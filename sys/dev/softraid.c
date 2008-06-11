@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.106 2008/06/09 07:07:16 djm Exp $ */
+/* $OpenBSD: softraid.c,v 1.107 2008/06/11 00:26:18 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -810,14 +810,22 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 #if 0
 #ifdef CRYPTO
 		case 'C':
-			if (no_chunk < 1 || no_chunk > 2)
+			/*
+                         * XXX we need the masking keys and salt here,
+                         * provided by bioctl.
+			 */
+			DNPRINTF(SR_D_IOCTL,
+			    "%s: sr_ioctl_createraid: no_chunk %d\n",
+			    DEVNAME(sc), no_chunk);
+
+			if (no_chunk != 1)
 				goto unwind;
+
 			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scm_size;
 
 			/* create crypto keys and encrypt them */
 			sr_crypto_create_keys(sd);
-			sr_crypto_encrypt_key(sd);
 			break;
 #endif /* CRYPTO */
 #endif
@@ -1234,8 +1242,8 @@ sr_read_meta(struct sr_discipline *sd)
 				goto bad;
 			}
 			bcopy(&mo->som_meta,
-			    &sd->mds.mdd_crypto.scr_meta[m->ssd_chunk_id],
-			    sizeof(sd->mds.mdd_crypto.scr_meta[m->ssd_chunk_id])
+			    &sd->mds.mdd_crypto.scr_meta,
+			    sizeof(sd->mds.mdd_crypto.scr_meta)
 			    );
 		}
 	}
@@ -1799,7 +1807,7 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		/* copy encrypted key / passphrase into optinal metadata area */
 		if (sd->sd_type == SR_MD_CRYPTO && i < 2) {
 			im_so->som_type = SR_OPT_CRYPTO;
-			bcopy(&sd->mds.mdd_crypto.scr_meta[i],
+			bcopy(&sd->mds.mdd_crypto.scr_meta,
 			    &im_so->som_meta.smm_crypto,
 			    sizeof(im_so->som_meta.smm_crypto));
 		}

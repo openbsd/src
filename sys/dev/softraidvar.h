@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.49 2008/02/22 23:00:04 hshoexer Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.50 2008/06/11 00:26:18 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -136,38 +136,29 @@ struct sr_raid1 {
 
 /* CRYPTO */
 #define SR_CRYPTO_MAXKEYS	32
-#define SR_CRYPTO_KEYBITS	128
+#define SR_CRYPTO_KEYBITS	512	/* AES-XTS with 2 * 256 bit keys */
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
-#define SR_CRYPTO_ROUNDS	14
-#define SR_CRYPTO_PBKDF2_ROUNDS	20000
+#define SR_CRYPTO_KDFHINTBYTES	64
 
 struct sr_crypto_metadata {
+	u_int32_t		scm_alg;
+#define SR_CRYPTOA_AES_XTS_128	1
+#define SR_CRYPTOA_AES_XTS_256	2
 	u_int32_t		scm_flags;
 #define SR_CRYPTOF_INVALID	(0)
 #define SR_CRYPTOF_KEY		(1<<0)
-#define SR_CRYPTOF_SALT		(1<<1)
-#define SR_CRYPTOF_PASSPHRASE	(1<<2)
+#define SR_CRYPTOF_KDFHINT	(1<<1)
 
-	u_int32_t		scm_pad;
-	u_int8_t		scm_key1[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
-	u_int8_t		scm_key2[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
-	u_int8_t		scm_salt[64];
-	char			scm_passphrase[128]; /* _PASSWORD_LEN */
+	u_int8_t		scm_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
+	u_int8_t		scm_kdfhint[SR_CRYPTO_KDFHINTBYTES];
 };
 
 #define SR_CRYPTO_NOWU		16
 struct sr_crypto {
-	/*
-	 * [0] contains encrypted key & salt
-	 * [1] contains password
-	 */
-	struct sr_crypto_metadata scr_meta[2];
+	struct sr_crypto_metadata scr_meta;
 
-	/* decrypted keys */
-	u_int8_t		scr_key1[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
-	u_int8_t		scr_key2[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
-
-	u_int64_t		scr_sid;
+	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
+	u_int64_t		scr_sid/*[SR_CRYPTO_MAXKEYS]*/;
 };
 
 #define SR_META_SIZE		32	/* save space at chunk beginning */
@@ -431,8 +422,7 @@ void			sr_raid1_set_vol_state(struct sr_discipline *);
 int			sr_crypto_alloc_resources(struct sr_discipline *);
 int			sr_crypto_free_resources(struct sr_discipline *);
 int			sr_crypto_rw(struct sr_workunit *);
-int			sr_crypto_encrypt_key(struct sr_discipline *);
-void			sr_crypto_create_keys(struct sr_discipline *);
+int			sr_crypto_create_keys(struct sr_discipline *);
 
 #ifdef SR_DEBUG
 void			sr_dump_mem(u_int8_t *, int);
