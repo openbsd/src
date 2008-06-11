@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiutil.c,v 1.3 2006/12/19 23:01:47 deraadt Exp $	*/
+/* $OpenBSD: acpiutil.c,v 1.4 2008/06/11 04:42:09 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *

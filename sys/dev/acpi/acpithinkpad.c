@@ -1,5 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.10 2008/06/08 02:52:11 deraadt Exp $ */
-
+/* $OpenBSD: acpithinkpad.c,v 1.11 2008/06/11 04:42:09 marco Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
