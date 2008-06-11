@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.16 2005/12/13 07:20:13 kjell Exp $	*/
+/*	$OpenBSD: modes.c,v 1.17 2008/06/11 23:23:55 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,13 +11,13 @@
 #include "def.h"
 #include "kbd.h"
 
-static int	changemode(int, int, char *);
+int	changemode(int, int, char *);
 
 int	 defb_nmodes = 0;
 struct maps_s	*defb_modes[PBMODES] = { &fundamental_mode };
 int	 defb_flag = 0;
 
-static int
+int
 changemode(int f, int n, char *mode)
 {
 	int	 i;
