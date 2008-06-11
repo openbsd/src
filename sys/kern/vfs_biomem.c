@@ -1,3 +1,4 @@
+/*	$OpenBSD: vfs_biomem.c,v 1.2 2008/06/11 00:11:03 thib Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
