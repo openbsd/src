@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.147 2008/06/11 09:42:13 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.148 2008/06/11 12:21:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -255,6 +255,18 @@ sub compute_md5
 	my ($self, $filename) = @_;
 	require OpenBSD::md5;
 	return OpenBSD::md5::fromfile($filename);
+}
+
+sub write
+{
+	my ($self, $fh) = @_;
+
+	$self->SUPER::write($fh);
+	if (defined $self->{tags}) {
+		for my $tag (sort keys %{$self->{tags}}) {
+			print $fh "\@tag ", $tag, "\n";
+		}
+	}
 }
 
 # exec/unexec and friends
@@ -611,8 +623,27 @@ sub add
 package OpenBSD::PackingElement::DefineTag;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
+sub category() { 'define-tag' }
 sub keyword() { 'define-tag' }
 __PACKAGE__->register_with_factory;
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($tag, $condition, @command) = split(/\s+/, $args);
+	bless { 
+		name => $tag, 
+		when => $condition, 
+		command => join(' ', @command)
+	}, $class;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return join(' ', map { $self->{$_}} 
+		(qw(name when command)));
+}
 
 package OpenBSD::PackingElement::symlink;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
