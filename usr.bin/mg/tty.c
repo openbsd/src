@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.28 2006/08/01 22:16:03 jason Exp $	*/
+/*	$OpenBSD: tty.c,v 1.29 2008/06/11 00:03:49 tobias Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -57,15 +57,10 @@ winchhandler(int sig)
 void
 ttinit(void)
 {
-	char	*tv_stype, *p;
+	int errret;
 
-	if ((tv_stype = getenv("TERM")) == NULL)
-		panic("Could not determine terminal type!");
-
-	if (setupterm(tv_stype, 1, NULL)) {
-		(void)asprintf(&p, "Unknown terminal type: %s", tv_stype);
-		panic(p);
-	}
+	if (setupterm(NULL, 1, &errret))
+		panic("Terminal setup failed");
 
 	signal(SIGWINCH, winchhandler);
 	signal(SIGCONT, winchhandler);
