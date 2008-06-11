@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.590 2008/06/11 02:46:34 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.591 2008/06/11 02:54:05 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4081,7 +4081,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		key.port[0] = th->th_dport;
 	}
 
-	STATE_LOOKUP(kif, &key, direction, *state);
+	STATE_LOOKUP(kif, &key, direction, *state, m);
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
