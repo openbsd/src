@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.204 2008/06/10 22:39:31 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.205 2008/06/11 20:51:34 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,6 +114,9 @@ void			 pf_state_export(struct pfsync_state *,
 void			 pf_state_import(struct pfsync_state *,
 			    struct pf_state_key *,
 			    struct pf_state_key *, struct pf_state *);
+int			 pf_addr_setup(struct pf_ruleset *,
+			    struct pf_addr_wrap *, sa_family_t);
+void			 pf_addr_copyout(struct pf_addr_wrap *);
 
 struct pf_rule		 pf_default_rule;
 struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
@@ -976,6 +979,25 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 }
 
 int
+pf_addr_setup(struct pf_ruleset *ruleset, struct pf_addr_wrap *addr,
+    sa_family_t af)
+{
+	if (pfi_dynaddr_setup(addr, af) ||
+	    pf_tbladdr_setup(ruleset, addr))
+		return (EINVAL);
+
+	return (0);
+}
+
+void
+pf_addr_copyout(struct pf_addr_wrap *addr)
+{
+	pfi_dynaddr_copyout(addr);
+	pf_tbladdr_copyout(addr);
+	pf_rtlabel_copyout(addr);
+}
+
+int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	struct pf_pooladdr	*pa = NULL;
@@ -1225,13 +1247,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_rtlabel_add(&rule->src.addr) ||
 		    pf_rtlabel_add(&rule->dst.addr))
 			error = EBUSY;
-		if (pfi_dynaddr_setup(&rule->src.addr, rule->af))
+		if (pf_addr_setup(ruleset, &rule->src.addr, rule->af))
 			error = EINVAL;
-		if (pfi_dynaddr_setup(&rule->dst.addr, rule->af))
-			error = EINVAL;
-		if (pf_tbladdr_setup(ruleset, &rule->src.addr))
-			error = EINVAL;
-		if (pf_tbladdr_setup(ruleset, &rule->dst.addr))
+		if (pf_addr_setup(ruleset, &rule->dst.addr, rule->af))
 			error = EINVAL;
 		if (pf_anchor_setup(rule, ruleset, pr->anchor_call))
 			error = EINVAL;
@@ -1328,12 +1346,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		pfi_dynaddr_copyout(&pr->rule.src.addr);
-		pfi_dynaddr_copyout(&pr->rule.dst.addr);
-		pf_tbladdr_copyout(&pr->rule.src.addr);
-		pf_tbladdr_copyout(&pr->rule.dst.addr);
-		pf_rtlabel_copyout(&pr->rule.src.addr);
-		pf_rtlabel_copyout(&pr->rule.dst.addr);
+		pf_addr_copyout(&pr->rule.src.addr);
+		pf_addr_copyout(&pr->rule.dst.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
 			if (rule->skip[i].ptr == NULL)
 				pr->rule.skip[i].nr = -1;
@@ -1470,13 +1484,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_rtlabel_add(&newrule->src.addr) ||
 			    pf_rtlabel_add(&newrule->dst.addr))
 				error = EBUSY;
-			if (pfi_dynaddr_setup(&newrule->src.addr, newrule->af))
+			if (pf_addr_setup(ruleset, &newrule->src.addr, newrule->af))
 				error = EINVAL;
-			if (pfi_dynaddr_setup(&newrule->dst.addr, newrule->af))
-				error = EINVAL;
-			if (pf_tbladdr_setup(ruleset, &newrule->src.addr))
-				error = EINVAL;
-			if (pf_tbladdr_setup(ruleset, &newrule->dst.addr))
+			if (pf_addr_setup(ruleset, &newrule->dst.addr, newrule->af))
 				error = EINVAL;
 			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
 				error = EINVAL;
@@ -2175,9 +2185,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(pa, &pp->addr, sizeof(struct pf_pooladdr));
-		pfi_dynaddr_copyout(&pp->addr.addr);
-		pf_tbladdr_copyout(&pp->addr.addr);
-		pf_rtlabel_copyout(&pp->addr.addr);
+		pf_addr_copyout(&pp->addr.addr);
 		break;
 	}
 
