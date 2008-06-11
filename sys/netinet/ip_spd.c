@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.55 2008/05/09 15:48:59 claudio Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.56 2008/06/11 18:20:54 blambert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -621,7 +621,7 @@ ipsec_add_policy(struct inpcb *inp, int af, int direction)
 		    0, 0, 0, "ipsec policy", NULL);
 	}
 
-	ipon = pool_get(&ipsec_policy_pool, 0);
+	ipon = pool_get(&ipsec_policy_pool, PR_NOWAIT);
 	if (ipon == NULL)
 		return NULL;
 
