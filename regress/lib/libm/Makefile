@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2006/03/15 21:44:41 otto Exp $
+#	$OpenBSD: Makefile,v 1.8 2008/06/11 15:07:34 martynas Exp $
 
-SUBDIR+= exp floor rint toint trivial1
+SUBDIR+= exp floor rint tgamma toint trivial1
 
 install:
 
