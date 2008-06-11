@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.42 2008/05/22 21:39:04 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.43 2008/06/11 04:44:19 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -324,7 +324,14 @@ clockattach_ebus(parent, self, aux)
 	/* hard code to 8K? */
 	sz = ea->ea_regs[0].size;
 
-	if (ebus_bus_map(ea->ea_iotag, 0,
+	if (ea->ea_nvaddrs) {
+		if (bus_space_map(ea->ea_memtag, ea->ea_vaddrs[0], 0,
+		    BUS_SPACE_MAP_PROMADDRESS, &cwi.cwi_bh) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
+		bt = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_iotag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), sz, 0, 0, &cwi.cwi_bh) == 0) {
 		bt = ea->ea_iotag;
 	} else if (ebus_bus_map(ea->ea_memtag, 0,
