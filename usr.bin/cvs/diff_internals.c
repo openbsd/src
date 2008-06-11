@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.24 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.25 2008/06/11 03:38:28 tobias Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -921,13 +921,6 @@ rdiff_head(void)
 	struct tm t;
 	time_t curr_time;
 
-	if (diff_rev1 != NULL) {
-		localtime_r(&stb1.st_mtime, &t);
-	} else {
-		time(&curr_time);
-		localtime_r(&curr_time, &t);
-	}
-
 	diff_output("%s ", diff_format == D_CONTEXT ? "***" : "---");
 
 	if (diff_rev1 == NULL) {
@@ -936,6 +929,7 @@ rdiff_head(void)
 	} else {
 		rcsnum_tostr(diff_rev1, buf, sizeof(buf));
 		diff_output("%s:%s", diff_file1, buf);
+		localtime_r(&stb1.st_mtime, &t);
 	}
 
 	(void)strftime(buf, sizeof(buf), "%a %b %e %H:%M:%S %G", &t);
