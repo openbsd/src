@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.77 2008/06/10 22:59:09 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.78 2008/06/11 08:11:33 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 u_int32_t nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
-static u_int32_t nfs_xid = 0;
 nfstype nfsv2_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON,
 		      NFCHR, NFNON };
 nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
@@ -548,7 +547,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 }
 
 /*
- * Return an unpredictable XID.
+ * Return an unpredictable XID in XDR form.
  */
 u_int32_t
 nfs_get_xid(void)
@@ -560,7 +559,7 @@ nfs_get_xid(void)
 		called = 1;
 		idgen32_init(&nfs_xid_ctx);
 	}
-	return idgen32(&nfs_xid_ctx);
+	return (txdr_unsigned(idgen32(&nfs_xid_ctx)));
 }
 
 /*
@@ -618,9 +617,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED, &bpos);
 
 	/* Get a new (non-zero) xid */
-	nfs_xid = nfs_get_xid();
-
-	*tl++ = req->r_xid = txdr_unsigned(nfs_xid);
+	*tl++ = req->r_xid = nfs_get_xid();
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
 	*tl++ = nfs_prog;
