@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.592 2008/06/11 03:26:03 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.593 2008/06/11 03:28:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -881,6 +881,9 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 			((struct pf_state_key *)
 			    m->m_pkthdr.pf.statekey)->reverse = sk;
 	}
+
+	if (dir == PF_OUT && m)
+		m->m_pkthdr.pf.statekey = NULL;
 
 	/* list is sorted, if-bound states before floating ones */
 	TAILQ_FOREACH(si, &sk->states, entry)
