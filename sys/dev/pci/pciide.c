@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.282 2008/04/29 11:40:58 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.283 2008/06/11 05:28:33 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -400,47 +400,47 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801ER_SATA, /* Intel 82801ER (ICH5R) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6300ESB_IDE, /* Intel 6300ESB IDE */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6300ESB_SATA, /* Intel 6300ESB SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6300ESB_SATA2, /* Intel 6300ESB SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6321ESB_IDE, /* Intel 6321ESB IDE */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_IDE,  /* Intel 82801FB (ICH6) IDE */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FBM_SATA,  /* Intel 82801FBM (ICH6M) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_SATA, /* Intel 82801FB (ICH6) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FR_SATA, /* Intel 82801FR (ICH6R) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GB_IDE,  /* Intel 82801GB (ICH7) IDE */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GB_SATA, /* Intel 82801GB (ICH7) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GR_AHCI, /* Intel 82801GR (ICH7R) AHCI */
@@ -448,11 +448,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GR_RAID, /* Intel 82801GR (ICH7R) RAID */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GBM_SATA, /* Intel 82801GBM (ICH7M) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GBM_AHCI, /* Intel 82801GBM (ICH7M) AHCI */
@@ -460,11 +460,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GHM_RAID, /* Intel 82801GHM (ICH7M DH) RAID */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_SATA_1, /* Intel 82801H (ICH8) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_AHCI_6P, /* Intel 82801H (ICH8) AHCI */
@@ -472,7 +472,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_RAID, /* Intel 82801H (ICH8) RAID */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_AHCI_4P, /* Intel 82801H (ICH8) AHCI */
@@ -480,11 +480,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_SATA_2, /* Intel 82801H (ICH8) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_SATA, /* Intel 82801HBM (ICH8M) SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_AHCI, /* Intel 82801HBM (ICH8M) AHCI */
@@ -492,7 +492,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_RAID, /* Intel 82801HBM (ICH8M) RAID */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_IDE, /* Intel 82801HBM (ICH8M) IDE */
@@ -584,11 +584,11 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_648,	/* CMD Technology PCI0648 */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_649,	/* CMD Technology PCI0649 */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_680,	/* CMD Technology PCI0680 */
@@ -596,19 +596,19 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	  cmd680_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3112,	/* SiI3112 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3512,	/* SiI3512 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_AAR_1210SA, /* Adaptec AAR-1210SA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
-	{ PCI_PRODUCT_CMDTECH_3114,	/* SiI3114 */
-	  IDE_PCI_CLASS_OVERRIDE,
+	{ PCI_PRODUCT_CMDTECH_3114,	/* SiI3114 SATA */
+	  0,
 	  sii3114_chip_map
 	}
 };
@@ -635,15 +635,15 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  apollo_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6420_SATA, /* VIA VT6420 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_SATA, /* VIA VT6421 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237A_SATA, /* VIA VT8237A SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237A_SATA_2, /* VIA VT8237A SATA */
@@ -655,7 +655,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT8251_SATA, /* VIA VT8251 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	}
 };
@@ -673,15 +673,15 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	  sis_chip_map
 	},
 	{ PCI_PRODUCT_SIS_180,		/* SIS 180 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_181,		/* SIS 181 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_182,		/* SIS 182 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sata_chip_map
 	}
 };
@@ -891,7 +891,7 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  serverworks_chip_map,
 	},
 	{ PCI_PRODUCT_RCC_K2_SATA,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  svwsata_chip_map,
 	},
 	{ PCI_PRODUCT_RCC_FRODO4_SATA,
@@ -1092,15 +1092,15 @@ const struct pciide_product_desc pciide_ati_products[] = {
 	  ixp_chip_map
 	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_300,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	}
 };
