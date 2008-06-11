@@ -307,6 +307,9 @@ static const char *const config_contents[] = {
     "# Set `LogHistory' to `all' or `TOFEWGCMAR' to log all transactions to the\n",
     "# history file, or a subset as needed (ie `TMAR' logs all write operations)\n",
     "#LogHistory=TOFEWGCMAR\n",
+    "\n",
+    "# Set DisableMdocdate=yes to turn off expansion of the Mdocdate keyword\n",
+    "#DisableMdocdate=no\n",
     NULL
 };
 

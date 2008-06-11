@@ -51,6 +51,7 @@ int top_level_admin = 0;
 
 mode_t cvsumask = UMASK_DFLT;
 char *RCS_citag = NULL;
+int disable_mdocdate = 0;
 
 char *CurDir;
 

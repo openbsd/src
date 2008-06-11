@@ -346,6 +346,17 @@ parse_config (cvsroot)
 	else if (strcmp (line, "umask") == 0) {
 	    cvsumask = (mode_t)(strtol(p, NULL, 8) & 0777);
 	}
+	else if (strcmp (line, "DisableMdocdate") == 0) {
+	    if (strcmp (p, "no") == 0)
+		disable_mdocdate = 0;
+	    else if (strcmp (p, "yes") == 0)
+		disable_mdocdate = 1;
+	    else 
+	    {
+		error (0, 0, "unrecognized value '%s' for DisableMdocdate", p);
+		goto error_return;
+	    }
+	}
 	else if (strcmp (line, "dlimit") == 0) {
 #ifdef BSD
 #include <sys/resource.h>

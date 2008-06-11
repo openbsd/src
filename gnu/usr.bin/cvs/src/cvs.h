@@ -369,6 +369,7 @@ extern int really_quiet, quiet;
 extern int use_editor;
 extern int cvswrite;
 extern mode_t cvsumask;
+extern int disable_mdocdate;
 extern char *RCS_citag;
 
 /* Access method specified in CVSroot. */

@@ -3628,6 +3628,8 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 		break;
 
 	    case KEYWORD_MDOCDATE:
+		if (disable_mdocdate)
+			continue;
 		value = mdoc_date (ver->date);
 		free_value = 1;
 		break;
