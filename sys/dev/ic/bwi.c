@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.75 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.76 2008/06/11 00:17:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7728,7 +7728,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(&st->stats_ring, dma_size);
+	bzero(st->stats_ring, dma_size);
 	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
 
 	/*
@@ -7767,7 +7767,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(&st->stats, dma_size);
+	bzero(st->stats, dma_size);
 	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 
