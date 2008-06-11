@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.11 2008/06/10 14:40:54 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.12 2008/06/11 02:02:08 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -114,7 +114,7 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 					val = fi->tag_op;
 				break;
 			case 'p':
-		    		val = current_cvsroot->cr_dir;
+				val = current_cvsroot->cr_dir;
 				break;
 			case 'r':
 				val = repo;
