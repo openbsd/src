@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1378 2008/06/08 17:21:57 reyk Exp $
+$OpenBSD: pcidevs,v 1.1379 2008/06/11 04:54:40 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ vendor	MUTECH		0x1159	Mutech
 vendor	XIRCOM		0x115d	Xircom
 vendor	RENDITION	0x1163	Rendition
 vendor	RCC		0x1166	ServerWorks
+vendor	ALTERA		0x1172	Altera
 vendor	TOSHIBA2	0x1179	Toshiba
 vendor	RICOH		0x1180	Ricoh
 vendor	DLINK		0x1186	D-Link Systems
@@ -629,6 +630,9 @@ product ALTEON ACENIC		0x0001	Acenic
 product ALTEON ACENICT		0x0002	Acenic Copper
 product ALTEON BCM5700		0x0003	BCM5700
 product ALTEON BCM5701		0x0004	BCM5701
+
+/* Altera products */
+product ALTERA EBUS		0x0000	EBus
 
 /* Altima products */
 product ALTIMA AC1000		0x03e8	AC1000
