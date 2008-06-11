@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.49 2008/05/28 20:04:59 sobrado Exp $
+.\"	$OpenBSD: tar.1,v 1.50 2008/06/11 00:49:08 pvalchev Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,9 +23,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.49 2008/05/28 20:04:59 sobrado Exp $
+.\"	$OpenBSD: tar.1,v 1.50 2008/06/11 00:49:08 pvalchev Exp $
 .\"
-.Dd $Mdocdate: May 28 2008 $
+.Dd $Mdocdate: June 11 2008 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.No { Cm crtux No } Op Cm 014578befHhLmOoPpqsvwXZz
+.No { Cm crtux No } Op Cm 014578befHhjLmOoPpqsvwXZz
 .Sm on
 .Bk -words
 .Op Ar blocking-factor | archive | replstr
@@ -44,7 +44,7 @@
 .Ek
 .Nm tar
 .No { Ns Fl crtux Ns }
-.Op Fl 014578eHhLmOoPpqvwXZz
+.Op Fl 014578eHhjLmOoPpqvwXZz
 .Op Fl b Ar blocking-factor
 .Op Fl C Ar directory
 .Op Fl f Ar archive
@@ -157,6 +157,9 @@ link ultimately points to.
 .It Fl I Ar file
 This is a positional argument which reads the names of files to
 archive or extract from the given file, one per line.
+.It Fl j
+Compress archive using bzip2.
+The bzip2 utility must be installed separately.
 .It Fl L
 Synonym for the
 .Fl h
@@ -376,7 +379,9 @@ command first appeared in
 Keith Muller at the University of California, San Diego.
 .Sh CAVEATS
 The
+.Fl j
+and
 .Fl L
-flag is not portable to other versions of
+flags are not portable to other versions of
 .Nm
-where it may have a different meaning.
+where they may have a different meaning.
