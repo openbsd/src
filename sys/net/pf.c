@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.593 2008/06/11 03:28:10 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.594 2008/06/11 03:36:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -870,19 +870,19 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	if (dir == PF_OUT && m && m->m_pkthdr.pf.statekey &&
+	if (dir == PF_OUT && m->m_pkthdr.pf.statekey &&
 	    ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
 		sk = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse;
 	else {
 		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
 		    (struct pf_state_key *)key)) == NULL)
 			return (NULL);
-		if (m && m->m_pkthdr.pf.statekey)
+		if (m->m_pkthdr.pf.statekey)
 			((struct pf_state_key *)
 			    m->m_pkthdr.pf.statekey)->reverse = sk;
 	}
 
-	if (dir == PF_OUT && m)
+	if (dir == PF_OUT)
 		m->m_pkthdr.pf.statekey = NULL;
 
 	/* list is sorted, if-bound states before floating ones */
