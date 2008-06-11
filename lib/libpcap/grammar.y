@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.16 2007/01/02 18:31:21 reyk Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.17 2008/06/11 15:02:21 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.16 2007/01/02 18:31:21 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.17 2008/06/11 15:02:21 dtucker Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -119,6 +119,7 @@ pcap_parse()
 %token	LSH RSH
 %token  LEN
 %token  IPV6 ICMPV6 AH ESP
+%token	VLAN
 
 %type	<s> ID
 %type	<e> EID
@@ -280,6 +281,8 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| BYTE NUM byteop NUM	{ $$ = gen_byteop($3, $2, $4); }
 	| INBOUND		{ $$ = gen_inbound(0); }
 	| OUTBOUND		{ $$ = gen_inbound(1); }
+	| VLAN pnum		{ $$ = gen_vlan($2); }
+	| VLAN			{ $$ = gen_vlan(-1); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
 	;

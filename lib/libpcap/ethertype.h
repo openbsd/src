@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertype.h,v 1.6 2000/04/26 21:25:52 jakob Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.7 2008/06/11 15:02:21 dtucker Exp $	*/
 /*	$NetBSD: ethertype.h,v 1.2 1995/03/06 11:38:17 mycroft Exp $	*/
 
 /*
@@ -21,7 +21,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/ethertype.h,v 1.6 2000/04/26 21:25:52 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/ethertype.h,v 1.7 2008/06/11 15:02:21 dtucker Exp $ (LBL)
  */
 
 /* Types missing from some systems */
@@ -73,6 +73,9 @@
 #endif
 #ifndef	ETHERTYPE_AARP
 #define	ETHERTYPE_AARP		0x80f3
+#endif
+#ifndef ETHERTYPE_8021Q
+#define ETHERTYPE_8021Q		0x8100
 #endif
 #ifndef ETHERTYPE_IPV6
 #define ETHERTYPE_IPV6		0x80f3

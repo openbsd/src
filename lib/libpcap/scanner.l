@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.19 2007/01/02 18:31:21 reyk Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.20 2008/06/11 15:02:21 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.19 2007/01/02 18:31:21 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.20 2008/06/11 15:02:21 dtucker Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -227,6 +227,8 @@ not		return '!';
 len|length	return LEN;
 inbound		return INBOUND;
 outbound	return OUTBOUND;
+
+vlan		return VLAN;
 
 on|ifname	return PF_IFNAME;
 rset|ruleset	return PF_RSET;

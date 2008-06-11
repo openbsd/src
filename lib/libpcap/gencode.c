@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.29 2007/11/06 10:22:29 chl Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.30 2008/06/11 15:02:21 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -66,6 +66,9 @@ struct rtentry;
 /* Locals */
 static jmp_buf top_ctx;
 static pcap_t *bpf_pcap;
+
+/* Hack for updating VLAN offsets. */
+static u_int	orig_linktype = -1, orig_nl = -1, orig_nl_nosnap = -1;
 
 /* XXX */
 #ifdef PCAP_FDDIPAD
@@ -548,6 +551,8 @@ gen_bcmp(offset, size, v)
  */
 static u_int off_linktype;
 static u_int off_nl;
+static u_int off_nl_nosnap;
+
 static int linktype;
 
 static void
@@ -3133,6 +3138,99 @@ gen_p80211_type(int type, int mask)
 		offset += IEEE80211_RADIOTAP_HDRLEN;
 
 	b0 = gen_mcmp(offset, BPF_B, (bpf_int32)type, (bpf_u_int32)mask);
+
+	return (b0);
+}
+
+struct block *
+gen_acode(eaddr, q)
+	register const u_char *eaddr;
+	struct qual q;
+{
+	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
+		if (linktype == DLT_ARCNET)
+			return gen_ahostop(eaddr, (int)q.dir);
+	}
+	bpf_error("ARCnet address used in non-arc expression");
+	/* NOTREACHED */
+}
+
+static struct block *
+gen_ahostop(eaddr, dir)
+	register const u_char *eaddr;
+	register int dir;
+{
+	register struct block *b0, *b1;
+
+	switch (dir) {
+	/* src comes first, different from Ethernet */
+	case Q_SRC:
+		return gen_bcmp(0, 1, eaddr);
+
+	case Q_DST:
+		return gen_bcmp(1, 1, eaddr);
+
+	case Q_AND:
+		b0 = gen_ahostop(eaddr, Q_SRC);
+		b1 = gen_ahostop(eaddr, Q_DST);
+		gen_and(b0, b1);
+		return b1;
+
+	case Q_DEFAULT:
+	case Q_OR:
+		b0 = gen_ahostop(eaddr, Q_SRC);
+		b1 = gen_ahostop(eaddr, Q_DST);
+		gen_or(b0, b1);
+		return b1;
+	}
+	abort();
+	/* NOTREACHED */
+}
+
+/*
+ * support IEEE 802.1Q VLAN trunk over ethernet
+ */
+struct block *
+gen_vlan(vlan_num)
+	int vlan_num;
+{
+	struct	block	*b0;
+
+	/*
+	 * Change the offsets to point to the type and data fields within
+	 * the VLAN packet.  This is somewhat of a kludge.
+	 */
+	if (orig_nl == (u_int)-1) {
+		orig_linktype = off_linktype;	/* save original values */
+		orig_nl = off_nl;
+		orig_nl_nosnap = off_nl_nosnap;
+
+		switch (linktype) {
+
+		case DLT_EN10MB:
+			off_linktype = 16;
+			off_nl_nosnap = 18;
+			off_nl = 18;
+			break;
+
+		default:
+			bpf_error("no VLAN support for data link type %d",
+				  linktype);
+			/*NOTREACHED*/
+		}
+	}
+
+	/* check for VLAN */
+	b0 = gen_cmp(orig_linktype, BPF_H, (bpf_int32)ETHERTYPE_8021Q);
+
+	/* If a specific VLAN is requested, check VLAN id */
+	if (vlan_num >= 0) {
+		struct block *b1;
+
+		b1 = gen_cmp(orig_nl, BPF_H, (bpf_int32)vlan_num);
+		gen_and(b0, b1);
+		b0 = b1;
+	}
 
 	return (b0);
 }
