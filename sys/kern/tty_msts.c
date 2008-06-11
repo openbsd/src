@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.3 2008/05/06 08:51:44 mbalmer Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.4 2008/06/11 17:11:36 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -52,7 +52,7 @@ void	mstsattach(int);
 #define TRUSTTIME	(10 * 60)	/* 10 minutes */
 #endif
 
-int msts_count;	/* this is wrong, it should really be a SLIST */
+int msts_count, msts_nxid;
 static int t_trust;
 
 struct msts {
@@ -102,7 +102,8 @@ mstsopen(dev_t dev, struct tty *tp)
 		return error;
 	np = malloc(sizeof(struct msts), M_DEVBUF, M_WAITOK|M_ZERO);
 	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "msts%d",
-	    msts_count++);
+	    msts_nxid++);
+	msts_count++;
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
 #ifndef MSTS_DEBUG
@@ -148,6 +149,8 @@ mstsclose(struct tty *tp, int flags)
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
 	msts_count--;
+	if (msts_count == 0)
+		msts_nxid = 0;
 	return linesw[TTYDISC].l_close(tp, flags);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.26 2008/05/05 19:57:01 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.27 2008/06/11 17:11:36 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -49,7 +49,7 @@ void	nmeaattach(int);
 #define TRUSTTIME	(10 * 60)	/* 10 minutes */
 #endif
 
-int nmea_count;	/* this is wrong, it should really be a SLIST */
+int nmea_count, nmea_nxid;
 static int t_trust;
 
 struct nmea {
@@ -101,7 +101,8 @@ nmeaopen(dev_t dev, struct tty *tp)
 		return error;
 	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK | M_ZERO);
 	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "nmea%d",
-	    nmea_count++);
+	    nmea_nxid++);
+	nmea_count++;
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
 	np->time.value = 0LL;
@@ -144,6 +145,8 @@ nmeaclose(struct tty *tp, int flags)
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
 	nmea_count--;
+	if (nmea_count == 0)
+		nmea_nxid = 0;
 	return linesw[TTYDISC].l_close(tp, flags);
 }
 
