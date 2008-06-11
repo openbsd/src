@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.15 2008/06/10 20:50:23 beck Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.16 2008/06/11 12:35:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -110,7 +110,7 @@ udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	 */
 	bp->b_blkno = sector * btodb(bsize);
 	bp->b_bcount = bsize;
-	bp->b_flags |= (B_READ | B_RAW);
+	bp->b_flags = B_BUSY | B_READ;
 	bp->b_resid = bp->b_blkno / lp->d_secpercyl;
 
 	(*strat)(bp);
@@ -130,7 +130,7 @@ udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	for (sector = mvds_start; sector < mvds_end; sector++) {
 		bp->b_blkno = sector * btodb(bsize);
 		bp->b_bcount = bsize;
-		bp->b_flags |= (B_READ | B_RAW);
+		bp->b_flags = B_BUSY | B_READ;
 		bp->b_resid = bp->b_blkno / lp->d_secpercyl;
 
 		(*strat)(bp);

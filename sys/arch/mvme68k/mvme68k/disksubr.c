@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.61 2008/06/10 20:50:23 beck Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.62 2008/06/11 12:35:42 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -67,7 +67,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 	error = biowait(bp);
 	if (error) {
@@ -122,14 +122,14 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
 	bsdtocpulabel(lp, (struct mvmedisklabel *)bp->b_data);
 
-	bp->b_flags = B_BUSY | B_WRITE | B_RAW;
+	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 

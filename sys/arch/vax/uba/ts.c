@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.18 2008/06/10 20:50:23 beck Exp $ */
+/*	$OpenBSD: ts.c,v 1.19 2008/06/11 12:35:44 deraadt Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -379,7 +379,7 @@ tscommand (dev, cmd, count)
 		tsleep ((caddr_t)bp, PRIBIO, "tscommand", 0);
 		/* check MOT-flag !!! */
 	}
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 
 	splx(s);
 

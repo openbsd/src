@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.168 2008/06/10 20:14:36 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.169 2008/06/11 12:35:46 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ void
 vntblinit(void)
 {
 	/* buffer cache may need a vnode for each buffer */
-	maxvnodes = bufpages;
+	maxvnodes = desiredvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
@@ -1256,12 +1256,8 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 		free(tmpvfsp, M_TEMP);
 		return (ret);
-	case VFS_BCACHESTAT:	/* buffer cache statistics */
-		ret = sysctl_rdstruct(oldp, oldlenp, newp, &bcstats,
-		    sizeof(struct bcachestats));
-		return(ret);
-
 	}
+
 	return (EOPNOTSUPP);
 }
 
@@ -1668,7 +1664,7 @@ vfs_syncwait(int verbose)
 			if (bp->b_flags & B_DELWRI) {
 				s = splbio();
 				bremfree(bp);
-				buf_acquire(bp);
+				bp->b_flags |= B_BUSY;
 				splx(s);
 				nbusy++;
 				bawrite(bp);
@@ -1839,7 +1835,7 @@ loop:
 				break;
 			}
 			bremfree(bp);
-			buf_acquire(bp);
+			bp->b_flags |= B_BUSY;
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
@@ -1877,7 +1873,7 @@ loop:
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty");
 		bremfree(bp);
-		buf_acquire(bp);
+		bp->b_flags |= B_BUSY;
 		splx(s);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,

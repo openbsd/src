@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.49 2008/06/10 20:14:37 beck Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.50 2008/06/11 12:35:46 deraadt Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -449,8 +449,7 @@ loop:
 		}
 
 		bremfree(bp);
-		buf_acquire(bp);
-		bp->b_flags |= B_SCANNED;
+		bp->b_flags |= B_BUSY | B_SCANNED;
 		splx(s);
 		/*
 		 * On our final pass through, do all I/O synchronously

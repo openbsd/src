@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.4 2008/06/10 20:50:23 beck Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 2008/06/11 12:35:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -59,7 +59,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
 
 	bp->b_blkno = sec;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -145,7 +145,7 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 
 	bp->b_blkno = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -215,7 +215,7 @@ finished:
 
 	bp->b_blkno = fsoffs + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
@@ -249,14 +249,14 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;
-	bp->b_flags = B_BUSY | B_WRITE | B_RAW;
+	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 

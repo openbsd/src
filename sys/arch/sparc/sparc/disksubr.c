@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.73 2008/06/10 20:50:23 beck Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.74 2008/06/11 12:35:43 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -105,7 +105,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "disk label read error";
@@ -169,7 +169,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	/* Write out the updated label. */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_WRITE | B_RAW;
+	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 

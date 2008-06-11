@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.58 2008/06/10 20:14:37 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.59 2008/06/11 12:35:46 deraadt Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -87,12 +87,6 @@ struct buf {
 	dev_t	b_dev;			/* Device associated with buffer. */
 	caddr_t	b_data;			/* associated data */
 	void	*b_saveaddr;		/* Original b_data for physio. */
-
-	TAILQ_ENTRY(buf) b_valist;	/* LRU of va to reuse. */
-
-	struct uvm_object *b_pobj;	/* Object containing the pages */
-	off_t	b_poffs;		/* Offset within object */
-
 	daddr64_t	b_lblkno;	/* Logical block number. */
 	daddr64_t	b_blkno;	/* Underlying physical block number. */
 					/* Function to call upon completion.
@@ -167,8 +161,6 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_DEFERRED	0x04000000	/* Skipped over for cleaning */
 #define	B_SCANNED	0x08000000	/* Block already pushed during sync */
 #define	B_PDAEMON	0x10000000	/* I/O started by pagedaemon */
-#define B_RELEASED	0x20000000	/* free this buffer after its kvm */
-#define B_NOTMAPPED	0x40000000	/* BUSY, but not necessarily mapped */
 
 #define	B_BITS	"\010\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY\006CACHE" \
     "\007CALL\010DELWRI\012DONE\013EINTR\014ERROR" \
@@ -235,23 +227,6 @@ int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr64_t, int, int, int);
 struct buf *geteblk(int);
 struct buf *incore(struct vnode *, daddr64_t);
-
-/*
- * buf_kvm_init initializes the kvm handling for buffers.
- * buf_acquire sets the B_BUSY flag and ensures that the buffer is
- * mapped in the kvm.
- * buf_release clears the B_BUSY flag and allows the buffer to become
- * unmapped.
- * buf_unmap is for internal use only. Unmaps the buffer from kvm.
- */
-void	buf_mem_init(vsize_t);
-void	buf_acquire(struct buf *);
-void	buf_acquire_unmapped(struct buf *);
-void	buf_release(struct buf *);
-int	buf_dealloc_mem(struct buf *);
-void	buf_alloc_pages(struct buf *, vsize_t);
-void	buf_free_pages(struct buf *);
-
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev,

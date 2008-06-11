@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.72 2008/06/10 20:50:23 beck Exp $	*/
+/*	$OpenBSD: fd.c,v 1.73 2008/06/11 12:35:45 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -1125,7 +1125,7 @@ fdformat(dev, finfo, p)
         if (bp == NULL)
                 return ENOBUFS;
 
-        bp->b_flags = B_BUSY | B_PHYS | B_FORMAT | B_RAW;
+        bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
         bp->b_proc = p;
         bp->b_dev = dev;
 

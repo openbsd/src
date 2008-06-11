@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.16 2008/06/10 20:14:37 beck Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.17 2008/06/11 12:35:46 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr64_t *bnp,
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
-			bcstats.pendingreads++;
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp);
 				return (error);
