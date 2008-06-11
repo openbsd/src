@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.43 2008/06/11 05:54:22 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.44 2008/06/11 18:40:52 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@ struct sdlim_t {
 };
 
 void		 usage(void);
+void		 create(void);
 struct sdlim_t	*create_sdlim(struct sensordev *);
 void		 destroy_sdlim(struct sdlim_t *);
 void		 check(time_t);
@@ -105,13 +106,8 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct sensordev sensordev;
-	struct sdlim_t	*sdlim;
-	size_t		 sdlen = sizeof(sensordev);
 	time_t		 last_report = 0, this_check;
-	int		 mib[3], dev;
-	int		 sensor_cnt = 0, ch;
-	int		 check_period = CHECK_PERIOD;
+	int		 ch, check_period = CHECK_PERIOD;
 	const char	*errstr;
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
@@ -134,25 +130,9 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_SENSORS;
-
-	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
-		mib[2] = dev;
-		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				warn("sysctl");
-			continue;
-		}
-		sdlim = create_sdlim(&sensordev);
-		TAILQ_INSERT_TAIL(&sdlims, sdlim, entries);
-		sensor_cnt += sdlim->sensor_cnt;
-	}
-
-	if (sensor_cnt == 0)
-		errx(1, "no sensors found");
-
 	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+	create();
 
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
@@ -164,8 +144,6 @@ main(int argc, char *argv[])
 
 	signal(SIGHUP, reparse_cfg);
 	signal(SIGCHLD, SIG_IGN);
-
-	syslog(LOG_INFO, "startup, system has %d sensors", sensor_cnt);
 
 	for (;;) {
 		if (reload) {
@@ -181,6 +159,32 @@ main(int argc, char *argv[])
 		last_report = this_check;
 		sleep(check_period);
 	}
+}
+
+void
+create(void)
+{
+	struct sensordev sensordev;
+	struct sdlim_t	*sdlim;
+	size_t		 sdlen = sizeof(sensordev);
+	int		 mib[3], dev, sensor_cnt = 0;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_SENSORS;
+
+	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+		mib[2] = dev;
+		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
+			if (errno != ENOENT)
+				warn("sysctl");
+			continue;
+		}
+		sdlim = create_sdlim(&sensordev);
+		TAILQ_INSERT_TAIL(&sdlims, sdlim, entries);
+		sensor_cnt += sdlim->sensor_cnt;
+	}
+
+	syslog(LOG_INFO, "startup, system has %d sensors", sensor_cnt);
 }
 
 struct sdlim_t *
