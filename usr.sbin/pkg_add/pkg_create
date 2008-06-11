@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.116 2008/04/07 11:02:24 espie Exp $
+# $OpenBSD: pkg_create,v 1.117 2008/06/11 09:43:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -76,8 +76,6 @@ sub verify_checksum
 {
 }
 
-use OpenBSD::md5;
-
 sub compute_checksum
 {
 	my ($self, $result, $base, $stash) = @_;
@@ -96,7 +94,7 @@ sub compute_checksum
 			$result->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $name;
-			$result->add_md5(OpenBSD::md5::fromfile($fname));
+			$result->add_md5($self->compute_md5($fname));
 			$result->add_size($size);
 		}
 	} else {

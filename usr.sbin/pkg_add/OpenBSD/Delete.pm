@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.75 2008/03/11 08:46:14 espie Exp $
+# $OpenBSD: Delete.pm,v 1.76 2008/06/11 09:43:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -248,7 +248,7 @@ sub do_not_delete
 	if (-l $realname) {
 		$self->{symlink} = readlink $realname;
 	} elsif (-f _) {
-		$self->{md5} = OpenBSD::md5::fromfile($realname);
+		$self->{md5} = $self->compute_md5($realname);
 	} elsif (-d _) {
 		# what should we do ?
 	}
@@ -350,7 +350,6 @@ sub should_run
 }
 
 package OpenBSD::PackingElement::FileBase;
-use OpenBSD::md5;
 use OpenBSD::Error;
 use OpenBSD::Vstat;
 
@@ -401,7 +400,7 @@ sub delete
 					$state->print("Couldn't delete $realname (no checksum)\n");
 					return;
 				}
-				my $md5 = OpenBSD::md5::fromfile($realname);
+				my $md5 = $self->compute_md5($realname);
 				if ($md5 ne $self->{md5}) {
 					print "Problem: checksum doesn't match for ",
 						$self->fullname, "\n";
@@ -480,7 +479,6 @@ sub copy_old_stuff
 }
 
 package OpenBSD::PackingElement::Sample;
-use OpenBSD::md5;
 use OpenBSD::Error;
 use File::Basename;
 
@@ -516,7 +514,7 @@ sub delete
 			return;
 		}
 	} else {
-		my $md5 = OpenBSD::md5::fromfile($realname);
+		my $md5 = $self->compute_md5($realname);
 		if ($md5 eq $orig->{md5}) {
 			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
 		} else {

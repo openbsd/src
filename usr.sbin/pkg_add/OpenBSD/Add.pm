@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.82 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: Add.pm,v 1.83 2008/06/11 09:43:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -76,11 +76,10 @@ sub record_partial_installation
 	# last file may have not copied correctly
 	my $last = $n->{state}->{lastfile};
 	if (defined $last && defined($last->{md5})) {
-	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
 	    my $lastname = $last->realname($state);
-	    $last->{md5} = OpenBSD::md5::fromfile($lastname);
+	    $last->{md5} = $last->compute_md5($lastname);
 	    if ($old ne $last->{md5}) {
 		print "Adjusting md5 for $lastname from ",
 		    unpack('H*', $old), " to ", unpack('H*', $last->{md5}), "\n";
@@ -510,9 +509,9 @@ sub install
 		if ($state->{verbose}) {
 		    print "The existing file $filename has NOT been changed\n";
 		    if (defined $orig->{md5}) {
-			require OpenBSD::md5;
 
-			my $md5 = OpenBSD::md5::fromfile($filename);
+			# XXX assume this would be the same type of file
+			my $md5 = $self->compute_md5($filename);
 			if ($md5 eq $orig->{md5}) {
 			    print "(but it seems to match the sample file $origname)\n";
 			} else {
