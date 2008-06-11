@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.60 2008/06/08 21:40:58 av Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.61 2008/06/11 21:59:25 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -166,6 +166,7 @@ int		play_msf(int, int, int, int, int, int);
 int		play_track(int, int, int, int);
 int		get_vol(int *, int *);
 int		status(int *, int *, int *, int *);
+__dead void	tao(int argc, char **argv);
 int		play(char *arg);
 int		info(char *arg);
 int		cddbinfo(char *arg);
@@ -228,14 +229,6 @@ main(int argc, char **argv)
 {
 	int ch, cmd;
 	char *arg;
-	struct stat sb;
-	struct track_info *cur_track;
-	struct track_info *tr;
-	off_t availblk, needblk = 0;
-	u_int blklen;
-	u_int ntracks = 0;
-	char type;
-	int cap;
 
 	cdname = getenv("DISC");
 	if (!cdname)
@@ -275,73 +268,9 @@ main(int argc, char **argv)
 		    "No CD device name specified. Defaulting to %s.\n", cdname);
 	}
 
-	if (argc > 0 && ! strcasecmp(*argv, "tao")) {
-		if (argc == 1)
-			usage();
-		SLIST_INIT(&tracks);
-		type = 'd';
-		blklen = 2048;
-		while (argc > 1) {
-			tr = malloc(sizeof(struct track_info));
-			tr->type = type;
-			optreset = 1;
-			optind = 1;
-			while ((ch = getopt(argc, argv, "ad")) != -1) {
-				switch (ch) {
-				case 'a':
-					type = 'a';
-					blklen = 2352;
-					break;
-				case 'd':
-					type = 'd';
-					blklen = 2048;
-					break;
-				default:
-					usage();
-				}
-			}
-			tr->type = type;
-			tr->blklen = blklen;
-			argc -= optind;
-			argv += optind;
-			if (argv[0] == NULL)
-				usage();
-			tr->file = argv[0];
-			tr->fd = open(tr->file, O_RDONLY, 0640);
-			if (tr->fd == -1)
-				err(1, "cannot open file %s", tr->file);
-			if (fstat(tr->fd, &sb) == -1)
-				err(1, "cannot stat file %s", tr->file);
-			tr->sz = sb.st_size;
-			if (tr->type == 'a')
-				tr->sz -= WAVHDRLEN;
-			if (SLIST_EMPTY(&tracks))
-				SLIST_INSERT_HEAD(&tracks, tr, track_list);
-			else
-				SLIST_INSERT_AFTER(cur_track, tr, track_list);
-			cur_track = tr;
-		}
-		if (!open_cd(cdname, 1))
-			exit(1);
-
-		if (get_media_capabilities(&cap) == -1)
-			errx(1, "Can't determine media type");
-		if ((cap & MEDIACAP_TAO) == 0)
-			errx(1, "The media can't be written in TAO mode");
-
-		get_disc_size(&availblk);
-		SLIST_FOREACH(tr, &tracks, track_list) {
-			needblk += tr->sz/tr->blklen;
-			ntracks++;
-		}
-		needblk += (ntracks - 1) * 150; /* transition area between tracks */
-		if (needblk > availblk)
-			errx(1, "Only %llu of the required %llu blocks available",
-			    availblk, needblk);
-		if (writetao(&tracks) != 0)
-			exit(1);
-		else
-			exit(0);
+	if (argc > 0 && !strcasecmp(*argv, "tao")) {
+		tao(argc, argv);
+		/* NOTREACHED */
 	}
 	if (argc > 0) {
 		char buf[80], *p;
@@ -615,6 +544,92 @@ run(int cmd, char *arg)
 		return (0);
 
 	}
+}
+
+__dead void
+tao(int argc, char **argv)
+{
+	struct stat sb;
+	struct track_info *cur_track;
+	struct track_info *tr;
+	off_t availblk, needblk = 0;
+	u_int blklen;
+	u_int ntracks = 0;
+	char type;
+	int ch, cap;
+
+	if (argc == 1)
+		usage();
+
+	SLIST_INIT(&tracks);
+	type = 'd';
+	blklen = 2048;
+	while (argc > 1) {
+		tr = malloc(sizeof(struct track_info));
+		if (tr == NULL)
+			err(1, "tao");
+
+		tr->type = type;
+		optreset = 1;
+		optind = 1;
+		while ((ch = getopt(argc, argv, "ad")) != -1) {
+			switch (ch) {
+			case 'a':
+				type = 'a';
+				blklen = 2352;
+				break;
+			case 'd':
+				type = 'd';
+				blklen = 2048;
+				break;
+			default:
+				usage();
+				/* NOTREACHED */
+			}
+		}
+
+		tr->type = type;
+		tr->blklen = blklen;
+		argc -= optind;
+		argv += optind;
+		if (argv[0] == NULL)
+			usage();
+		tr->file = argv[0];
+		tr->fd = open(tr->file, O_RDONLY, 0640);
+		if (tr->fd == -1)
+			err(1, "cannot open file %s", tr->file);
+		if (fstat(tr->fd, &sb) == -1)
+			err(1, "cannot stat file %s", tr->file);
+		tr->sz = sb.st_size;
+		if (tr->type == 'a')
+			tr->sz -= WAVHDRLEN;
+		if (SLIST_EMPTY(&tracks))
+			SLIST_INSERT_HEAD(&tracks, tr, track_list);
+		else
+			SLIST_INSERT_AFTER(cur_track, tr, track_list);
+		cur_track = tr;
+	}
+
+	if (!open_cd(cdname, 1))
+		exit(1);
+	if (get_media_capabilities(&cap) == -1)
+		errx(1, "Can't determine media type");
+	if ((cap & MEDIACAP_TAO) == 0)
+		errx(1, "The media can't be written in TAO mode");
+
+	get_disc_size(&availblk);
+	SLIST_FOREACH(tr, &tracks, track_list) {
+		needblk += tr->sz/tr->blklen;
+		ntracks++;
+	}
+	needblk += (ntracks - 1) * 150; /* transition area between tracks */
+	if (needblk > availblk)
+		errx(1, "Only %llu of the required %llu blocks available",
+		    availblk, needblk);
+	if (writetao(&tracks) != 0)
+		exit(1);
+	else
+		exit(0);
 }
 
 int
