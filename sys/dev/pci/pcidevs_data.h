@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1378 2008/06/08 17:21:57 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1379 2008/06/11 04:54:40 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1062,6 +1062,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
 	    "BCM5701",
+	},
+	{
+	    PCI_VENDOR_ALTERA, PCI_PRODUCT_ALTERA_EBUS,
+	    "EBus",
 	},
 	{
 	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000,
@@ -15830,6 +15834,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_RCC,
 	    "ServerWorks",
+	},
+	{
+	    PCI_VENDOR_ALTERA,
+	    "Altera",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2,

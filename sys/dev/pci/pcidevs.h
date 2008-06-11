@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1378 2008/06/08 17:21:57 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1379 2008/06/11 04:54:40 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -172,6 +172,7 @@
 #define	PCI_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	PCI_VENDOR_RENDITION	0x1163		/* Rendition */
 #define	PCI_VENDOR_RCC	0x1166		/* ServerWorks */
+#define	PCI_VENDOR_ALTERA	0x1172		/* Altera */
 #define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba */
 #define	PCI_VENDOR_RICOH	0x1180		/* Ricoh */
 #define	PCI_VENDOR_DLINK	0x1186		/* D-Link Systems */
@@ -634,6 +635,9 @@
 #define	PCI_PRODUCT_ALTEON_ACENICT	0x0002		/* Acenic Copper */
 #define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* BCM5700 */
 #define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* BCM5701 */
+
+/* Altera products */
+#define	PCI_PRODUCT_ALTERA_EBUS	0x0000		/* EBus */
 
 /* Altima products */
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 */
