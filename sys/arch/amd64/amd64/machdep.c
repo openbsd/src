@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2008/06/10 02:55:39 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 2008/06/11 18:49:50 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -309,12 +309,6 @@ cpu_startup(void)
 
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
-
-	if (physmem >= atop(1ULL << 32)) {
-		extern int amdgart_enable;
-
-		amdgart_enable = 1;
-	}
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -1325,6 +1319,10 @@ init_x86_64(paddr_t first_avail)
 			e1 = (1UL << 32) - 1;
 			if (s1 > e1)
 				continue;
+		} else if (bigmem && (e1 >= (1UL<<32))) {
+			extern int amdgart_enable;
+
+			amdgart_enable = 1;
 		}
 
 		/* Crop stuff into "640K hole" */
