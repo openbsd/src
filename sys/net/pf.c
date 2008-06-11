@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.591 2008/06/11 02:54:05 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.592 2008/06/11 03:26:03 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -870,7 +870,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	if (m && m->m_pkthdr.pf.statekey &&
+	if (dir == PF_OUT && m && m->m_pkthdr.pf.statekey &&
 	    ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
 		sk = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse;
 	else {
@@ -5761,7 +5761,7 @@ done:
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
 
-	if (s && s->key[PF_SK_STACK])
+	if (dir == PF_IN && s && s->key[PF_SK_STACK])
 		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 
 #ifdef ALTQ
@@ -6140,7 +6140,7 @@ done:
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
 
-	if (s && s->key[PF_SK_STACK])
+	if (dir == PF_IN && s && s->key[PF_SK_STACK])
 		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 
 #ifdef ALTQ
