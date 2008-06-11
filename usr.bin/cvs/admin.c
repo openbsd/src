@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.59 2008/05/22 15:45:01 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.60 2008/06/11 01:43:35 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -262,8 +262,6 @@ cvs_admin_local(struct cvs_file *cf)
 
 		TAILQ_FOREACH(acp, &(ocf->file_rcs->rf_access), ra_list)
 			rcs_access_add(cf->file_rcs, acp->ra_name);
-
-		(void)close(ofd);
 
 		cvs_file_free(ocf);
 	}
