@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.149 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.150 2008/06/11 21:24:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -410,7 +410,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 		cr.leavedir = NULL;
 	} else {
 		cr.enterdir = cvs_update_enterdir;
-		cr.leavedir = prune_dirs ? cvs_update_leavedir : NULL;
+		cr.leavedir = cvs_update_leavedir;
 	}
 	cr.fileproc = cvs_update_local;
 	cr.flags = flags;
