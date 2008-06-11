@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.7 2007/06/01 05:50:56 jason Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.8 2008/06/11 20:53:27 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -40,10 +40,10 @@
 
 #if (BYTE_ORDER == BIG_ENDIAN) || defined(arm32)
 
-typedef union 
+typedef union
 {
   double value;
-  struct 
+  struct
   {
     u_int32_t msw;
     u_int32_t lsw;
@@ -75,10 +75,10 @@ typedef union
 
 #if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(arm32)
 
-typedef union 
+typedef union
 {
   double value;
-  struct 
+  struct
   {
     u_int32_t lsw;
     u_int32_t msw;
@@ -194,13 +194,13 @@ do {								\
 } while (0)
 
 /* ieee style elementary functions */
-extern double __ieee754_sqrt(double);			
-extern double __ieee754_acos(double);			
-extern double __ieee754_acosh(double);			
-extern double __ieee754_log(double);			
-extern double __ieee754_atanh(double);			
-extern double __ieee754_asin(double);			
-extern double __ieee754_atan2(double,double);			
+extern double __ieee754_sqrt(double);
+extern double __ieee754_acos(double);
+extern double __ieee754_acosh(double);
+extern double __ieee754_log(double);
+extern double __ieee754_atanh(double);
+extern double __ieee754_asin(double);
+extern double __ieee754_atan2(double,double);
 extern double __ieee754_exp(double);
 extern double __ieee754_cosh(double);
 extern double __ieee754_fmod(double,double);
@@ -223,7 +223,7 @@ extern int    __ieee754_rem_pio2(double,double*);
 extern double __ieee754_scalb(double,double);
 
 /* fdlibm kernel function */
-extern double __kernel_standard(double,double,int);	
+extern double __kernel_standard(double,double,int);
 extern double __kernel_sin(double,double,int);
 extern double __kernel_cos(double,double);
 extern double __kernel_tan(double,double,int);
@@ -231,13 +231,13 @@ extern int    __kernel_rem_pio2(double*,double*,int,int,int,const int*);
 
 
 /* ieee style elementary float functions */
-extern float __ieee754_sqrtf(float);			
-extern float __ieee754_acosf(float);			
-extern float __ieee754_acoshf(float);			
-extern float __ieee754_logf(float);			
-extern float __ieee754_atanhf(float);			
-extern float __ieee754_asinf(float);			
-extern float __ieee754_atan2f(float,float);			
+extern float __ieee754_sqrtf(float);
+extern float __ieee754_acosf(float);
+extern float __ieee754_acoshf(float);
+extern float __ieee754_logf(float);
+extern float __ieee754_atanhf(float);
+extern float __ieee754_asinf(float);
+extern float __ieee754_atan2f(float,float);
 extern float __ieee754_expf(float);
 extern float __ieee754_coshf(float);
 extern float __ieee754_fmodf(float,float);
@@ -264,5 +264,34 @@ extern float __kernel_sinf(float,float,int);
 extern float __kernel_cosf(float,float);
 extern float __kernel_tanf(float,float,int);
 extern int   __kernel_rem_pio2f(float*,float*,int,int,int,const int*);
+
+/*
+ * TRUNC() is a macro that sets the trailing 27 bits in the mantissa
+ * of an IEEE double variable to zero.  It must be expression-like
+ * for syntactic reasons, and we implement this expression using
+ * an inline function instead of a pure macro to avoid depending
+ * on the gcc feature of statement-expressions.
+ */
+#define TRUNC(d)	(_b_trunc(&(d)))
+
+static __inline void
+_b_trunc(volatile double *_dp)
+{
+	uint32_t _lw;
+
+	GET_LOW_WORD(_lw, *_dp);
+	SET_LOW_WORD(*_dp, _lw & 0xf8000000);
+}
+
+struct Double {
+	double	a;
+	double	b;
+};
+
+/*
+ * Functions internal to the math package, yet not static.
+ */
+double __exp__D(double, double);
+struct Double __log__D(double);
 
 #endif /* _MATH_PRIVATE_H_ */

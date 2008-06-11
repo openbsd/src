@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp.c,v 1.5 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: b_exp__D.c,v 1.1 2008/06/11 20:53:27 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 2/6/85, 2/15/85, 3/7/85, 3/24/85, 4/16/85, 6/14/86.
  *
  * Required system supported functions:
- *	scalbn(x,n)
+ *	scalb(x,n)
  *	copysign(x,y)
  *	finite(x)
  *
@@ -66,92 +66,21 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
  *	exp(x) returns the exponential of x nearly rounded. In a test run
  *	with 1,156,000 random arguments on a VAX, the maximum observed
  *	error was 0.869 ulps (units in the last place).
- *
- * Constants:
- * The hexadecimal values are the intended ones for the following constants.
- * The decimal values may be used, provided that the compiler will convert
- * from decimal to binary accurately enough to produce the hexadecimal values
- * shown.
  */
 
-#include "mathimpl.h"
+#include "math.h"
+#include "math_private.h"
 
-vc(ln2hi,  6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
-vc(ln2lo,  1.6465949582897081279E-12 ,bcd5,2ce7,d9cc,e4f1, -39, .E7BCD5E4F1D9CC)
-vc(lnhuge, 9.4961163736712506989E1   ,ec1d,43bd,9010,a73e,   7, .BDEC1DA73E9010)
-vc(lntiny,-9.5654310917272452386E1   ,4f01,c3bf,33af,d72e,   7,-.BF4F01D72E33AF)
-vc(invln2, 1.4426950408889634148E0   ,aa3b,40b8,17f1,295c,   1, .B8AA3B295C17F1)
-vc(p1,     1.6666666666666602251E-1  ,aaaa,3f2a,a9f1,aaaa,  -2, .AAAAAAAAAAA9F1)
-vc(p2,    -2.7777777777015591216E-3  ,0b60,bc36,ec94,b5f5,  -8,-.B60B60B5F5EC94)
-vc(p3,     6.6137563214379341918E-5  ,b355,398a,f15f,792e, -13, .8AB355792EF15F)
-vc(p4,    -1.6533902205465250480E-6  ,ea0e,b6dd,5f84,2e93, -19,-.DDEA0E2E935F84)
-vc(p5,     4.1381367970572387085E-8  ,bb4b,3431,2683,95f5, -24, .B1BB4B95F52683)
-
-#ifdef vccast
-#define    ln2hi    vccast(ln2hi)
-#define    ln2lo    vccast(ln2lo)
-#define   lnhuge    vccast(lnhuge)
-#define   lntiny    vccast(lntiny)
-#define   invln2    vccast(invln2)
-#define       p1    vccast(p1)
-#define       p2    vccast(p2)
-#define       p3    vccast(p3)
-#define       p4    vccast(p4)
-#define       p5    vccast(p5)
-#endif
-
-ic(p1,     1.6666666666666601904E-1,  -3,  1.555555555553E)
-ic(p2,    -2.7777777777015593384E-3,  -9, -1.6C16C16BEBD93)
-ic(p3,     6.6137563214379343612E-5, -14,  1.1566AAF25DE2C)
-ic(p4,    -1.6533902205465251539E-6, -20, -1.BBD41C5D26BF1)
-ic(p5,     4.1381367970572384604E-8, -25,  1.6376972BEA4D0)
-ic(ln2hi,  6.9314718036912381649E-1,  -1,  1.62E42FEE00000)
-ic(ln2lo,  1.9082149292705877000E-10,-33,  1.A39EF35793C76)
-ic(lnhuge, 7.1602103751842355450E2,    9,  1.6602B15B7ECF2)
-ic(lntiny,-7.5137154372698068983E2,    9, -1.77AF8EBEAE354)
-ic(invln2, 1.4426950408889633870E0,    0,  1.71547652B82FE)
-
-double exp(double x)
-{
-	double z, hi, lo, c;
-	int k;
-
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
-	if( x <= lnhuge ) {
-		if( x >= lntiny ) {
-
-		    /* argument reduction : x --> x - k*ln2 */
-
-			k=invln2*x+copysign(0.5,x);	/* k=NINT(x/ln2) */
-
-		    /* express x-k*ln2 as hi-lo and let x=hi-lo rounded */
-
-			hi=x-k*ln2hi;
-			x=hi-(lo=k*ln2lo);
-
-		    /* return 2^k*[1+x+x*c/(2+c)]  */
-			z=x*x;
-			c= x - z*(p1+z*(p2+z*(p3+z*(p4+z*p5))));
-			return  scalbn(1.0+(hi-(lo-(x*c)/(2.0-c))),k);
-
-		}
-		/* end of x > lntiny */
-
-		else
-		     /* exp(-big#) underflows to zero */
-		     if(finite(x))  return(scalbn(1.0,-5000));
-
-		     /* exp(-INF) is zero */
-		     else return(0.0);
-	}
-	/* end of x < lnhuge */
-
-	else
-	/* exp(INF) is INF, exp(+big#) overflows to INF */
-	    return( finite(x) ?  scalbn(1.0,5000)  : x);
-}
+const static double p1 = 0x1.555555555553ep-3;
+const static double p2 = -0x1.6c16c16bebd93p-9;
+const static double p3 = 0x1.1566aaf25de2cp-14;
+const static double p4 = -0x1.bbd41c5d26bf1p-20;
+const static double p5 = 0x1.6376972bea4d0p-25;
+const static double ln2hi = 0x1.62e42fee00000p-1;
+const static double ln2lo = 0x1.a39ef35793c76p-33;
+const static double lnhuge = 0x1.6602b15b7ecf2p9;
+const static double lntiny = -0x1.77af8ebeae354p9;
+const static double invln2 = 0x1.71547652b82fep0;
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */
 
@@ -160,9 +89,8 @@ double __exp__D(double x, double c)
 	double z, hi, lo;
 	int k;
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if (x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (x != x)	/* x is NaN */
+		return(x);
 	if ( x <= lnhuge ) {
 		if ( x >= lntiny ) {
 
@@ -179,13 +107,13 @@ double __exp__D(double x, double c)
 			c= x - z*(p1+z*(p2+z*(p3+z*(p4+z*p5))));
 			c = (x*c)/(2.0-c);
 
-			return  scalbn(1.+(hi-(lo - c)), k);
+			return  scalb(1.+(hi-(lo - c)), k);
 		}
 		/* end of x > lntiny */
 
 		else
 		     /* exp(-big#) underflows to zero */
-		     if(finite(x))  return(scalbn(1.0,-5000));
+		     if(finite(x))  return(scalb(1.0,-5000));
 
 		     /* exp(-INF) is zero */
 		     else return(0.0);
@@ -194,5 +122,5 @@ double __exp__D(double x, double c)
 
 	else
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
-	    return( finite(x) ?  scalbn(1.0,5000)  : x);
+	    return( finite(x) ?  scalb(1.0,5000)  : x);
 }

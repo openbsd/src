@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.4 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: b_log__D.c,v 1.1 2008/06/11 20:53:27 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,10 +32,8 @@
 static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
 #endif /* not lint */
 
-#include <math.h>
-#include <errno.h>
-
-#include "mathimpl.h"
+#include "math.h"
+#include "math_private.h"
 
 /* Table-driven natural logarithm.
  *
@@ -71,16 +69,6 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
  *	neg	return signalling NaN
  *	+Inf	return +Inf
 */
-
-#if defined(__vax__) || defined(tahoe)
-#define _IEEE		0
-#define TRUNC(x)	x = (double) (float) (x)
-#else
-#define _IEEE		1
-#define endian		(((*(int *) &one)) ? 1 : 0)
-#define TRUNC(x)	*(((int *) &x) + endian) &= 0xf8000000
-#define infnan(x)	0.0
-#endif
 
 #define N 128
 
@@ -362,73 +350,6 @@ static const double logF_tail[N+1] = {
 	-.00000000000017239444525614834
 };
 
-double
-log(double x)
-{
-	int m, j;
-	double F, f, g, q, u, u2, v, zero = 0.0, one = 1.0;
-	volatile double u1;
-
-	/* Catch special cases */
-	if (x <= 0)
-		if (_IEEE && x == zero)	/* log(0) = -Inf */
-			return (-one/zero);
-		else if (_IEEE)		/* log(neg) = NaN */
-			return (zero/zero);
-		else if (x == zero)	/* NOT REACHED IF _IEEE */
-			return (infnan(-ERANGE));
-		else
-			return (infnan(EDOM));
-	else if (!finite(x))
-		if (_IEEE)		/* x = NaN, Inf */
-			return (x+x);
-		else
-			return (infnan(ERANGE));
-
-	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
-	/* y = F*(1 + f/F) for |f| <= 2^-8		*/
-
-	m = logb(x);
-	g = ldexp(x, -m);
-	if (_IEEE && m == -1022) {
-		j = logb(g), m += j;
-		g = ldexp(g, -j);
-	}
-	j = N*(g-1) + .5;
-	F = (1.0/N) * j + 1;	/* F*128 is an integer in [128, 512] */
-	f = g - F;
-
-	/* Approximate expansion for log(1+f/F) ~= u + q */
-	g = 1/(2*F+f);
-	u = 2*f*g;
-	v = u*u;
-	q = u*v*(A1 + v*(A2 + v*(A3 + v*A4)));
-
-    /* case 1: u1 = u rounded to 2^-43 absolute.  Since u < 2^-8,
-     * 	       u1 has at most 35 bits, and F*u1 is exact, as F has < 8 bits.
-     *         It also adds exactly to |m*log2_hi + log_F_head[j] | < 750
-    */
-	if (m | j)
-		u1 = u + 513, u1 -= 513;
-
-    /* case 2:	|1-x| < 1/256. The m- and j- dependent terms are zero;
-     * 		u1 = u to 24 bits.
-    */
-	else
-		u1 = u, TRUNC(u1);
-	u2 = (2.0*(f - F*u1) - u1*f) * g;
-			/* u1 + u2 = 2f/(2F+f) to extra precision.	*/
-
-	/* log(x) = log(2^m*F*(1+f/F)) =				*/
-	/* (m*log2_hi+logF_head[j]+u1) + (m*log2_lo+logF_tail[j]+q);	*/
-	/* (exact) + (tiny)						*/
-
-	u1 += m*logF_head[N] + logF_head[j];		/* exact */
-	u2 = (u2 + logF_tail[j]) + q;			/* tiny */
-	u2 += logF_tail[N]*m;
-	return (u1 + u2);
-}
-
 /*
  * Extra precision variant, returning struct {double a, b;};
  * log(x) = a+b to 63 bits, with a rounded to 26 bits.
@@ -446,7 +367,7 @@ __log__D(double x)
 
 	m = logb(x);
 	g = ldexp(x, -m);
-	if (_IEEE && m == -1022) {
+	if (m == -1022) {
 		j = logb(g), m += j;
 		g = ldexp(g, -j);
 	}

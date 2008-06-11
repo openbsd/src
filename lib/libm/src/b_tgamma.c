@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.1 1995/10/10 23:36:50 ragge Exp $ */
+/*	$OpenBSD: b_tgamma.c,v 1.1 2008/06/11 20:53:27 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,13 +39,12 @@ static char sccsid[] = "@(#)gamma.c	8.1 (Berkeley) 6/4/93";
  * acknowledged.
  */
 
-#include <math.h>
-#include "mathimpl.h"
-#include <errno.h>
+#include "math.h"
+#include "math_private.h"
 
 /* METHOD:
  * x < 0: Use reflection formula, G(x) = pi/(sin(pi*x)*x*G(x))
- * 	At negative integers, return +Inf, and set errno.
+ *	At negative integers, return NaN and raise invalid.
  *
  * x < 6.5:
  *	Use argument reduction G(x+1) = xG(x) to reach the
@@ -62,11 +61,15 @@ static char sccsid[] = "@(#)gamma.c	8.1 (Berkeley) 6/4/93";
  *	avoid premature round-off.
  *
  * Special values:
- *	non-positive integer:	Set overflow trap; return +Inf;
- *	x > 171.63:		Set overflow trap; return +Inf;
- *	NaN: 			Set invalid trap;  return NaN
+ *	-Inf:			return NaN and raise invalid;
+ *	negative integer:	return NaN and raise invalid;
+ *	other x ~< -177.79:	return +-0 and raise underflow;
+ *	+-0:			return +-Inf and raise divide-by-zero;
+ *	finite x ~> 171.63:	return +Inf and raise overflow;
+ *	+Inf:			return +Inf;
+ *	NaN: 			return NaN.
  *
- * Accuracy: Gamma(x) is accurate to within
+ * Accuracy: tgamma(x) is accurate to within
  *	x > 0:  error provably < 0.9ulp.
  *	Maximum observed in 1,000,000 trials was .87ulp.
  *	x < 0:
@@ -118,30 +121,15 @@ static struct Double ratfun_gam(double, double);
 #define Pa7	-1.44705562421428915453880392761e-02
 
 static const double zero = 0., one = 1.0, tiny = 1e-300;
-static int endian;
-/*
- * TRUNC sets trailing bits in a floating-point number to zero.
- * is a temporary variable.
- */
-#if defined(__vax__) || defined(tahoe)
-#define _IEEE		0
-#define TRUNC(x)	x = (double) (float) (x)
-#else
-#define _IEEE		1
-#define TRUNC(x)	*(((int *) &x) + endian) &= 0xf8000000
-#define infnan(x)	0.0
-#endif
 
 double
-gamma(x)
-	double x;
+tgamma(double x)
 {
 	struct Double u;
-	endian = (*(int *) &one) ? 1 : 0;
 
 	if (x >= 6) {
 		if(x > 171.63)
-			return(one/zero);
+			return(x/zero);
 		u = large_gam(x);
 		return(__exp__D(u.a, u.b));
 	} else if (x >= 1.0 + LEFT + x0)
@@ -149,28 +137,36 @@ gamma(x)
 	else if (x > 1.e-17)
 		return (smaller_gam(x));
 	else if (x > -1.e-17) {
-		if (x == 0.0)
-			if (!_IEEE) return (infnan(ERANGE));
-			else return (one/x);
-		one+1e-20;		/* Raise inexact flag. */
+		if (x != 0.0)
+			u.a = one - tiny;	/* raise inexact */
 		return (one/x);
 	} else if (!finite(x)) {
-		if (_IEEE)		/* x = NaN, -Inf */
-			return (x*x);
-		else
-			return (infnan(EDOM));
+		return (x - x);			/* x = NaN, -Inf */
 	 } else
 		return (neg_gam(x));
 }
+
+/*
+ * We simply call tgamma() rather than bloating the math library
+ * with a float-optimized version of it.  The reason is that tgammaf()
+ * is essentially useless, since the function is superexponential
+ * and floats have very limited range.  -- das@freebsd.org
+ */
+
+float
+tgammaf(float x)
+{
+	return tgamma(x);
+}
+
 /*
  * Accurate to max(ulp(1/128) absolute, 2^-66 relative) error.
  */
+
 static struct Double
-large_gam(x)
-	double x;
+large_gam(double x)
 {
 	double z, p;
-	int i;
 	struct Double t, u, v;
 
 	z = one/(x*x);
@@ -191,15 +187,16 @@ large_gam(x)
 	u.b += lns2pi_hi; u.b += t.b;
 	return (u);
 }
+
 /*
  * Good to < 1 ulp.  (provably .90 ulp; .87 ulp on 1,000,000 runs.)
  * It also has correct monotonicity.
  */
+
 static double
-small_gam(x)
-	double x;
+small_gam(double x)
 {
-	double y, ym1, t, x1;
+	double y, ym1, t;
 	struct Double yy, r;
 	y = x - one;
 	ym1 = y - one;
@@ -220,18 +217,19 @@ small_gam(x)
 		TRUNC(r.a);
 		r.b += (t - r.a);
 	}
-	/* Return r*gamma(y). */
+	/* Return r*tgamma(y). */
 	yy = ratfun_gam(y - x0, 0);
 	y = r.b*(yy.a + yy.b) + r.a*yy.b;
 	y += yy.a*r.a;
 	return (y);
 }
+
 /*
  * Good on (0, 1+x0+LEFT].  Accurate to 1ulp.
  */
+
 static double
-smaller_gam(x)
-	double x;
+smaller_gam(double x)
 {
 	double t, d;
 	struct Double r, xx;
@@ -255,14 +253,14 @@ smaller_gam(x)
 	r.a -= d*xx.a; r.a -= d*xx.b; r.a += r.b;
 	return (d + r.a/x);
 }
+
 /*
  * returns (z+c)^2 * P(z)/Q(z) + a0
  */
+
 static struct Double
-ratfun_gam(z, c)
-	double z, c;
+ratfun_gam(double z, double c)
 {
-	int i;
 	double p, q;
 	struct Double r, t;
 
@@ -287,21 +285,19 @@ ratfun_gam(z, c)
 }
 
 static double
-neg_gam(x)
-	double x;
+neg_gam(double x)
 {
 	int sgn = 1;
 	struct Double lg, lsine;
 	double y, z;
 
-	y = floor(x + .5);
+	y = ceil(x);
 	if (y == x)		/* Negative integer. */
-		if(!_IEEE)
-			return (infnan(ERANGE));
-		else
-			return (one/zero);
-	z = fabs(x - y);
-	y = .5*ceil(x);
+		return ((x - x) / zero);
+	z = y - x;
+	if (z > 0.5)
+		z = one - z;
+	y = 0.5 * y;
 	if (y == ceil(y))
 		sgn = -1;
 	if (z < .25)
@@ -325,9 +321,9 @@ neg_gam(x)
 	}
 	y = one-x;
 	if (one-y == x)
-		y = gamma(y);
+		y = tgamma(y);
 	else		/* 1-x is inexact */
-		y = -x*gamma(-x);
+		y = -x*tgamma(-x);
 	if (sgn < 0) y = -y;
 	return (M_PI / (y*z));
 }

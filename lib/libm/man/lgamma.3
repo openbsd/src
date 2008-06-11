@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lgamma.3,v 1.14 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: lgamma.3,v 1.15 2008/06/11 20:53:27 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,14 @@
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 11 2008 $
 .Dt LGAMMA 3
 .Os
 .Sh NAME
 .Nm lgamma ,
-.Nm lgammaf
+.Nm lgammaf ,
+.Nm tgamma ,
+.Nm tgammaf
 .Nd log gamma functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -44,6 +46,10 @@
 .Fn lgamma "double x"
 .Ft float
 .Fn lgammaf "float x"
+.Ft double
+.Fn tgamma "double x"
+.Ft float
+.Fn tgammaf "float x"
 .Sh DESCRIPTION
 .Fn lgamma x
 .if t \{\
@@ -64,6 +70,23 @@ The
 .Fn lgammaf
 function is a single precision version of
 .Fn lgamma .
+.Pp
+The
+.Fn tgamma x
+and
+.Fn tgammaf x
+functions return \(*G(x), with no effect on
+.Fa signgam .
+.Pp
+The
+.Fn gamma ,
+and
+.Fn gammaf
+are deprecated aliases for
+.Fn lgamma ,
+and
+.Fn lgammaf
+respectively.
 .Sh IDIOSYNCRASIES
 Do not use the expression
 .Sq Li signgam\(**exp(lgamma(x))
@@ -76,11 +99,19 @@ lg = lgamma(x); g = signgam\(**exp(lg);
 Only after
 .Fn lgamma
 has returned can signgam be correct.
+.Pp
+For arguments in its range,
+.Fn tgamma
+is preferred, as for positive arguments
+it is accurate to within one unit in the last place.
 .Sh RETURN VALUES
 .Fn lgamma
 returns appropriate values unless an argument is out of range.
 Overflow will occur for sufficiently large positive values, and
 non-positive integers.
+For large non-integer negative values,
+.Fn tgamma
+will underflow.
 On the
 .Tn VAX ,
 the reserved operator is returned,
@@ -91,8 +122,26 @@ is set to
 .Sh SEE ALSO
 .Xr infnan 3 ,
 .Xr math 3
+.Sh STANDARDS
+The
+.Fn lgamma ,
+.Fn lgammaf ,
+.Fn tgamma ,
+and
+.Fn tgammaf
+functions are expected to conform to
+.St -isoC-99 .
 .Sh HISTORY
 The
 .Fn lgamma
 function appeared in
 .Bx 4.3 .
+The
+.Fn tgamma
+function appeared in
+.Ox 4.4 ,
+which is based on the
+.Fn gamma
+function that appeared in
+.Bx 4.4
+as a function to compute \(*G(x).
