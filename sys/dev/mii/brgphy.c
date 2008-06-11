@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.79 2008/06/10 21:18:41 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.80 2008/06/11 23:53:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -411,6 +411,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 
 	brgphy_loop(sc);
 	PHY_RESET(sc);
+	/* Enable speed in the 1000baseT control register */
 	ktcr = BRGPHY_1000CTL_AFD|BRGPHY_1000CTL_AHD;
 	if (sc->mii_model == MII_MODEL_xxBROADCOM_BCM5701)
 		ktcr |= BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC;
@@ -423,6 +424,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 
 	PHY_WRITE(sc, BRGPHY_MII_ANAR, anar);
 	DELAY(1000);
+	/* Start autonegotiation */
 	PHY_WRITE(sc, BRGPHY_MII_BMCR,
 	    BRGPHY_BMCR_AUTOEN | BRGPHY_BMCR_STARTNEG);
 	PHY_WRITE(sc, BRGPHY_MII_IMR, 0xFF00);
@@ -430,6 +432,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	return (EJUSTRETURN);
 }
 
+/* Enable loopback to force the link down. */
 void
 brgphy_loop(struct mii_softc *sc)
 {
@@ -474,6 +477,7 @@ brgphy_reset(struct mii_softc *sc)
 		break;
 	}
 
+	/* Handle any bge (NetXtreme/NetLink) workarounds. */
 	if (strcmp(devname, "bge") == 0) {
 		bge_sc = sc->mii_pdata->mii_ifp->if_softc;
 
@@ -520,6 +524,7 @@ brgphy_reset(struct mii_softc *sc)
 			PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 				& ~BRGPHY_PHY_EXTCTL_3_LED);
 		}
+	/* Handle any bnx (NetXtreme II) workarounds. */
 	} else if (strcmp(devname, "bnx") == 0) {
 		brgphy_ber_bug(sc);
 
