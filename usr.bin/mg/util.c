@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2007/02/08 21:40:38 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2008/06/11 23:18:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -236,12 +236,12 @@ justone(int f, int n)
 int
 delwhite(int f, int n)
 {
-	int	col, c, s;
+	int	col, s;
 
 	col = curwp->w_doto;
 
 	while (col < llength(curwp->w_dotp) &&
-	    ((c = lgetc(curwp->w_dotp, col)) == ' ' || c == '\t'))
+	    (isspace(lgetc(curwp->w_dotp, col))))
 		++col;
 	do {
 		if (curwp->w_doto == 0) {
@@ -250,13 +250,62 @@ delwhite(int f, int n)
 		}
 		if ((s = backchar(FFRAND, 1)) != TRUE)
 			break;
-	} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' ' || c == '\t');
+	} while (isspace(lgetc(curwp->w_dotp, curwp->w_doto)));
 
 	if (s == TRUE)
 		(void)forwchar(FFRAND, 1);
 	(void)ldelete((RSIZE)(col - curwp->w_doto), KNONE);
 	return (TRUE);
 }
+
+/*
+ * Delete any leading whitespace on the current line
+ */
+int
+delleadwhite(int f, int n)
+{
+	int soff, ls;
+	struct line *slp;
+
+	/* Save current position */
+	slp = curwp->w_dotp;
+	soff = curwp->w_doto;
+
+	for (ls = 0; ls < llength(slp); ls++)
+                 if (!isspace(lgetc(slp, ls)))
+                        break;
+	gotobol(FFRAND, 1);
+	forwdel(FFRAND, ls);
+	soff -= ls;
+	if (soff < 0)
+		soff = 0;
+	forwchar(FFRAND, soff);
+
+	return (TRUE);
+}
+
+/*
+ * Delete any trailing whitespace on the current line
+ */
+int
+deltrailwhite(int f, int n)
+{
+	int soff;
+
+	/* Save current position */
+	soff = curwp->w_doto;
+
+	gotoeol(FFRAND, 1);
+	delwhite(FFRAND, 1);
+
+	/* restore original position, if possible */
+	if (soff < curwp->w_doto)
+		curwp->w_doto = soff;
+
+	return (TRUE);
+}
+
+
 
 /*
  * Insert a newline, then enough tabs and spaces to duplicate the indentation
@@ -268,7 +317,7 @@ delwhite(int f, int n)
  */
 /* ARGSUSED */
 int
-indent(int f, int n)
+lfindent(int f, int n)
 {
 	int	c, i, nicol;
 
@@ -295,6 +344,42 @@ indent(int f, int n)
 	}
 	return (TRUE);
 }
+
+/*
+ * Indent the current line. Delete existing leading whitespace,
+ * and use tabs/spaces to achieve correct indentation. Try
+ * to leave dot where it started.
+ */
+int
+indent(int f, int n)
+{
+	int soff, i;
+
+	if (n < 0)
+		return (FALSE);
+
+	delleadwhite(FFRAND, 1);
+
+	/* If not invoked with a numerical argument, done */
+	if (!(f & FFARG))
+		return (TRUE);
+
+	/* insert appropriate whitespace */
+	soff = curwp->w_doto;
+	(void)gotobol(FFRAND, 1);
+	if (
+#ifdef	NOTAB
+	    curbp->b_flag & BFNOTAB) ? linsert(n, ' ') == FALSE :
+#endif /* NOTAB */
+	    (((i = n / 8) != 0 && linsert(i, '\t') == FALSE) ||
+	    ((i = n % 8) != 0 && linsert(i, ' ') == FALSE)))
+		return (FALSE);
+
+	forwchar(FFRAND, soff);
+
+	return (TRUE);
+}
+
 
 /*
  * Delete forward.  This is real easy, because the basic delete routine does

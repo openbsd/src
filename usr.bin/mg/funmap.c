@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.29 2008/06/10 23:23:53 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.30 2008/06/11 23:18:33 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -53,6 +53,8 @@ static struct funmap functnames[] = {
 	{deblank, "delete-blank-lines",},
 	{forwdel, "delete-char",},
 	{delwhite, "delete-horizontal-space",},
+	{delleadwhite, "delete-leading-space",},
+	{deltrailwhite, "delete-trailing-space",},
 #ifdef	REGEX
 	{delmatchlines, "delete-matching-lines",},
 	{delnonmatchlines, "delete-non-matching-lines",},
@@ -119,7 +121,8 @@ static struct funmap functnames[] = {
 	{do_meta, "meta-key-mode",},	/* better name, anyone? */
 	{negative_argument, "negative-argument",},
 	{newline, "newline",},
-	{indent, "newline-and-indent",},
+	{lfindent, "newline-and-indent",},
+	{indent, "indent-current-line",},
 	{forwline, "next-line",},
 #ifdef NOTAB
 	{notabmode, "no-tab-mode",},
