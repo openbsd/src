@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.86 2008/06/08 18:07:44 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.87 2008/06/11 02:19:13 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -212,12 +213,12 @@ cvs_status_local(struct cvs_file *cf)
 			cvs_printf("   Sticky Tag:\t\t(none)\n");
 
 		if (cf->file_ent->ce_date != -1) {
-			struct tm *datetm;
+			struct tm datetm;
 			char datetmp[CVS_TIME_BUFSZ];
 
-			datetm = gmtime(&(cf->file_ent->ce_date));
+			gmtime_r(&(cf->file_ent->ce_date), &datetm);
                         (void)strftime(datetmp, sizeof(datetmp),
-			    CVS_DATE_FMT, datetm);
+			    CVS_DATE_FMT, &datetm);
 
 			cvs_printf("   Sticky Date:\t\t%s\n", datetmp);
 		} else if (verbosity > 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.148 2008/06/10 20:30:17 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.149 2008/06/11 02:19:13 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -435,7 +436,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	struct tm *datetm;
+	struct tm datetm;
 	char *tosend;
 	char template[MAXPATHLEN], *entry;
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
@@ -498,7 +499,8 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		time(&rcstime);
 	}
 
-	asctime_r(gmtime(&rcstime), tbuf);
+	gmtime_r(&rcstime, &datetm);
+	asctime_r(&datetm, tbuf);
 	tbuf[strcspn(tbuf, "\n")] = '\0';
 
 	if (co_flags & CO_MERGE) {
@@ -512,9 +514,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		if (tag != NULL)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
 		else if (cvs_specified_date != -1) {
-			datetm = gmtime(&cvs_specified_date);
+			gmtime_r(&cvs_specified_date, &datetm);
 			(void)strftime(sticky, sizeof(sticky),
-			    "D"CVS_DATE_FMT, datetm);
+			    "D"CVS_DATE_FMT, &datetm);
 		} else
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", rev);
 	else if (!reset_tag && cf->file_ent != NULL &&

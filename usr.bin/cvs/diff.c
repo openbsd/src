@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.138 2008/06/10 17:34:36 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.139 2008/06/11 02:19:13 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -244,7 +245,7 @@ cvs_diff_local(struct cvs_file *cf)
 	int fd1, fd2;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
-	struct tm *datetm;
+	struct tm datetm;
 	char rbuf[CVS_REV_BUFSZ], tbuf[CVS_TIME_BUFSZ], *p1, *p2;
 
 	b1 = NULL;
@@ -327,9 +328,9 @@ cvs_diff_local(struct cvs_file *cf)
 				cvs_log(LP_ERR, "tag %s not in file %s", rev1,
 				    cf->file_path);
 			else {
-				datetm = gmtime(&cvs_specified_date);
+				gmtime_r(&cvs_specified_date, &datetm);
 				strftime(tbuf, sizeof(tbuf),
-				    "%Y.%m.%d.%H.%M.%S", datetm);
+				    "%Y.%m.%d.%H.%M.%S", &datetm);
 				cvs_log(LP_ERR, "no revision for date %s in "
 				    "file %s", tbuf, cf->file_path);
 			}
@@ -361,9 +362,9 @@ cvs_diff_local(struct cvs_file *cf)
 				cvs_log(LP_ERR, "tag %s not in file %s", rev2,
 				    cf->file_path);
 			} else {
-				datetm = gmtime(&cvs_specified_date);
+				gmtime_r(&cvs_specified_date, &datetm);
 				strftime(tbuf, sizeof(tbuf),
-				    "%Y.%m.%d.%H.%M.%S", datetm);
+				    "%Y.%m.%d.%H.%M.%S", &datetm);
 				cvs_log(LP_ERR, "no revision for date %s in "
 				    "file %s", tbuf, cf->file_path);
 			}
