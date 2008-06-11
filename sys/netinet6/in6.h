@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.45 2008/03/09 12:03:03 sobrado Exp $	*/
+/*	$OpenBSD: in6.h,v 1.46 2008/06/11 06:30:36 mcbride Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -614,7 +614,12 @@ struct ip6_mtuinfo {
 #define IPV6CTL_MFORWARDING	42
 #define IPV6CTL_MULTIPATH	43
 #define IPV6CTL_MCAST_PMTU	44	/* path MTU discovery for multicast */
-#define IPV6CTL_MAXID		45
+#define IPV6CTL_NEIGHBORGCTHRESH 45
+#define IPV6CTL_MAXIFPREFIXES	46
+#define IPV6CTL_MAXIFDEFROUTERS 47
+#define IPV6CTL_MAXDYNROUTES	48
+#define IPV6CTL_MAXID		49
+
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
@@ -664,6 +669,10 @@ struct ip6_mtuinfo {
 	{ "mforwarding", CTLTYPE_INT }, \
 	{ "multipath", CTLTYPE_INT }, \
 	{ "multicast_mtudisc", CTLTYPE_INT }, \
+	{ "neighborgcthresh", CTLTYPE_INT }, \
+	{ "maxifprefixes", CTLTYPE_INT }, \
+	{ "maxifdefrouters", CTLTYPE_INT }, \
+	{ "maxdynroutes", CTLTYPE_INT }, \
 }
 
 #define IPV6CTL_VARS { \
@@ -712,6 +721,10 @@ struct ip6_mtuinfo {
 	&ip6_mforwarding, \
 	&ip6_multipath, \
 	&ip6_mcast_pmtu, \
+	&ip6_neighborgcthresh, \
+	&ip6_maxifprefixes, \
+	&ip6_maxifdefrouters, \
+	&ip6_maxdynroutes, \
 }
 
 #endif /* __BSD_VISIBLE */

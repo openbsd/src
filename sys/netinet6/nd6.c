@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.77 2008/05/11 08:13:02 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.78 2008/06/11 06:30:36 mcbride Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ int nd6_debug = 1;
 int nd6_debug = 0;
 #endif
 
-/* for debugging? */
 static int nd6_inuse, nd6_allocated;
 
 struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
@@ -108,6 +107,17 @@ extern struct timeout in6_tmpaddrtimer_ch;
 
 static int fill_drlist(void *, size_t *, size_t);
 static int fill_prlist(void *, size_t *, size_t);
+
+#define LN_DEQUEUE(ln) do { \
+	(ln)->ln_next->ln_prev = (ln)->ln_prev; \
+	(ln)->ln_prev->ln_next = (ln)->ln_next; \
+	} while (0)
+#define LN_INSERTHEAD(ln) do { \
+	(ln)->ln_next = llinfo_nd6.ln_next; \
+	llinfo_nd6.ln_next = (ln); \
+	(ln)->ln_prev = &llinfo_nd6; \
+	(ln)->ln_next->ln_prev = (ln); \
+	} while (0)
 
 void
 nd6_init()
@@ -464,6 +474,7 @@ nd6_llinfo_timer(void *arg)
 		break;
 
 	case ND6_LLINFO_STALE:
+	case ND6_LLINFO_PURGE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
 			(void)nd6_free(rt, 1);
@@ -1157,6 +1168,35 @@ nd6_rtrequest(req, rt, info)
 		ln->ln_next->ln_prev = ln;
 
 		/*
+		 * If we have too many cache entries, initiate immediate
+		 * purging for some "less recently used" entries.  Note that
+		 * we cannot directly call nd6_free() here because it would
+		 * cause re-entering rtable related routines triggering an LOR
+		 * problem for FreeBSD.
+		 */
+		if (ip6_neighborgcthresh >= 0 &&
+		    nd6_inuse >= ip6_neighborgcthresh) {
+			int i;
+
+			for (i = 0; i < 10 && llinfo_nd6.ln_prev != ln; i++) {
+				struct llinfo_nd6 *ln_end = llinfo_nd6.ln_prev;
+
+				/* Move this entry to the head */
+				LN_DEQUEUE(ln_end);
+				LN_INSERTHEAD(ln_end);
+
+				if (ND6_LLINFO_PERMANENT(ln_end))
+					continue;
+
+				if (ln_end->ln_state > ND6_LLINFO_INCOMPLETE)
+					ln_end->ln_state = ND6_LLINFO_STALE;
+				else
+					ln_end->ln_state = ND6_LLINFO_PURGE;
+				nd6_llinfo_settimer(ln_end, 0);
+			}
+		}
+
+		/*
 		 * check if rt_key(rt) is one of my address assigned
 		 * to the interface.
 		 */
@@ -1834,6 +1874,14 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 
 		goto sendpkt;	/* send anyway */
 	}
+
+	/*
+	 * Move this entry to the head of the queue so that it is less likely
+	 * for this entry to be a target of forced garbage collection (see
+	 * nd6_rtrequest()).
+	 */
+	LN_DEQUEUE(ln);
+	LN_INSERTHEAD(ln);
 
 	/* We don't have to do link-layer address resolution on a p2p link. */
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&

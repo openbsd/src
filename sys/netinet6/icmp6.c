@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.97 2008/05/11 08:13:02 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.98 2008/06/11 06:30:36 mcbride Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -161,7 +161,6 @@ static int icmp6_mtudisc_lowat = 256;
 static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
 
 /* XXX experimental, turned off */
-static int icmp6_redirect_hiwat = -1;
 static int icmp6_redirect_lowat = -1;
 
 static void icmp6_errcount(struct icmp6errstat *, int, int);
@@ -2335,8 +2334,8 @@ icmp6_redirect_input(m, off)
 		 * (there will be additional hops, though).
 		 */
 		rtcount = rt_timer_count(icmp6_redirect_timeout_q);
-		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat)
-			return;
+		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
+			goto freeit;
 		else if (0 <= icmp6_redirect_lowat &&
 		    rtcount > icmp6_redirect_lowat) {
 			/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.75 2008/05/11 08:13:02 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.76 2008/06/11 06:30:36 mcbride Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2634,6 +2634,8 @@ in6_domifattach(ifp)
 	    M_WAITOK | M_ZERO);
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
+	ext->nprefixes = 0;
+	ext->ndefrouters = 0;
 	return ext;
 }
 
