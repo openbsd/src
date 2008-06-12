@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.596 2008/06/11 17:52:37 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.597 2008/06/12 18:41:41 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3366,11 +3366,16 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	}
 
 	if (!state_icmp && (r->keep_state || nr != NULL ||
-	    (pd->flags & PFDESC_TCP_NORM)))
-		if (pf_create_state(r, nr, a, pd, nsn, skw, sks, nk, sk, m,
+	    (pd->flags & PFDESC_TCP_NORM))) {
+		int action;
+		action = pf_create_state(r, nr, a, pd, nsn, skw, sks, nk, sk, m,
 		    off, sport, dport, &rewrite, kif, sm, tag, bproto_sum,
-		    bip_sum, hdrlen) == PF_DROP)
+		    bip_sum, hdrlen);
+		if (action == PF_DROP)
 			goto cleanup;
+		if (action != PF_PASS)
+			return (action);
+	}
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
