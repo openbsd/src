@@ -118,9 +118,10 @@ usage(void)
 "Options:\n"
 "    -B buf       Set read/write buffer space (default: %u)\n"
 "    -h           Display this help\n"
-"    -l           List kernel vars and exit\n"
 "    -k var[,var] List of kernel PCB, TCB and socket variables to display\n"
 "                 (requires read access to /dev/kmem)\n"
+"    -l           List kernel vars and exit\n"
+"    -n number    use given numer of tcp connections (default: 1)\n"
 "    -p port      Specify port (default: %s)\n"
 "    -s           Server mode - listen for connections\n"
 "                 (default: client mode - initiate connection)\n"
@@ -616,67 +617,85 @@ serverloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop,
 }
 
 static void __dead
-clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop,
-    int vflag, int rflag, char **kflag, int Sflag, int Bflag)
+clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
+    int vflag, int rflag, char **kflag, int Sflag, int Bflag, int nconn)
 {
 	char tmp[128];
 	char *buf;
-	int r, sock;
-	struct addrinfo *ai;
-	struct pollfd pfd;
+	int r, sock, herr;
+	struct addrinfo *aitop, *ai, hints;
+	struct pollfd *pfd;
 	ssize_t n;
 	struct statctx sc;
+	u_int i;
+	const char *errstr;
 
 	if ((buf = malloc(Bflag)) == NULL)
 		err(1, "malloc");
-	for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
-		saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp, sizeof(tmp));
-		if (vflag)
-			fprintf(stderr, "Trying %s\n", tmp);
-		if ((sock = socket(ai->ai_family, ai->ai_socktype,
-		    ai->ai_protocol)) == -1) {
-			if (ai->ai_next == NULL)
-				err(1, "socket");
+
+	if ((pfd = calloc(nconn, sizeof(struct pollfd))) == NULL)
+		err(1, "clientloop pfd calloc");
+
+	for (i = 0; i < nconn; i++) {
+		bzero(&hints, sizeof(hints));
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = 0;
+		if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
+			if (herr == EAI_SYSTEM)
+				err(1, "getaddrinfo");
+			else
+				errx(1, "c getaddrinfo: %s", gai_strerror(herr));
+		}
+
+		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
+			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
+			    sizeof(tmp));
 			if (vflag)
-				warn("socket");
-			continue;
+				fprintf(stderr, "Trying %s\n", tmp);
+			if ((sock = socket(ai->ai_family, ai->ai_socktype,
+			    ai->ai_protocol)) == -1) {
+				if (ai->ai_next == NULL)
+					err(1, "socket");
+				if (vflag)
+					warn("socket");
+				continue;
+			}
+			if (Sflag) {
+				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
+				    &Sflag, sizeof(Sflag)) == -1)
+					warn("set TCP send buffer size");
+			}
+			if (connect(sock, ai->ai_addr, ai->ai_addrlen) != 0) {
+				if (ai->ai_next == NULL)
+					err(1, "connect");
+				if (vflag)
+					warn("connect");
+				close(sock);
+				sock = -1;
+				continue;
+			}
+			break;
 		}
-		if (Sflag) {
-			if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-			    &Sflag, sizeof(Sflag)) == -1)
-				warn("set TCP send buffer size");
-		}
-		if (connect(sock, ai->ai_addr, ai->ai_addrlen) != 0) {
-			if (ai->ai_next == NULL)
-				err(1, "connect");
-			if (vflag)
-				warn("connect");
-			close(sock);
-			sock = -1;
-			continue;
-		}
-		break;
+		freeaddrinfo(aitop);
+		if (sock == -1)
+			errx(1, "No host found");
+
+		if ((r = fcntl(sock, F_GETFL, 0)) == -1)
+			err(1, "fcntl(F_GETFL)");
+		r |= O_NONBLOCK;
+		if (fcntl(sock, F_SETFL, r) == -1)
+			err(1, "fcntl(F_SETFL, O_NONBLOCK)");
+
+		pfd[i].fd = sock;
+		pfd[i].events = POLLOUT;
 	}
-	freeaddrinfo(aitop);
-	if (sock == -1)
-		errx(1, "No host found");
 
 	arc4random_buf(buf, Bflag);
-
-	if ((r = fcntl(sock, F_GETFL, 0)) == -1)
-		err(1, "fcntl(F_GETFL)");
-	r |= O_NONBLOCK;
-	if (fcntl(sock, F_SETFL, r) == -1)
-		err(1, "fcntl(F_SETFL, O_NONBLOCK)");
 
 	signal(SIGINT, exitsighand);
 	signal(SIGTERM, exitsighand);
 	signal(SIGHUP, exitsighand);
 	signal(SIGPIPE, SIG_IGN);
-
-	bzero(&pfd, sizeof(pfd));
-	pfd.fd = sock;
-	pfd.events = POLLOUT;
 
 	stats_prepare(&sc, sock, kvmh, ktcbtab, rflag, vflag, kflag);
 
@@ -685,24 +704,27 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop,
 			stats_display(&sc);
 			print_stats = 0;
 		}
-		if (poll(&pfd, 1, INFTIM) == -1) {
+		if (poll(pfd, nconn, INFTIM) == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
 		}
-		if ((n = write(pfd.fd, buf, Bflag)) == -1) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-			err(1, "write");
+		for (i = 0; i < nconn; i++) {
+			if (pfd[i].revents & POLLOUT)
+				if ((n = write(pfd[i].fd, buf, Bflag)) == -1) {
+					if (errno == EINTR || errno == EAGAIN)
+						continue;
+					err(1, "write");
+				}
+			if (n == 0) {
+				warnx("Remote end closed connection");
+				done = -1;
+				break;
+			}
+			if (vflag >= 3)
+				fprintf(stderr, "write: %zd bytes\n", n);
+			stats_update(&sc, n);
 		}
-		if (n == 0) {
-			warnx("Remote end closed connection");
-			done = -1;
-			break;
-		}
-		if (vflag >= 3)
-			fprintf(stderr, "write: %zd bytes\n", n);
-		stats_update(&sc, n);
 	}
 	stats_finish(&sc);
 
@@ -740,10 +762,11 @@ main(int argc, char **argv)
 	char **kflag = NULL;
 	int sflag = 0, vflag = 0, rflag = DEFAULT_STATS_INTERVAL, Sflag = 0;
 	int Bflag = DEFAULT_BUF;
+	int nconn = 1;
 
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 
-	while ((ch = getopt(argc, argv, "B:hlk:p:r:sS:v")) != -1) {
+	while ((ch = getopt(argc, argv, "B:hlk:n:p:r:sS:v")) != -1) {
 		switch (ch) {
 		case 'l':
 			list_kvars();
@@ -785,6 +808,12 @@ main(int argc, char **argv)
 			if (vflag < 2)
 				vflag++;
 			break;
+		case 'n':
+			nconn = strtonum(optarg, 0, 65535, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of connections is %s: %s",
+				    errstr, optarg);
+			break;
 		case 'h':
 		default:
 			usage();
@@ -795,17 +824,23 @@ main(int argc, char **argv)
 	argc -= optind;
 	if (argc != (sflag ? 0 : 1))
 		usage();
+
+	if (kflag != NULL && nconn > 1)
+		errx(1, "-k currently only works with a single tcp connection");
+
 	if (!sflag)
 		host = argv[0];
 
-	bzero(&hints, sizeof(hints));
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = sflag ? AI_PASSIVE : 0;
-	if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
-		if (herr == EAI_SYSTEM)
-			err(1, "getaddrinfo");
-		else
-			errx(1, "getaddrinfo: %s", gai_strerror(herr));
+	if (sflag) {
+		bzero(&hints, sizeof(hints));
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE;
+		if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
+			if (herr == EAI_SYSTEM)
+				err(1, "getaddrinfo");
+			else
+				errx(1, "s getaddrinfo: %s", gai_strerror(herr));
+		}
 	}
 
 	if (kflag) {
@@ -822,8 +857,8 @@ main(int argc, char **argv)
 		serverloop(kvmh, nl[0].n_value, aitop, vflag, rflag, kflag,
 		    Sflag, Bflag);
 	else
-		clientloop(kvmh, nl[0].n_value, aitop, vflag, rflag, kflag,
-		    Sflag, Bflag);
+		clientloop(kvmh, nl[0].n_value, host, port, vflag, rflag, kflag,
+		    Sflag, Bflag, nconn);
 
 	return 0;
 }
