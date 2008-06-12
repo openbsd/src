@@ -1,4 +1,4 @@
-/*	$OpenBSD: fatal.c,v 1.13 2007/09/02 12:13:00 tobias Exp $ */
+/*	$OpenBSD: fatal.c,v 1.14 2008/06/12 03:54:43 joris Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -44,9 +44,13 @@ fatal(const char *fmt,...)
 	if (been_here++)
 		errx(1, "fatal loop");
 
-	va_start(args, fmt);
-	cvs_vlog(LP_ABORT, fmt, args);
-	va_end(args);
+	if (sig_received != 0) {
+		cvs_log(LP_ABORT, "received signal %d", sig_received);
+	} else {
+		va_start(args, fmt);
+		cvs_vlog(LP_ABORT, fmt, args);
+		va_end(args);
+	}
 
 	if (current_cvsroot != NULL)
 		cvs_cleanup();
