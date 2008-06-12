@@ -1,4 +1,5 @@
-/*      $NetBSD: n_sinh.c,v 1.1 1995/10/10 23:37:05 ragge Exp $ */
+/*	$OpenBSD: n_sinh.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$NetBSD: n_sinh.c,v 1.1 1995/10/10 23:37:05 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +36,7 @@ static char sccsid[] = "@(#)sinh.c	8.1 (Berkeley) 6/4/93";
 /* SINH(X)
  * RETURN THE HYPERBOLIC SINE OF X
  * DOUBLE PRECISION (VAX D format 56 bits, IEEE DOUBLE 53 BITS)
- * CODED IN C BY K.C. NG, 1/8/85; 
+ * CODED IN C BY K.C. NG, 1/8/85;
  * REVISED BY K.C. NG on 2/8/85, 3/7/85, 3/24/85, 4/16/85.
  *
  * Required system supported functions :
@@ -47,14 +48,14 @@ static char sccsid[] = "@(#)sinh.c	8.1 (Berkeley) 6/4/93";
  *
  * Method :
  *	1. reduce x to non-negative by sinh(-x) = - sinh(x).
- *	2. 
+ *	2.
  *
  *	                                      expm1(x) + expm1(x)/(expm1(x)+1)
  *	    0 <= x <= lnovfl     : sinh(x) := --------------------------------
  *			       		                      2
  *     lnovfl <= x <= lnovfl+ln2 : sinh(x) := expm1(x)/2 (avoid overflow)
  * lnovfl+ln2 <  x <  INF        :  overflow to INF
- *	
+ *
  *
  * Special cases:
  *	sinh(x) is x if x is +INF, -INF, or NaN.
@@ -111,7 +112,7 @@ double x;
 	    {t=expm1(x); return(copysign((t+t/(one+t))*half,sign));}
 
 	else if(x <= lnovfl+0.7)
-		/* subtract x by ln(2^(max+1)) and return 2^max*exp(x) 
+		/* subtract x by ln(2^(max+1)) and return 2^max*exp(x)
 	    		to avoid unnecessary overflow */
 	    return(copysign(scalbn(one+expm1((x-mln2hi)-mln2lo),max),sign));
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: n_fmod.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
 /*	$NetBSD: n_fmod.c,v 1.1 1995/10/10 23:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1989, 1993

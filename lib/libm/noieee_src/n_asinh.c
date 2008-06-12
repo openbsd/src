@@ -1,3 +1,4 @@
+/*	$OpenBSD: n_asinh.c,v 1.6 2008/06/12 22:43:36 martynas Exp $	*/
 /*	$NetBSD: n_asinh.c,v 1.1 1995/10/10 23:36:35 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -46,16 +47,16 @@ static char sccsid[] = "@(#)asinh.c	8.1 (Berkeley) 6/4/93";
  *	log1p(x) 		...return log(1+x)
  *
  * Method :
- *	Based on 
+ *	Based on
  *		asinh(x) = sign(x) * log [ |x| + sqrt(x*x+1) ]
  *	we have
  *	asinh(x) := x  if  1+x*x=1,
  *		 := sign(x)*(log1p(x)+ln2))	 if sqrt(1+x*x)=x, else
- *		 := sign(x)*log1p(|x| + |x|/(1/|x| + sqrt(1+(1/|x|)^2)) )  
+ *		 := sign(x)*log1p(|x| + |x|/(1/|x| + sqrt(1+(1/|x|)^2)) )
  *
  * Accuracy:
  *	asinh(x) returns the exact inverse hyperbolic sine of x nearly rounded.
- *	In a test run with 52,000 random arguments on a VAX, the maximum 
+ *	In a test run with 52,000 random arguments on a VAX, the maximum
  *	observed error was 1.58 ulps (units in the last place).
  *
  * Constants:
@@ -81,16 +82,16 @@ ic(ln2lo, 1.9082149292705877000E-10, -33, 1.A39EF35793C76)
 
 double asinh(x)
 double x;
-{	
+{
 	double t,s;
 	const static double	small=1.0E-10,	/* fl(1+small*small) == 1 */
 				big  =1.0E20,	/* fl(1+big) == big */
-				one  =1.0   ;	
+				one  =1.0   ;
 
 	if (isnan(x))
 		return (x);
 
-	if((t=copysign(x,one))>small) 
+	if((t=copysign(x,one))>small)
 	    if(t<big) {
 	     	s=one/t; return(copysign(log1p(t+t/(s+sqrt(one+s*s))),x)); }
 	    else	/* if |x| > big */

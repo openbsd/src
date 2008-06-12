@@ -1,3 +1,4 @@
+/*	$OpenBSD: mathimpl.h,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
 /*	$NetBSD: mathimpl.h,v 1.1 1995/10/10 23:36:31 ragge Exp $	*/
 /*
  * Copyright (c) 1988, 1993

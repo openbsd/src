@@ -1,4 +1,5 @@
-/*      $NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $ */
+/*	$OpenBSD: n_pow.c,v 1.8 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,17 +33,17 @@
 static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
-/* POW(X,Y)  
- * RETURN X**Y 
+/* POW(X,Y)
+ * RETURN X**Y
  * DOUBLE PRECISION (VAX D format 56 bits, IEEE DOUBLE 53 BITS)
- * CODED IN C BY K.C. NG, 1/8/85; 
+ * CODED IN C BY K.C. NG, 1/8/85;
  * REVISED BY K.C. NG on 7/10/85.
  * KERNEL pow_P() REPLACED BY P. McILROY 7/22/92.
  * Required system supported functions:
- *      scalbn(x,n)      
- *      logb(x)         
- *	copysign(x,y)	
- *	finite(x)	
+ *      scalbn(x,n)
+ *      logb(x)
+ *	copysign(x,y)
+ *	finite(x)
  *	drem(x,y)
  *
  * Required kernel functions:
@@ -53,7 +54,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
  *	1. Compute and return log(x) in three pieces:
  *		log(x) = n*ln2 + hi + lo,
  *	   where n is an integer.
- *	2. Perform y*log(x) by simulating muti-precision arithmetic and 
+ *	2. Perform y*log(x) by simulating muti-precision arithmetic and
  *	   return the answer in three pieces:
  *		y*log(x) = m*ln2 + hi + lo,
  *	   where m is an integer.
@@ -91,7 +92,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
  *			pow(integer,integer)
  *	always returns the correct integer provided it is representable.
  *	In a test run with 100,000 random arguments with 0 < x, y < 20.0
- *	on a VAX, the maximum observed error was 1.79 ulps (units in the 
+ *	on a VAX, the maximum observed error was 1.79 ulps (units in the
  *	last place).
  *
  * Constants :
@@ -120,7 +121,7 @@ const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
 static double pow_P(double, double);
 
-double pow(x,y)  	
+double pow(x,y)
 double x,y;
 {
 	double t;
