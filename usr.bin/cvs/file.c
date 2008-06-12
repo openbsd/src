@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.243 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.244 2008/06/12 07:29:54 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -294,7 +294,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 			 * During checkout -p, do not use any locally
 			 * available directories.
 			 */
-			if (cvs_cmdop != CVS_OP_CHECKOUT || !print_stdout)
+			if (cvs_cmdop != CVS_OP_CHECKOUT && !print_stdout)
 				if (stat(d, &st) == -1) {
 					cvs_log(LP_ERRNO, "%s", d);
 					goto next;
