@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.150 2008/06/11 21:24:50 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.151 2008/06/12 07:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -49,7 +49,9 @@ static char *dateflag = NULL;
 static int nflag = 0;
 
 char *checkout_target_dir = NULL;
+
 time_t cvs_specified_date = -1;
+int disable_fast_checkout = 0;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_USE_WDIR, "checkout",
@@ -98,6 +100,9 @@ cvs_checkout(int argc, char **argv)
 				fatal("-d specified two or more times");
 			dflag = optarg;
 			checkout_target_dir = dflag;
+
+			if (cvs_server_active == 1)
+				disable_fast_checkout = 1;
 			break;
 		case 'j':
 			if (cvs_join_rev1 == NULL)
@@ -152,7 +157,15 @@ cvs_checkout(int argc, char **argv)
 	if (argc == 0)
 		fatal("%s", cvs_cmd_checkout.cmd_synopsis);
 
+	if (cvs_server_active == 1 && disable_fast_checkout != 1) {
+		cmdp->cmd_flags &= ~CVS_USE_WDIR;
+		cvs_noexec = 1;
+	}
+
 	checkout_check_repository(argc, argv);
+
+	if (cvs_server_active == 1 && disable_fast_checkout != 1)
+		cvs_noexec = 0;
 
 	return (0);
 }
@@ -410,7 +423,14 @@ checkout_repository(const char *repobase, const char *wdbase)
 		cr.leavedir = NULL;
 	} else {
 		cr.enterdir = cvs_update_enterdir;
-		cr.leavedir = cvs_update_leavedir;
+		if (cvs_server_active == 1) {
+			if (disable_fast_checkout != 1)
+				cr.leavedir = NULL;
+			else
+				cr.leavedir = cvs_update_leavedir;
+		} else {
+			cr.leavedir = prune_dirs ? cvs_update_leavedir : NULL;
+		}
 	}
 	cr.fileproc = cvs_update_local;
 	cr.flags = flags;
@@ -431,14 +451,14 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
+	BUF *bp;
 	mode_t mode;
 	int cf_kflag, exists, fd;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
 	struct tm datetm;
-	char *tosend;
-	char template[MAXPATHLEN], *entry;
+	char *entry, *tosend;
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
 	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 
@@ -571,31 +591,13 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			xfree(entry);
 
 			if (!(co_flags & CO_MERGE)) {
-				(void)xsnprintf(template, MAXPATHLEN,
-				    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
-
-				fd = rcs_rev_write_stmp(cf->file_rcs, rnum,
-				    template, 0);
-
 				mode = cf->file_rcs->rf_mode;
 				mode |= S_IWUSR;
-
-				if (fchmod(fd, mode) == -1) {
-					cvs_log(LP_ERR,
-					    "failed to set mode for %s",
-					    cf->file_path);
-				}
-
-				tosend = template;
-			}
-
-			cvs_remote_send_file(tosend, fd);
-
-			if (!(co_flags & CO_MERGE)) {
-				close(fd);
-				(void)unlink(template);
-				cvs_worklist_run(&temp_files,
-				    cvs_worklist_unlink);
+				bp = rcs_rev_getbuf(cf->file_rcs, rnum, 0);
+				cvs_remote_send_file_buf(cf->file_path,
+				    bp, mode);
+			} else {
+				cvs_remote_send_file(tosend, fd);
 			}
 		}
 	}

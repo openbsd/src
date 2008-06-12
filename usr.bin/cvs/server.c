@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.89 2008/06/10 05:01:36 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.90 2008/06/12 07:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -74,6 +74,8 @@ char	*cvs_server_path = NULL;
 static char *server_currentdir = NULL;
 static char **server_argv;
 static int server_argc = 1;
+
+extern int disable_fast_checkout;
 
 struct cvs_cmd cvs_cmd_server = {
 	CVS_OP_SERVER, CVS_USE_WDIR, "server", { "", "" },
@@ -395,6 +397,9 @@ cvs_server_modified(char *data)
 	if (data == NULL)
 		fatal("Missing argument for Modified");
 
+	/* sorry, we have to use TMP_DIR */
+	disable_fast_checkout = 1;
+
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
 
@@ -436,6 +441,9 @@ cvs_server_unchanged(char *data)
 	if (data == NULL)
 		fatal("Missing argument for Unchanged");
 
+	/* sorry, we have to use TMP_DIR */
+	disable_fast_checkout = 1;
+
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
 
 	entlist = cvs_ent_open(server_currentdir);
@@ -460,6 +468,8 @@ cvs_server_unchanged(char *data)
 void
 cvs_server_questionable(char *data)
 {
+	/* sorry, we have to use TMP_DIR */
+	disable_fast_checkout = 1;
 }
 
 void
@@ -619,7 +629,7 @@ cvs_server_export(char *data)
 
 	cvs_cmdop = CVS_OP_EXPORT;
 	cmdp->cmd_flags = cvs_cmd_export.cmd_flags;
-	cvs_checkout(server_argc, server_argv);
+	cvs_export(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
 

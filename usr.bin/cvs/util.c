@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.144 2008/06/10 01:00:35 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.145 2008/06/12 07:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -44,6 +44,7 @@
 
 extern int print_stdout;
 extern int build_dirs;
+extern int disable_fast_checkout;
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
@@ -364,7 +365,7 @@ cvs_unlink(const char *path)
 	if (cvs_server_active == 0)
 		cvs_log(LP_TRACE, "cvs_unlink(%s)", path);
 
-	if (cvs_noexec == 1)
+	if (cvs_noexec == 1 && disable_fast_checkout != 0)
 		return (0);
 
 	if (unlink(path) == -1 && errno != ENOENT) {
@@ -393,7 +394,7 @@ cvs_rmdir(const char *path)
 	if (cvs_server_active == 0)
 		cvs_log(LP_TRACE, "cvs_rmdir(%s)", path);
 
-	if (cvs_noexec == 1)
+	if (cvs_noexec == 1 && disable_fast_checkout != 0)
 		return (0);
 
 	if ((dirp = opendir(path)) == NULL) {
@@ -857,7 +858,7 @@ cvs_yesno(void)
  * else, 0 or -1 if an error occur.
  */
 int
-cvs_exec(const char *prog, const char *in, int needwait)
+cvs_exec(char *prog, const char *in, int needwait)
 {
 	pid_t pid;
 	int fds[2], size, st;

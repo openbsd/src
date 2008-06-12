@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.269 2008/06/10 20:30:17 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.270 2008/06/12 07:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2986,7 +2986,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
-	bp = cvs_buf_alloc(1024);
+	bp = cvs_buf_alloc(1024 * 1024);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.242 2008/06/09 22:31:24 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.243 2008/06/12 07:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -46,6 +46,7 @@
 #define CVS_CHAR_ISMETA(c)	((c == '*') || (c == '?') || (c == '['))
 
 extern int print_stdout;
+extern int build_dirs;
 
 /*
  * Standard patterns to ignore.
@@ -584,7 +585,7 @@ walkrepo:
 		xsnprintf(fpath, sizeof(fpath), "%s/%s", cf->file_path,
 		    CVS_PATH_STATICENTRIES);
 
-		if (stat(fpath, &st) == -1)
+		if (stat(fpath, &st) == -1 || build_dirs == 1)
 			cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
 			    (cr->flags & CR_RECURSE_DIRS));
 	}
