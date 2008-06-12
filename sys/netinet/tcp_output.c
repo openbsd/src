@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.81 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.82 2008/06/12 15:08:47 jsing Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -205,8 +205,7 @@ tcp_sack_adjust(struct tcpcb *tp)
  * Tcp output routine: figure out what should be sent and send it.
  */
 int
-tcp_output(tp)
-	struct tcpcb *tp;
+tcp_output(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 	long len, win, txmaxseg;
