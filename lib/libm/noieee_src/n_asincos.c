@@ -91,9 +91,10 @@ asin(x)
 	double x;
 {
 	double s,t,copysign(),atan2(),sqrt(),one=1.0;
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+
+	if (isnan(x))
+		return (x);
+
 	s=copysign(x,one);
 	if(s <= 0.5)
 	    return(atan2(x,sqrt(one-x*x)));
@@ -159,9 +160,10 @@ acos(x)
 	double x;
 {
 	double t,copysign(),atan2(),sqrt(),one=1.0;
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+
+	if (isnan(x))
+		return (x);
+
 	if( x != -1.0)
 	    t=atan2(sqrt((one-x)/(one+x)),one);
 	else

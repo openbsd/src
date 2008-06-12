@@ -108,9 +108,9 @@ double x;
 		one=1.0, small=1.0E-18; /* fl(1+small)==1 */
 	double t;
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
+
 	if((x=copysign(x,one)) <= 22)
 	    if(x<0.3465) 
 		if(x<small) return(one+x);

@@ -176,10 +176,11 @@ double  y,x;
 	double t,z,signy,signx,hi,lo;
 	int k,m;
 
-#if !defined(__vax__)&&!defined(tahoe)
     /* if x or y is NAN */
-	if(x!=x) return(x); if(y!=y) return(y);
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
+	if (isnan(y))
+		return (y);
 
     /* copy down the sign of y and x */
 	signy = copysign(one,y) ;  

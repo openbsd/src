@@ -100,9 +100,10 @@ double x;
 {
 	static const double  one=1.0, half=1.0/2.0 ;
 	double t, sign;
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+
+	if (isnan(x))
+		return (x);
+
 	sign=copysign(one,x);
 	x=copysign(x,one);
 	if(x<lnovfl)

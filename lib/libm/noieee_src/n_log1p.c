@@ -116,9 +116,8 @@ double x;
 	double z,s,t,c;
 	int k;
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
 
 	if(finite(x)) {
 	   if( x > negone ) {

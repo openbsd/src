@@ -85,9 +85,9 @@ double x;
 				big  =1.0E20,	/* fl(1+big) == big */
 				one  =1.0   ;	
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
+
 	if((t=copysign(x,one))>small) 
 	    if(t<big) {
 	     	s=one/t; return(copysign(log1p(t+t/(s+sqrt(one+s*s))),x)); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp.c,v 1.5 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: n_exp.c,v 1.6 2008/06/12 15:57:59 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -116,9 +116,9 @@ double exp(double x)
 	double z, hi, lo, c;
 	int k;
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
+
 	if( x <= lnhuge ) {
 		if( x >= lntiny ) {
 
@@ -160,9 +160,9 @@ double __exp__D(double x, double c)
 	double z, hi, lo;
 	int k;
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if (x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
+
 	if ( x <= lnhuge ) {
 		if ( x >= lntiny ) {
 

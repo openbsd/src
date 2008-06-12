@@ -164,11 +164,7 @@ double x,y;
 }
 /* kernel function for x >= 0 */
 static double
-#ifdef _ANSI_SOURCE
 pow_P(double x, double y)
-#else
-pow_P(x, y) double x, y;
-#endif
 {
 	struct Double s, t, __log__D();
 	double  __exp__D(), huge = 1e300, tiny = 1e-300;

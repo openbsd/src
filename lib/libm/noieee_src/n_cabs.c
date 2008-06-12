@@ -148,9 +148,8 @@ double x, y;
 	         return (copysign(x,one));
 	else if(finite(y))
 	         return(x);		   /* x is NaN, y is finite */
-#if !defined(__vax__)&&!defined(tahoe)
-	else if(y!=y) return(y);  /* x and y is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	else if (isnan(y))
+		return (y);
 	else return(copysign(y,one));   /* y is INF */
 }
 

@@ -88,9 +88,8 @@ acosh(x)
 {	
 	double t,big=1.E20; /* big+1==big */
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
 
     /* return log1p(x) + log(2) if x is large */
 	if(x>big) {t=log1p(x)+ln2lo; return(t+ln2hi);} 

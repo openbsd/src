@@ -114,9 +114,8 @@ double x;
 	static prec=53;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-#if !defined(__vax__)&&!defined(tahoe)
-	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (isnan(x))
+		return (x);
 
 	if( x <= lnhuge ) {
 		if( x >= -40.0 ) {
