@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.90 2008/03/02 19:31:08 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.91 2008/06/12 16:17:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,15 +126,6 @@ struct rcs_kw {
 /* delta flags */
 #define RCS_RD_DEAD	0x01	/* dead */
 #define RCS_RD_SELECT	0x02	/* select for operation */
-
-/* RCS error codes */
-#define RCS_ERR_NOERR	0
-#define RCS_ERR_NOENT	1
-#define RCS_ERR_DUPENT	2
-#define RCS_ERR_BADNUM	3
-#define RCS_ERR_BADSYM	4
-#define RCS_ERR_PARSE	5
-#define RCS_ERR_ERRNO	255
 
 /* used for rcs_checkout_rev */
 #define CHECKOUT_REV_CREATED	1
