@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.110 2008/06/12 18:13:27 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.111 2008/06/12 21:29:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1410,9 +1410,9 @@ sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 void
 sr_free_discipline(struct sr_discipline *sd)
 {
-#ifdef SR_DEBUG
 	struct sr_softc		*sc = sd->sd_sc;
-#endif
+	int			i;
+
 	if (!sd)
 		return;
 
@@ -1424,6 +1424,12 @@ sr_free_discipline(struct sr_discipline *sd)
 	if (sd->sd_vol.sv_chunks)
 		free(sd->sd_vol.sv_chunks, M_DEVBUF);
 	free(sd, M_DEVBUF);
+
+	for (i = 0; i < SR_MAXSCSIBUS; i++)
+		if (sc->sc_dis[i] == sd) {
+			sc->sc_dis[i] = NULL;
+			break;
+		}
 }
 
 void
