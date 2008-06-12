@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.113 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.114 2008/06/12 19:50:04 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -353,7 +353,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
  * to do is to dig out all information we need to accomplish our task.
  */
 unsigned long
-_dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
+_dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 {
 	struct elf_object *exe_obj;	/* Pointer to executable object */
 	struct elf_object *dyn_obj;	/* Pointer to executable object */
@@ -363,10 +363,12 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	Elf_Dyn *dynp;
 	Elf_Phdr *phdp;
 	Elf_Ehdr *ehdr;
-	char *us = "";
+	char *us = NULL;
 	unsigned int loop;
 	int failed;
 	struct dep_node *n;
+	Elf_Addr minva, maxva, exe_loff;
+	int align;
 
 	_dl_setup_env(envp);
 
@@ -375,6 +377,11 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_pagesz = dl_data[AUX_pagesz];
 	else
 		_dl_pagesz = 4096;
+
+	align = _dl_pagesz - 1;
+
+#define ROUND_PG(x) (((x) + align) & ~(align))
+#define TRUNC_PG(x) ((x) & ~(align))
 
 	/*
 	 * now that GOT and PLT has been relocated, and we know
@@ -411,40 +418,56 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 	exe_obj = NULL;
 	_dl_loading_object = NULL;
+
+	minva = ELFDEFNNAME(NO_ADDR);
+	maxva = exe_loff = 0;
+
 	/*
 	 * Examine the user application and set up object information.
 	 */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (loop = 0; loop < dl_data[AUX_phnum]; loop++) {
-		if (phdp->p_type == PT_DYNAMIC) {
+		switch (phdp->p_type) {
+		case PT_PHDR:
+			exe_loff = (Elf_Addr)dl_data[AUX_phdr] - phdp->p_vaddr;
+			us += exe_loff;
+			DL_DEB(("exe load offset:  0x%lx\n", exe_loff));
+			break;
+		case PT_DYNAMIC:
+			minva = TRUNC_PG(minva);
+			maxva = ROUND_PG(maxva);
 			exe_obj = _dl_finalize_object(argv[0] ? argv[0] : "",
 			    (Elf_Dyn *)phdp->p_vaddr, (Elf_Phdr *)dl_data[AUX_phdr],
-			    dl_data[AUX_phnum], OBJTYPE_EXE, 0, 0);
+			    dl_data[AUX_phnum], OBJTYPE_EXE, minva + exe_loff, exe_loff);
 			_dl_add_object(exe_obj);
-		} else if (phdp->p_type == PT_INTERP) {
-			us = _dl_strdup((char *)phdp->p_vaddr);
-		} else if (phdp->p_type == PT_LOAD) {
-			int align = _dl_pagesz - 1;
-			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
-
-#define TRUNC_PG(x) ((x) & ~(align))
+			break;
+		case PT_INTERP:
+			us += phdp->p_vaddr;
+			break;
+		case PT_LOAD:
+			if (phdp->p_vaddr < minva)
+				minva = phdp->p_vaddr;
+			if (phdp->p_vaddr > maxva)
+				maxva = phdp->p_vaddr + phdp->p_memsz;
 
 			next_load = _dl_malloc(sizeof(struct load_list));
 			next_load->next = load_list;
 			load_list = next_load;
-			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr);
-			next_load->size = size;
+			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
+			next_load->size = (phdp->p_vaddr & align) + phdp->p_filesz;
 			next_load->prot = PFLAGS(phdp->p_flags);
 
 			if (phdp->p_flags & 0x08000000) {
-//				dump_prelink(phdp->p_vaddr, phdp->p_memsz);
+//				dump_prelink(phdp->p_vaddr + exe_loff, phdp->p_memsz);
 				prebind_load_exe(phdp, exe_obj);
 			}
+			break;
 		}
 		phdp++;
 	}
 	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= RTLD_GLOBAL;
+	exe_obj->load_size = maxva - minva;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -467,7 +490,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	ehdr = (Elf_Ehdr *)dl_data[AUX_base];
         dyn_obj = _dl_finalize_object(us, dynp,
 	    (Elf_Phdr *)((char *)dl_data[AUX_base] + ehdr->e_phoff),
-	    ehdr->e_phnum, OBJTYPE_LDR, dl_data[AUX_base], loff);
+	    ehdr->e_phnum, OBJTYPE_LDR, dl_data[AUX_base], dyn_loff);
 	_dl_add_object(dyn_obj);
 
 	dyn_obj->refcount++;
@@ -526,7 +549,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		debug_map->r_map = (struct link_map *)_dl_objects;
 		debug_map->r_brk = (Elf_Addr)_dl_debug_state;
 		debug_map->r_state = RT_CONSISTENT;
-		debug_map->r_ldbase = loff;
+		debug_map->r_ldbase = dyn_loff;
 		_dl_debug_map = debug_map;
 		*map_link = _dl_debug_map;
 	}
@@ -604,7 +627,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	/*
 	 * Zero out dl_data.
 	 */
-	for (n = 0; n < AUX_entry; n++)
+	for (n = 0; n <= AUX_entry; n++)
 		dl_data[n] = 0;
 
 	/*
@@ -617,7 +640,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 			continue;
 		dl_data[auxstack->au_id] = auxstack->au_v;
 	}
-	loff = dl_data[AUX_base];	/* XXX assumes linked at 0x0 */
+	loff = dl_data[AUX_base];	/* XXX assumes ld.so is linked at 0x0 */
 
 	/*
 	 * We need to do 'selfreloc' in case the code weren't
