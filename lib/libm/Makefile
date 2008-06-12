@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.44 2008/06/11 20:53:27 martynas Exp $
+#  $OpenBSD: Makefile,v 1.45 2008/06/12 15:51:42 jmc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -174,7 +174,9 @@ MLINKS+=ieee.3 copysign.3 ieee.3 drem.3 ieee.3 finite.3 ieee.3 ilogb.3 \
 MLINKS+=logb.3 scalb.3
 MLINKS+=logb.3 significand.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
-MLINKS+=lgamma.3 gamma.3 lgamma.3 tgamma.3 lgamma.3 tgammaf.3
+MLINKS+=lgamma.3 gamma.3 lgamma.3 tgamma.3
+MLINKS+=lrint.3 llrint.3
+MLINKS+=lround.3 llround.3
 MLINKS+=sqrt.3 cbrt.3
 
 # float versions
@@ -209,9 +211,6 @@ MLINKS+=ieee.3 ilogbf.3
 MLINKS+=ieee.3 nextafterf.3
 MLINKS+=ieee.3 remainderf.3
 MLINKS+=ieee.3 scalbnf.3
-MLINKS+=logb.3 logbf.3
-MLINKS+=logb.3 scalbf.3
-MLINKS+=logb.3 significandf.3
 MLINKS+=j0.3 j0f.3
 MLINKS+=j0.3 j1f.3
 MLINKS+=j0.3 jnf.3
@@ -220,11 +219,13 @@ MLINKS+=j0.3 y1f.3
 MLINKS+=j0.3 ynf.3
 MLINKS+=lgamma.3 gammaf.3
 MLINKS+=lgamma.3 lgammaf.3
+MLINKS+=lgamma.3 tgammaf.3
+MLINKS+=logb.3 logbf.3
+MLINKS+=logb.3 scalbf.3
+MLINKS+=logb.3 significandf.3
 MLINKS+=lrint.3 lrintf.3
-MLINKS+=lrint.3 llrint.3
 MLINKS+=lrint.3 llrintf.3
 MLINKS+=lround.3 lroundf.3
-MLINKS+=lround.3 llround.3
 MLINKS+=lround.3 llroundf.3
 MLINKS+=math.3 mathf.3
 MLINKS+=rint.3 rintf.3

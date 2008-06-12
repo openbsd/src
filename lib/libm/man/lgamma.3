@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lgamma.3,v 1.15 2008/06/11 20:53:27 martynas Exp $
+.\"	$OpenBSD: lgamma.3,v 1.16 2008/06/12 15:51:42 jmc Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
 .\"
-.Dd $Mdocdate: June 11 2008 $
+.Dd $Mdocdate: June 12 2008 $
 .Dt LGAMMA 3
 .Os
 .Sh NAME
@@ -77,16 +77,6 @@ and
 .Fn tgammaf x
 functions return \(*G(x), with no effect on
 .Fa signgam .
-.Pp
-The
-.Fn gamma ,
-and
-.Fn gammaf
-are deprecated aliases for
-.Fn lgamma ,
-and
-.Fn lgammaf
-respectively.
 .Sh IDIOSYNCRASIES
 Do not use the expression
 .Sq Li signgam\(**exp(lgamma(x))
@@ -131,16 +121,25 @@ and
 .Fn tgammaf
 functions are expected to conform to
 .St -isoC-99 .
+.Pp
+.Fn gamma
+and
+.Fn gammaf
+are deprecated aliases for
+.Fn lgamma
+and
+.Fn lgammaf ,
+respectively.
 .Sh HISTORY
 The
 .Fn lgamma
-function appeared in
+function first appeared in
 .Bx 4.3 .
 The
 .Fn tgamma
-function appeared in
+function first appeared in
 .Ox 4.4 ,
-which is based on the
+and is based on the
 .Fn gamma
 function that appeared in
 .Bx 4.4
