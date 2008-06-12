@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.233 2008/06/11 09:22:39 phessler Exp $
+#	$OpenBSD: GENERIC,v 1.234 2008/06/12 19:45:05 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -218,6 +218,10 @@ upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
+
+# USB Video
+uvideo*	at uhub?
+video*	at uvideo?
 
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
