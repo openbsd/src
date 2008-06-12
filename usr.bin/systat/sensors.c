@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.12 2007/07/29 04:51:59 cnst Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.13 2008/06/12 22:26:01 canacar Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -27,86 +27,35 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "systat.h"
-#include "extern.h"
 
 struct sensor sensor;
 struct sensordev sensordev;
-int row, sensor_cnt;
-void printline(void);
-static char * fmttime(double);
 
-WINDOW *
-opensensors(void)
-{
-	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
-}
+struct sensinfo {
+	int sn_dev;
+	struct sensor sn_sensor;
+};
+#define sn_type sn_sensor.type
+#define sn_numt sn_sensor.numt
+#define sn_desc sn_sensor.desc
+#define sn_status sn_sensor.status
+#define sn_value sn_sensor.value
 
-void
-closesensors(WINDOW *w)
-{
-	if (w == NULL)
-		return;
-	wclear(w);
-	wrefresh(w);
-	delwin(w);
-}
+char *devnames[MAXSENSORDEVICES];
 
-void
-labelsensors(void)
-{
-	wmove(wnd, 0, 0);
-	wclrtobot(wnd);
-	mvwaddstr(wnd, 1, 0, "Sensor");
-	mvwaddstr(wnd, 1, 34, "Value");
-	mvwaddstr(wnd, 1, 45, "Status");
-	mvwaddstr(wnd, 1, 58, "Description");
-}
+#define ADD_ALLOC 100
+static size_t sensor_cnt = 0;
+static size_t num_alloc = 0;
+static struct sensinfo *sensors = NULL;
 
-void
-fetchsensors(void)
-{
-	enum sensor_type type;
-	size_t		 slen, sdlen;
-	int		 mib[5], dev, numt;
+static char *fmttime(double);
+static void showsensor(struct sensinfo *s);
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_SENSORS;
-	slen = sizeof(struct sensor);
-	sdlen = sizeof(struct sensordev);
-
-	row = 2;
-	sensor_cnt = 0;
-
-	wmove(wnd, row, 0);
-	wclrtobot(wnd);
-
-	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
-		mib[2] = dev;
-		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				warn("sysctl");
-			continue;
-		}
-		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
-			mib[3] = type;
-			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
-				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0)
-				    == -1) {
-					if (errno != ENOENT)
-						warn("sysctl");
-					continue;
-				}
-				if (sensor.flags & SENSOR_FINVALID)
-					continue;
-				sensor_cnt++;
-				printline();
-			}
-		}
-	}
-}
+void print_sn(void);
+int read_sn(void);
+int select_sn(void);
 
 const char *drvstat[] = {
 	NULL,
@@ -114,91 +63,225 @@ const char *drvstat[] = {
 	"rebuild", "powerdown", "fail", "pfail"
 };
 
-void
-showsensors(void)
+
+field_def fields_sn[] = {
+	{"SENSOR", 16, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"VALUE", 16, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"STATUS", 5, 8, 1, FLD_ALIGN_CENTER, -1, 0, 0, 0},
+	{"DESCRIPTION", 20, 45, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0}
+};
+
+#define FIELD_ADDR(x) (&fields_sn[x])
+
+#define FLD_SN_SENSOR	FIELD_ADDR(0)
+#define FLD_SN_VALUE	FIELD_ADDR(1)
+#define FLD_SN_STATUS	FIELD_ADDR(2)
+#define FLD_SN_DESCR	FIELD_ADDR(3)
+
+/* Define views */
+field_def *view_sn_0[] = {
+	FLD_SN_SENSOR, FLD_SN_VALUE, FLD_SN_STATUS, FLD_SN_DESCR, NULL
+};
+
+
+/* Define view managers */
+struct view_manager sensors_mgr = {
+	"Sensors", select_sn, read_sn, NULL, print_header,
+	print_sn, keyboard_callback, NULL, NULL
+};
+
+field_view views_sn[] = {
+	{view_sn_0, "sensors", '3', &sensors_mgr},
+	{NULL, NULL, 0, NULL}
+};
+
+struct sensinfo *
+next_sn(void)
 {
-	if (sensor_cnt == 0)
-		mvwaddstr(wnd, row, 0, "No sensors found.");
+	if (num_alloc <= sensor_cnt) {
+		struct sensinfo *s;
+		size_t a = num_alloc + ADD_ALLOC;
+		if (a < num_alloc)
+			return NULL;
+		s = realloc(sensors, a * sizeof(struct sensinfo));
+		if (s == NULL)
+			return NULL;
+		sensors = s;
+		num_alloc = a;
+	}
+
+	return &sensors[sensor_cnt++];
+}
+
+
+int
+select_sn(void)
+{
+	num_disp = sensor_cnt;
+	return (0);
+}
+
+int
+read_sn(void)
+{
+	enum sensor_type type;
+	size_t		 slen, sdlen;
+	int		 mib[5], dev, numt;
+	struct sensinfo	*s;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_SENSORS;
+
+	sensor_cnt = 0;
+
+	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+		mib[2] = dev;
+		sdlen = sizeof(struct sensordev);
+		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
+			if (errno != ENOENT)
+				error("sysctl: %s", strerror(errno));
+			continue;
+		}
+
+		if (devnames[dev] && strcmp(devnames[dev], sensordev.xname)) {
+			free(devnames[dev]);
+			devnames[dev] = NULL;
+		}
+		if (devnames[dev] == NULL)
+			devnames[dev] = strdup(sensordev.xname);
+
+		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
+			mib[3] = type;
+			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
+				mib[4] = numt;
+				slen = sizeof(struct sensor);
+				if (sysctl(mib, 5, &sensor, &slen, NULL, 0)
+				    == -1) {
+					if (errno != ENOENT)
+						error("sysctl: %s", strerror(errno));
+					continue;
+				}
+				if (sensor.flags & SENSOR_FINVALID)
+					continue;
+
+				s = next_sn();
+				s->sn_sensor = sensor;
+				s->sn_dev = dev;
+			}
+		}
+	}
+
+	num_disp = sensor_cnt;
+	return 0;
+}
+
+
+void
+print_sn(void)
+{
+	int n, count = 0;
+
+	for (n = dispstart; n < num_disp; n++) {
+		showsensor(sensors + n);
+		count++;
+		if (maxprint > 0 && count >= maxprint)
+			break;
+	}
 }
 
 int
 initsensors(void)
 {
-	return (1);
+	field_view *v;
+
+	memset(devnames, 0, sizeof(devnames));
+
+	for (v = views_sn; v->name != NULL; v++)
+		add_view(v);
+
+	return(1);
 }
 
-void
-printline(void)
+static void
+showsensor(struct sensinfo *s)
 {
-	mvwprintw(wnd, row, 0, "%s.%s%d", sensordev.xname,
-	    sensor_type_s[sensor.type], sensor.numt);
-	switch (sensor.type) {
+	tb_start();
+	tbprintf("%s.%s%d", devnames[s->sn_dev],
+		 sensor_type_s[s->sn_type], s->sn_numt);
+	print_fld_tb(FLD_SN_SENSOR);
+
+	if (s->sn_desc[0] != '\0')
+		print_fld_str(FLD_SN_DESCR, s->sn_desc);
+
+	tb_start();
+
+	switch (s->sn_type) {
 	case SENSOR_TEMP:
-		mvwprintw(wnd, row, 24, "%10.2f degC",
-		    (sensor.value - 273150000) / 1000000.0);
+		tbprintf("%10.2f degC",
+		    (s->sn_value - 273150000) / 1000000.0);
 		break;
 	case SENSOR_FANRPM:
-		mvwprintw(wnd, row, 24, "%11lld RPM", sensor.value);
+		tbprintf("%11lld RPM", s->sn_value);
 		break;
 	case SENSOR_VOLTS_DC:
-		mvwprintw(wnd, row, 24, "%10.2f V DC",
-		    sensor.value / 1000000.0);
+		tbprintf("%10.2f V DC",
+		    s->sn_value / 1000000.0);
 		break;
 	case SENSOR_AMPS:
-		mvwprintw(wnd, row, 24, "%10.2f A", sensor.value / 1000000.0);
+		tbprintf("%10.2f A", s->sn_value / 1000000.0);
 		break;
 	case SENSOR_INDICATOR:
-		mvwprintw(wnd, row, 24, "%15s", sensor.value? "On" : "Off");
+		tbprintf("%15s", s->sn_value ? "On" : "Off");
 		break;
 	case SENSOR_INTEGER:
-		mvwprintw(wnd, row, 24, "%11lld raw", sensor.value);
+		tbprintf("%11lld raw", s->sn_value);
 		break;
 	case SENSOR_PERCENT:
-		mvwprintw(wnd, row, 24, "%14.2f%%", sensor.value / 1000.0);
+		tbprintf("%14.2f%%", s->sn_value / 1000.0);
 		break;
 	case SENSOR_LUX:
-		mvwprintw(wnd, row, 24, "%15.2f lx", sensor.value / 1000000.0);
+		tbprintf("%15.2f lx", s->sn_value / 1000000.0);
 		break;
 	case SENSOR_DRIVE:
-		if (0 < sensor.value &&
-		    sensor.value < sizeof(drvstat)/sizeof(drvstat[0])) {
-			mvwprintw(wnd, row, 24, "%15s", drvstat[sensor.value]);
+		if (0 < s->sn_value &&
+		    s->sn_value < sizeof(drvstat)/sizeof(drvstat[0])) {
+			tbprintf("%15s", drvstat[s->sn_value]);
 			break;
 		}
 		break;
 	case SENSOR_TIMEDELTA:
-		mvwprintw(wnd, row, 24, "%15s", fmttime(sensor.value / 1000000000.0));
+		tbprintf("%15s", fmttime(s->sn_value / 1000000000.0));
 		break;
 	case SENSOR_WATTHOUR:
-		mvwprintw(wnd, row, 24, "%12.2f Wh", sensor.value / 1000000.0);
+		tbprintf("%12.2f Wh", s->sn_value / 1000000.0);
 		break;
 	case SENSOR_AMPHOUR:
-		mvwprintw(wnd, row, 24, "%10.2f Ah", sensor.value / 1000000.0);
+		tbprintf("%10.2f Ah", s->sn_value / 1000000.0);
 		break;
 	default:
-		mvwprintw(wnd, row, 24, "%10lld", sensor.value);
+		tbprintf("%10lld", s->sn_value);
 		break;
 	}
-	if (sensor.desc[0] != '\0')
-		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
 
-	switch (sensor.status) {
+	print_fld_tb(FLD_SN_VALUE);
+
+	switch (s->sn_status) {
 	case SENSOR_S_UNSPEC:
 		break;
 	case SENSOR_S_UNKNOWN:
-		mvwaddstr(wnd, row, 45, "unknown");
+		print_fld_str(FLD_SN_STATUS, "unknown");
 		break;
 	case SENSOR_S_WARN:
-		mvwaddstr(wnd, row, 45, "WARNING");
+		print_fld_str(FLD_SN_STATUS, "WARNING");
 		break;
 	case SENSOR_S_CRIT:
-		mvwaddstr(wnd, row, 45, "CRITICAL");
+		print_fld_str(FLD_SN_STATUS, "CRITICAL");
 		break;
 	case SENSOR_S_OK:
-		mvwaddstr(wnd, row, 45, "OK");
+		print_fld_str(FLD_SN_STATUS, "OK");
 		break;
 	}
-	row++;
+	end_line();
 }
 
 #define SECS_PER_DAY 86400

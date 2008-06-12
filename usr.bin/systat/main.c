@@ -1,65 +1,57 @@
-/*	$OpenBSD: main.c,v 1.37 2007/05/21 21:15:37 cnst Exp $	*/
-/*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
-
-/*-
- * Copyright (c) 1980, 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/* $Id: main.c,v 1.38 2008/06/12 22:26:01 canacar Exp $	 */
+/*
+ * Copyright (c) 2001, 2007 Can Erkin Acar
+ * Copyright (c) 2001 Daniel Hartmeier
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *    - Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    - Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.37 2007/05/21 21:15:37 cnst Exp $";
-#endif /* not lint */
-
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-#include <err.h>
-#include <nlist.h>
-#include <signal.h>
+
 #include <ctype.h>
+#include <curses.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <utmp.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <stdarg.h>
 
+#include "engine.h"
 #include "systat.h"
-#include "extern.h"
 
 double	dellave;
 
@@ -69,266 +61,91 @@ char	*memf = NULL;
 double	avenrun[3];
 double	naptime = 5.0;
 int	verbose = 1;		/* to report kvm read errs */
-int	nflag = 0;
+int	nflag = 1;
 int	ut, hz, stathz;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
 int	CMDLINE;
 
-WINDOW *wload;			/* one line window for load average */
+#define TIMEPOS 55
 
-static void usage(void);
+/* command prompt */
+
+void cmd_delay(void);
+void cmd_count(void);
+void cmd_compat(void);
+
+struct command cm_compat = {"Command", cmd_compat};
+struct command cm_delay = {"Seconds to delay", cmd_delay};
+struct command cm_count = {"Number of lines to display", cmd_count};
+
+
+/* display functions */
 
 int
-main(int argc, char *argv[])
+print_header(void)
 {
-	char errbuf[_POSIX2_LINE_MAX];
-	gid_t gid;
-	int ch;
+	struct tm *tp;
+	time_t t;
+	order_type *ordering;
 
-	ut = open(_PATH_UTMP, O_RDONLY);
-	if (ut < 0) {
-		error("No utmp");
-		exit(1);
-	}
+	int start = dispstart + 1;
+	int end = dispstart + maxprint;
 
-	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
-	if (kd == NULL) {
-		error("%s", errbuf);
-		exit(1);
-	}
+	if (end > num_disp)
+		end = num_disp;
 
-	gid = getgid();
-	if (setresgid(gid, gid, gid) == -1)
-		err(1, "setresgid");
+	tb_start();
 
-	while ((ch = getopt(argc, argv, "nw:")) != -1)
-		switch (ch) {
-		case 'n':
-			nflag = 1;
-			break;
-		case 'w':
-
-			naptime = strtod(optarg, NULL);
-			if (naptime < 0.09 || naptime > 1000.0)
-				errx(1, "invalid interval: %s", optarg);
-			break;
-		default:
-			usage();
+#if 0
+	if (curr_mgr && curr_mgr->sort_fn != NULL) {
+		ordering = curr_mgr->order_curr;
+		if (ordering != NULL) {
+			tbprintf(", Order: %s", ordering->name);
+			if (sortdir < 0 && ordering->func != NULL)
+				tbprintf(" (rev)");
 		}
-	argc -= optind;
-	argv += optind;
-
-	while (argc > 0) {
-		if (isdigit(argv[0][0])) {
-			naptime = strtod(argv[0], NULL);
-			if (naptime < 0.09 || naptime > 1000.0)
-				naptime = 5.0;
-		} else {
-			struct cmdtab *p;
-
-			p = lookup(&argv[0][0]);
-			if (p == (struct cmdtab *)-1)
-				errx(1, "ambiguous request: %s", &argv[0][0]);
-			if (p == 0)
-				errx(1, "unknown request: %s", &argv[0][0]);
-			curcmd = p;
-		}
-		argc--;
-		argv++;
 	}
-
-	signal(SIGINT, sigdie);
-	siginterrupt(SIGINT, 1);
-	signal(SIGQUIT, sigdie);
-	siginterrupt(SIGQUIT, 1);
-	signal(SIGTERM, sigdie);
-	siginterrupt(SIGTERM, 1);
-	signal(SIGTSTP, sigtstp);
-	siginterrupt(SIGTSTP, 1);
-
-	/*
-	 * Initialize display.  Load average appears in a one line
-	 * window of its own.  Current command's display appears in
-	 * an overlapping sub-window of stdscr configured by the display
-	 * routines to minimize update work by curses.
-	 */
-	if (initscr() == NULL) {
-		warnx("couldn't initialize screen");
-		exit(0);
-	}
-
-	CMDLINE = LINES - 1;
-	wnd = (*curcmd->c_open)();
-	if (wnd == NULL) {
-		warnx("couldn't initialize display");
-		die();
-	}
-	wload = newwin(1, 0, 1, 20);
-	if (wload == NULL) {
-		warnx("couldn't set up load average window");
-		die();
-	}
-	gethostname(hostname, sizeof (hostname));
-	gethz();
-	(*curcmd->c_init)();
-	curcmd->c_flags |= CF_INIT;
-	labels();
-
-	dellave = 0.0;
-
-	signal(SIGALRM, sigdisplay);
-	siginterrupt(SIGALRM, 1);
-	signal(SIGWINCH, sigwinch);
-	siginterrupt(SIGWINCH, 1);
-	gotdisplay = 1;
-	noecho();
-	crmode();
-	keyboard();
-	/*NOTREACHED*/
-}
-
-void
-gethz(void)
-{
-	struct clockinfo cinf;
-	size_t  size = sizeof(cinf);
-	int	mib[2];
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CLOCKRATE;
-	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
-		return;
-	stathz = cinf.stathz;
-	hz = cinf.hz;
-}
-
-static void
-usage(void)
-{
-	fprintf(stderr, "usage: systat [-n] [-w wait] [display] [refresh-interval]\n");
-	exit(1);
-}
-
-
-void
-labels(void)
-{
-	if (curcmd->c_flags & CF_LOADAV)
-		mvprintw(0, 2 + 4, "users    Load");
-	(*curcmd->c_label)();
-#ifdef notdef
-	mvprintw(21, 25, "CPU usage on %s", hostname);
 #endif
-	refresh();
+
+	getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
+	extern int ucount();
+	char tbuf[26];
+	time_t now;
+
+	time(&now);
+	strlcpy(tbuf, ctime(&now), sizeof tbuf);
+	tbprintf("   %d users", ucount());
+	tbprintf("    Load %.2f %.2f %.2f", avenrun[0], avenrun[1], avenrun[2]);
+	if (num_disp && (start > 1 || end != num_disp))
+		tbprintf("  (%u-%u of %u)", start, end, num_disp);
+
+	if (paused)
+		tbprintf(" PAUSED");
+
+	if (rawmode)
+		printf("\n\n%s\n", tmp_buf);
+	else
+		mvprintw(0, 0, "%s", tmp_buf);
+
+	mvprintw(0, TIMEPOS, "%s", tbuf);
+
+
+	return (1);
 }
 
-/*ARGSUSED*/
-void
-sigdisplay(int signo)
-{
-	gotdisplay = 1;
-}
-
-void
-display(void)
-{
-	/* Get the load average over the last minute. */
-	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
-	(*curcmd->c_fetch)();
-	if (curcmd->c_flags & CF_LOADAV) {
-		extern int ucount();
-		char tbuf[26];
-		time_t now;
-
-		time(&now);
-		strlcpy(tbuf, ctime(&now), sizeof tbuf);
-
-		putint(ucount(), 0, 2, 3);
-		putfloat(avenrun[0], 0, 2 + 17, 6, 2, 0);
-		putfloat(avenrun[1], 0, 2 + 23, 6, 2, 0);
-		putfloat(avenrun[2], 0, 2 + 29, 6, 2, 0);
-		mvaddstr(0, 2 + 53, tbuf);
-	}
-	(*curcmd->c_refresh)();
-	if (curcmd->c_flags & CF_LOADAV)
-		wrefresh(wload);
-	wrefresh(wnd);
-	move(CMDLINE, 0);
-	refresh();
-	ualarm(naptime * 1000000, 0);
-}
-
-void
-load(void)
-{
-
-	(void) getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
-	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
-	    avenrun[0], avenrun[1], avenrun[2]);
-	clrtoeol();
-}
-
-volatile sig_atomic_t gotdie;
-volatile sig_atomic_t gotdisplay;
-volatile sig_atomic_t gotwinch;
-volatile sig_atomic_t gottstp;
-
-/*ARGSUSED*/
-void
-sigdie(int signo)
-{
-	gotdie = 1;
-}
-
-/*ARGSUSED*/
-void
-sigtstp(int signo)
-{
-	gottstp = 1;
-}
-
-void
-die(void)
-{
-	if (wnd) {
-		move(CMDLINE, 0);
-		clrtoeol();
-		refresh();
-		endwin();
-	}
-	exit(0);
-}
-
-/*ARGSUSED*/
-void
-sigwinch(int signo)
-{
-	gotwinch = 1;
-}
-
+/* compatibility functions, rearrange later */
 void
 error(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[255];
-	int oy, ox;
+	char buf[MAX_LINE_BUF];
 
 	va_start(ap, fmt);
-	if (wnd) {
-		getyx(stdscr, oy, ox);
-		(void) vsnprintf(buf, sizeof buf, fmt, ap);
-		clrtoeol();
-		standout();
-		mvaddstr(CMDLINE, 0, buf);
-		standend();
-		move(oy, ox);
-		refresh();
-	} else {
-		(void) vfprintf(stderr, fmt, ap);
-		fprintf(stderr, "\n");
-	}
+	vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
+
+	message_set(buf);
 }
 
 void
@@ -350,6 +167,27 @@ nlisterr(struct nlist namelist[])
 	exit(1);
 }
 
+void
+die(void)
+{
+	if (!rawmode)
+		endwin();
+	exit(0);
+}
+
+
+int
+prefix(char *s1, char *s2)
+{
+
+	while (*s1 == *s2) {
+		if (*s1 == '\0')
+			return (1);
+		s1++, s2++;
+	}
+	return (*s1 == '\0');
+}
+
 /* calculate number of users on the system */
 int
 ucount(void)
@@ -365,4 +203,308 @@ ucount(void)
 			nusers++;
 
 	return (nusers);
+}
+
+/* main program functions */
+
+void
+usage()
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-abhir] [-c cache] [-d cnt]", __progname);
+	fprintf(stderr, " [-o field] [-s time] [-w width] [view] [num]\n");
+	exit(1);
+}
+
+
+void
+add_view_tb(field_view *v)
+{
+	if (curr_view == v)
+		tbprintf("[%s] ", v->name);
+	else
+		tbprintf("%s ", v->name);
+}
+
+void
+show_help(void)
+{
+	int line = 0;
+
+	if (rawmode)
+		return;
+
+	tb_start();
+	foreach_view(add_view_tb);
+	tb_end();
+	message_set(tmp_buf);
+
+#if 0
+	erase();
+	mvprintw(line, 2, "Systat Help");
+	line += 2;
+	mvprintw(line,    5, " h  - Help (this page)");
+	mvprintw(line++, 40, " l  - set number of Lines");
+	mvprintw(line,    5, " p  - Pause display");
+	mvprintw(line++, 40, " s  - Set update interval");
+	mvprintw(line,    5, " v  - next View");
+	mvprintw(line++, 40, " q  - Quit");
+	line++;
+	mvprintw(line++, 5, "0-7 - select view directly");
+	mvprintw(line++, 5, "SPC - update immediately");
+	mvprintw(line++, 5, "^L  - refresh display");
+	line++;
+	mvprintw(line++, 5, "cursor keys - scroll display");
+	line++;
+	mvprintw(line++,  3, "Netstat specific keys::");
+	mvprintw(line,    5, " t  - toggle TCP display");
+	mvprintw(line++, 40, " u  - toggle UDP display");
+	mvprintw(line++,  5, " n  - toggle Name resolution");
+	line++;
+	mvprintw(line++,  3, "Ifstat specific keys::");
+	mvprintw(line,    5, " r  - initialize RUN mode");
+	mvprintw(line++, 40, " b  - set BOOT mode");
+	mvprintw(line,    5, " t  - set TIME mode (default)");
+	line++;
+	line++;
+	mvprintw(line++,  3, "VMstat specific keys::");
+	mvprintw(line,    5, " r  - initialize RUN mode");
+	mvprintw(line++, 40, " b  - set BOOT mode");
+	mvprintw(line,    5, " t  - set TIME mode (default)");
+	mvprintw(line++, 40, " z  - zero in RUN mode");
+	line++;
+	mvprintw(line++, 6, "press any key to continue ...");
+
+	while (getch() == ERR) {
+		if (gotsig_close)
+			break;
+	}
+#endif
+}
+
+void
+cmd_compat(void)
+{
+	char *s;
+
+	if (strcasecmp(cmdbuf, "help") == 0) {
+		show_help();
+		need_update = 1;
+		return;
+	}
+	if (strcasecmp(cmdbuf, "quit") == 0) {
+		gotsig_close = 1;
+		return;
+	}
+
+	for (s = cmdbuf; *s && strchr("0123456789+-.eE", *s) != NULL; s++)
+		;
+	if (*s) {
+		if (set_view(cmdbuf))
+			error("Invalid/ambigious view: %s", cmdbuf);
+	} else
+		cmd_delay();
+}
+
+void
+cmd_delay(void)
+{
+	double del;
+	del = atof(cmdbuf);
+	error("delay: %g", del);
+	if (del > 0) {
+		udelay = (useconds_t)(del * 1000000);
+		gotsig_alarm = 1;
+	}
+}
+
+void
+cmd_count(void)
+{
+	int ms;
+	ms = atoi(cmdbuf);
+
+	if (ms <= 0 || ms > lines - HEADER_LINES)
+		maxprint = lines - HEADER_LINES;
+	else
+		maxprint = ms;
+}
+
+
+int
+keyboard_callback(int ch)
+{
+	switch (ch) {
+	case '?':
+		/* FALLTHROUGH */
+	case 'h':
+		show_help();
+		need_update = 1;
+		break;
+	case 'l':
+		command_set(&cm_count, NULL);
+		break;
+	case 's':
+		command_set(&cm_delay, NULL);
+		break;
+	case ':':
+		command_set(&cm_compat, NULL);
+		break;
+	default:
+		return 0;
+	};
+
+	return 1;
+}
+
+void
+initialize(void)
+{
+	engine_initialize();
+
+	initvmstat();
+	initpigs();
+	initifstat();
+	initiostat();
+	initsensors();
+	initmembufs();
+	initnetstat();
+	initswap();
+	initpftop();
+	initpf();
+}
+
+void
+gethz(void)
+{
+	struct clockinfo cinf;
+	size_t  size = sizeof(cinf);
+	int	mib[2];
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
+		return;
+	stathz = cinf.stathz;
+	hz = cinf.hz;
+}
+
+int
+main(int argc, char *argv[])
+{
+	char errbuf[_POSIX2_LINE_MAX];
+	extern char *optarg;
+	extern int optind;
+	double delay = 5;
+
+	char *viewstr = NULL;
+
+	gid_t gid;
+	int countmax = 0;
+	int maxlines = 0;
+
+	int ch;
+
+	ut = open(_PATH_UTMP, O_RDONLY);
+	if (ut < 0) {
+		warn("No utmp");
+	}
+
+	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	if (kd == NULL)
+		warnx("kvm_openfiles: %s", errbuf);
+
+	gid = getgid();
+	if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid");
+
+	while ((ch = getopt(argc, argv, "abd:hins:S:w:")) != -1) {
+		switch (ch) {
+		case 'a':
+			maxlines = -1;
+			break;
+		case 'b':
+			rawmode = 1;
+			interactive = 0;
+			break;
+		case 'd':
+			countmax = atoi(optarg);
+			if (countmax < 0)
+				countmax = 0;
+			break;
+		case 'i':
+			interactive = 1;
+			break;
+		case 'n':
+			nflag = 1;
+			break;
+		case 's':
+			delay = atof(optarg);
+			if (delay < 0)
+				delay = 5;
+			break;
+		case 'S':
+			dispstart = atoi(optarg);
+			if (dispstart < 0)
+				dispstart = 0;
+			break;
+		case 'w':
+			rawwidth = atoi(optarg);
+			if (rawwidth < 1)
+				rawwidth = DEFAULT_WIDTH;
+			if (rawwidth >= MAX_LINE_BUF)
+				rawwidth = MAX_LINE_BUF - 1;
+			break;
+		case 'h':
+			/* FALLTHROUGH */
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 1) {
+		double del = atof(argv[0]);
+		if (del == 0)
+			viewstr = argv[0];
+		else
+			delay = del;
+	} else if (argc == 2) {
+		viewstr = argv[0];
+		delay = atof(argv[1]);
+	}
+
+	udelay = (useconds_t)(delay * 1000000.0);
+	if (udelay < 1)
+		udelay = 1;
+
+	gethostname(hostname, sizeof (hostname));
+	gethz();
+
+	initialize();
+
+	set_order(NULL);
+	if (viewstr && set_view(viewstr)) {
+		fprintf(stderr, "Unknown/ambigious view name: %s\n", viewstr);
+		return 1;
+	}
+
+	if (!isatty(STDOUT_FILENO)) {
+		rawmode = 1;
+		interactive = 0;
+	}
+
+	setup_term(maxlines);
+
+	if (rawmode && countmax == 0)
+		countmax = 1;
+
+	gotsig_alarm = 1;
+
+	engine_loop(countmax);
+
+	return 0;
 }

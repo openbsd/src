@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.63 2007/09/01 19:32:19 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.64 2008/06/12 22:26:01 canacar Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.63 2007/09/01 19:32:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.64 2008/06/12 22:26:01 canacar Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,6 @@ static char rcsid[] = "$OpenBSD: vmstat.c,v 1.63 2007/09/01 19:32:19 deraadt Exp
 #include <unistd.h>
 
 #include "systat.h"
-#include "extern.h"
 
 static struct Info {
 	long	time[CPUSTATES];
@@ -71,7 +70,7 @@ static struct Info {
 	struct	nchstats nchstats;
 	long	nchcount;
 	u_quad_t *intrcnt;
-} s, s1, s2, z;
+} s, s1, s2, s3, z;
 
 #include "dkstats.h"
 extern struct _disk	cur;
@@ -93,6 +92,11 @@ void putint(int, int, int, int);
 void putuint64(u_int64_t, int, int, int);
 void putfloat(double, int, int, int, int, int);
 int ucount(void);
+
+void print_vm(void);
+int read_vm(void);
+int select_vm(void);
+int vm_keyboard_callback(int);
 
 static	time_t t;
 static	double etime;
@@ -145,10 +149,26 @@ closekre(WINDOW *w)
 
 #define	DRIVESPACE	45	/* max space for drives */
 
+
+field_def *view_vm_0[] = {
+	NULL
+};
+
+/* Define view managers */
+struct view_manager vmstat_mgr = {
+	"VMstat", select_vm, read_vm, NULL, print_header,
+	print_vm, vm_keyboard_callback, NULL, NULL
+};
+
+field_view views_vm[] = {
+	{view_vm_0, "vmstat", '7', &vmstat_mgr},
+	{NULL, NULL, 0, NULL}
+};
+
 int ncpu = 1;
 
 int
-initkre(void)
+initvmstat(void)
 {
 	int mib[4], i;
 	size_t size;
@@ -193,17 +213,24 @@ initkre(void)
 	allocinfo(&s);
 	allocinfo(&s1);
 	allocinfo(&s2);
+	allocinfo(&s3);
 	allocinfo(&z);
 
 	getinfo(&s2);
-	copyinfo(&s2, &s1);
+	copyinfo(&z, &s1);
+
+	field_view *v;
+	
+	for (v = views_vm; v->name != NULL; v++)
+		add_view(v);
+
 	return(1);
 }
 
 void
 fetchkre(void)
 {
-	getinfo(&s);
+	getinfo(&s3);
 }
 
 void
@@ -278,10 +305,9 @@ labelkre(void)
 	}
 }
 
-#define X(fld)	{t=s.fld[i]; s.fld[i]-=s1.fld[i]; if (state==TIME) s1.fld[i]=t;}
-#define Y(fld)	{t = s.fld; s.fld -= s1.fld; if (state == TIME) s1.fld = t;}
-#define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
-	if (state == TIME) s1.nchstats.fld = t;}
+#define X(fld)	{s.fld[i]; s.fld[i]-=s1.fld[i];}
+#define Y(fld)	{s.fld; s.fld -= s1.fld;}
+#define Z(fld)	{s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld;}
 #define PUTRATE(fld, l, c, w) \
 	do { \
 		Y(fld); \
@@ -302,7 +328,6 @@ showkre(void)
 	static int failcnt = 0, first_run = 0;
 
 	if (state == TIME) {
-		dkswap();
 		if (!first_run) {
 			first_run = 1;
 			return;
@@ -315,14 +340,8 @@ showkre(void)
 	}
 	if (etime < 5.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
-			clear();
-			mvprintw(2, 10, "The alternate system clock has died!");
-			mvprintw(3, 10, "Reverting to ``pigs'' display.");
-			move(CMDLINE, 0);
-			refresh();
+			error("The alternate system clock has died!");
 			failcnt = 0;
-			sleep(5);
-			command("pigs");
 		}
 		return;
 	}
@@ -342,8 +361,6 @@ showkre(void)
 		}
 		t = intcnt = s.intrcnt[i];
 		s.intrcnt[i] -= s1.intrcnt[i];
-		if (state == TIME)
-			s1.intrcnt[i] = intcnt;
 		intcnt = (u_int64_t)((float)s.intrcnt[i]/etime + 0.5);
 		inttotal += intcnt;
 		putuint64(intcnt, intrloc[i], INTSCOL, 8);
@@ -353,8 +370,6 @@ showkre(void)
 	Z(ncs_long); Z(ncs_pass2); Z(ncs_2passes);
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
 	    nchtotal.ncs_miss + nchtotal.ncs_long;
-	if (state == TIME)
-		s1.nchcount = s.nchcount;
 
 	psiz = 0;
 	f2 = 0.0;
@@ -453,30 +468,28 @@ showkre(void)
 }
 
 int
-cmdkre(char *cmd, char *args)
+vm_keyboard_callback(int ch)
 {
-
-	if (prefix(cmd, "run")) {
+	switch(ch) {
+	case 'r':
 		copyinfo(&s2, &s1);
 		state = RUN;
-		return (1);
-	}
-	if (prefix(cmd, "boot")) {
+		break;
+	case 'b':
 		state = BOOT;
 		copyinfo(&z, &s1);
-		return (1);
-	}
-	if (prefix(cmd, "time")) {
+		break;
+	case 't':
 		state = TIME;
-		return (1);
-	}
-	if (prefix(cmd, "zero")) {
+		break;
+	case 'z':
 		if (state == RUN)
 			getinfo(&s1);
-		return (1);
+		break;
 	}
-	return (dkcmd(cmd, args));
+	return (keyboard_callback(ch));
 }
+
 
 static float
 cputime(int indx)
@@ -603,7 +616,7 @@ getinfo(struct Info *s)
 static void
 allocinfo(struct Info *s)
 {
-
+	memset(s, 0, sizeof(*s));
 	s->intrcnt = (u_quad_t *) calloc(nintr, sizeof(u_quad_t));
 	if (s->intrcnt == NULL)
 		errx(2, "out of memory");
@@ -638,4 +651,34 @@ dinfo(int dn, int c)
 	    DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
 	putfloat(atime/etime, DISKROW + 4, c, 5, 1, 1);
+}
+
+
+
+int
+select_vm(void)
+{
+	num_disp = 0;
+	return (0);
+}
+
+int
+read_vm(void)
+{
+	if (state == TIME)
+		copyinfo(&s3, &s1);
+	fetchkre();
+	if (state == TIME)
+		dkswap();
+	num_disp = 0;
+	return 0;
+}
+
+
+void
+print_vm(void)
+{
+	copyinfo(&s3, &s);
+	labelkre();
+	showkre();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.11 2007/09/05 20:31:34 mk Exp $ */
+/*	$OpenBSD: if.c,v 1.12 2008/06/12 22:26:01 canacar Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "systat.h"
-#include "extern.h"
 
 static  enum state { BOOT, TIME, RUN } state = TIME;
 
@@ -50,32 +49,73 @@ struct ifstat {
 } *ifstats;
 
 static	int nifs = 0;
+static int num_ifs = 0;
 
-const char	*showlinkstate(int);
+void print_if(void);
+int read_if(void);
+int select_if(void);
+int if_keyboard_callback(int);
 
-WINDOW *
-openifstat(void)
-{
+static void fetchifstat(void);
+static void showifstat(struct ifstat *);
+static void showtotal(void);
 
-	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
-}
 
-void
-closeifstat(WINDOW *w)
-{
+/* Define fields */
+field_def fields_if[] = {
+	{"IFACE", 8, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"STATE", 10, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"IPKTS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"IBYTES", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"IERRS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"OPKTS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"OBYTES", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"OERRS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"COLLS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+};
 
-	if (w == NULL)
-		return;
-	wclear(w);
-	wrefresh(w);
-	delwin(w);
-}
+
+#define FIELD_ADDR(x) (&fields_if[x])
+
+#define FLD_IF_IFACE	FIELD_ADDR(0)
+#define FLD_IF_STATE	FIELD_ADDR(1)
+#define FLD_IF_IPKTS	FIELD_ADDR(2)
+#define FLD_IF_IBYTES	FIELD_ADDR(3)
+#define FLD_IF_IERRS	FIELD_ADDR(4)
+#define FLD_IF_OPKTS	FIELD_ADDR(5)
+#define FLD_IF_OBYTES	FIELD_ADDR(6)
+#define FLD_IF_OERRS	FIELD_ADDR(7)
+#define FLD_IF_COLLS	FIELD_ADDR(8)
+
+
+/* Define views */
+field_def *view_if_0[] = {
+	FLD_IF_IFACE, FLD_IF_STATE, FLD_IF_IPKTS, FLD_IF_IBYTES,
+	FLD_IF_IERRS, FLD_IF_OPKTS, FLD_IF_OBYTES, FLD_IF_OERRS,
+	FLD_IF_COLLS, NULL
+};
+
+/* Define view managers */
+
+struct view_manager ifstat_mgr = {
+	"Ifstat", select_if, read_if, NULL, print_header,
+	print_if, if_keyboard_callback, NULL, NULL
+};
+
+field_view views_if[] = {
+	{view_if_0, "ifstat", '1', &ifstat_mgr},
+	{NULL, NULL, 0, NULL}
+};
+
 
 int
 initifstat(void)
 {
+	field_view *v;
+	read_if();
+	for (v = views_if; v->name != NULL; v++)
+		add_view(v);
 
-	fetchifstat();
 	return(1);
 }
 
@@ -105,7 +145,45 @@ rt_getaddrinfo(struct sockaddr *sa, int addrs, struct sockaddr **info)
 	}
 }
 
+
+
+int
+select_if(void)
+{
+	num_disp = num_ifs + 1;
+	return (0);
+}
+
+int
+read_if(void)
+{
+	fetchifstat();
+	num_disp = num_ifs + 1;
+
+	return 0;
+}
+
 void
+print_if(void)
+{
+	int n, i, count = 0;
+
+	for (n = 0, i = 0; n < nifs; n++) {
+		if (ifstats[n].ifs_name[0] == '\0')
+			continue;
+		if (i++ < dispstart)
+			continue;
+		if (i == num_disp)
+			break;
+		showifstat(ifstats + n);
+		if (maxprint > 0 && ++count >= maxprint)
+			return;
+	}
+	showtotal();
+}
+
+
+static void
 fetchifstat(void)
 {
 	struct ifstat *newstats, *ifs;
@@ -133,6 +211,7 @@ fetchifstat(void)
 	}
 
 	bzero(&sum, sizeof(sum));
+	num_ifs = 0;
 
 	lim = buf + need;
 	for (next = buf; next < lim; next += ifm.ifm_msglen) {
@@ -141,12 +220,12 @@ fetchifstat(void)
 		   !(ifm.ifm_addrs & RTA_IFP))
 			continue;
 		if (ifm.ifm_index >= nifs) {
-			if ((newstats = realloc(ifstats, (ifm.ifm_index + 4) *
-			    sizeof(struct ifstat))) == NULL)
+			if ((newstats = realloc(ifstats, (ifm.ifm_index + 4)
+			    * sizeof(struct ifstat))) == NULL)
 				continue;
 			ifstats = newstats;
 			for (; nifs < ifm.ifm_index + 4; nifs++)
-				ifstats[nifs].ifs_name[0] = '\0';
+				bzero(&ifstats[nifs], sizeof(*ifstats));
 		}
 		ifs = &ifstats[ifm.ifm_index];
 		if (ifs->ifs_name[0] == '\0') {
@@ -165,6 +244,7 @@ fetchifstat(void)
 			if (ifs->ifs_name[0] == '\0')
 				continue;
 		}
+		num_ifs++;
 		UPDATE(ifc_ip, ifm_data.ifi_ipackets);
 		UPDATE(ifc_ib, ifm_data.ifi_ibytes);
 		UPDATE(ifc_ie, ifm_data.ifi_ierrors);
@@ -178,107 +258,88 @@ fetchifstat(void)
 	free(buf);
 }
 
-#define INSET 0
 
-void
-labelifstat(void)
+static void
+showifstat(struct ifstat *ifs)
 {
+	print_fld_str(FLD_IF_IFACE, ifs->ifs_name);
 
-	wmove(wnd, 0, 0);
-	wclrtobot(wnd);
+	tb_start();
+	tbprintf("%s", ifs->ifs_cur.ifc_flags & IFF_UP ?
+		 "up" : "dn");
 
-	mvwaddstr(wnd, 1, INSET, "Iface");
-	mvwaddstr(wnd, 1, INSET+9, "State");
-	mvwaddstr(wnd, 1, INSET+19, "Ibytes");
-	mvwaddstr(wnd, 1, INSET+29, "Ipkts");
-	mvwaddstr(wnd, 1, INSET+36, "Ierrs");
-	mvwaddstr(wnd, 1, INSET+48, "Obytes");
-	mvwaddstr(wnd, 1, INSET+58, "Opkts");
-	mvwaddstr(wnd, 1, INSET+65, "Oerrs");
-	mvwaddstr(wnd, 1, INSET+74, "Colls");
-}
-
-#define FMT "%-8.8s %2s%2s  %10llu %8llu %6llu   %10llu %8llu %6llu   %6llu "
-
-const char *
-showlinkstate(int state)
-{
-	switch (state) {
+	switch (ifs->ifs_cur.ifc_state) {
 	case LINK_STATE_UP:
 	case LINK_STATE_HALF_DUPLEX:
 	case LINK_STATE_FULL_DUPLEX:
-		return (":U");
+		tbprintf(":U");
+		break;
 	case LINK_STATE_DOWN:
-		return (":D");
-	case LINK_STATE_UNKNOWN:
-	default:
-		return ("");
+		tbprintf (":D");
+		break;
 	}
+
+	print_fld_tb(FLD_IF_STATE);
+
+	print_fld_size(FLD_IF_IBYTES, ifs->ifs_cur.ifc_ib);
+	print_fld_size(FLD_IF_IPKTS, ifs->ifs_cur.ifc_ip);
+	print_fld_size(FLD_IF_IERRS, ifs->ifs_cur.ifc_ie);
+
+	print_fld_size(FLD_IF_OBYTES, ifs->ifs_cur.ifc_ob);
+	print_fld_size(FLD_IF_OPKTS, ifs->ifs_cur.ifc_op);
+	print_fld_size(FLD_IF_OERRS, ifs->ifs_cur.ifc_oe);
+
+	print_fld_size(FLD_IF_COLLS, ifs->ifs_cur.ifc_co);
+
+	end_line();
 }
 
-void
-showifstat(void)
+static void
+showtotal(void)
 {
-	int row;
-	struct ifstat *ifs;
+	print_fld_str(FLD_IF_IFACE, "Totals");
 
-	row = 2;
-	wmove(wnd, 0, 0);
-	wclrtoeol(wnd);
-	for (ifs = ifstats; ifs < ifstats + nifs; ifs++) {
-		if (ifs->ifs_name[0] == '\0')
-			continue;
-		mvwprintw(wnd, row++, INSET, FMT,
-		    ifs->ifs_name,
-		    ifs->ifs_cur.ifc_flags & IFF_UP ? "up" : "dn",
-		    showlinkstate(ifs->ifs_cur.ifc_state),
-		    ifs->ifs_cur.ifc_ib,
-		    ifs->ifs_cur.ifc_ip,
-		    ifs->ifs_cur.ifc_ie,
-		    ifs->ifs_cur.ifc_ob,
-		    ifs->ifs_cur.ifc_op,
-		    ifs->ifs_cur.ifc_oe,
-		    ifs->ifs_cur.ifc_co);
-	}
-	mvwprintw(wnd, row++, INSET, FMT,
-	    "Totals",
-	    "", "",
-	    sum.ifc_ib,
-	    sum.ifc_ip,
-	    sum.ifc_ie,
-	    sum.ifc_ob,
-	    sum.ifc_op,
-	    sum.ifc_oe,
-	    sum.ifc_co);
+	print_fld_size(FLD_IF_IBYTES, sum.ifc_ib);
+	print_fld_size(FLD_IF_IPKTS, sum.ifc_ip);
+	print_fld_size(FLD_IF_IERRS, sum.ifc_ie);
+
+	print_fld_size(FLD_IF_OBYTES, sum.ifc_ob);
+	print_fld_size(FLD_IF_OPKTS, sum.ifc_op);
+	print_fld_size(FLD_IF_OERRS, sum.ifc_oe);
+
+	print_fld_size(FLD_IF_COLLS, sum.ifc_co);
+
+	end_line();
+
 }
 
 int
-cmdifstat(char *cmd, char *args)
+if_keyboard_callback(int ch)
 {
 	struct ifstat *ifs;
 
-	if (prefix(cmd, "run")) {
-		if (state != RUN)
-			for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
-				ifs->ifs_old = ifs->ifs_now;
+	switch (ch) {
+	case 'r':
+		for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
+			ifs->ifs_old = ifs->ifs_now;
 		state = RUN;
-		return (1);
-	}
-	if (prefix(cmd, "boot")) {
+		gotsig_alarm = 1;
+
+		break;
+	case 'b':
 		state = BOOT;
 		for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
 			bzero(&ifs->ifs_old, sizeof(ifs->ifs_old));
-		return (1);
-	}
-	if (prefix(cmd, "time")) {
+		gotsig_alarm = 1;
+		break;
+	case 't':
 		state = TIME;
-		return (1);
-	}
-	if (prefix(cmd, "zero")) {
-		if (state == RUN)
-			for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
-				ifs->ifs_old = ifs->ifs_now;
-		return (1);
-	}
-	return (1);
+		gotsig_alarm = 1;
+		break;
+	default:
+		return keyboard_callback(ch);
+	};
+
+	return 1;
 }
+

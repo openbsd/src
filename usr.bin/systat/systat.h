@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.8 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: systat.h,v 1.9 2008/06/12 22:26:01 canacar Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -32,19 +32,14 @@
  *	@(#)systat.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <curses.h>
+#ifndef _SYSTAT_H_
+#define _SYSTAT_H_
 
-struct  cmdtab {
-	char	*c_name;			/* command name */
-	void	(*c_refresh)(void);		/* display refresh */
-	void	(*c_fetch)(void);		/* sets up data structures */
-	void	(*c_label)(void);		/* label display */
-	int	(*c_init)(void);		/* initialize namelist, etc. */
-	WINDOW	*(*c_open)(void);		/* open display */
-	void	(*c_close)(WINDOW *);		/* close display */
-	int	(*c_cmd)(char *, char *);	/* display command interpreter */
-	char	c_flags;			/* see below */
-};
+#include <sys/cdefs.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include "engine.h"
+
 
 #define	CF_INIT		0x1		/* been initialized */
 #define	CF_LOADAV	0x2		/* display w/ load average */
@@ -56,3 +51,39 @@ struct  cmdtab {
 #define NVAL(indx)  namelist[(indx)].n_value
 #define NPTR(indx)  (void *)NVAL((indx))
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
+int kvm_ckread(void *, void *, size_t);
+
+extern char	**dr_name;
+extern char	hostname[];
+extern double	avenrun[3];
+extern kvm_t	*kd;
+extern long	ntext;
+extern int	*dk_select;
+extern int	dk_ndrive;
+extern int	hz, stathz;
+extern double	naptime;
+extern size_t	nhosts;
+extern size_t	nports;
+extern int	protos;
+extern int	verbose;
+extern int	nflag;
+
+struct inpcb;
+
+void die(void);
+int print_header(void);
+int keyboard_callback(int);
+int initnetstat(void);
+int initifstat(void);
+int initiostat(void);
+int initsensors(void);
+int initmembufs(void);
+int initpigs(void);
+int initswap(void);
+int initvmstat(void);
+int initpf(void);
+
+void error(const char *fmt, ...);
+void nlisterr(struct nlist []);
+
+#endif

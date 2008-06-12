@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.21 2007/09/02 15:19:35 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.22 2008/06/12 22:26:01 canacar Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -30,13 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
-#endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.21 2007/09/02 15:19:35 deraadt Exp $";
-#endif /* not lint */
-
 /*
  * Pigs display from Bill Reeves at Lucasfilm
  */
@@ -56,86 +49,183 @@ static char rcsid[] = "$OpenBSD: pigs.c,v 1.21 2007/09/02 15:19:35 deraadt Exp $
 #include <stdlib.h>
 #include <string.h>
 
-#include "extern.h"
 #include "systat.h"
 
 int compar(const void *, const void *);
+void print_pg(void);
+int read_pg(void);
+int select_pg(void);
+void showpigs(int k);
 
-static int nproc;
-static struct p_times {
-	float pt_pctcpu;
-	struct kinfo_proc2 *pt_kp;
-} *pt;
+static struct kinfo_proc2 *procbase = NULL;
+static int nproc, pigs_cnt, *pb_indices = NULL;
+static int onproc = -1;
 
 static long stime[CPUSTATES];
 static double  lccpu;
-
-WINDOW *
-openpigs(void)
-{
-	return (subwin(stdscr, LINES-1-2, 0, 2, 0));
-}
-
-void
-closepigs(WINDOW *w)
-{
-	if (w == NULL)
-		return;
-	wclear(w);
-	wrefresh(w);
-	delwin(w);
-}
-
-
-void
-showpigs(void)
-{
-	int i, j, y, k;
-	struct kinfo_proc2 *kp;
-	float total;
-	int factor;
-	char *uname, *pname, pidname[30];
-
-	if (pt == NULL)
-		return;
-	/* Accumulate the percent of cpu per user. */
-	total = 0.0;
-	for (i = 0; i <= nproc; i++) {
-		/* Accumulate the percentage. */
-		total += pt[i].pt_pctcpu;
-	}
-
-	if (total < 1.0)
-		total = 1.0;
-	factor = 50.0/total;
-
-	qsort(pt, nproc + 1, sizeof (struct p_times), compar);
-	y = 1;
-	i = nproc + 1;
-	if (i > wnd->_maxy-1)
-		i = wnd->_maxy-1;
-	for (k = 0; i > 0 && pt[k].pt_pctcpu > 0.01; i--, y++, k++) {
-		kp = pt[k].pt_kp;
-		if (kp == NULL) {
-			uname = "";
-			pname = "<idle>";
-		} else {
-			uname = user_from_uid(kp->p_uid, 0);
-			pname = kp->p_comm;
-		}
-		wmove(wnd, y, 0);
-		wclrtoeol(wnd);
-		mvwaddstr(wnd, y, 0, uname);
-		snprintf(pidname, sizeof pidname, "%10.10s", pname);
-		mvwaddstr(wnd, y, 9, pidname);
-		wmove(wnd, y, 20);
-		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
-			waddch(wnd, 'X');
-	}
-	wmove(wnd, y, 0); wclrtobot(wnd);
-}
-
 struct loadavg sysload;
+
+
+
+field_def fields_pg[] = {
+	{"USER", 6, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"NAME", 10, 24, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"PID", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"CPU", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"", 30, 60, 1, FLD_ALIGN_BAR, -1, 0, 0, 100},
+};
+
+#define FIELD_ADDR(x) (&fields_pg[x])
+
+#define FLD_PG_USER	FIELD_ADDR(0)
+#define FLD_PG_NAME	FIELD_ADDR(1)
+#define FLD_PG_PID	FIELD_ADDR(2)
+#define FLD_PG_VALUE	FIELD_ADDR(3)
+#define FLD_PG_BAR	FIELD_ADDR(4)
+
+/* Define views */
+field_def *view_pg_0[] = {
+	FLD_PG_PID, FLD_PG_USER, FLD_PG_NAME, FLD_PG_VALUE, FLD_PG_BAR, NULL
+};
+
+
+/* Define view managers */
+struct view_manager pigs_mgr = {
+	"Pigs", select_pg, read_pg, NULL, print_header,
+	print_pg, keyboard_callback, NULL, NULL
+};
+
+field_view views_pg[] = {
+	{view_pg_0, "pigs", '5', &pigs_mgr},
+	{NULL, NULL, 0, NULL}
+};
+
+
+#ifdef FSCALE
+# define FIXED_LOADAVG FSCALE
+# define FIXED_PCTCPU FSCALE
+#endif
+
+#ifdef FIXED_PCTCPU
+  typedef long pctcpu;
+# define pctdouble(p) ((double)(p) / FIXED_PCTCPU)
+#else
+typedef double pctcpu;
+# define pctdouble(p) (p)
+#endif
+
+int
+select_pg(void)
+{
+	num_disp = pigs_cnt;
+	return (0);
+}
+
+
+int
+getprocs(void)
+{
+	size_t size;
+	int mib[6] = {CTL_KERN, KERN_PROC2, KERN_PROC_KTHREAD, 0, sizeof(struct kinfo_proc2), 0};
+	
+	int st;
+
+	free(procbase);
+	procbase = NULL;
+
+	st = sysctl(mib, 6, NULL, &size, NULL, 0);
+	if (st == -1)
+		return (1);
+
+	size = 5 * size / 4;		/* extra slop */
+	if ((procbase = malloc(size + 1)) == NULL)
+		return (1);
+
+	mib[5] = (int)(size / sizeof(struct kinfo_proc2));
+	st = sysctl(mib, 6, procbase, &size, NULL, 0);
+	if (st == -1)
+		return (1);
+
+	nproc = (int)(size / sizeof(struct kinfo_proc2));
+	return (0);
+}
+
+
+int
+read_pg(void)
+{
+	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
+	long ctime[CPUSTATES];
+	double t;
+	int i, k;
+	size_t size;
+
+	num_disp = pigs_cnt = 0;
+
+	if (getprocs()) {
+		error("Failed to read process info!");
+		return 1;
+	}
+
+	if (nproc > onproc) {
+		int *p;
+		p = realloc(pb_indices, (nproc + 1) * sizeof(int));
+		if (p == NULL) {
+			error("Out of Memory!");
+			return 1;
+		}
+		pb_indices = p;
+		onproc = nproc;
+	}
+
+	memset(&procbase[nproc], 0, sizeof(*procbase));
+
+	for (i = 0; i <= nproc; i++)
+		pb_indices[i] = i;
+
+	/*
+	 * and for the imaginary "idle" process
+	 */
+	size = sizeof(ctime);
+	sysctl(cp_time_mib, 2, &ctime, &size, NULL, 0);
+
+	t = 0;
+	for (i = 0; i < CPUSTATES; i++)
+		t += ctime[i] - stime[i];
+	if (t == 0.0)
+		t = 1.0;
+
+	procbase[nproc].p_pctcpu = (ctime[CP_IDLE] - stime[CP_IDLE]) / t / pctdouble(1);
+	for (i = 0; i < CPUSTATES; i++)
+		stime[i] = ctime[i];
+
+	qsort(pb_indices, nproc + 1, sizeof (int), compar);
+
+	pigs_cnt = 0;
+	for (k = 0; k < nproc + 1; k++) {
+		int i = pb_indices[k];
+		if (pctdouble(procbase[i].p_pctcpu) < 0.01)
+			break;
+		pigs_cnt++;
+	}
+
+	num_disp = pigs_cnt;
+	return 0;
+}
+
+
+void
+print_pg(void)
+{
+	int n, count = 0;
+
+	for (n = dispstart; n < num_disp; n++) {
+		showpigs(pb_indices[n]);
+		count++;
+		if (maxprint > 0 && count >= maxprint)
+			break;
+	}
+}
 
 int
 initpigs(void)
@@ -143,91 +233,68 @@ initpigs(void)
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int ccpu_mib[] = { CTL_KERN, KERN_CCPU };
+	field_view *v;
 	size_t size;
 	fixpt_t ccpu;
 
 	size = sizeof(stime);
-	(void) sysctl(cp_time_mib, 2, &stime, &size, NULL, 0);
+	sysctl(cp_time_mib, 2, &stime, &size, NULL, 0);
 
 	size = sizeof(sysload);
-	(void) sysctl(sysload_mib, 2, &sysload, &size, NULL, 0);
+	sysctl(sysload_mib, 2, &sysload, &size, NULL, 0);
 
 	size = sizeof(ccpu);
-	(void) sysctl(ccpu_mib, 2, &ccpu, &size, NULL, 0);
+	sysctl(ccpu_mib, 2, &ccpu, &size, NULL, 0);
 
 	lccpu = log((double) ccpu / sysload.fscale);
+
+	for (v = views_pg; v->name != NULL; v++)
+		add_view(v);
 
 	return(1);
 }
 
 void
-fetchpigs(void)
+showpigs(int k)
 {
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
-	static int lastnproc = 0;
-	struct kinfo_proc2 *kpp;
-	long ctime[CPUSTATES];
-	double t;
-	int i;
-	size_t size;
-	float *pctp;
+	struct kinfo_proc2 *kp;
+	double value;
+	char *uname, *pname;
 
-	kpp = kvm_getproc2(kd, KERN_PROC_KTHREAD, 0, sizeof(*kpp), &nproc);
-	if (kpp == NULL) {
-		error("%s", kvm_geterr(kd));
-		if (pt)
-			free(pt);
+	if (procbase == NULL)
 		return;
-	}
-	if (nproc > lastnproc) {
-		free(pt);
-		if ((pt = calloc(nproc + 1, sizeof(struct p_times))) == NULL) {
-			error("Out of memory");
-			die();
-		}
-	}
-	lastnproc = nproc;
-	/*
-	 * calculate %cpu for each proc
-	 */
-	for (i = 0; i < nproc; i++) {
-		pt[i].pt_kp = &kpp[i];
-		pctp = &pt[i].pt_pctcpu;
-		if (kpp->p_swtime == 0)
-			*pctp = 0;
-		else
-			*pctp = ((double) kpp->p_pctcpu / sysload.fscale) /
-			    (1.0 - exp(kpp->p_swtime * lccpu));
-	}
-	/*
-	 * and for the imaginary "idle" process
-	 */
-	size = sizeof(ctime);
-	(void) sysctl(cp_time_mib, 2, &ctime, &size, NULL, 0);
 
-	t = 0;
-	for (i = 0; i < CPUSTATES; i++)
-		t += ctime[i] - stime[i];
-	if (t == 0.0)
-		t = 1.0;
-	pt[nproc].pt_kp = NULL;
-	pt[nproc].pt_pctcpu = (ctime[CP_IDLE] - stime[CP_IDLE]) / t;
-	for (i = 0; i < CPUSTATES; i++)
-		stime[i] = ctime[i];
+	value = pctdouble(procbase[k].p_pctcpu) * 100;
+
+	kp = &procbase[k];
+	if (kp->p_comm[0] == '\0') {
+		uname = "";
+		pname = "<idle>";
+	} else {
+		uname = user_from_uid(kp->p_uid, 0);
+		pname = kp->p_comm;
+		print_fld_uint(FLD_PG_PID, kp->p_pid);
+	}
+
+	tb_start();
+	tbprintf("%.2f", value);
+	print_fld_tb(FLD_PG_VALUE);
+
+	print_fld_str(FLD_PG_NAME, pname);
+	print_fld_str(FLD_PG_USER, uname);
+	print_fld_bar(FLD_PG_BAR, value);
+
+	end_line();
 }
 
-void
-labelpigs(void)
-{
-	wmove(wnd, 0, 0);
-	wclrtoeol(wnd);
-	mvwaddstr(wnd, 0, 20,
-	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
-}
 
 int
 compar(const void *a, const void *b)
 {
-	return (((struct p_times *)a)->pt_pctcpu >
-	    ((struct p_times *)b)->pt_pctcpu) ? -1 : 1;
+	int i1 = *((int *)a);
+	int i2 = *((int *)b);
+
+	return procbase[i1].p_pctcpu > 
+		procbase[i2].p_pctcpu ? -1 : 1;
 }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.17 2007/02/25 18:21:24 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.18 2008/06/12 22:26:01 canacar Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -30,13 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.17 2007/02/25 18:21:24 deraadt Exp $";
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mbuf.h>
@@ -47,7 +40,12 @@ static char rcsid[] = "$OpenBSD: mbufs.c,v 1.17 2007/02/25 18:21:24 deraadt Exp 
 #include <err.h>
 #include <paths.h>
 #include "systat.h"
-#include "extern.h"
+
+
+void print_mb(void);
+int read_mb(void);
+int select_mb(void);
+static void showmbuf(int);
 
 static struct mbstat mb;
 
@@ -68,85 +66,128 @@ char *mtnames[] = {
 	"ifaddrs",
 };
 
+#define NUM_TYPES (sizeof(mb.m_mtypes) / sizeof(mb.m_mtypes[0]))
 #define	NNAMES	(sizeof (mtnames) / sizeof (mtnames[0]))
 
-WINDOW *
-openmbufs(void)
+int mb_index[NUM_TYPES];
+int mbuf_cnt = 0;
+
+
+field_def fields_mb[] = {
+	{"TYPE", 6, 16, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"VALUE", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"", 40, 80, 1, FLD_ALIGN_BAR, -1, 0, 0, 60},
+};
+
+#define FIELD_ADDR(x) (&fields_mb[x])
+
+#define FLD_MB_NAME	FIELD_ADDR(0)
+#define FLD_MB_VALUE	FIELD_ADDR(1)
+#define FLD_MB_BAR	FIELD_ADDR(2)
+
+/* Define views */
+field_def *view_mb_0[] = {
+	FLD_MB_NAME, FLD_MB_VALUE, FLD_MB_BAR, NULL
+};
+
+
+/* Define view managers */
+struct view_manager mbuf_mgr = {
+	"Mbufs", select_mb, read_mb, NULL, print_header,
+	print_mb, keyboard_callback, NULL, NULL
+};
+
+field_view views_mb[] = {
+	{view_mb_0, "mbufs", '4', &mbuf_mgr},
+	{NULL, NULL, 0, NULL}
+};
+
+
+int
+select_mb(void)
 {
-	return (subwin(stdscr, LINES-1-2, 0, 2, 0));
+	int i, w = 50;
+
+	read_mb();
+	for (i = 0; i < NUM_TYPES; i++)
+		if (w < (5 * mb.m_mtypes[i] / 4))
+			w = 5 * mb.m_mtypes[i] / 4;
+
+	w -= w % 10;
+	FLD_MB_BAR->arg = w;
+
+	return (0);
 }
 
-void
-closembufs(WINDOW *w)
+int
+read_mb(void)
 {
-	if (w == NULL)
-		return;
-	wclear(w);
-	wrefresh(w);
-	delwin(w);
-}
-
-void
-labelmbufs(void)
-{
-	wmove(wnd, 0, 0);
-	wclrtoeol(wnd);
-	mvwaddstr(wnd, 0, 10,
-	    "/0   /5   /10  /15  /20  /25  /30  /35  /40  /45  /50  /55  /60");
-}
-
-void
-showmbufs(void)
-{
-	int i, j, max, ind;
-	char buf[13];
-
-	for (j = 0; j < wnd->_maxy; j++) {
-		max = 0, ind = -1;
-		for (i = 0; i < wnd->_maxy; i++)
-			if (mb.m_mtypes[i] > max) {
-				max = mb.m_mtypes[i];
-				ind = i;
-			}
-		if (max == 0)
-			break;
-		if (j > NNAMES)
-			mvwprintw(wnd, 1+j, 0, "%10d", ind);
-		else
-			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[ind]);
-		wmove(wnd, 1 + j, 10);
-		if (max > 60) {
-			snprintf(buf, sizeof buf, " %d", max);
-			max = 60;
-			while (max--)
-				waddch(wnd, 'X');
-			waddstr(wnd, buf);
-		} else {
-			while (max--)
-				waddch(wnd, 'X');
-			wclrtoeol(wnd);
-		}
-		mb.m_mtypes[ind] = 0;
-	}
-	wmove(wnd, 1+j, 0);
-	wclrtobot(wnd);
-}
-
-
-void
-fetchmbufs(void)
-{
-	int mib[2];
+	int mib[2], i;
 	size_t size = sizeof (mb);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MBSTAT;
-	if (sysctl(mib, 2, &mb, &size, NULL, 0) < 0)
-		err(1, "sysctl(KERN_MBSTAT) failed");
+
+	if (sysctl(mib, 2, &mb, &size, NULL, 0) < 0) {
+		error("sysctl(KERN_MBSTAT) failed");
+		return 1;
+	}
+
+	mbuf_cnt = 0;
+	memset(mb_index, 0, sizeof(mb_index));
+
+	for (i = 0; i < NUM_TYPES; i++) {
+		if (mb.m_mtypes[i])
+			mb_index[mbuf_cnt++] = i;
+	}
+
+	num_disp = mbuf_cnt;
+
+	return 0;
+}
+
+
+void
+print_mb(void)
+{
+	int n, count = 0;
+
+	for (n = dispstart; n < num_disp; n++) {
+		showmbuf(n);
+		count++;
+		if (maxprint > 0 && count >= maxprint)
+			break;
+	}
 }
 
 int
-initmbufs(void)
+initmembufs(void)
 {
-	return (1);
+	field_view *v;
+
+	for (v = views_mb; v->name != NULL; v++)
+		add_view(v);
+
+	return(1);
 }
+
+
+static void
+showmbuf(int m)
+{
+	int i;
+
+	i = mb_index[m];
+
+	if (i < NNAMES)
+		print_fld_str(FLD_MB_NAME, mtnames[i]);
+	else
+		print_fld_uint(FLD_MB_NAME, i);
+
+	print_fld_uint(FLD_MB_VALUE, mb.m_mtypes[i]);
+	print_fld_bar(FLD_MB_BAR, mb.m_mtypes[i]);
+
+	end_line();
+}
+
+
