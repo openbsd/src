@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.215 2008/05/15 19:40:38 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.216 2008/06/12 14:50:20 jsing Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2869,7 +2869,7 @@ tcp_pulloutofband(so, urgent, m, off)
 void
 tcp_xmit_timer(tp, rtt)
 	struct tcpcb *tp;
-	short rtt;
+	int rtt;
 {
 	short delta;
 	short rttmin;
