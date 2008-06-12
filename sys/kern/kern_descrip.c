@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.78 2008/05/06 20:57:19 thib Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.79 2008/06/12 18:10:06 thib Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -837,8 +837,7 @@ fdinit(struct proc *p)
 	struct filedesc0 *newfdp;
 	extern int cmask;
 
-	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
-	bzero(newfdp, sizeof(struct filedesc0));
+	newfdp = pool_get(&fdesc_pool, PR_WAITOK|PR_ZERO);
 	if (p != NULL) {
 		struct filedesc *fdp = p->p_fd;
 
