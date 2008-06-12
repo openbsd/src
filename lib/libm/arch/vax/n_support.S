@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.9 2008/06/12 16:11:36 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.10 2008/06/12 18:06:10 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -40,6 +40,8 @@
  * scalbn(x,N),
  * finite(x),
  * remainder(x,y),
+ * isinff(x),
+ * isnanf(x),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
  * Revised by K.C. Ng on 4/9/85.
  */
@@ -206,6 +208,24 @@ Rop:					#Reserved operand
 	ret
 Ret:
 	movq	$0x8000,r0		#propagate reserved op
+	ret
+
+/*
+ * int isinff(x)
+ * float x;
+ */
+
+ENTRY(isinff, 0)
+	clrl	r0
+	ret
+
+/*
+ * int isnanf(x)
+ * float x;
+ */
+        
+ENTRY(isnanf, 0)
+	clrl	r0
 	ret
 
 /*
