@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.13 2007/09/01 18:49:27 henning Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.14 2008/06/12 18:17:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -335,6 +335,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	fpadd.fp_wscale = fpioc->fp_wscale;
 	fpadd.fp_ttl = fpioc->fp_ttl;
 
+#if 0	/* XXX RYAN wants to fix logging */
 	DPFPRINTF("adding osfp %s %s %s = %s%d:%d:%d:%s%d:0x%llx %d "
 	    "(TS=%s,M=%s%d,W=%s%d) %x\n",
 	    fpioc->fp_os.fp_class_nm, fpioc->fp_os.fp_version_nm,
@@ -358,7 +359,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	    (fpadd.fp_flags & PF_OSFP_WSCALE_DC) ? "*" : "",
 	    fpadd.fp_wscale,
 	    fpioc->fp_os.fp_os);
-
+#endif
 
 	if ((fp = pf_osfp_find_exact(&pf_osfp_list, &fpadd))) {
 		 SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
