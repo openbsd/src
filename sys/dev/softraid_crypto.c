@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.20 2008/06/12 18:13:27 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.21 2008/06/12 18:23:29 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -357,6 +357,8 @@ sr_crypto_rw(struct sr_workunit *wu)
 		s = splvm();
 		if (crypto_invoke(crp))
 			rv = 1;
+		else
+			rv = crp->crp_etype;
 		splx(s);
 	} else
 		rv = sr_crypto_rw2(wu, NULL);
@@ -456,6 +458,8 @@ queued:
 	return (0);
 bad:
 	/* wu is unwound by sr_put_wu */
+	if (crp)
+		crp->crp_etype = EINVAL;
 	return (1);
 }
 
