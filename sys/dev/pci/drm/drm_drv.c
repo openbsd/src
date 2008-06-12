@@ -517,6 +517,16 @@ drm_load(drm_device_t *dev)
 #endif
 	TAILQ_INIT(&dev->files);
 
+	/*
+	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
+	 * conflict with it.
+	 */
+	retcode = drm_memrange_init(&dev->handle_mm, 1024*1024*1024, LONG_MAX);
+	if (retcode != 0) {
+		DRM_ERROR("Failed to initialise handle memrange\n");
+		goto error;
+	}
+
 	if (dev->driver.load != NULL) {
 		DRM_LOCK();
 		/* Shared code returns -errno. */
@@ -592,6 +602,8 @@ drm_unload(drm_device_t *dev)
 	DRM_DEBUG( "\n" );
 
 	drm_ctxbitmap_cleanup(dev);
+
+	drm_memrange_takedown(&dev->handle_mm);
 
 #if !defined(DRM_NO_MTRR) && !defined(DRM_NO_AGP)
 	if (dev->agp && dev->agp->mtrr) {

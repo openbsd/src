@@ -191,6 +191,22 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 	map->type = type;
 	map->flags = flags;
 
+
+	map->mm = drm_memrange_search_free(&dev->handle_mm, map->size,
+	    PAGE_SIZE, 0);
+	if (map->mm == NULL) {
+		DRM_ERROR("can't find free offset\n");
+		free(map, M_DRM);
+		return ENOMEM;
+	}
+	map->mm = drm_memrange_get_block(map->mm, map->size,
+	    PAGE_SIZE); 
+	if (map->mm == NULL) {
+		DRM_ERROR("can't get block\n");
+		free(map, M_DRM);
+		return ENOMEM;
+	}
+
 	switch ( map->type ) {
 	case _DRM_REGISTERS:
 		map->handle = drm_ioremap(dev, map);
@@ -365,7 +381,7 @@ drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 #ifndef __OpenBSD__
 	if (request->type != _DRM_SHM) 
 #endif
-		request->handle = (void *)request->offset;
+	request->handle = (void *)map->mm->start;
 
 	return 0;
 }
@@ -420,6 +436,8 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 		    map->bsr);
 	}
 #endif
+
+	drm_memrange_put_block(map->mm);
 
 	free(map, M_DRM);
 }
@@ -676,7 +694,7 @@ drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 			free(entry->buflist, M_DRM);
 		return ENOMEM;
 	}
-	
+
 	memcpy(temp_pagelist, dma->pagelist, dma->page_count * 
 	    sizeof(*dma->pagelist));
 
@@ -1184,7 +1202,7 @@ drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 			goto done;
 		}
 		size = round_page(map->size);
-		foff = map->offset;
+		foff = map->mm->start;
 	} else {
 		size = round_page(dma->byte_count),
 		foff = 0;

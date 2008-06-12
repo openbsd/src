@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.1 2007/11/28 23:56:04 deraadt Exp $
+# $OpenBSD: files.drm,v 1.2 2008/06/12 19:14:53 oga Exp $
 
 # direct rendering modules
 define drmbase
@@ -15,6 +15,7 @@ file   dev/pci/drm/drm_ioctl.c         drmbase
 file   dev/pci/drm/drm_irq.c           drmbase
 file   dev/pci/drm/drm_lock.c          drmbase
 file   dev/pci/drm/drm_memory.c        drmbase
+file   dev/pci/drm/drm_memrange.c      drmbase
 file   dev/pci/drm/drm_pci.c           drmbase
 file   dev/pci/drm/drm_scatter.c       drmbase
 file   dev/pci/drm/drm_sysctl.c        drmbase

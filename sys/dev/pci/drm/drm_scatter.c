@@ -166,8 +166,6 @@ drm_sg_dmamem_alloc(drm_device_t *dev, size_t pages)
 	bus_size_t	  	 size = pages << PAGE_SHIFT;
 	int			 ret = 0;
 
-	printf("size = %d\n", size);
-
 	dsd = malloc(sizeof(*dsd), M_DRM, M_NOWAIT | M_ZERO);
 	if (dsd == NULL)
 		return (NULL);
