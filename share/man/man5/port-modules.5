@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.13 2008/06/12 18:59:25 steven Exp $
+.\"	$OpenBSD: port-modules.5,v 1.14 2008/06/12 19:13:23 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -356,16 +356,17 @@ This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
 .It java
-Set MODJAVA_VER=x.y to use exactly the jdk x.y, MODJAVA_VER=x.y+ to
+Set MODJAVA_VER=x.y to use exactly the JDK x.y, MODJAVA_VER=x.y+ to
 use any x.y or higher version.
-Set MODJAVA_JRERUN=Yes if the port only needs the jre at runtime.
+Set MODJAVA_JRERUN=Yes if the port only needs the JRE at runtime.
 The module sets JAVA_HOME, ONLY_FOR_ARCHS, MODJAVA_RUN_DEPENDS, and
 appends to BUILD_DEPENDS and RUN_DEPENDS.
 It heeds NO_BUILD.
 .It lang/ghc
 Sets ONLY_FOR_ARCHS, MODGHC_VERSION, BUILD_DEPENDS, and RUN_DEPENDS.
 .It lang/lua
-Sets CATEGORIES, RUN_DEPENDS, and BUILD_DEPENDS if NO_BUILD is not set.
+Appends to RUN_DEPENDS and CATEGORIES. Also appends to BUILD_DEPENDS,
+unless NO_BUILD has been set to Yes.
 .It lang/ocaml
 Sets OCAML_VERSION, MODOCAML_NATIVE.
 Appends to BUILD_DEPENDS and MAKE_ENV.
@@ -374,15 +375,15 @@ the architecture supports native compilation or not.
 .It lang/python
 Sets MODPY_VERSION, MODPY_BIN, MODPY_INCDIR, MODPY_LIBDIR, MODPY_SITEPKG,
 MODPY_SETUP, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS, MODPY_BUILD_DEPENDS.
-Adds to RUN_DEPENDS unless MODPY_RUNDEP is set to "no".
+Appends to RUN_DEPENDS unless MODPY_RUNDEP is set to No.
 MODPY_VERSION is the default version used by all python modules.
-Ports which use the setuptools module should set MODPY_SETUPTOOLS to "yes".
+Ports which use the setuptools module should set MODPY_SETUPTOOLS to Yes.
 All ports that generate egg-info files should set MODPY_EGG_VERSION
 to the version string used by the port's setup.py setup() function.
 Extra arguments to the build and install commands can be passed via
 MODPY_DISTUTILS_BUILDARGS and MODPY_DISTUTILS_INSTALLARGS.
 Also affects CATEGORIES, MAKE_ENV, SHARED_ONLY, and SUBST_VARS.
-May affect regress target.
+May affect the regress target.
 .It lang/ruby
 .It lang/tcl
 Sets MODTCL_VERSION, MODTCL_BIN, MODTCL_INCDIR, and MODTCL_CONFIG.
