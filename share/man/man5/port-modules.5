@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.15 2008/06/12 19:59:52 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.16 2008/06/12 20:27:29 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -328,6 +328,8 @@ performs lazy evaluation.
 .Sh CORE MODULES DOCUMENTATION
 The following modules are available.
 .Bl -tag -width do-configure
+.It apache-module
+.It converters/libiconv
 .It cpan
 For perl ports coming from CPAN.
 Wrapper around the normal perl module that fetches the file from
@@ -341,6 +343,10 @@ to locate the right directory.
 User settings: set CPAN_REPORT to Yes, CPAN_REPORT_DB to a valid directory,
 and CPAN_REPORT_FROM to a valid email adress to automate the reporting
 of regress tests to CPAN.
+.It devel/cmake
+.It devel/gettext
+.It devel/pmk
+.It devel/scons
 .It gcc3
 If USE_GCC3=Yes, and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
 compilers will be put at the front of the path.
@@ -393,8 +399,18 @@ Also affects CATEGORIES and SUBST_VARS.
 This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
+.It textproc/intltool
+.It www/drupal5
 .It www/pear
+.It www/plone
 .It www/zope
+.It x11/gnome
+.It x11/gnustep
+.It x11/kde
+.It x11/qt
+.It x11/qt2
+.It x11/qt3
+.It x11/qt4
 .It x11/tk
 Sets MODTK_VERSION, MODTK_BIN, MODTK_INCDIR, MODTK_CONFIG,
 MODTK_BUILD_DEPENDS, and MODTK_RUN_DEPENDS.
