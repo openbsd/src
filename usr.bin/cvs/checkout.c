@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.151 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.152 2008/06/12 16:55:48 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -567,7 +567,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			cvs_ent_add(ent, entry);
 			cvs_ent_close(ent, ENT_SYNC);
 			cf->file_ent = cvs_ent_parse(entry);
-			xfree(entry);
 		}
 	} else {
 		if (co_flags & CO_MERGE) {
@@ -588,7 +587,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 
 		if (!(co_flags & CO_REMOVE)) {
 			cvs_remote_output(entry);
-			xfree(entry);
 
 			if (!(co_flags & CO_MERGE)) {
 				mode = cf->file_rcs->rf_mode;
@@ -601,4 +599,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			}
 		}
 	}
+
+	xfree(entry);
 }
