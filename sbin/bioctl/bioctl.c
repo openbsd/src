@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.62 2008/01/19 23:53:53 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.63 2008/06/12 00:19:15 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -65,6 +65,7 @@ void			bio_setstate(char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
 void			bio_createraid(u_int16_t, char *);
+void			bio_deleteraid(char *);
 u_int32_t		bio_createflags(char *);
 char			*bio_vis(char *);
 void			bio_diskinq(char *);
@@ -91,7 +92,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:C:c:l:u:H:ha:ivq")) != -1) {
+	while ((ch = getopt(argc, argv, "b:C:c:dl:u:H:ha:ivq")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -111,6 +112,10 @@ main(int argc, char *argv[])
 				cr_level = atoi(optarg);
 			else
 				cr_level = *optarg;
+			break;
+		case 'd':
+			/* delete volume */
+			func |= BIOC_DELETERAID;
 			break;
 		case 'u': /* unblink */
 			func |= BIOC_BLINK;
@@ -185,6 +190,8 @@ main(int argc, char *argv[])
 		bio_setblink(sd_dev, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg);
+	} else if (func == BIOC_DELETERAID && sd_dev != NULL) {
+		bio_deleteraid(sd_dev);
 	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
 		if (!(func & BIOC_CREATERAID))
 			errx(1, "need -c parameter");
@@ -209,7 +216,7 @@ usage(void)
 		"\t[-C flag[,flag,...]] [-c raidlevel] "
 		"[-H channel:target[.lun]]\n"
 		"\t[-l special[,special,...]] "
-		"[-u channel:target[.lun]] device\n", __progname);
+		"[-u channel:target[.lun]] [-d] device\n", __progname);
 	
 	exit(1);
 }
@@ -705,6 +712,18 @@ bio_createflags(char *lst)
 	}
 
 	return (flags);
+}
+
+void
+bio_deleteraid(char *dev)
+{
+	struct bioc_deleteraid	bd;
+	memset(&bd, 0, sizeof(bd));
+
+	bd.bd_cookie = bd.bd_cookie;
+	strlcpy(bd.bd_dev, dev, sizeof bd.bd_dev);
+	if (ioctl(devh, BIOCDELETERAID, &bd))
+		errx(1, "delete volume %s failed", dev);
 }
 
 #define BIOCTL_VIS_NBUF		4

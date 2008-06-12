@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.107 2008/06/11 00:26:18 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.108 2008/06/12 00:19:15 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -91,6 +91,8 @@ int			sr_ioctl_setstate(struct sr_softc *,
 			    struct bioc_setstate *);
 int			sr_ioctl_createraid(struct sr_softc *,
 			    struct bioc_createraid *, int);
+int			sr_ioctl_deleteraid(struct sr_softc *,
+			    struct bioc_deleteraid *);
 int			sr_open_chunks(struct sr_softc *,
 			    struct sr_chunk_head *, dev_t *, int);
 int			sr_read_meta(struct sr_discipline *);
@@ -423,6 +425,12 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		}
 	}
 
+	if (sd->sd_deleted) {
+		printf("%s: %s device is being deleted, failing io\n",
+		    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+		goto stuffup;
+	}
+
 	if ((wu = sr_get_wu(sd)) == NULL) {
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd no wu\n", DEVNAME(sc));
 		return (TRY_AGAIN_LATER);
@@ -568,6 +576,9 @@ sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr, 1);
 		break;
 
+	case BIOCDELETERAID:
+		rv = sr_ioctl_deleteraid(sc, (struct bioc_deleteraid *)addr);
+		break;
 	default:
 		DNPRINTF(SR_D_IOCTL, "invalid ioctl\n");
 		rv = ENOTTY;
@@ -1024,6 +1035,37 @@ unwind:
 }
 
 int
+sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *dr)
+{
+	struct sr_discipline	*sd = NULL;
+	int			rv = 1;
+	int			i;
+
+	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n", DEVNAME(sc),
+	    dr->bd_dev);
+
+	for (i = 0; i < SR_MAXSCSIBUS; i++)
+		if (sc->sc_dis[i]) {
+			if (!strncmp(sc->sc_dis[i]->sd_vol.sv_meta.svm_devname, dr->bd_dev,
+			    sizeof(sc->sc_dis[i]->sd_vol.sv_meta.svm_devname))) {
+				sd = sc->sc_dis[i];
+				break;
+			}
+		}
+
+	if (sd == NULL)
+		goto bad;
+
+	sd->sd_deleted = 1;
+	sd->sd_meta->ssd_flags = BIOC_SCNOAUTOASSEMBLE;
+	sr_shutdown(sd);
+
+	rv = 0;
+bad:
+	return (rv);
+}
+
+int
 sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
     int no_chunk)
 {
@@ -1373,6 +1415,8 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
 
 	s = splbio();
+
+	shutdownhook_disestablish(sd->sd_shutdownhook);
 
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
