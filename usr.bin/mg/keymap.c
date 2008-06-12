@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.40 2008/06/11 23:18:33 kjell Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.41 2008/06/12 21:13:20 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -375,9 +375,7 @@ static struct KEYMAPE (1 + IMAPEXT) fillmap = {
 	1 + IMAPEXT,
 	rescan,
 	{
-		{
-			' ', ' ', fill_sp, NULL
-		}
+		{ ' ', ' ', fill_sp, NULL }
 	}
 };
 
