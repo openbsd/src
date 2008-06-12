@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2008/05/14 20:49:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2008/06/12 20:03:48 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -81,6 +81,7 @@ struct bdevsw   bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "audio.h"
+#include "video.h"
 #include "bio.h"
 #include "pty.h"
 #include "wsdisplay.h"
@@ -166,7 +167,7 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
-	cdev_notdef(),			/* 33: ALTQ (deprecated) */
+	cdev_video_init(NVIDEO,video),	/* 33: generic video I/O */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */

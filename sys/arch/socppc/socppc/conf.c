@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2008/05/14 20:49:48 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2008/06/12 20:03:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -50,6 +50,7 @@ cdev_decl(wd);
 #include "vnd.h"
 #include "ccd.h"
 #include "raid.h"
+#include "video.h"
 
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
@@ -147,7 +148,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 41 */
 	cdev_notdef(),			/* 42 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
-	cdev_notdef(),			/* 44 */
+	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
 	cdev_notdef(),			/* 47 */

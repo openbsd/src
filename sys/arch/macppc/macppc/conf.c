@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2008/05/14 20:49:48 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.37 2008/06/12 20:03:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -131,6 +131,7 @@ cdev_decl(pci);
 #endif
 
 #include "audio.h"
+#include "video.h"
 
 #include "pf.h"
 
@@ -188,7 +189,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ss_init(NSS,ss),		/* 42: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
 	cdev_audio_init(NAUDIO,audio),	/* 44: generic audio I/O */
-	cdev_notdef(),			/* 45 */
+	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */
 	cdev_notdef(),			/* 46 */
 	cdev_crypto_init(NCRYPTO,crypto), /* 47: /dev/crypto */
 	cdev_notdef(),			/* 48 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2008/05/14 20:49:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2008/06/12 20:03:48 mglocker Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ cdev_decl(pci);
  * Audio devices
  */
 #include "audio.h"
+#include "video.h"
 #include "midi.h"
 #include "sequencer.h"
 
@@ -325,7 +326,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
-	cdev_notdef(),				/* 38: removed cpu device */
+	cdev_video_init(NVIDEO,video),		/* 38: generic video I/O */
 	cdev_lkm_dummy(),			/* 39: reserved */
 	cdev_random_init(1,random),		/* 40: random generator */
 	cdev_lkm_dummy(),			/* 41: reserved */

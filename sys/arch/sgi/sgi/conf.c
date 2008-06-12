@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2008/05/14 20:49:48 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 2008/06/12 20:03:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +109,7 @@ cdev_decl(lpt);
 #include "uk.h"
 cdev_decl(wd);
 #include "audio.h"
+#include "video.h"
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
@@ -178,7 +179,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 42: */
 	cdev_notdef(),			/* 33: */
 	cdev_audio_init(NAUDIO,audio),	/* 44: /dev/audio */
-	cdev_notdef(),			/* 45: */
+	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */
 	cdev_notdef(),			/* 46: */
 	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
 	cdev_notdef(),			/* 48: */

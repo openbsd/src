@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2008/04/08 14:31:54 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 2008/06/12 20:03:48 mglocker Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -56,6 +56,7 @@
 #include "bpfilter.h"
 #include "tun.h"
 #include "audio.h"
+#include "video.h"
 #include "vnd.h"
 #include "ccd.h"
 #include "ch.h"
@@ -193,7 +194,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 41 */
 	cdev_notdef(),			/* 42: SMD disk */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net),	/* 43: svr4 net pseudo-device */
-	cdev_notdef(),			/* 44 */
+	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
 	cdev_notdef(),			/* 47 */

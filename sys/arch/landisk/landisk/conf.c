@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2008/05/14 20:49:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2008/06/12 20:03:48 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -118,6 +118,7 @@ cdev_decl(pci);
  * Audio devices
  */
 #include "audio.h"
+#include "video.h"
 #include "midi.h"
 #include "sequencer.h"
 
@@ -361,7 +362,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 74: reserved */
 	cdev_lkm_dummy(),			/* 75: reserved */
 	cdev_lkm_dummy(),			/* 76: reserved */
-	cdev_notdef(),                          /* 77: removed device */
+	cdev_video_init(NVIDEO,video),		/* 77: generic video I/O */
 	cdev_notdef(),                          /* 78: removed device */
 	cdev_notdef(),                          /* 79: removed device */
 	cdev_notdef(),                          /* 80: removed device */
