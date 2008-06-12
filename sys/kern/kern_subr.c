@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.31 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.32 2008/06/12 16:15:49 marco Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ hook_disestablish(struct hook_desc_head *head, void *vhook)
                 if (hdp == vhook)
 			break;
 	if (hdp == NULL)
-		panic("hook_disestablish: hook not established");
+		return;
 #endif
 	hdp = vhook;
 	TAILQ_REMOVE(head, hdp, hd_list);
