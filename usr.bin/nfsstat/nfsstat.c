@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.29 2006/04/03 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.30 2008/06/12 19:14:15 thib Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.29 2006/04/03 06:40:14 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.30 2008/06/12 19:14:15 thib Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,14 +250,16 @@ intpr(u_int display)
 		    nfsstats.rpccnt[NFSPROC_PATHCONF],
 		    nfsstats.rpccnt[NFSPROC_COMMIT]);
 		printf("Rpc Info:\n");
-		printf("%9.9s %9.9s %9.9s %9.9s %9.9s\n",
-		    "TimedOut", "Invalid", "X Replies", "Retries", "Requests");
-		printf("%9llu %9llu %9llu %9llu %9llu\n",
+		printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
+		    "TimedOut", "Invalid", "X Replies", "Retries", "Requests",
+		    "FrcSync");
+		printf("%9llu %9llu %9llu %9llu %9llu %9llu\n",
 		    nfsstats.rpctimeouts,
 		    nfsstats.rpcinvalid,
 		    nfsstats.rpcunexpected,
 		    nfsstats.rpcretries,
-		    nfsstats.rpcrequests);
+		    nfsstats.rpcrequests,
+		    nfsstats.forcedsync);
 		printf("Cache Info:\n");
 		printf("%9.9s %9.9s %9.9s %9.9s",
 		    "Attr Hits", "Misses", "Lkup Hits", "Misses");
