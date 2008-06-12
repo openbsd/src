@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.109 2008/06/12 01:26:16 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.110 2008/06/12 18:13:27 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -821,10 +821,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 #if 0
 #ifdef CRYPTO
 		case 'C':
-			/*
-                         * XXX we need the masking keys and salt here,
-                         * provided by bioctl.
-			 */
 			DNPRINTF(SR_D_IOCTL,
 			    "%s: sr_ioctl_createraid: no_chunk %d\n",
 			    DEVNAME(sc), no_chunk);
@@ -832,11 +828,17 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			if (no_chunk != 1)
 				goto unwind;
 
+			if (!(bc->bc_flags & BIOC_SCNOAUTOASSEMBLE))
+				goto unwind;
+
+			if (sr_crypto_get_kdf(bc, sd))
+				goto unwind;
+
 			strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scm_size;
 
-			/* create crypto keys and encrypt them */
 			sr_crypto_create_keys(sd);
+
 			break;
 #endif /* CRYPTO */
 #endif
@@ -870,6 +872,28 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    "metadata\n", DEVNAME(sc));
 			goto unwind;
 		}
+#ifdef CRYPTO
+		/* provide userland with kdf hint */
+		if (bc->bc_opaque_flags & BIOC_SOOUT) {
+			if (bc->bc_opaque == NULL)
+				goto unwind;
+
+			if (sr_read_meta(sd) == 0)
+				goto unwind;
+
+			if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
+			    bc->bc_opaque_size)
+				goto unwind;
+
+			if (copyout(sd->mds.mdd_crypto.scr_meta.scm_kdfhint,
+			    bc->bc_opaque, bc->bc_opaque_size))
+				goto unwind;
+
+			/* we're done */
+			rv = 0;
+			goto unwind;
+		}
+#endif	/* CRYPTO */
 		if (sr_already_assembled(sd)) {
 			printf("%s: disk ", DEVNAME(sc));
 			sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
@@ -1279,7 +1303,7 @@ sr_read_meta(struct sr_discipline *sd)
 		/* XXX fix this check, sd_type isnt filled in yet */
 		if (mv->svm_level == 'C') {
 			mo = (struct sr_opt_meta *)(mc + mv->svm_no_chunk);
-			if (m->ssd_chunk_id > 2) {
+			if (m->ssd_chunk_id > 1) {
 				no_chunk = -1;
 				goto bad;
 			}
