@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.60 2008/06/11 04:52:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.61 2008/06/12 20:24:06 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1040,18 +1040,16 @@ nfsmout:
  * siz arg. is used to decide if adding a cluster is worthwhile
  */
 int
-nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
+nfs_rephead(siz, nd, slp, err, mrq, mbp)
 	int siz;
 	struct nfsrv_descript *nd;
 	struct nfssvc_sock *slp;
 	int err;
 	struct mbuf **mrq;
 	struct mbuf **mbp;
-	caddr_t *bposp;
 {
 	u_int32_t *tl;
 	struct mbuf *mreq;
-	caddr_t bpos;
 	struct mbuf *mb;
 
 	MGETHDR(mreq, M_WAIT, MT_DATA);
@@ -1067,7 +1065,6 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 		mreq->m_data += max_hdr;
 	tl = mtod(mreq, u_int32_t *);
 	mreq->m_len = 6 * NFSX_UNSIGNED;
-	bpos = ((caddr_t)tl) + mreq->m_len;
 	*tl++ = txdr_unsigned(nd->nd_retxid);
 	*tl++ = rpc_reply;
 	if (err == ERPCMISMATCH || (err & NFSERR_AUTHERR)) {
@@ -1076,7 +1073,6 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 			*tl++ = rpc_autherr;
 			*tl = txdr_unsigned(err & ~NFSERR_AUTHERR);
 			mreq->m_len -= NFSX_UNSIGNED;
-			bpos -= NFSX_UNSIGNED;
 		} else {
 			*tl++ = rpc_mismatch;
 			*tl++ = txdr_unsigned(RPC_VER2);
@@ -1109,7 +1105,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 			*tl++ = rpc_auth_kerb;
 			*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
 			*tl = ktvout.tv_sec;
-			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = ktvout.tv_usec;
 			*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
 		    } else {
@@ -1126,7 +1122,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 			break;
 		case EPROGMISMATCH:
 			*tl = txdr_unsigned(RPC_PROGMISMATCH);
-			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(2);
 			*tl = txdr_unsigned(3);
 			break;
@@ -1139,7 +1135,7 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 		default:
 			*tl = 0;
 			if (err != NFSERR_RETVOID) {
-				tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+				tl = nfsm_build(&mb, NFSX_UNSIGNED);
 				if (err)
 				    *tl = txdr_unsigned(nfsrv_errmap(nd, err));
 				else
@@ -1152,7 +1148,6 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp, bposp)
 	*mrq = mreq;
 	if (mbp != NULL)
 		*mbp = mb;
-	*bposp = bpos;
 	if (err != 0 && err != NFSERR_RETVOID)
 		nfsstats.srvrpc_errs++;
 	return (0);

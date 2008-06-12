@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.38 2008/06/10 22:59:09 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.39 2008/06/12 20:24:06 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ int nfs_request(struct vnode *, struct mbuf *, int, struct proc *,
 		     struct ucred *, struct mbuf **, struct mbuf **,
 		     caddr_t *);
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *, int,
-		struct mbuf **, struct mbuf **, caddr_t *);
+		struct mbuf **, struct mbuf **);
 void nfs_timer(void *);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct proc *);
 int nfs_sndlock(int *, struct nfsreq *);
@@ -237,14 +237,14 @@ void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
 void nfsrv_cleancache(void);
 
 /* nfs_subs.c */
-struct mbuf *nfsm_reqh(struct vnode *, u_long, int, caddr_t *);
+struct mbuf *nfsm_reqh(struct vnode *, u_long, int);
 u_int32_t nfs_get_xid(void);
 void nfsm_rpchead(struct nfsreq *, struct ucred *, int, struct mbuf *, int);
-void *nfsm_build(struct mbuf **, u_int, caddr_t *);
+void *nfsm_build(struct mbuf **, u_int);
 int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
-void nfsm_uiotombuf(struct mbuf **, struct uio *, size_t, caddr_t *);
-void nfsm_strtombuf(struct mbuf **, void *, size_t, caddr_t *);
-void nfsm_buftombuf(struct mbuf **, void *, size_t, caddr_t *);
+void nfsm_uiotombuf(struct mbuf **, struct uio *, size_t);
+void nfsm_strtombuf(struct mbuf **, void *, size_t);
+void nfsm_buftombuf(struct mbuf **, void *, size_t);
 int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
 int nfs_adv(struct mbuf **, caddr_t *, int, int);
 int nfsm_strtmbuf(struct mbuf **, char **, char *, long);
@@ -256,12 +256,12 @@ int nfs_getattrcache(struct vnode *, struct vattr *);
 int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
 		   struct proc *);
-void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int, caddr_t *);
+void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int);
 void nfsm_adj(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
-		      struct vattr *, struct mbuf **, char **);
+		      struct vattr *, struct mbuf **);
 void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
-			     struct mbuf **, char **);
+			     struct mbuf **);
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *);
 int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,

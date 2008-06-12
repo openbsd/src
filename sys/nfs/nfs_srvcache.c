@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.17 2008/06/11 04:52:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.18 2008/06/12 20:24:06 blambert Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 	struct nfsrvcache *rp;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
-	caddr_t bpos;
 	int ret;
 
 	/*
@@ -181,8 +180,7 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 			ret = RC_DROPIT;
 		} else if (rp->rc_flag & RC_REPSTATUS) {
 			nfsstats.srvcache_nonidemdonehits++;
-			nfs_rephead(0, nd, slp, rp->rc_status, repp, &mb,
-			    &bpos);
+			nfs_rephead(0, nd, slp, rp->rc_status, repp, &mb);
 			ret = RC_REPLY;
 		} else if (rp->rc_flag & RC_REPMBUF) {
 			nfsstats.srvcache_nonidemdonehits++;

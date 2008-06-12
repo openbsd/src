@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.78 2008/06/11 08:11:33 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.79 2008/06/12 20:24:06 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -526,23 +526,19 @@ struct pool nfsreqpl;
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(vp, procid, hsiz, bposp)
+nfsm_reqh(vp, procid, hsiz)
 	struct vnode *vp;
 	u_long procid;
 	int hsiz;
-	caddr_t *bposp;
 {
 	struct mbuf *mb;
-	caddr_t bpos;
 
 	MGET(mb, M_WAIT, MT_DATA);
 	if (hsiz > MLEN)
 		MCLGET(mb, M_WAIT);
 	mb->m_len = 0;
-	bpos = mtod(mb, caddr_t);
 	
 	/* Finally, return values */
-	*bposp = bpos;
 	return (mb);
 }
 
@@ -574,7 +570,6 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 {
 	struct mbuf	*mb;
 	u_int32_t	*tl;
-	caddr_t		bpos;
 	int		i, authsiz, auth_len, ngroups;
 
 	KASSERT(auth_type == RPCAUTH_UNIX);
@@ -611,10 +606,9 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	}
 
 	mb->m_len = 0;
-	bpos = mtod(mb, caddr_t);
 
 	/* First the RPC header. */
-	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED, &bpos);
+	tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED);
 
 	/* Get a new (non-zero) xid */
 	*tl++ = req->r_xid = nfs_get_xid();
@@ -632,7 +626,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 	/* The Authorization cred and its verifier */
 	switch (auth_type) {
 	case RPCAUTH_UNIX:
-		tl = nfsm_build(&mb, auth_len + 4 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, auth_len + 4 * NFSX_UNSIGNED);
 		*tl++ = txdr_unsigned(RPCAUTH_UNIX);
 		*tl++ = txdr_unsigned(authsiz);
 
@@ -735,7 +729,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
  * Copy a uio scatter/gather list to an mbuf chain.
  */
 void
-nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len, caddr_t *bposp)
+nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len)
 {
 	struct mbuf *mb, *mb2;
 	size_t xfer, pad;
@@ -774,7 +768,6 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len, caddr_t *bposp)
 		mb->m_len += pad;
 	}
 
-	*bposp = mb_offset(mb);
 	*mp = mb;
 }
 
@@ -782,7 +775,7 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len, caddr_t *bposp)
  * Copy a buffer to an mbuf chain
  */
 void
-nfsm_buftombuf(struct mbuf **mp, void *buf, size_t len, caddr_t *bposp)
+nfsm_buftombuf(struct mbuf **mp, void *buf, size_t len)
 {
 	struct iovec iov;
 	struct uio io;
@@ -796,14 +789,14 @@ nfsm_buftombuf(struct mbuf **mp, void *buf, size_t len, caddr_t *bposp)
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_WRITE;
 
-	nfsm_uiotombuf(mp, &io, len, bposp);
+	nfsm_uiotombuf(mp, &io, len);
 }
 
 /*
  * Copy a string to an mbuf chain
  */
 void
-nfsm_strtombuf(struct mbuf **mp, void *str, size_t len, caddr_t *bposp)
+nfsm_strtombuf(struct mbuf **mp, void *str, size_t len)
 {
 	struct iovec iov[2];
 	struct uio io;
@@ -822,7 +815,7 @@ nfsm_strtombuf(struct mbuf **mp, void *str, size_t len, caddr_t *bposp)
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_WRITE;
 
-	nfsm_uiotombuf(mp, &io, io.uio_resid, bposp);
+	nfsm_uiotombuf(mp, &io, io.uio_resid);
 }
 
 /*
@@ -1418,24 +1411,22 @@ nfsm_adj(mp, len, nul)
  * doesn't get too big...
  */
 void
-nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
+nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp)
 	struct nfsrv_descript *nfsd;
 	int before_ret;
 	struct vattr *before_vap;
 	int after_ret;
 	struct vattr *after_vap;
 	struct mbuf **mbp;
-	char **bposp;
 {
 	struct mbuf *mb = *mbp;
-	char *bpos = *bposp;
 	u_int32_t *tl;
 
 	if (before_ret) {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	} else {
-		tl = nfsm_build(&mb, 7 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, 7 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
 		txdr_hyper(before_vap->va_size, tl);
 		tl += 2;
@@ -1443,35 +1434,31 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
 		tl += 2;
 		txdr_nfsv3time(&(before_vap->va_ctime), tl);
 	}
-	*bposp = bpos;
 	*mbp = mb;
-	nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp);
+	nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp);
 }
 
 void
-nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp)
+nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp)
 	struct nfsrv_descript *nfsd;
 	int after_ret;
 	struct vattr *after_vap;
 	struct mbuf **mbp;
-	char **bposp;
 {
 	struct mbuf *mb = *mbp;
-	char *bpos = *bposp;
 	u_int32_t *tl;
 	struct nfs_fattr *fp;
 
 	if (after_ret) {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED + NFSX_V3FATTR, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED + NFSX_V3FATTR);
 		*tl++ = nfs_true;
 		fp = (struct nfs_fattr *)tl;
 		nfsm_srvfattr(nfsd, after_vap, fp);
 	}
 	*mbp = mb;
-	*bposp = bpos;
 }
 
 void
@@ -1877,75 +1864,72 @@ nfsrv_setcred(incred, outcred)
  * If full is true, set all fields, otherwise just set mode and time fields
  */
 void
-nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full, caddr_t *bposp)
+nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
 {
 	struct mbuf *mb;
 	u_int32_t *tl;
-	caddr_t bpos;
 
 	mb = *mp;
-	bpos = *bposp;
 
 	if (a->va_mode != (mode_t)VNOVAL) {
-		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned(a->va_mode);
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	}
 	if (full && a->va_uid != (uid_t)VNOVAL) {
-		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned(a->va_uid);
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	}
 	if (full && a->va_gid != (gid_t)VNOVAL) {
-		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
 		*tl = txdr_unsigned((a)->va_gid);
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	}
 	if (full && a->va_size != VNOVAL) {
-		tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
 		txdr_hyper(a->va_size, tl);
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	}
 	if (a->va_atime.tv_sec != VNOVAL) {
 		if (a->va_atime.tv_sec != time_second) {
-			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_atime, tl);
 		} else {
-			tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, NFSX_UNSIGNED);
 			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
 		}
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
 	if (a->va_mtime.tv_sec != VNOVAL) {
 		if (a->va_mtime.tv_sec != time_second) {
-			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_mtime, tl);
 		} else {
-			tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+			tl = nfsm_build(&mb, NFSX_UNSIGNED);
 			*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);
 		}
 	} else {
-		tl = nfsm_build(&mb, NFSX_UNSIGNED, &bpos);
+		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
 
-	*bposp = bpos;
 	*mp = mb;
 }
 
@@ -1953,13 +1937,13 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full, caddr_t *bposp)
  * Ensure a contiguous buffer len bytes long
  */
 void *
-nfsm_build(struct mbuf **mp, u_int len, caddr_t *bposp)
+nfsm_build(struct mbuf **mp, u_int len)
 {
 	struct mbuf *mb, *mb2;
 	caddr_t bpos;
 
 	mb = *mp;
-	bpos = *bposp;
+	bpos = mb_offset(mb);
 
 	if (len > M_TRAILINGSPACE(mb)) {
 		MGET(mb2, M_WAIT, MT_DATA);
@@ -1972,7 +1956,6 @@ nfsm_build(struct mbuf **mp, u_int len, caddr_t *bposp)
 	}
 	mb->m_len += len;
 
-	*bposp = bpos + len;
 	*mp = mb;
 
 	return (bpos);
