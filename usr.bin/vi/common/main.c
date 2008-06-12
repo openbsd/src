@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2008/03/04 18:55:44 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2008/06/12 21:22:48 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -146,7 +146,7 @@ editor(gp, argc, argv)
 				break;
 			default:
 				v_estr(gp->progname, 0,
-				    "usage: -D requires s or w argument.");
+				    "-D requires s or w argument.");
 				return (1);
 			}
 			break;
