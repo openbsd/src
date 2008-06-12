@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.35 2007/02/13 17:50:26 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.36 2008/06/12 21:58:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -127,7 +127,11 @@ searchagain(int f, int n)
 int
 forwisearch(int f, int n)
 {
-	return (isearch(SRCH_FORW));
+	if (macrodef || inmacro)
+		/* We can't isearch in macro. Use search instead */
+		return (forwsearch(f,n));
+	else 
+		return (isearch(SRCH_FORW));
 }
 
 /*
@@ -138,7 +142,11 @@ forwisearch(int f, int n)
 int
 backisearch(int f, int n)
 {
-	return (isearch(SRCH_BACK));
+	if (macrodef || inmacro)
+		/* We can't isearch in macro. Use search instead */
+		return (backsearch(f,n));
+	else 
+		return (isearch(SRCH_BACK));
 }
 
 /*
