@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.8 2008/06/11 14:50:06 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.9 2008/06/12 16:11:36 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -125,9 +125,7 @@ ret1:	ret
  * CODED IN VAX ASSEMBLY LANGUAGE BY K.C. NG, 4/8/85.
  */
 
-	.globl drem
-	drem = remainder
-
+ALTENTRY(drem)
 ENTRY(remainder, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	subl2	$12,sp	
 	movq	4(ap),r0		#r0=x
