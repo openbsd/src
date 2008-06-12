@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.108 2008/06/12 00:19:15 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.109 2008/06/12 01:26:16 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1416,7 +1416,8 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 
 	s = splbio();
 
-	shutdownhook_disestablish(sd->sd_shutdownhook);
+	if (sd->sd_shutdownhook)
+		shutdownhook_disestablish(sd->sd_shutdownhook);
 
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
