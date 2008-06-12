@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.28 2007/05/30 05:20:58 otto Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.29 2008/06/12 17:53:49 beck Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,13 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.28 2007/05/30 05:20:58 otto Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.29 2008/06/12 17:53:49 beck Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/time.h>
+#include <sys/sysctl.h>
+#include <sys/mount.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -50,6 +52,7 @@ static char rcsid[] = "$OpenBSD: iostat.c,v 1.28 2007/05/30 05:20:58 otto Exp $"
 
 #include "dkstats.h"
 extern struct _disk	cur, last;
+struct bcachestats	bclast, bccur;
 
 static double etime;
 
@@ -58,12 +61,14 @@ static void numlabels(void);
 #define ATIME(x,y) ((double)x[y].tv_sec + \
         ((double)x[y].tv_usec / (double)1000000))
 
-#define NFMT "%-8.8s  %14.0f %14.0f  %10.0f %10.0f  %10.1f"
-#define SFMT "%-8.8s  %14s %14s  %10s %10s  %10s"
+#define NFMT "%-6.6s  %8.0f %8.0f  %6.0f %6.0f  %4.1f"
+#define SFMT "%-6.6s  %8s %8s  %6s %6s  %4s"
+#define	BCSCOL	50
 
 WINDOW *
 openiostat(void)
 {
+	bzero(&bccur, sizeof(bccur));
 	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
 }
 
@@ -88,9 +93,22 @@ initiostat(void)
 void
 fetchiostat(void)
 {
+	int mib[3];
+	size_t size;
+
 	if (cur.dk_ndrive == 0)
 		return;
 	dkreadstats();
+
+	bclast = bccur;
+	mib[0] = CTL_VFS;
+	mib[1] = VFS_GENERIC;
+	mib[2] = VFS_BCACHESTAT;
+	size = sizeof(bccur);
+	if (sysctl(mib, 3, &bccur, &size, NULL, 0) < 0)
+		mvwaddstr(wnd, 20, 0, "cannot get vfs.bcachestat");
+	if (bclast.numbufs == 0)
+		bclast = bccur;
 }
 
 void
@@ -98,6 +116,17 @@ labeliostat(void)
 {
 	mvwprintw(wnd, 1, 0, SFMT, "Device", "rKBytes", "wKBytes", "rtps",
 	    "wtps", "sec");
+	mvwprintw(wnd, 1, BCSCOL + 16, "numbufs");
+	mvwprintw(wnd, 2, BCSCOL + 16, "freebufs");
+	mvwprintw(wnd, 3, BCSCOL + 16, "numbufpages");
+	mvwprintw(wnd, 4, BCSCOL + 16, "numfreepages");
+	mvwprintw(wnd, 5, BCSCOL + 16, "numdirtypages");
+	mvwprintw(wnd, 6, BCSCOL + 16, "numcleanpages");
+	mvwprintw(wnd, 7, BCSCOL + 16, "pendingwrites");
+	mvwprintw(wnd, 8, BCSCOL + 16, "pendingreads");
+	mvwprintw(wnd, 9, BCSCOL + 16, "numwrites");
+	mvwprintw(wnd, 10, BCSCOL + 16, "numreads");
+	mvwprintw(wnd, 11, BCSCOL + 16, "cachehits");
 }
 
 void
@@ -124,6 +153,45 @@ showiostat(void)
 		return;
 
 	numlabels();
+
+	mvwprintw(wnd, 1, BCSCOL, "%15ld", bccur.numbufs);
+	mvwprintw(wnd, 2, BCSCOL, "%15ld", bccur.freebufs);
+	mvwprintw(wnd, 3, BCSCOL, "%15ld", bccur.numbufpages);
+	if (bccur.numfreepages)
+		mvwprintw(wnd, 4, BCSCOL, "%15ld", bccur.numfreepages);
+	else
+		mvwprintw(wnd, 4, BCSCOL, "%15s", "");
+	if (bccur.numdirtypages)
+		mvwprintw(wnd, 5, BCSCOL, "%15ld", bccur.numdirtypages);
+	else
+		mvwprintw(wnd, 5, BCSCOL, "%15s", "");
+	if (bccur.numcleanpages)
+		mvwprintw(wnd, 6, BCSCOL, "%15ld", bccur.numcleanpages);
+	else
+		mvwprintw(wnd, 6, BCSCOL, "%15s", "");
+	if (bccur.pendingwrites)
+		mvwprintw(wnd, 7, BCSCOL, "%15ld", bccur.pendingwrites);
+	else
+		mvwprintw(wnd, 7, BCSCOL, "%15s", "");
+	if (bccur.pendingreads)
+		mvwprintw(wnd, 8, BCSCOL, "%15ld", bccur.pendingreads);
+	else
+		mvwprintw(wnd, 8, BCSCOL, "%15s", "");
+	if (bccur.numwrites - bclast.numwrites)
+		mvwprintw(wnd, 9, BCSCOL, "%15ld",
+		    bccur.numwrites - bclast.numwrites);
+	else
+		mvwprintw(wnd, 9, BCSCOL, "%15s", "");
+	if (bccur.numreads - bclast.numreads)
+		mvwprintw(wnd, 10, BCSCOL, "%15ld",
+		    bccur.numreads - bclast.numreads);
+	else
+		mvwprintw(wnd, 10, BCSCOL, "%15s", "");
+	if (bccur.cachehits - bclast.cachehits)
+		mvwprintw(wnd, 11, BCSCOL, "%15ld",
+		    bccur.cachehits - bclast.cachehits);
+	else
+		mvwprintw(wnd, 11, BCSCOL, "%15s", "");
 }
 
 void
