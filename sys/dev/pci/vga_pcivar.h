@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.10 2008/05/06 19:19:02 oga Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.11 2008/06/12 00:54:38 oga Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -37,7 +37,7 @@
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-#define VGA_PCI_MAX_BARS 4
+#define VGA_PCI_MAX_BARS 6
 
 struct vga_pci_bar {
 	int		addr;
