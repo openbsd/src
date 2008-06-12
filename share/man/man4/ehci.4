@@ -1,4 +1,4 @@
-.\" $OpenBSD: ehci.4,v 1.9 2007/05/31 19:19:50 jmc Exp $
+.\" $OpenBSD: ehci.4,v 1.10 2008/06/12 18:32:40 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 12 2008 $
 .Dt EHCI 4
 .Os
 .Sh NAME
@@ -48,7 +48,9 @@
 The
 .Nm
 driver provides support for the USB Enhanced Host Controller Interface,
-which is used by USB 2.0 controllers.
+which provides an interface to
+.Xr usb 4
+devices.
 .Pp
 EHCI controllers are peculiar in that they can only handle the USB 2.0
 protocol.
