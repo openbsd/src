@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.1 2008/06/12 01:58:44 kjell Exp $ */
+/* $OpenBSD: cmode.c,v 1.2 2008/06/12 21:51:18 kjell Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -25,6 +25,12 @@ static int cc_colon_indent = -8;	/* Label / case indent */
 
 static int getmatch(int, int);
 static int getindent(const struct line *, int *);
+static int in_whitespace(struct line *, int);
+static int findcolpos(const struct buffer *, const struct line *, int);
+static struct line *findnonblank(struct line *);
+static int isnonblank(const struct line *, int);
+
+int cc_comment(int, int);
 
 /* Keymaps */
 
@@ -40,9 +46,8 @@ static PF cmode_ci[] = {
 	cc_lfindent,	/* ^M */
 };
 
-static PF cmode_colon[] = {
+static PF cmode_spec[] = {
 	cc_char,	/* : */
-	rescan,		/* ; */
 };
 
 static struct KEYMAPE (3 + IMAPEXT) cmodemap = {
@@ -51,7 +56,7 @@ static struct KEYMAPE (3 + IMAPEXT) cmodemap = {
 	rescan,
 	{
 		{ CCHR('I'), CCHR('M'), cmode_ci, NULL },
-		{ ':', ';', cmode_colon, NULL },
+		{ ':', ':', cmode_spec, NULL },
 		{ '}', '}', cmode_brace, NULL }
 	}
 };
@@ -99,20 +104,10 @@ cc_char(int f, int n)
 int
 cc_tab(int f, int n)
 {
-	int lo;
 	int inwhitep = FALSE;	/* In leading whitespace? */
 	
-	for (lo = 0; lo < llength(curwp->w_dotp); lo++) {
-		if (!isspace(lgetc(curwp->w_dotp, lo)))
-			break;
-		if (lo == curwp->w_doto)
-			inwhitep = TRUE;
-	}
+	inwhitep = in_whitespace(curwp->w_dotp, llength(curwp->w_dotp));
 
-	/* Special case: we could be at the end of a whitespace line */
-	if (lo == llength(curwp->w_dotp) && curwp->w_doto == lo)
-		inwhitep = TRUE;
-	
 	/* If empty line, or in whitespace */
 	if (llength(curwp->w_dotp) == 0 || inwhitep)
 		return (selfinsert(f, n));
@@ -128,9 +123,6 @@ cc_indent(int f, int n)
 {
 	int pi, mi;			/* Previous indents */
 	int ci, dci;			/* current indent, don't care */
-	int lo;
-	int c;
-	int nonblankp;
 	struct line *lp;
 
 	if (n < 0)
@@ -139,20 +131,12 @@ cc_indent(int f, int n)
 	if (cc_strip_trailp)
 		deltrailwhite(FFRAND, 1);
 
-	/* Search backwards for a nonblank, non preprocessor line */
-	lp = curwp->w_dotp;
-	nonblankp = FALSE;
-	while (lback(lp) != curbp->b_headp && !nonblankp) {
-		lp = lback(lp);
-		for (lo = 0; lo < llength(lp); lo++) {
-			if (!isspace(c = lgetc(lp, lo))) {
-				/* Leading # is a blank */
-				if (c != '#')	
-					nonblankp = TRUE;
-				break;
-			}
-		}
-	}
+	/*
+	 * Search backwards for a non-blank, non-preprocessor,
+	 * non-comment line
+	 */
+
+	lp = findnonblank(curwp->w_dotp);
 
 	pi = getindent(lp, &mi);
 
@@ -182,17 +166,16 @@ cc_lfindent(int f, int n)
 
 /*
  * Get the level of indention after line lp is processed
- * Note getindent has two returns: curi, nexti.
+ * Note getindent has two returns:
  * curi = value if indenting current line.
  * return value = value affecting subsequent lines.
- * note, we only process up to offset op.
- * set to llength(lp) for the whole line.
  */
 static int
 getindent(const struct line *lp, int *curi)
 {
 	int lo, co;		/* leading space,  current offset*/
 	int nicol = 0;		/* position count */
+	int ccol = 0;		/* current column */
 	int c = '\0';		/* current char */
 	int newind = 0;		/* new index value */
 	int stringp = FALSE;	/* in string? */
@@ -202,9 +185,13 @@ getindent(const struct line *lp, int *curi)
 	int obrace = 0;		/* open brace count */
 	int cbrace = 0;		/* close brace count */
 	int contp = FALSE;	/* Continue? */
-	int firstseenp = FALSE;	/* First nonspace encountered? */
+	int firstnwsp = FALSE;	/* First nonspace encountered? */
 	int colonp = FALSE;	/* Did we see a colon? */
 	int questionp = FALSE;	/* Did we see a question mark? */
+	int slashp = FALSE;	/* Slash? */
+	int astp = FALSE;	/* Asterisk? */
+	int cpos = -1;		/* comment position */
+	int cppp  = FALSE;	/* Preprocessor command? */
 	
 	*curi = 0;
 
@@ -226,17 +213,17 @@ getindent(const struct line *lp, int *curi)
 	if (lo == llength(lp))
 		nicol = 0;
 
-	if (c == '#')
-		return (0);
-
 	newind = 0;
+	ccol = nicol;			/* current column */
 	/* Compute modifiers */
 	for (co = lo; co < llength(lp); co++) {
 		c = lgetc(lp, co);
 		/* We have a non-whitespace char */
-		if (!firstseenp && !isspace(c)) {
+		if (!firstnwsp && !isspace(c)) {
 			contp = TRUE;
-			firstseenp = TRUE; 
+			if (c == '#')
+				cppp = TRUE;
+			firstnwsp = TRUE; 
 		}
 		if (c == '\\')
 			escp = !escp;
@@ -255,7 +242,7 @@ getindent(const struct line *lp, int *curi)
 			nparen--;
 		} else if (c == '{') {
 			obrace++;
-			firstseenp = FALSE;
+			firstnwsp = FALSE;
 			contp = FALSE;
 		} else if (c == '}') {
 			cbrace++;
@@ -268,11 +255,32 @@ getindent(const struct line *lp, int *curi)
 		} else if (c == ';') {
 			if (nparen > 0)
 				contp = FALSE;
+		} else if (c == '/') {
+			/* first nonwhitespace? -> indent */
+			if (firstnwsp) {
+				/* If previous char asterisk -> close */
+				if (astp)
+					cpos = -1;
+				else
+					slashp = TRUE;
+			}
+		} else if (c == '*') {
+			/* If previous char slash -> open */
+			if (slashp)
+				cpos = co;
+			else
+				astp = TRUE;
+		} else if (firstnwsp) {
+			firstnwsp = FALSE;
 		}
 
-		/* Reset escape character match */
+		/* Reset matches that apply to next character only */
 		if (c != '\\')
 			escp = FALSE;
+		if (c != '*')
+			astp = FALSE;
+		if (c != '/')
+			slashp = FALSE;
 	}
 	/*
 	 * If not terminated with a semicolon, and brace or paren open.
@@ -290,8 +298,19 @@ getindent(const struct line *lp, int *curi)
 		newind -= cc_cont_indent;
 	else if (nparen > 0)
 		newind += cc_cont_indent;
-	newind += nicol;
+
 	*curi += nicol;
+
+	/* Ignore preprocessor. Otherwise, add current column */
+	if (cppp) {
+		newind = nicol;
+		*curi = 0;
+	} else {
+		newind += nicol;
+	}
+
+	if (cpos != -1)
+		newind = findcolpos(curbp, lp, cpos);
 
 	return (newind);
 }
@@ -324,4 +343,144 @@ getmatch(int c, int mc)
 	}
 
 	return (match);
+}
+
+static int
+in_whitespace(struct line *lp, int len)
+{
+	int lo;
+	int inwhitep = FALSE;
+
+	for (lo = 0; lo < len; lo++) {
+		if (!isspace(lgetc(lp, lo)))
+			break;
+		if (lo == len - 1)
+			inwhitep = TRUE;
+	}
+
+	return (inwhitep);
+}
+
+
+/* convert a line/offset pair to a column position (for indenting) */
+static int
+findcolpos(const struct buffer *bp, const struct line *lp, int lo)
+{
+	int	col, i, c;
+	char tmp[5];
+
+	/* determine column */
+	col = 0;
+
+	for (i = 0; i < lo; ++i) {
+		c = lgetc(lp, i);
+		if (c == '\t'
+#ifdef NOTAB
+		    && !(bp->b_flag & BFNOTAB)
+#endif /* NOTAB */
+			) {
+			col |= 0x07;
+			col++;
+		} else if (ISCTRL(c) != FALSE)
+			col += 2;
+		else if (isprint(c)) {
+			col++;
+		} else {
+			col += snprintf(tmp, sizeof(tmp), "\\%o", c);
+		}
+
+	}
+	return (col);
+}
+
+/*
+ * Find a non-blank line, searching backwards from the supplied line pointer.
+ * For C, nonblank is non-preprocessor, non C++, and accounts
+ * for complete C-style comments.
+ */
+static struct line *
+findnonblank(struct line *lp)
+{
+	int lo;
+	int nonblankp = FALSE;
+	int commentp = FALSE;
+	int slashp;
+	int astp;
+	int c;
+
+	while (lback(lp) != curbp->b_headp && (commentp || !nonblankp)) {
+		lp = lback(lp);
+		slashp = FALSE;
+		astp = FALSE;
+
+		/* Potential nonblank? */
+		nonblankp = isnonblank(lp, llength(lp));
+
+		/*
+		 * Search from end, removing complete C-style
+		 * comments. If one is found, ignore it and
+		 * test for nonblankness from where it starts.
+		 */
+		slashp = FALSE;
+		/* Scan backwards from end to find C-style comment */
+		for (lo = llength(lp) - 1; lo >= 0; lo--) {
+			if (!isspace(c = lgetc(lp, lo))) {
+				if (commentp) { /* find comment "open" */
+					if (c == '*')
+						astp = TRUE;
+					else if (astp && c == '/') {
+						commentp = FALSE;
+						/* whitespace to here? */
+						nonblankp = isnonblank(lp, lo);
+					}
+				} else { /* find comment "close" */
+					if (c == '/')
+						slashp = TRUE;
+					else if (slashp && c == '*')
+						/* found a comment */
+						commentp = TRUE;
+				}
+			}
+		}
+	}
+
+	/* Rewound to start of file? */
+	if (lback(lp) == curbp->b_headp && !nonblankp)
+		return (curbp->b_headp);
+
+	return (lp);
+}
+
+/*
+ * Given a line, scan forward to 'omax' and determine if we
+ * are all C whitespace.
+ * Note that preprocessor directives and C++-style comments
+ * count as whitespace. C-style comments do not, and must
+ * be handled elsewhere.
+ */
+static int
+isnonblank(const struct line *lp, int omax)
+{
+	int nonblankp = FALSE;		/* Return value */
+	int slashp = FALSE;		/* Encountered slash */
+	int lo;				/* Loop index */
+	int c;				/* char being read */
+
+	/* Scan from front for preprocessor, C++ comments */
+	for (lo = 0; lo < omax; lo++) {
+		if (!isspace(c = lgetc(lp, lo))) {
+			/* Possible nonblank line */
+			nonblankp = TRUE;
+			/* skip // and # starts */
+			if (c == '#' || (slashp && c == '/')) {
+				nonblankp = FALSE;
+				break;
+			} else if (!slashp && c == '/') {
+				slashp = TRUE;
+				continue;
+			}
+		}
+		slashp = FALSE;
+	}
+	return (nonblankp);
 }
