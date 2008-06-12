@@ -31,7 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-#include <math.h>
 
 #if defined(__vax__)||defined(tahoe)
 

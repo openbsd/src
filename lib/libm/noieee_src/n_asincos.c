@@ -84,13 +84,14 @@ static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
  *      1.99 ulps.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 double
 asin(x)
 	double x;
 {
-	double s,t,copysign(),atan2(),sqrt(),one=1.0;
+	double s, t, one = 1.0;
 
 	if (isnan(x))
 		return (x);
@@ -159,7 +160,7 @@ double
 acos(x)
 	double x;
 {
-	double t,copysign(),atan2(),sqrt(),one=1.0;
+	double t, one = 1.0;
 
 	if (isnan(x))
 		return (x);

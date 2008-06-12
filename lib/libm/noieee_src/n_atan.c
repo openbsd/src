@@ -76,9 +76,11 @@ static char sccsid[] = "@(#)atan.c	8.1 (Berkeley) 6/4/93";
  *	0.85 ulps.
  */
 
+#include "math.h"
+
 double atan(x)
 double x;
 {
-	double atan2(),one=1.0;
+	double one=1.0;
 	return(atan2(x,one));
 }

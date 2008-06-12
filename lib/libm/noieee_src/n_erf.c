@@ -32,6 +32,7 @@
 static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
+#include "math.h"
 #include "mathimpl.h"
 
 /* Modified Nov 30, 1992 P. McILROY:
@@ -263,7 +264,7 @@ rd13 =	-1.42821001129434127360582351685e+007;
 double erf(x)
 	double x;
 {
-	double R,S,P,Q,ax,s,y,z,r,fabs(),exp();
+	double R, S, P, Q, ax, s, y, z, r;
 	if(!finite(x)) {		/* erf(nan)=nan */
 	    if (isnan(x))
 		return(x);
@@ -321,7 +322,7 @@ double erf(x)
 double erfc(x) 
 	double x;
 {
-	double R,S,P,Q,s,ax,y,z,r,fabs(),__exp__D();
+	double R, S, P, Q, s, ax, y, z, r;
 	if (!finite(x)) {
 		if (isnan(x))		/* erfc(NaN) = NaN */
 			return(x);

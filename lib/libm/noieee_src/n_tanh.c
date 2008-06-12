@@ -32,6 +32,8 @@
 static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
+#include "math.h"
+
 /* TANH(X)
  * RETURN THE HYPERBOLIC TANGENT OF X
  * DOUBLE PRECISION (VAX D FORMAT 56 BITS, IEEE DOUBLE 53 BITS)
@@ -73,8 +75,7 @@ double tanh(x)
 double x;
 {
 	static double one=1.0, two=2.0, small = 1.0e-10, big = 1.0e10;
-	double expm1(), t, copysign(), sign;
-	int finite();
+	double t, sign;
 
 	if (isnan(x))
 		return (x);

@@ -83,6 +83,7 @@ static char sccsid[] = "@(#)exp__E.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 vc(p1, 1.5150724356786683059E-2 ,3abe,3d78,066a,67e1,  -6, .F83ABE67E1066A)

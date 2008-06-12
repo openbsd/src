@@ -84,6 +84,8 @@ static char sccsid[] = "@(#)cabs.c	8.1 (Berkeley) 6/4/93";
  * from decimal to binary accurately enough to produce the hexadecimal values
  * shown.
  */
+
+#include "math.h"
 #include "mathimpl.h"
 
 vc(r2p1hi, 2.4142135623730950345E0   ,8279,411a,ef32,99fc,   2, .9A827999FCEF32)

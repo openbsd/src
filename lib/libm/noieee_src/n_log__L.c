@@ -66,6 +66,7 @@ static char sccsid[] = "@(#)log__L.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 vc(L1, 6.6666666666666703212E-1 ,aaaa,402a,aac5,aaaa,  0, .AAAAAAAAAAAAC5)

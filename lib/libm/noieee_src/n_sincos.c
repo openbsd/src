@@ -32,8 +32,9 @@
 static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
+#include "math.h"
 #include "mathimpl.h"
-#include "trig.h"
+
 double
 sin(x)
 double x;

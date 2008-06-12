@@ -166,8 +166,8 @@ double x,y;
 static double
 pow_P(double x, double y)
 {
-	struct Double s, t, __log__D();
-	double  __exp__D(), huge = 1e300, tiny = 1e-300;
+	struct Double s, t;
+	double  huge = 1e300, tiny = 1e-300;
 
 	if (x == zero)
 		if (y > zero)

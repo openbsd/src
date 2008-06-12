@@ -106,6 +106,7 @@ static char sccsid[] = "@(#)atan2.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 vc(athfhi, 4.6364760900080611433E-1  ,6338,3fed,da7b,2b0d,  -1, .ED63382B0DDA7B)

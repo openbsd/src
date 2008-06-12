@@ -58,6 +58,8 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
  *	observed error was 1.87 ulps (units in the last place) at
  *	x= -3.8962076028810414000e-03.
  */
+
+#include "math.h"
 #include "mathimpl.h"
 
 #if defined(__vax__)||defined(tahoe)

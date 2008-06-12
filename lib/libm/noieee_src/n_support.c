@@ -70,6 +70,7 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 1/22/85, 2/13/85, 3/24/85.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 #if defined(__vax__)||defined(tahoe)      /* VAX D format */

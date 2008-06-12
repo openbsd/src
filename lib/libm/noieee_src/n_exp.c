@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp.c,v 1.6 2008/06/12 15:57:59 martynas Exp $	*/
+/*	$OpenBSD: n_exp.c,v 1.7 2008/06/12 22:20:56 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -74,6 +74,7 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "math.h"
 #include "mathimpl.h"
 
 vc(ln2hi,  6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
