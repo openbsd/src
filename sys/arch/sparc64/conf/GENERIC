@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.206 2008/06/12 16:17:59 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.207 2008/06/12 16:19:18 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -338,6 +338,9 @@ pciide*	at pci? flags 0x0000
 wd*	at pciide? flags 0x0a00
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
+
+wdc*	at pcmcia?
+wd*	at wdc? flags 0x0000
 
 #
 # Note the flags on the esp entries below, that work around
