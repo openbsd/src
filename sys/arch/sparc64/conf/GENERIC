@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.209 2008/06/12 21:33:19 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.210 2008/06/12 21:48:24 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -65,6 +65,7 @@ mskc*	at pci?			# Marvell Yukon-2
 msk*	at mskc?		#  each port of above
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
+xl*	at cardbus?		# 3C9xx ethernet
 pcn*	at pci?			# AMD PCnet-PCI Ethernet
 de*	at pci?			# DC21X4X-based ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
