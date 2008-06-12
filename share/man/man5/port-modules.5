@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.12 2008/06/12 16:02:13 landry Exp $
+.\"	$OpenBSD: port-modules.5,v 1.13 2008/06/12 18:59:25 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -385,6 +385,8 @@ Also affects CATEGORIES, MAKE_ENV, SHARED_ONLY, and SUBST_VARS.
 May affect regress target.
 .It lang/ruby
 .It lang/tcl
+Sets MODTCL_VERSION, MODTCL_BIN, MODTCL_INCDIR, and MODTCL_CONFIG.
+Also affects CATEGORIES and SUBST_VARS.
 .It perl
 This module is documented in the main
 .Xr bsd.port.mk 5
@@ -392,6 +394,10 @@ manpage.
 .It www/pear
 .It www/zope
 .It x11/tk
+Sets MODTK_VERSION, MODTK_BIN, MODTK_INCDIR, MODTK_CONFIG,
+MODTK_BUILD_DEPENDS, and MODTK_RUN_DEPENDS.
+Automatically adds the lang/tcl module, and affects CATEGORIES,
+SUBST_VARS, and USE_X11.
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
