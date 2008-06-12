@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.36 2008/06/06 09:15:32 marco Exp $ */
+/* $OpenBSD: dsdt.h,v 1.37 2008/06/12 20:36:50 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -56,6 +56,7 @@ struct aml_node		*aml_searchrel(struct aml_node *, const void *);
 struct aml_node		*aml_createname(struct aml_node *, const void *,
 			    struct aml_value *);
 
+struct aml_value 	*aml_getstack(struct aml_scope *, int);
 struct aml_value	*aml_allocint(uint64_t);
 struct aml_value	*aml_allocstr(const char *);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);

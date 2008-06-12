@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.125 2008/06/12 20:30:09 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.126 2008/06/12 20:36:50 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -58,7 +58,6 @@ void			aml_freevalue(struct aml_value *);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);
 struct aml_value	*_aml_setvalue(struct aml_value *, int, int64_t,
 			    const void *);
-struct aml_value 	*aml_getstack(struct aml_scope *, int);
 
 u_int64_t		aml_convradix(u_int64_t, int, int);
 int64_t			aml_evalexpr(int64_t, int64_t, int);
