@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.111 2008/06/12 21:29:02 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.112 2008/06/12 23:29:27 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -872,6 +872,12 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    "metadata\n", DEVNAME(sc));
 			goto unwind;
 		}
+		if (sr_already_assembled(sd)) {
+			printf("%s: disk ", DEVNAME(sc));
+			sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
+			printf(" already assembled\n");
+			goto unwind;
+		}
 #ifdef CRYPTO
 		/* provide userland with kdf hint */
 		if (bc->bc_opaque_flags & BIOC_SOOUT) {
@@ -894,12 +900,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			goto unwind;
 		}
 #endif	/* CRYPTO */
-		if (sr_already_assembled(sd)) {
-			printf("%s: disk ", DEVNAME(sc));
-			sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
-			printf(" already assembled\n");
-			goto unwind;
-		}
 		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
 		    DEVNAME(sc));
 		updatemeta = 0;
@@ -1033,7 +1033,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_vol.sv_meta.svm_volid = vol;
 		strlcpy(sd->sd_vol.sv_meta.svm_devname, dev->dv_xname,
 		    sizeof(sd->sd_vol.sv_meta.svm_devname));
-
 	}
 
 	/* save metadata to disk */
@@ -1213,7 +1212,7 @@ sr_read_meta(struct sr_discipline *sd)
 
 		/* XXX mark chunk offline and restart metadata write */
 		if (b.b_flags & B_ERROR) {
-			printf("%s: %s i/o error on block %d while reading "
+			printf("%s: %s i/o error on block %lld while reading "
 			    "metadata %d\n", DEVNAME(sc),
 			    ch_entry->src_devname, b.b_blkno, b.b_error);
 			continue;
@@ -1730,7 +1729,7 @@ sr_clear_metadata(struct sr_discipline *sd)
 		biowait(&b);
 
 		if (b.b_flags & B_ERROR) {
-			printf("%s: %s i/o error on block %d while clearing "
+			printf("%s: %s i/o error on block %lld while clearing "
 			    "metadata %d\n", DEVNAME(sc),
 			    ch_entry->src_devname, b.b_blkno, b.b_error);
 			rv++;
@@ -1925,7 +1924,7 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		/* XXX do something smart here */
 		/* mark chunk offline and restart metadata write */
 		if (b.b_flags & B_ERROR) {
-			printf("%s: %s i/o error on block %d while writing "
+			printf("%s: %s i/o error on block %lld while writing "
 			    "metadata %d\n", DEVNAME(sc),
 			    src->src_meta.scm_devname, b.b_blkno, b.b_error);
 			goto bad;
