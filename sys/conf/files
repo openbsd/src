@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.434 2008/06/11 12:35:44 deraadt Exp $
+#	$OpenBSD: files,v 1.435 2008/06/12 06:58:38 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -707,6 +707,7 @@ file kern/uipc_socket2.c
 file kern/uipc_syscalls.c
 file kern/uipc_usrreq.c
 file kern/vfs_bio.c
+file kern/vfs_biomem.c
 file kern/vfs_cache.c
 file kern/vfs_cluster.c
 file kern/vfs_conf.c

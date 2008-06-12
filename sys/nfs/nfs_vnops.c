@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.88 2008/06/11 12:35:46 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.89 2008/06/12 06:58:40 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2736,7 +2736,8 @@ again:
 				!= (B_DELWRI | B_NEEDCOMMIT))
 				continue;
 			bremfree(bp);
-			bp->b_flags |= (B_BUSY | B_WRITEINPROG);
+			bp->b_flags |= B_WRITEINPROG;
+			buf_acquire(bp);
 			/*
 			 * A list of these buffers is kept so that the
 			 * second loop knows which buffers have actually
@@ -2814,10 +2815,12 @@ loop:
 		if ((passone || !commit) && (bp->b_flags & B_NEEDCOMMIT))
 			continue;
 		bremfree(bp);
-		if (passone || !commit)
-		    bp->b_flags |= (B_BUSY|B_ASYNC);
-		else
-		    bp->b_flags |= (B_BUSY|B_ASYNC|B_WRITEINPROG|B_NEEDCOMMIT);
+		if (passone || !commit) {
+			bp->b_flags |= B_ASYNC;
+		} else {
+			bp->b_flags |= (B_ASYNC|B_WRITEINPROG|B_NEEDCOMMIT);
+		}
+		buf_acquire(bp);
 		splx(s);
 		VOP_BWRITE(bp);
 		goto loop;
@@ -3013,6 +3016,8 @@ nfs_writebp(bp, force)
 	if (retv) {
 		if (force)
 			bp->b_flags |= B_WRITEINPROG;
+		bcstats.pendingwrites++;
+		bcstats.numwrites++;
 		VOP_STRATEGY(bp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.77 2008/06/11 12:35:46 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.78 2008/06/12 06:58:39 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 		/* read boot record */
 		bp->b_blkno = part_blkno;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags = B_BUSY | B_READ | B_RAW;
 		(*strat)(bp);
 		if (biowait(bp)) {
 /*wrong*/		if (partoffp)
@@ -542,7 +542,7 @@ notfat:
 
 	bp->b_blkno = dospartoff + DOS_LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp))
 		return ("disk label I/O error");

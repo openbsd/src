@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.5 2008/06/11 12:35:46 deraadt Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.6 2008/06/12 06:58:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -112,6 +112,8 @@ sched_idle(void *v)
 				exit2(dead);
 			}
 		}
+
+		splassert(IPL_NONE);
 
 		cpu_idle_enter();
 		while (sched_is_idle())

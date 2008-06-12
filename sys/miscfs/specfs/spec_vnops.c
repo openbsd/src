@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.51 2008/06/11 12:35:46 deraadt Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.52 2008/06/12 06:58:40 deraadt Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ loop:
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("spec_fsync: not dirty");
 		bremfree(bp);
-		bp->b_flags |= B_BUSY;
+		buf_acquire(bp);
 		splx(s);
 		bawrite(bp);
 		goto loop;

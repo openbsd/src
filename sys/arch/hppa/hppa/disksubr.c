@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.71 2008/06/11 12:35:41 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.72 2008/06/12 06:58:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -107,7 +107,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	/* read LIF volume header */
 	bp->b_blkno = btodb(LIF_VOLSTART);
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp))
 		return "LIF volume header I/O error";
@@ -122,7 +122,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	/* read LIF directory */
 	dbp->b_blkno = lifstodb(lvp->vol_addr);
 	dbp->b_bcount = lp->d_secsize;
-	dbp->b_flags = B_BUSY | B_READ;
+	dbp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(dbp);
 
 	if (biowait(dbp)) {
@@ -154,7 +154,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		/* read LIF directory */
 		dbp->b_blkno = lifstodb(p->dir_addr);
 		dbp->b_bcount = lp->d_secsize;
-		dbp->b_flags = B_BUSY | B_READ;
+		dbp->b_flags = B_BUSY | B_READ | B_RAW;
 		(*strat)(dbp);
 
 		if (biowait(dbp)) {
@@ -218,7 +218,7 @@ finished:
 
 	bp->b_blkno = fsoff + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -258,14 +258,14 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;
-	bp->b_flags = B_BUSY | B_WRITE;
+	bp->b_flags = B_BUSY | B_WRITE | B_RAW;
 	(*strat)(bp);
 	error = biowait(bp);
 
