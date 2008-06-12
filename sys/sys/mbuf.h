@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.98 2008/06/11 02:46:35 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.99 2008/06/12 01:47:07 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -47,7 +47,8 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
+/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN + MLEN + 1)
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /* Packet tags structure */
