@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.363 2008/06/08 20:43:31 yuo Exp $
+$OpenBSD: usbdevs,v 1.364 2008/06/12 18:50:57 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -382,6 +382,7 @@ vendor SHANTOU		0x0a46	ShanTou
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor DREAMCHEEKY	0x0a81	Dream Cheeky
 vendor IDQUANTIQUE	0x0aba	id Quantique
 vendor IDTECH		0x0acd	ID TECH
 vendor ZYDAS		0x0ace	ZyDAS Technology
@@ -2672,6 +2673,9 @@ product TENDA TWL541U		0x1fab	TWL541U WLAN
 
 /* Ten X Technology, Inc. */
 product TENX MISSILE		0x0202	Missile Launcher
+
+/* Dream Cheeky */
+product DREAMCHEEKY ROCKETBABY	0x0701	Missile Launcher
 
 /* Integrated System Solution Corp. */
 product ISSC KYBT100		0x1001	KY-BT100 Bluetooth
