@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.123 2008/06/11 04:42:09 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.124 2008/06/12 19:05:42 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -58,6 +58,7 @@ void			aml_freevalue(struct aml_value *);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);
 struct aml_value	*_aml_setvalue(struct aml_value *, int, int64_t,
 			    const void *);
+struct aml_value 	*aml_getstack(struct aml_scope *, int);
 
 u_int64_t		aml_convradix(u_int64_t, int, int);
 int64_t			aml_evalexpr(int64_t, int64_t, int);
@@ -67,16 +68,14 @@ int			aml_msb(u_int64_t);
 int			aml_tstbit(const u_int8_t *, int);
 void			aml_setbit(u_int8_t *, int, int);
 
+void		aml_xaddref(struct aml_value *, const char *);
+void		aml_xdelref(struct aml_value **, const char *);
+
 void			aml_bufcpy(void *, int, const void *, int, int);
 int			aml_evalinteger(struct acpi_softc *, struct aml_node *,
 			    const char *, int, struct aml_value *, int64_t *);
 
-void			_aml_delref(struct aml_value **val, const char *, int);
-void			aml_delref(struct aml_value **);
-void			aml_addref(struct aml_value *);
 int			aml_pc(uint8_t *);
-
-#define aml_delref(x) _aml_delref(x, __FUNCTION__, __LINE__)
 
 struct aml_value	*aml_parseop(struct aml_scope *, struct aml_value *,int);
 struct aml_value	*aml_parsetarget(struct aml_scope *, struct aml_value *,
@@ -277,6 +276,8 @@ _aml_die(const char *fn, int line, const char *fmt, ...)
 {
 #ifndef SMALL_KERNEL
 	struct aml_scope *root;
+	struct aml_value *sp;
+
 	int idx;
 #endif /* SMALL_KERNEL */
 	va_list ap;
@@ -290,14 +291,18 @@ _aml_die(const char *fn, int line, const char *fmt, ...)
 	for (root = aml_lastscope; root && root->pos; root = root->parent) {
 		printf("%.4x Called: %s\n", aml_pc(root->pos),
 		    aml_nodename(root->node));
-		for (idx = 0; idx < root->nargs; idx++) {
+		for (idx = 0; idx < AML_MAX_ARG; idx++) {
+			sp = aml_getstack(root, AMLOP_ARG0+idx);
+			if (sp && sp->type) {
 			printf("  arg%d: ", idx);
-			aml_showvalue(&root->args[idx], 0);
+				aml_showvalue(sp, 0);
+			}
 		}
-		for (idx = 0; root->locals && idx < AML_MAX_LOCAL; idx++) {
-			if (root->locals[idx].type) {
+		for (idx = 0; idx < AML_MAX_LOCAL; idx++) {
+			sp = aml_getstack(root, AMLOP_LOCAL0+idx);
+			if (sp && sp->type) {
 				printf("  local%d: ", idx);
-				aml_showvalue(&root->locals[idx], 0);
+				aml_showvalue(sp, 0);
 			}
 		}
 	}
@@ -720,7 +725,7 @@ aml_delchildren(struct aml_node *node)
 		aml_delchildren(onode);
 
 		/* Decrease reference count */
-		aml_delref(&onode->value);
+		aml_xdelref(&onode->value, "");
 
 		/* Delete node */
 		acpi_os_free(onode);
@@ -1096,7 +1101,7 @@ aml_allocvalue(int type, int64_t ival, const void *bval)
 
 	rv = (struct aml_value *)acpi_os_malloc(sizeof(struct aml_value));
 	if (rv != NULL) {
-		aml_addref(rv);
+		aml_xaddref(rv, "");
 		return _aml_setvalue(rv, type, ival, bval);
 	}
 	return NULL;
@@ -1123,42 +1128,17 @@ aml_freevalue(struct aml_value *val)
 		}
 		acpi_os_free(val->v_package);
 		break;
+	case AML_OBJTYPE_OBJREF:
+		aml_xdelref(&val->v_objref.ref, "");
+		break;
 	case AML_OBJTYPE_BUFFERFIELD:
 	case AML_OBJTYPE_FIELDUNIT:
-		aml_delref(&val->v_field.ref1);
-		aml_delref(&val->v_field.ref2);
+		aml_xdelref(&val->v_field.ref1, "");
+		aml_xdelref(&val->v_field.ref2, "");
 		break;
 	}
 	val->type = 0;
 	memset(&val->_, 0, sizeof(val->_));
-}
-
-/* Increase reference count */
-void
-aml_addref(struct aml_value *val)
-{
-	if (val)
-		val->refcnt++;
-}
-
-/* Decrease reference count + delete value */
-
-void
-_aml_delref(struct aml_value **val, const char *fn, int line)
-{
-	if (val == NULL || *val == NULL)
-		return;
-	if ((*val)->stack > 0) {
-		/* Don't delete locals */
-		return;
-	}
-	if ((*val)->refcnt & ~0xFF)
-		printf("-- invalid ref: %x:%s:%d\n", (*val)->refcnt, fn, line);
-	if (--(*val)->refcnt == 0) {
-		aml_freevalue(*val);
-		acpi_os_free(*val);
-		*val = NULL;
-	}
 }
 
 /*
@@ -1694,7 +1674,7 @@ aml_callosi(struct aml_scope *scope, struct aml_value *val)
 	int idx, result=0;
 	struct aml_value *fa;
 
-	fa = scope->args[0].v_objref.ref;
+	fa = aml_getstack(scope, AMLOP_ARG0);
 	for (idx=0; !result && aml_valid_osi[idx] != NULL; idx++) {
 		dnprintf(10,"osi: %s,%s\n", fa->v_string, aml_valid_osi[idx]);
 		result = !strcmp(fa->v_string, aml_valid_osi[idx]);
@@ -1949,8 +1929,6 @@ struct aml_scope *aml_xpushscope(struct aml_scope *, struct aml_value *,
 struct aml_scope *aml_xpopscope(struct aml_scope *);
 
 void		aml_showstack(struct aml_scope *);
-void		aml_xaddref(struct aml_value *, const char *);
-void		aml_xdelref(struct aml_value **, const char *);
 void		aml_xconvert(struct aml_value *, struct aml_value **, int, int);
 int64_t		aml_hextoint(const char *);
 
@@ -2038,28 +2016,53 @@ aml_xfindscope(struct aml_scope *scope, int type, int endscope)
 	return scope;
 }
 
+struct aml_value *
+aml_getstack(struct aml_scope *scope, int opcode)
+{
+  	struct aml_value *sp;
+
+	sp = NULL;
+	scope = aml_xfindscope(scope, AMLOP_METHOD, 0);
+	if (scope == NULL)
+		return NULL;
+	if (opcode >= AMLOP_LOCAL0 && opcode <= AMLOP_LOCAL7) {
+		if (scope->locals == NULL)
+			scope->locals = aml_allocvalue(AML_OBJTYPE_PACKAGE, 8, NULL);
+		sp = scope->locals->v_package[opcode - AMLOP_LOCAL0];
+		sp->stack = opcode;
+	}
+	else if (opcode >= AMLOP_ARG0 && opcode <= AMLOP_ARG6) {
+	  	if (scope->args == NULL)
+			scope->args = aml_allocvalue(AML_OBJTYPE_PACKAGE, 7, NULL);
+		sp = scope->args->v_package[opcode - AMLOP_ARG0];
+		if (sp->type == AML_OBJTYPE_OBJREF)
+			sp = sp->v_objref.ref;
+	}
+	return sp;
+}
+
 #ifdef ACPI_DEBUG
 /* Dump AML Stack */
 void 
 aml_showstack(struct aml_scope *scope)
 {
+	struct aml_value *sp;
 	int idx;
 
 	dnprintf(10, "===== Stack %s:%s\n", aml_nodename(scope->node), 
 	    aml_mnem(scope->type, 0));
-	scope = aml_xfindscope(scope, AMLOP_METHOD, 0);
-	if (scope == NULL)
-		return;
 	for (idx=0; scope->args && idx<7; idx++) {
-		if (scope->args[idx].type) {
+		sp = aml_getstack(scope, AMLOP_ARG0+idx);
+		if (sp && sp->type) {
 			dnprintf(10," Arg%d: ", idx);
-			aml_showvalue(scope->args[idx].v_objref.ref, 10);
+			aml_showvalue(sp, 10);
 		}
 	}
 	for (idx=0; scope->locals && idx<8; idx++) {
-		if (scope->locals[idx].type) {
+		sp = aml_getstack(scope, AMLOP_LOCAL0+idx);
+		if (sp && sp->type) {
 			dnprintf(10," Local%d: ", idx);
-			aml_showvalue(&scope->locals[idx], 10);
+			aml_showvalue(sp, 10);
 		}
 	}
 }
@@ -2106,7 +2109,6 @@ struct aml_scope *
 aml_xpopscope(struct aml_scope *scope)
 {
 	struct aml_scope *nscope;
-	int idx;
 
 	if (scope == NULL)
 		return NULL;
@@ -2117,16 +2119,12 @@ aml_xpopscope(struct aml_scope *scope)
 		aml_delchildren(scope->node);
 	}
 	if (scope->locals) {
-		for (idx=0; idx<8; idx++) {
-			aml_freevalue(&scope->locals[idx]);
-		}
+		aml_freevalue(scope->locals);
 		acpi_os_free(scope->locals);
 		scope->locals = NULL;
 	}
 	if (scope->args) {
-		for (idx=0; idx<7; idx++) {
-			aml_freevalue(&scope->args[idx]);
-		}
+		aml_freevalue(scope->args);
 		acpi_os_free(scope->args);
 		scope->args = NULL;
 	}
@@ -3381,19 +3379,19 @@ aml_xeval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 		    AML_METHOD_ARGCOUNT(tmp->v_method.flags),
 		    ret_type);
 		ms = aml_xpushscope(scope, tmp, tmp->node, AMLOP_METHOD);
-		ms->args = acpi_os_malloc(7 * sizeof(struct aml_value));
 		
 		/* Parse method arguments */
 		for (idx=0; idx<AML_METHOD_ARGCOUNT(tmp->v_method.flags); idx++) {
-			ms->args[idx].type = AML_OBJTYPE_OBJREF;
-			ms->args[idx].v_objref.type = AMLOP_ARG0 + idx;
+			struct aml_value *sp;
+
+			sp = aml_getstack(ms, AMLOP_ARG0+idx);
 			if (argv) {
-				ms->args[idx].v_objref.ref = &argv[idx];
-				argv[idx].refcnt = 99;
+				aml_copyvalue(sp, &argv[idx]);
 			}
 			else {
-				ms->args[idx].v_objref.ref = 
-				    aml_xparse(scope, 't', "ARGX");
+				sp->type = AML_OBJTYPE_OBJREF;
+				sp->v_objref.type = AMLOP_ARG0 + idx;
+				sp->v_objref.ref = aml_xparse(scope, 't', "ARGX");
 			}
 		}
 #ifdef ACPI_DEBUG
@@ -3628,8 +3626,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	aml_debugger(scope);
 
 	opcode = aml_parseopcode(scope);
-	delay(amlop_delay);
-
 	htab = aml_findopcode(opcode);
 	if (htab == NULL) {
 		/* No opcode handler */
@@ -3714,20 +3710,8 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			rv = aml_xparsesimple(scope, *ch, NULL);
 			break;
 		case AML_ARG_STKLOCAL:
-			mscope = aml_xfindscope(scope, AMLOP_METHOD, 0);
-			if (mscope->locals == NULL) {
-				mscope->locals = acpi_os_malloc(8 * sizeof(struct aml_value));
-			}
-			rv = &mscope->locals[opcode - AMLOP_LOCAL0];
-			if (rv->refcnt == 0) {
-				rv->refcnt++;
-			}
-			rv->stack = opcode;
-			rv->node  = mscope->node;
-			break;
 		case AML_ARG_STKARG:
-			mscope = aml_xfindscope(scope, AMLOP_METHOD, 0);
-			rv = mscope->args[opcode - AMLOP_ARG0].v_objref.ref;
+			rv = aml_getstack(scope, opcode);
 			break;
 		default:
 			aml_die("Unknown arg type: %c\n", *ch);
@@ -3736,18 +3720,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		if (rv != NULL) {
 			optype[idx] = *ch;
 			opargs[idx++] = rv;
-		}
-	}
-
-	/* Check for Op(Src1,Src2,Src1) type operations */
-	for (idx=0; optype[idx]; idx++) {
-		int jdx;
-		for (jdx=idx+1; optype[jdx]; jdx++) {
-			if (opargs[idx] == opargs[jdx]) {
-				dnprintf(12,"STORE SAME %s %d,%d -> [%s] ", 
-				    htab->mnem, idx, jdx, 
-				    aml_nodename(scope->node));
-			}
 		}
 	}
 
@@ -3767,9 +3739,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_LOCAL5:
 	case AMLOP_LOCAL6:
 	case AMLOP_LOCAL7:
-		my_ret = opargs[0];
-		aml_xaddref(my_ret, htab->mnem);
-		break;
 	case AMLOP_ARG0:
 	case AMLOP_ARG1:
 	case AMLOP_ARG2:
@@ -3777,7 +3746,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_ARG4:
 	case AMLOP_ARG5:
 	case AMLOP_ARG6:
-		/* These are not allocated dynamically but do not have node */
 		my_ret = opargs[0];
 		aml_xaddref(my_ret, htab->mnem);
 		break;
@@ -4373,7 +4341,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	}
 	if (my_ret != NULL) {
 		/* Display result */
-		my_ret->stack = opcode;
 		dnprintf(20,"quick: %.4x %18s %c %.4x\n", pc, stype, 
 		    ret_type, my_ret->stack);
 	}
