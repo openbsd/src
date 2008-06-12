@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.45 2008/06/12 18:52:46 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.46 2008/06/12 20:39:29 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -74,6 +74,7 @@
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
+#	video*	Video V4L devices
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -345,6 +346,11 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+video*)
+	M video$U  c 44 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 uscanner*)
 	M uscanner$U c 96 $U 660
 	;;
@@ -592,10 +598,10 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1
 	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
 	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ccd0 ccd1 ccd2 ccd3 hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 uall audio0 uk0 random
-	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
-	R ttyh0 ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
-	R raid2 raid3 std st0 st1 fd
+	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 audio0 uk0
+	R random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
+	R tty03 ttyh0 ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 raid0
+	R raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

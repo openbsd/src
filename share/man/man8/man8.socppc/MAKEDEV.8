@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.1 2008/05/14 20:55:50 miod Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.2 2008/06/12 20:42:00 todd Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.socppc/MAKEDEV.md,v 1.1 2008/05/13 19:39:58 kettenis Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
+.\"	OpenBSD: etc.socppc/MAKEDEV.md,v 1.2 2008/06/12 20:39:29 todd Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 14, 2008
+.Dd June 12, 2008
 .Dt MAKEDEV 8 socppc
 .Os
 .Sh NAME
@@ -180,6 +180,9 @@ Bus control devices used by usbd for attach/detach, see
 .It Ar uscanner*
 Scanners, see
 .Xr uscanner 4 .
+.It Ar video*
+Video V4L devices, see
+.Xr video 4 .
 .El
 .Pp
 .Sy Special purpose devices

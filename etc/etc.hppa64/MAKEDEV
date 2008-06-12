@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.8 2008/06/12 18:52:46 todd Exp 
+#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.9 2008/06/12 20:39:29 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -55,6 +55,8 @@
 #	wsmouse*	wscons mice
 # Printers:
 #	lpt*	IEEE 1284 centronics printer
+# USB devices:
+#	video*	Video V4L devices
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -292,6 +294,11 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+video*)
+	M video$U  c 33 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 lpt*|lpa*)
 	case $i in
 	lpt*) n=lpt f=0;;
@@ -437,9 +444,10 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
-	R ss1 ch0 ptm local wscons pci0 pci1 pci2 pci3 audio0 uk0
-	R random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
-	R tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R ss1 ch0 ptm local wscons pci0 pci1 pci2 pci3 video0 audio0
+	R uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01
+	R tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1
+	R fd
 	;;
 
 wd*|sd*|ccd*)

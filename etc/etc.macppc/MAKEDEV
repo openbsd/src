@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.32 2007/11/12 19:24:43 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.33 2008/06/12 20:39:29 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -64,6 +64,7 @@
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
+#	video*	Video V4L devices
 # Special purpose devices:
 #	apm	Power management device
 #	audio*	Audio devices
@@ -339,6 +340,11 @@ apm*)
 	M apmctl	c 25 8 644
 	;;
 
+video*)
+	M video$U  c 45 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 uscanner*)
 	M uscanner$U c 74 $U 660
 	;;
@@ -513,9 +519,9 @@ all)
 	R tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	R bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 cuaa cuab ttya ttyb hotplug
 	R ptm local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall tuner0
-	R radio0 audio0 uk0 random lkm tty00 tty01 tty02 tty03 apm
-	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R radio0 video0 audio0 uk0 random lkm tty00 tty01 tty02 tty03
+	R apm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
+	R raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

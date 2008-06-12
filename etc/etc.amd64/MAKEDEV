@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.25 2008/06/12 18:52:46 todd Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.26 2008/06/12 20:39:28 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -68,6 +68,7 @@
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
+#	video*	Video V4L devices
 # Special purpose devices:
 #	agp*	AGP bridge
 #	apm	Power Management Interface
@@ -97,7 +98,6 @@
 #	tun*	Network tunnel driver
 #	tuner*	Tuner devices
 #	uk*	Unknown SCSI devices
-#	video*	Video V4L devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -254,11 +254,6 @@ xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
-video*)
-	M video$U  c 44 $U
-	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
-	;;
-
 uk*)
 	M uk$U c 20 $U 640 operator
 	;;
@@ -394,6 +389,11 @@ apm*)
 agp*)
 	M agp$U c 86 $U
 	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"
+	;;
+
+video*)
+	M video$U  c 44 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
 uscanner*)

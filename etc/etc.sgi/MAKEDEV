@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.15 2007/05/28 22:26:02 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.16 2008/06/12 20:39:29 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -52,6 +52,8 @@
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
 #	wsmouse*	wscons mice
+# USB devices:
+#	video*	Video V4L devices
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -277,6 +279,11 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+video*)
+	M video$U  c 45 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 wsmouse*)
 	M wsmouse$U c 27 $U 600
 	;;
@@ -388,9 +395,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci0 pci1 pci2 pci3 audio0 uk0 random tty00
-	R tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0
-	R st1 fd
+	R local wscons pci0 pci1 pci2 pci3 video0 audio0 uk0 random
+	R tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
