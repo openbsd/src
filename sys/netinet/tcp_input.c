@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.217 2008/06/12 15:08:47 jsing Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.218 2008/06/12 15:13:47 jsing Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1642,19 +1642,15 @@ trimthenstep6:
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_maxseg;
-#if defined(TCP_SACK)
-					tp->snd_last = tp->snd_max;
-#endif
 #ifdef TCP_SACK
+					tp->snd_last = tp->snd_max;
                     			if (tp->sack_enable) {
 						TCP_TIMER_DISARM(tp, TCPT_REXMT);
 						tp->t_rtttime = 0;
 #ifdef TCP_ECN
 						tp->t_flags |= TF_SEND_CWR;
 #endif
-#if 1 /* TCP_ECN */
 						tcpstat.tcps_cwr_frecovery++;
-#endif
 						tcpstat.tcps_sack_recovery_episode++;
 #if defined(TCP_SACK) && defined(TCP_FACK)
 						tp->t_dupacks = tcprexmtthresh;
@@ -1683,9 +1679,7 @@ trimthenstep6:
 #ifdef TCP_ECN
 					tp->t_flags |= TF_SEND_CWR;
 #endif
-#if 1 /* TCP_ECN */
 					tcpstat.tcps_cwr_frecovery++;
-#endif
 					tcpstat.tcps_sndrexmitfast++;
 					(void) tcp_output(tp);
 

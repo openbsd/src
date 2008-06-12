@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.82 2008/06/12 15:08:47 jsing Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.83 2008/06/12 15:13:47 jsing Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -218,8 +218,6 @@ tcp_output(struct tcpcb *tp)
 #ifdef TCP_SACK
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
-#endif
-#if defined(TCP_SACK)
 	int maxburst = TCP_MAXBURST;
 #endif
 #ifdef TCP_SIGNATURE
@@ -293,9 +291,7 @@ again:
 		    (p = tcp_sack_output(tp))) {
 			off = p->rxmit - tp->snd_una;
 			sack_rxmit = 1;
-#if 0
 			/* Coalesce holes into a single retransmission */
-#endif
 			len = min(tp->t_maxseg, p->end - p->rxmit);
 #ifndef TCP_FACK
 			/* in FACK, hold snd_cwnd constant during recovery */
