@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.44 2008/06/11 01:55:05 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.45 2008/06/12 16:53:12 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -61,6 +61,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
 	int ecp;
 	FILE *out;
+	char *cmdname;
 
 	if (cvs_trace != 1 && level == LP_TRACE)
 		return;
@@ -86,6 +87,8 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		putc(' ', out);
 	}
 
+	cmdname = (cmdp != NULL) ? cmdp->cmd_name : __progname;
+
 	/* The cvs program appends the command name to the program name */
 	if (level == LP_TRACE) {
 		if (cvs_server_active)
@@ -98,9 +101,9 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		putc(' ', out);
 		if (level == LP_ABORT)
 			(void)fprintf(out,
-			    "[%s aborted]", cmdp->cmd_name);
+			    "[%s aborted]", cmdname);
 		else
-			(void)fputs(cmdp->cmd_name, out);
+			(void)fputs(cmdname, out);
 		(void)fputs(": ", out);
 	}
 
