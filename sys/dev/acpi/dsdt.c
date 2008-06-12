@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.124 2008/06/12 19:05:42 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.125 2008/06/12 20:30:09 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4244,11 +4244,13 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		    tmp->v_opregion.iospace != GAS_SYSTEM_MEMORY) {
 			aml_die("LOAD: not a memory region!\n");
 		}
-#if 0
+
 		/* Create buffer and read from memory */
+		_aml_setvalue(opargs[1], AML_OBJTYPE_BUFFER,
+		    tmp->v_opregion.iolen, NULL);
 		aml_xgasio(tmp->v_opregion.iospace, tmp->v_opregion.iobase, 
-		    tmp->v_opregion.iolen,
-		    opargs[1], ACPI_IOREAD);
+		    tmp->v_opregion.iolen, 
+		    opargs[1]->v_buffer, ACPI_IOREAD, 8, "");
 		
 		/* Validate that this is a SSDT */
 		if (!valid_acpihdr(opargs[1]->v_buffer, opargs[1]->length, 
@@ -4256,10 +4258,10 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			aml_die("LOAD: Not a SSDT!\n");
 		}
 
-		/* Parse block */
+		/* Parse block: set header bytes to NOP */
+		memset(opargs[1]->v_buffer, AMLOP_NOP, sizeof(struct acpi_table_header));
 		mscope = aml_xpushscope(scope, opargs[1], scope->node, 
 		    AMLOP_SCOPE);
-#endif
 		break;
 	case AMLOP_UNLOAD:
 		/* DDBHandle */
