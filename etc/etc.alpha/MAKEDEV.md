@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.35 2008/06/12 18:52:46 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.36 2008/06/12 20:39:28 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -59,6 +59,7 @@ _DEV(ugen, 48)
 _DEV(uhid, 46)
 _DEV(ulpt, 47)
 _DEV(usb, 45)
+_DEV(vi, 44)
 _TITLE(spec)
 _DEV(au, 24)
 _DEV(bio, 53)
