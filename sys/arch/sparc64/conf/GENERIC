@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.205 2008/06/12 15:31:40 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.206 2008/06/12 16:17:59 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -458,7 +458,7 @@ lpt*		at apio?
 
 stp*		at sbus?		# STP4020
 pcmcia*		at stp?
-#com*		at pcmcia?		# PCMCIA modems/serial ports
+com*		at pcmcia?		# PCMCIA modems/serial ports
 ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
 wi*		at pci?			# WaveLAN IEEE 802.11DS
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
