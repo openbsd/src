@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.47 2008/06/11 04:52:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.48 2008/06/12 06:44:16 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ int
 nfs_asyncio(bp)
 	struct buf *bp;
 {
-	int i,s;
+	int i;
 
 	if (nfs_numasync == 0)
 		return (EIO);
@@ -569,17 +569,7 @@ nfs_asyncio(bp)
 	if (bp->b_flags & (B_READ | B_WRITEINPROG | B_NOCACHE))
 		return (EIO);
 
-	/*
-	 * Just turn the async write into a delayed write, instead of
-	 * doing in synchronously. Hopefully, at least one of the nfsiods
-	 * is currently doing a write for this file and will pick up the
-	 * delayed writes before going back to sleep.
-	 */
-	s = splbio();
-	buf_dirty(bp);
-	biodone(bp);
-	splx(s);
-	return (0);
+	return (EIO);
 }
 
 /*
