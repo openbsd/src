@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.52 2008/06/12 18:13:27 hshoexer Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.53 2008/06/12 18:21:04 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -29,7 +29,9 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
+#ifdef CRYPTO
 #include <crypto/rijndael.h>
+#endif
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
@@ -137,6 +139,7 @@ struct sr_raid1 {
 };
 
 /* CRYPTO */
+#ifdef CRYPTO
 #define SR_CRYPTO_MAXKEYS	32
 #define SR_CRYPTO_KEYBITS	512	/* AES-XTS with 2 * 256 bit keys */
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
@@ -180,6 +183,7 @@ struct sr_crypto {
 	u_int8_t		scr_maskkey[AES_MAXKEYBYTES];
 	u_int64_t		scr_sid/*[SR_CRYPTO_MAXKEYS]*/;
 };
+#endif	/* CRYPTO */
 
 #define SR_META_SIZE		32	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
