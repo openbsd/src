@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.620 2008/06/07 23:05:37 robert Exp $
+#	$OpenBSD: GENERIC,v 1.621 2008/06/12 20:42:47 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -280,6 +280,10 @@ uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
+
+# USB Video
+uvideo* at uhub?
+video*  at uvideo?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
