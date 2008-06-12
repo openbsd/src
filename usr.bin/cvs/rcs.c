@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.270 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.271 2008/06/12 17:06:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -236,6 +236,8 @@ static void	rcs_strprint(const u_char *, size_t, FILE *);
 
 static void	rcs_kwexp_line(char *, struct rcs_delta *, struct cvs_lines *,
 		    struct cvs_line *, int mode);
+
+static int rcs_ignore_keys = 0;
 
 RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
@@ -1721,6 +1723,7 @@ rcs_parse_admin(RCSFILE *rfp)
 				goto fail;
 			break;
 		case RCS_TOK_SYMBOLS:
+			rcs_ignore_keys = 1;
 			if (rcs_parse_symbols(rfp) < 0)
 				goto fail;
 			break;
@@ -1734,6 +1737,9 @@ rcs_parse_admin(RCSFILE *rfp)
 			    RCS_TOKSTR(rfp));
 			goto fail;
 		}
+
+		rcs_ignore_keys = 0;
+
 	}
 
 fail:
@@ -2302,7 +2308,7 @@ rcs_gettok(RCSFILE *rfp)
 		}
 		*bp = '\0';
 
-		if (type != RCS_TOK_ERR) {
+		if (type != RCS_TOK_ERR && rcs_ignore_keys != 1) {
 			for (i = 0; i < RCS_NKEYS; i++) {
 				if (strcmp(rcs_keys[i].rk_str,
 				    pdp->rp_buf) == 0) {
