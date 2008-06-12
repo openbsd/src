@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.64 2008/06/12 04:33:37 miod Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.65 2008/06/12 17:02:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -549,9 +549,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		goto native;
 	}
 #endif
-	for (i = 0;
-	    i < sizeof(ELFNAME(probes)) / sizeof(ELFNAME(probes)[0]) && error;
-	    i++) {
+	for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++) {
 		error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos, &os);
 	}
 	if (!error)
