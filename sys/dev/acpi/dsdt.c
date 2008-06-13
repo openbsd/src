@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.128 2008/06/13 01:10:41 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.129 2008/06/13 05:53:56 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -104,6 +104,7 @@ void ns_xsearch(struct aml_node *node, int n, uint8_t *pos, void *arg);
 struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
 
 const char		*aml_getname(const char *);
+int64_t			aml_hextoint(const char *);
 void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
@@ -794,7 +795,6 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 /*
  * @@@: Value set/compare/alloc/free routines
  */
-int64_t aml_str2int(const char *);
 
 #ifndef SMALL_KERNEL
 void
@@ -884,28 +884,6 @@ aml_showvalue(struct aml_value *val, int lvl)
 #endif /* SMALL_KERNEL */
 
 int64_t
-aml_str2int(const char *str)
-{
-	int64_t val = 0;
-	int n;
-
-	/* process max 64 bit [0-9a-zA-Z] */
-	for (n = 0; n < 16; n++) {
-		int ch = str[n];
-		if (ch >= '0' && ch <= '9')
-			val = (val << 4) + ch - '0';
-		else if (ch >= 'a' && ch <= 'f')
-			val = (val << 4) + ch - 'a' + 10;
-		else if (ch >= 'A' && ch <= 'F')
-			val = (val << 4) + ch - 'A' + 10;
-		else	/* first non-digit ends conversion */
-			break;
-	}
-
-	return val;
-}
-
-int64_t
 aml_val2int(struct aml_value *rval)
 {
 	int64_t ival = 0;
@@ -924,7 +902,7 @@ aml_val2int(struct aml_value *rval)
 		    min(aml_intlen, rval->length*8));
 		break;
 	case AML_OBJTYPE_STRING:
-		aml_str2int(rval->v_string);
+		ival = aml_hextoint(rval->v_string);
 		break;
 	}
 	return (ival);
@@ -1836,7 +1814,6 @@ struct aml_scope *aml_xpopscope(struct aml_scope *);
 
 void		aml_showstack(struct aml_scope *);
 void		aml_xconvert(struct aml_value *, struct aml_value **, int, int);
-int64_t		aml_hextoint(const char *);
 
 int		aml_xmatchtest(int64_t, int64_t, int);
 int		aml_xmatch(struct aml_value *, int, int, int, int, int);
