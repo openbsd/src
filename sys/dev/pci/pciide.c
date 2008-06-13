@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.283 2008/06/11 05:28:33 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.284 2008/06/13 17:03:26 maja Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -600,7 +600,7 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3512,	/* SiI3512 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_AAR_1210SA, /* Adaptec AAR-1210SA */
