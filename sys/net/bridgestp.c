@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.32 2008/05/21 21:10:50 mk Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.33 2008/06/13 19:08:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1871,7 +1871,7 @@ void
 bstp_initialization(struct bstp_state *bs)
 {
 	struct bstp_port *bp;
-	struct ifnet *ifp, *mif;
+	struct ifnet *mif = NULL;
 	u_char *e_addr;
 
 	if (LIST_EMPTY(&bs->bs_bplist)) {
@@ -1879,25 +1879,23 @@ bstp_initialization(struct bstp_state *bs)
 		return;
 	}
 
-	mif = NULL;
 	/*
 	 * Search through the Ethernet interfaces and find the one
-	 * with the lowest value. The adapter which we take the MAC
-	 * address from does not need to be part of the bridge, it just
-	 * needs to be a unique value. It is not possible for mif to be
+	 * with the lowest value.
+	 * Make sure we take the address from an interface that is
+	 * part of the bridge to make sure two bridges on the system
+	 * will not use the same one. It is not possible for mif to be
 	 * null, at this point we have at least one STP port and hence
 	 * at least one NIC.
 	 */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (ifp->if_type != IFT_ETHER)
-			continue;
+	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
 		if (mif == NULL) {
-			mif = ifp;
+			mif = bp->bp_ifp;
 			continue;
 		}
-		if (bstp_addr_cmp(LLADDR(ifp->if_sadl),
+		if (bstp_addr_cmp(LLADDR(bp->bp_ifp->if_sadl),
 		    LLADDR(mif->if_sadl)) < 0) {
-			mif = ifp;
+			mif = bp->bp_ifp;
 			continue;
 		}
 	}
