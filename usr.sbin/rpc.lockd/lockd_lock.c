@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.2 2000/06/09 14:00:53 fvdl Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.2 2008/06/13 21:34:24 sturm Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

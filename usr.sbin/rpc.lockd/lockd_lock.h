@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.h,v 1.2 2000/06/09 14:00:54 fvdl Exp $	*/
+/*	$OpenBSD: lockd_lock.h,v 1.2 2008/06/13 21:34:24 sturm Exp $	*/
 
 /* Headers and function declarations for file-locking utilities */
 
