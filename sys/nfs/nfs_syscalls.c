@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.64 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.65 2008/06/13 22:19:35 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -391,32 +391,7 @@ nfssvc_nfsd(nsd, argp, p)
 		    else
 			nd->nd_nam = slp->ns_nam;
 
-		    /*
-		     * Check to see if authorization is needed.
-		     */
-		    if (nfsd->nfsd_flag & NFSD_NEEDAUTH) {
-			nfsd->nfsd_flag &= ~NFSD_NEEDAUTH;
-			nsd->nsd_haddr = mtod(nd->nd_nam,
-			    struct sockaddr_in *)->sin_addr.s_addr;
-			nsd->nsd_authlen = nfsd->nfsd_authlen;
-			nsd->nsd_verflen = nfsd->nfsd_verflen;
-			if (!copyout(nfsd->nfsd_authstr,nsd->nsd_authstr,
-				nfsd->nfsd_authlen) &&
-			    !copyout(nfsd->nfsd_verfstr, nsd->nsd_verfstr,
-				nfsd->nfsd_verflen) &&
-			    !copyout((caddr_t)nsd, argp, sizeof (*nsd))) {
-			    return (ENEEDAUTH);
-			}
-			cacherep = RC_DROPIT;
-		    } else
-			cacherep = nfsrv_getcache(nd, slp, &mreq);
-
-		    if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
-			    nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
-			    nd->nd_procnum = NFSPROC_NOOP;
-			    nd->nd_repstat = (NFSERR_AUTHERR | AUTH_TOOWEAK);
-			    cacherep = RC_DOIT;
-		    }
+		    cacherep = nfsrv_getcache(nd, slp, &mreq);
 		}
 
 		/*
