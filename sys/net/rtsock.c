@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.72 2008/06/13 06:10:46 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.73 2008/06/13 21:49:57 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ route_output(struct mbuf *m, ...)
 			goto flush;
 		}
 		prio = rtm->rtm_priority;
-	} else if (rtm->rtm_type == RTM_DELETE)
+	} else if (rtm->rtm_type != RTM_ADD)
 		prio = RTP_ANY;
 	else if (rtm->rtm_flags & RTF_STATIC)
 		prio = RTP_STATIC;
@@ -346,15 +346,39 @@ route_output(struct mbuf *m, ...)
 		 * if gate == NULL the first match is returned.
 		 * (no need to call rt_mpath_matchgate if gate == NULL)
 		 */
-		if (rn_mpath_capable(rnh) &&
-		    (rtm->rtm_type != RTM_GET || gate ||
-		    rtm->rtm_priority != 0)) {
-			rt = rt_mpath_matchgate(rt, gate, prio);
-			rn = (struct radix_node *)rt;
+		if (rn_mpath_capable(rnh)) {
+			/* first find correct priority bucket */
+			rn = rn_mpath_prio(rn, prio);
+			rt = (struct rtentry *)rn;
+			if (prio != RTP_ANY && rt->rt_priority != prio) {
+				error = ESRCH;
+				goto flush;
+			}
+
+			/* if multipath routes */
+			if (rn_mpath_next(rn)) {
+				if (gate)
+					rt = rt_mpath_matchgate(rt, gate, prio);
+				else if (rtm->rtm_type != RTM_GET)
+					/*
+					 * only RTM_GET may use an empty gate
+					 * on multipath ...
+					 */
+					rt = NULL;
+			} else if (gate && (rtm->rtm_type == RTM_GET ||
+			    rtm->rtm_type == RTM_LOCK))
+				/*
+				 * ... but if a gate is specified RTM_GET
+				 * and RTM_LOCK must match the gate no matter
+				 * what.
+				 */
+				rt = rt_mpath_matchgate(rt, gate, prio);
+
 			if (!rt) {
 				error = ESRCH;
 				goto flush;
 			}
+			rn = (struct radix_node *)rt;
 		}
 #endif
 		rt->rt_refcnt++;
