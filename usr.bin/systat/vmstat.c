@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.64 2008/06/12 22:26:01 canacar Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.65 2008/06/13 10:06:14 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.64 2008/06/12 22:26:01 canacar Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.65 2008/06/13 10:06:14 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -170,6 +170,7 @@ int ncpu = 1;
 int
 initvmstat(void)
 {
+	field_view *v;
 	int mib[4], i;
 	size_t size;
 
@@ -219,8 +220,6 @@ initvmstat(void)
 	getinfo(&s2);
 	copyinfo(&z, &s1);
 
-	field_view *v;
-	
 	for (v = views_vm; v->name != NULL; v++)
 		add_view(v);
 
