@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.66 2008/06/07 01:59:36 jdixon Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.67 2008/06/13 04:41:15 mbalmer Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -227,8 +227,7 @@ MODCONFDIR= \
 	modules.sample
 
 CONFFILES= \
-	conf/httpd.conf-dist conf/httpd.conf \
-	conf/mime.types conf/magic
+	conf/httpd.conf conf/mime.types conf/magic
 
 HTDOCS= \
 	htdocs/apache_pb.gif htdocs/index.html htdocs/openbsdpower.gif \
