@@ -4569,7 +4569,6 @@
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
-./var/www/conf/httpd.conf-dist
 ./var/www/conf/modules
 ./var/www/conf/modules.sample
 ./var/www/htdocs
