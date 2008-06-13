@@ -117,7 +117,7 @@ if test -z "${NO_SMALL_DATA}"; then
   .rela.sbss2   ${RELOCATING-0} : { *(.rela.sbss2${RELOCATING+ .rela.sbss2.* .rela.gnu.linkonce.sb2.*}) }"
 fi
 RODATA_ALIGN_ADD_VAL="${CREATE_SHLIB-${RODATA_ALIGN_ADD:-0}} ${CREATE_SHLIB+0}"
-test "$LD_FLAG" = "n" || test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || NO_PAD="y"
+test "$LD_FLAG" = "n" || test "$LD_FLAG" = "N" || test "${LD_FLAG%%(cpie|pie)}" = "Z" || NO_PAD="y"
 if test "$NO_PAD" = "y" ; then
   PAD_RO0="${RELOCATING+${RODATA_ALIGN} + ${RODATA_ALIGN_ADD_VAL};}"
   PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .pltpad0 ${RELOCATING-0} : { ${RELOCATING+__plt_start = .;} }"

@@ -1740,9 +1740,13 @@ sed $sc ldscripts/${EMULATION_NAME}.xn                 >> e${EMULATION_NAME}.c
 fi
 if test -n "$GENERATE_PIE_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
+echo '  ; else if (link_info.pie && link_info.combreloc && config.data_bss_contig == TRUE) return' >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xdcz                >> e${EMULATION_NAME}.c
 echo '  ; else if (link_info.pie && link_info.combreloc) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xdc                >> e${EMULATION_NAME}.c
 fi
+echo '  ; else if (link_info.pie && config.data_bss_contig == TRUE) return' >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xdz                >> e${EMULATION_NAME}.c
 echo '  ; else if (link_info.pie) return'	       >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xd                 >> e${EMULATION_NAME}.c
 fi
@@ -1788,11 +1792,15 @@ fi
 if test -n "$GENERATE_PIE_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 cat >>e${EMULATION_NAME}.c <<EOF
+  else if (link_info.pie && link_info.combreloc && config.data_bss_contig == TRUE)
+    return "ldscripts/${EMULATION_NAME}.xdcz";
   else if (link_info.pie && link_info.combreloc)
     return "ldscripts/${EMULATION_NAME}.xdc";
 EOF
 fi
 cat >>e${EMULATION_NAME}.c <<EOF
+  else if (link_info.pie && config.data_bss_contig == TRUE)
+    return "ldscripts/${EMULATION_NAME}.xdz";
   else if (link_info.pie)
     return "ldscripts/${EMULATION_NAME}.xd";
 EOF

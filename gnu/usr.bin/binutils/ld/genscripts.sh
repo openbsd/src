@@ -319,8 +319,21 @@ if test -n "$GENERATE_PIE_SCRIPT"; then
       . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
     ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xdc
     rm -f ${COMBRELOC}
+    LD_FLAG=Zcpie
+    ( echo "/* Script for -pie -z combreloc, -Z: position independent executable, combine & sort relocs, no PLT/GOT padding */"
+      . ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME}
+      . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+    ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xdcz
+    rm -f ${COMBRELOC}
     COMBRELOC=
   fi
+  LD_FLAG=Zpie
+  DATA_ALIGNMENT=${DATA_ALIGNMENT_sc-${DATA_ALIGNMENT}}
+  (
+    echo "/* Script for ld -pie -Z: link position independent executable, no PLT/GOT padding */"
+    . ${CUSTOMIZER_SCRIPT} ${EMULATION_NAME}
+    . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xdz
   unset CREATE_PIE
 fi
 
