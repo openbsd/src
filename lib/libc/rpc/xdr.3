@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.18 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: xdr.3,v 1.19 2008/06/13 23:39:26 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .\" Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -28,7 +28,7 @@
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 13 2008 $
 .Dt XDR 3
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Nm xdr_inline ,
 .Nm xdr_int ,
 .Nm xdr_long ,
+.Nm xdr_int64_t ,
 .Nm xdrmem_create ,
 .Nm xdr_opaque ,
 .Nm xdr_pointer ,
@@ -60,6 +61,7 @@
 .Nm xdr_u_char ,
 .Nm xdr_u_int ,
 .Nm xdr_u_long ,
+.Nm xdr_u_int64_t ,
 .Nm xdr_u_short ,
 .Nm xdr_union ,
 .Nm xdr_vector ,
@@ -95,6 +97,8 @@
 .Fn xdr_int "XDR *xdrs" "int *ip"
 .Ft int
 .Fn xdr_long "XDR *xdrs" "long *lp"
+.Ft int
+.Fn xdr_int64_t "XDR *xdrs" "int64_t *lp"
 .Ft void
 .Fn xdrmem_create "XDR *xdrs" "char *addr" "u_int size" "enum xdr_op op"
 .Ft int
@@ -125,6 +129,8 @@
 .Fn xdr_u_int "XDR *xdrs" "unsigned int *up"
 .Ft int
 .Fn xdr_u_long "XDR *xdrs" "unsigned long *ulp"
+.Ft int
+.Fn xdr_u_int64_t "XDR *xdrs" "u_int64_t *ullp"
 .Ft int
 .Fn xdr_u_short "XDR *xdrs" "unsigned short *usp"
 .Ft int
@@ -277,6 +283,12 @@ This routine returns one if it succeeds, zero otherwise.
 .Fn xdr_long
 is a filter primitive that translates between C
 .Li long
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.Pp
+.Fn xdr_int64_t
+is a filter primitive that translates between C
+.Li int64_t
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -491,6 +503,12 @@ This routine returns one if it succeeds, zero otherwise.
 .Fn xdr_u_long
 is a filter primitive that translates between C
 .Li unsigned long
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.Pp
+.Fn xdr_u_int64_t
+is a filter primitive that translates between C
+.Li u_int64_t
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
