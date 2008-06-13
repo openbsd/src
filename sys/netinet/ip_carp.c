@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.165 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.166 2008/06/13 23:29:31 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2475,16 +2475,21 @@ carp_set_state(struct carp_vhost_entry *vhe, int state)
 {
 	struct carp_softc *sc = vhe->parent_sc;
 	static const char *carp_states[] = { CARP_STATES };
+	int loglevel;
 
 	if (vhe->state == state)
 		return;
+	if (vhe->state == INIT || state == INIT)
+		loglevel = LOG_WARNING;
+	else
+		loglevel = LOG_CRIT;
 
 	if (sc->sc_vhe_count > 1)
-		CARP_LOG(LOG_CRIT, sc,
+		CARP_LOG(loglevel, sc,
 		    ("state transition (vhid %d): %s -> %s", vhe->vhid,
 		    carp_states[vhe->state], carp_states[state]));
 	else
-		CARP_LOG(LOG_CRIT, sc,
+		CARP_LOG(loglevel, sc,
 		    ("state transition: %s -> %s",
 		    carp_states[vhe->state], carp_states[state]));
 
