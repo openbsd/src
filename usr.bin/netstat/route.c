@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.79 2008/06/13 05:57:50 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.80 2008/06/13 05:59:05 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 struct radix_node_head ***rt_head;
-struct radix_node_head ***rnt;			/* provides enough space */
+struct radix_node_head ***rnt;
 struct radix_node_head *rt_tables[AF_MAX+1];	/* provides enough space */
 u_int8_t		  af2rtafidx[AF_MAX+1];
 
