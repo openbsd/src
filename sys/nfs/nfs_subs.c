@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.81 2008/06/13 17:24:13 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.82 2008/06/13 22:11:32 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -525,9 +525,7 @@ struct pool nfsreqpl;
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(vp, procid, hsiz)
-	struct vnode *vp;
-	u_long procid;
+nfsm_reqhead(hsiz)
 	int hsiz;
 {
 	struct mbuf *mb;

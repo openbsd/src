@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.74 2008/06/12 20:24:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.75 2008/06/13 22:11:32 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ nfs_statfs(mp, sbp, p)
 	if (v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
-	nfsm_reqhead(vp, NFSPROC_FSSTAT, NFSX_FH(v3));
+	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
 	nfsm_fhtom(vp, v3);
 	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
 	if (v3)
@@ -194,7 +194,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	struct mbuf *mreq, *mrep, *md, *mb;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
-	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
+	mb = mreq = nfsm_reqhead(NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	nfsm_request(vp, NFSPROC_FSINFO, p, cred);
 	nfsm_postop_attr(vp, retattr);

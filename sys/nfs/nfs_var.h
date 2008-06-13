@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.40 2008/06/13 03:49:26 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.41 2008/06/13 22:11:32 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
 void nfsrv_cleancache(void);
 
 /* nfs_subs.c */
-struct mbuf *nfsm_reqh(struct vnode *, u_long, int);
+struct mbuf *nfsm_reqhead(int);
 u_int32_t nfs_get_xid(void);
 void nfsm_rpchead(struct nfsreq *, struct ucred *, int, struct mbuf *, int);
 void *nfsm_build(struct mbuf **, u_int);
