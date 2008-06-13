@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.21 2007/10/20 04:37:54 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.22 2008/06/13 04:27:07 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -193,13 +193,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 		sc->sc_dev.dv_xname, sc->tv.tv_sec, sc->tv.tv_usec,
 		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
 		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
-
-#if defined(USB_DEBUG) && defined(SCSIDEBUG)
-	if (umassdebug & UDMASS_SCSI)
-		show_scsi_xs(xs);
-	else if (umassdebug & ~UDMASS_CMD)
-		show_scsi_cmd(xs);
-#endif
 
 	if (sc->sc_dying) {
 		xs->error = XS_DRIVER_STUFFUP;
