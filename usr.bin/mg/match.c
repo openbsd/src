@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.13 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: match.c,v 1.14 2008/06/13 19:01:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,21 +28,11 @@ static void	displaymatch(struct line *, int);
 static struct balance {
 	char	left, right;
 } bal[] = {
-	{
-		'(', ')'
-	},
-	{
-		'[', ']'
-	},
-	{
-		'{', '}'
-	},
-	{
-		'<', '>'
-	},
-	{
-		'\0', '\0'
-	}
+	{ '(', ')' },
+	{ '[', ']' },
+	{ '{', '}' },
+	{ '<', '>' },
+	{ '\0', '\0' }
 };
 
 /*
@@ -54,8 +44,6 @@ showmatch(int f, int n)
 {
 	int	i, s;
 
-	if (f & FFRAND)
-		return (FALSE);
 	for (i = 0; i < n; i++) {
 		if ((s = selfinsert(FFRAND, 1)) != TRUE)
 			return (s);
