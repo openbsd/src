@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.15 2008/06/13 05:00:32 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.16 2008/06/13 18:04:56 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -33,8 +33,6 @@
 
 #include <dev/video_if.h>
 #include <dev/videovar.h>
-
-#undef VIDEO_DEBUG	/* XXX remove from here somewhen */
 
 #ifdef VIDEO_DEBUG
 #define	DPRINTF(x)	do { printf x; } while (0)
