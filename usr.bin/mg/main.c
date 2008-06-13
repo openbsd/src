@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2008/06/13 18:41:57 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.60 2008/06/13 18:51:02 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -75,14 +75,12 @@ main(int argc, char **argv)
 	{
 		extern void grep_init(void);
 		extern void theo_init(void);
-		extern void mail_init(void);
 		extern void cmode_init(void);
 		extern void dired_init(void);
 
 		dired_init();
 		grep_init();
 		theo_init();
-		mail_init();
 		cmode_init();
 	}
 
