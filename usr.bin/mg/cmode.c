@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.2 2008/06/12 21:51:18 kjell Exp $ */
+/* $OpenBSD: cmode.c,v 1.3 2008/06/13 19:10:17 kjell Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -35,7 +35,7 @@ int cc_comment(int, int);
 /* Keymaps */
 
 static PF cmode_brace[] = {
-	cc_char,	/* } */
+	cc_brace,	/* } */
 };
 
 static PF cmode_ci[] = {
@@ -68,6 +68,7 @@ cmode_init(void)
 {
 	funmap_add(cmode, "c-mode");
 	funmap_add(cc_char, "c-handle-special-char");
+	funmap_add(cc_brace, "c-handle-special-brace");
 	funmap_add(cc_tab, "c-tab-or-indent");
 	funmap_add(cc_indent, "c-indent");
 	funmap_add(cc_lfindent, "c-indent-and-newline");
@@ -95,6 +96,20 @@ cc_char(int f, int n)
 		return (FALSE);
 	return (cc_indent(FFRAND, n));
 }
+
+/*
+ * Handle special C character - selfinsert then indent.
+ */
+int
+cc_brace(int f, int n)
+{
+	if (n < 0)
+		return (FALSE);
+	if (showmatch(FFRAND, 1) == FALSE)
+		return (FALSE);
+	return (cc_indent(FFRAND, n));
+}
+
 
 /*
  * If we are in the whitespace at the beginning of the line,

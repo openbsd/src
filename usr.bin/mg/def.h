@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.103 2008/06/12 01:58:44 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.104 2008/06/13 19:10:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -622,6 +622,7 @@ int		 add_autoexec(const char *, const char *);
 void		 mail_init(void);
 /* cmode.c X */
 int		 cmode(int, int);
+int		 cc_brace(int, int);
 int		 cc_char(int, int);
 int		 cc_tab(int, int);
 int		 cc_indent(int, int);
