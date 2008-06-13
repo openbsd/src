@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.13 2008/06/13 00:33:04 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.14 2008/06/13 00:46:57 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -101,8 +101,13 @@ do_populate() {
 			IGNORE_FILES="${IGNORE_FILES} ${cf}"
 		fi
 	done
+	if [ -r /etc/sysmerge.ignore ]; then
+		while read i; do \
+			IGNORE_FILES="${IGNORE_FILES} $(echo ${i} | sed -e 's,\.\.,,g')"
+		done < /etc/sysmerge.ignore
+	fi
 	for i in ${IGNORE_FILES}; do
-		rm -f ${TEMPROOT}/${i};
+		rm -rf ${TEMPROOT}/${i};
 	done
 }
 
