@@ -1,26 +1,5 @@
-/*	$OpenBSD: nlm_prot.x,v 1.5 2008/06/13 21:24:15 sturm Exp $	*/
+/*	$OpenBSD: nlm_prot.x,v 1.6 2008/06/13 23:49:25 deraadt Exp $	*/
 
-/*
- * Network lock manager protocol definition
- * Copyright (C) 1986 Sun Microsystems, Inc.
- *
- * protocol used between local lock manager and remote lock manager
- */
-
-#ifdef RPC_HDR
-%#define LM_MAXSTRLEN	1024
-%#define MAXNAMELEN	LM_MAXSTRLEN+1
-#else
-%#ifndef lint
-%/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
-%/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: nlm_prot.x,v 1.5 2008/06/13 21:24:15 sturm Exp $";
-%#endif /* not lint */
-#endif
-
-/*
- * status of a call to the lock manager
- */
 enum nlm_stats {
 	nlm_granted = 0,
 	nlm_denied = 1,
@@ -60,9 +39,9 @@ struct nlm_testres {
 
 struct nlm_lock {
 	string caller_name<LM_MAXSTRLEN>;
-	netobj fh;		/* identify a file */
-	netobj oh;		/* identify owner of a lock */
-	int svid;		/* generated from pid for svid */
+	netobj fh;
+	netobj oh;
+	int svid;
 	unsigned l_offset;
 	unsigned l_len;
 };
@@ -72,8 +51,8 @@ struct nlm_lockargs {
 	bool block;
 	bool exclusive;
 	struct nlm_lock alock;
-	bool reclaim;		/* used for recovering locks */
-	int state;		/* specify local status monitor state */
+	bool reclaim;
+	int state;
 };
 
 struct nlm_cancargs {
@@ -96,23 +75,19 @@ struct nlm_unlockargs {
 
 
 #ifdef RPC_HDR
-%/*
-% * The following enums are actually bit encoded for efficient
-% * boolean algebra.... DON'T change them.....
-% */
 #endif
 enum	fsh_mode {
-	fsm_DN  = 0,	/* deny none */
-	fsm_DR  = 1,	/* deny read */
-	fsm_DW  = 2,	/* deny write */
-	fsm_DRW = 3	/* deny read/write */
+	fsm_DN  = 0,
+	fsm_DR  = 1,
+	fsm_DW  = 2,
+	fsm_DRW = 3
 };
 
 enum	fsh_access {
-	fsa_NONE = 0,	/* for completeness */
-	fsa_R    = 1,	/* read only */
-	fsa_W    = 2,	/* write only */
-	fsa_RW   = 3	/* read/write */
+	fsa_NONE = 0,
+	fsa_R    = 1,
+	fsa_W    = 2,
+	fsa_RW   = 3
 };
 
 struct	nlm_share {
@@ -140,9 +115,6 @@ struct	nlm_notify {
 	int state;
 };
 
-#ifdef RPC_HDR
-%/* definitions for NLM version 4 */
-#endif
 enum nlm4_stats {
 	nlm4_granted			= 0,
 	nlm4_denied			= 1,
@@ -213,8 +185,8 @@ struct nlm4_lockargs {
 	bool block;
 	bool exclusive;
 	struct nlm4_lock alock;
-	bool reclaim;		/* used for recovering locks */
-	int state;		/* specify local status monitor state */
+	bool reclaim;
+	int state;
 };
 
 struct nlm4_cancargs {
@@ -241,10 +213,6 @@ struct	nlm4_shareres {
 	int	sequence;
 };
 
-/*
- * Over-the-wire protocol used between the network lock managers
- */
-
 program NLM_PROG {
 	version NLM_VERS {
 
@@ -253,18 +221,14 @@ program NLM_PROG {
 		nlm_res		NLM_LOCK(struct nlm_lockargs) =	2;
 
 		nlm_res		NLM_CANCEL(struct nlm_cancargs) = 3;
-		nlm_res		NLM_UNLOCK(struct nlm_unlockargs) =	4;
 
-		/*
-		 * remote lock manager call-back to grant lock
-		 */
+		nlm_res		NLM_UNLOCK(struct nlm_unlockargs) = 4;
+
 		nlm_res		NLM_GRANTED(struct nlm_testargs)= 5;
-		/*
-		 * message passing style of requesting lock
-		 */
+
 		void		NLM_TEST_MSG(struct nlm_testargs) = 6;
 		void		NLM_LOCK_MSG(struct nlm_lockargs) = 7;
-		void		NLM_CANCEL_MSG(struct nlm_cancargs) =8;
+		void		NLM_CANCEL_MSG(struct nlm_cancargs) = 8;
 		void		NLM_UNLOCK_MSG(struct nlm_unlockargs) = 9;
 		void		NLM_GRANTED_MSG(struct nlm_testargs) = 10;
 		void		NLM_TEST_RES(nlm_testres) = 11;
