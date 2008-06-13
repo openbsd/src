@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.1 2008/06/12 22:26:01 canacar Exp $	 */
+/* $Id: engine.c,v 1.2 2008/06/13 01:06:06 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -801,6 +801,9 @@ void
 next_order(void)
 {
 	order_type *o, *oc;
+
+	if (curr_view->mgr->order_list == NULL)
+		return;
 
 	oc = curr_view->mgr->order_curr;
 
