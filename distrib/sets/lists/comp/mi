@@ -5215,6 +5215,7 @@
 ./usr/share/man/cat3/strspn.0
 ./usr/share/man/cat3/strstr.0
 ./usr/share/man/cat3/strtod.0
+./usr/share/man/cat3/strtof.0
 ./usr/share/man/cat3/strtofflags.0
 ./usr/share/man/cat3/strtoimax.0
 ./usr/share/man/cat3/strtok.0
@@ -5503,6 +5504,7 @@
 ./usr/share/man/cat3/xdr_getpos.0
 ./usr/share/man/cat3/xdr_inline.0
 ./usr/share/man/cat3/xdr_int.0
+./usr/share/man/cat3/xdr_int64_t.0
 ./usr/share/man/cat3/xdr_long.0
 ./usr/share/man/cat3/xdr_opaque.0
 ./usr/share/man/cat3/xdr_opaque_auth.0
@@ -5517,6 +5519,7 @@
 ./usr/share/man/cat3/xdr_string.0
 ./usr/share/man/cat3/xdr_u_char.0
 ./usr/share/man/cat3/xdr_u_int.0
+./usr/share/man/cat3/xdr_u_int64_t.0
 ./usr/share/man/cat3/xdr_u_long.0
 ./usr/share/man/cat3/xdr_u_short.0
 ./usr/share/man/cat3/xdr_union.0
