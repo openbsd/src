@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.21 2008/06/12 18:23:29 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.22 2008/06/13 18:26:59 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -181,20 +181,25 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 
 	if (kdfinfo->len != bc->bc_opaque_size)
 		goto out;
-	if (!(kdfinfo->flags & SR_CRYPTOKDF_KEY) ||
-	    !(kdfinfo->flags & SR_CRYPTOKDF_HINT))
-		goto out;
 
 	/* copy KDF hint to disk meta data */
-	if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
-	    kdfinfo->kdfhint.len)
-		goto out;
-	bcopy(&kdfinfo->kdfhint, sd->mds.mdd_crypto.scr_meta.scm_kdfhint,
-	    kdfinfo->kdfhint.len);
+	if (kdfinfo->flags & SR_CRYPTOKDF_HINT) {
+		if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
+		    kdfinfo->kdfhint.len)
+			goto out;
+		bcopy(&kdfinfo->kdfhint,
+		    sd->mds.mdd_crypto.scr_meta.scm_kdfhint,
+		    kdfinfo->kdfhint.len);
+	}
 
 	/* copy mask key to run-time meta data */
-	bcopy(&kdfinfo->maskkey, sd->mds.mdd_crypto.scr_maskkey,
-	    sizeof(kdfinfo->maskkey));
+	if ((kdfinfo->flags & SR_CRYPTOKDF_KEY)) {
+		if (sizeof(sd->mds.mdd_crypto.scr_maskkey) <
+		    sizeof(kdfinfo->maskkey))
+			goto out;
+		bcopy(&kdfinfo->maskkey, sd->mds.mdd_crypto.scr_maskkey,
+		    sizeof(kdfinfo->maskkey));
+	}
 
 	rv = 0;
 out:

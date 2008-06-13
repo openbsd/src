@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.112 2008/06/12 23:29:27 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.113 2008/06/13 18:26:59 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -884,9 +884,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			if (bc->bc_opaque == NULL)
 				goto unwind;
 
-			if (sr_read_meta(sd) == 0)
-				goto unwind;
-
 			if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
 			    bc->bc_opaque_size)
 				goto unwind;
@@ -898,6 +895,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			/* we're done */
 			rv = 0;
 			goto unwind;
+		}
+		/* get kdf with maskkey from userland */
+		if (bc->bc_opaque_flags & BIOC_SOIN) {
+			if (sr_crypto_get_kdf(bc, sd))
+				goto unwind;
 		}
 #endif	/* CRYPTO */
 		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
