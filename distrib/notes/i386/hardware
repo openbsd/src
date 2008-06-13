@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.263 2008/06/09 06:18:38 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.264 2008/06/13 07:20:17 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -907,6 +907,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
 		    Corega CG-WLUSB2GPX
+		    D-Link DWA-111
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR

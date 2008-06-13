@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.133 2008/06/09 06:18:38 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.134 2008/06/13 07:20:17 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -402,6 +402,56 @@ Supported devices {:-include-:}:
 		    PLANEX GW-DS54G
 		    SMC EZ Connect g 2.4GHz SMC2802W
 		    SMC 2802Wv2
+		Marvell Libertas IEEE 802.11b/g Compact Flash adapters (will be
+		detected as PCMCIA adapters)
+		    Ambicom WL54CF
+		Ralink Technology IEEE 802.11a/b/g CardBus adapters
+		    A-Link WL54PC
+		    Alfa AWPC036
+		    Amigo AWI-914W
+		    AMIT WL531C
+		    ASUS WL-107G
+		    Atlantis Land A02-PCM-W54
+		    Belkin F5D7010 v2
+		    Canyon CN-WF513
+		    CC&amp;C WL-2102
+		    CNet CWC-854
+		    Compex WL54G
+		    Conceptronic C54RC
+		    Corega CG-WLCB54GL
+		    Digiconnect WL591C
+		    Digitus DN-7001G-RA
+		    E-Tech WGPC02
+		    E-Tech WGPC03
+		    Edimax EW-7108PCg
+		    Eminent EM3036
+		    Encore ENPWI-G-RLAM
+		    Eusso UGL2454-01R
+		    Fibreline WL-400X
+		    Gigabyte GN-WMKG
+		    Gigabyte GN-WM01GS
+		    Gigabyte GN-WM01GM
+		    Hawking HWC54GR
+		    Hercules HWGPCMCIA-54
+		    JAHT WN-4054P
+		    KCORP LifeStyle KLS-611
+		    LevelOne WPC-0301 v2
+		    Micronet SP908GK V3
+		    Minitar MN54GCB-R
+		    MSI CB54G2
+		    MSI MS-6835
+		    Pro-Nets CB80211G
+		    Repotec RP-WB7108
+		    SATech SN-54C
+		    Sitecom WL-112
+		    SparkLAN WL-685R
+		    Surecom EP-9428-g
+		    Sweex LC500050
+		    TekComm NE-9428-g
+		    Tonze PW-6200C
+		    Unex MR054g-R02
+		    Zinwell ZWX-G160
+		    Zonet ZEW1500
 		Ralink Technology IEEE 802.11a/b/g PCI adapters
 		    A-Link WL54H
 		    AirLive WN-5000PCI
@@ -519,6 +569,7 @@ Supported devices {:-include-:}:
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
 		    Corega CG-WLUSB2GPX
+		    D-Link DWA-111
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR

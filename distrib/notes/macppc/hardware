@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.89 2008/04/01 14:40:58 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.90 2008/06/13 07:20:17 jmc Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -516,6 +516,7 @@ Supported devices {:-include-:}:
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
 		    Corega CG-WLUSB2GPX
+		    D-Link DWA-111
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR
