@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.1 2008/06/12 22:26:01 canacar Exp $	 */
+/* $Id: pftop.c,v 1.2 2008/06/13 23:47:17 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2135,7 +2135,6 @@ initpftop(void)
 	pf_dev = open("/dev/pf", O_RDONLY);
 	if (pf_dev == -1) {
 		alloc_buf(0);
-		warn("open(\"/dev/pf\")");
 	} else if (ioctl(pf_dev, DIOCGETSTATUS, &status)) {
 		warn("DIOCGETSTATUS");
 		alloc_buf(0);
