@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.80 2008/06/13 05:59:05 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.81 2008/06/13 21:44:32 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -219,15 +219,20 @@ p_rtnode(void)
 	struct radix_mask *rm = rnode.rn_mklist;
 
 	if (rnode.rn_b < 0) {
+		snprintf(nbuf, sizeof nbuf, " => %p", rnode.rn_dupedkey);
+		printf("\t  (%p)%s", rnode.rn_p,
+		    rnode.rn_dupedkey ? nbuf : "");
 		if (rnode.rn_mask) {
-			printf("\t  mask ");
+			printf(" mask ");
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
 			    0, 0, -1);
-		} else if (rm == 0)
+		} else if (rm == 0) {
+			putchar('\n');
 			return;
+		}
 	} else {
 		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
-		printf("%6.6s %16p : %16p", nbuf, rnode.rn_l,
+		printf("%6.6s (%p) %16p : %16p", nbuf, rnode.rn_p, rnode.rn_l,
 		    rnode.rn_r);
 	}
 
