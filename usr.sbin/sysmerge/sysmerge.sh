@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.14 2008/06/13 00:46:57 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.15 2008/06/13 23:56:48 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -52,15 +52,13 @@ do_pre() {
 
 	trap "rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
-	echo "\n===> Running ${0##*/} with the following settings:\n"
-	echo " auto-mode:            ${AUTOMODE:-no}"
-	echo " source(s):            ${SRCDIR}${TGZ} ${XTGZ}"
-	echo " base work directory:  ${WRKDIR}"
-	echo " temp root directory:  ${TEMPROOT}"
-	echo " backup directory:     ${BKPDIR}"
-	echo ""
-
-	if [ -z "${BATCHMODE}" ]; then
+	if [ -z "${BATCHMODE}" -a -z "${AUTOMODE}" ]; then
+		echo "\n===> Running ${0##*/} with the following settings:\n"
+		echo " source(s):            ${SRCDIR}${TGZ} ${XTGZ}"
+		echo " base work directory:  ${WRKDIR}"
+		echo " temp root directory:  ${TEMPROOT}"
+		echo " backup directory:     ${BKPDIR}"
+		echo ""
 		echo -n "Continue? (y|[n]) "
 		read ANSWER
 		case "${ANSWER}" in
@@ -103,7 +101,7 @@ do_populate() {
 	done
 	if [ -r /etc/sysmerge.ignore ]; then
 		while read i; do \
-			IGNORE_FILES="${IGNORE_FILES} $(echo ${i} | sed -e 's,\.\.,,g')"
+			IGNORE_FILES="${IGNORE_FILES} $(echo ${i} | sed -e 's,\.\.,,g' -e 's,#.*,,g')"
 		done < /etc/sysmerge.ignore
 	fi
 	for i in ${IGNORE_FILES}; do
@@ -439,7 +437,7 @@ while [ $# -ne 0 ]
 do
 	case "$1" in
 	-a)
-		AUTOMODE=yes
+		AUTOMODE=1
 		shift;;
 	-b)
 		BATCHMODE=1
