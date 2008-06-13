@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.56 2008/02/27 21:11:11 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.57 2008/06/13 08:45:12 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	struct pci_dev *pd;
 	struct device *dev;
 	pcireg_t id, csr, class, intr, bhlcr;
-	int ret, pin, bus, device, function;
+	int ret = 0, pin, bus, device, function;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
