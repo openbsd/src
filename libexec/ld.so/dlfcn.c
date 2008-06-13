@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.79 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.80 2008/06/13 23:14:47 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -548,7 +548,7 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *data),
 		if (object->phdrp == NULL)
 			continue;
 
-		info.dlpi_addr = object->load_base;
+		info.dlpi_addr = object->obj_base;
 		info.dlpi_name = object->load_name;
 		info.dlpi_phdr = object->phdrp;
 		info.dlpi_phnum = object->phdrc;
