@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.48 2008/03/09 01:54:03 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.49 2008/06/13 17:15:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -111,6 +111,7 @@ int	cvs_file_cmpname(const char *, const char *);
 int	cvs_file_cmp(const char *, const char *);
 int	cvs_file_copy(const char *, const char *);
 
-struct cvs_file *cvs_file_get_cf(const char *, const char *, int, int, int);
+struct cvs_file *cvs_file_get_cf(const char *, const char *, const char *,
+	int, int, int);
 
 #endif	/* FILE_H */

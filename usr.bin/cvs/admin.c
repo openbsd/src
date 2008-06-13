@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.60 2008/06/11 01:43:35 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.61 2008/06/13 17:15:13 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -254,7 +254,7 @@ cvs_admin_local(struct cvs_file *cf)
 			    strerror(errno));
 
 		/* XXX: S_ISREG() check instead of blindly using CVS_FILE? */
-		ocf = cvs_file_get_cf(d, f, ofd, CVS_FILE, 0);
+		ocf = cvs_file_get_cf(d, f, oldfilename, ofd, CVS_FILE, 0);
 
 		ocf->file_rcs = rcs_open(fpath, ofd, RCS_READ, 0444);
 		if (ocf->file_rcs == NULL)
