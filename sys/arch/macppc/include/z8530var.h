@@ -1,3 +1,4 @@
+/*	$OpenBSD: z8530var.h,v 1.7 2008/06/13 00:31:09 krw Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: conf.c,v 1.3 2008/06/13 00:31:09 krw Exp $	*/
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
