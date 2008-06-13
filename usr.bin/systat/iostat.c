@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.30 2008/06/12 22:26:01 canacar Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.31 2008/06/13 08:18:47 canacar Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -142,16 +142,7 @@ print_io(void)
 	int n, count = 0;
 
 	int i, curr;
-
-	etime = 0.0;
-	for (i = 0; i < CPUSTATES; i++)
-		etime += cur.cp_time[i];
-
-	if (etime == 0.0)
-		etime = 1.0;
-
-	etime /= (float) hz;
-
+	etime = naptime;
 
 	/* XXX engine internals: save and restore curr_line for bcache */
 	curr = curr_line;
