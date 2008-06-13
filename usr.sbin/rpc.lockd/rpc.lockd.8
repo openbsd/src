@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.lockd.8,v 1.12 2008/06/13 21:32:26 sturm Exp $
+.\"	$OpenBSD: rpc.lockd.8,v 1.13 2008/06/13 23:56:28 jmc Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm rpc.lockd
 .Op Fl d Op Ar debug_level
-.Op Fl g Op Ar grace period
+.Op Fl g Ar grace_period
 .Sh DESCRIPTION
 .Nm rpc.lockd
 is a daemon which provides file- and record-locking services in an NFS
@@ -62,15 +62,13 @@ is not specified,
 level 1 is assumed, giving one log line per protocol operation.
 Higher debug levels can be specified, causing display of operation arguments
 and internal operations of the daemon.
-.It Fl g
-The
-.Fl g
-option allows to specify the grace period, in seconds.
+.It Fl g Ar grace_period
+Specify the grace period, in seconds.
 During the grace period
 .Nm
 only accepts requests from hosts which are reinitialising locks which
 existed before the server restart.
-Default is 30 seconds.
+The default is 30 seconds.
 .El
 .Pp
 Error conditions are logged to syslog, irrespective of the debug level,
