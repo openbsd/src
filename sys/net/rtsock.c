@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.71 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.72 2008/06/13 06:10:46 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -192,6 +192,7 @@ route_output(struct mbuf *m, ...)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
+	dst = NULL;	/* for error handling (goto flush) */
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
 	    (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
@@ -200,20 +201,17 @@ route_output(struct mbuf *m, ...)
 	len = m->m_pkthdr.len;
 	if (len < offsetof(struct rt_msghdr, rtm_type) + 1 ||
 	    len != mtod(m, struct rt_msghdr *)->rtm_msglen) {
-		dst = 0;
 		error = EINVAL;
 		goto flush;
 	}
 	switch (mtod(m, struct rt_msghdr *)->rtm_version) {
 	case RTM_VERSION:
 		if (len < sizeof(struct rt_msghdr)) {
-			dst = 0;
 			error = EINVAL;
 			goto flush;
 		}
 		R_Malloc(rtm, struct rt_msghdr *, len);
 		if (rtm == 0) {
-			dst = 0;
 			error = ENOBUFS;
 			goto flush;
 		}
@@ -222,20 +220,17 @@ route_output(struct mbuf *m, ...)
 #ifndef SMALL_KERNEL
 	case RTM_OVERSION:
 		if (len < sizeof(struct rt_omsghdr)) {
-			dst = 0;
 			error = EINVAL;
 			goto flush;
 		}
 		rtm = rtmsg_3to4(m, &len);
 		if (rtm == 0) {
-			dst = 0;
 			error = ENOBUFS;
 			goto flush;
 		}
 		break;
 #endif
 	default:
-		dst = 0;
 		error = EPROTONOSUPPORT;
 		goto flush;
 	}
@@ -243,7 +238,6 @@ route_output(struct mbuf *m, ...)
 	if (rtm->rtm_hdrlen == 0)	/* old client */
 		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
 	if (len < rtm->rtm_hdrlen) {
-		dst = 0;
 		error = EINVAL;
 		goto flush;
 	}
@@ -252,12 +246,10 @@ route_output(struct mbuf *m, ...)
 	if (!rtable_exists(tableid)) {
 		if (rtm->rtm_type == RTM_ADD) {
 			if (rtable_add(tableid)) {
-				dst = 0;
 				error = EINVAL;
 				goto flush;
 			}
 		} else {
-			dst = 0;
 			error = EINVAL;
 			goto flush;
 		}
@@ -265,7 +257,6 @@ route_output(struct mbuf *m, ...)
 
 	if (rtm->rtm_priority != 0) {
 		if (rtm->rtm_priority > RTP_MAX) {
-			dst = 0;
 			error = EINVAL;
 			goto flush;
 		}
