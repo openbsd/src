@@ -1,6 +1,7 @@
-/*	$OpenBSD: video.c,v 1.14 2008/06/12 22:16:16 robert Exp $	*/
+/*	$OpenBSD: video.c,v 1.15 2008/06/13 05:00:32 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
+ * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

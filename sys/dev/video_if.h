@@ -1,6 +1,7 @@
-/*	$OpenBSD: video_if.h,v 1.12 2008/06/11 01:27:30 robert Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.13 2008/06/13 05:00:32 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
+ * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
