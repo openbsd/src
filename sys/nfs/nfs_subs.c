@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.80 2008/06/13 03:49:26 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.81 2008/06/13 17:24:13 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -82,8 +82,7 @@ int	nfs_attrtimeo(struct nfsnode *np);
  */
 u_int32_t nfs_xdrneg1;
 u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
-	rpc_mismatch, rpc_auth_unix, rpc_msgaccepted,
-	rpc_auth_kerb;
+	rpc_mismatch, rpc_auth_unix, rpc_msgaccepted;
 u_int32_t nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
@@ -928,7 +927,6 @@ nfs_init()
 	rpc_mismatch = txdr_unsigned(RPC_MISMATCH);
 	rpc_autherr = txdr_unsigned(RPC_AUTHERR);
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
-	rpc_auth_kerb = txdr_unsigned(RPCAUTH_KERB4);
 	nfs_prog = txdr_unsigned(NFS_PROG);
 	nfs_true = txdr_unsigned(TRUE);
 	nfs_false = txdr_unsigned(FALSE);
