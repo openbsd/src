@@ -68,10 +68,10 @@ static void	int_encode(u_int8_t *, int);
 static void	prf_iterate(u_int8_t *, const u_int8_t *, int,
 			    const u_int8_t *, int, int, int);
 
-void
+static void
 memxor(void *res, const void *src, size_t len)
 {
-	int i;
+	size_t i;
 	char *r;
 	const char *s;
 
