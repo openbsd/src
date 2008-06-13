@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.22 2008/01/01 00:43:39 kurt Exp $ */
+/* $OpenBSD: thread_private.h,v 1.23 2008/06/13 21:18:42 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -132,10 +132,6 @@ void	_thread_malloc_unlock(void);
 #define _MALLOC_UNLOCK()	do {					\
 					if (__isthreaded)		\
 						_thread_malloc_unlock();\
-				} while (0)
-#define _MALLOC_LOCK_INIT()	do {					\
-					if (__isthreaded)		\
-						_thread_malloc_init();\
 				} while (0)
 
 void	_thread_atexit_lock(void);
