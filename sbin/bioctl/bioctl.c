@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.64 2008/06/12 16:08:48 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.65 2008/06/13 21:03:40 hshoexer Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -35,6 +35,7 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsi_all.h>
 #include <dev/biovar.h>
+#include <dev/softraidvar.h>
 
 #include <errno.h>
 #include <err.h>
@@ -48,6 +49,8 @@
 #include <util.h>
 #include <vis.h>
 
+#include "pkcs5_pbkdf2.h"
+
 struct locator {
 	int		channel;
 	int		target;
@@ -58,6 +61,11 @@ void			usage(void);
 const char 		*str2locator(const char *, struct locator *);
 void			cleanup(void);
 int			bio_parse_devlist(char *, dev_t *);
+void			bio_kdf_derive(struct sr_crypto_kdfinfo *,
+			    struct sr_crypto_kdf_pbkdf2 *);
+void			bio_kdf_generate(struct sr_crypto_kdfinfo *);
+void			get_pkcs_key(int, u_int8_t *, size_t, u_int8_t *,
+			    size_t);
 
 void			bio_inq(char *);
 void			bio_alarm(char *);
@@ -591,6 +599,8 @@ void
 bio_createraid(u_int16_t level, char *dev_list)
 {
 	struct bioc_createraid	create;
+	struct sr_crypto_kdfinfo kdfinfo;
+	struct sr_crypto_kdf_pbkdf2 kdfhint;
 	int			rv, no_dev;
 	dev_t			*dt;
 	u_int16_t		min_disks = 0;
@@ -613,7 +623,7 @@ bio_createraid(u_int16_t level, char *dev_list)
 		min_disks = 2;
 		break;
 	case 'C':
-		min_disks = 2;
+		min_disks = 1;
 		break;
 	case 'c':
 		min_disks = 1;
@@ -625,6 +635,11 @@ bio_createraid(u_int16_t level, char *dev_list)
 	if (no_dev < min_disks)
 		errx(1, "not enough disks");
 
+	/* for crypto raid we only allow one single chunk */
+	if (level == 'C' && no_dev != min_disks)
+		errx(1, "not exactly one disks");
+		
+
 	memset(&create, 0, sizeof(create));
 	create.bc_cookie = bl.bl_cookie;
 	create.bc_level = level;
@@ -632,11 +647,80 @@ bio_createraid(u_int16_t level, char *dev_list)
 	create.bc_dev_list = dt;
 	create.bc_flags = BIOC_SCDEVT | cflags;
 
+	if (level == 'C') {
+		memset(&kdfinfo, 0, sizeof(kdfinfo));
+		memset(&kdfhint, 0, sizeof(kdfhint));
+
+		create.bc_opaque = &kdfhint;
+		create.bc_opaque_size = sizeof(kdfhint);
+		create.bc_opaque_flags = BIOC_SOOUT;
+
+		/* try to get KDF hint */
+		if ((rv = ioctl(devh, BIOCCREATERAID, &create)) == 0) {
+			bio_kdf_derive(&kdfinfo, &kdfhint);
+			memset(&kdfhint, 0, sizeof(kdfhint));
+		} else {
+			/* XXX this will kill the keys in case of an error */
+			bio_kdf_generate(&kdfinfo);
+			/* no auto assembling */
+			create.bc_flags |= BIOC_SCNOAUTOASSEMBLE;
+		}
+
+		create.bc_opaque = &kdfinfo;
+		create.bc_opaque_size = sizeof(kdfinfo);
+		create.bc_opaque_flags = BIOC_SOIN;
+	}
+
 	rv = ioctl(devh, BIOCCREATERAID, &create);
+	memset(&kdfinfo, 0, sizeof(kdfinfo));
 	if (rv == -1)
 		err(1, "BIOCCREATERAID");
 
 	free(dt);
+}
+
+void
+bio_kdf_derive(struct sr_crypto_kdfinfo *kdfinfo, struct sr_crypto_kdf_pbkdf2
+    *kdfhint)
+{
+	if (!kdfinfo)
+		errx(1, "invalid KDF info");
+	if (!kdfhint)
+		errx(1, "invalid KDF hint");
+
+	if (kdfhint->len != sizeof(*kdfhint))
+		errx(1, "KDF hint has invalid size");
+	if (kdfhint->type != SR_CRYPTOKDFT_PBKDF2)
+		errx(1, "unknown KDF type %d", kdfhint->type);
+	if (kdfhint->rounds < 1000)
+		errx(1, "number of KDF rounds too low: %d", kdfhint->rounds);
+
+	kdfinfo->flags = SR_CRYPTOKDF_KEY;
+	kdfinfo->len = sizeof(*kdfinfo);
+
+	get_pkcs_key(kdfhint->rounds,
+	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
+	    kdfhint->salt, sizeof(kdfhint->salt));
+}
+
+void
+bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
+{
+	if (!kdfinfo)
+		errx(1, "invalid KDF info");
+
+	kdfinfo->pbkdf2.len = sizeof(kdfinfo->pbkdf2);
+	kdfinfo->pbkdf2.type = SR_CRYPTOKDFT_PBKDF2;
+	kdfinfo->pbkdf2.rounds = 10000;
+	kdfinfo->len = sizeof(*kdfinfo);
+	kdfinfo->flags = (SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT);
+
+	/* generate salt */
+	arc4random_buf(kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));
+
+	get_pkcs_key(kdfinfo->pbkdf2.rounds,
+	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
+	    kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));
 }
 
 int
@@ -754,4 +838,38 @@ bio_diskinq(char *sd_dev)
 
 	printf("%s: <%s, %s, %s>, serial %s\n", sd_dev, bio_vis(di.vendor),
 	    bio_vis(di.product), bio_vis(di.revision), bio_vis(di.serial));
+}
+
+void
+get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
+    size_t saltsz)
+{
+	u_int8_t	*keybuf;
+	char		*passphrase;
+
+	if (!key)
+		errx(1, "Invalid key");
+	if (!salt)
+		errx(1, "Invalid salt");
+	if (rounds < 1000)
+		errx(1, "Too less rounds: %d", rounds);
+
+	/* get passphrase */
+	passphrase = getpass("Passphrase: ");
+	if (!passphrase || strlen(passphrase) == 0)
+		errx(1, "Need a passphrase");
+
+	/* derive key from passphrase */
+	if (pkcs5_pbkdf2(&keybuf, keysz, passphrase, strlen(passphrase), salt,
+	    saltsz, rounds, 0))
+		errx(1, "pkcs5_pbkdf2 failed");
+
+	memcpy(key, keybuf, keysz);
+	memset(keybuf, 0, keysz);
+	free(keybuf);
+
+	/* forget passphrase */
+	memset(passphrase, 0, strlen(passphrase));
+
+	return;
 }

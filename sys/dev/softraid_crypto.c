@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.22 2008/06/13 18:26:59 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.23 2008/06/13 21:03:40 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -185,11 +185,11 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 	/* copy KDF hint to disk meta data */
 	if (kdfinfo->flags & SR_CRYPTOKDF_HINT) {
 		if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
-		    kdfinfo->kdfhint.len)
+		    kdfinfo->genkdf.len)
 			goto out;
-		bcopy(&kdfinfo->kdfhint,
+		bcopy(&kdfinfo->genkdf,
 		    sd->mds.mdd_crypto.scr_meta.scm_kdfhint,
-		    kdfinfo->kdfhint.len);
+		    kdfinfo->genkdf.len);
 	}
 
 	/* copy mask key to run-time meta data */
