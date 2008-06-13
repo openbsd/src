@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.65 2008/03/21 08:01:20 pyr Exp $	*/
+/*	$OpenBSD: file.c,v 1.66 2008/06/13 18:45:41 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,6 +9,8 @@
 #include <libgen.h>
 
 #include "def.h"
+
+static char *xdirname(const char *);
 
 /*
  * Insert a file into the current buffer.  Real easy - just call the
@@ -288,6 +290,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 	int	 nbytes, s, nline = 0, siz, x, x2;
 	int	 opos;			/* offset we started at */
 	int	 oline;			/* original line number */
+	char *dp;
 
 	if (replacebuf == TRUE)
 		x = undo_enable(FALSE);
@@ -306,9 +309,10 @@ insertfile(char *fname, char *newname, int replacebuf)
 	bp = curbp;
 	if (newname != NULL) {
 		(void)strlcpy(bp->b_fname, newname, sizeof(bp->b_fname));
-		(void)strlcpy(bp->b_cwd, dirname(newname),
-		    sizeof(bp->b_cwd));
+		dp = xdirname(newname);
+		(void)strlcpy(bp->b_cwd, dp, sizeof(bp->b_cwd));
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
+		free(dp);
 	}
 
 	/* hard file open */
@@ -335,8 +339,10 @@ insertfile(char *fname, char *newname, int replacebuf)
 		curbp = bp;
 		return (showbuffer(bp, curwp, WFFULL | WFMODE));
 	} else {
-		(void)strlcpy(bp->b_cwd, dirname(fname), sizeof(bp->b_cwd));
+		dp = xdirname(fname);
+		(void)strlcpy(bp->b_cwd, dp, sizeof(bp->b_cwd));
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
+		free(dp);
 	}
 	opos = curwp->w_doto;
 	oline = curwp->w_dotline;
@@ -641,4 +647,22 @@ upmodes(struct buffer *bp)
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 		if (bp == NULL || curwp->w_bufp == bp)
 			wp->w_flag |= WFMODE;
+}
+
+/*
+ * Same as dirname, except an empty string is returned in
+ * place of "/". This means we can always add a trailing
+ * slash and be correct.
+ * Unlike dirname, we allocate. Caller must free.
+ */
+static char *
+xdirname(const char *path)
+{
+	char *dp;
+	
+	dp = dirname(path);
+	if (*dp && dp[0] == '/' && dp[1] == '\0')
+		return (strdup(""));
+		
+	return (strdup(dp));	
 }
