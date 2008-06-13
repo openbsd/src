@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.7 2008/03/30 17:56:27 martin Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.8 2008/06/13 14:14:58 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2008 $
+.Dd $Mdocdate: June 13 2008 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ The following options can be set globally:
 .Bl -tag -width Ds -compact
 .It Ic listen on Ar address
 Specify the local address
-.Nm
+.Xr snmpd 8
 should listen on for incoming SNMP messages.
 .Pp
 .It Ic read-only community Ar string
