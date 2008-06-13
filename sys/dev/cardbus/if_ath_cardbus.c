@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.10 2006/10/12 16:35:52 grange Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.11 2008/06/13 07:31:57 jsg Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -38,8 +38,6 @@
  * CardBus bus front-end for the AR5001 Wireless LAN 802.11a/b/g CardBus.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h> 
 #include <sys/mbuf.h>   
@@ -64,10 +62,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_rssadapt.h>
-
-#if NBPFILTER > 0 
-#include <net/bpf.h>
-#endif 
 
 #include <machine/bus.h>
 #include <machine/intr.h>
