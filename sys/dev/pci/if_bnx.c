@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.61 2008/06/08 16:20:27 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.62 2008/06/13 07:40:30 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2317,10 +2317,8 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 */
 	for (i = 0; i < TOTAL_TX_BD; i++) {
 		if (bus_dmamap_create(sc->bnx_dmatag,
-		    MCLBYTES * BNX_MAX_SEGMENTS,
-		    USABLE_TX_BD - BNX_TX_SLACK_SPACE,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &sc->tx_mbuf_map[i])) {
+		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_mbuf_map[i])) {
 			printf(": Could not create Tx mbuf %d DMA map!\n", i);
 			rc = ENOMEM;
 			goto bnx_dma_alloc_exit;
@@ -3341,8 +3339,10 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	    printf("%s: Too many free rx_bd (0x%04X > 0x%04X)!\n", 
 	    sc->free_rx_bd, (u_int16_t) USABLE_RX_BD));
 
+	/* Update some debug statistics counters */
 	DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark), 
 	    sc->rx_low_watermark = sc->free_rx_bd);
+	DBRUNIF((sc->free_rx_bd == 0), sc->rx_empty_count++);
 
 	/* Setup the rx_bd for the first segment. */
 	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
@@ -3417,7 +3417,9 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	sc->tx_cons = 0;
 	sc->tx_prod_bseq = 0;
 	sc->used_tx_bd = 0;
+	sc->max_tx_bd =	USABLE_TX_BD;
 	DBRUNIF(1, sc->tx_hi_watermark = USABLE_TX_BD);
+	DBRUNIF(1, sc->tx_full_count = 0);
 
 	/*
 	 * The NetXtreme II supports a linked-list structure called
@@ -3529,8 +3531,10 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 	sc->rx_prod = 0;
 	sc->rx_cons = 0;
 	sc->rx_prod_bseq = 0;
-	sc->free_rx_bd = BNX_RX_SLACK_SPACE;
+	sc->free_rx_bd = USABLE_RX_BD;
+	sc->max_rx_bd = USABLE_RX_BD;
 	DBRUNIF(1, sc->rx_low_watermark = USABLE_RX_BD);
+	DBRUNIF(1, sc->rx_empty_count = 0);
 
 	/* Initialize the RX next pointer chain entries. */
 	for (i = 0; i < RX_PAGES; i++) {
@@ -3565,7 +3569,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 
 	/* Allocate mbuf clusters for the rx_bd chain. */
 	prod = prod_bseq = 0;
-	while (prod < BNX_RX_SLACK_SPACE) {
+	while (prod < TOTAL_RX_BD) {
 		chain_prod = RX_CHAIN_IDX(prod);
 		if (bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq)) {
 			BNX_PRINTF(sc, "Error filling RX chain: rx_bd[0x%04X]!\n",
@@ -3772,8 +3776,10 @@ bnx_rx_intr(struct bnx_softc *sc)
 	bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0,
 	    BUS_SPACE_BARRIER_READ);
 
+	/* Update some debug statistics counters */
 	DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark),
 	    sc->rx_low_watermark = sc->free_rx_bd);
+	DBRUNIF((sc->free_rx_bd == 0), sc->rx_empty_count++);
 
 	/* 
 	 * Scan through the receive chain as long 
@@ -4145,10 +4151,11 @@ bnx_tx_intr(struct bnx_softc *sc)
 	ifp->if_timer = 0;
 
 	/* Clear the tx hardware queue full flag. */
-	if ((sc->used_tx_bd + BNX_TX_SLACK_SPACE) < USABLE_TX_BD) {
+	if (sc->used_tx_bd < sc->max_tx_bd) {
 		DBRUNIF((ifp->if_flags & IFF_OACTIVE),
-		    printf("%s: TX chain is open for business! Used "
-		    "tx_bd = %d\n", sc->used_tx_bd));
+		    printf("%s: Open TX chain! %d/%d (used/total)\n",
+			sc->bnx_dev.dv_xname, sc->used_tx_bd,
+			sc->max_tx_bd));
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
@@ -4361,13 +4368,8 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 		return (error);
 	}
 
-	/*
-	 * The chip seems to require that at least 16 descriptors be kept
-	 * empty at all times.  Make sure we honor that.
-	 * XXX Would it be faster to assume worst case scenario for
-	 * map->dm_nsegs and do this calculation higher up?
-	 */
-	if (map->dm_nsegs > (USABLE_TX_BD - sc->used_tx_bd - BNX_TX_SLACK_SPACE)) {
+	/* Make sure there's room in the chain */
+	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd)) {
 		bus_dmamap_unload(sc->bnx_dmatag, map);
 		return (ENOBUFS);
 	}
@@ -4428,9 +4430,10 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	sc->tx_mbuf_ptr[chain_prod] = m0;
 	sc->used_tx_bd += map->dm_nsegs;
 
+	/* Update some debug statistics counters */
 	DBRUNIF((sc->used_tx_bd > sc->tx_hi_watermark),
 	    sc->tx_hi_watermark = sc->used_tx_bd);
-
+	DBRUNIF(sc->used_tx_bd == sc->max_tx_bd, sc->tx_full_count++);
 	DBRUNIF(1, sc->tx_mbuf_alloc++);
 
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, chain_prod, 
@@ -4473,10 +4476,9 @@ bnx_start(struct ifnet *ifp)
 	    __FUNCTION__, tx_prod, tx_chain_prod, sc->tx_prod_bseq);
 
 	/*
-	 * Keep adding entries while there is space in the ring.  We keep
-	 * BNX_TX_SLACK_SPACE entries unused at all times.
+	 * Keep adding entries while there is space in the ring.
 	 */
-	while (sc->used_tx_bd < USABLE_TX_BD - BNX_TX_SLACK_SPACE) {
+	while (sc->used_tx_bd < sc->max_tx_bd) {
 		/* Check for any frames to send. */
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
@@ -5731,7 +5733,7 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 
 	BNX_PRINTF(sc,
 	    "0x%08X/%08X - (sc->rx_low_watermark) rx low watermark\n",
-	    sc->rx_low_watermark, (u_int32_t) USABLE_RX_BD);
+	    sc->rx_low_watermark, sc->max_rx_bd);
 
 	BNX_PRINTF(sc,
 	    "         0x%08X - (sc->txmbuf_alloc) tx mbufs allocated\n",
@@ -5745,7 +5747,7 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	    sc->used_tx_bd);
 
 	BNX_PRINTF(sc, "0x%08X/%08X - (sc->tx_hi_watermark) tx hi watermark\n",
-	    sc->tx_hi_watermark, (u_int32_t) USABLE_TX_BD);
+	    sc->tx_hi_watermark, sc->max_tx_bd);
 
 	BNX_PRINTF(sc,
 	    "         0x%08X - (sc->mbuf_alloc_failed) failed mbuf alloc\n",

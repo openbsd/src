@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.24 2008/05/29 05:36:49 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.25 2008/06/13 07:40:30 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4429,7 +4429,6 @@ struct l2_fhdr {
 #define TOTAL_TX_BD (TOTAL_TX_BD_PER_PAGE * TX_PAGES)
 #define USABLE_TX_BD (USABLE_TX_BD_PER_PAGE * TX_PAGES)
 #define MAX_TX_BD (TOTAL_TX_BD - 1)
-#define BNX_TX_SLACK_SPACE 16
 
 #define RX_PAGES	2
 #define TOTAL_RX_BD_PER_PAGE  (BCM_PAGE_SIZE / sizeof(struct rx_bd))
@@ -4437,7 +4436,6 @@ struct l2_fhdr {
 #define TOTAL_RX_BD (TOTAL_RX_BD_PER_PAGE * RX_PAGES)
 #define USABLE_RX_BD (USABLE_RX_BD_PER_PAGE * RX_PAGES)
 #define MAX_RX_BD (TOTAL_RX_BD - 1)
-#define BNX_RX_SLACK_SPACE (MAX_RX_BD - 8)
 
 #define NEXT_TX_BD(x) (((x) & USABLE_TX_BD_PER_PAGE) ==	\
 		(USABLE_TX_BD_PER_PAGE - 1)) ?					  	\
@@ -4752,7 +4750,9 @@ struct bnx_softc
 
 	/* Track the number of rx_bd and tx_bd's in use. */
 	u_int16_t free_rx_bd;
+	u_int16_t max_rx_bd;
 	u_int16_t used_tx_bd;
+	u_int16_t max_tx_bd;
 
 	/* Provides access to hardware statistics through sysctl. */
 	u_int64_t stat_IfHCInOctets;
@@ -4823,7 +4823,9 @@ struct bnx_softc
 	u_int32_t tx_interrupts;
 
 	u_int32_t	rx_low_watermark;			/* Lowest number of rx_bd's free. */
+	u_int32_t rx_empty_count;			/* Number of times the RX chain was empty. */
 	u_int32_t tx_hi_watermark;			/* Greatest number of tx_bd's used. */
+	u_int32_t tx_full_count;			/* Number of times the TX chain was full. */
 	u_int32_t	mbuf_alloc_failed;			/* Mbuf allocation failure counter. */
 	u_int32_t l2fhdr_status_errors;
 	u_int32_t unexpected_attentions;
