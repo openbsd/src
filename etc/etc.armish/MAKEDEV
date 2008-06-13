@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.armish/MAKEDEV.md,v 1.7 2008/06/12 20:39:28 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
+#	OpenBSD: etc.armish/MAKEDEV.md,v 1.8 2008/06/13 21:07:27 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -210,7 +210,7 @@ U=`unt $i`
 case $i in
 ramdisk)
 	R std bpf0 wd0 wd1 sd0 tty00 rd0 wsmouse
-	R st0 ttyC0 wskbd0 apm
+	R st0 ttyC0 wskbd0 apm bio
 	;;
 
 std)
