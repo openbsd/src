@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.41 2008/03/16 19:47:43 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.42 2008/06/13 21:04:24 landry Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -131,6 +131,7 @@ void	*realloc(void *, size_t);
 void	*recalloc(void *, size_t, size_t);
 void	 srand(unsigned);
 double	 strtod(const char *, char **);
+float	 strtof(const char *, char **);
 long	 strtol(const char *, char **, int);
 unsigned long
 	 strtoul(const char *, char **, int);
