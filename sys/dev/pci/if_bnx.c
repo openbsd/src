@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.62 2008/06/13 07:40:30 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.63 2008/06/13 21:40:21 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4383,7 +4383,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	DBPRINT(sc, BNX_INFO_SEND,
 		"%s(): Start: prod = 0x%04X, chain_prod = %04X, "
 		"prod_bseq = 0x%08X\n",
-		__FUNCTION__, *prod, chain_prod, prod_bseq);
+		__FUNCTION__, prod, chain_prod, prod_bseq);
 
 	/*
 	 * Cycle through each mbuf segment that makes up
@@ -4411,7 +4411,8 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	/* Set the END flag on the last TX buffer descriptor. */
 	txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_END);
 
-	DBRUN(BNX_INFO_SEND, bnx_dump_tx_chain(sc, debug_prod, nseg));
+	DBRUN(BNX_INFO_SEND, bnx_dump_tx_chain(sc, debug_prod,
+	    map->dm_nsegs));
 
 	DBPRINT(sc, BNX_INFO_SEND,
 		"%s(): End: prod = 0x%04X, chain_prod = %04X, "
@@ -4437,7 +4438,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	DBRUNIF(1, sc->tx_mbuf_alloc++);
 
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, chain_prod, 
-	    map_arg.maxsegs));
+	    map->dm_nsegs));
 
 	/* prod points to the next free tx_bd at this point. */
 	sc->tx_prod = prod;
