@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.127 2008/06/13 00:04:33 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.128 2008/06/13 01:10:41 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2394,7 +2394,7 @@ void aml_xgasio(int, uint64_t, int, void *, int, int, const char *);
 void aml_xfldio(struct aml_scope *, struct aml_value *, 
     struct aml_value *, int);
 void aml_xcreatefield(struct aml_value *, int, struct aml_value *, int, int,
-    struct aml_value *, int);
+    struct aml_value *, int, int);
 void aml_xparsefieldlist(struct aml_scope *, int, int,
     struct aml_value *, struct aml_value *, int);
 int aml_evalhid(struct aml_node *, struct aml_value *);
@@ -2669,7 +2669,7 @@ aml_xfldio(struct aml_scope *scope, struct aml_value *fld,
 void
 aml_xcreatefield(struct aml_value *field, int opcode,
 		struct aml_value *data, int bpos, int blen,
-		struct aml_value *index, int indexval)
+		struct aml_value *index, int indexval, int flags)
 {
 	dnprintf(10, "## %s(%s): %s %.4x-%.4x\n", 
 	    aml_mnem(opcode, 0),
@@ -2685,12 +2685,21 @@ aml_xcreatefield(struct aml_value *field, int opcode,
 	    opcode == AMLOP_BANKFIELD) ?
 	    AML_OBJTYPE_FIELDUNIT : 
 	    AML_OBJTYPE_BUFFERFIELD;
+
+	if (field->type == AML_OBJTYPE_BUFFERFIELD && 
+	    data->type != AML_OBJTYPE_BUFFER) 
+	{
+		printf("WARN: %s not buffer\n",
+		    aml_nodename(data->node));
+		aml_xconvert(data, &data, AML_OBJTYPE_BUFFER, 0);
+	}
 	field->v_field.type = opcode;
 	field->v_field.bitpos = bpos;
 	field->v_field.bitlen = blen;
 	field->v_field.ref3 = indexval;
 	field->v_field.ref2 = index;
 	field->v_field.ref1 = data;
+	field->v_field.flags = flags;
 
 	/* Increase reference count */
 	aml_xaddref(data, "Field.Data");
@@ -2722,22 +2731,21 @@ aml_xparsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 			mscope->pos = aml_xparsename(mscope->pos, mscope->node,
 			    ns_xcreate, &rv);
 			blen = aml_parselength(mscope);
-			rv->v_field.flags = flags;
 			switch (opcode) {
 			case AMLOP_FIELD:
 				/* nbF */
 				aml_xcreatefield(rv, opcode, data, bpos, 
-				    blen, NULL, 0);
+				    blen, NULL, 0, flags);
 				break;
 			case AMLOP_INDEXFIELD:
 				/* nnbF */
 				aml_xcreatefield(rv, opcode, data, bpos & 7, 
-				    blen, index, bpos>>3);
+				    blen, index, bpos>>3, flags);
 				break;
 			case AMLOP_BANKFIELD:
 				/* nnibF */
 				aml_xcreatefield(rv, opcode, data, bpos, 
-				    blen, index, indexval);
+				    blen, index, indexval, flags);
 				break;
 			}
 			break;
@@ -3846,7 +3854,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 				dnprintf(12, "Index.Buf Targ\n");
 				my_ret = aml_allocvalue(0,0,NULL);
 				aml_xcreatefield(my_ret, AMLOP_INDEX, tmp, 
-				    8 * idx, 8, NULL, 0);
+				    8 * idx, 8, NULL, 0, AML_FIELD_BYTEACC);
 			}
 			aml_xdelref(&tmp, "Index.BufStr");
 			break;
@@ -4044,49 +4052,33 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		/* Field objects */
 	case AMLOP_CREATEFIELD:
 		/* Source:B, BitIndex:I, NumBits:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer,
-		    opargs[2]->v_integer, NULL, 0);
-		aml_xdelref(&tmp, htab->mnem);
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer,
+		    opargs[2]->v_integer, NULL, 0, 0);
 		break;
 	case AMLOP_CREATEBITFIELD:
 		/* Source:B, BitIndex:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer,    
-		    1, NULL, 0);	
-		aml_xdelref(&tmp, htab->mnem);
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer,    
+		    1, NULL, 0, 0);	
 		break;
 	case AMLOP_CREATEBYTEFIELD:
 		/* Source:B, ByteIndex:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer*8,  
-		    8, NULL, 0);
-		aml_xdelref(&tmp, htab->mnem);
-		cname->v_field.flags = AML_FIELD_BYTEACC;
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer*8,  
+		    8, NULL, 0, AML_FIELD_BYTEACC);
 		break;
 	case AMLOP_CREATEWORDFIELD:
 		/* Source:B, ByteIndex:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer*8, 
-		    16, NULL, 0);
-		aml_xdelref(&tmp, htab->mnem);
-		cname->v_field.flags = AML_FIELD_WORDACC;
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer*8, 
+		    16, NULL, 0, AML_FIELD_WORDACC);
 		break;
 	case AMLOP_CREATEDWORDFIELD:
 		/* Source:B, ByteIndex:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer*8, 
-		    32, NULL, 0);
-		aml_xdelref(&tmp, htab->mnem);
-		cname->v_field.flags = AML_FIELD_DWORDACC;
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer*8, 
+		    32, NULL, 0, AML_FIELD_DWORDACC);
 		break;
 	case AMLOP_CREATEQWORDFIELD:
 		/* Source:B, ByteIndex:I, FieldName */
-		aml_xconvert(opargs[0], &tmp, AML_OBJTYPE_BUFFER, 0);
-		aml_xcreatefield(cname, opcode, tmp, opargs[1]->v_integer*8, 
-		    64, NULL, 0);
-		aml_xdelref(&tmp, htab->mnem);
-		cname->v_field.flags = AML_FIELD_QWORDACC;
+		aml_xcreatefield(cname, opcode, opargs[0], opargs[1]->v_integer*8, 
+		    64, NULL, 0, AML_FIELD_QWORDACC);
 		break;
 	case AMLOP_FIELD:
 		/* Field: n:OpRegion, b:Flags, F:ieldlist */
