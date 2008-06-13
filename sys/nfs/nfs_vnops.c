@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.90 2008/06/12 20:24:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.91 2008/06/13 17:21:13 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -362,7 +362,6 @@ nfsmout:
  * For paged in text files, you will need to flush the page cache
  * if consistency is lost.
  */
-/* ARGSUSED */
 int
 nfs_open(v)
 	void *v;
@@ -457,7 +456,6 @@ nfs_open(v)
  *                     a 1 would force a commit operation, if it is felt a
  *                     commit is necessary now.
  */
-/* ARGSUSED */
 int
 nfs_close(v)
 	void *v;
@@ -1244,7 +1242,6 @@ nfsmout:
  * nfs mknod vop
  * just call nfs_mknodrpc() to do the work.
  */
-/* ARGSUSED */
 int
 nfs_mknod(v)
 	void *v;
@@ -2677,7 +2674,6 @@ nfs_strategy(v)
 /*
  * fsync vnode op. Just call nfs_flush() with commit == 1.
  */
-/* ARGSUSED */
 int
 nfs_fsync(v)
 	void *v;
@@ -3071,7 +3067,6 @@ nfsspec_access(v)
 	    ap->a_mode, ap->a_cred));
 }
 
-/* ARGSUSED */
 int
 nfs_poll(v)
         void *v;
