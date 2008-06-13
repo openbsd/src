@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.157 2008/06/01 02:45:59 krw Exp $
+#	$OpenBSD: install.sh,v 1.158 2008/06/13 04:41:44 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -120,7 +120,6 @@ if [ ! -f /etc/fstab ]; then
 		disklabel $DISK 2>&1 | sed -ne '/^ *[a-p]: /p' >/tmp/disklabel.$DISK
 		while read _dev _size _offset _type _rest; do
 			_pp=${DISK}${_dev%:}
-			_ps=$_size
 
 			if [[ $_pp == $ROOTDEV ]]; then
 				echo "$ROOTDEV /" >$FILESYSTEMS
@@ -133,7 +132,7 @@ if [ ! -f /etc/fstab ]; then
 			fi
 
 			_partitions[$_i]=$_pp
-			_psizes[$_i]=$_ps
+			_psizes[$_i]=$_size
 
 			# Set _mount_points[$_i].
 			if [[ -f /tmp/fstab.$DISK ]]; then
@@ -165,11 +164,11 @@ if [ ! -f /etc/fstab ]; then
 		_i=0
 		while :; do
 			_pp=${_partitions[$_i]}
-			_ps=$(( ${_psizes[$_i]} / 2 ))
 			_mp=${_mount_points[$_i]}
+			_size=$(stdsize ${_psizes[$_i]})
 
 			# Get the mount point from the user
-			ask "Mount point for ${_pp} (size=${_ps}k)? (or 'none' or 'done')" "$_mp"
+			ask "Mount point for $_pp ($_size)? (or 'none' or 'done')" "$_mp"
 			case $resp in
 			"")	;;
 			none)	_mp=

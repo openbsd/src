@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.430 2008/04/17 01:51:44 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.431 2008/06/13 04:41:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -227,6 +227,26 @@ mount_mnt2() {
 	# Always mount msdos partitions with -s to get lower case names.
 	grep -q "^  $resp: .*MSDOS" $_file && _opts="-s"
 	mount -o ro,$_opts /dev/$_dev$resp /mnt2
+}
+
+# Translate block count into human readable byte count.
+# N.B.:  Assumes blocks being counted are 512 bytes!
+# N.B.:  ksh arithmetic is 32 bits so can't just calculate!
+stdsize ()  {
+	local _p= _s= _sz=$1
+
+	set -- " " K M G T P E Z Y
+
+	while (( ${#_sz} > 3 )); do
+		shift
+		_p=${_sz%[0-9][0-9][0-9]}
+		_s=${_sz#$_p}
+		_sz=$_p
+	done
+
+	(( _s > 500 )) && : $(( _sz = _sz + 1 ))
+
+	echo "$(( _sz * 512 )) ${1}Bytes"
 }
 
 # Ask for a password, saving the input in $resp.
