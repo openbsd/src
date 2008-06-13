@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.78 2007/12/19 08:49:23 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.79 2008/06/13 05:57:50 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -285,12 +285,13 @@ p_krtentry(struct rtentry *rt)
 	p_addr(sa, mask, rt->rt_flags);
 	p_gwaddr(kgetsa(rt->rt_gateway), sa->sa_family);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
+	printf("%5u %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6u ", rt->rt_rmx.rmx_mtu);
+		printf("%5u ", rt->rt_rmx.rmx_mtu);
 	else
-		printf("%6s ", "-");
+		printf("%5s ", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
+	printf("  %2d", rt->rt_priority);
 
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
