@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.114 2008/06/12 19:50:04 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.115 2008/06/13 23:52:42 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -437,8 +437,10 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			minva = TRUNC_PG(minva);
 			maxva = ROUND_PG(maxva);
 			exe_obj = _dl_finalize_object(argv[0] ? argv[0] : "",
-			    (Elf_Dyn *)phdp->p_vaddr, (Elf_Phdr *)dl_data[AUX_phdr],
-			    dl_data[AUX_phnum], OBJTYPE_EXE, minva + exe_loff, exe_loff);
+			    (Elf_Dyn *)(phdp->p_vaddr + exe_loff),
+			    (Elf_Phdr *)dl_data[AUX_phdr],
+			    dl_data[AUX_phnum], OBJTYPE_EXE, minva + exe_loff,
+			    exe_loff);
 			_dl_add_object(exe_obj);
 			break;
 		case PT_INTERP:
