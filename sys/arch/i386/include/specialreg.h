@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.32 2007/10/17 02:30:25 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.33 2008/06/13 00:00:45 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -135,6 +135,7 @@
 #define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
 #define CPUIDECX_DSCPL	0x00000010	/* CPL Qualified Debug Store */
 #define CPUIDECX_VMX	0x00000020	/* Virtual Machine Extensions */
+#define CPUIDECX_SMX	0x00000040	/* Safer Mode Extensions */
 #define CPUIDECX_EST	0x00000080	/* enhanced SpeedStep */
 #define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
 #define CPUIDECX_CNXTID	0x00000400	/* Context ID */
