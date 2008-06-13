@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlm_prot.x,v 1.4 2004/01/17 12:32:11 deraadt Exp $	*/
+/*	$OpenBSD: nlm_prot.x,v 1.5 2008/06/13 21:24:15 sturm Exp $	*/
 
 /*
  * Network lock manager protocol definition
@@ -14,7 +14,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: nlm_prot.x,v 1.4 2004/01/17 12:32:11 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: nlm_prot.x,v 1.5 2008/06/13 21:24:15 sturm Exp $";
 %#endif /* not lint */
 #endif
 
@@ -140,6 +140,107 @@ struct	nlm_notify {
 	int state;
 };
 
+#ifdef RPC_HDR
+%/* definitions for NLM version 4 */
+#endif
+enum nlm4_stats {
+	nlm4_granted			= 0,
+	nlm4_denied			= 1,
+	nlm4_denied_nolock		= 2,
+	nlm4_blocked			= 3,
+	nlm4_denied_grace_period	= 4,
+	nlm4_deadlck			= 5,
+	nlm4_rofs			= 6,
+	nlm4_stale_fh			= 7,
+	nlm4_fbig			= 8,
+	nlm4_failed			= 9
+};
+
+struct nlm4_stat {
+	nlm4_stats stat;
+};
+
+struct nlm4_holder {
+	bool exclusive;
+	u_int32_t svid;
+	netobj oh;
+	u_int64_t l_offset;
+	u_int64_t l_len;
+};
+
+struct nlm4_lock {
+	string caller_name<MAXNAMELEN>;
+	netobj fh;
+	netobj oh;
+	u_int32_t svid;
+	u_int64_t l_offset;
+	u_int64_t l_len;
+};
+
+struct nlm4_share {
+	string caller_name<MAXNAMELEN>;
+	netobj fh;
+	netobj oh;
+	fsh_mode mode;
+	fsh_access access;
+};
+
+union nlm4_testrply switch (nlm4_stats stat) {
+	case nlm_denied:
+		struct nlm4_holder holder;
+	default:
+		void;
+};
+
+struct nlm4_testres {
+	netobj cookie;
+	nlm4_testrply stat;
+};
+
+struct nlm4_testargs {
+	netobj cookie;
+	bool exclusive;
+	struct nlm4_lock alock;
+};
+
+struct nlm4_res {
+	netobj cookie;
+	nlm4_stat stat;
+};
+
+struct nlm4_lockargs {
+	netobj cookie;
+	bool block;
+	bool exclusive;
+	struct nlm4_lock alock;
+	bool reclaim;		/* used for recovering locks */
+	int state;		/* specify local status monitor state */
+};
+
+struct nlm4_cancargs {
+	netobj cookie;
+	bool block;
+	bool exclusive;
+	struct nlm4_lock alock;
+};
+
+struct nlm4_unlockargs {
+	netobj cookie;
+	struct nlm4_lock alock;
+};
+
+struct	nlm4_shareargs {
+	netobj	cookie;
+	nlm4_share	share;
+	bool	reclaim;
+};
+
+struct	nlm4_shareres {
+	netobj	cookie;
+	nlm4_stats	stat;
+	int	sequence;
+};
+
 /*
  * Over-the-wire protocol used between the network lock managers
  */
@@ -180,5 +281,26 @@ program NLM_PROG {
 		void		NLM_FREE_ALL(nlm_notify) = 23;
 	} = 3;
 
+	version NLM_VERS4 {
+		nlm4_testres NLM4_TEST(nlm4_testargs) = 1;
+		nlm4_res NLM4_LOCK(nlm4_lockargs) = 2;
+		nlm4_res NLM4_CANCEL(nlm4_cancargs) = 3;
+		nlm4_res NLM4_UNLOCK(nlm4_unlockargs) = 4;
+		nlm4_res NLM4_GRANTED(nlm4_testargs) = 5;
+		void NLM4_TEST_MSG(nlm4_testargs) = 6;
+		void NLM4_LOCK_MSG(nlm4_lockargs) = 7;
+		void NLM4_CANCEL_MSG(nlm4_cancargs) = 8;
+		void NLM4_UNLOCK_MSG(nlm4_unlockargs) = 9;
+		void NLM4_GRANTED_MSG(nlm4_testargs) = 10;
+		void NLM4_TEST_RES(nlm4_testres) = 11;
+		void NLM4_LOCK_RES(nlm4_res) = 12;
+		void NLM4_CANCEL_RES(nlm4_res) = 13;
+		void NLM4_UNLOCK_RES(nlm4_res) = 14;
+		void NLM4_GRANTED_RES(nlm4_res) = 15;
+		nlm4_shareres NLM4_SHARE(nlm4_shareargs) = 20;
+		nlm4_shareres NLM4_UNSHARE(nlm4_shareargs) = 21;
+		nlm4_res NLM4_NM_LOCK(nlm4_lockargs) = 22;
+		void NLM4_FREE_ALL(nlm_notify) = 23;
+	} = 4;
 } = 100021;
 
