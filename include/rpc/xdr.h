@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.9 2005/01/08 19:47:38 krw Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.10 2008/06/13 21:12:11 sturm Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -249,6 +249,8 @@ extern bool_t	xdr_int16_t(XDR *, int16_t *);
 extern bool_t	xdr_u_int16_t(XDR *, u_int16_t *);
 extern bool_t	xdr_int32_t(XDR *, int32_t *);
 extern bool_t	xdr_u_int32_t(XDR *, u_int32_t *);
+extern bool_t	xdr_int64_t(XDR *, int64_t *);
+extern bool_t	xdr_u_int64_t(XDR *, u_int64_t *);
 extern bool_t	xdr_bool(XDR *, bool_t *);
 extern bool_t	xdr_enum(XDR *, enum_t *);
 extern bool_t	xdr_array(XDR *, char **, unsigned int *, unsigned int, 
