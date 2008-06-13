@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.53 2008/05/26 17:38:54 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.54 2008/06/13 15:19:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -497,6 +497,9 @@ sub try_until_success
 		my $o = &$code;
 		if (defined $o) {
 			return $o;
+		}
+		if (defined $self->{lasterror} && $self->{lasterror} == 550) {
+			last;
 		}
 		if ($self->should_have($pkgname)) {
 			print STDERR "Temporary error, sleeping $retry seconds\n";
