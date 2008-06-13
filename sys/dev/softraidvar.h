@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.55 2008/06/13 21:03:40 hshoexer Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.56 2008/06/13 22:08:17 djm Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -116,7 +116,6 @@ struct sr_crypto_kdf_pbkdf2 {
 	u_int8_t	salt[128];
 };
 
-
 struct sr_crypto_kdfinfo {
 	u_int32_t	len;
 	u_int32_t	flags;
@@ -140,6 +139,9 @@ struct sr_crypto_metadata {
 #define SR_CRYPTOF_INVALID	(0)
 #define SR_CRYPTOF_KEY		(1<<0)
 #define SR_CRYPTOF_KDFHINT	(1<<1)
+	u_int32_t		scm_mask_alg;
+#define SR_CRYPTOM_AES_ECB_256	1
+	u_int8_t		scm_reserved[64];
 
 	u_int8_t		scm_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
 	u_int8_t		scm_kdfhint[SR_CRYPTO_KDFHINTBYTES];

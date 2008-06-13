@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.23 2008/06/13 21:03:40 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.24 2008/06/13 22:08:17 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -215,30 +215,39 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 	rijndael_ctx	 ctx;
 	u_char		*p, *c;
 	size_t		 ksz;
-	int		 i;
+	int		 i, rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n", DEVNAME(sd->sd_sc));
-
-	if (rijndael_set_key(&ctx, sd->mds.mdd_crypto.scr_maskkey, 128) != 0) {
-		bzero(&ctx, sizeof(ctx));
-		return (1);
-	}
-	/* we don't need the mask key anymore */
-	bzero(&sd->mds.mdd_crypto.scr_maskkey,
-	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
 
 	c = (u_char *)sd->mds.mdd_crypto.scr_meta.scm_key;
 	p = (u_char *)sd->mds.mdd_crypto.scr_key;
 	ksz = sizeof(sd->mds.mdd_crypto.scr_key);
 
-	for (i = 0; i < ksz; i += RIJNDAEL128_BLOCK_LEN)
-		rijndael_decrypt(&ctx, &c[i], &p[i]);
-	bzero(&ctx, sizeof(ctx));
-
+	switch (sd->mds.mdd_crypto.scr_meta.scm_mask_alg) {
+	case SR_CRYPTOM_AES_ECB_256:
+		if (rijndael_set_key(&ctx, sd->mds.mdd_crypto.scr_maskkey,
+		    256) != 0)
+			goto out;
+		for (i = 0; i < ksz; i += RIJNDAEL128_BLOCK_LEN)
+			rijndael_decrypt(&ctx, &c[i], &p[i]);
+		break;
+	default:
+		DNPRINTF(SR_D_DIS, "%s: unsuppored scm_mask_alg %u\n",
+		    DEVNAME(sd->sd_sc),
+		    sd->mds.mdd_crypto.scr_meta.scm_mask_alg);
+		goto out;
+	}
+	rv = 0; /* Success */
 #ifdef SR_DEBUG0
 	sr_crypto_dumpkeys(sd);
 #endif
-	return (0);
+
+ out:
+	/* we don't need the mask key anymore */
+	bzero(&sd->mds.mdd_crypto.scr_maskkey,
+	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+	bzero(&ctx, sizeof(ctx));
+	return rv;
 }
 
 int
@@ -262,8 +271,9 @@ sr_crypto_create_keys(struct sr_discipline *sd)
 	/* XXX 128 for now */
 	sd->mds.mdd_crypto.scr_meta.scm_alg = SR_CRYPTOA_AES_XTS_128;
 
+	sd->mds.mdd_crypto.scr_meta.scm_mask_alg = SR_CRYPTOM_AES_ECB_256;
 	if (rijndael_set_key_enc_only(&ctx, sd->mds.mdd_crypto.scr_maskkey,
-	    128) != 0) {
+	    256) != 0) {
 		bzero(sd->mds.mdd_crypto.scr_key,
 		    sizeof(sd->mds.mdd_crypto.scr_key));
 		bzero(&ctx, sizeof(ctx));
