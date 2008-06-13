@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.27 2008/06/12 20:24:06 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.28 2008/06/13 03:49:26 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -299,9 +299,6 @@
 		if ((nfsd->nd_flag & ND_NFSV3) == 0) \
 			nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
 		}
-
-#define nfsm_srvpostop_attr(r, a) \
-		nfsm_srvpostopattr(nfsd, (r), (a), &mb)
 
 #define nfsm_srvsattr(a) \
 		{ nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \

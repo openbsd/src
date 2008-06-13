@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.79 2008/06/12 20:24:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.80 2008/06/13 03:49:26 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1435,11 +1435,11 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp)
 		txdr_nfsv3time(&(before_vap->va_ctime), tl);
 	}
 	*mbp = mb;
-	nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp);
+	nfsm_srvpostop_attr(nfsd, after_ret, after_vap, mbp);
 }
 
 void
-nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp)
+nfsm_srvpostop_attr(nfsd, after_ret, after_vap, mbp)
 	struct nfsrv_descript *nfsd;
 	int after_ret;
 	struct vattr *after_vap;
