@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.61 2008/06/12 20:24:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.62 2008/06/13 03:54:26 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -95,8 +95,7 @@
  * External data, mostly RPC constants in XDR form
  */
 extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
-	rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr,
-	rpc_auth_kerb;
+	rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr;
 extern u_int32_t nfs_prog;
 extern struct nfsstats nfsstats;
 extern int nfsv3_procid[NFS_NPROCS];
@@ -1081,41 +1080,10 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp)
 	} else {
 		*tl++ = rpc_msgaccepted;
 
-		/*
-		 * For Kerberos authentication, we must send the nickname
-		 * verifier back, otherwise just RPCAUTH_NULL.
-		 */
-		if (nd->nd_flag & ND_KERBFULL) {
-		    struct nfsuid *nuidp;
-		    struct timeval ktvin, ktvout;
+		/* AUTH_UNIX requires RPCAUTH_NULL. */
+		*tl++ = 0;
+		*tl++ = 0;
 
-		    LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
-		     nu_hash) {
-			if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
-			    (!nd->nd_nam2 || netaddr_match(NU_NETFAM(nuidp),
-			     &nuidp->nu_haddr, nd->nd_nam2)))
-			    break;
-		    }
-		    if (nuidp) {
-			ktvin.tv_sec =
-			    txdr_unsigned(nuidp->nu_timestamp.tv_sec - 1);
-			ktvin.tv_usec =
-			    txdr_unsigned(nuidp->nu_timestamp.tv_usec);
-
-			*tl++ = rpc_auth_kerb;
-			*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
-			*tl = ktvout.tv_sec;
-			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
-			*tl++ = ktvout.tv_usec;
-			*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
-		    } else {
-			*tl++ = 0;
-			*tl++ = 0;
-		    }
-		} else {
-			*tl++ = 0;
-			*tl++ = 0;
-		}
 		switch (err) {
 		case EPROGUNAVAIL:
 			*tl = txdr_unsigned(RPC_PROGUNAVAIL);
@@ -1506,15 +1474,10 @@ nfs_getreq(nd, nfsd, has_header)
 	int len, i;
 	u_int32_t *tl;
 	int32_t t1;
-	struct uio uio;
-	struct iovec iov;
-	caddr_t dpos, cp2, cp;
+	caddr_t dpos, cp2;
 	u_int32_t nfsvers, auth_type;
-	uid_t nickuid;
-	int error = 0, ticklen;
+	int error = 0;
 	struct mbuf *mrep, *md;
-	struct nfsuid *nuidp;
-	struct timeval tvin, tvout;
 
 	mrep = nd->nd_mrep;
 	md = nd->nd_md;
@@ -1568,10 +1531,7 @@ nfs_getreq(nd, nfsd, has_header)
 		return (EBADRPC);
 	}
 
-	nd->nd_flag &= ~ND_KERBAUTH;
-	/*
-	 * Handle auth_unix or auth_kerb.
-	 */
+	/* Handle auth_unix */
 	if (auth_type == rpc_auth_unix) {
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
@@ -1605,96 +1565,6 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		if (len > 0)
 			nfsm_adv(nfsm_rndup(len));
-	} else if (auth_type == rpc_auth_kerb) {
-		switch (fxdr_unsigned(int, *tl++)) {
-		case RPCAKN_FULLNAME:
-			ticklen = fxdr_unsigned(int, *tl);
-			*((u_int32_t *)nfsd->nfsd_authstr) = *tl;
-			uio.uio_resid = nfsm_rndup(ticklen) + NFSX_UNSIGNED;
-			nfsd->nfsd_authlen = uio.uio_resid + NFSX_UNSIGNED;
-			if (uio.uio_resid > (len - 2 * NFSX_UNSIGNED)) {
-				m_freem(mrep);
-				return (EBADRPC);
-			}
-			uio.uio_offset = 0;
-			uio.uio_iov = &iov;
-			uio.uio_iovcnt = 1;
-			uio.uio_segflg = UIO_SYSSPACE;
-			iov.iov_base = (caddr_t)&nfsd->nfsd_authstr[4];
-			iov.iov_len = RPCAUTH_MAXSIZ - 4;
-			nfsm_mtouio(&uio, uio.uio_resid);
-			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-			if (*tl++ != rpc_auth_kerb ||
-				fxdr_unsigned(int, *tl) != 4 * NFSX_UNSIGNED) {
-				printf("Bad kerb verifier\n");
-				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-			nfsm_dissect(cp, caddr_t, 4 * NFSX_UNSIGNED);
-			tl = (u_int32_t *)cp;
-			if (fxdr_unsigned(int, *tl) != RPCAKN_FULLNAME) {
-				printf("Not fullname kerb verifier\n");
-				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-			cp += NFSX_UNSIGNED;
-			bcopy(cp, nfsd->nfsd_verfstr, 3 * NFSX_UNSIGNED);
-			nfsd->nfsd_verflen = 3 * NFSX_UNSIGNED;
-			nd->nd_flag |= ND_KERBFULL;
-			nfsd->nfsd_flag |= NFSD_NEEDAUTH;
-			break;
-		case RPCAKN_NICKNAME:
-			if (len != 2 * NFSX_UNSIGNED) {
-				printf("Kerb nickname short\n");
-				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADCRED);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-			nickuid = fxdr_unsigned(uid_t, *tl);
-			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-			if (*tl++ != rpc_auth_kerb ||
-				fxdr_unsigned(int, *tl) != 3 * NFSX_UNSIGNED) {
-				printf("Kerb nick verifier bad\n");
-				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-			nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-			tvin.tv_sec = *tl++;
-			tvin.tv_usec = *tl;
-
-			LIST_FOREACH(nuidp, NUIDHASH(nfsd->nfsd_slp, nickuid),
-			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nickuid &&
-				    (!nd->nd_nam2 ||
-				     netaddr_match(NU_NETFAM(nuidp),
-				      &nuidp->nu_haddr, nd->nd_nam2)))
-					break;
-			}
-			if (!nuidp) {
-				nd->nd_repstat =
-					(NFSERR_AUTHERR|AUTH_REJECTCRED);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-
-			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
-			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
-			if (nuidp->nu_expire < time_second ||
-			    nuidp->nu_timestamp.tv_sec > tvout.tv_sec ||
-			    (nuidp->nu_timestamp.tv_sec == tvout.tv_sec &&
-			     nuidp->nu_timestamp.tv_usec > tvout.tv_usec)) {
-				nuidp->nu_expire = 0;
-				nd->nd_repstat =
-				    (NFSERR_AUTHERR|AUTH_REJECTVERF);
-				nd->nd_procnum = NFSPROC_NOOP;
-				return (0);
-			}
-			nfsrv_setcred(&nuidp->nu_cr, &nd->nd_cr);
-			nd->nd_flag |= ND_KERBNICK;
-		};
 	} else {
 		nd->nd_repstat = (NFSERR_AUTHERR | AUTH_REJECTCRED);
 		nd->nd_procnum = NFSPROC_NOOP;
