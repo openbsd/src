@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.6 2008/06/09 23:11:01 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.7 2008/06/13 00:33:04 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: June 13 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -93,6 +93,16 @@ mode (the default unless
 is specified),
 .Nm
 will perform a strict comparison of files.
+.Pa /etc/fbtab ,
+.Pa /etc/login.conf ,
+.Pa /etc/sysctl.conf ,
+and
+.Pa /etc/ttys
+are created using helper scripts and will
+.Sy always
+be strictly compared even in
+.Fl a
+mode.
 .Pp
 .Nm
 will work through the fileset,

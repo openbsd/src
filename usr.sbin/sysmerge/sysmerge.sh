@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.12 2008/06/10 00:36:46 pyr Exp $
+# $OpenBSD: sysmerge.sh,v 1.13 2008/06/13 00:33:04 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -308,8 +308,13 @@ do_compare() {
 		fi
 
 		# compare CVS $Id's first so if the file hasn't been modified,
-		# it will be deleted from temproot and ignored from comparison
-		if [ "${AUTOMODE}" ]; then
+		# it will be deleted from temproot and ignored from comparison.
+		# several files are generated from scripts so CVS ID is not a
+		# reliable way of detecting changes; leave for a full diff.
+		if [ "${AUTOMODE}" -a "${COMPFILE}" != "./etc/fbtab" \
+		    -a "${COMPFILE}" != "./etc/login.conf" \
+		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
+		    -a "${COMPFILE}" != "./etc/ttys" ]; then
 			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null`
 			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null` || CVSID2=none
 			if [ "${CVSID2}" = "${CVSID1}" ]; then rm "${COMPFILE}"; fi
