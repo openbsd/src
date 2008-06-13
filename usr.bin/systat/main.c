@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.38 2008/06/12 22:26:01 canacar Exp $	 */
+/* $Id: main.c,v 1.39 2008/06/13 01:24:55 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -311,10 +311,11 @@ cmd_delay(void)
 {
 	double del;
 	del = atof(cmdbuf);
-	error("delay: %g", del);
+
 	if (del > 0) {
 		udelay = (useconds_t)(del * 1000000);
 		gotsig_alarm = 1;
+		naptime = del;
 	}
 }
 
@@ -440,7 +441,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			delay = atof(optarg);
-			if (delay < 0)
+			if (delay <= 0)
 				delay = 5;
 			break;
 		case 'S':
@@ -480,6 +481,8 @@ main(int argc, char *argv[])
 	udelay = (useconds_t)(delay * 1000000.0);
 	if (udelay < 1)
 		udelay = 1;
+
+	naptime = (double)udelay / 1000000.0;
 
 	gethostname(hostname, sizeof (hostname));
 	gethz();
