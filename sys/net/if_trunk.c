@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.43 2008/06/08 17:25:46 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.44 2008/06/13 23:24:21 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1062,13 +1062,15 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		error = ENOENT;
 		goto bad;
 	}
-	if (tr->tr_proto == TRUNK_PROTO_NONE)
-		goto bad;
 	trifp = &tr->tr_ac.ac_if;
+	if (tr->tr_proto == TRUNK_PROTO_NONE) {
+		error = ENOENT;
+		goto bad;
+	}
 
 	error = (*tr->tr_input)(tr, tp, eh, m);
 	if (error != 0)
-		goto bad;
+		return (error);
 
 #if NBPFILTER > 0
 	if (trifp->if_bpf)
@@ -1077,12 +1079,12 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 #endif
 
 	trifp->if_ipackets++;
-
 	return (0);
 
  bad:
 	if (error > 0 && trifp != NULL)
 		trifp->if_ierrors++;
+	m_freem(m);
 	return (error);
 }
 
@@ -1318,7 +1320,7 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 			return (0);
 		}
 	}
-
+	m_freem(m);
 	return (-1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.121 2008/05/10 01:52:34 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.122 2008/06/13 23:24:21 mpf Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -509,12 +509,12 @@ ether_input(ifp0, eh, m)
 #if NTRUNK > 0
 	/* Handle input from a trunk port */
 	while (ifp->if_type == IFT_IEEE8023ADLAG) {
-		if (++i > TRUNK_MAX_STACKING ||
-		    trunk_input(ifp, eh, m) != 0) {
-			if (m)
-				m_freem(m);
+		if (++i > TRUNK_MAX_STACKING) {
+			m_freem(m);
 			return;
 		}
+		if (trunk_input(ifp, eh, m) != 0)
+			return;
 
 		/* Has been set to the trunk interface */
 		ifp = m->m_pkthdr.rcvif;
