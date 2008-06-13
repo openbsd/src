@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 1997/08/19 08:05:16 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/06/13 21:32:26 sturm Exp $
 
 PROG =	rpc.lockd
-SRCS =	nlm_prot_svc.c lockd.c procs.c
+SRCS =	nlm_prot_svc.c lockd.c lockd_lock.c procs.c
 MAN =	rpc.lockd.8
 
 DPADD=	${LIBRPCSVC}

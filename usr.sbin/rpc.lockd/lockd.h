@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.h,v 1.3 1997/09/17 23:09:37 deraadt Exp $	*/
+/*	$OpenBSD: lockd.h,v 1.4 2008/06/13 21:32:26 sturm Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,3 +34,5 @@
  */
 
 extern int debug_level;
+extern int grace_expired;
+void sigchild_handler(int);

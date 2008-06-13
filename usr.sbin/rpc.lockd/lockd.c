@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.8 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.9 2008/06/13 21:32:26 sturm Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -44,38 +44,56 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <netdb.h>
 
 #include "lockd.h"
 
-extern void nlm_prog_1(struct svc_req *, SVCXPRT *);
-extern void nlm_prog_3(struct svc_req *, SVCXPRT *);
+int debug_level = 0;	/* 0 = no debugging syslog() calls */
+int _rpcsvcdirty = 0;
+int grace_expired;
 
-int     debug_level = 0;	/* Zero means no debugging syslog() calls	 */
+void nlm_prog_1(struct svc_req *, SVCXPRT *);
+void nlm_prog_3(struct svc_req *, SVCXPRT *);
+void nlm_prog_4(struct svc_req *, SVCXPRT *);
 
-int     _rpcsvcdirty;
+static void sigalarm_handler(int);
+static void usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
+	int ch;
+	struct sigaction sigchild, sigalarm;
+	int grace_period = 30;
 
-	if (argc > 1) {
-		if (strncmp(argv[1], "-d", 2)) {
-			fprintf(stderr,
-			    "usage: rpc.lockd [-d [debug_level]]\n");
-			exit(1);
+	while ((ch = getopt(argc, argv, "d:g:")) != (-1)) {
+		switch (ch) {
+		case 'd':
+			debug_level = atoi(optarg);
+			if (!debug_level) {
+				usage();
+				/* NOTREACHED */
+			}
+			break;
+		case 'g':
+			grace_period = atoi(optarg);
+			if (!grace_period) {
+				usage();
+				/* NOTREACHED */
+			}
+			break;
+		default:
+		case '?':
+			usage();
+			/* NOTREACHED */
 		}
-		if (argc > 2)
-			debug_level = atoi(argv[2]);
-		else
-			debug_level = atoi(argv[1] + 2);
-		if (!debug_level)
-			debug_level = 1;
 	}
 	(void) pmap_unset(NLM_PROG, NLM_VERS);
 	(void) pmap_unset(NLM_PROG, NLM_VERSX);
+	(void) pmap_unset(NLM_PROG, NLM_VERS4);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL) {
@@ -90,6 +108,11 @@ main(int argc, char *argv[])
 	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
 	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_3, IPPROTO_UDP)) {
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERSX, udp).\n");
+		exit(1);
+	}
+	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_4, IPPROTO_UDP)) {
+		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERS4, udp).\n");
 		exit(1);
 	}
 	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
@@ -107,17 +130,61 @@ main(int argc, char *argv[])
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERSX, tcp).\n");
 		exit(1);
 	}
-
-	if (daemon(0, 0)) {
-		perror("cannot fork");
+	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_4, IPPROTO_TCP)) {
+		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERS4, tcp).\n");
 		exit(1);
 	}
+
+	/*
+	 * Note that it is NOT sensible to run this program from inetd - the
+	 * protocol assumes that it will run immediately at boot time.
+	 */
+	if (daemon(0, 0) == -1) {
+		err(1, "cannot fork");
+		/* NOTREACHED */
+	}
+
 	openlog("rpc.lockd", 0, LOG_DAEMON);
 	if (debug_level)
 		syslog(LOG_INFO, "Starting, debug level %d", debug_level);
 	else
 		syslog(LOG_INFO, "Starting");
 
-	svc_run();
-	exit(1);
+	sigchild.sa_handler = sigchild_handler;
+	sigemptyset(&sigchild.sa_mask);
+	sigchild.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &sigchild, NULL) != 0) {
+		syslog(LOG_WARNING, "sigaction(SIGCHLD) failed (%m)");
+		exit(1);
+	}
+	sigalarm.sa_handler = sigalarm_handler;
+	sigemptyset(&sigalarm.sa_mask);
+	sigalarm.sa_flags = SA_RESETHAND; /* should only happen once */
+	sigalarm.sa_flags |= SA_RESTART;
+	if (sigaction(SIGALRM, &sigalarm, NULL) != 0) {
+		syslog(LOG_WARNING, "sigaction(SIGALRM) failed (%m)");
+		exit(1);
+	}
+	grace_expired = 0;
+	if (alarm(10) == (unsigned int)-1) {
+		syslog(LOG_WARNING, "alarm failed (%m)");
+		exit(1);
+	}
+
+	svc_run();		/* Should never return */
+	return 1;
+}
+
+static void
+/*ARGSUSED*/
+sigalarm_handler(int s)
+{
+	grace_expired = 1;
+}
+
+static void
+usage()
+{
+	errx(1, "usage: rpc.lockd [-d <debuglevel>] [-g <grace period>]");
 }
