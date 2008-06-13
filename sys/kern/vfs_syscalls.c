@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.146 2008/05/22 17:04:59 thib Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.147 2008/06/13 01:59:45 rainer Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -489,10 +489,6 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 		vfs_unbusy(mp);
 	}
 
-#ifdef DEBUG
-	if (syncprt)
-		vfs_bufstats();
-#endif /* DEBUG */
 	return (0);
 }
 
