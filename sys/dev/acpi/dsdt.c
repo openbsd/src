@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.126 2008/06/12 20:36:50 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.127 2008/06/13 00:04:33 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -47,9 +47,6 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-#if 0
-int			aml_cmpvalue(struct aml_value *, struct aml_value *, int);
-#endif
 void			aml_copyvalue(struct aml_value *, struct aml_value *);
 
 void			aml_setvalue(struct aml_scope *, struct aml_value *,
@@ -98,10 +95,13 @@ void			_acpi_os_free(void *, const char *, int);
 void			acpi_sleep(int);
 void			acpi_stall(int);
 
+uint8_t *aml_xparsename(uint8_t *pos, struct aml_node *node, 
+    void (*fn)(struct aml_node *, int, uint8_t *, void *), void *arg);
+void ns_xcreate(struct aml_node *node, int n, uint8_t *pos, void *arg);
+void ns_xdis(struct aml_node *node, int n, uint8_t *pos, void *arg);
+void ns_xsearch(struct aml_node *node, int n, uint8_t *pos, void *arg);
+
 struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
-struct aml_value	*aml_callmethod(struct aml_scope *, struct aml_value *);
-struct aml_value	*aml_evalmethod(struct aml_scope *, struct aml_node *,
-			    int, struct aml_value *, struct aml_value *);
 
 const char		*aml_getname(const char *);
 void			aml_dump(int, u_int8_t *);
@@ -653,61 +653,6 @@ aml_getname(const char *name)
 	}
 	*(--p) = 0;
 	return namebuf;
-}
-
-/* Create name/value pair in namespace */
-struct aml_node *
-aml_createname(struct aml_node *root, const void *vname, struct aml_value *value)
-{
-	struct aml_node *node, **pp;
-	uint8_t *name = (uint8_t *)vname;
-	int count;
-
-	if (*name == AMLOP_ROOTCHAR) {
-		root = &aml_root;
-		name++;
-	}
-	while (*name == AMLOP_PARENTPREFIX && root) {
-		root = root->parent;
-		name++;
-	}
-	switch (*name) {
-	case 0x00:
-		return root;
-	case AMLOP_MULTINAMEPREFIX:
-		count = name[1];
-		name += 2;
-		break;
-	case AMLOP_DUALNAMEPREFIX:
-		count = 2;
-		name += 1;
-		break;
-	default:
-		count = 1;
-		break;
-	}
-	node = NULL;
-	while (count-- && root) {
-		/* Create new name if it does not exist */
-		if ((node = __aml_search(root, name, 0)) == NULL) {
-			node = acpi_os_malloc(sizeof(struct aml_node));
-
-			memcpy((void *)node->name, name, AML_NAMESEG_LEN);
-			for (pp = &root->child; *pp; pp = &(*pp)->sibling)
-				;
-			node->parent = root;
-			node->sibling = NULL;
-			*pp = node;
-		}
-		root = node;
-		name += AML_NAMESEG_LEN;
-	}
-	/* If node created, set value pointer */
-	if (node && value) {
-		node->value = value;
-		value->node = node;
-	}
-	return node;
 }
 
 /* Free all children nodes/values */
@@ -1294,45 +1239,6 @@ aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 	return res;
 }
 
-#if 0
-int
-aml_cmpvalue(struct aml_value *lhs, struct aml_value *rhs, int opcode)
-{
-	int rc, lt, rt;
-
-	rc = 0;
-	lt = lhs->type & ~AML_STATIC;
-	rt = rhs->type & ~AML_STATIC;
-	if (lt == rt) {
-		switch (lt) {
-		case AML_OBJTYPE_STATICINT:
-		case AML_OBJTYPE_INTEGER:
-			rc = (lhs->v_integer - rhs->v_integer);
-			break;
-		case AML_OBJTYPE_STRING:
-			rc = strncmp(lhs->v_string, rhs->v_string,
-			    min(lhs->length, rhs->length));
-			if (rc == 0)
-				rc = lhs->length - rhs->length;
-			break;
-		case AML_OBJTYPE_BUFFER:
-			rc = memcmp(lhs->v_buffer, rhs->v_buffer,
-			    min(lhs->length, rhs->length));
-			if (rc == 0)
-				rc = lhs->length - rhs->length;
-			break;
-		}
-	} else if (lt == AML_OBJTYPE_INTEGER) {
-		rc = lhs->v_integer - aml_val2int(rhs);
-	} else if (rt == AML_OBJTYPE_INTEGER) {
-		rc = aml_val2int(lhs) - rhs->v_integer;
-	} else {
-		aml_die("mismatched compare\n");
-	}
-	return aml_evalexpr(rc, 0, opcode);
-}
-#endif
-
 /*
  * aml_bufcpy copies/shifts buffer data, special case for aligned transfers
  * dstPos/srcPos are bit positions within destination/source buffers
@@ -1699,8 +1605,9 @@ aml_create_defaultobjects()
 
 	for (def = aml_defobj; def->name; def++) {
 		/* Allocate object value + add to namespace */
-		tmp = aml_allocvalue(def->type, def->ival, def->bval);
-		aml_createname(&aml_root, def->name, tmp);
+		aml_xparsename((uint8_t *)def->name, &aml_root,
+		    ns_xcreate, &tmp);
+		_aml_setvalue(tmp, def->type, def->ival, def->bval);
 		if (def->gval) {
 			/* Set root object pointer */
 			*def->gval = tmp;
@@ -2183,11 +2090,6 @@ aml_xmatch(struct aml_value *pkg, int index,
 /*
  * Namespace functions
  */
-void ns_xdis(struct aml_node *node, int n, uint8_t *pos, void *arg);
-void ns_xcreate(struct aml_node *node, int n, uint8_t *pos, void *arg);
-void ns_xsearch(struct aml_node *node, int n, uint8_t *pos, void *arg);
-uint8_t *aml_xparsename(uint8_t *pos, struct aml_node *node, 
-    void (*fn)(struct aml_node *, int, uint8_t *, void *), void *arg);
 
 /* Search for name in namespace */
 void
