@@ -1,3 +1,4 @@
+/*	$OpenBSD: uticom.c,v 1.3 2008/06/14 14:33:38 fgsch Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
