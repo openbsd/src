@@ -301,6 +301,8 @@
 ./usr/libdata/ldscripts/elf_i386_obsd.xc
 ./usr/libdata/ldscripts/elf_i386_obsd.xd
 ./usr/libdata/ldscripts/elf_i386_obsd.xdc
+./usr/libdata/ldscripts/elf_i386_obsd.xdcz
+./usr/libdata/ldscripts/elf_i386_obsd.xdz
 ./usr/libdata/ldscripts/elf_i386_obsd.xn
 ./usr/libdata/ldscripts/elf_i386_obsd.xr
 ./usr/libdata/ldscripts/elf_i386_obsd.xs
