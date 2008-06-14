@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.135 2008/06/11 22:11:20 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.136 2008/06/14 00:57:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,7 +168,7 @@ struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 char			*copytag(const char *);
 struct ipsec_rule	*copyrule(struct ipsec_rule *);
 int			 validate_af(struct ipsec_addr_wrap *,
-			    struct ipsec_addr_wrap *);
+			     struct ipsec_addr_wrap *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *, u_int8_t);
@@ -183,6 +183,8 @@ struct ipsec_rule	*create_sagroup(struct ipsec_addr_wrap *, u_int8_t,
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, u_int8_t, char *, char *,
 			     u_int8_t);
+void			 set_rule_peers(struct ipsec_rule *r,
+			     struct ipsec_hosts *peers);
 void			 expand_any(struct ipsec_addr_wrap *);
 int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *, int);
@@ -2340,24 +2342,11 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 	if (type == TYPE_DENY || type == TYPE_BYPASS)
 		return (r);
 
-	r->local = peers->src;
-	if (peers->dst == NULL) {
-		/* Set peer to remote host.  Must be a host address. */
-		if (r->direction == IPSEC_IN) {
-			if (r->src->netaddress) {
-				yyerror("no peer specified");
-				goto errout;
-			}
-			r->peer = copyhost(r->src);
-		} else {
-			if (r->dst->netaddress) {
-				yyerror("no peer specified");
-				goto errout;
-			}
-			r->peer = copyhost(r->dst);
-		}
-	} else
-		r->peer = peers->dst;
+	set_rule_peers(r, peers);
+	if (r->peer == NULL) {
+		yyerror("no peer specified");
+		goto errout;
+	}
 
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
@@ -2406,6 +2395,27 @@ expand_any(struct ipsec_addr_wrap *ipa_in)
 			err(1, "expand_any: strdup");
 
 		ipa->next->next = oldnext;
+	}
+}
+	 
+void
+set_rule_peers(struct ipsec_rule *r, struct ipsec_hosts *peers)
+{
+	r->local = peers->src;
+	r->peer = peers->dst;
+	if (r->peer == NULL) {
+		/* Set peer to remote host.  Must be a host address. */
+		if (r->direction == IPSEC_IN) {
+			if (r->src->netaddress)
+				r->peer = NULL;
+			else
+				r->peer = copyhost(r->src);
+		} else {
+			if (r->dst->netaddress)
+				r->peer = NULL;
+			else
+				r->peer = copyhost(r->dst);
+		}
 	}
 }
 
@@ -2565,24 +2575,7 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 		return NULL;
 	}
 
-	if (peers->dst == NULL) {
-		/* Set peer to remote host.  Must be a host address. */
-		if (r->direction == IPSEC_IN) {
-			if (r->src->netaddress)
-				r->peer = NULL;
-			else
-				r->peer = copyhost(r->src);
-		} else {
-			if (r->dst->netaddress)
-				r->peer = NULL;
-			else
-				r->peer = copyhost(r->dst);
-		}
-	} else
-		r->peer = peers->dst;
-
-	if (peers->src)
-		r->local = peers->src;
+	set_rule_peers(r, peers);
 
 	r->satype = satype;
 	r->tmode = tmode;
