@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.90 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.91 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -361,7 +361,6 @@ cvs_server_directory(char *data)
 
 		entlist = cvs_ent_open(parent);
 		cvs_ent_add(entlist, entry);
-		cvs_ent_close(entlist, ENT_SYNC);
 		xfree(entry);
 	}
 
@@ -382,7 +381,6 @@ cvs_server_entry(char *data)
 
 	entlist = cvs_ent_open(server_currentdir);
 	cvs_ent_add(entlist, data);
-	cvs_ent_close(entlist, ENT_SYNC);
 }
 
 void
@@ -462,7 +460,6 @@ cvs_server_unchanged(char *data)
 
 	cvs_ent_free(ent);
 	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.46 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: edit.c,v 1.47 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -408,7 +408,6 @@ cvs_unedit_local(struct cvs_file *cf)
 		cvs_ent_add(entlist, entry);
 
 		cvs_ent_free(ent);
-		cvs_ent_close(entlist, ENT_SYNC);
 
 		xfree(entry);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.97 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.98 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -28,6 +28,8 @@
 
 static struct cvs_ent_line *ent_get_line(CVSENTRIES *, const char *);
 
+CVSENTRIES *current_list = NULL;
+
 CVSENTRIES *
 cvs_ent_open(const char *dir)
 {
@@ -37,10 +39,19 @@ cvs_ent_open(const char *dir)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 
-	ep = (CVSENTRIES *)xcalloc(1, sizeof(*ep));
+	cvs_log(LP_TRACE, "cvs_ent_open(%s)", dir);
 
 	(void)xsnprintf(buf, sizeof(buf), "%s/%s", dir, CVS_PATH_ENTRIES);
 
+	if (current_list != NULL && !strcmp(current_list->cef_path, buf))
+		return (current_list);
+
+	if (current_list != NULL) {
+		cvs_ent_close(current_list, ENT_SYNC);
+		current_list = NULL;
+	}
+
+	ep = (CVSENTRIES *)xcalloc(1, sizeof(*ep));
 	ep->cef_path = xstrdup(buf);
 
 	(void)xsnprintf(buf, sizeof(buf), "%s/%s",
@@ -100,6 +111,7 @@ cvs_ent_open(const char *dir)
 		(void)fclose(fp);
 	}
 
+	current_list = ep;
 	return (ep);
 }
 
@@ -235,15 +247,17 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 	int dflag;
 
 	dflag = 1;
+	cvs_log(LP_TRACE, "cvs_ent_close(%s, %d)", ep->cef_bpath, writefile);
 
-	if (writefile) {
-		if ((fp = fopen(ep->cef_bpath, "w")) == NULL)
-			fatal("cvs_ent_close: fopen: `%s': %s",
-			    ep->cef_path, strerror(errno));
-	}
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		writefile = 0;
+
+	fp = NULL;
+	if (writefile)
+		fp = fopen(ep->cef_bpath, "w");
 
 	while ((l = TAILQ_FIRST(&(ep->cef_ent))) != NULL) {
-		if (writefile) {
+		if (fp != NULL) {
 			if (l->buf[0] == 'D')
 				dflag = 0;
 
@@ -256,7 +270,7 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 		xfree(l);
 	}
 
-	if (writefile) {
+	if (fp != NULL) {
 		if (dflag) {
 			fputc('D', fp);
 			fputc('\n', fp);

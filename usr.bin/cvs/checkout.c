@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.152 2008/06/12 16:55:48 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.153 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -565,7 +565,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		if (!(co_flags & CO_REMOVE) && cvs_cmdop != CVS_OP_EXPORT) {
 			ent = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(ent, entry);
-			cvs_ent_close(ent, ENT_SYNC);
 			cf->file_ent = cvs_ent_parse(entry);
 		}
 	} else {

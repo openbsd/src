@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.151 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.152 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -41,6 +41,8 @@ static int Aflag = 0;
 
 static void update_clear_conflict(struct cvs_file *);
 static void update_join_file(struct cvs_file *);
+
+extern CVSENTRIES *current_list;
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_USE_WDIR, "update",
@@ -210,7 +212,6 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(entlist, entry);
-			cvs_ent_close(entlist, ENT_SYNC);
 			xfree(entry);
 		}
 	} else if ((cf->file_status == DIR_CREATE && build_dirs == 0) ||
@@ -278,8 +279,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 				entlist = cvs_ent_open(cf->file_path);
 				if (!TAILQ_EMPTY(&(entlist->cef_ent)))
 					isempty = 0;
-
-				cvs_ent_close(entlist, ENT_NOSYNC);
 			} else {
 				isempty = 0;
 			}
@@ -304,7 +303,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 		if (cvs_server_active == 0 && cvs_cmdop != CVS_OP_EXPORT) {
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_remove(entlist, cf->file_name);
-			cvs_ent_close(entlist, ENT_SYNC);
 		}
 	}
 }
@@ -448,7 +446,6 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_REMOVE_ENTRY:
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);
-		cvs_ent_close(entlist, ENT_SYNC);
 		cvs_history_add(CVS_HISTORY_UPDATE_REMOVE, cf, NULL);
 		break;
 	case FILE_UPTODATE:
@@ -501,7 +498,6 @@ update_clear_conflict(struct cvs_file *cf)
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
 	xfree(entry);
 }
 

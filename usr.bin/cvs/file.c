@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.246 2008/06/13 17:15:13 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.247 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -573,8 +573,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		cvs_ent_free(ent);
 	}
 
-	cvs_ent_close(entlist, ENT_NOSYNC);
-
 walkrepo:
 	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
 		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
@@ -657,7 +655,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	if (cmdp->cmd_flags & CVS_USE_WDIR) {
 		entlist = cvs_ent_open(cf->file_wd);
 		cf->file_ent = cvs_ent_get(entlist, cf->file_name);
-		cvs_ent_close(entlist, ENT_NOSYNC);
 	} else
 		cf->file_ent = NULL;
 

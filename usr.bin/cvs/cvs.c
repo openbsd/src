@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.147 2008/06/10 23:42:04 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.148 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -79,6 +79,8 @@ void sighandler(int);
 volatile sig_atomic_t cvs_quit = 0;
 volatile sig_atomic_t sig_received = 0;
 
+extern CVSENTRIES *current_list;
+
 void
 sighandler(int sig)
 {
@@ -112,6 +114,9 @@ cvs_cleanup(void)
 		xfree(cvs_server_path);
 		cvs_server_path = NULL;
 	}
+
+	if (current_list != NULL)
+		cvs_ent_close(current_list, ENT_SYNC);
 }
 
 __dead void

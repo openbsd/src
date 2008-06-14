@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.102 2008/06/14 02:34:27 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.103 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -137,7 +137,6 @@ cvs_add_entry(struct cvs_file *cf)
 
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
-		cvs_ent_close(entlist, ENT_SYNC);
 
 		xfree(entry);
 	} else {
@@ -282,7 +281,6 @@ add_directory(struct cvs_file *cf)
 
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(entlist, p);
-			cvs_ent_close(entlist, ENT_SYNC);
 			xfree(p);
 		}
 	}
@@ -495,7 +493,6 @@ add_entry(struct cvs_file *cf)
 	} else {
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
-		cvs_ent_close(entlist, ENT_SYNC);
 	}
 	xfree(entry);
 }

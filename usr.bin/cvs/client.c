@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.115 2008/06/11 02:19:13 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.116 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -189,7 +189,6 @@ client_check_directory(char *data, char *repository)
 
 	entlist = cvs_ent_open(parent);
 	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
 
 	xfree(entry);
 }
@@ -669,7 +668,6 @@ cvs_client_checkedin(char *data)
 
 	cvs_ent_free(newent);
 	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
 
 	xfree(entry);
 }
@@ -748,7 +746,6 @@ cvs_client_updated(char *data)
 	if (cvs_cmdop != CVS_OP_EXPORT) {
 		ent = cvs_ent_open(data);
 		cvs_ent_add(ent, entry);
-		cvs_ent_close(ent, ENT_SYNC);
 	}
 
 	xfree(entry);
@@ -828,7 +825,6 @@ cvs_client_merged(char *data)
 
 	ent = cvs_ent_open(wdir);
 	cvs_ent_add(ent, entry);
-	cvs_ent_close(ent, ENT_SYNC);
 	xfree(entry);
 
 	(void)unlink(fpath);
@@ -869,7 +865,6 @@ cvs_client_removed(char *data)
 
 	entlist = cvs_ent_open(data);
 	cvs_ent_remove(entlist, filename);
-	cvs_ent_close(entlist, ENT_SYNC);
 
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", data, filename);
 	(void)unlink(fpath);
@@ -893,7 +888,6 @@ cvs_client_remove_entry(char *data)
 
 	entlist = cvs_ent_open(data);
 	cvs_ent_remove(entlist, filename);
-	cvs_ent_close(entlist, ENT_SYNC);
 
 	xfree(rpath);
 }

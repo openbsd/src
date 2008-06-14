@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.272 2008/06/14 00:47:49 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.273 2008/06/14 03:19:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2992,7 +2992,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
-	bp = cvs_buf_alloc(1024 * 1024);
+	bp = cvs_buf_alloc(1024 * 16);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)
@@ -3035,8 +3035,11 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
  * file descriptor <fd>.
  */
 void
-rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
+rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int _fd, int mode)
 {
+	int fd;
+	FILE *fp;
+	size_t ret;
 	int expmode, expand;
 	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
@@ -3059,6 +3062,13 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 		}
 	}
 
+	fd = dup(_fd);
+	if (fd == -1)
+		fatal("rcs_rev_write_fd: dup: %s", strerror(errno));
+
+	if ((fp = fdopen(fd, "w")) == NULL)
+		fatal("rcs_rev_write_fd: fdopen: %s", strerror(errno));
+
 	for (lp = TAILQ_FIRST(&lines->l_lines); lp != NULL;) {
 		nlp = TAILQ_NEXT(lp, l_list);
 
@@ -3077,19 +3087,20 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 			if (cvs_server_active == 1 &&
 			    (cvs_cmdop == CVS_OP_CHECKOUT ||
 			    cvs_cmdop == CVS_OP_UPDATE) && print_stdout == 1) {
-				if (atomicio(vwrite, fd, "M ", 2) != 2)
+				ret = fwrite("M ", 1, 2, fp);
+				if (ret != 2)
 					fatal("rcs_rev_write_fd: %s",
 					    strerror(errno));
 			}
 
-			if (atomicio(vwrite, fd, lp->l_line, lp->l_len) !=
-			    lp->l_len)
+			ret = fwrite(lp->l_line, 1, lp->l_len, fp);
+			if (ret != lp->l_len)
 				fatal("rcs_rev_write_fd: %s", strerror(errno));
 		} while ((lp = TAILQ_NEXT(lp, l_list)) != nlp);
 	}
 
 	cvs_freelines(lines);
-
+	(void)fclose(fp);
 }
 
 /*
@@ -3605,4 +3616,3 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 
 	return (NULL);
 }
-
