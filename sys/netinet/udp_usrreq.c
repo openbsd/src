@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.122 2008/06/14 19:54:09 jsing Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.123 2008/06/14 22:15:30 jsing Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -103,6 +103,8 @@
 extern int ip6_defhlim;
 #endif /* INET6 */
 
+#include "faith.h"
+
 /*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
@@ -141,7 +143,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 
-#if defined(NFAITH) && 0 < NFAITH
+#if NFAITH > 0
 	if (m->m_pkthdr.rcvif) {
 		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
 			/* XXX send icmp6 host/port unreach? */
