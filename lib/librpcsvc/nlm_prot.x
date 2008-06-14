@@ -1,4 +1,9 @@
-/*	$OpenBSD: nlm_prot.x,v 1.6 2008/06/13 23:49:25 deraadt Exp $	*/
+/*	$OpenBSD: nlm_prot.x,v 1.7 2008/06/14 01:10:43 deraadt Exp $	*/
+
+#ifdef RPC_HDR
+%#define LM_MAXSTRLEN	1024
+%#define MAXNAMELEN	LM_MAXSTRLEN+1
+#endif
 
 enum nlm_stats {
 	nlm_granted = 0,
