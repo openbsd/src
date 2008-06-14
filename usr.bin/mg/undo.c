@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.45 2008/06/11 17:07:37 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.46 2008/06/14 07:38:53 kjell Exp $ */
 /*
  * This file is in the public domain
  */
@@ -173,7 +173,8 @@ undo_enable(int on)
 
 /*
  * If undo is enabled, then:
- *   undo_boundary_enable(FALS) stops recording undo boundaries between actions.
+ *   undo_boundary_enable(FALSE) stops recording undo boundaries
+ *   between actions.
  *   undo_boundary_enable(TRUE) enables undo boundaries.
  * If undo is disabled, this function has no effect.
  */
@@ -443,12 +444,15 @@ undo(int f, int n)
 	static int	 nulled = FALSE;
 	int		 lineno;
 
+	if (n < 0)
+		return (FALSE);
+
 	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
 	ptr = curbp->b_undoptr;
 
-	/* if we moved, make ptr point back to the top of the list */
-	if ((ptr == NULL && nulled == TRUE) || curbp->b_undopos != dot) {
+	/* first invocation, make ptr point back to the top of the list */
+	if ((ptr == NULL && nulled == TRUE) ||  rptcount == 0) {
 		ptr = LIST_FIRST(&curbp->b_undo);
 		nulled = TRUE;
 	}
@@ -515,8 +519,12 @@ undo(int f, int n)
 				ldelete(ptr->region.r_size, KNONE);
 				break;
 			case DELETE:
+				lp = curwp->w_dotp;
+				offset = curwp->w_doto;
 				region_put_data(ptr->content,
 				    ptr->region.r_size);
+				curwp->w_dotp = lp;
+				curwp->w_doto = offset;
 				break;
 			case BOUNDARY:
 				done = 1;

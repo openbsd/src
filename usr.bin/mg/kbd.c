@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.23 2006/12/21 18:06:02 kjell Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.24 2008/06/14 07:38:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,6 +22,8 @@
 #define PROMPTL 80
 char	 prompt[PROMPTL] = "", *promptp = prompt;
 #endif /* !NO_DPROMPT */
+
+static int mgwrap(PF, int, int);
 
 static int	 use_metakey = TRUE;
 static int	 pushed = FALSE;
@@ -162,7 +164,7 @@ doin(void)
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount++].m_funct = funct;
 #endif /* !NO_MACRO */
-	return ((*funct)(0, 1));
+	return (mgwrap(funct, 0, 1));
 }
 
 int
@@ -179,8 +181,8 @@ rescan(int f, int n)
 			c = TOLOWER(key.k_chars[key.k_count - 1]);
 			curmap = curbp->b_modes[md]->p_map;
 			for (i = 0; i < key.k_count - 1; i++) {
-				if ((fp = doscan(curmap, (key.k_chars[i]), &curmap))
-				    != NULL)
+				if ((fp = doscan(curmap, (key.k_chars[i]),
+				    &curmap)) != NULL)
 					break;
 			}
 			if (fp == NULL) {
@@ -195,7 +197,8 @@ rescan(int f, int n)
 						macro[macrocount - 1].m_funct
 						    = fp;
 #endif /* !NO_MACRO */
-					return ((*fp)(f, n));
+
+					return (mgwrap(fp, f, n));
 				}
 			}
 		}
@@ -218,7 +221,7 @@ rescan(int f, int n)
 			if (macrodef && macrocount <= MAXMACRO)
 				macro[macrocount - 1].m_funct = fp;
 #endif /* !NO_MACRO */
-			return ((*fp)(f, n));
+			return (mgwrap(fp, f, n));
 		}
 	}
 }
@@ -252,7 +255,7 @@ universal_argument(int f, int n)
 				macro[macrocount++].m_funct = funct;
 			}
 #endif /* !NO_MACRO */
-			return ((*funct)(FFUNIV, nn));
+			return (mgwrap(funct, FFUNIV, nn));
 		}
 		nn <<= 2;
 	}
@@ -290,7 +293,7 @@ digit_argument(int f, int n)
 		macro[macrocount++].m_funct = funct;
 	}
 #endif /* !NO_MACRO */
-	return ((*funct)(FFOTHARG, nn));
+	return (mgwrap(funct, FFOTHARG, nn));
 }
 
 int
@@ -328,7 +331,7 @@ negative_argument(int f, int n)
 		macro[macrocount++].m_funct = funct;
 	}
 #endif /* !NO_MACRO */
-	return ((*funct)(FFNEGARG, nn));
+	return (mgwrap(funct, FFNEGARG, nn));
 }
 
 /*
@@ -423,4 +426,28 @@ quote(int f, int n)
 			ungetkey(c);
 	}
 	return (selfinsert(f, n));
+}
+
+/*
+ * Wraper function to count invocation repeats.
+ * We ignore any function whose sole purpose is to get us
+ * to the intended function.
+ */
+static int
+mgwrap(PF funct, int f, int n)
+{
+	static	 PF ofp;
+	
+	if (funct != rescan &&
+	    funct != negative_argument &&
+	    funct != digit_argument &&
+	    funct != universal_argument) {
+		if (funct == ofp)
+			rptcount++;
+		else
+			rptcount = 0;
+		ofp = funct;
+	}
+	
+	return ((*funct)(f, n));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.104 2008/06/13 19:10:17 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.105 2008/06/14 07:38:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -668,3 +668,4 @@ extern char		 prompt[];
 int		 tceeol;
 int		 tcinsl;
 int		 tcdell;
+int		 rptcount;	/* successive invocation count */
