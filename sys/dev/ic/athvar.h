@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.21 2008/06/13 07:31:57 jsg Exp $  */
+/*      $OpenBSD: athvar.h,v 1.22 2008/06/14 02:28:14 jsing Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -220,6 +220,7 @@ struct ath_softc {
 #endif
 	bus_space_tag_t		sc_st;		/* bus space tag */
 	bus_space_handle_t	sc_sh;		/* bus space handle */
+	bus_size_t		sc_ss;		/* bus space size */
 	bus_dma_tag_t		sc_dmat;	/* bus DMA tag */
 #ifdef __FreeBSD__
 	struct mtx		sc_mtx;		/* master lock (recursive) */
