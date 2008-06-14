@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.152 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.153 2008/06/14 03:58:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -79,6 +79,7 @@ cvs_update(int argc, char **argv)
 		case 'D':
 			dateflag = optarg;
 			cvs_specified_date = cvs_date_parse(dateflag);
+			reset_tag = 0;
 			break;
 		case 'd':
 			build_dirs = 1;
@@ -415,9 +416,9 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if ((tag != NULL && !reset_tag) || cvs_specified_date != -1 ||
-		    (((cf->file_ent != NULL) && cf->file_ent->ce_tag != NULL) &&
-		    !reset_tag))
+		if (!reset_tag && (tag != NULL || cvs_specified_date != -1 ||
+		    cvs_directory_date != -1 || (cf->file_ent != NULL &&
+		    cf->file_ent->ce_tag != NULL)))
 			flags = CO_SETSTICKY;
 
 		cvs_checkout_file(cf, cf->file_rcsrev, tag, flags);
@@ -455,7 +456,9 @@ cvs_update_local(struct cvs_file *cf)
 		if (cf->file_rcsrev == NULL)
 			break;
 
-		if (tag == NULL && cvs_specified_date == -1)
+		if (tag == NULL && cvs_specified_date == -1 &&
+		    cvs_directory_date == -1 && !reset_tag &&
+		    !reset_option)
 			break;
 
 		if (cf->file_rcs->rf_dead != 1 &&

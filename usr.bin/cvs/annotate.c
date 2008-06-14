@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.58 2008/06/09 16:34:22 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.59 2008/06/14 03:58:29 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -208,8 +208,9 @@ cvs_annotate_local(struct cvs_file *cf)
 		}
 		rcsnum_free(rev);
 	} else {
-		rcs_rev_getlines(cf->file_rcs, (cvs_specified_date != -1) ?
-		    cf->file_rcsrev : cf->file_rcs->rf_head, &alines);
+		rcs_rev_getlines(cf->file_rcs, (cvs_specified_date != -1 ||
+		    cvs_directory_date != -1) ? cf->file_rcsrev :
+		    cf->file_rcs->rf_head, &alines);
 	}
 
 	/* Stick at weird GNU cvs, ignore error. */

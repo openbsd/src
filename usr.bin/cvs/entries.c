@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.98 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.99 2008/06/14 03:58:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -417,6 +417,8 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	struct tm datetm;
 	char linebuf[128], tagpath[MAXPATHLEN];
 
+	cvs_directory_date = -1;
+
 	if (tagp != NULL)
 		*tagp = NULL;
 
@@ -464,8 +466,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 			datetm.tm_year -= 1900;
 			datetm.tm_mon -= 1;
 
-			if (cvs_specified_date == -1)
-				cvs_specified_date = timegm(&datetm);
+			cvs_directory_date = timegm(&datetm);
 
 			if (datep != NULL)
 				*datep = xstrdup(linebuf + 1);
@@ -506,7 +507,8 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 	if (i < 0 || i >= MAXPATHLEN)
 		return;
 
-	if (tag != NULL || cvs_specified_date != -1) {
+	if (tag != NULL || cvs_specified_date != -1 ||
+	    cvs_directory_date == -1) {
 		if ((fp = fopen(tagpath, "w+")) == NULL) {
 			if (errno != ENOENT) {
 				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
@@ -525,7 +527,10 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 				    "T%s", tag);
 			}
 		} else {
-			gmtime_r(&cvs_specified_date, &datetm);
+			if (cvs_specified_date != -1)
+				gmtime_r(&cvs_specified_date, &datetm);
+			else
+				gmtime_r(&cvs_directory_date, &datetm);
 			(void)strftime(sticky, sizeof(sticky),
 			    "D"CVS_DATE_FMT, &datetm);
 		}

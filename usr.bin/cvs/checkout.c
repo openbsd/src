@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.153 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.154 2008/06/14 03:58:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -51,6 +51,7 @@ static int nflag = 0;
 char *checkout_target_dir = NULL;
 
 time_t cvs_specified_date = -1;
+time_t cvs_directory_date = -1;
 int disable_fast_checkout = 0;
 
 struct cvs_cmd cvs_cmd_checkout = {
@@ -94,6 +95,7 @@ cvs_checkout(int argc, char **argv)
 		case 'D':
 			dateflag = optarg;
 			cvs_specified_date = cvs_date_parse(dateflag);
+			reset_tag = 0;
 			break;
 		case 'd':
 			if (dflag != NULL)
@@ -530,17 +532,22 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		strlcpy(timebuf, tbuf, sizeof(timebuf));
 	}
 
-	if (co_flags & CO_SETSTICKY)
+	if (reset_tag) {
+		sticky[0] = '\0';
+	} else if (co_flags & CO_SETSTICKY)
 		if (tag != NULL)
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", tag);
 		else if (cvs_specified_date != -1) {
 			gmtime_r(&cvs_specified_date, &datetm);
 			(void)strftime(sticky, sizeof(sticky),
 			    "D"CVS_DATE_FMT, &datetm);
+		} else if (cvs_directory_date != -1) {
+			gmtime_r(&cvs_directory_date, &datetm);
+			(void)strftime(sticky, sizeof(sticky),
+			    "D"CVS_DATE_FMT, &datetm);
 		} else
 			(void)xsnprintf(sticky, sizeof(sticky), "T%s", rev);
-	else if (!reset_tag && cf->file_ent != NULL &&
-	    cf->file_ent->ce_tag != NULL)
+	else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
 		(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 		    cf->file_ent->ce_tag);
 	else

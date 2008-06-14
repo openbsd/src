@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.273 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.274 2008/06/14 03:58:29 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3501,6 +3501,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	char branch[CVS_REV_BUFSZ];
 	RCSNUM *brev, *frev, *rev, *rrev;
 	struct rcs_delta *rdp, *trdp;
+	time_t cdate;
 
 	brev = frev = rrev = NULL;
 
@@ -3541,7 +3542,12 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 			rcsnum_free(rrev);
 	}
 
-	if (cvs_specified_date == -1) {
+	if (cvs_specified_date != -1)
+		cdate = cvs_specified_date;
+	else
+		cdate = cvs_directory_date;
+
+	if (cdate == -1) {
 		/* XXX */
 		if (rev->rn_len < 4 || !follow) {
 			return (rev);
@@ -3576,7 +3582,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		deltatime = timelocal(&(rdp->rd_date));
 
 		if (RCSNUM_ISBRANCHREV(rdp->rd_num)) {
-			if (deltatime > cvs_specified_date) {
+			if (deltatime > cdate) {
 				trdp = TAILQ_PREV(rdp, rcs_dlist, rd_list);
 				if (trdp == NULL)
 					trdp = rdp;
@@ -3595,7 +3601,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 				return (rev);
 			}
 		} else {
-			if (deltatime < cvs_specified_date) {
+			if (deltatime < cdate) {
 				rev = rcsnum_alloc();
 				rcsnum_cpy(rdp->rd_num, rev, 0);
 				return (rev);
