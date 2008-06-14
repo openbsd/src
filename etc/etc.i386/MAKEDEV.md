@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.44 2008/06/13 21:07:28 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.45 2008/06/14 22:06:47 mbalmer Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -19,10 +19,12 @@ dnl
 dnl
 __devitem(agp, agp*, AGP bridge)dnl
 __devitem(apm, apm, Power management device)dnl
+__devitem(amdmsr, amdmsr, AMD MSR access device)dnl
 __devitem(nvram, nvram, NVRAM access)dnl
 _mkdev(agp, agp*, {-M agp$U c major_agp_c $U
 	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"-})dnl
 _mkdev(nvram, nvram, {-M nvram c major_nvram_c 0 440 kmem-})dnl
+_mkdev(amdmsr, amdmsr*, {-M amdmsr c major_amdmsr_c $U -})dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramdisk)
@@ -72,6 +74,7 @@ _DEV(vi, 44)
 _TITLE(spec)
 _DEV(agp, 87)
 _DEV(apm, 21)
+_DEV(amdmsr, 89)
 _DEV(au, 42)
 _DEV(bio, 79)
 _DEV(bktr, 49)
@@ -140,5 +143,6 @@ target(all, nvram)dnl
 target(all, bthub, 0, 1, 2)dnl
 target(all, agp, 0)dnl
 target(all, drm, 0)dnl
+target(all, amdmsr)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
 target(ramd, mcd, 0)dnl
