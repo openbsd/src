@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.45 2008/06/11 21:21:50 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.46 2008/06/14 00:16:10 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -309,6 +309,8 @@ check(time_t this_check)
 		check_sdlim(sdlim, this_check);
 	}
 
+	if (TAILQ_EMPTY(&sdlims))
+		return;
 	/* Ensure that our queue is consistent. */
 	for (sdlim = TAILQ_FIRST(&sdlims);
 	    (next = TAILQ_NEXT(sdlim, entries)) != NULL;
