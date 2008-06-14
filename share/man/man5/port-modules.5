@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.16 2008/06/12 20:27:29 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.17 2008/06/14 16:17:03 landry Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2008 $
+.Dd $Mdocdate: June 14 2008 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -416,6 +416,24 @@ Sets MODTK_VERSION, MODTK_BIN, MODTK_INCDIR, MODTK_CONFIG,
 MODTK_BUILD_DEPENDS, and MODTK_RUN_DEPENDS.
 Automatically adds the lang/tcl module, and affects CATEGORIES,
 SUBST_VARS, and USE_X11.
+.It x11/xfce4
+Sets CATEGORIES, DIST_SUBDIR, EXTRACT_SUFX, CONFIGURE_STYLE,
+CONFIGURE_ENV, USE_X11 and USE_GMAKE.
+If DESKTOP_FILES is set to yes, it adds
+.Pa devel/desktop-file-utils
+to RUN_DEPENDS.
+Unless XFCE_NO_SRC is set, USE_LIBTOOL is set to yes and
+.Pa devel/gettext
+and
+.Pa textproc/intltool
+are added to MODULES.
+.Pp
+Xfce ports can be divided into three categories: core libraries and
+applications, goodies, and panel plugins.
+HOMEPAGE, MASTER_SITES and DISTNAME are built using XFCE_VERSION (which
+defaults to XFCE_DESKTOP_VERSION if not set) and either XFCE_PROJECT,
+XFCE_GOODIE or XFCE_PLUGIN.
+One of the latter has to be provided by the port Makefile.
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
