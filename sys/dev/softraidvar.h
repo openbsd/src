@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.57 2008/06/14 00:12:21 djm Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.58 2008/06/14 00:39:15 djm Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -111,8 +111,6 @@ struct sr_crypto_genkdf {
 struct sr_crypto_kdf_pbkdf2 {
 	u_int32_t	len;
 	u_int32_t	type;
-#define SR_CRYPTOKDFT_INVALID	(0)
-#define SR_CRYPTOKDFT_PBKDF2	(1<<0)
 	u_int32_t	rounds;
 	u_int8_t	salt[128];
 };
