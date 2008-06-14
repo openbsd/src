@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -53,7 +53,7 @@ std)
 dnl
 divert(1)dnl
 define(__mddivert,7)dnl
-include(etc.MACHINE/MAKEDEV.md)dnl
+include(MAKEDEV.md)dnl
 dnl
 dnl
 divert(0)dnl

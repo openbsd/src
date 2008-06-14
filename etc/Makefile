@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.265 2008/06/08 03:03:37 jdixon Exp $
+#	$OpenBSD: Makefile,v 1.266 2008/06/14 23:09:05 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -288,53 +288,6 @@ snap_pre:
 
 .endif	# DESTDIR check
 
-MAKEDEVARCHS+= alpha
-MAKEDEVARCHS+= amd64
-MAKEDEVARCHS+= armish
-MAKEDEVARCHS+= hp300
-MAKEDEVARCHS+= hppa
-MAKEDEVARCHS+= hppa64
-MAKEDEVARCHS+= i386
-MAKEDEVARCHS+= landisk
-MAKEDEVARCHS+= luna88k
-MAKEDEVARCHS+= mac68k
-MAKEDEVARCHS+= macppc
-MAKEDEVARCHS+= mvme68k
-MAKEDEVARCHS+= mvme88k
-#MAKEDEVARCHS+= mvmeppc
-MAKEDEVARCHS+= sgi
-MAKEDEVARCHS+= socppc
-MAKEDEVARCHS+= sparc
-MAKEDEVARCHS+= sparc64
-MAKEDEVARCHS+= vax
-MAKEDEVARCHS+= zaurus
-
-clean:
-	rm -f etc.${MACHINE}/MAKEDEV
-
-cleandir:
-	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-	    ${MAKE} MACHINE=$$m clean; done
-
-MAKEDEVSRC=	MAKEDEV.mi MAKEDEV.sub MAKEDEV.common
-MAKEDEVDOC=	MAKEDEV.man MAKEDEV.mansub MAKEDEV.common
-m4: etc.${M}/MAKEDEV
-man: ${.CURDIR}/../share/man/man8/man.${M}/MAKEDEV.8
-
-etc.${M}/MAKEDEV: ${MAKEDEVSRC} etc.${M}/MAKEDEV.md
-	@echo "==> etc.${M}/MAKEDEV"
-	m4 -DMACHINE=${M} MAKEDEV.mi > etc.${M}/.MAKEDEV.tmp && \
-	    mv etc.${M}/.MAKEDEV.tmp etc.${M}/MAKEDEV || \
-	    rm etc.${M}/.MAKEDEV.tmp
-
-${.CURDIR}/../share/man/man8/man.${M}/MAKEDEV.8: ${MAKEDEVDOC} etc.${M}/MAKEDEV.md
-	m4 -DMACHINE=${M} MAKEDEV.man > \
-	    ${.CURDIR}/../share/man/man8/man8.${M}/MAKEDEV.8
-
-allarchs: ${MAKEDEVSRC} ${MAKEDEVDOC}
-	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-	    ${MAKE} M=$$m m4 man; done
-
 distrib:
 	cd ${.CURDIR}/../distrib && \
 	    ${MAKE} && exec ${SUDO} ${MAKE} install
@@ -352,4 +305,27 @@ update-moduli:
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release allarchs snap_md m4 snap_pre
+
+SUBDIR+= etc.alpha
+SUBDIR+= etc.amd64
+SUBDIR+= etc.armish
+SUBDIR+= etc.aviion
+SUBDIR+= etc.hp300
+SUBDIR+= etc.hppa
+SUBDIR+= etc.hppa64
+SUBDIR+= etc.i386
+SUBDIR+= etc.landisk
+SUBDIR+= etc.luna88k
+SUBDIR+= etc.mac68k
+SUBDIR+= etc.macppc
+SUBDIR+= etc.mvme68k
+SUBDIR+= etc.mvme88k
+SUBDIR+= etc.sgi
+SUBDIR+= etc.socppc
+SUBDIR+= etc.sparc
+SUBDIR+= etc.sparc64
+SUBDIR+= etc.vax
+SUBDIR+= etc.zaurus
+
+.include <bsd.subdir.mk>
 .include <bsd.prog.mk>
