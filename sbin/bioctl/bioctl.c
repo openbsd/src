@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.66 2008/06/14 00:05:47 djm Exp $       */
+/* $OpenBSD: bioctl.c,v 1.67 2008/06/14 06:28:27 djm Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -49,7 +49,7 @@
 #include <util.h>
 #include <vis.h>
 
-#include "pkcs5_pbkdf2.h"
+#include "pbkdf2.h"
 
 struct locator {
 	int		channel;
@@ -733,7 +733,7 @@ bio_parse_devlist(char *lst, dev_t *dt)
 	u_int32_t		sz = 0;
 	int			no_dev = 0, i, x;
 	struct stat		sb;
-	char			devname[MAXPATHLEN];
+	char			dev[MAXPATHLEN];
 
 	if (!lst)
 		errx(1, "invalid device list");
@@ -746,12 +746,12 @@ bio_parse_devlist(char *lst, dev_t *dt)
 		else if (*(e + 1) == '\0' || *(e + 1) == ',') {
 			/* got one */
 			sz = e - s + 1;
-			strlcpy(devname, s, sz + 1);
-			if (stat(devname, &sb) == -1)
-				err(1, "could not stat %s", devname);
+			strlcpy(dev, s, sz + 1);
+			if (stat(dev, &sb) == -1)
+				err(1, "could not stat %s", dev);
 			dt[no_dev] = sb.st_rdev;
 			no_dev++;
-			if (no_dev > (BIOC_CRMAXLEN / sizeof(dev_t)))
+			if (no_dev > (int)(BIOC_CRMAXLEN / sizeof(dev_t)))
 				errx(1, "too many devices on device list");
 		}
 		e++;
@@ -847,7 +847,6 @@ void
 get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
     size_t saltsz)
 {
-	u_int8_t	*keybuf;
 	char		*passphrase;
 
 	if (!key)
@@ -863,13 +862,9 @@ get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "Need a passphrase");
 
 	/* derive key from passphrase */
-	if (pkcs5_pbkdf2(&keybuf, keysz, passphrase, strlen(passphrase), salt,
-	    saltsz, rounds, 0))
-		errx(1, "pkcs5_pbkdf2 failed");
-
-	memcpy(key, keybuf, keysz);
-	memset(keybuf, 0, keysz);
-	free(keybuf);
+	if (pkcs5_pbkdf2(passphrase, strlen(passphrase), salt, saltsz,
+	    key, keysz, rounds) != 0)
+		errx(1, "pbkdf2 failed");
 
 	/* forget passphrase */
 	memset(passphrase, 0, strlen(passphrase));
