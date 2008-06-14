@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.27 2008/05/16 17:21:36 thib Exp $	*/
+/*	$OpenBSD: pool.h,v 1.28 2008/06/14 03:56:41 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -141,9 +141,6 @@ struct pool {
 };
 
 #ifdef _KERNEL
-/* old nointr allocator, still needed for large allocations */
-extern struct pool_allocator pool_allocator_oldnointr;
-
 extern struct pool_allocator pool_allocator_nointr;
 
 /* these functions are not locked */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.60 2008/05/16 17:21:36 thib Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.61 2008/06/14 03:56:41 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1261,12 +1261,10 @@ void	pool_page_free_oldnointr(struct pool *, void *);
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
-/* previous nointr.  handles large allocations safely */
-struct pool_allocator pool_allocator_oldnointr = {
-	pool_page_alloc_oldnointr, pool_page_free_oldnointr, 0,
-};
-/* safe for interrupts, name preserved for compat
- * this is the default allocator */
+/*
+ * safe for interrupts, name preserved for compat this is the default
+ * allocator
+ */
 struct pool_allocator pool_allocator_nointr = {
 	pool_page_alloc, pool_page_free, 0,
 };
@@ -1322,23 +1320,4 @@ pool_page_free(struct pool *pp, void *v)
 {
 
 	uvm_km_putpage(v);
-}
-
-void *
-pool_page_alloc_oldnointr(struct pool *pp, int flags)
-{
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-
-	splassert(IPL_NONE);
-
-	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
-	    waitok));
-}
-
-void
-pool_page_free_oldnointr(struct pool *pp, void *v)
-{
-	splassert(IPL_NONE);
-
-	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
 }
