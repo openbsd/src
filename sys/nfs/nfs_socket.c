@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.62 2008/06/13 03:54:26 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.63 2008/06/14 01:21:17 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1913,25 +1913,25 @@ nfsrv_dorec(slp, nfsd, ndp)
  * running nfsds will go look for the work in the nfssvc_sock list.
  */
 void
-nfsrv_wakenfsd(slp)
-	struct nfssvc_sock *slp;
+nfsrv_wakenfsd(struct nfssvc_sock *slp)
 {
-	struct nfsd *nd;
+	struct nfsd	*nfsd;
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-	for (nd = TAILQ_FIRST(&nfsd_head); nd != NULL;
-	    nd = TAILQ_NEXT(nd, nfsd_chain)) {
-		if (nd->nfsd_flag & NFSD_WAITING) {
-			nd->nfsd_flag &= ~NFSD_WAITING;
-			if (nd->nfsd_slp)
+
+	TAILQ_FOREACH(nfsd, &nfsd_head, nfsd_chain) {
+		if (nfsd->nfsd_flag & NFSD_WAITING) {
+			nfsd->nfsd_flag &= ~NFSD_WAITING;
+			if (nfsd->nfsd_slp)
 				panic("nfsd wakeup");
 			slp->ns_sref++;
-			nd->nfsd_slp = slp;
-			wakeup((caddr_t)nd);
+			nfsd->nfsd_slp = slp;
+			wakeup(nfsd);
 			return;
 		}
 	}
+
 	slp->ns_flag |= SLP_DOREC;
 	nfsd_head_flag |= NFSD_CHECKSLP;
 }
