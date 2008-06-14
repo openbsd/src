@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.54 2008/06/14 00:16:38 hshoexer Exp $
+.\"	$OpenBSD: bioctl.8,v 1.55 2008/06/14 17:04:50 djm Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -39,6 +39,7 @@
 .Op Fl c Ar raidlevel
 .Op Fl H Ar channel:target[.lun]
 .Op Fl l Ar special[,special,...]
+.Op Fl r Ar rounds
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -127,6 +128,12 @@ Requires
 .Fl c .
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
+.It Fl r Ar rounds
+When creating an encrypted volume, specifies the number of iterations of
+the algorithm used to convert a passphrase into a key.
+Higher iteration counts take more time, but offer more resistance to key
+guessing attacks.
+The minimum is 1000 rounds and the default is 8192.
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]

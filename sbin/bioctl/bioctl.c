@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.67 2008/06/14 06:28:27 djm Exp $       */
+/* $OpenBSD: bioctl.c,v 1.68 2008/06/14 17:04:50 djm Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -82,6 +82,7 @@ int			devh = -1;
 int			human;
 int			verbose;
 u_int32_t		cflags = 0;
+int			rflag = 8192;
 
 struct bio_locate	bl;
 
@@ -94,13 +95,14 @@ main(int argc, char *argv[])
 	char			*bioc_dev = NULL, *sd_dev = NULL;
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
+	const char		*errstr;
 	int			ch, rv, blink = 0, diskinq = 0;
 	u_int16_t		cr_level = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:C:c:dl:u:H:ha:ivq")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:qr:vu:")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -143,6 +145,12 @@ main(int argc, char *argv[])
 		case 'l': /* device list */
 			func |= BIOC_DEVLIST;
 			dev_list = optarg;
+			break;
+		case 'r':
+			rflag = strtonum(optarg, 1000, 1<<30, &errstr);
+			if (errstr != NULL)
+				errx(1, "Number of rounds is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'v':
 			verbose = 1;
@@ -714,7 +722,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 
 	kdfinfo->pbkdf2.len = sizeof(kdfinfo->pbkdf2);
 	kdfinfo->pbkdf2.type = SR_CRYPTOKDFT_PBKDF2;
-	kdfinfo->pbkdf2.rounds = 10000;
+	kdfinfo->pbkdf2.rounds = rflag;
 	kdfinfo->len = sizeof(*kdfinfo);
 	kdfinfo->flags = (SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT);
 
