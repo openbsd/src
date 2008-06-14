@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.91 2008/06/13 04:27:08 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.92 2008/06/14 01:57:51 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -169,7 +169,6 @@ struct scsi_link {
 #define	ADEV_NOSENSE		0x0200	/* No request sense - ATAPI */
 #define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */
 #define	ADEV_NOCAPACITY		0x0800	/* no READ CD CAPACITY */
-#define	ADEV_NOTUR		0x1000	/* No TEST UNIT READY */
 #define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
 #define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
 	struct	scsi_device *device;	/* device entry points etc. */

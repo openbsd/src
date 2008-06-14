@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.131 2008/05/26 17:58:40 kettenis Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.132 2008/06/14 01:57:51 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -544,8 +544,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	/* ATAPI device quirks */
         {{T_CDROM, T_REMOV,
-         "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
-        {{T_CDROM, T_REMOV,
          "CR-2801TE", "", "1.07"},              ADEV_NOSENSE},
         {{T_CDROM, T_REMOV,
          "CREATIVECD3630E", "", "AC101"},       ADEV_NOSENSE},
@@ -559,8 +557,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
          "MATSHITA CR-574", "", "1.06"},        ADEV_NOCAPACITY},
         {{T_CDROM, T_REMOV,
          "Memorex CRW-2642", "", "1.0g"},       ADEV_NOSENSE},
-        {{T_CDROM, T_REMOV,
-         "NEC                 CD-ROM DRIVE:273", "", "4.21"}, ADEV_NOTUR},
         {{T_CDROM, T_REMOV,
          "SANYO CRD-256P", "", "1.02"},         ADEV_NOCAPACITY},
         {{T_CDROM, T_REMOV,
@@ -751,14 +747,12 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
 
-#if defined(mvme68k)
 	if (lun == 0) {
-		/* XXX some drivers depend on this */
+		/* Clear any outstanding errors. */
 		scsi_test_unit_ready(sc_link, TEST_READY_RETRIES,
 		    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 	}
-#endif
 
 	/* Now go ask the device all about itself. */
 	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
