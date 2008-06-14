@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.4 2007/09/29 07:10:09 fkr Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.5 2008/06/14 01:47:27 grunk Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -279,14 +279,13 @@ config(char *dev, char *file, int action, char *key, size_t keylen)
 	struct vnd_ioctl vndio;
 	FILE *f;
 	char *rdev;
-	int rv;
+	int rv = -1;
 
 	if (opendev(dev, O_RDONLY, OPENDEV_PART, &rdev) < 0)
 		err(4, "%s", rdev);
 	f = fopen(rdev, "r");
 	if (f == NULL) {
 		warn("%s", rdev);
-		rv = -1;
 		goto out;
 	}
 	vndio.vnd_file = file;
