@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.103 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.104 2008/06/14 04:34:07 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -335,7 +335,7 @@ add_file(struct cvs_file *cf)
 {
 	int added, nb, stop;
 	char revbuf[CVS_REV_BUFSZ];
-	RCSNUM *head;
+	RCSNUM *head = NULL;
 	char *tag;
 
 	cvs_parse_tagfile(cf->file_wd, &tag, NULL, &nb);
@@ -346,11 +346,11 @@ add_file(struct cvs_file *cf)
 
 	if (cf->file_rcs != NULL) {
 		head = rcs_head_get(cf->file_rcs);
-		if (head == NULL)
-			fatal("RCS head empty or missing in %s",
-			    cf->file_rcs->rf_path);
+		if (head == NULL) {
+			cvs_log(LP_NOTICE, "no head revision in RCS file for "
+			    "%s", cf->file_path);
+		}
 		rcsnum_tostr(head, revbuf, sizeof(revbuf));
-		rcsnum_free(head);
 	}
 
 	added = stop = 0;
@@ -370,12 +370,7 @@ add_file(struct cvs_file *cf)
 			add_entry(cf);
 
 			/* Restore the file. */
-			head = rcs_head_get(cf->file_rcs);
-			if (head == NULL)
-				fatal("RCS head empty or missing in %s",
-				    cf->file_rcs->rf_path);
 			cvs_checkout_file(cf, head, NULL, 0);
-			rcsnum_free(head);
 
 			cvs_printf("U %s\n", cf->file_path);
 
@@ -413,6 +408,9 @@ add_file(struct cvs_file *cf)
 	default:
 		break;
 	}
+
+	if (head != NULL)
+		rcsnum_free(head);
 
 	if (stop == 1)
 		return;

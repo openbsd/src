@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.274 2008/06/14 03:58:29 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.275 2008/06/14 04:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -776,7 +776,7 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	RCSNUM *num;
 	struct rcs_sym *symp;
 
-	if (!rcs_sym_check(sym))
+	if (!rcs_sym_check(sym) || file->rf_head == NULL)
 		return (NULL);
 
 	if (!strcmp(sym, RCS_HEAD_BRANCH)) {
@@ -1185,8 +1185,12 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		if (rf->rf_flags & RCS_CREATE) {
 			if ((rev = rcsnum_parse(RCS_HEAD_INIT)) == NULL)
 				return (-1);
+			if (rf->rf_head != NULL)
+				xfree(rf->rf_head);
 			rf->rf_head = rcsnum_alloc();
 			rcsnum_cpy(rev, rf->rf_head, 0);
+		} else if (rf->rf_head == NULL) {
+			return (-1);
 		} else {
 			rev = rcsnum_inc(rf->rf_head);
 		}
@@ -1288,6 +1292,9 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
+
+	if (rev == NULL)
+		return (-1);
 
 	/* do we actually have that revision? */
 	if ((rdp = rcs_findrev(rf, rev)) == NULL)
@@ -1663,6 +1670,10 @@ rcs_parse_admin(RCSFILE *rfp)
 			 * that we are dealing with an empty RCS file and
 			 * we just found the description.
 			 */
+			if (!(hmask & (1 << RCS_TOK_HEAD))) {
+				cvs_log(LP_ERR, "head missing");
+				goto fail;
+			}
 			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
 			return (tok);
 		}
@@ -1695,8 +1706,12 @@ rcs_parse_admin(RCSFILE *rfp)
 			if (tok == RCS_TOK_HEAD) {
 				if (rfp->rf_head == NULL)
 					rfp->rf_head = rcsnum_alloc();
-				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
-				    rfp->rf_head);
+				if (RCS_TOKSTR(rfp)[0] == '\0' ||
+				    rcsnum_aton(RCS_TOKSTR(rfp), NULL,
+				    rfp->rf_head) < 0) {
+					rcsnum_free(rfp->rf_head);
+					rfp->rf_head = NULL;
+				}
 			} else if (tok == RCS_TOK_BRANCH) {
 				if (rfp->rf_branch == NULL)
 					rfp->rf_branch = rcsnum_alloc();
@@ -2634,6 +2649,9 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
 		 * the minimum of both revision lengths is taken
 		 * instead of just 2.
 		 */
+		if (rfp->rf_head == NULL)
+			return NULL;
+
 		if (rcsnum_cmp(rev, rfp->rf_head,
 		    MIN(rfp->rf_head->rn_len, rev->rn_len)) < 0) {
 			rcsnum_free(rev);
@@ -2691,7 +2709,8 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 	struct cvs_line *line, *nline;
 	struct cvs_lines *dlines, *plines;
 
-	if ((hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
+	if (rfp->rf_head == NULL ||
+	    (hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
 		fatal("rcs_rev_getlines: no HEAD revision");
 
 	tnum = frev;

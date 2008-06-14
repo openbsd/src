@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.153 2008/06/14 03:58:29 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.154 2008/06/14 04:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -351,24 +351,29 @@ cvs_update_local(struct cvs_file *cf)
 		else
 			cf->file_status = FILE_CHECKOUT;
 
-		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
+		if ((cf->file_rcsrev = rcs_head_get(cf->file_rcs)) == NULL)
+			fatal("no head revision in RCS file for %s",
+			    cf->file_path);
 
 		/* might be a bit overkill */
 		if (cvs_server_active == 1)
 			cvs_server_clear_sticky(cf->file_wd);
 	}
 
-	if (print_stdout && cf->file_status != FILE_UNKNOWN &&
-	    !cf->file_rcs->rf_dead) {
-		rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
-		if (verbosity > 1) {
-			cvs_log(LP_RCS, RCS_DIFF_DIV);
-			cvs_log(LP_RCS, "Checking out %s", cf->file_path);
-			cvs_log(LP_RCS, "RCS:  %s", cf->file_rpath);
-			cvs_log(LP_RCS, "VERS: %s", rbuf);
-			cvs_log(LP_RCS, "***************");
+	if (print_stdout) {
+		if (cf->file_status != FILE_UNKNOWN && cf->file_rcs != NULL &&
+		    cf->file_rcsrev != NULL && !cf->file_rcs->rf_dead) {
+			rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
+			if (verbosity > 1) {
+				cvs_log(LP_RCS, RCS_DIFF_DIV);
+				cvs_log(LP_RCS, "Checking out %s",
+				    cf->file_path);
+				cvs_log(LP_RCS, "RCS:  %s", cf->file_rpath);
+				cvs_log(LP_RCS, "VERS: %s", rbuf);
+				cvs_log(LP_RCS, "***************");
+			}
+			cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_DUMP);
 		}
-		cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_DUMP);
 		return;
 	}
 
@@ -376,7 +381,7 @@ cvs_update_local(struct cvs_file *cf)
 		if (cf->file_ent->ce_opts == NULL) {
 			if (kflag)
 				cf->file_status = FILE_CHECKOUT;
-		} else {
+		} else if (cf->file_rcs != NULL) {
 			if (strlen(cf->file_ent->ce_opts) < 3)
 				fatal("malformed option for file %s",
 				    cf->file_path);
@@ -629,6 +634,12 @@ update_join_file(struct cvs_file *cf)
 	if (cf->file_ent != NULL) {
 		if (!rcsnum_cmp(cf->file_ent->ce_rev, rev2, 0))
 			goto out;
+	}
+
+	if (cf->file_rcsrev == NULL) {
+		cvs_printf("non-mergable file: %s has no head revision!\n",
+		    cf->file_path);
+		goto out;
 	}
 
 	if (rev1 == NULL || !strcmp(state1, RCS_STATE_DEAD)) {

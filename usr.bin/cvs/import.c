@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.95 2008/06/10 20:30:17 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.96 2008/06/14 04:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -382,6 +382,9 @@ import_update(struct cvs_file *cf)
 	RCSNUM *newrev, *rev, *brev;
 
 	cvs_log(LP_TRACE, "import_update(%s)", cf->file_path);
+
+	if (cf->file_rcs->rf_head == NULL)
+		fatal("no head revision in RCS file for `%s'", cf->file_path);
 
 	if ((rev = rcs_translate_tag(import_branch, cf->file_rcs)) == NULL)
 		fatal("import_update: could not translate tag `%s'",

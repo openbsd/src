@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.141 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.142 2008/06/14 04:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -472,8 +472,8 @@ cvs_commit_local(struct cvs_file *cf)
 		rrev = rcs_head_get(cf->file_rcs);
 		crev = rcs_head_get(cf->file_rcs);
 		if (crev == NULL || rrev == NULL)
-			fatal("RCS head empty or missing in %s\n",
-			    cf->file_rcs->rf_path);
+			fatal("no head revision in RCS file for %s",
+			    cf->file_path);
 
 		tag = cvs_directory_tag;
 		if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
@@ -570,6 +570,9 @@ cvs_commit_local(struct cvs_file *cf)
 		cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
 		cvs_printf("old revision: %s; ", rbuf);
 	}
+
+	if (isnew == 0 && cf->file_rcs->rf_head == NULL)
+		fatal("no head revision in RCS file for %s", cf->file_path);
 
 	if (isnew == 0 && onbranch == 0)
 		d = commit_diff(cf, cf->file_rcs->rf_head, 0);

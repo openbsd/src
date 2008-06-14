@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.140 2008/06/11 20:55:34 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.141 2008/06/14 04:34:08 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -314,6 +314,12 @@ cvs_diff_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_UPTODATE && rev1 == NULL && rev2 == NULL &&
 	    date1 == -1 && date2 == -1)
 		return;
+
+	if (cf->file_rcs->rf_head == NULL) {
+		cvs_log(LP_ERR, "no head revision in RCS file for %s\n",
+		    cf->file_path);
+		return;
+	}
 
 	if (kflag && cf->file_rcs != NULL)
 		rcs_kwexp_set(cf->file_rcs, kflag);
