@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2008/01/13 20:47:00 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2008/06/14 18:09:47 hshoexer Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1282,7 +1282,7 @@ pmap_free_pvpage(void)
  * => caller should adjust ptp's wire_count before calling
  *
  * pve: preallocated pve for us to use
- * ptp: PTP in pmap that maps this VA 
+ * ptp: PTP in pmap that maps this VA
  */
 
 void
@@ -1415,7 +1415,7 @@ pmap_create(void)
 /*
  * pmap_pinit: given a zero'd pmap structure, init it.
  */
- 
+
 void
 pmap_pinit(struct pmap *pmap)
 {
@@ -2582,10 +2582,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
-	struct pv_entry *pve = NULL;
+	struct pv_entry *pve = NULL, *freepve;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg = NULL;
-	int error;
+	int error, wired_count, resident_count, ptp_count;
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
@@ -2600,6 +2600,11 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
 		panic("pmap_enter: missing kernel PTP!");
 #endif
+	if (pmap_initialized)
+		freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+	else
+		freepve = NULL;
+	wired_count = resident_count = ptp_count = 0;
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -2621,6 +2626,9 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 			panic("pmap_enter: get ptp failed");
 		}
 	}
+	/*
+	 * not allowed to sleep after here!
+	 */
 	opte = ptes[atop(va)];			/* old PTE */
 
 	/*
@@ -2630,15 +2638,15 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 	if (pmap_valid_entry(opte)) {
 
 		/*
-		 * first, update pm_stats.  resident count will not
+		 * first, calculate pm_stats updates.  resident count will not
 		 * change since we are replacing/changing a valid
 		 * mapping.  wired count might change...
 		 */
 
 		if (wired && (opte & PG_W) == 0)
-			pmap->pm_stats.wired_count++;
+			wired_count++;
 		else if (!wired && (opte & PG_W) != 0)
-			pmap->pm_stats.wired_count--;
+			wired_count--;
 
 		/*
 		 * is the currently mapped PA the same as the one we
@@ -2684,17 +2692,16 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 			pg = NULL; /* This is not page we are looking for */
 		}
 	} else {	/* opte not valid */
-		pmap->pm_stats.resident_count++;
+		resident_count++;
 		if (wired)
-			pmap->pm_stats.wired_count++;
+			wired_count++;
 		if (ptp)
-			ptp->wire_count++;      /* count # of valid entries */
+			ptp_count++;      /* count # of valid entries */
 	}
 
 	/*
-	 * at this point pm_stats has been updated.   pve is either NULL
-	 * or points to a now-free pv_entry structure (the latter case is
-	 * if we called pmap_remove_pv above).
+	 * pve is either NULL or points to a now-free pv_entry structure
+	 * (the latter case is if we called pmap_remove_pv above).
 	 *
 	 * if this entry is to be on a pvlist, enter it now.
 	 */
@@ -2704,22 +2711,19 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 
 	if (pg != NULL) {
 		if (pve == NULL) {
-			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+			pve = freepve;
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					/*
-					 * XXX - Back out stats changes!
-					 */
 					error = ENOMEM;
 					goto out;
 				}
 				panic("pmap_enter: no pv entries available");
 			}
+			freepve = NULL;
 		}
-		/* lock pvh when adding */
+		/* lock pg when adding */
 		pmap_enter_pv(pg, pve, pmap, va, ptp);
 	} else {
-
 		/* new mapping is not PG_PVLIST.   free pve if we've got one */
 		if (pve)
 			pmap_free_pv(pmap, pve);
@@ -2727,7 +2731,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 
 enter_now:
 	/*
-	 * at this point pvh is !NULL if we want the PG_PVLIST bit set
+	 * at this point pg is !NULL if we want the PG_PVLIST bit set
 	 */
 
 	npte = pa | protection_codes[prot] | PG_V;
@@ -2750,6 +2754,10 @@ enter_now:
 	}
 
 	opte = i386_atomic_testset_ul(&ptes[atop(va)], npte);
+	if (ptp)
+		ptp->wire_count += ptp_count;
+	pmap->pm_stats.resident_count += resident_count;
+	pmap->pm_stats.wired_count += wired_count;
 
 	if (opte & PG_V) {
 		pmap_tlb_shootpage(pmap, va);
@@ -2761,6 +2769,8 @@ enter_now:
 out:
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+	if (freepve)
+		pmap_free_pv(pmap, freepve);
 
 	return error;
 }
