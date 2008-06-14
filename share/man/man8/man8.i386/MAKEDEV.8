@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.60 2008/06/12 22:40:02 todd Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.61 2008/06/14 22:07:54 mbalmer Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.43 2008/06/12 22:38:14 todd Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.45 2008/06/14 22:06:47 mbalmer Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June 12, 2008
+.Dd June 15, 2008
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -215,6 +215,9 @@ AGP bridge, see
 .It Ar apm
 Power management device, see
 .Xr apm 4 .
+.It Ar amdmsr
+AMD MSR access device, see
+.Xr amdmsr 4 .
 .It Ar audio*
 Audio devices, see
 .Xr audio 4 .

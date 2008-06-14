@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.44 2008/06/13 21:07:28 todd Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.45 2008/06/14 22:06:47 mbalmer Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -73,6 +73,7 @@
 # Special purpose devices:
 #	agp*	AGP bridge
 #	apm	Power management device
+#	amdmsr	AMD MSR access device
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
@@ -387,6 +388,10 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+amdmsr*)
+	M amdmsr c 89 $U 
+	;;
+
 apm*)
 	M apm	c 21 0 644
 	M apmctl	c 21 8 644
@@ -592,18 +597,18 @@ local)
 	;;
 
 all)
-	R drm0 agp0 bthub0 bthub1 bthub2 nvram gpio0 gpio1 gpio2
-	R bktr0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
-	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2
-	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D
-	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 hotplug ptm gpr0 local wscons pci0 pci1
-	R pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
-	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 speaker video0
-	R audio0 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2
-	R lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4
-	R ttyc5 ttyc6 ttyc7 apm crypto pf pctr systrace wd0 wd1 wd2
-	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd mcd0
+	R amdmsr drm0 agp0 bthub0 bthub1 bthub2 nvram gpio0 gpio1
+	R gpio2 bktr0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
+	R sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C
+	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
+	R fd0H xfs0 ss0 ss1 ch0 hotplug ptm gpr0 local wscons pci0
+	R pci1 pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3
+	R rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 speaker
+	R video0 audio0 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1
+	R lpt2 lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3
+	R ttyc4 ttyc5 ttyc6 ttyc7 apm crypto pf pctr systrace wd0 wd1
+	R wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
