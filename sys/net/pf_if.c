@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.53 2008/06/14 02:22:13 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.54 2008/06/14 16:55:28 mk Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -332,9 +332,9 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	if (aw->type != PF_ADDR_DYNIFTL)
 		return (0);
-	if ((dyn = pool_get(&pfi_addr_pl, PR_WAITOK|PR_LIMITFAIL)) == NULL)
+	if ((dyn = pool_get(&pfi_addr_pl, PR_WAITOK | PR_LIMITFAIL | PR_ZERO))
+	    == NULL)
 		return (1);
-	bzero(dyn, sizeof(*dyn));
 
 	s = splsoftnet();
 	if (!strcmp(aw->v.ifname, "self"))
