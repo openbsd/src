@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.3 2008/06/13 19:10:17 kjell Exp $ */
+/* $OpenBSD: cmode.c,v 1.4 2008/06/14 08:39:30 kjell Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -38,7 +38,18 @@ static PF cmode_brace[] = {
 	cc_brace,	/* } */
 };
 
-static PF cmode_ci[] = {
+static PF cmode_cCP[] = {
+	compile,		/* C-c P */
+};
+
+
+static PF cmode_cc[] = {
+	NULL,		/* ^C */
+	rescan,		/* ^D */
+	rescan,		/* ^E */
+	rescan,		/* ^F */
+	rescan,		/* ^G */
+	rescan,		/* ^H */
 	cc_tab,		/* ^I */
 	rescan,		/* ^J */
 	rescan,		/* ^K */
@@ -50,12 +61,21 @@ static PF cmode_spec[] = {
 	cc_char,	/* : */
 };
 
+static struct KEYMAPE (1 + IMAPEXT) cmode_cmap = {
+	1,
+	1 + IMAPEXT,
+	rescan,
+	{
+		{ 'P', 'P', cmode_cCP, NULL }
+	}
+};
+
 static struct KEYMAPE (3 + IMAPEXT) cmodemap = {
 	3,
 	3 + IMAPEXT,
 	rescan,
 	{
-		{ CCHR('I'), CCHR('M'), cmode_ci, NULL },
+		{ CCHR('C'), CCHR('M'), cmode_cc, (KEYMAP *) &cmode_cmap },
 		{ ':', ':', cmode_spec, NULL },
 		{ '}', '}', cmode_brace, NULL }
 	}
@@ -139,10 +159,13 @@ cc_indent(int f, int n)
 	int pi, mi;			/* Previous indents */
 	int ci, dci;			/* current indent, don't care */
 	struct line *lp;
-
+	int ret;
+	
 	if (n < 0)
 		return (FALSE);
 
+	undo_add_boundary();
+	undo_boundary_enable(FALSE);
 	if (cc_strip_trailp)
 		deltrailwhite(FFRAND, 1);
 
@@ -161,9 +184,14 @@ cc_indent(int f, int n)
 	dci = getindent(curwp->w_dotp, &ci);
 	
 	if (pi + ci < 0)
-		return(indent(FFOTHARG, 0));
+		ret = indent(FFOTHARG, 0);
 	else
-		return(indent(FFOTHARG, pi + ci));
+		ret = indent(FFOTHARG, pi + ci);
+	
+	undo_boundary_enable(TRUE);
+	undo_add_boundary();
+	
+	return (ret);
 }
 
 /*
