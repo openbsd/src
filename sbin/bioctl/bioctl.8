@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.53 2008/06/12 16:08:48 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.54 2008/06/14 00:16:38 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2008 $
+.Dd $Mdocdate: June 14 2008 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -154,6 +154,22 @@ a raid level of 1:
 .Bd -literal -offset 3n
 # bioctl -c 1 -l /dev/sd2e,/dev/sd3e,/dev/sd4e,/dev/sd5e softraid0
 .Ed
+.Pp
+The following command, executed from the command line, would configure the
+device softraid0 with one special device (/dev/sd2e) and an encrypting
+volume:
+.Bd -literal -offset 3n
+# bioctl -c C -l /dev/sd2e softraid0
+.Ed
+.Pp
+.Nm
+will ask for a passphrase, that will be needed to unlock the encrypted
+disk.
+After creating a new encrypted disk, it should be zeroed with the
+following command (assuming the new disk is sd3):
+.Bd -literal -offset 3n
+# dd if=/dev/zero of=/dev/rsd3c
+.Ed
 .Sh SEE ALSO
 .Xr ami 4 ,
 .Xr arc 4 ,
@@ -174,3 +190,5 @@ The
 .Nm
 interface was written by
 .An Marco Peereboom Aq marco@openbsd.org .
+.Sh CAVEATS
+Currently, the use of the encrypting volume is considered experimental.

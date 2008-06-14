@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.17 2008/01/29 10:26:56 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.18 2008/06/14 00:16:38 hshoexer Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2008 $
+.Dd $Mdocdate: June 14 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -68,6 +68,12 @@ though at the cost of write speed.
 Unlike traditional RAID 1,
 .Nm
 supports the use of more than two disks in a RAID 1 setup.
+.It CRYPTO
+An
+.Em encrypting
+discipline.
+It encrypts data on a single disk to provide for data confidentiality.
+CRYPTO does not provide redundancy.
 .El
 .Pp
 A

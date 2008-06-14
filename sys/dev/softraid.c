@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.113 2008/06/13 18:26:59 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.114 2008/06/14 00:16:38 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -818,7 +818,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scm_coerced_size;
 			break;
-#if 0
 #ifdef CRYPTO
 		case 'C':
 			DNPRINTF(SR_D_IOCTL,
@@ -841,7 +840,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 			break;
 #endif /* CRYPTO */
-#endif
 		default:
 			goto unwind;
 		}
