@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.30 2008/06/10 22:59:09 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.31 2008/06/14 19:33:58 beck Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -139,5 +139,6 @@ struct nfsnode {
  * Queue head for nfsiod's
  */
 extern TAILQ_HEAD(nfs_bufqhead, buf) nfs_bufq;
+extern uint32_t nfs_bufqlen, nfs_bufqmax;
 
 #endif		/* _NFS_NFSNODE_H_ */

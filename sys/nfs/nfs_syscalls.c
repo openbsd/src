@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.65 2008/06/13 22:19:35 blambert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.66 2008/06/14 19:33:58 beck Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -678,33 +678,42 @@ nfssvc_iod(p)
 	struct buf *bp, *nbp;
 	int i, myiod;
 	struct vnode *vp;
-	int error = 0, s;
+	int error = 0, s, bufcount;
 
-	/*
-	 * Assign my position or return error if too many already running
-	 */
+	bufcount = 256;	/* XXX: Big enough? sysctl, constant ? */
+
+	/* Assign my position or return error if too many already running. */
 	myiod = -1;
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		if (nfs_asyncdaemon[i] == NULL) {
 			myiod = i;
 			break;
 		}
+	}
 	if (myiod == -1)
 		return (EBUSY);
+
 	nfs_asyncdaemon[myiod] = p;
 	nfs_numasync++;
-	/*
-	 * Just loop around doin our stuff until SIGKILL
-	 */
+
+	/* Upper limit on how many bufs we'll queue up for this iod. */
+	if (nfs_bufqmax > bcstats.numbufs / 4) {
+		nfs_bufqmax = bcstats.numbufs / 4; /* limit to 1/4 of bufs */
+		bufcount = 0;
+	}
+
+	nfs_bufqmax += bufcount;
+
+	/* Just loop around doin our stuff until SIGKILL. */
 	for (;;) {
 	    while (TAILQ_FIRST(&nfs_bufq) == NULL && error == 0) {
-		nfs_iodwant[myiod] = p;
-		error = tsleep((caddr_t)&nfs_iodwant[myiod],
+		    error = tsleep(&nfs_bufq,
 			PWAIT | PCATCH, "nfsidl", 0);
 	    }
 	    while ((bp = TAILQ_FIRST(&nfs_bufq)) != NULL) {
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nfs_bufq, bp, b_freelist);
+		nfs_bufqlen--;
 		if (bp->b_flags & B_READ)
 		    (void) nfs_doio(bp, NULL);
 		else do {
@@ -742,6 +751,7 @@ nfssvc_iod(p)
 	    if (error) {
 		nfs_asyncdaemon[myiod] = NULL;
 		nfs_numasync--;
+		nfs_bufqmax -= bufcount;
 		return (error);
 	    }
 	}
