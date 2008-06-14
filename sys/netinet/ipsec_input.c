@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.86 2008/06/11 17:39:51 canacar Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.87 2008/06/14 23:18:20 todd Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -309,7 +309,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 #ifdef INET
 	/* Fix IPv4 header */
-	if (tdbp->tdb_dst.sa.sa_family == AF_INET) {
+	if (af == AF_INET) {
 		if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == NULL)) {
 			DPRINTF(("ipsec_common_input_cb(): processing failed "
 			    "for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst),
