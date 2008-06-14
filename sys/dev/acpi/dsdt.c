@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.129 2008/06/13 05:53:56 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.130 2008/06/14 21:40:16 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3489,13 +3489,15 @@ aml_xparsesimple(struct aml_scope *scope, char ch, struct aml_value *rv)
  */
 #define aml_debugger(x)
 
+int maxdp;
+
 struct aml_value *
 aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 {
 	int    opcode, idx, pc, optype[8];
 	struct aml_opcode *htab;
 	struct aml_value *opargs[8], *my_ret, *tmp, *cname;
-	struct aml_scope *mscope;
+	struct aml_scope *mscope, *iscope;
 	const char *ch;
 	int64_t ival;
 
@@ -3503,10 +3505,14 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	if (scope == NULL || scope->pos >= scope->end) {
 		return NULL;
 	}
- start:
 	if (odp++ > 125)
 		panic("depth");
-
+	if (odp > maxdp) {
+		maxdp = odp;
+		dnprintf(10, "max depth: %d\n", maxdp);
+	}
+	iscope = scope;
+ start:
 	/* --== Stage 0: Get Opcode ==-- */
 	pc = aml_pc(scope->pos);
 	aml_debugger(scope);
@@ -3515,8 +3521,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	htab = aml_findopcode(opcode);
 	if (htab == NULL) {
 		/* No opcode handler */
-		aml_die("Unknown opcode: %.4x @ %.4x", opcode,
-		    aml_pc(scope->pos - opsize(opcode)));
+		aml_die("Unknown opcode: %.4x @ %.4x", opcode, pc);
 	}
 	dnprintf(18,"%.4x %s\n", pc, aml_mnem(opcode, scope->pos));
 
@@ -3682,19 +3687,20 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		    AMLOP_PACKAGE);
 
 		for (idx=0; idx<my_ret->length; idx++) {
+			const char *nn;
+
 			tmp = aml_xparse(mscope, 'o', "Package");
 			if (tmp == NULL) {
 				continue;
 			}
-			if (tmp->node) {
+			nn = NULL;
+			if (tmp->node)
 				/* Object is a named node: store as string */
-				const char *nn = aml_nodename(tmp->node);
-				aml_xdelref(&tmp, "pkg.node");
-				tmp = aml_allocvalue(AML_OBJTYPE_STRING, 
-				    -1, nn);
-			}
-			else if (tmp->type == AML_OBJTYPE_NAMEREF) {
-				const char *nn = aml_getname(tmp->v_nameref);
+				nn = aml_nodename(tmp->node);
+			else if (tmp->type == AML_OBJTYPE_NAMEREF)
+				/* Object is nameref: store as string */
+				nn = aml_getname(tmp->v_nameref);
+			if (nn != NULL) {
 				aml_xdelref(&tmp, "pkg.node");
 				tmp = aml_allocvalue(AML_OBJTYPE_STRING, 
 				    -1, nn);
@@ -4062,18 +4068,21 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		mscope = aml_xpushscope(scope, opargs[2], scope->node, opcode);
 		aml_xparsefieldlist(mscope, opcode, opargs[1]->v_integer, 
 		    opargs[0], NULL, 0);
+		mscope = NULL;
 		break;
 	case AMLOP_INDEXFIELD:
 		/* IndexField: n:Index, n:Data, b:Flags, F:ieldlist */
 		mscope = aml_xpushscope(scope, opargs[3], scope->node, opcode);
 		aml_xparsefieldlist(mscope, opcode, opargs[2]->v_integer, 
 		    opargs[1], opargs[0], 0);
+		mscope = NULL;
 		break;
 	case AMLOP_BANKFIELD:
 		/* BankField: n:OpRegion, n:Field, i:Bank, b:Flags, F:ieldlist */
 		mscope = aml_xpushscope(scope, opargs[4], scope->node, opcode);
 		aml_xparsefieldlist(mscope, opcode, opargs[3]->v_integer, 
 		    opargs[0], opargs[1], opargs[2]->v_integer);
+		mscope = NULL;
 		break;
 
 		/* Misc functions */
@@ -4198,11 +4207,11 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	}
 	if (mscope != NULL) {
-		aml_xparse(mscope, 'T', htab->mnem);
-		aml_xpopscope(mscope);
+		/* Change our scope to new scope */
+		scope = mscope;
 	}
 	if ((ret_type == 'i' || ret_type == 't') && my_ret == NULL) {
-		dnprintf(10,"quick: %.4x [%s] allocating return integer = 0x%llx\n",
+		dnprintf(10,"quick: %.4x [%s] alloc return integer = 0x%llx\n",
 		    pc, htab->mnem, ival);
 		my_ret = aml_allocvalue(AML_OBJTYPE_INTEGER, ival, NULL);
 	}
@@ -4223,14 +4232,19 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			opargs[idx] = NULL;
 		aml_xdelref(&opargs[idx], "oparg");
 	}
-	odp--;
 
 	/* If parsing whole scope and not done, start again */
 	if (ret_type == 'T') {
 		aml_xdelref(&my_ret, "scope.loop");
+		while (scope->pos >= scope->end && scope != iscope) {
+			/* Pop intermediate scope */
+			scope = aml_xpopscope(scope);
+		}
 		if (scope->pos && scope->pos < scope->end)
 			goto start;
 	}
+
+	odp--;
 	dnprintf(50, ">>return [%s] %s %c %p\n", aml_nodename(scope->node), 
 	    stype, ret_type, my_ret);
 	return my_ret;
