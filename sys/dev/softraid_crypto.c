@@ -1,7 +1,8 @@
-/* $OpenBSD: softraid_crypto.c,v 1.24 2008/06/13 22:08:17 djm Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.25 2008/06/14 00:12:21 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
+ * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +16,25 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*-
+ * sr_crypto_hmac_sha1
+ *
+ * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 
 #include "bio.h"
 
@@ -40,6 +60,7 @@
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <crypto/rijndael.h>
+#include <crypto/sha1.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -62,6 +83,10 @@ int		 sr_crypto_rw2(struct sr_workunit *, struct cryptop *);
 void		 sr_crypto_intr(struct buf *);
 int		 sr_crypto_read(struct cryptop *);
 void		 sr_crypto_finish_io(struct sr_workunit *);
+void		 sr_crypto_hmac_sha1(const u_int8_t *, size_t, const u_int8_t *,
+		    size_t, u_int8_t[SHA1_DIGEST_LENGTH]);
+void		 sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *,
+		    u_char[SHA1_DIGEST_LENGTH]);
 
 #ifdef SR_DEBUG0
 void		 sr_crypto_dumpkeys(struct sr_discipline *);
@@ -209,6 +234,73 @@ out:
 	return (rv);
 }
 
+/*
+ * HMAC-SHA-1 (from RFC 2202).
+ * XXX this really belongs in sys/crypto, but it needs to be done
+ *      generically and so far, nothing else needs it.
+ */
+void
+sr_crypto_hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
+    size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
+{
+	SHA1_CTX ctx;
+	u_int8_t k_pad[SHA1_BLOCK_LENGTH];
+	u_int8_t tk[SHA1_DIGEST_LENGTH];
+	int i;
+
+	if (key_len > SHA1_BLOCK_LENGTH) {
+		SHA1Init(&ctx);
+		SHA1Update(&ctx, key, key_len);
+		SHA1Final(tk, &ctx);
+
+		key = tk;
+		key_len = SHA1_DIGEST_LENGTH;
+	}
+
+	bzero(k_pad, sizeof k_pad);
+	bcopy(key, k_pad, key_len);
+	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
+		k_pad[i] ^= 0x36;
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
+	SHA1Update(&ctx, text, text_len);
+	SHA1Final(digest, &ctx);
+
+	bzero(k_pad, sizeof k_pad);
+	bcopy(key, k_pad, key_len);
+	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
+		k_pad[i] ^= 0x5c;
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
+	SHA1Update(&ctx, digest, SHA1_DIGEST_LENGTH);
+	SHA1Final(digest, &ctx);
+}
+
+void
+sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *sd,
+    u_char check_digest[SHA1_DIGEST_LENGTH])
+{
+	u_char		check_key[SHA1_DIGEST_LENGTH];
+	SHA1_CTX	shactx;
+
+	bzero(check_key, sizeof(check_key));
+	/* k = SHA1(mask_key) */
+	SHA1Init(&shactx);
+	SHA1Update(&shactx, sd->mds.mdd_crypto.scr_maskkey,
+	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+	SHA1Final(check_key, &shactx);
+
+	bzero(&shactx, sizeof(shactx));
+	/* sch_mac = HMAC_SHA1_k(unencrypted scm_key) */
+	sr_crypto_hmac_sha1((u_char *)sd->mds.mdd_crypto.scr_key,
+	    sizeof(sd->mds.mdd_crypto.scr_key),
+	    check_key, sizeof(check_key),
+	    check_digest);
+	bzero(check_key, sizeof(check_key));
+}
+
 int
 sr_crypto_decrypt_key(struct sr_discipline *sd)
 {
@@ -216,8 +308,12 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 	u_char		*p, *c;
 	size_t		 ksz;
 	int		 i, rv = 1;
+	u_char		check_digest[SHA1_DIGEST_LENGTH];
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_decrypt_key\n", DEVNAME(sd->sd_sc));
+
+	if (sd->mds.mdd_crypto.scr_meta.scm_check_alg != SR_CRYPTOC_HMAC_SHA1)
+		goto out;
 
 	c = (u_char *)sd->mds.mdd_crypto.scr_meta.scm_key;
 	p = (u_char *)sd->mds.mdd_crypto.scr_key;
@@ -237,11 +333,22 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 		    sd->mds.mdd_crypto.scr_meta.scm_mask_alg);
 		goto out;
 	}
-	rv = 0; /* Success */
 #ifdef SR_DEBUG0
 	sr_crypto_dumpkeys(sd);
 #endif
 
+	/* Check that the key decrypted properly */
+	sr_crypto_calculate_check_hmac_sha1(sd, check_digest);
+	if (memcmp(sd->mds.mdd_crypto.scr_meta.chk_hmac_sha1.sch_mac,
+	    check_digest, sizeof(check_digest)) != 0) {
+		bzero(sd->mds.mdd_crypto.scr_key,
+		    sizeof(sd->mds.mdd_crypto.scr_key));
+		bzero(check_digest, sizeof(check_digest));
+		goto out;
+	}
+	bzero(check_digest, sizeof(check_digest));
+
+	rv = 0; /* Success */
  out:
 	/* we don't need the mask key anymore */
 	bzero(&sd->mds.mdd_crypto.scr_maskkey,
@@ -264,13 +371,14 @@ sr_crypto_create_keys(struct sr_discipline *sd)
 	if (AES_MAXKEYBYTES < sizeof(sd->mds.mdd_crypto.scr_maskkey))
 		return (1);
 
+	/* XXX allow user to specify */
+	sd->mds.mdd_crypto.scr_meta.scm_alg = SR_CRYPTOA_AES_XTS_256;
+
 	/* generate crypto keys */
 	arc4random_buf(sd->mds.mdd_crypto.scr_key,
 	    sizeof(sd->mds.mdd_crypto.scr_key));
 
-	/* XXX 128 for now */
-	sd->mds.mdd_crypto.scr_meta.scm_alg = SR_CRYPTOA_AES_XTS_128;
-
+	/* Mask the disk keys */
 	sd->mds.mdd_crypto.scr_meta.scm_mask_alg = SR_CRYPTOM_AES_ECB_256;
 	if (rijndael_set_key_enc_only(&ctx, sd->mds.mdd_crypto.scr_maskkey,
 	    256) != 0) {
@@ -279,15 +387,21 @@ sr_crypto_create_keys(struct sr_discipline *sd)
 		bzero(&ctx, sizeof(ctx));
 		return (1);
 	}
-
 	p = (u_char *)sd->mds.mdd_crypto.scr_key;
 	c = (u_char *)sd->mds.mdd_crypto.scr_meta.scm_key;
 	ksz = sizeof(sd->mds.mdd_crypto.scr_key);
-
 	for (i = 0; i < ksz; i += RIJNDAEL128_BLOCK_LEN)
 		rijndael_encrypt(&ctx, &p[i], &c[i]);
 	bzero(&ctx, sizeof(ctx));
+
+	/* Prepare key decryption check code */
+	sd->mds.mdd_crypto.scr_meta.scm_check_alg = SR_CRYPTOC_HMAC_SHA1;
+	sr_crypto_calculate_check_hmac_sha1(sd,
+	    sd->mds.mdd_crypto.scr_meta.chk_hmac_sha1.sch_mac);
+
+	/* Erase the plaintext disk keys */
 	bzero(sd->mds.mdd_crypto.scr_key, sizeof(sd->mds.mdd_crypto.scr_key));
+
 
 #ifdef SR_DEBUG0
 	sr_crypto_dumpkeys(sd);
@@ -313,10 +427,10 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	if (sr_alloc_wu(sd))
 		return (ENOMEM);
 	if (sr_alloc_ccb(sd))
-		return (ENOMEM);		/* XXX */
+		return (ENOMEM);
 
 	if (sr_crypto_decrypt_key(sd))
-		return (1);			/* XXX */
+		return (EPERM);	
 
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_XTS;
@@ -328,7 +442,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		cri.cri_klen = 512;
 		break;
 	default:
-		return (1);			/* XXX */
+		return (EINVAL);
 	}
 	cri.cri_key = sd->mds.mdd_crypto.scr_key[0];
 
