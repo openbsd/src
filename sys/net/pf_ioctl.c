@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.206 2008/06/14 02:22:13 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.207 2008/06/14 19:09:52 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,7 @@
  */
 
 #include "pfsync.h"
+#include "pflog.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
