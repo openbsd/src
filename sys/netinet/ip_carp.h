@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.26 2008/02/05 22:57:31 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.27 2008/06/14 21:46:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -142,6 +142,7 @@ struct carpreq {
 	u_int8_t	carpr_balancing;
 	int		carpr_advbase;
 	unsigned char	carpr_key[CARP_KEY_LEN];
+	struct in_addr	carpr_peer;
 };
 
 /*
@@ -170,7 +171,7 @@ int		 carp6_proto_input(struct mbuf **, int *, int);
 int		 carp_iamatch(struct in_ifaddr *, u_char *, u_int8_t **,
 		     u_int8_t **);
 int		 carp_iamatch6(struct ifnet *, u_char *, struct sockaddr_dl **);
-struct ifnet	*carp_ourether(void *, struct ether_header *, u_char, int);
+struct ifnet	*carp_ourether(void *, struct ether_header *, int);
 int		 carp_input(struct mbuf *, u_int8_t *, u_int8_t *, u_int16_t);
 int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);

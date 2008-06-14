@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.198 2008/06/13 06:58:20 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.199 2008/06/14 21:46:22 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -202,6 +202,8 @@ void	getifgroups(void);
 void	carp_status(void);
 void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
+void	setcarppeer(const char *, int);
+void	unsetcarppeer(const char *, int);
 void	setcarp_passwd(const char *, int);
 void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
@@ -333,6 +335,8 @@ const struct	cmd {
 	{ "-vlandev",	1,		0,		unsetvlandev },
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
+	{ "carppeer",	NEXTARG,	0,		setcarppeer },
+	{ "-carppeer",	1,		0,		unsetcarppeer },
 	{ "pass",	NEXTARG,	0,		setcarp_passwd },
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 	{ "state",	NEXTARG,	0,		setcarp_state },
@@ -3196,6 +3200,7 @@ carp_status(void)
 {
 	const char *state, *balmode;
 	struct carpreq carpr;
+	char peer[32];
 	int i;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
@@ -3212,6 +3217,12 @@ carp_status(void)
 	else
 		balmode = carp_bal_modes[carpr.carpr_balancing];
 
+	if (carpr.carpr_peer.s_addr != htonl(INADDR_CARP_GROUP))
+		snprintf(peer, sizeof(peer),
+		    " carppeer %s", inet_ntoa(carpr.carpr_peer));
+	else
+		peer[0] = '\0';
+
 	for (i = 0; carpr.carpr_vhids[i]; i++) {
 		if (carpr.carpr_states[i] > CARP_MAXSTATE)
 			state = "<UNKNOWN>";
@@ -3219,17 +3230,18 @@ carp_status(void)
 			state = carp_states[carpr.carpr_states[i]];
 		if (carpr.carpr_vhids[1] == 0) {
 			printf("\tcarp: %s carpdev %s vhid %u advbase %d "
-			    "advskew %u\n", state,
+			    "advskew %u%s\n", state,
 			    carpr.carpr_carpdev[0] != '\0' ?
 		    	    carpr.carpr_carpdev : "none", carpr.carpr_vhids[0],
-		    	    carpr.carpr_advbase, carpr.carpr_advskews[0]);
+		    	    carpr.carpr_advbase, carpr.carpr_advskews[0],
+			    peer);
 		} else {
 			if (i == 0) {
 				printf("\tcarp: carpdev %s advbase %d"
-				    " balancing %s\n",
+				    " balancing %s%s\n",
 				    carpr.carpr_carpdev[0] != '\0' ?
 				    carpr.carpr_carpdev : "none",
-				    carpr.carpr_advbase, balmode);
+				    carpr.carpr_advbase, balmode, peer);
 			}
 			printf("\t\tstate %s vhid %u advskew %u\n", state,
 			    carpr.carpr_vhids[i], carpr.carpr_advskews[i]);
@@ -3324,6 +3336,57 @@ setcarp_advbase(const char *val, int d)
 		err(1, "SIOCGVH");
 
 	carpr.carpr_advbase = advbase;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
+/* ARGSUSED */
+void
+setcarppeer(const char *val, int d)
+{
+	struct carpreq carpr;
+	struct addrinfo hints, *peerres;
+	int ecode;
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+
+	if ((ecode = getaddrinfo(val, NULL, &hints, &peerres)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if (peerres->ai_addr->sa_family != AF_INET)
+		errx(1, "only IPv4 addresses supported for the carppeer");
+
+	carpr.carpr_peer.s_addr = ((struct sockaddr_in *)
+	    peerres->ai_addr)->sin_addr.s_addr;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+
+	freeaddrinfo(peerres);
+}
+
+void
+unsetcarppeer(const char *val, int d)
+{
+	struct carpreq carpr;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	bzero((char *)&carpr.carpr_peer, sizeof(carpr.carpr_peer));
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
