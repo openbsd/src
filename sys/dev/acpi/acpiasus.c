@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.5 2008/06/11 04:42:09 marco Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.6 2008/06/14 17:17:33 jsing Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -59,7 +59,8 @@ struct acpiasus_softc {
 	void 			*sc_powerhook;
 };
 
-#define ASUS_NOTIFY_WirelessSwitch	0x10
+#define ASUS_NOTIFY_WirelessSwitchOn	0x10
+#define ASUS_NOTIFY_WirelessSwitchOff	0x11
 #define ASUS_NOTIFY_BrightnessLow	0x20
 #define ASUS_NOTIFY_BrightnessHigh	0x2f
 #define ASUS_NOTIFY_DisplayCycle	0x30
@@ -67,6 +68,9 @@ struct acpiasus_softc {
 #define ASUS_NOTIFY_VolumeMute		0x13
 #define ASUS_NOTIFY_VolumeDown		0x14
 #define ASUS_NOTIFY_VolumeUp		0x15
+
+#define ASUS_NOTIFY_PowerConnect	0x50
+#define ASUS_NOTIFY_PowerDisconnect	0x51
 
 #define	ASUS_SDSP_LCD			0x01
 #define	ASUS_SDSP_CRT			0x02
@@ -133,11 +137,14 @@ acpiasus_init(struct device *self)
 	struct aml_value cmd;
 	struct aml_value ret;
 
+	bzero(&cmd, sizeof(cmd));
 	cmd.type = AML_OBJTYPE_INTEGER;
 	cmd.v_integer = 0x40;		/* Disable ASL display switching. */
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "INIT", 1, &cmd, &ret))
 		printf("%s: no INIT\n", DEVNAME(sc));
+	else
+		aml_freevalue(&ret);
 }
 
 int
@@ -155,7 +162,8 @@ acpiasus_notify(struct aml_node *node, int notify, void *arg)
 	}
 
 	switch (notify) {
-	case ASUS_NOTIFY_WirelessSwitch:	/* Handled by AML. */
+	case ASUS_NOTIFY_WirelessSwitchOn:	/* Handled by AML. */
+	case ASUS_NOTIFY_WirelessSwitchOff:	/* Handled by AML. */
 		break;
 	case ASUS_NOTIFY_TaskSwitch:
 		break;
@@ -180,6 +188,10 @@ acpiasus_notify(struct aml_node *node, int notify, void *arg)
 	case ASUS_NOTIFY_VolumeUp:
 		break;
 #endif
+	case ASUS_NOTIFY_PowerConnect:
+	case ASUS_NOTIFY_PowerDisconnect:
+		break;
+
 	default:
 		printf("%s: unknown event 0x%02x\n", DEVNAME(sc), notify);
 		break;
@@ -202,12 +214,16 @@ acpiasus_power(int why, void *arg)
 	case PWR_RESUME:
 		acpiasus_init(arg);
 
+		bzero(&cmd, sizeof(cmd));
 		cmd.type = AML_OBJTYPE_INTEGER;
 		cmd.v_integer = ASUS_SDSP_LCD;
 
 		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "SDSP", 1,
 		    &cmd, &ret))
 			printf("%s: no SDSP\n", DEVNAME(sc));
+		else
+			aml_freevalue(&ret);
+
 		break;
 	}
 }
