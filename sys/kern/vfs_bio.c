@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.106 2008/06/12 06:58:39 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.107 2008/06/14 00:49:35 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -773,6 +773,17 @@ brelse(struct buf *bp)
 		 * pool.
 		 */
 		if (bp->b_data == NULL && bp->b_pobj == NULL) {
+			/*
+			 * Wake up any processes waiting for _this_ buffer to
+			 * become free. They are not allowed to grab it
+			 * since it will be freed. But the only sleeper is
+			 * getblk and it's restarting the operation after
+			 * sleep.
+			 */
+			if (ISSET(bp->b_flags, B_WANTED)) {
+				CLR(bp->b_flags, B_WANTED);
+				wakeup(bp);
+			}
 			buf_put(bp);
 			splx(s);
 			return;
