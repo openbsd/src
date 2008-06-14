@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.100 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.101 2008/06/14 00:55:31 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -358,6 +358,7 @@ add_file(struct cvs_file *cf)
 	added = stop = 0;
 	switch (cf->file_status) {
 	case FILE_ADDED:
+	case FILE_CHECKOUT:
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "%s has already been entered",
 			    cf->file_path);
