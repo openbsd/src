@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2008/06/09 20:32:56 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2008/06/14 10:55:20 mk Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1670,8 +1670,7 @@ pmap_create(void)
 
 	DPRINTF(PDB_CREATE, ("pmap_create()\n"));
 
-	pm = pool_get(&pmap_pool, PR_WAITOK);
-	bzero((caddr_t)pm, sizeof *pm);
+	pm = pool_get(&pmap_pool, PR_WAITOK | PR_ZERO);
 	DPRINTF(PDB_CREATE, ("pmap_create(): created %p\n", pm));
 
 	pm->pm_refs = 1;

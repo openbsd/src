@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2008/06/10 21:12:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2008/06/14 10:55:20 mk Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -837,8 +837,7 @@ pmap_create(void)
 	paddr_t stpa;
 	u_int s;
 
-	pmap = pool_get(&pmappool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	pmap = pool_get(&pmappool, PR_WAITOK | PR_ZERO);
 
 	/*
 	 * Allocate memory for *actual* segment table and *shadow* table.

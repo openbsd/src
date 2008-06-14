@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.39 2008/06/11 04:52:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.40 2008/06/14 10:55:21 mk Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -123,8 +123,7 @@ loop:
 		return (error);
 	}
 	vp = nvp;
-	np = pool_get(&nfs_node_pool, PR_WAITOK);
-	bzero((caddr_t)np, sizeof *np);
+	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
 	vp->v_data = np;
 	np->n_vnode = vp;
 

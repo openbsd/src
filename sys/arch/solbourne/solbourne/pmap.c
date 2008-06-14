@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.1 2005/04/19 21:30:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 2008/06/14 10:55:20 mk Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -504,9 +504,8 @@ pmap_create()
 
 	DPRINTF(PDB_CREATE, ("pmap_create()"));
 
-	pmap = pool_get(&pmappool, PR_WAITOK);
+	pmap = pool_get(&pmappool, PR_WAITOK | PR_ZERO);
 
-	bzero(pmap, sizeof(*pmap));
 	pmap->pm_refcount = 1;
 	simple_lock_init(&pmap->pm_lock);
 

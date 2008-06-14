@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.70 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.71 2008/06/14 10:55:21 mk Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -103,8 +103,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
 	s = splsoftnet();
-	so = pool_get(&socket_pool, PR_WAITOK);
-	bzero(so, sizeof(*so));
+	so = pool_get(&socket_pool, PR_WAITOK | PR_ZERO);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.52 2007/04/13 18:57:49 art Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.53 2008/06/14 10:55:20 mk Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -644,8 +644,7 @@ pmap_create()
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
 	    ("pmap_create\n"));
 
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
 
 	/*
 	 * No need to allocate page table space yet but we do need a

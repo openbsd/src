@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.26 2007/12/09 20:54:01 jmc Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.27 2008/06/14 10:55:21 mk Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -527,8 +527,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Allocate memory and check the tag id's before grabbing a new
 	 * vnode, since it's hard to roll back if there is a problem.
 	 */
-	up = pool_get(&unode_pool, PR_WAITOK);
-	bzero(up, sizeof(struct unode));
+	up = pool_get(&unode_pool, PR_WAITOK | PR_ZERO);
 
 	/*
 	 * Copy in the file entry.  Per the spec, the size can only be 1 block.

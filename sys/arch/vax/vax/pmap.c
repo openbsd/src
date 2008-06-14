@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2008/06/09 20:31:49 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.44 2008/06/14 10:55:20 mk Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -379,8 +379,7 @@ pmap_create()
 	struct pmap *pmap;
 	int bytesiz, res;
 
-	pmap =  pool_get(&pmap_pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(struct pmap));
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
 
 	/*
 	 * Allocate PTEs and stash them away in the pmap.

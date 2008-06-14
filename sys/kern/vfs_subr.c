@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.171 2008/06/13 03:45:39 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.172 2008/06/14 10:55:21 mk Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -342,8 +342,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	    ((TAILQ_FIRST(listhd = &vnode_free_list) == NULL) &&
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
-		vp = pool_get(&vnode_pool, PR_WAITOK);
-		bzero((char *)vp, sizeof *vp);
+		vp = pool_get(&vnode_pool, PR_WAITOK | PR_ZERO);
 		numvnodes++;
 	} else {
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;

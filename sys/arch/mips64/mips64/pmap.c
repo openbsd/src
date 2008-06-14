@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2008/04/07 22:30:48 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2008/06/14 10:55:20 mk Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -278,9 +278,8 @@ extern struct user *proc0paddr;
 	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_create()\n"));
 
 	s = splvm();
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
 	splx(s);
-	bzero(pmap, sizeof(*pmap));
 
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;

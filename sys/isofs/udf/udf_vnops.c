@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.32 2008/06/09 23:38:37 millert Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.33 2008/06/14 10:55:21 mk Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -550,8 +550,7 @@ udf_opendir(struct unode *up, int offset, int fsize, struct umount *ump)
 {
 	struct udf_dirstream *ds;
 
-	ds = pool_get(&udf_ds_pool, PR_WAITOK);
-	bzero(ds, sizeof(struct udf_dirstream));
+	ds = pool_get(&udf_ds_pool, PR_WAITOK | PR_ZERO);
 
 	ds->node = up;
 	ds->offset = offset;
