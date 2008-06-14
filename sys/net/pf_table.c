@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.77 2008/06/14 02:22:13 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.78 2008/06/14 03:50:14 art Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -191,9 +191,9 @@ void
 pfr_initialize(void)
 {
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", &pool_allocator_oldnointr);
+	    "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry", &pool_allocator_oldnointr);
+	    "pfrkentry", NULL);
 	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry2", NULL);
 	pool_init(&pfr_kcounters_pl, sizeof(struct pfr_kcounters), 0, 0, 0,
