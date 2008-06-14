@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.63 2008/06/14 01:21:17 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.64 2008/06/14 03:16:06 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1091,8 +1091,8 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp)
 		case EPROGMISMATCH:
 			*tl = txdr_unsigned(RPC_PROGMISMATCH);
 			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
-			*tl++ = txdr_unsigned(2);
-			*tl = txdr_unsigned(3);
+			*tl++ = txdr_unsigned(NFS_VER2);
+			*tl = txdr_unsigned(NFS_VER3);
 			break;
 		case EPROCUNAVAIL:
 			*tl = txdr_unsigned(RPC_PROCUNAVAIL);
