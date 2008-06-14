@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.44 2008/06/13 23:24:21 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.45 2008/06/14 01:18:53 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1068,15 +1068,15 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		goto bad;
 	}
 
-	error = (*tr->tr_input)(tr, tp, eh, m);
-	if (error != 0)
-		return (error);
-
 #if NBPFILTER > 0
-	if (trifp->if_bpf)
+	if (trifp->if_bpf && tr->tr_proto != TRUNK_PROTO_FAILOVER)
 		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
 		    BPF_DIRECTION_IN);
 #endif
+
+	error = (*tr->tr_input)(tr, tp, eh, m);
+	if (error != 0)
+		return (error);
 
 	trifp->if_ipackets++;
 	return (0);
@@ -1303,25 +1303,31 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;
 	struct trunk_port *tmp_tp;
+	int accept = 0;
 
 	if (tp == tr->tr_primary) {
-		m->m_pkthdr.rcvif = ifp;
-		return (0);
-	}
-
-	if (tr->tr_primary->tp_link_state == LINK_STATE_DOWN) {
+		accept = 1;
+	} else if (tr->tr_primary->tp_link_state == LINK_STATE_DOWN) {
 		tmp_tp = trunk_link_active(tr, NULL);
 		/*
 		 * If tmp_tp is null, we've received a packet when all
 		 * our links are down. Weird, but process it anyways.
 		 */
-		if ((tmp_tp == NULL || tmp_tp == tp)) {
-			m->m_pkthdr.rcvif = ifp;
-			return (0);
-		}
+		if ((tmp_tp == NULL || tmp_tp == tp))
+			accept = 1;
 	}
-	m_freem(m);
-	return (-1);
+	if (!accept) {
+		m_freem(m);
+		return (-1);
+	}
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap_hdr(ifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
+		    BPF_DIRECTION_IN);
+#endif
+
+	m->m_pkthdr.rcvif = ifp;
+	return (0);
 }
 
 /*
