@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkbc.c,v 1.6 2008/02/21 13:30:04 jsing Exp $  */
+/*	$OpenBSD: mkbc.c,v 1.7 2008/06/14 18:29:52 miod Exp $  */
 
 /*
  * Copyright (c) 2006, 2007, Joel Sing
@@ -348,7 +348,7 @@ mkbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 			break; /* pckbc_poll_data() will get it */
 
 		KBD_DELAY;
-		data = bus_space_read_8(t->t_iot, q->ioh, MKBC_RX_PORT);
+		data = bus_space_read_8(t->t_iot, q->ioh, MKBC_RX_PORT) & 0xff;
 		if (CMD_IN_QUEUE(q) && mkbc_cmdresponse(t, slot, data))
 			continue;
 
@@ -380,7 +380,7 @@ mkbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 			break; /* pckbc_poll_data() will get it. */
 
 		KBD_DELAY;
-		data = bus_space_read_8(t->t_iot, q->ioh, MKBC_RX_PORT);
+		data = bus_space_read_8(t->t_iot, q->ioh, MKBC_RX_PORT) & 0xff;
 		if (CMD_IN_QUEUE(q) && mkbc_cmdresponse(t, slot, data))
 			continue;
 
