@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.66 2007/12/15 03:42:57 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.67 2008/06/14 03:48:32 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -894,9 +894,22 @@ uvm_km_getpage(boolean_t waitok)
 			break;
 		msleep(&uvm_km_pages_free, &uvm_km_mtx, PVM, "getpage", 0);
 	}
-	mtx_leave(&uvm_km_mtx);
-	if (uvm_km_pages_free < uvm_km_pages_lowat)
+	if (uvm_km_pages_free < uvm_km_pages_lowat) {
 		wakeup(&uvm_km_pages_head);
+
+		/*
+		 * If we're below the low watermark and are allowed to
+		 * sleep, we should slow down our allocations a bit
+		 * to not exhaust the reserve of pages for nosleep
+		 * allocators.
+		 *
+		 * Just sleep once.
+		 */
+		if (waitok)
+			msleep(&uvm_km_pages_free, &uvm_km_mtx, PPAUSE,
+			    "getpg2", 0);
+	}
+	mtx_leave(&uvm_km_mtx);
 	return (page);
 }
 
