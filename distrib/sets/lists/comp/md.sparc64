@@ -277,6 +277,8 @@
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xc
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xd
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xdc
+./usr/libdata/ldscripts/elf64_sparc_obsd.xdcz
+./usr/libdata/ldscripts/elf64_sparc_obsd.xdz
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xn
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xr
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xs
