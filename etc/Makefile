@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.266 2008/06/14 23:09:05 todd Exp $
+#	$OpenBSD: Makefile,v 1.267 2008/06/14 23:13:01 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -306,26 +306,10 @@ update-moduli:
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release allarchs snap_md m4 snap_pre
 
-SUBDIR+= etc.alpha
-SUBDIR+= etc.amd64
-SUBDIR+= etc.armish
-SUBDIR+= etc.aviion
-SUBDIR+= etc.hp300
-SUBDIR+= etc.hppa
-SUBDIR+= etc.hppa64
-SUBDIR+= etc.i386
-SUBDIR+= etc.landisk
-SUBDIR+= etc.luna88k
-SUBDIR+= etc.mac68k
-SUBDIR+= etc.macppc
-SUBDIR+= etc.mvme68k
-SUBDIR+= etc.mvme88k
-SUBDIR+= etc.sgi
-SUBDIR+= etc.socppc
-SUBDIR+= etc.sparc
-SUBDIR+= etc.sparc64
-SUBDIR+= etc.vax
-SUBDIR+= etc.zaurus
+SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
+SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.luna88k etc.mac68k etc.macppc
+SUBDIR+= etc.mvme68k etc.mvme88k etc.sgi etc.socppc etc.sparc etc.sparc64
+SUBDIR+= etc.vax etc.zaurus
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>
