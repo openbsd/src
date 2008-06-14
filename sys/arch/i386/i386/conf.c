@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.126 2008/06/12 20:03:48 mglocker Exp $	*/
+/*	$OpenBSD: conf.c,v 1.127 2008/06/14 21:31:46 mbalmer Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ cdev_decl(pci);
 #include "pf.h"
 #include "hotplug.h"
 #include "gpio.h"
+#include "amdmsr.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -312,7 +313,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 85: ACPI (deprecated) */
 	cdev_bthub_init(NBTHUB,bthub),	/* 86: bthub */
 	cdev_agp_init(NAGP,agp),	/* 87: agp */
-	cdev_drm_init(NDRMBASE,drm)	/* 88: drm */
+	cdev_drm_init(NDRMBASE,drm),	/* 88: drm */
+	cdev_amdmsr_init(NAMDMSR,amdmsr)	/* 89: amdmsr */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

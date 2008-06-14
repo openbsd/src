@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.179 2008/05/21 18:49:47 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.180 2008/06/14 21:31:46 mbalmer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -134,6 +134,11 @@ file	arch/i386/pci/gscpm.c		gscpm
 device	glxpcib: isabus, gpiobus
 attach	glxpcib at pci
 file	arch/i386/pci/glxpcib.c		glxpcib   
+
+# AMD Geode LX series MSR access
+device	amdmsr
+attach	amdmsr at mainbus
+file	arch/i386/i386/amdmsr.c		amdmsr	needs-flag
 
 # PCI-ISA bridge chipsets
 device	pcib: isabus
