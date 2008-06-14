@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.58 2008/06/14 00:39:15 djm Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.59 2008/06/14 03:01:00 djm Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -100,6 +100,7 @@ struct sr_chunk_meta {
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
 #define SR_CRYPTO_KDFHINTBYTES	256
 #define SR_CRYPTO_CHECKBYTES	64
+#define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
 
 struct sr_crypto_genkdf {
 	u_int32_t	len;
@@ -292,7 +293,7 @@ struct sr_crypto {
 
 	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
 	u_int8_t		scr_maskkey[SR_CRYPTO_MAXKEYBYTES];
-	u_int64_t		scr_sid/*[SR_CRYPTO_MAXKEYS]*/;
+	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
 };
 
 struct sr_metadata_list {

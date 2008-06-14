@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.25 2008/06/14 00:12:21 djm Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.26 2008/06/14 03:01:00 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -102,6 +102,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	struct uio		*uio;
 	int			 flags, i, n;
 	daddr64_t		 blk = 0;
+	u_int			 keyndx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
@@ -133,7 +134,14 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	if (crp == NULL)
 		goto unwind;
 
-	crp->crp_sid = sd->mds.mdd_crypto.scr_sid;
+	/* Select crypto session based on block number */
+	keyndx = blk >> SR_CRYPTO_KEY_BLKSHIFT;
+	if (keyndx > SR_CRYPTO_MAXKEYS)
+		goto unwind;
+	crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
+	if (crp->crp_sid == (u_int64_t)-1)
+		goto unwind;
+
 	crp->crp_ilen = xs->datalen;
 	crp->crp_alloctype = M_DEVBUF;
 	crp->crp_buf = uio;
@@ -417,6 +425,7 @@ int
 sr_crypto_alloc_resources(struct sr_discipline *sd)
 {
 	struct cryptoini	cri;
+	u_int num_keys, i;
 
 	if (!sd)
 		return (EINVAL);
@@ -424,11 +433,13 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
+		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+
 	if (sr_alloc_wu(sd))
 		return (ENOMEM);
 	if (sr_alloc_ccb(sd))
 		return (ENOMEM);
-
 	if (sr_crypto_decrypt_key(sd))
 		return (EPERM);	
 
@@ -444,21 +455,46 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	default:
 		return (EINVAL);
 	}
-	cri.cri_key = sd->mds.mdd_crypto.scr_key[0];
 
-	return (crypto_newsession(&sd->mds.mdd_crypto.scr_sid, &cri, 0));
+	/* Allocate a session for every 2^SR_CRYPTO_KEY_BLKSHIFT blocks */
+	num_keys = sd->sd_vol.sv_meta.svm_size >> SR_CRYPTO_KEY_BLKSHIFT;
+	if (num_keys >= SR_CRYPTO_MAXKEYS)
+		return (EFBIG);
+	for (i = 0; i <= num_keys; i++) {
+		cri.cri_key = sd->mds.mdd_crypto.scr_key[i];
+		if (crypto_newsession(&sd->mds.mdd_crypto.scr_sid[i],
+		    &cri, 0) != 0) {
+			for (i = 0;
+			     sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1;
+			     i++) {
+				crypto_freesession(
+				    sd->mds.mdd_crypto.scr_sid[i]);
+				sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+			}
+			return (EINVAL);
+		}
+	}
+
+	return (0);
 }
 
 int
 sr_crypto_free_resources(struct sr_discipline *sd)
 {
 	int		rv = EINVAL;
+	u_int		i;
 
 	if (!sd)
 		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_free_resources\n",
 	    DEVNAME(sd->sd_sc));
+
+	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
+		crypto_freesession(
+		    sd->mds.mdd_crypto.scr_sid[i]);
+		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+	}
 
 	sr_free_wu(sd);
 	sr_free_ccb(sd);
