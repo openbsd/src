@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.11 2008/06/13 07:31:57 jsg Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.12 2008/06/14 07:20:12 jsing Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -88,7 +88,6 @@ struct ath_cardbus_softc {
 	void	*sc_ih;			/* interrupt handle */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
 	cardbustag_t sc_tag;		/* our CardBus tag */
-	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
@@ -152,7 +151,7 @@ ath_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Map the device.
 	 */
 	if (Cardbus_mapreg_map(ct, ATH_PCI_MMBA, CARDBUS_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
+	    &sc->sc_st, &sc->sc_sh, &adr, &sc->sc_ss) == 0) {
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
 	}
 
@@ -211,7 +210,7 @@ ath_cardbus_detach(struct device *self, int flags)
 	 * Release bus space and close window.
 	 */
 	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA,
-		    sc->sc_st, sc->sc_sh, csc->sc_mapsize);
+		    sc->sc_st, sc->sc_sh, sc->sc_ss);
 
 	return (0);
 }
