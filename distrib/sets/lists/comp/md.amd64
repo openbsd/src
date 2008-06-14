@@ -302,6 +302,8 @@
 ./usr/libdata/ldscripts/elf_i386.xc
 ./usr/libdata/ldscripts/elf_i386.xd
 ./usr/libdata/ldscripts/elf_i386.xdc
+./usr/libdata/ldscripts/elf_i386.xdcz
+./usr/libdata/ldscripts/elf_i386.xdz
 ./usr/libdata/ldscripts/elf_i386.xn
 ./usr/libdata/ldscripts/elf_i386.xr
 ./usr/libdata/ldscripts/elf_i386.xs
@@ -313,6 +315,8 @@
 ./usr/libdata/ldscripts/elf_i386_obsd.xc
 ./usr/libdata/ldscripts/elf_i386_obsd.xd
 ./usr/libdata/ldscripts/elf_i386_obsd.xdc
+./usr/libdata/ldscripts/elf_i386_obsd.xdcz
+./usr/libdata/ldscripts/elf_i386_obsd.xdz
 ./usr/libdata/ldscripts/elf_i386_obsd.xn
 ./usr/libdata/ldscripts/elf_i386_obsd.xr
 ./usr/libdata/ldscripts/elf_i386_obsd.xs
@@ -324,6 +328,8 @@
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xc
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xd
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xdc
+./usr/libdata/ldscripts/elf_x86_64_obsd.xdcz
+./usr/libdata/ldscripts/elf_x86_64_obsd.xdz
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xn
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xr
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xs
