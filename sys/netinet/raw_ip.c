@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.44 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.45 2008/06/14 02:17:27 jsing Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -87,6 +87,8 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_icmp.h>
+
+#include "pf.h"
 
 struct inpcbtable rawcbtable;
 
