@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.99 2008/06/14 03:58:29 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.100 2008/06/14 20:04:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -508,7 +508,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 		return;
 
 	if (tag != NULL || cvs_specified_date != -1 ||
-	    cvs_directory_date == -1) {
+	    cvs_directory_date != -1) {
 		if ((fp = fopen(tagpath, "w+")) == NULL) {
 			if (errno != ENOENT) {
 				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
