@@ -1744,13 +1744,10 @@ PREFIX(updatePosition)(const ENCODING *enc,
                        const char *end,
                        POSITION *pos)
 {
-  while (ptr != end) {
+  while (ptr < end) {
     switch (BYTE_TYPE(enc, ptr)) {
 #define LEAD_CASE(n) \
     case BT_LEAD ## n: \
-      if (end - ptr < n) { \
-        return; \
-      } \
       ptr += n; \
       break;
     LEAD_CASE(2) LEAD_CASE(3) LEAD_CASE(4)
