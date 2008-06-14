@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.30 2008/06/12 00:19:15 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.31 2008/06/14 18:40:50 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -185,6 +185,9 @@ struct bioc_createraid {
 #define	BIOC_SOINVALID		0x00	/* no opaque pointer */
 #define	BIOC_SOIN		0x01	/* kernel perspective direction */
 #define BIOC_SOOUT		0x02	/* kernel perspective direction */
+	u_int32_t	bc_opaque_status;
+#define	BIOC_SOINOUT_FAILED	0x00	/* operation failed */
+#define	BIOC_SOINOUT_OK		0x01	/* operation succeeded */
 	void		*bc_opaque;
 };
 

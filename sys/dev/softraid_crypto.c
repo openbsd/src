@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.26 2008/06/14 03:01:00 djm Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.27 2008/06/14 18:40:50 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -234,6 +234,7 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 		    sizeof(kdfinfo->maskkey));
 	}
 
+	bc->bc_opaque_status = BIOC_SOINOUT_OK;
 	rv = 0;
 out:
 	bzero(kdfinfo, bc->bc_opaque_size);

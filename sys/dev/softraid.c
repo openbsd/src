@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.114 2008/06/14 00:16:38 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.115 2008/06/14 18:40:50 hshoexer Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -827,6 +827,13 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			if (no_chunk != 1)
 				goto unwind;
 
+			/* no hint available yet */
+			if (bc->bc_opaque_flags & BIOC_SOOUT) {
+				bc->bc_opaque_status = BIOC_SOINOUT_FAILED;
+				rv = 0;
+				goto unwind;
+			}
+
 			if (!(bc->bc_flags & BIOC_SCNOAUTOASSEMBLE))
 				goto unwind;
 
@@ -891,6 +898,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 				goto unwind;
 
 			/* we're done */
+			bc->bc_opaque_status = BIOC_SOINOUT_OK;
 			rv = 0;
 			goto unwind;
 		}

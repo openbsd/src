@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.68 2008/06/14 17:04:50 djm Exp $       */
+/* $OpenBSD: bioctl.c,v 1.69 2008/06/14 18:40:50 hshoexer Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -664,11 +664,13 @@ bio_createraid(u_int16_t level, char *dev_list)
 		create.bc_opaque_flags = BIOC_SOOUT;
 
 		/* try to get KDF hint */
-		if ((rv = ioctl(devh, BIOCCREATERAID, &create)) == 0) {
+		if (ioctl(devh, BIOCCREATERAID, &create) == -1)
+			err(1, "ioctl");
+
+		if (create.bc_opaque_status == BIOC_SOINOUT_OK) {
 			bio_kdf_derive(&kdfinfo, &kdfhint);
 			memset(&kdfhint, 0, sizeof(kdfhint));
-		} else {
-			/* XXX this will kill the keys in case of an error */
+		} else  {
 			bio_kdf_generate(&kdfinfo);
 			/* no auto assembling */
 			create.bc_flags |= BIOC_SCNOAUTOASSEMBLE;
@@ -681,6 +683,7 @@ bio_createraid(u_int16_t level, char *dev_list)
 
 	rv = ioctl(devh, BIOCCREATERAID, &create);
 	memset(&kdfinfo, 0, sizeof(kdfinfo));
+	memset(&create, 0, sizeof(create));
 	if (rv == -1) {
 		if (errno == EPERM)
 			errx(1, "Incorrect passphrase");
