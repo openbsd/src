@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.29 2008/06/13 22:11:32 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.30 2008/06/14 22:44:07 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -86,18 +86,14 @@
 			nfsm_strtombuf(&mb, VTONFS(v)->n_fhp, \
 			    VTONFS(v)->n_fhsize); \
 		} else { \
-			cp = nfsm_build(&mb, NFSX_V2FH); \
-			bcopy((caddr_t)VTONFS(v)->n_fhp, cp, NFSX_V2FH); \
+			nfsm_buftombuf(&mb, VTONFS(v)->n_fhp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvfhtom(f, v3) \
 		{ if (v3) { \
-			tl = nfsm_build(&mb, NFSX_UNSIGNED + NFSX_V3FH); \
-			*tl++ = txdr_unsigned(NFSX_V3FH); \
-			bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
+			nfsm_strtombuf(&mb, (f), NFSX_V3FH); \
 		} else { \
-			cp = nfsm_build(&mb, NFSX_V2FH); \
-			bcopy((caddr_t)(f), cp, NFSX_V2FH); \
+			nfsm_buftombuf(&mb, (f), NFSX_V2FH); \
 		} }
 
 #define nfsm_srvpostop_fh(f) \

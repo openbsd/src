@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.75 2008/06/13 22:11:32 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.76 2008/06/14 22:44:07 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ nfs_statfs(mp, sbp, p)
 {
 	struct vnode *vp;
 	struct nfs_statfs *sfp = NULL;
-	caddr_t cp;
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t dpos, cp2;
@@ -186,7 +185,6 @@ nfs_fsinfo(nmp, vp, cred, p)
 	struct proc *p;
 {
 	struct nfsv3_fsinfo *fsp;
-	caddr_t cp;
 	int32_t t1;
 	u_int32_t *tl, pref, max;
 	caddr_t dpos, cp2;
