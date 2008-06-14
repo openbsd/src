@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.54 2008/06/13 03:49:26 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.55 2008/06/14 00:26:13 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2499,7 +2499,7 @@ again:
 	while (cpos < cend && ncookies > 0) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
-			pad = nfsm_rndup(nlen) - nlen;
+			pad = nfsm_padlen(nlen);
 			len += (4 * NFSX_UNSIGNED + nlen + pad);
 			if (v3)
 				len += 2 * NFSX_UNSIGNED;
@@ -2718,7 +2718,7 @@ again:
 	while (cpos < cend && ncookies > 0) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
-			pad = nfsm_rndup(nlen) - nlen;
+			pad = nfsm_padlen(nlen);
 
 			/*
 			 * For readdir_and_lookup get the vnode using
