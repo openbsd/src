@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.205 2008/06/11 20:51:34 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.206 2008/06/14 02:22:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1168,7 +1168,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		rule = pool_get(&pf_rule_pl, PR_NOWAIT);
+		rule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL);
 		if (rule == NULL) {
 			error = ENOMEM;
 			break;
@@ -1410,7 +1410,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcr->action != PF_CHANGE_REMOVE) {
-			newrule = pool_get(&pf_rule_pl, PR_NOWAIT);
+			newrule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL);
 			if (newrule == NULL) {
 				error = ENOMEM;
 				break;
@@ -1686,7 +1686,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		s = pool_get(&pf_state_pl, PR_NOWAIT | PR_ZERO);
+		s = pool_get(&pf_state_pl, PR_WAITOK | PR_LIMITFAIL | PR_ZERO);
 		if (s == NULL) {
 			error = ENOMEM;
 			break;
@@ -1984,7 +1984,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		altq = pool_get(&pf_altq_pl, PR_NOWAIT);
+		altq = pool_get(&pf_altq_pl, PR_WAITOK|PR_LIMITFAIL);
 		if (altq == NULL) {
 			error = ENOMEM;
 			break;
@@ -2124,7 +2124,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		pa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
+		pa = pool_get(&pf_pooladdr_pl, PR_WAITOK|PR_LIMITFAIL);
 		if (pa == NULL) {
 			error = ENOMEM;
 			break;
@@ -2218,7 +2218,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		if (pca->action != PF_CHANGE_REMOVE) {
-			newpa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
+			newpa = pool_get(&pf_pooladdr_pl,
+			    PR_WAITOK|PR_LIMITFAIL);
 			if (newpa == NULL) {
 				error = ENOMEM;
 				break;

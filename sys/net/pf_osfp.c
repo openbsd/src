@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.14 2008/06/12 18:17:01 henning Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.15 2008/06/14 02:22:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -366,10 +366,12 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 			if (PF_OSFP_ENTRY_EQ(entry, &fpioc->fp_os))
 				return (EEXIST);
 		}
-		if ((entry = pool_get(&pf_osfp_entry_pl, PR_NOWAIT)) == NULL)
+		if ((entry = pool_get(&pf_osfp_entry_pl,
+		    PR_WAITOK|PR_LIMITFAIL)) == NULL)
 			return (ENOMEM);
 	} else {
-		if ((fp = pool_get(&pf_osfp_pl, PR_NOWAIT)) == NULL)
+		if ((fp = pool_get(&pf_osfp_pl,
+		    PR_WAITOK|PR_LIMITFAIL)) == NULL)
 			return (ENOMEM);
 		memset(fp, 0, sizeof(*fp));
 		fp->fp_tcpopts = fpioc->fp_tcpopts;
@@ -381,7 +383,8 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		fp->fp_wscale = fpioc->fp_wscale;
 		fp->fp_ttl = fpioc->fp_ttl;
 		SLIST_INIT(&fp->fp_oses);
-		if ((entry = pool_get(&pf_osfp_entry_pl, PR_NOWAIT)) == NULL) {
+		if ((entry = pool_get(&pf_osfp_entry_pl,
+		    PR_WAITOK|PR_LIMITFAIL)) == NULL) {
 			pool_put(&pf_osfp_pl, fp);
 			return (ENOMEM);
 		}
