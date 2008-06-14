@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.1 2006/05/09 21:17:13 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp 
+#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.5 2008/06/13 21:07:28 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -45,6 +45,7 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Special purpose devices:
+#	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
@@ -252,6 +253,10 @@ bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
+bio)
+	M bio c 49 0 600
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -326,14 +331,16 @@ local)
 	;;
 
 ramdisk)
-	R pty0 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4 bpf0 std
+	R bio pty0 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4 bpf0
+	R std
 	;;
 
 all)
 	R ttya ttyb ttyc ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0
-	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0
-	R nvram0 ptm local uk0 random lkm pf systrace std st0 st1 fd
+	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0
+	R ch0 nvram0 ptm local uk0 random lkm pf systrace std st0 st1
+	R fd
 	;;
 
 sd*|ccd*)
