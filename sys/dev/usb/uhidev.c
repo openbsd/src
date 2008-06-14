@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.31 2007/11/12 04:18:09 deraadt Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.32 2008/06/14 02:40:23 todd Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -112,18 +112,6 @@ uhidev_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 	if (uaa->matchlvl)
 		return (uaa->matchlvl);
-
-#ifdef __macppc__
-	/*
-	 * Some Apple laptops have USB phantom devices which match
-	 * the ADB devices.  We want to ignore them to avoid
-	 * confusing users, as the real hardware underneath is adb
-	 * and has already attached.
-	 */
-	if (uaa->vendor == USB_VENDOR_APPLE &&
-	    uaa->product == USB_PRODUCT_APPLE_ADB)
-		return (UMATCH_NONE);
-#endif
 
 	return (UMATCH_IFACECLASS_GENERIC);
 }
