@@ -1657,6 +1657,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/acpiapm.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/amdmsr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apicvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apmvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/asm.ph

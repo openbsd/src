@@ -155,6 +155,7 @@
 ./usr/include/i386
 ./usr/include/i386/_types.h
 ./usr/include/i386/acpiapm.h
+./usr/include/i386/amdmsr.h
 ./usr/include/i386/apicvar.h
 ./usr/include/i386/apmvar.h
 ./usr/include/i386/asm.h
