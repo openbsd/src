@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2008/06/15 01:51:55 todd Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2008/06/15 01:56:59 deraadt Exp $
 
 MAKEDEVSRC=	${.CURDIR}/../MAKEDEV.mi
 MAKEDEVSRC+=	${.CURDIR}/../MAKEDEV.sub
@@ -22,7 +22,7 @@ MAKEDEV: ${MAKEDEVSRC}
 		diffout1 > diffout2; \
 	    if [ -s diffout2 ]; then \
 		echo "    m4 -I.. -I. ../MAKEDEV.mi > MAKEDEV"; \
-	    	cp MAKEDEV.tmp ${.CURDIR}/MAKEDEV || true; \
+		cp MAKEDEV.tmp ${.CURDIR}/MAKEDEV || true; \
 	    fi; \
 	    rm diffout1 diffout2; \
 	fi
