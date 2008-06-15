@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.38 2008/06/15 07:53:58 kjell Exp $
+.\"	$OpenBSD: mg.1,v 1.39 2008/06/15 21:01:55 jmc Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: June 15 2008 $
@@ -54,7 +54,7 @@ If changes are made to a buffer, it will be reflected in all open windows.
 The current cursor location in
 .Nm
 is called the
-.Em point 
+.Em point
 (or
 .Em dot ) .
 It is possible to define a window-specific region of text by setting a second
@@ -275,7 +275,7 @@ is the numerical argument) before the command, or by
 one or more invocations of the universal argument, usually bound to C-U.
 When invoked in this manner, the value of the numeric parameter to
 be passed is displayed in the minibuffer before the M-x.
-One common use of the parameter is in mode toggles (e.g.
+One common use of the parameter is in mode toggles (e.g.\&
 make-backup-files).
 If no parameter is supplied, the mode is toggled to its
 alternate state.
@@ -299,7 +299,7 @@ Toggle auto-fill mode (sometimes called mail-mode),
 where text inserted past the fill column is automatically wrapped
 to a new line.
 .It auto-indent-mode
-Toggle indent mode, where identation is preserved after a newline.
+Toggle indent mode, where indentation is preserved after a newline.
 .It backward-char
 Move cursor backwards one character.
 .It backward-kill-word
@@ -344,7 +344,7 @@ Count the number of lines matching the supplied regular expression.
 .It count-non-matches
 Count the number of lines not matching the supplied regular expression.
 .It define-key
-Prompts the user for a named keymap (mode), 
+Prompts the user for a named keymap (mode),
 a key, and an mg command, then creates a keybinding in the appropriate
 map.
 .It delete-backward-char
@@ -431,14 +431,14 @@ Justify a paragraph, wrapping text at the current fill column.
 Select a file for editing.
 First check if you can find the file
 in another buffer; if you can find it, just switch to the buffer.
-If you cannot find the file, create a new buffer, read in the 
+If you cannot find the file, create a new buffer, read in the
 file from disk, and switch to the new buffer.
 .It find-file-read-only
 Same as find-file, except the new buffer is set to read-only.
 .It find-alternate-file
 Replace the current file with an alternate one.
 Semantics for finding the replacement file are the same as
-'find-file', except the current buffer is killed before the switch.
+find-file, except the current buffer is killed before the switch.
 If the kill fails, or is aborted, revert to the original file.
 .It find-file-other-window
 Opens the specified file in a second buffer.
@@ -454,7 +454,7 @@ Returns an error if the end of buffer is reached.
 Move forward
 .Va n
 paragraphs.
-Paragraphs are delimited by <NL><NL> or <NL><TAB> or <NL><SPACE>
+Paragraphs are delimited by <NL><NL> or <NL><TAB> or <NL><SPACE>.
 .It forward-word
 Move the cursor forward by the specified number of words.
 .It global-set-key
@@ -466,14 +466,14 @@ Toggle global working-directory mode.
 When enabled,
 .Nm
 defaults to opening files (and executing commands like compile and grep)
-relative to the global working directory
+relative to the global working directory.
 When disabled, a working directory is set for each buffer.
 .It goto-line
 Go to a specific line.
 If an argument is present, then
 it is the line number, else prompt for a line number to use.
 .It help-help
-prompts for one of (a)propos, (b)indings, des(c)ribe key briefly
+Prompts for one of (a)propos, (b)indings, des(c)ribe key briefly.
 .It insert
 Insert a string, mainly for use from macros.
 .It insert-buffer
@@ -487,12 +487,12 @@ justify this line.
 .It isearch-backward
 Use incremental searching, initially in the reverse direction.
 isearch ignores any explicit arguments.
-If invoked during macro definition or evaluation, the non-incremental 
+If invoked during macro definition or evaluation, the non-incremental
 search-backward is invoked instead.
 .It isearch-forward
 Use incremental searching, initially in the forward direction.
 isearch ignores any explicit arguments.
-If invoked during macro definition or evaluation, the non-incremental 
+If invoked during macro definition or evaluation, the non-incremental
 search-forward is invoked instead.
 .It just-one-space
 Delete any whitespace around dot, then insert a space.
@@ -519,13 +519,13 @@ Delete
 .Va n
 paragraphs starting with the current one.
 .It kill-region
-Kill the currently defined region
+Kill the currently defined region.
 .It kill-word
 Delete forward
 .Va n
 words.
 .It line-number-mode
-Toggle whether line and column numbers are displayed in the modeline
+Toggle whether line and column numbers are displayed in the modeline.
 .It list-buffers
 Display the list of available buffers.
 .It load
@@ -542,7 +542,7 @@ When disabled, the meta key can be used to insert extended-ascii (8-bit)
 characters.
 When enabled, the meta key acts as usual.
 .It negative-argument
-Process a negative argument for keyboard-invoked functions
+Process a negative argument for keyboard-invoked functions.
 .It newline
 Insert a newline into the current buffer.
 .It newline-and-indent
@@ -569,7 +569,7 @@ window.
 There are no real errors, although the command does nothing if
 there is only 1 window on the screen.
 .It overwrite-mode
-Toggle overwrite mode, where typing in a buffer overwrites 
+Toggle overwrite mode, where typing in a buffer overwrites
 existing characters rather than inserting them.
 .It prefix-region
 Inserts a prefix string before each line of a region.
@@ -606,7 +606,7 @@ string and direction as the last search command.
 Search backwards using a regular expression.
 Get a search string from the user, and search, starting at dot
 and proceeding toward the front of the buffer.
-If found dot is left
+If found, dot is left
 pointing at the first character of the pattern [the last character that
 was matched].
 .It re-search-forward
@@ -618,7 +618,7 @@ the hard stuff.
 If not found, it just prints a message.
 .It recenter
 Reposition dot in the current window.
-by default, The dot is centered.
+By default, the dot is centered.
 If given a positive argument (n), the display is repositioned to line
 n.
 If
@@ -717,9 +717,9 @@ Switch to buffer in another window.
 Toggle the read-only flag on the current buffer.
 .It transpose-chars
 Transpose the two characters on either side of dot.
-If dot is at the end of the line transpose the two characters before it.
+If dot is at the end of the line, transpose the two characters before it.
 Return with an error if dot is at the beginning of line;
- it seems to be a bit pointless to
+it seems to be a bit pointless to
 make this work.
 .It undo
 Undo the most recent action.
@@ -730,7 +730,7 @@ Show the undo records for the current buffer in a new buffer.
 .It universal-argument
 Repeat the next command 4 times.
 Usually bound to C-u.
-This command may be stacked; e.g.
+This command may be stacked; e.g.\&
 C-u C-u C-f moves the cursor forward 16 characters.
 .It upcase-region
 Upper case region.
