@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.30 2008/06/11 15:02:21 dtucker Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.31 2008/06/15 02:49:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -3142,19 +3142,6 @@ gen_p80211_type(int type, int mask)
 	return (b0);
 }
 
-struct block *
-gen_acode(eaddr, q)
-	register const u_char *eaddr;
-	struct qual q;
-{
-	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
-		if (linktype == DLT_ARCNET)
-			return gen_ahostop(eaddr, (int)q.dir);
-	}
-	bpf_error("ARCnet address used in non-arc expression");
-	/* NOTREACHED */
-}
-
 static struct block *
 gen_ahostop(eaddr, dir)
 	register const u_char *eaddr;
@@ -3184,6 +3171,19 @@ gen_ahostop(eaddr, dir)
 		return b1;
 	}
 	abort();
+	/* NOTREACHED */
+}
+
+struct block *
+gen_acode(eaddr, q)
+	register const u_char *eaddr;
+	struct qual q;
+{
+	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
+		if (linktype == DLT_ARCNET)
+			return gen_ahostop(eaddr, (int)q.dir);
+	}
+	bpf_error("ARCnet address used in non-arc expression");
 	/* NOTREACHED */
 }
 
