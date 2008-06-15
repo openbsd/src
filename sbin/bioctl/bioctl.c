@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.70 2008/06/15 00:43:23 hshoexer Exp $       */
+/* $OpenBSD: bioctl.c,v 1.71 2008/06/15 18:52:58 jmc Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -232,8 +232,9 @@ usage(void)
 		"[-b channel:target[.lun]]\n"
 		"\t[-C flag[,flag,...]] [-c raidlevel] "
 		"[-H channel:target[.lun]]\n"
-		"\t[-l special[,special,...]] "
-		"[-u channel:target[.lun]] [-d] device\n", __progname);
+		"\t[-l special[,special,...]] [-r rounds] "
+		"[-u channel:target[.lun]]\n"
+		"\tdevice\n", __progname);
 	
 	exit(1);
 }
