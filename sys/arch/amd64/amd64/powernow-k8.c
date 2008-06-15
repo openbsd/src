@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.19 2007/05/31 17:49:15 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.20 2008/06/15 00:10:47 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -344,6 +344,8 @@ k8pnow_acpi_pss_changed(struct acpicpu_pss * pss, int npss)
 
 	curs = k8pnow_acpi_states(cstate, pss, npss, status);
 	ctrl = pss[curs].pss_ctrl;
+
+	cstate->rvo = PN8_ACPI_CTRL_TO_RVO(ctrl);
 	cstate->vst = PN8_ACPI_CTRL_TO_VST(ctrl);
 	cstate->mvs = PN8_ACPI_CTRL_TO_MVS(ctrl);
 	cstate->pll = PN8_ACPI_CTRL_TO_PLL(ctrl);
@@ -367,6 +369,7 @@ k8pnow_acpi_init(struct k8pnow_cpu_state * cstate, uint64_t status)
 	curs = k8pnow_acpi_states(cstate, pss, cstate->n_states, status);
 	ctrl = pss[curs].pss_ctrl;
 
+	cstate->rvo = PN8_ACPI_CTRL_TO_RVO(ctrl);
 	cstate->vst = PN8_ACPI_CTRL_TO_VST(ctrl);
 	cstate->mvs = PN8_ACPI_CTRL_TO_MVS(ctrl);
 	cstate->pll = PN8_ACPI_CTRL_TO_PLL(ctrl);
