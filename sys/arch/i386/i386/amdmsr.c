@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.1 2008/06/14 21:31:46 mbalmer Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.2 2008/06/15 01:18:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -28,7 +28,7 @@
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/amdmsr.h>
+#include <machine/amdmsr.h>
 
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
