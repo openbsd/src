@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.30 2008/06/14 22:44:07 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.31 2008/06/15 04:03:40 thib Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
  */
 
 #define	M_HASCL(m)	((m)->m_flags & M_EXT)
-#define	NFSMADV(m, s)	(m)->m_data += (s)
 #define	NFSMSIZ(m)	((M_HASCL(m)) ? (m)->m_ext.ext_size : \
 				(((m)->m_flags & M_PKTHDR) ? MHLEN : MLEN))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.56 2008/06/14 22:44:07 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.57 2008/06/15 04:03:40 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -725,7 +725,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 			adjust = dpos - mtod(mp, caddr_t);
 			mp->m_len -= adjust;
 			if (mp->m_len > 0 && adjust > 0)
-				NFSMADV(mp, adjust);
+				mp->m_data += adjust;
 		}
 		if (zeroing)
 			mp->m_len = 0;
@@ -920,7 +920,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 		    adjust = dpos - mtod(mp, caddr_t);
 		    mp->m_len -= adjust;
 		    if (mp->m_len > 0 && adjust > 0)
-			NFSMADV(mp, adjust);
+		    	mp->m_data += adjust;
 		}
 		if (zeroing)
 		    mp->m_len = 0;

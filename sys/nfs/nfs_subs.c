@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.83 2008/06/14 00:26:13 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.84 2008/06/15 04:03:40 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -866,7 +866,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			xfer = (siz2 > mp2->m_len) ? mp2->m_len : siz2;
 			if (xfer > 0) {
 				bcopy(mtod(mp2, caddr_t), p, xfer);
-				NFSMADV(mp2, xfer);
+				mp2->m_data += xfer;
 				mp2->m_len -= xfer;
 				p += xfer;
 				siz2 -= xfer;
