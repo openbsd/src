@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlm_prot.x,v 1.7 2008/06/14 01:10:43 deraadt Exp $	*/
+/*	$OpenBSD: nlm_prot.x,v 1.8 2008/06/15 04:41:39 sturm Exp $	*/
 
 #ifdef RPC_HDR
 %#define LM_MAXSTRLEN	1024
@@ -218,7 +218,17 @@ struct	nlm4_shareres {
 	int	sequence;
 };
 
+struct nlm_sm_status {
+	string mon_name<LM_MAXSTRLEN>;
+	int state;
+	opaque priv[16];
+};
+
 program NLM_PROG {
+	version NLM_SM {
+		void NLM_SM_NOTIFY(struct nlm_sm_status) = 1;
+	} = 0;
+
 	version NLM_VERS {
 
 		nlm_testres	NLM_TEST(struct nlm_testargs) =	1;
