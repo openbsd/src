@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.161 2008/06/14 21:46:22 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.162 2008/06/15 20:30:54 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 14 2008 $
+.Dd $Mdocdate: June 15 2008 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -451,10 +451,10 @@ and
 .Op Cm balancing Ar mode
 .Op Cm carpnodes Ar vhid:advskew,vhid:advskew,...
 .Op Cm carpdev Ar iface
+.Op Oo Fl Oc Cm carppeer Ar peer_address
 .Op Cm pass Ar passphrase
 .Op Cm state Ar state
 .Op Cm vhid Ar host-id
-.Op Oo Fl Oc Cm carppeer Ar peer_address
 .Ek
 .Pp
 The options are as follows:
@@ -497,6 +497,26 @@ pseudo-device, attach it to
 .Ar iface .
 If not specified, the kernel will attempt to select an interface with
 a subnet matching that of the carp interface.
+.It Cm carppeer Ar peer_address
+If the driver is a
+.Xr carp 4
+pseudo-device, send the carp advertisements to a specified
+point-to-point peer or multicast group instead of sending the messages
+to the default carp multicast group.
+The
+.Ar peer_address
+is the IP address of the other host taking part in the carp cluster.
+With this option,
+.Xr carp 4
+traffic can be protected using
+.Xr ipsec 4
+and it may be desired in networks that do not allow or have problems
+with IPv4 multicast traffic.
+.It Fl carppeer
+If the driver is a
+.Xr carp 4
+pseudo-device, send the advertisements to the default carp multicast
+group.
 .It Cm pass Ar passphrase
 If the driver is a
 .Xr carp 4
@@ -518,26 +538,6 @@ If the driver is a
 pseudo-device, set the virtual host ID to
 .Ar n .
 Acceptable values are 1 to 255.
-.It Cm carppeer Ar peer_address
-If the driver is a
-.Xr carp 4
-pseudo-device, send the carp advertisements to a specified
-point-to-point peer or multicast group instead of sending the messages
-to the default carp multicast group.
-The
-.Ar peer_address
-is the IP address of the other host taking part in the carp cluster. 
-With this option,
-.Xr carp 4
-traffic can be protected using
-.Xr ipsec 4
-and it may be desired in networks that do not allow or have problems
-with IPv4 multicast traffic.
-.It Fl carppeer
-If the driver is a
-.Xr carp 4
-pseudo-device, send the advertisements to the default carp multicast
-group.
 .El
 .Pp
 Taken together, the
