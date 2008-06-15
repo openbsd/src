@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.184 2008/06/08 16:20:27 reyk Exp $ */
+/* $OpenBSD: if_em.c,v 1.185 2008/06/15 16:37:00 millert Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2432,7 +2432,8 @@ em_initialize_receive_unit(struct em_softc *sc)
 			sc->rx_int_delay | E1000_RDT_FPDB);
 
 	if (sc->hw.mac_type >= em_82540) {
-		E1000_WRITE_REG(&sc->hw, RADV, sc->rx_abs_int_delay);
+		if (sc->rx_int_delay)
+			E1000_WRITE_REG(&sc->hw, RADV, sc->rx_abs_int_delay);
 
 		/* Set the interrupt throttling rate.  Value is calculated
 		 * as DEFAULT_ITR = 1/(MAX_INTS_PER_SEC * 256ns) */
