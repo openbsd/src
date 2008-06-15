@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.37 2008/06/15 07:31:41 kjell Exp $
+.\"	$OpenBSD: mg.1,v 1.38 2008/06/15 07:53:58 kjell Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: June 15 2008 $
@@ -780,8 +780,8 @@ Strings that are normally entered by the user at any subsequent prompts
 may be specified after the command name; e.g.:
 .Bd -literal -offset indent
 global-set-key ")" self-insert-command
-global-set-key "\^x\^f" find-file
-global-set-key "\e[Z" backward-char
+global-set-key "\\^x\\^f" find-file
+global-set-key "\\e[Z" backward-char
 set-default-mode fill
 set-fill-column 72
 auto-execute *.c c-mode
@@ -798,7 +798,8 @@ terminal-specific startup file
 .Sh CAVEATS
 Since it is written completely in C, there is currently no
 language in which you can write extensions;
-however, you can rebind keys and change certain parameters.
+however, you can rebind keys and change certain parameters
+in startup files.
 .Pp
 In order to use 8-bit characters (such as German umlauts), the Meta key
 needs to be disabled via the
