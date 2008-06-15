@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.66 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: pkg_info,v 1.67 2008/06/15 08:24:28 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,37 +66,45 @@ package main;
 my $total_size = 0;
 my $pkgs = 0;
 
-sub find_pkg
+sub find_pkg_in
 {
-	my ($pkgname, $code) = @_;
-	require OpenBSD::PackageRepository::Installed;
-	my $repo = OpenBSD::PackageRepository::Installed->new;
-	my $pkg;
+	my ($repo, $pkgname, $code) = @_;
 
-	$pkg = $repo->find($pkgname);
-	if (defined $pkg) {
-		&$code($pkgname, $pkg);
-		return;
-	}
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
 		require OpenBSD::Search;
 		my @l = sort ($repo->match(OpenBSD::Search::Stem->new($pkgname)));
 		if (@l != 0) {
 			for my $p (@l) {
-				&$code($p, $repo->find($p));
+				my $pkg = $repo->find($p);
+				&$code($p, $pkg);
+				$pkg->close_now;
+				$pkg->wipe_info;
 			}
-			return;
+			return 1;
 		}
 	}
-				
-	require OpenBSD::PackageLocator;
-
-	$pkg = OpenBSD::PackageLocator->find($pkgname);
+	my $pkg = $repo->find($pkgname);
 	if (defined $pkg) {
 		&$code($pkgname, $pkg);
 		$pkg->close_now;
 		$pkg->wipe_info;
+		return 1;
 	}
+	return 0;
+}
+
+sub find_pkg
+{
+	my ($pkgname, $code) = @_;
+	require OpenBSD::PackageRepository::Installed;
+
+	if (find_pkg_in(OpenBSD::PackageRepository::Installed->new, $pkgname, 
+	    $code)) {
+		return;
+	}
+	require OpenBSD::PackageLocator;
+
+	find_pkg_in('OpenBSD::PackageLocator', $pkgname, $code);
 }
 
 sub printfile
