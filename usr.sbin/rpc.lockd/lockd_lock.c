@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.3 2008/06/15 03:58:38 sturm Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.4 2008/06/15 04:48:03 sturm Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -124,6 +124,19 @@ enum nlm_stats do_unlock(struct file_lock *);
 void send_granted(struct file_lock *, int);
 void siglock(void);
 void sigunlock(void);
+
+/* list of hosts we monitor */
+LIST_HEAD(hostlst_head, host);
+struct hostlst_head hostlst_head = LIST_HEAD_INITIALIZER(hostlst_head);
+
+/* struct describing a lock */
+struct host {
+	LIST_ENTRY(host) hostlst;
+	char name[SM_MAXSTRLEN+1];
+	int refcnt;
+};
+
+void do_mon(const char *);
 
 #define	LL_FH	0x01
 #define	LL_NAME	0x02
@@ -311,6 +324,7 @@ getlock(nlm4_lockargs * lckarg, struct svc_req *rqstp, int flags)
 			    lckarg->alock.svid);
 			newfl->status = LKST_WAITING;
 			LIST_INSERT_HEAD(&lcklst_head, newfl, lcklst);
+			do_mon(lckarg->alock.caller_name);
 			sigunlock();
 			return (flags & LOCK_V4) ?
 			    nlm4_blocked : nlm_blocked;
@@ -336,6 +350,7 @@ getlock(nlm4_lockargs * lckarg, struct svc_req *rqstp, int flags)
 	/* case nlm_granted: is the same as nlm4_granted */
 	case nlm4_blocked:
 	/* case nlm_blocked: is the same as nlm4_blocked */
+		do_mon(lckarg->alock.caller_name);
 		break;
 	default:
 		lfree(newfl);
@@ -745,6 +760,53 @@ sigunlock(void)
 	if (sigprocmask(SIG_UNBLOCK, &block, NULL) < 0) {
 		syslog(LOG_WARNING, "sigunlock failed (%m)");
 	}
+}
+
+/* monitor a host through rpc.statd, and keep a ref count */
+void
+do_mon(const char *hostname)
+{
+	static char localhost[] = "localhost";
+	struct host *hp;
+	struct mon my_mon;
+	struct sm_stat_res result;
+	int retval;
+
+	LIST_FOREACH(hp, &hostlst_head, hostlst) {
+		if (strcmp(hostname, hp->name) == 0) {
+			/* already monitored, just bump refcnt */
+			hp->refcnt++;
+			return;
+		}
+	}
+	/* not found, have to create an entry for it */
+	hp = malloc(sizeof(struct host));
+	if (hp == NULL) {
+		syslog(LOG_WARNING, "can't monitor host %s (%m)", hostname);
+		return;
+	}
+	strlcpy(hp->name, hostname, sizeof(hp->name));
+	hp->refcnt = 1;
+	syslog(LOG_DEBUG, "monitoring host %s", hostname);
+	memset(&my_mon, 0, sizeof(my_mon));
+	my_mon.mon_id.mon_name = hp->name;
+	my_mon.mon_id.my_id.my_name = localhost;
+	my_mon.mon_id.my_id.my_prog = NLM_PROG;
+	my_mon.mon_id.my_id.my_vers = NLM_SM;
+	my_mon.mon_id.my_id.my_proc = NLM_SM_NOTIFY;
+	if ((retval = callrpc(localhost, SM_PROG, SM_VERS, SM_MON, xdr_mon,
+	    (void *)&my_mon, xdr_sm_stat_res, (void *)&result)) != 0) {
+		syslog(LOG_WARNING, "rpc to statd failed (%s)",
+		    clnt_sperrno((enum clnt_stat)retval));
+		free(hp);
+		return;
+	}
+	if (result.res_stat == stat_fail) {
+		syslog(LOG_WARNING, "statd failed");
+		free(hp);
+		return;
+	}
+	LIST_INSERT_HEAD(&hostlst_head, hp, hostlst);
 }
 
 void

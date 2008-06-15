@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.12 2008/06/13 21:32:26 sturm Exp $	*/
+/*	$OpenBSD: procs.c,v 1.13 2008/06/15 04:48:03 sturm Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -1132,5 +1132,19 @@ nlm4_free_all_4_svc(nlm_notify *arg, struct svc_req *rqstp)
 
 	if (debug_level)
 		log_from_addr("nlm4_free_all", rqstp);
+	return &dummy;
+}
+
+/* nlm_sm_notify --------------------------------------------------------- */
+/*
+ * Purpose:	called by rpc.statd when a monitored host state changes.
+ * Returns:	Nothing
+ */
+void *
+/*ARGSUSED*/
+nlm_sm_notify_0_svc(struct nlm_sm_status *arg, struct svc_req *rqstp)
+{
+	static char dummy;
+	notify(arg->mon_name, arg->state);
 	return &dummy;
 }

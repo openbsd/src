@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.10 2008/06/13 23:56:28 jmc Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.11 2008/06/15 04:48:03 sturm Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -54,6 +54,7 @@ int debug_level = 0;	/* 0 = no debugging syslog() calls */
 int _rpcsvcdirty = 0;
 int grace_expired;
 
+void nlm_prog_0(struct svc_req *, SVCXPRT *);
 void nlm_prog_1(struct svc_req *, SVCXPRT *);
 void nlm_prog_3(struct svc_req *, SVCXPRT *);
 void nlm_prog_4(struct svc_req *, SVCXPRT *);
@@ -91,6 +92,8 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	(void) pmap_unset(NLM_PROG, NLM_SM);
 	(void) pmap_unset(NLM_PROG, NLM_VERS);
 	(void) pmap_unset(NLM_PROG, NLM_VERSX);
 	(void) pmap_unset(NLM_PROG, NLM_VERS4);
@@ -98,6 +101,11 @@ main(int argc, char *argv[])
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL) {
 		fprintf(stderr, "cannot create udp service.\n");
+		exit(1);
+	}
+	if (!svc_register(transp, NLM_PROG, NLM_SM,
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_0, IPPROTO_UDP)) {
+		fprintf(stderr, "unable to register (NLM_PROG, NLM_SM, udp).\n");
 		exit(1);
 	}
 	if (!svc_register(transp, NLM_PROG, NLM_VERS,
