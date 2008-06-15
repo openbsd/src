@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.276 2008/06/15 04:38:52 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.277 2008/06/15 04:44:06 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1663,8 +1663,11 @@ rcs_parse_init(RCSFILE *rfp)
 		fatal("could not parse admin data");
 	}
 
-	if (rfp->rf_flags & RCS_PARSE_FULLY)
+	if (rfp->rf_flags & RCS_PARSE_FULLY) {
 		rcs_parse_deltatexts(rfp, NULL);
+		(void)close(rfp->fd);
+		rfp->fd = -1;
+	}
 
 	rfp->rf_flags |= RCS_SYNCED;
 }
