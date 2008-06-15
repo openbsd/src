@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.76 2008/06/15 03:11:28 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.77 2008/06/15 04:43:20 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.76 2008/06/15 03:11:28 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.77 2008/06/15 04:43:20 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -898,7 +898,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 					goto bad_ftp_url;
 				}
 
-				if (EMPTYSTRING(username) || EMPTYSTRING(pass)) {
+				if (EMPTYSTRING(username)) {
 bad_ftp_url:
 					warnx("Invalid URL: %s", argv[argpos]);
 					rval = argpos + 1;
