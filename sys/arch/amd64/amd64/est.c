@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.5 2007/06/07 11:20:58 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.6 2008/06/15 05:24:07 gwk Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -56,165 +56,128 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/bus.h>
 
-#define CPUVENDOR_INTEL 0
-#define CPUVENDOR_VIA 8
+#include "acpicpu.h"
 
+#if NACPICPU > 0
+#include <dev/acpi/acpidev.h>
+#include <dev/acpi/acpivar.h>
+#endif
 
-/* Convert MHz and mV into IDs for passing to the MSR. */
-#define ID16(MHz, mV, bus_clk) \
-	((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
-
-/* Possible bus speeds (multiplied by 100 for rounding) */
-#define BUS100 10000
-#define BUS133 13333
-#define BUS166 16667
-#define BUS200 20000
-#define BUS266 26667
-#define BUS333 33333
-
-#define MSR2MHZ(msr, bus) \
-	(((((int) (msr) >> 8) & 0xff) * (bus) + 50) / 100)
-#define MSR2MV(msr) \
-	(((int) (msr) & 0xff) * 16 + 700)
-
-struct fqlist {
-	int vendor: 5;
-	unsigned bus_clk : 1;
-	unsigned n : 5;
-	const u_int16_t *table;
+struct est_op {
+	uint16_t ctrl;
+	uint16_t mhz;
 };
 
-static const struct fqlist *est_fqlist;
+struct fqlist {
+	unsigned n : 5;
+	struct est_op *table;
+};
 
-static u_int16_t fake_table[3];
-static struct fqlist fake_fqlist;
+
+static struct fqlist *est_fqlist;
 
 extern int setperf_prio;
 extern int perflevel;
 
-int bus_clock;
+#if NACPICPU > 0
+struct fqlist * est_acpi_init(void);
+void est_acpi_pss_changed(struct acpicpu_pss *, int);
 
-void p4_get_bus_clock(struct cpu_info *);
-void p3_get_bus_clock(struct cpu_info *);
-
-void
-p4_get_bus_clock(struct cpu_info *ci)
+struct fqlist *
+est_acpi_init()
 {
-	u_int64_t msr;
-	int model, bus;
+	struct acpicpu_pss *pss;
+	struct fqlist *acpilist;
+	int nstates, i;
 
-	model = (ci->ci_signature >> 4) & 15;
-	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
-	if (model < 2) {
-		bus = (msr >> 21) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = BUS100;
-			break;
-		case 1:
-			bus_clock = BUS133;
-			break;
-		default:
-			printf("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    ci->ci_dev->dv_xname, model, bus);
-			break;
-		}
-	} else {
-		bus = (msr >> 16) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = (model == 2) ? BUS100 : BUS266;
-			break;
-		case 1:
-			bus_clock = BUS133;
-			break;
-		case 2:
-			bus_clock = BUS200;
-			break;
-		case 3:
-			bus_clock = BUS166;
-			break;
-		default:
-			printf("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    ci->ci_dev->dv_xname, model, bus);
-			break;
-		}
+	if ((nstates = acpicpu_fetch_pss(&pss)) == 0)
+		goto nolist;
+
+	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
+	    == NULL)
+		goto nolist;
+
+	if ((acpilist->table = malloc(sizeof(struct est_op) * nstates, M_DEVBUF,
+	   M_NOWAIT)) == NULL)
+		goto notable;
+
+	acpilist->n = nstates;
+
+	for (i = 0; i < nstates; i++) {
+		acpilist->table[i].mhz = pss[i].pss_core_freq;
+		acpilist->table[i].ctrl = pss[i].pss_ctrl;
 	}
+
+	acpicpu_set_notify(est_acpi_pss_changed);
+
+	return acpilist;
+
+notable:
+	free(acpilist, M_DEVBUF);
+	acpilist = NULL;
+nolist:
+	return NULL;
 }
 
 void
-p3_get_bus_clock(struct cpu_info *ci)
+est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 {
+	struct fqlist *acpilist;
+	int needtran = 1, nstates, i;
 	u_int64_t msr;
-	int model, bus;
+	u_int16_t cur;
 
-	model = (ci->ci_signature >> 4) & 15;
-	switch (model) {
-	case 0xe: /* Core Duo/Solo */
-	case 0xf: /* Core Xeon */
-		msr = rdmsr(MSR_FSB_FREQ);
-		bus = (msr >> 0) & 0x7;
-		switch (bus) {
-		case 5:
-			bus_clock = BUS100;
-			break;
-		case 1:
-			bus_clock = BUS133;
-			break;
-		case 3:
-			bus_clock = BUS166;
-			break;
-		case 2:
-			bus_clock = BUS200;
-			break;
-		case 0:
-			bus_clock = BUS266;
-			break;
-		case 4:
-			bus_clock = BUS333;
-			break;
-		default:
-			printf("%s: unknown Core FSB_FREQ value %d",
-			    ci->ci_dev->dv_xname, bus);
-			break;
-		}
-		break;
-	default: 
-		printf("%s: unknown i686 model %d, can't get bus clock",
-		    ci->ci_dev->dv_xname, model);
+	msr = rdmsr(MSR_PERF_STATUS);
+	cur = msr & 0xffff;
+
+	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
+	    == NULL) {
+		printf("est_acpi_pss_changed: cannot allocate memory for new est state");
+		return;
+	}
+
+	if ((acpilist->table = malloc(sizeof(struct est_op) * nstates, M_DEVBUF,
+	   M_NOWAIT)) == NULL) {
+		printf("est_acpi_pss_changed: cannot allocate memory for new operating points");
+		free(acpilist, M_DEVBUF);
+		return;
+	}
+
+	for (i = 0; i < nstates; i++) {
+		acpilist->table[i].mhz = pss[i].pss_core_freq;
+		acpilist->table[i].ctrl = pss[i].pss_ctrl;
+		if (pss[i].pss_ctrl == cur)
+			needtran = 0;
+	}
+
+	free(est_fqlist->table, M_DEVBUF);
+	free(est_fqlist, M_DEVBUF);
+	est_fqlist = acpilist;
+
+	if (needtran) {
+		est_setperf(perflevel);
 	}
 }
+#endif
 
 void
 est_init(struct cpu_info *ci)
 {
 	const char *cpu_device = ci->ci_dev->dv_xname;
-	int vendor = -1;
-	int i, mhz, mv, low, high, family;
+	int i, low, high;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;
 	u_int8_t crhi, crlo, crcur;
 
 	if (setperf_prio > 3)
 		return;
-
-	family = (ci->ci_signature >> 8) & 15;
-	if (family == 0xf) {
-		p4_get_bus_clock(ci);
-	} else if (family == 6) {
-		p3_get_bus_clock(ci);
-	}
-	if (bus_clock == 0) {
-		printf("%s: EST: unknown system bus clock\n", cpu_device);
-		return;
-	}
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;
@@ -223,6 +186,7 @@ est_init(struct cpu_info *ci)
 	crhi = (idhi  >> 8) & 0xff;
 	crlo = (idlo  >> 8) & 0xff;
 	crcur = (cur >> 8) & 0xff;
+
 	if (crlo == 0 || crhi == crlo) {
 		/*
 		 * Don't complain about these cases, and silently disable EST:
@@ -233,58 +197,27 @@ est_init(struct cpu_info *ci)
 		 */
 		return;
 	}
-	if (crhi == 0 || crcur == 0 || crlo > crhi ||
-	    crcur < crlo || crcur > crhi) {
-		/*
-		 * Do complain about other weirdness, because we first want to
-		 * know about it, before we decide what to do with it.
-		 */
-		printf("%s: EST: strange msr value 0x%016llx\n",
-		    cpu_device, msr);
+
+
+#if NACPICPU > 0
+		est_fqlist = est_acpi_init();
+#endif
+	if (est_fqlist == NULL)
 		return;
-	}
-	if (est_fqlist == NULL) {
-		printf("%s: unknown Enhanced SpeedStep CPU, msr 0x%016llx\n",
-		    cpu_device, msr);
 
-		/*
-		 * Generate a fake table with the power states we know.
-		 */
-		fake_table[0] = idhi;
-		if (cur == idhi || cur == idlo) {
-			printf("%s: using only highest and lowest power "
-			    "states\n", cpu_device);
+	printf("%s: Enhanced SpeedStep %d MHz", cpu_device, cpuspeed);
 
-			fake_table[1] = idlo;
-			fake_fqlist.n = 2;
-		} else {
-			printf("%s: using only highest, current and lowest "
-			    "power states\n", cpu_device);
-
-			fake_table[1] = cur;
-			fake_table[2] = idlo;
-			fake_fqlist.n = 3;
-		}
-		fake_fqlist.vendor = vendor;
-		fake_fqlist.table = fake_table;
-		est_fqlist = &fake_fqlist;
-	}
-
-	mhz = MSR2MHZ(cur, bus_clock);
-	mv = MSR2MV(cur);
-	printf("%s: Enhanced SpeedStep %d MHz (%d mV)", cpu_device, mhz, mv);
-
-	low = MSR2MHZ(est_fqlist->table[est_fqlist->n - 1], bus_clock);
-	high = MSR2MHZ(est_fqlist->table[0], bus_clock);
-	perflevel = (mhz - low) * 100 / (high - low);
+	low = est_fqlist->table[est_fqlist->n - 1].mhz;
+	high = est_fqlist->table[0].mhz;
+	perflevel = (cpuspeed - low) * 100 / (high - low);
 
 	/*
 	 * OK, tell the user the available frequencies.
 	 */
 	printf(": speeds: ");
 	for (i = 0; i < est_fqlist->n; i++)
-		printf("%d%s", MSR2MHZ(est_fqlist->table[i], bus_clock),
-		    i < est_fqlist->n - 1 ? ", " : " MHz\n");
+		printf("%d%s", est_fqlist->table[i].mhz, i < est_fqlist->n - 1 ?
+		    ", " : " MHz\n");
 
 	cpu_setperf = est_setperf;
 	setperf_prio = 3;
@@ -306,7 +239,8 @@ est_setperf(int level)
 
 	msr = rdmsr(MSR_PERF_CTL);
 	msr &= ~0xffffULL;
-	msr |= est_fqlist->table[i];
+	msr |= est_fqlist->table[i].ctrl;
+
 	wrmsr(MSR_PERF_CTL, msr);
-	cpuspeed = MSR2MHZ(est_fqlist->table[i], bus_clock);
+	cpuspeed = est_fqlist->table[i].mhz;
 }

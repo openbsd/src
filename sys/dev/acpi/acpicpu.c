@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.43 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.44 2008/06/15 05:24:07 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -46,6 +46,22 @@ void	acpicpu_setperf(int);
 #define ACPI_STATE_C1		0x01
 #define ACPI_STATE_C2		0x02
 #define ACPI_STATE_C3		0x03
+
+#define ACPI_PDC_REVID		0x1
+#define ACPI_PDC_SMP		0xa
+#define ACPI_PDC_MSR		0x1
+
+/* _PDC Intel capabilities flags from linux */
+#define ACPI_PDC_P_FFH		0x0001
+#define ACPI_PDC_C_C1_HALT	0x0002
+#define ACPI_PDC_T_FFH		0x0004
+#define ACPI_PDC_SMP_C1PT	0x0008
+#define ACPI_PDC_SMP_C2C3	0x0010
+#define ACPI_PDC_SMP_P_SWCOORD	0x0020
+#define ACPI_PDC_SMP_C_SWCOORD	0x0040
+#define ACPI_PDC_SMP_T_SWCOORD	0x0080
+#define ACPI_PDC_C_C1_FFH	0x0100
+#define ACPI_PDC_C_C2C3_FFH	0x0200
 
 #define FLAGS_NO_C2		0x01
 #define FLAGS_NO_C3		0x02
@@ -121,6 +137,8 @@ int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
 struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int,
     int);
+void	acpicpu_set_pdc(struct acpicpu_softc *);
+
 #if 0
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
 struct acpi_cstate *acpicpu_find_cstate(struct acpicpu_softc *, int);
@@ -169,6 +187,28 @@ acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
 	return (NULL);
 }
 #endif
+
+
+void
+acpicpu_set_pdc(struct acpicpu_softc *sc) {
+	struct aml_value cmd;
+	struct aml_value res;
+	uint32_t buf[3];
+
+	memset(&cmd, 0, sizeof(buf));
+	cmd.type = AML_OBJTYPE_BUFFER;
+	cmd.v_buffer = (uint8_t *)&buf;
+	cmd.length = sizeof(buf);
+
+	buf[0] = ACPI_PDC_REVID;
+	buf[1] = 1;
+	buf[2] = ACPI_PDC_C_C1_HALT | ACPI_PDC_P_FFH | ACPI_PDC_C_C1_FFH
+	    | ACPI_PDC_C_C2C3_FFH | ACPI_PDC_SMP_P_SWCOORD | ACPI_PDC_SMP_C2C3
+	    | ACPI_PDC_SMP_C1PT;
+
+	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PDC", 1, &cmd, &res);
+}
+
 
 struct acpi_cstate *
 acpicpu_add_cstate(struct acpicpu_softc *sc, int type, int latency, int power,
@@ -268,6 +308,13 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_duty_off = sc->sc_acpi->sc_fadt->duty_offset;
 	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
+
+#if defined(amd64)
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0)
+		if (cpu_ecxfeature & CPUIDECX_EST)
+			acpicpu_set_pdc(sc);
+#endif
+
 	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr))
 		sc->sc_flags |= FLAGS_NOTHROTTLE;
 #ifdef ACPI_DEBUG
@@ -298,6 +345,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
 		    sc->sc_pblk_addr + 5);
 	}
+
 	if (acpicpu_getpss(sc)) {
 		sc->sc_flags |= FLAGS_NOPSS;
 	} else {
