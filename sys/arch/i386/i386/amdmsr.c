@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.2 2008/06/15 01:18:22 deraadt Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.3 2008/06/15 15:31:55 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -82,17 +82,17 @@ amdmsr_attach(struct device *parent, struct device *self, void *aux)
 int
 amdmsropen(dev_t dev, int flags, int devtype, struct proc *p)
 {
-	if (suser(p, 0) != 0)
-		return EPERM;
 #ifdef APERTURE
-	if (!allowaperture)
+	if (suser(p, 0) != 0 || !allowaperture)
 		return EPERM;
-#endif
 	/* allow only one simultaneous open() */
 	if (amdmsr_open_cnt > 0)
 		return EPERM;
 	amdmsr_open_cnt++;
 	return 0;
+#else
+	return ENXIO;
+#endif
 }
 
 int
