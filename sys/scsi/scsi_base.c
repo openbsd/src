@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.126 2008/06/14 01:57:51 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.127 2008/06/15 00:52:25 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1062,9 +1062,10 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			case SENSE_NOT_READY_INPROGRESS:
 			case SENSE_NOT_READY_LONGWRITE:
 			case SENSE_NOT_READY_SELFTEST:
+			case SENSE_NOT_READY_INIT_REQUIRED:
 				SC_DEBUG(sc_link, SDEV_DB1,
-		    		    ("not ready: busy (%#x)\n",
-				    sense->add_sense_code_qual));
+		    		    ("not ready (ASC_ASCQ == %#x)\n",
+				    ASC_ASCQ(sense)));
 				return (scsi_delay(xs, 1));
 			case SENSE_NOMEDIUM:
 			case SENSE_NOMEDIUM_TCLOSED:

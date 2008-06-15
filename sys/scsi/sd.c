@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.147 2008/06/15 00:36:41 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.148 2008/06/15 00:52:25 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		    SCSI_SILENT);
 
 	/* Check that it is still responding and ok. */
-	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES,
+	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES * 3,
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
