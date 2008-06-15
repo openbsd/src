@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.38 2008/06/15 18:10:03 yuo Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.39 2008/06/15 18:30:08 miod Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -197,7 +197,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 			return (&t->quirks);
 		}
 	}
-	/* no device specific quirks found, serarch class specific entry */
+	/* no device specific quirks found, search class specific entry */
 	for (td = usb_dev_quirks; td->bDeviceClass != 0; td++) {
 		if (td->bDeviceClass == d->bDeviceClass &&
 		    (td->bDeviceSubClass == bANY ||
