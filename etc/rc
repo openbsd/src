@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.316 2008/06/09 22:21:49 mbalmer Exp $
+#	$OpenBSD: rc,v 1.317 2008/06/15 04:49:34 sturm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -397,6 +397,7 @@ if [ X"${nfs_server}" = X"YES" -a -s /etc/exports -a \
 	echo -n ' nfsd';		nfsd ${nfsd_flags}
 	if [ X"${lockd}" = X"YES" ]; then
 		echo -n ' rpc.lockd';	rpc.lockd
+		echo -n ' rpc.statd';	rpc.statd
 	fi
 fi
 
