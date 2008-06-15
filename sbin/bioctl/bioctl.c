@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.69 2008/06/14 18:40:50 hshoexer Exp $       */
+/* $OpenBSD: bioctl.c,v 1.70 2008/06/15 00:43:23 hshoexer Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -48,6 +48,7 @@
 #include <ctype.h>
 #include <util.h>
 #include <vis.h>
+#include <readpassphrase.h>
 
 #include "pbkdf2.h"
 
@@ -64,8 +65,8 @@ int			bio_parse_devlist(char *, dev_t *);
 void			bio_kdf_derive(struct sr_crypto_kdfinfo *,
 			    struct sr_crypto_kdf_pbkdf2 *);
 void			bio_kdf_generate(struct sr_crypto_kdfinfo *);
-void			get_pkcs_key(int, u_int8_t *, size_t, u_int8_t *,
-			    size_t);
+void			derive_key_pkcs(int, u_int8_t *, size_t, u_int8_t *,
+			    size_t, int);
 
 void			bio_inq(char *);
 void			bio_alarm(char *);
@@ -712,9 +713,9 @@ bio_kdf_derive(struct sr_crypto_kdfinfo *kdfinfo, struct sr_crypto_kdf_pbkdf2
 	kdfinfo->flags = SR_CRYPTOKDF_KEY;
 	kdfinfo->len = sizeof(*kdfinfo);
 
-	get_pkcs_key(kdfhint->rounds,
+	derive_key_pkcs(kdfhint->rounds,
 	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
-	    kdfhint->salt, sizeof(kdfhint->salt));
+	    kdfhint->salt, sizeof(kdfhint->salt), 0);
 }
 
 void
@@ -732,9 +733,9 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 	/* generate salt */
 	arc4random_buf(kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));
 
-	get_pkcs_key(kdfinfo->pbkdf2.rounds,
+	derive_key_pkcs(kdfinfo->pbkdf2.rounds,
 	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
-	    kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));
+	    kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt), 1);
 }
 
 int
@@ -855,10 +856,10 @@ bio_diskinq(char *sd_dev)
 }
 
 void
-get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
-    size_t saltsz)
+derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
+    size_t saltsz, int verify)
 {
-	char		*passphrase;
+	char		 passphrase[1024], verifybuf[1024];
 
 	if (!key)
 		errx(1, "Invalid key");
@@ -868,9 +869,26 @@ get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "Too less rounds: %d", rounds);
 
 	/* get passphrase */
-	passphrase = getpass("Passphrase: ");
-	if (!passphrase || strlen(passphrase) == 0)
-		errx(1, "Need a passphrase");
+	if (readpassphrase("Passphrase: ", passphrase, sizeof(passphrase),
+	    RPP_REQUIRE_TTY) == NULL)
+		errx(1, "unable to read passphrase");
+
+	if (verify) {
+		/* request user to re-type it */
+		if (readpassphrase("Re-type passphrase: ", verifybuf,
+		    sizeof(verifybuf), RPP_REQUIRE_TTY) == NULL) {
+			memset(passphrase, 0, sizeof(passphrase));
+			errx(1, "unable to read passphrase");
+		}
+		if ((strlen(passphrase) != strlen(verifybuf)) ||
+		    (strcmp(passphrase, verifybuf) != 0)) {
+			memset(passphrase, 0, sizeof(passphrase));
+			memset(verifybuf, 0, sizeof(verifybuf));
+			errx(1, "Passphrases did not match");
+		}
+		/* forget the re-typed one */
+		memset(verifybuf, 0, strlen(verifybuf));
+	}
 
 	/* derive key from passphrase */
 	if (pkcs5_pbkdf2(passphrase, strlen(passphrase), salt, saltsz,
@@ -878,7 +896,7 @@ get_pkcs_key(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "pbkdf2 failed");
 
 	/* forget passphrase */
-	memset(passphrase, 0, strlen(passphrase));
+	memset(passphrase, 0, sizeof(passphrase));
 
 	return;
 }
