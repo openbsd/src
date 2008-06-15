@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2008/05/13 02:09:38 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.49 2008/06/15 03:09:13 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.48 2008/05/13 02:09:38 ray Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.49 2008/06/15 03:09:13 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -298,6 +298,8 @@ tryagain:
 			if (tmp[0] != '\0')
 				user = tmp;
 		}
+		else
+			exit(0);
 	}
 	n = command("USER %s", user);
 	if (n == CONTINUE) {
@@ -351,8 +353,10 @@ another(int *pargc, char ***pargv, const char *prompt)
 	}
 	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
-	if (fgets(&line[len], (int)(sizeof(line) - len), stdin) == NULL)
+	if (fgets(&line[len], (int)(sizeof(line) - len), stdin) == NULL) {
+		clearerr(stdin);
 		intr();
+	}
 	len += strlen(&line[len]);
 	if (len > 0 && line[len - 1] == '\n')
 		line[len - 1] = '\0';
@@ -459,13 +463,19 @@ confirm(const char *cmd, const char *file)
 {
 	char str[BUFSIZ];
 
+	if (confirmrest == 2)
+		return (0);
+
 	if (!interactive || confirmrest)
 		return (1);
 top:
 	fprintf(ttyout, "%s %s? ", cmd, file);
 	(void)fflush(ttyout);
-	if (fgets(str, sizeof(str), stdin) == NULL)
+	if (fgets(str, sizeof(str), stdin) == NULL) {
+		confirmrest = 2;
+		clearerr(stdin);
 		return (0);
+	}
 	switch (tolower(*str)) {
 		case 'n':
 			return (0);
