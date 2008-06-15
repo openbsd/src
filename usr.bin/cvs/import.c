@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.96 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: import.c,v 1.97 2008/06/15 04:21:26 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -324,7 +324,7 @@ import_new(struct cvs_file *cf)
 	if ((brev = rcsnum_brtorev(branch)) == NULL)
 		fatal("import_new: failed to get first branch revision");
 
-	cf->repo_fd = open(cf->file_rpath, O_CREAT|O_TRUNC|O_WRONLY);
+	cf->repo_fd = open(cf->file_rpath, O_CREAT | O_RDONLY);
 	if (cf->repo_fd < 0)
 		fatal("import_new: %s: %s", cf->file_rpath, strerror(errno));
 
