@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdmsr.4,v 1.1 2008/06/14 21:31:46 mbalmer Exp $
+.\"	$OpenBSD: amdmsr.4,v 1.2 2008/06/15 13:19:40 matthieu Exp $
 .\"
 .\" AMD K6 MSR driver for OpenBSD.
 .\" Copyright 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ..\"
-.Dd $Mdocdate: June 14 2008 $
+.Dd $Mdocdate: June 15 2008 $
 .Dt AMDMSR 4 i386
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ MSRs can read or written via
 calls performed on
 .Pa /dev/amdmsr .
 Declarations and data types are to be found in
-.Aq Pa sys/amdmsr.h
+.Aq Pa machine/amdmsr.h
 .Pp
 Read or write requests are performed using
 .Bd -literal -offset xxxx
