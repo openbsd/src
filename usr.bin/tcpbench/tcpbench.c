@@ -627,7 +627,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 	struct pollfd *pfd;
 	ssize_t n;
 	struct statctx sc;
-	u_int i;
+	u_int i, scnt = 0;
 	const char *errstr;
 
 	if ((buf = malloc(Bflag)) == NULL)
@@ -650,7 +650,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
 			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
 			    sizeof(tmp));
-			if (vflag)
+			if (vflag && scnt == 0)
 				fprintf(stderr, "Trying %s\n", tmp);
 			if ((sock = socket(ai->ai_family, ai->ai_socktype,
 			    ai->ai_protocol)) == -1) {
@@ -688,8 +688,11 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 
 		pfd[i].fd = sock;
 		pfd[i].events = POLLOUT;
+		scnt++;
 	}
 
+	if (vflag && scnt > 1)
+		fprintf(stderr, "%u connections established\n", scnt);
 	arc4random_buf(buf, Bflag);
 
 	signal(SIGINT, exitsighand);
