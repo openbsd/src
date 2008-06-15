@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.38 2008/06/15 16:58:57 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.39 2008/06/15 17:07:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1136,7 +1136,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		printf("%s: %s: %s\n", DEVNAME(sc), __func__,
+		DPRINTF(1, "%s: %s: %s\n", DEVNAME(sc), __func__,
 		    usbd_errstr(status));
 		return;
         }
