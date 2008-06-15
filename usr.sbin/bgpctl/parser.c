@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.49 2008/06/11 03:19:39 tobias Exp $ */
+/*	$OpenBSD: parser.c,v 1.50 2008/06/15 09:58:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -633,8 +633,10 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 			err(1, "parse_prefix: malloc");
 		strlcpy(ps, word, strlen(word) - strlen(p) + 1);
 
-		if (parse_addr(ps, addr) == 0)
+		if (parse_addr(ps, addr) == 0) {
+			free(ps);
 			return (0);
+		}
 
 		free(ps);
 	} else
