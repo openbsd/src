@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.53 2007/05/28 17:26:33 henning Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.54 2008/06/15 10:19:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -462,7 +462,8 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 	if (strcmp(filterset_name(a->type), filterset_name(b->type)))
 		return (a->type - b->type);
 
-	if (a->type == ACTION_SET_COMMUNITY) {	/* a->type == b->type */
+	if (a->type == ACTION_SET_COMMUNITY ||
+	    a->type == ACTION_DEL_COMMUNITY) {	/* a->type == b->type */
 		/* compare community */
 		if (a->action.community.as - b->action.community.as != 0)
 			return (a->action.community.as -
