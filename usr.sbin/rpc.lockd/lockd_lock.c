@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.2 2008/06/13 21:34:24 sturm Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.3 2008/06/15 03:58:38 sturm Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -64,11 +64,7 @@ typedef struct {
 static int
 fhcmp(const nfs_fhandle_t *fh1, const nfs_fhandle_t *fh2)
 {
-
-	if (fh1->fhsize != fh2->fhsize) {
-		return 1;
-	}
-	return memcmp(fh1->fhdata, fh2->fhdata, fh1->fhsize);
+	return memcmp(fh1->fhdata, fh2->fhdata, sizeof(fhandle_t));
 }
 
 static int
