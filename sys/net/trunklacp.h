@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.1 2008/06/15 06:56:09 mpf Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.2 2008/06/15 19:00:57 mpf Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -88,8 +88,8 @@
 #define	SLOWPROTOCOLS_SUBTYPE_MARKER	2
 
 struct slowprothdr {
-	uint8_t		sph_subtype;
-	uint8_t		sph_version;
+	u_int8_t		sph_subtype;
+	u_int8_t		sph_version;
 } __packed;
 
 /*
@@ -97,9 +97,9 @@ struct slowprothdr {
  */
 
 struct tlvhdr {
-	uint8_t		tlv_type;
-	uint8_t		tlv_length;
-	/* uint8_t tlv_value[]; */
+	u_int8_t		tlv_type;
+	u_int8_t		tlv_length;
+	/* u_int8_t tlv_value[]; */
 } __packed;
 
 /*
@@ -113,31 +113,31 @@ struct tlvhdr {
 	} while (/*CONSTCOND*/0)
 
 struct tlv_template {
-	uint8_t			tmpl_type;
-	uint8_t			tmpl_length;
+	u_int8_t			tmpl_type;
+	u_int8_t			tmpl_length;
 };
 
 struct lacp_systemid {
-	uint16_t		lsi_prio;
-	uint8_t			lsi_mac[6];
+	u_int16_t		lsi_prio;
+	u_int8_t		lsi_mac[6];
 } __packed;
 
 struct lacp_portid {
-	uint16_t		lpi_prio;
-	uint16_t		lpi_portno;
+	u_int16_t		lpi_prio;
+	u_int16_t		lpi_portno;
 } __packed;
 
 struct lacp_peerinfo {
 	struct lacp_systemid	lip_systemid;
-	uint16_t		lip_key;
+	u_int16_t		lip_key;
 	struct lacp_portid	lip_portid;
-	uint8_t			lip_state;
-	uint8_t			lip_resv[3];
+	u_int8_t		lip_state;
+	u_int8_t		lip_resv[3];
 } __packed;
 
 struct lacp_collectorinfo {
-	uint16_t		lci_maxdelay;
-	uint8_t			lci_resv[12];
+	u_int16_t		lci_maxdelay;
+	u_int8_t		lci_resv[12];
 } __packed;
 
 struct lacpdu {
@@ -151,7 +151,7 @@ struct lacpdu {
 	struct tlvhdr		ldu_tlv_collector;
 	struct lacp_collectorinfo ldu_collector;
 	struct tlvhdr		ldu_tlv_term;
-	uint8_t			ldu_resv[50];
+	u_int8_t		ldu_resv[50];
 } __packed;
 
 /*
@@ -160,10 +160,10 @@ struct lacpdu {
  * protocol (on-wire) definitions.
  */
 struct lacp_markerinfo {
-	uint16_t		mi_rq_port;
-	uint8_t			mi_rq_system[ETHER_ADDR_LEN];
-	uint32_t		mi_rq_xid;
-	uint8_t			mi_pad[2];
+	u_int16_t		mi_rq_port;
+	u_int8_t			mi_rq_system[ETHER_ADDR_LEN];
+	u_int32_t		mi_rq_xid;
+	u_int8_t		mi_pad[2];
 } __packed;
 
 struct markerdu {
@@ -173,7 +173,7 @@ struct markerdu {
 	struct tlvhdr		mdu_tlv;
 	struct lacp_markerinfo	mdu_info;
 	struct tlvhdr		mdu_tlv_term;
-	uint8_t			mdu_resv[90];
+	u_int8_t		mdu_resv[90];
 } __packed;
 
 #define	MARKER_TYPE_INFO	0x01
@@ -287,35 +287,9 @@ void		lacp_linkstate(struct trunk_port *);
 void		lacp_req(struct trunk_softc *, caddr_t);
 void		lacp_portreq(struct trunk_port *, caddr_t);
 
-static __inline int
-lacp_isactive(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-	struct lacp_softc *lsc = lp->lp_lsc;
-	struct lacp_aggregator *la = lp->lp_aggregator;
-
-	/* This port is joined to the active aggregator */
-	if (la != NULL && la == lsc->lsc_active_aggregator)
-		return (1);
-
-	return (0);
-}
-
-static __inline int
-lacp_iscollecting(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-
-	return ((lp->lp_state & LACP_STATE_COLLECTING) != 0);
-}
-
-static __inline int
-lacp_isdistributing(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-
-	return ((lp->lp_state & LACP_STATE_DISTRIBUTING) != 0);
-}
+int		lacp_isactive(struct trunk_port *);
+int		lacp_iscollecting(struct trunk_port *);
+int		lacp_isdistributing(struct trunk_port *);
 
 /* following constants don't include terminating NUL */
 #define	LACP_MACSTR_MAX		(2*6 + 5)
