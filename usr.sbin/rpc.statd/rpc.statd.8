@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.statd.8,v 1.1 2008/06/15 04:43:28 sturm Exp $
+.\"	$OpenBSD: rpc.statd.8,v 1.2 2008/06/15 20:42:42 jmc Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 19, 1995
+.Dd $Mdocdate: June 15 2008 $
 .Dt RPC.STATD 8
 .Os
 .Sh NAME
@@ -44,29 +44,31 @@
 .Sh DESCRIPTION
 .Nm
 is a daemon which co-operates with rpc.statd daemons on other hosts to provide
-a status monitoring service.  The daemon accepts requests from
+a status monitoring service.
+The daemon accepts requests from
 programs running on the local host (typically,
 .Xr rpc.lockd 8 ,
-the NFS file locking daemon) to monitor the status of specified
-hosts.  If a monitored host crashes and restarts, the remote daemon will
+the NFS file locking daemon) to monitor the status of specified hosts.
+If a monitored host crashes and restarts, the remote daemon will
 notify the local daemon, which in turn will notify the local program(s)
-which requested the monitoring service.  Conversely, if this host crashes
-and restarts, when
+which requested the monitoring service.
+Conversely if this host crashes and restarts when
 .Nm
 restarts, it will notify all of the hosts which were being monitored
 at the time of the crash.
 .Pp
-Options and operands available for
-.Nm
-:
+The options available are:
 .Bl -tag -width Ds
 .It Fl d
-The
-.Fl d
-option causes debugging information to be written to syslog, recording
-all RPC transactions to the daemon.  These messages are logged with level
-LOG_DEBUG and facility LOG_DAEMON.  Error conditions are logged irrespective
-of this option, using level LOG_ERR.
+Causes debugging information to be written to
+.Xr syslog 3 ,
+recording all RPC transactions to the daemon.
+These messages are logged with level
+.Dv LOG_DEBUG
+and facility
+.Dv LOG_DAEMON .
+Error conditions are logged irrespective of this option, using level
+.Dv LOG_ERR .
 .El
 .Pp
 The
@@ -75,22 +77,25 @@ daemon must NOT be invoked by
 .Xr inetd 8
 because the protocol assumes that the daemon will run from system start time.
 Instead, it should be configured in
-.Xr rc.conf 5
+.Xr rc.conf 8
 to run at system startup.
 .Sh FILES
 .Bl -tag -width /usr/include/rpcsvc/sm_inter.x -compact
-.It Pa /var/db/statd.status
-non-volatile record of currently monitored hosts.
 .It Pa /usr/include/rpcsvc/sm_inter.x
-RPC protocol specification used by local applications to register monitoring requests.
+RPC protocol specification used by local applications
+to register monitoring requests.
+.It Pa /var/db/statd.status
+Non-volatile record of currently monitored hosts.
 .El
 .Sh SEE ALSO
 .Xr syslog 3 ,
-.Xr rc.conf 5 ,
+.Xr rc.conf 8 ,
 .Xr rpc.lockd 8
 .Sh STANDARDS
-The implementation is based on the specification in X/Open CAE Specification
-C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9
+This implementation is based on the specification in
+the X/Open CAE Specification C218,
+"Protocols for X/Open PC Interworking: XNFS, Issue 4",
+ISBN 1 872630 66 9.
 .Sh HISTORY
 A version of
 .Nm
@@ -98,8 +103,9 @@ appeared in
 .Tn SunOS 4 .
 .Sh BUGS
 There is no means for the daemon to tell when a monitored host has
-disappeared permanently (e.g., catastrophic hardware failure), as opposed
-to transient failure of the host or an intermediate router.  At present,
+disappeared permanently (e.g. catastrophic hardware failure), as opposed
+to transient failure of the host or an intermediate router.
+At present,
 it will retry notification attempts at frequent intervals for 10 minutes,
 then hourly, and finally gives up after 24 hours.
 .Pp
@@ -109,5 +115,6 @@ This is convenient for the NFS locking protocol, but probably reduces the
 usefulness of the monitoring system for other applications.
 .Pp
 The current implementation uses more than 1Kbyte per monitored host in
-the status file (and also in VM).  This may be inefficient for NFS servers
+the status file (and also in VM).
+This may be inefficient for NFS servers
 with large numbers of clients.
