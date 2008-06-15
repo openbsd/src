@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.45 2008/06/14 01:18:53 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.46 2008/06/15 06:56:09 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,8 @@
 
 #include <net/if_vlan_var.h>
 #include <net/if_trunk.h>
+#include <net/trunklacp.h>
+
 
 SLIST_HEAD(__trhead, trunk_softc) trunk_list;	/* list of trunks */
 
@@ -126,6 +128,13 @@ int	 trunk_bcast_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_bcast_input(struct trunk_softc *, struct trunk_port *,
 	    struct ether_header *, struct mbuf *);
 
+/* 802.3ad LACP */
+int	 trunk_lacp_attach(struct trunk_softc *);
+int	 trunk_lacp_detach(struct trunk_softc *);
+int	 trunk_lacp_start(struct trunk_softc *, struct mbuf *);
+int	 trunk_lacp_input(struct trunk_softc *, struct trunk_port *,
+	    struct ether_header *, struct mbuf *);
+
 /* Trunk protocol table */
 static const struct {
 	enum trunk_proto	ti_proto;
@@ -135,6 +144,7 @@ static const struct {
 	{ TRUNK_PROTO_FAILOVER,		trunk_fail_attach },
 	{ TRUNK_PROTO_LOADBALANCE,	trunk_lb_attach },
 	{ TRUNK_PROTO_BROADCAST,	trunk_bcast_attach },
+	{ TRUNK_PROTO_LACP,		trunk_lacp_attach },
 	{ TRUNK_PROTO_NONE,		NULL }
 };
 
@@ -576,12 +586,35 @@ void
 trunk_port2req(struct trunk_port *tp, struct trunk_reqport *rp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+
 	strlcpy(rp->rp_ifname, tr->tr_ifname, sizeof(rp->rp_ifname));
 	strlcpy(rp->rp_portname, tp->tp_if->if_xname, sizeof(rp->rp_portname));
 	rp->rp_prio = tp->tp_prio;
-	rp->rp_flags = tp->tp_flags;
-	if (TRUNK_PORTACTIVE(tp))
-		rp->rp_flags |= TRUNK_PORT_ACTIVE;
+	if (tr->tr_portreq != NULL)
+		(*tr->tr_portreq)(tp, (caddr_t)&rp->rp_psc);
+
+	/* Add protocol specific flags */
+	switch (tr->tr_proto) {
+	case TRUNK_PROTO_FAILOVER:
+	case TRUNK_PROTO_ROUNDROBIN:
+	case TRUNK_PROTO_LOADBALANCE:
+	case TRUNK_PROTO_BROADCAST:
+		if (TRUNK_PORTACTIVE(tp))
+			rp->rp_flags |= TRUNK_PORT_ACTIVE;
+		break;
+
+	case TRUNK_PROTO_LACP:
+		/* LACP has a different definition of active */
+		if (lacp_isactive(tp))
+			rp->rp_flags |= TRUNK_PORT_ACTIVE;
+		if (lacp_iscollecting(tp))
+			rp->rp_flags |= TRUNK_PORT_COLLECTING;
+		if (lacp_isdistributing(tp))
+			rp->rp_flags |= TRUNK_PORT_DISTRIBUTING;
+		break;
+	default:
+		break;
+	}
 }
 
 int
@@ -606,6 +639,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCGTRUNK:
 		ra->ra_proto = tr->tr_proto;
+		if (tr->tr_req != NULL)
+			(*tr->tr_req)(tr, (caddr_t)&ra->ra_psc);
 		ra->ra_ports = i = 0;
 		tp = SLIST_FIRST(&tr->tr_ports);
 		while (tp && ra->ra_size >=
@@ -698,7 +733,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&tr->tr_ac, ifa);
@@ -1200,6 +1234,8 @@ trunk_rr_attach(struct trunk_softc *tr)
 	tr->tr_port_create = NULL;
 	tr->tr_port_destroy = trunk_rr_port_destroy;
 	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
+	tr->tr_req = NULL;
+	tr->tr_portreq = NULL;
 
 	tp = SLIST_FIRST(&tr->tr_ports);
 	tr->tr_psc = (caddr_t)tp;
@@ -1272,6 +1308,8 @@ trunk_fail_attach(struct trunk_softc *tr)
 	tr->tr_port_create = NULL;
 	tr->tr_port_destroy = NULL;
 	tr->tr_linkstate = NULL;
+	tr->tr_req = NULL;
+	tr->tr_portreq = NULL;
 
 	return (0);
 }
@@ -1349,6 +1387,8 @@ trunk_lb_attach(struct trunk_softc *tr)
 	tr->tr_port_destroy = trunk_lb_port_destroy;
 	tr->tr_linkstate = NULL;
 	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
+	tr->tr_req = NULL;
+	tr->tr_portreq = NULL;
 
 	lb->lb_key = arc4random();
 	tr->tr_psc = (caddr_t)lb;
@@ -1468,6 +1508,8 @@ trunk_bcast_attach(struct trunk_softc *tr)
 	tr->tr_port_create = NULL;
 	tr->tr_port_destroy = NULL;
 	tr->tr_linkstate = NULL;
+	tr->tr_req = NULL;
+	tr->tr_portreq = NULL;
 
 	return (0);
 }
@@ -1516,6 +1558,96 @@ trunk_bcast_input(struct trunk_softc *tr, struct trunk_port *tp,
     struct ether_header *eh, struct mbuf *m)
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;
+
+	m->m_pkthdr.rcvif = ifp;
+	return (0);
+}
+
+/*
+ * 802.3ad LACP
+ */
+
+int
+trunk_lacp_attach(struct trunk_softc *tr)
+{
+	struct trunk_port *tp;
+	int error;
+
+	tr->tr_detach = trunk_lacp_detach;
+	tr->tr_port_create = lacp_port_create;
+	tr->tr_port_destroy = lacp_port_destroy;
+	tr->tr_linkstate = lacp_linkstate;
+	tr->tr_start = trunk_lacp_start;
+	tr->tr_input = trunk_lacp_input;
+	tr->tr_init = lacp_init;
+	tr->tr_stop = lacp_stop;
+	tr->tr_req = lacp_req;
+	tr->tr_portreq = lacp_portreq;
+
+	error = lacp_attach(tr);
+	if (error)
+		return (error);
+
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+		lacp_port_create(tp);
+
+	return (error);
+}
+
+int
+trunk_lacp_detach(struct trunk_softc *tr)
+{
+	struct trunk_port *tp;
+	int error;
+
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+		lacp_port_destroy(tp);
+
+	/* unlocking is safe here */
+	error = lacp_detach(tr);
+
+	return (error);
+}
+
+int
+trunk_lacp_start(struct trunk_softc *tr, struct mbuf *m)
+{
+	struct trunk_port *tp;
+
+	tp = lacp_select_tx_port(tr, m);
+	if (tp == NULL) {
+		m_freem(m);
+		return (EBUSY);
+	}
+
+	/* Send mbuf */
+	return (trunk_enqueue(tp->tp_if, m));
+}
+
+int
+trunk_lacp_input(struct trunk_softc *tr, struct trunk_port *tp,
+    struct ether_header *eh, struct mbuf *m)
+{
+	struct ifnet *ifp = &tr->tr_ac.ac_if;
+	u_short etype;
+
+	etype = ntohs(eh->ether_type);
+
+	/* Tap off LACP control messages */
+	if (etype == ETHERTYPE_SLOW) {
+		m = lacp_input(tp, m);
+		if (m == NULL)
+			return (-1);
+	}
+
+	/*
+	 * If the port is not collecting or not in the active aggregator then
+	 * free and return.
+	 */
+	if (lacp_iscollecting(tp) == 0 || lacp_isactive(tp) == 0) {
+		m_freem(m);
+		return (-1);
+	}
 
 	m->m_pkthdr.rcvif = ifp;
 	return (0);

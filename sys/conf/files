@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.435 2008/06/12 06:58:38 deraadt Exp $
+#	$OpenBSD: files,v 1.436 2008/06/15 06:56:09 mpf Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -777,6 +777,7 @@ file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
 file net/if_trunk.c			trunk			needs-count
+file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan

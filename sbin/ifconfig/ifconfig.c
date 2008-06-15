@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.199 2008/06/14 21:46:22 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.200 2008/06/15 06:56:09 mpf Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4013,6 +4013,7 @@ trunk_status(void)
 	struct trunk_protos tpr[] = TRUNK_PROTOS;
 	struct trunk_reqport rp, rpbuf[TRUNK_MAX_PORTS];
 	struct trunk_reqall ra;
+	struct lacp_opreq *lp;
 	const char *proto = "<unknown>";
 	int i, isport = 0;
 
@@ -4030,6 +4031,8 @@ trunk_status(void)
 	ra.ra_port = rpbuf;
 
 	if (ioctl(s, SIOCGTRUNK, &ra) == 0) {
+		lp = (struct lacp_opreq *)&ra.ra_lacpreq;
+
 		for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
 			if (ra.ra_proto == tpr[i].tpr_proto) {
 				proto = tpr[i].tpr_name;
@@ -4041,6 +4044,17 @@ trunk_status(void)
 		if (isport)
 			printf(" trunkdev %s", rp.rp_ifname);
 		putchar('\n');
+		if (ra.ra_proto == TRUNK_PROTO_LACP) {
+			printf("\ttrunk id: [(%04X,%s,%04X,%04X,%04X),\n"
+			    "\t\t (%04X,%s,%04X,%04X,%04X)]\n",
+			    lp->actor_prio,
+			    ether_ntoa((struct ether_addr*)lp->actor_mac),
+			    lp->actor_key, lp->actor_portprio, lp->actor_portno,
+			    lp->partner_prio,
+			    ether_ntoa((struct ether_addr*)lp->partner_mac),
+			    lp->partner_key, lp->partner_portprio,
+			    lp->partner_portno);
+		}
 
 		for (i = 0; i < ra.ra_ports; i++) {
 			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);

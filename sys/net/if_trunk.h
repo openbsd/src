@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.15 2008/06/13 07:03:45 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.16 2008/06/15 06:56:09 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -28,13 +28,16 @@
 #define TRUNK_MAX_STACKING	4	/* maximum number of stacked trunks */
 
 /* Port flags */
-#define TRUNK_PORT_SLAVE	0x00000000	/* normal enslaved port */
-#define TRUNK_PORT_MASTER	0x00000001	/* primary port */
-#define TRUNK_PORT_STACK	0x00000002	/* stacked trunk port */
-#define TRUNK_PORT_ACTIVE	0x00000004	/* port is active */
-#define TRUNK_PORT_GLOBAL	0x80000000	/* IOCTL: global flag */
-#define TRUNK_PORT_BITS							\
-	"\20\01MASTER\02STACK\03ACTIVE"
+#define TRUNK_PORT_SLAVE		0x00000000 /* normal enslaved port */
+#define TRUNK_PORT_MASTER		0x00000001 /* primary port */
+#define TRUNK_PORT_STACK		0x00000002 /* stacked trunk port */
+#define TRUNK_PORT_ACTIVE		0x00000004 /* port is active */
+#define TRUNK_PORT_COLLECTING		0x00000008 /* port is receiving frames */
+#define TRUNK_PORT_DISTRIBUTING	0x00000010 /* port is sending frames */
+#define TRUNK_PORT_DISABLED		0x00000020 /* port is disabled */
+#define TRUNK_PORT_GLOBAL		0x80000000 /* IOCTL: global flag */
+#define TRUNK_PORT_BITS		"\20\01MASTER\02STACK\03ACTIVE" \
+					 "\04COLLECTING\05DISTRIBUTING\06DISABLED"
 
 /* Supported trunk PROTOs */
 enum trunk_proto {
@@ -43,7 +46,8 @@ enum trunk_proto {
 	TRUNK_PROTO_FAILOVER	= 2,		/* active failover */
 	TRUNK_PROTO_LOADBALANCE	= 3,		/* loadbalance */
 	TRUNK_PROTO_BROADCAST	= 4,		/* broadcast */
-	TRUNK_PROTO_MAX		= 5
+	TRUNK_PROTO_LACP	= 5,		/* 802.3ad LACP */
+	TRUNK_PROTO_MAX		= 6
 };
 
 struct trunk_protos {
@@ -55,6 +59,7 @@ struct trunk_protos {
 #define TRUNK_PROTOS	{						\
 	{ "roundrobin",		TRUNK_PROTO_ROUNDROBIN },		\
 	{ "failover",		TRUNK_PROTO_FAILOVER },			\
+	{ "lacp",		TRUNK_PROTO_LACP },			\
 	{ "loadbalance",	TRUNK_PROTO_LOADBALANCE },		\
 	{ "broadcast",		TRUNK_PROTO_BROADCAST },		\
 	{ "none",		TRUNK_PROTO_NONE },			\
@@ -65,12 +70,34 @@ struct trunk_protos {
  * Trunk ioctls.
  */
 
+/*
+ * LACP current operational parameters structure.
+ */
+struct lacp_opreq {
+	u_int16_t		actor_prio;
+	u_int8_t		actor_mac[ETHER_ADDR_LEN];
+	u_int16_t		actor_key;
+	u_int16_t		actor_portprio;
+	u_int16_t		actor_portno;
+	u_int8_t		actor_state;
+	u_int16_t		partner_prio;
+	u_int8_t		partner_mac[ETHER_ADDR_LEN];
+	u_int16_t		partner_key;
+	u_int16_t		partner_portprio;
+	u_int16_t		partner_portno;
+	u_int8_t		partner_state;
+};
+
 /* Trunk port settings */
 struct trunk_reqport {
 	char			rp_ifname[IFNAMSIZ];	/* name of the trunk */
 	char			rp_portname[IFNAMSIZ];	/* name of the port */
 	u_int32_t		rp_prio;		/* port priority */
 	u_int32_t		rp_flags;		/* port flags */
+	union {
+		struct lacp_opreq rpsc_lacp;
+	} rp_psc;
+#define rp_lacpreq	rp_psc.rpsc_lacp
 };
 
 #define SIOCGTRUNKPORT		_IOWR('i', 140, struct trunk_reqport)
@@ -85,6 +112,10 @@ struct trunk_reqall {
 	size_t			ra_size;		/* size of buffer */
 	struct trunk_reqport	*ra_port;		/* allocated buffer */
 	int			ra_ports;		/* total port count */
+	union {
+		struct lacp_opreq rpsc_lacp;
+	} ra_psc;
+#define ra_lacpreq	ra_psc.rpsc_lacp
 };
 
 #define SIOCGTRUNK		_IOWR('i', 143, struct trunk_reqall)
@@ -169,6 +200,8 @@ struct trunk_softc {
 	void	(*tr_linkstate)(struct trunk_port *);
 	void	(*tr_init)(struct trunk_softc *);
 	void	(*tr_stop)(struct trunk_softc *);
+	void	(*tr_req)(struct trunk_softc *, caddr_t);
+	void	(*tr_portreq)(struct trunk_port *, caddr_t);
 };
 
 #define tr_ifflags		tr_ac.ac_if.if_flags		/* flags */
