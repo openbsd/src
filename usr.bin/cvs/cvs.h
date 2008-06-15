@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.168 2008/06/14 03:58:29 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.169 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -362,6 +362,9 @@ extern struct cvs_cmd cvs_cmd_server;
 extern struct cvs_cmd cvs_cmd_unedit;
 extern struct cvs_cmd cvs_cmd_watch;
 extern struct cvs_cmd cvs_cmd_watchers;
+
+/* add.c */
+void		 cvs_add_tobranch(struct cvs_file *, char *);
 
 /* cmd.c */
 struct cvs_cmd	*cvs_findcmd(const char *);

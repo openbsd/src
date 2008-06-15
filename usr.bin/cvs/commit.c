@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.142 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.143 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -366,6 +366,8 @@ cvs_commit_check_files(struct cvs_file *cf)
 			brev = rcs_translate_tag(tag, cf->file_rcs);
 
 			if (brev == NULL) {
+				if (cf->file_status == FILE_ADDED)
+					goto next;
 				fatal("failed to resolve tag: %s",
 				    cf->file_ent->ce_tag);
 			}
@@ -432,7 +434,7 @@ cvs_commit_local(struct cvs_file *cf)
 {
 	char *tag;
 	BUF *b, *d;
-	int onbranch, isnew, histtype;
+	int onbranch, isnew, histtype, branchadded;
 	RCSNUM *nrev, *crev, *rrev, *brev;
 	int openflags, rcsflags;
 	char rbuf[CVS_REV_BUFSZ], nbuf[CVS_REV_BUFSZ];
@@ -449,9 +451,27 @@ cvs_commit_local(struct cvs_file *cf)
 	if (cf->file_type != CVS_FILE)
 		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);
 
-	if (cf->file_status != FILE_MODIFIED &&
-	    cf->file_status != FILE_ADDED &&
-	    cf->file_status != FILE_REMOVED) {
+	tag = cvs_directory_tag;
+	if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
+		tag = cf->file_ent->ce_tag;
+
+	branchadded = 0;
+	switch (cf->file_status) {
+	case FILE_ADDED:
+		if (cf->file_rcs == NULL && tag != NULL) {
+			branchadded = 1;
+			cvs_add_tobranch(cf, tag);
+		}
+		break;
+	case FILE_MODIFIED:
+	case FILE_REMOVED:
+		if (cf->file_rcs == NULL) {
+			cvs_log(LP_ERR, "RCS file for %s got lost",
+			    cf->file_path);
+			return;
+		}
+		break;
+	default:
 		cvs_log(LP_ERR, "skipping bogus file `%s'", cf->file_path);
 		return;
 	}
@@ -466,18 +486,12 @@ cvs_commit_local(struct cvs_file *cf)
 		cf->file_rcs->rf_branch = NULL;
 	}
 
-	if (cf->file_status == FILE_MODIFIED ||
-	    cf->file_status == FILE_REMOVED || (cf->file_status == FILE_ADDED
-	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1)) {
+	if (cf->file_rcs != NULL) {
 		rrev = rcs_head_get(cf->file_rcs);
 		crev = rcs_head_get(cf->file_rcs);
 		if (crev == NULL || rrev == NULL)
 			fatal("no head revision in RCS file for %s",
 			    cf->file_path);
-
-		tag = cvs_directory_tag;
-		if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
-			tag = cf->file_ent->ce_tag;
 
 		if (tag != NULL) {
 			rcsnum_free(crev);
@@ -524,32 +538,36 @@ cvs_commit_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_ADDED) {
 		isnew = 1;
 		rcsflags = RCS_CREATE;
-		openflags = O_CREAT | O_TRUNC | O_WRONLY;
+		openflags = O_CREAT | O_RDONLY;
 		if (cf->file_rcs != NULL) {
-			if (cf->in_attic == 0)
-				cvs_log(LP_ERR, "warning: expected %s "
-				    "to be in the Attic", cf->file_path);
+			if (!onbranch) {
+				if (cf->in_attic == 0)
+					cvs_log(LP_ERR, "warning: expected %s "
+					    "to be in the Attic",
+					    cf->file_path);
 
-			if (cf->file_rcs->rf_dead == 0)
-				cvs_log(LP_ERR, "warning: expected %s "
-				    "to be dead", cf->file_path);
+				if (cf->file_rcs->rf_dead == 0)
+					cvs_log(LP_ERR, "warning: expected %s "
+					    "to be dead", cf->file_path);
 
-			cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-			(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
-			    repo, cf->file_name, RCS_FILE_EXT);
+				cvs_get_repository_path(cf->file_wd, repo,
+				    MAXPATHLEN);
+				(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
+				    repo, cf->file_name, RCS_FILE_EXT);
 
-			if (rename(cf->file_rpath, rcsfile) == -1)
-				fatal("cvs_commit_local: failed to move %s "
-				    "outside the Attic: %s", cf->file_path,
-				    strerror(errno));
+				if (rename(cf->file_rpath, rcsfile) == -1)
+					fatal("cvs_commit_local: failed to "
+					    "move %s outside the Attic: %s",
+					    cf->file_path, strerror(errno));
 
-			xfree(cf->file_rpath);
-			cf->file_rpath = xstrdup(rcsfile);
+				xfree(cf->file_rpath);
+				cf->file_rpath = xstrdup(rcsfile);
+				isnew = 0;
+			}
 
 			rcsflags = RCS_READ | RCS_PARSE_FULLY;
 			openflags = O_RDONLY;
 			rcs_close(cf->file_rcs);
-			isnew = 0;
 		}
 
 		cf->repo_fd = open(cf->file_rpath, openflags);
@@ -563,6 +581,9 @@ cvs_commit_local(struct cvs_file *cf)
 			    "for %s", cf->file_path);
 
 		commit_desc_set(cf);
+
+		if (branchadded)
+			strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 	}
 
 	if (verbosity > 1) {

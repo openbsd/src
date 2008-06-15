@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.275 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.276 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -593,6 +593,35 @@ rcs_head_set(RCSFILE *file, RCSNUM *rev)
 	return (0);
 }
 
+/*
+ * rcs_branch_new()
+ *
+ * Create a new branch out of supplied revision for the RCS file <file>.
+ */
+RCSNUM *
+rcs_branch_new(RCSFILE *file, RCSNUM *rev)
+{
+	RCSNUM *brev;
+	struct rcs_sym *sym;
+
+	if ((brev = rcsnum_new_branch(rev)) == NULL)
+		return (NULL);
+
+	for (;;) {
+		TAILQ_FOREACH(sym, &(file->rf_symbols), rs_list)
+			if (!rcsnum_cmp(sym->rs_num, brev, 0))
+				break;
+
+		if (sym != NULL) {
+			if (rcsnum_inc(brev) == NULL ||
+			    rcsnum_inc(brev) == NULL)
+				return (NULL);
+		} else
+			break;
+	}
+
+	return (brev);
+}
 
 /*
  * rcs_branch_get()

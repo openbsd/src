@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.104 2008/06/14 04:34:07 tobias Exp $	*/
+/*	$OpenBSD: add.c,v 1.105 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -215,6 +216,77 @@ cvs_add_loginfo(char *repo)
 	cvs_buf_putc(buf, '\0');
 
 	loginfo = cvs_buf_release(buf);
+}
+
+void
+cvs_add_tobranch(struct cvs_file *cf, char *tag)
+{
+	BUF *bp;
+	char attic[MAXPATHLEN], repo[MAXPATHLEN];
+	char *msg;
+	struct stat st;
+	struct rcs_delta *rdp;
+	RCSNUM *branch;
+
+	cvs_log(LP_TRACE, "cvs_add_tobranch(%s)", cf->file_name);
+
+	if (cvs_noexec == 1)
+		return;
+
+	if (fstat(cf->fd, &st) == -1)
+		fatal("cvs_add_tobranch: %s", strerror(errno));
+
+	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
+	(void)xsnprintf(attic, MAXPATHLEN, "%s/%s",
+	    repo, CVS_PATH_ATTIC);
+
+	if (mkdir(attic, 0755) == -1 && errno != EEXIST)
+		fatal("cvs_add_tobranch: failed to create Attic");
+
+	(void)xsnprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
+	    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
+
+	xfree(cf->file_rpath);
+	cf->file_rpath = xstrdup(attic);
+
+	cf->repo_fd = open(cf->file_rpath, O_CREAT|O_RDONLY);
+	if (cf->repo_fd < 0)
+		fatal("cvs_add_tobranch: %s: %s", cf->file_rpath,
+		    strerror(errno));
+
+	cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd,
+	    RCS_CREATE|RCS_WRITE, 0444);
+	if (cf->file_rcs == NULL)
+		fatal("cvs_add_tobranch: failed to create RCS file for %s",
+		    cf->file_path);
+
+	if ((branch = rcsnum_parse("1.1.2")) == NULL)
+		fatal("cvs_add_tobranch: failed to parse branch");
+
+	if (rcs_sym_add(cf->file_rcs, tag, branch) == -1)
+		fatal("cvs_add_tobranch: failed to add vendor tag");
+
+	(void)xasprintf(&msg, "file %s was initially added on branch %s.",
+	    cf->file_name, tag);
+	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, msg, -1, NULL) == -1)
+		fatal("cvs_add_tobranch: failed to create first branch "
+		    "revision");
+	xfree(msg);
+
+	if ((rdp = rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
+		fatal("cvs_add_tobranch: cannot find newly added revision");
+
+	bp = cvs_buf_alloc(1);
+
+	if (rcs_deltatext_set(cf->file_rcs,
+	    cf->file_rcs->rf_head, bp) == -1)
+		fatal("cvs_add_tobranch: failed to set deltatext");
+
+	rcs_comment_set(cf->file_rcs, " * ");
+
+	if (rcs_state_set(cf->file_rcs, cf->file_rcs->rf_head, RCS_STATE_DEAD)
+	    == -1)
+		fatal("cvs_add_tobranch: failed to set state");
 }
 
 static void

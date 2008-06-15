@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.91 2008/06/12 16:17:55 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.92 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -212,6 +212,7 @@ RCSFILE			*rcs_open(const char *, int, int, ...);
 void			 rcs_close(RCSFILE *);
 RCSNUM			*rcs_head_get(RCSFILE *);
 int			 rcs_head_set(RCSFILE *, RCSNUM *);
+RCSNUM			*rcs_branch_new(RCSFILE *, RCSNUM *);
 const RCSNUM		*rcs_branch_get(RCSFILE *);
 int			 rcs_branch_set(RCSFILE *, const RCSNUM *);
 int			 rcs_access_add(RCSFILE *, const char *);

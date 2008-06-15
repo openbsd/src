@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.74 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.75 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -450,22 +450,8 @@ tag_add(struct cvs_file *cf)
 	}
 
 	if (runflags & T_BRANCH) {
-		if ((trev = rcsnum_new_branch(srev)) == NULL)
+		if ((trev = rcs_branch_new(cf->file_rcs, srev)) == NULL)
 			fatal("Cannot create a new branch");
-
-		for (;;) {
-			TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list)
-				if (!rcsnum_cmp(sym->rs_num, trev, 0))
-					break;
-
-			if (sym != NULL) {
-				if (rcsnum_inc(trev) == NULL)
-					fatal("New revision too high");
-				if (rcsnum_inc(trev) == NULL)
-					fatal("New revision too high");
-			} else
-				break;
-		}
 	} else {
 		trev = rcsnum_alloc();
 		rcsnum_cpy(srev, trev, 0);

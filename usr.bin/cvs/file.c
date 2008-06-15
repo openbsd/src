@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.248 2008/06/14 03:58:29 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.249 2008/06/15 04:38:52 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -806,7 +806,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			}
 
 			cf->file_status = FILE_UNKNOWN;
-		} else if (rcsdead == 1) {
+		} else if (rcsdead == 1 || !(cf->file_flags & FILE_HAS_TAG)) {
 			if (cf->fd == -1) {
 				cf->file_status = FILE_UPTODATE;
 			} else if (cvs_cmdop != CVS_OP_ADD) {
@@ -830,7 +830,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 				    cf->file_path);
 			}
 			cf->file_status = FILE_REMOVE_ENTRY;
-		} else if (cf->file_rcs == NULL || rcsdead == 1) {
+		} else if (cf->file_rcs == NULL || rcsdead == 1 ||
+		    !(cf->file_flags & FILE_HAS_TAG)) {
 			cf->file_status = FILE_ADDED;
 		} else {
 			cvs_log(LP_NOTICE,
