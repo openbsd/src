@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.37 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.38 2008/06/15 08:23:50 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -91,6 +91,9 @@ sub delete_installed
 
 sub installed_stems
 {
+	if (!defined $list) {
+		_init_list();
+	}
 	return $stemlist;
 }
 
