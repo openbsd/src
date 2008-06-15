@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.37 2008/05/24 20:39:18 ckuethe Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.38 2008/06/15 18:10:03 yuo Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -160,27 +160,60 @@ const struct usbd_quirk_entry {
  { 0, 0, 0, { 0 } }
 };
 
+#define bANY 0xff
+const struct usbd_dev_quirk_entry {
+	u_int8_t bDeviceClass;
+	u_int8_t bDeviceSubClass;
+	u_int8_t bDeviceProtocol;
+	struct usbd_quirks quirks;
+} usb_dev_quirks[] = {
+ /* currently this table is empty */
+ { 0, 0, 0, { 0 } }
+};
+
 const struct usbd_quirks usbd_no_quirk = { 0 };
 
 const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
+	const struct usbd_dev_quirk_entry *td;
 	u_int16_t vendor = UGETW(d->idVendor);
 	u_int16_t product = UGETW(d->idProduct);
 	u_int16_t revision = UGETW(d->bcdDevice);
 
+	/* search device specific quirks entry */
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == vendor &&
 		    t->idProduct == product &&
-		    (t->bcdDevice == ANY || t->bcdDevice == revision))
-			break;
-	}
+		    (t->bcdDevice == ANY || t->bcdDevice == revision)) {
 #ifdef USB_DEBUG
-	if (usbdebug && t->quirks.uq_flags)
-		printf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n",
-			  UGETW(d->idVendor), UGETW(d->idProduct),
-			  UGETW(d->bcdDevice), t->quirks.uq_flags);
+			if (usbdebug && t->quirks.uq_flags)
+				printf("usbd_find_quirk for specific device 0x%04x/0x%04x/%x: %d\n",
+					vendor, product, UGETW(d->bcdDevice),
+					t->quirks.uq_flags);
 #endif
-	return (&t->quirks);
+	
+			return (&t->quirks);
+		}
+	}
+	/* no device specific quirks found, serarch class specific entry */
+	for (td = usb_dev_quirks; td->bDeviceClass != 0; td++) {
+		if (td->bDeviceClass == d->bDeviceClass &&
+		    (td->bDeviceSubClass == bANY ||
+		     td->bDeviceSubClass == d->bDeviceSubClass) &&
+		    (td->bDeviceProtocol == bANY ||
+		     td->bDeviceProtocol == d->bDeviceProtocol)) {
+#ifdef USB_DEBUG
+			if (usbdebug && td->quirks.uq_flags)
+				printf("usbd_find_quirk for device class 0x%02x/0x%02x/%x: %d\n",
+					d->bDeviceClass, d->bDeviceSubClass, 
+					UGETW(d->bcdDevice),
+					td->quirks.uq_flags);
+#endif
+			return (&td->quirks);
+		}
+	}
+
+	return (&usbd_no_quirk);
 }
