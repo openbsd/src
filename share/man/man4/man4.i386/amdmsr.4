@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdmsr.4,v 1.2 2008/06/15 13:19:40 matthieu Exp $
+.\"	$OpenBSD: amdmsr.4,v 1.3 2008/06/15 18:55:58 jmc Exp $
 .\"
 .\" AMD K6 MSR driver for OpenBSD.
 .\" Copyright 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -34,9 +34,9 @@ MSRs can read or written via
 calls performed on
 .Pa /dev/amdmsr .
 Declarations and data types are to be found in
-.Aq Pa machine/amdmsr.h
+.Aq Pa machine/amdmsr.h .
 .Pp
-Read or write requests are performed using
+Read or write requests are performed using:
 .Bd -literal -offset xxxx
 struct amdmsr_req {
 	u_int32_t addr;	/* 32-bit MSR address */
@@ -52,7 +52,7 @@ The
 .Fa WRMSR
 ioctl is used to write an MSR register.
 .Sh SEE ALSO
-.Xr ioctl 2 ,
+.Xr ioctl 2
 .Sh HISTORY
 .Nm
 support was added in
