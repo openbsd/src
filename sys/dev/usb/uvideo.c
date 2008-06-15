@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.36 2008/06/15 03:44:31 robert Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.37 2008/06/15 11:08:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1271,7 +1271,7 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 	/* queue it */
 	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[sc->sc_mmap_cur],
 	    q_frames);
-	DPRINTF(1, "%s: %s: frame queued on index %d\n",
+	DPRINTF(2, "%s: %s: frame queued on index %d\n",
 	    DEVNAME(sc), __func__, sc->sc_mmap_cur);
 
 	/* point to next mmap buffer */
@@ -1904,7 +1904,7 @@ uvideo_qbuf(void *v, struct v4l2_buffer *qb)
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED;
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_QUEUED;
 
-	DPRINTF(1, "%s: %s: buffer on index %d ready for queueing\n",
+	DPRINTF(2, "%s: %s: buffer on index %d ready for queueing\n",
 	    DEVNAME(sc), __func__, qb->index);
 
 	return (0);
@@ -1932,7 +1932,7 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 
 	mmap->v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_DONE;
 
-	DPRINTF(1, "%s: %s: frame dequeued from index %d\n",
+	DPRINTF(2, "%s: %s: frame dequeued from index %d\n",
 	    DEVNAME(sc), __func__, mmap->v4l2_buf.index);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
 
