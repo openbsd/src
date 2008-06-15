@@ -2233,3 +2233,4 @@
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/a2coff
 ./usr/mdec/netboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/trunklacp.ph

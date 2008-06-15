@@ -56,7 +56,7 @@
 ./usr/lib/libperl.so.10.1
 ./usr/lib/libpthread.so.11.0
 ./usr/lib/libreadline.so.3.0
-./usr/lib/librpcsvc.so.1.1
+./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.11.0
@@ -2299,3 +2299,4 @@
 ./usr/mdec/sdboot
 ./usr/mdec/uboot.lif
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/trunklacp.ph

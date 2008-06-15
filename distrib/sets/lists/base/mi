@@ -1,3 +1,4 @@
+./usr/sbin/rpc.statd
 ./altroot
 ./bin
 ./bin/[
