@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.267 2008/06/14 23:13:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.268 2008/06/15 01:52:19 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
 
-NOOBJ=	oobj
+NOOBJ=
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
