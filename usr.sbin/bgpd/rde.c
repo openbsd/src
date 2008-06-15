@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.231 2008/05/02 13:49:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.232 2008/06/15 10:03:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -747,6 +747,11 @@ rde_update_dispatch(struct imsg *imsg)
 		return (-1);	/* peer is not yet up, cannot happen */
 
 	p = imsg->data;
+
+	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2) {
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
+		return (-1);
+	}
 
 	memcpy(&len, p, 2);
 	withdrawn_len = ntohs(len);
