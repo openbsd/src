@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.31 2006/06/17 16:27:55 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.32 2008/06/15 07:37:05 todd Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -66,6 +66,8 @@ void OF_exit(void) __attribute__((__noreturn__));
 void OF_boot(char *bootspec) __attribute__((__noreturn__));
 void ofw_mem_regions(struct mem_region **memp, struct mem_region **availp);
 void ofw_vmon(void);
+
+extern char *hw_prod;
 
 struct firmware ofw_firmware = {
 	ofw_mem_regions,
@@ -260,7 +262,6 @@ ofw_recurse_keyboard(int pnode)
 	int old_devtree;
 	int len;
 	int node;
-	int vendor, product;
 
 	for (node = OF_child(pnode); node != 0; node = OF_peer(node)) {
 
@@ -271,23 +272,7 @@ ofw_recurse_keyboard(int pnode)
 		if (strcmp(name, "keyboard") == 0) {
 			/* found a keyboard node, where is it? */
 			if (ofw_devtree == DEVTREE_USB) {
-				/*
-				 * On some machines, such as PowerBook6,8,
-				 * the built-in ADB keyboard and mouse also
-				 * appears as an USB device, which we will
-				 * ignore.
-				 * We need to tell these shadow devices apart
-				 * from regular external USB keyboards.
-				 */
-				if (OF_getprop(pnode, "vendor-id", &vendor,
-				    sizeof vendor) != sizeof vendor)
-					vendor = 0;
-				if (OF_getprop(pnode, "product-id", &product,
-				    sizeof product) != sizeof product)
-					product = 0;
-				if (vendor != USB_VENDOR_APPLE ||
-				    product != USB_PRODUCT_APPLE_ADB)
-					ofw_have_kbd |= OFW_HAVE_USBKBD;
+				ofw_have_kbd |= OFW_HAVE_USBKBD;
 			} else if (ofw_devtree == DEVTREE_ADB) {
 				ofw_have_kbd |= OFW_HAVE_ADBKBD;
 			} else {
@@ -316,7 +301,7 @@ ofw_find_keyboard()
 {
 	int stdin_node;
 	char iname[32];
-	int len;
+	int len, attach;
 
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
@@ -329,30 +314,42 @@ ofw_find_keyboard()
 
 	ofw_recurse_keyboard(OF_peer(0));
 
-	if (ofw_have_kbd == 0) {
-		printf("no keyboard found, hoping USB will be present\n");
-#if NUKBD > 0
-		ukbd_cnattach();
-#endif
-	}
 
 	if (ofw_have_kbd == (OFW_HAVE_USBKBD | OFW_HAVE_ADBKBD)) {
-#if NUKBD > 0
-		printf("USB and ADB found, using USB\n");
-		ukbd_cnattach();
-#else
-		ofw_have_kbd = OFW_HAVE_ADBKBD;
-#endif
+		/*
+		 * On some machines, such as PowerBook6,8,
+		 * the built-in USB Bluetooth device
+		 * appears as an USB device.  Prefer
+		 * ADB (builtin) keyboard for console
+		 * for PowerBook systems.
+		 */
+		if (strncmp(hw_prod, "PowerBook", 9) ||
+		    strncmp(hw_prod, "iBook", 5)) {
+			ofw_have_kbd = OFW_HAVE_ADBKBD;
+		} else {
+			ofw_have_kbd = OFW_HAVE_USBKBD;
+		}
+		printf("USB and ADB found");
 	}
 	if (ofw_have_kbd == OFW_HAVE_USBKBD) {
 #if NUKBD > 0
-		printf("USB found\n");
+		printf(", using USB\n");
 		ukbd_cnattach();
+		attach=1;
 #endif
 	} else if (ofw_have_kbd == OFW_HAVE_ADBKBD) {
 #if NAKBD >0
-		printf("ADB found\n");
+		printf(", using ADB\n");
 		akbd_cnattach();
+		attach=1;
+#endif
+	} 
+	if (attach == 0) {
+#if NUKBD > 0
+		printf(", no keyboard attached, trying usb anyway\n");
+		ukbd_cnattach();
+#else
+		printf(", no keyboard found!\n");
 #endif
 	}
 }
