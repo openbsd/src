@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.137 2008/06/10 20:27:31 art Exp $	*/
+/*	$OpenBSD: cd.c,v 1.138 2008/06/15 00:36:41 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -483,8 +483,7 @@ cdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, cd->sc_dk.dk_label,
+	if (bounds_check_with_label(bp, cd->sc_dk.dk_label,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.146 2008/06/10 04:46:07 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.147 2008/06/15 00:36:41 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -555,8 +555,7 @@ sdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
+	if (bounds_check_with_label(bp, sd->sc_dk.dk_label,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 

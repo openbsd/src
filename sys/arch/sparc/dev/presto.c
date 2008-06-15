@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.13 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: presto.c,v 1.14 2008/06/15 00:36:40 krw Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -276,7 +276,7 @@ prestowrite(dev_t dev, struct uio *uio, int flags)
 void
 prestostrategy(struct buf *bp)
 {
-	int unit, part;
+	int unit;
 	struct presto_softc *sc;
 	size_t offset, count;
 	int s;
@@ -292,9 +292,7 @@ prestostrategy(struct buf *bp)
 	}
 
 	/* Do not write on "no trespassing" areas... */
-	part = DISKPART(bp->b_dev);
-	if (part != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dk.dk_label, 1) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label, 1) <= 0)
 		goto bad;
 
 	/* Bound the request size, then move data between buf and nvram */

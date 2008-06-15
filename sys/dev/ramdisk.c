@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.41 2008/05/23 00:51:33 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.42 2008/06/15 00:36:41 krw Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ void
 rdstrategy(bp)
 	struct buf *bp;
 {
-	int unit, part;
+	int unit;
 	struct rd_softc *sc;
 	caddr_t addr;
 	size_t off, xfer;
@@ -362,9 +362,7 @@ rdstrategy(bp)
 	}
 
 	/* Do not write on "no trespassing" areas... */
-	part = DISKPART(bp->b_dev);
-	if (part != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dkdev.dk_label, 1) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dkdev.dk_label, 1) <= 0)
 		goto bad;
 
 	switch (sc->sc_type) {

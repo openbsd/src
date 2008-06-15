@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.8 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.9 2008/06/15 00:36:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -809,8 +809,7 @@ flashstrategy(struct buf *bp)
 		goto done;
 
 	/* Do bounds checking on partitions. */
-	if (flashpart(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dk.dk_label, 0) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label, 0) <= 0)
 		goto done;
 
 	/* Queue the transfer. */

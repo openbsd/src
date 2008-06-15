@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.47 2008/03/26 00:48:54 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.48 2008/06/15 00:36:41 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -768,13 +768,12 @@ raidstrategy(struct buf *bp)
 	 * error, the bounds check will flag that for us.
 	 */
 	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, wlabel) <= 0) {
-			db1_printf(("Bounds check failed!!:%d %d\n",
-			    (int)bp->b_blkno, (int)wlabel));
-			biodone(bp);
-			goto raidstrategy_end;
-		}
+	if (bounds_check_with_label(bp, lp, wlabel) <= 0) {
+		db1_printf(("Bounds check failed!!:%d %d\n",
+		    (int)bp->b_blkno, (int)wlabel));
+		biodone(bp);
+		goto raidstrategy_end;
+	}
 
 	bp->b_resid = 0;
 
