@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.41 2008/04/26 20:03:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.42 2008/06/16 18:32:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -247,7 +247,7 @@ aes_key_wrap(const u_int8_t *kek, size_t kek_len, const u_int8_t *pt,
 	a = ct;
 	memcpy(a, aes_key_wrap_iv, 8);	/* default IV */
 
-	rijndael_set_key_enc_only(&ctx, (u_int8_t *)kek, kek_len * 8);
+	rijndael_set_key_enc_only(&ctx, kek, kek_len * 8);
 
 	for (j = 0, t = 1; j < 6; j++) {
 		r = ct + 8;
@@ -278,7 +278,7 @@ aes_key_unwrap(const u_int8_t *kek, size_t kek_len, const u_int8_t *ct,
 	/* allow ciphertext and plaintext to overlap (ct == pt) */
 	ovbcopy(ct + 8, pt, len * 8);
 
-	rijndael_set_key(&ctx, (u_int8_t *)kek, kek_len * 8);
+	rijndael_set_key(&ctx, kek, kek_len * 8);
 
 	for (j = 0, t = 6 * len; j < 6; j++) {
 		r = pt + (len - 1) * 8;
