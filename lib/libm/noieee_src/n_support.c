@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.8 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.9 2008/06/16 21:10:30 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -78,12 +78,14 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
 #include <errno.h>
     static const unsigned short msign=0x7fff, mexp =0x7f80 ;
     static const short  prep1=57, gap=7, bias=129           ;
-    static const double novf=1.7E38, nunf=3.0E-39, zero=0.0 ;
+    static const double novf=1.7E38, nunf=3.0E-39;
 #else	/* defined(__vax__)||defined(tahoe) */
     static const unsigned short msign=0x7fff, mexp =0x7ff0  ;
     static const short prep1=54, gap=4, bias=1023           ;
-    static const double novf=1.7E308, nunf=3.0E-308,zero=0.0;
+    static const double novf=1.7E308, nunf=3.0E-308;
 #endif	/* defined(__vax__)||defined(tahoe) */
+
+static const double zero = 0.0;
 
 double
 scalbn(double x, int N)
@@ -303,7 +305,6 @@ sqrt(double x)
 {
         double q, s, b, r;
         double t;
-	double const zero=0.0;
         int m, n, i;
 #if defined(__vax__)||defined(tahoe)
         int k=54;
@@ -389,7 +390,6 @@ remainder(double x, double y)
 #endif
 
     	static const unsigned short mexp =0x7ff0, m25 =0x0190, m57 =0x0390;
-	static const double zero=0.0;
 	double hy, y1, t, t1;
 	short k;
 	long n;

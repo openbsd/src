@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.4 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: n_log.c,v 1.5 2008/06/16 21:10:30 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -414,8 +414,10 @@ log(double x)
     /* case 2:	|1-x| < 1/256. The m- and j- dependent terms are zero;
      * 		u1 = u to 24 bits.
     */
-	else
-		u1 = u, TRUNC(u1);
+	else {
+		u1 = u;
+		TRUNC(u1);
+	}
 	u2 = (2.0*(f - F*u1) - u1*f) * g;
 			/* u1 + u2 = 2f/(2F+f) to extra precision.	*/
 
@@ -437,7 +439,7 @@ struct Double
 __log__D(double x)
 {
 	int m, j;
-	double F, f, g, q, u, v, u2;
+	double F, f, g, q, u, v, u2, one = 1.0;
 	volatile double u1;
 	struct Double r;
 
@@ -460,8 +462,10 @@ __log__D(double x)
 	q = u*v*(A1 + v*(A2 + v*(A3 + v*A4)));
 	if (m | j)
 		u1 = u + 513, u1 -= 513;
-	else
-		u1 = u, TRUNC(u1);
+	else {
+		u1 = u;
+		TRUNC(u1);
+	}
 	u2 = (2.0*(f - F*u1) - u1*f) * g;
 
 	u1 += m*logF_head[N] + logF_head[j];

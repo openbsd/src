@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_lgamma.c,v 1.4 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: n_lgamma.c,v 1.5 2008/06/16 21:10:30 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ lgamma(double x)
 {
 	double r;
 
-	signgam = 1;
+	int signgam = 1;
 #if _IEEE
 	endian = ((*(int *) &one)) ? 1 : 0;
 #endif

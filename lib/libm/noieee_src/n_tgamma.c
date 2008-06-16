@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tgamma.c,v 1.1 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: n_tgamma.c,v 1.2 2008/06/16 21:10:30 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -262,22 +262,26 @@ smaller_gam(double x)
 	double t, d;
 	struct Double r, xx;
 	if (x < x0 + LEFT) {
-		t = x, TRUNC(t);
+		t = x;
+		TRUNC(t);
 		d = (t+x)*(x-t);
 		t *= t;
-		xx.a = (t + x), TRUNC(xx.a);
+		xx.a = (t + x);
+		TRUNC(xx.a);
 		xx.b = x - xx.a; xx.b += t; xx.b += d;
 		t = (one-x0); t += x;
 		d = (one-x0); d -= t; d += x;
 		x = xx.a + xx.b;
 	} else {
-		xx.a =  x, TRUNC(xx.a);
+		xx.a =  x;
+		TRUNC(xx.a);
 		xx.b = x - xx.a;
 		t = x - x0;
 		d = (-x0 -t); d += x;
 	}
 	r = ratfun_gam(t, d);
-	d = r.a/x, TRUNC(d);
+	d = r.a/x;
+	TRUNC(d);
 	r.a -= d*xx.a; r.a -= d*xx.b; r.a += r.b;
 	return (d + r.a/x);
 }
@@ -297,17 +301,20 @@ ratfun_gam(double z, double c)
 
 	/* return r.a + r.b = a0 + (z+c)^2*p/q, with r.a truncated to 26 bits. */
 	p = p/q;
-	t.a = z, TRUNC(t.a);		/* t ~= z + c */
+	t.a = z;
+	TRUNC(t.a);			/* t ~= z + c */
 	t.b = (z - t.a) + c;
 	t.b *= (t.a + z);
 	q = (t.a *= t.a);		/* t = (z+c)^2 */
 	TRUNC(t.a);
 	t.b += (q - t.a);
-	r.a = p, TRUNC(r.a);		/* r = P/Q */
+	r.a = p;
+	TRUNC(r.a);			/* r = P/Q */
 	r.b = p - r.a;
 	t.b = t.b*p + t.a*r.b + a0_lo;
 	t.a *= r.a;			/* t = (z+c)^2*(P/Q) */
-	r.a = t.a + a0_hi, TRUNC(r.a);
+	r.a = t.a + a0_hi;
+	TRUNC(r.a);
 	r.b = ((a0_hi-r.a) + t.a) + t.b;
 	return (r);			/* r = a0 + t */
 }
