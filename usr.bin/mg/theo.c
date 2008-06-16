@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.104 2008/06/08 21:35:21 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.105 2008/06/16 17:38:10 claudio Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -149,6 +149,7 @@ static const char *talk[] = {
 	"If municipal water filtering equipment was built by the gcc developers, the western world would be dead by now.",
 	"kettenis supported a new machine in my basement and all I got to do was fix a 1 character typo in his html page commit.",
 	"industry told us a lesson: when you're an asshole, they mail you hardware",
+	"I was joking, really.  I think I am funny :-)",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
