@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.22 2007/05/31 19:19:36 jmc Exp $
+.\"	$OpenBSD: math.3,v 1.23 2008/06/16 10:15:16 martynas Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .ds Si sig.
 .if t \
 .ds Si significant
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 16 2008 $
 .Dt MATH 3
 .Sh NAME
 .Nm math
@@ -46,50 +46,56 @@ option.
 Declarations for these functions may be obtained from the include file
 .Aq Pa math.h .
 .Sh LIST OF FUNCTIONS
-.Bl -column "copysign" "lgamma(3)" "inverse trigonometric function" "ULPs"
-.It \fIName\fP Ta \fIManual\fP Ta \fIDescription\fP Ta "\fIULPs\fP"
-.It acos Ta acos(3) Ta "inverse trigonometric function" Ta 3
-.It acosh Ta acosh(3) Ta "inverse hyperbolic function" Ta 3
-.It asin Ta asin(3) Ta "inverse trigonometric function" Ta 3
-.It asinh Ta asinh(3) Ta "inverse hyperbolic function" Ta 3
-.It atan Ta tan(3) Ta "inverse trigonometric function" Ta 1
-.It atanh Ta atanh(3) Ta "inverse hyperbolic function" Ta 3
-.It atan2 Ta tan2(3) Ta "inverse trigonometric function" Ta 2
-.It cabs Ta hypot(3) Ta "complex absolute value" Ta 1
-.It cbrt Ta sqrt(3) Ta "cube root" Ta 1
-.It ceil Ta floor(3) Ta "integer no less than" Ta 0
-.It copysign Ta ieee(3) Ta "copy sign bit" Ta 0
-.It cos Ta sin(3) Ta "trigonometric function" Ta 1
-.It cosh Ta sinh(3) Ta "hyperbolic function" Ta 3
-.It erf Ta erf(3) Ta "error function" Ta ???
-.It erfc Ta erf(3) Ta "complementary error function" Ta ???
-.It exp Ta exp(3) Ta "exponential" Ta 1
-.It expm1 Ta exp(3) Ta "exp(x)-1" Ta 1
-.It fabs Ta fabs(3) Ta "absolute value" Ta 0
-.It floor Ta floor(3) Ta "integer no greater than" Ta 0
-.It hypot Ta hypot(3) Ta "Euclidean distance" Ta 1
-.It ilogb Ta ieee(3) Ta "exponent extraction" Ta 0
-.It isinf Ta isinf(3) Ta "check exceptions"
-.It isnan Ta isnan(3) Ta "check exceptions"
-.It j0 Ta j0(3) Ta "Bessel function" Ta ???
-.It j1 Ta j0(3) Ta "Bessel function" Ta ???
-.It jn Ta j0(3) Ta "Bessel function" Ta ???
-.It lgamma Ta lgamma(3) Ta "log gamma function" Ta ???
-.It log Ta exp(3) Ta "natural logarithm" Ta 1
-.It log10 Ta exp(3) Ta "logarithm to base 10" Ta 3
-.It log1p Ta exp(3) Ta "log(1+x)" Ta 1
-.It pow Ta exp(3) Ta "exponential x**y" Ta 60-500
-.It remainder Ta ieee(3) Ta "remainder" Ta 0
-.It rint Ta rint(3) Ta "round to nearest integer" Ta 0
-.It scalbn Ta ieee(3) Ta "exponent adjustment" Ta 0
-.It sin Ta sin(3) Ta "trigonometric function" Ta 1
-.It sinh Ta sinh(3) Ta "hyperbolic function" Ta 3
-.It sqrt Ta sqrt(3) Ta "square root" Ta 1
-.It tan Ta tan(3) Ta "trigonometric function" Ta 3
-.It tanh Ta tanh(3) Ta "hyperbolic function" Ta 3
-.It y0 Ta j0(3) Ta "Bessel function" Ta ???
-.It y1 Ta j0(3) Ta "Bessel function" Ta ???
-.It yn Ta j0(3) Ta "Bessel function" Ta ???
+.Bl -column "copysign(3)" "inverse trigonometric function" "ULPs"
+.It \fIName\fP Ta \fIDescription\fP Ta "\fIULPs\fP"
+.It acos(3) Ta "inverse trigonometric function" Ta 3
+.It acosh(3) Ta "inverse hyperbolic function" Ta 3
+.It asin(3) Ta "inverse trigonometric function" Ta 3
+.It asinh(3) Ta "inverse hyperbolic function" Ta 3
+.It atan(3) Ta "inverse trigonometric function" Ta 1
+.It atan2(3) Ta "inverse trigonometric function" Ta 2
+.It atanh(3) Ta "inverse hyperbolic function" Ta 3
+.It cabs(3) Ta "complex absolute value" Ta 1
+.It cbrt(3) Ta "cube root" Ta 1
+.It ceil(3) Ta "integer no less than" Ta 0
+.It copysign(3) Ta "copy sign bit" Ta 0
+.It cos(3) Ta "trigonometric function" Ta 1
+.It cosh(3) Ta "hyperbolic function" Ta 3
+.It erf(3) Ta "error function" Ta 1
+.It erfc(3) Ta "complementary error function" Ta 1
+.It exp(3) Ta "exponential" Ta 1
+.It expm1(3) Ta "exp(x)-1" Ta 1
+.It fabs(3) Ta "absolute value" Ta 0
+.It finite(3) Ta "test for finite value" Ta 0
+.It floor(3) Ta "integer no greater than" Ta 0
+.It fmod(3) Ta "remainder" Ta 0
+.It hypot(3) Ta "Euclidean distance" Ta 1
+.It ilogb(3) Ta "exponent extraction" Ta 0
+.It isinf(3) Ta "check for infinity" Ta 0
+.It isnan(3) Ta "check for not-a-number" Ta 0
+.It j0(3) Ta "Bessel function" Ta ???
+.It j1(3) Ta "Bessel function" Ta ???
+.It jn(3) Ta "Bessel function" Ta ???
+.It lgamma(3) Ta "log gamma function" Ta 1
+.It log(3) Ta "natural logarithm" Ta 1
+.It log10(3) Ta "logarithm to base 10" Ta 3
+.It log1p(3) Ta "log(1+x)" Ta 1
+.It nextafter(3) Ta "next representable number" Ta 0
+.It pow(3) Ta "exponential x**y" Ta 60-500
+.It remainder(3) Ta "remainder" Ta 0
+.It rint(3) Ta "round to nearest integer" Ta 0
+.It round(3) Ta "round to nearest integer" Ta 0
+.It scalbn(3) Ta "exponent adjustment" Ta 0
+.It sin(3) Ta "trigonometric function" Ta 1
+.It sinh(3) Ta "hyperbolic function" Ta 3
+.It sqrt(3) Ta "square root" Ta 1
+.It tan(3) Ta "trigonometric function" Ta 3
+.It tanh(3) Ta "hyperbolic function" Ta 3
+.It tgamma(3) Ta "gamma function" Ta 4
+.It trunc(3) Ta "nearest integral value" Ta 3
+.It y0(3) Ta "Bessel function" Ta ???
+.It y1(3) Ta "Bessel function" Ta ???
+.It yn(3) Ta "Bessel function" Ta ???
 .El
 .Sh NOTES
 In
