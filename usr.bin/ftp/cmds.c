@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.59 2008/06/15 03:09:13 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.60 2008/06/16 12:03:51 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.59 2008/06/15 03:09:13 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.60 2008/06/16 12:03:51 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -315,7 +315,6 @@ mput(int argc, char *argv[])
 {
 	int i;
 	sig_t oldintr;
-	int ointer;
 	char *tp;
 
 	if (argc < 2 && !another(&argc, &argv, "local-files")) {
@@ -335,7 +334,7 @@ mput(int argc, char *argv[])
 				mflag = 0;
 				continue;
 			}
-			if (mflag && confirm(argv[0], cp)) {
+			if (mflag && confirm(argv[0], cp, 0)) {
 				tp = cp;
 				if (mcase) {
 					while (*tp && !islower(*tp)) {
@@ -364,12 +363,8 @@ mput(int argc, char *argv[])
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    cp, tp, cp != tp || !interactive);
 				if (!mflag && fromatty) {
-					ointer = interactive;
-					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm("Continue with", "mput", 1))
 						mflag++;
-					}
-					interactive = ointer;
 				}
 			}
 		}
@@ -383,18 +378,14 @@ mput(int argc, char *argv[])
 		int flags;
 
 		if (!doglob) {
-			if (mflag && confirm(argv[0], argv[i])) {
+			if (mflag && confirm(argv[0], argv[i], 0)) {
 				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
 				tp = (mapflag) ? domap(tp) : tp;
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    argv[i], tp, tp != argv[i] || !interactive);
 				if (!mflag && fromatty) {
-					ointer = interactive;
-					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm("Continue with", "mput", 1))
 						mflag++;
-					}
-					interactive = ointer;
 				}
 			}
 			continue;
@@ -408,18 +399,14 @@ mput(int argc, char *argv[])
 			continue;
 		}
 		for (cpp = gl.gl_pathv; cpp && *cpp != NULL; cpp++) {
-			if (mflag && confirm(argv[0], *cpp)) {
+			if (mflag && confirm(argv[0], *cpp, 0)) {
 				tp = (ntflag) ? dotrans(*cpp) : *cpp;
 				tp = (mapflag) ? domap(tp) : tp;
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    *cpp, tp, *cpp != tp || !interactive);
 				if (!mflag && fromatty) {
-					ointer = interactive;
-					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm("Continue with", "mput", 1))
 						mflag++;
-					}
-					interactive = ointer;
 				}
 			}
 		}
@@ -536,24 +523,12 @@ freegetit:
 void
 mabort(int signo)
 {
-	int ointer, oconf;
-
 	alarmtimer(0);
 	putc('\n', ttyout);
 	(void)fflush(ttyout);
-	if (mflag && fromatty) {
-		ointer = interactive;
-		oconf = confirmrest;
-		interactive = 1;
-		confirmrest = 0;
-		if (confirm("Continue with", mname)) {
-			interactive = ointer;
-			confirmrest = oconf;
+	if (mflag && fromatty)
+		if (confirm("Continue with", mname, 0))
 			longjmp(jabort, 1);
-		}
-		interactive = ointer;
-		confirmrest = oconf;
-	}
 	mflag = 0;
 	longjmp(jabort, 1);
 }
@@ -565,7 +540,7 @@ void
 mget(int argc, char *argv[])
 {
 	sig_t oldintr;
-	int ch, ointer;
+	int ch;
 	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN], localcwd[MAXPATHLEN];
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
@@ -592,7 +567,7 @@ mget(int argc, char *argv[])
 			    cp);
 			continue;
 		}
-		if (confirm(argv[0], cp)) {
+		if (confirm(argv[0], cp, 0)) {
 			tp = cp;
 			if (mcase) {
 				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
@@ -607,12 +582,8 @@ mget(int argc, char *argv[])
 			recvrequest("RETR", tp, cp, "w",
 			    tp != cp || !interactive, 1);
 			if (!mflag && fromatty) {
-				ointer = interactive;
-				interactive = 1;
-				if (confirm("Continue with", "mget")) {
+				if (confirm("Continue with", "mget", 1))
 					mflag++;
-				}
-				interactive = ointer;
 			}
 		}
 	}
@@ -1034,7 +1005,6 @@ void
 mdelete(int argc, char *argv[])
 {
 	sig_t oldintr;
-	int ointer;
 	char *cp;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
@@ -1051,15 +1021,11 @@ mdelete(int argc, char *argv[])
 			mflag = 0;
 			continue;
 		}
-		if (mflag && confirm(argv[0], cp)) {
+		if (mflag && confirm(argv[0], cp, 0)) {
 			(void)command("DELE %s", cp);
 			if (!mflag && fromatty) {
-				ointer = interactive;
-				interactive = 1;
-				if (confirm("Continue with", "mdelete")) {
+				if (confirm("Continue with", "mdelete", 0))
 					mflag++;
-				}
-				interactive = ointer;
 			}
 		}
 	}
@@ -1112,7 +1078,7 @@ ls(int argc, char *argv[])
 	}
 	globargv2 = argv[2];
 	if (strcmp(argv[2], "-") && *argv[2] != '|' && (!globulize(&argv[2]) ||
-	    !confirm("output to local-file:", argv[2]))) {
+	    !confirm("output to local-file:", argv[2], 0))) {
 		code = -1;
 		goto freels;
 	}
@@ -1134,7 +1100,7 @@ void
 mls(int argc, char *argv[])
 {
 	sig_t oldintr;
-	int ointer, i;
+	int i;
 	char lmode[1], *dest, *odest;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
@@ -1149,7 +1115,7 @@ usage:
 	argv[argc - 1] = NULL;
 	if (strcmp(dest, "-") && *dest != '|')
 		if (!globulize(&dest) ||
-		    !confirm("output to local-file:", dest)) {
+		    !confirm("output to local-file:", dest, 0)) {
 			code = -1;
 			return;
 	}
@@ -1161,12 +1127,8 @@ usage:
 		*lmode = (i == 1) ? 'w' : 'a';
 		recvrequest("LIST", dest, argv[i], lmode, 0, 0);
 		if (!mflag && fromatty) {
-			ointer = interactive;
-			interactive = 1;
-			if (confirm("Continue with", argv[0])) {
+			if (confirm("Continue with", argv[0], 1))
 				mflag ++;
-			}
-			interactive = ointer;
 		}
 	}
 	(void)signal(SIGINT, oldintr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.49 2008/06/15 03:09:13 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.50 2008/06/16 12:03:51 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.49 2008/06/15 03:09:13 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.50 2008/06/16 12:03:51 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -459,20 +459,25 @@ remglob(char *argv[], int doswitch, char **errbuf)
 }
 
 int
-confirm(const char *cmd, const char *file)
+confirm(const char *cmd, const char *file, int force)
 {
 	char str[BUFSIZ];
 
-	if (confirmrest == 2)
+
+	if (force)
+		goto top;
+
+	if (confirmrest == -1)
 		return (0);
 
-	if (!interactive || confirmrest)
+	if (confirmrest || !interactive)
 		return (1);
 top:
 	fprintf(ttyout, "%s %s? ", cmd, file);
 	(void)fflush(ttyout);
 	if (fgets(str, sizeof(str), stdin) == NULL) {
-		confirmrest = 2;
+		if (!force)
+			confirmrest = -1;
 		clearerr(stdin);
 		return (0);
 	}
