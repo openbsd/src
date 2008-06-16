@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.68 2008/03/10 22:56:43 espie Exp $
+.\" 	$OpenBSD: ftp.1,v 1.69 2008/06/16 19:56:04 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: March 10 2008 $
+.Dd $Mdocdate: June 16 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -860,6 +860,8 @@ will delete all files.
 .Pp
 When prompting is on, the following commands are available at a prompt:
 .Bl -tag -width 2n -offset indent
+.It Ic ?\&
+Print help message.
 .It Ic a
 Answer
 .Dq yes
@@ -875,6 +877,12 @@ to the current file and turn off prompt mode
 (as if
 .Dq prompt off
 had been given).
+.It Ic q
+Answer
+.Dq no
+to the current file and automatically answer
+.Dq no
+to any remaining files for the current command.
 .It Ic y
 Transfer the file.
 .El

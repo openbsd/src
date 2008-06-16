@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.60 2008/06/16 12:03:51 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.61 2008/06/16 19:56:04 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.60 2008/06/16 12:03:51 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.61 2008/06/16 19:56:04 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -364,7 +364,7 @@ mput(int argc, char *argv[])
 				    cp, tp, cp != tp || !interactive);
 				if (!mflag && fromatty) {
 					if (confirm("Continue with", "mput", 1))
-						mflag++;
+						mflag = 1;
 				}
 			}
 		}
@@ -385,7 +385,7 @@ mput(int argc, char *argv[])
 				    argv[i], tp, tp != argv[i] || !interactive);
 				if (!mflag && fromatty) {
 					if (confirm("Continue with", "mput", 1))
-						mflag++;
+						mflag = 1;
 				}
 			}
 			continue;
@@ -406,7 +406,7 @@ mput(int argc, char *argv[])
 				    *cpp, tp, *cpp != tp || !interactive);
 				if (!mflag && fromatty) {
 					if (confirm("Continue with", "mput", 1))
-						mflag++;
+						mflag = 1;
 				}
 			}
 		}
@@ -583,7 +583,7 @@ mget(int argc, char *argv[])
 			    tp != cp || !interactive, 1);
 			if (!mflag && fromatty) {
 				if (confirm("Continue with", "mget", 1))
-					mflag++;
+					mflag = 1;
 			}
 		}
 	}
@@ -1025,7 +1025,7 @@ mdelete(int argc, char *argv[])
 			(void)command("DELE %s", cp);
 			if (!mflag && fromatty) {
 				if (confirm("Continue with", "mdelete", 0))
-					mflag++;
+					mflag = 1;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2008/06/16 12:03:51 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.51 2008/06/16 19:56:04 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.50 2008/06/16 12:03:51 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.51 2008/06/16 19:56:04 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -463,40 +463,45 @@ confirm(const char *cmd, const char *file, int force)
 {
 	char str[BUFSIZ];
 
-
-	if (force)
-		goto top;
-
-	if (confirmrest == -1)
-		return (0);
-
-	if (confirmrest || !interactive)
+	if (!force && (confirmrest || !interactive))
 		return (1);
 top:
 	fprintf(ttyout, "%s %s? ", cmd, file);
 	(void)fflush(ttyout);
-	if (fgets(str, sizeof(str), stdin) == NULL) {
-		if (!force)
-			confirmrest = -1;
-		clearerr(stdin);
-		return (0);
-	}
+	if (fgets(str, sizeof(str), stdin) == NULL)
+		goto quit;
 	switch (tolower(*str)) {
+		case '?':
+			fprintf(ttyout,
+			    "?	help\n"
+			    "a	answer yes to all\n"
+			    "n	answer no\n"
+			    "p	turn off prompt mode\n"
+			    "q	answer no to all\n"
+			    "y	answer yes\n");
+			goto top;
+		case 'a':
+			confirmrest = 1;
+			fprintf(ttyout, "Prompting off for duration of %s.\n",
+			    cmd);
+			break;
 		case 'n':
 			return (0);
 		case 'p':
 			interactive = 0;
 			fputs("Interactive mode: off.\n", ttyout);
 			break;
-		case 'a':
-			confirmrest = 1;
-			fprintf(ttyout, "Prompting off for duration of %s.\n", cmd);
-			break;
+		case 'q':
+quit:
+			mflag = 0;
+			clearerr(stdin);
+			return (0);
 		case 'y':
 			return(1);
 			break;
 		default:
-			fprintf(ttyout, "n, y, p, a, are the only acceptable commands!\n");
+			fprintf(ttyout, "?, a, n, p, q, y "
+			    "are the only acceptable commands!\n");
 			goto top;
 			break;
 	}
