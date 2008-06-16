@@ -1,7 +1,7 @@
 define(COMM,`.\"')dnl
 include(MAKEDEV.mansub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.man,v 1.4 2008/06/16 08:18:39 todd Exp $-})dnl
 dnl
 define(quote,{-.Dq $1
 -})dnl
@@ -23,7 +23,7 @@ define({-_std-},)dnl
 divert(1)dnl
 dnl send md shell fragments to the bit bucket...
 define(__mddivert,11)dnl
-include(etc.MACHINE/MAKEDEV.md)dnl
+include(MAKEDEV.md)dnl
 dnl
 .El
 divert(0)dnl
