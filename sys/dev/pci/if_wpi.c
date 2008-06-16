@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.60 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.61 2008/06/16 18:43:06 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2295,7 +2295,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 	}
 
 	/* never exceed channel's maximum allowed Tx power */
-	pwr = min(pwr, sc->maxpwr[chan]);
+	pwr = MIN(pwr, sc->maxpwr[chan]);
 
 	/* retrieve power index into gain tables from samples */
 	for (sample = group->samples; sample < &group->samples[3]; sample++)
