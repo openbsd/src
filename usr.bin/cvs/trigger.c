@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.12 2008/06/11 02:02:08 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.13 2008/06/17 17:09:21 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -364,10 +364,6 @@ cvs_trigger_getlines(char * file, char * repo)
 			;
 
 		if (*q == '\0')
-			goto bad;
-
-		/* XXX why do you check *p (regex)? */
-		if (*p == '%')
 			goto bad;
 
 		*q++ = '\0';
