@@ -1,4 +1,3 @@
-./usr/share/man/cat8/rpc.statd.0
 ./usr/share/doc/html
 ./usr/share/info/amdref.info
 ./usr/share/info/annotate.info
@@ -1026,6 +1025,7 @@
 ./usr/share/man/cat4/amd64/ioapic.0
 ./usr/share/man/cat4/amd64/kmem.0
 ./usr/share/man/cat4/amd64/mem.0
+./usr/share/man/cat4/amd64/mtrr.0
 ./usr/share/man/cat4/amd64/nvram.0
 ./usr/share/man/cat4/amd64/pctr.0
 ./usr/share/man/cat4/amdiic.0
@@ -2408,6 +2408,7 @@
 ./usr/share/man/cat8/rpc.rusersd.0
 ./usr/share/man/cat8/rpc.rwalld.0
 ./usr/share/man/cat8/rpc.sprayd.0
+./usr/share/man/cat8/rpc.statd.0
 ./usr/share/man/cat8/rpc.yppasswdd.0
 ./usr/share/man/cat8/rpcinfo.0
 ./usr/share/man/cat8/rquotad.0
