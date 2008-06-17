@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.15 2007/05/27 01:15:32 mjc Exp $	*/
+/*	$OpenBSD: cd.h,v 1.16 2008/06/17 01:32:49 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -158,14 +158,6 @@ struct scsi_read_track_info {
 	u_int8_t control;
 };
 
-struct scsi_read_cd_capacity {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t addr[4];
-	u_int8_t unused[3];
-	u_int8_t control;
-};
-
 struct scsi_load_unload {
 	u_int8_t opcode;
 	u_int8_t reserved;
@@ -195,7 +187,6 @@ struct scsi_set_cd_speed {
  * Opcodes
  */
 
-#define READ_CD_CAPACITY	0x25	/* slightly different from disk */
 #define READ_SUBCHANNEL		0x42	/* cdrom read Subchannel */
 #define READ_TOC		0x43	/* cdrom read TOC */
 #define READ_HEADER		0x44	/* cdrom read header */
@@ -219,11 +210,6 @@ struct scsi_set_cd_speed {
 #define ERR_RECOVERY_PAGE	0x01
 #define WRITE_PARAM_PAGE	0x05
 #define CDVD_CAPABILITIES_PAGE	0x2a
-
-struct scsi_read_cd_cap_data {
-	u_int8_t addr[4];
-	u_int8_t length[4];
-};
 
 struct cd_audio_page {
 	u_int8_t page_code;

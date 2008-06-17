@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.138 2008/06/15 00:36:41 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.139 2008/06/17 01:32:49 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1180,13 +1180,12 @@ done:
 u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	struct scsi_read_cd_cap_data rdcap;
-	struct scsi_read_cd_capacity scsi_cmd;
+	struct scsi_read_cap_data rdcap;
+	struct scsi_read_capacity scsi_cmd;
 	u_long size;
 	int blksize;
 
-	/* Reasonable defaults for drives that don't support
-	   READ_CD_CAPACITY */
+	/* Reasonable defaults for drives that don't support READ_CAPACITY */
 	cd->params.blksize = 2048;
 	cd->params.disksize = 400000;
 
@@ -1198,7 +1197,7 @@ cd_size(struct cd_softc *cd, int flags)
 	 * it for you.
 	 */
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CD_CAPACITY;
+	scsi_cmd.opcode = READ_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
