@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.57 2008/04/21 00:32:43 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.58 2008/06/17 16:51:40 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2074,9 +2074,9 @@ uaudio_open(void *addr, int flags)
 		return (EIO);
 
 	if ((flags & FWRITE) && !(sc->sc_mode & AUMODE_PLAY))
-		return (EACCES);
+		return (ENXIO);
 	if ((flags & FREAD) && !(sc->sc_mode & AUMODE_RECORD))
-		return (EACCES);
+		return (ENXIO);
 
 	return (0);
 }
