@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.33 2008/05/29 01:00:53 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.34 2008/06/17 05:03:29 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -146,7 +146,7 @@ extern struct pfsync_softc	*pfsyncif;
 
 struct pfsync_header {
 	u_int8_t version;
-#define	PFSYNC_VERSION	3
+#define	PFSYNC_VERSION	4
 	u_int8_t af;
 	u_int8_t action;
 #define	PFSYNC_ACT_CLR		0	/* clear all states */
