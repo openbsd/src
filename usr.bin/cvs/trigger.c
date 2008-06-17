@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.13 2008/06/17 17:09:21 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.14 2008/06/17 17:15:56 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -322,9 +322,6 @@ cvs_trigger_getlines(char * file, char * repo)
 	char fpath[MAXPATHLEN];
 	char *currentline, *defaultline = NULL, *nline, *p, *q, *regex;
 
-	list = xmalloc(sizeof(*list));
-	TAILQ_INIT(list);
-
 	if (strcmp(file, CVS_PATH_EDITINFO) == 0 ||
 	    strcmp(file, CVS_PATH_VERIFYMSG) == 0)
 		allow_all = 0;
@@ -340,6 +337,9 @@ cvs_trigger_getlines(char * file, char * repo)
 		return (NULL);
 	}
 
+	list = xmalloc(sizeof(*list));
+	TAILQ_INIT(list);
+	
 	lineno = 0;
 	nline = NULL;
 	while ((currentline = fgetln(fp, &len)) != NULL) {
@@ -409,6 +409,8 @@ cvs_trigger_getlines(char * file, char * repo)
 			xfree(defaultline);
 	}
 
+	(void)fclose(fp);
+	
 	if (TAILQ_EMPTY(list)) {
 		xfree(list);
 		list = NULL;
@@ -423,6 +425,8 @@ bad:
 		xfree(defaultline);
 	cvs_trigger_freelist(list);
 
+	(void)fclose(fp);
+	
 	return (NULL);
 }
 
