@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.148 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.149 2008/06/17 11:05:39 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -52,7 +52,6 @@ int	cvs_readonly = 0;
 int	cvs_readonlyfs = 0;
 int	cvs_nocase = 0;	/* set to 1 to disable filename case sensitivity */
 int	cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
-int	cvs_error = -1;	/* set to the correct error code on failure */
 int	cvs_cmdop;
 int	cvs_umask = CVS_UMASK_DEFAULT;
 int	cvs_server_active = 0;
