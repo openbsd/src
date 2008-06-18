@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.54 2008/06/13 15:19:06 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.55 2008/06/18 12:12:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,49 @@ sub new
 		return OpenBSD::PackageRepository::Installed->_new($1);
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
+	}
+}
+
+sub todo
+{
+	my ($class, $ref) = @_;
+	my $s = $$ref;
+	return undef if $s eq '';
+
+	if ($$ref =~ m/^ftp\:(.*)$/io) {
+		return OpenBSD::PackageRepository::FTP->_parse($1, $ref);
+	} elsif ($$ref =~ m/^http\:(.*)$/io) {
+		return OpenBSD::PackageRepository::HTTP->_parse($1, $ref);
+	} elsif ($$ref =~ m/^https\:(.*)$/io) {
+		return OpenBSD::PackageRepository::HTTPS->_parse($1, $ref);
+	} elsif ($$ref =~ m/^scp\:(.*)$/io) {
+		require OpenBSD::PackageRepository::SCP;
+
+		return OpenBSD::PackageRepository::SCP->_parse($1, $ref);
+	} elsif ($$ref =~ m/^src\:(.*)$/io) {
+		require OpenBSD::PackageRepository::Source;
+
+		return OpenBSD::PackageRepository::Source->_parse($1, $ref);
+	} elsif ($$ref =~ m/^file\:(.*)$/io) {
+		return OpenBSD::PackageRepository::Local->_parse($1, $ref);
+	} elsif ($$ref =~ m/^inst\:(.*)$/io) {
+		return OpenBSD::PackageRepository::Installed->_parse($1, $ref);
+	} else {
+		return OpenBSD::PackageRepository::Local->_parse($$ref, $ref);
+	}
+}
+
+sub parse
+{
+	my ($class, $ref) = @_;
+	my $s = $$ref;
+	return undef if !defined $s;
+	if ($s =~ m/(.*?)\/\:(.*)/) {
+		$$ref = $2;
+		return $class->new($1);
+	} else {
+		undef $$ref;
+		return $class->new($s);
 	}
 }
 
