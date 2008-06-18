@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.73 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.74 2008/06/18 12:04:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,10 +33,8 @@ if (defined $ENV{PKG_PATH}) {
 	my $v = $ENV{PKG_PATH};
 	$v =~ s/^\:+//o;
 	$v =~ s/\:+$//o;
-	my @tentative = split /\/\:/o, $v;
-	while (my $i = shift @tentative) {
-		$i =~ m|/$|o or $i.='/';
-		$pkgpath->add(OpenBSD::PackageRepository->new($i));
+	while (my $o = OpenBSD::PackageRepository->parse(\$v)) {
+		$pkgpath->add($o);
 	}
 } else {
 	$pkgpath->add(OpenBSD::PackageRepository->new("./"));
@@ -45,10 +43,18 @@ if (defined $ENV{PKG_PATH}) {
 sub path_parse
 {
 	use File::Basename;
+	use OpenBSD::Paths;
 
 	my ($pkgname, $path) = fileparse($_);
-	my $repository = OpenBSD::PackageRepository->new($path);
-	return ($repository, $path, $pkgname);
+	my $repo;
+
+	if ($path eq OpenBSD::Paths::pkgdb().'/') {
+		$repo = OpenBSD::PackageRepository::Installed->new($path);
+	} else {
+		$repo = OpenBSD::PackageRepository->new($path);
+	}
+
+	return ($repo, $path, $pkgname);
 }
 
 sub find
