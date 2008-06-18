@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.67 2008/06/15 08:24:28 espie Exp $
+# $OpenBSD: pkg_info,v 1.68 2008/06/18 12:05:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -104,7 +104,16 @@ sub find_pkg
 	}
 	require OpenBSD::PackageLocator;
 
-	find_pkg_in('OpenBSD::PackageLocator', $pkgname, $code);
+	my ($repo, $path);
+
+	if ($pkgname =~ m/\//o) {
+		($repo, $path, $pkgname) = 
+		    OpenBSD::PackageLocator::path_parse($pkgname);
+	} else {
+		$repo = 'OpenBSD::PackageLocator';
+	}
+
+	find_pkg_in($repo, $pkgname, $code);
 }
 
 sub printfile
