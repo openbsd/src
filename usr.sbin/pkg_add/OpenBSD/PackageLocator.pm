@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.74 2008/06/18 12:04:41 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.75 2008/06/18 12:24:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,12 +44,13 @@ sub path_parse
 {
 	use File::Basename;
 	use OpenBSD::Paths;
+	my $pkg_db = $ENV{"PKG_DBDIR"} || OpenBSD::Paths->pkgdb;
 
 	my ($pkgname, $path) = fileparse($_);
 	my $repo;
 
-	if ($path eq OpenBSD::Paths::pkgdb().'/') {
-		$repo = OpenBSD::PackageRepository::Installed->new($path);
+	if ($path eq $pkg_db.'/') {
+		$repo = OpenBSD::PackageRepository::Installed->new;
 	} else {
 		$repo = OpenBSD::PackageRepository->new($path);
 	}
