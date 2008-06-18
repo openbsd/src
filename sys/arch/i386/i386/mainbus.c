@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.40 2008/01/13 22:29:01 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.41 2008/06/18 20:15:54 mbalmer Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include "ipmi.h"
 #include "esm.h"
 #include "vesabios.h"
+#include "amdmsr.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -67,6 +68,10 @@
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
+#endif
+
+#if NAMDMSR > 0
+#include <machine/amdmsr.h>
 #endif
 
 #if NESM > 0
@@ -173,6 +178,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		config_found(self, &caa, mainbus_print);
 	}
+#if NAMDMSR > 0
+	if (amdmsr_probe()) {
+		mba.mba_busname = "amdmsr";
+		config_found(self, &mba.mba_busname, mainbus_print);
+	}
+#endif
 
 #if NACPI > 0
 	if (!acpi_hasprocfvs)

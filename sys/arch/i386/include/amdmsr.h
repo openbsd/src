@@ -25,4 +25,8 @@ struct amdmsr_req {
 #define RDMSR	_IOWR('M', 0, struct amdmsr_req)
 #define WRMSR	_IOW('M', 1, struct amdmsr_req)
 
+#ifdef _KERNEL
+int	amdmsr_probe(void);
+#endif
+
 #endif	/* !_SYS_AMDMSR_H_ */
