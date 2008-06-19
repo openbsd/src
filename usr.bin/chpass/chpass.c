@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.34 2007/03/27 07:22:33 jmc Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.35 2008/06/19 19:16:04 tobias Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.34 2007/03/27 07:22:33 jmc Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.35 2008/06/19 19:16:04 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,12 +82,18 @@ main(int argc, char *argv[])
 {
 	struct passwd *pw = NULL, *opw = NULL, lpw;
 	int i, ch, pfd, tfd, dfd;
-	char *arg = NULL;
+	char *tz, *arg = NULL;
 	sigset_t fullset;
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
 #endif
+	/* We need to use the system timezone for date conversions. */
+	if ((tz = getenv("TZ")) != NULL) {
+	    unsetenv("TZ");
+	    tzset();
+	    setenv("TZ", tz, 1);
+	}
 
 	op = EDITENTRY;
 	while ((ch = getopt(argc, argv, "a:s:ly")) != -1)
