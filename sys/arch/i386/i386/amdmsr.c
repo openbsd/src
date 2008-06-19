@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.4 2008/06/18 20:15:54 mbalmer Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.5 2008/06/19 09:58:40 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -63,7 +63,7 @@ struct cfattach amdmsr_ca = {
 };
 
 int
-amdmsr_probe()
+amdmsr_probe(void)
 {
 	u_int64_t gld_msr_cap;
 	int family, model, step;
@@ -82,7 +82,6 @@ amdmsr_probe()
 				return 1;
 		}
 	}
-
 	return 0;
 }
 

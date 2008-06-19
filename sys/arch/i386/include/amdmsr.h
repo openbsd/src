@@ -1,3 +1,5 @@
+/*	$OpenBSD: amdmsr.h,v 1.3 2008/06/19 09:58:40 mbalmer Exp $ */
+
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  *
