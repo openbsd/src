@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.45 2008/06/14 22:06:47 mbalmer Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.47 2008/06/19 15:27:00 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -50,11 +50,11 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
+#	drm*	Direct Rendering Manager
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
-#	drm*	Direct Rendering Manager
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Printers:
@@ -460,10 +460,6 @@ wsmouse*)
 	M wsmouse$U c 68 $U 600
 	;;
 
-drm*)
-	M drm$U c 88 $U 660
-	;;
-
 wsmux|wsmouse|wskbd)
 	M wsmouse c 69 0 600
 	M wskbd c 69 1 600
@@ -471,6 +467,12 @@ wsmux|wsmouse|wskbd)
 
 wskbd*)
 	M wskbd$U c 67 $U 600
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 tty[C-J]*)
@@ -492,10 +494,8 @@ tty[C-J]*)
 	esac
 	;;
 
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+drm*)
+	M drm$U c 88 $U 660
 	;;
 
 pty*)
