@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.154 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.155 2008/06/19 19:04:59 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -362,7 +362,8 @@ cvs_update_local(struct cvs_file *cf)
 
 	if (print_stdout) {
 		if (cf->file_status != FILE_UNKNOWN && cf->file_rcs != NULL &&
-		    cf->file_rcsrev != NULL && !cf->file_rcs->rf_dead) {
+		    cf->file_rcsrev != NULL && !cf->file_rcs->rf_dead &&
+		    (cf->file_flags & FILE_HAS_TAG)) {
 			rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
 			if (verbosity > 1) {
 				cvs_log(LP_RCS, RCS_DIFF_DIV);
