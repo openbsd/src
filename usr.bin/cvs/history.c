@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.38 2008/06/11 00:47:05 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.39 2008/06/19 19:03:25 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +68,7 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	FILE *fp;
 	RCSNUM *hrev;
 	size_t len;
+	int fd;
 	char *cwd, *p, *rev;
 	char revbuf[CVS_REV_BUFSZ], repo[MAXPATHLEN], fpath[MAXPATHLEN];
 	char timebuf[CVS_TIME_BUFSZ];
@@ -162,14 +164,20 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 	    current_cvsroot->cr_dir, CVS_PATH_HISTORY);
 
-	if ((fp = fopen(fpath, "a")) != NULL) {
-		fprintf(fp, "%c%x|%s|%s|%s|%s|%s\n",
-		    historytab[type], time(NULL), getlogin(), cwd, repo,
-		    rev, (cf != NULL) ? cf->file_name : argument);
-
-		(void)fclose(fp);
+	if ((fd = open(fpath, O_WRONLY|O_APPEND)) == -1) {
+		if (errno != ENOENT)
+			cvs_log(LP_ERR, "failed to open history file");
 	} else {
-		cvs_log(LP_ERR, "failed to add entry to history file");
+		if ((fp = fdopen(fd, "a")) != NULL) {
+			fprintf(fp, "%c%x|%s|%s|%s|%s|%s\n",
+			    historytab[type], time(NULL), getlogin(), cwd,
+			    repo, rev, (cf != NULL) ? cf->file_name :
+			    argument);
+			(void)fclose(fp);
+		} else {
+			cvs_log(LP_ERR, "failed to add entry to history file");
+			(void)close(fd);
+		}
 	}
 
 	if (rev != revbuf)
