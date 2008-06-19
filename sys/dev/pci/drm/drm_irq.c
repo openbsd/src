@@ -552,8 +552,8 @@ drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 				    "drmvblq", 3 * DRM_HZ);
 				DRM_SPINUNLOCK(&dev->vbl_lock);
 			}
+			drm_vblank_put(dev, crtc);
 		}
-		drm_vblank_put(dev, crtc);
 
 		if (ret != EINTR) {
 			struct timeval now;
