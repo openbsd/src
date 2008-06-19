@@ -421,10 +421,11 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 	if (dev->vblank_refcount[crtc] == 1 &&
 	    dev->vblank_enabled[crtc] == 0) {
 		ret = dev->driver.enable_vblank(dev, crtc);
-		if (ret)
+		if (ret) {
 			atomic_dec(&dev->vblank_refcount[crtc]);
-		else
+		} else {
 			dev->vblank_enabled[crtc] = 1;
+		}
 	}
 	DRM_SPINUNLOCK(&dev->vbl_lock);
 
@@ -437,7 +438,7 @@ drm_vblank_put(struct drm_device *dev, int crtc)
 	DRM_SPINLOCK(&dev->vbl_lock);
 	/* Last user schedules interrupt disable */
 	atomic_dec(&dev->vblank_refcount[crtc]);
-	if (&dev->vblank_refcount[crtc] == 0)
+	if (dev->vblank_refcount[crtc] == 0) 
 		timeout_add(&dev->vblank_disable_timer, 5*DRM_HZ);
 	DRM_SPINUNLOCK(&dev->vbl_lock);
 }
