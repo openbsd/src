@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.12 2004/05/31 15:48:26 pedro Exp $	*/
+/*	$OpenBSD: printf.c,v 1.13 2008/06/19 16:24:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.12 2004/05/31 15:48:26 pedro Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.13 2008/06/19 16:24:00 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -118,6 +118,12 @@ main(int argc, char *argv[])
 #if !defined(SHELL) && !defined(BUILTIN)
 	setlocale (LC_ALL, "");
 #endif
+
+	/* Need to accept/ignore "--" option. */
+	if (argc > 1 && strcmp(argv[1], "--") == 0) {
+		argc--;
+		argv++;
+	}
 
 	if (argc < 2) {
 		usage();
