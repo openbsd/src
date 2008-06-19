@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.366 2008/06/18 19:33:52 brad Exp $
+$OpenBSD: usbdevs,v 1.367 2008/06/19 08:05:05 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1798,11 +1798,20 @@ product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
 product LOGITECH QUICKCAMDLXNB	0x08a9	QuickCam Notebook Deluxe
 product LOGITECH QUICKCAMPRO3K	0x08b0	QuickCam Pro 3000
-product LOGITECH QUICKCAMPRONB	0x08b1	QuickCam Notebook Pro
+product LOGITECH QUICKCAMPRONB_1 0x08b1	QuickCam Notebook Pro
 product LOGITECH QUICKCAMPRO4K	0x08b2	QuickCam Pro 4000
+product LOGITECH QUICKCAMPRONB_  0x08c3	QuickCam Pro Notebook
+product LOGITECH QUICKCAMPRO5K_1 0x08c5	QuickCam Pro 5000
+product LOGITECH QUICKCAMULTVIS	0x08c9	QuickCam Ultra Vision
 product LOGITECH QUICKCAMFUSION	0x08ca	QuickCam Fusion
-product LOGITECH QUICKCAMPRO5K	0x08ce	QuickCam Pro 5000
+product LOGITECH QUICKCAMPRONB	0x08cb	QuickCam Pro Notebook
+product LOGITECH QUICKCAMORBITMP 0x08cc	QuickCam Orbit MP
+product LOGITECH QUICKCAMPRO5K_2 0x08ce	QuickCam Pro 5000
 product LOGITECH QUICKCAMPRO9K	0x0990	QuickCam Pro 9000
+product LOGITECH QUICKCAMPRONB_2 0x0991	QuickCam Pro Notebook
+product LOGITECH QUICKCAMCOMMDLX 0x0992	QuickCam Communicate Deluxe
+product LOGITECH QUICKCAMSPHEREAF 0x0994 QuickCam Spehere AF
+product LOGITECH QUICKCAMDLXNB	0x09c1	QuickCam Deluxe Notebook
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
