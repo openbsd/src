@@ -1,6 +1,6 @@
-.\"	$OpenBSD: amdmsr.4,v 1.3 2008/06/15 18:55:58 jmc Exp $
+.\"	$OpenBSD: amdmsr.4,v 1.4 2008/06/19 11:33:08 mbalmer Exp $
 .\"
-.\" AMD K6 MSR driver for OpenBSD.
+.\" MSR access driver for AMD Geode LX CPUs with graphics processor.
 .\" Copyright 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,21 +15,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ..\"
-.Dd $Mdocdate: June 15 2008 $
+.Dd $Mdocdate: June 19 2008 $
 .Dt AMDMSR 4 i386
 .Os
 .Sh NAME
 .Nm amdmsr
-.Nd driver to access Model Specific Registers (MSR)
+.Nd access MSRs on certain AMD Geode LX systems
 .Sh SYNOPSIS
-.Cd "msr0 at mainbus?"
+.Cd "amdmsr0 at mainbus?"
 .Sh DESCRIPTION
 The
 .Nm
-device provides access to the Model Specific Registers (MSR) of AMD K6
-CPUs.
+device provides access to the Model Specific Registers (MSRs) on systems with
+an AMD Geode LX CPU and graphics processor.
 .Ss IOCTL INTERFACE
-MSRs can read or written via
+MSRs can be read or written via
 .Fn ioctl
 calls performed on
 .Pa /dev/amdmsr .
