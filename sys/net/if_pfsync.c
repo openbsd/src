@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.96 2008/06/10 22:39:31 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.97 2008/06/19 04:53:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -279,17 +279,18 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
-	if ((PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
+	if (PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
 	    &sp->key[PF_SK_STACK].addr[0], sp->af) ||
 	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[1],
 	    &sp->key[PF_SK_STACK].addr[1], sp->af) ||
 	    sp->key[PF_SK_WIRE].port[0] != sp->key[PF_SK_STACK].port[0] ||
-	    sp->key[PF_SK_WIRE].port[1] != sp->key[PF_SK_STACK].port[1]) &&
-	    (sks = pf_alloc_state_key()) == NULL) {
-		pool_put(&pf_state_pl, st);
-		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
-		pool_put(&pf_state_key_pl, skw);
-		return (ENOMEM);
+	    sp->key[PF_SK_WIRE].port[1] != sp->key[PF_SK_STACK].port[1]) {
+		if ((sks = pf_alloc_state_key()) == NULL) {
+			pool_put(&pf_state_pl, st);
+			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+			pool_put(&pf_state_key_pl, skw);
+			return (ENOMEM);
+		}
 	} else
 		sks = skw;
 
