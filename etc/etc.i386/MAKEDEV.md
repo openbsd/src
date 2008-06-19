@@ -1,6 +1,6 @@
 define(MACHINE,i386)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.46 2008/06/14 23:09:06 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.47 2008/06/19 15:27:00 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -52,11 +52,11 @@ _DEV(ptm, 81)
 _DEV(pty, 6)
 _DEV(tty, 5)
 _TITLE(cons)
-_DEV(wscons)
+_DEV(drm, 88)
 _DEV(wsdisp, 12)
+_DEV(wscons)
 _DEV(wskbd, 67)
 _DEV(wsmux, 69)
-_DEV(drm, 88)
 _TITLE(point)
 _DEV(wsmouse, 68)
 _TITLE(prn)
