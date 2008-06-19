@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.626 2008/06/19 08:16:50 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.627 2008/06/19 15:37:28 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -340,7 +340,7 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-com4	at isa? disable port 0x220 irq 4	# Fujitsu Stylistic Touchscreen 
+#com4	at isa? port 0x220 irq 4	# Fujitsu Stylistic Touchscreen 
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
 com*	at ast?
