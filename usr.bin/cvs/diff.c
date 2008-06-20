@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.142 2008/06/17 06:38:21 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.143 2008/06/20 13:59:14 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -330,17 +330,20 @@ cvs_diff_local(struct cvs_file *cf)
 		cvs_specified_date = date1;
 		diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs);
 		if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_DIFF) {
-			if (rev1 != NULL)
+			if (rev1 != NULL) {
 				cvs_log(LP_ERR, "tag %s not in file %s", rev1,
 				    cf->file_path);
-			else {
+				goto cleanup;
+			} else if (Nflag) {
+				diff_rev1 = NULL;
+			} else {
 				gmtime_r(&cvs_specified_date, &datetm);
 				strftime(tbuf, sizeof(tbuf),
 				    "%Y.%m.%d.%H.%M.%S", &datetm);
 				cvs_log(LP_ERR, "no revision for date %s in "
 				    "file %s", tbuf, cf->file_path);
+				goto cleanup;
 			}
-			goto cleanup;
 		} else if (diff_rev1 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
 		    force_head) {
 			/* -f is not allowed for unknown symbols */
@@ -367,14 +370,17 @@ cvs_diff_local(struct cvs_file *cf)
 			if (rev2 != NULL) {
 				cvs_log(LP_ERR, "tag %s not in file %s", rev2,
 				    cf->file_path);
+				goto cleanup;
+			} else if (Nflag) {
+				diff_rev2 = NULL;
 			} else {
 				gmtime_r(&cvs_specified_date, &datetm);
 				strftime(tbuf, sizeof(tbuf),
 				    "%Y.%m.%d.%H.%M.%S", &datetm);
 				cvs_log(LP_ERR, "no revision for date %s in "
 				    "file %s", tbuf, cf->file_path);
+				goto cleanup;
 			}
-			goto cleanup;
 		} else if (diff_rev2 == NULL && cvs_cmdop == CVS_OP_RDIFF &&
 		    force_head) {
 			/* -f is not allowed for unknown symbols */
@@ -396,7 +402,7 @@ cvs_diff_local(struct cvs_file *cf)
 
 	switch (cvs_cmdop) {
 	case CVS_OP_DIFF:
-		if (cf->file_status == FILE_UPTODATE &&
+		if (cf->file_status == FILE_UPTODATE && diff_rev1 != NULL &&
 		    rcsnum_cmp(diff_rev1, cf->file_rcsrev, 0) == 0)
 			goto cleanup;
 		break;
