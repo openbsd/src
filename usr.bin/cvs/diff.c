@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.143 2008/06/20 13:59:14 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.144 2008/06/20 14:04:29 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -39,6 +39,8 @@ static char	*rev1 = NULL;
 static char	*rev2 = NULL;
 static time_t	 date1 = -1;
 static time_t	 date2 = -1;
+static char	*dateflag1 = NULL;
+static char	*dateflag2 = NULL;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_USE_WDIR, "diff",
@@ -83,8 +85,10 @@ cvs_diff(int argc, char **argv)
 		case 'D':
 			if (date1 == -1 && rev1 == NULL) {
 				date1 = cvs_date_parse(optarg);
+				dateflag1 = optarg;
 			} else if (date2 == -1 && rev2 == NULL) {
 				date2 = cvs_date_parse(optarg);
+				dateflag2 = optarg;
 			} else {
 				fatal("no more than 2 revisions/dates can"
 				    " be specified");
@@ -157,7 +161,8 @@ cvs_diff(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (cvs_cmdop == CVS_OP_RDIFF) {
-		if (rev1 == NULL)
+		if (rev1 == NULL && rev2 == NULL && dateflag1 == NULL &&
+		    dateflag2 == NULL)
 			fatal("must specify at least one revision/date!");
 
 		if (!argc)
@@ -205,6 +210,11 @@ cvs_diff(int argc, char **argv)
 			cvs_client_send_request("Argument -r%s", rev1);
 		if (rev2 != NULL)
 			cvs_client_send_request("Argument -r%s", rev2);
+
+		if (dateflag1 != NULL)
+			cvs_client_send_request("Argument -D%s", dateflag1);
+		if (dateflag2 != NULL)
+			cvs_client_send_request("Argument -D%s", dateflag2);
 	} else {
 		if (cvs_cmdop == CVS_OP_RDIFF &&
 		    chdir(current_cvsroot->cr_dir) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.75 2008/06/15 04:38:52 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.76 2008/06/20 14:04:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -169,6 +169,9 @@ cvs_tag(int argc, char **argv)
 
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
+
+		if (tag_date != NULL)
+			cvs_client_send_request("Argument -D%s", tag_date);
 
 		if (tag_oldname != NULL)
 			cvs_client_send_request("Argument -r%s", tag_oldname);
