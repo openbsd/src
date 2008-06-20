@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.9 2005/04/21 00:10:23 deraadt Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.10 2008/06/20 13:08:44 ragge Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -125,11 +125,7 @@ outstr(pp, str, len)
  *	Cursor doesn't move if the location is invalid
  */
 void
-outyx(pp, y, x, fmt)
-	PLAYER	*pp;
-	int	y;
-	int	x;
-	const char *fmt;
+outyx(PLAYER *pp, int y, int x, const char *fmt, ...)
 {
 	va_list ap;
 	char buf[BUFSIZ];
@@ -186,9 +182,7 @@ ce(pp)
  *	Send a command to the given user
  */
 void
-sendcom(pp, command)
-	PLAYER *pp;
-	int command;
+sendcom(PLAYER *pp, int command, ...)
 {
 	va_list	ap;
 	char	buf[3];
@@ -237,9 +231,7 @@ flush(pp)
 }
 
 void
-logx(prio, fmt)
-	int prio;
-	const char *fmt;
+logx(int prio, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -253,9 +245,7 @@ logx(prio, fmt)
 }
 
 void
-logit(prio, fmt)
-	int prio;
-	const char *fmt;
+logit(int prio, const char *fmt, ...)
 {
 	va_list ap;
 	char fmtm[1024];
