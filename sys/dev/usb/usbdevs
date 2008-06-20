@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.368 2008/06/19 08:12:25 brad Exp $
+$OpenBSD: usbdevs,v 1.369 2008/06/20 21:03:39 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -521,6 +521,7 @@ vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMM3		0x19d2	Qualcomm Inc.
+vendor WCH2		0x1a86	QinHeng Electronics
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor DLINK3		0x2101	D-Link
@@ -2825,6 +2826,7 @@ product OPTION GT3GPLUS		0x6721  GlobeTrotter 3G PLUS
 
 /* WCH/QinHeng Electronics */
 product WCH CH341		0x5523	CH341 serial/parallel
+product WCH2 CH341		0x7523	CH341 serial/parallel
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
