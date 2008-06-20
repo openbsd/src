@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.42 2008/06/13 21:04:24 landry Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.43 2008/06/20 15:21:06 ragge Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -213,11 +213,7 @@ void	 unsetenv(const char *);
 #endif
 
 #if __BSD_VISIBLE
-#if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
-void  *alloca(int);     /* built-in for gcc */ 
-#else 
-void  *alloca(size_t); 
-#endif /* __GNUC__ */ 
+void	*alloca(size_t); 
 
 char	*getbsize(int *, long *);
 char	*cgetcap(char *, const char *, int);
