@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.62 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.63 2008/06/20 16:32:06 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -214,7 +214,7 @@ cvs_admin_local(struct cvs_file *cf)
 		return;
 	}
 
-	if (cf->file_status == FILE_UNKNOWN)
+	if (cf->file_ent == NULL)
 		return;
 	else if (cf->file_status == FILE_ADDED) {
 		cvs_log(LP_ERR, "cannot admin newly added file `%s'",
