@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.12 2008/03/10 13:11:57 espie Exp $
+# $OpenBSD: Error.pm,v 1.13 2008/06/21 13:23:09 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 
 package OpenBSD::Error;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy Fatal Warn Usage set_usage 
+our @EXPORT=qw(System VSystem Copy Unlink Fatal Warn Usage set_usage 
     try throw catch catchall rethrow);
 
 our ($FileName, $Line, $FullMessage);
@@ -116,6 +116,18 @@ sub Copy
 	my $r = File::Copy::copy(@_);
 	if (!$r) {
 		print "copy(", join(',', @_),") failed: $!\n";
+	}
+	return $r;
+}
+
+sub Unlink
+{
+	my $verbose = shift;
+	my $r = unlink @_;
+	if ($r != @_) {
+		print "rm @_ failed: removed only $r targets, $!\n";
+	} elsif ($verbose) {
+		print "rm @_\n";
 	}
 	return $r;
 }
