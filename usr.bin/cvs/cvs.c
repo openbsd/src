@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.149 2008/06/17 11:05:39 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.150 2008/06/21 15:39:15 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -37,6 +37,7 @@
 
 #include "cvs.h"
 #include "remote.h"
+#include "hash.h"
 
 extern char *__progname;
 
@@ -79,6 +80,9 @@ volatile sig_atomic_t cvs_quit = 0;
 volatile sig_atomic_t sig_received = 0;
 
 extern CVSENTRIES *current_list;
+
+struct hash_table created_directories;
+struct hash_table created_cvs_directories;
 
 void
 sighandler(int sig)
@@ -188,6 +192,9 @@ main(int argc, char **argv)
 	TAILQ_INIT(&cvs_variables);
 	SLIST_INIT(&repo_locks);
 	SLIST_INIT(&temp_files);
+
+	hash_table_init(&created_directories, 100);
+	hash_table_init(&created_cvs_directories, 100);
 
 	/* check environment so command-line options override it */
 	if ((envstr = getenv("CVS_RSH")) != NULL)

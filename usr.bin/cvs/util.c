@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.146 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.147 2008/06/21 15:39:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -41,6 +41,7 @@
 
 #include "cvs.h"
 #include "remote.h"
+#include "hash.h"
 
 extern int print_stdout;
 extern int build_dirs;
@@ -525,6 +526,15 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	FILE *fp;
 	int fd;
 	char buf[MAXPATHLEN];
+	struct hash_data *hdata, hd;
+
+	hdata = hash_table_find(&created_cvs_directories, path, strlen(path));
+	if (hdata != NULL)
+		return;
+
+	hd.h_key = xstrdup(path);
+	hd.h_data = NULL;
+	hash_table_enter(&created_cvs_directories, &hd);
 
 	if (cvs_server_active == 0)
 		cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s)",
@@ -578,8 +588,17 @@ cvs_mkpath(const char *path, char *tag)
 	CVSENTRIES *ent;
 	FILE *fp;
 	size_t len;
+	struct hash_data *hdata, hd;
 	char *entry, sticky[CVS_REV_BUFSZ];
 	char *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+
+	hdata = hash_table_find(&created_directories, path, strlen(path));
+	if (hdata != NULL)
+		return;
+
+	hd.h_key = xstrdup(path);
+	hd.h_data = NULL;
+	hash_table_enter(&created_directories, &hd);
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
 	    cvs_server_active == 1)
