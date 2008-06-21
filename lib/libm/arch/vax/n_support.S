@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.10 2008/06/12 18:06:10 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.11 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -47,8 +47,8 @@
  */
 
 /*
- * double copysign(x,y)
- * double x,y;
+ * double
+ * copysign(double x, double y)
  */
 
 ENTRY(copysign, R2)
@@ -61,8 +61,8 @@ ENTRY(copysign, R2)
 Lz:	ret
 
 /*
- * double logb(x)
- * double x;
+ * double
+ * logb(double x)
  */
 
 ENTRY(logb, 0)
@@ -78,8 +78,8 @@ Ln:	movq	4(ap),r0		# r0:1 = x (zero or reserved op)
 1:	ret
 
 /*
- * long finite(x)
- * double x;
+ * long
+ * finite(double x)
  */
 
 ENTRY(finite, 0)
@@ -92,8 +92,8 @@ ENTRY(finite, 0)
 	ret
 
 /*
- * double scalbn(x,N)
- * double x; int N;
+ * double
+ * scalbn(double x, int N)
  */
 
 ENTRY(scalbn, R2|R3)
@@ -211,8 +211,8 @@ Ret:
 	ret
 
 /*
- * int isinff(x)
- * float x;
+ * int
+ * isinff(float x)
  */
 
 ENTRY(isinff, 0)
@@ -220,8 +220,8 @@ ENTRY(isinff, 0)
 	ret
 
 /*
- * int isnanf(x)
- * float x;
+ * int
+ * isnanf(float x)
  */
         
 ENTRY(isnanf, 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan.c,v 1.4 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_atan.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_atan.c,v 1.1 1995/10/10 23:36:36 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -79,8 +79,8 @@ static char sccsid[] = "@(#)atan.c	8.1 (Berkeley) 6/4/93";
 
 #include "math.h"
 
-double atan(x)
-double x;
+double
+atan(double x)
 {
 	double one=1.0;
 	return(atan2(x,one));

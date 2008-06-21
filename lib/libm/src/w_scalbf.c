@@ -28,7 +28,7 @@ static char rcsid[] = "$NetBSD: w_scalbf.c,v 1.3 1995/05/10 20:49:50 jtc Exp $";
 
 #include <errno.h>
 
-float 
+float
 #ifdef _SCALB_INT
 scalbf(float x, int fn)		/* wrapper scalbf */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log10.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_log10.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_log10.c,v 1.1 1995/10/10 23:36:58 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -82,13 +82,12 @@ ic(ivln10, 4.3429448190325181667E-1, -2, 1.BCB7B1526E50E)
 #define	ln10hi	vccast(ln10hi)
 #endif
 
-
-double log10(x)
-double x;
+double
+log10(double x)
 {
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 	return(log(x)/ln10hi);
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
 	return(ivln10*log(x));
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 }

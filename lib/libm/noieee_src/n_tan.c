@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.4 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -37,8 +37,7 @@ static char sccsid[] = "@(#)tan.c	8.1 (Berkeley) 6/4/93";
 #include "mathimpl.h"
 
 double
-tan(x)
-double x;
+tan(double x)
 {
 	double a,z,ss,cc,c;
 	int k;
@@ -65,10 +64,6 @@ double x;
 	c = (z >= thresh ? half-((z-half)-cc) : one-(z-cc));
 	if (k == 0)
 		return x+(x*(z-(cc-ss)))/c;	/* ... sin/cos */
-#ifdef national
-	else if (x == zero)
-		return copysign(fmax,x);	/* no inf on 32k */
-#endif	/* national */
 	else
 		return c/(x+x*ss);		/* ... cos/sin */
 }

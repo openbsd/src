@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cosh.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_cosh.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_cosh.c,v 1.1 1995/10/10 23:36:42 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -97,14 +97,14 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #define   lnovfl    vccast(lnovfl)
 #endif
 
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 static max = 126                      ;
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
 static max = 1023                     ;
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 
-double cosh(x)
-double x;
+double
+cosh(double x)
 {
 	static const double half=1.0/2.0,
 		one=1.0, small=1.0E-18; /* fl(1+small)==1 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_exp__D.c,v 1.1 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: b_exp__D.c,v 1.2 2008/06/21 08:26:19 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,8 @@ const static double invln2 = 0x1.71547652b82fep0;
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */
 
-double __exp__D(double x, double c)
+double
+__exp__D(double x, double c)
 {
 	double z, hi, lo;
 	int k;

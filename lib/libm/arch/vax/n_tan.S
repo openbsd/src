@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_tan.S,v 1.4 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_tan.S,v 1.1 1995/10/10 23:40:31 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -40,8 +40,8 @@
  *       under 1,024,000 random arguments testing on [0,2*pi] 
  *       tan() observed maximum error = 2.15 ulps
  *
- * double tan(arg)
- * double arg;
+ * double
+ * tan(double arg)
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */

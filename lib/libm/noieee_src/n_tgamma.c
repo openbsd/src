@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tgamma.c,v 1.2 2008/06/16 21:10:30 martynas Exp $	*/
+/*	$OpenBSD: n_tgamma.c,v 1.3 2008/06/21 08:26:19 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ static const double zero = 0., one = 1.0, tiny = 1e-300;
  * TRUNC sets trailing bits in a floating-point number to zero.
  * is a temporary variable.
  */
-#if defined(__vax__) || defined(tahoe)
+#if defined(__vax__)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else

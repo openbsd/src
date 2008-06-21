@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_j0.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_j0.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_j0.c,v 1.1 1995/10/10 23:36:52 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ static char sccsid[] = "@(#)j0.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(__vax__) || defined(tahoe)
+#if defined(__vax__)
 #define _IEEE	0
 #else
 #define _IEEE	1
@@ -138,8 +138,7 @@ s03 =   5.135465502073181376284426245689510134134e-0007,
 s04 =   1.166140033337900097836930825478674320464e-0009;
 
 double
-j0(x)
-	double x;
+j0(double x)
 {
 	double z, s,c,ss,cc,r,u,v;
 
@@ -201,8 +200,7 @@ v03 =   2.591508518404578033173189144579208685163e-0007,
 v04 =   4.411103113326754838596529339004302243157e-0010;
 
 double
-y0(x)
-	double x;
+y0(double x)
 {
 	double z, s, c, ss, cc, u, v;
     /* Y0(NaN) is NaN, y0(-inf) is Nan, y0(inf) is 0  */
@@ -332,8 +330,7 @@ static double ps2[5] = {
    1.465761769482561965099880599279699314477e+0001,
 };
 
-static double pzero(x)
-	double x;
+static double pzero(double x)
 {
 	double *p,*q,z,r,s;
 	if (x >= 8.00)			   {p = pr8; q= ps8;}
@@ -424,8 +421,7 @@ static double qs2[6] = {
   -5.310954938826669402431816125780738924463e+0000,
 };
 
-static double qzero(x)
-	double x;
+static double qzero(double x)
 {
 	double *p,*q, s,r,z;
 	if (x >= 8.00)			   {p = qr8; q= qs8;}

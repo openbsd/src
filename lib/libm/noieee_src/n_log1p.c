@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log1p.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_log1p.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_log1p.c,v 1.1 1995/10/10 23:37:00 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -110,8 +110,8 @@ ic(sqrt2, 1.4142135623730951455E0,     0, 1.6A09E667F3BCD)
 #define	sqrt2	vccast(sqrt2)
 #endif
 
-double log1p(x)
-double x;
+double
+log1p(double x)
 {
 	const static double zero=0.0, negone= -1.0, one=1.0,
 		      half=1.0/2.0, small=1.0E-20;   /* 1+small == 1 */
@@ -143,18 +143,18 @@ double x;
 	/* end of if (x > negone) */
 
 	    else {
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 		if ( x == negone )
 		    return (infnan(-ERANGE));	/* -INF */
 		else
 		    return (infnan(EDOM));	/* NaN */
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
 		/* x = -1, return -INF with signal */
 		if ( x == negone ) return( negone/zero );
 
 		/* negative argument for log, return NaN with signal */
 	        else return ( zero / zero );
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 	    }
 	}
     /* end of if (finite(x)) */

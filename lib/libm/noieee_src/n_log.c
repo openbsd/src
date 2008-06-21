@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.5 2008/06/16 21:10:30 martynas Exp $	*/
+/*	$OpenBSD: n_log.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
  *	+Inf	return +Inf
 */
 
-#if defined(__vax__) || defined(tahoe)
+#if defined(__vax__)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else

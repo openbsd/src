@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp.c,v 1.7 2008/06/12 22:20:56 martynas Exp $	*/
+/*	$OpenBSD: n_exp.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,8 @@ ic(lnhuge, 7.1602103751842355450E2,    9,  1.6602B15B7ECF2)
 ic(lntiny,-7.5137154372698068983E2,    9, -1.77AF8EBEAE354)
 ic(invln2, 1.4426950408889633870E0,    0,  1.71547652B82FE)
 
-double exp(double x)
+double
+exp(double x)
 {
 	double z, hi, lo, c;
 	int k;
@@ -156,7 +157,8 @@ double exp(double x)
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */
 
-double __exp__D(double x, double c)
+double
+__exp__D(double x, double c)
 {
 	double z, hi, lo;
 	int k;

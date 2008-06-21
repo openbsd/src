@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_cabs.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -104,8 +104,7 @@ ic(sqrt2,  1.4142135623730951455E0   ,   0, 1.6A09E667F3BCD)
 #endif
 
 double
-hypot(x,y)
-double x, y;
+hypot(double x, double y)
 {
 	static const double zero=0, one=1,
 		      small=1.0E-18;	/* fl(1+small)==1 */
@@ -172,23 +171,21 @@ double x, y;
 struct complex { double x, y; };
 
 double
-cabs(z)
-struct complex z;
+cabs(struct complex z)
 {
 	return hypot(z.x,z.y);
 }
 
 double
-z_abs(z)
-struct complex *z;
+z_abs(struct complex *z)
 {
 	return hypot(z->x,z->y);
 }
 
 /* A faster but less accurate version of cabs(x,y) */
 #if 0
-double hypot(x,y)
-double x, y;
+double
+hypot(double x, double y)
 {
 	static const double zero=0, one=1;
 		      small=1.0E-18;	/* fl(1+small)==1 */

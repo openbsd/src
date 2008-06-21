@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cbrt.c,v 1.4 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_cbrt.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_cbrt.c,v 1.1 1995/10/10 23:36:40 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -51,7 +51,7 @@ static char sccsid[] = "@(#)cbrt.c	8.1 (Berkeley) 6/4/93";
  * On a National machine, it has different ordering; therefore, this code
  * must be compiled with flag -DNATIONAL.
  */
-#if !defined(__vax__)&&!defined(tahoe)
+#if !defined(__vax__)
 
 static const unsigned long
 		     B1 = 715094163, /* B1 = (682-0.03306235651)*2**20 */
@@ -63,19 +63,14 @@ static const double
 	    F= 45./28.,
 	    G= 5./14.;
 
-double cbrt(x)
-double x;
+double
+cbrt(double x)
 {
 	double r,s,t=0.0,w;
 	unsigned long *px = (unsigned long *) &x,
 	              *pt = (unsigned long *) &t,
 		      mexp,sign;
-
-#ifdef national /* ordering of words in a floating points number */
-	const int n0=1,n1=0;
-#else	/* national */
 	const int n0=0,n1=1;
-#endif	/* national */
 
 	mexp=px[n0]&0x7ff00000;
 	if(mexp==0x7ff00000) return(x); /* cbrt(NaN,INF) is itself */

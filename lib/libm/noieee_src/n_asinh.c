@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asinh.c,v 1.6 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_asinh.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_asinh.c,v 1.1 1995/10/10 23:36:35 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -80,8 +80,8 @@ ic(ln2lo, 1.9082149292705877000E-10, -33, 1.A39EF35793C76)
 #define    ln2lo    vccast(ln2lo)
 #endif
 
-double asinh(x)
-double x;
+double
+asinh(double x)
 {
 	double t,s;
 	const static double	small=1.0E-10,	/* fl(1+small*small) == 1 */

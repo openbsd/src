@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_pow.c,v 1.8 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_pow.c,v 1.9 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -107,7 +107,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-#if (defined(__vax__) || defined(tahoe))
+#if defined(__vax__)
 #define TRUNC(x)	x = (double) (float) x
 #define _IEEE		0
 #else
@@ -115,14 +115,14 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 #define endian		(((*(int *) &one)) ? 1 : 0)
 #define TRUNC(x) 	*(((int *) &x)+endian) &= 0xf8000000
 #define infnan(x)	0.0
-#endif		/* vax or tahoe */
+#endif		/* defined(__vax__) */
 
 const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
 static double pow_P(double, double);
 
-double pow(x,y)
-double x,y;
+double
+pow(double x, double y)
 {
 	double t;
 	if (y==zero)

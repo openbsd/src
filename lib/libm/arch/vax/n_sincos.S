@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_sincos.S,v 1.4 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_sincos.S,v 1.1 1995/10/10 23:40:28 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -42,8 +42,8 @@
  *       sin() observed maximum error = 0.814 ulps
  *       cos() observed maximum error = 0.792 ulps
  *
- * double sin(arg)
- * double arg;
+ * double
+ * sin(double arg)
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
@@ -71,8 +71,8 @@ ENTRY(sin, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 1:	ret
 
 /*
- * double cos(arg)
- * double arg;
+ * double
+ * cos(double arg)
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */

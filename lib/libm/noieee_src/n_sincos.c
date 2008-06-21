@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.c,v 1.4 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_sincos.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -37,8 +37,7 @@ static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
 #include "mathimpl.h"
 
 double
-sin(x)
-double x;
+sin(double x)
 {
 	double a,c,z;
 
@@ -67,8 +66,7 @@ double x;
 }
 
 double
-cos(x)
-double x;
+cos(double x)
 {
 	double a,c,z,s = 1.0;
 

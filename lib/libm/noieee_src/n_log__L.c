@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log__L.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_log__L.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_log__L.c,v 1.1 1995/10/10 23:37:01 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -98,12 +98,12 @@ ic(L7, 1.4795612545334174692E-1, -3, 1.2F039F0085122)
 #define	L8	vccast(L8)
 #endif
 
-double __log__L(z)
-double z;
+double
+__log__L(double z)
 {
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
     return(z*(L1+z*(L2+z*(L3+z*(L4+z*(L5+z*(L6+z*(L7+z*L8))))))));
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
     return(z*(L1+z*(L2+z*(L3+z*(L4+z*(L5+z*(L6+z*L7)))))));
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 }

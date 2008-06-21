@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_jn.c,v 1.4 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_jn.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_jn.c,v 1.1 1995/10/10 23:36:54 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ static char sccsid[] = "@(#)jn.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(__vax__) || defined(tahoe)
+#if defined(__vax__)
 #define _IEEE	0
 #else
 #define _IEEE	1
@@ -106,8 +106,8 @@ two  = 2.0,
 zero = 0.0,
 one  = 1.0;
 
-double jn(n,x)
-	int n; double x;
+double
+jn(int n, double x)
 {
 	int i, sgn;
 	double a, b, temp;
@@ -236,11 +236,11 @@ double jn(n,x)
 		        b = ((i+i)/x)*b - a;
 		        a = temp;
 		    /* scale b to avoid spurious overflow */
-#			if defined(__vax__) || defined(tahoe)
+#			if defined(__vax__)
 #				define BMAX 1e13
 #			else
 #				define BMAX 1e100
-#			endif /* defined(__vax__) || defined(tahoe) */
+#			endif /* defined(__vax__) */
 			if (b > BMAX) {
 				a /= b;
 				t /= b;
@@ -252,8 +252,9 @@ double jn(n,x)
 	}
 	return ((sgn == 1) ? -b : b);
 }
-double yn(n,x)
-	int n; double x;
+
+double
+yn(int n, double x)
 {
 	int i, sign;
 	double a, b, temp;

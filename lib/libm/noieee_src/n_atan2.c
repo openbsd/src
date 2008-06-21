@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -171,8 +171,8 @@ ic(a11,    1.6438029044759730479E-2  ,  -6,  1.0D52174A1BB54)
 #define	a12	vccast(a12)
 #endif
 
-double atan2(y,x)
-double  y,x;
+double
+atan2(double y, double x)
 {
 	static const double zero=0, one=1, small=1.0E-9, big=1.0E18;
 	double t,z,signy,signx,hi,lo;
@@ -268,13 +268,13 @@ begin:
 
     /* compute atan(t) for t in [-.4375, .4375] */
 	z = t*t;
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 	z = t*(z*(a1+z*(a2+z*(a3+z*(a4+z*(a5+z*(a6+z*(a7+z*(a8+
 			z*(a9+z*(a10+z*(a11+z*a12))))))))))));
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
 	z = t*(z*(a1+z*(a2+z*(a3+z*(a4+z*(a5+z*(a6+z*(a7+z*(a8+
 			z*(a9+z*(a10+z*a11)))))))))));
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 	z = lo - z; z += t; z += hi;
 
 	return(copysign((signx>zero)?z:PI-z,signy));

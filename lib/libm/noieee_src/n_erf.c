@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_erf.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_erf.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_erf.c,v 1.1 1995/10/10 23:36:43 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -144,20 +144,13 @@ static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
  *	   	erfc/erf(NaN) is NaN
  */
 
-#if defined(__vax__) || defined(tahoe)
+#if defined(__vax__)
 #define _IEEE	0
 #define TRUNC(x) (double) (float) (x)
 #else
 #define _IEEE	1
 #define TRUNC(x) *(((int *) &x) + 1) &= 0xf8000000
 #define infnan(x) 0.0
-#endif
-
-#ifdef _IEEE_LIBM
-/*
- * redefining "___function" to "function" in _IEEE_LIBM mode
- */
-#include "ieee_libm.h"
 #endif
 
 static double
@@ -262,8 +255,8 @@ rd11 =	-2.06466642800404317677021026611e+006,
 rd12 =	 7.78293889471135381609201431274e+006,
 rd13 =	-1.42821001129434127360582351685e+007;
 
-double erf(x)
-	double x;
+double
+erf(double x)
 {
 	double R, S, P, Q, ax, s, y, z, r;
 	if(!finite(x)) {		/* erf(nan)=nan */
@@ -320,8 +313,8 @@ double erf(x)
 		return (z-one);
 }
 
-double erfc(x)
-	double x;
+double
+erfc(double x)
 {
 	double R, S, P, Q, s, ax, y, z, r;
 	if (!finite(x)) {

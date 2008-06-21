@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sqrt.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_sqrt.S,v 1.4 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -35,8 +35,8 @@
 #include <sys/errno.h>
 
 /*
- * double sqrt(arg)   revised August 15,1982
- * double arg;
+ * double
+ * sqrt(double arg)   revised August 15,1982
  * if(arg<0.0) { errno = EDOM; return(<a reserved operand>); }
  * if arg is a reserved operand it is returned as it is
  * W. Kahan's magic square root

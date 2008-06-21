@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atanh.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_atanh.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_atanh.c,v 1.1 1995/10/10 23:36:38 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -63,21 +63,21 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 #include <errno.h>
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 
-double atanh(x)
-double x;
+double
+atanh(double x)
 {
 	double z;
 	z = copysign(0.5,x);
 	x = copysign(x,1.0);
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 	if (x == 1.0) {
 	    return(copysign(1.0,z)*infnan(ERANGE));	/* sign(x)*INF */
 	}
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 	x = x/(1.0-x);
 	return( z*log1p(x+x) );
 }

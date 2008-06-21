@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_fmod.c,v 1.5 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_fmod.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_fmod.c,v 1.1 1995/10/10 23:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1989, 1993
@@ -64,8 +64,7 @@ static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
  */
 
 double
-fmod(x,y)
-double x,y;
+fmod(double x, double y)
 {
 	int ir,iy;
 	double r,w;

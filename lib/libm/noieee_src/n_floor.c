@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.6 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -52,8 +52,7 @@ ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
  *	customary for IEEE 754.  No other signal can be emitted.
  */
 double
-floor(x)
-double x;
+floor(double x)
 {
 	volatile double y;
 
@@ -69,8 +68,7 @@ double x;
 }
 
 double
-ceil(x)
-double x;
+ceil(double x)
 {
 	volatile double y;
 
@@ -85,7 +83,6 @@ double x;
 	}
 }
 
-#ifndef ns32000			/* rint() is in ./NATIONAL/support.s */
 /*
  * algorithm for rint(x) in pseudo-pascal form ...
  *
@@ -108,8 +105,7 @@ double x;
  *	customary for IEEE 754.  No other signal can be emitted.
  */
 double
-rint(x)
-double x;
+rint(double x)
 {
 	double s;
 	volatile double t;
@@ -125,4 +121,3 @@ double x;
 	t = x + s;				/* x+s rounded to integer */
 	return (t - s);
 }
-#endif	/* not national */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_expm1.c,v 1.7 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_expm1.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -104,17 +104,17 @@ ic(invln2, 1.4426950408889633870E0,     0, 1.71547652B82FE)
 #define	invln2	vccast(invln2)
 #endif
 
-double expm1(x)
-double x;
+double
+expm1(double x)
 {
 	const static double one=1.0, half=1.0/2.0;
 	double  z,hi,lo,c;
 	int k;
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__)
 	static prec=56;
-#else	/* defined(__vax__)||defined(tahoe) */
+#else	/* defined(__vax__) */
 	static prec=53;
-#endif	/* defined(__vax__)||defined(tahoe) */
+#endif	/* defined(__vax__) */
 
 	if (isnan(x))
 		return (x);

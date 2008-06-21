@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tanh.c,v 1.6 2008/06/12 22:43:36 martynas Exp $	*/
+/*	$OpenBSD: n_tanh.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
 /*	$NetBSD: n_tanh.c,v 1.1 1995/10/10 23:37:08 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -72,8 +72,8 @@ static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
  *	observed error was 2.22 ulps (units in the last place).
  */
 
-double tanh(x)
-double x;
+double
+tanh(double x)
 {
 	static double one=1.0, two=2.0, small = 1.0e-10, big = 1.0e10;
 	double t, sign;
