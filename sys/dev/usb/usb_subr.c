@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.66 2008/05/19 15:51:43 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.67 2008/06/21 22:28:21 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1217,7 +1217,7 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(5,("usbd_submatch port=%d,%d configno=%d,%d "
-	    "ifaceno=%d,%d vendor=%d,%d product=%d,%d release=%d,%d\n",
+	    "ifaceno=%d,%d vendor=0x%x,0x%x product=0x%x,0x%x release=%d,%d\n",
 	    uaa->port, cf->uhubcf_port,
 	    uaa->configno, cf->uhubcf_configuration,
 	    uaa->ifaceno, cf->uhubcf_interface,
