@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.13 2007/11/06 02:49:19 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.14 2008/06/21 21:11:34 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -53,8 +53,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
-
-#define	SDRETRIES	4
 
 struct sd_softc {
 	struct device sc_dev;

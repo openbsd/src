@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.92 2008/06/14 01:57:51 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.93 2008/06/21 21:11:34 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -297,9 +297,14 @@ struct scsi_xfer {
 #define XS_RESET	8	/* bus was reset; possible retry command  */
 
 /*
- * Possible retries numbers for scsi_test_unit_ready()
+ * Possible retries for scsi_test_unit_ready()
  */
 #define TEST_READY_RETRIES	5
+
+/*
+ * Possible retries for most SCSI commands.
+ */
+#define SCSI_RETRIES		4
 
 const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);
