@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.67 2008/06/10 20:55:02 mcbride Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.68 2008/06/21 10:34:08 mcbride Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -272,12 +272,14 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 			if (b.pfrb_size <= b.pfrb_msize)
 				break;
 		}
-		PFRB_FOREACH(p, &b)
+		PFRB_FOREACH(p, &b) {
+			((struct pfr_astats *)p)->pfras_a.pfra_fback = 0;
 			if (time(NULL) - ((struct pfr_astats *)p)->pfras_tzero >
 			     lifetime)
 				if (pfr_buf_add(&b2,
 				    &((struct pfr_astats *)p)->pfras_a))
 					err(1, "duplicate buffer");
+		}
 
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
