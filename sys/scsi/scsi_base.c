@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.127 2008/06/15 00:52:25 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.128 2008/06/21 21:35:27 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	 * number of blocks
 	 */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc, sizeof(rc),
-	    (u_char *)&rdcap, sizeof(rdcap), 2, 20000, NULL,
+	    (u_char *)&rdcap, sizeof(rdcap), SCSI_RETRIES, 20000, NULL,
 	    flags | SCSI_DATA_IN);
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
@@ -275,8 +275,8 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	 _lto4b(sizeof(rdcap16), rc16.length);
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc16,
-	    sizeof(rc16), (u_char *)&rdcap16, sizeof(rdcap16), 2, 20000, NULL,
-	    flags | SCSI_DATA_IN);
+	    sizeof(rc16), (u_char *)&rdcap16, sizeof(rdcap16), SCSI_RETRIES,
+	    20000, NULL, flags | SCSI_DATA_IN);
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY 16 error (%#x)\n",
 		    error));
