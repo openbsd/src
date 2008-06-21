@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.17 2008/06/21 12:41:55 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.18 2008/06/21 14:01:10 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -22,62 +22,72 @@ use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Vstat;
 
+sub find_collisions
+{
+	my ($todo, $verbose) = @_;
+	my $bypkg = {};
+	for my $name (keys %$todo) {
+		my $p = OpenBSD::Vstat::vexists $name;
+		if (ref $p) {
+			my $pkg = $$p;
+			push(@{$bypkg->{$pkg}}, $name);
+			delete $todo->{$name};
+		}
+	}
+
+
+	if (!%$todo) {
+		return $bypkg;
+	}
+	for my $pkg (installed_packages()) {
+		print "Looking for collisions in $pkg\n" if $verbose;
+		my $plist = OpenBSD::PackingList->from_installation($pkg, 
+		    \&OpenBSD::PackingList::FilesOnly);
+		next if !defined $plist;
+		for my $item (@{$plist->{items}}) {
+			next unless $item->IsFile;
+			my $name = $item->fullname;
+			if (defined $todo->{$name}) {
+				push(@{$bypkg->{$pkg}}, $name);
+				delete $todo->{$name};
+				return $bypkg;
+			}
+		}
+	}
+	return $bypkg;
+}
 
 sub collision_report($$)
 {
 	my ($list, $state) = @_;
 
 	if ($state->{defines}->{removecollisions}) {
+		require OpenBSD::Error;
 		for my $f (@$list) {
-			print "rm ", $f->fullname, "\n";
-			unlink($f->fullname);
+			OpenBSD::Error::Unlink(1, $f->fullname);
 		}
 		return;
 	}
 	my %todo = map {($_->fullname, $_->{md5})} @$list;
-	my $bypkg = {};
 	my $clueless_bat;
 	my $clueless_bat2;
+	my $found = 0;
 	
 	print "Collision: the following files already exist\n";
-	for my $name (keys %todo) {
-		my $p = OpenBSD::Vstat::vexists $name;
-		if (ref $p) {
-			my $pkg = $$p;
-			push(@{$bypkg->{$pkg}}, $name);
-			delete $todo{$name};
+	if (!$state->{defines}->{dontfindcollisions}) {
+		my $bypkg = find_collisions(\%todo, $state->{verbose});
+		for my $pkg (sort keys %$bypkg) {
+		    for my $item (sort @{$bypkg->{$pkg}}) {
+		    	$found++;
+			print "\t$item ($pkg)\n";
+		    }
+		    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/o) {
+			$clueless_bat = $pkg;
+		    }
+		    if ($pkg =~ m/^\.libs\d*-*$/o) {
+			$clueless_bat2 = $pkg;
+		    }
 		}
-	}
-
-	if (%todo) {
-		BIGLOOP: {
-		for my $pkg (installed_packages()) {
-			print "Looking for collisions in $pkg\n" if $state->{verbose};
-			my $plist = OpenBSD::PackingList->from_installation($pkg, 
-			    \&OpenBSD::PackingList::FilesOnly);
-			next if !defined $plist;
-			for my $item (@{$plist->{items}}) {
-				next unless $item->IsFile;
-				my $name = $item->fullname;
-				if (defined $todo{$name}) {
-					push(@{$bypkg->{$pkg}}, $name);
-					delete $todo{$name};
-					last BIGLOOP if !%todo;
-				}
-			}
-		}
-		}
-	}
-	for my $pkg (sort keys %$bypkg) {
-	    for my $item (sort @{$bypkg->{$pkg}}) {
-	    	print "\t$item ($pkg)\n";
-	    }
-	    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/o) {
-	    	$clueless_bat = $pkg;
-	    }
-	    if ($pkg =~ m/^\.libs\d*-*$/o) {
-	    	$clueless_bat2 = $pkg;
-	    }
 	}
 	if (%todo) {
 		require OpenBSD::md5;
@@ -107,6 +117,31 @@ sub collision_report($$)
 		print "from a former package update.  It is likely that\n";
 		print "\tpkg_delete $clueless_bat2\n";
 		print "will solve the problem\n";
+	}
+	my $dorepair = 0;
+	if ($found == 0) {
+		if ($state->{defines}->{repair}) {
+			$dorepair = 1;
+		} elsif ($state->{interactive}) {
+			require OpenBSD::Interactive;
+			if (OpenBSD::Interactive::confirm(
+	    "It seems to be a missing package registration\nRepair", 1, 0)) {
+				$dorepair = 1;
+			}
+		}
+	}
+	if ($dorepair == 1) {
+		require OpenBSD::Error;
+		for my $f (@$list) {
+
+			if (OpenBSD::Error::Unlink($state->{verbose}, 
+			    $f->fullname)) {
+				$state->{problems}--;
+			} else {
+				return;
+			}
+		}
+		$state->{repairdependencies} = 1;
 	}
 }
 

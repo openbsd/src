@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.63 2008/06/11 12:43:13 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.64 2008/06/21 14:01:10 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -402,6 +402,17 @@ sub adjust_old_dependencies
 	}
 }
 
+sub repair_dependencies
+{
+	my ($self, $state) = @_;
+	my $pkgname = $self->{set}->handle->{pkgname};
+	for my $pkg (installed_packages(1)) {
+		my $plist = OpenBSD::PackingList->from_installation($pkg, 
+		    \&OpenBSD::PackingList::DependOnly);
+	    	$plist->repair_dependency($pkg, $pkgname);
+	}
+}
+
 use OpenBSD::SharedLibs;
 
 sub check_lib_spec
@@ -477,6 +488,22 @@ sub solve_tags
 	    	}
 	}
 	return $okay;
+}
+
+package OpenBSD::PackingElement;
+sub repair_dependency
+{
+}
+
+package OpenBSD::PackingElement::Dependency;
+sub repair_dependency
+{
+	my ($self, $requiring, $required) = @_;
+	if ($self->spec->filter($required) == 1) {
+		require OpenBSD::RequiredBy;
+		OpenBSD::RequiredBy->new($required)->add($requiring);
+		OpenBSD::Requiring->new($requiring)->add($required);
+	}
 }
 
 1;

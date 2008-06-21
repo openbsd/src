@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.331 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.332 2008/06/21 14:01:10 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -401,6 +401,9 @@ sub really_add
 		$plist->get(DISPLAY)->prepare($state);
 	}
 	$set->{solver}->adjust_old_dependencies($state);
+	if ($state->{repairdependencies}) {
+		$set->{solver}->repair_dependencies($state);
+	}
 }
 
 sub install_set
@@ -470,6 +473,13 @@ sub install_set
 			return ();
 		}
 	}
+#	if (!$set->{solver}->solve_tags($state)) {
+#		$location->close_now;
+#		if (!$defines{libdepends}) {
+#			$bad++;
+#			return ();
+#		}
+#	}
 	really_add($set, $state);
 	$location->wipe_info;
 	delete $handle->{plist};
