@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.16 2008/06/17 01:32:49 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.17 2008/06/21 18:50:24 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -289,8 +289,8 @@ struct cd_softc {
 #endif
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
-		int blksize;
-		u_long disksize;	/* total number sectors */
+		u_int32_t blksize;
+		daddr64_t disksize;	/* total number sectors */
 	} params;
 #ifdef CDDA
 	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */

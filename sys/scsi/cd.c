@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.139 2008/06/17 01:32:49 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.140 2008/06/21 18:50:24 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ void	cdrestart(void *);
 void	cdminphys(struct buf *);
 void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 void	cddone(struct scsi_xfer *);
-u_long	cd_size(struct cd_softc *, int);
 void	cd_kill_buffers(struct cd_softc *);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
@@ -343,7 +342,8 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 		/* Load the physical device parameters. */
 		sc_link->flags |= SDEV_MEDIA_LOADED;
-		if (cd_get_parms(cd, 0) != 0) {
+		if (cd_get_parms(cd, (rawopen ? SCSI_SILENT : 0) |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE)) {
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			error = ENXIO;
 			goto bad;
@@ -1174,56 +1174,6 @@ done:
 	}
 }
 
-/*
- * Find out from the device what its capacity is
- */
-u_long
-cd_size(struct cd_softc *cd, int flags)
-{
-	struct scsi_read_cap_data rdcap;
-	struct scsi_read_capacity scsi_cmd;
-	u_long size;
-	int blksize;
-
-	/* Reasonable defaults for drives that don't support READ_CAPACITY */
-	cd->params.blksize = 2048;
-	cd->params.disksize = 400000;
-
-	if (cd->sc_link->quirks & ADEV_NOCAPACITY)
-		goto exit;
-
-	/*
-	 * make up a scsi command and ask the scsi driver to do
-	 * it for you.
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CAPACITY;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks and a blocksize
-	 */
-	if (scsi_scsi_cmd(cd->sc_link,
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
-	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
-	    flags | SCSI_DATA_IN) != 0)
-		goto exit;
-
-	blksize = _4btol(rdcap.length);
-	if ((blksize < 512) || ((blksize & 511) != 0))
-		blksize = 2048;	/* some drives lie ! */
-	cd->params.blksize = blksize;
-
-	size = _4btol(rdcap.addr) + 1;
-	if (size < 100)
-		size = 400000;	/* ditto */
-	cd->params.disksize = size;
-
- exit:
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_size: %d %ld\n", blksize, size));
-	return (cd->params.disksize);
-}
-
 int
 cd_setchan(struct cd_softc *cd, int p0, int p1, int p2, int p3, int flags)
 {
@@ -1585,12 +1535,22 @@ cd_load_toc(struct cd_softc *cd, struct cd_toc *toc, int fmt)
 int
 cd_get_parms(struct cd_softc *cd, int flags)
 {
-	/*
-	 * give a number of sectors so that sec * trks * cyls
-	 * is <= disk_size
-	 */
-	if (cd_size(cd, flags) == 0)
-		return (ENXIO);
+	/* Reasonable defaults for drives that don't support READ_CAPACITY */
+	cd->params.blksize = 2048;
+	cd->params.disksize = 400000;
+
+	if (cd->sc_link->quirks & ADEV_NOCAPACITY)
+		return (0);
+
+	cd->params.disksize = scsi_size(cd->sc_link, flags,
+	    &cd->params.blksize);
+
+	if ((cd->params.blksize < 512) || ((cd->params.blksize & 511) != 0))
+		cd->params.blksize = 2048;	/* some drives lie ! */
+
+	if (cd->params.disksize < 100)
+		cd->params.disksize = 400000;
+
 	return (0);
 }
 
