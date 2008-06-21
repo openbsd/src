@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.16 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.17 2008/06/21 12:41:55 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -36,15 +36,14 @@ sub collision_report($$)
 	}
 	my %todo = map {($_->fullname, $_->{md5})} @$list;
 	my $bypkg = {};
-	my $clueless_bat = 0;
-	my $clueless_bat2 = 0;
+	my $clueless_bat;
+	my $clueless_bat2;
 	
 	print "Collision: the following files already exist\n";
 	for my $name (keys %todo) {
 		my $p = OpenBSD::Vstat::vexists $name;
 		if (ref $p) {
 			my $pkg = $$p;
-			$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
 			push(@{$bypkg->{$pkg}}, $name);
 			delete $todo{$name};
 		}
@@ -61,7 +60,6 @@ sub collision_report($$)
 				next unless $item->IsFile;
 				my $name = $item->fullname;
 				if (defined $todo{$name}) {
-					$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
 					push(@{$bypkg->{$pkg}}, $name);
 					delete $todo{$name};
 					last BIGLOOP if !%todo;
@@ -98,13 +96,13 @@ sub collision_report($$)
 		    }
 	    	}
 	}
-	if ($clueless_bat) {
+	if (defined $clueless_bat) {
 		print "The package name $clueless_bat suggests that a former installation\n";
 		print "of a similar package got interrupted.  It is likely that\n";
 		print "\tpkg_delete $clueless_bat\n";
 		print "will solve the problem\n";
 	}
-	if ($clueless_bat2) {
+	if (defined $clueless_bat2) {
 		print "The package name $clueless_bat2 suggests remaining libraries\n";
 		print "from a former package update.  It is likely that\n";
 		print "\tpkg_delete $clueless_bat2\n";
