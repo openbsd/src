@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.65 2008/06/21 02:40:39 fgsch Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.66 2008/06/22 19:00:51 fgsch Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -988,7 +988,7 @@ uhci_add_loop(uhci_softc_t *sc) {
 		return;
 #endif
 	if (++sc->sc_loops == 1) {
-		DPRINTFN(5,("uhci_start_loop: add\n"));
+		DPRINTFN(5,("uhci_add_loop\n"));
 		/* Note, we don't loop back the soft pointer. */
 		sc->sc_last_qh->qh.qh_hlink =
 		    htole32(sc->sc_hctl_start->physaddr | UHCI_PTR_QH);
@@ -1002,7 +1002,7 @@ uhci_rem_loop(uhci_softc_t *sc) {
 		return;
 #endif
 	if (--sc->sc_loops == 0) {
-		DPRINTFN(5,("uhci_end_loop: remove\n"));
+		DPRINTFN(5,("uhci_rem_loop\n"));
 		sc->sc_last_qh->qh.qh_hlink = htole32(UHCI_PTR_T);
 	}
 }
@@ -1015,7 +1015,7 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 
 	SPLUSBCHECK;
 
-	DPRINTFN(10, ("uhci_add_ctrl: sqh=%p\n", sqh));
+	DPRINTFN(10, ("uhci_add_hs_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_hctl_end;
 	sqh->hlink       = eqh->hlink;
 	sqh->qh.qh_hlink = eqh->qh.qh_hlink;
@@ -1222,7 +1222,7 @@ uhci_intr1(uhci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
-	DPRINTFN(15, ("%s: uhci_intr: exit\n", sc->sc_bus.bdev.dv_xname));
+	DPRINTFN(15, ("%s: uhci_intr1: exit\n", sc->sc_bus.bdev.dv_xname));
 
 	return (1);
 }
@@ -1802,7 +1802,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_bulk_transfer: a request");
+		panic("uhci_device_bulk_start: a request");
 #endif
 
 	len = xfer->length;
@@ -1821,7 +1821,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 8) {
-		DPRINTF(("uhci_device_bulk_transfer: data(1)\n"));
+		DPRINTF(("uhci_device_bulk_start: data(1)\n"));
 		uhci_dump_tds(data);
 	}
 #endif
@@ -1832,7 +1832,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	ii->stdend = dataend;
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
-		printf("uhci_device_bulk_transfer: not done, ii=%p\n", ii);
+		printf("uhci_device_bulk_start: not done, ii=%p\n", ii);
 	}
 	ii->isdone = 0;
 #endif
@@ -1854,7 +1854,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_bulk_transfer: data(2)\n"));
+		DPRINTF(("uhci_device_bulk_start: data(2)\n"));
 		uhci_dump_tds(data);
 	}
 #endif
@@ -2032,12 +2032,12 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	DPRINTFN(3,("uhci_device_intr_transfer: xfer=%p len=%d flags=%d\n",
+	DPRINTFN(3,("uhci_device_intr_start: xfer=%p len=%d flags=%d\n",
 		    xfer, xfer->length, xfer->flags));
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_intr_transfer: a request");
+		panic("uhci_device_intr_start: a request");
 #endif
 
 	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
@@ -2055,7 +2055,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_intr_transfer: data(1)\n"));
+		DPRINTF(("uhci_device_intr_start: data(1)\n"));
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->u.intr.qhs[0]);
 	}
@@ -2073,7 +2073,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	ii->isdone = 0;
 #endif
 
-	DPRINTFN(10,("uhci_device_intr_transfer: qhs[0]=%p\n",
+	DPRINTFN(10,("uhci_device_intr_start: qhs[0]=%p\n",
 		     upipe->u.intr.qhs[0]));
 	for (i = 0; i < upipe->u.intr.npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
@@ -2086,7 +2086,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_intr_transfer: data(2)\n"));
+		DPRINTF(("uhci_device_intr_start: data(2)\n"));
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->u.intr.qhs[0]);
 	}
@@ -2168,7 +2168,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	int isread;
 	int s;
 
-	DPRINTFN(3,("uhci_device_control type=0x%02x, request=0x%02x, "
+	DPRINTFN(3,("uhci_device_request type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), UGETW(req->wLength),
@@ -2249,7 +2249,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 		uhci_soft_qh_t *sxqh;
 		int maxqh = 0;
 		uhci_physaddr_t link;
-		DPRINTF(("uhci_enter_ctl_q: follow from [0]\n"));
+		DPRINTF(("uhci_device_request: follow from [0]\n"));
 		for (std = sc->sc_vframes[0].htd, link = 0;
 		     (link & UHCI_PTR_QH) == 0;
 		     std = std->link.std) {
@@ -2576,7 +2576,7 @@ uhci_device_isoc_done(usbd_xfer_handle xfer)
 {
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 
-	DPRINTFN(4, ("uhci_isoc_done: length=%d\n", xfer->actlen));
+	DPRINTFN(4, ("uhci_device_isoc_done: length=%d\n", xfer->actlen));
 
 	if (ii->xfer != xfer)
 		/* Not on interrupt list, ignore it. */
@@ -3103,11 +3103,11 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_root_ctrl_transfer: not a request");
+		panic("uhci_root_ctrl_start: not a request");
 #endif
 	req = &xfer->request;
 
-	DPRINTFN(2,("uhci_root_ctrl_control type=0x%02x request=%02x\n",
+	DPRINTFN(2,("uhci_root_ctrl_start type=0x%02x request=%02x\n",
 		    req->bmRequestType, req->bRequest));
 
 	len = UGETW(req->wLength);
@@ -3134,7 +3134,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(2,("uhci_root_ctrl_control wValue=0x%04x\n", value));
+		DPRINTFN(2,("uhci_root_ctrl_start wValue=0x%04x\n", value));
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -3233,7 +3233,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(3, ("uhci_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
+		DPRINTFN(3, ("uhci_root_ctrl_start: UR_CLEAR_PORT_FEATURE "
 			     "port=%d feature=%d\n",
 			     index, value));
 		if (index == 1)
