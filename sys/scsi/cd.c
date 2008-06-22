@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.141 2008/06/21 21:11:34 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.142 2008/06/22 16:32:05 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -637,8 +637,8 @@ cdstart(void *v)
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
 		error = scsi_scsi_cmd(sc_link, cmdp, cmdlen,
-		    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 30000, bp,
-		    SCSI_NOSLEEP | ((bp->b_flags & B_READ) ? SCSI_DATA_IN :
+		    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 30000,
+		    bp, SCSI_NOSLEEP | ((bp->b_flags & B_READ) ? SCSI_DATA_IN :
 		    SCSI_DATA_OUT));
 		switch (error) {
 		case 0:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.15 2007/09/16 01:30:24 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.16 2008/06/22 16:32:05 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -65,8 +65,6 @@
 #include <scsi/scsiconf.h>
 #include <scsi/ssvar.h>
 #include <scsi/ss_mustek.h>
-
-#define MUSTEK_RETRIES 4
 
 int mustek_set_params(struct ss_softc *, struct scan_io *);
 int mustek_trigger_scanner(struct ss_softc *);
@@ -303,7 +301,7 @@ mustek_trigger_scanner(ss)
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_set_parms: set_window\n"));
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &window_cmd,
 	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
-	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
+	    SCSI_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
 		return (error);
 
@@ -342,7 +340,7 @@ mustek_trigger_scanner(ss)
 	/* send the command to the scanner */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &mode_cmd,
 	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
-	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
+	    SCSI_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
 		return (error);
 
@@ -379,7 +377,7 @@ mustek_trigger_scanner(ss)
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: start_scan\n"));
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &start_scan_cmd,
 	    sizeof(start_scan_cmd), NULL, 0,
-	    MUSTEK_RETRIES, 5000, NULL, 0);
+	    SCSI_RETRIES, 5000, NULL, 0);
 	if (error)
 		return (error);
 
@@ -421,7 +419,7 @@ mustek_rewind_scanner(ss)
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("mustek_rewind_scanner: stop_scan\n"));
 		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-		    sizeof(cmd), NULL, 0, MUSTEK_RETRIES, 5000, NULL, 0);
+		    sizeof(cmd), NULL, 0, SCSI_RETRIES, 5000, NULL, 0);
 		if (error)
 			return (error);
 	}
@@ -459,7 +457,7 @@ mustek_read(ss, bp)
 	 * go ask the adapter to do all this for us
 	 */
 	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
+	    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 10000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
 	else {
@@ -494,7 +492,7 @@ mustek_get_status(ss, timeout, update)
 	while (1) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("mustek_get_status: stat_cmd\n"));
 		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
+		    sizeof(cmd), (u_char *) &data, sizeof(data), SCSI_RETRIES,
 		    5000, NULL, SCSI_DATA_IN);
 		if (error)
 			return (error);

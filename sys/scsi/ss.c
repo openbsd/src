@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.61 2008/05/22 21:53:12 jasper Exp $	*/
+/*	$OpenBSD: ss.c,v 1.62 2008/06/22 16:32:05 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -540,7 +540,8 @@ ssread(dev, uio, flag)
 			trigger_cmd.how = SSS_START;
 			scsi_scsi_cmd(ss->sc_link,
 				(struct scsi_generic *)&trigger_cmd,
-				sizeof(trigger_cmd), 0, 0, 4, 5000, NULL, 0);
+				sizeof(trigger_cmd), 0, 0, SCSI_RETRIES, 5000,
+				NULL, 0);
 		}
 		ss->flags |= SSF_TRIGGERED;
 	}
@@ -859,7 +860,7 @@ ss_set_window(ss, sio)
 		    sizeof(window_cmd), (u_char *) &wd.window_data,
 		    (ss->quirkdata->quirks & SS_Q_WINDOW_DESC_LEN) ?
 		    ss->quirkdata->window_descriptor_length : 40,
-		    4, 5000, NULL, SCSI_DATA_OUT));
+		    SCSI_RETRIES, 5000, NULL, SCSI_DATA_OUT));
 }
 
 int
@@ -884,7 +885,7 @@ ricoh_is410_sw(ss, sio, wcmd, vwd)
 	/* send the command to the scanner */
 	return (scsi_scsi_cmd(sc_link, (struct scsi_generic *)wcmd,
 	    sizeof(struct scsi_set_window), (u_char *)rwd,
-	    sizeof(struct ricoh_is410_window_data), 4, 5000, NULL,
+	    sizeof(struct ricoh_is410_window_data), SCSI_RETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
 }
 
@@ -924,7 +925,7 @@ umax_uc630_sw(ss, sio, wcmd, vwd)
 	/* send the command to the scanner */
 	return (scsi_scsi_cmd(sc_link, (struct scsi_generic *)wcmd,
 	    sizeof(struct scsi_set_window), (u_char *)uwd,
-	    sizeof(struct umax_uc630_window_data), 4, 5000, NULL,
+	    sizeof(struct umax_uc630_window_data), SCSI_RETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
 }
 
@@ -968,7 +969,7 @@ fujitsu_m3096g_sw(ss, sio, wcmd, vwd)
 	/* send the command to the scanner */
 	return (scsi_scsi_cmd(sc_link, (struct scsi_generic *)wcmd,
 	    sizeof(struct scsi_set_window), (u_char *)fwd,
-	    sizeof(struct fujitsu_m3096g_window_data), 4, 5000, NULL,
+	    sizeof(struct fujitsu_m3096g_window_data), SCSI_RETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
 }
 #endif

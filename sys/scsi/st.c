@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.82 2008/05/12 22:14:46 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.83 2008/06/22 16:32:06 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,6 @@
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
-#define	ST_RETRIES	4	/* only on non IO commands */
 
 #define STMODE(z)	( minor(z)	 & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
@@ -1388,7 +1387,7 @@ st_read_block_limits(struct st_softc *st, int flags)
 	 */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) &block_limits, sizeof(block_limits),
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
+	    SCSI_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
 	if (error)
 		return error;
 
@@ -1604,7 +1603,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	 * we wait if we want to (eventually) to it synchronously?
 	 */
 	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, tmo, NULL, flags));
+	    sizeof(cmd), 0, 0, SCSI_RETRIES, tmo, NULL, flags));
 }
 
 /*
@@ -1824,7 +1823,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 	cmd.how = type;
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
+	    sizeof(cmd), 0, 0, SCSI_RETRIES, ST_SPC_TIME, NULL, flags);
 }
 
 /*
@@ -1847,7 +1846,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.byte2 = immediate;
 
 	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES,
+	    sizeof(cmd), 0, 0, SCSI_RETRIES,
 	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 
 	if (error == 0) {

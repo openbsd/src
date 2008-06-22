@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.32 2007/09/16 01:30:24 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.33 2008/06/22 16:32:05 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -51,8 +51,6 @@
 #include <scsi/scsi_scanner.h>
 #include <scsi/scsiconf.h>
 #include <scsi/ssvar.h>
-
-#define SCANJET_RETRIES 4
 
 int scanjet_set_params(struct ss_softc *, struct scan_io *);
 int scanjet_trigger_scanner(struct ss_softc *);
@@ -301,7 +299,7 @@ scanjet_read(ss, bp)
 	 * go ask the adapter to do all this for us
 	 */
 	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
+	    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 100000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
 	else {

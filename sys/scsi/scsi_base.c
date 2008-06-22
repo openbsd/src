@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.128 2008/06/21 21:35:27 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.129 2008/06/22 16:32:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ scsi_mode_sense(struct scsi_link *sc_link, int byte2, int page,
 	scsi_cmd.length = len;
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, len, SCSI_RETRIES, timeout, NULL,
 	    flags | SCSI_DATA_IN);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_sense: page %#x, error = %d\n",
@@ -459,7 +459,7 @@ scsi_mode_sense_big(struct scsi_link *sc_link, int byte2, int page,
 	_lto2b(len, scsi_cmd.length);
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, len, SCSI_RETRIES, timeout, NULL,
 	    flags | SCSI_DATA_IN);
 
 	SC_DEBUG(sc_link, SDEV_DB2,
@@ -616,8 +616,8 @@ scsi_mode_select(struct scsi_link *sc_link, int byte2,
 	data->data_length = 0;
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, scsi_cmd.length, 4, timeout, NULL,
-	    flags | SCSI_DATA_OUT);
+	    sizeof(scsi_cmd), (u_char *)data, scsi_cmd.length, SCSI_RETRIES,
+	    timeout, NULL, flags | SCSI_DATA_OUT);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select: error = %d\n", error));
 
@@ -643,7 +643,7 @@ scsi_mode_select_big(struct scsi_link *sc_link, int byte2,
 	_lto2b(0, data->data_length);
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, len, SCSI_RETRIES, timeout, NULL,
 	    flags | SCSI_DATA_OUT);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select_big: error = %d\n",
@@ -668,8 +668,8 @@ scsi_report_luns(struct scsi_link *sc_link, int selectreport,
 	_lto4b(datalen, scsi_cmd.length);
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, datalen, 4, timeout, NULL,
-	    flags | SCSI_DATA_IN);
+	    sizeof(scsi_cmd), (u_char *)data, datalen, SCSI_RETRIES, timeout,
+	    NULL, flags | SCSI_DATA_IN);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_report_luns: error = %d\n", error));
 
