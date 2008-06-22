@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.23 2008/05/19 18:42:12 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.24 2008/06/22 15:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -805,7 +805,7 @@ vs_intr(arg)
 			m328_cmd->top_sg_list = (M328_SG)0;
 		}
       
-		FREE(m328_cmd, M_DEVBUF); /* free the command tag */
+		free(m328_cmd, M_DEVBUF); /* free the command tag */
 		if (vs_checkintr (sc, xs, &status)) {
 			vs_scsidone(xs, status);
 		}
