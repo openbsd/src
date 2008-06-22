@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.16 2008/02/29 19:00:39 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.17 2008/06/22 21:02:10 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -223,6 +223,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	extern char k_intr[];
 	extern char k_general[];
 	struct trap_frame *regs = &ddb_regs;
+
+	if (have_addr) {
+		(*pr)("mips trace requires a trap frame... giving up\n");
+		return;
+	}
 
 	/* get initial values from the exception frame */
 	sp = (vaddr_t)regs->sp;
