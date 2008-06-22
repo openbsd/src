@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.40 2008/06/19 08:18:57 brad Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.41 2008/06/22 23:15:24 brad Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -72,8 +72,6 @@ const struct usbd_quirk_entry {
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO4K,
 	0x000, { UQ_BAD_AUDIO }},
- { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO5K_2,
-	0x005, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMZOOM,
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
