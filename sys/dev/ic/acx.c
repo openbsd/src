@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.83 2008/06/01 10:08:35 brad Exp $ */
+/*	$OpenBSD: acx.c,v 1.84 2008/06/22 21:40:36 brad Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -598,6 +598,7 @@ acx_stop(struct acx_softc *sc)
 	/* Clear RX host descriptors */
 	bzero(rd->rx_ring, ACX_RX_RING_SIZE);
 
+	sc->sc_txtimer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
@@ -1057,9 +1058,9 @@ acx_start(struct ifnet *ifp)
 	if (bd->tx_used_count == ACX_TX_DESC_CNT)
 		ifp->if_flags |= IFF_OACTIVE;
 
-	if (trans && ifp->if_timer == 0)
-		ifp->if_timer = 5;
-	sc->sc_txtimer = 5;
+	if (trans && sc->sc_txtimer == 0)
+		sc->sc_txtimer = 5;
+	ifp->if_timer = 1;
 }
 
 void
@@ -1078,8 +1079,8 @@ acx_watchdog(struct ifnet *ifp)
 			acx_txeof(ifp->if_softc);
 			ifp->if_oerrors++;
 			return;
-		}
-		ifp->if_timer = 5;
+		} else
+			ifp->if_timer = 1;
 	}
 
 	ieee80211_watchdog(ifp);
@@ -1197,8 +1198,7 @@ acx_txeof(struct acx_softc *sc)
 	}
 	bd->tx_used_start = idx;
 
-	ifp->if_timer = bd->tx_used_count == 0 ? 0 : 5;
-	sc->sc_txtimer = 0;
+	sc->sc_txtimer = bd->tx_used_count == 0 ? 0 : 5;
 
 	if (bd->tx_used_count != ACX_TX_DESC_CNT) {
 		ifp->if_flags &= ~IFF_OACTIVE;
