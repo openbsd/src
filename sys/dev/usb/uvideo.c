@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.39 2008/06/15 17:07:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.40 2008/06/22 20:58:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1919,7 +1919,7 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 
 	if (SIMPLEQ_EMPTY(&sc->sc_mmap_q)) {
 		/* mmap queue is empty, block until first frame is queued */
-		error = tsleep(sc, 0, "vid_mmap", 0);
+		error = tsleep(sc, 0, "vid_mmap", 10 * hz);
 		if (error)
 			return (EINVAL);
 	}
