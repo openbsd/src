@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.61 2008/06/11 21:59:25 av Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.62 2008/06/22 21:04:01 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -166,6 +166,7 @@ int		play_msf(int, int, int, int, int, int);
 int		play_track(int, int, int, int);
 int		get_vol(int *, int *);
 int		status(int *, int *, int *, int *);
+int		is_wave(int fd);
 __dead void	tao(int argc, char **argv);
 int		play(char *arg);
 int		info(char *arg);
@@ -546,6 +547,25 @@ run(int cmd, char *arg)
 	}
 }
 
+/*
+ * Check if audio file has RIFF WAVE format. If not, we assume it's just PCM.
+ */
+int
+is_wave(int fd)
+{
+	char buf[WAVHDRLEN];
+	int rv;
+
+	rv = 0;
+	if (read(fd, buf, sizeof(buf)) == sizeof(buf)) {
+		if (memcmp(buf, "RIFF", 4) == 0 &&
+		    memcmp(buf + 8, "WAVE", 4) == 0)
+			rv = 1;
+	}
+
+	return (rv);
+}
+
 __dead void
 tao(int argc, char **argv)
 {
@@ -601,8 +621,13 @@ tao(int argc, char **argv)
 		if (fstat(tr->fd, &sb) == -1)
 			err(1, "cannot stat file %s", tr->file);
 		tr->sz = sb.st_size;
-		if (tr->type == 'a')
-			tr->sz -= WAVHDRLEN;
+		tr->off = 0;
+		if (tr->type == 'a') {
+			if (is_wave(tr->fd)) {
+				tr->sz -= WAVHDRLEN;
+				tr->off = WAVHDRLEN;
+			}
+		}
 		if (SLIST_EMPTY(&tracks))
 			SLIST_INSERT_HEAD(&tracks, tr, track_list);
 		else

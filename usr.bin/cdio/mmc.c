@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.20 2008/06/08 21:01:24 av Exp $ */
+/* $OpenBSD: mmc.c,v 1.21 2008/06/22 21:04:01 av Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -261,10 +261,8 @@ writetrack(struct track_info *tr, int track)
 	} else {
 		end_lba = tr->sz / tr->blklen + lba;
 	}
-	if (tr->type == 'a') {
-		if (lseek(tr->fd, WAVHDRLEN, SEEK_SET) == -1)
-			err(1, "seek failed for file %s", tr->file);
-	}
+	if (lseek(tr->fd, tr->off, SEEK_SET) == -1)
+		err(1, "seek failed for file %s", tr->file);
 	while (lba < end_lba && nblk != 0) {
 		while (lba + nblk <= end_lba) {
 			read(tr->fd, databuf, nblk * tr->blklen);

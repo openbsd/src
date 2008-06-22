@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.10 2008/06/08 21:01:24 av Exp $ */
+/* $OpenBSD: extern.h,v 1.11 2008/06/22 21:04:01 av Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -29,6 +29,7 @@
 struct cd_toc_entry;
 struct track_info {
 	off_t sz;
+	off_t off;
 	u_int blklen;
 	int   fd;
 	char *file;
