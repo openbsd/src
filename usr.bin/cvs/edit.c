@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.47 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: edit.c,v 1.48 2008/06/23 20:51:08 ragge Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -44,7 +44,7 @@ static int	edit_aflags = 0;
 
 struct cvs_cmd cvs_cmd_edit = {
 	CVS_OP_EDIT, CVS_USE_WDIR, "edit",
-	{ },
+	{ { 0 }, { 0 } },
 	"Get ready to edit a watched file",
 	"[-lR] [-a action] [file ...]",
 	"a:lR",
@@ -54,7 +54,7 @@ struct cvs_cmd cvs_cmd_edit = {
 
 struct cvs_cmd cvs_cmd_editors = {
 	CVS_OP_EDITORS, CVS_USE_WDIR, "editors",
-	{ },
+	{ { 0 }, { 0 } },
 	"See who is editing a watched file",
 	"[-lR] [file ...]",
 	"lR",
@@ -64,7 +64,7 @@ struct cvs_cmd cvs_cmd_editors = {
 
 struct cvs_cmd cvs_cmd_unedit = {
 	CVS_OP_UNEDIT, CVS_USE_WDIR, "unedit",
-	{ },
+	{ { 0 }, { 0 } },
 	"Undo an edit command",
 	"[-lR] [file ...]",
 	"lR",
@@ -402,8 +402,8 @@ cvs_unedit_local(struct cvs_file *cf)
 			    cf->file_ent->ce_tag);
 
 		(void)xasprintf(&entry, "/%s/%s/%s/%s/%s",
-		    cf->file_name, rbuf, timebuf, cf->file_ent->ce_opts ? : "",
-		    sticky);
+		    cf->file_name, rbuf, timebuf, cf->file_ent->ce_opts ? 
+		    cf->file_ent->ce_opts : "", sticky);
 
 		cvs_ent_add(entlist, entry);
 

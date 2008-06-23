@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.78 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.79 2008/06/23 20:51:08 ragge Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -200,7 +200,8 @@ cvs_remove_local(struct cvs_file *cf)
 
 			entry = xmalloc(CVS_ENT_MAXLINELEN);
 			cvs_ent_line_str(cf->file_name, rbuf, tbuf,
-			    cf->file_ent->ce_opts ? : "", sticky, 0, 1,
+			    cf->file_ent->ce_opts ? 
+			    cf->file_ent->ce_opts : "", sticky, 0, 1,
 			    entry, CVS_ENT_MAXLINELEN);
 
 			if (cvs_server_active == 1) {

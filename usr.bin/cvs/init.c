@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.34 2008/06/10 15:50:31 tobias Exp $	*/
+/*	$OpenBSD: init.c,v 1.35 2008/06/23 20:51:08 ragge Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -72,7 +72,7 @@ static const char *cvsroot_dirs[2] = {
 
 struct cvs_cmd cvs_cmd_init = {
 	CVS_OP_INIT, 0, "init",
-	{ },
+	{ { 0 }, { 0 } },
 	"Create a CVS repository if it doesn't exist",
 	"",
 	"",
