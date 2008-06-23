@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.24 2006/07/31 22:09:37 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.25 2008/06/23 17:41:21 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -81,7 +81,9 @@ struct nlist nl[] = {
 };
 #endif /* NOKVM */
 
+#ifndef NOKVM
 int rebuild = 0;
+#endif
 
 struct nameint {
 	int value;
@@ -243,9 +245,9 @@ kbd_list(void)
 
 #ifndef NOKVM
 	kvm_close(kd);
-#endif
 	if (rebuild > 0)
 		printf("Unknown encoding or variant. kbd(8) needs to be rebuilt.\n");
+#endif
 }
 
 void
