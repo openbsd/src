@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.40 2008/06/22 20:58:17 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.41 2008/06/23 04:58:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1108,9 +1108,6 @@ uvideo_vs_start(struct uvideo_softc *sc)
 
 	for (i = 0; i < sc->sc_nframes; i++)
 		sc->sc_vs_curr->size[i] = sc->sc_vs_curr->max_packet_size;
-
-	bzero(sc->sc_vs_curr->buf,
-	    sc->sc_vs_curr->max_packet_size * sc->sc_nframes);
 
 	usbd_setup_isoc_xfer(
 	    sc->sc_vs_curr->xfer,
