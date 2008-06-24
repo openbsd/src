@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.370 2008/06/22 23:03:47 brad Exp $
+$OpenBSD: usbdevs,v 1.371 2008/06/24 07:04:01 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1810,12 +1810,12 @@ product LOGITECH QUICKCAMOEM_2	0x08c7	QuickCam OEM
 product LOGITECH QUICKCAMULTVIS	0x08c9	QuickCam Ultra Vision
 product LOGITECH QUICKCAMFUSION_2 0x08ca QuickCam Fusion
 product LOGITECH QUICKCAMNBPRO_2 0x08cb	QuickCam Notebook Pro
-product LOGITECH QUICKCAMORBITMP 0x08cc	QuickCam Orbit MP
+product LOGITECH QUICKCAMORBITMP_2 0x08cc QuickCam Orbit MP
 product LOGITECH QUICKCAMPRO5K_2 0x08ce	QuickCam Pro 5000
 product LOGITECH QUICKCAMPRO9K	0x0990	QuickCam Pro 9000
 product LOGITECH QUICKCAMPRONB	0x0991	QuickCam Pro Notebook
 product LOGITECH QUICKCAMCOMMDLX 0x0992	QuickCam Communicate Deluxe
-product LOGITECH QUICKCAMSPHEREAF 0x0994 QuickCam Spehere AF
+product LOGITECH QUICKCAMORBITAF 0x0994 QuickCam Orbit AF
 product LOGITECH QUICKCAMCOMMMP	0x09a1	QuickCam Communicate MP
 product LOGITECH QUICKCAME3500P	0x09a4	QuickCam E 3500 Plus
 product LOGITECH QUICKCAMDLXNB	0x09c1	QuickCam Deluxe Notebook
