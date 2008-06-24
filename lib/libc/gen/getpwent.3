@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.21 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: getpwent.3,v 1.22 2008/06/24 14:27:24 deraadt Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,13 +27,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 24 2008 $
 .Dt GETPWENT 3
 .Os
 .Sh NAME
 .Nm getpwent ,
 .Nm getpwnam ,
 .Nm getpwuid ,
+.Nm getpwnam_r ,
+.Nm getpwuid_r ,
 .Nm setpassent ,
 .Nm setpwent ,
 .Nm endpwent
@@ -47,6 +49,10 @@
 .Fn getpwnam "const char *login"
 .Ft struct passwd *
 .Fn getpwuid "uid_t uid"
+.Ft int
+.Fn getpwnam_r "const char *login" "struct passwd *pwstore" "char *buf" "size_t buflen" "struct passwd **result"
+.Ft int
+.Fn getpwuid_r "uid_t uid" "struct passwd *pwstore" "char *buf" "size_t buflen" "struct passwd **result"
 .Ft int
 .Fn setpassent "int stayopen"
 .Ft void
@@ -81,6 +87,18 @@ and
 .Fn getpwuid
 search the password database for the given login name or user ID,
 respectively, always returning the first one encountered.
+.Pp
+The re-entrant functions
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+search the password database for the given login name or user ID,
+respectively, always returning the first one encountered.
+The various strings associated with the result are stored in
+.Va buf ,
+and
+.Va pwstore
+is updated to point at those strings.
 .Pp
 .Fn getpwent
 sequentially reads the password database and is intended for programs
@@ -131,6 +149,17 @@ and
 .Fn getpwuid
 return a valid pointer to a passwd structure on success
 or a null pointer if end-of-file is reached or an error occurs.
+.Pp
+The functions
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+update
+.Va result
+to point to
+.Va pwstore
+and then return 0 on success.
+.Pp
 The
 .Fn setpassent
 function returns 0 on failure or 1 on success.
@@ -153,6 +182,7 @@ a Version 7 format password file
 .Sh SEE ALSO
 .Xr getlogin 2 ,
 .Xr getgrent 3 ,
+.Xr getgrouplist 3 ,
 .Xr pw_dup 3 ,
 .Xr passwd 5 ,
 .Xr pwd_mkdb 8 ,
