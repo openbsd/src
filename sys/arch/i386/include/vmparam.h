@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.39 2007/06/01 18:57:02 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.40 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@
 #define	DEADBEEF1	0xefffaabb	/* pool's filler */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)((PDSLOT_PTE<<PDSHIFT) - USPACE))
 #define VM_MAX_ADDRESS		((vaddr_t)((PDSLOT_PTE<<PDSHIFT) + \
 				    (PDSLOT_PTE<<PGSHIFT)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -510,7 +510,7 @@ cachectl(struct proc *p, struct trapframe *tf)
 		va = (vaddr_t)tf->tf_r4;
 		len = (vsize_t)tf->tf_r5;
 
-		if (/* va < VM_MIN_ADDRESS || */ va >= VM_MAXUSER_ADDRESS ||
+		if (va < VM_MIN_ADDRESS || va >= VM_MAXUSER_ADDRESS ||
 		    va + len <= va || va + len >= VM_MAXUSER_ADDRESS)
 			len = 0;
 

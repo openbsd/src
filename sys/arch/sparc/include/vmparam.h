@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.31 2005/04/17 18:47:48 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.32 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -89,7 +89,7 @@
  * IO space virtual base, which must be the same as VM_MAX_KERNEL_ADDRESS:
  * tread with care.
  */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MIN_ADDRESS		((vaddr_t)__LDPGSZ)
 #define VM_MAX_ADDRESS		((vaddr_t)VM_MIN_KERNEL_ADDRESS)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)VM_MIN_KERNEL_ADDRESS)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)

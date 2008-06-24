@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2007/09/02 21:18:08 hshoexer Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.17 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include <sys/queue.h>
 
 /* Virtual address map. */
-#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0x7ffff000)
 #define	VM_MAX_ADDRESS		((vaddr_t)0x7ffff000)
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0000000)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 /*
  * Mach derived constants
  */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
+#define	VM_MIN_ADDRESS		((vaddr_t) PAGE_SIZE)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) ARM_KERNEL_BASE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.28 2007/04/22 10:05:51 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.29 2008/06/24 21:24:03 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
 #define	vax_trunc_page(x) ((vaddr_t)(x) & ~VAX_PGOFSET)
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
