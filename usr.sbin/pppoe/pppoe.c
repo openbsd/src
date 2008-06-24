@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.16 2005/05/03 05:44:35 djm Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.17 2008/06/24 08:21:46 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -463,7 +463,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,"%s [-sv] [-i interface] [-n service] [-p system]\n",
+	fprintf(stderr,
+	    "usage: %s [-sv] [-i interface] [-n service] [-p system]\n",
 	    __progname);
 }
 
