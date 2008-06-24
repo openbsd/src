@@ -3599,7 +3599,9 @@
 ./usr/share/man/cat3/getprotoent_r.0
 ./usr/share/man/cat3/getpwent.0
 ./usr/share/man/cat3/getpwnam.0
+./usr/share/man/cat3/getpwnam_r.0
 ./usr/share/man/cat3/getpwuid.0
+./usr/share/man/cat3/getpwuid_r.0
 ./usr/share/man/cat3/getrawpartition.0
 ./usr/share/man/cat3/getrpcbyname.0
 ./usr/share/man/cat3/getrpcbynumber.0
