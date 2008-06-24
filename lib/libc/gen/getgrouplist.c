@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.12 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.13 2008/06/24 14:29:45 deraadt Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,21 +32,23 @@
  * get credential
  */
 #include <sys/types.h>
+#include <sys/limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <grp.h>
+#include <pwd.h>
+
+#include <rpc/rpc.h>
+#include <rpcsvc/yp.h>
+#include <rpcsvc/ypclnt.h>
 
 int
 getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
+	int i, ngroups = 0, ret = 0, maxgroups = *grpcnt, bail, foundyp = 0;
+	extern struct group *_getgrent_yp(int *);
 	struct group *grp;
-	int i, ngroups;
-	int ret, maxgroups;
-	int bail;
-
-	ret = 0;
-	ngroups = 0;
-	maxgroups = *grpcnt;
 
 	/*
 	 * install primary group
@@ -61,7 +63,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
-	while ((grp = getgrent())) {
+	while ((grp = _getgrent_yp(&foundyp))) {
 		if (grp->gr_gid == agroup)
 			continue;
 		for (bail = 0, i = 0; bail == 0 && i < ngroups; i++)
@@ -80,6 +82,76 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 			}
 		}
 	}
+
+#ifdef YP
+	/*
+	 * If we were told that there is a YP marker, look there now.
+	 */
+	if (foundyp) {
+		char buf[1024], *ypdata = NULL, *key, *p;
+		const char *errstr = NULL;
+		static char *__ypdomain;
+		struct passwd pwstore;
+		int r, ypdatalen;
+		gid_t gid;
+		uid_t uid;
+	
+		if (!__ypdomain) {
+			if (_yp_check(&__ypdomain) == 0) {
+				goto ypout;
+			}
+		}
+
+		if (getpwnam_r(uname, &pwstore, buf, sizeof buf, NULL))
+			goto ypout;
+
+		asprintf(&key, "unix.%u@%s", pwstore.pw_uid, __ypdomain);
+		if (key == NULL)
+			goto ypout;
+		r = yp_match(__ypdomain, "netid.byname", key,
+		    (int)strlen(key), &ypdata, &ypdatalen);
+		free(key);
+		if (r != 0)
+			goto ypout;
+
+		/* Parse the "uid:gid[,gid,gid[,...]]" string. */
+		p = strchr(ypdata, ':');
+		if (!p)
+			goto ypout;
+		*p++ = '\0';
+		uid = (uid_t)strtonum(ypdata, 0, UID_MAX, &errstr);
+		if (errstr || uid != pwstore.pw_uid)
+			goto ypout;
+		while (p && *p) {
+			char *start = p;
+
+			p = strchr(start, ',');
+			if (p)
+				*p++ = '\0';
+			gid = (uid_t)strtonum(start, 0, GID_MAX, &errstr);
+			if (errstr)
+				goto ypout;
+
+			/* Add new groups to the group list */
+			for (i = 0; i < ngroups; i++) {
+				if (groups[i] == gid)
+					break;
+			}
+			if (i == ngroups) {
+				if (ngroups >= maxgroups) {
+					ret = -1;
+					goto ypout;
+				}
+				groups[ngroups++] = gid;
+			}
+		}
+ypout:
+		if (ypdata)
+			free(ypdata);
+		goto out;
+	}
+#endif /* YP */
+
 out:
 	endgrent();
 	*grpcnt = ngroups;
