@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.76 2008/06/04 14:21:34 tobias Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.77 2008/06/24 15:07:02 jmc Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -676,7 +676,8 @@ usage(void)
 		"[-c fragments-per-cylinder-group] [-e maxbpg]\n"
 		"\t[-f frag-size] [-g avgfilesize] [-h avgfpdir] [-i bytes]\n"
 		"\t[-m free-space] [-O filesystem-format] [-o optimization]\n"
-		"\t[-S sector-size] [-s size] [-t fstype] special\n",
+		"\t[-S sector-size] [-s size] [-T disktype] [-t fstype] "
+		"special\n",
 		__progname);
 	}
 

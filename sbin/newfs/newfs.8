@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.62 2008/01/12 08:56:28 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.63 2008/06/24 15:07:01 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: January 12 2008 $
+.Dd $Mdocdate: June 24 2008 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@
 .Op Fl o Ar optimization
 .Op Fl S Ar sector-size
 .Op Fl s Ar size
+.Op Fl T Ar disktype
 .Op Fl t Ar fstype
 .Ar special
 .Ek
@@ -126,7 +127,9 @@ built in, so it is not necessary to run
 manually unless you wish to re-randomize the
 file system (or list the inode generation numbers).
 .Pp
-The following options define the general layout policies:
+The options to
+.Nm
+are as follows:
 .Bl -tag -width Fl
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
@@ -199,6 +202,18 @@ Operate in quiet mode.
 With this option,
 .Nm
 will not print extraneous information like superblock backups.
+.It Fl S Ar sector-size
+The size of a sector in bytes (almost never anything but 512).
+Changing this is useful only when using
+.Nm
+to build a file system whose raw image will eventually be used on
+a different type of disk than the one on which it is initially
+created (for example on a write-once disk).
+Note that changing this
+from its default will make it impossible for
+.Xr fsck 8
+to find the alternate superblocks if the standard superblock is
+lost.
 .It Fl s Ar size
 The size of the file system in sectors.
 The maximum size of a Fast File
@@ -214,40 +229,28 @@ in
 and ultimately depends on the per-arch
 .Dv MAXDSIZ
 limit.
-.El
-.Pp
-The following options override the standard sizes for the disk geometry.
-Their default values are taken from the disk label.
-Changing these defaults is useful only when using
-.Nm
-to build a file system whose raw image will eventually be used on
-a different type of disk than the one on which it is initially
-created (for example on a write-once disk).
-Note that changing any
-of these values from their defaults will make it impossible for
-.Xr fsck 8
-to find the alternate superblocks if the standard superblock is
-lost.
-.Bl -tag -width Fl
-.It Fl S Ar sector-size
-The size of a sector in bytes (almost never anything but 512).
+.It Fl T Ar disktype
+Uses information for the specified disk from
+.Xr disktab 5
+instead of trying to get the information from the
+.Xr disklabel 5 .
 .It Fl t Ar fstype
 Set the file system type of which file system you wish to create.
 .Nm
 will be smart enough to run the alternate newfs_XXX program instead.
 .El
 .Pp
-The options to the
+The options to
 .Nm mount_mfs
-command are as described for the
-.Nm
-command, except for the
+are as described for
+.Nm ,
+except for the
 .Fl o
 and
 .Fl P
 options.
 .Pp
-These options are as follows:
+Those options are as follows:
 .Bl -tag -width indent
 .It Fl o Ar options
 Options are specified with a
