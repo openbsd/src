@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.431 2008/06/13 04:41:44 krw Exp $
+#	$OpenBSD: install.sub,v 1.432 2008/06/24 11:59:48 tobias Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -241,6 +241,7 @@ stdsize ()  {
 		shift
 		_p=${_sz%[0-9][0-9][0-9]}
 		_s=${_sz#$_p}
+		_s=${_s##+(0)}
 		_sz=$_p
 	done
 
