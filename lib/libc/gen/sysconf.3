@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.24 2008/06/25 14:54:44 millert Exp $
+.\"	$OpenBSD: sysconf.3,v 1.25 2008/06/25 17:45:07 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -152,25 +152,21 @@ does not support the Semaphores Option.
 The number of pages of physical memory.
 .It Li _SC_AVPHYS_PAGES
 The number of pages of physical memory not currently in use by the system.
-.It Li
-_SC_GETGR_R_SIZE_MAX
+.It Li _SC_GETGR_R_SIZE_MAX
 The maximum size of the data buffer for the
 .Fn getgrgid_r
 and
 .Fn getgrnam_r
 functions.
-.It Li
-_SC_GETPW_R_SIZE_MAX
+.It Li _SC_GETPW_R_SIZE_MAX
 The maximum size of the data buffer for the
 .Fn getgrgid_r
 and
 .Fn getgrnam_r
 functions.
-.It Li
-_SC_LOGIN_NAME_MAX
+.It Li _SC_LOGIN_NAME_MAX
 The maximum length of a login name.
-.It Li
-_SC_THREAD_SAFE_FUNCTIONS
+.It Li _SC_THREAD_SAFE_FUNCTIONS
 The level of support for thread-safe (re-entrant) functions.
 .El
 .Sh RETURN VALUES
