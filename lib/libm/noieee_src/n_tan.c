@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.6 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -44,8 +44,8 @@ tan(double x)
 
 	if(!finite(x))		/* tan(NaN) and tan(INF) must be NaN */
 		return x-x;
-	x = drem(x,PI);			/* reduce x into [-PI/2, PI/2] */
-	a = copysign(x,one);		/* ... = abs(x) */
+	x = remainder(x,PI);	/* reduce x into [-PI/2, PI/2] */
+	a = copysign(x,one);	/* ... = abs(x) */
 	if (a >= PIo4) {
 		k = 1;
 		x = copysign(PIo2-a,x);

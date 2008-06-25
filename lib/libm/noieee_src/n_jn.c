@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_jn.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_jn.c,v 1.6 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_jn.c,v 1.1 1995/10/10 23:36:54 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -260,7 +260,7 @@ yn(int n, double x)
 	double a, b, temp;
 
     /* Y(n,NaN), Y(n, x < 0) is NaN */
-	if (x <= 0 || (_IEEE && x != x))
+	if (x <= 0 || isnan(x))
 		if (_IEEE && x < 0) return zero/zero;
 		else if (x < 0)     return (infnan(EDOM));
 		else if (_IEEE)     return -one/zero;

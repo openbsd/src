@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.10 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.11 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -177,7 +177,7 @@ logb(double x)
                 return ( -1022.0 );
             else
                 return(-(1.0/zero));
-        else if(x != x)
+        else if(isnan(x))
             return(x);
         else
             {*px &= msign; return(x);}
@@ -287,7 +287,7 @@ sqrt(double x)
 #endif	/* defined(__vax__) */
 
     /* sqrt(NaN) is NaN, sqrt(+-0) = +-0 */
-        if(x!=x||x==zero) return(x);
+        if(isnan(x) || x == zero) return(x);
 
     /* sqrt(negative) is invalid */
         if(x<zero) {
@@ -372,8 +372,8 @@ remainder(double x, double y)
 	sign = px[n0] &0x8000;	/* sign of x     */
 
 /* return NaN if x is NaN, or y is NaN, or x is INF, or y is zero */
-	if(x!=x) return(x); if(y!=y) return(y);	     /* x or y is NaN */
-	if( xexp == mexp )   return(zero/zero);      /* x is INF */
+	if(isnan(x)) return(x); if(isnan(y)) return(y);	/* x or y is NaN */
+	if( xexp == mexp )   return(zero/zero);		/* x is INF */
 	if(y==zero) return(y/y);
 
 /* save the inexact flag and inexact enable in i and e respectively
@@ -470,7 +470,8 @@ newsqrt(double x)
                                  */
 
 /* exceptions */
-	if(x!=x||x==0.0) return(x);  /* sqrt(NaN) is NaN, sqrt(+-0) = +-0 */
+	if(isnan(x) || x == 0.0) return(x);	/* sqrt(NaN) is NaN,
+						   sqrt(+-0) = +-0 */
 	if(x<0) return((x-x)/(x-x)); /* sqrt(negative) is invalid */
         if((mx=px[n0]&mexp)==mexp) return(x);  /* sqrt(+INF) is +INF */
 

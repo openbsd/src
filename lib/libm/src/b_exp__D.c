@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_exp__D.c,v 1.2 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: b_exp__D.c,v 1.3 2008/06/25 17:49:31 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,7 +90,7 @@ __exp__D(double x, double c)
 	double z, hi, lo;
 	int k;
 
-	if (x != x)	/* x is NaN */
+	if (isnan(x))	/* x is NaN */
 		return(x);
 	if ( x <= lnhuge ) {
 		if ( x >= lntiny ) {

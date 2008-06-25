@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_sincos.c,v 1.6 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ sin(double x)
 
         if(!finite(x))		/* sin(NaN) and sin(INF) must be NaN */
 		return x-x;
-	x=drem(x,PI2);		/* reduce x into [-PI,PI] */
+	x=remainder(x,PI2);	/* reduce x into [-PI,PI] */
 	a=copysign(x,one);
 	if (a >= PIo4) {
 		if(a >= PI3o4)		/* ... in [3PI/4,PI] */
@@ -72,7 +72,7 @@ cos(double x)
 
 	if(!finite(x))		/* cos(NaN) and cos(INF) must be NaN */
 		return x-x;
-	x=drem(x,PI2);		/* reduce x into [-PI,PI] */
+	x=remainder(x,PI2);	/* reduce x into [-PI,PI] */
 	a=copysign(x,one);
 	if (a >= PIo4) {
 		if (a >= PI3o4) {	/* ... in [3PI/4,PI] */

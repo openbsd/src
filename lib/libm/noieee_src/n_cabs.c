@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_cabs.c,v 1.9 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -141,18 +141,18 @@ hypot(double x, double y)
 
 	    }
 
-	    else if(y==y)   	   /* y is +-INF */
+	    else if(isinf(y))		/* y is +-INF */
 		     return(copysign(y,one));
 	    else
-		     return(y);	   /* y is NaN and x is finite */
+		     return(y);		/* y is NaN and x is finite */
 
-	else if(x==x) 		   /* x is +-INF */
+	else if(isinf(x))		/* x is +-INF */
 	         return (copysign(x,one));
 	else if(finite(y))
-	         return(x);		   /* x is NaN, y is finite */
+	         return(x);		/* x is NaN, y is finite */
 	else if (isnan(y))
 		return (y);
-	else return(copysign(y,one));   /* y is INF */
+	else return(copysign(y,one));	/* y is INF */
 }
 
 /* CABS(Z)
@@ -211,16 +211,16 @@ hypot(double x, double y)
 		return(scalbn(sqrt(x*x+y*y),exp));
 	    }
 
-	    else if(y==y)   	   /* y is +-INF */
+	    else if(isinf(y))		/* y is +-INF */
 		     return(copysign(y,one));
 	    else
-		     return(y);	   /* y is NaN and x is finite */
+		     return(y);		/* y is NaN and x is finite */
 
-	else if(x==x) 		   /* x is +-INF */
+	else if(isinf(x))		/* x is +-INF */
 	         return (copysign(x,one));
 	else if(finite(y))
-	         return(x);		   /* x is NaN, y is finite */
-	else if(y!=y) return(y);  	/* x and y is NaN */
-	else return(copysign(y,one));   /* y is INF */
+	         return(x);		/* x is NaN, y is finite */
+	else if(isnan(y)) return(y);	/* x and y is NaN */
+	else return(copysign(y,one));	/* y is INF */
 }
 #endif

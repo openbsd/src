@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_pow.c,v 1.9 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_pow.c,v 1.10 2008/06/25 17:49:31 martynas Exp $	*/
 /*	$NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
  *      logb(x)
  *	copysign(x,y)
  *	finite(x)
- *	drem(x,y)
+ *	remainder(x,y)
  *
  * Required kernel functions:
  *	exp__D(a,c)			exp(a + c) for |a| << |c|
@@ -127,9 +127,9 @@ pow(double x, double y)
 	double t;
 	if (y==zero)
 		return (one);
-	else if (y==one || (_IEEE && x != x))
+	else if (y==one || isnan(x))
 		return (x);		/* if x is NaN or y=1 */
-	else if (_IEEE && y!=y)		/* if y is NaN */
+	else if (isnan(y))		/* if y is NaN */
 		return (y);
 	else if (!finite(y))		/* if y is INF */
 		if ((t=fabs(x))==one)	/* +-1 ** +-INF is NaN */
@@ -148,7 +148,7 @@ pow(double x, double y)
 
     /* sign(x)= -1 */
 	/* if y is an even integer */
-	else if ( (t=drem(y,two)) == zero)
+	else if ( (t=remainder(y,two)) == zero)
 		return (pow_P(-x, y));
 
 	/* if y is an odd integer */
