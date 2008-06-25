@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.28 2008/06/13 21:07:27 todd Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.30 2008/06/25 13:39:46 jmc Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -75,9 +75,9 @@
 #	apm	Power Management Interface
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
-#	bthub*	Bluetooth Hubs
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
+#	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes
 #	gpr*	GPR400 smartcard reader
@@ -355,16 +355,16 @@ crypto)
 	M crypto c 70 0
 	;;
 
+bthub*)
+	M bthub$U c 84 $U
+	;;
+
 bpf*)
 	M bpf$U c 23 $U 600
 	;;
 
 bktr*)
 	M bktr$U c 49 $U 644
-	;;
-
-bthub*)
-	M bthub$U c 84 $U
 	;;
 
 bio)
