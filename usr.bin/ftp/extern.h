@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.32 2008/06/16 12:03:51 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.33 2008/06/25 18:07:00 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ void	psummary(int);
 void    pswitch(int);
 void    ptransfer(int);
 void	put(int, char **);
+void	putit(int, char **, int);
 void	pwd(int, char **);
 void	quit(int, char **);
 void	quote(int, char **);
@@ -145,6 +146,7 @@ off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
 void	removedir(int, char **);
 void	renamefile(int, char **);
+void	reput(int, char **);
 void    reset(int, char **);
 void	restart(int, char **);
 void	rmthelp(int, char **);

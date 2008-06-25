@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.70 2008/05/24 00:42:35 pyr Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.71 2008/06/25 18:07:00 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.70 2008/05/24 00:42:35 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.71 2008/06/25 18:07:00 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -448,9 +448,9 @@ getreply(int expecteof)
 				return (4);
 			}
 			if (c != '\r' && (verbose > 0 ||
-			    ((verbose > -1 && n == '5' && dig > 4)) &&
+			    ((verbose > -1 && n == '5' && dig > 4) &&
 			    (((!n && c < '5') || (n && n < '5'))
-			     || !retry_connect))) {
+			     || !retry_connect)))) {
 				if (proxflag &&
 				   (dig == 1 || (dig == 5 && verbose == 0)))
 					fprintf(ttyout, "%s:", hostname);
@@ -656,7 +656,6 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		}
 		if (rc == -1) {
 			warn("local: %s", local);
-			restart_point = 0;
 			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fin);
@@ -664,13 +663,11 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		}
 		if (command("REST %lld", (long long) restart_point)
 			!= CONTINUE) {
-			restart_point = 0;
 			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fin);
 			return;
 		}
-		restart_point = 0;
 		lmode = "r+w";
 	}
 	if (remote) {

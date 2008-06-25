@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.20 2006/04/25 05:45:20 tedu Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.21 2008/06/25 18:07:00 martynas Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.20 2006/04/25 05:45:20 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.21 2008/06/25 18:07:00 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <stdio.h>
@@ -95,6 +95,7 @@ char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
+char	reputhelp[] =	"put file restarting at end of remote file";
 char	remotehelp[] =	"get help from remote server";
 char	renamehelp[] =	"rename file";
 char	resethelp[] =	"clear queued command replies";
@@ -196,8 +197,13 @@ struct cmd cmdtab[] = {
 	{ "quit",	H(quithelp),	0, 0, 0, CMPL0		quit },
 	{ "quote",	H(quotehelp),	1, 1, 1, CMPL0		quote },
 	{ "recv",	H(receivehelp),	1, 1, 1, CMPL(rl)	get },
+#ifndef SMALL
 	{ "reget",	H(regethelp),	1, 1, 1, CMPL(rl)	reget },
+#endif /* !SMALL */
 	{ "rename",	H(renamehelp),	0, 1, 1, CMPL(rr)	renamefile },
+#ifndef SMALL
+	{ "reput",	H(reputhelp),	1, 1, 1, CMPL(lr)	reput },
+#endif /* !SMALL */
 	{ "reset",	H(resethelp),	0, 1, 1, CMPL0		reset },
 	{ "restart",	H(restarthelp),	1, 1, 1, CMPL0		restart },
 	{ "rhelp",	H(remotehelp),	0, 1, 1, CMPL0		rmthelp },

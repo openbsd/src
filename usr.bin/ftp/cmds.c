@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.61 2008/06/16 19:56:04 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.62 2008/06/25 18:07:00 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.61 2008/06/16 19:56:04 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.62 2008/06/25 18:07:00 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -258,11 +258,27 @@ setstruct(int argc, char *argv[])
 	code = -1;
 }
 
+#ifndef SMALL
+void
+reput(int argc, char *argv[])
+{
+
+	(void)putit(argc, argv, 1);
+}
+#endif /* !SMALL */
+
+void
+put(int argc, char *argv[])
+{
+ 
+	(void)putit(argc, argv, 0);
+}
+
 /*
  * Send a single file.
  */
 void
-put(int argc, char *argv[])
+putit(int argc, char *argv[], int restartit)
 {
 	char *cmd;
 	int loc = 0;
@@ -294,7 +310,22 @@ usage:
 	if (argv[1] != oldargv1 && argv[2] == oldargv1) {
 		argv[2] = argv[1];
 	}
-	cmd = (argv[0][0] == 'a') ? "APPE" : ((sunique) ? "STOU" : "STOR");
+#ifndef SMALL
+	if (restartit == 1) {
+		if (curtype != type)
+			changetype(type, 0);
+		restart_point = remotesize(argv[2], 1);
+		if (restart_point < 0) {
+			restart_point = 0;
+			code = -1;
+			return;
+		}
+	}
+#endif /* !SMALL */
+	if (strcmp(argv[0], "append") == 0) {
+		restartit = 1;
+	}
+	cmd = restartit ? "APPE" : ((sunique) ? "STOU" : "STOR");
 	if (loc && ntflag) {
 		argv[2] = dotrans(argv[2]);
 	}
@@ -303,6 +334,7 @@ usage:
 	}
 	sendrequest(cmd, argv[1], argv[2],
 	    argv[1] != oldargv1 || argv[2] != oldargv2);
+	restart_point = 0;
 	if (oldargv1 != argv[1])	/* free up after globulize() */
 		free(argv[1]);
 }
@@ -313,17 +345,42 @@ usage:
 void
 mput(int argc, char *argv[])
 {
-	int i;
+	extern int optind, optreset;
+	int ch, i, restartit = 0;
 	sig_t oldintr;
-	char *tp;
+	char *cmd, *tp;
 
-	if (argc < 2 && !another(&argc, &argv, "local-files")) {
-		fprintf(ttyout, "usage: %s local-files\n", argv[0]);
+	optind = optreset = 1;
+
+#ifndef SMALL
+	while ((ch = getopt(argc, argv, "c")) != -1) {
+		switch(ch) {
+		case 'c':
+			restartit = 1;
+			break;
+		default:
+			goto usage;
+		}
+	}
+#endif /* !SMALL */
+
+	if (argc - optind < 1 && !another(&argc, &argv, "local-files")) {
+usage:
+		fprintf(ttyout, "usage: %s [-c] local-files\n", argv[0]);
 		code = -1;
 		return;
 	}
+
+#ifndef SMALL
+	optind--;
+	argv[optind] = argv[0];
+	argc -= optind;
+	argv += optind;
+#endif /* !SMALL */
+
 	mname = argv[0];
 	mflag = 1;
+
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	if (proxy) {
@@ -360,10 +417,24 @@ mput(int argc, char *argv[])
 				if (mapflag) {
 					tp = domap(tp);
 				}
-				sendrequest((sunique) ? "STOU" : "STOR",
-				    cp, tp, cp != tp || !interactive);
+#ifndef SMALL
+				if (restartit == 1) {
+					off_t ret;
+
+					if (curtype != type)
+						changetype(type, 0);
+					ret = remotesize(tp, 0);
+					restart_point = (ret < 0) ? 0 : ret;
+				}
+#endif /* !SMALL */
+				cmd = restartit ? "APPE" : ((sunique) ?
+				    "STOU" : "STOR");
+				sendrequest(cmd, cp, tp,
+				    cp != tp || !interactive);
+				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with", "mput", 1))
+					if (confirm("Continue with",
+					    argv[0], 1))
 						mflag = 1;
 				}
 			}
@@ -381,10 +452,24 @@ mput(int argc, char *argv[])
 			if (mflag && confirm(argv[0], argv[i], 0)) {
 				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
 				tp = (mapflag) ? domap(tp) : tp;
-				sendrequest((sunique) ? "STOU" : "STOR",
-				    argv[i], tp, tp != argv[i] || !interactive);
+#ifndef SMALL
+				if (restartit == 1) {
+					off_t ret;
+
+					if (curtype != type)
+						changetype(type, 0);
+					ret = remotesize(tp, 0);
+					restart_point = (ret < 0) ? 0 : ret;
+				}
+#endif /* !SMALL */
+				cmd = restartit ? "APPE" : ((sunique) ?
+				    "STOU" : "STOR");
+				sendrequest(cmd, argv[i], tp,
+				    tp != argv[i] || !interactive);
+				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with", "mput", 1))
+					if (confirm("Continue with",
+					    argv[0], 1))
 						mflag = 1;
 				}
 			}
@@ -402,10 +487,24 @@ mput(int argc, char *argv[])
 			if (mflag && confirm(argv[0], *cpp, 0)) {
 				tp = (ntflag) ? dotrans(*cpp) : *cpp;
 				tp = (mapflag) ? domap(tp) : tp;
-				sendrequest((sunique) ? "STOU" : "STOR",
-				    *cpp, tp, *cpp != tp || !interactive);
+#ifndef SMALL
+				if (restartit == 1) {
+					off_t ret;
+
+					if (curtype != type)
+						changetype(type, 0);
+					ret = remotesize(tp, 0);
+					restart_point = (ret < 0) ? 0 : ret;
+				}
+#endif /* !SMALL */
+				cmd = restartit ? "APPE" : ((sunique) ?
+				    "STOU" : "STOR");
+				sendrequest(cmd, *cpp, tp,
+				    *cpp != tp || !interactive);
+				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with", "mput", 1))
+					if (confirm("Continue with",
+					    argv[0], 1))
 						mflag = 1;
 				}
 			}
@@ -416,12 +515,14 @@ mput(int argc, char *argv[])
 	mflag = 0;
 }
 
+#ifndef SMALL
 void
 reget(int argc, char *argv[])
 {
 
 	(void)getit(argc, argv, 1, "r+w");
 }
+#endif /* !SMALL */
 
 void
 get(int argc, char *argv[])
@@ -483,6 +584,7 @@ usage:
 		argv[2] = dotrans(argv[2]);
 	if (loc && mapflag)
 		argv[2] = domap(argv[2]);
+#ifndef SMALL
 	if (restartit) {
 		struct stat stbuf;
 		int ret;
@@ -508,6 +610,7 @@ usage:
 			}
 		}
 	}
+#endif /* !SMALL */
 
 	recvrequest("RETR", argv[2], argv[1], mode,
 	    argv[1] != oldargv1 || argv[2] != oldargv2, loc);
@@ -527,7 +630,7 @@ mabort(int signo)
 	putc('\n', ttyout);
 	(void)fflush(ttyout);
 	if (mflag && fromatty)
-		if (confirm("Continue with", mname, 0))
+		if (confirm("Continue with", mname, 1))
 			longjmp(jabort, 1);
 	mflag = 0;
 	longjmp(jabort, 1);
@@ -539,15 +642,39 @@ mabort(int signo)
 void
 mget(int argc, char *argv[])
 {
+	extern int optind, optreset;
 	sig_t oldintr;
-	int ch;
+	int ch, restartit = 0;
 	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN], localcwd[MAXPATHLEN];
 
-	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
-		fprintf(ttyout, "usage: %s remote-files\n", argv[0]);
+	optind = optreset = 1;
+
+#ifndef SMALL
+	while ((ch = getopt(argc, argv, "c")) != -1) {
+		switch(ch) {
+		case 'c':
+			restartit = 1;
+			break;
+		default:
+			goto usage;
+		}
+	}
+#endif /* !SMALL */
+
+	if (argc - optind < 1 && !another(&argc, &argv, "remote-files")) {
+usage:
+		fprintf(ttyout, "usage: %s [-c] remote-files\n", argv[0]);
 		code = -1;
 		return;
 	}
+
+#ifndef SMALL
+	optind--;
+	argv[optind] = argv[0];
+	argc -= optind;
+	argv += optind;
+#endif /* !SMALL */
+
 	mname = argv[0];
 	mflag = 1;
 	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
@@ -579,10 +706,20 @@ mget(int argc, char *argv[])
 				tp = dotrans(tp);
 			if (mapflag)
 				tp = domap(tp);
-			recvrequest("RETR", tp, cp, "w",
+#ifndef SMALL
+			if (restartit == 1) {
+				struct stat stbuf;
+				int ret;
+
+				ret = stat(tp, &stbuf);
+				restart_point = (ret < 0) ? 0 : stbuf.st_size;
+			}
+#endif /* !SMALL */
+			recvrequest("RETR", tp, cp, restart_point ? "r+w" : "w",
 			    tp != cp || !interactive, 1);
+			restart_point = 0;
 			if (!mflag && fromatty) {
-				if (confirm("Continue with", "mget", 1))
+				if (confirm("Continue with", argv[0], 1))
 					mflag = 1;
 			}
 		}
@@ -1024,7 +1161,7 @@ mdelete(int argc, char *argv[])
 		if (mflag && confirm(argv[0], cp, 0)) {
 			(void)command("DELE %s", cp);
 			if (!mflag && fromatty) {
-				if (confirm("Continue with", "mdelete", 0))
+				if (confirm("Continue with", argv[0], 1))
 					mflag = 1;
 			}
 		}

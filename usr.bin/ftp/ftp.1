@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.69 2008/06/16 19:56:04 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.70 2008/06/25 18:07:00 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: June 16 2008 $
+.Dd $Mdocdate: June 25 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -556,13 +556,21 @@ on the remote machine.
 .It Ic mdir Ar remote-files local-file
 A synonym for
 .Ic mls .
-.It Ic mget Ar remote-files
+.It Xo Ic mget
+.Op Fl c
+.Ar remote-files
+.Xc
 Expand the
 .Ar remote-files
 on the remote machine
 and do a
 .Ic get
 for each file name thus produced.
+If the
+.Fl c
+flag is specified, then
+.Ic reget
+is used instead for the partially transferred files.
 See
 .Ic glob
 for details on the filename expansion.
@@ -605,11 +613,19 @@ Show the last modification time of the file on the remote machine.
 .It Ic more Ar file
 A synonym for
 .Ic page .
-.It Ic mput Ar local-files
+.It Xo Ic mput
+.Op Fl c
+.Ar local-files
+.Xc
 Expand wild cards in the list of local files given as arguments
 and do a
 .Ic put
 for each file in the resulting list.
+If the
+.Fl c
+flag is specified, then
+.Ic reput
+is used instead for the partially transferred files.
 See
 .Ic glob
 for details of filename expansion.
@@ -968,6 +984,21 @@ Rename the file
 .Ar from
 on the remote machine to the file
 .Ar to .
+.It Ic reput Ar local-file Op Ar remote-file
+Reput acts like put, except that if
+.Ar remote-file
+exists and is
+smaller than
+.Ar local-file ,
+.Ar remote-file
+is presumed to be
+a partially transferred copy of
+.Ar local-file
+and the transfer
+is continued from the apparent point of failure.
+This command
+is useful when transferring very large files over networks that
+are prone to dropping connections.
 .It Ic reset
 Clear reply queue.
 This command re-synchronizes command/reply sequencing with the remote
