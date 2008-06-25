@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.73 2008/06/25 15:26:44 reyk Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.74 2008/06/25 15:32:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -127,14 +127,6 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	pdi->bios_cylinders &= 0x3ff;
 	pdi->bios_cylinders++;
 
-	/* Sanity check */
-	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
-		return 1;
-
-	/* CD-ROMs sometimes return heads == 1 */
-	if (pdi->bios_heads < 2)
-		return 1;
-
 	/* NOTE:
 	 * This currently hangs/reboots some machines
 	 * The IBM ThinkPad 750ED for one.
@@ -175,6 +167,18 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 			pdi->bios_edd = -1;
 	} else
 		pdi->bios_edd = -1;
+
+	/* Skip sanity check for CHS options in EDD mode. */
+	if (pdi->bios_edd != -1)
+		return 0;
+
+	/* Sanity check */
+	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
+		return 1;
+
+	/* CD-ROMs sometimes return heads == 1 */
+	if (pdi->bios_heads < 2)
+		return 1;
 
 	return 0;
 }
@@ -413,7 +417,8 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	int n = 8;
 
 	/* Sanity check */
-	if (bd->bios_heads == 0 || bd->bios_sectors == 0)
+	if (bd->bios_edd == -1 &&
+	    (bd->bios_heads == 0 || bd->bios_sectors == 0))
 		return "failed to read disklabel";
 
 	/* MBR is a harddisk thing */
