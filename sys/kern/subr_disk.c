@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.78 2008/06/12 06:58:39 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.79 2008/06/25 15:26:43 reyk Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 
 		bcopy(bp->b_data + DOSPARTOFF, dp, sizeof(dp));
 
-		if (ourpart == -1 && part_blkno == DOSBBSECTOR) {
+		if (ourpart == -1) {
 			/* Search for our MBR partition */
 			for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 			    i++, dp2++)
@@ -454,11 +454,6 @@ donot:
 				continue;
 			if (letoh32(dp2->dp_size) == 0)
 				continue;
-			if (letoh32(dp2->dp_start))
-				DL_SETPOFFSET(pp,
-				    letoh32(dp2->dp_start) + part_blkno);
-
-			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 
 			switch (dp2->dp_typ) {
 			case DOSPTYP_UNUSED:
@@ -499,6 +494,19 @@ donot:
 				n++;
 				break;
 			}
+
+			/*
+			 * There is no need to set the offset/size when
+			 * wandering; it would also invalidate the
+			 * disklabel checksum.
+			 */
+			if (wander)
+				continue;
+
+			if (letoh32(dp2->dp_start))
+				DL_SETPOFFSET(pp,
+				    letoh32(dp2->dp_start) + part_blkno);
+			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 		}
 	}
 	lp->d_npartitions = MAXPARTITIONS;

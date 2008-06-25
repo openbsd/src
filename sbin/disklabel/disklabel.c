@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.128 2008/06/04 01:27:54 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.129 2008/06/25 15:26:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.128 2008/06/04 01:27:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.129 2008/06/25 15:26:43 reyk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,6 +113,7 @@ int	donothing;
 
 #ifdef DOSLABEL
 struct dos_partition *dosdp;	/* DOS partition, if found */
+struct dos_partition *findopenbsd(int, off_t, struct dos_partition **, int *);
 struct dos_partition *readmbr(int);
 #endif
 
@@ -525,48 +526,30 @@ l_perror(char *s)
 }
 
 #ifdef DOSLABEL
-/*
- * Fetch DOS partition table from disk.
- */
 struct dos_partition *
-readmbr(int f)
+findopenbsd(int f, off_t mbroff, struct dos_partition **first, int *n)
 {
 	static int mbr[DEV_BSIZE / sizeof(int)];
-	struct dos_partition *dp;
+	struct dos_partition *dp, *p;
 	u_int16_t signature;
+	u_int32_t start = 0;
 	int part;
+
+	/* Limit the number of recursions */
+	if (!(*n)--)
+		return (NULL);
 
 	/*
 	 * This must be done this way due to alignment restrictions
 	 * in for example mips processors.
 	 */
 	dp = (struct dos_partition *)mbr;
-	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
+	if (lseek(f, (off_t)mbroff * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) != sizeof(mbr))
 		return (NULL);
 	signature = *((u_char *)mbr + DOSMBR_SIGNATURE_OFF) |
 	    (*((u_char *)mbr + DOSMBR_SIGNATURE_OFF + 1) << 8);
 	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
-
-	/*
-	 * Don't (yet) know disk geometry, use partition table to find OpenBSD
-	 * partition, and obtain disklabel from there.
-	 */
-	/* Check if table is valid. */
-	for (part = 0; part < NDOSPART; part++) {
-		if ((dp[part].dp_flag & ~0x80) != 0)
-			return (0);
-	}
-	/* Find OpenBSD partition. */
-	for (part = 0; part < NDOSPART; part++) {
-		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "# Inside MBR partition %d: "
-			    "type %02X start %u size %u\n",
-			    part, dp[part].dp_typ,
-			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
-			return (&dp[part]);
-		}
-	}
 
 	/*
 	 * If there is no signature and no OpenBSD partition this is probably
@@ -575,13 +558,66 @@ readmbr(int f)
 	if (signature != DOSMBR_SIGNATURE)
 		return (NULL);
 
-	/* If no OpenBSD partition, find first used partition. */
+	/*
+	 * Don't (yet) know disk geometry, use partition table to find OpenBSD
+	 * partition, and obtain disklabel from there.
+	 */
+	/* Check if table is valid. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (letoh32(dp[part].dp_size)) {
-			warnx("warning, DOS partition table with no valid OpenBSD partition");
+		if ((dp[part].dp_flag & ~0x80) != 0)
+			return (NULL);
+	}
+	/* Find OpenBSD partition. */
+	for (part = 0; part < NDOSPART; part++) {
+		if (!letoh32(dp[part].dp_size))
+			continue;
+		if (first && *first == NULL)
+			*first = &dp[part];
+		switch (dp[part].dp_typ) {
+		case DOSPTYP_OPENBSD:
+			fprintf(stderr, "# Inside MBR partition %d: "
+			    "type %02X start %u size %u\n",
+			    part, dp[part].dp_typ,
+			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
 			return (&dp[part]);
+		case DOSPTYP_EXTENDL:
+			fprintf(stderr, "# Extended partition %d: "
+			    "type %02X start %u size %u\n",
+			    part, dp[part].dp_typ,
+			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
+			start = letoh32(dp[part].dp_start);
+			p = findopenbsd(f, start, NULL, n);
+			if (p != NULL) {
+				p->dp_start =
+				    htole32(letoh32(p->dp_start) + start);
+				return (p);
+			}
+			break;
 		}
 	}
+
+	return (NULL);
+}
+
+/*
+ * Fetch DOS partition table from disk.
+ */
+struct dos_partition *
+readmbr(int f)
+{
+	struct dos_partition *dp, *first;
+	int part, n = 8;
+
+	dp = findopenbsd(f, DOSBBSECTOR, &first, &n);
+	if (dp != NULL)
+		return (dp);
+
+	/* If no OpenBSD partition, find first used partition. */
+	if (first != NULL) {
+		warnx("warning, DOS partition table with no valid OpenBSD partition");
+		return (first);
+	}
+
 	/* Table appears to be empty. */
 	return (NULL);
 }
