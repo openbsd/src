@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2004/01/28 01:46:17 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/06/25 02:47:59 kurt Exp $
 
 CFLAGS+=	-DLIBC_SCCS -fno-omit-frame-pointer
-OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
+OBJS=		crt0.o pcrt0.o gcrt0.o
+OBJS+=		crtbegin.o crtend.o
+OBJS+=		crtbeginP.o crtendP.o
+OBJS+=		crtbeginS.o crtendS.o
 SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 
 ELFDIR=		${.CURDIR}/../common_elf
@@ -18,6 +21,12 @@ crt0.o: crt0.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+pcrt0.o: crt0.c
+	@echo ${COMPILE.c} ${PICFLAG} -DCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} ${PICFLAG} -DCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
 gcrt0.o: crt0.c
 	@echo ${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
 	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
@@ -30,6 +39,12 @@ crtbegin.o: crtbegin.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+crtbeginP.o: crtbegin.c
+	@echo ${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbegin.c -o ${.TARGET}
+	@${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbegin.c -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
 crtbeginS.o: crtbeginS.c
 	@echo ${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbeginS.c -o ${.TARGET}
 	@${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbeginS.c -o ${.TARGET}.o
@@ -39,6 +54,12 @@ crtbeginS.o: crtbeginS.c
 crtend.o: crtend.c
 	@echo ${COMPILE.c} ${ELFDIR}/crtend.c -o ${.TARGET}
 	@${COMPILE.c} ${ELFDIR}/crtend.c -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtendP.o: crtend.c
+	@echo ${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtend.c -o ${.TARGET}
+	@${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtend.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
