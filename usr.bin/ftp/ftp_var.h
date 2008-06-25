@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.25 2007/11/26 12:39:00 martynas Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.26 2008/06/25 21:15:19 martynas Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ char *ftpport;			/* port number to use for ftp connections */
 char *httpport;			/* port number to use for http connections */
 #ifndef SMALL
 char *httpsport;		/* port number to use for https connections */
-#endif
+#endif /* !SMALL */
 char *gateport;			/* port number to use for gateftp connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */

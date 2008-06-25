@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.c,v 1.2 2007/10/08 18:39:37 pyr Exp $	*/
+/* $OpenBSD: cookie.c,v 1.3 2008/06/25 21:15:19 martynas Exp $	*/
 /*
  * Copyright (c) 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -225,4 +225,4 @@ cookie_get(const char *domain, const char *path, int secure, char **pstr)
 	*pstr = str;
 }
 
-#endif /* ! SMALL */
+#endif /* !SMALL */

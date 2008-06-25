@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.71 2008/06/25 18:07:00 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.72 2008/06/25 21:15:19 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.71 2008/06/25 18:07:00 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.72 2008/06/25 21:15:19 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ hookup(char *host, char *port)
 #ifndef SMALL
 		else if (strcmp(port, "https") == 0)
 			snprintf(pbuf, sizeof(pbuf), "%d", HTTPS_PORT);
-#endif
+#endif /* !SMALL */
 		if (pbuf[0])
 			error = getaddrinfo(host, pbuf, &hints, &res0);
 	}

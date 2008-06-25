@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.21 2008/06/25 18:07:00 martynas Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.22 2008/06/25 21:15:19 martynas Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.21 2008/06/25 18:07:00 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.22 2008/06/25 21:15:19 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <stdio.h>
@@ -127,11 +127,11 @@ char	empty[] = "";
 #define CMPL(x)
 #define CMPL0
 #define H(x)	empty
-#else  /* !SMALL */
+#else  /* SMALL */
 #define CMPL(x)	__STRING(x), 
 #define CMPL0	"",
 #define H(x)	x
-#endif /* !SMALL */
+#endif /* SMALL */
 
 struct cmd cmdtab[] = {
 	{ "!",		H(shellhelp),	0, 0, 0, CMPL0		shell },

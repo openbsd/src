@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.51 2008/06/16 19:56:04 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.52 2008/06/25 21:15:19 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.51 2008/06/16 19:56:04 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.52 2008/06/25 21:15:19 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -242,7 +242,7 @@ ftp_login(const char *host, char *user, char *pass)
 			return (0);
 		}
 	}
-#endif
+#endif /* !SMALL */
 
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.33 2008/06/25 18:07:00 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.34 2008/06/25 21:15:19 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ void	user(int, char **);
 int	ruserpass(const char *, char **, char **, char **);
 void	cookie_load(void);
 void	cookie_get(const char *, const char *, int, char **);
-#endif
+#endif /* !SMALL */
 
 
 extern jmp_buf	abortprox;
