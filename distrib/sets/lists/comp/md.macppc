@@ -248,8 +248,10 @@
 ./usr/include/powerpc/varargs.h
 ./usr/include/unwind.h
 ./usr/lib/crtbegin.o
+./usr/lib/crtbeginP.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
+./usr/lib/crtendP.o
 ./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.3/3.3.5/SYSCALLS.c.X
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.3/3.3.5/cc1obj
@@ -309,6 +311,7 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
+./usr/lib/pcrt0.o
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32ppc_obsd.x
 ./usr/libdata/ldscripts/elf32ppc_obsd.xbn
