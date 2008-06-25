@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.17 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.18 2008/06/25 15:09:32 deraadt Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.17 2006/03/25 19:06:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.18 2008/06/25 15:09:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,8 @@ main(int argc, char *argv[])
 	    cyclethreshold = atoi( *++argv );
 	    break;
 	case 'c':
-#if defined(__i386__) || defined(__vax__) || defined(__tahoe__) || defined(__sparc__)
+#if defined(__i386__) || defined(__vax__) || defined(__tahoe__) || \
+    defined(__sparc__) || defined(__sparc64__)
 	    cflag = TRUE;
 #else
 	    fprintf(stderr, "%s: -c isn't supported on this architecture yet\n", __progname);
