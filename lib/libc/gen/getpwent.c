@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.35 2008/06/24 14:27:24 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.36 2008/06/25 14:51:27 millert Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -57,7 +57,7 @@ static DB *_pw_db;			/* password database */
 
 /* Following are used only by setpwent(), getpwent(), and endpwent() */
 static struct passwd _pw_passwd;	/* password structure */
-static char _pw_string[1024];		/* string pointed to by _pw_passwd */
+static char _pw_string[_PW_BUF_LEN];	/* string pointed to by _pw_passwd */
 static int _pw_keynum;			/* key counter */
 static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
@@ -84,7 +84,7 @@ static char	*__ypcurrent;
 static int	__ypcurrentlen;
 static int	__yp_pw_flags;
 static struct passwd *__ypproto;
-static char	__ypline[1024];
+static char	__ypline[_PW_BUF_LEN];
 static int	__getpwent_has_yppw = -1;
 static struct _ypexclude *__ypexhead;
 
@@ -314,7 +314,7 @@ getpwent(void)
 	static char *name = NULL;
 	char *map;
 #endif
-	char bf[1 + sizeof(_pw_keynum)], pwbuf[1024];
+	char bf[1 + sizeof(_pw_keynum)], pwbuf[_PW_BUF_LEN];
 	struct passwd *pw = NULL;
 	DBT key;
 
@@ -440,7 +440,7 @@ again:
 	key.size = 1 + sizeof(_pw_keynum);
 	if (__hashpw(&key, pwbuf, sizeof pwbuf, &_pw_passwd, &_pw_flags)) {
 #ifdef YP
-		static long __yppbuf[1024 / sizeof(long)];
+		static long __yppbuf[_PW_BUF_LEN / sizeof(long)];
 		const char *user, *host, *dom;
 
 		/* if we don't have YP at all, don't bother. */
@@ -582,7 +582,7 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 {
 	char bf[1 + _PW_NAME_LEN], *ypcurrent = NULL, *map;
 	int yp_pw_flags = 0, ypcurrentlen, r, s = -1, pw_keynum;
-	static long yppbuf[1024 / sizeof(long)];
+	static long yppbuf[_PW_BUF_LEN / sizeof(long)];
 	struct _ypexclude *ypexhead = NULL;
 	const char *host, *user, *dom;
 	DBT key;

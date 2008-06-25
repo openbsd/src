@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.19 2008/06/24 14:31:59 deraadt Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.20 2008/06/25 14:51:27 millert Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #define	_PASSWORD_LEN		128	/* max length, not counting NUL */
 #define	_PW_NAME_LEN		31	/* max length, not counting NUL */
 					/* Should be MAXLOGNAME - 1 */
+#define _PW_BUF_LEN		1024	/* length of getpw*_r buffer */
 
 #define _PASSWORD_NOUID		0x01	/* flag for no specified uid. */
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
