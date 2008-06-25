@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.27 2007/03/15 12:42:39 kurt Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.28 2008/06/25 14:58:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -73,7 +73,6 @@
 #define _POSIX_THREAD_PRIO_INHERIT		1
 #define _POSIX_THREAD_PRIO_PROTECT		1
 /* #define _POSIX_THREAD_PROCESS_SHARED */
-#define _POSIX_THREAD_SAFE_FUNCTIONS		1
 
 /*
  * Flags for threads and thread attributes.

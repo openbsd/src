@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.61 2008/04/29 14:52:54 kurt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.62 2008/06/25 14:58:54 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -48,6 +48,11 @@
 #define F_LOCK          1	/* lock a section for exclusive use */
 #define F_TLOCK         2	/* test and lock a section for exclusive use */
 #define F_TEST          3	/* test a section for locks by other procs */
+#endif
+
+#if __POSIX_VISIBLE
+#define _POSIX_REENTRANT_FUNCTIONS	1
+#define _POSIX_THREAD_SAFE_FUNCTIONS	200112L
 #endif
 
 #ifndef NULL
