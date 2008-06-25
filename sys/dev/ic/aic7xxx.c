@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.80 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.81 2008/06/25 18:21:48 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.80 2007/11/27 16:22:13 martynas Exp $
+ * $Id: aic7xxx.c,v 1.81 2008/06/25 18:21:48 deraadt Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4450,8 +4450,7 @@ ahc_controller_info(struct ahc_softc *ahc, char *buf, size_t buf_len)
 	len = strlen(buf);
 	if ((ahc->features & AHC_TWIN) != 0)
 		snprintf(buf + len, buf_len - len,
-			 "Twin Channel, A SCSI Id=%d, B SCSI Id=%d, "
-			 "primary %c, ", ahc->our_id, ahc->our_id_b,
+			 "Twin Channel, primary %c, ",
 			 (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
 	else {
 		const char *speed;
@@ -4471,8 +4470,8 @@ ahc_controller_info(struct ahc_softc *ahc, char *buf, size_t buf_len)
 			type = "Single";
 		}
 		snprintf(buf + len, buf_len - len,
-			 "%s%s Channel %c, SCSI Id=%d, ",
-			 speed, type, ahc->channel, ahc->our_id);
+			 "%s%s Channel %c, ",
+			 speed, type, ahc->channel);
 	}
 	len = strlen(buf);
 
