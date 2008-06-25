@@ -22,12 +22,11 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <dev/rndvar.h>
-#include <crypto/idgen.h>
+#include <sys/time.h>
 
-static u_int16_t idgen32_g(u_int8_t *, int, u_int16_t);
-u_int32_t idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t);
-void idgen32_rekey(struct idgen32_ctx *);
+#include <dev/rndvar.h>
+
+#include <crypto/idgen.h>
 
 static const u_int8_t ftable[256] = { 
 	0xa3, 0xd7, 0x09, 0x83, 0xf8, 0x48, 0xf6, 0xf4,
@@ -81,7 +80,7 @@ idgen32_g(u_int8_t *key, int k, u_int16_t w)
 	return (g5 << 8) | g6;
 }
 
-u_int32_t
+static u_int32_t
 idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t in)
 {
 	u_int i, r;
@@ -102,19 +101,21 @@ idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t in)
 	return (wl << 16) | wr;
 }
 
-void
+static void
 idgen32_rekey(struct idgen32_ctx *ctx)
 {
-	ctx->counter = 0;
-	ctx->hibit ^= 0x80000000;
-	arc4random_buf(ctx->key, sizeof(ctx->key));
+	ctx->id_counter = 0;
+	ctx->id_hibit ^= 0x80000000;
+	ctx->id_offset = arc4random();
+	arc4random_buf(ctx->id_key, sizeof(ctx->id_key));
+	ctx->id_rekey_time = time_second + IDGEN32_REKEY_TIME;
 }
 
 void
 idgen32_init(struct idgen32_ctx *ctx)
 {
 	bzero(ctx, sizeof(ctx));
-	ctx->hibit = arc4random() & 0x80000000;
+	ctx->id_hibit = arc4random() & 0x80000000;
 	idgen32_rekey(ctx);
 }
 
@@ -125,13 +126,14 @@ idgen32(struct idgen32_ctx *ctx)
 
 	/* Avoid emitting a zero ID as they often have special meaning */
 	do {
-		ret = idgen32_permute(ctx->key, ctx->counter++) | ctx->hibit;
+		ret = idgen32_permute(ctx->id_key,
+		    ctx->id_offset + ctx->id_counter++);
 
 		/* Rekey a little early to avoid "card counting" attack */
-		if (ctx->counter > IDGEN32_REKEY_LIMIT)
+		if (ctx->id_counter > IDGEN32_REKEY_LIMIT ||
+		    ctx->id_rekey_time > time_second)
 			idgen32_rekey(ctx);
 	} while (ret == 0);
 
-	return ret;
+	return ret | ctx->id_hibit;
 }
-

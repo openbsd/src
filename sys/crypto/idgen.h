@@ -1,4 +1,4 @@
-/*	$OpenBSD: idgen.h,v 1.1 2008/06/09 22:47:41 djm Exp $	*/
+/*	$OpenBSD: idgen.h,v 1.2 2008/06/25 00:55:53 djm Exp $	*/
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
  *
@@ -17,12 +17,15 @@
 
 #define IDGEN32_ROUNDS		31
 #define IDGEN32_KEYLEN		32
-#define IDGEN32_REKEY_LIMIT	0x7ff00000
+#define IDGEN32_REKEY_LIMIT	0x60000000
+#define IDGEN32_REKEY_TIME	600
 
 struct idgen32_ctx {
-	u_int32_t counter;
-	u_int32_t hibit;
-	u_int8_t key[IDGEN32_KEYLEN];
+	u_int32_t id_counter;
+	u_int32_t id_offset;
+	u_int32_t id_hibit;
+	u_int8_t id_key[IDGEN32_KEYLEN];
+	time_t id_rekey_time;
 };
 
 void idgen32_init(struct idgen32_ctx *);
