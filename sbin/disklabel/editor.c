@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.167 2008/04/13 15:54:59 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.168 2008/06/25 18:31:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.167 2008/04/13 15:54:59 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.168 2008/06/25 18:31:07 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,6 +93,7 @@ void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 	    char *);
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
+void	display_edit(struct disklabel *, char **, char, u_int64_t);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -282,8 +283,12 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			break;
 
 		case 'p':
-			display(stdout, &label, mountpoints, arg ? *arg : 0, 1,
+			display_edit(&label, mountpoints, arg ? *arg : 0,
 			    editor_countfree(&label));
+			break;
+
+		case 'l':
+			display(stdout, &label, mountpoints, arg ? *arg : 0, 0);
 			break;
 
 		case 'M': {
@@ -367,7 +372,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			if ((fp = fopen(arg, "w")) == NULL) {
 				warn("cannot open %s", arg);
 			} else {
-				display(fp, &label, NULL, 0, 0, 0);
+				display(fp, &label, NULL, 0, 1) ;
 				(void)fclose(fp);
 			}
 			break;
@@ -1309,9 +1314,17 @@ free_chunks(struct disklabel *lp)
 	}
 	for (i = 0; spp[i] != NULL; i++) {
 		start = DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]);
+		if (start < starting_sector)
+			start = starting_sector;
+		else if (start > ending_sector)
+			start = ending_sector;
 		if (spp[i + 1] != NULL)
 			stop = DL_GETPOFFSET(spp[i+1]);
 		else
+			stop = ending_sector;
+		if (stop < starting_sector)
+			stop = starting_sector;
+		else if (stop > ending_sector)
 			stop = ending_sector;
 		if (start < stop) {
 			chunks[numchunks].start = start;
@@ -1411,7 +1424,13 @@ editor_help(char *arg)
 	switch (*arg) {
 	case 'p':
 		puts(
-"The 'p' command prints the current disk label.  By default, it prints the\n"
+"The 'p' command prints the current partitions.  By default, it prints size\n"
+"and offset in sectors (a sector is usually 512 bytes).  The 'p' command\n"
+"takes an optional units argument.  Possible values are 'b' for bytes, 'c'\n"
+"for cylinders, 'k' for kilobytes, 'm' for megabytes, and 'g' for gigabytes.\n");
+	case 'l':
+	puts(
+"The 'l' command prints the header of the disk label.  By default, it prints\n"
 "size and offset in sectors (a sector is usually 512 bytes).  The 'p' command\n"
 "takes an optional units argument.  Possible values are 'b' for bytes, 'c'\n"
 "for cylinders, 'k' for kilobytes, 'm' for megabytes, and 'g' for gigabytes.\n");
@@ -1545,15 +1564,16 @@ editor_help(char *arg)
 		puts("Available commands:");
 		puts(
 "  ? [command] - show help                   n [part] - set mount point\n"
-"  a [part]    - add partition               p [unit] - print label\n"
+"  a [part]    - add partition               p [unit] - print partitions\n"
 "  b           - set OpenBSD boundaries      q        - quit & save changes\n"
 "  c [part]    - change partition size       r        - display free space\n"
 "  D           - reset label to default      s [path] - save label to file\n"
 "  d [part]    - delete partition            u        - undo last change\n"
 "  e           - edit drive parameters       w        - write label to disk\n"
 "  g [d|u]     - [d]isk or [u]ser geometry   X        - toggle expert mode\n"
-"  M           - disklabel(8) man page       x        - exit w/o saving changes\n"
-"  m [part]    - modify partition            z        - delete all partitions\n"
+"  l [unit]    - print disk label header     x        - exit w/o saving changes\n"
+"  M           - disklabel(8) man page       z        - delete all partitions\n"
+"  m [part]    - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
@@ -2025,3 +2045,36 @@ max_partition_size(struct disklabel *lp, int partno)
 	}	
 	return (maxsize);
 }
+
+void
+psize(daddr64_t sz, char unit, struct disklabel *lp)
+{
+	double d = scale(sz, unit, lp);
+	if (d < 0)
+		printf("%llu", sz);
+	else
+		printf("%.*f%c", unit == 'B' ? 0 : 1, d, unit);
+}
+
+void
+display_edit(struct disklabel *lp, char **mp, char unit, u_int64_t fr)
+{
+	int i;
+
+	unit = toupper(unit);
+
+	printf("OpenBSD area: ");
+	psize(starting_sector, unit, lp);
+	printf("-");
+	psize(ending_sector, unit, lp);
+	printf("; size: ");
+	psize(ending_sector - starting_sector, unit, lp);
+	printf("; free: ");
+	psize(fr, unit, lp);
+
+	printf("\n#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
+	    "size", "offset");
+	for (i = 0; i < lp->d_npartitions; i++)
+		display_partition(stdout, lp, mp, i, unit);
+}
+

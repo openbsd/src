@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.68 2008/04/06 20:18:54 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.69 2008/06/25 18:31:07 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 6 2008 $
+.Dd $Mdocdate: June 25 2008 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -355,6 +355,8 @@ thinks (the
 geometry is simply what the label said before
 .Nm
 made any changes).
+.It Cm l Op Ar unit
+Print the disk label header.
 .It Cm M
 Display this manual page.
 .It Cm m Op Ar part
@@ -377,7 +379,7 @@ was invoked with the
 .Fl f
 flag.
 .It Cm p Op Ar unit
-Print the current disk label.
+Print the current partition list.
 If a
 .Em unit
 is given, the size and offsets are displayed in terms of the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.129 2008/06/25 15:26:43 reyk Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.130 2008/06/25 18:31:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.129 2008/06/25 15:26:43 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.130 2008/06/25 18:31:07 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 		if (tflag)
 			makedisktab(stdout, lp);
 		else
-			display(stdout, lp, NULL, print_unit, 0, 0);
+			display(stdout, lp, NULL, print_unit, 1);
 		error = checklabel(lp);
 		break;
 	case RESTORE:
@@ -752,7 +752,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 		/* XXX assume d_secsize is a power of two */
 		bootsize = (bootsize + dp->d_secsize-1) & ~(dp->d_secsize-1);
 		bootbuf = (char *)malloc((size_t)bootsize);
-		if (bootbuf == 0)
+		if (bootbuf == NULL)
 			err(4, "%s", xxboot);
 		if (read(b, bootbuf, bootsize) < 0) {
 			free(bootbuf);
@@ -940,17 +940,13 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 }
 
 void
-display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
-    u_int64_t fr)
+display(FILE *f, struct disklabel *lp, char **mp, char unit, int all)
 {
 	int i, j;
 	double d;
 
 	unit = toupper(unit);
-	if (edit)
-		fprintf(f, "device: %s\n", specname);
-	else
-		fprintf(f, "# %s:\n", specname);
+	fprintf(f, "# %s:\n", specname);
 
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
@@ -958,14 +954,13 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 		fprintf(f, "type: %d\n", lp->d_type);
 	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
-	if (!edit) {
-		fprintf(f, "flags:");
-		if (lp->d_flags & D_BADSECT)
-			fprintf(f, " badsect");
-		if (lp->d_flags & D_VENDOR)
-			fprintf(f, " vendor");
-		putc('\n', f);
-	}
+	fprintf(f, "flags:");
+	if (lp->d_flags & D_BADSECT)
+		fprintf(f, " badsect");
+	if (lp->d_flags & D_VENDOR)
+		fprintf(f, " vendor");
+	putc('\n', f);
+
 	fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
 	fprintf(f, "sectors/track: %u\n", lp->d_nsectors);
 	fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
@@ -978,38 +973,30 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 		fprintf(f, "total bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
 		    d, unit);
 
-	if (edit) {
-		d = scale(fr, unit, lp);
-		if (d < 0)
-			fprintf(f, "free sectors: %llu\n", fr);
-		else
-			fprintf(f, "free bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
-			    d, unit);
-	}
 	fprintf(f, "rpm: %hu\n", lp->d_rpm);
-	if (!edit) {
-		fprintf(f, "interleave: %hu\n", lp->d_interleave);
-		fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
-		fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
-		fprintf(f, "headswitch: %u\t\t# microseconds\n",
-		    lp->d_headswitch);
-		fprintf(f, "track-to-track seek: %u\t# microseconds\n",
-		    lp->d_trkseek);
-		fprintf(f, "drivedata: ");
-		for (i = NDDATA - 1; i >= 0; i--)
-			if (lp->d_drivedata[i])
-				break;
-		if (i < 0)
-			i = 0;
-		for (j = 0; j <= i; j++)
-			fprintf(f, "%d ", lp->d_drivedata[j]);
-		fprintf(f, "\n");
+	fprintf(f, "interleave: %hu\n", lp->d_interleave);
+	fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
+	fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
+	fprintf(f, "headswitch: %u\t\t# microseconds\n",
+	    lp->d_headswitch);
+	fprintf(f, "track-to-track seek: %u\t# microseconds\n",
+	    lp->d_trkseek);
+	fprintf(f, "drivedata: ");
+	for (i = NDDATA - 1; i >= 0; i--)
+		if (lp->d_drivedata[i])
+			break;
+	if (i < 0)
+		i = 0;
+	for (j = 0; j <= i; j++)
+		fprintf(f, "%d ", lp->d_drivedata[j]);
+	fprintf(f, "\n");
+	if (all) {
+		fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
+		fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
+		    "size", "offset");
+		for (i = 0; i < lp->d_npartitions; i++)
+			display_partition(f, lp, mp, i, unit);
 	}
-	fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
-	fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
-	    "size", "offset");
-	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, mp, i, unit);
 	fflush(f);
 }
 
@@ -1026,7 +1013,7 @@ edit(struct disklabel *lp, int f)
 		warn("%s", tmpfil);
 		return (1);
 	}
-	display(fp, lp, NULL, 0, 0, 0);
+	display(fp, lp, NULL, 0, 1);
 	fprintf(fp, "\n# Notes:\n");
 	fprintf(fp,
 "# Up to 16 partitions are valid, named from 'a' to 'p'.  Partition 'a' is\n"
@@ -1590,29 +1577,41 @@ setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int i, errors = 0;
-	u_long boffset;
+	daddr64_t bend;
 	char part;
 
-	if (bootbuf == 0)
+	if (bootbuf == NULL)
 		return;
-	boffset = bootsize / lp->d_secsize;
+
+	bend = bootsize / lp->d_secsize;
 	for (i = 0; i < lp->d_npartitions; i++) {
-		part = 'a' + i;
+		if (i == RAW_PART)
+			/* It will *ALWAYS* overlap 'c'. */
+			continue;
 		pp = &lp->d_partitions[i];
 		if (DL_GETPSIZE(pp) == 0)
+			/* Partition is unused. */
 			continue;
-		if (boffset <= DL_GETPOFFSET(pp)) {
+		if (bend <= DL_GETPOFFSET(pp)) {
+			/* Boot blocks end before this partition starts. */
 			if (pp->p_fstype == FS_BOOT)
 				pp->p_fstype = FS_UNUSED;
-		} else if (pp->p_fstype != FS_BOOT) {
-			if (pp->p_fstype != FS_UNUSED) {
-				warnx("boot overlaps used partition %c", part);
-				errors++;
-			} else {
-				pp->p_fstype = FS_BOOT;
-				warnx("warning, boot overlaps partition %c, %s",
-				    part, "marked as FS_BOOT");
-			}
+			continue;
+		}
+		
+		part = 'a' + i;
+		switch (pp->p_fstype) {
+		case FS_BOOT:	/* Already marked. */
+			break;
+		case FS_UNUSED:	/* Mark. */
+			pp->p_fstype = FS_BOOT;
+			warnx("warning, boot overlaps partition %c, %s",
+			    part, "marked as FS_BOOT");
+			break;
+		default:
+			warnx("boot overlaps used partition %c", part);
+			errors++;
+			break;
 		}
 	}
 	if (errors)
