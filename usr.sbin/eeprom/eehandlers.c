@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.13 2007/01/03 20:02:10 moritz Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.14 2008/06/25 15:15:16 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -50,9 +50,7 @@
 #include <unistd.h>
 
 #include <machine/eeprom.h>
-#ifdef __sparc__
 #include <machine/openpromio.h>
-#endif /* __sparc__ */
 
 #include "defs.h"
 
@@ -171,7 +169,6 @@ ee_num16(struct keytabent *ktent, char *arg)
 	printf("%s=%d\n", ktent->kt_keyword, num16);
 }
 
-#ifndef __sparc64__
 static	struct strvaltabent scrsizetab[] = {
 	{ "640x480",		EED_SCR_640X480 },
 	{ "1152x900",		EED_SCR_1152X900 },
@@ -213,7 +210,6 @@ ee_screensize(struct keytabent *ktent, char *arg)
 	}
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 }
-#endif
 
 static	struct strvaltabent truthtab[] = {
 	{ "true",		EE_TRUE },
@@ -347,7 +343,6 @@ ee_kbdtype(struct keytabent *ktent, char *arg)
 	printf("%s=%d (%s)\n", ktent->kt_keyword, kbd, kbd ? "other" : "Sun");
 }
 
-#ifndef __sparc64__
 static	struct strvaltabent constab[] = {
 	{ "b&w",		EED_CONS_BW },
 	{ "ttya",		EED_CONS_TTYA },
@@ -389,7 +384,6 @@ ee_constype(struct keytabent *ktent, char *arg)
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 
 }
-#endif
 
 void
 ee_diagpath(struct keytabent *ktent, char *arg)
