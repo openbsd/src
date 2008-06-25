@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.180 2008/06/14 21:31:46 mbalmer Exp $
+#	$OpenBSD: files.i386,v 1.181 2008/06/25 15:27:34 mbalmer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -139,6 +139,11 @@ file	arch/i386/pci/glxpcib.c		glxpcib
 device	amdmsr
 attach	amdmsr at mainbus
 file	arch/i386/i386/amdmsr.c		amdmsr	needs-flag
+
+# AMD Geode CS5536 Audio
+device	auglx: audio
+attach	auglx at pci
+file	arch/i386/pci/auglx.c		auglx
 
 # PCI-ISA bridge chipsets
 device	pcib: isabus
