@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.6 2004/01/04 03:40:19 pvalchev Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.7 2008/06/25 02:45:23 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -58,10 +58,9 @@ __asm__(".text\n"
 "	ba,pt	%icc, ___start\n"
 "	nop");
 
+static void ___start(char **, void (*)(void), const void *);
 
-void ___start(char **, void (*)(void), const void *);
-
-void
+static void
 ___start(char **sp, void (*cleanup)(void), const void *obj)
 {
 	long argc;
