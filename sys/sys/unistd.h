@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.14 2008/03/16 19:56:27 kettenis Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.15 2008/06/25 14:54:44 millert Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -119,11 +119,12 @@
 #define	_SC_SEM_NSEMS_MAX	31
 #define	_SC_SEM_VALUE_MAX	32
 
-#ifdef notyet
 /* P1003.1c */
-#define _SC_GETGR_R_SIZE_MAX
-#define _SC_GETPW_R_SIZE_MAX
-#define _SC_LOGIN_NAME_MAX
+#define _SC_GETGR_R_SIZE_MAX	100
+#define _SC_GETPW_R_SIZE_MAX	101
+#define _SC_LOGIN_NAME_MAX	102
+#define _SC_THREAD_SAFE_FUNCTIONS 103
+#ifdef notyet
 #define _SC_THREAD_DESTRUCTOR_ITERATIONS
 #define _SC_THREAD_KEYS_MAX
 #define _SC_THREAD_STACK_MIN
@@ -136,7 +137,6 @@
 #define _SC_THREAD_PRIO_INHERIT
 #define _SC_THREAD_PRIO_PROTECT
 #define _SC_THREAD_PROCESS_SHARED
-#define _SC_THREAD_SAFE_FUNCTIONS
 #endif
 
 #define	_SC_PHYS_PAGES		500

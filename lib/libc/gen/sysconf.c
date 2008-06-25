@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.9 2008/03/16 19:56:27 kettenis Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.10 2008/06/25 14:54:44 millert Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/vmmeter.h>
 
 #include <errno.h>
+#include <pwd.h>
 #include <unistd.h>
 
 /*
@@ -109,6 +110,19 @@ sysconf(int name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSYNC;
 		goto yesno;
+
+/* 1003.1c */
+	case _SC_LOGIN_NAME_MAX:
+		return (LOGIN_NAME_MAX);
+
+	case _SC_THREAD_SAFE_FUNCTIONS:
+		return (_POSIX_THREAD_SAFE_FUNCTIONS);
+
+	case _SC_GETGR_R_SIZE_MAX:
+		return (_PW_BUF_LEN);
+
+	case _SC_GETPW_R_SIZE_MAX:
+		return (_PW_BUF_LEN);
 
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:

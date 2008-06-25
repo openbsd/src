@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.23 2008/03/16 19:56:27 kettenis Exp $
+.\"	$OpenBSD: sysconf.3,v 1.24 2008/06/25 14:54:44 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2008 $
+.Dd $Mdocdate: June 25 2008 $
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -152,6 +152,26 @@ does not support the Semaphores Option.
 The number of pages of physical memory.
 .It Li _SC_AVPHYS_PAGES
 The number of pages of physical memory not currently in use by the system.
+.It Li
+_SC_GETGR_R_SIZE_MAX
+The maximum size of the data buffer for the
+.Fn getgrgid_r
+and
+.Fn getgrnam_r
+functions.
+.It Li
+_SC_GETPW_R_SIZE_MAX
+The maximum size of the data buffer for the
+.Fn getgrgid_r
+and
+.Fn getgrnam_r
+functions.
+.It Li
+_SC_LOGIN_NAME_MAX
+The maximum length of a login name.
+.It Li
+_SC_THREAD_SAFE_FUNCTIONS
+The level of support for thread-safe (re-entrant) functions.
 .El
 .Sh RETURN VALUES
 If the call to
