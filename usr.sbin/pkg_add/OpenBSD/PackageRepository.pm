@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.55 2008/06/18 12:12:14 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.56 2008/06/25 12:42:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,76 +32,88 @@ use OpenBSD::Paths;
 
 sub _new
 {
-	my ($class, $address) = @_;
-	bless { baseurl => $address }, $class;
+	my ($class, $path, $host) = @_;
+	$path .= '/' unless $path =~ m/\/$/;
+	bless { host => $host, path => $path }, $class;
+}
+
+sub baseurl
+{
+	my $self = shift;
+
+	if (defined $self->{host}) {
+		return "//$self->{host}/$self->{path}";
+	} else {
+		return $self->{path};
+	}
 }
 
 sub new
 {
 	my ($class, $baseurl) = @_;
-	if ($baseurl =~ m/^ftp\:(.*)$/io) {
-		return OpenBSD::PackageRepository::FTP->_new($1);
-	} elsif ($baseurl =~ m/^http\:(.*)$/io) {
-		return OpenBSD::PackageRepository::HTTP->_new($1);
-	} elsif ($baseurl =~ m/^https\:(.*)$/io) {
-		return OpenBSD::PackageRepository::HTTPS->_new($1);
-	} elsif ($baseurl =~ m/^scp\:(.*)$/io) {
-		require OpenBSD::PackageRepository::SCP;
-
-		return OpenBSD::PackageRepository::SCP->_new($1);
-	} elsif ($baseurl =~ m/^src\:(.*)$/io) {
-		require OpenBSD::PackageRepository::Source;
-
-		return OpenBSD::PackageRepository::Source->_new($1);
-	} elsif ($baseurl =~ m/^file\:(.*)$/io) {
-		return OpenBSD::PackageRepository::Local->_new($1);
-	} elsif ($baseurl =~ m/^inst\:(.*)$/io) {
-		return OpenBSD::PackageRepository::Installed->_new($1);
-	} else {
-		return OpenBSD::PackageRepository::Local->_new($baseurl);
-	}
+	my $o = $class->parse(\$baseurl);
+	return $o;
 }
 
-sub todo
+sub _parse
 {
-	my ($class, $ref) = @_;
-	my $s = $$ref;
-	return undef if $s eq '';
-
-	if ($$ref =~ m/^ftp\:(.*)$/io) {
-		return OpenBSD::PackageRepository::FTP->_parse($1, $ref);
-	} elsif ($$ref =~ m/^http\:(.*)$/io) {
-		return OpenBSD::PackageRepository::HTTP->_parse($1, $ref);
-	} elsif ($$ref =~ m/^https\:(.*)$/io) {
-		return OpenBSD::PackageRepository::HTTPS->_parse($1, $ref);
-	} elsif ($$ref =~ m/^scp\:(.*)$/io) {
-		require OpenBSD::PackageRepository::SCP;
-
-		return OpenBSD::PackageRepository::SCP->_parse($1, $ref);
-	} elsif ($$ref =~ m/^src\:(.*)$/io) {
-		require OpenBSD::PackageRepository::Source;
-
-		return OpenBSD::PackageRepository::Source->_parse($1, $ref);
-	} elsif ($$ref =~ m/^file\:(.*)$/io) {
-		return OpenBSD::PackageRepository::Local->_parse($1, $ref);
-	} elsif ($$ref =~ m/^inst\:(.*)$/io) {
-		return OpenBSD::PackageRepository::Installed->_parse($1, $ref);
-	} else {
-		return OpenBSD::PackageRepository::Local->_parse($$ref, $ref);
+	my ($class, $r) = @_;
+	if ($$r =~ m/^(.*?)\:(.*)$/) {
+		my $scheme = lc($1);
+		if ($scheme ne $class->urlscheme) {
+			return undef;
+	    	}
+		$$r = $2;
+		my $o;
+		# use similar heuristics as ftp
+		if ($$r =~ m/^\/\/(.*?)(\/.*)$/) {
+			my $host = $1;
+			$$r = $2;
+			if ($$r =~ m/^(.*?)\:(.*)$/) {
+				$o = $class->_new($1, $host);
+				$$r = $2;
+			} else {
+				$o = $class->_new($$r, $host);
+				$$r = '';
+			}
+		} elsif ($$r =~ m/^(.*?)\:(.*)/) { 	# no /, split on :
+			$o = $class->_new($1);
+			$$r = $2;
+		} else {
+			$o = $class->_new($$r);
+			$$r = '';
+		}
+	    	return $o;
 	}
+	return undef;
 }
 
 sub parse
 {
 	my ($class, $ref) = @_;
-	my $s = $$ref;
-	return undef if !defined $s;
-	if ($s =~ m/(.*?)\/\:(.*)/) {
-		$$ref = $2;
-		return $class->new($1);
+	local $_ = $$ref;
+	return undef if $_ eq '';
+
+	if (m/^ftp\:/io) {
+		return OpenBSD::PackageRepository::FTP->_parse($ref);
+	} elsif (m/^http\:/io) {
+		return OpenBSD::PackageRepository::HTTP->_parse($ref);
+	} elsif (m/^https\:/io) {
+		return OpenBSD::PackageRepository::HTTPS->_parse($ref);
+	} elsif (m/^scp\:/io) {
+		require OpenBSD::PackageRepository::SCP;
+
+		return OpenBSD::PackageRepository::SCP->_parse($ref);
+	} elsif (m/^src\:/io) {
+		require OpenBSD::PackageRepository::Source;
+
+		return OpenBSD::PackageRepository::Source->_parse($ref);
+	} elsif (m/^file\:/io) {
+		return OpenBSD::PackageRepository::Local->_parse($ref);
+	} elsif (m/^inst\:$/io) {
+		return OpenBSD::PackageRepository::Installed->_parse($ref);
 	} else {
-		undef $$ref;
-		return $class->new($s);
+		return OpenBSD::PackageRepository::Local->_parse($ref);
 	}
 }
 
@@ -240,9 +252,9 @@ sub relative_url
 {
 	my ($self, $name) = @_;
 	if (defined $name) {
-		return $self->{baseurl}.$name.".tgz";
+		return $self->baseurl.$name.".tgz";
 	} else {
-		return $self->{baseurl};
+		return $self->baseurl;
 	}
 }
 
@@ -252,6 +264,15 @@ our @ISA=qw(OpenBSD::PackageRepository);
 sub urlscheme
 {
 	return 'file';
+}
+
+sub _parse
+{
+	my ($class, $r) = @_;
+	my $o = $class->SUPER::_parse($r);
+	return $o if defined $o;
+	$$r = "file:$$r";
+	return $class->SUPER::_parse($r);
 }
 
 sub open_pipe
@@ -286,7 +307,7 @@ sub list
 {
 	my $self = shift;
 	my $l = [];
-	my $dname = $self->{baseurl};
+	my $dname = $self->baseurl;
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
 		next unless $e =~ m/^(.*)\.tgz$/o;
@@ -503,21 +524,11 @@ sub maxcount
 sub opened
 {
 	my $self = $_[0];
-	my $k = $self->{key};
+	my $k = $self->{host};
 	if (!defined $distant{$k}) {
 		$distant{$k} = [];
 	}
 	return $distant{$k};
-}
-
-sub _new
-{
-	my ($class, $baseurl) = @_;
-	my $distant_host;
-	if ($baseurl =~ m/^(\/\/.*?\/)/io) {
-	    $distant_host = $1;
-	}
-	bless { baseurl => $baseurl, key => $distant_host }, $class;
 }
 
 sub should_have
