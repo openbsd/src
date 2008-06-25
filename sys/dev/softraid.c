@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.115 2008/06/14 18:40:50 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.116 2008/06/25 17:43:09 thib Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/disk.h>
 #include <sys/rwlock.h>
@@ -62,6 +63,8 @@ uint32_t	sr_debug = 0
 		    /* | SR_D_STATE */
 		;
 #endif
+
+void		sr_init(void);
 
 int		sr_match(struct device *, void *, void *);
 void		sr_attach(struct device *, struct device *, void *);
@@ -128,6 +131,9 @@ void			sr_print_metadata(struct sr_metadata *);
 #define			sr_print_metadata(m)
 #endif
 
+struct pool sr_uiopl;
+struct pool sr_iovpl;
+
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
 };
@@ -136,9 +142,23 @@ struct scsi_device sr_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+void
+sr_init(void)
+{
+	pool_init(&sr_uiopl, sizeof(struct uio), 0, 0, 0, "sr_uiopl", NULL);
+	pool_init(&sr_iovpl, sizeof(struct iovec), 0, 0, 0, "sr_iovpl", NULL);
+}
+
 int
 sr_match(struct device *parent, void *match, void *aux)
 {
+	static int called = 0;
+
+	if (!called) {
+		sr_init();
+		called = 1;
+	}
+
 	return (1);
 }
 

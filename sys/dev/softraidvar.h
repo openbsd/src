@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.59 2008/06/14 03:01:00 djm Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.60 2008/06/25 17:43:09 thib Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -428,6 +428,10 @@ struct sr_softc {
 #define SR_MAXSCSIBUS		256
 	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
 };
+
+struct pool;
+extern struct pool	sr_uiopl;
+extern struct pool	sr_iovpl;
 
 /* work units & ccbs */
 int			sr_alloc_ccb(struct sr_discipline *);

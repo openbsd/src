@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.27 2008/06/14 18:40:50 hshoexer Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.28 2008/06/25 17:43:09 thib Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/disk.h>
 #include <sys/rwlock.h>
@@ -107,9 +108,8 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
-	/* XXX use pool */
-	uio = malloc(sizeof(*uio), M_DEVBUF, M_NOWAIT | M_ZERO);
-	uio->uio_iov = malloc(sizeof(*uio->uio_iov), M_DEVBUF, M_NOWAIT);
+	uio = pool_get(&sr_uiopl, PR_WAITOK|PR_ZERO);
+	uio->uio_iov = pool_get(&sr_iovpl, PR_WAITOK);
 	uio->uio_iovcnt = 1;
 	uio->uio_iov->iov_len = xs->datalen;
 	if (xs->flags & SCSI_DATA_OUT) {
@@ -172,8 +172,8 @@ unwind:
 		crypto_freereq(crp);
 	if (wu->swu_xs->flags & SCSI_DATA_OUT)
 		free(uio->uio_iov->iov_base, M_DEVBUF);
-	free(uio->uio_iov, M_DEVBUF);
-	free(uio, M_DEVBUF);
+	pool_put(&sr_iovpl, uio->uio_iov);
+	pool_put(&sr_uiopl, uio);
 	return (NULL);
 }
 
@@ -188,8 +188,8 @@ sr_crypto_putcryptop(struct cryptop *crp)
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT)
 		free(uio->uio_iov->iov_base, M_DEVBUF);
-	free(uio->uio_iov, M_DEVBUF);
-	free(uio, M_DEVBUF);
+	pool_put(&sr_iovpl, uio->uio_iov);
+	pool_put(&sr_uiopl, uio);
 	crypto_freereq(crp);
 
 	return (wu);
