@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.12 2007/05/29 04:47:17 jason Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.13 2008/06/25 02:51:08 kurt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -94,10 +94,9 @@ doit(char *name)
 {
 	Elf_Ehdr ehdr;
 	Elf_Phdr *phdr;
-	int fd, i, size, status;
+	int fd, i, size, status, interp=0;
 	char buf[MAXPATHLEN];
 	void * dlhandle; 
-
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
 		warn("%s", name);
@@ -117,7 +116,24 @@ doit(char *name)
 		return 1;
 	}
 
-	if (ehdr.e_type == ET_DYN) {
+	size = ehdr.e_phnum * sizeof(Elf_Phdr);
+	if ((phdr = malloc(size)) == NULL)
+		err(1, "malloc");
+
+	if (pread(fd, phdr, size, ehdr.e_phoff) != size) {
+		warn("read(%s)", name);
+		close(fd);
+		free(phdr);
+		return 1;
+	}
+
+	for (i = 0; i < ehdr.e_phnum; i++)
+		if (phdr[i].p_type == PT_INTERP) {
+			interp = 1;
+			break;
+		}
+
+	if (ehdr.e_type == ET_DYN && !interp) {
 		printf("%s:\n", name);
 		if (realpath(name, buf) == NULL) {
 			warn("realpath(%s)", name);
@@ -129,22 +145,10 @@ doit(char *name)
 			return 1;
 		}
 		close(fd);
+		free(phdr);
 		return 0;
 	}
 
-	size = ehdr.e_phnum * sizeof(Elf_Phdr);
-	if ((phdr = malloc(size)) == NULL)
-		err(1, "malloc");
-
-	if (pread(fd, phdr, size, ehdr.e_phoff) != size) {
-		warn("read(%s)", name);
-		close(fd);
-		free(phdr);
-		return 1;
-	}
-	for (i = 0; i < ehdr.e_phnum; i++)
-		if (phdr[i].p_type == PT_DYNAMIC)
-			break;
 	close(fd);
 	free(phdr);
 
