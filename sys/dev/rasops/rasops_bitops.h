@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_bitops.h,v 1.3 2003/02/12 20:53:59 henric Exp $ */
+/*	$OpenBSD: rasops_bitops.h,v 1.4 2008/06/26 05:42:18 ray Exp $ */
 /* 	$NetBSD: rasops_bitops.h,v 1.6 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

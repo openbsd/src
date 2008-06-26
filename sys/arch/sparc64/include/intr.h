@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2008/04/28 18:55:39 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2008/06/26 05:42:13 ray Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

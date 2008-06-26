@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.25 2007/06/15 11:41:48 mbalmer Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.26 2008/06/26 05:42:18 ray Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

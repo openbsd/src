@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.20 2004/06/24 09:07:39 itojun Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.21 2008/06/26 05:42:15 ray Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

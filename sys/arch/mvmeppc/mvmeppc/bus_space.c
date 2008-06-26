@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_space.c,v 1.6 2004/01/29 12:00:32 miod Exp $     */
+/*      $OpenBSD: bus_space.c,v 1.7 2008/06/26 05:42:12 ray Exp $     */
 /*      $NetBSD: bus_space.c,v 1.4 2001/06/15 15:50:05 nonaka Exp $     */
 
 /*-
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

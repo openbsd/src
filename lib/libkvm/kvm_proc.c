@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.35 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.36 2008/06/26 05:42:05 ray Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.35 2007/10/10 15:53:51 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.36 2008/06/26 05:42:05 ray Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

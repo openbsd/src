@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.33 2008/04/02 08:54:08 fkr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.34 2008/06/26 05:42:18 ray Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -40,13 +40,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

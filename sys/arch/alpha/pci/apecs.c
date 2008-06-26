@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.20 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.21 2008/06/26 05:42:08 ray Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

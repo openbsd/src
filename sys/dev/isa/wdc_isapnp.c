@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_isapnp.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: wdc_isapnp.c,v 1.8 2008/06/26 05:42:16 ray Exp $	*/
 /*	$NetBSD: wdc_isapnp.c,v 1.13 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

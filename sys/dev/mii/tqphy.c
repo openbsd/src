@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.11 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.12 2008/06/26 05:42:16 ray Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

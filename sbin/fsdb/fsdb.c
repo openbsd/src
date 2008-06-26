@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.21 2008/06/10 16:08:08 otto Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.22 2008/06/26 05:42:06 ray Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.21 2008/06/10 16:08:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.22 2008/06/26 05:42:06 ray Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
