@@ -35,11 +35,6 @@
 
 #include "drmP.h"
 
-#ifdef __FreeBSD__
-#include <pci/agpreg.h>
-#include <dev/pci/pcireg.h>
-#endif
-
 int	drm_device_find_capability(drm_device_t *, int);
 struct drm_agp_mem *drm_agp_lookup_entry(drm_device_t *, void *);
 
@@ -47,47 +42,8 @@ struct drm_agp_mem *drm_agp_lookup_entry(drm_device_t *, void *);
 int
 drm_device_find_capability(drm_device_t *dev, int cap)
 {
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 602102
-
-	return (pci_find_extcap(dev->device, cap, NULL) == 0);
-#else
-	/* Code taken from agp.c.  IWBNI that was a public interface. */
-	u_int32_t status;
-	u_int8_t ptr, next;
-
-	/*
-	 * Check the CAP_LIST bit of the PCI status register first.
-	 */
-	status = pci_read_config(dev->device, PCIR_STATUS, 2);
-	if (!(status & 0x10))
-		return 0;
-
-	/*
-	 * Traverse the capabilities list.
-	 */
-	for (ptr = pci_read_config(dev->device, AGP_CAPPTR, 1);
-	    ptr != 0; ptr = next) {
-		u_int32_t capid = pci_read_config(dev->device, ptr, 4);
-		next = AGP_CAPID_GET_NEXT_PTR(capid);
-
-		/*
-		 * If this capability entry ID is cap, then we are done.
-		 */
-		if (AGP_CAPID_GET_CAP_ID(capid) == cap)
-			return 1;
-	}
-
-	return 0;
-#endif
-#else
-#if defined(__NetBSD__) || defined (__OpenBSD__)
 	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap,
 	    NULL, NULL);
-#endif
-	/* XXX: fill me in for non-FreeBSD */
-	return 1;
-#endif
 }
 
 int

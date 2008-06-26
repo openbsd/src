@@ -73,22 +73,14 @@ drm_ctxbitmap_next(drm_device_t *dev)
 	set_bit(bit, dev->ctx_bitmap);
 	DRM_DEBUG("drm_ctxbitmap_next bit : %d\n", bit);
 	if ((bit+1) > dev->max_context) {
-#if defined(__OpenBSD__)
 		int old_context = dev->max_context;
-#endif
 		dev->max_context = (bit+1);
 		if (dev->context_sareas != NULL) {
 			drm_local_map_t **ctx_sareas;
 
-#if defined(__OpenBSD__)
 			 ctx_sareas = drm_realloc(dev->context_sareas,
 			    old_context * sizeof(*dev->context_sareas),
 			    dev->max_context * sizeof(*dev->context_sareas), M_DRM);
-#else
-			ctx_sareas = realloc(dev->context_sareas,
-			    dev->max_context * sizeof(*dev->context_sareas),
-			    M_DRM, M_NOWAIT);
-#endif
 			if (ctx_sareas == NULL) {
 				clear_bit(bit, dev->ctx_bitmap);
 				DRM_UNLOCK();

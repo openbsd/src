@@ -35,7 +35,6 @@
  */
 #include "drmP.h"
 
-#define DEBUG_SCATTER 0
 struct drm_sg_dmamem	*drm_sg_dmamem_alloc(drm_device_t *, size_t);
 void	drm_sg_dmamem_free(struct drm_sg_dmamem *);
 
@@ -43,13 +42,10 @@ void
 drm_sg_cleanup(drm_sg_mem_t *entry)
 {
 	if (entry) {
-#ifdef __OpenBSD__
 		if (entry->mem)
 			drm_sg_dmamem_free(entry->mem);
-#else
 		if (entry->handle)
 			free((void *)entry->handle, M_DRM);
-#endif
 		if (entry->busaddr)
 			free(entry->busaddr, M_DRM);
 		free(entry, M_DRM);
@@ -82,7 +78,6 @@ drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
 		return ENOMEM;
 	}
 
-#ifdef __OpenBSD__
 	if ((entry->mem = drm_sg_dmamem_alloc(dev, pages)) == NULL) {
 		drm_sg_cleanup(entry);
 		return ENOMEM;
@@ -92,18 +87,6 @@ drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
 
 	for (i = 0; i < pages; i++) 
 		entry->busaddr[i] = entry->mem->sg_map->dm_segs[i].ds_addr;
-#else
-	entry->handle = (long)malloc(pages << PAGE_SHIFT, M_DRM,
-	    M_WAITOK | M_ZERO);
-	if (entry->handle == NULL) {
-		drm_sg_cleanup(entry);
-		return ENOMEM;
-	}
-
-	for (i = 0; i < pages; i++) {
-		entry->busaddr[i] = vtophys(entry->handle + i * PAGE_SIZE);
-	}
-#endif
 
 	DRM_DEBUG( "sg alloc handle  = %08lx\n", entry->handle );
 

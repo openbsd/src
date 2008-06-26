@@ -78,24 +78,12 @@ drm_alloc_resource(drm_device_t *dev, int resource)
 		return 0;
 	}
 
-#if defined (__FreeBSD__)
-	dev->pcirid[resource] = PCIR_BAR(resource);
-	dev->pcir[resource] = bus_alloc_resource_any(dev->device,
-	    SYS_RES_MEMORY, &dev->pcirid[resource], RF_SHAREABLE);
-
-	DRM_LOCK();
-	if (dev->pcir[resource] == NULL) {
-		DRM_ERROR("Couldn't find resource 0x%x\n", resource);
-		return 1;
-	}
-#elif defined (__OpenBSD__)
 	dev->pcir[resource] = vga_pci_bar_info(dev->vga_softc, resource);
 	DRM_LOCK();
 	if (dev->pcir[resource] == NULL) {
 		DRM_ERROR("Can't get bar info for resource 0x%x\n", resource);
 		return 1;
 	}
-#endif
 
 	return 0;
 }
@@ -107,11 +95,7 @@ drm_get_resource_start(drm_device_t *dev, unsigned int resource)
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
 
-#ifdef __FreeBSD__
-	return rman_get_start(dev->pcir[resource]);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	return dev->pcir[resource]->base;
-#endif
 }
 
 unsigned long
@@ -120,11 +104,7 @@ drm_get_resource_len(drm_device_t *dev, unsigned int resource)
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
 
-#ifdef __FreeBSD__
-	return rman_get_size(dev->pcir[resource]);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	return dev->pcir[resource]->maxsize;
-#endif
 }
 
 int
@@ -223,32 +203,6 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			map->mtrr = 1;
 #endif
 		break;
-#ifndef __OpenBSD__
-	case _DRM_SHM:
-		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
-		DRM_DEBUG( "%lu %d %p\n",
-		    map->size, drm_order(map->size), map->handle );
-		if ( !map->handle ) {
-			free(map, M_DRM);
-			DRM_LOCK();
-			return ENOMEM;
-		}
-		map->offset = (unsigned long)map->handle;
-		if ( map->flags & _DRM_CONTAINS_LOCK ) {
-			/* Prevent a 2nd X Server from creating a 2nd lock */
-			DRM_LOCK();
-			if (dev->lock.hw_lock != NULL) {
-				DRM_UNLOCK();
-				free(map->handle, M_DRM);
-				free(map, M_DRM);
-				DRM_LOCK();
-				return EBUSY;
-			}
-			dev->lock.hw_lock = map->handle; /* Pointer to lock */
-			DRM_UNLOCK();
-		}
-		break;
-#endif
 	case _DRM_AGP:
 		/*valid = 0;*/
 		/* In some cases (i810 driver), user space may have already
@@ -295,9 +249,7 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		}
 		map->offset = map->offset + dev->sg->handle;
 		break;
-#ifdef __OpenBSD__
 	case _DRM_SHM:
-#endif
 	case _DRM_CONSISTENT:
 		/* Unfortunately, we don't get any alignment specification from
 		 * the caller, so we have to guess.  drm_pci_alloc requires
@@ -316,7 +268,6 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		}
 		map->handle = map->dmah->vaddr;
 		map->offset = map->dmah->busaddr;
-#ifdef __OpenBSD__
 		if (map->type == _DRM_SHM &&
 		    map->flags & _DRM_CONTAINS_LOCK) {
 			DRM_LOCK();
@@ -331,7 +282,6 @@ drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			dev->lock.hw_lock = map->handle;
 			DRM_UNLOCK();
 		}
-#endif
 		break;
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
@@ -378,9 +328,6 @@ drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	request->mtrr   = map->mtrr;
 	request->handle = map->handle;
 
-#ifndef __OpenBSD__
-	if (request->type != _DRM_SHM) 
-#endif
 	request->handle = (void *)map->mm->start;
 
 	return 0;
@@ -395,10 +342,7 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
-#ifdef __FreeBSD__
-		if (map->bsr == NULL)
-#endif
-			drm_ioremapfree(map);
+		drm_ioremapfree(map);
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
 #ifndef DRM_NO_MTRR
@@ -411,17 +355,10 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 		}
 #endif
 		break;
-#ifndef __OpenBSD__
-	case _DRM_SHM:
-		free(map->handle, M_DRM);
-		break;
-#endif
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:
 		break;
-#ifdef __OpenBSD__
 	case _DRM_SHM:
-#endif
 	case _DRM_CONSISTENT:
 		drm_pci_free(dev, map->dmah);
 		break;
@@ -429,13 +366,6 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 		DRM_ERROR("Bad map type %d\n", map->type);
 		break;
 	}
-
-#ifdef __FreeBSD__
-	if (map->bsr != NULL) {
-		bus_release_resource(dev->device, SYS_RES_MEMORY, map->rid,
-		    map->bsr);
-	}
-#endif
 
 	drm_memrange_put_block(map->mm);
 
@@ -605,16 +535,10 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 
 	DRM_DEBUG( "byte_count: %d\n", byte_count );
 
-#if defined(__OpenBSD__)
 	/* OpenBSD lacks realloc in kernel */
 	temp_buflist = drm_realloc(dma->buflist,
 	    dma->buf_count * sizeof(*dma->buflist),
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM );
-#else
-	temp_buflist = realloc(dma->buflist,
-	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM,
-	    M_NOWAIT);
-#endif
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
@@ -759,15 +683,9 @@ drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 		byte_count += PAGE_SIZE << page_order;
 	}
 
-#if defined(__OpenBSD__)
 	temp_buflist = drm_realloc( dma->buflist,
 	    dma->buf_count * sizeof(*dma->buflist),
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
-#else
-	temp_buflist = realloc(dma->buflist,
-	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM,
-	    M_NOWAIT);
-#endif
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
@@ -882,15 +800,9 @@ drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 
 	DRM_DEBUG( "byte_count: %d\n", byte_count );
 
-#if defined(__OpenBSD__)
 	temp_buflist = drm_realloc(dma->buflist, 
 	    dma->buf_count * sizeof(*dma->buflist),
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
-#else
-	temp_buflist = realloc(dma->buflist,
-	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM,
-	    M_NOWAIT);
-#endif
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
@@ -1157,33 +1069,18 @@ drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 	const int zero = 0;
 	vm_offset_t address;
 	struct vmspace *vms;
-#ifdef __FreeBSD__
-	vm_ooffset_t foff;
-	vm_size_t size;
-	vm_offset_t vaddr;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct vnode *vn;
 	voff_t foff;
 	vsize_t size;
-#ifdef __NetBSD__
-	vsize_t rsize;
-#endif
 	vaddr_t vaddr;
-#endif /* __NetBSD__ || __OpenBSD__ */
 
 	drm_buf_map_t *request = data;
 	int i;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (!vfinddev(dev->kdev, VCHR, &vn))
 		return EINVAL;
-#endif /* __NetBSD__ || __OpenBSD__ */
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
-	vms = DRM_CURPROC->td_proc->p_vmspace;
-#else
 	vms = DRM_CURPROC->p_vmspace;
-#endif
 
 	DRM_SPINLOCK(&dev->dma_lock);
 	dev->buf_use++;		/* Can't allocate more after this call */
@@ -1208,30 +1105,10 @@ drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 		foff = 0;
 	}
 
-#ifdef __FreeBSD__
-	vaddr = round_page((vm_offset_t)vms->vm_daddr + MAXDSIZ);
-#if __FreeBSD_version >= 600023
-	retcode = vm_mmap(&vms->vm_map, &vaddr, size, PROT_READ | PROT_WRITE,
-	    VM_PROT_ALL, MAP_SHARED, OBJT_DEVICE, dev->devnode, foff);
-#else
-	retcode = vm_mmap(&vms->vm_map, &vaddr, size, PROT_READ | PROT_WRITE,
-	    VM_PROT_ALL, MAP_SHARED, SLIST_FIRST(&dev->devnode->si_hlist),
-	    foff);
-#endif
-#elif defined(__NetBSD__) 
-	vaddr = p->l_proc->p_emul->e_vm_default_addr(p->l_proc,
-	    (vaddr_t)vms->vm_daddr, size);
-	rsize = round_page(size);
-	DRM_DEBUG("mmap %lx/%ld\n", vaddr, rsize);
-	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
-	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
-	    &vn->v_uobj, foff, p->l_proc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-#else /* __OpenBSD__ */
 	vaddr = round_page((vaddr_t)vms->vm_daddr + MAXDSIZ);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    (caddr_t)vn, foff, DRM_CURPROC->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,DRM_CURPROC);
-#endif /* __NetBSD__ || __OpenBSD__ */
 	if (retcode) {
 		DRM_DEBUG("uvm_mmap failed\n");
 		goto done;

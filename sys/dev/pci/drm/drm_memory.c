@@ -38,18 +38,9 @@
 
 #include "drmP.h"
 
-#ifndef __OpenBSD__
-MALLOC_DEFINE(M_DRM, "drm", "DRM Data Structures");
-#endif
-
 void
 drm_mem_init(void)
 {
-#if defined(__NetBSD__) 
-/*
-	malloc_type_attach(M_DRM);
-*/
-#endif
 }
 
 void
@@ -94,9 +85,6 @@ drm_free(void *pt, size_t size, int area)
 void *
 drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 {
-#ifdef __FreeBSD__
-	return pmap_mapdev(map->offset, map->size);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct vga_pci_bar *bar = NULL;
 	int i;
 
@@ -140,23 +128,17 @@ drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 done:
 	/* handles are still supposed to be kernel virtual addresses */
 	return bus_space_vaddr(map->bst, map->bsh);
-#endif
 }
 
 void
 drm_ioremapfree(drm_local_map_t *map)
 {
-#ifdef __FreeBSD__
-	pmap_unmapdev((vm_offset_t) map->handle, map->size);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	if (map != NULL && map->bsr != NULL)
 		vga_pci_bar_unmap(map->bsr);
 	else
 		bus_space_unmap(map->bst, map->bsh, map->size);
-#endif
 }
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 int
 drm_mtrr_add(unsigned long offset, size_t size, int flags)
 {
@@ -192,40 +174,3 @@ drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 	return 0;
 #endif
 }
-#elif defined(__NetBSD__) 
-int
-drm_mtrr_add(unsigned long offset, size_t size, int flags)
-{
-#ifndef DRM_NO_MTRR
-	struct mtrr mtrrmap;
-	int one = 1;
-
-	DRM_DEBUG("offset=%lx size=%ld\n", (long)offset, (long)size);
-	mtrrmap.base = offset;
-	mtrrmap.len = size;
-	mtrrmap.type = flags;
-	mtrrmap.flags = MTRR_VALID;
-	return mtrr_set(&mtrrmap, &one, NULL, MTRR_GETSET_KERNEL);
-#else
-	return 0;
-#endif
-}
-
-int
-drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
-{
-#ifndef DRM_NO_MTRR
-	struct mtrr mtrrmap;
-	int one = 1;
-
-	DRM_DEBUG("offset=%lx size=%ld\n", (long)offset, (long)size);
-	mtrrmap.base = offset;
-	mtrrmap.len = size;
-	mtrrmap.type = flags;
-	mtrrmap.flags = 0;
-	return mtrr_set(&mtrrmap, &one, NULL, MTRR_GETSET_KERNEL);
-#else
-	return 0;
-#endif
-}
-#endif
