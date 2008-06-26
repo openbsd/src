@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.599 2008/06/21 02:05:46 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.600 2008/06/26 03:56:20 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3422,9 +3422,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 	}
 	/* src node for translation rule */
 	if (nr != NULL && (nr->rpool.opts & PF_POOL_STICKYADDR) &&
-	    ((pd->dir == PF_OUT && pf_insert_src_node(&nsn, nr,
-	    &sks->addr[0], pd->af) != 0) || (pd->dir == PF_IN &&
-	    pf_insert_src_node(&nsn, nr, &skw->addr[0], pd->af) != 0))) {
+	    pf_insert_src_node(&nsn, nr, &sk->addr[pd->sidx], pd->af)) {
 		REASON_SET(&reason, PFRES_SRCLIMIT);
 		goto csfailed;
 	}
@@ -3505,10 +3503,8 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 		s->src_node->states++;
 	}
 	if (nsn != NULL) {
-		if (pd->dir == PF_IN)
-			PF_ACPY(&nsn->raddr, &nk->addr[0], pd->af);
-		else
-			PF_ACPY(&nsn->raddr, &nk->addr[1], pd->af);
+		/* XXX We only modify one side for now. */
+		PF_ACPY(&nsn->raddr, &nk->addr[1], pd->af);
 		s->nat_src_node = nsn;
 		s->nat_src_node->states++;
 	}
