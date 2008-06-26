@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.277 2008/06/15 04:44:06 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.278 2008/06/26 21:31:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2750,12 +2750,11 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 
 	/* revision on branch, get the branch root */
 	nextroot = 2;
-	if (RCSNUM_ISBRANCHREV(tnum)) {
-		bnum = rcsnum_alloc();
+	bnum = rcsnum_alloc();
+	if (RCSNUM_ISBRANCHREV(tnum))
 		rcsnum_cpy(tnum, bnum, nextroot);
-	} else {
-		bnum = tnum;
-	}
+	else
+		rcsnum_cpy(tnum, bnum, tnum->rn_len);
 
 	if (alines != NULL) {
 		/* start with annotate first at requested revision */
@@ -2783,8 +2782,7 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 			annotate = ANNOTATE_NOW;
 
 			/* annotate down to 1.1 from where we are */
-			if (bnum == tnum)
-				bnum = rcsnum_alloc();
+			rcsnum_free(bnum);
 			bnum = rcsnum_parse("1.1");
 			if (!rcsnum_differ(rdp->rd_num, bnum)) {
 				goto next;
@@ -2840,8 +2838,7 @@ again:
 			annotate = ANNOTATE_NOW;
 
 			/* annotate down to 1.1 from where we are */
-			if (bnum == tnum)
-				bnum = rcsnum_alloc();
+			rcsnum_free(bnum);
 			bnum = rcsnum_parse("1.1");
 
 			if (!rcsnum_differ(rdp->rd_num, bnum))
@@ -2874,8 +2871,7 @@ next:
 					xfree(*alines);
 				*alines = NULL;
 				cvs_freelines(dlines);
-				if (bnum != tnum)
-					rcsnum_free(bnum);
+				rcsnum_free(bnum);
 				return (NULL);
 			}
 			fatal("expected branch not found on branch list");
