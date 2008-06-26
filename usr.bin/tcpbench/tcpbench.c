@@ -111,25 +111,12 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr,
-"Usage:\n"
-"    tcpbench -l\n"
-"    tcpbench [-v] [-p port] [-r rate] [host]\n"
-"    tcpbench [-v] [-p port] [-r rate] -s\n"
-"Options:\n"
-"    -B buf       Set read/write buffer space (default: %u)\n"
-"    -h           Display this help\n"
-"    -k var[,var] List of kernel PCB, TCB and socket variables to display\n"
-"                 (requires read access to /dev/kmem)\n"
-"    -l           List kernel vars and exit\n"
-"    -n number    use given numer of tcp connections (default: 1)\n"
-"    -p port      Specify port (default: %s)\n"
-"    -s           Server mode - listen for connections\n"
-"                 (default: client mode - initiate connection)\n"
-"    -r rate      Statistics display interval in milliseconds, or 0 to\n"
-"                 disable (default: %d)\n"
-"    -S space     Set socket send/receive space (default: kernel default)\n"
-"    -v           Increase verbosity\n",
-	    DEFAULT_BUF, DEFAULT_PORT, DEFAULT_STATS_INTERVAL);
+	    "usage: tcpbench -l\n"
+	    "       tcpbench [-v] [-B buf] [-k kvars] [-n connections]"
+	    " [-p port] [-r rate]\n"
+	    "                [-S space] hostname\n"
+	    "       tcpbench -s [-v] [-B buf] [-k kvars] [-p port] [-r rate]"
+	    " [-S space]\n");
 	exit(1);
 }
 

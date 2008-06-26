@@ -21,4 +21,3 @@ LDADD=-lkvm
 #BINMODE=2555
 
 .include <bsd.prog.mk>
-
