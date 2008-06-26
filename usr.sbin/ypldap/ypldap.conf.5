@@ -1,0 +1,93 @@
+.\"	$OpenBSD: ypldap.conf.5,v 1.1 2008/06/26 15:10:01 pyr Exp $
+.\"
+.\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 26 2008 $
+.Dt YPLDAP.CONF 5
+.Os
+.Sh NAME
+.Nm ypldap.conf
+.Nd LDAP YP map daemon configuration file
+.Sh DESCRIPTION
+The
+.Xr ypldap 8
+daemon provides YP maps using LDAP as a backend.
+.Sh SECTIONS
+The
+.Nm
+config file is divided into three main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr ypldap 8 .
+.It Sy Directories
+LDAP Directory specific parameters.
+.El
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits,
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic cost ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+
+fixed_gecos="Pulled from LDAP"
+
+fixed attribute gecos $fixed_gecos
+.Ed
+.Sh GLOBAL CONFIGURATION
+Global settings concerns the main behaviour of the daemon.
+.Pp
+.Bl -tag -width Ds -compact
+.It domain Ar string
+Specify the name of the NIS domain
+.Nm
+will provide.
+.It interval Ar seconds
+Specify the interval in seconds at which the whole directory will be pulled
+from LDAP.
+.It provide map Ar string
+Specify a map that should be provided by
+.Nm
+the currently implemented maps are: passwd.byname, passwd.byid,
+group.byname, group.byid.
+.El
+.Sh DIRECTORIES
+.Sh FILES
+.Bl -tag -width "/etc/ypldap.conf" -compact
+.It Pa /etc/ypldap.conf
+.Xr ypldap 8
+configuration file
+.El
+.Sh SEE ALSO
+.Xr ypldap 8 ,
+.Xr ypserv 8 ,
+.Xr ypbind 8
+.Rs
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 4.4 .
