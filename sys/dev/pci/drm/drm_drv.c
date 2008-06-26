@@ -414,7 +414,6 @@ drm_load(drm_device_t *dev)
 	return 0;
 
 error:
-	drm_sysctl_cleanup(dev);
 	DRM_LOCK();
 	drm_lastclose(dev);
 	DRM_UNLOCK();

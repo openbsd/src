@@ -46,31 +46,17 @@ typedef struct drm_file drm_file_t;
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
-#if __FreeBSD_version >= 700000
-#include <sys/priv.h>
-#endif
 #include <sys/proc.h>
+#include <sys/resource.h>
+#include <sys/resourcevar.h>
 #include <sys/lock.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/filio.h>
-#include <sys/sysctl.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#include <sys/module.h>
-#include <sys/taskqueue.h>
-#include <vm/vm.h>
-#include <vm/pmap.h>
-#include <vm/vm_extern.h>
-#include <vm/vm_map.h>
-#include <vm/vm_param.h>
-#include <machine/resource.h>
-#endif
 #include <sys/signalvar.h>
 #include <sys/poll.h>
 #include <sys/tree.h>
 #include <machine/param.h>
-#include <machine/pmap.h>
 #include <machine/bus.h>
 #include <machine/param.h>
 #include <machine/bus.h>
@@ -79,37 +65,6 @@ typedef struct drm_file drm_file_t;
 #endif
 #include <sys/endian.h>
 #include <sys/mman.h>
-#if defined(__FreeBSD__)
-#include <sys/rman.h>
-#include <dev/pci/agpvar.h>
-#include <sys/memrange.h>
-#include <sys/agpio.h>
-#if __FreeBSD_version >= 500000
-#include <sys/mutex.h>
-#include <sys/selinfo.h>
-#else /* __FreeBSD_version >= 500000 */
-#include <dev/pci/pcivar.h>
-#include <sys/select.h>
-#endif /* __FreeBSD_version < 500000 */
-#elif defined(__NetBSD__)
-#ifndef DRM_NO_MTRR
-#include <machine/mtrr.h>
-#endif
-#include <sys/vnode.h>
-#include <sys/select.h>
-#include <sys/device.h>
-#include <sys/resourcevar.h>
-#include <sys/agpio.h>
-#include <sys/ttycom.h>
-#include <sys/mman.h>
-#include <sys/kauth.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <uvm/uvm.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/agpvar.h>
-#elif defined(__OpenBSD__)
 #include <sys/types.h>
 #include <sys/conf.h>
 #include <sys/stdint.h>
@@ -124,7 +79,6 @@ typedef struct drm_file drm_file_t;
 #include <dev/pci/agpvar.h>
 #include <dev/pci/vga_pcivar.h>
 #include <dev/pci/pcivar.h>
-#endif
 
 #include "drm.h"
 #include "drm_linux_list.h"
@@ -966,9 +920,6 @@ struct drm_device {
 	pid_t		  buf_pgid;
 #endif
 
-				/* Sysctl support */
-	struct drm_sysctl_info *sysctl;
-
 	drm_agp_head_t    *agp;
 	drm_sg_mem_t      *sg;  /* Scatter gather memory */
 	atomic_t          *ctx_bitmap;
@@ -1116,12 +1067,6 @@ int	drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request);
 /* Scatter Gather Support (drm_scatter.c) */
 void	drm_sg_cleanup(drm_sg_mem_t *entry);
 int	drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request);
-
-#if defined(__FreeBSD__) || defined (__NetBSD__) || defined (__OpenBSD__)
-/* sysctl support (drm_sysctl.h) */
-extern int		drm_sysctl_init(drm_device_t *dev);
-extern int		drm_sysctl_cleanup(drm_device_t *dev);
-#endif /* __FreeBSD__ */
 
 /* ATI PCIGART support (ati_pcigart.c) */
 int	drm_ati_pcigart_init(drm_device_t *, struct drm_ati_pcigart_info *);
