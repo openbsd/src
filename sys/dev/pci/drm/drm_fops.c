@@ -114,13 +114,13 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
  * on older X Servers (4.3.0 and earlier) */
 
 int
-drm_read(DRM_CDEV kdev, struct uio *uio, int ioflag)
+drmread(DRM_CDEV kdev, struct uio *uio, int ioflag)
 {
 	return 0;
 }
 
 int
-drm_poll(DRM_CDEV kdev, int events, DRM_STRUCTPROC *p)
+drmpoll(DRM_CDEV kdev, int events, DRM_STRUCTPROC *p)
 {
 	return 0;
 }

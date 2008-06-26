@@ -485,7 +485,7 @@ drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = NULL;
 	int retcode = 0;
@@ -512,7 +512,7 @@ drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 }
 
 int
-drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);
 	drm_file_t *file_priv;
@@ -612,10 +612,10 @@ done:
 	return retcode;
 }
 
-/* drm_ioctl is called whenever a process performs an ioctl on /dev/drm.
+/* drmioctl is called whenever a process performs an ioctl on /dev/drm.
  */
 int
-drm_ioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
+drmioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
     DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);

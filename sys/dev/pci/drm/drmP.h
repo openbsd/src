@@ -153,17 +153,6 @@ extern drm_device_t *drm_units[];
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
 #define __unused /* nothing */
-/*
- * cdev_decl() doesn't like underscore separated names.
- * doing this here is easier that ifdefing each of them.
- */
-#define drm_ioctl drmioctl
-#define drm_open drmopen
-#define drm_close drmclose
-#define drm_read drmread
-#define drm_poll drmpoll
-#define drm_mmap drmmmap
-
 
 #define DRM_IRQ_ARGS		void *arg
 typedef int			irqreturn_t;
@@ -735,17 +724,17 @@ extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
 int	drm_probe(struct pci_attach_args *, drm_pci_id_list_t * );
-void	drm_attach(struct device *kdev, struct device *parent,
-	    struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
-int	drm_detach(struct device *self, int flags);
-int	drm_activate(struct device *self, enum devact act);
-dev_type_ioctl(drm_ioctl);
-dev_type_open(drm_open);
-dev_type_close(drm_close);
-dev_type_read(drm_read);
-dev_type_poll(drm_poll);
-dev_type_mmap(drm_mmap);
-extern drm_local_map_t	*drm_getsarea(drm_device_t *dev);
+void	drm_attach(struct device *, struct device *,
+	    struct pci_attach_args *, drm_pci_id_list_t *);
+int	drm_detach(struct device *, int );
+int	drm_activate(struct device *, enum devact);
+dev_type_ioctl(drmioctl);
+dev_type_open(drmopen);
+dev_type_close(drmclose);
+dev_type_read(drmread);
+dev_type_poll(drmpoll);
+dev_type_mmap(drmmmap);
+extern drm_local_map_t	*drm_getsarea(drm_device_t *);
 
 /* File operations helpers (drm_fops.c) */
 int		drm_open_helper(DRM_CDEV, int, int, 

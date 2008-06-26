@@ -29,7 +29,7 @@
 #include "drm.h"
 
 paddr_t
-drm_mmap(dev_t kdev, off_t offset, int prot)
+drmmmap(dev_t kdev, off_t offset, int prot)
 {
 	drm_device_t *dev = drm_get_device_from_kdev(kdev);
 	drm_local_map_t *map;
