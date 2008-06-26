@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.264 2008/06/13 07:20:17 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.265 2008/06/26 08:57:13 mbalmer Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1443,6 +1443,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 	Sound Devices [G]
 		ALI M5461
 		AMD 768 and 8111 AC'97
+		AMD Geode LX series CS5536 integrated AC'97
 		ATI IXP series integrated AC'97
 		ATI SB450/SB600
 		C-Media CMI8[37]38
