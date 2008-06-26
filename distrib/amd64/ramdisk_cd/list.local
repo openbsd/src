@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.9 2007/02/04 23:30:19 jsg Exp $
+# $OpenBSD: list.local,v 1.10 2008/06/26 16:31:01 todd Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 #LINK	instbin					sbin/ccdconfig
@@ -7,6 +7,7 @@ LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/mount_udf
 
 LINK	instbin					sbin/dhclient
+LINK	instbin					sbin/bioctl
 
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/bnx		etc/firmware/bnx

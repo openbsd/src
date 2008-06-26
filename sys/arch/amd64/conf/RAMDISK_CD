@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.85 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.86 2008/06/26 16:31:01 todd Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -336,3 +336,4 @@ pseudo-device	bpfilter 1	# packet filter
 pseudo-device	rd	1	# ramdisk
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	wsmux	2
+pseudo-device	bio	1	# ioctl multiplexing device
