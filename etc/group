@@ -57,6 +57,7 @@ _relayd:*:89:
 _ospf6d:*:90:
 _snmpd:*:91:
 _rtadvd:*:92:
+_ypldap:*:93:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
