@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.629 2008/06/25 15:27:34 mbalmer Exp $
+#	$OpenBSD: GENERIC,v 1.630 2008/06/26 01:28:48 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -644,7 +644,7 @@ eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 sv*	at pci?				# S3 SonicVibes (S3 617)
 neo*	at pci?				# NeoMagic 256AV/ZX
 cmpci*	at pci?				# C-Media CMI8338/8738
-auglx*	at pci?				# CMD Geode CS5536 Audio
+auglx*	at pci?				# AMD Geode CS5536 Audio
 auich*	at pci? flags 0x0000		# i82801 ICH AC'97 audio
 auixp*	at pci?				# ATI IXP AC'97 Audio
 autri*	at pci? flags 0x0000		# Trident 4D WAVE
