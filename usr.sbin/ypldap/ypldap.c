@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.1 2008/06/26 15:10:01 pyr Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.2 2008/06/26 15:13:17 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -113,7 +113,6 @@ main_sig_handler(int sig, short event, void *p)
 void
 main_shutdown(void)
 {
-	(void)unlink(_PATH_LDAPBIND_SOCK);
 	_exit(0);
 }
 

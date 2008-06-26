@@ -14,10 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define YPLDAP_USER		"_ospfd"
+#define YPLDAP_USER		"_ypldap"
 #define YPLDAP_CONF_FILE	"/etc/ypldap.conf"
 #define DEFAULT_INTERVAL	600
-#define _PATH_LDAPBIND_SOCK	"/var/run/ypldap.sock"
 #define LINE_WIDTH		1024
 #define FILTER_WIDTH		128
 #define ATTR_WIDTH		32
