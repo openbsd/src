@@ -369,7 +369,7 @@ drm_agp_free_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 drm_agp_head_t *
 drm_agp_init(void)
 {
-	device_t agpdev;
+	struct device *agpdev;
 	drm_agp_head_t *head = NULL;
 	int agp_available = 1;
    
@@ -399,7 +399,7 @@ drm_agp_init(void)
 void *
 drm_agp_allocate_memory(size_t pages, u32 type)
 {
-	device_t agpdev;
+	struct device *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev)
@@ -411,7 +411,7 @@ drm_agp_allocate_memory(size_t pages, u32 type)
 int
 drm_agp_free_memory(void *handle)
 {
-	device_t agpdev;
+	struct device *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)
@@ -425,7 +425,7 @@ int
 drm_agp_bind_memory(void *handle, off_t start)
 {
 #ifndef DRM_NO_AGP
-	device_t agpdev;
+	struct device *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)
@@ -441,7 +441,7 @@ int
 drm_agp_unbind_memory(void *handle)
 {
 #ifndef DRM_NO_AGP
-	device_t agpdev;
+	struct device *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)

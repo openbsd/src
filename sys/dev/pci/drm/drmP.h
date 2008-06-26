@@ -192,7 +192,6 @@ extern int ticks;		/* really should be in a header */
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
 #endif
 
-typedef drm_device_t *device_t;
 extern struct cfdriver drm_cd;
 
 /* Capabilities taken from src/sys/dev/pci/pcireg.h. */
@@ -231,8 +230,6 @@ typedef u_int8_t u8;
 #define DRM_MEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%rsp)" : : : "memory");
 #endif
-
-typedef vaddr_t vm_offset_t;
 
 #define DRM_READ8(map, offset)		\
 	bus_space_read_1( (map)->bst, (map)->bsh, (offset))
@@ -445,17 +442,17 @@ struct drm_agp_mem {
 };
 
 typedef struct drm_agp_head {
-	device_t	   agpdev;
-	struct agp_info    info;
-	const char         *chipset;
-	TAILQ_HEAD(agp_memlist, drm_agp_mem) memory;
-	unsigned long      mode;
-	int                enabled;
-	int                acquired;
-	unsigned long      base;
-   	int 		   mtrr;
-	int		   cant_use_aperture;
-	unsigned long	   page_mask;
+	struct device				*agpdev;
+	const char				*chipset;
+	TAILQ_HEAD(agp_memlist, drm_agp_mem)	 memory;
+	struct agp_info				 info;
+	unsigned long				 base;
+	unsigned long				 mode;
+	unsigned long				 page_mask;
+	int					 acquired;
+	int					 cant_use_aperture;
+	int					 enabled;
+   	int					 mtrr;
 } drm_agp_head_t;
 
 struct drm_sg_dmamem {

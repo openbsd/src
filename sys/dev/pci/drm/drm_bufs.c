@@ -1065,14 +1065,14 @@ int
 drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
-	int retcode = 0;
-	const int zero = 0;
-	vm_offset_t address;
 	struct vmspace *vms;
 	struct vnode *vn;
+	vaddr_t address;
 	voff_t foff;
 	vsize_t size;
 	vaddr_t vaddr;
+	int retcode = 0;
+	const int zero = 0;
 
 	drm_buf_map_t *request = data;
 	int i;
