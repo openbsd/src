@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.1 2008/06/26 15:10:01 pyr Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.2 2008/06/26 21:24:34 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -58,7 +58,7 @@ fixed_gecos="Pulled from LDAP"
 fixed attribute gecos $fixed_gecos
 .Ed
 .Sh GLOBAL CONFIGURATION
-Global settings concerns the main behaviour of the daemon.
+Global settings concern the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
 .It domain Ar string
@@ -71,7 +71,7 @@ from LDAP.
 .It provide map Ar string
 Specify a map that should be provided by
 .Nm
-the currently implemented maps are: passwd.byname, passwd.byid,
+The currently implemented maps are: passwd.byname, passwd.byid,
 group.byname, group.byid.
 .El
 .Sh DIRECTORIES
@@ -79,12 +79,12 @@ group.byname, group.byid.
 .Bl -tag -width "/etc/ypldap.conf" -compact
 .It Pa /etc/ypldap.conf
 .Xr ypldap 8
-configuration file
+configuration file.
 .El
 .Sh SEE ALSO
+.Xr ypbind 8 ,
 .Xr ypldap 8 ,
-.Xr ypserv 8 ,
-.Xr ypbind 8
+.Xr ypserv 8
 .Rs
 .Sh HISTORY
 The
