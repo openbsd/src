@@ -37,8 +37,8 @@
 #include "mga_drv.h"
 #include "drm_pciids.h"
 
-int	mga_driver_device_is_agp(drm_device_t * );
-void	mga_configure(drm_device_t *);
+int	mga_driver_device_is_agp(struct drm_device * );
+void	mga_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {
@@ -63,7 +63,7 @@ static drm_pci_id_list_t mga_pciidlist[] = {
  * linux-core/mga_drv.c shows what needs to be done.
  */
 int
-mga_driver_device_is_agp(drm_device_t * dev)
+mga_driver_device_is_agp(struct drm_device * dev)
 {
 #ifdef __FreeBSD__
 	device_t bus;
@@ -92,7 +92,7 @@ mga_driver_device_is_agp(drm_device_t * dev)
 }
 
 void
-mga_configure(drm_device_t *dev)
+mga_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_mga_buf_priv_t);
 	dev->driver.load		= mga_driver_load;
@@ -139,9 +139,9 @@ mga_probe(device_t dev)
 static int
 mga_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	mga_configure(dev);
 	return drm_attach(nbdev, mga_pciidlist);
 }
@@ -158,7 +158,7 @@ static device_method_t mga_methods[] = {
 static driver_t mga_driver = {
 	"drm",
 	mga_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -187,7 +187,7 @@ void
 mgadrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	mga_configure(dev);
 	return drm_attach(parent, self, pa, mga_pciidlist);
@@ -195,7 +195,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach mgadrm_ca = {
-	sizeof(drm_device_t), mgadrm_probe, mgadrm_attach,
+	sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
 	drm_detach, drm_activate
 };
 
@@ -206,8 +206,8 @@ struct cfdriver mgadrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(mgadrm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(mgadrm, sizeof(drm_device_t), mgadrm_probe, mgadrm_attach, drm_detach,
-    drm_activate);
+CFATTACH_DECL(mgadrm, sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
+    drm_detach, drm_activate);
 #endif
 #endif
 

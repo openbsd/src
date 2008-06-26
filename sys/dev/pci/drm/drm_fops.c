@@ -36,10 +36,10 @@
 
 #include "drmP.h"
 
-drm_file_t *
+struct drm_file *
 drm_find_file_by_minor(struct drm_device *dev, int minor)
 {
-	drm_file_t *priv;
+	struct drm_file *priv;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
@@ -52,9 +52,9 @@ drm_find_file_by_minor(struct drm_device *dev, int minor)
 /* drm_open_helper is called whenever a process opens /dev/drm. */
 int
 drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
-    drm_device_t *dev)
+    struct drm_device *dev)
 {
-	drm_file_t   *priv;
+	struct drm_file   *priv;
 	int m, retcode;
 
 	m = minor(kdev);

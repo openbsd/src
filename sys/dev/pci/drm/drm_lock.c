@@ -79,7 +79,7 @@ drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
 /* This takes a lock forcibly and hands it to context.	Should ONLY be used
    inside *_unlock to give lock to kernel before calling *_dma_schedule. */
 int
-drm_lock_transfer(drm_device_t *dev, __volatile__ unsigned int *lock,
+drm_lock_transfer(struct drm_device *dev, __volatile__ unsigned int *lock,
     unsigned int context)
 {
 	unsigned int old, new;
@@ -94,7 +94,7 @@ drm_lock_transfer(drm_device_t *dev, __volatile__ unsigned int *lock,
 }
 
 int
-drm_lock_free(drm_device_t *dev, __volatile__ unsigned int *lock,
+drm_lock_free(struct drm_device *dev, __volatile__ unsigned int *lock,
     unsigned int context)
 {
 	unsigned int old, new;
@@ -115,7 +115,7 @@ drm_lock_free(drm_device_t *dev, __volatile__ unsigned int *lock,
 }
 
 int
-drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
         drm_lock_t *lock = data;
         int ret = 0;
@@ -164,7 +164,7 @@ drm_lock(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_unlock(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_lock_t *lock = data;
 

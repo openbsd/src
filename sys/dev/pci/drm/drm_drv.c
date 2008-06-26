@@ -45,12 +45,12 @@ int drm_debug_flag = 1;
 int drm_debug_flag = 0;
 #endif
 
-int	 drm_load(drm_device_t *);
-void	 drm_unload(drm_device_t *);
+int	 drm_load(struct drm_device *);
+void	 drm_unload(struct drm_device *);
 drm_pci_id_list_t *drm_find_description(int , int ,
 	    drm_pci_id_list_t *);
-int	 drm_firstopen(drm_device_t *);
-int	 drm_lastclose(drm_device_t *);
+int	 drm_firstopen(struct drm_device *);
+int	 drm_lastclose(struct drm_device *);
 
 static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, 0),
@@ -114,7 +114,7 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_UPDATE_DRAW, drm_update_draw, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 };
 
-drm_device_t *drm_units[DRM_MAXUNITS];
+struct drm_device *drm_units[DRM_MAXUNITS];
 
 static int init_units = 1;
 
@@ -143,7 +143,7 @@ drm_attach(struct device *parent, struct device *kdev,
     struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 {
 	int unit;
-	drm_device_t *dev;
+	struct drm_device *dev;
 	drm_pci_id_list_t *id_entry;
 
 	if(init_units) {
@@ -157,7 +157,7 @@ drm_attach(struct device *parent, struct device *kdev,
 		if(drm_units[unit] == NULL) break;
 	if(unit == DRM_MAXUNITS) return;
 
-	dev = drm_units[unit] = (drm_device_t*)kdev;
+	dev = drm_units[unit] = (struct drm_device*)kdev;
 	dev->unit = unit;
 
 	/* needed for pci_mapreg_* */
@@ -184,7 +184,7 @@ drm_attach(struct device *parent, struct device *kdev,
 int
 drm_detach(struct device *self, int flags)
 {
-	drm_unload((drm_device_t *)self);
+	drm_unload((struct drm_device *)self);
 	return 0;
 }
 
@@ -218,7 +218,7 @@ drm_find_description(int vendor, int device, drm_pci_id_list_t *idlist)
 }
 
 int
-drm_firstopen(drm_device_t *dev)
+drm_firstopen(struct drm_device *dev)
 {
 	drm_local_map_t *map;
 	int i;
@@ -269,7 +269,7 @@ drm_firstopen(drm_device_t *dev)
 }
 
 int
-drm_lastclose(drm_device_t *dev)
+drm_lastclose(struct drm_device *dev)
 {
 	struct drm_magic_entry *pt;
 	drm_local_map_t *map, *mapsave;
@@ -341,7 +341,7 @@ drm_lastclose(drm_device_t *dev)
 }
 
 int
-drm_load(drm_device_t *dev)
+drm_load(struct drm_device *dev)
 {
 	int retcode;
 
@@ -422,7 +422,7 @@ error:
 }
 
 void
-drm_unload(drm_device_t *dev)
+drm_unload(struct drm_device *dev)
 {
 
 	DRM_DEBUG( "\n" );
@@ -459,7 +459,7 @@ drm_unload(drm_device_t *dev)
 
 
 int
-drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_version(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_version_t *version = data;
 	int len;
@@ -487,7 +487,7 @@ drm_version(drm_device_t *dev, void *data, struct drm_file *file_priv)
 int
 drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
-	drm_device_t *dev = NULL;
+	struct drm_device *dev = NULL;
 	int retcode = 0;
 
 	dev = drm_get_device_from_kdev(kdev);
@@ -514,8 +514,8 @@ drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 int
 drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
-	drm_device_t *dev = drm_get_device_from_kdev(kdev);
-	drm_file_t *file_priv;
+	struct drm_device *dev = drm_get_device_from_kdev(kdev);
+	struct drm_file *file_priv;
 	int retcode = 0;
 
 	DRM_DEBUG( "open_count = %d\n", dev->open_count );
@@ -618,13 +618,13 @@ int
 drmioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
     DRM_STRUCTPROC *p)
 {
-	drm_device_t *dev = drm_get_device_from_kdev(kdev);
+	struct drm_device *dev = drm_get_device_from_kdev(kdev);
 	int retcode = 0;
 	drm_ioctl_desc_t *ioctl;
-	int (*func)(drm_device_t *dev, void *data, struct drm_file *file_priv);
+	int (*func)(struct drm_device *, void *, struct drm_file *);
 	int nr = DRM_IOCTL_NR(cmd);
 	int is_driver_ioctl = 0;
-	drm_file_t *file_priv;
+	struct drm_file *file_priv;
 
 	if (dev == NULL)
 		return ENODEV;
@@ -707,7 +707,7 @@ drmioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags,
 }
 
 drm_local_map_t *
-drm_getsarea(drm_device_t *dev)
+drm_getsarea(struct drm_device *dev)
 {
 	drm_local_map_t *map;
 

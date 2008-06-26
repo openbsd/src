@@ -35,7 +35,7 @@
 #include "i915_drv.h"
 #include "drm_pciids.h"
 
-void	i915_configure(drm_device_t *);
+void	i915_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t i915_pciidlist[] = {
@@ -43,7 +43,7 @@ static drm_pci_id_list_t i915_pciidlist[] = {
 };
 
 void
-i915_configure(drm_device_t *dev)
+i915_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= 1;	/* No dev_priv */
 	dev->driver.load		= i915_driver_load;
@@ -85,9 +85,9 @@ i915_probe(device_t dev)
 static int
 i915_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	i915_configure(dev);
 	return drm_attach(nbdev, i915_pciidlist);
 }
@@ -108,7 +108,7 @@ static driver_t i915_driver = {
 	"drmsub",
 #endif
 	i915_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -138,7 +138,7 @@ void
 i915drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	i915_configure(dev);
 
@@ -147,7 +147,7 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach inteldrm_ca = {
-	sizeof(drm_device_t), i915drm_probe, i915drm_attach,
+	sizeof(struct drm_device), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate
 };
 
@@ -159,7 +159,7 @@ struct cfdriver inteldrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(i915drm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
+CFATTACH_DECL(i915drm, sizeof(struct drm_device), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate);
 #endif
 #endif

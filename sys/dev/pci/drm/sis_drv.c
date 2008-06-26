@@ -31,7 +31,7 @@
 #include "sis_drv.h"
 #include "drm_pciids.h"
 
-void	sis_configure(drm_device_t *);
+void	sis_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t sis_pciidlist[] = {
@@ -39,7 +39,7 @@ static drm_pci_id_list_t sis_pciidlist[] = {
 };
 
 void
-sis_configure(drm_device_t *dev)
+sis_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 	dev->driver.context_ctor	= sis_init_context;
@@ -69,9 +69,9 @@ sis_probe(device_t dev)
 static int
 sis_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	sis_configure(dev);
 	return drm_attach(nbdev, sis_pciidlist);
 }
@@ -88,7 +88,7 @@ static device_method_t sis_methods[] = {
 static driver_t sis_driver = {
 	"drm",
 	sis_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -118,7 +118,7 @@ void
 sisdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	sis_configure(dev);
 	return drm_attach(parent, self, pa, sis_pciidlist);
@@ -126,7 +126,7 @@ sisdrm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach sisdrm_ca = {
-	sizeof(drm_device_t), sisdrm_probe, sisdrm_attach,
+	sizeof(struct drm_device), sisdrm_probe, sisdrm_attach,
 	drm_detach, drm_activate
 };
 
@@ -137,7 +137,7 @@ struct cfdriver sisdrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(sisdrm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(sisdrm, sizeof(drm_device_t), sisdrm_probe, sisdrm_attach, 
+CFATTACH_DECL(sisdrm, sizeof(struct drm_device), sisdrm_probe, sisdrm_attach, 
 	drm_detach, drm_activate);
 #endif
 #endif

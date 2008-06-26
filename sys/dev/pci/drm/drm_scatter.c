@@ -35,7 +35,7 @@
  */
 #include "drmP.h"
 
-struct drm_sg_dmamem	*drm_sg_dmamem_alloc(drm_device_t *, size_t);
+struct drm_sg_dmamem	*drm_sg_dmamem_alloc(struct drm_device *, size_t);
 void	drm_sg_dmamem_free(struct drm_sg_dmamem *);
 
 void
@@ -53,7 +53,7 @@ drm_sg_cleanup(drm_sg_mem_t *entry)
 }
 
 int
-drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
+drm_sg_alloc(struct drm_device * dev, drm_scatter_gather_t * request)
 {
 	drm_sg_mem_t *entry;
 	unsigned long pages;
@@ -106,7 +106,8 @@ drm_sg_alloc(drm_device_t * dev, drm_scatter_gather_t * request)
 }
 
 int
-drm_sg_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_sg_alloc_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_scatter_gather_t *request = data;
 	int ret;
@@ -118,7 +119,7 @@ drm_sg_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_sg_free(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_sg_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_scatter_gather_t *request = data;
 	drm_sg_mem_t *entry;
@@ -143,7 +144,7 @@ drm_sg_free(drm_device_t *dev, void *data, struct drm_file *file_priv)
  * scatter/gather
  */
 struct drm_sg_dmamem*
-drm_sg_dmamem_alloc(drm_device_t *dev, size_t pages)
+drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 {
 	struct drm_sg_dmamem	*dsd = NULL;
 	bus_size_t	  	 size = pages << PAGE_SHIFT;

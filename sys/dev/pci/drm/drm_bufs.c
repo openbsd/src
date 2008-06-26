@@ -37,11 +37,11 @@
 
 #include "drmP.h"
 
-int	drm_alloc_resource(drm_device_t *, int);
-void	drm_cleanup_buf_error(drm_device_t *, drm_buf_entry_t *);
-int	drm_do_addbufs_agp(drm_device_t *, drm_buf_desc_t *);
-int	drm_do_addbufs_pci(drm_device_t *, drm_buf_desc_t *);
-int	drm_do_addbufs_sg(drm_device_t *, drm_buf_desc_t *);
+int	drm_alloc_resource(struct drm_device *, int);
+void	drm_cleanup_buf_error(struct drm_device *, drm_buf_entry_t *);
+int	drm_do_addbufs_agp(struct drm_device *, drm_buf_desc_t *);
+int	drm_do_addbufs_pci(struct drm_device *, drm_buf_desc_t *);
+int	drm_do_addbufs_sg(struct drm_device *, drm_buf_desc_t *);
 
 /*
  * Compute order.  Can be made faster.
@@ -65,7 +65,7 @@ drm_order(unsigned long size)
  * address for accessing them.  Cleaned up at unload.
  */
 int
-drm_alloc_resource(drm_device_t *dev, int resource)
+drm_alloc_resource(struct drm_device *dev, int resource)
 {
 	if (resource >= DRM_MAX_PCI_RESOURCE) {
 		DRM_ERROR("Resource %d too large\n", resource);
@@ -90,7 +90,7 @@ drm_alloc_resource(drm_device_t *dev, int resource)
 
 
 unsigned long
-drm_get_resource_start(drm_device_t *dev, unsigned int resource)
+drm_get_resource_start(struct drm_device *dev, unsigned int resource)
 {
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
@@ -99,7 +99,7 @@ drm_get_resource_start(drm_device_t *dev, unsigned int resource)
 }
 
 unsigned long
-drm_get_resource_len(drm_device_t *dev, unsigned int resource)
+drm_get_resource_len(struct drm_device *dev, unsigned int resource)
 {
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
@@ -108,7 +108,7 @@ drm_get_resource_len(drm_device_t *dev, unsigned int resource)
 }
 
 int
-drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
+drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
     drm_map_type_t type, drm_map_flags_t flags, drm_local_map_t **map_ptr)
 {
 	drm_local_map_t *map;
@@ -305,7 +305,7 @@ done:
 }
 
 int
-drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_map_t *request = data;
 	drm_local_map_t *map;
@@ -334,7 +334,7 @@ drm_addmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 void
-drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
+drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 {
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
@@ -377,7 +377,7 @@ drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
  */
 
 int
-drm_rmmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_rmmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_local_map_t *map;
 	drm_map_t *request = data;
@@ -404,7 +404,7 @@ drm_rmmap_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 
 
 void
-drm_cleanup_buf_error(drm_device_t *dev, drm_buf_entry_t *entry)
+drm_cleanup_buf_error(struct drm_device *dev, drm_buf_entry_t *entry)
 {
 	int i;
 
@@ -428,7 +428,7 @@ drm_cleanup_buf_error(drm_device_t *dev, drm_buf_entry_t *entry)
 }
 
 int
-drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
+drm_do_addbufs_agp(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_entry_t *entry;
@@ -538,7 +538,7 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	/* OpenBSD lacks realloc in kernel */
 	temp_buflist = drm_realloc(dma->buflist,
 	    dma->buf_count * sizeof(*dma->buflist),
-	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM );
+	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
@@ -565,7 +565,7 @@ drm_do_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
+drm_do_addbufs_pci(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	int count;
@@ -717,7 +717,7 @@ drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
+drm_do_addbufs_sg(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_entry_t *entry;
@@ -829,7 +829,7 @@ drm_do_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
+drm_addbufs_agp(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -862,7 +862,7 @@ drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
+drm_addbufs_sg(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -895,7 +895,7 @@ drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
+drm_addbufs_pci(struct drm_device *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
@@ -927,7 +927,8 @@ drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 }
 
 int
-drm_addbufs_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_addbufs_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_buf_desc_t *request = data;
 	int err;
@@ -943,7 +944,7 @@ drm_addbufs_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_infobufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_info_t *request = data;
@@ -993,7 +994,7 @@ drm_infobufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_markbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_markbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_desc_t *request = data;
@@ -1024,7 +1025,7 @@ drm_markbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_freebufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	drm_buf_free_t *request = data;
@@ -1062,7 +1063,7 @@ drm_freebufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_mapbufs(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	struct vmspace *vms;

@@ -34,7 +34,7 @@
 #include "via_drv.h"
 #include "drm_pciids.h"
 
-void	via_configure(drm_device_t *);
+void	via_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t via_pciidlist[] = {
@@ -42,7 +42,7 @@ static drm_pci_id_list_t via_pciidlist[] = {
 };
 
 void
-via_configure(drm_device_t *dev)
+via_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= 1;
 	dev->driver.load		= via_driver_load;
@@ -84,9 +84,9 @@ via_probe(device_t dev)
 static int
 via_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	via_configure(dev);
 	return drm_attach(nbdev, via_pciidlist);
 }
@@ -103,7 +103,7 @@ static device_method_t via_methods[] = {
 static driver_t via_driver = {
 	"drm",
 	via_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -129,7 +129,7 @@ void
 viadrm_attach(struct device *parent, struct device *self, void *opaque)
 {
 	struct pci_attach_args *pa = opaque;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	viadrm_configure(dev);
 	drm_attach(parent, self, pa, via_pciidlist);
@@ -137,7 +137,7 @@ viadrm_attach(struct device *parent, struct device *self, void *opaque)
 
 #if defined(__OpenBSD__)
 struct cfattach viadrm_ca = {
-	sizeof(drm_device_t), viadrm_probe, viadrm_attach,
+	sizeof(struct drm_device), viadrm_probe, viadrm_attach,
 	drm_detach, drm_activate
 };
 
@@ -148,7 +148,7 @@ struct cfdriver viadrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(viadrm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(viadrm, sizeof(drm_device_t), viadrm_probe, viadrm_attach,
+CFATTACH_DECL(viadrm, sizeof(struct drm_device), viadrm_probe, viadrm_attach,
 	drm_detach, drm_activate);
 #endif
 #endif

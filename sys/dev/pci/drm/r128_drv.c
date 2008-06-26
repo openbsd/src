@@ -37,7 +37,7 @@
 #include "r128_drv.h"
 #include "drm_pciids.h"
 
-void r128_configure(drm_device_t *);
+void r128_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t r128_pciidlist[] = {
@@ -45,7 +45,7 @@ static drm_pci_id_list_t r128_pciidlist[] = {
 };
 
 void
-r128_configure(drm_device_t *dev)
+r128_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_r128_buf_priv_t);
 	dev->driver.preclose		= r128_driver_preclose;
@@ -88,9 +88,9 @@ r128_probe(device_t dev)
 static int
 r128_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	r128_configure(dev);
 	return drm_attach(nbdev, r128_pciidlist);
 }
@@ -107,7 +107,7 @@ static device_method_t r128_methods[] = {
 static driver_t r128_driver = {
 	"drm",
 	r128_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -137,7 +137,7 @@ void
 r128drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	r128_configure(dev);
 	return drm_attach(parent, self, pa, r128_pciidlist);
@@ -145,7 +145,7 @@ r128drm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach ragedrm_ca = {
-	sizeof(drm_device_t), r128drm_probe, r128drm_attach,
+	sizeof(struct drm_device), r128drm_probe, r128drm_attach,
 	drm_detach, drm_activate
 };
 
@@ -156,7 +156,7 @@ struct cfdriver ragedrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(r128drm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(r128drm, sizeof(drm_device_t), r128drm_probe, r128drm_attach,
+CFATTACH_DECL(r128drm, sizeof(struct drm_device), r128drm_probe, r128drm_attach,
 	drm_detach, drm_activate);
 #endif
 #endif

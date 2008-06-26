@@ -83,7 +83,7 @@ drm_free(void *pt, size_t size, int area)
 }
 
 void *
-drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
+drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
 {
 	struct vga_pci_bar *bar = NULL;
 	int i;

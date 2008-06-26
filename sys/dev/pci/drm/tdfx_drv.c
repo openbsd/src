@@ -36,7 +36,7 @@
 #include "drmP.h"
 #include "drm_pciids.h"
 
-void	tdfx_configure(drm_device_t *);
+void	tdfx_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
@@ -44,7 +44,7 @@ static drm_pci_id_list_t tdfx_pciidlist[] = {
 };
 
 void
-tdfx_configure(drm_device_t *dev)
+tdfx_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= 1; /* No dev_priv */
 
@@ -70,9 +70,9 @@ tdfx_probe(device_t dev)
 static int
 tdfx_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	tdfx_configure(dev);
 	return drm_attach(nbdev, tdfx_pciidlist);
 }
@@ -89,7 +89,7 @@ static device_method_t tdfx_methods[] = {
 static driver_t tdfx_driver = {
 	"drm",
 	tdfx_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -119,7 +119,7 @@ void
 tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	tdfx_configure(dev);
 	return drm_attach(parent, self, pa, tdfx_pciidlist);
@@ -127,7 +127,7 @@ tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach tdfxdrm_ca = {
-	sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach,
+	sizeof(struct drm_device), tdfxdrm_probe, tdfxdrm_attach,
 	drm_detach, drm_activate
 };
 
@@ -138,8 +138,8 @@ struct cfdriver tdfxdrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(tdfxdrm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(tdfxdrm, sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach, drm_detach,
-    drm_activate);
+CFATTACH_DECL(tdfxdrm, sizeof(struct drm_device), tdfxdrm_probe, tdfxdrm_attach,
+    drm_detach, drm_activate);
 #endif
 #endif
 

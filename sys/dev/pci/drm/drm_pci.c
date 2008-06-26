@@ -39,7 +39,8 @@
  * memory block.
  */
 drm_dma_handle_t *
-drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
+drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
+    dma_addr_t maxaddr)
 {
 	drm_dma_handle_t *dmah;
 	int ret, nsegs;
@@ -104,7 +105,7 @@ dmahfree:
  * \brief Free a DMA-accessible consistent memory block.
  */
 void
-drm_pci_free(drm_device_t *dev, drm_dma_handle_t *dmah)
+drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 {
 	if (dmah == NULL)
 		return;

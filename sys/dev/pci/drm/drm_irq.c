@@ -40,7 +40,7 @@ void		vblank_disable(void *);
 void		drm_locked_task(void *context, void *pending);
 
 int
-drm_irq_by_busid(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_irq_busid_t *irq = data;
 
@@ -62,7 +62,7 @@ irqreturn_t
 drm_irq_handler_wrap(DRM_IRQ_ARGS)
 {
 	irqreturn_t ret;
-	drm_device_t *dev = (drm_device_t *)arg;
+	struct drm_device *dev = (struct drm_device *)arg;
 
 	DRM_SPINLOCK(&dev->irq_lock);
 	ret = dev->driver.irq_handler(arg);
@@ -72,7 +72,7 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 }
 
 int
-drm_irq_install(drm_device_t *dev)
+drm_irq_install(struct drm_device *dev)
 {
 	int retcode;
 	pci_intr_handle_t ih;
@@ -128,7 +128,7 @@ err:
 }
 
 int
-drm_irq_uninstall(drm_device_t *dev)
+drm_irq_uninstall(struct drm_device *dev)
 {
 
 	if (!dev->irq_enabled)
@@ -149,7 +149,7 @@ drm_irq_uninstall(drm_device_t *dev)
 }
 
 int
-drm_control(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_control(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_control_t *ctl = data;
 	int err;
@@ -391,7 +391,7 @@ out:
 }
 
 int
-drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_wait_vblank_t *vblwait = data;
 	int ret, flags, crtc, seq;
@@ -477,13 +477,13 @@ drm_wait_vblank(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 void
-drm_vbl_send_signals(drm_device_t *dev, int crtc)
+drm_vbl_send_signals(struct drm_device *dev, int crtc)
 {
 }
 
 #if 0 /* disabled */
 void
-drm_vbl_send_signals(drm_device_t *dev, int crtc)
+drm_vbl_send_signals(struct drm_device *dev, int crtc)
 {
 	drm_vbl_sig_t *vbl_sig;
 	unsigned int vbl_seq = atomic_read( &dev->vbl_received );
@@ -517,7 +517,7 @@ drm_handle_vblank(struct drm_device *dev, int crtc)
 void
 drm_locked_task(void *context, void *pending)
 {
-	drm_device_t *dev = context;
+	struct drm_device *dev = context;
 
 	DRM_LOCK();
 	for (;;) {
@@ -548,7 +548,7 @@ drm_locked_task(void *context, void *pending)
 }
 
 void
-drm_locked_tasklet(drm_device_t *dev, void (*tasklet)(drm_device_t *dev))
+drm_locked_tasklet(struct drm_device *dev, void (*tasklet)(struct drm_device *))
 {
 	dev->locked_task_call = tasklet;
 	if (workq_add_task(NULL, 0, drm_locked_task, dev, NULL) == ENOMEM)

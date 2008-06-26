@@ -35,7 +35,8 @@
 
 #define ATI_PCIGART_PAGE_SIZE		4096	/* PCI GART page size */
 
-int drm_ati_pcigart_init(drm_device_t *dev, struct drm_ati_pcigart_info *gart_info)
+int drm_ati_pcigart_init(struct drm_device *dev,
+    struct drm_ati_pcigart_info *gart_info)
 {
 	unsigned long pages;
 	u32 *pci_gart = NULL, page_base;
@@ -98,7 +99,8 @@ int drm_ati_pcigart_init(drm_device_t *dev, struct drm_ati_pcigart_info *gart_in
 	return 1;
 }
 
-int drm_ati_pcigart_cleanup(drm_device_t *dev, struct drm_ati_pcigart_info *gart_info)
+int drm_ati_pcigart_cleanup(struct drm_device *dev,
+    struct drm_ati_pcigart_info *gart_info)
 {
 	if (dev->sg == NULL) {
 		DRM_ERROR( "no scatter/gather memory!\n" );

@@ -35,15 +35,16 @@
 
 #include "drmP.h"
 
-drm_file_t	*drm_find_file(drm_device_t *, drm_magic_t);
-int		 drm_add_magic(drm_device_t *, drm_file_t *, drm_magic_t);
-int		 drm_remove_magic(drm_device_t *, drm_magic_t);
+struct drm_file	*drm_find_file(struct drm_device *, drm_magic_t);
+int		 drm_add_magic(struct drm_device *, struct drm_file *,
+		     drm_magic_t);
+int		 drm_remove_magic(struct drm_device *, drm_magic_t);
 
 /**
  * Returns the file private associated with the given magic number.
  */
-drm_file_t *
-drm_find_file(drm_device_t *dev, drm_magic_t magic)
+struct drm_file *
+drm_find_file(struct drm_device *dev, drm_magic_t magic)
 {
 	struct drm_magic_entry	*pt;
 	struct drm_magic_entry	 key;
@@ -61,7 +62,7 @@ drm_find_file(drm_device_t *dev, drm_magic_t magic)
  * lists.
  */
 int
-drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
+drm_add_magic(struct drm_device *dev, struct drm_file *priv, drm_magic_t magic)
 {
 	struct drm_magic_entry	*entry;
 
@@ -83,7 +84,7 @@ drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
  * lists.
  */
 int
-drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
+drm_remove_magic(struct drm_device *dev, drm_magic_t magic)
 {
 	struct drm_magic_entry	*pt;
 	struct drm_magic_entry	 key;
@@ -109,7 +110,7 @@ drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
  * should be authenticated.
  */
 int
-drm_getmagic(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	static drm_magic_t	 sequence = 0;
 	drm_auth_t		*auth = data;
@@ -142,10 +143,10 @@ drm_getmagic(drm_device_t *dev, void *data, struct drm_file *file_priv)
  * Marks the client associated with the given magic number as authenticated.
  */
 int
-drm_authmagic(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_auth_t	*auth = data;
-	drm_file_t	*priv;
+	struct drm_file	*priv;
 
 	DRM_DEBUG("%u\n", auth->magic);
 

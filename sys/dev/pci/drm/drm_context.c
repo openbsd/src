@@ -39,7 +39,7 @@
  */
 
 void
-drm_ctxbitmap_free(drm_device_t *dev, int ctx_handle)
+drm_ctxbitmap_free(struct drm_device *dev, int ctx_handle)
 {
 	if (ctx_handle < 0 || ctx_handle >= DRM_MAX_CTXBITMAP || 
 	    dev->ctx_bitmap == NULL) {
@@ -56,7 +56,7 @@ drm_ctxbitmap_free(drm_device_t *dev, int ctx_handle)
 }
 
 int
-drm_ctxbitmap_next(drm_device_t *dev)
+drm_ctxbitmap_next(struct drm_device *dev)
 {
 	int bit;
 
@@ -105,7 +105,7 @@ drm_ctxbitmap_next(drm_device_t *dev)
 }
 
 int
-drm_ctxbitmap_init(drm_device_t *dev)
+drm_ctxbitmap_init(struct drm_device *dev)
 {
 	int i;
    	int temp;
@@ -129,7 +129,7 @@ drm_ctxbitmap_init(drm_device_t *dev)
 }
 
 void
-drm_ctxbitmap_cleanup(drm_device_t *dev)
+drm_ctxbitmap_cleanup(struct drm_device *dev)
 {
 	DRM_LOCK();
 	if (dev->context_sareas != NULL)
@@ -143,7 +143,8 @@ drm_ctxbitmap_cleanup(drm_device_t *dev)
  */
 
 int
-drm_getsareactx( drm_device_t *dev, void *data, struct drm_file *file_priv )
+drm_getsareactx(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_ctx_priv_map_t *request = data;
 	drm_local_map_t *map;
@@ -164,7 +165,7 @@ drm_getsareactx( drm_device_t *dev, void *data, struct drm_file *file_priv )
 }
 
 int
-drm_setsareactx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_setsareactx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_priv_map_t *request = data;
 	drm_local_map_t *map = NULL;
@@ -192,7 +193,7 @@ bad:
  */
 
 int
-drm_context_switch(drm_device_t *dev, int old, int new)
+drm_context_switch(struct drm_device *dev, int old, int new)
 {
         if ( test_and_set_bit( 0, &dev->context_flag ) ) {
                 DRM_ERROR( "Reentering -- FIXME\n" );
@@ -210,7 +211,7 @@ drm_context_switch(drm_device_t *dev, int old, int new)
 }
 
 int
-drm_context_switch_complete(drm_device_t *dev, int new)
+drm_context_switch_complete(struct drm_device *dev, int new)
 {
         dev->last_context = new;  /* PRE/POST: This is the _only_ writer. */
 
@@ -227,7 +228,7 @@ drm_context_switch_complete(drm_device_t *dev, int new)
 }
 
 int
-drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_resctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_res_t *res = data;
 	drm_ctx_t ctx;
@@ -248,7 +249,7 @@ drm_resctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_addctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_addctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -274,14 +275,14 @@ drm_addctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_modctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_modctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	/* This does nothing */
 	return 0;
 }
 
 int
-drm_getctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_getctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -292,7 +293,7 @@ drm_getctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_switchctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_switchctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -301,7 +302,7 @@ drm_switchctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_newctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_newctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
@@ -312,7 +313,7 @@ drm_newctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_rmctx(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_rmctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 

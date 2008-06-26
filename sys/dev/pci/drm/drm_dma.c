@@ -39,7 +39,7 @@
 #include "drmP.h"
 
 int
-drm_dma_setup(drm_device_t *dev)
+drm_dma_setup(struct drm_device *dev)
 {
 
 	dev->dma = malloc(sizeof(*dev->dma), M_DRM, M_NOWAIT | M_ZERO);
@@ -52,7 +52,7 @@ drm_dma_setup(drm_device_t *dev)
 }
 
 void
-drm_dma_takedown(drm_device_t *dev)
+drm_dma_takedown(struct drm_device *dev)
 {
 	drm_device_dma_t *dma = dev->dma;
 	int i, j;
@@ -97,7 +97,7 @@ drm_dma_takedown(drm_device_t *dev)
 
 
 void
-drm_free_buffer(drm_device_t *dev, drm_buf_t *buf)
+drm_free_buffer(struct drm_device *dev, drm_buf_t *buf)
 {
 	if (!buf) return;
 
@@ -107,7 +107,7 @@ drm_free_buffer(drm_device_t *dev, drm_buf_t *buf)
 }
 
 void
-drm_reclaim_buffers(drm_device_t *dev, struct drm_file *file_priv)
+drm_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 {
 	drm_device_dma_t *dma = dev->dma;
 	int i;
@@ -132,7 +132,7 @@ drm_reclaim_buffers(drm_device_t *dev, struct drm_file *file_priv)
 
 /* Call into the driver-specific DMA handler */
 int
-drm_dma(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 
 	if (dev->driver.dma_ioctl) {

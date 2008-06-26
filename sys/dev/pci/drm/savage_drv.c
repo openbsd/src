@@ -32,7 +32,7 @@
 #include "savage_drv.h"
 #include "drm_pciids.h"
 
-void	savage_configure(drm_device_t *);
+void	savage_configure(struct drm_device *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {
@@ -40,7 +40,7 @@ static drm_pci_id_list_t savage_pciidlist[] = {
 };
 
 void
-savage_configure(drm_device_t *dev)
+savage_configure(struct drm_device *dev)
 {
 	dev->driver.buf_priv_size	= sizeof(drm_savage_buf_priv_t);
 	dev->driver.load		= savage_driver_load;
@@ -76,9 +76,9 @@ savage_probe(device_t dev)
 static int
 savage_attach(device_t nbdev)
 {
-	drm_device_t *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	bzero(dev, sizeof(struct drm_device));
 	savage_configure(dev);
 	return drm_attach(nbdev, savage_pciidlist);
 }
@@ -95,7 +95,7 @@ static device_method_t savage_methods[] = {
 static driver_t savage_driver = {
 	"drm",
 	savage_methods,
-	sizeof(drm_device_t)
+	sizeof(struct drm_device)
 };
 
 extern devclass_t drm_devclass;
@@ -125,7 +125,7 @@ void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = (struct drm_device *)self;
 
 	savage_configure(dev);
 	return drm_attach(parent, self, pa, savage_pciidlist);
@@ -133,7 +133,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__OpenBSD__)
 struct cfattach savagedrm_ca = {
-	sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
+	sizeof(struct drm_device), savagedrm_probe, savagedrm_attach,
 	drm_detach, drm_activate
 };
 
@@ -144,8 +144,8 @@ struct cfdriver savagedrm_cd = {
 #ifdef _LKM
 CFDRIVER_DECL(savagedrm, DV_TTY, NULL);
 #else
-CFATTACH_DECL(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
-	drm_detach, drm_activate);
+CFATTACH_DECL(savagedrm, sizeof(struct drm_device), savagedrm_probe,
+    savagedrm_attach, drm_detach, drm_activate);
 #endif
 #endif
 

@@ -35,19 +35,19 @@
 
 #include "drmP.h"
 
-int	drm_device_find_capability(drm_device_t *, int);
-struct drm_agp_mem *drm_agp_lookup_entry(drm_device_t *, void *);
+int	drm_device_find_capability(struct drm_device *, int);
+struct drm_agp_mem *drm_agp_lookup_entry(struct drm_device *, void *);
 
 /* Returns 1 if AGP or 0 if not. */
 int
-drm_device_find_capability(drm_device_t *dev, int cap)
+drm_device_find_capability(struct drm_device *dev, int cap)
 {
 	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap,
 	    NULL, NULL);
 }
 
 int
-drm_device_is_agp(drm_device_t *dev)
+drm_device_is_agp(struct drm_device *dev)
 {
 	if (dev->driver.device_is_agp != NULL) {
 		int ret;
@@ -64,13 +64,13 @@ drm_device_is_agp(drm_device_t *dev)
 }
 
 int
-drm_device_is_pcie(drm_device_t *dev)
+drm_device_is_pcie(struct drm_device *dev)
 {
 	return (drm_device_find_capability(dev, PCIY_EXPRESS));
 }
 
 int
-drm_agp_info(drm_device_t * dev, drm_agp_info_t *info)
+drm_agp_info(struct drm_device * dev, drm_agp_info_t *info)
 {
 	struct agp_info *kern;
 
@@ -95,7 +95,8 @@ drm_agp_info(drm_device_t * dev, drm_agp_info_t *info)
 }
 
 int
-drm_agp_info_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_info_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	int err;
 	drm_agp_info_t info;
@@ -109,13 +110,14 @@ drm_agp_info_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_agp_acquire_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_acquire_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	return drm_agp_acquire(dev);
 }
 
 int
-drm_agp_acquire(drm_device_t *dev)
+drm_agp_acquire(struct drm_device *dev)
 {
 #ifndef DRM_NO_AGP
 	int retcode;
@@ -133,13 +135,14 @@ drm_agp_acquire(drm_device_t *dev)
 }
 
 int
-drm_agp_release_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_release_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	return drm_agp_release(dev);
 }
 
 int
-drm_agp_release(drm_device_t * dev)
+drm_agp_release(struct drm_device * dev)
 {
 #ifndef DRM_NO_AGP
 	if (!dev->agp || !dev->agp->acquired)
@@ -151,7 +154,7 @@ drm_agp_release(drm_device_t * dev)
 }
 
 int
-drm_agp_enable(drm_device_t *dev, drm_agp_mode_t mode)
+drm_agp_enable(struct drm_device *dev, drm_agp_mode_t mode)
 {
 
 #ifndef DRM_NO_AGP
@@ -166,7 +169,8 @@ drm_agp_enable(drm_device_t *dev, drm_agp_mode_t mode)
 }
 
 int
-drm_agp_enable_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_enable_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_agp_mode_t mode;
 
@@ -176,7 +180,7 @@ drm_agp_enable_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
+drm_agp_alloc(struct drm_device *dev, drm_agp_buffer_t *request)
 {
 #ifndef DRM_NO_AGP
 	struct drm_agp_mem *entry;
@@ -218,7 +222,8 @@ drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
 }
 
 int
-drm_agp_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_alloc_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_agp_buffer_t request;
 	int retcode;
@@ -235,7 +240,7 @@ drm_agp_alloc_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 struct drm_agp_mem *
-drm_agp_lookup_entry(drm_device_t *dev, void *handle)
+drm_agp_lookup_entry(struct drm_device *dev, void *handle)
 {
 	struct drm_agp_mem *entry;
 
@@ -246,7 +251,7 @@ drm_agp_lookup_entry(drm_device_t *dev, void *handle)
 }
 
 int
-drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request)
+drm_agp_unbind(struct drm_device *dev, drm_agp_binding_t *request)
 {
 	struct drm_agp_mem *entry;
 	int retcode;
@@ -269,7 +274,8 @@ drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request)
 }
 
 int
-drm_agp_unbind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_agp_binding_t request;
 	int retcode;
@@ -284,7 +290,7 @@ drm_agp_unbind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_agp_bind(drm_device_t *dev, drm_agp_binding_t *request)
+drm_agp_bind(struct drm_device *dev, drm_agp_binding_t *request)
 {
 	struct drm_agp_mem *entry;
 	int retcode;
@@ -311,7 +317,8 @@ drm_agp_bind(drm_device_t *dev, drm_agp_binding_t *request)
 }
 
 int
-drm_agp_bind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_bind_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_agp_binding_t request;
 	int retcode;
@@ -326,7 +333,7 @@ drm_agp_bind_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_agp_free(drm_device_t *dev, drm_agp_buffer_t *request)
+drm_agp_free(struct drm_device *dev, drm_agp_buffer_t *request)
 {
 	struct drm_agp_mem *entry;
 	
@@ -352,7 +359,8 @@ drm_agp_free(drm_device_t *dev, drm_agp_buffer_t *request)
 }
 
 int
-drm_agp_free_ioctl(drm_device_t *dev, void *data, struct drm_file *file_priv)
+drm_agp_free_ioctl(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_agp_buffer_t request;
 	int retcode;
