@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.83 2008/06/09 13:02:39 dtucker Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.84 2008/06/26 06:10:09 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -754,7 +754,7 @@ process_setstat(void)
 	}
 	if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) {
 		logit("set \"%s\" mode %04o", name, a->perm);
-		ret = chmod(name, a->perm & 0777);
+		ret = chmod(name, a->perm & 07777);
 		if (ret == -1)
 			status = errno_to_portable(errno);
 	}
@@ -807,7 +807,7 @@ process_fsetstat(void)
 		}
 		if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) {
 			logit("set \"%s\" mode %04o", name, a->perm);
-			ret = fchmod(fd, a->perm & 0777);
+			ret = fchmod(fd, a->perm & 07777);
 			if (ret == -1)
 				status = errno_to_portable(errno);
 		}
@@ -949,7 +949,7 @@ process_mkdir(void)
 	name = get_string(NULL);
 	a = get_attrib();
 	mode = (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) ?
-	    a->perm & 0777 : 0777;
+	    a->perm & 07777 : 0777;
 	debug3("request %u: mkdir", id);
 	logit("mkdir name \"%s\" mode 0%o", name, mode);
 	ret = mkdir(name, mode);
