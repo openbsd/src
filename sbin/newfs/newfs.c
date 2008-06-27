@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.77 2008/06/24 15:07:02 jmc Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.78 2008/06/27 18:50:43 sobrado Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -666,7 +666,7 @@ usage(void)
 	    fprintf(stderr,
 	        "usage: %s [-b block-size] [-c fragments-per-cylinder-group] "
 		"[-e maxbpg]\n"
-		"\t[-f frag-size] [-i bytes] [-m free space] [-o options] "
+		"\t[-f frag-size] [-i bytes] [-m free-space] [-o options] "
 		"[-P file]\n"
 		"\t[-s size] special node\n",
 		__progname);
