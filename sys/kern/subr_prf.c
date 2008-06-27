@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.73 2007/12/30 11:54:55 bluhm Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.74 2008/06/27 17:23:24 miod Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -69,9 +69,6 @@
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
 #include <ddb/db_var.h>		/* db_log, db_radix */
-#endif
-#if defined(UVM_SWAP_ENCRYPT)
-extern int uvm_doswapencrypt;
 #endif
 
 
@@ -185,10 +182,6 @@ panic(const char *fmt, ...)
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
-#if defined(UVM_SWAP_ENCRYPT)
-	if (uvm_doswapencrypt)
-		bootopt &= ~RB_DUMP;
-#endif
 	va_start(ap, fmt);
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
