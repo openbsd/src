@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.16 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: SCP.pm,v 1.17 2008/06/27 10:57:27 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -105,17 +105,6 @@ sub grab_object
 	}
 }
 
-sub _new
-{
-	my ($class, $baseurl) = @_;
-	if ($baseurl =~ m/^\/\/(.*?)(\/.*)$/o) {
-		bless {	host => $1, baseurl => $baseurl, 
-		    key => $1, path => $2 }, $class;
-	} else {
-		die "Invalid scp url: scp:$baseurl\n";
-	}
-}
-
 sub maxcount
 {
 	return 1;
@@ -124,7 +113,7 @@ sub maxcount
 sub opened
 {
 	my $self = $_[0];
-	my $k = $self->{key};
+	my $k = $self->{host};
 	if (!defined $distant{$k}) {
 		$distant{$k} = [];
 	}
