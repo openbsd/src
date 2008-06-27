@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2008/04/09 16:58:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2008/06/27 17:22:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -66,6 +66,7 @@
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_swap.h>
 
 #include <dev/rndvar.h>
 
@@ -801,6 +802,10 @@ dumpsys()
 		return;
 	printf("\ndumping to dev(%d,%d), at offset %ld blocks\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
+
+#ifdef UVM_SWAP_ENCRYPT
+	uvm_swap_finicrypt_all();
+#endif
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

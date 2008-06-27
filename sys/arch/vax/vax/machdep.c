@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.95 2008/04/09 16:58:10 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.96 2008/06/27 17:22:15 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -75,6 +75,7 @@
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_swap.h>
 
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -635,6 +636,10 @@ dumpsys()
 
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
+
+#ifdef UVM_SWAP_ENCRYPT
+	uvm_swap_finicrypt_all();
+#endif
 
 	/* Setup the dump header */
 	kseg_p = (kcore_seg_t *)dump_hdr;

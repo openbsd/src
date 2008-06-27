@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 2008/06/27 17:22:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -859,6 +859,10 @@ dumpsys()
 	}
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
+
+#ifdef UVM_SWAP_ENCRYPT
+	uvm_swap_finicrypt_all();
+#endif
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

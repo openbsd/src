@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2008/04/27 17:48:10 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 2008/06/27 17:22:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -48,6 +48,7 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
+#include <uvm/uvm_swap.h>
 
 #include <dev/cons.h>
 #include <dev/clock_subr.h>
@@ -767,6 +768,10 @@ dumpsys(void)
 		return;
 	}
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+
+#ifdef UVM_SWAP_ENCRYPT
+	uvm_swap_finicrypt_all();
+#endif
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
