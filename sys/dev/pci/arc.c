@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.75 2007/11/05 01:18:21 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.76 2008/06/27 12:04:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -213,6 +213,9 @@ struct arc_fw_bufhdr {
 #define ARC_FW_NOP		0x38	/* opcode only */
 
 #define ARC_FW_CMD_OK		0x41
+#define ARC_FW_BLINK		0x43
+#define  ARC_FW_BLINK_ENABLE			0x00
+#define  ARC_FW_BLINK_DISABLE			0x01
 #define ARC_FW_CMD_PASS_REQD	0x4d
 
 struct arc_fw_comminfo {
@@ -382,6 +385,8 @@ struct arc_softc {
 	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
 	int			sc_nsensors;
+
+	u_int32_t		sc_ledmask;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
@@ -488,6 +493,7 @@ int			arc_bio_disk(struct arc_softc *, struct bioc_disk *);
 int			arc_bio_alarm(struct arc_softc *, struct bioc_alarm *);
 int			arc_bio_alarm_state(struct arc_softc *,
 			    struct bioc_alarm *);
+int			arc_bio_blink(struct arc_softc *, struct bioc_blink *);
 
 int			arc_bio_getvol(struct arc_softc *, int,
 			    struct arc_fw_volinfo *);
@@ -1069,6 +1075,10 @@ arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
 		error = arc_bio_alarm(sc, (struct bioc_alarm *)addr);
 		break;
 
+	case BIOCBLINK:
+		error = arc_bio_blink(sc, (struct bioc_blink *)addr);
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -1200,6 +1210,37 @@ out:
 	free(volinfo, M_TEMP);
 	free(sysinfo, M_TEMP);
 	return (error);
+}
+
+int
+arc_bio_blink(struct arc_softc *sc, struct bioc_blink *blink)
+{
+	u_int8_t			 request[5];
+	u_int32_t			 mask;
+	int				 error = 0;
+
+	request[0] = ARC_FW_BLINK;
+	request[1] = ARC_FW_BLINK_ENABLE;
+
+	switch (blink->bb_status) {
+	case BIOC_SBUNBLINK:
+		sc->sc_ledmask &= ~(1 << blink->bb_target);
+		break;
+	case BIOC_SBBLINK:
+		sc->sc_ledmask |= (1 << blink->bb_target);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	mask = htole32(sc->sc_ledmask);
+	bcopy(&mask, &request[2], 3);
+
+	error = arc_msgbuf(sc, request, sizeof(request), NULL, 0);
+	if (error)
+		return (EIO);
+
+	return (0);
 }
 
 int
@@ -1497,6 +1538,9 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 			wdone += rwlen;
 		}
+
+		if (rptr == NULL)
+			goto out;
 
 		while ((reg = arc_read(sc, ARC_RA_OUTB_DOORBELL)) == 0)
 			arc_wait(sc);
