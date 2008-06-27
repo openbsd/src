@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c313.c,v 1.2 2006/10/23 20:26:25 miod Exp $	*/
+/*	$OpenBSD: rs5c313.c,v 1.3 2008/06/27 06:03:08 ray Exp $	*/
 /*	$NetBSD: rs5c313.c,v 1.1 2006/09/07 01:12:00 uwe Exp $	*/
 /*	$NetBSD: rs5c313_landisk.c,v 1.1 2006/09/07 01:55:03 uwe Exp $	*/
 
@@ -14,10 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
