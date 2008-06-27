@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.212 2008/06/12 22:22:36 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.213 2008/06/27 05:40:21 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -223,6 +223,10 @@ udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
+
+# USB Video
+uvideo* at uhub?
+video*  at uvideo?
 
 # Bluetooth controllers
 #ubt*	at uhub?		# USB Bluetooth
