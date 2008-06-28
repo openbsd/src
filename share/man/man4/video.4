@@ -1,0 +1,305 @@
+.\" $OpenBSD: video.4,v 1.1 2008/06/28 16:03:08 mglocker Exp $
+.\"
+.\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 28 2008 $
+.Dt VIDEO 4
+.Os
+.Sh NAME
+.Nm video
+.Nd device-independent video driver layer
+.Sh SYNOPSIS
+.Cd "video* at uvideo?"
+.Pp
+.Fd #include <sys/types.h>
+.Fd #include <sys/ioctl.h>
+.Fd #include <sys/videoio.h>
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for various video devices.  It provides an uniform
+programming interface layer above different underlying video hardware
+drivers.
+The
+.Nm
+driver uses the V4L2 (Video for Linux Two) API which is widely used by video
+applications.  Therefore this document mainly describes the V4L2 API parts
+which are supported by the
+.Nm
+driver yet.
+.Sh IOCTL
+The following
+.Xr ioctl 2
+commands are supported:
+.Pp
+.Bl -tag -width Ds -compact
+.It Dv VIDIOC_QUERYCAP (struct v4l2_capability *)
+Query device capabilities.
+.Bd -literal
+struct v4l2_capability {
+	u_int8_t	driver[16];
+	u_int8_t	card[32];
+	u_int8_t	bus_info[32];
+	u_int32_t	version;
+	u_int32_t	capabilities;
+	u_int32_t	reserved[4];
+};
+.Ed
+.Pp
+.It Dv VIDIOC_ENUM_FMT (struct v4l2_fmtdesc *)
+Enumerate image formats.
+.Bd -literal
+struct v4l2_fmtdesc {
+	u_int32_t		index;
+	enum v4l2_buf_type	flags;
+	u_int8_t		description[32];
+	u_int32_t		pixelformat;
+	u_int32_t		reserved[4];
+};
+.Ed
+.Pp
+.It Dv VIDIOC_S_FMT (struct v4l2_format *)
+Set the data format.
+.Bd -literal
+struct v4l2_format {
+	enum v4l2_buf_type	type;
+	union {
+		struct v4l2_pix_format		pix;
+		struct v4l2_window		win;
+		struct v4l2_vbi_format		vbi;
+		struct v4l2_sliced_vbi_format	sliced;
+		u_int8_t			raw_data[200];
+        } fmt;
+};
+.Ed
+.Pp
+.It Dv VIDIOC_G_FMT (struct v4l2_format *)
+Get the data format.
+.Pp
+Same structure as for VIDIOC_S_FMT.
+.Pp
+.It Dv VIDIOC_ENUMINPUT (struct v4l2_input *)
+Enumerate video inputs.
+.Bd -literal
+struct v4l2_input {
+	u_int32_t	index;
+	u_int8_t	name[32];
+	u_int32_t	type;
+	u_int32_t	audioset;
+	u_int32_t	tuner;
+	v4l2_std_id	std;
+	u_int32_t	status;
+	u_int32_t	reserved[32];
+};
+.Ed
+.Pp
+.It Dv VIDIOC_S_INPUT (int)
+Select the current video input.
+.Pp
+.It Dv VIDIOC_REQBUFS (struct v4l2_requestbuffers *)
+Initiate memory mapping or user pointer I/O.
+.Bd -literal
+struct v4l2_requestbuffers {
+	u_int32_t		count;
+	enum v4l2_buf_type	type;
+	enum v4l2_memory	memory;
+	u_int32_t		reserved[2];
+};
+.Ed
+.Pp
+.It Dv VIDIOC_QUERYBUF (struct v4l2_buffer *)
+Query the status of a buffer.
+.Pp
+Same structure as for VIDIOC_REQBUFS.
+.Pp
+.It Dv VIDIOC_QBUF (struct v4l2_buffer *)
+Add a buffer to the queue.
+.Pp
+Same structure as for VIDIOC_REQBUFS.
+.Pp
+.It Dv VIDIOC_DQBUF (struct v4l2_buffer *)
+Remove a buffer from the queue.
+.Pp
+Same structure as for VIDIOC_REQBUFS.
+.Pp
+.It Dv VIDIOC_STREAMON (int)
+Start video stream.
+.Pp
+.It Dv VIDIOC_STREAMOFF (int)
+Stop video stream.
+.Pp
+.It Dv VIDIOC_TRY_FMT (struct v4l2_format *)
+Try a data format.
+.Pp
+Same structure as for VIDIOC_S_FMT.
+.Pp
+.It Dv VIDIOC_QUERYCTRL (struct v4l2_queryctrl *)
+Enumerate control items.
+.Bd -literal
+struct v4l2_queryctrl {
+	u_int32_t		id;
+	enum v4l2_ctrl_type	type;
+	u_int8_t		name[32];
+	int32_t			minimum;
+	int32_t			maximum;
+	int32_t			step;
+	int32_t			default_value;
+	u_int32_t		flags;
+	u_int32_t		reserved[2];
+};
+.Ed
+.El
+.Pp
+.Bl -tag -width Ds -compact
+Command independed enumerations are:
+.Bd -literal
+enum v4l2_buf_type {
+	V4L2_BUF_TYPE_VIDEO_CAPTURE = 1,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT = 2,
+	V4L2_BUF_TYPE_VIDEO_OVERLAY = 3,
+	V4L2_BUF_TYPE_VBI_CAPTURE = 4,
+	V4L2_BUF_TYPE_VBI_OUTPUT = 5,
+	V4L2_BUF_TYPE_SLICED_VBI_CAPTURE = 6,
+	V4L2_BUF_TYPE_SLICED_VBI_OUTPUT = 7,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY = 8,
+	V4L2_BUF_TYPE_PRIVATE = 0x80,
+};
+
+enum v4l2_memory {
+	V4L2_MEMORY_MMAP = 1,
+	V4L2_MEMORY_USERPTR = 2,
+	V4L2_MEMORY_OVERLAY = 3,
+};
+
+enum v4l2_ctrl_type {
+	V4L2_CTRL_TYPE_INTEGER = 1,
+	V4L2_CTRL_TYPE_BOOLEAN = 2,
+	V4L2_CTRL_TYPE_MENU = 3,
+	V4L2_CTRL_TYPE_BUTTON = 4,
+	V4L2_CTRL_TYPE_INTEGER64 = 5,
+	V4L2_CTRL_TYPE_CTRL_CLASS = 6,
+};
+.Ed
+.Pp
+Command independed structures are:
+.Bd -literal
+struct v4l2_pix_format {
+	u_int32_t		width;
+	u_int32_t		height;
+	u_int32_t		pixelformat;
+	enum v4l2_field		field;
+	u_int32_t		bytesperline;
+	u_int32_t		sizeimage;
+	enum v4l2_colorspace	colorspace;
+	u_int32_t		priv;
+};
+
+struct v4l2_window {
+	struct v4l2_rect	 w;
+	enum v4l2_field		 chromakey;
+	struct v4l2_clip	 __user *clips;
+	u_int32_t		 clipcount;
+	void __user		*bitmap;
+	u_int8_t		 global_alpha;
+};
+
+struct v4l2_vbi_format {
+	u_int32_t		sampling_rate;
+	u_int32_t		offset;
+	u_int32_t		samples_per_line;
+	u_int32_t		sample_format;
+	int32_t			start[2];
+	u_int32_t		count[2];
+	u_int32_t		flags;
+	u_int32_t		reserved[2];
+};
+
+struct v4l2_sliced_vbi_format {
+	u_int16_t	service_set;
+	u_int16_t	service_lines[2][24];
+	u_int32_t	io_size;
+	u_int32_t	reserved[2];
+};
+.Ed
+.Pp
+Command independet typedefs are:
+.Bd -literal
+typedef u_int64_t	v4l2_std_id;
+.Ed
+.El
+.Sh READ
+Video data can be accessed via the
+.Xr read 2
+system call.  The main iteration for userland applications occurs as follow:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+Open /dev/video* via the
+.Xr open 2
+system call.
+.It
+Read video data from the device via the
+.Xr read 2
+system call.  The video stream will be started autoamtically with the first
+read, which means there is no need to issue a VIDIOC_STREAMON command.
+The read will always return a consistent video frame, if no error occurs.
+.It
+Process video data and start over again with step 2.
+.It
+When finished stop the video stream via the
+.Xr close 2
+system call.
+.El
+.Sh MMAP
+Video data can be accessed via the
+.Xr mmap 2
+system call.  The main iteration for userland applications occurs as follow:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+Open /dev/video* via the
+.Xr open 2
+system call.
+.It
+Request desired number of buffers via the VIDIOC_REQBUFS ioctl command.
+The maximum number of available buffers is normally limited by the hardware
+driver.
+.It
+Initially queue the buffers via the VIDIOC_QBUF ioctl command.
+.It
+Start the video stream via the VIDIOC_STREAMON ioctl command.
+.It
+Dequeue one buffer via the VIDIOC_DQBUF ioctl command.  If the queue is empty
+the ioctl will block until a buffer gets queued or an error occurs
+(e.g. timeout).
+.It
+Requeue the buffer via the VIDIOC_QBUF ioctl command.
+.It
+Process video data and start over again with step 5.
+.It
+When finished stop the video stream via the VIDIOC_STREAMOFF ioctl command.
+.El
+.Sh FILES
+.Bl -tag -width /dev/video -compact
+.It Pa /dev/video
+.El
+.Sh SEE ALSO
+.Xr uvideo 4 ,
+.Xr ioctl 2
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Ox 4.4 .
