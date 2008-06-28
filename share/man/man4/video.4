@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.3 2008/06/28 17:59:11 jmc Exp $
+.\" $OpenBSD: video.4,v 1.4 2008/06/28 19:35:42 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -265,6 +265,10 @@ Request desired number of buffers via the VIDIOC_REQBUFS ioctl command.
 The maximum number of available buffers is normally limited by the hardware
 driver.
 .It
+Map the buffers via the
+.Xr mmap 2
+system call.
+.It
 Initially queue the buffers via the VIDIOC_QBUF ioctl command.
 .It
 Start the video stream via the VIDIOC_STREAMON ioctl command.
@@ -276,7 +280,7 @@ the ioctl will block until a buffer gets queued or an error occurs
 .It
 Requeue the buffer via the VIDIOC_QBUF ioctl command.
 .It
-Process video data and start over again with step 5.
+Process video data and start over again with step 6.
 .It
 When finished stop the video stream via the VIDIOC_STREAMOFF ioctl command.
 .El
