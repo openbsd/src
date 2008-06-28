@@ -1,11 +1,11 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.16 2008/06/12 20:42:00 todd Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.17 2008/06/28 21:48:30 mglocker Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.9 2008/06/12 20:39:29 todd Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.37 2008/06/10 07:12:24 mglocker Exp 
-.\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
+.\"	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.12 2008/06/28 21:46:05 mglocker Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.4 2008/06/16 08:18:39 todd Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June 12, 2008
+.Dd June 28, 2008
 .Dt MAKEDEV 8 hppa64
 .Os
 .Sh NAME
@@ -163,9 +163,6 @@ IEEE 1284 centronics printer, see
 .Pp
 .Sy USB devices
 .Bl -tag -width tenletters -compact
-.It Ar video*
-Video V4L devices, see
-.Xr video 4 .
 .El
 .Pp
 .Sy Special purpose devices
@@ -212,6 +209,9 @@ Network tunnel driver, see
 .It Ar uk*
 Unknown SCSI devices, see
 .Xr uk 4 .
+.It Ar video*
+Video V4L devices, see
+.Xr video 4 .
 .It Ar xfs*
 XFS filesystem node, see
 .Xr mount_xfs 8 .

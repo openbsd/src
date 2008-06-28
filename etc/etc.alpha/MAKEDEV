@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.37 2008/06/13 21:07:27 todd Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.39 2008/06/28 21:46:04 mglocker Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -66,7 +66,6 @@
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	usb*	Bus control devices used by usbd for attach/detach
-#	video*	Video V4L devices
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -89,6 +88,7 @@
 #	tun*	Network tunnel driver
 #	tuner*	Tuner devices
 #	uk*	Unknown SCSI devices
+#	video*	Video V4L devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -250,6 +250,11 @@ xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
+video*)
+	M video$U  c 44 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 uk*)
 	M uk$U c 33 $U 640 operator
 	;;
@@ -355,11 +360,6 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
 	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
-	;;
-
-video*)
-	M video$U  c 44 $U
-	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
 usb*)

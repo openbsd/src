@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.10 2008/06/13 21:07:28 todd Exp 
+#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.12 2008/06/28 21:46:05 mglocker Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -61,7 +61,6 @@
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
-#	video*	Video V4L devices
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -78,6 +77,7 @@
 #	uk*	Unknown SCSI devices
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
+#	video*	Video V4L devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -228,6 +228,11 @@ xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
+video*)
+	M video$U  c 77 $U
+	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
 systrace)
 	M systrace c 50 0 644
 	;;
@@ -306,11 +311,6 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
 	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
-	;;
-
-video*)
-	M video$U  c 77 $U
-	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
 uscanner*)
