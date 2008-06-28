@@ -1,6 +1,6 @@
 define(MACHINE,hppa)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.34 2008/06/14 23:09:05 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.35 2008/06/28 21:46:05 mglocker Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -59,7 +59,6 @@ _DEV(ulpt, 43)
 _DEV(urio, 44)
 _DEV(ttyU, 45)
 _DEV(uscan, 46)
-_DEV(vi, 33)
 _TITLE(spec)
 _DEV(bio, 37)
 _DEV(au, 35)
@@ -76,6 +75,7 @@ _DEV(ss, 14)
 _DEV(systrace, 34)
 _DEV(tun, 18)
 _DEV(uk, 15)
+_DEV(vi, 33)
 _DEV(xfs, 32)
 dnl
 divert(__mddivert)dnl

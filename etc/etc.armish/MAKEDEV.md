@@ -1,6 +1,6 @@
 define(MACHINE,armish)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.9 2008/06/14 23:09:05 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.10 2008/06/28 21:46:05 mglocker Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -66,7 +66,6 @@ _DEV(ulpt, 66)
 _DEV(urio, 67)
 _DEV(usb, 64)
 _DEV(uscan, 69)
-_DEV(vi, 38)
 _TITLE(spec)
 _DEV(apm, 34)
 _DEV(au, 36)
@@ -87,6 +86,7 @@ _DEV(uk, 28)
 _DEV(ss, 29)
 _DEV(systrace, 50)
 _DEV(tuner, 75)
+_DEV(vi, 38)
 _DEV(xfs, 51)
 dnl
 divert(__mddivert)dnl
