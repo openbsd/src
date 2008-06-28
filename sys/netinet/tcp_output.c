@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.83 2008/06/12 15:13:47 jsing Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.84 2008/06/28 13:26:38 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ send:
 		 * terminate it.
 		 */
 		*bp++ = TCPOPT_NOP;
-		*bp++ = TCPOPT_EOL;
+		*bp++ = TCPOPT_NOP;
 
 		optlen += TCPOLEN_SIGLEN;
 	}
