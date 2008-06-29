@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.3 2008/06/29 10:44:47 pyr Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.4 2008/06/29 14:08:00 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -78,8 +78,9 @@ group.byname, group.byid.
 Directories are used to describe the LDAP schema and help
 .Nm
 convert LDAP entries to
-.Xr passwd 5, master.passwd 5
-and 
+.Xr passwd 5 ,
+.Xr master.passwd 5 ,
+and
 .Xr group 5
 lines.
 A directory declaration is of the following form:
@@ -88,17 +89,20 @@ directory "some.host" {
 	# directives
 }
 .Ed
+.Pp
 Valid directives for directories are:
 .Bl -tag -width Ds
 .It Xo
 .Ic attribute Ar name Ic maps to Ar string
 .Xc
 Map the
-.Xr passwd 5, master.passwd 5
-or 
+.Xr passwd 5 ,
+.Xr master.passwd 5 ,
+or
 .Xr group 5
 attribute to the LDAP attribute name supplied.
 Valid attributes are:
+.Pp
 .Bl -tag -width groupmembers -offset indent -compact
 .It Ic uid
 .It Ic passwd
@@ -119,12 +123,12 @@ Valid attributes are:
 Use the supplied credentials to bind to the directory.
 .It Ic fixed attribute Ar attribute string
 Do not retrieve the specified attribute from LDAP but
-instead set it unconditionnaly to the supplied value for
+instead set it unconditionally to the supplied value for
 every entry.
 .It Ic group filter Ar string
-use the supplied LDAP filter to retrieve group entries.
+Use the supplied LDAP filter to retrieve group entries.
 .It Ic passwd filter Ar string
-use the supplied LDAP filter to retrieve password entries.
+Use the supplied LDAP filter to retrieve password entries.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ypldap.conf" -compact
