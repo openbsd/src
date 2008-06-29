@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2007/05/10 18:06:01 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.44 2008/06/29 01:27:42 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -941,8 +941,8 @@ swift_hotfix(sc)
 {
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
-	/* Turn off branch prediction */
-	pcr &= ~SWIFT_PCR_BF;
+	/* Turn on branch prediction */
+	pcr |= SWIFT_PCR_BF;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }
 
