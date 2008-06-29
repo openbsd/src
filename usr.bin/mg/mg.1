@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.39 2008/06/15 21:01:55 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.40 2008/06/29 08:28:01 sobrado Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 15 2008 $
+.Dd $Mdocdate: June 29 2008 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -345,7 +345,9 @@ Count the number of lines matching the supplied regular expression.
 Count the number of lines not matching the supplied regular expression.
 .It define-key
 Prompts the user for a named keymap (mode),
-a key, and an mg command, then creates a keybinding in the appropriate
+a key, and an
+.Nm
+command, then creates a keybinding in the appropriate
 map.
 .It delete-backward-char
 Delete backwards
@@ -395,18 +397,22 @@ Set characters to lower case, starting at the dot, and ending
 .Va n
 words away.
 .It emacs-version
-Return an mg version string.
+Return an
+.Nm
+version string.
 .It end-kbd-macro
 Stop defining a keyboard macro.
 .It end-of-buffer
 Move cursor to the end of the buffer.
 .It end-of-line
-Move cursor to the end of the line
+Move cursor to the end of the line.
 .It enlarge-window
 Enlarge the current window by shrinking either the window above
 or below it.
 .It eval-current-buffer
-Evaluate the current buffer as a series of mg commands.
+Evaluate the current buffer as a series of
+.Nm
+commands.
 Useful for testing
 .Nm
 startup files.
@@ -460,7 +466,7 @@ Move the cursor forward by the specified number of words.
 .It global-set-key
 Bind a key in the global (fundamental) key map.
 .It global-unset-key
-Unbind a key from the global (fundamental) key map; i.e. set it to 'rescan'
+Unbind a key from the global (fundamental) key map; i.e. set it to 'rescan'.
 .It global-wd-mode
 Toggle global working-directory mode.
 When enabled,
@@ -477,7 +483,7 @@ Prompts for one of (a)propos, (b)indings, des(c)ribe key briefly.
 .It insert
 Insert a string, mainly for use from macros.
 .It insert-buffer
-Insert the contents of another buffer at dot
+Insert the contents of another buffer at dot.
 .It insert-file
 Insert a file into the current buffer at dot.
 .It insert-with-wrap
@@ -584,7 +590,9 @@ current window.
 There are no errors, although the command does not do
 a lot if there is only 1 window.
 .It push-shell
-Suspend mg and switch to alternate screen, if available.
+Suspend
+.Nm
+and switch to alternate screen, if available.
 .It pwd
 Display current (global) working directory in the status area.
 .It query-replace
@@ -623,7 +631,7 @@ If given a positive argument (n), the display is repositioned to line
 n.
 If
 .Va n
-is negative, it is that line from the bottom
+is negative, it is that line from the bottom.
 .It redraw-display
 Refresh the display.
 Recomputes all window sizes in case something has changed.
@@ -631,7 +639,8 @@ Recomputes all window sizes in case something has changed.
 Save the contents of the current buffer if it has been changed,
 optionally creating a backup copy.
 .It save-buffers-kill-emacs
-Offer to save modified buffers and quit mg.
+Offer to save modified buffers and quit
+.Nm .
 .It save-some-buffers
 Look through the list of buffers, offering to save any buffer that
 has been changed.
@@ -651,7 +660,7 @@ lines without changing the cursor position.
 .It scroll-one-line-up
 Scroll the display
 .Va n
-lines up without moving the cursor position
+lines up without moving the cursor position.
 .It scroll-other-window
 Scroll the next window in the window list window forward
 .Va n
@@ -691,7 +700,7 @@ Built in modes include: fill, indent, overwrite, and notab.
 Prompt the user for a fill column.
 Used by auto-fill-mode.
 .It set-mark-command
-Sets the mark in the current window to the current dot location
+Sets the mark in the current window to the current dot location.
 .It set-prefix-string
 Sets the prefix string to be used by the 'prefix-region' command.
 .It shrink-window
@@ -708,7 +717,9 @@ A window smaller than 3 lines cannot be split.
 Start defining a keyboard macro.
 Macro definition is ended by invoking end-kbd-macro.
 .It suspend-emacs
-Suspend mg and switch back to alternate screen, if in use.
+Suspend
+.Nm
+and switch back to alternate screen, if in use.
 .It switch-to-buffer
 Prompt and switch to a new buffer in the current window.
 .It switch-to-buffer-other-window
@@ -735,7 +746,7 @@ C-u C-u C-f moves the cursor forward 16 characters.
 .It upcase-region
 Upper case region.
 Change all of the lower case characters in the region to
-upper case
+upper case.
 .It upcase-word
 Move the cursor forward by the specified number of words.
 As you move, convert any characters to upper case.
@@ -754,7 +765,9 @@ Update the remembered file name and clear the buffer
 changed flag.
 .It yank
 Yank text from kill-buffer.
-Unlike emacs, the mg kill buffer consists only
+Unlike emacs, the
+.Nm
+kill buffer consists only
 of the most recent kill.
 It is not a ring.
 .El
