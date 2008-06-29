@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.20 2008/06/15 00:10:47 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.21 2008/06/29 03:50:49 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -50,6 +50,7 @@
 #define	BIOS_LEN			0x20000
 
 extern int setperf_prio;
+extern int perflevel;
 
 /*
  * MSRs and bits used by PowerNow technology
@@ -85,6 +86,9 @@ extern int setperf_prio;
 #define PN8_ACPI_CTRL_TO_PLL(x)		(((x) >> 20) & 0x7f)
 #define PN8_ACPI_CTRL_TO_RVO(x)		(((x) >> 28) & 0x03)
 #define PN8_ACPI_CTRL_TO_IRT(x)		(((x) >> 30) & 0x03)
+
+#define PN8_PSS_CFID(x)			((x) & 0x3f)
+#define PN8_PSS_CVID(x)			(((x) >> 6) & 0x1f)
 
 #define WRITE_FIDVID(fid, vid, ctrl)	\
 	wrmsr(MSR_AMDK7_FIDVID_CTL,	\
@@ -138,8 +142,8 @@ struct k8pnow_cpu_state *k8pnow_current_state;
 
 int k8pnow_read_pending_wait(uint64_t *);
 int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
-int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
-    unsigned int);
+int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int, unsigned int);
+void k8pnow_transition(struct k8pnow_cpu_state *e, int);
 
 #if NACPICPU > 0
 int k8pnow_acpi_init(struct k8pnow_cpu_state *, uint64_t);
@@ -167,11 +171,24 @@ void
 k8_powernow_setperf(int level)
 {
 	unsigned int i;
+	struct k8pnow_cpu_state *cstate;
+
+	cstate = k8pnow_current_state;
+
+	i = ((level * cstate->n_states) + 1) / 101;
+	if (i >= cstate->n_states)
+		i = cstate->n_states - 1;
+
+	k8pnow_transition(cstate, i);
+}
+
+void
+k8pnow_transition(struct k8pnow_cpu_state *cstate, int level)
+{
 	uint64_t status;
 	int cfid, cvid, fid = 0, vid = 0;
 	int rvo;
 	u_int val;
-	struct k8pnow_cpu_state *cstate;
 
 	/*
 	 * We dont do a k8pnow_read_pending_wait here, need to ensure that the
@@ -183,14 +200,8 @@ k8_powernow_setperf(int level)
 	cfid = PN8_STA_CFID(status);
 	cvid = PN8_STA_CVID(status);
 
-	cstate = k8pnow_current_state;
-
-	i = ((level * cstate->n_states) + 1) / 101;
-	if (i >= cstate->n_states)
-		i = cstate->n_states - 1;
-
-	fid = cstate->state_table[i].fid;
-	vid = cstate->state_table[i].vid;
+	fid = cstate->state_table[level].fid;
+	vid = cstate->state_table[level].vid;
 
 	if (fid == cfid && vid == cvid)
 		return;
@@ -262,7 +273,7 @@ k8_powernow_setperf(int level)
 	}
 
 	if (cfid == fid || cvid == vid)
-		cpuspeed = cstate->state_table[i].freq;
+		cpuspeed = cstate->state_table[level].freq;
 }
 
 /*
@@ -310,7 +321,8 @@ k8pnow_acpi_states(struct k8pnow_cpu_state * cstate, struct acpicpu_pss * pss,
 	k = -1;
 
 	for (n = 0; n < cstate->n_states; n++) {
-		if (status == pss[n].pss_status)
+		if ((PN8_STA_CFID(status) == PN8_PSS_CFID(pss[n].pss_status)) &&
+		    (PN8_STA_CVID(status) == PN8_PSS_CVID(pss[n].pss_status)))
 			k = n;
 		ctrl = pss[n].pss_ctrl;
 		state.fid = PN8_ACPI_CTRL_TO_FID(ctrl);
@@ -334,24 +346,44 @@ k8pnow_acpi_states(struct k8pnow_cpu_state * cstate, struct acpicpu_pss * pss,
 void
 k8pnow_acpi_pss_changed(struct acpicpu_pss * pss, int npss)
 {
-	int curs;
-	struct k8pnow_cpu_state * cstate;
+	int curs, needtran;
+	struct k8pnow_cpu_state *cstate, *nstate;
 	uint32_t ctrl;
 	uint64_t status;
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cstate = k8pnow_current_state;
 
-	curs = k8pnow_acpi_states(cstate, pss, npss, status);
+	nstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
+	if (!nstate)
+		return;
+
+	curs = k8pnow_acpi_states(nstate, pss, npss, status);
+	needtran = 0;
+
+	if (curs < 0) {
+		/* Our current opearting state is not among the ones found the new PSS */
+		curs = ((perflevel * npss) + 1) / 101;
+		if (curs >= npss)
+			curs = npss - 1;
+		needtran = 1;
+	}
+
 	ctrl = pss[curs].pss_ctrl;
 
-	cstate->rvo = PN8_ACPI_CTRL_TO_RVO(ctrl);
-	cstate->vst = PN8_ACPI_CTRL_TO_VST(ctrl);
-	cstate->mvs = PN8_ACPI_CTRL_TO_MVS(ctrl);
-	cstate->pll = PN8_ACPI_CTRL_TO_PLL(ctrl);
-	cstate->irt = PN8_ACPI_CTRL_TO_IRT(ctrl);
-	cstate->low = 0;
-	cstate->n_states = npss;
+	nstate->rvo = PN8_ACPI_CTRL_TO_RVO(ctrl);
+	nstate->vst = PN8_ACPI_CTRL_TO_VST(ctrl);
+	nstate->mvs = PN8_ACPI_CTRL_TO_MVS(ctrl);
+	nstate->pll = PN8_ACPI_CTRL_TO_PLL(ctrl);
+	nstate->irt = PN8_ACPI_CTRL_TO_IRT(ctrl);
+	nstate->low = 0;
+	nstate->n_states = npss;
+
+	if (needtran)
+		k8pnow_transition(nstate, curs);
+
+	free(cstate, M_DEVBUF);
+	k8pnow_current_state = nstate;
 }
 
 int
