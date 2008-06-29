@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2006/08/17 08:32:30 damien Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2008/06/29 23:57:58 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,6 +51,7 @@ int
 main(void)
 {
 	output("rum-rt2573", rt2573, sizeof rt2573);
+	output("run-rt2870", rt2870, sizeof rt2870);
 
 	return 0;
 }
