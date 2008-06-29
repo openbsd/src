@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.18 2008/02/07 11:33:26 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.19 2008/06/29 16:00:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -234,9 +234,9 @@ struct oid {
 	(((_oid)->o_flags & OID_IFSET) &&				\
 	((_oid)->o_data == NULL) && ((_oid)->o_val == 0))
 
-#define OID(_mib...)		{ { _mib } }
-#define MIBDECL(_mib...)	{ { MIB_##_mib } }, #_mib
-#define MIB(_mib...)		{ { MIB_##_mib } }, NULL
+#define OID(...)		{ { __VA_ARGS__ } }
+#define MIBDECL(...)		{ { MIB_##__VA_ARGS__ } }, #__VA_ARGS__
+#define MIB(...)		{ { MIB_##__VA_ARGS__ } }, NULL
 #define MIBEND			{ { 0 } }, NULL
 
 /*

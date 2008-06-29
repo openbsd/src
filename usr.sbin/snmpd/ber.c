@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.14 2008/03/18 16:57:58 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.15 2008/06/29 16:00:22 ragge Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -53,9 +53,9 @@ static ssize_t	ber_getc(struct ber *b, u_char *c);
 static ssize_t	ber_read(struct ber *ber, void *buf, size_t len);
 
 #ifdef DEBUG
-#define DPRINTF(x...)	printf(x)
+#define DPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define DPRINTF(x...)	do { } while (0)
+#define DPRINTF(...)	do { } while (0)
 #endif
 
 struct ber_element *
