@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.265 2008/06/26 08:57:13 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.266 2008/06/29 07:31:52 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -900,6 +900,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Atlantis Land A02-UP1-W54
 		    Belkin F5D7050 ver 3
 		    Belkin F5D9050 ver 3
+		    Belkin F5D9050C
 		    Buffalo WLI-U2-SG54HP
 		    Buffalo WLI-U2-G54HP
 		    CNet CWD-854 ver F
