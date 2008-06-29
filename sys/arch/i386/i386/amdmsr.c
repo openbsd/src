@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.5 2008/06/19 09:58:40 mbalmer Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.6 2008/06/29 15:18:28 ragge Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -65,6 +65,7 @@ struct cfattach amdmsr_ca = {
 int
 amdmsr_probe(void)
 {
+#ifdef APERTURE
 	u_int64_t gld_msr_cap;
 	int family, model, step;
 
@@ -82,6 +83,7 @@ amdmsr_probe(void)
 				return 1;
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -121,7 +123,9 @@ amdmsropen(dev_t dev, int flags, int devtype, struct proc *p)
 int
 amdmsrclose(dev_t dev, int flags, int devtype, struct proc *p)
 {
+#ifdef APERTURE
 	amdmsr_open_cnt--;
+#endif
 	return 0;
 }
 
