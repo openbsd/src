@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.1 2008/06/12 22:26:01 canacar Exp $ */
+/* $Id: config.h,v 1.2 2008/06/29 08:42:15 mcbride Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -72,7 +72,7 @@
 typedef struct pfsync_state pf_state_t;
 typedef struct pfsync_state_host pf_state_host_t;
 typedef struct pfsync_state_peer pf_state_peer_t;
-#define COUNTER(c) ((((u_int64_t) c[0])<<32) + c[1])
+#define COUNTER(c) ((((u_int64_t) ntohl(c[0]))<<32) + ntohl(c[1]))
 #define pfs_ifname ifname
 #else
 typedef struct pf_state pf_state_t;

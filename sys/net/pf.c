@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.600 2008/06/26 03:56:20 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.601 2008/06/29 08:42:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -164,7 +164,7 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 			    struct pf_state_key **, struct pf_state_key **,
 			    struct pf_addr *, struct pf_addr *,
 			    u_int16_t, u_int16_t);
-void			 pf_detach_state(struct pf_state *, int);
+void			 pf_detach_state(struct pf_state *);
 struct pf_state_key	*pf_state_key_insert(struct pf_state_key *,
 			    struct pf_state *);
 int			 pf_state_key_setup(struct pf_pdesc *, struct pf_rule *,
@@ -172,8 +172,7 @@ int			 pf_state_key_setup(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_state_key **, struct pf_state_key **,
 			    struct pf_addr *, struct pf_addr *,
 			    u_int16_t, u_int16_t);
-void			 pf_state_key_detach(struct pf_state_key *,
-			    struct pf_state *, int);
+void			 pf_state_key_detach(struct pf_state *, int);
 u_int32_t		 pf_tcp_iss(struct pf_pdesc *);
 int			 pf_test_rule(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
@@ -248,8 +247,6 @@ int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
-void			 pf_keyins_err(struct pf_state *, struct pf_state_key *,
-			    struct pf_state_key *, char *, u_int8_t);
 int			 pf_check_congestion(struct ifqueue *);
 
 extern struct pool pfr_ktable_pl;
@@ -578,17 +575,6 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 	return (0);
 }
 
-void
-pf_keyins_err(struct pf_state *s, struct pf_state_key *skw,
-    struct pf_state_key *sks, char *side, u_int8_t direction)
-{
-	if (pf_status.debug >= PF_DEBUG_MISC) {
-		printf("pf: %s key insert failed: ", side, s->kif->pfik_name);
-		pf_print_state_parts(s, skw, sks);
-		printf("\n");
-	}
-}
-
 /* state table stuff */
 
 static __inline int
@@ -674,97 +660,99 @@ pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 	return (0);
 }
 
-void
-pf_attach_state(struct pf_state_key *sk, struct pf_state *s, int tail,
-    int where)
+int
+pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 {
 	struct pf_state_item	*si;
+	struct pf_state_key     *cur;
 
-	if (where == PF_SK_WIRE || where == PF_SK_BOTH)
-		s->key[PF_SK_WIRE] = sk;
-	if (where == PF_SK_STACK || where == PF_SK_BOTH)
-		s->key[PF_SK_STACK] = sk;
+	KASSERT(s->key[idx] == NULL);	/* XXX handle this? */
 
-	si = pool_get(&pf_state_item_pl, PR_NOWAIT);
+	if ((cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
+		/* key exists. check for same kif, if none, add to key */
+		TAILQ_FOREACH(si, &cur->states, entry)
+			if (si->s->kif == s->kif &&
+			    si->s->direction == s->direction) {
+				if (pf_status.debug >= PF_DEBUG_MISC) {
+					printf(
+					    "pf: %s key attach failed on %s: ",
+					    (idx == PF_SK_WIRE) ?
+					    "wire" : "stack",
+		     			    s->kif->pfik_name);
+					pf_print_state_parts(s,
+					    (idx == PF_SK_WIRE) ? sk : NULL,
+					    (idx == PF_SK_STACK) ? sk : NULL);
+					printf("\n");
+				}
+				pool_put(&pf_state_key_pl, sk);
+				return (-1);	/* collision! */
+			}
+		pool_put(&pf_state_key_pl, sk);
+		s->key[idx] = cur;
+	}
+	s->key[idx] = sk;
+
+	if ((si = pool_get(&pf_state_item_pl, PR_NOWAIT)) == NULL) {
+		pf_state_key_detach(s, idx);
+		return (-1);
+	}
 	si->s = s;
 
 	/* list is sorted, if-bound states before floating */
-	if (tail)
+	if (s->kif == pfi_all)
 		TAILQ_INSERT_TAIL(&sk->states, si, entry);
 	else
 		TAILQ_INSERT_HEAD(&sk->states, si, entry);
+	return (0);
 }
 
 void
-pf_detach_state(struct pf_state *s, int flags)
+pf_detach_state(struct pf_state *s)
 {
 	if (s->key[PF_SK_WIRE] == s->key[PF_SK_STACK])
 		s->key[PF_SK_WIRE] = NULL;
 
-	if (s->key[PF_SK_STACK] != NULL) {
-		pf_state_key_detach(s->key[PF_SK_STACK], s, flags);
-		s->key[PF_SK_STACK] = NULL;
-	}
+	if (s->key[PF_SK_STACK] != NULL)
+		pf_state_key_detach(s, PF_SK_STACK);
 
-	if (s->key[PF_SK_WIRE] != NULL) {
-		pf_state_key_detach(s->key[PF_SK_WIRE], s, flags);
-		s->key[PF_SK_WIRE] = NULL;
-	}
+	if (s->key[PF_SK_WIRE] != NULL)
+		pf_state_key_detach(s, PF_SK_WIRE);
 }
 
 void
-pf_state_key_detach(struct pf_state_key *sk, struct pf_state *s, int flags)
+pf_state_key_detach(struct pf_state *s, int idx)
 {
 	struct pf_state_item	*si;
 
-	for (si = TAILQ_FIRST(&sk->states); si->s != s;
-	    si = TAILQ_NEXT(si, entry));
+	si = TAILQ_FIRST(&s->key[idx]->states);
+	while (si && si->s != s)
+	    si = TAILQ_NEXT(si, entry);
 
-	TAILQ_REMOVE(&sk->states, si, entry);
-	pool_put(&pf_state_item_pl, si);
-
-	if (TAILQ_EMPTY(&sk->states)) {
-		if (!(flags & PF_DT_SKIP_STATETREE))
-			RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
-		if (sk->reverse)
-			sk->reverse->reverse = NULL;
-		pool_put(&pf_state_key_pl, sk);
+	if (si) {
+		TAILQ_REMOVE(&s->key[idx]->states, si, entry);
+		pool_put(&pf_state_item_pl, si);
 	}
+
+	if (TAILQ_EMPTY(&s->key[idx]->states)) {
+		RB_REMOVE(pf_state_tree, &pf_statetbl, s->key[idx]);
+		if (s->key[idx]->reverse)
+			s->key[idx]->reverse->reverse = NULL;
+		pool_put(&pf_state_key_pl, s->key[idx]);
+	}
+	s->key[idx] = NULL;
 }
 
 struct pf_state_key *
-pf_alloc_state_key(void)
+pf_alloc_state_key(int pool_flags)
 {
 	struct pf_state_key	*sk;
 
-	if ((sk = pool_get(&pf_state_key_pl, PR_NOWAIT | PR_ZERO)) == NULL)
+	if ((sk = pool_get(&pf_state_key_pl, pool_flags)) == NULL)
 		return (NULL);
 	TAILQ_INIT(&sk->states);
 
 	return (sk);
 }
-
-struct pf_state_key *
-pf_state_key_insert(struct pf_state_key *sk, struct pf_state *s)
-{
-	struct pf_state_key	*cur;
-	struct pf_state_item	*si;
-
-	if (sk && (cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
-		/* key exists. check for same kif, if none, add to key */
-		TAILQ_FOREACH(si, &cur->states, entry)
-			if (si->s->kif == s->kif &&
-			    si->s->direction == s->direction) {
-				/* collision! */
-				pf_detach_state(s, PF_DT_SKIP_STATETREE);
-				return (NULL);
-			}
-		pf_detach_state(s, PF_DT_SKIP_STATETREE);
-		return (cur);
-	}
-	return (sk);
-}
-
 
 int
 pf_state_key_setup(struct pf_pdesc *pd, struct pf_rule *nr,
@@ -775,7 +763,7 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_rule *nr,
 {
 	KASSERT((*skp == NULL && *nkp == NULL));
 
-	if ((*skp = pf_alloc_state_key()) == NULL)
+	if ((*skp = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL)
 		return (ENOMEM);
 
 	PF_ACPY(&(*skp)->addr[pd->sidx], saddr, pd->af);
@@ -786,8 +774,8 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_rule *nr,
 	(*skp)->af = pd->af;
 
 	if (nr != NULL) {
-		if ((*nkp = pf_alloc_state_key()) == NULL)
-			return (ENOMEM); /* cleanup handled in pf_test_rule() */
+		if ((*nkp = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL)
+			return (ENOMEM); /* caller must handle cleanup */
 
 		/* XXX maybe just bcopy and TAILQ_INIT(&(*nkp)->states) */
 		PF_ACPY(&(*nkp)->addr[0], &(*skp)->addr[0], pd->af);
@@ -814,27 +802,18 @@ int
 pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
     struct pf_state_key *sks, struct pf_state *s)
 {
-	struct pf_state_key	*nskw, *nsks;
-
 	s->kif = kif;
 
-	KASSERT((sks != NULL));
-	KASSERT((skw != NULL));
-
-	if ((nskw = pf_state_key_insert(skw, s)) == NULL) {
-		pf_keyins_err(s, skw, sks, "wire", s->direction);
+	if (pf_state_key_attach(skw, s, PF_SK_WIRE))
 		return (-1);
-	}
 
-	if (skw == sks) {
-		pf_attach_state(nskw, s, kif == pfi_all ? 1 : 0, PF_SK_BOTH);
-	} else {
-		if ((nsks = pf_state_key_insert(sks, s)) == NULL) {
-			pf_keyins_err(s, skw, sks, "stack", s->direction);
+	if (skw == sks)
+		s->key[PF_SK_STACK] = s->key[PF_SK_WIRE];
+	else {
+		if (pf_state_key_attach(sks, s, PF_SK_STACK)) {
+			pf_state_key_detach(s, PF_SK_WIRE);
 			return (-1);
 		}
-		pf_attach_state(nskw, s, kif == pfi_all ? 1 : 0, PF_SK_WIRE);
-		pf_attach_state(nsks, s, kif == pfi_all ? 1 : 0, PF_SK_STACK);
 	}
 
 	if (s->id == 0 && s->creatorid == 0) {
@@ -850,7 +829,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
 				printf(" (from sync)");
 			printf("\n");
 		}
-		pf_detach_state(s, 0);
+		pf_detach_state(s);
 		return (-1);
 	}
 	TAILQ_INSERT_TAIL(&state_list, s, entry_list);
@@ -1081,7 +1060,7 @@ pf_unlink_state(struct pf_state *cur)
 #endif
 	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
-	pf_detach_state(cur, 0);
+	pf_detach_state(cur);
 }
 
 /* callers should be at splsoftnet and hold the
@@ -3360,11 +3339,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	}
 
 	if (r->action == PF_DROP)
-		return (PF_DROP);
+		goto cleanup;
 
 	if (pf_tag_packet(m, tag, rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
-		return (PF_DROP);
+		goto cleanup;
 	}
 
 	if (!state_icmp && (r->keep_state || nr != NULL ||
@@ -3373,9 +3352,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		action = pf_create_state(r, nr, a, pd, nsn, skw, sks, nk, sk, m,
 		    off, sport, dport, &rewrite, kif, sm, tag, bproto_sum,
 		    bip_sum, hdrlen);
-		if (action == PF_DROP)
-			goto cleanup;
-		if (action != PF_PASS)
 			return (action);
 	}
 
@@ -3585,6 +3561,11 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 	return (PF_PASS);
 
 csfailed:
+	if (sk != NULL)
+		pool_put(&pf_state_key_pl, sk);
+	if (nk != NULL)
+		pool_put(&pf_state_key_pl, nk);
+
 	if (sn != NULL && sn->states == 0 && sn->expire == 0) {
 		RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
 		pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
@@ -4957,6 +4938,10 @@ pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
 	if ((*state)->key[PF_SK_WIRE] != (*state)->key[PF_SK_STACK]) {
 		struct pf_state_key *nk = (*state)->key[pd->didx];
 
+		KASSERT(nk);
+		KASSERT(pd);
+		KASSERT(pd->src);
+		KASSERT(pd->dst);
 		switch (pd->af) {
 #ifdef INET
 		case AF_INET:

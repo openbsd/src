@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.2 2008/06/13 23:47:17 canacar Exp $	 */
+/* $Id: pftop.c,v 1.3 2008/06/29 08:42:15 mcbride Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -425,11 +425,11 @@ sort_pkt_callback(const void *s1, const void *s2)
 int
 sort_age_callback(const void *s1, const void *s2)
 {
-	if (state_buf[* (u_int32_t *) s2].creation >
-	    state_buf[* (u_int32_t *) s1].creation)
+	if (ntohl(state_buf[* (u_int32_t *) s2].creation) >
+	    ntohl(state_buf[* (u_int32_t *) s1].creation))
 		return sortdir;
-	if (state_buf[* (u_int32_t *) s2].creation <
-	    state_buf[* (u_int32_t *) s1].creation)
+	if (ntohl(state_buf[* (u_int32_t *) s2].creation) <
+	    ntohl(state_buf[* (u_int32_t *) s1].creation))
 		return -sortdir;
 	return 0;
 }
@@ -437,11 +437,11 @@ sort_age_callback(const void *s1, const void *s2)
 int
 sort_exp_callback(const void *s1, const void *s2)
 {
-	if (state_buf[* (u_int32_t *) s2].expire >
-	    state_buf[* (u_int32_t *) s1].expire)
+	if (ntohl(state_buf[* (u_int32_t *) s2].expire) >
+	    ntohl(state_buf[* (u_int32_t *) s1].expire))
 		return sortdir;
-	if (state_buf[* (u_int32_t *) s2].expire <
-	    state_buf[* (u_int32_t *) s1].expire)
+	if (ntohl(state_buf[* (u_int32_t *) s2].expire) <
+	    ntohl(state_buf[* (u_int32_t *) s1].expire))
 		return -sortdir;
 	return 0;
 }
@@ -1041,8 +1041,8 @@ print_state(pf_state_t * s, struct sc_ent * ent)
 		print_fld_str(FLD_DIR, "In");
 
 	print_fld_state(FLD_STATE, s->proto, src->state, dst->state);
-	print_fld_age(FLD_AGE, s->creation);
-	print_fld_age(FLD_EXP, s->expire);
+	print_fld_age(FLD_AGE, ntohl(s->creation));
+	print_fld_age(FLD_EXP, ntohl(s->expire));
 #ifdef HAVE_INOUT_COUNT
 	{
 		u_int64_t sz = COUNTER(s->bytes[0]) + COUNTER(s->bytes[1]);
@@ -1050,14 +1050,14 @@ print_state(pf_state_t * s, struct sc_ent * ent)
 		print_fld_size(FLD_PKTS, COUNTER(s->packets[0]) +
 			       COUNTER(s->packets[1]));
 		print_fld_size(FLD_BYTES, sz);
-		print_fld_rate(FLD_SA, (s->creation > 0) ?
-			       ((double)sz/(double)s->creation) : -1);
+		print_fld_rate(FLD_SA, (s->creation) ?
+			       ((double)sz/ntohl((double)s->creation)) : -1);
 	}
 #else
 	print_fld_size(FLD_PKTS, s->packets);
 	print_fld_size(FLD_BYTES, s->bytes);
-	print_fld_rate(FLD_SA, (s->creation > 0) ?
-		       ((double)s->bytes/(double)s->creation) : -1);
+	print_fld_rate(FLD_SA, (s->creation) ?
+		       ((double)s->bytes/ntohl((double)s->creation)) : -1);
 
 #endif
 #ifdef HAVE_PFSYNC_STATE

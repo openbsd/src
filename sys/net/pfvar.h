@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.274 2008/06/11 02:46:35 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.275 2008/06/29 08:42:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -756,7 +756,7 @@ struct pf_state {
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
 	u_int32_t		 creation;
-	u_int32_t		 expire;
+	u_int32_t	 	 expire;
 	u_int32_t		 pfsync_time;
 	u_int16_t		 tag;
 	u_int8_t		 log;
@@ -829,50 +829,55 @@ struct pfsync_state {
 #define PFSYNC_FLAG_SRCNODE	0x04
 #define PFSYNC_FLAG_NATSRCNODE	0x08
 
-/* for copies to/from userland via pf_ioctl() */
-#define pf_state_peer_to_pfsync(s,d) do {	\
-	(d)->seqlo = (s)->seqlo;		\
-	(d)->seqhi = (s)->seqhi;		\
-	(d)->seqdiff = (s)->seqdiff;		\
-	(d)->max_win = (s)->max_win;		\
-	(d)->mss = (s)->mss;			\
+/* for copies to/from network byte order */
+/* ioctl interface also uses network byte order */
+#define pf_state_peer_hton(s,d) do {		\
+	(d)->seqlo = htonl((s)->seqlo);		\
+	(d)->seqhi = htonl((s)->seqhi);		\
+	(d)->seqdiff = htonl((s)->seqdiff);	\
+	(d)->max_win = htons((s)->max_win);	\
+	(d)->mss = htons((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
 	if ((s)->scrub) {						\
-		(d)->scrub.pfss_flags =					\
-		    (s)->scrub->pfss_flags & PFSS_TIMESTAMP;		\
+		(d)->scrub.pfss_flags = 				\
+		    htons((s)->scrub->pfss_flags & PFSS_TIMESTAMP);	\
 		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
-		(d)->scrub.pfss_ts_mod = (s)->scrub->pfss_ts_mod;	\
+		(d)->scrub.pfss_ts_mod = htonl((s)->scrub->pfss_ts_mod);\
 		(d)->scrub.scrub_flag = PFSYNC_SCRUB_FLAG_VALID;	\
 	}								\
 } while (0)
 
-#define pf_state_peer_from_pfsync(s,d) do {	\
-	(d)->seqlo = (s)->seqlo;		\
-	(d)->seqhi = (s)->seqhi;		\
-	(d)->seqdiff = (s)->seqdiff;		\
-	(d)->max_win = (s)->max_win;		\
+#define pf_state_peer_ntoh(s,d) do {		\
+	(d)->seqlo = ntohl((s)->seqlo);		\
+	(d)->seqhi = ntohl((s)->seqhi);		\
+	(d)->seqdiff = ntohl((s)->seqdiff);	\
+	(d)->max_win = ntohs((s)->max_win);	\
 	(d)->mss = ntohs((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
-	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID &&		\
+	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID && 	\
 	    (d)->scrub != NULL) {					\
 		(d)->scrub->pfss_flags =				\
 		    ntohs((s)->scrub.pfss_flags) & PFSS_TIMESTAMP;	\
 		(d)->scrub->pfss_ttl = (s)->scrub.pfss_ttl;		\
-		(d)->scrub->pfss_ts_mod = (s)->scrub.pfss_ts_mod;	\
+		(d)->scrub->pfss_ts_mod = ntohl((s)->scrub.pfss_ts_mod);\
 	}								\
 } while (0)
 
-#define pf_state_counter_to_pfsync(s,d) do {			\
-	d[0] = (s>>32)&0xffffffff;				\
-	d[1] = s&0xffffffff;					\
+#define pf_state_counter_hton(s,d) do {				\
+	d[0] = htonl((s>>32)&0xffffffff);			\
+	d[1] = htonl(s&0xffffffff);				\
 } while (0)
 
-#define pf_state_counter_from_pfsync(s)		\
+#define pf_state_counter_from_pfsync(s)				\
 	(((u_int64_t)(s[0])<<32) | (u_int64_t)(s[1]))
 
-
+#define pf_state_counter_ntoh(s,d) do {				\
+	d = ntohl(s[0]);					\
+	d = d<<32;						\
+	d += ntohl(s[1]);					\
+} while (0)
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
 
@@ -1678,8 +1683,8 @@ void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *);
 int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
 int	pf_socket_lookup(int, struct pf_pdesc *);
-struct pf_state_key *pf_alloc_state_key(void);
-void	pf_attach_state(struct pf_state_key *, struct pf_state *, int, int);
+struct pf_state_key *pf_alloc_state_key(int);
+int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,

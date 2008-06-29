@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.34 2008/06/17 05:03:29 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.35 2008/06/29 08:42:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -205,58 +205,18 @@ struct pfsyncreq {
 	int		 pfsyncr_authlevel;
 };
 
-
-/* for copies to/from network */
-#define pf_state_peer_hton(s,d) do {		\
-	(d)->seqlo = htonl((s)->seqlo);		\
-	(d)->seqhi = htonl((s)->seqhi);		\
-	(d)->seqdiff = htonl((s)->seqdiff);	\
-	(d)->max_win = htons((s)->max_win);	\
-	(d)->mss = htons((s)->mss);		\
-	(d)->state = (s)->state;		\
-	(d)->wscale = (s)->wscale;		\
-	if ((s)->scrub) {						\
-		(d)->scrub.pfss_flags = 				\
-		    htons((s)->scrub->pfss_flags & PFSS_TIMESTAMP);	\
-		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
-		(d)->scrub.pfss_ts_mod = htonl((s)->scrub->pfss_ts_mod);\
-		(d)->scrub.scrub_flag = PFSYNC_SCRUB_FLAG_VALID;	\
-	}								\
-} while (0)
-
-#define pf_state_peer_ntoh(s,d) do {		\
-	(d)->seqlo = ntohl((s)->seqlo);		\
-	(d)->seqhi = ntohl((s)->seqhi);		\
-	(d)->seqdiff = ntohl((s)->seqdiff);	\
-	(d)->max_win = ntohs((s)->max_win);	\
-	(d)->mss = ntohs((s)->mss);		\
-	(d)->state = (s)->state;		\
-	(d)->wscale = (s)->wscale;		\
-	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID && 	\
-	    (d)->scrub != NULL) {					\
-		(d)->scrub->pfss_flags =				\
-		    ntohs((s)->scrub.pfss_flags) & PFSS_TIMESTAMP;	\
-		(d)->scrub->pfss_ttl = (s)->scrub.pfss_ttl;		\
-		(d)->scrub->pfss_ts_mod = ntohl((s)->scrub.pfss_ts_mod);\
-	}								\
-} while (0)
-
-#define pf_state_counter_hton(s,d) do {				\
-	d[0] = htonl((s>>32)&0xffffffff);			\
-	d[1] = htonl(s&0xffffffff);				\
-} while (0)
-
-#define pf_state_counter_ntoh(s,d) do {				\
-	d = ntohl(s[0]);					\
-	d = d<<32;						\
-	d += ntohl(s[1]);					\
-} while (0)
-
 #ifdef _KERNEL
-void pfsync_input(struct mbuf *, ...);
-int pfsync_clear_states(u_int32_t, char *);
-int pfsync_pack_state(u_int8_t, struct pf_state *, int);
-int pfsync_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
+void			pfsync_input(struct mbuf *, ...);
+int			pfsync_clear_states(u_int32_t, char *);
+int			pfsync_pack_state(u_int8_t, struct pf_state *, int);
+int			pfsync_sysctl(int *, u_int,  void *, size_t *,
+			    void *, size_t);
+void			pfsync_state_export(struct pfsync_state *,
+			    struct pf_state *);
+
+#define	PFSYNC_SI_IOCTL		0x01
+#define	PFSYNC_SI_CKSUM		0x02
+int			pfsync_state_import(struct pfsync_state *, u_int8_t);
 
 #define pfsync_insert_state(st)	do {				\
 	if ((st->rule.ptr->rule_flag & PFRULE_NOSYNC) ||	\
