@@ -269,7 +269,7 @@ return SSH_AGENT_FAILURE.
 Protocol 2 keys may be removed with the following request:
 
 	byte			SSH2_AGENTC_REMOVE_IDENTITY
-	byte[n]			key_blob
+	string			key_blob
 
 Where "key_blob" is encoded as per RFC 4253 section 6.6 "Public Key
 Algorithms" for either of the supported key types: "ssh-dss" or
@@ -338,7 +338,7 @@ The agent will reply with the following message header:
 
 Followed by zero or more consecutive keys, encoded as:
 
-	byte[n]			key_blob
+	string			key_blob
 	string			key_comment
 
 Where "key_blob" is encoded as per RFC 4253 section 6.6 "Public Key
@@ -513,4 +513,4 @@ Locking and unlocking affects both protocol 1 and protocol 2 keys.
 	SSH_AGENT_CONSTRAIN_LIFETIME			1
 	SSH_AGENT_CONSTRAIN_CONFIRM			2
 
-$OpenBSD: PROTOCOL.agent,v 1.1 2008/06/28 14:08:30 djm Exp $
+$OpenBSD: PROTOCOL.agent,v 1.2 2008/06/29 08:30:29 djm Exp $
