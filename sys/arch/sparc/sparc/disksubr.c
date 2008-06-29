@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.75 2008/06/12 06:58:37 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.76 2008/06/29 20:05:22 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -257,7 +257,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	lp->d_flags = D_VENDOR;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
-	lp->d_secsize = 512;
+	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = sl->sl_nsectors;
 	lp->d_ntracks = sl->sl_ntracks;
 	lp->d_ncylinders = sl->sl_ncylinders;
@@ -402,7 +402,8 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 	u_short cksum, *sp1, *sp2;
 
 	/* Enforce preconditions */
-	if (lp->d_secsize != 512 || lp->d_nsectors == 0 || lp->d_ntracks == 0)
+	if (lp->d_secsize != DEV_BSIZE || lp->d_nsectors == 0 ||
+	    lp->d_ntracks == 0)
 		return (EINVAL);
 
 	/* Format conversion. */
