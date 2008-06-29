@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.h,v 1.12 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb_quirks.h,v 1.13 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: usb_quirks.h,v 1.20 2001/04/15 09:38:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
@@ -68,6 +68,8 @@ struct usbd_quirks {
 #define UQ_MS_BAD_CLASS		0x00008000
 	/* mouse sends an unknown leading byte. */
 #define UQ_MS_LEADING_BYTE	0x00010000
+	/* need to attach as 1.1 device if it is 2.0 */
+#define UQ_EHCI_NEEDTO_DISOWN	0x00020000
 };
 
 extern const struct usbd_quirks usbd_no_quirk;

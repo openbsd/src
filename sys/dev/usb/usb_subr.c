@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.68 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.69 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -349,6 +349,42 @@ void
 usbd_delay_ms(usbd_device_handle dev, u_int ms)
 {
 	usb_delay_ms(dev->bus, ms);
+}
+
+usbd_status
+usbd_port_disown_to_1_1(usbd_device_handle dev, int port, usb_port_status_t *ps)
+{
+	usb_device_request_t req;
+	usbd_status err;
+	int n;
+
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UHF_PORT_DISOWN_TO_1_1);
+	USETW(req.wIndex, port);
+	USETW(req.wLength, 0);
+	err = usbd_do_request(dev, &req, 0);
+	DPRINTF(("usbd_disown_to_1_1: port %d disown request done, error=%s\n",
+	    port, usbd_errstr(err)));
+	if (err)
+		return (err);
+	n = 10;
+	do {
+		/* Wait for device to recover from reset. */
+		usbd_delay_ms(dev, USB_PORT_RESET_DELAY);
+		err = usbd_get_port_status(dev, port, ps);
+		if (err) {
+			DPRINTF(("%s: get status failed %d\n", __func__, err));
+			return (err);
+		}
+		/* If the device disappeared, just give up. */
+		if (!(UGETW(ps->wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
+			return (USBD_NORMAL_COMPLETION);
+	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
+	if (n == 0)
+		return (USBD_TIMEOUT);
+
+	return (err);
 }
 
 usbd_status
@@ -1125,6 +1161,20 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		    "failed\n", addr));
 		usbd_remove_device(dev, up);
 		return (err);
+	}
+
+	/* send disown request to handover 2.0 to 1.1. */
+	if (dev->quirks->uq_flags & UQ_EHCI_NEEDTO_DISOWN) {
+		
+		/* only effective when the target device is on ehci */
+		if (dev->bus->usbrev == USBREV_2_0) {
+			DPRINTF(("%s: disown request issues to dev:%p on usb2.0 bus\n",
+				__func__, dev));
+			(void) usbd_port_disown_to_1_1(dev->myhub, port, &ps);
+			/* reset_port required to finish disown request */
+			(void) usbd_reset_port(dev->myhub, port, &ps);
+  			return (USBD_NORMAL_COMPLETION);
+		}
 	}
 
 	/* Assume 100mA bus powered for now. Changed when configured. */

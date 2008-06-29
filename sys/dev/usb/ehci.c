@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.83 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ehci.c,v 1.84 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1896,6 +1896,12 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			break;
 		case UHF_PORT_SUSPEND:
 			EOWRITE4(sc, port, v | EHCI_PS_SUSP);
+			break;
+		case UHF_PORT_DISOWN_TO_1_1:
+			/* enter to Port Reset State */
+			v &= ~EHCI_PS_PE;
+			EOWRITE4(sc, port, v | EHCI_PS_PR);
+			ehci_disown(sc, index, 0);
 			break;
 		case UHF_PORT_RESET:
 			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",

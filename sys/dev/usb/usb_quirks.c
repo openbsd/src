@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.42 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.43 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -158,7 +158,7 @@ const struct usbd_dev_quirk_entry {
 	u_int8_t bDeviceProtocol;
 	struct usbd_quirks quirks;
 } usb_dev_quirks[] = {
- /* currently this table is empty */
+ { UDCLASS_VIDEO, bANY,	bANY,	{ UQ_EHCI_NEEDTO_DISOWN }},
  { 0, 0, 0, { 0 } }
 };
 

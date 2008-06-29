@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.67 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.68 2008/06/29 10:04:15 yuo Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -3377,6 +3377,10 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			goto ret;
 		case UHF_PORT_POWER:
 			/* Pretend we turned on power */
+			err = USBD_NORMAL_COMPLETION;
+			goto ret;
+		case UHF_PORT_DISOWN_TO_1_1:
+			/* accept, but do nothing */
 			err = USBD_NORMAL_COMPLETION;
 			goto ret;
 		case UHF_C_PORT_CONNECTION:

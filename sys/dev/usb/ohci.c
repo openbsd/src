@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.86 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ohci.c,v 1.87 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2658,6 +2658,9 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			DPRINTFN(2,("ohci_root_ctrl_transfer: set port power "
 				    "%d\n", index));
 			OWRITE4(sc, port, UPS_PORT_POWER);
+			break;
+		case UHF_PORT_DISOWN_TO_1_1:
+			/* accept, but do nothing */
 			break;
 		default:
 			err = USBD_IOERROR;

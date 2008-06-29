@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.31 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb.h,v 1.32 2008/06/29 10:04:15 yuo Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -285,6 +285,7 @@ typedef struct {
 #define UHF_C_PORT_RESET	20
 #define UHF_PORT_TEST		21
 #define UHF_PORT_INDICATOR	22
+#define UHF_PORT_DISOWN_TO_1_1	30
 
 typedef struct {
 	uByte		bDescLength;
