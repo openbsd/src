@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.14 2008/06/10 04:30:17 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.15 2008/06/30 11:20:28 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -84,6 +84,7 @@ struct lii_softc {
 
 	bus_space_tag_t		sc_mmiot;
 	bus_space_handle_t	sc_mmioh;
+	bus_size_t		sc_mmios;
 
 	/*
 	 * We allocate a big chunk of DMA-safe memory for all data exchanges.
@@ -217,13 +218,13 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,  &sc->sc_mmiot, 
-	    &sc->sc_mmioh, NULL, NULL, 0)) {
-		printf(": failed to map mem space\n");
+	    &sc->sc_mmioh, NULL, &sc->sc_mmios, 0)) {
+		printf(": failed to map memory!\n");
 		return;
 	}
 
 	if (lii_reset(sc))
-		return;
+		goto unmap;
 
 	lii_spi_configure(sc);
 
@@ -233,25 +234,21 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_memread = lii_spi_read;
 
 	if (lii_read_macaddr(sc, sc->sc_ac.ac_enaddr))
-		return;
+		goto unmap;
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": failed to map interrupt\n");
-		/* XXX cleanup */
-		return;
+		printf(": failed to map interrupt!\n");
+		goto unmap;
 	}
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET,
 	    lii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf(": failed to establish interrupt\n");
-		/* XXX cleanup */
-		return;
+		printf(": failed to establish interrupt!\n");
+		goto unmap;
 	}
 
-	if (lii_alloc_rings(sc)) {
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		return;
-	}
+	if (lii_alloc_rings(sc))
+		goto deintr;
 
 	printf(": %s, address %s\n", pci_intr_string(sc->sc_pc, ih),
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
@@ -280,6 +277,14 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	return;
+
+deintr:
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+unmap:
+	bus_space_unmap(sc->sc_mmiot, sc->sc_mmioh, sc->sc_mmios);
+	return;
 }
 
 int
@@ -988,26 +993,26 @@ lii_alloc_rings(struct lii_softc *sc)
 
 	if (bus_dmamap_create(sc->sc_dmat, bs, 1, bs, (1<<30),
 	    BUS_DMA_NOWAIT, &sc->sc_ringmap) != 0) {
-		printf(": bus_dmamap_create failed\n");
+		printf(": failed to create DMA map!\n");
 		return 1;
 	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, bs, PAGE_SIZE, (1<<30),
 	    &sc->sc_ringseg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		printf(": bus_dmamem_alloc failed\n");
-		goto fail;
+		printf(": failed to allocate DMA memory!\n");
+		goto destroy;
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_ringseg, nsegs, bs,
 	    (caddr_t *)&sc->sc_ring, BUS_DMA_NOWAIT) != 0) {
-		printf(": bus_dmamem_map failed\n");
-		goto fail1;
+		printf(": failed to map DMA memory!\n");
+		goto free;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_ringmap, sc->sc_ring,
 	    bs, NULL, BUS_DMA_NOWAIT) != 0) {
-		printf(": bus_dmamap_load failed\n");
-		goto fail2;
+		printf(": failed to load DMA memory!\n");
+		goto unmap;
 	}
 
 	sc->sc_rxp = (void *)(sc->sc_ring + AT_RXD_PADDING);
@@ -1022,11 +1027,11 @@ lii_alloc_rings(struct lii_softc *sc)
 
 	return 0;
 
-fail2:
+unmap:
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_ring, bs);
-fail1:
+free:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_ringseg, nsegs);
-fail:
+destroy:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ringmap);
 	return 1;
 }
