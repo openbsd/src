@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1382 2008/06/21 21:15:20 brad Exp $
+$OpenBSD: pcidevs,v 1.1383 2008/06/30 22:46:20 fgsch Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ product O2MICRO OZ6836		0x6836	OZ6836/OZ6860 CardBus
 product O2MICRO OZ6872		0x6872	OZ68[17]2 CardBus
 product O2MICRO OZ6933		0x6933	OZ6933 CardBus
 product O2MICRO OZ6972		0x6972	OZ69[17]2 CardBus
-product O2MICRO OZ7110		0x7110	OZ711Mx CardBus
+product O2MICRO OZ7110		0x7110	OZ711Mx Misc
 product O2MICRO OZ7113		0x7113	OZ711EC1 SmartCardBus
 product O2MICRO OZ7114		0x7114	OZ711M1 CardBus
 product O2MICRO OZ7120		0x7120	OZ711MP1 SDHC
