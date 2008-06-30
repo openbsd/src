@@ -17,6 +17,7 @@
 ./etc/firmware/kue-license
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
+./etc/firmware/run-rt2870
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
@@ -1791,6 +1792,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slip.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/trunklacp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211.ph
@@ -2362,4 +2364,3 @@
 ./usr/sbin/wsfontload
 ./usr/sbin/ztsscale
 ./usr/sbin/zzz
-./usr/libdata/perl5/site_perl/arm-openbsd/net/trunklacp.ph

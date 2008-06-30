@@ -1125,6 +1125,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/slip.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/net/trunklacp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211.ph
@@ -2205,4 +2206,3 @@
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/vax-openbsd/net/trunklacp.ph

@@ -1770,6 +1770,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/slip.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/trunklacp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net80211
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net80211/ieee80211.ph
@@ -2295,4 +2296,3 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
-./usr/libdata/perl5/site_perl/m68k-openbsd/net/trunklacp.ph

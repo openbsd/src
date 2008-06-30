@@ -1,4 +1,3 @@
-./usr/sbin/rpc.statd
 ./altroot
 ./bin
 ./bin/[
@@ -1904,6 +1903,7 @@
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
+./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
 ./usr/sbin/rtsold

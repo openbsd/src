@@ -22,6 +22,7 @@
 ./etc/firmware/ral-rt2860
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
+./etc/firmware/run-rt2870
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/zd1211
@@ -1835,6 +1836,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slip.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/trunklacp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211.ph
@@ -2356,4 +2358,3 @@
 ./usr/mdec/boot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
-./usr/libdata/perl5/site_perl/arm-openbsd/net/trunklacp.ph

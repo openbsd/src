@@ -1726,6 +1726,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/slip.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/trunklacp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net80211
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net80211/ieee80211.ph
@@ -2294,4 +2295,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/net/trunklacp.ph
