@@ -44,8 +44,6 @@ drm_sg_cleanup(drm_sg_mem_t *entry)
 	if (entry) {
 		if (entry->mem)
 			drm_sg_dmamem_free(entry->mem);
-		if (entry->handle)
-			free((void *)entry->handle, M_DRM);
 		if (entry->busaddr)
 			free(entry->busaddr, M_DRM);
 		free(entry, M_DRM);
