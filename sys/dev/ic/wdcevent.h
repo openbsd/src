@@ -1,5 +1,4 @@
-/* $OpenBSD: wdcevent.h,v 1.4 2003/09/28 21:01:43 grange Exp $ */
-
+/*	$OpenBSD: wdcevent.h,v 1.5 2008/06/30 00:13:30 fgsch Exp $	*/
 /*
  * Copyright (c) 2001 Constantine Sapuntzakis
  *
@@ -44,6 +43,7 @@ enum wdcevent_type {
 
 #ifdef _KERNEL
 
+#ifdef WDC_DEBUG
 void wdc_log(struct channel_softc *chp, enum wdcevent_type type,
     unsigned int size, char  val[]);
 
@@ -117,6 +117,19 @@ static __inline void WDC_LOG_ATA_CMDEXT(struct channel_softc *chp,
 
 	wdc_log(chp, WDCEVENT_ATA_EXT, 9, record);
 }
+#else
+#define WDC_LOG_STATUS(chp, status)
+#define WDC_LOG_ERROR(chp, error)
+#define WDC_LOG_ATAPI_CMD(chp, drive, flags, len, cmd)
+#define WDC_LOG_ATAPI_DONE(chp, drive, flags, error)
+#define WDC_LOG_ATA_CMDSHORT(chp, cmd)
+#define WDC_LOG_ATA_CMDLONG(chp, head, precomp, cylinhi, cylinlo, \
+    sector, count, command)
+#define WDC_LOG_SET_DRIVE(chp, drive)
+#define WDC_LOG_REG(chp, reg, val)
+#define WDC_LOG_ATA_CMDEXT(chp, lba_hi1, lba_hi2, lba_mi1, lba_mi2, \
+    lba_lo1, lba_lo2, count1, count2, command)
+#endif /* WDC_DEBUG */
 
 #endif	/* _KERNEL */
 
