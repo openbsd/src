@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.62 2008/06/22 21:04:01 av Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.63 2008/06/30 23:35:39 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -149,6 +149,7 @@ struct cd_toc_entry *toc_buffer;
 char		*cdname;
 int		fd = -1;
 int		writeperm = 0;
+int		mediacap = 0;
 int		verbose = 1;
 int		msf = 1;
 const char	*cddb_host;
@@ -166,7 +167,7 @@ int		play_msf(int, int, int, int, int, int);
 int		play_track(int, int, int, int);
 int		get_vol(int *, int *);
 int		status(int *, int *, int *, int *);
-int		is_wave(int fd);
+int		is_wave(int);
 __dead void	tao(int argc, char **argv);
 int		play(char *arg);
 int		info(char *arg);
@@ -315,7 +316,7 @@ main(int argc, char **argv)
 int
 run(int cmd, char *arg)
 {
-	int l, r, rc, cap;
+	int l, r, rc;
 	static char newcdname[MAXPATHLEN];
 
 	switch (cmd) {
@@ -513,11 +514,11 @@ run(int cmd, char *arg)
 		if (!open_cd(cdname, 1))
 			return 0;
 
-		if (get_media_capabilities(&cap) == -1) {
+		if (get_media_capabilities(&mediacap) == -1) {
 			warnx("Can't determine media type");
 			return (0);
 		}
-		if ((cap & MEDIACAP_CDRW_WRITE) == 0) {
+		if ((mediacap & MEDIACAP_CDRW_WRITE) == 0) {
 			warnx("The media doesn't support blanking");
 			return (0);
 		}
@@ -576,23 +577,24 @@ tao(int argc, char **argv)
 	u_int blklen;
 	u_int ntracks = 0;
 	char type;
-	int ch, cap;
+	int ch, speed;
+	const char *errstr;
 
 	if (argc == 1)
 		usage();
 
 	SLIST_INIT(&tracks);
 	type = 'd';
+	speed = DRIVE_SPEED_OPTIMAL;
 	blklen = 2048;
 	while (argc > 1) {
 		tr = malloc(sizeof(struct track_info));
 		if (tr == NULL)
 			err(1, "tao");
 
-		tr->type = type;
 		optreset = 1;
 		optind = 1;
-		while ((ch = getopt(argc, argv, "ad")) != -1) {
+		while ((ch = getopt(argc, argv, "ads:")) != -1) {
 			switch (ch) {
 			case 'a':
 				type = 'a';
@@ -602,11 +604,30 @@ tao(int argc, char **argv)
 				type = 'd';
 				blklen = 2048;
 				break;
+			case 's':
+				if (strcmp(optarg, "auto") == 0) {
+					speed = DRIVE_SPEED_OPTIMAL;
+				} else if (strcmp(optarg, "max") == 0) {
+					speed = DRIVE_SPEED_MAX;
+				} else {
+					speed = (int)strtonum(optarg, 1,
+					    CD_MAX_SPEED, &errstr);
+					if (errstr != NULL) {
+						errx(1,
+						    "incorrect speed value");
+					}
+				}
+				break;
 			default:
 				usage();
 				/* NOTREACHED */
 			}
 		}
+
+		if (speed != DRIVE_SPEED_OPTIMAL && speed != DRIVE_SPEED_MAX)
+			tr->speed = CD_SPEED_TO_KBPS(speed, blklen);
+		else
+			tr->speed = speed;
 
 		tr->type = type;
 		tr->blklen = blklen;
@@ -637,9 +658,9 @@ tao(int argc, char **argv)
 
 	if (!open_cd(cdname, 1))
 		exit(1);
-	if (get_media_capabilities(&cap) == -1)
+	if (get_media_capabilities(&mediacap) == -1)
 		errx(1, "Can't determine media type");
-	if ((cap & MEDIACAP_TAO) == 0)
+	if ((mediacap & MEDIACAP_TAO) == 0)
 		errx(1, "The media can't be written in TAO mode");
 
 	get_disc_size(&availblk);

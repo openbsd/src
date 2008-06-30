@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.11 2008/06/22 21:04:01 av Exp $ */
+/* $OpenBSD: extern.h,v 1.12 2008/06/30 23:35:39 av Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -35,12 +35,30 @@ struct track_info {
 	char *file;
 	SLIST_ENTRY(track_info) track_list;
 	char type;
+	int   speed; 
 };
 SLIST_HEAD(track_head, track_info) tracks;
 
-/* Media capabilities */
-#define MEDIACAP_TAO			0x01
-#define MEDIACAP_CDRW_WRITE		0x02
+/* Media capabilities (bitmask) */
+#define MEDIACAP_TAO		0x01	/* Track-At-Once writing mode */
+#define MEDIACAP_CDRW_WRITE	0x02	/* media is CD-RW and can be written */
+#define MEDIACAP_CDRW_CAV	0x04	/* Constant Angular Velocity */
+
+/* Read/Write speed */
+#define DRIVE_SPEED_MAX		0xfffe
+#define DRIVE_SPEED_OPTIMAL	0xffff	/* automatically adjusted by drive */
+
+/* Convert writing speed into Kbytes/sec (1x - 75 frames per second) */
+#define CD_SPEED_TO_KBPS(x, blksz)	((x) * 75 * (blksz) / 1024)
+
+/*
+ * It's maximum possible speed for CD (audio track).
+ * Data tracks theoretically can be written at 436x but in practice I
+ * believe, 380x will be never reached.
+ * NOTE: this value must never be changed to a bigger value, it can cause
+ * DRIVE_SPEED_MAX overrun.
+ */
+#define CD_MAX_SPEED		380
 
 extern unsigned long 	entry2time(struct cd_toc_entry *);
 extern unsigned long 	entry2frames(struct cd_toc_entry *);

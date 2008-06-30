@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.21 2008/06/22 21:04:01 av Exp $ */
+/* $OpenBSD: mmc.c,v 1.22 2008/06/30 23:35:39 av Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -31,10 +31,13 @@
 #include "extern.h"
 
 extern int fd;
+extern int mediacap;
 extern char *cdname;
 
 #define SCSI_GET_CONFIGURATION		0x46
+#define SCSI_SET_SPEED			0xbb
 
+#define MMC_FEATURE_CDRW_CAV		0x27
 #define MMC_FEATURE_CD_TAO		0x2d
 #define MMC_FEATURE_CDRW_WRITE		0x37
 
@@ -79,7 +82,9 @@ get_media_capabilities(int *cap)
 			break;	/* partial feature descriptor */
 		feature = betoh16(*(u_int16_t *)(buf + i));
 
-		if (feature == MMC_FEATURE_CD_TAO)
+		if (feature == MMC_FEATURE_CDRW_CAV)
+			*cap |= MEDIACAP_CDRW_CAV;
+		else if (feature == MMC_FEATURE_CD_TAO)
 			*cap |= MEDIACAP_TAO;
 		else if (feature == MMC_FEATURE_CDRW_WRITE)
 			*cap |= MEDIACAP_CDRW_WRITE;
@@ -88,6 +93,28 @@ get_media_capabilities(int *cap)
 	}
 
 	return (0);
+}
+
+int
+set_speed(int wspeed)
+{
+	scsireq_t scr;
+	int r;
+
+	memset(&scr, 0, sizeof(scr));
+	scr.cmd[0] = SCSI_SET_SPEED;
+	scr.cmd[1] = (mediacap & MEDIACAP_CDRW_CAV) != 0;
+	*(u_int16_t *)(scr.cmd + 2) = htobe16(DRIVE_SPEED_OPTIMAL);
+	*(u_int16_t *)(scr.cmd + 4) = htobe16(wspeed);
+
+	scr.cmdlen = 12;
+	scr.datalen = 0;
+	scr.timeout = 120000;
+	scr.flags = SCCMD_ESCAPE;
+	scr.senselen = SENSEBUFLEN;
+
+	r = ioctl(fd, SCIOCCOMMAND, &scr);
+	return (r == 0 ? scr.retsts : -1);
 }
 
 int
@@ -210,6 +237,8 @@ writetao(struct track_head *thp)
 			warnx("mode select failed: %d", r);
 			return (r);
 		}
+
+		set_speed(tr->speed);
 		writetrack(tr, track);
 		synchronize_cache();
 	}

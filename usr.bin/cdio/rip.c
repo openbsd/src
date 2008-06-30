@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.7 2007/08/02 07:31:16 jakemsr Exp $	*/
+/*	$OpenBSD: rip.c,v 1.8 2008/06/30 23:35:39 av Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -80,9 +80,9 @@ static u_char wavehdr[44] = {
 	'd', 'a', 't', 'a', 0x0, 0x0, 0x0, 0x0
 };
 
-static int	write_sector(int fd, u_char *sec, u_int32_t secsize);
+static int	write_sector(int, u_char *, u_int32_t);
 
-int	read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize);
+int		read_data_sector(u_int32_t, u_char *, u_int32_t);
 
 struct track_info {
 	int fd;		/* descriptor of output file */
@@ -93,10 +93,10 @@ struct track_info {
 	u_int32_t end_lba;	/* starting address of the next track */
 };
 
-int	read_track(int fd, struct track_info *ti);
+int	read_track(int, struct track_info *);
 
-int	rip_next_track(struct track_info *info);
-int	play_next_track(struct track_info *info);
+int	rip_next_track(struct track_info *);
+int	play_next_track(struct track_info *);
 
 static int	rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 		    int (*next_track)(struct track_info *));
