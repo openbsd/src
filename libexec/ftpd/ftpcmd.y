@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.49 2006/04/21 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.50 2008/06/30 12:03:51 ragge Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.49 2006/04/21 17:42:50 deraadt Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.50 2008/06/30 12:03:51 ragge Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ static const char rcsid[] =
 #include <unistd.h>
 #include <netdb.h>
 
-#include "extern.h"
 #include "monitor.h"
+#include "extern.h"
 
 extern	union sockunion data_dest;
 extern	int logged_in;

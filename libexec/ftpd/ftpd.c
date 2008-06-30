@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.182 2008/04/13 00:22:16 djm Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.183 2008/06/30 12:03:51 ragge Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.182 2008/04/13 00:22:16 djm Exp $";
+    "$OpenBSD: ftpd.c,v 1.183 2008/06/30 12:03:51 ragge Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,8 +122,8 @@ static const char rcsid[] =
 #endif	/* TCPWRAPPERS */
 
 #include "pathnames.h"
-#include "extern.h"
 #include "monitor.h"
+#include "extern.h"
 
 extern	off_t restart_point;
 extern	char cbuf[];

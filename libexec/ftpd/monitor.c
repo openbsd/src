@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.17 2007/04/05 21:16:59 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.18 2008/06/30 12:03:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -34,8 +34,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "extern.h"
 #include "monitor.h"
+#include "extern.h"
 
 enum monitor_command {
 	CMD_USER,

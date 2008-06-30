@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.21 2006/04/02 21:38:56 djm Exp $	*/
+/*	$OpenBSD: popen.c,v 1.22 2008/06/30 12:03:51 ragge Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static const char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: popen.c,v 1.21 2006/04/02 21:38:56 djm Exp $";
+    "$OpenBSD: popen.c,v 1.22 2008/06/30 12:03:51 ragge Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ static const char rcsid[] =
 #include <unistd.h>
 
 #include <netinet/in.h>
+
+#include "monitor.h"
 #include "extern.h"
 
 /*

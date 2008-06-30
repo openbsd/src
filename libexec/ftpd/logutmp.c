@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.10 2005/05/27 04:27:27 millert Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.11 2008/06/30 12:03:51 ragge Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ttyent.h>
+
+#include "monitor.h"
 #include "extern.h"
 
 static int fd = -1;
