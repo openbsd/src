@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.42 2008/06/26 21:00:27 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.43 2008/06/30 16:48:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -991,6 +991,11 @@ uvideo_vs_free_sample(struct uvideo_softc *sc)
 		free(fb->buf, M_DEVBUF);
 		fb->buf = NULL;
 	}
+
+	if (sc->sc_mmap_buffer != NULL) {
+		free(sc->sc_mmap_buffer, M_DEVBUF);
+		sc->sc_mmap_buffer = NULL;
+	}
 }
 
 usbd_status
@@ -1832,7 +1837,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	struct uvideo_softc *sc = v;
 	int i, buf_size, buf_size_total;
 
-	DPRINTF(1, "%s: count=%d\n", __func__, rb->count);
+	DPRINTF(1, "%s: %s: count=%d\n", DEVNAME(sc), __func__, rb->count);
 
 	/* limit the buffers */
 	if (rb->count > UVIDEO_MAX_BUFFERS)
