@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1383 2008/06/30 22:46:20 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.1384 2008/07/01 22:48:15 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1718,6 +1718,9 @@
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P03	0x1100		/* GL24110P03 */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P02 */
+
+/* Globespan products */
+#define	PCI_PRODUCT_GLOBESPAN_G7370	0xd002		/* Pulsar G7370 ADSL */
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GEMTEK_PR103	0x1001		/* PR103 */

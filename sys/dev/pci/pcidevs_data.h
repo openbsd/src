@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1383 2008/06/30 22:46:20 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.1384 2008/07/01 22:48:15 sthen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4754,6 +4754,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
 	    "GL24110P02",
+	},
+	{
+	    PCI_VENDOR_GLOBESPAN, PCI_PRODUCT_GLOBESPAN_G7370,
+	    "Pulsar G7370 ADSL",
 	},
 	{
 	    PCI_VENDOR_GEMTEK, PCI_PRODUCT_GEMTEK_PR103,
