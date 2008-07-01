@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.82 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.83 2008/07/01 18:58:20 todd Exp $
 #
 # Diskless kernel config
 #
@@ -339,3 +339,4 @@ pseudo-device	bpfilter 1	# packet filter
 pseudo-device	ksyms	1	# kernel symbols device
 #pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	wsmux	2
+pseudo-device	bio	1	# ioctl multiplexing device

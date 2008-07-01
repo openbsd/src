@@ -1,9 +1,10 @@
-#	$OpenBSD: list,v 1.8 2006/06/26 03:42:39 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2008/07/01 18:58:20 todd Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					sbin/bioctl
 
 SRCDIRS	sys/arch/hppa/stand
 
