@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.43 2008/06/30 16:48:49 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.44 2008/07/01 11:02:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -294,7 +294,7 @@ uvideo_close(void *addr)
 }
 
 int
-uvideo_match(struct device * parent, void *match, void *aux)
+uvideo_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
@@ -314,7 +314,7 @@ uvideo_match(struct device * parent, void *match, void *aux)
 }
 
 void
-uvideo_attach(struct device * parent, struct device * self, void *aux)
+uvideo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *) self;
 	struct usb_attach_arg *uaa = aux;
@@ -366,7 +366,7 @@ uvideo_attach(struct device * parent, struct device * self, void *aux)
 }
 
 int
-uvideo_detach(struct device * self, int flags)
+uvideo_detach(struct device *self, int flags)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	int rv = 0;
@@ -385,10 +385,10 @@ uvideo_detach(struct device * self, int flags)
 }
 
 int
-uvideo_activate(struct device * self, enum devact act)
+uvideo_activate(struct device *self, enum devact act)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *) self;
-	int             rv = 0;
+	int rv = 0;
 
 	DPRINTF(1, "uvideo_activate: sc=%p\n", sc);
 
