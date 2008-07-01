@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.6 2008/06/29 15:18:28 ragge Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.7 2008/07/01 11:58:50 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -73,9 +73,10 @@ amdmsr_probe(void)
 	model  = (cpu_id >> 4) & 0xf;
 	step   = (cpu_id >> 0) & 0xf;
 
+	/* Check for AMD Geode LX CPU */
 	if (strcmp(cpu_vendor, "AuthenticAMD") == 0 && family == 0x5 &&
-	    (model > 0x8 || (model == 0x8 && step > 0x7))) {
-		/* Check for Geode LX CPU and graphics processor presence */
+	    model == 0x0a) {
+		/* Check for graphics processor presence */
 		gld_msr_cap = rdmsr(GLX_CPU_GLD_MSR_CAP);
 		if (((gld_msr_cap >> 8) & 0x0fff) == GLX_CPU_DID) {
 			gld_msr_cap = rdmsr(GLX_GP_GLD_MSR_CAP);
