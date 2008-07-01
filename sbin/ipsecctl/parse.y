@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.137 2008/07/01 14:08:39 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.138 2008/07/01 14:31:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1583,7 +1583,7 @@ host_v4(const char *s, int mask)
 struct ipsec_addr_wrap *
 host_dns(const char *s, int mask)
 {
-	struct ipsec_addr_wrap	*ipa = NULL;
+	struct ipsec_addr_wrap	*ipa = NULL, *head = NULL;
 	struct addrinfo		 hints, *res0, *res;
 	int			 error;
 	char			 hbuf[NI_MAXHOST];
@@ -1629,6 +1629,12 @@ host_dns(const char *s, int mask)
 		ipa->af = res->ai_family;
 		ipa->next = NULL;
 		ipa->tail = ipa;
+		if (head == NULL)
+			head = ipa;
+		else {
+			head->tail->next = ipa;
+			head->tail = ipa;
+		}
 
 		/*
 		 * XXX for now, no netmask support for IPv6.
@@ -1642,11 +1648,10 @@ host_dns(const char *s, int mask)
 			if (mask != -1)
 				err(1, "host_dns: cannot apply netmask "
 				    "on non-IPv4 address");
-		break;
 	}
 	freeaddrinfo(res0);
 
-	return (ipa);
+	return (head);
 }
 
 struct ipsec_addr_wrap *
