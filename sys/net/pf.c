@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.602 2008/07/01 12:56:19 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.603 2008/07/01 13:07:02 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3350,6 +3350,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		action = pf_create_state(r, nr, a, pd, nsn, skw, sks, nk, sk, m,
 		    off, sport, dport, &rewrite, kif, sm, tag, bproto_sum,
 		    bip_sum, hdrlen);
+		if (action != PF_PASS)
 			return (action);
 	}
 
