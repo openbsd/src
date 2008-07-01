@@ -1,13 +1,13 @@
 TO = "{ 2.2.2.0/24, 3.3.3.0/24, 4.4.4.0/24 }"
-t IPsec-1.1.1.1-2.2.2.0/24
-C rmv [Phase 2]:Connections=IPsec-1.1.1.1-2.2.2.0/24
-C rms [IPsec-1.1.1.1-2.2.2.0/24]
-C rms [qm-1.1.1.1-2.2.2.0/24]
-t IPsec-1.1.1.1-3.3.3.0/24
-C rmv [Phase 2]:Connections=IPsec-1.1.1.1-3.3.3.0/24
-C rms [IPsec-1.1.1.1-3.3.3.0/24]
-C rms [qm-1.1.1.1-3.3.3.0/24]
-t IPsec-1.1.1.1-4.4.4.0/24
-C rmv [Phase 2]:Connections=IPsec-1.1.1.1-4.4.4.0/24
-C rms [IPsec-1.1.1.1-4.4.4.0/24]
-C rms [qm-1.1.1.1-4.4.4.0/24]
+t from-1.1.1.1-to-2.2.2.0/24
+C rmv [Phase 2]:Connections=from-1.1.1.1-to-2.2.2.0/24
+C rms [from-1.1.1.1-to-2.2.2.0/24]
+C rms [phase2-from-1.1.1.1-to-2.2.2.0/24]
+t from-1.1.1.1-to-3.3.3.0/24
+C rmv [Phase 2]:Connections=from-1.1.1.1-to-3.3.3.0/24
+C rms [from-1.1.1.1-to-3.3.3.0/24]
+C rms [phase2-from-1.1.1.1-to-3.3.3.0/24]
+t from-1.1.1.1-to-4.4.4.0/24
+C rmv [Phase 2]:Connections=from-1.1.1.1-to-4.4.4.0/24
+C rms [from-1.1.1.1-to-4.4.4.0/24]
+C rms [phase2-from-1.1.1.1-to-4.4.4.0/24]

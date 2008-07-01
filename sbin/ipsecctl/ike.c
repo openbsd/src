@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.63 2008/02/22 23:51:31 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.64 2008/07/01 15:00:53 bluhm Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -79,30 +79,21 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 static void
 ike_section_peer(struct ipsec_rule *r, FILE *fd)
 {
-	if (r->peer) {
-		fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", r->peer->name,
+	if (r->peer)
+		fprintf(fd, SET "[Phase 1]:%s=%s force\n", r->peer->name,
+		    r->p1name);
+	else
+		fprintf(fd, SET "[Phase 1]:Default=%s force\n", r->p1name);
+	fprintf(fd, SET "[%s]:Phase=1 force\n", r->p1name);
+	if (r->peer)
+		fprintf(fd, SET "[%s]:Address=%s force\n", r->p1name,
 		    r->peer->name);
-		fprintf(fd, SET "[peer-%s]:Phase=1 force\n", r->peer->name);
-		fprintf(fd, SET "[peer-%s]:Address=%s force\n", r->peer->name,
-		    r->peer->name);
-		if (r->local)
-			fprintf(fd, SET "[peer-%s]:Local-address=%s force\n",
-			    r->peer->name, r->local->name);
-		if (r->ikeauth->type == IKE_AUTH_PSK)
-			fprintf(fd, SET "[peer-%s]:Authentication=%s force\n",
-			    r->peer->name, r->ikeauth->string);
-	} else {
-		fprintf(fd, SET "[Phase 1]:Default=peer-default force\n");
-		fprintf(fd, SET "[peer-default]:Phase=1 force\n");
-		if (r->local)
-			fprintf(fd, SET
-			    "[peer-default]:Local-address=%s force\n",
-			    r->local->name);
-		if (r->ikeauth->type == IKE_AUTH_PSK)
-			fprintf(fd, SET
-			    "[peer-default]:Authentication=%s force\n",
-			    r->ikeauth->string);
-	}
+	if (r->local)
+		fprintf(fd, SET "[%s]:Local-address=%s force\n", r->p1name,
+		    r->local->name);
+	if (r->ikeauth->type == IKE_AUTH_PSK)
+		fprintf(fd, SET "[%s]:Authentication=%s force\n", r->p1name,
+		    r->ikeauth->string);
 }
 
 static void
@@ -120,69 +111,44 @@ ike_section_ids(struct ipsec_rule *r, FILE *fd)
 			err(1, "ike_section_ids: strdup");
 	}
 	if (r->auth->srcid) {
-		if (r->peer)
-			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
-			    r->peer->name, r->auth->srcid);
-		else
-			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
-			    r->auth->srcid);
-
-		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", r->auth->srcid,
+		fprintf(fd, SET "[%s]:ID=id-%s force\n", r->p1name,
+		    r->auth->srcid);
+		fprintf(fd, SET "[id-%s]:ID-type=%s force\n", r->auth->srcid,
 		    ike_id_types[r->auth->srcid_type]);
-		fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->auth->srcid,
+		fprintf(fd, SET "[id-%s]:Name=%s force\n", r->auth->srcid,
 		    r->auth->srcid);
 	}
 	if (r->auth->dstid) {
-		if (r->peer) {
-			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
-			    r->peer->name, r->peer->name);
-			fprintf(fd, SET "[%s-ID]:ID-type=%s force\n",
-			    r->peer->name, ike_id_types[r->auth->dstid_type]);
-			fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->peer->name,
-			    r->auth->dstid);
-		} else {
-			fprintf(fd, SET
-			    "[peer-default]:Remote-ID=default-ID force\n");
-			fprintf(fd, SET "[default-ID]:ID-type=%s force\n",
-			    ike_id_types[r->auth->dstid_type]);
-			fprintf(fd, SET "[default-ID]:Name=%s force\n",
-			    r->auth->dstid);
-		}
+		fprintf(fd, SET "[%s]:Remote-ID=id-%s force\n", r->p1name,
+		    r->auth->dstid);
+		fprintf(fd, SET "[id-%s]:ID-type=%s force\n", r->auth->dstid,
+		    ike_id_types[r->auth->dstid_type]);
+		fprintf(fd, SET "[id-%s]:Name=%s force\n", r->auth->dstid,
+		    r->auth->dstid);
 	}
 }
 
 static void
 ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 {
-	fprintf(fd, SET "[IPsec-%s]:Phase=2 force\n", r->p2name);
-
-	if (r->peer)
-		fprintf(fd, SET "[IPsec-%s]:ISAKMP-peer=peer-%s force\n",
-		    r->p2name, r->peer->name);
-	else
-		fprintf(fd, SET
-		    "[IPsec-%s]:ISAKMP-peer=peer-default force\n", r->p2name);
-
-	fprintf(fd, SET "[IPsec-%s]:Configuration=qm-%s force\n", r->p2name,
+	fprintf(fd, SET "[%s]:Phase=2 force\n", r->p2name);
+	fprintf(fd, SET "[%s]:ISAKMP-peer=%s force\n", r->p2name, r->p1name);
+	fprintf(fd, SET "[%s]:Configuration=phase2-%s force\n", r->p2name,
 	    r->p2name);
-	fprintf(fd, SET "[IPsec-%s]:Local-ID=lid-%s force\n", r->p2name,
-	    r->p2lid);
-	fprintf(fd, SET "[IPsec-%s]:Remote-ID=rid-%s force\n", r->p2name,
-	    r->p2rid);
+	fprintf(fd, SET "[%s]:Local-ID=%s force\n", r->p2name, r->p2lid);
+	fprintf(fd, SET "[%s]:Remote-ID=%s force\n", r->p2name, r->p2rid);
 
 	if (r->tag)
-		fprintf(fd, SET "[IPsec-%s]:PF-Tag=%s force\n", r->p2name,
-		    r->tag);
+		fprintf(fd, SET "[%s]:PF-Tag=%s force\n", r->p2name, r->tag);
 }
 
 static int
 ike_section_p2(struct ipsec_rule *r, FILE *fd)
 {
-	char	*tag, *exchange_type, *sprefix;
+	char	*exchange_type, *sprefix;
 
 	switch (r->p2ie) {
 	case IKE_QM:
-		tag = "qm";
 		exchange_type = "QUICK_MODE";
 		sprefix = "QM";
 		break;
@@ -191,9 +157,9 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	}
 
-	fprintf(fd, SET "[%s-%s]:EXCHANGE_TYPE=%s force\n", tag, r->p2name,
+	fprintf(fd, SET "[phase2-%s]:EXCHANGE_TYPE=%s force\n", r->p2name,
 	    exchange_type);
-	fprintf(fd, SET "[%s-%s]:Suites=%s-", tag, r->p2name, sprefix);
+	fprintf(fd, SET "[phase2-%s]:Suites=%s-", r->p2name, sprefix);
 
 	switch (r->satype) {
 	case IPSEC_ESP:
@@ -334,15 +300,13 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 static int
 ike_section_p1(struct ipsec_rule *r, FILE *fd)
 {
-	char *tag, *exchange_type;
+	char *exchange_type;
 
 	switch (r->p1ie) {
 	case IKE_MM:
-		tag = "mm";
 		exchange_type = "ID_PROT";
 		break;
 	case IKE_AM:
-		tag = "am";
 		exchange_type = "AGGRESSIVE";
 		break;
 	default:
@@ -350,19 +314,11 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	}
 
-	if (r->peer) {
-		fprintf(fd, SET "[peer-%s]:Configuration=%s-%s force\n",
-		    r->peer->name, tag, r->peer->name);
-		fprintf(fd, SET "[%s-%s]:EXCHANGE_TYPE=%s force\n",
-		    tag, r->peer->name, exchange_type);
-		fprintf(fd, ADD "[%s-%s]:Transforms=", tag, r->peer->name);
-	} else {
-		fprintf(fd, SET
-		    "[peer-default]:Configuration=%s-default force\n", tag);
-		fprintf(fd, SET "[%s-default]:EXCHANGE_TYPE=%s force\n",
-		    tag, exchange_type);
-		fprintf(fd, ADD "[%s-default]:Transforms=", tag);
-	}
+	fprintf(fd, SET "[%s]:Configuration=phase1-%s force\n", r->p1name,
+	    r->p1name);
+	fprintf(fd, SET "[phase1-%s]:EXCHANGE_TYPE=%s force\n", r->p1name,
+	    exchange_type);
+	fprintf(fd, ADD "[phase1-%s]:Transforms=", r->p1name);
 
 	if (r->p1xfs && r->p1xfs->encxf) {
 		switch (r->p1xfs->encxf->id) {
@@ -497,19 +453,19 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
-		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
+		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
 		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[lid-%s]:Network=%s force\n", r->p2lid,
+		fprintf(fd, SET "[%s]:Network=%s force\n", r->p2lid,
 		    network);
-		fprintf(fd, SET "[lid-%s]:Netmask=%s force\n", r->p2lid, mask);
+		fprintf(fd, SET "[%s]:Netmask=%s force\n", r->p2lid, mask);
 
 		free(network);
 	} else {
-		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR force\n",
+		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
 		if ((p = strrchr(src->name, '/')) != NULL)
 			*p = '\0';
-		fprintf(fd, SET "[lid-%s]:Address=%s force\n", r->p2lid,
+		fprintf(fd, SET "[%s]:Address=%s force\n", r->p2lid,
 		    src->name);
 	}
 	if (dst->netaddress) {
@@ -539,32 +495,32 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
-		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
+		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
 		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[rid-%s]:Network=%s force\n", r->p2rid,
+		fprintf(fd, SET "[%s]:Network=%s force\n", r->p2rid,
 		    network);
-		fprintf(fd, SET "[rid-%s]:Netmask=%s force\n", r->p2rid, mask);
+		fprintf(fd, SET "[%s]:Netmask=%s force\n", r->p2rid, mask);
 
 		free(network);
 	} else {
-		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR force\n",
+		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
 		if ((p = strrchr(dst->name, '/')) != NULL)
 			*p = '\0';
-		fprintf(fd, SET "[rid-%s]:Address=%s force\n", r->p2rid,
+		fprintf(fd, SET "[%s]:Address=%s force\n", r->p2rid,
 		    dst->name);
 	}
 	if (r->proto) {
-		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n",
+		fprintf(fd, SET "[%s]:Protocol=%d force\n",
 		    r->p2lid, r->proto);
-		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n",
+		fprintf(fd, SET "[%s]:Protocol=%d force\n",
 		    r->p2rid, r->proto);
 	}
 	if (r->sport)
-		fprintf(fd, SET "[lid-%s]:Port=%d force\n", r->p2lid,
+		fprintf(fd, SET "[%s]:Port=%d force\n", r->p2lid,
 		    ntohs(r->sport));
 	if (r->dport)
-		fprintf(fd, SET "[rid-%s]:Port=%d force\n", r->p2rid,
+		fprintf(fd, SET "[%s]:Port=%d force\n", r->p2rid,
 		    ntohs(r->dport));
 }
 
@@ -574,10 +530,10 @@ ike_connect(struct ipsec_rule *r, FILE *fd)
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
-		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s\n", r->p2name);
+		fprintf(fd, ADD "[Phase 2]:Connections=%s\n", r->p2name);
 		break;
 	case IKE_PASSIVE:
-		fprintf(fd, ADD "[Phase 2]:Passive-Connections=IPsec-%s\n",
+		fprintf(fd, ADD "[Phase 2]:Passive-Connections=%s\n",
 		    r->p2name);
 		break;
 	default:
@@ -615,20 +571,19 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
-		fprintf(fd, "t IPsec-%s\n", r->p2name);
+		fprintf(fd, "t %s\n", r->p2name);
 		break;
 	case IKE_PASSIVE:
 		fprintf(fd, DELETE "[Phase 2]\n");
-		fprintf(fd, "t IPsec-%s\n", r->p2name);
+		fprintf(fd, "t %s\n", r->p2name);
 		break;
 	default:
 		return (-1);
 	}
 
 	if (r->peer) {
-		fprintf(fd, DELETE "[peer-%s]\n", r->peer->name);
-		fprintf(fd, DELETE "[mm-%s]\n", r->peer->name);
-		fprintf(fd, DELETE "[am-%s]\n", r->peer->name);
+		fprintf(fd, DELETE "[%s]\n", r->p1name);
+		fprintf(fd, DELETE "[phase1-%s]\n", r->p1name);
 	}
 	if (r->auth) {
 		if (r->auth->srcid)
@@ -636,26 +591,26 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 		if (r->auth->dstid)
 			fprintf(fd, DELETE "[%s-ID]\n", r->auth->dstid);
 	}
-	fprintf(fd, DELETE "[IPsec-%s]\n", r->p2name);
-	fprintf(fd, DELETE "[qm-%s]\n", r->p2name);
-	fprintf(fd, DELETE "[lid-%s]\n", r->p2lid);
-	fprintf(fd, DELETE "[rid-%s]\n", r->p2rid);
+	fprintf(fd, DELETE "[%s]\n", r->p2name);
+	fprintf(fd, DELETE "[phase2-%s]\n", r->p2name);
+	fprintf(fd, DELETE "[%s]\n", r->p2lid);
+	fprintf(fd, DELETE "[%s]\n", r->p2rid);
 #else
-	fprintf(fd, "t IPsec-%s\n", r->p2name);
+	fprintf(fd, "t %s\n", r->p2name);
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
-		fprintf(fd, RMV "[Phase 2]:Connections=IPsec-%s\n", r->p2name);
+		fprintf(fd, RMV "[Phase 2]:Connections=%s\n", r->p2name);
 		break;
 	case IKE_PASSIVE:
-		fprintf(fd, RMV "[Phase 2]:Passive-Connections=IPsec-%s\n",
+		fprintf(fd, RMV "[Phase 2]:Passive-Connections=%s\n",
 		    r->p2name);
 		break;
 	default:
 		return (-1);
 	}
-	fprintf(fd, DELETE "[IPsec-%s]\n", r->p2name);
-	fprintf(fd, DELETE "[qm-%s]\n", r->p2name);
+	fprintf(fd, DELETE "[%s]\n", r->p2name);
+	fprintf(fd, DELETE "[phase2-%s]\n", r->p2name);
 #endif
 
 	return (0);
@@ -664,32 +619,42 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 static void
 ike_setup_ids(struct ipsec_rule *r)
 {
-	if (r->proto) {
-		if (asprintf(&r->p2lid, "%s:%d-%d", r->src->name,
-		     ntohs(r->sport), r->proto) == -1)
+	char sproto[10], ssport[10], sdport[10];
+
+	/* phase 1 name is peer and local address */
+	if (r->peer) {
+		if (r->local) {
+			/* peer-dstaddr-local-srcaddr */
+			if (asprintf(&r->p1name, "peer-%s-local-%s",
+			    r->peer->name, r->local->name) == -1)
+				err(1, "ike_setup_ids");
+		} else
+			/* peer-dstaddr */
+			if (asprintf(&r->p1name, "peer-%s",
+			    r->peer->name) == -1)
+				err(1, "ike_setup_ids");
+	} else
+		if ((r->p1name = strdup("peer-default")) == NULL)
 			err(1, "ike_setup_ids");
-		if (asprintf(&r->p2rid, "%s:%d-%d", r->dst->name,
-		     ntohs(r->dport), r->proto) == -1)
-			err(1, "ike_setup_ids");
-	} else {
-		if (r->sport) {
-			if (asprintf(&r->p2lid, "%s:%d", r->src->name,
-			     ntohs(r->sport)) == -1)
-				err(1, "ike_setup_ids");
-		} else {
-			if ((r->p2lid = strdup(r->src->name)) == NULL)
-				err(1, "ike_setup_ids");
-		}
-		if (r->dport) {
-			if (asprintf(&r->p2rid, "%s:%d", r->dst->name,
-			     ntohs(r->dport)) == -1)
-				err(1, "ike_setup_ids");
-		} else {
-			if ((r->p2rid = strdup(r->dst->name)) == NULL)
-				err(1, "ike_setup_ids");
-		}
-	}
-	if (asprintf(&r->p2name, "%s-%s", r->p2lid, r->p2rid) == -1)
+
+	/* Phase 2 name is from and to network, protocol, port*/
+	sproto[0] = ssport[0] = sdport[0] = 0;
+	if (r->proto)
+		snprintf(sproto, sizeof sproto, "=%u", r->proto);
+	if (r->sport)
+		snprintf(ssport, sizeof ssport, ":%u", ntohs(r->sport));
+	if (r->dport)
+		snprintf(sdport, sizeof sdport, ":%u", ntohs(r->dport));
+	/* from-network/masklen=proto:port */
+	if (asprintf(&r->p2lid, "from-%s%s%s", r->src->name, sproto, ssport)
+	    == -1)
+		err(1, "ike_setup_ids");
+	/* to-network/masklen=proto:port */
+	if (asprintf(&r->p2rid, "to-%s%s%s", r->dst->name, sproto, sdport)
+	    == -1)
+		err(1, "ike_setup_ids");
+	/* from-network/masklen=proto:port-to-network/masklen=proto:port */
+	if (asprintf(&r->p2name, "%s-%s", r->p2lid , r->p2rid) == -1)
 		err(1, "ike_setup_ids");
 }
 

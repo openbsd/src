@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.56 2008/02/22 23:51:31 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.57 2008/07/01 15:00:53 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -185,6 +185,7 @@ struct ipsec_rule {
 	struct ipsec_key  *enckey;
 
 	char		*tag;		/* pf tag for SAs */
+	char		*p1name;	/* Phase 1 Name */
 	char		*p2name;	/* Phase 2 Name (IPsec-XX) */
 	char		*p2lid;		/* Phase 2 source ID */
 	char		*p2rid;		/* Phase 2 destination ID */

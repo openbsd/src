@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.69 2007/10/13 16:35:18 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.70 2008/07/01 15:00:53 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -240,6 +240,8 @@ ipsecctl_free_rule(struct ipsec_rule *rp)
 		free(rp->enckey->data);
 		free(rp->enckey);
 	}
+	if (rp->p1name)
+		free(rp->p1name);
 	if (rp->p2name)
 		free(rp->p2name);
 	if (rp->p2lid)

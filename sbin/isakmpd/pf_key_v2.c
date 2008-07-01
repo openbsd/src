@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.183 2008/06/10 17:25:57 bluhm Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.184 2008/07/01 15:00:53 bluhm Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2431,6 +2431,57 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	}
 }
 
+static int
+mask4len(const struct sockaddr_in *mask)
+{
+	int len;
+	u_int32_t m;
+
+	len = 0;
+	for (m = 0x80000000; m & ntohl(mask->sin_addr.s_addr); m >>= 1)
+		len++;
+	if (len == 32)
+		len = -1;
+	return len;
+}
+
+#ifndef s6_addr8
+#define s6_addr8 __u6_addr.__u6_addr8
+#endif
+
+static int
+mask6len(const struct sockaddr_in6 *mask)
+{
+	int i, len;
+	u_int8_t m;
+
+	len = 0;
+	for (i = 0, m = 0; i < 16 && !m; i++)
+		for (m = 0x80; m & mask->sin6_addr.s6_addr8[i]; m >>= 1)
+			len++;
+	if (len == 128)
+		len = -1;
+	return len;
+}
+
+static int
+phase2id(char *str, size_t size, const char *side, const char *sflow,
+    int masklen, u_int8_t proto, u_int16_t port)
+{
+	char smasklen[10], sproto[10], sport[10];
+
+	smasklen[0] = sproto[0] = sport[0] = 0;
+	if (masklen != -1)
+		snprintf(smasklen, sizeof smasklen, "/%d", masklen);
+	if (proto)
+		snprintf(sproto, sizeof sproto, "=%u", proto);
+	if (port)
+		snprintf(sport, sizeof sport, ":%u", ntohs(port));
+
+	return snprintf(str, size, "%s-%s%s%s%s", side, sflow, smasklen,
+	    sproto, sport);
+}
+
 /* Handle a PF_KEY SA ACQUIRE message PMSG.  */
 static void
 pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
@@ -2451,8 +2502,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	struct sadb_protocol *sproto;
 	char		ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
 	char		sdmask[ADDRESS_MAX], ssmask[ADDRESS_MAX];
+	int		dmasklen, smasklen;
 	char           *sidtype = 0, *didtype = 0;
-	char		lname[100], dname[100], configname[30];
+	char		lname[100], dname[100], configname[200];
 	int		shostflag = 0, dhostflag = 0;
 	struct pf_key_v2_node *ext;
 	struct passwd  *pwd = 0;
@@ -2569,6 +2621,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	bzero(sdflow, sizeof sdflow);
 	bzero(ssmask, sizeof ssmask);
 	bzero(sdmask, sizeof sdmask);
+	smasklen = dmasklen = -1;
 
 	sidtype = didtype = "IPV4_ADDR_SUBNET";	/* default */
 
@@ -2600,6 +2653,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
+		smasklen = mask4len((struct sockaddr_in *) smask);
+		dmasklen = mask4len((struct sockaddr_in *) dmask);
 		if (((struct sockaddr_in *) smask)->sin_addr.s_addr ==
 		    INADDR_BROADCAST) {
 			shostflag = 1;
@@ -2639,6 +2694,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
+		smasklen = mask6len((struct sockaddr_in6 *) smask);
+		dmasklen = mask6len((struct sockaddr_in6 *) dmask);
 		sidtype = didtype = "IPV6_ADDR_SUBNET";
 		if (IN6_IS_ADDR_FULL(&((struct sockaddr_in6 *)smask)->sin6_addr)) {
 			shostflag = 1;
@@ -2773,7 +2830,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*srcid = '\0';
-			if (asprintf(&srcid, "ID:Address/%s",
+			if (asprintf(&srcid, "id-%s",
 			    (char *) (srcident + 1)) == -1) {
 				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
@@ -2846,7 +2903,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			if (asprintf(&srcid, "ID:%s/%s", prefstring,
+			if (asprintf(&srcid, "id-%s",
 			    slen ? (char *) (srcident + 1) : pwd->pw_name) == -1) {
 				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
@@ -2860,8 +2917,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				    1, 0) ||
 				    conf_set(af, srcid, "Refcount", "1", 1, 0) ||
 				    conf_set(af, srcid, "Name",
-					srcid + sizeof "ID:/" - 1 +
-					strlen(prefstring), 1, 0)) {
+					srcid + 3, 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -2922,7 +2978,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*dstid = '\0';
-			if (asprintf(&dstid, "ID:Address/%s",
+			if (asprintf(&dstid, "id-%s",
 			    (char *) (dstident + 1)) == -1) {
 				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
@@ -2994,7 +3050,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			if (asprintf(&dstid, "ID:%s/%s", prefstring,
+			if (asprintf(&dstid, "id-%s",
 			    slen ? (char *) (dstident + 1) : pwd->pw_name) == -1) {
 				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
@@ -3008,8 +3064,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				    1, 0) ||
 				    conf_set(af, dstid, "Refcount", "1", 1, 0) ||
 				    conf_set(af, dstid, "Name",
-					dstid + sizeof "ID:/" - 1 +
-					strlen(prefstring), 1, 0)) {
+					dstid + 3, 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -3034,12 +3089,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	/* Get a new connection sequence number. */
 	for (;; connection_seq++) {
 		snprintf(conn, connlen, "Connection-%u", connection_seq);
-		snprintf(configname, sizeof configname, "Config-Phase2-%u",
-		    connection_seq);
 
 		/* Does it exist ? */
-		if (!conf_get_str(conn, "Phase") &&
-		    !conf_get_str(configname, "Suites"))
+		if (!conf_get_str(conn, "Phase"))
 			break;
 	}
 
@@ -3052,31 +3104,24 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Configuration
 	 *
 	 * Also set the following section:
-	 *    [Peer-dstaddr(/srcaddr)(-srcid)(/dstid)]
+	 *    [peer-dstaddr(-local-srcaddr)]
 	 * with these fields:
 	 * - Phase
 	 * - ID (if provided)
 	 * - Remote-ID (if provided)
 	 * - Local-address (if provided)
 	 * - Address
-	 * - Configuration (if an entry ISAKMP-configuration-dstaddr(/srcaddr)
+	 * - Configuration (if an entry phase1-dstaddr-srcadd)
 	 *                  exists -- otherwise use the defaults)
 	 */
 
 	/*
 	 * The various cases:
-	 * - Peer-dstaddr
-	 * - Peer-dstaddr/srcaddr
-	 * - Peer-dstaddr/srcaddr-srcid
-	 * - Peer-dstaddr/srcaddr-srcid/dstid
-	 * - Peer-dstaddr/srcaddr-/dstid
-	 * - Peer-dstaddr-srcid/dstid
-	 * - Peer-dstaddr-/dstid
-	 * - Peer-dstaddr-srcid
+	 * - peer-dstaddr
+	 * - peer-dstaddr-local-srcaddr
 	 */
-	if (asprintf(&peer, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
-	    srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
-	    dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "") == -1)
+	if (asprintf(&peer, "peer-%s%s%s", dstbuf, srcaddr ? "-local-" : "",
+	    srcaddr ? srcbuf : "") == -1)
 		goto fail;
 
 	/*
@@ -3097,9 +3142,16 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		conf_end(af, 0);
 		goto fail;
 	}
-	/* Set Phase 2 IDs -- this is the Local-ID section. */
-	snprintf(lname, sizeof lname, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask,
-	    tproto, sport);
+	/*
+	 * Set Phase 2 IDs -- this is the Local-ID section.
+	 * - from-address
+	 * - from-address=proto
+	 * - from-address=proto:port
+	 * - from-network/masklen
+	 * - from-network/masklen=proto
+	 * - from-network/masklen=proto:port
+	 */
+	phase2id(lname, sizeof lname, "from", ssflow, smasklen, tproto, sport);
 	if (conf_set(af, conn, "Local-ID", lname, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
@@ -3141,9 +3193,16 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	} else
 		pf_key_v2_conf_refinc(af, lname);
 
-	/* Set Remote-ID section. */
-	snprintf(dname, sizeof dname, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask,
-	    tproto, dport);
+	/*
+	 * Set Remote-ID section.
+	 * to-address
+	 * to-address=proto
+	 * to-address=proto:port
+	 * to-network/masklen
+	 * to-network/masklen=proto
+	 * to-network/masklen=proto:port
+	 */
+	phase2id(dname, sizeof dname, "to", sdflow, dmasklen, tproto, dport);
 	if (conf_set(af, conn, "Remote-ID", dname, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
@@ -3192,27 +3251,37 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * At least, we should make this selectable.
 	 */
 
-	/* Phase 2 configuration. */
+	/*
+	 * Phase 2 configuration.
+	 * - phase2-from-address-to-address
+	 * - ...
+	 * - phase2-from-net/len=proto:port-to-net/len=proto:port
+	 */
+	snprintf(configname, sizeof configname, "phase2-%s-%s", lname, dname);
 	if (conf_set(af, conn, "Configuration", configname, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
 	}
-	if (conf_set(af, configname, "Exchange_type", "Quick_mode", 0, 0) ||
-	    conf_set(af, configname, "DOI", "IPSEC", 0, 0)) {
-		conf_end(af, 0);
-		goto fail;
-	}
-	if (conf_get_str("General", "Default-phase-2-suites")) {
-		if (conf_set(af, configname, "Suites",
-		    conf_get_str("General", "Default-phase-2-suites"), 0, 0)) {
+	if (!conf_get_str(configname, "Exchange_type")) {
+		if (conf_set(af, configname, "Exchange_type", "Quick_mode",
+		    0, 0) ||
+		    conf_set(af, configname, "DOI", "IPSEC", 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
 		}
-	} else {
-		if (conf_set(af, configname, "Suites",
-		    "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0)) {
-			conf_end(af, 0);
-			goto fail;
+		if (conf_get_str("General", "Default-phase-2-suites")) {
+			if (conf_set(af, configname, "Suites",
+			    conf_get_str("General", "Default-phase-2-suites"),
+			    0, 0)) {
+				conf_end(af, 0);
+				goto fail;
+			}
+		} else {
+			if (conf_set(af, configname, "Suites",
+			    "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0)) {
+				conf_end(af, 0);
+				goto fail;
+			}
 		}
 	}
 
@@ -3229,8 +3298,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			conf_end(af, 0);
 			goto fail;
 		}
-		snprintf(confname, sizeof confname, "ISAKMP-Configuration-%s",
-		    peer);
+		snprintf(confname, sizeof confname, "phase1-%s", peer);
 		if (conf_set(af, peer, "Configuration", confname, 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
