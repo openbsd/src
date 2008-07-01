@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.601 2008/06/29 08:42:15 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.602 2008/07/01 12:56:19 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -316,8 +316,6 @@ RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
-
-#define	PF_DT_SKIP_STATETREE	0x01
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
