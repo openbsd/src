@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.48 2008/04/16 18:32:15 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.49 2008/07/01 11:44:12 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1329,7 +1329,7 @@ pgt_trap_received(struct pgt_softc *sc, uint32_t oid, void *trapdata,
 		return;
 
 	total = sizeof(oid) + size + sizeof(struct pgt_async_trap);
-	if (total >= MINCLSIZE) {
+	if (total > MLEN) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			return;
@@ -1518,7 +1518,7 @@ pgt_datarx_completion(struct pgt_softc *sc, enum pgt_queue pq)
 
 		if (m == NULL)
 			goto fail;
-		if (datalen >= MINCLSIZE) {
+		if (datalen > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if (!(m->m_flags & M_EXT)) {
 				m_free(m);
