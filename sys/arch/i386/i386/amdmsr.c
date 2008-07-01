@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.7 2008/07/01 11:58:50 mbalmer Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.8 2008/07/01 12:03:48 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -67,11 +67,10 @@ amdmsr_probe(void)
 {
 #ifdef APERTURE
 	u_int64_t gld_msr_cap;
-	int family, model, step;
+	int family, model;
 
 	family = (cpu_id >> 8) & 0xf;
 	model  = (cpu_id >> 4) & 0xf;
-	step   = (cpu_id >> 0) & 0xf;
 
 	/* Check for AMD Geode LX CPU */
 	if (strcmp(cpu_vendor, "AuthenticAMD") == 0 && family == 0x5 &&
