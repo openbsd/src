@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1383 2008/06/30 22:46:20 fgsch Exp $
+$OpenBSD: pcidevs,v 1.1384 2008/07/01 22:48:15 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1713,6 +1713,9 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 product GLOBALSUN GL24110P03	0x1100	GL24110P03
 product GLOBALSUN GL24110P	0x1101	GL24110P
 product GLOBALSUN GL24110P02	0x1102	GL24110P02
+
+/* Globespan products */
+product GLOBESPAN G7370		0xd002	Pulsar G7370 ADSL
 
 /* Guillemot products */
 product GEMTEK PR103		0x1001	PR103
