@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.29 2008/06/02 09:42:22 yuo Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.30 2008/07/02 07:30:13 yuo Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -31,6 +31,7 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
+#include <dev/usb/usbcdc.h>
 
 #ifdef USB_DEBUG
 #define UMSM_DEBUG
@@ -59,6 +60,7 @@ int umsm_open(void *, int);
 void umsm_close(void *, int);
 void umsm_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void umsm_get_status(void *, int, u_char *, u_char *);
+void umsm_set(void *, int, int, int);
 
 usbd_status umsm_e220_changemode(usbd_device_handle);
 
@@ -66,6 +68,7 @@ struct umsm_softc {
 	struct device		 sc_dev;
 	usbd_device_handle	 sc_udev;
 	usbd_interface_handle	 sc_iface;
+	int			 sc_iface_no;
 	struct device		*sc_subdev;
 	u_char			 sc_dying;
 
@@ -77,11 +80,13 @@ struct umsm_softc {
 
 	u_char			 sc_lsr;	/* Local status register */
 	u_char			 sc_msr;	/* status register */
+	u_char			 sc_dtr;	/* current DTR state */
+	u_char			 sc_rts;	/* current RTS state */
 };
 
 struct ucom_methods umsm_methods = {
 	umsm_get_status,
-	NULL,
+	umsm_set,
 	NULL,
 	NULL,
 	umsm_open,
@@ -203,6 +208,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_iface_no = id->bInterfaceNumber;
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = sc->sc_isize = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -233,6 +239,8 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_dtr = sc->sc_rts = -1;
+
 	/* We need to force size as some devices lie */
 	uca.ibufsize = UMSMBUFSZ;
 	uca.obufsize = UMSMBUFSZ;
@@ -243,6 +251,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	uca.methods = &umsm_methods;
 	uca.arg = sc;
 	uca.info = NULL;
+	uca.portno = UCOM_UNK_PORTNO;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    &sc->sc_dev);
@@ -357,9 +366,10 @@ umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_status status)
 {
 	struct umsm_softc *sc = priv;
-	u_char *buf;
+	usb_cdc_notification_t *buf;
+	u_char mstatus;
 
-	buf = sc->sc_intr_buf;
+	buf = (usb_cdc_notification_t *)sc->sc_intr_buf;
 	if (sc->sc_dying)
 		return;
 
@@ -373,9 +383,42 @@ umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		return;
 	}
 
-	/* XXX */
-	sc->sc_lsr = buf[2];
-	sc->sc_msr = buf[3];
+	if (buf->bmRequestType != UCDC_NOTIFICATION) {
+#if 1 /* test */
+		printf("%s: this device is not using CDC notify message in intr pipe.\n"
+		    "Please send your dmesg to <bugs@openbsd.org>, thanks.\n",
+		    sc->sc_dev.dv_xname);
+		printf("%s: intr buffer 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", 
+		    sc->sc_dev.dv_xname,
+		    sc->sc_intr_buf[0], sc->sc_intr_buf[1], 
+		    sc->sc_intr_buf[2], sc->sc_intr_buf[3], 
+		    sc->sc_intr_buf[4], sc->sc_intr_buf[5], 
+		    sc->sc_intr_buf[6]); 
+#else
+		DPRINTF(("%s: umsm_intr: unknown message type(0x%02x)\n",
+		    sc->sc_dev.dv_xname, buf->bmRequestType));
+#endif
+		return;
+	}
+
+	if (buf->bNotification == UCDC_N_SERIAL_STATE) {
+		/* invalid message length, discard it */
+		if (UGETW(buf->wLength) != 2)
+			return;
+		/* XXX: sc_lsr is always 0 */
+		sc->sc_lsr = sc->sc_msr = 0;
+		mstatus = buf->data[0];
+		if (ISSET(mstatus, UCDC_N_SERIAL_RI))
+			sc->sc_msr |= UMSR_RI;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DSR))
+			sc->sc_msr |= UMSR_DSR;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DCD))
+			sc->sc_msr |= UMSR_DCD;
+	} else if (buf->bNotification != UCDC_N_CONNECTION_SPEED_CHANGE) {
+		DPRINTF(("%s: umsm_intr: unknown notify message (0x%02x)\n",
+		    sc->sc_dev.dv_xname, buf->bNotification));
+		return;
+	}
 
 	ucom_status_change((struct ucom_softc *)sc->sc_subdev);
 }
@@ -390,6 +433,41 @@ umsm_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 }
+
+void
+umsm_set(void *addr, int portno, int reg, int onoff)
+{
+	struct umsm_softc *sc = addr;
+	usb_device_request_t req;
+	int ls;
+
+	switch (reg) {
+	case UCOM_SET_DTR:
+		if (sc->sc_dtr == onoff)
+			return;
+		sc->sc_dtr = onoff;
+		break;
+	case UCOM_SET_RTS:
+		if (sc->sc_rts == onoff)
+			return;
+		sc->sc_rts = onoff;
+		break;
+	default:
+		return;
+	}
+
+	/* build a usb request */
+	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
+	     (sc->sc_rts ? UCDC_LINE_RTS : 0);
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
+	USETW(req.wValue, ls);
+	USETW(req.wIndex, sc->sc_iface_no);
+	USETW(req.wLength, 0);
+
+	(void)usbd_do_request(sc->sc_udev, &req, 0);
+}
+
 
 usbd_status
 umsm_e220_changemode(usbd_device_handle dev)
