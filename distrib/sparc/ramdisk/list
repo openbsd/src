@@ -1,7 +1,8 @@
-#	$OpenBSD: list,v 1.25 2005/01/11 19:21:08 deraadt Exp $
+#	$OpenBSD: list,v 1.26 2008/07/02 14:01:35 todd Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
+LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/restore
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
