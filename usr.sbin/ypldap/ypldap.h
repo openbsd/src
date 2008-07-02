@@ -65,18 +65,9 @@ struct imsgbuf {
 };
 
 enum imsg_type {
-	IMSG_NONE = 0,
-	IMSG_GETPWENT = 1,	/* sends nothing expects nothing */
-	IMSG_SETPWENT = 2,	/* sends nothing expects nothing */
-	IMSG_GETPWNAM = 3,	/* sends a name expects a line */ 
-	IMSG_GETPWID = 4,	/* sends a uid_t expects a line */
-	IMSG_GETGRENT = 5,	/* sends nothing expects nothing */
-	IMSG_SETGRENT = 6,	/* sends nothing expects nothing */
-	IMSG_GETGRNAM = 7,	/* sends a name expects a line */ 
-	IMSG_GETGRID = 8,	/* sends a uid_t expects a line */
+	IMSG_NONE,
 	IMSG_CONF_START,
 	IMSG_CONF_IDM,
-	IMSG_CONF_SERVER,
 	IMSG_CONF_END,
 	IMSG_START_UPDATE,
 	IMSG_END_UPDATE,
@@ -97,21 +88,10 @@ struct imsg {
 	void		*data;
 };
 
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK,
-};
-
 enum {
 	PROC_MAIN,
 	PROC_CLIENT
-} lb_process;
-
-union req {
-	uid_t	uid;
-	gid_t	gid;
-	char	nam[_PW_NAME_LEN+1];
-};
+} ypldap_process;
 
 struct userent {
 	RB_ENTRY(userent)		 ue_name_node;
@@ -227,12 +207,6 @@ ssize_t	 imsg_read(struct imsgbuf *);
 ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    void *, u_int16_t);
-#if 0
-int	 imsg_get_fd(struct imsgbuf *);
-int	 imsg_composev(struct imsgbuf *, enum imsg_type, u_int32_t,
-	    pid_t, const struct iovec *, int);
-int	 imsg_flush(struct imsgbuf *);
-#endif
 struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    u_int16_t);
 int	 imsg_add(struct buf *, void *, u_int16_t);

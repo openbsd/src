@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.2 2008/06/26 15:13:17 pyr Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.3 2008/07/02 17:36:15 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -361,7 +361,7 @@ main(int argc, char *argv[])
 	struct timeval	 tv;
 
 	debug = 0;
-	lb_process = PROC_MAIN;
+	ypldap_process = PROC_MAIN;
 
 	log_init(1);
 

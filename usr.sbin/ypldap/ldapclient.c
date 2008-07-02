@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.1 2008/06/26 15:10:01 pyr Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.2 2008/07/02 17:36:15 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -186,7 +186,7 @@ ldapclient(int pipe_main2client[2])
 #warning disabling chrooting in DEBUG mode
 #endif
 	setproctitle("ldap client");
-	lb_process = PROC_CLIENT;
+	ypldap_process = PROC_CLIENT;
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
