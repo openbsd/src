@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.99 2008/06/30 00:13:30 fgsch Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.100 2008/07/02 03:00:55 fgsch Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -137,7 +137,7 @@ struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_write_raw_multi_4
 };
 
-#ifdef WDC_DEBUG
+#ifdef WDCDEBUG
 static char *wdc_log_buf = NULL;
 static unsigned int wdc_tail = 0;
 static unsigned int wdc_head = 0;
@@ -285,7 +285,7 @@ wdc_get_log(unsigned int * size, unsigned int *left)
 	splx(s);
 	return (retbuf);
 }
-#endif /* WDC_DEBUG */
+#endif /* WDCDEBUG */
 
 u_int8_t
 wdc_default_read_reg(chp, reg)
@@ -2290,7 +2290,7 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 	int error = 0;
 
 	switch (xfer) {
-#ifdef WDC_DEBUG
+#ifdef WDCDEBUG
 	case ATAIOGETTRACE: {
 		atagettrace_t *agt = (atagettrace_t *)addr;
 		unsigned int size = 0;
@@ -2311,7 +2311,7 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 		agt->bytes_copied = size;
 		break;
 	}
-#endif
+#endif /* WDCDEBUG */
 
 	case ATAIOCCOMMAND:
 		/*
