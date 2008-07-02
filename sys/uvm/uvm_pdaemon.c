@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.34 2007/12/18 11:05:52 thib Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.35 2008/07/02 15:21:33 art Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -78,6 +78,7 @@
 #include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 
 #include <uvm/uvm.h>
 
@@ -160,7 +161,7 @@ uvm_wait(wmsg)
  */
 
 static void
-uvmpd_tune()
+uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
 
@@ -169,7 +170,9 @@ uvmpd_tune()
 	/* between 16k and 512k */
 	/* XXX:  what are these values good for? */
 	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
+#if 0
 	uvmexp.freemin = min(uvmexp.freemin, (512*1024) >> PAGE_SHIFT);
+#endif
 
 	/* Make sure there's always a user page free. */
 	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
@@ -244,17 +247,8 @@ uvm_pageout(void *arg)
 		/*
 		 * scan if needed
 		 */
-
-#ifdef UBC
-		if (uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
-		    uvmexp.inactive < uvmexp.inactarg ||
-		    uvm_pgcnt_vnode >
-		    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
-		     uvmexp.free) * 13 / 16) {
-#else
-		if (uvmexp.free < uvmexp.freetarg ||
+		if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg ||
 		    uvmexp.inactive < uvmexp.inactarg) {
-#endif
 			uvmpd_scan();
 		}
 
@@ -416,7 +410,7 @@ uvmpd_scan_inactive(pglst)
 			 */
 
 			uvm_lock_fpageq();
-			free = uvmexp.free;
+			free = uvmexp.free - BUFPAGES_DEFICIT;
 			uvm_unlock_fpageq();
 
 			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
@@ -955,7 +949,7 @@ uvmpd_scan_inactive(pglst)
  */
 
 void
-uvmpd_scan()
+uvmpd_scan(void)
 {
 	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
@@ -970,7 +964,7 @@ uvmpd_scan()
 	 * get current "free" page count
 	 */
 	uvm_lock_fpageq();
-	free = uvmexp.free;
+	free = uvmexp.free - BUFPAGES_DEFICIT;
 	uvm_unlock_fpageq();
 
 #ifndef __SWAP_BROKEN
@@ -985,7 +979,6 @@ uvmpd_scan()
 		uvm_unlock_pageq();
 		uvm_swapout_threads();
 		uvm_lock_pageq();
-
 	}
 #endif
 
@@ -1004,7 +997,7 @@ uvmpd_scan()
 	 */
 
 	got_it = FALSE;
-	pages_freed = uvmexp.pdfreed;
+	pages_freed = uvmexp.pdfreed;	/* XXX - int */
 	if ((uvmexp.pdrevs & 1) != 0 && uvmexp.nswapdev != 0)
 		got_it = uvmpd_scan_inactive(&uvm.page_inactive_swp);
 	if (!got_it)

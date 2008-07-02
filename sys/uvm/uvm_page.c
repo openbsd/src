@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.66 2008/04/12 20:37:35 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.67 2008/07/02 15:21:33 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -78,6 +78,7 @@
 #include <sys/sched.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 
 #include <uvm/uvm.h>
 
@@ -929,18 +930,10 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
 	 */
-
-#ifdef UBC
-	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
-	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmexp.inactive < uvmexp.inactarg)) {
+	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
+	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg))
 		wakeup(&uvm.pagedaemon);
-	}
-#else
-	if (uvmexp.free < uvmexp.freemin || (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
-#endif
 
 	/*
 	 * fail if any of these conditions is true:
@@ -954,9 +947,9 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	use_reserve = (flags & UVM_PGA_USERESERVE) ||
 		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
 	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
-	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(use_reserve && (curproc == uvm.pagedaemon_proc ||
-				curproc == syncerproc))))
+	    (uvmexp.free <= uvmexp.reserve_pagedaemon && 
+	     !((curproc == uvm.pagedaemon_proc) ||
+	      (curproc == syncerproc))))
 		goto fail;
 
 #if PGFL_NQUEUES != 2
