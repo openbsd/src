@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.16 2008/06/30 17:04:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.17 2008/07/02 21:28:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -309,6 +309,42 @@ struct usb_video_format_mjpeg_desc {
 
 /* Table 3-2: Motion-JPEG Video Frame Descriptor */
 struct usb_video_frame_mjpeg_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bFrameIndex;
+	uByte	bmCapabilities;
+	uWord	wWidth;
+	uWord	wHeight;
+	uDWord	dwMinBitRate;
+	uDWord	dwMaxBitRate;
+	uDWord	dwMaxVideoFrameBufferSize;
+	uDWord	dwDefaultFrameInterval;
+	uByte	bFrameIntervalType;
+	/* TODO add continous/discrete frame intervals (Table 3-3/3-4) */
+} __packed;
+
+/*
+ * USB Video Payload Uncompressed
+ */
+/* Table 3-1: Uncompressed Video Format Descriptor */
+struct usb_video_format_uncompressed_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bFormatIndex;
+	uByte	bNumFrameDescriptors;
+	uByte	guidFormat[16];
+	uByte	bBitsPerPixel;
+	uByte	bDefaultFrameIndex;
+	uByte	bAspectRatioX;
+	uByte	bAspectRatioY;
+	uByte	bmInterlaceFlags;
+	uByte	bCopyProtect;
+} __packed;
+
+/* Table 3-2: Uncompressed Video Frame Descriptor */
+struct usb_video_frame_uncompressed_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
