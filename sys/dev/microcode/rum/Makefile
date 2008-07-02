@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2008/06/29 23:57:58 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2008/07/02 01:11:11 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -30,6 +30,8 @@ afterinstall:
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/rum-license ${DESTDIR}/etc/firmware
+
+LINKS=	${DESTDIR}/etc/firmware/rum-license ${DESTDIR}/etc/firmware/run-license
 
 .endif
 
