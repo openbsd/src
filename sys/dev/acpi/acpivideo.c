@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivideo.c,v 1.1 2008/07/02 03:14:54 fgsch Exp $	*/
+/*	$OpenBSD: acpivideo.c,v 1.2 2008/07/02 04:23:22 fgsch Exp $	*/
 /*
  * Copyright (c) 2008 Federico G. Schwindt <fgsch@openbsd.org>
  *
@@ -46,6 +46,13 @@
 #define NOTIFY_OUTPUT_CYCLE_KEY		0x82
 #define NOTIFY_OUTPUT_NEXT_KEY		0x83
 #define NOTIFY_OUTPUT_PREV_KEY		0x84
+
+/* Notifications for Output Devices */
+#define NOTIFY_BRIGHTNESS_CYCLE		0x85
+#define NOTIFY_BRIGHTNESS_UP		0x86
+#define NOTIFY_BRIGHTNESS_DOWN		0x87
+#define NOTIFY_BRIGHTNESS_ZERO		0x88
+#define NOTIFY_DISPLAY_OFF		0x89
 
 struct acpivideo_softc {
 	struct device sc_dev;
