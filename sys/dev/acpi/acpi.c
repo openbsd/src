@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.124 2008/06/11 04:42:09 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.125 2008/07/02 03:14:54 fgsch Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -70,6 +70,7 @@ int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprt(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
+int	acpi_foundvideo(struct aml_node *, void *);
 int	acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
@@ -592,6 +593,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
+
+	/* attach video */
+	aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
 
 	/* create list of devices we want to query when APM come in */
 	SLIST_INIT(&sc->sc_ac);
@@ -2020,5 +2024,23 @@ acpi_founddock(struct aml_node *node, void *arg)
 	config_found(self, &aaa, acpi_print);
 
 	return 0;
+}
+
+int
+acpi_foundvideo(struct aml_node *node, void *arg)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)arg;
+	struct device *self = (struct device *)arg;
+	struct acpi_attach_args	aaa;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_name = "acpivideo";
+
+	config_found(self, &aaa, acpi_print);
+
+	return (0);
 }
 #endif /* SMALL_KERNEL */
