@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.71 2008/06/15 18:52:58 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.72 2008/07/02 22:08:02 todd Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -361,9 +361,19 @@ bio_inq(char *name)
 			else
 				snprintf(size, sizeof size, "%14llu",
 				    bv.bv_size);
-			printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
-			    volname, status, size, bv.bv_dev,
-			    bv.bv_level, percent, seconds);
+			switch (bv.bv_level) {
+			case 'C':
+				printf("%7s %-10s %14s %-7s CRYPTO%s%s\n",
+				    volname, status, size, bv.bv_dev,
+				    percent, seconds);
+				break;
+			default:
+				printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
+				    volname, status, size, bv.bv_dev,
+				    bv.bv_level, percent, seconds);
+				break;
+			}
+			
 		}
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
