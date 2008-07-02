@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.34 2008/06/26 05:42:18 ray Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.35 2008/07/02 15:12:18 yuo Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -698,8 +698,10 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct ubsa_softc *sc = priv;
 	u_char *buf;
+	usb_cdc_notification_t *cdcbuf;
 
 	buf = sc->sc_intr_buf;
+	cdcbuf = (usb_cdc_notification_t *)sc->sc_intr_buf;
 	if (sc->sc_dying)
 		return;
 
@@ -712,6 +714,24 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
+
+#if 1 /* test */
+	if (cdcbuf->bmRequestType == UCDC_NOTIFICATION) {
+		printf("%s: this device is using CDC notify message in" 
+		    " intr pipe.\n"
+		    "Please send your dmesg to <bugs@openbsd.org>, thanks.\n",
+		    sc->sc_dev.dv_xname);
+		printf("%s: intr buffer 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", 
+		    sc->sc_dev.dv_xname,
+		    buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
+
+		/* check the buffer data */
+		if (cdcbuf->bNotification == UCDC_N_SERIAL_STATE)
+			printf("%s:notify serial state, len=%d, data=0x%02x\n",
+			    sc->sc_dev.dv_xname,
+			    cdcbuf->wLength, cdcbuf->data[0]);
+	}
+#endif
 
 	/* incidentally, Belkin adapter status bits match UART 16550 bits */
 	sc->sc_lsr = buf[2];
