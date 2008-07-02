@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.156 2008/07/01 04:50:59 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.157 2008/07/02 21:56:28 todd Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -252,6 +252,8 @@ scsibus* at uha?
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
+softraid0	at root		# Software RAID
+scsibus* at softraid?
 
 # I2O
 iop*	at pci?			# I2O processor

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.87 2008/07/01 04:50:59 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.88 2008/07/02 21:56:28 todd Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -197,6 +197,8 @@ pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 #trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
 #scsibus* at trm?
+softraid0	at root		# Software RAID
+scsibus* at softraid?
 
 # I2O
 iop*	at pci?			# I2O processor
