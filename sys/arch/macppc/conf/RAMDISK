@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.78 2008/07/01 14:27:03 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.79 2008/07/03 16:46:22 todd Exp $
 #
 # PPC GENERIC config file
 #
@@ -190,6 +190,7 @@ cdce*		at uhub?		# CDC Ethernet
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 ural*		at uhub?		# Ralink RT2500
+rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uscanner*	at uhub?		# USB Scanner driver

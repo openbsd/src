@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2008/07/01 14:27:03 todd Exp $
+#	$OpenBSD: list,v 1.32 2008/07/03 16:46:22 todd Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -80,6 +80,7 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 
 # dhcp things
 SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
