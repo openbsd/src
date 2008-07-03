@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.56 2008/06/25 12:42:59 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.57 2008/07/03 18:45:51 sturm Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -652,11 +652,10 @@ sub get_http_list
 	local $_;
 	open(my $fh, '-|', OpenBSD::Paths->ftp." -o - $fullname 2>$error")
 	    or return;
-	# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 	while(<$fh>) {
 		chomp;
 		for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gio) {
-			next if $pkg =~ m|/|;
+			$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
 			push(@$l, $pkg);
 		}
 	}
