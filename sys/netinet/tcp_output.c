@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.84 2008/06/28 13:26:38 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.85 2008/07/03 15:46:24 henning Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -761,6 +761,7 @@ send:
 	}
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
 	m->m_pkthdr.len = hdrlen + len;
+	m->m_pkthdr.pf.statekey = tp->t_inpcb->inp_pf_sk;
 
 	if (!tp->t_template)
 		panic("tcp_output");

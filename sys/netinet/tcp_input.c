@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.219 2008/06/14 22:15:30 jsing Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.220 2008/07/03 15:46:24 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -96,6 +96,11 @@
 #include <netinet/tcp_debug.h>
 
 #include "faith.h"
+
+#include "pf.h"
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 struct	tcpiphdr tcp_saveti;
 
@@ -365,7 +370,7 @@ void
 tcp_input(struct mbuf *m, ...)
 {
 	struct ip *ip;
-	struct inpcb *inp;
+	struct inpcb *inp = NULL;
 	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int tlen, off;
@@ -590,19 +595,32 @@ tcp_input(struct mbuf *m, ...)
 	 * Locate pcb for segment.
 	 */
 findpcb:
-	switch (af) {
-#ifdef INET6
-	case AF_INET6:
-		inp = in6_pcbhashlookup(&tcbtable, &ip6->ip6_src, th->th_sport,
-		    &ip6->ip6_dst, th->th_dport);
-		break;
+#if NPF > 0
+	if (m->m_pkthdr.pf.statekey)
+		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
 #endif
-	case AF_INET:
-		inp = in_pcbhashlookup(&tcbtable, ip->ip_src, th->th_sport,
-		    ip->ip_dst, th->th_dport);
-		break;
+	if (inp == NULL) {
+		switch (af) {
+#ifdef INET6
+		case AF_INET6:
+			inp = in6_pcbhashlookup(&tcbtable, &ip6->ip6_src,
+			    th->th_sport, &ip6->ip6_dst, th->th_dport);
+			break;
+#endif
+		case AF_INET:
+			inp = in_pcbhashlookup(&tcbtable, ip->ip_src,
+			    th->th_sport, ip->ip_dst, th->th_dport);
+			break;
+		}
+#if NPF > 0
+		if (m->m_pkthdr.pf.statekey && inp) {
+			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
+			    inp;
+			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
+		}
+#endif
 	}
-	if (inp == 0) {
+	if (inp == NULL) {
 		int	inpl_flags = 0;
 		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
 			inpl_flags = INPLOOKUP_WILDCARD;
@@ -858,6 +876,14 @@ after_listen:
 	 */
 	if (tp->t_state == TCPS_LISTEN)
 		panic("tcp_input: TCPS_LISTEN");
+#endif
+
+#if NPF > 0
+		if (m->m_pkthdr.pf.statekey) {
+			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
+			    inp;
+			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
+		}
 #endif
 
 #ifdef IPSEC

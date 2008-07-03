@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.603 2008/07/01 13:07:02 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.604 2008/07/03 15:46:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -735,6 +735,8 @@ pf_state_key_detach(struct pf_state *s, int idx)
 		RB_REMOVE(pf_state_tree, &pf_statetbl, s->key[idx]);
 		if (s->key[idx]->reverse)
 			s->key[idx]->reverse->reverse = NULL;
+		if (s->key[idx]->inp)
+			s->key[idx]->inp->inp_pf_sk = NULL;
 		pool_put(&pf_state_key_pl, s->key[idx]);
 	}
 	s->key[idx] = NULL;

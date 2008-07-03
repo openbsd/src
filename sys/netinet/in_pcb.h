@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.63 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.64 2008/07/03 15:46:24 henning Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ struct inpcb {
 #define inp_csumoffset	in6p_cksum
 #endif
 	struct	icmp6_filter *inp_icmp6filt;
+	void	*inp_pf_sk;
 };
 
 struct inpcbtable {

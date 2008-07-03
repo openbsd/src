@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.99 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.100 2008/07/03 15:46:24 henning Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -512,6 +512,10 @@ in_pcbdetach(v)
 	if (inp->inp_ipo)
 		ipsec_delete_policy(inp->inp_ipo);
 	splx(s);
+#endif
+#if NPF > 0
+	if (inp->inp_pf_sk)
+		((struct pf_state_key *)inp->inp_pf_sk)->inp = NULL;
 #endif
 	s = splnet();
 	LIST_REMOVE(inp, inp_lhash);
