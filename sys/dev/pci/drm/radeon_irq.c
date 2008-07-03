@@ -35,7 +35,7 @@
 #include "radeon_drm.h"
 #include "radeon_drv.h"
 
-static void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state)
+void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
