@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.45 2008/07/02 21:28:50 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.46 2008/07/03 09:50:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -133,6 +133,8 @@ void		uvideo_dump_desc_format_mjpeg(struct uvideo_softc *,
 void		uvideo_dump_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_frame_uncompressed(struct uvideo_softc *,
+		    const usb_descriptor_t *);
+void		uvideo_dump_desc_extension(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_hexdump(void *, int);
 int		uvideo_debug_file_open(struct uvideo_softc *);
@@ -1429,7 +1431,8 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				} else {
 					printf(" (UDESCSUB_VC_EXTENSION_"
 					    "UNIT)\n");
-					/* TODO */
+					printf("|\n");
+					uvideo_dump_desc_extension(sc, desc);
 				}
 				break;
 			case UDESCSUB_VS_FRAME_MJPEG:
@@ -1765,6 +1768,24 @@ uvideo_dump_desc_format_uncompressed(struct uvideo_softc *sc,
 	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
 	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
 	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
+}
+
+void
+uvideo_dump_desc_extension(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	struct usb_video_vc_extension_desc *d;
+
+	d = (struct usb_video_vc_extension_desc *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
+	printf("bUnitID=0x%02x\n", d->bUnitID);
+	/* XXX we need a hexdump here */
+	printf("guidExtensionCode=%s\n", d->guidExtensionCode);
+	printf("bNumControls=0x%02x\n", d->bNumControls);
+	printf("bNrInPins=0x%02x\n", d->bNrInPins);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.17 2008/07/02 21:28:50 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.18 2008/07/03 09:50:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -207,6 +207,17 @@ struct usb_video_camera_terminal_desc {
 	uByte	bControlSize;
 	uByte	*bmControls; /* XXX */	
 };
+
+/* Table 3-9: VC Extension Unit Descriptor */
+struct usb_video_vc_extension_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bUnitID;
+	uByte	guidExtensionCode[16];
+	uByte	bNumControls;
+	uByte	bNrInPins;
+} __packed;
 
 /* Table 3-11: VC Endpoint Descriptor */
 struct usb_video_vc_endpoint_desc {
