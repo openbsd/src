@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.155 2008/06/13 09:44:36 deraadt Exp $ */
+/* $OpenBSD: packet.c,v 1.156 2008/07/04 23:08:25 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1465,12 +1465,13 @@ packet_write_poll(void)
 
 	if (len > 0) {
 		len = write(connection_out, buffer_ptr(&output), len);
-		if (len <= 0) {
-			if (errno == EAGAIN)
+		if (len == -1) {
+			if (errno == EINTR || errno == EAGAIN)
 				return;
-			else
-				fatal("Write failed: %.100s", strerror(errno));
+			fatal("Write failed: %.100s", strerror(errno));
 		}
+		if (len == 0)
+			fatal("Write connection closed");
 		buffer_consume(&output, len);
 	}
 }
