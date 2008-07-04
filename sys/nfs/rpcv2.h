@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcv2.h,v 1.7 2008/06/08 18:23:03 thib Exp $	*/
+/*	$OpenBSD: rpcv2.h,v 1.8 2008/07/04 16:49:28 blambert Exp $	*/
 /*	$NetBSD: rpcv2.h,v 1.8 1996/02/18 11:54:11 fvdl Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #define	RPCAUTH_UNIX	1
 #define	RPCAUTH_SHORT	2
 #define RPCAUTH_KERB4	4
-#define	RPCAUTH_NQNFS	300000
 #define	RPCAUTH_MAXSIZ	400
 #define	RPCVERF_MAXSIZ	12	/* For Kerb, can actually be 400 */
 #define	RPCAUTH_UNIXGIDS 16
