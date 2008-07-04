@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.72 2008/05/08 12:02:23 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.73 2008/07/04 23:30:16 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -261,6 +261,8 @@ do_authloop(Authctxt *authctxt)
 
 		/* Get a packet from the client. */
 		type = packet_read();
+		if (authctxt->failures >= options.max_authtries)
+			goto skip;
 		if ((meth = lookup_authmethod1(type)) == NULL) {
 			logit("Unknown message during authentication: "
 			    "type %d", type);
@@ -296,7 +298,7 @@ do_authloop(Authctxt *authctxt)
 		if (authenticated)
 			return;
 
-		if (authctxt->failures++ > options.max_authtries)
+		if (++authctxt->failures >= options.max_authtries)
 			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
 
 		packet_start(SSH_SMSG_FAILURE);
