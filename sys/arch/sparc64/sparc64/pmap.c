@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2008/06/14 10:55:20 mk Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2008/07/04 17:40:25 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2327,7 +2327,7 @@ pmap_protect(pm, sva, eva, prot)
 		if (((data = pseg_get(pm, sva))&TLB_V) /*&& ((data&TLB_TSB_LOCK) == 0)*/) {
 			pa = data&TLB_PA_MASK;
 #ifdef DEBUG
-			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
+			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
 				printf("pmap_protect: va=%08x data=%x:%08x seg=%08x pte=%08x\r\n", 
 					    (u_int)sva, (int)(pa>>32), (int)pa, (int)va_to_seg(sva), (int)va_to_pte(sva));
 			}
