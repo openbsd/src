@@ -168,7 +168,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
     int error;
     int result, major, minor;
     const char *content_length;
-    char *peer;
+    const char *peer;
 
     void *sconf = r->server->module_config;
     proxy_server_conf *conf =
@@ -191,7 +191,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
                 AP_HOOK_SIG2(int,ptr), 
                 AP_HOOK_TOPMOST,
                 &destport, r);
-    ap_snprintf(portstr, sizeof(portstr), "%d", DEFAULT_HTTP_PORT);
+    ap_snprintf(portstr, sizeof(portstr), "%d", destport);
     destportstr = portstr;
     strp = strchr(urlptr, '/');
     if (strp == NULL) {
@@ -230,6 +230,10 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
         if (ap_isdigit(*strp2))
             destportstr = strp2;
     }
+
+    /* Make sure peer is always set to prevent a segfault in the SSL handler */
+    peer = desthost;
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -282,7 +286,6 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
       if (error)
           return DECLINED;    /* try another */
     }
-
 
     /* check if ProxyBlock directive on this host */
     for (i = 0; i < conf->noproxies->nelts; i++) {

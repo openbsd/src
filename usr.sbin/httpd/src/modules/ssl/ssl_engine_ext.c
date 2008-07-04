@@ -441,7 +441,8 @@ static int ssl_ext_mp_set_destport(request_rec *r)
         return DEFAULT_HTTP_PORT;
 }
 
-static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
+static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb,
+    char *peer)
 {
 #ifndef SSL_EXPERIMENTAL_PROXY
     SSL_CTX *ssl_ctx;
@@ -561,10 +562,13 @@ static void ssl_ext_mp_close_connection(void *_fb)
 static int ssl_ext_mp_write_host_header(
     request_rec *r, BUFF *fb, char *host, char *port, char *portstr)
 {
+    char defport[16];
+
     if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PFALSE)
         return DECLINED;
 
-    if (portstr != NULL && port != DEFAULT_HTTPS_PORT) {
+    ap_snprintf(defport, sizeof(defport), "%d", DEFAULT_HTTPS_PORT);
+    if (portstr != NULL && strcmp(portstr, defport)) {
         ap_bvputs(fb, "Host: ", host, ":", portstr, "\r\n", NULL);
         return OK;
     }
