@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.9 2008/07/04 10:23:56 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.10 2008/07/04 15:03:45 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -163,12 +163,13 @@ later manual processing.
 Specify a path to an
 .Ox
 top src directory or an etcXX.tgz tarball.
+A tarball path specified as an FTP or HTTP URL will be passed
+to ${FETCH_CMD}.
 .It Fl x Ar xetcXX.tgz
 Specify a path to an
 xetcXX.tgz tarball.
-If this option is specified, it will add
-.Xr X 7
-configuration files to the comparison.
+A tarball path specified as an FTP or HTTP URL will be passed
+to ${FETCH_CMD}.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width "DESTDIRXXX"
@@ -176,6 +177,10 @@ configuration files to the comparison.
 Directory in which to merge and install files.
 If unset, this defaults to
 .Pa / .
+.It Ev FETCH_CMD
+Command used to fetch remote files.
+Defaults to
+.Xr ftp 1 .
 .It Ev TMPDIR
 Directory in which the work directory is created.
 If unset, this defaults to

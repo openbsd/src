@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.15 2008/06/13 23:56:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.16 2008/07/04 15:03:45 sthen Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -29,14 +29,19 @@ PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 
 PAGER="${PAGER:=/usr/bin/more}"
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
+WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
+
+trap "rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+
+if [ -z "${FETCH_CMD}" ]; then
+	if [ -z "${FTP_KEEPALIVE}" ]; then
+		FTP_KEEPALIVE=0
+	fi
+	FETCH_CMD="/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE}"
+fi
 
 
 do_pre() {
-	if [ `id -u` -ne 0 ]; then
-		echo " *** ERROR: Need root privilege to run this script"
-		exit 1
-	fi
-
 	if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 		if [ -f "/usr/src/etc/Makefile" ]; then
 			SRCDIR=/usr/src
@@ -46,15 +51,24 @@ do_pre() {
 		fi
 	fi
 
-	WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 	TEMPROOT="${WRKDIR}/temproot"
 	BKPDIR="${WRKDIR}/backups"
 
-	trap "rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
-
 	if [ -z "${BATCHMODE}" -a -z "${AUTOMODE}" ]; then
 		echo "\n===> Running ${0##*/} with the following settings:\n"
-		echo " source(s):            ${SRCDIR}${TGZ} ${XTGZ}"
+		if [ -n "${TGZURL}" ]; then
+			echo " etc source:   ${TGZURL}"
+			echo "               (fetched in ${TGZ})"
+		else
+			[ -n "${TGZ}" ] && echo " etc source:   ${TGZ}"
+		fi
+		if [ -n "${XTGZURL}" ]; then
+			echo " xetc source:  ${XTGZURL}"
+			echo "               (fetched in ${XTGZ})"
+		else
+			[ -n "${XTGZ}" ] && echo " etc source:   ${XTGZ}"
+		fi
+		echo ""
 		echo " base work directory:  ${WRKDIR}"
 		echo " temp root directory:  ${TEMPROOT}"
 		echo " backup directory:     ${BKPDIR}"
@@ -66,7 +80,7 @@ do_pre() {
 				echo ""
 				;;
 			*)
-				rmdir ${WRKDIR} 2> /dev/null
+				rm -rf ${WRKDIR} 2> /dev/null
 				exit 1
 				;;
 		esac
@@ -432,6 +446,12 @@ if [ $? -ne 0 ]; then
 	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
 	exit 1
 fi
+
+if [ `id -u` -ne 0 ]; then
+	echo " *** ERROR: Need root privilege to run this script"
+	exit 1
+fi
+
 set -- ${ARGS}
 while [ $# -ne 0 ]
 do
@@ -451,6 +471,14 @@ do
 		    awk -F/ '{print $NF}' | 				\
 		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
 			TGZ=${WHERE}
+		elif echo ${WHERE} | \
+		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
+			TGZ=${WRKDIR}/etc.tgz
+			TGZURL="${WHERE}"
+			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
+				echo " *** ERROR: Could not retrieve ${TGZURL}"
+				exit 1
+			fi
 		else
 			echo " *** ERROR: ${WHERE} is not a path to src nor etcXX.tgz"
 			exit 1
@@ -463,6 +491,14 @@ do
 		    awk -F/ '{print $NF}' | 				\
 		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
 			XTGZ=${WHERE}
+		elif echo ${WHERE} | \
+		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
+			XTGZ=${WRKDIR}/xetc.tgz
+			XTGZURL="${WHERE}"
+			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
+				echo " *** ERROR: Could not retrieve ${XTGZURL}"
+				exit 1
+			fi
 		else
 			echo " *** ERROR: ${WHERE} is not a path to xetcXX.tgz"
 			exit 1
