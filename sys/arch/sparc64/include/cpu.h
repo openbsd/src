@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.61 2008/04/17 19:52:27 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.62 2008/07/04 22:03:30 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -304,7 +304,7 @@ int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe64 *);
 struct trapvec {
 	int	tv_instr[8];		/* the eight instructions */
 };
-extern struct trapvec *trapbase;	/* the 256 vectors */
+extern struct trapvec trapbase[];	/* the 256 vectors */
 
 extern void wzero(void *, u_int);
 extern void wcopy(const void *, void *, u_int);
