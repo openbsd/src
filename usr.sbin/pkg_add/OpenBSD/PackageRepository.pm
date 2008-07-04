@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.57 2008/07/03 18:45:51 sturm Exp $
+# $OpenBSD: PackageRepository.pm,v 1.58 2008/07/04 10:47:13 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -41,11 +41,7 @@ sub baseurl
 {
 	my $self = shift;
 
-	if (defined $self->{host}) {
-		return "//$self->{host}/$self->{path}";
-	} else {
-		return $self->{path};
-	}
+	return $self->{path};
 }
 
 sub new
@@ -55,37 +51,46 @@ sub new
 	return $o;
 }
 
-sub _parse
+sub strip_urlscheme
 {
 	my ($class, $r) = @_;
 	if ($$r =~ m/^(.*?)\:(.*)$/) {
 		my $scheme = lc($1);
-		if ($scheme ne $class->urlscheme) {
-			return undef;
+		if ($scheme eq $class->urlscheme) {
+			$$r = $2;
+			return 1;
 	    	}
-		$$r = $2;
-		my $o;
-		# use similar heuristics as ftp
-		if ($$r =~ m/^\/\/(.*?)(\/.*)$/) {
-			my $host = $1;
-			$$r = $2;
-			if ($$r =~ m/^(.*?)\:(.*)$/) {
-				$o = $class->_new($1, $host);
-				$$r = $2;
-			} else {
-				$o = $class->_new($$r, $host);
-				$$r = '';
-			}
-		} elsif ($$r =~ m/^(.*?)\:(.*)/) { 	# no /, split on :
-			$o = $class->_new($1);
-			$$r = $2;
-		} else {
-			$o = $class->_new($$r);
-			$$r = '';
-		}
-	    	return $o;
 	}
-	return undef;
+	return 0;
+}
+
+sub parse_local_url
+{
+	my ($class, $r, @args) = @_;
+
+	my $o;
+
+	if ($$r =~ m/^(.*?)\:(.*)/) {
+		$o = $class->_new($1, @args);
+		$$r = $2;
+	} else {
+		$o = $class->_new($$r, @args);
+		$$r = '';
+	}
+	return $o;
+}
+
+sub parse_url
+{
+	&parse_local_url;
+}
+
+sub parse_fullurl
+{
+	my ($class, $r) = @_;
+
+	$class->strip_urlscheme($r) or return undef;
+	return $class->parse_url($r);
 }
 
 sub parse
@@ -95,25 +100,25 @@ sub parse
 	return undef if $_ eq '';
 
 	if (m/^ftp\:/io) {
-		return OpenBSD::PackageRepository::FTP->_parse($ref);
+		return OpenBSD::PackageRepository::FTP->parse_fullurl($ref);
 	} elsif (m/^http\:/io) {
-		return OpenBSD::PackageRepository::HTTP->_parse($ref);
+		return OpenBSD::PackageRepository::HTTP->parse_fullurl($ref);
 	} elsif (m/^https\:/io) {
-		return OpenBSD::PackageRepository::HTTPS->_parse($ref);
+		return OpenBSD::PackageRepository::HTTPS->parse_fullurl($ref);
 	} elsif (m/^scp\:/io) {
 		require OpenBSD::PackageRepository::SCP;
 
-		return OpenBSD::PackageRepository::SCP->_parse($ref);
+		return OpenBSD::PackageRepository::SCP->parse_fullurl($ref);
 	} elsif (m/^src\:/io) {
 		require OpenBSD::PackageRepository::Source;
 
-		return OpenBSD::PackageRepository::Source->_parse($ref);
+		return OpenBSD::PackageRepository::Source->parse_fullurl($ref);
 	} elsif (m/^file\:/io) {
-		return OpenBSD::PackageRepository::Local->_parse($ref);
+		return OpenBSD::PackageRepository::Local->parse_fullurl($ref);
 	} elsif (m/^inst\:$/io) {
-		return OpenBSD::PackageRepository::Installed->_parse($ref);
+		return OpenBSD::PackageRepository::Installed->parse_fullurl($ref);
 	} else {
-		return OpenBSD::PackageRepository::Local->_parse($ref);
+		return OpenBSD::PackageRepository::Local->parse_fullurl($ref);
 	}
 }
 
@@ -266,13 +271,12 @@ sub urlscheme
 	return 'file';
 }
 
-sub _parse
+sub parse_fullurl
 {
 	my ($class, $r) = @_;
-	my $o = $class->SUPER::_parse($r);
-	return $o if defined $o;
-	$$r = "file:$$r";
-	return $class->SUPER::_parse($r);
+
+	$class->strip_urlscheme($r);
+	return $class->parse_local_url($r);
 }
 
 sub open_pipe
@@ -360,6 +364,32 @@ sub open_pipe
 
 package OpenBSD::PackageRepository::Distant;
 our @ISA=qw(OpenBSD::PackageRepository);
+
+sub baseurl
+{
+	my $self = shift;
+
+	return "//$self->{host}/$self->{path}";
+}
+
+sub parse_url
+{
+	&parse_distant_url;
+}
+
+sub parse_distant_url
+{
+	my ($class, $r) = @_;
+	# same heuristics as ftp(1):
+	# find host part, rest is parsed as a local url
+	if ($$r =~ m/^\/\/(.*?)(\/.*)$/) {
+		my $host = $1;
+		$$r = $2;
+		return $class->parse_local_url($r, $host);
+	} else {
+		return undef;
+	}
+}
 
 my $buffsize = 2 * 1024 * 1024;
 

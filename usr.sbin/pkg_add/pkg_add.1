@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.72 2008/03/09 15:36:45 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.73 2008/07/04 10:47:13 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 9 2008 $
+.Dd $Mdocdate: July 4 2008 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -102,9 +102,6 @@ If the given package names are not found in the current working directory,
 will search for them in each directory named by the
 .Ev PKG_PATH
 environment variable.
-Since a few URL schemes contain colons,
-.Nm
-relies on each directory ending in a / to split the path correctly.
 Specifying
 .Ql -
 as a package name causes
@@ -594,7 +591,7 @@ the directories named by
 .Ev PKG_PATH
 are searched.
 It should contain a series of entries separated by colons.
-Each entry consists of a directory name, ending in a slash.
+Each entry consists of a directory name.
 URL schemes such as FTP, HTTP, HTTPS, or SCP are also appropriate.
 The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
