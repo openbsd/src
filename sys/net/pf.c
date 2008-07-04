@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.604 2008/07/03 15:46:23 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.605 2008/07/04 00:09:31 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,8 +165,6 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 			    struct pf_addr *, struct pf_addr *,
 			    u_int16_t, u_int16_t);
 void			 pf_detach_state(struct pf_state *);
-struct pf_state_key	*pf_state_key_insert(struct pf_state_key *,
-			    struct pf_state *);
 int			 pf_state_key_setup(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_state_key **, struct pf_state_key **,
 			    struct pf_state_key **, struct pf_state_key **,
