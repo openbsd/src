@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2008/06/24 14:27:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2008/07/04 12:50:23 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,9 @@ DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
 CFLAGS+= -I${.CURDIR}
 
+CFLAGS+=-I${.CURDIR}/../../lib/libc/include
 .if (${YP:L} == "yes")
-CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp -I${.CURDIR}/../../lib/libc/include
+CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
 .endif
 
 .include <bsd.own.mk>	# For Kerberos
