@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.8 2008/06/13 00:46:57 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.9 2008/07/04 10:23:56 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2008 $
+.Dd $Mdocdate: July 4 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ directory before running this script.
 .Pp
 .Nm
 works by comparing a temporary reference root directory
-against locally installed files.
+against currently installed files.
 The reference files are created from a
 .Xr cvs 1
 source tree or a
@@ -58,12 +58,6 @@ release or snapshot file.
 The default, if no source is specified on the command line,
 is to use
 .Pa /usr/src .
-To make sure configuration files are in sync with the actual binaries,
-use the same source as was used to upgrade the system:
-.Pa /usr/src
-when upgrading from source and
-.Pa etcXX.tgz
-when upgrading from binary sets.
 All work is done under
 .Pa ${TMPDIR}/sysmerge.XXXXX
 (known as the
@@ -74,6 +68,15 @@ is created under the work directory.
 Each modified and/or replaced file is saved under the
 .Pa backup
 directory inside the work directory.
+.Pp
+To make sure configuration files are in sync with the actual binaries,
+use the same source as was used to upgrade the system:
+.Pa /usr/src
+when upgrading from source;
+.Pa etcXX.tgz
+and
+.Pa xetcXX.tgz
+when upgrading from binary sets.
 .Pp
 When run in
 .Em automatic
