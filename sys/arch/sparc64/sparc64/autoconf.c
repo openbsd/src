@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.91 2008/06/10 16:49:01 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.92 2008/07/04 17:20:27 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -784,6 +784,14 @@ extern bus_space_tag_t mainbus_space_tag;
 	/* We configure the CPUs first. */
 
 	node = findroot();
+	for (node0 = OF_child(node); node0; node0 = OF_peer(node0)) {
+		if (OF_getprop(node0, "name", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "ssm") == 0) {
+			node = node0;
+			break;
+		}
+	}
 
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (!checkstatus(node))
@@ -829,12 +837,21 @@ extern bus_space_tag_t mainbus_space_tag;
 	if (optionsnode == 0)
 		panic("no options in OPENPROM");
 
+	for (node0 = OF_child(node); node0; node0 = OF_peer(node0)) {
+		if (OF_getprop(node0, "name", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "ssm") == 0) {
+			node = node0;
+			break;
+		}
+	}
+
 	/*
 	 * Configure the devices, in PROM order.  Skip
 	 * PROM entries that are not for devices, or which must be
 	 * done before we get here.
 	 */
-	for (node = node0; node; node = OF_peer(node)) {
+	for (node = OF_child(node); node; node = OF_peer(node)) {
 		int portid;
 
 		DPRINTF(ACDB_PROBE, ("Node: %x", node));
