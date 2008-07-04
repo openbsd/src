@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.92 2008/07/04 17:20:27 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.93 2008/07/04 18:48:45 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1204,6 +1204,12 @@ device_register(struct device *dev, void *aux)
 	 */
 	if (bp == NULL)
 		return;
+
+	/*
+	 * XXX Skip 'ssm' until we have a real driver for it.
+	 */
+	if (strcmp(bp->name, "ssm") == 0)
+		bp = bootpath_store(1, bp + 1);
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: devname %s(%s) component %s\n",
