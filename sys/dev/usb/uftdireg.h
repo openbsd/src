@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdireg.h,v 1.11 2006/06/16 06:28:25 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdireg.h,v 1.12 2008/07/05 14:41:28 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdireg.h,v 1.6 2002/07/11 21:14:28 augustss Exp $ */
 
 /*
@@ -251,10 +251,10 @@ enum {
 
 /*
  *   BmRequestType:   1100 0000b
- *   bRequest:        FTDI_SIO_GET_MODEM_STATUS
+ *   bRequest:        FTDI_SIO_GET_STATUS
  *   wValue:          zero
  *   wIndex:          Port
- *   wLength:         1
+ *   wLength:         1		(2 for newer devices like the FT232R)
  *   Data:            Status
  *
  * One byte of data is returned
@@ -272,7 +272,7 @@ enum {
  *         0 = inactive
  *         1 = active
  *
- * FTDI_SIO_GET_MODEM_STATUS
+ * FTDI_SIO_GET_STATUS
  * Retrieve the current value of the modem status register.
  */
 #define FTDI_SIO_CTS_MASK 0x10
