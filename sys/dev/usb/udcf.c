@@ -1,7 +1,7 @@
-/*	$OpenBSD: udcf.c,v 1.41 2007/11/23 16:23:11 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.42 2008/07/05 12:11:51 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,10 @@ int udcfdebug = 0;
 #define UDCF_CTRL_IDX	0x33
 #define UDCF_CTRL_VAL	0x98
 
+#define FT232R_RESET	0x00	/* reset USB request */
+#define FT232R_STATUS	0x05	/* get modem status USB request */
+#define FT232R_RI	0x40	/* ring indicator */
+
 #define DPERIOD1	((long) 5 * 60)		/* degrade OK -> WARN */
 #define DPERIOD2	((long) 15 * 60)	/* degrade WARN -> CRIT */
 
@@ -84,6 +88,7 @@ struct udcf_softc {
 
 	usb_device_request_t	sc_req;
 
+	int			sc_detect_ct;	/* != 0: autodetect type */
 	int			sc_clocktype;	/* DCF77 or HBG */
 	int			sc_sync;	/* 1 during sync */
 	u_int64_t		sc_mask;	/* 64 bit mask */
@@ -91,6 +96,7 @@ struct udcf_softc {
 	int			sc_minute;
 	int			sc_level;
 	time_t			sc_last_mg;
+	int			(*sc_signal)(struct udcf_softc *);
 
 	time_t			sc_current;	/* current time */
 	time_t			sc_next;	/* time to become valid next */
@@ -136,6 +142,11 @@ void udcf_attach(struct device *, struct device *, void *);
 int udcf_detach(struct device *, int); 
 int udcf_activate(struct device *, enum devact); 
 
+int udcf_nc_signal(struct udcf_softc *);
+int udcf_nc_init_hw(struct udcf_softc *);
+int udcf_ft232r_signal(struct udcf_softc *);
+int udcf_ft232r_init_hw(struct udcf_softc *);
+
 struct cfdriver udcf_cd = { 
 	NULL, "udcf", DV_DULL 
 }; 
@@ -148,6 +159,13 @@ const struct cfattach udcf_ca = {
 	udcf_activate, 
 };
 
+static const struct usb_devno udcf_devs[] = {
+	{ USB_VENDOR_GUDE, USB_PRODUCT_GUDE_DCF },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_DCF },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_HBG },
+	{ 0, 0 }
+};
+
 int
 udcf_match(struct device *parent, void *match, void *aux)
 {
@@ -156,9 +174,10 @@ udcf_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
 
-	return uaa->vendor == USB_VENDOR_GUDE &&
-	    uaa->product == USB_PRODUCT_GUDE_DCF ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	if (usb_lookup(udcf_devs, uaa->vendor, uaa->product) == NULL)
+		return UMATCH_NONE;
+
+	return UMATCH_VENDOR_PRODUCT;
 }
 
 void
@@ -170,23 +189,41 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	usbd_interface_handle		 iface;
 	struct timeval			 t;
 	usbd_status			 err;
-	usb_device_request_t		 req;
-	uWord				 result;
-	int				 actlen;
+
+	switch (uaa->product) {
+	case USB_PRODUCT_GUDE_DCF:
+		sc->sc_detect_ct = 1;
+		sc->sc_signal = udcf_nc_signal;
+		strlcpy(sc->sc_sensor.desc, "Unknown",
+		    sizeof(sc->sc_sensor.desc));
+		break;
+	case USB_PRODUCT_FTDI_DCF:
+		sc->sc_signal = udcf_ft232r_signal;
+		strlcpy(sc->sc_sensor.desc, clockname[CLOCK_DCF77],
+		    sizeof(sc->sc_sensor.desc));
+		break;
+	case USB_PRODUCT_FTDI_HBG:
+		sc->sc_signal = udcf_ft232r_signal;
+		strlcpy(sc->sc_sensor.desc, clockname[CLOCK_HBG],
+		    sizeof(sc->sc_sensor.desc));
+		break;
+	}
 
 	usb_init_task(&sc->sc_task, udcf_probe, sc);
 	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc);
 	usb_init_task(&sc->sc_mg_task, udcf_mg_probe, sc);
 	usb_init_task(&sc->sc_sl_task, udcf_sl_probe, sc);
-	usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc);
 
 	timeout_set(&sc->sc_to, udcf_intr, sc);
 	timeout_set(&sc->sc_bv_to, udcf_bv_intr, sc);
 	timeout_set(&sc->sc_mg_to, udcf_mg_intr, sc);
 	timeout_set(&sc->sc_sl_to, udcf_sl_intr, sc);
 	timeout_set(&sc->sc_it_to, udcf_it_intr, sc);
-	timeout_set(&sc->sc_ct_to, udcf_ct_intr, sc);
 
+	if (sc->sc_detect_ct) {
+		usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc);
+		timeout_set(&sc->sc_ct_to, udcf_ct_intr, sc);
+	}
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
@@ -194,7 +231,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
 	sc->sc_sensor.value = 0LL;
 	sc->sc_sensor.flags = 0;
-	strlcpy(sc->sc_sensor.desc, "Unknown", sizeof(sc->sc_sensor.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 
 #ifdef UDCF_DEBUG
@@ -207,7 +243,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_skew);
 #endif
 	sensordev_install(&sc->sc_sensordev);
-
 
 	sc->sc_udev = dev;
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
@@ -237,33 +272,16 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_last = 0L;
 	sc->sc_last_tv.tv_sec = 0L;
 
-	/* Prepare the USB request to probe the value */
-	sc->sc_req.bmRequestType = UDCF_READ_REQ;
-	sc->sc_req.bRequest = 1;
-	USETW(sc->sc_req.wValue, 0);
-	USETW(sc->sc_req.wIndex, UDCF_READ_IDX);
-	USETW(sc->sc_req.wLength, 1);
-
-	req.bmRequestType = UDCF_CTRL_REQ;
-	req.bRequest = 0;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	if ((err = usbd_do_request_flags(sc->sc_udev, &req, &result,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))) {
-		DPRINTF(("failed to turn on power for receiver\n"));
-		goto fishy;
-	}
-
-	req.bmRequestType = UDCF_CTRL_REQ;
-	req.bRequest = 0;
-	USETW(req.wValue, UDCF_CTRL_VAL);
-	USETW(req.wIndex, UDCF_CTRL_IDX);
-	USETW(req.wLength, 0);
-	if ((err = usbd_do_request_flags(sc->sc_udev, &req, &result,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))) {
-		DPRINTF(("failed to turn on receiver\n"));
-		goto fishy;
+	switch (uaa->product) {
+	case USB_PRODUCT_GUDE_DCF:
+		if (udcf_nc_init_hw(sc))
+			goto fishy;
+		break;
+	case USB_PRODUCT_FTDI_DCF:	/* FALLTHROUGH */
+	case USB_PRODUCT_FTDI_HBG:
+		if (udcf_ft232r_init_hw(sc))
+			goto fishy;
+		break;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -297,9 +315,11 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	t.tv_sec = DPERIOD2;
 	t_crit = tvtohz(&t);
 
-	t.tv_sec = 0L;
-	t.tv_usec = 250000L;
-	t_ct = tvtohz(&t);
+	if (sc->sc_detect_ct) {
+		t.tv_sec = 0L;
+		t.tv_usec = 250000L;
+		t_ct = tvtohz(&t);
+	}
 
 	/* Give the receiver some slack to stabilize */
 	timeout_add(&sc->sc_to, t_wait);
@@ -327,7 +347,8 @@ udcf_detach(struct device *self, int flags)
 	timeout_del(&sc->sc_mg_to);
 	timeout_del(&sc->sc_sl_to);
 	timeout_del(&sc->sc_it_to);
-	timeout_del(&sc->sc_ct_to);
+	if (sc->sc_detect_ct)
+		timeout_del(&sc->sc_ct_to);
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
@@ -335,7 +356,8 @@ udcf_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_bv_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_mg_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_sl_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_ct_task);
+	if (sc->sc_detect_ct)
+		usb_rem_task(sc->sc_udev, &sc->sc_ct_task);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    &sc->sc_dev);
@@ -383,26 +405,129 @@ udcf_ct_intr(void *xsc)
 }
 
 /*
- * udcf_probe runs in a process context.  If bit 0 is set, the transmitter
- * emits at full power.  During the low-power emission we decode a zero bit.
+ * initialize the Expert mouseCLOCK USB devices, they use a NetCologne
+ * chip to interface the receiver.  Power must be supplied to the
+ * receiver and the receiver must be turned on.
  */
+int
+udcf_nc_init_hw(struct udcf_softc *sc)
+{
+	usbd_status			 err;
+	usb_device_request_t		 req;
+	uWord				 result;
+	int				 actlen;
+
+	/* Prepare the USB request to probe the value */
+	sc->sc_req.bmRequestType = UDCF_READ_REQ;
+	sc->sc_req.bRequest = 1;
+	USETW(sc->sc_req.wValue, 0);
+	USETW(sc->sc_req.wIndex, UDCF_READ_IDX);
+	USETW(sc->sc_req.wLength, 1);
+
+	req.bmRequestType = UDCF_CTRL_REQ;
+	req.bRequest = 0;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	if ((err = usbd_do_request_flags(sc->sc_udev, &req, &result,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))) {
+		DPRINTF(("failed to turn on power for receiver\n"));
+		return -1;
+	}
+
+	req.bmRequestType = UDCF_CTRL_REQ;
+	req.bRequest = 0;
+	USETW(req.wValue, UDCF_CTRL_VAL);
+	USETW(req.wIndex, UDCF_CTRL_IDX);
+	USETW(req.wLength, 0);
+	if ((err = usbd_do_request_flags(sc->sc_udev, &req, &result,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))) {
+		DPRINTF(("failed to turn on receiver\n"));
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * initialize the Expert mouseCLOCK USB II devices, they use an FTDI
+ * FT232R chip to interface the receiver.  Only reset the chip.
+ */
+int
+udcf_ft232r_init_hw(struct udcf_softc *sc)
+{
+	usbd_status		err;
+	usb_device_request_t	req;
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = FT232R_RESET;
+	/* 0 resets the SIO */
+	USETW(req.wValue,FT232R_RESET);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (err) {
+		DPRINTF(("failed to reset ftdi\n"));
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * return 1 during high-power-, 0 during low-power-emission
+ * If bit 0 is set, the transmitter emits at full power.
+ * During the low-power emission we decode a zero bit.
+ */
+int
+udcf_nc_signal(struct udcf_softc *sc)
+{
+	int		actlen;
+	unsigned char	data;
+
+	if (usbd_do_request_flags(sc->sc_udev, &sc->sc_req, &data,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))
+		/* This happens if we pull the receiver */
+		return -1;
+	return data & 0x01;
+}
+
+/* pick up the signal level through the FTDI FT232R chip */
+int
+udcf_ft232r_signal(struct udcf_softc *sc)
+{
+	usb_device_request_t	req;
+	int			actlen;
+	u_int16_t		data;
+
+	req.bmRequestType = UT_READ_VENDOR_DEVICE;
+	req.bRequest = FT232R_STATUS;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 2);
+	if (usbd_do_request_flags(sc->sc_udev, &req, &data,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT)) {
+		DPRINTFN(2, ("error reading ftdi modem status\n"));
+		return -1;
+	}
+	DPRINTFN(2, ("ftdi status 0x%04x\n", data));
+	return data & FT232R_RI ? 0 : 1;
+}
+
+/* udcf_probe runs in a process context. */
 void
 udcf_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
 	struct timespec		 now;
-	unsigned char		 data;
-	int			 actlen;
+	int			 data;
 
 	if (sc->sc_dying)
 		return;
 
-	if (usbd_do_request_flags(sc->sc_udev, &sc->sc_req, &data,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT))
-		/* This happens if we pull the receiver */
+	data = sc->sc_signal(sc);
+	if (data == -1)
 		return;
 
-	if (data & 0x01) {
+	if (data) {
 		sc->sc_level = 1;
 		timeout_add(&sc->sc_to, 1);
 		return;
@@ -411,13 +536,14 @@ udcf_probe(void *xsc)
 	if (sc->sc_level == 0)
 		return;
 
-	/* Begin of a second */
+	/* the beginning of a second */
 	sc->sc_level = 0;
 	if (sc->sc_minute == 1) {
 		if (sc->sc_sync) {
 			DPRINTF(("start collecting bits\n"));
 			sc->sc_sync = 0;
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN)
+			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
+			    sc->sc_detect_ct)
 				sc->sc_clocktype = -1;
 		} else {
 			/* provide the timedelta */
@@ -428,7 +554,8 @@ udcf_probe(void *xsc)
 			    sc->sc_current) * 1000000000LL + now.tv_nsec;
 
 			/* set the clocktype and make sensor valid */
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
+			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
+			    sc->sc_detect_ct) {
 				strlcpy(sc->sc_sensor.desc, sc->sc_clocktype ?
 				    clockname[CLOCK_HBG] :
 				    clockname[CLOCK_DCF77],
@@ -448,13 +575,13 @@ udcf_probe(void *xsc)
 
 	timeout_add(&sc->sc_to, t_sync);	/* resync in 950 ms */
 
-	/* No clock and bit detection during sync */
+	/* no clock and bit detection during sync */
 	if (!sc->sc_sync) {
 		/* detect bit value */
 		timeout_add(&sc->sc_bv_to, t_bv);
 
 		/* detect clocktype */
-		if (sc->sc_clocktype == -1)
+		if (sc->sc_detect_ct && sc->sc_clocktype == -1)
 			timeout_add(&sc->sc_ct_to, t_ct);
 	}
 	timeout_add(&sc->sc_mg_to, t_mg);	/* detect minute gap */
@@ -466,21 +593,19 @@ void
 udcf_bv_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
-	int			 actlen;
-	unsigned char		 data;
+	int			 data;
 
 	if (sc->sc_dying)
 		return;
 
-	if (usbd_do_request_flags(sc->sc_udev, &sc->sc_req, &data,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT)) {
-		/* This happens if we pull the receiver */
+	data = sc->sc_signal(sc);
+	if (data == -1) {
 		DPRINTF(("bit detection failed\n"));
 		return;
-	}
+	}	
 
-	DPRINTFN(1, (data & 0x01 ? "0" : "1"));
-	if (!(data & 0x01))
+	DPRINTFN(1, (data ? "0" : "1"));
+	if (!(data))
 		sc->sc_tbits |= sc->sc_mask;
 	sc->sc_mask <<= 1;
 }
@@ -513,7 +638,7 @@ udcf_mg_probe(void *xsc)
 		goto cleanbits;	
 	}
 
-	/* Extract bits w/o parity */
+	/* extract bits w/o parity */
 	m_bit = sc->sc_tbits & 1;
 	r_bit = sc->sc_tbits >> 15 & 1;
 	a1_bit = sc->sc_tbits >> 16 & 1;
@@ -532,7 +657,7 @@ udcf_mg_probe(void *xsc)
 	month_bits = sc->sc_tbits >> 45 & 0x1f;
 	year_bits = sc->sc_tbits >> 50 & 0xff;
 
-	/* Validate time information */
+	/* validate time information */
 	p1 = (parity >> (minute_bits & 0x0f) & 1) ^
 	    (parity >> (minute_bits >> 4) & 1);
 
@@ -658,25 +783,23 @@ udcf_it_intr(void *xsc)
 	}
 }
 
-/* detect clock type */
+/* detect clock type.  used for older devices only. */
 void
 udcf_ct_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
-	int			 actlen;
-	unsigned char		 data;
+	int			 data;
 
 	if (sc->sc_dying)
 		return;
 
-	if (usbd_do_request_flags(sc->sc_udev, &sc->sc_req, &data,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT)) {
-		/* This happens if we pull the receiver */
+	data = sc->sc_signal(sc);
+	if (data == -1) {
 		DPRINTF(("clocktype detection failed\n"));
 		return;
 	}
 
-	sc->sc_clocktype = data & 0x01 ? 0 : 1;
+	sc->sc_clocktype = data ? 0 : 1;
 	DPRINTF(("\nclocktype is %s\n", sc->sc_clocktype ?
 		clockname[CLOCK_HBG] : clockname[CLOCK_DCF77]));
 }
