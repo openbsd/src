@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.606 2008/07/04 00:56:48 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.607 2008/07/05 16:57:50 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -696,9 +696,9 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 
 	/* list is sorted, if-bound states before floating */
 	if (s->kif == pfi_all)
-		TAILQ_INSERT_TAIL(&sk->states, si, entry);
+		TAILQ_INSERT_TAIL(&s->key[idx]->states, si, entry);
 	else
-		TAILQ_INSERT_HEAD(&sk->states, si, entry);
+		TAILQ_INSERT_HEAD(&s->key[idx]->states, si, entry);
 	return (0);
 }
 
