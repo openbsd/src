@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.7 2007/05/31 19:19:36 jmc Exp $
+.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.8 2008/07/05 08:03:57 guenther Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 5 2008 $
 .Dt PTHREAD_ATTR_SETDETACHSTATE 3
 .Os
 .Sh NAME
@@ -90,12 +90,15 @@ These functions will not return an error code of
 .Bq Er EINTR .
 .Sh SEE ALSO
 .Xr pthread_attr_init 3 ,
+.Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,
 .Xr pthread_create 3 ,
 .Xr pthreads 3
 .Sh STANDARDS
-.Fn pthread_create
-conforms to ISO/IEC 9945-1 ANSI/IEEE
+.Fn pthread_attr_setdetachstate
+and
+.Fn pthread_attr_getdetachstate
+conform to ISO/IEC 9945-1 ANSI/IEEE
 .Pq Dq Tn POSIX
 Std 1003.1 Second Edition 1996-07-12.

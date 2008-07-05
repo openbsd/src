@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.27 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthreads.3,v 1.28 2008/07/05 08:03:57 guenther Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 5 2008 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -72,6 +72,10 @@ Destroy a threads attribute object.
 Get detachstate attribute.
 .It Fn pthread_attr_setdetachstate
 Set detachstate attribute.
+.It Fn pthread_attr_getstack
+Get stackaddr and stacksize attributes.
+.It Fn pthread_attr_setstack
+Set stackaddr and stacksize attributes.
 .It Fn pthread_attr_getstackaddr
 Get stackaddr attribute.
 .It Fn pthread_attr_setstackaddr
@@ -487,6 +491,7 @@ environment variable.
 .Xr pthread_atfork 3 ,
 .Xr pthread_attr_init 3 ,
 .Xr pthread_attr_setdetachstate 3 ,
+.Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,
 .Xr pthread_cancel 3 ,
