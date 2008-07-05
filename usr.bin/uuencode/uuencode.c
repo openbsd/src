@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.7 2004/04/09 22:54:02 millert Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.8 2008/07/05 20:59:42 sobrado Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.7 2004/04/09 22:54:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.8 2008/07/05 20:59:42 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -63,29 +63,40 @@ static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.7 2004/04/09 22:54:02 mill
 
 void encode(void);
 void base64_encode(void);
-static void usage(void);
+static void usage(int);
 
 FILE *output;
 int mode;
 char **av;
 
+/*
+ * program modes
+ */
+#define MODE_ENCODE	0
+#define MODE_B64ENCODE	1
+
 int
 main(int argc, char *argv[])
 {
 	struct stat sb;
-	int base64;
-	int ch;
+	int base64, ch, mode;
 	char *outfile;
 	extern char *__progname;
+	static const char *optstr[2] = {
+		"mo:",
+		"o:"
+	};
 
-	base64 = 0;
+	base64 = mode = 0;
 	outfile = NULL;
 
-	if (strcmp(__progname, "b64encode") == 0)
+	if (strcmp(__progname, "b64encode") == 0) {
 		base64 = 1;
+		mode = MODE_B64ENCODE;
+	}
 
 	setlocale(LC_ALL, "");
-	while ((ch = getopt(argc, argv, "mo:")) != -1) {
+	while ((ch = getopt(argc, argv, optstr[mode])) != -1) {
 		switch (ch) {
 		case 'm':
 			base64 = 1;
@@ -95,7 +106,7 @@ main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			usage();
+			usage(mode);
 		}
 	}
 	argv += optind;
@@ -115,7 +126,7 @@ main(int argc, char *argv[])
 		break;
 	case 0:
 	default:
-		usage();
+		usage(mode);
 	}
 
 	av = argv;
@@ -216,10 +227,17 @@ encode(void)
 }
 
 static void
-usage(void)
+usage(int mode)
 {
-	(void)fprintf(stderr,
-	    "usage: uuencode [-m] [-o outfile] [infile] remotefile\n"
-	    "       b64encode [-o outfile] [infile] remotefile\n");
+	switch (mode) {
+	case MODE_ENCODE:
+		(void)fprintf(stderr,
+		    "usage: uuencode [-m] [-o output_file] [file] name\n");
+		break;
+	case MODE_B64ENCODE:
+		(void)fprintf(stderr,
+		    "usage: b64encode [-o output_file] [file] name\n");
+		break;
+	}
 	exit(1);
 }

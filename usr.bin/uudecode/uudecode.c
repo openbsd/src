@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.14 2004/04/09 22:54:02 millert Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.15 2008/07/05 20:59:42 sobrado Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: uudecode.c,v 1.14 2004/04/09 22:54:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: uudecode.c,v 1.15 2008/07/05 20:59:42 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -69,27 +69,41 @@ static const char *infile, *outfile;
 static FILE *infp, *outfp;
 static int base64, cflag, iflag, oflag, pflag, rflag, sflag;
 
-static void	usage(void);
+static void	usage(int);
 static int	decode(void);
 static int	decode2(void);
 static int	uu_decode(void);
 static int	base64_decode(void);
 
+/*
+ * program modes
+ */
+#define MODE_DECODE	0
+#define MODE_B64DECODE	1
+
 int
 main(int argc, char *argv[])
 {
-	int rval, ch;
+	int rval, ch, mode;
 	extern char *__progname;
+	static const char *optstr[2] = {
+		"cimo:prs",
+		"cio:prs"
+	};
 
-	if (strcmp(__progname, "b64decode") == 0)
+	mode = 0;
+
+	if (strcmp(__progname, "b64decode") == 0) {
 		base64 = 1;
+		mode = MODE_B64DECODE;
+	}
 
 	setlocale(LC_ALL, "");
-	while ((ch = getopt(argc, argv, "cimo:prs")) != -1) {
+	while ((ch = getopt(argc, argv, optstr[mode])) != -1) {
 		switch(ch) {
 		case 'c':
 			if (oflag || rflag)
-				usage();
+				usage(mode);
 			cflag = 1; /* multiple uudecode'd files */
 			break;
 		case 'i':
@@ -100,28 +114,28 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			if (cflag || pflag || rflag || sflag)
-				usage();
+				usage(mode);
 			oflag = 1; /* output to the specified file */
 			sflag = 1; /* do not strip pathnames for output */
 			outfile = optarg; /* set the output filename */
 			break;
 		case 'p':
 			if (oflag)
-				usage();
+				usage(mode);
 			pflag = 1; /* print output to stdout */
 			break;
 		case 'r':
 			if (cflag || oflag)
-				usage();
+				usage(mode);
 			rflag = 1; /* decode raw data */
 			break;
 		case 's':
 			if (oflag)
-				usage();
+				usage(mode);
 			sflag = 1; /* do not strip pathnames for output */
 			break;
 		default:
-			usage();
+			usage(mode);
 		}
 	}
 	argc -= optind;
@@ -436,12 +450,19 @@ base64_decode(void)
 }
 
 static void
-usage(void)
+usage(int mode)
 {
-	(void)fprintf(stderr,
-	    "usage: uudecode [-cimprs] [file ...]\n"
-	    "       uudecode [-i] -o output_file [file]\n"
-	    "       b64decode [-cimprs] [file ...]\n"
-	    "       b64decode [-i] -o output_file [file]\n");
+	switch (mode) {
+	case MODE_DECODE:
+		(void)fprintf(stderr,
+		    "usage: uudecode [-cimprs] [file ...]\n"
+		    "       uudecode [-i] -o output_file [file]\n");
+		break;
+	case MODE_B64DECODE:
+		(void)fprintf(stderr,
+		    "usage: b64decode [-ciprs] [file ...]\n"
+		    "       b64decode [-i] -o output_file [file]\n");
+		break;
+	}
 	exit(1);
 }
