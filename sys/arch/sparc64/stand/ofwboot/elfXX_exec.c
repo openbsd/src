@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfXX_exec.c,v 1.6 2007/01/12 20:16:19 miod Exp $	*/
+/*	$OpenBSD: elfXX_exec.c,v 1.7 2008/07/05 22:59:14 kettenis Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -102,7 +102,8 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		if ((phdr.p_vaddr & (4*MEG-1)) == 0)
 			align = 4*MEG;
 		if (phdr.p_filesz < phdr.p_memsz)
-			phdr.p_memsz = (phdr.p_memsz + 4*MEG) & ~(4*MEG-1);
+			phdr.p_memsz = roundup(phdr.p_memsz, 4*MEG);
+		phdr.p_memsz = roundup(phdr.p_memsz, NBPG);
 		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, align) ==
 		    (void *)-1)
 			panic("cannot claim memory");
@@ -151,7 +152,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	/*
 	 * Reserve memory for the symbols.
 	 */
-	if ((addr = OF_claim(0, size, NBPG)) == (void *)-1)
+	if ((addr = OF_claim(0, roundup(size, NBPG), NBPG)) == (void *)-1)
 		panic("no space for symbol table");
 
 	/*
