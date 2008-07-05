@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.25 2008/03/19 20:21:01 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.26 2008/07/05 22:17:21 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -118,7 +118,10 @@ prom_set_trap_table(tba, mmfsa)
 	} args;
 
 	args.name = ADR2CELL("SUNW,set-trap-table");
-	args.nargs = 2;
+	if (CPU_ISSUN4V)
+		args.nargs = 2;
+	else
+		args.nargs = 1;
 	args.nreturns = 0;
 	args.tba = ADR2CELL(tba);
 	args.mmfsa = ADR2CELL(mmfsa);
