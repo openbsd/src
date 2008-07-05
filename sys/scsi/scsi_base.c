@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.129 2008/06/22 16:32:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.130 2008/07/05 16:07:01 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -877,7 +877,21 @@ scsi_scsi_cmd(struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
 	    retries, timeout, bp, flags)) == NULL)
 		return (ENOMEM);
 
-	if ((error = scsi_execute_xs(xs)) == EJUSTRETURN)
+#ifdef	SCSIDEBUG
+	if ((sc_link->flags & SDEV_DB1) != 0)
+		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
+			show_mem(xs->data, min(64, xs->datalen));
+#endif	/* SCSIDEBUG */
+
+	error = scsi_execute_xs(xs);
+
+#ifdef	SCSIDEBUG
+	if ((sc_link->flags & SDEV_DB1) != 0)
+		if (xs->datalen && (xs->flags & SCSI_DATA_IN))
+			show_mem(xs->data, min(64, xs->datalen));
+#endif	/* SCSIDEBUG */
+
+	if (error == EJUSTRETURN)
 		return (0);
 
 	s = splbio();
@@ -1943,8 +1957,6 @@ show_scsi_xs(struct scsi_xfer *xs)
 			printf("%x", b[i++]);
 		}
 		printf("-[%d bytes]\n", xs->datalen);
-		if (xs->datalen)
-			show_mem(xs->data, min(64, xs->datalen));
 	} else
 		printf("-RESET-\n");
 }
