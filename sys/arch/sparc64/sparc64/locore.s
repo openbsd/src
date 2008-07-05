@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.143 2008/07/05 19:30:44 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.144 2008/07/05 20:53:33 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -814,10 +814,10 @@ TABLE/**/uspill:
 #endif	/* DEBUG */
 	UTRAP 0x08c; TA32	! 0x08c spill_3_normal
 TABLE/**/kspill:
-	SPILL64 kspill8,ASI_N	! 0x090 spill_4_normal -- used to save supervisor windows
-	SPILL32 kspill4,ASI_N	! 0x094 spill_5_normal
-	SPILLBOTH kspill8,kspill4,ASI_N	! 0x098 spill_6_normal
-	UTRAP 0x09c; TA32	! 0x09c spill_7_normal
+	UTRAP 0x090; TA32	! 0x090 spill_4_normal -- used to save supervisor windows
+	SPILL64 kspill8,ASI_N	! 0x094 spill_5_normal
+	SPILL32 kspill4,ASI_N	! 0x098 spill_6_normal
+	SPILLBOTH kspill8,kspill4,ASI_N	! 0x09c spill_7_normal
 TABLE/**/uspillk:
 	USPILL64 uspillk8,ASI_AIUS	! 0x0a0 spill_0_other -- used to save user windows in supervisor mode
 	SPILL32 uspillk4,ASI_AIUS	! 0x0a4 spill_1_other
@@ -833,10 +833,10 @@ TABLE/**/ufill:
 	FILLBOTH ufill8,ufill4,ASI_AIUS	! 0x0c8 fill_2_normal
 	UTRAP 0x0cc; TA32	! 0x0cc fill_3_normal
 TABLE/**/kfill:
-	FILL64 kfill8,ASI_N	! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
-	FILL32 kfill4,ASI_N	! 0x0d4 fill_5_normal
-	FILLBOTH kfill8,kfill4,ASI_N	! 0x0d8 fill_6_normal
-	UTRAP 0x0dc; TA32	! 0x0dc fill_7_normal
+	UTRAP 0x0d0; TA32	! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
+	FILL64 kfill8,ASI_N	! 0x0d4 fill_5_normal
+	FILL32 kfill4,ASI_N	! 0x0d8 fill_6_normal
+	FILLBOTH kfill8,kfill4,ASI_N	! 0x0dc fill_7_normal
 TABLE/**/ufillk:
 	UFILL64 ufillk8,ASI_AIUS	! 0x0e0 fill_0_other
 	FILL32 ufillk4,ASI_AIUS	! 0x0e4 fill_1_other
@@ -973,10 +973,10 @@ TABLE/**/uspill:
 	SPILLBOTH 1b,2b,ASI_AIUS	! 0x088 spill_2_normal
 	UTRAP 0x08c; TA32	! 0x08c spill_3_normal
 TABLE/**/kspill:
-	SPILL64 1,ASI_N	! 0x090 spill_4_normal -- used to save supervisor windows
-	SPILL32 2,ASI_N	! 0x094 spill_5_normal
-	SPILLBOTH 1b,2b,ASI_N	! 0x098 spill_6_normal
-	UTRAP 0x09c; TA32	! 0x09c spill_7_normal
+	UTRAP 0x090; TA32	! 0x090 spill_4_normal -- used to save supervisor windows
+	SPILL64 1,ASI_N		! 0x094 spill_5_normal
+	SPILL32 2,ASI_N		! 0x098 spill_6_normal
+	SPILLBOTH 1b,2b,ASI_N	! 0x09c spill_7_normal
 TABLE/**/uspillk:
 	USPILL64 1,ASI_AIUS	! 0x0a0 spill_0_other -- used to save user windows in nucleus mode
 	SPILL32 2,ASI_AIUS	! 0x0a4 spill_1_other
@@ -992,10 +992,10 @@ TABLE/**/ufill:
 	FILLBOTH 1b,2b,ASI_AIUS	! 0x0c8 fill_2_normal
 	UTRAP 0x0cc; TA32	! 0x0cc fill_3_normal
 TABLE/**/sfill:
-	FILL64 1,ASI_N		! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
-	FILL32 2,ASI_N		! 0x0d4 fill_5_normal
-	FILLBOTH 1b,2b,ASI_N	! 0x0d8 fill_6_normal
-	UTRAP 0x0dc; TA32	! 0x0dc fill_7_normal
+	UTRAP 0x0d0; TA32	! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
+	FILL64 1,ASI_N		! 0x0d4 fill_5_normal
+	FILL32 2,ASI_N		! 0x0d8 fill_6_normal
+	FILLBOTH 1b,2b,ASI_N	! 0x0dc fill_7_normal
 TABLE/**/kfill:
 	UFILL64 1,ASI_AIUS	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
 	FILL32 2,ASI_AIUS	! 0x0e4 fill_1_other
@@ -1102,10 +1102,10 @@ _C_LABEL(trapbase_sun4v):
 	SPILL32 uspill4v, ASI_AIUS			! 0x84
 	SPILLBOTH uspill8v,uspill4v, ASI_AIUS		! 0x88
 	sun4v_tl0_unused 4				! 0x8c
-	SPILL64 kspill8v, ASI_N				! 0x90
-	SPILL32 kspill4v, ASI_N				! 0x94
-	SPILLBOTH kspill8v, kspill4v, ASI_N		! 0x98
-	sun4v_tl0_unused 4				! 0x9c
+	sun4v_tl0_unused 4				! 0x90
+	SPILL64 kspill8v, ASI_N				! 0x94
+	SPILL32 kspill4v, ASI_N				! 0x98
+	SPILLBOTH kspill8v, kspill4v, ASI_N		! 0x9c
 	USPILL64 uspillk8v, ASI_AIUS			! 0xa0
 	SPILL32 uspillk4v, ASI_AIUS			! 0xa4
 	SPILLBOTH uspillk8v, uspillk4v, ASI_AIUS	! 0xa8
@@ -1114,11 +1114,11 @@ _C_LABEL(trapbase_sun4v):
 	UFILL64 ufill8v, ASI_AIUS			! 0xc0
 	FILL32 ufill4v, ASI_AIUS			! 0xc4
 	FILLBOTH ufill8v, ufill4v, ASI_AIUS		! 0xc8
-	sun4v_tl0_unused 4				! 0xcf
-	FILL64 kfill8v, ASI_N				! 0xd0
-	FILL32 kfill4v, ASI_N				! 0xd4
-	FILLBOTH kfill8v, kfill4v, ASI_N		! 0xd8
-	sun4v_tl0_unused 4				! 0xdf
+	sun4v_tl0_unused 4				! 0xcc
+	sun4v_tl0_unused 4				! 0xd0
+	FILL64 kfill8v, ASI_N				! 0xd4
+	FILL32 kfill4v, ASI_N				! 0xd8
+	FILLBOTH kfill8v, kfill4v, ASI_N		! 0xdc
 	UFILL64 ufillk8v, ASI_AIUS			! 0xe0
 	FILL32 ufillk4v, ASI_AIUS			! 0xe4
 	FILLBOTH ufillk8v, ufillk4v, ASI_AIUS		! 0xe8
@@ -1171,10 +1171,10 @@ _C_LABEL(trapbase_sun4v):
 	sun4v_tl1_uspill_normal				! 0x84
 	sun4v_tl1_uspill_normal				! 0x88
 	sun4v_tl1_unused 4				! 0x8c
-	sun4v_tl1_kspill_normal				! 0x90
+	sun4v_tl1_unused 4				! 0x90
 	sun4v_tl1_kspill_normal				! 0x94
 	sun4v_tl1_kspill_normal				! 0x98
-	sun4v_tl1_unused 4				! 0x9c
+	sun4v_tl1_kspill_normal				! 0x9c
 	sun4v_tl1_uspill_other				! 0xa0
 	sun4v_tl1_uspill_other				! 0xa4
 	sun4v_tl1_uspill_other				! 0xa8

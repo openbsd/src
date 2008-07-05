@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.24 2008/05/24 19:59:06 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.25 2008/07/05 20:53:33 kettenis Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -220,7 +220,7 @@
  * stack pointer and then vector to the real handler.  We could optimize this
  * if we could guarantee only 32-bit or 64-bit stacks.
  */
-#define WSTATE_KERN	026
+#define WSTATE_KERN	027
 #define WSTATE_USER	022
 
 #define CWP		0x01f
