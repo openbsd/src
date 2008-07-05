@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2008/07/04 17:40:25 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2008/07/05 21:20:48 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -882,12 +882,12 @@ remap_data:
 	 * Hunt for the kernel text segment and figure out it size and
 	 * alignment.  
 	 */
+	ktsize = 0;
 	for (i = 0; i < prom_map_size; i++) 
-		if (prom_map[i].vstart == ktext)
-			break;
-	if (i == prom_map_size) 
+		if (prom_map[i].vstart == ktext + ktsize)
+			ktsize += prom_map[i].vsize;
+	if (ktsize == 0)
 		panic("No kernel text segment!");
-	ktsize = prom_map[i].vsize;
 	ektext = ktext + ktsize;
 
 	if (ktextp & (4*MEG-1)) {
