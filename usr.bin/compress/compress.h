@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.8 2005/06/26 18:20:26 otto Exp $	*/
+/*	$OpenBSD: compress.h,v 1.9 2008/07/05 21:00:38 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -42,6 +42,13 @@ struct z_info {
  * actually this value is just a little bit better than 8192.
  */
 #define Z_BUFSIZE 16384
+
+/*
+ * program modes
+ */
+#define MODE_COMP	0
+#define MODE_DECOMP	1
+#define MODE_CAT	2
 
 /*
  * exit codes for compress
