@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.172 2008/06/14 10:55:21 mk Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.173 2008/07/05 12:48:03 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ struct freelst vnode_free_list;	/* vnode free list */
 struct mntlist mountlist;	/* mounted filesystem list */
 
 void	vclean(struct vnode *, int, struct proc *);
+void	vhold(struct vnode *);
+void	vdrop(struct vnode *);
 
 void insmntque(struct vnode *, struct mount *);
 int getdevvp(dev_t, struct vnode **, enum vtype);
@@ -729,11 +731,7 @@ vrele(struct vnode *vp)
 		vputonfreelist(vp);
 }
 
-void vhold(struct vnode *vp);
-
-/*
- * Page or buffer structure gets a reference.
- */
+/* Page or buffer structure gets a reference. */
 void
 vhold(struct vnode *vp)
 {
@@ -747,6 +745,28 @@ vhold(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	}
 	vp->v_holdcnt++;
+}
+
+/* Lose interest in a vnode. */
+void
+vdrop(struct vnode *vp)
+{
+#ifdef DIAGNOSTIC
+	if (vp->v_holdcnt == 0)
+		panic("vdrop: zero holdcnt"); 
+#endif
+
+	vp->v_holdcnt--;
+
+	/*
+	 * If it is on the holdlist and the hold count drops to
+	 * zero, move it to the free list.
+	 */
+	if ((vp->v_bioflag & VBIOONFREELIST) &&
+	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
+		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
+		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	}
 }
 
 /*
@@ -1259,7 +1279,6 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		ret = sysctl_rdstruct(oldp, oldlenp, newp, &bcstats,
 		    sizeof(struct bcachestats));
 		return(ret);
-
 	}
 	return (EOPNOTSUPP);
 }
@@ -1952,23 +1971,9 @@ brelvp(struct buf *bp)
 		vp->v_bioflag &= ~VBIOONSYNCLIST;
 		LIST_REMOVE(vp, v_synclist);
 	}
-	bp->b_vp = (struct vnode *) 0;
+	bp->b_vp = NULL;
 
-#ifdef DIAGNOSTIC
-	if (vp->v_holdcnt == 0)
-		panic("brelvp: holdcnt");
-#endif
-	vp->v_holdcnt--;
-
-	/*
-	 * If it is on the holdlist and the hold count drops to
-	 * zero, move it to the free list.
-	 */
-	if ((vp->v_bioflag & VBIOONFREELIST) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	}
+	vdrop(vp);
 }
 
 /*
