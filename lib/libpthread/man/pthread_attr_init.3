@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_attr_init.3,v 1.8 2008/07/05 08:03:57 guenther Exp $
+.\" $OpenBSD: pthread_attr_init.3,v 1.9 2008/07/05 10:43:07 jmc Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
@@ -35,7 +35,8 @@ A single attributes object can be used in multiple simultaneous calls to
 The
 .Fn pthread_attr_destroy
 function is used to destroy a thread
-attributes object. An implementation may cause
+attributes object.
+An implementation may cause
 .Fn pthread_attr_destroy
 to set
 .Fa attr

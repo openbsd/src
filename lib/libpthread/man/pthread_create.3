@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_create.3,v 1.11 2008/07/05 08:03:57 guenther Exp $
+.\" $OpenBSD: pthread_create.3,v 1.12 2008/07/05 10:43:07 jmc Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -50,7 +50,8 @@ function is used to create a new thread, with attributes specified by
 within a process.
 If
 .Fa attr
-is NULL, the default attributes are used. If the attributes specified by
+is NULL, the default attributes are used.
+If the attributes specified by
 .Fa attr
 are modified later, the thread's attributes are not affected.
 Upon successful completion
