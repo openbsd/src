@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.93 2008/07/04 18:48:45 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.94 2008/07/05 23:08:08 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -260,6 +260,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
+	struct trapvec *romtba;
 #if defined(SUN4US) || defined(SUN4V)
 	char buf[32];
 #endif
@@ -370,6 +371,15 @@ bootstrap(nctx)
 
 	}
 #endif
+
+	/*
+	 * Copy over the OBP breakpoint trap vector; OpenFirmware 5.x
+	 * needs it to be able to return to the ok prompt.
+	 */
+	romtba = (struct trapvec *)sparc_rdpr(tba);
+	bcopy(&romtba[T_MON_BREAKPOINT], &trapbase[T_MON_BREAKPOINT],
+	    sizeof(struct trapvec));
+	flush((void *)trapbase);
 
 	ncpus = get_ncpus();
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx, ncpus);
