@@ -1,6 +1,6 @@
-.\" $OpenBSD: udcf.4,v 1.24 2007/05/31 19:19:52 jmc Exp $
+.\" $OpenBSD: udcf.4,v 1.25 2008/07/05 12:18:27 mbalmer Exp $
 .\"
-.\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+.\" Copyright (c) 2006 - 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 5 2008 $
 .Dt UDCF 4
 .Os
 .Sh NAME
@@ -25,8 +25,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Gude ADS Expert mouseCLOCK USB, a receiver for
-the German DCF77 and the Swiss HBG time signal stations.
+driver provides support for the Gude ADS Expert mouseCLOCK USB and
+the Expert mouseCLOCK USB II, receivers for the German DCF77 and the
+Swiss HBG time signal stations.
+While receivers for the British MSF time signal station are also
+being made,
+.Nm
+lacks support for them.
+.Pp
 .Nm
 implements a timedelta sensor and the delta (in nanoseconds) between the
 received time information and the local time can be accessed through the
