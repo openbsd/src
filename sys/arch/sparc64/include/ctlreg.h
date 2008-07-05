@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.17 2008/04/15 22:39:26 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.18 2008/07/05 23:06:06 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -581,6 +581,7 @@ GEN_RDPR(cwp);
 GEN_RDPR(tick);
 GEN_RDPR(pstate);
 GEN_RDPR(pil);
+GEN_RDPR(tba);
 GEN_RDPR(ver);
 /*
  * Before adding GEN_RDPRs for other registers, see Errata 50 (E.g,. in
