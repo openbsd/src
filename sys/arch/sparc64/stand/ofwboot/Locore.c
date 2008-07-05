@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.7 2007/01/16 14:39:57 tsi Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.8 2008/07/05 23:03:04 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -377,6 +377,7 @@ OF_chain(virt, size, entry, arg, len)
 	u_int len;
 {
 	extern int64_t romp;
+#ifdef __notyet
 	extern int debug;
 	struct {
 		cell_t name;
@@ -405,6 +406,7 @@ OF_chain(virt, size, entry, arg, len)
 		printf("Calling entry(0, %p, %x, %lx, %lx)\n", arg, len,
 			(unsigned long)romp, (unsigned long)romp);
 	}
+#endif
 	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
 	panic("OF_chain: kernel returned!");
 	__asm("ta 2" : :);
