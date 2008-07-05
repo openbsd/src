@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.65 2008/07/05 17:34:26 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.66 2008/07/05 18:28:08 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1922,7 +1922,7 @@ nfsrv_wakenfsd(struct nfssvc_sock *slp)
 				panic("nfsd wakeup");
 			slp->ns_sref++;
 			nfsd->nfsd_slp = slp;
-			wakeup(nfsd);
+			wakeup_one(nfsd);
 			return;
 		}
 	}
