@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.76 2008/06/14 22:44:07 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.77 2008/07/05 12:51:04 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -673,7 +673,6 @@ mountnfs(argp, mp, nam, pth, hst)
 		nmp = malloc(sizeof(struct nfsmount), M_NFSMNT,
 		    M_WAITOK|M_ZERO);
 		mp->mnt_data = (qaddr_t)nmp;
-		TAILQ_INIT(&nmp->nm_uidlruhead);
 	}
 
 	vfs_getnewfsid(mp);

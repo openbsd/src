@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.31 2008/06/12 19:14:15 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.32 2008/07/05 12:51:04 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
 #define	NFS_DEFRAHEAD	1		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
-#define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
 #define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
 #ifndef NFS_GATHERDELAY
@@ -153,16 +152,6 @@ struct nfsd_srvargs {
 	u_char		*nsd_verfstr;
 	struct timeval	nsd_timestamp;	/* timestamp from verifier */
 	u_int32_t	nsd_ttl;	/* credential ttl (sec) */
-};
-
-struct nfsd_cargs {
-	char		*ncd_dirp;	/* Mount dir path */
-	uid_t		ncd_authuid;	/* Effective uid */
-	int		ncd_authtype;	/* Type of authenticator */
-	u_int		ncd_authlen;	/* Length of authenticator string */
-	u_char		*ncd_authstr;	/* Authenticator string */
-	u_int		ncd_verflen;	/* and the verifier */
-	u_char		*ncd_verfstr;
 };
 
 /*
@@ -292,24 +281,12 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 /*
  * A list of nfssvc_sock structures is maintained with all the sockets
  * that require service by the nfsd.
- * The nfsuid structs hang off of the nfssvc_sock structs in both lru
- * and uid hash lists.
  */
-#ifndef NFS_UIDHASHSIZ
-#define	NFS_UIDHASHSIZ	29	/* Tune the size of nfssvc_sock with this */
-#endif
-#define	NUIDHASH(sock, uid) \
-	(&(sock)->ns_uidhashtbl[(uid) % NFS_UIDHASHSIZ])
 #ifndef NFS_WDELAYHASHSIZ
 #define	NFS_WDELAYHASHSIZ 16	/* and with this */
 #endif
 #define	NWDELAYHASH(sock, f) \
 	(&(sock)->ns_wdelayhashtbl[(*((u_int32_t *)(f))) % NFS_WDELAYHASHSIZ])
-#ifndef NFS_MUIDHASHSIZ
-#define NFS_MUIDHASHSIZ	67	/* Tune the size of nfsmount with this */
-#endif
-#define	NMUIDHASH(nmp, uid) \
-	(&(nmp)->nm_uidhashtbl[(uid) % NFS_MUIDHASHSIZ])
 #define	NFSNOHASH(fhsum) \
 	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
 
@@ -321,27 +298,8 @@ union nethostaddr {
 	struct mbuf *had_nam;
 };
 
-struct nfsuid {
-	TAILQ_ENTRY(nfsuid) nu_lru;	/* LRU chain */
-	LIST_ENTRY(nfsuid) nu_hash;	/* Hash list */
-	int		nu_flag;	/* Flags */
-	union nethostaddr nu_haddr;	/* Host addr. for dgram sockets */
-	struct ucred	nu_cr;		/* Cred uid mapped to */
-	int		nu_expire;	/* Expiry time (sec) */
-	struct timeval	nu_timestamp;	/* Kerb. timestamp */
-	u_int32_t	nu_nickname;	/* Nickname on server */
-};
-
-#define	nu_inetaddr	nu_haddr.had_inetaddr
-#define	nu_nam		nu_haddr.had_nam
-/* Bits for nu_flag */
-#define	NU_INETADDR	0x1
-#define NU_NAM		0x2
-#define NU_NETFAM(u)	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_ISO)
-
 struct nfssvc_sock {
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
-	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
 	struct file	*ns_fp;
 	struct socket	*ns_so;
 	struct mbuf	*ns_nam;
@@ -354,10 +312,8 @@ struct nfssvc_sock {
 	int		ns_solock;
 	int		ns_cc;
 	int		ns_reclen;
-	int		ns_numuids;
 	u_int32_t	ns_sref;
 	LIST_HEAD(, nfsrv_descript) ns_tq;	/* Write gather lists */
-	LIST_HEAD(, nfsuid) ns_uidhashtbl[NFS_UIDHASHSIZ];
 	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
 };
 

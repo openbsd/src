@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.15 2008/06/08 18:23:03 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.16 2008/07/05 12:51:04 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -67,16 +67,7 @@ struct	nfsmount {
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readdirsize;		/* Size of a readdir rpc */
 	int	nm_readahead;		/* Num. of blocks to readahead */
-	uid_t	nm_authuid;		/* Uid for authenticator */
-	int	nm_authtype;		/* Authenticator type */
-	int	nm_authlen;		/* and length */
-	char	*nm_authstr;		/* Authenticator string */
-	char	*nm_verfstr;		/* and the verifier */
-	int	nm_verflen;
 	u_char	nm_verf[NFSX_V3WRITEVERF]; /* V3 write verifier */
-	int	nm_numuids;		/* Number of nfsuid mappings */
-	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
-	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];
 	u_short	nm_acregmin;		/* Attr cache file recently modified */
 	u_short	nm_acregmax;		/* ac file not recently modified */
 	u_short	nm_acdirmin;		/* ac for dir recently modified */
