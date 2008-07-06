@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.46 2008/07/03 09:50:04 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.47 2008/07/06 13:50:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -750,7 +750,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		}
 	}
 
-	/* set back first alternate, otherwise negotation can fail */
+	/* switch back to default interface, otherwise negotation could fail */
 	error = usbd_set_interface(uaa->ifaces[iface], 0);
 	if (error) {
 		printf("%s: could not set alternate interface 0!\n",
@@ -1141,6 +1141,9 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		usbd_close_pipe(sc->sc_vs_curr->pipeh);
 		sc->sc_vs_curr->pipeh = NULL;
 	}
+
+	/* switch back to default interface (turns off cam LED) */
+	(void)usbd_set_interface(sc->sc_vs_curr->ifaceh, 0);
 }
 
 void
