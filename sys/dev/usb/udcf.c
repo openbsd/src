@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.42 2008/07/05 12:11:51 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.43 2008/07/06 10:00:47 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -42,10 +42,8 @@ int udcfdebug = 0;
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
 
-#define UDCF_READ_REQ	0xc0
 #define UDCF_READ_IDX	0x1f
 
-#define UDCF_CTRL_REQ	0x40
 #define UDCF_CTRL_IDX	0x33
 #define UDCF_CTRL_VAL	0x98
 
@@ -418,13 +416,13 @@ udcf_nc_init_hw(struct udcf_softc *sc)
 	int				 actlen;
 
 	/* Prepare the USB request to probe the value */
-	sc->sc_req.bmRequestType = UDCF_READ_REQ;
+	sc->sc_req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	sc->sc_req.bRequest = 1;
 	USETW(sc->sc_req.wValue, 0);
 	USETW(sc->sc_req.wIndex, UDCF_READ_IDX);
 	USETW(sc->sc_req.wLength, 1);
 
-	req.bmRequestType = UDCF_CTRL_REQ;
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = 0;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
@@ -435,7 +433,7 @@ udcf_nc_init_hw(struct udcf_softc *sc)
 		return -1;
 	}
 
-	req.bmRequestType = UDCF_CTRL_REQ;
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = 0;
 	USETW(req.wValue, UDCF_CTRL_VAL);
 	USETW(req.wIndex, UDCF_CTRL_IDX);
