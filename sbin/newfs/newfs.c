@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.78 2008/06/27 18:50:43 sobrado Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.79 2008/07/06 15:03:36 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
 daddr64_t	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
-int	realsectorsize;		/* bytes/sector in hardware */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	maxfrgspercg = INT_MAX;	/* maximum fragments per cylinder group */
@@ -454,20 +453,6 @@ havelabel:
 			maxbpg = MAXBLKPG_FFS2(bsize);
 	}
 	oldpartition = *pp;
-	realsectorsize = sectorsize;
-	if (sectorsize < DEV_BSIZE) {
-		int secperblk = DEV_BSIZE / sectorsize;
-
-		sectorsize = DEV_BSIZE;
-		fssize /= secperblk;
-		DL_SETPSIZE(pp, DL_GETPSIZE(pp) / secperblk);
-	} else if (sectorsize > DEV_BSIZE) {
-		int blkpersec = sectorsize / DEV_BSIZE;
-
-		sectorsize = DEV_BSIZE;
-		fssize *= blkpersec;
-		DL_SETPSIZE(pp, DL_GETPSIZE(pp) * blkpersec);
-	}
 #ifdef MFS
 	if (mfs) {
 		if (realpath(argv[1], node) == NULL)
@@ -481,10 +466,6 @@ havelabel:
 #endif
 
 	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
-	if (realsectorsize < DEV_BSIZE)
-		DL_SETPSIZE(pp, DL_GETPSIZE(pp) * DEV_BSIZE / realsectorsize);
-	else if (realsectorsize > DEV_BSIZE)
-		DL_SETPSIZE(pp, DL_GETPSIZE(pp) / realsectorsize / DEV_BSIZE);
 	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)))
 		rewritelabel(special, fso, lp);
 	if (!Nflag)
