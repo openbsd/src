@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.68 2008/07/05 12:51:04 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.69 2008/07/06 13:33:54 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -72,8 +72,6 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
-
-void	nfsrv_zapsock(struct nfssvc_sock *);
 
 /* Global defs. */
 extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
