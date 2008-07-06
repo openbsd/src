@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.8 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.9 2008/07/06 13:36:09 sobrado Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.8 2003/07/02 21:04:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.9 2008/07/06 13:36:09 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 				break;
 			default:
 				fprintf(stderr,
-				    "usage: %s [ - ] [ -2 ] [ file ... ]\n",
+				    "usage: %s [-] [-2] [file ...]\n",
 				    __progname);
 				fflush(stdout);
 				exit(1);
