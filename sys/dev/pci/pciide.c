@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.284 2008/06/13 17:03:26 maja Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.285 2008/07/06 10:38:52 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1277,6 +1277,7 @@ pciide_match(struct device *parent, void *match, void *aux)
 		 */
 		case PCI_SUBCLASS_MASS_STORAGE_SATA:
 		case PCI_SUBCLASS_MASS_STORAGE_RAID:
+		case PCI_SUBCLASS_MASS_STORAGE_MISC:
 			if (pp)
 				return (1);
 			else
