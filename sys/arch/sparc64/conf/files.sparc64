@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.106 2008/06/10 00:02:09 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.107 2008/07/06 07:27:43 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -116,6 +116,10 @@ file	arch/sparc64/dev/vgafb.c		vgafb
 device	ifb: wsemuldisplaydev, rasops8
 attach	ifb at pci
 file	arch/sparc64/dev/ifb.c			ifb
+
+device	sbbc
+attach	sbbc at pci
+file	arch/sparc64/dev/sbbc.c			sbbc
 
 # IOMMU is for both sbus and pci
 file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci

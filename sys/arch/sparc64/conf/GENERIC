@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.213 2008/06/27 05:40:21 brad Exp $
+#	$OpenBSD: GENERIC,v 1.214 2008/07/06 07:27:43 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -52,6 +52,7 @@ ppb*	at pci?
 ebus*	at mainbus0
 ebus*	at pci?
 vbus0	at mainbus0
+sbbc*	at pci?
 
 # PCI Ethernet
 lmc*	at pci?			# Lan Media Corp SSI/T3/HSSI
