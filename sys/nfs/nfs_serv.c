@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.57 2008/06/15 04:03:40 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.58 2008/07/06 16:54:48 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1618,9 +1618,8 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 
-#ifndef nolint
-	vp = (struct vnode *)0;
-#endif
+	vp = NULL;
+
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);

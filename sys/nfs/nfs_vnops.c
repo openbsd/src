@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.93 2008/06/14 22:44:07 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.94 2008/07/06 16:54:48 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -984,9 +984,8 @@ nfs_readrpc(vp, uiop)
 	int error = 0, len, retlen, tsiz, eof, attrflag;
 	int v3 = NFS_ISV3(vp);
 
-#ifndef nolint
 	eof = 0;
-#endif
+
 	nmp = VFSTONFS(vp->v_mount);
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > 0xffffffff && !v3)
