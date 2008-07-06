@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.214 2008/07/06 07:27:43 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.215 2008/07/06 08:53:38 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,7 +30,10 @@ config		bsd	swap generic
 # Main bus and CPU .. all systems.
 mainbus0 at root
 cpu0	at mainbus0
+ssm*	at mainbus0
+cpu0	at ssm?
 cmp*	at mainbus0
+cmp*	at ssm?
 cpu0	at cmp?
 
 # Bus types found on SPARC systems.
@@ -42,6 +45,7 @@ upa0	at mainbus0
 psycho*	at mainbus0
 pci*	at psycho?
 schizo*	at mainbus0
+schizo*	at ssm?
 pci*	at schizo?
 pyro*	at mainbus0
 pci*	at pyro?

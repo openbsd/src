@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.95 2008/07/06 07:25:04 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.96 2008/07/06 08:53:38 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -798,10 +798,6 @@ extern bus_space_tag_t mainbus_space_tag;
 	for (node0 = OF_child(node); node0; node0 = OF_peer(node0)) {
 		if (OF_getprop(node0, "name", buf, sizeof(buf)) <= 0)
 			continue;
-		if (strcmp(buf, "ssm") == 0) {
-			node = node0;
-			break;
-		}
 	}
 
 	for (node = OF_child(node); node; node = OF_peer(node)) {
@@ -851,10 +847,6 @@ extern bus_space_tag_t mainbus_space_tag;
 	for (node0 = OF_child(node); node0; node0 = OF_peer(node0)) {
 		if (OF_getprop(node0, "name", buf, sizeof(buf)) <= 0)
 			continue;
-		if (strcmp(buf, "ssm") == 0) {
-			node = node0;
-			break;
-		}
 	}
 
 	/*
@@ -1216,12 +1208,6 @@ device_register(struct device *dev, void *aux)
 	if (bp == NULL)
 		return;
 
-	/*
-	 * XXX Skip 'ssm' until we have a real driver for it.
-	 */
-	if (strcmp(bp->name, "ssm") == 0)
-		bp = bootpath_store(1, bp + 1);
-
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: devname %s(%s) component %s\n",
 	    dev->dv_xname, devname, dev->dv_xname, bp->name));
@@ -1238,7 +1224,8 @@ device_register(struct device *dev, void *aux)
 	 * types; this is only used to find the boot device.
 	 */
 	busname = busdev->dv_cfdata->cf_driver->cd_name;
-	if (strcmp(busname, "mainbus") == 0 || strcmp(busname, "upa") == 0)
+	if (strcmp(busname, "mainbus") == 0 ||
+	    strcmp(busname, "ssm") == 0 || strcmp(busname, "upa") == 0)
 		node = ma->ma_node;
 	else if (strcmp(busname, "sbus") == 0 ||
 	    strcmp(busname, "dma") == 0 || strcmp(busname, "ledma") == 0)
