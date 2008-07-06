@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.36 2008/06/25 14:51:27 millert Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.37 2008/07/06 22:19:39 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -314,7 +314,7 @@ getpwent(void)
 	static char *name = NULL;
 	char *map;
 #endif
-	char bf[1 + sizeof(_pw_keynum)], pwbuf[_PW_BUF_LEN];
+	char bf[1 + sizeof(_pw_keynum)];
 	struct passwd *pw = NULL;
 	DBT key;
 
@@ -438,7 +438,8 @@ again:
 	bcopy((char *)&_pw_keynum, &bf[1], sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = 1 + sizeof(_pw_keynum);
-	if (__hashpw(&key, pwbuf, sizeof pwbuf, &_pw_passwd, &_pw_flags)) {
+	if (__hashpw(&key, _pw_string, sizeof _pw_string,
+	    &_pw_passwd, &_pw_flags)) {
 #ifdef YP
 		static long __yppbuf[_PW_BUF_LEN / sizeof(long)];
 		const char *user, *host, *dom;
