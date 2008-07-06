@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.27 2008/06/11 17:11:36 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.28 2008/07/06 21:03:13 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -78,6 +78,9 @@ void	nmea_gprmc(struct nmea *, struct tty *, char *fld[], int fldcnt);
 /* date and time conversion */
 int	nmea_date_to_nano(char *s, int64_t *nano);
 int	nmea_time_to_nano(char *s, int64_t *nano);
+
+/* longitude and latitude formatting and copying */
+void	nmea_degrees(char *dst, char *src, int neg, size_t len);
 
 /* degrade the timedelta sensor */
 void	nmea_timeout(void *);
@@ -358,6 +361,10 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
 		}
 	}
+	nmea_degrees(np->time.desc, fld[3], *fld[4] == 'S' ? 1 : 0,
+	    sizeof(np->time.desc));
+	nmea_degrees(np->time.desc, fld[5], *fld[6] == 'W' ? 1 : 0,
+	    sizeof(np->time.desc));
 
 	switch (*fld[2]) {
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
@@ -381,6 +388,56 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	 */
 	if (np->no_pps)
 		np->time.status = SENSOR_S_CRIT;
+}
+
+/* format a nmea position in the form DDDMM.MMMM to DDDdMM.MMm */
+void
+nmea_degrees(char *dst, char *src, int neg, size_t len)
+{
+	size_t dlen, ppos;
+	int n;
+	char *p;
+
+	for (dlen = 0; *dst; dlen++)
+		dst++;
+
+	while (*src == '0')
+		++src;	/* skip leading zeroes */
+
+	for (p = src, ppos = 0; *p; ppos++)
+		if (*p++ == '.')
+			break;
+
+	if (*p == '\0')
+		return;	/* no decimal point */
+
+	/*
+	 * we need at least room for a comma, an optional '-', the src data up
+	 * to the decimal point, the decimal point itself, two digits after
+	 * it and some additional characters:  an optional leading '0' in case
+	 * there a no degrees in src, the 'd' degrees indicator, the 'm'
+	 * minutes indicator and the terminating NUL character.
+	 */
+	if (len < (dlen + ppos + 9))
+		return;		/* not enough room in dst */
+
+	*dst++ = ',';
+	if (neg)
+		*dst++ = '-';
+
+	if (ppos < 3)
+		*dst++ = '0';
+
+	for (n = 0; *src && n + 2 < ppos; n++)
+		*dst++ = *src++;
+	*dst++ = 'd';
+	if (ppos == 0)
+		*dst++ = '0';
+
+	for (; *src && n < (ppos + 3); n++)
+		*dst++ = *src++;
+	*dst++ = 'm';
+	*dst = '\0';
 }
 
 /*
