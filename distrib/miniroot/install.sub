@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.434 2008/07/02 00:13:32 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.435 2008/07/06 14:31:19 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -664,7 +664,7 @@ v4_config() {
 		fi
 	fi
 
-	[[ -x /sbin/dhclient ]] && _prompt=" or 'dhcp'"
+	[[ -x /sbin/dhclient ]] && { _prompt=" or 'dhcp'" ; : ${_addr:=dhcp} ; }
 	_prompt="IPv4 address for $_ifs? (or 'none'$_prompt)"
 
 	ask_until "$_prompt" "$_addr"
@@ -1530,7 +1530,7 @@ questions() {
 		    >>/mnt/etc/rc.conf.local
 	fi
 
-	ask "NTP server? (host, 'none' or 'default')" none
+	ask "NTP server? (host, 'none' or 'default')" default
 	if [[ $resp != none ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
