@@ -1,5 +1,5 @@
-# $OpenBSD: australasia,v 1.26 2007/08/22 11:29:44 millert Exp $
-# @(#)australasia	8.8
+# $OpenBSD: australasia,v 1.27 2008/07/07 14:24:14 millert Exp $
+# @(#)australasia	8.9
 # <pre>
 
 # This file also includes Pacific islands.
@@ -1347,7 +1347,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # * Tonga will introduce DST in November
 #
 # I was given this link by John Letts:
-# <a hef="http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm">
+# <a href="http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm">
 # http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm
 # </a>
 #
@@ -1357,7 +1357,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # (12 + 1 hour DST).
 
 # From Arthur David Olson (1999-09-20):
-# According to <a href="http://www.tongaonline.com/news/sept1799.html>
+# According to <a href="http://www.tongaonline.com/news/sept1799.html">
 # http://www.tongaonline.com/news/sept1799.html
 # </a>:
 # "Daylight Savings Time will take effect on Oct. 2 through April 15, 2000
