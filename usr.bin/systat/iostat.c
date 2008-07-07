@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.31 2008/06/13 08:18:47 canacar Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.32 2008/07/07 17:16:27 thib Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ field_def fields_io[] = {
 	{"RTPS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"WTPS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"SEC", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"", 8, 10, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"", 8, 19, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"STATS", 12, 15, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0}
 };
 
