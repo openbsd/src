@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.22 2008/07/02 03:00:00 fgsch Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.23 2008/07/07 23:41:58 brad Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  * Thinkpads with 2GB of RAM, for which 2 GB is a good value.
  *
  * Thus, a general strategy of setting rbus_min_start to the amount of
- * memory seems in order.  However, the actually amount of memory is
+ * memory seems in order.  However, the actual amount of memory is
  * generally slightly more than the amount found, e.g. 1014MB vs 1024,
  * or 2046 vs 2048.
  */
