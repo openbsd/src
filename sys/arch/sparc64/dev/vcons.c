@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.1 2008/03/08 19:38:33 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.2 2008/07/07 14:38:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -85,7 +85,7 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 	cn_tab->cn_getc = vcons_cngetc;
 	cn_tab->cn_putc = vcons_cnputc;
 
-	/* Locate the mahor number. */
+	/* Locate the major number. */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == vconsopen)
 			break;
