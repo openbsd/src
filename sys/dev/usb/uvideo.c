@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.47 2008/07/06 13:50:36 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.48 2008/07/07 18:07:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -136,7 +136,7 @@ void		uvideo_dump_desc_frame_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_extension(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-void		uvideo_hexdump(void *, int);
+void		uvideo_hexdump(void *, int, int);
 int		uvideo_debug_file_open(struct uvideo_softc *);
 void		uvideo_debug_file_write_sample(void *);
 #endif
@@ -846,13 +846,21 @@ uvideo_vs_negotation(struct uvideo_softc *sc)
 	uint8_t probe_data[34];
 	usbd_status error;
 
-	/* set probe */
-	bzero(probe_data, sizeof(probe_data));
 	pc = (struct usb_video_probe_commit *)probe_data;
 
+	/* get probe */
+	bzero(probe_data, sizeof(probe_data));
+	error = uvideo_vs_get_probe(sc, probe_data);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (error);
+
+	/* set probe */
 	pc->bFormatIndex = sc->sc_desc_format_mjpeg->bFormatIndex;
 	pc->bFrameIndex = sc->sc_desc_format_mjpeg->bDefaultFrameIndex;
-
+	USETDW(pc->dwFrameInterval,
+	    UGETDW(sc->sc_desc_frame_mjpeg->dwDefaultFrameInterval));
+	USETDW(pc->dwMaxVideoFrameSize, 0);
+	USETDW(pc->dwMaxPayloadTransferSize, 0);
 	error = uvideo_vs_set_probe(sc, probe_data);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
@@ -907,7 +915,7 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
 	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
 	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
-	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
+	DPRINTF(1, "wCompWindowSize=%d\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
 	    UGETDW(pc->dwMaxVideoFrameSize));
@@ -952,7 +960,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
 	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
 	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
-	DPRINTF(1, "wCompWindowSize=0x%04x\n", UGETW(pc->wCompWindowSize));
+	DPRINTF(1, "wCompWindowSize=%d\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
 	    sc->sc_video_buf_size);
@@ -1785,22 +1793,24 @@ uvideo_dump_desc_extension(struct uvideo_softc *sc,
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bUnitID=0x%02x\n", d->bUnitID);
-	/* XXX we need a hexdump here */
-	printf("guidExtensionCode=%s\n", d->guidExtensionCode);
+	printf("guidExtensionCode=0x");
+	uvideo_hexdump(d->guidExtensionCode, sizeof(d->guidExtensionCode), 1);
 	printf("bNumControls=0x%02x\n", d->bNumControls);
 	printf("bNrInPins=0x%02x\n", d->bNrInPins);
 }
 
 void
-uvideo_hexdump(void *buf, int len)
+uvideo_hexdump(void *buf, int len, int quiet)
 {
 	int i;
 
 	for (i = 0; i < len; i++) {
-		if (i % 16 == 0)
-			printf("%s%5i:", i ? "\n" : "", i);
-		if (i % 4 == 0)
-			printf(" ");
+		if (quiet == 0) {
+			if (i % 16 == 0)
+				printf("%s%5i:", i ? "\n" : "", i);
+			if (i % 4 == 0)
+				printf(" ");
+		}
 		printf("%02x", (int)*((u_char *)buf + i));
 	}
 	printf("\n");
