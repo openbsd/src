@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.108 2008/07/06 08:52:26 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.109 2008/07/07 14:46:18 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -123,7 +123,7 @@ file	arch/sparc64/dev/ifb.c			ifb
 
 device	sbbc
 attach	sbbc at pci
-file	arch/sparc64/dev/sbbc.c			sbbc
+file	arch/sparc64/dev/sbbc.c			sbbc needs-flag
 
 # IOMMU is for both sbus and pci
 file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.26 2008/07/05 22:17:21 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.27 2008/07/07 14:46:18 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -738,6 +738,28 @@ prom_printf(const char *fmt, ...)
 	va_end(ap);
 
 	OF_write(OF_stdout(), buf, len);
+}
+
+const char *
+prom_serengeti_set_console_input(const char *new)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+		cell_t  new;
+		cell_t  old;
+	} args;
+
+	args.name = ADR2CELL("SUNW,set-console-input");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.new = ADR2CELL(new);
+
+	if (openfirmware(&args) == -1)
+		return NULL;
+
+	return (const char *)args.old;
 }
 
 #ifdef DEBUG
