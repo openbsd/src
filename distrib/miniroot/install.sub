@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.435 2008/07/06 14:31:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.436 2008/07/07 15:53:15 jdixon Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1530,10 +1530,11 @@ questions() {
 		    >>/mnt/etc/rc.conf.local
 	fi
 
-	ask "NTP server? (host, 'none' or 'default')" default
-	if [[ $resp != none ]]; then
+	ask_yn "Start ntpd(8) by default?" no
+	if [[ $resp == y ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
+		ask "NTP server? (hostname or 'default')" default
 		if [[ $resp != default ]]; then
 			# Comment out the default 'servers' line, and add a
 			# 'server' line with the first token in $resp as the
