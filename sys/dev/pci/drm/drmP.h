@@ -638,6 +638,7 @@ struct drm_device {
 	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */
 	DRM_SPINTYPE	  dev_lock;	/* protects everything else */
 	DRM_SPINTYPE	  drw_lock;
+	DRM_SPINTYPE	  tsk_lock;
 
 				/* Usage Counters */
 	int		  open_count;	/* Outstanding files open	   */

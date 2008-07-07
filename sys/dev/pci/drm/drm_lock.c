@@ -180,6 +180,13 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock) != lock->context)
 		return EINVAL;
 
+	DRM_SPINLOCK(&dev->tsk_lock);
+	if (dev->locked_task_call != NULL) {
+		dev->locked_task_call(dev);
+		dev->locked_task_call = NULL;
+	}
+	DRM_SPINUNLOCK(&dev->tsk_lock);
+
 	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
 
 	DRM_LOCK();

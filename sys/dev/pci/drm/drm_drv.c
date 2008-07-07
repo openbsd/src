@@ -169,7 +169,8 @@ drm_attach(struct device *parent, struct device *kdev,
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
 	DRM_SPININIT(&dev->dev_lock, "drm device");
-	DRM_SPININIT(&dev->drw_lock, "drm drawable lock");
+	mtx_init(&dev->drw_lock, IPL_BIO);
+	mtx_init(&dev->tsk_lock, IPL_BIO);
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
