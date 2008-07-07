@@ -1653,8 +1653,10 @@
 ./usr/share/man/cat4/sparc64/rtc.0
 ./usr/share/man/cat4/sparc64/sab.0
 ./usr/share/man/cat4/sparc64/sabtty.0
+./usr/share/man/cat4/sparc64/sbbc.0
 ./usr/share/man/cat4/sparc64/schizo.0
 ./usr/share/man/cat4/sparc64/spif.0
+./usr/share/man/cat4/sparc64/ssm.0
 ./usr/share/man/cat4/sparc64/tda.0
 ./usr/share/man/cat4/sparc64/timer.0
 ./usr/share/man/cat4/sparc64/tvtwo.0
