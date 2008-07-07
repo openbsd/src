@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.28 2008/07/06 21:03:13 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.29 2008/07/07 08:01:47 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -336,27 +336,27 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->mode = *fld[12];
 		switch (np->mode) {
 		case 'S':
-			strlcpy(np->time.desc, "GPS simulated",
+			strlcpy(np->time.desc, "GPS sim", /* simulated */
 			    sizeof(np->time.desc));
 			break;
 		case 'E':
-			strlcpy(np->time.desc, "GPS estimated",
+			strlcpy(np->time.desc, "GPS est", /* estimated */
 			    sizeof(np->time.desc));
 			break;
 		case 'A':
-			strlcpy(np->time.desc, "GPS autonomous",
+			strlcpy(np->time.desc, "GPS aut", /* autonomous */
 			    sizeof(np->time.desc));
 			break;
 		case 'D':
-			strlcpy(np->time.desc, "GPS differential",
+			strlcpy(np->time.desc, "GPS dif", /* differential */
 			    sizeof(np->time.desc));
 			break;
 		case 'N':
-			strlcpy(np->time.desc, "GPS not valid",
+			strlcpy(np->time.desc, "GPS inv", /* not valid */
 			    sizeof(np->time.desc));
 			break;
 		default:
-			strlcpy(np->time.desc, "GPS unknown",
+			strlcpy(np->time.desc, "GPS unk", /* unknown */
 			    sizeof(np->time.desc));
 			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
 		}
@@ -394,7 +394,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 void
 nmea_degrees(char *dst, char *src, int neg, size_t len)
 {
-	size_t dlen, ppos;
+	size_t dlen, ppos, rlen;
 	int n;
 	char *p;
 
@@ -418,7 +418,12 @@ nmea_degrees(char *dst, char *src, int neg, size_t len)
 	 * there a no degrees in src, the 'd' degrees indicator, the 'm'
 	 * minutes indicator and the terminating NUL character.
 	 */
-	if (len < (dlen + ppos + 9))
+	rlen = dlen + ppos + 7;
+	if (neg)
+		rlen++;
+	if (ppos < 3)
+		rlen++;
+	if (len < rlen)
 		return;		/* not enough room in dst */
 
 	*dst++ = ',';
