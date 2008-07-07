@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.53 2008/01/19 11:13:43 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.54 2008/07/07 23:22:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -114,6 +114,8 @@ schizo_match(struct device *parent, void *match, void *aux)
 
 	str = getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,8001") == 0)
+		return (1);
+	if (strcmp(str, "pci108e,8002") == 0)		/* XMITS */
 		return (1);
 	if (strcmp(str, "pci108e,a801") == 0)		/* Tomatillo */
 		return (1);
