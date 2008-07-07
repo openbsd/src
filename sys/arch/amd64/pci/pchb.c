@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.24 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.25 2008/07/07 07:54:48 bernd Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -171,6 +171,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		/* AGP only */
 		case PCI_PRODUCT_INTEL_82915GM_HB:
 		case PCI_PRODUCT_INTEL_82945GM_HB:
+		case PCI_PRODUCT_INTEL_82945GME_HB:
 		case PCI_PRODUCT_INTEL_82G965_HB:
 		case PCI_PRODUCT_INTEL_82Q965_HB:
 		case PCI_PRODUCT_INTEL_82GM965_HB:
