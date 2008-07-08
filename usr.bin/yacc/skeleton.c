@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.28 2007/09/03 21:14:58 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.29 2008/07/08 15:06:50 otto Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,9 +63,10 @@ char *banner[] =
     "#if __GNUC__ >= 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ >= 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.28 2007/09/03 21:14:58 deraadt Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.29 2008/07/08 15:06:50 otto Exp $\";",
     "#endif",
     "#include <stdlib.h>",
+    "#include <string.h>",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",
     "#define YYMINOR 9",
@@ -346,7 +347,10 @@ char *body[] =
     "                YYPREFIX, yystate, yyn, yyrule[yyn]);",
     "#endif",
     "    yym = yylen[yyn];",
-    "    yyval = yyvsp[1-yym];",
+    "    if (yym)",
+    "        yyval = yyvsp[1-yym];",
+    "    else",
+    "        memset(&yyval, 0, sizeof yyval);",
     "    switch (yyn)",
     "    {",
     0
