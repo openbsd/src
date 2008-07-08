@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.62 2008/06/25 18:07:00 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.63 2008/07/08 21:07:57 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.62 2008/06/25 18:07:00 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.63 2008/07/08 21:07:57 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -74,6 +74,9 @@ static const char rcsid[] = "$OpenBSD: cmds.c,v 1.62 2008/06/25 18:07:00 martyna
 
 #include <ctype.h>
 #include <err.h>
+#ifndef SMALL
+#include <fnmatch.h>
+#endif /* !SMALL */
 #include <glob.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -162,7 +165,11 @@ changetype(int newtype, int show)
 		newtype = TYPE_I;
 	if (newtype == curtype)
 		return;
-	if (debug == 0 && show == 0)
+	if (
+#ifndef SMALL
+	    !debug &&
+#endif /* !SMALL */
+	    show == 0)
 		verbose = 0;
 	for (p = types; p->t_name; p++)
 		if (newtype == p->t_type)
@@ -372,10 +379,9 @@ usage:
 	}
 
 #ifndef SMALL
-	optind--;
-	argv[optind] = argv[0];
-	argc -= optind;
-	argv += optind;
+	argv[optind - 1] = argv[0];
+	argc -= optind - 1;
+	argv += optind - 1;
 #endif /* !SMALL */
 
 	mname = argv[0];
@@ -391,7 +397,7 @@ usage:
 				mflag = 0;
 				continue;
 			}
-			if (mflag && confirm(argv[0], cp, 0)) {
+			if (mflag && confirm(argv[0], cp)) {
 				tp = cp;
 				if (mcase) {
 					while (*tp && !islower(*tp)) {
@@ -433,8 +439,7 @@ usage:
 				    cp != tp || !interactive);
 				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with",
-					    argv[0], 1))
+					if (confirm(argv[0], NULL))
 						mflag = 1;
 				}
 			}
@@ -449,7 +454,7 @@ usage:
 		int flags;
 
 		if (!doglob) {
-			if (mflag && confirm(argv[0], argv[i], 0)) {
+			if (mflag && confirm(argv[0], argv[i])) {
 				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
 				tp = (mapflag) ? domap(tp) : tp;
 #ifndef SMALL
@@ -468,8 +473,7 @@ usage:
 				    tp != argv[i] || !interactive);
 				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with",
-					    argv[0], 1))
+					if (confirm(argv[0], NULL))
 						mflag = 1;
 				}
 			}
@@ -484,7 +488,7 @@ usage:
 			continue;
 		}
 		for (cpp = gl.gl_pathv; cpp && *cpp != NULL; cpp++) {
-			if (mflag && confirm(argv[0], *cpp, 0)) {
+			if (mflag && confirm(argv[0], *cpp)) {
 				tp = (ntflag) ? dotrans(*cpp) : *cpp;
 				tp = (mapflag) ? domap(tp) : tp;
 #ifndef SMALL
@@ -503,8 +507,7 @@ usage:
 				    *cpp != tp || !interactive);
 				restart_point = 0;
 				if (!mflag && fromatty) {
-					if (confirm("Continue with",
-					    argv[0], 1))
+					if (confirm(argv[0], NULL))
 						mflag = 1;
 				}
 			}
@@ -630,7 +633,7 @@ mabort(int signo)
 	putc('\n', ttyout);
 	(void)fflush(ttyout);
 	if (mflag && fromatty)
-		if (confirm("Continue with", mname, 1))
+		if (confirm(mname, NULL))
 			longjmp(jabort, 1);
 	mflag = 0;
 	longjmp(jabort, 1);
@@ -644,16 +647,25 @@ mget(int argc, char *argv[])
 {
 	extern int optind, optreset;
 	sig_t oldintr;
-	int ch, restartit = 0;
+	int ch;
 	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN], localcwd[MAXPATHLEN];
+#ifndef SMALL
+	int i = 1, restartit = 0, xargc = 2;
+	char type = NULL, *xargv[] = {argv[0], ".", NULL, NULL};
+	FILE *ftemp = NULL;
+	static int depth = 0;
+#endif /* !SMALL */
 
 	optind = optreset = 1;
 
 #ifndef SMALL
-	while ((ch = getopt(argc, argv, "c")) != -1) {
+	while ((ch = getopt(argc, argv, "cr")) != -1) {
 		switch(ch) {
 		case 'c':
 			restartit = 1;
+			break;
+		case 'r':
+			depth++;
 			break;
 		default:
 			goto usage;
@@ -663,16 +675,15 @@ mget(int argc, char *argv[])
 
 	if (argc - optind < 1 && !another(&argc, &argv, "remote-files")) {
 usage:
-		fprintf(ttyout, "usage: %s [-c] remote-files\n", argv[0]);
+		fprintf(ttyout, "usage: %s [-cr] remote-files\n", argv[0]);
 		code = -1;
 		return;
 	}
 
 #ifndef SMALL
-	optind--;
-	argv[optind] = argv[0];
-	argc -= optind;
-	argv += optind;
+	argv[optind - 1] = argv[0];
+	argc -= optind - 1;
+	argv += optind - 1;
 #endif /* !SMALL */
 
 	mname = argv[0];
@@ -682,19 +693,80 @@ usage:
 
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
-	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
+	while ((cp =
+#ifndef SMALL
+	    depth ? remglob2(xargv, proxy, NULL, &ftemp, &type) :
+#endif /* !SMALL */
+	    remglob(argv, proxy, NULL)) != NULL
+#ifndef SMALL
+	    || (mflag && depth && ++i < argc)
+#endif /* !SMALL */
+	    ) {
+#ifndef SMALL
+		if (cp == NULL)
+			continue;
+#endif /* !SMALL */
 		if (*cp == '\0') {
 			mflag = 0;
 			continue;
 		}
 		if (!mflag)
 			continue;
+#ifndef SMALL
+		if (depth && fnmatch(argv[i], cp, FNM_PATHNAME) != 0)
+			continue;
+#endif /* !SMALL */
 		if (!fileindir(cp, localcwd)) {
 			fprintf(ttyout, "Skipping non-relative filename `%s'\n",
 			    cp);
 			continue;
 		}
-		if (confirm(argv[0], cp, 0)) {
+		if (confirm(argv[0], cp)) {
+#ifndef SMALL
+			if (type == 'd') {
+				mkdir(cp, 0755);
+				if (chdir(cp) != 0) {
+					warn("local: %s", cp);
+					continue;
+				}
+
+				xargv[1] = cp;
+				xargv[2] = NULL;
+				xargc = 2;
+				cd(xargc, xargv);
+				if (dirchange != 1)
+					goto out;
+
+				xargv[1] = (restartit == 1) ? "-cr" : "-r";
+				xargv[2] = "*";
+				xargv[3] = NULL;
+				xargc = 3;
+				mget(xargc, xargv);
+
+				xargv[1] = "..";
+				xargv[2] = NULL;
+				xargc = 2;
+				cd(xargc, xargv);
+				if (dirchange != 1) {
+					mflag = 0;
+					goto out;
+				}
+
+out:
+				if (chdir("..") != 0) {
+					warn("local: %s", cp);
+					mflag = 0;
+				}
+
+				xargv[1] = ".";
+				xargv[2] = NULL;
+				xargc = 2;
+				continue;
+			}
+			if (type == 's')
+				/* Currently ignored. */
+				continue;
+#endif /* !SMALL */
 			tp = cp;
 			if (mcase) {
 				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
@@ -719,13 +791,20 @@ usage:
 			    tp != cp || !interactive, 1);
 			restart_point = 0;
 			if (!mflag && fromatty) {
-				if (confirm("Continue with", argv[0], 1))
+				if (confirm(argv[0], NULL))
 					mflag = 1;
 			}
 		}
 	}
 	(void)signal(SIGINT, oldintr);
+#ifndef SMALL
+	if (depth)
+		depth--;
+	if (depth == 0 || mflag == 0)
+		depth = mflag = 0;
+#else /* !SMALL */
 	mflag = 0;
+#endif /* !SMALL */
 }
 
 char *
@@ -833,10 +912,10 @@ setbell(int argc, char *argv[])
 	code = togglevar(argc, argv, &bell, "Bell mode");
 }
 
-#ifndef SMALL
 /*
  * Set command line editing
  */
+#ifndef SMALL
 /*ARGSUSED*/
 void
 setedit(int argc, char *argv[])
@@ -1021,6 +1100,7 @@ setpreserve(int argc, char *argv[])
 /*
  * Set debugging mode on/off and/or set level of debugging.
  */
+#ifndef SMALL
 /*ARGSUSED*/
 void
 setdebug(int argc, char *argv[])
@@ -1056,6 +1136,7 @@ setdebug(int argc, char *argv[])
 	fprintf(ttyout, "Debugging %s (debug=%d).\n", onoff(debug), debug);
 	code = debug > 0;
 }
+#endif /* !SMALL */
 
 /*
  * Set current working directory on remote machine.
@@ -1158,10 +1239,10 @@ mdelete(int argc, char *argv[])
 			mflag = 0;
 			continue;
 		}
-		if (mflag && confirm(argv[0], cp, 0)) {
+		if (mflag && confirm(argv[0], cp)) {
 			(void)command("DELE %s", cp);
 			if (!mflag && fromatty) {
-				if (confirm("Continue with", argv[0], 1))
+				if (confirm(argv[0], NULL))
 					mflag = 1;
 			}
 		}
@@ -1215,7 +1296,7 @@ ls(int argc, char *argv[])
 	}
 	globargv2 = argv[2];
 	if (strcmp(argv[2], "-") && *argv[2] != '|' && (!globulize(&argv[2]) ||
-	    !confirm("output to local-file:", argv[2], 0))) {
+	    !confirm("output to local-file:", argv[2]))) {
 		code = -1;
 		goto freels;
 	}
@@ -1252,7 +1333,7 @@ usage:
 	argv[argc - 1] = NULL;
 	if (strcmp(dest, "-") && *dest != '|')
 		if (!globulize(&dest) ||
-		    !confirm("output to local-file:", dest, 0)) {
+		    !confirm("output to local-file:", dest)) {
 			code = -1;
 			return;
 	}
@@ -1264,7 +1345,7 @@ usage:
 		*lmode = (i == 1) ? 'w' : 'a';
 		recvrequest("LIST", dest, argv[i], lmode, 0, 0);
 		if (!mflag && fromatty) {
-			if (confirm("Continue with", argv[0], 1))
+			if (confirm(argv[0], NULL))
 				mflag ++;
 		}
 	}
@@ -1303,11 +1384,13 @@ shell(int argc, char *argv[])
 		(void)strlcpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
 		if (strcmp(namep, "sh") != 0)
 			shellnam[0] = '+';
+#ifndef SMALL
 		if (debug) {
 			fputs(shellp, ttyout);
 			fputc('\n', ttyout);
 			(void)fflush(ttyout);
 		}
+#endif /* !SMALL */
 		if (argc > 1) {
 			execl(shellp, shellnam, "-c", altarg, (char *)0);
 		}

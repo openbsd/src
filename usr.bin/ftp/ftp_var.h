@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.26 2008/06/25 21:15:19 martynas Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.27 2008/07/08 21:07:57 martynas Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -110,7 +110,9 @@ int	connected;		/* 1 = connected to server, -1 = logged in */
 int	fromatty;		/* input is from a terminal */
 int	interactive;		/* interactively prompt on m* cmds */
 int	confirmrest;		/* confirm rest of current m* cmd */
+#ifndef SMALL
 int	debug;			/* debugging level */
+#endif /* !SMALL */
 int	bell;			/* ring bell on cmd completion */
 int	doglob;			/* glob local file names */
 int	autologin;		/* establish user account on connection */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.53 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.54 2008/07/08 21:07:57 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.53 2008/06/26 05:42:20 ray Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.54 2008/07/08 21:07:57 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -174,7 +174,9 @@ setpeer(int argc, char *argv[])
  * system and not checking this out. This way they have to think about it.
  */
 		overbose = verbose;
-		if (debug == 0)
+#ifndef SMALL
+		if (!debug)
+#endif /* !SMALL */
 			verbose = -1;
 		if (command("SYST") == COMPLETE && overbose) {
 			char *cp, c;
@@ -364,22 +366,24 @@ another(int *pargc, char ***pargv, const char *prompt)
  * glob files given in argv[] from the remote server.
  * if errbuf isn't NULL, store error messages there instead
  * of writing to the screen.
+ * if type isn't NULL, use LIST instead of NLST, and store filetype.
+ * 'd' means directory, 's' means symbolic link, '-' means plain
+ * file.
  */
 char *
-remglob(char *argv[], int doswitch, char **errbuf)
+remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 {
-	char temp[MAXPATHLEN], *cp, *lmode;
+	char temp[MAXPATHLEN], *bufp, *cp, *lmode;
 	static char buf[MAXPATHLEN], **args;
-	static FILE *ftemp = NULL;
 	int oldverbose, oldhash, fd;
 
 	if (!mflag) {
 		if (!doglob)
 			args = NULL;
 		else {
-			if (ftemp) {
-				(void)fclose(ftemp);
-				ftemp = NULL;
+			if (*ftemp) {
+				(void)fclose(*ftemp);
+				*ftemp = NULL;
 			}
 		}
 		return (NULL);
@@ -391,7 +395,7 @@ remglob(char *argv[], int doswitch, char **errbuf)
 			args = NULL;
 		return (cp);
 	}
-	if (ftemp == NULL) {
+	if (*ftemp == NULL) {
 		int len;
 
 		if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
@@ -419,7 +423,8 @@ remglob(char *argv[], int doswitch, char **errbuf)
 		if (doswitch)
 			pswitch(!proxy);
 		for (lmode = "w"; *++argv != NULL; lmode = "a")
-			recvrequest("NLST", temp, *argv, lmode, 0, 0);
+			recvrequest(type ? "LIST" : "NLST", temp, *argv, lmode,
+			    0, 0);
 		if ((code / 100) != COMPLETE) {
 			if (errbuf != NULL)
 				*errbuf = reply_string;
@@ -428,9 +433,9 @@ remglob(char *argv[], int doswitch, char **errbuf)
 			pswitch(!proxy);
 		verbose = oldverbose;
 		hash = oldhash;
-		ftemp = fopen(temp, "r");
+		*ftemp = fopen(temp, "r");
 		(void)unlink(temp);
-		if (ftemp == NULL) {
+		if (*ftemp == NULL) {
 			if (errbuf == NULL)
 				fputs("can't find list of remote files, oops.\n",
 				    ttyout);
@@ -440,26 +445,50 @@ remglob(char *argv[], int doswitch, char **errbuf)
 			return (NULL);
 		}
 	}
-	if (fgets(buf, sizeof(buf), ftemp) == NULL) {
-		(void)fclose(ftemp);
-		ftemp = NULL;
+again:
+	if (fgets(buf, sizeof(buf), *ftemp) == NULL) {
+		(void)fclose(*ftemp);
+		*ftemp = NULL;
 		return (NULL);
 	}
 
 	buf[strcspn(buf, "\n")] = '\0';
+	bufp = buf;
 
-	return (buf);
+#ifndef SMALL
+	if (type) {
+		parse_list(&bufp, type);
+		if (!bufp)
+			goto again;
+	}
+#endif /* !SMALL */
+
+	return (bufp);
+}
+
+/*
+ * wrapper for remglob2
+ */
+char *
+remglob(char *argv[], int doswitch, char **errbuf)
+{
+	static FILE *ftemp = NULL;
+
+	return remglob2(argv, doswitch, errbuf, &ftemp, NULL);
 }
 
 int
-confirm(const char *cmd, const char *file, int force)
+confirm(const char *cmd, const char *file)
 {
 	char str[BUFSIZ];
 
-	if (!force && (confirmrest || !interactive))
+	if (file && (confirmrest || !interactive))
 		return (1);
 top:
-	fprintf(ttyout, "%s %s? ", cmd, file);
+	if (file)
+		fprintf(ttyout, "%s %s? ", cmd, file);
+	else
+		fprintf(ttyout, "Continue with %s? ", cmd);
 	(void)fflush(ttyout);
 	if (fgets(str, sizeof(str), stdin) == NULL)
 		goto quit;
@@ -545,7 +574,9 @@ remotesize(const char *file, int noisy)
 
 	overbose = verbose;
 	size = -1;
-	if (debug == 0)
+#ifndef SMALL
+	if (!debug)
+#endif /* !SMALL */
 		verbose = -1;
 	if (command("SIZE %s", file) == COMPLETE) {
 		char *cp, *ep;
@@ -557,7 +588,11 @@ remotesize(const char *file, int noisy)
 			if (*ep != '\0' && !isspace(*ep))
 				size = -1;
 		}
-	} else if (noisy && debug == 0) {
+	} else if (noisy
+#ifndef SMALL
+	    && !debug
+#endif /* !SMALL */
+	    ) {
 		fputs(reply_string, ttyout);
 		fputc('\n', ttyout);
 	}
@@ -578,7 +613,9 @@ remotemodtime(const char *file, int noisy)
 	overbose = verbose;
 	ocode = code;
 	rtime = -1;
-	if (debug == 0)
+#ifndef SMALL
+	if (!debug)
+#endif /* !SMALL */
 		verbose = -1;
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
@@ -614,11 +651,19 @@ remotemodtime(const char *file, int noisy)
 		timebuf.tm_year = yy - TM_YEAR_BASE;
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
-		if (rtime == -1 && (noisy || debug != 0))
+		if (rtime == -1 && (noisy
+#ifndef SMALL
+		    || debug
+#endif /* !SMALL */
+		    ))
 			fprintf(ttyout, "Can't convert %s to a time.\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
-	} else if (noisy && debug == 0) {
+	} else if (noisy
+#ifndef SMALL
+	    && !debug
+#endif /* !SMALL */
+	    ) {
 		fputs(reply_string, ttyout);
 		fputc('\n', ttyout);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2008/06/25 21:15:19 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.35 2008/07/08 21:07:57 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ int	command(const char *, ...);
 unsigned char complete(EditLine *, int);
 void	controlediting(void);
 #endif /* !SMALL */
-int	confirm(const char *, const char *, int);
+int	confirm(const char *, const char *);
 FILE   *dataconn(const char *);
 void	deletecmd(int, char **);
 void	disconnect(int, char **);
@@ -142,6 +142,9 @@ void    recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
 void	reget(int, char **);
 char   *remglob(char **, int, char **);
+#ifndef SMALL
+char   *remglob2(char **, int, char **, FILE **ftemp, char *type);
+#endif /* !SMALL */
 off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
 void	removedir(int, char **);
@@ -157,7 +160,9 @@ void	setbell(int, char **);
 void	setbinary(int, char **);
 void	setcase(int, char **);
 void	setcr(int, char **);
+#ifndef SMALL
 void	setdebug(int, char **);
+#endif /* !SMALL */
 void	setedit(int, char **);
 void	setepsv4(int, char **);
 void	setform(int, char **);
@@ -195,6 +200,7 @@ void	user(int, char **);
 int	ruserpass(const char *, char **, char **, char **);
 void	cookie_load(void);
 void	cookie_get(const char *, const char *, int, char **);
+void	parse_list(char **, char *);
 #endif /* !SMALL */
 
 

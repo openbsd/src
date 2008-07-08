@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.70 2008/06/25 18:07:00 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.71 2008/07/08 21:07:57 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: June 25 2008 $
+.Dd $Mdocdate: July 8 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -557,7 +557,7 @@ on the remote machine.
 A synonym for
 .Ic mls .
 .It Xo Ic mget
-.Op Fl c
+.Op Fl cr
 .Ar remote-files
 .Xc
 Expand the
@@ -566,11 +566,6 @@ on the remote machine
 and do a
 .Ic get
 for each file name thus produced.
-If the
-.Fl c
-flag is specified, then
-.Ic reget
-is used instead for the partially transferred files.
 See
 .Ic glob
 for details on the filename expansion.
@@ -585,6 +580,19 @@ which can be changed with
 .Ql lcd directory ;
 new local directories can be created with
 .Ql "\&! mkdir directory" .
+.Pp
+If the
+.Fl c
+flag is specified then
+.Ic reget
+is used instead of
+.Ic get .
+If the
+.Fl r
+flag is specified,
+.Nm
+recursively descends the directory tree,
+transferring all files and directories.
 .It Ic mkdir Ar directory-name
 Make a directory on the remote machine.
 .It Ic mls Ar remote-files local-file
@@ -621,11 +629,6 @@ Expand wild cards in the list of local files given as arguments
 and do a
 .Ic put
 for each file in the resulting list.
-If the
-.Fl c
-flag is specified, then
-.Ic reput
-is used instead for the partially transferred files.
 See
 .Ic glob
 for details of filename expansion.
@@ -634,6 +637,13 @@ Resulting file names will then be processed according to
 and
 .Ic nmap
 settings.
+.Pp
+If the
+.Fl c
+flag is specified then
+.Ic reput
+is used instead of
+.Ic put .
 .It Ic msend Ar local-files
 A synonym for
 .Ic mput .
@@ -1638,3 +1648,8 @@ to and from
 .Bx 4.2
 servers using the ASCII type.
 Avoid this problem by using the binary image type.
+.Pp
+In the recursive mode of
+.Ic mget ,
+files and directories starting with whitespace are ignored
+because the list cannot be parsed any other way.

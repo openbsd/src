@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.79 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.80 2008/07/08 21:07:57 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.79 2008/06/26 05:42:20 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.80 2008/07/08 21:07:57 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -353,9 +353,11 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	if (portnum != NULL)
 		*portnum++ = '\0';
 
+#ifndef SMALL
 	if (debug)
 		fprintf(ttyout, "host %s, port %s, path %s, save as %s.\n",
 		    host, portnum, path, savefile);
+#endif /* !SMALL */
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
@@ -558,8 +560,10 @@ again:
 
 	while (len > 0 && (buf[len-1] == '\r' || buf[len-1] == '\n'))
 		buf[--len] = '\0';
+#ifndef SMALL
 	if (debug)
 		fprintf(ttyout, "received '%s'\n", buf);
+#endif /* !SMALL */
 
 	cp = strchr(buf, ' ');
 	if (cp == NULL)
@@ -616,8 +620,10 @@ again:
 			buf[--len] = '\0';
 		if (len == 0)
 			break;
+#ifndef SMALL
 		if (debug)
 			fprintf(ttyout, "received '%s'\n", buf);
+#endif /* !SMALL */
 
 		/* Look for some headers */
 		cp = buf;
@@ -974,11 +980,13 @@ bad_ftp_url:
 				dir = NULL;
 			}
 		}
+#ifndef SMALL
 		if (debug)
 			fprintf(ttyout,
 			    "user %s:%s host %s port %s dir %s file %s\n",
 			    username, pass ? "XXXX" : NULL, host, portnum,
 			    dir, file);
+#endif /* !SMALL */
 
 		/*
 		 * Set up the connection.
@@ -1276,8 +1284,10 @@ proxy_connect(int socket, char *host)
 	l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\n\n", host, port);
 	if (l == -1)
 		errx(1, "Could not allocate memory to assemble connect string!");
+#ifndef SMALL
 	if (debug)
 		printf("%s", connstr);
+#endif /* !SMALL */
 	if (write(socket, connstr, l) != l)
 		err(1, "Could not send connect string");
 	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
