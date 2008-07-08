@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.143 2008/06/15 04:38:52 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.144 2008/07/08 12:54:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -480,6 +480,7 @@ cvs_commit_local(struct cvs_file *cf)
 	nrev = RCS_HEAD_REV;
 	crev = NULL;
 	rrev = NULL;
+	d = NULL;
 
 	if (cf->file_rcs != NULL && cf->file_rcs->rf_branch != NULL) {
 		rcsnum_free(cf->file_rcs->rf_branch);
@@ -704,12 +705,18 @@ cvs_commit_local(struct cvs_file *cf)
 	case FILE_REMOVED:
 		histtype = CVS_HISTORY_COMMIT_REMOVED;
 		break;
+	default:
+		histtype = -1;
+		break;
 	}
 
 	if (crev != NULL)
 		rcsnum_free(crev);
 
-	cvs_history_add(histtype, cf, NULL);
+	if (histtype != -1)
+		cvs_history_add(histtype, cf, NULL);
+	else
+		cvs_log(LP_NOTICE, "histtype was -1 for %s", cf->file_path);
 }
 
 static BUF *
