@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.181 2008/06/25 15:27:34 mbalmer Exp $
+#	$OpenBSD: files.i386,v 1.182 2008/07/08 05:22:00 dlg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -429,6 +429,9 @@ file	arch/i386/i386/acpi_machdep.c		acpi
 # IPMI
 #
 attach	ipmi at mainbus
+
+# VMware Tools
+attach	vmt at mainbus
 
 # Dell Embedded Systems Management
 device	esm

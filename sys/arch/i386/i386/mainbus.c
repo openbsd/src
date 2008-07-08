@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.41 2008/06/18 20:15:54 mbalmer Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.42 2008/07/08 05:22:00 dlg Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include "acpi.h"
 #include "ipmi.h"
 #include "esm.h"
+#include "vmt.h"
 #include "vesabios.h"
 #include "amdmsr.h"
 
@@ -68,6 +69,10 @@
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
+#endif
+
+#if NVMT > 0
+#include <dev/vmtvar.h>
 #endif
 
 #if NAMDMSR > 0
@@ -157,6 +162,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_iaa.iaa_memt = I386_BUS_SPACE_MEM;
 		if (ipmi_probe(&mba.mba_iaa))
 			config_found(self, &mba.mba_iaa, mainbus_print);
+	}
+#endif
+
+#if NVMT > 0
+	if (vmt_probe()) {
+		mba.mba_busname = "vmware";
+		config_found(self, &mba.mba_busname, mainbus_print);
 	}
 #endif
 
