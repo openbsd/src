@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.16 2008/07/04 15:03:45 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.17 2008/07/08 11:04:28 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -66,7 +66,7 @@ do_pre() {
 			echo " xetc source:  ${XTGZURL}"
 			echo "               (fetched in ${XTGZ})"
 		else
-			[ -n "${XTGZ}" ] && echo " etc source:   ${XTGZ}"
+			[ -n "${XTGZ}" ] && echo " xetc source:  ${XTGZ}"
 		fi
 		echo ""
 		echo " base work directory:  ${WRKDIR}"
