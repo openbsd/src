@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.150 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: sd.c,v 1.151 2008/07/08 12:17:48 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -158,6 +158,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	struct disk_parms *dp = &sd->params;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
+	int sd_autoconf = scsi_autoconf | SCSI_SILENT |
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
@@ -199,33 +201,26 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	/* Spin up non-UMASS devices ready or not. */
 	if ((sd->sc_link->flags & SDEV_UMASS) == 0)
-		scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		scsi_start(sc_link, SSS_START, sd_autoconf);
 
 	/*
 	 * Some devices (e.g. Blackberry Pearl) won't admit they have
 	 * media loaded unless its been locked in.
 	 */
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_PREVENT, scsi_autoconf |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_SILENT);
+		scsi_prevent(sc_link, PR_PREVENT, sd_autoconf);
 
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES * 3,
-	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+	    sd_autoconf);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
 	else
-		result = sd_get_parms(sd, &sd->params,
-		    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE);
+		result = sd_get_parms(sd, &sd->params, sd_autoconf);
 
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_ALLOW, scsi_autoconf |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_SILENT);
+		scsi_prevent(sc_link, PR_ALLOW, sd_autoconf);
 
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
