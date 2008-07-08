@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.35 2008/06/19 19:16:04 tobias Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.36 2008/07/08 21:30:15 sobrado Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.35 2008/06/19 19:16:04 tobias Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.36 2008/07/08 21:30:15 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -296,10 +296,10 @@ usage(void)
 	    "usage: %s [-l%s] [-s newshell] [user]\n",
 	    __progname, use_yp ? "y" : "");
 	(void)fprintf(stderr,
-	    "usage: %s [-l] -a list\n", __progname);
+	    "       %s [-l] -a list\n", __progname);
 #else
 	(void)fprintf(stderr, "usage: %s [-s newshell] [user]\n", __progname);
-	(void)fprintf(stderr, "usage: %s -a list\n", __progname);
+	(void)fprintf(stderr, "       %s -a list\n", __progname);
 #endif
 	exit(1);
 }
