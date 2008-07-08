@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.285 2008/07/06 10:38:52 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.286 2008/07/08 05:59:39 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GR_AHCI, /* Intel 82801GR (ICH7R) AHCI */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GR_RAID, /* Intel 82801GR (ICH7R) RAID */
@@ -456,7 +456,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GBM_AHCI, /* Intel 82801GBM (ICH7M) AHCI */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GHM_RAID, /* Intel 82801GHM (ICH7M DH) RAID */
@@ -468,7 +468,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_AHCI_6P, /* Intel 82801H (ICH8) AHCI */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_RAID, /* Intel 82801H (ICH8) RAID */
@@ -476,7 +476,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_AHCI_4P, /* Intel 82801H (ICH8) AHCI */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801H_SATA_2, /* Intel 82801H (ICH8) SATA */
@@ -488,7 +488,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_AHCI, /* Intel 82801HBM (ICH8M) AHCI */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_RAID, /* Intel 82801HBM (ICH8M) RAID */
@@ -600,7 +600,7 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3512,	/* SiI3512 SATA */
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_AAR_1210SA, /* Adaptec AAR-1210SA */
