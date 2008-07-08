@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.144 2008/05/10 19:54:58 tobias Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.145 2008/07/08 12:25:47 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #define RCSPROG_OPTSTRING	"A:a:b::c:e::ik:Ll::m:Mn:N:o:qt::TUu::Vx::z::"
 
-const char rcs_version[] = "OpenRCS 4.3";
+const char rcs_version[] = "OpenRCS 4.4";
 
 int	 rcsflags;
 int	 rcs_optind;
