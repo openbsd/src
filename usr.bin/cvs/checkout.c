@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.155 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.156 2008/07/08 12:29:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -455,7 +455,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
 	BUF *bp;
 	mode_t mode;
-	int cf_kflag, exists, fd;
+	int cf_kflag, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
@@ -581,7 +581,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			(void)unlink(cf->file_path);
 			cvs_merge_file(cf, (cvs_join_rev1 == NULL));
 			tosend = cf->file_path;
-			fd = cf->fd;
 		}
 
 		if (co_flags & CO_COMMIT)
@@ -603,7 +602,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 				cvs_remote_send_file_buf(cf->file_path,
 				    bp, mode);
 			} else {
-				cvs_remote_send_file(tosend, fd);
+				cvs_remote_send_file(tosend, cf->fd);
 			}
 		}
 	}
