@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.19 2007/11/16 16:34:33 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.20 2008/07/08 21:39:52 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -527,6 +527,6 @@ usage(void)
 		break;
 	}
 
-	fprintf(stderr, "%s: %s\n", __progname, usg);
+	fprintf(stderr, "usage: %s %s\n", __progname, usg);
 	exit(1);
 }
