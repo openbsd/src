@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.131 2008/07/01 04:08:53 ray Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.132 2008/07/09 23:59:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.131 2008/07/01 04:08:53 ray Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.132 2008/07/09 23:59:44 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1213,6 +1213,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				tp = word(cp);
 				if (!strcmp(cp, "badsect"))
 					v |= D_BADSECT;
+				else if (!strcmp(cp, "vendor"))
+					v |= D_VENDOR;
 				else {
 					warnx("line %d: bad flag: %s",
 					    lineno, cp);
