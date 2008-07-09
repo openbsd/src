@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.6 2007/03/15 22:33:22 jmc Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.7 2008/07/09 19:58:28 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 			break;
 		default:
 			fprintf(stderr,
-			   "usage: %sinit [-f%ssv] [-m mode] user [...]\n",
+			   "usage: %sinit [-f%ssv] [-m mode] user ...\n",
 			    tt->name, (tt->options & TOKEN_HEXINIT) ? "h" : "");
 			exit(1);
 		}
