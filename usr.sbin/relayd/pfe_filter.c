@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.30 2008/06/11 18:21:19 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.31 2008/07/09 14:57:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -510,7 +510,7 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 		bcopy(&out6->sin6_addr, &pnl.daddr.addr8, out6->sin6_len);
 		pnl.dport = out6->sin6_port;
 	}
-	pnl.proto = IPPROTO_TCP;
+	pnl.proto = cnl->proto;
 	pnl.direction = PF_IN;
 	cnl->in = 1;
 

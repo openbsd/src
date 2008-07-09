@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.90 2008/06/11 18:21:19 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.91 2008/07/09 14:57:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1964,6 +1964,7 @@ relay_accept(int fd, short sig, void *arg)
 		cnl->in = -1;
 		cnl->id = con->se_id;
 		cnl->proc = proc_id;
+		cnl->proto = IPPROTO_TCP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
 		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,

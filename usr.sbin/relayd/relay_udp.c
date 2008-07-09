@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.12 2008/07/09 10:50:34 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.13 2008/07/09 14:57:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -301,6 +301,7 @@ relay_udp_server(int fd, short sig, void *arg)
 		cnl->in = -1;
 		cnl->id = con->se_id;
 		cnl->proc = proc_id;
+		cnl->proto = IPPROTO_UDP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
 		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
