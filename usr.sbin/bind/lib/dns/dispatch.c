@@ -1910,6 +1910,7 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 	localaddr_bound = *localaddr;
  getsocket:
 	if ((attributes & DNS_DISPATCHATTR_RANDOMPORT) != 0) {
+#if 0
 		in_port_t prt;
 
 		/* XXX: should the range be configurable? */
@@ -1927,6 +1928,26 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 			goto getsocket;
 		}
 		localport = prt;
+#else
+		isc_sockaddr_t localaddr_listen;
+
+		isc_sockaddr_setport(&localaddr_bound, 0);
+		result = create_socket(sockmgr, &localaddr_bound, &sock);
+		if (result == ISC_R_ADDRINUSE) {
+			if (++k == 1024)
+				attributes &= ~DNS_DISPATCHATTR_RANDOMPORT;
+			goto getsocket;
+		}
+		result = isc_socket_getsockname(sock, &localaddr_listen);
+		if (result != ISC_R_SUCCESS ||
+		    blacklisted(mgr, NULL, &localaddr_listen)) {
+			isc_socket_detach(&sock);
+			if (++k == 1024)
+				attributes &= ~DNS_DISPATCHATTR_RANDOMPORT;
+			goto getsocket;
+		}
+		localport = isc_sockaddr_getport(&localaddr_listen);
+#endif
 	} else
 		result = create_socket(sockmgr, localaddr, &sock);
 	if (result != ISC_R_SUCCESS)
