@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.317 2008/06/15 04:49:34 sturm Exp $
+#	$OpenBSD: rc,v 1.318 2008/07/09 20:23:47 djm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -114,6 +114,34 @@ random_seed()
 
 		random_seed_done=1
 	fi
+}
+
+fill_baddynamic()
+{
+	local _service="$1"
+	local _sysctl="net.inet.${_service}.baddynamic"
+	local _name _port _srv _junk _ban
+	local _i=0
+	grep "/${_service}" /etc/services | { 
+		IFS=" 	/"
+		while read _name _port _srv _junk; do
+			[ "x${_srv}" = "x${_service}" ] || continue;
+			if [ "x${_ban}" = "x" ]; then
+				_ban="+${_port}"
+			else
+				_ban="${_ban},+${_port}"
+			fi
+			# Flush before argv gets too long
+			if [ $((++_i)) -gt 128 ]; then
+				sysctl ${_sysctl}=${_ban} >/dev/null
+				_ban=""
+				_i=0
+			fi
+		done; 
+		if [ "x${_ban}" != "x" ]; then
+			sysctl ${_sysctl}=${_ban} >/dev/null
+		fi
+	}
 }
 
 # End subroutines
@@ -252,6 +280,10 @@ if [ X"${pf}" != X"NO" ]; then
 	echo $RULES | pfctl -f -
 	pfctl -e
 fi
+
+# Fill net.inet.(tcp|udp).baddynamic lists from /etc/services
+fill_baddynamic udp
+fill_baddynamic tcp
 
 sysctl_conf
 
