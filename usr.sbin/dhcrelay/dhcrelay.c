@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.30 2008/07/09 19:41:56 sobrado Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.31 2008/07/09 20:08:13 sobrado Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -265,7 +265,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-d] -i interface server1 [... serverN]",
+	fprintf(stderr, "usage: %s [-d] -i interface server1 [... serverN]\n",
 	    __progname);
 	exit(1);
 }
