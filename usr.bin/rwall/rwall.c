@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.10 2003/07/09 01:10:30 mickey Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.11 2008/07/09 19:41:56 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -38,7 +38,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$OpenBSD: rwall.c,v 1.10 2003/07/09 01:10:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rwall.c,v 1.11 2008/07/09 19:41:56 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	CLIENT *cl;
 
 	if ((argc < 2) || (argc > 3)) {
-		fprintf(stderr, "usage: %s hostname [file]\n", __progname);
+		fprintf(stderr, "usage: %s host [file]\n", __progname);
 		exit(1);
 	}
 

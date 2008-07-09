@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.22 2005/11/17 19:55:05 moritz Exp $	*/
+/*	$OpenBSD: rup.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.22 2005/11/17 19:55:05 moritz Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -340,6 +340,6 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: rup [-dhlt] [hosts ...]\n");
+	fprintf(stderr, "usage: rup [-dhlt] [host ...]\n");
 	exit(1);
 }
