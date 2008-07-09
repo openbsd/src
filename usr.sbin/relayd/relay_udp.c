@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.13 2008/07/09 14:57:01 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.14 2008/07/09 17:16:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,6 +54,7 @@ extern struct imsgbuf *ibuf_pfe;
 extern int debug;
 
 struct relayd *env = NULL;
+struct shuffle relay_shuffle;
 
 int		 relay_udp_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
@@ -72,20 +73,25 @@ int		 relay_dns_cmp(struct session *, struct session *);
 void
 relay_udp_privinit(struct relayd *x_env, struct relay *rlay)
 {
-	struct protocol		*proto = rlay->rl_proto;
-
 	if (env == NULL)
 		env = x_env;
 
 	if (rlay->rl_conf.flags & F_SSL)
 		fatalx("ssl over udp is not supported");
 	rlay->rl_conf.flags |= F_UDP;
+}
+
+void
+relay_udp_init(struct relay *rlay)
+{
+	struct protocol		*proto = rlay->rl_proto;
 
 	switch (proto->type) {
 	case RELAY_PROTO_DNS:
 		proto->validate = relay_dns_validate;
 		proto->request = relay_dns_request;
 		proto->cmp = relay_dns_cmp;
+		shuffle_init(&relay_shuffle);
 		break;
 	default:
 		fatalx("unsupported udp protocol");
@@ -401,7 +407,7 @@ relay_dns_validate(struct session *con, struct relay *rlay,
 		priv = malloc(sizeof(struct relay_dns_priv));
 		if (priv == NULL)
 			return (NULL);
-		priv->dp_inkey = arc4random() & 0xffff;
+		priv->dp_inkey = shuffle_generate16(&relay_shuffle);
 		priv->dp_outkey = key;
 		return ((void *)priv);
 	}

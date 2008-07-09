@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.91 2008/07/09 14:57:01 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.92 2008/07/09 17:16:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -484,6 +484,16 @@ relay_init(void)
 			log_info("adding %d hosts from table %s%s",
 			    rlay->rl_dstnhosts, rlay->rl_dsttable->conf.name,
 			    rlay->rl_dsttable->conf.check ? "" : " (no check)");
+		}
+
+		switch (rlay->rl_proto->type) {
+		case RELAY_PROTO_DNS:
+			relay_udp_init(rlay);
+			break;
+		case RELAY_PROTO_TCP:
+		case RELAY_PROTO_HTTP:
+			/* Use defaults */
+			break;
 		}
 	}
 

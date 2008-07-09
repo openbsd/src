@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.105 2008/07/09 14:57:01 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.106 2008/07/09 17:16:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -63,6 +63,12 @@
 #else
 #define DPRINTF(x...)	do {} while(0)
 #endif
+
+/* Used for DNS request ID randomization */
+struct shuffle {
+	u_int16_t	 id_shuffle[65536];
+	int		 isindex;
+};
 
 /* buffer */
 struct buf {
@@ -801,6 +807,7 @@ SPLAY_PROTOTYPE(session_tree, session, se_nodes, relay_session_cmp);
 
 /* relay_udp.c */
 void	 relay_udp_privinit(struct relayd *, struct relay *);
+void	 relay_udp_init(struct relay *);
 int	 relay_udp_bind(struct sockaddr_storage *, in_port_t,
 	    struct protocol *);
 void	 relay_udp_server(int, short, void *);
@@ -871,3 +878,8 @@ void		 pn_ref(u_int16_t);
 void	 snmp_init(struct relayd *, struct imsgbuf *);
 int	 snmp_sendsock(struct imsgbuf *);
 void	 snmp_hosttrap(struct table *, struct host *);
+
+/* shuffle.c */
+void		shuffle_init(struct shuffle *);
+u_int16_t	shuffle_generate16(struct shuffle *);
+
