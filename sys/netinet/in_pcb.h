@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.64 2008/07/03 15:46:24 henning Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.65 2008/07/09 20:20:46 djm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -221,14 +221,14 @@ struct inpcbtable {
 
 /* macros for handling bitmap of ports not to allocate dynamically */
 #define	DP_MAPBITS	(sizeof(u_int32_t) * NBBY)
-#define	DP_MAPSIZE	(howmany(IPPORT_RESERVED/2, DP_MAPBITS))
-#define	DP_SET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] |= (1 << ((p) % DP_MAPBITS)))
-#define	DP_CLR(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] &= ~(1 << ((p) % DP_MAPBITS)))
-#define	DP_ISSET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] & (1 << ((p) % DP_MAPBITS)))
+#define	DP_MAPSIZE	(howmany(65536, DP_MAPBITS))
+#define	DP_SET(m, p)	((m)[(p) / DP_MAPBITS] |= (1 << ((p) % DP_MAPBITS)))
+#define	DP_CLR(m, p)	((m)[(p) / DP_MAPBITS] &= ~(1 << ((p) % DP_MAPBITS)))
+#define	DP_ISSET(m, p)	((m)[(p) / DP_MAPBITS] & (1 << ((p) % DP_MAPBITS)))
 
 /* default values for baddynamicports [see ip_init()] */
-#define	DEFBADDYNAMICPORTS_TCP	{ 587, 749, 750, 751, 871, 0 }
-#define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 749, 750, 751, 0 }
+#define	DEFBADDYNAMICPORTS_TCP	{ 587, 749, 750, 751, 871, 2049, 0 }
+#define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 749, 750, 751, 2049, 0 }
 
 struct baddynamicports {
 	u_int32_t tcp[DP_MAPSIZE];
