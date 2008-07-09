@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.1 2008/06/25 15:27:34 mbalmer Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.2 2008/07/09 02:47:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -317,11 +317,8 @@ const struct pci_matchid auglx_devices[] = {
 int
 auglx_match(struct device *parent, void *match, void *aux)
 {
-	if (pci_matchbyid((struct pci_attach_args *)aux, auglx_devices,
-	    sizeof(auglx_devices) / sizeof(auglx_devices[0])))
-		return 2;
-
-	return 0;
+	return (pci_matchbyid((struct pci_attach_args *)aux, auglx_devices,
+	    sizeof(auglx_devices) / sizeof(auglx_devices[0])));
 }
 
 void
