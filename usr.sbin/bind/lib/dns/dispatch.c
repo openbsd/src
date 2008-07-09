@@ -30,6 +30,7 @@
 #include <isc/mutex.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/shuffle.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
@@ -52,6 +53,7 @@ typedef struct dns_qid {
 	unsigned int	qid_increment;	/*%< id increment on collision */
 	isc_mutex_t	lock;
 	dns_displist_t	*qid_table;	/*%< the table itself */
+	isc_shuffle_t	qid_shuffle;	/*%< state generator info */
 } dns_qid_t;
 
 /* ARC4 Random generator state */
@@ -1573,6 +1575,7 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 	qid->qid_nbuckets = buckets;
 	qid->qid_increment = increment;
 	qid->magic = QID_MAGIC;
+	isc_shuffle_init(&qid->qid_shuffle);
 	*qidp = qid;
 	return (ISC_R_SUCCESS);
 }
@@ -2085,8 +2088,8 @@ dns_dispatch_addresponse(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	/*
 	 * Try somewhat hard to find an unique ID.
 	 */
-	id = (dns_messageid_t)dispatch_arc4random(disp->mgr);
 	qid = DNS_QID(disp);
+	id = (dns_messageid_t)isc_shuffle_generate16(&qid->qid_shuffle);
 	LOCK(&qid->lock);
 	bucket = dns_hash(qid, dest, id, disp->localport);
 	ok = ISC_FALSE;
