@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.14 2008/07/09 17:16:51 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.15 2008/07/09 17:24:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -176,6 +176,7 @@ relay_udp_response(int fd, short sig, void *arg)
 	struct session		*con = (struct session *)arg;
 	struct relay		*rlay = con->se_relay;
 	struct protocol		*proto = rlay->rl_proto;
+	void			*priv = NULL;
 	struct sockaddr_storage	 ss;
 	u_int8_t		 buf[READ_BUF_SIZE];
 	ssize_t			 len;
@@ -197,8 +198,12 @@ relay_udp_response(int fd, short sig, void *arg)
 
 	/* Parse and validate the packet header */
 	if (proto->validate != NULL &&
-	    (*proto->validate)(con, rlay, &ss, buf, len) == NULL)
+	    (priv = (*proto->validate)(con, rlay, &ss, buf, len)) == NULL)
 		return;
+
+	relay_close(con, "unknown response");
+	if (priv != NULL)
+		free(priv);
 }
 
 void
@@ -424,8 +429,14 @@ relay_dns_validate(struct session *con, struct relay *rlay,
 		    con->se_priv != NULL &&
 		    relay_cmp_af(ss, &con->se_out.ss) == 0)
 			relay_dns_result(con, buf, len);
-	} else
+	} else {
+		priv = (struct relay_dns_priv *)con->se_priv;
+		if (priv == NULL || key != priv->dp_inkey) {
+			relay_close(con, "invalid response");
+			return (NULL);
+		}
 		relay_dns_result(con, buf, len);
+	}
 
 	/*
 	 * This is not a new session, ignore it in the UDP server.
