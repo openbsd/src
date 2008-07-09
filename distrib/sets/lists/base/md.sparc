@@ -916,6 +916,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/video_if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videovar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/ascii.ph

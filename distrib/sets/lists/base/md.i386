@@ -1480,6 +1480,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/video_if.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/videovar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wscons/ascii.ph

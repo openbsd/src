@@ -961,6 +961,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/video_if.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/videovar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/wscons/ascii.ph

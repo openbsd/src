@@ -1805,6 +1805,7 @@
 ./usr/share/man/cat4/vic.0
 ./usr/share/man/cat4/video.0
 ./usr/share/man/cat4/vlan.0
+./usr/share/man/cat4/vmt.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/watchdog.0

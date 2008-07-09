@@ -1547,6 +1547,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/video_if.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/videovar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/ascii.ph
