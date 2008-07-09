@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.77 2008/06/11 18:21:20 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.78 2008/07/09 14:06:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1181,7 +1181,8 @@ bindany(struct ctl_bindany *bnd)
 
 	if (relay_socket_af(&bnd->bnd_ss, bnd->bnd_port) == -1)
 		goto fail;
-	if ((s = socket(bnd->bnd_ss.ss_family, SOCK_STREAM,
+	if ((s = socket(bnd->bnd_ss.ss_family,
+	    bnd->bnd_proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM,
 	    bnd->bnd_proto)) == -1)
 		goto fail;
 	if (setsockopt(s, SOL_SOCKET, SO_BINDANY,
