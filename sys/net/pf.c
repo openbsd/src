@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.607 2008/07/05 16:57:50 david Exp $ */
+/*	$OpenBSD: pf.c,v 1.608 2008/07/10 05:44:54 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -802,12 +802,15 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
 {
 	s->kif = kif;
 
-	if (pf_state_key_attach(skw, s, PF_SK_WIRE))
-		return (-1);
-
-	if (skw == sks)
+	if (skw == sks) {
+		if (pf_state_key_attach(skw, s, PF_SK_WIRE))
+			return (-1);
 		s->key[PF_SK_STACK] = s->key[PF_SK_WIRE];
-	else {
+	} else {
+		if (pf_state_key_attach(skw, s, PF_SK_WIRE)) {
+			pool_put(&pf_state_key_pl, sks);
+			return (-1);
+		}
 		if (pf_state_key_attach(sks, s, PF_SK_STACK)) {
 			pf_state_key_detach(s, PF_SK_WIRE);
 			return (-1);
