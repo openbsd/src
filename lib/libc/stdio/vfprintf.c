@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.47 2008/05/16 20:42:52 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.48 2008/07/10 18:18:55 martynas Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -149,7 +149,7 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 
 extern char *__dtoa(double, int, int, int *, int *, char **);
 extern void  __freedtoa(char *);
-static char *cvt(double, int, int, char *, int *, int, int *);
+static char *cvt(double, int, int, int *, int *, int, int *);
 static int exponent(char *, int, int);
 
 #else /* no FLOATING_POINT */
@@ -200,7 +200,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	mbstate_t ps;
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
-	char softsign;		/* temporary negative sign for floats */
+	int softsign;		/* temporary negative sign for floats */
 	double _double;		/* double precision arguments %[eEfgG] */
 	int expt;		/* integer value of exponent */
 	int expsize;		/* character count for expstr */
@@ -1257,10 +1257,10 @@ __grow_type_table(unsigned char **typetable, int *tablesize)
 #ifdef FLOATING_POINT
 
 static char *
-cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch, 
+cvt(double value, int ndigits, int flags, int *sign, int *decpt, int ch, 
     int *length)
 {
-	int mode, dsgn;
+	int mode;
 	char *digits, *bp, *rve;
 
 	if (ch == 'f') {
@@ -1276,12 +1276,7 @@ cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch,
 		mode = 2;		/* ndigits significant digits */
 	}
 
-	if (value < 0) {
-		value = -value;
-		*sign = '-';
-	} else
-		*sign = '\000';
-	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
+	digits = __dtoa(value, mode, ndigits, decpt, sign, &rve);
 	if ((ch != 'g' && ch != 'G') || flags & ALT) {/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {
