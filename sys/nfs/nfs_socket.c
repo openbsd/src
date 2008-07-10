@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.66 2008/07/05 18:28:08 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.67 2008/07/10 18:17:56 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -656,7 +656,6 @@ errout:
  * We must search through the list of received datagrams matching them
  * with outstanding requests using the xid, until ours is found.
  */
-/* ARGSUSED */
 int
 nfs_reply(myrep)
 	struct nfsreq *myrep;

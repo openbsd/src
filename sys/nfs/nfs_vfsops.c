@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.77 2008/07/05 12:51:04 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.78 2008/07/10 18:17:56 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -772,7 +772,6 @@ nfs_root(mp, vpp)
 /*
  * Flush out the buffer cache
  */
-/* ARGSUSED */
 int
 nfs_sync(mp, waitfor, cred, p)
 	struct mount *mp;
