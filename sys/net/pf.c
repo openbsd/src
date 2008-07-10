@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.608 2008/07/10 05:44:54 david Exp $ */
+/*	$OpenBSD: pf.c,v 1.609 2008/07/10 07:41:21 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2429,12 +2429,12 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 				high = tmp;
 			}
 			/* low < high */
-			cut = htonl(arc4random()) % (1 + high - low) + low;
+			cut = arc4random_uniform(1 + high - low) + low;
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high; ++(tmp)) {
 				key.port[0] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
-				    NULL) {
+				    NULL && !in_baddynamic(tmp, proto)) {
 					*nport = htons(tmp);
 					return (0);
 				}
@@ -2442,7 +2442,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			for (tmp = cut - 1; tmp >= low; --(tmp)) {
 				key.port[0] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
-				    NULL) {
+				    NULL && !in_baddynamic(tmp, proto)) {
 					*nport = htons(tmp);
 					return (0);
 				}
@@ -3235,8 +3235,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    pd->lookup.gid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->prob && r->prob <=
-		    (arc4random() % (UINT_MAX - 1) + 1))
+		else if (r->prob &&
+		    r->prob <= arc4random_uniform(UINT_MAX - 1) + 1)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, &tag))
 			r = TAILQ_NEXT(r, entries);
