@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.49 2008/06/26 05:42:18 ray Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.50 2008/07/10 13:48:54 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -398,8 +398,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_TESTO, USB_PRODUCT_TESTO_SERIAL_1 },
 	{ USB_VENDOR_TESTO, USB_PRODUCT_TESTO_SERIAL_2 },
 	{ USB_VENDOR_TESTO, USB_PRODUCT_TESTO_SERVICE },
-	{ USB_VENDOR_THURLBY, USB_PRODUCT_THURLBY_QL355P },
-	{ 0, 0 }
+	{ USB_VENDOR_THURLBY, USB_PRODUCT_THURLBY_QL355P }
 };
 
 int

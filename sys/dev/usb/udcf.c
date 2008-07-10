@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.43 2008/07/06 10:00:47 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.44 2008/07/10 13:48:54 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -160,8 +160,7 @@ const struct cfattach udcf_ca = {
 static const struct usb_devno udcf_devs[] = {
 	{ USB_VENDOR_GUDE, USB_PRODUCT_GUDE_DCF },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_DCF },
-	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_HBG },
-	{ 0, 0 }
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_HBG }
 };
 
 int
