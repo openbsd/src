@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.363 2008/07/01 07:24:22 dtucker Exp $ */
+/* $OpenBSD: sshd.c,v 1.364 2008/07/10 18:08:11 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -660,7 +660,7 @@ privsep_postauth(Authctxt *authctxt)
 	if (pmonitor->m_pid == -1)
 		fatal("fork of unprivileged child failed");
 	else if (pmonitor->m_pid != 0) {
-		debug2("User child is on pid %ld", (long)pmonitor->m_pid);
+		verbose("User child is on pid %ld", (long)pmonitor->m_pid);
 		close(pmonitor->m_recvfd);
 		buffer_clear(&loginmsg);
 		monitor_child_postauth(pmonitor);
@@ -1207,6 +1207,7 @@ main(int ac, char **av)
 	int remote_port;
 	char *line, *p, *cp;
 	int config_s[2] = { -1 , -1 };
+	u_int64_t ibytes, obytes;
 	mode_t new_umask;
 	Key *key;
 	Authctxt *authctxt;
@@ -1780,7 +1781,11 @@ main(int ac, char **av)
 	do_authenticated(authctxt);
 
 	/* The connection has been terminated. */
-	verbose("Closing connection to %.100s", remote_ip);
+	packet_get_state(MODE_IN, NULL, NULL, NULL, &ibytes);
+	packet_get_state(MODE_OUT, NULL, NULL, NULL, &obytes);
+	verbose("Transferred: sent %llu, received %llu bytes", obytes, ibytes);
+
+	verbose("Closing connection to %.500s port %d", remote_ip, remote_port);
 	packet_close();
 
 	if (use_privsep)
