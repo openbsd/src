@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.17 2008/05/24 15:29:33 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.18 2008/07/10 12:33:40 kettenis Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -105,6 +105,8 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
 	int i, com_is_input, com_is_output;
+	int node, port;
+	char buf[32];
 
 	sc->sc_iobase = EBUS_PADDR_FROM_REG(&ea->ea_regs[0]);
 	/*
@@ -145,9 +147,35 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 		bus_intr_establish(sc->sc_iot, ea->ea_intrs[i],
 		    IPL_TTY, 0, comintr, sc, self->dv_xname);
 
-	/* Figure out if we're the console. */
-	com_is_input = (ea->ea_node == OF_instance_to_package(OF_stdin()));
-	com_is_output = (ea->ea_node == OF_instance_to_package(OF_stdout()));
+	/*
+	 * Figure out if we're the console.
+	 *
+	 * The Fujitsu SPARC Enterprise M4000/M5000/M8000/M9000 has a
+	 * serial port on each I/O board and a pseudo console that is
+	 * redirected to one of these serial ports.  The board number
+	 * of the serial port in question is encoded in the "tty-port#"
+	 * property of the pseudo console, so we figure out what our
+	 * board number is by walking up the device tree, and check
+	 * for a match.
+	 */
+
+	node = OF_instance_to_package(OF_stdin());
+	com_is_input = (ea->ea_node == node);
+	if (OF_getprop(node, "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "pseudo-console") == 0) {
+		port = getpropint(node, "tty-port#", -1);
+		node = OF_parent(OF_parent(ea->ea_node));
+		com_is_input = (getpropint(node, "board#", -2) == port);
+	}
+
+	node = OF_instance_to_package(OF_stdout());
+	com_is_output = (ea->ea_node == node);
+	if (OF_getprop(node, "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "pseudo-console") == 0) {
+		port = getpropint(node, "tty-port#", -1);
+		node = OF_parent(OF_parent(ea->ea_node));
+		com_is_output = (getpropint(node, "board#", -2) == port);
+	}
 
 	if (com_is_input || com_is_output) {
 		struct consdev *cn_orig;
