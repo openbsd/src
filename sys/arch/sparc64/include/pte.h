@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.11 2008/04/20 09:18:52 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.12 2008/07/10 09:29:33 kettenis Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -168,7 +168,7 @@ void smp_tlb_flush_ctx(int);
 #define SUN4U_TLB_IE		0x0800000000000000LL
 #define SUN4U_TLB_SOFT2_MASK	0x07fc000000000000LL
 #define SUN4U_TLB_RESERVED_MASK	0x0003f80000000000LL
-#define SUN4U_TLB_PA_MASK	0x000007ffffffe000LL
+#define SUN4U_TLB_PA_MASK	0x00007fffffffe000LL
 #define SUN4U_TLB_SOFT_MASK	0x0000000000001f80LL
 /* S/W bits */
 #define SUN4U_TLB_ACCESS	0x0000000000000200LL

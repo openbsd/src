@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.144 2008/07/05 20:53:33 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.145 2008/07/10 09:29:33 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2086,9 +2086,9 @@ winfixspill:
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
-	sllx	%g7, PGSHIFT+23, %g7			! There are 23 bits to the left of the PA in the TTE
+	sllx	%g7, PGSHIFT+17, %g7			! There are 17 bits to the left of the PA in the TTE
 	srl	%g6, 32-PGSHIFT, %g6
-	srax	%g7, 23, %g7
+	srax	%g7, 17, %g7
 	or	%g7, %g6, %g6				! Then combine them to form PA
 
 	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
@@ -3287,9 +3287,9 @@ pcbspill:
 	brgez	%g7, pcbspill_fail
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
-	sllx	%g7, PGSHIFT+23, %g7			! There are 23 bits to the left of the PA in the TTE
+	sllx	%g7, PGSHIFT+8, %g7			! There are 8 bits to the left of the PA in the TTE
 	srl	%g6, 32-PGSHIFT, %g6
-	srax	%g7, 23, %g7
+	srax	%g7, 8, %g7
 	or	%g7, %g6, %g6				! Then combine them to form PA
 
 !	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
