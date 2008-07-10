@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.48 2008/07/07 18:07:51 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.49 2008/07/10 04:49:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -89,7 +89,7 @@ int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
 		    int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 
-usbd_status	uvideo_vs_negotation(struct uvideo_softc *);
+usbd_status	uvideo_vs_negotation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
@@ -359,8 +359,13 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
-	/* do device negotation */
-	error = uvideo_vs_negotation(sc);
+	/* set default video stream interface */
+	error = usbd_set_interface(sc->sc_vs_curr->ifaceh, 0);
+	if (error != USBD_NORMAL_COMPLETION)
+		return;
+
+	/* do device negotation without commit */
+	error = uvideo_vs_negotation(sc, 0);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
@@ -709,37 +714,38 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
     int vs_nr, int iface, int numalts)
 {
 	struct uvideo_vs_iface *vs;
+	usbd_desc_iter_t iter;
+	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int i;
-	usbd_status error;
 
 	vs = &sc->sc_vs_coll[vs_nr];
 
-	for (i = 0; i < numalts; i++) {
-		error = usbd_set_interface(uaa->ifaces[iface], i);
-		if (error) {
-			printf("%s: could not set alternate interface %d!\n",
-			    DEVNAME(sc), i);
-			return (USBD_INVAL);
-		}
-
-		id = usbd_get_interface_descriptor(uaa->ifaces[iface]);
-		if (id == NULL)
-			continue;
-
+	usb_desc_iter_init(sc->sc_udev, &iter);
+	desc = usb_desc_iter_next(&iter);
+	while (desc) {
+		/* find video stream interface */
+		if (desc->bDescriptorType != UDESC_INTERFACE)
+			goto next;
+		id = (usb_interface_descriptor_t *)(uint8_t *)desc;
+		if (id->bInterfaceNumber != iface)
+			goto next;
 		DPRINTF(1, "%s: bAlternateSetting=0x%02x, ",
 		    DEVNAME(sc), id->bAlternateSetting);
-
-		ed = usbd_interface2endpoint_descriptor(uaa->ifaces[iface], 0);
-		if (ed == NULL) {
+		if (id->bNumEndpoints == 0) {
 			DPRINTF(1, "no endpoint descriptor\n");
-			continue;
+			goto next;
 		}
 
+		/* jump to corresponding endpoint descriptor */
+		desc = usb_desc_iter_next(&iter);
+		if (desc->bDescriptorType != UDESC_ENDPOINT)
+			goto next;
+		ed = (usb_endpoint_descriptor_t *)(uint8_t *)desc;
 		DPRINTF(1, "bEndpointAddress=0x%02x, ", ed->bEndpointAddress);
 		DPRINTF(1, "wMaxPacketSize=%d\n", UGETW(ed->wMaxPacketSize));
 
+		/* save endpoint with largest bandwidth */
 		if (UGETW(ed->wMaxPacketSize) > vs->max_packet_size) {
 			vs->ifaceh = uaa->ifaces[iface];
 			vs->endpoint = ed->bEndpointAddress;
@@ -748,14 +754,8 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 			vs->max_packet_size = UGETW(ed->wMaxPacketSize);
 			vs->iface = iface;
 		}
-	}
-
-	/* switch back to default interface, otherwise negotation could fail */
-	error = usbd_set_interface(uaa->ifaces[iface], 0);
-	if (error) {
-		printf("%s: could not set alternate interface 0!\n",
-		    DEVNAME(sc));
-		return (USBD_INVAL);
+next:
+		desc = usb_desc_iter_next(&iter);
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -765,42 +765,57 @@ int
 uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
     int max_packet_size)
 {
+	usbd_desc_iter_t iter;
+	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	int i;
 	usbd_status error;
 
-	for (i = 0; i < sc->sc_vs_curr->numalts; i++) {
-		error = usbd_set_interface(ifaceh, i);
-		if (error) {
-			printf("%s: could not set alternate interface %d!\n",
-			    DEVNAME(sc), i);
-			return (USBD_INVAL);
-		}
+	i = 0;
+	usb_desc_iter_init(sc->sc_udev, &iter);
+	desc = usb_desc_iter_next(&iter);
+	while (desc) {
+		/* find video stream interface */
+		if (desc->bDescriptorType != UDESC_INTERFACE)
+			goto next;
+		id = (usb_interface_descriptor_t *)(uint8_t *)desc;
+		if (id->bInterfaceNumber != sc->sc_vs_curr->iface)
+			goto next;
+		if (id->bNumEndpoints == 0)
+			goto next;
 
-		id = usbd_get_interface_descriptor(ifaceh);
-		if (id == NULL)
-			continue;
+		/* jump to corresponding endpoint descriptor */
+		desc = usb_desc_iter_next(&iter);
+		if (desc->bDescriptorType != UDESC_ENDPOINT)
+			goto next;
+		ed = (usb_endpoint_descriptor_t *)(uint8_t *)desc;
+		i++;
 
-		ed = usbd_interface2endpoint_descriptor(ifaceh, 0);
-		if (ed == NULL)
-			continue;
-
+		/* save endpoint with requested bandwidth */
 		if (UGETW(ed->wMaxPacketSize) == max_packet_size) {
 			sc->sc_vs_curr->endpoint = ed->bEndpointAddress;
 			sc->sc_vs_curr->curalt = id->bAlternateSetting;
 			sc->sc_vs_curr->max_packet_size =
 			    UGETW(ed->wMaxPacketSize);
-
 			DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
 			DPRINTF(1, "bAlternateSetting=0x%02x\n",
 			    id->bAlternateSetting);
-
-			return (USBD_NORMAL_COMPLETION);
+			break;
 		}
+next:
+		desc = usb_desc_iter_next(&iter);
 	}
 
-	return (USBD_INVAL);
+	/* set alternate video stream interface */
+	error = usbd_set_interface(ifaceh, i);
+	if (error) {
+		printf("%s: could not set alternate interface %d!\n",
+		    DEVNAME(sc), i);
+		return (USBD_INVAL);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 /*
@@ -840,7 +855,7 @@ uvideo_desc_len(const usb_descriptor_t *desc,
 }
 
 usbd_status
-uvideo_vs_negotation(struct uvideo_softc *sc)
+uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
 {
 	struct usb_video_probe_commit *pc;
 	uint8_t probe_data[34];
@@ -872,9 +887,11 @@ uvideo_vs_negotation(struct uvideo_softc *sc)
 		return (error);
 
 	/* commit */
-	error = uvideo_vs_set_commit(sc, probe_data);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (error);
+	if (commit) {
+		error = uvideo_vs_set_commit(sc, probe_data);
+		if (error != USBD_NORMAL_COMPLETION)
+			return (error);
+	}
 
 	/* save a copy of probe commit */
 	bcopy(pc, &sc->sc_desc_probe, sizeof(sc->sc_desc_probe));
@@ -1092,6 +1109,11 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	usbd_status error;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
+	/* do device negotation with commit */
+	error = uvideo_vs_negotation(sc, 1);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (error);
 
 	error = uvideo_vs_set_alt(sc, sc->sc_vs_curr->ifaceh,
 	    UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize));
