@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtc.c,v 1.1 2008/03/13 22:46:16 kettenis Exp $	*/
+/*	$OpenBSD: prtc.c,v 1.2 2008/07/10 08:58:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -29,6 +29,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
+#include <machine/sparc64.h>
 
 #include <dev/clock_subr.h>
 
@@ -82,11 +83,18 @@ prtc_attach(struct device *parent, struct device *self, void *aux)
 int
 prtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	char cmd[32];
 	u_int32_t tod = 0;
+	char buf[32];
 
-	snprintf(cmd, sizeof(cmd), "h# %08x unix-gettod", &tod);
-	OF_interpret(cmd, 0);
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,SPARC-Enterprise") == 0) {
+		tv->tv_sec = prom_opl_get_tod();
+		tv->tv_usec = 0;
+		return (0);
+	}
+
+	snprintf(buf, sizeof(buf), "h# %08x unix-gettod", &tod);
+	OF_interpret(buf, 0);
 
 	tv->tv_sec = tod;
 	tv->tv_usec = 0;
