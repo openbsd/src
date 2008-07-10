@@ -1933,7 +1933,7 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 
 		isc_sockaddr_setport(&localaddr_bound, 0);
 		result = create_socket(sockmgr, &localaddr_bound, &sock);
-		if (result == ISC_R_ADDRINUSE) {
+		if (result != ISC_R_SUCCESS) {
 			if (++k == 1024)
 				attributes &= ~DNS_DISPATCHATTR_RANDOMPORT;
 			goto getsocket;
