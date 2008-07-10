@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.27 2008/07/07 14:46:18 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.28 2008/07/10 08:57:05 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -760,6 +760,27 @@ prom_serengeti_set_console_input(const char *new)
 		return NULL;
 
 	return (const char *)args.old;
+}
+
+time_t
+prom_opl_get_tod(void)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+		cell_t  stick;
+		cell_t  time;
+	} args;
+
+	args.name = ADR2CELL("FJSV,get-tod");
+	args.nargs = 0;
+	args.nreturns = 2;
+
+	if (openfirmware(&args) == -1)
+		return (time_t)-1;
+
+	return (time_t)args.time;
 }
 
 #ifdef DEBUG

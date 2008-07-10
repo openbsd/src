@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.10 2008/07/07 14:46:18 kettenis Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.11 2008/07/10 08:57:05 kettenis Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ int prom_dtlb_load(int index, u_int64_t data, vaddr_t vaddr);
 void prom_start_cpu(int cpu, void *func, long arg);
 void prom_start_cpu_by_cpuid(int cpu, void *func, long arg);
 const char *prom_serengeti_set_console_input(const char *);
+time_t prom_opl_get_tod(void);
 
 /*
  * Debug
