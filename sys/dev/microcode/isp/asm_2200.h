@@ -1,7 +1,7 @@
-/* $OpenBSD: asm_2200.h,v 1.6 2008/06/11 22:38:39 krw Exp $ */
+/* $OpenBSD: asm_2200.h,v 1.7 2008/07/11 14:46:25 sobrado Exp $ */
 /* $FreeBSD: src/sys/dev/ispfw/asm_2200.h,v 1.7 2005/01/06 01:42:50 imp Exp $ */
 /*-
- * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
+ * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted provided

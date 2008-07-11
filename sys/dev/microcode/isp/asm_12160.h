@@ -1,6 +1,6 @@
-/* $OpenBSD: asm_12160.h,v 1.3 2001/10/24 18:27:12 mjacob Exp $ */
+/* $OpenBSD: asm_12160.h,v 1.4 2008/07/11 14:46:24 sobrado Exp $ */
 /*
- * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
+ * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted provided

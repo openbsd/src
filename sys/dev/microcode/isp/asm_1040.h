@@ -1,6 +1,6 @@
-/* $OpenBSD: asm_1040.h,v 1.2 2001/02/12 23:16:57 mjacob Exp $ */
+/* $OpenBSD: asm_1040.h,v 1.3 2008/07/11 14:46:24 sobrado Exp $ */
 /*
- * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
+ * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted provided
