@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.434 2008/07/07 13:41:59 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.435 2008/07/11 03:03:07 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3731,7 +3731,7 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	bus_addr_t lastaddr;
+	bus_addr_t lastaddr = 0;
 	int seg, error;
 
 	/*
@@ -3760,7 +3760,7 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
-	paddr_t lastaddr;
+	paddr_t lastaddr = 0;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -3802,7 +3802,7 @@ int
 _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
-	paddr_t lastaddr;
+	paddr_t lastaddr = 0;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
