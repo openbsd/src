@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.14 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.15 2008/07/11 15:11:58 brad Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -250,10 +250,9 @@ iophy_status(sc)
 
 		ext0 = PHY_READ(sc, MII_IOPHY_EXT0);
 		if (ext0 & EXT0_SPEED) {
-			if (bmsr & BMSR_100T4) {
+			if (bmsr & BMSR_100T4)
 				mii->mii_media_active |= IFM_100_T4;
-				return;
-			} else
+			else
 				mii->mii_media_active |= IFM_100_TX;
 		} else
 			mii->mii_media_active |= IFM_10_T;
