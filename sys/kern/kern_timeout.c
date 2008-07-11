@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.26 2008/01/20 18:23:38 miod Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.27 2008/07/11 14:18:39 blambert Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/lock.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
+#include <sys/kernel.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -180,6 +181,71 @@ timeout_add(struct timeout *new, int to_ticks)
 		CIRCQ_INSERT(&new->to_list, &timeout_todo);
 	}
 	mtx_leave(&timeout_mutex);
+}
+
+void
+timeout_add_tv(struct timeout *to, struct timeval *tv)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * tv->tv_sec + tv->tv_usec / tick;
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	timeout_add(to, (int)to_ticks);
+}
+
+void
+timeout_add_ts(struct timeout *to, struct timespec *ts)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	timeout_add(to, (int)to_ticks);
+}
+
+void
+timeout_add_bt(struct timeout *to, struct bintime *bt)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * bt->sec + (long)(((uint64_t)1000000 *
+	    (uint32_t)(bt->frac >> 32)) >> 32) / tick;
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	timeout_add(to, (int)to_ticks);
+}
+
+void
+timeout_add_sec(struct timeout *to, int secs)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * secs;
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	timeout_add(to, (int)to_ticks);
+}
+
+void
+timeout_add_usec(struct timeout *to, int usecs)
+{
+	int to_ticks = usecs / tick;
+
+	timeout_add(to, to_ticks);
+}
+
+void
+timeout_add_nsec(struct timeout *to, int nsecs)
+{
+	int to_ticks = nsecs / (tick * 1000);
+
+	timeout_add(to, to_ticks);
 }
 
 void
