@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.1 2008/06/10 00:02:09 kettenis Exp $	*/
+/*	$OpenBSD: cmp.c,v 1.2 2008/07/11 13:47:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -67,8 +67,6 @@ cmp_attach(struct device *parent, struct device *self, void *aux)
 		bzero(&nma, sizeof(nma));
 		nma.ma_node = node;
 		nma.ma_name = buf;
-		getprop(node, "reg", sizeof(*nma.ma_reg),
-		    &nma.ma_nreg, (void **)&nma.ma_reg);
 		config_found(self, &nma, cmp_print);
 	}
 }
