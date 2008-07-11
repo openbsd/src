@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.19 2008/06/10 21:15:14 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.20 2008/07/11 15:00:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -333,7 +333,7 @@ dcphy_status(struct mii_softc *sc)
 		if (tstat & DC_TSTAT_LP_CAN_NWAY) {
 			anlpar = tstat >> 16;
 			if (anlpar & ANLPAR_T4 &&
-			    sc->mii_capabilities & BMSR_100TXHDX)
+			    sc->mii_capabilities & BMSR_100T4)
 				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
 			else if (anlpar & ANLPAR_TX_FD &&
 			    sc->mii_capabilities & BMSR_100TXFDX)
