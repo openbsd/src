@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.103 2007/11/03 19:16:07 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.104 2008/07/11 15:05:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -610,6 +610,7 @@ gethelo(char *p, size_t len, char *f)
 void
 initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
+	socklen_t len = sa->sa_len;
 	time_t tt;
 	char *tmp;
 	int error;
@@ -626,7 +627,7 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
 	cp->fd = fd;
-	if (sa->sa_len > sizeof(cp->ss))
+	if (len > sizeof(cp->ss))
 		errx(1, "sockaddr size");
 	if (sa->sa_family != AF_INET)
 		errx(1, "not supported yet");
