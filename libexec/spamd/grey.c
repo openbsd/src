@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.42 2008/07/11 01:40:50 phessler Exp $	*/
+/*	$OpenBSD: grey.c,v 1.43 2008/07/11 14:53:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -740,7 +740,7 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 			fprintf(stderr, "added %s %s\n",
 			    spamtrap ? "trap entry for" : "", ip);
 		syslog_r(LOG_DEBUG, &sdata,
-		    "New %s from %s for %s, expires %s", what, source, ip,
+		    "new %s from %s for %s, expires %s", what, source, ip,
 		    expires);
 	} else {
 		/* existing entry */
@@ -862,6 +862,9 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync,
 		if (debug)
 			fprintf(stderr, "added %s %s\n",
 			    spamtrap ? "greytrap entry for" : "", lookup);
+		syslog_r(LOG_DEBUG, &sdata,
+		    "new %sentry %s from %s to %s, helo %s",
+		    spamtrap ? "greytrap " : "", ip, from, to, helo);
 	} else {
 		/* existing entry */
 		if (dbd.size != sizeof(gd)) {
