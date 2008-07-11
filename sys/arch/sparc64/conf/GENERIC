@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.215 2008/07/06 08:53:38 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.216 2008/07/11 14:23:53 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,8 @@ cpu0	at ssm?
 cmp*	at mainbus0
 cmp*	at ssm?
 cpu0	at cmp?
+core*	at cmp?
+cpu0	at core?
 
 # Bus types found on SPARC systems.
 sbus*	at mainbus0
