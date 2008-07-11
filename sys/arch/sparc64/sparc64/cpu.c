@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.40 2008/06/08 02:21:34 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.41 2008/07/11 05:20:19 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -226,7 +226,7 @@ cpu_attach(parent, dev, aux)
 	void *aux;
 {
 	int node;
-	long clk;
+	u_int clk;
 	int impl, vers;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_info *ci;
