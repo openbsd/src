@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -91,14 +91,14 @@
 
 int	et_match(struct device *, void *, void *);
 void	et_attach(struct device *, struct device *, void *);
-int	et_detach(struct device *, int flags);
+int	et_detach(struct device *, int);
 int	et_shutdown(struct device *);
 
 int	et_miibus_readreg(struct device *, int, int);
 void	et_miibus_writereg(struct device *, int, int, int);
 void	et_miibus_statchg(struct device *);
 
-int	et_init(struct ifnet *ifp);
+int	et_init(struct ifnet *);
 int	et_ioctl(struct ifnet *, u_long, caddr_t);
 void	et_start(struct ifnet *);
 void	et_watchdog(struct ifnet *);
@@ -119,7 +119,6 @@ int	et_dma_mem_create(struct et_softc *, bus_size_t,
 void	et_dma_mem_destroy(struct et_softc *, void *, bus_dmamap_t);
 int	et_dma_mbuf_create(struct et_softc *);
 void	et_dma_mbuf_destroy(struct et_softc *, int, const int[]);
-void	et_dma_ring_addr(void *, bus_dma_segment_t *, int, int);
 
 int	et_init_tx_ring(struct et_softc *);
 int	et_init_rx_ring(struct et_softc *);
@@ -898,13 +897,6 @@ et_dma_mem_destroy(struct et_softc *sc, void *addr, bus_dmamap_t dmap)
 {
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	bus_dmamem_free(sc->sc_dmat, (bus_dma_segment_t *)&addr, 1);
-}
-
-void
-et_dma_ring_addr(void *arg, bus_dma_segment_t *seg, int nseg, int error)
-{
-	KASSERT(nseg == 1, ("too many segments\n"));
-	*((bus_addr_t *)arg) = seg->ds_addr;
 }
 
 void
