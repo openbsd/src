@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.59 2008/06/02 19:39:08 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.60 2008/07/12 10:07:25 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -416,12 +416,16 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		psycho_set_intr(sc, 15, psycho_ue,
 		    psycho_psychoreg_vaddr(sc, ue_int_map),
 		    psycho_psychoreg_vaddr(sc, ue_clr_int), "ue");
-		psycho_set_intr(sc, 1, psycho_ce,
-		    psycho_psychoreg_vaddr(sc, ce_int_map),
-		    psycho_psychoreg_vaddr(sc, ce_clr_int), "ce");
-		psycho_set_intr(sc, 15, psycho_bus_a,
-		    psycho_psychoreg_vaddr(sc, pciaerr_int_map),
-		    psycho_psychoreg_vaddr(sc, pciaerr_clr_int), "bus_a");
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO ||
+		    sc->sc_mode == PSYCHO_MODE_SABRE) {
+			psycho_set_intr(sc, 1, psycho_ce,
+			    psycho_psychoreg_vaddr(sc, ce_int_map),
+			    psycho_psychoreg_vaddr(sc, ce_clr_int), "ce");
+			psycho_set_intr(sc, 15, psycho_bus_a,
+			    psycho_psychoreg_vaddr(sc, pciaerr_int_map),
+			    psycho_psychoreg_vaddr(sc, pciaerr_clr_int),
+			    "bus_a");
+		}
 #if 0
 		psycho_set_intr(sc, 15, psycho_powerfail,
 		    psycho_psychoreg_vaddr(sc, power_int_map),
@@ -433,6 +437,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 			    psycho_psychoreg_vaddr(sc, pciberr_int_map),
 			    psycho_psychoreg_vaddr(sc, pciberr_clr_int),
 			    "bus_b");
+		}
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
 			psycho_set_intr(sc, 1, psycho_wakeup,
 			    psycho_psychoreg_vaddr(sc, pwrmgt_int_map),
 			    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int),
