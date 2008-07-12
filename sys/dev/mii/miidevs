@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.96 2008/06/26 05:42:16 ray Exp $
+$OpenBSD: miidevs,v 1.97 2008/07/12 05:45:31 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -53,6 +53,7 @@ oui AGERE			0x00a0bc	Agere
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui JATO			0x00e083	Jato Technologies
+oui JMICRON			0x001b8c	JMicron Technologies
 oui LEVEL1			0x00207b	Level 1
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
@@ -216,6 +217,10 @@ model INTEL I82553		0x0035 i82553 10/100 PHY
 
 /* Jato Technologies PHYs */
 model JATO BASEX		0x0000 Jato 1000baseX PHY
+
+/* JMicron Technologies PHYs */
+model JMICRON JMP211		0x0021 JMP211 10/100/1000 PHY
+model JMICRON JMP202		0x0022 JMP202 10/100 PHY
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 PHY
