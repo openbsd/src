@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.42 2008/06/15 00:36:41 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.43 2008/07/12 19:58:48 miod Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -305,6 +305,11 @@ rdopen(dev, flag, fmt, proc)
 	 */
 	if (sc->sc_type == RD_UNCONFIGURED)
 		return ENXIO;
+
+	/*
+	 * Make sure we have read the disklabel.
+	 */
+	rdgetdisklabel(dev, sc, sc->sc_dkdev.dk_label, 0);
 
 	return 0;
 }
