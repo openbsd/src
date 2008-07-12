@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.158 2008/07/09 20:20:46 djm Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.159 2008/07/12 12:04:10 thib Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.158 2008/07/09 20:20:46 djm Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.159 2008/07/12 12:04:10 thib Exp $";
 #endif
 #endif /* not lint */
 
@@ -1617,34 +1617,40 @@ sysctl_nchstats(char *string, char **bufpp, int mib[], int flags, int *typep)
 		(void)printf("%s%s", string, equ);
 	switch (indx) {
 	case KERN_NCHSTATS_GOODHITS:
-		(void)printf("%ld\n", nch.ncs_goodhits);
+		(void)printf("%llu\n", nch.ncs_goodhits);
 		break;
 	case KERN_NCHSTATS_NEGHITS:
-		(void)printf("%ld\n", nch.ncs_neghits);
+		(void)printf("%llu\n", nch.ncs_neghits);
 		break;
 	case KERN_NCHSTATS_BADHITS:
-		(void)printf("%ld\n", nch.ncs_badhits);
+		(void)printf("%llu\n", nch.ncs_badhits);
 		break;
 	case KERN_NCHSTATS_FALSEHITS:
-		(void)printf("%ld\n", nch.ncs_falsehits);
+		(void)printf("%llu\n", nch.ncs_falsehits);
 		break;
 	case KERN_NCHSTATS_MISS:
-		(void)printf("%ld\n", nch.ncs_miss);
+		(void)printf("%llu\n", nch.ncs_miss);
 		break;
 	case KERN_NCHSTATS_LONG:
-		(void)printf("%ld\n", nch.ncs_long);
+		(void)printf("%llu\n", nch.ncs_long);
 		break;
 	case KERN_NCHSTATS_PASS2:
-		(void)printf("%ld\n", nch.ncs_pass2);
+		(void)printf("%llu\n", nch.ncs_pass2);
 		break;
 	case KERN_NCHSTATS_2PASSES:
-		(void)printf("%ld\n", nch.ncs_2passes);
+		(void)printf("%llu\n", nch.ncs_2passes);
 		break;
 	case KERN_NCHSTATS_REVHITS:
-		(void)printf("%ld\n", nch.ncs_revhits);
+		(void)printf("%llu\n", nch.ncs_revhits);
 		break;
 	case KERN_NCHSTATS_REVMISS:
-		(void)printf("%ld\n", nch.ncs_revmiss);
+		(void)printf("%llu\n", nch.ncs_revmiss);
+		break;
+	case KERN_NCHSTATS_DOTHITS:
+		(void)printf("%llu\n", nch.ncs_dothits);
+		break;
+	case KERN_NCHSTATS_DOTDOTHITS:
+		(void)printf("%llu\n", nch.ncs_dotdothits);
 		break;
 	}
 	return (-1);
