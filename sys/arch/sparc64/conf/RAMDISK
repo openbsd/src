@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.75 2008/07/06 08:53:38 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.76 2008/07/12 13:20:42 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -45,6 +45,8 @@ ssm*	at mainbus0
 cpu0	at ssm?
 cmp*	at mainbus0
 cpu0	at cmp?
+core*	at cmp?
+cpu0	at core?
 
 # Bus types found on SPARC systems.
 sbus*	at mainbus0
