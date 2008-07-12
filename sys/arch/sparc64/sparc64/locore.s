@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.145 2008/07/10 09:29:33 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.146 2008/07/12 15:05:51 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6036,18 +6036,15 @@ ENTRY(cpu_switchto)
 	rdpr	%pstate, %o1		! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_INTR, %pstate ! make sure we're on normal globals
 
-	mov	%i0, %l4		! oldproc
-	mov	%i1, %l3		! newproc
-
 	ldx	[%g7 + CI_CPCB], %l5
 
 	/*
 	 * Register usage:
 	 *
+	 *	%i0 = oldproc
+	 *	%i1 = newproc
 	 *	%l1 = newpcb
 	 *	%l2 = newpstate
-	 *	%l3 = p
-	 *	%l4 = lastproc
 	 *	%l5 = cpcb
 	 *	%o0 = tmp 1
 	 *	%o1 = oldpstate
@@ -6058,10 +6055,10 @@ ENTRY(cpu_switchto)
 	 */
 
 	/* firewalls */
-	ldx	[%l3 + P_WCHAN], %o0	! if (p->p_wchan)
+	ldx	[%i1 + P_WCHAN], %o0	! if (newproc->p_wchan)
 	brnz,pn	%o0, Lsw_panic_wchan	!	panic("switch wchan");
 !	 XXX check no delay slot
-	ldsb	[%l3 + P_STAT], %o0	! if (p->p_stat != SRUN)
+	ldsb	[%i1 + P_STAT], %o0	! if (newproc->p_stat != SRUN)
 	cmp	%o0, SRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 !	 XXX check no delay slot
@@ -6074,13 +6071,12 @@ ENTRY(cpu_switchto)
 	 * p->p_cpu = curcpu();
 	 */
 	ldx	[%g7 + CI_SELF], %o0
-	stx	%o0, [%l3 + P_CPU]
+	stx	%o0, [%i1 + P_CPU]
 #endif	/* defined(MULTIPROCESSOR) */
-	mov	SONPROC, %o0			! p->p_stat = SONPROC
-	stb	%o0, [%l3 + P_STAT]
+	mov	SONPROC, %o0			! newproc->p_stat = SONPROC
+	stb	%o0, [%i1 + P_STAT]
 	st	%g0, [%g7 + CI_WANT_RESCHED]	! want_resched = 0;
-	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
-	stx	%l4, [%g7 + CI_CURPROC]		! restore old proc so we can save it
+	ldx	[%i1 + P_ADDR], %l1		! newpcb = newpeoc->p_addr;
 
 	flushw				! save all register windows except this one
 
@@ -6088,7 +6084,7 @@ ENTRY(cpu_switchto)
 	 * Not the old process.  Save the old process, if any;
 	 * then load p.
 	 */
-	brz,pn	%l4, Lsw_load		! if no old process, go load
+	brz,pn	%i0, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
 	stx	%i6, [%l5 + PCB_SP]	! cpcb->pcb_sp = sp;
@@ -6106,7 +6102,7 @@ ENTRY(cpu_switchto)
 	 */
 Lsw_load:
 	/* set new cpcb */
-	stx	%l3, [%g7 + CI_CURPROC]	! curproc = p;
+	stx	%i1, [%g7 + CI_CURPROC]	! curproc = newproc;
 	stx	%l1, [%g7 + CI_CPCB]	! cpcb = newpcb;
 
 	ldx	[%l1 + PCB_SP], %i6
@@ -6120,7 +6116,7 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
-	ldx	[%l3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	ldx	[%i1 + P_VMSPACE], %o3		! vm = newproc->p_vmspace;
 	sethi	%hi(_C_LABEL(kernel_pmap_)), %o1
 	mov	CTX_SECONDARY, %l5		! Recycle %l5
 	ldx	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap != kernel_pmap_)
