@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.11 2006/02/06 17:19:31 jmc Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.12 2008/07/12 13:08:04 kettenis Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -85,7 +85,7 @@ struct psychoreg {
 
 	struct iommureg psy_iommu;							/* 1fe.0000.0200,0210 */
 
-	u_int64_t	pad3[317];
+	u_int64_t	pad3[256];
 
 	u_int64_t	pcia_slot0_int;		/* PCI bus a slot 0 irq map reg */	/* 1fe.0000.0c00 */
 	u_int64_t	pcia_slot1_int;		/* PCI bus a slot 1 irq map reg */	/* 1fe.0000.0c08 */

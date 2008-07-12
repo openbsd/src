@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.13 2008/07/12 12:21:04 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.14 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -239,6 +239,10 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	if (name == NULL)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+
+	/* On Oberon, we need to flush the cache. */
+	if (sc->sc_oberon)
+		is->is_flags |= IOMMU_FLUSH_CACHE;
 
 	iommu_init(name, is, tsbsize, iobase);
 }

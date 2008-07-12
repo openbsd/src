@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.12 2008/03/09 19:27:56 kettenis Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.13 2008/07/12 13:08:04 kettenis Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -110,6 +110,8 @@ struct iommu_state {
 	int64_t			is_cr;		/* Control register value */
 	struct mutex		is_mtx;
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
+	int			is_flags;
+#define IOMMU_FLUSH_CACHE	0x00000001
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 

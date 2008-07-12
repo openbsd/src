@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.15 2007/05/29 09:53:59 sobrado Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.16 2008/07/12 13:08:04 kettenis Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -54,6 +54,11 @@ struct iommureg {
 	volatile u_int64_t	iommu_cr;	/* IOMMU control register */
 	volatile u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
 	volatile u_int64_t	iommu_flush;	/* IOMMU flush register */
+	volatile u_int64_t	iommu_ctxflush;
+	volatile u_int64_t	iommu_reserved[28];
+	volatile u_int64_t	iommu_cache_flush;
+	volatile u_int64_t	iommu_cache_invalidate;
+	volatile u_int64_t	iommu_reserved2[30];
 };
 
 /* streaming buffer registers */
@@ -94,7 +99,7 @@ struct iommu_strbuf {
 #define IOTTE_STREAM	0x1000000000000000LL	/* Is page streamable? */
 #define	IOTTE_LOCAL	0x0800000000000000LL	/* Accesses to same bus segment? */
 #define	IOTTE_CONTEXT	0x07ff800000000000LL	/* context number */
-#define IOTTE_PAMASK	0x000007ffffffe000LL	/* Let's assume this is correct (bits 42..13) */
+#define IOTTE_PAMASK	0x00007fffffffe000LL	/* Let's assume this is correct (bits 42..13) */
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
 #define IOTTE_W		0x0000000000000002LL	/* Writeable */
 #define IOTTE_SOFTWARE	0x0000000000001f80LL	/* For software use (bits 12..7) */

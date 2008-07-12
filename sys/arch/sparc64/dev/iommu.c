@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.49 2007/12/15 18:08:07 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.50 2008/07/12 13:08:04 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -263,6 +263,9 @@ iommu_reset(struct iommu_state *is)
 		if (sb->sb_flush)
 			printf(", STC%d enabled", i);
 	}
+
+	if (is->is_flags & IOMMU_FLUSH_CACHE)
+		IOMMUREG_WRITE(is, iommu_cache_invalidate, -1ULL);
 }
 
 /*
@@ -1807,7 +1810,7 @@ iommu_iomap_load_map(struct iommu_state *is, struct iommu_map_state *ims,
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
 	struct strbuf_ctl *sb = ims->ims_sb;
-	int i;
+	int i, slot;
 
 	if (sb->sb_flush == NULL)
 		flags &= ~BUS_DMA_STREAMING;
@@ -1820,6 +1823,14 @@ iommu_iomap_load_map(struct iommu_state *is, struct iommu_map_state *ims,
 	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e) {
 		e->ipe_va = vmaddr;
 		iommu_enter(is, sb, e->ipe_va, e->ipe_pa, flags);
+
+		/* Flush cache if necessary. */
+		slot = IOTSBSLOT(e->ipe_va, is->is_tsbsize);
+		if (is->is_flags & IOMMU_FLUSH_CACHE &&
+		    (i == (ipm->ipm_pagecnt - 1) || (slot % 8) == 7))
+			IOMMUREG_WRITE(is, iommu_cache_flush,
+			    is->is_ptsb + slot * 8);
+
 		vmaddr += PAGE_SIZE;
 	}
 
@@ -1835,10 +1846,18 @@ iommu_iomap_unload_map(struct iommu_state *is, struct iommu_map_state *ims)
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
 	struct strbuf_ctl *sb = ims->ims_sb;
-	int i;
+	int i, slot;
 
-	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e)
+	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e) {
 		iommu_remove(is, sb, e->ipe_va);
+
+		/* Flush cache if necessary. */
+		slot = IOTSBSLOT(e->ipe_va, is->is_tsbsize);
+		if (is->is_flags & IOMMU_FLUSH_CACHE &&
+		    (i == (ipm->ipm_pagecnt - 1) || (slot % 8) == 7))
+			IOMMUREG_WRITE(is, iommu_cache_flush,
+			    is->is_ptsb + slot * 8);
+	}
 
 	return (0);
 }

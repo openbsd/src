@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.19 2008/02/10 12:53:01 kettenis Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -27,9 +27,8 @@
  */
 struct schizo_pbm_regs {
 	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
-	struct iommureg		iommu;			/* 0x0200 - 0x0217 */
-	volatile u_int64_t	iommu_ctxflush;		/* 0x0218 - 0x021f */
-	volatile u_int64_t	_unused2[444];
+	struct iommureg		iommu;			/* 0x0200 - 0x03ff */
+	volatile u_int64_t	_unused2[384];
 	volatile u_int64_t	imap[64];
 	volatile u_int64_t	_unused3[64];
 	volatile u_int64_t	iclr[64];
