@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2008/07/12 07:37:25 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.44 2008/07/12 14:26:07 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -208,6 +208,12 @@ cpu_match(parent, vcf, aux)
 		return (0);
 
 	if (portid != cpus->ci_upaid)
+		return (0);
+#else
+	/* XXX Only attach the first thread of a core for now. */
+	if (OF_getprop(OF_parent(ma->ma_node), "device_type",
+	    buf, sizeof(buf)) >= 0 && strcmp(buf, "core") == 0 &&
+	    (getpropint(ma->ma_node, "cpuid", -1) % 2) == 1)
 		return (0);
 #endif
 
