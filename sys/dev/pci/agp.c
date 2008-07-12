@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.23 2008/07/07 07:54:48 bernd Exp $ */
+/* $OpenBSD: agp.c,v 1.24 2008/07/12 17:31:06 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -174,6 +174,9 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_pc = pa->pa_pc;
 		sc->sc_id = pa->pa_id;
 		sc->sc_dmat = pa->pa_dmat;
+		sc->sc_memt = pa->pa_memt;
+		sc->sc_vgapcitag = aaa->apa_vga_args.pa_tag;
+		sc->sc_vgapc = aaa->apa_vga_args.pa_pc;
 
 		pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
 		    &sc->sc_capoff, NULL);
@@ -426,7 +429,7 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 	pcireg_t command;
 	int rq, sba, fw, rate, capoff;
 	
-	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
+	if (pci_get_capability(sc->sc_vgapc, sc->sc_vgapcitag, PCI_CAP_AGP,
 	    &capoff, NULL) == 0) {
 		printf("agp_generic_enable: not an AGP capable device\n");
 		return (-1);
@@ -434,7 +437,8 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 
 	tstatus = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 	    sc->sc_capoff + AGP_STATUS);
-	mstatus = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	/* display agp mode */
+	mstatus = pci_conf_read(sc->sc_vgapc, sc->sc_vgapcitag,
 	    capoff + AGP_STATUS);
 
 	/* Set RQ to the min of mode, tstatus and mstatus */
@@ -471,9 +475,11 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 	command = AGP_MODE_SET_FW(command, fw);
 	command = AGP_MODE_SET_RATE(command, rate);
 	command = AGP_MODE_SET_AGP(command, 1);
+
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 	    sc->sc_capoff + AGP_COMMAND, command);
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, capoff + AGP_COMMAND, command);
+	pci_conf_write(sc->sc_vgapc, sc->sc_vgapcitag, capoff + AGP_COMMAND,
+	    command);
 	return (0);
 }
 

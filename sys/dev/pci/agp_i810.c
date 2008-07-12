@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.39 2008/07/07 07:54:48 bernd Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.40 2008/07/12 17:31:06 oga Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -191,6 +191,7 @@ agp_i810_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 
 	/* XXXfvdl */
 	sc->sc_dmat = isc->vga_pa.pa_dmat;
+	sc->sc_memt = isc->vga_pa.pa_memt;
 
 	switch (PCI_PRODUCT(isc->vga_pa.pa_id)) {
 	case PCI_PRODUCT_INTEL_82810_IGD:

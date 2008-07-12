@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.33 2008/06/12 00:58:47 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.34 2008/07/12 17:31:06 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -201,6 +201,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (agp_pchb_pa_set) {
 		aba.apa_pci_args = agp_pchb_pa;
+		memcpy(&aba.apa_vga_args, pa, sizeof(struct pci_attach_args));
 		config_found_sm(self, &aba, agpbus_print, agpsubmatch);
 
 	}
