@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2008/04/07 16:21:26 thib Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2008/07/12 08:08:54 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -986,7 +986,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		type, sfsr, sfva, afsr, afva, tf);
 
-	if (afsr == 0) {
+	if (afsr == 0 && sfsr == 0) {
 		printf("data_access_error: no fault\n");
 		goto out;	/* No fault. Why were we called? */
 	}
