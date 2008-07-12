@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.40 2008/06/13 10:06:14 deraadt Exp $	 */
+/* $Id: main.c,v 1.41 2008/07/12 06:20:47 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -289,7 +289,7 @@ cmd_compat(void)
 		need_update = 1;
 		return;
 	}
-	if (strcasecmp(cmdbuf, "quit") == 0) {
+	if (strcasecmp(cmdbuf, "quit") == 0 || strcasecmp(cmdbuf, "q") == 0) {
 		gotsig_close = 1;
 		return;
 	}
