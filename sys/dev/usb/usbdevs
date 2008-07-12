@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.374 2008/07/04 15:06:54 yuo Exp $
+$OpenBSD: usbdevs,v 1.375 2008/07/12 16:22:55 bernd Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -538,6 +538,7 @@ vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
 vendor PROLIFIC2	0x5372	Prolific Technology
 vendor ONSPEC2		0x55aa	OnSpec
+vendor ACERLABS2	0x5986  Acer
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor 3COM2		0x6891	3Com
