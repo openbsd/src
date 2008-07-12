@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.18 2008/07/03 09:50:04 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.19 2008/07/12 06:26:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -401,11 +401,6 @@ struct uvideo_sample_buffer {
 #define UVIDEO_MAX_BUFFERS	32
 struct uvideo_mmap {
 	SIMPLEQ_ENTRY(uvideo_mmap)	q_frames;
-	/*
-	 * TODO
-	 * Complete buffer so we can queue/dequeue video frames.
-	 * Maybe we should use some queue macros for this?
-	 */
 	uint8_t				*buf;
 	struct v4l2_buffer		 v4l2_buf;
 };
