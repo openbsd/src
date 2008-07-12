@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.99 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.100 2008/07/12 05:45:49 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.95 2008/06/11 00:25:27 brad Exp 
+ *	OpenBSD: miidevs,v 1.97 2008/07/12 05:45:31 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -60,6 +60,7 @@
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_JATO	0x00e083	/* Jato Technologies */
+#define	MII_OUI_JMICRON	0x001b8c	/* JMicron Technologies */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
@@ -308,6 +309,12 @@
 /* Jato Technologies PHYs */
 #define	MII_MODEL_JATO_BASEX	0x0000
 #define	MII_STR_JATO_BASEX	"Jato 1000baseX PHY"
+
+/* JMicron Technologies PHYs */
+#define	MII_MODEL_JMICRON_JMP211	0x0021
+#define	MII_STR_JMICRON_JMP211	"JMP211 10/100/1000 PHY"
+#define	MII_MODEL_JMICRON_JMP202	0x0022
+#define	MII_STR_JMICRON_JMP202	"JMP202 10/100 PHY"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
