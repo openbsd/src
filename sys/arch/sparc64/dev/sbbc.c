@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbbc.c,v 1.3 2008/07/10 20:27:36 kettenis Exp $	*/
+/*	$OpenBSD: sbbc.c,v 1.4 2008/07/12 23:12:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -129,12 +129,12 @@ struct sbbc_softc {
 	struct sparc_bus_space_tag sc_bbt;
 
 	struct tty		*sc_tty;
-	struct timeout		sc_to;
 	caddr_t			sc_sram_cons;
 	uint32_t		*sc_sram_solscie;
 	uint32_t		*sc_sram_solscir;
 	uint32_t		*sc_sram_scsolie;
 	uint32_t		*sc_sram_scsolir;
+	void			*sc_cons_si;
 };
 
 struct sbbc_softc *sbbc_cons_input;
@@ -159,12 +159,13 @@ int	sbbc_tod_gettime(todr_chip_handle_t, struct timeval *);
 int	sbbc_tod_settime(todr_chip_handle_t, struct timeval *);
 
 void	sbbc_attach_cons(struct sbbc_softc *, uint32_t);
+void	sbbc_intr_cons(struct sbbc_softc *, uint32_t);
+void	sbbc_softintr_cons(void *);
 int	sbbc_cnlookc(dev_t, int *);
 int	sbbc_cngetc(dev_t);
 void	sbbc_cnputc(dev_t, int);
 void	sbbcstart(struct tty *);
 int	sbbcparam(struct tty *, struct termios *);
-void	sbbctimeout(void *);
 
 int
 sbbc_match(struct device *parent, void *match, void *aux)
@@ -296,12 +297,7 @@ sbbc_intr(void *arg)
 	reason = *sc->sc_sram_scsolir;
 	*sc->sc_sram_scsolir = 0;
 
-#ifdef DDB
-	if (reason & SBBC_SRAM_CONS_BRK && sc == sbbc_cons_input) {
-		if (db_console)
-			Debugger();
-	}
-#endif
+	sbbc_intr_cons(sc, reason);
 
 	/* Ack interrupt. */
 	bus_space_write_4(sc->sc_iot, sc->sc_regs_ioh,
@@ -379,10 +375,13 @@ sbbc_attach_cons(struct sbbc_softc *sc, uint32_t offset)
 	sbbc_cons_input = sbbc_cons_output = sc;
 	sgcn_is_input = sgcn_is_output = 0;
 
-	timeout_set(&sc->sc_to, sbbctimeout, sc);
+	sc->sc_cons_si = softintr_establish(IPL_TTY, sbbc_softintr_cons, sc);
+	if (sc->sc_cons_si == NULL)
+		panic("%s: can't establish soft interrupt",
+		    sc->sc_dv.dv_xname);
 
 	*sc->sc_sram_solscie |= SBBC_SRAM_CONS_OUT;
-	*sc->sc_sram_scsolie |= SBBC_SRAM_CONS_BRK;
+	*sc->sc_sram_scsolie |= SBBC_SRAM_CONS_IN | SBBC_SRAM_CONS_BRK;
 
 	/* Take over console input. */
 	prom_serengeti_set_console_input("CON_CLNT");
@@ -417,6 +416,42 @@ sbbc_attach_cons(struct sbbc_softc *sc, uint32_t offset)
 
 		printf("%s: console\n", sc->sc_dv.dv_xname);
 	}
+}
+
+void
+sbbc_intr_cons(struct sbbc_softc *sc, uint32_t reason)
+{
+#ifdef DDB
+	if ((reason & SBBC_SRAM_CONS_BRK) && sc == sbbc_cons_input) {
+		if (db_console)
+			Debugger();
+	}
+#endif
+
+	if ((reason & SBBC_SRAM_CONS_IN) && sc->sc_tty)
+		softintr_schedule(sc->sc_cons_si);
+}
+
+void
+sbbc_softintr_cons(void *arg)
+{
+	struct sbbc_softc *sc = arg;
+	struct sbbc_sram_cons *cons = (void *)sc->sc_sram_cons;
+	uint32_t rdptr = cons->cons_in_rdptr;
+	struct tty *tp = sc->sc_tty;
+	int c;
+
+	while (rdptr != cons->cons_in_wrptr) {
+		if (tp->t_state & TS_ISOPEN) {
+			c = *(sc->sc_sram_cons + rdptr);
+			(*linesw[tp->t_line].l_rint)(c, tp);
+		}
+
+		if (++rdptr == cons->cons_in_end)
+			rdptr = cons->cons_in_begin;
+	}
+
+	cons->cons_in_rdptr = rdptr;
 }
 
 int
@@ -470,7 +505,6 @@ sbbcopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct sbbc_softc *sc;
 	struct tty *tp;
 	int unit = minor(dev);
-	int error, setuptimeout;
 
 	if (unit > sbbc_cd.cd_ndevs)
 		return (ENXIO);
@@ -494,17 +528,11 @@ sbbcopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);
-
-		setuptimeout = 1;
 	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0))
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
-	if (error == 0 && setuptimeout)
-		sbbctimeout(sc);
-
-	return (error);
+	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 int
@@ -521,7 +549,6 @@ sbbcclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 
 	tp = sc->sc_tty;
-	timeout_del(&sc->sc_to);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	return (0);
@@ -645,18 +672,4 @@ sbbcparam(struct tty *tp, struct termios *t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 	return (0);
-}
-
-void
-sbbctimeout(void *v)
-{
-	struct sbbc_softc *sc = v;
-	struct tty *tp = sc->sc_tty;
-	int c;
-
-	while (sbbc_cnlookc(tp->t_dev, &c)) {
-		if (tp->t_state & TS_ISOPEN)
-			(*linesw[tp->t_line].l_rint)(c, tp);
-	}
-	timeout_add(&sc->sc_to, 1);
 }
