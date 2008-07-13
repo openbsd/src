@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.77 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: in6.c,v 1.78 2008/07/13 20:41:39 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -166,7 +166,8 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	bzero(&info, sizeof(info));
 	info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
 	info.rti_info[RTAX_DST] = ifa->ifa_addr;
-	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	if (cmd != RTM_DELETE)
+		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&all1_sa;
 	e = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, 0);
 	if (e != 0) {
