@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.50 2008/07/13 11:49:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.51 2008/07/13 12:48:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -620,15 +620,15 @@ int
 uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-        struct usb_video_format_mjpeg_desc *d;
+	struct usb_video_format_mjpeg_desc *d;
 
-        d = (struct usb_video_format_mjpeg_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_mjpeg_desc *)(uint8_t *)desc;
 
-        if (d->bNumFrameDescriptors == 0) {
-                printf("%s: no MJPEG frame descriptors found!\n",
-                    DEVNAME(sc));
-                return (-1);
-        }
+	if (d->bNumFrameDescriptors == 0) {
+		printf("%s: no MJPEG frame descriptors found!\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
 
 	if (d->bFormatIndex == UVIDEO_MAX_FORMAT) {
 		printf("%s: too many MJPEG format descriptors found!\n",
@@ -640,7 +640,7 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 	/* set MJPEG format as default */
 	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
 
-        return (0);
+	return (0);
 }
 
 int
