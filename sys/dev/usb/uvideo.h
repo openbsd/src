@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.19 2008/07/12 06:26:06 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.20 2008/07/13 11:49:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -406,6 +406,14 @@ struct uvideo_mmap {
 };
 typedef SIMPLEQ_HEAD(, uvideo_mmap) q_mmap;
 
+struct uvideo_format_group {
+	/* XXX format descriptor should be union */
+	struct usb_video_format_mjpeg_desc	*format;
+	struct usb_video_frame_mjpeg_desc	*frame_cur;
+#define UVIDEO_MAX_FRAME			 16
+	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
+} __packed;
+
 struct uvideo_softc {
 	struct device				 sc_dev;
 	usbd_device_handle			 sc_udev;
@@ -451,8 +459,10 @@ struct uvideo_softc {
 	struct usb_video_probe_commit		 sc_desc_probe;
 	struct usb_video_header_desc_all	 sc_desc_vc_header;
 	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
-	struct usb_video_format_mjpeg_desc	*sc_desc_format_mjpeg;
-	struct usb_video_frame_mjpeg_desc	*sc_desc_frame_mjpeg;
+
+#define UVIDEO_MAX_FORMAT			 8
+	struct uvideo_format_group		*sc_fmtgrp_cur;
+	struct uvideo_format_group		 sc_fmtgrp[UVIDEO_MAX_FORMAT];
 
 #define	UVIDEO_MAX_VS_NUM			 8
 	struct uvideo_vs_iface			*sc_vs_curr;

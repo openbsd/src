@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.49 2008/07/10 04:49:12 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.50 2008/07/13 11:49:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -80,7 +80,7 @@ int		uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 int		uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
-		    const usb_descriptor_t *);
+		    const usb_descriptor_t *, int *);
 int		uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
@@ -630,7 +630,15 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
                 return (-1);
         }
 
-        sc->sc_desc_format_mjpeg = d;
+	if (d->bFormatIndex == UVIDEO_MAX_FORMAT) {
+		printf("%s: too many MJPEG format descriptors found!\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	sc->sc_fmtgrp[d->bFormatIndex].format = d;
+
+	/* set MJPEG format as default */
+	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
 
         return (0);
 }
@@ -659,6 +667,7 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
+	int fmtidx = 0;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -672,39 +681,48 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_FRAME_MJPEG:
-			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc) == 0)
-				return (0);
+			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc, &fmtidx))
+				return (1);
 			break;
 		}
 
 		desc = usb_desc_iter_next(&iter);
 	}
 
-	printf("%s: no default frame descriptor found!\n", DEVNAME(sc));
-
-	return (1);
+	return (0);
 }
 
 int
 uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
-    const usb_descriptor_t *desc)
+    const usb_descriptor_t *desc, int *fmtidx)
 {
 	struct usb_video_frame_mjpeg_desc *d;
 
 	d = (struct usb_video_frame_mjpeg_desc *)(uint8_t *)desc;
+
+	if (d->bFrameIndex == 1)
+		++*fmtidx;
+
+	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
+		printf("%s: too many MJPEG frame descriptors found!\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+	sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex] = d;
 
 	/*
 	 * If bDefaultFrameIndex is not set by the device
 	 * use the first bFrameIndex available, otherwise
 	 * set it to the default one.
 	 */
-	if (!sc->sc_desc_format_mjpeg->bDefaultFrameIndex)
-		goto set;
-	else if (d->bFrameIndex != sc->sc_desc_format_mjpeg->bDefaultFrameIndex)
-		return (1);
-
-set:
-	sc->sc_desc_frame_mjpeg = d;
+	if (sc->sc_fmtgrp[*fmtidx].format->bDefaultFrameIndex == 0) {
+		sc->sc_fmtgrp[*fmtidx].frame_cur =
+		    sc->sc_fmtgrp[*fmtidx].frame[1];
+	} else if (sc->sc_fmtgrp[*fmtidx].format->bDefaultFrameIndex ==
+	    d->bFrameIndex) {
+		sc->sc_fmtgrp[*fmtidx].frame_cur =
+		    sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex];
+	}
 
 	return (0);
 }
@@ -870,10 +888,10 @@ uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
 		return (error);
 
 	/* set probe */
-	pc->bFormatIndex = sc->sc_desc_format_mjpeg->bFormatIndex;
-	pc->bFrameIndex = sc->sc_desc_format_mjpeg->bDefaultFrameIndex;
+	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
+	pc->bFrameIndex = sc->sc_fmtgrp_cur->format->bDefaultFrameIndex;
 	USETDW(pc->dwFrameInterval,
-	    UGETDW(sc->sc_desc_frame_mjpeg->dwDefaultFrameInterval));
+	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
 	USETDW(pc->dwMaxVideoFrameSize, 0);
 	USETDW(pc->dwMaxPayloadTransferSize, 0);
 	error = uvideo_vs_set_probe(sc, probe_data);
@@ -1923,7 +1941,7 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 	 * XXX We need to create a sc->sc_desc_format pointer array
 	 * which contains all available format descriptors.
 	 */
-	switch (sc->sc_desc_format_mjpeg->bDescriptorSubtype) {
+	switch (sc->sc_fmtgrp_cur->format->bDescriptorSubtype) {
 	case UDESCSUB_VS_FORMAT_MJPEG:
 		fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
 		(void)strlcpy(fmtdesc->description, "MJPEG",
