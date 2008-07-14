@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.609 2008/07/10 07:41:21 djm Exp $ */
+/*	$OpenBSD: pf.c,v 1.610 2008/07/14 13:29:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1819,7 +1819,9 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 {
 	struct mbuf	*m0;
 
-	m0 = m_copy(m, 0, M_COPYALL);
+	if ((m0 = m_copy(m, 0, M_COPYALL)) == NULL)
+		return;
+
 	m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 
 	if (r->rtableid >= 0)
