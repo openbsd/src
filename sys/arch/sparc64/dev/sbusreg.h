@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusreg.h,v 1.3 2007/05/29 09:54:15 sobrado Exp $	*/
+/*	$OpenBSD: sbusreg.h,v 1.4 2008/07/14 20:01:37 miod Exp $	*/
 /*	$NetBSD: sbusreg.h,v 1.7 1999/06/07 05:28:03 eeh Exp $ */
 
 /*
@@ -95,9 +95,9 @@ struct sysioreg {
 
 	u_int64_t	pad3[117];
 
-	struct iommureg sys_iommu;							/* 1fe.0000.2400,2410 */
+	struct iommureg sys_iommu;							/* 1fe.0000.2400-25f8 */
 
-	u_int64_t	pad4[125];
+	u_int64_t	pad4[64];
 
 	struct iommu_strbuf	sys_strbuf;						/* 1fe.0000.2800-2810 */
 
