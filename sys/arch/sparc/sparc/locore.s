@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.78 2008/05/21 19:42:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.79 2008/07/14 13:13:18 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -6163,5 +6163,3 @@ _C_LABEL(proc0paddr):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(promvec), 4
-	.comm	_C_LABEL(qs), 32 * 8
-	.comm	_C_LABEL(whichqs), 4

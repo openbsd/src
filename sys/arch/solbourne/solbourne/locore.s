@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.10 2008/05/21 19:42:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.11 2008/07/14 13:13:18 art Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -4815,6 +4815,3 @@ _C_LABEL(proc0paddr):
 	.globl winuf_invalid
 
 	.comm	_C_LABEL(nwindows), 4
-	.comm	_C_LABEL(curproc), 4
-	.comm	_C_LABEL(qs), 32 * 8
-	.comm	_C_LABEL(whichqs), 4
