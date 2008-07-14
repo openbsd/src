@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.27 2008/07/11 14:18:39 blambert Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.28 2008/07/14 15:17:08 art Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -354,10 +354,8 @@ db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	db_printf("ticks now: %d\n", ticks);
 	db_printf("    ticks  wheel       arg  func\n");
 
-	mtx_enter(&timeout_mutex);
 	db_show_callout_bucket(&timeout_todo);
 	for (b = 0; b < BUCKETS; b++)
 		db_show_callout_bucket(&timeout_wheel[b]);
-	mtx_leave(&timeout_mutex);
 }
 #endif
