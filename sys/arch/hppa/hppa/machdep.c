@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.167 2008/06/27 17:22:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.168 2008/07/14 13:37:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -560,8 +560,6 @@ cpuid()
 
 	/* force strong ordering for now */
 	if (p->features & HPPA_FTRS_W32B) {
-		extern register_t kpsw;	/* intr.c */
-
 		kpsw |= PSL_O;
 	}
 
@@ -1426,7 +1424,7 @@ sys_sigreturn(p, v, retval)
 		tf->tf_iisq_tail = HPPA_SID_KERNEL;
 	else
 		tf->tf_iisq_tail = p->p_addr->u_pcb.pcb_space;
-	tf->tf_ipsw = ksc.sc_ps;
+	tf->tf_ipsw = ksc.sc_ps | (kpsw & PSL_O);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))

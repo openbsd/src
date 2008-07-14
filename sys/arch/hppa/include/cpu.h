@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.52 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.53 2008/07/14 13:39:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -91,6 +91,7 @@ enum hppa_cpu_type {
 extern enum hppa_cpu_type cpu_type;
 extern const char *cpu_typename;
 extern int cpu_hvers;
+extern register_t kpsw;
 #endif
 #endif
 
