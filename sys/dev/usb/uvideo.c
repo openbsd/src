@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.52 2008/07/14 04:45:50 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.53 2008/07/14 19:57:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1990,25 +1990,50 @@ int
 uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 {
 	struct uvideo_softc *sc = v;
+	int idx;
 
-	if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
-	    fmtdesc->index > 0)
+	if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		/* type not supported */
 		return (EINVAL);
 
-	/*
-	 * XXX We need to create a sc->sc_desc_format pointer array
-	 * which contains all available format descriptors.
-	 */
-	switch (sc->sc_fmtgrp_cur->format->bDescriptorSubtype) {
+	idx = fmtdesc->index + 1;
+	if (idx == UVIDEO_MAX_FORMAT || sc->sc_fmtgrp[idx].format == NULL)
+		/* no more formats left */
+		return (EINVAL);
+
+	switch (sc->sc_fmtgrp[idx].format->bDescriptorSubtype) {
 	case UDESCSUB_VS_FORMAT_MJPEG:
 		fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
 		(void)strlcpy(fmtdesc->description, "MJPEG",
 		    sizeof(fmtdesc->description));
+		fmtdesc->pixelformat = V4L2_PIX_FMT_MJPEG;
+		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
+		break;
+	case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
+		fmtdesc->flags = 0;
+		if (!strcmp(sc->sc_fmtgrp[idx].format->u.uc.guidFormat,
+		    "YUY2")) {
+			(void)strlcpy(fmtdesc->description, "YUYV",
+			    sizeof(fmtdesc->description));
+			fmtdesc->pixelformat = V4L2_PIX_FMT_YUYV;
+		} else if (!strcmp(sc->sc_fmtgrp[idx].format->u.uc.guidFormat,
+		    "NV12")) {
+			(void)strlcpy(fmtdesc->description, "NV12",
+			    sizeof(fmtdesc->description));
+			fmtdesc->pixelformat = V4L2_PIX_FMT_NV12;
+		} else {
+			(void)strlcpy(fmtdesc->description, "Unknown UC Format",
+			    sizeof(fmtdesc->description));
+			fmtdesc->pixelformat = 0;
+		}
+		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
 		break;
 	default:
 		fmtdesc->flags = 0;
 		(void)strlcpy(fmtdesc->description, "Unknown Format",
 		    sizeof(fmtdesc->description));
+		fmtdesc->pixelformat = 0;
+		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
 		break;
 	}
 
