@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2008/03/15 22:05:51 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2008/07/14 14:00:01 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -96,7 +96,7 @@ vmapbuf(bp, len)
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
-	kva = uvm_km_valloc_wait(kernel_map, len);
+	kva = uvm_km_valloc_prefer_wait(kernel_map, len, uva);
 	bp->b_data = (caddr_t)(kva + off);
 
 	/*
