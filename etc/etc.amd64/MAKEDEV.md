@@ -1,6 +1,6 @@
 define(MACHINE,amd64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.31 2008/06/28 21:46:05 mglocker Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.32 2008/07/14 16:21:52 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -33,7 +33,7 @@ _TITLE(dis)
 _DEV(ccd, 18, 16)
 _DEV(cd, 15, 6)
 _DEV(flo, 9, 2)
-_DEV(mcd, 39, 7)
+dnl _DEV(mcd, 39, 7)
 _DEV(raid, 54, 19)
 _DEV(rd, 47, 17)
 _DEV(sd, 13, 4)
@@ -71,7 +71,6 @@ _DEV(usb, 61)
 _DEV(uscan, 77)
 _TITLE(spec)
 _DEV(agp, 86)
-dnl _DEV(apm, 21)
 _DEV(apm, 83)
 _DEV(au, 42)
 _DEV(bio, 79)
@@ -83,7 +82,7 @@ _DEV(fdesc, 22)
 _DEV(gpr, 80)
 _DEV(hotplug, 82)
 _DEV(iop, 75)
-_DEV(joy, 26)
+dnl _DEV(joy, 26)
 _DEV(lkm, 28)
 _DEV(music, 53)
 _DEV(nvram, 85)
@@ -142,4 +141,4 @@ target(all, agp, 0)dnl
 target(all, drm, 0)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
 target(ramd, fd, 0)dnl
-target(ramd, mcd, 0)dnl
+dnl target(ramd, mcd, 0)dnl
