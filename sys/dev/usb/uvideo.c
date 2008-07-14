@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.51 2008/07/13 12:48:40 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.52 2008/07/14 04:45:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -82,7 +82,7 @@ int		uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 int		uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *, int *);
 int		uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
-		    const usb_descriptor_t *);
+		    const usb_descriptor_t *, int *);
 int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
 		    struct usb_attach_arg *uaa, int, int, int);
 int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
@@ -635,10 +635,13 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 		    DEVNAME(sc));
 		return (-1);
 	}
-	sc->sc_fmtgrp[d->bFormatIndex].format = d;
+	sc->sc_fmtgrp[d->bFormatIndex].format = (struct uvideo_format_desc *)d;
+	sc->sc_fmtgrp[d->bFormatIndex].format_dfidx =
+	    sc->sc_fmtgrp[d->bFormatIndex].format->u.mjpeg.bDefaultFrameIndex;
 
-	/* set MJPEG format as default */
-	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
+	if (sc->sc_fmtgrp_cur == NULL)
+		/* set MJPEG format */
+		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
 
 	return (0);
 }
@@ -657,7 +660,18 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		return (-1);
 	}
 
-	/* TODO */
+	if (d->bFormatIndex == UVIDEO_MAX_FORMAT) {
+		printf("%s: too many UNCOMPRESSED format descriptors found!\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	sc->sc_fmtgrp[d->bFormatIndex].format = (struct uvideo_format_desc *)d;
+	sc->sc_fmtgrp[d->bFormatIndex].format_dfidx =
+	    sc->sc_fmtgrp[d->bFormatIndex].format->u.uc.bDefaultFrameIndex;
+
+	if (sc->sc_fmtgrp_cur == NULL)
+		/* set UNCOMPRESSED format */
+		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
 
 	return (0);
 }
@@ -683,6 +697,14 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 		case UDESCSUB_VS_FRAME_MJPEG:
 			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc, &fmtidx))
 				return (1);
+			break;
+		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
+			/* XXX do correct length calculation */
+			if (desc->bLength == 38) {
+				if (uvideo_vs_parse_desc_frame_uncompressed(sc,
+				    desc, &fmtidx))
+					return (1);
+			}
 			break;
 		}
 
@@ -715,10 +737,46 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 	 * use the first bFrameIndex available, otherwise
 	 * set it to the default one.
 	 */
-	if (sc->sc_fmtgrp[*fmtidx].format->bDefaultFrameIndex == 0) {
+	if (sc->sc_fmtgrp[*fmtidx].format->u.mjpeg.bDefaultFrameIndex == 0) {
 		sc->sc_fmtgrp[*fmtidx].frame_cur =
 		    sc->sc_fmtgrp[*fmtidx].frame[1];
-	} else if (sc->sc_fmtgrp[*fmtidx].format->bDefaultFrameIndex ==
+	} else if (sc->sc_fmtgrp[*fmtidx].format->u.mjpeg.bDefaultFrameIndex ==
+	    d->bFrameIndex) {
+		sc->sc_fmtgrp[*fmtidx].frame_cur =
+		    sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex];
+	}
+
+	return (0);
+}
+
+int
+uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc, int *fmtidx)
+{
+	struct usb_video_frame_uncompressed_desc *d;
+
+	d = (struct usb_video_frame_uncompressed_desc *)(uint8_t *)desc;
+
+	if (d->bFrameIndex == 1)
+		++*fmtidx;
+
+	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
+		printf("%s: too many UNCOMPRESSED frame descriptors found!\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+	sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex] =
+	    (struct usb_video_frame_mjpeg_desc *)d;
+
+	/*
+	 * If bDefaultFrameIndex is not set by the device
+	 * use the first bFrameIndex available, otherwise
+	 * set it to the default one.
+	 */
+	if (sc->sc_fmtgrp[*fmtidx].format->u.uc.bDefaultFrameIndex == 0) {
+		sc->sc_fmtgrp[*fmtidx].frame_cur =
+		    sc->sc_fmtgrp[*fmtidx].frame[1];
+	} else if (sc->sc_fmtgrp[*fmtidx].format->u.uc.bDefaultFrameIndex ==
 	    d->bFrameIndex) {
 		sc->sc_fmtgrp[*fmtidx].frame_cur =
 		    sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex];
@@ -889,7 +947,7 @@ uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
 
 	/* set probe */
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
-	pc->bFrameIndex = sc->sc_fmtgrp_cur->format->bDefaultFrameIndex;
+	pc->bFrameIndex = sc->sc_fmtgrp_cur->format_dfidx;
 	USETDW(pc->dwFrameInterval,
 	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
 	USETDW(pc->dwMaxVideoFrameSize, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.20 2008/07/13 11:49:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.21 2008/07/14 04:45:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -406,11 +406,42 @@ struct uvideo_mmap {
 };
 typedef SIMPLEQ_HEAD(, uvideo_mmap) q_mmap;
 
+struct uvideo_format_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bFormatIndex;
+	uByte	bNumFrameDescriptors;
+	union {
+		/* mjpeg */
+		struct {
+			uByte	bmFlags;
+			uByte	bDefaultFrameIndex;
+			uByte	bAspectRatioX;
+			uByte	bAspectRatioY;
+			uByte	bmInterlaceFlags;
+			uByte	bCopyProtect;
+		} mjpeg;
+
+		/* uncompressed */
+		struct {
+			uByte	guidFormat[16];
+			uByte	bBitsPerPixel;
+			uByte	bDefaultFrameIndex;
+			uByte	bAspectRatioX;
+			uByte	bAspectRatioY;
+			uByte	bmInterlaceFlags;
+			uByte	bCopyProtect;
+		} uc;
+	} u;
+} __packed;
+
 struct uvideo_format_group {
-	/* XXX format descriptor should be union */
-	struct usb_video_format_mjpeg_desc	*format;
-	struct usb_video_frame_mjpeg_desc	*frame_cur;
+	struct uvideo_format_desc		*format;
+	uint8_t					 format_dfidx;
+	/* frame descriptors for mjpeg and uncompressed are identical */
 #define UVIDEO_MAX_FRAME			 16
+	struct usb_video_frame_mjpeg_desc	*frame_cur;
 	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
 } __packed;
 
