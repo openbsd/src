@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.39 2008/07/14 16:22:23 miod Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -561,7 +561,7 @@ _mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 666)dnl
 __devtitle(plat, Platform-specific devices)dnl
 __devitem(bktr, bktr*, Video frame grabbers)dnl
 _mcdev(bktr, bktr*, bktr, {-major_bktr_c-}, 644)dnl
-__devitem(tuner, tuner*, Tuner devices)dnl
+__devitem(tuner, tuner*, Tuner devices, bktr)dnl
 _mkdev(tuner, tuner*, {-M tuner$U c major_bktr_c Add(Mult($U, 2), 16) 644-}, 644)dnl
 __devitem(pci, pci*, PCI bus devices)dnl
 _mkdev(pci, pci*, {-M pci$U	c major_pci_c $U 600
