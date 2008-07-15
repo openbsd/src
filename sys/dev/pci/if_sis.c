@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.79 2008/07/10 18:14:59 thib Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.80 2008/07/15 12:10:48 thib Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1257,8 +1257,6 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c, struct mbuf *m)
 	}
 
 	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-
-	m_adj(m_new, sizeof(u_int64_t));
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rx_sparemap, m_new,
 	    BUS_DMA_NOWAIT)) {
