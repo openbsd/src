@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.48 2008/07/13 05:24:05 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.49 2008/07/15 13:21:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -419,6 +419,15 @@
 #define RL_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
 #define RL_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
 #define RL_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+#define	RL_CPLUSCMD_MACSTAT_DIS	0x0080	/* 8168B/C/CP */
+#define	RL_CPLUSCMD_ASF		0x0100	/* 8168C/CP */
+#define	RL_CPLUSCMD_DBG_SEL	0x0200	/* 8168C/CP */
+#define	RL_CPLUSCMD_FORCE_TXFC	0x0400	/* 8168C/CP */
+#define	RL_CPLUSCMD_FORCE_RXFC	0x0800	/* 8168C/CP */
+#define	RL_CPLUSCMD_FORCE_HDPX	0x1000	/* 8168C/CP */
+#define	RL_CPLUSCMD_NORMAL_MODE	0x2000	/* 8168C/CP */
+#define	RL_CPLUSCMD_DBG_ENB	0x4000	/* 8168C/CP */
+#define	RL_CPLUSCMD_BIST_ENB	0x8000	/* 8168C/CP */
 
 /* C+ early transmit threshold */
 
@@ -749,6 +758,15 @@ struct rl_softc {
 	struct timeout		timer_handle;
 
 	int			rl_txstart;
+	u_int32_t		rl_flags;
+#define	RL_FLAG_MSI		0x0001
+#define	RL_FLAG_INVMAR		0x0004
+#define	RL_FLAG_PHYWAKE		0x0008
+#define	RL_FLAG_NOJUMBO		0x0010
+#define	RL_FLAG_PAR		0x0020
+#define	RL_FLAG_DESCV2		0x0040
+#define	RL_FLAG_MACSTAT		0x0080
+#define	RL_FLAG_LINK		0x8000
 	int			rl_link;
 };
 

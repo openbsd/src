@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.83 2008/07/13 05:24:05 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.84 2008/07/15 13:21:17 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -568,16 +568,10 @@ re_setmulti(struct rl_softc *sc)
 	 * parts. This means we have to write the hash pattern in reverse
 	 * order for those devices.
 	 */
-	switch (sc->sc_hwrev) {
-	case RL_HWREV_8100E_SPIN1:
-	case RL_HWREV_8100E_SPIN2:
-	case RL_HWREV_8101E:
-	case RL_HWREV_8168_SPIN1:
-	case RL_HWREV_8168_SPIN2:
+	if (sc->rl_flags & RL_FLAG_INVMAR) {
 		CSR_WRITE_4(sc, RL_MAR0, swap32(hashes[1]));
 		CSR_WRITE_4(sc, RL_MAR4, swap32(hashes[0]));
-		break;
-	default:
+	} else {
 		CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 		CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
 	}
@@ -867,6 +861,53 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
 
+	switch (sc->sc_hwrev) {
+	case RL_HWREV_8139CPLUS:
+		sc->rl_flags |= RL_FLAG_NOJUMBO;
+		break;
+	case RL_HWREV_8100E_SPIN1:
+	case RL_HWREV_8100E_SPIN2:
+	case RL_HWREV_8101E:
+		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
+		    RL_FLAG_PHYWAKE;
+		break;
+	case RL_HWREV_8102E:
+	case RL_HWREV_8102EL:
+		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
+		    RL_FLAG_PHYWAKE | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT;
+		break;
+	case RL_HWREV_8168_SPIN1:
+	case RL_HWREV_8168_SPIN2:
+	case RL_HWREV_8168_SPIN3:
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_MACSTAT;
+		break;
+	case RL_HWREV_8168C:
+	case RL_HWREV_8168C_SPIN2:
+	case RL_HWREV_8168CP:
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT;
+		/*
+		 * These controllers support jumbo frame but it seems
+		 * that enabling it requires touching additional magic
+		 * registers. Depending on MAC revisions some
+		 * controllers need to disable checksum offload. So
+		 * disable jumbo frame until I have better idea what
+		 * it really requires to make it support.
+		 * RTL8168C/CP : supports up to 6KB jumbo frame.
+		 * RTL8111C/CP : supports up to 9KB jumbo frame.
+		 */
+		sc->rl_flags |= RL_FLAG_NOJUMBO;
+		break;
+	case RL_HWREV_8169_8110SB:
+	case RL_HWREV_8169_8110SCd:
+	case RL_HWREV_8169_8110SBL:
+		sc->rl_flags |= RL_FLAG_PHYWAKE;
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * Set RX length mask, TX poll request register
 	 * and TX descriptor count.
@@ -1007,13 +1048,16 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
-	if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
+	if ((sc->rl_flags & RL_FLAG_NOJUMBO) == 0)
 		ifp->if_hardmtu = RL_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
-			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	if ((sc->rl_flags & RL_FLAG_DESCV2) == 0)
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
+		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -1354,17 +1398,22 @@ re_rxeof(struct rl_softc *sc)
 
 		/* Do RX checksumming */
 
-		/* Check IP header checksum */
-		if ((rxstat & RL_RDESC_STAT_PROTOID) &&
-		    !(rxstat & RL_RDESC_STAT_IPSUMBAD))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+		if (sc->rl_flags & RL_FLAG_DESCV2) {
+			/* XXX V2 CSUM */
+		} else {
+			/* Check IP header checksum */
+			if ((rxstat & RL_RDESC_STAT_PROTOID) &&
+			    !(rxstat & RL_RDESC_STAT_IPSUMBAD))
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
-		/* Check TCP/UDP checksum */
-		if ((RL_TCPPKT(rxstat) &&
-		    !(rxstat & RL_RDESC_STAT_TCPSUMBAD)) ||
-		    (RL_UDPPKT(rxstat) &&
-		    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
-			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+			/* Check TCP/UDP checksum */
+			if ((RL_TCPPKT(rxstat) &&
+			    !(rxstat & RL_RDESC_STAT_TCPSUMBAD)) ||
+			    (RL_UDPPKT(rxstat) &&
+			    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+				    M_UDP_CSUM_IN_OK;
+		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1796,6 +1845,7 @@ re_init(struct ifnet *ifp)
 {
 	struct rl_softc *sc = ifp->if_softc;
 	u_int32_t	rxcfg = 0;
+	u_int16_t	cfg;
 	int		s;
 	union {
 		u_int32_t align_dummy;
@@ -1813,9 +1863,17 @@ re_init(struct ifnet *ifp)
 	 * Enable C+ RX and TX mode, as well as RX checksum offload.
 	 * We must configure the C+ register before all others.
 	 */
-	CSR_WRITE_2(sc, RL_CPLUS_CMD, RL_CPLUSCMD_RXENB|
-	    RL_CPLUSCMD_TXENB|RL_CPLUSCMD_PCI_MRW|
-	    RL_CPLUSCMD_RXCSUM_ENB);
+	cfg = RL_CPLUSCMD_PCI_MRW;
+	if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
+		cfg |= RL_CPLUSCMD_RXCSUM_ENB;
+	if (sc->rl_flags & RL_FLAG_MACSTAT) {
+		cfg |= RL_CPLUSCMD_MACSTAT_DIS;
+		/* XXX magic. */
+		cfg |= 0x0001;
+	} else {
+		cfg |= RL_CPLUSCMD_RXENB | RL_CPLUSCMD_TXENB;
+	}
+	CSR_WRITE_2(sc, RL_CPLUS_CMD, cfg);
 
 	/*
 	 * Init our MAC address.  Even though the chipset
