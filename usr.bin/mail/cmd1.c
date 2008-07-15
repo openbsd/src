@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.26 2007/04/03 18:01:49 martynas Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.27 2008/07/15 19:13:25 martynas Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.26 2007/04/03 18:01:49 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.27 2008/07/15 19:13:25 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -370,7 +370,8 @@ type1(int *msgvec, char *cmd, int doign, int page)
 		}
 		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
 			restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
-			obuf = Popen(value("PAGER"), "w");
+			cp = value("PAGER");
+			obuf = Popen(cp, "w");
 			if (obuf == NULL) {
 				warn("%s", cp);
 				obuf = stdout;
