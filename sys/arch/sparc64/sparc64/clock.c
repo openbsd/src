@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.43 2008/06/11 04:44:19 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.44 2008/07/15 22:49:01 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -111,6 +111,12 @@ u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
 	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL
+};
+
+u_int sys_tick_get_timecount(struct timecounter *);
+
+struct timecounter sys_tick_timecounter = {
+	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL
 };
 
 /*
@@ -540,12 +546,14 @@ myetheraddr(cp)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int statint, minint;
 #ifdef DEBUG
 	extern int intrdebug;
 #endif
+	u_int sys_tick_rate;
+	int impl = 0;
 
 #ifdef DEBUG
 	/* Set a 1s clock */
@@ -569,7 +577,21 @@ cpu_initclocks()
 
 	tick_timecounter.tc_frequency = cpu_clockrate;
 	tc_init(&tick_timecounter);
-	
+
+	/*
+	 * UltraSPARC IIe processors do have a STICK register, but it
+	 * lives on the PCI host bridge and isn't accessable through
+	 * ASR24.
+	 */
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
+		impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
+
+	sys_tick_rate = getpropint(findroot(), "stick-frequency", 0);
+	if (sys_tick_rate > 0 && impl != IMPL_HUMMINGBIRD) {
+		sys_tick_timecounter.tc_frequency = sys_tick_rate;
+		tc_init(&sys_tick_timecounter);
+	}
+
 	/*
 	 * Now handle machines w/o counter-timers.
 	 */
@@ -907,6 +929,16 @@ tick_get_timecount(struct timecounter *tc)
 	u_int64_t tick;
 
 	__asm __volatile("rd %%tick, %0" : "=r" (tick) :);
+
+	return (tick & ~0u);
+}
+
+u_int
+sys_tick_get_timecount(struct timecounter *tc)
+{
+	u_int64_t tick;
+
+	__asm __volatile("rd %%sys_tick, %0" : "=r" (tick) :);
 
 	return (tick & ~0u);
 }
