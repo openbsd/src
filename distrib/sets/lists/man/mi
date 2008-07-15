@@ -1623,6 +1623,7 @@
 ./usr/share/man/cat4/sparc64/clock.0
 ./usr/share/man/cat4/sparc64/cmp.0
 ./usr/share/man/cat4/sparc64/comkbd.0
+./usr/share/man/cat4/sparc64/core.0
 ./usr/share/man/cat4/sparc64/creator.0
 ./usr/share/man/cat4/sparc64/ebus.0
 ./usr/share/man/cat4/sparc64/ecadc.0
