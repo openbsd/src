@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.9 2008/02/19 21:55:02 landry Exp $
+.\" $OpenBSD: packages-specs.7,v 1.10 2008/07/15 11:10:51 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2008 $
+.Dd $Mdocdate: July 15 2008 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ part starts at the first digit that follows a
 and goes on up to the following
 .Sq - ,
 or to the end of the package name, if no flavor modifier is present.
-It is highly recommended that all packages have a version number.
+All packages must have a version number.
 Normally, the version number directly matches the original software
 distribution version number, or release date.
 In case there are substantial changes in the
@@ -70,6 +70,13 @@ the new package would be called
 Obviously, these specific markers are reserved for
 .Ox
 purposes.
+.Pp
+In some rare cases, version numbering changes completely upstream.
+A version style marker, of the form
+.Sq v0 ,
+.Sq v1 ...
+can be appended to the version number (after the patch level)
+to denote the new numbering scheme.
 .Pp
 Flavored packages will also contain a list of flavors after the version
 identifier, in a canonical order determined by
@@ -114,28 +121,22 @@ Makefile.
 The
 .Ar directory,[-multi],[flavor...]
 part of the dependency is always used to obtain the default dependency for
-the given package (the package that will be installed if no package
+the given package (the package that will be built and installed if no package
 is found).
 The corresponding package name is also used as a package specification,
-unless a more specific specification has been given.
+after removing any version and flavor requirements.
 .Pp
-Package specifications are extended package names, that may use
-.Xr sh 1
--style wildcards, like
-.Sq *
-or
-.Sq \&? .
-.Pp
-A specification such as
+An explicit specification such as
 .Qq ghostscript-*
 may be used to ask for any version of package ghostscript,
-or a more specific wildcard may be used, such as
-.Qq png-1.0.* .
+or a more specific version number may be required, such as
+.Qq png-1.0.7 .
 Version numbers may also include ranges, separated by commas, so for
 instance,
-.Qq foo-1.0.*,>=1.3,<1.5
-would match either foo-1.0.something, or any version of foo between 1.3
-and 1.5.
+.Qq foo->=1.3
+would match any foo with version at least 1.3, and
+.Qq foo->=1.3,<=1.5
+would match any version of foo between 1.3 and 1.5, inclusive.
 .Pp
 If the flavor specification is left blank, any flavor will do.
 Note that most default package names don't contain flavor specification,
@@ -160,49 +161,49 @@ append
 .Sq -!f .
 In the preceding case, one may use
 .Bd -literal -offset indent
-LIB_DEPENDS=aa.1.2:aalib-1.2-!no_x11:graphics/aalib
+LIB_DEPENDS=aa.1.2:aalib-*-!no_x11:graphics/aalib
 .Ed
 .Pp
 to ensure the no_x11 flavor is not picked.
 .Sh DEPENDENCIES RESOLUTION
 Several packages may be specified for a dependency:
-.Qq foo|bar
-will match either package foo, or package bar.
+.Qq foo-*|bar-*
+will match either any version of package foo, or any version of package bar.
 In the general case, each package holds a tree of dependencies.
 Resolution occurs at
 .Xr pkg_add 1
 time, and all dependencies are tracked only as far as needed.
 .Pp
 For instance, if package
-.Qq foo
+.Qq foo-1.0
 depends on either
-.Qq bar
+.Qq bar-*
 or
-.Qq fuzz ,
+.Qq fuzz-* ,
 and
-.Qq bar
+.Qq bar-2.0
 depends
 on
-.Qq toughluck ,
+.Qq toughluck-* ,
 .Xr pkg_add 1
 will first check whether
-.Qq bar
+.Qq bar-*
 or
-.Qq fuzz
+.Qq fuzz-*
 is installed.
 If either is there, the
-.Qq toughluck
+.Qq toughluck-*
 dependency will never be examined.
 It would only be used in the case where neither
-.Qq bar
+.Qq bar-*
 nor
-.Qq fuzz
+.Qq fuzz-*
 are present, thus
 .Xr pkg_add 1
 would decide to bring in
-.Qq bar ,
+.Qq bar-2.0 ,
 and so would check on
-.Qq toughluck .
+.Qq toughluck-* .
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr bsd.port.mk 5 ,
