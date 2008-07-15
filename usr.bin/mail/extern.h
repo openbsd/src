@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.25 2006/05/02 05:28:07 hugh Exp $	*/
+/*	$OpenBSD: extern.h,v 1.26 2008/07/15 19:23:26 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.25 2006/05/02 05:28:07 hugh Exp $
+ *	$OpenBSD: extern.h,v 1.26 2008/07/15 19:23:26 martynas Exp $
  */
 
 struct name;
@@ -198,7 +198,6 @@ int	 putline(FILE *, char *, int);
 int	 pversion(void *);
 int	 quit(void);
 int	 quitcmd(void *);
-int	 chraise(int);
 int	 readline(FILE *, char *, int, int *);
 void	 register_file(FILE *, int, pid_t);
 void	 regret(int);
