@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.45 2008/06/12 15:51:42 jmc Exp $
+#  $OpenBSD: Makefile,v 1.46 2008/07/16 15:15:26 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -144,6 +144,7 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
+MAN+=	infnan.3
 .else
 SRCS=	${COMMON_SRCS}
 .endif
@@ -163,8 +164,8 @@ SRCS=	${COMMON_SRCS}
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	infnan.3 logb.3 j0.3 lgamma.3 lrint.3 lround.3 math.3 rint.3 \
-	round.3 sin.3 sinh.3 sqrt.3 tan.3 tanh.3 trunc.3
+	logb.3 j0.3 lgamma.3 lrint.3 lround.3 math.3 rint.3 round.3 \
+	sin.3 sinh.3 sqrt.3 tan.3 tanh.3 trunc.3
 
 MLINKS+=erf.3 erfc.3
 MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
