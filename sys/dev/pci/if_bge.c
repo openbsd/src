@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.236 2008/06/07 19:05:11 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.237 2008/07/16 03:56:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1669,8 +1669,8 @@ bge_blockinit(struct bge_softc *sc)
 		dma_read_modebits =
 		  BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
 
-		if (sc->bge_flags & BGE_PCIE && 0)
-			dma_read_modebits |= BGE_RDMA_MODE_FIFO_LONG_BURST;
+		if (sc->bge_flags & BGE_PCIE)
+			dma_read_modebits |= BGE_RDMAMODE_FIFO_LONG_BURST;
 
 		CSR_WRITE_4(sc, BGE_RDMA_MODE, dma_read_modebits);
 	}

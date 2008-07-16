@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.83 2008/04/20 01:32:43 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.84 2008/07/16 03:56:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1362,10 +1362,8 @@
 #define BGE_RDMAMODE_PCI_FIFOOREAD_ATTN	0x00000100
 #define BGE_RDMAMODE_LOCWRITE_TOOBIG	0x00000200
 #define BGE_RDMAMODE_ALL_ATTNS		0x000003FC
-
-/* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
-#define BGE_RDMA_MODE_FIFO_LONG_BURST	((1 << 17) || (1 << 16))
-#define BGE_RDMA_MODE_FIFO_SIZE_128	(1 << 17)
+#define BGE_RDMAMODE_FIFO_SIZE_128	0x00020000
+#define BGE_RDMAMODE_FIFO_LONG_BURST	0x00030000
 
 /* Read DMA status register */
 #define BGE_RDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
@@ -1395,6 +1393,7 @@
 #define BGE_WDMAMODE_PCI_FIFOOREAD_ATTN	0x00000100
 #define BGE_WDMAMODE_LOCREAD_TOOBIG	0x00000200
 #define BGE_WDMAMODE_ALL_ATTNS		0x000003FC
+#define BGE_WDMAMODE_RX_ACCEL		0x00000400
 
 /* Write DMA status register */
 #define BGE_WDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
