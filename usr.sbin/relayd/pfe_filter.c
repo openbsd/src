@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.31 2008/07/09 14:57:01 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.32 2008/07/16 14:38:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -497,17 +497,17 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	case AF_INET:
 		in = (struct sockaddr_in *)&cnl->src;
 		out = (struct sockaddr_in *)&cnl->dst;
-		bcopy(&in->sin_addr, &pnl.saddr.addr8, in->sin_len);
+		bcopy(&in->sin_addr, &pnl.saddr.v4, sizeof(pnl.saddr.v4));
 		pnl.sport = in->sin_port;
-		bcopy(&out->sin_addr, &pnl.daddr.addr8, out->sin_len);
+		bcopy(&out->sin_addr, &pnl.daddr.v4, sizeof(pnl.daddr.v4));
 		pnl.dport = out->sin_port;
 		break;
 	case AF_INET6:
 		in6 = (struct sockaddr_in6 *)&cnl->src;
 		out6 = (struct sockaddr_in6 *)&cnl->dst;
-		bcopy(&in6->sin6_addr, &pnl.saddr.addr8, in6->sin6_len);
+		bcopy(&in6->sin6_addr, &pnl.saddr.v6, sizeof(pnl.saddr.v6));
 		pnl.sport = in6->sin6_port;
-		bcopy(&out6->sin6_addr, &pnl.daddr.addr8, out6->sin6_len);
+		bcopy(&out6->sin6_addr, &pnl.daddr.v6, sizeof(pnl.daddr.v6));
 		pnl.dport = out6->sin6_port;
 	}
 	pnl.proto = cnl->proto;
@@ -518,7 +518,7 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 		pnl.direction = PF_OUT;
 		cnl->in = 0;
 		if (ioctl(env->sc_pf->dev, DIOCNATLOOK, &pnl) == -1) {
-			log_debug("natlook: error");
+			log_debug("natlook: error: %s", strerror(errno));
 			return (-1);
 		}
 	}
@@ -533,17 +533,16 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	case AF_INET:
 		in = (struct sockaddr_in *)&cnl->rsrc;
 		out = (struct sockaddr_in *)&cnl->rdst;
-		bcopy(&pnl.rsaddr.addr8, &in->sin_addr, sizeof(in->sin_addr));
+		bcopy(&pnl.rsaddr.v4, &in->sin_addr, sizeof(in->sin_addr));
 		in->sin_port = pnl.rsport;
-		bcopy(&pnl.rdaddr.addr8, &out->sin_addr, sizeof(out->sin_addr));
+		bcopy(&pnl.rdaddr.v4, &out->sin_addr, sizeof(out->sin_addr));
 		out->sin_port = pnl.rdport;
 		break;
 	case AF_INET6:
 		in6 = (struct sockaddr_in6 *)&cnl->rsrc;
 		out6 = (struct sockaddr_in6 *)&cnl->rdst;
-		bcopy(&pnl.rsaddr.addr8, &in6->sin6_addr,
-		    sizeof(in6->sin6_addr));
-		bcopy(&pnl.rdaddr.addr8, &out6->sin6_addr,
+		bcopy(&pnl.rsaddr.v6, &in6->sin6_addr, sizeof(in6->sin6_addr));
+		bcopy(&pnl.rdaddr.v6, &out6->sin6_addr,
 		    sizeof(out6->sin6_addr));
 		break;
 	}
