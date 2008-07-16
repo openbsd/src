@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.19 2008/07/16 14:53:41 martynas Exp $	*/
+/*	$OpenBSD: send.c,v 1.20 2008/07/16 15:11:16 martynas Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.19 2008/07/16 14:53:41 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: send.c,v 1.20 2008/07/16 15:11:16 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,6 +339,8 @@ mail1(struct header *hp, int printheaders)
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
 	if (fsize(mtf) == 0) {
+		if (value("skipempty") != NULL)
+			goto out;
 		if (hp->h_subject == NULL)
 			puts("No message, no subject; hope that's ok");
 		else

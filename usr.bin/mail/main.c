@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2008/07/16 15:11:16 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.20 2007/08/06 19:16:06 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.21 2008/07/16 15:11:16 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 	bcc = NULL;
 	smopts = NULL;
 	subject = NULL;
-	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
+	while ((i = getopt(argc, argv, "EINT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
 			/*
@@ -181,6 +181,12 @@ main(int argc, char **argv)
 			 * Get Blind Carbon Copy Recipient list
 			 */
 			bcc = cat(bcc, nalloc(optarg, GBCC));
+			break;
+		case 'E':
+			/*
+			 * Don't send messages with an empty body.
+			 */
+			assign("skipempty", "");
 			break;
 		default:
 			usage();
@@ -290,11 +296,11 @@ __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-Iinv] [-b list] [-c list] "
+	fprintf(stderr, "usage: %s [-EIinv] [-b list] [-c list] "
 	    "[-s subject] to-addr ...\n", __progname);
 	fprintf(stderr, "       %*s [-sendmail-options ...]\n",
 	    (int)strlen(__progname), "");
-	fprintf(stderr, "       %s [-IiNnv] -f [name]\n", __progname);
-	fprintf(stderr, "       %s [-IiNnv] [-u user]\n", __progname);
+	fprintf(stderr, "       %s [-EIiNnv] -f [name]\n", __progname);
+	fprintf(stderr, "       %s [-EIiNnv] [-u user]\n", __progname);
 	exit(1);
 }
