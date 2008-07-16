@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.123 2008/06/14 22:15:30 jsing Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.124 2008/07/16 09:00:44 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -105,6 +105,11 @@ extern int ip6_defhlim;
 
 #include "faith.h"
 
+#include "pf.h"
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
+
 /*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
@@ -163,7 +168,7 @@ udp_input(struct mbuf *m, ...)
 {
 	struct ip *ip;
 	struct udphdr *uh;
-	struct inpcb *inp;
+	struct inpcb *inp = NULL;
 	struct mbuf *opts = NULL;
 	struct ip save_ip;
 	int iphlen, len;
@@ -529,14 +534,27 @@ udp_input(struct mbuf *m, ...)
 	/*
 	 * Locate pcb for datagram.
 	 */
+#if NPF > 0
+	if (m->m_pkthdr.pf.statekey)
+		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
+#endif
+	if (inp == NULL) {
 #ifdef INET6
-	if (ip6)
-		inp = in6_pcbhashlookup(&udbtable, &ip6->ip6_src, uh->uh_sport,
-		    &ip6->ip6_dst, uh->uh_dport);
-	else
+		if (ip6)
+			inp = in6_pcbhashlookup(&udbtable, &ip6->ip6_src,
+			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport);
+		else
 #endif /* INET6 */
-	inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
-	    ip->ip_dst, uh->uh_dport);
+		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
+		    ip->ip_dst, uh->uh_dport);
+#if NPF > 0
+		if (m->m_pkthdr.pf.statekey && inp) {
+			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
+			    inp;
+			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
+		}
+#endif
+	}
 	if (inp == 0) {
 		int	inpl_reverse = 0;
 		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
@@ -970,6 +988,7 @@ udp_output(struct mbuf *m, ...)
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
 
+	m->m_pkthdr.pf.statekey = inp->inp_pf_sk;
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options &
