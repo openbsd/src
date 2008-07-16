@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.5 2007/01/31 14:35:51 mickey Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.6 2008/07/16 20:03:22 miod Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -51,7 +51,10 @@ struct pckbc_internal {
 	bus_addr_t t_addr;
 	u_char t_cmdbyte; /* shadow */
 
+	int t_flags;
+#define	PCKBC_CANT_TRANSLATE	0x0001	/* can't translate to XT scancodes */
 	int t_haveaux; /* controller has an aux port */
+
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];
 
 	struct pckbc_softc *t_sc; /* back pointer */
@@ -103,7 +106,7 @@ void pckbc_slot_enable(pckbc_tag_t, pckbc_slot_t, int);
 
 void pckbc_attach(struct pckbc_softc *);
 int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t,
-			pckbc_slot_t);
+			pckbc_slot_t, int);
 int pckbc_is_console(bus_space_tag_t, bus_addr_t);
 int pckbcintr(void *);
 

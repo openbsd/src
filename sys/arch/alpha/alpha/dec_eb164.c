@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb164.c,v 1.14 2006/11/28 16:56:50 dlg Exp $ */
+/* $OpenBSD: dec_eb164.c,v 1.15 2008/07/16 20:03:20 miod Exp $ */
 /* $NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -126,7 +126,7 @@ dec_eb164_cons_init()
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		/*
 		 * On at least LX164, SRM reports an isa video board

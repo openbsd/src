@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.14 2008/01/23 16:37:56 jsing Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.15 2008/07/16 20:03:22 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -123,7 +123,8 @@ wscninit(struct consdev *cp)
 	if (0) goto dokbd;	/* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-	if (!pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT))
+	if (!pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT,
+	    0))
 		return;
 #endif
 #if (NUKBD > 0)

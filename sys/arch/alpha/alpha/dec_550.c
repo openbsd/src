@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.10 2006/11/28 16:56:50 dlg Exp $ */
+/* $OpenBSD: dec_550.c,v 1.11 2008/07/16 20:03:20 miod Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -132,7 +132,7 @@ dec_550_cons_init()
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.15 2007/11/26 22:45:27 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.16 2008/07/16 20:03:22 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -475,7 +475,8 @@ pckbc_xt_translation(self, slot, on)
 	struct pckbc_internal *t = self;
 	int ison;
 
-	if (slot != PCKBC_KBD_SLOT) {
+	if (ISSET(t->t_flags, PCKBC_CANT_TRANSLATE) ||
+	    slot != PCKBC_KBD_SLOT) {
 		/* translation only for kbd slot */
 		if (on)
 			return (0);
@@ -998,11 +999,12 @@ pckbcintr_internal(t, sc)
 }
 
 int
-pckbc_cnattach(iot, addr, cmd_offset, slot)
+pckbc_cnattach(iot, addr, cmd_offset, slot, flags)
 	bus_space_tag_t iot;
 	bus_addr_t addr;
 	bus_size_t cmd_offset;
 	pckbc_slot_t slot;
+	int flags;
 {
 	bus_space_handle_t ioh_d, ioh_c;
 	int res = 0;
@@ -1018,6 +1020,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
+	pckbc_consdata.t_flags = flags;
 	timeout_set(&pckbc_consdata.t_cleanup, pckbc_cleanup, &pckbc_consdata);
 	timeout_set(&pckbc_consdata.t_poll, pckbc_poll, &pckbc_consdata);
 

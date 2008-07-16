@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_1000a.c,v 1.5 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: dec_1000a.c,v 1.6 2008/07/16 20:03:20 miod Exp $ */
 /* $NetBSD: dec_1000a.c,v 1.14 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -201,7 +201,7 @@ dec_1000a_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT, 0);
 
 		/*
 		 * AlphaServer 1000s have a firmware bug whereby the
