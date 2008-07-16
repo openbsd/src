@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.11 2008/06/25 17:49:31 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.12 2008/07/16 15:25:51 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -314,7 +314,10 @@ sqrt(double x)
             for(i=1;i<=k;i++) {
                 t=s+1; x *= 4; r /= 2;
                 if(t<=x) {
-                    s=t+t+2, x -= t; q += r;}
+                    s = t+t+2;
+                    x -= t;
+                    q += r;
+                }
                 else
                     s *= 2;
                 }
@@ -383,7 +386,12 @@ remainder(double x, double y)
 
 /* subnormal number */
 	nx=0;
-	if(yexp==0) {t=1.0,pt[n0]+=m57; y*=t; nx=m57;}
+	if (yexp == 0) {
+		t = 1.0;
+		pt[n0] += m57;
+		y *= t;
+		nx = m57;
+	}
 
 /* if y is tiny (biased exponent <= 57), scale up y to y*2**57 */
 	if( yexp <= m57 ) {py[n0]+=m57; nx+=m57; yexp+=m57;}

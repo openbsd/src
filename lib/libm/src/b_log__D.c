@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_log__D.c,v 1.2 2008/06/12 22:15:36 martynas Exp $	*/
+/*	$OpenBSD: b_log__D.c,v 1.3 2008/07/16 15:25:51 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -368,7 +368,8 @@ __log__D(double x)
 	m = logb(x);
 	g = ldexp(x, -m);
 	if (m == -1022) {
-		j = logb(g), m += j;
+		j = logb(g);
+		m += j;
 		g = ldexp(g, -j);
 	}
 	j = N*(g-1) + .5;
@@ -379,8 +380,10 @@ __log__D(double x)
 	u = 2*f*g;
 	v = u*u;
 	q = u*v*(A1 + v*(A2 + v*(A3 + v*A4)));
-	if (m | j)
-		u1 = u + 513, u1 -= 513;
+	if (m | j) {
+		u1 = u + 513;
+		u1 -= 513;
+	}
 	else {
 		u1 = u;
 		TRUNC(u1);

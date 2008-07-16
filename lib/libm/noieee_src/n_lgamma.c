@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_lgamma.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_lgamma.c,v 1.7 2008/07/16 15:25:51 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -156,8 +156,10 @@ lgamma(double x)
 	} else if (x > 1e-16)
 		return (small_lgam(x));
 	else if (x > -1e-16) {
-		if (x < 0)
-			signgam = -1, x = -x;
+		if (x < 0) {
+			signgam = -1;
+			x = -x;
+		}
 		return (-log(x));
 	} else
 		return (neg_lgam(x));
@@ -301,8 +303,10 @@ neg_lgam(double x)
 			else
 				return(infnan(ERANGE));
 		y = tgamma(x);
-		if (y < 0)
-			y = -y, signgam = -1;
+		if (y < 0) {
+			y = -y;
+			signgam = -1;
+		}
 		return (log(y));
 	}
 	z = floor(x + .5);

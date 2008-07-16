@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_log.c,v 1.7 2008/07/16 15:25:51 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -391,7 +391,8 @@ log(double x)
 	m = logb(x);
 	g = ldexp(x, -m);
 	if (_IEEE && m == -1022) {
-		j = logb(g), m += j;
+		j = logb(g);
+		m += j;
 		g = ldexp(g, -j);
 	}
 	j = N*(g-1) + .5;
@@ -408,8 +409,10 @@ log(double x)
      * 	       u1 has at most 35 bits, and F*u1 is exact, as F has < 8 bits.
      *         It also adds exactly to |m*log2_hi + log_F_head[j] | < 750
     */
-	if (m | j)
-		u1 = u + 513, u1 -= 513;
+	if (m | j) {
+		u1 = u + 513;
+		u1 -= 513;
+	}
 
     /* case 2:	|1-x| < 1/256. The m- and j- dependent terms are zero;
      * 		u1 = u to 24 bits.
@@ -449,7 +452,8 @@ __log__D(double x)
 	m = logb(x);
 	g = ldexp(x, -m);
 	if (_IEEE && m == -1022) {
-		j = logb(g), m += j;
+		j = logb(g);
+		m += j;
 		g = ldexp(g, -j);
 	}
 	j = N*(g-1) + .5;
@@ -460,8 +464,10 @@ __log__D(double x)
 	u = 2*f*g;
 	v = u*u;
 	q = u*v*(A1 + v*(A2 + v*(A3 + v*A4)));
-	if (m | j)
-		u1 = u + 513, u1 -= 513;
+	if (m | j) {
+		u1 = u + 513;
+		u1 -= 513;
+	}
 	else {
 		u1 = u;
 		TRUNC(u1);
