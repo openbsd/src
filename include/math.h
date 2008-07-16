@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.15 2008/06/11 21:16:43 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.16 2008/07/16 15:01:19 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -304,6 +304,10 @@ extern float lgammaf_r(float, int *);
 
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 500 */
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
+
+#if __BSD_VISIBLE && defined(__vax__)
+extern double infnan(int);
+#endif /* __BSD_VISIBLE && defined(__vax__) */
 __END_DECLS
 
 #endif /* _MATH_H_ */
