@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.9 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: head.c,v 1.10 2008/07/16 14:53:41 martynas Exp $	*/
 /*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: head.c,v 1.9 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: head.c,v 1.10 2008/07/16 14:53:41 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ parse(char *line, struct headline *hl, char *pbuf)
 	cp = nextword(cp, word);
 	if (*word)
 		hl->l_from = copyin(word, &sp);
-	if (cp != NULL && cp[0] == 't' && cp[1] == 't' && cp[2] == 'y') {
+	if (cp != NULL && strncmp(cp, "tty", 3) == 0) {
 		cp = nextword(cp, word);
 		hl->l_tty = copyin(word, &sp);
 	}

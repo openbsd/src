@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.28 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: collect.c,v 1.29 2008/07/16 14:53:41 martynas Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: collect.c,v 1.28 2007/09/10 14:29:53 tobias Exp $";
+static const char rcsid[] = "$OpenBSD: collect.c,v 1.29 2008/07/16 14:53:41 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -533,7 +533,7 @@ forward(char *ms, FILE *fp, char *fn, int f)
 		}
 		msgvec[1] = NULL;
 	}
-	if (f == 'f' || f == 'F')
+	if (tolower(f) == 'f')
 		tabst = NULL;
 	else if ((tabst = value("indentprefix")) == NULL)
 		tabst = "\t";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.20 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.21 2008/07/16 14:53:41 martynas Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.20 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.21 2008/07/16 14:53:41 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,9 +265,7 @@ reedit(char *subj)
 
 	if (subj == NULL)
 		return(NULL);
-	if ((subj[0] == 'r' || subj[0] == 'R') &&
-	    (subj[1] == 'e' || subj[1] == 'E') &&
-	    subj[2] == ':')
+	if (strncasecmp(subj, "re:", 3) == 0)
 		return(subj);
 	len = strlen(subj) + 5;
 	newsubj = salloc(len);

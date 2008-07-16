@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.23 2008/07/15 19:23:26 martynas Exp $	*/
+/*	$OpenBSD: aux.c,v 1.24 2008/07/16 14:53:41 martynas Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: aux.c,v 1.23 2008/07/15 19:23:26 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: aux.c,v 1.24 2008/07/16 14:53:41 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,9 +241,7 @@ istrlcpy(char *dst, const char *src, size_t dsize)
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {
 		do {
-			if (isupper(*s))
-				*d++ = tolower(*s++);
-			else if ((*d++ = *s++) == 0)
+			if ((*d++ = tolower(*s++)) == 0)
 				break;
 		} while (--n != 0);
 	}
@@ -464,10 +462,10 @@ skin(char *name)
 			break;
 
 		case ' ':
-			if (cp[0] == 'a' && cp[1] == 't' && cp[2] == ' ')
+			if (strncmp(cp, "at ", 3) == 0)
 				cp += 3, *cp2++ = '@';
 			else
-			if (cp[0] == '@' && cp[1] == ' ')
+			if (strncmp(cp, "@ ", 2) == 0)
 				cp += 2, *cp2++ = '@';
 			else
 				lastsp = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.18 2007/03/20 21:01:08 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.19 2008/07/16 14:53:41 martynas Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.18 2007/03/20 21:01:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: send.c,v 1.19 2008/07/16 14:53:41 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,8 +167,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				*cp2 = 0;	/* temporarily null terminate */
 				if (doign && isign(line, doign))
 					ignoring = 1;
-				else if ((line[0] == 's' || line[0] == 'S') &&
-					 strcasecmp(line, "status") == 0) {
+				else if (strcasecmp(line, "status") == 0) {
 					/*
 					 * If the field is "status," go compute
 					 * and print the real Status: field
