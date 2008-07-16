@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.51 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: mail.1,v 1.52 2008/07/16 14:56:11 martynas Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: July 16 2008 $
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@
 .Nm mail
 .Op Fl IiNnv
 .Fl f
-.Op Ar name
+.Op Ar file
 .Nm mail
 .Op Fl IiNnv
 .Op Fl u Ar user
@@ -72,13 +72,14 @@ Send carbon copies to
 of users.
 .Ar list
 should be a comma separated list of names.
-.It Fl f Op Ar name
+.It Fl f Op Ar file
 Read in the contents of your mailbox
-(or the specified file
-.Ar name )
+(or the specified
+.Ar file )
 for processing; when you quit,
 .Nm mail
-writes undeleted messages back to this file.
+writes undeleted messages back to this
+.Ar file .
 .It Fl I
 Forces
 .Nm mail
@@ -1007,6 +1008,8 @@ command and the
 escape.
 A default shell is used if this option is
 not defined.
+.It Ev TMPDIR
+Directory in which temporary files are stored.
 .It Ev VISUAL
 Pathname of the text editor to use in the
 .Ic visual
