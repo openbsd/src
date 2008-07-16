@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.92 2008/07/09 17:16:51 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.93 2008/07/16 14:49:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1975,8 +1975,15 @@ relay_accept(int fd, short sig, void *arg)
 		cnl->id = con->se_id;
 		cnl->proc = proc_id;
 		cnl->proto = IPPROTO_TCP;
+
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
-		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
+		slen = sizeof(cnl->dst);
+		if (getsockname(s,
+		    (struct sockaddr *)&cnl->dst, &slen) == -1) {
+			relay_close(con, "failed to get local address");
+			return;
+		}
+
 		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
