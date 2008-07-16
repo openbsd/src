@@ -1,4 +1,4 @@
-/* $Id: cache.c,v 1.1 2008/06/12 22:26:01 canacar Exp $ */
+/* $Id: cache.c,v 1.2 2008/07/16 10:23:39 canacar Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -38,8 +38,8 @@
 #include "cache.h"
 
 /* prototypes */
-void update_state(struct sc_ent *, pf_state_t *, double);
-struct sc_ent *cache_state(pf_state_t *);
+void update_state(struct sc_ent *, struct pfsync_state *, double);
+struct sc_ent *cache_state(struct pfsync_state *);
 static __inline int sc_cmp(struct sc_ent *s1, struct sc_ent *s2);
 
 /* initialize the tree and queue */
@@ -91,22 +91,18 @@ cache_init(int max)
 }
 
 void
-update_state(struct sc_ent *prev, pf_state_t *new, double rate)
+update_state(struct sc_ent *prev, struct pfsync_state *new, double rate)
 {
 	assert (prev != NULL && new != NULL);
 	prev->t = time(NULL);
 	prev->rate = rate;
-#ifdef HAVE_INOUT_COUNT
 	prev->bytes = COUNTER(new->bytes[0]) + COUNTER(new->bytes[1]);
-#else
-	prev->bytes = COUNTER(new->bytes);
-#endif
 	if (prev->peak < rate)
 		prev->peak = rate;
 }
 
 void
-add_state(pf_state_t *st)
+add_state(struct pfsync_state *st)
 {
 	struct sc_ent *ent;
 	assert(st != NULL);
@@ -122,22 +118,9 @@ add_state(pf_state_t *st)
 
 	cache_size--;
 
-#ifdef HAVE_PFSYNC_STATE
 	ent->id[0] = st->id[0];
 	ent->id[1] = st->id[1];
-#else
-	ent->addr[0] = st->lan.addr;
-	ent->port[0] = st->lan.port;
-	ent->addr[1] = st->ext.addr;
-	ent->port[1] = st->ext.port;
-	ent->af = st->af;
-	ent->proto = st->proto;
-#endif
-#ifdef HAVE_INOUT_COUNT
 	ent->bytes = COUNTER(st->bytes[0]) + COUNTER(st->bytes[1]);
-#else
-	ent->bytes = st->bytes;
-#endif
 	ent->peak = 0;
 	ent->rate = 0;
 	ent->t = time(NULL);
@@ -148,7 +131,7 @@ add_state(pf_state_t *st)
 
 /* must be called only once for each state before cache_endupdate */
 struct sc_ent *
-cache_state(pf_state_t *st)
+cache_state(struct pfsync_state *st)
 {
 	struct sc_ent ent, *old;
 	double sd, td, r;
@@ -156,17 +139,8 @@ cache_state(pf_state_t *st)
 	if (cache_max == 0)
 		return (NULL);
 
-#ifdef HAVE_PFSYNC_STATE
 	ent.id[0] = st->id[0];
 	ent.id[1] = st->id[1];
-#else
-	ent.addr[0] = st->lan.addr;
-	ent.port[0] = st->lan.port;
-	ent.addr[1] = st->ext.addr;
-	ent.port[1] = st->ext.port;
-	ent.af = st->af;
-	ent.proto = st->proto;
-#endif
 	old = RB_FIND(sc_tree, &sctree, &ent);
 
 	if (old == NULL) {
@@ -174,18 +148,10 @@ cache_state(pf_state_t *st)
 		return (NULL);
 	}
 
-#ifdef HAVE_INOUT_COUNT
 	if (COUNTER(st->bytes[0]) + COUNTER(st->bytes[1]) < old->bytes)
 		return (NULL);
 
 	sd = COUNTER(st->bytes[0]) + COUNTER(st->bytes[1]) - old->bytes;
-#else
-	if (st->bytes < old->bytes)
-		return (NULL);
-
-	sd = st->bytes - old->bytes;
-#endif
-
 	td = time(NULL) - old->t;
 
 	if (td > 0) {
@@ -223,7 +189,6 @@ cache_endupdate(void)
 static __inline int
 sc_cmp(struct sc_ent *a, struct sc_ent *b)
 {
-#ifdef HAVE_PFSYNC_STATE
 	if (a->id[0] > b->id[0])
 		return (1);
 	if (a->id[0] < b->id[0])
@@ -232,66 +197,5 @@ sc_cmp(struct sc_ent *a, struct sc_ent *b)
 		return (1);
 	if (a->id[1] < b->id[1])
 		return (-1);
-#else	
-       	int diff;
-
-	if ((diff = a->proto - b->proto) != 0)
-		return (diff);
-	if ((diff = a->af - b->af) != 0)
-		return (diff);
-	switch (a->af) {
-	case AF_INET:
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return (-1);
-		break;
-	case AF_INET6:
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return (-1);
-		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
-			return (1);
-		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
-			return (-1);
-		if (a->addr[0].addr32[2] > b->addr[0].addr32[2])
-			return (1);
-		if (a->addr[0].addr32[2] < b->addr[0].addr32[2])
-			return (-1);
-		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
-			return (1);
-		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
-			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return (-1);
-		if (a->addr[1].addr32[1] > b->addr[1].addr32[1])
-			return (1);
-		if (a->addr[1].addr32[1] < b->addr[1].addr32[1])
-			return (-1);
-		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
-			return (1);
-		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
-			return (-1);
-		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
-			return (1);
-		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
-			return (-1);
-		break;
-		default:
-			return 1;
-	}
-
-	if ((diff = a->port[0] - b->port[0]) != 0)
-		return (diff);
-	if ((diff = a->port[1] - b->port[1]) != 0)
-		return (diff);
-#endif
 	return (0);
 }
