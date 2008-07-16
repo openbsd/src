@@ -205,11 +205,12 @@ struct isc_socketmgr {
 	isc_mutex_t		lock;
 	/* Locked by manager lock. */
 	ISC_LIST(isc_socket_t)	socklist;
-	fd_set			read_fds;
-	fd_set			write_fds;
-	isc_socket_t	       *fds[FD_SETSIZE];
-	int			fdstate[FD_SETSIZE];
+	fd_set		       *read_fds, *read_fds_copy;
+	fd_set		       *write_fds, *write_fds_copy;
+	isc_socket_t	      **fds;
+	int		       *fdstate;
 	int			maxfd;
+	int			fdsize;
 #ifdef ISC_PLATFORM_USETHREADS
 	isc_thread_t		watcher;
 	isc_condition_t		shutdown_ok;
@@ -254,6 +255,7 @@ static void build_msghdr_send(isc_socket_t *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
 static void build_msghdr_recv(isc_socket_t *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
+static void expand_fdsets(isc_socketmgr_t *, int, isc_mem_t *);
 
 #define SELECT_POKE_SHUTDOWN		(-1)
 #define SELECT_POKE_NOTHING		(-2)
@@ -332,12 +334,12 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 	 * or writes.
 	 */
 
-	INSIST(fd >= 0 && fd < (int)FD_SETSIZE);
+	INSIST(fd >= 0 && fd < manager->fdsize);
 
 	if (manager->fdstate[fd] == CLOSE_PENDING) {
 		manager->fdstate[fd] = CLOSED;
-		FD_CLR(fd, &manager->read_fds);
-		FD_CLR(fd, &manager->write_fds);
+		FD_CLR(fd, manager->read_fds);
+		FD_CLR(fd, manager->write_fds);
 		(void)close(fd);
 		return;
 	}
@@ -350,9 +352,9 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 	 * Set requested bit.
 	 */
 	if (msg == SELECT_POKE_READ)
-		FD_SET(sock->fd, &manager->read_fds);
+		FD_SET(sock->fd, manager->read_fds);
 	if (msg == SELECT_POKE_WRITE)
-		FD_SET(sock->fd, &manager->write_fds);
+		FD_SET(sock->fd, manager->write_fds);
 }
 
 #ifdef ISC_PLATFORM_USETHREADS
@@ -1224,7 +1226,7 @@ destroy(isc_socket_t **sockp) {
 	INSIST(ISC_LIST_EMPTY(sock->recv_list));
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(sock->connect_ev == NULL);
-	REQUIRE(sock->fd >= 0 && sock->fd < (int)FD_SETSIZE);
+	REQUIRE(sock->fd >= 0 && sock->fd < manager->fdsize);
 
 	LOCK(&manager->lock);
 
@@ -1395,6 +1397,78 @@ free_socket(isc_socket_t **socketp) {
 	*socketp = NULL;
 }
 
+static void
+expand_fdsets(isc_socketmgr_t *manager, int maxfd, isc_mem_t *mctx) {
+	void *tmp;
+	int newsize = manager->fdsize;
+
+	if (mctx == NULL)
+		mctx = manager->mctx;
+
+	do {
+		newsize += FD_SETSIZE;
+	} while (newsize <= maxfd);
+
+	tmp = isc_mem_get(mctx, sizeof(manager->fds[0]) * newsize);
+	memset(tmp, 0, sizeof(manager->fds[0]) * newsize);
+	if (manager->fdsize) {
+		memcpy(tmp, manager->fds,
+		    sizeof(manager->fds[0]) * manager->fdsize);
+		isc_mem_put(mctx, manager->fds,
+		    sizeof(manager->fds[0]) * manager->fdsize);
+	}
+	manager->fds = tmp;
+
+	tmp = isc_mem_get(mctx, sizeof(manager->fdstate[0]) * newsize);
+	memset(tmp, 0, sizeof(manager->fdstate[0]) * newsize);
+	if (manager->fdsize) {
+		memcpy(tmp, manager->fdstate,
+		    sizeof(manager->fdstate[0]) * manager->fdsize);
+		isc_mem_put(mctx, manager->fdstate,
+		    sizeof(manager->fdstate[0]) * manager->fdsize);
+	}
+	manager->fdstate = tmp;
+
+	tmp = isc_mem_get(mctx, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	memset(tmp, 0, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	if (manager->fdsize) {
+		memcpy(tmp, manager->read_fds,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+		isc_mem_put(mctx, manager->read_fds,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+	}
+	manager->read_fds = tmp;
+
+	tmp = isc_mem_get(mctx, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	memset(tmp, 0, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	if (manager->fdsize) {
+		memcpy(tmp, manager->write_fds,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+		isc_mem_put(mctx, manager->write_fds,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+	}
+	manager->write_fds = tmp;
+
+	/* Don't bother copying these, they are copied before use */
+	tmp = isc_mem_get(mctx, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	memset(tmp, 0, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	if (manager->fdsize) {
+		isc_mem_put(mctx, manager->read_fds_copy,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+	}
+	manager->read_fds_copy = tmp;
+
+	tmp = isc_mem_get(mctx, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	memset(tmp, 0, howmany(newsize, NFDBITS) * sizeof(fd_mask));
+	if (manager->fdsize) {
+		isc_mem_put(mctx, manager->write_fds_copy,
+		    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+	}
+	manager->write_fds_copy = tmp;
+
+	manager->fdsize = newsize;
+}
+
 #ifdef SO_BSDCOMPAT
 /*
  * This really should not be necessary to do.  Having to workout
@@ -1494,16 +1568,8 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 	}
 #endif
 
-	if (sock->fd >= (int)FD_SETSIZE) {
-		(void)close(sock->fd);
-		isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-			       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
-			       isc_msgcat, ISC_MSGSET_SOCKET,
-			       ISC_MSG_TOOMANYFDS,
-			       "%s: too many open file descriptors", "socket");
-		free_socket(&sock);
-		return (ISC_R_NORESOURCES);
-	}
+	if (sock->fd >= sock->manager->fdsize)
+		expand_fdsets(sock->manager, sock->fd, NULL);
 	
 	if (sock->fd < 0) {
 		free_socket(&sock);
@@ -2026,15 +2092,8 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 					 sock->pf);
 			(void)close(fd);
 			goto soft_error;
-		} else if (fd >= (int)FD_SETSIZE) {
-			isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-				       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
-				       isc_msgcat, ISC_MSGSET_SOCKET,
-				       ISC_MSG_TOOMANYFDS,
-				       "%s: too many open file descriptors",
-				       "accept");
-			(void)close(fd);
-			goto soft_error;
+		} else if (fd >= sock->manager->fdsize) {
+			expand_fdsets(sock->manager, fd, NULL);
 		}
 	}
 
@@ -2078,10 +2137,13 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		 */
 		dev->address = dev->newsocket->address;
 
-		manager->fds[fd] = dev->newsocket;
-		manager->fdstate[fd] = MANAGED;
 		if (manager->maxfd < fd)
 			manager->maxfd = fd;
+		if (manager->maxfd >= manager->fdsize)
+			expand_fdsets(manager, manager->maxfd, NULL);
+
+		manager->fds[fd] = dev->newsocket;
+		manager->fdstate[fd] = MANAGED;
 
 		socket_log(sock, &dev->newsocket->address, CREATION,
 			   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_ACCEPTEDCXN,
@@ -2238,7 +2300,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 	isc_socket_t *sock;
 	isc_boolean_t unlock_sock;
 
-	REQUIRE(maxfd <= (int)FD_SETSIZE);
+	REQUIRE(maxfd <= manager->fdsize);
 
 	/*
 	 * Process read/writes on other fds here.  Avoid locking
@@ -2252,8 +2314,8 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 
 		if (manager->fdstate[i] == CLOSE_PENDING) {
 			manager->fdstate[i] = CLOSED;
-			FD_CLR(i, &manager->read_fds);
-			FD_CLR(i, &manager->write_fds);
+			FD_CLR(i, manager->read_fds);
+			FD_CLR(i, manager->write_fds);
 
 			(void)close(i);
 
@@ -2264,7 +2326,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 		unlock_sock = ISC_FALSE;
 		if (FD_ISSET(i, readfds)) {
 			if (sock == NULL) {
-				FD_CLR(i, &manager->read_fds);
+				FD_CLR(i, manager->read_fds);
 				goto check_write;
 			}
 			unlock_sock = ISC_TRUE;
@@ -2275,12 +2337,12 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 				else
 					dispatch_recv(sock);
 			}
-			FD_CLR(i, &manager->read_fds);
+			FD_CLR(i, manager->read_fds);
 		}
 	check_write:
 		if (FD_ISSET(i, writefds)) {
 			if (sock == NULL) {
-				FD_CLR(i, &manager->write_fds);
+				FD_CLR(i, manager->write_fds);
 				continue;
 			}
 			if (!unlock_sock) {
@@ -2293,7 +2355,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 				else
 					dispatch_send(sock);
 			}
-			FD_CLR(i, &manager->write_fds);
+			FD_CLR(i, manager->write_fds);
 		}
 		if (unlock_sock)
 			UNLOCK(&sock->lock);
@@ -2435,7 +2497,11 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 
 	manager->magic = SOCKET_MANAGER_MAGIC;
 	manager->mctx = NULL;
-	memset(manager->fds, 0, sizeof(manager->fds));
+	manager->read_fds = NULL;
+	manager->write_fds = NULL;
+	manager->fds = NULL;
+	manager->fdstate = NULL;
+	manager->fdsize = NULL;
 	ISC_LIST_INIT(manager->socklist);
 	result = isc_mutex_init(&manager->lock);
 	if (result != ISC_R_SUCCESS) {
@@ -2481,15 +2547,13 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	/*
 	 * Set up initial state for the select loop
 	 */
-	FD_ZERO(&manager->read_fds);
-	FD_ZERO(&manager->write_fds);
 #ifdef ISC_PLATFORM_USETHREADS
-	FD_SET(manager->pipe_fds[0], &manager->read_fds);
+	FD_SET(manager->pipe_fds[0], manager->read_fds);
 	manager->maxfd = manager->pipe_fds[0];
 #else /* ISC_PLATFORM_USETHREADS */
 	manager->maxfd = 0;
 #endif /* ISC_PLATFORM_USETHREADS */
-	memset(manager->fdstate, 0, sizeof(manager->fdstate));
+	expand_fdsets(manager, manager->maxfd, mctx);
 
 #ifdef ISC_PLATFORM_USETHREADS
 	/*
@@ -2595,9 +2659,23 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	(void)isc_condition_destroy(&manager->shutdown_ok);
 #endif /* ISC_PLATFORM_USETHREADS */
 
-	for (i = 0; i < (int)FD_SETSIZE; i++)
-		if (manager->fdstate[i] == CLOSE_PENDING)
-			(void)close(i);
+	if (manager->fdsize) {
+		for (i = 0; i < manager->fdsize; i++)
+			if (manager->fdstate[i] == CLOSE_PENDING)
+				(void)close(i);
+                isc_mem_put(manager->mctx, manager->fds,
+                    sizeof(manager->fds[0]) * manager->fdsize);
+                isc_mem_put(manager->mctx, manager->fdstate,
+                    sizeof(manager->fdstate[0]) * manager->fdsize);
+                isc_mem_put(manager->mctx, manager->read_fds,
+                    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+                isc_mem_put(manager->mctx, manager->write_fds,
+                    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+                isc_mem_put(manager->mctx, manager->read_fds_copy,
+                    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+                isc_mem_put(manager->mctx, manager->write_fds_copy,
+                    howmany(manager->fdsize, NFDBITS) * sizeof(fd_mask));
+	}
 
 	DESTROYLOCK(&manager->lock);
 	manager->magic = 0;
@@ -3824,12 +3902,22 @@ isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
 
 #ifndef ISC_PLATFORM_USETHREADS
 void
-isc__socketmgr_getfdsets(fd_set *readset, fd_set *writeset, int *maxfd) {
+isc__socketmgr_getfdsets(fd_set **readset, fd_set **writeset, int *maxfd) {
 	if (socketmgr == NULL)
 		*maxfd = 0;
 	else {
-		*readset = socketmgr->read_fds;
-		*writeset = socketmgr->write_fds;
+		
+		/* Prepare duplicates of fd_sets, as select() will modify */
+		if (socketmgr->fdsize) {
+			memcpy(socketmgr->read_fds_copy, socketmgr->read_fds,
+			    howmany(socketmgr->fdsize, NFDBITS) *
+			    sizeof(fd_mask));
+			memcpy(socketmgr->write_fds_copy, socketmgr->write_fds,
+			    howmany(socketmgr->fdsize, NFDBITS) *
+			    sizeof(fd_mask));
+		}
+		*readset = socketmgr->read_fds_copy;
+		*writeset = socketmgr->write_fds_copy;
 		*maxfd = socketmgr->maxfd + 1;
 	}
 }

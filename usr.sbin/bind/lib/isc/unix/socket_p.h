@@ -27,7 +27,7 @@
 #endif
 
 void
-isc__socketmgr_getfdsets(fd_set *readset, fd_set *writeset, int *maxfd);
+isc__socketmgr_getfdsets(fd_set **readset, fd_set **writeset, int *maxfd);
 
 isc_result_t
 isc__socketmgr_dispatch(fd_set *readset, fd_set *writeset, int maxfd);
