@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.93 2008/07/16 14:49:44 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.94 2008/07/16 15:02:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2178,7 +2178,8 @@ relay_bindany(int fd, short event, void *arg)
 		return;
 	}
 
-	relay_connect((struct session *)con);
+	if (relay_connect((struct session *)con) == -1)
+		relay_close(con, "session failed");
 }
 
 int
