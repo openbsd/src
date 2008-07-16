@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.5 2008/04/07 22:30:49 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.6 2008/07/16 15:49:22 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -438,7 +438,7 @@ _dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	return (_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, 0xf0000000));
+	    segs, nsegs, rsegs, flags, 0, -1));
 }
 
 /*
