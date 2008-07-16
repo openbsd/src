@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.17 2007/10/17 20:02:33 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.18 2008/07/16 14:49:09 martynas Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.17 2007/10/17 20:02:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.18 2008/07/16 14:49:09 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ edit1(int *msgvec, int type)
 					break;
 			}
 			if (ferror(otf))
-				warn("/tmp");
+				warn("%s", tmpdir);
 			(void)Fclose(fp);
 		}
 		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
