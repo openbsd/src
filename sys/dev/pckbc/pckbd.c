@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.14 2008/06/26 05:42:17 ray Exp $ */
+/* $OpenBSD: pckbd.c,v 1.15 2008/07/16 20:00:45 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -86,18 +86,18 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#if defined(__i386__) || defined(__alpha__)
-#include <sys/kernel.h> /* XXX for hz */
-#endif
-
 struct pckbd_internal {
 	int t_isconsole;
 	pckbc_tag_t t_kbctag;
 	pckbc_slot_t t_kbcslot;
 
+	int t_translating;
+	int t_table;
+
 	int t_lastchar;
 	int t_extended;
 	int t_extended1;
+	int t_releasing;
 
 	struct pckbd_softc *t_sc; /* back pointer */
 };
@@ -165,9 +165,10 @@ void	*pckbd_bell_fn_arg;
 
 void	pckbd_bell(u_int, u_int, u_int, int);
 
-int	pckbd_set_xtscancode(pckbc_tag_t, pckbc_slot_t);
-int	pckbd_init(struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
-			int);
+int	pckbd_scancode_translate(struct pckbd_internal *, int);
+int	pckbd_set_xtscancode(pckbc_tag_t, pckbc_slot_t,
+	    struct pckbd_internal *);
+int	pckbd_init(struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t, int);
 void	pckbd_input(void *, int);
 
 static int	pckbd_decode(struct pckbd_internal *, int,
@@ -178,19 +179,31 @@ static int	pckbd_led_decode(int);
 struct pckbd_internal pckbd_consdata;
 
 int
-pckbd_set_xtscancode(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
+    struct pckbd_internal *id)
 {
 	/* default to have the 8042 translate the keyboard with table 3. */
 	int table = 3;
 
-	if (!pckbc_xt_translation(kbctag, kbcslot, 1)) {
+	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
+		if (id != NULL)
+			id->t_translating = 1;
+	} else {
 #ifdef DEBUG
 		printf("pckbd: enabling of translation failed\n");
 #endif
-		/* just set the basic XT table and hope it works. */
-		table = 1;
+		/*
+		 * Since the keyboard controller can not translate scan
+		 * codes to the XT set (#1), we would like to request
+		 * this exact set. However it is likely that the
+		 * controller does not support it either.
+		 *
+		 * So try scan code set #2 as well, which this driver
+		 * knows how to translate.
+		 */
+		table = 2;
+		if (id != NULL)
+			id->t_translating = 0;
 	}
 
 	/* keep falling back until we hit a table that looks usable. */
@@ -238,7 +251,7 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 #ifdef DEBUG
 				printf("pckbd: settling on table 3\n");
 #endif
-				return (0);
+				break;
 			}
 #ifdef DEBUG
 			else
@@ -249,11 +262,17 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 #ifdef DEBUG
 			printf("pckbd: settling on table %d\n", table);
 #endif
-			return (0);
+			break;
 		}
 	}
 
-	return (1);
+	if (table == 0)
+		return (1);
+
+	if (id != NULL)
+		id->t_table = table;
+
+	return (0);
 }
 
 static int
@@ -319,7 +338,7 @@ pckbdprobe(parent, match, aux)
 	 */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
 
-	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot))
+	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, NULL))
 		return (0);
 
 	return (2);
@@ -405,7 +424,7 @@ pckbd_enable(v, on)
 		}
 
 		res = pckbd_set_xtscancode(sc->id->t_kbctag,
-					   sc->id->t_kbcslot);
+					   sc->id->t_kbcslot, sc->id);
 		if (res)
 			return (res);
 
@@ -430,6 +449,337 @@ pckbd_enable(v, on)
 	return (0);
 }
 
+const u_int8_t pckbd_xtbl[] = {
+/* 0x00 */
+	0,
+	0x43,		/* F9 */
+	0,
+	0x3f,		/* F5 */
+	0x3d,		/* F3 */
+	0x3b,		/* F1 */
+	0x3c,		/* F2 */
+	0x58,		/* F12 */
+	0x40,		/* F6 according to documentation */
+	0x44,		/* F10 */
+	0x42,		/* F8 */
+	0x40,		/* F6 according to experimentation */
+	0x3e,		/* F4 */
+	0x0f,		/* Tab */
+	0x29,		/* ` ~ */
+	0,
+/* 0x10 */
+	0,
+	0x38,		/* Left Alt */
+	0x2a,		/* Left Shift */
+	0,
+	0x1d,		/* Left Ctrl */
+	0x10,		/* q */
+	0x02,		/* 1 ! */
+	0,
+	0,
+	0,
+	0x2c,		/* z */
+	0x1f,		/* s */
+	0x1e,		/* a */
+	0x11,		/* w */
+	0x03,		/* 2 @ */
+	0,
+/* 0x20 */	
+	0,
+	0x2e,		/* c */
+	0x2d,		/* x */
+	0x20,		/* d */
+	0x12,		/* e */
+	0x05,		/* 4 $ */
+	0x04,		/* 3 # */
+	0,
+	0,
+	0x39,		/* Space */
+	0x2f,		/* v */
+	0x21,		/* f */
+	0x14,		/* t */
+	0x13,		/* r */
+	0x06,		/* 5 % */
+	0,
+/* 0x30 */
+	0,
+	0x31,		/* n */
+	0x30,		/* b */
+	0x23,		/* h */
+	0x22,		/* g */
+	0x15,		/* y */
+	0x07,		/* 6 ^ */
+	0,
+	0,
+	0,
+	0x32,		/* m */
+	0x24,		/* j */
+	0x16,		/* u */
+	0x08,		/* 7 & */
+	0x09,		/* 8 * */
+	0,
+/* 0x40 */
+	0,
+	0x33,		/* , < */
+	0x25,		/* k */
+	0x17,		/* i */
+	0x18,		/* o */
+	0x0b,		/* 0 ) */
+	0x0a,		/* 9 ( */
+	0,
+	0,
+	0x34,		/* . > */
+	0x35,		/* / ? */
+	0x26,		/* l */
+	0x27,		/* ; : */
+	0x19,		/* p */
+	0x0c,		/* - _ */
+	0,
+/* 0x50 */
+	0,
+	0,
+	0x28,		/* ' " */
+	0,
+	0x1a,		/* [ { */
+	0x0d,		/* = + */
+	0,
+	0,
+	0x3a,		/* Caps Lock */
+	0x36,		/* Right Shift */
+	0x1c,		/* Return */
+	0x1b,		/* ] } */
+	0,
+	0x2b,		/* \ | */
+	0,
+	0,
+/* 0x60 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0x0e,		/* Back Space */
+	0,
+	0,
+	0x4f,		/* KP 1 */
+	0,
+	0x4b,		/* KP 4 */
+	0x47,		/* KP 7 */
+	0,
+	0,
+	0,
+/* 0x70 */
+	0x52,		/* KP 0 */
+	0x53,		/* KP . */
+	0x50,		/* KP 2 */
+	0x4c,		/* KP 5 */
+	0x4d,		/* KP 6 */
+	0x48,		/* KP 8 */
+	0x01,		/* Escape */
+	0x45,		/* Num Lock */
+	0x57,		/* F11 */
+	0x4e,		/* KP + */
+	0x51,		/* KP 3 */
+	0x4a,		/* KP - */
+	0x37,		/* KP * */
+	0x49,		/* KP 9 */
+	0x46,		/* Scroll Lock */
+	0,
+/* 0x80 */
+	0,
+	0,
+	0,
+	0x41,		/* F7 (produced as an actual 8 bit code) */
+	0		/* Alt-Print Screen */
+};
+
+const u_int8_t pckbd_xtbl_ext[] = {
+/* 0x00 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x10 */
+	0,
+	0x38,		/* Right Alt */
+	0,		/* E0 12, to be ignored */
+	0,
+	0x1d,		/* Right Ctrl */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x20 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x30 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x40 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0x55,		/* KP / */
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x50 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0x1c,		/* KP Return */
+	0,
+	0,
+	0,
+	0,
+	0,
+/* 0x60 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0x4f,		/* End */
+	0,
+	0x4b,		/* Left */
+	0x47,		/* Home */
+	0,
+	0,
+	0,
+/* 0x70 */
+	0x52,		/* Insert */
+	0x53,		/* Delete */
+	0x50,		/* Down */
+	0,
+	0x4d,		/* Right */
+	0x48,		/* Up */
+	0,
+	0,
+	0,
+	0,
+	0x51,		/* Page Down */
+	0,
+	0x37,		/* Print Screen */
+	0x49,		/* Page Up */
+	0x46,		/* Ctrl-Break */
+	0
+};
+
+/*
+ * Translate scan codes from set 2 to set 1
+ */
+int
+pckbd_scancode_translate(struct pckbd_internal *id, int datain)
+{
+	if (id->t_translating != 0 || id->t_table == 1)
+		return datain;
+
+	if (datain == KBR_BREAK) {
+		id->t_releasing = 0x80;	/* next keycode is a release */
+		return 0;	/* consume scancode */
+	}
+
+	/*
+	 * Convert BREAK sequence (14 77 -> 1D 45)
+	 */
+	if (id->t_extended1 == 2 && datain == 0x14)
+		return 0x1d | id->t_releasing;
+	else if (id->t_extended1 == 1 && datain == 0x77)
+		return 0x77 | id->t_releasing;
+
+	if (id->t_extended != 0) {
+		if (datain >= sizeof pckbd_xtbl_ext)
+			datain = 0;
+		else
+			datain = pckbd_xtbl_ext[datain];
+	} else {
+		if (datain >= sizeof pckbd_xtbl)
+			datain = 0;
+		else
+			datain = pckbd_xtbl[datain];
+	}
+
+	if (datain == 0) {
+		/*
+		 * We don't know how to translate this scan code, but
+		 * we can't silently eat it either (because there might
+		 * have been an extended byte transmitted already).
+		 * Hopefully this value will be harmless to the upper
+		 * layers.
+		 */
+		return 0xff;
+	}
+
+	return datain;
+}
+
 static int
 pckbd_decode(id, datain, type, dataout)
 	struct pckbd_internal *id;
@@ -438,35 +788,44 @@ pckbd_decode(id, datain, type, dataout)
 	int *dataout;
 {
 	int key;
+	int releasing;
 
 	if (datain == KBR_EXTENDED0) {
-		id->t_extended = 1;
-		return(0);
+		id->t_extended = 0x80;
+		return 0;
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
-		return(0);
+		return 0;
 	}
 
- 	/* map extended keys to (unused) codes 128-254 */
-	key = (datain & 0x7f) | (id->t_extended ? 0x80 : 0);
-	id->t_extended = 0;
+	releasing = datain & 0x80;
+	datain &= 0x7f;
 
 	/*
-	 * process BREAK key (EXT1 1D 45  EXT1 9D C5):
+	 * process BREAK key sequence (EXT1 1D 45 / EXT1 9D C5):
 	 * map to (unused) code 7F
 	 */
-	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
+	if (id->t_extended1 == 2 && datain == 0x1d) {
 		id->t_extended1 = 1;
-		return(0);
-	} else if (id->t_extended1 == 1 &&
-		   (datain == 0x45 || datain == 0xc5)) {
+		return 0;
+	} else if (id->t_extended1 == 1 && datain == 0x45) {
 		id->t_extended1 = 0;
-		key = 0x7f;
-	} else if (id->t_extended1 > 0) {
+		datain = 0x7f;
+	} else
 		id->t_extended1 = 0;
+
+	if (id->t_translating != 0 || id->t_table == 1) {
+		id->t_releasing = releasing;
+	} else {
+		/* id->t_releasing computed in pckbd_scancode_translate() */
 	}
 
-	if (datain & 0x80) {
+	/* map extended keys to (unused) codes 128-254 */
+	key = datain | id->t_extended;
+	id->t_extended = 0;
+
+	if (id->t_releasing) {
+		id->t_releasing = 0;
 		id->t_lastchar = 0;
 		*type = WSCONS_EVENT_KEY_UP;
 	} else {
@@ -478,7 +837,7 @@ pckbd_decode(id, datain, type, dataout)
 	}
 
 	*dataout = key;
-	return(1);
+	return 1;
 }
 
 int
@@ -494,7 +853,7 @@ pckbd_init(t, kbctag, kbcslot, console)
 	t->t_kbctag = kbctag;
 	t->t_kbcslot = kbcslot;
 
-	return (pckbd_set_xtscancode(kbctag, kbcslot));
+	return (pckbd_set_xtscancode(kbctag, kbcslot, t));
 }
 
 static int
@@ -557,6 +916,10 @@ pckbd_input(vsc, data)
 {
 	struct pckbd_softc *sc = vsc;
 	int rc, type, key;
+
+	data = pckbd_scancode_translate(sc->id, data);
+	if (data == 0)
+		return;
 
 	rc = pckbd_decode(sc->id, data, &type, &key);
 
@@ -688,7 +1051,14 @@ pckbd_cngetc(v, type, data)
 
 	for (;;) {
 		val = pckbc_poll_data(t->t_kbctag, t->t_kbcslot);
-		if ((val != -1) && pckbd_decode(t, val, type, data))
+		if (val == -1)
+			continue;
+
+		val = pckbd_scancode_translate(t, val);
+		if (val == 0)
+			continue;
+
+		if (pckbd_decode(t, val, type, data))
 			return;
 	}
 }
