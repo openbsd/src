@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.118 2008/06/07 19:12:32 brad Exp $
+#	$OpenBSD: GENERIC,v 1.119 2008/07/16 16:32:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -244,7 +244,7 @@ scsibus* at oosiop?
 harmony* at gsc? irq 13		# Audio Type 2 (CS4215/AD1849)
 audio*	at harmony?
 gsckbc*	at gsc? irq 26
-gsckbd*	at gsckbc?		# PS/2 keyboard
+pckbd*	at gsckbc?		# PS/2 keyboard
 pms*	at gsckbc?		# PS/2 mouse
 
 #sh*	at eisa?		# Interphase Seahawk 4811 EISA/FDDI
@@ -328,7 +328,7 @@ ukphy*		at mii?		# generic unknown PHYs
 # MI devices
 #wsdisplay*	at vgafb?
 wsdisplay*	at sti?
-wskbd*		at gsckbd? mux 1
+wskbd*		at pckbd? mux 1
 wskbd*		at hilkbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at hilms? mux 0

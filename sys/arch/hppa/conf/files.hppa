@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.79 2008/05/28 22:45:57 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.80 2008/07/16 16:32:08 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -284,13 +284,7 @@ device	gsckbc: pckbcslot
 attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c			gsckbc
 
-# PS/2 keyboard
-device	gsckbd: wskbddev
-attach	gsckbd at pckbcslot
-file	arch/hppa/gsc/gsckbd.c			gsckbd	needs-flag
-file	arch/hppa/gsc/gsckbdmap.c		gsckbd
-
-# PS/2 mouse
+# PS/2 keyboard and mouse
 include	"dev/pckbc/files.pckbc"
 
 #

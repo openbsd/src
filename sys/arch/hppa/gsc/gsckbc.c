@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.10 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.11 2008/07/16 16:32:08 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -88,7 +88,7 @@
 #include <dev/ic/pckbcvar.h>
 
 #include <dev/pckbc/pckbdreg.h>	/* constants for probe magic */
-#include <hppa/gsc/gsckbdvar.h>
+#include <dev/pckbc/pckbdvar.h>
 
 int	gsckbc_match(struct device *, void *, void *);
 void	gsckbc_attach(struct device *, struct device *, void *);
@@ -111,7 +111,7 @@ struct cfdriver gsckbc_cd = {
 
 void	gsckbc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-#include "gsckbd.h"
+#include "pckbd.h"
 #if (NGSCKBD > 0)
 #include <dev/pckbc/pckbdvar.h>
 #endif
@@ -411,11 +411,11 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: expecting device type %d, got %d\n",
 			    sc->sc_dv.dv_xname, gsc->sc_type, ident);
 	} else {
-#if (NGSCKBD > 0)
+#if (NPCKBD > 0)
 		if (gsc->sc_type == PCKBC_KBD_SLOT &&
 		    ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
 		    bcmp(ga->ga_dp.dp_bc, PAGE0->mem_kbd.pz_dp.dp_bc, 6) == 0)
-			gsckbd_cnattach(t, PCKBC_KBD_SLOT);
+			pckbd_cnattach(t, PCKBC_KBD_SLOT);
 #endif
 		pckbc_attach_slot(sc, gsc->sc_type);
 	}
@@ -588,6 +588,15 @@ pckbc_poll_data(self, slot)
 			return (-1);
 	}
 	return (c);
+}
+
+int
+pckbc_xt_translation(self, slot, on)
+	pckbc_tag_t self;
+	pckbc_slot_t slot;
+	int on;
+{
+	return (0);
 }
 
 void
