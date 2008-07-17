@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.118 2008/07/17 16:28:07 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.119 2008/07/17 16:41:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -369,7 +369,7 @@ rdr		: REDIRECT STRING	{
 			}
 			if (!(rdr->conf.flags & F_DISABLE))
 				rdr->conf.flags |= F_ADD;
-			TAILQ_INSERT_HEAD(conf->sc_rdrs, rdr, entry);
+			TAILQ_INSERT_TAIL(conf->sc_rdrs, rdr, entry);
 			tableport = 0;
 			rdr = NULL;
 		}
@@ -742,7 +742,7 @@ proto		: proto_type PROTO STRING	{
 				YYERROR;
 			}
 
-			TAILQ_INSERT_HEAD(conf->sc_protos, proto, entry);
+			TAILQ_INSERT_TAIL(conf->sc_protos, proto, entry);
 		}
 		;
 
@@ -1100,7 +1100,7 @@ relay		: RELAY STRING	{
 			}
 			conf->sc_relaycount++;
 			SPLAY_INIT(&rlay->rl_sessions);
-			TAILQ_INSERT_HEAD(conf->sc_relays, rlay, rl_entry);
+			TAILQ_INSERT_TAIL(conf->sc_relays, rlay, rl_entry);
 			tableport = 0;
 			rlay = NULL;
 		}
@@ -2139,7 +2139,7 @@ table_inherit(struct table *tb)
 	}
 
 	conf->sc_tablecount++;
-	TAILQ_INSERT_HEAD(conf->sc_tables, tb, entry);
+	TAILQ_INSERT_TAIL(conf->sc_tables, tb, entry);
 
 	return (tb);
 }
