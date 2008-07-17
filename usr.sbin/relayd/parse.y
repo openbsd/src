@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.117 2008/07/17 16:12:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.118 2008/07/17 16:28:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -495,6 +495,7 @@ tabledef	: TABLE table		{
 			tb->conf.id = 0; /* will be set later */
 			bcopy(&conf->sc_timeout, &tb->conf.timeout,
 			    sizeof(struct timeval));
+			TAILQ_INIT(&tb->hosts);
 			table = tb;
 		} tabledefopts_l 	{
 			if (TAILQ_EMPTY(&table->hosts)) {
@@ -503,7 +504,7 @@ tabledef	: TABLE table		{
 				YYERROR;
 			}
 			conf->sc_tablecount++;
-			TAILQ_INSERT_HEAD(conf->sc_tables, table, entry);
+			TAILQ_INSERT_TAIL(conf->sc_tables, table, entry);
 		}
 		;
 
@@ -522,7 +523,7 @@ tablelist_l	: tablelist comma tablelist_l
 tablelist	: host			{
 			$1->conf.tableid = table->conf.id;
 			$1->tablename = table->conf.name;
-			TAILQ_INSERT_HEAD(&table->hosts, $1, entry);
+			TAILQ_INSERT_TAIL(&table->hosts, $1, entry);
 		}
 		| include
 		;
@@ -2120,7 +2121,7 @@ table_inherit(struct table *tb)
 	    sizeof(tb->conf.demote_group));
 
 	/* Copy the associated hosts */
-	bzero(&tb->hosts, sizeof(tb->hosts));
+	TAILQ_INIT(&tb->hosts);
 	TAILQ_FOREACH(dsth, &dsttb->hosts, entry) {
 		if ((h = (struct host *)
 		    calloc(1, sizeof (*h))) == NULL)
@@ -2134,7 +2135,7 @@ table_inherit(struct table *tb)
 		}
 		h->conf.tableid = tb->conf.id;
 		h->tablename = tb->conf.name;
-		TAILQ_INSERT_HEAD(&tb->hosts, h, entry);
+		TAILQ_INSERT_TAIL(&tb->hosts, h, entry);
 	}
 
 	conf->sc_tablecount++;
