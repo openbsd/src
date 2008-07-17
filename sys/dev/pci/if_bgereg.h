@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.84 2008/07/16 03:56:25 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.85 2008/07/17 19:59:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1802,8 +1802,10 @@
 /* Misc. config register */
 #define BGE_MISCCFG_RESET_CORE_CLOCKS	0x00000001
 #define BGE_MISCCFG_TIMER_PRESCALER	0x000000FE
-#define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
+#define BGE_MISCCFG_BOARD_ID_5788	0x00010000
+#define BGE_MISCCFG_BOARD_ID_5788M	0x00018000
 #define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
+#define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
@@ -2440,6 +2442,7 @@ struct bge_softc {
 #define BGE_PHY_BER_BUG		0x00020000
 #define BGE_PHY_ADJUST_TRIM	0x00040000
 #define BGE_NO_ETH_WIRE_SPEED	0x00080000
+#define BGE_IS_5788		0x00100000
 
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.237 2008/07/16 03:56:25 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.238 2008/07/17 19:59:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1896,6 +1896,11 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	misccfg = CSR_READ_4(sc, BGE_MISC_CFG);
 	misccfg &= BGE_MISCCFG_BOARD_ID_MASK;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
+	    (misccfg == BGE_MISCCFG_BOARD_ID_5788 ||
+	     misccfg == BGE_MISCCFG_BOARD_ID_5788M))
+		sc->bge_flags |= BGE_IS_5788;
 
 	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 &&
 	     (misccfg == 0x4000 || misccfg == 0x8000)) ||
