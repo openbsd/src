@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.201 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.202 2008/07/17 08:14:24 sthen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3841,7 +3841,7 @@ setspppkey(const char *val, int d)
 	if (auth->proto == 0)
 		errx(1, "unspecified protocol");
 	if (strlcpy((char *)auth->secret, val, AUTHKEYLEN) >= AUTHKEYLEN)
-		errx(1, "setspppname");
+		errx(1, "setspppkey");
 
 	spr.cmd = (int)SPPPIOSDEFS;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
