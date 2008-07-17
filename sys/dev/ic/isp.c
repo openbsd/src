@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.43 2008/06/11 22:53:46 krw Exp $ */
+/* 	$OpenBSD: isp.c,v 1.44 2008/07/17 23:08:08 kettenis Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the QLogic ISP SCSI adapters.
@@ -4788,6 +4788,7 @@ isp_mbox_continue(struct ispsoftc *isp)
 	/*
 	 * Continue with next word.
 	 */
+	MEMZERO(&mbs, sizeof (mbs));
 	ptr = isp->isp_mbxworkp;
 	switch (isp->isp_lastmbxcmd) {
 	case MBOX_WRITE_RAM_WORD:
@@ -4801,7 +4802,6 @@ isp_mbox_continue(struct ispsoftc *isp)
 		break;
 	}
 	isp->isp_mbxworkp = ptr;
-	MEMZERO(&mbs, sizeof (mbs));
 	mbs.param[0] = isp->isp_lastmbxcmd;
 	isp->isp_mbxwrk0 -= 1;
 	isp_mboxcmd_qnw(isp, &mbs, 0);
