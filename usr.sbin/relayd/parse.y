@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2008/07/17 15:10:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.117 2008/07/17 16:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -336,7 +336,7 @@ rdr		: REDIRECT STRING	{
 				YYERROR;
 			}
 			free($2);
-			srv->conf.id = last_rdr_id++;
+			srv->conf.id = ++last_rdr_id;
 			srv->conf.timeout.tv_sec = RELAY_TIMEOUT;
 			if (last_rdr_id == INT_MAX) {
 				yyerror("too many redirections defined");
@@ -492,14 +492,9 @@ tabledef	: TABLE table		{
 			(void)strlcpy(tb->conf.name, $2, sizeof(tb->conf.name));
 			free($2);
 
-			tb->conf.id = last_table_id++;
+			tb->conf.id = 0; /* will be set later */
 			bcopy(&conf->sc_timeout, &tb->conf.timeout,
 			    sizeof(struct timeval));
-			if (last_table_id == INT_MAX) {
-				yyerror("too many tables defined");
-				free(tb);
-				YYERROR;
-			}
 			table = tb;
 		} tabledefopts_l 	{
 			if (TAILQ_EMPTY(&table->hosts)) {
@@ -722,7 +717,7 @@ proto		: proto_type PROTO STRING	{
 				YYERROR;
 			}
 			free($3);
-			p->id = last_proto_id++;
+			p->id = ++last_proto_id;
 			p->type = $1;
 			p->cache = RELAY_CACHESIZE;
 			p->tcpflags = TCPFLAG_DEFAULT;
@@ -1067,7 +1062,7 @@ relay		: RELAY STRING	{
 				YYERROR;
 			}
 			free($2);
-			r->rl_conf.id = last_relay_id++;
+			r->rl_conf.id = ++last_relay_id;
 			r->rl_conf.timeout.tv_sec = RELAY_TIMEOUT;
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
@@ -1268,13 +1263,8 @@ host		: STRING retry		{
 				YYERROR;
 			}
 			free($1);
-			$$->conf.id = last_host_id++;
+			$$->conf.id = 0; /* will be set later */
 			$$->conf.retry = $2;
-			if (last_host_id == INT_MAX) {
-				yyerror("too many hosts defined");
-				free($$);
-				YYERROR;
-			}
 		}
 		;
 
@@ -2115,7 +2105,7 @@ table_inherit(struct table *tb)
 		return (oldtb);
 
 	/* Create a new table */
-	tb->conf.id = last_table_id++;
+	tb->conf.id = ++last_table_id;
 	if (last_table_id == INT_MAX) {
 		yyerror("too many tables defined");
 		purge_table(NULL, tb);
@@ -2136,7 +2126,7 @@ table_inherit(struct table *tb)
 		    calloc(1, sizeof (*h))) == NULL)
 			fatal("out of memory");
 		bcopy(dsth, h, sizeof(*h));
-		h->conf.id = last_host_id++;
+		h->conf.id = ++last_host_id;
 		if (last_host_id == INT_MAX) {
 			yyerror("too many hosts defined");
 			purge_table(NULL, tb);
