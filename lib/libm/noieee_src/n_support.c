@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.12 2008/07/16 15:25:51 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.13 2008/07/17 15:36:28 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -515,7 +515,7 @@ newsqrt(double x)
         t=x/y;          /* ...chopped quotient, possibly inexact */
         j=swapINX(i);   /* ...read and restore inexact flag */
         if(j==0) { if(t==y) goto end; else t=subc(t); }  /* ...t=t-ulp */
-        b54+0.1;        /* ..trigger inexact flag, sqrt(x) is inexact */
+        x=b54+0.1;      /* ..trigger inexact flag, sqrt(x) is inexact */
         if(r==RN) t=addc(t);            /* ...t=t+ulp */
         else if(r==RP) { t=addc(t);y=addc(y);}/* ...t=t+ulp;y=y+ulp; */
         y=y+t;                          /* ...chopped sum */

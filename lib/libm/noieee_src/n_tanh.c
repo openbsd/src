@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tanh.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_tanh.c,v 1.8 2008/07/17 15:36:28 martynas Exp $	*/
 /*	$NetBSD: n_tanh.c,v 1.1 1995/10/10 23:37:08 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -88,8 +88,10 @@ tanh(double x)
 		return(copysign(one-two/(expm1(x+x)+two),sign));
 	    else if ( x > small )
 		{t= -expm1(-(x+x)); return(copysign(t/(two-t),sign));}
-	    else		/* raise the INEXACT flag for non-zero x */
-		{big+x; return(copysign(x,sign));}
+	    else {		/* raise the INEXACT flag for non-zero x */
+		t = big + x;
+		return(copysign(x,sign) - (t-(big+x)));
+	    }
 	else if(finite(x))
 	    return (sign+1.0E-37); /* raise the INEXACT flag */
 	else

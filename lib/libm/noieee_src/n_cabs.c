@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.9 2008/06/25 17:49:31 martynas Exp $	*/
+/*	$OpenBSD: n_cabs.c,v 1.10 2008/07/17 15:36:28 martynas Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -122,9 +122,10 @@ hypot(double x, double y)
 		if(x == zero) return(zero);
 		if(y == zero) return(x);
 		exp= logb(x);
-		if(exp-(int)logb(y) > ibig )
-			/* raise inexact flag and return |x| */
-		   { one+small; return(x); }
+		if (exp - (int)logb(y) > ibig) {
+			if (one + small >= 1.0)	/* raise inexact flag */
+				return(x);	/* return |x| */
+		}
 
 	    /* start computing sqrt(x^2 + y^2) */
 		r=x-y;
@@ -204,9 +205,10 @@ hypot(double x, double y)
 		if(y == zero) return(x);
 		exp= logb(x);
 		x=scalbn(x,-exp);
-		if(exp-(int)logb(y) > ibig )
-			/* raise inexact flag and return |x| */
-		   { one+small; return(scalbn(x,exp)); }
+		if (exp - (int)logb(y) > ibig) {
+			if (one + small >= 1.0)		/* raise inexact flag */
+				return(scalbn(x,exp));	/* return |x| */
+		}
 		else y=scalbn(y,-exp);
 		return(scalbn(sqrt(x*x+y*y),exp));
 	    }

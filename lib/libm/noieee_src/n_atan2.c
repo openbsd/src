@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.9 2008/07/17 15:36:28 martynas Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -225,9 +225,10 @@ begin:
 	    /* t is in [0,7/16] */
 	    case 0:
 	    case 1:
-		if (t < small)
-		    { big + small ;  /* raise inexact flag */
-		      return (copysign((signx>zero)?t:PI-t,signy)); }
+		if (t < small) {
+			if (big + small > 0.0)	/* raise inexact flag */
+				return (copysign((signx>zero)?t:PI-t,signy));
+		}
 
 		hi = zero;  lo = zero;  break;
 
@@ -260,9 +261,10 @@ begin:
 	    if (t <= big)  t = - x / y;
 
 	    /* t is in [big, INF] */
-	    else
-	      { big+small;	/* raise inexact flag */
-		t = zero; }
+	    else {
+		if (big + small > 0.0)	/* raise inexact flag */
+			t = zero;
+	    }
 	}
     /* end of argument reduction */
 
