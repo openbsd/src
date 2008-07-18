@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1386 2008/07/07 07:38:40 bernd Exp $
+$OpenBSD: pcidevs,v 1.1387 2008/07/18 11:44:22 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1150,6 +1150,7 @@ product AVM T1			0x1200	PRI T1 ISDN
 /* Belkin Components products */
 product BELKIN2 F5D6001		0x6001	F5D6001
 product BELKIN2 F5D6020V3	0x6020	F5D6020V3
+product BELKIN2 F5D7010		0x701f	F5D7010
 product BELKIN F5D6000		0xec00	F5D6000
 
 /* Bit3 products */
