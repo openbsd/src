@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.54 2008/07/18 18:49:11 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.55 2008/07/18 21:45:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -91,7 +91,7 @@ int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 
 usbd_status	uvideo_vs_negotation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
-usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *);
+usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *, uint8_t);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_alloc_sample(struct uvideo_softc *);
 void		uvideo_vs_free_sample(struct uvideo_softc *);
@@ -943,7 +943,7 @@ uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
 
 	/* get probe */
 	bzero(probe_data, sizeof(probe_data));
-	error = uvideo_vs_get_probe(sc, probe_data);
+	error = uvideo_vs_get_probe(sc, probe_data, GET_DEF);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
 
@@ -960,7 +960,7 @@ uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
 
 	/* get probe */
 	bzero(probe_data, sizeof(probe_data));
-	error = uvideo_vs_get_probe(sc, probe_data);
+	error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
 
@@ -1021,7 +1021,8 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 }
 
 usbd_status
-uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
+uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
+    uint8_t request)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -1029,7 +1030,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	struct usb_video_probe_commit *pc;
 
 	req.bmRequestType = UVIDEO_GET_IF;
-	req.bRequest = GET_CUR;
+	req.bRequest = request;
 	tmp = VS_PROBE_CONTROL;
 	tmp = tmp << 8;
 	USETW(req.wValue, tmp);
