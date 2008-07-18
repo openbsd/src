@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.18 2007/11/09 17:46:00 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.19 2008/07/18 21:39:52 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -221,11 +221,7 @@ dmareq(struct dmaqueue *dq)
 	struct dma_softc *sc = &dma_softc;
 	int i, chan, s;
 
-#if 1
-	s = splhigh();	/* XXXthorpej */
-#else
-	s = splbio();
-#endif
+	s = splvm();
 
 	chan = dq->dq_chan;
 	for (i = NDMACHAN - 1; i >= 0; i--) {
@@ -294,11 +290,7 @@ dmafree(struct dmaqueue *dq)
 	struct dmaqueue *dn;
 	int chan, s;
 
-#if 1
-	s = splhigh();	/* XXXthorpej */
-#else
-	s = splbio();
-#endif
+	s = splvm();
 
 #ifdef DEBUG
 	dmatimo[unit] = 0;
@@ -566,7 +558,7 @@ dmatimeout(void *arg)
 	struct dma_softc *sc = arg;
 
 	for (i = 0; i < NDMACHAN; i++) {
-		s = splbio();
+		s = splvm();
 		if (dmatimo[i]) {
 			if (dmatimo[i] > 1)
 				printf("dma channel %d timeout #%d\n",
