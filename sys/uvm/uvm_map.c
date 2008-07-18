@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.100 2008/06/09 20:30:23 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.101 2008/07/18 16:40:17 kurt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1097,6 +1097,45 @@ uvm_map_spacefits(struct vm_map *map, vaddr_t *phint, vsize_t length,
 		return (FALSE);
 	
 	return (TRUE);
+}
+
+/*
+ * uvm_map_pie: return a random load address for a PIE executable
+ * properly aligned.
+ */
+
+#ifndef VM_PIE_MAX_ADDR
+#define VM_PIE_MAX_ADDR (VM_MAXUSER_ADDRESS / 4)
+#endif
+
+#ifndef VM_PIE_MIN_ADDR
+#define VM_PIE_MIN_ADDR VM_MIN_ADDRESS
+#endif
+
+#ifndef VM_PIE_MIN_ALIGN
+#define VM_PIE_MIN_ALIGN PAGE_SIZE
+#endif
+
+vaddr_t
+uvm_map_pie(vaddr_t align)
+{
+	vaddr_t addr, space, min;
+
+	align = MAX(align, VM_PIE_MIN_ALIGN);
+
+	/* round up to next alignment */
+	min = (VM_PIE_MIN_ADDR + align - 1) & ~(align - 1);
+
+	if (align >= VM_PIE_MAX_ADDR || min >= VM_PIE_MAX_ADDR)
+		return (align);
+
+	space = (VM_PIE_MAX_ADDR - min) / align;
+	space = MIN(space, (u_int32_t)-1);
+
+	addr = (vaddr_t)arc4random_uniform((u_int32_t)space) * align;
+	addr += min;
+
+	return (addr);
 }
 
 /*

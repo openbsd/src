@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.40 2008/06/24 21:24:03 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.41 2008/07/18 16:40:17 kurt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -76,6 +76,10 @@
 
 /* I386 has a line where all code is executable: 0 - I386_MAX_EXE_ADDR */
 #define I386_MAX_EXE_ADDR 0x20000000		/* exec line */
+
+/* map PIE into 320MB - 448MB address range */
+#define VM_PIE_MIN_ADDR 0x14000000
+#define VM_PIE_MAX_ADDR 0x1C000000
 
 /*
  * Size of shared memory map

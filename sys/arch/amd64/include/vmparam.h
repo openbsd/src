@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 2008/06/24 21:24:03 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.10 2008/07/18 16:40:17 kurt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -95,6 +95,10 @@
 #define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
 
 #define VM_MAXUSER_ADDRESS32	0xffffc000
+
+/* map PIE into approximately the first quarter of user va space */
+#define VM_PIE_MIN_ADDR		VM_MIN_ADDRESS
+#define VM_PIE_MAX_ADDR		0x200000000000
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
