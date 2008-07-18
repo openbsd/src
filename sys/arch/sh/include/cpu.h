@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2008/05/21 19:45:37 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2008/07/18 23:43:31 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ do {									\
 	if (curproc != NULL)						\
 		aston(curproc);					\
 } while (/*CONSTCOND*/0)
+#define clear_resched(ci) 	want_resched = 0
 
 /*
  * Give a profiling tick to the current process when the user profiling

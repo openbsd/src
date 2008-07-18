@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.26 2007/10/10 15:53:53 art Exp $      */
+/*      $OpenBSD: cpu.h,v 1.27 2008/07/18 23:43:31 art Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -107,6 +107,7 @@ extern int bootdev;
 	want_resched++; \
 	mtpr(AST_OK,PR_ASTLVL); \
 	}
+#define clear_resched(ci) 	want_resched = 0
 
 /*
  * Notify the current process (p) that it has a signal pending,

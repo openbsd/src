@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2007/05/16 19:37:06 thib Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2008/07/18 23:43:31 art Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -196,6 +196,7 @@ extern int cpu_hvers;
 
 #define	signotify(p)		(setsoftast())
 #define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define clear_resched(ci) 	want_resched = 0
 #define	need_proftick(p)	setsoftast()
 
 #ifndef _LOCORE

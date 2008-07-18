@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2007/05/08 07:23:18 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2008/07/18 23:43:31 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -131,6 +131,7 @@ extern void	raise(int, int);
  */
 extern int	want_resched;		/* resched() was called */
 #define	need_resched(ci)		(want_resched = 1, want_ast = 1)
+#define clear_resched(ci) 	want_resched = 0
 extern int	want_ast;
 
 /*

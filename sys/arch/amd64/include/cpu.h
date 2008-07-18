@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2008/06/10 02:55:39 weingart Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2008/07/18 23:43:31 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -161,6 +161,7 @@ extern struct cpu_info *cpu_info_list;
  * or after the current trap/syscall if in system mode.
  */
 extern void need_resched(struct cpu_info *);
+#define clear_resched(ci) (ci)->ci_want_resched = 0
 
 #if defined(MULTIPROCESSOR)
 

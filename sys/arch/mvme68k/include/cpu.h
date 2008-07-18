@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2007/05/30 17:10:44 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.28 2008/07/18 23:43:31 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,6 +115,7 @@ struct clockframe {
  */
 extern int want_resched;
 #define	need_resched(ci)	{ want_resched = 1; aston(); }
+#define clear_resched(ci) 	want_resched = 0
 
 /*
  * Give a profiling tick to the current process when the user profiling

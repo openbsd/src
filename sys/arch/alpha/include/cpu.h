@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.32 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: cpu.h,v 1.33 2008/07/18 23:43:31 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -282,12 +282,14 @@ do {									\
 	ci->ci_want_resched = 1;					\
 	aston(curcpu());						\
 } while (/*CONSTCOND*/0)
+#define clear_resched(ci) (ci)->ci_want_resched = 0
 #else
 #define	need_resched(ci)						\
 do {									\
 	curcpu()->ci_want_resched = 1;					\
 	aston(curcpu());						\
 } while (/*CONSTCOND*/0)
+#define clear_resched(ci) curcpu()->ci_want_resched = 0
 #endif
 
 /*
