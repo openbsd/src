@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.73 2008/05/22 19:23:04 mk Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.74 2008/07/18 13:38:40 thib Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -137,6 +137,8 @@ void vr_setmulti(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
 int vr_list_tx_init(struct vr_softc *);
+
+int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *, struct mbuf *);
 
 const struct pci_matchid vr_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE },
@@ -674,61 +676,39 @@ vr_list_rx_init(struct vr_softc *sc)
 {
 	struct vr_chain_data	*cd;
 	struct vr_list_data	*ld;
-	int			i;
 	struct vr_desc		*d;
+	int			 i, nexti;
 
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
 
-	for (i = 0; i < VR_RX_LIST_CNT; i++) {
-		d = (struct vr_desc *)&ld->vr_rx_list[i];
-		cd->vr_rx_chain[i].vr_ptr = d;
-		cd->vr_rx_chain[i].vr_paddr =
-		    sc->sc_listmap->dm_segs[0].ds_addr +
-		    offsetof(struct vr_list_data, vr_rx_list[i]);
-		cd->vr_rx_chain[i].vr_buf =
-		    (u_int8_t *)malloc(MCLBYTES, M_DEVBUF, M_NOWAIT);
-		if (cd->vr_rx_chain[i].vr_buf == NULL)
-			return (ENOBUFS);
-
+	for (i = 0; i < VR_RX_LIST_CNT; i++)  {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
 		    0, BUS_DMA_NOWAIT | BUS_DMA_READ,
 		    &cd->vr_rx_chain[i].vr_map))
 			return (ENOBUFS);
 
-		if (bus_dmamap_load(sc->sc_dmat, cd->vr_rx_chain[i].vr_map,
-		    cd->vr_rx_chain[i].vr_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT))
+		d = (struct vr_desc *)&ld->vr_rx_list[i];
+		cd->vr_rx_chain[i].vr_ptr = d;
+		cd->vr_rx_chain[i].vr_paddr =
+		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct vr_list_data, vr_rx_list[i]);
+
+		if (vr_alloc_mbuf(sc, &cd->vr_rx_chain[i], NULL))
 			return (ENOBUFS);
-		bus_dmamap_sync(sc->sc_dmat, cd->vr_rx_chain[i].vr_map,
-		    0, cd->vr_rx_chain[i].vr_map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD);
 
-		d->vr_status = htole32(VR_RXSTAT);
-		d->vr_data =
-		    htole32(cd->vr_rx_chain[i].vr_map->dm_segs[0].ds_addr +
-		    sizeof(u_int64_t));
-		d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+		if (i == (VR_RX_LIST_CNT - 1))
+			nexti = 0;
+		else 
+			nexti = i + 1;
 
-		if (i == (VR_RX_LIST_CNT - 1)) {
-			cd->vr_rx_chain[i].vr_nextdesc =
-			    &cd->vr_rx_chain[0];
-			ld->vr_rx_list[i].vr_next =
-			    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
-			    offsetof(struct vr_list_data, vr_rx_list[0]));
-		} else {
-			cd->vr_rx_chain[i].vr_nextdesc =
-			    &cd->vr_rx_chain[i + 1];
-			ld->vr_rx_list[i].vr_next =
-			    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
-			    offsetof(struct vr_list_data, vr_rx_list[i + 1]));
-		}
+		cd->vr_rx_chain[i].vr_nextdesc = &cd->vr_rx_chain[nexti];
+		ld->vr_rx_list[i].vr_next =
+		    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct vr_list_data, vr_rx_list[nexti]));
 	}
 
 	cd->vr_rx_head = &cd->vr_rx_chain[0];
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-	    sc->sc_listmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return(0);
 }
@@ -740,7 +720,7 @@ vr_list_rx_init(struct vr_softc *sc)
 void
 vr_rxeof(struct vr_softc *sc)
 {
-	struct mbuf		*m0;
+	struct mbuf		*m0, *m;
 	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -813,30 +793,29 @@ vr_rxeof(struct vr_softc *sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
-		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
-		    cur_rx->vr_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
-		m0 = m_devget(cur_rx->vr_buf + sizeof(u_int64_t) - ETHER_ALIGN,
-		    total_len + ETHER_ALIGN, 0, ifp, NULL);
-		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
-		    cur_rx->vr_map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD);
+		m = cur_rx->vr_mbuf;
+		cur_rx->vr_mbuf = NULL;
 
-		/* Reinitialize descriptor */
-		cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
-		cur_rx->vr_ptr->vr_data =
-		    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
-		    sizeof(u_int64_t));
-		cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-		    sc->sc_listmap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
+		    cur_rx->vr_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, cur_rx->vr_map);
 
-		if (m0 == NULL) {
-			ifp->if_ierrors++;
-			continue;
+#ifndef __STRICT_ALIGNMENT
+		if (vr_alloc_mbuf(sc, cur_rx, NULL) == 0) {
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = total_len;
+		} else
+#endif
+		{
+			m0 = m_devget(mtod(m, caddr_t) - ETHER_ALIGN,
+			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+			if (m0 == NULL || vr_alloc_mbuf(sc, cur_rx, m)) {
+				ifp->if_ierrors++;
+				continue;
+			}
+			m_adj(m0, ETHER_ALIGN);
+			m = m0;
 		}
-		m_adj(m0, ETHER_ALIGN);
 
 		ifp->if_ipackets++;
 
@@ -845,10 +824,10 @@ vr_rxeof(struct vr_softc *sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		/* pass it on. */
-		ether_input_mbuf(ifp, m0);
+		ether_input_mbuf(ifp, m);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
@@ -1479,9 +1458,9 @@ vr_stop(struct vr_softc *sc)
 	 */
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
 
-		if (sc->vr_cdata.vr_rx_chain[i].vr_buf != NULL) {
-			free(sc->vr_cdata.vr_rx_chain[i].vr_buf, M_DEVBUF);
-			sc->vr_cdata.vr_rx_chain[i].vr_buf = NULL;
+		if (sc->vr_cdata.vr_rx_chain[i].vr_mbuf != NULL) {
+			m_freem(sc->vr_cdata.vr_rx_chain[i].vr_mbuf);
+			sc->vr_cdata.vr_rx_chain[i].vr_mbuf = NULL;
 		}
 
 		map = sc->vr_cdata.vr_rx_chain[i].vr_map;
@@ -1528,4 +1507,52 @@ vr_shutdown(void *arg)
 	struct vr_softc		*sc = (struct vr_softc *)arg;
 
 	vr_stop(sc);
+}
+
+int
+vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r, struct mbuf *mb)
+{
+	struct vr_desc	*d;
+	struct mbuf	*m;
+
+	if (mb == NULL) {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			return (ENOBUFS);
+
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_free(m);
+			return (ENOBUFS);
+		}
+	} else  {
+		m = mb;
+		m->m_data = m->m_ext.ext_buf;
+	}
+
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	r->vr_mbuf = m;
+
+	m_adj(m, sizeof(u_int64_t));
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, r->vr_map, r->vr_mbuf,
+	    BUS_DMA_NOWAIT)) {
+		m_freem(r->vr_mbuf);
+		return (ENOBUFS);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, r->vr_map, 0, r->vr_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
+	/* Reinitialize the RX descriptor */
+	d = r->vr_ptr;
+	d->vr_status = htole32(VR_RXSTAT);
+	d->vr_data = htole32(r->vr_map->dm_segs[0].ds_addr);
+	d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+	    sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	return (0);
 }

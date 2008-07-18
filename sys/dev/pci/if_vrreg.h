@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.20 2007/10/04 01:29:39 brad Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.21 2008/07/18 13:38:40 thib Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -409,7 +409,7 @@ struct vr_chain {
 struct vr_chain_onefrag {
 	struct vr_desc		*vr_ptr;
 	struct vr_chain_onefrag	*vr_nextdesc;
-	u_int8_t		*vr_buf;
+	struct mbuf 		*vr_mbuf;
 	bus_addr_t		vr_paddr;
 	bus_dmamap_t		vr_map;
 };
@@ -468,6 +468,7 @@ struct vr_softc {
 	bus_dmamap_t		sc_listmap;	/* descriptor list map */
 	bus_dma_segment_t	sc_listseg;
 	int			sc_if_flags;
+	int			sc_rxbufs;
 };
 
 #define VR_F_RESTART		0x01		/* Restart unit on next tick */
