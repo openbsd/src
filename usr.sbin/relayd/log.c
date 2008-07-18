@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.12 2008/07/17 15:10:14 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.13 2008/07/18 12:26:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,8 +220,10 @@ const char *
 print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 {
 	if (getnameinfo((struct sockaddr *)ss, ss->ss_len,
-	    buf, len, NULL, 0, NI_NUMERICHOST) != 0)
+	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
+		buf[0] = '\0';
 		return (NULL);
+	}
 	return (buf);
 }
 
