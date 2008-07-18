@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.21 2008/07/14 04:45:50 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.22 2008/07/18 18:49:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -437,10 +437,12 @@ struct uvideo_format_desc {
 } __packed;
 
 struct uvideo_format_group {
+	uint32_t				 pixelformat;
 	struct uvideo_format_desc		*format;
 	uint8_t					 format_dfidx;
 	/* frame descriptors for mjpeg and uncompressed are identical */
 #define UVIDEO_MAX_FRAME			 16
+	int					 frame_num;
 	struct usb_video_frame_mjpeg_desc	*frame_cur;
 	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
 } __packed;
@@ -469,6 +471,7 @@ struct uvideo_softc {
 	int					 sc_dying;
 	int					 sc_mode;
 	int					 sc_video_buf_size;
+	int					 sc_negotiated_flag;
 
 	u_int16_t				 uvc_version;
 	u_int32_t				 clock_frequency;
@@ -492,6 +495,7 @@ struct uvideo_softc {
 	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
 
 #define UVIDEO_MAX_FORMAT			 8
+	int					 sc_fmtgrp_num;
 	struct uvideo_format_group		*sc_fmtgrp_cur;
 	struct uvideo_format_group		 sc_fmtgrp[UVIDEO_MAX_FORMAT];
 
