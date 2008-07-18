@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: intr.h,v 1.24 2008/07/18 21:39:16 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ extern	unsigned short hp300_varpsl[NISR];
 #define	spltty()		_splraise(hp300_varpsl[IPL_TTY])
 #define	splclock()		_splraise(PSL_S | PSL_IPL6)
 #define	splstatclock()		_splraise(PSL_S | PSL_IPL6)
-#define	splvm()			_splraise(hp300_varpsl[IPL_VM])
+#define	splvm()			_splraise(PSL_S | PSL_IPL5)
 #define	splhigh()		_spl(PSL_S | PSL_IPL7)
 #define	splsched()		splhigh()
 

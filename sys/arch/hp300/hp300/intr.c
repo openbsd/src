@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.21 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: intr.c,v 1.22 2008/07/18 21:39:14 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ isr_list_t isr_list[NISR];
 
 /*
  * Default interrupt priorities.
- * IPL_BIO, IPL_NET, IPL_TTY and IPL_VM will be adjusted when devices attach.
+ * IPL_BIO, IPL_NET and IPL_TTY will be adjusted when devices attach.
  */
 u_short	hp300_varpsl[NISR] = {
 	PSL_S | PSL_IPL0,	/* IPL_NONE */
@@ -70,7 +70,7 @@ u_short	hp300_varpsl[NISR] = {
 	PSL_S | PSL_IPL3,	/* IPL_BIO */
 	PSL_S | PSL_IPL3,	/* IPL_NET */
 	PSL_S | PSL_IPL3,	/* IPL_TTY */
-	PSL_S | PSL_IPL3,	/* IPL_VM */
+	PSL_S | PSL_IPL5,	/* IPL_VM */
 	PSL_S | PSL_IPL6,	/* IPL_CLOCK */
 	PSL_S | PSL_IPL7	/* IPL_HIGH */
 };
@@ -99,7 +99,7 @@ intr_computeipl()
 
 	/* Start with low values. */
 	hp300_varpsl[IPL_BIO] = hp300_varpsl[IPL_NET] =
-	    hp300_varpsl[IPL_TTY] = hp300_varpsl[IPL_VM] = PSL_S | PSL_IPL3;
+	    hp300_varpsl[IPL_TTY] = PSL_S | PSL_IPL3;
 
 	for (ipl = 0; ipl < NISR; ipl++) {
 		LIST_FOREACH(isr, &isr_list[ipl], isr_link) {
@@ -139,9 +139,6 @@ intr_computeipl()
 
 	if (hp300_varpsl[IPL_TTY] < hp300_varpsl[IPL_NET])
 		hp300_varpsl[IPL_TTY] = hp300_varpsl[IPL_NET];
-
-	if (hp300_varpsl[IPL_VM] < hp300_varpsl[IPL_TTY])
-		hp300_varpsl[IPL_VM] = hp300_varpsl[IPL_TTY];
 }
 
 void
@@ -149,9 +146,9 @@ intr_printlevels()
 {
 
 #ifdef DEBUG
-	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, vm = 0x%x\n",
+	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x\n",
 	    hp300_varpsl[IPL_BIO], hp300_varpsl[IPL_NET],
-	    hp300_varpsl[IPL_TTY], hp300_varpsl[IPL_VM]);
+	    hp300_varpsl[IPL_TTY]);
 #endif
 
 	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
