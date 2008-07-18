@@ -183,3 +183,4 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.4/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat3/infnan.0

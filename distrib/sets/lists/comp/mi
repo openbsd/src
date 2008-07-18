@@ -3823,7 +3823,6 @@
 ./usr/share/man/cat3/inflateReset.0
 ./usr/share/man/cat3/inflateSetDictionary.0
 ./usr/share/man/cat3/inflateSync.0
-./usr/share/man/cat3/infnan.0
 ./usr/share/man/cat3/init_color.0
 ./usr/share/man/cat3/init_pair.0
 ./usr/share/man/cat3/initgroups.0
