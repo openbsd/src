@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.65 2008/06/12 17:02:04 miod Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.66 2008/07/18 16:58:06 kurt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -86,7 +86,7 @@ struct ELFNAME(probe_entry) {
 
 int ELFNAME(load_file)(struct proc *, char *, struct exec_package *,
 	struct elf_args *, Elf_Addr *);
-int ELFNAME(check_header)(Elf_Ehdr *, int);
+int ELFNAME(check_header)(Elf_Ehdr *);
 int ELFNAME(read_from)(struct proc *, struct vnode *, u_long, caddr_t, int);
 void ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
@@ -157,7 +157,7 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
  * Check header for validity; return 0 for ok, ENOEXEC if error
  */
 int
-ELFNAME(check_header)(Elf_Ehdr *ehdr, int type)
+ELFNAME(check_header)(Elf_Ehdr *ehdr)
 {
 	/*
 	 * We need to check magic, class size, endianess, and version before
@@ -173,10 +173,6 @@ ELFNAME(check_header)(Elf_Ehdr *ehdr, int type)
 	/* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
-		return (ENOEXEC);
-
-	/* Check the type */
-	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
 	/* Don't allow an insane amount of sections. */
@@ -327,7 +323,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 				    (caddr_t)&eh, sizeof(eh))) != 0)
 		goto bad1;
 
-	if (ELFNAME(check_header)(&eh, ET_DYN)) {
+	if (ELFNAME(check_header)(&eh) || eh.e_type != ET_DYN) {
 		error = ENOEXEC;
 		goto bad1;
 	}
@@ -474,8 +470,8 @@ int
 ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 {
 	Elf_Ehdr *eh = epp->ep_hdr;
-	Elf_Phdr *ph, *pp;
-	Elf_Addr phdr = 0;
+	Elf_Phdr *ph, *pp, *base_ph = NULL;
+	Elf_Addr phdr = 0, exe_base = 0;
 	int error, i;
 	char *interp = NULL;
 	u_long pos = 0, phsize;
@@ -484,7 +480,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
 		return (ENOEXEC);
 
-	if (ELFNAME(check_header)(eh, ET_EXEC))
+	if (ELFNAME(check_header)(eh) ||
+	   (eh->e_type != ET_EXEC && eh->e_type != ET_DYN))
 		return (ENOEXEC);
 
 	/*
@@ -512,9 +509,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
 	epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
 
-	for (i = 0; i < eh->e_phnum; i++) {
-		pp = &ph[i];
-		if (pp->p_type == PT_INTERP) {
+	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
+		if (pp->p_type == PT_INTERP && !interp) {
 			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
 			interp = pool_get(&namei_pool, PR_WAITOK);
@@ -522,8 +518,18 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			    pp->p_offset, interp, pp->p_filesz)) != 0) {
 				goto bad;
 			}
-			break;
+		} else if (pp->p_type == PT_LOAD) {
+			if (base_ph == NULL)
+				base_ph = pp;
 		}
+	}
+
+	if (eh->e_type == ET_DYN) {
+		/* need an interpreter and load sections for PIE */
+		if (interp == NULL || base_ph == NULL)
+			goto bad;
+		/* randomize exe_base for PIE */
+		exe_base = uvm_map_pie(base_ph->p_align);
 	}
 
 	/*
@@ -560,17 +566,28 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 #else
 native:
 #endif /* NATIVE_EXEC_ELF */
+
 	/*
 	 * Load all the necessary sections
 	 */
-	for (i = 0; i < eh->e_phnum; i++) {
-		Elf_Addr addr = ELFDEFNNAME(NO_ADDR), size = 0;
+	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
+		Elf_Addr addr, size = 0;
 		int prot = 0;
+		int flags = 0;
 
-		pp = &ph[i];
-
-		switch (ph[i].p_type) {
+		switch (pp->p_type) {
 		case PT_LOAD:
+			if (exe_base != 0) {
+				if (pp == base_ph) {
+					flags = VMCMD_BASE;
+					addr = exe_base;
+				} else {
+					flags = VMCMD_RELATIVE;
+					addr = pp->p_vaddr - base_ph->p_vaddr;
+				}
+			} else
+				addr = ELFDEFNNAME(NO_ADDR);
+
 			/*
 			 * Calculates size of text and data segments
 			 * by starting at first and going to end of last.
@@ -579,7 +596,18 @@ native:
 			 * for DATA_PLT, is fine for TEXT_PLT.
 			 */
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
-			    &ph[i], &addr, &size, &prot, 0);
+			    pp, &addr, &size, &prot, flags);
+
+			/*
+			 * Update exe_base in case allignment was off.
+			 * For PIE, addr is relative to exe_base so
+			 * adjust it (non PIE exe_base is 0 so no change).
+			 */
+			if (flags == VMCMD_BASE)
+				exe_base = addr;
+			else
+				addr += exe_base;
+
 			/*
 			 * Decide whether it's text or data by looking
 			 * at the protection of the section
@@ -643,6 +671,8 @@ native:
 		}
 	}
 
+	phdr += exe_base;
+
 	/*
 	 * Strangely some linux programs may have all load sections marked
 	 * writeable, in this case, textsize is not -1, but rather 0;
@@ -660,7 +690,7 @@ native:
 	}
 
 	epp->ep_interp = interp;
-	epp->ep_entry = eh->e_entry;
+	epp->ep_entry = eh->e_entry + exe_base;
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
@@ -674,7 +704,7 @@ native:
 		ap->arg_phaddr = phdr;
 		ap->arg_phentsize = eh->e_phentsize;
 		ap->arg_phnum = eh->e_phnum;
-		ap->arg_entry = eh->e_entry;
+		ap->arg_entry = eh->e_entry + exe_base;
 		ap->arg_os = os;
 
 		epp->ep_emul_arg = ap;
