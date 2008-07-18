@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.216 2008/07/11 14:23:53 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.217 2008/07/18 22:27:50 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -95,6 +95,8 @@ pgt*	at pci?			# Prism54 (only full-mac varients)
 acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
 ral*	at pci?			# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?		# Ralink RT2500/RT2501/RT2600
+malo*	at pci?			# Marvell Libertas
+malo*	at cardbus?		# Marvell Libertas
 malo*	at pcmcia?		# Marvell 88W8385
 
 # PCI SCSI
@@ -154,10 +156,12 @@ midi*	at autri?
 midi*	at opl?
 midi*	at eap?
 
-# PCI USB Controllers
+# USB Controllers
 ohci*	at pci?			# Open Host Controller
+ohci*	at cardbus?
 uhci*	at pci?			# Universal Host Controller (Intel)
 ehci*	at pci?			# Enhanced Host Controller
+ehci*	at cardbus?
 
 # USB bus support
 usb*	at ohci?
