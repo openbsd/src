@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2008/02/27 15:12:10 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2008/07/18 12:35:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -862,20 +862,28 @@ host_v4(const char *s)
 struct address *
 host_v6(const char *s)
 {
-	struct in6_addr		 ina6;
-	struct sockaddr_in6	*sin6;
-	struct address		*h;
+	struct addrinfo		 hints, *res;
+	struct sockaddr_in6	*sa_in6;
+	struct address		*h = NULL;
 
-	bzero(&ina6, sizeof(ina6));
-	if (inet_pton(AF_INET6, s, &ina6) != 1)
-		return (NULL);
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /* dummy */
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal(NULL);
+		sa_in6 = (struct sockaddr_in6 *)&h->ss;
+		sa_in6->sin6_len = sizeof(struct sockaddr_in6);
+		sa_in6->sin6_family = AF_INET6;
+		memcpy(&sa_in6->sin6_addr,
+		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+		    sizeof(sa_in6->sin6_addr));
+		sa_in6->sin6_scope_id =
+		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 
-	if ((h = calloc(1, sizeof(*h))) == NULL)
-		fatal(NULL);
-	sin6 = (struct sockaddr_in6 *)&h->ss;
-	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	sin6->sin6_family = AF_INET6;
-	memcpy(&sin6->sin6_addr, &ina6, sizeof(ina6));
+		freeaddrinfo(res);
+	}
 
 	return (h);
 }
