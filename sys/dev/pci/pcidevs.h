@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1385 2008/07/05 18:21:47 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1387 2008/07/18 11:44:22 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1155,6 +1155,7 @@
 /* Belkin Components products */
 #define	PCI_PRODUCT_BELKIN2_F5D6001	0x6001		/* F5D6001 */
 #define	PCI_PRODUCT_BELKIN2_F5D6020V3	0x6020		/* F5D6020V3 */
+#define	PCI_PRODUCT_BELKIN2_F5D7010	0x701f		/* F5D7010 */
 #define	PCI_PRODUCT_BELKIN_F5D6000	0xec00		/* F5D6000 */
 
 /* Bit3 products */

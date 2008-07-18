@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1385 2008/07/05 18:21:47 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1387 2008/07/18 11:44:22 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2946,6 +2946,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D6020V3,
 	    "F5D6020V3",
+	},
+	{
+	    PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D7010,
+	    "F5D7010",
 	},
 	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6000,
