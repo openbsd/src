@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.2 2007/11/25 00:38:49 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.c,v 1.3 2008/07/18 22:05:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -31,11 +31,12 @@
 struct rbustag rbus_null;
 
 /*
- * The PROM doesn't really understand CardBus bridges.  So it treats
- * the memory and IO window register as ordinary BARs and assigns
- * address space to them.  We re-use that address space for rbus.
- * This is a bit of a hack, but it seems to work and saves us from
- * tracking down available address space globally.
+ * The PROM doesn't really understand PCMCIA/CardBus bridges, and
+ * leaves them mostly alone.  However, on the UltraBook machines, it
+ * treats the memory and IO window register as ordinary BARs and
+ * assigns address space to them.  We re-use that address space for
+ * rbus.  This is a bit of a hack, but it seems to work and saves us
+ * from tracking down available address space globally.
  */
 
 rbus_tag_t
@@ -44,17 +45,37 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 	struct ofw_pci_register addr[5];
 	int naddr, len, i;
 	int space, reg;
+	int node = PCITAG_NODE(pa->pa_tag);
+	char buf[32];
 
-	len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
-	    &addr, sizeof(addr));
+	/* Check for the UltraBook PCMCIA controller. *//
+	if (OF_getprop(node, "name", &buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "pcma") == 0) {
+		len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
+		    &addr, sizeof(addr));
+		naddr = len / sizeof(struct ofw_pci_register);
+
+		for (i = 0; i < naddr; i++) {
+			space = addr[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK;
+			if (space != OFW_PCI_PHYS_HI_SPACE_MEM32)
+				continue;
+			reg = addr[i].phys_hi & OFW_PCI_PHYS_HI_REGISTERMASK;
+			if (reg < PCI_CB_MEMBASE0 || reg > PCI_CB_IOLIMIT1)
+				continue;
+
+			return (rbus_new_root_delegate(pa->pa_memt,
+			    addr[i].phys_lo, addr[i].size_lo, 0));
+		}
+	}
+
+	len = OF_getprop(OF_parent(node), "available", &addr, sizeof(addr));
 	naddr = len / sizeof(struct ofw_pci_register);
 
 	for (i = 0; i < naddr; i++) {
 		space = addr[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK;
 		if (space != OFW_PCI_PHYS_HI_SPACE_MEM32)
 			continue;
-		reg = addr[i].phys_hi & OFW_PCI_PHYS_HI_REGISTERMASK;
-		if (reg < PCI_CB_MEMBASE0 || reg > PCI_CB_IOLIMIT1)
+		if (addr[i].size_hi == 0 && addr[i].size_lo < 0x10000000)
 			continue;
 
 		return (rbus_new_root_delegate(pa->pa_memt,
@@ -70,17 +91,37 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 	struct ofw_pci_register addr[5];
 	int naddr, len, i;
 	int space, reg;
+	int node = PCITAG_NODE(pa->pa_tag);
+	char buf[32];
 
-	len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
-	    &addr, sizeof(addr));
+	/* Check for the UltraBook PCMCIA controller. *//
+	if (OF_getprop(node, "name", &buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "pcma") == 0) {
+		len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
+		    &addr, sizeof(addr));
+		naddr = len / sizeof(struct ofw_pci_register);
+
+		for (i = 0; i < naddr; i++) {
+			space = addr[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK;
+			if (space != OFW_PCI_PHYS_HI_SPACE_IO)
+				continue;
+			reg = addr[i].phys_hi & OFW_PCI_PHYS_HI_REGISTERMASK;
+			if (reg < PCI_CB_MEMBASE0 || reg > PCI_CB_IOLIMIT1)
+				continue;
+
+			return (rbus_new_root_delegate(pa->pa_iot,
+			    addr[i].phys_lo, addr[i].size_lo, 0));
+		}
+	}
+
+	len = OF_getprop(OF_parent(node), "available", &addr, sizeof(addr));
 	naddr = len / sizeof(struct ofw_pci_register);
 
 	for (i = 0; i < naddr; i++) {
 		space = addr[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK;
 		if (space != OFW_PCI_PHYS_HI_SPACE_IO)
 			continue;
-		reg = addr[i].phys_hi & OFW_PCI_PHYS_HI_REGISTERMASK;
-		if (reg < PCI_CB_MEMBASE0 || reg > PCI_CB_IOLIMIT1)
+		if (addr[i].size_hi == 0 && addr[i].size_lo < 0x00001000)
 			continue;
 
 		return (rbus_new_root_delegate(pa->pa_iot,
@@ -107,7 +148,7 @@ pccbb_attach_hook(struct device *parent, struct device *self,
 	    sizeof(busrange)) != sizeof(busrange))
 		return;
 
-	bus = busrange[1] + 1;
+	bus = busrange[0] + 1;
 	while (bus < 256 && pc->busnode[bus])
 		bus++;
 	if (bus == 256)
