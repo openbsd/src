@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_expm1.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_expm1.c,v 1.9 2008/07/18 13:08:58 martynas Exp $	*/
 /*	$NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -107,7 +107,7 @@ ic(invln2, 1.4426950408889633870E0,     0, 1.71547652B82FE)
 double
 expm1(double x)
 {
-	const static double one=1.0, half=1.0/2.0;
+	const static double one=1.0, half=1.0/2.0, tiny=1e-300;
 	double  z,hi,lo,c;
 	int k;
 #if defined(__vax__)
@@ -152,7 +152,7 @@ expm1(double x)
 		else
 		     /* expm1(-big#) rounded to -1 (inexact) */
 		     if(finite(x))
-			 { ln2hi+ln2lo; return(-one);}
+			return(tiny-one);
 
 		     /* expm1(-INF) is -1 */
 		     else return(-one);

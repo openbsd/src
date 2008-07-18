@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.13 2008/07/17 15:36:28 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.14 2008/07/18 13:08:58 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -324,7 +324,8 @@ sqrt(double x)
 
     /* generate the last bit and determine the final rounding */
             r/=2; x *= 4;
-            if(x==zero) goto end; 100+r; /* trigger inexact flag */
+            if(x==zero) goto end;
+	    if (100+r >= 100) {			/* trigger inexact flag */
             if(s<x) {
                 q+=r; x -=s; s += 2; s *= 2; x *= 4;
                 t = (x-s)-5;
@@ -337,6 +338,7 @@ sqrt(double x)
                 b=1.0+3*r/4; if(b==1.0) goto end;
                 b=1.0+r/4;   if(b>1.0) t=1;
                 if(t>=0) q+=r; }
+	    }
 
 end:        return(scalbn(q,n));
 }
