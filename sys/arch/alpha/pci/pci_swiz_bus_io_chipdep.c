@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.4 2007/03/16 21:22:27 robert Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.5 2008/07/19 17:10:03 miod Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -308,6 +308,7 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, cacheable, iohp)
 	int cacheable;
 	bus_space_handle_t *iohp;
 {
+	bus_addr_t ioend = ioaddr + (iosize - 1);
 	int error;
 
 #ifdef EXTENT_DEBUG
@@ -325,19 +326,20 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, cacheable, iohp)
 
 #ifdef CHIP_IO_W1_BUS_START
 	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
+	    ioend <= CHIP_IO_W1_BUS_END(v)) {
 		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
 		    (ioaddr - CHIP_IO_W1_BUS_START(v));
 	} else
 #endif
 #ifdef CHIP_IO_W2_BUS_START
 	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
+	    ioend <= CHIP_IO_W2_BUS_END(v)) {
 		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
 		    (ioaddr - CHIP_IO_W2_BUS_START(v));
 	} else
 #endif
 	{
+#ifdef EXTENT_DEBUG
 		printf("\n");
 #ifdef CHIP_IO_W1_BUS_START
 		printf("%s: window[1]=0x%lx-0x%lx\n",
@@ -351,6 +353,8 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, cacheable, iohp)
 #endif
 		panic("%s: don't know how to map %lx",
 		    __S(__C(CHIP,_io_map)), ioaddr);
+#endif
+		return (EINVAL);
 	}
 
 	return (0);
