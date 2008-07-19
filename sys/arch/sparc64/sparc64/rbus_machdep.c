@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.3 2008/07/18 22:05:29 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.c,v 1.4 2008/07/19 10:02:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -48,7 +48,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 	int node = PCITAG_NODE(pa->pa_tag);
 	char buf[32];
 
-	/* Check for the UltraBook PCMCIA controller. *//
+	/* Check for the UltraBook PCMCIA controller. */
 	if (OF_getprop(node, "name", &buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "pcma") == 0) {
 		len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
@@ -94,7 +94,7 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 	int node = PCITAG_NODE(pa->pa_tag);
 	char buf[32];
 
-	/* Check for the UltraBook PCMCIA controller. *//
+	/* Check for the UltraBook PCMCIA controller. */
 	if (OF_getprop(node, "name", &buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "pcma") == 0) {
 		len = OF_getprop(PCITAG_NODE(pa->pa_tag), "assigned-addresses",
