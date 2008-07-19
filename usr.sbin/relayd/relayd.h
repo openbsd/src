@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.106 2008/07/09 17:16:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.107 2008/07/19 10:52:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -345,6 +345,7 @@ enum forwardmode {
 
 struct host_config {
 	objid_t			 id;
+	objid_t			 parentid;
 	objid_t			 tableid;
 	int			 retry;
 	char			 name[MAXHOSTNAMELEN];
@@ -353,6 +354,8 @@ struct host_config {
 
 struct host {
 	TAILQ_ENTRY(host)	 entry;
+	TAILQ_ENTRY(host)	 child;
+	TAILQ_HEAD(,host)	 children;
 	struct host_config	 conf;
 	u_int32_t		 flags;
 	char			*tablename;
@@ -766,10 +769,10 @@ void	 show(struct ctl_conn *);
 void	 show_sessions(struct ctl_conn *);
 int	 enable_rdr(struct ctl_conn *, struct ctl_id *);
 int	 enable_table(struct ctl_conn *, struct ctl_id *);
-int	 enable_host(struct ctl_conn *, struct ctl_id *);
+int	 enable_host(struct ctl_conn *, struct ctl_id *, struct host *);
 int	 disable_rdr(struct ctl_conn *, struct ctl_id *);
 int	 disable_table(struct ctl_conn *, struct ctl_id *);
-int	 disable_host(struct ctl_conn *, struct ctl_id *);
+int	 disable_host(struct ctl_conn *, struct ctl_id *, struct host *);
 
 /* pfe_filter.c */
 void	 init_filter(struct relayd *);

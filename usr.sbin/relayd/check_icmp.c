@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.23 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.24 2008/07/19 10:52:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -197,7 +197,8 @@ send_icmp(int s, short event, void *arg)
 		    table->conf.flags & F_DISABLE)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (host->flags & (F_DISABLE | F_CHECK_SENT))
+			if (host->flags & (F_DISABLE | F_CHECK_SENT) ||
+			    host->conf.parentid)
 				continue;
 			if (((struct sockaddr *)&host->conf.ss)->sa_family !=
 			    cie->af)

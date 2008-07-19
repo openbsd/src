@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.25 2008/01/31 09:33:39 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.26 2008/07/19 10:52:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -293,7 +293,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (disable_host(c, &id))
+			if (disable_host(c, &id, NULL))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
@@ -307,7 +307,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (enable_host(c, &id))
+			if (enable_host(c, &id, NULL))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {

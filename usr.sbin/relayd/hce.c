@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.41 2008/03/12 10:50:44 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.42 2008/07/19 10:52:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -240,7 +240,7 @@ hce_launch_checks(int fd, short event, void *arg)
 			fatalx("hce_launch_checks: unknown check type");
 
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (host->flags & F_DISABLE)
+			if (host->flags & F_DISABLE || host->conf.parentid)
 				continue;
 			switch (table->conf.check) {
 			case CHECK_ICMP:
@@ -276,6 +276,10 @@ hce_notify_done(struct host *host, const char *msg)
 	struct timeval		 tv_now, tv_dur;
 	u_long			 duration;
 	u_int			 logopt;
+	struct host		*h;
+	int			 hostup;
+
+	hostup = host->up;
 
 	if (host->up == HOST_DOWN && host->retry_cnt) {
 		log_debug("hce_notify_done: host %s retry %d",
@@ -327,6 +331,15 @@ hce_notify_done(struct host *host, const char *msg)
 		snmp_hosttrap(table, host);
 
 	host->last_up = host->up;
+
+	if (TAILQ_EMPTY(&host->children))
+		return;
+
+	/* Notify for all other hosts that inherit the state from this one */
+	TAILQ_FOREACH(h, &host->children, child) {
+		h->up = hostup;		
+		hce_notify_done(h, msg);
+	}
 }
 
 void

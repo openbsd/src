@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2008/07/17 16:41:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2008/07/19 10:52:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -130,11 +130,11 @@ typedef struct {
 %token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
 %token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
 %token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
-%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT
+%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT PARENT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname table
-%type	<v.number>	port http_type loglevel sslcache optssl mark
+%type	<v.number>	port http_type loglevel sslcache optssl mark parent
 %type	<v.number>	proto_type dstmode retry log flag direction forwardmode
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -1238,7 +1238,7 @@ interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
-host		: STRING retry		{
+host		: STRING retry parent	{
 			struct address *a;
 			struct addresslist al;
 
@@ -1266,6 +1266,8 @@ host		: STRING retry		{
 			free($1);
 			$$->conf.id = 0; /* will be set later */
 			$$->conf.retry = $2;
+			$$->conf.parentid = $3;
+			TAILQ_INIT(&$$->children);
 		}
 		;
 
@@ -1273,6 +1275,15 @@ retry		: /* nothing */		{ $$ = 0; }
 		| RETRY NUMBER		{
 			if (($$ = $2) < 0) {
 				yyerror("invalid retry value: %d\n", $2);
+				YYERROR;
+			}
+		}
+		;
+
+parent		: /* nothing */		{ $$ = 0; }
+		| PARENT NUMBER		{
+			if (($$ = $2) < 0) {
+				yyerror("invalid parent value: %d\n", $2);
 				YYERROR;
 			}
 		}
@@ -1378,6 +1389,7 @@ lookup(char *s)
 		{ "nodelay",		NODELAY },
 		{ "nothing",		NOTHING },
 		{ "on",			ON },
+		{ "parent",		PARENT },
 		{ "path",		PATH },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
@@ -1729,7 +1741,7 @@ parse_config(const char *filename, int opts)
 {
 	struct sym	*sym, *next;
 	struct table	*nexttb;
-	struct host	*h;
+	struct host	*h, *ph;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
 	    (conf->sc_tables = calloc(1, sizeof(*conf->sc_tables))) == NULL ||
@@ -1833,6 +1845,26 @@ parse_config(const char *filename, int opts)
 			free(table);
 			continue;
 		}
+
+		TAILQ_FOREACH(h, &table->hosts, entry) {
+			if (h->conf.parentid) {
+				ph = host_find(conf, h->conf.parentid);
+
+				/* Validate the parent id */
+				if (h->conf.id == h->conf.parentid ||
+				    ph == NULL || ph->conf.parentid)
+					ph = NULL;
+
+				if (ph == NULL) {
+					log_warnx("host parent id %d invalid",
+					    h->conf.parentid);
+					errors++;
+				} else
+					TAILQ_INSERT_TAIL(&ph->children,
+					    h, child);
+			}
+		}
+
 		if (!(table->conf.flags & F_USED)) {
 			log_warnx("unused table: %s", table->conf.name);
 			errors++;
@@ -2135,6 +2167,7 @@ table_inherit(struct table *tb)
 		}
 		h->conf.tableid = tb->conf.id;
 		h->tablename = tb->conf.name;
+		TAILQ_INIT(&h->children);
 		TAILQ_INSERT_TAIL(&tb->hosts, h, entry);
 	}
 

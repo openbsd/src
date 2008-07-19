@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.88 2008/06/11 18:21:20 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.89 2008/07/19 10:52:32 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2008 $
+.Dd $Mdocdate: July 19 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -183,7 +183,7 @@ The table can be later enabled through
 .El
 Each table must contain at least one host;
 multiple hosts are separated by newline, comma, or whitespace.
-Host entries may be defined with the following attribute:
+Host entries may be defined with the following attributes:
 .Bl -tag -width retry
 .It Ic retry Ar number
 The optional retry option adds a tolerance for failed host checks;
@@ -192,6 +192,17 @@ the check will be retried for
 more times before setting the host state to down.
 If this table is used by a relay, it will also specify the number of
 retries for outgoing connection attempts.
+.It Ic parent Ar number
+The optional parent option allows to inherit the state from a parent
+host with the specified identifier.
+The check will be skipped for this host and copied from the parent host.
+This can be used to prevent multiple checks on hosts with multiple IP
+addresses for the same service.
+The host identifiers are sequentially assigned to the configured hosts
+starting with 1; it can be figured out with the
+.Xr relayctl 8
+.Ic show summary
+commands.
 .El
 .Pp
 For example:
