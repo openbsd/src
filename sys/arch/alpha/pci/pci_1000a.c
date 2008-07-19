@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.7 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.8 2008/07/19 19:25:18 miod Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -152,7 +152,7 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 	int buspin, line;
         pci_intr_handle_t *ihp;
 {
-	int imrbit, device;
+	int imrbit = 0, device;
 	/*
 	 * Get bit number in mystery ICU imr
 	 */
@@ -180,15 +180,24 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 		return 1;
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
+
 	pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
-	if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
+
+	/*
+	 * The console places the interrupt mapping in the "line" value.
+	 * We trust it whenever possible.
+	 */
+	if (line >= 0 && line < PCI_NIRQ) {
+		imrbit = line + 1;
+	} else if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
 		if (device == 0)
 			printf("dec_1000a_intr_map: ?! UNEXPECTED DEV 0\n");
 		imrbit = imrmap[device][buspin - 1];
-		if (imrbit) {
-			*ihp = IMR2IRQ(imrbit);
-			return 0;
-		}
+	}
+
+	if (imrbit) {
+		*ihp = IMR2IRQ(imrbit);
+		return 0;
 	}
 bad:
 	return 1;
