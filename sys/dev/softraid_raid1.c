@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.5 2008/02/05 16:49:25 marco Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.6 2008/07/19 22:41:58 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -55,9 +55,9 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	if (sr_alloc_wu(sd))
+	if (sr_wu_alloc(sd))
 		goto bad;
-	if (sr_alloc_ccb(sd))
+	if (sr_ccb_alloc(sd))
 		goto bad;
 
 	rv = 0;
@@ -76,11 +76,8 @@ sr_raid1_free_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_free_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	sr_free_wu(sd);
-	sr_free_ccb(sd);
-
-	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF);
+	sr_wu_free(sd);
+	sr_ccb_free(sd);
 
 	rv = 0;
 	return (rv);
@@ -92,8 +89,8 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	int			old_state, s;
 
 	DNPRINTF(SR_D_STATE, "%s: %s: %s: sr_raid_set_chunk_state %d -> %d\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
-	    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname, c, new_state);
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname, c, new_state);
 
 	/* ok to go to splbio since this only happens in error path */
 	s = splbio();
@@ -148,8 +145,8 @@ die:
 		splx(s); /* XXX */
 		panic("%s: %s: %s: invalid chunk state transition "
 		    "%d -> %d\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname,
-		    sd->sd_vol.sv_chunks[c]->src_meta.scm_devname,
+		    sd->sd_meta->ssd_devname,
+		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
 		    old_state, new_state);
 		/* NOTREACHED */
 	}
@@ -158,7 +155,7 @@ die:
 	sd->sd_set_vol_state(sd);
 
 	sd->sd_must_flush = 1;
-	workq_add_task(NULL, 0, sr_save_metadata_callback, sd, NULL);
+	workq_add_task(NULL, 0, sr_meta_save_callback, sd, NULL);
 done:
 	splx(s);
 }
@@ -168,12 +165,12 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 {
 	int			states[SR_MAX_STATES];
 	int			new_state, i, s, nd;
-	int			old_state = sd->sd_vol.sv_meta.svm_status;
+	int			old_state = sd->sd_vol_status;
 
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 
-	nd = sd->sd_vol.sv_meta.svm_no_chunk;
+	nd = sd->sd_meta->ssdi.ssd_chunk_no;
 
 	for (i = 0; i < SR_MAX_STATES; i++)
 		states[i] = 0;
@@ -183,8 +180,8 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 		if (s > SR_MAX_STATES)
 			panic("%s: %s: %s: invalid chunk state",
 			    DEVNAME(sd->sd_sc),
-			    sd->sd_vol.sv_meta.svm_devname,
-			    sd->sd_vol.sv_chunks[i]->src_meta.scm_devname);
+			    sd->sd_meta->ssd_devname,
+			    sd->sd_vol.sv_chunks[i]->src_meta.scmi.scm_devname);
 		states[s]++;
 	}
 
@@ -207,7 +204,7 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	}
 
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state %d -> %d\n",
-	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    old_state, new_state);
 
 	switch (old_state) {
@@ -274,12 +271,12 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 die:
 		panic("%s: %s: invalid volume state transition "
 		    "%d -> %d\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname,
+		    sd->sd_meta->ssd_devname,
 		    old_state, new_state);
 		/* NOTREACHED */
 	}
 
-	sd->sd_vol.sv_meta.svm_status = new_state;
+	sd->sd_vol_status = new_state;
 }
 
 int
@@ -302,16 +299,16 @@ sr_raid1_rw(struct sr_workunit *wu)
 	if (xs->flags & SCSI_DATA_IN)
 		ios = 1;
 	else
-		ios = sd->sd_vol.sv_meta.svm_no_chunk;
+		ios = sd->sd_meta->ssdi.ssd_chunk_no;
 	wu->swu_io_count = ios;
 
 	for (i = 0; i < ios; i++) {
-		ccb = sr_get_ccb(sd);
+		ccb = sr_ccb_get(sd);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */
 			printf("%s: %s: too many ccbs queued\n",
 			    DEVNAME(sd->sd_sc),
-			    sd->sd_vol.sv_meta.svm_devname);
+			    sd->sd_meta->ssd_devname);
 			goto bad;
 		}
 
@@ -337,7 +334,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 ragain:
 			/* interleave reads */
 			x = sd->mds.mdd_raid1.sr1_counter++ %
-			    sd->sd_vol.sv_meta.svm_no_chunk;
+			    sd->sd_meta->ssdi.ssd_chunk_no;
 			scp = sd->sd_vol.sv_chunks[x];
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
@@ -348,7 +345,7 @@ ragain:
 			case BIOC_SDOFFLINE:
 			case BIOC_SDREBUILD:
 			case BIOC_SDHOTSPARE:
-				if (rt++ < sd->sd_vol.sv_meta.svm_no_chunk)
+				if (rt++ < sd->sd_meta->ssdi.ssd_chunk_no)
 					goto ragain;
 
 				/* FALLTHROUGH */
@@ -356,7 +353,7 @@ ragain:
 				/* volume offline */
 				printf("%s: is offline, can't read\n",
 				    DEVNAME(sd->sd_sc));
-				sr_put_ccb(ccb);
+				sr_ccb_put(ccb);
 				goto bad;
 			}
 		} else {
@@ -373,7 +370,7 @@ ragain:
 			case BIOC_SDHOTSPARE: /* should never happen */
 			case BIOC_SDOFFLINE:
 				wu->swu_io_count--;
-				sr_put_ccb(ccb);
+				sr_ccb_put(ccb);
 				continue;
 
 			default:
@@ -391,7 +388,7 @@ ragain:
 
 		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
 		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
-		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
 		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 	}
@@ -415,7 +412,7 @@ queued:
 	splx(s);
 	return (0);
 bad:
-	/* wu is unwound by sr_put_wu */
+	/* wu is unwound by sr_wu_put */
 	return (1);
 }
 
@@ -465,7 +462,7 @@ sr_raid1_intr(struct buf *bp)
 			if (xs->flags & SCSI_DATA_IN) {
 				printf("%s: retrying read on block %lld\n",
 				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-				sr_put_ccb(ccb);
+				sr_ccb_put(ccb);
 				TAILQ_INIT(&wu->swu_ccb);
 				wu->swu_state = SR_WU_RESTART;
 				if (sd->sd_scsi_rw(wu))
@@ -513,7 +510,7 @@ sr_raid1_intr(struct buf *bp)
 			    DEVNAME(sc), wu);
 
 		/* do not change the order of these 2 functions */
-		sr_put_wu(wu);
+		sr_wu_put(wu);
 		scsi_done(xs);
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -526,7 +523,7 @@ retry:
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
-	sr_put_wu(wu);
+	sr_wu_put(wu);
 	scsi_done(xs);
 	splx(s);
 }
@@ -544,7 +541,7 @@ sr_raid1_recreate_wu(struct sr_workunit *wu)
 		/* toss all ccbs */
 		while ((ccb = TAILQ_FIRST(&wup->swu_ccb)) != NULL) {
 			TAILQ_REMOVE(&wup->swu_ccb, ccb, ccb_link);
-			sr_put_ccb(ccb);
+			sr_ccb_put(ccb);
 		}
 		TAILQ_INIT(&wup->swu_ccb);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.60 2008/06/25 17:43:09 thib Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.61 2008/07/19 22:41:58 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -19,89 +19,129 @@
 #ifndef SOFTRAIDVAR_H
 #define SOFTRAIDVAR_H
 
+#include <crypto/md5.h>
+
 #define SR_UUID_MAX		4
 struct sr_uuid {
 	u_int32_t		sui_id[SR_UUID_MAX];
 } __packed;
 
-#define SR_META_SIZE		32	/* save space at chunk beginning */
+#define SR_META_SIZE		64	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
-#define SR_META_VERSION		1	/* bump when sr_metadata changes */
+#define SR_META_VERSION		2	/* bump when sr_metadata changes */
 struct sr_metadata {
-	/* do not change order of ssd_magic, ssd_version & ssd_checksum */
-	u_int64_t		ssd_magic;	/* magic id */
+	struct sr_meta_invariant {
+		/* do not change order of ssd_magic, ssd_version */
+		u_int64_t	ssd_magic;	/* magic id */
 #define	SR_MAGIC		0x4d4152436372616dLLU
-	u_int8_t		ssd_version;	/* meta data version */
-	u_int8_t		ssd_pad1[3];
-	u_int32_t		ssd_flags;	/* flags */
+		u_int32_t	ssd_version; 	/* meta data version */
+		u_int32_t	ssd_flags;
+		struct sr_uuid	ssd_uuid;	/* unique identifier */
 
-	/* meta-data */
-	u_int32_t		ssd_checksum;	/* xor of the structure */
-	u_int32_t		ssd_size;	/* sizeof(sr_metadata) */
-	u_int32_t		ssd_ondisk;	/* on disk version counter */
-	u_int32_t		ssd_pad2;
-	struct sr_uuid		ssd_uuid;	/* unique identifier */
+		/* chunks */
+		u_int32_t	ssd_chunk_no;	/* number of chunks */
+		u_int32_t	ssd_chunk_id;	/* chunk identifier */
 
-	/* virtual disk data */
-	u_int32_t		ssd_vd_ver;	/* vd structure version */
-	u_int32_t		ssd_vd_size;	/* vd structure size */
-	u_int32_t		ssd_vd_volid;	/* volume id */
-	u_int32_t		ssd_vd_chk;	/* vd structure xor */
+		/* optional */
+		u_int32_t	ssd_opt_no;	/* nr of optional md * elements */
+		u_int32_t	ssd_pad;
 
-	/* chunk data */
-	u_int32_t		ssd_chunk_ver;	/* chunk structure version */
-	u_int32_t		ssd_chunk_no;	/* number of chunks */
-	u_int32_t		ssd_chunk_size;	/* chunk structure size */
-	u_int32_t		ssd_chunk_id;	/* chunk identifier */
-	u_int32_t		ssd_chunk_chk;	/* chunk structure xor */
-	u_int32_t		ssd_pad3;
-
-	/* optional metadata */
-	u_int32_t		ssd_opt_ver;	/* optinal meta version */
-	u_int32_t		ssd_opt_no;	/* nr of optional md elements */
-	u_int32_t		ssd_opt_size;	/* sizeof optional metadata */
-	u_int32_t		ssd_opt_chk;	/* optional metadata xor */
+		/* volume metadata */
+		u_int32_t	ssd_volid;	/* volume id */
+		u_int32_t	ssd_level;	/* raid level */
+		int64_t		ssd_size;	/* virt disk size in blocks */
+		char		ssd_vendor[8];	/* scsi vendor */
+		char		ssd_product[16];/* scsi product */
+		char		ssd_revision[4];/* scsi revision */
+		/* optional volume members */
+		u_int32_t	ssd_strip_size;	/* strip size */
+	} _sdd_invariant;
+#define ssdi			_sdd_invariant
+	/* MD5 of invariant metadata */
+	u_int8_t		ssd_checksum[MD5_DIGEST_LENGTH];
+	char			ssd_devname[32];/* /dev/XXXXX */
+	u_int32_t		ssd_meta_flags;
+#define	SR_META_DIRTY		0x1
+	u_int32_t		ssd_pad;
+	u_int64_t		ssd_ondisk;	/* on disk version counter */
 } __packed;
 
-#define SR_VOL_VERSION	2	/* bump when sr_vol_meta changes */
-struct sr_vol_meta {
-	u_int32_t		svm_volid;	/* volume id */
-	u_int32_t		svm_status; 	/* use bioc_vol status */
-	u_int32_t		svm_flags;	/* flags */
-#define	SR_VOL_DIRTY		0x01
-	u_int32_t		svm_level;	/* raid level */
-	int64_t			svm_size;	/* virt disk size in blocks */
-	char			svm_devname[32];/* /dev/XXXXX */
-	char			svm_vendor[8];	/* scsi vendor */
-	char			svm_product[16];/* scsi product */
-	char			svm_revision[4];/* scsi revision */
-	u_int32_t		svm_no_chunk;	/* number of chunks */
-	struct sr_uuid 		svm_uuid;	/* volume unique identifier */
-
-	/* optional members */
-	u_int32_t		svm_strip_size;	/* strip size */
-} __packed;
-
-#define SR_CHUNK_VERSION	1	/* bump when sr_chunk_meta changes */
-struct sr_chunk_meta {
-	u_int32_t		scm_volid;	/* vd we belong to */
-	u_int32_t		scm_chunk_id;	/* chunk id */
+struct sr_meta_chunk {
+	struct sr_meta_chunk_invariant {
+		u_int32_t	scm_volid;	/* vd we belong to */
+		u_int32_t	scm_chunk_id;	/* chunk id */
+		char		scm_devname[32];/* /dev/XXXXX */
+		int64_t		scm_size;	/* size of partition in blocks*/
+		int64_t		scm_coerced_size; /* coerced sz of part in blk*/
+		struct sr_uuid	scm_uuid;	/* unique identifier */
+	} _scm_invariant;
+#define scmi			_scm_invariant
+	/* MD5 of invariant chunk metadata */
+	u_int8_t		scm_checksum[MD5_DIGEST_LENGTH];
 	u_int32_t		scm_status;	/* use bio bioc_disk status */
-	u_int32_t		scm_pad1;
-	char			scm_devname[32];/* /dev/XXXXX */
-	int64_t			scm_size;	/* size of partition in blocks*/
-	int64_t			scm_coerced_size; /* coerced sz of part in blk*/
-	struct sr_uuid		scm_uuid;	/* unique identifier */
 } __packed;
 
-#define SR_CRYPTO_MAXKEYBYTES	32
-#define SR_CRYPTO_MAXKEYS	32
+#define SR_CRYPTO_MAXKEYBYTES	32	/* max bytes in a key (AES-XTS-256) */
+#define SR_CRYPTO_MAXKEYS	32	/* max keys per volume */
 #define SR_CRYPTO_KEYBITS	512	/* AES-XTS with 2 * 256 bit keys */
 #define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
-#define SR_CRYPTO_KDFHINTBYTES	256
-#define SR_CRYPTO_CHECKBYTES	64
+#define SR_CRYPTO_KDFHINTBYTES	256	/* size of opaque KDF hint */
+#define SR_CRYPTO_CHECKBYTES	64	/* size of generic key chksum struct */
 #define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
 
+/*
+ * Check that HMAC-SHA1_k(decrypted scm_key) == sch_mac, where
+ * k = SHA1(masking key)
+ */
+struct sr_crypto_chk_hmac_sha1 {
+	u_int8_t	sch_mac[20];
+} __packed;
+
+struct sr_meta_crypto {
+	u_int32_t		scm_alg;	/* vol crypto algorithm */
+#define SR_CRYPTOA_AES_XTS_128	1
+#define SR_CRYPTOA_AES_XTS_256	2
+	u_int32_t		scm_flags;	/* key & kdfhint valid */
+#define SR_CRYPTOF_INVALID	(0)
+#define SR_CRYPTOF_KEY		(1<<0)
+#define SR_CRYPTOF_KDFHINT	(1<<1)
+	u_int32_t		scm_mask_alg;	/* disk key masking crypt alg */
+#define SR_CRYPTOM_AES_ECB_256	1
+	u_int32_t		scm_pad1;
+	u_int8_t		scm_reserved[64];
+
+	/* symmetric keys used for disk encryption */
+	u_int8_t		scm_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
+	/* hint to kdf algorithm (opaque to kernel) */
+	u_int8_t		scm_kdfhint[SR_CRYPTO_KDFHINTBYTES];
+
+	u_int32_t		scm_check_alg;	/* key chksum algorithm */
+#define SR_CRYPTOC_HMAC_SHA1		1
+	u_int32_t		scm_pad2;
+	union {
+		struct sr_crypto_chk_hmac_sha1	chk_hmac_sha1;
+		u_int8_t			chk_reserved2[64];
+	}			_scm_chk;
+#define	chk_hmac_sha1	_scm_chk.chk_hmac_sha1
+} __packed;
+
+struct sr_meta_opt {
+	struct sr_meta_opt_invariant {
+		u_int32_t	som_type;	/* optional type */
+#define SR_OPT_INVALID		0x00
+#define SR_OPT_CRYPTO		0x01
+		u_int32_t	som_pad;
+		union {
+			struct sr_meta_crypto smm_crypto;
+		}		som_meta;
+	} _som_invariant;
+#define somi			_som_invariant
+#define somi_crypto		_som_invariant.smm_crypto
+	/* MD5 of invariant optional metadata */
+	u_int8_t		som_checksum[MD5_DIGEST_LENGTH];
+} __packed;
+
+/* this is a generic hint for KDF done in userland, not interpreted by the kernel. */
 struct sr_crypto_genkdf {
 	u_int32_t	len;
 	u_int32_t	type;
@@ -109,6 +149,7 @@ struct sr_crypto_genkdf {
 #define SR_CRYPTOKDFT_PBKDF2	(1<<0)
 };
 
+/* this is a hint for KDF using PKCS#5.  Not interpreted by the kernel */
 struct sr_crypto_kdf_pbkdf2 {
 	u_int32_t	len;
 	u_int32_t	type;
@@ -117,13 +158,9 @@ struct sr_crypto_kdf_pbkdf2 {
 };
 
 /*
- * Check that HMAC-SHA1_k(decrypted scm_key) == sch_mac, where
- * k = SHA1(masking key)
+ * this structure is used to copy masking keys and KDF hints from/to userland.
+ * the embedded hint structures are not interpreted by the kernel.
  */
-struct sr_crypto_chk_hmac_sha1 {
-	u_int8_t	sch_mac[20];
-};
-
 struct sr_crypto_kdfinfo {
 	u_int32_t	len;
 	u_int32_t	flags;
@@ -139,46 +176,11 @@ struct sr_crypto_kdfinfo {
 #define pbkdf2		_kdfhint.pbkdf2
 };
 
-struct sr_crypto_metadata {
-	u_int32_t		scm_alg;
-#define SR_CRYPTOA_AES_XTS_128	1
-#define SR_CRYPTOA_AES_XTS_256	2
-	u_int32_t		scm_flags;
-#define SR_CRYPTOF_INVALID	(0)
-#define SR_CRYPTOF_KEY		(1<<0)
-#define SR_CRYPTOF_KDFHINT	(1<<1)
-	u_int32_t		scm_mask_alg;
-#define SR_CRYPTOM_AES_ECB_256	1
-	u_int8_t		scm_reserved[64];
-
-	u_int8_t		scm_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
-	u_int8_t		scm_kdfhint[SR_CRYPTO_KDFHINTBYTES];
-
-	u_int32_t		scm_check_alg;
-#define SR_CRYPTOC_HMAC_SHA1		1
-	union {
-		struct sr_crypto_chk_hmac_sha1	chk_hmac_sha1;
-		u_int8_t			chk_reserved2[64];
-	}			_scm_chk;
-#define	chk_hmac_sha1	_scm_chk.chk_hmac_sha1
-};
-
-#define SR_OPT_VERSION		1	/* bump when sr_opt_meta changes */
-struct sr_opt_meta {
-	u_int32_t		som_type;
-#define SR_OPT_INVALID		0x00
-#define SR_OPT_CRYPTO		0x01
-	u_int32_t		som_pad;
-	union {
-		struct sr_crypto_metadata smm_crypto;
-	}			som_meta;
-};
-
 #ifdef _KERNEL
-
 #include <dev/biovar.h>
 
 #include <sys/buf.h>
+#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 
@@ -211,6 +213,7 @@ extern u_int32_t		sr_debug;
 #define	SR_MAX_LD		1
 #define	SR_MAX_CMDS		16
 #define	SR_MAX_STATES		7
+#define SR_VM_IGNORE_DIRTY	1
 
 /* forward define to prevent dependency goo */
 struct sr_softc;
@@ -289,15 +292,19 @@ struct sr_raid1 {
 /* CRYPTO */
 #define SR_CRYPTO_NOWU		16
 struct sr_crypto {
-	struct sr_crypto_metadata scr_meta;
+	struct sr_meta_crypto	scr_meta;
 
+	struct pool		sr_uiopl;
+	struct pool		sr_iovpl;
+
+	/* XXX only keep scr_sid over time */
 	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
 	u_int8_t		scr_maskkey[SR_CRYPTO_MAXKEYBYTES];
 	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
 };
 
 struct sr_metadata_list {
-	struct sr_metadata	*sml_metadata;
+	u_int8_t		sml_metadata[SR_META_SIZE * 512];
 	dev_t			sml_mm;
 	int			sml_used;
 
@@ -307,7 +314,8 @@ struct sr_metadata_list {
 SLIST_HEAD(sr_metadata_list_head, sr_metadata_list);
 
 struct sr_chunk {
-	struct sr_chunk_meta	src_meta;	/* chunk meta data */
+	struct sr_meta_chunk	src_meta;	/* chunk meta data */
+	struct sr_meta_opt	src_opt;	/* optional metadata */
 
 	/* runtime data */
 	dev_t			src_dev_mm;	/* major/minor */
@@ -323,8 +331,6 @@ struct sr_chunk {
 SLIST_HEAD(sr_chunk_head, sr_chunk);
 
 struct sr_volume {
-	struct sr_vol_meta	sv_meta;	/* meta data */
-
 	/* runtime data */
 	struct sr_chunk_head	sv_chunk_list;	/* linked list of all chunks */
 	struct sr_chunk		**sv_chunks;	/* array to same chunks */
@@ -356,7 +362,9 @@ struct sr_discipline {
 
 	/* discipline metadata */
 	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */
+	void			*sd_meta_foreign; /* non native metadata */
 	u_int32_t		sd_meta_flags;
+	int			sd_meta_type;	/* metadata functions */
 
 	int			sd_sync;
 	int			sd_must_flush;
@@ -368,7 +376,7 @@ struct sr_discipline {
 
 	/* discipline volume */
 	struct sr_volume	sd_vol;		/* volume associated */
-
+	int			sd_vol_status;	/* runtime vol status */
 	/* discipline resources */
 	struct sr_ccb		*sd_ccb;
 	struct sr_ccb_list	sd_ccb_freeq;
@@ -429,23 +437,19 @@ struct sr_softc {
 	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
 };
 
-struct pool;
-extern struct pool	sr_uiopl;
-extern struct pool	sr_iovpl;
-
 /* work units & ccbs */
-int			sr_alloc_ccb(struct sr_discipline *);
-void			sr_free_ccb(struct sr_discipline *);
-struct sr_ccb		*sr_get_ccb(struct sr_discipline *);
-void			sr_put_ccb(struct sr_ccb *);
-int			sr_alloc_wu(struct sr_discipline *);
-void			sr_free_wu(struct sr_discipline *);
-struct sr_workunit	*sr_get_wu(struct sr_discipline *);
-void			sr_put_wu(struct sr_workunit *);
+int			sr_ccb_alloc(struct sr_discipline *);
+void			sr_ccb_free(struct sr_discipline *);
+struct sr_ccb		*sr_ccb_get(struct sr_discipline *);
+void			sr_ccb_put(struct sr_ccb *);
+int			sr_wu_alloc(struct sr_discipline *);
+void			sr_wu_free(struct sr_discipline *);
+struct sr_workunit	*sr_wu_get(struct sr_discipline *);
+void			sr_wu_put(struct sr_workunit *);
 
 /* misc functions */
 int32_t			sr_validate_stripsize(u_int32_t);
-void			sr_save_metadata_callback(void *, void *);
+void			sr_meta_save_callback(void *, void *);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
 			    char *);
 int			sr_check_io_collision(struct sr_workunit *);

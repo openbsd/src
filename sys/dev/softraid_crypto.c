@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.28 2008/06/25 17:43:09 thib Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.29 2008/07/19 22:41:58 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -100,16 +100,23 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct cryptop		*crp;
 	struct cryptodesc	*crd;
-	struct uio		*uio;
-	int			 flags, i, n;
-	daddr64_t		 blk = 0;
-	u_int			 keyndx;
+	struct uio		*uio = NULL;
+	int			flags, i, n, s;
+	daddr64_t		blk = 0;
+	u_int			keyndx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
-	uio = pool_get(&sr_uiopl, PR_WAITOK|PR_ZERO);
-	uio->uio_iov = pool_get(&sr_iovpl, PR_WAITOK);
+	s = splbio();
+	uio = pool_get(&sd->mds.mdd_crypto.sr_uiopl, PR_ZERO);
+	if (uio == NULL)
+		goto unwind;
+	uio->uio_iov = pool_get(&sd->mds.mdd_crypto.sr_iovpl, 0);
+	if (uio->uio_iov == NULL)
+		goto unwind;
+	splx(s);
+
 	uio->uio_iovcnt = 1;
 	uio->uio_iov->iov_len = xs->datalen;
 	if (xs->flags & SCSI_DATA_OUT) {
@@ -172,8 +179,14 @@ unwind:
 		crypto_freereq(crp);
 	if (wu->swu_xs->flags & SCSI_DATA_OUT)
 		free(uio->uio_iov->iov_base, M_DEVBUF);
-	pool_put(&sr_iovpl, uio->uio_iov);
-	pool_put(&sr_uiopl, uio);
+
+	s = splbio();
+	if (uio && uio->uio_iov)
+		pool_put(&sd->mds.mdd_crypto.sr_iovpl, uio->uio_iov);
+	if (uio)
+		pool_put(&sd->mds.mdd_crypto.sr_uiopl, uio);
+	splx(s);
+
 	return (NULL);
 }
 
@@ -182,14 +195,18 @@ sr_crypto_putcryptop(struct cryptop *crp)
 {
 	struct uio		*uio = crp->crp_buf;
 	struct sr_workunit	*wu = crp->crp_opaque;
+	struct sr_discipline	*sd = wu->swu_dis;
+	int			s;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_putcryptop crp: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), crp);
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT)
 		free(uio->uio_iov->iov_base, M_DEVBUF);
-	pool_put(&sr_iovpl, uio->uio_iov);
-	pool_put(&sr_uiopl, uio);
+	s = splbio();
+	pool_put(&sd->mds.mdd_crypto.sr_iovpl, uio->uio_iov);
+	pool_put(&sd->mds.mdd_crypto.sr_uiopl, uio);
+	splx(s);
 	crypto_freereq(crp);
 
 	return (wu);
@@ -434,12 +451,17 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
+	pool_init(&sd->mds.mdd_crypto.sr_uiopl, sizeof(struct uio), 0, 0, 0,
+	    "sr_uiopl", NULL);
+	pool_init(&sd->mds.mdd_crypto.sr_iovpl, sizeof(struct iovec), 0, 0, 0,
+	    "sr_iovpl", NULL);
+
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 
-	if (sr_alloc_wu(sd))
+	if (sr_wu_alloc(sd))
 		return (ENOMEM);
-	if (sr_alloc_ccb(sd))
+	if (sr_ccb_alloc(sd))
 		return (ENOMEM);
 	if (sr_crypto_decrypt_key(sd))
 		return (EPERM);	
@@ -458,7 +480,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	}
 
 	/* Allocate a session for every 2^SR_CRYPTO_KEY_BLKSHIFT blocks */
-	num_keys = sd->sd_vol.sv_meta.svm_size >> SR_CRYPTO_KEY_BLKSHIFT;
+	num_keys = sd->sd_meta->ssdi.ssd_size >> SR_CRYPTO_KEY_BLKSHIFT;
 	if (num_keys >= SR_CRYPTO_MAXKEYS)
 		return (EFBIG);
 	for (i = 0; i <= num_keys; i++) {
@@ -497,11 +519,11 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 	}
 
-	sr_free_wu(sd);
-	sr_free_ccb(sd);
+	sr_wu_free(sd);
+	sr_ccb_free(sd);
 
-	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF);
+	pool_destroy(&sd->mds.mdd_crypto.sr_uiopl);
+	pool_destroy(&sd->mds.mdd_crypto.sr_iovpl);
 
 	rv = 0;
 	return (rv);
@@ -570,11 +592,11 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 
 	wu->swu_io_count = 1;
 
-	ccb = sr_get_ccb(sd);
+	ccb = sr_ccb_get(sd);
 	if (!ccb) {
 		/* should never happen but handle more gracefully */
 		printf("%s: %s: too many ccbs queued\n",
-		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 		goto bad;
 	}
 
@@ -608,7 +630,7 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 
         DNPRINTF(SR_D_DIS, "%s: %s: sr_crypto_rw2: b_bcount: %d "
             "b_blkno: %x b_flags 0x%0x b_data %p\n",
-            DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
+            DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
             ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
             ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 
@@ -623,7 +645,7 @@ queued:
 	splx(s);
 	return (0);
 bad:
-	/* wu is unwound by sr_put_wu */
+	/* wu is unwound by sr_wu_put */
 	if (crp)
 		crp->crp_etype = EINVAL;
 	return (1);
@@ -740,7 +762,7 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 	}
 
 	/* do not change the order of these 2 functions */
-	sr_put_wu(wu);
+	sr_wu_put(wu);
 	scsi_done(xs);
 
 	if (sd->sd_sync && sd->sd_wu_pending == 0)
