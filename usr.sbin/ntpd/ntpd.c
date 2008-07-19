@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.60 2008/05/16 06:13:25 ckuethe Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.61 2008/07/19 21:31:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "ntpd.h"
 
@@ -137,15 +138,12 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (geteuid()) {
-		fprintf(stderr, "ntpd: need root privileges\n");
-		exit(1);
-	}
+	if (geteuid())
+		errx(1, "need root privileges");
 
-	if ((pw = getpwnam(NTPD_USER)) == NULL) {
-		fprintf(stderr, "ntpd: unknown user %s\n", NTPD_USER);
-		exit(1);
-	}
+	if ((pw = getpwnam(NTPD_USER)) == NULL)
+		errx(1, "unknown user %s", NTPD_USER);
+
 	endpwent();
 
 	reset_adjtime();
