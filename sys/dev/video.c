@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.16 2008/06/13 18:04:56 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.17 2008/07/19 06:39:00 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -308,7 +308,7 @@ video_intr(void *addr)
 {
 	struct video_softc *sc = (struct video_softc *)addr;
 
-	printf("video_intr sc=%p\n", sc);
+	DPRINTF(("video_intr sc=%p\n", sc));
 	wakeup(sc);
 }
 
