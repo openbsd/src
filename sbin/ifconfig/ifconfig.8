@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.162 2008/06/15 20:30:54 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.163 2008/07/19 15:55:07 brad Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 15 2008 $
+.Dd $Mdocdate: July 19 2008 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -888,7 +888,7 @@ The options are as follows:
 .It Cm mplslabel Ar mpls-label
 If the interface is a
 .Xr mpe 4
-pseudo-interface, set the mpls label to
+pseudo-interface, set the MPLS label to
 .Ar mpls-label .
 This value is a 20-bit number which will be used as the MPLS header for
 packets entering the MPLS domain.
