@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.217 2008/07/18 22:27:50 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.218 2008/07/19 12:36:06 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -93,6 +93,7 @@ tht*	at thtc?
 
 pgt*	at pci?			# Prism54 (only full-mac varients)
 acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
+acx*	at cardbus?		# TI ACX100/ACX111 (802.11b/g)
 ral*	at pci?			# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?		# Ralink RT2500/RT2501/RT2600
 malo*	at pci?			# Marvell Libertas
