@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.49 2008/07/19 10:52:32 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.50 2008/07/19 11:38:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -791,12 +791,12 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		    &host->conf.id, sizeof(host->conf.id));
 	log_debug("disable_host: disabled host %d", host->conf.id);
 
-	/* Disable all children */
-	TAILQ_FOREACH(h, &host->children, child)
-		disable_host(c, id, h);
-
-	if (!host->conf.parentid)
+	if (!host->conf.parentid) {
+		/* Disable all children */
+		SLIST_FOREACH(h, &host->children, child)
+			disable_host(c, id, h);
 		pfe_sync();
+	}
 	return (0);
 }
 
@@ -833,12 +833,12 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		    &host->conf.id, sizeof(host->conf.id));
 	log_debug("enable_host: enabled host %d", host->conf.id);
 
-	/* Enable all children */
-	TAILQ_FOREACH(h, &host->children, child)
-		enable_host(c, id, h);
-
-	if (!host->conf.parentid)
+	if (!host->conf.parentid) {
+		/* Enable all children */
+		SLIST_FOREACH(h, &host->children, child)
+			enable_host(c, id, h);
 		pfe_sync();
+	}
 	return (0);
 }
 

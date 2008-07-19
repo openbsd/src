@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2008/07/19 10:52:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.121 2008/07/19 11:38:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1267,7 +1267,7 @@ host		: STRING retry parent	{
 			$$->conf.id = 0; /* will be set later */
 			$$->conf.retry = $2;
 			$$->conf.parentid = $3;
-			TAILQ_INIT(&$$->children);
+			SLIST_INIT(&$$->children);
 		}
 		;
 
@@ -1860,7 +1860,7 @@ parse_config(const char *filename, int opts)
 					    h->conf.parentid);
 					errors++;
 				} else
-					TAILQ_INSERT_TAIL(&ph->children,
+					SLIST_INSERT_HEAD(&ph->children,
 					    h, child);
 			}
 		}
@@ -2167,7 +2167,7 @@ table_inherit(struct table *tb)
 		}
 		h->conf.tableid = tb->conf.id;
 		h->tablename = tb->conf.name;
-		TAILQ_INIT(&h->children);
+		SLIST_INIT(&h->children);
 		TAILQ_INSERT_TAIL(&tb->hosts, h, entry);
 	}
 
