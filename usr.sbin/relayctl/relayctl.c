@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.33 2008/01/31 12:12:50 thib Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.34 2008/07/19 12:10:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -314,6 +314,7 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct host		*host;
 	struct relay		*rlay;
 	struct ctl_stats	 stats[RELAY_MAXPROC];
+	char			 name[MAXHOSTNAMELEN];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RDR:
@@ -336,8 +337,13 @@ show_summary_msg(struct imsg *imsg, int type)
 		if (type == SHOW_RELAYS || type == SHOW_RDRS)
 			break;
 		host = imsg->data;
+		if (host->conf.parentid)
+			snprintf(name, sizeof(name), "%s parent %u",
+			    host->conf.name, host->conf.parentid);
+		else
+			strlcpy(name, host->conf.name, sizeof(name));
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
-		    host->conf.id, "host", host->conf.name,
+		    host->conf.id, "host", name,
 		    print_availability(host->check_cnt, host->up_cnt),
 		    print_host_status(host->up, host->flags));
 		if (type == SHOW_HOSTS && host->check_cnt) {
