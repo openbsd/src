@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.31 2006/01/02 05:21:26 brad Exp $	*/
+/*	$OpenBSD: sio.c,v 1.32 2008/07/19 18:13:06 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 
 #include <alpha/pci/siovar.h>
 
+#include "eisa.h"
 #include "isadma.h"
 
 struct sio_softc {
@@ -224,8 +225,9 @@ sio_eisa_attach_hook(parent, self, eba)
 	struct device *parent, *self;
 	struct eisabus_attach_args *eba;
 {
-
-	/* Nothing to do. */
+#if NEISA > 0
+	eisa_init(eba->eba_ec);
+#endif
 }
 
 int

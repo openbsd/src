@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.5 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.6 2008/07/19 18:13:06 miod Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.1 1996/04/12 05:39:51 cgd Exp $	*/
 
 /*
@@ -63,3 +63,9 @@ struct alpha_eisa_chipset {
     (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a), (nm))
 #define	eisa_intr_disestablish(c, h)					\
     (*(c)->ec_intr_disestablish)((c)->ec_v, (h))
+
+/*
+ * Internal functions, NOT TO BE USED BY MACHINE-INDEPENDENT CODE!
+ */
+
+void	eisa_init(eisa_chipset_tag_t);
