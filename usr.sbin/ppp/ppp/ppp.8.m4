@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.40 2008/05/21 20:10:54 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.41 2008/07/19 10:35:31 reyk Exp $
 .\"
-.Dd $Mdocdate: May 21 2008 $
+.Dd $Mdocdate: July 19 2008 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -5481,8 +5481,8 @@ for
 .Ar gw .
 .Pp
 For example, a returned value of
-.Dq 3ffe:505:abcd::/48 ::
-would result in a routing table entry to the 3ffe:505:abcd::/48 network via
+.Dq 2001:db8:abcd::/48 ::
+would result in a routing table entry to the 2001:db8:abcd::/48 network via
 .Dv HISADDR6
 and a returned value of
 .Dq :: ::

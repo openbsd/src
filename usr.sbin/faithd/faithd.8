@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.33 2008/05/17 23:31:52 sobrado Exp $
+.\"	$OpenBSD: faithd.8,v 1.34 2008/07/19 10:35:31 reyk Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 17 2008 $
+.Dd $Mdocdate: July 19 2008 $
 .Dt FAITHD 8
 .Os
 .Sh NAME
@@ -63,13 +63,13 @@ connection is determined by the last 4 octets of the original
 .Tn IPv6
 destination.
 For example, if
-.Li 3ffe:0501:4819:ffff::
+.Li 2001:db8:4819:ffff::
 is reserved for
 .Nm faithd ,
 and the
 .Tn TCPv6
 destination address is
-.Li 3ffe:0501:4819:ffff::0a01:0101 ,
+.Li 2001:db8:4819:ffff::0a01:0101 ,
 the traffic is relayed to IPv4 destination
 .Li 10.1.1.1 .
 .Pp
@@ -258,8 +258,8 @@ interface has to be configured properly:
 # sysctl net.inet6.ip6.forwarding=1
 # sysctl net.inet6.ip6.keepfaith=1
 # ifconfig faith0 up
-# route add -inet6 3ffe:501:4819:ffff:: -prefixlen 96 ::1
-# route change -inet6 3ffe:501:4819:ffff:: -prefixlen 96 -ifp faith0
+# route add -inet6 2001:db8:4819:ffff:: -prefixlen 96 ::1
+# route change -inet6 2001:db8:4819:ffff:: -prefixlen 96 -ifp faith0
 .Ed
 .\".Ss Daemon mode samples
 .Pp
@@ -279,14 +279,14 @@ The following illustrates a simple
 .Pa faithd.conf
 setting.
 .Bd -literal -offset indent
-# Permit anyone from 3ffe:501:ffff::/48 to use the translator,
+# Permit anyone from 2001:db8:ffff::/48 to use the translator,
 # to connect to the following IPv4 destinations:
 # - any location except 10.0.0.0/8 and 127.0.0.0/8.
 # Permit no other connections.
 #
-3ffe:501:ffff::/48 deny 10.0.0.0/8
-3ffe:501:ffff::/48 deny 127.0.0.0/8
-3ffe:501:ffff::/48 permit 0.0.0.0/0
+2001:db8:ffff::/48 deny 10.0.0.0/8
+2001:db8:ffff::/48 deny 127.0.0.0/8
+2001:db8:ffff::/48 permit 0.0.0.0/0
 .Ed
 .Sh SEE ALSO
 .Xr faith 4 ,

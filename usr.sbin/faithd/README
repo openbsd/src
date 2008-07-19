@@ -1,7 +1,7 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$OpenBSD: README,v 1.12 2008/06/04 18:11:35 miod Exp $
+$OpenBSD: README,v 1.13 2008/07/19 10:35:31 reyk Exp $
 $KAME: README,v 1.9 2002/05/09 14:10:06 itojun Exp $
 
 
@@ -28,12 +28,12 @@ invoked per each TCP services (TCP port number).
 	clients	  IPv6 node "src"				|
 
 You will have to allocate an IPv6 address prefix to map IPv4 addresses into.
-The following description uses 3ffe:0501:ffff:0000:: as example.
+The following description uses 2001:db8:ffff:0000:: as example.
 Please use a prefix which belongs to your site.
 FAITH will make it possible to make a IPv6 TCP connection From IPv6 node
 "src", toward IPv4 node "dest", by specifying FAITH-mapped address
-3ffe:0501:ffff:0000::123.4.5.6
-(which is, 3ffe:0501:ffff:0000:0000:0000:7b04:0506).
+2001:db8:ffff:0000::123.4.5.6
+(which is, 2001:db8:ffff:0000:0000:0000:7b04:0506).
 The address mapping can be performed by hand:-), by special nameserver on
 the network, or by special resolver on the source node.
 
@@ -42,7 +42,7 @@ Setup
 =====
 
 The following example assumes:
-- You have assigned 3ffe:0501:ffff:0000:: as FAITH address prefix.
+- You have assigned 2001:db8:ffff:0000:: as FAITH address prefix.
 - You are willing to provide IPv6-to IPv4 TCP relay for telnet.
 
 <<On the translating router on which faithd runs>>
@@ -58,8 +58,8 @@ The following example assumes:
 (3) Route packets toward FAITH prefix into "faith0" interface.
 
 	# ifconfig faith0 up
-	# route add -inet6 3ffe:0501:ffff:0000:: -prefixlen 64 ::1
-	# route change -inet6 3ffe:0501:ffff:0000:: -prefixlen 64 -ifp faith0
+	# route add -inet6 2001:db8:ffff:0000:: -prefixlen 64 ::1
+	# route change -inet6 2001:db8:ffff:0000:: -prefixlen 64 -ifp faith0
 
 (4) Execute "faithd" by root as follows:
 
@@ -97,7 +97,7 @@ There are two ways to translate IPv4 address to IPv6 address:
 (5.b) Add an entry into /etc/hosts so that you can resolve hostname into
 faked IPv6 address.  For example, add the following line for www.netbsd.org:
 
-	3ffe:0501:ffff:0000::140.160.140.252	www.netbsd.org
+	2001:db8:ffff:0000::140.160.140.252	www.netbsd.org
 
 <<On the translating router on which faithd runs.>>
 
@@ -127,13 +127,13 @@ Advanced configuration
 If you would like to restrict IPv4 destination for translation, you may
 want to do the following:
 
-	# route add -inet6 3ffe:0501:ffff:0000::123.0.0.0 -prefixlen 104 ::1
-	# route change -inet6 3ffe:0501:ffff:0000::123.0.0.0 -prefixlen 104 \
+	# route add -inet6 2001:db8:ffff:0000::123.0.0.0 -prefixlen 104 ::1
+	# route change -inet6 2001:db8:ffff:0000::123.0.0.0 -prefixlen 104 \
 		-ifp faith0
 
 By this way, you can restrict IPv4 destination to 123.0.0.0/8.
-You may also want to reject packets toward 3ffe:0501:ffff:0000::/64 which
-is not in 3ffe:0501:ffff:0000::123.0.0.0/104.  This will be left as excerside
+You may also want to reject packets toward 2001:db8:ffff:0000::/64 which
+is not in 2001:db8:ffff:0000::123.0.0.0/104.  This will be left as excerside
 for the reader.
 
 By doing this, you will be able to provide your IPv4 web server to outside
