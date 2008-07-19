@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.22 2008/07/18 18:49:11 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.23 2008/07/19 11:30:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -445,6 +445,12 @@ struct uvideo_format_group {
 	int					 frame_num;
 	struct usb_video_frame_mjpeg_desc	*frame_cur;
 	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
+} __packed;
+
+struct uvideo_res {
+	int width;
+	int height;
+	int fidx;
 } __packed;
 
 struct uvideo_softc {

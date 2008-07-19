@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.55 2008/07/18 21:45:24 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.56 2008/07/19 11:30:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -88,6 +88,8 @@ int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
 int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
 		    int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
+int		uvideo_find_res(struct uvideo_softc *, int, int, int,
+		    struct uvideo_res *);
 
 usbd_status	uvideo_vs_negotation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
@@ -928,6 +930,41 @@ uvideo_desc_len(const usb_descriptor_t *desc,
 
 	if (desc->bLength == size_total && size_elements != 0)
 		return (1);
+
+	return (0);
+}
+
+/*
+ * Find the next best matching resolution which we can offer and
+ * return it.
+ */
+int
+uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
+    struct uvideo_res *r)
+{
+	int i, w, h, diff, diff_best, size_want, size_is;
+
+	size_want = width * height;
+
+	for (i = 1; i <= sc->sc_fmtgrp[idx].frame_num; i++) {
+		w = UGETW(sc->sc_fmtgrp[idx].frame[i]->wWidth);
+		h = UGETW(sc->sc_fmtgrp[idx].frame[i]->wHeight);
+		size_is = w * h;
+		if (size_is > size_want)
+			diff = size_is - size_want;
+		else
+			diff = size_want - size_is;
+		if (i == 1)
+			diff_best = diff;
+		if (diff <= diff_best) {
+			diff_best = diff;
+			r->width = w;
+			r->height = h;
+			r->fidx = i;
+		}
+		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
+		    DEVNAME(sc), __func__, i, w, h);
+	}
 
 	return (0);
 }
@@ -2078,7 +2115,8 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	struct uvideo_softc *sc = v;
 	struct uvideo_format_group *fmtgrp_save;
 	struct usb_video_frame_mjpeg_desc *frame_save;
-	int found, i, j, width, height;
+	struct uvideo_res r;
+	int found, i;
 	usbd_status error;
 
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
@@ -2098,24 +2136,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 		return (EINVAL);
 
 	/* search requested frame resolution */
-	for (found = 0, j = 1; j <= sc->sc_fmtgrp[i].frame_num; j++) {
-		width = UGETW(sc->sc_fmtgrp[i].frame[j]->wWidth);
-		height = UGETW(sc->sc_fmtgrp[i].frame[j]->wHeight);
-		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
-		    DEVNAME(sc), __func__, j, width, height);
-		if (fmt->fmt.pix.width == width &&
-		    fmt->fmt.pix.height == height) {
-			found = 1;
-			break;
-		}
-	}
-	/*
-	 * TODO
-	 * If we don't have exactly the requested resolution we should
-	 * search for the closest matching resolution which we can offer.
-	 */
-	if (found == 0)
-		return (EINVAL);
+	uvideo_find_res(sc, i, fmt->fmt.pix.width, fmt->fmt.pix.height, &r);
 
 	/*
 	 * Do negotation.
@@ -2125,8 +2146,8 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	frame_save = sc->sc_fmtgrp_cur->frame_cur;
 	/* set new format group */
 	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[i];
-	sc->sc_fmtgrp[i].frame_cur = sc->sc_fmtgrp[i].frame[j];
-	sc->sc_fmtgrp[i].format_dfidx = j;
+	sc->sc_fmtgrp[i].frame_cur = sc->sc_fmtgrp[i].frame[r.fidx];
+	sc->sc_fmtgrp[i].format_dfidx = r.fidx;
 	/* do device negotation with commit */
 	error = uvideo_vs_negotation(sc, 1);
 	if (error != USBD_NORMAL_COMPLETION) {
@@ -2137,11 +2158,11 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	sc->sc_negotiated_flag = 1;
 
 	/* offer closest resolution which we have found */
-	fmt->fmt.pix.width = width;
-	fmt->fmt.pix.height = height;
+	fmt->fmt.pix.width = r.width;
+	fmt->fmt.pix.height = r.height;
 
 	DPRINTF(1, "%s: %s: offered width=%d, height=%d\n",
-	    DEVNAME(sc), __func__, width, height);
+	    DEVNAME(sc), __func__, r.width, r.height);
 
 	/* tell our sample buffer size */
 	fmt->fmt.pix.sizeimage = sc->sc_sample_buffer.buf_size;
@@ -2323,7 +2344,8 @@ int
 uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 {
 	struct uvideo_softc *sc = v;
-	int found, i, j, width, height;
+	struct uvideo_res r;
+	int found, i;
 
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
@@ -2342,31 +2364,14 @@ uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 		return (EINVAL);
 
 	/* search requested frame resolution */
-	for (found = 0, j = 1; j <= sc->sc_fmtgrp[i].frame_num; j++) {
-		width = UGETW(sc->sc_fmtgrp[i].frame[j]->wWidth);
-		height = UGETW(sc->sc_fmtgrp[i].frame[j]->wHeight);
-		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
-		    DEVNAME(sc), __func__, j, width, height);
-		if (fmt->fmt.pix.width == width &&
-		    fmt->fmt.pix.height == height) {
-			found = 1;
-			break;
-		}
-	}
-	/*
-	 * TODO
-	 * If we don't have exactly the requested resolution we should
-	 * search for the closest matching resolution which we can offer.
-	 */
-	if (found == 0)
-		return (EINVAL);
+	uvideo_find_res(sc, i, fmt->fmt.pix.width, fmt->fmt.pix.height, &r);
 
 	/* offer closest resolution which we have found */
-	fmt->fmt.pix.width = width;
-	fmt->fmt.pix.height = height;
+	fmt->fmt.pix.width = r.width;
+	fmt->fmt.pix.height = r.height;
 
 	DPRINTF(1, "%s: %s: offered width=%d, height=%d\n",
-	    DEVNAME(sc), __func__, width, height);
+	    DEVNAME(sc), __func__, r.width, r.height);
 
 	/* tell our sample buffer size */
 	fmt->fmt.pix.sizeimage = sc->sc_sample_buffer.buf_size;
