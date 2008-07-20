@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 2008/06/12 06:58:36 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 2008/07/20 13:40:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -93,11 +93,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readsgilabel(bp, strat, lp, 0, spoofonly);
+	msg = readsgilabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
-	msg = readdoslabel(bp, strat, lp, 0, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
