@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 2008/07/20 13:40:27 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 2008/07/20 13:46:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -40,34 +40,8 @@
 #include <sys/syslog.h>
 #include <sys/disk.h>
 
-char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
-    int, struct disklabel *, int);
 char   *readsgilabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, int *, int);
-
-/*
- * Try to read a standard BSD disklabel at a certain sector.
- */
-char *
-readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
-    int cyl, int sec, int off, struct disklabel *lp,
-    int spoofonly)
-{
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		return (NULL);
-
-	bp->b_blkno = sec;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ | B_RAW;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	if (biowait(bp))
-		return ("disk label I/O error");
-
-	return checkdisklabel(bp->b_data + LABELOFFSET, lp);
-}
 
 /*
  * Attempt to read a disk label from a device
