@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.35 2008/07/02 15:12:18 yuo Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.36 2008/07/20 14:24:49 yuo Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -215,8 +215,6 @@ const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM },
 	/* GoHubs GO-COM232 */
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
-	/* HUAWEI Mobile */
-	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E618 },
 	/* Novatel Wireless U740 */
 	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_MERLINU740 },
 	/* Option Vodafone Mobile Connect 3G */
