@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.117 2008/07/19 22:41:58 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.118 2008/07/20 21:57:51 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2423,18 +2423,28 @@ sr_checksum(struct sr_softc *sc, void *src, void *md5, u_int32_t len)
 void
 sr_uuid_get(struct sr_uuid *uuid)
 {
-	/* XXX replace with idgen32 */
 	arc4random_buf(uuid->sui_id, sizeof(uuid->sui_id));
+	/* UUID version 4: random */
+	uuid->sui_id[6] &= 0x0f;
+	uuid->sui_id[6] |= 0x40;
+	/* RFC4122 variant */
+	uuid->sui_id[8] &= 0x3f;
+	uuid->sui_id[8] |= 0x80;
 }
 
 void
 sr_uuid_print(struct sr_uuid *uuid, int cr)
 {
-	int			i;
-
-	for (i = 0; i < SR_UUID_MAX; i++)
-		printf("%x%s", uuid->sui_id[i],
-		    i < SR_UUID_MAX - 1 ? ":" : "");
+	printf("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
+	    "%02x%02x%02x%02x%02x%02x",
+	    uuid->sui_id[0], uuid->sui_id[1],
+	    uuid->sui_id[2], uuid->sui_id[3],
+	    uuid->sui_id[4], uuid->sui_id[5],
+	    uuid->sui_id[6], uuid->sui_id[7],
+	    uuid->sui_id[8], uuid->sui_id[9],
+	    uuid->sui_id[10], uuid->sui_id[11],
+	    uuid->sui_id[12], uuid->sui_id[13],
+	    uuid->sui_id[14], uuid->sui_id[15]);
 
 	if (cr)
 		printf("\n");
