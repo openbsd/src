@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.86 2008/06/29 20:05:22 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.87 2008/07/20 01:53:43 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -922,6 +922,12 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		break;
+
+	case DIOCGPDINFO:
+		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
+			return (ENOTTY);
+		vndgetdisklabel(dev, vnd, (struct disklabel *)addr, 1);
+		return (0);
 
 	case DIOCGDINFO:
 		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
