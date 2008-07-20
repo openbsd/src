@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.60 2008/05/22 19:23:04 mk Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.61 2008/07/20 18:58:07 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -284,6 +284,8 @@ struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -745,7 +747,7 @@ pccbb_chipinit(sc)
 		 * The TI125X parts have a different register.
 		 */
 		reg = pci_conf_read(pc, tag, PCI12XX_MFUNC);
-		if (reg == 0) {
+		if (reg == PCI12XX_MFUNC_DEFAULT) {
 			reg &= ~PCI12XX_MFUNC_PIN0;
 			reg |= PCI12XX_MFUNC_PIN0_INTA;
 			if ((pci_conf_read(pc, tag, PCI_SYSCTRL) &

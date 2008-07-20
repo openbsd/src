@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.9 2006/04/26 21:21:53 brad Exp $	*/
+/*	$OpenBSD: pccbbreg.h,v 1.10 2008/07/20 18:58:07 kettenis Exp $	*/
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -143,9 +143,11 @@
 #define PCI12XX_MFUNC_PIN1_INTB		0x20
 #define PCI12XX_MFUNC_PIN2		0x00000F00
 #define PCI12XX_MFUNC_PIN3		0x0000F000
+#define PCI12XX_MFUNC_PIN3_INTSER	0x00001000
 #define PCI12XX_MFUNC_PIN4		0x000F0000
 #define PCI12XX_MFUNC_PIN5		0x00F00000
 #define PCI12XX_MFUNC_PIN6		0x0F000000
+#define PCI12XX_MFUNC_DEFAULT		PCI12XX_MFUNC_PIN3_INTSER
 
 /*  PCI_CBCTRL bits for TI PCI113X */
 #define PCI113X_CBCTRL_INT_SERIAL	0x040000
