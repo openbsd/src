@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.60 2008/07/12 10:07:25 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.61 2008/07/20 10:37:43 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
@@ -122,6 +123,12 @@ void psycho_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
+
+u_int stick_get_timecount(struct timecounter *);
+
+struct timecounter stick_timecounter = {
+	stick_get_timecount, NULL, ~0u, 0, "stick", 1000, NULL
+};
 
 /*
  * autoconfiguration
@@ -238,6 +245,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	int psycho_br[2], n;
 	struct psycho_type *ptype;
 	char buf[32];
+	u_int stick_rate;
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
@@ -554,6 +562,18 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		    (PAGE_SIZE << sc->sc_is->is_tsbsize)));
 		iommu_reset(sc->sc_is);
 		printf("\n");
+	}
+
+	/*
+	 * The UltraSPARC IIe has new STICK logic that provides a
+	 * timebase counter that doesn't scale with processor
+	 * frequency.  Use it to provide a timecounter.
+	 */
+	stick_rate = getpropint(findroot(), "stick-frequency", 0);
+	if (stick_rate > 0 && sc->sc_mode == PSYCHO_MODE_SABRE) {
+		stick_timecounter.tc_frequency = stick_rate;
+		stick_timecounter.tc_priv = sc;
+		tc_init(&stick_timecounter);
 	}
 
 	/*
@@ -1283,4 +1303,12 @@ psycho_sabre_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
 		membar(MemIssue);
+}
+
+u_int
+stick_get_timecount(struct timecounter *tc)
+{
+	struct psycho_softc *sc = tc->tc_priv;
+
+	return psycho_psychoreg_read(sc, stick_reg_low);
 }
