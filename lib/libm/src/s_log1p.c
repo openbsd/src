@@ -32,7 +32,7 @@ static char rcsid[] = "$NetBSD: s_log1p.c,v 1.8 1995/05/10 20:47:46 jtc Exp $";
  *	Let s = f/(2+f) ; based on log(1+f) = log(1+s) - log(1-s)
  *		 = 2s + 2/3 s**3 + 2/5 s**5 + .....,
  *	     	 = 2s + s*R
- *      We use a special Reme algorithm on [0,0.1716] to generate 
+ *      We use a special Remes algorithm on [0,0.1716] to generate 
  * 	a polynomial of degree 14 to approximate R The maximum error 
  *	of this polynomial approximation is bounded by 2**-58.45. In
  *	other words,
