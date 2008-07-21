@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.42 2005/05/22 03:47:16 martin Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.43 2008/07/21 04:12:21 kevlo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -721,8 +721,6 @@ struct dc_softc {
 	void			*dc_intrhand;
 	void			*sc_dhook;
 	void			*sc_pwrhook;
-	struct resource		*dc_irq;
-	struct resource		*dc_res;
 	u_int8_t		dc_type;
 	u_int8_t		dc_pmode;
 	u_int8_t		dc_link;

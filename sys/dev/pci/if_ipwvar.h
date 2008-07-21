@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.16 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.17 2008/07/21 04:12:21 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -94,8 +94,6 @@ struct ipw_softc {
 	uint32_t			flags;
 #define IPW_FLAG_FW_INITED	(1 << 0)
 
-	struct resource			*irq;
-	struct resource			*mem;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 	void 				*sc_ih;

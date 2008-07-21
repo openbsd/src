@@ -1,4 +1,4 @@
-/*	$OpenBSD: safevar.h,v 1.5 2003/08/20 16:28:35 jason Exp $	*/
+/*	$OpenBSD: safevar.h,v 1.6 2008/07/21 04:12:21 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -149,7 +149,6 @@ struct safe_pkq {
 
 struct safe_softc {
 	struct device		sc_dev;		/* device backpointer */
-	struct resource		*sc_irq;
 	void			*sc_ih;		/* interrupt handler cookie */
 	bus_space_handle_t	sc_sh;		/* memory handle */
 	bus_space_tag_t		sc_st;		/* memory tag */

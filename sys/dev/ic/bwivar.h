@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.24 2008/07/21 04:12:21 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -525,12 +525,6 @@ struct bwi_softc {
 	uint16_t		 sc_pwron_delay;
 	int			 sc_locale;
 
-	int			 sc_irq_rid;
-	struct resource		*sc_irq_res;
-	void			*sc_irq_handle;
-
-	int			 sc_mem_rid;
-	struct resource		*sc_mem_res;
 	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_mem_bt;
 	bus_space_handle_t	 sc_mem_bh;
