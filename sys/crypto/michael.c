@@ -1,4 +1,4 @@
-/*	$OpenBSD: michael.c,v 1.1 2006/03/21 18:40:54 reyk Exp $	*/
+/*	$OpenBSD: michael.c,v 1.2 2008/07/21 19:52:45 damien Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -29,18 +29,28 @@
 
 #define ROL(n, x)	(((x) << (n)) | ((x) >> (32 - (n))))
 #define ROR(n, x)	(((x) >> (n)) | ((x) << (32 - (n))))
-#define VAL32(x)	(*((u_int32_t *)(x)))
-#define XSWAP(x)	(((x) & 0xff00ff00UL) >> 8) | ((((x) & 0x00ff00ffUL) << 8))
+#define XSWAP(x)	(((x) & 0xff00ff00UL) >> 8 | ((x) & 0x00ff00ffUL) << 8)
 
-#define MICHAEL_BLOCK(l, r) do {						\
-	r ^= ROL(17, l);							\
-	l += r;									\
-	r ^= XSWAP(l);								\
-	l += r;									\
-	r ^= ROL(3, l);								\
-	l += r;									\
-	r ^= ROR(2, l);								\
-	l += r;									\
+#if defined(__STRICT_ALIGNMENT) || _BYTE_ORDER != _LITTLE_ENDIAN
+#define GETLE32(x)	((x)[0] | (x)[1] << 8 | (x)[2] << 16 | (x)[3] << 24)
+#define PUTLE32(x, v)	((x)[0] = (u_int8_t)(v),			\
+			 (x)[1] = (u_int8_t)((v) >> 8),			\
+			 (x)[2] = (u_int8_t)((v) >> 16),		\
+			 (x)[3] = (u_int8_t)((v) >> 24))
+#else
+#define GETLE32(x)	(*((u_int32_t *)(x)))
+#define PUTLE32(x, v)	(*((u_int32_t *)(x)) = (v))
+#endif
+
+#define MICHAEL_BLOCK(l, r) do {					\
+	r ^= ROL(17, l);						\
+	l += r;								\
+	r ^= XSWAP(l);							\
+	l += r;								\
+	r ^= ROL(3, l);							\
+	l += r;								\
+	r ^= ROR(2, l);							\
+	l += r;								\
 } while (0)
 
 void
@@ -69,19 +79,20 @@ michael_update(MICHAEL_CTX *ctx, const u_int8_t *data, u_int len)
 void
 michael_final(u_int8_t digest[MICHAEL_DIGEST_LENGTH], MICHAEL_CTX *ctx)
 {
-	u_int8_t pad[] = { 0x5a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	static const u_int8_t pad[] =
+	    { 0x5a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	michael_update(ctx, pad, sizeof(pad));
 
-	VAL32(digest) = letoh32(ctx->michael_l);
-	VAL32(digest + MICHAEL_RAW_BLOCK_LENGTH) = letoh32(ctx->michael_r);
+	PUTLE32(digest, ctx->michael_l);
+	PUTLE32(digest + MICHAEL_RAW_BLOCK_LENGTH, ctx->michael_r);
 }
 
 void
 michael_key(const u_int8_t *key, MICHAEL_CTX *ctx)
 {
 	ctx->michael_l = ctx->michael_key[0] =
-	    htole32(VAL32(key));
+	    GETLE32(key);
 	ctx->michael_r = ctx->michael_key[1] =
-	    htole32(VAL32(key + MICHAEL_RAW_BLOCK_LENGTH));
+	    GETLE32(key + MICHAEL_RAW_BLOCK_LENGTH);
 }
