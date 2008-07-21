@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.610 2008/07/14 13:29:45 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.611 2008/07/21 15:56:55 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3160,7 +3160,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				    &nk->addr[pd->sidx], AF_INET))
 					pf_change_a(&saddr->v4.s_addr,
 					    pd->ip_sum,
-					    nk->addr[pd->didx].v4.s_addr, 0);
+					    nk->addr[pd->sidx].v4.s_addr, 0);
 
 				if (PF_ANEQ(daddr,
 				    &nk->addr[pd->didx], AF_INET))
