@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.118 2008/07/20 21:57:51 djm Exp $ */
+/* $OpenBSD: softraid.c,v 1.119 2008/07/21 14:49:40 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -791,8 +791,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	}
 
 	/* get disklabel */
-	error = (*bdsw->d_ioctl)(dev, DIOCGDINFO, (void *)&label,
-	    FREAD, curproc);
+	error = (*bdsw->d_ioctl)(dev, DIOCGDINFO, (void *)&label, FREAD,
+	    curproc);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe ioctl "
 		    "failed\n", DEVNAME(sc));
@@ -1000,7 +1000,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	part = DISKPART(dev);
 
 	/* get disklabel */
-	error = bdsw->d_ioctl(dev, DIOCGDINFO, (void *)&label, 0, NULL);
+	error = bdsw->d_ioctl(dev, DIOCGDINFO, (void *)&label, FREAD, curproc);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: %s can't obtain disklabel\n",
 		    DEVNAME(sc), devname);
