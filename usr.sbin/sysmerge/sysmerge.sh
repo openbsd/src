@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.18 2008/07/10 16:49:26 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.19 2008/07/21 08:28:55 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -25,7 +25,6 @@
 #
 
 umask 0022
-PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 
 PAGER="${PAGER:=/usr/bin/more}"
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
