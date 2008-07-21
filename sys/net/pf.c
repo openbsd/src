@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.611 2008/07/21 15:56:55 david Exp $ */
+/*	$OpenBSD: pf.c,v 1.612 2008/07/21 15:58:59 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -207,7 +207,7 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct pfi_kif *, struct mbuf *, struct pf_pdesc *);
 void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
-			    struct pf_rule **, struct pf_rule **,  int *);
+			    struct pf_rule **, struct pf_rule **, int *);
 int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 			     int, struct pf_rule **, struct pf_rule **,
 			     int *);
@@ -674,7 +674,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 					    "pf: %s key attach failed on %s: ",
 					    (idx == PF_SK_WIRE) ?
 					    "wire" : "stack",
-		     			    s->kif->pfik_name);
+					    s->kif->pfik_name);
 					pf_print_state_parts(s,
 					    (idx == PF_SK_WIRE) ? sk : NULL,
 					    (idx == PF_SK_STACK) ? sk : NULL);
@@ -2010,7 +2010,7 @@ pf_tag_packet(struct mbuf *m, int tag, int rtableid)
 
 void
 pf_step_into_anchor(int *depth, struct pf_ruleset **rs, int n,
-    struct pf_rule **r, struct pf_rule **a,  int *match)
+    struct pf_rule **r, struct pf_rule **a, int *match)
 {
 	struct pf_anchor_stackframe	*f;
 
@@ -2074,7 +2074,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs, int n,
 		if (*depth == 0 && a != NULL)
 			*a = NULL;
 		*rs = f->rs;
-		if (f->r->anchor->match || (match  != NULL && *match))
+		if (f->r->anchor->match || (match != NULL && *match))
 			quick = f->r->quick;
 		*r = TAILQ_NEXT(f->r, entries);
 	} while (*r == NULL);
@@ -3058,7 +3058,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 
 	bport = nport = sport;
-	/* check  packet for BINAT/NAT/RDR */
+	/* check packet for BINAT/NAT/RDR */
 	if ((nr = pf_get_translation(pd, m, off, direction, kif, &nsn,
 	    &skw, &sks, &sk, &nk, saddr, daddr, sport, dport)) != NULL) {
 		if (nk == NULL || sk == NULL) {
