@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.26 2008/05/07 12:19:20 beck Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.27 2008/07/21 16:51:18 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -491,7 +491,56 @@ dhcpdecline(struct packet *packet)
 void
 dhcpinform(struct packet *packet)
 {
-	note("DHCPINFORM from %s", inet_ntoa(packet->raw->ciaddr));
+	struct lease *lease;
+	struct iaddr cip;
+	struct subnet *subnet;
+
+	/*
+	 * ciaddr should be set to client's IP address but
+	 * not all clients are standards compliant.
+	 */
+	cip.len = 4;
+	if (packet->raw->ciaddr.s_addr)
+		memcpy(cip.iabuf, &packet->raw->ciaddr.s_addr, 4);
+	else
+		memcpy(cip.iabuf, &packet->client_addr.iabuf, 4);
+
+	note("DHCPINFORM from %s", piaddr(cip));
+
+	/* Find the lease that matches the address requested by the client. */
+	subnet = find_subnet(cip);
+	if (!subnet)
+		return;
+
+	/* Sourceless packets don't make sense here. */
+	if (!subnet->shared_network) {
+		note("Packet from unknown subnet: %s",
+		    inet_ntoa(packet->raw->giaddr));
+		return;
+	}
+
+	lease = find_lease(packet, subnet->shared_network, 0);
+	if (!lease) {
+		note("DHCPINFORM packet from %s but no lease present",
+		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
+		    packet->raw->chaddr));
+		return;
+	}
+
+	/* If this subnet won't boot unknown clients, ignore the
+	   request. */
+	if (!lease->host &&
+	    !lease->subnet->group->boot_unknown_clients) {
+		note("Ignoring unknown client %s",
+		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
+		    packet->raw->chaddr));
+	} else if (lease->host && !lease->host->group->allow_booting) {
+		note("Declining to boot client %s",
+		    lease->host->name ? lease->host->name :
+		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
+		    packet->raw->chaddr));
+	} else
+		ack_lease(packet, lease, DHCPACK, 0);
 }
 
 void
