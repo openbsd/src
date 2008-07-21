@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.49 2008/07/01 11:44:12 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.50 2008/07/21 18:43:19 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -916,6 +916,7 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	struct ether_header eh;
 	struct ifnet *ifp;
 	struct ieee80211_channel *chan;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ieee80211com *ic;
 	struct pgt_rx_annex *pra;
@@ -1034,9 +1035,10 @@ input:
 				bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 			}
 #endif
-			ni->ni_rssi = rssi;
-			ni->ni_rstamp = rstamp;
-			ieee80211_input(ifp, m, ni, rssi, rstamp);
+			rxi.rxi_flags = 0;
+			ni->ni_rssi = rxi.rxi_rssi = rssi;
+			ni->ni_rstamp = rxi.rxi_tstamp = rstamp;
+			ieee80211_input(ifp, m, ni, &rxi);
 			/*
 			 * The frame may have caused the node to be marked for
 			 * reclamation (e.g. in response to a DEAUTH message)

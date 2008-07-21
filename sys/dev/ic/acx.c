@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.84 2008/06/22 21:40:36 brad Exp $ */
+/*	$OpenBSD: acx.c,v 1.85 2008/07/21 18:43:19 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1315,6 +1315,7 @@ acx_rxeof(struct acx_softc *sc)
 		struct acx_rxbuf_hdr *head;
 		struct acx_rxbuf *buf;
 		struct mbuf *m;
+		struct ieee80211_rxinfo rxi;
 		uint32_t desc_status;
 		uint16_t desc_ctrl;
 		int len, error;
@@ -1350,6 +1351,7 @@ acx_rxeof(struct acx_softc *sc)
 			    sc->chip_rxbuf_exhdr);
 			wh = mtod(m, struct ieee80211_frame *);
 
+			rxi.rxi_flags = 0;
 			if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 			    sc->chip_hw_crypt) {
 				/* Short circuit software WEP */
@@ -1360,6 +1362,7 @@ acx_rxeof(struct acx_softc *sc)
 					sc->chip_proc_wep_rxbuf(sc, m, &len);
 					wh = mtod(m, struct ieee80211_frame *);
 				}
+				rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 			}
 
 			m->m_len = m->m_pkthdr.len = len;
@@ -1390,8 +1393,9 @@ acx_rxeof(struct acx_softc *sc)
 
 			ni = ieee80211_find_rxnode(ic, wh);
 
-			ieee80211_input(ifp, m, ni, head->rbh_level,
-			    letoh32(head->rbh_time));
+			rxi.rxi_rssi = head->rbh_level;
+			rxi.rxi_tstamp = letoh32(head->rbh_time);
+			ieee80211_input(ifp, m, ni, &rxi);
 
 			ieee80211_release_node(ic, ni);
 		} else {

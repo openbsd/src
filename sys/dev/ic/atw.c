@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.59 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: atw.c,v 1.60 2008/07/21 18:43:19 damien Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ void	atw_linkintr(struct atw_softc *, u_int32_t);
 int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int	atw_tune(struct atw_softc *);
 void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, int, u_int32_t);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 void	atw_next_scan(void *);
 
 /* Device initialization */
@@ -2262,7 +2262,7 @@ atw_change_ibss(struct atw_softc *sc)
 
 void
 atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
 {
 	struct atw_softc *sc = (struct atw_softc*)ic->ic_softc;
 
@@ -2271,7 +2271,7 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	    sc->sc_rev < ATW_REVISION_BA)
 		return;
 
-	(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+	(*sc->sc_recv_mgmt)(ic, m, ni, rxi, subtype);
 
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
@@ -3066,6 +3066,7 @@ atw_rxintr(struct atw_softc *sc)
 {
 	static int rate_tbl[] = {2, 4, 11, 22, 44};
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 	struct ifnet *ifp = &ic->ic_if;
@@ -3213,11 +3214,16 @@ atw_rxintr(struct atw_softc *sc)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
+		rxi.rxi_flags = 0;
 #if 0
-		if (atw_hw_decrypted(sc, wh))
+		if (atw_hw_decrypted(sc, wh)) {
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+			rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
+		}
 #endif
-		ieee80211_input(ifp, m, ni, (int)rssi, 0);
+		rxi.rxi_rssi = (int)rssi;
+		rxi.rxi_tstamp = 0;
+		ieee80211_input(ifp, m, ni, &rxi);
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)

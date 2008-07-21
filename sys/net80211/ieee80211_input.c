@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.80 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.81 2008/07/21 18:43:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -79,13 +79,13 @@ int	ieee80211_parse_wpa(struct ieee80211com *, const u_int8_t *,
 int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *);
 void	ieee80211_recv_probe_resp(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t, int);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 void	ieee80211_recv_probe_req(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *);
 void	ieee80211_recv_auth(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *);
 void	ieee80211_recv_assoc_req(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, u_int32_t, int);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 void	ieee80211_recv_assoc_resp(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
 void	ieee80211_recv_deauth(struct ieee80211com *, struct mbuf *,
@@ -151,7 +151,7 @@ ieee80211_get_hdrlen(const void *data)
  */
 void
 ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
-    int rssi, u_int32_t rstamp)
+    struct ieee80211_rxinfo *rxi)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
@@ -203,8 +203,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		goto out;
 	}
 	if (ic->ic_state != IEEE80211_S_SCAN) {
-		ni->ni_rssi = rssi;
-		ni->ni_rstamp = rstamp;
+		ni->ni_rssi = rxi->rxi_rssi;
+		ni->ni_rstamp = rxi->rxi_tstamp;
 		if (type == IEEE80211_FC0_TYPE_DATA &&
 		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)) {
 			struct ieee80211_qosframe *qwh =
@@ -374,11 +374,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				ic->ic_stats.is_rx_nowep++;
 				goto out;
 			}
+		} else if (!(rxi->rxi_flags & IEEE80211_RXI_HWDEC)) {
+			/* XXX */
 		}
-		/*
-		 * XXX else: drivers should pass a flag to indicate if the
-		 * frame was successfully decrypted or not.
-		 */
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
@@ -502,7 +500,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				    ifp->if_xname,
 				    ieee80211_mgt_subtype_name[subtype
 				    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-				    ether_sprintf(wh->i_addr2), rssi,
+				    ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
 				    ieee80211_phymode_name[ieee80211_chan2mode(ic,
 				    ic->ic_bss->ni_chan)]);
 		}
@@ -519,7 +517,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			return;
 		}
 #endif
-		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+		(*ic->ic_recv_mgmt)(ic, m, ni, rxi, subtype);
 		m_freem(m);
 		return;
 
@@ -874,7 +872,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm,
 {
 	/* check IE length */
 	if (frm[1] < 2) {
-		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
+		IEEE80211_DPRINTF(("%s: invalid RSN IE;"
 		    " length %u, expecting at least 2\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_STATUS_IE_INVALID;
@@ -930,7 +928,7 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
  */
 void
 ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, int isprobe)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int isprobe)
 {
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
@@ -1104,7 +1102,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 * potential better one.
 	 */
 	if ((ni = ieee80211_find_node_for_beacon(ic, wh->i_addr2,
-	    &ic->ic_channels[chan], ssid, rssi)) != NULL)
+	    &ic->ic_channels[chan], ssid, rxi->rxi_rssi)) != NULL)
 		return;
 
 #ifdef IEEE80211_DEBUG
@@ -1217,8 +1215,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	ni->ni_rssi = rssi;
-	ni->ni_rstamp = rstamp;
+	ni->ni_rssi = rxi->rxi_rssi;
+	ni->ni_rstamp = rxi->rxi_tstamp;
 	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
@@ -1256,7 +1254,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi)
 {
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
@@ -1322,8 +1320,8 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_DPRINTF(("%s: new probe req from %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 	}
-	ni->ni_rssi = rssi;
-	ni->ni_rstamp = rstamp;
+	ni->ni_rssi = rxi->rxi_rssi;
+	ni->ni_rstamp = rxi->rxi_tstamp;
 	rate = ieee80211_setup_rates(ic, ni, rates, xrates,
 	    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO |
 	    IEEE80211_F_DODEL);
@@ -1343,7 +1341,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi)
 {
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
@@ -1378,7 +1376,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		return;
 	}
-	ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq, status);
+	ieee80211_auth_open(ic, wh, ni, rxi, seq, status);
 }
 
 /*-
@@ -1394,7 +1392,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, int reassoc)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int reassoc)
 {
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
@@ -1588,8 +1586,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	} else
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 
-	ni->ni_rssi = rssi;
-	ni->ni_rstamp = rstamp;
+	ni->ni_rssi = rxi->rxi_rssi;
+	ni->ni_rstamp = rxi->rxi_tstamp;
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
 	ni->ni_chan = ic->ic_bss->ni_chan;
@@ -1847,26 +1845,26 @@ ieee80211_recv_action(struct ieee80211com *ic, struct mbuf *m0,
 
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
 {
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		ieee80211_recv_probe_resp(ic, m0, ni, rssi, rstamp, 0);
+		ieee80211_recv_probe_resp(ic, m0, ni, rxi, 0);
 		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-		ieee80211_recv_probe_resp(ic, m0, ni, rssi, rstamp, 1);
+		ieee80211_recv_probe_resp(ic, m0, ni, rxi, 1);
 		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-		ieee80211_recv_probe_req(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_probe_req(ic, m0, ni, rxi);
 		break;
 	case IEEE80211_FC0_SUBTYPE_AUTH:
-		ieee80211_recv_auth(ic, m0, ni, rssi, rstamp);
+		ieee80211_recv_auth(ic, m0, ni, rxi);
 		break;
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
-		ieee80211_recv_assoc_req(ic, m0, ni, rssi, rstamp, 0);
+		ieee80211_recv_assoc_req(ic, m0, ni, rxi, 0);
 		break;
 	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
-		ieee80211_recv_assoc_req(ic, m0, ni, rssi, rstamp, 1);
+		ieee80211_recv_assoc_req(ic, m0, ni, rxi, 1);
 		break;
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
 		ieee80211_recv_assoc_resp(ic, m0, ni, 0);

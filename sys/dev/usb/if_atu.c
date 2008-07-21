@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.91 2007/11/27 16:22:13 martynas Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.92 2008/07/21 18:43:19 damien Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1654,6 +1654,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet		*ifp = &ic->ic_if;
 	struct atu_rx_hdr	*h;
 	struct ieee80211_frame	*wh;
+	struct ieee80211_rxinfo	rxi;
 	struct ieee80211_node	*ni;
 	struct mbuf		*m;
 	u_int32_t		len;
@@ -1753,15 +1754,19 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 #endif /* NBPFILTER > 0 */
 
+	rxi.rxi_flags = 0;
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * WEP is decrypted by hardware. Clear WEP bit
 		 * header for ieee80211_input().
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
 
-	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
+	rxi.rxi_rssi = h->rssi;
+	rxi.rxi_tstamp = UGETDW(h->rx_time);
+	ieee80211_input(ifp, m, ni, &rxi);
 
 	ieee80211_release_node(ic, ni);
 done1:

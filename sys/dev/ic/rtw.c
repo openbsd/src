@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.66 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.67 2008/07/21 18:43:19 damien Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -106,7 +106,7 @@ void	 rtw_start(struct ifnet *);
 void	 rtw_watchdog(struct ifnet *);
 void	 rtw_next_scan(void *);
 void	 rtw_recv_mgmt(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, int, u_int32_t);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 struct ieee80211_node *rtw_node_alloc(struct ieee80211com *);
 void	 rtw_node_free(struct ieee80211com *, struct ieee80211_node *);
 void	 rtw_media_status(struct ifnet *, struct ifmediareq *);
@@ -1090,7 +1090,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 	struct rtw_rxsoft *rs;
 	struct rtw_rxdesc_blk *rdb;
 	struct mbuf *m;
-
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 
@@ -1289,7 +1289,10 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		}
 #endif /* NBPFILTER > 0 */
 
-		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
+		rxi.rxi_flags = 0;
+		rxi.rxi_rssi = rssi;
+		rxi.rxi_tstamp = htsftl;
+		ieee80211_input(&sc->sc_if, m, ni, &rxi);
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
 		rtw_rxdesc_init(rdb, rs, next, 0);
@@ -3511,11 +3514,11 @@ rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni,
 
 void
 rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
 {
 	struct rtw_softc *sc = (struct rtw_softc*)ic->ic_softc;
 
-	(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+	(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, rxi, subtype);
 
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
@@ -3523,7 +3526,7 @@ rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ic->ic_state != IEEE80211_S_RUN)
 			return;
-		rtw_ibss_merge(sc, ni, rstamp);
+		rtw_ibss_merge(sc, ni, rxi->rxi_tstamp);
 		break;
 	default:
 		break;

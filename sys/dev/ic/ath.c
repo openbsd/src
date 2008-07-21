@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.69 2007/10/13 16:12:29 fgsch Exp $  */
+/*      $OpenBSD: ath.c,v 1.70 2008/07/21 18:43:19 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 void	ath_rssadapt_updatenode(void *, struct ieee80211_node *);
 void	ath_rssadapt_updatestats(void *);
 void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, int, u_int32_t);
+	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 
@@ -1886,6 +1886,7 @@ ath_rx_proc(void *arg, int npending)
 	struct ath_desc *ds;
 	struct mbuf *m;
 	struct ieee80211_frame *wh, whbuf;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ath_node *an;
 	struct ath_recv_hist *rh;
@@ -2018,9 +2019,9 @@ ath_rx_proc(void *arg, int npending)
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 		}
 #endif
-
 		m_adj(m, -IEEE80211_CRC_LEN);
 		wh = mtod(m, struct ieee80211_frame *);
+		rxi.rxi_flags = 0;
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			/*
 			 * WEP is decrypted by hardware. Clear WEP bit
@@ -2039,6 +2040,8 @@ ath_rx_proc(void *arg, int npending)
 			 * The header has probably moved.
 			 */
 			wh = mtod(m, struct ieee80211_frame *);
+
+			rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 		}
 
 		/*
@@ -2062,8 +2065,9 @@ ath_rx_proc(void *arg, int npending)
 		/*
 		 * Send frame up for processing.
 		 */
-		ieee80211_input(ifp, m, ni,
-		    ds->ds_rxstat.rs_rssi, ds->ds_rxstat.rs_tstamp);
+		rxi.rxi_rssi = ds->ds_rxstat.rs_rssi;
+		rxi.rxi_tstamp = ds->ds_rxstat.rs_tstamp;
+		ieee80211_input(ifp, m, ni, &rxi);
 
 		/* Handle the rate adaption */
 		ieee80211_rssadapt_input(ic, ni, &an->an_rssadapt,
@@ -2982,12 +2986,12 @@ bad:
 
 void
 ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
 {
 	struct ath_softc *sc = (struct ath_softc*)ic->ic_softc;
 	struct ath_hal *ah = sc->sc_ah;
 
-	(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+	(*sc->sc_recv_mgmt)(ic, m, ni, rxi, subtype);
 
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:

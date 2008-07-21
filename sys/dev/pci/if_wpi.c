@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.61 2008/06/16 18:43:06 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.62 2008/07/21 18:43:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -1204,6 +1204,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct wpi_rx_tail *tail;
 	struct wpi_rbuf *rbuf;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
 
@@ -1317,7 +1318,10 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the 802.11 layer */
-	ieee80211_input(ifp, m, ni, stat->rssi, 0);
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = stat->rssi;
+	rxi.rxi_tstamp = 0;	/* unused */
+	ieee80211_input(ifp, m, ni, &rxi);
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);

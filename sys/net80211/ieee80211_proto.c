@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.24 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.25 2008/07/21 18:43:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -432,7 +432,7 @@ ieee80211_gtk_rekey_timeout(void *arg)
 
 void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
+    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, u_int16_t seq,
     u_int16_t status)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -472,8 +472,8 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 				return;
 			}
 			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
-			ni->ni_rssi = rssi;
-			ni->ni_rstamp = rstamp;
+			ni->ni_rssi = rxi->rxi_rssi;
+			ni->ni_rstamp = rxi->rxi_tstamp;
 			ni->ni_chan = ic->ic_bss->ni_chan;
 		}
 		IEEE80211_SEND_MGMT(ic, ni,

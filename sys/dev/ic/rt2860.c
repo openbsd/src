@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.15 2008/06/08 19:34:14 jsg Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.16 2008/07/21 18:43:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -1014,6 +1014,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
 	uint8_t ant, rssi;
@@ -1101,8 +1102,12 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh16(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
-		/* frame is decrypted by hardware */
-		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+		rxi.rxi_flags = 0;
+		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+			/* frame is decrypted by hardware */
+			wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+			rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
+		}
 
 		/* HW may insert 2 padding bytes after 802.11 header */
 		if (rxd->flags & htole32(RT2860_RX_L2PAD)) {
@@ -1164,7 +1169,9 @@ skipbpf:
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		ieee80211_input(ifp, m, ni, rssi, 0);
+		rxi.rxi_rssi = rssi;
+		rxi.rxi_tstamp = 0;	/* unused */
+		ieee80211_input(ifp, m, ni, &rxi);
 
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);

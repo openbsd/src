@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.76 2008/06/11 00:17:17 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.77 2008/07/21 18:43:19 damien Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8214,6 +8214,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		struct bwi_rxbuf *rb = &rbd->rbd_buf[idx];
 		struct bwi_rxbuf_hdr *hdr;
 		struct ieee80211_frame *wh;
+		struct ieee80211_rxinfo rxi;
 		struct ieee80211_node *ni;
 		struct mbuf *m;
 		void *plcp;
@@ -8290,8 +8291,9 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		ni = ieee80211_find_rxnode(ic, wh);
 		type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-		ieee80211_input(ifp, m, ni, hdr->rxh_rssi,
-		    letoh16(hdr->rxh_tsf));
+		rxi.rxi_rssi = hdr->rxh_rssi;
+		rxi.rxi_tstamp = letoh16(hdr->rxh_tsf);
+		ieee80211_input(ifp, m, ni, &rxi);
 
 		ieee80211_release_node(ic, ni);
 

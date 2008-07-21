@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.38 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.39 2008/07/21 18:43:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -158,6 +158,13 @@ struct ieee80211_rsnparams {
 	u_int16_t		rsn_caps;
 };
 
+struct ieee80211_rxinfo {
+	u_int32_t		rxi_flags;
+	u_int32_t		rxi_tstamp;
+	int			rxi_rssi;
+};
+#define IEEE80211_RXI_HWDEC	0x00000001
+
 #define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
 
 #define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
@@ -172,7 +179,7 @@ struct ieee80211com {
 	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
-				    int, int, u_int32_t);
+				    struct ieee80211_rxinfo *, int);
 	int			(*ic_send_mgmt)(struct ieee80211com *,
 				    struct ieee80211_node *, int, int);
 	void			(*ic_recv_eapol)(struct ieee80211com *,

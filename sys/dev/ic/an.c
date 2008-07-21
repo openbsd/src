@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.54 2007/09/30 11:33:14 kettenis Exp $	*/
+/*	$OpenBSD: an.c,v 1.55 2008/07/21 18:43:19 damien Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -357,6 +357,7 @@ an_rxeof(struct an_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct an_rxframe frmhdr;
 	struct mbuf *m;
@@ -474,17 +475,21 @@ an_rxeof(struct an_softc *sc)
 #endif /* NBPFILTER > 0 */
 
 	wh = mtod(m, struct ieee80211_frame *);
+	rxi.rxi_flags = 0;
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * WEP is decrypted by hardware. Clear WEP bit
 		 * header for ieee80211_input().
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	ieee80211_input(ifp, m, ni, frmhdr.an_rx_signal_strength,
-	    an_switch32(frmhdr.an_rx_time));
+	rxi.rxi_rssi = frmhdr.an_rx_signal_strength;
+	rxi.rxi_tstamp = an_switch32(frmhdr.an_rx_time);
+	ieee80211_input(ifp, m, ni, &rxi);
 	ieee80211_release_node(ic, ni);
 }
 

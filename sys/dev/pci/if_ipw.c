@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.72 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.73 2008/07/21 18:43:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -815,6 +815,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	struct ifnet *ifp = &ic->ic_if;
 	struct mbuf *mnew, *m;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	int error;
 
@@ -892,7 +893,10 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the upper layer */
-	ieee80211_input(ifp, m, ni, status->rssi, 0);
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = status->rssi;
+	rxi.rxi_tstamp = 0;	/* unused */
+	ieee80211_input(ifp, m, ni, &rxi);
 
 	ieee80211_release_node(ic, ni);
 }

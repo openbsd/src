@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.73 2008/06/29 00:43:11 deraadt Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.74 2008/07/21 18:43:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -774,6 +774,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp = &ic->ic_if;
 	const struct rum_rx_desc *desc;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
 	int s, len;
@@ -860,7 +861,10 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the 802.11 layer */
-	ieee80211_input(ifp, m, ni, desc->rssi, 0);
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = desc->rssi;
+	rxi.rxi_tstamp = 0;	/* unused */
+	ieee80211_input(ifp, m, ni, &rxi);
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);

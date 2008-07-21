@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.34 2008/06/08 20:43:31 yuo Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.35 2008/07/21 18:43:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1182,6 +1182,7 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct uath_rx_desc *desc;
 	struct mbuf *mnew, *m;
@@ -1248,6 +1249,7 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	data->buf = mtod(data->m, uint8_t *);
 
 	wh = mtod(m, struct ieee80211_frame *);
+	rxi.rxi_flags = 0;
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		/*
@@ -1261,6 +1263,8 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 		m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
 		m_adj(m, -IEEE80211_WEP_CRCLEN);
 		wh = mtod(m, struct ieee80211_frame *);
+
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
 
 #if NBPFILTER > 0
@@ -1286,7 +1290,9 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	s = splnet();
 	ni = ieee80211_find_rxnode(ic, wh);
-	ieee80211_input(ifp, m, ni, (int)betoh32(desc->rssi), 0);
+	rxi.rxi_rssi = (int)betoh32(desc->rssi);
+	rxi.rxi_tstamp = 0;	/* unused */
+	ieee80211_input(ifp, m, ni, &rxi);
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
