@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.70 2008/07/01 15:00:53 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.71 2008/07/21 14:37:53 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -97,8 +97,9 @@ sacompare(const void *va, const void *vb)
 int
 ipsecctl_rules(char *filename, int opts)
 {
-	struct ipsecctl	 ipsec;
-	int		 action, error = 0;
+	struct ipsecctl		 ipsec;
+	struct ipsec_rule	*rp;
+	int			 action, error = 0;
 
 	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
@@ -116,7 +117,15 @@ ipsecctl_rules(char *filename, int opts)
 
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
 			error = ipsecctl_commit(action, &ipsec);
+
 	}
+
+	/* This also frees the rules in ipsec.group_queue. */
+	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
+		TAILQ_REMOVE(&ipsec.rule_queue, rp, rule_entry);
+		ipsecctl_free_rule(rp);
+	}
+
 	return (error);
 }
 
@@ -151,9 +160,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 	if (pfkey_init() == -1)
 		errx(1, "ipsecctl_commit: failed to open PF_KEY socket");
 
-	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
-		TAILQ_REMOVE(&ipsec->rule_queue, rp, rule_entry);
-
+	TAILQ_FOREACH(rp, &ipsec->rule_queue, rule_entry) {
 		if (rp->type & RULE_IKE) {
 			if (ike_ipsec_establish(action, rp) == -1) {
 				warnx("failed to %s rule %d",
@@ -169,7 +176,6 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 				ret = 2;
 			}
 		}
-		ipsecctl_free_rule(rp);
 	}
 
 	return (ret);
