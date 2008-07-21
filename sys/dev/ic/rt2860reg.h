@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.8 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.9 2008/07/21 19:41:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -274,6 +274,7 @@
 #define RT2860_MCU_CMD_LED3	0x54
 #define RT2860_MCU_CMD_BOOT	0x72
 #define RT2860_MCU_CMD_BBP	0x80
+#define RT2860_MCU_CMD_PSLEVEL	0x83
 
 /* possible flags for register PBF_CFG */
 #define RT2860_TX1Q_NUM_SHIFT	21
@@ -753,6 +754,8 @@ struct rt2860_rxwi {
 #define RT2860_EEPROM_MAC01		0x02
 #define RT2860_EEPROM_MAC23		0x03
 #define RT2860_EEPROM_MAC45		0x04
+#define RT2860_EEPROM_PCIE_PSLEVEL	0x11
+#define RT2860_EEPROM_REV		0x12
 #define RT2860_EEPROM_ANTENNA		0x1a
 #define RT2860_EEPROM_CONFIG		0x1b
 #define RT2860_EEPROM_COUNTRY		0x1c
@@ -787,18 +790,17 @@ struct rt2860_rxwi {
 /*
  * Control and status registers access macros.
  */
-#define RAL_READ(sc, reg)						\
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
+static inline u_int32_t
+RAL_READ(struct rt2860_softc *sc, bus_size_t reg)
+{
+	(void)bus_space_read_4(sc->sc_st, sc->sc_sh, RT2860_ASIC_VER_ID);
+	return bus_space_read_4(sc->sc_st, sc->sc_sh, reg);
+}
 
-#define RAL_WRITE(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
-
-#define RAL_WRITE_1(sc, reg, val)					\
-	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
-
-#define RAL_RW_BARRIER_1(sc, reg)					\
-	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, (reg), 1,		\
-	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
+#define RAL_WRITE(sc, reg, val)	do {					\
+	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, RT2860_ASIC_VER_ID);	\
+	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val));	\
+} while (/* CONSTCOND */0)
 
 #define RAL_WRITE_REGION_1(sc, offset, datap, count)			\
 	bus_space_write_region_1((sc)->sc_st, (sc)->sc_sh, (offset),	\
@@ -845,7 +847,9 @@ struct rt2860_rxwi {
 	{ RT2860_TXOP_CTRL_CFG,		0x0000583f },	\
 	{ RT2860_TXOP_HLDR_ET,		0x00000002 },	\
 	{ RT2860_TX_RTS_CFG,		0x00092b20 },	\
-	{ RT2860_EXP_ACK_TIME,		0x002400ca }
+	{ RT2860_EXP_ACK_TIME,		0x002400ca },	\
+	{ RT2860_XIFS_TIME_CFG,		0x33a41010 },	\
+	{ RT2860_PWR_PIN_CFG,		0x00000003 }
 
 /*
  * Default values for BBP registers; values taken from the reference driver.
@@ -858,7 +862,10 @@ struct rt2860_rxwi {
 	{  81, 0x37 },	\
 	{  82, 0x62 },	\
 	{  83, 0x6a },	\
-	{  84, 0x99 },	\
+	{  84, 0x19 },	\
+	{  86, 0x00 },	\
+	{  91, 0x04 },	\
+	{  92, 0x00 },	\
 	{ 105, 0x01 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.7 2008/06/08 19:34:14 jsg Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.8 2008/07/21 19:41:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -118,6 +118,7 @@ struct rt2860_softc {
 #define RT2860_ENABLED		(1 << 0)
 #define RT2860_FWLOADED		(1 << 1)
 #define RT2860_UPD_BEACON	(1 << 2)
+#define RT2860_ADVANCED_PS	(1 << 3)
 
 	uint32_t			sc_ic_flags;
 
@@ -139,6 +140,7 @@ struct rt2860_softc {
 	uint8_t				freq;
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;
+	uint8_t				pslevel;
 	int8_t				txpow1[50];
 	int8_t				txpow2[50];
 	int8_t				rssi_2ghz[3];
