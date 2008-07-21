@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.9 2008/06/08 21:08:57 rainer Exp $	*/
+/*	$OpenBSD: dump.c,v 1.10 2008/07/21 19:14:15 rainer Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -150,10 +150,10 @@ rtadvd_dump()
 
 		/* Router configuration variables */
 		log_info("  DefaultLifetime: %d, MaxAdvInterval: %d, "
-		    "MinAdvInterval: %d"
+		    "MinAdvInterval: %d, "
 		    "Flags: %s%s, Preference: %s, MTU: %d",
 		    rai->lifetime, rai->maxinterval, rai->mininterval,
-		    rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
+		    rai->managedflg ? "M" : "-", rai->otherflg ? "O" : "-",
 		    rtpref_str[(rai->rtpref >> 3) & 0xff], rai->linkmtu);
 		log_info("  ReachableTime: %d, RetransTimer: %d, "
 		    "CurHopLimit: %d", rai->reachabletime,
@@ -192,8 +192,8 @@ rtadvd_dump()
 			vltime = lifetime(pfx->validlifetime);
 			pltime = lifetime(pfx->preflifetime);
 			asprintf(&flags, "%s%s",
-			    pfx->onlinkflg ? "L" : "",
-			    pfx->autoconfflg ? "A" : "");
+			    pfx->onlinkflg ? "L" : "-",
+			    pfx->autoconfflg ? "A" : "-");
 			log_info("    %s/%d(%s, vltime: %s%s, "
 			    "pltime: %s%s, flags: %s)",
 			    inet_ntop(AF_INET6, &pfx->prefix, prefixbuf,
