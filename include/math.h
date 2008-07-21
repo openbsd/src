@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.16 2008/07/16 15:01:19 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.17 2008/07/21 20:50:54 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -17,6 +17,7 @@
 #ifndef _MATH_H_
 #define _MATH_H_
 
+#include <sys/_types.h>
 #include <sys/cdefs.h>
 
 /*
@@ -29,11 +30,8 @@ extern char __infinity[];
  * C99
  */
 
-/* XXX just appease the committee for now, needs proper defs... */
-
-typedef float float_t;
-typedef double double_t;
-#define FLT_EVAL_METHOD (-1)
+typedef __double_t	double_t;
+typedef __float_t	float_t;
 
 /*
  * XOPEN/SVID

@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: float.h,v 1.5 2008/07/21 20:50:55 martynas Exp $	*/
 /*	$NetBSD: float.h,v 1.3 2001/09/21 20:48:02 eeh Exp $ */
 
 /*
@@ -52,6 +52,7 @@ __END_DECLS
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	__flt_rounds()
+#define FLT_EVAL_METHOD	0		/* no promotions */
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
