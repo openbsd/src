@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.46 2008/07/16 15:15:26 martynas Exp $
+#  $OpenBSD: Makefile,v 1.47 2008/07/21 20:29:14 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -110,7 +110,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
-	lround.c lroundf.c llround.c llroundf.c \
+	s_lround.c s_lroundf.c s_llround.c s_llroundf.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
 	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c s_erff.c \
 	s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \

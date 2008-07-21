@@ -1,5 +1,5 @@
-/*	$OpenBSD: lroundf.c,v 1.1 2005/11/17 20:07:40 otto Exp $	*/
-/* $NetBSD: lroundf.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+/*	$OpenBSD: s_lround.c,v 1.1 2008/07/21 20:29:14 martynas Exp $	*/
+/* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -27,15 +27,15 @@
  * SUCH DAMAGE.
  */
 
-#include <math.h>
 #include <sys/types.h>
 #include <sys/limits.h>
+#include <math.h>
 #include <ieeefp.h>
 #include <machine/ieee.h>
 #include "math_private.h"
 
 #ifndef LROUNDNAME
-#define LROUNDNAME lroundf
+#define LROUNDNAME lround
 #define RESTYPE long int
 #define RESTYPE_MIN LONG_MIN
 #define RESTYPE_MAX LONG_MAX
@@ -44,16 +44,16 @@
 #define RESTYPE_BITS (sizeof(RESTYPE) * 8)
 
 RESTYPE
-LROUNDNAME(float x)
+LROUNDNAME(double x)
 {
-	u_int32_t i0;
+	u_int32_t i0, i1;
 	int e, s, shift;
 	RESTYPE res;
 
-	GET_FLOAT_WORD(i0, x);
-	e = i0 >> SNG_FRACBITS;
-	s = e >> SNG_EXPBITS;
-	e = (e & 0xff) - SNG_EXP_BIAS;
+	GET_HIGH_WORD(i0, x);
+	e = i0 >> 20;
+	s = e >> DBL_EXPBITS;
+	e = (e & 0x7ff) - DBL_EXP_BIAS;
 
 	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */
 	if (e < -1)
@@ -62,22 +62,27 @@ LROUNDNAME(float x)
 	if (e >= (int)RESTYPE_BITS - 1)
 		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
 
-	/* >= 2^23 is already an exact integer */
-	if (e < SNG_FRACBITS) {
+	/* >= 2^52 is already an exact integer */
+	if (e < DBL_FRACBITS) {
 		/* add 0.5, extraction below will truncate */
 		x += (s ? -0.5 : 0.5);
 	}
 
-	GET_FLOAT_WORD(i0, x);
-	e = ((i0 >> SNG_FRACBITS) & 0xff) - SNG_EXP_BIAS;
-	i0 &= 0x7fffff;
-	i0 |= (1 << SNG_FRACBITS);
+	EXTRACT_WORDS(i0, i1, x);
+	e = ((i0 >> 20) & 0x7ff) - DBL_EXP_BIAS;
+	i0 &= 0xfffff;
+	i0 |= (1 << 20);
 
-	shift = e - SNG_FRACBITS;
+	shift = e - DBL_FRACBITS;
 	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
+		res = (shift < 32 ? (RESTYPE)i1 << shift : 0);
 	else
-		res = (shift > -32 ? i0 >> -shift : 0);
+		res = (shift > -32 ? i1 >> -shift : 0);
+	shift += 32;
+	if (shift >=0)
+		res |= (shift < 32 ? (RESTYPE)i0 << shift : 0);
+	else
+		res |= (shift > -32 ? i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }
