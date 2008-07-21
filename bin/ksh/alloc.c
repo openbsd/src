@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.7 2004/02/19 18:51:17 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.8 2008/07/21 17:30:08 millert Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -102,12 +102,19 @@ aresize(void *ptr, size_t size, Area *ap)
 void
 afree(void *ptr, Area *ap)
 {
-	struct link *l;
+	struct link *l, *l2;
 
 	if (!ptr)
 		return;
 
 	l = P2L(ptr);
+
+	for (l2 = ap->freelist; l2 != NULL; l2 = l2->next) {
+		if (l == l2)
+			break;
+	}
+	if (l2 == NULL)
+		internal_errorf(1, "afree: %p not present in area %p", ptr, ap);
 
 	if (l->prev)
 		l->prev->next = l->next;
