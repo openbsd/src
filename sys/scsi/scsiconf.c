@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.132 2008/06/14 01:57:51 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.133 2008/07/21 23:40:03 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -700,7 +700,7 @@ int
 scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 {
 	const struct scsi_quirk_inquiry_pattern *finger;
-	static struct scsi_inquiry_data	inqbuf;
+	struct scsi_inquiry_data	*inqbuf;
 	struct scsi_attach_args sa;
 	struct scsi_link *sc_link;
 	struct cfdata *cf;
@@ -718,6 +718,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
+	inqbuf = &sc_link->inqdata;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
 
@@ -755,7 +756,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	}
 
 	/* Now go ask the device all about itself. */
-	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
+	rslt = scsi_inquire(sc_link, inqbuf, scsi_autoconf | SCSI_SILENT);
 	if (rslt != 0) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("Bad LUN. rslt = %i\n", rslt));
 		if (lun == 0)
@@ -763,16 +764,16 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		goto bad;
 	}
 
-	switch (inqbuf.device & SID_QUAL) {
+	switch (inqbuf->device & SID_QUAL) {
 	case SID_QUAL_RSVD:
 	case SID_QUAL_BAD_LU:
 	case SID_QUAL_LU_OFFLINE:
-		SC_DEBUG(sc_link, SDEV_DB1,
-		    ("Bad LUN. SID_QUAL = 0x%02x\n", inqbuf.device & SID_QUAL));
+		SC_DEBUG(sc_link, SDEV_DB1, ("Bad LUN. SID_QUAL = 0x%02x\n",
+		    inqbuf->device & SID_QUAL));
 		goto bad;
 
 	case SID_QUAL_LU_OK:
-		if ((inqbuf.device & SID_TYPE) == T_NODEVICE) {
+		if ((inqbuf->device & SID_TYPE) == T_NODEVICE) {
 			SC_DEBUG(sc_link, SDEV_DB1,
 		    	    ("Bad LUN. SID_TYPE = T_NODEVICE\n"));
 			goto bad;
@@ -787,8 +788,8 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		;
 	else if (sc_link->flags & SDEV_UMASS)
 		;
-	else if (memcmp(&inqbuf, &scsi->sc_link[target][0]->inqdata,
-	    sizeof inqbuf) == 0) {
+	else if (memcmp(inqbuf, &scsi->sc_link[target][0]->inqdata,
+	    sizeof(*inqbuf)) == 0) {
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
 		rslt = EINVAL;
@@ -796,7 +797,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	}
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
-	    &inqbuf, scsi_quirk_patterns,
+	    inqbuf, scsi_quirk_patterns,
 	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 
@@ -804,12 +805,12 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 * Based upon the inquiry flags we got back, and if we're
 	 * at SCSI-2 or better, remove some limiting quirks.
 	 */
-	if (SCSISPC(inqbuf.version) >= 2) {
-		if ((inqbuf.flags & SID_CmdQue) != 0)
+	if (SCSISPC(inqbuf->version) >= 2) {
+		if ((inqbuf->flags & SID_CmdQue) != 0)
 			sc_link->quirks &= ~SDEV_NOTAGS;
-		if ((inqbuf.flags & SID_Sync) != 0)
+		if ((inqbuf->flags & SID_Sync) != 0)
 			sc_link->quirks &= ~SDEV_NOSYNC;
-		if ((inqbuf.flags & SID_WBus16) != 0)
+		if ((inqbuf->flags & SID_WBus16) != 0)
 			sc_link->quirks &= ~SDEV_NOWIDE;
 	} else
 		/* Older devices do not have SYNCHRONIZE CACHE capability. */
@@ -822,14 +823,9 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		sc_link->quirks |= finger->quirks;
 
 	/*
-	 * Save INQUIRY.
-	 */
-	memcpy(&sc_link->inqdata, &inqbuf, sizeof(sc_link->inqdata));
-
-	/*
 	 * note what BASIC type of device it is
 	 */
-	if ((inqbuf.dev_qual2 & SID_REMOVABLE) != 0)
+	if ((inqbuf->dev_qual2 & SID_REMOVABLE) != 0)
 		sc_link->flags |= SDEV_REMOVABLE;
 
 	sa.sa_sc_link = sc_link;
@@ -851,8 +847,9 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 */
 	if (lun == 0 && (sc_link->flags & SDEV_UMASS) &&
 	    scsi->sc_link[target][1] == NULL && sc_link->luns > 1) {
+		struct scsi_inquiry_data tmpinq;
 		sc_link->lun = 1;
-		scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
+		scsi_inquire(sc_link, &tmpinq, scsi_autoconf | SCSI_SILENT);
 	    	sc_link->lun = 0;
 	}
 
