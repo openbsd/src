@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.1 2008/03/08 19:15:56 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.2 2008/07/21 13:30:04 art Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -48,6 +48,8 @@ int64_t	hv_cpu_qconf(uint64_t queue, uint64_t base, uint64_t nentries);
 
 int64_t	hv_cpu_mondo_send(uint64_t ncpus, paddr_t cpulist, paddr_t data);
 int64_t	hv_cpu_myid(uint64_t *cpuid);
+
+void hv_cpu_yield(void);
 
 /*
  * MMU services

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.146 2008/07/12 15:05:51 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.147 2008/07/21 13:30:05 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6153,18 +6153,6 @@ Lsw_havectx:
 	wrpr	%g0, PSTATE_INTR, %pstate
 	ret
 	 restore
-
-ENTRY(cpu_idle_enter)
-	retl
-	 nop
-
-ENTRY(cpu_idle_cycle)
-	retl
-	 nop
-
-ENTRY(cpu_idle_leave)
-	retl
-	 nop
 
 /*
  * Snapshot the current process so that stack frames are up to date.

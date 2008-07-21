@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.1 2008/03/08 19:15:56 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.2 2008/07/21 13:30:05 art Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -320,3 +320,9 @@ ENTRY(hv_pci_config_put)
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
+
+ENTRY(hv_cpu_yield)
+	mov	CPU_YIELD, %o5
+	ta	FAST_TRAP
+	retl
+	 nop

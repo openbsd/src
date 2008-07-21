@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2008/07/12 14:26:07 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.45 2008/07/21 13:30:05 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -515,4 +515,39 @@ need_resched(struct cpu_info *ci)
 	ci->ci_want_resched = 1;
 	if (ci->ci_curproc != NULL)
 		aston(ci->ci_curproc);
+}
+
+/*
+ * Idle loop.
+ *
+ * We disable and reenable the interrupts in every cycle of the idle loop.
+ * Since hv_cpu_yield doesn't actually reenable interrupts, it just wakes
+ * up if an interrupt would have happened, but it's our responsibility to
+ * unblock interrupts.
+ */
+
+void
+cpu_idle_enter(void)
+{
+	if (CPU_ISSUN4V) {
+		sparc_wrpr(pstate, sparc_rdpr(pstate) & ~PSTATE_IE, 0);
+	}
+}
+
+void
+cpu_idle_cycle(void)
+{
+	if (CPU_ISSUN4V) {
+		hv_cpu_yield();
+		sparc_wrpr(pstate, sparc_rdpr(pstate) | PSTATE_IE, 0);
+		sparc_wrpr(pstate, sparc_rdpr(pstate) & ~PSTATE_IE, 0);
+	}
+}
+
+void
+cpu_idle_leave()
+{
+	if (CPU_ISSUN4V) {
+		sparc_wrpr(pstate, sparc_rdpr(pstate) | PSTATE_IE, 0);
+	}
 }
