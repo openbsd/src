@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.39 2008/07/21 18:43:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.40 2008/07/21 19:27:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -356,15 +356,6 @@ int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
-
-#ifdef IEEE80211_DEBUG
-extern	int ieee80211_debug;
-#define	IEEE80211_DPRINTF(X)	do { if (ieee80211_debug) printf X; } while(0)
-#define	IEEE80211_DPRINTF2(X)	do { if (ieee80211_debug>1) printf X; } while(0)
-#else
-#define	IEEE80211_DPRINTF(X)
-#define	IEEE80211_DPRINTF2(X)
-#endif
 
 extern	int ieee80211_cache_size;
 

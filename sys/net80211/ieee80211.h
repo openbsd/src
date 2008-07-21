@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.35 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.36 2008/07/21 19:27:26 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -557,16 +557,9 @@ enum {
  * number may be overridden by the driver and/or by
  * user configuration.
  */
-#define	IEEE80211_AID_MAX		2007
-#define	IEEE80211_AID_DEF		1800
-
-#define	IEEE80211_AID(b)		((b) &~ 0xc000)
-#define	IEEE80211_AID_SET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_CLR(b, w) \
-	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_ISSET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
+#define	IEEE80211_AID_MAX	2007
+#define	IEEE80211_AID_DEF	1800
+#define IEEE80211_AID(b)	((b) &~ 0xc000)
 
 /*
  * RTS frame length parameters.  The default is specified in

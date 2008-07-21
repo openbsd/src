@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.42 2008/06/16 18:32:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.43 2008/07/21 19:27:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -40,6 +40,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 #include <dev/rndvar.h>
 #include <crypto/arc4.h>
@@ -465,17 +466,6 @@ ieee80211_derive_pmkid(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
 	/* use the first 128 bits of the HMAC-SHA1 */
 	memcpy(pmkid, hash, IEEE80211_PMKID_LEN);
 }
-
-/* unaligned big endian access */
-#define BE_READ_2(p)				\
-	((u_int16_t)				\
-         ((((const u_int8_t *)(p))[0] << 8) |	\
-          (((const u_int8_t *)(p))[1])))
-
-#define BE_WRITE_2(p, v) do {			\
-	((u_int8_t *)(p))[0] = (v) >> 8;	\
-	((u_int8_t *)(p))[1] = (v) & 0xff;	\
-} while (0)
 
 /*
  * Compute the Key MIC field of an EAPOL-Key frame using the specified Key

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.2 2008/07/21 19:27:26 damien Exp $	*/
+
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
  *
@@ -37,6 +39,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 #include <dev/rndvar.h>
 
@@ -59,22 +62,6 @@ void	ieee80211_recv_group_msg2(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
-
-/* unaligned big endian access */
-#define BE_READ_2(p)						\
-	((u_int16_t)(p)[0] << 8 | (u_int16_t)(p)[1])
-
-#define BE_READ_8(p)						\
-	((u_int64_t)(p)[0] << 56 | (u_int64_t)(p)[1] << 48 |	\
-	 (u_int64_t)(p)[2] << 40 | (u_int64_t)(p)[3] << 32 |	\
-	 (u_int64_t)(p)[4] << 24 | (u_int64_t)(p)[5] << 16 |	\
-	 (u_int64_t)(p)[6] <<  8 | (u_int64_t)(p)[7])
-
-/* unaligned little endian access */
-#define LE_READ_6(p)						\
-	((u_int64_t)(p)[5] << 40 | (u_int64_t)(p)[4] << 32 |	\
-	 (u_int64_t)(p)[3] << 24 | (u_int64_t)(p)[2] << 16 |	\
-	 (u_int64_t)(p)[1] <<  8 | (u_int64_t)(p)[0])
 
 /*
  * Process an incoming EAPOL frame.  Notice that we are only interested in

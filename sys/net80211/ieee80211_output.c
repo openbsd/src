@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.60 2008/07/21 19:05:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.61 2008/07/21 19:27:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
@@ -593,12 +594,6 @@ bad:
 	*pni = NULL;
 	return NULL;
 }
-
-/* unaligned little endian access */
-#define LE_WRITE_2(p, v) do {			\
-	((u_int8_t *)(p))[0] = (v) & 0xff;	\
-	((u_int8_t *)(p))[1] = (v) >> 8;	\
-} while (0)
 
 /*
  * Add a Capability Information field to a frame (see 7.3.1.4).

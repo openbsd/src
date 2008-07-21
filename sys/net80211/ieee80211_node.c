@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.34 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.35 2008/07/21 19:27:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 #include <dev/rndvar.h>
 

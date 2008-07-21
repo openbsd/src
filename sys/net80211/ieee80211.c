@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.31 2008/04/26 20:03:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.32 2008/07/21 19:27:26 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;

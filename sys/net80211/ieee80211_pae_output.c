@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.1 2008/07/21 19:05:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.2 2008/07/21 19:27:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -41,6 +41,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 int		ieee80211_send_eapol_key(struct ieee80211com *, struct mbuf *,
 		    struct ieee80211_node *, const struct ieee80211_ptk *);
@@ -48,28 +49,6 @@ u_int8_t 	*ieee80211_add_gtk_kde(u_int8_t *, struct ieee80211_node *,
 		    const struct ieee80211_key *);
 u_int8_t	*ieee80211_add_pmkid_kde(u_int8_t *, const u_int8_t *);
 struct mbuf 	*ieee80211_get_eapol_key(int, int, u_int);
-
-/* unaligned big endian access */
-#define BE_READ_2(p)				\
-	((u_int16_t)(p)[0] << 8 | (u_int16_t)(p)[1])
-
-#define BE_WRITE_2(p, v) do {			\
-	(p)[0] = (v) >>  8; (p)[1] = (v);	\
-} while (0)
-
-#define BE_WRITE_8(p, v) do {			\
-	(p)[0] = (v) >> 56; (p)[1] = (v) >> 48;	\
-	(p)[2] = (v) >> 40; (p)[3] = (v) >> 32;	\
-	(p)[4] = (v) >> 24; (p)[5] = (v) >> 16;	\
-	(p)[6] = (v) >>  8; (p)[7] = (v);	\
-} while (0)
-
-/* unaligned little endian access */
-#define LE_WRITE_6(p, v) do {			\
-	(p)[5] = (v) >> 40; (p)[4] = (v) >> 32;	\
-	(p)[3] = (v) >> 24; (p)[2] = (v) >> 16;	\
-	(p)[1] = (v) >>  8; (p)[0] = (v);	\
-} while (0)
 
 /*
  * Send an EAPOL-Key frame to node `ni'.  If MIC or encryption is required,

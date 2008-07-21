@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.82 2008/07/21 19:05:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.83 2008/07/21 19:27:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -61,6 +61,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_priv.h>
 
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
@@ -629,18 +630,6 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 	}
 	return m;
 }
-
-/* unaligned little endian access */
-#define LE_READ_2(p)					\
-	((u_int16_t)					\
-	 ((((const u_int8_t *)(p))[0]) |		\
-	  (((const u_int8_t *)(p))[1] <<  8)))
-#define LE_READ_4(p)					\
-	((u_int32_t)					\
-	 ((((const u_int8_t *)(p))[0])       |		\
-	  (((const u_int8_t *)(p))[1] <<  8) |		\
-	  (((const u_int8_t *)(p))[2] << 16) |		\
-	  (((const u_int8_t *)(p))[3] << 24)))
 
 /*
  * Parse an EDCA Parameter Set element (see 7.3.2.27).
