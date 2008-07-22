@@ -1047,7 +1047,7 @@ consisting of OpenSSL cipher specifications to configure the Cipher Suite the
 client is permitted to negotiate in the SSL handshake phase. Notice that this
 directive can be used both in per-server and per-directory context. In
 per-server context it applies to the standard SSL handshake when a connection
-is established. In per-directory context it forces a SSL renegotation with the
+is established. In per-directory context it forces a SSL renegotiation with the
 reconfigured Cipher Suite after the HTTP request was read but before the HTTP
 response is sent.
 <p>
@@ -1753,7 +1753,7 @@ This directive sets the Certificate verification level for the Client
 Authentication. Notice that this directive can be used both in per-server and
 per-directory context. In per-server context it applies to the client
 authentication process used in the standard SSL handshake when a connection is
-established. In per-directory context it forces a SSL renegotation with the
+established. In per-directory context it forces a SSL renegotiation with the
 reconfigured client verification level after the HTTP request was read but
 before the HTTP response is sent.
 <p>
@@ -1837,7 +1837,7 @@ clients don't have a valid certificate. Notice that this directive can be
 used both in per-server and per-directory context. In per-server context it
 applies to the client authentication process used in the standard SSL
 handshake when a connection is established. In per-directory context it forces
-a SSL renegotation with the reconfigured client verification depth after the
+a SSL renegotiation with the reconfigured client verification depth after the
 HTTP request was read but before the HTTP response is sent.
 <p>
 The depth actually is the maximum number of intermediate certificate issuers,

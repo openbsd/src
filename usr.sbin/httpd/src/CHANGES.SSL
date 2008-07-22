@@ -1778,7 +1778,7 @@
       SSLVerifyDepth and/or SSLCipherSuite directives in <Directory> or
       <Location> containers or even .htaccess files. When Apache reaches those
       directories, those directives reconfigure the SSL parameters and the SSL
-      renegotation is automatically enforced by mod_ssl. The only drawback is
+      renegotiation is automatically enforced by mod_ssl. The only drawback is
       that although an optimization is done to reduce unnecessary
       renegotiations (when the parameters were not actually changed), you
       usually increase the overhead for a request because a SSL renegotiation

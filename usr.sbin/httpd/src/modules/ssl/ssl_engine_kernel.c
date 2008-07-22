@@ -845,7 +845,7 @@ int ssl_hook_Access(request_rec *r)
      * Additionally the following optimization is possible here: When the
      * currently active verify type is "none" but a client certificate is
      * already known/present, it's enough to manually force a client
-     * verification but at least skip the I/O-intensive renegotation
+     * verification but at least skip the I/O-intensive renegotiation
      * handshake.
      */
     if (dc->nVerifyClient != SSL_CVERIFY_UNSET) {
@@ -951,7 +951,7 @@ int ssl_hook_Access(request_rec *r)
      */
     if (renegotiate) {
         /*
-         * Now we force the SSL renegotation by sending the Hello Request
+         * Now we force the SSL renegotiation by sending the Hello Request
          * message to the client. Here we have to do a workaround: Actually
          * OpenSSL returns immediately after sending the Hello Request (the
          * intent AFAIK is because the SSL/TLS protocol says it's not a must
@@ -1944,7 +1944,7 @@ void ssl_callback_LogTracingState(const SSL *ssl, int where, int rc)
     }
 
     /*
-     * Because SSL renegotations can happen at any time (not only after
+     * Because SSL renegotiations can happen at any time (not only after
      * SSL_accept()), the best way to log the current connection details is
      * right after a finished handshake.
      */

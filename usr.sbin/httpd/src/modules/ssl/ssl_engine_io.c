@@ -329,7 +329,7 @@ static int ssl_io_hook_read(BUFF *fb, char *buf, int len)
         /*
          * Simulate an EINTR in case OpenSSL wants to read more.
          * (This is usually the case when the client forces an SSL
-         * renegotation which is handled implicitly by OpenSSL.)
+         * renegotiation which is handled implicitly by OpenSSL.)
          */
         if (rc < 0 && SSL_get_error(ssl, rc) == SSL_ERROR_WANT_READ)
             errno = EINTR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.20 2008/07/11 15:00:17 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.21 2008/07/22 11:20:10 martynas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -282,7 +282,7 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * since real Intel 21143 chips don't show valid link
 		 * status until autonegotiation is switched off, and
 		 * that only happens in dcphy_status().  Without this,
-		 * successful autonegotation is never recognised on
+		 * successful autonegotiation is never recognised on
 		 * these chips.
 		 */
 		if (++sc->mii_ticks <= sc->mii_anegticks)

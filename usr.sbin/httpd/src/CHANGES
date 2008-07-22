@@ -165,7 +165,7 @@ Changes with Apache 1.3.28
      getsockname() failures to log the client IP address and to
      change the log level to debug.  [Jeff Trawick]
 
-  *) Correction to mod_negotation for Win32, OS2, Netware etc, where
+  *) Correction to mod_negotiation for Win32, OS2, Netware etc, where
      case insensitive requests such as the HEADER or README search
      from autoindex would fail to match HEADER.html (because the
      system internally looked for the case-sensitive header.* pattern.)
@@ -720,7 +720,7 @@ Changes with Apache 1.3.23
      Apache to the main server error log, until the child can
      open it's own error logs.  [William Rowe]
 
-  *) Revert mod_negotation's handling of path_info and query_args
+  *) Revert mod_negotiation's handling of path_info and query_args
      to the 1.3.20 behavior.  PR: 8628, 8582, 8538  [William Rowe]
 
   *) Modify buff.h and buff.c to enable modules to intercept the
