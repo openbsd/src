@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.612 2008/07/21 15:58:59 david Exp $ */
+/*	$OpenBSD: pf.c,v 1.613 2008/07/22 12:31:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3537,12 +3537,15 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 		s->src.state = PF_TCPS_PROXY_SRC;
 		/* undo NAT changes, if they have taken place */
 		if (nr != NULL) {
-			PF_ACPY(pd->src, &sk->addr[pd->sidx], pd->af);
-			PF_ACPY(pd->dst, &sk->addr[pd->didx], pd->af);
+			struct pf_state_key *skt = s->key[PF_SK_WIRE];
+			if (pd->dir == PF_OUT)
+				skt = s->key[PF_SK_STACK];
+			PF_ACPY(pd->src, &skt->addr[pd->sidx], pd->af);
+			PF_ACPY(pd->dst, &skt->addr[pd->didx], pd->af);
 			if (pd->sport)
-				*pd->sport = sk->port[pd->sidx];
+				*pd->sport = skt->port[pd->sidx];
 			if (pd->dport)
-				*pd->dport = sk->port[pd->didx];
+				*pd->dport = skt->port[pd->didx];
 			if (pd->proto_sum)
 				*pd->proto_sum = bproto_sum;
 			if (pd->ip_sum)
