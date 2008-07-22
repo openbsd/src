@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.218 2008/07/04 10:55:55 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.219 2008/07/22 20:53:13 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2008 $
+.Dd $Mdocdate: July 22 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1017,17 +1017,6 @@ Default value is ${DISTFILES}.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
 Default value is .tar.gz.
-.It Ev FAKE
-Automatically set to
-.Sq Yes
-for most ports (and all new ports).
-Indicates that the port, using
-.Ev FAKE_FLAGS
-magic, will properly fake installation into ${WRKINST}, to be packaged
-and properly installed from the package.
-Set to
-.Sq No
-in very rare cases, and during port creation.
 .It Ev FAKE_FLAGS
 Extra flags passed to ${MAKE_PROGRAM} on fake invocation.
 Empty by default.
