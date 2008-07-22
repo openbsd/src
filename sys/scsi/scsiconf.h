@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.93 2008/06/21 21:11:34 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.94 2008/07/22 01:01:31 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -55,6 +55,26 @@
 #include <sys/workq.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
+
+#define DEVID_NONE	0
+#define DEVID_NAA	1
+#define DEVID_EUI	2
+#define DEVID_T10	3
+
+struct devid {
+	int		 d_type;
+	u_int		 d_len;
+	u_int8_t	*d_id;
+};
+
+#define DEVID_CMP(_a, _b) (				\
+	(_a) != NULL &&					\
+	(_b) != NULL &&					\
+	(_a)->d_type != DEVID_NONE &&			\
+	(_a)->d_type == (_b)->d_type &&			\
+	(_a)->d_len == (_b)->d_len &&			\
+	bcmp((_a)->d_id, (_b)->d_id, (_a)->d_len) == 0	\
+)
 
 /*
  * The following documentation tries to describe the relationship between the
@@ -177,6 +197,7 @@ struct scsi_link {
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
+	struct  devid id;
 };
 
 int	scsiprint(void *, const char *);
