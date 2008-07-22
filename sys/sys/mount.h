@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.90 2008/07/05 12:56:52 thib Exp $	*/
+/*	$OpenBSD: mount.h,v 1.91 2008/07/22 08:05:02 thib Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -490,17 +490,17 @@ struct vfsconf {
 
 /* buffer cache statistics */
 struct bcachestats {
-	u_int64_t numbufs;		/* number of buffers allocated */
-	u_int64_t freebufs;		/* number of free buffers */
-	u_int64_t numbufpages;		/* number of pages in buffer cache */
-	u_int64_t numfreepages; 	/* number of free pages */
-	u_int64_t numdirtypages; 	/* number of dirty free pages */
-	u_int64_t numcleanpages; 	/* number of clean free pages */
-	u_int64_t pendingwrites;	/* number of pending writes */
-	u_int64_t pendingreads;		/* number of pending reads */
-	u_int64_t numwrites;		/* total writes started */
-	u_int64_t numreads;		/* total reads started */
-	u_int64_t cachehits;		/* total reads found in cache */
+	int64_t numbufs;		/* number of buffers allocated */
+	int64_t freebufs;		/* number of free buffers */
+	int64_t numbufpages;		/* number of pages in buffer cache */
+	int64_t numfreepages; 		/* number of free pages */
+	int64_t numdirtypages; 		/* number of dirty free pages */
+	int64_t numcleanpages; 		/* number of clean free pages */
+	int64_t pendingwrites;		/* number of pending writes */
+	int64_t pendingreads;		/* number of pending reads */
+	int64_t numwrites;		/* total writes started */
+	int64_t numreads;		/* total reads started */
+	int64_t cachehits;		/* total reads found in cache */
 };
 #ifdef _KERNEL
 extern struct bcachestats bcstats;

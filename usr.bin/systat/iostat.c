@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.32 2008/07/07 17:16:27 thib Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.33 2008/07/22 08:05:02 thib Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -230,46 +230,46 @@ showbcache(void)
 	int count = 0;
 
 	print_fld_str(FLD_IO_SSTR, "numbufs");
-	print_fld_size(FLD_IO_SVAL, bccur.numbufs);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numbufs);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "freebufs");
-	print_fld_size(FLD_IO_SVAL, bccur.freebufs);
+	print_fld_ssize(FLD_IO_SVAL, bccur.freebufs);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numbufpages");
-	print_fld_size(FLD_IO_SVAL, bccur.numbufpages);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numbufpages);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numfreepages");
-	print_fld_size(FLD_IO_SVAL, bccur.numfreepages);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numfreepages);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numdirtypages");
-	print_fld_size(FLD_IO_SVAL, bccur.numdirtypages);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numdirtypages);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numcleanpages");
-	print_fld_size(FLD_IO_SVAL, bccur.numcleanpages);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numcleanpages);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "pendingwrites");
-	print_fld_size(FLD_IO_SVAL, bccur.pendingwrites);
+	print_fld_ssize(FLD_IO_SVAL, bccur.pendingwrites);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "pendingreads");
-	print_fld_size(FLD_IO_SVAL, bccur.pendingreads);
+	print_fld_ssize(FLD_IO_SVAL, bccur.pendingreads);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numwrites");
-	print_fld_size(FLD_IO_SVAL, bccur.numwrites - bclast.numwrites);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numwrites - bclast.numwrites);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "numreads");
-	print_fld_size(FLD_IO_SVAL, bccur.numreads - bclast.numreads);
+	print_fld_ssize(FLD_IO_SVAL, bccur.numreads - bclast.numreads);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "cachehits");
-	print_fld_size(FLD_IO_SVAL, bccur.cachehits - bclast.cachehits);
+	print_fld_ssize(FLD_IO_SVAL, bccur.cachehits - bclast.cachehits);
 	end_line();
 }
