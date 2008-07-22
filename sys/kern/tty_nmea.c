@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.29 2008/07/07 08:01:47 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.30 2008/07/22 06:06:47 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -79,8 +79,10 @@ void	nmea_gprmc(struct nmea *, struct tty *, char *fld[], int fldcnt);
 int	nmea_date_to_nano(char *s, int64_t *nano);
 int	nmea_time_to_nano(char *s, int64_t *nano);
 
+#if NMEA_POS_IN_DESC
 /* longitude and latitude formatting and copying */
 void	nmea_degrees(char *dst, char *src, int neg, size_t len);
+#endif
 
 /* degrade the timedelta sensor */
 void	nmea_timeout(void *);
@@ -336,36 +338,37 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->mode = *fld[12];
 		switch (np->mode) {
 		case 'S':
-			strlcpy(np->time.desc, "GPS sim", /* simulated */
+			strlcpy(np->time.desc, "GPS simulated",
 			    sizeof(np->time.desc));
 			break;
 		case 'E':
-			strlcpy(np->time.desc, "GPS est", /* estimated */
+			strlcpy(np->time.desc, "GPS estimated",
 			    sizeof(np->time.desc));
 			break;
 		case 'A':
-			strlcpy(np->time.desc, "GPS aut", /* autonomous */
+			strlcpy(np->time.desc, "GPS autonomous",
 			    sizeof(np->time.desc));
 			break;
 		case 'D':
-			strlcpy(np->time.desc, "GPS dif", /* differential */
+			strlcpy(np->time.desc, "GPS differential",
 			    sizeof(np->time.desc));
 			break;
 		case 'N':
-			strlcpy(np->time.desc, "GPS inv", /* not valid */
+			strlcpy(np->time.desc, "GPS invalid",
 			    sizeof(np->time.desc));
 			break;
 		default:
-			strlcpy(np->time.desc, "GPS unk", /* unknown */
+			strlcpy(np->time.desc, "GPS unknown",
 			    sizeof(np->time.desc));
 			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
 		}
 	}
+#if NMEA_POS_IN_DESC
 	nmea_degrees(np->time.desc, fld[3], *fld[4] == 'S' ? 1 : 0,
 	    sizeof(np->time.desc));
 	nmea_degrees(np->time.desc, fld[5], *fld[6] == 'W' ? 1 : 0,
 	    sizeof(np->time.desc));
-
+#endif
 	switch (*fld[2]) {
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
@@ -390,6 +393,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->time.status = SENSOR_S_CRIT;
 }
 
+#ifdef NMEA_POS_IN_DESC
 /* format a nmea position in the form DDDMM.MMMM to DDDdMM.MMm */
 void
 nmea_degrees(char *dst, char *src, int neg, size_t len)
@@ -444,6 +448,7 @@ nmea_degrees(char *dst, char *src, int neg, size_t len)
 	*dst++ = 'm';
 	*dst = '\0';
 }
+#endif
 
 /*
  * Convert a NMEA 0183 formatted date string to seconds since the epoch.
