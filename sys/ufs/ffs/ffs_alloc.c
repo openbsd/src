@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.83 2008/04/10 19:39:37 thib Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.84 2008/07/22 18:44:25 miod Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1051,7 +1051,7 @@ ffs1_blkpref(struct inode *ip, daddr64_t lbn, int indx, int32_t *bap)
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
 		if (lbn < NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
-			return (fs->fs_fpg * cg + fs->fs_frag);
+			return (cgbase(fs, cg) + fs->fs_frag);
 		}
 		/*
 		 * Find a cylinder with greater than average number of
@@ -1067,12 +1067,12 @@ ffs1_blkpref(struct inode *ip, daddr64_t lbn, int indx, int32_t *bap)
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
 				fs->fs_cgrotor = cg;
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		for (cg = 0; cg <= startcg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
 				fs->fs_cgrotor = cg;
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		return (0);
 	}
@@ -1095,7 +1095,7 @@ ffs2_blkpref(struct inode *ip, daddr64_t lbn, int indx, int64_t *bap)
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
 		if (lbn < NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
-			return ((int64_t)fs->fs_fpg * cg + fs->fs_frag);
+			return (cgbase(fs, cg) + fs->fs_frag);
 		}
 
 		/*
@@ -1113,13 +1113,11 @@ ffs2_blkpref(struct inode *ip, daddr64_t lbn, int indx, int64_t *bap)
 
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree)
-				return ((int64_t)fs->fs_fpg * cg +
-				    fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 
 		for (cg = 0; cg < startcg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree)
-				return ((int64_t)fs->fs_fpg * cg +
-				    fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 
 		return (0);
 	}
