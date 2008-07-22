@@ -21,7 +21,7 @@ static char rcsid[] = "$NetBSD: e_asin.c,v 1.9 1995/05/12 04:57:22 jtc Exp $";
  *		asin(x) = x + x*x^2*R(x^2)
  *	where
  *		R(x^2) is a rational approximation of (asin(x)-x)/x^3 
- *	and its remez error is bounded by
+ *	and its Remes error is bounded by
  *		|(asin(x)-x)/x^3 - R(x^2)| < 2^(-58.75)
  *
  *	For x in [0.5,1]

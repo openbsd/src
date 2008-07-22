@@ -27,7 +27,7 @@ static char rcsid[] = "$NetBSD: k_cos.c,v 1.8 1995/05/10 20:46:22 jtc Exp $";
  *	   [0,pi/4]
  *		  	                 4            14
  *	   	cos(x) ~ 1 - x*x/2 + C1*x + ... + C6*x
- *	   where the remez error is
+ *	   where the Remes error is
  *	
  * 	|              2     4     6     8     10    12     14 |     -58
  * 	|cos(x)-(1-.5*x +C1*x +C2*x +C3*x +C4*x +C5*x  +C6*x  )| <= 2

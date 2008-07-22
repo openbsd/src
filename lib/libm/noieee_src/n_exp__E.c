@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp__E.c,v 1.8 2008/07/18 13:08:58 martynas Exp $	*/
+/*	$OpenBSD: n_exp__E.c,v 1.9 2008/07/22 19:58:40 martynas Exp $	*/
 /*	$NetBSD: n_exp__E.c,v 1.1 1995/10/10 23:36:45 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -69,7 +69,7 @@ static char sccsid[] = "@(#)exp__E.c	8.1 (Berkeley) 6/4/93";
  *	    and cosh :
  *		sinh(r/2) =  r/2 + r * P  ,  cosh(r/2) =  1 + Q . )
  *
- *         The coefficients were obtained by a special Remez algorithm.
+ *         The coefficients were obtained by a special Remes algorithm.
  *
  * Approximation error:
  *

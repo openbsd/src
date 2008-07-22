@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log__L.c,v 1.6 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_log__L.c,v 1.7 2008/07/22 19:58:40 martynas Exp $	*/
 /*	$NetBSD: n_log__L.c,v 1.1 1995/10/10 23:37:01 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -53,7 +53,7 @@ static char sccsid[] = "@(#)log__L.c	8.1 (Berkeley) 6/4/93";
  *	       z*(L1 + z*(L2 + z*(... (L7 + z*L8)...)))
  *
  *	   where z=s*s. (See the listing below for Lk's values.) The
- *	   coefficients are obtained by a special Remez algorithm.
+ *	   coefficients are obtained by a special Remes algorithm.
  *
  * Accuracy:
  *	Assuming no rounding error, the maximum magnitude of the approximation
