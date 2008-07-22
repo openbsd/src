@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.3 2008/06/13 17:45:02 canacar Exp $	 */
+/* $Id: engine.c,v 1.4 2008/07/22 03:00:23 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -691,6 +691,13 @@ print_fld_sdiv(field_def *fld, u_int64_t size, int div)
 	size /= div;
 	if (tbprintf("%lluG", size) <= len)
 		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= div;
+	if (tbprintf("%lluT", size) <= len)
+		goto ok;
 	
 err:
 	print_fld_str(fld, "*");
@@ -705,6 +712,63 @@ void
 print_fld_size(field_def *fld, u_int64_t size)
 {
 	print_fld_sdiv(fld, size, 1024);
+}
+
+void
+print_fld_ssdiv(field_def *fld, int64_t size, int div)
+{
+	int len;
+
+	if (fld == NULL)
+		return;
+
+	len = fld->width;
+	if (len < 1)
+		return;
+
+	tb_start();
+	if (tbprintf("%lld", size) <= len)
+		goto ok;
+
+	tb_start();
+	size /= div;
+	if (tbprintf("%lldK", size) <= len)
+		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= div;
+	if (tbprintf("%lldM", size) <= len)
+		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= div;
+	if (tbprintf("%lldG", size) <= len)
+		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= div;
+	if (tbprintf("%lldT", size) <= len)
+		goto ok;
+
+err:
+	print_fld_str(fld, "*");
+	tb_end();
+	return;
+
+ok:
+	print_fld_tb(fld);
+}
+
+void
+print_fld_ssize(field_def *fld, int64_t size)
+{
+	print_fld_ssdiv(fld, size, 1024);
 }
 
 void
