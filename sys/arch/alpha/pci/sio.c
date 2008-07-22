@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.32 2008/07/19 18:13:06 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.33 2008/07/22 20:06:01 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -234,8 +234,10 @@ int
 sio_eisa_maxslots(v)
 	void *v;
 {
-
-	return 16;		/* as good a number as any.  only 8, maybe? */
+	/*
+	 * None of the alpha backplanes has more than 8 physical slots.
+	 */
+	return 9;
 }
 
 int
