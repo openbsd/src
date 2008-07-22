@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.9 2008/07/22 18:45:50 miod Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.10 2008/07/22 18:47:24 miod Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -147,7 +147,7 @@ dec_1000a_intr_map(pa, ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	int imrbit = 0, device;
+	int imrbit = 0, bus, device;
 	/*
 	 * Get bit number in mystery ICU imr
 	 */
@@ -162,13 +162,19 @@ dec_1000a_intr_map(pa, ihp)
 		/*  5  */ { 1, 0, 0, 0 },	/* Corelle */
 		/*  6  */ { 10, 0, 0, 0 },	/* Corelle */
 		/*  7  */ IRQNONE,
-		/*  8  */ { 1, 0, 0, 0 },	/* isp behind ppb */
+		/*  8  */ IRQNONE,		/* see imrmap2[] below */
 		/*  9  */ IRQNONE,
 		/* 10  */ IRQNONE,
 		/* 11  */ IRQSPLIT(2),
 		/* 12  */ IRQSPLIT(4),
 		/* 13  */ IRQSPLIT(6),
 		/* 14  */ IRQSPLIT(8)		/* Corelle */
+	}, imrmap2[][4] = {
+		/*  0 */ { 1, 0, 0, 0 },	/* isp */
+		/*  1 */  IRQSPLIT(8),
+		/*  2 */  IRQSPLIT(10),
+		/*  3 */  IRQSPLIT(12),
+		/*  4 */  IRQSPLIT(14)
 	};
 
 	if (buspin == 0)	/* No IRQ used. */
@@ -176,7 +182,7 @@ dec_1000a_intr_map(pa, ihp)
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
 
-	pci_decompose_tag(pa->pa_pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pa->pa_pc, bustag, &bus, &device, NULL);
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
@@ -184,10 +190,37 @@ dec_1000a_intr_map(pa, ihp)
 	 */
 	if (line >= 0 && line < PCI_NIRQ) {
 		imrbit = line + 1;
-	} else if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
-		if (device == 0)
-			printf("dec_1000a_intr_map: ?! UNEXPECTED DEV 0\n");
-		imrbit = imrmap[device][buspin - 1];
+	} else {
+		if (pa->pa_bridgetag) {
+			buspin = pa->pa_rawintrpin;
+			bus = pa->pa_bus;
+			device = pa->pa_device;
+		
+			if (bus == 2) {
+				/*
+				 * Devices behind ppb1 (pci bus #2).
+				 * Those use fixed per-slot assignments.
+				 */
+				if (0 <= device && device <
+				    sizeof imrmap2 / sizeof imrmap2[0]) {
+					imrbit = imrmap2[device][buspin - 1];
+				}
+			} else {
+				/*
+				 * Devices behind further ppb.
+				 * Those reuse ppb configured interrupts.
+				 */
+				buspin = PPB_INTERRUPT_SWIZZLE(buspin, device);
+				if (pa->pa_bridgeih[buspin - 1] != 0) {
+					imrbit =
+					   IRQ2IMR(pa->pa_bridgeih[buspin - 1]);
+				}
+			}
+		} else {
+			if (0 <= device &&
+			    device < sizeof imrmap / sizeof imrmap[0])
+				imrbit = imrmap[device][buspin - 1];
+		}
 	}
 
 	if (imrbit) {
