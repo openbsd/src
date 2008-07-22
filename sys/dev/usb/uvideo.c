@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.58 2008/07/22 11:02:17 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.59 2008/07/22 16:24:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -287,6 +287,19 @@ uvideo_close(void *addr)
 	return (0);
 }
 
+/*
+ * Some devices do not report themselfs as UVC compatible although
+ * they are.  They report UICLASS_VENDOR in the bInterfaceClass
+ * instead of UICLASS_VIDEO.  Give those devices a chance to attach
+ * by looking up their USB ID.
+ *
+ * If the device also doesn't set UDCLASS_VIDEO you need to add an
+ * entry in usb_quirks.c, too, so the ehci disown works.
+ */
+static const struct usb_devno uvideo_quirk_devs [] = {
+	{ USB_VENDOR_LOGITECH,	USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 }
+};
+
 int
 uvideo_match(struct device *parent, void *match, void *aux)
 {
@@ -301,6 +314,11 @@ uvideo_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 
 	if (id->bInterfaceClass == UICLASS_VIDEO &&
+	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
+		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+
+	if (usb_lookup(uvideo_quirk_devs, uaa->vendor, uaa->product) != NULL &&
+	    id->bInterfaceClass == UICLASS_VENDOR &&
 	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
