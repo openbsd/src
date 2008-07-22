@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.22 2006/06/15 20:08:29 brad Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.23 2008/07/22 18:45:51 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -54,8 +54,7 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn20aa_intr_map(void *, pcitag_t, int, int,
-	    pci_intr_handle_t *);
+int	dec_kn20aa_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
 int	dec_kn20aa_intr_line(void *, pci_intr_handle_t);
 void	*dec_kn20aa_intr_establish(void *, pci_intr_handle_t,
@@ -104,14 +103,13 @@ pci_kn20aa_pickintr(ccp)
 }
 
 int     
-dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
-        void *ccv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_kn20aa_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct cia_config *ccp = ccv;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int device;
 	int kn20aa_irq;
 

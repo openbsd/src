@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.2 2008/07/22 18:45:51 miod Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -59,12 +59,12 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn300_intr_map (void *, pcitag_t, int, int, pci_intr_handle_t *);
+int	dec_kn300_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 
-const char *dec_kn300_intr_string (void *, pci_intr_handle_t);
-void	*dec_kn300_intr_establish (void *, pci_intr_handle_t,
+const char *dec_kn300_intr_string(void *, pci_intr_handle_t);
+void	*dec_kn300_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
-void	dec_kn300_intr_disestablish (void *, void *);
+void	dec_kn300_intr_disestablish(void *, void *);
 
 #define	KN300_PCEB_IRQ	16
 #define	NPIN		4
@@ -116,14 +116,14 @@ pci_kn300_pickintr(ccp, first)
 }
 
 int     
-dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
-	void *ccv;
-	pcitag_t bustag;
-	int buspin, line;
+dec_kn300_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	struct mcpcia_config *ccp = ccv; 
-	pci_chipset_tag_t pc = &ccp->cc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	struct mcpcia_config *ccp = (struct mcpcia_config *)pc->pc_intr_v;
 	int device;
 	int mcpcia_irq;
 

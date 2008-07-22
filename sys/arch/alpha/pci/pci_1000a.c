@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.8 2008/07/19 19:25:18 miod Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.9 2008/07/22 18:45:50 miod Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -73,6 +73,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/pci_1000a.h>
 
@@ -90,8 +91,7 @@
 static bus_space_tag_t mystery_icu_iot;
 static bus_space_handle_t mystery_icu_ioh[2];
 
-int	dec_1000a_intr_map(void *, pcitag_t, int, int,
-	    pci_intr_handle_t *);
+int	dec_1000a_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_1000a_intr_string(void *, pci_intr_handle_t);
 int	dec_1000a_intr_line(void *, pci_intr_handle_t);
 void	*dec_1000a_intr_establish(void *, pci_intr_handle_t,
@@ -104,7 +104,6 @@ void dec_1000a_iointr(void *arg, unsigned long vec);
 void dec_1000a_enable_intr(int irq);
 void dec_1000a_disable_intr(int irq);
 void pci_1000a_imi(void);
-static pci_chipset_tag_t pc_tag;
 
 void
 pci_1000a_pickintr(core, iot, memt, pc)
@@ -112,14 +111,10 @@ pci_1000a_pickintr(core, iot, memt, pc)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 {
-#if 0
-	char *cp;
-#endif
 	int i;
 
 	mystery_icu_iot = iot;
 
-	pc_tag = pc;
 	if (bus_space_map(iot, 0x54a, 2, 0, mystery_icu_ioh + 0)
 	||  bus_space_map(iot, 0x54c, 2, 0, mystery_icu_ioh + 1))
 		panic("pci_1000a_pickintr");
@@ -146,12 +141,12 @@ pci_1000a_pickintr(core, iot, memt, pc)
 }
 
 int     
-dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
-	void *ccv;
-	pcitag_t bustag;
-	int buspin, line;
+dec_1000a_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
 	int imrbit = 0, device;
 	/*
 	 * Get bit number in mystery ICU imr
@@ -181,7 +176,7 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
 
-	pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pa->pa_pc, bustag, NULL, &device, NULL);
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.

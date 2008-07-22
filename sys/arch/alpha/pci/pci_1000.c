@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.7 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.8 2008/07/22 18:45:50 miod Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -84,7 +84,7 @@
 static bus_space_tag_t another_mystery_icu_iot;
 static bus_space_handle_t another_mystery_icu_ioh;
 
-int	dec_1000_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
+int	dec_1000_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_1000_intr_string(void *, pci_intr_handle_t);
 int	dec_1000_intr_line(void *, pci_intr_handle_t);
 void	*dec_1000_intr_establish(void *, pci_intr_handle_t,
@@ -100,7 +100,6 @@ void dec_1000_iointr(void *arg, unsigned long vec);
 void dec_1000_enable_intr(int irq);
 void dec_1000_disable_intr(int irq);
 void pci_1000_imi(void);
-static pci_chipset_tag_t pc_tag;
 
 void
 pci_1000_pickintr(core, iot, memt, pc)
@@ -115,7 +114,6 @@ pci_1000_pickintr(core, iot, memt, pc)
 
 	another_mystery_icu_iot = iot;
 
-	pc_tag = pc;
 	if (bus_space_map(iot, 0x536, 2, 0, &another_mystery_icu_ioh))
 		panic("pci_1000_pickintr");
         pc->pc_intr_v = core;
@@ -142,20 +140,20 @@ pci_1000_pickintr(core, iot, memt, pc)
 }
 
 int     
-dec_1000_intr_map(ccv, bustag, buspin, line, ihp)
-	void *ccv;
-	pcitag_t bustag;
-	int buspin, line;
+dec_1000_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	int	device;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	int device;
 
 	if (buspin == 0)	/* No IRQ used. */
 		return 1;
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
 
-	pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pa->pa_pc, bustag, NULL, &device, NULL);
 
 	switch(device) {
 	case 6:

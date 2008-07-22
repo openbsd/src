@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.16 2007/05/02 21:50:14 martin Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.17 2008/07/22 18:45:51 miod Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -81,7 +81,7 @@ void *dec_6600_intr_establish(void *, pci_intr_handle_t, int,
     int (*func)(void *), void *, char *);
 const char *dec_6600_intr_string(void *, pci_intr_handle_t);
 int dec_6600_intr_line(void *, pci_intr_handle_t);
-int dec_6600_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
+int dec_6600_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 void *dec_6600_pciide_compat_intr_establish(void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *);
 void  dec_6600_pciide_compat_intr_disestablish(void *, void *);
@@ -133,14 +133,13 @@ pci_6600_pickintr(pcp)
 }
 
 int     
-dec_6600_intr_map(acv, bustag, buspin, line, ihp)
-        void *acv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_6600_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct tsp_config *pcp = acv;
-	pci_chipset_tag_t pc = &pcp->pc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 
 	if (buspin == 0) {

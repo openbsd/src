@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.10 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.11 2008/07/22 18:45:51 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -84,8 +84,7 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_eb64plus_intr_map(void *, pcitag_t, int, int,
-	    pci_intr_handle_t *);
+int	dec_eb64plus_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_eb64plus_intr_string(void *, pci_intr_handle_t);
 void	*dec_eb64plus_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
@@ -139,14 +138,13 @@ pci_eb64plus_pickintr(acp)
 }
 
 int     
-dec_eb64plus_intr_map(acv, bustag, buspin, line, ihp)
-	void *acv;
-	pcitag_t bustag;
-	int buspin, line;
+dec_eb64plus_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct apecs_config *acp = acv;
-	pci_chipset_tag_t pc = &acp->ac_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 
 	if (buspin == 0) {
