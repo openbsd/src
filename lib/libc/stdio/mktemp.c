@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.20 2007/10/21 11:09:30 tobias Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.21 2008/07/22 21:47:45 deraadt Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -109,7 +109,7 @@ _gettemp(char *path, int *doopen, int domkdir, int slen)
 	while (trv >= path && *trv == 'X') {
 		char c;
 
-		pid = (arc4random() & 0xffff) % (26+26);
+		pid = arc4random_uniform(26+26);
 		if (pid < 26)
 			c = pid + 'A';
 		else
