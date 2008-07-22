@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.108 2008/07/19 11:38:54 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.109 2008/07/22 23:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -590,6 +590,7 @@ struct relay_config {
 	objid_t			 dsttable;
 	struct sockaddr_storage	 ss;
 	struct sockaddr_storage	 dstss;
+	struct sockaddr_storage	 dstaf;
 	struct timeval		 timeout;
 	enum forwardmode	 fwdmode;
 };
@@ -863,6 +864,8 @@ struct protonode *protonode_header(enum direction, struct protocol *,
 		    struct protonode *);
 int		 protonode_add(enum direction, struct protocol *,
 		    struct protonode *);
+int		 map6to4(struct sockaddr_storage *);
+int		 map4to6(struct sockaddr_storage *, struct sockaddr_storage *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

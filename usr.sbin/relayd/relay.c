@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.94 2008/07/16 15:02:19 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.95 2008/07/22 23:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2186,7 +2186,7 @@ int
 relay_connect(struct session *con)
 {
 	struct relay	*rlay = (struct relay *)con->se_relay;
-	int		 bnds = -1;
+	int		 bnds = -1, ret;
 
 	if (gettimeofday(&con->se_tv_start, NULL))
 		return (-1);
@@ -2206,6 +2206,22 @@ relay_connect(struct session *con)
 			return (-1);
 		}
 		bnds = con->se_bnds;
+	}
+
+	/* Do the IPv4-to-IPv6 or IPv6-to-IPv4 translation if requested */
+	if (rlay->rl_conf.dstaf.ss_family != AF_UNSPEC) {
+		if (con->se_out.ss.ss_family == AF_INET &&
+		    rlay->rl_conf.dstaf.ss_family == AF_INET6)
+			ret = map4to6(&con->se_out.ss, &rlay->rl_conf.dstaf);
+		else if (con->se_out.ss.ss_family == AF_INET6 &&
+		    rlay->rl_conf.dstaf.ss_family == AF_INET)
+			ret = map6to4(&con->se_out.ss);
+		else
+			ret = 0;
+		if (ret != 0) {
+			log_debug("relay_connect: mapped to invalid address");
+			return (-1);
+		}
 	}
 
  retry:

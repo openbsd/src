@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.121 2008/07/19 11:38:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.122 2008/07/22 23:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ typedef struct {
 %token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
 %token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
 %token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
-%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT PARENT
+%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT PARENT INET INET6
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname table
@@ -1136,7 +1136,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 			tableport = h->port;
 		}
-		| forwardmode TO forwardspec interface		{
+		| forwardmode TO forwardspec interface dstaf	{
 			rlay->rl_conf.fwdmode = $1;
 			switch ($1) {
 			case FWD_NORMAL:
@@ -1232,6 +1232,28 @@ dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
 		| LOADBALANCE		{ $$ = RELAY_DSTMODE_LOADBALANCE; }
 		| ROUNDROBIN		{ $$ = RELAY_DSTMODE_ROUNDROBIN; }
 		| HASH			{ $$ = RELAY_DSTMODE_HASH; }
+		;
+
+dstaf		: /* empty */		{
+			rlay->rl_conf.dstaf.ss_family = AF_UNSPEC;
+		}
+		| INET			{
+			rlay->rl_conf.dstaf.ss_family = AF_INET;
+		}
+		| INET6	STRING		{
+			struct sockaddr_in6	*sin6;
+
+			sin6 = (struct sockaddr_in6 *)&rlay->rl_conf.dstaf;
+			if (inet_pton(AF_INET6, $2, &sin6->sin6_addr) == -1) {
+				yyerror("invalid ipv6 address %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_len = sizeof(*sin6);
+		}
 		;
 
 interface	: /*empty*/		{ $$ = NULL; }
@@ -1373,6 +1395,8 @@ lookup(char *s)
 		{ "host",		HOST },
 		{ "icmp",		ICMP },
 		{ "include",		INCLUDE },
+		{ "inet",		INET },
+		{ "inet6",		INET6 },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },

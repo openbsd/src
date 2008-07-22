@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.90 2008/07/19 16:35:50 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.91 2008/07/22 23:17:37 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2008 $
+.Dd $Mdocdate: July 22 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -489,7 +489,7 @@ Start the relay but immediately close any accepted connections.
 .Ic forward to
 .Ar address
 .Op Ic port Ar port
-.Op Ic retry Ar number
+.Ar options ...
 .Xc
 Specify the address and port of the target host to connect to.
 If the
@@ -497,16 +497,40 @@ If the
 option is not specified, the port from the
 .Ic listen on
 directive will be used.
-.Pp
 Use the
 .Ic transparent
 keyword to enable fully-transparent mode; the source address of the
 client will be retained in this case.
 .Pp
-The optional host retry option will be used as a tolerance for failed
+The following options may be specified for forward directives:
+.Pp
+.Bl -tag -width Ds
+.It Ic retry Ar number
+The optional host
+.Ic retry
+option will be used as a tolerance for failed
 host connections; the connection will be retried for
 .Ar number
 more times.
+.It Ic inet
+If the requested destination is an IPv6 address,
+.Xr relayd 8
+will forward the connection to an IPv4 address which is determined by
+the last 4 octets of the original IPv6 destination.
+For example, if the original IPv6 destination address is
+2001:db8:7395:ffff::a01:101, the session is relayed to the IPv4
+address 10.1.1.1 (a01:101).
+.It Ic inet6 Ar address-prefix
+If the requested destination is an IPv4 address,
+.Xr relayd 8
+will forward the connection to an IPv6 address which is determined by
+setting the last 4 octets of the specified IPv6
+.Ar address-prefix
+to the 4 octets of the original IPv4 destination.
+For example, if the original IPv4 destination address is 10.1.1.1 and
+the specified address prefix is 2001:db8:7395:ffff::, the session is
+relayed to the IPv6 address 2001:db8:7395:ffff::a01:101.
+.El
 .It Xo
 .Ic forward to
 .Aq Ar table
@@ -520,7 +544,7 @@ section above for information about table options.
 .It Xo
 .Ic forward to
 .Ic nat lookup
-.Op Ic retry Ar number
+.Ar options ...
 .Xc
 When redirecting connections with an
 .Ar rdr

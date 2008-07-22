@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.78 2008/07/09 14:06:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.79 2008/07/22 23:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1198,4 +1198,55 @@ bindany(struct ctl_bindany *bnd)
 	if (s != -1)
 		close(s);
 	return (-1);
+}
+
+int
+map6to4(struct sockaddr_storage *in6)
+{
+	struct sockaddr_storage	 out4;
+	struct sockaddr_in	*sin4 = (struct sockaddr_in *)&out4;
+	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)in6;
+
+	bzero(sin4, sizeof(*sin4));
+	sin4->sin_len = sizeof(*sin4);
+	sin4->sin_family = AF_INET;
+	sin4->sin_port = sin6->sin6_port;
+
+	bcopy(&sin6->sin6_addr.s6_addr[12], &sin4->sin_addr.s_addr,
+	    sizeof(sin4->sin_addr));
+
+	if (sin4->sin_addr.s_addr == INADDR_ANY ||
+	    sin4->sin_addr.s_addr == INADDR_BROADCAST ||
+	    IN_MULTICAST(ntohl(sin4->sin_addr.s_addr)))
+		return (-1);
+
+	bcopy(&out4, in6, sizeof(*in6));
+
+	return (0);
+}
+
+int
+map4to6(struct sockaddr_storage *in4, struct sockaddr_storage *map)
+{
+	struct sockaddr_storage	 out6;
+	struct sockaddr_in	*sin4 = (struct sockaddr_in *)in4;
+	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)&out6;
+	struct sockaddr_in6	*map6 = (struct sockaddr_in6 *)map;
+
+	if (sin4->sin_addr.s_addr == INADDR_ANY ||
+	    sin4->sin_addr.s_addr == INADDR_BROADCAST ||
+	    IN_MULTICAST(ntohl(sin4->sin_addr.s_addr)))
+		return (-1);
+
+	bcopy(map6, sin6, sizeof(*sin6));
+	sin6->sin6_len = sizeof(*sin6);
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_port = sin4->sin_port;
+
+	bcopy(&sin4->sin_addr.s_addr, &sin6->sin6_addr.s6_addr[12],
+	    sizeof(sin4->sin_addr));
+
+	bcopy(&out6, in4, sizeof(*in4));
+
+	return (0);
 }
