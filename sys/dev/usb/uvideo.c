@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.56 2008/07/19 11:30:55 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.57 2008/07/22 10:57:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -700,7 +700,7 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 			break;
 		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
 			/* XXX do correct length calculation */
-			if (desc->bLength == 38) {
+			if (desc->bLength > 11) {
 				if (uvideo_vs_parse_desc_frame_uncompressed(sc,
 				    desc, &fmtidx))
 					return (1);
