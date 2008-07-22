@@ -1,4 +1,4 @@
-/*	$OpenBSD: wpa-psk.c,v 1.2 2008/05/08 18:04:34 chl Exp $	*/
+/*	$OpenBSD: wpa-psk.c,v 1.3 2008/07/22 07:37:25 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,83 +25,7 @@
 #include <stdlib.h>
 #include <err.h>
 
-/*
- * HMAC-SHA-1 (from RFC 2202).
- */
-static void
-hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
-    size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
-{
-	SHA1_CTX ctx;
-	u_int8_t k_pad[SHA1_BLOCK_LENGTH];
-	u_int8_t tk[SHA1_DIGEST_LENGTH];
-	int i;
-
-	if (key_len > SHA1_BLOCK_LENGTH) {
-		SHA1Init(&ctx);
-		SHA1Update(&ctx, key, key_len);
-		SHA1Final(tk, &ctx);
-
-		key = tk;
-		key_len = SHA1_DIGEST_LENGTH;
-	}
-
-	bzero(k_pad, sizeof k_pad);
-	bcopy(key, k_pad, key_len);
-	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
-		k_pad[i] ^= 0x36;
-
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
-	SHA1Update(&ctx, text, text_len);
-	SHA1Final(digest, &ctx);
-
-	bzero(k_pad, sizeof k_pad);
-	bcopy(key, k_pad, key_len);
-	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
-		k_pad[i] ^= 0x5c;
-
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
-	SHA1Update(&ctx, digest, SHA1_DIGEST_LENGTH);
-	SHA1Final(digest, &ctx);
-}
-
-/*
- * Password-Based Key Derivation Function 2 (PKCS #5 v2.0).
- * Code based on IEEE Std 802.11-2007, Annex H.4.2.
- */
-static void
-pbkdf2(const char *password, u_int len, const char *ssid, u_int ssid_len,
-    u_int8_t key[32])
-{
-	u_int8_t keybuf[2 * SHA1_DIGEST_LENGTH];
-	u_int8_t digest[IEEE80211_NWID_LEN + 4], digest1[SHA1_DIGEST_LENGTH];
-	u_int8_t *output, count;
-	int i, j;
-
-	output = keybuf;
-	for (count = 1; count <= 2; count++) {
-		memcpy(digest, ssid, ssid_len);
-		digest[ssid_len + 0] = 0;
-		digest[ssid_len + 1] = 0;
-		digest[ssid_len + 2] = 0;
-		digest[ssid_len + 3] = count;
-		hmac_sha1(digest, ssid_len + 4, password, len, digest1);
-		memcpy(output, digest1, SHA1_DIGEST_LENGTH);
-
-		for (i = 1; i < 4096; i++) {
-			hmac_sha1(digest1, SHA1_DIGEST_LENGTH, password,
-			    len, digest);
-			memcpy(digest1, digest, SHA1_DIGEST_LENGTH);
-			for (j = 0; j < SHA1_DIGEST_LENGTH; j++)
-				output[j] ^= digest[j];
-		}
-		output += SHA1_DIGEST_LENGTH;
-	}
-	/* truncate output to its 256MSBs */
-	memcpy(key, keybuf, 32);
-}
+#include "pbkdf2.h"
 
 int
 main(int argc, char **argv)
@@ -134,7 +58,7 @@ main(int argc, char **argv)
 		warnx("truncating SSID to its first %d characters", ssid_len);
 	}
 
-	pbkdf2(pass, len, ssid, ssid_len, keybuf);
+	pkcs5_pbkdf2(pass, len, ssid, ssid_len, keybuf, sizeof(keybuf), 4096);
 
 	printf("0x");
 	for (i = 0; i < 32; i++)
