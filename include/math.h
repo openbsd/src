@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.17 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.18 2008/07/22 16:01:46 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -19,6 +19,7 @@
 
 #include <sys/_types.h>
 #include <sys/cdefs.h>
+#include <sys/limits.h>
 
 /*
  * ANSI/POSIX
@@ -26,12 +27,79 @@
 extern char __infinity[];
 #define HUGE_VAL	(*(double *)(void *)__infinity)
 
-/* 
+/*
  * C99
  */
+#if __ISO_C_VISIBLE >= 1999
+typedef	__double_t	double_t;
+typedef	__float_t	float_t;
 
-typedef __double_t	double_t;
-typedef __float_t	float_t;
+#define	HUGE_VALF	((float)HUGE_VAL)
+#define	HUGE_VALL	((long double)HUGE_VAL)
+#define	INFINITY	HUGE_VALF
+#if 0	/* XXX */
+#define	NAN		nan("")
+#endif	/* XXX */
+
+#define	FP_INFINITE	0x01
+#define	FP_NAN		0x02
+#define	FP_NORMAL	0x04
+#define	FP_SUBNORMAL	0x08
+#define	FP_ZERO		0x10
+
+#define FP_ILOGB0	(-INT_MAX)
+#define FP_ILOGBNAN	INT_MAX
+
+#if 0	/* XXX */
+#define fpclassify(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		__fpclassifyf(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__fpclassify(x) \
+	:	__fpclassifyl(x))
+#define isfinite(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		__isfinitef(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__isfinite(x) \
+	:	__isfinitel(x))
+#define isinf(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		isinff(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__isinf(x) \
+	:	__isinfl(x))
+#define isnan(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		isnanf(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__isnan(x) \
+	:	__isnanl(x))
+#define isnormal(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		__isnormalf(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__isnormal(x) \
+	:	__isnormall(x))
+#define signbit(x) \
+	((sizeof (x) == sizeof (float)) ? \
+		__signbitf(x) \
+	: (sizeof (x) == sizeof (double)) ? \
+		__signbit(x) \
+	:	__signbitl(x))
+
+#define	isgreater(x, y)		(!isunordered((x), (y)) && (x) > (y))
+#define	isgreaterequal(x, y)	(!isunordered((x), (y)) && (x) >= (y))
+#define	isless(x, y)		(!isunordered((x), (y)) && (x) < (y))
+#define	islessequal(x, y)	(!isunordered((x), (y)) && (x) <= (y))
+#define	islessgreater(x, y)	(!isunordered((x), (y)) && \
+					((x) > (y) || (y) > (x)))
+#define	isunordered(x, y)	(isnan(x) || isnan(y))
+#else	/* XXX */
+extern int isinf(double);
+extern int isnan(double);
+#endif	/* XXX */
+#endif /* __ISO_C_VISIBLE >= 1999 */
 
 /*
  * XOPEN/SVID
@@ -52,10 +120,10 @@ typedef __float_t	float_t;
 #define	M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
 
 #ifdef __vax__
-#define	MAXFLOAT        ((float)1.70141173319264430e+38)
+#define	MAXFLOAT	((float)1.70141173319264430e+38)
 #else
 #define	MAXFLOAT	((float)3.40282346638528860e+38)
-#endif
+#endif /* __vax__ */
 
 extern int signgam;
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
@@ -64,21 +132,21 @@ extern int signgam;
 enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 #define _LIB_VERSION_TYPE enum fdversion
-#define _LIB_VERSION _fdlib_version  
+#define _LIB_VERSION _fdlib_version
 
-/* if global variable _LIB_VERSION is not desirable, one may 
- * change the following to be a constant by: 
+/* if global variable _LIB_VERSION is not desirable, one may
+ * change the following to be a constant by:
  *	#define _LIB_VERSION_TYPE const enum version
  * In that case, after one initializes the value _LIB_VERSION (see
  * s_lib_version.c) during compile time, it cannot be modified
  * in the middle of a program
- */ 
-extern  _LIB_VERSION_TYPE  _LIB_VERSION;
+ */
+extern _LIB_VERSION_TYPE	_LIB_VERSION;
 
-#define _IEEE_  fdlibm_ieee
-#define _SVID_  fdlibm_svid
-#define _XOPEN_ fdlibm_xopen
-#define _POSIX_ fdlibm_posix
+#define _IEEE_	fdlibm_ieee
+#define _SVID_	fdlibm_svid
+#define _XOPEN_	fdlibm_xopen
+#define _POSIX_	fdlibm_posix
 
 #ifndef __cplusplus
 struct exception {
@@ -88,16 +156,16 @@ struct exception {
 	double arg2;
 	double retval;
 };
-#endif
+#endif /* !__cplusplus */
 
 #define	HUGE		MAXFLOAT
 
-/* 
+/*
  * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
  * (one may replace the following line by "#include <values.h>")
  */
 
-#define X_TLOSS		1.41484755040568800000e+16 
+#define X_TLOSS		1.41484755040568800000e+16
 
 #define	DOMAIN		1
 #define	SING		2
@@ -139,76 +207,115 @@ extern double fabs(double);
 extern double floor(double);
 extern double fmod(double, double);
 
-extern double round(double);
-extern double trunc(double);
-
-#if __BSD_VISIBLE || __XPG_VISIBLE
-extern double erf(double);
-extern double erfc(double);
-extern double gamma(double);
-extern double hypot(double, double);
-extern int isinf(double);
-extern int isnan(double);
-extern int finite(double);
-extern double j0(double);
-extern double j1(double);
-extern double jn(int, double);
-extern double lgamma(double);
-extern double tgamma(double);
-extern double y0(double);
-extern double y1(double);
-extern double yn(int, double);
-
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 500
+/*
+ * C99
+ */
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE
 extern double acosh(double);
 extern double asinh(double);
 extern double atanh(double);
-extern double cbrt(double);
-extern double logb(double);
-extern double nextafter(double, double);
-extern double remainder(double, double);
-extern double scalb(double, double);
 
-#ifdef __LIBM_PRIVATE
-extern int matherr(struct exception *);
+#if 0	/* XXX */
+extern double exp2(double);
+#endif	/* XXX */
+extern double expm1(double);
+extern int ilogb(double);
+extern double log1p(double);
+#if 0
+extern double log2(double);
+#endif
+extern double logb(double);
+extern double scalbn(double, int);
+#if 0
+extern double scalbln(double, long int);
 #endif
 
-/*
- * IEEE Test Vector
- */
-extern double significand(double);
+extern double cbrt(double);
+extern double hypot(double, double);
 
-/*
- * Functions callable from C, intended to support IEEE arithmetic.
- */
-extern double copysign(double, double);
-extern int ilogb(double);
+extern double erf(double);
+extern double erfc(double);
+extern double lgamma(double);
+extern double tgamma(double);
+
+#if 0
+extern double nearbyint(double);
+#endif
 extern double rint(double);
 extern long int lrint(double);
-extern long int lround(double);
 extern long long int llrint(double);
+extern double round(double);
+extern long int lround(double);
 extern long long int llround(double);
-extern double scalbn(double, int);
+extern double trunc(double);
+
+extern double remainder(double, double);
+#if 0	/* XXX */
+extern double remquo(double, double, int *);
+#endif	/* XXX */
+
+extern double copysign(double, double);
+#if 0	/* XXX */
+extern double nan(const char *);
+#endif	/* XXX */
+extern double nextafter(double, double);
+#if 0
+extern double nexttoward(double, long double);
+#endif
+
+#if 0
+extern double fdim(double, double);
+extern double fmax(double, double);
+extern double fmin(double, double);
+#endif
+
+#if 0
+extern double fma(double, double, double);
+#endif
+#endif /* __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE */
+
+#if __BSD_VISIBLE || __XPG_VISIBLE
+extern double j0(double);
+extern double j1(double);
+extern double jn(int, double);
+extern double scalb(double, double);
+extern double y0(double);
+extern double y1(double);
+extern double yn(int, double);
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
+
+#if __BSD_VISIBLE || __XPG_VISIBLE <= 500
+extern double gamma(double);
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE <= 500 */
 
 /*
  * BSD math library entry points
  */
-extern double cabs();
+#if __BSD_VISIBLE
 extern double drem(double, double);
-extern double expm1(double);
-extern double log1p(double);
+extern int finite(double);
 
 /*
  * Reentrant version of gamma & lgamma; passes signgam back by reference
  * as the second argument; user must allocate space for signgam.
  */
-#if __BSD_VISIBLE || defined(_REENTRANT)
 extern double gamma_r(double, int *);
 extern double lgamma_r(double, int *);
-#endif /* __BSD_VISIBLE || _REENTRANT */
 
+#ifdef __LIBM_PRIVATE
+extern int matherr(struct exception *);
+#endif /* __LIBM_PRIVATE */
 
-/* float versions of ANSI/POSIX functions */
+/*
+ * IEEE Test Vector
+ */
+extern double significand(double);
+#endif /* __BSD_VISIBLE */
+
+/*
+ * Float versions of C99 functions
+ */
+#if __ISO_C_VISIBLE >= 1999
 extern float acosf(float);
 extern float asinf(float);
 extern float atanf(float);
@@ -217,95 +324,220 @@ extern float cosf(float);
 extern float sinf(float);
 extern float tanf(float);
 
+extern float acoshf(float);
+extern float asinhf(float);
+extern float atanhf(float);
 extern float coshf(float);
 extern float sinhf(float);
 extern float tanhf(float);
 
 extern float expf(float);
+#if 0	/* XXX */
+extern float exp2f(float);
+#endif	/* XXX */
+extern float expm1f(float);
 extern float frexpf(float, int *);
+extern int ilogbf(float);
 extern float ldexpf(float, int);
 extern float logf(float);
 extern float log10f(float);
+extern float log1pf(float);
+#if 0
+extern float log2f(float);
+#endif
+extern float logbf(float);
 extern float modff(float, float *);
+extern float scalbnf(float, int);
+#if 0
+extern float scalblnf(float, long int);
+#endif
 
+extern float cbrtf(float);
+extern float fabsf(float);
+extern float hypotf(float, float);
 extern float powf(float, float);
 extern float sqrtf(float);
 
-extern float ceilf(float);
-extern float fabsf(float);
-extern float floorf(float);
-extern float fmodf(float, float);
-
-extern float roundf(float);
-extern float truncf(float);
-
 extern float erff(float);
 extern float erfcf(float);
-extern float gammaf(float);
-extern float hypotf(float, float);
-extern int isinff(float);
-extern int isnanf(float);
-extern int finitef(float);
+extern float lgammaf(float);
+extern float tgammaf(float);
+
+extern float ceilf(float);
+extern float floorf(float);
+#if 0
+extern float nearbyintf(float);
+#endif
+extern float rintf(float);
+extern long int lrintf(float);
+extern long long int llrintf(float);
+extern float roundf(float);
+extern long int lroundf(float);
+extern long long int llroundf(float);
+extern float truncf(float);
+
+extern float fmodf(float, float);
+extern float remainderf(float, float);
+#if 0	/* XXX */
+extern float remquof(float, float, int *);
+#endif	/* XXX */
+
+extern float copysignf(float, float);
+#if 0	/* XXX */
+extern float nanf(const char *);
+#endif	/* XXX */
+extern float nextafterf(float, float);
+#if 0
+extern float nexttowardf(float, long double);
+#endif
+
+#if 0
+extern float fdimf(float, float);
+extern float fmaxf(float, float);
+extern float fminf(float, float);
+#endif
+
+#if 0
+extern float fmaf(float, float, float);
+#endif
+#endif /* __ISO_C_VISIBLE >= 1999 */
+
+#if __BSD_VISIBLE || __XPG_VISIBLE
 extern float j0f(float);
 extern float j1f(float);
 extern float jnf(int, float);
-extern float lgammaf(float);
-extern float tgammaf(float);
+extern float scalbf(float, float);
 extern float y0f(float);
 extern float y1f(float);
 extern float ynf(int, float);
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
-extern float acoshf(float);
-extern float asinhf(float);
-extern float atanhf(float);
-extern float cbrtf(float);
-extern float logbf(float);
-extern float nextafterf(float, float);
-extern float remainderf(float, float);
-extern float scalbf(float, float);
+#if __BSD_VISIBLE || __XPG_VISIBLE <= 500
+extern float gammaf(float);
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE <= 500 */
 
 /*
- * float version of IEEE Test Vector
+ * Float versions of BSD math library entry points
  */
-extern float significandf(float);
-
-/*
- * Float versions of functions callable from C, intended to support
- * IEEE arithmetic.
- */
-extern float copysignf(float, float);
-extern int ilogbf(float);
-extern float rintf(float);
-extern long int lrintf(float);
-extern long int lroundf(float);
-extern long long int llrintf(float);
-extern long long int llroundf(float);
-extern float scalbnf(float, int);
-
-/*
- * float versions of BSD math library entry points
- */
-extern float cabsf ();
+#if __BSD_VISIBLE
 extern float dremf(float, float);
-extern float expm1f(float);
-extern float log1pf(float);
+extern int finitef(float);
+extern int isinff(float);
+extern int isnanf(float);
 
 /*
  * Float versions of reentrant version of gamma & lgamma; passes
  * signgam back by reference as the second argument; user must
  * allocate space for signgam.
  */
-#if __BSD_VISIBLE || defined(_REENTRANT)
 extern float gammaf_r(float, int *);
 extern float lgammaf_r(float, int *);
-#endif /* __BSD_VISIBLE || _REENTRANT */
 
-#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 500 */
-#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
+/*
+ * Float version of IEEE Test Vector
+ */
+extern float significandf(float);
+#endif /* __BSD_VISIBLE */
+
+/*
+ * Long double versions of C99 functions
+ */
+#if __ISO_C_VISIBLE >= 1999
+#if 0
+extern long double acosl(long double);
+extern long double asinl(long double);
+extern long double atanl(long double);
+extern long double atan2l(long double, long double);
+extern long double cosl(long double);
+extern long double sinl(long double);
+extern long double tanl(long double);
+
+extern long double acoshl(long double);
+extern long double asinhl(long double);
+extern long double atanhl(long double);
+extern long double coshl(long double);
+extern long double sinhl(long double);
+extern long double tanhl(long double);
+
+extern long double expl(long double);
+extern long double exp2l(long double);
+extern long double expm1l(long double);
+extern long double frexpl(long double, int *);
+extern int ilogbl(long double);
+extern long double ldexpl(long double, int);
+extern long double logl(long double);
+extern long double log10l(long double);
+extern long double log1pl(long double);
+extern long double log2l(long double);
+extern long double logbl(long double);
+extern long double modfl(long double, long double *);
+extern long double scalbnl(long double, int);
+extern long double scalblnl(long double, long int);
+
+extern long double cbrtl(long double);
+extern long double fabsl(long double);
+extern long double hypotl(long double, long double);
+extern long double powl(long double, long double);
+extern long double sqrtl(long double);
+
+extern long double erfl(long double);
+extern long double erfcl(long double);
+extern long double lgammal(long double);
+extern long double tgammal(long double);
+
+extern long double ceill(long double);
+extern long double floorl(long double);
+extern long double nearbyintl(long double);
+extern long double rintl(long double);
+extern long int lrintl(long double);
+extern long long int llrintl(long double);
+extern long double roundl(long double);
+extern long int lroundl(long double);
+extern long long int llroundl(long double);
+extern long double truncl(long double);
+
+extern long double fmodl(long double, long double);
+extern long double remainderl(long double, long double);
+extern long double remquol(long double, long double, int *);
+
+extern long double copysignl(long double, long double);
+extern long double nanl(const char *);
+extern long double nextafterl(long double, long double);
+extern long double nexttowardl(long double, long double);
+
+extern long double fdiml(long double, long double);
+extern long double fmaxl(long double, long double);
+extern long double fminl(long double, long double);
+
+extern long double fmal(long double, long double, long double);
+#endif
+#endif /* __ISO_C_VISIBLE >= 1999 */
+
+/*
+ * Library implementation
+ */
+#if 0	/* XXX */
+extern int __fpclassify(double);
+extern int __fpclassifyf(float);
+extern int __fpclassifyl(long double);
+extern int __isfinite(double);
+extern int __isfinitef(float);
+extern int __isfinitel(long double);
+extern int __isinf(double);
+extern int __isinfl(long double);
+extern int __isnan(double);
+extern int __isnanl(long double);
+extern int __isnormal(double);
+extern int __isnormalf(float);
+extern int __isnormall(long double);
+extern int __signbit(double);
+extern int __signbitf(float);
+extern int __signbitl(long double);
+#endif	/* XXX */
 
 #if __BSD_VISIBLE && defined(__vax__)
 extern double infnan(int);
 #endif /* __BSD_VISIBLE && defined(__vax__) */
 __END_DECLS
 
-#endif /* _MATH_H_ */
+#endif /* !_MATH_H_ */
