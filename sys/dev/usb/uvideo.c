@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.57 2008/07/22 10:57:15 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.58 2008/07/22 11:02:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -91,7 +91,7 @@ int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 int		uvideo_find_res(struct uvideo_softc *, int, int, int,
 		    struct uvideo_res *);
 
-usbd_status	uvideo_vs_negotation(struct uvideo_softc *, int);
+usbd_status	uvideo_vs_negotiation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *, uint8_t);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
@@ -348,8 +348,8 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
-	/* do device negotation without commit */
-	error = uvideo_vs_negotation(sc, 0);
+	/* do device negotiation without commit */
+	error = uvideo_vs_negotiation(sc, 0);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
@@ -970,7 +970,7 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 }
 
 usbd_status
-uvideo_vs_negotation(struct uvideo_softc *sc, int commit)
+uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 {
 	struct usb_video_probe_commit *pc;
 	uint8_t probe_data[34];
@@ -1227,8 +1227,8 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
 	if (sc->sc_negotiated_flag == 0) {
-		/* do device negotation with commit */
-		error = uvideo_vs_negotation(sc, 1);
+		/* do device negotiation with commit */
+		error = uvideo_vs_negotiation(sc, 1);
 		if (error != USBD_NORMAL_COMPLETION)
 			return (error);
 	}
@@ -2139,17 +2139,17 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	uvideo_find_res(sc, i, fmt->fmt.pix.width, fmt->fmt.pix.height, &r);
 
 	/*
-	 * Do negotation.
+	 * Do negotiation.
 	 */
-	/* save a copy of current fromat group in case of negotation fails */
+	/* save a copy of current fromat group in case of negotiation fails */
 	fmtgrp_save = sc->sc_fmtgrp_cur;
 	frame_save = sc->sc_fmtgrp_cur->frame_cur;
 	/* set new format group */
 	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[i];
 	sc->sc_fmtgrp[i].frame_cur = sc->sc_fmtgrp[i].frame[r.fidx];
 	sc->sc_fmtgrp[i].format_dfidx = r.fidx;
-	/* do device negotation with commit */
-	error = uvideo_vs_negotation(sc, 1);
+	/* do device negotiation with commit */
+	error = uvideo_vs_negotiation(sc, 1);
 	if (error != USBD_NORMAL_COMPLETION) {
 		sc->sc_fmtgrp_cur = fmtgrp_save;
 		sc->sc_fmtgrp_cur->frame_cur = frame_save;
