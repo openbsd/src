@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.14 2008/04/07 12:12:48 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.15 2008/07/23 15:39:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -270,9 +270,8 @@ dump_type0(int bus, int dev, int func)
 			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 				printf("%s ", memtype);
 
-				printf("addr: 0x%08x len: %d\n",
-				    PCI_MAPREG_MEM_ADDR(reg),
-				    PCI_MAPREG_MEM_SIZE(reg));
+				printf("addr: 0x%08x\n",
+				    PCI_MAPREG_MEM_ADDR(reg));
 
 				break;
 			case PCI_MAPREG_MEM_TYPE_64BIT:
@@ -283,17 +282,16 @@ dump_type0(int bus, int dev, int func)
 
 				mem |= (u_int64_t)reg << 32;
 
-				printf("64bit addr: 0x%016llx size: %lld\n",
-				    PCI_MAPREG_MEM64_ADDR(mem),
-				    PCI_MAPREG_MEM64_SIZE(mem));
+				printf("64bit addr: 0x%016llx\n",
+				    PCI_MAPREG_MEM64_ADDR(mem));
 
 				break;
 			}
 			break;
 
 		case PCI_MAPREG_TYPE_IO:
-			printf("io addr: 0x%08x size: %d\n",
-			    PCI_MAPREG_IO_ADDR(reg), PCI_MAPREG_IO_SIZE(reg));
+			printf("io addr: 0x%08x\n",
+			    PCI_MAPREG_IO_ADDR(reg));
 			break;
 		}
 	}
