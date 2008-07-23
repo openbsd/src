@@ -2756,6 +2756,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS690M HD Audio",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD34xx_HDA,
+	    "Radeon HD 34xx HD Audio",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_AGP,
 	    "RS100 AGP",
 	},

@@ -1088,7 +1088,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3200	0x9610		/* Radeon HD 3200 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HDA	0xaa08		/* Radeon HD 2600 HD Audio */
 #define	PCI_PRODUCT_ATI_RS690M_HDA	0xaa10		/* RS690M HD Audio */
-+product ATI RADEON_HD34xx_HDA	0xaa28	Radeon HD 34xx HD Audio
+#define	PCI_PRODUCT_ATI_RADEON_HD34xx_HDA	0xaa28		/* Radeon HD 34xx HD Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
