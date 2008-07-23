@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1390 2008/07/23 07:55:31 mglocker Exp $
+$OpenBSD: pcidevs,v 1.1391 2008/07/23 18:34:29 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1125,6 +1125,7 @@ product ATHEROS AR5211_LEGACY	0xff12	AR5211Ref
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
 /* Attansic Technology products */
+product ATTANSIC L1E		0x1026	L1E
 product ATTANSIC L1		0x1048	L1
 product ATTANSIC L2		0x2048	L2
 
