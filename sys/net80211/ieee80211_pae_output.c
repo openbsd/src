@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.2 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.3 2008/07/23 15:55:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -212,7 +212,7 @@ ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 	MGETHDR(m, flags, type);
 	if (m == NULL)
 		return NULL;
-	if (pktlen >= MINCLSIZE) {
+	if (pktlen > MHLEN) {
 		MCLGET(m, flags);
 		if (!(m->m_flags & M_EXT))
 			return m_free(m);

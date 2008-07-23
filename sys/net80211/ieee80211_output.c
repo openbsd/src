@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.61 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.62 2008/07/23 15:55:46 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -951,7 +951,7 @@ ieee80211_getmgmt(int flags, int type, u_int pktlen)
 	MGETHDR(m, flags, type);
 	if (m == NULL)
 		return NULL;
-	if (pktlen >= MINCLSIZE) {
+	if (pktlen > MHLEN) {
 		MCLGET(m, flags);
 		if (!(m->m_flags & M_EXT))
 			return m_free(m);
