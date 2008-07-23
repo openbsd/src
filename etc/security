@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.80 2008/04/17 19:49:16 sthen Exp $
+#	$OpenBSD: security,v 1.81 2008/07/23 16:05:47 sthen Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -303,7 +303,10 @@ fi
 # world-readable.
 
 for f in /etc/hostname.* ; do
-	if [ "$(stat -f "%SLp" $f)" != "---" ]; then
+	if [ ! -e $f ]; then
+		continue
+	fi
+	if [ "$(stat -Lf "%SLp" $f)" != "---" ]; then
 		echo "\n$f is world readable."
 	fi
 done
