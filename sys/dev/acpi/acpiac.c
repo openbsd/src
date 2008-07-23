@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.24 2008/07/18 03:54:18 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.25 2008/07/23 00:20:35 fgsch Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -68,9 +68,6 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
-	    acpiac_notify, sc, ACPIDEV_NOPOLL);
-
 	acpiac_getsta(sc);
 	printf(": AC unit ");
 	if (sc->sc_ac_stat == PSR_ONLINE)
@@ -88,6 +85,9 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
 	sensordev_install(&sc->sc_sensdev);
 	sc->sc_sens[0].value = sc->sc_ac_stat;
+
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
+	    acpiac_notify, sc, ACPIDEV_NOPOLL);
 }
 
 void
