@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.95 2008/07/23 11:53:07 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.96 2008/07/23 16:24:43 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2997,6 +2997,7 @@ nfs_writebp(bp, force)
 	}
 
 	if( (oldflags & B_ASYNC) == 0) {
+		bp->b_flags |= B_RAW;
 		int rtval = biowait(bp);
 		if (!(oldflags & B_DELWRI) && p) {
 			++p->p_stats->p_ru.ru_oublock;

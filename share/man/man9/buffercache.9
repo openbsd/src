@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.5 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: buffercache.9,v 1.6 2008/07/23 16:24:43 beck Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,7 +102,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 23 2008 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -327,7 +327,12 @@ Otherwise, wake up the waiting processes.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn biowait "bp"
 Wait for operations on the buffer to complete.
-When they do, extract and return the I/O's error value.
+When they do, extract and return the I/O's error value. 
+If the operation on the buffer is being done via a direct call to a 
+.Fn strategy 
+type function, then the buffer must be previously initialized with the 
+.Dv B_RAW
+flag.
 .El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES

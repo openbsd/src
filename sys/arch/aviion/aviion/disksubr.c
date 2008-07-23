@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.43 2008/06/12 06:58:33 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.44 2008/07/23 16:24:42 beck Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;

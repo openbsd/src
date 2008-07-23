@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.51 2008/06/14 19:33:58 beck Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.52 2008/07/23 16:24:43 beck Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -607,11 +607,13 @@ nfs_doio(bp, p)
 	    if (bp->b_flags & B_READ) {
 		uiop->uio_rw = UIO_READ;
 		nfsstats.read_physios++;
+		bcstats.pendingreads++; /* XXX */
 		error = nfs_readrpc(vp, uiop);
 	    } else {
 		iomode = NFSV3WRITE_DATASYNC;
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
+		bcstats.pendingwrites++; /* XXX */
 		error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
 	    }
 	    if (error) {
@@ -626,6 +628,7 @@ nfs_doio(bp, p)
 	    case VREG:
 		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
 		nfsstats.read_bios++;
+		bcstats.pendingreads++;
 		error = nfs_readrpc(vp, uiop);
 		if (!error) {
 		    bp->b_validoff = 0;
@@ -657,6 +660,7 @@ nfs_doio(bp, p)
 	    case VLNK:
 		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
+		bcstats.pendingreads++; /* XXX */
 		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
 		break;
 	    default:
@@ -675,6 +679,7 @@ nfs_doio(bp, p)
 	    io.iov_base = (char *)bp->b_data + bp->b_dirtyoff;
 	    uiop->uio_rw = UIO_WRITE;
 	    nfsstats.write_bios++;
+	    bcstats.pendingwrites++; /* XXX */
 	    if ((bp->b_flags & (B_ASYNC | B_NEEDCOMMIT | B_NOCACHE)) == B_ASYNC)
 		iomode = NFSV3WRITE_UNSTABLE;
 	    else
