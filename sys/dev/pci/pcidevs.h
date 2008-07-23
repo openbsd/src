@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1388 2008/07/21 19:41:44 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1389 2008/07/23 04:59:18 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1080,6 +1080,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_M72	0x94c9		/* Mobility Radeon HD 2400 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3870	0x9501		/* Radeon HD 3870 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600	0x9589		/* Radeon HD 2600 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3450	0x95c5		/* Radeon HD 3450 */
 #define	PCI_PRODUCT_ATI_RS780_HB	0x9600		/* RS780 Host */
 #define	PCI_PRODUCT_ATI_RS780_PCIE_1	0x9602		/* RS780 PCIE */
 #define	PCI_PRODUCT_ATI_RS780_PCIE_2	0x9609		/* RS780 PCIE */
@@ -1087,6 +1088,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3200	0x9610		/* Radeon HD 3200 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HDA	0xaa08		/* Radeon HD 2600 HD Audio */
 #define	PCI_PRODUCT_ATI_RS690M_HDA	0xaa10		/* RS690M HD Audio */
++product ATI RADEON_HD34xx_HDA	0xaa28	Radeon HD 34xx HD Audio
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
