@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1388 2008/07/21 19:41:44 damien Exp $
+$OpenBSD: pcidevs,v 1.1389 2008/07/23 04:59:18 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1075,6 +1075,7 @@ product ATI RADEON_HD2400_PRO	0x94c3	Radeon HD 2400 Pro
 product ATI RADEON_HD2400_M72	0x94c9	Mobility Radeon HD 2400
 product ATI RADEON_HD3870	0x9501	Radeon HD 3870
 product ATI RADEON_HD2600	0x9589	Radeon HD 2600
+product ATI RADEON_HD3450	0x95c5	Radeon HD 3450
 product ATI RS780_HB		0x9600	RS780 Host
 product ATI RS780_PCIE_1	0x9602	RS780 PCIE
 product ATI RS780_PCIE_2	0x9609	RS780 PCIE
@@ -1082,6 +1083,7 @@ product ATI RS780_HDA		0x960f	RS780 HD Audio
 product ATI RADEON_HD3200	0x9610	Radeon HD 3200
 product ATI RADEON_HD2600_HDA	0xaa08	Radeon HD 2600 HD Audio
 product ATI RS690M_HDA		0xaa10	RS690M HD Audio
++product ATI RADEON_HD34xx_HDA	0xaa28	Radeon HD 34xx HD Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
 product ATI RS250_AGP		0xcab3	RS250 AGP
