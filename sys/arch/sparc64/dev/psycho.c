@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.61 2008/07/20 10:37:43 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.62 2008/07/23 12:18:40 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -765,15 +765,23 @@ int
 psycho_ce(void *arg)
 {
 	struct psycho_softc *sc = arg;
+	u_int64_t afar, afsr;
 
 	/*
 	 * It's correctable.  Dump the regs and continue.
 	 */
 
+	afar = psycho_psychoreg_read(sc, psy_ce_afar);
+	afsr = psycho_psychoreg_read(sc, psy_ce_afsr);
+
 	printf("%s: correctable DMA error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, 
-	    (long long)psycho_psychoreg_read(sc, psy_ce_afar),
-	    (long long)psycho_psychoreg_read(sc, psy_ce_afsr));
+	    sc->sc_dev.dv_xname, afar, afsr);
+
+	/* Clear error. */
+	psycho_psychoreg_write(sc, psy_ce_afsr,
+	    afsr & (PSY_CEAFSR_PDRD | PSY_CEAFSR_PDWR |
+	    PSY_CEAFSR_SDRD | PSY_CEAFSR_SDWR));
+			       
 	return (1);
 }
 
