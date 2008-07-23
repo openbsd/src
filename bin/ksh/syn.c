@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.27 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: syn.c,v 1.28 2008/07/23 16:34:38 jaredy Exp $	*/
 
 /*
  * shell parser (C version)
@@ -364,6 +364,11 @@ get_command(int cf)
 	case TIME:
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
+		if (t) {
+			t->str = alloc(2, ATEMP);
+			t->str[0] = '\0'; /* TF_* flags */
+			t->str[1] = '\0';
+		}
 		t = block(TTIME, t, NOBLOCK, NOWORDS);
 		break;
 

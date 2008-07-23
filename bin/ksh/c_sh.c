@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.37 2007/09/03 13:54:23 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.38 2008/07/23 16:34:38 jaredy Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -719,7 +719,6 @@ timex(struct op *t, int f)
 	struct timeval usrtime, systime, tv0, tv1;
 	int tf = 0;
 	extern struct timeval j_usrtime, j_systime; /* computed by j_wait */
-	char opts[1];
 
 	gettimeofday(&tv0, NULL);
 	getrusage(RUSAGE_SELF, &ru0);
@@ -735,11 +734,9 @@ timex(struct op *t, int f)
 		 */
 		timerclear(&j_usrtime);
 		timerclear(&j_systime);
-		if (t->left->type == TCOM)
-			t->left->str = opts;
-		opts[0] = 0;
 		rv = execute(t->left, f | XTIME);
-		tf |= opts[0];
+		if (t->left->type == TCOM)
+			tf |= t->left->str[0];
 		gettimeofday(&tv1, NULL);
 		getrusage(RUSAGE_SELF, &ru1);
 		getrusage(RUSAGE_CHILDREN, &cru1);
