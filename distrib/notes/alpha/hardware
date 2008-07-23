@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.93 2008/06/09 06:18:38 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.94 2008/07/23 19:24:25 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -6,8 +6,8 @@ here, please send mail to <alpha@OpenBSD.org> with as much information
 as possible.
 
 Supported hardware:
-    XP900, XP1000, DS10, DS20, 264DP, and other EV6 machines using the Tsunami
-    chipset (only one processor on the DS20 will be used)
+    XP900, XP1000, CS20, DS10, DS20, 264DP, and other EV6 machines using the
+    Tsunami chipset (only one processor on multiprocessor models will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21143 Ethernet.
@@ -21,7 +21,7 @@ Supported hardware:
 		Floppy drive.
 		ISA devices that require DMA operation.
 
-    API UP1000, UP2000, and UP2000+ and other EV6 machines using the
+    API UP1000, UP1100, UP2000, and UP2000+ and other EV6 machines using the
     Irongate chipset
 	  Supported devices:
 		Built-in serial and parallel ports.
@@ -33,10 +33,6 @@ Supported hardware:
 		ISA devices that require DMA operation.
 
     Digital Personal Workstation (Miata)
-	Some of these machines are known not to function properly (random
-	hangs or crashes).  At the moment, there is no known method to
-	detect which machines will run stably and which will not, apart from
-	trying to install OpenBSD on them.
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21043 Ethernet.
@@ -50,10 +46,6 @@ Supported hardware:
 		ISA devices that require DMA operation.
 
     EB164 based machines (including PC164, 164SX, 164LX, but NOT the 164UX)
-	Some of these machines are known not to function properly (random
-	hangs or crashes).  At the moment, there is no known method to
-	detect which machines will run stably and which will not, apart from
-	trying to install OpenBSD on them.
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in PCIIDE controller, when present.
@@ -65,7 +57,7 @@ Supported hardware:
 		ISA IDE controller on the EB164.
 		ISA devices that require DMA operation.
 
-    AlphaServer 800, 1000, 1000A, 1200 and 4100
+    AlphaServer 800, 1000, 1000A, 1200 and 4100, and AlphaStation 1200
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 Ethernet.
@@ -77,6 +69,19 @@ Supported hardware:
 		Floppy drive.
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
+
+    AlphaServer 400 and AlphaStation 200, 250, 255 and 400
+	  Supported devices:
+		Built-in serial and parallel ports.
+		Built-in DEC21040 Ethernet.
+		Built-in ISP SCSI.
+		PCI graphics card (TGA or VGA compatible).
+		Most PCI devices (see below).
+		Some ISA devices (see below).
+	  Unsupported devices:
+		Floppy drive.
+		Built-in audio.
+		ISA devices that require DMA operation.
 
     AlphaStation 500 and 600
 	  Supported devices:
@@ -90,19 +95,6 @@ Supported hardware:
 		Floppy drive.
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
-
-    AlphaStation 200, 250, 255 and 400
-	  Supported devices:
-		Built-in serial and parallel ports.
-		Built-in DEC21040 Ethernet.
-		Built-in ISP SCSI.
-		PCI graphics card (TGA or VGA compatible).
-		Most PCI devices (see below).
-		Some ISA devices (see below).
-	  Unsupported devices:
-		Floppy drive.
-		Built-in audio.
-		ISA devices that require DMA operation.
 
     AXPpci based machines (including ``Noname'', UDB, Multia)
 	  Supported devices:
@@ -144,14 +136,14 @@ Supported hardware:
 		Other TURBOchannel cards.
 
     At this time none of the following systems are supported:
-	DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
-	AlphaServer systems, other than models 400 and 500, which seem to
-	  be disguised AlphaStation machines
+	DECpc AXP150 (2000/300) ``Jensen'' systems (EISA-bus PC-like systems)
+	AlphaServer systems unlisted above, such as models 2000, 2100 and 2100A
 	Alpha XL systems
-	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
+	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus-based)
 	EB64+ based systems
 	Samsung 164BX/UX (no SRM)
-	Multiprocessor Alpha systems
+	Multiprocessor Alpha systems (though they will run fine using one
+	    processor only, if the model is listed as supported above)
 	VME Alpha systems
 
 Supported Peripherals:
