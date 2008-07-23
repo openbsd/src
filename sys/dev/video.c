@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.17 2008/07/19 06:39:00 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.18 2008/07/23 22:10:21 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -97,6 +97,10 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	     sc->hw_if == NULL)
 		return (ENXIO);
 
+	if (sc->sc_open & VIDEO_OPEN)
+		return (EBUSY);
+	sc->sc_open |= VIDEO_OPEN;
+
 	sc->sc_start_read = 0;
 
 	if (sc->hw_if->open != NULL)
@@ -110,13 +114,16 @@ int
 videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct video_softc *sc;
+	int r = 0;
 
 	sc = video_cd.cd_devs[VIDEOUNIT(dev)];
 
 	if (sc->hw_if->close != NULL)
-		return (sc->hw_if->close(sc->hw_hdl));
-	else
-		return (0);
+		r = sc->hw_if->close(sc->hw_hdl);
+
+	sc->sc_open &= ~VIDEO_OPEN;
+
+	return (r);
 }
 
 int
