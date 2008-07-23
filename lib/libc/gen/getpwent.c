@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.37 2008/07/06 22:19:39 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.38 2008/07/23 19:36:47 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -332,7 +332,7 @@ again:
 	if (__getpwent_has_yppw && (__ypmode != YPMODE_NONE)) {
 		const char *user, *host, *dom;
 		int keylen, datalen, r, s;
-		char *key, *data;
+		char *key, *data = NULL;
 
 		if (!__ypdomain) {
 			if (_yp_check(&__ypdomain) == 0) {
@@ -352,7 +352,6 @@ again:
 					__ypmode = YPMODE_NONE;
 					if (data)
 						free(data);
-					data = NULL;
 					goto again;
 				}
 				__ypcurrent = key;
@@ -371,7 +370,6 @@ again:
 			}
 			bcopy(data, __ypline, datalen);
 			free(data);
-			data = NULL;
 			break;
 		case YPMODE_NETGRP:
 			s = getnetgrent(&host, &user, &dom);
@@ -397,7 +395,6 @@ again:
 			}
 			bcopy(data, __ypline, datalen);
 			free(data);
-			data = NULL;
 			break;
 		case YPMODE_USER:
 			if (name) {
@@ -414,7 +411,6 @@ again:
 				}
 				bcopy(data, __ypline, datalen);
 				free(data);
-				data = NULL;
 			} else {		/* XXX */
 				__ypmode = YPMODE_NONE;
 				goto again;
