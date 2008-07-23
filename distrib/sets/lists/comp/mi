@@ -6118,6 +6118,12 @@
 ./usr/share/man/cat9/time.0
 ./usr/share/man/cat9/timeout.0
 ./usr/share/man/cat9/timeout_add.0
+./usr/share/man/cat9/timeout_add_bt.0
+./usr/share/man/cat9/timeout_add_nsec.0
+./usr/share/man/cat9/timeout_add_sec.0
+./usr/share/man/cat9/timeout_add_ts.0
+./usr/share/man/cat9/timeout_add_tv.0
+./usr/share/man/cat9/timeout_add_usec.0
 ./usr/share/man/cat9/timeout_del.0
 ./usr/share/man/cat9/timeout_initialized.0
 ./usr/share/man/cat9/timeout_pending.0
