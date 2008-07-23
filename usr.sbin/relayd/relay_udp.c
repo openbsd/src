@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.15 2008/07/09 17:24:14 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.16 2008/07/23 10:05:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -61,7 +61,7 @@ int		 relay_udp_socket(struct sockaddr_storage *, in_port_t,
 void		 relay_udp_request(struct session *);
 void		 relay_udp_timeout(int, short, void *);
 
-void		 relay_dns_log(struct session *, u_int8_t *);
+void		 relay_dns_log(struct session *, u_int8_t *, size_t);
 void		*relay_dns_validate(struct session *,
 		    struct relay *, struct sockaddr_storage *,
 		    u_int8_t *, size_t);
@@ -372,9 +372,16 @@ struct relay_dnshdr {
 } __packed;
 
 void
-relay_dns_log(struct session *con, u_int8_t *buf)
+relay_dns_log(struct session *con, u_int8_t *buf, size_t len)
 {
 	struct relay_dnshdr	*hdr = (struct relay_dnshdr *)buf;
+
+	/* Validate the header length */
+	if (len < sizeof(*hdr)) {
+		log_debug("relay_dns_log: session %d: short dns packet",
+		    con->se_id);
+		return;
+	}
 
 	log_debug("relay_dns_log: session %d: %s id 0x%x "
 	    "flags 0x%x:0x%x qd %u an %u ns %u ar %u",
@@ -457,7 +464,7 @@ relay_dns_request(struct session *con)
 	if (buf == NULL || priv == NULL || len < 1)
 		return (-1);
 	if (debug)
-		relay_dns_log(con, buf);
+		relay_dns_log(con, buf, len);
 
 	if (gettimeofday(&con->se_tv_start, NULL))
 		return (-1);
@@ -512,7 +519,7 @@ relay_dns_result(struct session *con, u_int8_t *buf, size_t len)
 		fatalx("relay_dns_result: response to invalid session");
 
 	if (debug)
-		relay_dns_log(con, buf);
+		relay_dns_log(con, buf, len);
 
 	/*
 	 * Replace the random DNS request Id with the original Id
