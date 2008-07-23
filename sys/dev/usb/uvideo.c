@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.59 2008/07/22 16:24:40 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.60 2008/07/23 14:10:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -553,7 +553,9 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		DPRINTF(1, "bInterfaceNumber=0x%02x, numalts=%d\n",
 		    id->bInterfaceNumber, numalts);
 
-		uvideo_vs_parse_desc_alt(sc, uaa, i, iface, numalts);
+		error = uvideo_vs_parse_desc_alt(sc, uaa, i, iface, numalts);
+		if (error != USBD_NORMAL_COMPLETION)
+			return (error);
 	}
 
 	/* XXX for now always use the first video stream */
@@ -718,7 +720,7 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 			break;
 		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
 			/* XXX do correct length calculation */
-			if (desc->bLength > 11) {
+			if (desc->bLength > 25) {
 				if (uvideo_vs_parse_desc_frame_uncompressed(sc,
 				    desc, &fmtidx))
 					return (1);
@@ -836,12 +838,17 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		}
 
 		/* jump to corresponding endpoint descriptor */
-		desc = usb_desc_iter_next(&iter);
-		if (desc->bDescriptorType != UDESC_ENDPOINT)
-			goto next;
+		while ((desc = usb_desc_iter_next(&iter))) {
+			if (desc->bDescriptorType == UDESC_ENDPOINT)
+				break;
+		}
 		ed = (usb_endpoint_descriptor_t *)(uint8_t *)desc;
 		DPRINTF(1, "bEndpointAddress=0x%02x, ", ed->bEndpointAddress);
 		DPRINTF(1, "wMaxPacketSize=%d\n", UGETW(ed->wMaxPacketSize));
+
+		/* we just support isoc endpoints yet */
+		if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_ISOCHRONOUS)
+			goto next;
 
 		/* save endpoint with largest bandwidth */
 		if (UGETW(ed->wMaxPacketSize) > vs->max_packet_size) {
@@ -854,6 +861,13 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		}
 next:
 		desc = usb_desc_iter_next(&iter);
+	}
+
+	/* check if we have found a valid alternate interface */
+	if (vs->ifaceh == NULL) {
+		printf("%s: no valid alternate interface found!\n",
+		    DEVNAME(sc));
+		return (USBD_INVAL);
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1606,7 +1620,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				/* XXX do correct length calculation */
-				if (desc->bLength > 11) {
+				if (desc->bLength > 25) {
 					printf(" (UDESCSUB_VS_FRAME_"
 					    "UNCOMPRESSED)\n");
 					uvideo_dump_desc_frame_uncompressed(
