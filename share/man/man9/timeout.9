@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.25 2007/09/14 16:16:08 mk Exp $
+.\"	$OpenBSD: timeout.9,v 1.26 2008/07/23 11:45:21 art Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2007 $
+.Dd $Mdocdate: July 23 2008 $
 .Dt TIMEOUT 9
 .Os
 .Sh NAME
@@ -49,6 +49,18 @@
 .Fn "timeout_initialized" "struct timeout *to"
 .Ft int
 .Fn "timeout_triggered" "struct timeout *to"
+.Ft void
+.Fn "timeout_add_tv" "struct timeout *to" "struct timeval *"
+.Ft void
+.Fn "timeout_add_ts" "struct timeout *to" "struct timespec *"
+.Ft void
+.Fn "timeout_add_bt" "struct timeout *to" "struct bintime *"
+.Ft void
+.Fn "timeout_add_sec" "struct timeout *to" "int sec"
+.Ft void
+.Fn "timeout_add_usec" "struct timeout *to" "int sec"
+.Ft void
+.Fn "timeout_add_nsec" "struct timeout *to" "int sec"
 .Sh DESCRIPTION
 The
 .Nm timeout
@@ -145,6 +157,19 @@ The
 and
 .Fn timeout_del
 functions clear the triggered state for that timeout.
+.Pp
+When possible, instead of using
+.Fn timeout_add
+the functions
+.Fn timeout_add_tv ,
+.Fn timeout_add_ts ,
+.Fn timeout_add_bt ,
+.Fn timeout_add_sec ,
+.Fn timeout_add_usec ,
+.Fn timeout_add_nsec
+should be used.
+Those functions add a timeout doing conversion of the time specified
+by their respective types.
 .Sh CODE REFERENCES
 These functions are implemented in the file
 .Pa sys/kern/kern_timeout.c .
