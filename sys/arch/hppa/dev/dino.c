@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.23 2007/08/28 21:19:17 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.24 2008/07/23 19:14:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -371,8 +371,12 @@ dino_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pcireg_t reg;
 
 	reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
+	if (PCI_INTERRUPT_LINE(reg) == 0xff)
+		return (1);
+    
 	*ihp = PCI_INTERRUPT_LINE(reg) + 1;
-	return (*ihp == 0);
+	return (0);
 }
 
 const char *
@@ -452,10 +456,12 @@ dino_memmap(void *v, bus_addr_t bpa, bus_size_t size,
 		sbpa = bpa & 0xff800000;
 		reg = sc->io_shadow;
 		reg |= 1 << ((bpa >> 23) & 0x1f);
+		if (reg & 0x80000001) {
 #ifdef DEBUG
-		if (reg & 0x80000001)
 			panic("mapping outside the mem extent range");
 #endif
+			return (EINVAL);
+		}
 		/* map into the upper bus space, if not yet mapped this 8M */
 		if (reg != sc->io_shadow) {
 
@@ -541,10 +547,12 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 
 	reg = sc->io_shadow;
 	reg |= 1 << ((*addrp >> 23) & 0x1f);
+	if (reg & 0x80000001) {
 #ifdef DEBUG
-	if (reg & 0x80000001)
 		panic("mapping outside the mem extent range");
 #endif
+		return (EINVAL);
+	}
 	r->io_addr_en |= reg;
 	sc->io_shadow = reg;
 
