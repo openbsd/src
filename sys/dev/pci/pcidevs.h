@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1389 2008/07/23 04:59:18 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1391 2008/07/23 18:34:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1130,6 +1130,7 @@
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
 
 /* Attansic Technology products */
+#define	PCI_PRODUCT_ATTANSIC_L1E	0x1026		/* L1E */
 #define	PCI_PRODUCT_ATTANSIC_L1	0x1048		/* L1 */
 #define	PCI_PRODUCT_ATTANSIC_L2	0x2048		/* L2 */
 
