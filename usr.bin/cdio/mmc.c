@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.22 2008/06/30 23:35:39 av Exp $ */
+/* $OpenBSD: mmc.c,v 1.23 2008/07/23 21:33:32 av Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -45,7 +45,7 @@ int
 get_media_capabilities(int *cap)
 {
 	scsireq_t scr;
-	char buf[4096];
+	u_char buf[4096];
 	int error;
 	u_int32_t i, dsz;
 	u_int16_t feature;
@@ -78,7 +78,7 @@ get_media_capabilities(int *cap)
 	dsz += 4;	/* total size of bufer for all features */
 	i = 8;
 	while (i <= dsz - 4) {
-		if (dsz - i < 4 + buf[i + 3])
+		if (dsz - i < (u_int32_t)buf[i + 3] + 4)
 			break;	/* partial feature descriptor */
 		feature = betoh16(*(u_int16_t *)(buf + i));
 

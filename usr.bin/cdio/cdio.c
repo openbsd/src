@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.63 2008/06/30 23:35:39 av Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.64 2008/07/23 21:33:32 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -1516,7 +1516,7 @@ parse(char *buf, int *cmd)
 {
 	struct cmdtab *c;
 	char *p;
-	int len;
+	size_t len;
 
 	for (p=buf; isspace(*p); p++)
 		continue;
