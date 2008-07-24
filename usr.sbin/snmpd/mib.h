@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.15 2008/03/16 00:35:05 dlg Exp $	*/
+/*	$OpenBSD: mib.h,v 1.16 2008/07/24 12:59:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -336,6 +336,7 @@
 #define MIB_openBSD			MIB_enterprises, 30155
 
 /* OPENBSD-MIB */
+#define MIB_pfMIBObjects		MIB_openBSD, 1
 #define MIB_sensorMIBObjects		MIB_openBSD, 2
 #define MIB_sensors			MIB_sensorMIBObjects, 1
 #define MIB_sensorNumber		MIB_sensors, 1
@@ -350,6 +351,8 @@
 #define MIB_sensorValue			MIB_sensorEntry, 5
 #define MIB_sensorUnits			MIB_sensorEntry, 6
 #define MIB_sensorStatus		MIB_sensorEntry, 7
+#define MIB_carpMIBObjects		MIB_openBSD, 3
+#define MIB_ipsecMIBObjects		MIB_openBSD, 4
 #define MIB_localSystem			MIB_openBSD, 23
 #define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
 #define MIB_localTest			MIB_openBSD, 42
