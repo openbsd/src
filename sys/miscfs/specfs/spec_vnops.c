@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.52 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.53 2008/07/24 18:48:18 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ spec_vnoperate(void *v)
 /*
  * Open a special file.
  */
-/* ARGSUSED */
 int
 spec_open(void *v)
 {
@@ -197,7 +196,6 @@ spec_open(void *v)
 /*
  * Vnode op for read
  */
-/* ARGSUSED */
 int
 spec_read(void *v)
 {
@@ -286,7 +284,6 @@ spec_inactive(void *v)
 /*
  * Vnode op for write
  */
-/* ARGSUSED */
 int
 spec_write(void *v)
 {
@@ -363,7 +360,6 @@ spec_write(void *v)
 /*
  * Device ioctl operation.
  */
-/* ARGSUSED */
 int
 spec_ioctl(void *v)
 {
@@ -387,7 +383,6 @@ spec_ioctl(void *v)
 	}
 }
 
-/* ARGSUSED */
 int
 spec_poll(void *v)
 {
@@ -405,7 +400,6 @@ spec_poll(void *v)
 		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
 	}
 }
-/* ARGSUSED */
 int
 spec_kqfilter(void *v)
 {
@@ -422,7 +416,6 @@ spec_kqfilter(void *v)
 /*
  * Synch buffers associated with a block device
  */
-/* ARGSUSED */
 int
 spec_fsync(void *v)
 {
@@ -484,7 +477,6 @@ spec_strategy(void *v)
 /*
  * Device close routine
  */
-/* ARGSUSED */
 int
 spec_close(void *v)
 {
@@ -651,7 +643,6 @@ spec_pathconf(void *v)
 /*
  * Special device advisory byte-level locks.
  */
-/* ARGSUSED */
 int
 spec_advlock(void *v)
 {
