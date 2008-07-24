@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.18 2008/07/22 16:01:46 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.19 2008/07/24 09:35:30 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -37,9 +37,10 @@ typedef	__float_t	float_t;
 #define	HUGE_VALF	((float)HUGE_VAL)
 #define	HUGE_VALL	((long double)HUGE_VAL)
 #define	INFINITY	HUGE_VALF
-#if 0	/* XXX */
-#define	NAN		nan("")
-#endif	/* XXX */
+#ifndef __vax__
+extern char __nan[];
+#define	NAN		(*(float *)(void *)__nan)
+#endif /* !__vax__ */
 
 #define	FP_INFINITE	0x01
 #define	FP_NAN		0x02
@@ -50,7 +51,6 @@ typedef	__float_t	float_t;
 #define FP_ILOGB0	(-INT_MAX)
 #define FP_ILOGBNAN	INT_MAX
 
-#if 0	/* XXX */
 #define fpclassify(x) \
 	((sizeof (x) == sizeof (float)) ? \
 		__fpclassifyf(x) \
@@ -95,10 +95,6 @@ typedef	__float_t	float_t;
 #define	islessgreater(x, y)	(!isunordered((x), (y)) && \
 					((x) > (y) || (y) > (x)))
 #define	isunordered(x, y)	(isnan(x) || isnan(y))
-#else	/* XXX */
-extern int isinf(double);
-extern int isnan(double);
-#endif	/* XXX */
 #endif /* __ISO_C_VISIBLE >= 1999 */
 
 /*
@@ -516,7 +512,6 @@ extern long double fmal(long double, long double, long double);
 /*
  * Library implementation
  */
-#if 0	/* XXX */
 extern int __fpclassify(double);
 extern int __fpclassifyf(float);
 extern int __fpclassifyl(long double);
@@ -533,7 +528,6 @@ extern int __isnormall(long double);
 extern int __signbit(double);
 extern int __signbitf(float);
 extern int __signbitl(long double);
-#endif	/* XXX */
 
 #if __BSD_VISIBLE && defined(__vax__)
 extern double infnan(int);
