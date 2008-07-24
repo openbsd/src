@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.74 2008/07/18 13:38:40 thib Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.75 2008/07/24 19:01:28 thib Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -67,7 +67,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/socket.h>
@@ -682,7 +681,7 @@ vr_list_rx_init(struct vr_softc *sc)
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
 
-	for (i = 0; i < VR_RX_LIST_CNT; i++)  {
+	for (i = 0; i < VR_RX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
 		    0, BUS_DMA_NOWAIT | BUS_DMA_READ,
 		    &cd->vr_rx_chain[i].vr_map))
@@ -710,7 +709,7 @@ vr_list_rx_init(struct vr_softc *sc)
 
 	cd->vr_rx_head = &cd->vr_rx_chain[0];
 
-	return(0);
+	return (0);
 }
 
 /*
