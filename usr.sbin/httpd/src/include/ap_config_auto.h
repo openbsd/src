@@ -51,16 +51,6 @@
 #define HAVE_SYS_PARAM_H 1
 #endif
 
-/* determine: isinf() found in libc */ 
-#ifndef HAVE_ISINF
-#define HAVE_ISINF 1
-#endif
-
-/* determine: isnan() found in libc */ 
-#ifndef HAVE_ISNAN
-#define HAVE_ISNAN 1
-#endif
-
 /* sizeof(off_t) == sizeof(quad_t) on OpenBSD */
 #ifndef AP_OFF_T_IS_QUAD
 #define AP_OFF_T_IS_QUAD 1
