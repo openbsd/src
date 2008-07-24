@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.48 2008/07/21 20:30:35 martynas Exp $
+#  $OpenBSD: Makefile,v 1.49 2008/07/24 09:40:16 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -113,12 +113,13 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_lround.c s_lroundf.c s_llround.c s_llroundf.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
 	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c s_erff.c \
-	s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \
+	s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
-	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
+	s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
-	s_lrintf.c s_matherr.c s_modff.c \
-	s_nextafter.c s_nextafterf.c s_rint.c s_rintf.c s_round.c s_roundf.c \
+	s_lrintf.c s_matherr.c s_modff.c s_nan.c \
+	s_nextafter.c s_nextafterf.c s_remquo.c s_remquof.c s_rint.c \
+	s_rintf.c s_round.c s_roundf.c \
 	s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c s_significandf.c \
 	s_sin.c s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c s_truncf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
@@ -140,7 +141,8 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 
 
 # OpenBSD's C library supplies these functions:
-#COMMON_SRCS+=	s_fabs.c s_frexp.c s_isinf.c s_isnan.c s_ldexp.c s_modf.c
+#COMMON_SRCS+=	s_fabs.c s_frexp.c s_isinf.c s_isinff.c s_isnan.c s_isnanf.c \
+#		s_ldexp.c s_modf.c
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}

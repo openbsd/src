@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.8 2008/06/11 20:53:27 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.9 2008/07/24 09:40:16 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -192,6 +192,26 @@ do {								\
   sf_u.word = (i);						\
   (d) = sf_u.value;						\
 } while (0)
+
+#ifdef FLT_EVAL_METHOD
+/*
+ * Attempt to get strict C99 semantics for assignment with non-C99 compilers.
+ */
+#if FLT_EVAL_METHOD == 0 || __GNUC__ == 0
+#define	STRICT_ASSIGN(type, lval, rval)	((lval) = (rval))
+#else
+#define	STRICT_ASSIGN(type, lval, rval) do {	\
+	volatile type __lval;			\
+						\
+	if (sizeof(type) >= sizeof(double))	\
+		(lval) = (rval);		\
+	else {					\
+		__lval = (rval);		\
+		(lval) = __lval;		\
+	}					\
+} while (0)
+#endif
+#endif
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt(double);

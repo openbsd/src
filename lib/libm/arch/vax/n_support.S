@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.11 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.12 2008/07/24 09:40:16 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -40,8 +40,6 @@
  * scalbn(x,N),
  * finite(x),
  * remainder(x,y),
- * isinff(x),
- * isnanf(x),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
  * Revised by K.C. Ng on 4/9/85.
  */
@@ -209,34 +207,3 @@ Rop:					#Reserved operand
 Ret:
 	movq	$0x8000,r0		#propagate reserved op
 	ret
-
-/*
- * int
- * isinff(float x)
- */
-
-ENTRY(isinff, 0)
-	clrl	r0
-	ret
-
-/*
- * int
- * isnanf(float x)
- */
-        
-ENTRY(isnanf, 0)
-	clrl	r0
-	ret
-
-/*
- * signbit(x), signbitl(x), signbitf(x) -- returns zero if x is
- *    non-negative.
- */
-	_ALIGN_TEXT
-ALTENTRY(__signbitf)
-ALTENTRY(__signbitl)
-ENTRY(__signbit, 0)
-        movw 4(ap), r0
-        bicl2 $-32769,r0
-        ret
-

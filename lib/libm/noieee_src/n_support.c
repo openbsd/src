@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.14 2008/07/18 13:08:58 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.15 2008/07/24 09:40:16 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -135,30 +135,6 @@ copysign(double x, double y)
 
         *px = ( *px & msign ) | ( *py & ~msign );
         return(x);
-}
-
-int
-__signbitf(float x)
-{
-	unsigned short *px = (unsigned short *)&x;
-
-	return (*px & ~msign);
-}
-
-int
-__signbit(double x)
-{
-	unsigned short *px = (unsigned short *)&x;
-
-	return (*px & ~msign);
-}
-
-int
-__signbitl(long double x)
-{
-	unsigned short *px = (unsigned short *)&x;
-
-	return (*px & ~msign);
 }
 
 double
