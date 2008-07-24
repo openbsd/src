@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.19 2008/07/24 09:35:30 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.20 2008/07/24 09:41:58 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -211,9 +211,7 @@ extern double acosh(double);
 extern double asinh(double);
 extern double atanh(double);
 
-#if 0	/* XXX */
 extern double exp2(double);
-#endif	/* XXX */
 extern double expm1(double);
 extern int ilogb(double);
 extern double log1p(double);
@@ -246,14 +244,10 @@ extern long long int llround(double);
 extern double trunc(double);
 
 extern double remainder(double, double);
-#if 0	/* XXX */
 extern double remquo(double, double, int *);
-#endif	/* XXX */
 
 extern double copysign(double, double);
-#if 0	/* XXX */
 extern double nan(const char *);
-#endif	/* XXX */
 extern double nextafter(double, double);
 #if 0
 extern double nexttoward(double, long double);
@@ -328,9 +322,7 @@ extern float sinhf(float);
 extern float tanhf(float);
 
 extern float expf(float);
-#if 0	/* XXX */
 extern float exp2f(float);
-#endif	/* XXX */
 extern float expm1f(float);
 extern float frexpf(float, int *);
 extern int ilogbf(float);
@@ -374,14 +366,10 @@ extern float truncf(float);
 
 extern float fmodf(float, float);
 extern float remainderf(float, float);
-#if 0	/* XXX */
 extern float remquof(float, float, int *);
-#endif	/* XXX */
 
 extern float copysignf(float, float);
-#if 0	/* XXX */
 extern float nanf(const char *);
-#endif	/* XXX */
 extern float nextafterf(float, float);
 #if 0
 extern float nexttowardf(float, long double);
