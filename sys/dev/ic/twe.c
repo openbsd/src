@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.28 2007/10/20 16:10:09 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.29 2008/07/24 19:03:08 thib Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -180,8 +180,6 @@ twe_attach(sc)
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_done_ccb);
-
-	lockinit(&sc->sc_lock, PWAIT, "twelk", 0, 0);
 
 	pa = sc->sc_cmdmap->dm_segs[0].ds_addr +
 	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
