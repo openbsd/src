@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.60 2008/07/23 14:10:58 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.61 2008/07/24 13:30:10 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2098,7 +2098,7 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		return (EINVAL);
 
 	idx = fmtdesc->index + 1;
-	if (idx == UVIDEO_MAX_FORMAT || sc->sc_fmtgrp[idx].format == NULL)
+	if (idx > sc->sc_fmtgrp_num) 
 		/* no more formats left */
 		return (EINVAL);
 
@@ -2112,13 +2112,13 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		break;
 	case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
 		fmtdesc->flags = 0;
-		if (!strcmp(sc->sc_fmtgrp[idx].format->u.uc.guidFormat,
-		    "YUY2")) {
+		if (sc->sc_fmtgrp[idx].pixelformat ==
+		    V4L2_PIX_FMT_YUYV) {
 			(void)strlcpy(fmtdesc->description, "YUYV",
 			    sizeof(fmtdesc->description));
 			fmtdesc->pixelformat = V4L2_PIX_FMT_YUYV;
-		} else if (!strcmp(sc->sc_fmtgrp[idx].format->u.uc.guidFormat,
-		    "NV12")) {
+		} else if (sc->sc_fmtgrp[idx].pixelformat ==
+		    V4L2_PIX_FMT_NV12) {
 			(void)strlcpy(fmtdesc->description, "NV12",
 			    sizeof(fmtdesc->description));
 			fmtdesc->pixelformat = V4L2_PIX_FMT_NV12;
