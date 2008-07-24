@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2005/12/08 23:50:54 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 2008/07/24 04:54:27 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,20 +42,15 @@
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * is the top (end) of the user stack.
  *
- * NOTE: the ONLY reason that HIGHPAGES is 0x100 instead of UPAGES (3)
+ * NOTE: the ONLY reason that USRSTACK is 0xfff00000 instead of -USIZE
  * is for HPUX compatibility.  Why??  Because HPUX's debuggers
  * have the user's stack hard-wired at FFF00000 for post-mortems,
  * and we must be compatible...
  */
 #define	USRTEXT		8192
-#define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-#define	LOWPAGES	0
-#define	HIGHPAGES	(0x100000/NBPG)
+#define	USRSTACK	0xfff00000	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
