@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.58 2008/06/13 07:05:26 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.59 2008/07/24 18:46:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1284,7 +1284,7 @@ fetchifs(u_short ifindex)
 			continue;
 		switch (rtm->rtm_type) {
 		case RTM_IFINFO:
-			bcopy(rtm, &ifm, sizeof ifm);
+			memcpy(&ifm, next, sizeof(ifm));
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 

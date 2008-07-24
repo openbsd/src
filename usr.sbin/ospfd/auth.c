@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.13 2008/02/11 11:50:30 norby Exp $ */
+/*	$OpenBSD: auth.c,v 1.14 2008/07/24 18:46:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -48,7 +48,7 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 
 	switch (iface->auth_type) {
 	case AUTH_SIMPLE:
-		if (bcmp(ospf_hdr->auth_key.simple, iface->auth_key,
+		if (memcmp(ospf_hdr->auth_key.simple, iface->auth_key,
 		    sizeof(ospf_hdr->auth_key.simple))) {
 			log_debug("auth_validate: wrong password, interface %s",
 			    iface->name);
@@ -104,7 +104,7 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		auth_data += ntohs(ospf_hdr->len);
 
 		/* save the received digest and clear it in the packet */
-		bcopy(auth_data, recv_digest, sizeof(recv_digest));
+		memcpy(recv_digest, auth_data, sizeof(recv_digest));
 		bzero(auth_data, MD5_DIGEST_LENGTH);
 
 		/* insert plaintext key */
@@ -117,7 +117,7 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 		MD5Final(digest, &hash);
 
-		if (bcmp(recv_digest, digest, sizeof(digest))) {
+		if (memcmp(recv_digest, digest, sizeof(digest))) {
 			log_debug("auth_validate: invalid MD5 digest, "
 			    "interface %s", iface->name);
 			return (-1);
