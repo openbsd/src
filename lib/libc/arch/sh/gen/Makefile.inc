@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2007/03/02 06:11:54 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2008/07/24 09:31:06 martynas Exp $
 
-SRCS+= flt_rounds.c isinf.c isnan.c infinity.c setjmp.S _setjmp.S sigsetjmp.S \
+SRCS+= flt_rounds.c infinity.c nan.c setjmp.S _setjmp.S sigsetjmp.S \
 	modf.c ldexp.c
 
 SRCS+=	fabs.c fpgetmask.c fpgetround.c fpgetsticky.c \

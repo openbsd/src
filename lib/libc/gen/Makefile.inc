@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.41 2008/06/24 14:27:24 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.42 2008/07/24 09:31:07 martynas Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -6,12 +6,13 @@
 SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         basename.c clock.c closedir.c confstr.c ctermid.c ctype_.c \
         daemon.c devname.c dirname.c disklabel.c elf_hash.c err.c \
-        errx.c errlist.c errno.c exec.c fnmatch.c frexp.c fstab.c ftok.c \
-        fts.c ftw.c getbsize.c getcap.c getcwd.c getdomainname.c \
-        getgrent.c getgrouplist.c gethostname.c getloadavg.c \
-        getlogin.c getmntinfo.c getnetgrent.c getpagesize.c getpwent.c \
-        getttyent.c getusershell.c glob.c initgroups.c isatty.c \
-        isctype.c isfdtype.c lockf.c login_cap.c nice.c nlist.c \
+        errx.c errlist.c errno.c exec.c fnmatch.c fpclassify.c frexp.c \
+        fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c \
+        getdomainname.c getgrent.c getgrouplist.c gethostname.c \
+        getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
+        getpwent.c getttyent.c getusershell.c glob.c initgroups.c \
+        isatty.c isctype.c isfdtype.c isfinite.c isinf.c isnan.c \
+        isnormal.c signbit.c lockf.c login_cap.c nice.c nlist.c \
         nftw.c opendir.c pause.c popen.c psignal.c pw_dup.c pwcache.c \
         raise.c readdir.c readpassphrase.c rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
@@ -27,7 +28,7 @@ SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
-#	_setjmp() fabs() frexp() infinity isinf() ldexp() modf()
+#	_setjmp() fabs() frexp() infinity ldexp() modf() nan
 #	setjmp() sigsetjmp()
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"

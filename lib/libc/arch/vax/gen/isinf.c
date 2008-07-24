@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.6 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.7 2008/07/24 09:31:07 martynas Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,16 +31,14 @@
 
 /* ARGSUSED */
 int
-isnan(d)
-	double d;
+__isinf(double d)
 {
 	return(0);
 }
 
 /* ARGSUSED */
 int
-isinf(d)
-	double d;
+isinff(float f)
 {
 	return(0);
 }

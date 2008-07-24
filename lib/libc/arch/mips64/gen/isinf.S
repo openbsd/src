@@ -1,4 +1,4 @@
-/* $OpenBSD: isinf.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: isinf.S,v 1.5 2008/07/24 09:31:06 martynas Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,35 +36,12 @@
 #define DEXP_INF	0x7ff
 
 /*
- * isnan(x)
- *	double x;
- *
- * Return true if x is a NAN.
- */
-LEAF(isnan, 0)
-	.set	noreorder
-	dmfc1	t3, $f12		# get x
-	dsll	t1, t3, 1		# get x exponent
-	dsrl	t1, t1, 64 - 11
-	bne	t1, DEXP_INF, 1f	# is it a finite number?
-	sll	t2, t3, 64 - 52		# get x fraction
-	beq	t2, zero, 1f		# its infinity
-	nop
-
-	j	ra
-	li	v0, 1			# x is a NAN
-1:
-	j	ra
-	move	v0, zero		# x is NOT a NAN
-END(isnan)
-
-/*
- * isinf(x)
- *	double x;
+ * int
+ * __isinf(double x)
  *
  * Return true if x is infinity.
  */
-LEAF(isinf, 0)
+LEAF(__isinf, 0)
 	.set	noreorder
 	dmfc1	t3, $f12		# get LSW of x
 	dsll	t1, t3, 1		# get x exponent
@@ -78,4 +55,4 @@ LEAF(isinf, 0)
 1:
 	j	ra
 	move	v0, zero		# x is NOT infinity
-END(isinf)
+END(__isinf)

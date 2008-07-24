@@ -1,12 +1,10 @@
-/*	$OpenBSD: isnan.c,v 1.3 2005/08/07 16:40:13 espie Exp $	*/
-
-/*
- * Copyright (c) 1992, 1993
+/* $OpenBSD: isnan.S,v 1.1 2008/07/24 09:31:06 martynas Exp $ */
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,15 +31,29 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <machine/ieee.h>
+#include <machine/asm.h>
 
-int
-isnan(d)
-	double d;
-{
-	struct ieee_double *p = (struct ieee_double *)&d;
+#define DEXP_INF	0x7ff
 
-	return (p->dbl_exp == DBL_EXP_INFNAN &&
-	    (p->dbl_frach != 0 || p->dbl_fracl != 0));
-}
+/*
+ * int
+ * __isnan(double x)
+ *
+ * Return true if x is a NAN.
+ */
+LEAF(__isnan, 0)
+	.set	noreorder
+	dmfc1	t3, $f12		# get x
+	dsll	t1, t3, 1		# get x exponent
+	dsrl	t1, t1, 64 - 11
+	bne	t1, DEXP_INF, 1f	# is it a finite number?
+	sll	t2, t3, 64 - 52		# get x fraction
+	beq	t2, zero, 1f		# its infinity
+	nop
+
+	j	ra
+	li	v0, 1			# x is a NAN
+1:
+	j	ra
+	move	v0, zero		# x is NOT a NAN
+END(__isnan)
