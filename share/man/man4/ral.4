@@ -1,6 +1,6 @@
-.\" $OpenBSD: ral.4,v 1.80 2008/04/17 14:01:22 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.81 2008/07/25 16:18:54 damien Exp $
 .\"
-.\" Copyright (c) 2005-2007
+.\" Copyright (c) 2005-2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2008 $
+.Dd $Mdocdate: July 25 2008 $
 .Os
 .Dt RAL 4
 .Sh NAME
@@ -49,14 +49,18 @@ multiple radio transceivers to extend the operating range of the adapter and
 to achieve higher throughput.
 However, the RT2600 chipset does not support any of the 802.11n features.
 .Pp
-The RT2800 chipset is the first generation of 802.11n-Draft 2.0 adapters
-from Ralink.
-It consists of two integrated chips, an RT2860 or RT2890 MAC/BBP and an
-RT2820 (2.4GHz) or RT2850 (2.4GHz/5GHz) radio transceiver.
-The RT2800 chipset supports up to two transmit paths and three receiver paths
-(aka 2T3R).
+The RT2800 chipset is the first generation of 802.11n adapters from Ralink.
+It consists of two integrated chips, an RT2860 or RT2890 (PCIe) MAC/BBP and
+an RT2820 (2.4GHz) or RT2850 (2.4GHz/5GHz) radio transceiver.
+The RT2800 chipset supports two transmit paths and up to three receiver
+paths (2T2R/2T3R).
 It can achieve speeds up to 144Mbps (20MHz bandwidth) and 300Mbps (40MHz
 bandwidth.)
+.Pp
+The RT2700 chipset is a low-cost version of the RT2800 chipset.
+It supports a single transmit path and two receiver paths (1T2R).
+It consists of two integrated chips, an RT2760 or RT2790 (PCIe) MAC/BBP and
+an RT2720 (2.4GHz) or RT2750 (2.4GHz/5GHz) radio transceiver.
 .Pp
 These are the modes the
 .Nm
@@ -88,16 +92,18 @@ capture packets from networks which it wouldn't normally have access to,
 or to scan for access points.
 .El
 .Pp
+The
 .Nm
-supports software WEP.
-Wired Equivalent Privacy (WEP) is the de facto encryption standard
-for wireless networks.
-It can be typically configured in one of three modes:
-no encryption; 40-bit encryption; or 104-bit encryption.
-Unfortunately, due to serious weaknesses in WEP protocol
-it is strongly recommended that it not be used as the
-sole mechanism to secure wireless communication.
-WEP is not enabled by default.
+driver can be configured to use the WEP, WPA-PSK and WPA2-PSK protocols.
+.Pp
+The
+.Nm
+driver relies on the software 802.11 stack for both encryption and
+decryption of data frames on the RT2500, RT2501 and RT2600 chipsets.
+On the RT2700 and RT2800 chipsets, the
+.Nm
+driver offloads both encryption and decryption of data frames to the
+hardware for the WEP40, WEP104, TKIP(+MIC) and CCMP ciphers.
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
@@ -109,7 +115,7 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The RT2501, RT2600 and RT2800 chipsets require the following firmware
+The RT2501, RT2600, RT2700 and RT2800 chipsets require the following firmware
 files to be loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -267,16 +273,19 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
-Configure ral0 for WEP, using hex key
-.Dq 0x1deadbeef1 :
+Configure ral0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig ral0 nwkey 0x1deadbeef1
+# PSK=$(wpa-psk my_net my_passphrase)
+# ifconfig ral0 nwid my_net wpa wpapsk $PSK
 .Ed
 .Pp
 Return ral0 to its default settings:
 .Bd -literal -offset indent
 # ifconfig ral0 -bssid -chan media autoselect \e
-	nwid "" -nwkey
+	nwid "" -nwkey -wpa
 .Ed
 .Pp
 Join an existing BSS network,
@@ -322,6 +331,8 @@ Support for the RT2501 and RT2600 chipsets was added in
 .Ox 3.9 .
 Support for the RT2800 chipset was added in
 .Ox 4.3 .
+Support for the RT2700 chipset was added in
+.Ox 4.4 .
 .Sh AUTHORS
 The
 .Nm
@@ -330,8 +341,8 @@ driver was written by
 .Sh CAVEATS
 The
 .Nm
-driver does not support any of the 802.11n-Draft 2.0 capabilities offered by
-the RT2800 chipset.
+driver does not support any of the 802.11n capabilities offered by
+the RT2700 and RT2800 chipsets.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
