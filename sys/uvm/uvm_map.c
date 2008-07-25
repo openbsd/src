@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.102 2008/07/25 12:02:09 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.103 2008/07/25 12:05:04 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3744,9 +3744,8 @@ uvm_object_printit(uobj, full, pr)
 
 static const char page_flagbits[] =
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5CLEANCHK\6RELEASED\7FAKE\10RDONLY"
-	"\11ZERO\15PAGER1";
-static const char page_pqflagbits[] =
-	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
+	"\11ZERO\15PAGER1\20FREE\21INACTIVE\22ACTIVE\24ENCRYPT\30PMAP0"
+	"\31PMAP1\32PMAP2\33PMAP3";
 
 void
 uvm_page_printit(pg, full, pr)
@@ -3757,14 +3756,10 @@ uvm_page_printit(pg, full, pr)
 	struct vm_page *tpg;
 	struct uvm_object *uobj;
 	struct pglist *pgl;
-	char pgbuf[128];
-	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->pg_flags, page_flagbits);
-	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pg_flags, page_pqflagbits);
-	(*pr)("  flags=%s, pg_flags=%s, vers=%d, wire_count=%d, pa=0x%llx\n",
-	    pgbuf, pqbuf, pg->pg_version, pg->wire_count,
+	(*pr)("  flags=%b, vers=%d, wire_count=%d, pa=0x%llx\n",
+	    pg->pg_flags, page_flagbits, pg->pg_version, pg->wire_count,
 	    (long long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
