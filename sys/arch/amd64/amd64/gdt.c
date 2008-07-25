@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.11 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.12 2008/07/25 15:01:33 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -206,8 +206,10 @@ gdt_reload_cpu(struct cpu_info *ci)
 void
 gdt_grow(void)
 {
-	size_t old_len;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	struct vm_page *pg;
+	size_t old_len;
 	vaddr_t va;
 
 	old_len = gdt_size;
@@ -215,15 +217,18 @@ gdt_grow(void)
 	gdt_dynavail =
 	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
 
-	for (va = (vaddr_t)gdtstore + old_len;
-	    va < (vaddr_t)gdtstore + gdt_size;
-	    va += PAGE_SIZE) {
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-		       NULL) {
-			uvm_wait("gdt_grow");
+	CPU_INFO_FOREACH(cii, ci) {
+		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
+		    va < (vaddr_t)(ci->ci_gdt) + gdt_size;
+		    va += PAGE_SIZE) {
+			while ((pg =
+			    uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
+			    NULL) {
+				uvm_wait("gdt_grow");
+			}
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 }
 
