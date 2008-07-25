@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.82 2008/07/25 20:36:16 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.83 2008/07/25 20:49:23 damien Exp $
 .\"
 .\" Copyright (c) 2005-2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -318,7 +318,8 @@ This should not happen.
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr hostapd 8 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr wpa-psk 8
 .Pp
 Ralink Technology:
 .Pa http://www.ralinktech.com/
@@ -339,6 +340,11 @@ The
 driver was written by
 .An Damien Bergamini Aq damien@openbsd.org .
 .Sh CAVEATS
+.Pp
+The
+.Nm
+driver does not make use of the hardware cryptographic engine present on
+the RT2500, RT2501 and RT2600 chipsets.
 The
 .Nm
 driver does not support any of the 802.11n capabilities offered by
