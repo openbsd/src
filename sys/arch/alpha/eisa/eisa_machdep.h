@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.6 2008/07/19 18:13:06 miod Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.7 2008/07/25 21:11:14 miod Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.1 1996/04/12 05:39:51 cgd Exp $	*/
 
 /*
@@ -36,10 +36,10 @@ typedef int eisa_intr_handle_t;
 
 struct alpha_eisa_chipset {
 	void	*ec_v;
+	int	ec_maxslots;
 
 	void	(*ec_attach_hook)(struct device *, struct device *,
 		    struct eisabus_attach_args *);
-	int	(*ec_maxslots)(void *);
 	int	(*ec_intr_map)(void *, u_int,
 		    eisa_intr_handle_t *);
 	const char *(*ec_intr_string)(void *, eisa_intr_handle_t);
@@ -54,7 +54,7 @@ struct alpha_eisa_chipset {
 #define	eisa_attach_hook(p, s, a)					\
     (*(a)->eba_ec->ec_attach_hook)((p), (s), (a))
 #define	eisa_maxslots(c)						\
-    (*(c)->ec_maxslots)((c)->ec_v)
+    ((c)->ec_maxslots)
 #define	eisa_intr_map(c, i, hp)						\
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
 #define	eisa_intr_string(c, h)						\

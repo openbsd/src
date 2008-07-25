@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.33 2008/07/22 20:06:01 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.34 2008/07/25 21:11:15 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -91,7 +91,6 @@ void	sio_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
 void	sio_eisa_attach_hook(struct device *, struct device *,
 	    struct eisabus_attach_args *);
-int	sio_eisa_maxslots(void *);
 int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 void	sio_bridge_callback(struct device *);
 
@@ -169,8 +168,8 @@ sio_bridge_callback(self)
 
 	if (sc->sc_haseisa) {
 		ec.ec_v = NULL;
+		ec.ec_maxslots = 0;	/* will be filled by attach_hook */
 		ec.ec_attach_hook = sio_eisa_attach_hook;
-		ec.ec_maxslots = sio_eisa_maxslots;
 		ec.ec_intr_map = sio_eisa_intr_map;
 		ec.ec_intr_string = sio_intr_string;
 		ec.ec_intr_establish = sio_intr_establish;
@@ -228,16 +227,6 @@ sio_eisa_attach_hook(parent, self, eba)
 #if NEISA > 0
 	eisa_init(eba->eba_ec);
 #endif
-}
-
-int
-sio_eisa_maxslots(v)
-	void *v;
-{
-	/*
-	 * None of the alpha backplanes has more than 8 physical slots.
-	 */
-	return 9;
 }
 
 int

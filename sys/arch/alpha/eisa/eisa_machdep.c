@@ -1,4 +1,4 @@
-/* $OpenBSD: eisa_machdep.c,v 1.1 2008/07/19 18:13:06 miod Exp $ */
+/* $OpenBSD: eisa_machdep.c,v 1.2 2008/07/25 21:11:14 miod Exp $ */
 /* $NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $ */
 
 /*-
@@ -41,6 +41,8 @@
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
+
+int	eisa_compute_maxslots(const char *);
 
 #define	EISA_SLOT_HEADER_SIZE	31
 #define	EISA_SLOT_INFO_OFFSET	20
@@ -368,6 +370,15 @@ eisa_init(eisa_chipset_tag_t ec)
 #endif
 
 	/*
+	 * Read SLOT 0 (motherboard) id, and decide how many (logical)
+	 * slots there are.
+	 */
+	eisa_read_config_bytes(eisa_config_header_addr, eisaid, sizeof(eisaid));
+	eisaid[EISA_IDSTRINGLEN - 1] = '\0';	/* sanity */
+	ec->ec_maxslots = eisa_compute_maxslots((const char *)eisaid);
+	printf(": %s, %d slots", (const char *)eisaid, ec->ec_maxslots - 1);
+
+	/*
 	 * Read the slot headers, and allocate config structures for
 	 * valid slots.
 	 */
@@ -514,6 +525,11 @@ eisa_init(eisa_chipset_tag_t ec)
 #endif
 				continue;
 			}
+#ifdef EISA_DEBUG
+			else
+				printf("SLOT %d:%d settings\n",
+				    ecud->ecud_slot, func);
+#endif
 
 			ecuf = malloc(sizeof(*ecuf), M_DEVBUF, M_WAITOK);
 			if (ecuf == NULL)
@@ -573,4 +589,40 @@ eisa_init(eisa_chipset_tag_t ec)
 
 	free(cdata, M_TEMP);
 	free(data, M_TEMP);
+}
+
+/*
+ * Return the number of logical slots a motherboard supports,
+ * from its signature.
+ */
+int
+eisa_compute_maxslots(const char *idstring)
+{
+	int nslots;
+
+	if (strcmp(idstring, "DEC2400") == 0)		/* Jensen */
+		nslots = 1 + 6;
+	else if (strcmp(idstring, "DEC2A01") == 0)	/* AS 2000/2100 */
+		nslots = 1 + 8;
+	else if (strcmp(idstring, "DEC5000") == 0)	/* AS 1000/600A */
+		nslots = 1 + 8;
+	else if (strcmp(idstring, "DEC5100") == 0)	/* AS 600 */
+		nslots = 1 + 4;
+	else if (strcmp(idstring, "DEC5301") == 0)	/* AS 800 */
+		nslots = 1 + 3;
+	else if (strcmp(idstring, "DEC6000") == 0)	/* AS 8200/8400 */
+		nslots = 1 + 8;
+	else if (strcmp(idstring, "DEC6400") == 0)	/* AS 4x00/1200 */
+		nslots = 1 + 3;
+	else {
+		/*
+		 * Unrecognized design. Not likely to happen, since
+		 * Digital ECU will not recognize it either.
+		 * But just in case the EISA configuration data badly
+		 * fooled us, return the largest possible value.
+		 */
+		nslots = 1 + 8;
+	}
+
+	return nslots;
 }
