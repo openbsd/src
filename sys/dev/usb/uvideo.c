@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.61 2008/07/24 13:30:10 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.62 2008/07/25 11:12:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1013,8 +1013,11 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	/* get probe */
 	bzero(probe_data, sizeof(probe_data));
 	error = uvideo_vs_get_probe(sc, probe_data, GET_DEF);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (error);
+	if (error != USBD_NORMAL_COMPLETION) {
+		error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
+		if (error != USBD_NORMAL_COMPLETION)
+			return (error);
+	}
 
 	/* set probe */
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
