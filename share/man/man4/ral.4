@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.81 2008/07/25 16:18:54 damien Exp $
+.\" $OpenBSD: ral.4,v 1.82 2008/07/25 20:36:16 jmc Exp $
 .\"
 .\" Copyright (c) 2005-2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -28,7 +28,7 @@
 The
 .Nm
 driver supports PCI/PCIe/CardBus wireless adapters based on the Ralink RT2500,
-RT2501, RT2600 and RT2800 chipsets.
+RT2501, RT2600, RT2700 and RT2800 chipsets.
 .Pp
 The RT2500 chipset is the first generation of 802.11b/g adapters from Ralink.
 It consists of two integrated chips, an RT2560 MAC/BBP and an RT2525 radio
@@ -49,6 +49,11 @@ multiple radio transceivers to extend the operating range of the adapter and
 to achieve higher throughput.
 However, the RT2600 chipset does not support any of the 802.11n features.
 .Pp
+The RT2700 chipset is a low-cost version of the RT2800 chipset.
+It supports a single transmit path and two receiver paths (1T2R).
+It consists of two integrated chips, an RT2760 or RT2790 (PCIe) MAC/BBP and
+an RT2720 (2.4GHz) or RT2750 (2.4GHz/5GHz) radio transceiver.
+.Pp
 The RT2800 chipset is the first generation of 802.11n adapters from Ralink.
 It consists of two integrated chips, an RT2860 or RT2890 (PCIe) MAC/BBP and
 an RT2820 (2.4GHz) or RT2850 (2.4GHz/5GHz) radio transceiver.
@@ -56,11 +61,6 @@ The RT2800 chipset supports two transmit paths and up to three receiver
 paths (2T2R/2T3R).
 It can achieve speeds up to 144Mbps (20MHz bandwidth) and 300Mbps (40MHz
 bandwidth.)
-.Pp
-The RT2700 chipset is a low-cost version of the RT2800 chipset.
-It supports a single transmit path and two receiver paths (1T2R).
-It consists of two integrated chips, an RT2760 or RT2790 (PCIe) MAC/BBP and
-an RT2720 (2.4GHz) or RT2750 (2.4GHz/5GHz) radio transceiver.
 .Pp
 These are the modes the
 .Nm
