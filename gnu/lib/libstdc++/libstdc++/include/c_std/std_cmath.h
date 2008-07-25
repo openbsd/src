@@ -647,8 +647,6 @@ namespace __gnu_cxx
      __capture_isunordered(_Tp __f1, _Tp __f2) 
      { return isunordered(__f1, __f2); }
 } 
-#endif /* _GLIBCPP_USE_C99_FP_MACROS_DYNAMIC */
-#endif
 
 #undef fpclassify
 #undef isfinite
@@ -663,8 +661,6 @@ namespace __gnu_cxx
 #undef islessgreater
 #undef isunordered
 
-#if defined(_GLIBCPP_USE_C99)
-#if !defined(_GLIBCPP_USE_C99_FP_MACROS_DYNAMIC)
 namespace __gnu_cxx
 {
   template<typename _Tp>
