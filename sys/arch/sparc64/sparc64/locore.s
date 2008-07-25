@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.147 2008/07/21 13:30:05 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.148 2008/07/25 14:53:38 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -346,6 +346,13 @@ _C_LABEL(data_start):					! Start of data segment
 	.globl	_C_LABEL(u0)
 _C_LABEL(u0):	.xword	0
 estack0:	.xword	0
+
+/*
+ * This stack is used for bootstrapping and spinning up CPUs.
+ */
+	.space	4096
+	.align	16
+tmpstack:
 
 #ifdef DEBUG
 /*
@@ -4857,6 +4864,11 @@ dostart:
 #endif	/* 0 */
 
 	/*
+	 * Switch to temporary stack.
+	 */
+	set	tmpstack-CC64FSZ-BIAS, %sp
+
+	/*
 	 * Ready to run C code; finish bootstrap.
 	 */
 1:
@@ -4964,12 +4976,6 @@ ENTRY(sun4u_set_tsbs)
 
 
 #ifdef MULTIPROCESSOR
-	.data
-	.space 2048
-	_ALIGN
-tmpstack:
-	.text
-
 ENTRY(cpu_mp_startup)
 	mov	%o0, %g2
 
