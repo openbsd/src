@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2008/07/24 04:54:27 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2008/07/25 21:25:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,7 @@
 #define	USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
 
 /*
- * PTEs for mapping user space into the kernel for phyio operations.
+ * PTEs for mapping user space into the kernel for physio operations.
  * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
 #ifndef USRIOSIZE

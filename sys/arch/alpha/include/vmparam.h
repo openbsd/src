@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.16 2008/07/25 20:51:56 kurt Exp $ */
+/* $OpenBSD: vmparam.h,v 1.17 2008/07/25 21:24:49 miod Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -82,7 +82,7 @@
 #define STACKGAP_RANDOM	256*1024
 
 /*
- * PTEs for mapping user space into the kernel for phyio operations.
+ * PTEs for mapping user space into the kernel for physio operations.
  * 64 pte's are enough to cover 8 disks * MAXBSIZE.
  */
 #ifndef USRIOSIZE
