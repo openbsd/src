@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2008/07/05 21:20:48 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2008/07/25 19:37:16 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -3191,6 +3191,15 @@ pmap_count_res(pm)
 	int i, j, k, n, s;
 	paddr_t *pdir, *ptbl;
 	/* Almost the same as pmap_collect() */
+
+	/*
+	 * XXX On the SPARC Enterprise T5120, counting the number of
+	 * pages in the kernel pmap is ridiculously slow.  Since ps(1)
+	 * doesn't use the information for P_SYSTEM processes, we may
+	 * as well skip the counting and return zero immediately.
+	 */
+	if (pm == pmap_kernel())
+		return 0;
 
 	/* Don't want one of these pages reused while we're reading it. */
 	s = splvm();
