@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.62 2008/07/25 11:12:34 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.63 2008/07/25 17:20:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2200,7 +2200,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	    DEVNAME(sc), __func__, r.width, r.height);
 
 	/* tell our sample buffer size */
-	fmt->fmt.pix.sizeimage = sc->sc_sample_buffer.buf_size;
+	fmt->fmt.pix.sizeimage = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	return (0);
 }
