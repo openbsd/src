@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.219 2008/07/22 20:53:13 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.220 2008/07/26 11:05:32 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2008 $
+.Dd $Mdocdate: July 26 2008 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -553,6 +553,26 @@ and update it using
 .Sq pkg_add -r
 if a newer package is available.
 In multi-packages ports, all relevant packages are updated.
+See
+.Ev UPDATE_COOKIES_DIR
+and
+.Ev FORCE_UPDATE
+as well.
+.It Ar update-or-install
+Update an installed package or perform a fresh installation,
+by using
+.Sq pkg_add -r .
+Handles one single package in multi-packages ports.
+See
+.Ev UPDATE_COOKIES_DIR
+and
+.Ev FORCE_UPDATE
+as well.
+.It Ar update-or-install-all
+Update installed packages or perform a fresh installation,
+by using
+.Sq pkg_add -r .
+Handles all packages in multi-packages ports.
 See
 .Ev UPDATE_COOKIES_DIR
 and
@@ -1765,7 +1785,7 @@ Leave empty if no message is needed.
 Name of the unzip binary.
 .It Ev UPDATE_COOKIES_DIR
 User settings.
-Used to store cookies for package updates, defaults to
+Used to store cookies for package updates and, defaults to
 .Pa ${PORTSDIR}/update/${MACHINE_ARCH} .
 If set to empty, will revert to a file under
 .Pa ${WRKDIR} .
