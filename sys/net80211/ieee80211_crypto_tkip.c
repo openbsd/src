@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.3 2008/04/26 19:59:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.4 2008/07/26 12:36:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,11 +22,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/endian.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -60,6 +56,7 @@ struct ieee80211_tkip_ctx {
 	const u_int8_t	*rxmic;
 	u_int16_t	TTAK1[5];
 	u_int16_t	TTAK2[5];
+	u_int8_t	TTAK2ok;
 };
 
 /*
@@ -140,15 +137,24 @@ ieee80211_tkip_mic(struct mbuf *m0, int off, const u_int8_t *key,
 		IEEE80211_ADDR_COPY(wht.i_sa, wh->i_addr3);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
-		/* not yet supported */
+		IEEE80211_ADDR_COPY(wht.i_da, wh->i_addr3);
+		IEEE80211_ADDR_COPY(wht.i_sa,
+		    ((const struct ieee80211_frame_addr4 *)wh)->i_addr4);
 		break;
 	}
 	if ((wh->i_fc[0] &
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
 	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		const struct ieee80211_qosframe *qwh =
-		    (const struct ieee80211_qosframe *)wh;
-		wht.i_pri = qwh->i_qos[0] & 0xf;
+		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+		    IEEE80211_FC1_DIR_DSTODS) {
+			const struct ieee80211_qosframe_addr4 *qwh4 =
+			    (const struct ieee80211_qosframe_addr4 *)wh;
+			wht.i_pri = qwh4->i_qos[0] & 0xf;
+		} else {
+			const struct ieee80211_qosframe *qwh =
+			    (const struct ieee80211_qosframe *)wh;
+			wht.i_pri = qwh->i_qos[0] & 0xf;
+		}
 	}  else
 		wht.i_pri = 0;
 	wht.i_pad[0] = wht.i_pad[1] = wht.i_pad[2] = 0;
@@ -223,9 +229,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	ivp[7] = k->k_tsc >> 40;	/* TSC5 */
 
 	/* compute WEP seed */
-#ifdef notyet
 	if ((k->k_tsc & 0xffff) == 0)
-#endif
 		Phase1(ctx->TTAK1, k->k_key, wh->i_addr2, k->k_tsc >> 16);
 	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK1, k->k_tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
@@ -373,10 +377,10 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 
 	/* compute WEP seed */
-#ifdef notyet
-	if (k->k_rsc[0] == 0 || ((tsc >> 16) != (k->k_rsc[0] >> 16)))
-#endif
+	if (!ctx->TTAK2ok || ((tsc >> 16) != (k->k_rsc[0] >> 16))) {
 		Phase1(ctx->TTAK2, k->k_key, wh->i_addr2, tsc >> 16);
+		ctx->TTAK2ok = 1;
+	}
 	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK2, tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
