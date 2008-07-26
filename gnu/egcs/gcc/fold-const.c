@@ -1070,6 +1070,10 @@ real_hex_to_f (s, mode)
 	       expsign = -1;
 	       ++p;
 	     }
+	   else if (*p == '+')
+	     {
+	       ++p;
+	     }
 	   /* Value of exponent.
 	      The exponent field is a decimal integer.  */
 	   while (isdigit(*p))
