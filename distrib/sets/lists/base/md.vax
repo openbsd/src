@@ -1672,6 +1672,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/trap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/uvax.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/varargs.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/vaxfp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vmparam.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vsbus.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vis.ph

@@ -166,6 +166,7 @@
 ./usr/include/vax/trap.h
 ./usr/include/vax/uvax.h
 ./usr/include/vax/varargs.h
+./usr/include/vax/vaxfp.h
 ./usr/include/vax/vmparam.h
 ./usr/include/vax/vsbus.h
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.4/2.95.3/SYSCALLS.c.X
