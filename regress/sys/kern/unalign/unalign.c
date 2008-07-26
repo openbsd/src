@@ -1,4 +1,4 @@
-/*	$OpenBSD: unalign.c,v 1.1 2005/04/26 21:37:05 miod Exp $	*/
+/*	$OpenBSD: unalign.c,v 1.2 2008/07/26 10:25:04 miod Exp $	*/
 /* Written by Miod Vallat, 2004 AD -- this file is in the public domain */
 
 /*
@@ -14,15 +14,14 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-int
-main(int argc, char *argv[])
-{
-#if !defined(__LP64__)
-	long array[4] = { 0x12345678, 0x13579ace, 0xffffabcd, 0x2468fedc };
-	long long t;
-	unsigned int i;
+uint32_t array[5];
 
-	t = *(long long *)(array + 1);
+int
+unalign_read(uint64_t *addr)
+{
+	uint64_t t;
+
+	t = *addr;
 #if BYTE_ORDER == BIG_ENDIAN
 	if (t != 0x13579aceffffabcdULL)
 #else
@@ -30,16 +29,45 @@ main(int argc, char *argv[])
 #endif
 		return (1);
 
-	t = 0xdeadbeaffadebabeULL;
-	*(long long *)(array + 1) = t;
+	return (0);
+}
 
-#if BYTE_ORDER == BIG_ENDIAN
-	if (array[1] != 0xdeadbeaf || array[2] != 0xfadebabe)
-#else
-	if (array[1] != 0xfadebabe || array[2] != 0xdeadbeaf)
-#endif
+void
+unalign_write(uint64_t *addr)
+{
+	uint64_t t;
+
+	t = 0xdeadbeaffadebabeULL;
+	*addr = t;
+}
+
+int
+main(int argc, char *argv[])
+{
+#if !defined(__LP64__)
+	uint32_t *addr = array;
+
+	/* align on a 64 bit boundary */
+	if (((uint32_t)addr & 7) != 0)
+		addr++;
+
+	addr[0] = 0x12345678;
+	addr[1] = 0x13579ace;
+	addr[2] = 0xffffabcd;
+	addr[3] = 0x2468fedc;
+
+	if (unalign_read((uint64_t *)(addr + 1)))
 		return (1);
 
+	unalign_write((uint64_t *)(addr + 1));
+
+#if BYTE_ORDER == BIG_ENDIAN
+	if (addr[1] != 0xdeadbeaf || addr[2] != 0xfadebabe)
+#else
+	if (addr[1] != 0xfadebabe || addr[2] != 0xdeadbeaf)
+#endif
+		return (1);
 #endif	/* __LP64__ */
+
 	return (0);
 }
