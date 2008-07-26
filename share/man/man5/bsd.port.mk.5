@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.220 2008/07/26 11:05:32 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.221 2008/07/26 11:31:03 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -279,6 +279,10 @@ which will also retrieve
 .Ev SUPDISTFILES ,
 to fill with supplementary distribution files which are not needed for
 every configuration.
+Use of
+.Ar {pre,do,post}-fetch
+hooks is strongly discouraged, and will probably be removed in the
+near future, as this makes mirroring of distfiles very complicated.
 See
 .Ev CHECKSUMFILES ,
 .Ev CDROM_SITE ,
