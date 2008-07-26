@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.38 2008/07/26 00:51:38 brad Exp $
+.\" $OpenBSD: bge.4,v 1.39 2008/07/26 01:11:36 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -158,9 +158,11 @@ or
 modes.
 .It Cm 1000baseT
 Set 1000baseT operation over twisted pair.
-Only
+Both
 .Cm full-duplex
-mode is supported.
+and
+.Cm half-dupex
+modes are supported.
 .It Cm 1000baseSX
 Set 1000Mbps (Gigabit Ethernet) operation.
 Both
