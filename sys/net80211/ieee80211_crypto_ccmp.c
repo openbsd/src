@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.1 2008/04/16 18:32:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.2 2008/07/26 12:41:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,9 +24,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/endian.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -74,7 +71,7 @@ ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 	k->k_priv = NULL;
 }
 
-/*
+/*-
  * Counter with CBC-MAC (CCM) - see RFC3610.
  * CCMP uses the following CCM parameters: M = 8, L = 2
  */
@@ -89,11 +86,22 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 
 	/* construct AAD (additional authentication data) */
 	aad = &auth[2];	/* skip l(a), will be filled later */
-	*aad++ = wh->i_fc[0] & ~IEEE80211_FC0_SUBTYPE_MASK;
-	/* NB: 'Protected' bit is already set in wh->i_fc[1] */
-	/* 'Order' bit was added as part of 802.11n-Draft 2.0 */
-	*aad++ = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_ORDER |
-	    IEEE80211_FC1_PWR_MGT | IEEE80211_FC1_MORE_DATA);
+	*aad = wh->i_fc[0];
+	/* 11w: conditionnally mask subtype field */
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_DATA)
+		*aad &= ~IEEE80211_FC0_SUBTYPE_MASK;
+	aad++;
+	/* protected bit is already set in wh */
+	*aad = wh->i_fc[1];
+	*aad &= ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
+	    IEEE80211_FC1_MORE_DATA);
+	/* 11n: conditionnally mask order bit */
+	if ((wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+		*aad &= ~IEEE80211_FC1_ORDER;
+	aad++;
 	IEEE80211_ADDR_COPY(aad, wh->i_addr1); aad += IEEE80211_ADDR_LEN;
 	IEEE80211_ADDR_COPY(aad, wh->i_addr2); aad += IEEE80211_ADDR_LEN;
 	IEEE80211_ADDR_COPY(aad, wh->i_addr3); aad += IEEE80211_ADDR_LEN;
@@ -123,11 +131,14 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	}
 
 	/* construct CCM nonce */
-	nonce[0]  = tid;
+	nonce[ 0] = tid;
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_MGT)
+		nonce[0] |= 1 << 4;	/* 11w: set management bit */
 	IEEE80211_ADDR_COPY(&nonce[1], wh->i_addr2);
-	nonce[7]  = pn >> 40;	/* PN5 */
-	nonce[8]  = pn >> 32;	/* PN4 */
-	nonce[9]  = pn >> 24;	/* PN3 */
+	nonce[ 7] = pn >> 40;	/* PN5 */
+	nonce[ 8] = pn >> 32;	/* PN4 */
+	nonce[ 9] = pn >> 24;	/* PN3 */
 	nonce[10] = pn >> 16;	/* PN2 */
 	nonce[11] = pn >> 8;	/* PN1 */
 	nonce[12] = pn;		/* PN0 */
@@ -139,7 +150,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	memset(aad, 0, 30 - la);	/* pad AAD with zeros */
 
 	/* construct first block B_0 */
-	b[0] = 89;	/* Flags = 64*Adata + 8*((M-2)/2) + (L-1) */
+	b[ 0] = 89;	/* Flags = 64*Adata + 8*((M-2)/2) + (L-1) */
 	memcpy(&b[1], nonce, 13);
 	b[14] = lm >> 8;
 	b[15] = lm & 0xff;
@@ -153,7 +164,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	rijndael_encrypt(ctx, b, b);
 
 	/* construct S_0 */
-	a[0] = 1;	/* Flags = L' = (L-1) */
+	a[ 0] = 1;	/* Flags = L' = (L-1) */
 	memcpy(&a[1], nonce, 13);
 	a[14] = a[15] = 0;
 	rijndael_encrypt(ctx, a, s0);
