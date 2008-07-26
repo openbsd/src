@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.25 2007/06/25 13:12:51 jmc Exp $
+.\"	$OpenBSD: locate.1,v 1.26 2008/07/26 09:48:00 pyr Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.25 2007/06/25 13:12:51 jmc Exp $
+.\"	$Id: locate.1,v 1.26 2008/07/26 09:48:00 pyr Exp $
 .\"
-.Dd $Mdocdate: June 25 2007 $
+.Dd $Mdocdate: July 26 2008 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -90,6 +90,9 @@ Characters less than 32 or greater than 127 are stored as 2 bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b
+For each entry in the database, perform the search on the last
+component of path.
 .It Fl c
 Suppress normal output; instead print a count of matching file names.
 .It Fl d Ar database

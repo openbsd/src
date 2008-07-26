@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.8 2003/09/29 16:03:16 deraadt Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.9 2008/07/26 09:48:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.8 2003/09/29 16:03:16 deraadt Exp $
+ * $Id: fastfind.c,v 1.9 2008/07/26 09:48:00 pyr Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -295,8 +295,17 @@ fastfind
 					    )
 						break;
 				if (*p == '\0') {   /* fast match success */
+					char	*shortpath;
+
 					found = 1;
-					if (!globflag || !fnmatch(pathpart, path, 0)) {
+					shortpath = path;
+					if (f_basename)
+						shortpath = basename(path);
+
+					if ((!f_basename && (!globflag ||
+					    !fnmatch(pathpart, shortpath, 0)))
+					    || (strstr(shortpath, pathpart) !=
+					    NULL)) {
 						if (f_silent)
 							counter++;
 						else if (f_limit) {
