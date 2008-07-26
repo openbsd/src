@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.26 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.27 2008/07/26 12:56:06 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -755,77 +755,18 @@ ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
 	struct ifnet *ifp = &ic->ic_if;
 
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_AHDEMO:
-		/* FALLTHROUGH */
-	case IEEE80211_M_STA:
-		if (ifp->if_link_state != nstate) {
-			if (nstate == LINK_STATE_UP) {
-				/* Change link state to UP. */
-				ifp->if_link_state = LINK_STATE_UP;
-				if_link_state_change(ifp);
-				if (ifp->if_flags & IFF_DEBUG) {
-					printf("%s: set STA link state UP\n",
-					    ifp->if_xname);
-				}
-			}
-
-			if (nstate == LINK_STATE_DOWN) {
-				/* Change link state to DOWN. */
-				ifp->if_link_state = LINK_STATE_DOWN;
-				if_link_state_change(ifp);
-				if (ifp->if_flags & IFF_DEBUG) {
-					printf("%s: set STA link state DOWN\n",
-					    ifp->if_xname);
-				}
-			}
-
-			if (nstate == LINK_STATE_UNKNOWN) {
-				/* Change link state to UNKNOWN. */
-				ifp->if_link_state = LINK_STATE_UNKNOWN;
-				if_link_state_change(ifp);
-				if (ifp->if_flags & IFF_DEBUG) {
-					printf("%s: set STA link state UNKNOWN\n",
-					    ifp->if_xname);
-				}
-			}
-		}
-		break;
 	case IEEE80211_M_IBSS:
-		/* Always change link state to UNKNOWN in IBSS mode. */
-		if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
-			ifp->if_link_state = LINK_STATE_UNKNOWN;
-			if_link_state_change(ifp); 
-			if (ifp->if_flags & IFF_DEBUG) {
-				printf("%s: set IBSS link state UNKNOWN\n",
-				    ifp->if_xname);
-			}
-		}
-		break;
 	case IEEE80211_M_HOSTAP:
-		/* Always change link state to UNKNOWN in HOSTAP mode. */
-		if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
-			ifp->if_link_state = LINK_STATE_UNKNOWN;
-			if_link_state_change(ifp);
-			if (ifp->if_flags & IFF_DEBUG) {
-				printf("%s: set HOSTAP link state UNKNOWN\n",
-				    ifp->if_xname);
-			}
-		}
+		nstate = LINK_STATE_UNKNOWN;
 		break;
 	case IEEE80211_M_MONITOR:
-		/* Always change link state to DOWN in MONITOR mode. */
-		if (ifp->if_link_state != LINK_STATE_DOWN) {
-			ifp->if_link_state = LINK_STATE_DOWN;
-			if_link_state_change(ifp);
-			if (ifp->if_flags & IFF_DEBUG) {
-				printf("%s: set MONITOR link state DOWN\n",
-				    ifp->if_xname);
-			}
-		}
+		nstate = LINK_STATE_DOWN;
 		break;
 	default:
-		printf("%s: can't set link state (unknown mediaopt)!\n",
-		    ifp->if_xname);
 		break;
+	}
+	if (nstate != ifp->if_link_state) {
+		ifp->if_link_state = nstate;
+		if_link_state_change(ifp);
 	}
 }
