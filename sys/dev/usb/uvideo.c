@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.63 2008/07/25 17:20:27 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.64 2008/07/26 11:42:43 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1119,8 +1119,6 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
 
-	sc->sc_video_buf_size = UGETDW(pc->dwMaxVideoFrameSize);
-
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
@@ -1131,7 +1129,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	DPRINTF(1, "wCompWindowSize=%d\n", UGETW(pc->wCompWindowSize));
 	DPRINTF(1, "wDelay=%d (ms)\n", UGETW(pc->wDelay));
 	DPRINTF(1, "dwMaxVideoFrameSize=%d (bytes)\n",
-	    sc->sc_video_buf_size);
+	    UGETDW(pc->dwMaxVideoFrameSize));
 	DPRINTF(1, "dwMaxPayloadTransferSize=%d (bytes)\n",
 	    UGETDW(pc->dwMaxPayloadTransferSize));
 
@@ -1172,7 +1170,7 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	/* don't overflow the upper layer sample buffer */
-	if (sc->sc_video_buf_size < fb->buf_size) {
+	if (sc->sc_max_fbuf_size < fb->buf_size) {
 		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
@@ -2432,8 +2430,21 @@ int
 uvideo_get_bufsize(void *v)
 {
 	struct uvideo_softc *sc = v;
+	struct usb_video_probe_commit *pc;
+	uint8_t probe_data[34];
+	usbd_status error;
 
-	return (sc->sc_video_buf_size);
+	pc = (struct usb_video_probe_commit *)probe_data;
+
+	/* find the maximum frame size */
+	bzero(probe_data, sizeof(probe_data));
+	error = uvideo_vs_get_probe(sc, probe_data, GET_MAX);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EINVAL);
+
+	sc->sc_max_fbuf_size = UGETDW(pc->dwMaxVideoFrameSize);
+
+	return (sc->sc_max_fbuf_size);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.24 2008/07/24 14:59:44 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.25 2008/07/26 11:42:43 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -476,7 +476,7 @@ struct uvideo_softc {
 	int					 sc_enabled;
 	int					 sc_dying;
 	int					 sc_mode;
-	int					 sc_video_buf_size;
+	int					 sc_max_fbuf_size;
 	int					 sc_negotiated_flag;
 
 	u_int16_t				 uvc_version;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.18 2008/07/23 22:10:21 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.19 2008/07/26 11:42:43 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -77,6 +77,10 @@ videoattach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->hw_if->get_bufsize)
 		video_buf_size = (sc->hw_if->get_bufsize)(sc->hw_hdl);
+	if (video_buf_size == EINVAL) {
+		printf("video: could not request frame buffer size\n");
+		return;
+	}
 
 	sc->sc_fbuffer = malloc(video_buf_size, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_fbuffer == NULL) {
