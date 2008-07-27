@@ -1,5 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.84 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.85 2008/07/27 18:24:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -135,21 +134,23 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	struct mbuf *m1;
 	int error, hdrlen, len;
 	u_int8_t dir, type, subtype;
-	u_int16_t orxseq, nrxseq;
+	u_int16_t *orxseq, nrxseq;
+	int tid;
 
+#ifdef DIAGNOSTIC
 	if (ni == NULL)
 		panic("null node");
-
-	/*
-	 * In monitor mode, send everything directly to bpf.
-	 * XXX may want to include the CRC
-	 */
+#endif
+	/* in monitor mode, send everything directly to bpf */
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		goto out;
 
-	/* do not process frames w/o i_addr2 any further */
-	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame_min)) {
-		DPRINTF(("frame too short (1), len %u\n", m->m_pkthdr.len));
+	/*
+	 * Do not process frames without an Address 2 field any further.
+	 * Only CTS and ACK control frames do not have this field.
+	 */
+	if (m->m_len < sizeof(struct ieee80211_frame_min)) {
+		DPRINTF(("frame too short, len %u\n", m->m_len));
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
@@ -157,7 +158,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[0] & IEEE80211_FC0_VERSION_MASK) !=
 	    IEEE80211_FC0_VERSION_0) {
-		DPRINTF(("packet with wrong version: %x\n", wh->i_fc[0]));
+		DPRINTF(("frame with wrong version: %x\n", wh->i_fc[0]));
 		ic->ic_stats.is_rx_badversion++;
 		goto err;
 	}
@@ -165,67 +166,68 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	/*
-	 * NB: We are not yet prepared to handle control frames,
-	 *     but permitting drivers to send them to us allows
-	 *     them to go through bpf tapping at the 802.11 layer.
-	 */
-	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
-		DPRINTF(("frame too short (2), len %u\n", m->m_pkthdr.len));
-		ic->ic_stats.is_rx_tooshort++;
-		goto out;
+	if (type != IEEE80211_FC0_TYPE_CTL) {
+		hdrlen = ieee80211_get_hdrlen(wh);
+		if (m->m_len < hdrlen) {
+			DPRINTF(("frame too short, len %u\n", m->m_len));
+			ic->ic_stats.is_rx_tooshort++;
+		}
+	}
+	/* check and save sequence control field, if present */
+	if (ic->ic_state != IEEE80211_S_SCAN &&
+	    type != IEEE80211_FC0_TYPE_CTL) {
+		nrxseq = letoh16(*(u_int16_t *)wh->i_seq) >>
+		    IEEE80211_SEQ_SEQ_SHIFT;
+		if ((wh->i_fc[0] &
+		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+		    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
+			if (dir == IEEE80211_FC1_DIR_DSTODS) {
+				struct ieee80211_qosframe_addr4 *qwh4 =
+				    (struct ieee80211_qosframe_addr4 *)wh;
+				tid = qwh4->i_qos[0] & IEEE80211_QOS_TID;
+			} else {
+				struct ieee80211_qosframe *qwh =
+				    (struct ieee80211_qosframe *)wh;
+				tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
+			}
+			orxseq = &ni->ni_qos_rxseqs[tid];
+		} else
+			orxseq = &ni->ni_rxseq;
+		if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
+		    nrxseq == *orxseq) {
+			/* duplicate, silently discarded */
+			ic->ic_stats.is_rx_dup++;
+			goto out;
+		}
+		*orxseq = nrxseq;
 	}
 	if (ic->ic_state != IEEE80211_S_SCAN) {
 		ni->ni_rssi = rxi->rxi_rssi;
 		ni->ni_rstamp = rxi->rxi_tstamp;
-		if (type == IEEE80211_FC0_TYPE_DATA &&
-		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)) {
-			struct ieee80211_qosframe *qwh =
-			    (struct ieee80211_qosframe *)wh;
-			int tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
-			orxseq = ni->ni_qos_rxseqs[tid];
-			nrxseq = ni->ni_qos_rxseqs[tid] =
-			    letoh16(*(u_int16_t *)qwh->i_seq) >>
-				IEEE80211_SEQ_SEQ_SHIFT;
-		} else {
-			orxseq = ni->ni_rxseq;
-			nrxseq = ni->ni_rxseq =
-			    letoh16(*(u_int16_t *)wh->i_seq) >>
-				IEEE80211_SEQ_SEQ_SHIFT;
-		}
-		/* TODO: fragment */
-		if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
-		    orxseq == nrxseq) {
-			/* duplicate, silently discarded */
-			ic->ic_stats.is_rx_dup++; /* XXX per-station stat */
-			goto out;
-		}
 		ni->ni_inact = 0;
 	}
 
-	if ((ic->ic_opmode == IEEE80211_M_HOSTAP ||
-	     ic->ic_opmode == IEEE80211_M_IBSS) && ic->ic_set_tim != NULL) {
+	if ((ic->ic_caps & IEEE80211_C_PMGT) &&
+	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    dir == IEEE80211_FC1_DIR_TODS) {
 		if ((wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-		    ni->ni_pwrsave == 0) {
-			/* turn on power save mode */
-
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: power save mode on for %s\n",
-				    ifp->if_xname, ether_sprintf(wh->i_addr2));
-
-			ni->ni_pwrsave = IEEE80211_PS_SLEEP;
+		    ni->ni_pwrsave == IEEE80211_PS_AWAKE) {
+			/* turn on PS mode */
+			ni->ni_pwrsave = IEEE80211_PS_DOZE;
+			DPRINTF(("power saving on for %s\n",
+			    ether_sprintf(wh->i_addr2)));
 		}
 		if (!(wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-		    ni->ni_pwrsave != 0) {
-			/* turn off power save mode, dequeue stored packets */
+		    ni->ni_pwrsave == IEEE80211_PS_DOZE) {
+			/* turn off PS mode */
+			ni->ni_pwrsave = IEEE80211_PS_AWAKE;
+			DPRINTF(("power saving off for %s\n",
+			    ether_sprintf(wh->i_addr2)));
 
-			ni->ni_pwrsave = 0;
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: power save mode off for %s\n",
-				    ifp->if_xname, ether_sprintf(wh->i_addr2));
-
+			/* dequeue buffered unicast frames */
 			while (!IF_IS_EMPTY(&ni->ni_savedq)) {
 				struct mbuf *m;
 				IF_DEQUEUE(&ni->ni_savedq, m);
@@ -255,7 +257,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
 				/*
-				 * In IEEE802.11 network, multicast packet
+				 * In IEEE802.11 network, multicast frame
 				 * sent from me is broadcasted from AP.
 				 * It should be silently discarded for
 				 * SIMPLEX interface.
@@ -326,8 +328,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			/* can't get there */
 			goto out;
 		}
-
-		hdrlen = ieee80211_get_hdrlen(wh);
 
 		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 			if (ic->ic_flags &
@@ -407,7 +407,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (m != NULL) {
 #if NBPFILTER > 0
 			/*
-			 * If we forward packet into transmitter of the AP,
+			 * If we forward frame into transmitter of the AP,
 			 * we don't need to duplicate for DLT_EN10MB.
 			 */
 			if (ifp->if_bpf && m1 == NULL)
@@ -490,22 +490,16 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	case IEEE80211_FC0_TYPE_CTL:
 		ic->ic_stats.is_rx_ctl++;
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
-			goto out;
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-		if (subtype == IEEE80211_FC0_SUBTYPE_PS_POLL) {
-			/* XXX statistic */
-			/* Dump out a single packet from the host */
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: got power save probe from %s\n",
-				    ifp->if_xname,
-				    ether_sprintf(wh->i_addr2));
+		switch (subtype) {
+		case IEEE80211_FC0_SUBTYPE_PS_POLL:
 			ieee80211_recv_pspoll(ic, m);
+			break;
 		}
 		goto out;
 
 	default:
-		DPRINTF(("bad packet type %x\n", type));
+		DPRINTF(("bad frame type %x\n", type));
 		/* should not come here */
 		break;
 	}
@@ -890,7 +884,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 *    o hostap mode: for passive scanning of neighbor APs
 	 *    o when scanning
 	 * In other words, in all modes other than monitor (which
-	 * does not process incoming packets) and adhoc-demo (which
+	 * does not process incoming frames) and adhoc-demo (which
 	 * does not use management frames at all).
 	 */
 #ifdef DIAGNOSTIC
@@ -901,15 +895,15 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		panic("%s: impossible operating mode", __func__);
 	}
 #endif
+	/* make sure all mandatory fixed fields are present */
+	if (m0->m_len < sizeof(*wh) + 12) {
+		DPRINTF(("frame too short\n"));
+		return;
+	}
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (const u_int8_t *)&wh[1];
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
-	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < 12) {
-		DPRINTF(("frame too short\n"));
-		return;
-	}
 	tstamp  = frm; frm += 8;
 	bintval = LE_READ_2(frm); frm += 2;
 	capinfo = LE_READ_2(frm); frm += 2;
@@ -1282,18 +1276,17 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi)
 {
 	const struct ieee80211_frame *wh;
-	const u_int8_t *frm, *efrm;
+	const u_int8_t *frm;
 	u_int16_t algo, seq, status;
 
-	wh = mtod(m0, struct ieee80211_frame *);
-	frm = (const u_int8_t *)&wh[1];
-	efrm = mtod(m0, u_int8_t *) + m0->m_len;
-
 	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < 6) {
+	if (m0->m_len < sizeof(*wh) + 6) {
 		DPRINTF(("frame too short\n"));
 		return;
 	}
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (const u_int8_t *)&wh[1];
+
 	algo   = LE_READ_2(frm); frm += 2;
 	seq    = LE_READ_2(frm); frm += 2;
 	status = LE_READ_2(frm); frm += 2;
@@ -1343,18 +1336,15 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	    ic->ic_state != IEEE80211_S_RUN)
 		return;
 
+	/* make sure all mandatory fixed fields are present */
+	if (m0->m_len < sizeof(*wh) + (reassoc ? 10 : 4)) {
+		DPRINTF(("frame too short\n"));
+		return;
+	}
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (const u_int8_t *)&wh[1];
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
-	resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
-	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
-
-	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < (reassoc ? 10 : 4)) {
-		DPRINTF(("frame too short\n"));
-		return;
-	}
 	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
 		DPRINTF(("ignore other bss from %s\n",
 		    ether_sprintf((u_int8_t *)wh->i_addr2)));
@@ -1530,6 +1520,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_fhindex = ic->ic_bss->ni_fhindex;
  end:
 	if (status != 0) {
+		resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
+		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
 		IEEE80211_SEND_MGMT(ic, ni, resp, status);
 		ieee80211_node_leave(ic, ni);
 	} else
@@ -1562,15 +1554,15 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
+	/* make sure all mandatory fixed fields are present */
+	if (m0->m_len < sizeof(*wh) + 6) {
+		DPRINTF(("%s: frame too short\n"));
+		return;
+	}
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (const u_int8_t *)&wh[1];
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
-	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < 6) {
-		DPRINTF(("%s: frame too short\n"));
-		return;
-	}
 	capinfo = LE_READ_2(frm); frm += 2;
 	status =  LE_READ_2(frm); frm += 2;
 	if (status != IEEE80211_STATUS_SUCCESS) {
@@ -1684,18 +1676,17 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
-	const u_int8_t *frm, *efrm;
+	const u_int8_t *frm;
 	u_int16_t reason;
 
-	wh = mtod(m0, struct ieee80211_frame *);
-	frm = (const u_int8_t *)&wh[1];
-	efrm = mtod(m0, u_int8_t *) + m0->m_len;
-
 	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < 2) {
+	if (m0->m_len < sizeof(*wh) + 2) {
 		DPRINTF(("frame too short\n"));
 		return;
 	}
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (const u_int8_t *)&wh[1];
+
 	reason = LE_READ_2(frm);
 
 	ic->ic_stats.is_rx_deauth++;
@@ -1730,18 +1721,17 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
-	const u_int8_t *frm, *efrm;
+	const u_int8_t *frm;
 	u_int16_t reason;
 
-	wh = mtod(m0, struct ieee80211_frame *);
-	frm = (const u_int8_t *)&wh[1];
-	efrm = mtod(m0, u_int8_t *) + m0->m_len;
-
 	/* make sure all mandatory fixed fields are present */
-	if (efrm - frm < 2) {
+	if (m0->m_len < sizeof(*wh) + 2) {
 		DPRINTF(("frame too short\n"));
 		return;
 	}
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (const u_int8_t *)&wh[1];
+
 	reason = LE_READ_2(frm);
 
 	ic->ic_stats.is_rx_disassoc++;
@@ -1824,68 +1814,53 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 }
 
 void
-ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0)
+ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m)
 {
 	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_frame_pspoll *psp;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	struct mbuf *m;
 	u_int16_t aid;
 
-	if (ic->ic_set_tim == NULL)	/* no powersaving functionality */
+	if (!(ic->ic_caps & IEEE80211_C_PMGT) ||
+	    ic->ic_opmode != IEEE80211_M_HOSTAP)
 		return;
 
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s sent bogus power save poll\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+	if (m->m_len < sizeof(*psp)) {
+		DPRINTF(("frame too short, len %u\n", m->m_len));
+		ic->ic_stats.is_rx_tooshort++;
 		return;
 	}
-
-	memcpy(&aid, wh->i_dur, sizeof(wh->i_dur));
-	if ((aid & 0xc000) != 0xc000) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s sent bogus aid %x\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr2), aid);
+	psp = mtod(m, struct ieee80211_frame_pspoll *);
+	if (!IEEE80211_ADDR_EQ(psp->i_bssid, ic->ic_bss->ni_bssid)) {
+		DPRINTF(("discard pspoll frame to BSS %s\n",
+		    ether_sprintf(psp->i_bssid)));
+		ic->ic_stats.is_rx_wrongbss++;
 		return;
 	}
-
+	if ((ni = ieee80211_find_node(ic, psp->i_ta)) == NULL) {
+		DPRINTF(("no node found for %s", ether_sprintf(psp->i_ta)));
+		return;
+	}
+	aid = letoh16(*(u_int16_t *)psp->i_aid);
 	if (aid != ni->ni_associd) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s aid %x doesn't match pspoll "
-			    "aid %x\n", ifp->if_xname,
-			    ether_sprintf(wh->i_addr2), ni->ni_associd, aid);
+		DPRINTF(("invalid pspoll aid %x from %s\n", aid,
+		    ether_sprintf(psp->i_addr2)));
 		return;
 	}
 
-	/* Okay, take the first queued packet and put it out... */
-
+	/* take the first queued frame and put it out.. */
 	IF_DEQUEUE(&ni->ni_savedq, m);
-	if (m == NULL) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s sent pspoll, "
-			    "but no packets are saved\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+	if (m == NULL)
 		return;
-	}
-	wh = mtod(m, struct ieee80211_frame *);
-
-	/*
-	 * If this is the last packet, turn off the TIM fields.
-	 * If there are more packets, set the more packets bit.
-	 */
-
-	if (IF_IS_EMPTY(&ni->ni_savedq))
+	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+		/* last queued frame, turn off the TIM bit */
 		(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
-	else
+	} else {
+		/* more queued frames, set the more data bit */
+		wh = mtod(m, struct ieee80211_frame *);
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
-
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: enqueued power saving packet for station %s\n",
-		    ifp->if_xname, ether_sprintf(ni->ni_macaddr));
-
+	}
 	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
 	(*ifp->if_start)(ifp);
 }

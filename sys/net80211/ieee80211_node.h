@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.27 2008/04/21 19:37:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.28 2008/07/27 18:24:01 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -64,6 +64,13 @@ enum ieee80211_node_state {
 	do {					\
 		(__ni)->ni_state = (__state);	\
 	} while (0)
+
+enum ieee80211_node_psstate {
+	IEEE80211_PS_AWAKE,
+	IEEE80211_PS_DOZE
+};
+
+#define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
 
 /* Authenticator state machine: 4-Way Handshake (see 8.5.6.1.1) */
 enum {
