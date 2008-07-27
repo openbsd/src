@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.266 2008/06/29 07:31:52 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.267 2008/07/27 16:36:09 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -743,6 +743,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		Marvell Libertas IEEE 802.11b/g Compact Flash adapters (will be
 		detected as PCMCIA adapters) [G]
 		    Ambicom WL54CF
+		    I-O DATA WN-G54/CF
 		Ralink Technology IEEE 802.11a/b/g CardBus adapters [A] [B]
 		    A-Link WL54PC
 		    Alfa AWPC036
