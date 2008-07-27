@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.128 2008/06/28 10:54:45 sobrado Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.129 2008/07/27 10:06:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.128 2008/06/28 10:54:45 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.129 2008/07/27 10:06:10 claudio Exp $";
 #endif /* not lint */
 
 /*
@@ -300,7 +300,7 @@ int	dg_broadcast(struct in_addr *in);
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
-char	*progname;
+extern char	*__progname;
 
 void
 fd_grow(fd_set **fdsp, int *bytes, int fd)
@@ -332,10 +332,7 @@ main(int argc, char *argv[])
 	struct servtab *sep;
 	extern char *optarg;
 	extern int optind;
-
-	progname = strrchr(argv[0], '/');
-	progname = progname ? progname + 1 : argv[0];
-
+	
 	while ((ch = getopt(argc, argv, "dR:")) != -1)
 		switch (ch) {
 		case 'd':
@@ -360,7 +357,7 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr,
 			    "usage: %s [-d] [-R rate] [configuration_file]\n",
-			    progname);
+			    __progname);
 			exit(1);
 		}
 	argc -= optind;
@@ -373,12 +370,12 @@ main(int argc, char *argv[])
 		CONFIG = argv[0];
 	if (CONFIG == NULL) {
 		fprintf(stderr, "%s: non-root must specify a config file\n",
-		    progname);
+		    __progname);
 		exit(1);
 	}
 	if (argc > 1) {
 		fprintf(stderr, "%s: more than one argument specified\n",
-		    progname);
+		    __progname);
 		exit(1);
 	}
 
@@ -396,7 +393,7 @@ main(int argc, char *argv[])
 		setgroups(1, &gid);
 	}
 
-	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim_nofile) < 0) {
