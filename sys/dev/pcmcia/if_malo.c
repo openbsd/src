@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.61 2007/10/09 20:41:22 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.62 2008/07/27 13:02:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -606,13 +606,13 @@ cmalo_fw_load_main(struct malo_softc *sc)
 	DPRINTF(1, "%s: main FW downloaded\n", sc->sc_dev.dv_xname);
 
 	/* verify if the main firmware has been loaded correctly */
-	for (i = 0; i < 50; i++) {
+	for (i = 0; i < 500; i++) {
 		if (MALO_READ_1(sc, MALO_REG_SCRATCH) ==
 		    MALO_VAL_SCRATCH_FW_LOADED)
 			break;
 		delay(1000);
 	}
-	if (i == 50) {
+	if (i == 500) {
 		printf("%s: main FW not loaded!\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
