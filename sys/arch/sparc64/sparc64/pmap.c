@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2008/07/25 19:37:16 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2008/07/27 20:33:23 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -845,15 +845,17 @@ remap_data:
 		physmem += atop(mp->size);
 	BDPRINTF(PDB_BOOT1, (" result %x or %d pages\r\n", 
 			     (int)physmem, (int)physmem));
+
 	/* 
-	 * Calculate approx TSB size.  This probably needs tweaking.
+	 * Calculate approx TSB size.
 	 */
-	if (physmem < atop(64 * 1024 * 1024))
-		tsbsize = 0;
-	else if (physmem < atop(512 * 1024 * 1024))
-		tsbsize = 1;
-	else
-		tsbsize = 2;
+	tsbsize = 0;
+#ifdef SMALL_KERNEL
+	while ((physmem >> tsbsize) > atop(64 * MEG) && tsbsize < 2)
+#else
+	while ((physmem >> tsbsize) > atop(64 * MEG) && tsbsize < 7)
+#endif
+		tsbsize++;
 
 	/*
 	 * Save the prom translations
