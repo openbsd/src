@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2008/07/05 21:00:38 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.73 2008/07/27 13:15:31 sobrado Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.72 2008/07/05 21:00:38 sobrado Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.73 2008/07/27 13:15:31 sobrado Exp $";
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ const struct compressor null_method =
 #endif /* SMALL */
 
 int permission(const char *);
-__dead void usage(int, int);
+__dead void usage(int);
 int docompress(const char *, char *, const struct compressor *,
     int, struct stat *);
 int dodecompress(const char *, char *, const struct compressor *,
@@ -139,14 +139,14 @@ main(int argc, char *argv[])
 	char *p, *infile;
 	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
 	char *nargv[512];	/* some estimate based on ARG_MAX */
-	int bits, ch, error, i, rc, cflag, oflag, mode;
+	int bits, ch, error, i, rc, cflag, oflag;
 	static const char *optstr[3] = {
 		"123456789ab:cdfghlLnNOo:qrS:tvV",
 		"cfhlNno:qrtv",
 		"fghqr"
 	};
 
-	bits = cflag = oflag = mode = 0;
+	bits = cflag = oflag = 0;
 	storename = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -161,15 +161,16 @@ main(int argc, char *argv[])
 #endif /* SMALL */
 
 	decomp = 0;
+	pmode = MODE_COMP;
 	if (!strcmp(p, "zcat")) {
 		decomp++;
 		cflag = 1;
-		mode = MODE_CAT;
+		pmode = MODE_CAT;
 	} else {
 		if (p[0] == 'u' && p[1] == 'n') {
 			p += 2;
 			decomp++;
-			mode = MODE_DECOMP;
+			pmode = MODE_DECOMP;
 		}
 
 		if (strcmp(p, "zip") &&
@@ -196,7 +197,7 @@ main(int argc, char *argv[])
 		argv = nargv;
 	}
 
-	while ((ch = getopt_long(argc, argv, optstr[mode], longopts, NULL)) != -1)
+	while ((ch = getopt_long(argc, argv, optstr[pmode], longopts, NULL)) != -1)
 		switch(ch) {
 		case '1':
 		case '2':
@@ -295,10 +296,10 @@ main(int argc, char *argv[])
 			break;
 
 		case 'h':
-			usage(0, mode);
+			usage(0);
 			break;
 		default:
-			usage(1, mode);
+			usage(1);
 		}
 	argc -= optind;
 	argv += optind;
@@ -893,9 +894,9 @@ verbose_info(const char *file, off_t compressed, off_t uncompressed,
 }
 
 __dead void
-usage(int status, int mode)
+usage(int status)
 {
-	switch (mode) {
+	switch (pmode) {
 	case MODE_COMP:
 		fprintf(stderr, "usage: %s [-123456789cdfghLlNnOqrtVv] "
 		    "[-b bits] [-o filename] [-S suffix]\n"
