@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.36 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.37 2008/07/27 14:15:42 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -14,8 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.5 2004/04/05 17:47:40 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
@@ -37,26 +33,12 @@
  * 802.11 protocol definitions.
  */
 
-#define	IEEE80211_ADDR_LEN	6		/* size of 802.11 address */
+#define IEEE80211_ADDR_LEN	6	/* size of 802.11 address */
 /* is 802.11 address multicast/broadcast? */
-#define	IEEE80211_IS_MULTICAST(_a)	(*(_a) & 0x01)
-
-/* IEEE 802.11 PLCP header */
-struct ieee80211_plcp_hdr {
-	u_int16_t	i_sfd;
-	u_int8_t	i_signal;
-	u_int8_t	i_service;
-	u_int16_t	i_length;
-	u_int16_t	i_crc;
-} __packed;
-
-#define IEEE80211_PLCP_SFD      0xF3A0
-#define IEEE80211_PLCP_SERVICE  0x00
-#define IEEE80211_PLCP_SERVICE_PBCC  0x08	/* PBCC encoded */
-#define IEEE80211_PLCP_SERVICE_LENEXT  0x80	/* length extension bit */
+#define IEEE80211_IS_MULTICAST(_a)	(*(_a) & 0x01)
 
 /*
- * generic definitions for IEEE 802.11 frames
+ * Generic definitions for IEEE 802.11 frames.
  */
 struct ieee80211_frame {
 	u_int8_t	i_fc[2];
@@ -77,8 +59,7 @@ struct ieee80211_qosframe {
 	u_int8_t	i_qos[2];
 } __packed;
 
-/* 802.11n/D2.02 */
-struct ieee80211_htframe {
+struct ieee80211_htframe {		/* 11n */
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
 	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
@@ -110,8 +91,7 @@ struct ieee80211_qosframe_addr4 {
 	u_int8_t	i_qos[2];
 } __packed;
 
-/* 802.11n/D2.02 */
-struct ieee80211_htframe_addr4 {
+struct ieee80211_htframe_addr4 {	/* 11n */
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
 	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
@@ -122,20 +102,6 @@ struct ieee80211_htframe_addr4 {
 	u_int8_t	i_qos[2];
 	u_int8_t	i_ht[4];
 } __packed;
-
-/*
- * Management Notification Frame
- */
-struct ieee80211_mnf {
-	u_int8_t	mnf_category;
-	u_int8_t	mnf_action;
-	u_int8_t	mnf_dialog;
-	u_int8_t	mnf_status;
-} __packed;
-#define	MNF_SETUP_REQ	0
-#define	MNF_SETUP_RESP	1
-#define	MNF_TEARDOWN	2
-
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
 #define	IEEE80211_FC0_VERSION_SHIFT		0
@@ -161,7 +127,7 @@ struct ieee80211_mnf {
 #define	IEEE80211_FC0_SUBTYPE_AUTH		0xb0
 #define	IEEE80211_FC0_SUBTYPE_DEAUTH		0xc0
 #define IEEE80211_FC0_SUBTYPE_ACTION		0xd0
-#define IEEE80211_FC0_SUBTYPE_ACTION_NOACK	0xe0	/* 802.11n/D2.00 */
+#define IEEE80211_FC0_SUBTYPE_ACTION_NOACK	0xe0	/* 11n */
 /* for TYPE_CTL */
 #define	IEEE80211_FC0_SUBTYPE_PS_POLL		0xa0
 #define	IEEE80211_FC0_SUBTYPE_RTS		0xb0
@@ -194,6 +160,9 @@ struct ieee80211_mnf {
 #define	IEEE80211_FC1_WEP			0x40	/* pre-RSNA compat */
 #define	IEEE80211_FC1_ORDER			0x80
 
+/*
+ * Sequence Control field (see 7.1.3.4).
+ */
 #define	IEEE80211_SEQ_FRAG_MASK			0x000f
 #define	IEEE80211_SEQ_FRAG_SHIFT		0
 #define	IEEE80211_SEQ_SEQ_MASK			0xfff0
@@ -201,6 +170,9 @@ struct ieee80211_mnf {
 
 #define	IEEE80211_NWID_LEN			32
 
+/*
+ * QoS Control field (see 7.1.3.5).
+ */
 #define	IEEE80211_QOS_TXOP			0x00ff
 /* bit 8 is reserved */
 #define	IEEE80211_QOS_ACKPOLICY			0x0600
@@ -256,6 +228,9 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	/* FCS */
 } __packed;
 
+/*
+ * Capability Information field (see 7.3.1.4).
+ */
 #define	IEEE80211_CAPINFO_ESS			0x0001
 #define	IEEE80211_CAPINFO_IBSS			0x0002
 #define	IEEE80211_CAPINFO_CF_POLLABLE		0x0004
@@ -278,89 +253,9 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	"\11SPECTRUM_MGMT\12QOS\13SHORT_SLOTTIME\14APSD"	\
 	"\16DSSSOFDM\17DELAYED_B_ACK\20IMMEDIATE_B_ACK"
 
-/* 
- * Channel attributes
- */
-#define	IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
-#define	IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
-#define	IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
-#define	IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel. */
-#define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
-#define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
-#define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
-#define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
-#define	IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
-
 /*
- * Useful combinations of channel characteristics.
+ * Information elements (see Table 7-26).
  */
-#define	IEEE80211_CHAN_FHSS \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
-#define	IEEE80211_CHAN_A \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_B \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
-#define	IEEE80211_CHAN_PUREG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_G \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
-#define	IEEE80211_CHAN_T \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-#define	IEEE80211_CHAN_TG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-
-/*
- * Management information element payloads
- */
-union ieee80211_information {
-	char	ssid[IEEE80211_NWID_LEN+1];
-	struct rates {
-		u_int8_t	*p;
-	} rates;
-	struct fh {
-		u_int16_t	dwell;
-		u_int8_t	set;
-		u_int8_t	pattern;
-		u_int8_t	index;
-	} fh;
-	struct ds {
-		u_int8_t	channel;
-	} ds;
-	struct cf {
-		u_int8_t	count;
-		u_int8_t	period;
-		u_int8_t	maxdur[2];
-		u_int8_t	dur[2];
-	} cf;
-	struct tim {
-		u_int8_t	count;
-		u_int8_t	period;
-		u_int8_t	bitctl;
-		/* u_int8_t	pvt[251]; The driver needs to use this. */
-	} tim;
-	struct ibss {
-		u_int16_t	atim;
-	} ibss;
-	struct challenge {
-		u_int8_t	*p;
-		u_int8_t	len;
-	} challenge;
-	struct erp {
-		u_int8_t	flags;
-	} erp;
-	struct country {
-		u_int8_t	cc[3];		/* ISO CC+(I)ndoor/(O)utdoor */
-		struct {
-			u_int8_t schan;		/* starting channel */
-			u_int8_t nchan;		/* number channels */
-			u_int8_t maxtxpwr;
-		} band[4];			/* up to 4 sub bands */
-	} country;
-	struct ath {
-		u_int8_t	flags;
-	} ath;
-};
-
 enum {
 	IEEE80211_ELEMID_SSID			= 0,
 	IEEE80211_ELEMID_RATES			= 1,
@@ -390,13 +285,15 @@ enum {
 #define	IEEE80211_RATE_SIZE			8	/* 802.11 standard */
 #define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
-/* ERP information element flags */
+/*
+ * ERP information element (see 7.3.2.13).
+ */
 #define	IEEE80211_ERP_NON_ERP_PRESENT		0x01
 #define	IEEE80211_ERP_USE_PROTECTION		0x02
 #define	IEEE80211_ERP_BARKER_MODE		0x04
 
 /*
- * 802.11e EDCA Access Categories.
+ * EDCA Access Categories.
  */
 enum ieee80211_edca_ac {
 	EDCA_AC_BK  = 1,	/* Background */
@@ -416,8 +313,10 @@ enum ieee80211_edca_ac {
 /* bits 3-6 reserved */
 #define	ATHEROS_CAP_BOOST			0x80
 
-/* Organizationally Unique Identifiers */
-/* See http://standards.ieee.org/regauth/oui/oui.txt for a list */
+/*-
+ * Organizationally Unique Identifiers.
+ * See http://standards.ieee.org/regauth/oui/oui.txt for a list.
+ */
 #define ATHEROS_OUI	((const u_int8_t[]){ 0x00, 0x03, 0x7f })
 #define BROADCOM_OUI	((const u_int8_t[]){ 0x00, 0x90, 0x4c })
 #define IEEE80211_OUI	((const u_int8_t[]){ 0x00, 0x0f, 0xac })
@@ -430,15 +329,20 @@ enum ieee80211_edca_ac {
 #define	IEEE80211_AUTH_STATUS(auth) \
 	((auth)[4] | ((auth)[5] << 8))
 
-#define	IEEE80211_AUTH_ALG_OPEN			0x0000
-#define	IEEE80211_AUTH_ALG_SHARED		0x0001
-#define	IEEE80211_AUTH_ALG_LEAP			0x0080
+/*
+ * Authentication Algorithm Number field (see 7.3.1.1).
+ */
+#define IEEE80211_AUTH_ALG_OPEN			0x0000
+#define IEEE80211_AUTH_ALG_SHARED		0x0001
+#define IEEE80211_AUTH_ALG_LEAP			0x0080
 
+/*
+ * Authentication Transaction Sequence Number field (see 7.3.1.2).
+ */
 enum {
 	IEEE80211_AUTH_OPEN_REQUEST		= 1,
 	IEEE80211_AUTH_OPEN_RESPONSE		= 2
 };
-
 enum {
 	IEEE80211_AUTH_SHARED_REQUEST		= 1,
 	IEEE80211_AUTH_SHARED_CHALLENGE		= 2,
@@ -569,6 +473,10 @@ enum {
 #define	IEEE80211_RTS_MIN			1
 #define	IEEE80211_RTS_MAX			IEEE80211_MAX_LEN
 
+#define IEEE80211_PLCP_SERVICE		0x00
+#define IEEE80211_PLCP_SERVICE_PBCC	0x08	/* PBCC encoded */
+#define IEEE80211_PLCP_SERVICE_LENEXT	0x80	/* length extension bit */
+
 /* One Time Unit (TU) is 1Kus = 1024 microseconds. */
 #define IEEE80211_DUR_TU		1024
 
@@ -595,18 +503,6 @@ enum {
 				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
 				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
 				 IEEE80211_DUR_DIFS)
-
-enum {
-	IEEE80211_AUTH_NONE	= 0,
-	IEEE80211_AUTH_OPEN	= 1,		/* open */
-	IEEE80211_AUTH_SHARED	= 2,		/* shared-key */
-	IEEE80211_AUTH_8021X	= 3,		/* 802.1x */
-	IEEE80211_AUTH_AUTO	= 4,		/* auto-select/accept */
-	IEEE80211_AUTH_WPA	= 5,		/* WPA w/ 802.1x */
-	IEEE80211_AUTH_WPA_PSK	= 6,		/* WPA w/ preshared key */
-	IEEE80211_AUTH_WPA2	= 7,		/* WPA2 w/ 802.1x */
-	IEEE80211_AUTH_WPA2_PSK	= 8		/* WPA2 w/ preshared key */
-};
 
 /*
  * The RSNA key descriptor used by IEEE 802.11 does not use the IEEE 802.1X
@@ -648,7 +544,7 @@ struct ieee80211_eapol_key {
 #define EAPOL_KEY_REQUEST	(1 << 11)
 #define EAPOL_KEY_ENCRYPTED	(1 << 12)
 #define EAPOL_KEY_SMK		(1 << 13)
-/* WPA1 compatibility */
+/* WPA compatibility */
 #define EAPOL_KEY_WPA_KID_MASK	0x3
 #define EAPOL_KEY_WPA_KID_SHIFT	4
 #define EAPOL_KEY_WPA_TX	EAPOL_KEY_INSTALL
@@ -685,5 +581,36 @@ enum {
 	IEEE80211_KDE_LIFETIME	= 7,
 	IEEE80211_KDE_ERROR	= 8
 };
+
+/*
+ * Channel attributes (not 802.11 but exported by radiotap).
+ */
+#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
+#define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
+#define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
+#define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */
+#define IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
+#define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
+#define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
+#define IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
+#define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+
+/*
+ * Useful combinations of channel characteristics.
+ */
+#define IEEE80211_CHAN_FHSS \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
+#define IEEE80211_CHAN_A \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
+#define IEEE80211_CHAN_B \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
+#define IEEE80211_CHAN_PUREG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
+#define IEEE80211_CHAN_G \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
+#define IEEE80211_CHAN_T \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
+#define IEEE80211_CHAN_TG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
 #endif /* _NET80211_IEEE80211_H_ */
