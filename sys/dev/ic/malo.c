@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.83 2008/07/21 18:43:19 damien Exp $ */
+/*	$OpenBSD: malo.c,v 1.84 2008/07/27 11:28:17 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1360,7 +1360,7 @@ malo_tx_intr(struct malo_softc *sc)
 		/* save last used TX rate */
 		sc->sc_last_txrate = malo_chip2rate(desc->datarate);
 
-		/* cleanup TX data and TX descritpor */
+		/* cleanup TX data and TX descriptor */
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
