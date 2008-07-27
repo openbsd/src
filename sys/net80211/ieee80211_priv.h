@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_priv.h,v 1.1 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_priv.h,v 1.2 2008/07/27 14:21:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,19 +20,22 @@
 #define _NET80211_IEEE80211_PRIV_H_
 
 #ifdef IEEE80211_DEBUG
-extern	int ieee80211_debug;
-#define	IEEE80211_DPRINTF(X)	do { if (ieee80211_debug) printf X; } while(0)
-#define	IEEE80211_DPRINTF2(X)	do { if (ieee80211_debug>1) printf X; } while(0)
+extern int ieee80211_debug;
+#define DPRINTF(X) do {				\
+	if (ieee80211_debug) {			\
+		printf("%s: ", __func__);	\
+		printf X;			\
+	}					\
+} while(0)
 #else
-#define	IEEE80211_DPRINTF(X)
-#define	IEEE80211_DPRINTF2(X)
+#define DPRINTF(X)
 #endif
 
-#define	IEEE80211_AID_SET(b, w) \
+#define IEEE80211_AID_SET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_CLR(b, w) \
+#define IEEE80211_AID_CLR(b, w) \
 	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_ISSET(b, w) \
+#define IEEE80211_AID_ISSET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
 /* unaligned big endian access */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.2 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.3 2008/07/27 14:21:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/endian.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
 
@@ -35,7 +34,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -238,8 +236,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_state != RSNA_PTKSTART &&
 	    ni->ni_rsn_state != RSNA_PTKCALCNEGOTIATING) {
-		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
-		    __func__, ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
 		return;
 	}
 	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING;
@@ -257,7 +254,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;	/* will timeout.. */
 	}
@@ -317,8 +314,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* check that ANonce matches that of message 1 */
 	if (memcmp(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN) != 0) {
-		IEEE80211_DPRINTF(("%s: ANonce does not match msg 1/4\n",
-		    __func__));
+		DPRINTF(("ANonce does not match msg 1/4\n"));
 		return;
 	}
 	/* retrieve PMK and derive TPTK */
@@ -334,7 +330,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}
@@ -344,7 +340,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	/* if encrypted, decrypt Key Data field using KEK */
 	if ((info & EAPOL_KEY_ENCRYPTED) &&
 	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
-		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
+		DPRINTF(("decryption failed\n"));
 		return;
 	}
 
@@ -396,12 +392,12 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	}
 	/* first WPA/RSN IE is mandatory */
 	if (rsnie1 == NULL) {
-		IEEE80211_DPRINTF(("%s: missing RSN IE\n", __func__));
+		DPRINTF(("missing RSN IE\n"));
 		return;
 	}
 	/* key data must be encrypted if GTK is included */
 	if (gtk != NULL && !(info & EAPOL_KEY_ENCRYPTED)) {
-		IEEE80211_DPRINTF(("%s: GTK not encrypted\n", __func__));
+		DPRINTF(("GTK not encrypted\n"));
 		return;
 	}
 	/*
@@ -495,8 +491,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (info & EAPOL_KEY_SECURE) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ++ni->ni_key_count == 2) {
-			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
-			    __func__, ether_sprintf(ni->ni_macaddr)));
+			DPRINTF(("marking port %s valid\n",
+			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
 		}
 	}
@@ -522,8 +518,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_state != RSNA_PTKINITNEGOTIATING) {
-		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
-		    __func__, ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
 		return;
 	}
 
@@ -531,7 +526,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;	/* will timeout.. */
 	}
@@ -553,7 +548,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 		}
 	}
 	if (ic->ic_opmode != IEEE80211_M_IBSS || ++ni->ni_key_count == 2) {
-		IEEE80211_DPRINTF(("%s: marking port %s valid\n", __func__,
+		DPRINTF(("marking port %s valid\n",
 		    ether_sprintf(ni->ni_macaddr)));
 		ni->ni_port_valid = 1;
 	}
@@ -642,7 +637,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	}
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}
@@ -651,7 +646,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	/* check that encrypted and decrypt Key Data field using KEK */
 	if (!(info & EAPOL_KEY_ENCRYPTED) ||
 	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
-		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
+		DPRINTF(("decryption failed\n"));
 		return;
 	}
 
@@ -680,8 +675,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	}
 	/* check that the GTK KDE is present and valid */
 	if (gtk == NULL || gtk[1] < 4 + 2) {
-		IEEE80211_DPRINTF(("%s: missing or invalid GTK KDE\n",
-		    __func__));
+		DPRINTF(("missing or invalid GTK KDE\n"));
 		return;
 	}
 
@@ -704,8 +698,8 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	if (info & EAPOL_KEY_SECURE) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ++ni->ni_key_count == 2) {
-			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
-			    __func__, ether_sprintf(ni->ni_macaddr)));
+			DPRINTF(("marking port %s valid\n",
+			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
 		}
 	}
@@ -742,7 +736,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	}
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}
@@ -751,7 +745,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	 * the ENCRYPTED bit in the info field.
 	 */
 	if (ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0) {
-		IEEE80211_DPRINTF(("%s: decryption failed\n", __func__));
+		DPRINTF(("decryption failed\n"));
 		return;
 	}
 	info = BE_READ_2(key->info);
@@ -783,8 +777,8 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	if (info & EAPOL_KEY_SECURE) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ++ni->ni_key_count == 2) {
-			IEEE80211_DPRINTF(("%s: marking port %s valid\n",
-			    __func__, ether_sprintf(ni->ni_macaddr)));
+			DPRINTF(("marking port %s valid\n",
+			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
 		}
 	}
@@ -814,8 +808,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_gstate != RSNA_REKEYNEGOTIATING) {
-		IEEE80211_DPRINTF(("%s: unexpected in state: %d\n",
-		    __func__, ni->ni_rsn_state));
+		DPRINTF(("%s: unexpected in state: %d\n", ni->ni_rsn_state));
 		return;
 	}
 	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt) {
@@ -824,7 +817,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 	}
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}
@@ -871,7 +864,7 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 	}
 	if (!(info & EAPOL_KEY_KEYMIC) ||
 	    ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		IEEE80211_DPRINTF(("%s: key MIC failed\n", __func__));
+		DPRINTF(("key MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}
@@ -883,8 +876,7 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 		/* ignore reports from STAs not using TKIP */
 		if (ic->ic_bss->ni_rsngroupcipher != IEEE80211_CIPHER_TKIP &&
 		    ni->ni_rsncipher != IEEE80211_CIPHER_TKIP) {
-			IEEE80211_DPRINTF(("%s: MIC failure report from "
-			    "STA not using TKIP: %s\n", __func__,
+			DPRINTF(("MIC failure report from !TKIP STA: %s\n",
 			    ether_sprintf(ni->ni_macaddr)));
 			return;
 		}

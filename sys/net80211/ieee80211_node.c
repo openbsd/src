@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.35 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.36 2008/07/27 14:21:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ ieee80211_next_scan(struct ifnet *ifp)
 		}
 	}
 	clrbit(ic->ic_chan_scan, ieee80211_chan2ieee(ic, chan));
-	IEEE80211_DPRINTF(("%s: chan %d->%d\n", __func__,
+	DPRINTF(("chan %d->%d\n",
 	    ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
 	    ieee80211_chan2ieee(ic, chan)));
 	ic->ic_bss->ni_chan = chan;
@@ -471,7 +471,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		goto wakeup;
 	}
 	if (ni == NULL) {
-		IEEE80211_DPRINTF(("%s: no scan candidate\n", __func__));
+		DPRINTF(("no scan candidate\n"));
  notfound:
 		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
@@ -653,8 +653,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 {
 	int s;
 
-	IEEE80211_DPRINTF(("%s %s\n", __func__,
-	    ether_sprintf((u_int8_t *)macaddr)));
+	DPRINTF(("%s\n", ether_sprintf((u_int8_t *)macaddr)));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
@@ -878,7 +877,7 @@ ieee80211_find_rxnode(struct ieee80211com *ic,
 	if (ic->ic_newassoc)
 		(*ic->ic_newassoc)(ic, ni, 1);
 
-	IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n", __func__, ni,
+	DPRINTF(("faked-up node %p for %s\n", ni,
 	    ether_sprintf((u_int8_t *)wh->i_addr2)));
 
 	return ieee80211_ref_node(ni);
@@ -914,7 +913,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ni == ic->ic_bss)
 		panic("freeing bss node");
 
-	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(ni->ni_macaddr)));
+	DPRINTF(("%s\n", ether_sprintf(ni->ni_macaddr)));
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
@@ -934,8 +933,8 @@ ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	int s;
 
-	IEEE80211_DPRINTF(("%s %s refcnt %d\n", __func__,
-	    ether_sprintf(ni->ni_macaddr), ni->ni_refcnt));
+	DPRINTF(("%s refcnt %d\n", ether_sprintf(ni->ni_macaddr),
+	    ni->ni_refcnt));
 	if (ieee80211_node_decref(ni) == 0 &&
 	    ni->ni_state == IEEE80211_STA_COLLECT) {
 		s = splnet();
@@ -950,7 +949,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 	struct ieee80211_node *ni;
 	int s;
 
-	IEEE80211_DPRINTF(("%s\n", __func__));
+	DPRINTF(("freeing all nodes\n"));
 	s = splnet();
 	while ((ni = RB_MIN(ieee80211_tree, &ic->ic_tree)) != NULL)
 		ieee80211_free_node(ic, ni);
@@ -981,7 +980,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 		ni->ni_scangen = gen;
 		if (ni->ni_refcnt > 0)
 			continue;
-		IEEE80211_DPRINTF(("station %s purged from LRU cache\n",
+		DPRINTF(("station %s purged from LRU cache\n",
 		    ether_sprintf(ni->ni_macaddr)));
 		/*
 		 * Send a deauthenticate frame.
@@ -1033,9 +1032,9 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 		nxrates = xrates[1];
 		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
 			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
-			IEEE80211_DPRINTF(("%s: extended rate set too large;"
-				" only using %u of %u rates\n",
-				__func__, nxrates, xrates[1]));
+			DPRINTF(("extended rate set too large; "
+			    "only using %u of %u rates\n",
+			    nxrates, xrates[1]));
 			ic->ic_stats.is_rx_rstoobig++;
 		}
 		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
@@ -1077,7 +1076,7 @@ ieee80211_iserp_sta(const struct ieee80211_node *ni)
 void
 ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	IEEE80211_DPRINTF(("station %s associated using proto %d akm 0x%x "
+	DPRINTF(("station %s associated using proto %d akm 0x%x "
 	    "cipher 0x%x groupcipher 0x%x\n", ether_sprintf(ni->ni_macaddr),
 	    ni->ni_rsnprotos, ni->ni_rsnakms, ni->ni_rsnciphers,
 	    ni->ni_rsngroupcipher));
@@ -1119,9 +1118,8 @@ ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 			if (ic->ic_caps & IEEE80211_C_SHSLOT)
 				ieee80211_set_shortslottime(ic, 0);
 		}
-		IEEE80211_DPRINTF(("[%s] station needs long slot time, "
-		    "count %d\n", ether_sprintf(ni->ni_macaddr),
-		    ic->ic_longslotsta));
+		DPRINTF(("[%s] station needs long slot time, count %d\n",
+		    ether_sprintf(ni->ni_macaddr), ic->ic_longslotsta));
 	}
 
 	if (!ieee80211_iserp_sta(ni)) {
@@ -1130,14 +1128,13 @@ ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 		 */
 		ic->ic_nonerpsta++;
 
-		IEEE80211_DPRINTF(("[%s] station is non-ERP, %d non-ERP "
+		DPRINTF(("[%s] station is non-ERP, %d non-ERP "
 		    "stations associated\n", ether_sprintf(ni->ni_macaddr),
 		    ic->ic_nonerpsta));
 
 		/* must enable the use of protection */
 		if (ic->ic_protmode != IEEE80211_PROT_NONE) {
-			IEEE80211_DPRINTF(("%s: enable use of protection\n",
-			    __func__));
+			DPRINTF(("enable use of protection\n"));
 			ic->ic_flags |= IEEE80211_F_USEPROT;
 		}
 
@@ -1179,9 +1176,8 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 	} else
 		newassoc = 0;
 
-	IEEE80211_DPRINTF(("station %s %s associated at aid %d\n",
-	    ether_sprintf(ni->ni_macaddr),
-	    (newassoc ? "newly" : "already"),
+	DPRINTF(("station %s %s associated at aid %d\n",
+	    ether_sprintf(ni->ni_macaddr), newassoc ? "newly" : "already",
 	    ni->ni_associd & ~0xc000));
 
 	/* give driver a chance to setup state like ni_txrate */
@@ -1255,9 +1251,8 @@ ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 			    ic->ic_opmode != IEEE80211_M_IBSS)
 				ieee80211_set_shortslottime(ic, 1);
 		}
-		IEEE80211_DPRINTF(("[%s] long slot time station leaves, "
-		    "count now %d\n", ether_sprintf(ni->ni_macaddr),
-		    ic->ic_longslotsta));
+		DPRINTF(("[%s] long slot time station leaves, count %d\n",
+		    ether_sprintf(ni->ni_macaddr), ic->ic_longslotsta));
 	}
 
 	if (!(ni->ni_flags & IEEE80211_NODE_ERP)) {
@@ -1277,9 +1272,8 @@ ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 			if (ic->ic_caps & IEEE80211_C_SHPREAMBLE)
 				ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
 		}
-		IEEE80211_DPRINTF(("[%s] non-ERP station leaves, "
-		    "count now %d\n", ether_sprintf(ni->ni_macaddr),
-		    ic->ic_nonerpsta));
+		DPRINTF(("[%s] non-ERP station leaves, count %d\n",
+		    ether_sprintf(ni->ni_macaddr), ic->ic_nonerpsta));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.62 2008/07/23 15:55:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.63 2008/07/27 14:21:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -495,16 +495,16 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 
 	ni = ieee80211_find_txnode(ic, eh.ether_dhost);
 	if (ni == NULL) {
-		IEEE80211_DPRINTF(("%s: no node for dst %s, discard frame\n",
-		    __func__, ether_sprintf(eh.ether_dhost)));
+		DPRINTF(("no node for dst %s, discard frame\n",
+		    ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
 	    eh.ether_type != htons(ETHERTYPE_PAE)) {
-		IEEE80211_DPRINTF(("%s: port not valid: %s\n",
-		    __func__, ether_sprintf(eh.ether_dhost)));
+		DPRINTF(("port not valid: %s\n",
+		    ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_noauth++;
 		goto bad;
 	}
@@ -1329,8 +1329,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 
 	default:
-		IEEE80211_DPRINTF(("%s: invalid mgmt frame type %u\n",
-		    __func__, type));
+		DPRINTF(("invalid mgmt frame type %u\n", type));
 		senderr(EINVAL, is_tx_unknownmgt);
 		/* NOTREACHED */
 	}
@@ -1424,7 +1423,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	u_int8_t *frm;
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
-	    8 +	2 + 2 +
+	    8 + 2 + 2 +
 	    2 + ((ic->ic_flags & IEEE80211_F_HIDENWID) ? 0 : ni->ni_esslen) +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    2 + ((ic->ic_phytype == IEEE80211_T_FH) ? 5 : 1) +

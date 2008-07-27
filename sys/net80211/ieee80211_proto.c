@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.27 2008/07/26 12:56:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.28 2008/07/27 14:21:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -441,8 +441,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
+			DPRINTF(("discard auth from %s; state %u, seq %u\n",
 			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
@@ -459,8 +458,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	case IEEE80211_M_HOSTAP:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
+			DPRINTF(("discard auth from %s; state %u, seq %u\n",
 			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
@@ -492,8 +490,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		if (ic->ic_state != IEEE80211_S_AUTH ||
 		    seq != IEEE80211_AUTH_OPEN_RESPONSE) {
 			ic->ic_stats.is_rx_bad_auth++;
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-			    "state %u, seq %u\n", __func__,
+			DPRINTF(("discard auth from %s; state %u, seq %u\n",
 			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			return;
@@ -535,8 +532,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	int s;
 
 	ostate = ic->ic_state;
-	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
-	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
+	DPRINTF(("%s -> %s\n", ieee80211_state_name[ostate],
+	    ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
 	if (ostate == IEEE80211_S_RUN)
@@ -651,8 +648,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	case IEEE80211_S_AUTH:
 		switch (ostate) {
 		case IEEE80211_S_INIT:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			DPRINTF(("invalid transition\n"));
 			break;
 		case IEEE80211_S_SCAN:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -692,8 +688,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			DPRINTF(("invalid transition\n"));
 			break;
 		case IEEE80211_S_AUTH:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -711,8 +706,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			DPRINTF(("invalid transition\n"));
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */

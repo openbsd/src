@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.3 2008/07/23 15:55:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.4 2008/07/27 14:21:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -134,8 +134,8 @@ ieee80211_eapol_timeout(void *arg)
 	struct ieee80211com *ic = ni->ni_ic;
 	int s;
 
-	IEEE80211_DPRINTF(("%s: no answer from station %s in state %d\n",
-	    __func__, ether_sprintf(ni->ni_macaddr), ni->ni_rsn_state));
+	DPRINTF(("no answer from station %s in state %d\n",
+	    ether_sprintf(ni->ni_macaddr), ni->ni_rsn_state));
 
 	s = splnet();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.4 2008/07/21 19:27:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.5 2008/07/27 14:21:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -68,6 +68,7 @@ void
 ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
     struct ieee80211_amrr_node *amn)
 {
+#define RV(rate)	((rate) & IEEE80211_RATE_VAL)
 	int need_change = 0;
 
 	if (is_success(amn) && is_enough(amn)) {
@@ -77,10 +78,8 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 			amn->amn_recovery = 1;
 			amn->amn_success = 0;
 			increase_rate(ni);
-			IEEE80211_DPRINTF(("AMRR increasing rate %d (txcnt=%d "
-			    "retrycnt=%d)\n",
-			    ni->ni_rates.rs_rates[ni->ni_txrate] &
-				IEEE80211_RATE_VAL,
+			DPRINTF(("increase rate=%d,#tx=%d,#retries=%d\n",
+			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
 		} else {
@@ -100,10 +99,8 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 				    amrr->amrr_min_success_threshold;
 			}
 			decrease_rate(ni);
-			IEEE80211_DPRINTF(("AMRR decreasing rate %d (txcnt=%d "
-			    "retrycnt=%d)\n",
-			    ni->ni_rates.rs_rates[ni->ni_txrate] &
-				IEEE80211_RATE_VAL,
+			DPRINTF(("decrease rate=%d,#tx=%d,#retries=%d\n",
+			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
 		}
@@ -112,4 +109,5 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 
 	if (is_enough(amn) || need_change)
 		reset_cnt(amn);
+#undef RV
 }
