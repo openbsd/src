@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.188 2007/11/29 11:29:01 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.189 2008/07/27 21:14:31 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 29 2007 $
+.Dd $Mdocdate: July 27 2008 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -135,6 +135,17 @@ applications built for the same architecture.
 This option is supported on the i386 architecture.
 See
 .Xr compat_linux 8 .
+.It Cd option COMPAT_O43
+Enables compatibility with
+.Ox 4.3 .
+This makes it possible to run binaries that use old versions of the
+.Xr statfs 2 ,
+.Xr fstatfs 2 ,
+and
+.Xr getfsstat 2
+system calls which were replaced in
+.Ox 4.4
+when struct stat was expanded.
 .It Cd option COMPAT_OSF1
 On those architectures that support it, this enables binary
 compatibility with
