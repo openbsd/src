@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2008/05/21 19:42:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -36,7 +36,6 @@
 	.import boothowto, data
 	.import bootdev, data
 	.import esym, data
-	.import want_resched, data
 	.import proc0, data
 	.import proc0paddr, data
 
@@ -1508,8 +1507,6 @@ kstack_check
 	nop
 kstack_ok
 #endif
-	ldil	L%want_resched, %r1
-	stw	%r0, R%want_resched(%r1)
 
 	/* Record new proc. */
 	ldi	SONPROC, %r1

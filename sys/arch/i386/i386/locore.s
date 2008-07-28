@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.123 2008/06/09 20:43:43 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.124 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1302,11 +1302,8 @@ ENTRY(cpu_switchto)
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
 
-	xorl	%eax, %eax
-
-	movl	%eax, CPUVAR(RESCHED)
-
 #ifdef	DIAGNOSTIC
+	xorl	%eax, %eax
 	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
 	jne	_C_LABEL(switch_error1)	# Yes; shouldn't be queued.
 	cmpb	$SRUN,P_STAT(%edi)	# In run state?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.148 2008/07/25 14:53:38 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.149 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6081,7 +6081,6 @@ ENTRY(cpu_switchto)
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! newproc->p_stat = SONPROC
 	stb	%o0, [%i1 + P_STAT]
-	st	%g0, [%g7 + CI_WANT_RESCHED]	! want_resched = 0;
 	ldx	[%i1 + P_ADDR], %l1		! newpcb = newpeoc->p_addr;
 
 	flushw				! save all register windows except this one

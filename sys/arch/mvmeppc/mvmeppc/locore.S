@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2005/11/24 12:08:16 pedro Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -217,11 +217,6 @@ _C_LABEL(sw1):
 	stw	%r9,_C_LABEL(whichqs)@l(%r8)	/* mark it empty */
 
 1:
-	/* just did this resched thing, clear resched */
-	li	%r3,0
-	lis	%r4,_C_LABEL(want_resched)@ha
-	stw	%r3,_C_LABEL(want_resched)@l(%r4)
-
 	stw	%r3,P_BACK(%r31)		/* probably superfluous */
 
 	lis	%r4,_C_LABEL(curproc)@ha

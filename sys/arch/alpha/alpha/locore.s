@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.33 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: locore.s,v 1.34 2008/07/28 19:08:43 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -791,7 +791,6 @@ EXPORT(__bwx_switch1)
 	stq	v0, P_CPU(s2)			/* p->p_cpu = curcpu() */
 #endif
 	stq	s2, CPU_INFO_CURPROC(v0)	/* curproc = p */
-	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
 
 	/*
 	 * Now running on the new u struct.

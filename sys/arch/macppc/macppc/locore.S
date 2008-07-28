@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.40 2008/06/10 18:38:59 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.41 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -158,9 +158,6 @@ _ENTRY(_C_LABEL(cpu_switchto_asm))
  * r5 - cpuinfo
  */
 	GET_CPUINFO(%r5)
-	li	%r31,0
-	/* just did this resched thing, clear resched */
-	stw	%r31,CI_WANT_RESCHED(%r5)
 
 	li	%r31,SONPROC
 	stb	%r31,P_STAT(%r4)

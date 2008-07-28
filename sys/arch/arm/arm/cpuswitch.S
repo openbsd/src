@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.9 2007/10/13 12:46:17 miod Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.10 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -128,9 +128,6 @@
 .Lcurproc:
 	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
 
-.Lwant_resched:
-	.word	_C_LABEL(want_resched)
-
 .Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 	
@@ -203,11 +200,6 @@ ENTRY(cpu_idle_leave)
 
 ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
-
-	/* Clear the want_resched flag */
-	ldr	r7, .Lwant_resched
-	mov	r2, #0x00000000
-	str	r2, [r7]
 
 #ifdef MULTIPROCESSOR
 	/* XXX use curcpu() */

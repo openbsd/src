@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.19 2008/02/16 18:43:27 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.20 2008/07/28 19:08:46 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -142,7 +142,6 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	 * Switch to new context
  	*/
 	move	s0, a1				# save p
-	sw	zero, want_resched
 	jal	pmap_activate
 	move	a0, s0
 

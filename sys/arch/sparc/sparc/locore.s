@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.80 2008/07/16 16:40:05 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.81 2008/07/28 19:08:46 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4411,8 +4411,6 @@ ENTRY(cpu_switchto)
 
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%g3 + P_STAT]
-	sethi	%hi(_C_LABEL(want_resched)), %o0
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
 	st	%g3, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = p;
