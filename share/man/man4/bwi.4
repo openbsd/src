@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.19 2008/04/17 14:01:22 jmc Exp $
+.\" $OpenBSD: bwi.4,v 1.20 2008/07/28 20:10:28 damien Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2008 $
+.Dd $Mdocdate: July 28 2008 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -59,17 +59,14 @@ capture packets from networks which it wouldn't normally have access to,
 or to scan for access points.
 .El
 .Pp
-.\" .Nm
-.\" supports hardware WEP.
-.\" Wired Equivalent Privacy (WEP) is the de facto encryption standard
-.\" for wireless networks.
-.\" It can be typically configured in one of three modes:
-.\" no encryption; 40-bit encryption; or 104-bit encryption.
-.\" Unfortunately, due to serious weaknesses in WEP protocol
-.\" it is strongly recommended that it not be used as the
-.\" sole mechanism to secure wireless communication.
-.\" WEP is not enabled by default.
-.\" .Pp
+The
+.Nm
+driver can be configured to use the WEP, WPA-PSK and WPA2-PSK protocols.
+The
+.Nm
+driver relies on the software 802.11 stack for both encryption and decryption
+of data frames.
+.Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the received signal strength and on the number of hardware
 transmission retries.
@@ -138,16 +135,19 @@ dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .\"	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
-Configure bwi0 for WEP, using hex key
-.Dq 0x1deadbeef1 :
+Configure bwi0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig bwi0 nwkey 0x1deadbeef1
+# _psk=$(wpa-psk my_net my_passphrase)
+# ifconfig bwi0 nwid my_net wpa wpapsk ${_psk}
 .Ed
 .Pp
 Return bwi0 to its default settings:
 .Bd -literal -offset indent
 # ifconfig bwi0 -bssid -chan media autoselect \e
-	nwid "" -nwkey
+	nwid "" -nwkey -wpa -wpapsk
 .Ed
 .Pp
 Join an existing BSS network,
@@ -164,7 +164,8 @@ Join an existing BSS network,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .\".Xr hostapd 8 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr wpa-psk 8
 .Sh HISTORY
 The
 .Nm
