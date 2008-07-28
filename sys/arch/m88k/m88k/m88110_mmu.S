@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.4 2007/12/02 21:32:41 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.5 2008/07/28 17:49:38 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -56,8 +56,8 @@
 	align 32
 ENTRY(set_icmd)
 	FLUSH_PIPELINE
-	jmp.n	r1
-	 stcr	r2, ICMD
+	stcr	r2, ICMD
+	jmp	r1
 
 	align 32
 ENTRY(set_ictl)
@@ -69,8 +69,8 @@ ENTRY(set_ictl)
 
 	align 32
 ENTRY(set_isar)
-	jmp.n	r1
-	 stcr	r2, ISAR
+	stcr	r2, ISAR
+	jmp	r1
 
 	align 32
 ENTRY(set_isap)
@@ -88,34 +88,34 @@ ENTRY(set_iuap)
 
 	align 32
 ENTRY(set_iir)
-	jmp.n	r1
-	 stcr	r2, IIR 
+	stcr	r2, IIR 
+	jmp	r1
 
 	align 32
 ENTRY(set_ibp)
-	jmp.n	r1
-	 stcr	r2, IBP 
+	stcr	r2, IBP 
+	jmp	r1
 
 	align 32
 ENTRY(set_ippu)
-	jmp.n	r1
-	 stcr	r2, IPPU
+	stcr	r2, IPPU
+	jmp	r1
 
 	align 32
 ENTRY(set_ippl)
-	jmp.n	r1
-	 stcr	r2, IPPL
+	stcr	r2, IPPL
+	jmp	r1
 
 	align 32
 ENTRY(set_isr)
-	jmp.n	r1
-	 stcr	r2, ISR 
+	stcr	r2, ISR 
+	jmp	r1
 
 	align 32
 ENTRY(set_dcmd)
 	FLUSH_PIPELINE
-	jmp.n	r1
-	 stcr	r2, DCMD
+	stcr	r2, DCMD
+	jmp	r1
 
 	align 32
 ENTRY(set_dctl)
@@ -151,36 +151,36 @@ ENTRY(set_duap)
 
 	align 32
 ENTRY(set_dir)
-	jmp.n	r1
-	 stcr	r2, DIR 
+	stcr	r2, DIR 
+	jmp	r1
 
 	align 32
 ENTRY(set_dbp)
-	jmp.n	r1
-	 stcr	r2, DBP 
+	stcr	r2, DBP 
+	jmp	r1
 
 	align 32
 ENTRY(set_dppu)
-	jmp.n	r1
-	 stcr	r2, DPPU
+	stcr	r2, DPPU
+	jmp	r1
 
 	align 32
 ENTRY(set_dppl)
-	jmp.n	r1
-	 stcr	r2, DPPL
+	stcr	r2, DPPL
+	jmp	r1
 
 	align 32
 ENTRY(set_dsr)
-	jmp.n	r1
-	 stcr	r2, DSR 
+	stcr	r2, DSR 
+	jmp	r1
 
 /* get routines */
 	align 32
 ENTRY(get_ictl)
-	jmp.n	r1
-	 ldcr	r2, ICTL
+	ldcr	r2, ICTL
+	jmp	r1
 
 	align 32
 ENTRY(get_dctl)
-	jmp.n	r1
-	 ldcr	r2, DCTL
+	ldcr	r2, DCTL
+	jmp	r1

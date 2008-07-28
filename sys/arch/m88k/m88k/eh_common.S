@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.45 2007/12/25 00:29:49 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.46 2008/07/28 17:49:38 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -334,8 +334,8 @@
 	stcr	r1, SR2	/* r1 now free */		; \
 	/* set or clear the FLAG_FROM_KERNEL bit */	; \
 	ldcr	r1, EPSR 				; \
-	bb0.n	PSR_SUPERVISOR_MODE_BIT, r1, 1f 	; \
-	 clr	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL> 	; \
+	clr	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL> 	; \
+	bb0	PSR_SUPERVISOR_MODE_BIT, r1, 1f 	; \
 	set	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 	/* get a stack (exception frame) */		; \
 1:	bsr	_ASM_LABEL(m88110_setup_phase_one)	; \
@@ -343,8 +343,8 @@
 	or	TMP2, r0, NUM				; \
 	/* call setup_phase_two to save all general */	; \
 	/* registers.                               */	; \
-	bsr.n	_ASM_LABEL(m88110_setup_phase_two)	; \
-	 st	TMP2, r31, EF_VECTOR
+	st	TMP2, r31, EF_VECTOR			; \
+	bsr	_ASM_LABEL(m88110_setup_phase_two)
 #endif
 
 /* Some defines for use with PREP88100() */
@@ -1697,8 +1697,8 @@ GLOBAL(m88110_entry)
  * since they aren't generally used.
  */
 GLOBAL(m88110_error_handler)
-	br.n	1f
-	 or	r29, r0, 10
+	or	r29, r0, 10
+	br	1f
 GLOBAL(m88110_reset_handler)
 	or	r29, r0, 0
 1:
@@ -1713,8 +1713,8 @@ GLOBAL(m88110_reset_handler)
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
-	br.n	1b
-	 addu	r27, r27, 4	/* bump up */
+	addu	r27, r27, 4	/* bump up */
+	br	1b
 2:	/* stack has been cleared */
 #endif
 
@@ -1796,8 +1796,8 @@ GLOBAL(m88110_reset_handler)
 	st	r20, r31, 0x00
 #endif
 
-	bsr.n	_C_LABEL(error_fatal)
-	 or	r2, r0, r30
+	or	r2, r0, r30
+	bsr	_C_LABEL(error_fatal)
 
 	/* turn interrupts back on */
 	ldcr	r1, PSR
@@ -1851,8 +1851,8 @@ ASLOCAL(m88110_setup_phase_one)
 	st	r1,   r31,  EF_SR3
 
 	addu	r1,   r31,  TRAPFRAME_SIZEOF	/* save previous r31 */
-	br.n	_ASM_LABEL(m88110_have_pcb)
-	 st	r1,   r31,  GENREG_OFF(31)
+	st	r1,   r31,  GENREG_OFF(31)
+	br	_ASM_LABEL(m88110_have_pcb)
 
 ASLOCAL(m88110_pickup_stack)
 	/*
@@ -1917,8 +1917,8 @@ ASLOCAL(m88110_have_pcb)
 	 * Save and clear fault status registers.
 	 */
 	ldcr	TMP,  ISR
-	bcnd.n	eq0,  TMP,  1f
-	 st	TMP,  r31,  EF_ISR
+	st	TMP,  r31,  EF_ISR
+	bcnd	eq0,  TMP,  1f
 	ldcr	TMP2, ILAR
 	ldcr	TMP3, IPAR
 	st	TMP2, r31,  EF_ILAR
@@ -1930,8 +1930,8 @@ ASLOCAL(m88110_have_pcb)
 	stcr	r0, ISR
 1:
 	ldcr	TMP,  DSR
-	bcnd.n	eq0,  TMP,  1f
-	 st	TMP,  r31,  EF_DSR
+	st	TMP,  r31,  EF_DSR
+	bcnd	eq0,  TMP,  1f
 	ldcr	TMP2, DLAR
 	ldcr	TMP3, DPAR
 	st	TMP2, r31,  EF_DLAR
@@ -2103,18 +2103,18 @@ ASLOCAL(m88110_shadow_enable)
 #endif
 
 	ld	r2,   r30,  EF_VECTOR
-	bcnd.n	eq0,  r2,   8f
-	 ld	r14,  r30,  EF_RET
+	ld	r14,  r30,  EF_RET
+	bcnd	eq0,  r2,   8f
 	cmp	r3,   r2,   1	/* is an interrupt? */
-	bb1.n	eq,   r3,   8f
-	 cmp	r3,   r2,   11	/* or NMI? */
-	bb1.n	eq,   r3,   8f
+	bb1	eq,   r3,   8f
+	cmp	r3,   r2,   11	/* or NMI? */
+	bb1	eq,   r3,   8f
 
 #ifdef DDB
-	 cmp	r3,   r2,   130	/* DDB break exception */
-	bb1.n	eq,   r3,   8f
-	 cmp	r3,   r2,   132	/* DDB entry exception */
-	bb1.n	eq,   r3,   8f
+	cmp	r3,   r2,   130	/* DDB break exception */
+	bb1	eq,   r3,   8f
+	cmp	r3,   r2,   132	/* DDB entry exception */
+	bb1	eq,   r3,   8f
 #endif
 
 	/* turn interrupts back on unless they were not enabled when the
