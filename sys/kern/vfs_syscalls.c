@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.147 2008/06/13 01:59:45 rainer Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.148 2008/07/28 14:21:17 thib Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -571,10 +571,7 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-#if notyet
-	if (mp->mnt_flag & MNT_SOFTDEP)
-		sp->f_eflags = STATFS_SOFTUPD;
-#endif
+
 	return (copyout_statfs(sp, SCARG(uap, buf), p));
 }
 
