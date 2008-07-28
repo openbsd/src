@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.52 2008/05/20 11:25:26 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.53 2008/07/28 19:53:03 otto Exp $
 .\"
-.Dd $Mdocdate: May 20 2008 $
+.Dd $Mdocdate: July 28 2008 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -244,16 +244,18 @@ If the machine is paging a lot this may help a bit.
 .It Cm J
 .Dq Junk .
 Fill some junk into the area allocated.
-Currently junk is bytes of 0xd0; this is pronounced
+Currently junk is bytes of 0xd0 when allocating; this is pronounced
 .Dq Duh .
 \&:-)
+Freed chunks are filled with 0xdf.
 .It Cm N
 Do not output warning messages when encountering possible corruption
 or bad pointers.
 .It Cm P
-.Dq Pointer Protection .
-Pointer sized allocations are aligned to the end of a page to catch
-sizeof(ptr) errors where sizeof(*ptr) is meant.
+.Dq Move allocations within a page.
+Allocations larger than half a page but smaller that a page
+are aligned to the end of a page to catch buffer overruns in more
+cases.
 .It Cm R
 .Dq realloc .
 Always reallocate when
@@ -278,6 +280,9 @@ including in the source:
 extern char *malloc_options;
 malloc_options = "X";
 .Ed
+.Pp
+Note that this will cause code that is supposed to handle
+out-of-memory conditions gracefully to abort instead.
 .It Cm Z
 .Dq Zero .
 Fill some junk into the area allocated (see
@@ -302,7 +307,7 @@ flags are mostly for testing and debugging.
 If a program changes behavior if either of these options are used,
 it is buggy.
 .Pp
-The default number of free pages cached is 16.
+The default number of free pages cached is 64.
 .Sh RETURN VALUES
 The
 .Fn malloc
@@ -357,13 +362,7 @@ the process.
 .Pp
 Here is a brief description of the error messages and what they mean:
 .Bl -tag -width Ds
-.It Dq (ES): mumble mumble mumble
-.Fn malloc
-has been compiled with
-.Dv \&-DEXTRA_SANITY
-and something looks fishy in there.
-Consult sources and/or wizards.
-.It Dq allocation failed
+.It Dq out of memory
 If the
 .Cm A
 option is specified it is an error for
@@ -373,47 +372,32 @@ or
 .Fn realloc
 to return
 .Dv NULL .
-.It Dq mmap(2) failed, check limits.
+.It Dq malloc init mmap failed
 This is a rather weird condition that is most likely to indicate a
 seriously overloaded system or a ulimit restriction.
-.It Dq freelist is destroyed.
-.Fn malloc Ns 's
-internal freelist has been stomped on.
+.It any other error
+.Fn malloc
+detected an internal error;
+consult sources and/or wizards.
 .El
 .Pp
 Here is a brief description of the warning messages and what they mean:
 .Bl -tag -width Ds
-.It Dq chunk/page is already free.
+.It Dq bogus pointer (double free?)
+An attempt to
+.Fn free
+or
+.Fn realloc
+an unallocated pointer was made.
+.It Dq chunk is already free
 There was an attempt to free a chunk that had already been freed.
-.It Dq junk pointer, too high to make sense.
-The pointer doesn't make sense.
-It's above the area of memory that
-.Fn malloc
-knows something about.
-This could be a pointer from some
-.Xr mmap 2 'ed
-memory.
-.It Dq junk pointer, too low to make sense.
-The pointer doesn't make sense.
-It's below the area of memory that
-.Fn malloc
-knows something about.
-This pointer probably came from your data or bss segments.
-.It Dq malloc() has never been called.
-Nothing has ever been allocated, yet something is being freed or
-realloc'ed.
-.It Dq modified (chunk-/page-) pointer.
+.It Dq modified (chunk-) pointer
 The pointer passed to
 .Fn free
 or
 .Fn realloc
 has been modified.
-.It Dq pointer to wrong page.
-The pointer that
-.Fn malloc
-is trying to free is not pointing to
-a sensible page.
-.It Dq recursive call.
+.It Dq recursive call
 An attempt was made to call recursively into these functions, i.e., from a
 signal handler.
 This behavior is not supported.
@@ -428,6 +412,12 @@ functions nor utilize any other functions which may call
 routines).
 .It Dq unknown char in MALLOC_OPTIONS
 We found something we didn't understand.
+.It Dq malloc cache overflow/underflow
+The internal malloc page cache has been corrupted.
+.It Dq malloc free slot lost
+The internal malloc page cache has been corrupted.
+.It Dq guard size
+An inconsistent guard size was detected.
 .El
 .Sh SEE ALSO
 .Xr brk 2 ,
