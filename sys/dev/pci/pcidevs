@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1391 2008/07/23 18:34:29 brad Exp $
+$OpenBSD: pcidevs,v 1.1392 2008/07/28 01:54:46 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3752,7 +3752,10 @@ product PLX 8532_PCIE		0x8532	8532 PCIE
 product PLX 9016		0x9016	I/O 9016
 product PLX 9050		0x9050	I/O 9050
 product PLX 9080		0x9080	I/O 9080
-product	PLX CRONYX_OMEGA	0xc001	Cronyx Omega
+product PLX CRONYX_OMEGA	0xc001	Cronyx Omega
+product PLX PEX_8533		0x8533	PEX 8533
+product PLX PEX_8517		0x8517	PEX 8517
+product PLX PEX_8112		0x8112	PEX 8112
 
 /* Promise products */
 product PROMISE PDC20265	0x0d30	PDC20265
