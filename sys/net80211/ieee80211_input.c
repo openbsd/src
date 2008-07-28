@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.86 2008/07/28 10:38:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.87 2008/07/28 19:42:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -71,7 +71,8 @@ enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
 int	ieee80211_parse_rsn_body(struct ieee80211com *, const u_int8_t *,
 	    u_int, struct ieee80211_rsnparams *);
 int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
-void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *);
+void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *);
 void	ieee80211_recv_probe_resp(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 void	ieee80211_recv_probe_req(struct ieee80211com *, struct mbuf *,
@@ -210,21 +211,21 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	if ((ic->ic_caps & IEEE80211_C_PMGT) &&
 	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
-	    ic->ic_state == IEEE80211_S_RUN &&
-	    dir == IEEE80211_FC1_DIR_TODS) {
-		if ((wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-		    ni->ni_pwrsave == IEEE80211_PS_AWAKE) {
-			/* turn on PS mode */
-			ni->ni_pwrsave = IEEE80211_PS_DOZE;
-			DPRINTF(("power saving on for %s\n",
-			    ether_sprintf(wh->i_addr2)));
-		}
-		if (!(wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
-		    ni->ni_pwrsave == IEEE80211_PS_DOZE) {
+	    ni->ni_state == IEEE80211_STA_ASSOC) {
+		if (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) {
+			if (ni->ni_pwrsave == IEEE80211_PS_AWAKE) {
+				/* turn on PS mode */
+				ni->ni_pwrsave = IEEE80211_PS_DOZE;
+				ic->ic_pssta++;
+				DPRINTF(("PS mode on for %s, count %d\n",
+				    ether_sprintf(wh->i_addr2), ic->ic_pssta));
+			}
+		} else if (ni->ni_pwrsave == IEEE80211_PS_DOZE) {
 			/* turn off PS mode */
 			ni->ni_pwrsave = IEEE80211_PS_AWAKE;
-			DPRINTF(("power saving off for %s\n",
-			    ether_sprintf(wh->i_addr2)));
+			ic->ic_pssta--;
+			DPRINTF(("PS mode off for %s, count %d\n",
+			    ether_sprintf(wh->i_addr2), ic->ic_pssta));
 
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 
@@ -494,7 +495,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 		switch (subtype) {
 		case IEEE80211_FC0_SUBTYPE_PS_POLL:
-			ieee80211_recv_pspoll(ic, m);
+			ieee80211_recv_pspoll(ic, m, ni);
 			break;
 		}
 		goto out;
@@ -536,7 +537,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 	    llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 &&
 	    llc->llc_snap.org_code[2] == 0) {
-		m_adj(m, hdrlen + sizeof(struct llc) - sizeof(*eh));
+		m_adj(m, hdrlen + sizeof(*llc) - sizeof(*eh));
 		llc = NULL;
 	} else {
 		m_adj(m, hdrlen - sizeof(*eh));
@@ -1815,16 +1816,17 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 }
 
 void
-ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m)
+ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame_pspoll *psp;
 	struct ieee80211_frame *wh;
-	struct ieee80211_node *ni;
 	u_int16_t aid;
 
 	if (!(ic->ic_caps & IEEE80211_C_PMGT) ||
-	    ic->ic_opmode != IEEE80211_M_HOSTAP)
+	    ic->ic_opmode != IEEE80211_M_HOSTAP ||
+	    ni->ni_state != IEEE80211_STA_ASSOC)
 		return;
 
 	if (m->m_len < sizeof(*psp)) {
@@ -1837,10 +1839,6 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m)
 		DPRINTF(("discard pspoll frame to BSS %s\n",
 		    ether_sprintf(psp->i_bssid)));
 		ic->ic_stats.is_rx_wrongbss++;
-		return;
-	}
-	if ((ni = ieee80211_find_node(ic, psp->i_ta)) == NULL) {
-		DPRINTF(("no node found for %s", ether_sprintf(psp->i_ta)));
 		return;
 	}
 	aid = letoh16(*(u_int16_t *)psp->i_aid);
