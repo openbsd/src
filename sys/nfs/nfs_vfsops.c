@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.78 2008/07/10 18:17:56 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.79 2008/07/28 13:35:14 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ nfs_statfs(mp, sbp, p)
 		goto nfsmout;
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
-	sbp->f_flags = nmp->nm_flag;
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
