@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.1 2008/04/07 22:47:40 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 2008/07/28 18:50:59 miod Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -68,7 +68,7 @@ $1 == "vendor" {
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
 	vendors[nvendors, 1] = $2;		# name
 	vendors[nvendors, 2] = $3;		# id
-	printf("#define\tPCI_VENDOR_%s\t%s\n", vendors[nvendors, 1],
+	printf("#define\tXBOW_VENDOR_%s\t%s\n", vendors[nvendors, 1],
 	    vendors[nvendors, 2]) > hfile
 
 	next
@@ -79,7 +79,7 @@ $1 == "product" {
 	products[nproducts, 1] = $2;		# vendor name
 	products[nproducts, 2] = $3;		# product id
 	products[nproducts, 3] = $4;		# id
-	printf("#define\tPCI_PRODUCT_%s_%s\t%s\t", products[nproducts, 1],
+	printf("#define\tXBOW_PRODUCT_%s_%s\t%s\t", products[nproducts, 1],
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
 
 	i=4; f = 5;
@@ -146,7 +146,7 @@ END {
 	    > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
-		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s,\n",
+		printf("\t    XBOW_VENDOR_%s, XBOW_PRODUCT_%s_%s,\n",
 		    products[i, 1], products[i, 1], products[i, 2]) \
 		    > dfile
 
