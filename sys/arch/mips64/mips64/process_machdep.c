@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.8 2007/10/18 04:32:25 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.9 2008/07/28 18:48:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.8 2007/10/18 04:32:25 miod Exp $
+ *	$Id: process_machdep.c,v 1.9 2008/07/28 18:48:25 miod Exp $
  */
 
 /*
@@ -104,7 +104,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	register_t sr;
+	register_t sr, ic, cpl;
 	extern struct proc *machFPCurProcPtr;
 
 	if (p == machFPCurProcPtr) {
@@ -114,8 +114,12 @@ process_write_regs(p, regs)
 			MipsSaveCurFPState16(p);
 	}
 	sr = p->p_md.md_regs->sr;
+	ic = p->p_md.md_regs->ic;
+	cpl = p->p_md.md_regs->cpl;
 	bcopy((caddr_t)regs, (caddr_t)p->p_md.md_regs, REGSIZE);
 	p->p_md.md_regs->sr = sr;
+	p->p_md.md_regs->ic = ic;
+	p->p_md.md_regs->cpl = cpl;
 	return (0);
 }
 
