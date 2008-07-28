@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 2005/05/18 16:44:41 miod Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.4 2008/07/28 17:50:11 miod Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -85,7 +85,13 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy((caddr_t)regs, (caddr_t)USER_REGS(p), sizeof(struct reg));
+	struct reg *procregs = (struct reg *)USER_REGS(p);
+	unsigned int psr = procregs->epsr;
+
+	bcopy(regs, procregs, sizeof(struct reg));
+	procregs->epsr =
+	    (psr & PSR_USERSTATIC) | (regs->epsr & ~PSR_USERSTATIC);
+	
 	return (0);
 }
 

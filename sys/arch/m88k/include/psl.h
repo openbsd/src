@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.5 2007/12/20 21:17:51 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.6 2008/07/28 17:50:09 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -78,6 +78,10 @@
 #define PSR_MXM		0x00000004	/* misaligned access enable */
 #define PSR_IND		0x00000002	/* interrupt disable */
 #define PSR_SFRZ	0x00000001	/* shadow freeze */
+
+/* bits userland is not allowed to change */
+#define	PSR_USERSTATIC	(PSR_MODE | PSR_BO | PSR_SGN | PSR_SRM | PSR_SFD | \
+			 PSR_MXM | PSR_IND | PSR_SFRZ)
 
 #define FIP_V		0x00000002	/* valid */
 #define FIP_E		0x00000001	/* exception */
