@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1394 2008/07/28 14:15:18 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1395 2008/07/28 16:03:48 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12136,20 +12136,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6520 PCIX-PCIX",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8114_PCI,
-	    "8114 PCIE-PCI",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8112,
+	    "PEX 8112",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8518_PCIE,
-	    "8518 PCIE",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8114,
+	    "PEX 8114",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8524_PCIE,
-	    "8524 PCIE",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8517,
+	    "PEX 8517",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8532_PCIE,
-	    "8532 PCIE",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8518,
+	    "PEX 8518",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8524,
+	    "PEX 8524",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8532,
+	    "PEX 8532",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8533,
+	    "PEX 8533",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9016,
@@ -12166,18 +12178,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_CRONYX_OMEGA,
 	    "Cronyx Omega",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8533,
-	    "PEX 8533",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8517,
-	    "PEX 8517",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8112,
-	    "PEX 8112",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
