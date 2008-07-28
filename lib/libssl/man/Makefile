@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2008/05/07 09:22:33 markus Exp $
+# $OpenBSD: Makefile,v 1.13 2008/07/28 23:44:10 jsg Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -7,6 +7,27 @@ POD2MAN=pod2man --official --release="OpenBSD ${OSREV}" --center=OpenSSL
 .ifndef NOMAN
 MANALL=	\
 	BF_set_key.cat3 \
+	BIO_ctrl.cat3 \
+	BIO_f_base64.cat3 \
+	BIO_f_buffer.cat3 \
+	BIO_f_cipher.cat3 \
+	BIO_f_md.cat3 \
+	BIO_f_null.cat3 \
+	BIO_f_ssl.cat3 \
+	BIO_find_type.cat3 \
+	BIO_new.cat3 \
+	BIO_push.cat3 \
+	BIO_read.cat3 \
+	BIO_s_accept.cat3 \
+	BIO_s_bio.cat3 \
+	BIO_s_connect.cat3 \
+	BIO_s_fd.cat3 \
+	BIO_s_file.cat3 \
+	BIO_s_mem.cat3 \
+	BIO_s_null.cat3 \
+	BIO_s_socket.cat3 \
+	BIO_set_callback.cat3 \
+	BIO_should_retry.cat3 \
 	BN_CTX_new.cat3 \
 	BN_CTX_start.cat3 \
 	BN_add.cat3 \
@@ -213,6 +234,110 @@ MLINKS+=\
 	BF_set_key.3 BF_encrypt.3 \
 	BF_set_key.3 BF_ofb64_encrypt.3 \
 	BF_set_key.3 BF_options.3 \
+	BIO_ctrl.3 BIO_callback_ctrl.3 \
+	BIO_ctrl.3 BIO_ctrl_pending.3 \
+	BIO_ctrl.3 BIO_ctrl_wpending.3 \
+	BIO_ctrl.3 BIO_eof.3 \
+	BIO_ctrl.3 BIO_flush.3 \
+	BIO_ctrl.3 BIO_get_close.3 \
+	BIO_ctrl.3 BIO_get_info_callback.3 \
+	BIO_ctrl.3 BIO_int_ctrl.3 \
+	BIO_ctrl.3 BIO_pending.3 \
+	BIO_ctrl.3 BIO_ptr_ctrl.3 \
+	BIO_ctrl.3 BIO_reset.3 \
+	BIO_ctrl.3 BIO_seek.3 \
+	BIO_ctrl.3 BIO_set_close.3 \
+	BIO_ctrl.3 BIO_set_info_callback.3 \
+	BIO_ctrl.3 BIO_tell.3 \
+	BIO_f_buffer.3 BIO_get_buffer_num_lines.3 \
+	BIO_f_buffer.3 BIO_set_buffer_read_data.3 \
+	BIO_f_buffer.3 BIO_set_buffer_size.3 \
+	BIO_f_buffer.3 BIO_set_read_buffer_size.3 \
+	BIO_f_buffer.3 BIO_set_write_buffer_size.3 \
+	BIO_f_cipher.3 BIO_set_cipher.3 \
+	BIO_f_cipher.3 BIO_get_cipher_ctx.3 \
+	BIO_f_cipher.3 BIO_get_cipher_status.3 \
+	BIO_f_md.3 BIO_get_md.3 \
+	BIO_f_md.3 BIO_get_md_ctx.3 \
+	BIO_f_md.3 BIO_set_md.3 \
+	BIO_f_ssl.3 BIO_do_handshake.3 \
+	BIO_f_ssl.3 BIO_get_ssl.3 \
+	BIO_f_ssl.3 BIO_get_num_renegotiates.3 \
+	BIO_f_ssl.3 BIO_new_buffer_ssl_connect.3 \
+	BIO_f_ssl.3 BIO_new_ssl.3 \
+	BIO_f_ssl.3 BIO_new_ssl_connect.3 \
+	BIO_f_ssl.3 BIO_set_ssl.3 \
+	BIO_f_ssl.3 BIO_set_ssl_mode.3 \
+	BIO_f_ssl.3 BIO_set_ssl_renegotiate_bytes.3 \
+	BIO_f_ssl.3 BIO_set_ssl_renegotiate_timeout.3 \
+	BIO_f_ssl.3 BIO_ssl_copy_session_id.3 \
+	BIO_f_ssl.3 BIO_ssl_shutdown.3 \
+	BIO_find_type.3 BIO_method_type.3 \
+	BIO_find_type.3 BIO_next.3 \
+	BIO_new.3 BIO_set.3 \
+	BIO_new.3 BIO_free.3 \
+	BIO_new.3 BIO_vfree.3 \
+	BIO_new.3 BIO_free_all.3 \
+	BIO_push.3 BIO_pop.3 \
+	BIO_read.3 BIO_write.3 \
+	BIO_read.3 BIO_gets.3 \
+	BIO_read.3 BIO_puts.3 \
+	BIO_s_accept.3 BIO_do_accept.3 \
+	BIO_s_accept.3 BIO_get_accept_port.3 \
+	BIO_s_accept.3 BIO_get_bind_mode.3 \
+	BIO_s_accept.3 BIO_set_accept_bios.3 \
+	BIO_s_accept.3 BIO_set_accept_port.3 \
+	BIO_s_accept.3 BIO_set_bind_mode.3 \
+	BIO_s_accept.3 BIO_set_nbio_accept.3 \
+	BIO_s_bio.3 BIO_ctrl_get_read_request.3 \
+	BIO_s_bio.3 BIO_ctrl_get_write_guarantee.3 \
+	BIO_s_bio.3 BIO_ctrl_reset_read_request.3 \
+	BIO_s_bio.3 BIO_destroy_bio_pair.3 \
+	BIO_s_bio.3 BIO_get_read_request.3 \
+	BIO_s_bio.3 BIO_get_write_buf_size.3 \
+	BIO_s_bio.3 BIO_get_write_guarantee.3 \
+	BIO_s_bio.3 BIO_make_bio_pair.3 \
+	BIO_s_bio.3 BIO_new_bio_pair.3 \
+	BIO_s_bio.3 BIO_set_write_buf_size.3 \
+	BIO_s_bio.3 BIO_shutdown_wr.3 \
+	BIO_s_connect.3 BIO_do_connect.3 \
+	BIO_s_connect.3 BIO_get_conn_hostname.3 \
+	BIO_s_connect.3 BIO_get_conn_int_port.3 \
+	BIO_s_connect.3 BIO_get_conn_ip.3 \
+	BIO_s_connect.3 BIO_get_conn_port.3 \
+	BIO_s_connect.3 BIO_set_conn_hostname.3 \
+	BIO_s_connect.3 BIO_set_conn_int_port.3 \
+	BIO_s_connect.3 BIO_set_conn_ip.3 \
+	BIO_s_connect.3 BIO_set_conn_port.3 \
+	BIO_s_connect.3 BIO_set_nbio.3 \
+	BIO_s_fd.3 BIO_get_fd.3 \
+	BIO_s_fd.3 BIO_new_fd.3 \
+	BIO_s_fd.3 BIO_set_fd.3 \
+	BIO_s_file.3 BIO_append_filename.3 \
+	BIO_s_file.3 BIO_get_fp.3 \
+	BIO_s_file.3 BIO_new_file.3 \
+	BIO_s_file.3 BIO_new_fp.3 \
+	BIO_s_file.3 BIO_read_filename.3 \
+	BIO_s_file.3 BIO_rw_filename.3 \
+	BIO_s_file.3 BIO_set_fp.3 \
+	BIO_s_file.3 BIO_write_filename.3 \
+	BIO_s_mem.3 BIO_get_mem_data.3 \
+	BIO_s_mem.3 BIO_get_mem_ptr.3 \
+	BIO_s_mem.3 BIO_new_mem_buf.3 \
+	BIO_s_mem.3 BIO_set_mem_buf.3 \
+	BIO_s_mem.3 BIO_set_mem_eof_return.3 \
+	BIO_s_socket.3 BIO_get_fd.3 \
+	BIO_s_socket.3 BIO_set_fd.3 \
+	BIO_set_callback.3 BIO_debug_callback.3 \
+	BIO_set_callback.3 BIO_get_callback.3 \
+	BIO_set_callback.3 BIO_get_callback_arg.3 \
+	BIO_set_callback.3 BIO_set_callback_arg.3 \
+	BIO_should_retry.3 BIO_get_retry_BIO.3 \
+	BIO_should_retry.3 BIO_get_retry_reason.3 \
+	BIO_should_retry.3 BIO_retry_type.3 \
+	BIO_should_retry.3 BIO_should_io_special.3 \
+	BIO_should_retry.3 BIO_should_read.3 \
+	BIO_should_retry.3 BIO_should_write.3 \
 	BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_new.3 BN_CTX_init.3 \
 	BN_CTX_start.3 BN_CTX_end.3 \
