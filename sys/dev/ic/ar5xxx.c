@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.48 2008/07/28 10:02:32 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.49 2008/07/28 16:56:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,7 @@ static const struct {
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5416,
 	    ar5k_ar5212_attach },
-	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5416_PCIE,
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5418,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRDAG675,
 	    ar5k_ar5212_attach },
