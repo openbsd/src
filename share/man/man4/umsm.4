@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.30 2008/07/20 14:24:49 yuo Exp $
+.\"	$OpenBSD: umsm.4,v 1.31 2008/07/28 10:42:12 yuo Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2008 $
+.Dd $Mdocdate: July 28 2008 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -50,6 +50,8 @@ driver:
 .It Li "NTT DoCoMo A2502" Ta Ta USB
 .It Li "ONDA Communication H600" Ta Ta CardBus
 .It Li "Option GlobeTrotter 3G+" Ta Ta CardBus
+.It Li "Option GlobeSurfer ICON7.2" Ta Ta USB
+.It Li "Option GlobeTrotter HSDPA ICON225" Ta Ta USB
 .It Li "Sierra Wireless MC8755" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless AirCard 580" Ta Ta CardBus
 .It Li "Sierra Wireless AirCard 875" Ta Ta CardBus
@@ -160,7 +162,10 @@ The
 .Nm
 driver was written by
 .An Jonathan Gray
-.Aq jsg@openbsd.org .
+.Aq jsg@openbsd.org ,
+and
+.An Yojiro UO
+.Aq yuo@nui.org .
 .Sh CAVEATS
 For Verizon Wireless (and possibly other services),
 cards require a one-time activation before they will work;

@@ -1,6 +1,7 @@
-/*	$OpenBSD: umsm.c,v 1.31 2008/07/20 14:24:49 yuo Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.32 2008/07/28 10:42:12 yuo Exp $	*/
 
 /*
+ * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -32,6 +33,8 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/usbcdc.h>
+#include <dev/usb/umassvar.h>
+#undef DPRINTF	/* undef DPRINTF for umass */
 
 #ifdef USB_DEBUG
 #define UMSM_DEBUG
@@ -45,7 +48,6 @@ int     umsmdebug = 1;
 #endif
 
 #define DPRINTF(x) DPRINTFN(0, x)
-
 
 #define UMSMBUFSZ	4096
 #define	UMSM_INTR_INTERVAL	100	/* ms */
@@ -62,8 +64,6 @@ void umsm_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void umsm_get_status(void *, int, u_char *, u_char *);
 void umsm_set(void *, int, int, int);
 
-usbd_status umsm_e220_changemode(usbd_device_handle);
-
 struct umsm_softc {
 	struct device		 sc_dev;
 	usbd_device_handle	 sc_udev;
@@ -71,6 +71,7 @@ struct umsm_softc {
 	int			 sc_iface_no;
 	struct device		*sc_subdev;
 	u_char			 sc_dying;
+	uint16_t		 sc_flag;
 
 	/* interrupt ep */
 	int			 sc_intr_number;
@@ -84,6 +85,9 @@ struct umsm_softc {
 	u_char			 sc_rts;	/* current RTS state */
 };
 
+usbd_status umsm_huawei_changemode(usbd_device_handle);
+usbd_status umsm_umass_changemode(struct umsm_softc *);
+
 struct ucom_methods umsm_methods = {
 	umsm_get_status,
 	umsm_set,
@@ -95,38 +99,52 @@ struct ucom_methods umsm_methods = {
 	NULL,
 };
 
-static const struct usb_devno umsm_devs[] = {
-	{ USB_VENDOR_AIRPRIME,	USB_PRODUCT_AIRPRIME_PC5220 },
-	{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_A2502 },
-	{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_ADU_500A },
-	{ USB_VENDOR_DELL,	USB_PRODUCT_DELL_W5500 },
-	{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E220 },
-	{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E618 },
-	{ USB_VENDOR_KYOCERA2,	USB_PRODUCT_KYOCERA2_KPC650 },
-	{ USB_VENDOR_NOVATEL1,	USB_PRODUCT_NOVATEL1_FLEXPACKGPS },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_EXPRESSCARD },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_MERLINV620 },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_S720 },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_U720 },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_XU870 },
-	{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_ES620 },
-	{ USB_VENDOR_OPTION,	USB_PRODUCT_OPTION_GT3GPLUS },
-	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_DRIVER },
-	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA },
-	{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA2 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_EM5625 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_580 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_595 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_875 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC5720 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC5725 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8755 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8755_2 },
-	{ USB_VENDOR_SIERRA,    USB_PRODUCT_SIERRA_MC8755_3 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8765 },
-	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8775 },
+struct umsm_type {
+	struct usb_devno	umsm_dev;
+	uint16_t		umsm_flag;
+/* device type */
+#define	DEV_NORMAL	0x0000
+#define	DEV_HUAWEI	0x0001
+#define	DEV_UMASS1	0x0010
+#define	DEV_UMASS2	0x0020
+#define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2)
+};
+ 
+static const struct umsm_type umsm_devs[] = {
+	{{ USB_VENDOR_AIRPRIME,	USB_PRODUCT_AIRPRIME_PC5220 }, 0},
+	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_A2502 }, 0},
+	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_ADU_500A }, 0},
+	{{ USB_VENDOR_DELL,	USB_PRODUCT_DELL_W5500 }, 0},
+	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E220 }, DEV_HUAWEI},
+	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E618 }, 0},
+	{{ USB_VENDOR_KYOCERA2,	USB_PRODUCT_KYOCERA2_KPC650 }, 0},
+	{{ USB_VENDOR_NOVATEL1,	USB_PRODUCT_NOVATEL1_FLEXPACKGPS }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_EXPRESSCARD }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_MERLINV620 }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_S720 }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_U720 }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_XU870 }, 0},
+	{{ USB_VENDOR_NOVATEL,	USB_PRODUCT_NOVATEL_ES620 }, 0},
+	{{ USB_VENDOR_OPTION,	USB_PRODUCT_OPTION_GT3GPLUS }, 0},
+	{{ USB_VENDOR_OPTION,	USB_PRODUCT_OPTION_GSICON72 }, DEV_UMASS1},
+	{{ USB_VENDOR_OPTION,	USB_PRODUCT_OPTION_GTHSDPA225 }, DEV_UMASS2},
+	{{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_DRIVER }, DEV_UMASS1},
+	{{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA }, 0},
+	{{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_HSDPA2 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_EM5625 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_580 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_595 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_AIRCARD_875 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC5720 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC5725 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8755 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8755_2 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8755_3 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8765 }, 0},
+	{{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8775 }, 0},
 };
 
+#define umsm_lookup(v, p) ((const struct umsm_type *)usb_lookup(umsm_devs, v, p))
 
 struct cfdriver umsm_cd = { 
 	NULL, "umsm", DV_DULL 
@@ -145,32 +163,37 @@ umsm_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
+	uint16_t flag;
 
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	/*
-	 * Some devices(eg Huawei E220) have multiple interfaces and some
+	 * Some devices (eg Huawei E220) have multiple interfaces and some
 	 * of them are of class umass. Don't claim ownership in such case.
 	 */
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
-		/*
-		 * E220 is a dual mode device, so we have to deal with
-		 * it differently.
-		 */
-		if (uaa->vendor  == USB_VENDOR_HUAWEI &&
-                    uaa->product == USB_PRODUCT_HUAWEI_E220) {
-			if  (uaa->ifaceno != 2) 
+	if (umsm_lookup(uaa->vendor, uaa->product) != NULL) {
+		id = usbd_get_interface_descriptor(uaa->iface);
+		flag = umsm_lookup(uaa->vendor, uaa->product)->umsm_flag;
+
+		if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
+			/*
+			 * Some high-speed modem requre special care.
+			 */
+			if (flag & DEV_HUAWEI) {
+				if  (uaa->ifaceno != 2) 
+					return UMATCH_VENDOR_IFACESUBCLASS;
+				else
+					return UMATCH_NONE;
+			} else if (flag & DEV_UMASS)
 				return UMATCH_VENDOR_IFACESUBCLASS;
 			else
 				return UMATCH_NONE;
 		} else
-			return UMATCH_NONE;
-	}
+			return UMATCH_VENDOR_IFACESUBCLASS;
+	} 
 
-	return (usb_lookup(umsm_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_IFACESUBCLASS : UMATCH_NONE;
+	return UMATCH_NONE;
 }
 
 void
@@ -186,26 +209,31 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
+	sc->sc_flag  = umsm_lookup(uaa->vendor, uaa->product)->umsm_flag;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
+	/*
+	 * Some 3G modem devices have multiple interface and some 
+	 * of them are umass class. Don't claim ownership in such case.
+	 */
 	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
 		/*
-		 * Huawei E220 requires a special command to change into
-		 * modem mode
+		 * Some 3G modems require special request to
+		 * enable it's modem function.
 		 */
-		if (uaa->vendor  == USB_VENDOR_HUAWEI &&
-		    uaa->product == USB_PRODUCT_HUAWEI_E220 &&
-		    uaa->ifaceno == 0) {
-                        umsm_e220_changemode(uaa->device);
-			/*
-			 * The device will reset its own bus from the
-			 * device side, so we just return from this device
-			 * probe process. 
-			 */
+		if ((sc->sc_flag & DEV_HUAWEI) && uaa->ifaceno == 0) {
+                        umsm_huawei_changemode(uaa->device);
 			printf("%s: umass only mode. need to reattach\n", 
 				sc->sc_dev.dv_xname);
+		} else if ((sc->sc_flag & DEV_UMASS) && uaa->ifaceno == 0) {
+			umsm_umass_changemode(sc);
 		}
+
+		/*
+		 * The device will reset its own bus from the device side 
+		 * when its mode was changed, so just return. 
+		 */
 		return;
 	}
 
@@ -359,7 +387,6 @@ umsm_close(void *addr, int portno)
 		free(sc->sc_intr_buf, M_USBDEV);
 		sc->sc_intr_pipe = NULL;
 	}
-
 }
 
 void
@@ -469,9 +496,8 @@ umsm_set(void *addr, int portno, int reg, int onoff)
 	(void)usbd_do_request(sc->sc_udev, &req, 0);
 }
 
-
 usbd_status
-umsm_e220_changemode(usbd_device_handle dev)
+umsm_huawei_changemode(usbd_device_handle dev)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -487,4 +513,89 @@ umsm_e220_changemode(usbd_device_handle dev)
 		return (EIO);
 
 	return (0);
+}
+
+usbd_status
+umsm_umass_changemode(struct umsm_softc *sc) 
+{
+#define UMASS_CMD_REZERO_UNIT	0x01
+	usb_interface_descriptor_t *id;
+	usb_endpoint_descriptor_t *ed;
+	usbd_xfer_handle xfer;
+	usbd_pipe_handle cmdpipe;
+	usbd_status err;
+	u_int32_t n;
+	void *bufp;
+	int target_ep, i;
+
+	umass_bbb_cbw_t	cbw;
+	static int dCBWTag = 0x12345678;
+
+	USETDW(cbw.dCBWSignature, CBWSIGNATURE);
+	USETDW(cbw.dCBWTag, dCBWTag);
+	cbw.bCBWLUN   = 0;
+	cbw.bCDBLength= 6; 
+	bzero(cbw.CBWCDB, sizeof(cbw.CBWCDB));
+	cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
+	cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
+
+	switch (sc->sc_flag) {
+	case DEV_UMASS1:
+		USETDW(cbw.dCBWDataTransferLength, 0x0); 
+		cbw.bCBWFlags = CBWFLAGS_OUT;
+		break;
+	case DEV_UMASS2:
+		USETDW(cbw.dCBWDataTransferLength, 0x1); 
+		cbw.bCBWFlags = CBWFLAGS_IN;
+		break;
+	default:
+		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
+		break;
+	}
+
+	/* get command endpoint address */
+	id = usbd_get_interface_descriptor(sc->sc_iface);
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		if (ed == NULL) {
+			return (USBD_IOERROR);
+		}
+
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
+			target_ep = ed->bEndpointAddress;
+	}
+
+	/* open command endppoint */
+	err = usbd_open_pipe(sc->sc_iface, target_ep,
+		USBD_EXCLUSIVE_USE, &cmdpipe);
+	if (err) {
+		DPRINTF(("%s: open pipe for modem change cmd failed: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err)));
+		return (err);
+	}
+
+	xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (xfer == NULL) {
+		usbd_close_pipe(cmdpipe);
+		return (USBD_NOMEM);
+	} else {
+		bufp = usbd_alloc_buffer(xfer, UMASS_BBB_CBW_SIZE);
+		if (bufp == NULL)
+			err = USBD_NOMEM;
+		else {
+			n = UMASS_BBB_CBW_SIZE;
+			memcpy(bufp, &cbw, UMASS_BBB_CBW_SIZE);
+			err = usbd_bulk_transfer(xfer, cmdpipe, USBD_NO_COPY,
+			    USBD_NO_TIMEOUT, bufp, &n, "umsm");
+			if (err)
+				DPRINTF(("%s: send error:%s", __func__,
+				    usbd_errstr(err)));
+		}
+		usbd_close_pipe(cmdpipe);
+		usbd_free_buffer(xfer);
+		usbd_free_xfer(xfer);
+	}
+		
+	return (err);
 }
