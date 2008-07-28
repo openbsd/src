@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.43 2008/07/28 22:11:00 kurt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -284,7 +284,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
-		if (object->obj_type != OBJTYPE_EXE) {
+		if (object->obj_base != 0) {
 			int i, size;
 			Elf_Addr *addr;
 			Elf_RelA *rela;
