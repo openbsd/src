@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.17 2007/02/18 23:37:53 jmc Exp $ */
+/*	$OpenBSD: ypset.c,v 1.18 2008/07/28 16:22:11 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.17 2007/02/18 23:37:53 jmc Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.18 2008/07/28 16:22:11 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	tv.tv_usec = 0;
 	sock = RPC_ANYSOCK;
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
-	if (client==NULL) {
+	if (client == NULL) {
 		warnx("can't yp_bind: reason: %s", yperr_string(YPERR_YPBIND));
 		return YPERR_YPBIND;
 	}
@@ -130,11 +130,8 @@ main(int argc, char *argv[])
 		case 'h':
 			if (inet_aton(optarg, &sin.sin_addr) == 0) {
 				hent = gethostbyname(optarg);
-				if (hent == NULL) {
-					fprintf(stderr, "ypset: host %s unknown\n",
-					    optarg);
-					exit(1);
-				}
+				if (hent == NULL)
+					errx(1, "host %s unknown\n", optarg);
 				bcopy(hent->h_addr, &sin.sin_addr,
 				    sizeof(sin.sin_addr));
 			}
@@ -143,7 +140,7 @@ main(int argc, char *argv[])
 			usage();
 		}
 
-	if (optind + 1 != argc )
+	if (optind + 1 != argc)
 		usage();
 
 	if (bind_tohost(&sin, domainname, argv[optind]))
