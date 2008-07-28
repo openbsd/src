@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.85 2008/07/27 18:24:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.86 2008/07/28 10:38:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -171,6 +171,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (m->m_len < hdrlen) {
 			DPRINTF(("frame too short, len %u\n", m->m_len));
 			ic->ic_stats.is_rx_tooshort++;
+			goto err;
 		}
 	}
 	/* check and save sequence control field, if present */
@@ -1519,9 +1520,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
 	ni->ni_fhindex = ic->ic_bss->ni_fhindex;
  end:
+	resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
+	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
 	if (status != 0) {
-		resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
-		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
 		IEEE80211_SEND_MGMT(ic, ni, resp, status);
 		ieee80211_node_leave(ic, ni);
 	} else
@@ -1556,7 +1557,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* make sure all mandatory fixed fields are present */
 	if (m0->m_len < sizeof(*wh) + 6) {
-		DPRINTF(("%s: frame too short\n"));
+		DPRINTF(("frame too short\n"));
 		return;
 	}
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -1845,7 +1846,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m)
 	aid = letoh16(*(u_int16_t *)psp->i_aid);
 	if (aid != ni->ni_associd) {
 		DPRINTF(("invalid pspoll aid %x from %s\n", aid,
-		    ether_sprintf(psp->i_addr2)));
+		    ether_sprintf(psp->i_ta)));
 		return;
 	}
 
