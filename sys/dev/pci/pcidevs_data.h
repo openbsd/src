@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1393 2008/07/28 09:58:24 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1394 2008/07/28 14:15:18 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2126,6 +2126,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV250_S,
 	    "Radeon 9000 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800PRO,
+	    "Radeon X800 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800PRO_S,
+	    "Radeon X800 Pro Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
@@ -11052,6 +11060,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 8600 GT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8600M_GT,
+	    "GeForce 8600M GT",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX570M,
 	    "Quadro FX 570M",
 	},
@@ -11176,8 +11188,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP65 SATA",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7000M,
+	    "GeForce 7000M",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM2,
+	    "MCP67 Memory",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SMB,
 	    "MCP67 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM_1,
+	    "MCP67 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HB_1,
+	    "MCP67 Host",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1,
@@ -11252,8 +11280,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP67 HD Audio",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_OHCI,
+	    "MCP67 USB",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_EHCI,
+	    "MCP67 USB",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_IDE,
 	    "MCP67 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_PPB_1,
+	    "MCP67 PCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_PPB_2,
+	    "MCP67 PCIE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_EHCI,
@@ -14172,6 +14216,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_0,
+	    "VX800 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900,
 	    "P4M900 Host",
 	},
@@ -14264,6 +14312,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C570M ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CHROME9HC3,
+	    "Chrome9 HC3 IGP",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800_1,
 	    "K8M800 Host",
 	},
@@ -14310,6 +14362,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_2,
 	    "VT3351 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_1,
+	    "VX800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_1,
@@ -14370,6 +14426,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_3,
 	    "VT3351 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_2,
+	    "VX800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_2,
@@ -14640,6 +14700,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_DRAM,
+	    "VX800 DRAM",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_3,
 	    "P4M900 Host",
 	},
@@ -14708,6 +14772,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_4,
+	    "VX800 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_4,
 	    "P4M900 Host",
 	},
@@ -14740,6 +14808,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 IOAPIC",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_IOAPIC,
+	    "VX800 IOAPIC",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_IOAPIC,
 	    "P4M900 IOAPIC",
 	},
@@ -14764,6 +14836,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "P4M890 Security",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_6,
+	    "VX800 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_6,
 	    "P4M900 Security",
 	},
@@ -14786,6 +14862,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M890_7,
 	    "K8M890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_7,
+	    "VX800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_7,
@@ -14840,6 +14920,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CX700 ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_ISA,
+	    "VX800 ISA",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
 	    "VT8371 PCI-PCI",
 	},
@@ -14864,12 +14948,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8605 AGP",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_SDMMC,
+	    "VX800 SD/MMC",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_SDIO,
+	    "VX800 SDIO",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A,
 	    "K8T890 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_PPB_1,
 	    "P4M890 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_A,
+	    "VX800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_PPB_1,
@@ -14906,6 +15002,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377_AGP,
 	    "VT8377 AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_PPB,
+	    "VX800 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_B,
