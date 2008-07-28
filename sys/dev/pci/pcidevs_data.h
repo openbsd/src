@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1391 2008/07/23 18:34:29 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1392 2008/07/28 01:54:46 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12110,6 +12110,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_CRONYX_OMEGA,
 	    "Cronyx Omega",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8533,
+	    "PEX 8533",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8517,
+	    "PEX 8517",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8112,
+	    "PEX 8112",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
