@@ -1,4 +1,4 @@
-.\"	$OpenBSD: group.5,v 1.11 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: group.5,v 1.12 2008/07/28 16:27:39 deraadt Exp $
 .\"	$NetBSD: group.5,v 1.4 1995/07/28 06:41:39 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)group.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 28 2008 $
 .Dt GROUP 5
 .Os
 .Sh NAME
@@ -118,6 +118,18 @@ form should be on the last line, for historical reasons.
 Only the first group with a specific name encountered, whether in the
 .Nm
 file itself, or included via YP, will be used.
+.Pp
+Proper YP group support requires consistent
+.Pa group.byname ,
+.Pa group.bygid
+and
+.Pa netid.byname
+YP maps.
+See
+.Xr getgrent 3
+and
+.Xr getgrouplist 3
+for details.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
