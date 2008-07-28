@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.18 2008/06/21 21:11:34 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.19 2008/07/28 20:58:41 fgsch Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -7,7 +7,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -190,7 +190,7 @@ struct scsi_set_cd_speed {
 #define READ_SUBCHANNEL		0x42	/* cdrom read Subchannel */
 #define READ_TOC		0x43	/* cdrom read TOC */
 #define READ_HEADER		0x44	/* cdrom read header */
-#define PLAY			0x45	/* cdrom play  'play audio' mode */
+#define PLAY			0x45	/* cdrom play 'play audio' mode */
 #define PLAY_MSF		0x47	/* cdrom play Min,Sec,Frames mode */
 #define PLAY_TRACK		0x48	/* cdrom play track/index mode */
 #define PLAY_TRACK_REL		0x49	/* cdrom play track/index mode */
@@ -199,7 +199,7 @@ struct scsi_set_cd_speed {
 #define CLOSE_TRACK		0x5b	/* close track/rzone/session/border */
 #define BLANK			0xa1	/* cdrom blank */
 #define PLAY_BIG		0xa5	/* cdrom pause in 'play audio' mode */
-#define	LOAD_UNLOAD		0xa6	/* cdrom load/unload media */
+#define LOAD_UNLOAD		0xa6	/* cdrom load/unload media */
 #define PLAY_TRACK_REL_BIG	0xa9	/* cdrom play track/index mode */
 #define SET_CD_SPEED		0xbb	/* set cdrom read/write speed */
 
