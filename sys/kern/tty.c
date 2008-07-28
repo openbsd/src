@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.76 2008/05/23 16:42:03 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.77 2008/07/28 06:13:22 stefan Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1667,7 +1667,8 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	u_char *cp = NULL;
 	int cc, ce, obufcc = 0;
 	struct proc *p;
-	int i, hiwat, cnt, error, s;
+	int i, hiwat, error, s;
+	size_t cnt;
 	u_char obuf[OBUFSIZ];
 
 	hiwat = tp->t_hiwat;
@@ -1732,7 +1733,7 @@ loop:
 		 * leftover from last time.
 		 */
 		if (cc == 0) {
-			cc = min(uio->uio_resid, OBUFSIZ);
+			cc = MIN(uio->uio_resid, OBUFSIZ);
 			cp = obuf;
 			error = uiomove(cp, cc, uio);
 			if (error) {
