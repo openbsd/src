@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2007/12/04 23:45:52 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2008/07/28 17:57:25 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -64,8 +64,6 @@ void	kdbprinttrap(int);
 int	m88k_dmx_print(u_int, u_int, u_int, u_int);
 
 void	m88k_db_trap(int, struct trapframe *);
-void	ddb_error_trap(char *, db_regs_t *);
-void	m88k_db_pause(u_int);
 void	m88k_db_print_frame(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_registers(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_where(db_expr_t, int, db_expr_t, char *);
@@ -369,17 +367,6 @@ m88k_db_registers(addr, have_addr, count, modif)
 }
 
 /*
- * pause for 2*ticks many cycles
- */
-void
-m88k_db_pause(ticks)
-	u_int volatile ticks;
-{
-	while (ticks)
-		ticks -= 1;
-}
-
-/*
  * m88k_db_trap - field a TRACE or BPT trap
  * Note that only the tf_regs part of the frame is valid - some ddb routines
  * invoke this function with a promoted struct reg!
@@ -494,24 +481,6 @@ ddb_entry_trap(level, eframe)
 	m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)eframe);
 
 	return 0;
-}
-
-/*
- * When the below routine is entered interrupts should be on
- * but spl should be high
- */
-/* error trap - unreturnable */
-void
-ddb_error_trap(error, regs)
-	char *error;
-	db_regs_t *regs;
-{
-	db_printf("KERNEL:  unrecoverable error [%s]\n", error);
-	db_printf("KERNEL:  Exiting debugger will cause abort to rom\n");
-	db_printf("at 0x%x ", regs->sxip & XIP_ADDR);
-	db_printf("dmt0 0x%x dma0 0x%x", regs->dmt0, regs->dma0);
-	m88k_db_pause(1000000);
-	m88k_db_trap(T_KDB_BREAK, (struct trapframe *)regs);
 }
 
 /*
