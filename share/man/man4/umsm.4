@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.31 2008/07/28 10:42:12 yuo Exp $
+.\"	$OpenBSD: umsm.4,v 1.32 2008/07/29 06:51:54 yuo Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2008 $
+.Dd $Mdocdate: July 29 2008 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -73,6 +73,14 @@ Devices suspected of being compatible are:
 .It Li "Sierra Wireless MC8765" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless MC8775" Ta Ta PCI Express Mini Card
 .El
+.Pp
+Some modems have multiple com ports, however almost all modems
+have only one effective port for PPP connections.
+For example, the Huawei E220 has two com ports, but only the first
+port can be used to make connections, the second one is for management.
+The Option GlobeTrotter HSDPA modem has three com ports, but
+only the last port can be used to make PPP connections.
+.Pp
 .Sh EXAMPLES
 An example
 .Pa /etc/ppp/ppp.conf
