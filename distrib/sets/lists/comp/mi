@@ -3528,6 +3528,8 @@
 ./usr/share/man/cat3/execvp.0
 ./usr/share/man/cat3/exit.0
 ./usr/share/man/cat3/exp.0
+./usr/share/man/cat3/exp2.0
+./usr/share/man/cat3/exp2f.0
 ./usr/share/man/cat3/expf.0
 ./usr/share/man/cat3/expm1.0
 ./usr/share/man/cat3/expm1f.0
