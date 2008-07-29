@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.20 2008/07/28 20:10:28 damien Exp $
+.\" $OpenBSD: bwi.4,v 1.21 2008/07/29 16:44:19 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2008 $
+.Dd $Mdocdate: July 29 2008 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -61,7 +61,14 @@ or to scan for access points.
 .Pp
 The
 .Nm
-driver can be configured to use the WEP, WPA-PSK and WPA2-PSK protocols.
+driver can be configured to use
+Wireless Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the de facto encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
 The
 .Nm
 driver relies on the software 802.11 stack for both encryption and decryption
@@ -140,8 +147,8 @@ Configure bwi0 to join network
 using WPA-PSK with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# _psk=$(wpa-psk my_net my_passphrase)
-# ifconfig bwi0 nwid my_net wpa wpapsk ${_psk}
+# ifconfig bwi0 nwid my_net wpa wpapsk \e
+	$(wpa-psk my_net my_passphrase)
 .Ed
 .Pp
 Return bwi0 to its default settings:
