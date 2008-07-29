@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.27 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.28 2008/07/29 18:39:45 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -451,7 +451,7 @@ sio_intr_establish(v, irq, type, level, fn, arg, name)
 {
 	void *cookie;
 
-	if (irq > ICU_LEN || type == IST_NONE)
+	if (irq >= ICU_LEN || type == IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
 
 	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level, fn,
