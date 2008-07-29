@@ -4774,6 +4774,8 @@
 ./usr/share/man/cat3/mvwprintw.0
 ./usr/share/man/cat3/mvwscanw.0
 ./usr/share/man/cat3/mvwvline.0
+./usr/share/man/cat3/nan.0
+./usr/share/man/cat3/nanf.0
 ./usr/share/man/cat3/napms.0
 ./usr/share/man/cat3/ncurses.0
 ./usr/share/man/cat3/ndbm.0
@@ -5054,6 +5056,7 @@
 ./usr/share/man/cat3/remainderf.0
 ./usr/share/man/cat3/remove.0
 ./usr/share/man/cat3/remque.0
+./usr/share/man/cat3/remquo.0
 ./usr/share/man/cat3/replace_panel.0
 ./usr/share/man/cat3/request_init.0
 ./usr/share/man/cat3/request_set.0
