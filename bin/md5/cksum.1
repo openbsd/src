@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.17 2007/05/31 19:19:15 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.18 2008/07/29 18:24:31 sobrado Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 29 2008 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -50,6 +50,11 @@
 .Op Ar file ...
 .Ek
 .Nm sum
+.Op Fl bpqrtx
+.Op Fl a Ar algorithms
+.Op Fl c Op Ar checklist ...
+.Op Fl o Ar 1 | 2
+.Op Fl s Ar string
 .Op Ar file ...
 .Sh DESCRIPTION
 The
