@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.6 2008/07/16 20:03:22 miod Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.7 2008/07/29 04:20:37 miod Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -53,6 +53,7 @@ struct pckbc_internal {
 
 	int t_flags;
 #define	PCKBC_CANT_TRANSLATE	0x0001	/* can't translate to XT scancodes */
+#define	PCKBC_NEED_AUXWRITE	0x0002	/* need auxwrite command to find aux */
 	int t_haveaux; /* controller has an aux port */
 
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];

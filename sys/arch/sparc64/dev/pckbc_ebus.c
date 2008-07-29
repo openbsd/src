@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.9 2008/07/16 20:03:22 miod Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.10 2008/07/29 04:20:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -128,7 +128,7 @@ pckbc_ebus_attach(parent, self, aux)
 		char model[128];
 		OF_getprop(ea->ea_node, "model", &model, sizeof model);
 		if (strcmp(model, "INTC,80c42") == 0)
-			flags = PCKBC_CANT_TRANSLATE;
+			flags = PCKBC_CANT_TRANSLATE | PCKBC_NEED_AUXWRITE;
 	}
 
 	if (console) {
