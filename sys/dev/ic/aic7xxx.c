@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.81 2008/06/25 18:21:48 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.82 2008/07/29 21:18:53 miod Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.81 2008/06/25 18:21:48 deraadt Exp $
+ * $Id: aic7xxx.c,v 1.82 2008/07/29 21:18:53 miod Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4010,15 +4010,8 @@ ahc_free(struct ahc_softc *ahc)
 		free(ahc->black_hole, M_DEVBUF);
 	}
 #endif
-#ifndef __NetBSD__
-	if (ahc->name != NULL)
-		free(ahc->name, M_DEVBUF);
-#endif
 	if (ahc->seep_config != NULL)
 		free(ahc->seep_config, M_DEVBUF);
-#ifndef __FreeBSD__
-	free(ahc, M_DEVBUF);
-#endif
 	return;
 }
 
