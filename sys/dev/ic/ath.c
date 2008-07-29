@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.70 2008/07/21 18:43:19 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.71 2008/07/29 00:18:25 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -217,8 +217,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	sc->sc_flags &= ~ATH_ATTACHED;	/* make sure that it's not attached */
 
-	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, sc->sc_64bit,
-	    &status);
+	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh,
+	    sc->sc_pcie, &status);
 	if (ah == NULL) {
 		printf("%s: unable to attach hardware; HAL status %d\n",
 			ifp->if_xname, status);

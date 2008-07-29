@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.42 2007/11/01 20:32:16 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.43 2008/07/29 00:18:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -320,10 +320,9 @@ ar5k_ar5212_nic_wakeup(struct ath_hal *hal, u_int16_t flags)
 	 * Reset and wakeup the device
 	 */
 
-	/* ...reset chipset and PCI device */
-	if (hal->ah_single_chip == AH_FALSE &&
-	    ar5k_ar5212_nic_reset(hal,
-	    AR5K_AR5212_RC_CHIP | AR5K_AR5212_RC_PCI) == AH_FALSE) {
+	/* ...reset chipset and PCI device (if not PCI-E) */
+	if (hal->ah_pci_express == AH_FALSE &&
+	    ar5k_ar5212_nic_reset(hal, AR5K_AR5212_RC_CHIP) == AH_FALSE) {
 		AR5K_PRINT("failed to reset the AR5212 + PCI chipset\n");
 		return (AH_FALSE);
 	}
@@ -436,7 +435,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
-	u_int32_t data, s_seq, s_ant, s_led[3];
+	u_int32_t data, s_seq, s_ant, s_led[3], dmasize;
 	u_int i, phy, mode, freq, off, ee_mode, ant[2];
 	const HAL_RATE_TABLE *rt;
 
@@ -729,11 +728,16 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 
 	/*
 	 * Set Rx/Tx DMA Configuration
+	 *
+	 * XXX Limit DMA size on PCI-E chipsets to 128 bytes because
+	 * XXX we saw RX overruns and TX errors with higher values.
 	 */
+	dmasize = hal->ah_pci_express == AH_TRUE ?
+	    AR5K_AR5212_DMASIZE_128B : AR5K_AR5212_DMASIZE_512B;
 	AR5K_REG_WRITE_BITS(AR5K_AR5212_TXCFG, AR5K_AR5212_TXCFG_SDMAMR,
-	    AR5K_AR5212_DMASIZE_512B | AR5K_AR5212_TXCFG_DMASIZE);
+	    dmasize | AR5K_AR5212_TXCFG_DMASIZE);
 	AR5K_REG_WRITE_BITS(AR5K_AR5212_RXCFG, AR5K_AR5212_RXCFG_SDMAMW,
-	    AR5K_AR5212_DMASIZE_512B);
+	    dmasize);
 
 	/*
 	 * Set channel and calibrate the PHY

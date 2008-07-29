@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.49 2008/07/28 16:56:06 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.50 2008/07/29 00:18:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -152,7 +152,7 @@ ath_hal_probe(u_int16_t vendor, u_int16_t device)
  */
 struct ath_hal *
 ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
-    bus_space_handle_t sh, u_int is_64bit, int *status)
+    bus_space_handle_t sh, u_int is_pcie, int *status)
 {
 	struct ath_softc *sc = (struct ath_softc *)arg;
 	struct ath_hal *hal = NULL;
@@ -205,6 +205,7 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	hal->ah_limit_tx_retries = AR5K_INIT_TX_RETRY;
 	hal->ah_software_retry = AH_FALSE;
 	hal->ah_ant_diversity = AR5K_TUNE_ANT_DIVERSITY;
+	hal->ah_pci_express = is_pcie ? AH_TRUE : AH_FALSE;
 
 	switch (device) {
 	case PCI_PRODUCT_ATHEROS_AR2413:
@@ -214,22 +215,6 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 		 * Known single chip solutions
 		 */
 		hal->ah_single_chip = AH_TRUE;
-		break;
-	case PCI_PRODUCT_ATHEROS_AR5212_IBM:
-		/*
-		 * IBM ThinkPads use the same device ID for different
-		 * chipset versions. Ugh.
-		 */
-		if (is_64bit) {
-			/*
-			 * PCI Express "Mini Card" interface based on the
-			 * AR5424 chipset
-			 */
-			hal->ah_single_chip = AH_TRUE;
-		} else {
-			/* Classic Mini PCI interface based on AR5212 */
-			hal->ah_single_chip = AH_FALSE;
-		}
 		break;
 	default:
 		/*
@@ -281,7 +266,7 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 		 * XXX to limit 11b operation to 1-2Mbit/s. This
 		 * XXX needs to be fixed but allows basic operation for now.
 		 */
-		if (hal->ah_single_chip == AH_TRUE)
+		if (hal->ah_pci_express == AH_TRUE)
 			hal->ah_rt_11b.rateCount = 2;
 	} if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
 		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
@@ -1279,7 +1264,7 @@ ar5k_ar5112_channel(struct ath_hal *hal, HAL_CHANNEL *channel)
 		 * XXX after figuring out how to calculate the Atheros
 		 * XXX channel for these chipsets.
 		 */
-		if (hal->ah_single_chip == AH_TRUE) {
+		if (hal->ah_pci_express == AH_TRUE) {
 			c += c < 2427 ? -45 :		/* channel 1-3 */
 			    (c < 2447 ? -40 :		/* channel 4-7 */
 			    (c < 2462 ? -35 :		/* channel 8-10 */
