@@ -3568,6 +3568,8 @@
 ./usr/share/man/cat3/field_userptr.0
 ./usr/share/man/cat3/fileno.0
 ./usr/share/man/cat3/filter.0
+./usr/share/man/cat3/finite.0
+./usr/share/man/cat3/finitef.0
 ./usr/share/man/cat3/firstkey.0
 ./usr/share/man/cat3/flash.0
 ./usr/share/man/cat3/flockfile.0
