@@ -69,7 +69,7 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 	if (priv) {
 		priv->refs++;
 	} else {
-		priv = malloc(sizeof(*priv), M_DRM, M_NOWAIT | M_ZERO);
+		priv = drm_calloc(1, sizeof(*priv), DRM_MEM_FILES);
 		if (priv == NULL) {
 			DRM_UNLOCK();
 			return ENOMEM;
@@ -79,7 +79,6 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 
 		priv->refs = 1;
 		priv->minor = m;
-		priv->ioctl_count = 0;
 
 		/* for compatibility root is always authenticated */
 		priv->authenticated = DRM_SUSER(p);
@@ -88,7 +87,7 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 			/* shared code returns -errno */
 			retcode = -dev->driver.open(dev, priv);
 			if (retcode != 0) {
-				free(priv, M_DRM);
+				drm_free(priv, sizeof(*priv), DRM_MEM_FILES);
 				DRM_UNLOCK();
 				return retcode;
 			}
@@ -96,7 +95,7 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 
 		/* first opener automatically becomes master if root */
 		if (TAILQ_EMPTY(&dev->files) && !DRM_SUSER(p)) {
-			free(priv, M_DRM);
+			drm_free(priv, sizeof(*priv), DRM_MEM_FILES);
 			DRM_UNLOCK();
 			return (EPERM);
 		}

@@ -70,7 +70,7 @@ drm_add_magic(struct drm_device *dev, struct drm_file *priv, drm_magic_t magic)
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
-	if ((entry = malloc(sizeof(*entry), M_DRM, M_ZERO | M_NOWAIT)) == NULL)
+	if ((entry = drm_alloc(sizeof(*entry), DRM_MEM_MAGIC)) == NULL)
 		return (ENOMEM);
 	entry->magic = magic;
 	entry->priv = priv;
@@ -97,7 +97,7 @@ drm_remove_magic(struct drm_device *dev, drm_magic_t magic)
 	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) == NULL)
 		return (EINVAL);
 	SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
-	free(pt, M_DRM);
+	drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
 	return (0);
 }
 

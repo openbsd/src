@@ -154,7 +154,7 @@ drm_update_draw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			return 0;
 		}
 		if (info->rects == NULL) {
-			info->rects = drm_alloc(sizeof(*info->rects) *
+			info->rects = drm_calloc(sizeof(*info->rects),
 			    update->num, DRM_MEM_DRAWABLE);
 			if (info->rects == NULL) {
 				DRM_SPINUNLOCK(&dev->drw_lock);
@@ -175,15 +175,12 @@ drm_update_draw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 void
 drm_drawable_free(struct drm_device *dev, struct bsd_drm_drawable_info *draw)
 {
-	if (draw) {
-		RB_REMOVE(drawable_tree, &dev->drw_head, draw);
-		if (draw->info.rects)
-			drm_free(draw->info.rects,
-			    sizeof(*draw->info.rects) * draw->info.num_rects,
-			    DRM_MEM_DRAWABLE);
-		drm_free(draw, sizeof(*draw),
-		    DRM_MEM_DRAWABLE);
-	}
+	if (draw == NULL)
+		return;
+	RB_REMOVE(drawable_tree, &dev->drw_head, draw);
+	drm_free(draw->info.rects,
+	    sizeof(*draw->info.rects) * draw->info.num_rects, DRM_MEM_DRAWABLE);
+	drm_free(draw, sizeof(*draw), DRM_MEM_DRAWABLE);
 }
 
 void

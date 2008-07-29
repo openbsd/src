@@ -41,12 +41,12 @@ void	drm_sg_dmamem_free(struct drm_sg_dmamem *);
 void
 drm_sg_cleanup(drm_sg_mem_t *entry)
 {
-	if (entry) {
-		if (entry->mem)
+	if (entry != NULL) {
+		if (entry->mem != NULL)
 			drm_sg_dmamem_free(entry->mem);
-		if (entry->busaddr)
-			free(entry->busaddr, M_DRM);
-		free(entry, M_DRM);
+		drm_free(entry->busaddr,
+		    sizeof(*entry->busaddr) * entry->pages, DRM_MEM_SGLISTS);
+		drm_free(entry, sizeof(entry), DRM_MEM_SGLISTS);
 	}
 }
 
@@ -60,17 +60,17 @@ drm_sg_alloc(struct drm_device * dev, drm_scatter_gather_t * request)
 	if ( dev->sg )
 		return EINVAL;
 
-	entry = malloc(sizeof(*entry), M_DRM, M_WAITOK | M_ZERO);
-	if ( !entry )
-		return ENOMEM;
+	entry = drm_calloc(1, sizeof(*entry), DRM_MEM_SGLISTS);
+        if ( !entry )
+                return ENOMEM;
 
 	pages = round_page(request->size) / PAGE_SIZE;
 	DRM_DEBUG( "sg size=%ld pages=%ld\n", request->size, pages );
 
 	entry->pages = pages;
 
-	entry->busaddr = malloc(pages * sizeof(*entry->busaddr), M_DRM,
-	    M_WAITOK | M_ZERO);
+	entry->busaddr = drm_calloc(pages, sizeof(*entry->busaddr),
+	    DRM_MEM_SGLISTS);
 	if ( !entry->busaddr ) {
 		drm_sg_cleanup(entry);
 		return ENOMEM;
@@ -148,12 +148,12 @@ drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 	bus_size_t	  	 size = pages << PAGE_SHIFT;
 	int			 ret = 0;
 
-	dsd = malloc(sizeof(*dsd), M_DRM, M_NOWAIT | M_ZERO);
+	dsd = drm_calloc(1, sizeof(*dsd), DRM_MEM_SGLISTS);
 	if (dsd == NULL)
 		return (NULL);
 
-	dsd->sg_segs = malloc(sizeof(*dsd->sg_segs) * pages, M_DRM,
-	    M_NOWAIT | M_ZERO);
+	dsd->sg_segs = drm_calloc(sizeof(*dsd->sg_segs), pages,
+	    DRM_MEM_SGLISTS);
 	if (dsd->sg_segs == NULL)
 		goto dsdfree;
 
@@ -189,10 +189,10 @@ free:
 destroy:
 	bus_dmamap_destroy(dev->pa.pa_dmat, dsd->sg_map);
 segsfree:
-	free(dsd->sg_segs, M_DRM);
+	drm_free(dsd->sg_segs, sizeof(*dsd->sg_segs) * pages, DRM_MEM_SGLISTS);
 
 dsdfree:
-	free(dsd, M_DRM);
+	drm_free(dsd, sizeof(*dsd), DRM_MEM_SGLISTS);
 
 	return (NULL);
 }
@@ -204,6 +204,7 @@ drm_sg_dmamem_free(struct drm_sg_dmamem *mem)
 	bus_dmamem_unmap(mem->sg_tag, mem->sg_kva, mem->sg_size);
 	bus_dmamem_free(mem->sg_tag, mem->sg_segs, mem->sg_nsegs);
 	bus_dmamap_destroy(mem->sg_tag, mem->sg_map);
-	free(mem->sg_segs, M_DRM);
-	free(mem, M_DRM);
+	drm_free(mem->sg_segs, sizeof(*mem->sg_segs) *
+	    (mem->sg_size >> PAGE_SHIFT), DRM_MEM_SGLISTS);
+	drm_free(mem, sizeof(*mem), DRM_MEM_SGLISTS);
 }

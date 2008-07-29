@@ -421,11 +421,8 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	if (flags & _DRM_VBLANK_SIGNAL) {
 #if 0 /* disabled */
-		if (dev->vblank_suspend[crtc])
-			return (EBUSY);
-
-		drm_vbl_sig_t *vbl_sig = malloc(sizeof(drm_vbl_sig_t), M_DRM,
-		    M_NOWAIT | M_ZERO);
+		drm_vbl_sig_t *vbl_sig = drm_calloc(1, sizeof(drm_vbl_sig_t),
+		    DRM_MEM_DRIVER);
 		if (vbl_sig == NULL)
 			return ENOMEM;
 
@@ -499,7 +496,7 @@ drm_vbl_send_signals(struct drm_device *dev, int crtc)
 				psignal(p, vbl_sig->signo);
 
 			TAILQ_REMOVE(&dev->vbl_sig_list, vbl_sig, link);
-			DRM_FREE(vbl_sig,sizeof(*vbl_sig));
+			drm_free(vbl_sig, sizeof(*vbl_sig), DRM_MEM_DRIVER);
 		}
 		vbl_sig = next;
 	}

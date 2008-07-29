@@ -81,7 +81,8 @@ drm_realloc(void *oldpt, size_t oldsize, size_t size, int area)
 void
 drm_free(void *pt, size_t size, int area)
 {
-	free(pt, M_DRM);
+	if (pt != NULL)
+		free(pt, M_DRM);
 }
 
 void *

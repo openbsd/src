@@ -353,11 +353,9 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 
 	DRM_DEBUG("\n");
 
-	dev_priv = drm_alloc(sizeof(drm_r128_private_t), DRM_MEM_DRIVER);
+	dev_priv = drm_calloc(1, sizeof(drm_r128_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
 		return -ENOMEM;
-
-	memset(dev_priv, 0, sizeof(drm_r128_private_t));
 
 	dev_priv->is_pci = init->is_pci;
 
@@ -765,11 +763,11 @@ static int r128_freelist_init(struct drm_device * dev)
 	drm_r128_freelist_t *entry;
 	int i;
 
-	dev_priv->head = drm_alloc(sizeof(drm_r128_freelist_t), DRM_MEM_DRIVER);
+	dev_priv->head = drm_calloc(1, sizeof(drm_r128_freelist_t),
+	    DRM_MEM_DRIVER);
 	if (dev_priv->head == NULL)
 		return -ENOMEM;
 
-	memset(dev_priv->head, 0, sizeof(drm_r128_freelist_t));
 	dev_priv->head->age = R128_BUFFER_USED;
 
 	for (i = 0; i < dma->buf_count; i++) {

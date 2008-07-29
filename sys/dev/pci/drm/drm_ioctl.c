@@ -74,12 +74,12 @@ drm_setunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (!u->unique_len || u->unique_len > 1024)
 		return EINVAL;
 
-	busid = malloc(u->unique_len + 1, M_DRM, M_WAITOK);
+	busid = drm_alloc(u->unique_len + 1, DRM_MEM_DRIVER);
 	if (busid == NULL)
 		return ENOMEM;
 
 	if (DRM_COPY_FROM_USER(busid, u->unique, u->unique_len)) {
-		free(busid, M_DRM);
+		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
 		return EFAULT;
 	}
 	busid[u->unique_len] = '\0';
@@ -92,7 +92,7 @@ drm_setunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #endif /* Net and Openbsd don't have sscanf in the kernel this is deprecated anyway. */
 
 	if (ret != 3) {
-		free(busid, M_DRM);
+		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
 		return EINVAL;
 	}
 	domain = bus >> 8;
@@ -102,7 +102,7 @@ drm_setunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	    (bus != dev->pci_bus) ||
 	    (slot != dev->pci_slot) ||
 	    (func != dev->pci_func)) {
-		free(busid, M_DRM);
+		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
 		return EINVAL;
 	}
 
@@ -133,7 +133,7 @@ drm_set_busid(struct drm_device *dev)
 	}
 
 	dev->unique_len = 20;
-	dev->unique = malloc(dev->unique_len + 1, M_DRM, M_NOWAIT);
+	dev->unique = drm_alloc(dev->unique_len + 1, DRM_MEM_DRIVER);
 	if (dev->unique == NULL) {
 		DRM_UNLOCK();
 		return ENOMEM;

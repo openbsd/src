@@ -1698,11 +1698,10 @@ int radeon_driver_load(struct drm_device *dev, unsigned long flags)
 	drm_radeon_private_t *dev_priv;
 	int ret = 0;
 
-	dev_priv = drm_alloc(sizeof(drm_radeon_private_t), DRM_MEM_DRIVER);
+	dev_priv = drm_calloc(1, sizeof(drm_radeon_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
 		return -ENOMEM;
 
-	memset(dev_priv, 0, sizeof(drm_radeon_private_t));
 	dev->dev_private = (void *)dev_priv;
 	dev_priv->flags = flags;
 

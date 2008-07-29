@@ -1025,11 +1025,9 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev->types[8] = _DRM_STAT_SECONDARY;
 	dev->types[9] = _DRM_STAT_DMA;
 
-	dev_priv = drm_alloc(sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
+	dev_priv = drm_calloc(1, sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
 		return -ENOMEM;
-
-	memset(dev_priv, 0, sizeof(drm_i915_private_t));
 
 	dev->dev_private = (void *)dev_priv;
 

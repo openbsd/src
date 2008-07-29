@@ -1006,11 +1006,9 @@ static int mach64_do_dma_init(struct drm_device * dev, drm_mach64_init_t * init)
 
 	DRM_DEBUG("\n");
 
-	dev_priv = drm_alloc(sizeof(drm_mach64_private_t), DRM_MEM_DRIVER);
+	dev_priv = drm_calloc(1, sizeof(drm_mach64_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
 		return -ENOMEM;
-
-	memset(dev_priv, 0, sizeof(drm_mach64_private_t));
 
 	dev_priv->is_pci = init->is_pci;
 
@@ -1477,10 +1475,9 @@ int mach64_init_freelist(struct drm_device * dev)
 	for (i = 0; i < dma->buf_count; i++) {
 		if ((entry =
 		     (drm_mach64_freelist_t *)
-		     drm_alloc(sizeof(drm_mach64_freelist_t),
+		     drm_calloc(1, sizeof(drm_mach64_freelist_t),
 			       DRM_MEM_BUFLISTS)) == NULL)
 			return -ENOMEM;
-		memset(entry, 0, sizeof(drm_mach64_freelist_t));
 		entry->buf = dma->buflist[i];
 		ptr = &entry->list;
 		list_add_tail(ptr, &dev_priv->free_list);

@@ -42,7 +42,7 @@ int
 drm_dma_setup(struct drm_device *dev)
 {
 
-	dev->dma = malloc(sizeof(*dev->dma), M_DRM, M_NOWAIT | M_ZERO);
+	dev->dma = drm_calloc(1, sizeof(*dev->dma), DRM_MEM_DRIVER);
 	if (dev->dma == NULL)
 		return ENOMEM;
 
@@ -90,7 +90,7 @@ drm_dma_takedown(struct drm_device *dev)
 	if (dma->pagelist)
 		free(dma->pagelist, M_DRM);
 	if (dev->dma)
-		free(dev->dma, M_DRM);
+		drm_free(dev->dma, sizeof(*dev->dma), DRM_MEM_DMA);
 	dev->dma = NULL;
 	DRM_SPINUNINIT(&dev->dma_lock);
 }

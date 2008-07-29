@@ -987,7 +987,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 	 * for locking on FreeBSD.
 	 */
 	if (cmdbuf->size) {
-		kcmd_addr = drm_alloc(cmdbuf->size * 8, DRM_MEM_DRIVER);
+		kcmd_addr = drm_calloc(cmdbuf->size, 8, DRM_MEM_DRIVER);
 		if (kcmd_addr == NULL)
 			return -ENOMEM;
 
@@ -1014,9 +1014,8 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 		cmdbuf->vb_addr = kvb_addr;
 	}
 	if (cmdbuf->nbox) {
-		kbox_addr = drm_alloc(cmdbuf->nbox *
-				      sizeof(struct drm_clip_rect),
-				      DRM_MEM_DRIVER);
+		kbox_addr = drm_calloc(cmdbuf->nbox, 
+		    sizeof(struct drm_clip_rect), DRM_MEM_DRIVER);
 		if (kbox_addr == NULL) {
 			ret = -ENOMEM;
 			goto done;
