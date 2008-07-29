@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.34 2008/07/25 21:11:15 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.35 2008/07/29 18:40:23 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -178,6 +178,8 @@ sio_bridge_callback(self)
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_iot = sc->sc_iot;
 		sa.sa_eba.eba_memt = sc->sc_memt;
+		sa.sa_eba.eba_dmat =
+		    alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_EISA);
 		sa.sa_eba.eba_ec = &ec;
 		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
