@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.8 2008/07/05 20:59:42 sobrado Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.9 2008/07/29 18:25:28 sobrado Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.8 2008/07/05 20:59:42 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.9 2008/07/29 18:25:28 sobrado Exp $";
 #endif /* not lint */
 
 /*
@@ -63,23 +63,22 @@ static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.8 2008/07/05 20:59:42 sobr
 
 void encode(void);
 void base64_encode(void);
-static void usage(int);
+static void usage(void);
 
 FILE *output;
 int mode;
 char **av;
 
-/*
- * program modes
- */
-#define MODE_ENCODE	0
-#define MODE_B64ENCODE	1
+enum program_mode {
+	MODE_ENCODE,
+	MODE_B64ENCODE
+} pmode;
 
 int
 main(int argc, char *argv[])
 {
 	struct stat sb;
-	int base64, ch, mode;
+	int base64, ch;
 	char *outfile;
 	extern char *__progname;
 	static const char *optstr[2] = {
@@ -87,16 +86,17 @@ main(int argc, char *argv[])
 		"o:"
 	};
 
-	base64 = mode = 0;
+	base64 = 0;
 	outfile = NULL;
 
+	pmode = MODE_ENCODE;
 	if (strcmp(__progname, "b64encode") == 0) {
 		base64 = 1;
-		mode = MODE_B64ENCODE;
+		pmode = MODE_B64ENCODE;
 	}
 
 	setlocale(LC_ALL, "");
-	while ((ch = getopt(argc, argv, optstr[mode])) != -1) {
+	while ((ch = getopt(argc, argv, optstr[pmode])) != -1) {
 		switch (ch) {
 		case 'm':
 			base64 = 1;
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			usage(mode);
+			usage();
 		}
 	}
 	argv += optind;
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 		break;
 	case 0:
 	default:
-		usage(mode);
+		usage();
 	}
 
 	av = argv;
@@ -227,9 +227,9 @@ encode(void)
 }
 
 static void
-usage(int mode)
+usage(void)
 {
-	switch (mode) {
+	switch (pmode) {
 	case MODE_ENCODE:
 		(void)fprintf(stderr,
 		    "usage: uuencode [-m] [-o output_file] [file] name\n");
