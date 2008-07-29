@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.62 2008/07/20 21:57:51 djm Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.63 2008/07/29 01:18:02 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -28,7 +28,7 @@ struct sr_uuid {
 
 #define SR_META_SIZE		64	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
-#define SR_META_VERSION		2	/* bump when sr_metadata changes */
+#define SR_META_VERSION		3	/* bump when sr_metadata changes */
 struct sr_metadata {
 	struct sr_meta_invariant {
 		/* do not change order of ssd_magic, ssd_version */
@@ -43,7 +43,7 @@ struct sr_metadata {
 		u_int32_t	ssd_chunk_id;	/* chunk identifier */
 
 		/* optional */
-		u_int32_t	ssd_opt_no;	/* nr of optional md * elements */
+		u_int32_t	ssd_opt_no;	/* nr of optional md elements */
 		u_int32_t	ssd_pad;
 
 		/* volume metadata */
@@ -64,6 +64,7 @@ struct sr_metadata {
 #define	SR_META_DIRTY		0x1
 	u_int32_t		ssd_pad;
 	u_int64_t		ssd_ondisk;	/* on disk version counter */
+	int64_t			ssd_rebuild;	/* last block of rebuild */
 } __packed;
 
 struct sr_meta_chunk {
