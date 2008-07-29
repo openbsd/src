@@ -3147,6 +3147,8 @@ static int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_fil
 		dev_priv->new_memmap = sp->value;
 		break;
 	case RADEON_SETPARAM_PCIGART_TABLE_SIZE:
+		if (sp->value < 0)
+			return -EINVAL;
 		dev_priv->gart_info.table_size = sp->value;
 		if (dev_priv->gart_info.table_size < RADEON_PCIGART_TABLE_SIZE)
 			dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;

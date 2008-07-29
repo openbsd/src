@@ -554,8 +554,8 @@ static int i915_dispatch_cmdbuffer(struct drm_device * dev,
 	int nbox = cmd->num_cliprects;
 	int i = 0, count, ret;
 
-	if (cmd->sz & 0x3) {
-		DRM_ERROR("alignment\n");
+	if (cmd->sz <= 0 || (cmd->sz & 0x3) != 0) {
+		DRM_ERROR("negative value or incorrect alignment\n");
 		return -EINVAL;
 	}
 
@@ -746,6 +746,9 @@ static int i915_batchbuffer(struct drm_device *dev, void *data,
 	DRM_DEBUG("i915 batchbuffer, start %x used %d cliprects %d\n",
 		  batch->start, batch->used, batch->num_cliprects);
 
+	if (batch->num_cliprects < 0)
+		return -EINVAL;
+
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (batch->num_cliprects && DRM_VERIFYAREA_READ(batch->cliprects,
@@ -770,6 +773,9 @@ static int i915_cmdbuffer(struct drm_device *dev, void *data,
 
 	DRM_DEBUG("i915 cmdbuffer, buf %p sz %d cliprects %d\n",
 		  cmdbuf->buf, cmdbuf->sz, cmdbuf->num_cliprects);
+
+	if (cmdbuf->num_cliprects < 0)
+		return -EINVAL;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
