@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fpclassify.3,v 1.1 2008/07/29 18:19:17 martynas Exp $
+.\"	$OpenBSD: fpclassify.3,v 1.2 2008/07/29 20:11:45 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm isnan ,
 .Nm isnormal ,
 .Nm signbit
-.Nd "classify a floating-point number"
+.Nd classify a floating-point number
 .Sh SYNOPSIS
 .In math.h
 .Ft int
@@ -56,8 +56,9 @@ The
 .Fn fpclassify
 macro takes an argument of
 .Fa x
-and returns one of the following manifest constants.
-.Bl -tag -width ".Dv FP_SUBNORMAL"
+and returns one of the following manifest constants:
+.Pp
+.Bl -tag -width "FP_SUBNORMALXXX" -offset indent -compact
 .It Dv FP_INFINITE
 Indicates that
 .Fa x
