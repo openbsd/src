@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.64 2008/07/26 11:42:43 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.65 2008/07/29 13:45:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1421,7 +1421,8 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
 	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
-	int header_len, header_flags, fragment_len;
+	uint8_t header_len, header_flags;
+	int fragment_len;
 
 	if (frame_size < 2)
 		/* frame too small to contain a valid stream header */
