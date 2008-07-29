@@ -6,7 +6,6 @@
  */
 
 /*
-
  * Copyright 2002 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *

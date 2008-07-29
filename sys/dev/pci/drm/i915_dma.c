@@ -1042,6 +1042,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
 	intel_init_chipset_flush_compat(dev);
 #endif
+	intel_opregion_init(dev);
 #endif
 
 	return ret;
@@ -1053,6 +1054,10 @@ int i915_driver_unload(struct drm_device *dev)
 
 	if (dev_priv->mmio_map)
 		drm_rmmap(dev, dev_priv->mmio_map);
+
+#ifdef __linux__
+	intel_opregion_free(dev);
+#endif
 
 	drm_free(dev->dev_private, sizeof(drm_i915_private_t),
 		 DRM_MEM_DRIVER);

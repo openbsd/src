@@ -254,35 +254,27 @@ static int radeon_wait_irq(struct drm_device * dev, int swi_nr)
 u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	u32 crtc_cnt_reg, crtc_status_reg;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
 
+	if (crtc < 0 || crtc > 1) {
+		DRM_ERROR("Invalid crtc %d\n", crtc);
+		return -EINVAL;
+	}
+
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690) {
-		if (crtc == 0) {
-			crtc_cnt_reg = R500_D1CRTC_FRAME_COUNT;
-			crtc_status_reg = R500_D1CRTC_STATUS;
-		} else if (crtc == 1) {
-			crtc_cnt_reg = R500_D2CRTC_FRAME_COUNT;
-			crtc_status_reg = R500_D2CRTC_STATUS;
-		} else
-			return -EINVAL;
-		return RADEON_READ(crtc_cnt_reg) + (RADEON_READ(crtc_status_reg) & 1);
-			
+		if (crtc == 0)
+			return RADEON_READ(R500_D1CRTC_FRAME_COUNT);
+		else
+			return RADEON_READ(R500_D2CRTC_FRAME_COUNT);
 	} else {
-		if (crtc == 0) {
-			crtc_cnt_reg = RADEON_CRTC_CRNT_FRAME;
-			crtc_status_reg = RADEON_CRTC_STATUS;
-		} else if (crtc == 1) {
-			crtc_cnt_reg = RADEON_CRTC2_CRNT_FRAME;
-			crtc_status_reg = RADEON_CRTC2_STATUS;
-		} else {
-			return -EINVAL;
-		}
-		return RADEON_READ(crtc_cnt_reg) + (RADEON_READ(crtc_status_reg) & 1);
+		if (crtc == 0)
+			return RADEON_READ(RADEON_CRTC_CRNT_FRAME);
+		else
+			return RADEON_READ(RADEON_CRTC2_CRNT_FRAME);
 	}
 }
 
@@ -382,27 +374,8 @@ void radeon_driver_irq_uninstall(struct drm_device * dev)
 int radeon_vblank_crtc_get(struct drm_device *dev)
 {
 	drm_radeon_private_t *dev_priv = (drm_radeon_private_t *) dev->dev_private;
-	u32 flag;
-	u32 value;
 
-	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690) {
-		flag = RADEON_READ(R500_DxMODE_INT_MASK);
-		value = 0;
-		if (flag & R500_D1MODE_INT_MASK)
-			value |= DRM_RADEON_VBLANK_CRTC1;
-
-		if (flag & R500_D2MODE_INT_MASK)
-			value |= DRM_RADEON_VBLANK_CRTC2;
-	} else {
-		flag = RADEON_READ(RADEON_GEN_INT_CNTL);
-		value = 0;
-		if (flag & RADEON_CRTC_VBLANK_MASK)
-			value |= DRM_RADEON_VBLANK_CRTC1;
-
-		if (flag & RADEON_CRTC2_VBLANK_MASK)
-			value |= DRM_RADEON_VBLANK_CRTC2;
-	}
-	return value;
+	return dev_priv->vblank_crtc;
 }
 
 int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value)

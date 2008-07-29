@@ -678,6 +678,7 @@ struct drm_device {
 	int		  last_context;	/* Last current context		   */
 
 	/* VBLANK support */
+	int		 vblank_disable_allowed;
 	int		*vbl_queue;	/* vbl wait channel */
 	atomic_t	*_vblank_count;	/* no vblank interrupts */
 	DRM_SPINTYPE	vbl_lock;	/* locking for vblank operations */
@@ -688,8 +689,7 @@ struct drm_device {
 	atomic_t	*vblank_refcount; /* no. users for vlank interrupts */
 	u_int32_t	*last_vblank;	/* locked, used for overflow handling*/
 	int		*vblank_enabled; /* make sure we only disable once */
-	u_int32_t	*vblank_premodeset; /* compensation for wraparounds */
-	int		*vblank_suspend; /* Don't wait while crtc is disabled */
+	int		*vblank_inmodeset; /* X DDX is currently setting mode */
 	struct timeout	vblank_disable_timer;
 	int		num_crtcs;	/* number of crtcs on device */
 
@@ -796,7 +796,6 @@ void	drm_vbl_send_signals(struct drm_device *, int);
 void	drm_vblank_cleanup(struct drm_device *);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);
-void	drm_update_vblank_count(struct drm_device *, int);
 int	drm_vblank_get(struct drm_device *, int);
 void	drm_vblank_put(struct drm_device *, int);
 int	drm_modeset_ctl(struct drm_device *, void *, struct drm_file *);
@@ -924,6 +923,7 @@ int		 drm_memrange_add_space_to_tail(struct drm_memrange *,
 		     unsigned long );
 
 /* Inline replacements for DRM_IOREMAP macros */
+#define drm_core_ioremap_wc drm_core_ioremap
 static __inline__ void drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	map->handle = drm_ioremap(dev, map);

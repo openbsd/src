@@ -305,8 +305,9 @@ static __inline__ int radeon_check_and_fixup_packet3(drm_radeon_private_t *
 	case RADEON_CP_3D_DRAW_INDX_2:
 	case RADEON_3D_CLEAR_HIZ:
 		/* safe but r200 only */
-		if (dev_priv->microcode_version != UCODE_R200) {
-			DRM_ERROR("Invalid 3d packet for r100-class chip\n");
+		if ((dev_priv->chip_family < CHIP_R200) ||
+		    (dev_priv->chip_family > CHIP_RV280)) {
+			DRM_ERROR("Invalid 3d packet for non r200-class chip\n");
 			return -EINVAL;
 		}
 		break;
@@ -359,8 +360,8 @@ static __inline__ int radeon_check_and_fixup_packet3(drm_radeon_private_t *
 		break;
 
 	case RADEON_3D_RNDR_GEN_INDX_PRIM:
-		if (dev_priv->microcode_version != UCODE_R100) {
-			DRM_ERROR("Invalid 3d packet for r200-class chip\n");
+		if (dev_priv->chip_family > CHIP_RS200) {
+			DRM_ERROR("Invalid 3d packet for non-r100-class chip\n");
 			return -EINVAL;
 		}
 		if (radeon_check_and_fixup_offset(dev_priv, file_priv, &cmd[1])) {
@@ -370,8 +371,10 @@ static __inline__ int radeon_check_and_fixup_packet3(drm_radeon_private_t *
 		break;
 
 	case RADEON_CP_INDX_BUFFER:
-		if (dev_priv->microcode_version != UCODE_R200) {
-			DRM_ERROR("Invalid 3d packet for r100-class chip\n");
+		/* safe but r200 only */
+		if ((dev_priv->chip_family < CHIP_R200) ||
+		    (dev_priv->chip_family > CHIP_RV280)) {
+			DRM_ERROR("Invalid 3d packet for non-r200-class chip\n");
 			return -EINVAL;
 		}
 		if ((cmd[1] & 0x8000ffff) != 0x80000810) {
@@ -1015,7 +1018,7 @@ static void radeon_cp_dispatch_clear(struct drm_device * dev,
 			int tileoffset, nrtilesx, nrtilesy, j;
 			/* it looks like r200 needs rv-style clears, at least if hierz is not enabled? */
 			if ((dev_priv->flags & RADEON_HAS_HIERZ)
-			    && !(dev_priv->microcode_version == UCODE_R200)) {
+			    && (dev_priv->chip_family < CHIP_R200)) {
 				/* FIXME : figure this out for r200 (when hierz is enabled). Or
 				   maybe r200 actually doesn't need to put the low-res z value into
 				   the tile cache like r100, but just needs to clear the hi-level z-buffer?
@@ -1044,7 +1047,8 @@ static void radeon_cp_dispatch_clear(struct drm_device * dev,
 					ADVANCE_RING();
 					tileoffset += depthpixperline >> 6;
 				}
-			} else if (dev_priv->microcode_version == UCODE_R200) {
+			} else if ((dev_priv->chip_family >= CHIP_R200) &&
+				   (dev_priv->chip_family <= CHIP_RV280)) {
 				/* works for rv250. */
 				/* find first macro tile (8x2 4x4 z-pixels on rv250) */
 				tileoffset =
@@ -1099,7 +1103,8 @@ static void radeon_cp_dispatch_clear(struct drm_device * dev,
 
 		/* TODO don't always clear all hi-level z tiles */
 		if ((dev_priv->flags & RADEON_HAS_HIERZ)
-		    && (dev_priv->microcode_version == UCODE_R200)
+		    && ((dev_priv->chip_family >= CHIP_R200) &&
+			(dev_priv->chip_family <= CHIP_RV280))
 		    && (flags & RADEON_USE_HIERZ))
 			/* r100 and cards without hierarchical z-buffer have no high-level z-buffer */
 			/* FIXME : the mask supposedly contains low-res z values. So can't set
@@ -1119,8 +1124,9 @@ static void radeon_cp_dispatch_clear(struct drm_device * dev,
 	 * rendering a quad into just those buffers.  Thus, we have to
 	 * make sure the 3D engine is configured correctly.
 	 */
-	else if ((dev_priv->microcode_version == UCODE_R200) &&
-		(flags & (RADEON_DEPTH | RADEON_STENCIL))) {
+	else if ((dev_priv->chip_family >= CHIP_R200) &&
+		 (dev_priv->chip_family <= CHIP_RV280) &&
+		 (flags & (RADEON_DEPTH | RADEON_STENCIL))) {
 
 		int tempPP_CNTL;
 		int tempRE_CNTL;
@@ -2889,7 +2895,7 @@ static int radeon_cp_cmdbuf(struct drm_device *dev, void *data, struct drm_file 
 
 	orig_nbox = cmdbuf->nbox;
 
-	if (dev_priv->microcode_version == UCODE_R300) {
+	if (dev_priv->chip_family >= CHIP_R300) {
 		int temp;
 		temp = r300_do_cp_cmdbuf(dev, file_priv, cmdbuf);
 
