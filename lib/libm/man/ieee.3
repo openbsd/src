@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee.3,v 1.14 2008/06/11 14:50:06 martynas Exp $
+.\"	$OpenBSD: ieee.3,v 1.15 2008/07/29 18:38:21 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,14 +28,12 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: June 11 2008 $
+.Dd $Mdocdate: July 29 2008 $
 .Dt IEEE 3
 .Os
 .Sh NAME
 .Nm copysign ,
 .Nm copysignf ,
-.Nm finite ,
-.Nm finitef ,
 .Nm ilogb ,
 .Nm ilogbf ,
 .Nm nextafter ,
@@ -51,10 +49,6 @@
 .Fn copysign "double x" "double y"
 .Ft float
 .Fn copysignf "float x" "float y"
-.Ft int
-.Fn finite "double x"
-.Ft int
-.Fn finitef "float x"
 .Ft int
 .Fn ilogb "double x"
 .Ft int
@@ -84,23 +78,6 @@ The
 .Fn copysignf
 function is a single precision version of
 .Fn copysign .
-.Pp
-.Fn finite
-returns the value 1 just when
-\-\*(If \*(Lt
-.Fa x
-\*(Lt +\*(If;
-otherwise a
-zero is returned
-(when
-.Pf \\*(Ba Ns Fa x Ns \\*(Ba
-= \*(If or
-.Fa x
-is \*(Na).
-The
-.Fn finitef
-function is a single precision version of
-.Fn finite .
 .Pp
 .Fn ilogb
 returns
@@ -197,10 +174,3 @@ The
 .Nm ieee
 functions appeared in
 .Bx 4.3 .
-.Sh BUGS
-.Tn VAX
-floating point does not have distinguished values
-for either infinity or not-a-number.
-The
-.Fn finite
-function always returns 1 on that architecture.
