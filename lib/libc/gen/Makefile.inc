@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.42 2008/07/24 09:31:07 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.43 2008/07/29 18:19:17 martynas Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -47,19 +47,19 @@ errlst.o errlst.po:
 
 MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
-	exec.3 fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 ftw.3 getbsize.3 \
-	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
-	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 getmntinfo.3 \
-	getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 getttyent.3 \
-	getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 isascii.3 \
-	isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 isinf.3 islower.3 \
-	isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
-	login_cap.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pw_dup.3 \
-	pwcache.3 raise.3 readpassphrase.3 scandir.3 setjmp.3 setmode.3 \
-	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 statvfs.3 \
-	sysconf.3 sysctl.3 strtofflags.3 syslog.3 time.3 times.3 timezone.3 \
-	toascii.3 tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
-	usleep.3 utime.3 valloc.3 vis.3
+	exec.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 ftw.3 \
+	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
+	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
+	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
+	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 \
+	isascii.3 isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 \
+	isgreater.3 islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 \
+	isxdigit.3 ldexp.3 lockf.3 login_cap.3 modf.3 nice.3 nlist.3 pause.3 \
+	popen.3 psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
+	scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 signal.3 \
+	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
+	syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 \
+	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=auth_subr.3 auth_open.3 auth_subr.3 auth_call.3 auth_subr.3 \
 	auth_challenge.3 auth_subr.3 auth_check_change.3 auth_subr.3 \
@@ -83,13 +83,15 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3
+MLINKS+=fpclassify.3 finite.3 fpclassify.3 finitef.3 fpclassify.3 isfinite.3 \
+	fpclassify.3 isinf.3 fpclassify.3 isinff.3 fpclassify.3 isnan.3 \
+	fpclassify.3 isnanf.3 fpclassify.3 isnormal.3 fpclassify.3 signbit.3
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3 fpgetmask.3 fpsetround.3 \
 	fpgetmask.3 fpsetsticky.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3
 MLINKS+=ftw.3 nftw.3
-MLINKS+=isinf.3 isnan.3 isinf.3 isnanf.3 isinf.3 isinff.3
 MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
 	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
@@ -110,6 +112,8 @@ MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
+MLINKS+=isgreater.3 isgreaterequal.3 isgreater.3 isless.3 isgreater.3 \
+	islessequal.3 isgreater.3 islessgreater.3 isgreater.3 isunordered.3
 MLINKS+=login_cap.3 login_getclass.3 login_cap.3 login_getstyle.3 login_cap.3 \
 	login_getcapbool.3 login_cap.3 login_getcapnum.3 login_cap.3 \
 	login_getcapsize.3 login_cap.3 login_getcapstr.3 login_cap.3 \
