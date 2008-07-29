@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.40 2008/04/17 14:01:22 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.41 2008/07/29 17:03:35 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: April 17 2008 $
+.Dd $Mdocdate: July 29 2008 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -121,16 +121,14 @@ capture packets from networks which it wouldn't normally have access to,
 or to scan for access points.
 .El
 .Pp
+The
 .Nm
-supports hardware WEP.
-Wired Equivalent Privacy (WEP) is the de facto encryption standard
-for wireless networks.
-It can be typically configured in one of three modes:
-no encryption; 40-bit encryption; or 104-bit encryption.
-Unfortunately, due to serious weaknesses in WEP protocol
-it is strongly recommended that it not be used as the
-sole mechanism to secure wireless communication.
-WEP is not enabled by default.
+driver can be configured to use hardware
+Wireless Equivalent Privacy (WEP).
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
 .Pp
 AR5211 and AR5212 support the AES, TKIP, and Michael cryptographic
 operations required for WPA but at this time the driver does not support them.
