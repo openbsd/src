@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.51 2008/07/29 21:57:13 martynas Exp $
+#  $OpenBSD: Makefile,v 1.52 2008/07/29 22:08:43 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -166,21 +166,21 @@ SRCS=	${COMMON_SRCS}
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	logb.3 j0.3 lgamma.3 lrint.3 lround.3 math.3 rint.3 round.3 \
-	sin.3 sinh.3 sqrt.3 tan.3 tanh.3 trunc.3
+	logb.3 j0.3 lgamma.3 lrint.3 lround.3 math.3 nan.3 remainder.3 \
+	rint.3 round.3 sin.3 sinh.3 sqrt.3 tan.3 tanh.3 trunc.3
 
 MLINKS+=erf.3 erfc.3
 MLINKS+=exp.3 exp2.3 exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 \
 	exp.3 pow.3
 MLINKS+=hypot.3 cabs.3
-MLINKS+=ieee.3 copysign.3 ieee.3 drem.3 ieee.3 ilogb.3 ieee.3 nextafter.3 \
-	ieee.3 remainder.3 ieee.3 scalbn.3
+MLINKS+=ieee.3 copysign.3 ieee.3 ilogb.3 ieee.3 nextafter.3 ieee.3 scalbn.3
 MLINKS+=logb.3 scalb.3
 MLINKS+=logb.3 significand.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3 lgamma.3 tgamma.3
 MLINKS+=lrint.3 llrint.3
 MLINKS+=lround.3 llround.3
+MLINKS+=remainder.3 drem.3 remainder.3 remquo.3
 MLINKS+=sqrt.3 cbrt.3
 
 # float versions
@@ -209,11 +209,9 @@ MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 cabsf.3
 MLINKS+=hypot.3 hypotf.3
 MLINKS+=ieee.3 copysignf.3
-MLINKS+=ieee.3 dremf.3
 MLINKS+=ieee.3 ieeef.3
 MLINKS+=ieee.3 ilogbf.3
 MLINKS+=ieee.3 nextafterf.3
-MLINKS+=ieee.3 remainderf.3
 MLINKS+=ieee.3 scalbnf.3
 MLINKS+=j0.3 j0f.3
 MLINKS+=j0.3 j1f.3
@@ -232,6 +230,9 @@ MLINKS+=lrint.3 llrintf.3
 MLINKS+=lround.3 lroundf.3
 MLINKS+=lround.3 llroundf.3
 MLINKS+=math.3 mathf.3
+MLINKS+=nan.3 nanf.3
+MLINKS+=remainder.3 dremf.3
+MLINKS+=remainder.3 remainderf.3
 MLINKS+=rint.3 rintf.3
 MLINKS+=round.3 roundf.3
 MLINKS+=sin.3 sinf.3
