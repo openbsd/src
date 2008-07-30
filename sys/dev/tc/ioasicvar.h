@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasicvar.h,v 1.7 2004/06/28 02:28:43 aaron Exp $	*/
+/*	$OpenBSD: ioasicvar.h,v 1.8 2008/07/30 22:02:09 miod Exp $	*/
 /*	$NetBSD: ioasicvar.h,v 1.14 2000/10/17 09:45:49 nisimura Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ struct ioasic_dev {
 };
 
 struct ioasicdev_attach_args {
-	char	iada_modname[TC_ROM_LLEN];
+	char	iada_modname[TC_ROM_LLEN + 1];
 	tc_offset_t iada_offset;
 	tc_addr_t iada_addr;
 	void	*iada_cookie;
