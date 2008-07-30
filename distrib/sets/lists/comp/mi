@@ -5057,6 +5057,7 @@
 ./usr/share/man/cat3/remove.0
 ./usr/share/man/cat3/remque.0
 ./usr/share/man/cat3/remquo.0
+./usr/share/man/cat3/remquof.0
 ./usr/share/man/cat3/replace_panel.0
 ./usr/share/man/cat3/request_init.0
 ./usr/share/man/cat3/request_set.0
