@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.18 2007/04/22 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.19 2008/07/30 18:08:03 miod Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -350,8 +350,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	mesh_reset(sc);
 	mesh_bus_reset(sc);
 
-	printf(" irq %d: %dMHz, SCSI ID %d\n",
-	    sc->sc_irq, sc->sc_freq, sc->sc_id);
+	printf(" irq %d: %dMHz\n", sc->sc_irq, sc->sc_freq);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;

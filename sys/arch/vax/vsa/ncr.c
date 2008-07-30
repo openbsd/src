@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.23 2008/06/26 05:42:14 ray Exp $ */
+/* $OpenBSD: ncr.c,v 1.24 2008/07/30 18:08:04 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -173,6 +173,8 @@ si_attach(parent, self, aux)
 	struct scsibus_attach_args saa;
 	int tweak, target;
 
+	printf("\n");
+
 	/* enable interrupts on vsbus too */
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 	    SCB_ISTACK, &sc->ncr_intrcnt);
@@ -240,8 +242,6 @@ si_attach(parent, self, aux)
 		target = 7;
 	else
 		target = (clk_page[0xbc/2] >> tweak) & 7;
-
-	printf(": SCSI ID %d\n", target);
 
 	ncr_sc->sc_link.adapter_softc =	sc;
 	ncr_sc->sc_link.adapter_target = target;

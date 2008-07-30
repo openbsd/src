@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.14 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.15 2008/07/30 18:08:03 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -115,6 +115,8 @@ wdscattach(parent, self, aux)
 	struct scsibus_attach_args saa;
 	int tmp;
 
+	printf("\n");
+
 	sc->sc_enintr  = wdsc_enintr;
 	sc->sc_dmago   = wdsc_dmago;
 	sc->sc_dmanext = wdsc_dmanext;
@@ -126,8 +128,6 @@ wdscattach(parent, self, aux)
 	sc->sc_link.adapter        = &wdsc_scsiswitch;
 	sc->sc_link.device         = &wdsc_scsidev;
 	sc->sc_link.openings       = 2;
-
-	printf(": SCSI ID %d\n", sc->sc_link.adapter_target);
 
 	sc->sc_sbicp = (sbic_regmap_p)ca->ca_vaddr;
 

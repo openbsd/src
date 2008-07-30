@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.70 2008/01/05 00:34:07 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.71 2008/07/30 18:08:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -224,16 +224,16 @@ vsattach(struct device *parent, struct device *self, void *args)
 		if (bus != 0)
 			sc_link->flags = SDEV_2NDBUS;
 
-		printf("%s: channel %d, ", sc->sc_dev.dv_xname, bus);
+		printf("%s: channel %d", sc->sc_dev.dv_xname, bus);
 		switch (vc->vc_type) {
 		case VCT_SE:
-			printf("single-ended, ");
+			printf(", single-ended");
 			break;
 		case VCT_DIFFERENTIAL:
-			printf("differential, ");
+			printf(", differential");
 			break;
 		}
-		printf("SCSI ID %d\n", vc->vc_id);
+		printf("\n");
 
 		if (vc->vc_width == 0) {
 			printf("%s: daughterboard disabled, "

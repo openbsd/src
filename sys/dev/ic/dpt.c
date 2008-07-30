@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.15 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.16 2008/07/30 18:08:04 miod Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -364,12 +364,8 @@ dpt_init(sc, intrstr)
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname, intrstr);
 
-	printf("%s: %d queued commands, %d channel(s), adapter on ID(s)", 
+	printf("%s: %d queued commands, %d channel(s)\n", 
 	    sc->sc_dv.dv_xname, sc->sc_nccbs, ec->ec_maxchannel + 1);
-
-	for (i = 0; i <= ec->ec_maxchannel; i++)
-		printf(" %d", ec->ec_hba[3 - i]);
-	printf("\n");
 
 	/* Reset the SCSI bus */
 	if (dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_BUS_RESET))

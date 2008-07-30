@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.24 2008/06/22 15:18:23 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.25 2008/07/30 18:08:03 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -590,7 +590,7 @@ vs_initialize(sc)
 	vs_reset(sc);
 	/* sync all devices */
 	vs_resync(sc);
-	printf(": target %d\n", sc->sc_link.adapter_target);
+	printf("\n");
 }
 
 void
