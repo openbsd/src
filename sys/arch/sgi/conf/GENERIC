@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2008/04/07 22:36:26 miod Exp $
+#	$OpenBSD: GENERIC,v 1.30 2008/07/30 17:38:02 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -102,6 +102,9 @@ nsgphy*		at mii?		# NS gigabit PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# "unknown" PHYs
+
+#### Wireless
+wi*		at pci?
 
 #### Audio
 audio*		at mavb?
