@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.15 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.16 2008/07/30 17:32:30 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -332,7 +332,7 @@ mace_pcibr_bus_maxdevs(cpv, busno)
 	void *cpv;
 	int busno;
 {
-	return(16);
+	return 5;
 }
 
 pcireg_t
@@ -392,6 +392,14 @@ int
 mace_pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int bus, device, pirq;
+	static const signed char intrmap[][PCI_INTERRUPT_PIN_MAX] = {
+		{ -1, -1, -1, -1 },
+		{ 9, -1, -1, -1 },	/* ahc0 */
+		{ 10, -1, -1, -1 },	/* ahc1 */
+		{ 11, 14, 15, 16 },	/* slot */
+		{ 12, 16, 14, 15 },	/* no slots... */
+		{ 13, 15, 16, 14 }	/* ... unless you solder them */
+	};
 
 	*ihp = -1;
 
@@ -399,30 +407,21 @@ mace_pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* No IRQ used. */
 		return 1;
 	}
+#ifdef DIAGNOSTIC
 	if (pa->pa_intrpin > 4) {
 		printf("mace_pcibr_intr_map: bad interrupt pin %d\n", pa->pa_intrpin);
 		return 1;
 	}
+#endif
 
-	mace_pcibr_decompose_tag((void *)NULL, pa->pa_tag, &bus, &device, NULL);
+	pci_decompose_tag(pa->pa_pc, pa->pa_intrtag, &bus, &device, NULL);
 
-	if (sys_config.system_type == SGI_O2) {
-		pirq = -1;
-		switch (device) {
-		case 1:
-			pirq = 9;
-			break;
-		case 2:
-			pirq = 10;
-			break;
-		case 3:
-			pirq = 11;
-			break;
-		}
-	}
+	pirq = -1;
+	if ((unsigned int)device < sizeof(intrmap) / PCI_INTERRUPT_PIN_MAX)
+		pirq = intrmap[device][pa->pa_intrpin - PCI_INTERRUPT_PIN_A];
 
 	*ihp = pirq;
-	return 0;
+	return pirq >= 0 ? 0 : 1;
 }
 
 const char *
