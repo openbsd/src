@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.17 2008/07/29 00:18:25 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.18 2008/07/30 16:47:09 brad Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -213,9 +213,9 @@ ath_pci_detach(struct device *self, int flags)
 		psc->sc_sdhook = NULL;
 	}
 
-	if (sc->sc_sh != 0) {
+	if (sc->sc_ss != 0) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
-		sc->sc_sh = 0;
+		sc->sc_ss = 0;
 	}
 
 	return (0);
