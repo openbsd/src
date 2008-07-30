@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.52 2008/07/29 22:08:43 martynas Exp $
+#  $OpenBSD: Makefile,v 1.53 2008/07/30 08:02:34 jmc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -233,6 +233,7 @@ MLINKS+=math.3 mathf.3
 MLINKS+=nan.3 nanf.3
 MLINKS+=remainder.3 dremf.3
 MLINKS+=remainder.3 remainderf.3
+MLINKS+=remainder.3 remquof.3
 MLINKS+=rint.3 rintf.3
 MLINKS+=round.3 roundf.3
 MLINKS+=sin.3 sinf.3

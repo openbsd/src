@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remainder.3,v 1.1 2008/07/29 22:08:43 martynas Exp $
+.\"	$OpenBSD: remainder.3,v 1.2 2008/07/30 08:02:35 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\" $FreeBSD: src/lib/msun/man/remainder.3,v 1.6 2008/03/30 20:48:02 das Exp $
 .\"
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: July 30 2008 $
 .Dt REMAINDER 3
 .Os
 .Sh NAME
@@ -39,8 +39,6 @@
 .Nm remquo ,
 .Nm remquof
 .Nd minimal residue functions
-.Sh LIBRARY
-.Lb libm
 .Sh SYNOPSIS
 .In math.h
 .Ft double
@@ -96,7 +94,7 @@ is 0 or
 is \*(Pm\*(If is an invalid operation that produces a \*(Na.
 .Pp
 The
-.Fn remquo ,
+.Fn remquo
 and
 .Fn remquof
 functions also store the last
@@ -134,7 +132,7 @@ are deprecated aliases for
 .Fn remainder
 and
 .Fn remainderf ,
-respectively.   
+respectively.
 .Sh HISTORY
 The
 .Fn remainder
