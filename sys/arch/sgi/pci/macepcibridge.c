@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.16 2008/07/30 17:32:30 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.17 2008/07/30 17:37:46 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -100,6 +100,9 @@ bus_space_t mace_pcibbus_mem_tag = {
 	mace_pcib_read_2, mace_pcib_write_2,
 	mace_pcib_read_4, mace_pcib_write_4,
 	mace_pcib_read_8, mace_pcib_write_8,
+	mace_pcib_read_raw_2, mace_pcib_write_raw_2,
+	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
+	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
 };
 
@@ -112,6 +115,9 @@ bus_space_t mace_pcibbus_io_tag = {
 	mace_pcib_read_2, mace_pcib_write_2,
 	mace_pcib_read_4, mace_pcib_write_4,
 	mace_pcib_read_8, mace_pcib_write_8,
+	mace_pcib_read_raw_2, mace_pcib_write_raw_2,
+	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
+	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
 };
 
@@ -505,6 +511,78 @@ void
 mace_pcib_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
 	*(volatile u_int64_t *)(h + o) = v;
+}
+
+void
+mace_pcib_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int16_t *addr = (volatile u_int16_t *)(h + (o | 2) - (o & 3));
+	len >>= 1;
+	while (len-- != 0) {
+		*(u_int16_t *)buf = letoh16(*addr);
+		buf += 2;
+	}
+}
+
+void
+mace_pcib_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int16_t *addr = (volatile u_int16_t *)(h + (o | 2) - (o & 3));
+	len >>= 1;
+	while (len-- != 0) {
+		*addr = htole16(*(u_int16_t *)buf);
+		buf += 2;
+	}
+}
+
+void
+mace_pcib_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int32_t *addr = (volatile u_int32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(u_int32_t *)buf = letoh32(*addr);
+		buf += 4;
+	}
+}
+
+void
+mace_pcib_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int32_t *addr = (volatile u_int32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = htole32(*(u_int32_t *)buf);
+		buf += 4;
+	}
+}
+
+void
+mace_pcib_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int64_t *addr = (volatile u_int64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(u_int64_t *)buf = letoh64(*addr);
+		buf += 8;
+	}
+}
+
+void
+mace_pcib_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int64_t *addr = (volatile u_int64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = htole64(*(u_int64_t *)buf);
+		buf += 8;
+	}
 }
 
 extern int extent_malloc_flags;

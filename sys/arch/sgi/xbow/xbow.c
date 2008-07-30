@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.1 2008/04/07 22:47:40 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.2 2008/07/30 17:37:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -82,10 +82,21 @@ void	xbow_enumerate(struct device *, int,
 
 uint32_t xbow_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint64_t xbow_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	xbow_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint32_t);
-void	xbow_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint64_t);
+void	xbow_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint32_t);
+void	xbow_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint64_t);
+void	xbow_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	xbow_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	xbow_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+
 int	xbow_space_map_short(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	xbow_space_map_long(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -120,6 +131,12 @@ static const bus_space_t xbowbus_short_tag = {
 	xbow_write_4,
 	xbow_read_8,
 	xbow_write_8,
+	xbow_read_raw_2,
+	xbow_write_raw_2,
+	xbow_read_raw_4,
+	xbow_write_raw_4,
+	xbow_read_raw_8,
+	xbow_write_raw_8,
 	xbow_space_map_short,
 	xbow_space_unmap,
 	xbow_space_region_short
@@ -139,6 +156,12 @@ static const bus_space_t xbowbus_long_tag = {
 	xbow_write_4,
 	xbow_read_8,
 	xbow_write_8,
+	xbow_read_raw_2,
+	xbow_write_raw_2,
+	xbow_read_raw_4,
+	xbow_write_raw_4,
+	xbow_read_raw_8,
+	xbow_write_raw_8,
 	xbow_space_map_long,
 	xbow_space_unmap,
 	xbow_space_region_long
@@ -400,6 +423,72 @@ void
 xbow_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint64_t v)
 {
 	*(volatile uint64_t *)(h + o) = v;
+}
+
+void
+xbow_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 1;
+	while (len-- != 0) {
+		*(uint16_t *)buf = *(volatile uint16_t *)(h + o);
+		buf += 2;
+	}
+}
+
+void
+xbow_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 1;
+	while (len-- != 0) {
+		*(volatile uint16_t *)(h + o) = *(uint16_t *)buf;
+		buf += 2;
+	}
+}
+
+void
+xbow_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = *(volatile uint32_t *)(h + o);
+		buf += 4;
+	}
+}
+
+void
+xbow_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		*(volatile uint32_t *)(h + o) = *(uint32_t *)buf;
+		buf += 4;
+	}
+}
+
+void
+xbow_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 3;
+	while (len-- != 0) {
+		*(uint64_t *)buf = *(volatile uint64_t *)(h + o);
+		buf += 8;
+	}
+}
+
+void
+xbow_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 3;
+	while (len-- != 0) {
+		*(volatile uint64_t *)(h + o) = *(uint64_t *)buf;
+		buf += 8;
+	}
 }
 
 int

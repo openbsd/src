@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.36 2008/04/07 22:34:23 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.37 2008/07/30 17:37:46 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -76,6 +76,19 @@ void mace_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
 void mace_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
 
+void mace_read_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_write_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
+void mace_read_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_write_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
+void mace_read_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_write_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
+
 int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
@@ -104,6 +117,9 @@ bus_space_t macebus_tag = {
 	mace_read_2, mace_write_2,
 	mace_read_4, mace_write_4,
 	mace_read_8, mace_write_8,
+	mace_read_raw_2, mace_write_raw_2,
+	mace_read_raw_4, mace_write_raw_4,
+	mace_read_raw_8, mace_write_raw_8,
 	mace_space_map, mace_space_unmap, mace_space_region,
 	mace_space_vaddr
 };
@@ -117,6 +133,9 @@ bus_space_t crimebus_tag = {
 	mace_read_2, mace_write_2,
 	mace_read_4, mace_write_4,
 	mace_read_8, mace_write_8,
+	mace_read_raw_2, mace_write_raw_2,
+	mace_read_raw_4, mace_write_raw_4,
+	mace_read_raw_8, mace_write_raw_8,
 	mace_space_map, mace_space_unmap, mace_space_region,
 	mace_space_vaddr
 };
@@ -313,6 +332,68 @@ void
 mace_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
 	*(volatile u_int64_t *)(h + o) = v;
+}
+
+void
+mace_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	panic(__func__);
+}
+
+void
+mace_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	panic(__func__);
+}
+
+void
+mace_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int32_t *addr = (volatile u_int32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(u_int32_t *)buf = *addr;
+		buf += 4;
+	}
+}
+
+void
+mace_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int32_t *addr = (volatile u_int32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = *(u_int32_t *)buf;
+		buf += 4;
+	}
+}
+
+void
+mace_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int64_t *addr = (volatile u_int64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(u_int64_t *)buf = *addr;
+		buf += 8;
+	}
+}
+
+void
+mace_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const u_int8_t *buf, bus_size_t len)
+{
+	volatile u_int64_t *addr = (volatile u_int64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = *(u_int64_t *)buf;
+		buf += 8;
+	}
 }
 
 extern int extent_malloc_flags;

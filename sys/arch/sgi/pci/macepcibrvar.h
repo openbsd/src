@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibrvar.h,v 1.3 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: macepcibrvar.h,v 1.4 2008/07/30 17:37:46 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se)
@@ -56,6 +56,19 @@ void mace_pcib_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	u_int32_t);
 void mace_pcib_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	u_int64_t);
+
+void mace_pcib_read_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_pcib_write_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
+void mace_pcib_read_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_pcib_write_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
+void mace_pcib_read_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, u_int8_t *, bus_size_t);
+void mace_pcib_write_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const u_int8_t *, bus_size_t);
 
 int mace_pcib_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);

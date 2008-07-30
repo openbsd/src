@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.2 2008/07/28 18:50:59 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.3 2008/07/30 17:37:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -96,6 +96,18 @@ void	xbridge_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint8_t);
 void	xbridge_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint16_t);
+void	xbow_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	xbow_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	xbow_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbow_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
 
 bus_addr_t xbridge_pa_to_device(paddr_t);
 paddr_t	xbridge_device_to_pa(bus_addr_t);
@@ -192,11 +204,23 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_io_bus_space->_space_read_2 = xbridge_read_2;
 	sc->sc_io_bus_space->_space_write_1 = xbridge_write_1;
 	sc->sc_io_bus_space->_space_write_2 = xbridge_write_2;
+	sc->sc_io_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
+	sc->sc_io_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
+	sc->sc_io_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
+	sc->sc_io_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
+	sc->sc_io_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
+	sc->sc_io_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 
 	sc->sc_mem_bus_space->_space_read_1 = xbridge_read_1;
 	sc->sc_mem_bus_space->_space_read_2 = xbridge_read_2;
 	sc->sc_mem_bus_space->_space_write_1 = xbridge_write_1;
 	sc->sc_mem_bus_space->_space_write_2 = xbridge_write_2;
+	sc->sc_mem_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
+	sc->sc_mem_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
+	sc->sc_mem_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
+	sc->sc_mem_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
+	sc->sc_mem_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
+	sc->sc_mem_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 
 	/*
 	 * Initialize PCI methods.
@@ -586,6 +610,78 @@ xbridge_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     uint16_t v)
 {
 	*(volatile uint16_t *)((h + o) ^ 2) = v;
+}
+
+void
+xbridge_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)((h + o) ^ 2);
+	len >>= 1;
+	while (len-- != 0) {
+		*(uint16_t *)buf = *addr;
+		buf += 2;
+	}
+}
+
+void
+xbridge_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)((h + o) ^ 2);
+	len >>= 1;
+	while (len-- != 0) {
+		*addr = *(uint16_t *)buf;
+		buf += 2;
+	}
+}
+
+void
+xbridge_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = *addr;
+		buf += 4;
+	}
+}
+
+void
+xbridge_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = *(uint32_t *)buf;
+		buf += 4;
+	}
+}
+
+void
+xbridge_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(uint64_t *)buf = *addr;
+		buf += 8;
+	}
+}
+
+void
+xbridge_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = *(uint64_t *)buf;
+		buf += 8;
+	}
 }
 
 /*
