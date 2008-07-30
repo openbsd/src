@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.50 2008/07/29 00:18:25 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.51 2008/07/30 07:15:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -95,6 +95,7 @@ HAL_BOOL	 ar5k_check_channel(struct ath_hal *, u_int16_t, u_int flags);
 
 HAL_BOOL	 ar5k_ar5111_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
 HAL_BOOL	 ar5k_ar5112_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
+HAL_BOOL	 ar5k_arxxxx_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
 u_int		 ar5k_rfregs_op(u_int32_t *, u_int32_t, u_int32_t, u_int32_t,
     u_int32_t, u_int32_t, HAL_BOOL);
 
@@ -118,7 +119,13 @@ static const struct ar5k_gain_opt ar5112_gain_opt = AR5K_AR5112_GAIN_OPT;
 static const struct ar5k_ini_rf ar5111_rf[] = AR5K_AR5111_INI_RF;
 static const struct ar5k_ini_rf ar5112_rf[] = AR5K_AR5112_INI_RF;
 static const struct ar5k_ini_rf ar5112a_rf[] = AR5K_AR5112A_INI_RF;
-static const struct ar5k_ini_rfgain ar5k_rfg[] = AR5K_INI_RFGAIN;
+static const struct ar5k_ini_rf ar5413_rf[] = AR5K_AR5413_INI_RF;
+static const struct ar5k_ini_rf ar2413_rf[] = AR5K_AR2413_INI_RF;
+static const struct ar5k_ini_rf ar2425_rf[] = AR5K_AR2425_INI_RF;
+static const struct ar5k_ini_rfgain ar5111_rfg[] = AR5K_AR5111_INI_RFGAIN;
+static const struct ar5k_ini_rfgain ar5112_rfg[] = AR5K_AR5112_INI_RFGAIN;
+static const struct ar5k_ini_rfgain ar5413_rfg[] = AR5K_AR5413_INI_RFGAIN;
+static const struct ar5k_ini_rfgain ar2413_rfg[] = AR5K_AR2413_INI_RFGAIN;
 
 /*
  * Enable to overwrite the country code (use "00" for debug)
@@ -261,13 +268,6 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 		ar5k_rt_copy(&hal->ah_rt_11a, &ar5k_rt_11a);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B) {
 		ar5k_rt_copy(&hal->ah_rt_11b, &ar5k_rt_11b);
-		/*
-		 * XXX Workaround for AR24xx/AR54xx and newer chipsets
-		 * XXX to limit 11b operation to 1-2Mbit/s. This
-		 * XXX needs to be fixed but allows basic operation for now.
-		 */
-		if (hal->ah_pci_express == AH_TRUE)
-			hal->ah_rt_11b.rateCount = 2;
 	} if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
 		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_TURBO)
@@ -290,6 +290,8 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 		hal->ah_gain.g_low = 20;
 		hal->ah_gain.g_high = 85;
 		hal->ah_gain.g_active = 1;
+	} else {
+		/* XXX not needed for newer chipsets? */
 	}
 
 	*status = HAL_OK;
@@ -1257,20 +1259,6 @@ ar5k_ar5112_channel(struct ath_hal *hal, HAL_CHANNEL *channel)
 	 * Set the channel on the AR5112 or newer
 	 */
 	if (c < 4800) {
-		/*
-		 * XXX Workaround for AR24xx/AR54xx and newer chipsets to
-		 * XXX set the 2GHz channels correctly.
-		 * XXX This needs to be replaced with a true algorithm
-		 * XXX after figuring out how to calculate the Atheros
-		 * XXX channel for these chipsets.
-		 */
-		if (hal->ah_pci_express == AH_TRUE) {
-			c += c < 2427 ? -45 :		/* channel 1-3 */
-			    (c < 2447 ? -40 :		/* channel 4-7 */
-			    (c < 2462 ? -35 :		/* channel 8-10 */
-			    (c < 2477 ? -30 : -25)));	/* channel 11-13 */
-		}
-
 		if (!((c - 2224) % 5)) {
 			data0 = ((2 * (c - 704)) - 3040) / 10;
 			data1 = 1;
@@ -1491,17 +1479,33 @@ ar5k_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 	ar5k_rfgain_t *func = NULL;
 	HAL_BOOL ret;
 
-	if (hal->ah_radio == AR5K_AR5111) {
+	switch (hal->ah_radio) {
+	case AR5K_AR5111:
 		hal->ah_rf_banks_size = sizeof(ar5111_rf);
 		func = ar5k_ar5111_rfregs;
-	} else if (hal->ah_radio == AR5K_AR5112) {
+		break;
+	case AR5K_AR5112:
 		if (hal->ah_radio_5ghz_revision >= AR5K_SREV_RAD_5112A)
 			hal->ah_rf_banks_size = sizeof(ar5112a_rf);
 		else
 			hal->ah_rf_banks_size = sizeof(ar5112_rf);
 		func = ar5k_ar5112_rfregs;
-	} else
+		break;
+	case AR5K_AR5413:
+		hal->ah_rf_banks_size = sizeof(ar5413_rf);
+		func = ar5k_arxxxx_rfregs;
+		break;
+	case AR5K_AR2413:
+		hal->ah_rf_banks_size = sizeof(ar2413_rf);
+		func = ar5k_arxxxx_rfregs;
+		break;
+	case AR5K_AR2425:
+		hal->ah_rf_banks_size = sizeof(ar2425_rf);
+		func = ar5k_arxxxx_rfregs;
+		break;
+	default:
 		return (AH_FALSE);
+	}
 
 	if (hal->ah_rf_banks == NULL) {
 		/* XXX do extra checks? */
@@ -1703,19 +1707,90 @@ ar5k_ar5112_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 
 	/* Write RF values */
 	for (i = 0; i < rf_size; i++)
-		AR5K_REG_WRITE(ar5112_rf[i].rf_register, rf[i]);
+		AR5K_REG_WRITE(rf_ini[i].rf_register, rf[i]);
 
 	return (AH_TRUE);
 }
 
 HAL_BOOL
-ar5k_rfgain(struct ath_hal *hal, u_int phy, u_int freq)
+ar5k_arxxxx_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 {
-	int i;
+	const struct ar5k_ini_rf	*rf_ini;
+	u_int				 rf_size;
+	u_int32_t			*rf;
+	int				 i, bank = -1;
 
-	switch (phy) {
-	case AR5K_INI_PHY_5111:
-	case AR5K_INI_PHY_5112:
+	AR5K_ASSERT_ENTRY(mode, AR5K_INI_VAL_MAX);
+
+	rf = hal->ah_rf_banks;
+
+	switch (hal->ah_radio) {
+	case AR5K_AR5413:
+		rf_ini = ar5413_rf;
+		rf_size = AR5K_ELEMENTS(ar5413_rf);
+		break;
+	case AR5K_AR2413:
+		rf_ini = ar2413_rf;
+		rf_size = AR5K_ELEMENTS(ar2413_rf);
+		break;
+	case AR5K_AR2425:
+		if (mode == AR5K_INI_VAL_11B)
+			mode = AR5K_INI_VAL_11G;
+		rf_ini = ar2425_rf;
+		rf_size = AR5K_ELEMENTS(ar2425_rf);
+		break;
+	default:
+		return (AH_FALSE);
+	}
+
+	/* Copy values to modify them */
+	for (i = 0; i < rf_size; i++) {
+		if (rf_ini[i].rf_bank >= AR5K_MAX_RF_BANKS) {
+			AR5K_PRINT("invalid bank\n");
+			return (AH_FALSE);
+		}
+
+		if (bank != rf_ini[i].rf_bank) {
+			bank = rf_ini[i].rf_bank;
+			hal->ah_offset[bank] = i;
+		}
+
+		rf[i] = rf_ini[i].rf_value[mode];
+	}
+
+	/* Write RF values */
+	for (i = 0; i < rf_size; i++)
+		AR5K_REG_WRITE(rf_ini[i].rf_register, rf[i]);
+
+	return (AH_TRUE);
+}
+
+HAL_BOOL
+ar5k_rfgain(struct ath_hal *hal, u_int freq)
+{
+	const struct ar5k_ini_rfgain	*rfg;
+	size_t				 rfg_size;
+	int				 i;
+
+	switch (hal->ah_radio) {
+	case AR5K_AR5111:
+		rfg = ar5111_rfg;
+		rfg_size = AR5K_ELEMENTS(ar5111_rfg);
+		break;
+	case AR5K_AR5112:
+		rfg = ar5112_rfg;
+		rfg_size = AR5K_ELEMENTS(ar5112_rfg);
+		break;
+	case AR5K_AR5413:
+		rfg = ar5413_rfg;
+		rfg_size = AR5K_ELEMENTS(ar5413_rfg);
+		break;
+	case AR5K_AR2413:
+	case AR5K_AR2425:
+		if (freq == AR5K_INI_RFGAIN_5GHZ)
+			return (AH_FALSE);
+		rfg = ar2413_rfg;
+		rfg_size = AR5K_ELEMENTS(ar2413_rfg);
 		break;
 	default:
 		return (AH_FALSE);
@@ -1729,10 +1804,10 @@ ar5k_rfgain(struct ath_hal *hal, u_int phy, u_int freq)
 		return (AH_FALSE);
 	}
 
-	for (i = 0; i < AR5K_ELEMENTS(ar5k_rfg); i++) {
+	for (i = 0; i < rfg_size; i++) {
 		AR5K_REG_WAIT(i);
-		AR5K_REG_WRITE((u_int32_t)ar5k_rfg[i].rfg_register,
-		    ar5k_rfg[i].rfg_value[phy][freq]);
+		AR5K_REG_WRITE((u_int32_t)rfg[i].rfg_register,
+		    rfg[i].rfg_value[freq]);
 	}
 
 	return (AH_TRUE);
@@ -1775,4 +1850,42 @@ ar5k_txpower_table(struct ath_hal *hal, HAL_CHANNEL *channel, int16_t max_power)
 #else
 		    min;
 #endif
+}
+
+void
+ar5k_write_ini(struct ath_hal *hal, const struct ar5k_ini *ini,
+    size_t n, HAL_BOOL change_channel)
+{
+	u_int	 i;
+
+	for (i = 0; i < n; i++) {
+		if (change_channel == AH_TRUE &&
+		    ini[i].ini_register >= AR5K_PCU_MIN &&
+		    ini[i].ini_register <= AR5K_PCU_MAX)
+			continue;
+		switch (ini[i].ini_mode) {
+		case AR5K_INI_READ:
+			/* cleared on read */
+			AR5K_REG_READ((u_int32_t)ini[i].ini_register);
+			break;
+		case AR5K_INI_WRITE:
+			AR5K_REG_WAIT(i);
+			AR5K_REG_WRITE((u_int32_t)ini[i].ini_register,
+			    ini[i].ini_value);
+			break;
+		}
+	}
+}
+
+void
+ar5k_write_mode(struct ath_hal *hal, const struct ar5k_mode *ini,
+    size_t n, u_int mode)
+{
+	u_int	 i;
+
+	for (i = 0; i < n; i++) {
+		AR5K_REG_WAIT(i);
+		AR5K_REG_WRITE((u_int32_t)ini[i].mode_register,
+		    ini[i].mode_value[mode]);
+	}
 }

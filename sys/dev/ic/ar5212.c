@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.43 2008/07/29 00:18:25 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.44 2008/07/30 07:15:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -34,10 +34,16 @@ HAL_BOOL	 ar5k_ar5212_txpower(struct ath_hal *, HAL_CHANNEL *, u_int);
 /*
  * Initial register setting for the AR5212
  */
-static const struct ar5k_ar5212_ini ar5212_ini[] =
-    AR5K_AR5212_INI;
-static const struct ar5k_ar5212_ini_mode ar5212_mode[] =
-    AR5K_AR5212_INI_MODE;
+static const struct ar5k_ini ar5212_ini[] = AR5K_AR5212_INI;
+static const struct ar5k_mode ar5212_mode[] = AR5K_AR5212_MODE;
+static const struct ar5k_mode ar5212_ar5111_mode[] = AR5K_AR5212_AR5111_MODE;
+static const struct ar5k_mode ar5212_ar5112_mode[] = AR5K_AR5212_AR5112_MODE;
+static const struct ar5k_mode ar5413_mode[] = AR5K_AR5413_MODE;
+static const struct ar5k_mode ar2413_mode[] = AR5K_AR2413_MODE;
+static const struct ar5k_mode ar2425_mode[] = AR5K_AR2425_MODE;
+static const struct ar5k_ini ar5111_bbgain[] = AR5K_AR5111_INI_BBGAIN;
+static const struct ar5k_ini ar5112_bbgain[] = AR5K_AR5112_INI_BBGAIN;
+static const struct ar5k_ini ar5212_pcie[] = AR5K_AR5212_PCIE;
 
 AR5K_HAL_FUNCTIONS(extern, ar5k_ar5212,);
 
@@ -222,9 +228,38 @@ ar5k_ar5212_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 
 	/* Identify the chipset (this has to be done in an early step) */
 	hal->ah_version = AR5K_AR5212;
-	hal->ah_radio = hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112 ?
-	    AR5K_AR5111 : AR5K_AR5112;
+	if (srev == AR5K_SREV_VER_AR2425) {
+		hal->ah_radio = AR5K_AR2425;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112) {
+		hal->ah_radio = AR5K_AR5111;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5111;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_SC0) {
+		hal->ah_radio = AR5K_AR5112;
+		if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112A)
+			hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112;
+		else
+			hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112A;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_SC1) {
+		hal->ah_radio = AR5K_AR2413;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112A;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_SC2) {
+		hal->ah_radio = AR5K_AR5413;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112A;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5133 &&
+	    srev < AR5K_SREV_VER_AR5424) {
+		hal->ah_radio = AR5K_AR2413;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112A;
+	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5133) {
+		hal->ah_radio = AR5K_AR5413;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5424;
+	}
 	hal->ah_phy = AR5K_AR5212_PHY(0);
+
+	if (hal->ah_pci_express == AH_TRUE) {
+		/* PCI-Express based devices need some extra initialization */
+		ar5k_write_ini(hal, ar5212_pcie, AR5K_ELEMENTS(ar5212_pcie), 0);
+	}
 
 	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5212_set_associd(hal, mac, 0, 0);
@@ -431,18 +466,18 @@ ar5k_ar5212_phy_disable(struct ath_hal *hal)
 
 HAL_BOOL
 ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
-    HAL_BOOL change_channel, HAL_STATUS *status)
+    HAL_BOOL chanchange, HAL_STATUS *status)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
 	u_int32_t data, s_seq, s_ant, s_led[3], dmasize;
-	u_int i, phy, mode, freq, off, ee_mode, ant[2];
+	u_int i, mode, freq, ee_mode, ant[2];
 	const HAL_RATE_TABLE *rt;
 
 	/*
 	 * Save some registers before a reset
 	 */
-	if (change_channel == AH_TRUE) {
+	if (chanchange == AH_TRUE) {
 		s_seq = AR5K_REG_READ(AR5K_AR5212_DCU_SEQNUM(0));
 		s_ant = AR5K_REG_READ(AR5K_AR5212_DEFAULT_ANTENNA);
 	} else {
@@ -455,7 +490,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	s_led[1] = AR5K_REG_READ(AR5K_AR5212_GPIOCR);
 	s_led[2] = AR5K_REG_READ(AR5K_AR5212_GPIODO);
 
-	if (change_channel == AH_TRUE && hal->ah_rf_banks != NULL)
+	if (chanchange == AH_TRUE && hal->ah_rf_banks != NULL)
 		ar5k_ar5212_get_rf_gain(hal);
 
 	if (ar5k_ar5212_nic_wakeup(hal, channel->c_channel_flags) == AH_FALSE)
@@ -465,15 +500,6 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	 * Initialize operating mode
 	 */
 	hal->ah_op_mode = op_mode;
-
-	if (hal->ah_radio == AR5K_AR5111) {
-		phy = AR5K_INI_PHY_5111;
-	} else if (hal->ah_radio == AR5K_AR5112) {
-		phy = AR5K_INI_PHY_5112;
-	} else {
-		AR5K_PRINTF("invalid phy radio: %u\n", hal->ah_radio);
-		return (AH_FALSE);
-	}
 
 	switch (channel->c_channel_flags & CHANNEL_MODES) {
 	case CHANNEL_A:
@@ -516,48 +542,52 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	AR5K_REG_WRITE(AR5K_AR5212_PHY(0), AR5K_AR5212_PHY_SHIFT_5GHZ);
 
 	/*
-	 * Write initial mode settings
+	 * Write initial mode and register settings
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5212_mode); i++) {
-		if (ar5212_mode[i].mode_flags == AR5K_INI_FLAG_511X)
-			off = AR5K_INI_PHY_511X;
-		else if (ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5111 &&
-		    hal->ah_radio == AR5K_AR5111)
-			off = AR5K_INI_PHY_5111;
-		else if (ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5112 &&
-		    hal->ah_radio == AR5K_AR5112)
-			off = AR5K_INI_PHY_5112;
-		else
-			continue;
+	ar5k_write_mode(hal, ar5212_mode, AR5K_ELEMENTS(ar5212_mode), mode);
+	ar5k_write_ini(hal, ar5212_ini, AR5K_ELEMENTS(ar5212_ini), chanchange);
 
-		AR5K_REG_WAIT(i);
-		AR5K_REG_WRITE((u_int32_t)ar5212_mode[i].mode_register,
-		    ar5212_mode[i].mode_value[off][mode]);
+	switch (hal->ah_radio) {
+	case AR5K_AR5111:
+		ar5k_write_mode(hal, ar5212_ar5111_mode,
+		    AR5K_ELEMENTS(ar5212_ar5111_mode), mode);
+		break;
+	case AR5K_AR5112:
+		ar5k_write_mode(hal, ar5212_ar5112_mode,
+		    AR5K_ELEMENTS(ar5212_ar5112_mode), mode);
+		break;
+	case AR5K_AR5413:
+		ar5k_write_mode(hal, ar5413_mode,
+		    AR5K_ELEMENTS(ar5413_mode), mode);
+		break;
+	case AR5K_AR2413:
+		AR5K_REG_WRITE(AR5K_AR5212_PHY(648), 0x018830c6);
+		ar5k_write_mode(hal, ar2413_mode,
+		    AR5K_ELEMENTS(ar2413_mode), mode);
+		break;
+	case AR5K_AR2425:
+		AR5K_REG_WRITE(AR5K_AR5212_PHY(648), 0x018830c6);
+		if (mode == AR5K_INI_VAL_11B)
+			mode = AR5K_INI_VAL_11G;
+		ar5k_write_mode(hal, ar2425_mode,
+		    AR5K_ELEMENTS(ar2425_mode), mode);
+		break;
+	default:
+		AR5K_PRINTF("invalid radio: %d\n", hal->ah_radio);
+		return (AH_FALSE);
 	}
 
-	/*
-	 * Write initial register settings
-	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5212_ini); i++) {
-		if (change_channel == AH_TRUE &&
-		    ar5212_ini[i].ini_register >= AR5K_AR5212_PCU_MIN &&
-		    ar5212_ini[i].ini_register <= AR5K_AR5212_PCU_MAX)
-			continue;
-
-		if ((hal->ah_radio == AR5K_AR5111 &&
-		    ar5212_ini[i].ini_flags & AR5K_INI_FLAG_5111) ||
-		    (hal->ah_radio == AR5K_AR5112 &&
-		    ar5212_ini[i].ini_flags & AR5K_INI_FLAG_5112)) {
-			AR5K_REG_WAIT(i);
-			AR5K_REG_WRITE((u_int32_t)ar5212_ini[i].ini_register,
-			    ar5212_ini[i].ini_value);
-		}
-	}
+	if (hal->ah_radio == AR5K_AR5111)
+		ar5k_write_ini(hal, ar5111_bbgain,
+		    AR5K_ELEMENTS(ar5111_bbgain), chanchange);
+	else
+		ar5k_write_ini(hal, ar5112_bbgain,
+		    AR5K_ELEMENTS(ar5112_bbgain), chanchange);
 
 	/*
 	 * Write initial RF gain settings
 	 */
-	if (ar5k_rfgain(hal, phy, freq) == AH_FALSE)
+	if (ar5k_rfgain(hal, freq) == AH_FALSE)
 		return (AH_FALSE);
 
 	AR5K_DELAY(1000);
@@ -806,8 +836,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	AR5K_REG_WRITE(AR5K_AR5212_PHY_SCAL, AR5K_AR5212_PHY_SCAL_32MHZ);
 	AR5K_REG_WRITE(AR5K_AR5212_PHY_SCLOCK, AR5K_AR5212_PHY_SCLOCK_32MHZ);
 	AR5K_REG_WRITE(AR5K_AR5212_PHY_SDELAY, AR5K_AR5212_PHY_SDELAY_32MHZ);
-	AR5K_REG_WRITE(AR5K_AR5212_PHY_SPENDING, hal->ah_radio == AR5K_AR5111 ?
-	    AR5K_AR5212_PHY_SPENDING_AR5111 : AR5K_AR5212_PHY_SPENDING_AR5112);
+	AR5K_REG_WRITE(AR5K_AR5212_PHY_SPENDING, hal->ah_phy_spending);
 
 	/* 
 	 * Disable beacons and reset the register
@@ -2161,7 +2190,7 @@ ar5k_ar5212_get_rf_gain(struct ath_hal *hal)
 		if (type == AR5K_AR5212_PHY_PAPD_PROBE_TYPE_CCK)
 			hal->ah_gain.g_current += AR5K_GAIN_CCK_PROBE_CORR;
 
-		if (hal->ah_radio == AR5K_AR5112) {
+		if (hal->ah_radio >= AR5K_AR5112) {
 			ar5k_rfregs_gainf_corr(hal);
 			hal->ah_gain.g_current =
 			    hal->ah_gain.g_current >= hal->ah_gain.g_f_corr ?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.36 2007/11/01 20:32:16 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.37 2008/07/30 07:15:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -507,7 +507,7 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/*
 	 * Write initial RF gain settings
 	 */
-	if (ar5k_rfgain(hal, AR5K_INI_PHY_5111, freq) == AH_FALSE)
+	if (ar5k_rfgain(hal, freq) == AH_FALSE)
 		return (AH_FALSE);
 
 	AR5K_DELAY(1000);
