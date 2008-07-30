@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.46 2008/06/15 06:56:09 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.47 2008/07/30 10:15:35 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1460,6 +1460,11 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	struct trunk_port *tp = NULL;
 	u_int32_t p = 0;
 	int idx;
+
+	if (tr->tr_count == 0) {
+		m_freem(m);
+		return (EINVAL);
+	}
 
 	p = trunk_hashmbuf(m, lb->lb_key);
 	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS) {
