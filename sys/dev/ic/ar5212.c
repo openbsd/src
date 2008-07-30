@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.44 2008/07/30 07:15:39 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.45 2008/07/30 07:43:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2016,15 +2016,15 @@ ar5k_ar5212_set_associd(struct ath_hal *hal, const u_int8_t *bssid,
 HAL_BOOL
 ar5k_ar5212_set_bssid_mask(struct ath_hal *hal, const u_int8_t* mask)
 {
-	u_int32_t low_id, high_id; 
+	u_int32_t low_id, high_id;
 
 	low_id = AR5K_LOW_ID(mask);
 	high_id = 0x0000ffff & AR5K_HIGH_ID(mask);
 
-	AR5K_REG_WRITE(AR5K_AR5212_BSS_IDM0, low_id); 
-	AR5K_REG_WRITE(AR5K_AR5212_BSS_IDM1, high_id); 
+	AR5K_REG_WRITE(AR5K_AR5212_BSS_IDM0, low_id);
+	AR5K_REG_WRITE(AR5K_AR5212_BSS_IDM1, high_id);
 
-	return (AH_TRUE); 
+	return (AH_TRUE);
 }
 
 HAL_BOOL

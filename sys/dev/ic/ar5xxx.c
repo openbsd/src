@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.51 2008/07/30 07:15:39 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.52 2008/07/30 07:43:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -266,9 +266,9 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	/* Get rate tables */
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11A)
 		ar5k_rt_copy(&hal->ah_rt_11a, &ar5k_rt_11a);
-	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B) {
+	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B)
 		ar5k_rt_copy(&hal->ah_rt_11b, &ar5k_rt_11b);
-	} if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
+	if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
 		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_TURBO)
 		ar5k_rt_copy(&hal->ah_rt_turbo, &ar5k_rt_turbo);

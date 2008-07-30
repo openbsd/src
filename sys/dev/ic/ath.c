@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.71 2008/07/29 00:18:25 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.72 2008/07/30 07:43:01 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1726,7 +1726,7 @@ struct ieee80211_node *
 ath_node_alloc(struct ieee80211com *ic)
 {
 	struct ath_node *an;
-	
+
 	an = malloc(sizeof(*an), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (an) {
 		int i;
