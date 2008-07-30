@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.74 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.75 2008/07/30 06:25:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -583,7 +583,7 @@ rum_alloc_rx_list(struct rum_softc *sc)
 
 	return 0;
 
-fail:	rum_free_tx_list(sc);
+fail:	rum_free_rx_list(sc);
 	return error;
 }
 
