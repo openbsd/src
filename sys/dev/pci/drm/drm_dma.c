@@ -72,25 +72,31 @@ drm_dma_takedown(struct drm_device *dev)
 				drm_pci_free(dev, dma->bufs[i].seglist[j]);
 			}
 			if (dma->bufs[i].seglist)
-				free(dma->bufs[i].seglist, M_DRM);
+				drm_free(dma->bufs[i].seglist,
+				    dma->bufs[i].seg_count *
+				    sizeof(*dma->bufs[i].seglist),
+				    DRM_MEM_BUFS);
 		}
 
 	   	if (dma->bufs[i].buf_count) {
 		   	for (j = 0; j < dma->bufs[i].buf_count; j++) {
-				free(dma->bufs[i].buflist[j].dev_private,
-				    M_DRM);
+				drm_free(dma->bufs[i].buflist[j].dev_private,
+				    dma->bufs[i].buflist[j].dev_priv_size,
+				    DRM_MEM_BUFS);
 			}
 			if (dma->bufs[i].buflist)
-		   		free(dma->bufs[i].buflist, M_DRM);
+		   		drm_free(dma->bufs[i].buflist,
+				    dma->bufs[i].buf_count *
+				    sizeof(*dma->bufs[i].buflist),
+				    DRM_MEM_BUFS);
 		}
 	}
 
-	if (dma->buflist)
-		free(dma->buflist, M_DRM);
-	if (dma->pagelist)
-		free(dma->pagelist, M_DRM);
-	if (dev->dma)
-		drm_free(dev->dma, sizeof(*dev->dma), DRM_MEM_DMA);
+	drm_free(dma->buflist, dma->buf_count * sizeof(*dma->buflist),
+	    DRM_MEM_BUFS);
+	drm_free(dma->pagelist, dma->page_count * sizeof(*dma->pagelist),
+	    DRM_MEM_BUFS);
+	drm_free(dev->dma, sizeof(*dev->dma), DRM_MEM_DMA);
 	dev->dma = NULL;
 	DRM_SPINUNINIT(&dev->dma_lock);
 }
