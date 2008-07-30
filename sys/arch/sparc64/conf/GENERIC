@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.218 2008/07/19 12:36:06 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.219 2008/07/30 18:51:52 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,6 +91,8 @@ art*	at musycc?		# Accoom Artery E1/T1 cards
 thtc*	at pci?			# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
 
+ath*	at pci?			# Atheros AR5k (802.11a/b/g)
+ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
 pgt*	at pci?			# Prism54 (only full-mac varients)
 acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*	at cardbus?		# TI ACX100/ACX111 (802.11b/g)
