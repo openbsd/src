@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.41 2008/07/12 06:20:47 canacar Exp $	 */
+/* $Id: main.c,v 1.42 2008/07/31 04:24:11 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -473,6 +473,8 @@ main(int argc, char *argv[])
 	} else if (argc == 2) {
 		viewstr = argv[0];
 		delay = atof(argv[1]);
+		if (delay <= 0)
+			delay = 5;
 	}
 
 	udelay = (useconds_t)(delay * 1000000.0);
