@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.25 2008/07/26 11:42:43 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.26 2008/07/31 15:26:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -501,6 +501,7 @@ struct uvideo_softc {
 	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
 
 #define UVIDEO_MAX_FORMAT			 8
+	int					 sc_fmtgrp_idx;
 	int					 sc_fmtgrp_num;
 	struct uvideo_format_group		*sc_fmtgrp_cur;
 	struct uvideo_format_group		 sc_fmtgrp[UVIDEO_MAX_FORMAT];

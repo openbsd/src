@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.65 2008/07/29 13:45:04 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.66 2008/07/31 15:26:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -80,9 +80,9 @@ int		uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 int		uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
-		    const usb_descriptor_t *, int *);
+		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
-		    const usb_descriptor_t *, int *);
+		    const usb_descriptor_t *);
 int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
 		    struct usb_attach_arg *uaa, int, int, int);
 int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
@@ -166,7 +166,7 @@ int		uvideo_try_fmt(void *, struct v4l2_format *);
  */
 caddr_t		uvideo_mappage(void *, off_t, int);
 int		uvideo_get_bufsize(void *);
-void		uvideo_start_read(void *);
+int		uvideo_start_read(void *);
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -617,6 +617,8 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 		desc = usb_desc_iter_next(&iter);
 	}
 
+	sc->sc_fmtgrp_idx = 0;
+
 	return (0);
 }
 
@@ -634,21 +636,23 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 		return (-1);
 	}
 
-	if (d->bFormatIndex == UVIDEO_MAX_FORMAT) {
+	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
 		printf("%s: too many MJPEG format descriptors found!\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
-	sc->sc_fmtgrp[d->bFormatIndex].format = (struct uvideo_format_desc *)d;
-	sc->sc_fmtgrp[d->bFormatIndex].format_dfidx =
-	    sc->sc_fmtgrp[d->bFormatIndex].format->u.mjpeg.bDefaultFrameIndex;
 
-	sc->sc_fmtgrp[d->bFormatIndex].pixelformat = V4L2_PIX_FMT_MJPEG;
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
+	    (struct uvideo_format_desc *)d;
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
+	    sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format->u.mjpeg.bDefaultFrameIndex;
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].pixelformat = V4L2_PIX_FMT_MJPEG;
 
 	if (sc->sc_fmtgrp_cur == NULL)
 		/* set MJPEG format */
-		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
+		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[sc->sc_fmtgrp_idx];
 
+	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
 
 	return (0);
@@ -669,16 +673,17 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		return (-1);
 	}
 
-	if (d->bFormatIndex == UVIDEO_MAX_FORMAT) {
+	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
 		printf("%s: too many UNCOMPRESSED format descriptors found!\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
-	sc->sc_fmtgrp[d->bFormatIndex].format = (struct uvideo_format_desc *)d;
-	sc->sc_fmtgrp[d->bFormatIndex].format_dfidx =
-	    sc->sc_fmtgrp[d->bFormatIndex].format->u.uc.bDefaultFrameIndex;
 
-	i = d->bFormatIndex;
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
+	    (struct uvideo_format_desc *)d;
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
+	    sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format->u.uc.bDefaultFrameIndex;
+	i = sc->sc_fmtgrp_idx;
 	if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "YUY2")) {
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_YUYV;
 	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "NV12")) {
@@ -689,8 +694,9 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 
 	if (sc->sc_fmtgrp_cur == NULL)
 		/* set UNCOMPRESSED format */
-		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[d->bFormatIndex];
+		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[sc->sc_fmtgrp_idx];
 
+	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
 
 	return (0);
@@ -701,7 +707,6 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
-	int fmtidx = 0;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -715,14 +720,14 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_FRAME_MJPEG:
-			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc, &fmtidx))
+			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc))
 				return (1);
 			break;
 		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
 			/* XXX do correct length calculation */
 			if (desc->bLength > 25) {
 				if (uvideo_vs_parse_desc_frame_uncompressed(sc,
-				    desc, &fmtidx))
+				    desc))
 					return (1);
 			}
 			break;
@@ -736,58 +741,62 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 
 int
 uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
-    const usb_descriptor_t *desc, int *fmtidx)
+    const usb_descriptor_t *desc)
 {
 	struct usb_video_frame_mjpeg_desc *d;
+	int fmtidx;
 
 	d = (struct usb_video_frame_mjpeg_desc *)(uint8_t *)desc;
-
-	if (d->bFrameIndex == 1)
-		++*fmtidx;
 
 	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
 		printf("%s: too many MJPEG frame descriptors found!\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex] = d;
+
+	fmtidx = sc->sc_fmtgrp_idx;
+	sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex] = d;
 
 	/*
 	 * If bDefaultFrameIndex is not set by the device
 	 * use the first bFrameIndex available, otherwise
 	 * set it to the default one.
 	 */
-	if (sc->sc_fmtgrp[*fmtidx].format->u.mjpeg.bDefaultFrameIndex == 0) {
-		sc->sc_fmtgrp[*fmtidx].frame_cur =
-		    sc->sc_fmtgrp[*fmtidx].frame[1];
-	} else if (sc->sc_fmtgrp[*fmtidx].format->u.mjpeg.bDefaultFrameIndex ==
+	if (sc->sc_fmtgrp[fmtidx].format->u.mjpeg.bDefaultFrameIndex == 0) {
+		sc->sc_fmtgrp[fmtidx].frame_cur =
+		    sc->sc_fmtgrp[fmtidx].frame[1];
+	} else if (sc->sc_fmtgrp[fmtidx].format->u.mjpeg.bDefaultFrameIndex ==
 	    d->bFrameIndex) {
-		sc->sc_fmtgrp[*fmtidx].frame_cur =
-		    sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex];
+		sc->sc_fmtgrp[fmtidx].frame_cur =
+		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex];
 	}
 
-	sc->sc_fmtgrp[*fmtidx].frame_num++;
+	sc->sc_fmtgrp[fmtidx].frame_num++;
+
+	if (d->bFrameIndex ==
+	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
+		sc->sc_fmtgrp_idx++;
 
 	return (0);
 }
 
 int
 uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
-    const usb_descriptor_t *desc, int *fmtidx)
+    const usb_descriptor_t *desc)
 {
 	struct usb_video_frame_uncompressed_desc *d;
+	int fmtidx;
 
 	d = (struct usb_video_frame_uncompressed_desc *)(uint8_t *)desc;
-
-	if (d->bFrameIndex == 1)
-		++*fmtidx;
 
 	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
 		printf("%s: too many UNCOMPRESSED frame descriptors found!\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex] =
+
+	fmtidx = sc->sc_fmtgrp_idx;
+	sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex] =
 	    (struct usb_video_frame_mjpeg_desc *)d;
 
 	/*
@@ -795,16 +804,20 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	 * use the first bFrameIndex available, otherwise
 	 * set it to the default one.
 	 */
-	if (sc->sc_fmtgrp[*fmtidx].format->u.uc.bDefaultFrameIndex == 0) {
-		sc->sc_fmtgrp[*fmtidx].frame_cur =
-		    sc->sc_fmtgrp[*fmtidx].frame[1];
-	} else if (sc->sc_fmtgrp[*fmtidx].format->u.uc.bDefaultFrameIndex ==
+	if (sc->sc_fmtgrp[fmtidx].format->u.uc.bDefaultFrameIndex == 0) {
+		sc->sc_fmtgrp[fmtidx].frame_cur =
+		    sc->sc_fmtgrp[fmtidx].frame[1];
+	} else if (sc->sc_fmtgrp[fmtidx].format->u.uc.bDefaultFrameIndex ==
 	    d->bFrameIndex) {
-		sc->sc_fmtgrp[*fmtidx].frame_cur =
-		    sc->sc_fmtgrp[*fmtidx].frame[d->bFrameIndex];
+		sc->sc_fmtgrp[fmtidx].frame_cur =
+		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex];
 	}
 
-	sc->sc_fmtgrp[*fmtidx].frame_num++;
+	sc->sc_fmtgrp[fmtidx].frame_num++;
+
+	if (d->bFrameIndex ==
+	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
+		sc->sc_fmtgrp_idx++;
 
 	return (0);
 }
@@ -1170,7 +1183,8 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	/* don't overflow the upper layer sample buffer */
-	if (sc->sc_max_fbuf_size < fb->buf_size) {
+	if (sc->sc_max_fbuf_size < fb->buf_size &&
+	    sc->sc_mmap_flag == 0) {
 		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
@@ -2099,10 +2113,10 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		/* type not supported */
 		return (EINVAL);
 
-	idx = fmtdesc->index + 1;
-	if (idx > sc->sc_fmtgrp_num) 
+	if (fmtdesc->index == sc->sc_fmtgrp_num) 
 		/* no more formats left */
 		return (EINVAL);
+	idx = fmtdesc->index;
 
 	switch (sc->sc_fmtgrp[idx].format->bDescriptorSubtype) {
 	case UDESCSUB_VS_FORMAT_MJPEG:
@@ -2160,7 +2174,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	    DEVNAME(sc), __func__, fmt->fmt.pix.width, fmt->fmt.pix.height);
 
 	/* search requested pixel format */
-	for (found = 0, i = 1; i <= sc->sc_fmtgrp_num; i++) {
+	for (found = 0, i = 0; i < sc->sc_fmtgrp_num; i++) {
 		if (fmt->fmt.pix.pixelformat == sc->sc_fmtgrp[i].pixelformat) {
 			found = 1;
 			break;
@@ -2357,8 +2371,12 @@ int
 uvideo_streamon(void *v, int type)
 {
 	struct uvideo_softc *sc = v;
+	usbd_status error;
 
-	uvideo_vs_init(sc);
+	error = uvideo_vs_init(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EINVAL);
+
 	uvideo_vs_start(sc);
 
 	return (0);
@@ -2388,7 +2406,7 @@ uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 	    DEVNAME(sc), __func__, fmt->fmt.pix.width, fmt->fmt.pix.height);
 
 	/* search requested pixel format */
-	for (found = 0, i = 1; i <= sc->sc_fmtgrp_num; i++) {
+	for (found = 0, i = 0; i < sc->sc_fmtgrp_num; i++) {
 		if (fmt->fmt.pix.pixelformat == sc->sc_fmtgrp[i].pixelformat) {
 			found = 1;
 			break;
@@ -2440,22 +2458,29 @@ uvideo_get_bufsize(void *v)
 	/* find the maximum frame size */
 	bzero(probe_data, sizeof(probe_data));
 	error = uvideo_vs_get_probe(sc, probe_data, GET_MAX);
-	if (error != USBD_NORMAL_COMPLETION)
+	if (error != USBD_NORMAL_COMPLETION) {
 		return (EINVAL);
+	}
 
 	sc->sc_max_fbuf_size = UGETDW(pc->dwMaxVideoFrameSize);
 
 	return (sc->sc_max_fbuf_size);
 }
 
-void
+int
 uvideo_start_read(void *v)
 {
 	struct uvideo_softc *sc = v;
+	usbd_status error;
 
 	if (sc->sc_mmap_flag)
 		sc->sc_mmap_flag = 0;
 
-	uvideo_vs_init(sc);
+	error = uvideo_vs_init(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (EINVAL);
+
 	uvideo_vs_start(sc);
+
+	return (0);
 }

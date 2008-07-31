@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.19 2008/07/26 11:42:43 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.20 2008/07/31 15:26:25 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -146,8 +146,10 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* start the stream */
 	if (sc->hw_if->start_read && !sc->sc_start_read) {
+		error = sc->hw_if->start_read(sc->hw_hdl);
+		if (error)
+			return (error);
 		sc->sc_start_read = 1;
-		sc->hw_if->start_read(sc->hw_hdl);
 	}
 
 	DPRINTF(("resid=%d\n", uio->uio_resid));
