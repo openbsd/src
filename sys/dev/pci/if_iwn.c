@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.21 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.22 2008/07/31 20:14:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -3447,12 +3447,12 @@ iwn_reset(struct iwn_softc *sc)
 	IWN_WRITE(sc, IWN_GPIO_CTL, tmp | IWN_GPIO_INIT);
 
 	/* wait for clock stabilization */
-	for (ntries = 0; ntries < 1000; ntries++) {
+	for (ntries = 0; ntries < 25000; ntries++) {
 		if (IWN_READ(sc, IWN_GPIO_CTL) & IWN_GPIO_CLOCK)
 			break;
-		DELAY(10);
+		DELAY(100);
 	}
-	if (ntries == 1000) {
+	if (ntries == 25000) {
 		printf("%s: timeout waiting for clock stabilization\n",
 		    sc->sc_dev.dv_xname);
 		return ETIMEDOUT;

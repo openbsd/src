@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.62 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.63 2008/07/31 20:14:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2725,12 +2725,12 @@ wpi_reset(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_GPIO_CTL, tmp | WPI_GPIO_INIT);
 
 	/* wait for clock stabilization */
-	for (ntries = 0; ntries < 1000; ntries++) {
+	for (ntries = 0; ntries < 25000; ntries++) {
 		if (WPI_READ(sc, WPI_GPIO_CTL) & WPI_GPIO_CLOCK)
 			break;
-		DELAY(10);
+		DELAY(100);
 	}
-	if (ntries == 1000) {
+	if (ntries == 25000) {
 		printf("%s: timeout waiting for clock stabilization\n",
 		    sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
