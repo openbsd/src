@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.8 2007/12/03 15:09:47 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.9 2008/07/31 16:44:03 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -49,6 +49,7 @@
 #define HAVE_SETLOCALE 1
 #define HAVE_SETRESUID 1
 #define HAVE_SETRLIMIT 1
+#define HAVE_SETSID 1
 #define HAVE_SIGACTION 1
 #define HAVE_SIG_ATOMIC_T 1
 #define HAVE_SNPRINTF 1

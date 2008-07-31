@@ -55,7 +55,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.lex,v 1.132.2.7 2007/08/25 02:48:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.lex,v 1.132.2.10 2008/06/26 11:53:50 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -151,7 +151,7 @@ DEFVAR			[a-z_]+
 }
 
 <INSTR>{
-    \\\n[[:blank:]]*	{
+    \\[[:blank:]]*\n[[:blank:]]*	{
 			    /* Line continuation char followed by newline. */
 			    ++sudolineno;
 			    LEXTRACE("\n");
@@ -163,12 +163,13 @@ DEFVAR			[a-z_]+
 			    return(WORD);
 			}
 
-    ([^\"\n]|\\\")+	{
+    \\			{
+			    LEXTRACE("BACKSLASH ");
+			    append(yytext, yyleng);
+			}
+
+    ([^\"\n\\]|\\\")+	{
 			    LEXTRACE("STRBODY ");
-			    /* Push back line continuation char if present */
-			    if (yyleng > 2 && yytext[yyleng - 1] == '\\' &&
-				isspace((unsigned char)yytext[yyleng - 2]))
-				yyless(yyleng - 1);
 			    append(yytext, yyleng);
 			}
 }
@@ -326,11 +327,21 @@ NOSETENV[[:blank:]]*:	{
 			    if (strcmp(yytext, "ALL") == 0) {
 				LEXTRACE("ALL ");
 				return(ALL);
-			    } else {
-				fill(yytext, yyleng);
-				LEXTRACE("ALIAS ");
-				return(ALIAS);
 			    }
+#ifdef HAVE_SELINUX
+			    /* XXX - restrict type/role to initial state */
+			    if (strcmp(yytext, "TYPE") == 0) {
+				LEXTRACE("TYPE ");
+				return(TYPE);
+			    }
+			    if (strcmp(yytext, "ROLE") == 0) {
+				LEXTRACE("ROLE ");
+				return(ROLE);
+			    }
+#endif /* HAVE_SELINUX */
+			    fill(yytext, yyleng);
+			    LEXTRACE("ALIAS ");
+			    return(ALIAS);
 			}
 
 <GOTRUNAS>(#[0-9-]+|{WORD}) {

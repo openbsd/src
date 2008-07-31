@@ -70,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.6 2008/01/16 18:03:24 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.7 2008/06/21 00:27:01 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -86,14 +86,6 @@ __unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.6 2008/01/16 1
 # else
 #  define _POSIX_VDISABLE	0
 # endif
-#endif
-
-/*
- * QNX 6 (at least) has issues with TCSAFLUSH.
- */
-#ifdef __QNX__
-#undef TCSAFLUSH
-#define	TCSAFLUSH	TCSADRAIN
 #endif
 
 /*

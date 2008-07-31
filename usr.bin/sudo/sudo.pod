@@ -1,4 +1,3 @@
-=cut
 Copyright (c) 1994-1996, 1998-2005, 2007
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
@@ -19,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.70.2.20 2008/01/05 23:59:42 millert Exp $
+$Sudo: sudo.pod,v 1.70.2.24 2008/02/19 18:22:11 millert Exp $
 =pod
 
 =head1 NAME
@@ -30,11 +29,16 @@ sudo, sudoedit - execute a command as another user
 
 B<sudo> B<-h> | B<-K> | B<-k> | B<-L> | B<-l> | B<-V> | B<-v>
 
-B<sudo> [B<-bEHPS>] S<[B<-a> I<auth_type>]>
-S<[B<-c> I<class>|I<->]> S<[B<-p> I<prompt>]> S<[B<-u> I<username>|I<#uid>]>
+B<sudo> [B<-bEHPS>]
+S<[B<-a> I<auth_type>]>
+S<[B<-c> I<class>|I<->]>
+S<[B<-p> I<prompt>]>
+S<[B<-u> I<username>|I<#uid>]>
 S<[B<VAR>=I<value>]> S<{B<-i> | B<-s> | I<command>}>
 
-B<sudoedit> [B<-S>] S<[B<-a> I<auth_type>]> S<[B<-c> I<class>|I<->]>
+B<sudoedit> [B<-S>]
+S<[B<-a> I<auth_type>]>
+S<[B<-c> I<class>|I<->]>
 S<[B<-p> I<prompt>]> S<[B<-u> I<username>|I<#uid>]>
 file ...
 
@@ -458,11 +462,15 @@ Default editor to use in B<-e> (sudoedit) mode
 
 =head1 FILES
 
-=over 4
+=over 24
 
-=item F<@sysconfdir@/sudoers>C<		>List of who can run what
+=item F<@sysconfdir@/sudoers>
 
-=item F<@timedir@>C<		>Directory containing timestamps
+List of who can run what
+
+=item F<@timedir@>
+
+Directory containing timestamps
 
 =back
 
@@ -495,8 +503,9 @@ to make the C<cd> and file redirection work.
 
 =head1 SEE ALSO
 
-L<grep(1)>, L<su(1)>, L<stat(2)>, L<login_cap(3)>, L<passwd(5)>,
-L<sudoers(5)>, L<visudo(8)>
+L<grep(1)>, L<su(1)>, L<stat(2)>,
+L<login_cap(3)>,
+L<passwd(5)>, L<sudoers(5)>, L<visudo(8)>
 
 =head1 AUTHORS
 

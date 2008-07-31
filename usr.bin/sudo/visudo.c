@@ -78,7 +78,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.166.2.10 2007/09/01 13:39:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.166.2.11 2008/06/21 00:47:52 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
@@ -590,12 +590,7 @@ run_command(path, argv)
     char **argv;
 {
     int status;
-    pid_t pid;
-    sigset_t set, oset;
-
-    (void) sigemptyset(&set);
-    (void) sigaddset(&set, SIGCHLD);
-    (void) sigprocmask(SIG_BLOCK, &set, &oset);
+    pid_t pid, rv;
 
     switch (pid = fork()) {
 	case -1:
@@ -603,7 +598,6 @@ run_command(path, argv)
 	    Exit(-1);
 	    break;	/* NOTREACHED */
 	case 0:
-	    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	    endpwent();
 	    closefrom(STDERR_FILENO + 1);
 	    execv(path, argv);
@@ -612,15 +606,15 @@ run_command(path, argv)
 	    break;	/* NOTREACHED */
     }
 
+    do {
 #ifdef sudo_waitpid
-    pid = sudo_waitpid(pid, &status, 0);
+	rv = sudo_waitpid(pid, &status, 0);
 #else
-    pid = wait(&status);
+	rv = wait(&status);
 #endif
+    } while (rv == -1 && errno == EINTR);
 
-    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
-
-    if (pid == -1 || !WIFEXITED(status))
+    if (rv == -1 || !WIFEXITED(status))
 	return(-1);
     return(WEXITSTATUS(status));
 }

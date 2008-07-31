@@ -90,7 +90,7 @@
 #endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.15 2007/12/04 15:26:40 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.16 2008/02/09 14:44:48 millert Exp $";
 #endif /* lint */
 
 /*
@@ -198,6 +198,21 @@ sudoers_lookup(pwflag)
 		    /*
 		     * User was granted access to cmnd on host as user.
 		     */
+#ifdef HAVE_SELINUX
+		    /* Set role and type if not specified on command line. */
+		    if (user_role == NULL) {
+			if (match[top-1].role != NULL)
+			    user_role = match[top-1].role;
+			else
+			    user_role = def_role;
+		    }
+		    if (user_type == NULL) {
+			if (match[top-1].type != NULL)
+			    user_type = match[top-1].type;
+			else
+			    user_type = def_type;
+		    }
+#endif
 		    set_perms(PERM_ROOT);
 		    return(VALIDATE_OK |
 			(no_passwd == TRUE ? FLAG_NOPASS : 0) |

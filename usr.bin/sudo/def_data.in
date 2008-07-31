@@ -191,3 +191,9 @@ env_delete
 env_keep
 	T_LIST|T_BOOL
 	"Environment variables to preserve:"
+role
+	T_STR
+	"SELinux role to use in the new security context: %s"
+type
+	T_STR
+	"SELinux type to use in the new security context: %s"

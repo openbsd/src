@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.17 2007/07/31 18:04:31 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.19 2008/06/21 19:04:07 millert Exp $";
 #endif /* lint */
 
 /*
@@ -198,6 +198,7 @@ static const char *initial_checkenv_table[] = {
 static const char *initial_keepenv_table[] = {
     "COLORS",
     "DISPLAY",
+    "HOME",
     "HOSTNAME",
     "KRB5CCNAME",
     "LS_COLORS",
@@ -405,7 +406,7 @@ rebuild_env(envp, sudo_mode, noexec)
     ps1 = NULL;
     didvar = 0;
     memset(&env, 0, sizeof(env));
-    if (def_env_reset) {
+    if (def_env_reset || ISSET(sudo_mode, MODE_LOGIN_SHELL)) {
 	/* Pull in vars we want to keep from the old environment. */
 	for (ep = envp; *ep; ep++) {
 	    int keepit;
@@ -536,6 +537,7 @@ rebuild_env(envp, sudo_mode, noexec)
 #endif
 
     /* Set $USER, $LOGNAME and $USERNAME to target if "set_logname" is true. */
+    /* XXX - not needed for MODE_LOGIN_SHELL */
     if (def_set_logname && runas_pw->pw_name) {
 	if (!ISSET(didvar, KEPT_LOGNAME))
 	    insert_env(format_env("LOGNAME", runas_pw->pw_name, VNULL), &env, 1);
@@ -546,6 +548,7 @@ rebuild_env(envp, sudo_mode, noexec)
     }
 
     /* Set $HOME for `sudo -H'.  Only valid at PERM_FULL_RUNAS. */
+    /* XXX - not needed for MODE_LOGIN_SHELL */
     if (runas_pw->pw_dir) {
 	if (ISSET(sudo_mode, MODE_RESET_HOME) ||
 	    (ISSET(sudo_mode, MODE_RUN) && (def_always_set_home ||

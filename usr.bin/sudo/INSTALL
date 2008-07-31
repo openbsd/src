@@ -320,6 +320,10 @@ Special features/options:
 	physically live in ${prefix}/etc and /etc/sudoers will be
 	a symbolic link.
 
+  --with-selinux 
+	Enable support for role based access control (RBAC) on
+	systems that support SELinux.
+
 The following options are also configurable at runtime:
 
   --with-long-otp-prompt

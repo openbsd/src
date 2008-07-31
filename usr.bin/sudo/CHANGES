@@ -2045,3 +2045,73 @@ Sudo 1.6.9p11 released.
      to the screen if there was a read timeout.
 
 Sudo 1.6.9p12 released.
+
+646) Sudo will now set the nproc resource limit to unlimited on Linux
+     systems to work around Linux's setuid() resource limit semantics.
+     On PAM systems the resource limits will be reset by pam_limits.so
+     before the command is executed.
+
+647) SELinux support that can be used to implement role based access
+     control (RBAC).  A role and (optional) type may be specified
+     in sudoers or on the command line.  These are then used in the
+     security context that the command is run as.
+
+648) Fixed a Kerberos 5 compilation problem with MIT Kerberos.
+
+Sudo 1.6.9p13 released.
+
+649) Fixed an invalid assumption in the PAM conversation function
+     introduced in version 1.6.9p9.  The conversation function may
+     be called for non-password reading purposes as well.
+
+650) Fixed freeing an uninitialized pointer in -l mode, introduced in
+     version 1.6.9p13.
+
+651) Check /etc/sudoers after LDAP even if the user was found in LDAP.
+     This allows Defaults options in /etc/sudoers to take effect.
+
+652) Add missing checks for enforcing mode in SELinux RBAC mode.
+
+Sudo 1.6.9p14 released.
+
+653) Fixed installation of sudo_noexec.so on AIX.
+
+654) Updated libtool to version 1.5.26.
+
+655) Fixed printing of default SELinux role and type in -V mode.
+
+656) The HOME environment variable is once again preserved by default,
+     as per the documentation.
+
+Sudo 1.6.9p15 released.
+
+657) There was a missing space before the ldap libraries in the Makefile
+     for some configurations.
+
+658) LDAPS_PORT may not be defined on older Solaris LDAP SDKs.
+
+659) If the LDAP server could not be contacted and the user was not present
+     in sudoers, a syntax error in sudoers was incorrectly reported.
+
+Sudo 1.6.9p16 released.
+
+660) The -i flag should imply resetting the environment, as it did in
+     sudo version prior to 1.6.9.  Also, the -i and -E flags are
+     mutually exclusive.
+
+661) Fixed the configure test for dirfd() under Linux.
+
+662) Fixed test for whether -lintl is required to link.
+
+663) Changed how sudo handles the child process when sending mail.
+     This fixes a problem on Linux with the mail_always option.
+
+664) Fixed a problem with line continuation characters inside of
+     quoted strings.
+
+Sudo 1.6.9p17 released.
+
+665) Fixed a crash when the -i flag was used with a uid not in the password
+     database.
+
+666) Regenerated parser to pull in a yacc skeleton fix.

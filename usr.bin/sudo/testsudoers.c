@@ -75,7 +75,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.6 2007/10/24 16:43:27 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.7 2008/02/09 14:44:49 millert Exp $";
 #endif /* lint */
 
 
@@ -542,6 +542,10 @@ main(argc, argv)
 	    (void) printf("no_passwd  : %d\n", no_passwd);
 	    (void) printf("runas_match: %d\n", runas_matches);
 	    (void) printf("runas      : %s\n", *user_runas);
+	    if (match[top-1].role)
+		(void) printf("role       : %s\n", match[top-1].role);
+	    if (match[top-1].type)
+		(void) printf("type       : %s\n", match[top-1].type);
 	    top--;
 	}
     }

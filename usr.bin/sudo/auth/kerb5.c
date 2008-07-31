@@ -54,7 +54,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.23.2.7 2008/01/13 14:54:40 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.23.2.8 2008/02/13 22:17:41 millert Exp $";
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
@@ -185,8 +185,10 @@ kerb5_verify(pw, pass, auth)
 		  error_message(error));
 	goto done;
     }
+#ifdef HAVE_HEIMDAL
     krb5_get_init_creds_opt_set_default_flags(sudo_context, NULL,
 	krb5_principal_get_realm(sudo_context, princ), opts);
+#endif
 
     /* Note that we always obtain a new TGT to verify the user */
     if ((error = krb5_get_init_creds_password(sudo_context, &credbuf, princ,
@@ -217,8 +219,13 @@ kerb5_verify(pw, pass, auth)
     }
 
 done:
-    if (opts)
+    if (opts) {
+#ifdef HAVE_HEIMDAL
 	krb5_get_init_creds_opt_free(opts);
+#else
+	krb5_get_init_creds_opt_free(sudo_context, opts);
+#endif
+    }
     if (creds)
 	krb5_free_cred_contents(sudo_context, creds);
     return (error ? AUTH_FAILURE : AUTH_SUCCESS);

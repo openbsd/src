@@ -17,12 +17,12 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: version.h,v 1.66.2.15 2008/01/14 12:22:57 millert Exp $
+ * $Sudo: version.h,v 1.66.2.20 2008/06/22 20:29:03 millert Exp $
  */
 
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static const char version[] = "1.6.9p12";
+static const char version[] = "1.6.9p17";
 
 #endif /* _SUDO_VERSION_H */

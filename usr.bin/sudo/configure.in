@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.43 2008/01/21 16:46:50 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.53 2008/06/22 20:23:56 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -33,9 +33,14 @@ AC_SUBST(SUDOERS_MODE)
 AC_SUBST(SUDOERS_UID)
 AC_SUBST(SUDOERS_GID)
 AC_SUBST(DEV)
+AC_SUBST(SELINUX)
+AC_SUBST(BAMAN)
+AC_SUBST(LCMAN)
+AC_SUBST(SEMAN)
 AC_SUBST(mansectsu)
 AC_SUBST(mansectform)
 AC_SUBST(mansrcdir)
+AC_SUBST(NOEXECFILE)
 AC_SUBST(NOEXECDIR)
 AC_SUBST(noexec_file)
 AC_SUBST(INSTALL_NOEXEC)
@@ -109,6 +114,10 @@ PROGS="sudo visudo"
 : ${SUDOERS_UID='0'}
 : ${SUDOERS_GID='0'}
 DEV="#"
+SELINUX="#"
+BAMAN='.\" '
+LCMAN='.\" '
+SEMAN='.\" '
 AUTH_OBJS=
 AUTH_REG=
 AUTH_EXCL=
@@ -127,7 +136,11 @@ shadow_libs_optional=
 dnl
 dnl Override default configure dirs...
 dnl
-test "$mandir" = '${prefix}/man' && mandir='$(prefix)/man'
+if test X"$prefix" = X"NONE"; then
+    test "$mandir" = '${datarootdir}/man' && mandir='$(prefix)/man'
+else
+    test "$mandir" = '${datarootdir}/man' && mandir='$(datarootdir)/man'
+fi
 test "$bindir" = '${exec_prefix}/bin' && bindir='$(exec_prefix)/bin'
 test "$sbindir" = '${exec_prefix}/sbin' && sbindir='$(exec_prefix)/sbin'
 test "$sysconfdir" = '${prefix}/etc' -a X"$with_stow" != X"yes" && sysconfdir='/etc'
@@ -1114,6 +1127,20 @@ AC_ARG_ENABLE(path_info,
   esac
 ], AC_MSG_RESULT(no))
 
+AC_ARG_WITH(selinux, [  --with-selinux          enable SELinux support],
+[case $with_selinux in
+    yes)	AC_DEFINE(HAVE_SELINUX)
+		SUDO_LIBS="${SUDO_LIBS} -lselinux"
+		SUDO_OBJS="${SUDO_OBJS} selinux.o"
+		PROGS="${PROGS} sesh"
+		SELINUX=""
+		SEMAN=""
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-selinux does not take an argument."])
+		;;
+esac])
+
 dnl
 dnl If we don't have egrep we can't do anything...
 dnl
@@ -1160,6 +1187,7 @@ AC_ARG_WITH(noexec, [  --with-noexec[=PATH]      fully qualified pathname of sud
     *)		;;
 esac], [with_noexec="$libexecdir/sudo_noexec$_shrext"])
 AC_MSG_RESULT($with_noexec)
+NOEXECFILE="sudo_noexec$_shrext"
 NOEXECDIR="`echo $with_noexec|sed 's:^\(.*\)/[[^/]]*:\1:'`"
 
 dnl
@@ -1382,7 +1410,7 @@ case "$host" in
 		: ${mansectsu='1m'}
 		: ${mansectform='4'}
 		;;
-    *-*-linux*)
+    *-*-linux*|*-*-k*bsd*-gnu)
 		OSDEFS="${OSDEFS} -D_GNU_SOURCE"
 		# Some Linux versions need to link with -lshadow
 		shadow_funcs="getspnam"
@@ -1633,7 +1661,7 @@ if test "$OS" != "ultrix"; then
     fi
 fi
 if test ${with_logincap-'no'} != "no"; then
-    AC_CHECK_HEADERS(login_cap.h, [
+    AC_CHECK_HEADERS(login_cap.h, [LCMAN=""
 	case "$OS" in
 	    freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
 	    ;;
@@ -1681,7 +1709,7 @@ dnl
 AC_FUNC_GETGROUPS
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale getaddrinfo)
+	       setlocale getaddrinfo setsid)
 if test -z "$SKIP_SETRESUID"; then
     AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
 fi
@@ -1736,7 +1764,7 @@ dnl
 dnl Check for the dirfd function/macro.  If not found, look for dd_fd in DIR.
 dnl
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <$ac_header_dirent>]], [[DIR d; (void)dirfd(&d);]])], [AC_DEFINE(HAVE_DIRFD)], [AC_TRY_LINK([#include <sys/types.h>
+#include <$ac_header_dirent>]], [[DIR *d; (void)dirfd(d);]])], [AC_DEFINE(HAVE_DIRFD)], [AC_TRY_LINK([#include <sys/types.h>
 #include <$ac_header_dirent>], [DIR d; memset(&d, 0, sizeof(d)); return(d.dd_fd);], [AC_DEFINE(HAVE_DD_FD)])])
 dnl
 dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS
@@ -1839,8 +1867,13 @@ if test ${with_pam-"no"} != "no"; then
 	    esac], AC_MSG_RESULT(yes))
 	case $host in
 	    *-*-linux*|*-*-solaris*)
-		    AC_CHECK_FUNCS(dgettext, [],
-			[AC_CHECK_LIB(intl, dgettext, [LIBS="${LIBS} -lintl"]
+		    # dgettext() may be defined to dgettext_libintl in the
+		    # header file, so first check that it links w/ additional
+		    # libs, then try with -lintl
+		    AC_LINK_IFELSE([AC_LANG_PROGRAM(
+		    [[#include <libintl.h>]], [(void)dgettext((char *)0, (char *)0);])],
+		    [AC_DEFINE(HAVE_DGETTEXT)],
+		    [AC_CHECK_LIB(intl, dgettext, [LIBS="${LIBS} -lintl"]
 			[AC_DEFINE(HAVE_DGETTEXT)])])
 		    ;;
 	esac
@@ -1868,8 +1901,7 @@ dnl
 if test ${with_bsdauth-'no'} != "no"; then
     AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H)
 	[AUTH_OBJS="$AUTH_OBJS bsdauth.o"]
-	[BSDAUTH_USAGE='[[-a auth_type]] ']
-	[AUTH_EXCL=BSD_AUTH],
+	[AUTH_EXCL=BSD_AUTH; BAMAN=""],
 	[AC_MSG_ERROR([BSD authentication was specified but bsd_auth.h could not be found])])
 fi
 
@@ -2296,7 +2328,7 @@ if test ${with_ldap-'no'} != "no"; then
     AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init ldapssl_set_strength)
     AC_CHECK_HEADERS([ldap_ssl.h] [mps/ldap_ssl.h], [break], [], [#include <ldap.h>])
 
-    SUDO_LIBS="${SUDO_LIBS}${LDAP_LIBS}"
+    SUDO_LIBS="${SUDO_LIBS} ${LDAP_LIBS}"
     LIBS="$_LIBS"
     LDFLAGS="$_LDFLAGS"
     # XXX - OpenLDAP has deprecated ldap_get_values()
@@ -2360,13 +2392,11 @@ dnl
 test "$exec_prefix" = "NONE" && exec_prefix='$(prefix)'
 
 dnl
-dnl Defer setting _PATH_SUDO_NOEXEC until after exec_prefix is set
+dnl Defer setting _PATH_SUDO_NOEXEC and _PATH_SUDO_SESH
+dnl until after exec_prefix is set
 dnl XXX - this is gross!
 dnl
-if test "$with_noexec" != "no"; then
-    PROGS="${PROGS} sudo_noexec.la"
-    INSTALL_NOEXEC="install-noexec"
-
+if test X"$with_noexec" != X"no" -o X"$with_selinux" != X"no"; then
     oexec_prefix="$exec_prefix"
     if test "$exec_prefix" = '$(prefix)'; then
 	if test "$prefix" = "NONE"; then
@@ -2375,8 +2405,17 @@ if test "$with_noexec" != "no"; then
 	    exec_prefix="$prefix"
 	fi
     fi
-    eval noexec_file="$with_noexec"
-    AC_DEFINE_UNQUOTED(_PATH_SUDO_NOEXEC, "$noexec_file", [The fully qualified pathname of sudo_noexec.so])
+    if test X"$with_noexec" != X"no"; then
+	PROGS="${PROGS} sudo_noexec.la"
+	INSTALL_NOEXEC="install-noexec"
+
+	eval noexec_file="$with_noexec"
+	AC_DEFINE_UNQUOTED(_PATH_SUDO_NOEXEC, "$noexec_file", [The fully qualified pathname of sudo_noexec.so])
+    fi
+    if test X"$with_selinux" != X"no"; then
+	eval sesh_file="$libexecdir/sesh"
+	AC_DEFINE_UNQUOTED(_PATH_SUDO_SESH, "$sesh_file", [The fully qualified pathname of sesh])
+    fi
     exec_prefix="$oexec_prefix"
 fi
 
@@ -2437,6 +2476,7 @@ AH_TEMPLATE(HAVE_OPIE, [Define to 1 if you use NRL OPIE.])
 AH_TEMPLATE(HAVE_PAM, [Define to 1 if you use PAM authentication.])
 AH_TEMPLATE(HAVE_PROJECT_H, [Define to 1 if you have the <project.h> header file.])
 AH_TEMPLATE(HAVE_SECURID, [Define to 1 if you use SecurID for authentication.])
+AH_TEMPLATE(HAVE_SELINUX, [Define to 1 to enable SELinux RBAC support.])
 AH_TEMPLATE(HAVE_SIA, [Define to 1 if you use SIA authentication.])
 AH_TEMPLATE(HAVE_SIGACTION_T, [Define to 1 if <signal.h> has the sigaction_t typedef.])
 AH_TEMPLATE(HAVE_SKEY, [Define to 1 if you use S/Key.])

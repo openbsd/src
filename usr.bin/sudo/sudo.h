@@ -17,7 +17,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.209.2.13 2007/11/27 23:41:23 millert Exp $
+ * $Sudo: sudo.h,v 1.209.2.14 2008/02/09 14:44:48 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -53,6 +53,10 @@ struct sudo_user {
     int ngroups;
     GETGROUPS_T *groups;
     struct list_member *env_vars;
+#ifdef HAVE_SELINUX
+    char *role;
+    char *type;
+#endif
 };
 
 /*
@@ -149,6 +153,8 @@ struct sudo_user {
 #define safe_cmnd		(sudo_user.cmnd_safe)
 #define login_class		(sudo_user.class_name)
 #define runas_pw		(sudo_user._runas_pw)
+#define user_role		(sudo_user.role)
+#define user_type		(sudo_user.type)
 
 /*
  * We used to use the system definition of PASS_MAX or _PASSWD_LEN,
@@ -262,6 +268,9 @@ char *sudo_getepw	__P((const struct passwd *));
 int pam_prep_user	__P((struct passwd *));
 void zero_bytes		__P((volatile VOID *, size_t));
 int gettime		__P((struct timespec *));
+#ifdef HAVE_SELINUX
+void selinux_exec	__P((char *, char *, char **, char **, int));
+#endif
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */

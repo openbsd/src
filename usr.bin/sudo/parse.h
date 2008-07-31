@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: parse.h,v 1.14.2.1 2007/06/23 21:36:48 millert Exp $
+ * $Sudo: parse.h,v 1.14.2.2 2008/02/09 14:44:48 millert Exp $
  */
 
 #ifndef _SUDO_PARSE_H
@@ -35,6 +35,8 @@ struct matchstack {
 	int nopass;
 	int noexec;
 	int setenv;
+	char *role;
+	char *type;
 };
 
 /*
@@ -44,6 +46,15 @@ struct matchstack {
 struct sudo_command {
     char *cmnd;
     char *args;
+};
+
+/*
+ * SELinux-specific container struct.
+ * Currently just contains a role and type.
+ */
+struct selinux_info {
+    char *role;
+    char *type;
 };
 
 #define user_matches	(match[top-1].user)
@@ -64,6 +75,12 @@ struct command_match {
     char *cmnd;
     size_t cmnd_len;
     size_t cmnd_size;
+    char *role;
+    size_t role_len;
+    size_t role_size;
+    char *type;
+    size_t type_len;
+    size_t type_size;
     int nopasswd;
     int noexecve;
     int setenv;

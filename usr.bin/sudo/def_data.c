@@ -264,6 +264,14 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"Environment variables to preserve:",
 	NULL,
     }, {
+	"role", T_STR,
+	"SELinux role to use in the new security context: %s",
+	NULL,
+    }, {
+	"type", T_STR,
+	"SELinux type to use in the new security context: %s",
+	NULL,
+    }, {
 	NULL, 0, NULL
     }
 };

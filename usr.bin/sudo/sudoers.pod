@@ -1,4 +1,3 @@
-=cut
 Copyright (c) 1994-1996, 1998-2005, 2007
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
@@ -19,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.95.2.23 2008/01/05 23:59:42 millert Exp $
+$Sudo: sudoers.pod,v 1.95.2.27 2008/07/12 12:49:04 millert Exp $
 =pod
 
 =head1 NAME
@@ -299,7 +298,7 @@ For example:
  ray	rushmore = NOPASSWD: /bin/kill, /bin/ls, /usr/bin/lprm
 
 would allow the user B<ray> to run F</bin/kill>, F</bin/ls>, and
-F</usr/bin/lprm> as root on the machine rushmore as B<root> without
+F</usr/bin/lprm> as B<root> on the machine rushmore without
 authenticating himself.  If we only want B<ray> to be able to
 run F</bin/kill> without a password the entry would be:
 
@@ -500,14 +499,14 @@ of B<sudo>).
 
 =item ignore_local_sudoers
 
-If set via LDAP, parsing of @sysconfdir@/sudoers will be skipped.
+If set via LDAP, parsing of F<@sysconfdir@/sudoers> will be skipped.
 This is intended for Enterprises that wish to prevent the usage of local
 sudoers files so that only LDAP is used.  This thwarts the efforts of
-rogue operators who would attempt to add roles to @sysconfdir@/sudoers.
-When this option is present, @sysconfdir@/sudoers does not even need to exist. 
-Since this option tells B<sudo> how to behave when no specific LDAP entries
-have been matched, this sudoOption is only meaningful for the cn=defaults
-section.  This flag is I<off> by default.
+rogue operators who would attempt to add roles to F<@sysconfdir@/sudoers>.
+When this option is present, F<@sysconfdir@/sudoers> does not even need to
+exist. Since this option tells B<sudo> how to behave when no specific LDAP
+entries have been matched, this sudoOption is only meaningful for the
+C<cn=defaults> section.  This flag is I<off> by default.
 
 =item insults
 
@@ -1021,15 +1020,18 @@ B<notice>, and B<warning>.
 
 =head1 FILES
 
-=over 4
+=over 24
 
-=item F<@sysconfdir@/sudoers>C<		>
+=item F<@sysconfdir@/sudoers>
+
 List of who can run what
 
-=item F</etc/group>C<		>
+=item F</etc/group>
+
 Local groups file
 
-=item F</etc/netgroup>C<		>
+=item F</etc/netgroup>
+
 List of network groups
 
 =back

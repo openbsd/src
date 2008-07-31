@@ -72,7 +72,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.9 2007/12/02 17:13:52 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.10 2008/02/22 20:19:45 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -257,11 +257,6 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 	return(PAM_CONV_ERR);
     zero_bytes(*response, num_msg * sizeof(struct pam_response));
 
-    /* Is the sudo prompt standard? (If so, we'l just use PAM's) */
-    std_prompt =  strncmp(def_prompt, "Password:", 9) == 0 &&
-	(def_prompt[9] == '\0' ||
-	(def_prompt[9] == ' ' && def_prompt[10] == '\0'));
-
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
 	flags = tgetpass_flags;
 	switch (pm->msg_style) {
@@ -269,6 +264,12 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		SET(flags, TGP_ECHO);
 	    case PAM_PROMPT_ECHO_OFF:
 		prompt = def_prompt;
+
+		/* Is the sudo prompt standard? (If so, we'l just use PAM's) */
+		std_prompt = strncmp(def_prompt, "Password:", 9) == 0 &&
+		    (def_prompt[9] == '\0' ||
+		    (def_prompt[9] == ' ' && def_prompt[10] == '\0'));
+
 		/* Only override PAM prompt if it matches /^Password: ?/ */
 #if defined(PAM_TEXT_DOMAIN) && defined(HAVE_DGETTEXT)
 		if (!def_passprompt_override && (std_prompt ||

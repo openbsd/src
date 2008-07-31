@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ## (From INN-1.4, written by Rich Salz)
-##  $Revision: 1.8 $
+##  $Revision: 1.9 $
 ##  A script to install files and directories.
 
 PROGNAME=`basename $0`
@@ -182,7 +182,7 @@ fi
 
 ##  Get the destination and a temp file in the destination diretory.
 if [ -d "$2" ] ; then
-    DEST="$2/$1"
+    DEST="$2/`basename $1`"
     TEMP="$2/$$.tmp"
 else
     DEST="$2"

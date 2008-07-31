@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
@@ -56,11 +57,12 @@
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.13 2007/11/25 13:07:38 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.16 2008/06/22 20:23:57 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -458,9 +460,9 @@ send_mail(line)
 {
     FILE *mail;
     char *p;
-    int pfd[2];
-    pid_t pid;
-    sigset_t set, oset;
+    int fd, pfd[2], status;
+    pid_t pid, rv;
+    sigaction_t sa;
 #ifndef NO_ROOT_MAILER
     static char *root_envp[] = {
 	"HOME=/",
@@ -476,17 +478,79 @@ send_mail(line)
     if (!def_mailerpath || !def_mailto)
 	return;
 
-    (void) sigemptyset(&set);
-    (void) sigaddset(&set, SIGCHLD);
-    (void) sigprocmask(SIG_BLOCK, &set, &oset);
+    /* Fork and return, child will daemonize. */
+    switch (pid = fork()) {
+	case -1:
+	    /* Error */
+	    err(1, "cannot fork");
+	    break;
+	case 0:
+	    /* Child */
+	    switch (pid = fork()) {
+		case -1:
+		    /* Error. */
+		    mysyslog(LOG_ERR, "cannot fork: %m");
+		    _exit(1);
+		case 0:
+		    /* Grandchild continues below. */
+		    break;
+		default:
+		    /* Parent will wait for us. */
+		    _exit(0);
+	    }
+	    break;
+	default:
+	    /* Parent */
+	    do {
+#ifdef HAVE_WAITPID
+		rv = waitpid(pid, &status, 0);
+#else
+		rv = wait(&status);
+#endif
+	    } while (rv == -1 && errno == EINTR);
+	    return;
+    }
 
-    if (pipe(pfd) == -1)
-	err(1, "cannot open pipe");
+    /* Daemonize - disassociate from session/tty. */
+#ifdef HAVE_SETSID
+    if (setsid() == -1)
+      warn("setsid");
+#else
+    setpgrp(0, 0);
+# ifdef TIOCNOTTY
+    if ((fd = open(_PATH_TTY, O_RDWR, 0644)) != -1) {
+	ioctl(fd, TIOCNOTTY, NULL);
+	close(fd);
+    }
+# endif
+#endif
+    chdir("/");
+    if ((fd = open(_PATH_DEVNULL, O_RDWR, 0644)) != -1) {
+	(void) dup2(fd, STDIN_FILENO);
+	(void) dup2(fd, STDOUT_FILENO);
+	(void) dup2(fd, STDERR_FILENO);
+    }
+
+    /* Close password and other fds so we don't leak. */
+    endpwent();
+    closefrom(STDERR_FILENO + 1);
+
+    /* Ignore SIGPIPE in case mailer exits prematurely (or is missing). */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = SIG_IGN;
+    (void) sigaction(SIGPIPE, &sa, NULL);
+
+    if (pipe(pfd) == -1) {
+	mysyslog(LOG_ERR, "cannot open pipe: %m");
+	_exit(1);
+    }
 
     switch (pid = fork()) {
 	case -1:
 	    /* Error. */
-	    err(1, "cannot fork");
+	    mysyslog(LOG_ERR, "cannot fork: %m");
+	    _exit(1);
 	    break;
 	case 0:
 	    {
@@ -517,9 +581,6 @@ send_mail(line)
 		}
 		argv[i] = NULL;
 
-		/* Close password file so we don't leak the fd. */
-		endpwent();
-
 		/*
 		 * Depending on the config, either run the mailer as root
 		 * (so user cannot kill it) or as the user (for the paranoid).
@@ -531,6 +592,7 @@ send_mail(line)
 		set_perms(PERM_FULL_USER);
 		execv(mpath, argv);
 #endif /* NO_ROOT_MAILER */
+		mysyslog(LOG_ERR, "cannot execute %s: %m", mpath);
 		_exit(127);
 	    }
 	    break;
@@ -562,10 +624,14 @@ send_mail(line)
     (void) fprintf(mail, "\n\n%s : %s : %s : %s\n\n", user_host,
 	get_timestr(), user_name, line);
     fclose(mail);
-
-    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
-    /* If mailer is done, wait for it now.  If not, we'll get it later.  */
-    reapchild(SIGCHLD);
+    do {
+#ifdef HAVE_WAITPID
+	rv = waitpid(pid, &status, 0);
+#else
+	rv = wait(&status);
+#endif
+    } while (rv == -1 && errno == EINTR);
+    _exit(0);
 }
 
 /*
@@ -594,26 +660,6 @@ mail_auth(status, line)
 
     if ((status & mail_mask) != 0)
 	send_mail(line);
-}
-
-/*
- * SIGCHLD sig handler--wait for children as they die.
- */
-RETSIGTYPE
-reapchild(sig)
-    int sig;
-{
-    int status, serrno = errno;
-#ifdef sudo_waitpid
-    pid_t pid;
-
-    do {
-	pid = sudo_waitpid(-1, &status, WNOHANG);
-    } while (pid != 0 && (pid != -1 || errno == EINTR));
-#else
-    (void) wait(&status);
-#endif
-    errno = serrno;
 }
 
 /*

@@ -71,7 +71,7 @@
 #include "parse.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.36 2008/01/21 16:08:26 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.38 2008/04/11 14:03:51 millert Exp $";
 #endif /* lint */
 
 #ifndef LINE_MAX
@@ -80,6 +80,10 @@ __unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.36 2008/01/21 16:08
 
 #ifndef LDAP_OPT_SUCCESS
 # define LDAP_OPT_SUCCESS LDAP_SUCCESS
+#endif
+
+#ifndef LDAPS_PORT
+# define LDAPS_PORT 636
 #endif
 
 #define	DPRINTF(args, level)	if (ldap_conf.debug >= level) warnx args
@@ -1189,6 +1193,13 @@ sudo_ldap_check(pwflag)
 		if (setenv_implied)
 		    def_setenv = TRUE;
 		sudo_ldap_parse_options(ld, entry);
+#ifdef HAVE_SELINUX
+		/* Set role and type if not specified on command line. */
+		if (user_role == NULL)
+		    user_role = def_role;
+		if (user_type == NULL)
+		    user_type = def_type;
+#endif /* HAVE_SELINUX */
 		/* make sure we don't reenter loop */
 		ret = VALIDATE_OK;
 		/* break from inside for loop */

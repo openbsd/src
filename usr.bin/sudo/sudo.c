@@ -96,13 +96,16 @@
 # include <project.h>
 # include <sys/task.h>
 #endif
+#ifdef HAVE_SELINUX
+# include <selinux/selinux.h>
+#endif
 
 #include "sudo.h"
 #include "interfaces.h"
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.34 2007/12/13 14:12:49 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.43 2008/07/02 10:28:43 millert Exp $";
 #endif /* lint */
 
 /*
@@ -152,7 +155,7 @@ login_cap_t *lc;
 #ifdef HAVE_BSD_AUTH_H
 char *login_style;
 #endif /* HAVE_BSD_AUTH_H */
-sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
+sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp;
 
 
 int
@@ -201,8 +204,6 @@ main(argc, argv, envp)
     (void) sigaction(SIGINT, &sa, &saved_sa_int);
     (void) sigaction(SIGQUIT, &sa, &saved_sa_quit);
     (void) sigaction(SIGTSTP, &sa, &saved_sa_tstp);
-    sa.sa_handler = reapchild;
-    (void) sigaction(SIGCHLD, &sa, &saved_sa_chld);
 
     /*
      * Turn off core dumps and close open files.
@@ -270,25 +271,22 @@ main(argc, argv, envp)
     validated = sudo_ldap_check(pwflag);
 
     /* Skip reading /etc/sudoers if LDAP told us to */
-    if (def_ignore_local_sudoers); /* skips */
-    else if (ISSET(validated, VALIDATE_OK) && !printmatches); /* skips */
-    else if (ISSET(validated, VALIDATE_OK) && printmatches)
-    {
+    if (!def_ignore_local_sudoers) {
+	int v;
+
 	check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
 
-	/* User is found in LDAP and we want a list of all sudo commands the
-	 * user can do, so consult sudoers but throw away result.
-	 */
-	sudoers_lookup(pwflag);
+	/* Local sudoers file overrides LDAP if we have a match. */
+	v = sudoers_lookup(pwflag);
+	if (validated == VALIDATE_ERROR || ISSET(v, VALIDATE_OK))
+	    validated = v;
     }
-    else
+#else
+    check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
+
+    /* Validate the user but don't search for pseudo-commands. */
+    validated = sudoers_lookup(pwflag);
 #endif
-    {
-	check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
-
-	/* Validate the user but don't search for pseudo-commands. */
-	validated = sudoers_lookup(pwflag);
-    }
     if (safe_cmnd == NULL)
 	safe_cmnd = estrdup(user_cmnd);
 
@@ -437,13 +435,18 @@ main(argc, argv, envp)
 	(void) sigaction(SIGINT, &saved_sa_int, NULL);
 	(void) sigaction(SIGQUIT, &saved_sa_quit, NULL);
 	(void) sigaction(SIGTSTP, &saved_sa_tstp, NULL);
-	(void) sigaction(SIGCHLD, &saved_sa_chld, NULL);
 
 #ifndef PROFILING
 	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0)
 	    exit(0);
-	else
+	else {
+#ifdef HAVE_SELINUX
+	    if (is_selinux_enabled() > 0 && user_role != NULL)
+		selinux_exec(user_role, user_type, NewArgv, environ,
+		    ISSET(sudo_mode, MODE_LOGIN_SHELL));
+#endif
 	    execve(safe_cmnd, NewArgv, environ);
+	}
 #else
 	exit(0);
 #endif /* PROFILING */
@@ -610,8 +613,10 @@ init_vars(sudo_mode, envp)
 	log_error(USE_ERRNO|MSG_ONLY, "can't get hostname");
 
     set_runaspw(*user_runas);		/* may call log_error() */
-    if (*user_runas[0] == '#' && runas_pw->pw_name && runas_pw->pw_name[0])
-	*user_runas = estrdup(runas_pw->pw_name);
+    if (*user_runas[0] == '#') {
+	if (runas_pw->pw_name != *user_runas && runas_pw->pw_name[0])
+	    *user_runas = estrdup(runas_pw->pw_name);
+    }
 
     /*
      * Get current working directory.  Try as user, fall back to root.
@@ -858,6 +863,28 @@ parse_args(argc, argv)
 		case 'E':
 		    SET(rval, MODE_PRESERVE_ENV);
 		    break;
+#ifdef HAVE_SELINUX
+		case 'r':
+		    /* Must have an associated SELinux role. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
+
+		    user_role = NewArgv[1];
+
+		    NewArgc--;
+		    NewArgv++;
+		    break;
+		case 't':
+		    /* Must have an associated SELinux type. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
+
+		    user_type = NewArgv[1];
+
+		    NewArgc--;
+		    NewArgv++;
+		    break;
+#endif
 		case '-':
 		    NewArgc--;
 		    NewArgv++;
@@ -893,7 +920,10 @@ args_done:
 	    warnx("you may not specify environment variables in edit mode");
 	usage(1);
     }
-
+    if (ISSET(rval, MODE_PRESERVE_ENV) && ISSET(rval, MODE_LOGIN_SHELL)) {
+	warnx("you may not specify both the `-i' and `-E' options");
+	usage(1);
+    }
     if (user_runas != NULL && !ISSET(rval, (MODE_EDIT|MODE_RUN))) {
 	if (excl != '\0')
 	    warnx("the `-u' and '-%c' options may not be used together", excl);
@@ -992,9 +1022,25 @@ static void
 initial_setup()
 {
     int miss[3], devnull = -1;
-#if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
+#if defined(__linux__) || (defined(RLIMIT_CORE) && !defined(SUDO_DEVEL))
     struct rlimit rl;
+#endif
 
+#if defined(__linux__)
+    /*
+     * Unlimit the number of processes since Linux's setuid() will
+     * apply resource limits when changing uid and return EAGAIN if
+     * nproc would be violated by the uid switch.
+     */
+    rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
+    if (setrlimit(RLIMIT_NPROC, &rl)) {
+	if (getrlimit(RLIMIT_NPROC, &rl) == 0) {
+	    rl.rlim_cur = rl.rlim_max;
+	    (void)setrlimit(RLIMIT_NPROC, &rl);
+	}
+    }
+#endif /* __linux__ */
+#if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
     /*
      * Turn off core dumps.
      */
@@ -1194,6 +1240,11 @@ set_runaspw(user)
 	    runas_pw = emalloc(sizeof(struct passwd));
 	    (void) memset((VOID *)runas_pw, 0, sizeof(struct passwd));
 	    runas_pw->pw_uid = atoi(user + 1);
+	    runas_pw->pw_name = user;
+	    runas_pw->pw_passwd = "*";
+	    runas_pw->pw_gecos = user;
+	    runas_pw->pw_dir = "/";
+	    runas_pw->pw_shell = estrdup(_PATH_BSHELL);
 	}
     } else {
 	runas_pw = sudo_getpwnam(user);
@@ -1273,7 +1324,13 @@ usage(exit_val)
 #ifdef HAVE_LOGIN_CAP_H
 	" [-c class|-]",
 #endif
+#ifdef HAVE_SELINUX
+	" [-r role]",
+#endif
 	" [-p prompt]",
+#ifdef HAVE_SELINUX
+	" [-t type]",
+#endif
 	" [-u username|#uid]",
 	" [VAR=value]",
 	" {-i | -s | <command>}",

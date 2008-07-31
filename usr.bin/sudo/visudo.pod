@@ -1,4 +1,3 @@
-=cut
 Copyright (c) 1996,1998-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +17,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: visudo.pod,v 1.38.2.9 2007/08/13 16:23:31 millert Exp $
+$Sudo: visudo.pod,v 1.38.2.10 2008/02/19 15:45:12 millert Exp $
 =pod
 
 =head1 NAME
@@ -125,11 +124,15 @@ Used by visudo if VISUAL is not set
 
 =head1 FILES
 
-=over 4
+=over 24
 
-=item F<@sysconfdir@/sudoers>C<    		>List of who can run what
+=item F<@sysconfdir@/sudoers>
 
-=item F<@sysconfdir@/sudoers.tmp>C<		>Lock file for visudo
+List of who can run what
+
+=item F<@sysconfdir@/sudoers.tmp>
+
+Lock file for visudo
 
 =back
 
