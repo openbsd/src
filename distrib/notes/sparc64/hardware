@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.137 2008/07/29 22:20:04 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.138 2008/07/31 14:03:26 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -333,6 +333,24 @@ Supported devices {:-include-:}:
 		    Z-TEK ZK-R02
 
 	Wireless Ethernet Adapters
+		Atheros IEEE 802.11a/b/g CardBus adapters
+		    3Com 3CRPAG175
+		    Cisco AIR-CB21AG
+		    D-Link DWL-A650
+		    D-Link DWL-AB650
+		    Elecom LD-WL54
+		    Linksys WPC51AB
+		    Netgear WAB501
+		    Planet WL-3560
+		    Proxim Skyline 4030
+		    SMC SMC2735W
+		    Sony PCWA-C500
+		Atheros IEEE 802.11a/b/g PCI adapters
+		    D-Link DWL-A520
+		    IBM 11ABG WL LAN Mini PCI
+		    Proxim Skyline 4032
+		    Senao NL-5354MP Mini PCI
+		    Wistron CM9 Mini PCI
 		Atheros USB IEEE 802.11a/b/g USB adapters
 		    Compex WLU108AG
 		    Compex WLU108G
