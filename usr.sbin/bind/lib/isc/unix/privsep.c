@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2005/05/04 08:29:07 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.7 2008/08/01 00:32:56 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -236,7 +236,6 @@ isc_priv_bind(int fd, struct sockaddr *sa, socklen_t salen)
 		errx(1, "%s called from privileged portion", __func__);
 
 	if (check_bind(sa, salen)) {
-		logmsg(LOG_DEBUG, "Binding locally");
 		status = bind(fd, sa, salen);
 	} else {
 		logmsg(LOG_DEBUG, "Binding privsep");
