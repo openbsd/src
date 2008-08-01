@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.66 2008/07/31 15:26:25 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.67 2008/08/01 08:20:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -619,7 +619,14 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 
 	sc->sc_fmtgrp_idx = 0;
 
-	return (0);
+	if (sc->sc_fmtgrp_num == 0) {
+		printf("%s: no format descriptors found!\n", DEVNAME(sc));
+		return (USBD_INVAL);
+	}
+	DPRINTF(1, "%s: number of total format descriptors=%d\n",
+	    DEVNAME(sc), sc->sc_fmtgrp_num);
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 int
@@ -631,14 +638,13 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 	d = (struct usb_video_format_mjpeg_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
-		printf("%s: no MJPEG frame descriptors found!\n",
+		printf("%s: no MJPEG frame descriptors available!\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
 
 	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
-		printf("%s: too many MJPEG format descriptors found!\n",
-		    DEVNAME(sc));
+		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
 		return (-1);
 	}
 
@@ -668,14 +674,13 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 	d = (struct usb_video_format_uncompressed_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
-		printf("%s: no UNCOMPRESSED frame descriptors found!\n",
+		printf("%s: no UNCOMPRESSED frame descriptors available!\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
 
 	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
-		printf("%s: too many UNCOMPRESSED format descriptors found!\n",
-		    DEVNAME(sc));
+		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
 		return (-1);
 	}
 
