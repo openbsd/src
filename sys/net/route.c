@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.94 2008/07/28 13:25:10 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.95 2008/08/01 05:08:07 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -720,6 +720,9 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct sockaddr		*ndst;
 	struct sockaddr_rtlabel	*sa_rl;
 #define senderr(x) { error = x ; goto bad; }
+
+	/* XXX hack for 4.4-release */
+	prio = RTP_DEFAULT;
 
 	if ((rnh = rt_gettable(info->rti_info[RTAX_DST]->sa_family, tableid)) ==
 	    NULL)
