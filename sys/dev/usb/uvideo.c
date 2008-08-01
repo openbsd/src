@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.67 2008/08/01 08:20:26 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.68 2008/08/01 12:16:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -65,30 +65,30 @@ void            uvideo_attach(struct device *, struct device *, void *);
 int             uvideo_detach(struct device *, int);
 int             uvideo_activate(struct device *, enum devact);
 
-int		uvideo_vc_parse_desc(struct uvideo_softc *);
-int		uvideo_vc_parse_desc_header(struct uvideo_softc *,
+usbd_status	uvideo_vc_parse_desc(struct uvideo_softc *);
+usbd_status	uvideo_vc_parse_desc_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 
-int		uvideo_vs_parse_desc(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
 		    struct usb_attach_arg *, usb_config_descriptor_t *);
-int		uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-int		uvideo_vs_parse_desc_format(struct uvideo_softc *);
-int		uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_format(struct uvideo_softc *);
+usbd_status	uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-int		uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-int		uvideo_vs_parse_desc_frame(struct uvideo_softc *);
-int		uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
+usbd_status	uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-int		uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-int		uvideo_vs_parse_desc_alt(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *,
 		    struct usb_attach_arg *uaa, int, int, int);
-int		uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
+usbd_status	uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
 		    int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
-int		uvideo_find_res(struct uvideo_softc *, int, int, int,
+void		uvideo_find_res(struct uvideo_softc *, int, int, int,
 		    struct uvideo_res *);
 
 usbd_status	uvideo_vs_negotiation(struct uvideo_softc *, int);
@@ -105,10 +105,10 @@ usbd_status	uvideo_vs_init(struct uvideo_softc *);
 void		uvideo_vs_start(struct uvideo_softc *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-int		uvideo_vs_decode_stream_header(struct uvideo_softc *,
+usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
-int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
-int		uvideo_read(struct uvideo_softc *, uint8_t *, int);
+void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
+void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 #ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
@@ -422,12 +422,13 @@ uvideo_activate(struct device *self, enum devact act)
 	return (rv);
 }
 
-int
+usbd_status
 uvideo_vc_parse_desc(struct uvideo_softc *sc)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
 	int vc_header_found;
+	usbd_status error;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -448,10 +449,11 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 			if (vc_header_found) {
 				printf("%s: too many VC_HEADERs!\n",
 				    DEVNAME(sc));
-				return (-1);
+				return (USBD_INVAL);
 			}
-			if (uvideo_vc_parse_desc_header(sc, desc) != 0)
-				return (-1);
+			error = uvideo_vc_parse_desc_header(sc, desc);
+			if (error != USBD_NORMAL_COMPLETION)
+				return (error);
 			vc_header_found = 1;
 			break;
 
@@ -463,13 +465,13 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 
 	if (vc_header_found == 0) {
 		printf("%s: no VC_HEADER found!\n", DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vc_parse_desc_header(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -480,16 +482,16 @@ uvideo_vc_parse_desc_header(struct uvideo_softc *sc,
 	if (d->bInCollection == 0) {
 		printf("%s: no VS interface found!\n",
 		    DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 	
 	sc->sc_desc_vc_header.fix = d;
 	sc->sc_desc_vc_header.baInterfaceNr = (uByte *)(d + 1);
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
     usb_config_descriptor_t *cdesc)
 {
@@ -516,8 +518,9 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		case UDESCSUB_VS_INPUT_HEADER:
 			if (!uvideo_desc_len(desc, 13, 3, 0, 12))
 				break;
-			if (uvideo_vs_parse_desc_input_header(sc, desc) != 0)
-				return (-1);
+			error = uvideo_vs_parse_desc_input_header(sc, desc);
+			if (error != USBD_NORMAL_COMPLETION)
+				return (error);
 			break;
 
 		/* TODO: which VS descriptors do we need else? */
@@ -564,7 +567,7 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_input_header(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -575,16 +578,16 @@ uvideo_vs_parse_desc_input_header(struct uvideo_softc *sc,
 	/* on some devices bNumFormats is larger than the truth */
 	if (d->bNumFormats == 0) {
 		printf("%s: no INPUT FORMAT descriptors found!\n", DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	sc->sc_desc_vs_input_header.fix = d;
 	sc->sc_desc_vs_input_header.bmaControls = (uByte *)(d + 1);
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 {
 	usbd_desc_iter_t iter;
@@ -603,13 +606,14 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_FORMAT_MJPEG:
 			if (desc->bLength == 11) {
-				uvideo_vs_parse_desc_format_mjpeg(sc, desc);
+				(void)uvideo_vs_parse_desc_format_mjpeg(
+				    sc, desc);
 			}
 			break;
 		case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
 			if (desc->bLength == 27) {
-				uvideo_vs_parse_desc_format_uncompressed(sc,
-				    desc);
+				(void)uvideo_vs_parse_desc_format_uncompressed(
+				    sc, desc);
 			}
 			break;
 		}
@@ -629,7 +633,7 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -640,12 +644,12 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no MJPEG frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -661,10 +665,10 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -676,12 +680,12 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no UNCOMPRESSED frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -704,14 +708,15 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
+	usbd_status error;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -725,15 +730,16 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_FRAME_MJPEG:
-			if (uvideo_vs_parse_desc_frame_mjpeg(sc, desc))
-				return (1);
+			error = uvideo_vs_parse_desc_frame_mjpeg(sc, desc);
+			if (error != USBD_NORMAL_COMPLETION)
+				return (error);
 			break;
 		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
 			/* XXX do correct length calculation */
 			if (desc->bLength > 25) {
-				if (uvideo_vs_parse_desc_frame_uncompressed(sc,
-				    desc))
-					return (1);
+				error = uvideo_vs_parse_desc_frame_uncompressed(				    sc, desc);
+				if (error != USBD_NORMAL_COMPLETION)
+					return (error);
 			}
 			break;
 		}
@@ -741,10 +747,10 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 		desc = usb_desc_iter_next(&iter);
 	}
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -756,7 +762,7 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
 		printf("%s: too many MJPEG frame descriptors found!\n",
 		    DEVNAME(sc));
-		return (1);
+		return (USBD_INVAL);
 	}
 
 	fmtidx = sc->sc_fmtgrp_idx;
@@ -782,10 +788,10 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -797,7 +803,7 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
 		printf("%s: too many UNCOMPRESSED frame descriptors found!\n",
 		    DEVNAME(sc));
-		return (1);
+		return (USBD_INVAL);
 	}
 
 	fmtidx = sc->sc_fmtgrp_idx;
@@ -824,10 +830,10 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
     int vs_nr, int iface, int numalts)
 {
@@ -891,7 +897,7 @@ next:
 	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+usbd_status
 uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
     int max_packet_size)
 {
@@ -988,7 +994,7 @@ uvideo_desc_len(const usb_descriptor_t *desc,
  * Find the next best matching resolution which we can offer and
  * return it.
  */
-int
+void
 uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
     struct uvideo_res *r)
 {
@@ -1015,8 +1021,6 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
 		    DEVNAME(sc), __func__, i, w, h);
 	}
-
-	return (0);
 }
 
 usbd_status
@@ -1354,20 +1358,20 @@ uvideo_vs_init(struct uvideo_softc *sc)
 	/* open video stream pipe */
 	error = uvideo_vs_open(sc);
 	if (error != USBD_NORMAL_COMPLETION)
-		return (EIO);
+		return (USBD_INVAL);
 
 	/* allocate video stream xfer buffer */
 	error = uvideo_vs_alloc(sc);
 	if (error != USBD_NORMAL_COMPLETION)
-		return (EIO);
+		return (USBD_INVAL);
 
 	/* allocate video stream sample buffer */
 	error = uvideo_vs_alloc_sample(sc);
 	if (error != USBD_NORMAL_COMPLETION)
-		return (EIO);
+		return (USBD_INVAL);
 #ifdef UVIDEO_DUMP
 	if (uvideo_debug_file_open(sc) != 0)
-		return(EIO);
+		return (USBD_INVAL);
 	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
 #endif
 	return (USBD_NORMAL_COMPLETION);
@@ -1428,14 +1432,14 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			/* frame is empty */
 			continue;
 
-		uvideo_vs_decode_stream_header(sc, frame, frame_size);
+		(void)uvideo_vs_decode_stream_header(sc, frame, frame_size);
 	}
 
 skip:	/* setup new transfer */
 	uvideo_vs_start(sc);
 }
 
-int
+usbd_status
 uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
@@ -1445,7 +1449,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	if (frame_size < 2)
 		/* frame too small to contain a valid stream header */
-		return (-1);
+		return (USBD_INVAL);
 
 	header_len = frame[0];
 	header_flags = frame[1];
@@ -1454,10 +1458,10 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	if (header_len != 12)
 		/* frame header is 12 bytes long */
-		return (-1);
+		return (USBD_INVAL);
 	if (header_len == frame_size && !(header_flags & UVIDEO_STREAM_EOF)) {
 		/* stream header without payload and no EOF */
-		return (-1);
+		return (USBD_INVAL);
 	}
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
@@ -1522,10 +1526,10 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->fid = 0;
 	}
 
-	return (0);
+	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+void
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 {
 	/* find a buffer which is ready for queueing */
@@ -1556,11 +1560,9 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 		sc->sc_mmap_cur = 0;
 
 	wakeup(sc);
-
-	return (0);
 }
 
-int
+void
 uvideo_read(struct uvideo_softc *sc, uint8_t *buf, int len)
 {
 	/*
@@ -1570,8 +1572,6 @@ uvideo_read(struct uvideo_softc *sc, uint8_t *buf, int len)
 	*sc->sc_uplayer_fsize = len;
 	bcopy(buf, sc->sc_uplayer_fbuffer, len);
 	sc->sc_uplayer_intr(sc->sc_uplayer_arg);
-
-	return (0);
 }
 
 #ifdef UVIDEO_DEBUG
@@ -2049,14 +2049,14 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 	if (error) {
 		DPRINTF(1, "%s: %s: can't creat debug file %s!\n",
 		    DEVNAME(sc), __func__, name);
-		return (-1);
+		return (error);
 	}
 
 	sc->sc_vp = nd.ni_vp;
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 	if (nd.ni_vp->v_type != VREG) {
 		vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
-		return (-1);
+		return (EIO);
 	}
 
 	DPRINTF(1, "%s: %s: created debug file %s\n",
