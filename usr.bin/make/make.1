@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.79 2008/03/03 23:04:33 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.80 2008/08/01 14:19:09 bluhm Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 3 2008 $
+.Dd $Mdocdate: August 1 2008 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -665,6 +665,11 @@ Name of the machine architecture
 was compiled for, obtained from the
 .Ev MACHINE_ARCH
 environment variable, or defined at compilation time.
+.It Va MAKEFILE
+Possibly the file name of the last makefile that has been read.
+It should not be used; see the
+.Sx BUGS
+section below.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
@@ -1446,3 +1451,9 @@ only limits the number of concurrent makes it knows about.
 During recursive invocations, each level will multiply the number
 of processes by
 .Ar n .
+.Pp
+The
+.Va MAKEFILE
+variable cannot be used reliably.
+It is a compatibility feature and may get set to the last makefile
+specified, as it is set by System V make.
