@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.151 2008/07/08 12:17:48 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.152 2008/08/01 01:44:20 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -368,14 +368,15 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * it's open. But allow the open to proceed if the device can't
 		 * be locked in.
 		 */
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-			scsi_prevent(sc_link, PR_PREVENT,
+		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
+			scsi_prevent(sc_link, PR_PREVENT, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
+		}
 
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-		    TEST_READY_RETRIES, (rawopen ? SCSI_SILENT : 0) |
+		    TEST_READY_RETRIES, SCSI_SILENT |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error) {
@@ -425,7 +426,7 @@ out:	/* Insure only one open at a time. */
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
 		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
-			scsi_prevent(sc_link, PR_ALLOW,
+			scsi_prevent(sc_link, PR_ALLOW, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
@@ -477,7 +478,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
 			scsi_prevent(sd->sc_link, PR_ALLOW,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_NOT_READY);
+			    SCSI_IGNORE_NOT_READY | SCSI_SILENT);
 		sd->sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (sd->sc_link->flags & SDEV_EJECTING) {

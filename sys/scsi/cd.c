@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.143 2008/07/26 04:39:51 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.144 2008/08/01 01:44:20 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -336,7 +336,8 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 		/* Lock the cd in. */
 		error = scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_SILENT);
 		if (error)
 			goto bad;
 
@@ -379,7 +380,8 @@ out:	/* Insure only one open at a time. */
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_SILENT);
 		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
@@ -422,7 +424,8 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		/* XXXX Must wait for I/O to complete! */
 
 		scsi_prevent(cd->sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
+		    SCSI_SILENT);
 		cd->sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (cd->sc_link->flags & SDEV_EJECTING) {
@@ -1899,7 +1902,8 @@ cd_powerhook(int why, void *arg)
 	 */
 	if (why == PWR_RESUME && cd->sc_dk.dk_openmask != 0)
 		scsi_prevent(cd->sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_SILENT);
 }
 
 int
