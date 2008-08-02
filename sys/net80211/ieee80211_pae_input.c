@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.4 2008/08/02 08:20:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.5 2008/08/02 08:25:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -814,7 +814,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_gstate != RSNA_REKEYNEGOTIATING) {
-		DPRINTF(("%s: unexpected in state: %d\n", ni->ni_rsn_state));
+		DPRINTF(("%s: unexpected in state: %d\n", ni->ni_rsn_gstate));
 		return;
 	}
 	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt) {
@@ -861,14 +861,14 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	info = BE_READ_2(key->info);
-
 	/* enforce monotonicity of key request replay counter */
 	if (ni->ni_reqreplaycnt_ok &&
 	    BE_READ_8(key->replaycnt) <= ni->ni_reqreplaycnt) {
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
 	}
+	info = BE_READ_2(key->info);
+
 	if (!(info & EAPOL_KEY_KEYMIC) ||
 	    ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
 		DPRINTF(("key MIC failed\n"));
