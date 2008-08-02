@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.69 2008/08/02 08:51:25 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.70 2008/08/02 12:32:23 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1031,6 +1031,13 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	usbd_status error;
 
 	pc = (struct usb_video_probe_commit *)probe_data;
+
+	/* check if the format descriptor contains frame descriptors */
+	if (sc->sc_fmtgrp_cur->frame_num == 0) {
+		printf("%s: %s: no frame descriptors found!\n",
+		    __func__, DEVNAME(sc));
+		return (USBD_INVAL);
+	}
 
 	/* get probe */
 	bzero(probe_data, sizeof(probe_data));
@@ -2187,6 +2194,13 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	}
 	if (found == 0)
 		return (EINVAL);
+
+	/* check if the format descriptor contains frame descriptors */
+	if (sc->sc_fmtgrp[i].frame_num == 0) {
+		printf("%s: %s: no frame descriptors found!\n",
+		    __func__, DEVNAME(sc));
+		return (EINVAL);
+	}
 
 	/* search requested frame resolution */
 	uvideo_find_res(sc, i, fmt->fmt.pix.width, fmt->fmt.pix.height, &r);
