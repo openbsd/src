@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.70 2008/08/02 12:32:23 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.71 2008/08/02 16:34:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -47,6 +47,7 @@
 
 #include <dev/video_if.h>
 
+#undef UVIDEO_DEBUG
 #ifdef UVIDEO_DEBUG
 int uvideo_debug = 1;
 #define DPRINTF(l, x...) do { if ((l) <= uvideo_debug) printf(x); } while (0)
@@ -1142,8 +1143,10 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 
 	err = usbd_do_request(sc->sc_udev, &req, probe_data);
 	if (err) {
-		printf("%s: could not GET probe request: %s\n",
-		    DEVNAME(sc), usbd_errstr(err));
+		if (request != GET_DEF) {
+			printf("%s: could not GET probe request: %s\n",
+			    DEVNAME(sc), usbd_errstr(err));
+		}
 		return (USBD_INVAL);
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
