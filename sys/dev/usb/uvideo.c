@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.68 2008/08/01 12:16:52 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.69 2008/08/02 08:51:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2047,7 +2047,7 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 	if (error) {
-		DPRINTF(1, "%s: %s: can't creat debug file %s!\n",
+		DPRINTF(1, "%s: %s: can't create debug file %s!\n",
 		    DEVNAME(sc), __func__, name);
 		return (error);
 	}
