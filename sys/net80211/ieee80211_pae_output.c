@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.4 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.5 2008/08/02 08:33:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -61,8 +61,8 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	struct ifnet *ifp = &ic->ic_if;
 	struct ether_header *eh;
 	struct ieee80211_eapol_key *key;
-	u_int16_t len, info;
-	int s, error;
+	u_int16_t info;
+	int s, len, error;
 
 	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
@@ -109,13 +109,14 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	if (info & EAPOL_KEY_KEYMIC)
 		ieee80211_eapol_key_mic(key, ptk->kck);
 
+	len = m->m_pkthdr.len;
 	s = splnet();
 	/* start a 100ms timeout if an answer is expected from supplicant */
 	if (info & EAPOL_KEY_KEYACK)
 		timeout_add(&ni->ni_rsn_timeout, hz / 10);
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error == 0) {
-		ifp->if_obytes += m->m_pkthdr.len;
+		ifp->if_obytes += len;
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
 			(*ifp->if_start)(ifp);
 	}

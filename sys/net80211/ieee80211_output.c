@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.64 2008/08/02 08:20:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.65 2008/08/02 08:33:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -98,9 +98,9 @@ int
 ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
-	u_int dlt = 0;
-	int s, error = 0;
 	struct m_tag *mtag;
+	int s, len, error = 0;
+	u_short mflags;
 
 	/* Interface has to be up and running */
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
@@ -111,7 +111,7 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	/* Try to get the DLT from a mbuf tag */
 	if ((mtag = m_tag_find(m, PACKET_TAG_DLT, NULL)) != NULL) {
-		dlt = *(u_int *)(mtag + 1);
+		u_int dlt = *(u_int *)(mtag + 1);
 
 		/* Fallback to ethernet for non-802.11 linktypes */
 		if (!(dlt == DLT_IEEE802_11 || dlt == DLT_IEEE802_11_RADIO))
@@ -122,6 +122,8 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		 * further headers, and start output if interface not
 		 * yet active.
 		 */
+		mflags = m->m_flags;
+		len = m->m_pkthdr.len;
 		s = splnet();
 		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 		if (error) {
@@ -131,8 +133,8 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			    ifp->if_xname);
 			return (error);
 		}
-		ifp->if_obytes += m->m_pkthdr.len;
-		if (m->m_flags & M_MCAST)
+		ifp->if_obytes += len;
+		if (mflags & M_MCAST)
 			ifp->if_omcasts++;
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
 			(*ifp->if_start)(ifp);
