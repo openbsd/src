@@ -1,4 +1,4 @@
-.\" $OpenBSD: modload.8,v 1.24 2007/11/25 19:21:37 mikeb Exp $
+.\" $OpenBSD: modload.8,v 1.25 2008/08/02 09:17:47 jmc Exp $
 .\" $NetBSD: modload.8,v 1.17 2001/11/16 11:57:16 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd $Mdocdate: November 25 2007 $
+.Dd $Mdocdate: August 2 2008 $
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -104,12 +104,12 @@ Do not load symbols from the kernel module.
 Print comments about the loading process.
 .El
 .Sh FILES
-.Bl -tag -width /usr/include/sys/lkm.h -compact
+.Bl -tag -width "/usr/include/sys/lkm.hXXX" -compact
 .It Pa /dev/ksyms
-default file passed to the linker to resolve external
-references in the module
+Default file passed to the linker to resolve external
+references in the module.
 .It Pa /usr/include/sys/lkm.h
-file containing definitions of module types
+File containing definitions of module types.
 .El
 .Sh DIAGNOSTICS
 The
@@ -119,6 +119,7 @@ and with a nonzero status if an error occurs.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr lkm 4 ,
+.Xr securelevel 7 ,
 .Xr modstat 8 ,
 .Xr modunload 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lkm.4,v 1.14 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: lkm.4,v 1.15 2008/08/02 09:17:46 jmc Exp $
 .\"	$NetBSD: lkm.4,v 1.4 1994/11/30 16:22:22 jtc Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 2 2008 $
 .Dt LKM 4
 .Os
 .Sh NAME
@@ -63,7 +63,10 @@ programs.
 Users should never have to interact with
 .Pa /dev/lkm
 directly.
-.Sh "MODULE TYPES"
+The loading and unloading of modules is also
+dependent on the system
+.Xr securelevel 7 .
+.Sh MODULE TYPES
 .Bl -tag -width indent
 .It System Call modules
 System calls may be replaced by loading
@@ -91,7 +94,7 @@ drivers may be loaded into the system with
 .Nm LKM .
 The major problem with loading
 a device driver is that the driver's
-device nodes must be exist for the
+device nodes must exist for the
 devices to be accessed.
 They are usually created by instructing
 .Xr modload 8
@@ -112,16 +115,17 @@ whatever kernel data structures necessary to enable and disable the new module
 when it is loaded and unloaded.
 .El
 .Sh FILES
-.Bl -tag -width /usr/include/sys/lkm.h -compact
+.Bl -tag -width "/usr/include/sys/lkm.hXXX" -compact
 .It Pa /dev/lkm
 .Nm
-interface device
+interface device.
 .It Pa /usr/include/sys/lkm.h
-file containing definitions of module types
+File containing definitions of module types.
 .It Pa /usr/share/lkm
-example source code implementing several of the modules types
+Example source code implementing several of the modules types.
 .El
 .Sh SEE ALSO
+.Xr securelevel 7 ,
 .Xr modload 8 ,
 .Xr modstat 8 ,
 .Xr modunload 8
