@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.34 2008/07/12 17:31:06 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.35 2008/08/02 15:50:34 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -258,7 +258,7 @@ int
 vga_drm_print(void *aux, const char *pnp)
 {
        if (pnp)
-               printf("direct rendering for %s", pnp);
+               printf("drm at %s", pnp);
        return (UNSUPP);
 }
 #endif
