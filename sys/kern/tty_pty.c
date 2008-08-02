@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.37 2008/05/07 09:35:52 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.38 2008/08/02 11:39:38 stefan Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -471,7 +471,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				if (error)
 					return (error);
 				if (pti->pt_send & TIOCPKT_IOCTL) {
-					cc = min(uio->uio_resid,
+					cc = MIN(uio->uio_resid,
 						sizeof(tp->t_termios));
 					uiomove(&tp->t_termios, cc, uio);
 				}
@@ -500,7 +500,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL))
 		error = ureadc(0, uio);
 	while (uio->uio_resid > 0 && error == 0) {
-		cc = min(uio->uio_resid, BUFSIZ);
+		cc = MIN(uio->uio_resid, BUFSIZ);
 		cc = q_to_b(&tp->t_outq, buf, cc);
 		if (cc > bufcc)
 			bufcc = cc;
@@ -529,7 +529,7 @@ ptcwrite(dev_t dev, struct uio *uio, int flag)
 	u_char *cp = NULL;
 	int cc = 0, bufcc = 0;
 	u_char buf[BUFSIZ];
-	int cnt = 0;
+	size_t cnt = 0;
 	int error = 0;
 
 again:
@@ -540,7 +540,7 @@ again:
 			goto block;
 		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG - 1) {
 			if (cc == 0) {
-				cc = min(uio->uio_resid, BUFSIZ);
+				cc = MIN(uio->uio_resid, BUFSIZ);
 				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
 				if (cc > bufcc)
 					bufcc = cc;
@@ -565,7 +565,7 @@ again:
 	}
 	while (uio->uio_resid > 0) {
 		if (cc == 0) {
-			cc = min(uio->uio_resid, BUFSIZ);
+			cc = MIN(uio->uio_resid, BUFSIZ);
 			if (cc > bufcc)
 				bufcc = cc;
 			cp = buf;
