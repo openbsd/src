@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.72 2008/08/02 17:30:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.73 2008/08/02 20:05:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -54,12 +54,13 @@ int uvideo_debug = 1;
 #define DPRINTF(l, x...)
 #endif
 
+#define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
+
 int		uvideo_enable(void *);
 void		uvideo_disable(void *);
 int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
 		    void *arg);
 int		uvideo_close(void *);
-
 int             uvideo_match(struct device *, void *, void *);
 void            uvideo_attach(struct device *, struct device *, void *);
 int             uvideo_detach(struct device *, int);
@@ -68,7 +69,6 @@ int             uvideo_activate(struct device *, enum devact);
 usbd_status	uvideo_vc_parse_desc(struct uvideo_softc *);
 usbd_status	uvideo_vc_parse_desc_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-
 usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
 		    struct usb_attach_arg *, usb_config_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
@@ -90,7 +90,6 @@ usbd_status	uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 void		uvideo_find_res(struct uvideo_softc *, int, int, int,
 		    struct uvideo_res *);
-
 usbd_status	uvideo_vs_negotiation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *, uint8_t);
@@ -109,6 +108,7 @@ usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
 void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
+
 #ifdef UVIDEO_DEBUG
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
@@ -168,7 +168,9 @@ caddr_t		uvideo_mappage(void *, off_t, int);
 int		uvideo_get_bufsize(void *);
 int		uvideo_start_read(void *);
 
-#define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
+struct cfdriver uvideo_cd = {
+	NULL, "uvideo", DV_DULL
+};
 
 const struct cfattach uvideo_ca = {
 	sizeof(struct uvideo_softc),
@@ -177,16 +179,6 @@ const struct cfattach uvideo_ca = {
 	uvideo_detach,
 	uvideo_activate,
 };
-
-struct cfdriver uvideo_cd = {
-	NULL,
-	"uvideo",
-	DV_DULL
-};
-
-usbd_status 
-uvideo_usb_request(struct uvideo_softc * sc, u_int8_t type, u_int8_t request,
-    u_int16_t value, u_int16_t index, u_int16_t length, u_int8_t * data);
 
 struct video_hw_if uvideo_hw_if = {
 	uvideo_open,		/* open */
@@ -208,6 +200,19 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_mappage,		/* mmap */
 	uvideo_get_bufsize,	/* read */
 	uvideo_start_read	/* start stream for read */
+};
+
+/*
+ * Some devices do not report themselfs as UVC compatible although
+ * they are.  They report UICLASS_VENDOR in the bInterfaceClass
+ * instead of UICLASS_VIDEO.  Give those devices a chance to attach
+ * by looking up their USB ID.
+ *
+ * If the device also doesn't set UDCLASS_VIDEO you need to add an
+ * entry in usb_quirks.c, too, so the ehci disown works.
+ */
+static const struct usb_devno uvideo_quirk_devs [] = {
+	{ USB_VENDOR_LOGITECH,	USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 }
 };
 
 int
@@ -286,19 +291,6 @@ uvideo_close(void *addr)
 #endif
 	return (0);
 }
-
-/*
- * Some devices do not report themselfs as UVC compatible although
- * they are.  They report UICLASS_VENDOR in the bInterfaceClass
- * instead of UICLASS_VIDEO.  Give those devices a chance to attach
- * by looking up their USB ID.
- *
- * If the device also doesn't set UDCLASS_VIDEO you need to add an
- * entry in usb_quirks.c, too, so the ehci disown works.
- */
-static const struct usb_devno uvideo_quirk_devs [] = {
-	{ USB_VENDOR_LOGITECH,	USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 }
-};
 
 int
 uvideo_match(struct device *parent, void *match, void *aux)
