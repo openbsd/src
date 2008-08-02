@@ -177,8 +177,7 @@ drm_attach(struct device *parent, struct device *kdev,
 	dev->id_entry = id_entry;
 	dev->driver.id_entry = id_entry;
 
-	printf("\n");
-	DRM_INFO("%s (unit %d)\n", id_entry->name, dev->unit);
+	printf(": %s(%d)", id_entry->name, dev->unit);
 	drm_load(dev);
 }
 
@@ -405,8 +404,7 @@ drm_load(struct drm_device *dev)
 		DRM_ERROR("Cannot allocate memory for context bitmap.\n");
 		goto error;
 	}
-	DRM_INFO("Initialized %s %d.%d.%d %s\n",
-	    dev->driver.name,
+	printf(", %d.%d.%d %s\n",
 	    dev->driver.major,
 	    dev->driver.minor,
 	    dev->driver.patchlevel,

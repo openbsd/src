@@ -397,9 +397,6 @@ drm_agp_init(void)
 #endif
 		head->base = head->info.ai_aperture_base;
 		TAILQ_INIT(&head->memory);
-		DRM_INFO("AGP at 0x%08lx %dMB\n",
-		    (long)head->info.ai_aperture_base,
-		    (int)(head->info.ai_aperture_size >> 20));
 	}
 	return head;
 }
