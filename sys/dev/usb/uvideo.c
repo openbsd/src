@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.74 2008/08/02 20:08:49 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.75 2008/08/02 21:52:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -94,8 +94,8 @@ usbd_status	uvideo_vs_negotiation(struct uvideo_softc *, int);
 usbd_status	uvideo_vs_set_probe(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *, uint8_t);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
-usbd_status	uvideo_vs_alloc_sample(struct uvideo_softc *);
-void		uvideo_vs_free_sample(struct uvideo_softc *);
+usbd_status	uvideo_vs_alloc_frame(struct uvideo_softc *);
+void		uvideo_vs_free_frame(struct uvideo_softc *);
 usbd_status	uvideo_vs_alloc(struct uvideo_softc *);
 void		uvideo_vs_free(struct uvideo_softc *);
 usbd_status	uvideo_vs_open(struct uvideo_softc *);
@@ -141,7 +141,7 @@ void		uvideo_dump_desc_extension(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_hexdump(void *, int, int);
 int		uvideo_debug_file_open(struct uvideo_softc *);
-void		uvideo_debug_file_write_sample(void *);
+void		uvideo_debug_file_write_frame(void *);
 #endif
 
 /*
@@ -284,8 +284,8 @@ uvideo_close(void *addr)
 	/* free video stream xfer buffer */
 	uvideo_vs_free(sc);
 
-	/* free video stream sample buffer */
-	uvideo_vs_free_sample(sc);
+	/* free video stream frame buffer */
+	uvideo_vs_free_frame(sc);
 #ifdef UVIDEO_DUMP
 	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
 #endif
@@ -383,7 +383,7 @@ uvideo_detach(struct device *self, int flags)
 	/* Wait for outstanding requests to complete */
 	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
 
-	uvideo_vs_free_sample(sc);
+	uvideo_vs_free_frame(sc);
 
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
@@ -1186,13 +1186,13 @@ uvideo_vs_set_commit(struct uvideo_softc *sc, uint8_t *probe_data)
 }
 
 usbd_status
-uvideo_vs_alloc_sample(struct uvideo_softc *sc)
+uvideo_vs_alloc_frame(struct uvideo_softc *sc)
 {
-	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
+	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 
 	fb->buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
-	/* don't overflow the upper layer sample buffer */
+	/* don't overflow the upper layer frame buffer */
 	if (sc->sc_max_fbuf_size < fb->buf_size &&
 	    sc->sc_mmap_flag == 0) {
 		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
@@ -1201,14 +1201,14 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 
 	fb->buf = malloc(fb->buf_size, M_DEVBUF, M_NOWAIT);
 	if (fb->buf == NULL) {
-		printf("%s: can't allocate sample buffer!\n", DEVNAME(sc));
+		printf("%s: can't allocate frame buffer!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
 
-	DPRINTF(1, "%s: %s: allocated %d bytes sample buffer\n",
+	DPRINTF(1, "%s: %s: allocated %d bytes frame buffer\n",
 	    DEVNAME(sc), __func__, fb->buf_size);
 
-	fb->fragment = 0;
+	fb->sample = 0;
 	fb->fid = 0;
 	fb->offset = 0;
 
@@ -1216,9 +1216,9 @@ uvideo_vs_alloc_sample(struct uvideo_softc *sc)
 }
 
 void
-uvideo_vs_free_sample(struct uvideo_softc *sc)
+uvideo_vs_free_frame(struct uvideo_softc *sc)
 {
-	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
+	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 
 	if (fb->buf != NULL) {
 		free(fb->buf, M_DEVBUF);
@@ -1366,14 +1366,14 @@ uvideo_vs_init(struct uvideo_softc *sc)
 	if (error != USBD_NORMAL_COMPLETION)
 		return (USBD_INVAL);
 
-	/* allocate video stream sample buffer */
-	error = uvideo_vs_alloc_sample(sc);
+	/* allocate video stream frame buffer */
+	error = uvideo_vs_alloc_frame(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (USBD_INVAL);
 #ifdef UVIDEO_DUMP
 	if (uvideo_debug_file_open(sc) != 0)
 		return (USBD_INVAL);
-	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_sample, sc);
+	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_frame, sc);
 #endif
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1444,9 +1444,9 @@ usbd_status
 uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
-	struct uvideo_sample_buffer *fb = &sc->sc_sample_buffer;
+	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	uint8_t header_len, header_flags;
-	int fragment_len;
+	int sample_len;
 
 	if (frame_size < 2)
 		/* frame too small to contain a valid stream header */
@@ -1477,32 +1477,32 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		    header_flags & UVIDEO_STREAM_FID);
 	}
 
-	if (fb->fragment == 0) {
-		/* first fragment for a sample */
-		fb->fragment = 1;
+	if (fb->sample == 0) {
+		/* first sample for a frame */
+		fb->sample = 1;
 		fb->fid = header_flags & UVIDEO_STREAM_FID;
 		fb->offset = 0;
 	} else {
-		/* continues fragment for a sample, check consistency */
+		/* continues sample for a frame, check consistency */
 		if (fb->fid != (header_flags & UVIDEO_STREAM_FID)) {
-			DPRINTF(1, "%s: %s: wrong FID, ignore last sample!\n",
+			DPRINTF(1, "%s: %s: wrong FID, ignore last frame!\n",
 			    DEVNAME(sc), __func__);
-			fb->fragment = 1;
+			fb->sample = 1;
 			fb->fid = header_flags & UVIDEO_STREAM_FID;
 			fb->offset = 0;
 		}
 	}
 
-	/* save sample fragment */
-	fragment_len = frame_size - header_len;
-	if ((fb->offset + fragment_len) <= fb->buf_size) {
-		bcopy(frame + header_len, fb->buf + fb->offset, fragment_len);
-		fb->offset += fragment_len;
+	/* save sample */
+	sample_len = frame_size - header_len;
+	if ((fb->offset + sample_len) <= fb->buf_size) {
+		bcopy(frame + header_len, fb->buf + fb->offset, sample_len);
+		fb->offset += sample_len;
 	}
 
 	if (header_flags & UVIDEO_STREAM_EOF) {
-		/* got a full sample */
-		DPRINTF(2, "%s: %s: EOF (sample size = %d bytes)\n",
+		/* got a full frame */
+		DPRINTF(2, "%s: %s: EOF (frame size = %d bytes)\n",
 		    DEVNAME(sc), __func__, fb->offset);
 
 		if (fb->offset <= fb->buf_size) {
@@ -1519,11 +1519,11 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 				uvideo_read(sc, fb->buf, fb->offset);
 			}
 		} else {
-			DPRINTF(1, "%s: %s: sample too large, skipped!\n",
+			DPRINTF(1, "%s: %s: frame too large, skipped!\n",
 			    DEVNAME(sc), __func__);
 		}
 
-		fb->fragment = 0;
+		fb->sample = 0;
 		fb->fid = 0;
 	}
 
@@ -2067,10 +2067,10 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 }
 
 void
-uvideo_debug_file_write_sample(void *arg)
+uvideo_debug_file_write_frame(void *arg)
 {
 	struct uvideo_softc *sc = arg;
-	struct uvideo_sample_buffer *sb = &sc->sc_sample_buffer;
+	struct uvideo_frame_buffer *sb = &sc->sc_frame_buffer;
 	struct proc *p = curproc;
 	int error;
 
@@ -2225,7 +2225,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	DPRINTF(1, "%s: %s: offered width=%d, height=%d\n",
 	    DEVNAME(sc), __func__, r.width, r.height);
 
-	/* tell our sample buffer size */
+	/* tell our frame buffer size */
 	fmt->fmt.pix.sizeimage = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	return (0);
@@ -2438,8 +2438,8 @@ uvideo_try_fmt(void *v, struct v4l2_format *fmt)
 	DPRINTF(1, "%s: %s: offered width=%d, height=%d\n",
 	    DEVNAME(sc), __func__, r.width, r.height);
 
-	/* tell our sample buffer size */
-	fmt->fmt.pix.sizeimage = sc->sc_sample_buffer.buf_size;
+	/* tell our frame buffer size */
+	fmt->fmt.pix.sizeimage = sc->sc_frame_buffer.buf_size;
 
 	return (0);
 }

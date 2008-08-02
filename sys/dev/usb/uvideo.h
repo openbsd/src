@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.26 2008/07/31 15:26:25 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.27 2008/08/02 21:52:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -390,8 +390,8 @@ struct uvideo_vs_iface {
 	int			 iface;
 };
 
-struct uvideo_sample_buffer {
-	int		 fragment;
+struct uvideo_frame_buffer {
+	int		 sample;
 	uint8_t		 fid;
 	int		 offset;
 	int		 buf_size;
@@ -483,7 +483,7 @@ struct uvideo_softc {
 	u_int32_t				 clock_frequency;
 	u_int32_t				 quirks;
 
-	struct uvideo_sample_buffer		 sc_sample_buffer;
+	struct uvideo_frame_buffer		 sc_frame_buffer;
 
 	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
 	uint8_t					*sc_mmap_buffer;
