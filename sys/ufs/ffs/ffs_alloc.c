@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.84 2008/07/22 18:44:25 miod Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.85 2008/08/02 08:34:36 otto Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ ffs_realloccg(struct inode *ip, daddr64_t lbprev, daddr64_t bpref, int osize,
 	bprev = DIP(ip, db[lbprev]);
 
 	if (bprev == 0) {
-		printf("dev = 0x%x, bsize = %d, bprev = %d, fs = %s\n",
+		printf("dev = 0x%x, bsize = %d, bprev = %lld, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
@@ -473,7 +473,7 @@ ffs1_reallocblks(void *v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		printf("realloc: ino %d, lbns %d-%d\n\told:", ip->i_number,
+		printf("realloc: ino %d, lbns %lld-%lld\n\told:", ip->i_number,
 		    start_lbn, end_lbn);
 #endif
 	blkno = newblk;
@@ -555,7 +555,7 @@ ffs1_reallocblks(void *v)
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
 			panic("ffs1_reallocblks: unallocated block 3");
 		if (prtrealloc)
-			printf(" %d,", blkno);
+			printf(" %lld,", blkno);
 #endif
 	}
 #ifdef DEBUG
@@ -687,8 +687,8 @@ ffs2_reallocblks(void *v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		printf("realloc: ino %d, lbns %jd-%jd\n\told:", ip->i_number,
-		    (intmax_t)start_lbn, (intmax_t)end_lbn);
+		printf("realloc: ino %d, lbns %lld-%lld\n\told:", ip->i_number,
+		    start_lbn, end_lbn);
 #endif
 
 	blkno = newblk;
@@ -707,7 +707,7 @@ ffs2_reallocblks(void *v)
 #endif
 #ifdef DEBUG
 		if (prtrealloc)
-			printf(" %jd,", (intmax_t)*bap);
+			printf(" %lld,", *bap);
 #endif
 		if (DOINGSOFTDEP(vp)) {
 			if (sbap == &ip->i_din2->di_db[0] && i < ssize)
@@ -773,7 +773,7 @@ ffs2_reallocblks(void *v)
 #endif
 #ifdef DEBUG
 		if (prtrealloc)
-			printf(" %jd,", (intmax_t)blkno);
+			printf(" %lld,", blkno);
 #endif
 	}
 #ifdef DEBUG
@@ -882,8 +882,8 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	}
 
 	if (DIP(ip, blocks)) {
-		printf("free inode %s/%d had %d blocks\n",
-		    fs->fs_fsmnt, ino, DIP(ip, blocks));
+		printf("free inode %s/%d had %lld blocks\n",
+		    fs->fs_fsmnt, ino, (daddr64_t)DIP(ip, blocks));
 		DIP_ASSIGN(ip, blocks, 0);
 	}
 
@@ -1709,7 +1709,7 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 	}
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
-		printf("bad block %d, ino %u\n", bno, ip->i_number);
+		printf("bad block %lld, ino %u\n", bno, ip->i_number);
 		ffs_fserr(fs, DIP(ip, uid), "bad block");
 		return;
 	}
@@ -1723,7 +1723,7 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 	if (size == fs->fs_bsize) {
 		blkno = fragstoblks(fs, bno);
 		if (!ffs_isfreeblock(fs, cg_blksfree(cgp), blkno)) {
-			printf("dev = 0x%x, block = %d, fs = %s\n",
+			printf("dev = 0x%x, block = %lld, fs = %s\n",
 			    ip->i_dev, bno, fs->fs_fsmnt);
 			panic("ffs_blkfree: freeing free block");
 		}
@@ -1752,7 +1752,7 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(cg_blksfree(cgp), bno + i)) {
-				printf("dev = 0x%x, block = %d, fs = %s\n",
+				printf("dev = 0x%x, block = %lld, fs = %s\n",
 				    ip->i_dev, bno + i, fs->fs_fsmnt);
 				panic("ffs_blkfree: freeing free frag");
 			}
@@ -1870,7 +1870,7 @@ ffs_checkblk(struct inode *ip, daddr64_t bno, long size)
 		panic("ffs_checkblk: bad size");
 	}
 	if ((u_int)bno >= fs->fs_size)
-		panic("ffs_checkblk: bad block %d", bno);
+		panic("ffs_checkblk: bad block %lld", bno);
 
 	if (!(bp = ffs_cgread(fs, ip, dtog(fs, bno))))
 		return (0);
@@ -1949,7 +1949,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr64_t bpref, int allocsiz)
 			subfield <<= 1;
 		}
 	}
-	printf("bno = %d, fs = %s\n", bno, fs->fs_fsmnt);
+	printf("bno = %lld, fs = %s\n", bno, fs->fs_fsmnt);
 	panic("ffs_alloccg: block not in map");
 	return (-1);
 }
