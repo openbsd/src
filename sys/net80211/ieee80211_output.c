@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.63 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.64 2008/08/02 08:20:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -501,7 +501,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		goto bad;
 	}
 
-	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    !ni->ni_port_valid &&
 	    eh.ether_type != htons(ETHERTYPE_PAE)) {
 		DPRINTF(("port not valid: %s\n",
 		    ether_sprintf(eh.ether_dhost)));
@@ -581,7 +582,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	}
 
 	if ((ic->ic_flags & IEEE80211_F_WEPON) ||
-	    ((ic->ic_flags & IEEE80211_F_RSNON) && ni->ni_port_valid))
+	    ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	     (ni->ni_flags & IEEE80211_NODE_TXPROT)))
 		wh->i_fc[1] |= IEEE80211_FC1_PROTECTED;
 
 	*pni = ni;

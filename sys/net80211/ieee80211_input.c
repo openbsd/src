@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.87 2008/07/28 19:42:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.88 2008/08/02 08:20:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -331,22 +331,31 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			goto out;
 		}
 
-		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-			if (ic->ic_flags &
-			    (IEEE80211_F_WEPON | IEEE80211_F_RSNON)) {
+		if ((ic->ic_flags & IEEE80211_F_WEPON) ||
+		    ((ic->ic_flags & IEEE80211_F_RSNON) &&
+		     (ni->ni_flags & IEEE80211_NODE_RXPROT))) {
+			/* protection is on for Rx */
+			if (!(rxi->rxi_flags & IEEE80211_RXI_HWDEC)) {
+				if (!(wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
+					/* drop unencrypted */
+					ic->ic_stats.is_rx_unencrypted++;
+					goto err;
+				}
+				/* do software decryption */
 				m = ieee80211_decrypt(ic, m, ni);
 				if (m == NULL) {
 					ic->ic_stats.is_rx_wepfail++;
 					goto err;
 				}
 				wh = mtod(m, struct ieee80211_frame *);
-			} else {
-				ic->ic_stats.is_rx_nowep++;
-				goto out;
 			}
-		} else if (!(rxi->rxi_flags & IEEE80211_RXI_HWDEC)) {
-			/* XXX */
+		} else if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) ||
+		    (rxi->rxi_flags & IEEE80211_RXI_HWDEC)) {
+			/* frame encrypted but protection off for Rx */
+			ic->ic_stats.is_rx_nowep++;
+			goto out;
 		}
+
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
@@ -361,7 +370,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 		eh = mtod(m, struct ether_header *);
 
-		if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
+		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+		    !ni->ni_port_valid &&
 		    eh->ether_type != htons(ETHERTYPE_PAE)) {
 			DPRINTF(("port not valid: %s\n",
 			    ether_sprintf(wh->i_addr2)));

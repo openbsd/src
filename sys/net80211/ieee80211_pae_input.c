@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.3 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.4 2008/08/02 08:20:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -461,6 +461,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
+		ni->ni_flags |= IEEE80211_NODE_RXPROT;
 	}
 	if (gtk != NULL) {
 		u_int64_t rsc;
@@ -488,7 +489,11 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			goto deauth;
 		}
 	}
+	if (info & EAPOL_KEY_INSTALL)
+		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
+
 	if (info & EAPOL_KEY_SECURE) {
+		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ++ni->ni_key_count == 2) {
 			DPRINTF(("marking port %s valid\n",
@@ -546,6 +551,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 			ieee80211_node_leave(ic, ni);
 			return;
 		}
+		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 	}
 	if (ic->ic_opmode != IEEE80211_M_IBSS || ++ni->ni_key_count == 2) {
 		DPRINTF(("marking port %s valid\n",
@@ -829,6 +835,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 	    --ic->ic_rsn_keydonesta == 0)
 		ieee80211_setkeysdone(ic);
 	ni->ni_flags &= ~IEEE80211_NODE_REKEY;
+	ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 
 	ni->ni_rsn_gstate = RSNA_IDLE;
 	ni->ni_rsn_retries = 0;

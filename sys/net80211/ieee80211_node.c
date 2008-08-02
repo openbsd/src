@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.37 2008/07/28 19:42:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.38 2008/08/02 08:20:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -329,6 +329,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		 * multicast frames using the group key we've just configured.
 		 */
 		ni->ni_port_valid = 1;
+		ni->ni_flags |= IEEE80211_NODE_TXPROT;
 
 		/* schedule a GTK rekeying after 3600s */
 		timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
@@ -1086,6 +1087,7 @@ ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	ni->ni_key_count = 0;
 	ni->ni_port_valid = 0;
+	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 	ni->ni_replaycnt = -1;	/* XXX */
 	ni->ni_rsn_retries = 0;
 	ni->ni_rsncipher = ni->ni_rsnciphers;
@@ -1222,6 +1224,7 @@ ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	timeout_del(&ni->ni_rsn_timeout);
 	ni->ni_rsn_retries = 0;
+	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 	ni->ni_port_valid = 0;
 	(*ic->ic_delete_key)(ic, ni, &ni->ni_pairwise_key);
 }

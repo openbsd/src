@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.28 2008/07/27 18:24:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.29 2008/08/02 08:20:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -181,7 +181,11 @@ struct ieee80211_node {
 	u_int8_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP	0x01
 #define IEEE80211_NODE_QOS	0x02
-#define IEEE80211_NODE_REKEY	0x04
+#define IEEE80211_NODE_REKEY	0x04	/* GTK rekying in progress */
+#define IEEE80211_NODE_RXPROT	0x08	/* RX protection ON */
+#define IEEE80211_NODE_TXPROT	0x10	/* TX protection ON */
+#define IEEE80211_NODE_TXRXPROT	\
+	(IEEE80211_NODE_TXPROT | IEEE80211_NODE_RXPROT)
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);
