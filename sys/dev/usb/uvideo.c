@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.71 2008/08/02 16:34:45 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.72 2008/08/02 17:30:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -47,7 +47,6 @@
 
 #include <dev/video_if.h>
 
-#undef UVIDEO_DEBUG
 #ifdef UVIDEO_DEBUG
 int uvideo_debug = 1;
 #define DPRINTF(l, x...) do { if ((l) <= uvideo_debug) printf(x); } while (0)
