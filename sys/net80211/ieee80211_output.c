@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.65 2008/08/02 08:33:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.66 2008/08/02 08:35:48 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -549,7 +549,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		struct ieee80211_qosframe *qwh =
 		    (struct ieee80211_qosframe *)wh;
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
-		qwh->i_qos[0] = tid & IEEE80211_QOS_TID;
+		qwh->i_qos[0] = tid & 0xf;
 		qwh->i_qos[1] = 0;	/* no TXOP requested */
 		*(u_int16_t *)&qwh->i_seq[0] =
 		    htole16(ni->ni_qos_txseqs[tid] << IEEE80211_SEQ_SEQ_SHIFT);

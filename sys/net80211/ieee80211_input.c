@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.88 2008/08/02 08:20:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.89 2008/08/02 08:35:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -186,11 +186,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (dir == IEEE80211_FC1_DIR_DSTODS) {
 				struct ieee80211_qosframe_addr4 *qwh4 =
 				    (struct ieee80211_qosframe_addr4 *)wh;
-				tid = qwh4->i_qos[0] & IEEE80211_QOS_TID;
+				tid = qwh4->i_qos[0] & 0x0f;
 			} else {
 				struct ieee80211_qosframe *qwh =
 				    (struct ieee80211_qosframe *)wh;
-				tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
+				tid = qwh->i_qos[0] & 0x0f;
 			}
 			orxseq = &ni->ni_qos_rxseqs[tid];
 		} else
