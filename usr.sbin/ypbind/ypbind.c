@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.57 2007/10/09 14:40:15 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.58 2008/08/02 04:13:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.57 2007/10/09 14:40:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.58 2008/08/02 04:13:37 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -334,7 +334,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: ypbind [-insecure] [-ypset] [-ypsetme]\n");
-	exit(0);
+	exit(1);
 }
 
 int
