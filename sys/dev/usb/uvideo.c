@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.73 2008/08/02 20:05:28 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.74 2008/08/02 20:08:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -259,7 +259,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 	if (sc->sc_dying)
 		return (EIO);
 
-	/* pointers to upper layer which we need */
+	/* pointers to upper video layer */
 	sc->sc_uplayer_arg = arg;
 	sc->sc_uplayer_fsize = size;
 	sc->sc_uplayer_fbuffer = buffer;
