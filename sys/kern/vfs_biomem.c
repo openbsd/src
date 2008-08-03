@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.2 2008/06/11 00:11:03 thib Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.3 2008/08/03 18:08:54 kettenis Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -175,20 +175,21 @@ buf_release(struct buf *bp)
 int
 buf_dealloc_mem(struct buf *bp)
 {
-	caddr_t data = bp->b_data;
+	caddr_t data;
 	int s;
 
 	s = splbio();
 
+	data = bp->b_data;
 	bp->b_data = NULL;
 
-	if (bp->b_pobj) {
-		if (data) {
-			pmap_kremove((vaddr_t)data, bp->b_bufsize);
-			pmap_update(pmap_kernel());
-		}
-		buf_free_pages(bp);
+	if (data) {
+		pmap_kremove((vaddr_t)data, bp->b_bufsize);
+		pmap_update(pmap_kernel());
 	}
+
+	if (bp->b_pobj)
+		buf_free_pages(bp);
 
 	if (data == NULL) {
 		splx(s);
