@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.70 2008/07/28 20:49:28 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.71 2008/08/03 02:02:14 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1080,29 +1080,6 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		return (err);
 	}
 
-	/* Set the address. Do this early; some devices need that. */
-	/* Try a few times in case the device is slow (i.e. outside specs.) */
-	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
-	for (i = 0; i < 15; i++) {
-		err = usbd_set_address(dev, addr);
-		if (!err)
-			break;
-		if ((i % 4) == 0)
-			usbd_reset_port(up->parent, port, &ps);
-		else
-			usbd_delay_ms(dev, 200);
-	}
-	if (err) {
-		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
-		err = USBD_SET_ADDR_FAILED;
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-	/* Allow device time to set new address */
-	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
-	dev->address = addr;	/* New device address now */
-	bus->devices[addr] = dev;
-
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 15; i++) {
@@ -1162,6 +1139,21 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
+
+	/* Set the address. */
+	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
+	err = usbd_set_address(dev, addr);
+	if (err) {
+		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
+		err = USBD_SET_ADDR_FAILED;
+		usbd_remove_device(dev, up);
+		return (err);
+	}
+
+	/* Allow device time to set new address */
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+	dev->address = addr;	/* New device address now */
+	bus->devices[addr] = dev;
 
 	/* send disown request to handover 2.0 to 1.1. */
 	if (dev->quirks->uq_flags & UQ_EHCI_NEEDTO_DISOWN) {
