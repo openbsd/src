@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.64 2008/06/27 18:50:43 sobrado Exp $
+.\"	$OpenBSD: newfs.8,v 1.65 2008/08/03 21:43:19 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: June 27 2008 $
+.Dd $Mdocdate: August 3 2008 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -85,6 +85,16 @@ basing its defaults on the information in the disk label.
 Typically the defaults are reasonable, although
 .Nm
 has numerous options to allow the defaults to be selectively overridden.
+.Pp
+The
+.Ar special
+file should be a raw device,
+for example
+.Pa /dev/rsd0a ;
+if a relative path like
+.Pa sd0a
+is specified,
+the corresponding raw device is used.
 .Pp
 .Nm mount_mfs
 is used to build a file system in virtual memory and then mount it
