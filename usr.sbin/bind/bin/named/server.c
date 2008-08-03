@@ -3110,15 +3110,6 @@ load_configuration(const char *filename, ns_server_t *server,
 			const char *randomdev = cfg_obj_asstring(obj);
 			result = isc_entropy_createfilesource(ns_g_entropy,
 							      randomdev);
-			if (result != ISC_R_SUCCESS)
-				isc_log_write(ns_g_lctx,
-					      NS_LOGCATEGORY_GENERAL,
-					      NS_LOGMODULE_SERVER,
-					      ISC_LOG_INFO,
-					      "could not open entropy source "
-					      "%s: %s",
-					      randomdev,
-					      isc_result_totext(result));
 #ifdef PATH_RANDOMDEV
 			if (ns_g_fallbackentropy != NULL) {
 				if (result != ISC_R_SUCCESS) {
@@ -3134,8 +3125,17 @@ load_configuration(const char *filename, ns_server_t *server,
 							   &ns_g_entropy);
 				}
 				isc_entropy_detach(&ns_g_fallbackentropy);
-			}
+			} else
 #endif
+			if (result != ISC_R_SUCCESS)
+				isc_log_write(ns_g_lctx,
+					      NS_LOGCATEGORY_GENERAL,
+					      NS_LOGMODULE_SERVER,
+					      ISC_LOG_INFO,
+					      "could not open entropy source "
+					      "%s: %s",
+					      randomdev,
+					      isc_result_totext(result));
 		}
 	}
 
