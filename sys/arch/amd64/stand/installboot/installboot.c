@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.9 2008/06/25 15:26:44 reyk Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.10 2008/08/04 15:58:13 reyk Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -231,7 +231,7 @@ findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
 	if (!(*n)--)
 		return (-1);
 
-	if (lseek(devfd, mbroff, SEEK_SET) < 0 ||
+	if (lseek(devfd, mbroff * dl->d_secsize, SEEK_SET) < 0 ||
 	    read(devfd, &mbr, sizeof(mbr)) != sizeof(mbr))
 		err(4, "can't read master boot record");
 
@@ -242,14 +242,13 @@ findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
 	    dp++) {
 		if (!dp->dp_size)
 			continue;
-		startoff = (off_t)dp->dp_start * dl->d_secsize;
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "using MBR partition %ld: "
 			    "type %d (0x%02x) offset %d (0x%x)\n",
 			    (long)(dp - mbr.dmbr_parts),
 			    dp->dp_typ, dp->dp_typ,
 			    dp->dp_start, dp->dp_start);
-			break;
+			return (dp->dp_start + mbroff);
 		} else if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
 			fprintf(stderr, "extended partition %ld: "
@@ -257,16 +256,14 @@ findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
 			    (long)(dp - mbr.dmbr_parts),
 			    dp->dp_typ, dp->dp_typ,
 			    dp->dp_start, dp->dp_start);
+			startoff = (off_t)dp->dp_start + mbroff;
 			start = findopenbsd(devfd, dl, startoff, n);
 			if (start != -1)
-				return (dp->dp_start + start);
+				return (start);
 		}
 	}
-	/* Don't check for old part number, that is ;-p */
-	if (dp >= &mbr.dmbr_parts[NDOSPART])
-		return (-1);
 
-	return (dp->dp_start);
+	return (-1);
 }
 
 /*

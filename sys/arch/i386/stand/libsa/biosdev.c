@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.74 2008/06/25 15:32:18 reyk Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.75 2008/08/04 15:58:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,8 +46,7 @@ static int biosdisk_errno(u_int);
 static int CHS_rw (int, int, int, int, int, int, void *);
 static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
-static daddr_t findopenbsd(bios_diskinfo_t *, daddr_t, daddr_t *,
-    const char **, int *);
+static daddr_t findopenbsd(bios_diskinfo_t *, daddr_t, const char **, int *);
 
 extern int debug;
 int bios_bootdev;
@@ -346,8 +345,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
  * Try to read the bsd label on the given BIOS device
  */
 static daddr_t
-findopenbsd(bios_diskinfo_t *bd, daddr_t off, daddr_t *roff, const char **err,
-    int *n)
+findopenbsd(bios_diskinfo_t *bd, daddr_t off, const char **err, int *n)
 {
 	int error, i;
 	struct dos_mbr mbr;
@@ -373,7 +371,7 @@ findopenbsd(bios_diskinfo_t *bd, daddr_t off, daddr_t *roff, const char **err,
 	}
 
 	/* Search for OpenBSD partition */
-	for (off = 0, i = 0; off == 0 && i < NDOSPART; i++) {
+	for (i = 0; i < NDOSPART; i++) {
 		dp = &mbr.dmbr_parts[i];
 #ifdef BIOS_DEBUG
 		if (debug)
@@ -383,13 +381,14 @@ findopenbsd(bios_diskinfo_t *bd, daddr_t off, daddr_t *roff, const char **err,
 			    dp->dp_typ, dp->dp_typ,
 			    dp->dp_start, dp->dp_start);
 #endif
-		if (dp->dp_typ == DOSPTYP_OPENBSD)
-			off = dp->dp_start;
-		else if (dp->dp_typ == DOSPTYP_EXTEND ||
+		if (dp->dp_typ == DOSPTYP_OPENBSD) {
+			off = dp->dp_start + off;
+			break;
+		} else if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			off = findopenbsd(bd, dp->dp_start, roff, err, n);
+			off = findopenbsd(bd, dp->dp_start + off, err, n);
 			if (off != 0)
-				*roff = dp->dp_start;
+				break;
 		}
 	}
 
@@ -410,7 +409,7 @@ findopenbsd(bios_diskinfo_t *bd, daddr_t off, daddr_t *roff, const char **err,
 const char *
 bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 {
-	daddr_t off = 0, roff = 0;
+	daddr_t off = 0;
 	char *buf;
 	const char *err = NULL;
 	int error;
@@ -423,14 +422,14 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 
 	/* MBR is a harddisk thing */
 	if (bd->bios_number & 0x80) {
-		off = findopenbsd(bd, DOSBBSECTOR, &roff, &err, &n);
+		off = findopenbsd(bd, DOSBBSECTOR, &err, &n);
 		if (off == 0) {
 			if (err != NULL)
 				return (err);
  			return "no OpenBSD partition\n";
 		}
 	}
-	off = LABELSECTOR + off + roff;
+	off = LABELSECTOR + off;
 
 	/* Load BSD disklabel */
 	buf = alloca(DEV_BSIZE);
