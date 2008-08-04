@@ -178,6 +178,7 @@
 ./usr/include/mvme88k/intr.h
 ./usr/include/mvme88k/kcore.h
 ./usr/include/mvme88k/limits.h
+./usr/include/mvme88k/loadfile_machdep.h
 ./usr/include/mvme88k/lock.h
 ./usr/include/mvme88k/m88100.h
 ./usr/include/mvme88k/m88110.h

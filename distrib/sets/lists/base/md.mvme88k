@@ -1650,6 +1650,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/limits.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/m88100.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/m88110.ph
