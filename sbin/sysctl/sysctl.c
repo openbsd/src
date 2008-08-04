@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.159 2008/07/12 12:04:10 thib Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.160 2008/08/04 04:26:42 miod Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.159 2008/07/12 12:04:10 thib Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.160 2008/08/04 04:26:42 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -1880,30 +1880,32 @@ sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 	case CPU_CHIPSET_HAE_MASK:
 		len = sizeof(void *);
 		if (sysctl(mib, 3, &q, &len, NULL, 0) < 0)
-			return (-1);
-		printf("%p\n", q);
+			goto done;
+		printf("%p", q);
 		break;
 	case CPU_CHIPSET_BWX:
 		len = sizeof(int);
 		if (sysctl(mib, 3, &bwx, &len, NULL, 0) < 0)
-			return (-1);
-		printf("%d\n", bwx);
+			goto done;
+		printf("%d", bwx);
 		break;
 	case CPU_CHIPSET_TYPE:
 		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0)
-			return (-1);
+			goto done;
 		p = malloc(len + 1);
 		if (p == NULL)
-			return (-1);
+			goto done;
 		if (sysctl(mib, 3, p, &len, NULL, 0) < 0) {
 			free(p);
-			return (-1);
+			goto done;
 		}
 		p[len] = '\0';
-		printf("%s\n", p);
+		printf("%s", p);
 		free(p);
 		break;
 	}
+done:
+	printf("\n");
 	return (-1);
 }
 #endif
