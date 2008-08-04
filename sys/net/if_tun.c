@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.93 2008/05/07 05:51:12 mpf Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.94 2008/08/04 18:55:08 damien Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -561,7 +561,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-	len = m0->m_pkthdr.len + sizeof(*af);
+	len = m0->m_pkthdr.len;
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
 	if (error) {

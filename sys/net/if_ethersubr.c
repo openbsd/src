@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.122 2008/06/13 23:24:21 mpf Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.123 2008/08/04 18:55:08 damien Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -460,10 +460,10 @@ ether_output(ifp0, m0, dst, rt0)
 		splx(s);
 		return (error);
 	}
-	ifp->if_obytes += len + ETHER_HDR_LEN;
+	ifp->if_obytes += len;
 #if NCARP > 0
 	if (ifp != ifp0)
-		ifp0->if_obytes += len + ETHER_HDR_LEN;
+		ifp0->if_obytes += len;
 #endif /* NCARP > 0 */
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
