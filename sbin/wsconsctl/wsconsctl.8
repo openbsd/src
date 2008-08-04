@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.22 2008/06/26 05:42:06 ray Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.23 2008/08/04 07:32:51 sobrado Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: August 4 2008 $
 .Dt WSCONSCTL 8
 .Os
 .Sh NAME
@@ -36,8 +36,7 @@
 .Nd get or set wscons state
 .Sh SYNOPSIS
 .Nm wsconsctl
-.Op Fl n
-.Fl a
+.Op Fl an
 .Nm wsconsctl
 .Op Fl n
 .Op Fl f Ar file
@@ -62,6 +61,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Print all device variables and their current values.
+This is the default, if no parameters are given to
+.Nm .
 .It Fl f Ar file
 Specify an alternative control device.
 .It Fl n
