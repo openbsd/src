@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.79 2008/07/06 15:03:36 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.80 2008/08/04 18:46:32 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -398,9 +398,13 @@ main(int argc, char *argv[])
 			fatal("%s: %s", special, strerror(errno));
 		if (fstat(fsi, &st) < 0)
 			fatal("%s: %s", special, strerror(errno));
-		if (!S_ISCHR(st.st_mode) && !mfs)
-			warnx("%s: not a character-special device\n",
-			    special);
+		if (!mfs) {
+			if (S_ISBLK(st.st_mode))
+				fatal("%s: block device", special);
+			if (!S_ISCHR(st.st_mode))
+				warnx("%s: not a character-special device",
+				    special);
+		}
 		cp = strchr(argv[0], '\0') - 1;
 		if (cp == NULL || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
 		    && !isdigit(*cp)))
