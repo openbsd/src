@@ -28031,7 +28031,7 @@ case "$host" in
 	*-solaris2.[89])
 		hack_shutup_pthreadonceinit=yes
 		;;
-	*-solaris2.10)
+	*-solaris2.1[0-9])
 		hack_shutup_pthreadonceinit=yes
 		;;
 esac
