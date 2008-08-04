@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtable.c,v 1.10 2008/03/20 12:02:27 millert Exp $	*/
+/*	$OpenBSD: prtable.c,v 1.11 2008/08/04 18:42:09 millert Exp $	*/
 /*	$NetBSD: prtable.c,v 1.2 1995/03/21 12:14:42 cgd Exp $	*/
 
 /*-
@@ -108,7 +108,14 @@ prtable(char **base, int num, int d_cols, int width,
 			attron(A_REVERSE);
 			printw("--More--");
 			attroff(A_REVERSE);
-			while (inputch() != ' ');
+			do {
+			    j = inputch();
+			} while (j != ' ' && j != 'q' && j != 'Q');
+			if (j == 'q' || j == 'Q') {
+				move(row + 1, 0);
+				wclrtoeol(stdscr);
+				break;
+			}
 			move(LIST_LINE, LIST_COL);
 			wclrtobot(stdscr);
 		}
