@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.17 2008/05/19 18:42:12 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.18 2008/08/05 04:29:03 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -582,8 +582,7 @@ struct ssh_softc *sc;
 	splx(s);
 
 	delay(ssh_reset_delay * 1000);
-	printf(": version %d target %d\n", rp->ssh_ctest8 >> 4,
-			 sc->sc_link.adapter_target);
+	printf(": version %d\n", rp->ssh_ctest8 >> 4);
 
 	if ((sc->sc_flags & SSH_ALIVE) == 0) {
 		TAILQ_INIT(&sc->ready_list);
