@@ -9,7 +9,7 @@ s [message list] <file>		append message(s) to file.
 u [message list]		undelete message(s).
 R [message list]		reply to message sender(s).
 r [message list]		reply to message sender(s) and all recipients.
-p [message list]		print message list (pipe to lpr).
+p [message list]		print message list.
 pre [message list]		make messages go back to /var/mail.
 m <recipient list>		mail to specific recipient(s).
 q				quit, saving unresolved messages in mbox.
