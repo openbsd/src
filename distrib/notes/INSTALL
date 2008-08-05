@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.41 2005/03/18 13:29:44 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.42 2008/08/05 22:53:51 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -177,6 +177,11 @@ list server, send mail to that address with an empty body, and it will
 reply with instructions.  There are also two OpenBSD Usenet newsgroups,
 comp.unix.bsd.openbsd.announce for important announcements and
 comp.unix.bsd.openbsd.misc for general OpenBSD discussion.
+
+More information about the various OpenBSD mailing list and proper
+netiquette is available at
+
+	http://www.OpenBSD.org/mail.html
 
 To report bugs, use the 'sendbug' command shipped with OpenBSD,
 and fill in as much information about the problem as you can.  Good
