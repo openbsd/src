@@ -1,19 +1,22 @@
-dnl	$OpenBSD: prep,v 1.25 2006/08/30 23:50:59 kurt Exp $
+dnl	$OpenBSD: prep,v 1.26 2008/08/05 23:02:34 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
 with the SRM firmware.
 
 Switching your MACHINE to SRM console:
-    Recent machines (such as the Miata and later models) have enough flash
-    ROM space to carry both the AlphaBIOS and the SRM console.
+
+    AlphaServer class machines (except for model 400) and recent machines
+    (such as the Miata and later models) have enough flash ROM space to
+    carry both the AlphaBIOS and the SRM console.
+
     To switch to SRM from AlphaBIOS, do the following:
     - enter the AlphaBIOS setup upon startup
-      (F2 key, or ^B from serial console)
+      (F2 key, or Ctrl-B from serial console)
     - choose "CMOS Setup" from the menu
-    - select "Advanced CMOS Setup" (F6 key, or ^F from serial console)
+    - select "Advanced CMOS Setup" (F6 key, or Ctrl-F from serial console)
     - change the "Console Selection" setting to "OpenVMS console (SRM)"
-    - confirm your changes with F10 (or ^U) twice, then enter.
+    - confirm your changes with F10 (or Ctrl-U) twice, then enter.
     - power-cycle your system for the changes to take effect.
 
     If you didn't find a "Console Selection" entry (for example on 164SX or
@@ -27,7 +30,12 @@ Switching your MACHINE to SRM console:
 	http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
     for more information.
 
+    Note that, on most models, upgrading the firmware requires a jumper
+    to be moved on the motherboards; refer to the firmware update
+    instructions for details.
+
 AXPpci33 Motherboard specific notes:
+
     The 1994 version of the OEM guide has an incorrect pinout
     for the serial ports.  The newer version from
     ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z 
@@ -37,6 +45,7 @@ AXPpci33 Motherboard specific notes:
     you won't get any output from the serial console.
 
 Using the SRM console:
+
     This is not intended to be an exhaustive guide on using the
     SRM firmware console.  It should, however, give you enough
     information to boot OpenBSD/MACHINE.
@@ -48,30 +57,56 @@ Using the SRM console:
 
     You can set ROM variables by saying "set VARIABLE VALUE".
     Some variables you will want to set:
-	auto_action	Determines what happens when you turn the power on,
-			halt, or crash your machine.  Valid values
-			{:-include-:} "halt", "boot", and "restart".
-			Most users will want to set this to "boot".
-	bootdef_dev	Default boot device (or list of devices).
-	boot_file	Name of the kernel to boot.  If this variable is
-			empty, "bsd" will be loaded.  Note that this
-			variable does not exist in all versions of the SRM
-			console, in which case you need to always specify a
-			kernel filename if it differs from "bsd".
-	boot_osflags	Flags to pass to the kernel.
+
+	auto_action
+		Determines what happens when you turn the power on,
+		halt, or restart your machine.  Valid values are:
+
+		"halt"
+			the system will not autoboot, will restart when
+			rebooted (shutdown -r), and will not restart
+			when halted (shutdown -h).
+		"boot"
+			the system will autoboot on powerup, and when the
+			system is halted (shutdown -h) or rebooted
+			(shutdown -r).
+		"restart"
+			the system will autoboot on powerup, will restart
+			when rebooted (shutdown -r), and will not restart
+			when halted (shutdown -h).
+
+		Most users will want to set this to "boot".
+
+	bootdef_dev
+		Default boot device (or list of devices).
+
+	boot_file
+		Name of the kernel to boot.  If this variable is empty,
+		"bsd" will be loaded.  Note that this variable does not
+		exist in all versions of the SRM console, in which case
+		you need to always boot manually and specify a kernel
+		filename if it differs from "bsd".
+
+	boot_osflags
+		Flags to pass to the kernel (there is no need to prefix
+		them with a `-' dash sign).
+
     To see a list of all variables on your machine, use the "show"
-    command with no arguments.
+    command with no arguments.  If there are too many of them, you
+    might want to page with "show | more".
 
     You can bypass the boot_file and boot_osflags values from the command
     prompt, with the -fi (to override boot_file) and -fl (to override
     boot_osflags) options. For example,
+
 	boot -fi bsd -fl c dka0
-    will boot the "bsd" kernel with the "c" flag on dka0. However, some
+
+    will boot the "bsd" kernel with the "c" flag on dka0.  However, some
     versions of the SRM console (mainly on DEC 3000 series) will only let
     you specify uppercase filenames.
 
-
 SRM console boot device restrictions:
+
     The SRM firmware on your system may or may not be able to boot from
     any disk controller you may install in your MACHINE.
     The built-in disk controllers on your MACHINE will always be supported,
@@ -79,19 +114,20 @@ SRM console boot device restrictions:
     well as the low-end Personal Workstation (non-u models), you can plug
     in a SCSI controller, and boot from it if it is recognized.
 
-    Recent SRM releases for these machines will be able to boot from the
-    following controllers:
+    Recent SRM releases for these machines will be able to boot (or netboot)
+    from the following controllers:
 	QLogic PCI SCSI controllers
 	Symbios Logic (NCR) 53C8xx (but not on PC164)
 	Adaptec AHA-[23]9[34]x[U][W] cards
+	Intel i8255x-based cards (EtherExpress PRO)
     The following controllers are known not to be supported as boot devices
     by the SRM:
 	Adaptec AHA-[23]9[34]xU2 cards
 
     Depending on your specific model, your mileage may vary, though.
 
-
 OpenBSD/MACHINE console device restrictions:
+
     On systems with no framebuffer supported, including all
     TURBOchannel-based machines, OpenBSD/MACHINE must be used with a
     serial console.  Setting an Alpha system to use a serial console
@@ -99,6 +135,11 @@ OpenBSD/MACHINE console device restrictions:
 
 	DEC 3000/[4-9]00's:
 		Flip the appropriate switch on the back of the machine.
+
+		It is also necessary to set the ``server'' SRM
+		environment variable to ``on'' for the system to
+		autoboot on powerup despite the lack of a keyboard
+		and mouse plugged in.
 
 	DEC 3000/300 family machines:
 		Boot the machine with the keyboard/mouse connector
@@ -109,7 +150,9 @@ OpenBSD/MACHINE console device restrictions:
 			set console serial
 		at the SRM prompt, then enter
 			init
-		or cycle power.
+		or cycle power.  Switching back to glass console is
+		done with the opposite command:
+			set console graphics
 
     See your owner's manual for more details on how to set your machine
     to use a serial console.
