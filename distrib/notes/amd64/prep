@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2005/03/18 23:40:36 miod Exp $
+dnl	$OpenBSD: prep,v 1.5 2008/08/05 23:05:12 miod Exp $
 NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do not
 want any other operating system to reside on your hard disk, you can skip
 this section and go on to the section that describes installation, below.
@@ -11,13 +11,13 @@ SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
 wish to keep.  Repartitioning your hard disk is an excellent way to
 destroy important data.
 
-Second, if you are using a disk controller which supports disk geometry
-translation, be sure to use the same parameters for OpenBSD as for the
-other operating systems installed on your disk.  If you do not, it will
-be much harder to make OpenBSD properly coexist with them.
 dnl
 dnl All this text below is probably completely unapplicable to amd64,
 dnl as they don't have BIOS that old and crappy...
+dnl Second, if you are using a disk controller which supports disk geometry
+dnl translation, be sure to use the same parameters for OpenBSD as for the
+dnl other operating systems installed on your disk.  If you do not, it will
+dnl be much harder to make OpenBSD properly coexist with them.
 dnl
 dnl Utilities exist which will print out the disk geometry which DOS sees;
 dnl some versions of DOS "fdisk" also do this.  If you have an "EIDE" hard
@@ -41,7 +41,7 @@ dnl supported part of the hard disk -- this would typically be 504MB, 2GB or
 dnl 8GB, depending upon the age of the machine and its BIOS.
 
 dnl Fourth, use the other operating system's "fdisk" program or partition
-Third, use the other operating system's "fdisk" program or partition
+Second, use the other operating system's "fdisk" program or partition
 editor to create at least one of the partitions to be used for that
 operating system.  If that operating system is already set up to use the
 entire disk, you will have to back it up, remove and recreate a smaller

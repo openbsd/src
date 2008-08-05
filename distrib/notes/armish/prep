@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.13 2008/03/10 21:34:14 miod Exp $
+dnl	$OpenBSD: prep,v 1.14 2008/08/05 23:05:14 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about RedBoot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -7,11 +7,12 @@ dnl XXX bootable partitions
 The enabled features between IOData HDL-G and Thecus N2100 vary, so
 different methods will be needed on both machines.
 
-Thecus cannot load a file from disk, but can load an image
-from flash or network.
-IOData can load an image from disk (ext2fs), however the commands
-to load from flash are not available and network booting does not appear
-to work.
+All these machines use RedBoot as their firmware and boot loader
+interface, with varying limitations.  Thecus systems cannot load a
+file from disk, but can load an image from flash or network.  IOData
+systems are more restricted, and can only load an image from ext2fs
+partitions on disk, while the commands to load from flash are not
+available and network booting does not appear to work.
 
 Talking to the Thecus
 
@@ -292,17 +293,17 @@ so far.
 
 To install OpenBSD, boot linux, and copy 'boot' and 'bsd.rd' into the
 partition mounted on /dev/hda1, after that has been done, it is possible
-to reboot into OpenBSD and install the device. Installation can proceede
+to reboot into OpenBSD and install the device. Installation can proceed
 as on other machines, however care must be take to not remove wd0i/hda1
 partition (fdisk partition 0). DO NOT chose the 'full disk installation'
 option.
 
 Unfortunately, since IODATA did not provide the 'fconfig' command it
-is not possible to change the boot commands run when redboot launches,
-So it not possible to autoboot. Eventually 'boot' may be built such
-that it can be loaded as 'zImage', but not now. To disable autobooting
-into linux, zImage and initrd can be renamed or removed. The presence of 
-bsd.rd will allow manipulation of that parition.
+is not possible to change the boot commands run when RedBoot starts,
+thus it not possible to autoboot OpenBSD; the OpenBSD/MACHINE bootloader
+is currently unable to work when loaded as `zImage'.  Futhermore, to
+disable autobooting into Linux, at least one of the zImage and initrd files
+need to be renamed or removed.  This can be done from the shell in bsd.rd.
 
 To load the ramdisk kernel to install use the commands
 
@@ -315,3 +316,6 @@ kernels.
     RedBoot> load -m disk hda1:/boot
     RedBoot> go
 
+Since this bootloader is able to boot any kernel from the OpenBSD root
+partition, it is not necessary to keep bsd.rd on the hda1 partition after
+OpenBSD is installed.
