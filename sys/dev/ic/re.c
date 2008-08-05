@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.84 2008/07/15 13:21:17 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.85 2008/08/05 01:58:47 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -826,39 +826,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/* Reset the adapter. */
 	re_reset(sc);
 
-	sc->rl_eewidth = RL_9356_ADDR_LEN;
-	re_read_eeprom(sc, (caddr_t)&re_did, 0, 1);
-	if (re_did != 0x8129)
-		sc->rl_eewidth = RL_9346_ADDR_LEN;
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	re_read_eeprom(sc, (caddr_t)as, RL_EE_EADDR, 3);
-	for (i = 0; i < ETHER_ADDR_LEN / 2; i++)
-		as[i] = letoh16(as[i]);
-	bcopy(as, eaddr, sizeof(eaddr));
-#ifdef __armish__
-	/*
-	 * On the Thecus N2100, the MAC address in the EEPROM is
-	 * always 00:14:fd:10:00:00.  The proper MAC address is stored
-	 * in flash.  Fortunately RedBoot configures the proper MAC
-	 * address (for the first onboard interface) which we can read
-	 * from the IDR.
-	 */
-	if (eaddr[0] == 0x00 && eaddr[1] == 0x14 && eaddr[2] == 0xfd &&
-	    eaddr[3] == 0x10 && eaddr[4] == 0x00 && eaddr[5] == 0x00) {
-		if (boot_eaddr_valid == 0) {
-			boot_eaddr.eaddr_word[1] = letoh32(CSR_READ_4(sc, RL_IDR4));
-			boot_eaddr.eaddr_word[0] = letoh32(CSR_READ_4(sc, RL_IDR0));
-			boot_eaddr_valid = 1;
-		}
-
-		bcopy(boot_eaddr.eaddr, eaddr, sizeof(eaddr));
-		eaddr[5] += sc->sc_dev.dv_unit;
-	}
-#endif
-
 	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
 
 	switch (sc->sc_hwrev) {
@@ -874,7 +841,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8102E:
 	case RL_HWREV_8102EL:
 		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
-		    RL_FLAG_PHYWAKE | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT;
+		    RL_FLAG_PHYWAKE | RL_FLAG_PAR | RL_FLAG_DESCV2 |
+		    RL_FLAG_MACSTAT;
 		break;
 	case RL_HWREV_8168_SPIN1:
 	case RL_HWREV_8168_SPIN2:
@@ -906,6 +874,52 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	default:
 		break;
+	}
+
+	if (sc->rl_flags & RL_FLAG_PAR) {
+		/*
+		 * XXX Should have a better way to extract station
+		 * address from EEPROM.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			eaddr[i] = CSR_READ_1(sc, RL_IDR0 + i);
+	} else {
+		sc->rl_eewidth = RL_9356_ADDR_LEN;
+		re_read_eeprom(sc, (caddr_t)&re_did, 0, 1);
+		if (re_did != 0x8129)
+			sc->rl_eewidth = RL_9346_ADDR_LEN;
+
+		/*
+		 * Get station address from the EEPROM.
+		 */
+		re_read_eeprom(sc, (caddr_t)as, RL_EE_EADDR, 3);
+		for (i = 0; i < ETHER_ADDR_LEN / 2; i++)
+			as[i] = letoh16(as[i]);
+		bcopy(as, eaddr, sizeof(eaddr));
+
+#ifdef __armish__
+		/*
+		 * On the Thecus N2100, the MAC address in the EEPROM is
+		 * always 00:14:fd:10:00:00.  The proper MAC address is
+		 * stored in flash.  Fortunately RedBoot configures the
+		 * proper MAC address (for the first onboard interface)
+		 * which we can read from the IDR.
+		 */
+		if (eaddr[0] == 0x00 && eaddr[1] == 0x14 &&
+		    eaddr[2] == 0xfd && eaddr[3] == 0x10 &&
+		    eaddr[4] == 0x00 && eaddr[5] == 0x00) {
+			if (boot_eaddr_valid == 0) {
+				boot_eaddr.eaddr_word[1] =
+				    letoh32(CSR_READ_4(sc, RL_IDR4));
+				boot_eaddr.eaddr_word[0] =
+				    letoh32(CSR_READ_4(sc, RL_IDR0));
+				boot_eaddr_valid = 1;
+			}
+
+			bcopy(boot_eaddr.eaddr, eaddr, sizeof(eaddr));
+			eaddr[5] += sc->sc_dev.dv_unit;
+		}
+#endif
 	}
 
 	/*
