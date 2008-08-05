@@ -1,9 +1,9 @@
-dnl	$OpenBSD: install,v 1.40 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.41 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD installation
-CD-ROM, or an installation floppy.
+CD-ROM, or an installation floppy (if your machine can boot from floppy).
 
 If your machine is hooked up to a network, try and find a server to
 arrange for a diskless setup. This is a convenient way to install on a
@@ -67,15 +67,6 @@ partition naming a=0, b=1...
 	ok boot disk1:b bsd     # example - scsi target 1 or
 				# second ide drive
 
-During the boot, the kernel might not be able to determine by itself
-which device it has been booted from.  In this case, it will ask you
-for the root and swap devices.  Answer the device and partition you
-booted from as the root partition (likely sd0b or wd0b); you might
-want to rely on the boot messages to find the correct device name
-(see below).  When the kernel asks you for the swap device, just
-validate the suggested device name; since the installation procedure
-does not use swap, it doesn't matter.
-
 
 Installing using a diskless setup:
 
@@ -137,6 +128,12 @@ OpenBSDCommonFS
 		
 OpenBSDCommonURL
 
+OpenBSDInstallWrapup
+
+OpenBSDInstallAperture
+
+OpenBSDInstallWrapupPart2
+
 After completing an installation:
 
 Now try a reboot.  (If needed, swap your SCSI IDs first).
@@ -150,19 +147,13 @@ empty, value, type the following:
 
     ok set-default boot-file
 
+On multiprocessor systems, to boot the multiprocessor kernel automatically,
+type the following:
+
+    ok setenv boot-file bsd.mp
+
 
 OpenBSDCongratulations
-
-If you will be running your OpenBSD system from a serial console, you may
-need to edit /etc/ttys and change the terminal type, and getty method from
-"sun" and "suncons" to "vt100" and "std.9600" or something similar.  Also
-when running from a serial console, you may wish to adjust the eeprom
-settings for input-device, output-device, screen-#columns, and screen-#rows
-as appropriate.
-
-In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
-and add "local" to the end of the tty configuration line, and run
-'ttyflags -a' to put your changes into effect.
 
 
 Installing from Solaris:

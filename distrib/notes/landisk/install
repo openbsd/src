@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -44,5 +44,9 @@ OpenBSDDISKInstall({:-"wdN" or -:},{:-only-:})
 OpenBSDCommonFS
 
 OpenBSDCommonURL
+
+OpenBSDInstallWrapup
+
+OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

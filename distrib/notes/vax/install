@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.21 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -49,7 +49,7 @@ typing "mopd -a", if you've not configured it to run by default.
 Next you need to export a directory for your new machine to mount over
 NFS. This is accomplished by adding an entry to /etc/exports such as:
 
-/export/MACHINE -maproot=root quickvax
+	/export/MACHINE -maproot=root quickvax
 
 In a typical NFS install, the directory `/export/MACHINE' will contain
 the ramdisk kernel image `bsd.rd', although it is possible to populate
@@ -80,6 +80,7 @@ OpenBSDInstallPart2
 
 	The OpenBSD bootloader will appear, and a countdown should begin;
 	type any key on the console to interrupt and type
+
 		boot bsd.rd
 
 	It will take a while to load the kernel especially on a slow
@@ -122,5 +123,9 @@ OpenBSDDISKInstall(,{:-only -:})
 OpenBSDCommonFS(NFS)
 
 OpenBSDCommonURL
+
+OpenBSDInstallWrapup
+
+OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

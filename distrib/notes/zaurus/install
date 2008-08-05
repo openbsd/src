@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.21 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -119,10 +119,9 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	 2: 0C 7560   0  1 - 9065   7  1 [     1028160:      204800 ] Win95 FAT32L
 	 3: A6 9065   7  2 - 67885   5  3 [     1232960:     7999488 ] OpenBSD     
 
-	After shrinking the MS-DOS partition, please be sure to newfs
-	it using:
-
-		newfs -t msdos /dev/rwd0k
+	After shrinking the MS-DOS partition, you will need to
+	reformat it from Linux or OpenBSD once OpenBSD is installed.
+	(You will be reminded of this later in this document)
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
@@ -130,6 +129,34 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	is within the bounds of the 'c' partition if the disk is not being
 	shared with other operating systems, and within the OpenBSD fdisk
 	partition if the disk is being shared.
+
+OpenBSDInstallPart5(wd0)
+
+OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+
+OpenBSDFTPInstall
+
+OpenBSDHTTPInstall
+
+OpenBSDTAPEInstall
+
+OpenBSDCDROMInstall
+
+OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
+OpenBSDCongratulations
+
+	If you have kept the MS-DOS partition, do not forget to
+	newfs it using:
+
+		newfs -t msdos /dev/rwd0k
+
+	This should be done before attempting to mount and use this
+	partition from Linux or OpenBSD.
 
 	For purposes of recovery in case Linux becomes inoperable for
 	one reason or another with HDD1 Errors and such, we detail the
@@ -194,26 +221,3 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 		cp rc.rofilesys rc.rofilesys.ext3
 		cp ext2 rc.rofilesys
 
-	If you have created an 'A6' OpenBSD partition earlier using fdisk,
-	you will be able to use disklabel to cut that partition into at
-	least a root filesystem and swap partition.
-
-OpenBSDInstallPart5(wd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
-
-OpenBSDFTPInstall
-
-OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall
-
-OpenBSDCDROMInstall
-
-OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
-
-OpenBSDCommonFS
-
-OpenBSDCommonURL
-
-OpenBSDCongratulations

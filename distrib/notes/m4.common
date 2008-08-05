@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.78 2008/05/12 22:01:39 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.79 2008/08/05 22:57:59 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -316,7 +316,7 @@ dnl OpenBSDBootMsgs(warn geometry, disk type, disk type, disk type)
 dnl
 dnl Describes the boot of the ramdisk, the expected disk devices
 dnl names, and warns bore the reader with geometry concerns if the
-dnl second argument is not empty.
+dnl first argument is not empty.
 define({:-OpenBSDBootMsgs-:},
 {:-	Once the kernel has loaded, you will be presented with the
 	OpenBSD kernel boot messages.  You will want to read them
@@ -393,36 +393,47 @@ dnl OpenBSDInstallNet(other installation sources,hasfloppy)
 dnl Setting up the network
 define({:-OpenBSDInstallNet-:},
 {:-	After all your file systems have been created, the install program
-	will give you an opportunity to configure the network.  The network
-	configuration you enter (if any) can then be used to do the install
-	from another system using HTTP or FTP, and will also be the
-	configuration used by the system after the installation is complete.
+	will prompt you for the system hostname, and will give you an
+	opportunity to configure the network.  The network configuration
+	you enter (if any) can then be used to do the install from another
+	system using HTTP or FTP, and will also be the configuration used
+	by the system after the installation is complete.
+
+	Note that the system hostname should be without the domain part.
+
+If you select to configure the network, the install program will
+ask you for the name of your system and the DNS domain name to use.
+Note that the host name should be without the domain part, and that
+the domain name should NOT {:-include-:} the host name part.
 
 	If you select to configure the network, the install program will
-	ask you for the name of your system and the DNS domain name to use.
-	Note that the host name should be without the domain part, and that
-	the domain name should NOT {:-include-:} the host name part.
-
-	Next the system will give you a list of network interfaces you can
-	configure.  For each network interface you select to configure, it
-	will ask for the IP address to use, the symbolic host name to use,
-	the netmask to use, and any interface-specific flags to set.  The
-	interface-specific flags are usually used to determine which media
-	the network card is to use.  Typically no media flags are required
-	as autodetection normally works, but you will be prompted with a
-	list of the acceptable media flags, and asked if you want to provide
-	any.  In doubt, do not enter any media flags; or you can refer to
-	the manual page for your interface for the appropriate flags.
+	give you a list of network interfaces you can configure.  For each
+	network interface you select to configure, it will ask for the IP
+	address to use, the symbolic host name to use, the netmask to use,
+	and any interface-specific flags to set.  If the IP address should
+	be obtained from a DHCP server, simply enter ``dhcp'' when asked
+	for the IP address.  The interface-specific flags are usually used
+	to determine which media the network card is to use.  Typically no
+	media flags are required as autodetection normally works, but you
+	will be prompted with a list of the acceptable media flags, and
+	asked if you want to provide any.  In doubt, do not enter any media
+	flags; or you can refer to the manual page for your interface for
+	the appropriate flags.
 
 	After all network interfaces have been configured, the install pro-
-	gram will ask for a default route and IP address of the primary
-	name server to use.  You will also be presented with an opportunity
-	to edit the host table.
+	gram will ask for the DNS domain name to use, as well as the IP
+	address of the primary name server to use.  Finally, you will be
+	asked for the IP address of the default route.
 
-	At this point you will be allowed to edit the file system table
-	that will be used for the remainder of the installation and that
-	will be used by the finished system, following which the new file
-	systems will be mounted to complete the installation.
+	You will also be presented with an opportunity to edit the host
+	table.
+
+	At this point you will be asked for the initial root password of
+	the system, twice.  Although the install program will only check
+	that the two passwords match, you should make sure to use a
+	strong password.  As a minimum, the password should be at least
+	six characters long and a mixture of both lower and uppercase
+	letters, numbers and punctuation characters.
 
         After these preparatory steps have been completed, you will be
         able to extract the distribution sets onto your system.  There
@@ -641,15 +652,46 @@ define({:-OpenBSDCommonURL-:},
 		you really do want to download and install the files.
 		Assuming you acquiesce, the files will begin to download
 		and unpack.  If not, you will be given the option of
-		installing sets via one of the other install methods.
-
-
+		installing sets via one of the other install methods.-:})dnl
+dnl
+dnl Description of the end of the installation procedure.
+dnl This is split in multiple parts because not all platforms will
+dnl suggest setting the aperture sysctl or configuring a serial console.
+dnl
+dnl (the first blank line is intentional)
+define({:-OpenBSDInstallWrapup-:},
+{:-
 	When all the selected distribution sets have been extracted, you
-	will be allowed to select which time zone your system will be
-	using, all the device nodes needed by the installed system will
-	be created for you, and the file systems will be unmounted.  For
-	this to work properly, it is expected that you have installed
-	at least the "base{:--:}OSrev", "etc{:--:}OSrev", and "bsd" distribution sets.-:})dnl
+	will be asked whether you want to start shhd(8) by default,
+	as well as your ntp server (ntpd(8) will not be started by
+	default if you don't provide a server).-:})dnl
+dnl
+define({:-OpenBSDInstallAperture-:},
+{:-	You will next be asked whether you intend to run the X Window
+	System on your machine.  The install program needs to know
+	this, to change a configuration setting controlling whether
+	the X server will be able to access the xf86(4) driver; it
+	is not necessary to answer `y' to this question if you only
+	intend to run X client programs on a remote display.-:})dnl
+dnl
+define({:-OpenBSDInstallConsole-:},
+{:-	By default, the OpenBSD/MACHINE installation will only start
+	terminals on the primary display device.
+
+	If you are installing using a serial console, the installer
+	program will ask you whether you want to also enable an
+	additional terminal on that line, and will allow you to select
+	the line speed.-:})dnl
+dnl
+define({:-OpenBSDInstallWrapupPart2-:},
+{:-	The last thing you'll need to configure is the time zone your
+	system will be using.  For this work properly, it is expected
+	that you have installed at least the "base{:--:}OSrev", "etc{:--:}OSrev",
+	and "bsd" distribution sets.
+
+	The installer program will the proceed to create all the device
+	nodes needed by the installed system, and will unmount the
+	file systems.-:})dnl
 dnl
 define({:-OpenBSDCongratulations-:},
 {:-Congratulations, you have successfully installed OpenBSD OSREV.  When you

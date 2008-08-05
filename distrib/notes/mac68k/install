@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.36 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -102,6 +102,10 @@ dnl OpenBSDDISKInstall(,{:-only -:})
 OpenBSDCommonFS(NFS)
 
 OpenBSDCommonURL
+
+OpenBSDInstallWrapup
+
+OpenBSDInstallWrapupPart2
 
 Once the installation is complete, reboot into Mac OS, and start the
 BSD/Mac68k Booter again. This time, point to the OpenBSD kernel location

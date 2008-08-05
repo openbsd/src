@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.66 2008/03/10 21:38:28 miod Exp $
+dnl	$OpenBSD: install,v 1.67 2008/08/05 22:58:01 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -204,6 +204,10 @@ OpenBSDCommonFS
 		
 OpenBSDCommonURL
 
+OpenBSDInstallWrapup
+
+OpenBSDInstallWrapupPart2
+
 After completing an installation:
 
 Now try a reboot.  (If needed, swap your SCSI IDs first.)
@@ -224,18 +228,6 @@ On sun4 systems, you may not need to specify the boot file, as
 the OpenBSD boot blocks will look for "bsd" on the boot device by default.
 
 OpenBSDCongratulations
-
-If you will be running your OpenBSD system from a serial console, you may
-need to edit /etc/ttys and change the terminal type, and getty method from
-"sun" and "suncons" to "vt100" and "std.9600" or something similar.  Also
-when running from a serial console, you may wish to adjust the eeprom
-settings for input-device, output-device, screen-#columns, and screen-#rows
-as appropriate.
-
-In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
-and add "local" to the end of the tty configuration line, and run
-'ttyflags -a' to put your changes into effect.
-
 
 
 Installing from SunOS:
