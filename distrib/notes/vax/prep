@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.7 2006/08/30 20:08:51 miod Exp $
+dnl	$OpenBSD: prep,v 1.8 2008/08/05 23:03:50 miod Exp $
 VAX machines don't generally need any specific preparation. You will need
 to properly identify the console port on your machine.
 
@@ -9,7 +9,7 @@ all models have such a switch, though.
 
 Machines with frame buffers (i.e. VAXstations) have a similar S3 switch,
 and will either use a serial console connected to port 3 (usually labeled
-as the printer port) if the S3 switch is in the up position, and will use
+as the printer port) if the S3 switch is in the up position, or will use
 the keyboard and frame buffer console, if the S3 switch is in the down
 position. Be warned that early VAXstation 3100 models do not have a hole in
 the enclosure to access the switch, and will need to be opened for the
