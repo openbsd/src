@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.267 2008/07/27 16:36:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.268 2008/08/06 18:23:56 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -39,17 +39,17 @@ dnl	       	The only CPU that is known to work poorly (due to
 dnl		flawed motherboard designs) is the Cyrix 386DLC.
 	Buses
 		All standard ISA, EISA, VLB, and PCI bus based machines,
-		including:
+		including among others:
 			Intel 450GX/KX based machines
 			Intel 450NX based machines
 			ServerWorks chipset-based machines
-			(We just had to mention those last three, since
-			 they are the hardest to support)
-		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
-		support
+dnl Not worth bragging anymore
+dnl			(We just had to mention those last three, since
+dnl			 they are the hardest to support)
+		Both 16-bit PCMCIA Cards and newer 32-bit CardBus support
 		Universal Serial Bus (USB)
 		Inter IC (I2C) bus
-		The MCA bus found in various IBM PS/2 machines is not
+		The MCA bus found in various older IBM PS/2 machines is not
 		supported.
 	Bus Interfaces
 		Standard PCI-PCI bridges, including PCI expansion
@@ -1491,7 +1491,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		SoundForte RadioLink SF16-FMR FM radio
 		SoundForte RadioLink SF16-FMR2 FM radio
 	Miscellaneous Devices
-		APM power management,
+		APM power management (on non-ACPI systems)
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including: [G]
 		    Animation Technologies FlyVideo
@@ -1593,9 +1593,10 @@ dnl		XR16850-based ports (only in the pccom driver)
 Drivers for hardware marked with [G] are only included in the GENERIC
 kernels, but are NOT included on the various distribution floppies
 (including the CD-ROM boot image).
-Drivers for hardware marked with [A] are not included in floppy A.
-Drivers for hardware marked with [B] are not included in floppy B.
-Drivers for hardware marked with [C] are not included in floppy C.
+Drivers for hardware marked with [A] are NOT included in floppy A.
+Drivers for hardware marked with [B] are NOT included in floppy B.
+Drivers for hardware marked with [C] are NOT included in floppy C.
+
 Support for devices marked with [*] is not included in the distribution media
 or in the GENERIC kernel, and will require you to compile a custom kernel to
 enable it.

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.36 2008/07/16 16:41:03 miod Exp $
+dnl	$OpenBSD: hardware,v 1.37 2008/08/06 18:23:56 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -115,16 +115,16 @@ Supported devices {:-include-:}:
 		AHA-19160B
 		AHA-29160[B,N]
 		AHA-39160
-- SGC/GSC graphics:
+- SGC/GSC graphics
 	Artist (as found on 712) (sti)
 	CRX-8, CRX-24, HCRX-8, HCRX-24 (sti)
-- RS-232 devices:
+- RS-232 devices
 	on-board NS16550 or similar serial ports (com)
-- Parallel ports:
+- Parallel ports
 	on-board parallel port (lpt)
-- Audio devices:
+- Audio devices
 	Harmony CS4215/AD1849 LASI audio (harmony)
-- Input devices:
+- Input devices
 	PS/2 keyboard (pckbd) and mouse (pms)
 	HIL keyboard (hilkbd), mouse and tablets (hilms)
 - Wireless Ethernet Adapters

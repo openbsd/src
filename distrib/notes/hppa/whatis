@@ -1,5 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.4 2005/03/18 13:29:46 miod Exp $
+dnl	$OpenBSD: whatis,v 1.5 2008/08/06 18:23:56 miod Exp $
 
 OpenBSD/MACHINE OSREV runs on the HP 9000/700 series of workstations,
 based on 32 bit PA-RISC processors. Most letter-named models are also
-supported.
+supported, including many 64 bit PA-RISC 2.0-based models (running in
+32 bit mode).

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.39 2008/03/10 21:25:52 miod Exp $
+dnl	$OpenBSD: contents,v 1.40 2008/08/06 18:23:56 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -10,7 +10,7 @@ OpenBSDrd
 	SYS_UBOOT	Unified boot file, used for booting from disk or
 			from the network.
 
-	SYS_CDBOOT	Raw boot file, used for booting from CD-ROM.
+	SYS_CDBOOT	Simplified boot file, used for booting from CD-ROM.
 
 DistributionDescription(eleven)
 

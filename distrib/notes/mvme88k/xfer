@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.5 2005/03/18 13:30:53 miod Exp $
+dnl	$OpenBSD: xfer,v 1.6 2008/08/06 18:23:56 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -11,7 +11,7 @@ Installation is supported from several media types, including:
 OpenBSDXferPrelude
 
 
-OpenBSDXferBootTape(,stboot obs=512,bootst obs=512,bsd.rd obs=8k conv=sync)
+OpenBSDXferBootTape(xbase xetc xfont xserv xshare,stboot obs=512,bootst obs=512,bsd.rd obs=8k conv=sync)
 
 OpenBSDXferNFS
 

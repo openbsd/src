@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.23 2008/03/10 22:00:12 miod Exp $
+dnl	$OpenBSD: hardware,v 1.24 2008/08/06 18:23:56 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -69,5 +69,3 @@ Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed
 through an appropriate QBUS MSCP controller, or an NFS root and swap.
 The latter is the only option for the diskless VXT2000 terminals.
-
-Please see below for details.

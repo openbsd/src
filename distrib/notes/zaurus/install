@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2008/08/06 18:23:56 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -90,23 +90,20 @@ OpenBSDBootMsgs(,"wd0")
 
 OpenBSDInstallPart3
 
-	Next you will have to edit or create a disk label for the disk
-	OpenBSD is being installed on.  If there are any existing
-	partitions defined (for any operating system), and a disk label
-	is not found, you will first be given an opportunity to run
-	fdisk and create an OpenBSD partition.
+	Next you will have to create an OpenBSD partition with fdisk,
+	and then create a disk label within it.
 
-	If fdisk is being invoked on your behalf, it will start by
+	When fdisk is being invoked on your behalf, it will start by
 	displaying the current partitions defined and then allow you
 	to modify this information, add new partitions and change
 	which partition to boot from by default.  If you make a mistake,
 	you will be allowed to repeat this procedure as necessary to
-	correct this.  Note that you should make OpenBSD be the active
-	partition at least until the install has been completed.
+	correct this.  Note that you do not need to make OpenBSD be
+	the active partition.
 
 OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
-	'h', 'i' and so on.-:})
+	'i', 'j' and so on.-:})
 
 	One of the three partitions on the Zaurus C3x00 hard drive is
 	a 3GB or 5GB MS-DOS filesystem.  This partition has application

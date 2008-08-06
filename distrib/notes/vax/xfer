@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.9 2006/08/14 13:23:19 miod Exp $
+dnl	$OpenBSD: xfer,v 1.10 2008/08/06 18:23:56 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -11,7 +11,9 @@ Installation is supported from several media types, including:
 OpenBSDXferPrelude
 
 
-OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
+dnl Put back xserv when it is back
+dnl OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
+OpenBSDXferBareTape(xbase xetc xfont xshare)
 
 OpenBSDXferNFS
 

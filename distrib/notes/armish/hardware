@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.5 2008/08/06 18:23:51 miod Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Thecus N2100 and IOData HDL-G models at the moment.
 
@@ -255,6 +255,6 @@ Supported devices {:-include-:}:
 		USB-USB cables
 		USB Y@p phone
 	Keyboards
-		USB keyboards ???
+		USB keyboards
 	Pointing Devices
 		USB mice

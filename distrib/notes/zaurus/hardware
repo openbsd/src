@@ -1,9 +1,13 @@
-dnl	$OpenBSD: hardware,v 1.28 2008/04/01 14:40:58 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.29 2008/08/06 18:23:56 miod Exp $
 dnl When more than one model is supported, turn this into a list...
-OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
-SL-C3200 models at the moment.
+The following Sharp Zaurus models are supported by OpenBSD:
 
-Supported devices {:-include-:}:
+	SL-C3000
+	SL-C3100
+	SL-C3200
+
+In addition to the on-board devices (keyboard, touchscreen, microdrive,
+and serial ports), many USB devices are supported. These {:-include-:}:
 	Ethernet Adapters
 		ADMtek AN986-based USB adapters, including:
 		    Abocom UFE1000
@@ -332,9 +336,7 @@ Supported devices {:-include-:}:
 		    TDK LAK-CD011WL
 		    US Robotics 2410
 		    US Robotics 2445
-
 	Serial ports
-		On-board serial (com) ports
 		Most modems, digital cellular modems, and serial
 		cards should work
 	Universal Serial Bus (USB) Devices
@@ -353,15 +355,6 @@ Supported devices {:-include-:}:
 		USB Scanners
 		USB-USB cables
 		USB Y@p phone
-	Keyboards
-dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
-		System keyboard
-		USB keyboards
-	Pointing Devices
-		USB mice
-dnl C3000 specific. Mention it when C860 is supported but not its display.
-	On-board Display (pxalcd)
-
 	Miscellaneous Devices
 		Meinberg Funkuhren radio clocks
 			USB5131 USB attached DCF77 radio clock
