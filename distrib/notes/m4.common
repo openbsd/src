@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.79 2008/08/05 22:57:59 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.80 2008/08/06 20:50:48 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -745,12 +745,13 @@ new system in.  It will also use your existing network parameters.
 
 From then, the upgrade procedure is very close to the installation
 procedure described earlier in this document.  Note that the upgrade
-procedure will not let you pick the ``etc{:--:}OSrev.tgz'' set, so as to
-preserve your files in `/etc' which you are likely to have customized
-since a previous installation.
+procedure will not let you pick neither the ``etc{:--:}OSrev.tgz'' nor the
+``xetc{:--:}OSrev.tgz'' sets, so as to preserve your files in `/etc' which
+you are likely to have customized since a previous installation.
 
-However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz set in
-a temporary directory and merge changes by hand, since all components of
+However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz and
+xetc{:--:}OSrev.tgz sets in a temporary directory and merge changes by hand, or
+with the help of the sysmerge(8) helper script, since all components of
 your system may not function correctly until your files in `/etc' are
 updated.-:})dnl
 dnl
