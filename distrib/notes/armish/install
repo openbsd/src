@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.5 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.6 2008/08/06 18:20:55 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -29,7 +29,7 @@ OpenBSDInstallPart3
 
 OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
-	'h', 'i' and so on.-:})
+	'i', 'j' and so on.-:})
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,

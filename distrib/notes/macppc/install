@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.26 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.27 2008/08/06 18:20:55 miod Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -111,7 +111,7 @@ OpenBSDInstallPart3
 
 OpenBSDInstallPart4({:- If you have DOS or Linux
 	partitions defined on the disk, these will usually show up as
-	partition 'h', 'i' and so on.
+	partition 'i', 'j' and so on.
 
 	OpenBSD/MACHINE can share a disk with Mac OS or Mac OS X by using
 	an HFS partitioned disk. For proper layout, the disk should be
