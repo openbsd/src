@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.27 2008/08/06 17:22:14 miod Exp $
+dnl	$OpenBSD: prep,v 1.28 2008/08/06 20:29:49 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -113,6 +113,18 @@ Using the SRM console:
     will boot the "bsd" kernel with the "c" flag on dka0.  However, some
     versions of the SRM console (mainly on DEC 3000 series) will only let
     you specify uppercase filenames.
+
+USB support on the XP1000:
+
+    For some unknown reason, the USB interface found on the XP1000
+    (and possibly the XP900 and the XP1100) is not enabled unless a
+    specific SRM environment variable is set.
+
+    If you plan to use USB devices on these machines, enter
+	set usb_enable on
+    at the SRM prompt, followed by
+	init
+    before attempting to install OpenBSD.
 
 SRM console boot device restrictions:
 
