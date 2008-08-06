@@ -124,6 +124,13 @@ override_options ()
     }
   else
     m68k_align_funcs = def_align;
+
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
+  /* -fcse-skip-blocks causes NULL pointer dereferences in merge_blocks()
+     when invoked from delete_unreachable_blocks(). Disable it until the
+     real cause is found. */
+  flag_cse_skip_blocks = 0;
+#endif
 }
 
 /* This function generates the assembly code for function entry.
