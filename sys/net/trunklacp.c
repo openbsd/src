@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.2 2008/06/15 19:00:57 mpf Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.3 2008/08/06 17:04:28 reyk Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -514,7 +514,6 @@ lacp_port_create(struct trunk_port *tp)
 	struct lacp_port *lp;
 	struct ifnet *ifp = tp->tp_if;
 	struct ifreq ifr;
-	struct ifmediareq ifmr;
 	int error;
 
 	int active = 1; /* XXX should be configurable */
@@ -551,11 +550,6 @@ lacp_port_create(struct trunk_port *tp)
 	    (fast ? LACP_STATE_TIMEOUT : 0);
 	lp->lp_aggregator = NULL;
 	lacp_sm_rx_set_expired(lp);
-
-	bzero((char *)&ifmr, sizeof(ifmr));
-	error = (*ifp->if_ioctl)(ifp, SIOCGIFMEDIA, (caddr_t)&ifmr);
-	if (error == 0)
-		lp->lp_media = ifmr.ifm_active;
 
 	lacp_linkstate(tp);
 
@@ -870,7 +864,6 @@ lacp_aggregator_bandwidth(struct lacp_aggregator *la)
 	}
 
 	speed = lp->lp_ifp->if_baudrate;
-	speed = ifmedia_baudrate(lp->lp_media);
 	speed *= la->la_nports;
 	if (speed == 0) {
 		LACP_DPRINTF((lp, "speed 0? media=0x%x nports=%d\n",
@@ -987,7 +980,6 @@ lacp_compose_key(struct lacp_port *lp)
 {
 	struct trunk_port *tp = lp->lp_trunk;
 	struct trunk_softc *sc = tp->tp_trunk;
-	u_int media = lp->lp_media;
 	u_int16_t key;
 
 	if ((lp->lp_state & LACP_STATE_AGGREGATION) == 0) {
@@ -1003,16 +995,10 @@ lacp_compose_key(struct lacp_port *lp)
 		/* bit 15:	1 */
 		key |= 0x8000;
 	} else {
-		u_int subtype = IFM_SUBTYPE(media);
-
-		KASSERT(IFM_TYPE(media) == IFM_ETHER);
-		KASSERT((media & IFM_FDX) != 0);
-
-		/* bit 0..4:	IFM_SUBTYPE */
-		key = subtype;
-		/* bit 5..14:	(some bits of) if_index of trunk device */
-		key |= 0x7fe0 & ((sc->tr_ac.ac_if.if_index) << 5);
+		/* bit 0..14:	(some bits of) if_index of trunk device */
+		key = sc->tr_ac.ac_if.if_index;
 		/* bit 15:	0 */
+		key &= ~0x8000;
 	}
 	return (htons(key));
 }
