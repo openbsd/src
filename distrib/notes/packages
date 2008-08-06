@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.42 2007/05/29 04:30:38 miod Exp $
+dnl	$OpenBSD: packages,v 1.43 2008/08/06 18:22:13 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -106,34 +106,6 @@ Installing applications from the OpenBSD ports collection:
 	You should also refer to the ports(7) manual page.
 
 dnl
-dnl If this architecture is also supported under FreeBSD or NetBSD, define
-dnl text that tells which ports collection you can try to tinker with.
-dnl
-define({:-PORTS-:},
-{:-ifelse(
-MACHINE_ARCH,alpha,{:-FreeBSD
-	ports or NetBSD pkgsrc-:},
-MACHINE_ARCH,amd64,{:-FreeBSD
-	ports or NetBSD pkgsrc-:},
-MACHINE_ARCH,arm,{:-NetBSD
-	pkgsrc-:},
-dnl MACHINE_ARCH,hppa,{:-NetBSD
-dnl 	pkgsrc-:},
-MACHINE_ARCH,i386,{:-FreeBSD
-	ports or NetBSD pkgsrc-:},
-MACHINE_ARCH,m68k,{:-NetBSD
-	pkgsrc-:},
-MACHINE_ARCH,powerpc,{:-NetBSD
-	pkgsrc-:},
-MACHINE_ARCH,sh,{:-NetBSD
-	pkgsrc-:},
-MACHINE_ARCH,sparc,{:-NetBSD
-	pkgsrc-:},
-MACHINE_ARCH,sparc64,{:-FreeBSD
-	ports or NetBSD pkgsrc-:},
-MACHINE_ARCH,vax,{:-NetBSD
-	pkgsrc-:})-:})dnl
-dnl
 dnl If this architecture supports FreeBSD or NetBSD emulation by default,
 dnl define text that tells which binary packages you can try to run.
 dnl
@@ -153,10 +125,8 @@ Installing other applications:
 	If an OpenBSD package or port does not exist for an application
 	you're pretty much on your own.  The first thing to do is ask
 	<ports@OpenBSD.org> if anyone is working on a port -- there may
-	be one in progress.
-	ifelse(PORTS,,,{:-
-	If no such port exists, you might want to tinker with the PORTS.
--:})dnl
+	be one in progress.  If no such port exists, you might want to
+	look at the FreeBSD ports or NetBSD pkgsrc for inspiration.
 	ifelse(EMUL,,,{:-
 	It is also quite possible that the EMUL binary packages,
 	if they exist, will work for you. Note that you will need to
