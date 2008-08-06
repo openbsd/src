@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.92 2008/07/27 16:36:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.93 2008/08/06 20:30:09 miod Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -11,8 +11,8 @@ the G4 Cube, B&W G3, LCD iMac, Mac mini, iMac G5, PowerMac G5 and Xserve G5.
 
 For portables, PowerBook G3, PowerBook G4 (12", 15", 17"), iBook, iBook2
 and iBook G4 have been tested.  Note that power saving features on portables
-are very limited, limited power management features are available, suspend/sleep
-is not supported.  However battery level and status charging/AC
+are very limited, limited power management features are available,
+suspend/sleep is not supported.  However battery level and status charging/AC
 connected/AC disconnected is supported via an APM emulation layer.
 
 
@@ -137,8 +137,8 @@ Supported devices {:-include-:}:
 			Farallon PN9000SX
 			Netgear GA620 and GA620T
 			SGI Tigon
-		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters (axe),
-		including:
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters
+		(axe), including:
 			ATEN UC210T
 			BAFO BF-320
 			Billionton Systems USB2AR
