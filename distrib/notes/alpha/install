@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.31 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.32 2008/08/06 17:22:14 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -32,16 +32,9 @@ Booting from CD-ROM installation media:
 	as DKA600, you want to use dka6 (device IDs are case
 	insensitive).
 
-	On all MACHINE computers but the TURBOchannel DEC 3000 series,
-	insert the OpenBSD/MACHINE CD-ROM and enter
-		boot -fi OSREV/MACHINE/bsd.rd DEVICE
+	Insert the OpenBSD/MACHINE CD-ROM and enter
+		boot DEVICE
 	where DEVICE is the dka device name.
-
-	On the DEC 3000 series, insert the OpenBSD/MACHINE CD-ROM and enter
-		boot -fi ALPHA DEVICE
-	where DEVICE is the dka device name.
-	
-	Note that, in both cases, the argument order is important.
 
 	You should see info about the primary and secondary boot
 	and then the kernel should start to load.  If the kernel

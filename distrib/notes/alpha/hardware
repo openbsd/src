@@ -1,13 +1,13 @@
-dnl	$OpenBSD: hardware,v 1.95 2008/07/23 19:28:27 miod Exp $
+dnl	$OpenBSD: hardware,v 1.96 2008/08/06 17:22:14 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
-If you have hardware that is listed here and are unable to run
-OpenBSD, or if you are able to run OpenBSD on hardware not listed
-here, please send mail to <alpha@OpenBSD.org> with as much information
-as possible.
+If you have hardware that is listed here and are unable to run OpenBSD,
+or if you are able to run OpenBSD on hardware not listed here, please
+send mail to <alpha@OpenBSD.org> with as much information as possible.
 
 Supported hardware:
-    XP900, XP1000, CS20, DS10, DS20, 264DP, and other EV6 machines using the
-    Tsunami chipset (only one processor on multiprocessor models will be used)
+    XP900, XP1000, CS20, DS10, DS20, DS20L, ES40, 264DP, and other EV6
+    machines using the Tsunami chipset (only one processor on multiprocessor
+    models will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21143 Ethernet.
@@ -57,8 +57,9 @@ Supported hardware:
 		ISA IDE controller on the EB164.
 		ISA devices that require DMA operation.
 
-    AlphaServer 800 (also known as Digital Server 3300 and 3305), 1000, 1000A,
-    AlphaServer 1200 and 4100, and AlphaStation 1200
+    AlphaStation 600A and 1200
+    AlphaServer 800 (also known as Digital Server 3300 and 3305), 1000, 1000A
+    AlphaServer 1200, 4000 and 4100
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 Ethernet.
@@ -71,7 +72,7 @@ Supported hardware:
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
 
-    AlphaServer 400 and AlphaStation 200, 250, 255 and 400
+    AlphaServer 300 and 400, and AlphaStation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 Ethernet.
@@ -138,14 +139,20 @@ Supported hardware:
 
     At this time none of the following systems are supported:
 	DECpc AXP150 (2000/300) ``Jensen'' systems (EISA-bus PC-like systems)
-	AlphaServer systems unlisted above, such as models 2000, 2100 and 2100A
-	Alpha XL systems
+	AlphaServer 2000, 2100 and 2100A
+	AlphaServer 4100
+	AlphaServer 8200, 8400 and GS60
+	AlphaServer DS15, DS15A, DS25, ES45 and TS202C
+	AlphaServer ES47, ES80 and GS1280
+	AlphaServer GS80, GS160 and GS320
+	Alpha XL systems (no SRM)
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus-based)
 	EB64+ based systems
-	Samsung 164BX/UX (no SRM)
+	Samsung 164BX and 164UX (no SRM)
+	VME Alpha systems (AXPvme, ALPHAvme)
+	Tadpole ALPHAbook
 	Multiprocessor Alpha systems (though they will run fine using one
 	    processor only, if the model is listed as supported above)
-	VME Alpha systems
 
 Supported Peripherals:
 
@@ -983,7 +990,6 @@ Drivers for hardware marked with "[-]" are NOT available on the installation
 floppies, or the CD-ROM installation kernel, but are available in the GENERIC
 kernel which will be installed.
 
-Console frame buffers and keyboards are only supported on systems
-explicitly mentioned above.  On other systems, including all
-TURBOchannel-based machines, OpenBSD/MACHINE *must* be used with a
-serial console.
+Console frame buffers and keyboards are only supported on systems explicitly
+mentioned above.  On other systems, including all TURBOchannel-based machines,
+OpenBSD/MACHINE *must* be used with a serial console.

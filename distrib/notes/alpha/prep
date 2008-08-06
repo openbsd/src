@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.26 2008/08/05 23:02:34 miod Exp $
+dnl	$OpenBSD: prep,v 1.27 2008/08/06 17:22:14 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -6,9 +6,9 @@ with the SRM firmware.
 
 Switching your MACHINE to SRM console:
 
-    AlphaServer class machines (except for model 400) and recent machines
-    (such as the Miata and later models) have enough flash ROM space to
-    carry both the AlphaBIOS and the SRM console.
+    AlphaServer class machines (except for models 300 and 400) and recent
+    enough machines (such as the Miata and later models) have enough
+    flash ROM space to carry both the AlphaBIOS and the SRM console.
 
     To switch to SRM from AlphaBIOS, do the following:
     - enter the AlphaBIOS setup upon startup
@@ -23,11 +23,16 @@ Switching your MACHINE to SRM console:
     164LX), your system can not hold both the AlphaBIOS and SRM console in
     flash, and you will have to upgrade your firmware.
 
-    You can get replacement firmware either from a firmware update CD-ROM
-    or via FTP from
-	ftp://ftp.digital.com/pub/DEC/Alpha/firmware/
+    You can get replacement firmware either from a firmware update CD-ROM,
+    which can be downloaded from
+	ftp://ftp.hp.com/pub/alphaserver/firmware/v73.zip
+    However, this CD-ROM image only supports AlphaServer DS10, DS20, DS20L,
+    and ES40.  Firmware update for other models can be picked individually
+    via FTP from
+	ftp://ftp.hp.com/pub/alphaserver/firmware/retired_platforms/
+
     Please refer to
-	http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
+	http://h18002.www1.hp.com/alphaserver/firmware/index.html
     for more information.
 
     Note that, on most models, upgrading the firmware requires a jumper
@@ -36,13 +41,17 @@ Switching your MACHINE to SRM console:
 
 AXPpci33 Motherboard specific notes:
 
-    The 1994 version of the OEM guide has an incorrect pinout
-    for the serial ports.  The newer version from
-    ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z 
-    has a corrected pinout (as well as more information than
-    the 1994 edition).  Note that there are two flavors
-    of PC serial connectors.  If you have the wrong kind,
-    you won't get any output from the serial console.
+    The 1994 version of the OEM guide has an incorrect pinout for the
+    serial ports.  The newer version used to be available at
+	ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z 
+    with a corrected pinout (as well as more information than the 1994
+    edition). Although ftp.digital.com does not exist anymore, a few
+    copies of this document are scattered accross various ftp servers
+    on the globe, such as
+	ftp://ftp.uniroma2.it/Digital/support/axppci/design_guide.ps.Z
+    
+    Note that there are two flavors of PC serial connectors.  If you
+    have the wrong kind, you won't get any output from the serial console.
 
 Using the SRM console:
 
@@ -128,46 +137,36 @@ SRM console boot device restrictions:
 
 OpenBSD/MACHINE console device restrictions:
 
-    On systems with no framebuffer supported, including all
-    TURBOchannel-based machines, OpenBSD/MACHINE must be used with a
-    serial console.  Setting an Alpha system to use a serial console
-    is system-specific.  The procedure for most common hardware is:
+    On systems with no framebuffer supported (currently all
+    TURBOchannel-based machines), OpenBSD/MACHINE must be used with a
+    serial console.
+    
+    Setting an Alpha system to use a serial console is system-specific.
+    Although most models will default to serial console if no keyboard
+    is connected on powerup, this behaviour can't be relied upon.
+    The recommended procedure is:
 
-	DEC 3000/[4-9]00's:
-		Flip the appropriate switch on the back of the machine.
+	DEC 3000/[4-9]00
+		Flip the `S3' switch on the back of the machine
+		(up for glass console, down for serial console).
 
-		It is also necessary to set the ``server'' SRM
-		environment variable to ``on'' for the system to
-		autoboot on powerup despite the lack of a keyboard
-		and mouse plugged in.
+		When configured to use a serial console, it is also
+		necessary to set the ``server'' SRM environment
+		variable to ``on'' for the system to autoboot on
+		powerup despite the lack of a keyboard and mouse
+		plugged in.
 
-	DEC 3000/300 family machines:
-		Boot the machine with the keyboard/mouse connector
+	DEC 3000/300 family machines
+		These machines will automatically switch to serial
+		console if the keyboard/mouse connector is left
 		unplugged.
 
-	Other machines running the SRM console on local display:
-		From the SRM console, enter
+	All other machines
+		From the SRM console, enter either
 			set console serial
+		or
+			set console graphics
 		at the SRM prompt, then enter
 			init
-		or cycle power.  Switching back to glass console is
-		done with the opposite command:
-			set console graphics
+		or cycle power.
 
-    See your owner's manual for more details on how to set your machine
-    to use a serial console.
-
-    Note that some MACHINE computers currently *require* a serial console
-    and can't be used from a regular keyboard/display console, even though
-    the motherboard has appropriate connectors.
-    Currently, only the TURBOchannel MACHINE computers (DEC 3000) require
-    use of a serial console.
-
-dnl XXX This only affects kernels built without pckbc on machines configured
-dnl XXX for glass console. Not worth keeping at the moment... -- miod
-dnl    If booting using the regular console aborts with ``not configured to
-dnl    use display && keyboard console'', then you need to use a serial
-dnl    console.
-dnl
-    If your machine was not listed in the list above, please report this
-    to <alpha@OpenBSD.org>.

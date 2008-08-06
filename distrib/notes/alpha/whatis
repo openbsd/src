@@ -1,5 +1,5 @@
-dnl	$OpenBSD: whatis,v 1.12 2005/03/18 13:29:45 miod Exp $
+dnl	$OpenBSD: whatis,v 1.13 2008/08/06 17:22:14 miod Exp $
 
 OpenBSD/MACHINE runs on a broad range of Alpha processor-based machines,
-including workstations manufactured by Digital (now HP), as well as OEM
-motherboards designed by Alpha Processor, Inc.
+including workstations manufactured by Digital (then Compaq, now HP), as
+well as OEM motherboards designed by Samsung and Alpha Processor, Inc.
