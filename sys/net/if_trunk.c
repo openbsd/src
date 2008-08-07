@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.48 2008/08/06 17:04:28 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.49 2008/08/07 18:06:17 damien Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -963,16 +963,19 @@ trunk_start(struct ifnet *ifp)
 int
 trunk_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
-	int error = 0;
+	int len, error = 0;
+	u_short mflags;
 
 	/* Send mbuf */
+	mflags = m->m_flags;
+	len = m->m_pkthdr.len;
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error)
 		return (error);
 	if_start(ifp);
 
-	ifp->if_obytes += m->m_pkthdr.len;
-	if (m->m_flags & M_MCAST)
+	ifp->if_obytes += len;
+	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 
 	return (error);
