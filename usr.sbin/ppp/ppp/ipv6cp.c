@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipv6cp.c,v 1.9 2005/09/21 16:58:34 brad Exp $
+ * $OpenBSD: ipv6cp.c,v 1.10 2008/08/07 19:26:57 brad Exp $
  */
 
 #include <sys/param.h>
@@ -710,12 +710,12 @@ ipv6cp_DecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
       case MODE_NAK:
         if (memcmp(ifid, zero, IPV6CP_IFIDLEN) == 0) {
           log_Printf(log_IsKept(LogIPV6CP) ? LogIPV6CP : LogPHASE,
-                    "0x0000000000000000: Unacceptable IntefaceID!\n");
+                    "0x0000000000000000: Unacceptable InterfaceID!\n");
           fsm_Close(&ipv6cp->fsm);
         } else if (memcmp(ifid, ipv6cp->his_ifid, IPV6CP_IFIDLEN) == 0) {
           log_Printf(log_IsKept(LogIPV6CP) ? LogIPV6CP : LogPHASE,
 		     "0x%02x%02x%02x%02x%02x%02x%02x%02x: "
-		     "Unacceptable IntefaceID!\n",
+		     "Unacceptable InterfaceID!\n",
 		     ifid[0], ifid[1], ifid[2], ifid[3],
 		     ifid[4], ifid[5], ifid[6], ifid[7]);
         } else if (memcmp(ifid, ipv6cp->my_ifid, IPV6CP_IFIDLEN) != 0) {
@@ -729,10 +729,10 @@ ipv6cp_DecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
 
           if (n == 0) {
             log_Printf(log_IsKept(LogIPV6CP) ? LogIPV6CP : LogPHASE,
-                       "0x0000000000000000: Unacceptable IntefaceID!\n");
+                       "0x0000000000000000: Unacceptable InterfaceID!\n");
             fsm_Close(&ipv6cp->fsm);
           } else {
-	    log_Printf(LogIPV6CP, "%s changing IntefaceID: "
+	    log_Printf(LogIPV6CP, "%s changing InterfaceID: "
 		       "0x%02x%02x%02x%02x%02x%02x%02x%02x "
 		       "--> 0x%02x%02x%02x%02x%02x%02x%02x%02x\n", tbuff,
 		       ipv6cp->my_ifid[0], ipv6cp->my_ifid[1],
