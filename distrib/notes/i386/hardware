@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.268 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: hardware,v 1.269 2008/08/07 06:18:44 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1715,43 +1715,36 @@ PCI BIOS, or autoconfigured.
 Hardware not listed in the above table doesn't need any specific
 configuration.
 
-dnl
-dnl Special care for PCI BIOS:
-dnl
-dnl	As with all BIOS implementations and subsystems this one has bugs
-dnl	too.
-dnl	Sometimes specifications are unclear about interfaces and/or data
-dnl	validation.
-dnl	These all cause our driver for PCI BIOS to misbehave in more or
-dnl	less fatal ways, such as panics on pcibios0 configuration or PCI
-dnl	device attachments, or unconfigured PCI devices due to IRQ and/or
-dnl	I/O address misconfiguration.
-dnl
-dnl	Fast workaround
-dnl
-dnl	Boot by giving the -c flag to the initial boot request.
-dnl	Following the loading of the kernel, the user is presented with a
-dnl
-dnl	UKC>
-dnl
-dnl	Then type the following commands:
-dnl
-dnl	UKC> change bios0
-dnl	165 bios0 at mainbus0 bus -1 flags 0x0
-dnl	change [n] y
-dnl	bus [-1] ? <enter>
-dnl	flags [0] ? 3
-dnl	165 bios0 changed
-dnl	165 bios0 at mainbus0 bus -1 flags 0x3
-dnl	UKC> quit
-dnl
-dnl	This will disable the pcibios0 attachment.
-dnl	Sometimes, especially when hangs occur on particular PCI device
-dnl	attachments, moving PCI cards into a different slot helps.
-dnl
-dnl	Fixing for good
-dnl
-dnl	Try to gather dmesg output from the failing configuration, for
-dnl	example by using a serial console (see boot(8)), and send it to
-dnl	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
-dnl	Alternatively, dig in the code and fix problems.
+ACPI notice:
+
+	OpenBSD supports the ACPI information provided by many modern
+	machine BIOSes.  On a minority of systems, this ACPI information
+	may be misleading or misinterpreted.
+
+	This might cause various drivers to misbehave in more or less
+	fatal ways, most problems being interrupt-related (interrupt
+	storms slowing the machine down, or a device not getting any
+	interrupts at all).
+
+	If your system seems to misbehave under OpenBSD, you might want
+	to try booting the kernel with ACPI support disabled.
+
+	To do so, boot with the -c flag at the initial bootloader prompt.
+	After the kernel loads, at the UKC> prompt, enter "disable acpi"
+	followed by "quit". This will disable ACPI support.
+
+	If disabling ACPI helps, it is possible to make this behaviour
+	permanent with the userland config(8) utility. In any case,
+	please open a bug report with sendbug(1), giving as many
+	details as possible, including the dmesg(8) output for both ACPI
+	and ACPI-disabled kernels, as well as the output from acpidump(8)
+	and pcidump(8).
+
+	On a few machines as well (usually with broken BIOSes), the
+	monoprocessor kernel (bsd) and the multiprocessor kernel (bsd.mp)
+	will behave differently, due to differences in the interrupt
+	routing mechanism.  Trying the multiprocessor kernel, even on a
+	single processor machine, or the other way around, might solve
+	interrupt problems as well. As with the potential ACPI problems
+	above, please report any such problems, so that the developers
+	have a chance to fix them.
