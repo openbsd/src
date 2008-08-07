@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.10 2008/07/27 13:15:31 sobrado Exp $	*/
+/*	$OpenBSD: compress.h,v 1.11 2008/08/07 17:37:37 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -44,9 +44,9 @@ struct z_info {
 #define Z_BUFSIZE 16384
 
 enum program_mode {
-    MODE_COMP,
-    MODE_DECOMP,
-    MODE_CAT
+	MODE_COMP,
+	MODE_DECOMP,
+	MODE_CAT
 } pmode;
 
 /*
