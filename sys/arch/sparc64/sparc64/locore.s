@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.149 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.150 2008/08/07 18:46:04 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4282,12 +4282,12 @@ _C_LABEL(sparc_interrupt):
 	 * If this is a %tick softint, clear it then call interrupt_vector.
 	 */
 	rd	SOFTINT, %g1
-	btst	1, %g1
+	btst	TICK_INT, %g1
 	bz,pt	%icc, 0f
-	 set	_C_LABEL(intrlev), %g3
-	wr	%g0, 1, CLEAR_SOFTINT
+	 GET_CPUINFO_VA(%g7)
+	wr	%g0, TICK_INT, CLEAR_SOFTINT
 	ba,pt	%icc, setup_sparcintr
-	 ldx	[%g3 + 8], %g5	! intrlev[1] is reserved for %tick intr.
+	 add	%g7, CI_TICKINTR, %g5
 0:
 	INTR_SETUP -CC64FSZ-TF_SIZE-8
 

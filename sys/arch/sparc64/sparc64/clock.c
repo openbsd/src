@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.44 2008/07/15 22:49:01 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.45 2008/08/07 18:46:04 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -597,8 +597,11 @@ cpu_initclocks(void)
 	 */
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
+		struct cpu_info *ci;
+
 		/* We don't have a counter-timer -- use %tick */
 		level0.ih_clr = 0;
+
 		/* 
 		 * Establish a level 10 interrupt handler 
 		 *
@@ -608,6 +611,10 @@ cpu_initclocks(void)
 		level0.ih_number = 1;
 		strlcpy(level0.ih_name, "clock", sizeof(level0.ih_name));
 		intr_establish(10, &level0);
+
+		for (ci = cpus; ci != NULL; ci = ci->ci_next)
+			memcpy(&ci->ci_tickintr, &level0, sizeof(level0));
+
 		/* We only have one timer so we have no statclock */
 		stathz = 0;	
 
