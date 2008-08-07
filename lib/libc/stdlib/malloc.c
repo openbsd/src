@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.92 2008/07/28 04:56:38 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.93 2008/08/07 18:41:47 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -389,7 +389,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 
 	if (psz > malloc_cache) {
 		if (munmap(p, sz))
-			wrterror("unmap");
+			wrterror("munmap");
 		malloc_used -= sz;
 		return;
 	}
@@ -701,7 +701,7 @@ omalloc_grow(struct dir_info *d)
 	}
 	/* avoid pages containing meta info to end up in cache */
 	if (munmap(d->r, d->regions_total * sizeof(struct region_info))) 
-		wrterror("omalloc_grow munmap");
+		wrterror("munmap");
 	else
 		malloc_used -= d->regions_total * sizeof(struct region_info);
 	d->regions_free = d->regions_free + d->regions_total;
@@ -989,7 +989,7 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 	i = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 
 	if ((uintptr_t)ptr & ((1UL << (info->shift)) - 1)) {
-		wrtwarning("modified (chunk-) pointer");
+		wrtwarning("modified chunk-pointer");
 		return;
 	}
 	if (info->bits[i / MALLOC_BITS] & (1UL << (i % MALLOC_BITS))) {
