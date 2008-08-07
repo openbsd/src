@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.71 2008/06/14 10:55:21 mk Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.72 2008/08/07 17:43:37 reyk Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ restart:
 					mlen = MLEN;
 				}
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
-					MCLGET(m, M_WAIT);
+					MCLGET(m, M_NOWAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;
