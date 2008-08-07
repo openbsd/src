@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.150 2008/08/07 18:46:04 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.151 2008/08/07 21:25:47 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4282,10 +4282,11 @@ _C_LABEL(sparc_interrupt):
 	 * If this is a %tick softint, clear it then call interrupt_vector.
 	 */
 	rd	SOFTINT, %g1
-	btst	TICK_INT, %g1
+	set	(TICK_INT|STICK_INT), %g2
+	andcc	%g2, %g1, %g2
 	bz,pt	%icc, 0f
 	 GET_CPUINFO_VA(%g7)
-	wr	%g0, TICK_INT, CLEAR_SOFTINT
+	wr	%g2, 0, CLEAR_SOFTINT
 	ba,pt	%icc, setup_sparcintr
 	 add	%g7, CI_TICKINTR, %g5
 0:
@@ -8911,6 +8912,26 @@ ENTRY(tickcmpr_set)
 
 	cmp	%o0, %o1		! Make sure the value we wrote to
 	bg,pt	%xcc, 2f		!   %tick_cmpr was in the future.
+	 add	%o0, %o2, %o0		! If not, add the step size, double
+	ba,pt	%xcc, 1b		!   the step size and try again.
+	 sllx	%o2, 1, %o2
+2:
+	retl
+	 nop
+
+ENTRY(sys_tickcmpr_set)
+	ba	1f
+	 mov	8, %o2			! Initial step size
+	.align	64
+1:	wr	%o0, 0, %sys_tick_cmpr
+	rd	%sys_tick_cmpr, %g0
+
+	rd	%sys_tick, %o1		! Read current %sys_tick
+	sllx	%o1, 1, %o1
+	srlx	%o1, 1, %o1
+
+	cmp	%o0, %o1		! Make sure the value we wrote to
+	bg,pt	%xcc, 2f		!   %sys_tick_cmpr was in the future.
 	 add	%o0, %o2, %o0		! If not, add the step size, double
 	ba,pt	%xcc, 1b		!   the step size and try again.
 	 sllx	%o2, 1, %o2

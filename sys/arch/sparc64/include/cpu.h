@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2008/08/07 18:46:04 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2008/08/07 21:25:48 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -215,6 +215,8 @@ struct clockframe {
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 #define	CLKF_INTR(framep)	((framep)->saved_intr_level != 0)
 
+extern void (*cpu_start_clock)(void);
+
 void setsoftnet(void);
 
 #define aston(p)	((p)->p_md.md_astpending = 1)
@@ -249,9 +251,11 @@ caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
 int	tickintr(void *); /* level 10 (tick) interrupt code */
+int	sys_tickintr(void *); /* level 10 (sys_tick) interrupt code */
 int	clockintr(void *);/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 void	tick_start(void);
+void	sys_tick_start(void);
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);

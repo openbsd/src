@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.45 2008/08/07 18:46:04 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.46 2008/08/07 21:25:47 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -612,22 +612,25 @@ cpu_initclocks(void)
 		strlcpy(level0.ih_name, "clock", sizeof(level0.ih_name));
 		intr_establish(10, &level0);
 
-		for (ci = cpus; ci != NULL; ci = ci->ci_next)
-			memcpy(&ci->ci_tickintr, &level0, sizeof(level0));
-
 		/* We only have one timer so we have no statclock */
 		stathz = 0;	
 
-		/* set the next interrupt time */
-		tick_increment = cpu_clockrate / hz;
-#ifdef DEBUG
-		printf("Using %%tick -- intr in %ld cycles...",
-		    tick_increment);
-#endif
-		tick_start();
-#ifdef DEBUG
-		printf("done.\n");
-#endif
+		if (sys_tick_rate > 0 && impl != IMPL_HUMMINGBIRD) {
+			tick_increment = sys_tick_rate / hz;
+			level0.ih_fun = sys_tickintr;
+			cpu_start_clock = sys_tick_start;
+		} else {
+			/* set the next interrupt time */
+			tick_increment = cpu_clockrate / hz;
+			level0.ih_fun = tickintr;
+			cpu_start_clock = tick_start;
+		}
+
+		for (ci = cpus; ci != NULL; ci = ci->ci_next)
+			memcpy(&ci->ci_tickintr, &level0, sizeof(level0));
+
+		cpu_start_clock();
+
 		return;
 	}
 
@@ -767,6 +770,30 @@ tickintr(cap)
 	/* Reset the interrupt. */
 	s = intr_disable();
 	tickcmpr_set(ci->ci_tick);
+	intr_restore(s);
+
+	return (1);
+}
+
+int
+sys_tickintr(cap)
+	void *cap;
+{
+	struct cpu_info *ci = curcpu();
+	u_int64_t s;
+
+	/*
+	 * Do we need to worry about overflow here?
+	 */
+	while (ci->ci_tick < sys_tick()) {
+		ci->ci_tick += tick_increment;
+		hardclock((struct clockframe *)cap);
+		level0.ih_count.ec_count++;
+	}
+
+	/* Reset the interrupt. */
+	s = intr_disable();
+	sys_tickcmpr_set(ci->ci_tick);
 	intr_restore(s);
 
 	return (1);
@@ -927,6 +954,23 @@ tick_start(void)
 	s = intr_disable();
 	ci->ci_tick = roundup(tick(), tick_increment);
 	tickcmpr_set(ci->ci_tick);
+	intr_restore(s);
+}
+
+void
+sys_tick_start(void)
+{
+	struct cpu_info *ci = curcpu();
+	u_int64_t s;
+
+	/*
+	 * Try to make the tick interrupts as synchronously as possible on
+	 * all CPUs to avoid inaccuracies for migrating processes.
+	 */
+
+	s = intr_disable();
+	ci->ci_tick = roundup(sys_tick(), tick_increment);
+	sys_tickcmpr_set(ci->ci_tick);
 	intr_restore(s);
 }
 

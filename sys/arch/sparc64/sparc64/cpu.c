@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.45 2008/07/21 13:30:05 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.46 2008/08/07 21:25:47 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -75,6 +75,8 @@
 struct cacheinfo cacheinfo = {
 	us_dcache_flush_page
 };
+
+void (*cpu_start_clock)(void);
 
 /* Linked list of all CPUs in system. */
 struct cpu_info *cpus = NULL;
@@ -502,7 +504,7 @@ cpu_hatch(void)
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
-	tick_start();
+	cpu_start_clock();
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
