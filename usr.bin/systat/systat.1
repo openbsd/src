@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.62 2008/08/08 20:07:49 matthieu Exp $
+.\"	$OpenBSD: systat.1,v 1.63 2008/08/08 21:48:19 sobrado Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -106,7 +106,7 @@ The default interval is 5 seconds.
 .\".It Fl S Ar start
 .\"??? no idea what that does
 .It Fl w Ar width
-Specifies the maximum width of the display .
+Specifies the maximum width of the display.
 .\" XXX not sure for the above.
 .It Ar view
 The
@@ -147,7 +147,7 @@ The default interval is 5 seconds.
 .Pp
 Certain characters cause immediate action by
 .Nm .
-These are
+These are:
 .Bl -tag -width Fl
 .It Ic \&^L
 Refresh the screen.
@@ -280,7 +280,9 @@ Display network addresses numerically.
 .It Cm reset
 Reset the port, host, and protocol matching mechanisms to the default
 (any protocol, port, or host).
-.It Cm show Op Ar "protos \&| ports \&| hosts"
+.It Cm show Oo
+.Ar protocols \*(Ba ports \*(Ba hosts
+.Oc
 Show, on the command line, the currently selected protocols,
 hosts, and ports.
 Protocols, hosts and ports which are being ignored are prefixed with a
@@ -370,7 +372,7 @@ and swapped out but desiring to run
 Below the queue length listing is a numerical listing and
 a bar graph showing the amount of
 interrupt (shown as
-.Ql | ) ,
+.Ql \*(Ba ) ,
 system (shown as
 .Ql = ) ,
 user (shown as
