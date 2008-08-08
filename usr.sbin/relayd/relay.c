@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.98 2008/08/08 18:56:05 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.99 2008/08/08 19:13:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1191,8 +1191,10 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 			relay_close(con, "invalid chunk");
 			return;
 		}
-		if (!strlen(line))
+		if (!strlen(line)) {
+			free(line);
 			goto next;
+		}
 
 		/* Read prepended chunk size in hex, ingore the trailer */
 		if (sscanf(line, "%lx", &lval) != 1) {
@@ -1202,8 +1204,10 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		}
 
 		if (relay_bufferevent_print(cre->dst, line) == -1 ||
-		    relay_bufferevent_print(cre->dst, "\r\n") == -1)
+		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
+			free(line);
 			goto fail;
+		}
 		free(line);
 
 		/* Last chunk is 0 bytes followed by an empty newline */
