@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsproto.h,v 1.7 2007/06/06 14:13:42 thib Exp $	*/
+/*	$OpenBSD: nfsproto.h,v 1.8 2008/08/08 21:44:44 thib Exp $	*/
 /*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
 
 /*
@@ -239,17 +239,13 @@ typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5,
 /* Structs for common parts of the rpc's */
 /*
  * File Handle (32 bytes for version 2), variable up to 64 for version 3.
- * File Handles of up to NFS_SMALLFH in size are stored directly in the
- * nfs node, whereas larger ones are malloc'd. (This never happens when
- * NFS_SMALLFH is set to 64.)
- * NFS_SMALLFH should be in the range of 32 to 64 and be divisible by 4.
  */
-#ifndef NFS_SMALLFH
-#define NFS_SMALLFH	64
+#ifndef NFS_MAXFHSIZE
+#define NFS_MAXFHSIZE	64
 #endif
 union nfsfh {
 	fhandle_t fh_generic;
-	u_char    fh_bytes[NFS_SMALLFH];
+	u_char    fh_bytes[NFS_MAXFHSIZE];
 };
 typedef union nfsfh nfsfh_t;
 
