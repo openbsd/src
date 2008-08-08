@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.79 2008/07/22 23:17:37 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.80 2008/08/08 08:51:21 thib Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -910,7 +910,7 @@ event_again(struct event *ev, int fd, short event,
 {
 	struct timeval tv_next, tv_now, tv;
 
-	if (gettimeofday(&tv_now, NULL))
+	if (gettimeofday(&tv_now, NULL) == -1)
 		fatal("event_again: gettimeofday");
 
 	bcopy(end, &tv_next, sizeof(tv_next));

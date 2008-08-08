@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.95 2008/07/22 23:17:37 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.96 2008/08/08 08:51:21 thib Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -518,7 +518,7 @@ relay_statistics(int fd, short events, void *arg)
 	 */
 
 	timerclear(&tv);
-	if (gettimeofday(&tv_now, NULL))
+	if (gettimeofday(&tv_now, NULL) == -1)
 		fatal("relay_init: gettimeofday");
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
@@ -845,7 +845,7 @@ relay_write(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
 	struct session		*con = (struct session *)cre->con;
-	if (gettimeofday(&con->se_tv_last, NULL))
+	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		con->se_done = 1;
 	if (con->se_done)
 		relay_close(con, "last write (done)");
@@ -876,7 +876,7 @@ relay_read(struct bufferevent *bev, void *arg)
 	struct session		*con = (struct session *)cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 
-	if (gettimeofday(&con->se_tv_last, NULL))
+	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto done;
 	if (!EVBUFFER_LENGTH(src))
 		return;
@@ -1138,7 +1138,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	size_t			 size;
 
-	if (gettimeofday(&con->se_tv_last, NULL))
+	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto done;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_httpcontent: size %d, to read %d",
@@ -1175,7 +1175,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	long			 lval;
 	size_t			 size;
 
-	if (gettimeofday(&con->se_tv_last, NULL))
+	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto done;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_httpchunks: size %d, to read %d",
@@ -1269,7 +1269,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	const char		*errstr;
 	size_t			 size;
 
-	if (gettimeofday(&con->se_tv_last, NULL))
+	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto done;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_http: size %d, to read %d", size, cre->toread);
@@ -1926,7 +1926,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->se_out.dir = RELAY_DIR_RESPONSE;
 	con->se_retry = rlay->rl_conf.dstretry;
 	con->se_bnds = -1;
-	if (gettimeofday(&con->se_tv_start, NULL))
+	if (gettimeofday(&con->se_tv_start, NULL) == -1)
 		goto err;
 	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
 	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
@@ -2188,7 +2188,7 @@ relay_connect(struct session *con)
 	struct relay	*rlay = (struct relay *)con->se_relay;
 	int		 bnds = -1, ret;
 
-	if (gettimeofday(&con->se_tv_start, NULL))
+	if (gettimeofday(&con->se_tv_start, NULL) == -1)
 		return (-1);
 
 	if (rlay->rl_dsttable != NULL) {
