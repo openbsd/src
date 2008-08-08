@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.99 2008/08/08 20:40:24 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.100 2008/08/08 20:44:38 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -186,7 +186,6 @@ extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
 extern struct nfsstats nfsstats;
 extern nfstype nfsv3_type[9];
-struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
 
 

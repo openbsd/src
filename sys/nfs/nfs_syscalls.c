@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.70 2008/07/06 16:54:48 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.71 2008/08/08 20:44:38 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -77,7 +77,6 @@
 extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct proc *, struct mbuf **);
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;

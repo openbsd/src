@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.84 2008/06/15 04:03:40 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.85 2008/08/08 20:44:38 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -514,7 +514,6 @@ static short *nfsrv_v3errmap[] = {
 	nfsv3err_commit,
 };
 
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsrtt nfsrtt;
 
 struct pool nfsreqpl;
@@ -954,11 +953,6 @@ int
 nfs_vfs_init(vfsp)
 	struct vfsconf *vfsp;
 {
-	int i;
-
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		nfs_iodwant[i] = (struct proc *)0;
 	TAILQ_INIT(&nfs_bufq);
 	nfs_nhinit();			/* Init the nfsnode table */
 

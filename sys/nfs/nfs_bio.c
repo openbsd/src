@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.53 2008/07/25 14:56:47 beck Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.54 2008/08/08 20:44:38 blambert Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern struct nfsstats nfsstats;
 struct nfs_bufqhead nfs_bufq;
