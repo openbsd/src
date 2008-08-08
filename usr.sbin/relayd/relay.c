@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.96 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: relay.c,v 1.97 2008/08/08 18:38:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1492,11 +1492,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
 			/* HTTP request payload */
-			if (cre->toread) {
+			if (cre->toread)
 				bev->readcb = relay_read_httpcontent;
-				break;
-			}
-			/* FALLTHROUGH */
+
+			/* Single-pass HTTP response */
+			bev->readcb = relay_read;
+			break;
 		default:
 			/* HTTP handler */
 			bev->readcb = relay_read_http;
