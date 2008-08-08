@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.80 2008/08/04 18:46:32 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.81 2008/08/08 23:49:53 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -433,6 +433,7 @@ havelabel:
 		if (sectorsize <= 0)
 			fatal("%s: no default sector size", argv[0]);
 	}
+	fssize *= sectorsize / DEV_BSIZE;
 	if (fsize == 0) {
 		fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (fsize <= 0)
@@ -480,7 +481,7 @@ havelabel:
 		struct mfs_args args;
 		memset(&args, 0, sizeof(args));
 		args.base = membase;
-		args.size = fssize * sectorsize;
+		args.size = fssize * DEV_BSIZE;
 		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export_info.ex_flags = MNT_EXRDONLY;

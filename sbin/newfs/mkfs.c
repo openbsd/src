@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.71 2008/01/05 19:51:55 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.72 2008/08/08 23:49:53 krw Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	time(&utime);
 #endif
 	if (mfs) {
-		quad_t sz = (quad_t)fssize * sectorsize;
+		quad_t sz = (quad_t)fssize * DEV_BSIZE;
 		if (sz > SIZE_T_MAX) {
 			errno = ENOMEM;
 			err(12, "mmap");
@@ -197,7 +197,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		errx(13, "preposterous size %lld, max is %lld", fssize,
 		    MAXDISKSIZE);
 
-	wtfs(fssize - 1, sectorsize, (char *)&sblock);
+	wtfs(fssize - (sectorsize / DEV_BSIZE), sectorsize, (char *)&sblock);
 
 	sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 	sblock.fs_avgfilesize = avgfilesize;
@@ -248,9 +248,9 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		    sblock.fs_bsize / MAXFRAG);
 	}
 	sblock.fs_fragshift = ilog2(sblock.fs_frag);
-	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
+	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / DEV_BSIZE);
 	sblock.fs_size = dbtofsb(&sblock, fssize);
-	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
+	sblock.fs_nspf = sblock.fs_fsize / DEV_BSIZE;
 	sblock.fs_maxcontig = 1;
 	sblock.fs_nrpos = 1;
 	sblock.fs_cpg = 1;
@@ -506,15 +506,15 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		if (fsun1 == NULL)
 			err(39, "calloc");
 		fs1 = &fsun1->fs;
-		rdfs(SBLOCK_UFS1 / sectorsize, SBSIZE, (char *)fs1);
+		rdfs(SBLOCK_UFS1 / DEV_BSIZE, SBSIZE, (char *)fs1);
 		if (fs1->fs_magic == FS_UFS1_MAGIC) {
 			fs1->fs_magic = FS_BAD_MAGIC;
-			wtfs(SBLOCK_UFS1 / sectorsize, SBSIZE, (char *)fs1);
+			wtfs(SBLOCK_UFS1 / DEV_BSIZE, SBSIZE, (char *)fs1);
 		}
 		free(fsun1);
 	}
 
-	wtfs((int)sblock.fs_sblockloc / sectorsize, SBSIZE, (char *)&sblock);
+	wtfs((int)sblock.fs_sblockloc / DEV_BSIZE, SBSIZE, (char *)&sblock);
 	sblock.fs_magic = (Oflag <= 1) ? FS_UFS1_MAGIC : FS_UFS2_MAGIC;
 
 	/*
@@ -583,7 +583,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 			errx(32, "fsinit2 failed");
 	}
 
-	wtfs((int)sblock.fs_sblockloc / sectorsize, SBSIZE, (char *)&sblock);
+	wtfs((int)sblock.fs_sblockloc / DEV_BSIZE, SBSIZE, (char *)&sblock);
 
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
 		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
@@ -1004,10 +1004,10 @@ rdfs(daddr64_t bno, int size, void *bf)
 	int n;
 
 	if (mfs) {
-		memcpy(bf, membase + bno * sectorsize, size);
+		memcpy(bf, membase + bno * DEV_BSIZE, size);
 		return;
 	}
-	n = pread(fsi, bf, size, (off_t)bno * sectorsize);
+	n = pread(fsi, bf, size, (off_t)bno * DEV_BSIZE);
 	if (n != size) {
 		err(34, "rdfs: read error on block %lld", bno);
 	}
@@ -1022,12 +1022,12 @@ wtfs(daddr64_t bno, int size, void *bf)
 	int n;
 
 	if (mfs) {
-		memcpy(membase + bno * sectorsize, bf, size);
+		memcpy(membase + bno * DEV_BSIZE, bf, size);
 		return;
 	}
 	if (Nflag)
 		return;
-	n = pwrite(fso, bf, size, (off_t)bno * sectorsize);
+	n = pwrite(fso, bf, size, (off_t)bno * DEV_BSIZE);
 	if (n != size) {
 		err(36, "wtfs: write error on block %lld", bno);
 	}
