@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.85 2008/08/02 08:34:36 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.86 2008/08/08 16:17:38 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1346,7 +1346,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr64_t bpref, int size)
 	if (frags != allocsiz)
 		cgp->cg_frsum[allocsiz - frags]++;
 
-	blkno = (daddr64_t)cg * fs->fs_fpg + bno;
+	blkno = cgbase(fs, cg) + bno;
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_blkmapdep(bp, fs, blkno);
 	bdwrite(bp);
@@ -1407,7 +1407,7 @@ gotit:
 	}
 
 	fs->fs_fmod = 1;
-	blkno = (daddr64_t)cgp->cg_cgx * fs->fs_fpg + bno;
+	blkno = cgbase(fs, cgp->cg_cgx) + bno;
 
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_blkmapdep(bp, fs, blkno);
@@ -1509,7 +1509,7 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr64_t bpref, int len)
 		if (!ffs_isblock(fs, cg_blksfree(cgp), got - run + i))
 			panic("ffs_clusteralloc: map mismatch");
 #endif
-	bno = cg * fs->fs_fpg + blkstofrags(fs, got - run + 1);
+	bno = cgbase(fs, cg) + blkstofrags(fs, got - run + 1);
 #ifdef DIAGNOSTIC
 	if (dtog(fs, bno) != cg)
 		panic("ffs_clusteralloc: allocated out of group");
