@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2007/06/20 18:15:45 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2008/08/08 16:07:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,27 @@
 #define LABELOFFSET		0
 #define	MAXPARTITIONS		16		/* number of partitions */
 
-/* SGI */
+/*
+ * SGI Volume Header.
+ */
+
+#define SGILABEL_MAGIC  0xbe5a941
+#define SGI_SIZE_VOLDIR 15
+
+/* Partition types. */
+#define SGI_PTYPE_VOLHDR        0
+#define SGI_PTYPE_RAW           3
+#define SGI_PTYPE_BSD           4
+#define SGI_PTYPE_VOLUME        6
+#define SGI_PTYPE_EFS           7
+#define SGI_PTYPE_LVOL          8
+#define SGI_PTYPE_RLVOL         9
+#define SGI_PTYPE_XFS           10
+#define SGI_PTYPE_XFSLOG        11
+#define SGI_PTYPE_XLV           12
+#define SGI_PTYPE_XVM           13
+
+/* Device parameters. */
 struct devparms {
         u_int8_t        dp_skew;
         u_int8_t        dp_gap1;
@@ -64,8 +84,8 @@ struct devparms {
         u_int16_t       dp_xwcont;
 } __packed;
 
+/* SGI volume header. */
 struct sgilabel {
-#define SGILABEL_MAGIC  0xbe5a941
 	u_int32_t       magic;
 	int16_t         root;
 	int16_t         swap;
@@ -75,7 +95,7 @@ struct sgilabel {
 		char	name[8];
 		int32_t	block;
 		int32_t	bytes;
-	} voldir[15];
+	} voldir[SGI_SIZE_VOLDIR];
 	struct {
 		int32_t	blocks;
 		int32_t	first;
@@ -84,17 +104,5 @@ struct sgilabel {
 	int32_t         checksum;
 	int32_t         _pad;
 } __packed;
-
-#define SGI_PTYPE_VOLHDR        0
-#define SGI_PTYPE_RAW           3
-#define SGI_PTYPE_BSD           4
-#define SGI_PTYPE_VOLUME        6
-#define SGI_PTYPE_EFS           7
-#define SGI_PTYPE_LVOL          8
-#define SGI_PTYPE_RLVOL         9
-#define SGI_PTYPE_XFS           10
-#define SGI_PTYPE_XFSLOG        11
-#define SGI_PTYPE_XLV           12
-#define SGI_PTYPE_XVM           13
 
 #endif /* _MACHINE_DISKLABEL_H_ */
