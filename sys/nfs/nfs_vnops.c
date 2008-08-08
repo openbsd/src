@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.98 2008/07/25 14:56:47 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.99 2008/08/08 20:40:24 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2512,11 +2512,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 		nfsm_getfh(nfhp, fhlen, v3);
 		if (*npp) {
 		    np = *npp;
-		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
-			free((caddr_t)np->n_fhp, M_NFSBIGFH);
-			np->n_fhp = &np->n_fh;
-		    } else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
-			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
+		    np->n_fhp = &np->n_fh;
 		    bcopy((caddr_t)nfhp, (caddr_t)np->n_fhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
