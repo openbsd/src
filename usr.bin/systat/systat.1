@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.61 2007/11/22 18:20:04 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.62 2008/08/08 20:07:49 matthieu Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 22 2007 $
+.Dd $Mdocdate: August 8 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -38,10 +38,13 @@
 .Nd display system statistics
 .Sh SYNOPSIS
 .Nm systat
-.Op Fl n
-.Op Fl w Ar wait
-.Op Ar display
-.Op Ar refresh-interval
+.Op Fl abin
+.Op Fl d Ar count
+.Op Fl S Ar start
+.Op Fl s Ar delay
+.Op Fl w Ar width
+.Op Ar view
+.Op Ar delay
 .Sh DESCRIPTION
 .Nm
 displays various system statistics in a screen oriented fashion
@@ -81,39 +84,58 @@ input line is passed to a per-display command interpreter.
 This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
-.Bl -tag -width "refresh-interval"
+.Bl -tag -width Ds
+.It Fl a 
+Display all lines.
+.It Fl b
+Raw, non interactive mode. 
+.It Fl d Ar count
+Exit after
+.Ar count
+screen updates.
+.It Fl i
+Interactive mode.
 .It Fl n
 Do not try to reverse-map IP address.
-.It Fl w Ar wait
+.It Fl s Ar delay
 Specifies the screen refresh time interval in seconds.
-This option is overridden by
-.Ar refresh-interval ,
-if given.
+This option is overridden by the final
+.Ar delay 
+argument if given.
 The default interval is 5 seconds.
-.It Ar display
+.\".It Fl S Ar start
+.\"??? no idea what that does
+.It Fl w Ar width
+Specifies the maximum width of the display .
+.\" XXX not sure for the above.
+.It Ar view
 The
-.Ar display
+.Ar view
 argument expects to be one of:
+.Ic vmstat ,
 .Ic pigs ,
+.Ic ifstat ,
 .Ic iostat ,
-.Ic swap ,
 .Ic sensors ,
 .Ic mbufs ,
-.Ic vmstat ,
-.Ic ifstat
+.Ic netstat ,
+.Ic swap ,
+.Ic states ,
+.Ic rules ,
+.Ic queues
 or
-.Ic netstat .
+.Ic pf .
 These displays can also be requested interactively and are described in
 full detail below.
-.Ar display
+.Ar view
 may be abbreviated to the minimum unambiguous prefix;
 for example,
 .Dq io
 for
 .Dq iostat .
-.It Ar refresh-interval
+.It Ar delay
 The
-.Ar refresh-interval
+.Ar delay
 specifies the screen refresh time interval in seconds.
 This is provided for backwards compatibility, and overrides the
 .Ar wait
@@ -258,7 +280,7 @@ Display network addresses numerically.
 .It Cm reset
 Reset the port, host, and protocol matching mechanisms to the default
 (any protocol, port, or host).
-.It Cm show Op Ar protos\&|ports\&|hosts
+.It Cm show Op Ar "protos \&| ports \&| hosts"
 Show, on the command line, the currently selected protocols,
 hosts, and ports.
 Protocols, hosts and ports which are being ignored are prefixed with a
@@ -269,6 +291,14 @@ then only the requested information will be displayed.
 .It Cm tcp \*(Ba udp \*(Ba all
 Display only network connections using the indicated protocol.
 .El
+.It Ic pf
+Displays filter information about
+.Xr pf 4 ,
+similar to the output of
+.Xr pfctl 8
+with the 
+.Fl s Cm info
+option.
 .It Ic pigs
 Display, in the lower window, those processes resident in main
 memory and getting the
@@ -278,11 +308,23 @@ processor is scheduled to user processes, the remaining time
 is accounted to the
 .Dq idle
 process.
+.It Ic queues
+Displays statistics about the active
+.Xr altq 4 
+queues, similar to the output of 
+.Cm pfctl Fl s Cm queue .
+.It Ic rules
+Displays pf rules statistics, similar to the output of 
+.Cm pfctl Fl s Cm rules .
 .It Ic sensors
 Display, in the lower window,
 the current values of available hardware sensors,
 in a format similar to that of
 .Xr sysctl 8 .
+.It Ic states
+Displays pf
+states statistics, similar to the output of 
+.Cm pfctl Fl s Cm states .
 .It Ic swap
 Show information about swap space usage on all the
 swap areas compiled into the kernel.
@@ -489,6 +531,8 @@ Multiple drives may be specified, separated by spaces.
 host names
 .It Pa /etc/networks
 network names
+.It Pa /etc/pf.conf
+pf and altq configuration
 .It Pa /etc/services
 port names
 .El
@@ -499,6 +543,7 @@ port names
 .Xr ps 1 ,
 .Xr top 1 ,
 .Xr iostat 8 ,
+.Xr pfctl 8 ,
 .Xr pstat 8 ,
 .Xr renice 8 ,
 .Xr sysctl 8 ,

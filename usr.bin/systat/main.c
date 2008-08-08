@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.42 2008/07/31 04:24:11 canacar Exp $	 */
+/* $Id: main.c,v 1.43 2008/08/08 20:07:49 matthieu Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -208,8 +208,8 @@ void
 usage()
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-abhir] [-c cache] [-d cnt]", __progname);
-	fprintf(stderr, " [-o field] [-s time] [-w width] [view] [num]\n");
+	fprintf(stderr, "usage: %s [-abin] [-d count] [-S start] "
+	    "[-s delay] [-w width] [view] [delay]\n", __progname);
 	exit(1);
 }
 
@@ -409,14 +409,12 @@ main(int argc, char *argv[])
 	}
 
 	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
-	if (kd == NULL)
-		warnx("kvm_openfiles: %s", errbuf);
 
 	gid = getgid();
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
-	while ((ch = getopt(argc, argv, "abd:hins:S:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "abd:ins:S:w:")) != -1) {
 		switch (ch) {
 		case 'a':
 			maxlines = -1;
@@ -453,13 +451,14 @@ main(int argc, char *argv[])
 			if (rawwidth >= MAX_LINE_BUF)
 				rawwidth = MAX_LINE_BUF - 1;
 			break;
-		case 'h':
-			/* FALLTHROUGH */
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
+
+	if (kd == NULL)
+		warnx("kvm_openfiles: %s", errbuf);
 
 	argc -= optind;
 	argv += optind;
