@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.36 2008/07/21 18:43:19 damien Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.37 2008/08/08 12:20:24 thib Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1783,7 +1783,8 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	m = m_devget(rxdesc->data - ETHER_ALIGN, pkglen + ETHER_ALIGN, 0, ifp,
 	    NULL);
 	if (m == NULL) {
-		printf("%s: could not create RX mbuf!\n", sc->sc_dev.dv_xname);
+		DPRINTF(1, "%s: could not create RX mbuf!\n", sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
 		return;
 	}
 	m_adj(m, ETHER_ALIGN);
