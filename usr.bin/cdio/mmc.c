@@ -1,5 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.23 2008/07/23 21:33:32 av Exp $ */
-
+/*	$OpenBSD: mmc.c,v 1.24 2008/08/08 07:26:40 fgsch Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -35,7 +34,6 @@ extern int mediacap;
 extern char *cdname;
 
 #define SCSI_GET_CONFIGURATION		0x46
-#define SCSI_SET_SPEED			0xbb
 
 #define MMC_FEATURE_CDRW_CAV		0x27
 #define MMC_FEATURE_CD_TAO		0x2d
@@ -102,7 +100,7 @@ set_speed(int wspeed)
 	int r;
 
 	memset(&scr, 0, sizeof(scr));
-	scr.cmd[0] = SCSI_SET_SPEED;
+	scr.cmd[0] = SET_CD_SPEED;
 	scr.cmd[1] = (mediacap & MEDIACAP_CDRW_CAV) != 0;
 	*(u_int16_t *)(scr.cmd + 2) = htobe16(DRIVE_SPEED_OPTIMAL);
 	*(u_int16_t *)(scr.cmd + 4) = htobe16(wspeed);
@@ -425,7 +423,7 @@ get_nwa(int *nwa)
 	bzero(&scr, sizeof(scr));
 	scr.timeout = 4000;
 	scr.senselen = SENSEBUFLEN;
-	scr.cmd[0] = 0x52; /* READ TRACK INFO */
+	scr.cmd[0] = READ_TRACK_INFO;
 	scr.cmd[1] = 0x01;
 	scr.cmd[5] = 0xff; /* Invisible Track */
 	scr.cmd[7] = 0x00;
