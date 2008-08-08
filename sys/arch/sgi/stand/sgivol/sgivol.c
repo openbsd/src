@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.10 2008/08/08 16:07:41 jsing Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.11 2008/08/08 17:12:37 jsing Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -253,7 +253,8 @@ display_vol(void)
 	printf("\nVolume header files:\n");
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
 		if (volhdr->voldir[i].name[0] != '\0') {
-			printf("%-8s offset %4d blocks, length %8d bytes (%d blocks)\n",
+			printf("%-8s offset %4d blocks, "
+			    "length %8d bytes (%d blocks)\n",
 			    volhdr->voldir[i].name,
 			    betoh32(volhdr->voldir[i].block),
 			    betoh32(volhdr->voldir[i].bytes),
@@ -364,7 +365,6 @@ write_file(void)
 	}
 	if (slot == -1)
 		errx(1, "no more directory entries available");
-	/* -w can overwrite, -a won't overwrite */
 	if (betoh32(volhdr->voldir[slot].block) > 0) {
 		if (!quiet)
 			printf("File %s exists, removing old file\n",
@@ -514,8 +514,9 @@ allocate_space(int size)
 				first = betoh32(volhdr->voldir[n].block) +
 				    howmany(betoh32(volhdr->voldir[n].bytes),
 				    DEV_BSIZE);
-#if 0
-				printf("allocate: n=%d first=%d blocks=%d size=%d\n",
+#if DEBUG
+				printf("allocate: "
+				    "n=%d first=%d blocks=%d size=%d\n",
 				    n, first, blocks, size);
 				printf("%s %d %d\n", volhdr->voldir[n].name,
 				    volhdr->voldir[n].block,
@@ -524,7 +525,8 @@ allocate_space(int size)
 				    first, volhdr->voldir[n].block,
 				    first + blocks - 1,
 				    volhdr->voldir[n].block +
-				    howmany(volhdr->voldir[n].bytes, DEV_BSIZE));
+				    howmany(volhdr->voldir[n].bytes,
+				        DEV_BSIZE));
 #endif
 				n = 0;
 				continue;
