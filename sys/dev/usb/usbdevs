@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.376 2008/07/30 15:50:52 deraadt Exp $
+$OpenBSD: usbdevs,v 1.377 2008/08/08 11:10:06 reyk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -547,6 +547,7 @@ vendor SITECOM2		0x9016	Sitecom
 vendor MOSCHIP		0x9710	MosChip
 vendor 3COM3		0xa727	3Com
 vendor EVOLUTION	0xdeee	Evolution Robotics
+vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
 
 /*
@@ -1168,6 +1169,9 @@ product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA
 product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
+
+/* eMPIA products */
+product EMPIA EEEPC701_VIDEO	0x2761	EeePC701 camera
 
 /* Entrega products */
 product ENTREGA 1S		0x0001	1S serial
