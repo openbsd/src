@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.7 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.8 2008/08/08 08:22:42 sobrado Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -944,7 +944,7 @@ void
 usage(me)
 	char *me;
 {
-	(void)fprintf(stderr, "%s: [-o <outfile>] <infile>\n", me);
+	(void)fprintf(stderr, "usage: %s [-d level] [-o outfile] infile\n", me);
 	exit(1);
 }
 

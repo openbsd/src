@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgen.1,v 1.3 2007/05/31 19:20:09 jmc Exp $
+.\"	$OpenBSD: fgen.1,v 1.4 2008/08/08 08:22:42 sobrado Exp $
 .\"	$NetBSD: fgen.1,v 1.6 2001/06/13 10:46:05 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Eduardo Horvath, All Rights Reserved.
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" The following requests are required for all man pages.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 8 2008 $
 .Dt FGEN 1
 .Os
 .Sh NAME
@@ -42,19 +42,20 @@
 .Ar infile
 .Sh DESCRIPTION
 Reads Forth source and generates tokenized FCode object file.
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
-.\" .Sh EXAMPLES
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
-.\" .Sh DIAGNOSTICS
-.\" .Sh ERRORS
-.\" .Sh SEE ALSO
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
-.\" .Sh STANDARDS
-.\" .Sh HISTORY
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar level
+Sets the debug
+.Ar level .
+When the debug level is greater than zero, additional debugging messages
+are printed to standard output.
+Different levels of verbosity are available if compiled with DEBUG.
+.It Fl o Ar outfile
+Write output to
+.Ar outfile
+instead of standard output.
+.El
 .Sh AUTHORS
 Written by
 .An Eduardo E. Horvath Aq eeh@one-o.com
