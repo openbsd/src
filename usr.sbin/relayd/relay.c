@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.100 2008/08/08 20:34:30 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.101 2008/08/08 22:49:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1001,6 +1001,11 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 			    ntohs(rlay->rl_conf.port));
 			if (expand_string(buf, len,
 			    "$SERVER_PORT", ibuf) != 0)
+				return (NULL);
+		}
+		if (strstr(val, "$SERVER_NAME") != NULL) {
+			if (expand_string(buf, len,
+			    "$SERVER_NAME", RELAYD_SERVERNAME) != 0)
 				return (NULL);
 		}
 	}
