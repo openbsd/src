@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.103 2008/07/30 15:07:40 canacar Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.104 2008/08/08 17:49:21 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -508,10 +508,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 			m_freem(m);
 			goto done;
 		}
-
-		/* Latch to PCB */
-		if (inp)
-			tdb_add_inp(tdb, inp, 0);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
