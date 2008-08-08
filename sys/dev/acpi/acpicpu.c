@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.45 2008/08/06 05:24:44 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.46 2008/08/08 01:05:20 krw Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -533,7 +533,7 @@ acpicpu_fetch_pss(struct acpicpu_pss **pss)
 
 	/*
 	 * XXX: According to the ACPI spec in an SMP system all processors
-	 * are supposed to support the same states. For now we prey
+	 * are supposed to support the same states. For now we pray
 	 * the bios ensures this...
 	 * XXX part deux: this needs to account for _PPC as well
 	 * when AC is removed the nr of _PSS entries can go down
