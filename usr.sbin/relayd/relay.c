@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.99 2008/08/08 19:13:24 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.100 2008/08/08 20:34:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1188,7 +1188,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	if (!cre->toread) {
 		line = evbuffer_readline(src);
 		if (line == NULL) {
-			relay_close(con, "invalid chunk");
+			/* Ignore empty line, continue */
+			bufferevent_enable(bev, EV_READ);
 			return;
 		}
 		if (!strlen(line)) {
