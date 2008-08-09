@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.15 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.16 2008/08/09 22:59:20 mglocker Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -52,12 +52,36 @@ typedef struct ehci_soft_qh {
 #define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
 
+typedef struct ehci_soft_itd {
+	ehci_itd_t itd;
+	union {
+		struct {
+			/* soft_itds links in a periodic frame*/
+			struct ehci_soft_itd *next;
+			struct ehci_soft_itd *prev;
+		} frame_list;
+		/* circular list of free itds */
+		LIST_ENTRY(ehci_soft_itd) free_list;
+	} u;
+	struct ehci_soft_itd *xfer_next; /* Next soft_itd in xfer */
+	ehci_physaddr_t physaddr;
+	usb_dma_t dma;
+	int offs;
+	int slot;
+	struct timeval t; /* store free time */
+} ehci_soft_itd_t;
+#define EHCI_ITD_SIZE ((sizeof(struct ehci_soft_itd) + EHCI_QH_ALIGN - 1) / EHCI_ITD_ALIGN * EHCI_ITD_ALIGN)
+#define EHCI_ITD_CHUNK (EHCI_PAGE_SIZE / EHCI_ITD_SIZE)
+
 struct ehci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
 	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
+	ehci_soft_itd_t *itdstart;
+	ehci_soft_itd_t *itdend;
+	u_int isoc_len;
 	u_int32_t ehci_xfer_flags;
 #ifdef DIAGNOSTIC
 	int isdone;
@@ -84,6 +108,8 @@ struct ehci_soft_islot {
 #define EHCI_HASH_SIZE 128
 #define EHCI_COMPANION_MAX 8
 
+#define EHCI_FREE_LIST_INTERVAL 100
+
 typedef struct ehci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
@@ -107,10 +133,16 @@ typedef struct ehci_softc {
 
 	struct ehci_soft_islot sc_islots[EHCI_INTRQHS];
 
+	/* jcmm - an array matching sc_flist, but with software pointers,
+	 * not hardware address pointers
+	 */
+	struct ehci_soft_itd **sc_softitds;
+
 	LIST_HEAD(, ehci_xfer) sc_intrhead;
 
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
+	LIST_HEAD(sc_freeitds, ehci_soft_itd) sc_freeitds;
 
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
