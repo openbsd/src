@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.22 2008/06/26 05:42:20 ray Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.23 2008/08/09 11:25:05 thib Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -1029,9 +1029,7 @@ pppoe_get_mbuf(size_t len)
 	if (len + sizeof(struct ether_header) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			struct mbuf *n;
-
-			MFREE(m, n);
+			m_free(m);
 			return (NULL);
 		}
 	}
