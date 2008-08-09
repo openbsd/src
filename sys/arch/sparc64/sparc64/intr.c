@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.32 2008/04/28 20:55:10 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.33 2008/08/09 20:42:28 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -156,33 +156,24 @@ setsoftnet() {
 	send_softint(-1, IPL_SOFTNET, &soft01net);
 }
 
-int fastvec = 0;
-
 /*
  * PCI devices can share interrupts so we need to have
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(arg)
-	void * arg;
+intr_list_handler(void *arg)
 {
+	struct intrhand *ih = arg;
 	int claimed = 0;
-	struct intrhand *ih = (struct intrhand *)arg;
 
-	if (!arg) panic("intr_list_handler: no handlers!");
-	while (ih && !claimed) {
-		claimed = (*ih->ih_fun)(ih->ih_arg);
-#ifdef DEBUG
-		{
-			extern int intrdebug;
-			if (intrdebug & 1)
-				printf("intr %p %x arg %p %s\n",
-					ih, ih->ih_number, ih->ih_arg,
-					claimed ? "claimed" : "");
+	while (ih) {
+		if (ih->ih_fun(ih->ih_arg)) {
+			ih->ih_count.ec_count++;
+			claimed = 1;
 		}
-#endif
 		ih = ih->ih_next;
 	}
+
 	return (claimed);
 }
 
@@ -197,15 +188,14 @@ intr_ack(struct intrhand *ih)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih)
-	int level;
-	struct intrhand *ih;
+intr_establish(int level, struct intrhand *ih)
 {
 	struct intrhand *q;
 	u_int64_t m, id;
 	int s;
 
 	s = splhigh();
+
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
@@ -251,26 +241,26 @@ intr_establish(level, ih)
 #ifdef DEBUG
 		printf("intr_establish: intr reused %x\n", ih->ih_number);
 #endif
-
 		if (q->ih_fun != intr_list_handler) {
-			nih = (struct intrhand *)malloc(sizeof(struct intrhand),
-			    M_DEVBUF, M_NOWAIT);
+			nih = malloc(sizeof(struct intrhand),
+			    M_DEVBUF, M_NOWAIT | M_ZERO);
 			if (nih == NULL)
 				panic("intr_establish");
-			/* Point the old IH at the new handler */
-			*nih = *q;
-			q->ih_fun = intr_list_handler;
-			q->ih_arg = (void *)nih;
-			nih->ih_next = NULL;
+
+			nih->ih_fun = intr_list_handler;
+			nih->ih_arg = q;
+			nih->ih_number = q->ih_number;
+			nih->ih_pil = q->ih_pil;
+			nih->ih_map = q->ih_map;
+			nih->ih_clr = q->ih_clr;
+			nih->ih_ack = q->ih_ack;
+
+			intrlev[ih->ih_number] = q = nih;
 		}
-		nih = (struct intrhand *)malloc(sizeof(struct intrhand),
-		    M_DEVBUF, M_NOWAIT);
-		if (nih == NULL)
-			panic("intr_establish");
-		*nih = *ih;
+
 		/* Add the ih to the head of the list */
-		nih->ih_next = (struct intrhand *)q->ih_arg;
-		q->ih_arg = (void *)nih;
+		ih->ih_next = q->ih_arg;
+		q->ih_arg = ih;
 	}
 
 	if(ih->ih_map) {
@@ -287,12 +277,6 @@ intr_establish(level, ih)
 		}
 		m |= INTMAP_V;
 		*ih->ih_map = m;
-	} else {
-#ifdef DEBUG
-		printf(	"\n**********************\n"
-			"********************** intr_establish: no map register\n"
-			"**********************\n");
-#endif
 	}
 
 	if (ih->ih_clr != NULL)			/* Set interrupt to idle */
