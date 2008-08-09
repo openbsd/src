@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.41 2008/08/08 20:40:24 blambert Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.42 2008/08/09 10:14:02 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ nfs_inactive(v)
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 */
-		(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
+		nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
 		vrele(sp->s_dvp);

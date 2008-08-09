@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.100 2008/08/08 20:44:38 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.101 2008/08/09 10:14:02 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -398,8 +398,8 @@ nfs_open(v)
 	}
 
 	if (np->n_flag & NMODIFIED) {
-		if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-			 ap->a_p, 1)) == EINTR)
+		error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
+		if (error == EINTR)
 			return (error);
 		uvm_vnp_uncache(vp);
 		np->n_attrstamp = 0;
@@ -416,8 +416,8 @@ nfs_open(v)
 		if (np->n_mtime != vattr.va_mtime.tv_sec) {
 			if (vp->v_type == VDIR)
 				np->n_direofoffset = 0;
-			if ((error = nfs_vinvalbuf(vp, V_SAVE,
-				 ap->a_cred, ap->a_p, 1)) == EINTR)
+			error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
+			if (error == EINTR);
 				return (error);
 			uvm_vnp_uncache(vp);
 			np->n_mtime = vattr.va_mtime.tv_sec;
@@ -469,7 +469,7 @@ nfs_close(v)
 		    error = nfs_flush(vp, ap->a_cred, MNT_WAIT, ap->a_p, 0);
 		    np->n_flag &= ~NMODIFIED;
 		} else
-		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
 		np->n_attrstamp = 0;
 	    }
 	    if (np->n_flag & NWRITEERR) {
@@ -570,10 +570,10 @@ nfs_setattr(v)
 				return (EROFS);
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
- 				     ap->a_cred, ap->a_p, 1);
+ 				     ap->a_cred, ap->a_p);
 			else
 				error = nfs_vinvalbuf(vp, V_SAVE,
- 				     ap->a_cred, ap->a_p, 1);
+ 				     ap->a_cred, ap->a_p);
 			if (error)
 				return (error);
  			tsize = np->n_size;
@@ -584,7 +584,7 @@ nfs_setattr(v)
 		vap->va_atime.tv_sec != VNOVAL) &&
 		vp->v_type == VREG &&
   		(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-		 ap->a_p, 1)) == EINTR)
+		    ap->a_p)) == EINTR)
 		return (error);
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
@@ -1396,7 +1396,7 @@ nfs_remove(v)
 		 * throw away biocache buffers, mainly to avoid
 		 * unnecessary delayed writes later.
 		 */
-		error = nfs_vinvalbuf(vp, 0, cnp->cn_cred, cnp->cn_proc, 1);
+		error = nfs_vinvalbuf(vp, 0, cnp->cn_cred, cnp->cn_proc);
 		/* Do the rpc */
 		if (error != EINTR)
 			error = nfs_removerpc(dvp, cnp->cn_nameptr,
