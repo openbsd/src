@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.75 2008/08/02 21:52:37 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.76 2008/08/09 07:57:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1035,6 +1035,9 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	bzero(probe_data, sizeof(probe_data));
 	error = uvideo_vs_get_probe(sc, probe_data, GET_DEF);
 	if (error != USBD_NORMAL_COMPLETION) {
+		/* relax a moment and retry with GET_CUR */
+		usbd_delay_ms(sc->sc_udev, 100);
+
 		error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
 		if (error != USBD_NORMAL_COMPLETION)
 			return (error);
