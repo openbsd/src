@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.8 2008/05/19 18:09:06 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.9 2008/08/09 16:31:08 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.8 2008/05/19 18:09:06 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.9 2008/08/09 16:31:08 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -39,8 +39,7 @@ BEGIN {
 	kbfr = 0
 	nmaps = 0
 
-	# PS/2 id -> UKBD conversion table, or "sanity lossage 102"
-	# (101 is for GSC keyboards!)
+	# PS/2 id -> UKBD conversion table, or "sanity lossage 101"
 	for (i = 0; i < 256; i++)
 		conv[i] = -1
 
@@ -398,9 +397,11 @@ $1 == "#define" || $1 == "#undef" {
 }
 /KB_FR/ {
 	print $0
-	if (kbfr++ == 0) {
+	kbfr++
+	# Add .apple variants, but not to the fr.dvorak variants
+	if (kbfr == 1) {
 		print "\tKBD_MAP(KB_FR | KB_APPLE,\tKB_FR,\tukbd_keydesc_fr_apple),"
-	} else {
+	} else if (kbfr == 3) {
 		print "\tKBD_MAP(KB_FR | KB_APPLE | KB_SWAPCTRLCAPS,\tKB_FR | KB_APPLE,"
 		print "\t\tukbd_keydesc_swapctrlcaps),"
 	}

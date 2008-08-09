@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.38 2008/07/30 15:53:31 deraadt Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.39 2008/08/09 16:31:08 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -288,6 +288,65 @@ static const keysym_t pckbd_keydesc_fr[] = {
     KC(52),  KS_colon,		KS_slash,
     KC(53),  KS_exclam,		KS_section,
     KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
+/*
+ * fr-dvorak-be'po layout, simplified map, per http://www.clavier-dvorak.org/
+ * (the complete map is still a moving target)
+ */
+static const keysym_t pckbd_keydesc_fr_dvorak_bepo[] = {
+    KC(2),   KS_quotedbl,	KS_1,		KS_hyphen,
+    KC(3),   KS_guillemotleft,	KS_2,		KS_less,
+    KC(4),   KS_guillemotright,	KS_3,		KS_greater,
+    KC(5),   KS_parenleft,	KS_4,		KS_bracketleft,
+    KC(6),   KS_parenright,	KS_5,		KS_bracketright,
+    KC(7),   KS_at,		KS_6,
+    KC(8),   KS_plus,		KS_7,
+    KC(9),   KS_minus,		KS_8,
+    KC(10),  KS_slash,		KS_9,
+    KC(11),  KS_asterisk,	KS_0,
+    KC(12),  KS_equal,		KS_asciicircum,
+    KC(13),  KS_percent,	KS_grave,
+    KC(16),  KS_b,		KS_B,		KS_bar,
+    KC(17),  KS_eacute,		KS_Eacute,	KS_dead_acute,
+    KC(18),  KS_p,		KS_P,		KS_ampersand,
+    KC(19),  KS_o,		KS_O,
+						/* oe ligature */
+    KC(20),  KS_egrave,		KS_Egrave,	KS_dead_grave,
+    KC(21),  KS_dead_circumflex,KS_exclam,
+    KC(22),			KS_v,
+    KC(23),			KS_d,
+    KC(24),			KS_l,
+    KC(25),			KS_j,
+    KC(26),			KS_z,
+    KC(27),			KS_w,
+    KC(30),  KS_a,		KS_A,		KS_ae,		KS_AE,
+    KC(31),  KS_u,		KS_U,		KS_ugrave,	KS_Ugrave,
+    KC(32),  KS_i,		KS_I,		KS_dead_diaeresis,
+    KC(33),  KS_e,		KS_E,
+						/* euro currency */
+    KC(34),  KS_comma,		KS_semicolon,
+    KC(35),			KS_c,
+    KC(36),			KS_t,
+    KC(37),			KS_s,
+    KC(38),			KS_r,
+    KC(39),			KS_n,
+    KC(40),			KS_m,
+    KC(41),  KS_dollar,		KS_numbersign,
+    KC(43),  KS_ccedilla,	KS_Ccedilla,
+    KC(44),  KS_agrave,		KS_Agrave,	KS_backslash,
+    KC(45),  KS_y,		KS_Y,		KS_braceleft,
+    KC(46),  KS_x,		KS_X,		KS_braceright,
+    KC(47),  KS_period,		KS_colon,	/* ellipsis */
+    KC(48),  KS_k,		KS_K,		KS_asciitilde,
+    KC(49),  KS_apostrophe,	KS_question,
+    KC(50),  KS_q,		KS_Q,
+    KC(51),  KS_g,		KS_G,		KS_mu,
+    KC(52),			KS_h,
+    KC(53),			KS_f,
+    KC(57),  KS_space,		KS_nobreakspace,KS_underscore,
+    KC(86),  KS_egrave,		KS_Egrave,	KS_slash,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
@@ -980,6 +1039,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,			KB_US,	pckbd_keydesc_fr),
+	KBD_MAP(KB_FR | KB_DVORAK,	KB_US,	pckbd_keydesc_fr_dvorak_bepo),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
@@ -995,6 +1055,8 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	pckbd_keydesc_iopener),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_FR | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_FR | KB_DVORAK,
+		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_BE | KB_SWAPCTRLCAPS, KB_BE,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		pckbd_keydesc_swapctrlcaps),
