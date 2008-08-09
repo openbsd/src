@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.42 2008/08/08 23:49:53 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.43 2008/08/09 19:20:07 kettenis Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ struct	__partitionv0 {		/* the partition table */
 
 #define DL_BLKSPERSEC(d)	((d)->d_secsize / DEV_BSIZE)
 #define DL_SECTOBLK(d, n)	((n) * DL_BLKSPERSEC(d))
-#define DL_BLKTOSEC(d, n)	(((n) * DEV_BSIZE) / (d)->d_secsize)
+#define DL_BLKTOSEC(d, n)	((n) / DL_BLKSPERSEC(d))
 #define DL_BLKOFFSET(d, n)	(((n) * DEV_BSIZE) % (d)->d_secsize)
 
 /* d_type values: */
