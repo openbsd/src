@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.17 2007/06/25 14:13:40 tom Exp $	*/
+/*	$OpenBSD: tc.c,v 1.18 2008/08/09 16:42:30 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -261,15 +261,16 @@ tc_checkslot(slotbase, namep)
 }
 
 void
-tc_intr_establish(dev, cookie, level, handler, arg)
+tc_intr_establish(dev, cookie, level, handler, arg, name)
 	struct device *dev;
 	void *cookie, *arg;
 	int level;
 	int (*handler)(void *);
+	const char *name;
 {
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
+	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg, name);
 }
 
 void

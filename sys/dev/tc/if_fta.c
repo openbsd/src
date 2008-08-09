@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fta.c,v 1.14 2007/11/06 18:20:07 miod Exp $	*/
+/*	$OpenBSD: if_fta.c,v 1.15 2008/08/09 16:42:30 miod Exp $	*/
 /*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ pdq_tc_attach(parent, self, aux)
 	pdq_ifattach(sc, NULL);
 
 	tc_intr_establish(parent, ta->ta_cookie, IPL_NET,
-	    (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
+	    (int (*)(void *)) pdq_interrupt, sc->sc_pdq, self->dv_xname);
 
 	sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset,
 	    sc->sc_pdq);

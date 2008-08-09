@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.5 2008/06/26 05:42:18 ray Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.6 2008/08/09 16:42:30 miod Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -168,7 +168,8 @@ asc_tcds_attach(parent, self, aux)
 	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
-	tcds_intr_establish(parent, tcdsdev->tcdsda_chip, ncr53c9x_intr, sc);
+	tcds_intr_establish(parent, tcdsdev->tcdsda_chip, ncr53c9x_intr, sc,
+	    self->dv_xname);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but

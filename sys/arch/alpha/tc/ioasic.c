@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.14 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: ioasic.c,v 1.15 2008/08/09 16:42:29 miod Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -117,7 +117,6 @@ struct ioasicintr {
 	int	(*iai_func)(void *);
 	void	*iai_arg;
 	struct evcount iai_count;
-	char	iai_name[16];
 } ioasicintrs[IOASIC_NCOOKIES];
 
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
@@ -195,12 +194,9 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < IOASIC_NCOOKIES; i++) {
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
-		snprintf(ioasicintrs[i].iai_name,
-		    sizeof ioasicintrs[i].iai_name, "ioasic slot %u", i);
-		evcount_attach(&ioasicintrs[i].iai_count,
-		    ioasicintrs[i].iai_name, NULL, &evcount_intr);
 	}
-	tc_intr_establish(parent, ta->ta_cookie, IPL_NONE, ioasic_intr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, IPL_NONE, ioasic_intr, sc,
+	    NULL);
 
 	/*
 	 * Try to configure each device.
@@ -209,11 +205,12 @@ ioasicattach(parent, self, aux)
 }
 
 void
-ioasic_intr_establish(ioa, cookie, level, func, arg)
+ioasic_intr_establish(ioa, cookie, level, func, arg, name)
 	struct device *ioa;
 	void *cookie, *arg;
 	int level;
 	int (*func)(void *);
+	const char *name;
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
 	u_long dev, i, imsk;
@@ -228,6 +225,7 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 
 	ioasicintrs[dev].iai_func = func;
 	ioasicintrs[dev].iai_arg = arg;
+	evcount_attach(&ioasicintrs[dev].iai_count, name, NULL, &evcount_intr);
 
 	/* Enable interrupts for the device. */
 	for (i = 0; i < ioasic_ndevs; i++)
@@ -270,6 +268,7 @@ ioasic_intr_disestablish(ioa, cookie)
 
 	ioasicintrs[dev].iai_func = ioasic_intrnull;
 	ioasicintrs[dev].iai_arg = (void *)dev;
+	evcount_detach(&ioasicintrs[dev].iai_count);
 }
 
 int

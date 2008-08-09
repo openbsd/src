@@ -1,4 +1,4 @@
-/* $OpenBSD: tcdsvar.h,v 1.3 2006/03/13 22:36:06 miod Exp $ */
+/* $OpenBSD: tcdsvar.h,v 1.4 2008/08/09 16:42:30 miod Exp $ */
 /* $NetBSD: tcdsvar.h,v 1.2 2001/08/22 05:00:27 nisimura Exp $ */
 
 /*
@@ -77,7 +77,7 @@ struct tcdsdev_attach_args {
  * TCDS functions.
  */
 void	tcds_intr_establish(struct device *, int,
-	    int (*)(void *), void *);
+	    int (*)(void *), void *, const char *);
 void	tcds_intr_disestablish(struct device *, int);
 void	tcds_dma_enable(struct tcds_slotconfig *, int);
 void	tcds_scsi_enable(struct tcds_slotconfig *, int);

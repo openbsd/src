@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.14 2007/11/06 18:20:05 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.15 2008/08/09 16:42:29 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -47,12 +47,6 @@
 #if NSFB > 0
 extern int	sfb_cnattach(tc_addr_t);
 #endif
-
-void	tc_3000_500_intr_setup(void);
-void	tc_3000_500_intr_establish(struct device *, void *,
-	    int, int (*)(void *), void *);
-void	tc_3000_500_intr_disestablish(struct device *, void *);
-void	tc_3000_500_iointr(void *, unsigned long);
 
 int	tc_3000_500_intrnull(void *);
 int	tc_3000_500_fb_cnattach(u_int64_t);
@@ -104,7 +98,6 @@ struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcount tci_count;
-	char	tci_name[12];
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
 u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
@@ -130,19 +123,16 @@ tc_3000_500_intr_setup()
         for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
-		snprintf(tc_3000_500_intr[i].tci_name,
-		    sizeof tc_3000_500_intr[i].tci_name, "tc slot %u", i);
-		evcount_attach(&tc_3000_500_intr[i].tci_count,
-		    tc_3000_500_intr[i].tci_name, NULL, &evcount_intr);
         }
 }
 
 void
-tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
+tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
 	struct device *tcadev;
 	void *cookie, *arg;
 	int level;
 	int (*func)(void *);
+	const char *name;
 {
 	u_long dev = (u_long)cookie;
 
@@ -155,6 +145,9 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 
 	tc_3000_500_intr[dev].tci_func = func;
 	tc_3000_500_intr[dev].tci_arg = arg;
+	if (name != NULL)
+		evcount_attach(&tc_3000_500_intr[dev].tci_count,
+		    name, NULL, &evcount_intr);
 
 	tc_3000_500_imask &= ~tc_3000_500_intrbits[dev];
 	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
@@ -182,6 +175,8 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
 	tc_3000_500_intr[dev].tci_arg = (void *)dev;
+	if (tc_3000_500_intr[dev].tci_count.ec_parent != NULL)
+		evcount_detach(&tc_3000_500_intr[dev].tci_count);
 }
 
 int

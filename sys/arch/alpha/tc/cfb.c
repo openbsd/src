@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.19 2007/11/06 18:20:05 miod Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.20 2008/08/09 16:42:29 miod Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -219,7 +219,8 @@ cfbattach(parent, self, aux)
 	    sc->sc_dc->dc_depth);
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
-        tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, cfbintr, sc);
+        tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, cfbintr, sc,
+	    self->dv_xname);
 	*(volatile u_int32_t *)(sc->sc_dc->dc_vaddr + CFB_IREQCTRL_OFFSET) = 0;
 
 	/* initialize the raster */

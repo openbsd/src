@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_conf.h,v 1.9 2007/11/06 18:20:05 miod Exp $ */
+/* $OpenBSD: tc_conf.h,v 1.10 2008/08/09 16:42:29 miod Exp $ */
 /* $NetBSD: tc_conf.h,v 1.10 2000/06/04 19:14:29 cgd Exp $ */
 
 /*
@@ -39,7 +39,7 @@ extern void	tc_3000_500_intr_setup(void);
 extern void	tc_3000_500_iointr(void *, unsigned long);
 
 extern void	tc_3000_500_intr_establish(struct device *, void *,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 extern void	tc_3000_500_intr_disestablish(struct device *, void *);
 
 extern int	tc_3000_500_nslots;
@@ -57,7 +57,7 @@ extern void	tc_3000_300_intr_setup(void);
 extern void	tc_3000_300_iointr(void *, unsigned long);
 
 extern void	tc_3000_300_intr_establish(struct device *, void *,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 extern void	tc_3000_300_intr_disestablish(struct device *, void *);
 
 extern int	tc_3000_300_nslots;
