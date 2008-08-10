@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.151 2008/08/07 21:25:47 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.152 2008/08/10 14:13:05 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8932,6 +8932,58 @@ ENTRY(sys_tickcmpr_set)
 
 	cmp	%o0, %o1		! Make sure the value we wrote to
 	bg,pt	%xcc, 2f		!   %sys_tick_cmpr was in the future.
+	 add	%o0, %o2, %o0		! If not, add the step size, double
+	ba,pt	%xcc, 1b		!   the step size and try again.
+	 sllx	%o2, 1, %o2
+2:
+	retl
+	 nop
+
+/*
+ * Support for the STICK logic found on the integrated PCI host bridge
+ * of Hummingbird (UltraSPARC-IIe).  The chip designers made the
+ * brilliant decision to split the 64-bit counters into two 64-bit
+ * aligned 32-bit registers, making atomic access impossible.  This
+ * means we have to check for wraparound in various places.  Sigh.
+ */
+
+#define STICK_CMP_LOW	0x1fe0000f060
+#define STICK_CMP_HIGH	0x1fe0000f068
+#define STICK_REG_LOW	0x1fe0000f070
+#define STICK_REG_HIGH	0x1fe0000f078
+
+ENTRY(stick)
+	setx	STICK_REG_LOW, %o1, %o3
+0:
+	ldxa	[%o3] ASI_PHYS_NON_CACHED, %o0
+	add	%o3, (STICK_REG_HIGH - STICK_REG_LOW), %o4
+	ldxa	[%o4] ASI_PHYS_NON_CACHED, %o1
+	ldxa	[%o3] ASI_PHYS_NON_CACHED, %o2
+	cmp	%o2, %o0		! Check for wraparound
+	blu,pn	%icc, 0b
+	 sllx	%o1, 33, %o1		! Clear the MSB
+	srlx	%o1, 1, %o1
+	retl
+	 or	%o2, %o1, %o0
+
+ENTRY(stickcmpr_set)
+	setx	STICK_CMP_HIGH, %o1, %o3
+	mov	8, %o2			! Initial step size
+1:
+	srlx	%o0, 32, %o1
+	stxa	%o1, [%o3] ASI_PHYS_NON_CACHED
+	add	%o3, (STICK_CMP_LOW - STICK_CMP_HIGH), %o4
+	stxa	%o0, [%o4] ASI_PHYS_NON_CACHED
+
+	add	%o3, (STICK_REG_LOW - STICK_CMP_HIGH), %o4
+	ldxa	[%o4] ASI_PHYS_NON_CACHED, %o1
+	add	%o3, (STICK_REG_HIGH - STICK_CMP_HIGH), %o4
+	ldxa	[%o4] ASI_PHYS_NON_CACHED, %o5
+	sllx	%o5, 32, %o5
+	or	%o1, %o5, %o1
+
+	cmp	%o0, %o1		! Make sure the value we wrote
+	bg,pt	%xcc, 2f		!   was in the future
 	 add	%o0, %o2, %o0		! If not, add the step size, double
 	ba,pt	%xcc, 1b		!   the step size and try again.
 	 sllx	%o2, 1, %o2
