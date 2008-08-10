@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.2 2008/07/21 13:30:05 art Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.3 2008/08/10 13:55:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -80,6 +80,12 @@
 #define PCI_CONFIG_GET		0xb4
 #define PCI_CONFIG_PUT		0xb5
 
+#define RNG_GET_DIAG_CONTROL	0x130
+#define RNG_CTL_READ		0x131
+#define RNG_CTL_WRITE		0x132
+#define RNG_DATA_READ_DIAG	0x133
+#define RNG_DATA_READ		0x134
+
 #define API_SET_VERSION		0x00
 #define API_PUTCHAR		0x01
 #define API_EXIT		0x02
@@ -103,6 +109,12 @@ ENTRY(hv_api_get_version)
 
 ENTRY(hv_mach_set_soft_state)
 	mov	MACH_SET_SOFT_STATE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_cpu_yield)
+	mov	CPU_YIELD, %o5
 	ta	FAST_TRAP
 	retl
 	 nop
@@ -321,8 +333,36 @@ ENTRY(hv_pci_config_put)
 	retl
 	 stx	%o1, [%g5]
 
-ENTRY(hv_cpu_yield)
-	mov	CPU_YIELD, %o5
+ENTRY(hv_rng_get_diag_control)
+	mov	RNG_GET_DIAG_CONTROL, %o5
 	ta	FAST_TRAP
 	retl
 	 nop
+
+ENTRY(hv_rng_ctl_read)
+	mov	%o2, %o4
+	mov	%o1, %o3
+	mov	RNG_CTL_READ, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o3]
+	retl
+	 stx	%o2, [%o4]
+
+ENTRY(hv_rng_ctl_write)
+	mov	RNG_CTL_WRITE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o3]
+
+ENTRY(hv_rng_data_read_diag)
+	mov	RNG_DATA_READ_DIAG, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_rng_data_read)
+	mov	%o1, %o2
+	mov	RNG_DATA_READ, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.2 2008/07/21 13:30:04 art Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.3 2008/08/10 13:55:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -41,6 +41,7 @@ int64_t	hv_mach_set_soft_state(uint64_t software_state,
  * CPU services
  */
 
+void	hv_cpu_yield(void);
 int64_t	hv_cpu_qconf(uint64_t queue, uint64_t base, uint64_t nentries);
 
 #define CPU_MONDO_QUEUE		0x3c
@@ -48,8 +49,6 @@ int64_t	hv_cpu_qconf(uint64_t queue, uint64_t base, uint64_t nentries);
 
 int64_t	hv_cpu_mondo_send(uint64_t ncpus, paddr_t cpulist, paddr_t data);
 int64_t	hv_cpu_myid(uint64_t *cpuid);
-
-void hv_cpu_yield(void);
 
 /*
  * MMU services
@@ -145,6 +144,19 @@ int64_t	hv_pci_config_put(uint64_t devhandle, uint64_t pci_device,
 
 #define PCI_MAP_ATTR_READ  0x01		/* From memory */
 #define PCI_MAP_ATTR_WRITE 0x02		/* To memory */
+
+int64_t	hv_rng_get_diag_control(void);
+int64_t	hv_rng_ctl_read(paddr_t raddr, uint64_t *state, uint64_t *delta);
+int64_t	hv_rng_ctl_write(paddr_t raddr, uint64_t state, uint64_t timeout,
+	uint64_t *delta);
+
+#define RNG_STATE_UNCONFIGURED	0
+#define RNG_STATE_CONFIGURED	1
+#define RNG_STATE_HEALTHCHECK	2
+#define RNG_STATE_ERROR		3
+
+int64_t	hv_rng_data_read_diag(paddr_t raddr, uint64_t size, uint64_t *delta);
+int64_t	hv_rng_data_read(paddr_t raddr, uint64_t *delta);
 
 /*
  * Error codes
