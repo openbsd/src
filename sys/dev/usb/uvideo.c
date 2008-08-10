@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.77 2008/08/09 08:42:03 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.78 2008/08/10 10:01:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1033,12 +1033,9 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 
 	/* get probe */
 	bzero(probe_data, sizeof(probe_data));
-	error = uvideo_vs_get_probe(sc, probe_data, GET_DEF);
-	if (error != USBD_NORMAL_COMPLETION) {
-		error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
-		if (error != USBD_NORMAL_COMPLETION)
-			return (error);
-	}
+	error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (error);
 
 	/* set probe */
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
@@ -1134,10 +1131,8 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 
 	err = usbd_do_request(sc->sc_udev, &req, probe_data);
 	if (err) {
-		if (request != GET_DEF) {
-			printf("%s: could not GET probe request: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		}
+		printf("%s: could not GET probe request: %s\n",
+		    DEVNAME(sc), usbd_errstr(err));
 		return (USBD_INVAL);
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
@@ -1341,14 +1336,14 @@ uvideo_vs_open(struct uvideo_softc *sc)
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
+	/* switch back to default interface (turns off cam LED) */
+	(void)usbd_set_interface(sc->sc_vs_curr->ifaceh, 0);
+
 	if (sc->sc_vs_curr->pipeh) {
 		usbd_abort_pipe(sc->sc_vs_curr->pipeh);
 		usbd_close_pipe(sc->sc_vs_curr->pipeh);
 		sc->sc_vs_curr->pipeh = NULL;
 	}
-
-	/* switch back to default interface (turns off cam LED) */
-	(void)usbd_set_interface(sc->sc_vs_curr->ifaceh, 0);
 }
 
 usbd_status
