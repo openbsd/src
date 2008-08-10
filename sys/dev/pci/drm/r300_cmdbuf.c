@@ -139,7 +139,7 @@ static int r300_emit_cliprects(drm_radeon_private_t *dev_priv,
 		ADVANCE_RING();
 	}
 
-	/* flus cache and wait idle clean after cliprect change */
+	/* flush cache and wait idle clean after cliprect change */
 	BEGIN_RING(2);
 	OUT_RING(CP_PACKET0(R300_RB3D_DSTCACHE_CTLSTAT, 0));
 	OUT_RING(R300_RB3D_DC_FLUSH);

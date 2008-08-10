@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.96 2008/07/29 05:59:11 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.97 2008/08/10 12:03:53 krw Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -3104,7 +3104,7 @@ mixer_remove(struct audio_softc *sc, struct proc *p)
 }
 
 /*
- * Signal all processes waitinf for the mixer.
+ * Signal all processes waiting for the mixer.
  */
 static void
 mixer_signal(struct audio_softc *sc)
