@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.35 2008/08/02 15:50:34 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.36 2008/08/10 00:18:35 brad Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -247,8 +247,8 @@ drmsubmatch(struct device *parent, void *match, void *aux)
 
 	/* is this a *drm device? */
 	len = strlen(cd->cd_name);
-	sm = cd->cd_name + len -3;
-	if (strncmp(sm,"drm",3) == 0)
+	sm = cd->cd_name + len - 3;
+	if (strncmp(sm, "drm", 3) == 0)
 		return ((*cf->cf_attach->ca_match)(parent, match, aux));
 
 	return (0);
@@ -257,9 +257,9 @@ drmsubmatch(struct device *parent, void *match, void *aux)
 int
 vga_drm_print(void *aux, const char *pnp)
 {
-       if (pnp)
-               printf("drm at %s", pnp);
-       return (UNSUPP);
+	if (pnp)
+		printf("drm at %s", pnp);
+	return (UNSUPP);
 }
 #endif
 
