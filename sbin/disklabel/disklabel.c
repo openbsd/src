@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.134 2008/08/04 15:58:13 reyk Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.135 2008/08/10 13:00:25 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.134 2008/08/04 15:58:13 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.135 2008/08/10 13:00:25 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1651,13 +1651,13 @@ usage(void)
 #endif
 
 	fprintf(stderr,
-	    "usage: disklabel [-c | -d | -t] [-v] [-p unit] disk\t(read)\n");
+	    "usage: disklabel [-c | -d | -t] [-v] [-p unit] disk\t\t(read)\n");
 	fprintf(stderr,
 	    "       disklabel -w [-c | -d] [-nv] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,
 	    "       disklabel -e [-c | -d] [-nv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-c | -d] [-nv] [-f tempfile] disk\t(simple editor)\n");
+	    "       disklabel -E [-c | -d] [-nv] [-f tempfile] disk\t\t(simple editor)\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
 	fprintf(stderr,
