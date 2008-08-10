@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.40 2008/07/05 21:13:47 sobrado Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.41 2008/08/10 17:40:10 sobrado Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -954,7 +954,7 @@ device_sec_setpass(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s user high|maximum\n",
+	fprintf(stderr, "usage: %s device %s user high | maximum\n",
 	    __progname, argv[0]);
 	fprintf(stderr, "       %s device %s master\n", __progname, argv[0]);
 	exit(1);
@@ -997,7 +997,7 @@ device_sec_unlock(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s user|master\n", __progname,
+	fprintf(stderr, "usage: %s device %s user | master\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -1053,7 +1053,7 @@ device_sec_erase(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s user|master [enhanced]\n",
+	fprintf(stderr, "usage: %s device %s user | master [enhanced]\n",
 	    __progname, argv[0]);
 	exit(1);
 }
@@ -1119,7 +1119,7 @@ device_sec_disablepass(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s user|master\n", __progname,
+	fprintf(stderr, "usage: %s device %s user | master\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -1258,7 +1258,7 @@ device_smart_autosave(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s enable|disable\n", __progname,
+	fprintf(stderr, "usage: %s device %s enable | disable\n", __progname,
 	    argv[0]);
 	exit(1);
 }

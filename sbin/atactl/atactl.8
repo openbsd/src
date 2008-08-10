@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.39 2008/06/26 05:42:06 ray Exp $
+.\"	$OpenBSD: atactl.8,v 1.40 2008/08/10 17:40:10 sobrado Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: August 10 2008 $
 .Dt ATACTL 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Nm atactl
 .Ar device
-.Op Ar command Op Ar arg
+.Op Ar command Op Ar arg ...
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to issue commands to and otherwise
@@ -243,12 +243,14 @@ even models, so don't rely on it.
 SMART must be enabled while executing this command or the device will return
 an error.
 .Pp
-.It Li secdisablepass Ar user\*(Bamaster
+.It Li secdisablepass Ar user \*(Ba master
 Disables the lock mode for the specified device with user or master password.
 This command won't change the master password.
 The master password will be reactivated when a user password is set.
 .Pp
-.It Li secerase Ar user\*(Bamaster Op Ar enhanced
+.It Li secerase Ar user \*(Ba master Oo
+.Ar enhanced
+.Oc
 Erases all user data and unlocks the specified device.
 Execution of this command with the master password is the only way to unlock a
 device locked at maximum security level with the
@@ -274,7 +276,7 @@ security system.
 After command completion any other commands that update the device lock mode
 will be aborted.
 .Pp
-.It Li secsetpass Ar user Ar high\*(Bamaximum
+.It Li secsetpass Ar user Ar high \*(Ba maximum
 .It Li secsetpass Ar master
 Sets password and security level for the specified device.
 There are two passwords, user and master, and two security levels, high and
@@ -309,7 +311,7 @@ Execution of the
 .Li secerase
 command erases all user data on the device.
 .Pp
-.It Li secunlock Ar user\*(Bamaster
+.It Li secunlock Ar user \*(Ba master
 Unlocks the specified device with user or master password.
 The device will always unlock if a valid user password is received.
 If the security level was set to high during the last
@@ -341,7 +343,7 @@ Typically the
 driver performs this reset automatically, but this should still be
 used with caution.
 .Pp
-.It Li smartautosave Ar enable\*(Badisable
+.It Li smartautosave Ar enable \*(Ba disable
 Enables/disables attribute autosave feature on the specified device.
 .Pp
 .It Li smartdisable
