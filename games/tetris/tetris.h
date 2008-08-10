@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.9 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.10 2008/08/10 12:23:25 krw Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ extern int	Rows, Cols;	/* current screen size */
 
 /*
  * Translations from board coordinates to display coordinates.
- * As with board coordinates, display coordiates are zero origin.
+ * As with board coordinates, display coordinates are zero origin.
  */
 #define	RTOD(x)	((x) - 1)
 #define	CTOD(x)	((x) * 2 + (((Cols - 2 * B_COLS) >> 1) - 1))
