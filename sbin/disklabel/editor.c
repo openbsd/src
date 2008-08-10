@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.169 2008/08/10 02:03:06 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.170 2008/08/10 11:22:40 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.169 2008/08/10 02:03:06 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.170 2008/08/10 11:22:40 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1570,7 +1570,7 @@ editor_help(char *arg)
 "  D           - reset label to default     s [path] - save label to file\n"
 "  d [part]    - delete partition           u        - undo last change\n"
 "  e           - edit drive parameters      w        - write label to disk\n"
-"  g [d|u]     - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
+"  g [d | u]   - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
 "  l [unit]    - print disk label header    x        - exit & lose changes\n"
 "  M           - disklabel(8) man page      z        - delete all partitions\n"
 "  m [part]    - modify partition\n"
