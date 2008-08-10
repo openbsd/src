@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.3 2003/11/07 10:16:45 jmc Exp $ */
+/*	$OpenBSD: if_le.c,v 1.4 2008/08/10 18:20:07 miod Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -104,7 +104,8 @@ volatile struct	buffdesc {
 	short	bd_mcnt;
 } *rdesc, *tdesc;
 
-static	int addoff, kopiera = 0;
+static	int addoff;
+static	int lebufaddr;
 
 /* Flags in the address field */
 #define	BR_OWN	0x80000000
@@ -145,9 +146,19 @@ leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	if (vax_boardtype == VAX_BTYP_650 &&
 	    ((vax_siedata >> 8) & 0xff) == VAX_SIE_KA640) {
-		kopiera = 1;
+		lebufaddr = 0x20120000;
 		ea = (void *)0x20084200;
 		nireg = (void *)0x20084400;
+	} else if (vax_boardtype == VAX_BTYP_60) {
+		extern int ff_ioslot;
+		lebufaddr = 0x30a00000 + (ff_ioslot << 25);
+		ea = (int *)(0x30800000 + (ff_ioslot << 25));
+		for (i = 0; i < 6; i++) {
+			eaddr[i] = *(u_char *)((int)ea + 2);
+			ea++;
+		}
+		ea = NULL;
+		nireg = (void *)(0x30200000 + (ff_ioslot << 25));
 	} else {
 		*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 		ea = (void *)0x20090000; /* XXX Ethernet address */
@@ -167,8 +178,10 @@ igen:
 	while (to--)
 		;
 
-	for (i = 0; i < 6; i++)
-		eaddr[i] = ea[i] & 0377;
+	if (ea != NULL) {
+		for (i = 0; i < 6; i++)
+			eaddr[i] = ea[i] & 0377;
+	}
 
 	if (initblock == NULL) {
 		(void *)initblock =
@@ -180,39 +193,39 @@ igen:
 
 		(int)rdesc = QW_ALLOC(sizeof(struct buffdesc) * NRBUF) + addoff;
 		initblock->ib_rdr = (RLEN << 29) | (int)rdesc;
-		if (kopiera)
+		if (lebufaddr)
 			initblock->ib_rdr -= (int)initblock;
 		(int)tdesc = QW_ALLOC(sizeof(struct buffdesc) * NTBUF) + addoff;
 		initblock->ib_tdr = (TLEN << 29) | (int)tdesc;
-		if (kopiera)
+		if (lebufaddr)
 			initblock->ib_tdr -= (int)initblock;
-		if (kopiera)
+		if (lebufaddr)
 			copyout(initblock, 0, sizeof(struct initblock));
 
 		for (i = 0; i < NRBUF; i++) {
 			rdesc[i].bd_adrflg = QW_ALLOC(BUFSIZE) | BR_OWN;
-			if (kopiera)
+			if (lebufaddr)
 				rdesc[i].bd_adrflg -= (int)initblock;
 			rdesc[i].bd_bcnt = -BUFSIZE;
 			rdesc[i].bd_mcnt = 0;
 		}
-		if (kopiera)
+		if (lebufaddr)
 			copyout((void *)rdesc, (int)rdesc - (int)initblock,
 			    sizeof(struct buffdesc) * NRBUF);
 
 		for (i = 0; i < NTBUF; i++) {
 			tdesc[i].bd_adrflg = QW_ALLOC(BUFSIZE);
-			if (kopiera)
+			if (lebufaddr)
 				tdesc[i].bd_adrflg -= (int)initblock;
 			tdesc[i].bd_bcnt = 0xf000;
 			tdesc[i].bd_mcnt = 0;
 		}
-		if (kopiera)
+		if (lebufaddr)
 			copyout((void *)tdesc, (int)tdesc - (int)initblock,
 			    sizeof(struct buffdesc) * NTBUF);
 	}
 
-	if (kopiera) {
+	if (lebufaddr) {
 		LEWRCSR(LE_CSR1, 0);
 		LEWRCSR(LE_CSR2, 0);
 	} else {
@@ -251,7 +264,7 @@ retry:
 	csr = LERDCSR(LE_CSR0);
 	LEWRCSR(LE_CSR0, csr & (LE_C0_BABL|LE_C0_MISS|LE_C0_MERR|LE_C0_RINT));
 
-	if (kopiera)
+	if (lebufaddr)
 		copyin((int)&rdesc[next_rdesc] - (int)initblock,
 		    (void *)&rdesc[next_rdesc], sizeof(struct buffdesc));
 	if (rdesc[next_rdesc].bd_adrflg & BR_OWN)
@@ -263,7 +276,7 @@ retry:
 		if ((len = rdesc[next_rdesc].bd_mcnt - 4) > maxlen)
 			len = maxlen;
 
-		if (kopiera)
+		if (lebufaddr)
 			copyin((rdesc[next_rdesc].bd_adrflg&0xffffff),
 			    pkt, len);
 		else
@@ -273,7 +286,7 @@ retry:
 
 	rdesc[next_rdesc].bd_mcnt = 0;
 	rdesc[next_rdesc].bd_adrflg |= BR_OWN;
-	if (kopiera)
+	if (lebufaddr)
 		copyout((void *)&rdesc[next_rdesc], (int)&rdesc[next_rdesc] -
 		    (int)initblock, sizeof(struct buffdesc));
 	if (++next_rdesc >= NRBUF)
@@ -298,13 +311,13 @@ retry:
 	csr = LERDCSR(LE_CSR0);
 	LEWRCSR(LE_CSR0, csr & (LE_C0_MISS|LE_C0_CERR|LE_C0_TINT));
 
-	if (kopiera)
+	if (lebufaddr)
 		copyin((int)&tdesc[next_tdesc] - (int)initblock,
 		    (void *)&tdesc[next_tdesc], sizeof(struct buffdesc));
 	if (tdesc[next_tdesc].bd_adrflg & BT_OWN)
 		goto retry;
 
-	if (kopiera)
+	if (lebufaddr)
 		copyout(pkt, (tdesc[next_tdesc].bd_adrflg & 0xffffff), len);
 	else
 		bcopy(pkt, (char *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) +
@@ -313,7 +326,7 @@ retry:
 	    (len < ETHER_MIN_LEN ? -ETHER_MIN_LEN : -len);
 	tdesc[next_tdesc].bd_mcnt = 0;
 	tdesc[next_tdesc].bd_adrflg |= BT_OWN | BT_STP | BT_ENP;
-	if (kopiera)
+	if (lebufaddr)
 		copyout((void *)&tdesc[next_tdesc], (int)&tdesc[next_tdesc] -
 		    (int)initblock, sizeof(struct buffdesc));
 
@@ -344,29 +357,47 @@ leclose(struct open_file *f)
 void
 copyout(void *f, int dest, int len)
 {
-	short *from = f;
-	short *toaddr;
+	if (vax_boardtype == VAX_BTYP_60) {
+		u_char *from = f;
+		u_char *toaddr = (u_char *)lebufaddr + dest;
 
-	toaddr = (short *)0x20120000 + dest;
+		while (len-- > 0)
+			*toaddr++ = *from++;
+	} else {
+		short *from = f;
+		short *toaddr;
 
-	while (len > 0) {
-		*toaddr = *from++;
-		toaddr += 2;
-		len -= 2;
+		toaddr = (short *)lebufaddr + dest;
+
+		while (len > 0) {
+			*toaddr = *from++;
+			toaddr += 2;
+			len -= 2;
+		}
 	}
 }
 
 void
 copyin(int src, void *f, int len)
 {
-	short *to = f;
-	short *fromaddr;
+	if (vax_boardtype == VAX_BTYP_60) {
+		u_char *to = f;
+		u_char *fromaddr;
 
-	fromaddr = (short *)0x20120000 + src;
+		fromaddr = (u_char *)lebufaddr + src;
 
-	while (len > 0) {
-		*to++ = *fromaddr;
-		fromaddr += 2;
-		len -= 2;
+		while (len-- > 0)
+			*to++ = *fromaddr++;
+	} else {
+		short *to = f;
+		short *fromaddr;
+
+		fromaddr = (short *)lebufaddr + src;
+
+		while (len > 0) {
+			*to++ = *fromaddr;
+			fromaddr += 2;
+			len -= 2;
+		}
 	}
 }
