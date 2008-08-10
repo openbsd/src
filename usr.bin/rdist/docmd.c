@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.19 2006/12/11 20:50:54 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.20 2008/08/10 13:39:09 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: docmd.c,v 1.8 2001/03/12 18:42:23 kim Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: docmd.c,v 1.19 2006/12/11 20:50:54 deraadt Exp $";
+"$OpenBSD: docmd.c,v 1.20 2008/08/10 13:39:09 sobrado Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -148,7 +148,7 @@ notify(char *rhost, struct namelist *to, time_t lmod)
 		return;
 	}
 	/*
-	 * Create a pipe to mailling program.
+	 * Create a pipe to mailing program.
 	 * Set IFS to avoid possible security problem with users
 	 * setting "IFS=/".
 	 */
