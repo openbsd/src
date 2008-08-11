@@ -1,4 +1,4 @@
-/*	$OpenBSD: htdigest.c,v 1.11 2008/05/23 12:12:01 mbalmer Exp $ */
+/*	$OpenBSD: htdigest.c,v 1.12 2008/08/11 17:15:56 tobias Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -80,6 +80,8 @@
 #define CR 13
 
 #define MAX_STRING_LEN 256
+
+#define INTR_MSG "\nInterrupted.\n"
 
 static char tn[MAX_STRING_LEN];
 
@@ -179,10 +181,10 @@ usage(void)
 static void
 interrupted(void)
 {
-	fprintf(stderr, "Interrupted.\n");
+	write(STDERR_FILENO, INTR_MSG, sizeof(INTR_MSG) - 1);
 	if (tn[0] != '\0')
 		unlink(tn);
-	exit(1);
+	_exit(1);
 }
 
 
