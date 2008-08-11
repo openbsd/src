@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.52 2008/03/23 12:10:53 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.53 2008/08/11 20:56:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -418,10 +418,19 @@ vgafb_mmap(v, off, prot)
 			    sc->sc_mem_addr, off - sc->sc_mem_addr,
 			    prot, BUS_SPACE_MAP_LINEAR));
 
-		if (off >= sc->sc_mmio_addr &&
+		/* 
+		 * ATI Mach64 boards have an mmio region that's
+		 * typically smaller than a page and therefore may end
+		 * up being not aligned to a page boundary.  Alow the
+		 * whole page to be mapped and hope the firmware
+		 * didn't put any resources on the same page that
+		 * belong to a different device.
+		 */
+		if (off >= trunc_page(sc->sc_mmio_addr) &&
 		    off < (sc->sc_mmio_addr + sc->sc_mmio_size))
 			return (bus_space_mmap(sc->sc_mem_t,
-			    sc->sc_mmio_addr, off - sc->sc_mmio_addr,
+			    trunc_page(sc->sc_mmio_addr),
+			    off - trunc_page(sc->sc_mmio_addr),
 			    prot, BUS_SPACE_MAP_LINEAR));
 		break;
 
