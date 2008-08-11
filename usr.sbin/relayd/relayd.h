@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.109 2008/07/22 23:17:37 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.110 2008/08/11 08:07:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -227,15 +227,16 @@ struct ctl_tcp_event {
 };
 
 enum httpmethod {
-	HTTP_METHOD_GET		= 0,
-	HTTP_METHOD_HEAD	= 1,
-	HTTP_METHOD_POST	= 2,
-	HTTP_METHOD_PUT		= 3,
-	HTTP_METHOD_DELETE	= 4,
-	HTTP_METHOD_OPTIONS	= 5,
-	HTTP_METHOD_TRACE	= 6,
-	HTTP_METHOD_CONNECT	= 7,
-	HTTP_METHOD_RESPONSE	= 8	/* Server response */
+	HTTP_METHOD_NONE	= 0,
+	HTTP_METHOD_GET		= 1,
+	HTTP_METHOD_HEAD	= 2,
+	HTTP_METHOD_POST	= 3,
+	HTTP_METHOD_PUT		= 4,
+	HTTP_METHOD_DELETE	= 5,
+	HTTP_METHOD_OPTIONS	= 6,
+	HTTP_METHOD_TRACE	= 7,
+	HTTP_METHOD_CONNECT	= 8,
+	HTTP_METHOD_RESPONSE	= 9	/* Server response */
 };
 
 enum direction {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.102 2008/08/11 06:42:06 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.103 2008/08/11 08:07:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1146,7 +1146,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	size_t			 size;
 
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto done;
+		goto fail;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_httpcontent: size %d, to read %d",
 	    size, cre->toread);
@@ -1161,7 +1161,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	    size, cre->toread);
 	if (con->se_done)
 		goto done;
-	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_httpcontent)
+	if (bev->readcb != relay_read_httpcontent)
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
@@ -1183,7 +1183,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	size_t			 size;
 
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto done;
+		goto fail;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_httpchunks: size %d, to read %d",
 	    size, cre->toread);
@@ -1282,11 +1282,15 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	size_t			 size;
 
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto done;
+		goto fail;
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("relay_read_http: size %d, to read %d", size, cre->toread);
-	if (!size)
-		return;
+	if (!size) {
+		if (cre->dir == RELAY_DIR_RESPONSE)
+			return;
+		cre->toread = 0;
+		goto done;
+	}
 
 	pk.type = NODE_TYPE_HEADER;
 
@@ -1345,9 +1349,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			if (cre->dir == RELAY_DIR_RESPONSE) {
 				cre->method = HTTP_METHOD_RESPONSE;
 				goto lookup;
-			} else if (strcmp("GET", pk.key) == 0)
-				cre->method = HTTP_METHOD_GET;
-			else if (strcmp("HEAD", pk.key) == 0)
+			} else if (strcmp("HEAD", pk.key) == 0)
 				cre->method = HTTP_METHOD_HEAD;
 			else if (strcmp("POST", pk.key) == 0)
 				cre->method = HTTP_METHOD_POST;
@@ -1361,6 +1363,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				cre->method = HTTP_METHOD_TRACE;
 			else if (strcmp("CONNECT", pk.key) == 0)
 				cre->method = HTTP_METHOD_CONNECT;
+			else {
+				/* Use GET method as the default */
+				cre->method = HTTP_METHOD_GET;
+			}
 
 			/*
 			 * Decode the path and query
@@ -1496,6 +1502,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		}
 
 		switch (cre->method) {
+		case HTTP_METHOD_NONE:
+			relay_close_http(con, 406, "no method", 0);
+			return;
 		case HTTP_METHOD_CONNECT:
 			/* Data stream */
 			bev->readcb = relay_read;
@@ -1526,12 +1535,14 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		/* Write empty newline and switch to relay mode */
 		if (relay_bufferevent_print(cre->dst, "\r\n") == -1)
 			goto fail;
+
 		cre->line = 0;
 		cre->method = 0;
 		cre->done = 0;
 		cre->chunked = 0;
 
-		if (cre->dir == RELAY_DIR_REQUEST &&
+ done:
+		if (cre->dir == RELAY_DIR_REQUEST && !cre->toread &&
 		    proto->lateconnect && cre->dst->bev == NULL) {
 			if (rlay->rl_conf.fwdmode == FWD_TRANS) {
 				relay_bindanyreq(con, 0, IPPROTO_TCP);
@@ -1542,14 +1553,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			return;
 		}
 	}
-	if (con->se_done)
-		goto done;
+	if (con->se_done) {
+		relay_close(con, "last http read (done)");
+		return;
+	}
 	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_http)
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
-	return;
- done:
-	relay_close(con, "last http read (done)");
 	return;
  fail:
 	relay_close_http(con, 500, strerror(errno), 0);
