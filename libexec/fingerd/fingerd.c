@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.33 2006/08/19 06:01:00 ray Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.34 2008/08/11 17:17:53 tobias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.33 2006/08/19 06:01:00 ray Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.34 2008/08/11 17:17:53 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 		}
 
 		len = strlen(*ap);
-		while ((*ap)[len - 1] == '@')
+		while (len > 0 && (*ap)[len - 1] == '@')
 			(*ap)[--len] = '\0';
 		if (**ap == '\0')
 			continue;
