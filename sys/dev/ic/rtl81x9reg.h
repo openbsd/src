@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.49 2008/07/15 13:21:17 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.50 2008/08/11 22:42:19 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -528,6 +528,10 @@ struct rl_desc {
 
 #define RL_TDESC_VLANCTL_TAG	0x00020000	/* Insert VLAN tag */
 #define RL_TDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+/* RTL8168C/RTL8168CP/RTL8111C/RTL8111CP */
+#define	RL_TDESC_CMD_IPCSUMV2	0x20000000
+#define	RL_TDESC_CMD_TCPCSUMV2	0x40000000
+#define	RL_TDESC_CMD_UDPCSUMV2	0x80000000
 
 /*
  * Error bits are valid only on the last descriptor of a frame
@@ -565,6 +569,8 @@ struct rl_desc {
 #define RL_RDESC_STAT_RUNT	0x00080000	/* runt packet received */
 #define RL_RDESC_STAT_CRCERR	0x00040000	/* CRC error */
 #define RL_RDESC_STAT_PROTOID	0x00030000	/* Protocol type */
+#define	RL_RDESC_STAT_UDP	0x00020000	/* UDP, 8168C/CP, 8111C/CP */
+#define	RL_RDESC_STAT_TCP	0x00010000	/* TCP, 8168C/CP, 8111C/CP */
 #define RL_RDESC_STAT_IPSUMBAD	0x00008000	/* IP header checksum bad */
 #define RL_RDESC_STAT_UDPSUMBAD	0x00004000	/* UDP checksum bad */
 #define RL_RDESC_STAT_TCPSUMBAD	0x00002000	/* TCP checksum bad */
@@ -576,6 +582,9 @@ struct rl_desc {
 #define RL_RDESC_VLANCTL_TAG	0x00010000	/* VLAN tag available
 						   (rl_vlandata valid)*/
 #define RL_RDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+/* RTL8168C/RTL8168CP/RTL8111C/RTL8111CP */
+#define	RL_RDESC_IPV6		0x80000000
+#define	RL_RDESC_IPV4		0x40000000
 
 #define RL_PROTOID_NONIP	0x00000000
 #define RL_PROTOID_TCPIP	0x00010000
