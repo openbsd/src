@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.103 2008/08/11 08:07:14 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.104 2008/08/11 08:24:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -879,7 +879,7 @@ relay_read(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto done;
+		goto fail;
 	if (!EVBUFFER_LENGTH(src))
 		return;
 	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
