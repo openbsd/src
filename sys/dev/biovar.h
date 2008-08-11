@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.31 2008/06/14 18:40:50 hshoexer Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.32 2008/08/11 17:22:54 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -159,7 +159,10 @@ struct bioc_setstate {
 	u_int16_t	bs_channel;
 	u_int16_t	bs_target;
 	u_int16_t	bs_lun;
-	u_int16_t	bs_other_id;	/* unused for now  */
+	u_int16_t	bs_other_id_type; /* use other_id instead of ctl */
+#define BIOC_SSOTHER_UNUSED	0x00
+#define BIOC_SSOTHER_DEVT	0x01
+	int		bs_other_id;	/* cram dev_t or other id in here */
 
 	int		bs_status;	/* change to this status */
 #define BIOC_SSONLINE		0x00	/* online disk */
