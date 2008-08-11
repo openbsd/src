@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.109 2008/03/28 18:21:55 grunk Exp $
+.\"	$OpenBSD: spamd.8,v 1.110 2008/08/11 20:28:55 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 28 2008 $
+.Dd $Mdocdate: August 11 2008 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -513,15 +513,18 @@ a connecting address is matched.
 is normally used to configure this information.
 .Sh SYNCHRONISATION
 .Nm
-supports realtime synchronisation of greylisting states between
-a number of
-.Nm
+supports realtime synchronisation of spamd databases between
+a number of spamd
 daemons running on multiple machines,
 using the
 .Fl Y
 and
 .Fl y
 options.
+The databases are synchronised for greylisted and trapped entries;
+whitelisted entries and entries made manually using
+.Xr spamdb 8
+are not updated.
 .Pp
 The following example will accept incoming multicast and unicast
 synchronisation messages, and send outgoing multicast messages through
