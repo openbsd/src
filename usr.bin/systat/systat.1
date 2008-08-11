@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.63 2008/08/08 21:48:19 sobrado Exp $
+.\"	$OpenBSD: systat.1,v 1.64 2008/08/11 20:24:45 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: August 8 2008 $
+.Dd $Mdocdate: August 11 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -85,10 +85,10 @@ This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a 
+.It Fl a
 Display all lines.
 .It Fl b
-Raw, non interactive mode. 
+Raw, non interactive mode.
 .It Fl d Ar count
 Exit after
 .Ar count
@@ -100,7 +100,7 @@ Do not try to reverse-map IP address.
 .It Fl s Ar delay
 Specifies the screen refresh time interval in seconds.
 This option is overridden by the final
-.Ar delay 
+.Ar delay
 argument if given.
 The default interval is 5 seconds.
 .\".It Fl S Ar start
@@ -294,12 +294,10 @@ then only the requested information will be displayed.
 Display only network connections using the indicated protocol.
 .El
 .It Ic pf
-Displays filter information about
+Display filter information about
 .Xr pf 4 ,
 similar to the output of
-.Xr pfctl 8
-with the 
-.Fl s Cm info
+.Cm pfctl Fl s Cm info
 option.
 .It Ic pigs
 Display, in the lower window, those processes resident in main
@@ -311,12 +309,12 @@ is accounted to the
 .Dq idle
 process.
 .It Ic queues
-Displays statistics about the active
-.Xr altq 4 
-queues, similar to the output of 
+Display statistics about the active
+.Xr altq 9
+queues, similar to the output of
 .Cm pfctl Fl s Cm queue .
 .It Ic rules
-Displays pf rules statistics, similar to the output of 
+Display pf rules statistics, similar to the output of
 .Cm pfctl Fl s Cm rules .
 .It Ic sensors
 Display, in the lower window,
@@ -324,8 +322,7 @@ the current values of available hardware sensors,
 in a format similar to that of
 .Xr sysctl 8 .
 .It Ic states
-Displays pf
-states statistics, similar to the output of 
+Display pf states statistics, similar to the output of
 .Cm pfctl Fl s Cm states .
 .It Ic swap
 Show information about swap space usage on all the
