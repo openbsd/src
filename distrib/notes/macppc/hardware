@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.93 2008/08/06 20:30:09 miod Exp $
+dnl	$OpenBSD: hardware,v 1.94 2008/08/11 20:43:16 jmc Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -441,6 +441,7 @@ Supported devices {:-include-:}:
 		    KCORP LifeStyle KLS-660
 		    LevelOne WNC-0301 v2
 		    Linksys WMP54G v4
+		    Longshine LCS-8031N
 		    Micronet SP906GK
 		    Minitar MN54GPC-R
 		    MSI MP54G2 Mini PCI

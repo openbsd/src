@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.93 2008/08/07 06:18:42 miod Exp $
+dnl	$OpenBSD: hardware,v 1.94 2008/08/11 20:43:16 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -714,6 +714,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    KCORP LifeStyle KLS-660
 		    LevelOne WNC-0301 v2
 		    Linksys WMP54G v4
+		    Longshine LCS-8031N
 		    Micronet SP906GK
 		    Minitar MN54GPC-R
 		    MSI MP54G2 Mini PCI

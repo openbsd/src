@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.139 2008/08/06 18:23:29 miod Exp $
+dnl	$OpenBSD: hardware,v 1.140 2008/08/11 20:43:16 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -532,6 +532,7 @@ Supported devices {:-include-:}:
 		    KCORP LifeStyle KLS-660
 		    LevelOne WNC-0301 v2
 		    Linksys WMP54G v4
+		    Longshine LCS-8031N
 		    Micronet SP906GK
 		    Minitar MN54GPC-R
 		    MSI MP54G2 Mini PCI
