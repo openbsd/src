@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.135 2008/08/10 13:00:25 sobrado Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.136 2008/08/11 19:03:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.135 2008/08/10 13:00:25 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.136 2008/08/11 19:03:05 reyk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -529,7 +529,8 @@ l_perror(char *s)
 struct dos_partition *
 findopenbsd(int f, off_t mbroff, struct dos_partition **first, int *n)
 {
-	static int mbr[DEV_BSIZE / sizeof(int)];
+	static struct dos_partition res;
+	int mbr[DEV_BSIZE / sizeof(int)];
 	struct dos_partition *dp, *p;
 	u_int16_t signature;
 	u_int32_t start = 0;
@@ -571,17 +572,20 @@ findopenbsd(int f, off_t mbroff, struct dos_partition **first, int *n)
 	for (part = 0; part < NDOSPART; part++) {
 		if (!letoh32(dp[part].dp_size))
 			continue;
-		if (first && *first == NULL)
-			*first = &dp[part];
+		if (first && *first == NULL) {
+			bcopy(&dp[part], &res, sizeof(struct dos_partition));
+			*first = &res;
+		}
 		switch (dp[part].dp_typ) {
 		case DOSPTYP_OPENBSD:
 			fprintf(stderr, "# Inside MBR partition %d: "
 			    "type %02X start %u size %u\n",
 			    part, dp[part].dp_typ,
 			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
-			dp[part].dp_start =
-			    htole32((off_t)letoh32(dp[part].dp_start) + mbroff);
-			return (&dp[part]);
+			bcopy(&dp[part], &res, sizeof(struct dos_partition));
+			res.dp_start =
+			    htole32((off_t)letoh32(res.dp_start) + mbroff);
+			return (&res);
 		case DOSPTYP_EXTEND:
 		case DOSPTYP_EXTENDL:
 			fprintf(stderr, "# Extended partition %d: "
