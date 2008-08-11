@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.50 2008/07/12 13:08:04 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.51 2008/08/11 21:28:53 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -212,9 +212,11 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
 	printf("dvma map %x-%x, ", is->is_dvmabase, is->is_dvmaend);
+#ifdef DEBUG
 	printf("iotdb %llx-%llx",
 	    (unsigned long long)is->is_ptsb,
 	    (unsigned long long)(is->is_ptsb + size));
+#endif
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, (u_long)is->is_dvmaend + 1,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
