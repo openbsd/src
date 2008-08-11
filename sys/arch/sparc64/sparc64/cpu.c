@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.47 2008/08/11 18:20:37 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.48 2008/08/11 19:53:33 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -98,6 +98,8 @@ struct cfattach cpu_ca = {
 
 void cpu_init(struct cpu_info *ci);
 void cpu_hatch(void);
+
+int sparc64_cpuspeed(int *);
 
 int hummingbird_div(uint64_t);
 uint64_t hummingbird_estar_mode(int);
@@ -285,6 +287,8 @@ cpu_attach(parent, dev, aux)
 	    ma->ma_name, vers >> 4, vers & 0xf, clockfreq(clk));
 	printf(": %s\n", cpu_model);
 
+	cpu_cpuspeed = sparc64_cpuspeed;
+
 	if (ci->ci_upaid == cpu_myid())
 		cpu_init(ci);
 
@@ -460,6 +464,15 @@ cpu_init(struct cpu_info *ci)
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+int
+sparc64_cpuspeed(int *freq)
+{
+	extern u_int64_t cpu_clockrate[];
+
+	*freq = cpu_clockrate[1];
+	return (0);
+}
 
 #ifndef SMALL_KERNEL
 
