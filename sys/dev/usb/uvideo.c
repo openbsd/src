@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.78 2008/08/10 10:01:25 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.79 2008/08/11 05:37:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -207,9 +207,6 @@ struct video_hw_if uvideo_hw_if = {
  * they are.  They report UICLASS_VENDOR in the bInterfaceClass
  * instead of UICLASS_VIDEO.  Give those devices a chance to attach
  * by looking up their USB ID.
- *
- * If the device also doesn't set UDCLASS_VIDEO you need to add an
- * entry in usb_quirks.c, too, so the ehci disown works.
  */
 static const struct usb_devno uvideo_quirk_devs [] = {
 	{ USB_VENDOR_LOGITECH,	USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 }
@@ -326,12 +323,6 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status error;
 
 	sc->sc_udev = uaa->device;
-
-	if (uaa->device->bus->usbrev == USBREV_2_0) {
-		printf("%s: ehci(4) does not support isochronous transfers "
-		    "yet, disable it.\n", DEVNAME(sc));
-		return; 
-	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);

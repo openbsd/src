@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.44 2008/07/22 16:24:40 mglocker Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.45 2008/08/11 05:37:01 mglocker Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -149,9 +149,6 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_FLASH,	    ANY,   { UQ_BAD_HID }},
 
-/* devices which are UVC compatible (uvideo) but don't set UDCLASS_VIDEO */
-{ USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1,
-	ANY, { UQ_EHCI_NEEDTO_DISOWN }},
  { 0, 0, 0, { 0 } }
 };
 
@@ -162,7 +159,6 @@ const struct usbd_dev_quirk_entry {
 	u_int8_t bDeviceProtocol;
 	struct usbd_quirks quirks;
 } usb_dev_quirks[] = {
- { UDCLASS_VIDEO, bANY,	bANY,	{ UQ_EHCI_NEEDTO_DISOWN }},
  { 0, 0, 0, { 0 } }
 };
 
