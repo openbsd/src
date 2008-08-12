@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.67 2008/08/12 19:05:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.68 2008/08/12 19:21:04 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -823,7 +823,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	/* write Version field */
 	LE_WRITE_2(frm, 1); frm += 2;
 
-	/* write Group Cipher Suite field (see Table 20da) */
+	/* write Group Data Cipher Suite field (see Table 20da) */
 	memcpy(frm, oui, 3); frm += 3;
 	switch (ni->ni_rsngroupcipher) {
 	case IEEE80211_CIPHER_WEP40:
@@ -840,7 +840,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		break;
 	default:
 		/* can't get there */
-		panic("invalid group cipher!");
+		panic("invalid group data cipher!");
 	}
 
 	pcount = frm; frm += 2;
@@ -880,11 +880,27 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	/* write AKM Suite List Count field */
 	LE_WRITE_2(pcount, count);
 
-	if (!wpa) {
-		/* write RSN Capabilities field */
-		LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
+	if (wpa)
+		return frm;
 
-		/* no PMKID List for now */
+	/* write RSN Capabilities field */
+	LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
+
+	if (!(ic->ic_caps & IEEE80211_C_MFP))
+		return frm;
+
+	/* no PMKID List for now */
+	LE_WRITE_2(frm, 0); frm += 2;
+
+	/* write Group Integrity Cipher Suite field */
+	memcpy(frm, oui, 3); frm += 3;
+	switch (ic->ic_rsngroupmgmtcipher) {
+	case IEEE80211_CIPHER_AES128_CMAC:
+		*frm++ = 6;
+		break;
+	default:
+		/* can't get there */
+		panic("invalid integrity group cipher!");
 	}
 	return frm;
 }

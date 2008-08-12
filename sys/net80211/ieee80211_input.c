@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.90 2008/08/12 17:53:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.91 2008/08/12 19:21:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -689,20 +689,34 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 enum ieee80211_cipher
 ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 {
-	/* from IEEE Std 802.11i-2004 - Table 20da */
-	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA */
-	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0) {	/* WPA */
 		switch (selector[3]) {
-		case 0:	/* use group cipher suite */
+		case 0: /* use group data cipher suite */
 			return IEEE80211_CIPHER_USEGROUP;
-		case 1:	/* WEP-40 */
+		case 1: /* WEP-40 */
 			return IEEE80211_CIPHER_WEP40;
-		case 2:	/* TKIP */
+		case 2: /* TKIP */
 			return IEEE80211_CIPHER_TKIP;
-		case 4:	/* CCMP (RSNA default) */
+		case 4: /* CCMP (RSNA default) */
 			return IEEE80211_CIPHER_CCMP;
-		case 5:	/* WEP-104 */
+		case 5: /* WEP-104 */
 			return IEEE80211_CIPHER_WEP104;
+		}
+	} else if (memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
+		/* from IEEE Std 802.11 - Table 20da */
+		switch (selector[3]) {
+		case 0: /* use group data cipher suite */
+			return IEEE80211_CIPHER_USEGROUP;
+		case 1: /* WEP-40 */
+			return IEEE80211_CIPHER_WEP40;
+		case 2: /* TKIP */
+			return IEEE80211_CIPHER_TKIP;
+		case 4: /* CCMP (RSNA default) */
+			return IEEE80211_CIPHER_CCMP;
+		case 5: /* WEP-104 */
+			return IEEE80211_CIPHER_WEP104;
+		case 6:	/* AES-128-CMAC */
+			return IEEE80211_CIPHER_AES128_CMAC;
 		}
 	}
 	return IEEE80211_CIPHER_NONE;	/* ignore unknown ciphers */
@@ -747,13 +761,15 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	rsn->rsn_groupcipher = IEEE80211_CIPHER_CCMP;
 	rsn->rsn_nciphers = 1;
 	rsn->rsn_ciphers = IEEE80211_CIPHER_CCMP;
+	/* if Group Management Cipher Suite missing, defaut to AES-128-CMAC */
+	rsn->rsn_groupmgmtcipher = IEEE80211_CIPHER_AES128_CMAC;
 	/* if AKM Suite missing, default to 802.1X */
 	rsn->rsn_nakms = 1;
 	rsn->rsn_akms = IEEE80211_AKM_IEEE8021X;
 	/* if RSN capabilities missing, default to 0 */
 	rsn->rsn_caps = 0;
 
-	/* read Group Cipher Suite field */
+	/* read Group Data Cipher Suite field */
 	if (frm + 4 > efrm)
 		return 0;
 	rsn->rsn_groupcipher = ieee80211_parse_rsn_cipher(frm);
@@ -816,6 +832,11 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 		/* ignore PMKIDs for now */
 		frm += IEEE80211_PMKID_LEN;
 	}
+
+	/* read Group Management Cipher Suite field */
+	if (frm + 4 > efrm)
+		return 0;
+	rsn->rsn_groupmgmtcipher = ieee80211_parse_rsn_cipher(frm);
 
 	return IEEE80211_STATUS_SUCCESS;
 }
@@ -1146,6 +1167,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			ni->ni_rsnakms = rsn.rsn_akms;
 			ni->ni_rsnciphers = rsn.rsn_ciphers;
 			ni->ni_rsngroupcipher = rsn.rsn_groupcipher;
+			ni->ni_rsngroupmgmtcipher = rsn.rsn_groupmgmtcipher;
 			ni->ni_rsncaps = rsn.rsn_caps;
 		} else
 			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
@@ -1499,6 +1521,27 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			status = IEEE80211_STATUS_BAD_GROUP_CIPHER;
 			goto end;
 		}
+
+		if (!(rsn.rsn_caps & IEEE80211_RSNCAP_MFPC) &&
+		    (ic->ic_bss->ni_rsncaps & IEEE80211_RSNCAP_MFPR)) {
+			status = IEEE80211_REASON_MFP_POLICY;	/* XXX */
+			goto end;
+		}
+		if ((ic->ic_bss->ni_rsncaps & IEEE80211_RSNCAP_MFPC) &&
+		    (rsn.rsn_caps & (IEEE80211_RSNCAP_MFPC |
+		     IEEE80211_RSNCAP_MFPR)) == IEEE80211_RSNCAP_MFPR) {
+			/* STA advertises an invalid setting */
+			status = IEEE80211_REASON_MFP_POLICY;	/* XXX */
+			goto end;
+		}
+		if ((rsn.rsn_caps & IEEE80211_RSNCAP_MFPC) &&
+		    rsn.rsn_groupmgmtcipher !=
+		    ic->ic_bss->ni_rsngroupmgmtcipher) {
+			/* XXX satus not reason?! */
+			status = IEEE80211_REASON_BAD_GROUP_MGMT_CIPHER;
+			goto end;
+		}
+
 		/*
 		 * Disallow new associations using TKIP if countermeasures
 		 * are active.
