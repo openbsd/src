@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2008/08/10 18:20:07 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.12 2008/08/12 17:23:21 miod Exp $ */
 /*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -190,6 +190,14 @@ clkstart(void)
 	if (vax_boardtype != VAX_BTYP_VXT)
 		mtpr(-10000, PR_NICR);		/* Load in count register */
 	mtpr(0x800000d1, PR_ICCS);	/* Start clock and enable interrupt */
+
+	if (vax_boardtype == VAX_BTYP_60) {
+		extern int ka60_ioslot;
+
+		/* enable M-Bus clock in IOCSR */
+		*(unsigned int *)(0x30800000 + (ka60_ioslot << 25)) |=
+		    0x20000000;	/* CLKIEN */
+	}
 
 	mtpr(20, PR_IPL);
 }

@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.6 2008/08/10 18:20:07 miod Exp $
+$OpenBSD: version,v 1.7 2008/08/12 17:23:21 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -34,4 +34,4 @@ is taken as the current.
 1.11:	Better VXT2000{,+} support.
 1.12:	Glass console support on VXT2000{,+}.
 1.13:	Enable the loadfile code added in revision 1.8.
-1.14:	Support for VaxStation 3[58][24]0 (serial port console only).
+1.14:	Support for VaxStation 3[58][24]0.

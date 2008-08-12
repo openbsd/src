@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.8 2008/08/10 18:20:07 miod Exp $ */
+/*	$OpenBSD: consio.c,v 1.9 2008/08/12 17:23:21 miod Exp $ */
 /*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -100,13 +100,15 @@ int	vxt_getchar(void);
 int	vxt_testchar(void);
 
 /*
- * I/O using the VS3[58][24]0 serial ports
+ * I/O using the KA60 ROM console routines
  */
 
-void	ff_consinit(void);
-void	ff_putchar(int c);
-int	ff_getchar(void);
-int	ff_testchar(void);
+unsigned char  *ka60_conspage;
+void	ka60_consinit(void);
+
+void	ka60_rom_putchar(int c);
+int	ka60_rom_getchar(void);
+int	ka60_rom_testchar(void);
 
 void	putchar(int);
 int	getchar(void);
@@ -200,10 +202,7 @@ consinit(void)
 		break;
 
 	case VAX_BTYP_60:
-		put_fp = ff_putchar;
-		get_fp = ff_getchar;
-		test_fp = ff_testchar;
-		ff_consinit();
+		ka60_consinit();
 		break;
 
 #ifdef notdef
@@ -268,7 +267,7 @@ pr_testchar(void)
 }
 
 /*
- * void ka630_rom_getchar (void)  ==> initialize KA630 ROM console I/O
+ * void ka630_consinit (void)  ==> initialize KA630 ROM console I/O
  */
 void ka630_consinit(void)
 {
@@ -373,44 +372,17 @@ vxt_testchar(void)
 	}
 }
 
+int ka60_ioslot = -1;
+
 /*
- * VaxStation 3[58][24]0 console routines.
- *
- * We do not know what the proper ROM entry points are, so these routines
- * drive the serial ports directly.
- *
- * Unfortunately the address of the serial ports depend on the position
- * of the L2003 I/O board in the system, which requires us to check all
- * slots for their ID.  Of course, empty slots will cause a machine check,
- * and the suggested method of looking at the BUSCTL register to know
- * which slots are populated is not usable, since we are way too late in
- * the boot process.
+ * void ka60_consinit (void)  ==> initialize KA60 ROM console I/O
  */
-
-struct ff_dzregs {
-	volatile unsigned short csr;
-	volatile unsigned short unused;
-	volatile unsigned short rbuf;
-	volatile unsigned short unused2;
-	volatile unsigned short tcr;
-	volatile unsigned short unused3;
-	volatile unsigned short tdr;
-};
-
-#define	DZ_CSR_TX_READY	0100000
-#define	DZ_CSR_RX_DONE	0000200
-
-int ff_ioslot = -1;
-static struct ff_dzregs *ff_dz;
-
-void
-ff_consinit()
+void ka60_consinit(void)
 {
 	extern int jbuf[10];
 	extern int mcheck_silent;
 	extern int setjmp(int *);
 
-	int line = 3;	/* printer port */
 	int mid, modaddr, modtype;
 
 	mcheck_silent = 1;
@@ -422,71 +394,22 @@ ff_consinit()
 		}
 		modtype = *(int *)modaddr;
 		if ((modtype & 0xff) == 0x04) {
-			ff_ioslot = mid;
+			ka60_ioslot = mid;
 			break;
 		}
 	}
 	mcheck_silent = 0;
 
-	if (ff_ioslot < 0) {
+	if (ka60_ioslot < 0) {
 		/*
 		 * This shouldn't happen. Try mid #5 (slot #4) as a
 		 * supposedly sane default.
 		 */
-		ff_ioslot = 5;
+		ka60_ioslot = 5;
 	}
 
-	ff_dz = (struct ff_dzregs *)
-	    (0x30000000 + (ff_ioslot << 25) + 0x00600000);
-	ff_dz->tcr = 1 << line;
-}
-
-void
-ff_putchar(int c)
-{
-	while ((ff_dz->csr & DZ_CSR_TX_READY) == 0)
-		;
-	ff_dz->tdr = c;
-	while ((ff_dz->csr & DZ_CSR_TX_READY) == 0)
-		;
-}
-
-int
-ff_getchar()
-{
-	int line = 3;	/* printer port */
-	unsigned short rbuf;
-
-	for(;;) {
-		while ((ff_dz->csr & DZ_CSR_RX_DONE) == 0)
-			;
-		rbuf = ff_dz->rbuf;
-		if (((rbuf >> 8) & 3) == line)
-			break;
-	}
-
-	rbuf &= 0x7f;
-	if (rbuf == 13)
-		rbuf = 10;
-
-	return (int)rbuf;
-}
-
-int
-ff_testchar()
-{
-	int line = 3;	/* printer port */
-	unsigned short rbuf;
-
-	if ((ff_dz->csr & DZ_CSR_RX_DONE) == 0)
-		return 0;
-	rbuf = ff_dz->rbuf;
-	if (((rbuf >> 8) & 3) != line)
-		return 0;
-
-	rbuf &= 0x7f;
-	if (rbuf == 13)
-		rbuf = 10;
-
-	return (int)rbuf;
+	ka60_conspage = (char *) *(unsigned int *)0x20140514;
+	put_fp = ka60_rom_putchar;
+	get_fp = ka60_rom_getchar;
+	test_fp = ka60_rom_testchar;
 }

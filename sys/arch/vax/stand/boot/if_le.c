@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.4 2008/08/10 18:20:07 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.5 2008/08/12 17:23:21 miod Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -150,15 +150,15 @@ leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		ea = (void *)0x20084200;
 		nireg = (void *)0x20084400;
 	} else if (vax_boardtype == VAX_BTYP_60) {
-		extern int ff_ioslot;
-		lebufaddr = 0x30a00000 + (ff_ioslot << 25);
-		ea = (int *)(0x30800000 + (ff_ioslot << 25));
+		extern int ka60_ioslot;
+		lebufaddr = 0x30a00000 + (ka60_ioslot << 25);
+		ea = (int *)(0x30800000 + (ka60_ioslot << 25));
 		for (i = 0; i < 6; i++) {
 			eaddr[i] = *(u_char *)((int)ea + 2);
 			ea++;
 		}
 		ea = NULL;
-		nireg = (void *)(0x30200000 + (ff_ioslot << 25));
+		nireg = (void *)(0x30200000 + (ka60_ioslot << 25));
 	} else {
 		*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 		ea = (void *)0x20090000; /* XXX Ethernet address */
