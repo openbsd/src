@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.44 2008/08/12 15:59:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.45 2008/08/12 16:05:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -257,9 +257,9 @@ ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
  * Derive Pairwise Transient Key (PTK) (see 8.5.1.2).
  */
 void
-ieee80211_derive_ptk(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
-    const u_int8_t *spa, const u_int8_t *anonce, const u_int8_t *snonce,
-    u_int8_t *ptk, size_t ptk_len)
+ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
+    const u_int8_t *aa, const u_int8_t *spa, const u_int8_t *anonce,
+    const u_int8_t *snonce, struct ieee80211_ptk *ptk)
 {
 	u_int8_t buf[2 * IEEE80211_ADDR_LEN + 2 * EAPOL_KEY_NONCE_LEN];
 	int ret;
@@ -274,8 +274,8 @@ ieee80211_derive_ptk(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
 	memcpy(&buf[12], ret ? anonce : snonce, EAPOL_KEY_NONCE_LEN);
 	memcpy(&buf[44], ret ? snonce : anonce, EAPOL_KEY_NONCE_LEN);
 
-	ieee80211_prf(pmk, pmk_len, "Pairwise key expansion", 23,
-	    buf, sizeof buf, ptk, ptk_len);
+	ieee80211_prf(pmk, IEEE80211_PMK_LEN, "Pairwise key expansion", 23,
+	    buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
 }
 
 /*

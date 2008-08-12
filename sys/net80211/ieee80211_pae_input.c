@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.5 2008/08/02 08:25:59 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.6 2008/08/12 16:05:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -204,9 +204,8 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		/* no PMK configured for this STA/PMKID */
 		return;
 	}
-	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ni->ni_macaddr,
-	    ic->ic_myaddr, key->nonce, ic->ic_nonce, (u_int8_t *)&tptk,
-	    sizeof(tptk));
+	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ni->ni_macaddr,
+	    ic->ic_myaddr, key->nonce, ic->ic_nonce, &tptk);
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -248,9 +247,8 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		/* no PMK configured for this STA */
 		return;	/* will timeout.. */
 	}
-	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ic->ic_myaddr,
-	    ni->ni_macaddr, ni->ni_nonce, key->nonce, (u_int8_t *)&tptk,
-	    sizeof(tptk));
+	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ic->ic_myaddr,
+	    ni->ni_macaddr, ni->ni_nonce, key->nonce, &tptk);
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0) {
@@ -322,9 +320,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		/* no PMK configured for this STA */
 		return;
 	}
-	ieee80211_derive_ptk(pmk, IEEE80211_PMK_LEN, ni->ni_macaddr,
-	    ic->ic_myaddr, key->nonce, ic->ic_nonce, (u_int8_t *)&tptk,
-	    sizeof(tptk));
+	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ni->ni_macaddr,
+	    ic->ic_myaddr, key->nonce, ic->ic_nonce, &tptk);
 
 	info = BE_READ_2(key->info);
 

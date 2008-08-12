@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.13 2008/04/21 19:37:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.14 2008/08/12 16:05:15 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -140,9 +140,9 @@ extern	void ieee80211_eapol_key_encrypt(struct ieee80211com *,
 extern	int ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
 		const u_int8_t *);
 
-extern	void ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
-	    size_t);
+extern	void ieee80211_derive_ptk(enum ieee80211_akm, const u_int8_t *,
+	    const u_int8_t *, const u_int8_t *, const u_int8_t *,
+	    const u_int8_t *, struct ieee80211_ptk *);
 extern	int ieee80211_cipher_keylen(enum ieee80211_cipher);
 extern	void ieee80211_map_ptk(const struct ieee80211_ptk *,
 	    enum ieee80211_cipher, u_int64_t, struct ieee80211_key *);
