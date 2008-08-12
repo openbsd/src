@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.29 2008/08/12 16:14:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.30 2008/08/12 17:53:13 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -114,9 +114,6 @@ ieee80211_proto_attach(struct ifnet *ifp)
 	/* initialize management frame handlers */
 	ic->ic_recv_mgmt = ieee80211_recv_mgmt;
 	ic->ic_send_mgmt = ieee80211_send_mgmt;
-
-	/* initialize EAPOL frame handler */
-	ic->ic_recv_eapol = ieee80211_recv_eapol;
 }
 
 void

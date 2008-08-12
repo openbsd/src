@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.7 2008/08/12 16:14:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.8 2008/08/12 17:53:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -66,55 +66,72 @@ void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
  * EAPOL-Key frames with an IEEE 802.11 or WPA descriptor type.
  */
 void
-ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
+ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ether_header *eh;
 	struct ieee80211_eapol_key *key;
 	u_int16_t info, desc;
+	int totlen;
 
 	ifp->if_ibytes += m0->m_pkthdr.len;
 
-	if (m0->m_len < sizeof(*eh) + sizeof(*key))
-		return;
 	eh = mtod(m0, struct ether_header *);
 	if (IEEE80211_IS_MULTICAST(eh->ether_dhost)) {
 		ifp->if_imcasts++;
-		return;
+		goto done;
 	}
 	m_adj(m0, sizeof(*eh));
+
+	if (m0->m_pkthdr.len < sizeof(*key))
+		goto done;
+	if (m0->m_len < sizeof(*key) &&
+	    (m0 = m_pullup(m0, sizeof(*key))) == NULL) {
+		ic->ic_stats.is_rx_nombuf++;
+		goto done;
+	}
+
+	ic->ic_stats.is_rx_eapol_key++;
 	key = mtod(m0, struct ieee80211_eapol_key *);
 
 	if (key->type != EAPOL_KEY)
-		return;
+		goto done;
 	ic->ic_stats.is_rx_eapol_key++;
 
 	if ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN &&
 	     key->desc != EAPOL_KEY_DESC_IEEE80211) ||
 	    (ni->ni_rsnprotos == IEEE80211_PROTO_WPA &&
 	     key->desc != EAPOL_KEY_DESC_WPA))
-		return;
+		goto done;
 
 	/* check packet body length */
 	if (m0->m_len < 4 + BE_READ_2(key->len))
-		return;
+		goto done;
 
 	/* check key data length */
-	if (m0->m_len < sizeof(*key) + BE_READ_2(key->paylen))
-		return;
+	totlen = sizeof(*key) + BE_READ_2(key->paylen);
+	if (m0->m_pkthdr.len < totlen || totlen > MCLBYTES)
+		goto done;
 
 	info = BE_READ_2(key->info);
 
 	/* discard EAPOL-Key frames with an unknown descriptor version */
 	desc = info & EAPOL_KEY_VERSION_MASK;
 	if (desc != EAPOL_KEY_DESC_V1 && desc != EAPOL_KEY_DESC_V2)
-		return;
+		goto done;
 
 	if ((ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
 	     ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP) &&
 	    desc != EAPOL_KEY_DESC_V2)
-		return;
+		goto done;
+
+	/* make sure the key data field is contiguous */
+	if (m0->m_len < totlen && (m0 = m_pullup2(m0, totlen)) == NULL) {
+		ic->ic_stats.is_rx_nombuf++;
+		goto done;
+	}
+	key = mtod(m0, struct ieee80211_eapol_key *);
 
 	/* determine message type (see 8.5.3.7) */
 	if (info & EAPOL_KEY_REQUEST) {
@@ -133,7 +150,7 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 	} else {
 		/* Group Key Handshake */
 		if (!(info & EAPOL_KEY_KEYMIC))
-			return;
+			goto done;
 		if (info & EAPOL_KEY_KEYACK) {
 			if (key->desc == EAPOL_KEY_DESC_WPA)
 				ieee80211_recv_wpa_group_msg1(ic, key, ni);
@@ -142,6 +159,9 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 		} else
 			ieee80211_recv_group_msg2(ic, key, ni);
 	}
+ done:
+	if (m0 != NULL)
+		m_freem(m0);
 }
 
 /*

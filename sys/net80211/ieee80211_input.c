@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.89 2008/08/02 08:35:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.90 2008/08/12 17:53:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -426,10 +426,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 			if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-			    eh->ether_type == htons(ETHERTYPE_PAE)) {
-				(*ic->ic_recv_eapol)(ic, m, ni);
-				m_freem(m);
-			} else
+			    eh->ether_type == htons(ETHERTYPE_PAE))
+				ieee80211_eapol_key_input(ic, m, ni);
+			else
 				ether_input_mbuf(ifp, m);
 		}
 		return;

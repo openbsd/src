@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.42 2008/07/28 19:42:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.43 2008/08/12 17:53:13 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -178,8 +178,6 @@ struct ieee80211com {
 				    struct ieee80211_rxinfo *, int);
 	int			(*ic_send_mgmt)(struct ieee80211com *,
 				    struct ieee80211_node *, int, int);
-	void			(*ic_recv_eapol)(struct ieee80211com *,
-				    struct mbuf *, struct ieee80211_node *);
 	int			(*ic_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 	void			(*ic_newassoc)(struct ieee80211com *,
