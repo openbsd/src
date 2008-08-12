@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.69 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.70 2008/08/12 19:56:59 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -193,6 +193,24 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+
+	/* check if protection is required for this mgmt frame */
+	if ((ic->ic_caps & IEEE80211_C_MFP) &&
+	    (type == IEEE80211_FC0_SUBTYPE_DISASSOC ||
+	     type == IEEE80211_FC0_SUBTYPE_DEAUTH ||
+	     type == IEEE80211_FC0_SUBTYPE_ACTION)) {
+		/*
+		 * Hack: we should not set the Protected bit in outgoing
+		 * group management frames, however it is used as an
+		 * indication to the drivers that they must encrypt the
+		 * frame.  Drivers should clear this bit from group
+		 * management frames (software crypto code will do it).
+		 * XXX could use an mbuf flag..
+		 */
+		if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+		    (ni->ni_flags & IEEE80211_NODE_TXMGMTPROT))
+			wh->i_fc[1] |= IEEE80211_FC1_PROTECTED;
+	}
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */

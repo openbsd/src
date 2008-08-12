@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.95 2008/08/12 19:50:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.96 2008/08/12 19:56:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -451,6 +451,30 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				ic->ic_stats.is_rx_mgtdiscard++;
 				goto out;
 			}
+		}
+
+		if (ni->ni_flags & IEEE80211_NODE_RXMGMTPROT) {
+			/* MMPDU protection is on for Rx */
+			if (subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
+			    subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
+			    subtype == IEEE80211_FC0_SUBTYPE_ACTION) {
+				if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+				    !(wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
+					/* unicast mgmt not encrypted */
+					goto out;
+				}
+				/* do software decryption */
+				m = ieee80211_decrypt(ic, m, ni);
+				if (m == NULL) {
+					/* XXX stats */
+					goto out;
+				}
+				wh = mtod(m, struct ieee80211_frame *);
+			}
+		} else if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
+			/* encrypted but MMPDU Rx protection off for TA */
+			goto out;
 		}
 
 		if (ifp->if_flags & IFF_DEBUG) {

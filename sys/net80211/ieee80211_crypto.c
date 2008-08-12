@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.51 2008/08/12 19:34:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.52 2008/08/12 19:56:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -188,11 +188,20 @@ struct ieee80211_key *
 ieee80211_get_txkey(struct ieee80211com *ic, const struct ieee80211_frame *wh,
     struct ieee80211_node *ni)
 {
-	if (!(ic->ic_flags & IEEE80211_F_RSNON) ||
-	    IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    ni->ni_rsncipher == IEEE80211_CIPHER_USEGROUP)
-		return &ic->ic_nw_keys[ic->ic_wep_txkey];
-	return &ni->ni_pairwise_key;
+	int kid;
+
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP)
+		return &ni->ni_pairwise_key;
+
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_MGT)
+		kid = ic->ic_def_txkey;
+	else
+		kid = ic->ic_igtk_kid;
+	return &ic->ic_nw_keys[kid];
 }
 
 struct mbuf *
@@ -210,6 +219,9 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	case IEEE80211_CIPHER_CCMP:
 		m0 = ieee80211_ccmp_encrypt(ic, m0, k);
 		break;
+	case IEEE80211_CIPHER_AES128_CMAC:
+		m0 = ieee80211_bip_encap(ic, m0, k);
+		break;
 	default:
 		/* should not get there */
 		m_freem(m0);
@@ -224,21 +236,50 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k;
+	u_int8_t *ivp, *mmie;
+	u_int16_t kid;
+	int hdrlen;
 
-	/* select the key for decryption */
+	/* find key for decryption */
 	wh = mtod(m0, struct ieee80211_frame *);
-	if (!(ic->ic_flags & IEEE80211_F_RSNON) ||
-	    IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    ni->ni_rsncipher == IEEE80211_CIPHER_USEGROUP) {
-		/* XXX check length! */
-		int hdrlen = ieee80211_get_hdrlen(wh);
-		const u_int8_t *ivp = (u_int8_t *)wh + hdrlen;
-		/* key identifier is always located at the same index */
-		int kid = ivp[IEEE80211_WEP_IVLEN] >> 6;
-		k = &ic->ic_nw_keys[kid];
-	} else
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP) {
 		k = &ni->ni_pairwise_key;
 
+	} else if (!IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_MGT) {
+		/* retrieve group data key id from IV field */
+		hdrlen = ieee80211_get_hdrlen(wh);
+		/* check that IV field is present */
+		if (m0->m_len < hdrlen + 4) {
+			m_freem(m0);
+			return NULL;
+		}
+		ivp = (u_int8_t *)wh + hdrlen;
+		kid = ivp[3] >> 6;
+		k = &ic->ic_nw_keys[kid];
+	} else {
+		/* retrieve integrity group key id from MMIE */
+		if (m0->m_len < sizeof(*wh) + IEEE80211_MMIE_LEN) {
+			m_freem(m0);
+			return NULL;
+		}
+		/* it is assumed management frames are contiguous */
+		mmie = (u_int8_t *)wh + m0->m_len - IEEE80211_MMIE_LEN;
+		/* check that MMIE is valid */
+		if (mmie[0] != IEEE80211_ELEMID_MMIE || mmie[1] != 16) {
+			m_freem(m0);
+			return NULL;
+		}
+		kid = LE_READ_2(&mmie[2]);
+		if (kid != 4 && kid != 5) {
+			m_freem(m0);
+			return NULL;
+		}
+		k = &ic->ic_nw_keys[kid];
+	}
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:
@@ -249,6 +290,9 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	case IEEE80211_CIPHER_CCMP:
 		m0 = ieee80211_ccmp_decrypt(ic, m0, k);
+		break;
+	case IEEE80211_CIPHER_AES128_CMAC:
+		m0 = ieee80211_bip_decap(ic, m0, k);
 		break;
 	default:
 		/* key not defined */
