@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.79 2008/08/11 05:37:01 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.80 2008/08/12 08:26:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1397,6 +1397,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct uvideo_softc *sc = vs->sc;
 	int len, i, frame_size;
 	uint8_t *frame;
+	usbd_status error;
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -1419,7 +1420,9 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			/* frame is empty */
 			continue;
 
-		(void)uvideo_vs_decode_stream_header(sc, frame, frame_size);
+		error = uvideo_vs_decode_stream_header(sc, frame, frame_size);
+		if (error == USBD_CANCELLED)
+			break;
 	}
 
 skip:	/* setup new transfer */
@@ -1449,6 +1452,11 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 	if (header_len == frame_size && !(header_flags & UVIDEO_STREAM_EOF)) {
 		/* stream header without payload and no EOF */
 		return (USBD_INVAL);
+	}
+	if (header_flags & UVIDEO_STREAM_ERR) {
+		/* stream error, skip xfer */
+		DPRINTF(1, "%s: %s: stream error!\n", DEVNAME(sc), __func__);
+		return (USBD_CANCELLED);
 	}
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
