@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.3 2008/07/26 12:42:57 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.4 2008/08/12 16:14:45 henning Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -144,7 +144,7 @@ ieee80211_wep_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 				goto nospace;
 			n = n->m_next;
 			n->m_len = MLEN;
-			if (left > MLEN - IEEE80211_WEP_CRCLEN) {
+			if (left >= MINCLSIZE - IEEE80211_WEP_CRCLEN) {
 				MCLGET(n, M_DONTWAIT);
 				if (n->m_flags & M_EXT)
 					n->m_len = n->m_ext.ext_size;
@@ -259,7 +259,7 @@ ieee80211_wep_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 				goto nospace;
 			n = n->m_next;
 			n->m_len = MLEN;
-			if (left > MLEN) {
+			if (left >= MINCLSIZE) {
 				MCLGET(n, M_DONTWAIT);
 				if (n->m_flags & M_EXT)
 					n->m_len = n->m_ext.ext_size;
