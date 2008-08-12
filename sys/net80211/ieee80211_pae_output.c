@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.10 2008/08/12 19:34:35 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.11 2008/08/12 19:51:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -321,7 +321,9 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 48);
+	    (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
+		2 + IEEE80211_WPAIE_MAXLEN :
+		2 + IEEE80211_RSNIE_MAXLEN);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
