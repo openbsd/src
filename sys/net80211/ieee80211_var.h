@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.45 2008/08/12 18:30:56 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.46 2008/08/12 19:59:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -235,10 +235,6 @@ struct ieee80211com {
 	int			ic_nnodes;	/* length of ic_nnodes */
 	int			ic_max_nnodes;	/* max length of ic_nnodes */
 	u_int16_t		ic_lintval;	/* listen interval */
-	u_int16_t		ic_holdover;	/* PM hold over duration */
-	u_int16_t		ic_txmin;	/* min tx retry count */
-	u_int16_t		ic_txmax;	/* max tx retry count */
-	u_int16_t		ic_txlifetime;	/* tx lifetime */
 	int16_t			ic_txpower;	/* tx power setting (dBm) */
 	u_int16_t		ic_bmisstimeout;/* beacon miss threshold (ms) */
 	u_int16_t		ic_nonerpsta;	/* # non-ERP stations */
