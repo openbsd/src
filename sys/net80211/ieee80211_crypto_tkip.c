@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.5 2008/08/12 16:14:45 henning Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.6 2008/08/12 16:21:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -323,7 +323,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	u_int16_t wepseed[8];	/* needs to be 16-bit aligned for Phase2 */
 	u_int8_t buf[IEEE80211_TKIP_MICLEN + IEEE80211_WEP_CRCLEN];
 	u_int8_t mic[IEEE80211_TKIP_MICLEN];
-	u_int64_t tsc;
+	u_int64_t tsc, *prsc;
 	u_int32_t crc, crc0;
 	u_int8_t *ivp, *mic0;
 	struct mbuf *n0, *m, *n;
@@ -343,6 +343,26 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		m_freem(m0);
 		return NULL;
 	}
+
+	/* retrieve last seen packet number for this frame TID */
+	if ((wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
+		u_int8_t tid;
+		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+		    IEEE80211_FC1_DIR_DSTODS) {
+			struct ieee80211_qosframe_addr4 *qwh4 =
+			    (struct ieee80211_qosframe_addr4 *)wh;
+			tid = qwh4->i_qos[0] & 0x0f;
+		} else {
+			struct ieee80211_qosframe *qwh =
+			    (struct ieee80211_qosframe *)wh;
+			tid = qwh->i_qos[0] & 0x0f;
+		}
+		prsc = &k->k_rsc[tid];
+	} else
+		prsc = &k->k_rsc[0];
+
 	/* extract the 48-bit TSC from the TKIP header */
 	tsc = (u_int64_t)ivp[2]       |
 	      (u_int64_t)ivp[0] <<  8 |
@@ -351,7 +371,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	      (u_int64_t)ivp[6] << 32 |
 	      (u_int64_t)ivp[7] << 40;
 	/* NB: the keys are refreshed, we'll never overflow the 48 bits */
-	if (tsc <= k->k_rsc[0]) {
+	if (tsc <= *prsc) {
 		/* replayed frame, discard */
 		m_freem(m0);
 		return NULL;
@@ -377,7 +397,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 
 	/* compute WEP seed */
-	if (!ctx->TTAK2ok || ((tsc >> 16) != (k->k_rsc[0] >> 16))) {
+	if (!ctx->TTAK2ok || ((tsc >> 16) != (*prsc >> 16))) {
 		Phase1(ctx->TTAK2, k->k_key, wh->i_addr2, tsc >> 16);
 		ctx->TTAK2ok = 1;
 	}
@@ -457,7 +477,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	 * Update last seen packet number (note that it must be done
 	 * after MIC is validated.)
 	 */
-	k->k_rsc[0] = tsc;
+	*prsc = tsc;
 
 	m_freem(m0);
 	return n0;

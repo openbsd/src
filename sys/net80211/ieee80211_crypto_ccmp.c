@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.3 2008/08/12 16:14:45 henning Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.4 2008/08/12 16:21:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -314,7 +314,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ieee80211_ccmp_ctx *ctx = k->k_priv;
 	struct ieee80211_frame *wh;
-	u_int64_t pn;
+	u_int64_t pn, *prsc;
 	const u_int8_t *ivp, *src;
 	u_int8_t *dst;
 	u_int8_t mic0[IEEE80211_CCMP_MICLEN];
@@ -338,6 +338,26 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		m_freem(m0);
 		return NULL;
 	}
+
+	/* retrieve last seen packet number for this frame type/TID */
+	if ((wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
+		u_int8_t tid;
+		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+		    IEEE80211_FC1_DIR_DSTODS) {
+			struct ieee80211_qosframe_addr4 *qwh4 =
+			    (struct ieee80211_qosframe_addr4 *)wh;
+			tid = qwh4->i_qos[0] & 0x0f;
+		} else {
+			struct ieee80211_qosframe *qwh =
+			    (struct ieee80211_qosframe *)wh;
+			tid = qwh->i_qos[0] & 0x0f;
+		}
+		prsc = &k->k_rsc[tid];
+	} else
+		prsc = &k->k_rsc[0];
+
 	/* extract the 48-bit PN from the CCMP header */
 	pn = (u_int64_t)ivp[0]       |
 	     (u_int64_t)ivp[1] <<  8 |
@@ -345,7 +365,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	     (u_int64_t)ivp[5] << 24 |
 	     (u_int64_t)ivp[6] << 32 |
 	     (u_int64_t)ivp[7] << 40;
-	if (pn <= k->k_rsc[0]) {
+	if (pn <= *prsc) {
 		/* replayed frame, discard */
 		m_freem(m0);
 		return NULL;
@@ -453,7 +473,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	 * Update last seen packet number (note that it must be done
 	 * after MIC is validated.)
 	 */
-	k->k_rsc[0] = pn;
+	*prsc = pn;
 
 	m_freem(m0);
 	return n0;
