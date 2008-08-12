@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.47 2008/08/12 18:01:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.48 2008/08/12 18:41:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -67,6 +67,7 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
 		    IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_AES128_CMAC;
 	}
 	ic->ic_set_key = ieee80211_set_key;
 	ic->ic_delete_key = ieee80211_delete_key;
@@ -103,6 +104,8 @@ ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 		return 16;
 	case IEEE80211_CIPHER_WEP104:
 		return 13;
+	case IEEE80211_CIPHER_AES128_CMAC:
+		return 16;
 	default:	/* unknown cipher */
 		return 0;
 	}

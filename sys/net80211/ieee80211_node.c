@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.40 2008/08/12 18:37:23 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.41 2008/08/12 18:41:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -313,6 +313,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		ni->ni_rsnakms = ic->ic_rsnakms;
 		ni->ni_rsnciphers = ic->ic_rsnciphers;
 		ni->ni_rsngroupcipher = ic->ic_rsngroupcipher;
+		ni->ni_rsngroupmgmtcipher = ic->ic_rsngroupmgmtcipher;
 		ni->ni_rsncaps = 0;
 
 		ic->ic_def_txkey = 1;
