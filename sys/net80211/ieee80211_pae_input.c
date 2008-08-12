@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.8 2008/08/12 17:53:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.9 2008/08/12 18:22:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -14,6 +14,12 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This code implements the 4-Way Handshake and Group Key Handshake protocols
+ * (both Supplicant and Authenticator Key Receive state machines) defined in
+ * IEEE Std 802.11-2007 section 8.5.
  */
 
 #include <sys/param.h>
@@ -165,8 +171,7 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 }
 
 /*
- * 4-Way Handshake Message 1 is sent by the authenticator to the supplicant
- * (see 8.5.3.1).
+ * Process Message 1 of the 4-Way Handshake (sent by Authenticator).
  */
 void
 ieee80211_recv_4way_msg1(struct ieee80211com *ic,
@@ -186,8 +191,6 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
 	}
-	/* save authenticator's nonce (ANonce) */
-	memcpy(ni->ni_nonce, key->nonce, EAPOL_KEY_NONCE_LEN);
 
 	/* parse key data field (may contain an encapsulated PMKID) */
 	frm = (const u_int8_t *)&key[1];
@@ -216,16 +219,20 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	if (pmkid != NULL && pmkid[1] < 4 + 16)
 		return;
 
-	/* generate a new supplicant's nonce (SNonce) */
-	arc4random_buf(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
-
-	/* retrieve PMK and derive TPTK */
-	if ((pmk = ieee80211_get_pmk(ic, ni, pmkid)) == NULL) {
+	/* retrieve PMK */
+	if ((pmk = ieee80211_get_pmk(ic, ni, &pmkid[6])) == NULL) {
 		/* no PMK configured for this STA/PMKID */
 		return;
 	}
+	/* save authenticator's nonce (ANonce) */
+	memcpy(ni->ni_nonce, key->nonce, EAPOL_KEY_NONCE_LEN);
+
+	/* generate supplicant's nonce (SNonce) */
+	arc4random_buf(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
+
+	/* derive TPTK */
 	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ni->ni_macaddr,
-	    ic->ic_myaddr, key->nonce, ic->ic_nonce, &tptk);
+	    ic->ic_myaddr, ni->ni_nonce, ic->ic_nonce, &tptk);
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -237,8 +244,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 }
 
 /*
- * 4-Way Handshake Message 2 is sent by the supplicant to the authenticator
- * (see 8.5.3.2).
+ * Process Message 2 of the 4-Way Handshake (sent by Supplicant).
  */
 void
 ieee80211_recv_4way_msg2(struct ieee80211com *ic,
@@ -306,8 +312,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 }
 
 /*
- * 4-Way Handshake Message 3 is sent by the authenticator to the supplicant
- * (see 8.5.3.3).
+ * Process Message 3 of the 4-Way Handshake (sent by Authenticator).
  */
 void
 ieee80211_recv_4way_msg3(struct ieee80211com *ic,
@@ -316,7 +321,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	struct ieee80211_ptk tptk;
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rsnie1, *rsnie2, *gtk;
+	const u_int8_t *rsnie1, *rsnie2, *gtk, *igtk;
 	const u_int8_t *pmk;
 	u_int16_t info, reason = 0;
 	int keylen;
@@ -371,7 +376,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	 * RSN IEs in message 3/4.  We only take into account the IE of the
 	 * version of the protocol we negotiated at association time.
 	 */
-	rsnie1 = rsnie2 = gtk = NULL;
+	rsnie1 = rsnie2 = gtk = igtk = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm)
 			break;
@@ -392,6 +397,10 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 				switch (frm[5]) {
 				case IEEE80211_KDE_GTK:
 					gtk = frm;
+					break;
+				case IEEE80211_KDE_IGTK:
+					if (ni->ni_flags & IEEE80211_NODE_MFP)
+						igtk = frm;
 					break;
 				}
 			} else if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
@@ -418,6 +427,12 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		DPRINTF(("GTK not encrypted\n"));
 		return;
 	}
+	/* GTK KDE must be included if IGTK KDE is present */
+	if (igtk != NULL && gtk == NULL) {
+		DPRINTF(("IGTK KDE found but GTK KDE missing\n"));
+		return;
+	}
+
 	/*
 	 * Check that first WPA/RSN IE is identical to the one received in
 	 * the beacon or probe response frame.
@@ -485,6 +500,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
+		ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 		ni->ni_flags |= IEEE80211_NODE_RXPROT;
 	}
 	if (gtk != NULL) {
@@ -519,6 +535,35 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			goto deauth;
 		}
 	}
+	if (igtk != NULL) {	/* implies MFP && gtk != NULL */
+		u_int16_t kid;
+
+		/* check that the IGTK KDE is valid */
+		if (igtk[1] != 4 + 24) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+		kid = LE_READ_2(&igtk[6]);
+		if (kid != 4 && kid != 5) {
+			DPRINTF(("unsupported IGTK id %u\n", kid));
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+		/* map IGTK to 802.11 key */
+		k = &ic->ic_nw_keys[kid];
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;	/* either 4 or 5 */
+		k->k_cipher = ni->ni_rsngroupmgmtcipher;
+		k->k_flags = IEEE80211_KEY_IGTK;
+		k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
+		k->k_len = 16;
+		memcpy(k->k_key, &igtk[14], k->k_len);
+		/* install the IGTK */
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+	}
 	if (info & EAPOL_KEY_INSTALL)
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 
@@ -540,8 +585,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 }
 
 /*
- * 4-Way Handshake Message 4 is sent by the supplicant to the authenticator
- * (see 8.5.3.4).
+ * Process Message 4 of the 4-Way Handshake (sent by Supplicant).
  */
 void
 ieee80211_recv_4way_msg4(struct ieee80211com *ic,
@@ -655,8 +699,7 @@ ieee80211_recv_4way_msg2or4(struct ieee80211com *ic,
 }
 
 /*
- * Group Key Handshake Message 1 is sent by the authenticator to the
- * supplicant (see 8.5.4.1).
+ * Process Message 1 of the RSN Group Key Handshake (sent by Authenticator).
  */
 void
 ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
@@ -664,9 +707,8 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 {
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *gtk;
-	u_int16_t info;
-	u_int8_t kid;
+	const u_int8_t *gtk, *igtk;
+	u_int16_t info, kid, reason = 0;
 	int keylen;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
@@ -696,7 +738,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
 
-	gtk = NULL;
+	gtk = igtk = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm)
 			break;
@@ -708,6 +750,10 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 				switch (frm[5]) {
 				case IEEE80211_KDE_GTK:
 					gtk = frm;
+					break;
+				case IEEE80211_KDE_IGTK:
+					if (ni->ni_flags & IEEE80211_NODE_MFP)
+						igtk = frm;
 					break;
 				}
 			}
@@ -739,10 +785,35 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	k->k_len = keylen;
 	/* install the GTK */
 	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
-		    IEEE80211_REASON_AUTH_LEAVE);
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-		return;
+		reason = IEEE80211_REASON_AUTH_LEAVE;
+		goto deauth;
+	}
+	if (igtk != NULL) {	/* implies MFP */
+		/* check that the IGTK KDE is valid */
+		if (igtk[1] != 4 + 24) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+		kid = LE_READ_2(&igtk[6]);
+		if (kid != 4 && kid != 5) {
+			DPRINTF(("unsupported IGTK id %u\n", kid));
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+		/* map IGTK to 802.11 key */
+		k = &ic->ic_nw_keys[kid];
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;	/* either 4 or 5 */
+		k->k_cipher = ni->ni_rsngroupmgmtcipher;
+		k->k_flags = IEEE80211_KEY_IGTK;
+		k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
+		k->k_len = 16;
+		memcpy(k->k_key, &igtk[14], k->k_len);
+		/* install the IGTK */
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
 	}
 	if (info & EAPOL_KEY_SECURE) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
@@ -761,9 +832,16 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	(void)ieee80211_send_group_msg2(ic, ni, k);
+	(void)ieee80211_send_group_msg2(ic, ni, NULL);
+	return;
+ deauth:
+	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH, reason);
+	ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 }
 
+/*
+ * Process Message 1 of the WPA Group Key Handshake (sent by Authenticator).
+ */
 void
 ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
@@ -847,8 +925,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 }
 
 /*
- * Group Key Handshake Message 2 is sent by the supplicant to the
- * authenticator (see 8.5.4.2).
+ * Process Message 2 of the Group Key Handshake (sent by Supplicant).
  */
 void
 ieee80211_recv_group_msg2(struct ieee80211com *ic,
@@ -917,7 +994,7 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 
 	if (!(info & EAPOL_KEY_KEYMIC) ||
 	    ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {
-		DPRINTF(("key MIC failed\n"));
+		DPRINTF(("key request MIC failed\n"));
 		ic->ic_stats.is_rx_eapol_badmic++;
 		return;
 	}

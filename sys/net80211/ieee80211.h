@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.39 2008/08/12 16:51:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.40 2008/08/12 18:22:41 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -581,7 +581,8 @@ enum {
 	IEEE80211_KDE_SMK	= 5,
 	IEEE80211_KDE_NONCE	= 6,
 	IEEE80211_KDE_LIFETIME	= 7,
-	IEEE80211_KDE_ERROR	= 8
+	IEEE80211_KDE_ERROR	= 8,
+	IEEE80211_KDE_IGTK	= 9	/* 11w */
 };
 
 /*

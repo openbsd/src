@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.5 2008/08/02 08:33:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.6 2008/08/12 18:22:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -14,6 +14,12 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This code implements the 4-Way Handshake and Group Key Handshake protocols
+ * (both Supplicant and Authenticator Key Transmit state machines) defined in
+ * IEEE Std 802.11-2007 section 8.5.
  */
 
 #include <sys/param.h>
@@ -45,9 +51,11 @@
 
 int		ieee80211_send_eapol_key(struct ieee80211com *, struct mbuf *,
 		    struct ieee80211_node *, const struct ieee80211_ptk *);
-u_int8_t 	*ieee80211_add_gtk_kde(u_int8_t *, struct ieee80211_node *,
+u_int8_t	*ieee80211_add_gtk_kde(u_int8_t *, struct ieee80211_node *,
 		    const struct ieee80211_key *);
 u_int8_t	*ieee80211_add_pmkid_kde(u_int8_t *, const u_int8_t *);
+u_int8_t	*ieee80211_add_igtk_kde(u_int8_t *,
+		    const struct ieee80211_key *);
 struct mbuf 	*ieee80211_get_eapol_key(int, int, u_int);
 
 /*
@@ -199,6 +207,24 @@ ieee80211_add_pmkid_kde(u_int8_t *frm, const u_int8_t *pmkid)
 	return frm + IEEE80211_PMKID_LEN;
 }
 
+/*
+ * Add an IGTK KDE to an EAPOL-Key frame (see Figure 8-32a).
+ */
+u_int8_t *
+ieee80211_add_igtk_kde(u_int8_t *frm, const struct ieee80211_key *k)
+{
+	KASSERT(k->k_flags & IEEE80211_KEY_IGTK);
+
+	*frm++ = IEEE80211_ELEMID_VENDOR;
+	*frm++ = 4 + 24;
+	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+	*frm++ = IEEE80211_KDE_IGTK;
+	LE_WRITE_2(frm, k->k_id); frm += 2;
+	LE_WRITE_6(frm, k->k_tsc); frm += 6;	/* IPN */
+	memcpy(frm, k->k_key, 16);
+	return frm + 16;
+}
+
 struct mbuf *
 ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 {
@@ -223,8 +249,7 @@ ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 }
 
 /*
- * 4-Way Handshake Message 1 is sent by the authenticator to the supplicant
- * (see 8.5.3.1).
+ * Send 4-Way Handshake Message 1 to the supplicant.
  */
 int
 ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
@@ -279,8 +304,7 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*
- * 4-Way Handshake Message 2 is sent by the supplicant to the authenticator
- * (see 8.5.3.2).
+ * Send 4-Way Handshake Message 2 to the authenticator.
  */
 int
 ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -310,7 +334,7 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = (u_int8_t *)&key[1];
 	/* add the WPA/RSN IE used in the (Re)Association Request */
 	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
-		u_int16_t keylen;
+		int keylen;
 		frm = ieee80211_add_wpa(frm, ic, ni);
 		/* WPA sets the key length field here */
 		keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
@@ -329,8 +353,7 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 /*
- * 4-Way Handshake Message 3 is sent by the authenticator to the supplicant
- * (see 8.5.3.3).
+ * Send 4-Way Handshake Message 3 to the supplicant.
  */
 int
 ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
@@ -355,6 +378,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + 48 +
 	    ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ?
 		2 + 6 + k->k_len : 0) +
+	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
@@ -378,9 +402,15 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* add the WPA/RSN IE included in Beacon/Probe Response */
 	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN) {
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
-		/* encapsulate the GTK and ask for encryption */
+		/* encapsulate the GTK */
 		frm = ieee80211_add_gtk_kde(frm, ni, k);
 		LE_WRITE_6(key->rsc, k->k_tsc);
+		/* encapsulate the IGTK if MFP was negotiated */
+		if (ni->ni_flags & IEEE80211_NODE_MFP) {
+			frm = ieee80211_add_igtk_kde(frm,
+			    &ic->ic_nw_keys[ic->ic_igtk_kid]);
+		}
+		/* ask that the EAPOL-Key frame be encrypted */
 		info |= EAPOL_KEY_ENCRYPTED | EAPOL_KEY_SECURE;
 	} else	/* WPA */
 		frm = ieee80211_add_wpa(frm, ic, ic->ic_bss);
@@ -399,8 +429,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*
- * 4-Way Handshake Message 4 is sent by the supplicant to the authenticator
- * (see 8.5.3.4).
+ * Send 4-Way Handshake Message 4 to the authenticator.
  */
 int
 ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
@@ -421,7 +450,7 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
 	if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA) {
-		u_int16_t keylen;
+		int keylen;
 		/* WPA sets the key length field here */
 		keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
 		BE_WRITE_2(key->keylen, keylen);
@@ -443,8 +472,7 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*
- * Group Key Handshake Message 1 is sent by the authenticator to the
- * supplicant (see 8.5.4.1).
+ * Send Group Key Handshake Message 1 to the supplicant.
  */
 int
 ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
@@ -467,6 +495,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
 	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
 		k->k_len : 2 + 6 + k->k_len) +
+	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
@@ -488,9 +517,13 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 		info |= (k->k_id & 0x3) << EAPOL_KEY_WPA_KID_SHIFT;
 		if (ni->ni_rsncipher == IEEE80211_CIPHER_USEGROUP)
 			info |= EAPOL_KEY_WPA_TX;
-	} else	/* RSN */
+	} else {	/* RSN */
 		frm = ieee80211_add_gtk_kde(frm, ni, k);
-
+		if (ni->ni_flags & IEEE80211_NODE_MFP) {
+			frm = ieee80211_add_igtk_kde(frm,
+			    &ic->ic_nw_keys[ic->ic_igtk_kid]);
+		}
+	}
 	/* RSC = last transmit sequence number for the GTK */
 	LE_WRITE_6(key->rsc, k->k_tsc);
 
@@ -508,8 +541,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*
- * Group Key Handshake Message 2 is sent by the supplicant to the
- * authenticator (see 8.5.4.2).
+ * Send Group Key Handshake Message 2 to the authenticator.
  */
 int
 ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
