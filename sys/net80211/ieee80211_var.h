@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.44 2008/08/12 18:01:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.45 2008/08/12 18:30:56 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -155,6 +155,7 @@ struct ieee80211_rsnparams {
 	u_int16_t		rsn_nciphers;
 	u_int32_t		rsn_ciphers;
 	enum ieee80211_cipher	rsn_groupcipher;
+	enum ieee80211_cipher	rsn_groupmgmtcipher;
 	u_int16_t		rsn_caps;
 };
 
@@ -310,6 +311,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_RSNON	0x00200000	/* CONF: RSN enabled */
 #define	IEEE80211_F_PSK		0x00400000	/* CONF: pre-shared key set */
 #define IEEE80211_F_COUNTERM	0x00800000	/* STATUS: countermeasures */
+#define IEEE80211_F_MFPR	0x01000000	/* CONF: MFP requested */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_caps */
@@ -326,6 +328,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_C_SCANALL	0x00000400	/* CAPABILITY: scan all chan */
 #define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS avail */
 #define IEEE80211_C_RSN		0x00001000	/* CAPABILITY: RSN avail */
+#define IEEE80211_C_MFP		0x00002000	/* CAPABILITY: MFP avail */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
