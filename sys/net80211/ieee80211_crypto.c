@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.46 2008/08/12 16:14:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.47 2008/08/12 18:01:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -79,12 +79,33 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	int i;
 
 	/* clear all keys from memory */
-	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		if (ic->ic_nw_keys[i].k_cipher != IEEE80211_CIPHER_NONE)
-			(*ic->ic_delete_key)(ic, NULL, &ic->ic_nw_keys[i]);
-		memset(&ic->ic_nw_keys[i], 0, sizeof(struct ieee80211_key));
+	for (i = 0; i < IEEE80211_GROUP_NKID; i++) {
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
+		if (k->k_cipher != IEEE80211_CIPHER_NONE)
+			(*ic->ic_delete_key)(ic, NULL, k);
+		memset(k, 0, sizeof(*k));
 	}
 	memset(ic->ic_psk, 0, IEEE80211_PMK_LEN);
+}
+
+/*
+ * Return the length in bytes of a cipher suite key (see Table 60).
+ */
+int
+ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
+{
+	switch (cipher) {
+	case IEEE80211_CIPHER_WEP40:
+		return 5;
+	case IEEE80211_CIPHER_TKIP:
+		return 32;
+	case IEEE80211_CIPHER_CCMP:
+		return 16;
+	case IEEE80211_CIPHER_WEP104:
+		return 13;
+	default:	/* unknown cipher */
+		return 0;
+	}
 }
 
 int
@@ -448,24 +469,4 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 	}
 
 	return 1;	/* unknown Key Descriptor Version */
-}
-
-/*
- * Return the length in bytes of a cipher suite key (see Table 60).
- */
-int
-ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
-{
-	switch (cipher) {
-	case IEEE80211_CIPHER_WEP40:
-		return 5;
-	case IEEE80211_CIPHER_TKIP:
-		return 32;
-	case IEEE80211_CIPHER_CCMP:
-		return 16;
-	case IEEE80211_CIPHER_WEP104:
-		return 13;
-	default:	/* unknown cipher */
-		return 0;
-	}
 }

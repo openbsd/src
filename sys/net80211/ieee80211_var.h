@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.43 2008/08/12 17:53:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.44 2008/08/12 18:01:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -170,6 +170,8 @@ struct ieee80211_rxinfo {
 #define	IEEE80211_SCAN_REQUEST	0x2
 #define	IEEE80211_SCAN_RESUME	0x4
 
+#define IEEE80211_GROUP_NKID	6
+
 struct ieee80211com {
 	struct arpcom		ic_ac;
 	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
@@ -248,9 +250,10 @@ struct ieee80211com {
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */
 	u_int8_t		ic_des_bssid[IEEE80211_ADDR_LEN];
-	struct ieee80211_key	ic_nw_keys[IEEE80211_WEP_NKID];
-	int			ic_def_txkey;	/* default tx key index */
+	struct ieee80211_key	ic_nw_keys[IEEE80211_GROUP_NKID];
+	int			ic_def_txkey;	/* group data key index */
 #define ic_wep_txkey	ic_def_txkey
+	int			ic_igtk_kid;	/* IGTK key index */
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	struct ieee80211_stats	ic_stats;	/* statistics */
 	struct timeval		ic_last_merge_print;	/* for rate-limiting
@@ -269,6 +272,7 @@ struct ieee80211com {
 	u_int			ic_rsnakms;
 	u_int			ic_rsnciphers;
 	enum ieee80211_cipher	ic_rsngroupcipher;
+	enum ieee80211_cipher	ic_rsngroupmgmtcipher;
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
