@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.92 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.93 2008/08/12 19:42:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -505,6 +505,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		switch (subtype) {
 		case IEEE80211_FC0_SUBTYPE_PS_POLL:
 			ieee80211_recv_pspoll(ic, m, ni);
+			break;
+		case IEEE80211_FC0_SUBTYPE_BAR:
+			/* NYI */
+			break;
+		case IEEE80211_FC0_SUBTYPE_BA:
+			/* NYI */
 			break;
 		}
 		goto out;
@@ -1826,13 +1832,58 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 
 /*-
  * Action frame format:
+ * [1] Category
  * [1] Action
  */
 void
 ieee80211_recv_action(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
-	/* TBD */
+	const struct ieee80211_frame *wh;
+	const u_int8_t *frm;
+
+	if (m0->m_len < sizeof(*wh) + 2) {
+		DPRINTF(("frame too short\n"));
+		return;
+	}
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (const u_int8_t *)&wh[1];
+
+	switch (frm[0]) {
+	case IEEE80211_CATEG_BA:
+		switch (frm[1]) {
+		case IEEE80211_ACTION_ADDBA_REQ:
+			/* NYI */
+			break;
+		case IEEE80211_ACTION_ADDBA_RESP:
+			/* NYI */
+			break;
+		case IEEE80211_ACTION_DELBA:
+			/* NYI */
+			break;
+		}
+		break;
+	case IEEE80211_CATEG_HT:
+		switch (frm[1]) {
+		case IEEE80211_ACTION_NOTIFYCW:
+			/* NYI */
+			break;
+		}
+		break;
+	case IEEE80211_CATEG_SALT:
+		switch (frm[1]) {
+		case IEEE80211_ACTION_SALT_REQ:
+			/* NYI */
+			break;
+		case IEEE80211_ACTION_SALT_RESP:
+			/* NYI */
+			break;
+		}
+		break;
+	default:
+		DPRINTF(("action frame category %d not handled\n", categ));
+		break;
+	}
 }
 
 void
