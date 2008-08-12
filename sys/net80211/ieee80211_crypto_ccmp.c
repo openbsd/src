@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.5 2008/08/12 16:45:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.6 2008/08/12 17:54:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -359,8 +359,11 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 			tid = qwh->i_qos[0] & 0x0f;
 		}
 		prsc = &k->k_rsc[tid];
-	} else
+	} else if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_MGT) {
 		prsc = &k->k_rsc[0];
+	} else	/* 11w: management frames have their own counters */
+		prsc = &k->k_mgmt_rsc;
 
 	/* extract the 48-bit PN from the CCMP header */
 	pn = (u_int64_t)ivp[0]       |
