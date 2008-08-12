@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.6 2008/08/12 18:22:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.7 2008/08/12 18:25:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -379,7 +379,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ?
 		2 + 6 + k->k_len : 0) +
 	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0) +
-	    8);
+	    15);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
@@ -496,7 +496,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
 		k->k_len : 2 + 6 + k->k_len) +
 	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0) +
-	    8);
+	    15);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
