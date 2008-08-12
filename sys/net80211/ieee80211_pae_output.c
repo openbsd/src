@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.7 2008/08/12 18:25:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.8 2008/08/12 19:05:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -375,11 +375,10 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 48 +
-	    ((ni->ni_rsnprotos == IEEE80211_PROTO_RSN) ?
-		2 + 6 + k->k_len : 0) +
-	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0) +
-	    15);
+	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
+		2 + IEEE80211_WPAIE_MAXLEN :
+		2 + IEEE80211_RSNIE_MAXLEN + 2 + 6 + k->k_len + 15) +
+	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0));
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);

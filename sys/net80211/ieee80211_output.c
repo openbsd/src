@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.66 2008/08/02 08:35:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.67 2008/08/12 19:05:39 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1028,10 +1028,12 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
+	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
+		2 + IEEE80211_RSNIE_MAXLEN : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
+	      (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_WPA)) ?
+		2 + IEEE80211_WPAIE_MAXLEN : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1143,10 +1145,12 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
+		2 + IEEE80211_RSNIE_MAXLEN : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 1 : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ?
+		2 + IEEE80211_WPAIE_MAXLEN : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1436,10 +1440,12 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	     (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ? 2 + 44 : 0) +
+	     (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
+		2 + IEEE80211_RSNIE_MAXLEN : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ? 2 + 48 : 0));
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ?
+		2 + IEEE80211_WPAIE_MAXLEN : 0));
 	if (m == NULL)
 		return NULL;
 

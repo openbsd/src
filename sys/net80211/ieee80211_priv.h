@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_priv.h,v 1.2 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_priv.h,v 1.3 2008/08/12 19:05:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -37,6 +37,27 @@ extern int ieee80211_debug;
 	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
 #define IEEE80211_AID_ISSET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
+
+#define IEEE80211_RSNIE_MAXLEN						\
+	(2 +		/* Version */					\
+	 4 +		/* Group Data Cipher Suite */			\
+	 2 +		/* Pairwise Cipher Suite Count */		\
+	 4 * 2 +	/* Pairwise Cipher Suite List (max 2) */	\
+	 2 +		/* AKM Suite List Count */			\
+	 4 * 4 +	/* AKM Suite List (max 4) */			\
+	 2 +		/* RSN Capabilities */				\
+	 2 +		/* PMKID Count */				\
+	 16 * 1 +	/* PMKID List (max 1) */			\
+	 4)		/* 11w: Group Integrity Cipher Suite */
+
+#define IEEE80211_WPAIE_MAXLEN						\
+	(4 +		/* MICROSOFT_OUI */				\
+	 2 +		/* Version */					\
+	 4 +		/* Group Cipher Suite */			\
+	 2 +		/* Pairwise Cipher Suite Count */		\
+	 4 * 2 +	/* Pairwise Cipher Suite List (max 2) */	\
+	 2 +		/* AKM Suite List Count */			\
+	 4 * 2)		/* AKM Suite List (max 2) */
 
 /* unaligned big endian access */
 #define BE_READ_2(p)				\
