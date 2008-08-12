@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.96 2008/08/12 19:56:59 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.97 2008/08/12 20:07:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1605,6 +1605,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_rsnakms = rsn.rsn_akms;
 		ni->ni_rsnciphers = rsn.rsn_ciphers;
 		ni->ni_rsngroupcipher = ic->ic_bss->ni_rsngroupcipher;
+		ni->ni_rsngroupmgmtcipher = ic->ic_bss->ni_rsngroupmgmtcipher;
 		ni->ni_rsncaps = rsn.rsn_caps;
 	} else
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
@@ -1958,6 +1959,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+/*
+ * Process an incoming PS-Poll control frame (see 11.2).
+ */
 void
 ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni)
