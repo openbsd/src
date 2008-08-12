@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.6 2008/08/12 16:21:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.7 2008/08/12 16:45:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -14,6 +14,11 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This code implements the Temporal Key Integrity Protocol (TKIP) defined
+ * in IEEE Std 802.11-2007 section 8.3.2.
  */
 
 #include <sys/param.h>
@@ -155,7 +160,7 @@ ieee80211_tkip_mic(struct mbuf *m0, int off, const u_int8_t *key,
 			    (const struct ieee80211_qosframe *)wh;
 			wht.i_pri = qwh->i_qos[0] & 0xf;
 		}
-	}  else
+	} else
 		wht.i_pri = 0;
 	wht.i_pad[0] = wht.i_pad[1] = wht.i_pad[2] = 0;
 
@@ -370,9 +375,9 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	      (u_int64_t)ivp[5] << 24 |
 	      (u_int64_t)ivp[6] << 32 |
 	      (u_int64_t)ivp[7] << 40;
-	/* NB: the keys are refreshed, we'll never overflow the 48 bits */
 	if (tsc <= *prsc) {
 		/* replayed frame, discard */
+		ic->ic_stats.is_tkip_replays++;
 		m_freem(m0);
 		return NULL;
 	}
@@ -456,7 +461,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	/* decrypt ICV and compare it with calculated ICV */
 	crc0 = *(u_int32_t *)(buf + IEEE80211_TKIP_MICLEN);
 	if (crc != letoh32(crc0)) {
-		ic->ic_stats.is_rx_decryptcrc++;
+		ic->ic_stats.is_tkip_icv_errs++;
 		m_freem(m0);
 		m_freem(n0);
 		return NULL;
@@ -473,10 +478,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		return NULL;
 	}
 
-	/*
-	 * Update last seen packet number (note that it must be done
-	 * after MIC is validated.)
-	 */
+	/* update last seen packet number (MIC is validated) */
 	*prsc = tsc;
 
 	m_freem(m0);

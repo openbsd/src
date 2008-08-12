@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.4 2008/08/12 16:14:45 henning Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.5 2008/08/12 16:45:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -16,13 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This code implements Wired Equivalent Privacy (WEP) defined in
+ * IEEE Std 802.11-2007 section 8.2.1.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/endian.h>
 
 #include <net/if.h>

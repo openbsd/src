@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.4 2008/08/12 16:21:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.5 2008/08/12 16:45:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -16,13 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This code implements the CTR with CBC-MAC protocol (CCMP) defined in
+ * IEEE Std 802.11-2007 section 8.3.3.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/endian.h>
 
 #include <net/if.h>
@@ -84,7 +88,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	u_int8_t tid = 0;
 	int la, i;
 
-	/* construct AAD (additional authentication data) */
+	/* construct AAD (additional authenticated data) */
 	aad = &auth[2];	/* skip l(a), will be filled later */
 	*aad = wh->i_fc[0];
 	/* 11w: conditionnally mask subtype field */
@@ -367,6 +371,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	     (u_int64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
 		/* replayed frame, discard */
+		ic->ic_stats.is_ccmp_replays++;
 		m_freem(m0);
 		return NULL;
 	}
@@ -464,15 +469,13 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	/* check that it matches the MIC in received frame */
 	m_copydata(m, moff, IEEE80211_CCMP_MICLEN, mic0);
 	if (memcmp(mic0, b, IEEE80211_CCMP_MICLEN) != 0) {
+		ic->ic_stats.is_ccmp_dec_errs++;
 		m_freem(m0);
 		m_freem(n0);
 		return NULL;
 	}
 
-	/*
-	 * Update last seen packet number (note that it must be done
-	 * after MIC is validated.)
-	 */
+	/* update last seen packet number (MIC is validated) */
 	*prsc = pn;
 
 	m_freem(m0);
