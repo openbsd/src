@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.48 2008/08/12 18:41:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.49 2008/08/12 18:48:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,9 +49,12 @@
 #include <crypto/sha2.h>
 #include <crypto/hmac.h>
 #include <crypto/rijndael.h>
+#include <crypto/cmac.h>
 #include <crypto/key_wrap.h>
 
 void	ieee80211_prf(const u_int8_t *, size_t, const u_int8_t *, size_t,
+	    const u_int8_t *, size_t, u_int8_t *, size_t);
+void	ieee80211_kdf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
@@ -128,6 +131,9 @@ ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_CIPHER_CCMP:
 		error = ieee80211_ccmp_set_key(ic, k);
 		break;
+	case IEEE80211_CIPHER_AES128_CMAC:
+		error = ieee80211_bip_set_key(ic, k);
+		break;
 	default:
 		/* should not get there */
 		error = EINVAL;
@@ -150,11 +156,14 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_CIPHER_CCMP:
 		ieee80211_ccmp_delete_key(ic, k);
 		break;
+	case IEEE80211_CIPHER_AES128_CMAC:
+		ieee80211_bip_delete_key(ic, k);
+		break;
 	default:
 		/* should not get there */
 		break;
 	}
-	memset(k, 0, sizeof(*k));	/* XXX */
+	memset(k, 0, sizeof(*k));
 }
 
 /*
@@ -278,6 +287,38 @@ ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 }
 
 /*
+ * SHA256-based Key Derivation Function (see 8.5.1.5.2).
+ */
+void
+ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
+    size_t label_len, const u_int8_t *context, size_t context_len,
+    u_int8_t *output, size_t len)
+{
+	HMAC_SHA256_CTX ctx;
+	u_int8_t digest[SHA256_DIGEST_LENGTH];
+	u_int16_t i, iter, length;
+
+	length = htole16(len * NBBY);
+	for (i = 1; len != 0; i++) {
+		HMAC_SHA256_Init(&ctx, key, key_len);
+		iter = htole16(i);
+		HMAC_SHA256_Update(&ctx, (u_int8_t *)&iter, sizeof iter);
+		HMAC_SHA256_Update(&ctx, label, label_len);
+		HMAC_SHA256_Update(&ctx, context, context_len);
+		HMAC_SHA256_Update(&ctx, (u_int8_t *)&length, sizeof length);
+		if (len < SHA256_DIGEST_LENGTH) {
+			HMAC_SHA256_Final(digest, &ctx);
+			/* truncate HMAC-SHA-256 to len bytes */
+			memcpy(output, digest, len);
+			break;
+		}
+		HMAC_SHA256_Final(output, &ctx);
+		output += SHA256_DIGEST_LENGTH;
+		len -= SHA256_DIGEST_LENGTH;
+	}
+}
+
+/*
  * Derive Pairwise Transient Key (PTK) (see 8.5.1.2).
  */
 void
@@ -324,12 +365,13 @@ ieee80211_derive_pmkid(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
 typedef union _ANY_CTX {
 	HMAC_MD5_CTX	md5;
 	HMAC_SHA1_CTX	sha1;
+	AES_CMAC_CTX	cmac;
 } ANY_CTX;
 
 /*
  * Compute the Key MIC field of an EAPOL-Key frame using the specified Key
- * Confirmation Key (KCK).  The hash function can be either HMAC-MD5 or
- * HMAC-SHA1 depending on the EAPOL-Key Key Descriptor Version.
+ * Confirmation Key (KCK).  The hash function can be HMAC-MD5, HMAC-SHA1
+ * or AES-128-CMAC depending on the EAPOL-Key Key Descriptor Version.
  */
 void
 ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
@@ -352,6 +394,12 @@ ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
 		HMAC_SHA1_Final(digest, &ctx.sha1);
 		/* truncate HMAC-SHA1 to its 128 MSBs */
 		memcpy(key->mic, digest, EAPOL_KEY_MIC_LEN);
+		break;
+	case EAPOL_KEY_DESC_V3:
+		AES_CMAC_Init(&ctx.cmac);
+		AES_CMAC_SetKey(&ctx.cmac, kck);
+		AES_CMAC_Update(&ctx.cmac, (u_int8_t *)key, len);
+		AES_CMAC_Final(key->mic, &ctx.cmac);
 		break;
 	}
 }
@@ -412,6 +460,7 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		rc4_crypt(&ctx.rc4, data, data, len);
 		break;
 	case EAPOL_KEY_DESC_V2:
+	case EAPOL_KEY_DESC_V3:
 		if (len < 16 || (len & 7) != 0) {
 			/* insert padding */
 			n = (len < 16) ? 16 - len : 8 - (len & 7);
@@ -463,6 +512,7 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 		rc4_crypt(&ctx.rc4, data, data, len);
 		return 0;
 	case EAPOL_KEY_DESC_V2:
+	case EAPOL_KEY_DESC_V3:
 		/* Key Data Length must be a multiple of 8 */
 		if (len < 16 + 8 || (len & 7) != 0)
 			return 1;

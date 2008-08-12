@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.41 2008/08/12 18:30:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.42 2008/08/12 18:48:35 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -548,6 +548,7 @@ struct ieee80211_eapol_key {
 #define EAPOL_KEY_VERSION_MASK	0x7
 #define EAPOL_KEY_DESC_V1	1
 #define EAPOL_KEY_DESC_V2	2
+#define EAPOL_KEY_DESC_V3	3		/* 11r */
 #define EAPOL_KEY_PAIRWISE	(1 <<  3)
 #define EAPOL_KEY_INSTALL	(1 <<  6)	/* I */
 #define EAPOL_KEY_KEYACK	(1 <<  7)	/* A */
