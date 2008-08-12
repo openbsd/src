@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.10 2004/01/04 18:30:05 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.11 2008/08/12 09:44:26 otto Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.10 2004/01/04 18:30:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.11 2008/08/12 09:44:26 otto Exp $";
 #endif
 
 #include <err.h>
@@ -141,8 +141,22 @@ elf_loadkernel(char *file)
 	if (read(fd, elf_total, (size_t)elf_size) != elf_size)
 		errx(1, "can't read elf kernel");
 
+	if (elf_ex.e_phoff > (size_t)elf_size)
+		errx(1, "incorrect ELF header or truncated file");
+	if (elf_ex.e_shoff > (size_t)elf_size)
+		errx(1, "incorrect ELF header or truncated file");
+
 	elf_phdr = (Elf_Phdr *)&elf_total[elf_ex.e_phoff];
 	elf_shdr = (Elf_Shdr *)&elf_total[elf_ex.e_shoff];
+
+	if ((char *)&elf_shdr[elf_ex.e_shstrndx] +
+	    sizeof(elf_shdr[elf_ex.e_shstrndx]) >= elf_total + (size_t)elf_size)
+		errx(1, "incorrect ELF header or truncated file");
+
+	if ((char *)&elf_shdr[elf_ex.e_shstrndx].sh_offset +
+	    sizeof(elf_shdr[elf_ex.e_shstrndx].sh_offset) >=
+	    elf_total + (size_t)elf_size)
+		errx(1, "incorrect ELF header or truncated file");
 
 	elf_shstrtab = &elf_total[elf_shdr[elf_ex.e_shstrndx].sh_offset];
 
