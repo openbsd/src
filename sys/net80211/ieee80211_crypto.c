@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.50 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.51 2008/08/12 19:34:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -175,7 +175,8 @@ const u_int8_t *
 ieee80211_get_pmk(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *pmkid)
 {
-	if (ni->ni_rsnakms == IEEE80211_AKM_PSK)
+	if (ni->ni_rsnakms == IEEE80211_AKM_PSK ||
+	    ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK)
 		return ic->ic_psk;	/* the PMK is the PSK */
 
 	/* XXX find the PMK in the PMKSA cache using the PMKID */
