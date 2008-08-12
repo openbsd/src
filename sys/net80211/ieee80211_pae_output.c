@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.9 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.10 2008/08/12 19:34:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 		}
 		ieee80211_eapol_key_encrypt(ic, key, ptk->kek);
 
-		if ((info & EAPOL_KEY_VERSION_MASK) == EAPOL_KEY_DESC_V2) {
+		if ((info & EAPOL_KEY_VERSION_MASK) != EAPOL_KEY_DESC_V1) {
 			/* AES Key Wrap adds 8 bytes + padding */
 			m->m_pkthdr.len = m->m_len =
 			    sizeof(*eh) + 4 + BE_READ_2(key->len);
