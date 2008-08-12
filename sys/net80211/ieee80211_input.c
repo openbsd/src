@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.93 2008/08/12 19:42:37 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.94 2008/08/12 19:45:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -969,7 +969,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
-			return;
+			break;
 		}
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
@@ -1259,7 +1259,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
-			return;
+			break;
 		}
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
@@ -1413,7 +1413,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
-			return;
+			break;
 		}
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
@@ -1656,7 +1656,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
-			return;
+			break;
 		}
 		switch (frm[0]) {
 		case IEEE80211_ELEMID_RATES:
