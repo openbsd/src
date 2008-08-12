@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.28 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.29 2008/08/12 16:14:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -386,15 +386,18 @@ ieee80211_node_gtk_rekey(void *arg, struct ieee80211_node *ni)
 void
 ieee80211_setkeys(struct ieee80211com *ic)
 {
-	u_int8_t gtk[IEEE80211_PMK_LEN];
+	struct ieee80211_key *k;
 	u_int8_t kid;
 
 	/* Swap(GM, GN) */
 	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
-
-	arc4random_buf(gtk, sizeof(gtk));
-	ieee80211_map_gtk(gtk, ic->ic_bss->ni_rsngroupcipher, kid, 1, 0,
-	    &ic->ic_nw_keys[kid]);
+	k = &ic->ic_nw_keys[kid];
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;
+	k->k_cipher = ic->ic_bss->ni_rsngroupcipher;
+	k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
+	k->k_len = ieee80211_cipher_keylen(k->k_cipher);
+	arc4random_buf(k->k_key, k->k_len);
 
 	ic->ic_rsn_keydonesta = 0;
 	ieee80211_iterate_nodes(ic, ieee80211_node_gtk_rekey, ic);

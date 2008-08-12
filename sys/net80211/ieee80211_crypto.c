@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.45 2008/08/12 16:05:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.46 2008/08/12 16:14:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -468,37 +468,4 @@ ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 	default:	/* unknown cipher */
 		return 0;
 	}
-}
-
-/*
- * Map PTK to IEEE 802.11 key (see 8.6).
- */
-void
-ieee80211_map_ptk(const struct ieee80211_ptk *ptk,
-    enum ieee80211_cipher cipher, u_int64_t rsc, struct ieee80211_key *k)
-{
-	memset(k, 0, sizeof(*k));
-	k->k_cipher = cipher;
-	k->k_flags = IEEE80211_KEY_TX;
-	k->k_len = ieee80211_cipher_keylen(cipher);
-	k->k_rsc[0] = rsc;
-	memcpy(k->k_key, ptk->tk, k->k_len);
-}
-
-/*
- * Map GTK to IEEE 802.11 key (see 8.6).
- */
-void
-ieee80211_map_gtk(const u_int8_t *gtk, enum ieee80211_cipher cipher, int kid,
-    int txflag, u_int64_t rsc, struct ieee80211_key *k)
-{
-	memset(k, 0, sizeof(*k));
-	k->k_id = kid;
-	k->k_cipher = cipher;
-	k->k_flags = IEEE80211_KEY_GROUP;
-	if (txflag)
-		k->k_flags |= IEEE80211_KEY_TX;
-	k->k_len = ieee80211_cipher_keylen(cipher);
-	k->k_rsc[0] = rsc;
-	memcpy(k->k_key, gtk, k->k_len);
 }

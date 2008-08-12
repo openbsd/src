@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.6 2008/08/12 16:05:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.7 2008/08/12 16:14:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -299,6 +299,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	const u_int8_t *rsnie1, *rsnie2, *gtk;
 	const u_int8_t *pmk;
 	u_int16_t info, reason = 0;
+	int keylen;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -445,15 +446,21 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		u_int64_t prsc;
 
 		/* check that key length matches that of pairwise cipher */
-		if (BE_READ_2(key->keylen) !=
-		    ieee80211_cipher_keylen(ni->ni_rsncipher)) {
+		keylen = ieee80211_cipher_keylen(ni->ni_rsncipher);
+		if (BE_READ_2(key->keylen) != keylen) {
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
-		/* install the PTK */
 		prsc = (gtk == NULL) ? LE_READ_6(key->rsc) : 0;
+
+		/* map PTK to 802.11 key */
 		k = &ni->ni_pairwise_key;
-		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_rsncipher, prsc, k);
+		memset(k, 0, sizeof(*k));
+		k->k_cipher = ni->ni_rsncipher;
+		k->k_rsc[0] = prsc;
+		k->k_len = keylen;
+		memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
+		/* install the PTK */
 		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
@@ -461,7 +468,6 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		ni->ni_flags |= IEEE80211_NODE_RXPROT;
 	}
 	if (gtk != NULL) {
-		u_int64_t rsc;
 		u_int8_t kid;
 
 		/* check that the GTK KDE is valid */
@@ -470,17 +476,24 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			goto deauth;
 		}
 		/* check that key length matches that of group cipher */
-		if (gtk[1] - 6 !=
-		    ieee80211_cipher_keylen(ni->ni_rsngroupcipher)) {
+		keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
+		if (gtk[1] != 6 + keylen) {
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
-		/* install the GTK */
+		/* map GTK to 802.11 key */
 		kid = gtk[6] & 3;
-		rsc = LE_READ_6(key->rsc);
 		k = &ic->ic_nw_keys[kid];
-		ieee80211_map_gtk(&gtk[8], ni->ni_rsngroupcipher, kid,
-		    gtk[6] & (1 << 2), rsc, k);
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;	/* 0-3 */
+		k->k_cipher = ni->ni_rsngroupcipher;
+		k->k_flags = IEEE80211_KEY_GROUP;
+		if (gtk[6] & (1 << 2))
+			k->k_flags |= IEEE80211_KEY_TX;
+		k->k_rsc[0] = LE_READ_6(key->rsc);
+		k->k_len = keylen;
+		memcpy(k->k_key, &gtk[8], k->k_len);
+		/* install the GTK */
 		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
@@ -538,9 +551,15 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 	ni->ni_rsn_retries = 0;
 
 	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP) {
+		struct ieee80211_key *k;
+
+		/* map PTK to 802.11 key */
+		k = &ni->ni_pairwise_key;
+		memset(k, 0, sizeof(*k));
+		k->k_cipher = ni->ni_rsncipher;
+		k->k_len = ieee80211_cipher_keylen(k->k_cipher);
+		memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
 		/* install the PTK */
-		struct ieee80211_key *k = &ni->ni_pairwise_key;
-		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_rsncipher, 0, k);
 		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
@@ -626,9 +645,9 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *gtk;
-	u_int64_t rsc;
 	u_int16_t info;
 	u_int8_t kid;
+	int keylen;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -683,15 +702,22 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	}
 
 	/* check that key length matches that of group cipher */
-	if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_rsngroupcipher))
+	keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
+	if (gtk[1] != 6 + keylen)
 		return;
 
-	/* install the GTK */
+	/* map GTK to 802.11 key */
 	kid = gtk[6] & 3;
-	rsc = LE_READ_6(key->rsc);
 	k = &ic->ic_nw_keys[kid];
-	ieee80211_map_gtk(&gtk[8], ni->ni_rsngroupcipher, kid,
-	    gtk[6] & (1 << 2), rsc, k);
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;	/* 0-3 */
+	k->k_cipher = ni->ni_rsngroupcipher;
+	k->k_flags = IEEE80211_KEY_GROUP;
+	if (gtk[6] & (1 << 2))
+		k->k_flags |= IEEE80211_KEY_TX;
+	k->k_rsc[0] = LE_READ_6(key->rsc);
+	k->k_len = keylen;
+	/* install the GTK */
 	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_AUTH_LEAVE);
@@ -723,8 +749,6 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
-	const u_int8_t *frm;
-	u_int64_t rsc;
 	u_int16_t info;
 	u_int8_t kid;
 	int keylen;
@@ -762,15 +786,20 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	if (BE_READ_2(key->paylen) < keylen)
 		return;
 
-	/* key data field contains the GTK */
-	frm = (const u_int8_t *)&key[1];
-
-	/* install the GTK */
+	/* map GTK to 802.11 key */
 	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
-	rsc = LE_READ_6(key->rsc);
 	k = &ic->ic_nw_keys[kid];
-	ieee80211_map_gtk(frm, ni->ni_rsngroupcipher, kid,
-	    info & EAPOL_KEY_WPA_TX, rsc, k);
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;	/* 0-3 */
+	k->k_cipher = ni->ni_rsngroupcipher;
+	k->k_flags = IEEE80211_KEY_GROUP;
+	if (info & EAPOL_KEY_WPA_TX)
+		k->k_flags |= IEEE80211_KEY_TX;
+	k->k_rsc[0] = LE_READ_6(key->rsc);
+	k->k_len = keylen;
+	/* key data field contains the GTK */
+	memcpy(k->k_key, &key[1], k->k_len);
+	/* install the GTK */
 	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_AUTH_LEAVE);

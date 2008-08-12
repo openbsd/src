@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.38 2008/08/02 08:20:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.39 2008/08/12 16:14:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -305,7 +305,6 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		struct ieee80211_key *k;
-		u_int8_t gtk[IEEE80211_PMK_LEN];
 
 		/* initialize 256-bit global key counter to a random value */
 		arc4random_buf(ic->ic_globalcnt, EAPOL_KEY_NONCE_LEN);
@@ -318,9 +317,12 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 
 		ic->ic_def_txkey = 1;
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
-		arc4random_buf(gtk, sizeof(gtk));
-		ieee80211_map_gtk(gtk, ni->ni_rsngroupcipher,
-		    ic->ic_def_txkey, 1, 0, k);
+		memset(k, 0, sizeof(*k));
+		k->k_id = ic->ic_def_txkey;
+		k->k_cipher = ni->ni_rsngroupcipher;
+		k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
+		k->k_len = ieee80211_cipher_keylen(k->k_cipher);
+		arc4random_buf(k->k_key, k->k_len);
 		(*ic->ic_set_key)(ic, ni, k);	/* XXX */
 
 		/*
