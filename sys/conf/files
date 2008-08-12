@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.438 2008/07/21 19:05:21 damien Exp $
+#	$OpenBSD: files,v 1.439 2008/08/12 15:43:00 damien Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -832,7 +832,7 @@ file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt | wlan
 file crypto/md5.c
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto | carp | wlan
-file crypto/sha2.c			(inet & ipsec) | crypto
+file crypto/sha2.c			(inet & ipsec) | crypto | wlan
 file crypto/blf.c			(inet & ipsec) | crypto | vnd
 file crypto/cast.c			(inet & ipsec) | crypto
 file crypto/skipjack.c			(inet & ipsec) | crypto
@@ -847,6 +847,9 @@ file crypto/xform.c			(inet & ipsec) | crypto
 file crypto/deflate.c			(inet & ipsec) | crypto
 file crypto/arc4.c			
 file crypto/michael.c			wlan
+file crypto/cmac.c			wlan
+file crypto/hmac.c			wlan
+file crypto/key_wrap.c			wlan
 file crypto/idgen.c			inet6 | nfsclient | nfsserver
 file netatalk/aarp.c			netatalk
 file netatalk/at_control.c		netatalk
