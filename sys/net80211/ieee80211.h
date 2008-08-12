@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.43 2008/08/12 19:21:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.44 2008/08/12 19:40:13 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -129,6 +129,9 @@ struct ieee80211_htframe_addr4 {	/* 11n */
 #define IEEE80211_FC0_SUBTYPE_ACTION		0xd0
 #define IEEE80211_FC0_SUBTYPE_ACTION_NOACK	0xe0	/* 11n */
 /* for TYPE_CTL */
+#define IEEE80211_FC0_SUBTYPE_WRAPPER		0x70	/* 11n */
+#define IEEE80211_FC0_SUBTYPE_BAR		0x80
+#define IEEE80211_FC0_SUBTYPE_BA		0x90
 #define	IEEE80211_FC0_SUBTYPE_PS_POLL		0xa0
 #define	IEEE80211_FC0_SUBTYPE_RTS		0xb0
 #define	IEEE80211_FC0_SUBTYPE_CTS		0xc0
@@ -275,12 +278,41 @@ enum {
 	IEEE80211_ELEMID_RSN			= 48,
 	IEEE80211_ELEMID_XRATES			= 50,
 	IEEE80211_ELEMID_MMIE			= 76,	/* 11w */
+	IEEE80211_ELEMID_ASSOC_CBT		= 77,	/* 11w */
 	IEEE80211_ELEMID_TPC			= 150,
 	IEEE80211_ELEMID_CCKM			= 156,
 	IEEE80211_ELEMID_VENDOR			= 221	/* vendor private */
 };
 
-#define IEEE80211_CHALLENGE_LEN			128
+/*
+ * Action field category values (see Table 7-24).
+ */
+enum {
+	IEEE80211_CATEG_SPECTRUM	= 0,
+	IEEE80211_CATEG_QOS		= 1,
+	IEEE80211_CATEG_DLS		= 2,
+	IEEE80211_CATEG_BA		= 3,
+	IEEE80211_CATEG_HT		= 7,	/* 11n */
+	IEEE80211_CATEG_SALT		= 8	/* 11w */
+};
+
+/*
+ * Block Ack Action field values (see Table 7-54).
+ */
+#define IEEE80211_ACTION_ADDBA_REQ	0
+#define IEEE80211_ACTION_ADDBA_RESP	1
+#define IEEE80211_ACTION_DELBA		2
+
+/*
+ * SALT Action field values (see Table 7.57l).
+ */
+#define IEEE80211_ACTION_SALT_REQ	0
+#define IEEE80211_ACTION_SALT_RESP	1
+
+/*
+ * HT Action field values (see Table 7-57m).
+ */
+#define IEEE80211_ACTION_NOTIFYCW	0
 
 #define	IEEE80211_RATE_BASIC			0x80
 #define	IEEE80211_RATE_VAL			0x7f
@@ -431,6 +463,7 @@ enum {
 
 #define	IEEE80211_WEP_KEYLEN			5	/* 40bit */
 #define	IEEE80211_WEP_NKID			4	/* number of key ids */
+#define IEEE80211_CHALLENGE_LEN			128
 
 /* WEP header constants */
 #define	IEEE80211_WEP_IVLEN			3	/* 24bit */
@@ -523,14 +556,14 @@ enum {
  * The RSNA key descriptor used by IEEE 802.11 does not use the IEEE 802.1X
  * key descriptor.  Instead, it uses the key descriptor described in 8.5.2.
  */
-#define EAPOL_VERSION	1
-
 #define EAPOL_KEY_NONCE_LEN	32
 #define EAPOL_KEY_IV_LEN	16
 #define EAPOL_KEY_MIC_LEN	16
 
 struct ieee80211_eapol_key {
 	u_int8_t	version;
+#define EAPOL_VERSION	1
+
 	u_int8_t	type;
 /* IEEE Std 802.1X-2004, 7.5.4 (only type EAPOL-Key is used here) */
 #define EAP_PACKET	0
