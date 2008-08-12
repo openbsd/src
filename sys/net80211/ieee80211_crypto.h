@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.15 2008/08/12 16:14:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.16 2008/08/12 16:33:38 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ struct ieee80211_key {
 
 	u_int			k_len;
 	u_int64_t		k_rsc[IEEE80211_NUM_TID];
+	u_int64_t		k_mgmt_rsc;
 	u_int64_t		k_tsc;
 	u_int8_t		k_key[32];
 	void			*k_priv;
