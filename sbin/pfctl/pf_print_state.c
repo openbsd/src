@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.51 2008/06/29 08:42:15 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.52 2008/08/12 16:40:18 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -306,7 +306,7 @@ print_state(struct pfsync_state *s, int opts)
 		printf("   age %.2u:%.2u:%.2u", creation, min, sec);
 		sec = expire % 60;
 		expire /= 60;
-		min = s->expire % 60;
+		min = expire % 60;
 		expire /= 60;
 		printf(", expires in %.2u:%.2u:%.2u", expire, min, sec);
 
