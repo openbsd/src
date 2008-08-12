@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.40 2008/08/12 18:22:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.41 2008/08/12 18:30:02 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -293,6 +293,17 @@ enum {
 #define	IEEE80211_ERP_NON_ERP_PRESENT		0x01
 #define	IEEE80211_ERP_USE_PROTECTION		0x02
 #define	IEEE80211_ERP_BARKER_MODE		0x04
+
+/*
+ * RSN capabilities (see 7.3.2.25.3).
+ */
+#define IEEE80211_RSNCAP_PREAUTH		0x0001
+#define IEEE80211_RSNCAP_NOPAIRWISE		0x0002
+#define IEEE80211_RSNCAP_MFPR			0x0040	/* 11w */
+#define IEEE80211_RSNCAP_MFPC			0x0080	/* 11w */
+#define IEEE80211_RSNCAP_PEERKEYENA		0x0200
+#define IEEE80211_RSNCAP_SPPAMSDUC		0x0400	/* 11n */
+#define IEEE80211_RSNCAP_SPPAMSDUR		0x0800	/* 11n */
 
 /*
  * EDCA Access Categories.
