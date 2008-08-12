@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2008/06/27 17:22:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2008/08/12 18:27:22 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1198,7 +1198,7 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 /* Tweakable by config(8) */
-int bigmem = 1;
+int bigmem = 0;
 
 void
 init_x86_64(paddr_t first_avail)
