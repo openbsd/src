@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.16 2008/08/12 16:33:38 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.17 2008/08/12 16:51:39 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -145,5 +145,14 @@ extern	void ieee80211_derive_ptk(enum ieee80211_akm, const u_int8_t *,
 	    const u_int8_t *, const u_int8_t *, const u_int8_t *,
 	    const u_int8_t *, struct ieee80211_ptk *);
 extern	int ieee80211_cipher_keylen(enum ieee80211_cipher);
+
+extern	int ieee80211_bip_set_key(struct ieee80211com *,
+	    struct ieee80211_key *);
+extern	void ieee80211_bip_delete_key(struct ieee80211com *,
+	    struct ieee80211_key *);
+extern	struct	mbuf *ieee80211_bip_encap(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
+extern	struct	mbuf *ieee80211_bip_decap(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
 
 #endif /* _NET80211_IEEE80211_CRYPTO_H_ */

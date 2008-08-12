@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.38 2008/08/12 16:24:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.39 2008/08/12 16:51:39 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ struct ieee80211_htframe_addr4 {	/* 11n */
 #define	IEEE80211_SEQ_SEQ_SHIFT			4
 
 #define	IEEE80211_NWID_LEN			32
+#define IEEE80211_MMIE_LEN			18	/* 11w */
 
 /*
  * QoS Control field (see 7.1.3.5).
@@ -273,6 +274,7 @@ enum {
 	IEEE80211_ELEMID_QOS_CAP		= 46,
 	IEEE80211_ELEMID_RSN			= 48,
 	IEEE80211_ELEMID_XRATES			= 50,
+	IEEE80211_ELEMID_MMIE			= 76,	/* 11w */
 	IEEE80211_ELEMID_TPC			= 150,
 	IEEE80211_ELEMID_CCKM			= 156,
 	IEEE80211_ELEMID_VENDOR			= 221	/* vendor private */

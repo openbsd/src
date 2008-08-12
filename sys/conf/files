@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.439 2008/08/12 15:43:00 damien Exp $
+#	$OpenBSD: files,v 1.440 2008/08/12 16:51:39 damien Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -786,6 +786,7 @@ file net/if_mpe.c			mpe			needs-count
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan
+file net80211/ieee80211_crypto_bip.c	wlan
 file net80211/ieee80211_crypto_ccmp.c	wlan
 file net80211/ieee80211_crypto_tkip.c	wlan
 file net80211/ieee80211_crypto_wep.c	wlan
