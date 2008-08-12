@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.9 2008/08/12 18:22:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.10 2008/08/12 19:29:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -124,7 +124,12 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* discard EAPOL-Key frames with an unknown descriptor version */
 	desc = info & EAPOL_KEY_VERSION_MASK;
-	if (desc != EAPOL_KEY_DESC_V1 && desc != EAPOL_KEY_DESC_V2)
+	if (desc < EAPOL_KEY_DESC_V1 || desc > EAPOL_KEY_DESC_V3)
+		goto done;
+
+	if ((ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X ||
+	     ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK) &&
+	    desc != EAPOL_KEY_DESC_V3)
 		goto done;
 
 	if ((ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||

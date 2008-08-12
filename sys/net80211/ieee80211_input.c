@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.91 2008/08/12 19:21:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.92 2008/08/12 19:29:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -725,14 +725,28 @@ ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 enum ieee80211_akm
 ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 {
-	/* from IEEE Std 802.11i-2004 - Table 20dc */
-	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA */
-	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0) {	/* WPA */
 		switch (selector[3]) {
 		case 1:	/* IEEE 802.1X (RSNA default) */
-			return IEEE80211_AKM_IEEE8021X;
+			return IEEE80211_AKM_8021X;
 		case 2:	/* PSK */
 			return IEEE80211_AKM_PSK;
+		}
+	} else if (memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
+		/* from IEEE Std 802.11i-2004 - Table 20dc */
+		switch (selector[3]) {
+		case 1:	/* IEEE 802.1X (RSNA default) */
+			return IEEE80211_AKM_8021X;
+		case 2:	/* PSK */
+			return IEEE80211_AKM_PSK;
+		case 3:	/* Fast BSS Transition IEEE 802.1X */
+			return IEEE80211_AKM_FBT_8021X;
+		case 4:	/* Fast BSS Transition PSK */
+			return IEEE80211_AKM_FBT_PSK;
+		case 5:	/* IEEE 802.1X with SHA256 KDF */
+			return IEEE80211_AKM_SHA256_8021X;
+		case 6:	/* PSK with SHA256 KDF */
+			return IEEE80211_AKM_SHA256_PSK;
 		}
 	}
 	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
@@ -765,7 +779,7 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	rsn->rsn_groupmgmtcipher = IEEE80211_CIPHER_AES128_CMAC;
 	/* if AKM Suite missing, default to 802.1X */
 	rsn->rsn_nakms = 1;
-	rsn->rsn_akms = IEEE80211_AKM_IEEE8021X;
+	rsn->rsn_akms = IEEE80211_AKM_8021X;
 	/* if RSN capabilities missing, default to 0 */
 	rsn->rsn_caps = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.42 2008/08/12 19:21:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.43 2008/08/12 19:29:07 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -590,7 +590,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		    (ic->ic_flags & IEEE80211_F_PSK))
 			ni->ni_rsnakms = IEEE80211_AKM_PSK;
 		else
-			ni->ni_rsnakms = IEEE80211_AKM_IEEE8021X;
+			ni->ni_rsnakms = IEEE80211_AKM_8021X;
 
 		/* prefer CCMP over TKIP if the AP supports it */
 		ni->ni_rsnciphers &= ic->ic_rsnciphers;

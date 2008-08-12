@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.18 2008/08/12 16:56:45 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.19 2008/08/12 19:29:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -41,8 +41,12 @@ enum ieee80211_cipher {
  */
 enum ieee80211_akm {
 	IEEE80211_AKM_NONE		= 0x00000000,
-	IEEE80211_AKM_IEEE8021X		= 0x00000001,
-	IEEE80211_AKM_PSK		= 0x00000002
+	IEEE80211_AKM_8021X		= 0x00000001,
+	IEEE80211_AKM_PSK		= 0x00000002,
+	IEEE80211_AKM_FBT_8021X		= 0x00000004,	/* 11r */
+	IEEE80211_AKM_FBT_PSK		= 0x00000008,	/* 11r */
+	IEEE80211_AKM_SHA256_8021X	= 0x00000010,	/* 11w */
+	IEEE80211_AKM_SHA256_PSK	= 0x00000020	/* 11w */
 };
 
 #define	IEEE80211_KEYBUF_SIZE	16

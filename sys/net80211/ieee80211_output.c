@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.68 2008/08/12 19:21:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.69 2008/08/12 19:29:07 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -867,7 +867,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	pcount = frm; frm += 2;
 	count = 0;
 	/* write AKM Suite List (see Table 20dc) */
-	if (ni->ni_rsnakms & IEEE80211_AKM_IEEE8021X) {
+	if (ni->ni_rsnakms & IEEE80211_AKM_8021X) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 1;
 		count++;
@@ -875,6 +875,16 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	if (ni->ni_rsnakms & IEEE80211_AKM_PSK) {
 		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 2;
+		count++;
+	}
+	if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_8021X) {
+		memcpy(frm, oui, 3); frm += 3;
+		*frm++ = 5;
+		count++;
+	}
+	if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_PSK) {
+		memcpy(frm, oui, 3); frm += 3;
+		*frm++ = 6;
 		count++;
 	}
 	/* write AKM Suite List Count field */
