@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.94 2008/08/12 19:45:22 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.95 2008/08/12 19:50:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1735,7 +1735,9 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 */
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		/* XXX ic->ic_mgt_timer = 5; */
-	}
+	} else if (ic->ic_flags & IEEE80211_F_WEPON)
+		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
+
 	ieee80211_new_state(ic, IEEE80211_S_RUN,
 	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 }

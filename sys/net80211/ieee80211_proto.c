@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.31 2008/08/12 18:37:23 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.32 2008/08/12 19:50:39 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -517,6 +517,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		}
 		if (ic->ic_flags & IEEE80211_F_RSNON) {
 			/* XXX not here! */
+			ic->ic_bss->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 			ic->ic_bss->ni_port_valid = 0;
 			ic->ic_bss->ni_replaycnt_ok = 0;
 			(*ic->ic_delete_key)(ic, ic->ic_bss,
