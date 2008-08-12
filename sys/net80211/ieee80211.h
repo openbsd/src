@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.37 2008/07/27 14:15:42 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.38 2008/08/12 16:24:24 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -173,11 +173,11 @@ struct ieee80211_htframe_addr4 {	/* 11n */
 /*
  * QoS Control field (see 7.1.3.5).
  */
-#define	IEEE80211_QOS_TXOP			0x00ff
-/* bit 8 is reserved */
-#define	IEEE80211_QOS_ACKPOLICY			0x0600
-#define	IEEE80211_QOS_ESOP			0x0800
-#define	IEEE80211_QOS_TID			0xf000
+#define IEEE80211_QOS_TXOP			0xff00
+#define IEEE80211_QOS_AMSDU			0x0080	/* 11n */
+#define IEEE80211_QOS_ACKPOLICY			0x0060
+#define IEEE80211_QOS_EOSP			0x0010
+#define IEEE80211_QOS_TID			0x000f
 
 /*
  * Control frames.
