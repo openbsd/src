@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.39 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: auvia.c,v 1.40 2008/08/12 06:50:16 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -161,6 +161,8 @@ struct cfattach auvia_ca = {
 #define VIA8233_OFF_MP_SCRATCH		0x03
 #define VIA8233_OFF_MP_STOP		0x08
 
+#define VIA8233_WR_BASE			0x60
+
 #define	AUVIA_CODEC_CTL			0x80
 #define		AUVIA_CODEC_READ		0x00800000
 #define		AUVIA_CODEC_BUSY		0x01000000
@@ -247,6 +249,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8233_AC97) {
 		sc->sc_flags |= AUVIA_FLAGS_VT8233;
 		sc->sc_play.sc_base = VIA8233_MP_BASE;
+		sc->sc_record.sc_base = VIA8233_WR_BASE;
 	}
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
@@ -877,14 +880,9 @@ auvia_mappage(void *addr, void *mem, off_t off, int prot)
 int
 auvia_get_props(void *addr)
 {
-	struct auvia_softc *sc = addr;
 	int props;
 
-	props = AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT; 
-
-	/* recording doesn't work correctly on 8233 based devices */
-	if (!(sc->sc_flags & AUVIA_FLAGS_VT8233))
-		props |= AUDIO_PROP_FULLDUPLEX;
+	props = AUDIO_PROP_MMAP|AUDIO_PROP_INDEPENDENT|AUDIO_PROP_FULLDUPLEX;
 
 	return  props;
 }
