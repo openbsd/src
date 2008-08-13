@@ -57,7 +57,7 @@ drm_alloc(size_t size, int area)
 void *
 drm_calloc(size_t nmemb, size_t size, int area)
 {
-	if (SIZE_MAX / nmemb < size)
+	if (nmemb == 0 || SIZE_MAX / nmemb < size)
 		return (NULL);
 	else
 		return malloc(size * nmemb, M_DRM, M_NOWAIT | M_ZERO);

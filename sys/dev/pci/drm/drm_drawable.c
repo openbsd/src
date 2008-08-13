@@ -154,8 +154,8 @@ drm_update_draw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			return 0;
 		}
 		if (info->rects == NULL) {
-			info->rects = drm_calloc(sizeof(*info->rects),
-			    update->num, DRM_MEM_DRAWABLE);
+			info->rects = drm_calloc(update->num,
+			    sizeof(*info->rects), DRM_MEM_DRAWABLE);
 			if (info->rects == NULL) {
 				DRM_SPINUNLOCK(&dev->drw_lock);
 				return ENOMEM;

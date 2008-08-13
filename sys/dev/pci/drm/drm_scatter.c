@@ -152,7 +152,7 @@ drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 	if (dsd == NULL)
 		return (NULL);
 
-	dsd->sg_segs = drm_calloc(sizeof(*dsd->sg_segs), pages,
+	dsd->sg_segs = drm_calloc(pages, sizeof(*dsd->sg_segs),
 	    DRM_MEM_SGLISTS);
 	if (dsd->sg_segs == NULL)
 		goto dsdfree;
