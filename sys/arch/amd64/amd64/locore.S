@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.27 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.28 2008/08/13 16:01:08 weingart Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ gdt64_end:
 farjmp64:
 	.long	longmode-KERNBASE
 	.word	GSEL(GCODE_SEL, SEL_KPL)
-	
+
 	.space 512
 tmpstk:
 
