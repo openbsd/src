@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.86 2008/08/11 22:42:19 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.87 2008/08/13 03:18:19 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -668,7 +668,7 @@ re_diag(struct rl_softc *sc)
 	sc->rl_testmode = 1;
 	re_reset(sc);
 	re_init(ifp);
-	sc->rl_link = 1;
+	sc->rl_flags |= RL_FLAG_LINK;
 	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		phyaddr = 0;
 	else
@@ -782,9 +782,8 @@ re_diag(struct rl_softc *sc)
 
 done:
 	/* Turn interface off, release resources */
-
 	sc->rl_testmode = 0;
-	sc->rl_link = 0;
+	sc->rl_flags &= ~RL_FLAG_LINK;
 	ifp->if_flags &= ~IFF_PROMISC;
 	re_stop(ifp, 1);
 	if (m0 != NULL)
@@ -1533,13 +1532,13 @@ re_tick(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (sc->rl_link) {
+	if (sc->rl_flags & RL_FLAG_LINK) {
 		if (!(mii->mii_media_status & IFM_ACTIVE))
-			sc->rl_link = 0;
+			sc->rl_flags &= ~RL_FLAG_LINK;
 	} else {
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			sc->rl_link = 1;
+			sc->rl_flags |= RL_FLAG_LINK;
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				re_start(ifp);
 		}
@@ -1802,7 +1801,9 @@ re_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->rl_link || ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
+	if ((sc->rl_flags & RL_FLAG_LINK) == 0)
 		return;
 
 	idx = sc->rl_ldata.rl_txq_prodidx;
@@ -2030,7 +2031,7 @@ re_init(struct ifnet *ifp)
 
 	splx(s);
 
-	sc->rl_link = 0;
+	sc->rl_flags &= ~RL_FLAG_LINK;
 
 	timeout_add(&sc->timer_handle, hz);
 
@@ -2174,7 +2175,7 @@ re_stop(struct ifnet *ifp, int disable)
 	sc = ifp->if_softc;
 
 	ifp->if_timer = 0;
-	sc->rl_link = 0;
+	sc->rl_flags &= ~RL_FLAG_LINK;
 
 	timeout_del(&sc->timer_handle);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
