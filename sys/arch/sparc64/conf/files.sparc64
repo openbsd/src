@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.110 2008/07/11 14:23:53 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.111 2008/08/13 19:30:02 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -367,6 +367,11 @@ include "dev/onewire/files.onewire"
 device	vcons
 attach	vcons at vbus
 file	arch/sparc64/dev/vcons.c		vcons needs-flag
+
+# Virtual random number generator
+device	vrng
+attach	vrng at vbus
+file	arch/sparc64/dev/vrng.c			vrng
 
 # Virtual rtc
 device	vrtc
