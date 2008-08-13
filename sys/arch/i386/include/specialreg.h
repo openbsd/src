@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.33 2008/06/13 00:00:45 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.34 2008/08/13 15:46:21 art Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -274,6 +274,10 @@
 #define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
 #define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
 #define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
+#define MSR_INT_PEN_MSG	0xc0010055		/* Interrupt pending message */
+
+#define IPM_C1E_CMP_HLT	0x10000000
+#define IPM_SMI_CMP_HLT	0x08000000
 
 /*
  * These require a 'passcode' for access.  See cpufunc.h.
