@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.43 2008/08/08 20:07:49 matthieu Exp $	 */
+/* $Id: main.c,v 1.44 2008/08/13 06:20:48 jmc Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -208,7 +208,7 @@ void
 usage()
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-abin] [-d count] [-S start] "
+	fprintf(stderr, "usage: %s [-abin] [-d count] "
 	    "[-s delay] [-w width] [view] [delay]\n", __progname);
 	exit(1);
 }
