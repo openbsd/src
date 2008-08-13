@@ -124,11 +124,7 @@ drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		auth->magic = file_priv->magic;
 	} else {
 		DRM_LOCK();
-		do {
-			auth->magic = idgen32(&dev->magicid);
-		} while (drm_find_file(dev, auth->magic));
-
-		file_priv->magic = auth->magic;
+		file_priv->magic = auth->magic = dev->magicid++;
 		drm_add_magic(dev, file_priv, auth->magic);
 		DRM_UNLOCK();
 	}

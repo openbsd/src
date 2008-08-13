@@ -253,7 +253,7 @@ drm_firstopen(struct drm_device *dev)
 	for ( i = 0 ; i < DRM_ARRAY_SIZE(dev->counts) ; i++ )
 		atomic_set( &dev->counts[i], 0 );
 
-	idgen32_init(&dev->magicid);
+	dev->magicid = 1;
 	SPLAY_INIT(&dev->magiclist);
 
 	dev->lock.lock_queue = 0;
