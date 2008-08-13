@@ -549,7 +549,7 @@ drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 		if (dev->driver.reclaim_buffers_locked != NULL)
 			dev->driver.reclaim_buffers_locked(dev, file_priv);
 
-		drm_lock_free(dev, &dev->lock.hw_lock->lock,
+		drm_lock_free(&dev->lock,
 		    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock));
 		
 				/* FIXME: may require heavy-handed reset of
@@ -565,8 +565,7 @@ drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 				retcode = EINTR;
 				break;
 			}
-			if (drm_lock_take(&dev->lock.hw_lock->lock,
-			    DRM_KERNEL_CONTEXT)) {
+			if (drm_lock_take(&dev->lock, DRM_KERNEL_CONTEXT)) {
 				dev->lock.file_priv = file_priv;
 				dev->lock.lock_time = jiffies;
                                 atomic_inc( &dev->counts[_DRM_STAT_LOCKS] );
@@ -580,8 +579,7 @@ drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 		}
 		if (retcode == 0) {
 			dev->driver.reclaim_buffers_locked(dev, file_priv);
-			drm_lock_free(dev, &dev->lock.hw_lock->lock,
-			    DRM_KERNEL_CONTEXT);
+			drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT);
 		}
 	}
 

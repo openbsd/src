@@ -503,7 +503,7 @@ drm_locked_task(void *context, void *pending)
 
 	DRM_LOCK(); /* XXX drm_lock_take() should do its own locking */
 	if (dev->locked_task_call == NULL ||
-	    drm_lock_take(&dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT) == 0) {
+	    drm_lock_take(&dev->lock, DRM_KERNEL_CONTEXT) == 0) {
 		DRM_UNLOCK();
 		DRM_SPINUNLOCK(&dev->tsk_lock);
 		return;
@@ -517,7 +517,7 @@ drm_locked_task(void *context, void *pending)
 
 	dev->locked_task_call(dev);
 
-	drm_lock_free(dev, &dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT);
+	drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT);
 
 	dev->locked_task_call = NULL;
 

@@ -396,12 +396,13 @@ struct drm_file {
 	void		 *driver_priv;
 };
 
-typedef struct drm_lock_data {
-	drm_hw_lock_t	  *hw_lock;	/* Hardware lock		   */
-	struct drm_file   *file_priv;   /* Unique identifier of holding process (NULL is kernel)*/
-	int		  lock_queue;	/* Queue of blocked processes	   */
-	unsigned long	  lock_time;	/* Time of last lock in jiffies	   */
-} drm_lock_data_t;
+struct drm_lock_data {
+	drm_hw_lock_t	*hw_lock;	/* Hardware lock */
+	/* Unique identifier of holding process (NULL is kernel) */
+	struct drm_file	*file_priv;
+	int		 lock_queue;	/* Queue of blocked processes */
+	unsigned long	 lock_time;	/* Time of last lock in jiffies */
+};
 
 /* This structure, in the struct drm_device, is always initialized while
  * the device is open.  dev->dma_lock protects the incrementing of
@@ -643,7 +644,7 @@ struct drm_device {
 
 	int		  max_context;
 
-	drm_lock_data_t	  lock;		/* Information on hardware lock	   */
+	struct drm_lock_data  lock;	/* Information on hardware lock	*/
 
 				/* DMA queues (contexts) */
 	drm_device_dma_t  *dma;		/* Optional pointer for DMA support */
@@ -742,11 +743,9 @@ void	drm_write16(drm_local_map_t *, unsigned long, u_int16_t);
 void	drm_write32(drm_local_map_t *, unsigned long, u_int32_t);
 
 /* Locking IOCTL support (drm_lock.c) */
-int	drm_lock_take(__volatile__ unsigned int *, unsigned int);
-int	drm_lock_transfer(struct drm_device *, __volatile__ unsigned int *,
-	    unsigned int);
-int	drm_lock_free(struct drm_device *, __volatile__ unsigned int *,
-	    unsigned int);
+int	drm_lock_take(struct drm_lock_data *, unsigned int);
+int	drm_lock_transfer(struct drm_lock_data *, unsigned int);
+int	drm_lock_free(struct drm_lock_data *, unsigned int);
 
 /* Buffer management support (drm_bufs.c) */
 unsigned long drm_get_resource_start(struct drm_device *, unsigned int);

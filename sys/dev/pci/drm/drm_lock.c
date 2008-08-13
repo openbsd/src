@@ -50,9 +50,10 @@
 #include "drmP.h"
 
 int
-drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
+drm_lock_take(struct drm_lock_data *lock_data, unsigned int context)
 {
-	unsigned int old, new;
+	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
+	unsigned int		 old, new;
 
 	do {
 		old = *lock;
@@ -79,12 +80,13 @@ drm_lock_take(__volatile__ unsigned int *lock, unsigned int context)
 /* This takes a lock forcibly and hands it to context.	Should ONLY be used
    inside *_unlock to give lock to kernel before calling *_dma_schedule. */
 int
-drm_lock_transfer(struct drm_device *dev, __volatile__ unsigned int *lock,
+drm_lock_transfer(struct drm_lock_data *lock_data,
     unsigned int context)
 {
-	unsigned int old, new;
+	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
+	unsigned int		 old, new;
 
-	dev->lock.file_priv = NULL;
+	lock_data->file_priv = NULL;
 	do {
 		old  = *lock;
 		new  = context | _DRM_LOCK_HELD;
@@ -94,12 +96,13 @@ drm_lock_transfer(struct drm_device *dev, __volatile__ unsigned int *lock,
 }
 
 int
-drm_lock_free(struct drm_device *dev, __volatile__ unsigned int *lock,
+drm_lock_free(struct drm_lock_data *lock_data,
     unsigned int context)
 {
-	unsigned int old, new;
+	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
+	unsigned int		 old, new;
 
-	dev->lock.file_priv = NULL;
+	lock_data->file_priv = NULL;
 	do {
 		old  = *lock;
 		new  = 0;
@@ -110,15 +113,15 @@ drm_lock_free(struct drm_device *dev, __volatile__ unsigned int *lock,
 			  context, _DRM_LOCKING_CONTEXT(old));
 		return 1;
 	}
-	DRM_WAKEUP_INT((void *)&dev->lock.lock_queue);
+	DRM_WAKEUP_INT((void *)&lock_data->lock_queue);
 	return 0;
 }
 
 int
 drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-        drm_lock_t *lock = data;
-        int ret = 0;
+        drm_lock_t	*lock = data;
+        int		 ret = 0;
 
         if (lock->context == DRM_KERNEL_CONTEXT) {
                 DRM_ERROR("Process %d using kernel context %d\n",
@@ -135,7 +138,7 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	DRM_LOCK();
 	for (;;) {
-		if (drm_lock_take(&dev->lock.hw_lock->lock, lock->context)) {
+		if (drm_lock_take(&dev->lock, lock->context)) {
 			dev->lock.file_priv = file_priv;
 			dev->lock.lock_time = jiffies;
 			atomic_inc(&dev->counts[_DRM_STAT_LOCKS]);
@@ -143,8 +146,8 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 
 		/* Contention */
-		ret = DRM_SLEEPLOCK((void *)&dev->lock.lock_queue, &dev->dev_lock,
-		    PZERO | PCATCH, "drmlk2", 0);
+		ret = DRM_SLEEPLOCK((void *)&dev->lock.lock_queue,
+		    &dev->dev_lock, PZERO | PCATCH, "drmlkq", 0);
 		if (ret != 0)
 			break;
 	}
@@ -166,7 +169,7 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_lock_t *lock = data;
+	drm_lock_t	*lock = data;
 
 	if (lock->context == DRM_KERNEL_CONTEXT) {
 		DRM_ERROR("Process %d using kernel context %d\n",
@@ -190,9 +193,9 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
 
 	DRM_LOCK();
-	drm_lock_transfer(dev, &dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT);
+	drm_lock_transfer(&dev->lock, DRM_KERNEL_CONTEXT);
 
-	if (drm_lock_free(dev, &dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT)) {
+	if (drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT)) {
 		DRM_ERROR("\n");
 	}
 	DRM_UNLOCK();
