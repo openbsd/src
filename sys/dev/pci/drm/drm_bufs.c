@@ -311,7 +311,7 @@ drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_local_map_t *map;
 	int err;
 
-	if (!(dev->flags & (FREAD|FWRITE)))
+	if (!(file_priv->flags & (FREAD|FWRITE)))
 		return EACCES; /* Require read/write */
 
 	DRM_LOCK();
@@ -1089,7 +1089,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_buf_map_t *request = data;
 	int i;
 
-	if (!vfinddev(dev->kdev, VCHR, &vn))
+	if (!vfinddev(file_priv->kdev, VCHR, &vn))
 		return EINVAL;
 
 	vms = DRM_CURPROC->p_vmspace;

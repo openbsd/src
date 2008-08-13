@@ -384,16 +384,17 @@ typedef struct drm_buf_entry {
 
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
 struct drm_file {
-	TAILQ_ENTRY(drm_file) link;
-	int		  authenticated;
-	int		  master;
-	int		  minor;
-	pid_t		  pid;
-	uid_t		  uid;
-	int		  refs;
-	drm_magic_t	  magic;
-	unsigned long	  ioctl_count;
-	void		 *driver_priv;
+	TAILQ_ENTRY(drm_file)	 link;
+	void			*driver_priv;
+	int			 authenticated;
+	unsigned long		 ioctl_count;
+	dev_t			 kdev;
+	drm_magic_t		 magic;
+	int			 flags;
+	int			 master;
+	int			 minor;
+	pid_t			 pid;
+	uid_t			 uid;
 };
 
 struct drm_lock_data {
@@ -610,13 +611,9 @@ struct drm_device {
 
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
-	dev_t		kdev; 		/* used by uvm_mmap, this is just a placeholder */
 	struct vga_pci_softc *vga_softc;
 	
 	int		  if_version;	/* Highest interface version set */
-
-	int		  flags;	/* Flags to open(2)		   */
-
 				/* Locks */
 	DRM_SPINTYPE	  dma_lock;	/* protects dev->dma */
 	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */

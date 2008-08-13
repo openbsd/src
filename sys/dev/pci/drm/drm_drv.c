@@ -492,8 +492,6 @@ drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 	if (dev == NULL)
 		return (ENXIO);
 
-	dev->kdev = kdev; /* hack for now */
-
 	DRM_DEBUG( "open_count = %d\n", dev->open_count );
 
 	retcode = drm_open_helper(kdev, flags, fmt, p, dev);
@@ -527,9 +525,6 @@ drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 		retcode = EINVAL;
 		goto done;
 	}
-
-	if (--file_priv->refs != 0)
-		goto done;
 
 	if (dev->driver.preclose != NULL)
 		dev->driver.preclose(dev, file_priv);
