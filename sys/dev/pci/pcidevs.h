@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1397 2008/08/08 16:07:18 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1398 2008/08/13 03:45:55 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3869,6 +3869,7 @@
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
+#define	PCI_PRODUCT_REALTEK_RT8139D	0x8039		/* 8139D */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
 #define	PCI_PRODUCT_REALTEK_RT8101E	0x8136		/* 8101E */
 #define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 */
