@@ -258,10 +258,6 @@ typedef u_int8_t u8;
 #define DRM_UDELAY(udelay)	DELAY(udelay)
 #define DRM_TIME_SLICE		(hz/20)  /* Time slice for GLXContexts	  */
 
-#define DRM_GET_PRIV_SAREA(_dev, _ctx, _map) do {	\
-	(_map) = (_dev)->context_sareas[_ctx];		\
-} while(0)
-
 #define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
 do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
@@ -524,7 +520,7 @@ typedef struct drm_vbl_sig {
 #define DRM_ATI_GART_IGP  3
 
 #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
-#define upper_32_bits(_val) (((u64)(_val)) >> 32)
+#define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
 struct drm_ati_pcigart_info {
 	int gart_table_location;
@@ -547,16 +543,9 @@ struct drm_driver_info {
 	void	(*reclaim_buffers_locked)(struct drm_device *,
 		    struct drm_file *);
 	int	(*dma_ioctl)(struct drm_device *, void *, struct drm_file *);
-	void	(*dma_ready)(struct drm_device *);
 	int	(*dma_quiescent)(struct drm_device *);
-	int	(*dma_flush_block_and_flush)(struct drm_device *, int,
-		    drm_lock_flags_t);
-	int	(*dma_flush_unblock)(struct drm_device *, int,
-		    drm_lock_flags_t);
 	int	(*context_ctor)(struct drm_device *, int);
 	int	(*context_dtor)(struct drm_device *, int);
-	int	(*kernel_context_switch)(struct drm_device *, int, int);
-	int	(*kernel_context_switch_unlock)(struct drm_device *);
 	void	(*irq_preinstall)(struct drm_device *);
 	int	(*irq_postinstall)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
@@ -651,7 +640,6 @@ struct drm_device {
 	struct drm_memrange handle_mm;
 	drm_map_list_t	  maplist;
 
-	drm_local_map_t	  **context_sareas;
 	int		  max_context;
 
 	drm_lock_data_t	  lock;		/* Information on hardware lock	   */
@@ -673,9 +661,6 @@ struct drm_device {
 	int		  pci_bus;
 	int		  pci_slot;
 	int		  pci_func;
-
-	atomic_t	  context_flag;	/* Context swapping flag	   */
-	int		  last_context;	/* Last current context		   */
 
 	/* VBLANK support */
 	int		 vblank_disable_allowed;
@@ -743,9 +728,6 @@ void	*drm_ioremap(struct drm_device *, drm_local_map_t *);
 void	drm_ioremapfree(drm_local_map_t *);
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
-
-int	drm_context_switch(struct drm_device *, int, int);
-int	drm_context_switch_complete(struct drm_device *, int);
 
 int	drm_ctxbitmap_init(struct drm_device *);
 void	drm_ctxbitmap_cleanup(struct drm_device *);
@@ -846,13 +828,8 @@ int	drm_noop(struct drm_device *, void *, struct drm_file *);
 /* Context IOCTL support (drm_context.c) */
 int	drm_resctx(struct drm_device *, void *, struct drm_file *);
 int	drm_addctx(struct drm_device *, void *, struct drm_file *);
-int	drm_modctx(struct drm_device *, void *, struct drm_file *);
 int	drm_getctx(struct drm_device *, void *, struct drm_file *);
-int	drm_switchctx(struct drm_device *, void *, struct drm_file *);
-int	drm_newctx(struct drm_device *, void *, struct drm_file *);
 int	drm_rmctx(struct drm_device *, void *, struct drm_file *);
-int	drm_setsareactx(struct drm_device *, void *, struct drm_file *);
-int	drm_getsareactx(struct drm_device *, void *, struct drm_file *);
 
 /* Drawable IOCTL support (drm_drawable.c) */
 int	drm_adddraw(struct drm_device *, void *, struct drm_file *);

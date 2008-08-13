@@ -50,7 +50,6 @@ drm_ctxbitmap_free(struct drm_device *dev, int ctx_handle)
 
 	DRM_LOCK();
 	clear_bit(ctx_handle, dev->ctx_bitmap);
-	dev->context_sareas[ctx_handle] = NULL;
 	DRM_UNLOCK();
 	return;
 }
@@ -72,34 +71,8 @@ drm_ctxbitmap_next(struct drm_device *dev)
 
 	set_bit(bit, dev->ctx_bitmap);
 	DRM_DEBUG("drm_ctxbitmap_next bit : %d\n", bit);
-	if ((bit+1) > dev->max_context) {
-		int old_context = dev->max_context;
+	if ((bit+1) > dev->max_context)
 		dev->max_context = (bit+1);
-		if (dev->context_sareas != NULL) {
-			drm_local_map_t **ctx_sareas;
-
-			 ctx_sareas = drm_realloc(dev->context_sareas,
-			    old_context * sizeof(*dev->context_sareas),
-			    dev->max_context * sizeof(*dev->context_sareas), M_DRM);
-			if (ctx_sareas == NULL) {
-				clear_bit(bit, dev->ctx_bitmap);
-				DRM_UNLOCK();
-				return -1;
-			}
-			dev->context_sareas = ctx_sareas;
-			dev->context_sareas[bit] = NULL;
-		} else {
-			/* max_context == 1 at this point */
-			dev->context_sareas = drm_calloc(dev->max_context, 
-			    sizeof(*dev->context_sareas), DRM_MEM_CTXLIST);
-			if (dev->context_sareas == NULL) {
-				clear_bit(bit, dev->ctx_bitmap);
-				DRM_UNLOCK();
-				return -1;
-			}
-			dev->context_sareas[bit] = NULL;
-		}
-	}
 	DRM_UNLOCK();
 	return bit;
 }
@@ -116,7 +89,6 @@ drm_ctxbitmap_init(struct drm_device *dev)
 		DRM_UNLOCK();
 		return ENOMEM;
 	}
-	dev->context_sareas = NULL;
 	dev->max_context = -1;
 	DRM_UNLOCK();
 
@@ -132,99 +104,8 @@ void
 drm_ctxbitmap_cleanup(struct drm_device *dev)
 {
 	DRM_LOCK();
-	drm_free(dev->context_sareas,
-	    sizeof(dev->context_sareas) * dev->max_context, DRM_MEM_CTXLIST);
 	drm_free(dev->ctx_bitmap, PAGE_SIZE, DRM_MEM_CTXBITMAP);
 	DRM_UNLOCK();
-}
-
-/* ================================================================
- * Per Context SAREA Support
- */
-
-int
-drm_getsareactx(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	drm_ctx_priv_map_t *request = data;
-	drm_local_map_t *map;
-
-	DRM_LOCK();
-	if (dev->max_context < 0 ||
-	    request->ctx_id >= (unsigned) dev->max_context) {
-		DRM_UNLOCK();
-		return EINVAL;
-	}
-
-	map = dev->context_sareas[request->ctx_id];
-	DRM_UNLOCK();
-
-	request->handle = map->handle;
-
-	return 0;
-}
-
-int
-drm_setsareactx(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_ctx_priv_map_t *request = data;
-	drm_local_map_t *map = NULL;
-
-	DRM_LOCK();
-	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (map->handle == request->handle) {
-			if (dev->max_context < 0)
-				goto bad;
-			if (request->ctx_id >= (unsigned) dev->max_context)
-				goto bad;
-			dev->context_sareas[request->ctx_id] = map;
-			DRM_UNLOCK();
-			return 0;
-		}
-	}
-
-bad:
-	DRM_UNLOCK();
-	return EINVAL;
-}
-
-/* ================================================================
- * The actual DRM context handling routines
- */
-
-int
-drm_context_switch(struct drm_device *dev, int old, int new)
-{
-        if ( test_and_set_bit( 0, &dev->context_flag ) ) {
-                DRM_ERROR( "Reentering -- FIXME\n" );
-                return EBUSY;
-        }
-
-        DRM_DEBUG( "Context switch from %d to %d\n", old, new );
-
-        if ( new == dev->last_context ) {
-                clear_bit( 0, &dev->context_flag );
-                return 0;
-        }
-
-        return 0;
-}
-
-int
-drm_context_switch_complete(struct drm_device *dev, int new)
-{
-        dev->last_context = new;  /* PRE/POST: This is the _only_ writer. */
-
-        if ( !_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ) {
-                DRM_ERROR( "Lock isn't held after context switch\n" );
-        }
-
-				/* If a context switch is ever initiated
-                                   when the kernel holds the lock, release
-                                   that lock here. */
-        clear_bit( 0, &dev->context_flag );
-
-        return 0;
 }
 
 int
@@ -275,39 +156,12 @@ drm_addctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drm_modctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	/* This does nothing */
-	return 0;
-}
-
-int
 drm_getctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
 	/* This is 0, because we don't handle any context flags */
 	ctx->flags = 0;
-
-	return 0;
-}
-
-int
-drm_switchctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_ctx_t *ctx = data;
-
-	DRM_DEBUG( "%d\n", ctx->handle );
-	return drm_context_switch(dev, dev->last_context, ctx->handle);
-}
-
-int
-drm_newctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_ctx_t *ctx = data;
-
-	DRM_DEBUG( "%d\n", ctx->handle );
-	drm_context_switch_complete(dev, ctx->handle);
 
 	return 0;
 }

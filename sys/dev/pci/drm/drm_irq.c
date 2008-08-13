@@ -91,8 +91,6 @@ drm_irq_install(struct drm_device *dev)
 	}
 	dev->irq_enabled = 1;
 
-	dev->context_flag = 0;
-
 	mtx_init(&dev->irq_lock, IPL_BIO);
 
 				/* Before installing handler */
