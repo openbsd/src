@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.80 2008/08/12 08:26:42 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.81 2008/08/13 20:29:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -149,6 +149,8 @@ void		uvideo_debug_file_write_frame(void *);
  */
 int		uvideo_querycap(void *, struct v4l2_capability *);
 int		uvideo_enum_fmt(void *, struct v4l2_fmtdesc *);
+int		uvideo_enum_fsizes(void *, struct v4l2_frmsizeenum *);
+int		uvideo_enum_fivals(void *, struct v4l2_frmivalenum *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
 int		uvideo_g_fmt(void *, struct v4l2_format *);
 int		uvideo_enum_input(void *, struct v4l2_input *);
@@ -185,6 +187,8 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_close,		/* close */
 	uvideo_querycap,	/* VIDIOC_QUERYCAP */
 	uvideo_enum_fmt,	/* VIDIOC_ENUM_FMT */
+	uvideo_enum_fsizes,	/* VIDIOC_ENUM_FRAMESIZES */
+	uvideo_enum_fivals,	/* VIDIOC_ENUM_FRAMEINTERVALS */
 	uvideo_s_fmt,		/* VIDIOC_S_FMT */
 	uvideo_g_fmt,		/* VIDIOC_G_FMT */
 	uvideo_enum_input,	/* VIDIOC_ENUMINPUT */
@@ -2155,6 +2159,64 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 	}
 
 	return (0);
+}
+
+int
+uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
+{
+	struct uvideo_softc *sc = v;
+	int i, idx, found = 0;
+
+	for (idx = 0; idx < sc->sc_fmtgrp_num; idx++) {
+		if (sc->sc_fmtgrp[idx].pixelformat == fsizes->pixel_format) {
+			found = 1;
+			break;
+		}
+	}
+	if (found == 0)
+		return (EINVAL);
+
+	i = fsizes->index + 1;
+	if (i > sc->sc_fmtgrp[idx].frame_num)
+		/* no more frames left */
+		return (EINVAL);
+
+	if (sc->sc_fmtgrp[idx].frame[i]->bFrameIntervalType == 0) {
+		/* TODO */
+		fsizes->type = V4L2_FRMSIZE_TYPE_CONTINUOUS;
+		fsizes->stepwise.min_width = 0;
+		fsizes->stepwise.min_height = 0;
+		fsizes->stepwise.max_width = 0;
+		fsizes->stepwise.max_height = 0;
+	} else {
+		fsizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+		fsizes->discrete.width =
+		    UGETW(sc->sc_fmtgrp[idx].frame[i]->wWidth);
+		fsizes->discrete.height =
+		    UGETW(sc->sc_fmtgrp[idx].frame[i]->wHeight);
+	}
+
+	return (0);
+}
+
+int
+uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
+{
+	struct uvideo_softc *sc = v;
+	int idx, found = 0;
+
+	for (idx = 0; idx < sc->sc_fmtgrp_num; idx++) {
+		if (sc->sc_fmtgrp[idx].pixelformat == fivals->pixel_format) {
+			found = 1;
+			break;
+		}
+	}
+	if (found == 0)
+		return (EINVAL);
+
+	/* TODO */
+
+	return (EINVAL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.20 2008/07/31 15:26:25 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.21 2008/08/13 20:29:34 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -198,6 +198,16 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (sc->hw_if->enum_fmt)
 			error = (sc->hw_if->enum_fmt)(sc->hw_hdl,
 			    (struct v4l2_fmtdesc *)data);
+		break;
+	case VIDIOC_ENUM_FRAMESIZES:
+		if (sc->hw_if->enum_fsizes)
+			error = (sc->hw_if->enum_fsizes)(sc->hw_hdl,
+			    (struct v4l2_frmsizeenum *)data);
+		break;
+	case VIDIOC_ENUM_FRAMEINTERVALS:
+		if (sc->hw_if->enum_fivals)
+			error = (sc->hw_if->enum_fivals)(sc->hw_hdl,
+			    (struct v4l2_frmivalenum *)data);
 		break;
 	case VIDIOC_S_FMT:
 		if (!(flags & FWRITE))
