@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.10 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.11 2008/08/13 17:38:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -97,8 +97,6 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_nombuf++;
 		goto done;
 	}
-
-	ic->ic_stats.is_rx_eapol_key++;
 	key = mtod(m0, struct ieee80211_eapol_key *);
 
 	if (key->type != EAPOL_KEY)
@@ -112,7 +110,7 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 		goto done;
 
 	/* check packet body length */
-	if (m0->m_len < 4 + BE_READ_2(key->len))
+	if (m0->m_pkthdr.len < 4 + BE_READ_2(key->len))
 		goto done;
 
 	/* check key data length */
@@ -127,15 +125,15 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 	if (desc < EAPOL_KEY_DESC_V1 || desc > EAPOL_KEY_DESC_V3)
 		goto done;
 
-	if ((ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X ||
-	     ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK) &&
-	    desc != EAPOL_KEY_DESC_V3)
-		goto done;
-
-	if ((ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
-	     ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP) &&
-	    desc != EAPOL_KEY_DESC_V2)
-		goto done;
+	if (ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X ||
+	    ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK) {
+		if (desc != EAPOL_KEY_DESC_V3)
+			goto done;
+	} else if (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
+	     ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP) {
+		if (desc != EAPOL_KEY_DESC_V2)
+			goto done;
+	}
 
 	/* make sure the key data field is contiguous */
 	if (m0->m_len < totlen && (m0 = m_pullup2(m0, totlen)) == NULL) {
@@ -511,11 +509,6 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (gtk != NULL) {
 		u_int8_t kid;
 
-		/* check that the GTK KDE is valid */
-		if (gtk[1] < 4 + 2) {
-			reason = IEEE80211_REASON_AUTH_LEAVE;
-			goto deauth;
-		}
 		/* check that key length matches that of group cipher */
 		keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
 		if (gtk[1] != 6 + keylen) {
@@ -766,9 +759,9 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	/* check that the GTK KDE is present and valid */
-	if (gtk == NULL || gtk[1] < 4 + 2) {
-		DPRINTF(("missing or invalid GTK KDE\n"));
+	/* check that the GTK KDE is present */
+	if (gtk == NULL) {
+		DPRINTF(("GTK KDE missing\n"));
 		return;
 	}
 
@@ -878,16 +871,17 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 		DPRINTF(("decryption failed\n"));
 		return;
 	}
-	info = BE_READ_2(key->info);
-	keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
 
 	/* check that key length matches that of group cipher */
+	keylen = ieee80211_cipher_keylen(ni->ni_rsngroupcipher);
 	if (BE_READ_2(key->keylen) != keylen)
 		return;
 
 	/* check that the data length is large enough to hold the key */
 	if (BE_READ_2(key->paylen) < keylen)
 		return;
+
+	info = BE_READ_2(key->info);
 
 	/* map GTK to 802.11 key */
 	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
