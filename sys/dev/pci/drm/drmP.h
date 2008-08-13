@@ -66,6 +66,7 @@
 #include <dev/pci/vga_pcivar.h>
 #include <machine/param.h>
 #include <machine/bus.h>
+#include <crypto/idgen.h>
 
 #include "drm.h"
 #include "drm_linux_list.h"
@@ -634,6 +635,7 @@ struct drm_device {
 
 				/* Authentication */
 	drm_file_list_t   files;
+	struct idgen32_ctx magicid;
 	SPLAY_HEAD(drm_magic_tree, drm_magic_entry)	magiclist;
 
 	/* Linked list of mappable regions. Protected by dev_lock */
