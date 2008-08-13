@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.97 2008/08/12 20:07:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.98 2008/08/13 17:44:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -563,8 +563,8 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 	struct ether_header *eh;
 	struct llc *llc;
 
-	if (m->m_len < hdrlen + sizeof(*llc)) {
-		m = m_pullup(m, hdrlen + sizeof(*llc));
+	if (m->m_len < hdrlen + LLC_SNAPFRAMELEN) {
+		m = m_pullup(m, hdrlen + LLC_SNAPFRAMELEN);
 		if (m == NULL)
 			return NULL;
 	}
@@ -576,7 +576,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 	    llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 &&
 	    llc->llc_snap.org_code[2] == 0) {
-		m_adj(m, hdrlen + sizeof(*llc) - sizeof(*eh));
+		m_adj(m, hdrlen + LLC_SNAPFRAMELEN - sizeof(*eh));
 		llc = NULL;
 	} else {
 		m_adj(m, hdrlen - sizeof(*eh));
@@ -721,29 +721,29 @@ ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 {
 	if (memcmp(selector, MICROSOFT_OUI, 3) == 0) {	/* WPA */
 		switch (selector[3]) {
-		case 0: /* use group data cipher suite */
+		case 0:	/* use group data cipher suite */
 			return IEEE80211_CIPHER_USEGROUP;
-		case 1: /* WEP-40 */
+		case 1:	/* WEP-40 */
 			return IEEE80211_CIPHER_WEP40;
-		case 2: /* TKIP */
+		case 2:	/* TKIP */
 			return IEEE80211_CIPHER_TKIP;
-		case 4: /* CCMP (RSNA default) */
+		case 4:	/* CCMP (RSNA default) */
 			return IEEE80211_CIPHER_CCMP;
-		case 5: /* WEP-104 */
+		case 5:	/* WEP-104 */
 			return IEEE80211_CIPHER_WEP104;
 		}
 	} else if (memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN */
 		/* from IEEE Std 802.11 - Table 20da */
 		switch (selector[3]) {
-		case 0: /* use group data cipher suite */
+		case 0:	/* use group data cipher suite */
 			return IEEE80211_CIPHER_USEGROUP;
-		case 1: /* WEP-40 */
+		case 1:	/* WEP-40 */
 			return IEEE80211_CIPHER_WEP40;
-		case 2: /* TKIP */
+		case 2:	/* TKIP */
 			return IEEE80211_CIPHER_TKIP;
-		case 4: /* CCMP (RSNA default) */
+		case 4:	/* CCMP (RSNA default) */
 			return IEEE80211_CIPHER_CCMP;
-		case 5: /* WEP-104 */
+		case 5:	/* WEP-104 */
 			return IEEE80211_CIPHER_WEP104;
 		case 6:	/* AES-128-CMAC */
 			return IEEE80211_CIPHER_AES128_CMAC;
