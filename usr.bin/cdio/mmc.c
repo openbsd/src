@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.24 2008/08/08 07:26:40 fgsch Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.25 2008/08/13 12:21:19 av Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -38,6 +38,42 @@ extern char *cdname;
 #define MMC_FEATURE_CDRW_CAV		0x27
 #define MMC_FEATURE_CD_TAO		0x2d
 #define MMC_FEATURE_CDRW_WRITE		0x37
+
+int
+get_media_type(void)
+{
+	scsireq_t scr;
+	char buf[32];
+	u_char disctype;
+	int rv, error;
+
+	rv = MEDIATYPE_UNKNOWN;
+	memset(buf, 0, sizeof(buf));
+	memset(&scr, 0, sizeof(scr));
+
+	scr.cmd[0] = READ_TOC;
+	scr.cmd[1] = 0x2;	/* MSF */
+	scr.cmd[2] = 0x4;	/* ATIP */
+	scr.cmd[8] = 0x20;
+
+	scr.flags = SCCMD_ESCAPE | SCCMD_READ;
+	scr.databuf = buf;
+	scr.datalen = sizeof(buf);
+	scr.cmdlen = 10;
+	scr.timeout = 120000;
+	scr.senselen = SENSEBUFLEN;
+
+	error = ioctl(fd, SCIOCCOMMAND, &scr);
+	if (error != -1 && scr.retsts == 0 && scr.datalen_used > 7) {
+		disctype = (buf[6] >> 6) & 0x1;
+		if (disctype == 0)
+			rv = MEDIATYPE_CDR;
+		else if (disctype == 1)
+			rv = MEDIATYPE_CDRW;
+	}
+
+	return (rv);
+}
 
 int
 get_media_capabilities(int *cap)

@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.12 2008/06/30 23:35:39 av Exp $ */
+/* $OpenBSD: extern.h,v 1.13 2008/08/13 12:21:19 av Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -60,12 +60,20 @@ SLIST_HEAD(track_head, track_info) tracks;
  */
 #define CD_MAX_SPEED		380
 
+/*
+ * Media types
+ */
+#define MEDIATYPE_UNKNOWN	0
+#define MEDIATYPE_CDR		1
+#define MEDIATYPE_CDRW		2
+
 extern unsigned long 	entry2time(struct cd_toc_entry *);
 extern unsigned long 	entry2frames(struct cd_toc_entry *);
 extern int              open_cd(char *, int);
 extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
+extern int		get_media_type(void);
 extern int		get_media_capabilities(int *cap);
 extern int		blank(void);
 extern int		unit_ready(void);

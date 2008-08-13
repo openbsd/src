@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.65 2008/08/08 07:26:40 fgsch Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.66 2008/08/13 12:21:19 av Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -517,7 +517,8 @@ run(int cmd, char *arg)
 			warnx("Can't determine media type");
 			return (0);
 		}
-		if ((mediacap & MEDIACAP_CDRW_WRITE) == 0) {
+		if ((mediacap & MEDIACAP_CDRW_WRITE) == 0 &&
+		    get_media_type() != MEDIATYPE_CDRW) {
 			warnx("The media doesn't support blanking");
 			return (0);
 		}
