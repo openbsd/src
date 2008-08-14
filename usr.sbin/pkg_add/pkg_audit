@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_audit,v 1.4 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: pkg_audit,v 1.5 2008/08/14 13:06:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -24,6 +24,7 @@ use File::Find;
 
 my %found;
 
+print "Scanning packages\n";
 for my $pkg (installed_packages()) {
 	my $plist = OpenBSD::PackingList->from_installation($pkg, 
 	    \&OpenBSD::PackingList::FilesOnly);
@@ -34,7 +35,21 @@ for my $pkg (installed_packages()) {
 	}
 }
 
+print "\nFiles not accounted for by any package: \n";
 find(sub {
 	return unless -f $_;
-	print $File::Find::name, "\n" unless $found{$File::Find::name};
+	if ($found{$File::Find::name}) {
+		delete $found{$File::Find::name};
+	} else {
+		print $File::Find::name, "\n" 
+	}
 }, '/usr/local');
+
+print "\nStuff that should be there, but isn't:\n";
+my %packages;
+for my $item (keys %found) {
+	push(@{$packages{$found{$item}}}, $item);
+}
+for my $pkg (keys %packages) {
+	print "$pkg -> ", join(' ', @{$packages{$pkg}}), "\n";
+}
