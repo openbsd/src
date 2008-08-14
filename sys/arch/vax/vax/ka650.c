@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.13 2004/01/29 21:34:17 deraadt Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.14 2008/08/14 11:41:30 martin Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -106,9 +106,9 @@ uvaxIII_conf()
 	    syssub == VAX_SIE_KA655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
 	ka650setcache(CACHEON);
-	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
+	if (ptoa(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
-		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
+		    ptoa(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
 	if (mfpr(PR_TODR) == 0)

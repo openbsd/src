@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.96 2008/06/27 17:22:15 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.97 2008/08/14 11:41:30 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -192,7 +192,7 @@ cpu_startup()
 
 	printf("real mem = %u (%uMB)\n", avail_end,
 	    avail_end/1024/1024);
-	physmem = btoc(avail_end);
+	physmem = atop(avail_end);
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
@@ -287,10 +287,10 @@ dumpconf(void)
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	dumpsize = physmem + 1;
-	if (dumpsize > btoc(dbtob(nblks - dumplo)))
-		dumpsize = btoc(dbtob(nblks - dumplo));
+	if (dumpsize > atop(dbtob(nblks - dumplo)))
+		dumpsize = atop(dbtob(nblks - dumplo));
 	else if (dumplo == 0)
-		dumplo = nblks - btodb(ctob(dumpsize));
+		dumplo = nblks - btodb(ptoa(dumpsize));
 
 	/*
 	 * Don't dump on the first block in case the dump

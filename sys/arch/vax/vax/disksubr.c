@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2008/06/12 06:58:38 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2008/08/14 11:41:30 martin Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ disk_reallymapin(struct buf *bp, pt_entry_t *map, int reg, int flag)
 	caddr_t addr;
 
 	o = (int)bp->b_data & VAX_PGOFSET;
-	npf = vax_btoc(bp->b_bcount + o) + 1;
+	npf = vax_atop(bp->b_bcount + o) + 1;
 	addr = bp->b_data;
 	p = bp->b_proc;
 

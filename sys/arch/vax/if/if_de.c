@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.19 2006/04/16 00:46:32 pascoe Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.20 2008/08/14 11:41:30 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ deinit(ds)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
-		    sizeof (struct ether_header), (int)vax_btoc(ETHERMTU),
+		    sizeof (struct ether_header), (int)vax_atop(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
