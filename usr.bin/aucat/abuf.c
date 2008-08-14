@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.4 2008/08/14 09:44:15 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.5 2008/08/14 09:46:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -61,6 +61,7 @@ abuf_new(unsigned nfr, unsigned bpf)
 	buf->len = len;
 	buf->used = 0;
 	buf->start = 0;
+	buf->abspos = 0;
 	buf->silence = 0;
 	buf->drop = 0;
 	buf->rproc = NULL;
@@ -113,6 +114,7 @@ abuf_rdiscard(struct abuf *buf, unsigned count)
 	buf->start += count;
 	if (buf->start >= buf->len)
 		buf->start -= buf->len;
+	buf->abspos += count;
 }
 
 /*
