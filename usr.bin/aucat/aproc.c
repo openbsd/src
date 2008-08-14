@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.7 2008/08/14 09:44:15 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.8 2008/08/14 09:45:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -70,6 +70,8 @@ aproc_new(struct aproc_ops *ops, char *name)
 void
 aproc_del(struct aproc *p)
 {
+	if (p->ops->done)
+		p->ops->done(p);
 	DPRINTF("aproc_del: %s: %s: deleted\n", p->ops->name, p->name);
 	free(p);
 }
@@ -129,13 +131,12 @@ rpipe_out(struct aproc *p, struct abuf *obuf)
 }
 
 void
-rpipe_del(struct aproc *p)
+rpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 
 	f->rproc = NULL;
 	f->events &= ~POLLIN;
-	aproc_del(p);
 }
 
 void
@@ -143,18 +144,18 @@ rpipe_eof(struct aproc *p, struct abuf *ibuf_dummy)
 {
 	DPRINTFN(3, "rpipe_eof: %s\n", p->name);
 	abuf_eof(LIST_FIRST(&p->obuflist));
-	rpipe_del(p);
+	aproc_del(p);
 }
 
 void
 rpipe_hup(struct aproc *p, struct abuf *obuf)
 {
 	DPRINTFN(3, "rpipe_hup: %s\n", p->name);
-	rpipe_del(p);
+	aproc_del(p);
 }
 
 struct aproc_ops rpipe_ops = {
-	"rpipe", rpipe_in, rpipe_out, rpipe_eof, rpipe_hup, NULL, NULL
+	"rpipe", rpipe_in, rpipe_out, rpipe_eof, rpipe_hup, NULL, NULL, rpipe_done
 };
 
 struct aproc *
@@ -170,13 +171,12 @@ rpipe_new(struct file *f)
 }
 
 void
-wpipe_del(struct aproc *p)
+wpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 
 	f->wproc = NULL;
 	f->events &= ~POLLOUT;
-	aproc_del(p);
 }
 
 int
@@ -214,7 +214,7 @@ wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
 	abuf_rdiscard(ibuf, count);
 	if (ABUF_EOF(ibuf)) {
 		abuf_hup(ibuf);
-		wpipe_del(p);
+		aproc_del(p);
 		return 0;
 	}
 	abuf_fill(ibuf);
@@ -225,7 +225,7 @@ void
 wpipe_eof(struct aproc *p, struct abuf *ibuf)
 {
 	DPRINTFN(3, "wpipe_eof: %s\n", p->name);
-	wpipe_del(p);
+	aproc_del(p);
 }
 
 void
@@ -233,11 +233,11 @@ wpipe_hup(struct aproc *p, struct abuf *obuf_dummy)
 {
 	DPRINTFN(3, "wpipe_hup: %s\n", p->name);
 	abuf_hup(LIST_FIRST(&p->ibuflist));
-	wpipe_del(p);
+	aproc_del(p);
 }
 
 struct aproc_ops wpipe_ops = {
-	"wpipe", wpipe_in, wpipe_out, wpipe_eof, wpipe_hup, NULL, NULL
+	"wpipe", wpipe_in, wpipe_out, wpipe_eof, wpipe_hup, NULL, NULL, wpipe_done
 };
 
 struct aproc *
@@ -454,7 +454,7 @@ mix_newout(struct aproc *p, struct abuf *obuf)
 }
 
 struct aproc_ops mix_ops = {
-	"mix", mix_in, mix_out, mix_eof, mix_hup, mix_newin, mix_newout
+	"mix", mix_in, mix_out, mix_eof, mix_hup, mix_newin, mix_newout, NULL
 };
 
 struct aproc *
@@ -494,12 +494,6 @@ sub_rm(struct aproc *p, struct abuf *obuf)
 {
 	LIST_REMOVE(obuf, oent);
 	DPRINTF("sub_rm: %s\n", p->name);
-}
-
-void
-sub_del(struct aproc *p)
-{
-	aproc_del(p);
 }
 
 int
@@ -579,7 +573,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 				abuf_eof(i);
 		}
 		ibuf->wproc = NULL;
-		sub_del(p);
+		aproc_del(p);
 		return 0;
 	}
 	abuf_fill(ibuf);
@@ -596,7 +590,7 @@ sub_eof(struct aproc *p, struct abuf *ibuf)
 		sub_rm(p, obuf);
 		abuf_eof(obuf);
 	}
-	sub_del(p);
+	aproc_del(p);
 }
 
 void
@@ -608,7 +602,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 	sub_rm(p, obuf);
 	if (LIST_EMPTY(&p->obuflist)) {
 		abuf_hup(ibuf);
-		sub_del(p);
+		aproc_del(p);
 	} else
 		abuf_run(ibuf);
 	DPRINTF("sub_hup: done\n");
@@ -622,7 +616,7 @@ sub_newout(struct aproc *p, struct abuf *obuf)
 }
 
 struct aproc_ops sub_ops = {
-	"sub", sub_in, sub_out, sub_eof, sub_hup, NULL, sub_newout
+	"sub", sub_in, sub_out, sub_eof, sub_hup, NULL, sub_newout, NULL
 };
 
 struct aproc *
@@ -758,12 +752,6 @@ conv_bcopy(struct aconv *ist, struct aconv *ost,
 	abuf_wcommit(obuf, ocount);
 }
 
-void
-conv_del(struct aproc *p)
-{
-	aproc_del(p);
-}
-
 int
 conv_in(struct aproc *p, struct abuf *ibuf)
 {
@@ -787,7 +775,7 @@ conv_out(struct aproc *p, struct abuf *obuf)
 	if (ABUF_EOF(ibuf)) {
 		obuf->wproc = NULL;
 		abuf_hup(ibuf);
-		conv_del(p);
+		aproc_del(p);
 		return 0;
 	}
 	abuf_fill(ibuf);
@@ -798,14 +786,14 @@ void
 conv_eof(struct aproc *p, struct abuf *ibuf)
 {
 	abuf_eof(LIST_FIRST(&p->obuflist));
-	conv_del(p);
+	aproc_del(p);
 }
 
 void
 conv_hup(struct aproc *p, struct abuf *obuf)
 {
 	abuf_hup(LIST_FIRST(&p->ibuflist));
-	conv_del(p);
+	aproc_del(p);
 }
 
 void
@@ -840,7 +828,7 @@ aconv_init(struct aconv *st, struct aparams *par, int input)
 }
 
 struct aproc_ops conv_ops = {
-	"conv", conv_in, conv_out, conv_eof, conv_hup, NULL, NULL
+	"conv", conv_in, conv_out, conv_eof, conv_hup, NULL, NULL, NULL
 };
 
 struct aproc *

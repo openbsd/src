@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.2 2008/06/02 17:06:36 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.3 2008/08/14 09:45:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -91,6 +91,12 @@ struct aproc_ops {
 	 * A new output was connected
 	 */
 	void (*newout)(struct aproc *, struct abuf *);
+
+	/*
+	 * destroy the aproc, called just before to free the
+	 * aproc structure
+	 */
+	void (*done)(struct aproc *);
 };
 
 struct aconv {
@@ -140,12 +146,25 @@ struct aproc {
 	} u;
 };
 
+struct aproc *aproc_new(struct aproc_ops *, char *);
 void aproc_del(struct aproc *);
 void aproc_setin(struct aproc *, struct abuf *);
 void aproc_setout(struct aproc *, struct abuf *);
 
 struct aproc *rpipe_new(struct file *);
+int rpipe_in(struct aproc *, struct abuf *);
+int rpipe_out(struct aproc *, struct abuf *);
+void rpipe_done(struct aproc *);
+void rpipe_eof(struct aproc *, struct abuf *);
+void rpipe_hup(struct aproc *, struct abuf *);
+
 struct aproc *wpipe_new(struct file *);
+void wpipe_done(struct aproc *);
+int wpipe_in(struct aproc *, struct abuf *);
+int wpipe_out(struct aproc *, struct abuf *);
+void wpipe_eof(struct aproc *, struct abuf *);
+void wpipe_hup(struct aproc *, struct abuf *);
+
 struct aproc *mix_new(void);
 struct aproc *sub_new(void);
 struct aproc *conv_new(char *, struct aparams *, struct aparams *);
