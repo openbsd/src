@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.6 2008/08/14 09:39:16 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.7 2008/08/14 09:44:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -320,25 +320,10 @@ int
 mix_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
-	unsigned icount, ocount;
+	unsigned ocount;
 
-	DPRINTFN(4, "mix_in: used = %u, done = %u, zero = %u\n",
+	DPRINTFN(4, "mix_in: used = %u, done = %u, todo = %u\n",
 	    ibuf->used, ibuf->mixdone, obuf->mixtodo);
-
-	/* 
-	 * discard data already sent as silence
-	 */
-	if (ibuf->mixdrop > 0) {
-		icount = ibuf->mixdrop;
-		if (icount > ibuf->used)
-			icount = ibuf->used;
-		ibuf->used -= icount;
-		ibuf->start += icount;
-		if (ibuf->start >= ibuf->len)
-			ibuf->start -= ibuf->len;
-		ibuf->mixdrop -= icount;
-		DPRINTF("mix_in: catched xruns, drop = %u\n", ibuf->mixdrop);
-	}
 		
 	if (ibuf->mixdone >= obuf->mixtodo)
 		return 0;
@@ -394,9 +379,8 @@ mix_out(struct aproc *p, struct abuf *obuf)
 				drop = obuf->mixtodo;
 				i->mixdone += drop;
 				if (i->xrun == XRUN_SYNC)
-					i->mixdrop += drop;
-				DPRINTF("mix_out: xrun, drop = %u\n", 
-				    i->mixdrop);
+					i->drop += drop;
+				DPRINTF("mix_out: drop = %u\n", i->drop);
 			}
 		} else
 			mix_badd(i, obuf);
@@ -458,7 +442,6 @@ void
 mix_newin(struct aproc *p, struct abuf *ibuf)
 {
 	ibuf->mixdone = 0;
-	ibuf->mixdrop = 0;
 	ibuf->mixvol = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
 }
@@ -539,10 +522,9 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 				}
 				drop = ibuf->used;
 				if (i->xrun == XRUN_SYNC)
-					i->subdrop += drop;
+					i->silence += drop;
 				i->subdone += drop;
-				DPRINTF("sub_in: xrun, drop =  %u\n",
-				    i->subdrop);
+				DPRINTF("sub_in: silence =  %u\n", i->silence);
 			}
 		} else {
 			sub_bcopy(ibuf, i);
@@ -565,24 +547,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	struct abuf *i, *inext;
-	unsigned char *odata;
-	unsigned ocount;
 	unsigned done;
-
-	/*
-	 * generate silence for dropped samples
-	 */
-	while (obuf->subdrop > 0) {
-		odata = abuf_wgetblk(obuf, &ocount, 0);
-		if (ocount >= obuf->subdrop)
-			ocount = obuf->subdrop;
-		if (ocount == 0)
-			break;
-		memset(odata, 0, ocount);
-		obuf->used += ocount;
-		obuf->subdrop -= ocount;
-		DPRINTF("sub_out: catch, drop = %u\n", obuf->subdrop);
-	}
 
 	if (obuf->subdone >= ibuf->used)
 		return 0;
@@ -653,7 +618,6 @@ void
 sub_newout(struct aproc *p, struct abuf *obuf)
 {
 	obuf->subdone = 0;
-	obuf->subdrop = 0;
 	obuf->xrun = XRUN_IGNORE;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.5 2008/08/14 09:39:16 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.6 2008/08/14 09:44:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,9 +34,7 @@ struct abuf {
 	int mixvol;		/* input gain */
 	unsigned mixdone;	/* input of mixer */
 	unsigned mixtodo;	/* output of mixer */
-	unsigned mixdrop;	/* frames mix_in() will discard */
 	unsigned subdone;	/* output if sub */
-	unsigned subdrop;	/* silence frames sub_out() will insert */ 
 #define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
 #define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
 #define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
@@ -51,9 +49,11 @@ struct abuf {
 	unsigned start;		/* offset where data starts */
 	unsigned used;		/* valid data */
 	unsigned len;		/* size of the ring */
+	unsigned silence;	/* silence to insert on next write */
+	unsigned drop;		/* frames to drop on next read */
 	struct aproc *rproc;	/* reader */
 	struct aproc *wproc;	/* writer */
-	unsigned char *data;	/* pointer to actual data (immediately following) */
+	unsigned char *data;	/* actual data (immediately following) */
 };
 
 /*
