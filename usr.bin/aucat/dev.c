@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.1 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.2 2008/08/14 15:25:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -461,7 +461,6 @@ dev_attach(char *name,
 		ibuf->silence += -delta * ibuf->bpf;
 	}
 	if (ibuf && (dev_mix->u.mix.flags & MIX_DROP)) {
-		DPRINTF("lmkqsjdlkqsjklqsd\n");
 		/*
 		 * fill the play buffer with silence to avoid underruns,
 		 * drop samples on the input to keep play/record in sync
