@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.5 2008/08/14 09:46:36 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.6 2008/08/14 10:02:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -97,6 +97,8 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 
 	start = buf->start + ofs;
 	used = buf->used - ofs;
+	if (start >= buf->len)
+		start -= buf->len;
 	count = buf->len - start;
 	if (count > used)
 		count = used;
