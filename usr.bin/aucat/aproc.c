@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.8 2008/08/14 09:45:23 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.9 2008/08/14 09:47:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -395,7 +395,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	}
 	if (ocount == 0)
 		return 0;
-	if (LIST_EMPTY(&p->ibuflist)) {
+	if (LIST_EMPTY(&p->ibuflist) && (p->u.mix.flags & MIX_AUTOQUIT)) {
 		DPRINTF("mix_out: nothing more to do...\n");
 		obuf->wproc = NULL;
 		aproc_del(p);
@@ -600,7 +600,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 
 	DPRINTF("sub_hup: %s: detached\n", p->name);
 	sub_rm(p, obuf);
-	if (LIST_EMPTY(&p->obuflist)) {
+	if (LIST_EMPTY(&p->obuflist) && (p->u.sub.flags & SUB_AUTOQUIT)) {
 		abuf_hup(ibuf);
 		aproc_del(p);
 	} else

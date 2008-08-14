@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.3 2008/08/14 09:45:23 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.4 2008/08/14 09:47:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -136,11 +136,13 @@ struct aproc {
 			struct aconv ist, ost;
 		} conv;
 		struct {
-#define MIX_DROP 1
+#define MIX_DROP	1
+#define MIX_AUTOQUIT	2
 			unsigned flags;
 		} mix;
 		struct {
-#define SUB_DROP 1
+#define SUB_DROP	1
+#define SUB_AUTOQUIT	2
 			unsigned flags;
 		} sub;
 	} u;
