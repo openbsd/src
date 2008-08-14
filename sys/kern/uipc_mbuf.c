@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.91 2008/08/08 08:54:08 thib Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.92 2008/08/14 19:39:40 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -271,9 +271,12 @@ m_free(struct mbuf *m)
 	if (m->m_flags & M_PKTHDR)
 		m_tag_delete_chain(m);
 	if (m->m_flags & M_EXT) {
-		if (MCLISREFERENCED(m))
-			_MCLDEREFERENCE(m);
-		else if (m->m_flags & M_CLUSTER)
+		if (MCLISREFERENCED(m)) {
+			m->m_ext.ext_nextref->m_ext.ext_prevref =
+			    m->m_ext.ext_prevref;
+			m->m_ext.ext_prevref->m_ext.ext_nextref =
+			    m->m_ext.ext_nextref;
+		} else if (m->m_flags & M_CLUSTER)
 			pool_put(&mclpool, m->m_ext.ext_buf);
 		else if (m->m_ext.ext_free)
 			(*(m->m_ext.ext_free))(m->m_ext.ext_buf,

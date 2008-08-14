@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.101 2008/08/07 18:33:49 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.102 2008/08/14 19:39:40 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -238,13 +238,6 @@ struct mbuf {
 #endif
 
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
-
-#define	_MCLDEREFERENCE(m)	do {					\
-		(m)->m_ext.ext_nextref->m_ext.ext_prevref =		\
-			(m)->m_ext.ext_prevref;				\
-		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
-			(m)->m_ext.ext_nextref;				\
-	} while (/* CONSTCOND */ 0)
 
 #define	_MCLADDREFERENCE(o, n)	do {					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
