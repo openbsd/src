@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.99 2008/08/14 16:02:23 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.100 2008/08/14 16:07:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -62,6 +62,8 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
 
+void	ieee80211_deliver_data(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *);
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
@@ -131,12 +133,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
-	struct ether_header *eh;
-	struct mbuf *m1;
-	int error, hdrlen, len;
-	u_int8_t dir, type, subtype;
 	u_int16_t *orxseq, nrxseq;
-	int tid;
+	u_int8_t dir, type, subtype, tid;
+	int hdrlen;
 
 #ifdef DIAGNOSTIC
 	if (ni == NULL)
@@ -368,70 +367,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ic->ic_stats.is_rx_decap++;
 			goto err;
 		}
-		eh = mtod(m, struct ether_header *);
-
-		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-		    !ni->ni_port_valid &&
-		    eh->ether_type != htons(ETHERTYPE_PAE)) {
-			DPRINTF(("port not valid: %s\n",
-			    ether_sprintf(wh->i_addr2)));
-			ic->ic_stats.is_rx_unauth++;
-			goto err;
-		}
-		ifp->if_ipackets++;
-
-		/*
-		 * Perform as a bridge within the AP.  XXX we do not bridge
-		 * 802.1X frames as suggested in C.1.1 of IEEE Std 802.1X.
-		 */
-		m1 = NULL;
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
-		    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
-		    eh->ether_type != htons(ETHERTYPE_PAE)) {
-			if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
-				m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-				if (m1 == NULL)
-					ifp->if_oerrors++;
-				else
-					m1->m_flags |= M_MCAST;
-			} else {
-				struct ieee80211_node *ni;
-				ni = ieee80211_find_node(ic, eh->ether_dhost);
-				if (ni != NULL) {
-					if (ni->ni_associd != 0) {
-						m1 = m;
-						m = NULL;
-					}
-				}
-			}
-			if (m1 != NULL) {
-				len = m1->m_pkthdr.len;
-				IFQ_ENQUEUE(&ifp->if_snd, m1, NULL, error);
-				if (error)
-					ifp->if_oerrors++;
-				else {
-					if (m != NULL)
-						ifp->if_omcasts++;
-					ifp->if_obytes += len;
-					if_start(ifp);
-				}
-			}
-		}
-		if (m != NULL) {
-#if NBPFILTER > 0
-			/*
-			 * If we forward frame into transmitter of the AP,
-			 * we don't need to duplicate for DLT_EN10MB.
-			 */
-			if (ifp->if_bpf && m1 == NULL)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-			if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-			    eh->ether_type == htons(ETHERTYPE_PAE))
-				ieee80211_eapol_key_input(ic, m, ni);
-			else
-				ether_input_mbuf(ifp, m);
-		}
+		ieee80211_deliver_data(ic, m, ni);
 		return;
 
 	case IEEE80211_FC0_TYPE_MGT:
@@ -557,10 +493,84 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	}
 }
 
+void
+ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_node *ni1;
+	struct ether_header *eh;
+	struct mbuf *m1;
+	int error, len;
+
+	eh = mtod(m, struct ether_header *);
+
+	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
+	    eh->ether_type != htons(ETHERTYPE_PAE)) {
+		DPRINTF(("port not valid: %s\n",
+		    ether_sprintf(eh->ether_dhost)));
+		ic->ic_stats.is_rx_unauth++;
+		m_freem(m);
+		return;
+	}
+	ifp->if_ipackets++;
+
+	/*
+	 * Perform as a bridge within the AP.  Notice that we do not
+	 * bridge EAPOL frames as suggested in C.1.1 of IEEE Std 802.1X.
+	 */
+	m1 = NULL;
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
+	    eh->ether_type != htons(ETHERTYPE_PAE)) {
+		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+			m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			if (m1 == NULL)
+				ifp->if_oerrors++;
+			else
+				m1->m_flags |= M_MCAST;
+		} else {
+			ni1 = ieee80211_find_node(ic, eh->ether_dhost);
+			if (ni1 != NULL &&
+			    ni1->ni_state == IEEE80211_STA_ASSOC) {
+				m1 = m;
+				m = NULL;
+			}
+		}
+		if (m1 != NULL) {
+			len = m1->m_pkthdr.len;
+			IFQ_ENQUEUE(&ifp->if_snd, m1, NULL, error);
+			if (error)
+				ifp->if_oerrors++;
+			else {
+				if (m != NULL)
+					ifp->if_omcasts++;
+				ifp->if_obytes += len;
+				if_start(ifp);
+			}
+		}
+	}
+	if (m != NULL) {
+#if NBPFILTER > 0
+		/*
+		 * If we forward frame into transmitter of the AP,
+		 * we don't need to duplicate for DLT_EN10MB.
+		 */
+		if (ifp->if_bpf && m1 == NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+		    eh->ether_type == htons(ETHERTYPE_PAE))
+			ieee80211_eapol_key_input(ic, m, ni);
+		else
+			ether_input_mbuf(ifp, m);
+	}
+}
+
 struct mbuf *
 ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 {
-	struct ieee80211_frame wh;
+	struct ieee80211_qosframe_addr4 wh;	/* largest 802.11 header */
 	struct ether_header *eh;
 	struct llc *llc;
 
@@ -569,7 +579,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 		if (m == NULL)
 			return NULL;
 	}
-	memcpy(&wh, mtod(m, caddr_t), sizeof(wh));
+	memcpy(&wh, mtod(m, caddr_t), hdrlen);
 	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
 	if (llc->llc_dsap == LLC_SNAP_LSAP &&
 	    llc->llc_ssap == LLC_SNAP_LSAP &&
@@ -597,10 +607,9 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr3);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
-		/* not yet supported */
-		DPRINTF(("discard DS to DS frame\n"));
-		m_freem(m);
-		return NULL;
+		IEEE80211_ADDR_COPY(eh->ether_dhost, wh.i_addr3);
+		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr4);
+		break;
 	}
 	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
