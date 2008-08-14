@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.53 2008/08/14 16:10:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.54 2008/08/14 16:14:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -57,9 +57,9 @@ void	ieee80211_prf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 #ifdef notyet
 void	ieee80211_kdf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
-#endif
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
+#endif
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
@@ -395,6 +395,7 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
 /*
  * Derive Pairwise Master Key Identifier (PMKID) (see 8.5.1.2).
  */
+#ifdef notyet
 void
 ieee80211_derive_pmkid(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
     const u_int8_t *spa, u_int8_t *pmkid)
@@ -410,6 +411,7 @@ ieee80211_derive_pmkid(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
 	/* use the first 128 bits of the HMAC-SHA1 */
 	memcpy(pmkid, digest, IEEE80211_PMKID_LEN);
 }
+#endif
 
 typedef union _ANY_CTX {
 	HMAC_MD5_CTX	md5;
