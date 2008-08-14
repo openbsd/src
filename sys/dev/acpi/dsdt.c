@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.130 2008/06/14 21:40:16 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.131 2008/08/14 17:41:20 jsing Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3920,7 +3920,10 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_SIZEOF:
 		/* Sizeof: S => i */
-		ival = opargs[0]->length;
+		if (opargs[0]->type == AML_OBJTYPE_OBJREF)
+			ival = opargs[0]->v_objref.ref->length;
+		else
+			ival = opargs[0]->length;
 		break;
 	case AMLOP_OBJECTTYPE:
 		/* ObjectType: S => i */
