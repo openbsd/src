@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.36 2008/08/14 05:15:41 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.37 2008/08/14 05:20:44 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -209,14 +209,14 @@ pthread_exit(void *retval)
 	LIST_REMOVE(thread, threads);
 	_spinunlock(&_thread_lock);
 
-	_sem_post(&thread->donesem);
-
 	stack = thread->stack;
 	tid = thread->tid;
 	if (thread->flags & THREAD_DETACHED)
 		_rthread_free(thread);
-	else
+	else {
 		_rthread_setflag(thread, THREAD_DONE);
+		_sem_post(&thread->donesem);
+	}
 
 	if (tid != _initial_thread.tid)
 		_rthread_add_to_reaper(tid, stack);
