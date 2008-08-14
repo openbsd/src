@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.2 2008/08/14 09:48:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -87,6 +87,7 @@ file_poll(void)
 	struct pollfd pfds[MAXFDS];
 	struct pollfd *pfd;
 	struct file *f, *fnext;
+	struct aproc *p;
 
 	nfds = 0;
 #ifdef DEBUG
@@ -139,7 +140,8 @@ file_poll(void)
 			f->state |= FILE_ROK;
 			DPRINTFN(3, "file_poll: %s rok\n", f->name);
 			while (f->state & FILE_ROK) {
-				if (!f->rproc->ops->in(f->rproc, NULL))
+				p = f->rproc;
+				if (!p || !p->ops->in(p, NULL))
 					break;
 			}
 		}
@@ -148,7 +150,8 @@ file_poll(void)
 			f->state |= FILE_WOK;
 			DPRINTFN(3, "file_poll: %s wok\n", f->name);
 			while (f->state & FILE_WOK) {
-				if (!f->wproc->ops->out(f->wproc, NULL))
+				p = f->wproc;
+				if (!p || !p->ops->out(p, NULL))
 					break;
 			}
 		}
@@ -156,12 +159,16 @@ file_poll(void)
 	LIST_FOREACH(f, &file_list, entry) {
 		if (f->state & FILE_EOF) {
 			DPRINTFN(2, "file_poll: %s: eof\n", f->name);
-			f->rproc->ops->eof(f->rproc, NULL);
+			p = f->rproc;
+			if (p)
+				p->ops->eof(p, NULL);
 			f->state &= ~FILE_EOF;
 		}
 		if (f->state & FILE_HUP) {
 			DPRINTFN(2, "file_poll: %s hup\n", f->name);
-			f->wproc->ops->hup(f->wproc, NULL);
+			p = f->wproc;
+			if (p)
+				p->ops->hup(p, NULL);
 			f->state &= ~FILE_HUP;
 		}
 	}
