@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.88 2008/07/23 16:24:43 beck Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.89 2008/08/14 17:10:29 jsing Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -128,7 +128,8 @@ struct vnd_softc {
 
 	char		 sc_file[VNDNLEN];	/* file we're covering */
 	int		 sc_flags;		/* flags */
-	size_t		 sc_size;		/* size of vnd in blocks */
+	size_t		 sc_size;		/* size of vnd in sectors */
+	size_t		 sc_secsize;		/* sector size in bytes */
 	struct vnode	*sc_vp;			/* vnode */
 	struct ucred	*sc_cred;		/* credentials */
 	struct buf	 sc_tab;		/* transfer queue */
@@ -305,7 +306,7 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
 
 	bzero(lp, sizeof(struct disklabel));
 
-	lp->d_secsize = DEV_BSIZE;
+	lp->d_secsize = sc->sc_secsize;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = sc->sc_size / 100;
@@ -407,6 +408,16 @@ vndstrategy(struct buf *bp)
 		return;
 	}
 
+	/* Ensure that the requested block is sector aligned. */
+	if (bp->b_blkno % DL_BLKSPERSEC(vnd->sc_dk.dk_label) != 0) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		s = splbio();
+		biodone(bp);
+		splx(s);
+		return;
+	}
+
 	bn = bp->b_blkno;
 	bp->b_resid = bp->b_bcount;
 
@@ -434,15 +445,18 @@ vndstrategy(struct buf *bp)
 		bp->b_resid = bp->b_bcount;
 	}
 
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
+	if (vnd->sc_flags & VNF_HAVELABEL)
+		sz = howmany(bp->b_bcount, vnd->sc_dk.dk_label->d_secsize);
+	else
+		sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* No bypassing of buffer cache?  */
 	if (vndsimple(bp->b_dev)) {
 		/* Loop until all queued requests are handled.  */
 		for (;;) {
 			int part = DISKPART(bp->b_dev);
-			daddr64_t off = DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]);
-
+			daddr64_t off = DL_SECTOBLK(vnd->sc_dk.dk_label,
+			    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]));
 			aiov.iov_base = bp->b_data;
 			auio.uio_resid = aiov.iov_len = bp->b_bcount;
 			auio.uio_iov = &aiov;
@@ -509,7 +523,8 @@ vndstrategy(struct buf *bp)
 	}
 
 	/* The old-style buffercache bypassing method.  */
-	bn += DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
+	bn += DL_SECTOBLK(vnd->sc_dk.dk_label,
+	    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]));
 	bn = dbtob(bn);
 	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
@@ -714,7 +729,6 @@ vndbdevsize(struct vnode *vp, struct proc *p)
 {
 	struct partinfo pi;
 	struct bdevsw *bsw;
-	long sscale;
 	dev_t dev;
 
 	dev = vp->v_rdev;
@@ -723,10 +737,9 @@ vndbdevsize(struct vnode *vp, struct proc *p)
 		return (0);
 	if (bsw->d_ioctl(dev, DIOCGPART, (caddr_t)&pi, FREAD, p))
 		return (0);
-	sscale = pi.disklab->d_secsize / DEV_BSIZE;
-	DNPRINTF(VDB_INIT, "vndbdevsize: size %li secsize %li sscale %li\n",
-	    (long)pi.part->p_size,(long)pi.disklab->d_secsize,sscale);
-	return (pi.part->p_size * sscale);
+	DNPRINTF(VDB_INIT, "vndbdevsize: size %li secsize %li\n",
+	    (long)pi.part->p_size,(long)pi.disklab->d_secsize);
+	return (pi.part->p_size);
 }
 
 /* ARGSUSED */
@@ -777,6 +790,14 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return(ENXIO);
 		}
 
+		/* Set sector size for device, if specified. */
+		if (vio->vnd_secsize == 0)
+			vnd->sc_secsize = DEV_BSIZE;
+		else if (vio->vnd_secsize % DEV_BSIZE == 0)
+			vnd->sc_secsize = vio->vnd_secsize;
+		else
+			return (EINVAL);
+
 		/*
 		 * Open for read and write first. This lets vn_open() weed out
 		 * directories, sockets, etc. so we don't have to worry about
@@ -811,7 +832,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				vndunlock(vnd);
 				return (error);
 			}
-			vnd->sc_size = btodb(vattr.va_size); /* note truncation */
+			vnd->sc_size = vattr.va_size / vnd->sc_secsize;
 		}
 		VOP_UNLOCK(nd.ni_vp, 0, p);
 		vnd->sc_vp = nd.ni_vp;
@@ -842,7 +863,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		} else
 			vnd->sc_keyctx = NULL;
 
-		vio->vnd_size = dbtob((off_t)vnd->sc_size);
+		vio->vnd_size = vnd->sc_size * vnd->sc_secsize;
 		vnd->sc_flags |= VNF_INITED;
 
 		DNPRINTF(VDB_INIT, "vndioctl: SET vp %p size %llx\n",
@@ -1004,7 +1025,7 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = MIN(DEV_BSIZE, dbtob((off_t)vnd->sc_size));
+	aiov.iov_len = MIN(DEV_BSIZE, vnd->sc_size * vnd->sc_secsize);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
@@ -1055,7 +1076,7 @@ vndsize(dev_t dev)
 
 	if (unit >= numvnd || (vnd->sc_flags & VNF_INITED) == 0)
 		return (-1);
-	return (vnd->sc_size);
+	return (vnd->sc_size * (vnd->sc_secsize / DEV_BSIZE));
 }
 
 int

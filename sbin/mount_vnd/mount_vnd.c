@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.5 2008/06/14 01:47:27 grunk Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.6 2008/08/14 17:10:29 jsing Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -67,7 +67,7 @@ int verbose = 0;
 int run_mount_vnd = 0;
 
 __dead void	 usage(void);
-int		 config(char *, char *, int, char *, size_t);
+int		 config(char *, char *, int, size_t, char *, size_t);
 int		 getinfo(const char *);
 char		*get_pkcs_key(char *, char *);
 
@@ -76,7 +76,8 @@ main(int argc, char **argv)
 {
 	int	 ch, rv, action, opt_c, opt_k, opt_K, opt_l, opt_u;
 	char	*key, *mntopts, *rounds, *saltopt;
-	size_t	 keylen = 0;
+	size_t	 keylen = 0, secsize = 0;
+	const char *errstr;
 	extern char *__progname;
 
 	if (strcasecmp(__progname, "mount_vnd") == 0)
@@ -86,7 +87,7 @@ main(int argc, char **argv)
 	key = mntopts = rounds = saltopt = NULL;
 	action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "ckK:lo:S:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "ckK:lo:s:S:uv")) != -1) {
 		switch (ch) {
 		case 'c':
 			opt_c = 1;
@@ -106,6 +107,11 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			saltopt = optarg;
+			break;
+		case 's':
+			secsize = strtonum(optarg, 512, 65536, &errstr);
+			if (errstr || (secsize & 0x1ff) != 0)
+				errx(1, "invalid sector size: %s", optarg);
 			break;
 		case 'u':
 			opt_u = 1;
@@ -156,9 +162,10 @@ main(int argc, char **argv)
 			ind_raw = 0;
 			ind_reg = 1;
 		}
-		rv = config(argv[ind_raw], argv[ind_reg], action, key, keylen);
+		rv = config(argv[ind_raw], argv[ind_reg], action, secsize, key,
+		    keylen);
 	} else if (action == VND_UNCONFIG && argc == 1)
-		rv = config(argv[0], NULL, action, NULL, 0);
+		rv = config(argv[0], NULL, action, 0, NULL, 0);
 	else if (action == VND_GET)
 		rv = getinfo(argc ? argv[0] : NULL);
 	else
@@ -274,7 +281,8 @@ query:
 }
 
 int
-config(char *dev, char *file, int action, char *key, size_t keylen)
+config(char *dev, char *file, int action, size_t secsize, char *key,
+    size_t keylen)
 {
 	struct vnd_ioctl vndio;
 	FILE *f;
@@ -289,6 +297,7 @@ config(char *dev, char *file, int action, char *key, size_t keylen)
 		goto out;
 	}
 	vndio.vnd_file = file;
+	vndio.vnd_secsize = secsize;
 	vndio.vnd_key = (u_char *)key;
 	vndio.vnd_keylen = keylen;
 

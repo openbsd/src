@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.13 2008/05/26 21:14:46 jmc Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.14 2008/08/14 17:10:29 jsing Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2008 $
+.Dd $Mdocdate: August 14 2008 $
 .Dt MOUNT_VND 8
 .Os
 .Sh NAME
@@ -63,6 +63,7 @@
 .Op Fl K Ar rounds
 .Op Fl o Ar options
 .Op Fl S Ar saltfile
+.Op Fl s Ar secsize
 .Ar image
 .Ar vnd_dev
 .Ek
@@ -71,6 +72,7 @@
 .Op Fl ckluv
 .Op Fl K Ar rounds
 .Op Fl S Ar saltfile
+.Op Fl s Ar secsize
 .Ar vnd_dev
 .Ar image
 .Ek
@@ -208,6 +210,12 @@ If the salt filename is not specified using
 .Fl S ,
 it defaults to
 .Ar image Ns .slt .
+.It Fl s Ar secsize
+Specify the sector size, in bytes, to be used by the device.
+The default sector size is 512 bytes.
+If specified
+.Ar secsize
+must be a multiple of 512 bytes and cannot exceed 65536 bytes.
 .It Fl u
 .Nm vnconfig
 only.
