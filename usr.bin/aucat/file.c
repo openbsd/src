@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.2 2008/08/14 09:48:50 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.3 2008/08/14 09:58:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,16 +31,35 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "conf.h"
 #include "file.h"
 #include "aproc.h"
 #include "abuf.h"
+#include "dev.h"
 
 #define MAXFDS 100
 
 struct filelist file_list;
+
+void
+file_dprint(int n, struct file *f)
+{
+	if (debug_level >= n) {
+		fprintf(stderr, "%s <", f->name);
+		if (f->state & FILE_ROK)
+			fprintf(stderr, "ROK");
+		if (f->state & FILE_WOK)
+			fprintf(stderr, "WOK");
+		if (f->state & FILE_EOF)
+			fprintf(stderr, "EOF");
+		if (f->state & FILE_HUP)
+			fprintf(stderr, "HUP");
+		fprintf(stderr, ">");
+	}
+}
 
 struct file *
 file_new(int fd, char *name)
@@ -74,7 +93,14 @@ file_new(int fd, char *name)
 void
 file_del(struct file *f)
 {
-	DPRINTF("file_del: %s|%x\n", f->name, f->state);
+	DPRINTF("file_del: ");
+	file_dprint(1, f);
+	DPRINTF("\n");
+
+	if (f->hdr == HDR_WAV)
+		wav_writehdr(f->fd, &f->hpar);
+	close(f->fd);
+	free(f);
 }
 
 int
@@ -176,8 +202,8 @@ file_poll(void)
 		fnext = LIST_NEXT(f, entry);
 		if (f->rproc == NULL && f->wproc == NULL) {
 			LIST_REMOVE(f, entry);
-			DPRINTF("file_poll: %s: deleted\n", f->name);
-			free(f);
+			DPRINTF("file_poll: %s: removed\n", f->name);
+			file_del(f);
 		}
 	}
 	if (LIST_EMPTY(&file_list)) {

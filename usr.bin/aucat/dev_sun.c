@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sun.c,v 1.4 2008/06/03 14:36:20 drahn Exp $	*/
+/*	$OpenBSD: dev_sun.c,v 1.5 2008/08/14 09:58:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,11 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/audioio.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "conf.h"
@@ -27,7 +32,7 @@
 #include "dev.h"
 
 /*
- * convert sun device parameters to struct params
+ * Convert sun device parameters to struct aparams
  */
 int
 sun_infotopar(struct audio_prinfo *ai, struct aparams *par)
@@ -75,7 +80,7 @@ sun_infotopar(struct audio_prinfo *ai, struct aparams *par)
 }
 
 /*
- * Convert struct params to sun device parameters.
+ * Convert struct aparams to sun device parameters.
  */
 void
 sun_partoinfo(struct audio_prinfo *ai, struct aparams *par)
@@ -98,11 +103,11 @@ sun_partoinfo(struct audio_prinfo *ai, struct aparams *par)
  * Open the device and pause it, so later play and record
  * can be started simultaneously.
  *
- * int "infr" and "onfd" we return the input and the output
+ * in "infr" and "onfd" we return the input and the output
  * block sizes respectively.
  */
 int
-dev_init(char *path, struct aparams *ipar, struct aparams *opar,
+sun_open(char *path, struct aparams *ipar, struct aparams *opar,
 	 unsigned *infr, unsigned *onfr)
 {
 	int fd;
@@ -173,7 +178,7 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 		return -1;
 	}
 	if (ioctl(fd, AUDIO_GETINFO, &aui) < 0) {
-		warn("dev_init: getinfo");
+		warn("sun_open: getinfo");
 		close(fd);
 		return -1;
 	}
@@ -206,18 +211,21 @@ dev_init(char *path, struct aparams *ipar, struct aparams *opar,
 	return fd;
 }
 
+/*
+ * Drain and close the device
+ */
 void
-dev_done(int fd)
+sun_close(int fd)
 {
 	close(fd);
-	DPRINTF("dev_done: closed\n");
+	DPRINTF("sun_close: closed\n");
 }
 
 /*
- * Start play/record.
+ * Start play/record simultaneously. Play buffers must be filled.
  */
 void
-dev_start(int fd)
+sun_start(int fd)
 {
 	audio_info_t aui;
 
@@ -228,37 +236,47 @@ dev_start(int fd)
 	AUDIO_INITINFO(&aui);	
 	aui.play.pause = aui.record.pause = 0;
 	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0)
-		err(1, "dev_start: setinfo");
+		err(1, "sun_start: setinfo");
 
-	DPRINTF("dev_start: play/rec started\n");
+	DPRINTF("sun_start: play/rec started\n");
 }
 
 /*
- * Stop play/record and clear kernel buffers so that dev_start() can be called
- * again.
+ * Drain play buffers and then stop play/record simultaneously.
  */
 void
-dev_stop(int fd)
+sun_stop(int fd)
 {
 	audio_info_t aui;
-	unsigned mode;
-
-	if (ioctl(fd, AUDIO_DRAIN) < 0)
-		err(1, "dev_stop: drain");
 
 	/*
-	 * The only way to clear kernel buffers and to pause the device
-	 * simultaneously is to set the mode again (to the same value).
+	 * Sun API doesn't not allows us to drain and stop without
+	 * loosing the sync between playback and record. So, for now we
+	 * just pause the device until this problem is worked around.
+	 *
+	 * there are three possible workarounds:
+	 *
+	 *	1) stop depending on this, ie. make the rest of the code
+	 *	   able to resynchronize playback to record. Then just
+	 *	   close/reset the device to stop it.
+	 *
+	 *	2) send "hiwat" blocks of silence and schedule the
+	 *	   very same amount of silence to drop.
+	 *
+	 *	3) modify the AUDIO_DRAIN ioctl(2) not to loose sync
+	 * 
 	 */
-	if (ioctl(fd, AUDIO_GETINFO, &aui) < 0)
-		err(1, "dev_stop: getinfo");
-
-	mode = aui.mode;
 	AUDIO_INITINFO(&aui);
-	aui.mode = mode;
 	aui.play.pause = aui.record.pause = 1;	
 	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0)
-		err(1, "dev_stop: setinfo");
+		err(1, "sun_stop: setinfo");
 
-	DPRINTF("dev_stop: play/rec stopped\n");
+	DPRINTF("sun_stop: play/rec stopped\n");
 }
+
+struct devops devops_sun = {
+	sun_open,
+	sun_close,
+	sun_start,
+	sun_stop
+};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.2 2008/06/02 17:05:12 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.3 2008/08/14 09:58:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,8 +19,8 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-
 #include <poll.h>
+#include "aparams.h"
 
 struct aparams;
 struct aproc;
@@ -40,6 +40,15 @@ struct file {
 	char *name;			/* for debug purposes */
 	struct aproc *rproc, *wproc;	/* reader and/or writer */
 	LIST_ENTRY(file) entry;
+
+	/*
+	 * disk-file specific stuff
+	 */
+#define HDR_AUTO	0	/* guess by looking at the file name */
+#define HDR_RAW		1	/* no headers, ie openbsd native ;-) */
+#define HDR_WAV		2	/* microsoft riff wave */
+	unsigned hdr;		/* HDR_RAW or HDR_WAV */
+	struct aparams hpar;	/* parameters to write on the header */
 };
 
 LIST_HEAD(filelist,file);

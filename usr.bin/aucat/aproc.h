@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.4 2008/08/14 09:47:51 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.5 2008/08/14 09:58:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -170,5 +170,8 @@ void wpipe_hup(struct aproc *, struct abuf *);
 struct aproc *mix_new(void);
 struct aproc *sub_new(void);
 struct aproc *conv_new(char *, struct aparams *, struct aparams *);
+
+void mix_pushzero(struct aproc *);
+void mix_setmaster(struct aproc *);
 
 #endif /* !defined(FIFO_H) */

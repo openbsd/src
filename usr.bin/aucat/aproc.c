@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.9 2008/08/14 09:47:51 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.10 2008/08/14 09:58:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -465,6 +465,33 @@ mix_new(void)
 	p = aproc_new(&mix_ops, "softmix");
 	p->u.mix.flags = 0;
 	return p;
+}
+
+void
+mix_pushzero(struct aproc *p)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	abuf_wcommit(obuf, obuf->mixtodo);
+	obuf->mixtodo = 0;
+	abuf_flush(obuf);
+	mix_bzero(p);
+}
+
+/*
+ * Normalize input levels
+ */
+void
+mix_setmaster(struct aproc *p)
+{
+	unsigned n;
+	struct abuf *buf;
+
+	n = 0;
+	LIST_FOREACH(buf, &p->ibuflist, ient)
+	    n++;
+	LIST_FOREACH(buf, &p->ibuflist, ient)
+	    buf->mixvol = ADATA_UNIT / n;
 }
 
 /*
