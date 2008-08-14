@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.51 2008/08/05 17:01:06 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.52 2008/08/14 14:31:31 robert Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -403,7 +403,7 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibat_softc	*sc = arg;
 	struct aml_value	res;
-	int			present
+	int			present;
 
 	dnprintf(10, "acpibat_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->name);
