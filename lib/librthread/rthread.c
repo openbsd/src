@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.35 2008/06/05 21:06:11 kurt Exp $ */
+/*	$OpenBSD: rthread.c,v 1.36 2008/08/14 05:15:41 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -146,9 +146,11 @@ static void
 _rthread_free(pthread_t thread)
 {
 	/* catch wrongdoers for the moment */
-	memset(thread, 0xd0, sizeof(*thread));
-	if (thread != &_initial_thread)
+	if (thread != &_initial_thread) {
+		/* initial_thread.tid must remain valid */
+		memset(thread, 0xd0, sizeof(*thread));
 		free(thread);
+	}
 }
 
 static void
