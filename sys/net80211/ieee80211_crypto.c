@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.52 2008/08/12 19:56:59 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.53 2008/08/14 16:10:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -54,8 +54,10 @@
 
 void	ieee80211_prf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
+#ifdef notyet
 void	ieee80211_kdf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
+#endif
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
 
@@ -334,6 +336,7 @@ ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 /*
  * SHA256-based Key Derivation Function (see 8.5.1.5.2).
  */
+#ifdef notyet
 void
 ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
     size_t label_len, const u_int8_t *context, size_t context_len,
@@ -362,6 +365,7 @@ ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 		len -= SHA256_DIGEST_LENGTH;
 	}
 }
+#endif
 
 /*
  * Derive Pairwise Transient Key (PTK) (see 8.5.1.2).
