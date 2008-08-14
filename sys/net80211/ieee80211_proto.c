@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.32 2008/08/12 19:50:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.33 2008/08/14 15:51:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -150,6 +150,7 @@ ieee80211_print_essid(const u_int8_t *essid, int len)
 	}
 }
 
+#ifdef IEEE80211_DEBUG
 void
 ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 {
@@ -209,6 +210,7 @@ ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 		printf("\n");
 	}
 }
+#endif
 
 int
 ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.32 2008/08/12 17:53:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.33 2008/08/14 15:51:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -127,7 +127,9 @@ extern	int ieee80211_parse_rsn(struct ieee80211com *, const u_int8_t *,
 extern	int ieee80211_parse_wpa(struct ieee80211com *, const u_int8_t *,
 		struct ieee80211_rsnparams *);
 extern	void ieee80211_print_essid(const u_int8_t *, int);
+#ifdef IEEE80211_DEBUG
 extern	void ieee80211_dump_pkt(const u_int8_t *, int, int, int);
+#endif
 extern	int ieee80211_ibss_merge(struct ieee80211com *,
 		struct ieee80211_node *, u_int64_t);
 extern	void ieee80211_reset_erp(struct ieee80211com *);
