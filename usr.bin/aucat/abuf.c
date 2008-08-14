@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.2 2008/05/25 21:16:37 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.3 2008/08/14 09:39:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,12 +25,6 @@
  * is ready, the writer adds to used the count of bytes available.
  *
  * TODO:
- *
- *	(easy) create abuf_wcommitblk(), abuf_rdiscardblk() instead of tweeking
- *	the fifo pointers by hand. But first, find shorter function names...
- *
- *	(easy) dont initialize aproc-specific stuff in abuf_new(), let the
- *	aproc xxx_new() routines do it
  *
  *	(hard) make abuf_fill() a boolean depending on whether
  *	eof is reached. So the caller can do:
@@ -104,6 +98,27 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 		count = used;
 	*rsize = count;
 	return buf->data + start;
+}
+
+/*
+ * Discard the block at the start postion
+ */
+void
+abuf_rdiscard(struct abuf *buf, unsigned count)
+{
+	buf->used -= count;
+	buf->start += count;
+	if (buf->start >= buf->len)
+		buf->start -= buf->len;
+}
+
+/*
+ * Commit the data written at the end postion
+ */
+void
+abuf_wcommit(struct abuf *buf, unsigned count)
+{
+	buf->used += count;
 }
 
 /*

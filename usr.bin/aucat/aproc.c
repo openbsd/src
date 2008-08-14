@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.5 2008/06/02 17:06:36 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.6 2008/08/14 09:39:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,10 +36,6 @@
  * 	(easy) split the "conv" into 2 converters: one for input (that
  *	convers anything to 16bit signed) and one for the output (that
  *	converts 16bit signed to anything)
- *
- *	(hard) handle underruns in rpipe and mix
- *
- *	(hard) handle overruns in wpipe and sub
  *
  *	(hard) add a lowpass filter for the resampler. Quality is
  *	not acceptable as is.
@@ -104,10 +100,13 @@ rpipe_in(struct aproc *p, struct abuf *ibuf_dummy)
 	unsigned char *data;
 	unsigned count;
 
+	DPRINTFN(3, "rpipe_in: %s\n", p->name);
+
 	if (ABUF_FULL(obuf))
 		return 0;
 	data = abuf_wgetblk(obuf, &count, 0);
-	obuf->used += file_read(f, data, count);
+	count = file_read(f, data, count);
+	abuf_wcommit(obuf, count);
 	abuf_flush(obuf);
 	return !ABUF_FULL(obuf);
 }
@@ -119,10 +118,13 @@ rpipe_out(struct aproc *p, struct abuf *obuf)
 	unsigned char *data;
 	unsigned count;
 
+	DPRINTFN(3, "rpipe_out: %s\n", p->name);
+
 	if (!(f->state & FILE_ROK))
 		return 0;
 	data = abuf_wgetblk(obuf, &count, 0);
-	obuf->used += file_read(f, data, count);
+	count = file_read(f, data, count);
+	abuf_wcommit(obuf, count);
 	return f->state & FILE_ROK;
 }
 
@@ -184,15 +186,14 @@ wpipe_in(struct aproc *p, struct abuf *ibuf)
 	unsigned char *data;
 	unsigned count;
 
+	DPRINTFN(3, "wpipe_in: %s\n", p->name);
+
 	if (!(f->state & FILE_WOK))
 		return 0;
 
 	data = abuf_rgetblk(ibuf, &count, 0);
 	count = file_write(f, data, count);
-	ibuf->used -= count;
-	ibuf->start += count;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
+	abuf_rdiscard(ibuf, count);
 	return f->state & FILE_WOK;
 }
 
@@ -204,14 +205,13 @@ wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
 	unsigned char *data;
 	unsigned count;
 
+	DPRINTFN(3, "wpipe_out: %s\n", p->name);
+
 	if (ABUF_EMPTY(ibuf))
 		return 0;
 	data = abuf_rgetblk(ibuf, &count, 0);
 	count = file_write(f, data, count);
-	ibuf->used -= count;
-	ibuf->start += count;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
+	abuf_rdiscard(ibuf, count);
 	if (ABUF_EOF(ibuf)) {
 		abuf_hup(ibuf);
 		wpipe_del(p);
@@ -262,7 +262,7 @@ mix_bzero(struct aproc *p)
 	short *odata;
 	unsigned ocount;
 
-	DPRINTFN(4, "mix_bzero: used = %u, zero = %u\n",
+	DPRINTFN(4, "mix_bzero: used = %u, todo = %u\n",
 	    obuf->used, obuf->mixtodo);
 	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->mixtodo);
 	if (ocount == 0)
@@ -282,7 +282,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	unsigned i, scount, icount, ocount;
 	int vol = ibuf->mixvol;
 
-	DPRINTFN(4, "mix_badd: zero = %u, done = %u\n",
+	DPRINTFN(4, "mix_badd: todo = %u, done = %u\n",
 	    obuf->mixtodo, ibuf->mixdone);
 
 	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
@@ -298,15 +298,11 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 		*odata += (*idata * vol) >> ADATA_SHIFT;
 		idata++;
 		odata++;
-	}
-
-	ibuf->used -= scount;
+	}	
+	abuf_rdiscard(ibuf, scount);
 	ibuf->mixdone += scount;
-	ibuf->start += scount;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
 
-	DPRINTFN(4, "mix_badd: added %u, done = %u, zero = %u\n",
+	DPRINTFN(4, "mix_badd: added %u, done = %u, todo = %u\n",
 	    scount, ibuf->mixdone, obuf->mixtodo);
 }
 
@@ -355,7 +351,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	if (ocount == 0)
 		return 0;
 
-	obuf->used += ocount;
+	abuf_wcommit(obuf, ocount);
 	obuf->mixtodo -= ocount;
 	abuf_flush(obuf);
 	mix_bzero(p);
@@ -381,7 +377,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	struct abuf *i, *inext;
 	unsigned ocount, drop;
 
-	DPRINTFN(4, "mix_out: used = %u, zero = %u\n",
+	DPRINTFN(4, "mix_out: used = %u, todo = %u\n",
 	    obuf->used, obuf->mixtodo);
 
 	mix_bzero(p);
@@ -421,7 +417,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		aproc_del(p);
 		return 0;
 	}
-	obuf->used += ocount;
+	abuf_wcommit(obuf, ocount);
 	obuf->mixtodo -= ocount;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
 		i->mixdone -= ocount;
@@ -505,8 +501,8 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		return;
 	scount = (icount < ocount) ? icount : ocount;
 	memcpy(odata, idata, scount);
+	abuf_wcommit(obuf, scount);
 	obuf->subdone += scount;
-	obuf->used += scount;
 	DPRINTFN(4, "sub_bcopy: %u bytes\n", scount);
 }
 
@@ -560,10 +556,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	LIST_FOREACH(i, &p->obuflist, oent) {
 		i->subdone -= done;
 	}
-	ibuf->used -= done;
-	ibuf->start += done;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
+	abuf_rdiscard(ibuf, done);
 	return again;
 }
 
@@ -610,10 +603,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	LIST_FOREACH(i, &p->obuflist, oent) {
 		i->subdone -= done;
 	}
-	ibuf->used -= done;
-	ibuf->start += done;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
+	abuf_rdiscard(ibuf, done);
 	if (ABUF_EOF(ibuf)) {
 		abuf_hup(ibuf);
 		for (i = LIST_FIRST(&p->obuflist);
@@ -799,13 +789,9 @@ conv_bcopy(struct aconv *ist, struct aconv *ost,
 	 * Update FIFO pointers.
 	 */
 	icount -= ifr * ist->bpf;
-	ibuf->used -= icount;
-	ibuf->start += icount;
-	if (ibuf->start >= ibuf->len)
-		ibuf->start -= ibuf->len;
-
 	ocount -= ofr * ost->bpf;
-	obuf->used += ocount;
+	abuf_rdiscard(ibuf, icount);
+	abuf_wcommit(obuf, ocount);
 }
 
 void

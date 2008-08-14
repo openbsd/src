@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 2008/05/28 07:36:23 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2008/08/14 09:39:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef ACONF_H
-#define ACONF_H
+#ifndef CONF_H
+#define CONF_H
 
 /*
  * debug trace levels:
