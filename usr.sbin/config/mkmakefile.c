@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.30 2008/04/19 14:22:04 chl Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.31 2008/08/14 10:18:34 espie Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -260,24 +260,8 @@ emitdefs(FILE *fp)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
-	switch (*srcdir) {
-	case '/':
-		if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
-			return (1);
-		break;
-	case '.':
-		if (fprintf(fp, "S!=\techo `/bin/pwd`/%s\n", srcdir) < 0)
-			return (1);
-		break;
-	default:
-		/*
-		 * libkern and libcompat "Makefile.inc"s want relative S
-		 * specification to begin with '.'.
-		 */
-		if (fprintf(fp, "S!=\techo .`/bin/pwd`/%s\n", srcdir) < 0)
-			return (1);
-		break;
-	}
+	if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
+		return (1);
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str) < 0)
 			return (1);
