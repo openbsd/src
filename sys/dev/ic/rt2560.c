@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.37 2008/07/21 18:43:19 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.38 2008/08/14 16:02:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1213,13 +1213,6 @@ skip:		desc->flags = htole32(RT2560_RX_BUSY);
 		sc->rxq.cur_decrypt =
 		    (sc->rxq.cur_decrypt + 1) % RT2560_RX_RING_COUNT;
 	}
-
-	/*
-	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
-	 * without calling if_start().
-	 */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
-		rt2560_start(ifp);
 }
 
 /*

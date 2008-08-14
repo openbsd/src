@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.75 2008/07/30 06:25:23 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.76 2008/08/14 16:02:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -868,13 +868,6 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
-
-	/*
-	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
-	 * without calling if_start().
-	 */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
-		rum_start(ifp);
 
 	splx(s);
 

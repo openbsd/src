@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.42 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.43 2008/08/14 16:02:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1142,13 +1142,6 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % RT2661_RX_RING_COUNT;
 	}
-
-	/*
-	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
-	 * without calling if_start().
-	 */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
-		rt2661_start(ifp);
 }
 
 /*

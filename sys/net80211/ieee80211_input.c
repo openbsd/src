@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.98 2008/08/13 17:44:45 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.99 2008/08/14 16:02:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -413,6 +413,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 					if (m != NULL)
 						ifp->if_omcasts++;
 					ifp->if_obytes += len;
+					if_start(ifp);
 				}
 			}
 		}

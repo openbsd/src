@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.85 2008/07/21 18:43:19 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.86 2008/08/14 16:02:24 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1417,13 +1417,6 @@ next:
 	 * time we can start from it.
 	 */
 	bd->rx_scan_start = idx;
-
-	/*
-	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
-	 * without calling if_start().
-	 */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.17 2008/07/21 19:41:44 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.18 2008/08/14 16:02:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -1193,13 +1193,6 @@ skip:		rxd->sdl0 &= ~htole16(RT2860_RX_DDONE);
 	/* tell HW what we have processed */
 	RAL_WRITE(sc, RT2860_RX_CALC_IDX,
 	    (sc->rxq.cur - 1) % RT2860_RX_RING_COUNT);
-
-	/*
-	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
-	 * without calling if_start().
-	 */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
-		rt2860_start(ifp);
 }
 
 int
