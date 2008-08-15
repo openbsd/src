@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzvar.h,v 1.6 2004/07/07 23:10:46 deraadt Exp $	*/
+/*	$OpenBSD: dzvar.h,v 1.7 2008/08/15 22:50:25 miod Exp $	*/
 /*	$NetBSD: dzvar.h,v 1.8 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -47,9 +47,9 @@
 
 struct	dz_softc {
 	struct	device	sc_dev;		/* Autoconf blaha */
-	struct	evcount	sc_rintrcnt;	/* recevive interrupt counts */
+	struct	evcount	sc_rintrcnt;	/* receive interrupt counts */
 	struct	evcount	sc_tintrcnt;	/* transmit interrupt counts */
-	int	sc_rcvec, sc_tcvec;
+	int	sc_rcvec, sc_tcvec;	/* XXX used by attachment glue only */
 	struct	dz_regs	sc_dr;		/* reg pointers */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -75,3 +75,12 @@ void   dzattach(struct dz_softc *);
 void   dzrint(void *);
 void   dzxint(void *);
 void   dzreset(struct device *);
+
+#define	DZ_READ_BYTE(sc, adr) \
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_dr.adr)
+#define	DZ_READ_WORD(sc, adr) \
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_dr.adr)
+#define	DZ_WRITE_BYTE(sc, adr, val) \
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_dr.adr, val)
+#define	DZ_WRITE_WORD(sc, adr, val) \
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_dr.adr, val)
