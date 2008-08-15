@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.28 2007/09/03 00:47:37 krw Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.29 2008/08/15 15:49:08 naddy Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ typedef struct {
  *
  * The receive space MUST ALWAYS be a multiple of the page size.
  * And the number of receive descriptors multiplied by the size
- * of the receive buffers must equal the recevive space.  This
+ * of the receive buffers must equal the receive space.  This
  * is so that we can manipulate the page tables so that even if a
  * packet wraps around the end of the receive space, we can
  * treat it as virtually contiguous.
@@ -121,7 +121,7 @@ typedef struct {
  * architecture which can't handle unaligned accesses) because with
  * 100Mb/s cards the copying is just too much of a hit.
  */
-#if !defined(__i386__)
+#ifdef __STRICT_ALIGNMENT
 #define	TULIP_COPY_RXDATA	1
 #endif
 
