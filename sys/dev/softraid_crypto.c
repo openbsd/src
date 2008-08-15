@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.29 2008/07/19 22:41:58 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.30 2008/08/15 11:18:10 djm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -16,25 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/*-
- * sr_crypto_hmac_sha1
- *
- * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 
 #include "bio.h"
 
@@ -61,7 +42,10 @@
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <crypto/rijndael.h>
+#include <crypto/md5.h>
 #include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/hmac.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -84,8 +68,6 @@ int		 sr_crypto_rw2(struct sr_workunit *, struct cryptop *);
 void		 sr_crypto_intr(struct buf *);
 int		 sr_crypto_read(struct cryptop *);
 void		 sr_crypto_finish_io(struct sr_workunit *);
-void		 sr_crypto_hmac_sha1(const u_int8_t *, size_t, const u_int8_t *,
-		    size_t, u_int8_t[SHA1_DIGEST_LENGTH]);
 void		 sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *,
 		    u_char[SHA1_DIGEST_LENGTH]);
 
@@ -260,71 +242,33 @@ out:
 	return (rv);
 }
 
-/*
- * HMAC-SHA-1 (from RFC 2202).
- * XXX this really belongs in sys/crypto, but it needs to be done
- *      generically and so far, nothing else needs it.
- */
-void
-sr_crypto_hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
-    size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
-{
-	SHA1_CTX ctx;
-	u_int8_t k_pad[SHA1_BLOCK_LENGTH];
-	u_int8_t tk[SHA1_DIGEST_LENGTH];
-	int i;
-
-	if (key_len > SHA1_BLOCK_LENGTH) {
-		SHA1Init(&ctx);
-		SHA1Update(&ctx, key, key_len);
-		SHA1Final(tk, &ctx);
-
-		key = tk;
-		key_len = SHA1_DIGEST_LENGTH;
-	}
-
-	bzero(k_pad, sizeof k_pad);
-	bcopy(key, k_pad, key_len);
-	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
-		k_pad[i] ^= 0x36;
-
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
-	SHA1Update(&ctx, text, text_len);
-	SHA1Final(digest, &ctx);
-
-	bzero(k_pad, sizeof k_pad);
-	bcopy(key, k_pad, key_len);
-	for (i = 0; i < SHA1_BLOCK_LENGTH; i++)
-		k_pad[i] ^= 0x5c;
-
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
-	SHA1Update(&ctx, digest, SHA1_DIGEST_LENGTH);
-	SHA1Final(digest, &ctx);
-}
-
 void
 sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *sd,
     u_char check_digest[SHA1_DIGEST_LENGTH])
 {
 	u_char		check_key[SHA1_DIGEST_LENGTH];
+	HMAC_SHA1_CTX	hmacctx;
 	SHA1_CTX	shactx;
 
 	bzero(check_key, sizeof(check_key));
+	bzero(&hmacctx, sizeof(hmacctx));
+	bzero(&shactx, sizeof(shactx));
+
 	/* k = SHA1(mask_key) */
 	SHA1Init(&shactx);
 	SHA1Update(&shactx, sd->mds.mdd_crypto.scr_maskkey,
 	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
 	SHA1Final(check_key, &shactx);
 
-	bzero(&shactx, sizeof(shactx));
 	/* sch_mac = HMAC_SHA1_k(unencrypted scm_key) */
-	sr_crypto_hmac_sha1((u_char *)sd->mds.mdd_crypto.scr_key,
-	    sizeof(sd->mds.mdd_crypto.scr_key),
-	    check_key, sizeof(check_key),
-	    check_digest);
+	HMAC_SHA1_Init(&hmacctx, check_key, sizeof(check_key));
+	HMAC_SHA1_Update(&hmacctx, (u_int8_t *)sd->mds.mdd_crypto.scr_key,
+	    sizeof(sd->mds.mdd_crypto.scr_key));
+	HMAC_SHA1_Final(check_digest, &hmacctx);
+
 	bzero(check_key, sizeof(check_key));
+	bzero(&hmacctx, sizeof(hmacctx));
+	bzero(&shactx, sizeof(shactx));
 }
 
 int
