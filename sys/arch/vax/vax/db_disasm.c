@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.15 2007/02/14 00:53:47 jsg Exp $ */
+/*	$OpenBSD: db_disasm.c,v 1.16 2008/08/15 22:41:02 miod Exp $ */
 /*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -146,7 +146,7 @@ db_disasm(loc, altfmt)
 	inst_buffer	ib;
 
 	bzero(&ib, sizeof(ib));
-	ib.ppc = (void *) loc;
+	ib.ppc = (void *)loc;
 
 	if (!altfmt) {		/* ignore potential entry masks in altfmt */
 		diff = INT_MAX;
@@ -154,12 +154,14 @@ db_disasm(loc, altfmt)
 		sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
 		db_symbol_values(sym, &symname, 0);
 
-		if (symname && !diff) { /* symbol at loc */
-			db_printf("function \"%s()\", entry-mask 0x%x\n\t\t",
+		if (symname && diff == 0) { /* symbol at loc */
+			db_printf("function \"%s()\", entry-mask 0x%x\n",
 				  symname, (unsigned short) get_word(&ib));
-			ib.ppc += 2;
+			db_printsym((db_addr_t)ib.ppc, DB_STGY_ANY, db_printf);
+			db_printf(":\t");
 		}
 	}
+
 	get_opcode(&ib);
 	get_operands(&ib);
 	db_printf("%s\n", ib.dasm);
