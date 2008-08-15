@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.36 2007/08/05 16:11:09 ray Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.37 2008/08/15 14:57:20 djm Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -376,18 +376,13 @@ _res_init(int usercall)
 		}
 		/* read nameservers to query */
 		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
-#ifdef INET6
 		    char *q;
 		    struct addrinfo hints, *res;
 		    char pbuf[NI_MAXSERV];
-#else
-		    struct in_addr a;
-#endif /* INET6 */
 
 		    cp = buf + sizeof("nameserver") - 1;
 		    while (*cp == ' ' || *cp == '\t')
 			cp++;
-#ifdef INET6
 		    if ((*cp == '\0') || (*cp == '\n'))
 			continue;
 		    for (q = cp; *q; q++) {
@@ -396,10 +391,26 @@ _res_init(int usercall)
 			    break;
 			}
 		    }
+
+		    /* Handle addresses enclosed in [] */
+		    *pbuf = '\0';
+		    if (*cp == '[') {
+			cp++;
+			if ((q = strchr(cp, ']')) == NULL)
+				continue;
+			*q++ = '\0';
+			/* Extract port, if specified */
+			if (*q++ == ':') {
+			    if (strlcpy(pbuf, q, sizeof(pbuf)) >= sizeof(pbuf))
+				continue;
+			}
+		    }
+		    if (*pbuf == '\0')
+		    	snprintf(pbuf, sizeof(pbuf), "%u", NAMESERVER_PORT);
+
 		    memset(&hints, 0, sizeof(hints));
 		    hints.ai_flags = AI_NUMERICHOST;
 		    hints.ai_socktype = SOCK_DGRAM;
-		    snprintf(pbuf, sizeof(pbuf), "%u", NAMESERVER_PORT);
 		    res = NULL;
 		    if (getaddrinfo(cp, pbuf, &hints, &res) == 0 &&
 			    res->ai_next == NULL) {
@@ -421,17 +432,6 @@ _res_init(int usercall)
 		    }
 		    if (res)
 			freeaddrinfo(res);
-#else /* INET6 */
-		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
-			_resp->nsaddr_list[nserv].sin_addr = a;
-			_resp->nsaddr_list[nserv].sin_family = AF_INET;
-			_resp->nsaddr_list[nserv].sin_port =
-				htons(NAMESERVER_PORT);
-			_resp->nsaddr_list[nserv].sin_len =
-				sizeof(struct sockaddr_in);
-			nserv++;
-		    }
-#endif /* INET6 */
 		    continue;
 		}
 #ifdef RESOLVSORT
@@ -641,6 +641,8 @@ res_setoptions(char *options, char *source)
 			_resp->options |= RES_INSECURE2;
 		} else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
 			_resp->options |= RES_USE_EDNS0;
+		} else if (!strncmp(cp, "tcp", sizeof("tcp") - 1)) {
+			_resp->options |= RES_USEVC;
 		} else {
 			/* XXX - print a warning here? */
 		}
