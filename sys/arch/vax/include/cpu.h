@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.27 2008/07/18 23:43:31 art Exp $      */
+/*      $OpenBSD: cpu.h,v 1.28 2008/08/15 22:38:20 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -69,7 +69,7 @@ extern struct cpu_info cpu_info_store;
  * struct for the current cpu is set up in locore.c.
  */
 struct	cpu_dep {
-	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
+	void	(*cpu_init)(void); /* pmap init before mm is on */
 	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
@@ -97,7 +97,6 @@ extern int bootdev;
 
 #define	setsoftnet()	mtpr(IPL_SOFTNET,PR_SIRR)
 #define setsoftclock()	mtpr(IPL_SOFTCLOCK,PR_SIRR)
-#define	todr()		mfpr(PR_TODR)
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.

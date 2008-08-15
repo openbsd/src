@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.10 2002/09/21 13:42:43 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.11 2008/08/15 22:38:23 miod Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -55,7 +55,7 @@ static void	ka680_conf(void);
 static void	ka680_cache_enable(void);
 static void	ka680_softmem(void *);
 static void	ka680_hardmem(void *);
-static void	ka680_steal_pages(void);
+static void	ka680_init(void);
 static void	ka680_memerr(void);
 static int	ka680_mchk(caddr_t);
  
@@ -87,7 +87,7 @@ static int	ka680_mchk(caddr_t);
  * Declaration of KA680-specific calls.
  */
 struct cpu_dep ka680_calls = {
-	ka680_steal_pages,
+	ka680_init,
 	ka680_mchk,
 	ka680_memerr, 
 	ka680_conf,
@@ -264,7 +264,7 @@ ka680_softmem(void *arg)
 }
 
 void
-ka680_steal_pages()
+ka680_init()
 {
 	/*
 	 * Get the soft and hard memory error vectors now.

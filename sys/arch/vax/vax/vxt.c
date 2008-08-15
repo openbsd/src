@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxt.c,v 1.1 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: vxt.c,v 1.2 2008/08/15 22:38:23 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,7 +48,7 @@
 #include <machine/clock.h>
 
 static	void	vxt_conf(void);
-static	void	vxt_steal_pages(void);
+static	void	vxt_init(void);
 static	void	vxt_memerr(void);
 static	int	vxt_mchk(caddr_t);
 static	void	vxt_halt(void);
@@ -62,7 +62,7 @@ struct	vs_cpu *vxt_cpu;
  */
 
 struct	cpu_dep vxt_calls = {
-	vxt_steal_pages,
+	vxt_init,
 	vxt_mchk,
 	vxt_memerr, 
 	vxt_conf,
@@ -117,7 +117,7 @@ vxt_mchk(addr)
 }
 
 void
-vxt_steal_pages()
+vxt_init()
 {
 	/* Turn on caches (to speed up execution a bit) */
 	vxt_cache_enable();

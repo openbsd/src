@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.14 2008/08/14 11:41:30 martin Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.15 2008/08/15 22:38:23 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -69,7 +69,7 @@ static	void    uvaxIII_memerr(void);
 static	int     uvaxIII_mchk(caddr_t);
 
 struct	cpu_dep	ka650_calls = {
-	0, /* No special page stealing anymore */
+	NULL,
 	uvaxIII_mchk,
 	uvaxIII_memerr,
 	uvaxIII_conf,

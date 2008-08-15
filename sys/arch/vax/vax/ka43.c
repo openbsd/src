@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.10 2006/06/30 16:14:31 miod Exp $ */
+/*	$OpenBSD: ka43.c,v 1.11 2008/08/15 22:38:23 miod Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -53,7 +53,7 @@
 #include <machine/clock.h>
 
 static	void ka43_conf(void);
-static	void ka43_steal_pages(void);
+static	void ka43_init(void);
 
 static	int ka43_mchk(caddr_t);
 static	void ka43_memerr(void);
@@ -71,7 +71,7 @@ static  void ka43_clrf(void);
 
 
 struct	cpu_dep ka43_calls = {
-	ka43_steal_pages,
+	ka43_init,
 	ka43_mchk,
 	ka43_memerr,
 	ka43_conf,
@@ -84,11 +84,6 @@ struct	cpu_dep ka43_calls = {
         ka43_clrf,
 };
 
-/*
- * ka43_steal_pages() is called with MMU disabled, after that call MMU gets
- * enabled. Thus we initialize these four pointers with physical addresses,
- * but before leving ka43_steal_pages() we reset them to virtual addresses.
- */
 static	volatile struct	ka43_cpu   *ka43_cpu	= (void *)KA43_CPU_BASE;
 static	volatile u_int	*ka43_creg = (void *)KA43_CH2_CREG;
 static	volatile u_int	*ka43_ctag = (void *)KA43_CT2_BASE;
@@ -320,14 +315,8 @@ ka43_conf()
 }
 
 
-/*
- * The interface for communication with the LANCE ethernet controller
- * is setup in the xxx_steal_pages() routine. We decrease highest
- * available address by 64K and use this area as communication buffer.
- */
-
 void
-ka43_steal_pages()
+ka43_init()
 {
 	int	val;
 

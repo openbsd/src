@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.7 2002/07/21 19:28:51 hugh Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.8 2008/08/15 22:38:23 miod Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,7 +46,7 @@ static	void	ka49_halt(void);
 static	void	ka49_reboot(int);
 static	void	ka49_softmem(void *);
 static	void	ka49_hardmem(void *);
-static	void	ka49_steal_pages(void);
+static	void	ka49_init(void);
 static	void	ka49_cache_enable(void);
 static	void	ka49_halt(void);
 
@@ -54,7 +54,7 @@ static	void	ka49_halt(void);
  * Declaration of 49-specific calls.
  */
 struct	cpu_dep ka49_calls = {
-	ka49_steal_pages,
+	ka49_init,
 	ka49_mchk,
 	ka49_memerr, 
 	ka49_conf,
@@ -209,7 +209,7 @@ ka49_mchk(addr)
 }
 
 void
-ka49_steal_pages()
+ka49_init()
 {
 	/*
 	 * Get the soft and hard memory error vectors now.

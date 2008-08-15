@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.7 2002/07/21 19:28:50 hugh Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.8 2008/08/15 22:38:23 miod Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -55,7 +55,7 @@
 #include <machine/vsbus.h>
 
 static	void	ka46_conf(void);
-static	void	ka46_steal_pages(void);
+static	void	ka46_init(void);
 static	void	ka46_memerr(void);
 static	int	ka46_mchk(caddr_t);
 static	void	ka46_halt(void);
@@ -68,7 +68,7 @@ struct	vs_cpu *ka46_cpu;
  * Declaration of 46-specific calls.
  */
 struct	cpu_dep ka46_calls = {
-	ka46_steal_pages,
+	ka46_init,
 	ka46_mchk,
 	ka46_memerr, 
 	ka46_conf,
@@ -153,7 +153,7 @@ ka46_mchk(addr)
 }
 
 void
-ka46_steal_pages()
+ka46_init()
 {
 
 	/* Turn on caches (to speed up execution a bit) */
