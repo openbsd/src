@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.70 2008/08/12 19:56:59 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.71 2008/08/15 08:15:27 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -547,7 +547,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		hdrlen = sizeof(struct ieee80211_frame);
 		addqos = 0;
 	}
-	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));
+	m_adj(m, sizeof(struct ether_header) - LLC_SNAPFRAMELEN);
 	llc = mtod(m, struct llc *);
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 	llc->llc_control = LLC_UI;
@@ -1181,7 +1181,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int16_t capinfo;
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
-	    2 +	2 +
+	    2 + 2 +
 	    ((reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
 		IEEE80211_ADDR_LEN : 0) +
 	    2 + ni->ni_esslen +
@@ -1251,7 +1251,7 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
-	    2 +	2 + 2 +
+	    2 + 2 + 2 +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +

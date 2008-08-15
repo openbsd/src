@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.11 2008/08/12 19:51:19 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.12 2008/08/15 08:15:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -235,7 +235,7 @@ ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 	struct mbuf *m;
 
 	/* reserve space for 802.11 encapsulation and EAPOL-Key header */
-	pktlen += sizeof(struct ieee80211_frame) + sizeof(struct llc) +
+	pktlen += sizeof(struct ieee80211_frame) + LLC_SNAPFRAMELEN +
 	    sizeof(struct ieee80211_eapol_key);
 
 	if (pktlen > MCLBYTES)
@@ -248,7 +248,7 @@ ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
 		if (!(m->m_flags & M_EXT))
 			return m_free(m);
 	}
-	m->m_data += sizeof(struct ieee80211_frame) + sizeof(struct llc);
+	m->m_data += sizeof(struct ieee80211_frame) + LLC_SNAPFRAMELEN;
 	return m;
 }
 
