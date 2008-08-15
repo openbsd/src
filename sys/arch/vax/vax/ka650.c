@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.15 2008/08/15 22:38:23 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.16 2008/08/15 22:47:45 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -185,7 +185,7 @@ uvaxIII_mchk(cmcf)
 
 	printf("machine check %x", type);
 	if (type >= 0x80 && type <= 0x83)
-		type -= (0x80 + 11);
+		type -= 0x80 - 11;
 	if (type < NMC650 && mc650[type])
 		printf(": %s", mc650[type]);
 	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
