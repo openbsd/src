@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2008/08/15 22:39:59 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -791,23 +791,6 @@ struct vax_sgmap;
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-/*
- *	vax_bus_t
- *
- *	Busses supported by NetBSD/vax, used by internal
- *	utility functions.  NOT TO BE USED BY MACHINE-INDEPENDENT
- *	CODE!
- */
-typedef enum {
-	VAX_BUS_MAINBUS,
-	VAX_BUS_SBI,
-	VAX_BUS_MASSBUS,
-	VAX_BUS_UNIBUS,		/* Also handles QBUS */
-	VAX_BUS_BI,
-	VAX_BUS_XMI,
-	VAX_BUS_TURBOCHANNEL
-} vax_bus_t;
-
 typedef struct vax_bus_dma_tag	*bus_dma_tag_t;
 typedef struct vax_bus_dmamap	*bus_dmamap_t;
 
@@ -852,12 +835,6 @@ struct vax_bus_dma_tag {
 	struct vax_sgmap *_sgmap;
 
 	/*
-	 * Internal-use only utility methods.  NOT TO BE USED BY
-	 * MACHINE-INDEPENDENT CODE!
-	 */
-	bus_dma_tag_t (*_get_tag)(bus_dma_tag_t, vax_bus_t);
-
-	/*
 	 * DMA mapping methods.
 	 */
 	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
@@ -888,9 +865,6 @@ struct vax_bus_dma_tag {
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };
-
-#define	vaxbus_dma_get_tag(t, b)				\
-	(*(t)->_get_tag)(t, b)
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
 	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))

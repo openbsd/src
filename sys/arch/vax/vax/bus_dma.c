@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.19 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.20 2008/08/15 22:40:00 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -750,8 +750,7 @@ struct vax_bus_dma_tag vax_bus_dma_tag = {
 	0, 
 	0,
 	0,
-	0,
-	0,
+	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

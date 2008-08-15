@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.18 2006/12/13 21:12:06 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.19 2008/08/15 22:40:07 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -70,12 +70,11 @@ int	vsbus_print(void *, const char *);
 int	vsbus_search(struct device *, void *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+	NULL,
 	0,
 	0,
 	0,
-	0,
-	0,
-	0,
+	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
