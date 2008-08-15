@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.h,v 1.6 2006/08/27 16:55:41 miod Exp $ */
+/*	$OpenBSD: clock.h,v 1.7 2008/08/15 22:41:46 miod Exp $ */
 /*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -74,5 +74,3 @@ int	generic_clkread(time_t);
 void	generic_clkwrite(void);
 int	chip_clkread(time_t);
 void	chip_clkwrite(void);
-int	missing_clkread(time_t);
-void	missing_clkwrite(void);

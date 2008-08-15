@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxt.c,v 1.2 2008/08/15 22:38:23 miod Exp $	*/
+/*	$OpenBSD: vxt.c,v 1.3 2008/08/15 22:41:48 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,8 +32,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*** needs to be completed MK-990306 ***/
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -54,6 +52,8 @@ static	int	vxt_mchk(caddr_t);
 static	void	vxt_halt(void);
 static	void	vxt_reboot(int);
 static	void	vxt_cache_enable(void);
+static	int	missing_clkread(time_t);
+static	void	missing_clkwrite(void);
 
 struct	vs_cpu *vxt_cpu;
 
@@ -134,4 +134,17 @@ vxt_reboot(arg)
 	int arg;
 {
 	asm("halt");
+}
+
+int
+missing_clkread(base)
+	time_t base;
+{
+	printf("WARNING: no TOY clock");
+	return CLKREAD_BAD;
+}
+
+void
+missing_clkwrite()
+{
 }
