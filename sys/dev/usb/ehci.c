@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.85 2008/08/09 22:59:20 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.86 2008/08/16 16:37:30 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1577,7 +1577,7 @@ ehci_open(usbd_pipe_handle pipe)
 		return (ehci_device_setintr(sc, sqh, ival));
 	case UE_ISOCHRONOUS:
 		pipe->methods = &ehci_device_isoc_methods;
-		if (ed->bInterval == 0 || ed->bInterval >= 16) {
+		if (ed->bInterval == 0 || ed->bInterval > 16) {
 			printf("ehci: opening pipe with invalid bInterval\n");
 			err = USBD_INVAL;
 			goto bad;
@@ -3638,7 +3638,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	struct ehci_xfer *exfer;
 	ehci_soft_itd_t *itd, *prev, *start, *stop;
 	usb_dma_t *dma_buf;
-	int i, j, k, frames, uframes;
+	int i, j, k, frames, uframes, ufrperframe;
 	int s, trans_count, offs, total_length;
 	int frindex;
 
@@ -3700,18 +3700,24 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		/* Spec page 271 says intervals > 16 are invalid */
 		DPRINTF(("ehci_device_isoc_start: bInvertal %d invalid\n", i));
 		return (USBD_INVAL);
-	} else if (i >= 4) {
-		frames = xfer->nframes;
-		uframes = 8;
-	} else {
-		frames = xfer->nframes + 0x7; /* 7 added for rounding up */
-		uframes = 0;
-		switch (i) {
-			case 1: frames /= 8; uframes = 1; break;
-			case 2: frames /= 4; uframes = 2; break;
-			case 3: frames /= 2; uframes = 4; break;
-		}
 	}
+
+	switch (i) { 
+	case 1:
+		ufrperframe = 8; 
+		break;
+	case 2:
+		ufrperframe = 4; 
+		break;
+	case 3:
+		ufrperframe = 2; 
+		break;
+	default:
+		ufrperframe = 1; 
+		break;
+	} 
+	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe; 
+	uframes = 8 / ufrperframe; 
 
 	if (frames == 0) {
 		DPRINTF(("ehci_device_isoc_start: frames == 0\n"));
