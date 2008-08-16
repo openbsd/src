@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.64 2008/08/16 12:21:46 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.65 2008/08/16 12:25:21 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ expand_builtin(const char *argv[], int argc, int td)
   */
   	ac = argc;
 
-	if (argc == 3 && !*(argv[2]) && !mimic_gnu)
+	if (argc == 3 && !*(argv[2]))
 		argc--;
 
 	switch (td & TYPEMASK) {
@@ -576,10 +576,9 @@ expand_macro(const char *argv[], int argc)
 void
 dodefine(const char *name, const char *defn)
 {
-	if (!*name && !mimic_gnu)
+	if (!*name)
 		m4errx(1, "null definition.");
-	else 
-		macro_define(name, defn);
+	macro_define(name, defn);
 }
 
 /*
@@ -613,10 +612,9 @@ dodefn(const char *name)
 static void
 dopushdef(const char *name, const char *defn)
 {
-	if (!*name && !mimic_gnu)
+	if (!*name)
 		m4errx(1, "null definition.");
-	else
-		macro_pushdef(name, defn);
+	macro_pushdef(name, defn);
 }
 
 /*
