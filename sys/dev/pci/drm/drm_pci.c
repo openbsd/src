@@ -21,21 +21,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * \file drm_pci.h
- * \brief PCI consistent, DMA-accessible memory allocation.
- *
- * \author Eric Anholt <anholt@FreeBSD.org>
- */
-
 #include "drmP.h"
 
-/**********************************************************************/
-/** \name PCI memory */
-/*@{*/
-
-/**
- * \brief Allocate a physically contiguous DMA-accessible consistent 
+/*
+ * Allocate a physically contiguous DMA-accessible consistent 
  * memory block.
  */
 drm_dma_handle_t *
@@ -66,7 +55,7 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
 		    size, align, ret);
 		goto destroy;
 	}
-	if(nsegs != 1) {
+	if (nsegs != 1) {
 		DRM_ERROR("bus_dmamem_alloc(%zd) returned %d segments\n",
 		    size, nsegs);
 		goto free;
@@ -101,8 +90,8 @@ dmahfree:
 
 }
 
-/**
- * \brief Free a DMA-accessible consistent memory block.
+/*
+ * Free a DMA-accessible consistent memory block.
  */
 void
 drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
@@ -117,5 +106,3 @@ drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 
 	drm_free(dmah, sizeof(*dmah), DRM_MEM_DMA);
 }
-
-/*@}*/

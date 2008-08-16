@@ -27,7 +27,7 @@
  *
  */
 
-/** @file drm_scatter.c
+/*
  * Allocation of memory for scatter-gather mappings by the graphics chip.
  *
  * The memory allocated here is then made into an aperture in the card
@@ -36,7 +36,7 @@
 #include "drmP.h"
 
 struct drm_sg_dmamem	*drm_sg_dmamem_alloc(struct drm_device *, size_t);
-void	drm_sg_dmamem_free(struct drm_sg_dmamem *);
+void			 drm_sg_dmamem_free(struct drm_sg_dmamem *);
 
 void
 drm_sg_cleanup(drm_sg_mem_t *entry)
@@ -57,21 +57,21 @@ drm_sg_alloc(struct drm_device * dev, drm_scatter_gather_t * request)
 	unsigned long pages;
 	int i;
 
-	if ( dev->sg )
+	if (dev->sg != NULL)
 		return EINVAL;
 
 	entry = drm_calloc(1, sizeof(*entry), DRM_MEM_SGLISTS);
-        if ( !entry )
+        if (entry == NULL)
                 return ENOMEM;
 
 	pages = round_page(request->size) / PAGE_SIZE;
-	DRM_DEBUG( "sg size=%ld pages=%ld\n", request->size, pages );
+	DRM_DEBUG("sg size=%ld pages=%ld\n", request->size, pages);
 
 	entry->pages = pages;
 
 	entry->busaddr = drm_calloc(pages, sizeof(*entry->busaddr),
 	    DRM_MEM_SGLISTS);
-	if ( !entry->busaddr ) {
+	if (entry->busaddr == NULL) {
 		drm_sg_cleanup(entry);
 		return ENOMEM;
 	}
@@ -86,7 +86,7 @@ drm_sg_alloc(struct drm_device * dev, drm_scatter_gather_t * request)
 	for (i = 0; i < pages; i++) 
 		entry->busaddr[i] = entry->mem->sg_map->dm_segs[i].ds_addr;
 
-	DRM_DEBUG( "sg alloc handle  = %08lx\n", entry->handle );
+	DRM_DEBUG("sg alloc handle  = %08lx\n", entry->handle);
 
 	entry->virtual = (void *)entry->handle;
 	request->handle = entry->handle;
@@ -110,7 +110,7 @@ drm_sg_alloc_ioctl(struct drm_device *dev, void *data,
 	drm_scatter_gather_t *request = data;
 	int ret;
 
-	DRM_DEBUG( "%s\n", __FUNCTION__ );
+	DRM_DEBUG("\n");
 
 	ret = drm_sg_alloc(dev, request);
 	return ret;
@@ -127,10 +127,10 @@ drm_sg_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	dev->sg = NULL;
 	DRM_UNLOCK();
 
-	if ( !entry || entry->handle != request->handle )
+	if (entry == NULL || entry->handle != request->handle)
 		return EINVAL;
 
-	DRM_DEBUG( "sg free virtual  = 0x%lx\n", entry->handle );
+	DRM_DEBUG("sg free virtual  = 0x%lx\n", entry->handle);
 
 	drm_sg_cleanup(entry);
 
@@ -165,10 +165,8 @@ drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 		goto segsfree;
 
 	if ((ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, PAGE_SIZE, 0,
-	    dsd->sg_segs, pages, &dsd->sg_nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("alloc failed, value= %d\n",ret);
+	    dsd->sg_segs, pages, &dsd->sg_nsegs, BUS_DMA_NOWAIT)) != 0)
 		goto destroy;
-	}
 
 	if (bus_dmamem_map(dev->pa.pa_dmat, dsd->sg_segs, dsd->sg_nsegs, size, 
 	    &dsd->sg_kva, BUS_DMA_NOWAIT) != 0)

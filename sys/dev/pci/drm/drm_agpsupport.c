@@ -51,8 +51,8 @@ drm_device_is_agp(struct drm_device *dev)
 {
 	if (dev->driver.device_is_agp != NULL) {
 		int ret;
-
-		/* device_is_agp returns a tristate, 0 = not AGP, 1 = definitely
+		/*
+		 * device_is_agp returns a tristate, 0 = not AGP, 1 = definitely
 		 * AGP, 2 = fall back to PCI capability
 		 */
 		ret = (*dev->driver.device_is_agp)(dev);
@@ -77,19 +77,19 @@ drm_agp_info(struct drm_device * dev, drm_agp_info_t *info)
 	if (!dev->agp || !dev->agp->acquired)
 		return EINVAL;
 
-	kern                   = &dev->agp->info;
+	kern = &dev->agp->info;
 #ifndef DRM_NO_AGP
 	agp_get_info(dev->agp->agpdev, kern);
 #endif
 	info->agp_version_major = 1;
 	info->agp_version_minor = 0;
-	info->mode              = kern->ai_mode;
-	info->aperture_base     = kern->ai_aperture_base;
-	info->aperture_size     = kern->ai_aperture_size;
-	info->memory_allowed    = kern->ai_memory_allowed;
-	info->memory_used       = kern->ai_memory_used;
-	info->id_vendor         = kern->ai_devid & 0xffff;
-	info->id_device         = kern->ai_devid >> 16;
+	info->mode = kern->ai_mode;
+	info->aperture_base = kern->ai_aperture_base;
+	info->aperture_size = kern->ai_aperture_size;
+	info->memory_allowed = kern->ai_memory_allowed;
+	info->memory_used = kern->ai_memory_used;
+	info->id_vendor = kern->ai_devid & 0xffff;
+	info->id_device = kern->ai_devid >> 16;
 
 	return 0;
 }
@@ -105,7 +105,7 @@ drm_agp_info_ioctl(struct drm_device *dev, void *data,
 	if (err != 0)
 		return err;
 
-	*(drm_agp_info_t *) data = info;
+	*(drm_agp_info_t *)data = info;
 	return 0;
 }
 
@@ -197,7 +197,7 @@ drm_agp_alloc(struct drm_device *dev, drm_agp_buffer_t *request)
 		return ENOMEM;
 
 	pages = (request->size + PAGE_SIZE - 1) / PAGE_SIZE;
-	type = (u_int32_t) request->type;
+	type = (u_int32_t)request->type;
 
 	DRM_UNLOCK();
 	handle = drm_agp_allocate_memory(pages, type);
@@ -245,7 +245,8 @@ drm_agp_lookup_entry(struct drm_device *dev, void *handle)
 	struct drm_agp_mem *entry;
 
 	TAILQ_FOREACH(entry, &dev->agp->memory, link) {
-		if (entry->handle == handle) return entry;
+		if (entry->handle == handle)
+			return entry;
 	}
 	return NULL;
 }
@@ -365,7 +366,7 @@ drm_agp_free_ioctl(struct drm_device *dev, void *data,
 	drm_agp_buffer_t request;
 	int retcode;
 
-	request = *(drm_agp_buffer_t *) data;
+	request = *(drm_agp_buffer_t *)data;
 
 	DRM_LOCK();
 	retcode = drm_agp_free(dev, &request);

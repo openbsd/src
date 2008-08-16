@@ -57,8 +57,10 @@ drm_lock_take(struct drm_lock_data *lock_data, unsigned int context)
 
 	do {
 		old = *lock;
-		if (old & _DRM_LOCK_HELD) new = old | _DRM_LOCK_CONT;
-		else new = context | _DRM_LOCK_HELD;
+		if (old & _DRM_LOCK_HELD)
+			new = old | _DRM_LOCK_CONT;
+		else
+			new = context | _DRM_LOCK_HELD;
 	} while (!atomic_cmpset_int(lock, old, new));
 
 	if (_DRM_LOCKING_CONTEXT(old) == context) {
@@ -80,8 +82,7 @@ drm_lock_take(struct drm_lock_data *lock_data, unsigned int context)
 /* This takes a lock forcibly and hands it to context.	Should ONLY be used
    inside *_unlock to give lock to kernel before calling *_dma_schedule. */
 int
-drm_lock_transfer(struct drm_lock_data *lock_data,
-    unsigned int context)
+drm_lock_transfer(struct drm_lock_data *lock_data, unsigned int context)
 {
 	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
 	unsigned int		 old, new;
@@ -96,8 +97,7 @@ drm_lock_transfer(struct drm_lock_data *lock_data,
 }
 
 int
-drm_lock_free(struct drm_lock_data *lock_data,
-    unsigned int context)
+drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 {
 	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
 	unsigned int		 old, new;

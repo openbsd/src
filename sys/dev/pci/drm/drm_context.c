@@ -63,7 +63,7 @@ drm_ctxbitmap_next(struct drm_device *dev)
 		return -1;
 
 	DRM_LOCK();
-	bit = find_first_zero_bit( dev->ctx_bitmap, DRM_MAX_CTXBITMAP );
+	bit = find_first_zero_bit(dev->ctx_bitmap, DRM_MAX_CTXBITMAP);
 	if (bit >= DRM_MAX_CTXBITMAP) {
 		DRM_UNLOCK();
 		return -1;
@@ -85,16 +85,16 @@ drm_ctxbitmap_init(struct drm_device *dev)
 
 	DRM_LOCK();
 	dev->ctx_bitmap = drm_calloc(1, PAGE_SIZE, DRM_MEM_CTXBITMAP);
-	if ( dev->ctx_bitmap == NULL ) {
+	if (dev->ctx_bitmap == NULL) {
 		DRM_UNLOCK();
 		return ENOMEM;
 	}
 	dev->max_context = -1;
 	DRM_UNLOCK();
 
-	for ( i = 0 ; i < DRM_RESERVED_CONTEXTS ; i++ ) {
+	for (i = 0; i < DRM_RESERVED_CONTEXTS; i++) {
 		temp = drm_ctxbitmap_next(dev);
-	   	DRM_DEBUG( "drm_ctxbitmap_init : %d\n", temp );
+	   	DRM_DEBUG("drm_ctxbitmap_init : %d\n", temp);
 	}
 
 	return 0;
@@ -115,12 +115,12 @@ drm_resctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_ctx_t ctx;
 	int i;
 
-	if ( res->count >= DRM_RESERVED_CONTEXTS ) {
+	if (res->count >= DRM_RESERVED_CONTEXTS) {
 		bzero(&ctx, sizeof(ctx));
-		for ( i = 0 ; i < DRM_RESERVED_CONTEXTS ; i++ ) {
+		for (i = 0; i < DRM_RESERVED_CONTEXTS; i++) {
 			ctx.handle = i;
-			if ( DRM_COPY_TO_USER( &res->contexts[i],
-			    &ctx, sizeof(ctx) ) )
+			if (DRM_COPY_TO_USER(&res->contexts[i],
+			    &ctx, sizeof(ctx)))
 				return EFAULT;
 		}
 	}
@@ -135,13 +135,13 @@ drm_addctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_ctx_t *ctx = data;
 
 	ctx->handle = drm_ctxbitmap_next(dev);
-	if ( ctx->handle == DRM_KERNEL_CONTEXT ) {
+	if (ctx->handle == DRM_KERNEL_CONTEXT) {
 		/* Skip kernel's context and get a new one. */
 		ctx->handle = drm_ctxbitmap_next(dev);
 	}
-	DRM_DEBUG( "%d\n", ctx->handle );
-	if ( ctx->handle == -1 ) {
-		DRM_DEBUG( "Not enough free contexts.\n" );
+	DRM_DEBUG("%d\n", ctx->handle);
+	if (ctx->handle == -1) {
+		DRM_DEBUG("Not enough free contexts.\n");
 		/* Should this return -EBUSY instead? */
 		return ENOMEM;
 	}
@@ -171,8 +171,8 @@ drm_rmctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_ctx_t *ctx = data;
 
-	DRM_DEBUG( "%d\n", ctx->handle );
-	if ( ctx->handle != DRM_KERNEL_CONTEXT ) {
+	DRM_DEBUG("%d\n", ctx->handle);
+	if (ctx->handle != DRM_KERNEL_CONTEXT) {
 		if (dev->driver.context_dtor) {
 			DRM_LOCK();
 			dev->driver.context_dtor(dev, ctx->handle);

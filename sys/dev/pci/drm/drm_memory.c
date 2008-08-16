@@ -109,7 +109,7 @@ drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
 		}
 		goto done;
 	} else {
-		for (i = 0 ; i < DRM_MAX_PCI_RESOURCE; ++i) {
+		for (i = 0; i < DRM_MAX_PCI_RESOURCE; ++i) {
 			bar = vga_pci_bar_info(dev->vga_softc, i);
 			if (bar == NULL)
 				continue;

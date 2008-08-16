@@ -48,9 +48,9 @@ RB_PROTOTYPE(drawable_tree, bsd_drm_drawable_info, tree,
     drm_drawable_compare);
 
 struct bsd_drm_drawable_info {
-	struct drm_drawable_info info;
-	unsigned int handle;
-	RB_ENTRY(bsd_drm_drawable_info) tree;
+	struct drm_drawable_info	info;
+	unsigned int			handle;
+	RB_ENTRY(bsd_drm_drawable_info)	tree;
 };
 
 int
@@ -157,8 +157,8 @@ drm_update_draw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			struct drm_clip_rect *rects;
 
 			DRM_SPINUNLOCK(&dev->drw_lock);
-			rects = drm_calloc(update->num, 
-			    sizeof(*info->rects), DRM_MEM_DRAWABLE);
+			rects = drm_calloc(update->num, sizeof(*info->rects),
+			    DRM_MEM_DRAWABLE);
 			DRM_SPINLOCK(&dev->drw_lock);
 			if (rects == NULL) {
 				ret = ENOMEM;
@@ -188,8 +188,8 @@ drm_drawable_free(struct drm_device *dev, struct bsd_drm_drawable_info *draw)
 		return;
 	RB_REMOVE(drawable_tree, &dev->drw_head, draw);
 	DRM_SPINUNLOCK(&dev->drw_lock);
-	drm_free(draw->info.rects,
-	    sizeof(*draw->info.rects) * draw->info.num_rects, DRM_MEM_DRAWABLE);
+	drm_free(draw->info.rects, sizeof(*draw->info.rects) *
+	    draw->info.num_rects, DRM_MEM_DRAWABLE);
 	drm_free(draw, sizeof(*draw), DRM_MEM_DRAWABLE);
 	DRM_SPINLOCK(&dev->drw_lock);
 }
@@ -200,13 +200,10 @@ drm_drawable_free_all(struct drm_device *dev)
 	struct bsd_drm_drawable_info *draw, *nxt;
 
 	DRM_SPINLOCK(&dev->drw_lock);
-
 	for (draw = RB_MIN(drawable_tree, &dev->drw_head); draw != NULL;
 	    draw = nxt) {
 		nxt = RB_NEXT(drawable_tree, &dev->drw_head, draw);
 		drm_drawable_free(dev, draw);
-
 	}
 	DRM_SPINUNLOCK(&dev->drw_lock);
-
 }

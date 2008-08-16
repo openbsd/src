@@ -64,9 +64,9 @@ drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 	DRM_DEBUG("pid = %d, minor = %d\n", DRM_CURRENTPID, m);
 
 	priv = drm_calloc(1, sizeof(*priv), DRM_MEM_FILES);
-	if (priv == NULL) {
+	if (priv == NULL)
 		return (ENOMEM);
-	}
+
 	priv->uid = DRM_UID(p);
 	priv->pid = DRM_PID(p);
 	priv->kdev = kdev;

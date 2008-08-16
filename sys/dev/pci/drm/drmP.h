@@ -270,7 +270,7 @@ do {									\
 
 /* Returns -errno to shared code */
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
-ret = 0;								\
+ret = 0;							\
 while ( ret == 0 ) {						\
 	DRM_UNLOCK();						\
 	DRM_SPINLOCK(&dev->irq_lock);				\
