@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.81 2007/12/11 15:44:00 tedu Exp $	*/
+/*	$OpenBSD: apm.c,v 1.82 2008/08/16 00:26:26 krw Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -751,7 +751,7 @@ apmprobe(struct device *parent, void *match, void *aux)
 
 	if (apm_cd.cd_ndevs || strcmp(ba->ba_name, "apm") ||
 	    !(ba->ba_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
-		DPRINTF(("%s: %x\n", ba->bios_dev, ba->bios_apmp->apm_detail));
+		DPRINTF(("%s: %x\n", ba->ba_name, ba->ba_apmp->apm_detail));
 		return 0;
 	}
 

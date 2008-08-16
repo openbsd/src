@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.81 2008/06/08 13:55:06 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.82 2008/08/16 00:26:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -132,7 +132,7 @@ biosprobe(struct device *parent, void *match, void *aux)
 
 #ifdef BIOS_DEBUG
 	printf("%s%d: boot API ver %x, %x; args %p[%d]\n",
-	    bia->bios_dev, bios_cd.cd_ndevs,
+	    bia->ba_name, bios_cd.cd_ndevs,
 	    bootapiver, BOOTARG_APIVER, bootargp, bootargc);
 #endif
 	/* there could be only one */
