@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.37 2008/08/16 12:21:46 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.38 2008/08/16 12:23:50 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -508,85 +508,43 @@ doformat(const char *argv[], int argc)
 {
 	const char *format = argv[2];
 	int pos = 3;
-	int left_padded;
-	long width;
-	size_t l;
-	const char *thisarg;
-	char temp[2];
-	long extra;
 
 	while (*format != 0) {
 		if (*format != '%') {
 			addchar(*format++);
-			continue;
-		}
-
-		format++;
-		if (*format == '%') {
-			addchar(*format++);
-			continue;
-		}
-		if (*format == 0) {
-			addchar('%');
-			break;
-		}
-
-		if (*format == '*') {
-			format++;
-			if (pos >= argc)
-				m4errx(1, 
-				    "Format with too many format specifiers.");
-			width = strtol(argv[pos++], NULL, 10);
 		} else {
-			width = strtol(format, (char **)&format, 10);
-		}
-		if (width < 0) {
-			left_padded = 1;
-			width = -width;
-		} else {
-			left_padded = 0;
-		}
-		if (*format == '.') {
 			format++;
-			if (*format == '*') {
-				format++;
-				if (pos >= argc)
-					m4errx(1, 
-					    "Format with too many format specifiers.");
-				extra = strtol(argv[pos++], NULL, 10);
+			if (*format == '%' || *format == 0) {
+				addchar('%');
+				if (*format == '%')
+					format++;
 			} else {
-				extra = strtol(format, (char **)&format, 10);
+			    int left_padded = 0;
+			    unsigned long width;
+			    size_t l;
+
+			    if (*format == '-') {
+				    left_padded = 1;
+				    format++;
+			    }
+			    width = strtoul(format, (char **)&format, 10);
+			    if (*format != 's') {
+				    m4errx(1, "Unsupported format specification: %s.", argv[2]);
+			    }
+			    format++;
+			    if (pos >= argc)
+				    m4errx(1, "Format with too many values.");
+			    l = strlen(argv[pos]);
+			    if (!left_padded) {
+				    while (l < width--)
+					    addchar(' ');
+			    }
+			    addchars(argv[pos++], l);
+			    if (left_padded) {
+				    while (l < width--)
+					    addchar(' ');
+			    }
 			}
-		} else {
-			extra = LONG_MAX;
-		}
-		if (pos >= argc)
-			m4errx(1, "Format with too many format specifiers.");
-		switch(*format) {
-		case 's':
-			thisarg = argv[pos++];
-			break;
-		case 'c':
-			temp[0] = strtoul(argv[pos++], NULL, 10);
-			temp[1] = 0;
-			thisarg = temp;
-			break;
-		default:
-			m4errx(1, "Unsupported format specification: %s.", 
-			    argv[2]);
-		}
-		format++;
-		l = strlen(thisarg);
-		if (l > extra)
-			l = extra;
-		if (!left_padded) {
-			while (l < width--)
-				addchar(' ');
-		}
-		addchars(thisarg, l);
-		if (left_padded) {
-			while (l < width--)
-				addchar(' ');
 		}
 	}
 	pbstr(getstring());

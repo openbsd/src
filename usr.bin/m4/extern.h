@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.46 2008/08/16 12:21:46 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.47 2008/08/16 12:23:50 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ extern void	usage(void);
 extern void	resizedivs(int);
 extern size_t	buffer_mark(void);
 extern void	dump_buffer(FILE *, size_t);
-extern void	__dead m4errx(int, const char *, ...);
+extern void	m4errx(int, const char *, ...);
 
 extern int 	obtain_char(struct input_file *);
 extern void	set_input(struct input_file *, FILE *, const char *);
@@ -133,7 +133,7 @@ extern void	release_input(struct input_file *);
 /* and corresponding exposure for local symbols */
 extern void enlarge_bufspace(void);
 extern void enlarge_strspace(void);
-extern unsigned char *endpbb;
+extern char *endpbb;
 extern char *endest;
 
 /* trace.c */
@@ -156,10 +156,10 @@ extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */
-extern unsigned char *bp;	/* first available character */
-extern unsigned char *buf;	/* push-back buffer */
-extern unsigned char *bufbase;	/* buffer base for this ilevel */
-extern unsigned char *bbase[];	/* buffer base per ilevel */
+extern char *bp;		/* first available character */
+extern char *buf;		/* push-back buffer */
+extern char *bufbase;		/* buffer base for this ilevel */
+extern char *bbase[];		/* buffer base per ilevel */
 extern char ecommt[MAXCCHARS+1];/* end character for comment */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[MAXCCHARS+1];/* left quote character (`) */
