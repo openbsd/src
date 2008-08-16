@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.3 2006/01/20 23:10:19 espie Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.4 2008/08/16 12:21:46 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -21,9 +21,11 @@
 #include <stdint.h>
 #include <limits.h>
 
+extern int mimic_gnu;
 extern int32_t yylval;
 
 int32_t number(void);
+int32_t parse_radix(void);
 %}
 
 delim 	[ \t\n]
@@ -31,10 +33,17 @@ ws	{delim}+
 hex	0[xX][0-9a-fA-F]+
 oct	0[0-7]*
 dec	[1-9][0-9]*
+radix	0[rR][0-9]+:[0-9a-zA-Z]+
 
 %%
 {ws}			{/* just skip it */}
 {hex}|{oct}|{dec}	{ yylval = number(); return(NUMBER); }
+{radix}			{ if (mimic_gnu) {
+				yylval = parse_radix(); return(NUMBER);
+			  } else {
+			  	return(ERROR);
+			  }
+			}
 "<="			{ return(LE); }
 ">="			{ return(GE); }
 "<<"			{ return(LSHIFT); }
@@ -58,5 +67,31 @@ number()
 		fprintf(stderr, "m4: numeric overflow in expr: %s\n", yytext);
 	}
 	return l;
-
 }
+
+int32_t
+parse_radix()
+{
+	long base;
+	char *next;
+	long l;
+
+	l = 0;
+	base = strtol(yytext+2, &next, 0);
+	if (base > 36 || next == NULL) {
+		fprintf(stderr, "m4: error in number %s\n", yytext);
+	} else {
+		next++;
+		while (*next != 0) {
+			if (*next >= '0' && *next <= '9')
+				l = base * l + *next - '0';
+			else if (*next >= 'a' && *next <= 'z')
+				l = base * l + *next - 'a' + 10;
+			else if (*next >= 'A' && *next <= 'Z')
+				l = base * l + *next - 'A' + 10;
+			next++;
+		}
+	}
+	return l;
+}
+

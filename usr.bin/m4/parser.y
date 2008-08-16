@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: parser.y,v 1.3 2006/01/20 23:10:19 espie Exp $ */
+/* $OpenBSD: parser.y,v 1.4 2008/08/16 12:21:46 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -22,6 +22,7 @@ extern int yylex(void);
 extern int yyerror(const char *);
 %}
 %token NUMBER
+%token ERROR
 %left LOR
 %left LAND
 %left '|'
