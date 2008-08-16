@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.86 2008/08/16 16:37:30 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.87 2008/08/16 16:47:32 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3702,22 +3702,22 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		return (USBD_INVAL);
 	}
 
-	switch (i) { 
+	switch (i) {
 	case 1:
-		ufrperframe = 8; 
+		ufrperframe = 8;
 		break;
 	case 2:
-		ufrperframe = 4; 
+		ufrperframe = 4;
 		break;
 	case 3:
-		ufrperframe = 2; 
+		ufrperframe = 2;
 		break;
 	default:
-		ufrperframe = 1; 
+		ufrperframe = 1;
 		break;
-	} 
-	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe; 
-	uframes = 8 / ufrperframe; 
+	}
+	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe;
+	uframes = 8 / ufrperframe;
 
 	if (frames == 0) {
 		DPRINTF(("ehci_device_isoc_start: frames == 0\n"));
