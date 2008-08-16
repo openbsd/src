@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.81 2008/08/13 20:29:34 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.82 2008/08/16 18:56:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -916,11 +916,10 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 		i++;
 
 		/* save endpoint with requested bandwidth */
-		if (UGETW(ed->wMaxPacketSize) == max_packet_size) {
+		if (UGETW(ed->wMaxPacketSize) >= max_packet_size) {
 			sc->sc_vs_curr->endpoint = ed->bEndpointAddress;
 			sc->sc_vs_curr->curalt = id->bAlternateSetting;
-			sc->sc_vs_curr->max_packet_size =
-			    UGETW(ed->wMaxPacketSize);
+			sc->sc_vs_curr->max_packet_size = max_packet_size;
 			DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
 			DPRINTF(1, "bAlternateSetting=0x%02x\n",
 			    id->bAlternateSetting);
