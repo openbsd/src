@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.51 2008/08/16 12:21:46 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.52 2008/08/16 12:26:07 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,11 +138,7 @@ Activate GNU-m4 compatibility mode.
 In this mode, translit handles simple character
 ranges (e.g., a-z), regular expressions mimic emacs behavior,
 multiple m4wrap calls are handled as a stack,
-the number of diversions is unlimited,
-empty names for macro definitions are allowed,
-and eval understands 
-.Sq 0rbase:value 
-numbers.
+and the number of diversions is unlimited.
 .It Fl I Ar "dirname"
 Add directory
 .Ar dirname
@@ -272,9 +268,9 @@ with escape sequences substituted with
 .Fa arg1
 and following arguments, in a way similar to
 .Xr printf 3 .
-This built-in is only available in GNU-m4 compatibility mode, and the only
-parameters implemented are there for autoconf compatibility:
-left-padding flag, an optional field width, a maximum field width, *-specified field widths, and the %s and %c data type.
+This built-in is only available in GNU-m4 compatibility mode, and the
+left-padding flag, an optional field width and the %s data type
+are the only supported parameters.
 .It Fn ifdef name yes no
 If the macro named by the first argument is defined then return the second
 argument, otherwise the third.
