@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.24 2008/07/12 17:31:06 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.25 2008/08/17 21:31:38 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -751,6 +751,9 @@ agp_acquire_helper(void *dev, enum agp_acquire_state state)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
 
+	if (sc->sc_chipc == NULL) 
+		return (EINVAL);
+
 	if (sc->sc_state != AGP_ACQUIRE_FREE)
 		return (EBUSY);
 	sc->sc_state = state;
@@ -965,8 +968,7 @@ agp_unbind_memory(void *dev, void *handle)
 }
 
 void
-agp_memory_info(void *dev, void *handle, struct
-    agp_memory_info *mi)
+agp_memory_info(void *dev, void *handle, struct agp_memory_info *mi)
 {
         struct agp_memory *mem = (struct agp_memory *) handle;
 
