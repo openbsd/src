@@ -1,4 +1,4 @@
-/*	$OpenBSD: code.c,v 1.8 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: code.c,v 1.9 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -29,6 +29,8 @@
 
 # include "pass1.h"
 
+int lastloc = -1;
+
 /*
  * Define everything needed to print out some data (or text).
  * This means segment, alignment, visibility, etc.
@@ -37,8 +39,11 @@ void
 defloc(struct symtab *sp)
 {
 	extern char *nextsect;
+#if defined(ELFABI) || defined(PECOFFABI)
 	static char *loctbl[] = { "text", "data", "section .rodata" };
-	static int lastloc = -1;
+#elif defined(MACHOABI)
+	static char *loctbl[] = { "text", "data", "const_data" };
+#endif
 	TWORD t;
 	int s;
 
@@ -67,9 +72,13 @@ defloc(struct symtab *sp)
 	if (t > UCHAR)
 		printf("	.align %d\n", t > USHORT ? 4 : 2);
 	if (sp->sclass == EXTDEF)
-		printf("	.globl %s\n", sp->soname);
+		printf("	.globl %s\n", exname(sp->soname));
+#if defined(ELFABI)
+	if (ISFTN(t))
+		printf("\t.type %s,@function\n", exname(sp->soname));
+#endif
 	if (sp->slevel == 0)
-		printf("%s:\n", sp->soname);
+		printf("%s:\n", exname(sp->soname));
 	else
 		printf(LABFMT ":\n", sp->soffset);
 }
@@ -105,6 +114,10 @@ efcode()
 void
 bfcode(struct symtab **sp, int cnt)
 {
+#ifdef os_win32
+	extern int argstacksize;
+#endif
+	struct symtab *sp2;
 	extern int gotnr;
 	NODE *n, *p;
 	int i;
@@ -114,6 +127,26 @@ bfcode(struct symtab **sp, int cnt)
 		for (i = 0; i < cnt; i++) 
 			sp[i]->soffset += SZPOINT(INT);
 	}
+
+#ifdef os_win32
+	/*
+	 * Count the arguments and mangle name in symbol table as a callee.
+	 */
+	argstacksize = 0;
+	if (cftnsp->sflags & SSTDCALL) {
+		char buf[64];
+		for (i = 0; i < cnt; i++) {
+			TWORD t = sp[i]->stype;
+			if (t == STRTY || t == UNIONTY)
+				argstacksize += sp[i]->ssue->suesize;
+			else
+				argstacksize += szty(t) * SZINT / SZCHAR;
+		}
+		snprintf(buf, 64, "%s@%d", cftnsp->soname, argstacksize);
+		cftnsp->soname = newstring(buf, strlen(buf));
+	}
+#endif
+
 	if (kflag) {
 		/* Put ebx in temporary */
 		n = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
@@ -130,9 +163,9 @@ bfcode(struct symtab **sp, int cnt)
 		if (sp[i]->stype == STRTY || sp[i]->stype == UNIONTY ||
 		    cisreg(sp[i]->stype) == 0)
 			continue;
-		spname = sp[i];
+		sp2 = sp[i];
 		n = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
-		n = buildtree(ASSIGN, n, buildtree(NAME, 0, 0));
+		n = buildtree(ASSIGN, n, nametree(sp2));
 		sp[i]->soffset = regno(n->n_left);
 		sp[i]->sflags |= STNODE;
 		ecomp(n);
@@ -149,16 +182,54 @@ bccode()
 	SETOFF(autooff, SZINT);
 }
 
+#if defined(MACHOABI)
+struct stub stublist;
+struct stub nlplist;
+#endif
+
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
 ejobcode(int flag )
 {
+#if defined(MACHOABI)
+	/*
+	 * iterate over the stublist and output the PIC stubs
+`	 */
+	if (kflag) {
+		struct stub *p;
+
+		DLIST_FOREACH(p, &stublist, link) {
+			printf("\t.section __IMPORT,__jump_table,symbol_stubs,self_modifying_code+pure_instructions,5\n");
+			printf("L%s$stub:\n", p->name);
+			printf("\t.indirect_symbol %s\n", exname(p->name));
+			printf("\thlt ; hlt ; hlt ; hlt ; hlt\n");
+			printf("\t.subsections_via_symbols\n");
+		}
+
+		printf("\t.section __IMPORT,__pointers,non_lazy_symbol_pointers\n");
+		DLIST_FOREACH(p, &nlplist, link) {
+			printf("L%s$non_lazy_ptr:\n", p->name);
+			printf("\t.indirect_symbol %s\n", exname(p->name));
+			printf("\t.long 0\n");
+	        }
+
+	}
+#endif
+
+#define _MKSTR(x) #x
+#define MKSTR(x) _MKSTR(x)
+#define OS MKSTR(TARGOS)
+        printf("\t.ident \"PCC: %s (%s)\"\n", PACKAGE_STRING, OS);
 }
 
 void
 bjobcode()
 {
+#if defined(MACHOABI)
+	DLIST_INIT(&stublist, link);
+	DLIST_INIT(&nlplist, link);
+#endif
 }
 
 /*
@@ -188,6 +259,7 @@ funcode(NODE *p)
 	}
 	if (kflag == 0)
 		return p;
+#if defined(ELFABI)
 	/* Create an ASSIGN node for ebx */
 	l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
 	l->n_rval = EBX;
@@ -199,6 +271,7 @@ funcode(NODE *p)
 			;
 		r->n_left = block(CM, l, r->n_left, INT, 0, MKSUE(INT));
 	}
+#endif
 	return p;
 }
 

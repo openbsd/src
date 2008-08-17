@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.6 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: table.c,v 1.7 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -229,7 +229,7 @@ struct optab table[] = {
 
 /* convert int to char. This is done when register is loaded */
 { SCONV,	INCH,
-	SAREG,	TWORD,
+	SAREG,	TWORD|TPOINT,
 	SANY,	TCHAR|TUCHAR,
 		NSPECIAL|NBREG|NBSL,	RESC1,
 		"ZM", },
@@ -976,7 +976,7 @@ struct optab table[] = {
 	SNAME|SOREG,	TLDOUBLE,
 	SHFL,	TFLOAT|TDOUBLE|TLDOUBLE,
 		0,	RDEST,
-		"	fstt AL\n", },
+		"	fst AL\n", },
 
 { ASSIGN,	FOREFF,
 	SNAME|SOREG,	TLDOUBLE,
@@ -1316,7 +1316,7 @@ struct optab table[] = {
 		0,	RNOP,
 		"	jmp LL\n", },
 
-#ifdef GCC_COMPAT
+#if defined(GCC_COMPAT) || defined(LANG_F77)
 { GOTO, 	FOREFF,
 	SAREG,	TANY,
 	SANY,	TANY,

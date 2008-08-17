@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.13 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.14 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -71,7 +71,6 @@
 
 #include "cgram.h"
 
-struct symtab *spname;
 struct symtab *cftnsp;
 int arglistcnt, dimfuncnt;	/* statistics */
 int symtabcnt, suedefcnt;	/* statistics */
@@ -101,6 +100,8 @@ struct rstack {
 	int	rstr;
 	struct	symtab *rsym;
 	struct	symtab *rb;
+	int	flags;
+#define	LASTELM	1
 } *rpole;
 
 /*
@@ -139,6 +140,7 @@ int ddebug = 0;
 void
 defid(NODE *q, int class)
 {
+	extern int fun_inline;
 	struct symtab *p;
 	TWORD type, qual;
 	TWORD stp, stq;
@@ -150,6 +152,9 @@ defid(NODE *q, int class)
 		return;  /* an error was detected */
 
 	p = q->n_sp;
+
+	if (p->sname == NULL)
+		cerror("defining null identifier");
 
 #ifdef PCC_DEBUG
 	if (ddebug) {
@@ -215,10 +220,11 @@ defid(NODE *q, int class)
 	changed = 0;
 	for (temp = type; temp & TMASK; temp = DECREF(temp)) {
 		if (ISARY(temp)) {
-			if (dsym->ddim == 0) {
+			if (dsym->ddim == NOOFFSET) {
 				dsym->ddim = ddef->ddim;
 				changed = 1;
-			} else if (ddef->ddim != 0 && dsym->ddim!=ddef->ddim) {
+			} else if (ddef->ddim != NOOFFSET &&
+			    dsym->ddim!=ddef->ddim) {
 				goto mismatch;
 			}
 			++dsym;
@@ -258,59 +264,60 @@ defid(NODE *q, int class)
 		switch( scl ){
 		case STATIC:
 		case USTATIC:
-			if( slev==0 ) return;
+			if( slev==0 )
+				goto done;
 			break;
 		case EXTDEF:
 		case EXTERN:
 		case FORTRAN:
 		case UFORTRAN:
-			return;
+			goto done;
 			}
 		break;
 
 	case STATIC:
 		if (scl==USTATIC || (scl==EXTERN && blevel==0)) {
 			p->sclass = STATIC;
-			return;
+			goto done;
 		}
 		if (changed || (scl == STATIC && blevel == slev))
-			return; /* identical redeclaration */
+			goto done; /* identical redeclaration */
 		break;
 
 	case USTATIC:
 		if (scl==STATIC || scl==USTATIC)
-			return;
+			goto done;
 		break;
 
 	case TYPEDEF:
 		if (scl == class)
-			return;
+			goto done;
 		break;
 
 	case UFORTRAN:
 		if (scl == UFORTRAN || scl == FORTRAN)
-			return;
+			goto done;
 		break;
 
 	case FORTRAN:
 		if (scl == UFORTRAN) {
 			p->sclass = FORTRAN;
-			return;
+			goto done;
 		}
 		break;
 
 	case MOU:
 	case MOS:
-		return;
+		goto done;
 
 	case EXTDEF:
 		switch (scl) {
 		case EXTERN:
 			p->sclass = EXTDEF;
-			return;
+			goto done;
 		case USTATIC:
 			p->sclass = STATIC;
-			return;
+			goto done;
 		}
 		break;
 
@@ -318,7 +325,11 @@ defid(NODE *q, int class)
 	case REGISTER:
 		if (blevel == slev)
 			goto redec;
-		;  /* mismatch.. */
+		break;  /* mismatch.. */
+	case SNULL:
+		if (fun_inline && ISFTN(type))
+			goto done;
+		break;
 	}
 
 	mismatch:
@@ -396,11 +407,18 @@ redec:			uerror("redeclaration of %s", p->sname);
 		break;
 
 	case MOU:
+		rpole->rstr = 0;
+		/* FALLTHROUGH */
 	case MOS:
 		oalloc(p, &rpole->rstr);
 		if (class == MOU)
 			rpole->rstr = 0;
 		break;
+	case SNULL:
+		if (fun_inline) {
+			p->slevel = 1;
+			p->soffset = getlab();
+		}
 	}
 
 #ifdef STABS
@@ -408,6 +426,7 @@ redec:			uerror("redeclaration of %s", p->sname);
 		stabs_newsym(p);
 #endif
 
+done:
 	fixdef(p);	/* Leave last word to target */
 #ifdef PCC_DEBUG
 	if (ddebug)
@@ -705,6 +724,12 @@ enumref(char *name)
 	NODE *p;
 
 	sp = lookup(name, STAGNAME);
+	/*
+	 * 6.7.2.3 Clause 2:
+	 * "A type specifier of the form 'enum identifier' without an
+	 *  enumerator list shall only appear after the type it specifies
+	 *  is complete."
+	 */
 	if (sp->sclass != ENAME)
 		uerror("enum %s undeclared", name);
 
@@ -735,9 +760,8 @@ bstruct(char *name, int soru)
 	} else
 		sp = NULL;
 
-	r = tmpalloc(sizeof(struct rstack));
+	r = tmpcalloc(sizeof(struct rstack));
 	r->rsou = soru;
-	r->rstr = 0;
 	r->rsym = sp;
 	r->rb = NULL;
 	r->rnext = rpole;
@@ -758,6 +782,9 @@ dclstruct(struct rstack *r)
 	int al, sa, sz, coff;
 	TWORD temp;
 
+	if (pragma_allpacked && !pragma_packed)
+		pragma_packed = pragma_allpacked;
+
 	if (r->rsym == NULL) {
 		sue = permalloc(sizeof(struct suedef));
 		suedefcnt++;
@@ -768,10 +795,6 @@ dclstruct(struct rstack *r)
 	if (sue->suealign == 0)  /* suealign == 0 is undeclared struct */
 		sue->suealign = ALSTRUCT;
 
-#ifdef PCC_DEBUG
-	if (ddebug)
-		printf("dclstruct(%s)\n", r->rsym ? r->rsym->sname : "??");
-#endif
 	temp = r->rsou == STNAME ? STRTY : UNIONTY;
 	al = ALSTRUCT;
 
@@ -805,10 +828,20 @@ dclstruct(struct rstack *r)
 		 */
 		SETOFF(al, sa);
 	}
-	SETOFF(rpole->rstr, al);
+
+	if (!pragma_packed && !pragma_aligned)
+		SETOFF(rpole->rstr, al);
 
 	sue->suesize = rpole->rstr;
 	sue->suealign = al;
+
+#ifdef PCC_DEBUG
+	if (ddebug) {
+		printf("dclstruct(%s): size=%d, align=%d\n",
+		    r->rsym ? r->rsym->sname : "??",
+		    sue->suesize, sue->suealign);
+	}
+#endif
 
 	pragma_packed = pragma_aligned = 0;
 
@@ -839,6 +872,7 @@ void
 soumemb(NODE *n, char *name, int class)
 {
 	struct symtab *sp, *lsp;
+	int incomp;
  
 	if (rpole == NULL)
 		cerror("soumemb");
@@ -854,10 +888,38 @@ soumemb(NODE *n, char *name, int class)
 	else
 		lsp->snext = sp;
 	n->n_sp = sp;
+	if ((class & FIELD) == 0)
+		class = rpole->rsou == STNAME ? MOS : MOU;
 	defid(n, class);
-}
- 
 
+	/*
+	 * 6.7.2.1 clause 16:
+	 * "...the last member of a structure with more than one
+	 *  named member may have incomplete array type;"
+	 */
+	if (ISARY(sp->stype) && sp->sdf->ddim == NOOFFSET)
+		incomp = 1;
+	else
+		incomp = 0;
+	if ((rpole->flags & LASTELM) || (rpole->rb == sp && incomp == 1))
+		uerror("incomplete array in struct");
+	if (incomp == 1)
+		rpole->flags |= LASTELM;
+
+	/*
+	 * 6.7.2.1 clause 2:
+	 * "...such a structure shall not be a member of a structure
+	 *  or an element of an array."
+	 */
+	if (sp->stype == STRTY && sp->ssue->sylnk) {
+		struct symtab *lnk;
+
+		for (lnk = sp->ssue->sylnk; lnk->snext; lnk = lnk->snext)
+			;
+		if (ISARY(lnk->stype) && lnk->sdf->ddim == NOOFFSET)
+			uerror("incomplete struct in struct");
+	}
+}
 
 /*
  * error printing routine in parser
@@ -1005,6 +1067,8 @@ tsize(TWORD ty, union dimfun *d, struct suedef *sue)
 		case PTR:
 			return( SZPOINT(ty) * mult );
 		case ARY:
+			if (d->ddim == NOOFFSET)
+				return 0;
 			mult *= d->ddim;
 			d++;
 			continue;
@@ -1035,7 +1099,7 @@ tsize(TWORD ty, union dimfun *d, struct suedef *sue)
 }
 
 /*
- * Save string (and print it out).  If wide == 'L' then wide string.
+ * Save string (and print it out).  If wide then wide string.
  */
 NODE *
 strend(int wide, char *str)
@@ -1044,7 +1108,7 @@ strend(int wide, char *str)
 	NODE *p;
 
 	/* If an identical string is already emitted, just forget this one */
-	if (wide == 'L') {
+	if (wide) {
 		/* Do not save wide strings, at least not now */
 		sp = getsymtab(str, SSTRING|STEMP);
 	} else {
@@ -1061,24 +1125,24 @@ strend(int wide, char *str)
 		sp->soffset = getlab();
 		sp->squal = (CON >> TSHIFT);
 		sp->sdf = permalloc(sizeof(union dimfun));
-		if (wide == 'L') {
+		if (wide) {
 			sp->stype = WCHAR_TYPE+ARY;
 			sp->ssue = MKSUE(WCHAR_TYPE);
 		} else {
-#ifdef CHAR_UNSIGNED
-			sp->stype = UCHAR+ARY;
-			sp->ssue = MKSUE(UCHAR);
-#else
-			sp->stype = CHAR+ARY;
-			sp->ssue = MKSUE(CHAR);
-#endif
+			if (funsigned_char) {
+				sp->stype = UCHAR+ARY;
+				sp->ssue = MKSUE(UCHAR);
+			} else {
+				sp->stype = CHAR+ARY;
+				sp->ssue = MKSUE(CHAR);
+			}
 		}
 		for (wr = sp->sname, i = 1; *wr; i++)
 			if (*wr++ == '\\')
 				(void)esccon(&wr);
 
 		sp->sdf->ddim = i;
-		if (wide == 'L')
+		if (wide)
 			inwstring(sp);
 		else
 			instring(sp);
@@ -1119,12 +1183,11 @@ oalloc(struct symtab *p, int *poff )
 	/*
 	 * Only generate tempnodes if we are optimizing,
 	 * and only for integers, floats or pointers,
-	 * and not if the basic type is volatile.
+	 * and not if the type on this level is volatile.
 	 */
-/* XXX OLDSTYLE */
 	if (xtemps && ((p->sclass == AUTO) || (p->sclass == REGISTER)) &&
 	    (p->stype < STRTY || ISPTR(p->stype)) &&
-	    !ISVOL((p->squal << TSHIFT)) && cisreg(p->stype)) {
+	    !(cqual(p->stype, p->squal) & VOL) && cisreg(p->stype)) {
 		NODE *tn = tempnode(0, p->stype, p->sdf, p->ssue);
 		p->soffset = regno(tn);
 		p->sflags |= STNODE;
@@ -1209,7 +1272,7 @@ dynalloc(struct symtab *p, int *poff)
 	astkp = 0;
 	if (ISARY(t) && blevel == 1) {
 		/* must take care of side effects of dynamic arg arrays */
-		if (p->sdf->ddim < 0) {
+		if (p->sdf->ddim < 0 && p->sdf->ddim != NOOFFSET) {
 			/* first-level array will be indexed correct */
 			edelay(arrstk[astkp++]);
 		}
@@ -1235,8 +1298,10 @@ dynalloc(struct symtab *p, int *poff)
 			continue;
 		if (df->ddim < 0) {
 			n = arrstk[astkp++];
-			nn = tempnode(0, INT, 0, MKSUE(INT));
-			no = regno(nn);
+			do {
+				nn = tempnode(0, INT, 0, MKSUE(INT));
+				no = regno(nn);
+			} while (no == -NOOFFSET);
 			edelay(buildtree(ASSIGN, nn, n));
 
 			df->ddim = -no;
@@ -1358,7 +1423,7 @@ nidcl(NODE *p, int class)
 
 	sp = p->n_sp;
 	/* check if forward decl */
-	if (ISARY(sp->stype) && sp->sdf->ddim == 0)
+	if (ISARY(sp->stype) && sp->sdf->ddim == NOOFFSET)
 		return;
 
 	if (sp->sflags & SASG)
@@ -1459,13 +1524,10 @@ typenode(NODE *p)
 	NODE *q, *saved;
 	TWORD type;
 	int class, qual;
-	int sig, uns;
+	int sig, uns, cmplx;
 
-	type = class = qual = sig = uns = 0;
+	cmplx = type = class = qual = sig = uns = 0;
 	saved = NIL;
-
-	if (rpole != NULL)
-		class = rpole->rsou == STNAME ? MOS : MOU;
 
 	for (q = p; p; p = p->n_left) {
 		switch (p->n_op) {
@@ -1544,11 +1606,32 @@ typenode(NODE *p)
 					goto bad;
 				uns = 1;
 				break;
+			case COMPLEX:
+				cmplx = 1;
+				break;
 			default:
 				cerror("typenode");
 			}
 		}
 	}
+	if (cmplx) {
+		if (sig || uns)
+			goto bad;
+		switch (type) {
+		case FLOAT:
+			type = FCOMPLEX;
+			break;
+		case DOUBLE:
+			type = COMPLEX;
+			break;
+		case LDOUBLE:
+			type = LCOMPLEX;
+			break;
+		default:
+			goto bad;
+		}
+	}
+
 	if (saved && type)
 		goto bad;
 	if (sig || uns) {
@@ -1559,10 +1642,9 @@ typenode(NODE *p)
 		if (uns)
 			type = ENUNSIGN(type);
 	}
-#ifdef CHAR_UNSIGNED
-	if (type == CHAR && sig == 0)
+
+	if (funsigned_char && type == CHAR && sig == 0)
 		type = UCHAR;
-#endif
 
 	/* free the chain */
 	while (q) {
@@ -1789,7 +1871,7 @@ tyreduce(NODE *p, struct tylnk **tylkp, int *ntdim)
 			nfree(p->n_right);
 #ifdef notdef
 	/* XXX - check dimensions at usage time */
-			if (dim.ddim == 0 && p->n_left->n_op == LB)
+			if (dim.ddim == NOOFFSET && p->n_left->n_op == LB)
 				uerror("null dimension");
 #endif
 		}
@@ -1857,6 +1939,22 @@ builtin_alloca(NODE *f, NODE *a)
 	spalloc(t, a, SZCHAR);
 	tfree(f);
 	return u;
+}
+
+/*
+ * Determine if a value is known to be constant at compile-time and
+ * hence that PCC can perform constant-folding on expressions involving
+ * that value.
+ */
+static NODE *
+builtin_constant_p(NODE *f, NODE *a)
+{
+	int isconst = (a != NULL && a->n_op == ICON);
+
+	tfree(f);
+	tfree(a);
+
+	return bcon(isconst);
 }
 
 #ifndef TARGET_STDARGS
@@ -1966,6 +2064,7 @@ static struct bitable {
 	NODE *(*fun)(NODE *f, NODE *a);
 } bitable[] = {
 	{ "__builtin_alloca", builtin_alloca },
+	{ "__builtin_constant_p", builtin_constant_p },
 #ifndef TARGET_STDARGS
 	{ "__builtin_stdarg_start", builtin_stdarg_start },
 	{ "__builtin_va_arg", builtin_va_arg },
@@ -2051,7 +2150,7 @@ doacall(NODE *f, NODE *a)
 	    f->n_sp->sname[0] == '_' && f->n_sp->sname[1] == '_') {
 		int i;
 
-		for (i = 0; i < sizeof(bitable)/sizeof(bitable[0]); i++) {
+		for (i = 0; i < (int)(sizeof(bitable)/sizeof(bitable[0])); i++) {
 			if (strcmp(bitable[i].name, f->n_sp->sname) == 0)
 				return (*bitable[i].fun)(f, a);
 		}
@@ -2062,11 +2161,14 @@ doacall(NODE *f, NODE *a)
 	 */
 	if (f->n_df == NULL || (al = f->n_df[0].dfun) == NULL) {
 		if (Wimplicit_function_declaration) {
-			if (f->n_sp != NULL)
-				werror("no prototype for function '%s()'",
-				    f->n_sp->sname);
-			else
+			if (f->n_sp != NULL) {
+				if (strncmp(f->n_sp->sname,
+				    "__builtin", 9) != 0)
+					werror("no prototype for function "
+					    "'%s()'", f->n_sp->sname);
+			} else {
 				werror("no prototype for function pointer");
+			}
 		}
 		/* floats must be cast to double */
 		if (a == NULL)
@@ -2144,8 +2246,19 @@ doacall(NODE *f, NODE *a)
 		if ((hasarray = ISARY(arrt)))
 			arrt += (PTR-ARY);
 #endif
-		if (ISARY(type))
-			type += (PTR-ARY);
+		/* Taking addresses of arrays are meaningless in expressions */
+		/* but people tend to do that and also use in prototypes */
+		/* this is mostly a problem with typedefs */
+		if (ISARY(type)) {
+			if (ISPTR(arrt) && ISARY(DECREF(arrt)))
+				type = INCREF(type);
+			else
+				type += (PTR-ARY);
+		} else if (ISPTR(type) && !ISARY(DECREF(type)) &&
+		    ISPTR(arrt) && ISARY(DECREF(arrt))) {
+			type += (ARY-PTR);
+			type = INCREF(type);
+		}
 
 		/* Check structs */
 		if (type <= BTMASK && arrt <= BTMASK) {
@@ -2190,9 +2303,9 @@ incomp:					uerror("incompatible types for arg %d",
 			goto skip; /* Anything assigned a zero */
 
 		if ((type & ~BTMASK) == (arrt & ~BTMASK)) {
-			/* do not complain for intermixed char/uchar */
-			if ((BTYPE(type) == CHAR || BTYPE(type) == UCHAR) &&
-			    (BTYPE(arrt) == CHAR || BTYPE(arrt) == UCHAR))
+			/* do not complain for pointers with signedness */
+			if (!Wpointer_sign &&
+			    DEUNSIGN(BTYPE(type)) == DEUNSIGN(BTYPE(arrt)))
 				goto skip;
 		}
 
@@ -2238,9 +2351,9 @@ chk2(TWORD type, union dimfun *dsym, union dimfun *ddef)
 		switch (type & TMASK) {
 		case ARY:
 			/* may be declared without dimension */
-			if (dsym->ddim == 0)
+			if (dsym->ddim == NOOFFSET)
 				dsym->ddim = ddef->ddim;
-			if (ddef->ddim && dsym->ddim != ddef->ddim)
+			if (ddef->ddim != NOOFFSET && dsym->ddim != ddef->ddim)
 				return 1;
 			dsym++, ddef++;
 			break;
@@ -2368,8 +2481,12 @@ uclass(int class)
 int
 fixclass(int class, TWORD type)
 {
+	extern int fun_inline;
+
 	/* first, fix null class */
 	if (class == SNULL) {
+		if (fun_inline && ISFTN(type))
+			return SNULL;
 		if (rpole)
 			class = rpole->rsou == STNAME ? MOS : MOU;
 		else if (blevel == 0)
@@ -2398,7 +2515,7 @@ fixclass(int class, TWORD type)
 		}
 
 	if (class & FIELD) {
-		if (rpole && rpole->rsou != STNAME)
+		if (rpole && rpole->rsou != STNAME && rpole->rsou != UNAME)
 			uerror("illegal use of field");
 		return(class);
 	}
@@ -2508,7 +2625,7 @@ getsymtab(char *name, int flags)
 int
 fldchk(int sz)
 {
-	if (rpole->rsou != STNAME)
+	if (rpole->rsou != STNAME && rpole->rsou != UNAME)
 		uerror("field outside of structure");
 	if (sz < 0 || sz >= FIELD) {
 		uerror("illegal field size");
@@ -2553,3 +2670,108 @@ scnames(int c)
 	return( ccnames[c] );
 	}
 #endif
+
+void
+sspinit()
+{
+	NODE *p;
+
+	p = block(NAME, NIL, NIL, FTN+VOID, 0, MKSUE(VOID));
+	p->n_sp = lookup("__stack_chk_fail", SNORMAL);
+	defid(p, EXTERN);
+	nfree(p);
+
+	p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
+	p->n_sp = lookup("__stack_chk_guard", SNORMAL);
+	defid(p, EXTERN);
+	nfree(p);
+}
+
+void
+sspstart()
+{
+	NODE *p, *q;
+
+	q = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
+ 	q->n_sp = lookup("__stack_chk_guard", SNORMAL);
+	q = clocal(q);
+
+	p = block(REG, NIL, NIL, INT, 0, 0);
+	p->n_lval = 0;
+	p->n_rval = FPREG;
+	q = block(ER, p, q, INT, 0, MKSUE(INT));
+	q = clocal(q);
+
+	p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
+	p->n_sp = lookup("__stack_chk_canary", SNORMAL);
+	defid(p, AUTO);
+	p = clocal(p);
+
+	ecomp(buildtree(ASSIGN, p, q));
+}
+
+void
+sspend()
+{
+	NODE *p, *q;
+	TWORD t;
+	int tmpnr = 0;
+	int lab;
+
+	if (retlab != NOLAB) {
+		plabel(retlab);
+		retlab = getlab();
+	}
+
+	t = DECREF(cftnsp->stype);
+	if (t == BOOL)
+		t = BOOL_TYPE;
+
+	if (t != VOID && !ISSOU(t)) {
+		p = tempnode(0, t, cftnsp->sdf, cftnsp->ssue);
+		tmpnr = regno(p);
+		q = block(REG, NIL, NIL, t, cftnsp->sdf, cftnsp->ssue);
+		q->n_rval = RETREG(t);
+		ecomp(buildtree(ASSIGN, p, q));
+	}
+
+	p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
+	p->n_sp = lookup("__stack_chk_canary", SNORMAL);
+	p = clocal(p);
+
+	q = block(REG, NIL, NIL, INT, 0, 0);
+	q->n_lval = 0;
+	q->n_rval = FPREG;
+	q = block(ER, p, q, INT, 0, MKSUE(INT));
+
+	p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
+	p->n_sp = lookup("__stack_chk_guard", SNORMAL);
+	p = clocal(p);
+
+	lab = getlab();
+	cbranch(buildtree(EQ, p, q), bcon(lab));
+
+	p = block(NAME, NIL, NIL, FTN+VOID, 0, MKSUE(VOID));
+	p->n_sp = lookup("__stack_chk_fail", SNORMAL);
+	p = clocal(p);
+
+	ecomp(buildtree(UCALL, p, NIL));
+
+	plabel(lab);
+
+	if (t != VOID && !ISSOU(t)) {
+		p = tempnode(tmpnr, t, cftnsp->sdf, cftnsp->ssue);
+		q = block(REG, NIL, NIL, t, cftnsp->sdf, cftnsp->ssue);
+		q->n_rval = RETREG(t);
+		ecomp(buildtree(ASSIGN, q, p));
+	}
+}
+
+/*
+ * Allocate on the permanent heap for inlines, otherwise temporary heap.
+ */
+void *
+inlalloc(int size)
+{
+	return isinlining ?  permalloc(size) : tmpalloc(size);
+}

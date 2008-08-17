@@ -1,4 +1,4 @@
-/*	$OpenBSD: optim2.c,v 1.7 2008/01/12 17:17:28 ragge Exp $	*/
+/*	$OpenBSD: optim2.c,v 1.8 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -167,7 +167,6 @@ cvtaddrof(NODE *p)
 		l->n_op = REG;
 		l->n_lval = 0;
 		l->n_rval = FPREG;
-		
 	}
 }
 
@@ -430,7 +429,7 @@ again:	gotone = 0;
 			continue;
 		ip->ip_node->n_right->n_lval = j;
 		i = ip->ip_node->n_left->n_op;
-		if (i < EQ || i - EQ >= negrelsize)
+		if (i < EQ || i - EQ >= (int)negrelsize)
 			comperr("deljumps: unexpected op");
 		ip->ip_node->n_left->n_op = negrel[i - EQ];
 		tfree(n->ip_node);
@@ -473,7 +472,9 @@ optdump(struct interpass *ip)
 	printf("type %s\n", nm[ip->type-1]);
 	switch (ip->type) {
 	case IP_NODE:
+#ifdef PCC_DEBUG
 		fwalk(ip->ip_node, e2print, 0);
+#endif
 		break;
 	case IP_DEFLAB:
 		printf("label " LABFMT "\n", ip->ip_lbl);
@@ -967,7 +968,7 @@ printip(struct interpass *pole)
 	static char *foo[] = {
 	   0, "NODE", "PROLOG", "STKOFF", "EPILOG", "DEFLAB", "DEFNAM", "ASM" };
 	struct interpass *ip;
-	struct interpass_prolog *ipp, *epp;
+	struct interpass_prolog *ipplg, *epplg;
 
 	DLIST_FOREACH(ip, pole, qelem) {
 		if (ip->type > MAXIP)
@@ -976,20 +977,22 @@ printip(struct interpass *pole)
 			printf("%s (%p): ", foo[ip->type], ip);
 		switch (ip->type) {
 		case IP_NODE: printf("\n");
+#ifdef PCC_DEBUG
 			fwalk(ip->ip_node, e2print, 0); break;
+#endif
 		case IP_PROLOG:
-			ipp = (struct interpass_prolog *)ip;
+			ipplg = (struct interpass_prolog *)ip;
 			printf("%s %s regs %x autos %d mintemp %d minlbl %d\n",
-			    ipp->ipp_name, ipp->ipp_vis ? "(local)" : "",
-			    ipp->ipp_regs, ipp->ipp_autos, ipp->ip_tmpnum,
-			    ipp->ip_lblnum);
+			    ipplg->ipp_name, ipplg->ipp_vis ? "(local)" : "",
+			    ipplg->ipp_regs, ipplg->ipp_autos, ipplg->ip_tmpnum,
+			    ipplg->ip_lblnum);
 			break;
 		case IP_EPILOG:
-			epp = (struct interpass_prolog *)ip;
+			epplg = (struct interpass_prolog *)ip;
 			printf("%s %s regs %x autos %d mintemp %d minlbl %d\n",
-			    epp->ipp_name, epp->ipp_vis ? "(local)" : "",
-			    epp->ipp_regs, epp->ipp_autos, epp->ip_tmpnum,
-			    epp->ip_lblnum);
+			    epplg->ipp_name, epplg->ipp_vis ? "(local)" : "",
+			    epplg->ipp_regs, epplg->ipp_autos, epplg->ip_tmpnum,
+			    epplg->ip_lblnum);
 			break;
 		case IP_DEFLAB: printf(LABFMT "\n", ip->ip_lbl); break;
 		case IP_DEFNAM: printf("\n"); break;

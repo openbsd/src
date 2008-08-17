@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpp.1,v 1.5 2008/04/11 20:55:22 stefan Exp $
+.\"	$OpenBSD: cpp.1,v 1.6 2008/08/17 18:40:13 ragge Exp $
 ."\
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -102,6 +102,9 @@ Include a file at the beginning by using
 Generate dependencies for
 .Xr make 1 .
 .\" TODO: explain and show example?
+.It Fl P
+Inhibit generation of line markers.  This is sometimes useful when
+running the preprocessor on something other than C code.
 .It Fl S Ar path
 Add
 .Ar path

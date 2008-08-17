@@ -1,4 +1,4 @@
-/*      $OpenBSD: match.c,v 1.9 2008/04/11 20:45:52 stefan Exp $   */
+/*      $OpenBSD: match.c,v 1.10 2008/08/17 18:40:13 ragge Exp $   */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -60,11 +60,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-# include "pass2.h"
+#include "pass2.h"
 
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 
-void prttype(int t);
 void setclass(int tmp, int class);
 int getclass(int tmp);
 
@@ -384,26 +385,6 @@ getlr(NODE *p, int c)
 	/* NOTREACHED */
 	return NULL;
 }
-
-static char *tarr[] = {
-	"CHAR", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "POINT", "UCHAR",
-	"USHORT", "UINT", "ULONG", "PTRTO", "ANY", "STRUCT", "LONGLONG",
-	"ULONGLONG",
-};
-
-void
-prttype(int t)
-{
-	int i, gone = 0;
-
-	for (i = 0; i < 16; i++)
-		if ((t >> i) & 1) {
-			if (gone) putchar('|');
-			gone++;
-			printf("%s", tarr[i]);
-		}
-}
-
 
 #ifdef PCC_DEBUG
 #define	F2DEBUG(x)	if (f2debug) printf x

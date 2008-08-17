@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.h,v 1.8 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: pass2.h,v 1.9 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -267,6 +267,13 @@ void myormake(NODE *);
 int *livecall(NODE *);
 void prtreg(FILE *, NODE *);
 char *prcook(int);
+int myxasm(struct interpass *ip, NODE *p);
+int xasmcode(char *s);
+int freetemp(int k);
+int rewfld(NODE *p);
+void canon(NODE *);
+void mycanon(NODE *);
+void oreg2(NODE *p);
 
 void conput(FILE *, NODE *);
 
@@ -283,6 +290,15 @@ extern int regK[];
 #define	CLASSC	3
 #define	CLASSD	4
 #define	CLASSE	5
+
+/* used when parsing xasm codes */
+#define	XASMVAL(x)	((x) & 0377)	/* get val from codeword */
+#define	XASMASG		0x100	/* = */
+#define	XASMCONSTR	0x200	/* & */
+#define	XASMINOUT	0x400	/* + */
+#define XASMALL		(XASMASG|XASMCONSTR|XASMINOUT)
+#define	XASMISINP(cw)	(((cw) & XASMASG) == 0)		/* input operand */
+#define	XASMISOUT(cw)	((cw) & (XASMASG|XASMINOUT))	/* output operand */
 
 /* routines to handle double indirection */
 #ifdef R2REGS
@@ -383,12 +399,12 @@ struct basicblock {
 
 struct labelinfo {
 	struct basicblock **arr;
-	unsigned int size;
+	int size;
 	unsigned int low;
 };
 
 struct bblockinfo {
-	unsigned int size;
+	int size;
 	struct basicblock **arr;
 };
 

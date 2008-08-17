@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cc.1,v 1.4 2008/04/11 20:45:52 stefan Exp $
+.\"	$OpenBSD: cc.1,v 1.5 2008/08/17 18:40:12 ragge Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -55,22 +55,29 @@ Unrecognized options are all sent directly to
 Filenames that end with
 .Sy \&.c
 are passed via
-.Xr cpp 1 -\*[Gt]
-.Xr ccom 1 -\*[Gt]
-.Xr as 1 -\*[Gt]
+.Xr cpp 1 -\*(Gt
+.Xr ccom 1 -\*(Gt
+.Xr as 1 -\*(Gt
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.i
 are passed via
-.Xr ccom 1 -\*[Gt]
-.Xr as 1 -\*[Gt]
+.Xr ccom 1 -\*(Gt
+.Xr as 1 -\*(Gt
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.s
 are passed via
-.Xr as 1 -\*[Gt]
+.Xr as 1 -\*(Gt
+.Xr ld 1 .
+.Pp
+Filenames that end with
+.Sy \&.S
+are passed via
+.Xr cpp 1 -\*(Gt
+.Xr as 1 -\*(Gt
 .Xr ld 1 .
 .Pp
 Filenames that end with
@@ -238,6 +245,9 @@ if multiple files are given.
 Do not use dynamic linkage.
 By default, it will link using the dynamic linker options
 and/or shared objects for the platform.
+.It Fl shared
+Create a shared object of the result.  Tells the linker not to 
+generate an executable.
 .It Fl t
 Passes
 .Fl t
@@ -258,7 +268,12 @@ Options for the linker.
 .It Fl X
 Don't remove temporary files on exit.
 .It Fl x
-TODO
+May be used to give separate optimization flags to ccom, see
+.Fl O
+for options.
+.It Fl x Ar c
+Gcc compatibility option; specify that the language in use is
+.Ar c .
 .El
 .Ss Predefined Macros
 A few

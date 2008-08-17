@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.h,v 1.5 2007/10/21 18:58:02 otto Exp $	*/
+/*	$OpenBSD: cpp.h,v 1.6 2008/08/17 18:40:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -43,7 +43,7 @@ extern	int	trulvl;
 extern	int	flslvl;
 extern	int	elflvl;
 extern	int	elslvl;
-extern	int	tflag, Cflag;
+extern	int	tflag, Cflag, Pflag;
 extern	int	Mflag, dMflag;
 extern	usch	*Mfile;
 extern	int	ofd;
@@ -72,6 +72,7 @@ struct includ {
 	int infil;
 	usch *curptr;
 	usch *maxread;
+	usch *ostr;
 	usch *buffer;
 	usch bbuf[NAMEMAX+CPPBUF+1];
 } *ifiles;
@@ -134,6 +135,13 @@ void line(void);
 usch *sheap(char *fmt, ...);
 void xwarning(usch *);
 void xerror(usch *);
+#ifdef HAVE_CPP_VARARG_MACRO_GCC
 #define warning(...) xwarning(sheap(__VA_ARGS__))
 #define error(...) xerror(sheap(__VA_ARGS__))
+#else
+#define warning printf
+#define error printf
+#endif
 void expmac(struct recur *);
+int cinput(void);
+void getcmnt(void);

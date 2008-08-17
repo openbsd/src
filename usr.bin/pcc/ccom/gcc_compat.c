@@ -1,4 +1,4 @@
-/*      $OpenBSD: gcc_compat.c,v 1.5 2008/04/11 20:45:52 stefan Exp $     */
+/*      $OpenBSD: gcc_compat.c,v 1.6 2008/08/17 18:40:12 ragge Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -44,13 +44,17 @@ static struct kw {
  * Do NOT change the order of these entries unless you know 
  * what you're doing!
  */
-	{ "__asm", NULL, C_ASM },
-	{ "__signed", NULL, 0 },
-	{ "__inline", NULL, C_FUNSPEC },
-	{ "__const", NULL, 0 },
-	{ "__asm__", NULL, C_ASM },
-	{ "__inline__", NULL, C_FUNSPEC },
-	{ "__thread", NULL, 0 },
+/* 0 */	{ "__asm", NULL, C_ASM },
+/* 1 */	{ "__signed", NULL, 0 },
+/* 2 */	{ "__inline", NULL, C_FUNSPEC },
+/* 3 */	{ "__const", NULL, 0 },
+/* 4 */	{ "__asm__", NULL, C_ASM },
+/* 5 */	{ "__inline__", NULL, C_FUNSPEC },
+/* 6 */	{ "__thread", NULL, 0 },
+/* 7 */	{ "__FUNCTION__", NULL, 0 },
+/* 8 */	{ "__volatile", NULL, 0 },
+/* 9 */	{ "__volatile__", NULL, 0 },
+/* 10 */{ "__restrict", NULL, -1 },
 	{ NULL, NULL, 0 },
 };
 
@@ -96,6 +100,17 @@ gcc_keyword(char *str, NODE **n)
 		while (tw > tlbuf)
 			cunput(*--tw);
 		return -1;
+	case 7: /* __FUNCTION__ */
+		if (cftnsp == NULL) {
+			uerror("__FUNCTION__ outside function");
+			yylval.strp = "";
+		} else
+			yylval.strp = cftnsp->sname; /* XXX - not C99 */
+		return C_STRING;
+	case 8: /* __volatile */
+	case 9: /* __volatile__ */
+		*n = block(QUALIFIER, NIL, NIL, VOL, 0, 0);
+		return C_QUALIFIER;
 	}
 	cerror("gcc_keyword");
 	return 0;

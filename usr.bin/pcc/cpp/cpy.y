@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpy.y,v 1.4 2007/10/21 18:58:02 otto Exp $	*/
+/*	$OpenBSD: cpy.y,v 1.5 2008/08/17 18:40:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -87,7 +87,7 @@ int setd(int l, int r);
 /*
  * The following terminals are not used in the yacc code.
  */
-%term STRING FPOINT WSPACE VA_ARGS CONCAT MKSTR ELLIPS
+%term STRING FPOINT WSPACE VA_ARGS CONCAT MKSTR ELLIPS CMNT
 
 %left ','
 %right '?' ':'

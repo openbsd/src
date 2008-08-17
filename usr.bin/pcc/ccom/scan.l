@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: scan.l,v 1.6 2008/08/17 18:40:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -38,6 +38,7 @@ FS			(f|F|l|L)
 IS			(u|U|l|L)*
 
 %{
+#include <stdlib.h>
 #include <errno.h>  
 #include <string.h>
 #include <stdarg.h>
@@ -58,20 +59,20 @@ int notype, parbal;
 #define	CPP_HASH	4
 
 #ifdef STABS
-#define	STABS_LINE(x) if (gflag && blevel > 1) stabs_line(x)
+#define	STABS_LINE(x) if (gflag && cftnsp) stabs_line(x)
 #else
 #define STABS_LINE(x)
 #endif
 #if defined(FLEX_SCANNER) && YY_FLEX_SUBMINOR_VERSION >= 31
-/* Hack to avoid unneccessary warnings */
+/* Hack to avoid unnecessary warnings */
 FILE *yyget_in  (void);
 FILE *yyget_out  (void);
 int yyget_leng  (void);
 char *yyget_text  (void);
-void yyset_in (FILE *  in_str );
-void yyset_out (FILE *  out_str );
+void yyset_in (FILE *);
+void yyset_out (FILE *);
 int yyget_debug  (void);
-void yyset_debug (int  bdebug );
+void yyset_debug (int);
 int yylex_destroy  (void);
 extern int yyget_lineno (void);
 extern void yyset_lineno (int);
@@ -94,6 +95,8 @@ extern void yyset_lineno (int);
 "break"			{ return(C_BREAK); }
 "case"			{ return(C_CASE); }
 "char"			{ yylval.nodep = mkty((TWORD)CHAR, 0, MKSUE(CHAR));
+			  notype=1; return(C_TYPE); }
+"_Complex"		{ yylval.nodep = mkty((TWORD)COMPLEX, 0, MKSUE(DOUBLE));
 			  notype=1; return(C_TYPE); }
 "const"			{ yylval.nodep =
 				block(QUALIFIER, NIL, NIL, CON, 0, 0);
@@ -167,19 +170,8 @@ L?'(\\.|[^\\'])+'	{ yylval.nodep = charcon(); return(C_ICON); }
 0[xX]{H}+"."{P}{FS}?	{ yylval.nodep = fhexcon(); return(C_FCON); }
 0[xX]{H}+{P}{FS}?	{ yylval.nodep = fhexcon(); return(C_FCON); }
 
-L?\"(\\.|[^\\"])*\"	{
-				char *c = yytext;
-				int i = yyleng-2, rv;
+L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
-				if (*c++ == 'L') {
-					c++, i--;
-					rv = C_WSTRING;
-				} else
-					rv = C_STRING;
-				c[i] = 0; /* last " */
-				yylval.strp = c;
-				return rv;
-			}
 "..."			{ return(C_ELLIPSIS); }
 ">>="			{ yylval.intval = RSEQ; return(C_ASOP); }
 "<<="			{ yylval.intval = LSEQ; return(C_ASOP); }
@@ -326,9 +318,13 @@ esccon(char **sptr)
 	case '\"': val = '\"'; break;
 	case 'x': val = strtoul(wr, &wr, 16); break;
 	case '0': case '1': case '2': case '3': case '4': 
-	case '5': case '6': case '7': case '8': case '9': 
-		wr--;
-		val = strtoul(wr, &wr, 8);
+	case '5': case '6': case '7':
+		val = wr[-1] - '0';
+		if (*wr >= '0' && *wr <= '7') {
+			val = (val << 3) + (*wr++ - '0');
+			if (*wr >= '0' && *wr <= '7')
+				val = (val << 3) + (*wr++ - '0');
+		}
 		break;
 	default: val = wr[-1];
 	}
@@ -478,15 +474,17 @@ splitup(char *str)
 
 	/* count ws. at least needed array size, add 2 to terminate */
 	for (i = 2, s = str; *s; s++)
-		if (*s == ' ' || *s == '\t')
+		if (*s == ' ' || *s == '\t' ||
+		    *s == '(' || *s == ')' || *s == ',')
 			i++;
 	ary = tmpalloc(sizeof(char *)*i);
-	for (i = 0, s = strtok(str, " \t"); s; s = strtok(NULL, " \t"))
+	for (i = 0, s = strtok(str, " \t(,)"); s; s = strtok(NULL, " \t(,)"))
 		ary[i++] = s;
 	ary[i] = NULL;
 	return ary;
 }
 
+int pragma_allpacked;
 int pragma_packed, pragma_aligned;
 char *pragma_renamed;
 
@@ -501,16 +499,21 @@ pragma()
 	ary = splitup(yytext);
 	if (ary[1] == NULL)
 		goto bad;
-	if (strcmp(ary[1], "packed") == 0) {
+	if (strcmp(ary[1], "pack") == 0) {
+		pragma_allpacked = ary[2] ? atoi(ary[2]) : 0;
+	} else if (strcmp(ary[1], "packed") == 0) {
 		pragma_packed = ary[2] ? atoi(ary[2]) : 1;
 	} else if (strcmp(ary[1], "aligned") == 0) {
 		pragma_aligned = ary[2] ? atoi(ary[2]) : 1;
 	} else if (strcmp(ary[1], "rename") == 0) {
 		pragma_renamed = newstring(ary[2], strlen(ary[2]));
-	} else if (mypragma(ary))
+	} else if (mypragma(ary)) {
 		return;
-	else
-bad:		werror("unknown pragma");
+	} else {
+bad:
+		if (Wunknown_pragmas)
+			werror("unknown pragma");
+	}
 }
 
 void

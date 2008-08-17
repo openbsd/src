@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.14 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: trees.c,v 1.15 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -197,9 +197,11 @@ buildtree(int o, NODE *l, NODE *r)
 		case ER:
 		case LS:
 		case RS:
-			if( conval( l, o, r ) ) {
-				nfree(r);
-				return(l);
+			if (!ISPTR(l->n_type) && !ISPTR(r->n_type)) {
+				if( conval( l, o, r ) ) {
+					nfree(r);
+					return(l);
+				}
 			}
 			break;
 		}
@@ -296,51 +298,7 @@ runtime:
 		switch(o){
 
 		case NAME:
-			sp = spname;
-			if (sp->sflags & STNODE) {
-				/* Generated for optimizer */
-				p->n_op = TEMP;
-				p->n_type = sp->stype;
-				p->n_sue = sp->ssue;
-				p->n_df = sp->sdf;
-				p->n_rval = sp->soffset;
-				break;
-			}
-				
-#ifdef GCC_COMPAT
-			/* Get a label name */
-			if (sp->sflags == SLBLNAME) {
-				p->n_type = VOID;
-				p->n_sue = MKSUE(VOID);
-				p->n_lval = 0;
-				p->n_sp = sp;
-				break;
-			} else
-#endif
-			if (sp->stype == UNDEF) {
-				uerror("%s undefined", sp->sname);
-				/* make p look reasonable */
-				p->n_type = INT;
-				p->n_sue = MKSUE(INT);
-				p->n_df = NULL;
-				p->n_sp = sp;
-				p->n_lval = 0;
-				defid(p, SNULL);
-				break;
-			}
-			p->n_type = sp->stype;
-			p->n_qual = sp->squal;
-			p->n_df = sp->sdf;
-			p->n_sue = sp->ssue;
-			p->n_lval = 0;
-			p->n_sp = sp;
-			if (sp->sclass == MOE) {
-				p->n_op = ICON;
-				p->n_lval = sp->soffset;
-				p->n_df = NULL;
-				p->n_sp = NULL;
-			}
-			break;
+			cerror("buildtree NAME");
 
 		case STREF:
 			/* p->x turned into *(p+offset) */
@@ -352,16 +310,20 @@ runtime:
 				break;
 			}
 
-			if ((sp = l->n_sue->sylnk) == NULL)
+			if ((sp = l->n_sue->sylnk) == NULL) {
 				uerror("undefined struct or union");
+				break;
+			}
 
 			name = r->n_name;
 			for (; sp != NULL; sp = sp->snext) {
 				if (sp->sname == name)
 					break;
 			}
-			if (sp == NULL)
+			if (sp == NULL) {
 				uerror("member '%s' not declared", name);
+				break;
+			}
 
 			r->n_sp = sp;
 			p = stref(p);
@@ -539,6 +501,55 @@ runtime:
 	return(p);
 
 	}
+
+/*
+ * Build a name node based on a symtab entry.
+ * broken out from buildtree().
+ */
+NODE *
+nametree(struct symtab *sp)
+{
+	NODE *p;
+
+	p = block(NAME, NIL, NIL, sp->stype, sp->sdf, sp->ssue);
+	p->n_qual = sp->squal;
+	p->n_sp = sp;
+
+#ifndef NO_C_BUILTINS
+	if (sp->sname[0] == '_' && strncmp(sp->sname, "__builtin_", 10) == 0)
+		return p;  /* do not touch builtins here */
+	
+#endif
+
+	if (sp->sflags & STNODE) {
+		/* Generated for optimizer */
+		p->n_op = TEMP;
+		p->n_rval = sp->soffset;
+	}
+
+#ifdef GCC_COMPAT
+	/* Get a label name */
+	if (sp->sflags == SLBLNAME) {
+		p->n_type = VOID;
+		p->n_sue = MKSUE(VOID);
+	}
+#endif
+	if (sp->stype == UNDEF) {
+		uerror("%s undefined", sp->sname);
+		/* make p look reasonable */
+		p->n_type = INT;
+		p->n_sue = MKSUE(INT);
+		p->n_df = NULL;
+		defid(p, SNULL);
+	}
+	if (sp->sclass == MOE) {
+		p->n_op = ICON;
+		p->n_lval = sp->soffset;
+		p->n_df = NULL;
+		p->n_sp = NULL;
+	}
+	return clocal(p);
+}
 
 /*
  * Do a conditional branch.
@@ -797,7 +808,8 @@ chkpun(NODE *p)
 			t1 = DECREF(t1);
 			t2 = DECREF(t2);
 		}
-		werror("illegal pointer combination");
+		if (Wpointer_sign)
+			werror("illegal pointer combination");
 	}
 }
 
@@ -1158,6 +1170,10 @@ tymatch(p)  register NODE *p; {
 		ru = 1;
 		t2 = DEUNSIGN(t2);
 		}
+
+	if (Wsign_compare && clogop(o) && t1 == t2 && lu != ru &&
+	    p->n_left->n_op != ICON && p->n_right->n_op != ICON)
+		werror("comparison between signed and unsigned");
 
 #if 0
 	if ((t1 == CHAR || t1 == SHORT) && o!= RETURN)
@@ -1566,6 +1582,8 @@ doszof(NODE *p)
 	df = p->n_df;
 	ty = p->n_type;
 	while (ISARY(ty)) {
+		if (df->ddim == NOOFFSET)
+			uerror("sizeof of incomplete type");
 		rv = buildtree(MUL, rv, df->ddim >= 0 ? bcon(df->ddim) :
 		    tempnode(-df->ddim, INT, 0, MKSUE(INT)));
 		df++;
@@ -1933,7 +1951,7 @@ delasgop(NODE *p)
 	if (p->n_op == INCR || p->n_op == DECR) {
 		/*
 		 * Rewrite x++ to (x += 1) -1; and deal with it further down.
-		 * Pass2 will remove -1 if unneccessary.
+		 * Pass2 will remove -1 if unnecessary.
 		 */
 		q = ccopy(p);
 		tfree(p->n_left);
@@ -1991,7 +2009,8 @@ ecomp(NODE *p)
 		fwalk(p, eprint, 0);
 #endif
 	if (!reached) {
-		werror("statement not reached");
+		if (Wunreachable_code)
+			werror("statement not reached");
 		reached = 1;
 	}
 	p = optim(p);
@@ -2002,6 +2021,7 @@ ecomp(NODE *p)
 	else
 		ecode(p);
 }
+
 
 #if defined(MULTIPASS)
 void	
@@ -2075,6 +2095,17 @@ p2tree(NODE *p)
 		p2tree(p->n_right);
 }
 #else
+static char *
+sptostr(struct symtab *sp)
+{
+	char *cp = inlalloc(32);
+	int n = sp->soffset;
+	if (n < 0)
+		n = -n;
+	snprintf(cp, 32, LABFMT, n);
+	return cp;
+}
+
 void
 p2tree(NODE *p)
 {
@@ -2095,16 +2126,16 @@ p2tree(NODE *p)
 			    q->sflags == SLBLNAME ||
 #endif
 			    q->sclass == ILABEL) {
-				char *cp = (isinlining ?
-				    permalloc(32) : tmpalloc(32));
-				int n = q->soffset;
-				if (n < 0)
-					n = -n;
-				snprintf(cp, 32, LABFMT, n);
+				p->n_name = sptostr(q);
+			} else if (!kflag) {
+				char *name = exname(q->soname);
+				int n = strlen(name) + 1;
+				char *cp = inlalloc(n);
+
+				strlcpy(cp, name, n);
 				p->n_name = cp;
-			} else {
+			} else
 				p->n_name = q->soname;
-			}
 		} else
 			p->n_name = "";
 		break;
@@ -2130,6 +2161,18 @@ p2tree(NODE *p)
 		p->n_stsize = (tsize(STRTY, p->n_left->n_df,
 		    p->n_left->n_sue)+SZCHAR-1)/SZCHAR;
 		p->n_stalign = talign(STRTY,p->n_left->n_sue)/SZCHAR;
+		/* FALLTHROUGH */
+	case CALL:
+	case UCALL:
+		if (callop(p->n_op) && p->n_left->n_op == ICON &&
+		    (q = p->n_left->n_sp) != NULL && q->sclass == SNULL &&
+		    (q->sflags & SINLINE)) {
+			/* call to inline ftns uses L-style labels */
+			p->n_left->n_name = sptostr(q);
+			if (ty == BITYPE)
+				p2tree(p->n_right);
+			return;
+		}
 		break;
 
 	case XARG:
@@ -2219,7 +2262,7 @@ send_passt(int type, ...)
 	else
 		sz = sizeof(struct interpass);
 
-	ip = isinlining ? permalloc(sz) : tmpalloc(sz);
+	ip = inlalloc(sz);
 	ip->type = type;
 	ip->lineno = lineno;
 	switch (type) {
@@ -2249,7 +2292,9 @@ send_passt(int type, ...)
 		break;
 	case IP_ASM:
 		if (blevel == 0) { /* outside function */
-			printf("\t%s\n", va_arg(ap, char *));
+			printf("\t");
+			printf("%s", va_arg(ap, char *));
+			printf("\n");
 			va_end(ap);
 			defloc(NULL);
 			return;
@@ -2260,6 +2305,7 @@ send_passt(int type, ...)
 		cerror("bad send_passt type %d", type);
 	}
 	va_end(ap);
+	pass1_lastchance(ip); /* target-specific info */
 	if (isinlining)
 		inline_addarg(ip);
 	else

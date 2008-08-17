@@ -1,4 +1,4 @@
-/*	$OpenBSD: manifest.h,v 1.10 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: manifest.h,v 1.11 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -180,7 +180,10 @@ extern int ddebug, xdebug, f2debug;
 extern int iTflag, oTflag, kflag;
 extern int sflag, nflag, gflag, pflag;
 extern int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
-	Wimplicit_function_declaration;
+	Wimplicit_function_declaration, Wpointer_sign, Wshadow,
+	Wsign_compare, Wunknown_pragmas, Wunreachable_code;
+extern int funsigned_char;
+extern int sspflag;
 extern int xssaflag, xtailcallflag, xtemps, xdeljumps;
 
 int yyparse(void);
@@ -263,6 +266,9 @@ struct interpass_prolog {
 	int ipp_autos;		/* Size on stack needed */
 	int ip_tmpnum;		/* # allocated temp nodes so far */
 	int ip_lblnum;		/* # used labels so far */
+#ifdef TARGET_IPP_MEMBERS
+	TARGET_IPP_MEMBERS
+#endif
 };
 
 /*
@@ -302,6 +308,8 @@ void *tmpcalloc(int size);
 void *tmpalloc(int size);
 void tmpfree(void);
 char *newstring(char *, int len);
+char *tmpstrdup(char *str);
+
 
 /* command-line processing */
 void mflags(char *);
@@ -318,6 +326,10 @@ void pass2_compile(struct interpass *);
 NODE *nfree(NODE *);
 NODE *tcopy(NODE *);
 void fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down);
+void flist(NODE *p, void (*f)(NODE *, void *), void *);
+void listf(NODE *p, void (*f)(NODE *));
+NODE *listarg(NODE *p, int n, int *cnt);
+
 
 extern	int nerrors;		/* number of errors seen so far */
 extern	int warniserr;		/* treat warnings as errors */

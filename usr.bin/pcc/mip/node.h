@@ -1,4 +1,4 @@
-/*	$OpenBSD: node.h,v 1.3 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: node.h,v 1.4 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -63,6 +63,7 @@ typedef struct node {
 	union {
 		int	_label;
 		int	_stalign;
+		int	_flags;
 		struct	suedef *_sue;
 	} n_6;
 	union {
@@ -90,6 +91,7 @@ typedef struct node {
 
 #define	n_label	n_6._label
 #define	n_stalign n_6._stalign
+#define	n_flags n_6._flags
 #define	n_sue	n_6._sue
 
 #define	n_left	n_f.n_u.n_l._left
@@ -100,6 +102,9 @@ typedef struct node {
 #define	n_sp	n_f.n_u.n_r._sp
 #define	n_dcon	n_f._dcon
 
+#define	NLOCAL1	010000
+#define	NLOCAL2	020000
+#define	NLOCAL3	040000
 /*
  * Node types.
  *

@@ -1,8 +1,4 @@
-/*	$OpenBSD: protos.h,v 1.7 2008/01/12 17:17:28 ragge Exp $	*/
-
-struct optab;
-struct symtab;
-struct sw;
+/*	$OpenBSD: protos.h,v 1.8 2008/08/17 18:40:13 ragge Exp $	*/
 
 void cerror(char *s, ...);
 void werror(char *s, ...);
@@ -13,7 +9,6 @@ void tfree(NODE *);
 int tshape(NODE *, int);
 void tcheck(void);
 void mkdope(void);
-int tshape(NODE *p, int shape);
 int shtemp(NODE *p);
 int flshape(NODE *p);
 int shumul(NODE *p);
@@ -38,22 +33,16 @@ int fldexpand(NODE *, int, char **);
 void ecomp(NODE *p);
 void bccode(void);
 int upoff(int size, int alignment, int *poff);
-void fldty(struct symtab *p);
 void nidcl(NODE *p, int class);
 int noinit(void);
 void eprint(NODE *, int, int *, int *);
 int uclass(int class);
-void mycanon(NODE *);
 void setregs(void);
-void canon(NODE *);
 int tlen(NODE *p);
 int setbin(NODE *);
-void oreg2(NODE *p);
 int notoff(TWORD, int, CONSZ, char *);
 int notlval(NODE *);
 void ecode(NODE *p);
 int yylex(void);
 void yyerror(char *s);
 void p2tree(NODE *p);
-int rewfld(NODE *p);
-int freetemp(int k);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2008/08/17 18:40:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -297,7 +297,8 @@ stkpush(void)
 		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->sylnk : 0;
 		is->in_t = DECREF(t);
 		is->in_sym = sp;
-		if (pstk->in_df->ddim && pstk->in_n >= pstk->in_df->ddim) {
+		if (pstk->in_df->ddim != NOOFFSET &&
+		    pstk->in_n >= pstk->in_df->ddim) {
 			werror("excess of initializing elements");
 			pstk->in_n--;
 		}
@@ -340,7 +341,7 @@ stkpop(void)
 			pstk->in_n++;
 			if (pstk->in_fl)
 				break;
-			if (pstk->in_df->ddim == 0 ||
+			if (pstk->in_df->ddim == NOOFFSET ||
 			    pstk->in_n < pstk->in_df->ddim)
 				break; /* ger more elements */
 		}
@@ -401,10 +402,12 @@ findoff(void)
 			}
 		}
 	}
+#ifdef PCC_DEBUG
 	if (idebug>1) {
 		printf("findoff: off %lld\n", off);
 		prtstk(pstk);
 	}
+#endif
 	return off;
 }
 
@@ -539,9 +542,7 @@ insbf(OFFSZ off, int fsz, int val)
 	else
 		typ = INT;
 	/* Fake a struct reference */
-	spname = csym;
-	p = buildtree(ADDROF,
-	    buildtree(NAME, NIL, NIL), NIL);
+	p = buildtree(ADDROF, nametree(csym), NIL);
 	sym.stype = typ;
 	sym.squal = 0;
 	sym.sdf = 0;
@@ -598,7 +599,7 @@ endinit(void)
 		defloc(csym);
 
 	/* Calculate total block size */
-	if (ISARY(csym->stype) && csym->sdf->ddim == 0) {
+	if (ISARY(csym->stype) && csym->sdf->ddim == NOOFFSET) {
 		tbit = numents*basesz; /* open-ended arrays */
 		csym->sdf->ddim = numents;
 		if (csym->sclass == AUTO) { /* Get stack space */
@@ -630,9 +631,7 @@ endinit(void)
 					    (ll->begsz + il->off) - lastoff);
 
 				/* Fake a struct reference */
-				spname = csym;
-				p = buildtree(ADDROF,
-				    buildtree(NAME, NIL, NIL), NIL);
+				p = buildtree(ADDROF, nametree(csym), NIL);
 				n = il->n;
 				sym.stype = n->n_type;
 				sym.squal = n->n_qual;
@@ -642,7 +641,7 @@ endinit(void)
 				sym.sclass = fsz < 0 ? FIELD | -fsz : 0;
 				r = xbcon(0, &sym, INT);
 				p = block(STREF, p, r, INT, 0, MKSUE(INT));
-				ecode(buildtree(ASSIGN, stref(p), il->n));
+				ecomp(buildtree(ASSIGN, stref(p), il->n));
 				if (fsz < 0)
 					fsz = -fsz;
 
@@ -917,7 +916,7 @@ simpleinit(struct symtab *sp, NODE *p)
 		/* Handle "aaa" as { 'a', 'a', 'a' } */
 		beginit(sp);
 		strcvt(p);
-		if (csym->sdf->ddim == 0)
+		if (csym->sdf->ddim == NOOFFSET)
 			scalinit(bcon(0)); /* Null-term arrays */
 		endinit();
 		return;
@@ -926,8 +925,7 @@ simpleinit(struct symtab *sp, NODE *p)
 	switch (sp->sclass) {
 	case STATIC:
 	case EXTDEF:
-		spname = sp;
-		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
+		p = optim(buildtree(ASSIGN, nametree(sp), p));
 		defloc(sp);
 		ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
@@ -937,8 +935,7 @@ simpleinit(struct symtab *sp, NODE *p)
 	case REGISTER:
 		if (ISARY(sp->stype))
 			cerror("no array init");
-		spname = sp;
-		ecomp(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
+		ecomp(buildtree(ASSIGN, nametree(sp), p));
 		break;
 
 	default:

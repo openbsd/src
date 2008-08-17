@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: common.c,v 1.10 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -152,6 +152,7 @@ werror(char *s, ...)
 static NODE *freelink;
 static int usednodes;
 
+#ifndef LANG_F77
 NODE *
 talloc()
 {
@@ -178,6 +179,7 @@ talloc()
 		printf("alloc node %p from memory\n", p);
 	return p;
 }
+#endif
 
 /*
  * make a fresh copy of p
@@ -200,6 +202,7 @@ tcopy(NODE *p)
 	return(q);
 }
 
+#ifndef LANG_F77
 /*
  * ensure that all nodes have been freed
  */
@@ -214,6 +217,7 @@ tcheck()
 	if ((usednodes - inlnodecnt) != 0)
 		cerror("usednodes == %d, inlnodecnt %d", usednodes, inlnodecnt);
 }
+#endif
 
 /*
  * free the tree p
@@ -232,7 +236,9 @@ tfree(NODE *p)
 NODE *
 nfree(NODE *p)
 {
+#ifndef LANG_F77
 	extern int inlnodecnt, recovernodes;
+#endif
 	NODE *l;
 #ifdef PCC_DEBUG_NODES
 	NODE *q;
@@ -259,10 +265,18 @@ nfree(NODE *p)
 	p->next = freelink;
 	freelink = p;
 	usednodes--;
+#ifndef LANG_F77
 	if (recovernodes)
 		inlnodecnt--;
+#endif
 	return l;
 }
+#endif
+
+#ifdef LANG_F77
+#define OPTYPE(x) optype(x)
+#else
+#define OPTYPE(x) coptype(x)
 #endif
 
 #ifdef MKEXT
@@ -283,7 +297,7 @@ fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down)
 
 	(*f)(t, down, &down1, &down2);
 
-	switch (coptype( t->n_op )) {
+	switch (OPTYPE( t->n_op )) {
 
 	case BITYPE:
 		fwalk( t->n_left, f, down1 );
@@ -304,7 +318,8 @@ walkf(NODE *t, void (*f)(NODE *))
 {
 	int opty;
 
-	opty = coptype(t->n_op);
+
+	opty = OPTYPE(t->n_op);
 
 	if (opty != LTYPE)
 		walkf( t->n_left, f );
@@ -419,6 +434,9 @@ tprint(FILE *fp, TWORD t, TWORD q)
 		"void",
 		"signed", /* pass1 */
 		"bool", /* pass1 */
+		"fcomplex", /* pass1 */
+		"dcomplex", /* pass1 */
+		"lcomplex", /* pass1 */
 		"?", "?"
 		};
 
@@ -600,6 +618,18 @@ tmpvsprintf(char *fmt, va_list ap)
 	return tmp;
 }
 
+/*
+ * Duplicate a string onto the temporary heap.
+ */
+char *
+tmpstrdup(char *str)
+{
+	int len;
+
+	len = strlen(str) + 1;
+	return memcpy(tmpalloc(len), str, len);
+}
+
 void
 tmpfree()
 {
@@ -643,4 +673,49 @@ newstring(char *s, int len)
 	while (len--)
 		*c++ = *s++;
 	return u;
+}
+
+/*
+ * Do a preorder walk of the CM list p and apply function f on each element.
+ */
+void
+flist(NODE *p, void (*f)(NODE *, void *), void *arg)
+{
+	if (p->n_op == CM) {
+		(*f)(p->n_right, arg);
+		flist(p->n_left, f, arg);
+	} else
+		(*f)(p, arg);
+}
+
+/*
+ * The same as flist but postorder.
+ */
+void
+listf(NODE *p, void (*f)(NODE *))
+{
+	if (p->n_op == CM) {
+		listf(p->n_left, f);
+		(*f)(p->n_right);
+	} else
+		(*f)(p);
+}
+
+/*
+ * Get list argument number n from list, or NIL if out of list.
+ */
+NODE *
+listarg(NODE *p, int n, int *cnt)
+{
+	NODE *r;
+
+	if (p->n_op == CM) {
+		r = listarg(p->n_left, n, cnt);
+		if (n == ++(*cnt))
+			r = p->n_right;
+	} else {
+		*cnt = 0;
+		r = n == 0 ? p : NIL;
+	}
+	return r;
 }

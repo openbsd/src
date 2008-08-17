@@ -6,6 +6,8 @@
 
 #include <string.h>
 
+#define FMTdPTR "%td"
+
 int chkop[DSIZE];
 
 void mktables(void);
@@ -73,8 +75,22 @@ compl(struct optab *q, char *str)
 	if (op < OPSIMP) {
 		s = opst[op];
 	} else
-		s = "Special op";
-	printf("table entry %td, op %s: %s\n", q - table, s, str);
+		switch (op) {
+		default:	s = "Special op";	break;
+		case OPSIMP:	s = "OPLSIMP";	break;
+		case OPCOMM:	s = "OPCOMM";	break;
+		case OPMUL:	s = "OPMUL";	break;
+		case OPDIV:	s = "OPDIV";	break;
+		case OPUNARY:	s = "OPUNARY";	break;
+		case OPLEAF:	s = "OPLEAF";	break;
+		case OPANY:	s = "OPANY";	break;
+		case OPLOG:	s = "OPLOG";	break;
+		case OPFLOAT:	s = "OPFLOAT";	break;
+		case OPSHFT:	s = "OPSHFT";	break;
+		case OPLTYPE:	s = "OPLTYPE";	break;
+		}
+
+	printf("table entry " FMTdPTR ", op %s: %s\n", q - table, s, str);
 }
 
 static int
@@ -174,7 +190,7 @@ main(int argc, char *argv[])
 		if ((q->rewrite & (RESC1|RESC2|RESC3)) && 
 		    !(q->needs & REWRITE)) {
 			if ((q->visit & getrcl(q)) == 0) {
-				compl(q, "rwong RESCx class");
+				compl(q, "wrong RESCx class");
 				rval++;
 			}
 		}
@@ -272,7 +288,7 @@ main(int argc, char *argv[])
 	if (breg > mx) mx = breg;
 	if (creg > mx) mx = creg;
 	if (dreg > mx) mx = dreg;
-	if (mx > (sizeof(int)*8)-1) {
+	if (mx > (int)(sizeof(int)*8)-1) {
 		printf("too many regs in a class, use two classes instead\n");
 		printf("%d > %zu\n", mx, (sizeof(int)*8)-1);
 		rval++;
@@ -342,7 +358,7 @@ mktables()
 		for (op = table; op->op != FREE; op++) {
 			if (op->op < OPSIMP) {
 				if (op->op == i) {
-					P((fc, "%td, ", op - table));
+					P((fc, FMTdPTR ", ", op - table));
 					curalen++;
 				}
 			} else {
@@ -350,11 +366,12 @@ mktables()
 				if ((opmtemp=mamask[op->op - OPSIMP])&SPFLG) {
 					if (i==NAME || i==ICON || i==TEMP ||
 					    i==OREG || i == REG || i == FCON) {
-						P((fc, "%td, ", op - table));
+						P((fc, FMTdPTR ", ",
+						    op - table));
 						curalen++;
 					}
 				} else if ((dope[i]&(opmtemp|ASGFLG))==opmtemp){
-					P((fc, "%td, ", op - table));
+					P((fc, FMTdPTR ", ", op - table));
 					curalen++;
 				}
 			}

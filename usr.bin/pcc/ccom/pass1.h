@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.9 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.10 2008/08/17 18:40:13 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -33,9 +33,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <stdarg.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include "manifest.h"
 
@@ -82,14 +86,14 @@ extern	char *scnames(int);
 #define	NSTYPES		05
 #define	SMASK		07
 
-#define SSET		00010
-#define SREF		00020
-#define SNOCREAT	00040
-#define STEMP		00100
-#define	SDYNARRAY	00200
-#define	SINLINE		00400
-#define	STNODE		01000
-#define	SASG		04000
+/* #define SSET		00010 */
+/* #define SREF		00020 */
+#define SNOCREAT	00040	/* don't create a symbol in lookup() */
+#define STEMP		00100	/* Allocate symtab from temp or perm mem */
+#define	SDYNARRAY	00200	/* symbol is dynamic array on stack */
+#define	SINLINE		00400	/* function is of type inline */
+#define	STNODE		01000	/* symbol shall be a temporary node */
+#define	SASG		04000	/* symbol is assigned to already */
 #define	SLOCAL1		010000
 #define	SLOCAL2		020000
 #define	SLOCAL3		040000
@@ -192,10 +196,6 @@ extern	OFFSZ inoff;
 extern	int reached;
 extern	int isinlining;
 
-/* 	tunnel to buildtree for name id's */
-
-extern	struct symtab *spname;
-
 extern	int sdebug, idebug, pdebug;
 
 /* various labels */
@@ -205,7 +205,7 @@ extern	int flostat;
 extern	int retlab;
 
 /* pragma globals */
-extern int pragma_packed, pragma_aligned;
+extern int pragma_allpacked, pragma_packed, pragma_aligned;
 extern char *pragma_renamed;
 
 /*
@@ -222,12 +222,12 @@ extern char *pragma_renamed;
 
 /* declarations of various functions */
 extern	NODE
-	*buildtree(int, NODE *l, NODE *r),
+	*buildtree(int, NODE *, NODE *r),
 	*mkty(unsigned, union dimfun *, struct suedef *),
 	*rstruct(char *, int),
 	*dclstruct(struct rstack *),
 	*strend(int gtype, char *),
-	*tymerge(NODE *typ, NODE *idp),
+	*tymerge(NODE *, NODE *),
 	*stref(NODE *),
 	*offcon(OFFSZ, TWORD, union dimfun *, struct suedef *),
 	*bcon(int),
@@ -239,14 +239,14 @@ extern	NODE
 	*ptmatch(NODE *),
 	*tymatch(NODE *),
 	*makety(NODE *, TWORD, TWORD, union dimfun *, struct suedef *),
-	*block(int, NODE *, NODE *r, TWORD, union dimfun *, struct suedef *),
+	*block(int, NODE *, NODE *, TWORD, union dimfun *, struct suedef *),
 	*doszof(NODE *),
 	*talloc(void),
 	*optim(NODE *),
 	*clocal(NODE *),
 	*ccopy(NODE *),
-	*tempnode(int, TWORD type, union dimfun *df, struct suedef *sue),
-	*doacall(NODE *f, NODE *a);
+	*tempnode(int, TWORD, union dimfun *, struct suedef *),
+	*doacall(NODE *, NODE *);
 NODE	*intprom(NODE *);
 OFFSZ	tsize(TWORD, union dimfun *, struct suedef *),
 	psize(NODE *);
@@ -255,56 +255,58 @@ void	spalloc(NODE *, NODE *, OFFSZ);
 char	*exname(char *);
 extern struct rstack *rpole;
 
-int oalloc(struct symtab *p, int *poff);
+int oalloc(struct symtab *, int *);
 void deflabel(char *);
 void gotolabel(char *);
-unsigned int esccon(char **sptr);
-void inline_start(struct symtab *sp);
+unsigned int esccon(char **);
+void inline_start(struct symtab *);
 void inline_end(void);
 void inline_addarg(struct interpass *);
-void inline_ref(struct symtab *sp);
+void inline_ref(struct symtab *);
 void inline_prtout(void);
 void ftnarg(NODE *);
 struct rstack *bstruct(char *, int);
 void moedef(char *);
 void beginit(struct symtab *);
 void simpleinit(struct symtab *, NODE *);
-struct symtab *lookup(char *name, int s);
-struct symtab *getsymtab(char *name, int flags);
+struct symtab *lookup(char *, int);
+struct symtab *getsymtab(char *, int);
 char *addstring(char *);
 char *addname(char *);
-char *newstring(char *, int len);
-void symclear(int level);
-struct symtab *hide(struct symtab *p);
+void symclear(int);
+struct symtab *hide(struct symtab *);
 void soumemb(NODE *, char *, int);
 int talign(unsigned int, struct suedef *);
 void bfcode(struct symtab **, int);
 int chkftn(union arglist *, union arglist *);
 void branch(int);
-void cbranch(NODE *p, NODE *q);
+void cbranch(NODE *, NODE *);
 void extdec(struct symtab *);
 void defzero(struct symtab *);
-int falloc(struct symtab *p, int w, int new, NODE *pty);
+int falloc(struct symtab *, int, int, NODE *);
 TWORD ctype(TWORD);  
-void ninval(CONSZ off, int fsz, NODE *);
-void infld(CONSZ off, int fsz, CONSZ);
-void zbits(CONSZ off, int fsz);
-void instring(struct symtab *sp);
-void inwstring(struct symtab *sp);
-void plabel(int lab);
+void ninval(CONSZ, int, NODE *);
+void infld(CONSZ, int, CONSZ);
+void zbits(CONSZ, int);
+void instring(struct symtab *);
+void inwstring(struct symtab *);
+void plabel(int);
 void bjobcode(void);
 void ejobcode(int);
 void calldec(NODE *, NODE *);
 int cisreg(TWORD);
-char *tmpsprintf(char *fmt, ...);
-char *tmpvsprintf(char *fmt, va_list ap);
+char *tmpsprintf(char *, ...);
+char *tmpvsprintf(char *, va_list);
 void asginit(NODE *);
 void desinit(NODE *);
 void endinit(void);
+void sspinit(void);
+void sspstart(void);
+void sspend(void);
 void ilbrace(void);
 void irbrace(void);
-void scalinit(NODE *p);
-void p1print(char *fmt, ...);
+void scalinit(NODE *);
+void p1print(char *, ...);
 char *copst(int);
 int cdope(int);
 void myp2tree(NODE *);
@@ -317,12 +319,15 @@ NODE *enumref(char *);
 CONSZ icons(NODE *);
 int mypragma(char **);
 void fixdef(struct symtab *);
-int cqual(TWORD t, TWORD q);
+int cqual(TWORD, TWORD);
 void defloc(struct symtab *);
-int fldchk(int sz);
+int fldchk(int);
 int nncon(NODE *);
-void cunput(char c);
-
+void cunput(char);
+NODE *nametree(struct symtab *sp);
+void *inlalloc(int size);
+void pass1_lastchance(struct interpass *);
+void fldty(struct symtab *p);
 
 #ifdef GCC_COMPAT
 void gcc_init(void);
@@ -338,7 +343,7 @@ void stabs_lbrac(int);
 void stabs_func(struct symtab *);
 void stabs_newsym(struct symtab *);
 void stabs_chgsym(struct symtab *);
-void stabs_struct(struct symtab *p, struct suedef *sue);
+void stabs_struct(struct symtab *, struct suedef *);
 #endif
 
 #ifndef CHARCAST
@@ -387,7 +392,9 @@ void stabs_struct(struct symtab *p, struct suedef *sue);
  */
 #define SIGNED		(MAXTYPES+1)
 #define BOOL		(MAXTYPES+2)
-
+#define	FCOMPLEX	(MAXTYPES+3)
+#define	COMPLEX		(MAXTYPES+4)
+#define	LCOMPLEX	(MAXTYPES+5)
 
 #define coptype(o)	(cdope(o)&TYFLG)
 #define clogop(o)	(cdope(o)&LOGFLG)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2008/04/11 20:45:52 stefan Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2008/08/17 18:40:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
@@ -41,12 +43,19 @@ int iTflag, oTflag;
 #endif
 int xdebug, sdebug, gflag, c2debug, pdebug;
 int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
-	Wimplicit_function_declaration;
+	Wimplicit_function_declaration, Wpointer_sign, Wshadow,
+	Wsign_compare, Wunknown_pragmas, Wunreachable_code;
+#ifdef CHAR_UNSIGNED
+int funsigned_char = 1;
+#else
+int funsigned_char = 0;
+#endif
+int sspflag;
 int xssaflag, xtailcallflag, xtemps, xdeljumps;
 
 int e2debug, t2debug, f2debug, b2debug;
 
-struct suedef btdims[24];
+struct suedef btdims[32];
 char *prgname;
 
 static void prtstats(void);
@@ -58,6 +67,11 @@ static struct {
 	{ "missing-prototypes", &Wmissing_prototypes, },
 	{ "implicit-int", &Wimplicit_int, },
 	{ "implicit-function-declaration", &Wimplicit_function_declaration, },
+	{ "shadow", &Wshadow, },
+	{ "pointer-sign", &Wpointer_sign, },
+	{ "sign-compare", &Wsign_compare, },
+	{ "unknown-pragmas", &Wunknown_pragmas, },
+	{ "unreachable-code", &Wunreachable_code, },
 	{ NULL, NULL, },
 };
 
@@ -86,26 +100,60 @@ segvcatch(int a)
 static void
 Wflags(char *str)
 {
-	int i, found = 0, all;
+	int i, flagval = 1, found = 0, all;
+
+	if (strncmp("no-", str, 3) == 0) {
+		str += 3;
+		flagval = 0;
+	}
 
 	if (strcmp(str, "implicit") == 0) {
-		Wimplicit_int = Wimplicit_function_declaration = 1;
+		Wimplicit_int = Wimplicit_function_declaration = flagval;
 		return;
 	}
 	if (strcmp(str, "error") == 0) {
-		warniserr = 1;
+		warniserr = flagval;
 		return;
 	}
+
 	all = strcmp(str, "W") == 0;
-	for (i = 0; flagstr[i].n; i++)
+	for (i = 0; flagstr[i].n; i++) {
 		if (all || strcmp(flagstr[i].n, str) == 0) {
-			*flagstr[i].f = 1;
+			*flagstr[i].f = flagval;
 			found++;
 		}
-	if (found == 0)
+	}
+	if (found == 0) {
+		fprintf(stderr, "unrecognised option '%s'\n", str);
 		usage();
+	}
 }
 
+static void
+fflags(char *str)
+{
+	int flagval = 1;
+
+	if (strncmp("no-", str, 3) == 0) {
+		str += 3;
+		flagval = 0;
+	}
+
+	if (strcmp(str, "signed-char") == 0)
+		funsigned_char = !flagval;
+	else if (strcmp(str, "unsigned-char") == 0)
+		funsigned_char = flagval;
+	else if (strcmp(str, "stack-protector") == 0)
+		sspflag = flagval;
+	else if (strcmp(str, "stack-protector-all") == 0)
+		sspflag = flagval;
+	else if (strncmp(str, "pack-struct", 11) == 0)
+		pragma_allpacked = (strlen(str) > 12 ? atoi(str+12) : 1);
+	else {
+		fprintf(stderr, "unrecognised option '%s'\n", str);
+		usage();
+	}
+}
 
 /* control multiple files */
 int
@@ -116,7 +164,7 @@ main(int argc, char *argv[])
 
 	prgname = argv[0];
 
-	while ((ch = getopt(argc, argv, "OT:VW:X:Z:gklm:psvwx:")) != -1)
+	while ((ch = getopt(argc, argv, "OT:VW:X:Z:f:gklm:psvwx:")) != -1)
 		switch (ch) {
 #if !defined(MULTIPASS) || defined(PASS1)
 		case 'X':
@@ -190,20 +238,24 @@ main(int argc, char *argv[])
 #endif
 			break;
 
-		case 'k': /* PIC code */
-			++kflag;
-			break;
-
-		case 'l': /* linenos */
-			++lflag;
-			break;
-
-		case 'm': /* target-specific */
-			mflags(optarg);
+		case 'f': /* Language */
+			fflags(optarg);
 			break;
 
 		case 'g': /* Debugging */
 			gflag = 1;
+			break;
+
+		case 'k': /* PIC code */
+			++kflag;
+			break;
+
+		case 'l': /* Linenos */
+			++lflag;
+			break;
+
+		case 'm': /* Target-specific */
+			mflags(optarg);
 			break;
 
 		case 'p': /* Profiling */
@@ -241,20 +293,21 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 
-		if (argc != 0) {
+		if (argc > 0 && strcmp(argv[0], "-") != 0) {
 			if (freopen(argv[0], "r", stdin) == NULL) {
 				fprintf(stderr, "open input file '%s':",
 				    argv[0]);
 				perror(NULL);
 				exit(1);
 			}
-			if (argc != 1)
-				if (freopen(argv[1], "w", stdout) == NULL) {
-					fprintf(stderr, "open output file '%s':",
-					    argv[1]);
-					perror(NULL);
-					exit(1);
-				}
+		}
+		if (argc > 1 && strcmp(argv[1], "-") != 0) {
+			if (freopen(argv[1], "w", stdout) == NULL) {
+				fprintf(stderr, "open output file '%s':",
+				    argv[1]);
+				perror(NULL);
+				exit(1);
+			}
 		}
 
 	mkdope();
@@ -282,6 +335,9 @@ main(int argc, char *argv[])
 	btdims[UNSIGNED].suesize = SZINT;
 	btdims[ULONG].suesize = SZLONG;
 	btdims[ULONGLONG].suesize = SZLONGLONG;
+	btdims[FCOMPLEX].suesize = SZFLOAT * 2;
+	btdims[COMPLEX].suesize = SZDOUBLE * 2;
+	btdims[LCOMPLEX].suesize = SZLDOUBLE * 2;
 	/* starts past any of the above */
 	reached = 1;
 
@@ -293,6 +349,9 @@ main(int argc, char *argv[])
 		stabs_init();
 	}
 #endif
+
+	if (sspflag)
+		sspinit();
 
 	(void) yyparse();
 	yyaccpt();
