@@ -837,8 +837,6 @@ SPLAY_PROTOTYPE(drm_magic_tree, drm_magic_entry, node, drm_magic_cmp);
 int	drm_addmap_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_rmmap_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_addbufs_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_infobufs(struct drm_device *, void *, struct drm_file *);
-int	drm_markbufs(struct drm_device *, void *, struct drm_file *);
 int	drm_freebufs(struct drm_device *, void *, struct drm_file *);
 int	drm_mapbufs(struct drm_device *, void *, struct drm_file *);
 
