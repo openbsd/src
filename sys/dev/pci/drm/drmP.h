@@ -344,15 +344,6 @@ typedef struct drm_buf {
 	void		  *dev_private;  /* Per-buffer private storage       */
 } drm_buf_t;
 
-typedef struct drm_freelist {
-	int		  initialized; /* Freelist in use		   */
-	atomic_t	  count;       /* Number of free buffers	   */
-	drm_buf_t	  *next;       /* End pointer			   */
-
-	int		  low_mark;    /* Low water mark		   */
-	int		  high_mark;   /* High water mark		   */
-} drm_freelist_t;
-
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
@@ -369,8 +360,6 @@ typedef struct drm_buf_entry {
 	int		  seg_count;
 	drm_dma_handle_t  **seglist;
 	int		  page_order;
-
-	drm_freelist_t	  freelist;
 } drm_buf_entry_t;
 
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
