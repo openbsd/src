@@ -35,16 +35,7 @@
 
 #include "drmP.h"
 
-int	drm_device_find_capability(struct drm_device *, int);
-struct drm_agp_mem *drm_agp_lookup_entry(struct drm_device *, void *);
-
-/* Returns 1 if AGP or 0 if not. */
-int
-drm_device_find_capability(struct drm_device *dev, int cap)
-{
-	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap,
-	    NULL, NULL);
-}
+struct drm_agp_mem	*drm_agp_lookup_entry(struct drm_device *, void *);
 
 int
 drm_device_is_agp(struct drm_device *dev)
@@ -60,13 +51,15 @@ drm_device_is_agp(struct drm_device *dev)
 			return ret;
 	}
 
-	return (drm_device_find_capability(dev, PCIY_AGP));
+	return (pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, PCI_CAP_AGP,
+	    NULL, NULL));
 }
 
 int
 drm_device_is_pcie(struct drm_device *dev)
 {
-	return (drm_device_find_capability(dev, PCIY_EXPRESS));
+	return (pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag,
+	    PCI_CAP_PCIEXPRESS, NULL, NULL));
 }
 
 int

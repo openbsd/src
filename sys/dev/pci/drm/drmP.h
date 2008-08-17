@@ -193,15 +193,6 @@ extern int ticks;		/* really should be in a header */
 
 extern struct cfdriver drm_cd;
 
-/* Capabilities taken from src/sys/dev/pci/pcireg.h. */
-#ifndef PCIY_AGP
-#define PCIY_AGP	0x02
-#endif
-
-#ifndef PCIY_EXPRESS
-#define PCIY_EXPRESS	0x10
-#endif
-
 typedef unsigned long dma_addr_t;
 typedef u_int64_t u64;
 typedef u_int32_t u32;
