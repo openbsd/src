@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.152 2008/08/10 14:13:05 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.153 2008/08/17 14:25:19 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9039,20 +9039,6 @@ ENTRY(delay)			! %o0 = n
 	brgz,pt	%o0, 1b						! Done?
 	 rdpr	%tick, %o2					! Get new tick
 
-	retl
-	 nop
-
-	/*
-	 * If something's wrong with the standard setup do this stupid loop
-	 * calibrated for a 143MHz processor.
-	 */
-Lstupid_delay:
-	set	142857143/MICROPERSEC, %o1
-Lstupid_loop:
-	brnz,pt	%o1, Lstupid_loop
-	 dec	%o1
-	brnz,pt	%o0, Lstupid_delay
-	 dec	%o0
 	retl
 	 nop
 
