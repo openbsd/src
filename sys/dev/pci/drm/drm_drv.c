@@ -46,8 +46,6 @@ int drm_debug_flag = 1;
 int drm_debug_flag = 0;
 #endif
 
-int	 drm_load(struct drm_device *);
-void	 drm_unload(struct drm_device *);
 drm_pci_id_list_t *drm_find_description(int , int ,
 	    drm_pci_id_list_t *);
 int	 drm_firstopen(struct drm_device *);
@@ -196,9 +194,13 @@ drm_attach(struct device *parent, struct device *kdev,
 	dev->vga_softc = (struct vga_pci_softc *)parent;
 
 	dev->irq = pa->pa_intrline;
+	dev->pci_domain = 0;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
+	dev->pci_vendor = PCI_VENDOR(dev->pa.pa_id);
+	dev->pci_device = PCI_PRODUCT(dev->pa.pa_id);
+
 	DRM_SPININIT(&dev->dev_lock, "drm device");
 	mtx_init(&dev->drw_lock, IPL_BIO);
 	mtx_init(&dev->tsk_lock, IPL_BIO);
@@ -207,15 +209,95 @@ drm_attach(struct device *parent, struct device *kdev,
 	    PCI_PRODUCT(pa->pa_id), idlist);
 	dev->id_entry = id_entry;
 	dev->driver.id_entry = id_entry;
+	printf(" %s(%d)", id_entry->name, dev->unit);
 
-	printf(": %s(%d)", id_entry->name, dev->unit);
-	drm_load(dev);
+	TAILQ_INIT(&dev->maplist);
+
+	drm_mem_init();
+	TAILQ_INIT(&dev->files);
+
+	/*
+	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
+	 * conflict with it.
+	 */
+	if (drm_memrange_init(&dev->handle_mm, 1024*1024*1024, LONG_MAX) != 0) {
+		printf(": failed to initialise handle memrange\n");
+		goto error;
+	}
+
+	if (dev->driver.load != NULL) {
+		int retcode;
+
+		DRM_LOCK();
+		/* Shared code returns -errno. */
+		retcode = -dev->driver.load(dev,
+		    dev->id_entry->driver_private);
+		DRM_UNLOCK();
+		if (retcode != 0)
+			goto error;
+	}
+
+	if (dev->driver.use_agp) {
+		if (drm_device_is_agp(dev))
+			dev->agp = drm_agp_init();
+		if (dev->driver.require_agp && dev->agp == NULL) {
+			printf(":couldn't find agp\n");
+			goto error;
+		}
+		if (dev->agp != NULL) {
+			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
+			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
+				dev->agp->mtrr = 1;
+		}
+	}
+
+	if (drm_ctxbitmap_init(dev) != 0) {
+		printf(": couldn't allocate memory for context bitmap.\n");
+		goto error;
+	}
+	printf(", %d.%d.%d %s\n", dev->driver.major, dev->driver.minor,
+	    dev->driver.patchlevel, dev->driver.date);
+
+	return;
+
+error:
+	DRM_LOCK();
+	drm_lastclose(dev);
+	DRM_UNLOCK();
+	DRM_SPINUNINIT(&dev->dev_lock);
 }
 
 int
 drm_detach(struct device *self, int flags)
 {
-	drm_unload((struct drm_device *)self);
+	struct drm_device *dev = (struct drm_device *)self;
+
+	drm_ctxbitmap_cleanup(dev);
+
+	drm_memrange_takedown(&dev->handle_mm);
+
+	if (dev->agp && dev->agp->mtrr) {
+		int retcode;
+
+		retcode = drm_mtrr_del(0, dev->agp->info.ai_aperture_base,
+		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
+		DRM_DEBUG("mtrr_del = %d", retcode);
+	}
+
+	DRM_LOCK();
+	drm_lastclose(dev);
+	DRM_UNLOCK();
+
+	if (dev->agp != NULL) {
+		drm_free(dev->agp, sizeof(*dev->agp), DRM_MEM_AGPLISTS);
+		dev->agp = NULL;
+	}
+
+	if (dev->driver.unload != NULL)
+		dev->driver.unload(dev);
+
+	drm_mem_uninit();
+	DRM_SPINUNINIT(&dev->dev_lock);
 	return 0;
 }
 
@@ -330,8 +412,9 @@ drm_lastclose(struct drm_device *dev)
 	if (dev->agp != NULL) {
 		struct drm_agp_mem *entry;
 
-		/* Remove AGP resources, but leave dev->agp intact until
-		 * drm_unload is called.
+		/*
+		 * Remove AGP resources, but leave dev->agp intact until
+		 * we detach the device
 		 */
 		while ((entry = TAILQ_FIRST(&dev->agp->memory)) != NULL) {
 			if (entry->bound)
@@ -368,116 +451,6 @@ drm_lastclose(struct drm_device *dev)
 
 	return 0;
 }
-
-int
-drm_load(struct drm_device *dev)
-{
-	int retcode;
-
-	DRM_DEBUG("\n");
-
-	dev->irq = dev->pa.pa_intrline;
-	dev->pci_domain = 0;
-	dev->pci_bus = dev->pa.pa_bus;
-	dev->pci_slot = dev->pa.pa_device;
-	dev->pci_func = dev->pa.pa_function;
-
-	dev->pci_vendor = PCI_VENDOR(dev->pa.pa_id);
-	dev->pci_device = PCI_PRODUCT(dev->pa.pa_id);
-
-	TAILQ_INIT(&dev->maplist);
-
-	drm_mem_init();
-	TAILQ_INIT(&dev->files);
-
-	/*
-	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
-	 * conflict with it.
-	 */
-	retcode = drm_memrange_init(&dev->handle_mm, 1024*1024*1024, LONG_MAX);
-	if (retcode != 0) {
-		DRM_ERROR("Failed to initialise handle memrange\n");
-		goto error;
-	}
-
-	if (dev->driver.load != NULL) {
-		DRM_LOCK();
-		/* Shared code returns -errno. */
-		retcode = -dev->driver.load(dev,
-		    dev->id_entry->driver_private);
-		DRM_UNLOCK();
-		if (retcode != 0)
-			goto error;
-	}
-
-	if (dev->driver.use_agp) {
-		if (drm_device_is_agp(dev))
-			dev->agp = drm_agp_init();
-		if (dev->driver.require_agp && dev->agp == NULL) {
-			DRM_ERROR("Card isn't AGP, or couldn't initialize "
-			    "AGP.\n");
-			retcode = ENOMEM;
-			goto error;
-		}
-		if (dev->agp != NULL) {
-			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
-			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
-				dev->agp->mtrr = 1;
-		}
-	}
-
-	retcode = drm_ctxbitmap_init(dev);
-	if (retcode != 0) {
-		DRM_ERROR("Cannot allocate memory for context bitmap.\n");
-		goto error;
-	}
-	printf(", %d.%d.%d %s\n", dev->driver.major, dev->driver.minor,
-	    dev->driver.patchlevel, dev->driver.date);
-
-	return 0;
-
-error:
-	DRM_LOCK();
-	drm_lastclose(dev);
-	DRM_UNLOCK();
-	DRM_SPINUNINIT(&dev->dev_lock);
-	return retcode;
-}
-
-void
-drm_unload(struct drm_device *dev)
-{
-
-	DRM_DEBUG("\n");
-
-	drm_ctxbitmap_cleanup(dev);
-
-	drm_memrange_takedown(&dev->handle_mm);
-
-	if (dev->agp && dev->agp->mtrr) {
-		int retcode;
-
-		retcode = drm_mtrr_del(0, dev->agp->info.ai_aperture_base,
-		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
-		DRM_DEBUG("mtrr_del = %d", retcode);
-	}
-
-	DRM_LOCK();
-	drm_lastclose(dev);
-	DRM_UNLOCK();
-
-	if (dev->agp != NULL) {
-		drm_free(dev->agp, sizeof(*dev->agp), DRM_MEM_AGPLISTS);
-		dev->agp = NULL;
-	}
-
-	if (dev->driver.unload != NULL)
-		dev->driver.unload(dev);
-
-	drm_mem_uninit();
-	DRM_SPINUNINIT(&dev->dev_lock);
-}
-
 
 int
 drm_version(struct drm_device *dev, void *data, struct drm_file *file_priv)
