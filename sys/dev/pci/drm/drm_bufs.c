@@ -200,10 +200,8 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 			break;
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
-#ifndef DRM_NO_MTRR
 		if (drm_mtrr_add(map->offset, map->size, DRM_MTRR_WC) == 0)
 			map->mtrr = 1;
-#endif
 		break;
 	case _DRM_AGP:
 		/*valid = 0;*/
@@ -346,7 +344,6 @@ drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 		drm_ioremapfree(map);
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
-#ifndef DRM_NO_MTRR
 		if (map->mtrr) {
 			int retcode;
 			
@@ -354,7 +351,6 @@ drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 			    DRM_MTRR_WC);
 			DRM_DEBUG("mtrr_del = %d\n", retcode);
 		}
-#endif
 		break;
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:

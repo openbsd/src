@@ -378,6 +378,7 @@ drm_agp_free_ioctl(struct drm_device *dev, void *data,
 drm_agp_head_t *
 drm_agp_init(void)
 {
+#ifndef DRM_NO_AGP
 	struct device *agpdev;
 	drm_agp_head_t *head = NULL;
 	int agp_available = 1;
@@ -393,13 +394,14 @@ drm_agp_init(void)
 		if (head == NULL)
 			return NULL;
 		head->agpdev = agpdev;
-#ifndef DRM_NO_AGP
 		agp_get_info(agpdev, &head->info);
-#endif
 		head->base = head->info.ai_aperture_base;
 		TAILQ_INIT(&head->memory);
 	}
 	return head;
+#else
+	return (NULL);
+#endif
 }
 
 void *

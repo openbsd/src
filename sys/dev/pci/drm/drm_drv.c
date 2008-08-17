@@ -419,13 +419,11 @@ drm_load(struct drm_device *dev)
 			retcode = ENOMEM;
 			goto error;
 		}
-#ifndef DRM_NO_MTRR
 		if (dev->agp != NULL) {
 			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
 			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
 				dev->agp->mtrr = 1;
 		}
-#endif
 	}
 
 	retcode = drm_ctxbitmap_init(dev);
@@ -456,7 +454,6 @@ drm_unload(struct drm_device *dev)
 
 	drm_memrange_takedown(&dev->handle_mm);
 
-#if !defined(DRM_NO_MTRR) && !defined(DRM_NO_AGP)
 	if (dev->agp && dev->agp->mtrr) {
 		int retcode;
 
@@ -464,7 +461,6 @@ drm_unload(struct drm_device *dev)
 		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
 		DRM_DEBUG("mtrr_del = %d", retcode);
 	}
-#endif
 
 	DRM_LOCK();
 	drm_lastclose(dev);
