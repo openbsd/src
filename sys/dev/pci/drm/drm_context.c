@@ -80,15 +80,15 @@ drm_ctxbitmap_next(struct drm_device *dev)
 int
 drm_ctxbitmap_init(struct drm_device *dev)
 {
-	int i;
-   	int temp;
+	atomic_t	*bitmap;
+	int		 i, temp;
 
+	
+	bitmap = drm_calloc(1, PAGE_SIZE, DRM_MEM_CTXBITMAP);
+	if (bitmap == NULL)
+		return (ENOMEM);
 	DRM_LOCK();
-	dev->ctx_bitmap = drm_calloc(1, PAGE_SIZE, DRM_MEM_CTXBITMAP);
-	if (dev->ctx_bitmap == NULL) {
-		DRM_UNLOCK();
-		return ENOMEM;
-	}
+	dev->ctx_bitmap = bitmap;
 	dev->max_context = -1;
 	DRM_UNLOCK();
 
@@ -103,9 +103,13 @@ drm_ctxbitmap_init(struct drm_device *dev)
 void
 drm_ctxbitmap_cleanup(struct drm_device *dev)
 {
+	atomic_t *bitmap;
+
 	DRM_LOCK();
-	drm_free(dev->ctx_bitmap, PAGE_SIZE, DRM_MEM_CTXBITMAP);
+	bitmap = dev->ctx_bitmap;
+	dev->ctx_bitmap = NULL;
 	DRM_UNLOCK();
+	drm_free(bitmap, PAGE_SIZE, DRM_MEM_CTXBITMAP);
 }
 
 int
