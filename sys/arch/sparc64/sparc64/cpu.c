@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.48 2008/08/11 19:53:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.49 2008/08/17 15:55:55 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -107,7 +107,6 @@ void hummingbird_enable_self_refresh(void);
 void hummingbird_disable_self_refresh(void);
 void hummingbird_set_refresh_count(int, int);
 void hummingbird_setperf(int);
-int hummingbird_cpuspeed(int *);
 void hummingbird_init(struct cpu_info *ci);
 
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
@@ -592,6 +591,7 @@ hummingbird_set_refresh_count(int div, int new_div)
 void
 hummingbird_setperf(int level)
 {
+	extern u_int64_t cpu_clockrate[];
 	uint64_t estar_mode, new_estar_mode;
 	uint64_t reg, s;
 	int div, new_div, i;
@@ -660,20 +660,8 @@ hummingbird_setperf(int level)
 		delay(1);
 		hummingbird_set_refresh_count(div, new_div);
 	}
+	cpu_clockrate[1] = cpu_clockrate[0] / (new_div * 1000000);
 	intr_restore(s);
-}
-
-int
-hummingbird_cpuspeed(int *freq)
-{
-	extern u_int64_t cpu_clockrate[];
-	uint64_t reg;
-	int div;
-
-	reg = ldxa(HB_ESTAR, ASI_PHYS_NON_CACHED);
-	div = hummingbird_div(reg & HB_ESTAR_MODE_MASK);
-	*freq = cpu_clockrate[1] / div;
-	return (0);
 }
 
 void
@@ -688,7 +676,6 @@ hummingbird_init(struct cpu_info *ci)
 		return;
 
 	cpu_setperf = hummingbird_setperf;
-	cpu_cpuspeed = hummingbird_cpuspeed;	
 }
 #endif
 
