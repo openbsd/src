@@ -479,21 +479,18 @@ struct drm_memrange {
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
 typedef struct drm_local_map {
-	unsigned long	offset;	 /* Physical address (0 for SAREA)*/
-	unsigned long	size;	 /* Physical size (bytes)	    */
-	drm_map_type_t	type;	 /* Type of memory mapped		    */
-	drm_map_flags_t flags;	 /* Flags				    */
-	void		*handle; /* User-space: "Handle" to pass to mmap    */
-				 /* Kernel-space: kernel-virtual address    */
-	int		mtrr;	 /* Boolean: MTRR used */
-				 /* Private data			    */
-	int		rid;	 /* PCI resource ID for bus_space */
-	struct vga_pci_bar	*bsr;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	drm_dma_handle_t *dmah;
-	TAILQ_ENTRY(drm_local_map) link;
-	struct drm_memrange_node *mm;
+	TAILQ_ENTRY(drm_local_map)	 link;	/* Link for map list */
+	struct vga_pci_bar		*bsr;	/* Vga BAR, if applicable */
+	drm_dma_handle_t		*dmah;	/* Handle to DMA mem */
+	void				*handle;/* KVA, if mapped */
+	struct drm_memrange_node 	*mm;	/* mmap offset */
+	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
+	bus_space_handle_t		 bsh;	/* Handle to mapped pci mem */
+	drm_map_flags_t			 flags;	/* Flags */
+	int				 mtrr;	/* Boolean: MTRR used */
+	unsigned long			 offset;/* Physical address */
+	unsigned long			 size;	/* Physical size (bytes) */
+	drm_map_type_t			 type;	/* Type of memory mapped */
 } drm_local_map_t;
 
 TAILQ_HEAD(drm_vbl_sig_list, drm_vbl_sig);
@@ -907,10 +904,6 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 			return map;
 	}
 	return NULL;
-}
-
-static __inline__ void drm_core_dropmap(struct drm_map *map)
-{
 }
 
 #endif /* __KERNEL__ */
