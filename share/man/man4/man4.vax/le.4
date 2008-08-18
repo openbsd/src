@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.12 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.13 2008/08/18 23:19:18 miod Exp $
 .\"
 .\" Copyright (c) 2000 Brandon Creighton
 .\"
@@ -23,7 +23,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 18 2008 $
 .Dt LE 4 vax
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Sh SYNOPSIS
 .Cd "le* at vsbus? csr 0x200e0000    " Pq "VAXstation onboard"
 .Cd "le* at ibus?                    " Pq "MicroVAX ibus"
+.Cd "le* at fwio?                    " Pq "VAXstation 35x0 and 38x0"
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,7 +46,8 @@ chipset.
 .Pp
 Different machine configurations have varying types of connectors.
 The following types can be found:
-.Bl -tag -width 10n
+.Pp
+.Bl -tag -width 10n -compact -offset indent
 .It AUI/DIX
 15-pin connector (10base5)
 .It BNC

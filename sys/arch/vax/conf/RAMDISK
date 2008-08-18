@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2008/08/18 23:19:21 miod Exp $
 
 machine		vax			# machine type
 
@@ -22,6 +22,7 @@ option		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000/10{0,5,6}
+option		VAX60		# VS 3[58][24]0
 option		VXT		# VXT2000 and VXT2000+
 
 maxusers	8		# estimated number of users
@@ -61,6 +62,7 @@ vsbus0		at mainbus0		# All VAXstations
 ibus0		at mainbus0		# All Microvax
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
+mbus0		at mainbus0		# VS 3[58][24]0
 vxtbus0		at mainbus0		# VXT2000
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
@@ -86,6 +88,16 @@ uba0		at ibus0		# Qbus adapter
 ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet
 #shac0		at ibus0		# DSSI controller
+
+# M-bus found on VS 3[58][24]0
+fwio*		at mbus0 mid ?		# I/O module
+uba0		at mbus0 mid 0
+
+dz0		at fwio?		# DZ-11 like serial ports
+dz*		at fwio?		# DZ-11 (on additional fwio)
+le0		at fwio?		# LANCE ethernet
+le*		at fwio?		# LANCE (on additional fwio)
+sii*		at fwio?		# SII SCSI
 
 # VXT2000 devices
 ze0		at vxtbus0		# SGEC on-board ethernet
@@ -140,6 +152,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 # SCSI devices
 scsibus*	at asc?
 scsibus*	at ncr?
+scsibus*	at sii?
 
 sd*		at scsibus?
 st*		at scsibus?

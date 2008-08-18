@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2008/08/15 22:38:23 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.47 2008/08/18 23:19:29 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -185,7 +185,7 @@ pmap_bootstrap()
 	avail_start = scratch + 4 * VAX_NBPG - KERNBASE;
 
 	/* Kernel message buffer */
-	avail_end -= MSGBUFSIZE;
+	avail_end -= round_page(MSGBUFSIZE);
 	msgbufp = (void *)(avail_end + KERNBASE);
 	msgbufp->msg_magic = MSG_MAGIC-1; 	/* ensure that it will be zeroed */
 
@@ -257,9 +257,8 @@ pmap_bootstrap()
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
-	uvm_page_physload(avail_start >> PGSHIFT, avail_end >> PGSHIFT,
-	    avail_start >> PGSHIFT, avail_end >> PGSHIFT,
-	    VM_FREELIST_DEFAULT);
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 	mtpr(sysptsize, PR_SLR);
 	rpb.sbr = mfpr(PR_SBR);
 	rpb.slr = mfpr(PR_SLR);
@@ -299,7 +298,7 @@ pmap_steal_memory(size, vstartp, vendp)
 #endif
 
 	/*
-	 * A vax only have one segment of memory.
+	 * A vax only has one segment of memory.
 	 */
 
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;

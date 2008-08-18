@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2008/02/16 22:59:34 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2008/08/18 23:19:29 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -266,7 +266,7 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAX60
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
@@ -303,7 +303,7 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAX60
 	vaddr_t addr, off;
 
 	if (phys_map == NULL)

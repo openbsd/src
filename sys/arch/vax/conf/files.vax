@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.47 2008/08/18 23:07:22 miod Exp $
+#	$OpenBSD: files.vax,v 1.48 2008/08/18 23:19:21 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -340,6 +340,9 @@ device	dh # XXX?
 attach	dh at uba
 file	arch/vax/uba/dh.c			dh needs-flag
 
+# M-bus on VS 3[58][24]0
+include "arch/vax/mbus/files.mbus"
+
 # Blinkenlichten
 device	led
 attach	led at mainbus
@@ -362,6 +365,7 @@ file	arch/vax/vax/ka46.c			vax46
 file	arch/vax/vax/ka48.c			vax48
 file	arch/vax/vax/ka49.c			vax49
 file	arch/vax/vax/ka53.c			vax53
+file	arch/vax/vax/ka60.c			vax60
 file	arch/vax/vax/emulate.s			insn_emulate
 file	arch/vax/vax/unimpl_emul.s		insn_emulate
 file	arch/vax/vax/ka650.c			vax650

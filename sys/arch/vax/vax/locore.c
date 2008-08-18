@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.33 2008/03/30 18:25:13 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.34 2008/08/18 23:19:29 miod Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -50,11 +50,13 @@
 #include <machine/pmap.h>
 #include <machine/nexus.h>
 #include <machine/rpb.h>
+#include <machine/cca.h>
 
 void	start(struct rpb *);
 void	main(void);
 
 extern	paddr_t avail_end;
+extern	int physmem;
 paddr_t	esym;
 u_int	proc0paddr;
 char	cpu_model[100];
@@ -78,6 +80,7 @@ extern struct cpu_dep ka650_calls;
 extern struct cpu_dep ka660_calls;
 extern struct cpu_dep ka670_calls;
 extern struct cpu_dep ka680_calls;
+extern struct cpu_dep ka60_calls;
 extern struct cpu_dep vxt_calls;
 
 /*
@@ -90,6 +93,7 @@ void
 start(struct rpb *prpb)
 {
 	extern vaddr_t scratch;
+	int preserve_cca = 0;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
@@ -301,6 +305,13 @@ start(struct rpb *prpb)
 		strlcpy(cpu_model, "VAX 8200", sizeof cpu_model);
 		break;
 #endif
+#ifdef VAX60
+	case VAX_BTYP_60:
+		dep_call = &ka60_calls;
+		preserve_cca = 1;
+		/* cpu_model will be set in ka60_init */
+		break;
+#endif
 	default:
 		/* CPU not supported, just give up */
 		asm("halt");
@@ -330,6 +341,33 @@ start(struct rpb *prpb)
 		while (badaddr((caddr_t)avail_end, 4) == 0)
 			avail_end += VAX_NBPG * 128;
 	boothowto = prpb->rpb_bootr5;
+
+	physmem = atop(avail_end);
+
+	/*
+	 * If we need to use the Console Communication Area, make sure
+	 * we will not stomp over it.
+	 *
+	 * On KA60 systems, the PROM apparently forgets to keep the CCA
+	 * out of the reported memory size.  It's no real surprise, as
+	 * the memory bitmap pointed to by the CCA reports all physical
+	 * memory (including itself and the CCA) as available!
+	 * (which means the bitmap is not worth looking at either)
+	 */
+
+	if (preserve_cca) {
+		if (prpb->cca_addr != 0 && avail_end > prpb->cca_addr) {
+			struct cca *cca = (struct cca *)prpb->cca_addr;
+
+			/*
+			 * XXX Should validate the CCA image here.
+			 */
+
+			avail_end = prpb->cca_addr;
+			if (cca->cca_bitmap != 0 && avail_end > cca->cca_bitmap)
+				avail_end = cca->cca_bitmap;
+		}
+	}
 
         avail_end = TRUNC_PAGE(avail_end); /* be sure */
 

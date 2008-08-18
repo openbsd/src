@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.98 2008/08/18 23:08:57 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.99 2008/08/18 23:19:29 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -174,7 +174,6 @@ cpu_startup()
 	caddr_t		v;
 	int		sz;
 	vaddr_t		minaddr, maxaddr;
-	extern unsigned int avail_end;
 	extern char	cpu_model[];
 
 	/*
@@ -190,9 +189,8 @@ cpu_startup()
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 
-	printf("real mem = %u (%uMB)\n", avail_end,
-	    avail_end/1024/1024);
-	physmem = atop(avail_end);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
@@ -228,7 +226,7 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAX60
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
@@ -237,7 +235,8 @@ cpu_startup()
 	 * can perform address translation, do not need this.
 	 */
 	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48 ||
-	    vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_1303)
+	    vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_1303 ||
+	    vax_boardtype == VAX_BTYP_60)
 		phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 		    VM_PHYS_SIZE, 0, FALSE, NULL);
 #endif
@@ -283,10 +282,7 @@ dumpconf(void)
 	if (nblks <= ctod(1))
 		return;
 
-	/*
-	 * XXX include the final RAM page which is not included in physmem.
-	 */
-	dumpsize = physmem + 1;
+	dumpsize = physmem;
 	if (dumpsize > atop(dbtob(nblks - dumplo)))
 		dumpsize = atop(dbtob(nblks - dumplo));
 	else if (dumplo == 0)

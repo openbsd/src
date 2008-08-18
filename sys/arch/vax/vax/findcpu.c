@@ -1,4 +1,4 @@
-/*	$OpenBSD: findcpu.c,v 1.12 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: findcpu.c,v 1.13 2008/08/18 23:19:29 miod Exp $	*/
 /*	$NetBSD: findcpu.c,v 1.5 1999/08/23 19:10:43 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -51,7 +51,7 @@ int vax_boardtype;	/* machine dependend, combination of SID and SIE */
  
 int vax_cpudata = 0;	/* contents of the SID register */
 int vax_siedata = 0;	/* contents of the SIE register */
-int vax_confdata;	/* machine dependend, configuration/setup data */
+int vax_confdata;	/* machine dependent, configuration/setup data */
 
 void	findcpu(void);
 
@@ -112,6 +112,9 @@ findcpu(void)
 			break;
 
 		case VAX_BTYP_60:
+			vax_bustype = VAX_MBUS;
+			break;
+
 		case VAX_BTYP_630:
 		case VAX_BTYP_650:
 		case VAX_BTYP_660:

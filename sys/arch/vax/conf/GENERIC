@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2006/11/06 20:28:20 miod Exp $
+#	$OpenBSD: GENERIC,v 1.49 2008/08/18 23:19:21 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,6 +30,7 @@ option		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
+option		VAX60		# VS 3[58][24]0
 option		VXT		# VXT2000 and VXT2000+
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
@@ -50,10 +51,11 @@ mainbus0	at root
 #sbi0		at mainbus0		# SBI, master bus on 11/780.
 #cmi0		at mainbus0		# 11/750 internal bus.
 #bi0		at mainbus0		# VAX 8200
-vsbus0		at mainbus0		# All VAXstations
+vsbus0		at mainbus0		# All VAXstations but 3[58][24]0
 ibus0		at mainbus0		# All Microvax
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
+mbus0		at mainbus0		# VS 3[58][24]0
 vxtbus0		at mainbus0		# VXT2000
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
@@ -79,6 +81,16 @@ uba0		at ibus0		# Qbus adapter
 ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet (MV3400)
 #shac0		at ibus0		# DSSI controller
+
+# M-bus found on VS 3[58][24]0
+fwio*		at mbus0 mid ?		# I/O module
+uba0		at mbus0 mid 0
+
+dz0		at fwio?		# DZ-11 like serial ports
+dz*		at fwio?		# DZ-11 (on additional fwio)
+le0		at fwio?		# LANCE ethernet
+le*		at fwio?		# LANCE (on additional fwio)
+sii*		at fwio?		# SII SCSI
 
 # VXT2000 devices
 ze0		at vxtbus0		# SGEC on-board ethernet
@@ -133,6 +145,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 # SCSI devices
 scsibus*	at asc?
 scsibus*	at ncr?
+scsibus*	at sii?
 
 sd*		at scsibus?
 st*		at scsibus?

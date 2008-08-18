@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubareg.h,v 1.12 2008/08/18 23:10:39 miod Exp $ */
+/*	$OpenBSD: ubareg.h,v 1.13 2008/08/18 23:19:27 miod Exp $ */
 /*	$NetBSD: ubareg.h,v 1.11 2000/01/24 02:40:36 matt Exp $ */
 
 /*-
@@ -63,7 +63,7 @@
 #define DW730	3		/* has adaptor regs, no sr: 750, 730 */
 #endif
 
-#if VAX630 || VAX650 || VAX660 || VAX670
+#if VAX630 || VAX650 || VAX660 || VAX670 || VAX60
 #define QBA	4		/* 22-bit Q-bus, no adaptor regs: uVAX II */
 #endif
 
@@ -190,7 +190,7 @@ struct uba_regs {
  * Symbolic BUS addresses for UBAs.
  */
 
-#if VAX630 || VAX650
+#if VAX630 || VAX650 || VAX60
 #define QBAMAP	0x20088000
 #define QMEM	0x30000000
 #define QIOPAGE	0x20000000

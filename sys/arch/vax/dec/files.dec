@@ -1,4 +1,4 @@
-#	$OpenBSD: files.dec,v 1.5 2008/08/18 23:04:28 miod Exp $
+#	$OpenBSD: files.dec,v 1.6 2008/08/18 23:19:22 miod Exp $
 #	$NetBSD: files.dec,v 1.4 1999/08/04 07:17:51 nisimura Exp $
 #
 # Config file and device description for machine-independent
@@ -14,3 +14,7 @@ file	arch/vax/dec/wskbdmap_lk201.c		lkkbd
 
 # VSxxx mouse
 file	arch/vax/dec/vsms_ws.c			lkms
+
+# DC7061 SII DSSI/SCSI controller
+device	sii: scsi
+file	arch/vax/dec/sii.c			sii
