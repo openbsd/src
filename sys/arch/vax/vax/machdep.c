@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.97 2008/08/14 11:41:30 martin Exp $ */
+/* $OpenBSD: machdep.c,v 1.98 2008/08/18 23:08:57 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -1051,6 +1051,18 @@ splassert_check(int wantipl, const char *func)
 	 */
 	if (oldvsbus != 0 && oldipl == 0x14)
 		oldipl = 0x15;
+
+	/*
+	 * ... and then, IPL_TYY is now 0x16 because of KA60 interrupt
+	 * assignments, so we should not mind if splassert(IPL_TTY) and
+	 * IPL 0x15 on other machines.
+	 */
+	if (wantipl == IPL_TTY && oldipl == 0x15) {
+#ifdef VAX60
+		if (vax_boardtype != VAX_BTYP_60)
+#endif
+			oldipl = 0x16;
+	}
 		
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);
