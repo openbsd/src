@@ -512,7 +512,6 @@ drm_do_addbufs_agp(struct drm_device *dev, drm_buf_desc_t *request)
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
 		buf->address = (void *)(agp_offset + offset);
-		buf->next = NULL;
 		buf->pending = 0;
 		buf->file_priv = NULL;
 
@@ -660,7 +659,6 @@ drm_do_addbufs_pci(struct drm_device *dev, drm_buf_desc_t *request)
 			buf->offset = (dma->byte_count + byte_count + offset);
 			buf->address = ((char *)dmah->vaddr + offset);
 			buf->bus_address = dmah->busaddr + offset;
-			buf->next = NULL;
 			buf->pending = 0;
 			buf->file_priv = NULL;
 
@@ -780,7 +778,6 @@ drm_do_addbufs_sg(struct drm_device *dev, drm_buf_desc_t *request)
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
 		buf->address = (void *)(agp_offset + offset + dev->sg->handle);
-		buf->next = NULL;
 		buf->pending = 0;
 		buf->file_priv = NULL;
 

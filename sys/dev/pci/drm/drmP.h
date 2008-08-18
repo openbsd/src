@@ -327,7 +327,6 @@ typedef struct drm_buf {
 	unsigned long	  offset;      /* Byte offset (used internally)	     */
 	void		  *address;    /* Address of buffer		     */
 	unsigned long	  bus_address; /* Bus address of buffer		     */
-	struct drm_buf	  *next;       /* Kernel-only: used for free list    */
 	__volatile__ int  pending;     /* On hardware DMA queue		     */
 	struct drm_file   *file_priv;  /* Unique identifier of holding process */
 	int		  context;     /* Kernel queue for this buffer	     */
