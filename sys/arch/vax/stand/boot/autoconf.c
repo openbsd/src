@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2008/08/12 17:23:21 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.13 2008/08/18 23:20:43 miod Exp $ */
 /*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -38,11 +38,13 @@
 
 #include <lib/libsa/stand.h>
 
-#include "../../include/mtpr.h"
-#include "../../include/sid.h"
-#include "../../include/intr.h"
-#include "../../include/rpb.h"
-#include "../../include/scb.h"
+#include <machine/mtpr.h>
+#include <machine/sid.h>
+#include <machine/intr.h>
+#include <machine/rpb.h>
+#include <machine/scb.h>
+#include <arch/vax/mbus/mbusreg.h>
+#include <arch/vax/mbus/fwioreg.h>
 #include "vaxstand.h"
 
 void autoconf(void);
@@ -52,6 +54,7 @@ void scbinit(void);
 void clkstart(void);
 int getsecs(void);
 void scb_stray(void *);
+void scb_silent(void *);
 void longjmp(int *);
 void rtimer(void *);
 
@@ -181,6 +184,8 @@ scbinit(void)
 		scb_vec[i].ev = NULL;
 	}
 	scb_vec[4/4].hoppaddr = mcheck;
+	if (vax_boardtype == VAX_BTYP_60)
+		scb_vec[0x60/4].hoppaddr = scb_silent;
 }
 
 void
@@ -195,8 +200,8 @@ clkstart(void)
 		extern int ka60_ioslot;
 
 		/* enable M-Bus clock in IOCSR */
-		*(unsigned int *)(0x30800000 + (ka60_ioslot << 25)) |=
-		    0x20000000;	/* CLKIEN */
+		*(unsigned int *)(MBUS_SLOT_BASE(ka60_ioslot) +
+		    FWIO_IOCSR_OFFSET) |= FWIO_IOCSR_CLKIEN;
 	}
 
 	mtpr(20, PR_IPL);
@@ -266,4 +271,10 @@ scb_stray(void *arg)
 	ipl = mfpr(PR_IPL);
 	vector = (int) arg;
 	printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
+}
+
+void
+scb_silent(void *arg)
+{
+	/* nothing */
 }

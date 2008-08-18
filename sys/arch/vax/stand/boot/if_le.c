@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.5 2008/08/12 17:23:21 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.6 2008/08/18 23:20:44 miod Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -46,11 +46,14 @@
 #include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
-#include <../include/sid.h>
-#include <../include/rpb.h>
+#include <machine/sid.h>
+#include <machine/rpb.h>
 
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
+
+#include <arch/vax/mbus/mbusreg.h>
+#include <arch/vax/mbus/fwioreg.h>
 
 #include <dev/ic/am7990reg.h>
 
@@ -151,14 +154,15 @@ leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		nireg = (void *)0x20084400;
 	} else if (vax_boardtype == VAX_BTYP_60) {
 		extern int ka60_ioslot;
-		lebufaddr = 0x30a00000 + (ka60_ioslot << 25);
-		ea = (int *)(0x30800000 + (ka60_ioslot << 25));
+		lebufaddr = MBUS_SLOT_BASE(ka60_ioslot) + FWIO_LANCE_BUF_OFFSET;
+		ea = (int *)(MBUS_SLOT_BASE(ka60_ioslot) + FWIO_ESAR_OFFSET);
 		for (i = 0; i < 6; i++) {
 			eaddr[i] = *(u_char *)((int)ea + 2);
 			ea++;
 		}
 		ea = NULL;
-		nireg = (void *)(0x30200000 + (ka60_ioslot << 25));
+		nireg = (void *)(MBUS_SLOT_BASE(ka60_ioslot) +
+		    FWIO_LANCE_REG_OFFSET);
 	} else {
 		*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 		ea = (void *)0x20090000; /* XXX Ethernet address */

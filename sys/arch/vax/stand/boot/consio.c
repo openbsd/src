@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.9 2008/08/12 17:23:21 miod Exp $ */
+/*	$OpenBSD: consio.c,v 1.10 2008/08/18 23:20:44 miod Exp $ */
 /*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -42,6 +42,9 @@
 #include "ka630.h"
 
 #include "data.h"
+
+#include <machine/cvax.h>
+#include <arch/vax/mbus/mbusreg.h>
 
 void setup(void);
 
@@ -383,26 +386,36 @@ void ka60_consinit(void)
 	extern int mcheck_silent;
 	extern int setjmp(int *);
 
-	int mid, modaddr, modtype;
+	int mid, fbicaddr;
+	uint32_t modtype, fbicrange;
 
-	mcheck_silent = 1;
-	for (mid = 0; mid < 8; mid++) {
-		modaddr = 0x31fffffc + (mid << 25);
+	for (mid = 0; mid < MBUS_SLOT_MAX; mid++) {
+		fbicaddr = MBUS_SLOT_BASE(mid) + FBIC_BASE;
+
 		if (setjmp(jbuf)) {
 			/* this slot is empty */
 			continue;
 		}
-		modtype = *(int *)modaddr;
-		if ((modtype & 0xff) == 0x04) {
-			ka60_ioslot = mid;
+		mcheck_silent = 1;
+		modtype = *(uint32_t *)(fbicaddr + FBIC_MODTYPE);
+		mcheck_silent = 0;
+
+		if ((modtype & MODTYPE_CLASS_MASK) >> MODTYPE_CLASS_SHIFT !=
+		    CLASS_IO)
+			continue;
+
+		ka60_ioslot = mid;
+
+		fbicrange = *(uint32_t *)(fbicaddr + FBIC_RANGE);
+		if (fbicrange ==
+		    ((HOST_TO_MBUS(CVAX_SSC) & RANGE_MATCH) | RANGE_ENABLE))
 			break;
-		}
 	}
 	mcheck_silent = 0;
 
 	if (ka60_ioslot < 0) {
 		/*
-		 * This shouldn't happen. Try mid #5 (slot #4) as a
+		 * This shouldn't happen. Try mid #5 (enclosure slot #4) as a
 		 * supposedly sane default.
 		 */
 		ka60_ioslot = 5;

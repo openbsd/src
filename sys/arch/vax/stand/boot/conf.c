@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2008/08/18 23:20:44 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.10 2000/06/15 19:53:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,7 @@ struct	devsw devsw[]={
         SADEV("hd",mfmstrategy, mfmopen, nullsys, noioctl),
         SADEV("sd",romstrategy, romopen, nullsys, noioctl),
 	SADEV("sd",romstrategy, romopen, nullsys, noioctl),	/* SDN */
+	SADEV("sd",romstrategy, romopen, nullsys, noioctl),	/* SDS */
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
 	SADEV("le",nostrategy, leopen, leclose, noioctl), /* LANCE */
 	SADEV("ze",nostrategy, zeopen, zeclose, noioctl), /* SGEC */
@@ -77,6 +78,7 @@ int	cnvtab[] = {
 	BDEV_RD,
 	BDEV_SD,
 	BDEV_SDN,
+	BDEV_SDS,
 	BDEV_ST,
 	BDEV_LE,
 	BDEV_ZE,
