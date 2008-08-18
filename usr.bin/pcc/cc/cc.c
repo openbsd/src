@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.14 2008/08/17 18:40:12 ragge Exp $	*/
+/*	$OpenBSD: cc.c,v 1.15 2008/08/18 20:54:10 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -120,7 +120,7 @@
 #define MAXOPT 100
 char	*tmp3;
 char	*tmp4;
-char	*outfile;
+char	*outfile, *ermfile;
 char *Bprefix(char *);
 char *copy(char *, int),*setsuf(char *, char);
 int getsuf(char *);
@@ -175,8 +175,8 @@ int	pthreads;
 int	xcflag;
 int 	ascpp;
 
-char	*passp = LIBEXECDIR PREPROCESSOR;
-char	*pass0 = LIBEXECDIR COMPILER;
+char	*passp = LIBEXECDIR "/" PREPROCESSOR;
+char	*pass0 = LIBEXECDIR "/" COMPILER;
 char	*as = ASSEMBLER;
 char	*ld = LINKER;
 char	*Bflag;
@@ -667,7 +667,7 @@ main(int argc, char *argv[])
 		if (!Eflag && !Mflag)
 			av[na++] = tmp4;
 		if (Eflag && outfile)
-			 av[na++] = outfile;
+			 ermfile = av[na++] = outfile;
 		av[na++]=0;
 		if (callsys(passp, av))
 			{exfail++; eflag++;}
@@ -741,7 +741,7 @@ main(int argc, char *argv[])
 			else
 				tmp3 = setsuf(clist[i], 's');
 		}
-		av[na++] = tmp3;
+		ermfile = av[na++] = tmp3;
 #if 0
 		if (proflag) {
 			av[3] = "-XP";
@@ -779,9 +779,9 @@ main(int argc, char *argv[])
 			av[na++] = "-k";
 		av[na++] = "-o";
 		if (outfile && cflag)
-			av[na++] = outfile;
+			ermfile = av[na++] = outfile;
 		else
-			av[na++] = setsuf(clist[i], 'o');
+			ermfile = av[na++] = setsuf(clist[i], 'o');
 		av[na++] = assource;
 		if (dflag)
 			av[na++] = alist;
@@ -973,6 +973,8 @@ dexit(int eval)
 			cunlink(tmp3);
 		cunlink(tmp4);
 	}
+	if (exfail || eflag)
+		cunlink(ermfile);
 	if (eval == 100)
 		_exit(eval);
 	exit(eval);
