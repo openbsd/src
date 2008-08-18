@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.54 2008/07/07 23:22:27 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -93,6 +93,8 @@ int schizo_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 paddr_t schizo_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
+bus_addr_t schizo_bus_addr(bus_space_tag_t, bus_space_tag_t,
+    bus_space_handle_t);
 void *schizo_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
 
@@ -567,6 +569,7 @@ schizo_alloc_bus_tag(struct schizo_pbm *pbm, const char *name, int ss,
 	bt->sasi = sasi;
 	bt->sparc_bus_map = schizo_bus_map;
 	bt->sparc_bus_mmap = schizo_bus_mmap;
+	bt->sparc_bus_addr = schizo_bus_addr;
 	bt->sparc_intr_establish = schizo_intr_establish;
 	return (bt);
 }
@@ -690,6 +693,36 @@ schizo_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 		paddr |= ((bus_addr_t)pbm->sp_range[i].phys_hi<<32);
 		return ((*t->parent->sparc_bus_mmap)
 		    (t, t0, paddr, off, prot, flags));
+	}
+
+	return (-1);
+}
+
+bus_addr_t
+schizo_bus_addr(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h)
+{
+	struct schizo_pbm *pbm = t->cookie;
+	bus_addr_t addr;
+	int i, ss;
+
+	ss = t->default_type;
+
+	if (t->parent == 0 || t->parent->sparc_bus_addr == 0) {
+		printf("\nschizo_bus_addr: invalid parent");
+		return (-1);
+	}
+
+	t = t->parent;
+
+	addr = ((*t->sparc_bus_addr)(t, t0, h));
+	if (addr == -1)
+		return (-1);
+
+	for (i = 0; i < pbm->sp_nrange; i++) {
+		if (((pbm->sp_range[i].cspace >> 24) & 0x03) != ss)
+			continue;
+
+		return (BUS_ADDR_PADDR(addr) - pbm->sp_range[i].phys_lo);
 	}
 
 	return (-1);
