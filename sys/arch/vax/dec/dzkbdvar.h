@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbdvar.h,v 1.2 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: dzkbdvar.h,v 1.3 2008/08/18 23:04:28 miod Exp $	*/
 /* $NetBSD: dzkbdvar.h,v 1.2 2001/03/06 07:40:52 matt Exp $ */
 
 struct dzkm_attach_args {
@@ -7,11 +7,14 @@ struct dzkm_attach_args {
 #define	DZKBD_CONSOLE	1
 };
 
+/* dzcons.c */
+int	dz_can_have_kbd(void);
+void	dzcninit_internal(int);
+int	dzcngetc_internal(int);
 
+/* dzinput.c */
+void	dzputc(struct dz_linestate *, int);
+int	dz_print(void *, const char *);
 
-/* These functions must be present for the keyboard/mouse to work */
-int dzgetc(struct dz_linestate *);
-void dzputc(struct dz_linestate *, int);
-
-/* Exported functions */
-int dzkbd_cnattach(struct dz_linestate *);
+/* dzkbd.c */
+int	dzkbd_cnattach(void);

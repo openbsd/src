@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.4 2008/01/23 16:37:57 jsing Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.5 2008/08/18 23:04:28 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -129,7 +129,7 @@ wscninit(struct consdev *cp)
 	switch (vax_bustype) {
 	case VAX_VSBUS:
 #if NDZKBD > 0
-		dzkbd_cnattach(0); /* Connect keyboard and screen together */
+		dzkbd_cnattach();
 #endif
 		break;
 	case VAX_VXTBUS:
