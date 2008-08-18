@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.87 2008/08/16 16:47:32 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.88 2008/08/18 04:28:18 kevlo Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ ehci_init(ehci_softc_t *sc)
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 
 	sc->sc_softitds = malloc(sc->sc_flsize * sizeof(ehci_soft_itd_t *),
-	    M_USB, M_WAITOK | M_ZERO);
+	    M_USB, M_NOWAIT | M_ZERO);
 	if (sc->sc_softitds == NULL)
 		return (ENOMEM);
 	LIST_INIT(&sc->sc_freeitds);
