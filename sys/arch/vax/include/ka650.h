@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.h,v 1.10 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.11 2008/08/18 23:07:24 miod Exp $	*/
 /*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -47,20 +47,6 @@
 #define CAER_MCC	0x00000010	/* mcheck due to 1st lev cache parity */
 #define CAER_DAT	0x00000002	/* data parity in 1st level cache */
 #define CAER_TAG	0x00000001	/* tag parity in 1st level cache */
-
-/*
- * CADR: Cache Disable Register (IPR 37)
- */
-#define CADR_STMASK	0x000000f0	/* 1st level cache state mask */
-#define CADR_SEN2	0x00000080	/* 1st level cache set 2 enabled */
-#define CADR_SEN1	0x00000040	/* 1st level cache set 1 enabled */
-#define CADR_CENI	0x00000020	/* 1st level I-stream caching enabled */
-#define CADR_CEND	0x00000010	/* 1st level D-stream caching enabled */
-
-/*
- * Internal State Info 2: (for mcheck recovery)
- */
-#define IS2_VCR		0x00008000	/* VAX Can't Restart flag */
 
 /*
  * DMA System Error Register (merr_dser)
@@ -144,56 +130,6 @@ struct ka650_cbd {
  */
 #define CACR_CEN	0x00000010	/* Cache enable */
 #define CACR_CPE	0x00000020	/* Cache Parity Error */
-
-/*
- * System Support Chip (SSC) registers
- */
-struct ka650_ssc {
-	u_long	ssc_sscbr;	/* SSC Base Addr Register */
-	u_long	pad1[3];
-	u_long	ssc_ssccr;	/* SSC Configuration Register */
-	u_long	pad2[3];
-	u_long	ssc_cbtcr;	/* CDAL Bus Timeout Control Register */
-	u_long	pad3[55];
-	u_long	ssc_tcr0;	/* timer control reg 0 */
-	u_long	ssc_tir0;	/* timer interval reg 0 */
-	u_long	ssc_tnir0;	/* timer next interval reg 0 */
-	u_long	ssc_tivr0;	/* timer interrupt vector reg 0 */
-	u_long	ssc_tcr1;	/* timer control reg 1 */
-	u_long	ssc_tir1;	/* timer interval reg 1 */
-	u_long	ssc_tnir1;	/* timer next interval reg 1 */
-	u_long	ssc_tivr1;	/* timer interrupt vector reg 1 */
-	u_long	pad4[184];
-	u_char	ssc_cpmbx;	/* Console Program Mail Box: Lang & Hact */
-	u_char	ssc_terminfo;	/* TTY info: Video Dev, MCS, CRT & ROM flags */
-	u_char	ssc_keyboard;	/* Keyboard code */
-};
-#define KA650_SSC	0x20140000
-
-/*
- * CBTCR: CDAL Bus Timeout Control Register (ssc_cbtcr)
- */
-#define CBTCR_BTO	0x80000000	/* r/w unimp IPR or unack intr */
-#define CBTCR_RWT	0x40000000	/* CDAL Bus Timeout on CPU or DMA */
-
-/*
- * TCR0/TCR1: Programable Timer Control Registers (ssc_tcr[01])
- * (The rest of the bits are the same as in the standard VAX
- *	Interval timer and are defined in clock.h)
- */
-#define TCR_STP		0x00000004	/* Stop after time-out */
-
-/*
- * Flags for Console Program Mail Box
- */
-#define CPMB650_HALTACT	0x03	/* Field for halt action */
-#define CPMB650_RESTART	0x01	/* Restart */
-#define CPMB650_REBOOT	0x02	/* Reboot */
-#define CPMB650_HALT	0x03	/* Halt */
-#define CPMB650_BIP	0x04	/* Bootstrap in progress */
-#define CPMB650_RIP	0x08	/* Restart in progress */
-#define	CPMB650_DOTHIS	0x30	/* Execute sommand */
-#define CPMB650_LANG	0xf0	/* Language field */
 
 /*
  * Inter Processor Communication Register

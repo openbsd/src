@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.c,v 1.10 2008/08/18 23:05:38 miod Exp $ */
+/*	$OpenBSD: ka410.c,v 1.11 2008/08/18 23:07:26 miod Exp $ */
 /*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -50,6 +50,7 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
+#include <machine/cvax.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
@@ -102,8 +103,7 @@ ka410_conf()
 		ka410_cpu->vc_vdcorg = 0; /* XXX */
 		ka410_cpu->vc_parctl = PARCTL_CPEN | PARCTL_DPEN ;
 		printf("cpu: Enabling primary cache, ");
-		mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, 
-			PR_CADR);
+		mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
 		if (vax_confdata & KA420_CFG_CACHPR) {
 			l2cache = (void *)vax_map_physmem(KA420_CH2_BASE,
 			    (KA420_CH2_SIZE / VAX_NBPG));

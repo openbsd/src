@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.17 2008/08/18 23:05:38 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.18 2008/08/18 23:07:26 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -45,16 +45,17 @@
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 
+#include <machine/cvax.h>
 #include <machine/ka650.h>
 #include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/mtpr.h>
 #include <machine/sid.h>
+#include <machine/nexus.h>
 
 struct	ka650_merr *ka650merr_ptr;
 struct	ka650_cbd *ka650cbd_ptr;
-struct	ka650_ssc *ka650ssc_ptr;
 struct	ka650_ipcr *ka650ipcr_ptr;
 int	*KA650_CACHE_ptr;
 
@@ -62,8 +63,6 @@ int	*KA650_CACHE_ptr;
 #define	CACHEON		1
 
 static	void	ka650setcache(int);
-static	void	ka650_halt(void);
-static	void	ka650_reboot(int);
 static	void    uvaxIII_conf(void);
 static	void    uvaxIII_memerr(void);
 static	int     uvaxIII_mchk(caddr_t);
@@ -77,8 +76,8 @@ struct	cpu_dep	ka650_calls = {
 	generic_clkwrite,
 	4,      /* ~VUPS */
 	2,	/* SCB pages */
-	ka650_halt,
-	ka650_reboot,
+	cvax_halt,
+	cvax_reboot,
 	NULL,
 	NULL,
 	hardclock
@@ -99,7 +98,7 @@ uvaxIII_conf()
 	 */
 	ka650merr_ptr = (void *)vax_map_physmem(KA650_MERR, 1);
 	ka650cbd_ptr = (void *)vax_map_physmem(KA650_CBD, 1);
-	ka650ssc_ptr = (void *)vax_map_physmem(KA650_SSC, 3);
+	cvax_ssc_ptr = (void *)vax_map_physmem(CVAX_SSC, 3);
 	ka650ipcr_ptr = (void *)vax_map_physmem(KA650_IPCR, 1);
 	KA650_CACHE_ptr = (void *)vax_map_physmem(KA650_CACHE,
 	    (KA650_CACHESIZE/VAX_NBPG));
@@ -155,45 +154,27 @@ uvaxIII_memerr()
 #endif
 }
 
-#define NMC650	15
-char *mc650[] = {
-	0,			"FPA proto err",	"FPA resv inst",
-	"FPA Ill Stat 2",	"FPA Ill Stat 1",	"PTE in P0, TB miss",
-	"PTE in P1, TB miss",	"PTE in P0, Mod",	"PTE in P1, Mod",
-	"Illegal intr IPL",	"MOVC state error",	"bus read error",
-	"SCB read error",	"bus write error",	"PCB write error"
-};
 u_int	cache1tag;
 u_int	cache1data;
 u_int	cdalerr;
 u_int	cache2tag;
 
-struct mc650frame {
-	int	mc65_bcnt;		/* byte count == 0xc */
-	int	mc65_summary;		/* summary parameter */
-	int	mc65_mrvaddr;		/* most recent vad */
-	int	mc65_istate1;		/* internal state */
-	int	mc65_istate2;		/* internal state */
-	int	mc65_pc;		/* trapped pc */
-	int	mc65_psl;		/* trapped psl */
-};
-
 int
 uvaxIII_mchk(cmcf)
 	caddr_t cmcf;
 {
-	register struct mc650frame *mcf = (struct mc650frame *)cmcf;
-	register u_int type = mcf->mc65_summary;
-	register u_int i;
+	struct cvax_mchk_frame *mcf = (struct cvax_mchk_frame *)cmcf;
+	u_int type = mcf->cvax_summary;
+	const char *descr;
+	u_int i;
 
 	printf("machine check %x", type);
-	if (type >= 0x80 && type <= 0x83)
-		type -= 0x80 - 11;
-	if (type < NMC650 && mc650[type])
-		printf(": %s", mc650[type]);
+	descr = cvax_mchk_descr(type);
+	if (descr != NULL)
+		printf(": %s", descr);
 	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
-	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
-	    mcf->mc65_pc, mcf->mc65_psl);
+	    mcf->cvax_mrvaddr, mcf->cvax_istate1, mcf->cvax_istate2,
+	    mcf->cvax_pc, mcf->cvax_psl);
 	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
 	    ka650merr_ptr->merr_dser, DMASER_BITS, 
 	    (int)ka650merr_ptr->merr_qbear,
@@ -231,14 +212,14 @@ uvaxIII_mchk(cmcf)
 	 * only if FPD is set in the saved PSL, or bit VCR in Istate2
 	 * is clear.
 	 */
-	if ((type > 0 && type < 5) || type == 11 || type == 12) {
-		if ((mcf->mc65_psl & PSL_FPD)
-		    || !(mcf->mc65_istate2 & IS2_VCR)) {
+	if ((type > 0 && type < 5) || type == 0x80 || type == 0x81) {
+		if ((mcf->cvax_psl & PSL_FPD)
+		    || !(mcf->cvax_istate2 & IS2_VCR)) {
 			uvaxIII_memerr();
-			return 0;
+			return MCHK_RECOVERED;
 		}
 	}
-	return -1;
+	return MCHK_PANIC;
 }
 
 /*
@@ -272,18 +253,4 @@ ka650setcache(int state)
 			ka650cbd_ptr->cbd_cacr = CACR_CEN;
 		}
 	}
-}
-
-static void
-ka650_halt()
-{
-	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_HALT;
-	asm("halt");
-}
-
-static void
-ka650_reboot(arg)
-	int arg;
-{
-	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_REBOOT;
 }

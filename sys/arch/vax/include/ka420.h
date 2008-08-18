@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka420.h,v 1.4 2006/07/25 21:11:08 miod Exp $ */
+/*	$OpenBSD: ka420.h,v 1.5 2008/08/18 23:07:24 miod Exp $ */
 /*	$NetBSD: ka420.h,v 1.2 1998/06/07 18:34:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -137,14 +137,6 @@
 #define	KA420_CFG_L3CON		0x20	/* Console on line #3 of dc */
 #define	KA420_CFG_CURTEST	0x10	/* Cursor Test (monochrom) */
 #define	KA420_CFG_VIDOPT	0x08	/* Video option present */
-
-/* Primary cache bits (CADR, IPR 37) */
-#define	KA420_CADR_S2E		0x80	/* set 2 enable */
-#define	KA420_CADR_S1E		0x40	/* set 1 enable */
-#define	KA420_CADR_ISE		0x20	/* insn caching enable */
-#define	KA420_CADR_DSE		0x10	/* data caching enable */
-#define	KA420_CADR_WWP		0x02	/* write wrong parity */
-#define	KA420_CADR_DIA		0x01	/* diagnostic mode */
 
 /* Secondary cache bits (CACR, 20084000) */
 #define	KA420_CACR_CP3		0x80000000	/* last parity read */
