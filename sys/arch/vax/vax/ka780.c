@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka780.c,v 1.9 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: ka780.c,v 1.10 2008/08/18 23:05:38 miod Exp $	*/
 /*	$NetBSD: ka780.c,v 1.14 1999/08/07 10:36:49 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -108,6 +108,11 @@ struct	cpu_dep ka780_calls = {
 	generic_clkwrite,
 	2,	/* ~VUPS */
 	5,	/* SCB pages */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	hardclock
 };
 
 /*

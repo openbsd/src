@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.21 2007/05/10 17:59:27 deraadt Exp $   */
+/*	$OpenBSD: intvec.s,v 1.22 2008/08/18 23:05:38 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -157,7 +157,7 @@ _rpb:
 # at when returning from a intentional test.
 #
 mcheck: .globl	mcheck
-	tstl	_cold		# Ar we still in coldstart?
+	tstl	_cold		# Are we still in coldstart?
 	bneq	L4		# Yes.
 
 	pushr	$0x7f
@@ -216,16 +216,16 @@ ENTRY(privinflt)	# Privileged/unimplemented instruction
 	.align	2
 	.globl	transl_v	# 20: Translation violation
 transl_v:
-	pushr	$0x3f
+	PUSHR
 	pushl	28(sp)
 	pushl	28(sp)
 	calls	$2,_pmap_simulref
 	tstl	r0
 	bneq	1f
-	popr	$0x3f
+	POPR
 	addl2	$8,sp
 	rei
-1:	popr	$0x3f
+1:	POPR
 	brb	access_v
 
 	.align	2
@@ -273,7 +273,7 @@ ENTRY(cmrerr)
 	POPR
 	rei
 
-ENTRY(sbiflt);
+ENTRY(sbiflt)
 	pushab	sbifltmsg
 	calls	$1, _panic
 
@@ -298,21 +298,17 @@ ENTRY(netint)
 
 	TRAPCALL(ddbtrap, T_KDBTRAP)
 
-		.align	2
-		.globl	hardclock
-hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
-		pushr	$0x3f
-#ifdef VAX46
-		cmpl	_vax_boardtype,$VAX_BTYP_46
-		bneq	1f
-		movl	_ka46_cpu,r0
-		clrl	0x1c(r0)
-#endif
-1:		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_hardclock
-		popr	$0x3f
-		rei
+ENTRY(hardclock)
+	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
+	PUSHR
+	pushl	sp
+	addl2	$24,(sp)
+	movl	_dep_call,r0
+	calls	$1,*HARDCLOCK(r0)
+	incl	_clock_intrcnt+EC_COUNT		# increment low longword
+	adwc	$0,_clock_intrcnt+EC_COUNT+4	# add any carry to hi longword
+	POPR
+	rei
 
 /*
  * Main routine for traps; all go through this.

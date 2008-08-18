@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.9 2008/08/15 22:38:23 miod Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.10 2008/08/18 23:05:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,6 +79,9 @@ struct	cpu_dep ka48_calls = {
 	2,	/* SCB pages */
 	ka48_halt,
 	ka48_reboot,
+	NULL,
+	NULL,
+	hardclock
 };
 
 

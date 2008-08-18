@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.8 2008/08/15 22:38:23 miod Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.9 2008/08/18 23:05:38 miod Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -61,6 +61,7 @@ static	int	ka46_mchk(caddr_t);
 static	void	ka46_halt(void);
 static	void	ka46_reboot(int);
 static	void	ka46_cache_enable(void);
+static	void	ka46_hardclock(struct clockframe *);
 
 struct	vs_cpu *ka46_cpu;
 
@@ -78,6 +79,9 @@ struct	cpu_dep ka46_calls = {
 	2,	/* SCB pages */
 	ka46_halt,
 	ka46_reboot,
+	NULL,
+	NULL,
+	ka46_hardclock
 };
 
 
@@ -179,4 +183,11 @@ ka46_reboot(arg)
 	if (((u_int8_t *) clk_page)[KA46_CPMBX] != KA46_HLT_BOOT)
 		((u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_BOOT;
 	asm("halt");
+}
+
+static void
+ka46_hardclock(struct clockframe *cf)
+{
+	ka46_cpu->vc_diagtimu = 0;
+	hardclock(cf);
 }

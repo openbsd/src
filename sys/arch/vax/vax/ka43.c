@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.11 2008/08/15 22:38:23 miod Exp $ */
+/*	$OpenBSD: ka43.c,v 1.12 2008/08/18 23:05:38 miod Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -82,6 +82,8 @@ struct	cpu_dep ka43_calls = {
         ka43_halt,
         ka43_reboot,
         ka43_clrf,
+	NULL,
+	hardclock
 };
 
 static	volatile struct	ka43_cpu   *ka43_cpu	= (void *)KA43_CPU_BASE;

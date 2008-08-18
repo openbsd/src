@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka53.c,v 1.6 2008/08/15 22:38:23 miod Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.7 2008/08/18 23:05:38 miod Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -65,6 +65,9 @@ struct cpu_dep ka53_calls = {
 	2,	/* SCB pages */
 	generic_halt,
 	generic_reboot,
+	NULL,
+	NULL,
+	hardclock
 };
 
 void

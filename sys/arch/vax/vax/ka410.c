@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.c,v 1.9 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: ka410.c,v 1.10 2008/08/18 23:05:38 miod Exp $ */
 /*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -79,6 +79,8 @@ struct	cpu_dep ka410_calls = {
 	ka410_halt,
 	ka410_reboot,
 	ka410_clrf,
+	NULL,
+	hardclock
 };
 
 

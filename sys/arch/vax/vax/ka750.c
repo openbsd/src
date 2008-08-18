@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka750.c,v 1.10 2003/06/02 23:27:59 millert Exp $ */
+/*	$OpenBSD: ka750.c,v 1.11 2008/08/18 23:05:38 miod Exp $ */
 /*	$NetBSD: ka750.c,v 1.30 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -61,9 +61,12 @@ struct	cpu_dep ka750_calls = {
 	generic_clkwrite,
 	1,	/* ~VUPS */
 	4,	/* SCB pages */
-	0,	/* halt call */
-	0,	/* Reboot call */
+	NULL,	/* halt call */
+	NULL,	/* Reboot call */
 	ka750_clrf,
+	NULL,
+	NULL,
+	hardclock
 };
 
 static	caddr_t mcraddr[4];	/* XXX */

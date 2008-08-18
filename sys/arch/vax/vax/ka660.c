@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka660.c,v 1.4 2002/09/28 06:25:11 hugh Exp $	*/
+/*	$OpenBSD: ka660.c,v 1.5 2008/08/18 23:05:38 miod Exp $	*/
 /*	$NetBSD: ka660.c,v 1.3 2000/06/29 07:14:27 mrg Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -81,6 +81,9 @@ struct cpu_dep ka660_calls = {
 	2,	/* SCB pages */
 	generic_halt,
 	generic_reboot,
+	NULL,
+	NULL,
+	hardclock
 };
 
 

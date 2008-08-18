@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.c,v 1.12 2003/11/10 21:05:06 miod Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.13 2008/08/18 23:05:38 miod Exp $	*/
 /*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -83,6 +83,11 @@ struct	cpu_dep ka820_calls = {
 	ka820_clkwrite,
 	3,      /* ~VUPS */
 	5,	/* SCB pages */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	hardclock
 };
 
 struct cfattach cpu_bi_ca = {

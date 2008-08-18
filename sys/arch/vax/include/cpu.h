@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.28 2008/08/15 22:38:20 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.29 2008/08/18 23:05:37 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -64,6 +64,11 @@ extern struct cpu_info cpu_info_store;
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
+struct clockframe {
+        int     pc;
+        int     ps;
+};
+
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the
  * struct for the current cpu is set up in locore.c.
@@ -82,14 +87,10 @@ struct	cpu_dep {
 	void	(*cpu_reboot)(int); /* Cpu dependent reboot call */
 	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
 	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
+	void	(*cpu_hardclock)(struct clockframe *);	/* hardclock handler */
 };
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
-
-struct clockframe {
-        int     pc;
-        int     ps;
-};
 
 extern struct device *booted_from;
 extern int mastercpu;
