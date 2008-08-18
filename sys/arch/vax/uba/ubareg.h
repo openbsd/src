@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubareg.h,v 1.11 2003/11/10 21:05:06 miod Exp $ */
+/*	$OpenBSD: ubareg.h,v 1.12 2008/08/18 23:10:39 miod Exp $ */
 /*	$NetBSD: ubareg.h,v 1.11 2000/01/24 02:40:36 matt Exp $ */
 
 /*-
@@ -84,7 +84,7 @@
 #define UBAIOADDR	0760000		/* start of I/O page */
 #define UBAIOPAGES	16
 
-#ifndef _LOCORE
+#if !defined(_LOCORE) && !defined(UBA_REGS_DEFINED)
 /*
  * DW780/DW750 hardware registers
  */
