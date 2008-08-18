@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.119 2008/07/16 16:32:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.120 2008/08/18 21:55:01 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -300,11 +300,13 @@ mskc*	at pci?			# Marvell Yukon-2
 msk*	at mskc?		#  each port of above
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 hme*	at pci?			# Sun Happy Meal
+stge*	at pci?			# Sundance TC9021 GigE
 
 dcphy*		at mii?		# Digital Clone PHYs
 acphy*		at mii?		# Altima AC101 PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
 exphy*		at mii?		# 3Com internal PHYs
+gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 inphy*		at mii?		# Intel 82555 PHYs
 iophy*		at mii?		# Intel 82553 PHYs
 icsphy*		at mii?		# ICS1890 PHYs
