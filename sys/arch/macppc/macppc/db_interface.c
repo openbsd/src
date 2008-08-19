@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2008/08/19 08:26:20 kettenis Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 #include <sys/param.h>
@@ -9,6 +9,8 @@
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+
+int db_active = 0;
 
 int ddb_trap_glue(struct trapframe *frame); /* called from locore */
 
@@ -31,9 +33,11 @@ ddb_trap_glue(struct trapframe *frame)
 		DDB_REGS->tf.srr0 = frame->srr0;
 		DDB_REGS->tf.srr1 = frame->srr1;
 
+		db_active++;
 		cnpollc(TRUE);
 		db_trap(T_BREAKPOINT, 0);
 		cnpollc(FALSE);
+		db_active--;
 
 		bcopy(DDB_REGS->tf.fixreg, frame->fixreg,
 			32 * sizeof(u_int32_t));
