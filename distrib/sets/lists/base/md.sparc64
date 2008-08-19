@@ -1531,6 +1531,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/_types.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/asm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/atomic.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/autoconf.ph
@@ -2344,8 +2345,11 @@
 ./usr/mdec/installboot
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/sbin/zzz
