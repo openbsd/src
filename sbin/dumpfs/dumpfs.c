@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.25 2008/06/08 03:00:20 otto Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.26 2008/08/19 09:41:12 pedro Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.25 2008/06/08 03:00:20 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.26 2008/08/19 09:41:12 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,8 @@ dumpfs(int fd, const char *name)
 	printf("avgfpdir %d\tavgfilesize %d\n",
 	    afs.fs_avgfpdir, afs.fs_avgfilesize);
 	printf("flags\t");
-	if (afs.fs_ffs1_flags & FS_FLAGS_UPDATED)
+	if (afs.fs_magic == FS_UFS2_MAGIC ||
+	    afs.fs_ffs1_flags & FS_FLAGS_UPDATED)
 		fsflags = afs.fs_flags;
 	else
 		fsflags = afs.fs_ffs1_flags;
