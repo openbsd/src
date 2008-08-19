@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.94 2008/08/11 20:43:16 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.95 2008/08/19 06:42:25 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -792,6 +792,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Corega CG-WLUSB2GL
 		    Corega CG-WLUSB2GO
 		    Corega CG-WLUSB2GPX
+		    D-Link DWA-110
 		    D-Link DWA-111
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
