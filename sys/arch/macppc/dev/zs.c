@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.16 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: zs.c,v 1.17 2008/08/19 07:59:19 kettenis Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -1123,7 +1123,24 @@ zscninit(cp)
 void
 zs_abort(struct zs_chanstate *channel)
 {
+	volatile struct zschan *zc = zs_conschan;
+	int rr0;
 
+	/* Wait for end of break to avoid PROM abort. */
+	/* XXX - Limit the wait? */
+	do {
+		rr0 = zc->zc_csr;
+		ZS_DELAY();
+	} while (rr0 & ZSRR0_BREAK);
+
+#if defined(DDB)
+	{
+		extern int db_active;
+
+		if (!db_active)
+			Debugger();
+	}
+#endif
 }
 
 /* copied from sparc - XXX? */
