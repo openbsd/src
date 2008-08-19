@@ -63,12 +63,15 @@
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
+./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
 ./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
+./usr/include/crypto/hmac.h
 ./usr/include/crypto/idgen.h
+./usr/include/crypto/key_wrap.h
 ./usr/include/crypto/md5.h
 ./usr/include/crypto/michael.h
 ./usr/include/crypto/podd.h

@@ -1769,6 +1769,7 @@
 ./usr/share/man/cat4/vax/de.0
 ./usr/share/man/cat4/vax/dhu.0
 ./usr/share/man/cat4/vax/dz.0
+./usr/share/man/cat4/vax/fwio.0
 ./usr/share/man/cat4/vax/gpx.0
 ./usr/share/man/cat4/vax/hp.0
 ./usr/share/man/cat4/vax/ibus.0
@@ -1780,6 +1781,7 @@
 ./usr/share/man/cat4/vax/led.0
 ./usr/share/man/cat4/vax/lkkbd.0
 ./usr/share/man/cat4/vax/lkms.0
+./usr/share/man/cat4/vax/mbus.0
 ./usr/share/man/cat4/vax/mem.0
 ./usr/share/man/cat4/vax/mscpbus.0
 ./usr/share/man/cat4/vax/mt.0
@@ -1789,6 +1791,7 @@
 ./usr/share/man/cat4/vax/qsc.0
 ./usr/share/man/cat4/vax/ra.0
 ./usr/share/man/cat4/vax/rx.0
+./usr/share/man/cat4/vax/sii.0
 ./usr/share/man/cat4/vax/smg.0
 ./usr/share/man/cat4/vax/ts.0
 ./usr/share/man/cat4/vax/uba.0
@@ -2473,6 +2476,8 @@
 ./usr/share/man/cat8/sparc/zzz.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
+./usr/share/man/cat8/sparc64/apm.0
+./usr/share/man/cat8/sparc64/apmd.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
 ./usr/share/man/cat8/sparc64/eeprom.0
 ./usr/share/man/cat8/sparc64/hotplugd.0
@@ -2480,6 +2485,7 @@
 ./usr/share/man/cat8/sparc64/kbd.0
 ./usr/share/man/cat8/sparc64/wsconscfg.0
 ./usr/share/man/cat8/sparc64/wsconsctl.0
+./usr/share/man/cat8/sparc64/zzz.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/ssh-keysign.0

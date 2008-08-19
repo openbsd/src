@@ -632,12 +632,15 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/crypto/hmac.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/idgen.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/crypto/key_wrap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/crypto/podd.ph

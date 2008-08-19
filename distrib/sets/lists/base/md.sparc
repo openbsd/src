@@ -108,12 +108,15 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/hmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/idgen.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/key_wrap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/podd.ph

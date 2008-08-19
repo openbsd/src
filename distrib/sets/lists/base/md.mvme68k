@@ -609,12 +609,15 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/hmac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/idgen.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/key_wrap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/podd.ph
