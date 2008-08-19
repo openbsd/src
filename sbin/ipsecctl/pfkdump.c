@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.24 2007/01/03 12:17:43 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.25 2008/08/19 10:37:12 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -618,10 +618,6 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 
 	setup_extensions(msg);
 	sa = (struct sadb_sa *)extensions[SADB_EXT_SA];
-	if (!(opts & IPSECCTL_OPT_SHOWKEY)) {
-	    extensions[SADB_EXT_KEY_AUTH] = NULL;
-	    extensions[SADB_EXT_KEY_ENCRYPT] = NULL;
-	}
 	bzero(&r, sizeof r);
 	r.type |= RULE_SA;
 	r.tmode = (msg->sadb_msg_satype != SADB_X_SATYPE_TCPSIGNATURE) &&
@@ -675,6 +671,10 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 		bzero(&xfs, sizeof xfs);
 		r.xfs = &xfs;
 		if (sa->sadb_sa_encrypt) {
+			bzero(&enckey, sizeof enckey);
+			parse_key(extensions[SADB_EXT_KEY_ENCRYPT], &enckey);
+			r.enckey = &enckey;
+
 			switch (sa->sadb_sa_encrypt) {
 			case SADB_EALG_3DESCBC:
 				xfs.encxf = &encxfs[ENCXF_3DES_CBC];
@@ -683,7 +683,17 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				xfs.encxf = &encxfs[ENCXF_DES_CBC];
 				break;
 			case SADB_X_EALG_AES:
-				xfs.encxf = &encxfs[ENCXF_AES];
+				switch (r.enckey->len) {
+				case 192/8:
+					xfs.encxf = &encxfs[ENCXF_AES_192];
+					break;
+				case 256/8:
+					xfs.encxf = &encxfs[ENCXF_AES_256];
+					break;
+				default:
+					xfs.encxf = &encxfs[ENCXF_AES];
+					break;
+				}
 				break;
 			case SADB_X_EALG_AESCTR:
 				xfs.encxf = &encxfs[ENCXF_AESCTR];
@@ -701,11 +711,12 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				xfs.encxf = &encxfs[ENCXF_SKIPJACK];
 				break;
 			}
-			bzero(&enckey, sizeof enckey);
-			parse_key(extensions[SADB_EXT_KEY_ENCRYPT], &enckey);
-			r.enckey = &enckey;
 		}
 		if (sa->sadb_sa_auth) {
+			bzero(&authkey, sizeof authkey);
+			parse_key(extensions[SADB_EXT_KEY_AUTH], &authkey);
+			r.authkey = &authkey;
+
 			switch (sa->sadb_sa_auth) {
 			case SADB_AALG_MD5HMAC:
 				xfs.authxf = &authxfs[AUTHXF_HMAC_MD5];
@@ -726,10 +737,13 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				xfs.authxf = &authxfs[AUTHXF_HMAC_SHA2_512];
 				break;
 			}
-			bzero(&authkey, sizeof authkey);
-			parse_key(extensions[SADB_EXT_KEY_AUTH], &authkey);
-			r.authkey = &authkey;
 		}
+	}
+	if (!(opts & IPSECCTL_OPT_SHOWKEY)) {
+		bzero(&enckey, sizeof enckey);
+		bzero(&authkey, sizeof authkey);
+		extensions[SADB_EXT_KEY_AUTH] = NULL;
+		extensions[SADB_EXT_KEY_ENCRYPT] = NULL;
 	}
 	ipsecctl_print_rule(&r, opts);
 
