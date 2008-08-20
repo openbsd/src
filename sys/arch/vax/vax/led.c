@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.5 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: led.c,v 1.6 2008/08/20 18:50:17 miod Exp $	*/
 /*	$NetBSD: leds.c,v 1.4 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
@@ -70,6 +70,11 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 
+#if VAX60
+#include <arch/vax/mbus/mbusreg.h>
+#include <arch/vax/mbus/mbusvar.h>
+#endif
+
 struct led_softc {
 	struct device	sc_dev;
 	struct timeout	sc_tmo;
@@ -109,7 +114,7 @@ ledmatch(struct device *parent, void *cf, void *aux)
 		return (0);
 	
 	switch (vax_boardtype) {
-#if VAX46 || VAX48 || VAX49 || VAX53 || VXT
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAX60 || VXT
 #if VAX46
 	case VAX_BTYP_46:
 #endif
@@ -121,6 +126,9 @@ ledmatch(struct device *parent, void *cf, void *aux)
 #endif
 #if VAX53
 	case VAX_BTYP_1303:
+#endif
+#if VAX60
+	case VAX_BTYP_60:
 #endif
 #if VXT
 	case VAX_BTYP_VXT:
@@ -175,6 +183,14 @@ ledattach(struct device *parent, struct device *self, void *aux)
 		sc->sc_pat = led_pattern4;
 		break;
 #endif
+#if VAX60
+	case VAX_BTYP_60:
+		pgva = vax_map_physmem(MBUS_SLOT_BASE(mbus_ioslot) + FBIC_BASE,
+		    1);
+		sc->sc_reg = (volatile u_short *)(pgva + FBIC_CSR);
+		sc->sc_pat = NULL;
+		break;
+#endif
 #if VXT
 	case VAX_BTYP_VXT:
 		pgva = vax_map_physmem(0x200c1000, 1);
@@ -203,14 +219,40 @@ led_blink(void *v)
 			return;
 	}
 
-	if (vax_led_blink == 0) {
-		*sc->sc_reg = 0xff;
-		return;
-	}
+	if (sc->sc_pat != NULL) {
+		if (vax_led_blink == 0) {
+			*sc->sc_reg = 0xff;
+			return;
+		}
 
-	*sc->sc_reg = *sc->sc_patpos++;
-	if (*sc->sc_patpos == 0)
-		sc->sc_patpos = sc->sc_pat;
+		*sc->sc_reg = *sc->sc_patpos++;
+		if (*sc->sc_patpos == 0)
+			sc->sc_patpos = sc->sc_pat;
+	} else {
+#if VAX60
+		uint32_t fbicsr, dot, digit;
+
+		fbicsr= *(volatile uint32_t *)sc->sc_reg;
+		dot = ((fbicsr & FBICSR_LEDS_MASK) >> FBICSR_LEDS_SHIFT) & 0x10;
+		fbicsr &= ~FBICSR_LEDS_MASK;
+
+		if (vax_led_blink == 0) {
+			fbicsr |= 0x1f << FBICSR_LEDS_SHIFT;
+			*(volatile uint32_t *)sc->sc_reg = fbicsr;
+			return;
+		}
+
+		/* this is supposed to flip the decimal dot... doesn't work */
+		fbicsr |= (dot ^ 0x10) << FBICSR_LEDS_SHIFT;
+		/* display the load average in the hex digit */
+		digit = averunnable.ldavg[0] >> FSHIFT;
+		if (digit > 0x0f)
+			digit = 0x0f;
+		fbicsr |= (0x0f ^ digit) << FBICSR_LEDS_SHIFT;
+
+		*(volatile uint32_t *)sc->sc_reg = fbicsr;
+#endif
+	}
 
 	timeout_add(&sc->sc_tmo,
 	    (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3)));
