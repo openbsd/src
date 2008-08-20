@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.12 2008/06/26 05:42:20 ray Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.13 2008/08/20 12:08:04 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -277,7 +277,7 @@ nfs_kqfilter(void *v)
 		kn->kn_fop = &nfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;
