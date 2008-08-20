@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.55 2007/11/23 18:21:43 kettenis Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.56 2008/08/20 04:37:15 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -277,11 +277,14 @@ config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
 	m.pri = 0;
 	/*
 	 * Look at root entries for matching name.  We do not bother
-	 * with found-state here since only one root should ever be
-	 * searched (and it must be done first).
+	 * with found-state here since only one instance of each possible
+	 * root child should ever be searched.
 	 */
 	for (p = cfroots; *p >= 0; p++) {
 		cf = &cfdata[*p];
+		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+		    cf->cf_fstate == FSTATE_DSTAR)
+			continue;
 		if (strcmp(cf->cf_driver->cd_name, rootname) == 0)
 			mapply(&m, cf);
 	}
