@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.13 2008/08/18 23:04:28 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.14 2008/08/20 16:31:41 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ dzkbd_cnattach()
 	 * requires the help of the serial console routines, which
 	 * need to be initialized to work with the keyboard line.
 	 */
-	dzcninit_internal(0);
+	dzcninit_internal(0, 1);
 
 	dzkbd_console_internal.dzi_ks.attmt.sendchar = dzkbd_sendchar;
 	dzkbd_console_internal.dzi_ks.attmt.cookie = NULL;

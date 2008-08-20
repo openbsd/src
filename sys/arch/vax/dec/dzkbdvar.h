@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbdvar.h,v 1.3 2008/08/18 23:04:28 miod Exp $	*/
+/*	$OpenBSD: dzkbdvar.h,v 1.4 2008/08/20 16:31:41 miod Exp $	*/
 /* $NetBSD: dzkbdvar.h,v 1.2 2001/03/06 07:40:52 matt Exp $ */
 
 struct dzkm_attach_args {
@@ -9,7 +9,7 @@ struct dzkm_attach_args {
 
 /* dzcons.c */
 int	dz_can_have_kbd(void);
-void	dzcninit_internal(int);
+void	dzcninit_internal(int, int);
 int	dzcngetc_internal(int);
 
 /* dzinput.c */
