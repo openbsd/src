@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: zmore,v 1.5 2007/05/20 00:27:27 jsg Exp $
+# $OpenBSD: zmore,v 1.6 2008/08/20 09:22:02 mpf Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -47,13 +47,13 @@ fi
 
 # No files means read from stdin
 if [ $# -eq 0 ]; then
-	compress -cdfq 2>&1 | $pager $flags
+	compress -cdf 2>&1 | $pager $flags
 	exit 0
 fi
 
 oterm=`stty -g 2>/dev/null`
 while test $# -ne 0; do
-	compress -cdfq "$1" 2>&1 | $pager $flags
+	compress -cdf "$1" 2>&1 | $pager $flags
 	prev="$1"
 	shift
 	if tty -s && test -n "$oterm" -a $# -gt 0; then

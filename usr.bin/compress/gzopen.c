@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.24 2007/03/19 13:02:18 pedro Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.25 2008/08/20 09:22:02 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,7 +60,7 @@
 
 #ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.24 2007/03/19 13:02:18 pedro Exp $";
+    "$OpenBSD: gzopen.c,v 1.25 2008/08/20 09:22:02 mpf Exp $";
 #endif
 
 #include <sys/param.h>
@@ -439,6 +439,15 @@ gz_read(void *cookie, char *buf, int len)
 		}
 
 		error = inflate(&(s->z_stream), Z_NO_FLUSH);
+
+		if (error == Z_DATA_ERROR) {
+			errno = EINVAL;
+			return -1;
+		}
+		if (error == Z_BUF_ERROR) {
+			errno = EIO;
+			return -1;
+		}
 		if (error == Z_STREAM_END) {
 			/* Check CRC and original size */
 			s->z_crc = crc32(s->z_crc, start,
