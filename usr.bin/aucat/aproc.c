@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.10 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.11 2008/08/20 14:22:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -474,7 +474,7 @@ mix_pushzero(struct aproc *p)
 
 	abuf_wcommit(obuf, obuf->mixtodo);
 	obuf->mixtodo = 0;
-	abuf_flush(obuf);
+	abuf_run(obuf);
 	mix_bzero(p);
 }
 
