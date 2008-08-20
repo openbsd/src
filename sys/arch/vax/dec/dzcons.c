@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.3 2008/08/20 18:55:24 miod Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.4 2008/08/20 19:00:01 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -50,6 +50,7 @@
 #ifdef VAX60
 #include <vax/mbus/mbusreg.h>
 #include <vax/mbus/mbusvar.h>
+#include <vax/mbus/fwioreg.h>
 #endif
 
 #include <vax/qbus/dzreg.h>
@@ -164,11 +165,13 @@ dzcnprobe(cndev)
 	struct	consdev *cndev;
 {
 	extern	vaddr_t iospace;
-	int diagcons, major;
+	int diagcons, major, pri;
 	paddr_t ioaddr = 0x200a0000;
 
 	if ((major = getmajor(dzopen)) < 0)
 		return;
+
+	pri = CN_DEAD;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -194,8 +197,9 @@ dzcnprobe(cndev)
 
 #ifdef VAX60
 	case VAX_BTYP_60:
-		ioaddr = MBUS_SLOT_BASE(mbus_ioslot) + 0x600000;
-		diagcons = 3;	/* XXX force serial for now */
+		ioaddr = MBUS_SLOT_BASE(mbus_ioslot) + FWIO_DZ_REG_OFFSET;
+		diagcons = 3;
+		pri = CN_LOWPRI;	/* graphics console always wins */
 		break;
 #endif
 
@@ -203,7 +207,9 @@ dzcnprobe(cndev)
 		return;
 	}
 
-	cndev->cn_pri = diagcons != 0 ? CN_HIGHPRI : CN_LOWPRI;
+	if (pri == CN_DEAD)
+		pri = diagcons != 0 ? CN_HIGHPRI : CN_LOWPRI;
+	cndev->cn_pri = pri;
 	cndev->cn_dev = makedev(major, dz_can_have_kbd() ? 3 : diagcons);
 	dz_console_regs = iospace;
 	ioaccess(iospace, ioaddr, 1);

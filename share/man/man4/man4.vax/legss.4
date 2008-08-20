@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbus.4,v 1.2 2008/08/20 19:00:01 miod Exp $
+.\"	$OpenBSD: legss.4,v 1.1 2008/08/20 19:00:01 miod Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,29 +15,36 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: August 20 2008 $
-.Dt MBUS 4 vax
+.Dt LEGSS 4 vax
 .Os
 .Sh NAME
-.Nm mbus
-.Nd VAXstation 35x0 and 38x0 bus
+.Nm legss
+.Nd Low-End Graphics Subsystem
 .Sh SYNOPSIS
-.Cd "mbus0 at mainbus0"
+.Cd "legss* at mbus0 mid 7"
+.Cd "wsdisplay* at legss?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the M-bus found in VAXstation 35x0 and 38x0 series.
-It will perform the necessary configuration of all the boards connected
-to the bus, and will attach a specific driver if necessary.
-.Sh SUPPORTED DEVICES
-The following M-bus devices are supported:
+is a 8 bit color frame buffer found in VAXstation 35x0 and 38x0 series.
+An optional VCB03 16 plane option expands it to a 24 bit color frame buffer.
 .Pp
-.Bl -tag -width 8n -compact -offset indent
-.It Xr fwio 4
-Firefox Workstation I/O module
-.It Xr legss 4
-Low-End Graphics Subsystem
-.It Xr uba 4
-UNIBUS/Q-bus controller
-.El
+The
+.Nm
+driver interfaces the frame buffer with the
+.Xr wscons 4
+console framework.
+It does not provide direct device driver entry points
+but makes its functions available via the internal
+.Xr wsdisplay 4
+interface.
 .Sh SEE ALSO
-.Xr intro 4
+.Xr intro 4 ,
+.Xr mbus 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
+.Sh BUGS
+The 16 plane option is currently not supported, and needs to be removed
+for the
+.Nm
+driver to operate properly.
