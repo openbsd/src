@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2008/07/29 15:40:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2008/08/20 18:21:13 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -19,7 +19,7 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 
 BSDRD=	bsd.rd
 FFS=	ffs.img
-all: # ${CDROM}
+all: ${CDROM}
 
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
@@ -56,7 +56,7 @@ ${CDROM}:
 	    seek=`cat ${.OBJDIR}/volhdr | grep 'Volume Header' | awk '{print $$3}'`
 
 install:
-	# cp ${CDROM} ${RELDIR}/
+	cp ${CDROM} ${RELDIR}/
 
 unconfig:
 	-umount /mnt
