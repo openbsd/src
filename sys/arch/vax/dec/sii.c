@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.1 2008/08/18 23:19:22 miod Exp $	*/
+/*	$OpenBSD: sii.c,v 1.2 2008/08/20 18:52:07 miod Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -108,7 +108,7 @@ struct cfdriver sii_cd = {
 	}
 
 #ifdef DEBUG
-int	sii_debug = 1;
+u_int	sii_debug = 1;
 int	sii_debug_cmd;
 int	sii_debug_bn;
 int	sii_debug_sz;
@@ -232,7 +232,7 @@ sii_scsi_cmd(xs)
 	int count;
 
 	s = splbio();
-	if (sc->sc_cmd[target]) {
+	if (sc->sc_xs[target] != NULL) {
 		splx(s);
 #ifdef DEBUG
 		printf("[busy at start]\n");
@@ -243,14 +243,6 @@ sii_scsi_cmd(xs)
 	 * Build a ScsiCmd for this command and start it.
 	 */
 	sc->sc_xs[target] = xs;
-	sc->sc_cmd[target] = &sc->sc_cmd_fake[target];	/* XXX */
-	sc->sc_cmd[target]->unit = 0;
-	sc->sc_cmd[target]->flags = 0;
-	sc->sc_cmd[target]->buflen = xs->datalen;
-	sc->sc_cmd[target]->buf = xs->data;
-	sc->sc_cmd[target]->cmdlen = xs->cmdlen;
-	sc->sc_cmd[target]->cmd = (u_char *)xs->cmd;
-	sc->sc_cmd[target]->lun = xs->sc_link->lun;
 	sii_StartCmd(sc, target);
 	splx(s);
 
@@ -261,20 +253,7 @@ sii_scsi_cmd(xs)
 	count = xs->timeout;
 	while (count) {
 		s = splbio();
-#if 0
 		(void)sii_intr(sc);
-#else
-{
-	u_int dstat;
-
-	/*
-	 * Find which controller caused the interrupt.
-	 */
-	dstat = sc->sc_regs->dstat;
-	if (dstat & (SII_CI | SII_DI))
-		sii_DoIntr(sc, dstat);
-}
-#endif
 		splx(s);
 		if ((xs->flags & ITSDONE) != 0)
 			break;
@@ -389,8 +368,8 @@ sii_StartCmd(sc, target)
 	int target;		/* which command to start */
 {
 	SIIRegs *regs;
-	ScsiCmd *scsicmd;
 	State *state;
+	struct scsi_xfer *xs;
 	u_int status;
 	int error, retval;
 
@@ -401,7 +380,7 @@ sii_StartCmd(sc, target)
 		return;
 
 	/* initialize state information for this command */
-	scsicmd = sc->sc_cmd[target];
+	xs = sc->sc_xs[target];
 	state = &sc->sc_st[target];
 	state->flags = FIRST_DMA;
 	state->prevComm = 0;
@@ -409,30 +388,27 @@ sii_StartCmd(sc, target)
 	state->dmaCurPhase = -1;
 	state->dmaPrevPhase = -1;
 	state->dmaBufIndex = 0;
-	state->cmd = scsicmd->cmd;
-	state->cmdlen = scsicmd->cmdlen;
-	if ((state->buflen = scsicmd->buflen) == 0) {
+	state->cmd = (u_char *)xs->cmd;
+	state->cmdlen = xs->cmdlen;
+	if ((state->buflen = xs->datalen) == 0) {
 		state->dmaDataPhase = -1; /* illegal phase. shouldn't happen */
-		state->buf = (char *)0;
+		state->buf = (char *)NULL;
 	} else {
-		state->buf = scsicmd->buf;
+		state->buf = xs->data;
 	}
 
 #ifdef DEBUG
 	if (sii_debug > 1) {
 		printf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d DMA %d\n",
 			sc->sc_dev.dv_xname,
-			target, scsicmd->cmd[0], scsicmd->buf, scsicmd->buflen,
+			target, xs->cmd->opcode, xs->data, xs->datalen,
 			state->dmaDataPhase);
 	}
-	sii_debug_cmd = scsicmd->cmd[0];
-	if (scsicmd->cmd[0] == READ_BIG ||
-	    scsicmd->cmd[0] == WRITE_BIG) {
-		sii_debug_bn = (scsicmd->cmd[2] << 24) |
-			(scsicmd->cmd[3] << 16) |
-			(scsicmd->cmd[4] << 8) |
-			scsicmd->cmd[5];
-		sii_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
+	sii_debug_cmd = xs->cmd->opcode;
+	if (sii_debug_cmd == READ_BIG || sii_debug_cmd == WRITE_BIG) {
+		sii_debug_bn = (state->cmd[2] << 24) | (state->cmd[3] << 16) |
+		    (state->cmd[4] << 8) | state->cmd[5];
+		sii_debug_sz = (state->cmd[7] << 8) | state->cmd[8];
 	} else {
 		sii_debug_bn = 0;
 		sii_debug_sz = 0;
@@ -452,42 +428,13 @@ sii_StartCmd(sc, target)
 	}
 
 	sc->sc_target = target;
-#if 0
-	/* seem to have problems with synchronous transfers */
-	if (scsicmd->flags & SCSICMD_USE_SYNC) {
-		printf("sii_StartCmd: doing extended msg\n"); /* XXX */
-		/*
-		 * Setup to send both the identify message and the synchronous
-		 * data transfer request.
-		 */
-		sc->sc_buf[0] = MSG_IDENTIFYFLAG | MSG_IDENTIFY_DISCFLAG;
-		sc->sc_buf[1] = MSG_EXTENDED;
-		sc->sc_buf[2] = MSG_EXT_SDTR_LEN;
-		sc->sc_buf[3] = MSG_EXT_SDTR;
-		sc->sc_buf[4] = 0;
-		sc->sc_buf[5] = 3;		/* maximum SII chip supports */
-
-		state->dmaCurPhase = SII_MSG_OUT_PHASE,
-		state->dmalen = 6;
-		sc->sii_copytobuf(sc, sc->sc_buf, SII_BUF_ADDR(sc), 6);
-		regs->slcsr = target;
-		regs->dmctrl = state->dmaReqAck;
-		regs->dmaddrl = SII_BUF_ADDR(sc);
-		regs->dmaddrh = SII_BUF_ADDR(sc) >> 16;
-		regs->dmlotc = 6;
-		regs->comm = SII_DMA | SII_INXFER | SII_SELECT | SII_ATN |
-			SII_CON | SII_MSG_OUT_PHASE;
-	} else
-#endif
-	{
-		/* do a chained, select with ATN and programmed I/O command */
-		regs->data = MSG_IDENTIFYFLAG | MSG_IDENTIFY_DISCFLAG |
-		    scsicmd->lun;
-		regs->slcsr = target;
-		regs->dmctrl = state->dmaReqAck;
-		regs->comm = SII_INXFER | SII_SELECT | SII_ATN | SII_CON |
-			SII_MSG_OUT_PHASE;
-	}
+	/* do a chained, select with ATN and programmed I/O command */
+	regs->data = MSG_IDENTIFYFLAG | MSG_IDENTIFY_DISCFLAG |
+	    xs->sc_link->lun;
+	regs->slcsr = target;
+	regs->dmctrl = state->dmaReqAck;
+	regs->comm = SII_INXFER | SII_SELECT | SII_ATN | SII_CON |
+		SII_MSG_OUT_PHASE;
 
 	/*
 	 * Wait for something to happen
@@ -535,7 +482,7 @@ sii_StartCmd(sc, target)
 		sc->sii_copytobuf(sc, state->cmd, state->dmaAddr[0],
 		    state->cmdlen);
 		sii_StartDMA(regs, state->dmaCurPhase = SII_CMD_PHASE,
-			state->dmaAddr[0], state->dmalen = scsicmd->cmdlen);
+			state->dmaAddr[0], state->dmalen = xs->cmdlen);
 
 		/* wait a little while for DMA to finish */
 		SII_WAIT_UNTIL(status, regs->dstat, status & (SII_CI | SII_DI),
@@ -642,7 +589,7 @@ again:
 			printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 			/* need to flush disconnected commands */
 			for (i = 0; i < SII_NCMD; i++) {
-				if (!sc->sc_cmd[i])
+				if (sc->sc_xs[i] == NULL)
 					continue;
 				sii_CmdDone(sc, i, XS_DRIVER_STUFFUP /* EIO */);
 			}
@@ -867,7 +814,7 @@ again:
 			if (state->cmdlen > 0) {
 				printf("%s: device %d: cmd 0x%x: command data not all sent (%d) 1\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
-					sc->sc_cmd[sc->sc_target]->cmd[0],
+					sc->sc_xs[sc->sc_target]->cmd[0],
 					state->cmdlen);
 				state->cmdlen = 0;
 #ifdef DEBUG
@@ -949,7 +896,7 @@ again:
 			if (state->cmdlen > 0) {
 				printf("%s: device %d: cmd 0x%x: command data not all sent (%d) 2\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
-					sc->sc_cmd[sc->sc_target]->cmd[0],
+					sc->sc_xs[sc->sc_target]->cmd[0],
 					state->cmdlen);
 				state->cmdlen = 0;
 #ifdef DEBUG
@@ -1374,7 +1321,7 @@ again:
 		/* look for another device that is ready */
 		for (i = 0; i < SII_NCMD; i++) {
 			/* don't restart a disconnected command */
-			if (!sc->sc_cmd[i] || sc->sc_st[i].prevComm)
+			if (sc->sc_xs[i] == NULL || sc->sc_st[i].prevComm)
 				continue;
 			sii_StartCmd(sc, i);
 			break;
@@ -1608,7 +1555,7 @@ sii_DoSync(sc, state)
 	u_int len;
 
 #ifdef DEBUG
-	if (sii_debug)
+	if (sii_debug > 0)
 		printf("sii_DoSync: len %d per %d req/ack %d\n",
 			sc->sc_buf[1], sc->sc_buf[3], sc->sc_buf[4]);
 #endif
@@ -1741,36 +1688,34 @@ sii_CmdDone(sc, target, error)
 	int target;			/* which device is done */
 	int error;			/* error code if any errors */
 {
-	ScsiCmd *scsicmd;
 	struct scsi_xfer *xs;
 	int i;
 
 	splassert(IPL_BIO);
 
-	scsicmd = sc->sc_cmd[target];
+	xs = sc->sc_xs[target];
 #ifdef DIAGNOSTIC
-	if (target < 0 || !scsicmd)
+	if (target < 0 || xs == NULL)
 		panic("sii_CmdDone");
 #endif
-	sc->sc_cmd[target] = NULL;
+	sc->sc_xs[target] = NULL;
 #ifdef DEBUG
 	if (sii_debug > 1) {
 		printf("sii_CmdDone: %s target %d cmd 0x%x err %d resid %d\n",
 			sc->sc_dev.dv_xname,
-			target, scsicmd->cmd[0], error, sc->sc_st[target].buflen);
+			target, xs->cmd[0], error, sc->sc_st[target].buflen);
 	}
 #endif
 
 	/* look for another device that is ready */
 	for (i = 0; i < SII_NCMD; i++) {
 		/* don't restart a disconnected command */
-		if (!sc->sc_cmd[i] || sc->sc_st[i].prevComm)
+		if (sc->sc_xs[i] == NULL || sc->sc_st[i].prevComm)
 			continue;
 		sii_StartCmd(sc, i);
 		break;
 	}
 
-	xs = sc->sc_xs[target];
 	xs->status = sc->sc_st[target].statusByte;
 	xs->error = error;
 	xs->resid = sc->sc_st[target].buflen;

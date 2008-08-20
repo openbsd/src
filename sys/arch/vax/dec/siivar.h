@@ -1,23 +1,8 @@
-/*	$OpenBSD: siivar.h,v 1.1 2008/08/18 23:19:22 miod Exp $	*/
+/*	$OpenBSD: siivar.h,v 1.2 2008/08/20 18:52:07 miod Exp $	*/
 /*	$NetBSD: siivar.h,v 1.6 2000/06/02 20:16:51 mhitch Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
-
-/*
- * This structure contains information that a SCSI interface controller
- * needs to execute a SCSI command.
- */
-typedef struct ScsiCmd {
-	int	unit;		/* unit number passed to device done routine */
-	int	flags;		/* control flags for this command (see below) */
-	int	buflen;		/* length of the data buffer in bytes */
-	char	*buf;		/* pointer to data buffer for this command */
-	int	cmdlen;		/* length of data in cmdbuf */
-	u_char	*cmd;		/* buffer for the SCSI command */
-	int	error;		/* compatibility hack for new scsi */
-	int	lun;		/* LUN for MI SCSI */
-} ScsiCmd;
 
 typedef struct scsi_state {
 	int	statusByte;	/* status byte returned during STATUS_PHASE */
@@ -48,20 +33,18 @@ typedef struct scsi_state {
 #define SII_NCMD	8
 struct sii_softc {
 	struct device sc_dev;		/* us as a device */
-	struct scsi_link sc_link;		/* scsi link struct */
-	ScsiCmd sc_cmd_fake[SII_NCMD];		/* XXX - hack!!! */
-	struct scsi_xfer *sc_xs[SII_NCMD];	/* XXX - hack!!! */
+	struct scsi_link sc_link;	/* scsi link struct */
 	SIIRegs	*sc_regs;		/* HW address of SII controller chip */
 	int	sc_flags;
 	int	sc_target;		/* target SCSI ID if connected */
 	int	sc_hostid;
-	ScsiCmd	*sc_cmd[SII_NCMD];	/* active command indexed by ID */
 	void	(*sii_copytobuf)(void *, u_char *, u_int, int);
  	void	(*sii_copyfrombuf)(void *, u_int, u_char *, int);
 
+	struct scsi_xfer *sc_xs[SII_NCMD]; /* currently executing requests */
 	State	sc_st[SII_NCMD];	/* state info for each active command */
 
-	u_char	sc_buf[258];	/* used for extended messages */
+	u_char	sc_buf[258];		/* used for extended messages */
 };
 
 /* Machine-independent back-end attach entry point */
