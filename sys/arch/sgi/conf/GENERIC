@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2008/07/30 17:38:02 miod Exp $
+#	$OpenBSD: GENERIC,v 1.31 2008/08/20 18:04:44 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,7 @@ option		ARCBIOS		# We use arcbios for FW communication.
 option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 
 option		PCIVERBOSE
+option		USER_PCICONF	# User-space PCI configuration
 
 #option		UVMHIST		# Enable uvm history logging
 
