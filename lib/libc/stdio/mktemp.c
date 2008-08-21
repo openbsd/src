@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.21 2008/07/22 21:47:45 deraadt Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.22 2008/08/21 16:54:44 millert Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -117,26 +117,6 @@ _gettemp(char *path, int *doopen, int domkdir, int slen)
 		*trv-- = c;
 	}
 	start = trv + 1;
-
-	/* Check the target directory. */
-	if (doopen || domkdir) {
-		for (;; --trv) {
-			if (trv <= path)
-				break;
-			if (*trv == '/') {
-				*trv = '\0';
-				rval = stat(path, &sbuf);
-				*trv = '/';
-				if (rval != 0)
-					return(0);
-				if (!S_ISDIR(sbuf.st_mode)) {
-					errno = ENOTDIR;
-					return(0);
-				}
-				break;
-			}
-		}
-	}
 
 	for (;;) {
 		if (doopen) {
