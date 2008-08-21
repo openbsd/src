@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.28 2008/05/14 20:12:12 jmc Exp $
+.\"	$OpenBSD: termios.4,v 1.29 2008/08/21 18:16:13 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 14 2008 $
+.Dd $Mdocdate: August 21 2008 $
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -1241,6 +1241,8 @@ masks.
 /* visual erase for line kill */
 .It Dv ECHOE
 /* visually erase chars */
+.It Dv ECHOK
+/* echo NL after line kill */
 .It Dv ECHO
 /* enable echoing */
 .It Dv ECHONL
