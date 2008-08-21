@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.39 2008/08/16 12:23:50 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.40 2008/08/21 20:59:14 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -54,11 +54,11 @@ char *endest;		/* end of string space	       */
 static size_t strsize = STRSPMAX;
 static size_t bufsize = BUFSIZE;
 
-char *buf;			/* push-back buffer	       */
-char *bufbase;			/* the base for current ilevel */
-char *bbase[MAXINP];		/* the base for each ilevel    */
-char *bp; 			/* first available character   */
-char *endpbb;			/* end of push-back buffer     */
+unsigned char *buf;			/* push-back buffer	       */
+unsigned char *bufbase;			/* the base for current ilevel */
+unsigned char *bbase[MAXINP];		/* the base for each ilevel    */
+unsigned char *bp; 			/* first available character   */
+unsigned char *endpbb;			/* end of push-back buffer     */
 
 
 /*
@@ -163,7 +163,7 @@ initspaces()
 	strspace = xalloc(strsize+1, NULL);
 	ep = strspace;
 	endest = strspace+strsize;
-	buf = (char *)xalloc(bufsize, NULL);
+	buf = (unsigned char *)xalloc(bufsize, NULL);
 	bufbase = buf;
 	bp = buf;
 	endpbb = buf + bufsize;
@@ -195,7 +195,7 @@ enlarge_strspace()
 void
 enlarge_bufspace()
 {
-	char *newbuf;
+	unsigned char *newbuf;
 	int i;
 
 	bufsize += bufsize/2;
@@ -418,7 +418,7 @@ buffer_mark()
 void
 dump_buffer(FILE *f, size_t m)
 {
-	char *s;
+	unsigned char *s;
 
 	for (s = bp; s-buf > m;)
 		fputc(*--s, f);
