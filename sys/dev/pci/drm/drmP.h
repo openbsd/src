@@ -481,6 +481,18 @@ typedef struct drm_local_map {
 	drm_map_type_t			 type;	/* Type of memory mapped */
 } drm_local_map_t;
 
+struct drm_vblank {
+#if 0 /* unneeded for now, signal support */
+	TAILQ_HEAD(vbl_sigs);
+#endif
+	u_int32_t	last_vblank;	/* Last vblank we recieved */
+	atomic_t	vbl_count;	/* Number of interrupts */
+	int		vbl_queue;	/* sleep on this when waiting */
+	atomic_t	vbl_refcount;	/* Number of users */
+	int		vbl_enabled;	/* Enabled? */
+	int		vbl_inmodeset;	/* is the DDX currently modesetting */
+};
+
 TAILQ_HEAD(drm_vbl_sig_list, drm_vbl_sig);
 typedef struct drm_vbl_sig {
 	TAILQ_ENTRY(drm_vbl_sig) link;
@@ -638,22 +650,13 @@ struct drm_device {
 	int		  pci_func;
 
 	/* VBLANK support */
-	int		 vblank_disable_allowed;
-	int		*vbl_queue;	/* vbl wait channel */
-	atomic_t	*_vblank_count;	/* no vblank interrupts */
-	DRM_SPINTYPE	vbl_lock;	/* locking for vblank operations */
-#if 0 /* unneeded for now */
-	TAILQ_HEAD(vbl_sigs);
-#endif
-	atomic_t	vbl_signal_pending; /* sigs pending on all crtcs */
-	atomic_t	*vblank_refcount; /* no. users for vlank interrupts */
-	u_int32_t	*last_vblank;	/* locked, used for overflow handling*/
-	int		*vblank_enabled; /* make sure we only disable once */
-	int		*vblank_inmodeset; /* X DDX is currently setting mode */
-	struct timeout	vblank_disable_timer;
-	int		num_crtcs;	/* number of crtcs on device */
-
-	u_int32_t	max_vblank_count; /* size of counter reg */
+	int			 num_crtcs;		/* number of crtcs */
+	u_int32_t		 max_vblank_count;	/* size of counter reg*/
+	DRM_SPINTYPE		 vbl_lock;		/* VBLANK data lock */
+	atomic_t		 vbl_signal_pending;	/* No. pending sigs */
+	int			 vblank_disable_allowed;
+	struct timeout		 vblank_disable_timer;	/* timer for disable */
+	struct drm_vblank	*vblank;		/* One per ctrc */
 
 	pid_t		  buf_pgid;
 

@@ -186,12 +186,12 @@ vblank_disable(void *arg)
 
 	for (i=0; i < dev->num_crtcs; i++){
 		DRM_SPINLOCK(&dev->vbl_lock);
-		if (atomic_read(&dev->vblank_refcount[i]) == 0 &&
-		    dev->vblank_enabled[i]) {
-			dev->last_vblank[i] =
+		if (atomic_read(&dev->vblank[i].vbl_refcount) == 0 &&
+		    dev->vblank[i].vbl_enabled) {
+			dev->vblank[i].last_vblank =
 			    dev->driver.get_vblank_counter(dev, i);
 			dev->driver.disable_vblank(dev, i);
-			dev->vblank_enabled[i] = 0;
+			dev->vblank[i].vbl_enabled = 0;
 		}
 		DRM_SPINUNLOCK(&dev->vbl_lock);
 	}
@@ -207,22 +207,10 @@ drm_vblank_cleanup(struct drm_device *dev)
 
 	vblank_disable(dev);
 
-	drm_free(dev->vbl_queue, sizeof(*dev->vbl_queue) *
-	    dev->num_crtcs, M_DRM);
-#if 0 /* disabled for now */
-	drm_free(dev->vbl_sigs, sizeof(*dev->vbl_sigs) * dev->num_crtcs, M_DRM);
-#endif
-	drm_free(dev->_vblank_count, sizeof(*dev->_vblank_count) *
-	    dev->num_crtcs, M_DRM);
-	drm_free(dev->vblank_refcount, sizeof(*dev->vblank_refcount) *
-	    dev->num_crtcs, M_DRM);
-	drm_free(dev->vblank_enabled, sizeof(*dev->vblank_enabled) *
-	    dev->num_crtcs, M_DRM);
-	drm_free(dev->last_vblank, sizeof(*dev->last_vblank) *
-	    dev->num_crtcs, M_DRM);
-	drm_free(dev->vblank_inmodeset, sizeof(*dev->vblank_inmodeset) *
+	drm_free(dev->vblank, sizeof(*dev->vblank) *
 	    dev->num_crtcs, M_DRM);
 
+	dev->vblank = NULL;
 	dev->num_crtcs = 0;
 	DRM_SPINUNINIT(&dev->vbl_lock);
 }
@@ -230,39 +218,14 @@ drm_vblank_cleanup(struct drm_device *dev)
 int
 drm_vblank_init(struct drm_device *dev, int num_crtcs)
 {
-	int i;
-
 	timeout_set(&dev->vblank_disable_timer, vblank_disable, dev);
 	mtx_init(&dev->vbl_lock, IPL_BIO);
 	atomic_set(&dev->vbl_signal_pending, 0);
 	dev->num_crtcs = num_crtcs;
 
-	if ((dev->vbl_queue = drm_calloc(num_crtcs, sizeof(*dev->vbl_queue),
-	    M_DRM)) == NULL)
+	dev->vblank = drm_calloc(num_crtcs, sizeof(*dev->vblank), M_DRM);
+	if (dev->vblank == NULL)
 		goto err;
-
-	if ((dev->_vblank_count = drm_calloc(num_crtcs,
-	    sizeof(*dev->_vblank_count), M_DRM)) == NULL)
-		goto err;
-
-	if ((dev->vblank_refcount = drm_calloc(num_crtcs,
-	    sizeof(*dev->vblank_refcount), M_DRM)) == NULL)
-		goto err;
-	if ((dev->vblank_enabled = drm_calloc(num_crtcs,
-	    sizeof(*dev->vblank_enabled), M_DRM)) == NULL)
-		goto err;
-	if ((dev->last_vblank = drm_calloc(num_crtcs,
-	    sizeof(*dev->last_vblank), M_DRM)) == NULL)
-		goto err;
-	if ((dev->vblank_inmodeset = drm_calloc(num_crtcs,
-	    sizeof(*dev->vblank_inmodeset), M_DRM)) == NULL)
-		goto err;
-
-	/* Zero everything */
-	for (i = 0; i < num_crtcs; i++) {
-		atomic_set(&dev->_vblank_count[i], 0);
-		atomic_set(&dev->vblank_refcount[i], 0);
-	}
 
 	dev->vblank_disable_allowed = 0;
 
@@ -276,7 +239,7 @@ err:
 u_int32_t
 drm_vblank_count(struct drm_device *dev, int crtc)
 {
-	return atomic_read(&dev->_vblank_count[crtc]);
+	return atomic_read(&dev->vblank[crtc].vbl_count);
 }
 
 void
@@ -290,11 +253,11 @@ drm_update_vblank_count(struct drm_device *dev, int crtc)
 	 * the register is small or the interrupts were off for a long time.
 	 */
 	cur_vblank = dev->driver.get_vblank_counter(dev, crtc);
-	diff = cur_vblank - dev->last_vblank[crtc];
-	if (cur_vblank < dev->last_vblank[crtc])
+	diff = cur_vblank - dev->vblank[crtc].last_vblank;
+	if (cur_vblank < dev->vblank[crtc].last_vblank)
 		diff += dev->max_vblank_count;
 
-	atomic_add(diff, &dev->_vblank_count[crtc]);
+	atomic_add(diff, &dev->vblank[crtc].vbl_count);
 }
 
 int
@@ -304,14 +267,14 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 
 	DRM_SPINLOCK(&dev->vbl_lock);
 
-	atomic_add(1, &dev->vblank_refcount[crtc]);
-	if (dev->vblank_refcount[crtc] == 1 &&
-	    dev->vblank_enabled[crtc] == 0) {
+	atomic_add(1, &dev->vblank[crtc].vbl_refcount);
+	if (dev->vblank[crtc].vbl_refcount == 1 &&
+	    dev->vblank[crtc].vbl_enabled == 0) {
 		ret = dev->driver.enable_vblank(dev, crtc);
 		if (ret) {
-			atomic_dec(&dev->vblank_refcount[crtc]);
+			atomic_dec(&dev->vblank[crtc].vbl_refcount);
 		} else {
-			dev->vblank_enabled[crtc] = 1;
+			dev->vblank[crtc].vbl_enabled = 1;
 			drm_update_vblank_count(dev, crtc);
 		}
 	}
@@ -325,8 +288,8 @@ drm_vblank_put(struct drm_device *dev, int crtc)
 {
 	DRM_SPINLOCK(&dev->vbl_lock);
 	/* Last user schedules interrupt disable */
-	atomic_dec(&dev->vblank_refcount[crtc]);
-	if (dev->vblank_refcount[crtc] == 0) 
+	atomic_dec(&dev->vblank[crtc].vbl_refcount);
+	if (dev->vblank[crtc].vbl_refcount == 0) 
 		timeout_add_sec(&dev->vblank_disable_timer, 5);
 	DRM_SPINUNLOCK(&dev->vbl_lock);
 }
@@ -354,16 +317,18 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	 */
 	switch (modeset->cmd) {
 	case _DRM_PRE_MODESET:
-		if (dev->vblank_inmodeset[crtc] == 0) {
-			dev->vblank_inmodeset[crtc] = 1;
+		if (dev->vblank[crtc].vbl_inmodeset == 0) {
+			DRM_SPINLOCK(&dev->vbl_lock);
+			dev->vblank[crtc].vbl_inmodeset = 1;
+			DRM_SPINUNLOCK(&dev->vbl_lock);
 			drm_vblank_get(dev, crtc);
 		}
 		break;
 	case _DRM_POST_MODESET:
-		if (dev->vblank_inmodeset[crtc]) {
+		if (dev->vblank[crtc].vbl_inmodeset) {
 			DRM_SPINLOCK(&dev->vbl_lock);
 			dev->vblank_disable_allowed = 1;
-			dev->vblank_inmodeset[crtc] = 0;
+			dev->vblank[crtc].vbl_inmodeset = 0;
 			DRM_SPINUNLOCK(&dev->vbl_lock);
 			drm_vblank_put(dev, crtc);
 		}
@@ -436,7 +401,7 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 				DRM_SPINUNLOCK(&dev->vbl_lock);
 				break;
 			}
-			ret = msleep(&dev->vbl_queue[crtc],
+			ret = msleep(&dev->vblank[crtc].vbl_queue,
 			    &dev->vbl_lock, PZERO | PCATCH,
 			    "drmvblq", 3 * DRM_HZ);
 			DRM_SPINUNLOCK(&dev->vbl_lock);
@@ -489,8 +454,8 @@ drm_vbl_send_signals(struct drm_device *dev, int crtc)
 void
 drm_handle_vblank(struct drm_device *dev, int crtc)
 {
-	atomic_inc(&dev->_vblank_count[crtc]);
-	DRM_WAKEUP(&dev->vbl_queue[crtc]);
+	atomic_inc(&dev->vblank[crtc].vbl_count);
+	DRM_WAKEUP(&dev->vblank[crtc].vbl_queue);
 	drm_vbl_send_signals(dev, crtc);
 }
 
