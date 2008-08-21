@@ -482,9 +482,6 @@ typedef struct drm_local_map {
 } drm_local_map_t;
 
 struct drm_vblank {
-#if 0 /* unneeded for now, signal support */
-	TAILQ_HEAD(vbl_sigs);
-#endif
 	u_int32_t	last_vblank;	/* Last vblank we recieved */
 	atomic_t	vbl_count;	/* Number of interrupts */
 	int		vbl_queue;	/* sleep on this when waiting */
@@ -492,14 +489,6 @@ struct drm_vblank {
 	int		vbl_enabled;	/* Enabled? */
 	int		vbl_inmodeset;	/* is the DDX currently modesetting */
 };
-
-TAILQ_HEAD(drm_vbl_sig_list, drm_vbl_sig);
-typedef struct drm_vbl_sig {
-	TAILQ_ENTRY(drm_vbl_sig) link;
-	unsigned int	sequence;
-	int		signo;
-	int		pid;
-} drm_vbl_sig_t;
 
 /* location of GART table */
 #define DRM_ATI_GART_MAIN 1
@@ -653,7 +642,6 @@ struct drm_device {
 	int			 num_crtcs;		/* number of crtcs */
 	u_int32_t		 max_vblank_count;	/* size of counter reg*/
 	DRM_SPINTYPE		 vbl_lock;		/* VBLANK data lock */
-	atomic_t		 vbl_signal_pending;	/* No. pending sigs */
 	int			 vblank_disable_allowed;
 	struct timeout		 vblank_disable_timer;	/* timer for disable */
 	struct drm_vblank	*vblank;		/* One per ctrc */
@@ -750,7 +738,6 @@ irqreturn_t drm_irq_handler(DRM_IRQ_ARGS);
 void	drm_driver_irq_preinstall(struct drm_device *);
 void	drm_driver_irq_postinstall(struct drm_device *);
 void	drm_driver_irq_uninstall(struct drm_device *);
-void	drm_vbl_send_signals(struct drm_device *, int);
 void	drm_vblank_cleanup(struct drm_device *);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);

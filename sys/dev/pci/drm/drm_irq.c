@@ -220,7 +220,6 @@ drm_vblank_init(struct drm_device *dev, int num_crtcs)
 {
 	timeout_set(&dev->vblank_disable_timer, vblank_disable, dev);
 	mtx_init(&dev->vbl_lock, IPL_BIO);
-	atomic_set(&dev->vbl_signal_pending, 0);
 	dev->num_crtcs = num_crtcs;
 
 	dev->vblank = drm_calloc(num_crtcs, sizeof(*dev->vblank), M_DRM);
@@ -374,24 +373,6 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 
 	if (flags & _DRM_VBLANK_SIGNAL) {
-#if 0 /* disabled */
-		drm_vbl_sig_t *vbl_sig = drm_calloc(1, sizeof(drm_vbl_sig_t),
-		    DRM_MEM_DRIVER);
-		if (vbl_sig == NULL)
-			return ENOMEM;
-
-		vbl_sig->sequence = vblwait->request.sequence;
-		vbl_sig->signo = vblwait->request.signal;
-		vbl_sig->pid = DRM_CURRENTPID;
-
-		vblwait->reply.sequence = atomic_read(&dev->vbl_received);
-
-		
-		DRM_SPINLOCK(&dev->vbl_lock);
-		TAILQ_INSERT_HEAD(&dev->vbl_sig_list, vbl_sig, link);
-		DRM_SPINUNLOCK(&dev->vbl_lock);
-		ret = 0;
-#endif
 		ret = EINVAL;
 	} else {
 		while (ret == 0) {
@@ -422,41 +403,10 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 void
-drm_vbl_send_signals(struct drm_device *dev, int crtc)
-{
-}
-
-#if 0 /* disabled */
-void
-drm_vbl_send_signals(struct drm_device *dev, int crtc)
-{
-	drm_vbl_sig_t *vbl_sig;
-	unsigned int vbl_seq = atomic_read(&dev->vbl_received);
-	struct proc *p;
-
-	vbl_sig = TAILQ_FIRST(&dev->vbl_sig_list);
-	while (vbl_sig != NULL) {
-		drm_vbl_sig_t *next = TAILQ_NEXT(vbl_sig, link);
-
-		if ((vbl_seq - vbl_sig->sequence) <= (1<<23)) {
-			p = pfind(vbl_sig->pid);
-			if (p != NULL)
-				psignal(p, vbl_sig->signo);
-
-			TAILQ_REMOVE(&dev->vbl_sig_list, vbl_sig, link);
-			drm_free(vbl_sig, sizeof(*vbl_sig), DRM_MEM_DRIVER);
-		}
-		vbl_sig = next;
-	}
-}
-#endif
-
-void
 drm_handle_vblank(struct drm_device *dev, int crtc)
 {
 	atomic_inc(&dev->vblank[crtc].vbl_count);
 	DRM_WAKEUP(&dev->vblank[crtc].vbl_queue);
-	drm_vbl_send_signals(dev, crtc);
 }
 
 void
