@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.39 2007/06/01 00:52:38 henning Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.40 2008/08/21 23:05:30 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -185,17 +185,20 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			}
 
 #ifdef INET
-			ip = mtod(m, struct ip *);
+			if (af == AF_INET) {
+				ip = mtod(m, struct ip *);
 
-			/*
-			 * This is not a bridge packet, remember if we
-			 * had IP_DF.
-			 */
-			setdf = ip->ip_off & htons(IP_DF);
+				/*
+				 * This is not a bridge packet, remember if we
+				 * had IP_DF.
+				 */
+				setdf = ip->ip_off & htons(IP_DF);
+			}
 #endif /* INET */
 
 #ifdef INET6
-			ip6 = mtod(m, struct ip6_hdr *);
+			if (af == AF_INET6)
+				ip6 = mtod(m, struct ip6_hdr *);
 #endif /* INET6 */
 		}
 
