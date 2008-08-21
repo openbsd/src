@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.101 2008/08/09 10:14:02 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.102 2008/08/21 01:17:39 pedro Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ nfs_open(v)
 			if (vp->v_type == VDIR)
 				np->n_direofoffset = 0;
 			error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
-			if (error == EINTR);
+			if (error == EINTR)
 				return (error);
 			uvm_vnp_uncache(vp);
 			np->n_mtime = vattr.va_mtime.tv_sec;
