@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.93 2008/08/07 18:41:47 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.94 2008/08/22 17:14:57 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -443,7 +443,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 }
 
 static void *
-map(struct dir_info *d, size_t sz)
+map(struct dir_info *d, size_t sz, int zero_fill)
 {
 	size_t psz = PAGEROUND(sz) >> MALLOC_PAGESHIFT;
 	struct region_info *r, *big = NULL;
@@ -454,6 +454,7 @@ map(struct dir_info *d, size_t sz)
 		p = MMAP(sz);
 		if (p != MAP_FAILED)
 			malloc_used += sz;
+		/* zero fill not needed */
 		return p;
 	}
 	offset = getrbyte();
@@ -469,6 +470,8 @@ map(struct dir_info *d, size_t sz)
 				r->p = NULL;
 				r->size = 0;
 				d->free_regions_size -= psz;
+				if (zero_fill)
+					memset(p, 0, sz);
 				return p;
 			} else if (r->size > psz)
 				big = r;
@@ -483,6 +486,8 @@ map(struct dir_info *d, size_t sz)
 			madvise(p, sz, MADV_NORMAL);
 		r->size -= psz;
 		d->free_regions_size -= psz;
+		if (zero_fill)
+			memset(p, 0, sz);
 		return p;
 	}
 	p = MMAP(sz);
@@ -490,6 +495,7 @@ map(struct dir_info *d, size_t sz)
 		malloc_used += sz;
 	if (d->free_regions_size > malloc_cache)
 		wrtwarning("malloc cache");
+	/* zero fill not needed */
 	return p;
 }
 
@@ -835,7 +841,7 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 	long		i, k;
 
 	/* Allocate a new bucket */
-	pp = map(d, MALLOC_PAGESIZE);
+	pp = map(d, MALLOC_PAGESIZE, 0);
 	if (pp == MAP_FAILED)
 		return NULL;
 
@@ -1053,7 +1059,7 @@ omalloc(size_t sz, int zero_fill)
 		}
 		sz += malloc_guard;
 		psz = PAGEROUND(sz);
-		p = map(&g_pool, psz);
+		p = map(&g_pool, psz, zero_fill);
 		if (p == MAP_FAILED) {
 			errno = ENOMEM;
 			return NULL;
@@ -1077,8 +1083,6 @@ omalloc(size_t sz, int zero_fill)
 		    sz - malloc_guard < MALLOC_PAGESIZE - MALLOC_MINSIZE)
 			p = ((char *)p) + ((MALLOC_PAGESIZE - MALLOC_MINSIZE -
 			    (sz - malloc_guard)) & ~(MALLOC_MINSIZE-1));
-		if (zero_fill)
-			memset(p, 0, sz - malloc_guard);
 	} else {
 		/* takes care of SOME_JUNK */
 		p = malloc_bytes(&g_pool, sz);
@@ -1314,6 +1318,51 @@ realloc(void *ptr, size_t size)
 	}
 
 	r = orealloc(ptr, size);
+  
+	malloc_active--;
+	_MALLOC_UNLOCK();
+	if (r == NULL && malloc_xmalloc) {
+		wrterror("out of memory");
+		errno = ENOMEM;
+	}
+	return r;
+}
+
+
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
+
+void *
+calloc(size_t nmemb, size_t size)
+{
+	void *r;
+
+	_MALLOC_LOCK();
+	malloc_func = " in calloc():";  
+	if (!g_pool.regions_total) {
+		if (omalloc_init(&g_pool)) {
+			 _MALLOC_UNLOCK();
+			if (malloc_xmalloc)
+				wrterror("out of memory");
+			errno = ENOMEM;
+			return NULL;
+		}
+	}
+	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	    nmemb > 0 && SIZE_MAX / nmemb < size) {
+		 _MALLOC_UNLOCK();
+		if (malloc_xmalloc)
+			wrterror("out of memory");
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	if (malloc_active++) {
+		malloc_recurse();
+		return NULL;
+	}
+
+	size *= nmemb;
+	r = omalloc(size, 1);
   
 	malloc_active--;
 	_MALLOC_UNLOCK();

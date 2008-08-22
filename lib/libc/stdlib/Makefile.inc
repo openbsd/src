@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.38 2008/06/13 21:04:24 landry Exp $
+#	$OpenBSD: Makefile.inc,v 1.39 2008/08/22 17:14:56 otto Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
-	calloc.c cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
+	cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
 	getsubopt.c hcreate.c heapsort.c imaxabs.c imaxdiv.c l64a.c llabs.c \
 	lldiv.c lsearch.c malloc.c merge.c putenv.c qsort.c radixsort.c rand.c \
 	random.c realpath.c setenv.c strtoimax.c strtod.c strtof.c strtol.c \
