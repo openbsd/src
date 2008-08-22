@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze_vsbus.c,v 1.4 2006/08/30 19:28:13 miod Exp $	*/
+/*	$OpenBSD: if_ze_vsbus.c,v 1.5 2008/08/22 17:09:08 deraadt Exp $	*/
 /*      $NetBSD: if_ze_vsbus.c,v 1.5 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -38,6 +38,7 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

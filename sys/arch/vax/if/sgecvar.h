@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgecvar.h,v 1.5 2006/08/30 19:28:11 miod Exp $	*/
+/*	$OpenBSD: sgecvar.h,v 1.6 2008/08/22 17:09:06 deraadt Exp $	*/
 /*      $NetBSD: sgecvar.h,v 1.2 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -47,6 +47,7 @@ struct	ze_softc {
 	struct evcount	sc_intrcnt;	/* Interrupt counters           */
 	struct arpcom	sc_ac;		/* Ethernet common part		*/
 #define sc_if	sc_ac.ac_if		/* network-visible interface	*/
+	struct ifmedia sc_ifmedia;
 	bus_space_tag_t sc_iot;
 	bus_addr_t	sc_ioh;
 	bus_dma_tag_t	sc_dmat;
@@ -65,6 +66,7 @@ struct	ze_softc {
 	int		sc_flags;
 #define	SGECF_SETUP		0x00000001	/* need to send setup packet */
 #define	SGECF_VXTQUIRKS		0x00000002	/* need VXT2000 care */
+#define SGECF_LINKUP		0x00000004	/* got link */
 };
 
 void	sgec_attach(struct ze_softc *);

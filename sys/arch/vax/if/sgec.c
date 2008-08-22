@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.15 2006/08/31 22:10:57 miod Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.16 2008/08/22 17:09:06 deraadt Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -56,6 +56,7 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -74,6 +75,8 @@ void	sgec_rxintr(struct ze_softc *);
 void	sgec_txintr(struct ze_softc *);
 void	zeinit(struct ze_softc *);
 int	zeioctl(struct ifnet *, u_long, caddr_t);
+int	ze_ifmedia_change(struct ifnet *const);
+void	ze_ifmedia_status(struct ifnet *const, struct ifmediareq *);
 void	zekick(struct ze_softc *);
 int	zereset(struct ze_softc *);
 void	zestart(struct ifnet *);
@@ -215,6 +218,12 @@ sgec_attach(sc)
 	ether_ifattach(ifp);
 
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+
+	ifmedia_init(&sc->sc_ifmedia, 0, ze_ifmedia_change,
+	    ze_ifmedia_status);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, 0);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
+	sc->sc_flags |= SGECF_LINKUP;
 	return;
 
 	/*
@@ -248,6 +257,23 @@ sgec_attach(sc)
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
 	return;
+}
+
+int
+ze_ifmedia_change(struct ifnet *const ifp)
+{
+	return (0);
+}
+
+void
+ze_ifmedia_status(struct ifnet *const ifp, struct ifmediareq *req)
+{
+	struct ze_softc *sc = ifp->if_softc;
+
+	req->ifm_status = IFM_AVALID;
+	if (sc->sc_flags & SGECF_LINKUP)
+		req->ifm_status |= IFM_ACTIVE;
+	req->ifm_active = IFM_10_5 | IFM_ETHER;
 }
 
 /*
@@ -503,6 +529,7 @@ sgec_txintr(struct ze_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	u_short tdes0;
 
+	sc->sc_flags |= SGECF_LINKUP;
 	while ((zc->zc_xmit[sc->sc_lastack].ze_tdr & ZE_TDR_OW) == 0) {
 		int idx = sc->sc_lastack;
 
@@ -523,8 +550,7 @@ sgec_txintr(struct ze_softc *sc)
 				printf("%s: transmit watchdog timeout\n",
 				    sc->sc_dev.dv_xname);
 			if (tdes0 & (ZE_TDES0_LO | ZE_TDES0_NC))
-				printf("%s: no carrier\n",
-				    sc->sc_dev.dv_xname);
+				sc->sc_flags &= ~SGECF_LINKUP;
 			if (tdes0 & ZE_TDES0_EC) {
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
@@ -615,6 +641,12 @@ zeioctl(ifp, cmd, data)
 			break;
 #endif
 		}
+		break;
+
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
+		    &sc->sc_ifmedia, cmd);
 		break;
 
 	case SIOCSIFFLAGS:
