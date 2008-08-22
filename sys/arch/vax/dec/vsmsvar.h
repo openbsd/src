@@ -1,4 +1,19 @@
-/*	$OpenBSD: vsmsvar.h,v 1.1 2006/08/27 16:52:15 miod Exp $	*/
+/*	$OpenBSD: vsmsvar.h,v 1.2 2008/08/22 21:05:07 miod Exp $	*/
+/*
+ * Copyright (c) 2008 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,40 +55,94 @@
  */
 
 /*
- * Command characters for the mouse.
+ * Command characters
  */
-#define MOUSE_SELF_TEST		'T'
-#define MOUSE_INCREMENTAL	'R'
+#define	VS_B9600		'B'	/* T only: switch to 9600 bps */
+#define	VS_REQUEST_POINT	'D'	/* stop incremental position reports */
+#define	VS_FREQ_55		'K'	/* T only: 55Hz report rate */
+#define	VS_FREQ_72		'L'	/* T only: 72Hz report rate */
+#define	VS_FREQ_120		'M'	/* T only: 120Hz report rate, 9600bps */
+#define	VS_REQUEST_POSITION	'P'	/* request position (in point mode) */
+#define VS_INCREMENTAL		'R'	/* incremental position reports */
+#define VS_SELF_TEST		'T'	/* reset and self test */
 
 /*
- * Mouse output bits.
- *
- *     	MOUSE_START_FRAME	Start of report frame bit.
- *	MOUSE_X_SIGN		Sign bit for X.
- *	MOUSE_Y_SIGN		Sign bit for Y.
- *	MOUSE_X_OFFSET		X offset to start cursor at.
- *	MOUSE_Y_OFFSET		Y offset to start cursor at.
+ * Data frame types
  */
-#define MOUSE_START_FRAME	0x80
-#define MOUSE_X_SIGN		0x10
-#define MOUSE_Y_SIGN		0x08
+
+#define	FRAME_MASK		0x80
+#define	FRAME_TYPE_MASK		0xe0
+#define	FRAME_MOUSE		0x80	/* 1 0 0 - mouse 3 byte packet */
+#define	FRAME_SELFTEST		0xa0	/* 1 0 1 - selftest 4 byte packet */
+#define	FRAME_TABLET		0xc0	/* 1 1 0 - tablet 5 byte packet */
 
 /*
- * Definitions for mouse buttons
+ * Selftest frame layout
+ *	byte 0: frame type and device revision
+ *	byte 1: manufacturing location code and device type
+ *	byte 2: self test result
+ *	byte 3: button mask (if result == button error)
  */
-#define RIGHT_BUTTON		0x01
-#define MIDDLE_BUTTON		0x02
-#define LEFT_BUTTON		0x04
+
+/* byte 0 */
+#define	FRAME_ST_REV_MASK		0x0f	/* device revision */
+
+/* byte 1 */
+#define	FRAME_ST_LOCATION_MASK		0x70
+#define	FRAME_ST_DEVICE_MASK		0x0f
+#define	FRAME_ST_DEVICE_MOUSE		0x02
+#define	FRAME_ST_DEVICE_TABLET		0x04
+
+/* status test error codes */
+#define	ERROR_OK			0x00
+#define	ERROR_TABLET_STYLUS		0x11	/* stylus only, no puck */
+#define	ERROR_TABLET_NO_POINTER		0x13	/* neither stylus nor puck */
+#define	ERROR_FATAL			0x20	/* fatal errors from here */
+#define	ERROR_TABLET_LINK		0x3a	/* tablet internal error */
+#define	ERROR_BUTTON_ERROR		0x3d	/* button malfunction */
+#define	ERROR_MEMORY_CKSUM_ERROR	0x3e	/* firmware malfunction */
+
+/*
+ * Mouse frame layout
+ *	byte 0: frame type, delta signs, button mask
+ *	byte 1: unsigned X delta
+ *	byte 2: unsigned Y delta
+ */
+#define	FRAME_MS_X_SIGN			0x10	/* set if positive */
+#define	FRAME_MS_Y_SIGN			0x08	/* set if positive */
+#define	FRAME_MS_B3			0x04	/* left button */
+#define	FRAME_MS_B2			0x02	/* middle button */
+#define	FRAME_MS_B1			0x01	/* right button */
+
+/*
+ * Tablet frame layout
+ *	byte 0: frame type, button and proximity sensor mask
+ *	byte 1: low 6 bits of absolute X position
+ *	byte 2: high 6 bits of absolute X position
+ *	byte 3: low 6 bits of absolute Y position
+ *	byte 4: high 6 bits of absolute Y position
+ */
+#define	FRAME_T_B4			0x10	/* puck bottom button */
+#define	FRAME_T_B3			0x08	/* puck right button */
+#define	FRAME_T_B2			0x04	/* puck top / stylus tip */
+#define	FRAME_T_B1			0x02	/* puck left / stylus barrel */
+#define	FRAME_T_PR			0x01	/* stylus proximity (if zero) */
 
 struct lkms_softc {		/* driver status information */
 	struct	device dzms_dev;	/* required first: base device */
 
-	int sc_enabled;		/* input enabled? */
-	int sc_selftest;
+	int	sc_flags;
+#define	MS_ENABLED		0x01	/* input enabled */
+#define	MS_SELFTEST		0x02	/* selftest in progress */
+#define	MS_TABLET		0x04	/* device is a tablet */
+#define	MS_STYLUS		0x08	/* tablet has a stylus, not a puck */
 
-	int inputstate;
-	u_int buttons;
-	int dx, dy;
+	int	sc_frametype;		/* frame type being processed */
+	u_int	sc_framepos;		/* position in the frame */
+	int	sc_error;		/* selftest error result */
+
+	u_int	buttons;
+	int	dx, dy;
 
 	struct device *sc_wsmousedev;
 };

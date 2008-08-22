@@ -1,4 +1,4 @@
-/*	$OpenBSD: qscms.c,v 1.1 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: qscms.c,v 1.2 2008/08/22 21:05:07 miod Exp $	*/
 /*	from OpenBSD: qscms.c,v 1.6 2006/07/31 18:50:13 miod Exp	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
@@ -57,7 +57,7 @@
  */
 
 /*
- * VSXXX mice attached to line D of the SC26C94
+ * VSXXX mouse or tablet, attached to line D of the SC26C94
  */
 
 #include <sys/param.h>
@@ -130,8 +130,7 @@ qscms_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &qscms_accessops;
 	a.accesscookie = qscms;
 
-	sc->sc_enabled = 0;
-	sc->sc_selftest = 0;
+	sc->sc_flags = 0;
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -141,20 +140,20 @@ qscms_enable(void *v)
 	struct qscms_softc *qscms = v;
 	struct lkms_softc *sc = v;
 
-	if (sc->sc_enabled)
+	if (ISSET(sc->sc_flags, MS_ENABLED))
 		return EBUSY;
 
-	sc->sc_selftest = 4;	/* wait for 4 byte reply upto 1/2 sec */
-	qscputc(qscms->sc_line, MOUSE_SELF_TEST);
-	(void)tsleep(&sc->sc_enabled, TTIPRI, "qscmsopen", hz / 2);
-	if (sc->sc_selftest != 0) {
-		sc->sc_selftest = 0;
+	SET(sc->sc_flags, MS_SELFTEST);
+	qscputc(qscms->sc_line, VS_SELF_TEST);
+	/* selftest is supposed to complete within 500ms */
+	(void)tsleep(&sc->sc_flags, TTIPRI, "qscmsopen", hz / 2);
+	if (ISSET(sc->sc_flags, MS_SELFTEST)) {
+		CLR(sc->sc_flags, MS_SELFTEST);
 		return ENXIO;
 	}
 	DELAY(150);
-	qscputc(qscms->sc_line, MOUSE_INCREMENTAL);
-	sc->sc_enabled = 1;
-	sc->inputstate = 0;
+	qscputc(qscms->sc_line, VS_INCREMENTAL);
+	SET(sc->sc_flags, MS_ENABLED);
 	return 0;
 }
 
@@ -163,5 +162,5 @@ qscms_disable(void *v)
 {
 	struct lkms_softc *sc = v;
 
-	sc->sc_enabled = 0;
+	CLR(sc->sc_flags, MS_ENABLED);
 }

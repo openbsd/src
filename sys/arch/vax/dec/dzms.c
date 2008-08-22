@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzms.c,v 1.7 2006/08/27 16:52:15 miod Exp $	*/
+/*	$OpenBSD: dzms.c,v 1.8 2008/08/22 21:05:07 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 /*
- * VSXXX mice attached to line 1 of the DZ*
+ * VSXXX mouse or tablet, attached to line 1 of the DZ*
  */
 
 #include <sys/param.h>
@@ -125,8 +125,7 @@ dzms_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &dzms_accessops;
 	a.accesscookie = dzms;
 
-	sc->sc_enabled = 0;
-	sc->sc_selftest = 0;
+	sc->sc_flags = 0;
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -136,20 +135,20 @@ dzms_enable(void *v)
 	struct dzms_softc *dzms = v;
 	struct lkms_softc *sc = v;
 
-	if (sc->sc_enabled)
+	if (ISSET(sc->sc_flags, MS_ENABLED))
 		return EBUSY;
 
-	sc->sc_selftest = 4;	/* wait for 4 byte reply upto 1/2 sec */
-	dzputc(dzms->dzms_ls, MOUSE_SELF_TEST);
-	(void)tsleep(&sc->sc_enabled, TTIPRI, "dzmsopen", hz / 2);
-	if (sc->sc_selftest != 0) {
-		sc->sc_selftest = 0;
+	SET(sc->sc_flags, MS_SELFTEST);
+	dzputc(dzms->dzms_ls, VS_SELF_TEST);
+	/* selftest is supposed to complete within 500ms */
+	(void)tsleep(&sc->sc_flags, TTIPRI, "dzmsopen", hz / 2);
+	if (ISSET(sc->sc_flags, MS_SELFTEST)) {
+		CLR(sc->sc_flags, MS_SELFTEST);
 		return ENXIO;
 	}
 	DELAY(150);
-	dzputc(dzms->dzms_ls, MOUSE_INCREMENTAL);
-	sc->sc_enabled = 1;
-	sc->inputstate = 0;
+	dzputc(dzms->dzms_ls, VS_INCREMENTAL);
+	SET(sc->sc_flags, MS_ENABLED);
 	return 0;
 }
 
@@ -158,5 +157,5 @@ dzms_disable(void *v)
 {
 	struct lkms_softc *sc = v;
 
-	sc->sc_enabled = 0;
+	CLR(sc->sc_flags, MS_ENABLED);
 }
