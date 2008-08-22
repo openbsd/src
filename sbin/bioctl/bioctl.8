@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.60 2008/08/22 02:00:12 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.61 2008/08/22 06:41:36 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -39,8 +39,8 @@
 .Op Fl c Ar raidlevel
 .Op Fl H Ar channel:target[.lun]
 .Op Fl l Ar special[,special,...]
+.Op Fl R Ar device\*(Bachannel:target[.lun]
 .Op Fl r Ar rounds
-.Op Fl R Ar device|channel:target[.lun]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -143,18 +143,20 @@ Requires
 .Fl c .
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
+.It Fl R Ar device\*(Bachannel:target[.lun]
+Manually kick off a rebuild using
+.Ar device
+or
+.Ar channel:target[.lun]
+on the provided drive name.
+This command requires a drive by name (e.g. sd1) instead of a controller
+by name (e.g. softraid0).
 .It Fl r Ar rounds
 When creating an encrypted volume, specifies the number of iterations of
 the algorithm used to convert a passphrase into a key.
 Higher iteration counts take more time, but offer more resistance to key
 guessing attacks.
 The minimum is 1000 rounds and the default is 8192.
-.It Fl R Ar device|channel:target[.lun]
-Manually kick off a rebuild using device or
-.Ar channel:target[.lun]
-on the provided drive name.
-This command requires a drive by name (e.g. sd1) instead of a controller
-by name (e.g. softraid0).
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
