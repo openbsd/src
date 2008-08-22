@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.2 2008/08/22 15:38:37 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -94,9 +94,9 @@ char            topdir[MAXPATHLEN], execfname[MAXPATHLEN];
 int             linenum = -1;
 int             goterror = 0;
 
-char           *progname = "crunchgen";
+extern char	*__progname;
 
-int             verbose, readcache, elf_names;	/* options */
+int             verbose = 1, readcache = 1, elf_names;	/* options */
 int             reading_cache;
 
 void            status(char *str);
@@ -116,20 +116,14 @@ main(int argc, char *argv[])
 	char           *p;
 	int             optc;
 	extern int      optind;
-	extern char    *optarg, *__progname;
+	extern char    *optarg;
 
-	verbose = 1;
-	readcache = 1;
-	*outmkname = *outcfname = *execfname = '\0';
-
-	if (argc > 0)
-		progname = argv[0];
-
-	if (strcmp(__progname, "crunchide") == 0)
-		return (crunchide_main(argc, argv));
-
-	while ((optc = getopt(argc, argv, "m:c:e:fqD:EL:O:")) != -1) {
+	while ((optc = getopt(argc, argv, "hm:c:e:fqD:EL:O:")) != -1) {
 		switch (optc) {
+		case 'h':
+			optreset = 1;
+			return (crunchide_main(argc, argv));
+			break;
 		case 'f':
 			readcache = 0;
 			break;
@@ -218,9 +212,10 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-Efq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
-	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name] conf-file\n",
-	    progname);
+	    "usage: crunchgen [-Efq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
+	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name] conf-file\n");
+	fprintf(stderr,
+	    "usage: crunchgen -h [-f keep-list-file] [-k keep-symbol] object-file ...\n");
 	exit(1);
 }
 
@@ -241,7 +236,7 @@ parse_conf_file(void)
 {
 	if (!is_nonempty_file(infilename)) {
 		fprintf(stderr, "%s: fatal: input file \"%s\" not found.\n",
-		    progname, infilename);
+		    __progname, infilename);
 		exit(1);
 	}
 	parse_one_file(infilename);
@@ -938,7 +933,7 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	    p->name, p->name, p->ident);
 	fprintf(outmk, "\t$(LINK) -o $@ %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->ident);
-	fprintf(outmk, "\tcrunchide -k %s_crunched_%s_stub $@\n",
+	fprintf(outmk, "\tcrunchgen -h -k %s_crunched_%s_stub $@\n",
 	    elf_names ? "" : "_", p->ident);
 }
 

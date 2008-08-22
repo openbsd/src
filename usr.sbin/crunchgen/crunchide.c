@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.2 2008/08/22 15:38:37 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -79,7 +79,7 @@
 #define DO_AOUT
 #endif
 
-void            crunchide_usage(void);
+void            usage(void);
 
 void            add_to_keep_list(char *);
 void            add_file_to_keep_list(char *);
@@ -99,8 +99,10 @@ crunchide_main(int argc, char *argv[])
 {
 	int             ch;
 
-	while ((ch = getopt(argc, argv, "k:f:")) != -1)
+	while ((ch = getopt(argc, argv, "hk:f:")) != -1)
 		switch (ch) {
+		case 'h':
+			break;
 		case 'k':
 			add_to_keep_list(optarg);
 			break;
@@ -108,14 +110,14 @@ crunchide_main(int argc, char *argv[])
 			add_file_to_keep_list(optarg);
 			break;
 		default:
-			crunchide_usage();
+			usage();
 		}
 
 	argc -= optind;
 	argv += optind;
 
 	if (argc == 0)
-		crunchide_usage();
+		usage();
 
 	while (argc) {
 		hide_syms(*argv);
@@ -124,14 +126,6 @@ crunchide_main(int argc, char *argv[])
 	}
 
 	return 0;
-}
-
-void 
-crunchide_usage(void)
-{
-	fprintf(stderr,
-	    "usage: crunchide [-f keep-list-file] [-k keep-symbol] object-file ...\n");
-	exit(1);
 }
 
 struct keep {
@@ -188,7 +182,7 @@ add_file_to_keep_list(char *filename)
 
 	if ((keepf = fopen(filename, "r")) == NULL) {
 		perror(filename);
-		crunchide_usage();
+		usage();
 	}
 	while (fgets(symbol, sizeof(symbol), keepf)) {
 		len = strlen(symbol);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.1,v 1.1 2008/08/22 15:18:55 deraadt Exp $
+.\"	$OpenBSD: crunchgen.1,v 1.2 2008/08/22 15:38:37 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -42,6 +42,11 @@
 .Op Fl m Ar makefile-name
 .Op Fl O Ar objdir-name
 .Ar conf-file
+.Nm crunchgen
+.Fl h
+.Op Fl f Ar keep-list-file
+.Op Fl k Ar keep-symbol
+.Ar object-file ...
 .Ek
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
@@ -64,11 +69,34 @@ the program from its source directory Makefile.
 This information is cached in a file named
 .Pa <conf-name>.cache
 between runs.
+.Pp
 .Nm
-uses the companion program
-.Xr crunchide 1
-to eliminate link-time conflicts between the component programs by
+is later run again with the
+.Fl h
+flag to eliminate link-time conflicts between the component programs by
 hiding all unnecessary symbols.
+Some symbols may be left visible via the
+.Fl k Ar keep-symbol
+and
+.Fl f Ar keep-list-file
+options.
+The
+.Ar keep-list-file
+must contain a list of symbols to keep visible, one symbol per line.
+Note that the C compiler prepends an underscore in front of
+symbols, so to keep the C function ``foo'' visible, the option
+.Dq -k _foo
+must be used.
+.Pp
+.Sh NOTES
+The ELF version of
+.Fl h
+mangles the symbol table beyond recognition.
+It is therefore not advisable to try to run
+.Xr nm 1
+on a crunched object file.
+This is due to the nature of the ELF symbol table
+and how some arches uses the symbol attributes for their GOT build.
 .Pp
 After
 .Nm
@@ -265,8 +293,6 @@ At this point the binary
 .Dq kcopy
 can be copied onto an install floppy
 and hard-linked to the names of the component programs.
-.Sh SEE ALSO
-.Xr crunchide 1
 .Sh AUTHORS
 .Nm
 was written by James da Silva
