@@ -1623,9 +1623,11 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/asm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/atomic.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/bus.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/cca.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/cdefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/clock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/cpu.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/cvax.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/db_machdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/disklabel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/endian.ph
