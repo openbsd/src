@@ -618,8 +618,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/arpa/tftp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/assert.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/bfd.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/bfdlink.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/bm.ph
@@ -1475,7 +1473,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dirent.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dis-asm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/elf_abi.ph

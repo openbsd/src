@@ -634,8 +634,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/tftp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/assert.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/bfd.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/bfdlink.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bm.ph
@@ -1487,7 +1485,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dirent.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dis-asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/elf_abi.ph

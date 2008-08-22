@@ -94,8 +94,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/tftp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/assert.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/bfd.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/bfdlink.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bm.ph
@@ -951,7 +949,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dirent.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dis-asm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/elf_abi.ph

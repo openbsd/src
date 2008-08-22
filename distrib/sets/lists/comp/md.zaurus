@@ -53,9 +53,6 @@
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
-./usr/include/bfd.h
-./usr/include/bfdlink.h
-./usr/include/dis-asm.h
 ./usr/include/g++/arm-unknown-openbsd4.4
 ./usr/include/g++/arm-unknown-openbsd4.4/bits
 ./usr/include/g++/arm-unknown-openbsd4.4/bits/atomicity.h
@@ -259,8 +256,6 @@
 ./usr/lib/libarm.a
 ./usr/lib/libarm_p.a
 ./usr/lib/libasn1_pic.a
-./usr/lib/libbfd.a
-./usr/lib/libbfd.la
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
@@ -285,8 +280,6 @@
 ./usr/lib/libncurses_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
-./usr/lib/libopcodes.a
-./usr/lib/libopcodes.la
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a
