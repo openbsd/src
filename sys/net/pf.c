@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.614 2008/08/02 12:34:37 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.615 2008/08/22 00:35:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1189,34 +1189,33 @@ pf_print_host(struct pf_addr *addr, u_int16_t p, sa_family_t af)
 #ifdef INET6
 	case AF_INET6: {
 		u_int16_t b;
-		u_int8_t i, curstart = 255, curend = 0,
-		    maxstart = 0, maxend = 0;
+		u_int8_t i, curstart, curend, maxstart, maxend;
+		curstart = curend = maxstart = maxend = 255;
 		for (i = 0; i < 8; i++) {
 			if (!addr->addr16[i]) {
 				if (curstart == 255)
 					curstart = i;
-				else
-					curend = i;
+				curend = i;
 			} else {
-				if (curstart) {
-					if ((curend - curstart) >
-					    (maxend - maxstart)) {
-						maxstart = curstart;
-						maxend = curend;
-						curstart = 255;
-					}
+				if ((curend - curstart) >
+				    (maxend - maxstart)) {
+					maxstart = curstart;
+					maxend = curend;
 				}
+				curstart = curend = 255;
 			}
+		}
+		if ((curend - curstart) >
+		    (maxend - maxstart)) {
+			maxstart = curstart;
+			maxend = curend;
 		}
 		for (i = 0; i < 8; i++) {
 			if (i >= maxstart && i <= maxend) {
-				if (maxend != 7) {
-					if (i == maxstart)
-						printf(":");
-				} else {
-					if (i == maxend)
-						printf(":");
-				}
+				if (i == 0)
+					printf(":");
+				if (i == maxend)
+					printf(":");
 			} else {
 				b = ntohs(addr->addr16[i]);
 				printf("%x", b);
