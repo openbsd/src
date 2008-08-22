@@ -2347,6 +2347,7 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
+./usr/sbin/mksuncd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz

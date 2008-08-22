@@ -1798,6 +1798,7 @@
 ./usr/sbin/chroot
 ./usr/sbin/config
 ./usr/sbin/cron
+./usr/sbin/crunchgen
 ./usr/sbin/cryptoadm
 ./usr/sbin/cryptoinit
 ./usr/sbin/dev_mkdb

@@ -231,6 +231,7 @@
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
 ./usr/share/man/cat1/mklocale.0
+./usr/share/man/cat1/mksuncd.0
 ./usr/share/man/cat1/mktemp.0
 ./usr/share/man/cat1/mopa.out.0
 ./usr/share/man/cat1/mopchk.0
@@ -2134,6 +2135,7 @@
 ./usr/share/man/cat8/config.0
 ./usr/share/man/cat8/crash.0
 ./usr/share/man/cat8/cron.0
+./usr/share/man/cat8/crunchgen.0
 ./usr/share/man/cat8/cryptoadm.0
 ./usr/share/man/cat8/cryptoinit.0
 ./usr/share/man/cat8/cvsbug.0
