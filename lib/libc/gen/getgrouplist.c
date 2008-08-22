@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.13 2008/06/24 14:29:45 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.14 2008/08/22 00:59:34 deraadt Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,8 @@
 int
 getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
-	int i, ngroups = 0, ret = 0, maxgroups = *grpcnt, bail, foundyp = 0;
+	int i, ngroups = 0, ret = 0, maxgroups = *grpcnt, bail;
+	int needyp = 0, foundyp = 0;
 	extern struct group *_getgrent_yp(int *);
 	struct group *grp;
 
@@ -63,7 +64,12 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
-	while ((grp = _getgrent_yp(&foundyp))) {
+	while ((grp = _getgrent_yp(&foundyp)) || foundyp) {
+		if (foundyp) {
+			needyp = 1;
+			foundyp = 0;
+			continue;
+		}
 		if (grp->gr_gid == agroup)
 			continue;
 		for (bail = 0, i = 0; bail == 0 && i < ngroups; i++)
@@ -87,7 +93,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	/*
 	 * If we were told that there is a YP marker, look there now.
 	 */
-	if (foundyp) {
+	if (needyp) {
 		char buf[1024], *ypdata = NULL, *key, *p;
 		const char *errstr = NULL;
 		static char *__ypdomain;
