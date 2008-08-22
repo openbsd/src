@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.146 2008/03/14 19:19:57 sobrado Exp $
+.\"	$OpenBSD: sysctl.8,v 1.147 2008/08/22 11:51:47 brad Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: March 14 2008 $
+.Dd $Mdocdate: August 22 2008 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -457,6 +457,8 @@ definitions for second level vfs identifiers
 definitions for third level NFS identifiers
 .It Aq Pa ufs/ffs/ffs_extern.h
 definitions for third level FFS identifiers
+.It Aq Pa machine/cpu.h
+definitions for second level CPU identifiers
 .El
 .Sh EXAMPLES
 To retrieve the maximum number of processes allowed
