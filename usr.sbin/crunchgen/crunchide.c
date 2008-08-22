@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.22 2007/02/18 23:50:46 ray Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -79,9 +79,7 @@
 #define DO_AOUT
 #endif
 
-char           *pname = "crunchide";
-
-void            usage(void);
+void            crunchide_usage(void);
 
 void            add_to_keep_list(char *);
 void            add_file_to_keep_list(char *);
@@ -94,13 +92,12 @@ void            ecoff_hide(int, char *);
 void            elf_hide(int, char *);
 #endif
 
+extern char	*__progname;
+
 int 
-main(int argc, char *argv[])
+crunchide_main(int argc, char *argv[])
 {
 	int             ch;
-
-	if (argc > 0)
-		pname = argv[0];
 
 	while ((ch = getopt(argc, argv, "k:f:")) != -1)
 		switch (ch) {
@@ -111,14 +108,14 @@ main(int argc, char *argv[])
 			add_file_to_keep_list(optarg);
 			break;
 		default:
-			usage();
+			crunchide_usage();
 		}
 
 	argc -= optind;
 	argv += optind;
 
 	if (argc == 0)
-		usage();
+		crunchide_usage();
 
 	while (argc) {
 		hide_syms(*argv);
@@ -130,11 +127,10 @@ main(int argc, char *argv[])
 }
 
 void 
-usage(void)
+crunchide_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-f keep-list-file] [-k keep-symbol] object-file ...\n",
-	    pname);
+	    "usage: crunchide [-f keep-list-file] [-k keep-symbol] object-file ...\n");
 	exit(1);
 }
 
@@ -160,7 +156,7 @@ add_to_keep_list(char *symbol)
 	if (newp)
 		newp->sym = strdup(symbol);
 	if (newp == NULL || newp->sym == NULL) {
-		fprintf(stderr, "%s: out of memory for keep list\n", pname);
+		fprintf(stderr, "%s: out of memory for keep list\n", __progname);
 		exit(1);
 	}
 	newp->next = curp;
@@ -174,7 +170,7 @@ int
 in_keep_list(char *symbol)
 {
 	struct keep    *curp;
-	int             cmp;
+	int             cmp = 0;
 
 	for (curp = keep_list; curp; curp = curp->next)
 		if ((cmp = strcmp(symbol, curp->sym)) <= 0)
@@ -192,7 +188,7 @@ add_file_to_keep_list(char *filename)
 
 	if ((keepf = fopen(filename, "r")) == NULL) {
 		perror(filename);
-		usage();
+		crunchide_usage();
 	}
 	while (fgets(symbol, sizeof(symbol), keepf)) {
 		len = strlen(symbol);
@@ -235,12 +231,14 @@ void            check_reloc(char *filename, struct relocation_info * relp);
 void 
 hide_syms(char *filename)
 {
-	int             inf, outf, rc;
+	int             inf;
 	struct stat     infstat;
+#ifdef DO_AOUT
 	struct relocation_info *relp;
 	struct nlist   *symp;
-	char           *buf;
 	u_char          zero = 0;
+#endif
+	char           *buf;
 
 	/*
          * Open the file and do some error checking.

@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.12 2007/08/14 20:43:10 miod Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -64,10 +64,12 @@ char           *pexe;
 void
 elf_hide(int pfile, char *p)
 {
-	int             i;
 	Elf_Ehdr       *pehdr;
+#ifdef DEBUG
 	Elf_Shdr       *pshdr;
 	Elf_Phdr       *pphdr;
+	int             i;
+#endif
 	struct stat     sb;
 
 	pexe = p;
@@ -179,9 +181,11 @@ load_symtab(Elf_Ehdr * pehdr, char *pexe)
 	Elf_Sym        *symtab;
 	Elf_Shdr       *symsect;
 	int             symtabsize;
-	Elf_Shdr       *pshdr;
 	Elf_Shdr       *psymshdr;
+	Elf_Shdr       *pshdr;
+#ifdef DEBUG
 	char           *shname;
+#endif
 	int             i;
 
 	symtab = NULL;
@@ -235,7 +239,7 @@ int             strtabsize;
 void
 load_strtab(Elf_Ehdr * pehdr, char *pexe)
 {
-	Elf_Shdr       *pshdr;
+	Elf_Shdr       *pshdr = NULL;
 	char           *shname;
 	int             i;
 	strtab = NULL;
@@ -280,6 +284,7 @@ dump_strtab()
 
 }
 
+void
 fprint_str(FILE * channel, int indx)
 {
 	if (strtab != NULL)

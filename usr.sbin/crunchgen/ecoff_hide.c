@@ -1,4 +1,4 @@
-/* $OpenBSD: ecoff_hide.c,v 1.3 2003/06/03 21:08:59 deraadt Exp $	 */
+/* $OpenBSD: ecoff_hide.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.

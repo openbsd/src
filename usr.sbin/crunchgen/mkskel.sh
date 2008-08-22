@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$OpenBSD: mkskel.sh,v 1.2 2000/03/01 22:10:03 todd Exp $
+#	$OpenBSD: mkskel.sh,v 1.1 2008/08/22 15:18:55 deraadt Exp $
 
 # idea and sed lines taken straight from flex
 

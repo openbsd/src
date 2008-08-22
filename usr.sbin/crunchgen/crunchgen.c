@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.28 2006/12/26 10:20:11 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -53,12 +53,9 @@
  * name on any given platform. Make sure
  * default name is last though.
  */
-char           *mf_name[] = {
-#if defined(MF_NAMES)
-	MF_NAMES,
-#else
+char	*mf_name[] = {
+	"Makefile.bsd-wrapper",
 	"Makefile",
-#endif
 	NULL
 };
 
@@ -111,13 +108,15 @@ void            usage(void);
 void            parse_conf_file(void);
 void            gen_outputs(void);
 
+extern int	crunchide_main(int, char *[]);
+
 int 
 main(int argc, char *argv[])
 {
 	char           *p;
 	int             optc;
 	extern int      optind;
-	extern char    *optarg;
+	extern char    *optarg, *__progname;
 
 	verbose = 1;
 	readcache = 1;
@@ -125,6 +124,9 @@ main(int argc, char *argv[])
 
 	if (argc > 0)
 		progname = argv[0];
+
+	if (strcmp(__progname, "crunchide") == 0)
+		return (crunchide_main(argc, argv));
 
 	while ((optc = getopt(argc, argv, "m:c:e:fqD:EL:O:")) != -1) {
 		switch (optc) {
