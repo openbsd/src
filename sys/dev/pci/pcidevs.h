@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1399 2008/08/18 22:28:36 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1400 2008/08/22 01:09:07 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1154,6 +1154,7 @@
 /* AVlab products */
 #define	PCI_PRODUCT_AVLAB_PCI2S	0x2130		/* Dual Serial */
 #define	PCI_PRODUCT_AVLAB_LPPCI4S	0x2150		/* Quad Serial */
+#define	PCI_PRODUCT_AVLAB_LPPCI4S_2	0x2152		/* Quad Serial */
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* BRI ISDN */
