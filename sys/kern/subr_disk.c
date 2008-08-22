@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.80 2008/08/08 23:49:53 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.81 2008/08/22 03:19:02 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1016,8 +1016,8 @@ struct device *
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
+	int majdev, part = defpart;
 	char c;
-	int majdev, part;
 
 	if (len == 0)
 		return (NULL);
@@ -1025,9 +1025,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
 		len -= 1;
-	} else
-		part = defpart;
-
+	}
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
@@ -1257,11 +1255,17 @@ extern struct nam2blk nam2blk[];
 int
 findblkmajor(struct device *dv)
 {
-	char *name = dv->dv_xname;
+	char buf[16], *p;
 	int i;
 
+	if (strlcpy(buf, dv->dv_xname, sizeof buf) >= sizeof buf)
+		return (-1);
+	for (p = buf; *p; p++)
+		if (*p >= '0' && *p <= '9')
+			*p = '\0';
+
 	for (i = 0; nam2blk[i].name; i++)
-		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)))
+		if (!strcmp(buf, nam2blk[i].name))
 			return (nam2blk[i].maj);
 	return (-1);
 }
