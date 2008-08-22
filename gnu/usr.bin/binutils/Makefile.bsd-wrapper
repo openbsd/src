@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.72 2008/01/14 22:01:23 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.73 2008/08/22 13:02:53 kettenis Exp $
 
 NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sh sparc sparc64
 
@@ -10,17 +10,8 @@ USING_NEW_BINUTILS?=no
 .  endif
 .endfor
 
-SUBDIRS=
-CONF_SUBDIRS=
-
-.if ${USING_NEW_BINUTILS:L} == "yes"
-CONF_SUBDIRS+=	opcodes bfd
-SUBDIRS+=	opcodes bfd
-INST_SUBDIRS+=	opcodes bfd
-.else
-CONF_SUBDIRS+=	opcodes bfd
-SUBDIRS+=	opcodes bfd
-.endif
+SUBDIRS=	opcodes bfd
+CONF_SUBDIRS=	opcodes bfd
 
 # This allows moving the whole binutils installation around for 
 # testing purposes
@@ -98,7 +89,7 @@ do-config: .USE
 	MAKEINFO='makeinfo --no-split' \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
-	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF} \
+	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
 	    ${CONFIGTARGET}
 	cd ${.OBJDIR} && \
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
@@ -139,23 +130,8 @@ install: maninstall
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 
-prereq: config.status
-	cd ${.OBJDIR}/bfd && ${MAKE} bfd.h
-	# we don't install ansidecl.h, we merge it into the file that
-	# needs it instead.
-	sed -e '/^#include "ansidecl.h"/r${.CURDIR}/include/ansidecl.h' -e '//d' \
-		bfd/bfd.h >bfd/mybfd.h
-
 c++filt.1: binutils/cxxfilt.man
 	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
-
-includes:
-.if ${USING_NEW_BINUTILS:L} == "yes"
-	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${.CURDIR}/include/bfdlink.h ${DESTDIR}/usr/include
-	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		bfd/mybfd.h ${DESTDIR}/usr/include/bfd.h
-.endif
 
 depend:
 	# Nothing here so far...

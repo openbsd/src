@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.144 2008/06/04 21:12:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.145 2008/08/22 13:02:53 kettenis Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -51,11 +51,11 @@ RDIRS=	../lib/libpthread ../lib/libcompat ../lib/libcurses \
 PRDIRS=
 
 # Directories with an includes target that use Makefile.bsd-wrapper
-WDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
+WDIRS=	../usr.sbin/httpd
 
 # Places using Makefile.bsd-wrapper that needs a prerequisite target met
 # before includes
-PWDIRS=	../gnu/usr.bin/binutils
+PWDIRS=
 
 .if ${USE_GCC3:L} == "yes"
 WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc \
