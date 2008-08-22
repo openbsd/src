@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2008/08/22 15:38:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2008/08/22 16:08:12 deraadt Exp $
 
 PROG=		crunchgen
-MAN=		crunchgen.1
+MAN=		crunchgen.8
 SRCS=		crunchgen.c crunched_skel.c \
 		crunchide.c elf_hide.c ecoff_hide.c
 CFLAGS+=	-g -Wall
