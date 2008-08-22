@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.55 2008/05/05 22:25:04 dlg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.56 2008/08/22 01:09:08 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1373,6 +1373,18 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ },
+	    },
+	},
+
+	/* Avlab Technology, Inc. Low Profile PCI 4 Serial: 4S */
+	{   /* "Avlab Low Profile PCI 4 Serial" */
+	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S_2,	0, 0  },
+	    {	0xffff,	0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
