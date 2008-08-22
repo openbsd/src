@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.181 2008/05/30 19:09:42 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.182 2008/08/22 12:02:33 brad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 30 2008 $
+.Dd $Mdocdate: August 22 2008 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -2149,6 +2149,8 @@ identifiers
 definitions for fourth level
 .Tn UDP
 identifiers
+.It Aq Pa machine/cpu.h
+definitions for second level CPU identifiers
 .El
 .Sh ERRORS
 The following errors may be reported:
