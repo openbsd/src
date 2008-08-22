@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.34 2008/08/22 10:41:37 kurt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -76,6 +76,10 @@
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0001000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xef000000)
+
+/* use a small range for PIE to minimize mmap pressure */
+#define	VM_PIE_MIN_ADDR		PAGE_SIZE
+#define	VM_PIE_MAX_ADDR		0x40000UL
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
