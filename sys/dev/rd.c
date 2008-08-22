@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.1 2001/05/11 07:04:47 deraadt Exp $	*/
+/*	$OpenBSD: rd.c,v 1.2 2008/08/22 03:12:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,9 +52,7 @@ char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
  * This is called during autoconfig.
  */
 void
-rd_attach_hook(unit, rd)
-	int unit;
-	struct rd_conf *rd;
+rd_attach_hook(int unit, struct rd_conf *rd)
 {
 	if (unit == 0) {
 		/* Setup root ramdisk */
@@ -69,8 +67,6 @@ rd_attach_hook(unit, rd)
  * This is called during open (i.e. mountroot)
  */
 void
-rd_open_hook(unit, rd)
-	int unit;
-	struct rd_conf *rd;
+rd_open_hook(int unit, struct rd_conf *rd)
 {
 }
