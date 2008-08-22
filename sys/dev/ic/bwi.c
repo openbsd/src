@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.77 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.78 2008/08/22 19:58:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5633,7 +5633,7 @@ bwi_rf_init_hw_nrssi_table(struct bwi_mac *mac, uint16_t adjust)
 		val -= adjust;
 		if (val < -32)
 			val = -32;
-		else if (val > 31);
+		else if (val > 31)
 			val = 31;
 
 		bwi_nrssi_write(mac, i, val);
