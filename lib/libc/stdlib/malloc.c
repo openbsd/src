@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.94 2008/08/22 17:14:57 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.95 2008/08/22 21:25:10 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -382,10 +382,15 @@ wrtwarning(char *p)
 static void
 unmap(struct dir_info *d, void *p, size_t sz)
 {
-	size_t psz = PAGEROUND(sz) >> MALLOC_PAGESHIFT;
+	size_t psz = sz >> MALLOC_PAGESHIFT;
 	size_t rsz, tounmap;
 	struct region_info *r;
 	u_int i, offset;
+
+	if (sz != PAGEROUND(sz)) {
+		wrterror("munmap round");
+		return;
+	}
 
 	if (psz > malloc_cache) {
 		if (munmap(p, sz))
@@ -445,11 +450,15 @@ unmap(struct dir_info *d, void *p, size_t sz)
 static void *
 map(struct dir_info *d, size_t sz, int zero_fill)
 {
-	size_t psz = PAGEROUND(sz) >> MALLOC_PAGESHIFT;
+	size_t psz = sz >> MALLOC_PAGESHIFT;
 	struct region_info *r, *big = NULL;
 	u_int i, offset;
 	void *p;
 
+	if (sz != PAGEROUND(sz)) {
+		wrterror("map round");
+		return NULL;
+	}
 	if (psz > d->free_regions_size) {
 		p = MMAP(sz);
 		if (p != MAP_FAILED)
@@ -1065,7 +1074,7 @@ omalloc(size_t sz, int zero_fill)
 			return NULL;
 		}
 		if (insert(&g_pool, p, sz)) {
-			unmap(&g_pool, p, sz);
+			unmap(&g_pool, p, psz);
 			errno = ENOMEM;
 			return NULL;
 		}
@@ -1181,7 +1190,7 @@ ofree(void *p)
 		}
 		if (malloc_junk)
 			memset(p, SOME_FREEJUNK, PAGEROUND(sz) - malloc_guard);
-		unmap(&g_pool, p, sz);
+		unmap(&g_pool, p, PAGEROUND(sz));
 		delete(&g_pool, r);
 	} else {
 		void *tmp;
