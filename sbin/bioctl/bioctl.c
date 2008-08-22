@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.74 2008/08/11 17:28:24 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.75 2008/08/22 02:00:12 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -70,7 +70,8 @@ void			derive_key_pkcs(int, u_int8_t *, size_t, u_int8_t *,
 
 void			bio_inq(char *);
 void			bio_alarm(char *);
-void			bio_setstate(char *);
+int			bio_getvolbyname(char *);
+void			bio_setstate(char *, int, char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
 void			bio_createraid(u_int16_t, char *);
@@ -97,13 +98,13 @@ main(int argc, char *argv[])
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
 	const char		*errstr;
-	int			ch, rv, blink = 0, diskinq = 0;
+	int			ch, rv, blink = 0, diskinq = 0, ss_func = 0;
 	u_int16_t		cr_level = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:qr:vu:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:qr:R:vu:")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -135,6 +136,7 @@ main(int argc, char *argv[])
 			break;
 		case 'H': /* set hotspare */
 			func |= BIOC_SETSTATE;
+			ss_func = BIOC_SSHOTSPARE;
 			al_arg = optarg;
 			break;
 		case 'h':
@@ -152,6 +154,12 @@ main(int argc, char *argv[])
 			if (errstr != NULL)
 				errx(1, "Number of rounds is %s: %s",
 				    errstr, optarg);
+			break;
+		case 'R':
+			/* rebuild to provided chunk/CTL */
+			func |= BIOC_SETSTATE;
+			ss_func = BIOC_SSREBUILD;
+			al_arg = optarg;
 			break;
 		case 'v':
 			verbose = 1;
@@ -206,7 +214,7 @@ main(int argc, char *argv[])
 	} else if (func == BIOC_BLINK) {
 		bio_setblink(sd_dev, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
-		bio_setstate(al_arg);
+		bio_setstate(al_arg, ss_func, argv[0]);
 	} else if (func == BIOC_DELETERAID && sd_dev != NULL) {
 		bio_deleteraid(sd_dev);
 	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
@@ -233,8 +241,9 @@ usage(void)
 		"\t[-C flag[,flag,...]] [-c raidlevel] "
 		"[-H channel:target[.lun]]\n"
 		"\t[-l special[,special,...]] [-r rounds] "
-		"[-u channel:target[.lun]]\n"
-		"\tdevice\n", __progname);
+		"[-R device|channel:target[.lun]\n"
+		"\t[-u channel:target[.lun]] "
+		"device\n", __progname);
 	
 	exit(1);
 }
@@ -492,23 +501,67 @@ bio_alarm(char *arg)
 	}
 }
 
+int
+bio_getvolbyname(char *name)
+{
+	int			id = -1, i, rv;
+	struct bioc_inq		bi;
+	struct bioc_vol		bv;
+
+	memset(&bi, 0, sizeof(bi));
+	bi.bi_cookie = bl.bl_cookie;
+	rv = ioctl(devh, BIOCINQ, &bi);
+	if (rv == -1)
+		err(1, "BIOCINQ");
+
+	for (i = 0; i < bi.bi_novol; i++) {
+		memset(&bv, 0, sizeof(bv));
+		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_volid = i;
+		rv = ioctl(devh, BIOCVOL, &bv);
+		if (rv == -1)
+			err(1, "BIOCVOL");
+
+		if (name && strcmp(name, bv.bv_dev) != 0)
+			continue;
+		id = i;
+		break;
+	}
+
+	return (id);
+}
+
 void
-bio_setstate(char *arg)
+bio_setstate(char *arg, int status, char *devname)
 {
 	struct bioc_setstate	bs;
 	struct locator		location;
+	struct stat		sb;
 	const char		*errstr;
 	int			rv;
 
-	errstr = str2locator(arg, &location);
-	if (errstr)
-		errx(1, "Target %s: %s", arg, errstr);
+	memset(&bs, 0, sizeof(bs));
+	if (stat(arg, &sb) == -1) {
+		/* use CTL */
+		errstr = str2locator(arg, &location);
+		if (errstr)
+			errx(1, "Target %s: %s", arg, errstr);
+		bs.bs_channel = location.channel;
+		bs.bs_target = location.target;
+		bs.bs_lun = location.lun;
+	} else {
+		/* use other id */
+		bs.bs_other_id = sb.st_rdev;
+		bs.bs_other_id_type = BIOC_SSOTHER_DEVT;
+	}
 
 	bs.bs_cookie = bl.bl_cookie;
-	bs.bs_status = BIOC_SSHOTSPARE;
-	bs.bs_channel = location.channel;
-	bs.bs_target = location.target;
-	bs.bs_lun = location.lun;
+	bs.bs_status = status;
+
+	/* make sure user supplied a sd device */
+	bs.bs_volid = bio_getvolbyname(devname);
+	if (bs.bs_volid == -1)
+		errx(1, "invalid device %s", devname);
 
 	rv = ioctl(devh, BIOCSETSTATE, &bs);
 	if (rv == -1)
@@ -831,6 +884,7 @@ bio_deleteraid(char *dev)
 	memset(&bd, 0, sizeof(bd));
 
 	bd.bd_cookie = bd.bd_cookie;
+	/* XXX make this a dev_t instead of a string */
 	strlcpy(bd.bd_dev, dev, sizeof bd.bd_dev);
 	if (ioctl(devh, BIOCDELETERAID, &bd))
 		errx(1, "delete volume %s failed", dev);

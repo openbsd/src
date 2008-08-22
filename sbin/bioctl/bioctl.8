@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.59 2008/08/11 17:28:24 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.60 2008/08/22 02:00:12 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2008 $
+.Dd $Mdocdate: August 22 2008 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Op Fl H Ar channel:target[.lun]
 .Op Fl l Ar special[,special,...]
 .Op Fl r Ar rounds
+.Op Fl R Ar device|channel:target[.lun]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -148,6 +149,12 @@ the algorithm used to convert a passphrase into a key.
 Higher iteration counts take more time, but offer more resistance to key
 guessing attacks.
 The minimum is 1000 rounds and the default is 8192.
+.It Fl R Ar device|channel:target[.lun]
+Manually kick off a rebuild using device or
+.Ar channel:target[.lun]
+on the provided drive name.
+This command requires a drive by name (e.g. sd1) instead of a controller
+by name (e.g. softraid0).
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
