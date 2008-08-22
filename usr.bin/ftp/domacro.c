@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.13 2006/05/16 23:43:16 ray Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.14 2008/08/22 08:52:35 sobrado Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: domacro.c,v 1.13 2006/05/16 23:43:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: domacro.c,v 1.14 2008/08/22 08:52:35 sobrado Exp $";
 #endif /* not lint and not SMALL */
 
 #include <ctype.h>
@@ -49,7 +49,7 @@ domacro(int argc, char *argv[])
 	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
+		fprintf(ttyout, "usage: %s macro-name\n", argv[0]);
 		code = -1;
 		return;
 	}

@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.72 2008/07/16 14:57:27 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.73 2008/08/22 08:52:35 sobrado Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: July 16 2008 $
+.Dd $Mdocdate: August 22 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -242,11 +242,13 @@ The following commands are recognized
 by
 .Nm :
 .Bl -tag -width Fl
-.It Ic \&! Op Ar command Op Ar args
+.It Ic \&! Oo Ar command
+.Op Ar arg ...
+.Oc
 Invoke an interactive shell on the local machine.
 If there are arguments, the first is taken to be a command to execute
 directly, with the rest of the arguments as its arguments.
-.It Ic \&$ Ar macro-name Op Ar args
+.It Ic \&$ Ar macro-name Op Ar arg ...
 Execute the macro
 .Ar macro-name
 that was defined with the
@@ -256,7 +258,7 @@ Arguments are passed to the macro unglobbed.
 .It Ic \&? Op Ar command
 A synonym for
 .Ic help .
-.It Ic account Op Ar passwd
+.It Ic account Op Ar password
 Supply a supplemental password required by a remote system for access
 to resources once a login has been successfully completed.
 If no argument is included, the user will be prompted for an account
@@ -282,19 +284,19 @@ Set the file transfer
 .Ic type
 to network
 .Tn ASCII .
-This is the default type.
-.It Ic bell
+.It Ic bell Op Ic on | off
 Arrange that a bell be sounded after each file transfer
 command is completed.
 .It Ic binary
 Set the file transfer
 .Ic type
 to support binary image transfer.
+This is the default type.
 .It Ic bye
 Terminate the FTP session with the remote server and exit
 .Nm .
 An end-of-file will also terminate the session and exit.
-.It Ic case
+.It Ic case Op Ic on | off
 Toggle remote computer file name case mapping during
 .Ic mget
 commands.
@@ -310,9 +312,9 @@ to
 .It Ic cdup
 Change the remote machine working directory to the parent of the
 current remote machine working directory.
-.It Ic chmod Ar mode file-name
-Change the permission modes of the file
-.Ar file-name
+.It Ic chmod Ar mode file
+Change the permission modes of
+.Ar file
 on the remote
 system to
 .Ar mode .
@@ -320,7 +322,7 @@ system to
 Terminate the FTP session with the remote server and
 return to the command interpreter.
 Any defined macros are erased.
-.It Ic cr
+.It Ic cr Op Ic on | off
 Toggle carriage return stripping during
 ASCII type file retrieval.
 Records are denoted by a carriage return/linefeed sequence
@@ -337,10 +339,12 @@ when an ASCII type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic cr
 is off.
-.It Ic debug Op Ar debug-value
+.It Ic debug Oo Ic on | off |
+.Ar debuglevel
+.Oc
 Toggle debugging mode.
 If an optional
-.Ar debug-value
+.Ar debuglevel
 is specified, it is used to set the debugging level.
 When debugging is on,
 .Nm
@@ -357,12 +361,12 @@ A synonym for
 .It Ic disconnect
 A synonym for
 .Ic close .
-.It Ic edit
+.It Ic edit Op Ic on | off
 Toggle command line editing, and context sensitive command and file
 completion.
 This is automatically enabled if input is from a terminal, and
 disabled otherwise.
-.It Ic epsv4
+.It Ic epsv4 Op Ic on | off
 Toggle use of EPSV/EPRT command on IPv4 connection.
 .It Ic exit
 A synonym for
@@ -377,7 +381,9 @@ The default format is
 .It Ic ftp Ar host Op Ar port
 A synonym for
 .Ic open .
-.It Ic gate Op Ar host Op Ar port
+.It Ic gate Oo Ic on | off |
+.Ar host Op Ar port
+.Oc
 Toggle gate-ftp mode.
 This will not be permitted if the gate-ftp server hasn't been set
 (either explicitly by the user, or from the
@@ -412,7 +418,7 @@ The current settings for
 and
 .Ic structure
 are used while transferring the file.
-.It Ic glob
+.It Ic glob Op Ic on | off
 Toggle filename expansion for
 .Ic mdelete ,
 .Ic mget
@@ -447,7 +453,9 @@ That can be done by
 transferring a
 .Xr tar 1
 archive of the subtree (in binary mode).
-.It Ic hash Op Ar size
+.It Ic hash Oo Ic on | off |
+.Ar size
+.Oc
 Toggle hash mark
 .Pq Ql #
 printing for each data block transferred.
@@ -468,11 +476,11 @@ seconds.
 If
 .Ar seconds
 is omitted, the current inactivity timer is printed.
-.It Ic lcd Op Ar directory
+.It Ic lcd Op Ar local-directory
 Change the working directory on the local machine.
 If
 no
-.Ar directory
+.Ar local-directory
 is specified, the user's home directory is used.
 .It Ic less Ar file
 A synonym for
@@ -616,8 +624,10 @@ to
 The default mode is
 .Dq stream
 mode.
-.It Ic modtime Ar file-name
-Show the last modification time of the file on the remote machine.
+.It Ic modtime Ar file
+Show the last modification time of
+.Ar file
+on the remote machine.
 .It Ic more Ar file
 A synonym for
 .Ic page .
@@ -644,10 +654,13 @@ flag is specified then
 .Ic reput
 is used instead of
 .Ic put .
-.It Ic msend Ar local-files
+.It Xo Ic msend
+.Op Fl c
+.Ar local-files
+.Xc
 A synonym for
 .Ic mput .
-.It Ic newer Ar file-name
+.It Ic newer Ar remote-file Op Ar local-file
 Get the file only if the modification time of the remote file is more
 recent than the file on the current system.
 If the file does not
@@ -833,7 +846,7 @@ and display with the program defined in
 if
 .Ev PAGER
 is null or not defined).
-.It Ic passive
+.It Ic passive Op Ic on | off
 Toggle passive mode.
 If passive mode is turned on (default is on),
 .Nm
@@ -858,9 +871,9 @@ traffic.
 (Note that though FTP servers are required to support the
 .Dv PASV
 command by RFC 1123, some do not.)
-.It Ic preserve
+.It Ic preserve Op Ic on | off
 Toggle preservation of modification times on retrieved files.
-.It Ic progress
+.It Ic progress Op Ic on | off
 Toggle display of transfer progress bar.
 The progress bar will be disabled for a transfer that has
 .Ar local-file
@@ -871,7 +884,7 @@ or a command that starts with
 Refer to
 .Sx FILE NAMING CONVENTIONS
 for more information.
-.It Ic prompt
+.It Ic prompt Op Ic on | off
 Toggle interactive prompting.
 Interactive prompting
 occurs during multiple file transfers to allow the
@@ -912,7 +925,7 @@ to any remaining files for the current command.
 .It Ic y
 Transfer the file.
 .El
-.It Ic proxy Ar ftp-command
+.It Ic proxy Ar command
 Execute an FTP command on a secondary control connection.
 This command allows simultaneous connection to two remote FTP
 servers for transferring files between the two servers.
@@ -969,7 +982,7 @@ machine.
 .It Ic quit
 A synonym for
 .Ic bye .
-.It Ic quote Ar arg1 arg2 ...
+.It Ic quote Ar arg ...
 The arguments specified are sent, verbatim, to the remote FTP server.
 .It Ic recv Ar remote-file Op Ar local-file
 A synonym for
@@ -989,11 +1002,11 @@ is continued from the apparent point of failure.
 This command
 is useful when transferring very large files over networks that
 are prone to dropping connections.
-.It Ic rename Op Ar from Op Ar to
+.It Ic rename Ar from-name to-name
 Rename the file
-.Ar from
+.Ar from-name
 on the remote machine to the file
-.Ar to .
+.Ar to-name .
 .It Ic reput Ar local-file Op Ar remote-file
 Reput acts like put, except that if
 .Ar remote-file
@@ -1036,14 +1049,14 @@ If a
 is specified, it is supplied to the server as well.
 .It Ic rmdir Ar directory-name
 Delete a directory on the remote machine.
-.It Ic rstatus Op Ar file-name
+.It Ic rstatus Op Ar file
 With no arguments, show status of remote machine.
 If
-.Ar file-name
+.Ar file
 is specified, show status of
-.Ar file-name
+.Ar file
 on remote machine.
-.It Ic runique
+.It Ic runique Op Ic on | off
 Toggle storing of files on the local system with unique filenames.
 If a file already exists with a name equal to the target
 local filename for a
@@ -1069,7 +1082,7 @@ The default value is off.
 .It Ic send Ar local-file Op Ar remote-file
 A synonym for
 .Ic put .
-.It Ic sendport
+.It Ic sendport Op Ic on | off
 Toggle the use of
 .Dv PORT
 commands.
@@ -1096,13 +1109,13 @@ commands for each data transfer.
 This is useful for certain FTP implementations which do ignore
 .Dv PORT
 commands but, incorrectly, indicate they've been accepted.
-.It Ic site Ar arg1 arg2 ...
+.It Ic site Ar arg ...
 The arguments specified are sent, verbatim, to the remote FTP server as a
 .Dv SITE
 command.
-.It Ic size Ar file-name
+.It Ic size Ar file
 Return size of
-.Ar file-name
+.Ar file
 on remote machine.
 .It Ic status
 Show the current status of
@@ -1115,7 +1128,7 @@ Show the current status of
 .\" By default,
 .\" .Dq file
 .\" structure is used.
-.It Ic sunique
+.It Ic sunique Op Ic on | off
 Toggle storing of files on remote machine under unique file names.
 The remote FTP server must support the FTP protocol
 .Dv STOU
@@ -1130,7 +1143,7 @@ Set the file transfer type to that needed to
 talk to
 .Tn TENEX
 machines.
-.It Ic trace
+.It Ic trace Op Ic on | off
 Toggle packet tracing.
 .It Ic type Op Ar type-name
 Set the file transfer
@@ -1148,7 +1161,7 @@ If
 .Ar newmask
 is omitted, the current umask is printed.
 .It Xo
-.Ic user Ar user-name
+.Ic user Ar username
 .Op Ar password Op Ar account
 .Xc
 Identify yourself to the remote FTP server.
@@ -1173,7 +1186,7 @@ is invoked with
 .Dq auto-login
 disabled, this process is done automatically on initial connection to the
 FTP server.
-.It Ic verbose
+.It Ic verbose Op Ic on | off
 Toggle verbose mode.
 In verbose mode, all responses from
 the FTP server are displayed to the user.

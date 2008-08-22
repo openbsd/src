@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.54 2008/07/08 21:07:57 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.55 2008/08/22 08:52:35 sobrado Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.54 2008/07/08 21:07:57 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.55 2008/08/22 08:52:35 sobrado Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -113,7 +113,7 @@ setpeer(int argc, char *argv[])
 	if (argc < 2)
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
-		fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
+		fprintf(ttyout, "usage: %s host [port]\n", argv[0]);
 		code = -1;
 		return;
 	}

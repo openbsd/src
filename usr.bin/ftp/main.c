@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.70 2008/07/08 21:07:57 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.71 2008/08/22 08:52:35 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.70 2008/07/08 21:07:57 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.71 2008/08/22 08:52:35 sobrado Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -792,7 +792,7 @@ usage(void)
 #ifndef SMALL
 	    "[-C] "
 #endif /* !SMALL */
-	    "[-o output] host:[/path/]file[/]\n",
+	    "[-o output] host:/file[/]\n",
 #ifndef SMALL
 	    __progname, __progname, __progname, __progname, __progname);
 #else /* !SMALL */

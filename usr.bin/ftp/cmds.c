@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.63 2008/07/08 21:07:57 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.64 2008/08/22 08:52:35 sobrado Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.63 2008/07/08 21:07:57 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.64 2008/08/22 08:52:35 sobrado Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -118,12 +118,12 @@ settype(int argc, char *argv[])
 		char *sep;
 
 		fprintf(ttyout, "usage: %s [", argv[0]);
-		sep = " ";
+		sep = "";
 		for (p = types; p->t_name; p++) {
 			fprintf(ttyout, "%s%s", sep, p->t_name);
 			sep = " | ";
 		}
-		fputs(" ]\n", ttyout);
+		fputs("]\n", ttyout);
 		code = -1;
 		return;
 	}
@@ -300,7 +300,8 @@ putit(int argc, char *argv[], int restartit)
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "remote-file")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s local-file [ remote-file ]\n", argv[0]);
+		fprintf(ttyout, "usage: %s local-file [remote-file]\n",
+		    argv[0]);
 		code = -1;
 		return;
 	}
@@ -553,7 +554,8 @@ getit(int argc, char *argv[], int restartit, const char *mode)
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "local-file")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s remote-file [ local-file ]\n", argv[0]);
+		fprintf(ttyout, "usage: %s remote-file [local-file]\n",
+		    argv[0]);
 		code = -1;
 		return (0);
 	}
@@ -893,7 +895,7 @@ togglevar(int argc, char *argv[], int *var, const char *mesg)
 	} else if (argc == 2 && strcasecmp(argv[1], "off") == 0) {
 		*var = 0;
 	} else {
-		fprintf(ttyout, "usage: %s [ on | off ]\n", argv[0]);
+		fprintf(ttyout, "usage: %s [on | off]\n", argv[0]);
 		return (-1);
 	}
 	if (mesg)
@@ -959,7 +961,7 @@ sethash(int argc, char *argv[])
 	if (argc == 1)
 		hash = !hash;
 	else if (argc != 2) {
-		fprintf(ttyout, "usage: %s [ on | off | bytecount ]\n", argv[0]);
+		fprintf(ttyout, "usage: %s [on | off | size]\n", argv[0]);
 		code = -1;
 		return;
 	} else if (strcasecmp(argv[1], "on") == 0)
@@ -1041,7 +1043,7 @@ setgate(int argc, char *argv[])
 	static char gsbuf[MAXHOSTNAMELEN];
 
 	if (argc > 3) {
-		fprintf(ttyout, "usage: %s [ on | off | gateserver [ port ] ]\n",
+		fprintf(ttyout, "usage: %s [on | off | host [port]]\n",
 		    argv[0]);
 		code = -1;
 		return;
@@ -1106,7 +1108,7 @@ void
 setdebug(int argc, char *argv[])
 {
 	if (argc > 2) {
-		fprintf(ttyout, "usage: %s [ on | off | debuglevel ]\n", argv[0]);
+		fprintf(ttyout, "usage: %s [on | off | debuglevel]\n", argv[0]);
 		code = -1;
 		return;
 	} else if (argc == 2) {
@@ -1178,7 +1180,7 @@ lcd(int argc, char *argv[])
 	if (argc < 2)
 		argc++, argv[1] = home;
 	if (argc != 2) {
-		fprintf(ttyout, "usage: %s local-directory\n", argv[0]);
+		fprintf(ttyout, "usage: %s [local-directory]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1284,7 +1286,8 @@ ls(int argc, char *argv[])
 	if (argc < 3)
 		argc++, argv[2] = "-";
 	if (argc > 3) {
-		fprintf(ttyout, "usage: %s remote-directory local-file\n", argv[0]);
+		fprintf(ttyout, "usage: %s [remote-directory [local-file]]\n",
+		    argv[0]);
 		code = -1;
 		return;
 	}
@@ -1427,7 +1430,8 @@ user(int argc, char *argv[])
 	if (argc < 2)
 		(void)another(&argc, &argv, "username");
 	if (argc < 2 || argc > 4) {
-		fprintf(ttyout, "usage: %s username [password] [account]\n", argv[0]);
+		fprintf(ttyout, "usage: %s username [password [account]]\n",
+		    argv[0]);
 		code = -1;
 		return;
 	}
@@ -1549,7 +1553,7 @@ quote(int argc, char *argv[])
 {
 
 	if (argc < 2 && !another(&argc, &argv, "command line to send")) {
-		fprintf(ttyout, "usage: %s line-to-send\n", argv[0]);
+		fprintf(ttyout, "usage: %s arg ...\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1566,7 +1570,7 @@ site(int argc, char *argv[])
 {
 
 	if (argc < 2 && !another(&argc, &argv, "arguments to SITE command")) {
-		fprintf(ttyout, "usage: %s line-to-send\n", argv[0]);
+		fprintf(ttyout, "usage: %s arg ...\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1617,9 +1621,9 @@ do_chmod(int argc, char *argv[])
 
 	if (argc < 2 && !another(&argc, &argv, "mode"))
 		goto usage;
-	if ((argc < 3 && !another(&argc, &argv, "file-name")) || argc > 3) {
+	if ((argc < 3 && !another(&argc, &argv, "file")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s mode file-name\n", argv[0]);
+		fprintf(ttyout, "usage: %s mode file\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1867,8 +1871,8 @@ setnmap(int argc, char *argv[])
 		code = mapflag;
 		return;
 	}
-	if ((argc < 3 && !another(&argc, &argv, "mapout")) || argc > 3) {
-		fprintf(ttyout, "usage: %s [mapin mapout]\n", argv[0]);
+	if ((argc < 3 && !another(&argc, &argv, "outpattern")) || argc > 3) {
+		fprintf(ttyout, "usage: %s [inpattern outpattern]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2144,8 +2148,8 @@ macdef(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	if ((argc < 2 && !another(&argc, &argv, "macro name")) || argc > 2) {
-		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "macro-name")) || argc > 2) {
+		fprintf(ttyout, "usage: %s macro-name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2199,8 +2203,8 @@ sizecmd(int argc, char *argv[])
 {
 	off_t size;
 
-	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
-		fprintf(ttyout, "usage: %s filename\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "file")) || argc > 2) {
+		fprintf(ttyout, "usage: %s file\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2218,8 +2222,8 @@ modtime(int argc, char *argv[])
 {
 	time_t mtime;
 
-	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
-		fprintf(ttyout, "usage: %s filename\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "file")) || argc > 2) {
+		fprintf(ttyout, "usage: %s file\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2260,8 +2264,8 @@ page(int argc, char *argv[])
 	int orestart_point, ohash, overbose;
 	char *p, *pager, *oldargv1;
 
-	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
-		fprintf(ttyout, "usage: %s filename\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "file")) || argc > 2) {
+		fprintf(ttyout, "usage: %s file\n", argv[0]);
 		code = -1;
 		return;
 	}
