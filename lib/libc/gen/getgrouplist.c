@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.14 2008/08/22 00:59:34 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.15 2008/08/23 10:08:02 chl Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
