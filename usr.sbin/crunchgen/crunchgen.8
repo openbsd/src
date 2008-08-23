@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.8,v 1.1 2008/08/22 16:08:12 deraadt Exp $
+.\"	$OpenBSD: crunchgen.8,v 1.2 2008/08/23 07:24:06 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -25,7 +25,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd $Mdocdate: August 22 2008 $
+.Dd $Mdocdate: August 23 2008 $
 .Dt CRUNCHGEN 8
 .Os
 .Sh NAME
@@ -88,16 +88,6 @@ symbols, so to keep the C function ``foo'' visible, the option
 .Dq -k _foo
 must be used.
 .Pp
-.Sh NOTES
-The ELF version of
-.Fl h
-mangles the symbol table beyond recognition.
-It is therefore not advisable to try to run
-.Xr nm 1
-on a crunched object file.
-This is due to the nature of the ELF symbol table
-and how some arches uses the symbol attributes for their GOT build.
-.Pp
 After
 .Nm
 is run, the crunched binary can be built by running
@@ -133,6 +123,16 @@ The default name is
 .It Fl f
 Flush cache.
 Forces the recalculation of cached parameters.
+.It Fl h
+Hide all unnecessary symbols.
+Note that the ELF version of
+.Fl h
+mangles the symbol table beyond recognition.
+It is therefore not advisable to try to run
+.Xr nm 1
+on a crunched object file.
+This is due to the nature of the ELF symbol table
+and how some architectures use the symbol attributes for their GOT build.
 .It Fl L Ar lib-dir
 Try to obtain libraries from
 .Ar lib-dir .

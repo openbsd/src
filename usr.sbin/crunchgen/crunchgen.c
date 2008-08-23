@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.2 2008/08/22 15:38:37 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.3 2008/08/23 07:24:06 jmc Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -215,7 +215,7 @@ usage(void)
 	    "usage: crunchgen [-Efq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
 	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name] conf-file\n");
 	fprintf(stderr,
-	    "usage: crunchgen -h [-f keep-list-file] [-k keep-symbol] object-file ...\n");
+	    "       crunchgen -h [-f keep-list-file] [-k keep-symbol] object-file ...\n");
 	exit(1);
 }
 
