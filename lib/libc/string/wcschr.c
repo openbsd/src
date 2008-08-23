@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcschr.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcschr.c,v 1.4 2008/08/23 05:34:36 djm Exp $	*/
 /*	$NetBSD: wcschr.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -37,12 +37,14 @@ wcschr(const wchar_t *s, wchar_t c)
 	const wchar_t *p;
 
 	p = s;
-	while (*p) {
+	for (;;) {
 		if (*p == c) {
 			/* LINTED interface specification */
 			return (wchar_t *)p;
 		}
+		if (!*p)
+			return NULL;
 		p++;
 	}
-	return NULL;
+	/* NOTREACHED */
 }
