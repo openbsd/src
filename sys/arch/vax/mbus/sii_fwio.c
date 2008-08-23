@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii_fwio.c,v 1.1 2008/08/18 23:19:25 miod Exp $	*/
+/*	$OpenBSD: sii_fwio.c,v 1.2 2008/08/23 12:40:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/cvax.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -113,7 +114,7 @@ sii_fwio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Complete attachment.
 	 */
-	sc->sc_hostid = 7;	/* hardcoded */
+	sc->sc_hostid = *(uint8_t *)((vaddr_t)cvax_ssc_ptr + 0x4c0) & 07;
 	sii_attach(sc);
 }
 
