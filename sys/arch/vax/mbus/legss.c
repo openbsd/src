@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.1 2008/08/20 19:00:01 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.2 2008/08/23 22:57:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -14,6 +14,39 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * The wsdisplay emulops routines ({copy,erase}{cols,rows}, putchar, and
+ * do_cursor) are adapted from the rasops routines found in rasops.c and
+ * rasops32.c, under the following licence terms:
+ *
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -128,6 +161,15 @@ const struct wsdisplay_accessops legss_accessops = {
 };
 
 int	legss_setup_screen(struct legss_screen *);
+void	legss_clear_screen(struct legss_screen *);
+
+void	legss_copycols(void *, int, int, int, int);
+void	legss_copyrows(void *, int, int, int);
+void	legss_do_cursor(struct rasops_info *);
+void	legss_erasecols(void *, int, int, int, long);
+void	legss_eraserows(void *, int, int, long);
+void	legss_putchar(void *, int, int, u_int, long);
+
 u_int	legss_probe_depth(vaddr_t);
 
 /*
@@ -308,7 +350,7 @@ legss_setup_screen(struct legss_screen *ss)
 	ri->ri_width = LEGSS_VISWIDTH;
 	ri->ri_height = LEGSS_VISHEIGHT;
 	ri->ri_stride = LEGSS_WIDTH * 32 / NBBY;
-	ri->ri_flg = RI_FORCEMONO | RI_CENTER | RI_CLEAR;
+	ri->ri_flg = RI_FORCEMONO | RI_CENTER;		/* no RI_CLEAR ! */
 	ri->ri_hw = ss;
 	ri->ri_bits = (u_char *)ss->ss_vram;
 
@@ -319,12 +361,27 @@ legss_setup_screen(struct legss_screen *ss)
 	if (rasops_init(ri, 160, 160) != 0)
 		return -1;
 
+	/*
+	 * Override the rasops emulops.
+	 */
+	ri->ri_ops.copyrows = legss_copyrows;
+	ri->ri_ops.copycols = legss_copycols;
+	ri->ri_ops.eraserows = legss_eraserows;
+	ri->ri_ops.erasecols = legss_erasecols;
+	ri->ri_ops.putchar = legss_putchar;
+	ri->ri_do_cursor = legss_do_cursor;
+
 	legss_stdscreen.ncols = ri->ri_cols;
 	legss_stdscreen.nrows = ri->ri_rows;
 	legss_stdscreen.textops = &ri->ri_ops;
 	legss_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	legss_stdscreen.fontheight = ri->ri_font->fontheight;
 	legss_stdscreen.capabilities = ri->ri_caps;
+
+	/*
+	 * Clear display.
+	 */
+	legss_clear_screen(ss);
 
 	return 0;
 }
@@ -343,7 +400,7 @@ legss_probe_depth(vaddr_t vram)
 	 * to anything and latch random bus data.
 	 */
 	switch (probe & 0x000fffff) {
-	case 0x00ff:
+	case 0x000ff:
 		return 8;
 	default:
 		return 0;
@@ -425,4 +482,245 @@ legsscninit()
 	wsdisplay_cnattach(&legss_stdscreen, ri, 0, 0, defattr);
 
 	return 0;
+}
+
+/*
+ * wsdisplay emulops
+ */
+
+void
+legss_putchar(void *v, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = v;
+	struct wsdisplay_font *font = ri->ri_font;
+	int width, height, cnt, fs, fb, fg, bg, ul;
+	int32_t *dp, *rp;
+	u_char *fr;
+
+	ri->ri_ops.unpack_attr(v, attr, &fg, &bg, &ul);
+
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	height = font->fontheight;
+	width = font->fontwidth;
+
+	if (uc == ' ') {
+		while (height--) {
+			dp = rp;
+			DELTA(rp, ri->ri_stride, int32_t *);
+
+			for (cnt = width; cnt; cnt--) {
+				*(int8_t *)dp = bg;
+				dp++;
+			}
+		}
+	} else {
+		uc -= font->firstchar;
+		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fs = font->stride;
+
+		while (height--) {
+			dp = rp;
+			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) |
+			    (fr[0] << 24);
+			fr += fs;
+			DELTA(rp, ri->ri_stride, int32_t *);
+
+			for (cnt = width; cnt; cnt--) {
+				if ((fb >> 31) & 1)
+					*(int8_t *)dp = fg;
+				else
+					*(int8_t *)dp = bg;
+				dp++;
+				fb <<= 1;
+			}
+		}
+	}
+
+	/* Do underline */
+	if (ul) {
+		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+
+		while (width--) {
+			*(int8_t *)rp = fg;
+			rp++;
+		}
+	}
+}
+
+void
+legss_copycols(void *v, int row, int src, int dst, int num)
+{
+	struct rasops_info *ri = v;
+	struct wsdisplay_font *font = ri->ri_font;
+	u_char *sp, *dp;
+	int height, cnt, delta;
+
+	num *= font->fontwidth;
+	row *= ri->ri_yscale;
+	height = font->fontheight;
+
+	sp = ri->ri_bits + row + src * ri->ri_xscale;
+	dp = ri->ri_bits + row + dst * ri->ri_xscale;
+
+	if (dst <= src) {
+		/* non overlapping copy */
+		delta = ri->ri_stride - (num << 2);
+		while (height--) {
+			for (cnt = num; cnt != 0; cnt--) {
+				*dp = *sp;
+				sp += 1 << 2;
+				dp += 1 << 2;
+			}
+			dp += delta;
+			sp += delta;
+		}
+	} else {
+		/* possibly overlapping copy */
+		delta = num << 2;
+		while (height--) {
+			dp += delta;
+			sp += delta;
+			for (cnt = num; cnt != 0; cnt--) {
+				dp -= 1 << 2;
+				sp -= 1 << 2;
+				*dp = *sp;
+			}
+			dp += ri->ri_stride;
+			sp += ri->ri_stride;
+		}
+	}
+}
+
+void
+legss_erasecols(void *v, int row, int col, int num, long attr)
+{
+	struct rasops_info *ri = v;
+	struct wsdisplay_font *font = ri->ri_font;
+	int height, cnt, fg, bg;
+	int32_t *rp, *dp;
+
+	ri->ri_ops.unpack_attr(v, attr, &fg, &bg, NULL);
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	height = font->fontheight;
+	num *= font->fontwidth;
+
+	while (height--) {
+		dp = rp;
+		DELTA(rp, ri->ri_stride, int32_t *);
+
+		for (cnt = num; cnt; cnt--) {
+			*(int8_t *)dp = bg;
+			dp++;
+		}
+	}
+}
+
+void
+legss_copyrows(void *v, int src, int dst, int num)
+{
+	struct rasops_info *ri = v;
+	struct wsdisplay_font *font = ri->ri_font;
+	int32_t *srp, *drp;
+	int8_t *sp, *dp;
+	int n, cnt, delta;
+
+	num *= font->fontheight;
+	n = ri->ri_emustride >> 2;
+
+	if (dst < src) {
+		srp = (int32_t *)(ri->ri_bits + src * ri->ri_yscale);
+		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_yscale);
+		delta = ri->ri_stride;
+	} else {
+		src = font->fontheight * src + num - 1;
+		dst = font->fontheight * dst + num - 1;
+		srp = (int32_t *)(ri->ri_bits + src * ri->ri_stride);
+		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_stride);
+		delta = -ri->ri_stride;
+	}
+
+	while (num--) {
+		dp = (int8_t *)drp;
+		sp = (int8_t *)srp;
+		DELTA(drp, delta, int32_t *);
+		DELTA(srp, delta, int32_t *);
+
+		for (cnt = n; cnt; cnt--) {
+			*dp = *sp;
+			dp += 1 << 2;
+			sp += 1 << 2;
+		}
+	}
+}
+
+void
+legss_eraserows(void *v, int row, int num, long attr)
+{
+	struct rasops_info *ri = v;
+	struct wsdisplay_font *font = ri->ri_font;
+	int n, cnt, delta, fg, bg;
+	int32_t *dp;
+
+	ri->ri_ops.unpack_attr(v, attr, &fg, &bg, NULL);
+	n = ri->ri_emustride >> 2;
+	num *= font->fontheight;
+	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
+	delta = ri->ri_delta;
+
+	while (num--) {
+		for (cnt = n; cnt; cnt--) {
+			*(int8_t *)dp = bg;
+			DELTA(dp, 4, int32_t *);
+		}
+
+		DELTA(dp, delta, int32_t *);
+	}
+}
+
+void
+legss_do_cursor(struct rasops_info *ri)
+{
+	struct wsdisplay_font *font = ri->ri_font;
+	int height, cnt, row, col;
+	u_char *dp, *rp;
+
+	row = ri->ri_crow;
+	col = ri->ri_ccol;
+
+	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	height = font->fontheight;
+
+	while (height--) {
+		dp = rp;
+		rp += ri->ri_stride;
+
+		for (cnt = font->fontwidth; cnt; cnt--) {
+			*(int8_t *)dp ^= ~0;
+			dp += 4;
+		}
+	}
+}
+
+/* Clear the whole screen */
+void
+legss_clear_screen(struct legss_screen *ss)
+{
+	struct rasops_info *ri = &ss->ss_ri;
+	int n, cnt, num, delta;
+	int32_t *dp, clr;
+
+	n = ri->ri_stride >> 2;
+	num = ri->ri_height;
+	dp = (int32_t *)ri->ri_origbits;
+	delta = 0;
+	clr = ri->ri_devcmap[0];
+
+	while (num--) {
+		for (cnt = n; cnt; cnt--) {
+			*(int8_t *)dp = clr;
+			DELTA(dp, 4, int32_t *);
+		}
+
+		DELTA(dp, delta, int32_t *);
+	}
 }
