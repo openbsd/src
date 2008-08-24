@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.15 2008/08/13 20:29:34 mglocker Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.16 2008/08/24 11:05:02 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -50,6 +50,8 @@ struct video_hw_if {
 	int	(*streamoff)(void *, int);
 	int	(*try_fmt)(void *, struct v4l2_format *);
 	int	(*queryctrl)(void *, struct v4l2_queryctrl *);
+	int	(*g_ctrl)(void *, struct v4l2_control *);
+	int	(*s_ctrl)(void *, struct v4l2_control *);
 	caddr_t	(*mappage)(void *, off_t, int);
 
 	/* other functions */

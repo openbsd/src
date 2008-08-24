@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.21 2008/08/13 20:29:34 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.22 2008/08/24 11:05:02 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -270,6 +270,16 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (sc->hw_if->queryctrl)
 			error = (sc->hw_if->queryctrl)(sc->hw_hdl,
 			    (struct v4l2_queryctrl *)data);
+		break;
+	case VIDIOC_G_CTRL:
+		if (sc->hw_if->g_ctrl)
+			error = (sc->hw_if->g_ctrl)(sc->hw_hdl,
+			    (struct v4l2_control *)data);
+		break;
+	case VIDIOC_S_CTRL:
+		if (sc->hw_if->s_ctrl)
+			error = (sc->hw_if->s_ctrl)(sc->hw_hdl,
+			    (struct v4l2_control *)data);
 		break;
 	default:
 		error = (ENOTTY);
