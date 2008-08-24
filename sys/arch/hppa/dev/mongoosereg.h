@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoosereg.h,v 1.1 2004/10/29 20:23:37 miod Exp $	*/
+/*	$OpenBSD: mongoosereg.h,v 1.2 2008/08/24 18:53:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -42,8 +42,8 @@ struct mongoose_regs {
 struct mongoose_ctrl {
 	struct dma0 {
 		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	count: 8;
+			u_int16_t	addr : 8;
+			u_int16_t	count: 8;
 		} ch[4];
 		u_int8_t	command;
 		u_int8_t	request;
@@ -53,7 +53,7 @@ struct mongoose_ctrl {
 		u_int8_t	master_clear;
 		u_int8_t	mask_clear;
 		u_int8_t	master_write;
-		u_int8_t	pad[8];
+		u_int8_t	pad[15];
 	}	dma0;
 
 	u_int8_t	irr0;		/* 0x20 */
@@ -95,27 +95,17 @@ struct mongoose_ctrl {
 
 	struct dma1 {
 		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	pad0 : 8;
-			u_int32_t	count: 8;
-			u_int32_t	pad1 : 8;
+			u_int32_t	addr : 16;
+			u_int32_t	count: 16;
 		} ch[4];
-		u_int8_t	command;
-		u_int8_t	pad0;
-		u_int8_t	request;
-		u_int8_t	pad1;
-		u_int8_t	mask_channel;
-		u_int8_t	pad2;
-		u_int8_t	mode;
-		u_int8_t	pad3;
-		u_int8_t	clr_byte_ptr;
-		u_int8_t	pad4;
-		u_int8_t	master_clear;
-		u_int8_t	pad5;
-		u_int8_t	mask_clear;
-		u_int8_t	pad6;
-		u_int8_t	master_write;
-		u_int8_t	pad7;
+		u_int16_t	command;
+		u_int16_t	request;
+		u_int16_t	mask_channel;
+		u_int16_t	mode;
+		u_int16_t	clr_byte_ptr;
+		u_int16_t	master_clear;
+		u_int16_t	mask_clear;
+		u_int16_t	master_write;
 	}	dma1;			/* 0xc0 */
 
 	u_int8_t	master_req;	/* 0xe0 master request register */
