@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_fwio.c,v 1.1 2008/08/18 23:19:25 miod Exp $	*/
+/*	$OpenBSD: dz_fwio.c,v 1.2 2008/08/24 14:49:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/sid.h>
 
 #include <vax/mbus/mbusreg.h>
 #include <vax/mbus/mbusvar.h>
@@ -123,7 +124,7 @@ dz_fwio_attach(struct device *parent, struct device *self, void *aux)
 	if (dz_console_regs != 0 && faa->faa_mid == mbus_ioslot) {
 		dz_regs = dz_console_regs;
 		console = 1;
-		serial_console = 1;	/* XXX forced for now */
+		serial_console = (vax_confdata & 0x60) == 0;
 		if (serial_console)
 			printf("console, ");
 	} else {
@@ -150,7 +151,7 @@ dz_fwio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_type = DZ_DZV;
 
-	/* no modem ctrl bits except on line 2 */
+	/* no modem control bits except on line 2 */
 	sc->sc_dsr = (1 << 0) | (1 << 1) | (1 << 3);
 
 	printf("4 lines");
