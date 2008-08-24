@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.238 2008/07/17 19:59:44 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.239 2008/08/24 16:30:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1870,7 +1870,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "subsystem-vendor-id",
 	    &subvendor, sizeof(subvendor)) == sizeof(subvendor)) {
 		if (subvendor == PCI_VENDOR_SUN)
-		sc->bge_flags |= BGE_NO_EEPROM;
+			sc->bge_flags |= BGE_NO_EEPROM;
 	}
 #endif
 
