@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.60 2008/06/12 06:58:36 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.61 2008/08/24 12:56:17 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -108,6 +108,9 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	int i, part_cnt, n, hfspartoff = -1;
 	struct part_map_entry *part;
 
+	if (partoffp)
+		*partoffp = hfspartoff;
+
 	/* First check for a DPME (HFS) disklabel */
 	bp->b_blkno = 1;
 	bp->b_bcount = lp->d_secsize;
@@ -122,9 +125,9 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	if (part->pmSig != PART_ENTRY_MAGIC)
 		return ("not a DPMI partition");
 	part_cnt = part->pmMapBlkCnt;
-	n = 0;
+	n = 8;
 	for (i = 0; i < part_cnt; i++) {
-		struct partition *pp = &lp->d_partitions[8+n];
+		struct partition *pp;
 		char *s;
 
 		bp->b_blkno = 1+i;
@@ -140,24 +143,31 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 			if ((*s >= 'a') && (*s <= 'z'))
 				*s = (*s - 'a' + 'A');
 
-		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0)
+		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
 			hfspartoff = part->pmPyPartStart - LABELSECTOR;
+			if (partoffp) {
+				*partoffp = hfspartoff;
+				return (NULL);
+			}
+			continue;
+		}
 
-		/* currently we ignore all but HFS partitions */
+		if (n >= MAXPARTITIONS || partoffp)
+			continue;
+
+		/* Currently we spoof HFS partitions only. */
 		if (strcmp(part->pmPartType, PART_TYPE_MAC) == 0) {
+			pp = &lp->d_partitions[n];
 			DL_SETPOFFSET(pp, part->pmPyPartStart);
 			DL_SETPSIZE(pp, part->pmPartBlkCnt);
 			pp->p_fstype = FS_HFS;
 			n++;
 		}
 	}
-	lp->d_npartitions = MAXPARTITIONS;
-
 	if (hfspartoff == -1)
-		return ("no OpenBSD parition inside DPME label");
+		return ("no OpenBSD partition inside DPME label");
 
-	if (partoffp)
-		*partoffp = hfspartoff;
+	lp->d_npartitions = MAXPARTITIONS;
 
 	if (spoofonly)
 		return (NULL);
