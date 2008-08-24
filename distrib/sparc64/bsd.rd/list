@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.26 2007/02/14 23:38:21 deraadt Exp $
+#	$OpenBSD: list,v 1.27 2008/08/24 20:13:35 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -76,3 +76,8 @@ SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
+
+COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
+COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
+COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
+COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
