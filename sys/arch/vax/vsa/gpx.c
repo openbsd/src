@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.18 2007/12/28 20:44:39 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.19 2008/08/24 14:49:59 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -696,7 +696,7 @@ gpx_reset_viper(struct gpx_screen *ss)
 	ss->ss_adder->sync_phase_adj = 0x0100;
 	ss->ss_adder->x_scan_conf = 0x00c8;
 	/*
-	 * got a bug in secound pass ADDER! lets take care of it...
+	 * got a bug in second pass ADDER! lets take care of it...
 	 *
 	 * normally, just use the code in the following bug fix code, but to
 	 * make repeated demos look pretty, load the registers as if there was

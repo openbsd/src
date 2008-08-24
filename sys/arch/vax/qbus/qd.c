@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.13 2008/01/23 16:37:57 jsing Exp $	*/
+/*	$OpenBSD: qd.c,v 1.14 2008/08/24 14:49:58 miod Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -3389,7 +3389,7 @@ setup_dragon(unit)
 	adder->sync_phase_adj = 0x0100;
 	adder->x_scan_conf = 0x00C8;
 	/*
-	 * got a bug in secound pass ADDER! lets take care of it 
+	 * got a bug in second pass ADDER! lets take care of it 
 	 *
 	 * normally, just use the code in the following bug fix code, but to
 	 * make repeated demos look pretty, load the registers as if there was
