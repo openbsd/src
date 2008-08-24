@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.84 2008/08/24 11:43:00 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.85 2008/08/24 19:46:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2446,8 +2446,18 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 int
 uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 {
+	struct uvideo_softc *sc = v;
+
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return (EINVAL);
+
+	fmt->fmt.pix.pixelformat = sc->sc_fmtgrp_cur->pixelformat;
+	fmt->fmt.pix.width = UGETW(sc->sc_fmtgrp_cur->frame_cur->wWidth);
+	fmt->fmt.pix.height = UGETW(sc->sc_fmtgrp_cur->frame_cur->wHeight);
+	fmt->fmt.pix.sizeimage = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+
+	DPRINTF(1, "%s: %s: current width=%d, height=%d\n",
+	    DEVNAME(sc), __func__, fmt->fmt.pix.width, fmt->fmt.pix.height);
 
 	return (0);
 }
