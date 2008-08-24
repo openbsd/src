@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.26 2008/08/18 23:04:28 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.27 2008/08/24 14:52:08 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -140,7 +140,8 @@ dz_vsbus_attach(parent, self, aux)
 
 	sc->sc_type = DZ_DZV;
 
-	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
+	/* no modem control bits except on line 2 */
+	sc->sc_dsr = (1 << 0) | (1 << 1) | (1 << 3);
 
 	sc->sc_rcvec = va->va_cvec;
 	scb_vecalloc(sc->sc_rcvec, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
