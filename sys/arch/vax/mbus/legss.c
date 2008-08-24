@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.2 2008/08/23 22:57:11 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.3 2008/08/24 20:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -270,7 +270,7 @@ legss_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = 0; /* XXX WSDISPLAY_TYPE_LEGSS; */
+		*(u_int *)data = WSDISPLAY_TYPE_LEGSS;
 		break;
 
 	case WSDISPLAYIO_GINFO:
