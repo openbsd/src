@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.15 2008/08/15 22:50:25 miod Exp $	*/
+/*	$OpenBSD: dz.c,v 1.16 2008/08/24 14:51:22 miod Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -252,12 +252,9 @@ dzxint(void *arg)
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;
 		else
-			ndflush (&tp->t_outq, cl->c_cc);
+			ndflush(&tp->t_outq, cl->c_cc);
 
-		if (tp->t_line)
-			(*linesw[tp->t_line].l_start)(tp);
-		else
-			dzstart(tp);
+		(*linesw[tp->t_line].l_start)(tp);
 	}
 }
 
@@ -449,9 +446,13 @@ dztty(dev_t dev)
 int
 dzstop(struct tty *tp, int flag)
 {
+	int s;
+
+	s = spltty();
 	if (tp->t_state & TS_BUSY)
 		if (!(tp->t_state & TS_TTSTOP))
 			tp->t_state |= TS_FLUSH;
+	splx(s);
 	return(0);
 }
 
@@ -561,13 +562,15 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 	unsigned status;
 	unsigned mbits;
 	unsigned bit;
+	int8_t tcr;
 	int s;
 
 	s = spltty();
 
-	mbits = 0;
-
+	tcr = DZ_READ_BYTE(sc, dr_tcr);
 	bit = (1 << line);
+
+	mbits = 0;
 
 	/* external signals as seen from the port */
 
@@ -623,6 +626,12 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		sc->sc_brk &= ~bit;
 		DZ_WRITE_BYTE(sc, dr_break, sc->sc_brk);
 	}
+
+	/*
+	 * On VAXstation 35x0/38x0, writing to the DTR register apparently
+	 * affects the TCR register.  Restore its value unconditionally.
+	 */
+	DZ_WRITE_BYTE(sc, dr_tcr, tcr);
 
 	splx(s);
 	return (mbits);
