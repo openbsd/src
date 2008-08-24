@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.45 2008/05/04 20:54:22 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.46 2008/08/24 23:44:44 todd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -75,7 +75,14 @@ void openpic_enable_irq_mask(int irq_mask);
 #define HWIRQ_MASK 0x0fffffff
 
 /* IRQ vector used for inter-processor interrupts. */
-#define IPI_VECTOR	64
+#define IPI_VECTOR_DDB 64
+#define IPI_VECTOR_NOP 65
+#ifdef MULTIPROCESSOR
+static struct evcount ipi_ddb[2];
+static struct evcount ipi_nop[2];
+static int ipi_nopirq = IPI_VECTOR_NOP;
+static int ipi_ddbirq = IPI_VECTOR_DDB;
+#endif
 
 static __inline u_int openpic_read(int);
 static __inline void openpic_write(int, u_int);
@@ -86,6 +93,7 @@ void openpic_init(void);
 void openpic_set_priority(int, int);
 static __inline int openpic_read_irq(int);
 static __inline void openpic_eoi(int);
+void openpic_ipi_ddb(void);
 
 struct openpic_softc {
 	struct device sc_dev;
@@ -664,6 +672,9 @@ openpic_send_ipi(int cpu)
 
 #endif
 
+
+/* XXX */ extern long hostid;
+
 void
 ext_intr_openpic()
 {
@@ -679,8 +690,16 @@ ext_intr_openpic()
 
 	while (realirq != 255) {
 #ifdef MULTIPROCESSOR
-		if (realirq == IPI_VECTOR) {
+		if (realirq == IPI_VECTOR_NOP) {
+			ipi_nop[ci->ci_cpuid].ec_count++;
 			openpic_eoi(ci->ci_cpuid);
+			realirq = openpic_read_irq(ci->ci_cpuid);
+			continue;
+		}
+		if (realirq == IPI_VECTOR_DDB) {
+			ipi_ddb[ci->ci_cpuid].ec_count++;
+			openpic_eoi(ci->ci_cpuid);
+			openpic_ipi_ddb();
 			realirq = openpic_read_irq(ci->ci_cpuid);
 			continue;
 		}
@@ -699,8 +718,8 @@ ext_intr_openpic()
 			openpic_eoi(ci->ci_cpuid);
 		} else {
 			openpic_enable_irq_mask(~imask[o_intrmaxlvl[realirq]]);
-			openpic_eoi(ci->ci_cpuid);
 			ocpl = splraise(imask[o_intrmaxlvl[realirq]]);
+			openpic_eoi(ci->ci_cpuid);
 
 			ih = o_intrhand[irq];
 			while (ih) {
@@ -761,8 +780,22 @@ openpic_init()
 	/* Set up inter-processor interrupts. */
 	x = openpic_read(OPENPIC_IPI_VECTOR(0));
 	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
-	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR;
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR_NOP;
 	openpic_write(OPENPIC_IPI_VECTOR(0), x);
+
+	evcount_attach(&ipi_nop[0], "ipi_nop0", (void *)&ipi_nopirq,
+	    &evcount_intr); 
+	evcount_attach(&ipi_nop[1], "ipi_nop1", (void *)&ipi_nopirq,
+	    &evcount_intr);
+
+	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR_DDB;
+	openpic_write(OPENPIC_IPI_VECTOR(1), x);
+	evcount_attach(&ipi_ddb[0], "ipi_ddb0", (void *)&ipi_ddbirq,
+	    &evcount_intr);
+	evcount_attach(&ipi_ddb[1], "ipi_ddb1", (void *)&ipi_ddbirq,
+	    &evcount_intr);
 #endif
 
 	/* XXX set spurious intr vector */
@@ -794,4 +827,30 @@ openpic_prog_button (void *arg)
 	printf("programmer button pressed, debugger not available\n");
 #endif
 	return 1;
+}
+
+void
+openpic_ipi_ddb()
+{
+	printf("ipi_ddb() called\n");
+	Debugger();
+}
+
+void
+ppc_send_ipi(struct cpu_info *ci, int id)
+{
+	printf("sending IPI %d to %d\n", id, ci->ci_cpuid);
+	switch (id) {
+	case PPC_IPI_NOP:
+		id = 0;
+		break;
+	case PPC_IPI_DDB:
+		id = 1;
+		break;
+	default:
+		printf("invalid ipi send to cpu %d %d\n", ci->ci_cpuid, id);
+		return;
+	}
+
+	openpic_write(OPENPIC_IPI(curcpu()->ci_cpuid, id), 1 << ci->ci_cpuid);
 }

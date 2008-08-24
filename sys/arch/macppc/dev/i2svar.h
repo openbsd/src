@@ -1,5 +1,5 @@
-/*	$OpenBSD: i2svar.h,v 1.3 2005/11/19 01:07:00 kettenis Exp $	*/
-/*	$Id: i2svar.h,v 1.3 2005/11/19 01:07:00 kettenis Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.4 2008/08/24 23:44:44 todd Exp $	*/
+/*	$Id: i2svar.h,v 1.4 2008/08/24 23:44:44 todd Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -61,6 +61,7 @@ struct i2s_softc {
 	void (*sc_setvolume)(struct i2s_softc *, int, int);
 	void (*sc_setbass)(struct i2s_softc *, int);
 	void (*sc_settreble)(struct i2s_softc *, int);
+	void (*sc_setinput)(struct i2s_softc *, int);
 
 	u_char *sc_reg;
 	void *sc_i2c;

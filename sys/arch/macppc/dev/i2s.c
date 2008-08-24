@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.11 2007/12/11 09:11:54 jakemsr Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.12 2008/08/24 23:44:44 todd Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -63,6 +63,9 @@ void i2s_mute_lineout(struct i2s_softc *, int);
 int i2s_cint(void *);
 u_char *i2s_gpio_map(struct i2s_softc *, char *, int *);
 void i2s_init(struct i2s_softc *, int);
+
+int i2s_intr(void *);
+int i2s_iintr(void *);
 
 /* XXX */
 void keylargo_fcr_enable(int, u_int32_t);
@@ -135,7 +138,8 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, i2s_intr, sc); */
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, i2s_intr,
 	    sc, sc->sc_dev.dv_xname);
-	/* intr_establish(iirq, iirq_type, IPL_AUDIO, i2s_intr, sc); */
+	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO, i2s_iintr,
+	    sc, sc->sc_dev.dv_xname);
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
@@ -169,6 +173,37 @@ i2s_intr(v)
 		if (status)	/* status == 0x8400 */
 			if (sc->sc_ointr)
 				(*sc->sc_ointr)(sc->sc_oarg);
+	}
+
+	return 1;
+}
+
+int
+i2s_iintr(v)
+	void *v;
+{
+	struct i2s_softc *sc = v;
+	struct dbdma_command *cmd = sc->sc_idmap;
+	u_int16_t c, status;
+
+	/* if not set we are not running */
+	if (!cmd)
+		return (0);
+	DPRINTF(("i2s_intr: cmd %x\n", cmd));
+
+	c = in16rb(&cmd->d_command);
+	status = in16rb(&cmd->d_status);
+
+	if (c >> 12 == DBDMA_CMD_IN_LAST)
+		sc->sc_idmap = sc->sc_idmacmd;
+	else
+		sc->sc_idmap++;
+
+	if (c & (DBDMA_INT_ALWAYS << 4)) {
+		cmd->d_status = 0;
+		if (status)	/* status == 0x8400 */
+			if (sc->sc_iintr)
+				(*sc->sc_iintr)(sc->sc_iarg);
 	}
 
 	return 1;
@@ -507,14 +542,15 @@ i2s_set_port(h, mc)
 		if (mc->un.mask == sc->sc_record_source)
 			return 0;
 		switch (mc->un.mask) {
-		case 1 << 0: /* CD */
-		case 1 << 1: /* microphone */
-		case 1 << 2: /* line in */
+		case 1 << 0: /* microphone */
+		case 1 << 1: /* line in */
 			/* XXX TO BE DONE */
 			break;
 		default: /* invalid argument */
 			return EINVAL;
 		}
+		if (sc->sc_setinput != NULL)
+			(*sc->sc_setinput)(sc, mc->un.mask);
 		sc->sc_record_source = mc->un.mask;
 		return 0;
 
@@ -617,16 +653,13 @@ i2s_query_devinfo(h, dip)
 		strlcpy(dip->label.name, AudioNsource, sizeof(dip->label.name));
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.s.num_mem = 3;
-		strlcpy(dip->un.s.member[0].label.name, AudioNcd,
+		dip->un.s.num_mem = 2;
+		strlcpy(dip->un.s.member[0].label.name, AudioNmicrophone,
 		    sizeof(dip->un.s.member[0].label.name));
 		dip->un.s.member[0].mask = 1 << 0;
-		strlcpy(dip->un.s.member[1].label.name, AudioNmicrophone,
+		strlcpy(dip->un.s.member[1].label.name, AudioNline,
 		    sizeof(dip->un.s.member[1].label.name));
 		dip->un.s.member[1].mask = 1 << 1;
-		strlcpy(dip->un.s.member[2].label.name, AudioNline,
-		    sizeof(dip->un.s.member[2].label.name));
-		dip->un.s.member[2].mask = 1 << 2;
 		return 0;
 
 	case I2S_VOL_INPUT:
@@ -763,9 +796,41 @@ i2s_trigger_input(h, start, end, bsize, intr, arg, param)
 	void *arg;
 	struct audio_params *param;
 {
-	DPRINTF(("i2s_trigger_input called\n"));
+	struct i2s_softc *sc = h;
+	struct i2s_dma *p;
+	struct dbdma_command *cmd = sc->sc_idmacmd;
+	vaddr_t spa, pa, epa;
+	int c;
 
-	return 1;
+	DPRINTF(("trigger_input %p %p 0x%x\n", start, end, bsize));
+
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	if (!p)
+		return -1;
+
+	sc->sc_iintr = intr;
+	sc->sc_iarg = arg;
+	sc->sc_idmap = sc->sc_idmacmd;
+   
+	spa = p->segs[0].ds_addr;
+	c = DBDMA_CMD_IN_MORE;
+	for (pa = spa, epa = spa + (end - start);
+	    pa < epa; pa += bsize, cmd++) {
+
+		if (pa + bsize == epa)
+			c = DBDMA_CMD_IN_LAST;
+
+		DBDMA_BUILD(cmd, c, 0, bsize, pa, DBDMA_INT_ALWAYS,
+			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	}
+
+	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
+	dbdma_st32(&cmd->d_cmddep, sc->sc_idbdma->d_paddr);
+		
+	dbdma_start(sc->sc_idma, sc->sc_idbdma);
+		
+	return 0;
 }
 
 
