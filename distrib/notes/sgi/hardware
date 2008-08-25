@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2008/01/15 18:55:48 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.5 2008/08/25 18:22:41 jasper Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 	O2 with the following CPU configurations:
 		R5000, R52xx and RM7000 with any secondary/tertiary caches.
@@ -24,6 +24,19 @@ Supported devices {:-include-:}:
         LSI Logic Fusion-MPT Message Passing Interface (mpi)
 - RS-232 devices:
         on-board NS16550 compatible serial ports (com)
+- Universal Serial Bus (USB) host controllers, including:
+		USB Universal Host Controller (uhci)
+		USB Open Host Controller (ohci)
+	Universal Serial Bus (USB) Devices
+		USB Ethernet adapters (aue, others untested)
+		USB Generic Human Interface Devices (catch-all) (uhid)
+		USB Hubs (uhub)
+		USB Keyboards (ukbd)
+		USB Mice (ums)
+		USB Mass Storage devices, i.e., USB floppy drives and USB
+		  memory stick controllers (umass)
+		USB Modems (umodem)
+		USB Printers (ulpt)
 - Miscellaneous devices:
         battery-backed real time clock
         ``soft'' power button as available on SGI O2 (power)
