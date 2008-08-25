@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.81 2008/08/22 03:19:02 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.82 2008/08/25 11:27:00 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -447,6 +447,7 @@ donot:
 		 */
 		for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 			struct partition *pp = &lp->d_partitions[8+n];
+			u_int8_t fstype;
 
 			if (dp2->dp_typ == DOSPTYP_OPENBSD)
 				continue;
@@ -459,17 +460,17 @@ donot:
 
 			switch (dp2->dp_typ) {
 			case DOSPTYP_UNUSED:
-				pp->p_fstype = FS_UNUSED;
+				fstype = FS_UNUSED;
 				n++;
 				break;
 
 			case DOSPTYP_LINUX:
-				pp->p_fstype = FS_EXT2FS;
+				fstype = FS_EXT2FS;
 				n++;
 				break;
 
 			case DOSPTYP_NTFS:
-				pp->p_fstype = FS_NTFS;
+				fstype = FS_NTFS;
 				n++;
 				break;
 
@@ -479,7 +480,7 @@ donot:
 			case DOSPTYP_FAT16L:
 			case DOSPTYP_FAT32:
 			case DOSPTYP_FAT32L:
-				pp->p_fstype = FS_MSDOS;
+				fstype = FS_MSDOS;
 				n++;
 				break;
 			case DOSPTYP_EXTEND:
@@ -492,25 +493,30 @@ donot:
 				wander = 1;
 				break;
 			default:
-				pp->p_fstype = FS_OTHER;
+				fstype = FS_OTHER;
 				n++;
 				break;
 			}
 
 			/*
-			 * There is no need to set the offset/size when
-			 * wandering; it would also invalidate the
-			 * disklabel checksum.
+			 * Don't set fstype/offset/size when wandering or just
+			 * looking for the offset of the OpenBSD partition. It
+			 * would invalidate the disklabel checksum!
 			 */
-			if (wander)
+			if (wander || partoffp)
 				continue;
 
+			pp->p_fstype = fstype;
 			if (letoh32(dp2->dp_start))
 				DL_SETPOFFSET(pp,
 				    letoh32(dp2->dp_start) + part_blkno);
 			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 		}
 	}
+	if (partoffp)
+		/* dospartoff has been set and we must not modify *lp. */
+		goto notfat;
+
 	lp->d_npartitions = MAXPARTITIONS;
 
 	if (n == 0 && part_blkno == DOSBBSECTOR) {
