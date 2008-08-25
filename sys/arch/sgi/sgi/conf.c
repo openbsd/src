@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2008/06/12 20:03:48 mglocker Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 2008/08/25 13:51:12 jsing Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,6 +128,13 @@ cdev_decl(pci);
 #include "pf.h"
 #include "systrace.h"
 
+#include "usb.h"
+#include "uhid.h"
+#include "ugen.h"
+#include "ulpt.h"
+#include "urio.h"
+#include "ucom.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -155,7 +162,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
-cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 26: */
 	cdev_mouse_init(NWSMOUSE, wsmouse),	/* 27: */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 28: */
@@ -191,6 +198,20 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 51: */
 #endif
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
+	cdev_notdef(),			/* 53: */
+	cdev_notdef(),			/* 54: */
+	cdev_notdef(),			/* 55: */
+	cdev_notdef(),			/* 56: */
+	cdev_notdef(),			/* 57: */
+	cdev_notdef(),			/* 58: */
+	cdev_notdef(),			/* 59: */
+	cdev_notdef(),			/* 60: */
+	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
+	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
+	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom)	/* 66: USB tty */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
