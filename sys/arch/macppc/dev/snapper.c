@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.30 2008/08/24 23:44:44 todd Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.31 2008/08/25 03:16:22 todd Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ struct {
 	int high, mid, low;
 } snapper_volumetab[] = {
 	{ 0x07, 0xF1, 0x7B }, /* 18.0 */
-	{ 0x07, 0x7F, 0xBB }, 0x/* 17.5 */
+	{ 0x07, 0x7F, 0xBB }, /* 17.5 */
 	{ 0x07, 0x14, 0x57 }, /* 17.0 */
 	{ 0x06, 0xAE, 0xF6 }, /* 16.5 */
 	{ 0x06, 0x4F, 0x40 }, /* 16.0 */
