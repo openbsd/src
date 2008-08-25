@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2008/07/30 17:37:44 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2008/08/25 14:05:51 jsing Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -153,6 +153,25 @@ bus_space_read_region(4,32)
 bus_space_read_region(8,64)
 
 /*----------------------------------------------------------------------------*/
+#define bus_space_read_raw_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_read_raw_region_,n)(bus_space_tag_t bst,			      \
+     bus_space_handle_t bsh,						      \
+     bus_addr_t ba, u_int8_t *x, size_t cnt)				      \
+{									      \
+	cnt >>= ((n) >> 1);						      \
+	while (cnt--) {							      \
+		CAT(bus_space_read_raw_multi_,n)(bst, bsh, ba, x, 1);	      \
+		ba += (n);						      \
+		x += (n);						      \
+	}								      \
+}
+
+bus_space_read_raw_region(2,16)
+bus_space_read_raw_region(4,32)
+bus_space_read_raw_region(8,64)
+
+/*----------------------------------------------------------------------------*/
 #define bus_space_write_multi(n,m)					      \
 static __inline void							      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
@@ -184,6 +203,25 @@ bus_space_write_region(1,8)
 bus_space_write_region(2,16)
 bus_space_write_region(4,32)
 bus_space_write_region(8,64)
+
+/*----------------------------------------------------------------------------*/
+#define bus_space_write_raw_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_raw_region_,n)(bus_space_tag_t bst,			      \
+     bus_space_handle_t bsh,						      \
+     bus_addr_t ba, const u_int8_t *x, size_t cnt)		              \
+{									      \
+	cnt >>= ((n) >> 1);						      \
+	while (cnt--) {							      \
+		CAT(bus_space_write_raw_multi_,n)(bst, bsh, ba, x, 1);	      \
+		ba += (n);						      \
+		x += (n);						      \
+	}								      \
+}
+
+bus_space_write_raw_region(2,16)
+bus_space_write_raw_region(4,32)
+bus_space_write_raw_region(8,64)
 
 /*----------------------------------------------------------------------------*/
 #define bus_space_set_region(n,m)					      \
