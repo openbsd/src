@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.11 2008/08/08 17:12:37 jsing Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.12 2008/08/25 14:53:34 jsing Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -71,6 +71,8 @@ int	fd;
 int	partno, partfirst, partblocks, parttype;
 struct	sgilabel *volhdr;
 int32_t	checksum;
+
+/* Volume header size in sectors. */
 u_int32_t volhdr_size = SGI_SIZE_VOLHDR;
 
 const char *vfilename = "";
@@ -78,7 +80,8 @@ const char *ufilename = "";
 
 struct disklabel lbl;
 
-unsigned char buf[DEV_BSIZE];
+unsigned char *buf;
+unsigned int bufsize;
 
 const char *sgi_types[] = {
 	"Volume Header",
@@ -113,6 +116,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, oflags;
+	char fname[FILENAME_MAX];
 	char *endp;
 
 	quiet = 0;
@@ -195,17 +199,28 @@ main(int argc, char *argv[])
 	oflags = ((mode == 'i' || mode == 'w' || mode == 'l' || mode == 'd'
 	    || mode == 'p') ? O_RDWR : O_RDONLY);
 
+	/* Open raw device. */
 	if ((fd = open(argv[0], oflags)) < 0) {
-		snprintf(buf, sizeof(buf), "/dev/r%s%c",
+		snprintf(fname, sizeof(fname), "/dev/r%s%c",
 		    argv[0], 'a' + getrawpartition());
-		if ((fd = open(buf, oflags)) < 0)
-			err(1, "open %s", buf);
+		if ((fd = open(fname, oflags)) < 0)
+			err(1, "open %s", fname);
 	}
 
-	if (read(fd, buf, sizeof(buf)) != sizeof(buf))
-		err(1, "read volhdr");
+	/* Get disklabel for device. */
 	if (ioctl(fd, DIOCGDINFO, &lbl) == -1)
 		err(1, "ioctl DIOCGDINFO");
+
+	/* Allocate a buffer that matches the device sector size. */
+	bufsize = lbl.d_secsize;
+	if (bufsize < sizeof(struct sgilabel))
+		errx(1, "sector size is smaller than SGI volume header!\n");
+	if ((buf = malloc(bufsize)) == NULL)
+		err(1, "failed to allocate buffer");
+
+	/* Read SGI volume header. */
+	if (read(fd, buf, bufsize) != bufsize)
+		err(1, "read volhdr");
 	volhdr = (struct sgilabel *)buf;
 
 	if (mode == 'i') {
@@ -239,11 +254,13 @@ display_vol(void)
 	int32_t *l;
 	int i;
 
-	printf("disklabel shows %d sectors\n", lbl.d_secperunit);
 	l = (int32_t *)buf;
 	checksum = 0;
-	for (i = 0; i < sizeof(buf) / sizeof(int32_t); ++i)
+	for (i = 0; i < sizeof(struct sgilabel) / sizeof(int32_t); ++i)
 		checksum += betoh32(l[i]);
+
+	printf("disklabel shows %d sectors with %d bytes per sector\n",
+	    lbl.d_secperunit, lbl.d_secsize);
 	printf("checksum: %08x%s\n", checksum, checksum == 0 ? "" : " *ERROR*");
 	printf("root part: %d\n", betoh32(volhdr->root));
 	printf("swap part: %d\n", betoh32(volhdr->swap));
@@ -281,7 +298,7 @@ display_vol(void)
 void
 init_volhdr(void)
 {
-	memset(buf, 0, sizeof(buf));
+	memset(volhdr, 0, sizeof(struct sgilabel));
 	volhdr->magic = htobe32(SGILABEL_MAGIC);
 	volhdr->root = htobe16(0);
 	volhdr->swap = htobe16(1);
@@ -296,14 +313,16 @@ init_volhdr(void)
 	volhdr->dp.dp_secbytes = htobe16(lbl.d_secsize);
 	volhdr->dp.dp_interleave = htobe16(lbl.d_interleave);
 	volhdr->dp.dp_nretries = htobe32(22);
-	volhdr->partitions[10].blocks = htobe32(lbl.d_secperunit);
+	volhdr->partitions[10].blocks =
+	    htobe32(DL_SECTOBLK(&lbl, lbl.d_secperunit));
 	volhdr->partitions[10].first = 0;
 	volhdr->partitions[10].type = htobe32(SGI_PTYPE_VOLUME);
-	volhdr->partitions[8].blocks = htobe32(volhdr_size);
+	volhdr->partitions[8].blocks = htobe32(DL_SECTOBLK(&lbl, volhdr_size));
 	volhdr->partitions[8].first = 0;
 	volhdr->partitions[8].type = htobe32(SGI_PTYPE_VOLHDR);
-	volhdr->partitions[0].blocks = htobe32(lbl.d_secperunit - volhdr_size);
-	volhdr->partitions[0].first = htobe32(volhdr_size);
+	volhdr->partitions[0].blocks =
+	    htobe32(DL_SECTOBLK(&lbl, lbl.d_secperunit - volhdr_size));
+	volhdr->partitions[0].first = htobe32(DL_SECTOBLK(&lbl, volhdr_size));
 	volhdr->partitions[0].type = htobe32(SGI_PTYPE_BSD);
 	write_volhdr();
 }
@@ -329,10 +348,10 @@ read_file(void)
 		err(1, "open %s", ufilename);
 	i = betoh32(volhdr->voldir[i].bytes);
 	while (i > 0) {
-		if (read(fd, buf, sizeof(buf)) != sizeof(buf))
+		if (read(fd, buf, bufsize) != bufsize)
 			err(1, "read file");
-		fwrite(buf, 1, i > sizeof(buf) ? sizeof(buf) : i, fp);
-		i -= i > sizeof(buf) ? sizeof(buf) : i;
+		fwrite(buf, 1, i > bufsize ? bufsize : i, fp);
+		i -= i > bufsize ? bufsize : i;
 	}
 	fclose(fp);
 }
@@ -342,16 +361,18 @@ write_file(void)
 {
 	FILE *fp;
 	int slot;
-	int block, i;
+	int block, i, fsize, fbufsize;
 	struct stat st;
-	char fbuf[DEV_BSIZE];
+	char *fbuf;
 
 	if (!quiet)
 		printf("Writing file %s\n", ufilename);
+
 	if (stat(ufilename, &st) != 0)
 		err(1, "stat %s", ufilename);
 	if (st.st_size == 0)
 		errx(1, "%s: file is empty", vfilename);
+
 	if (!quiet)
 		printf("File %s has %lld bytes\n", ufilename, st.st_size);
 	slot = -1;
@@ -395,14 +416,20 @@ write_file(void)
 	/* Write the file itself. */
 	if (lseek(fd, block * DEV_BSIZE, SEEK_SET) == -1)
 		err(1, "lseek write");
+	fbufsize = volhdr->dp.dp_secbytes;
+	if ((fbuf = malloc(fbufsize)) == NULL)
+		err(1, "failed to allocate buffer");
 	i = st.st_size;
 	fp = fopen(ufilename, "r");
 	while (i > 0) {
-		fread(fbuf, 1, i > sizeof(fbuf) ? sizeof(fbuf) : i, fp);
-		if (write(fd, fbuf, sizeof(fbuf)) != sizeof(fbuf))
+		fsize = i > fbufsize ? fbufsize : i;
+		fread(fbuf, 1, fsize, fp);
+		if (write(fd, fbuf, fsize) != fsize)
 			err(1, "write file");
-		i -= i > sizeof(fbuf) ? sizeof(fbuf) : i;
+		i -= fsize;
 	}
+	fclose(fp);
+	free(fbuf);
 }
 
 void
@@ -493,7 +520,7 @@ write_volhdr(void)
 		display_vol();
 	if (lseek(fd, 0, SEEK_SET) == -1)
 		err(1, "lseek 0");
-	if (write(fd, buf, sizeof(buf)) != sizeof(buf))
+	if (write(fd, buf, sizeof(struct sgilabel)) != sizeof(struct sgilabel))
 		err(1, "write volhdr");
 }
 
@@ -504,16 +531,21 @@ allocate_space(int size)
 	int first;
 
 	blocks = howmany(size, DEV_BSIZE);
-	first = 2;
+	first = roundup(2 * DEV_BSIZE, volhdr->dp.dp_secbytes) / DEV_BSIZE;
+
 	for (n = 0; n < SGI_SIZE_VOLDIR;) {
 		if (volhdr->voldir[n].name[0]) {
 			if (first < (betoh32(volhdr->voldir[n].block) +
 			    howmany(betoh32(volhdr->voldir[n].bytes),
-			    DEV_BSIZE)) &&
-			    (first + blocks) > betoh32(volhdr->voldir[n].block)) {
-				first = betoh32(volhdr->voldir[n].block) +
+			        DEV_BSIZE)) &&
+			    (first + blocks) >
+			        betoh32(volhdr->voldir[n].block)) {
+
+				first = roundup(
+				    betoh32(volhdr->voldir[n].block) +
 				    howmany(betoh32(volhdr->voldir[n].bytes),
-				    DEV_BSIZE);
+				        DEV_BSIZE),
+				    volhdr->dp.dp_secbytes / DEV_BSIZE);
 #if DEBUG
 				printf("allocate: "
 				    "n=%d first=%d blocks=%d size=%d\n",
@@ -551,7 +583,7 @@ checksum_vol(void)
 
 	volhdr->checksum = checksum = 0;
 	l = (int32_t *)buf;
-	for (i = 0; i < sizeof(buf) / sizeof(int32_t); ++i)
+	for (i = 0; i < sizeof(struct sgilabel) / sizeof(int32_t); ++i)
 		checksum += betoh32(l[i]);
 	volhdr->checksum = htobe32(-checksum);
 }
