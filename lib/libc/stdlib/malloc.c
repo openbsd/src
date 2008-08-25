@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.97 2008/08/23 07:49:38 djm Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.98 2008/08/25 17:56:17 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1078,8 +1078,6 @@ omalloc(size_t sz, int zero_fill)
 			errno = ENOMEM;
 			return NULL;
 		}
-		if (malloc_junk)
-			memset(p + sz, SOME_JUNK, psz - sz);
 		if (malloc_guard) {
 			if (mprotect((char *)p + psz - malloc_guard,
 			    malloc_guard, PROT_NONE))
@@ -1087,11 +1085,28 @@ omalloc(size_t sz, int zero_fill)
 			malloc_guarded += malloc_guard;
 		}
 
-		/* shift towards the end */
 		if (malloc_move &&
-		    sz - malloc_guard < MALLOC_PAGESIZE - MALLOC_MINSIZE)
+		    sz - malloc_guard < MALLOC_PAGESIZE - MALLOC_MINSIZE) {
+			/* fill whole allocation */
+			if (malloc_junk)
+				memset(p, SOME_JUNK, psz - malloc_guard);
+			/* shift towards the end */
 			p = ((char *)p) + ((MALLOC_PAGESIZE - MALLOC_MINSIZE -
 			    (sz - malloc_guard)) & ~(MALLOC_MINSIZE-1));
+			/* fill zeros if needed and overwritten above */
+			if (zero_fill && malloc_junk)
+				memset(p, 0, sz - malloc_guard);
+		} else {
+			if (malloc_junk) {
+				if (zero_fill)
+					memset(p + sz - malloc_guard,
+					    SOME_JUNK, psz - sz);
+				else
+					memset(p,
+					    SOME_JUNK, psz - malloc_guard);
+			}
+		}
+
 	} else {
 		/* takes care of SOME_JUNK */
 		p = malloc_bytes(&g_pool, sz);
