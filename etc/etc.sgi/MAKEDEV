@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.20 2008/06/28 21:46:05 mglocker Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.21 2008/08/25 14:00:33 jsing Exp 
 #	OpenBSD: MAKEDEV.common,v 1.38 2008/06/12 22:38:14 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -53,6 +53,13 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # USB devices:
+#	uall	All USB devices
+#	ttyU*	USB serial ports
+#	ugen*	Generic USB devices
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	urio*	Diamond Multimedia Rio 500
+#	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -284,6 +291,43 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+usb*)
+	[ "$i" = "usb" ] && u= || u=$U
+	M usb$u c 61 $U 660
+	;;
+
+urio*)
+	M urio$U c 65 $U 660
+	;;
+
+ulpt*)
+	M ulpt$U c 64 $U 660
+	;;
+
+uhid*)
+	M uhid$U c 62 $U 660
+	;;
+
+ugen*)
+	n=$(($U*16))
+	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
+	do
+		M ugen$U.$j c 63 $(($n+10#$j)) 660
+	done
+	;;
+
+ttyU[0-9a-zA-Z])
+	U=${i#ttyU*}
+	o=$(alph2d $U)
+	M ttyU$U c 66 $o 660 dialer uucp
+	M cuaU$U c 66 $(($o+128)) 660 dialer uucp
+	;;
+
+uall)
+	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
+	R uhid2 uhid3 urio0 usb0 usb1 usb2 usb3 usb4 usb5
+	;;
+
 wsmouse*)
 	M wsmouse$U c 27 $U 600
 	;;
@@ -395,9 +439,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci0 pci1 pci2 pci3 video0 audio0 uk0 random
-	R tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R local wscons pci0 pci1 pci2 pci3 uall video0 audio0 uk0
+	R random tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1
+	R wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
