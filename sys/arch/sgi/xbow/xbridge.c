@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.3 2008/07/30 17:37:46 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.4 2008/08/25 13:35:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -96,17 +96,17 @@ void	xbridge_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint8_t);
 void	xbridge_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint16_t);
-void	xbow_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
-void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
-void	xbow_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
-void	xbow_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
-void	xbow_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
-void	xbow_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+void	xbridge_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
 
 bus_addr_t xbridge_pa_to_device(paddr_t);
