@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 2008/07/01 04:50:59 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.23 2008/08/25 16:15:53 jasper Exp $
 #
 
 machine		sgi mips64
@@ -65,6 +65,37 @@ pci*		at macepcibr?	# PCI is on pci bridge
 #### SCSI controllers
 ahc*		at pci?
 siop*		at pci?
+
+# USB Controllers
+ohci*		at pci?	# Open Host Controller
+uhci*		at pci?	# Universal Host Controller
+ehci*		at pci?	# Enhanced Host Controller
+
+# USB bus support
+usb*		at ohci?
+usb*		at uhci?
+usb*		at ehci?
+
+# USB devices
+uhub*		at usb?		# USB Hubs
+uhub*		at uhub?	# USB Hubs
+umodem*		at uhub?	# USB Modems/Serial
+ucom*		at umodem?
+uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
+ucom*		at uvscom?
+ubsa*		at uhub?	# Belkin serial adapter
+ucom*		at ubsa?
+ulpt*		at uhub?	# USB Printers	
+umass*		at uhub?	# USB Mass Storage devices
+scsibus*	at umass?
+uhidev*		at uhub?	# Human Interface Devices
+ums*		at uhidev?	# USB mouse
+wsmouse*	at ums? mux 0
+ukbd*		at uhidev?	# USB keyboard
+wskbd*		at ukbd? mux 1
+uhid*		at uhidev?	# USB generic HID support
+aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
+ugen*		at uhub?	# USB Generic driver
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
