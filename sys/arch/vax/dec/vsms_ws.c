@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsms_ws.c,v 1.3 2008/08/22 21:05:07 miod Exp $	*/
+/*	$OpenBSD: vsms_ws.c,v 1.4 2008/08/26 19:46:23 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ lkms_input_tablet(struct lkms_softc *sc, int data)
 			sc->buttons |= WSMS_BUTTON(3);
 		if ((data & FRAME_T_B4) != 0)
 			sc->buttons |= WSMS_BUTTON(4);
-		if ((data & FRAME_T_PR) != 0)
+		if ((data & FRAME_T_PR) == 0)
 			sc->buttons |= WSMS_BUTTON(5);
 		break;
 	case 1:
