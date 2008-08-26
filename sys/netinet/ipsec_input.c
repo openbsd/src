@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.88 2008/07/24 10:55:44 henning Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.89 2008/08/26 12:18:01 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -563,9 +563,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	/* Add pf tag if requested. */
 	if (pf_tag_packet(m, tdbp->tdb_tag, -1))
 		DPRINTF(("failed to tag ipsec packet\n"));
-
-	/* clear state key ptr to prevent incorrect linking */
-	m->m_pkthdr.pf.statekey = NULL;
+	pf_pkt_addr_changed(m);
 #endif
 
 	if (tdbp->tdb_flags & TDBF_TUNNELING)
