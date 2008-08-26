@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: devopen.c,v 1.4 2008/08/26 18:36:21 miod Exp $ */
 /*	$NetBSD: devopen.c,v 1.10 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lib/libsa/stand.h"
+#include <lib/libsa/stand.h>
 
 #include "machine/rpb.h"
 #include "machine/sid.h"
@@ -39,7 +39,7 @@
 #define	VAX780 1
 #include "machine/ka750.h"
 
-#include "arch/vax/bi/bireg.h"
+#include <arch/vax/bi/bireg.h>
 
 #include "vaxstand.h"
 
@@ -77,7 +77,6 @@ devopen(f, fname, file)
 		if (cnvtab[i] == dev)
 			dp = devsw + i;
 
-	x = 0;
 	if ((s = index((char *)fname, '('))) {
 		*s++ = 0;
 
@@ -88,17 +87,37 @@ devopen(f, fname, file)
 		if (i == ndevs) {
 			printf("No such device - Configured devices are:\n");
 			for (dp = devsw, i = 0; i < ndevs; i++, dp++)
-				if (dp->dv_name)
+				if (dp->dv_name && (i == 0 ||
+				    strcmp(dp->dv_name, (dp[-1]).dv_name) != 0))
 					printf(" %s", dp->dv_name);
 			printf("\n");
-			return -1;
+			return EINVAL;
 		}
+
 		dev = cnvtab[i];
 		if ((c = index(s, ')')) == 0)
 			goto usage;
-
 		*c++ = 0;
 
+		/*
+		 * If the user has specified sd(), we need to pick the
+		 * correct BDEV_SDx value, depending on the machine type.
+		 */
+		if (dev == BDEV_SD) {
+			switch (vax_boardtype) {
+			case VAX_BTYP_46:
+			case VAX_BTYP_48:
+			case VAX_BTYP_49:
+			case VAX_BTYP_1303:
+				dev = BDEV_SDN;		/* asc(4) */
+				break;
+			case VAX_BTYP_60:
+				dev = BDEV_SDS;		/* sii(4) */
+				break;
+			}
+		}
+
+		x = 0;
 		if (*s) do {
 			a[x++] = atoi(s);
 			while (*s >= '0' && *s <= '9')
@@ -124,7 +143,7 @@ devopen(f, fname, file)
 
 	if (!dp->dv_open) {
 		printf("Can't open device type %d\n", dev);
-		return(ENODEV);
+		return ENXIO;
 	}
 	f->f_dev = dp;
 	bootrpb.unit = unit;
@@ -201,5 +220,5 @@ devopen(f, fname, file)
 
 usage:
 	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");
-	return -1;
+	return EINVAL;
 }

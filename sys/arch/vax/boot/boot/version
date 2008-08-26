@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.7 2008/08/12 17:23:21 miod Exp $
+$OpenBSD: version,v 1.8 2008/08/26 18:36:21 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -14,7 +14,7 @@ is taken as the current.
 	Standalone driver for the Digital Equipment Unibus Network Adapter
 	(DEUNA). This allows 11/750 owners to install from a single TU58
 	cassette.
-	Adopt to the RPB changes. Complete change of how network devices are
+	Adapt to the RPB changes. Complete change of how network devices are
 	handled. No more hacks to find bus addresses.
 1.5:	Standalone device driver for DEBNx (ni) ethernet controllers.
 1.6:	Add support for VAX 6000 + VAX 8000. Tweak console routines.
@@ -35,3 +35,5 @@ is taken as the current.
 1.12:	Glass console support on VXT2000{,+}.
 1.13:	Enable the loadfile code added in revision 1.8.
 1.14:	Support for VaxStation 3[58][24]0.
+1.15:	Restore boot sd()... functionality on machines with asc(4) or sii(4)
+	controllers.
