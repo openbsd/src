@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.378 2008/08/19 02:34:04 deraadt Exp $
+$OpenBSD: usbdevs,v 1.379 2008/08/26 22:24:30 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -269,6 +269,7 @@ vendor SYNTECH		0x0745	Syntech Information
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
+vendor CYBERPOWER	0x0764	CyberPower
 vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
@@ -1038,6 +1039,9 @@ product CSR BLUECORE		0x1000	BlueCore
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
+
+/* CyberPower products */
+product CYBERPOWER 1500		0x0501	1500
 
 /* CyberTAN Technology products */
 product CYBERTAN TG54USB	0x1666	TG54USB
