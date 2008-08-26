@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.54 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.55 2008/08/26 18:29:12 martynas Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 26 2008 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -206,6 +206,7 @@ For
 .Cm e ,
 .Cm E ,
 .Cm f ,
+.Cm F ,
 .Cm g ,
 and
 .Cm G
@@ -456,7 +457,7 @@ conversion uses the letter
 to introduce the exponent.
 The exponent always contains at least two digits; if the value is zero,
 the exponent is 00.
-.It Cm f
+.It Cm fF
 The
 .Li double
 argument is rounded and converted to decimal notation in the style
@@ -468,6 +469,18 @@ is equal to the precision specification.
 If the precision is missing, it is taken as 6; if the precision is
 explicitly zero, no decimal-point character appears.
 If a decimal point appears, at least one digit appears before it.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm f
+or [-]INF
+.Pq Cm F ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm f
+or [-]NAN
+.Pq Cm F ,
+respectively.
 .It Cm gG
 The
 .Li double

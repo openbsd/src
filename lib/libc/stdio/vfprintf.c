@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.49 2008/08/26 17:56:30 martynas Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.50 2008/08/26 18:29:12 martynas Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -523,6 +523,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (prec == -1) {
@@ -541,13 +542,19 @@ reswitch:	switch (ch) {
 			if (isinf(_double)) {
 				if (_double < 0)
 					sign = '-';
-				cp = "Inf";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "INF";
+				else
+					cp = "inf";
 				size = 3;
 				flags &= ~ZEROPAD;
 				break;
 			}
 			if (isnan(_double)) {
-				cp = "NaN";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "NAN";
+				else
+					cp = "nan";
 				size = 3;
 				flags &= ~ZEROPAD;
 				break;
@@ -564,13 +571,14 @@ reswitch:	switch (ch) {
 				else
 					ch = 'g';
 			}
-			if (ch <= 'e') {	/* 'e' or 'E' fmt */
+			if (ch == 'e' || ch == 'E') {	/* 'e' or 'E' fmt */
 				--expt;
 				expsize = exponent(expstr, expt, ch);
 				size = expsize + ndig;
 				if (ndig > 1 || flags & ALT)
 					++size;
-			} else if (ch == 'f') {		/* f fmt */
+			} else if (ch == 'f' || ch == 'F') {
+							/* 'f' or 'F' fmt */
 				if (expt > 0) {
 					size = expt;
 					if (prec || flags & ALT)
@@ -783,7 +791,7 @@ number:			if ((dprec = prec) >= 0)
 		if ((flags & FPT) == 0) {
 			PRINT(cp, size);
 		} else {	/* glue together f_p fragments */
-			if (ch >= 'f') {	/* 'f' or 'g' */
+			if (ch >= 'f' || ch == 'F') {	/* 'f', 'g' or 'F' */
 				if (_double == 0) {
 					/* kludge for __dtoa irregularity */
 					PRINT("0", 1);
@@ -1071,6 +1079,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (flags & LONGDBL)
@@ -1265,7 +1274,7 @@ cvt(double value, int ndigits, int flags, int *sign, int *decpt, int ch,
 	int mode;
 	char *digits, *bp, *rve;
 
-	if (ch == 'f') {
+	if (ch == 'f' || ch == 'F') {
 		mode = 3;		/* ndigits after the decimal point */
 	} else {
 		/* To obtain ndigits after the decimal point for the 'e'
@@ -1281,7 +1290,7 @@ cvt(double value, int ndigits, int flags, int *sign, int *decpt, int ch,
 	digits = __dtoa(value, mode, ndigits, decpt, sign, &rve);
 	if ((ch != 'g' && ch != 'G') || flags & ALT) {/* Print trailing zeros */
 		bp = digits + ndigits;
-		if (ch == 'f') {
+		if (ch == 'f' || ch == 'F') {
 			if (*digits == '0' && value)
 				*decpt = -ndigits + 1;
 			bp += *decpt;
