@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.40 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.41 2008/08/26 15:39:27 kettenis Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -398,6 +398,11 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		if (newover != NULL) {
 			free(newover, M_UVMAMAP);
 		}
+#ifdef UVM_AMAP_PPREF
+		if (newppref != NULL) {
+			free(newppref, M_UVMAMAP);
+		}
+#endif
 		return (ENOMEM);
 	}
 	KASSERT(amap->am_maxslot < slotneed);
