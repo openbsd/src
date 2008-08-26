@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.615 2008/08/22 00:35:08 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.616 2008/08/26 12:17:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6274,4 +6274,14 @@ pf_check_congestion(struct ifqueue *ifq)
 		return (1);
 	else
 		return (0);
+}
+
+/*
+ * must be called whenever any addressing information such as
+ * address, port, protocol has changed
+ */
+void
+pf_pkt_addr_changed(struct mbuf *m)
+{
+	m->m_pkthdr.pf.statekey = NULL;
 }
