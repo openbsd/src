@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.75 2008/05/31 02:41:25 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.76 2008/08/26 21:06:29 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -100,7 +100,6 @@ int		gem_disable_tx(struct gem_softc *);
 void		gem_rxdrain(struct gem_softc *);
 int		gem_add_rxbuf(struct gem_softc *, int idx);
 void		gem_setladrf(struct gem_softc *);
-int		gem_encap(struct gem_softc *, struct mbuf *, u_int32_t *);
 
 /* MII methods & callbacks */
 int		gem_mii_readreg(struct device *, int, int);
@@ -1600,58 +1599,6 @@ chipit:
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
 }
 
-int
-gem_encap(struct gem_softc *sc, struct mbuf *mhead, u_int32_t *bixp)
-{
-	u_int64_t flags;
-	u_int32_t cur, frag, i;
-	bus_dmamap_t map;
-
-	cur = frag = *bixp;
-	map = sc->sc_txd[cur].sd_map;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, mhead,
-	    BUS_DMA_NOWAIT) != 0) {
-		return (ENOBUFS);
-	}
-
-	if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
-		bus_dmamap_unload(sc->sc_dmatag, map);
-		return (ENOBUFS);
-	}
-
-	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	for (i = 0; i < map->dm_nsegs; i++) {
-		sc->sc_txdescs[frag].gd_addr =
-		    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
-		flags = (map->dm_segs[i].ds_len & GEM_TD_BUFSIZE) |
-		    (i == 0 ? GEM_TD_START_OF_PACKET : 0) |
-		    ((i == (map->dm_nsegs - 1)) ? GEM_TD_END_OF_PACKET : 0);
-		sc->sc_txdescs[frag].gd_flags = GEM_DMA_WRITE(sc, flags);
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
-		    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
-		    BUS_DMASYNC_PREWRITE);
-		cur = frag;
-		if (++frag == GEM_NTXDESC)
-			frag = 0;
-	}
-
-	sc->sc_tx_cnt += map->dm_nsegs;
-	sc->sc_txd[*bixp].sd_map = sc->sc_txd[cur].sd_map;
-	sc->sc_txd[cur].sd_map = map;
-	sc->sc_txd[cur].sd_mbuf = mhead;
-
-	bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK, frag);
-
-	*bixp = frag;
-
-	/* sync descriptors */
-
-	return (0);
-}
-
 /*
  * Transmit interrupt.
  */
@@ -1694,17 +1641,70 @@ void
 gem_start(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
-	struct mbuf *m;
-	u_int32_t bix;
+	struct mbuf *m, *m0;
+	u_int64_t flags;
+	bus_dmamap_t map;
+	u_int32_t cur, frag, i;
+	int error;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	bix = sc->sc_tx_prod;
-	while (sc->sc_txd[bix].sd_mbuf == NULL) {
+	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		/*
+		 * Encapsulate this packet and start it going...
+		 * or fail...
+		 */
+
+		cur = frag = sc->sc_tx_prod;
+		map = sc->sc_txd[cur].sd_map;
+		m0 = NULL;
+
+		error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+		    BUS_DMA_NOWAIT);
+		if (error != 0 && error != EFBIG)
+			goto drop;
+		if (error != 0) {
+			/* Too many fragments, linearize. */
+			MGETHDR(m0, M_DONTWAIT, MT_DATA);
+			if (m0 == NULL)
+				goto drop;
+			if (m->m_pkthdr.len > MHLEN) {
+				MCLGET(m0, M_DONTWAIT);
+				if (!(m0->m_flags & M_EXT)) {
+					m_freem(m0);
+					goto drop;
+				}
+			}
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
+			m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
+			error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m0,
+			    BUS_DMA_NOWAIT);
+			if (error != 0) {
+				m_freem(m0);
+				goto drop;
+			}
+		}
+
+		if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
+			bus_dmamap_unload(sc->sc_dmatag, map);
+			ifp->if_flags |= IFF_OACTIVE;
+			if (m0 != NULL)
+				m_free(m0);
+			break;
+		}
+
+		/* We are now committed to transmitting the packet. */
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m0 != NULL) {
+			m_free(m);
+			m = m0;
+		}
 
 #if NBPFILTER > 0
 		/*
@@ -1715,18 +1715,42 @@ gem_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		/*
-		 * Encapsulate this packet and start it going...
-		 * or fail...
-		 */
-		if (gem_encap(sc, m, &bix)) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
+		bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		for (i = 0; i < map->dm_nsegs; i++) {
+			sc->sc_txdescs[frag].gd_addr =
+			    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
+			flags = map->dm_segs[i].ds_len & GEM_TD_BUFSIZE;
+			if (i == 0)
+				flags |= GEM_TD_START_OF_PACKET;
+			if (i == (map->dm_nsegs - 1))
+				flags |= GEM_TD_END_OF_PACKET;
+			sc->sc_txdescs[frag].gd_flags =
+			    GEM_DMA_WRITE(sc, flags);
+			bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
+			    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
+			    BUS_DMASYNC_PREWRITE);
+			cur = frag;
+			if (++frag == GEM_NTXDESC)
+				frag = 0;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		sc->sc_tx_cnt += map->dm_nsegs;
+		sc->sc_txd[sc->sc_tx_prod].sd_map = sc->sc_txd[cur].sd_map;
+		sc->sc_txd[cur].sd_map = map;
+		sc->sc_txd[cur].sd_mbuf = m;
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK, frag);
+		sc->sc_tx_prod = frag;
+
 		ifp->if_timer = 5;
 	}
 
-	sc->sc_tx_prod = bix;
+	return;
+
+ drop:
+	IFQ_DEQUEUE(&ifp->if_snd, m);
+	m_free(m);
+	ifp->if_oerrors++;
 }
