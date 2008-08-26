@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.240 2008/08/24 20:24:43 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.241 2008/08/26 19:43:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1793,8 +1793,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	caddr_t			kva;
 #ifdef __sparc64__
-	char			namebuf[32];
-	int			subvendor;
+	char			name[32];
 #endif
 
 	sc->bge_pa = *pa;
@@ -1869,13 +1868,16 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * SEEPROM check.
 	 */
 #ifdef __sparc64__
-	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "subsystem-vendor-id",
-	    &subvendor, sizeof(subvendor)) == sizeof(subvendor)) {
-		if (subvendor == PCI_VENDOR_SUN)
-			sc->bge_flags |= BGE_NO_EEPROM;
-	}
-	if (OF_getprop(findroot(), "name", namebuf, sizeof(namebuf)) > 0 &&
-	    strcmp(namebuf, "TAD,Viper") == 0)
+	/*
+	 * Onboard interfaces on UltraSPARC systems generally don't
+	 * have a SEEPROM fitted.  These interfaces, and cards that
+	 * have FCode, are named "network" by the PROM, whereas cards
+	 * without FCode show up as "ethernet".  Since we don't really
+	 * need the information from the SEEPROM on cards that have
+	 * FCode it's fine to pretend they don't have one.
+	 */
+	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "name", name,
+	    sizeof(name)) > 0 && strcmp(name, "network") == 0)
 		sc->bge_flags |= BGE_NO_EEPROM;
 #endif
 
