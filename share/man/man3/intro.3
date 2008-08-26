@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.36 2008/06/10 07:01:01 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.37 2008/08/26 08:59:49 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 10 2008 $
+.Dd $Mdocdate: August 26 2008 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -55,13 +55,6 @@ option of the compiler.
 The various libraries (followed by the loader flag):
 .Pp
 .Bl -tag -width "libkvm" -compact
-.It libbfd Pq Fl lbfd
-GNU binary file descriptor library.
-Allows applications to operate on object files,
-regardless of the object file format.
-See
-.Sq info bfd .
-.Pp
 .It libc Pq Fl lc
 Standard C library functions.
 When using the C compiler
@@ -300,9 +293,6 @@ library, and is a hard link to
 .Em libocurses .
 See
 .Xr otermcap 3 .
-.Pp
-.It libopcodes Pq Fl lopcodes
-GNU opcode library.
 .Pp
 .It libossaudio Pq Fl lossaudio
 Provides an emulation of the OSS
@@ -590,7 +580,6 @@ for more details.
 .Sh FILES
 .Bl -tag -width /usr/lib/libotermcap.a -compact
 .It Pa /usr/lib/libasn1.a
-.It Pa /usr/lib/libbfd.a
 .It Pa /usr/lib/libc.a
 .It Pa /usr/lib/libcom_err.a
 .It Pa /usr/lib/libcompat.a
@@ -621,7 +610,6 @@ for more details.
 .It Pa /usr/lib/libncurses.a
 .It Pa /usr/lib/libobjc.a
 .It Pa /usr/lib/libocurses.a
-.It Pa /usr/lib/libopcodes.a
 .It Pa /usr/lib/libossaudio.a
 .It Pa /usr/lib/libotermcap.a
 .It Pa /usr/lib/libpanel.a
