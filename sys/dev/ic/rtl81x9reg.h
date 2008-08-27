@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.51 2008/08/13 03:59:16 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.52 2008/08/27 20:38:59 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -119,7 +119,6 @@
 #define RL_TXLIST_ADDR_HI	0x0024	/* 64 bits, 256 byte alignment */
 #define RL_TXLIST_ADDR_HPRIO_LO	0x0028	/* 64 bits, 256 byte aligned */
 #define RL_TXLIST_ADDR_HPRIO_HI	0x002C	/* 64 bits, 256 byte aligned */
-#define RL_CFG2		0x0053
 #define RL_TIMERINT		0x0054	/* interrupt on timer expire */
 #define RL_TXSTART		0x00D9	/* 8 bits */
 #define RL_CPLUS_CMD		0x00E0	/* 16 bits */
@@ -220,7 +219,7 @@
 #define RL_ISR_RX_OVERRUN	0x0010
 #define RL_ISR_PKT_UNDERRUN	0x0020
 #define RL_ISR_LINKCHG		0x0020	/* 8169 only */
-#define RL_ISR_FIFO_OFLOW	0x0040	/* 8139 only */
+#define RL_ISR_FIFO_OFLOW	0x0040
 #define RL_ISR_TX_DESC_UNAVAIL	0x0080	/* C+ only */
 #define RL_ISR_SWI		0x0100	/* C+ only */
 #define RL_ISR_CABLE_LEN_CHGD	0x2000
