@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.75 2008/08/27 09:05:03 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.76 2008/08/27 10:01:18 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2025,6 +2025,7 @@ ath_rx_proc(void *arg, int npending)
 		if (sc->sc_drvbpf) {
 			struct mbuf mb;
 
+			sc->sc_rxtap.wr_flags = IEEE80211_RADIOTAP_F_FCS;
 			sc->sc_rxtap.wr_rate =
 			    sc->sc_hwmap[ds->ds_rxstat.rs_rate] &
 			    IEEE80211_RATE_VAL;

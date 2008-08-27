@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.8 2006/06/23 21:34:15 reyk Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.9 2008/08/27 10:01:18 damien Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -202,5 +202,6 @@ enum ieee80211_radiotap_type {
 #define	IEEE80211_RADIOTAP_F_FRAG	0x08	/* sent/received
 						 * with fragmentation
 						 */
+#define	IEEE80211_RADIOTAP_F_FCS	0x10	/* frame includes FCS */
 
 #endif /* _NET_IF_IEEE80211RADIOTAP_H_ */
