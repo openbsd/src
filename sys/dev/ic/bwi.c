@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.79 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.80 2008/08/27 09:14:36 damien Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -292,6 +292,8 @@ void		 bwi_iter_func(void *, struct ieee80211_node *);
 void		 bwi_amrr_timeout(void *);
 void		 bwi_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		     int);
+struct ieee80211_node
+		*bwi_node_alloc(struct ieee80211com *ic);
 int		 bwi_dma_alloc(struct bwi_softc *);
 void		 bwi_dma_free(struct bwi_softc *);
 int		 bwi_dma_ring_alloc(struct bwi_softc *,
@@ -877,6 +879,7 @@ bwi_attach(struct bwi_softc *sc)
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwi_newstate;
 	ic->ic_newassoc = bwi_newassoc;
+	ic->ic_node_alloc = bwi_node_alloc;
 
 	ieee80211_media_init(ifp, bwi_media_change, ieee80211_media_status);
 
@@ -7512,6 +7515,18 @@ bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	    i--);
 
 	ni->ni_txrate = i;
+}
+
+struct ieee80211_node *
+bwi_node_alloc(struct ieee80211com *ic)
+{
+	struct bwi_node *bn;
+
+	bn = malloc(sizeof(*bn), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bn == NULL)
+		return (NULL);
+
+	return ((struct ieee80211_node *)bn);
 }
 
 int
