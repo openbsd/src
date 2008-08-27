@@ -1727,6 +1727,10 @@ classify_argument (mode, type, classes, bit_offset)
   if (bytes < 0)
     return 0;
 
+  if (mode != VOIDmode
+      && MUST_PASS_IN_STACK (mode, type))
+    return 0;
+
   if (type && AGGREGATE_TYPE_P (type))
     {
       int i;
@@ -14810,6 +14814,17 @@ x86_machine_dependent_reorg (first)
     if (insert)
       emit_insn_before (gen_nop (), ret);
   }
+}
+
+/* Return if we do not know how to pass TYPE solely in registers.  */
+bool
+ix86_must_pass_in_stack (mode, type)
+	enum machine_mode mode;
+	tree type;
+{
+   if (default_must_pass_in_stack (mode, type))
+     return true;
+   return (!TARGET_64BIT && type && mode == TImode);
 }
 
 #include "gt-i386.h"

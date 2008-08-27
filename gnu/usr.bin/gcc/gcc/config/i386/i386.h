@@ -1638,18 +1638,7 @@ enum reg_class
    definition that is usually appropriate, refer to expr.h for additional
    documentation. If `REG_PARM_STACK_SPACE' is defined, the argument will be
    computed in the stack and then loaded into a register.  */
-#define MUST_PASS_IN_STACK(MODE, TYPE)				\
-  ((TYPE) != 0							\
-   && (TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST		\
-       || TREE_ADDRESSABLE (TYPE)				\
-       || ((MODE) == TImode)					\
-       || ((MODE) == BLKmode 					\
-	   && ! ((TYPE) != 0					\
-		 && TREE_CODE (TYPE_SIZE (TYPE)) == INTEGER_CST \
-		 && 0 == (int_size_in_bytes (TYPE)		\
-			  % (PARM_BOUNDARY / BITS_PER_UNIT)))	\
-	   && (FUNCTION_ARG_PADDING (MODE, TYPE)		\
-	       == (BYTES_BIG_ENDIAN ? upward : downward)))))
+#define MUST_PASS_IN_STACK(MODE, TYPE) ix86_must_pass_in_stack ((MODE), (TYPE))
 
 /* Value is the number of bytes of arguments automatically
    popped when returning from a subroutine call.
