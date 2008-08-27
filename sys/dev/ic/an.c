@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.55 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: an.c,v 1.56 2008/08/27 09:05:03 damien Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -281,8 +281,10 @@ an_attach(struct an_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_PMGT | IEEE80211_C_IBSS |
-	    IEEE80211_C_MONITOR;
+	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_PMGT | IEEE80211_C_MONITOR;
+#ifndef IEEE80211_STA_ONLY
+	ic->ic_caps |= IEEE80211_C_IBSS;
+#endif
 	ic->ic_state = IEEE80211_S_INIT;
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, sc->sc_caps.an_oemaddr);
 
@@ -675,8 +677,11 @@ an_linkstat_intr(struct an_softc *sc)
 	DPRINTF(("an_linkstat_intr: status 0x%x\n", status));
 
 	if (status == AN_LINKSTAT_ASSOCIATED) {
-		if (ic->ic_state != IEEE80211_S_RUN ||
-		    ic->ic_opmode == IEEE80211_M_IBSS)
+		if (ic->ic_state != IEEE80211_S_RUN
+#ifndef IEEE80211_STA_ONLY
+		    || ic->ic_opmode == IEEE80211_M_IBSS
+#endif
+		    )
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	} else {
 		if (ic->ic_opmode == IEEE80211_M_STA)
@@ -1004,10 +1009,12 @@ an_init(struct ifnet *ifp)
 		    AN_OPMODE_INFRASTRUCTURE_STATION;
 		sc->sc_config.an_rxmode = AN_RXMODE_BC_MC_ADDR;
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		sc->sc_config.an_opmode = AN_OPMODE_IBSS_ADHOC;
 		sc->sc_config.an_rxmode = AN_RXMODE_BC_MC_ADDR;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		sc->sc_config.an_opmode =
 		    AN_OPMODE_INFRASTRUCTURE_STATION;
@@ -1329,11 +1336,14 @@ an_media_change(struct ifnet *ifp)
 		error = ENETRESET;
 	}
 
+#ifndef IEEE80211_STA_ONLY
 	if (ime->ifm_media & IFM_IEEE80211_ADHOC)
 		newmode = IEEE80211_M_IBSS;
 	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
 		newmode = IEEE80211_M_HOSTAP;
-	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
+	else
+#endif
+	if (ime->ifm_media & IFM_IEEE80211_MONITOR)
 		newmode = IEEE80211_M_MONITOR;
 	else
 		newmode = IEEE80211_M_STA;
@@ -1381,12 +1391,14 @@ an_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_ADHOC;
 		break;
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.54 2008/08/14 16:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.55 2008/08/27 09:05:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -472,6 +472,7 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
 	return memcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Encrypt the Key Data field of an EAPOL-Key frame using the specified Key
  * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
@@ -529,6 +530,7 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		break;
 	}
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*
  * Decrypt the Key Data field of an EAPOL-Key frame using the specified Key

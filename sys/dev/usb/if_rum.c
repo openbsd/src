@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.77 2008/08/19 02:34:04 deraadt Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.78 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -183,7 +183,9 @@ int		rum_bbp_init(struct rum_softc *);
 int		rum_init(struct ifnet *);
 void		rum_stop(struct ifnet *, int);
 int		rum_load_microcode(struct rum_softc *, const u_char *, size_t);
+#ifndef IEEE80211_STA_ONLY
 int		rum_prepare_beacon(struct rum_softc *);
+#endif
 void		rum_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 void		rum_amrr_start(struct rum_softc *, struct ieee80211_node *);
@@ -359,9 +361,11 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps =
-	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
+#ifndef IEEE80211_STA_ONLY
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
+#endif
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
@@ -683,9 +687,11 @@ rum_task(void *arg)
 			rum_set_bssid(sc, ni->ni_bssid);
 		}
 
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS)
 			rum_prepare_beacon(sc);
+#endif
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			rum_enable_tsf_sync(sc);
@@ -1173,11 +1179,13 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		    ic->ic_flags) + sc->sifs;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
+#ifndef IEEE80211_STA_ONLY
 		/* tell hardware to set timestamp in probe responses */
 		if ((wh->i_fc[0] &
 		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 			flags |= RT2573_TX_TIMESTAMP;
+#endif
 	}
 
 #if NBPFILTER > 0
@@ -1745,6 +1753,7 @@ rum_enable_tsf_sync(struct rum_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA) {
 		/*
 		 * Change default 16ms TBTT adjustment to 8ms.
@@ -1752,6 +1761,7 @@ rum_enable_tsf_sync(struct rum_softc *sc)
 		 */
 		rum_write(sc, RT2573_TXRX_CSR10, 1 << 12 | 8);
 	}
+#endif
 
 	tmp = rum_read(sc, RT2573_TXRX_CSR9) & 0xff000000;
 
@@ -1761,9 +1771,10 @@ rum_enable_tsf_sync(struct rum_softc *sc)
 	tmp |= RT2573_TSF_TICKING | RT2573_ENABLE_TBTT;
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		tmp |= RT2573_TSF_MODE(1);
+#ifndef IEEE80211_STA_ONLY
 	else
 		tmp |= RT2573_TSF_MODE(2) | RT2573_GENERATE_BEACON;
-
+#endif
 	rum_write(sc, RT2573_TXRX_CSR9, tmp);
 }
 
@@ -2064,7 +2075,9 @@ rum_init(struct ifnet *ifp)
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		tmp |= RT2573_DROP_CTL | RT2573_DROP_VER_ERROR |
 		       RT2573_DROP_ACKCTS;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+#endif
 			tmp |= RT2573_DROP_TODS;
 		if (!(ifp->if_flags & IFF_PROMISC))
 			tmp |= RT2573_DROP_NOT_TO_ME;
@@ -2147,6 +2160,7 @@ rum_load_microcode(struct rum_softc *sc, const u_char *ucode, size_t size)
 	return error;
 }
 
+#ifndef IEEE80211_STA_ONLY
 int
 rum_prepare_beacon(struct rum_softc *sc)
 {
@@ -2179,6 +2193,7 @@ rum_prepare_beacon(struct rum_softc *sc)
 
 	return 0;
 }
+#endif
 
 void
 rum_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)

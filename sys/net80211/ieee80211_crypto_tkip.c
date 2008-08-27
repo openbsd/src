@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.7 2008/08/12 16:45:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.8 2008/08/27 09:05:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,10 +80,13 @@ ieee80211_tkip_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 	 * Use bits 128-191 as the Michael key for AA->SPA and bits
 	 * 192-255 as the Michael key for SPA->AA.
 	 */
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		ctx->txmic = &k->k_key[16];
 		ctx->rxmic = &k->k_key[24];
-	} else {
+	} else
+#endif
+	{
 		ctx->rxmic = &k->k_key[16];
 		ctx->txmic = &k->k_key[24];
 	}
@@ -491,6 +494,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	return NULL;
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * This function is called in HostAP mode to deauthenticate all STAs using
  * TKIP as their pairwise or group cipher (as part of TKIP countermeasures).
@@ -509,6 +513,7 @@ ieee80211_tkip_deauth(void *arg, struct ieee80211_node *ni)
 		ieee80211_node_leave(ic, ni);
 	}
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*
  * This function can be called by the software TKIP crypto code or by the
@@ -541,20 +546,26 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	}
 	ic->ic_tkip_micfail = ticks;
 
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+	switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
 		/* refuse new TKIP associations for the next 60 seconds */
 		ic->ic_flags |= IEEE80211_F_COUNTERM;
 
 		/* deauthenticate all currently associated STAs using TKIP */
 		ieee80211_iterate_nodes(ic, ieee80211_tkip_deauth, ic);
-
-	} else if (ic->ic_opmode == IEEE80211_M_STA) {
+		break;
+#endif
+	case IEEE80211_M_STA:
 		/* deauthenticate from the AP.. */
 		IEEE80211_SEND_MGMT(ic, ic->ic_bss,
 		    IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_MIC_FAILURE);
 		/* ..and find another one */
 		(void)ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
+	default:
+		break;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.68 2008/08/14 16:02:24 damien Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.69 2008/08/27 09:05:03 damien Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -98,15 +98,19 @@ void	 rtw_rxdesc_init(struct rtw_rxdesc_blk *, struct rtw_rxsoft *, int, int);
 void	 rtw_rxring_fixup(struct rtw_softc *);
 void	 rtw_io_enable(struct rtw_regs *, u_int8_t, int);
 void	 rtw_intr_rx(struct rtw_softc *, u_int16_t);
+#ifndef IEEE80211_STA_ONLY
 void	 rtw_intr_beacon(struct rtw_softc *, u_int16_t);
 void	 rtw_intr_atim(struct rtw_softc *);
+#endif
 void	 rtw_transmit_config(struct rtw_softc *);
 void	 rtw_pktfilt_load(struct rtw_softc *);
 void	 rtw_start(struct ifnet *);
 void	 rtw_watchdog(struct ifnet *);
 void	 rtw_next_scan(void *);
+#ifndef IEEE80211_STA_ONLY
 void	 rtw_recv_mgmt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
+#endif
 struct ieee80211_node *rtw_node_alloc(struct ieee80211com *);
 void	 rtw_node_free(struct ieee80211com *, struct ieee80211_node *);
 void	 rtw_media_status(struct ifnet *, struct ifmediareq *);
@@ -192,8 +196,10 @@ struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct ifqueue *, int,
 	    struct rtw_txsoft_blk **, struct rtw_txdesc_blk **,
 	    struct ieee80211_node **, short *);
 uint64_t rtw_tsf_extend(struct rtw_regs *, u_int32_t);
+#ifndef IEEE80211_STA_ONLY
 void	 rtw_ibss_merge(struct rtw_softc *, struct ieee80211_node *,
 	    u_int32_t);
+#endif
 void	 rtw_idle(struct rtw_regs *);
 void	 rtw_led_attach(struct rtw_led_state *, void *);
 void	 rtw_led_init(struct rtw_regs *);
@@ -1455,6 +1461,7 @@ rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
 		rtw_start(&sc->sc_if);
 }
 
+#ifndef IEEE80211_STA_ONLY
 void
 rtw_intr_beacon(struct rtw_softc *sc, u_int16_t isr)
 {
@@ -1512,6 +1519,7 @@ rtw_intr_atim(struct rtw_softc *sc)
 	/* TBD */
 	return;
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 #ifdef RTW_DEBUG
 void
@@ -1845,10 +1853,12 @@ rtw_intr(void *arg)
 			rtw_intr_rx(sc, isr & RTW_INTR_RX);
 		if ((isr & RTW_INTR_TX) != 0)
 			rtw_intr_tx(sc, isr & RTW_INTR_TX);
+#ifndef IEEE80211_STA_ONLY
 		if ((isr & RTW_INTR_BEACON) != 0)
 			rtw_intr_beacon(sc, isr & RTW_INTR_BEACON);
 		if ((isr & RTW_INTR_ATIMINT) != 0)
 			rtw_intr_atim(sc);
+#endif
 		if ((isr & RTW_INTR_IOERROR) != 0)
 			rtw_intr_ioerror(sc, isr & RTW_INTR_IOERROR);
 		if ((isr & RTW_INTR_TIMEOUT) != 0)
@@ -2242,6 +2252,7 @@ rtw_set_nettype(struct rtw_softc *sc, enum ieee80211_opmode opmode)
 	msr = RTW_READ8(&sc->sc_regs, RTW_MSR) & ~RTW_MSR_NETYPE_MASK;
 
 	switch (opmode) {
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_IBSS:
 		msr |= RTW_MSR_NETYPE_ADHOC_OK;
@@ -2249,12 +2260,15 @@ rtw_set_nettype(struct rtw_softc *sc, enum ieee80211_opmode opmode)
 	case IEEE80211_M_HOSTAP:
 		msr |= RTW_MSR_NETYPE_AP_OK;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		/* XXX */
 		msr |= RTW_MSR_NETYPE_NOLINK;
 		break;
 	case IEEE80211_M_STA:
 		msr |= RTW_MSR_NETYPE_INFRA_OK;
+		break;
+	default:
 		break;
 	}
 	RTW_WRITE8(&sc->sc_regs, RTW_MSR, msr);
@@ -2289,11 +2303,13 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 	case IEEE80211_M_MONITOR:
 		sc->sc_rcr |= RTW_RCR_MONITOR;
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_IBSS:
 		/* receive broadcasts in our BSS */
 		sc->sc_rcr |= RTW_RCR_ADD3;
 		break;
+#endif
 	default:
 		break;
 	}
@@ -3446,16 +3462,18 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	case IEEE80211_S_RUN:
 		switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
 		case IEEE80211_M_HOSTAP:
 		case IEEE80211_M_IBSS:
 			rtw_set_nettype(sc, IEEE80211_M_MONITOR);
 			/*FALLTHROUGH*/
 		case IEEE80211_M_AHDEMO:
+#endif
 		case IEEE80211_M_STA:
 			rtw_join_bss(sc, ic->ic_bss->ni_bssid,
 			    ic->ic_bss->ni_intval);
 			break;
-		case IEEE80211_M_MONITOR:
+		default:
 			break;
 		}
 		rtw_set_nettype(sc, ic->ic_opmode);
@@ -3484,6 +3502,7 @@ rtw_tsf_extend(struct rtw_regs *regs, u_int32_t rstamp)
 	return ((u_int64_t)tsfth << 32) | rstamp;
 }
 
+#ifndef IEEE80211_STA_ONLY
 void
 rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni,
     u_int32_t rstamp)
@@ -3525,6 +3544,7 @@ rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	}
 	return;
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 struct ieee80211_node *
 rtw_node_alloc(struct ieee80211com *ic)
@@ -4058,9 +4078,10 @@ rtw_attach(struct rtw_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
-
+	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
+#ifndef IEEE80211_STA_ONLY
+	ic->ic_caps |= IEEE80211_C_HOSTAP | IEEE80211_C_IBSS;
+#endif
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	rtw_led_attach(&sc->sc_led_state, (void *)sc);
@@ -4075,8 +4096,10 @@ rtw_attach(struct rtw_softc *sc)
 	mtbl->mt_newstate = ic->ic_newstate;
 	ic->ic_newstate = rtw_newstate;
 
+#ifndef IEEE80211_STA_ONLY
 	mtbl->mt_recv_mgmt = ic->ic_recv_mgmt;
 	ic->ic_recv_mgmt = rtw_recv_mgmt;
+#endif
 
 	mtbl->mt_node_free = ic->ic_node_free;
 	ic->ic_node_free = rtw_node_free;

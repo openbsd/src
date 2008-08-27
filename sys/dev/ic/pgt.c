@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.50 2008/07/21 18:43:19 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.51 2008/08/27 09:05:03 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -849,7 +849,9 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 	if (ni != NULL) {
 		if (ic->ic_opmode == IEEE80211_M_STA) {
 			*ni = ieee80211_ref_node(ic->ic_bss);
-		} else {
+		}
+#ifndef IEEE80211_STA_ONLY
+		else {
 			*ni = ieee80211_find_node(ic, eh->ether_shost);
 			/*
 			 * Make up associations for ad-hoc mode.  To support
@@ -869,6 +871,7 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 				return (NULL);
 			}
 		}
+#endif
 		(*ni)->ni_inact = 0;
 	}
 	snap->llc_dsap = snap->llc_ssap = LLC_SNAP_LSAP;
@@ -890,6 +893,7 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 		IEEE80211_ADDR_COPY(frame->i_addr2, ic->ic_bss->ni_bssid);
 		IEEE80211_ADDR_COPY(frame->i_addr3, eh->ether_shost);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		frame->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -904,6 +908,7 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 		IEEE80211_ADDR_COPY(frame->i_addr2, eh->ether_shost);
 		IEEE80211_ADDR_COPY(frame->i_addr3, eh->ether_dhost);
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1988,10 +1993,11 @@ pgt_net_attach(struct pgt_softc *sc)
 		}
 	}
 
-	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_IBSS | IEEE80211_C_PMGT |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_TXPMGT | IEEE80211_C_SHSLOT |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR;
-
+	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_PMGT | IEEE80211_C_TXPMGT |
+	    IEEE80211_C_SHSLOT | IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR;
+#ifndef IEEE80211_STA_ONLY
+	ic->ic_caps |= IEEE80211_C_IBSS | IEEE80211_C_HOSTAP;
+#endif
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 
@@ -2095,6 +2101,7 @@ pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_ADHOC;
 		break;
@@ -2104,6 +2111,7 @@ pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
@@ -2511,6 +2519,7 @@ pgt_watchdog(struct ifnet *ifp)
 	    sc->sc_ic.ic_opmode != IEEE80211_M_MONITOR)
 		pgt_async_update(sc);
 
+#ifndef IEEE80211_STA_ONLY
 	/*
 	 * As a firmware-based HostAP, we should not time out
 	 * nodes inside the driver additionally to the timeout
@@ -2530,6 +2539,7 @@ pgt_watchdog(struct ifnet *ifp)
 	default:
 		break;
 	}
+#endif
 	ieee80211_watchdog(ifp);
 	ifp->if_timer = 1;
 }
@@ -2597,6 +2607,7 @@ pgt_update_hw_from_sw(struct pgt_softc *sc, int keepassoc, int keepnodes)
 			bsstype = PGT_BSS_TYPE_STA;
 			dot1x = PGT_DOT1X_AUTH_ENABLED;
 			break;
+#ifndef IEEE80211_STA_ONLY
 		case IEEE80211_M_IBSS:
 			if (ifp->if_flags & IFF_PROMISC)
 				mode = PGT_MODE_CLIENT;	/* what to do? */
@@ -2626,6 +2637,7 @@ pgt_update_hw_from_sw(struct pgt_softc *sc, int keepassoc, int keepnodes)
 			if (sc->sc_wds)
 				config |= PGT_CONFIG_WDS;
 			break;
+#endif
 		case IEEE80211_M_MONITOR:
 			mode = PGT_MODE_PROMISCUOUS;
 			bsstype = PGT_BSS_TYPE_ANY;
@@ -2911,8 +2923,10 @@ pgt_update_sw_from_hw(struct pgt_softc *sc, struct pgt_async_trap *pa,
 				    letoh16(mlme->pom_id),
 				    letoh16(mlme->pom_state),
 				    letoh16(mlme->pom_code)));
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 				pgt_hostap_handle_mlme(sc, oid, mlme);
+#endif
 			break;
 		}
 		return;
@@ -2990,9 +3004,11 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		else
 			ieee80211_free_allnodes(ic);
 
+#ifndef IEEE80211_STA_ONLY
 		/* Just use any old channel; we override it anyway. */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			ieee80211_create_ibss(ic, ic->ic_ibss_chan);
+#endif
 		break;
 	case IEEE80211_S_RUN:
 		ic->ic_if.if_timer = 1;

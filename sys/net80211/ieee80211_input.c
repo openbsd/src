@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.100 2008/08/14 16:07:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.101 2008/08/27 09:05:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -73,16 +73,22 @@ enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
 int	ieee80211_parse_rsn_body(struct ieee80211com *, const u_int8_t *,
 	    u_int, struct ieee80211_rsnparams *);
 int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
+#endif
 void	ieee80211_recv_probe_resp(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_probe_req(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *);
+#endif
 void	ieee80211_recv_auth(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_assoc_req(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
+#endif
 void	ieee80211_recv_assoc_resp(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
 void	ieee80211_recv_deauth(struct ieee80211com *, struct mbuf *,
@@ -208,6 +214,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ni->ni_inact = 0;
 	}
 
+#ifndef IEEE80211_STA_ONLY
 	if ((ic->ic_caps & IEEE80211_C_PMGT) &&
 	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    ni->ni_state == IEEE80211_STA_ASSOC) {
@@ -237,7 +244,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			}
 		}
 	}
-
+#endif
 	switch (type) {
 	case IEEE80211_FC0_TYPE_DATA:
 		switch (ic->ic_opmode) {
@@ -267,6 +274,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				goto out;
 			}
 			break;
+#ifndef IEEE80211_STA_ONLY
 		case IEEE80211_M_IBSS:
 		case IEEE80211_M_AHDEMO:
 			if (dir != IEEE80211_FC1_DIR_NODS) {
@@ -325,7 +333,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				goto err;
 			}
 			break;
-		case IEEE80211_M_MONITOR:
+#endif	/* IEEE80211_STA_ONLY */
+		default:
 			/* can't get there */
 			goto out;
 		}
@@ -375,10 +384,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ic->ic_stats.is_rx_wrongdir++;
 			goto err;
 		}
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_AHDEMO) {
 			ic->ic_stats.is_rx_ahdemo_mgt++;
 			goto out;
 		}
+#endif
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 		/* drop frames without interest */
@@ -423,10 +434,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				if (ic->ic_state == IEEE80211_S_SCAN)
 					doprint = 1;
 				break;
+#ifndef IEEE80211_STA_ONLY
 			case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
 				if (ic->ic_opmode == IEEE80211_M_IBSS)
 					doprint = 1;
 				break;
+#endif
 			default:
 				doprint = 1;
 				break;
@@ -464,9 +477,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ic->ic_stats.is_rx_ctl++;
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 		switch (subtype) {
+#ifndef IEEE80211_STA_ONLY
 		case IEEE80211_FC0_SUBTYPE_PS_POLL:
 			ieee80211_recv_pspoll(ic, m, ni);
 			break;
+#endif
 		case IEEE80211_FC0_SUBTYPE_BAR:
 			/* NYI */
 			break;
@@ -498,10 +513,8 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
-	struct ieee80211_node *ni1;
 	struct ether_header *eh;
 	struct mbuf *m1;
-	int error, len;
 
 	eh = mtod(m, struct ether_header *);
 
@@ -520,9 +533,13 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	 * bridge EAPOL frames as suggested in C.1.1 of IEEE Std 802.1X.
 	 */
 	m1 = NULL;
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
 	    eh->ether_type != htons(ETHERTYPE_PAE)) {
+		struct ieee80211_node *ni1;
+		int error, len;
+
 		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 			m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (m1 == NULL)
@@ -550,6 +567,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 			}
 		}
 	}
+#endif
 	if (m != NULL) {
 #if NBPFILTER > 0
 		/*
@@ -975,8 +993,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 */
 #ifdef DIAGNOSTIC
 	if (ic->ic_opmode != IEEE80211_M_STA &&
+#ifndef IEEE80211_STA_ONLY
 	    ic->ic_opmode != IEEE80211_M_IBSS &&
 	    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+#endif
 	    ic->ic_state != IEEE80211_S_SCAN) {
 		panic("%s: impossible operating mode", __func__);
 	}
@@ -1085,6 +1105,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		DPRINTF(("invalid SSID element\n"));
 		return;
 	}
+
 	if (
 #if IEEE80211_CHAN_MAX < 255
 	    chan > IEEE80211_CHAN_MAX ||
@@ -1194,7 +1215,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	if (ic->ic_state == IEEE80211_S_SCAN &&
+#ifndef IEEE80211_STA_ONLY
 	    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+#endif
 	    (ic->ic_flags & IEEE80211_F_RSNON)) {
 		struct ieee80211_rsnparams rsn;
 		const u_int8_t *saveie = NULL;
@@ -1255,7 +1278,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 * Anything else can be discarded (XXX and should be handled
 	 * above so we don't do so much work).
 	 */
-	if (ic->ic_opmode == IEEE80211_M_IBSS || (is_new && isprobe)) {
+	if (
+#ifndef IEEE80211_STA_ONLY
+	    ic->ic_opmode == IEEE80211_M_IBSS ||
+#endif
+	    (is_new && isprobe)) {
 		/*
 		 * Fake an association so the driver can setup it's
 		 * private state.  The rate set has been setup above;
@@ -1266,6 +1293,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*-
  * Probe request frame format:
  * [tlv] SSID
@@ -1351,6 +1379,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*-
  * Authentication frame format:
@@ -1385,17 +1414,20 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 		DPRINTF(("unsupported auth algorithm %d from %s\n",
 		    algo, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		ic->ic_stats.is_rx_auth_unsupported++;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			/* XXX hack to workaround calling convention */
 			IEEE80211_SEND_MGMT(ic, ni,
 				IEEE80211_FC0_SUBTYPE_AUTH,
 				(seq+1) | (IEEE80211_STATUS_ALG<<16));
 		}
+#endif
 		return;
 	}
 	ieee80211_auth_open(ic, wh, ni, rxi, seq, status);
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*-
  * (Re)Association request frame format:
  * [2]   Capability information
@@ -1636,6 +1668,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	} else
 		ieee80211_node_join(ic, ni, resp);
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*-
  * (Re)Association response frame format:
@@ -1785,7 +1818,6 @@ void
 ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
-	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm;
 	u_int16_t reason;
@@ -1806,17 +1838,19 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_new_state(ic, IEEE80211_S_AUTH,
 		    IEEE80211_FC0_SUBTYPE_DEAUTH);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
-			if (ifp->if_flags & IFF_DEBUG)
+			if (ic->ic_if.if_flags & IFF_DEBUG)
 				printf("%s: station %s deauthenticated "
 				    "by peer (reason %d)\n",
-				    ifp->if_xname,
+				    ic->ic_if.if_xname,
 				    ether_sprintf(ni->ni_macaddr),
 				    reason);
 			ieee80211_node_leave(ic, ni);
 		}
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1830,7 +1864,6 @@ void
 ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
-	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm;
 	u_int16_t reason;
@@ -1851,17 +1884,19 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
 		    IEEE80211_FC0_SUBTYPE_DISASSOC);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
-			if (ifp->if_flags & IFF_DEBUG)
+			if (ic->ic_if.if_flags & IFF_DEBUG)
 				printf("%s: station %s disassociated "
 				    "by peer (reason %d)\n",
-				    ifp->if_xname,
+				    ic->ic_if.if_xname,
 				    ether_sprintf(ni->ni_macaddr),
 				    reason);
 			ieee80211_node_leave(ic, ni);
 		}
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1934,18 +1969,22 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 		ieee80211_recv_probe_resp(ic, m0, ni, rxi, 1);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
 		ieee80211_recv_probe_req(ic, m0, ni, rxi);
 		break;
+#endif
 	case IEEE80211_FC0_SUBTYPE_AUTH:
 		ieee80211_recv_auth(ic, m0, ni, rxi);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
 		ieee80211_recv_assoc_req(ic, m0, ni, rxi, 0);
 		break;
 	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
 		ieee80211_recv_assoc_req(ic, m0, ni, rxi, 1);
 		break;
+#endif
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
 		ieee80211_recv_assoc_resp(ic, m0, ni, 0);
 		break;
@@ -1969,6 +2008,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Process an incoming PS-Poll control frame (see 11.2).
  */
@@ -2020,3 +2060,4 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
 	(*ifp->if_start)(ifp);
 }
+#endif	/* IEEE80211_STA_ONLY */

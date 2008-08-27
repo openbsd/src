@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.87 2008/07/21 18:43:18 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.88 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -268,7 +268,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps =
+#ifndef IEEE80211_STA_ONLY
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+#endif
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
@@ -688,19 +690,21 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_ADHOC;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
-	case IEEE80211_M_AHDEMO:
-	case IEEE80211_M_HOSTAP:
+	default:
 		/* should not get there */
 		break;
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * This is only used for IBSS mode where the firmware expect an index to an
  * internal node table instead of a destination address.
@@ -731,6 +735,7 @@ iwi_find_txnode(struct iwi_softc *sc, const uint8_t *macaddr)
 
 	return i;
 }
+#endif
 
 int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
@@ -751,10 +756,13 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_IBSS) {
 			sc->nsta = 0;	/* flush IBSS nodes */
 			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
-		} else if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		} else
+#endif
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			iwi_set_chan(sc, ic->ic_ibss_chan);
 
 		/* assoc led on */
@@ -934,8 +942,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	wh = mtod(m, struct ieee80211_frame *);
 
 	rxi.rxi_flags = 0;
-	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
-	    ic->ic_opmode != IEEE80211_M_MONITOR) {
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * Hardware decrypts the frame itself but leaves the WEP bit
 		 * set in the 802.11 header and doesn't remove the IV and CRC
@@ -1296,6 +1303,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&desc->wh);
 	m_adj(m0, sizeof (struct ieee80211_frame));
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		station = iwi_find_txnode(sc, desc->wh.i_addr1);
 		if (station == -1) {
@@ -1305,6 +1313,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 			return 0;
 		}
 	}
+#endif
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1826,7 +1835,11 @@ iwi_config(struct iwi_softc *sc)
 	config.multicast_enabled = 1;
 	config.silence_threshold = 30;
 	config.report_noise = 1;
-	config.answer_pbreq = (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 : 0;
+	config.answer_pbreq =
+#ifndef IEEE80211_STA_ONLY
+	    (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 :
+#endif
+	    0;
 	DPRINTF(("Configuring adapter\n"));
 	error = iwi_cmd(sc, IWI_CMD_SET_CONFIG, &config, sizeof config, 0);
 	if (error != 0)
@@ -2034,7 +2047,11 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	config.multicast_enabled = 1;
 	config.silence_threshold = 30;
 	config.report_noise = 1;
-	config.answer_pbreq = (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 : 0;
+	config.answer_pbreq =
+#ifndef IEEE80211_STA_ONLY
+	    (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 :
+#endif
+	    0;
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		config.bg_autodetection = 1;
 	DPRINTF(("Configuring adapter\n"));
@@ -2081,9 +2098,11 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		return error;
 
 	bzero(&assoc, sizeof assoc);
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_flags & IEEE80211_F_SIBSS)
 		assoc.type = IWI_ASSOC_SIBSS;
 	else
+#endif
 		assoc.type = IWI_ASSOC_ASSOCIATE;
 	if (ic->ic_curmode == IEEE80211_MODE_11A)
 		assoc.mode = IWI_MODE_11A;
@@ -2112,9 +2131,11 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	assoc.lintval = htole16(ic->ic_lintval);
 	assoc.intval = htole16(ni->ni_intval);
 	IEEE80211_ADDR_COPY(assoc.bssid, ni->ni_bssid);
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		IEEE80211_ADDR_COPY(assoc.dst, etherbroadcastaddr);
 	else
+#endif
 		IEEE80211_ADDR_COPY(assoc.dst, ni->ni_bssid);
 
 	DPRINTF(("Trying to associate to %s channel %u auth %u\n",
@@ -2142,18 +2163,21 @@ iwi_init(struct ifnet *ifp)
 
 	switch (sc->sc_ic.ic_opmode) {
 	case IEEE80211_M_STA:
-	case IEEE80211_M_HOSTAP:
 		name = "iwi-bss";
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		name = "iwi-ibss";
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		name = "iwi-monitor";
 		break;
 	default:
-		name = NULL;	/* should not get there */
+		/* should not get there */
+		error = EINVAL;
+		goto fail1;
 	}
 
 	if ((error = loadfirmware(name, &data, &size)) != 0) {

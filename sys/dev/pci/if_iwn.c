@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.22 2008/07/31 20:14:17 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.23 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -3297,6 +3297,8 @@ iwn_config(struct iwn_softc *sc)
 		sc->config.mode = IWN_MODE_STA;
 		sc->config.filter |= htole32(IWN_FILTER_MULTICAST);
 		break;
+#ifndef IEEE80211_STA_ONLY
+#ifdef notyet
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		sc->config.mode = IWN_MODE_IBSS;
@@ -3304,10 +3306,15 @@ iwn_config(struct iwn_softc *sc)
 	case IEEE80211_M_HOSTAP:
 		sc->config.mode = IWN_MODE_HOSTAP;
 		break;
+#endif
+#endif
 	case IEEE80211_M_MONITOR:
 		sc->config.mode = IWN_MODE_MONITOR;
 		sc->config.filter |= htole32(IWN_FILTER_MULTICAST |
 		    IWN_FILTER_CTL | IWN_FILTER_PROMISC);
+		break;
+	default:
+		/* should not get there */
 		break;
 	}
 	sc->config.cck_mask  = 0x0f;	/* not yet negotiated */

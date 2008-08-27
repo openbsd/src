@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.11 2008/08/13 17:38:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.12 2008/08/27 09:05:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,23 +49,29 @@
 
 void	ieee80211_recv_4way_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_4way_msg2(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *,
 	    const u_int8_t *);
+#endif
 void	ieee80211_recv_4way_msg3(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_4way_msg4(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg2or4(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+#endif
 void	ieee80211_recv_rsn_group_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_wpa_group_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_recv_group_msg2(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+#endif
 
 /*
  * Process an incoming EAPOL frame.  Notice that we are only interested in
@@ -144,16 +150,19 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* determine message type (see 8.5.3.7) */
 	if (info & EAPOL_KEY_REQUEST) {
+#ifndef IEEE80211_STA_ONLY
 		/* EAPOL-Key Request frame */
 		ieee80211_recv_eapol_key_req(ic, key, ni);
-
+#endif
 	} else if (info & EAPOL_KEY_PAIRWISE) {
 		/* 4-Way Handshake */
 		if (info & EAPOL_KEY_KEYMIC) {
 			if (info & EAPOL_KEY_KEYACK)
 				ieee80211_recv_4way_msg3(ic, key, ni);
+#ifndef IEEE80211_STA_ONLY
 			else
 				ieee80211_recv_4way_msg2or4(ic, key, ni);
+#endif
 		} else if (info & EAPOL_KEY_KEYACK)
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
@@ -165,8 +174,11 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 				ieee80211_recv_wpa_group_msg1(ic, key, ni);
 			else
 				ieee80211_recv_rsn_group_msg1(ic, key, ni);
-		} else
+		}
+#ifndef IEEE80211_STA_ONLY
+		else
 			ieee80211_recv_group_msg2(ic, key, ni);
+#endif
 	}
  done:
 	if (m0 != NULL)
@@ -185,10 +197,11 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	const u_int8_t *pmkid;
 	const u_int8_t *pmk;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
-
+#endif
 	if (ni->ni_replaycnt_ok &&
 	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
 		ic->ic_stats.is_rx_eapol_replay++;
@@ -246,6 +259,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	(void)ieee80211_send_4way_msg2(ic, ni, key->replaycnt, &tptk);
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Process Message 2 of the 4-Way Handshake (sent by Supplicant).
  */
@@ -313,6 +327,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	/* send message 3 to supplicant */
 	(void)ieee80211_send_4way_msg3(ic, ni);
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*
  * Process Message 3 of the 4-Way Handshake (sent by Authenticator).
@@ -329,10 +344,11 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	u_int16_t info, reason = 0;
 	int keylen;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
-
+#endif
 	if (ni->ni_replaycnt_ok &&
 	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
 		ic->ic_stats.is_rx_eapol_replay++;
@@ -567,8 +583,11 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	if (info & EAPOL_KEY_SECURE) {
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
-		    ++ni->ni_key_count == 2) {
+		    ++ni->ni_key_count == 2)
+#endif
+		{
 			DPRINTF(("marking port %s valid\n",
 			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
@@ -582,6 +601,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Process Message 4 of the 4-Way Handshake (sent by Supplicant).
  */
@@ -695,6 +715,7 @@ ieee80211_recv_4way_msg2or4(struct ieee80211com *ic,
 	else
 		ieee80211_recv_4way_msg4(ic, key, ni);
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*
  * Process Message 1 of the RSN Group Key Handshake (sent by Authenticator).
@@ -709,10 +730,11 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	u_int16_t info, kid, reason = 0;
 	int keylen;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
-
+#endif
 	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
@@ -814,8 +836,11 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		}
 	}
 	if (info & EAPOL_KEY_SECURE) {
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
-		    ++ni->ni_key_count == 2) {
+		    ++ni->ni_key_count == 2)
+#endif
+		{
 			DPRINTF(("marking port %s valid\n",
 			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
@@ -849,10 +874,11 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	u_int8_t kid;
 	int keylen;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
-
+#endif
 	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt) {
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
@@ -904,8 +930,11 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 		return;
 	}
 	if (info & EAPOL_KEY_SECURE) {
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
-		    ++ni->ni_key_count == 2) {
+		    ++ni->ni_key_count == 2)
+#endif
+		{
 			DPRINTF(("marking port %s valid\n",
 			    ether_sprintf(ni->ni_macaddr)));
 			ni->ni_port_valid = 1;
@@ -923,6 +952,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	(void)ieee80211_send_group_msg2(ic, ni, k);
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Process Message 2 of the Group Key Handshake (sent by Supplicant).
  */
@@ -1022,3 +1052,4 @@ ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
 		 */
 	}
 }
+#endif	/* IEEE80211_STA_ONLY */

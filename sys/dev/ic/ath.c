@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.74 2008/08/25 20:43:49 jmc Exp $  */
+/*      $OpenBSD: ath.c,v 1.75 2008/08/27 09:05:03 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -98,9 +98,11 @@ void    ath_mcastfilter_accum(caddr_t, u_int32_t (*)[2]);
 void    ath_mcastfilter_compute(struct ath_softc *, u_int32_t (*)[2]);
 u_int32_t ath_calcrxfilter(struct ath_softc *);
 void	ath_mode_init(struct ath_softc *);
+#ifndef IEEE80211_STA_ONLY
 int	ath_beacon_alloc(struct ath_softc *, struct ieee80211_node *);
 void	ath_beacon_proc(void *, int);
 void	ath_beacon_free(struct ath_softc *);
+#endif
 void	ath_beacon_config(struct ath_softc *);
 int	ath_desc_alloc(struct ath_softc *);
 void	ath_desc_free(struct ath_softc *);
@@ -133,8 +135,10 @@ int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 void	ath_rssadapt_updatenode(void *, struct ieee80211_node *);
 void	ath_rssadapt_updatestats(void *);
+#ifndef IEEE80211_STA_ONLY
 void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, struct ieee80211_rxinfo *, int);
+#endif
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 
@@ -310,7 +314,9 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ATH_TASK_INIT(&sc->sc_rxorntask, ath_rxorn_proc, sc);
 	ATH_TASK_INIT(&sc->sc_fataltask, ath_fatal_proc, sc);
 	ATH_TASK_INIT(&sc->sc_bmisstask, ath_bmiss_proc, sc);
+#ifndef IEEE80211_STA_ONLY
 	ATH_TASK_INIT(&sc->sc_swbatask, ath_beacon_proc, sc);
+#endif
 
 	/*
 	 * For now just pre-allocate one data queue and one
@@ -357,8 +363,10 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_caps = IEEE80211_C_WEP	/* wep supported */
 	    | IEEE80211_C_PMGT		/* power management */
+#ifndef IEEE80211_STA_ONLY
 	    | IEEE80211_C_IBSS		/* ibss, nee adhoc, mode */
 	    | IEEE80211_C_HOSTAP	/* hostap mode */
+#endif
 	    | IEEE80211_C_MONITOR	/* monitor mode */
 	    | IEEE80211_C_SHSLOT	/* short slot time supported */
 	    | IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
@@ -386,8 +394,10 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_node_getrssi = ath_node_getrssi;
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ath_newstate;
+#ifndef IEEE80211_STA_ONLY
 	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
 	ic->ic_recv_mgmt = ath_recv_mgmt;
+#endif
 	ic->ic_max_rssi = AR5K_MAX_RSSI;
 	bcopy(etherbroadcastaddr, sc->sc_broadcast_addr, IEEE80211_ADDR_LEN);
 
@@ -766,8 +776,10 @@ ath_init1(struct ath_softc *sc)
 	sc->sc_imask = HAL_INT_RX | HAL_INT_TX
 	    | HAL_INT_RXEOL | HAL_INT_RXORN
 	    | HAL_INT_FATAL | HAL_INT_GLOBAL;
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 		sc->sc_imask |= HAL_INT_MIB;
+#endif
 	ath_hal_set_intr(ah, sc->sc_imask);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -831,7 +843,9 @@ ath_stop(struct ifnet *ifp)
 			sc->sc_rxlink = NULL;
 		}
 		IFQ_PURGE(&ifp->if_snd);
+#ifndef IEEE80211_STA_ONLY
 		ath_beacon_free(sc);
+#endif
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 		if (!sc->sc_invalid) {
 			ath_hal_set_power(ah, HAL_PM_FULL_SLEEP, 0);
@@ -1237,7 +1251,9 @@ ath_calcrxfilter(struct ath_softc *sc)
 	    | HAL_RX_FILTER_UCAST | HAL_RX_FILTER_BCAST | HAL_RX_FILTER_MCAST;
 	if (ic->ic_opmode != IEEE80211_M_STA)
 		rfilt |= HAL_RX_FILTER_PROBEREQ;
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_AHDEMO)
+#endif
 		rfilt |= HAL_RX_FILTER_BEACON;
 	if (ifp->if_flags & IFF_PROMISC)
 		rfilt |= HAL_RX_FILTER_PROM;
@@ -1290,6 +1306,7 @@ ath_getmbuf(int flags, int type, u_int pktlen)
 	return m;
 }
 
+#ifndef IEEE80211_STA_ONLY
 int
 ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 {
@@ -1438,6 +1455,7 @@ ath_beacon_free(struct ath_softc *sc)
 		bf->bf_node = NULL;
 	}
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 /*
  * Configure the beacon and sleep timers.
@@ -1529,7 +1547,9 @@ ath_beacon_config(struct ath_softc *sc)
 		ath_hal_set_beacon_timers(ah, &bs, 0/*XXX*/, 0, 0);
 		sc->sc_imask |= HAL_INT_BMISS;
 		ath_hal_set_intr(ah, sc->sc_imask);
-	} else {
+	}
+#ifndef IEEE80211_STA_ONLY
+	else {
 		ath_hal_set_intr(ah, 0);
 		if (nexttbtt == intval)
 			intval |= HAL_BEACON_RESET_TSF;
@@ -1561,6 +1581,7 @@ ath_beacon_config(struct ath_softc *sc)
 		if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_veol)
 			ath_beacon_proc(sc, 0);
 	}
+#endif
 }
 
 int
@@ -1801,7 +1822,6 @@ int
 ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 {
 	struct ath_hal *ah = sc->sc_ah;
-	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 	struct mbuf *m;
 	struct ath_desc *ds;
@@ -1858,8 +1878,10 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	 */
 	ds = bf->bf_desc;
 	bzero(ds, sizeof(struct ath_desc));
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+#ifndef IEEE80211_STA_ONLY
+	if (sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP)
 		ds->ds_link = bf->bf_daddr;	/* link to self */
+#endif
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	ath_hal_setup_rx_desc(ah, ds
 		, m->m_len		/* buffer size */
@@ -2946,13 +2968,14 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/*
 		 * Allocate and setup the beacon frame for AP or adhoc mode.
 		 */
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS) {
 			error = ath_beacon_alloc(sc, ni);
 			if (error != 0)
 				goto bad;
 		}
-
+#endif
 		/*
 		 * Configure the beacon and sleep timers.
 		 */
@@ -2981,6 +3004,7 @@ bad:
 	return error;
 }
 
+#ifndef IEEE80211_STA_ONLY
 void
 ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
@@ -3005,6 +3029,7 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	}
 	return;
 }
+#endif
 
 /*
  * Setup driver-specific state for a newly associated node.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.85 2008/08/14 16:02:24 damien Exp $ */
+/*	$OpenBSD: malo.c,v 1.86 2008/08/27 09:05:03 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1225,15 +1225,19 @@ malo_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_ADHOC;
-		break;
-	case IEEE80211_M_MONITOR:
-		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
 	case IEEE80211_M_AHDEMO:
 		break;
 	case IEEE80211_M_HOSTAP:
+		break;
+#endif
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+	default:
 		break;
 	}
 
@@ -1932,9 +1936,11 @@ malo_update_slot(struct ieee80211com *ic)
 
 	malo_set_slot(sc);
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		/* TODO */
 	}
+#endif
 }
 
 #ifdef MALO_DEBUG
@@ -2286,9 +2292,12 @@ malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate)
 
 	bzero(body, sizeof(*body));
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		/* TODO */
-	} else {
+	} else
+#endif
+	{
 		body->aprates[0] = 2;
 		body->aprates[1] = 4;
 		body->aprates[2] = 11;

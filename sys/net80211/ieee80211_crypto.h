@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.19 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.20 2008/08/27 09:05:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -100,8 +100,10 @@ void	ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
 	    const u_int8_t *);
 int	ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
 	    const u_int8_t *);
+#ifndef IEEE80211_STA_ONLY
 void	ieee80211_eapol_key_encrypt(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, const u_int8_t *);
+#endif
 int	ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
 	    const u_int8_t *);
 

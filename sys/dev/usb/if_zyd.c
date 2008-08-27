@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.69 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.70 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1734,10 +1734,12 @@ zyd_set_rxfilter(struct zyd_softc *sc)
 	case IEEE80211_M_STA:
 		rxfilter = ZYD_FILTER_BSS;
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_HOSTAP:
 		rxfilter = ZYD_FILTER_HOSTAP;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		rxfilter = ZYD_FILTER_MONITOR;
 		break;

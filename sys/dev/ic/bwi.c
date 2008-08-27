@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.78 2008/08/22 19:58:21 deraadt Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.79 2008/08/27 09:05:03 damien Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -2107,12 +2107,14 @@ bwi_mac_opmode_init(struct bwi_mac *mac)
 		mac_status |= BWI_MAC_STATUS_PROMISC;
 
 	switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		mac_status &= ~BWI_MAC_STATUS_INFRA;
 		break;
 	case IEEE80211_M_HOSTAP:
 		mac_status |= BWI_MAC_STATUS_OPMODE_HOSTAP;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 #if 0
 		/* Do you want data from your microwave oven? */
@@ -2133,14 +2135,18 @@ bwi_mac_opmode_init(struct bwi_mac *mac)
 
 	CSR_WRITE_4(sc, BWI_MAC_STATUS, mac_status);
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_IBSS &&
 	    ic->ic_opmode != IEEE80211_M_HOSTAP) {
+#endif
 		if (sc->sc_bbp_id == BWI_BBPID_BCM4306 && sc->sc_bbp_rev == 3)
 			pre_tbtt = 100;
 		else
 			pre_tbtt = 50;
+#ifndef IEEE80211_STA_ONLY
 	} else
 		pre_tbtt = 2;
+#endif
 	CSR_WRITE_2(sc, BWI_MAC_PRE_TBTT, pre_tbtt);
 }
 
@@ -2751,13 +2757,15 @@ void
 bwi_mac_lock(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	struct ieee80211com *ic = &sc->sc_ic;
 
 	KASSERT((mac->mac_flags & BWI_MAC_F_LOCKED) == 0);
 
 	if (mac->mac_rev < 3)
 		bwi_mac_stop(mac);
-	else if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+	else
+#ifndef IEEE80211_STA_ONLY
+	if (sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP)
+#endif
 		bwi_mac_config_ps(mac);
 
 	CSR_SETBITS_4(sc, BWI_MAC_STATUS, BWI_MAC_STATUS_RFLOCK);
@@ -2773,7 +2781,6 @@ void
 bwi_mac_unlock(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	struct ieee80211com *ic = &sc->sc_ic;
 
 	KASSERT(mac->mac_flags & BWI_MAC_F_LOCKED);
 
@@ -2783,7 +2790,10 @@ bwi_mac_unlock(struct bwi_mac *mac)
 
 	if (mac->mac_rev < 3)
 		bwi_mac_start(mac);
-	else if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+	else
+#ifndef IEEE80211_STA_ONLY
+	if (sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP)
+#endif
 		bwi_mac_config_ps(mac);
 
 	mac->mac_flags &= ~BWI_MAC_F_LOCKED;
@@ -7478,8 +7488,10 @@ bwi_amrr_timeout(void *arg)
 
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		bwi_iter_func(sc, ic->ic_bss);
+#ifndef IEEE80211_STA_ONLY
 	else
 		ieee80211_iterate_nodes(ic, bwi_iter_func, sc);
+#endif
 
 	timeout_add(&sc->sc_amrr_ch, hz / 2);
 }

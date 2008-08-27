@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.73 2008/07/21 18:43:18 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.74 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -228,7 +228,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps =
+#ifndef IEEE80211_STA_ONLY
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+#endif
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
@@ -644,14 +646,15 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_IBSS;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
-	case IEEE80211_M_AHDEMO:
-	case IEEE80211_M_HOSTAP:
+	default:
 		/* should not get there */
 		break;
 	}
@@ -1631,9 +1634,11 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 	case IEEE80211_M_STA:
 		name = "ipw-bss";
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		name = "ipw-ibss";
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		name = "ipw-monitor";
 		break;
@@ -1682,9 +1687,11 @@ ipw_config(struct ipw_softc *sc)
 	case IEEE80211_M_STA:
 		data = htole32(IPW_MODE_BSS);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		data = htole32(IPW_MODE_IBSS);
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		data = htole32(IPW_MODE_MONITOR);
 		break;
@@ -1697,7 +1704,10 @@ ipw_config(struct ipw_softc *sc)
 	if (error != 0)
 		return error;
 
-	if (ic->ic_opmode == IEEE80211_M_IBSS ||
+	if (
+#ifndef IEEE80211_STA_ONLY
+	    ic->ic_opmode == IEEE80211_M_IBSS ||
+#endif
 	    ic->ic_opmode == IEEE80211_M_MONITOR) {
 		data = htole32(ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 		DPRINTF(("Setting channel to %u\n", letoh32(data)));
@@ -1720,8 +1730,10 @@ ipw_config(struct ipw_softc *sc)
 
 	config.flags = htole32(IPW_CFG_BSS_MASK | IPW_CFG_IBSS_MASK |
 	    IPW_CFG_PREAMBLE_AUTO | IPW_CFG_802_1x_ENABLE);
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		config.flags |= htole32(IPW_CFG_IBSS_AUTO_START);
+#endif
 	if (ifp->if_flags & IFF_PROMISC)
 		config.flags |= htole32(IPW_CFG_PROMISCUOUS);
 	config.bss_chan = htole32(0x3fff);	/* channels 1-14 */
@@ -1749,6 +1761,7 @@ ipw_config(struct ipw_softc *sc)
 	if (error != 0)
 		return error;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		data = htole32(32);	/* default value */
 		DPRINTF(("Setting tx power index to %u\n", letoh32(data)));
@@ -1757,6 +1770,7 @@ ipw_config(struct ipw_softc *sc)
 		if (error != 0)
 			return error;
 	}
+#endif
 
 	data = htole32(ic->ic_rtsthreshold);
 	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
@@ -1838,6 +1852,7 @@ ipw_config(struct ipw_softc *sc)
 	if (error != 0)
 		return error;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		data = htole32(ic->ic_lintval);
@@ -1847,6 +1862,7 @@ ipw_config(struct ipw_softc *sc)
 		if (error != 0)
 			return error;
 	}
+#endif
 
 	options.flags = htole32(0);
 	options.channels = htole32(0x3fff);	/* scan channels 1-14 */

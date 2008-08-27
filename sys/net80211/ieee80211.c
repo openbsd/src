@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.33 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.34 2008/08/27 09:05:04 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -285,12 +285,14 @@ ieee80211_media_init(struct ifnet *ifp,
 			continue;
 		mopt = mopts[mode];
 		ADD(ic, IFM_AUTO, mopt);	/* e.g. 11a auto */
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_caps & IEEE80211_C_IBSS)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_IBSS);
 		if (ic->ic_caps & IEEE80211_C_HOSTAP)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_HOSTAP);
 		if (ic->ic_caps & IEEE80211_C_AHDEMO)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_ADHOC);
+#endif
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		if (mode == IEEE80211_MODE_AUTO)
@@ -302,12 +304,14 @@ ieee80211_media_init(struct ifnet *ifp,
 			if (mword == 0)
 				continue;
 			ADD(ic, mword, mopt);
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_caps & IEEE80211_C_IBSS)
 				ADD(ic, mword, mopt | IFM_IEEE80211_IBSS);
 			if (ic->ic_caps & IEEE80211_C_HOSTAP)
 				ADD(ic, mword, mopt | IFM_IEEE80211_HOSTAP);
 			if (ic->ic_caps & IEEE80211_C_AHDEMO)
 				ADD(ic, mword, mopt | IFM_IEEE80211_ADHOC);
+#endif
 			if (ic->ic_caps & IEEE80211_C_MONITOR)
 				ADD(ic, mword, mopt | IFM_IEEE80211_MONITOR);
 			/*
@@ -334,12 +338,14 @@ ieee80211_media_init(struct ifnet *ifp,
 			continue;
 		mword = IFM_SUBTYPE(mword);	/* remove media options */
 		ADD(ic, mword, 0);
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_caps & IEEE80211_C_IBSS)
 			ADD(ic, mword, IFM_IEEE80211_IBSS);
 		if (ic->ic_caps & IEEE80211_C_HOSTAP)
 			ADD(ic, mword, IFM_IEEE80211_HOSTAP);
 		if (ic->ic_caps & IEEE80211_C_AHDEMO)
 			ADD(ic, mword, IFM_IEEE80211_ADHOC);
+#endif
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, mword, IFM_IEEE80211_MONITOR);
 	}
@@ -456,17 +462,21 @@ ieee80211_media_change(struct ifnet *ifp)
 	/*
 	 * Deduce new operating mode but don't install it just yet.
 	 */
+#ifndef IEEE80211_STA_ONLY
 	if (ime->ifm_media & IFM_IEEE80211_ADHOC)
 		newopmode = IEEE80211_M_AHDEMO;
 	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
 		newopmode = IEEE80211_M_HOSTAP;
 	else if (ime->ifm_media & IFM_IEEE80211_IBSS)
 		newopmode = IEEE80211_M_IBSS;
-	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
+	else
+#endif
+	if (ime->ifm_media & IFM_IEEE80211_MONITOR)
 		newopmode = IEEE80211_M_MONITOR;
 	else
 		newopmode = IEEE80211_M_STA;
 
+#ifndef IEEE80211_STA_ONLY
 	/*
 	 * Autoselect doesn't make sense when operating as an AP.
 	 * If no phy mode has been selected, pick one and lock it
@@ -481,6 +491,7 @@ ieee80211_media_change(struct ifnet *ifp)
 				break;
 			}
 	}
+#endif
 
 	/*
 	 * Handle phy mode change.
@@ -505,6 +516,7 @@ ieee80211_media_change(struct ifnet *ifp)
 	 */
 	if (ic->ic_opmode != newopmode) {
 		ic->ic_opmode = newopmode;
+#ifndef IEEE80211_STA_ONLY
 		switch (newopmode) {
 		case IEEE80211_M_AHDEMO:
 		case IEEE80211_M_HOSTAP:
@@ -516,6 +528,7 @@ ieee80211_media_change(struct ifnet *ifp)
 			ic->ic_flags |= IEEE80211_F_IBSSON;
 			break;
 		}
+#endif
 		/*
 		 * Yech, slot time may change depending on the
 		 * operating mode so reset it to be sure everything
@@ -549,6 +562,7 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		imr->ifm_active |= ieee80211_rate2media(ic,
 			ni->ni_rates.rs_rates[ni->ni_txrate], ic->ic_curmode);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_IBSS;
 		break;
@@ -558,8 +572,11 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+	default:
 		break;
 	}
 	switch (ic->ic_curmode) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.22 2008/08/12 19:29:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.23 2008/08/27 09:05:04 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -473,8 +473,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_flags |= IEEE80211_F_DESBSSID;
 			IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
 		}
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			break;
+#endif
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
@@ -493,10 +495,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 				IEEE80211_ADDR_COPY(bssid->i_bssid,
 				    ic->ic_myaddr);
-			else if (ic->ic_flags & IEEE80211_F_DESBSSID)
+			else
+#endif
+			if (ic->ic_flags & IEEE80211_F_DESBSSID)
 				IEEE80211_ADDR_COPY(bssid->i_bssid,
 				    ic->ic_des_bssid);
 			else
@@ -599,8 +604,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCS80211SCAN:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			break;
+#endif
 		if ((ifp->if_flags & IFF_UP) == 0) {
 			error = ENETDOWN;
 			break;
@@ -628,10 +635,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCS80211NODE:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			error = EINVAL;
 			break;
 		}
+#endif
 		nr = (struct ieee80211_nodereq *)data;
 
 		ni = ieee80211_find_node(ic, nr->nr_macaddr);
@@ -691,7 +700,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211FLAGS:
 		flags = ic->ic_flags;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+#endif
 			flags &= ~IEEE80211_F_HOSTAPMASK;
 		ifr->ifr_flags = flags >> IEEE80211_F_USERSHIFT;
 		break;
@@ -699,11 +710,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc, 0)) != 0)
 			break;
 		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
 		    (flags & IEEE80211_F_HOSTAPMASK)) {
 			error = EINVAL;
 			break;
 		}
+#endif
 		ic->ic_flags = (ic->ic_flags & ~IEEE80211_F_USERMASK) | flags;
 		error = ENETRESET;
 		break;

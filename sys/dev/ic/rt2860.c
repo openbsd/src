@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.18 2008/08/14 16:02:24 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.19 2008/08/27 09:05:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -140,7 +140,9 @@ int		rt2860_init(struct ifnet *);
 void		rt2860_stop(struct ifnet *, int);
 int		rt2860_load_microcode(struct rt2860_softc *);
 void		rt2860_calib(struct rt2860_softc *);
+#ifndef IEEE80211_STA_ONLY
 int		rt2860_setup_beacon(struct rt2860_softc *);
+#endif
 void		rt2860_enable_tsf_sync(struct rt2860_softc *);
 void		rt2860_power(int, void *);
 
@@ -236,9 +238,11 @@ rt2860_attach(void *xsc, int id)
 
 	/* set device capabilities */
 	ic->ic_caps =
-	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
+#ifndef IEEE80211_STA_ONLY
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_HOSTAP |	/* HostAP mode supported */
+#endif
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
@@ -739,9 +743,9 @@ rt2860_updatestats(void *arg)
 {
 	struct rt2860_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint32_t tmp;
 	int s;
 
+#ifndef IEEE80211_STA_ONLY
 	/*
 	 * In IBSS or HostAP modes (when the hardware sends beacons), the
 	 * MAC can run into a livelock and start sending CTS-to-self frames
@@ -750,7 +754,7 @@ rt2860_updatestats(void *arg)
 	 */
 	if (ic->ic_curmode != IEEE80211_M_STA) {
 		/* check if we're in a livelock situation.. */
-		tmp = RAL_READ(sc, RT2860_DEBUG);
+		uint32_t tmp = RAL_READ(sc, RT2860_DEBUG);
 		if ((tmp & (1 << 29)) && (tmp & (1 << 7 | 1 << 5))) {
 			/* ..and reset MAC/BBP for a while.. */
 			DPRINTF(("CTS-to-self livelock detected\n"));
@@ -760,12 +764,15 @@ rt2860_updatestats(void *arg)
 			    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
 		}
 	}
+#endif
 
 	s = splnet();
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		rt2860_iter_func(sc, ic->ic_bss);
+#ifndef IEEE80211_STA_ONLY
 	else
 		ieee80211_iterate_nodes(ic, rt2860_iter_func, arg);
+#endif
 	splx(s);
 
 	timeout_add(&sc->amrr_to, hz / 2);
@@ -847,9 +854,11 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			rt2860_set_bssid(sc, ic->ic_bss->ni_bssid);
 		}
 
+#ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS)
 			rt2860_setup_beacon(sc);
+#endif
 
 		if (ic->ic_opmode == IEEE80211_M_STA) {
 			/* fake a join to init the tx rate */
@@ -1240,11 +1249,13 @@ rt2860_intr(void *arg)
 	if (r & RT2860_TX_DONE_INT0)
 		rt2860_tx_intr(sc, 0);
 
+#ifndef IEEE80211_STA_ONLY
 	if (r & RT2860_MAC_INT_1) {	/* pre-TBTT */
 		if ((sc->sc_flags & RT2860_UPD_BEACON) &&
 		    rt2860_setup_beacon(sc) == 0)
 			sc->sc_flags &= ~RT2860_UPD_BEACON;
 	}
+#endif
 	if (r & RT2860_MAC_INT_0) {	/* TBTT */
 		struct ieee80211com *ic = &sc->sc_ic;
 		/* check if protection mode has changed */
@@ -1422,12 +1433,14 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		    ic->ic_flags) + sc->sifs;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
+#ifndef IEEE80211_STA_ONLY
 	/* ask MAC to insert timestamp into probe responses */
 	if ((wh->i_fc[0] &
 	     (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	     (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 	    /* NOTE: beacons do not pass through tx_data() */
 		txwi->flags |= RT2860_TX_TS;
+#endif
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -2037,8 +2050,10 @@ rt2860_updateslot(struct ieee80211com *ic)
 	struct rt2860_softc *sc = ic->ic_softc;
 	uint32_t tmp;
 
+#ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 		sc->sc_flags |= RT2860_UPD_BEACON;
+#endif
 
 	tmp = RAL_READ(sc, RT2860_BKOFF_SLOT_CFG);
 	tmp &= ~0xff;
@@ -2139,12 +2154,15 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		base = RT2860_SKEY(0, k->k_id);
 		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
 			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 				RAL_WRITE_REGION_1(sc, base + 16,
 				    &k->k_key[16], 8);
 				RAL_WRITE_REGION_1(sc, base + 24,
 				    &k->k_key[24], 8);
-			} else {
+			} else
+#endif
+			{
 				RAL_WRITE_REGION_1(sc, base + 16,
 				    &k->k_key[24], 8);
 				RAL_WRITE_REGION_1(sc, base + 24,
@@ -2163,12 +2181,15 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		base = RT2860_PKEY(wcid);
 		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
 			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 				RAL_WRITE_REGION_1(sc, base + 16,
 				    &k->k_key[16], 8);
 				RAL_WRITE_REGION_1(sc, base + 24,
 				    &k->k_key[24], 8);
-			} else {
+			} else
+#endif
+			{
 				RAL_WRITE_REGION_1(sc, base + 16,
 				    &k->k_key[24], 8);
 				RAL_WRITE_REGION_1(sc, base + 24,
@@ -2983,6 +3004,7 @@ rt2860_calib(struct rt2860_softc *sc)
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
 int
 rt2860_setup_beacon(struct rt2860_softc *sc)
 {
@@ -3014,6 +3036,7 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 
 	return 0;
 }
+#endif
 
 void
 rt2860_enable_tsf_sync(struct rt2860_softc *sc)
@@ -3032,7 +3055,9 @@ rt2860_enable_tsf_sync(struct rt2860_softc *sc)
 		 * reception.
 		 */
 		tmp |= 1 << RT2860_TSF_SYNC_MODE_SHIFT;
-	} else if (ic->ic_opmode == IEEE80211_M_IBSS) {
+	}
+#ifndef IEEE80211_STA_ONLY
+	else if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		tmp |= RT2860_BCN_TX_EN;
 		/*
 		 * Local TSF is updated with remote TSF on beacon reception
@@ -3044,6 +3069,7 @@ rt2860_enable_tsf_sync(struct rt2860_softc *sc)
 		/* SYNC with nobody */
 		tmp |= 3 << RT2860_TSF_SYNC_MODE_SHIFT;
 	}
+#endif
 
 	RAL_WRITE(sc, RT2860_BCN_TIME_CFG, tmp);
 }

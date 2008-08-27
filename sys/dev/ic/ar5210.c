@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.41 2007/11/01 20:32:16 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.42 2008/08/27 09:05:03 damien Exp $        */
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -484,6 +484,7 @@ ar5k_ar5210_set_opmode(struct ath_hal *hal)
 		    AR5K_AR5210_STA_ID1_PWR_SV;
 		break;
 
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		pcu_reg |= AR5K_AR5210_STA_ID1_ADHOC |
 		    AR5K_AR5210_STA_ID1_NO_PSPOLL |
@@ -497,6 +498,7 @@ ar5k_ar5210_set_opmode(struct ath_hal *hal)
 		    AR5K_AR5210_STA_ID1_DESC_ANTENNA;
 		beacon_reg |= AR5K_AR5210_BCR_AP;
 		break;
+#endif
 
 	case IEEE80211_M_MONITOR:
 		pcu_reg |= AR5K_AR5210_STA_ID1_NO_PSPOLL;

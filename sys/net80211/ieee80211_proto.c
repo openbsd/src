@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.33 2008/08/14 15:51:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.34 2008/08/27 09:05:04 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -284,9 +284,11 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 				 * Note that this is important for 11b stations
 				 * when they want to associate with an 11g AP.
 				 */
+#ifndef IEEE80211_STA_ONLY
 				if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 				    (nrs->rs_rates[i] & IEEE80211_RATE_BASIC))
 					error++;
+#endif
 				ignore++;
 			}
 		}
@@ -331,10 +333,14 @@ ieee80211_reset_erp(struct ieee80211com *ic)
 	 *   the device supports short slot time
 	 */
 	ieee80211_set_shortslottime(ic,
-	    ic->ic_curmode == IEEE80211_MODE_11A ||
+	    ic->ic_curmode == IEEE80211_MODE_11A
+#ifndef IEEE80211_STA_ONLY
+	    ||
 	    (ic->ic_curmode == IEEE80211_MODE_11G &&
 	     ic->ic_opmode == IEEE80211_M_HOSTAP &&
-	     (ic->ic_caps & IEEE80211_C_SHSLOT)));
+	     (ic->ic_caps & IEEE80211_C_SHSLOT))
+#endif
+	);
 
 	if (ic->ic_curmode == IEEE80211_MODE_11A ||
 	    (ic->ic_caps & IEEE80211_C_SHPREAMBLE))
@@ -359,6 +365,7 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 		ic->ic_updateslot(ic);
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Initiate a group key handshake with a node.
  */
@@ -452,6 +459,7 @@ ieee80211_gtk_rekey_timeout(void *arg)
 	/* re-schedule a GTK rekeying after 3600s */
 	timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
 }
+#endif	/* IEEE80211_STA_ONLY */
 
 void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
@@ -460,6 +468,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
@@ -507,6 +516,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 			    "newly" : "already");
 		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
 		break;
+#endif	/* IEEE80211_STA_ONLY */
 
 	case IEEE80211_M_STA:
 		if (ic->ic_state != IEEE80211_S_AUTH ||
@@ -539,7 +549,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 		break;
-	case IEEE80211_M_MONITOR:
+	default:
 		break;
 	}
 }
@@ -552,7 +562,9 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
 	u_int rate;
+#ifndef IEEE80211_STA_ONLY
 	int s;
+#endif
 
 	ostate = ic->ic_state;
 	DPRINTF(("%s -> %s\n", ieee80211_state_name[ostate],
@@ -573,6 +585,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    IEEE80211_FC0_SUBTYPE_DISASSOC,
 				    IEEE80211_REASON_ASSOC_LEAVE);
 				break;
+#ifndef IEEE80211_STA_ONLY
 			case IEEE80211_M_HOSTAP:
 				s = splnet();
 				RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
@@ -584,6 +597,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				}
 				splx(s);
 				break;
+#endif
 			default:
 				break;
 			}
@@ -595,6 +609,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_AUTH_LEAVE);
 				break;
+#ifndef IEEE80211_STA_ONLY
 			case IEEE80211_M_HOSTAP:
 				s = splnet();
 				RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
@@ -604,14 +619,17 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				}
 				splx(s);
 				break;
+#endif
 			default:
 				break;
 			}
 			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 				timeout_del(&ic->ic_rsn_timeout);
+#endif
 			ic->ic_mgt_timer = 0;
 			IF_PURGE(&ic->ic_mgtq);
 			IF_PURGE(&ic->ic_pwrsaveq);
@@ -630,6 +648,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		ni->ni_rstamp = 0;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
+#ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 			    ic->ic_des_chan != IEEE80211_CHAN_ANYC) {
 				/*
@@ -637,9 +656,9 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				 * bypass the scan and startup immediately.
 				 */
 				ieee80211_create_ibss(ic, ic->ic_des_chan);
-			} else {
+			} else
+#endif
 				ieee80211_begin_scan(ifp);
-			}
 			break;
 		case IEEE80211_S_SCAN:
 			/* scan next */
@@ -772,10 +791,12 @@ ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
 	struct ifnet *ifp = &ic->ic_if;
 
 	switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_HOSTAP:
 		nstate = LINK_STATE_UNKNOWN;
 		break;
+#endif
 	case IEEE80211_M_MONITOR:
 		nstate = LINK_STATE_DOWN;
 		break;
