@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.50 2008/08/26 18:29:12 martynas Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.51 2008/08/27 00:40:38 martynas Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -201,7 +201,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	int softsign;		/* temporary negative sign for floats */
-	double _double;		/* double precision arguments %[eEfgG] */
+	double _double;		/* double precision arguments %[eEfFgG] */
 	int expt;		/* integer value of exponent */
 	int expsize;		/* character count for expstr */
 	int ndig;		/* actual number of digits returned by cvt */
@@ -210,15 +210,15 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 #endif
 
 	uintmax_t _umax;	/* integer arguments %[diouxX] */
-	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
-	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
+	enum { OCT, DEC, HEX } base;/* base for %[diouxX] conversion */
+	int dprec;		/* a copy of prec if %[diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
-	char *xdigs;		/* digits for [xX] conversion */
+	char *xdigs;		/* digits for %[xX] conversion */
 #define NIOV 8
 	struct __suio uio;	/* output information: summary */
 	struct __siov iov[NIOV];/* ... and individual io vectors */
-	char buf[BUF];		/* space for %c, %[diouxX], %[eEfgG] */
+	char buf[BUF];		/* space for %c, %[diouxX], %[eEfFgG] */
 	char ox[2];		/* space for 0x hex-prefix */
 	union arg *argtable;	/* args, built due to positional arg */
 	union arg statargtable[STATIC_ARG_TBL_SIZE];
@@ -753,7 +753,7 @@ number:			if ((dprec = prec) >= 0)
 		 * first be prefixed by any sign or other prefix; otherwise,
 		 * it should be blank padded before the prefix is emitted.
 		 * After any left-hand padding and prefixing, emit zeroes
-		 * required by a decimal [diouxX] precision, then print the
+		 * required by a decimal %[diouxX] precision, then print the
 		 * string proper, then emit zeroes required by any leftover
 		 * floating precision; finally, if LADJUST, pad with blanks.
 		 *
