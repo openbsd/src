@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.37 2008/08/08 12:20:24 thib Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.38 2008/08/27 10:34:24 damien Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1789,9 +1789,6 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	}
 	m_adj(m, ETHER_ALIGN);
 
-	/* trim FCS */
-	m_adj(m, -IEEE80211_CRC_LEN);
-
 	s = splnet();
 
 #if NBPFILTER > 0
@@ -1799,7 +1796,7 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 		struct mbuf mb;
 		struct upgt_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
+		tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
 		tap->wr_rate = upgt_rx_rate(sc, rxdesc->rate);
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
@@ -1814,6 +1811,8 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
+	/* trim FCS */
+	m_adj(m, -IEEE80211_CRC_LEN);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);

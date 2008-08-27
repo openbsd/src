@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.107 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.108 2008/08/27 10:34:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -771,7 +771,6 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
-	m_adj(m, -IEEE80211_CRC_LEN);	/* trim FCS */
 
 	s = splnet();
 
@@ -780,7 +779,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		struct mbuf mb;
 		struct ural_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
+		tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
 		tap->wr_rate = ural_rxrate(desc);
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
@@ -796,6 +795,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
+	m_adj(m, -IEEE80211_CRC_LEN);	/* trim FCS */
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
