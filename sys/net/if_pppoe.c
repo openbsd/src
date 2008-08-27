@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.23 2008/08/09 11:25:05 thib Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.24 2008/08/27 08:41:46 brad Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -471,6 +471,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		pt = (struct pppoetag *)(mtod(n, caddr_t) + noff);
 		tag = ntohs(pt->tag);
 		len = ntohs(pt->len);
+		off += sizeof(*pt);
 		if (off + len > m->m_pkthdr.len) {
 			printf("%s: tag 0x%x len 0x%x is too long\n",
 			    devname, tag, len);
@@ -486,7 +487,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		case PPPOE_TAG_HUNIQUE:
 			if (sc != NULL)
 				break;
-			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
+			n = m_pulldown(m, off, len, &noff);
 			if (n == NULL) {
 				m = NULL;
 				err_msg = "TAG HUNIQUE ERROR";
@@ -503,7 +504,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;
 		case PPPOE_TAG_ACCOOKIE:
 			if (ac_cookie == NULL) {
-				n = m_pulldown(m, off + sizeof(*pt), len,
+				n = m_pulldown(m, off, len,
 				    &noff);
 				if (n == NULL) {
 					err_msg = "TAG ACCOOKIE ERROR";
@@ -516,7 +517,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;
 		case PPPOE_TAG_RELAYSID:
 			if (relay_sid == NULL) {
-				n = m_pulldown(m, off + sizeof(*pt), len,
+				n = m_pulldown(m, off, len,
 				    &noff);
 				if (n == NULL) {
 					err_msg = "TAG RELAYSID ERROR";
@@ -543,7 +544,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		if (err_msg) {
 			log(LOG_INFO, "%s: %s: ", devname, err_msg);
 			if (errortag && len) {
-				n = m_pulldown(m, off + sizeof(*pt), len,
+				n = m_pulldown(m, off, len,
 				    &noff);
 				if (n) {
 					u_int8_t *et = mtod(n, caddr_t) + noff;
@@ -554,7 +555,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			addlog("\n");
 			goto done;
 		}
-		off += sizeof(*pt) + len;
+		off += len;
 	}
 breakbreak:
 	switch (code) {
