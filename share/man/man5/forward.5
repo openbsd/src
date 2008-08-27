@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.7 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: forward.5,v 1.8 2008/08/27 20:39:32 jmc Exp $
 .\"
 .\"	Copyright (c) 2001 Marco S. Hyman
 .\"
@@ -10,7 +10,7 @@
 .\"	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 .\"	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 27 2008 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
@@ -26,32 +26,38 @@ If this file exists,
 addresses found in the
 .Pa .forward
 file.
-.Pa .forward
-files must not be group or world writable.
-The user's home directory should not be group writable.
-The
-.Pa .forward
-file must be owned by and readable by the indicated user.
 .Pp
 A
 .Pa .forward
 file contains one or more lines where each line is an e-mail address
 or the name of a private incoming mailer where incoming mail will be
 forwarded.
-Examples:
-.Bd -literal -offset indent
-# lines with # in the first column are ignored
-# empty lines are ignored
-# #@# with whitespace on both sides may be used to start a comment
-
-foo@bar.baz.com				#@# is a comment anywhere
-"| /usr/local/libexec/slocal -user foo"
-.Ed
+Multiple entries may be specified on one line, comma separated.
+Additionally, a copy of all mail may be retained
+on the local machine using a
+.Dq \euser
+entry.
+.Pp
+.Pa .forward
+files must not be group or world writable.
+The user's home directory should not be group writable.
+The
+.Pa .forward
+file must be owned by and readable by the indicated user.
 .Sh FILES
 .Bl -tag -width $HOME/.forward -compact
 .It Pa $HOME/.forward
 e-mail forwarding information
 .El
+.Sh EXAMPLES
+.Bd -literal -offset indent
+# lines with # in the first column are ignored
+# empty lines are ignored
+# #@# with whitespace on both sides may be used to start a comment
+
+foo@bar.baz.com, \euser			#@# is a comment anywhere
+"| /usr/local/libexec/slocal -user foo"
+.Ed
 .Sh SEE ALSO
 .Xr aliases 5 ,
 .Xr sendmail 8
