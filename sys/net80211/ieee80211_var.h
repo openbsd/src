@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.47 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.48 2008/08/27 10:58:01 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -99,6 +99,37 @@ struct ieee80211_channel {
 	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
+
+/*
+ * Channel attributes (XXX must keep in sync with radiotap flags).
+ */
+#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
+#define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
+#define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
+#define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */
+#define IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
+#define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
+#define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
+#define IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
+#define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+
+/*
+ * Useful combinations of channel characteristics.
+ */
+#define IEEE80211_CHAN_FHSS \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
+#define IEEE80211_CHAN_A \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
+#define IEEE80211_CHAN_B \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
+#define IEEE80211_CHAN_PUREG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
+#define IEEE80211_CHAN_G \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
+#define IEEE80211_CHAN_T \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
+#define IEEE80211_CHAN_TG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
 #define	IEEE80211_IS_CHAN_FHSS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
