@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.69 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.70 2008/08/27 10:29:53 damien Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1273,10 +1273,10 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			rr->rr_tsft =
 			    htole64(((uint64_t)htsfth << 32) | htsftl);
 
-			if ((hstat & RTW_RXSTAT_SPLCP) != 0)
-				rr->rr_flags = IEEE80211_RADIOTAP_F_SHORTPRE;
-
 			rr->rr_flags = 0;
+			if ((hstat & RTW_RXSTAT_SPLCP) != 0)
+				rr->rr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+
 			rr->rr_rate = rate;
 			rr->rr_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
