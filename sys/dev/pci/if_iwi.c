@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.88 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.89 2008/08/27 09:28:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1416,10 +1416,11 @@ iwi_start(struct ifnet *ifp)
 	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
-	if (ic->ic_state != IEEE80211_S_RUN)
-		return;
-
 	for (;;) {
+		IF_PURGE(&ic->ic_mgtq);
+
+		if (ic->ic_state != IEEE80211_S_RUN)
+			return;
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
