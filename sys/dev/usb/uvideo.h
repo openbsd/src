@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.30 2008/08/26 21:52:48 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.31 2008/08/27 17:31:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -162,7 +162,7 @@ struct usb_video_header_desc {
 	uWord	wTotalLength;
 	uDWord	dwClockFrequency;
 	uByte	bInCollection;
-};
+} __packed;
 
 struct usb_video_header_desc_all {
 	struct usb_video_header_desc	*fix;
@@ -178,7 +178,7 @@ struct usb_video_input_terminal_desc {
 	uWord	wTerminalType;
 	uByte	bAssocTerminal;
 	uByte	iTerminal;
-};
+} __packed;
 
 /* Table 3-5: Output Terminal Descriptor */
 struct usb_video_output_terminal_desc {
@@ -190,7 +190,7 @@ struct usb_video_output_terminal_desc {
 	uByte	bAssocTerminal;
 	uByte	bSourceID;
 	uByte	iTerminal;
-};
+} __packed;
 
 /* Table 3-6: Camera Terminal Descriptor */
 struct usb_video_camera_terminal_desc {
@@ -206,7 +206,7 @@ struct usb_video_camera_terminal_desc {
 	uWord	wOcularFocalLength;
 	uByte	bControlSize;
 	uByte	*bmControls;
-};
+} __packed;
 
 /* Table 3-8: VC Processing Unit Descriptor */
 struct usb_video_vc_processing_desc {
@@ -239,7 +239,7 @@ struct usb_video_vc_endpoint_desc {
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
 	uWord	wMaxTransferSize;
-};
+} __packed;
 
 /* Table 3-13: Interface Input Header Descriptor */
 struct usb_video_input_header_desc {
@@ -255,7 +255,7 @@ struct usb_video_input_header_desc {
 	uByte	bTriggerSupport;
 	uByte	bTriggerUsage;
 	uByte	bControlSize;
-};
+} __packed;
 
 struct usb_video_input_header_desc_all {
 	struct usb_video_input_header_desc	*fix;
@@ -388,38 +388,6 @@ struct usb_video_frame_uncompressed_desc {
 /*
  * Driver specific private definitions.
  */
-#define UVIDEO_NFRAMES_MAX	40
-
-struct uvideo_vs_iface {
-	struct uvideo_softc	*sc;
-	usbd_xfer_handle	 xfer;
-	void			*buf;
-	usbd_interface_handle  	 ifaceh;
-	int			 endpoint;
-	usbd_pipe_handle	 pipeh;
-	uint16_t		 size[UVIDEO_NFRAMES_MAX];
-	int			 numalts;
-	int			 curalt;
-	uint32_t		 max_packet_size;
-	int			 iface;
-};
-
-struct uvideo_frame_buffer {
-	int		 sample;
-	uint8_t		 fid;
-	int		 offset;
-	int		 buf_size;
-	uint8_t		*buf;
-};
-
-#define UVIDEO_MAX_BUFFERS	32
-struct uvideo_mmap {
-	SIMPLEQ_ENTRY(uvideo_mmap)	q_frames;
-	uint8_t				*buf;
-	struct v4l2_buffer		 v4l2_buf;
-};
-typedef SIMPLEQ_HEAD(, uvideo_mmap) q_mmap;
-
 struct uvideo_format_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
@@ -450,6 +418,37 @@ struct uvideo_format_desc {
 	} u;
 } __packed;
 
+#define UVIDEO_NFRAMES_MAX	40
+struct uvideo_vs_iface {
+	struct uvideo_softc	*sc;
+	usbd_xfer_handle	 xfer;
+	void			*buf;
+	usbd_interface_handle  	 ifaceh;
+	int			 endpoint;
+	usbd_pipe_handle	 pipeh;
+	uint16_t		 size[UVIDEO_NFRAMES_MAX];
+	int			 numalts;
+	int			 curalt;
+	uint32_t		 max_packet_size;
+	int			 iface;
+};
+
+struct uvideo_frame_buffer {
+	int		 sample;
+	uint8_t		 fid;
+	int		 offset;
+	int		 buf_size;
+	uint8_t		*buf;
+};
+
+#define UVIDEO_MAX_BUFFERS	32
+struct uvideo_mmap {
+	SIMPLEQ_ENTRY(uvideo_mmap)	q_frames;
+	uint8_t				*buf;
+	struct v4l2_buffer		 v4l2_buf;
+};
+typedef SIMPLEQ_HEAD(, uvideo_mmap) q_mmap;
+
 struct uvideo_format_group {
 	uint32_t				 pixelformat;
 	uint8_t					 format_dfidx;
@@ -465,7 +464,7 @@ struct uvideo_res {
 	int width;
 	int height;
 	int fidx;
-} __packed;
+};
 
 struct uvideo_controls {
 	int		cid;
