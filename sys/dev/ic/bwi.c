@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.80 2008/08/27 09:14:36 damien Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.81 2008/08/27 10:03:47 damien Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8293,7 +8293,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			struct bwi_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
 			tap->wr_tsf = hdr->rxh_tsf;
-			tap->wr_flags = 0;
+			tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
 			tap->wr_rate = rate;
 			tap->wr_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
