@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.70 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.71 2008/08/27 09:49:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1905,18 +1905,16 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	const struct zyd_plcphdr *plcp;
 	const struct zyd_rx_stat *stat;
 	struct mbuf *m;
-	int rlen, s;
+	int s;
 
 	if (len < ZYD_MIN_FRAGSZ) {
-		printf("%s: frame too short (length=%d)\n",
-		    sc->sc_dev.dv_xname, len);
+		DPRINTFN(2, ("frame too short (length=%d)\n", len));
 		ifp->if_ierrors++;
 		return;
 	}
 
 	plcp = (const struct zyd_plcphdr *)buf;
-	stat = (const struct zyd_rx_stat *)
-	    (buf + len - sizeof (struct zyd_rx_stat));
+	stat = (const struct zyd_rx_stat *)(buf + len - sizeof (*stat));
 
 	if (stat->flags & ZYD_RX_ERROR) {
 		DPRINTF(("%s: RX status indicated error (%x)\n",
@@ -1926,30 +1924,31 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	}
 
 	/* compute actual frame length */
-	rlen = len - sizeof (struct zyd_plcphdr) -
-	    sizeof (struct zyd_rx_stat) - IEEE80211_CRC_LEN;
+	len -= sizeof (*plcp) - sizeof (*stat) - IEEE80211_CRC_LEN;
+
+	if (len > MCLBYTES) {
+		DPRINTFN(2, ("frame too large (length=%d)\n", len));
+		ifp->if_ierrors++;
+		return;
+	}
 
 	/* allocate a mbuf to store the frame */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		printf("%s: could not allocate rx mbuf\n",
-		    sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		return;
 	}
-	if (rlen > MHLEN) {
+	if (len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (!(m->m_flags & M_EXT)) {
-			printf("%s: could not allocate rx mbuf cluster\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(m);
 			ifp->if_ierrors++;
+			m_freem(m);
 			return;
 		}
 	}
+	bcopy(plcp + 1, mtod(m, caddr_t), len);
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = rlen;
-	bcopy((const uint8_t *)(plcp + 1), mtod(m, uint8_t *), rlen);
+	m->m_pkthdr.len = m->m_len = len;
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -2013,8 +2012,7 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
 	if (len < ZYD_MIN_RXBUFSZ) {
-		printf("%s: xfer too short (length=%d)\n",
-		    sc->sc_dev.dv_xname, len);
+		DPRINTFN(2, ("xfer too short (length=%d)\n", len));
 		ifp->if_ierrors++;
 		goto skip;
 	}

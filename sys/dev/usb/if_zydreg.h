@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.22 2007/11/27 20:30:14 damien Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.23 2008/08/27 09:49:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -947,11 +947,16 @@
 #define ZYD_FILTER_CFE_A	(1 << 31)
 
 /* helpers for register ZYD_MAC_RXFILTER */
-#define ZYD_FILTER_MONITOR	0xffffffff
+#define ZYD_FILTER_MONITOR	0x000fffff
+#if 1
+/* magic from the vendor's driver */
+#define ZYD_FILTER_BSS		0x2400ffff
+#else
 #define ZYD_FILTER_BSS							\
 	(ZYD_FILTER_ASS_RSP | ZYD_FILTER_REASS_RSP |			\
 	 ZYD_FILTER_PRB_RSP | ZYD_FILTER_BCN | ZYD_FILTER_DEASS |	\
 	 ZYD_FILTER_AUTH | ZYD_FILTER_DEAUTH)
+#endif
 #define ZYD_FILTER_HOSTAP						\
 	(ZYD_FILTER_ASS_REQ | ZYD_FILTER_REASS_REQ |			\
 	 ZYD_FILTER_PRB_REQ | ZYD_FILTER_DEASS | ZYD_FILTER_AUTH |	\
@@ -1078,7 +1083,7 @@ struct zyd_notif_retry {
 	(sizeof (struct zyd_tx_desc) + IEEE80211_MAX_LEN)
 
 #define ZYD_MIN_FRAGSZ							\
-	(sizeof (struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
+	(sizeof (struct zyd_plcphdr) + IEEE80211_ACK_LEN +		\
 	 sizeof (struct zyd_rx_stat))
 #define ZYD_MIN_RXBUFSZ	ZYD_MIN_FRAGSZ
 #define ZYX_MAX_RXBUFSZ							\
