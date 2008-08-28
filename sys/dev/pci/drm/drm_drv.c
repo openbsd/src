@@ -220,8 +220,10 @@ drm_attach(struct device *parent, struct device *kdev,
 	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
 	 * conflict with it.
 	 */
-	if (drm_memrange_init(&dev->handle_mm, 1024*1024*1024, LONG_MAX) != 0) {
-		printf(": failed to initialise handle memrange\n");
+	dev->handle_ext = extent_create("drmext", 1024*1024*1024, LONG_MAX,
+	    M_DRM, NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
+	if (dev->handle_ext == NULL) {
+		DRM_ERROR("Failed to initialise handle extent\n");
 		goto error;
 	}
 
@@ -274,7 +276,7 @@ drm_detach(struct device *self, int flags)
 
 	drm_ctxbitmap_cleanup(dev);
 
-	drm_memrange_takedown(&dev->handle_mm);
+	extent_destroy(dev->handle_ext);
 
 	if (dev->agp && dev->agp->mtrr) {
 		int retcode;

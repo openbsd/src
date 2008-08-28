@@ -113,7 +113,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
     drm_map_type_t type, drm_map_flags_t flags, drm_local_map_t **map_ptr)
 {
 	drm_local_map_t *map;
-	int align;
+	int align, ret = 0;
 #if 0 /* disabled for now */
 	struct drm_agp_mem *entry;
 	int valid;
@@ -151,7 +151,6 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 			if (map->type == type && (map->offset == offset ||
 			    (map->type == _DRM_SHM &&
 			    map->flags == _DRM_CONTAINS_LOCK))) {
-				map->size = size;
 				DRM_DEBUG("Found kernel map %d\n", type);
 				goto done;
 			}
@@ -174,20 +173,17 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 	map->flags = flags;
 
 
-	map->mm = drm_memrange_search_free(&dev->handle_mm, map->size,
-	    PAGE_SIZE, 0);
-	if (map->mm == NULL) {
+	DRM_LOCK();
+	ret = extent_alloc(dev->handle_ext, map->size, PAGE_SIZE, 0,
+	    0, EX_NOWAIT, &map->ext);
+	if (ret) {
 		DRM_ERROR("can't find free offset\n");
+		DRM_UNLOCK();
 		drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-		return ENOMEM;
+		DRM_LOCK();
+		return ret;
 	}
-	map->mm = drm_memrange_get_block(map->mm, map->size,
-	    PAGE_SIZE); 
-	if (map->mm == NULL) {
-		DRM_ERROR("can't get block\n");
-		drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-		return ENOMEM;
-	}
+	DRM_UNLOCK();
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
@@ -327,7 +323,7 @@ drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	request->mtrr = map->mtrr;
 	request->handle = map->handle;
 
-	request->handle = (void *)map->mm->start;
+	request->handle = (void *)map->ext;
 
 	return 0;
 }
@@ -364,7 +360,9 @@ drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 		break;
 	}
 
-	drm_memrange_put_block(map->mm);
+	/* NOCOALESCE set, can't fail */
+	extent_free(dev->handle_ext, map->ext, map->size, EX_NOWAIT);
+
 
 	drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 }
@@ -1018,7 +1016,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			goto done;
 		}
 		size = round_page(map->size);
-		foff = map->mm->start;
+		foff = map->ext;
 	} else {
 		size = round_page(dma->byte_count),
 		foff = 0;

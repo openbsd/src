@@ -58,6 +58,7 @@
 #include <sys/stdint.h>
 #include <sys/agpio.h>
 #include <sys/memrange.h>
+#include <sys/extent.h>
 #include <sys/vnode.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcidevs.h>
@@ -444,26 +445,6 @@ typedef struct drm_sg_mem {
 	struct drm_sg_dmamem *mem;
 } drm_sg_mem_t;
 
-/*
- * Generic memory range manager structs
- */ 
-
-struct drm_memrange_node {
-	TAILQ_ENTRY(drm_memrange_node)	 ml_entry;
-	TAILQ_ENTRY(drm_memrange_node)	 fl_entry;
-	struct drm_memrange		*mm;
-	void				*private;
-	int				 free;
-	unsigned long			 start;
-	unsigned long			 size;
-};
-
-TAILQ_HEAD(drm_mmq, drm_memrange_node);
-struct drm_memrange {
-	struct drm_mmq	ml;
-	struct drm_mmq	fl;
-};
-
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
 typedef struct drm_local_map {
@@ -471,9 +452,9 @@ typedef struct drm_local_map {
 	struct vga_pci_bar		*bsr;	/* Vga BAR, if applicable */
 	drm_dma_handle_t		*dmah;	/* Handle to DMA mem */
 	void				*handle;/* KVA, if mapped */
-	struct drm_memrange_node 	*mm;	/* mmap offset */
 	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
 	bus_space_handle_t		 bsh;	/* Handle to mapped pci mem */
+	u_long				 ext;	/* extent for mmap */
 	drm_map_flags_t			 flags;	/* Flags */
 	int				 mtrr;	/* Boolean: MTRR used */
 	unsigned long			 offset;/* Physical address */
@@ -613,7 +594,7 @@ struct drm_device {
 	SPLAY_HEAD(drm_magic_tree, drm_magic_entry)	magiclist;
 
 	/* Linked list of mappable regions. Protected by dev_lock */
-	struct drm_memrange handle_mm;
+	struct extent	*handle_ext;
 	drm_map_list_t	  maplist;
 
 	int		  max_context;
@@ -842,24 +823,6 @@ drm_dma_handle_t *drm_pci_alloc(struct drm_device *, size_t, size_t,
 		      dma_addr_t);
 void	drm_pci_free(struct drm_device *, drm_dma_handle_t *);
 
-/* Memrange functions for managing aperture space */
-struct drm_memrange_node
-		*drm_memrange_get_block(struct drm_memrange_node *,
-		     unsigned long, unsigned);
-void		 drm_memrange_put_block(struct drm_memrange_node *);
-struct drm_memrange_node
-		*drm_memrange_search_free(const struct drm_memrange *,
-		     unsigned long, unsigned, int);
-int		 drm_memrange_init(struct drm_memrange *, unsigned long,
-		     unsigned long);
-void		 drm_memrange_takedown(struct drm_memrange *);
-int		 drm_memrange_clean(struct drm_memrange *);
-unsigned long	 drm_memrange_tail_space(struct drm_memrange *);
-int		 drm_memrange_remove_space_from_tail(struct drm_memrange *,
-		     unsigned long);
-int		 drm_memrange_add_space_to_tail(struct drm_memrange *,
-		     unsigned long );
-
 /* Inline replacements for DRM_IOREMAP macros */
 #define drm_core_ioremap_wc drm_core_ioremap
 static __inline__ void drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
@@ -878,7 +841,7 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset == map->mm->start)
+		if (offset == map->ext)
 			return map;
 	}
 	return NULL;

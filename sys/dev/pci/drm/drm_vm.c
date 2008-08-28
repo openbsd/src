@@ -76,9 +76,9 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 	 */
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset >= map->mm->start &&
-		    offset < map->mm->start + map->size) {
-			offset -= map->mm->start;
+		if (offset >= map->ext &&
+		    offset < map->ext + map->size) {
+			offset -= map->ext;
 			break;
 		}
 	}
