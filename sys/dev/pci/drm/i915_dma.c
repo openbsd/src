@@ -119,14 +119,6 @@ static int i915_initialize(struct drm_device * dev,
 		return -EINVAL;
 	}
 
-	if (init->mmio_offset != 0)
-		dev_priv->mmio_map = drm_core_findmap(dev, init->mmio_offset);
-	if (!dev_priv->mmio_map) {
-		i915_dma_cleanup(dev);
-		DRM_ERROR("can not find mmio map!\n");
-		return -EINVAL;
-	}
-
 	if (init->sarea_priv_offset)
 		dev_priv->sarea_priv = (drm_i915_sarea_t *)
 			((u8 *) dev_priv->sarea->handle +
@@ -201,11 +193,6 @@ static int i915_dma_resume(struct drm_device * dev)
 
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
-		return -EINVAL;
-	}
-
-	if (!dev_priv->mmio_map) {
-		DRM_ERROR("can not find mmio map!\n");
 		return -EINVAL;
 	}
 
