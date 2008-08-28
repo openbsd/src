@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.254 2008/06/08 20:01:02 reyk Exp $
+#	$OpenBSD: files.pci,v 1.255 2008/08/28 10:21:23 mikeb Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -118,6 +118,11 @@ file	dev/pci/eso.c			eso
 
 attach	opl at eso with opl_eso
 file	dev/pci/opl_eso.c		opl_eso
+
+# Acer Labs M5455
+device	auacer: audio, auconv, mulaw, ac97
+attach	auacer at pci
+file	dev/pci/auacer.c		auacer
 
 # Intel 810/820/440MX ICH audio with AC'97
 device	auich: audio, auconv, mulaw, ac97

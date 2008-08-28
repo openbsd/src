@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.219 2008/07/30 18:51:52 brad Exp $
+#	$OpenBSD: GENERIC,v 1.220 2008/08/28 10:21:22 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -131,6 +131,7 @@ lofn*	at pci?			# Hifn 6500
 ubsec*	at pci?			# Broadcom 580[125]/582[012]
 
 # PCI sound
+auacer*	at pci?			# Acer Labs M5455
 autri*	at pci? flags 0x0000	# Trident 4D WAVE
 cmpci*  at pci?			# C-Media CMI8338/8738
 eap*	at pci?			# Ensoniq AudioPCI S5016
@@ -142,6 +143,7 @@ com*	at puc?
 #lpt*	at puc?
 
 # Sound support
+audio*	at auacer?
 audio*	at audioce?
 audio*	at audiocs?
 audio*	at autri?
