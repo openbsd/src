@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2008/08/25 16:15:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.33 2008/08/28 05:18:26 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -101,7 +101,7 @@ aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet
 ugen*		at uhub?	# USB Generic driver
 
 # USB Video
-uvideo*		at uhub? disable
+uvideo*		at uhub?
 video*		at uvideo?
 
 #### NICs
