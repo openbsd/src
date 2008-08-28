@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwreg.h,v 1.14 2006/02/26 19:14:40 damien Exp $	*/
+/*	$OpenBSD: if_ipwreg.h,v 1.15 2008/08/28 14:40:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -182,7 +182,7 @@ struct ipw_cmd {
 #define IPW_CMD_SET_BASIC_TX_RATES		19
 #define IPW_CMD_SET_WEP_KEY			20
 #define IPW_CMD_SET_WEP_KEY_INDEX		25
-#define IPW_CMD_SET_WEP_FLAGS			26
+#define IPW_CMD_SET_PRIVACY_FLAGS		26
 #define IPW_CMD_ADD_MULTICAST			27
 #define IPW_CMD_SET_BEACON_INTERVAL		29
 #define IPW_CMD_SET_TX_POWER_INDEX		36
@@ -192,7 +192,9 @@ struct ipw_cmd {
 #define IPW_CMD_SET_SCAN_OPTIONS		46
 #define IPW_CMD_PREPARE_POWER_DOWN		58
 #define IPW_CMD_DISABLE_PHY			61
+#define IPW_CMD_SET_MSDU_TX_RATES		62
 #define IPW_CMD_SET_SECURITY_INFORMATION	67
+#define IPW_CMD_SET_ASSOC_REQ			69
 	uint32_t	subtype;
 	uint32_t	seq;
 	uint32_t	len;
@@ -210,8 +212,8 @@ struct ipw_cmd {
 #define IPW_MODE_IBSS		1
 #define IPW_MODE_MONITOR	2
 
-/* possible flags for command IPW_CMD_SET_WEP_FLAGS */
-#define IPW_WEPON	0x8
+/* possible flags for command IPW_CMD_SET_PRIVACY_FLAGS */
+#define IPW_PRIVACYON	0x8
 
 /* structure for command IPW_CMD_SET_WEP_KEY */
 struct ipw_wep_key {
@@ -225,6 +227,8 @@ struct ipw_security {
 	uint32_t	ciphers;
 #define IPW_CIPHER_NONE		0x00000001
 #define IPW_CIPHER_WEP40	0x00000002
+#define IPW_CIPHER_TKIP		0x00000004
+#define IPW_CIPHER_CCMP		0x00000010
 #define IPW_CIPHER_WEP104	0x00000020
 	uint16_t	reserved1;
 	uint8_t		authmode;
@@ -237,6 +241,7 @@ struct ipw_security {
 struct ipw_scan_options {
 	uint32_t	flags;
 #define IPW_SCAN_DO_NOT_ASSOCIATE	0x00000001
+#define IPW_SCAN_MIXED_CELL		0x00000002
 #define IPW_SCAN_PASSIVE		0x00000008
 	uint32_t	channels;
 } __packed;
@@ -247,14 +252,25 @@ struct ipw_configuration {
 #define IPW_CFG_PROMISCUOUS	0x00000004
 #define IPW_CFG_PREAMBLE_AUTO	0x00000010
 #define IPW_CFG_IBSS_AUTO_START	0x00000020
-#define IPW_CFG_802_1x_ENABLE	0x00004000
+#define IPW_CFG_802_1X_ENABLE	0x00004000
 #define IPW_CFG_BSS_MASK	0x00008000
 #define IPW_CFG_IBSS_MASK	0x00010000
 	uint32_t	bss_chan;
 	uint32_t	ibss_chan;
 } __packed;
 
-/* EEPROM = Electrically Erasable Programmable Read-Only Memory */
+/* structure for command IPW_CMD_SET_ASSOC_REQ */
+struct ipw_assoc_req {
+	uint16_t	flags;
+#define IPW_ASSOC_CAPINFO	0x0001
+#define IPW_ASSOC_LINTVAL	0x0002
+#define IPW_ASSOC_BSSID		0x0004	/* reassoc */
+	uint16_t	capinfo;
+	uint16_t	lintval;
+	uint8_t		bssid[IEEE80211_ADDR_LEN];
+	uint32_t	optie_len;
+	uint8_t		optie[384];
+} __packed;
 
 #define IPW_MEM_EEPROM_CTL	0x00300040
 
@@ -324,5 +340,5 @@ struct ipw_configuration {
 #define IPW_EEPROM_CTL(sc, val) do {					\
 	MEM_WRITE_4((sc), IPW_MEM_EEPROM_CTL, (val));			\
 	DELAY(IPW_EEPROM_DELAY);					\
-} while (0)
+} while (/* CONSTCOND */0)
 

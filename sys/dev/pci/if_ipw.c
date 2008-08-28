@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.75 2008/08/27 09:28:38 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.76 2008/08/28 14:40:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
+#include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -106,6 +107,8 @@ int		ipw_reset(struct ipw_softc *);
 int		ipw_load_ucode(struct ipw_softc *, u_char *, int);
 int		ipw_load_firmware(struct ipw_softc *, u_char *, int);
 int		ipw_read_firmware(struct ipw_softc *, struct ipw_firmware *);
+void		ipw_scan(void *, void *);
+void		ipw_auth_and_assoc(void *, void *);
 int		ipw_config(struct ipw_softc *);
 int		ipw_init(struct ifnet *);
 void		ipw_stop(struct ifnet *, int);
@@ -235,6 +238,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_WEP |		/* s/w WEP */
+	    IEEE80211_C_RSN |		/* WPA/RSN */
 	    IEEE80211_C_SCANALL;	/* h/w scanning */
 
 	/* read MAC address from EEPROM */
@@ -665,29 +669,25 @@ int
 ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ipw_softc *sc = ic->ic_softc;
-	struct ieee80211_node *ni;
-	uint8_t macaddr[IEEE80211_ADDR_LEN];
-	uint32_t len;
+	int error;
 
 	switch (nstate) {
-	case IEEE80211_S_RUN:
-		DELAY(100);	/* firmware needs a short delay here */
-
-		len = IEEE80211_ADDR_LEN;
-		ipw_read_table2(sc, IPW_INFO_CURRENT_BSSID, macaddr, &len);
-
-		ni = ieee80211_find_node(ic, macaddr);
-		if (ni == NULL)
-			break;
-
-		(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
-		ieee80211_node_newstate(ni, IEEE80211_STA_BSS);
+	case IEEE80211_S_SCAN:
+		error = workq_add_task(NULL, 0, ipw_scan, sc, NULL);
+		if (error != 0)
+			return error;
 		break;
 
-	case IEEE80211_S_INIT:
-	case IEEE80211_S_SCAN:
 	case IEEE80211_S_AUTH:
+		error = workq_add_task(NULL, 0, ipw_auth_and_assoc, sc, NULL);
+		if (error != 0)
+			return error;
+		break;
+
+	case IEEE80211_S_RUN:
+	case IEEE80211_S_INIT:
 	case IEEE80211_S_ASSOC:
+		/* nothing to do */
 		break;
 	}
 
@@ -761,11 +761,10 @@ ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 
 	cmd = mtod(sbuf->m, struct ipw_cmd *);
 
-	DPRINTFN(2, ("RX!CMD!%u!%u!%u!%u!%u\n",
-	    letoh32(cmd->type), letoh32(cmd->subtype), letoh32(cmd->seq),
-	    letoh32(cmd->len), letoh32(cmd->status)));
+	DPRINTFN(2, ("received command ack type=%u,status=%u\n",
+	    letoh32(cmd->type), letoh32(cmd->status)));
 
-	wakeup(sc);
+	wakeup(&sc->cmd);
 }
 
 void
@@ -780,27 +779,24 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 
 	state = letoh32(*mtod(sbuf->m, uint32_t *));
 
-	DPRINTFN(2, ("RX!NEWSTATE!%u\n", state));
+	DPRINTFN(2, ("firmware state changed to 0x%x\n", state));
 
 	switch (state) {
 	case IPW_STATE_ASSOCIATED:
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		break;
 
-	case IPW_STATE_SCANNING:
-		/* don't leave run state on background scan */
-		if (ic->ic_state != IEEE80211_S_RUN)
-			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-
-		ic->ic_flags |= IEEE80211_F_ASCAN;
-		break;
-
 	case IPW_STATE_SCAN_COMPLETE:
-		ic->ic_flags &= ~IEEE80211_F_ASCAN;
+		if (ic->ic_state == IEEE80211_S_SCAN)
+			ieee80211_end_scan(ifp);
 		break;
 
 	case IPW_STATE_ASSOCIATION_LOST:
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+		break;
+
+	case IPW_STATE_DISABLED:
+		wakeup(sc);
 		break;
 
 	case IPW_STATE_RADIO_DISABLED:
@@ -822,7 +818,8 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	struct ieee80211_node *ni;
 	int error;
 
-	DPRINTFN(5, ("RX!DATA!%u!%u\n", letoh32(status->len), status->rssi));
+	DPRINTFN(5, ("received data frame len=%u,rssi=%u\n",
+	    letoh32(status->len), status->rssi));
 
 	/*
 	 * Try to allocate a new mbuf for this ring element and load it before
@@ -907,7 +904,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 void
 ipw_notification_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
-	DPRINTFN(2, ("RX!NOTIFICATION\n"));
+	DPRINTFN(2, ("received notification\n"));
 }
 
 void
@@ -1043,8 +1040,6 @@ ipw_intr(void *arg)
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
 
-	DPRINTFN(8, ("INTR!0x%08x\n", r));
-
 	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		ifp->if_flags &= ~IFF_UP;
@@ -1074,17 +1069,9 @@ int
 ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 {
 	struct ipw_soft_bd *sbd;
-	int error;
+	int s, error;
 
-	sbd = &sc->stbd_list[sc->txcur];
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->cmd_map, &sc->cmd,
-	    sizeof (struct ipw_cmd), NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map command DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		return error;
-	}
+	s = splnet();
 
 	sc->cmd.type = htole32(type);
 	sc->cmd.subtype = htole32(0);
@@ -1093,6 +1080,16 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	if (data != NULL)
 		bcopy(data, sc->cmd.data, len);
 
+	error = bus_dmamap_load(sc->sc_dmat, sc->cmd_map, &sc->cmd,
+	    sizeof (struct ipw_cmd), NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map command DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		splx(s);
+		return error;
+	}
+
+	sbd = &sc->stbd_list[sc->txcur];
 	sbd->type = IPW_SBD_TYPE_COMMAND;
 	sbd->bd->physaddr = htole32(sc->cmd_map->dm_segs[0].ds_addr);
 	sbd->bd->len = htole32(sizeof (struct ipw_cmd));
@@ -1102,7 +1099,6 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->cmd_map, 0, sizeof (struct ipw_cmd),
 	    BUS_DMASYNC_PREWRITE);
-
 	bus_dmamap_sync(sc->sc_dmat, sc->tbd_map,
 	    sc->txcur * sizeof (struct ipw_bd), sizeof (struct ipw_bd),
 	    BUS_DMASYNC_PREWRITE);
@@ -1111,10 +1107,13 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	sc->txfree--;
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, sc->txcur);
 
-	DPRINTFN(2, ("TX!CMD!%u!%u!%u!%u\n", type, 0, 0, len));
+	DPRINTFN(2, ("sending command type=%u,len=%u\n", type, len));
 
 	/* wait at most one second for command to complete */
-	return tsleep(sc, 0, "ipwcmd", hz);
+	error = tsleep(&sc->cmd, 0, "ipwcmd", hz);
+	splx(s);
+
+	return error;
 }
 
 int
@@ -1241,11 +1240,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	sbd->bd->flags = IPW_BD_FLAG_TX_FRAME_802_3 |
 	    IPW_BD_FLAG_TX_NOT_LAST_FRAGMENT;
 
-	DPRINTFN(5, ("TX!HDR!%u!%u!%u!%u", shdr->hdr.type, shdr->hdr.subtype,
-	    shdr->hdr.encrypted, shdr->hdr.encrypt));
-	DPRINTFN(5, ("!%s", ether_sprintf(shdr->hdr.src_addr)));
-	DPRINTFN(5, ("!%s\n", ether_sprintf(shdr->hdr.dst_addr)));
-
 	bus_dmamap_sync(sc->sc_dmat, sc->tbd_map,
 	    sc->txcur * sizeof (struct ipw_bd),
 	    sizeof (struct ipw_bd), BUS_DMASYNC_PREWRITE);
@@ -1270,9 +1264,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 			sbd->type = IPW_SBD_TYPE_NOASSOC;
 			sbd->bd->flags |= IPW_BD_FLAG_TX_NOT_LAST_FRAGMENT;
 		}
-
-		DPRINTFN(5, ("TX!FRAG!%d!%d\n", i,
-		    sbuf->map->dm_segs[i].ds_len));
 
 		bus_dmamap_sync(sc->sc_dmat, sc->tbd_map,
 		    sc->txcur * sizeof (struct ipw_bd),
@@ -1301,11 +1292,10 @@ ipw_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	for (;;) {
-		IF_PURGE(&ic->ic_mgtq);
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
 
-		if (ic->ic_state != IEEE80211_S_RUN)
-			return;
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1671,18 +1661,174 @@ fail:	free(fw->data, M_DEVBUF);
 	return error;
 }
 
+void
+ipw_scan(void *arg1, void *arg2)
+{
+	struct ipw_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ipw_scan_options scan;
+	uint8_t ssid[IEEE80211_NWID_LEN];
+	int error;
+
+	/*
+	 * Firmware has a bug and does not honour the ``do not associate
+	 * after scan'' bit in the scan command.  To prevent the firmware
+	 * from associating after the scan, we set the ESSID to something
+	 * unlikely to be used by a real AP.
+	 * XXX would setting the BSSID to a multicast address work?
+	 */
+	memset(ssid, '\r', sizeof ssid);
+	error = ipw_cmd(sc, IPW_CMD_SET_ESSID, ssid, sizeof ssid);
+	if (error != 0)
+		goto fail;
+
+	/* no mandatory BSSID */
+	DPRINTF(("Setting mandatory BSSID to null\n"));
+	error = ipw_cmd(sc, IPW_CMD_SET_MANDATORY_BSSID, NULL, 0);
+	if (error != 0)
+		goto fail;
+
+	scan.flags = htole32(IPW_SCAN_DO_NOT_ASSOCIATE | IPW_SCAN_MIXED_CELL);
+	scan.channels = htole32(0x3fff);	/* scan channels 1-14 */
+	DPRINTF(("Setting scan options to 0x%x\n", letoh32(scan.flags)));
+	error = ipw_cmd(sc, IPW_CMD_SET_SCAN_OPTIONS, &scan, sizeof scan);
+	if (error != 0)
+		goto fail;
+
+	/* start scanning */
+	DPRINTF(("Enabling adapter\n"));
+	error = ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
+	if (error != 0)
+		goto fail;
+
+	return;
+ fail:
+	printf("%s: scan request failed (error=%d)\n", sc->sc_dev.dv_xname,
+	    error);
+	ieee80211_end_scan(ifp);
+}
+
+void
+ipw_auth_and_assoc(void *arg1, void *arg2)
+{
+	struct ipw_softc *sc = arg1;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct ipw_scan_options scan;
+	struct ipw_security security;
+	struct ipw_assoc_req assoc;
+	uint32_t data;
+	uint8_t chan;
+	int s, error;
+
+	DPRINTF(("Disabling adapter\n"));
+	error = ipw_cmd(sc, IPW_CMD_DISABLE, NULL, 0);
+	if (error != 0)
+		goto fail;
+#if 1
+	/* wait at most one second for card to be disabled */
+	s = splnet();
+	error = tsleep(sc, 0, "ipwdis", hz);
+	splx(s);
+	if (error != 0) {
+		printf("%s: timeout waiting for disabled state\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+#else
+	/* Intel's Linux driver polls for the DISABLED state instead.. */
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if (ipw_read_table1(sc, IPW_INFO_CARD_DISABLED) == 1)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 1000) {
+		printf("%s: timeout waiting for disabled state\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+#endif
+
+	bzero(&security, sizeof security);
+	security.authmode = IPW_AUTH_OPEN;
+	security.ciphers = htole32(IPW_CIPHER_NONE);
+	DPRINTF(("Setting authmode to %u\n", security.authmode));
+	error = ipw_cmd(sc, IPW_CMD_SET_SECURITY_INFORMATION, &security,
+	    sizeof security);
+	if (error != 0)
+		goto fail;
+
+#ifdef IPW_DEBUG
+	if (ipw_debug > 0) {
+		printf("Setting ESSID to ");
+		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
+		printf("\n");
+	}
+#endif
+	error = ipw_cmd(sc, IPW_CMD_SET_ESSID, ni->ni_essid, ni->ni_esslen);
+	if (error != 0)
+		goto fail;
+
+	DPRINTF(("Setting BSSID to %s\n", ether_sprintf(ni->ni_bssid)));
+	error = ipw_cmd(sc, IPW_CMD_SET_MANDATORY_BSSID, ni->ni_bssid,
+	    IEEE80211_ADDR_LEN);
+	if (error != 0)
+		goto fail;
+
+	data = htole32((ic->ic_flags & (IEEE80211_F_WEPON |
+	    IEEE80211_F_RSNON)) ? IPW_PRIVACYON : 0);
+	DPRINTF(("Setting privacy flags to 0x%x\n", letoh32(data)));
+	error = ipw_cmd(sc, IPW_CMD_SET_PRIVACY_FLAGS, &data, sizeof data);
+	if (error != 0)
+		goto fail;
+
+	/* let firmware set the capinfo, lintval, and bssid fixed fields */
+	bzero(&assoc, sizeof assoc);
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		uint8_t *frm = assoc.optie;
+
+		/* tell firmware to add a WPA or RSN IE in (Re)Assoc req */
+		if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
+			frm = ieee80211_add_rsn(frm, ic, ni);
+		else if (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)
+			frm = ieee80211_add_wpa(frm, ic, ni);
+		assoc.optie_len = htole32(frm - assoc.optie);
+	}
+	DPRINTF(("Preparing assocation request (optional IE length=%d)\n",
+	    letoh32(assoc.optie_len)));
+	error = ipw_cmd(sc, IPW_CMD_SET_ASSOC_REQ, &assoc, sizeof assoc);
+	if (error != 0)
+		goto fail;
+
+	scan.flags = htole32(IPW_SCAN_MIXED_CELL);
+	chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	scan.channels = htole32(1 << (chan - 1));
+	DPRINTF(("Setting scan options to 0x%x\n", letoh32(scan.flags)));
+	error = ipw_cmd(sc, IPW_CMD_SET_SCAN_OPTIONS, &scan, sizeof scan);
+	if (error != 0)
+		goto fail;
+
+	/* trigger scan+association */
+	DPRINTF(("Enabling adapter\n"));
+	error = ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
+	if (error != 0)
+		goto fail;
+
+	return;
+ fail:
+	printf("%s: association failed (error=%d)\n", sc->sc_dev.dv_xname,
+	    error);
+	ieee80211_begin_scan(&ic->ic_if);
+}
+
 int
 ipw_config(struct ipw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct ipw_security security;
-	struct ieee80211_key *k;
-	struct ipw_wep_key wepkey;
-	struct ipw_scan_options options;
 	struct ipw_configuration config;
 	uint32_t data;
-	int error, i;
+	int error;
 
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
@@ -1730,7 +1876,7 @@ ipw_config(struct ipw_softc *sc)
 		return error;
 
 	config.flags = htole32(IPW_CFG_BSS_MASK | IPW_CFG_IBSS_MASK |
-	    IPW_CFG_PREAMBLE_AUTO | IPW_CFG_802_1x_ENABLE);
+	    IPW_CFG_PREAMBLE_AUTO | IPW_CFG_802_1X_ENABLE);
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		config.flags |= htole32(IPW_CFG_IBSS_AUTO_START);
@@ -1744,6 +1890,18 @@ ipw_config(struct ipw_softc *sc)
 	if (error != 0)
 		return error;
 
+	data = htole32(ic->ic_rtsthreshold);
+	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
+	error = ipw_cmd(sc, IPW_CMD_SET_RTS_THRESHOLD, &data, sizeof data);
+	if (error != 0)
+		return error;
+
+	data = htole32(ic->ic_fragthreshold);
+	DPRINTF(("Setting frag threshold to %u\n", letoh32(data)));
+	error = ipw_cmd(sc, IPW_CMD_SET_FRAG_THRESHOLD, &data, sizeof data);
+	if (error != 0)
+		return error;
+
 	data = htole32(0x3);	/* 1, 2 */
 	DPRINTF(("Setting basic tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_BASIC_TX_RATES, &data, sizeof data);
@@ -1753,6 +1911,12 @@ ipw_config(struct ipw_softc *sc)
 	data = htole32(0xf);	/* 1, 2, 5.5, 11 */
 	DPRINTF(("Setting tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_TX_RATES, &data, sizeof data);
+	if (error != 0)
+		return error;
+
+	data = htole32(0xf);	/* 1, 2, 5.5, 11 */
+	DPRINTF(("Setting MSDU tx rates to 0x%x\n", letoh32(data)));
+	error = ipw_cmd(sc, IPW_CMD_SET_MSDU_TX_RATES, &data, sizeof data);
 	if (error != 0)
 		return error;
 
@@ -1770,92 +1934,7 @@ ipw_config(struct ipw_softc *sc)
 		    sizeof data);
 		if (error != 0)
 			return error;
-	}
-#endif
 
-	data = htole32(ic->ic_rtsthreshold);
-	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
-	error = ipw_cmd(sc, IPW_CMD_SET_RTS_THRESHOLD, &data, sizeof data);
-	if (error != 0)
-		return error;
-
-	data = htole32(ic->ic_fragthreshold);
-	DPRINTF(("Setting frag threshold to %u\n", letoh32(data)));
-	error = ipw_cmd(sc, IPW_CMD_SET_FRAG_THRESHOLD, &data, sizeof data);
-	if (error != 0)
-		return error;
-
-#ifdef IPW_DEBUG
-	if (ipw_debug > 0) {
-		printf("Setting ESSID to ");
-		ieee80211_print_essid(ic->ic_des_essid, ic->ic_des_esslen);
-		printf("\n");
-	}
-#endif
-	error = ipw_cmd(sc, IPW_CMD_SET_ESSID, ic->ic_des_essid,
-	    ic->ic_des_esslen);
-	if (error != 0)
-		return error;
-
-	/* no mandatory BSSID */
-	DPRINTF(("Setting mandatory BSSID to null\n"));
-	error = ipw_cmd(sc, IPW_CMD_SET_MANDATORY_BSSID, NULL, 0);
-	if (error != 0)
-		return error;
-
-	if (ic->ic_flags & IEEE80211_F_DESBSSID) {
-		DPRINTF(("Setting adapter BSSID to %s\n",
-		    ether_sprintf(ic->ic_des_bssid)));
-		error = ipw_cmd(sc, IPW_CMD_SET_DESIRED_BSSID,
-		    ic->ic_des_bssid, IEEE80211_ADDR_LEN);
-		if (error != 0)
-			return error;
-	}
-
-	bzero(&security, sizeof security);
-	security.authmode = IPW_AUTH_OPEN;	/* XXX shared mode */
-	security.ciphers = htole32(IPW_CIPHER_NONE);
-	DPRINTF(("Setting authmode to %u\n", security.authmode));
-	error = ipw_cmd(sc, IPW_CMD_SET_SECURITY_INFORMATION, &security,
-	    sizeof security);
-	if (error != 0)
-		return error;
-
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		k = ic->ic_nw_keys;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
-			if (k->k_len == 0)
-				continue;
-
-			wepkey.idx = i;
-			wepkey.len = k->k_len;
-			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->k_key, wepkey.key, k->k_len);
-			DPRINTF(("Setting wep key index %u len %u\n",
-			    wepkey.idx, wepkey.len));
-			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
-			    sizeof wepkey);
-			if (error != 0)
-				return error;
-		}
-
-		data = htole32(ic->ic_wep_txkey);
-		DPRINTF(("Setting wep tx key index to %u\n", letoh32(data)));
-		error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY_INDEX, &data,
-		    sizeof data);
-		if (error != 0)
-			return error;
-	}
-
-	data = htole32((ic->ic_flags & IEEE80211_F_WEPON) ? IPW_WEPON : 0);
-	DPRINTF(("Setting wep flags to 0x%x\n", letoh32(data)));
-	error = ipw_cmd(sc, IPW_CMD_SET_WEP_FLAGS, &data, sizeof data);
-	if (error != 0)
-		return error;
-
-#ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_IBSS ||
-	    ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		data = htole32(ic->ic_lintval);
 		DPRINTF(("Setting beacon interval to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_BEACON_INTERVAL, &data,
@@ -1864,23 +1943,14 @@ ipw_config(struct ipw_softc *sc)
 			return error;
 	}
 #endif
-
-	options.flags = htole32(0);
-	options.channels = htole32(0x3fff);	/* scan channels 1-14 */
-	DPRINTF(("Setting scan options to 0x%x\n", letoh32(options.flags)));
-	error = ipw_cmd(sc, IPW_CMD_SET_SCAN_OPTIONS, &options, sizeof options);
-	if (error != 0)
-		return error;
-
-	/* finally, enable adapter (start scanning for an access point) */
-	DPRINTF(("Enabling adapter\n"));
-	return ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
+	return 0;
 }
 
 int
 ipw_init(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ipw_firmware fw;
 	int error;
 
@@ -1941,14 +2011,19 @@ ipw_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
+
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		ieee80211_begin_scan(ifp);
+	else
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return 0;
 
 fail2:	free(fw.data, M_DEVBUF);
 fail1:	ipw_stop(ifp, 0);
-
 	return error;
 }
 
