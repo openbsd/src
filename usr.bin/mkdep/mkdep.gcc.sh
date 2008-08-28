@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.14 2007/08/06 19:16:06 sobrado Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.15 2008/08/28 08:39:44 jmc Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #
 
 #
-# Scan for a -o option in the arguments are record the filename given.
+# Scan for a -o option in the arguments and record the filename given.
 # This is needed, since "cc -M -o out" writes to the file "out", not to
 # stdout.
 #
