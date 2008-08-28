@@ -122,7 +122,6 @@ typedef struct drm_i915_private {
 	drm_local_map_t hws_map;
 
 	unsigned int cpp;
-	int use_mi_batchbuffer_start;
 
 	wait_queue_head_t irq_queue;
 	atomic_t irq_received;
