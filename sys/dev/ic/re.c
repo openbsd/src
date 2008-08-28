@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.87 2008/08/13 03:18:19 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.88 2008/08/28 17:51:09 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -185,8 +185,7 @@ int	re_miibus_readreg(struct device *, int, int);
 void	re_miibus_writereg(struct device *, int, int, int);
 void	re_miibus_statchg(struct device *);
 
-void	re_setmulti(struct rl_softc *);
-void	re_setpromisc(struct rl_softc *);
+void	re_iff(struct rl_softc *);
 void	re_reset(struct rl_softc *);
 
 #ifdef RE_DIAG
@@ -504,13 +503,10 @@ re_miibus_statchg(struct device *dev)
 {
 }
 
-/*
- * Program the 64-bit multicast hash filter.
- */
 void
-re_setmulti(struct rl_softc *sc)
+re_iff(struct rl_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
 	u_int32_t		rxfilt;
@@ -518,49 +514,39 @@ re_setmulti(struct rl_softc *sc)
 	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	
-	ifp = &sc->sc_arpcom.ac_if;
 
 	rxfilt = CSR_READ_4(sc, RL_RXCFG);
+	rxfilt &= ~(RL_RXCFG_RX_ALLPHYS | RL_RXCFG_RX_MULTI);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC ||
+	    ac->ac_multirangecnt > 0) {
+		ifp ->if_flags |= IFF_ALLMULTI;
 		rxfilt |= RL_RXCFG_RX_MULTI;
-		CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
-		CSR_WRITE_4(sc, RL_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, RL_MAR4, 0xFFFFFFFF);
-		return;
-	}
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= RL_RXCFG_RX_ALLPHYS;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
+	} else {
+		/* first, zot all the existing hash bits */
+		CSR_WRITE_4(sc, RL_MAR0, 0);
+		CSR_WRITE_4(sc, RL_MAR4, 0);
 
-	/* first, zot all the existing hash bits */
-	CSR_WRITE_4(sc, RL_MAR0, 0);
-	CSR_WRITE_4(sc, RL_MAR4, 0);
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+			mcnt++;
+			ETHER_NEXT_MULTI(step, enm);
 		}
-		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
-			break;
 
-		h = (ether_crc32_be(enm->enm_addrlo,
-		    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h - 32));
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
+		if (mcnt)
+			rxfilt |= RL_RXCFG_RX_MULTI;
 	}
-
-	if (mcnt)
-		rxfilt |= RL_RXCFG_RX_MULTI;
-	else
-		rxfilt &= ~RL_RXCFG_RX_MULTI;
-
-	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 
 	/*
 	 * For some unfathomable reason, RealTek decided to reverse
@@ -575,22 +561,8 @@ re_setmulti(struct rl_softc *sc)
 		CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 		CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
 	}
-}
 
-void
-re_setpromisc(struct rl_softc *sc)
-{
-	struct ifnet	*ifp;
-	u_int32_t	rxcfg = 0;
-
-	ifp = &sc->sc_arpcom.ac_if;
-
-	rxcfg = CSR_READ_4(sc, RL_RXCFG);
-	if (ifp->if_flags & IFF_PROMISC) 
-		rxcfg |= RL_RXCFG_RX_ALLPHYS;
-        else
-		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
-	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
+	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 }
 
 void
@@ -1976,13 +1948,8 @@ re_init(struct ifnet *ifp)
 
 	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
-	/* Set promiscuous mode. */
-	re_setpromisc(sc);
-
-	/*
-	 * Program the multicast filter, if necessary.
-	 */
-	re_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	re_iff(sc);
 
 	/*
 	 * Enable interrupts.
@@ -2100,14 +2067,10 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ((ifp->if_flags ^ sc->if_flags) &
-			     IFF_PROMISC)) {
-				re_setpromisc(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					re_init(ifp);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				re_iff(sc);
+			else
+				re_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				re_stop(ifp, 1);
@@ -2125,7 +2088,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * filter accordingly.
 			 */
 			if (ifp->if_flags & IFF_RUNNING)
-				re_setmulti(sc);
+				re_iff(sc);
 			error = 0;
 		}
 		break;
