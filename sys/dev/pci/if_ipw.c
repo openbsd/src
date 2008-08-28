@@ -1,30 +1,20 @@
-/*	$OpenBSD: if_ipw.c,v 1.76 2008/08/28 14:40:44 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.77 2008/08/28 15:08:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice unmodified, this list of conditions, and the following
- *    disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -131,10 +121,12 @@ MEM_READ_4(struct ipw_softc *sc, uint32_t addr)
 	return CSR_READ_4(sc, IPW_CSR_INDIRECT_DATA);
 }
 
+#define IPW_DEBUG
+
 #ifdef IPW_DEBUG
 #define DPRINTF(x)	do { if (ipw_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (ipw_debug >= (n)) printf x; } while (0)
-int ipw_debug = 0;
+int ipw_debug = 2;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -786,6 +778,11 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		break;
 
+	case IPW_STATE_SCANNING:
+		if (ic->ic_state == IEEE80211_S_RUN)
+			ieee80211_begin_scan(ifp);
+		break;
+
 	case IPW_STATE_SCAN_COMPLETE:
 		if (ic->ic_state == IEEE80211_S_SCAN)
 			ieee80211_end_scan(ifp);
@@ -1292,10 +1289,11 @@ ipw_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if (ic->ic_state != IEEE80211_S_RUN)
-		return;
-
 	for (;;) {
+                IF_PURGE(&ic->ic_mgtq);
+
+		if (ic->ic_state != IEEE80211_S_RUN)
+			return;
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1702,7 +1700,7 @@ ipw_scan(void *arg1, void *arg2)
 		goto fail;
 
 	return;
- fail:
+fail:
 	printf("%s: scan request failed (error=%d)\n", sc->sc_dev.dv_xname,
 	    error);
 	ieee80211_end_scan(ifp);
@@ -1815,7 +1813,7 @@ ipw_auth_and_assoc(void *arg1, void *arg2)
 		goto fail;
 
 	return;
- fail:
+fail:
 	printf("%s: association failed (error=%d)\n", sc->sc_dev.dv_xname,
 	    error);
 	ieee80211_begin_scan(&ic->ic_if);
