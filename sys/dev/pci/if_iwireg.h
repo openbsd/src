@@ -1,30 +1,20 @@
-/*	$OpenBSD: if_iwireg.h,v 1.25 2006/08/19 11:07:45 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.26 2008/08/28 15:52:20 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004-2006
+ * Copyright (c) 2004-2008
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice unmodified, this list of conditions, and the following
- *    disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #define IWI_CMD_RING_COUNT	16
@@ -144,6 +134,7 @@ struct iwi_notif {
 #define IWI_NOTIF_TYPE_SCAN_COMPLETE	13
 #define IWI_NOTIF_TYPE_BAD_LINK		15
 #define IWI_NOTIF_TYPE_BEACON		17
+#define IWI_NOTIF_TYPE_PAIRWISE_KEY	18
 #define IWI_NOTIF_TYPE_CALIBRATION	20
 #define IWI_NOTIF_TYPE_NOISE		25
 
@@ -227,11 +218,13 @@ struct iwi_tx_desc {
 #define IWI_DATA_FLAG_NEED_ACK		(1 << 7)
 
 	uint8_t		xflags;
-#define IWI_DATA_XFLAG_CCK	(1 << 0)
+#define IWI_DATA_XFLAG_CCK		(1 << 0)
+#define IWI_DATA_XFLAG_QOS		(1 << 4)
 
-	uint8_t		wep_txkey;
-#define IWI_DATA_KEY_WEP40	(1 << 6)
-#define IWI_DATA_KEY_WEP104	(1 << 7)
+	uint8_t		txkey;
+#define IWI_DATA_KEY_USE_PAIRWISE	(1 << 5)
+#define IWI_DATA_KEY_WEP40		(1 << 6)
+#define IWI_DATA_KEY_WEP104		(1 << 7)
 
 	uint8_t		wepkey[IEEE80211_KEYBUF_SIZE];
 	uint8_t		rate;
@@ -260,14 +253,18 @@ struct iwi_cmd_desc {
 #define IWI_CMD_SET_RTS_THRESHOLD	15
 #define IWI_CMD_SET_FRAG_THRESHOLD	16
 #define IWI_CMD_SET_POWER_MODE		17
-#define IWI_CMD_SET_WEP_KEY		18
+#define IWI_CMD_SET_GROUP_KEY		18
+#define IWI_CMD_SET_PAIRWISE_KEY	19
 #define IWI_CMD_ASSOCIATE		21
 #define IWI_CMD_SET_RATES		22
+#define IWI_CMD_SET_QOS_PARAMS		25
 #define IWI_CMD_SCAN			26
+#define IWI_CMD_SET_OPTIE		31
 #define IWI_CMD_DISABLE			33
-#define IWI_CMD_SET_IV			34
+#define IWI_CMD_SET_RANDOM_SEED		34
 #define IWI_CMD_SET_TX_POWER		35
 #define IWI_CMD_SET_SENSITIVITY		42
+#define IWI_CMD_SET_EDCAIE		84
 
 	uint8_t		len;
 	uint16_t	reserved;
@@ -300,6 +297,37 @@ struct iwi_rateset {
 	uint8_t	rates[12];
 } __packed;
 
+/* structures for command IWI_CMD_SET_QOS_PARAMS */
+struct iwi_qos_params {
+	uint16_t	cwmin[EDCA_NUM_AC];
+	uint16_t	cwmax[EDCA_NUM_AC];
+	uint8_t		aifsn[EDCA_NUM_AC];
+	uint8_t		acm  [EDCA_NUM_AC];
+	uint8_t		txop [EDCA_NUM_AC];
+} __packed;
+
+struct iwi_qos_cmd {
+	struct iwi_qos_params	cck;
+	struct iwi_qos_params	ofdm;
+	struct iwi_qos_params	current;
+} __packed;
+
+/* copied verbatim from sys/net80211/ieee80211_output.c */
+static const struct ieee80211_edca_ac_params iwi_cck[EDCA_NUM_AC] = {
+	[EDCA_AC_BK] = { 5, 10, 7,   0 },
+	[EDCA_AC_BE] = { 5, 10, 3,   0 },
+	[EDCA_AC_VI] = { 4,  5, 2, 188 },
+	[EDCA_AC_VO] = { 3,  4, 2, 102 }
+};
+
+/* copied verbatim from sys/net80211/ieee80211_output.c */
+static const struct ieee80211_edca_ac_params iwi_ofdm[EDCA_NUM_AC] = {
+	[EDCA_AC_BK] = { 4, 10, 7,   0 },
+	[EDCA_AC_BE] = { 4, 10, 3,   0 },
+	[EDCA_AC_VI] = { 3,  4, 2,  94 },
+	[EDCA_AC_VO] = { 2,  3, 2,  47 }
+};
+
 /* structure for command IWI_CMD_SET_TX_POWER */
 struct iwi_txpower {
 	uint8_t	nchan;
@@ -327,7 +355,10 @@ struct iwi_associate {
 #define IWI_ASSOC_SIBSS		3
 
 	uint8_t		reserved1;
-	uint16_t	reserved2;
+	uint16_t	policy;
+#define IWI_ASSOC_POLICY_QOS	(1 << 0)
+#define IWI_ASSOC_POLICY_RSN	(1 << 1)
+
 	uint8_t		plen;
 #define IWI_ASSOC_SHPREAMBLE	(1 << 2)
 
@@ -387,15 +418,28 @@ struct iwi_configuration {
 	uint8_t	reserved5;
 } __packed;
 
-/* structure for command IWI_CMD_SET_WEP_KEY */
-struct iwi_wep_key {
+/* structure for command IWI_CMD_SET_GROUP_KEY */
+struct iwi_group_key {
 	uint8_t	cmd;
-#define IWI_WEP_KEY_CMD_SETKEY	0x08
+#define IWI_GROUP_KEY_CMD_SETKEY	0x08
 
 	uint8_t	seq;
 	uint8_t	idx;
 	uint8_t	len;
-	uint8_t	key[IEEE80211_KEYBUF_SIZE];
+	uint8_t	key[16];
+} __packed;
+
+/* structure for command IWI_CMD_SET_PAIRWISE_KEY */
+struct iwi_pairwise_key {
+	uint8_t		idx;
+	uint8_t		cipher;
+#define IWI_CIPHER_WEP	0
+#define IWI_CIPHER_CCMP	2
+#define IWI_CIPHER_TKIP	3
+	uint8_t		sta;
+	uint8_t		flags;
+	uint8_t		key[16];
+	uint64_t	tsc;
 } __packed;
 
 #define IWI_MEM_EEPROM_CTL	0x00300040

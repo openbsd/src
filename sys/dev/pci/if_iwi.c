@@ -1,30 +1,20 @@
-/*	$OpenBSD: if_iwi.c,v 1.89 2008/08/27 09:28:38 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.90 2008/08/28 15:52:20 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004-2006
+ * Copyright (c) 2004-2008
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice unmodified, this list of conditions, and the following
- *    disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -119,6 +109,7 @@ int		iwi_reset(struct iwi_softc *);
 int		iwi_load_ucode(struct iwi_softc *, const char *, int);
 int		iwi_load_firmware(struct iwi_softc *, const char *, int);
 int		iwi_config(struct iwi_softc *);
+void		iwi_update_edca(struct ieee80211com *);
 int		iwi_set_chan(struct iwi_softc *, struct ieee80211_channel *);
 int		iwi_scan(struct iwi_softc *);
 int		iwi_auth_and_assoc(struct iwi_softc *);
@@ -275,7 +266,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_WEP |		/* h/w WEP supported */
+	    IEEE80211_C_WEP |		/* s/w WEP */
+	    IEEE80211_C_RSN |		/* WPA/RSN supported */
 	    IEEE80211_C_SCANALL;	/* h/w scanning */
 
 	/* read MAC address from EEPROM */
@@ -602,7 +594,6 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 			error = ENOMEM;
 			goto fail;
 		}
-
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
 			m_freem(data->m);
@@ -939,25 +930,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	    sizeof (struct iwi_frame) + letoh16(frame->len);
 	m_adj(m, sizeof (struct iwi_hdr) + sizeof (struct iwi_frame));
 
-	wh = mtod(m, struct ieee80211_frame *);
-
-	rxi.rxi_flags = 0;
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		/*
-		 * Hardware decrypts the frame itself but leaves the WEP bit
-		 * set in the 802.11 header and doesn't remove the IV and CRC
-		 * fields.
-		 */
-		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-		ovbcopy(wh, (char *)wh + IEEE80211_WEP_IVLEN +
-		    IEEE80211_WEP_KIDLEN, sizeof (struct ieee80211_frame));
-		m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
-		m_adj(m, -IEEE80211_WEP_CRCLEN);
-		wh = mtod(m, struct ieee80211_frame *);
-
-		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
-	}
-
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -984,9 +956,11 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	}
 #endif
 
+	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the upper layer */
+	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = frame->rssi_dbm;
 	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_input(ifp, m, ni, &rxi);
@@ -1271,11 +1245,25 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct iwi_tx_data *data;
 	struct iwi_tx_desc *desc;
 	struct iwi_tx_ring *txq = &sc->txq[0];
 	struct mbuf *mnew;
-	int error, i, station = 0;
+	int hdrlen, error, i, station = 0;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+		k = ieee80211_get_txkey(ic, wh, ni);
+
+		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
+			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
+	}
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -1299,9 +1287,10 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &txq->data[txq->cur];
 	desc = &txq->desc[txq->cur];
 
-	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&desc->wh);
-	m_adj(m0, sizeof (struct ieee80211_frame));
+	/* copy and trim IEEE802.11 header */
+	hdrlen = ieee80211_get_hdrlen(wh);
+	bcopy(wh, &desc->wh, hdrlen);
+	m_adj(m0, hdrlen);
 
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
@@ -1331,7 +1320,6 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 			m_freem(m0);
 			return ENOMEM;
 		}
-
 		M_DUP_PKTHDR(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
@@ -1365,23 +1353,19 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->cmd = IWI_DATA_CMD_TX;
 	desc->len = htole16(m0->m_pkthdr.len);
 	desc->station = station;
-	desc->flags = 0;
+	desc->flags = IWI_DATA_FLAG_NO_WEP;
 	desc->xflags = 0;
 
 	if (!IEEE80211_IS_MULTICAST(desc->wh.i_addr1))
 		desc->flags |= IWI_DATA_FLAG_NEED_ACK;
 
-	if (desc->wh.i_fc[1] & IEEE80211_FC1_WEP) {
-		desc->wep_txkey = ic->ic_wep_txkey |
-		    ((ic->ic_nw_keys[ic->ic_wep_txkey].k_cipher ==
-			IEEE80211_CIPHER_WEP40) ? IWI_DATA_KEY_WEP40 :
-		    IWI_DATA_KEY_WEP104);
-	} else {
-		desc->flags |= IWI_DATA_FLAG_NO_WEP;
-		desc->wep_txkey = 0;
-	}
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->flags |= IWI_DATA_FLAG_SHPREAMBLE;
+
+	if ((desc->wh.i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+		desc->xflags |= IWI_DATA_XFLAG_QOS;
 
 	if (ic->ic_curmode == IEEE80211_MODE_11B)
 		desc->xflags |= IWI_DATA_XFLAG_CCK;
@@ -1820,8 +1804,6 @@ iwi_config(struct iwi_softc *sc)
 	struct iwi_configuration config;
 	struct iwi_rateset rs;
 	struct iwi_txpower power;
-	struct ieee80211_key *k;
-	struct iwi_wep_key wepkey;
 	uint32_t data;
 	int error, nchan, i;
 
@@ -1944,32 +1926,60 @@ iwi_config(struct iwi_softc *sc)
 			return error;
 	}
 
-	data = htole32(arc4random());
-	DPRINTF(("Setting initialization vector to %u\n", letoh32(data)));
-	error = iwi_cmd(sc, IWI_CMD_SET_IV, &data, sizeof data, 0);
+	data = arc4random();
+	DPRINTF(("Setting random seed to %u\n", data));
+	error = iwi_cmd(sc, IWI_CMD_SET_RANDOM_SEED, &data, sizeof data, 0);
 	if (error != 0)
 		return error;
-
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		k = ic->ic_nw_keys;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
-			wepkey.cmd = IWI_WEP_KEY_CMD_SETKEY;
-			wepkey.idx = i;
-			wepkey.len = k->k_len;
-			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->k_key, wepkey.key, k->k_len);
-			DPRINTF(("Setting wep key index %u len %u\n",
-			    wepkey.idx, wepkey.len));
-			error = iwi_cmd(sc, IWI_CMD_SET_WEP_KEY, &wepkey,
-			    sizeof wepkey, 0);
-			if (error != 0)
-				return error;
-		}
-	}
 
 	/* enable adapter */
 	DPRINTF(("Enabling adapter\n"));
 	return iwi_cmd(sc, IWI_CMD_ENABLE, NULL, 0, 0);
+}
+
+void
+iwi_update_edca(struct ieee80211com *ic)
+{
+#define IWI_EXP2(v)	htole16((1 << (v)) - 1)
+#define IWI_TXOP(v)	IEEE80211_TXOP_TO_US(v)
+	struct iwi_softc *sc = ic->ic_softc;
+	struct iwi_qos_cmd cmd;
+	struct iwi_qos_params *qos;
+	struct ieee80211_edca_ac_params *edca = ic->ic_edca_ac;
+	int aci;
+
+	/* set default QoS parameters for CCK */
+	qos = &cmd.cck;
+	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+		qos->cwmin[aci] = IWI_EXP2(iwi_cck[aci].ac_ecwmin);
+		qos->cwmax[aci] = IWI_EXP2(iwi_cck[aci].ac_ecwmax);
+		qos->txop [aci] = IWI_TXOP(iwi_cck[aci].ac_txoplimit);
+		qos->aifsn[aci] = iwi_cck[aci].ac_aifsn;
+		qos->acm  [aci] = 0;
+	}
+	/* set default QoS parameters for OFDM */
+	qos = &cmd.ofdm;
+	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+		qos->cwmin[aci] = IWI_EXP2(iwi_ofdm[aci].ac_ecwmin);
+		qos->cwmax[aci] = IWI_EXP2(iwi_ofdm[aci].ac_ecwmax);
+		qos->txop [aci] = IWI_TXOP(iwi_ofdm[aci].ac_txoplimit);
+		qos->aifsn[aci] = iwi_ofdm[aci].ac_aifsn;
+		qos->acm  [aci] = 0;
+	}
+	/* set current QoS parameters */
+	qos = &cmd.current;
+	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+		qos->cwmin[aci] = IWI_EXP2(edca[aci].ac_ecwmin);
+		qos->cwmax[aci] = IWI_EXP2(edca[aci].ac_ecwmax);
+		qos->txop [aci] = IWI_TXOP(edca[aci].ac_txoplimit);
+		qos->aifsn[aci] = edca[aci].ac_aifsn;
+		qos->acm  [aci] = 0;
+	}
+
+	DPRINTF(("Setting QoS parameters\n"));
+	(void)iwi_cmd(sc, IWI_CMD_SET_QOS_PARAMS, &cmd, sizeof cmd, 1);
+#undef IWI_EXP2
+#undef IWI_TXOP
 }
 
 int
@@ -2039,13 +2049,17 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	struct iwi_configuration config;
 	struct iwi_associate assoc;
 	struct iwi_rateset rs;
-	uint16_t capinfo;
+	uint8_t *frm;
 	uint32_t data;
+	uint16_t capinfo;
+	uint8_t buf[64];	/* XXX max WPA/RSN/WMM IE length */
 	int error;
 
 	/* update adapter configuration */
 	bzero(&config, sizeof config);
 	config.multicast_enabled = 1;
+	config.disable_unicast_decryption = 1;
+	config.disable_multicast_decryption = 1;
 	config.silence_threshold = 30;
 	config.report_noise = 1;
 	config.answer_pbreq =
@@ -2098,6 +2112,27 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
+	if (ic->ic_flags & IEEE80211_F_QOS) {
+		iwi_update_edca(ic);
+
+		frm = ieee80211_add_edca_params(buf, ic);
+		DPRINTF(("Setting EDCA IE length %d\n", frm - buf));
+		error = iwi_cmd(sc, IWI_CMD_SET_EDCAIE, buf, frm - buf, 1);
+		if (error != 0)
+			return error;
+	}
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		/* tell firmware to add WPA/RSN IE to (re)assoc request */
+		if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN)
+			frm = ieee80211_add_rsn(buf, ic, ni);
+		else
+			frm = ieee80211_add_wpa(buf, ic, ni);
+		DPRINTF(("Setting RSN IE length %d\n", frm - buf));
+		error = iwi_cmd(sc, IWI_CMD_SET_OPTIE, buf, frm - buf, 1);
+		if (error != 0)
+			return error;
+	}
+
 	bzero(&assoc, sizeof assoc);
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_flags & IEEE80211_F_SIBSS)
@@ -2105,6 +2140,11 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	else
 #endif
 		assoc.type = IWI_ASSOC_ASSOCIATE;
+	assoc.policy = 0;
+	if (ic->ic_flags & IEEE80211_F_RSNON)
+		assoc.policy |= htole16(IWI_ASSOC_POLICY_RSN);
+	if (ic->ic_flags & IEEE80211_F_QOS)
+		assoc.policy |= htole16(IWI_ASSOC_POLICY_QOS);
 	if (ic->ic_curmode == IEEE80211_MODE_11A)
 		assoc.mode = IWI_MODE_11A;
 	else if (ic->ic_curmode == IEEE80211_MODE_11B)
@@ -2112,15 +2152,12 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	else	/* assume 802.11b/g */
 		assoc.mode = IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-#if 0
-	if (ni->ni_challenge != NULL)	/* XXX */
-		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;
-#endif
-	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 		assoc.plen = IWI_ASSOC_SHPREAMBLE;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
 	capinfo = IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & (IEEE80211_F_WEPON | IEEE80211_F_RSNON))
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
