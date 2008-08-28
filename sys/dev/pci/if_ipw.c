@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.77 2008/08/28 15:08:38 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.78 2008/08/28 16:00:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -121,12 +121,10 @@ MEM_READ_4(struct ipw_softc *sc, uint32_t addr)
 	return CSR_READ_4(sc, IPW_CSR_INDIRECT_DATA);
 }
 
-#define IPW_DEBUG
-
 #ifdef IPW_DEBUG
 #define DPRINTF(x)	do { if (ipw_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (ipw_debug >= (n)) printf x; } while (0)
-int ipw_debug = 2;
+int ipw_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -1673,7 +1671,7 @@ ipw_scan(void *arg1, void *arg2)
 	 * after scan'' bit in the scan command.  To prevent the firmware
 	 * from associating after the scan, we set the ESSID to something
 	 * unlikely to be used by a real AP.
-	 * XXX would setting the BSSID to a multicast address work?
+	 * XXX would setting the desired BSSID to a multicast address work?
 	 */
 	memset(ssid, '\r', sizeof ssid);
 	error = ipw_cmd(sc, IPW_CMD_SET_ESSID, ssid, sizeof ssid);
