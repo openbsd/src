@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.3 2008/08/06 17:04:28 reyk Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.4 2008/08/28 11:10:25 reyk Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -980,24 +980,45 @@ lacp_compose_key(struct lacp_port *lp)
 {
 	struct trunk_port *tp = lp->lp_trunk;
 	struct trunk_softc *sc = tp->tp_trunk;
+	u_int64_t speed;
 	u_int16_t key;
 
 	if ((lp->lp_state & LACP_STATE_AGGREGATION) == 0) {
-
-		/*
-		 * non-aggregatable links should have unique keys.
-		 *
-		 * XXX this isn't really unique as if_index is 16 bit.
-		 */
-
-		/* bit 0..14:	(some bits of) if_index of this port */
+		/* bit 0..14: (some bits of) if_index of this port */
 		key = lp->lp_ifp->if_index;
-		/* bit 15:	1 */
+
+		/* non-aggregatable */
 		key |= 0x8000;
 	} else {
-		/* bit 0..14:	(some bits of) if_index of trunk device */
-		key = sc->tr_ac.ac_if.if_index;
-		/* bit 15:	0 */
+		/* bit 0..2: speed indication */
+		speed = lp->lp_ifp->if_baudrate;
+		if (speed == 0)
+			key = 0;
+		else if (speed <= IF_Mbps(1))
+			key = 1;
+		else if (speed <= IF_Mbps(10))
+			key = 2;
+		else if (speed <= IF_Mbps(100))
+			key = 3;
+		else if (speed <= IF_Gbps(1))
+			key = 4;
+		else if (speed <= IF_Gbps(10))
+			key = 5;
+		else if (speed <= IF_Gbps(100))
+			key = 6;
+		else
+			key = 7;
+
+		/* bit 3..13: (some bits of) if_index of the trunk device */
+		key |= sc->tr_ac.ac_if.if_index << 3;
+
+		/* bit 14: the port active flag (includes link state) */
+		if (TRUNK_PORTACTIVE(tp))
+			key |= 0x4000;
+		else
+			key &= ~0x4000;
+
+		/* clear the non-aggregatable bit */
 		key &= ~0x8000;
 	}
 	return (htons(key));
