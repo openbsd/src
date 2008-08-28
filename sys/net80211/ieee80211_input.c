@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.101 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.102 2008/08/28 17:56:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1953,7 +1953,7 @@ ieee80211_recv_action(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		break;
 	default:
-		DPRINTF(("action frame category %d not handled\n", categ));
+		DPRINTF(("action frame category %d not handled\n", frm[0]));
 		break;
 	}
 }
