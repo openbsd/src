@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.26 2008/07/15 17:50:20 kettenis Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.27 2008/08/28 01:17:29 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -475,6 +475,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82573E              0x108B
 #define E1000_DEV_ID_82573E_IAMT         0x108C
 #define E1000_DEV_ID_82573L              0x109A
+#define E1000_DEV_ID_82574L              0x10D3
 #define E1000_DEV_ID_82546GB_2           0x109B
 #define E1000_DEV_ID_82571EB_AT          0x10A0
 #define E1000_DEV_ID_82571EB_AF          0x10A1
@@ -494,11 +495,20 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_ICH8_IFE_GT         0x10C4
 #define E1000_DEV_ID_ICH8_IFE_G          0x10C5
 #define E1000_DEV_ID_ICH8_IGP_M          0x104D
+#define E1000_DEV_ID_ICH9_IGP_M          0x10BF
+#define E1000_DEV_ID_ICH9_IGP_M_AMT      0x10F5
+#define E1000_DEV_ID_ICH9_IGP_M_V        0x10CB
 #define E1000_DEV_ID_ICH9_IGP_AMT        0x10BD
+#define E1000_DEV_ID_ICH9_BM             0x10E5
 #define E1000_DEV_ID_ICH9_IGP_C          0x294C
 #define E1000_DEV_ID_ICH9_IFE            0x10C0
 #define E1000_DEV_ID_ICH9_IFE_GT         0x10C3
 #define E1000_DEV_ID_ICH9_IFE_G          0x10C2
+#define E1000_DEV_ID_ICH10_R_BM_LM       0x10CC
+#define E1000_DEV_ID_ICH10_R_BM_LF       0x10CD
+#define E1000_DEV_ID_ICH10_R_BM_V        0x10CE
+#define E1000_DEV_ID_ICH10_D_BM_LM       0x10DE
+#define E1000_DEV_ID_ICH10_D_BM_LF       0x10DF
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6
