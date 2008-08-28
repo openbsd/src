@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.24 2008/08/27 08:41:46 brad Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.25 2008/08/28 13:10:54 brad Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -148,8 +148,8 @@ struct pppoe_softc {
 };
 
 /* incoming traffic will be queued here */
-struct ifqueue ppoediscinq = { NULL };
-struct ifqueue ppoeinq = { NULL };
+struct ifqueue pppoediscinq = { NULL };
+struct ifqueue pppoeinq = { NULL };
 
 extern int sppp_ioctl(struct ifnet *, unsigned long, void *);
 
@@ -205,8 +205,8 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-	ppoediscinq.ifq_maxlen = IFQ_MAXLEN;
-	ppoeinq.ifq_maxlen = IFQ_MAXLEN;
+	pppoediscinq.ifq_maxlen = IFQ_MAXLEN;
+	pppoeinq.ifq_maxlen = IFQ_MAXLEN;
 }
 
 /* Create a new interface. */
@@ -366,7 +366,7 @@ pppoeintr(void)
 	
 	for (;;) {
 		s = splnet();
-		IF_DEQUEUE(&ppoediscinq, m);
+		IF_DEQUEUE(&pppoediscinq, m);
 		splx(s);
 		if (m == NULL)
 			break;
@@ -375,7 +375,7 @@ pppoeintr(void)
 
 	for (;;) {
 		s = splnet();
-		IF_DEQUEUE(&ppoeinq, m);
+		IF_DEQUEUE(&pppoeinq, m);
 		splx(s);
 		if (m == NULL)
 			break;

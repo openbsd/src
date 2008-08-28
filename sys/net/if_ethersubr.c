@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.123 2008/08/04 18:55:08 damien Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.124 2008/08/28 13:10:54 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -714,9 +714,9 @@ decapsulate:
 		bcopy(eh, eh_tmp, sizeof(struct ether_header));
 
 		if (etype == ETHERTYPE_PPPOEDISC)
-			inq = &ppoediscinq;
+			inq = &pppoediscinq;
 		else
-			inq = &ppoeinq;
+			inq = &pppoeinq;
 
 		schednetisr(NETISR_PPPOE);
 		break;
