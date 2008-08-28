@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.78 2008/08/28 16:00:21 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.79 2008/08/28 16:02:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1288,7 +1288,7 @@ ipw_start(struct ifnet *ifp)
 	struct mbuf *m;
 
 	for (;;) {
-                IF_PURGE(&ic->ic_mgtq);
+		IF_PURGE(&ic->ic_mgtq);
 
 		if (ic->ic_state != IEEE80211_S_RUN)
 			return;
