@@ -39,11 +39,6 @@
 #define DRIVER_DESC		"Intel Graphics"
 #define DRIVER_DATE		"20080312"
 
-#if defined(__linux__)
-#define I915_HAVE_FENCE
-#define I915_HAVE_BUFFER
-#endif
-
 /* Interface history:
  *
  * 1.1: Original.
@@ -60,22 +55,13 @@
  * 1.12: TTM relocation optimization
  */
 #define DRIVER_MAJOR		1
-#if defined(I915_HAVE_FENCE) && defined(I915_HAVE_BUFFER)
-#define DRIVER_MINOR		13
-#else
 #define DRIVER_MINOR		6
-#endif
 #define DRIVER_PATCHLEVEL	0
 
 enum pipe {
     PIPE_A = 0,
     PIPE_B,
 };
-
-#ifdef I915_HAVE_BUFFER
-#define I915_MAX_VALIDATE_BUFFERS 4096
-struct drm_i915_validate_buffer;
-#endif
 
 typedef struct _drm_i915_ring_buffer {
 	int tail_mask;
@@ -153,27 +139,9 @@ typedef struct drm_i915_private {
 	uint32_t irq_enable_reg;
 	int irq_enabled;
 
-#ifdef I915_HAVE_FENCE
-	uint32_t flush_sequence;
-	uint32_t flush_flags;
-	uint32_t flush_pending;
-	uint32_t saved_flush_status;
-#endif
-#ifdef I915_HAVE_BUFFER
-	void *agp_iomap;
-	unsigned int max_validate_buffers;
-	struct mutex cmdbuf_mutex;
-	struct drm_i915_validate_buffer *val_bufs;
-#endif
-
 	DRM_SPINTYPE swaps_lock;
 	drm_i915_vbl_swap_t vbl_swaps;
 	unsigned int swaps_pending;
-#if defined(I915_HAVE_BUFFER)
-	/* DRI2 sarea */
-	struct drm_buffer_object *sarea_bo;
-	struct drm_bo_kmap_obj sarea_kmap;
-#endif
 
 #ifdef __linux__
 	struct intel_opregion opregion;
@@ -338,31 +306,6 @@ extern void i915_mem_release(struct drm_device * dev,
 /* i915_suspend.c */
 extern int i915_save_state(struct drm_device *dev);
 extern int i915_restore_state(struct drm_device *dev);
-
-#ifdef I915_HAVE_FENCE
-/* i915_fence.c */
-extern void i915_fence_handler(struct drm_device *dev);
-extern void i915_invalidate_reported_sequence(struct drm_device *dev);
-
-#endif
-
-#ifdef I915_HAVE_BUFFER
-/* i915_buffer.c */
-extern struct drm_ttm_backend *i915_create_ttm_backend_entry(struct drm_device *dev);
-extern int i915_fence_type(struct drm_buffer_object *bo, uint32_t *fclass,
-			   uint32_t *type);
-extern int i915_invalidate_caches(struct drm_device *dev, uint64_t buffer_flags);
-extern int i915_init_mem_type(struct drm_device *dev, uint32_t type,
-			       struct drm_mem_type_manager *man);
-extern uint64_t i915_evict_flags(struct drm_buffer_object *bo);
-extern int i915_move(struct drm_buffer_object *bo, int evict,
-		int no_wait, struct drm_bo_mem_reg *new_mem);
-void i915_flush_ttm(struct drm_ttm *ttm);
-/* i915_execbuf.c */
-int i915_execbuffer(struct drm_device *dev, void *data,
-				   struct drm_file *file_priv);
-
-#endif
 
 #ifdef __linux__
 /* i915_opregion.c */

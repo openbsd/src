@@ -462,9 +462,6 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 
 	if (iir & I915_USER_INTERRUPT) {
 		DRM_WAKEUP(&dev_priv->irq_queue);
-#ifdef I915_HAVE_FENCE
-		i915_fence_handler(dev);
-#endif
 	}
 
 	if (vblank) {
