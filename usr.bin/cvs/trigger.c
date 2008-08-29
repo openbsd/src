@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.14 2008/06/17 17:15:56 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.15 2008/08/29 09:46:10 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -288,26 +288,25 @@ cvs_trigger_handle(int type, char *repo, char *in, struct trigger_list *list,
 	struct trigger_line *line;
 
 	TAILQ_FOREACH(line, list, flist) {
-		cmd = parse_cmd(type, line->line, repo, files);
-		if (cmd != NULL) {
-			switch(type) {
-			case CVS_TRIGGER_COMMITINFO:
-			case CVS_TRIGGER_TAGINFO:
-			case CVS_TRIGGER_VERIFYMSG:
-				if ((r = cvs_exec(cmd, NULL, 1)) != 0) {
-					xfree(cmd);
-					return r;
-				}
-				break;
-			default:
-				(void)cvs_exec(cmd, in, 1);
-				break;
+		if ((cmd = parse_cmd(type, line->line, repo, files)) == NULL)
+			return (1);
+		switch(type) {
+		case CVS_TRIGGER_COMMITINFO:
+		case CVS_TRIGGER_TAGINFO:
+		case CVS_TRIGGER_VERIFYMSG:
+			if ((r = cvs_exec(cmd, NULL, 1)) != 0) {
+				xfree(cmd);
+				return (r);
 			}
-			xfree(cmd);
+			break;
+		default:
+			(void)cvs_exec(cmd, in, 1);
+			break;
 		}
+		xfree(cmd);
 	}
 
-	return 0;
+	return (0);
 }
 
 struct trigger_list *
