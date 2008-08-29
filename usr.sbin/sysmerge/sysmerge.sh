@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.19 2008/07/21 08:28:55 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.20 2008/08/29 08:17:28 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -255,7 +255,9 @@ diff_loop() {
 
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			echo "  Use 'i' to install the temporary ${COMPFILE}"
+			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" ]; then
+				echo "  Use 'i' to install the temporary ${COMPFILE}"
+			fi
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
 				echo "  Use 'm' to merge the temporary and installed versions"
 				echo "  Use 'v' to view the diff results again"
@@ -275,12 +277,18 @@ diff_loop() {
 			echo "\n===> Deleting ${COMPFILE}"
 			;;
 		[iI])
-			echo ""
-			if mm_install "${COMPFILE}"; then
-				echo "===> ${COMPFILE} installed successfully"
+			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" ]; then
+				echo ""
+				if mm_install "${COMPFILE}"; then
+					echo "===> ${COMPFILE} installed successfully"
+				else
+					echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+				fi
 			else
-				echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+				echo "invalid choice: ${HANDLE_COMPFILE}\n"
+				HANDLE_COMPFILE="todo"
 			fi
+				
 			;;
 		[mM])
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
