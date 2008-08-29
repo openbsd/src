@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.40 2008/08/19 02:37:26 deraadt Exp $
+.\" $OpenBSD: rum.4,v 1.41 2008/08/29 09:03:48 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2008 $
+.Dd $Mdocdate: August 29 2008 $
 .Os
 .Dt RUM 4
 .Sh NAME
@@ -230,3 +230,7 @@ driver supports automatic control of the transmit speed in BSS mode only.
 Therefore the use of a
 .Nm
 adapter in Host AP mode is discouraged.
+.Pp
+Host AP mode doesn't support power saving.  Clients attempting to
+use power saving mode may experience significant packet loss (disabling
+power saving on the client will fix this).

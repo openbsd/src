@@ -1,4 +1,4 @@
-.\" $OpenBSD: ural.4,v 1.7 2008/07/29 16:44:19 jmc Exp $
+.\" $OpenBSD: ural.4,v 1.8 2008/08/29 09:03:48 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: August 29 2008 $
 .Os
 .Dt URAL 4
 .Sh NAME
@@ -203,3 +203,7 @@ driver supports automatic control of the transmit speed in BSS mode only.
 Therefore the use of an
 .Nm
 adapter in Host AP mode is discouraged.
+.Pp
+Host AP mode doesn't support power saving.  Clients attempting to
+use power saving mode may experience significant packet loss (disabling
+power saving on the client will fix this).

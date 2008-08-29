@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.88 2008/08/08 15:57:41 damien Exp $
+.\" $OpenBSD: ral.4,v 1.89 2008/08/29 09:03:48 damien Exp $
 .\"
 .\" Copyright (c) 2005-2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2008 $
+.Dd $Mdocdate: August 29 2008 $
 .Os
 .Dt RAL 4
 .Sh NAME
@@ -360,6 +360,10 @@ the RT2700 and RT2800 chipsets.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
+.Pp
+Host AP mode doesn't support power saving.  Clients attempting to
+use power saving mode may experience significant packet loss (disabling
+power saving on the client will fix this).
 .Pp
 Some PCI
 .Nm

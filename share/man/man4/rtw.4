@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.33 2008/07/29 17:03:35 jmc Exp $
+.\"	$OpenBSD: rtw.4,v 1.34 2008/08/29 09:03:48 damien Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: August 29 2008 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -193,3 +193,7 @@ by
 GCT refuse to release any documentation on their GRF5101 RF transceiver.
 .Pp
 While PCI devices will attach most of them are not able to transmit.
+.Pp
+Host AP mode doesn't support power saving.  Clients attempting to
+use power saving mode may experience significant packet loss (disabling
+power saving on the client will fix this).
