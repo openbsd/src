@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.42 2008/08/29 09:03:48 damien Exp $
+.\"	$OpenBSD: ath.4,v 1.43 2008/08/29 09:44:16 damien Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -345,9 +345,9 @@ Different regulatory domains may not be able to communicate with each
 other with 802.11a as different regulatory domains do not necessarily
 have overlapping channels.
 .Pp
-Host AP mode doesn't support power saving.  Clients attempting to
-use power saving mode may experience significant packet loss (disabling
-power saving on the client will fix this).
+Host AP mode doesn't support power saving.
+Clients attempting to use power saving mode may experience significant
+packet loss (disabling power saving on the client will fix this).
 .Sh BUGS
 Performance in lossy environments is suboptimal.
 The algorithm used to select the rate for transmitted packets is
