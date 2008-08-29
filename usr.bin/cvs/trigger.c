@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.15 2008/08/29 09:46:10 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.16 2008/08/29 09:51:21 tobias Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
+#include <pwd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,7 @@
 
 static int	 expand_args(BUF *, struct file_info_list *, const char *,
     const char *, char *);
+static int	 expand_var(BUF *, const char *);
 static char	*parse_cmd(int, char *, const char *, struct file_info_list *);
 
 static int
@@ -177,6 +179,46 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	return 0;
 }
 
+static int
+expand_var(BUF *buf, const char *var)
+{
+	struct passwd *pw;
+	const char *val;
+
+	if (*var == '=') {
+		if ((val = cvs_var_get(++var)) == NULL) {
+			cvs_log(LP_ERR, "no such user variable ${=%s}", var);
+			return (1);
+		}
+		cvs_buf_puts(buf, val);
+	} else {
+		if (strcmp(var, "CVSEDITOR") == 0 ||
+		    strcmp(var, "EDITOR") == 0 ||
+		    strcmp(var, "VISUAL") == 0)
+			cvs_buf_puts(buf, cvs_editor);
+		else if (strcmp(var, "CVSROOT") == 0)
+			cvs_buf_puts(buf, current_cvsroot->cr_dir);
+		else if (strcmp(var, "USER") == 0) {
+			pw = getpwuid(geteuid());
+			if (pw == NULL) {
+				cvs_log(LP_ERR, "unable to retrieve "
+				    "caller ID");
+				return (1);
+			}
+			cvs_buf_puts(buf, pw->pw_name);
+		} else if (strcmp(var, "RCSBIN") == 0) {
+			cvs_log(LP_ERR, "RCSBIN internal variable is no "
+			    "longer supported");
+			return (1);
+		} else {
+			cvs_log(LP_ERR, "no such internal variable $%s", var);
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
 static char *
 parse_cmd(int type, char *cmd, const char *repo,
     struct file_info_list *file_info)
@@ -224,39 +266,60 @@ parse_cmd(int type, char *cmd, const char *repo,
 	p = cmd;
 again:
 	for (; *p != '\0'; p++) {
-		if ((pos = strcspn(p, "%")) != 0) {
+		if ((pos = strcspn(p, "$%")) != 0) {
 			cvs_buf_append(buf, p, pos);
 			p += pos;
 		}
 
-		if (*p++ == '\0')
-			break;
-
 		q = NULL;
-		switch (*p) {
-		case '\0':
-			goto bad;
-		case '{':
-			if (strchr(allowed_args, '{') == NULL)
-				goto bad;
-			pos = strcspn(++p, "}");
-			if (p[pos] == '\0')
-				goto bad;
+		if (*p == '\0')
+			break;
+		if (*p++ == '$') {
+			if (*p == '{') {
+				pos = strcspn(++p, "}");
+				if (p[pos] == '\0')
+					goto bad;
+			} else {
+				if (!isalpha(*p)) {
+					cvs_log(LP_ERR,
+					    "unrecognized variable syntax");
+					goto bad;
+				}
+				pos = strcspn(p, " \t");
+			}
 			q = xmalloc(pos + 1);
 			memcpy(q, p, pos);
 			q[pos] = '\0';
-			args = q;
+			if (expand_var(buf, q))
+				goto bad;
 			p += pos;
-			break;
-		default:
-			argbuf[0] = *p;
-			args = argbuf;
-			break;
+		} else {
+			switch (*p) {
+			case '\0':
+				goto bad;
+			case '{':
+				if (strchr(allowed_args, '{') == NULL)
+					goto bad;
+				pos = strcspn(++p, "}");
+				if (p[pos] == '\0')
+					goto bad;
+				q = xmalloc(pos + 1);
+				memcpy(q, p, pos);
+				q[pos] = '\0';
+				args = q;
+				p += pos;
+				break;
+			default:
+				argbuf[0] = *p;
+				args = argbuf;
+				break;
+			}
+	
+			if (expand_args(buf, file_info, repo, allowed_args,
+			    args))
+				goto bad;
+			expanded = 1;
 		}
-
-		if (expand_args(buf, file_info, repo, allowed_args, args))
-			goto bad;
-		expanded = 1;
 
 		if (q != NULL)
 			xfree(q);
