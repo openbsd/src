@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.144 2008/07/08 12:54:13 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.145 2008/08/29 09:54:22 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -135,15 +135,13 @@ cvs_commit(int argc, char **argv)
 	if (TAILQ_EMPTY(&files_affected))
 		return (0);
 
-	if (logmsg == NULL && cvs_server_active == 0) {
-		logmsg = cvs_logmsg_create(NULL, &files_added, &files_removed,
-		    &files_modified);
-
-		if (logmsg == NULL)
-			fatal("This shouldnt happen, honestly!");
-	}
-
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		if (logmsg == NULL) {
+			logmsg = cvs_logmsg_create(NULL, &files_added,
+			    &files_removed, &files_modified);
+			if (logmsg == NULL)
+				fatal("This shouldnt happen, honestly!");
+		}
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -161,9 +159,6 @@ cvs_commit(int argc, char **argv)
 		cvs_client_send_request("ci");
 		cvs_client_get_responses();
 	} else {
-		if (cvs_server_active && logmsg == NULL)
-			fatal("no log message specified");
-
 		cvs_get_repository_name(".", repo, MAXPATHLEN);
 
 		line_list = cvs_trigger_getlines(CVS_PATH_COMMITINFO, repo);
@@ -185,6 +180,16 @@ cvs_commit(int argc, char **argv)
 
 			cvs_trigger_freelist(line_list);
 			cvs_trigger_freeinfo(&files_info);
+		}
+
+		if (cvs_server_active) {
+			if (logmsg == NULL)
+				fatal("no log message specified");
+		} else if (logmsg == NULL) {
+			logmsg = cvs_logmsg_create(NULL, &files_added,
+			    &files_removed, &files_modified);	
+			if (logmsg == NULL)
+				fatal("This shouldnt happen, honestly!");
 		}
 
 		if (cvs_logmsg_verify(logmsg))
@@ -217,7 +222,8 @@ cvs_commit(int argc, char **argv)
 
 end:
 	cvs_trigger_freeinfo(&files_info);
-	xfree(logmsg);
+	if (logmsg != NULL)
+		xfree(logmsg);
 	return (0);
 }
 
