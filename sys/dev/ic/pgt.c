@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.51 2008/08/27 09:05:03 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.52 2008/08/29 12:14:53 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2669,8 +2669,6 @@ badopmode:
 		preamble = PGT_OID_PREAMBLE_MODE_SHORT;
 		DPRINTF(("IEEE80211_MODE_11G\n"));
 		break;
-	case IEEE80211_MODE_FH:
-		/* FALLTHROUGH */
 	case IEEE80211_MODE_TURBO: /* not handled */
 		/* FALLTHROUGH */
 	case IEEE80211_MODE_AUTO:

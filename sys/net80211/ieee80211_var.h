@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.49 2008/08/29 08:40:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.50 2008/08/29 12:14:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
-	IEEE80211_T_FH,			/* frequency hopping */
 	IEEE80211_T_OFDM,		/* frequency division multiplexing */
 	IEEE80211_T_TURBO,		/* high rate OFDM, aka turbo mode */
 	IEEE80211_T_XR		        /* extended range mode */
@@ -68,8 +67,7 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11A	= 1,	/* 5GHz, OFDM */
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
-	IEEE80211_MODE_FH	= 4,	/* 2GHz, GFSK */
-	IEEE80211_MODE_TURBO	= 5	/* 5GHz, OFDM, 2x clock */
+	IEEE80211_MODE_TURBO	= 4	/* 5GHz, OFDM, 2x clock */
 };
 #define	IEEE80211_MODE_MAX	(IEEE80211_MODE_TURBO+1)
 
@@ -110,14 +108,11 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
 #define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
-#define IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 
 /*
  * Useful combinations of channel characteristics.
  */
-#define IEEE80211_CHAN_FHSS \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
 #define IEEE80211_CHAN_A \
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
 #define IEEE80211_CHAN_B \
@@ -131,8 +126,6 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_TG \
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
-#define	IEEE80211_IS_CHAN_FHSS(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
 #define	IEEE80211_IS_CHAN_A(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_A) == IEEE80211_CHAN_A)
 #define	IEEE80211_IS_CHAN_B(_c) \
@@ -154,16 +147,8 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_OFDM) != 0)
 #define	IEEE80211_IS_CHAN_CCK(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_CCK) != 0)
-#define	IEEE80211_IS_CHAN_GFSK(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_GFSK) != 0)
 #define	IEEE80211_IS_CHAN_XR(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_XR) != 0)
-
-/* ni_chan encoding for FH phy */
-#define	IEEE80211_FH_CHANMOD	80
-#define	IEEE80211_FH_CHAN(set,pat)	(((set)-1)*IEEE80211_FH_CHANMOD+(pat))
-#define	IEEE80211_FH_CHANSET(chan)	((chan)/IEEE80211_FH_CHANMOD+1)
-#define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
 
 /*
  * EDCA AC parameters.

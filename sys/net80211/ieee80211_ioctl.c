@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.23 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.24 2008/08/29 12:14:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -81,8 +81,6 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	bcopy(ni->ni_tstamp, nr->nr_tstamp, sizeof(nr->nr_tstamp));
 	nr->nr_intval = ni->ni_intval;
 	nr->nr_capinfo = ni->ni_capinfo;
-	nr->nr_fhdwell = ni->ni_fhdwell;
-	nr->nr_fhindex = ni->ni_fhindex;
 	nr->nr_erp = ni->ni_erp;
 	nr->nr_pwrsave = ni->ni_pwrsave;
 	nr->nr_associd = ni->ni_associd;
@@ -119,8 +117,6 @@ ieee80211_req2node(struct ieee80211com *ic, const struct ieee80211_nodereq *nr,
 	/* Node information */
 	ni->ni_intval = nr->nr_intval;
 	ni->ni_capinfo = nr->nr_capinfo;
-	ni->ni_fhdwell = nr->nr_fhdwell;
-	ni->ni_fhindex = nr->nr_fhindex;
 	ni->ni_erp = nr->nr_erp;
 	ni->ni_pwrsave = nr->nr_pwrsave;
 	ni->ni_associd = nr->nr_associd;

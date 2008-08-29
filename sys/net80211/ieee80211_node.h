@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.31 2008/08/12 18:22:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.32 2008/08/29 12:14:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -127,8 +127,6 @@ struct ieee80211_node {
 	struct ieee80211_rateset ni_rates;	/* negotiated rate set */
 	u_int8_t		*ni_country;	/* country information XXX */
 	struct ieee80211_channel *ni_chan;
-	u_int16_t		ni_fhdwell;	/* FH only */
-	u_int8_t		ni_fhindex;	/* FH only */
 	u_int8_t		ni_erp;		/* 11g only */
 
 #ifdef notyet

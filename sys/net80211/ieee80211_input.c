@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.102 2008/08/28 17:56:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.103 2008/08/29 12:14:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -959,7 +959,6 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
  * [2]    Capability
  * [tlv]  Service Set Identifier (SSID)
  * [tlv]  Supported rates
- * [tlv*] Frequency-Hopping (FH) Parameter Set
  * [tlv*] DS Parameter Set (802.11g)
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
@@ -975,8 +974,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie;
 	const u_int8_t *rsnie, *wpaie;
-	u_int16_t capinfo, bintval, fhdwell;
-	u_int8_t chan, bchan, fhindex, erp;
+	u_int16_t capinfo, bintval;
+	u_int8_t chan, bchan, erp;
 	int is_new;
 
 	/*
@@ -1017,8 +1016,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
-	fhdwell = 0;
-	fhindex = 0;
 	erp = 0;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
@@ -1032,20 +1029,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		case IEEE80211_ELEMID_RATES:
 			rates = frm;
 			break;
-		case IEEE80211_ELEMID_FHPARMS:
-			if (ic->ic_phytype != IEEE80211_T_FH)
-				break;
-			if (frm[1] < 5) {
-				ic->ic_stats.is_rx_elem_toosmall++;
-				break;
-			}
-			fhdwell = LE_READ_2(frm + 2);
-			chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
-			fhindex = frm[6];
-			break;
 		case IEEE80211_ELEMID_DSPARMS:
-			if (ic->ic_phytype == IEEE80211_T_FH)
-				break;
 			if (frm[1] < 1) {
 				ic->ic_stats.is_rx_elem_toosmall++;
 				break;
@@ -1118,16 +1102,13 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	if ((ic->ic_state != IEEE80211_S_SCAN ||
 	     !(ic->ic_caps & IEEE80211_C_SCANALL)) &&
-	    chan != bchan && ic->ic_phytype != IEEE80211_T_FH) {
+	    chan != bchan) {
 		/*
 		 * Frame was received on a channel different from the
 		 * one indicated in the DS params element id;
 		 * silently discard it.
 		 *
 		 * NB: this can happen due to signal leakage.
-		 *     But we should take it for FH phy because
-		 *     the rssi value should be correct even for
-		 *     different hop pattern in FH.
 		 */
 		DPRINTF(("ignore %s on channel %u marked for channel %u\n",
 		    isprobe ? "probe response" : "beacon", bchan, chan));
@@ -1265,8 +1246,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_capinfo = capinfo;
 	/* XXX validate channel # */
 	ni->ni_chan = &ic->ic_channels[chan];
-	ni->ni_fhdwell = fhdwell;
-	ni->ni_fhindex = fhindex;
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
@@ -1657,8 +1636,6 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
 	ni->ni_chan = ic->ic_bss->ni_chan;
-	ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
-	ni->ni_fhindex = ic->ic_bss->ni_fhindex;
  end:
 	resp = reassoc ? IEEE80211_FC0_SUBTYPE_REASSOC_RESP :
 	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;

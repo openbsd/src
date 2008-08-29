@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.44 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.45 2008/08/29 12:14:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -365,10 +365,6 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 
 		/* schedule a GTK/IGTK rekeying after 3600s */
 		timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
-	}
-	if (ic->ic_phytype == IEEE80211_T_FH) {
-		ni->ni_fhdwell = 200;	/* XXX */
-		ni->ni_fhindex = 1;
 	}
 	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.34 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.35 2008/08/29 12:14:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ const char * const ieee80211_phymode_name[] = {
 	"11a",		/* IEEE80211_MODE_11A */
 	"11b",		/* IEEE80211_MODE_11B */
 	"11g",		/* IEEE80211_MODE_11G */
-	"fh",		/* IEEE80211_MODE_FH */
 	"turbo",	/* IEEE80211_MODE_TURBO */
 };
 
