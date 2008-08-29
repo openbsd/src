@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.44 2008/07/30 07:15:39 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.45 2008/08/29 10:05:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1045,6 +1045,7 @@ struct ath_desc {
 	    const HAL_KEYVAL *, const u_int8_t *, int);	\
 	_t HAL_BOOL (_a _n##_set_key_lladdr)(struct ath_hal*, \
 	    u_int16_t, const u_int8_t *); \
+	_t HAL_BOOL (_a _n##_softcrypto)(struct ath_hal *, HAL_BOOL); \
 	/* Power Management Functions */ \
 	_t HAL_BOOL (_a _n##_set_power)(struct ath_hal*, \
 	    HAL_POWER_MODE mode, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.46 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.47 2008/08/29 10:05:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -139,6 +139,7 @@ ar5k_ar5212_fill(struct ath_hal *hal)
 	AR5K_HAL_FUNCTION(hal, ar5212, is_key_valid);
 	AR5K_HAL_FUNCTION(hal, ar5212, set_key);
 	AR5K_HAL_FUNCTION(hal, ar5212, set_key_lladdr);
+	AR5K_HAL_FUNCTION(hal, ar5212, softcrypto);
 
 	/*
 	 * Power management functions
@@ -2388,6 +2389,28 @@ ar5k_ar5212_set_key_lladdr(struct ath_hal *hal, u_int16_t entry,
 
 	AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_MAC0(entry), low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_MAC1(entry), high_id);
+
+	return (AH_TRUE);
+}
+
+HAL_BOOL
+ar5k_ar5212_softcrypto(struct ath_hal *hal, HAL_BOOL enable)
+{
+	u_int32_t bits;
+	int i;
+
+	bits = AR5K_AR5212_DIAG_SW_DIS_ENC | AR5K_AR5212_DIAG_SW_DIS_DEC;
+	if (enable == AH_TRUE) {
+		/* Disable the hardware crypto engine */
+		AR5K_REG_ENABLE_BITS(AR5K_AR5212_DIAG_SW, bits);
+	} else {
+		/* Enable the hardware crypto engine */
+		AR5K_REG_DISABLE_BITS(AR5K_AR5212_DIAG_SW, bits);
+	}
+
+	/* Reset the key cache */
+	for (i = 0; i < AR5K_AR5212_KEYTABLE_SIZE; i++)
+		ar5k_ar5212_reset_key(hal, i);
 
 	return (AH_TRUE);
 }
