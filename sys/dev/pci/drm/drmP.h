@@ -73,10 +73,6 @@
 #include "drm_atomic.h"
 #include "drm_internal.h"
 
-#ifdef __amd64__
-#define DRM_NO_MTRR
-#endif /* Until the mtrr apis are merged. */
-
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
 #define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
 
