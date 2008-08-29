@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.48 2008/08/27 10:58:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.49 2008/08/29 08:40:53 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -326,9 +326,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_IBSSON	0x00000200	/* CONF: IBSS creation enable */
 #define	IEEE80211_F_PMGTON	0x00000400	/* CONF: Power mgmt enable */
 #define	IEEE80211_F_DESBSSID	0x00000800	/* CONF: des_bssid is set */
-#define	IEEE80211_F_SCANAP	0x00001000	/* CONF: Scanning AP */
 #define	IEEE80211_F_ROAMING	0x00002000	/* CONF: roaming enabled */
-#define	IEEE80211_F_SWRETRY	0x00004000	/* CONF: sw tx retry enabled */
 #define	IEEE80211_F_TXPMGT	0x00018000	/* STATUS: tx power */
 #define IEEE80211_F_TXPOW_OFF	0x00000000	/* TX Power: radio disabled */
 #define IEEE80211_F_TXPOW_FIXED	0x00008000	/* TX Power: fixed rate */
@@ -349,7 +347,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_C_PMGT	0x00000004	/* CAPABILITY: Power mgmt */
 #define	IEEE80211_C_HOSTAP	0x00000008	/* CAPABILITY: HOSTAP avail */
 #define	IEEE80211_C_AHDEMO	0x00000010	/* CAPABILITY: Old Adhoc Demo */
-#define	IEEE80211_C_SWRETRY	0x00000020	/* CAPABILITY: sw tx retry */
+#define	IEEE80211_C_APPMGT	0x00000020	/* CAPABILITY: AP power mgmt */
 #define	IEEE80211_C_TXPMGT	0x00000040	/* CAPABILITY: tx power mgmt */
 #define	IEEE80211_C_SHSLOT	0x00000080	/* CAPABILITY: short slottime */
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
@@ -358,6 +356,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS avail */
 #define IEEE80211_C_RSN		0x00001000	/* CAPABILITY: RSN avail */
 #define IEEE80211_C_MFP		0x00002000	/* CAPABILITY: MFP avail */
+#define	IEEE80211_C_HT		0x00004000	/* CAPABILITY: HT avail */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
