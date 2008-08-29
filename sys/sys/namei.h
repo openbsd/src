@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.21 2008/07/05 12:56:52 thib Exp $	*/
+/*	$OpenBSD: namei.h,v 1.22 2008/08/29 08:57:28 otto Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -150,9 +150,7 @@ struct nameidata {
 
 /*
  * This structure describes the elements in the cache of recent
- * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize malloc's. Minimum reasonable
- * size is 15.
+ * names looked up by namei.
  */
 
 #define	NCHNAMLEN	31	/* maximum name segment length we bother with */
