@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.88 2008/08/28 17:51:09 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.89 2008/08/29 22:59:56 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -839,8 +839,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		sc->rl_flags |= RL_FLAG_NOJUMBO;
 		break;
 	case RL_HWREV_8169_8110SB:
-	case RL_HWREV_8169_8110SCd:
 	case RL_HWREV_8169_8110SBL:
+	case RL_HWREV_8169_8110SCd:
+	case RL_HWREV_8169_8110SCe:
 		sc->rl_flags |= RL_FLAG_PHYWAKE;
 		break;
 	default:
@@ -1046,6 +1047,12 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 #endif
 
 	timeout_set(&sc->timer_handle, re_tick, sc);
+
+	/* Take PHY out of power down mode. */
+	if (sc->rl_flags & RL_FLAG_PHYWAKE) {
+		re_gmii_writereg((struct device *)sc, 1, 0x1f, 0);
+		re_gmii_writereg((struct device *)sc, 1, 0x0e, 0);
+	}
 
 	/* Do MII setup */
 	sc->sc_mii.mii_ifp = ifp;
