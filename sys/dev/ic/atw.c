@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.61 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: atw.c,v 1.62 2008/08/29 09:30:23 damien Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -816,7 +816,7 @@ atw_attach(struct atw_softc *sc)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 #ifndef IEEE80211_STA_ONLY
-	ic->ic_caps |= IEEE80211_C_IBSS | IEEE80211_C_HOSTAP;
+	ic->ic_caps |= IEEE80211_C_IBSS;
 #endif
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;	
 
@@ -1429,8 +1429,6 @@ atw_init(struct ifnet *ifp)
 	case IEEE80211_M_IBSS:
 		ic->ic_flags |= IEEE80211_F_IBSSON;
 		/*FALLTHROUGH*/
-	case IEEE80211_M_HOSTAP: /* XXX */
-		break;
 #endif
 	default: /* XXX */
 		break;
@@ -1439,7 +1437,6 @@ atw_init(struct ifnet *ifp)
 #ifndef IEEE80211_STA_ONLY
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_AHDEMO:
-	case IEEE80211_M_HOSTAP:
 		ic->ic_bss->ni_intval = ic->ic_lintval;
 		ic->ic_bss->ni_rssi = 0;
 		ic->ic_bss->ni_rstamp = 0;
@@ -2392,11 +2389,6 @@ atw_start_beacon(struct atw_softc *sc, int start)
 		len += 4; /* IBSS parameters */
 		capinfo |= IEEE80211_CAPINFO_IBSS;
 		break;
-	case IEEE80211_M_HOSTAP:
-		/* XXX 6-byte minimum TIM */
-		len += atw_beacon_len_adjust;
-		capinfo |= IEEE80211_CAPINFO_ESS;
-		break;
 	default:
 		return;
 	}
@@ -2479,9 +2471,8 @@ atw_predict_beacon(struct atw_softc *sc)
 	} u;
 
 #ifndef IEEE80211_STA_ONLY
-	if ((ic->ic_opmode == IEEE80211_M_HOSTAP) ||
-	    ((ic->ic_opmode == IEEE80211_M_IBSS) &&
-	     (ic->ic_flags & IEEE80211_F_SIBSS))) {
+	if ((ic->ic_opmode == IEEE80211_M_IBSS) &&
+	    (ic->ic_flags & IEEE80211_F_SIBSS)) {
 		tsft = atw_get_tsft(sc);
 		u.word = htole64(tsft);
 		(void)memcpy(&ic->ic_bss->ni_tstamp[0], &u.tstamp[0],
@@ -2595,8 +2586,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 #ifndef IEEE80211_STA_ONLY
 	if (nstate == IEEE80211_S_RUN &&
-	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
-	     ic->ic_opmode == IEEE80211_M_IBSS))
+	    ic->ic_opmode == IEEE80211_M_IBSS)
 		atw_start_beacon(sc, 1);
 	else
 #endif
