@@ -72,7 +72,7 @@ drm_realloc(void *oldpt, size_t oldsize, size_t size, int area)
 	if (pt == NULL)
 		return NULL;
 	if (oldpt && oldsize) {
-		memcpy(pt, oldpt, oldsize);
+		memcpy(pt, oldpt, min(oldsize, size));
 		free(oldpt, M_DRM);
 	}
 	return pt;
