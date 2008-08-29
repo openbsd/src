@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.76 2008/08/27 10:01:18 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.77 2008/08/29 11:15:32 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@
 
 #include <dev/pci/pcidevs.h>
 #include <dev/gpio/gpiovar.h>
+
 #include <dev/ic/athvar.h>
 
 int	ath_init(struct ifnet *);
@@ -157,6 +158,7 @@ int ath_dwelltime = 200;		/* 5 channels/second */
 int ath_calinterval = 30;		/* calibrate every 30 secs */
 int ath_outdoor = AH_TRUE;		/* outdoor operation */
 int ath_xchanmode = AH_TRUE;		/* enable extended channels */
+int ath_softcrypto = 0;			/* 1=enable software crypto */
 
 struct cfdriver ath_cd = {
 	NULL, "ath", DV_IFNET
@@ -370,6 +372,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	    | IEEE80211_C_MONITOR	/* monitor mode */
 	    | IEEE80211_C_SHSLOT	/* short slot time supported */
 	    | IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
+	if (ath_softcrypto)
+		ic->ic_caps |= IEEE80211_C_RSN;	/* wpa/rsn supported */
 
 	/*
 	 * Not all chips have the VEOL support we want to use with
@@ -751,20 +755,13 @@ ath_init1(struct ath_softc *sc)
 		goto done;
 	}
 	ath_set_slot_time(sc);
-	/*
-	 * Setup the hardware after reset: the key cache
-	 * is filled as needed and the receive engine is
-	 * set going.  Frame transmit is handled entirely
-	 * in the frame output path; there's nothing to do
-	 * here except setup the interrupt mask.
-	 */
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		if ((error = ath_initkeytable(sc)) != 0) {
-			printf("%s: unable to initialize the key cache\n",
-			    ifp->if_xname);
-			goto done;
-		}
+
+	if ((error = ath_initkeytable(sc)) != 0) {
+		printf("%s: unable to reset the key cache\n",
+		    ifp->if_xname);
+		goto done;
 	}
+
 	if ((error = ath_startrecv(sc)) != 0) {
 		printf("%s: unable to start recv logic\n", ifp->if_xname);
 		goto done;
@@ -1155,6 +1152,29 @@ ath_initkeytable(struct ath_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	int i;
+
+	if (ath_softcrypto) {
+		/*
+		 * Disable the hardware crypto engine and reset the key cache
+		 * to allow software crypto operation for WEP/RSN/WPA2
+		 */
+		if (ic->ic_flags & (IEEE80211_F_WEPON|IEEE80211_F_RSNON))
+			(void)ath_hal_softcrypto(ah, AH_TRUE);
+		else
+			(void)ath_hal_softcrypto(ah, AH_FALSE);
+		return (0);
+	}
+
+	/* WEP is disabled, we only support WEP in hardware yet */
+	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0)
+		return (0);
+
+	/*
+	 * Setup the hardware after reset: the key cache is filled as
+	 * needed and the receive engine is set going.  Frame transmit
+	 * is handled entirely in the frame output path; there's nothing
+	 * to do here except setup the interrupt mask.
+	 */
 
 	/* XXX maybe should reset all keys when !WEPON */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -1907,7 +1927,8 @@ ath_rx_proc(void *arg, int npending)
 	struct ath_hal *ah = sc->sc_ah;
 	struct ath_desc *ds;
 	struct mbuf *m;
-	struct ieee80211_frame *wh, whbuf;
+	struct ieee80211_frame *wh;
+	struct ieee80211_frame whbuf;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ath_node *an;
@@ -2045,7 +2066,7 @@ ath_rx_proc(void *arg, int npending)
 		m_adj(m, -IEEE80211_CRC_LEN);
 		wh = mtod(m, struct ieee80211_frame *);
 		rxi.rxi_flags = 0;
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		if (!ath_softcrypto && (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			/*
 			 * WEP is decrypted by hardware. Clear WEP bit
 			 * and trim WEP header for ieee80211_input().
@@ -2129,6 +2150,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	struct ath_desc *ds;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	u_int32_t iv;
 	u_int8_t *ivp;
 	u_int8_t hdrbuf[sizeof(struct ieee80211_frame) +
@@ -2141,11 +2163,19 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	u_int8_t hwqueue = HAL_TX_QUEUE_ID_DATA_MIN;
 
 	wh = mtod(m0, struct ieee80211_frame *);
-	iswep = wh->i_fc[1] & IEEE80211_FC1_WEP;
+	iswep = wh->i_fc[1] & IEEE80211_FC1_PROTECTED;
 	hdrlen = sizeof(struct ieee80211_frame);
 	pktlen = m0->m_pkthdr.len;
 
-	if (iswep) {
+	if (ath_softcrypto && iswep) {
+		k = ieee80211_get_txkey(ic, wh, ni);	
+		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
+			return ENOMEM;
+		wh = mtod(m0, struct ieee80211_frame *);
+
+		/* reset len in case we got a new mbuf */
+		pktlen = m0->m_pkthdr.len;
+	} else if (!ath_softcrypto && iswep) {
 		bcopy(mtod(m0, caddr_t), hdrbuf, hdrlen);
 		m_adj(m0, hdrlen);
 		M_PREPEND(m0, sizeof(hdrbuf), M_DONTWAIT);
@@ -2417,7 +2447,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		sc->sc_txtap.wt_flags = 0;
 		if (shortPreamble)
 			sc->sc_txtap.wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		if (iswep)
+		if (!ath_softcrypto && iswep)
 			sc->sc_txtap.wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 		sc->sc_txtap.wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate] &
 		    IEEE80211_RATE_VAL;
@@ -2908,7 +2938,8 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ath_hal *ah = sc->sc_ah;
 	struct ieee80211_node *ni;
 	const u_int8_t *bssid;
-	int i, error;
+	int error, i;
+
 	u_int32_t rfilt;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: %s -> %s\n", __func__,
@@ -2946,7 +2977,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ath_hal_set_associd(ah, bssid, 0);
 	}
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if (!ath_softcrypto && (ic->ic_flags & IEEE80211_F_WEPON)) {
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			if (ath_hal_is_key_valid(ah, i))
 				ath_hal_set_key_lladdr(ah, i, bssid);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.24 2008/07/29 00:18:25 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.25 2008/08/29 11:15:32 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -449,6 +449,8 @@ int	ath_enable(struct ath_softc *);
 	(((*(_ah)->ah_is_key_valid)((_ah), (_ix))))
 #define	ath_hal_set_key_lladdr(_ah, _ix, _mac) \
 	((*(_ah)->ah_set_key_lladdr)((_ah), (_ix), (_mac)))
+#define	ath_hal_softcrypto(_ah, _val ) \
+	((*(_ah)->ah_softcrypto)((_ah), (_val)))
 #define	ath_hal_get_rx_filter(_ah) \
 	((*(_ah)->ah_get_rx_filter)((_ah)))
 #define	ath_hal_set_rx_filter(_ah, _filter) \
