@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.102 2008/08/14 19:39:40 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.103 2008/08/29 08:13:08 jmc Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -37,9 +37,9 @@
 #include <sys/queue.h>
 
 /*
- * Mbufs are of a single size, MSIZE (machine/param.h), which
+ * Mbufs are of a single size, MSIZE (sys/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
- * MCLBYTES (also in machine/param.h), which has no additional overhead
+ * MCLBYTES (also in sys/param.h), which has no additional overhead
  * and is used instead of the internal data area; this is done when
  * at least MINCLSIZE of data must be stored.
  */
