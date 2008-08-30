@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.13 2008/08/13 12:21:19 av Exp $ */
+/* $OpenBSD: extern.h,v 1.14 2008/08/30 10:41:38 fgsch Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -39,11 +39,6 @@ struct track_info {
 };
 SLIST_HEAD(track_head, track_info) tracks;
 
-/* Media capabilities (bitmask) */
-#define MEDIACAP_TAO		0x01	/* Track-At-Once writing mode */
-#define MEDIACAP_CDRW_WRITE	0x02	/* media is CD-RW and can be written */
-#define MEDIACAP_CDRW_CAV	0x04	/* Constant Angular Velocity */
-
 /* Read/Write speed */
 #define DRIVE_SPEED_MAX		0xfffe
 #define DRIVE_SPEED_OPTIMAL	0xffff	/* automatically adjusted by drive */
@@ -60,9 +55,14 @@ SLIST_HEAD(track_head, track_info) tracks;
  */
 #define CD_MAX_SPEED		380
 
-/*
- * Media types
- */
+/* MMC feature codes */
+#define MMC_FEATURE_CDRW_CAV	0x27	/* Constant Angular Velocity */
+#define MMC_FEATURE_CD_TAO	0x2d	/* Track-At-Once writing mode */
+#define MMC_FEATURE_CDRW_WRITE	0x37	/* media is CD-RW and can be written */
+
+#define MMC_FEATURE_MAX		0x0110
+
+/* Media types */
 #define MEDIATYPE_UNKNOWN	0
 #define MEDIATYPE_CDR		1
 #define MEDIATYPE_CDRW		2
@@ -74,7 +74,7 @@ extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
 extern int		get_media_type(void);
-extern int		get_media_capabilities(int *cap);
+extern int		get_media_capabilities(int *, int);
 extern int		blank(void);
 extern int		unit_ready(void);
 extern int		synchronize_cache(void);

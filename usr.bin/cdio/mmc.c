@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.25 2008/08/13 12:21:19 av Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.26 2008/08/30 10:41:38 fgsch Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/limits.h>
 #include <sys/types.h>
 #include <sys/scsiio.h>
+#include <sys/param.h>
 #include <scsi/cd.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -30,14 +31,12 @@
 #include "extern.h"
 
 extern int fd;
-extern int mediacap;
+extern int mediacap[];
 extern char *cdname;
 
 #define SCSI_GET_CONFIGURATION		0x46
 
-#define MMC_FEATURE_CDRW_CAV		0x27
-#define MMC_FEATURE_CD_TAO		0x2d
-#define MMC_FEATURE_CDRW_WRITE		0x37
+#define MMC_FEATURE_HDR_LEN		8
 
 int
 get_media_type(void)
@@ -76,21 +75,22 @@ get_media_type(void)
 }
 
 int
-get_media_capabilities(int *cap)
+get_media_capabilities(int *cap, int rt)
 {
 	scsireq_t scr;
 	u_char buf[4096];
-	int error;
-	u_int32_t i, dsz;
+	u_int32_t i, dlen;
 	u_int16_t feature;
+	u_int8_t feature_len;
+	int error;
 
-	*cap = 0;
+	memset(cap, 0, MMC_FEATURE_MAX / 8);
 	memset(buf, 0, sizeof(buf));
 	memset(&scr, 0, sizeof(scr));
 
 	scr.cmd[0] = SCSI_GET_CONFIGURATION;
-	scr.cmd[1] = 1;	/* enumerate only "current" features */
-	*(u_int16_t *)(scr.cmd + 7) = betoh16(sizeof(buf));
+	scr.cmd[1] = rt;
+	*(u_int16_t *)(scr.cmd + 7) = htobe16(sizeof(buf));
 
 	scr.flags = SCCMD_ESCAPE | SCCMD_READ;
 	scr.databuf = buf;
@@ -102,28 +102,24 @@ get_media_capabilities(int *cap)
 	error = ioctl(fd, SCIOCCOMMAND, &scr);
 	if (error == -1 || scr.retsts != 0)
 		return (-1);
-	if (scr.datalen_used < 8)
-		return (-1);	/* can't get header */
+	if (scr.datalen_used < MMC_FEATURE_HDR_LEN)
+		return (-1);	/* Can't get the header. */
 
-	dsz = betoh32(*(u_int32_t *)buf);
-	if (dsz > scr.datalen_used - 4)
-		dsz = scr.datalen_used - 4;
+	/* Include the whole header in the length. */
+	dlen = betoh32(*(u_int32_t *)buf) + 4;
+	if (dlen > scr.datalen_used)
+		dlen = scr.datalen_used;
 
-	dsz += 4;	/* total size of bufer for all features */
-	i = 8;
-	while (i <= dsz - 4) {
-		if (dsz - i < (u_int32_t)buf[i + 3] + 4)
-			break;	/* partial feature descriptor */
+	for (i = MMC_FEATURE_HDR_LEN; i + 3 < dlen; i += feature_len) {
+		feature_len = buf[i + 3] + 4;
+		if (feature_len + i > dlen)
+			break;
+
 		feature = betoh16(*(u_int16_t *)(buf + i));
+		if (feature >= MMC_FEATURE_MAX)
+			break;
 
-		if (feature == MMC_FEATURE_CDRW_CAV)
-			*cap |= MEDIACAP_CDRW_CAV;
-		else if (feature == MMC_FEATURE_CD_TAO)
-			*cap |= MEDIACAP_TAO;
-		else if (feature == MMC_FEATURE_CDRW_WRITE)
-			*cap |= MEDIACAP_CDRW_WRITE;
-
-		i += 4 + buf[i + 3];
+		setbit(cap, feature);
 	}
 
 	return (0);
@@ -137,7 +133,7 @@ set_speed(int wspeed)
 
 	memset(&scr, 0, sizeof(scr));
 	scr.cmd[0] = SET_CD_SPEED;
-	scr.cmd[1] = (mediacap & MEDIACAP_CDRW_CAV) != 0;
+	scr.cmd[1] = (isset(mediacap, MMC_FEATURE_CDRW_CAV)) != 0;
 	*(u_int16_t *)(scr.cmd + 2) = htobe16(DRIVE_SPEED_OPTIMAL);
 	*(u_int16_t *)(scr.cmd + 4) = htobe16(wspeed);
 
