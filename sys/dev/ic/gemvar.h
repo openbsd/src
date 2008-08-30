@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.17 2007/04/19 19:00:01 kettenis Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.18 2008/08/30 07:41:51 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -274,10 +274,6 @@ do {									\
 	GEM_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
 
-#define GEM_IS_APPLE(sc)	\
-    ((sc)->sc_variant >= GEM_APPLE_INTREPID2_GMAC &&	\
-    (sc)->sc_variant <= GEM_APPLE_UNINORTH2GMAC)
-
 #ifdef _KERNEL
 void	gem_attach(struct gem_softc *, const u_int8_t *);
 int	gem_activate(struct device *, enum devact);
@@ -296,6 +292,5 @@ void	gem_config(struct gem_softc *);
 void	gem_reset(struct gem_softc *);
 int	gem_intr(void *);
 #endif /* _KERNEL */
-
 
 #endif
