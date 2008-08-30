@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1401 2008/08/26 05:41:07 brad Exp $
+$OpenBSD: pcidevs,v 1.1402 2008/08/30 04:50:50 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -229,6 +229,7 @@ vendor	LEVEL1		0x1394	Level 1
 vendor	HIFN		0x13a3	Hifn
 vendor	EXAR		0x13a8	Exar
 vendor	3WARE		0x13c1	3ware
+vendor	TECHSAN		0x13d0	Techsan Electronics
 vendor	ABOCOM		0x13d1	Abocom
 vendor	SUNDANCE	0x13f0	Sundance
 vendor	CMI		0x13f6	C-Media Electronics
@@ -4171,6 +4172,10 @@ product TTTECH MC322		0x000a	MC322
 /* Tamarack Microelectronics */
 product TAMARACK TC9021		0x1021	TC9021 GigE
 product TAMARACK TC9021_ALT	0x9021	TC9021 GigE (alt ID)
+
+/* Techsan Electronics */
+product TECHSAN B2C2_SKY2PC	0x2104	B2C2 Sky2PC
+product TECHSAN B2C2_SKY2PC_2	0x2200	B2C2 Sky2PC
 
 /* Tehuti Networks Ltd */
 product TEHUTI TN3009		0x3009	TN3009
