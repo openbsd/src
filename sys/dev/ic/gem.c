@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.76 2008/08/26 21:06:29 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.77 2008/08/30 07:39:12 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1619,9 +1619,9 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
+			ifp->if_opackets++;
 		}
 		sc->sc_tx_cnt--;
-		ifp->if_opackets++;
 		if (++cons == GEM_NTXDESC)
 			cons = 0;
 	}

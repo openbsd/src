@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.19 2008/05/31 22:49:03 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.20 2008/08/30 07:39:12 brad Exp $	*/
 
 /*
  *
@@ -1937,9 +1937,9 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
+			ifp->if_opackets++;
 		}
 		sc->sc_tx_cnt--;
-		ifp->if_opackets++;
 		if (++cons == CAS_NTXDESC)
 			cons = 0;
 	}
