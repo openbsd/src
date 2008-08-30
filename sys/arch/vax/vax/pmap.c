@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2008/08/30 18:58:24 martin Exp $ */
+/*	$OpenBSD: pmap.c,v 1.49 2008/08/30 20:45:31 martin Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -174,7 +174,7 @@ pmap_bootstrap()
 	mtpr((unsigned)Sysmap - KERNBASE, PR_SBR);
 
 	/* Map Interrupt stack and set red zone */
-	istack = (vaddr_t)Sysmap + ROUND_PAGE(sysptsize * 4);
+	istack = (vaddr_t)Sysmap + round_page(sysptsize * 4);
 	mtpr(istack + ISTACK_SIZE, PR_ISP);
 	*kvtopte(istack) &= ~PG_V;
 
@@ -212,9 +212,9 @@ pmap_bootstrap()
 	if (dep_call->cpu_init)
 		(*dep_call->cpu_init)();
 
-	avail_start = ROUND_PAGE(avail_start);
-	virtual_avail = ROUND_PAGE(virtual_avail);
-	virtual_end = TRUNC_PAGE(virtual_end);
+	avail_start = round_page(avail_start);
+	virtual_avail = round_page(virtual_avail);
+	virtual_end = trunc_page(virtual_end);
 
 
 #if 0 /* Breaks cninit() on some machines */
@@ -1016,7 +1016,7 @@ if (startpmapdebug)
 			pte = (pt_entry_t *)mfpr(PR_P0BR);
 		pte += PG_PFNUM(addr);
 		if (bits & 2) { /* PTE reference */
-			pte = (pt_entry_t *)TRUNC_PAGE(pte);
+			pte = (pt_entry_t *)trunc_page((vaddr_t)pte);
 			pte = kvtopte(pte);
 			if (pte[0] == 0) /* Check for CVAX bug */
 				return 1;	

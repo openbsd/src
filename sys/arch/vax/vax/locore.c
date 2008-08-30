@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.34 2008/08/18 23:19:29 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.35 2008/08/30 20:45:31 martin Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -369,7 +369,7 @@ start(struct rpb *prpb)
 		}
 	}
 
-        avail_end = TRUNC_PAGE(avail_end); /* be sure */
+        avail_end = trunc_page(avail_end); /* be sure */
 
 	proc0.p_addr = (struct user *)proc0paddr; /* XXX */
 	bzero((struct user *)proc0paddr, sizeof(struct user));

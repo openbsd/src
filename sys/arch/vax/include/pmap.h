@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.29 2007/12/15 17:24:07 deraadt Exp $     */
+/*      $OpenBSD: pmap.h,v 1.30 2008/08/30 20:45:31 martin Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -84,10 +84,6 @@ struct pv_entry {
 	pt_entry_t	*pv_pte;	/* pte for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 };
-
-/* ROUND_PAGE used before vm system is initialized */
-#define ROUND_PAGE(x)	(((uint)(x) + PGOFSET) & ~PGOFSET)
-#define TRUNC_PAGE(x)	((uint)(x) & ~PGOFSET)
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)					\

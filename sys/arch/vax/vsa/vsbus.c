@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.19 2008/08/15 22:40:07 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.20 2008/08/30 20:45:31 martin Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -331,9 +331,9 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
+	pte = uvtopte(trunc_page((vaddr_t)to), (&p->p_addr->u_pcb));
 	if ((vaddr_t)to & PGOFSET) {
-		int cz = ROUND_PAGE(to) - (vaddr_t)to;
+		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
 		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) |
 		    (NBPG - cz) | KERNBASE;
@@ -363,9 +363,9 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
+	pte = uvtopte(trunc_page((vaddr_t)from), (&p->p_addr->u_pcb));
 	if ((vaddr_t)from & PGOFSET) {
-		int cz = ROUND_PAGE(from) - (vaddr_t)from;
+		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
 		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) |
 		    (NBPG - cz) | KERNBASE;
