@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1401 2008/08/26 05:41:07 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1402 2008/08/30 04:50:50 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -234,6 +234,7 @@
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_EXAR	0x13a8		/* Exar */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
+#define	PCI_VENDOR_TECHSAN	0x13d0		/* Techsan Electronics */
 #define	PCI_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
@@ -4176,6 +4177,10 @@
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 GigE */
 #define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 GigE (alt ID) */
+
+/* Techsan Electronics */
+#define	PCI_PRODUCT_TECHSAN_B2C2_SKY2PC	0x2104		/* B2C2 Sky2PC */
+#define	PCI_PRODUCT_TECHSAN_B2C2_SKY2PC_2	0x2200		/* B2C2 Sky2PC */
 
 /* Tehuti Networks Ltd */
 #define	PCI_PRODUCT_TEHUTI_TN3009	0x3009		/* TN3009 */
