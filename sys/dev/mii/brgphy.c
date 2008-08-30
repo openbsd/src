@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.81 2008/06/13 22:23:08 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.82 2008/08/30 08:16:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -390,23 +390,21 @@ brgphy_copper_status(struct mii_softc *sc)
 	mii->mii_media_active = IFM_ETHER;
 
 	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
+	if (bmsr & BRGPHY_BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
 
+	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
 	if (bmcr & BRGPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+		int gsr;
+
 		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-	}
-
-	if (bmsr & BRGPHY_BMSR_LINK) {
-		int gsr;
-
-		mii->mii_media_status |= IFM_ACTIVE;
 
 		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) &
 			BRGPHY_AUXSTS_AN_RES) {
@@ -458,43 +456,34 @@ brgphy_fiber_status(struct mii_softc *sc)
 	mii->mii_media_active = IFM_ETHER;
 
 	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
+	if (bmsr & BRGPHY_BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
 
+	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
 	if (bmcr & BRGPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+		int val;
+
 		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-	}
 
-	if (bmsr & BRGPHY_BMSR_LINK) {
-		mii->mii_media_status |= IFM_ACTIVE;
 		mii->mii_media_active |= IFM_1000_SX;
 
-		/*
-		 * If autoneg enabled, read negotiated
-		 * duplex settings
-		 */
-		if (bmcr & BRGPHY_BMCR_AUTOEN) {
-			int val;
+		val = PHY_READ(sc, BRGPHY_SERDES_ANAR) &
+		      PHY_READ(sc, BRGPHY_SERDES_ANLPAR);
 
-			val = PHY_READ(sc, BRGPHY_SERDES_ANAR) &
-			      PHY_READ(sc, BRGPHY_SERDES_ANLPAR);
-
-			if (val & BRGPHY_SERDES_ANAR_FDX)
-				mii->mii_media_active |= IFM_FDX;
-			else
-				mii->mii_media_active |= IFM_HDX;
-
-			if (mii->mii_media_active & IFM_FDX)
-				mii->mii_media_active |=
-				    mii_phy_flowstatus(sc);
-		}
+		if (val & BRGPHY_SERDES_ANAR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
@@ -510,30 +499,27 @@ brgphy_5708s_status(struct mii_softc *sc)
 	mii->mii_media_active = IFM_ETHER;
 
 	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
+	if (bmsr & BRGPHY_BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
 
+	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
 	if (bmcr & BRGPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+		int xstat;
+
 		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-	}
-
-	if (bmsr & BRGPHY_BMSR_LINK) {
-		int xstat;
-
-		mii->mii_media_status |= IFM_ACTIVE;
 
 		PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 		    BRGPHY_5708S_DIG_PG0);
 
 		xstat = PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1);
 
-		/* Todo: Create #defines for hard coded values */
 		switch (xstat & BRGPHY_5708S_PG0_1000X_STAT1_SPEED_MASK) {
 		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_10:
 			mii->mii_media_active |= IFM_10_FL;
