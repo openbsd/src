@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2008/08/18 23:19:29 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.48 2008/08/30 18:58:24 martin Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -56,8 +56,6 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/rpb.h>
-
-#include <uvm/uvm.h>
 
 /* QDSS console mapping hack */
 #include "qd.h"
