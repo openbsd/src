@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.16 2007/08/14 07:16:26 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.17 2008/08/30 02:46:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -39,8 +39,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/pci/wdt50x.h>
 
 struct wdt_softc {
 	/* wdt_dev must be the first item in the struct */
