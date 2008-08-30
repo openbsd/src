@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.2 2008/08/20 18:52:07 miod Exp $	*/
+/*	$OpenBSD: sii.c,v 1.3 2008/08/30 20:13:03 miod Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -95,17 +95,18 @@ struct cfdriver sii_cd = {
  *		spincount 	- maximum number of times through the loop
  *		cntr		- variable for number of tries
  */
-#define	SII_WAIT_UNTIL(var, reg, expr, spincount, cntr) {	\
-		u_int tmp = reg;				\
-		for (cntr = 0; cntr < spincount; cntr++) {	\
-			while (tmp != (var = reg))		\
-				tmp = var;			\
-			if (expr)				\
-				break;				\
-			if (cntr >= 100)			\
-				DELAY(100);			\
-		}						\
-	}
+#define	SII_WAIT_UNTIL(var, reg, expr, spincount, cntr)			\
+	do {								\
+		u_int tmp = reg;					\
+		for (cntr = 0; cntr < spincount; cntr++) {		\
+			while (tmp != (var = reg))			\
+				tmp = var;				\
+			if (expr)					\
+				break;					\
+			if (cntr >= 100)				\
+				DELAY(100);				\
+		}							\
+	} while (0)
 
 #ifdef DEBUG
 u_int	sii_debug = 1;
@@ -154,7 +155,9 @@ void	sii_StateChg(struct sii_softc *sc, u_int cstat);
 int	sii_GetByte(SIIRegs *regs, int phase, int ack);
 void	sii_DoSync(struct sii_softc *, State *);
 void	sii_StartDMA(SIIRegs *regs, int phase, u_int dmaAddr, int size);
+u_int	sii_msgout(SIIRegs *, u_int, u_int8_t);
 int	sii_scsi_cmd(struct scsi_xfer *);
+void	sii_schedule(struct sii_softc *);
 #ifdef DEBUG
 void	sii_DumpLog(void);
 #endif
@@ -632,8 +635,8 @@ again:
 		 */
 		if (sc->sc_target < 0) {
 			cstat = regs->cstat;
-			printf("%s: target %d DNE?? dev %d,%d cs %x\n",
-				sc->sc_dev.dv_xname, sc->sc_target,
+			printf("%s: DNE?? dev %d,%d cs %x\n",
+				sc->sc_dev.dv_xname,
 				regs->slcsr, regs->destat,
 				cstat); /* XXX */
 			if (cstat & SII_DST) {
@@ -646,7 +649,8 @@ again:
 		state = &sc->sc_st[sc->sc_target];
 		/* check for a PARITY ERROR */
 		if (dstat & SII_IPE) {
-			state->flags |= PARITY_ERR;
+			state->flags |= PENDING_CMD;
+			state->nextCmd = MSG_PARITY_ERROR;
 			printf("%s: Parity error\n", sc->sc_dev.dv_xname);
 			goto abort;
 		}
@@ -1146,13 +1150,8 @@ again:
 						SII_WAIT_COUNT, i);
 
 					/* send a reject message */
-					regs->data = MSG_MESSAGE_REJECT;
-					regs->comm = SII_INXFER |
-						(regs->cstat & SII_STATE_MSK) |
-						SII_MSG_OUT_PHASE;
-					SII_WAIT_UNTIL(dstat, regs->dstat,
-						dstat & SII_DNE,
-						SII_WAIT_COUNT, i);
+					sii_msgout(regs, regs->cstat,
+					    MSG_MESSAGE_REJECT);
 					regs->dstat = SII_DNE;
 				}
 				break;
@@ -1267,26 +1266,20 @@ again:
 		case SII_MSG_OUT_PHASE:
 #ifdef DEBUG
 			if (sii_debug > 4)
-				printf("MsgOut\n");
+				printf("MsgOut %x\n", state->flags); /* XXX */
 #endif
-			printf("MsgOut %x\n", state->flags); /* XXX */
 
 			/*
 			 * Check for parity error.
 			 * Hardware will automatically set ATN
 			 * to request the device for a MSG_OUT phase.
 			 */
-			if (state->flags & PARITY_ERR) {
-				state->flags &= ~PARITY_ERR;
-				regs->data = MSG_PARITY_ERROR;
+			if (state->flags & PENDING_CMD) {
+				state->flags &= ~PENDING_CMD;
+				dstat = sii_msgout(regs, comm, state->nextCmd);
 			} else
-				regs->data = MSG_NOOP;
-			regs->comm = SII_INXFER | (comm & SII_STATE_MSK) |
-				SII_MSG_OUT_PHASE;
+				dstat = sii_msgout(regs, comm, MSG_NOOP);
 
-			/* wait a short time for XFER complete */
-			SII_WAIT_UNTIL(dstat, regs->dstat, dstat & SII_DNE,
-				SII_WAIT_COUNT, i);
 #ifdef DEBUG
 			if (sii_debug > 4)
 				printf("ds %x i %d\n", dstat, i);
@@ -1317,23 +1310,16 @@ again:
 	if (dstat & (SII_CI | SII_DI))
 		goto again;
 
-	if (sc->sc_target < 0) {
-		/* look for another device that is ready */
-		for (i = 0; i < SII_NCMD; i++) {
-			/* don't restart a disconnected command */
-			if (sc->sc_xs[i] == NULL || sc->sc_st[i].prevComm)
-				continue;
-			sii_StartCmd(sc, i);
-			break;
-		}
-	}
+	if (sc->sc_target < 0)
+		sii_schedule(sc);
 	return;
 
 abort:
+#ifdef DEBUG
 	/* jump here to abort the current command */
 	printf("%s: device %d: current command terminated\n",
 		sc->sc_dev.dv_xname, sc->sc_target);
-#ifdef DEBUG
+
 	sii_DumpLog();
 #endif
 
@@ -1344,9 +1330,8 @@ abort:
 		regs->comm = SII_INXFER | SII_ATN | (cstat & SII_STATE_MSK) |
 			SII_MSG_OUT_PHASE;
 		SII_WAIT_UNTIL(dstat, regs->dstat,
-			(dstat & (SII_DNE | SII_PHASE_MSK)) ==
-			(SII_DNE | SII_MSG_OUT_PHASE),
-			2 * SII_WAIT_COUNT, i);
+		    (dstat & (SII_DNE | SII_PHASE_MSK)) ==
+			(SII_DNE | SII_MSG_OUT_PHASE), 2 * SII_WAIT_COUNT, i);
 #ifdef DEBUG
 		if (sii_debug > 0)
 			printf("Abort: cs %x ds %x i %d\n", cstat, dstat, i);
@@ -1370,7 +1355,13 @@ abort:
 
 	i = sc->sc_target;
 	sc->sc_target = -1;
-	sii_CmdDone(sc, i, XS_DRIVER_STUFFUP /* EIO */);
+
+	/* XXX xs might have been get taken care of already */
+	if (sc->sc_xs[i] != NULL)
+		sii_CmdDone(sc, i, XS_DRIVER_STUFFUP /* EIO */);
+	else
+		sii_schedule(sc);
+
 #ifdef DEBUG
 	if (sii_debug > 4)
 		printf("sii_DoIntr: after CmdDone target %d\n", sc->sc_target);
@@ -1689,7 +1680,6 @@ sii_CmdDone(sc, target, error)
 	int error;			/* error code if any errors */
 {
 	struct scsi_xfer *xs;
-	int i;
 
 	splassert(IPL_BIO);
 
@@ -1707,6 +1697,35 @@ sii_CmdDone(sc, target, error)
 	}
 #endif
 
+	sii_schedule(sc);
+
+	xs->status = sc->sc_st[target].statusByte;
+	xs->error = error;
+	xs->resid = sc->sc_st[target].buflen;
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+}
+
+/* Send a particular message */
+u_int
+sii_msgout(SIIRegs *regs, u_int state, u_int8_t cmd)
+{
+	int i;
+	u_int dstat;
+
+	regs->data = cmd;
+	regs->comm = SII_INXFER | (state & SII_STATE_MSK) | SII_MSG_OUT_PHASE;
+
+	SII_WAIT_UNTIL(dstat, regs->dstat, dstat & SII_DNE, SII_WAIT_COUNT, i);
+
+	return dstat;
+}
+
+void
+sii_schedule(struct sii_softc *sc)
+{
+	unsigned int i;
+
 	/* look for another device that is ready */
 	for (i = 0; i < SII_NCMD; i++) {
 		/* don't restart a disconnected command */
@@ -1715,12 +1734,6 @@ sii_CmdDone(sc, target, error)
 		sii_StartCmd(sc, i);
 		break;
 	}
-
-	xs->status = sc->sc_st[target].statusByte;
-	xs->error = error;
-	xs->resid = sc->sc_st[target].buflen;
-	xs->flags |= ITSDONE;
-	scsi_done(xs);
 }
 
 #ifdef DEBUG

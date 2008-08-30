@@ -1,4 +1,4 @@
-/*	$OpenBSD: siivar.h,v 1.2 2008/08/20 18:52:07 miod Exp $	*/
+/*	$OpenBSD: siivar.h,v 1.3 2008/08/30 20:13:03 miod Exp $	*/
 /*	$NetBSD: siivar.h,v 1.6 2000/06/02 20:16:51 mhitch Exp $	*/
 
 #ifndef _SIIVAR_H
@@ -17,6 +17,7 @@ typedef struct scsi_state {
 	int	buflen;		/* total remaining amount of data to transfer */
 	char	*buf;		/* current pointer within scsicmd->buf */
 	u_short	flags;		/* see below */
+	u_int8_t nextCmd;	/* next command to send if PENDING_CMD set */
 	u_short	prevComm;	/* command reg before disconnect */
 	u_short	dmaCtrl;	/* DMA control register if disconnect */
 	u_short	dmaAddrL;	/* DMA address register if disconnect */
@@ -28,7 +29,7 @@ typedef struct scsi_state {
 
 /* state flags */
 #define FIRST_DMA	0x01	/* true if no data DMA started yet */
-#define PARITY_ERR	0x02	/* true if parity error seen */
+#define	PENDING_CMD	0x02	/* need to send a particular command */
 
 #define SII_NCMD	8
 struct sii_softc {
