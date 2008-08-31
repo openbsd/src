@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.37 2008/05/27 09:43:26 kettenis Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.38 2008/08/31 17:21:57 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2779,10 +2779,9 @@ ncr53c9x_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
+	printf("timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(l %x, c %x, p %x), resid %lx, "
 	       "msg(q %x,o %x) %s>",
-		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus,
 		NCR_READ_REG(sc, NCR_STAT),

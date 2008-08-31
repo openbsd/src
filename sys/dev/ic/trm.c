@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.8 2007/09/07 17:41:09 krw Exp $
+/*	$OpenBSD: trm.c,v 1.9 2008/08/31 17:21:57 miod Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -653,9 +653,8 @@ trm_timeout(void *arg1)
  	if (xs != NULL) {
  		sc = xs->sc_link->adapter_softc;
  		sc_print_addr(xs->sc_link);
- 		printf("%s: SCSI OpCode 0x%02x for target %d lun %d timed out\n",
- 		    sc->sc_device.dv_xname, xs->cmd->opcode,
-		    xs->sc_link->target, xs->sc_link->lun);
+ 		printf("SCSI OpCode 0x%02x timed out\n",
+ 		    sc->sc_device.dv_xname, xs->cmd->opcode);
 		pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
  		trm_FinishSRB(sc, pSRB);
 		trm_StartWaitingSRB(sc);

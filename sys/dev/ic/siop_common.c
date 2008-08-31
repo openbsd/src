@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.30 2007/08/05 19:05:09 kettenis Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.31 2008/08/31 17:21:57 miod Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ siop_sdp(siop_cmd, offset)
 #ifdef DIAGNOSTIC
 	if (offset > SIOP_NSG) {
 		sc_print_addr(siop_cmd->xs->sc_link);
-		printf(": offset %d > %d\n", offset, SIOP_NSG);
+		printf("offset %d > %d\n", offset, SIOP_NSG);
 		panic("siop_sdp: offset");
 	}
 #endif

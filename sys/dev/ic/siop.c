@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.49 2007/09/07 17:41:09 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.50 2008/08/31 17:21:57 miod Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ siop_intr(v)
 			if (siop_cmd)
 				sc_print_addr(xs->sc_link);
 			else
-				printf("%s:", sc->sc_c.sc_dev.dv_xname);
+				printf("%s: ", sc->sc_c.sc_dev.dv_xname);
 			printf("scsi gross error\n");
 			goto reset;
 		}
@@ -574,7 +574,7 @@ siop_intr(v)
 			if (siop_cmd)
 				sc_print_addr(xs->sc_link);
 			else
-				printf("%s:", sc->sc_c.sc_dev.dv_xname);
+				printf("%s: ", sc->sc_c.sc_dev.dv_xname);
 			printf("parity error\n");
 			goto reset;
 		}
