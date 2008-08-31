@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.16 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.17 2008/08/31 09:54:32 jsg Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 
 /*
  * driver for Seeq 80220/80221 and 80223 10/100 ethernet PHYs
- * datasheet from www.seeq.com
  */
 
 #include <sys/param.h>

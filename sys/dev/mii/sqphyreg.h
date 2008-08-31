@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphyreg.h,v 1.4 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: sqphyreg.h,v 1.5 2008/08/31 09:54:32 jsg Exp $	*/
 /*	$NetBSD: sqphyreg.h,v 1.1 1998/11/03 23:51:29 thorpej Exp $	*/
 
 /*-
@@ -36,8 +36,6 @@
 
 /*
  * Seeq 80220 Register definitions.
- * Further documentation can be found at:
- *	http://www.seeq.com/80220.html
  */
 
 #define	MII_SQPHY_CONFIG1	0x10	/* Configuration 1 Register */
