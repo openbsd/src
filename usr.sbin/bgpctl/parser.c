@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.50 2008/06/15 09:58:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.51 2008/08/31 08:29:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -801,7 +801,7 @@ parse_community(const char *word, struct parse_result *r)
 	type = getcommunity(p);
 
 done:
-	if (as == 0 || as == USHRT_MAX) {
+	if (as == 0) {
 		fprintf(stderr, "Invalid community\n");
 		return (0);
 	}
@@ -814,7 +814,7 @@ done:
 			break;
 		default:
 			/* unknown */
-			fprintf(stderr, "Invalid well-known community\n");
+			fprintf(stderr, "Unknown well-known community\n");
 			return (0);
 		}
 
