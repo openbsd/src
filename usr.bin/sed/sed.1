@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.29 2007/10/16 20:19:27 sobrado Exp $
+.\"	$OpenBSD: sed.1,v 1.30 2008/09/01 06:13:14 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 16 2007 $
+.Dd $Mdocdate: September 1 2008 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -175,7 +175,9 @@ has the following two additions to BREs:
 In a context address, any character other than a backslash
 .Pq Ql \e
 or newline character may be used to delimit the regular expression.
-Also, putting a backslash character before the delimiting character
+The opening delimiter should be preceded by a backslash
+unless it is a slash.
+Putting a backslash character before the delimiting character
 causes the character to be treated literally.
 For example, in the context address \exabc\exdefx, the RE delimiter
 is an
