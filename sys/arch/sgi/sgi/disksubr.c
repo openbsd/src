@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 2008/09/01 14:08:25 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 2008/09/01 16:28:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -160,7 +160,7 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	/* Set up partitions i-l if there is no BSD label. */
+	/* Spoof info from sgi label, in case there is no OpenBSD label. */
 	DL_SETDSIZE(lp, (DL_GETDSIZE(lp)*lp->d_secsize) / dlp->dp.dp_secbytes);
 	lp->d_secsize = dlp->dp.dp_secbytes;
 	lp->d_nsectors = dlp->dp.dp_secs;
