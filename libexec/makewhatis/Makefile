@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2004/08/06 12:05:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2008/09/01 17:18:19 drahn Exp $
 
 MAN=makewhatis.8
+NOPROG=
 PACKAGES= \
 	OpenBSD/Makewhatis.pm \
 	OpenBSD/Makewhatis/Check.pm \
@@ -14,11 +15,7 @@ SCRIPTS= \
 
 LIBBASE=/usr/libdata/perl5
 
-# Nothing to build
-depend:
-all:
-
-install: 
+realinstall: 
 .for i in ${PACKAGES}
 	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m ${DIRMODE} \
 		${DESTDIR}${LIBBASE}/${i:H}
@@ -30,14 +27,4 @@ install:
 		${.CURDIR}/$i ${DESTDIR}${BINDIR}/$i
 .endfor
 
-clean:
-
-.include <bsd.own.mk>
-
-.if !defined(NOMAN)
-install: maninstall
-.include <bsd.man.mk>
-.endif
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
