@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.74 2008/09/01 19:41:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.75 2008/09/01 19:43:33 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 #endif
 
 #if NVLAN > 0
@@ -398,11 +401,12 @@ int
 ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
 #ifdef INET
-	const struct ether_header *eh;
+	struct ether_header *eh;
+	u_int8_t ds_field;
 #endif
 #if NVLAN > 0
 	if ((m->m_flags & M_PROTO1) == M_PROTO1 && m->m_pkthdr.rcvif != NULL) {
-		const struct ifvlan *ifv = m->m_pkthdr.rcvif->if_softc;
+		struct ifvlan *ifv = m->m_pkthdr.rcvif->if_softc;
 
 		/* use VLAN 802.1D user-priority */
 		if (ifv->ifv_prio <= 7)
@@ -412,29 +416,46 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 #ifdef INET
 	eh = mtod(m, struct ether_header *);
 	if (eh->ether_type == htons(ETHERTYPE_IP)) {
-		const struct ip *ip = (const struct ip *)(eh + 1);
-		/*
-		 * Map Differentiated Services Codepoint field (see RFC2474).
-		 * Preserves backward compatibility with IP Precedence field.
-		 */
-		switch (ip->ip_tos & 0xfc) {
-		case IPTOS_PREC_PRIORITY:
-			return 2;
-		case IPTOS_PREC_IMMEDIATE:
-			return 1;
-		case IPTOS_PREC_FLASH:
-			return 3;
-		case IPTOS_PREC_FLASHOVERRIDE:
-			return 4;
-		case IPTOS_PREC_CRITIC_ECP:
-			return 5;
-		case IPTOS_PREC_INTERNETCONTROL:
-			return 6;
-		case IPTOS_PREC_NETCONTROL:
-			return 7;
-		}
+		struct ip *ip = (struct ip *)&eh[1];
+		if (ip->ip_v != 4)
+			return 0;
+		ds_field = ip->ip_tos;
 	}
-#endif
+#ifdef INET6
+	else if (eh->ether_type == htons(ETHERTYPE_IPV6)) {
+		struct ip6_hdr *ip6 = (struct ip6_hdr *)&eh[1];
+		u_int32_t flowlabel;
+
+		flowlabel = ntohl(ip6->ip6_flow);
+		if ((flowlabel >> 28) != 6)
+			return 0;
+		ds_field = (flowlabel >> 20) & 0xff;
+	}
+#endif	/* INET6 */
+	else	/* neither IPv4 nor IPv6 */
+		return 0;
+
+	/*
+	 * Map Differentiated Services Codepoint field (see RFC2474).
+	 * Preserves backward compatibility with IP Precedence field.
+	 */
+	switch (ds_field & 0xfc) {
+	case IPTOS_PREC_PRIORITY:
+		return 2;
+	case IPTOS_PREC_IMMEDIATE:
+		return 1;
+	case IPTOS_PREC_FLASH:
+		return 3;
+	case IPTOS_PREC_FLASHOVERRIDE:
+		return 4;
+	case IPTOS_PREC_CRITIC_ECP:
+		return 5;
+	case IPTOS_PREC_INTERNETCONTROL:
+		return 6;
+	case IPTOS_PREC_NETCONTROL:
+		return 7;
+	}
+#endif	/* INET */
 	return 0;	/* default to Best-Effort */
 }
 
