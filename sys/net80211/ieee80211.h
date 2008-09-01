@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.45 2008/08/27 10:58:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.46 2008/09/01 19:55:21 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -179,7 +179,12 @@ struct ieee80211_htframe_addr4 {	/* 11n */
  */
 #define IEEE80211_QOS_TXOP			0xff00
 #define IEEE80211_QOS_AMSDU			0x0080	/* 11n */
-#define IEEE80211_QOS_ACKPOLICY			0x0060
+#define IEEE80211_QOS_ACK_POLICY_NORMAL		0
+#define IEEE80211_QOS_ACK_POLICY_NOACK		1
+#define IEEE80211_QOS_ACK_POLICY_NOEXPLACK	2
+#define IEEE80211_QOS_ACK_POLICY_BA		3
+#define IEEE80211_QOS_ACK_POLICY_MASK		0x0060
+#define IEEE80211_QOS_ACK_POLICY_SHIFT		5
 #define IEEE80211_QOS_EOSP			0x0010
 #define IEEE80211_QOS_TID			0x000f
 

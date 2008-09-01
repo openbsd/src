@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.75 2008/09/01 19:43:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.76 2008/09/01 19:55:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ static const struct ieee80211_edca_ac_params
 enum ieee80211_edca_ac
 ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 {
-	/* IEEE Std 802.11e-2005, table 20i */
+	/* see Table 9-1 */
 	static const enum ieee80211_edca_ac up_to_ac[] = {
 		EDCA_AC_BE,	/* BE */
 		EDCA_AC_BK,	/* BK */
@@ -368,7 +368,7 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 #endif
 	/*
 	 * We do not support the admission control procedure defined in
-	 * IEEE Std 802.11e-2005 section 9.9.3.1.2.  The spec says that
+	 * IEEE Std 802.11-2007 section 9.9.3.1.2.  The spec says that
 	 * non-AP QSTAs that don't support this procedure shall use EDCA
 	 * parameters of a lower priority AC that does not require
 	 * admission control.
@@ -590,8 +590,12 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		struct ieee80211_qosframe *qwh =
 		    (struct ieee80211_qosframe *)wh;
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
-		qwh->i_qos[0] = tid & 0xf;
-		qwh->i_qos[1] = 0;	/* no TXOP requested */
+		qwh->i_qos[0] = tid;
+		if (ic->ic_tid_noack & (1 << tid)) {
+			qwh->i_qos[0] |= IEEE80211_QOS_ACK_POLICY_NOACK <<
+			    IEEE80211_QOS_ACK_POLICY_SHIFT;
+		}
+		qwh->i_qos[1] = 0;	/* unused/set by hardware */
 		*(u_int16_t *)&qwh->i_seq[0] =
 		    htole16(ni->ni_qos_txseqs[tid] << IEEE80211_SEQ_SEQ_SHIFT);
 		ni->ni_qos_txseqs[tid]++;
@@ -1505,7 +1509,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
-	     (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
 		2 + IEEE80211_RSNIE_MAXLEN : 0) +
 	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
