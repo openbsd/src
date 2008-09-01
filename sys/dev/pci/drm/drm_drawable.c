@@ -171,7 +171,7 @@ drm_update_draw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		/* For some reason the pointer arg is unsigned long long. */
 		ret = copyin((void *)(intptr_t)update->data, info->rects,
 		    sizeof(*info->rects) * info->num_rects);
-		DRM_SPINUNLOCK(&dev->drw_lock);
+		break;
 	default:
 		ret =  EINVAL;
 	}
