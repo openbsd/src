@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.80 2008/08/01 14:19:09 bluhm Exp $
+.\"	$OpenBSD: make.1,v 1.81 2008/09/01 08:37:45 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 1 2008 $
+.Dd $Mdocdate: September 1 2008 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1153,7 +1153,7 @@ made before the sources that succeed it in the line.
 Loops are not
 detected and targets that form loops will be silently ignored.
 .El
-.Sh "SPECIAL TARGETS"
+.Sh SPECIAL TARGETS
 Special targets may not be included with other targets, i.e., they must be
 the only target specified.
 .Bl -tag -width ".NOTPARALLEL"
