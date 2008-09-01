@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.4 2008/07/16 10:23:39 canacar Exp $	 */
+/* $Id: pftop.c,v 1.5 2008/09/01 23:30:08 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1281,7 +1281,13 @@ print_rule(struct pf_rule *pr)
 	print_fld_size(FLD_BYTES, pr->bytes[0] + pr->bytes[1]);
 
 	print_fld_uint(FLD_RULE, pr->nr);
-	print_fld_str(FLD_DIR, pr->direction == PF_OUT ? "Out" : "In");
+	if (pr->direction == PF_OUT)
+		print_fld_str(FLD_DIR, "Out");
+	else if (pr->direction == PF_IN)
+		print_fld_str(FLD_DIR, "In");
+	else
+		print_fld_str(FLD_DIR, "Any");
+
 	if (pr->quick)
 		print_fld_str(FLD_QUICK, "Quick");
 
