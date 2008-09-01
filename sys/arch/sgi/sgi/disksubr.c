@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 2008/08/08 23:49:53 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 2008/09/01 14:08:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -118,6 +118,9 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	int fsoffs = 0;
 	int offset;
 
+	if (partoffp)
+		*partoffp = fsoffs;
+
 	bp->b_blkno = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
@@ -130,10 +133,8 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 	dlp = (struct sgilabel *)(bp->b_data + LABELOFFSET);
-	if (dlp->magic != htobe32(SGILABEL_MAGIC)) {
-		fsoffs = 0;
+	if (dlp->magic != htobe32(SGILABEL_MAGIC))
 		goto finished;
-	}
 
 	if (dlp->partitions[0].blocks == 0) {
 		msg = "no BSD partition";
@@ -141,8 +142,14 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 	fsoffs = dlp->partitions[0].first * (dlp->dp.dp_secbytes / DEV_BSIZE);
 
-	if (spoofonly)
+	/*
+	 * If the disklabel is about to be written to disk, don't modify it!
+	 * just bail out.
+	 */
+	if (partoffp) {
+		*partoffp = fsoffs;
 		goto finished;
+	}
 
 	p = (int *)dlp;
 	i = sizeof(struct sgilabel) / sizeof(int);
@@ -183,9 +190,6 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	lp->d_checksum = dkcksum(lp);
 
 finished:
-	if (partoffp)
-		*partoffp = fsoffs;
-
 	if (spoofonly)
 		goto done;
 
