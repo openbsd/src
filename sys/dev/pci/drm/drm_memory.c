@@ -136,7 +136,10 @@ done:
 void
 drm_ioremapfree(drm_local_map_t *map)
 {
-	if (map != NULL && map->bsr != NULL)
+	if (map == NULL)
+		return;
+
+	if (map->bsr != NULL)
 		vga_pci_bar_unmap(map->bsr);
 	else
 		bus_space_unmap(map->bst, map->bsh, map->size);
