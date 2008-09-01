@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.77 2008/08/29 11:15:32 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.78 2008/09/01 09:02:59 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -158,7 +158,7 @@ int ath_dwelltime = 200;		/* 5 channels/second */
 int ath_calinterval = 30;		/* calibrate every 30 secs */
 int ath_outdoor = AH_TRUE;		/* outdoor operation */
 int ath_xchanmode = AH_TRUE;		/* enable extended channels */
-int ath_softcrypto = 0;			/* 1=enable software crypto */
+int ath_softcrypto = 1;			/* 1=enable software crypto */
 
 struct cfdriver ath_cd = {
 	NULL, "ath", DV_IFNET
