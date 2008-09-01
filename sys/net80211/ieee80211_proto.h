@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.33 2008/08/14 15:51:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.34 2008/09/01 19:41:10 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -95,8 +95,8 @@ extern	int ieee80211_send_group_msg2(struct ieee80211com *,
 		struct ieee80211_node *, const struct ieee80211_key *);
 extern	int ieee80211_send_eapol_key_req(struct ieee80211com *,
 		struct ieee80211_node *, u_int16_t, u_int64_t);
-extern	void ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *,
-		struct mbuf *);
+extern	int ieee80211_pwrsave(struct ieee80211com *, struct mbuf *,
+		struct ieee80211_node *);
 extern	struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *, int);
 #define	ieee80211_new_state(_ic, _nstate, _arg) \
 	(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))

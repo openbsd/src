@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.50 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.51 2008/09/01 19:41:11 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -291,7 +291,7 @@ struct ieee80211com {
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
-	u_int			ic_tim_mcast;
+	u_int			ic_tim_mcast_pending;
 	u_int			ic_dtim_period;
 	u_int			ic_dtim_count;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.73 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.74 2008/09/01 19:41:10 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -238,6 +238,11 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 			    ieee80211_chan2mode(ic, ni->ni_chan)]);
 	}
 
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    ieee80211_pwrsave(ic, m, ni) != 0)
+		return 0;
+#endif
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
 	(*ifp->if_start)(ifp);
@@ -606,6 +611,13 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	     (ni->ni_flags & IEEE80211_NODE_TXPROT)))
 		wh->i_fc[1] |= IEEE80211_FC1_PROTECTED;
 
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    ieee80211_pwrsave(ic, m, ni) != 0) {
+		*pni = NULL;
+		return NULL;
+	}
+#endif
 	*pni = ni;
 	return m;
 bad:
@@ -718,7 +730,7 @@ ieee80211_add_tim(u_int8_t *frm, struct ieee80211com *ic)
 	/* Bitmap Control */
 	*frm = offset;
 	/* set broadcast/multicast indication bit if necessary */
-	if (ic->ic_dtim_count == 0 && ic->ic_tim_mcast)
+	if (ic->ic_dtim_count == 0 && ic->ic_tim_mcast_pending)
 		*frm |= 0x01;
 	frm++;
 
@@ -1527,31 +1539,56 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	return m;
 }
 
-void
-ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct mbuf *m)
+/*
+ * Check if an outgoing MSDU or management frame should be buffered into
+ * the AP for power management.  Return 1 if the frame was buffered into
+ * the AP, or 0 if the frame shall be transmitted immediately.
+ */
+int
+ieee80211_pwrsave(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
 {
-	/* store the new packet on our queue, changing the TIM if necessary */
-	if (IF_IS_EMPTY(&ni->ni_savedq))
-		(*ic->ic_set_tim)(ic, ni->ni_associd, 1);
+	const struct ieee80211_frame *wh;
 
-	if (ni->ni_savedq.ifq_len >= IEEE80211_PS_MAX_QUEUE) {
-		IF_DROP(&ni->ni_savedq);
-		m_freem(m);
-		if (ic->ic_if.if_flags & IFF_DEBUG)
-			printf("%s: station %s power save queue overflow"
-			    " of size %d drops %d\n",
-			    ic->ic_if.if_xname,
-			    ether_sprintf(ni->ni_macaddr),
-			    IEEE80211_PS_MAX_QUEUE,
-			    ni->ni_savedq.ifq_drops);
+	KASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP);
+	if (!(ic->ic_caps & IEEE80211_C_APPMGT))
+		return 0;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/*
+		 * Buffer group addressed MSDUs with the Order bit clear
+		 * if any associated STAs are in PS mode.
+		 */
+		if ((wh->i_fc[1] & IEEE80211_FC1_ORDER) ||
+		    ic->ic_pssta == 0)
+			return 0;
+		ic->ic_tim_mcast_pending = 1;
 	} else {
 		/*
-		 * Similar to ieee80211_mgmt_output, store the node in
-		 * the rcvif field.
+		 * Buffer MSDUs, A-MSDUs or management frames destined for
+		 * PS STAs.
 		 */
+		if (ni->ni_pwrsave == IEEE80211_PS_AWAKE ||
+		    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+		    IEEE80211_FC0_TYPE_CTL)
+			return 0;
+		if (IF_IS_EMPTY(&ni->ni_savedq))
+			(*ic->ic_set_tim)(ic, ni->ni_associd, 1);
+	}
+	/* NB: ni == ic->ic_bss for broadcast/multicast */
+	if (IF_QFULL(&ni->ni_savedq)) {
+		/* XXX should we drop the oldest instead? */
+		IF_DROP(&ni->ni_savedq);
+		m_freem(m);
+	} else {
 		IF_ENQUEUE(&ni->ni_savedq, m);
+		/*
+		 * Similar to ieee80211_mgmt_output, store the node in the
+		 * rcvif field.
+		 */
 		m->m_pkthdr.rcvif = (void *)ni;
 	}
+	return 1;
 }
 #endif	/* IEEE80211_STA_ONLY */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.103 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.104 2008/09/01 19:41:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -215,8 +215,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	}
 
 #ifndef IEEE80211_STA_ONLY
-	if ((ic->ic_caps & IEEE80211_C_PMGT) &&
-	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    (ic->ic_caps & IEEE80211_C_APPMGT) &&
 	    ni->ni_state == IEEE80211_STA_ASSOC) {
 		if (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) {
 			if (ni->ni_pwrsave == IEEE80211_PS_AWAKE) {
@@ -1998,8 +1998,8 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 	struct ieee80211_frame *wh;
 	u_int16_t aid;
 
-	if (!(ic->ic_caps & IEEE80211_C_PMGT) ||
-	    ic->ic_opmode != IEEE80211_M_HOSTAP ||
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
+	    !(ic->ic_caps & IEEE80211_C_APPMGT) ||
 	    ni->ni_state != IEEE80211_STA_ASSOC)
 		return;
 
