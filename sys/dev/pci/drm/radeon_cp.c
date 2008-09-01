@@ -1390,7 +1390,8 @@ void radeon_do_release(struct drm_device * dev)
 				mtx_sleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
 				       1);
 #else
-				tsleep(&ret, PZERO, "rdnrel", 1);
+				msleep(&ret, &dev->dev_lock, PZERO,
+				    "rdnrel", 1);
 #endif
 #endif
 			}
