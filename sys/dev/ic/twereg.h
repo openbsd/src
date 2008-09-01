@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.8 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.9 2008/09/01 17:30:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -146,20 +146,18 @@
 /*	TWE_AEN_	0x0000	 * dunno what this is (yet) */
 #define	TWE_AEN_QFULL	0x00ff
 
-#pragma pack(1)
-
 /* struct definitions */
 struct twe_param {
 	u_int16_t	table_id;
 	u_int8_t	param_id;
 	u_int8_t	param_size;
 	u_int8_t	data[1];
-};
+} __packed;
 
 struct twe_segs {
 	u_int32_t twes_addr;
 	u_int32_t twes_len;
-};
+} __packed;
 
 struct twe_cmd {
 	u_int16_t	cmd_op;
@@ -175,17 +173,17 @@ struct twe_cmd {
 			u_int32_t	lba;
 			struct twe_segs	segs[TWE_MAXOFFSETS];
 			u_int32_t	pad;
-		} _cmd_io;
+		} __packed _cmd_io;
 #define	cmd_io		_._cmd_io
 		struct {
 			u_int16_t	count;
 			struct twe_segs	segs[TWE_MAXOFFSETS];
-		} _cmd_param;
+		} __packed _cmd_param;
 #define	cmd_param	_._cmd_param
 		struct {
 			u_int16_t	msgcr;
 			u_int32_t	rdy_q_ptr;
-		} _cmd_init;
+		} __packed _cmd_init;
 #define	cmd_init	_._cmd_init
 		struct {
 			u_int8_t	action;
@@ -193,7 +191,7 @@ struct twe_cmd {
 #define	TWE_HSWAP_ADDCBOD	1
 #define	TWE_HSWAP_ADDSPARE	2
 			u_int8_t	port;
-		} _cmd_aport;
+		} __packed _cmd_aport;
 #define	cmd_hswap	_._cmd_hswap
 		struct {
 			u_int8_t	feature;
@@ -202,7 +200,7 @@ struct twe_cmd {
 			u_int8_t	mode;
 			u_int16_t	units;
 			u_int16_t	persist;
-		} _cmd_ata;
+		} __packed _cmd_ata;
 #define	cmd_ata		_._cmd_ata
 		u_int16_t	cmd_status;
 		struct {
@@ -213,9 +211,7 @@ struct twe_cmd {
 #define	TWE_REBUILD_STARTU	5
 #define	TWE_REBUILD_CS		0x80
 			u_int8_t	subunit;	/* raid10 lu rebuild */
-		} _cmd_rebuild;
+		} __packed _cmd_rebuild;
 #define	cmd_rebuild	_._cmd_rebuild
 	} _;
-};	/* 512 bytes */
-
-#pragma pack()
+} __packed;	/* 512 bytes */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.14 2006/01/12 22:39:21 weingart Exp $	*/
+/*	$OpenBSD: segments.h,v 1.15 2008/09/01 17:30:56 deraadt Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -69,10 +69,6 @@
 
 #ifndef _LOCORE
 
-#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
-#pragma pack(1)
-#endif
-
 /*
  * Memory and System segment descriptors
  */
@@ -118,10 +114,6 @@ struct region_descriptor {
 	unsigned rd_limit:16;		/* segment extent */
 	unsigned rd_base:32;		/* base address  */
 } __packed;
-
-#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
-#pragma pack(4)
-#endif
 
 #ifdef _KERNEL
 extern union descriptor *gdt, ldt[];

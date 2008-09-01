@@ -1,4 +1,4 @@
-/*	$OpenBSD: bhareg.h,v 1.3 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: bhareg.h,v 1.4 2008/09/01 17:30:56 deraadt Exp $	*/
 /*	$NetBSD: bhareg.h,v 1.12 1998/08/17 00:26:33 mycroft Exp $	*/
 
 /*-
@@ -139,13 +139,11 @@ typedef u_int8_t physlen[4];
 #define BHA_INTR_MBOA		0x02	/* MBX out empty */
 #define BHA_INTR_MBIF		0x01	/* MBX in full */
 
-#pragma pack(1)
-
 struct bha_mbx_out {
 	physaddr ccb_addr;
 	u_int8_t reserved[3];
 	u_int8_t cmd;
-};
+} __packed;
 
 struct bha_mbx_in {
 	physaddr ccb_addr;
@@ -153,7 +151,7 @@ struct bha_mbx_in {
 	u_int8_t target_stat;
 	u_int8_t reserved;
 	u_int8_t comp_stat;
-};
+} __packed;
 
 /*
  * mbo.cmd values
@@ -184,7 +182,7 @@ WARNING...THIS WON'T WORK(won't fit on 1 page)
 struct bha_scat_gath {
 	physlen seg_len;
 	physaddr seg_addr;
-};
+} __packed;
 
 struct bha_ccb {
 	u_int8_t	opcode;
@@ -253,7 +251,7 @@ struct bha_ccb {
 	 * Its contents are loaded into "scat_gath" above.
 	 */
 	bus_dmamap_t	dmamap_xfer;
-};
+} __packed;
 
 /*
  * opcode fields
@@ -300,7 +298,7 @@ struct bha_extended_inquire {
 	struct {
 		u_char	opcode;
 		u_char	len;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char	bus_type;	/* Type of bus connected to */
 #define	BHA_BUS_TYPE_24BIT	'A'	/* ISA bus */
@@ -321,13 +319,13 @@ struct bha_extended_inquire {
 #define BHA_SCSI_ULTRA		0x08	/* host adapter supports Ultra */
 #define BHA_SCSI_TERMINATION	0x10	/* host adapter supports smart
 					   termination */
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_config {
 	struct {
 		u_char	opcode;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char  chan;
 		u_char  intr;
@@ -338,64 +336,64 @@ struct bha_config {
 		u_char		 :5,
 			scsi_dev :3;
 #endif
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_toggle {
 	struct {
 		u_char	opcode;
 		u_char	enable;
-	} cmd;
-};
+	} __packed cmd;
+} __packed;
 
 struct bha_mailbox {
 	struct {
 		u_char	opcode;
 		u_char	nmbx;
 		physaddr addr;
-	} cmd;
-};
+	} __packed cmd;
+} __packed;
 
 struct bha_model {
 	struct {
 		u_char	opcode;
 		u_char	len;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char	id[4];		/* i.e bt742a -> '7','4','2','A' */
 		u_char	version[2];	/* i.e Board Revision 'H' -> 'H', 0x00 */
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_revision {
 	struct {
 		u_char	opcode;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char  board_type;
 		u_char  custom_feature;
 		char    firm_revision;
 		u_char  firm_version;
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_digit {
 	struct {
 		u_char	opcode;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char  digit;
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_devices {
 	struct {
 		u_char	opcode;
-	} cmd;
+	} __packed cmd;
 	struct {
 		u_char	lun_map[8];
-	} reply;
-};
+	} __packed reply;
+} __packed;
 
 struct bha_sync {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -407,7 +405,7 @@ struct bha_sync {
 		period	:3,
 		offset	:4;
 #endif
-};
+} __packed;
 
 struct bha_setup_reply {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -427,7 +425,7 @@ struct bha_setup_reply {
 	/* doesn't make sense with 32bit addresses */
 	struct bha_sync	sync[8];
 	u_int8_t	disc_sts;
-};
+} __packed;
 
 /* additional reply data supplied by wide controllers */
 struct bha_setup_reply_wide {
@@ -441,38 +439,36 @@ struct bha_setup_reply_wide {
 	u_int8_t	reserved;
 	u_int8_t	high_wide_allowed;
 	u_int8_t	high_wide_active;
-};
+} __packed;
 
 struct bha_setup {
 	struct {
 		u_char	opcode;
 		u_char	len;
-	} cmd;
+	} __packed cmd;
 	struct bha_setup_reply reply;
 	struct bha_setup_reply_wide reply_w;	/* for wide controllers */
-};
+} __packed;
 
 struct bha_period_reply {
 	u_char	period[8];
-};
+} __packed;
 
 struct bha_period {
 	struct {
 		u_char	opcode;
 		u_char	len;
-	} cmd;
+	} __packed cmd;
 	struct bha_period_reply reply;
 	struct bha_period_reply reply_w;	/* for wide controllers */
-};
+} __packed;
 
 struct bha_isadisable {
 	struct {
 		u_char	opcode;
 		u_char	modifier;
-	} cmd;
-};
-
-#pragma pack()
+	} __packed cmd;
+} __packed;
 
 /*
  * bha_isadisable.modifier parameters
