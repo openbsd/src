@@ -126,17 +126,19 @@ typedef struct drm_i915_private {
 	wait_queue_head_t irq_queue;
 	atomic_t irq_received;
 	atomic_t irq_emitted;
+	/* Protects user_irq_refcount and irq_mask reg */
+	DRM_SPINTYPE user_irq_lock;
+	/* Refcount for user irq, only enabled when needed */
+	int user_irq_refcount;
+	/* Cached value of IMR to avoid reads in updating the bitfield */
+	u_int32_t irq_mask_reg;
+	int irq_enabled;
 
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
 	struct mem_block *agp_heap;
 	unsigned int sr01, adpa, ppcr, dvob, dvoc, lvds;
 	int vblank_pipe;
-	DRM_SPINTYPE user_irq_lock;
-	int user_irq_refcount;
-	int fence_irq_on;
-	uint32_t irq_enable_reg;
-	int irq_enabled;
 
 	DRM_SPINTYPE swaps_lock;
 	drm_i915_vbl_swap_t vbl_swaps;

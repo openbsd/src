@@ -80,7 +80,7 @@ static int i915_dma_cleanup(struct drm_device * dev)
 	 * may not have been called from userspace and after dev_private
 	 * is freed, it's too late.
 	 */
-	if (dev->irq)
+	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
 	if (dev_priv->ring.virtual_start) {
@@ -745,7 +745,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 
 	switch (param->param) {
 	case I915_PARAM_IRQ_ACTIVE:
-		value = dev->irq ? 1 : 0;
+		value = dev->irq_enabled;
 		break;
 	case I915_PARAM_ALLOW_BATCHBUFFER:
 		value = dev_priv->allow_batchbuffer ? 1 : 0;
@@ -921,6 +921,9 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	ret = drm_addmap(dev, base, size, _DRM_REGISTERS,
 		_DRM_KERNEL | _DRM_DRIVER, &dev_priv->mmio_map);
 
+	mtx_init(&dev_priv->swaps_lock, IPL_BIO);
+	DRM_SPININIT(&dev_priv->user_irq_lock, "I915 irq lock");
+
 #ifdef __linux__
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
 	intel_init_chipset_flush_compat(dev);
@@ -937,6 +940,9 @@ int i915_driver_unload(struct drm_device *dev)
 
 	if (dev_priv->mmio_map)
 		drm_rmmap(dev, dev_priv->mmio_map);
+
+	DRM_SPINUNINIT(&dev_priv->swaps_lock);
+	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
 
 #ifdef __linux__
 	intel_opregion_free(dev);
