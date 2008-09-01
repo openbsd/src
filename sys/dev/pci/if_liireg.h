@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_liireg.h,v 1.3 2008/07/17 13:50:49 jsing Exp $	*/
+/*	$OpenBSD: if_liireg.h,v 1.4 2008/09/01 14:38:31 brad Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -32,7 +32,7 @@
  */
 
 /* SPI Flash Control register */
-#define ATL2_SFC	0x0200
+#define LII_SFC		0x0200
 #define 	SFC_STS_NON_RDY		0x00000001
 #define 	SFC_STS_WEN		0x00000002
 #define 	SFC_STS_WPEN		0x00000080
@@ -58,13 +58,13 @@
 #define 	SFC_WAIT_READY		0x10000000
 
 /* SPI Flash Address register */
-#define ATL2_SF_ADDR	0x0204
+#define LII_SF_ADDR	0x0204
 
 /* SPI Flash Data register */
-#define ATL2_SF_DATA	0x0208
+#define LII_SF_DATA	0x0208
 
 /* SPI Flash Configuration register */
-#define ATL2_SFCF	0x020c
+#define LII_SFCF	0x020c
 #define 	SFCF_LD_ADDR_MASK	0x00ffffff
 #define 	SFCF_LD_ADDR_SHIFT	0
 #define 	SFCF_VPD_ADDR_MASK	0x03
@@ -72,17 +72,17 @@
 #define 	SFCF_LD_EXISTS		0x04000000
 
 /* SPI Flash op codes programmation registers */
-#define ATL2_SFOP_PROGRAM	0x0210
-#define ATL2_SFOP_SC_ERASE	0x0211
-#define ATL2_SFOP_CHIP_ERASE	0x0212
-#define ATL2_SFOP_RDID		0x0213
-#define ATL2_SFOP_WREN		0x0214
-#define ATL2_SFOP_RDSR		0x0215
-#define ATL2_SFOP_WRSR		0x0216
-#define ATL2_SFOP_READ		0x0217
+#define LII_SFOP_PROGRAM	0x0210
+#define LII_SFOP_SC_ERASE	0x0211
+#define LII_SFOP_CHIP_ERASE	0x0212
+#define LII_SFOP_RDID		0x0213
+#define LII_SFOP_WREN		0x0214
+#define LII_SFOP_RDSR		0x0215
+#define LII_SFOP_WRSR		0x0216
+#define LII_SFOP_READ		0x0217
 
 /* TWSI Control register, whatever that is */
-#define ATL2_TWSIC	0x0218
+#define LII_TWSIC	0x0218
 #define     TWSIC_LD_OFFSET_MASK        0x000000ff
 #define     TWSIC_LD_OFFSET_SHIFT       0
 #define     TWSIC_LD_SLV_ADDR_MASK      0x07
@@ -102,7 +102,7 @@
 #define     TWSIC_WRITE_FREQ_SEL_SHIFT  24
 
 /* PCI-Express Device Misc. Control register? (size unknown) */
-#define ATL2_PCEDMC	0x021c
+#define LII_PCEDMC	0x021c
 #define 	PCEDMC_RETRY_BUFDIS	0x01
 #define 	PCEDMC_EXT_PIPE		0x02
 #define 	PCEDMC_SPIROM_EXISTS	0x04
@@ -110,11 +110,11 @@
 #define 	PCEDMC_SERDES_SEL_DIN	0x10
 
 /* PCI-Express PHY Miscellaneous register (size unknown) */
-#define ATL2_PCEPM	0x1000
+#define LII_PCEPM	0x1000
 #define 	PCEPM_FORCE_RCV_DET	0x04
 
 /* Selene Master Control register */
-#define ATL2_SMC	0x1400
+#define LII_SMC		0x1400
 #define 	SMC_SOFT_RST		0x00000001
 #define 	SMC_MTIMER_EN		0x00000002
 #define 	SMC_ITIMER_EN		0x00000004
@@ -125,29 +125,29 @@
 #define 	SMC_DEV_ID_SHIFT	24
 
 /* Timer Initial Value register */
-#define ATL2_TIV	0x1404
+#define LII_TIV		0x1404
 
 /* IRQ Moderator Timer Initial Value register */
-#define ATL2_IMTIV	0x1408
+#define LII_IMTIV	0x1408
 
 /* PHY Control register */
-#define ATL2_PHYC	0x140c
+#define LII_PHYC	0x140c
 #define 	PHYC_ENABLE	0x0001
 
 /* IRQ Anti-Lost Timer Initial Value register
     --> Time allowed for software to clear the interrupt */
-#define ATL2_IALTIV	0x140e
+#define LII_IALTIV	0x140e
 
 /* Block Idle Status register
    --> Bit set if matching state machine is not idle */
-#define ATL2_BIS	0x1410
+#define LII_BIS		0x1410
 #define 	BIS_RXMAC	0x00000001
 #define		BIS_TXMAC	0x00000002
 #define 	BIS_DMAR	0x00000004
 #define 	BIS_DMAW	0x00000008
 
 /* MDIO Control register */
-#define ATL2_MDIOC	0x1414
+#define LII_MDIOC	0x1414
 #define 	MDIOC_DATA_MASK		0x0000ffff
 #define 	MDIOC_DATA_SHIFT	0
 #define 	MDIOC_REG_MASK		0x1f
@@ -170,12 +170,12 @@
 #define 	MDIO_WAIT_TIMES		10
 
 /* SerDes Lock Detect Control and Status register */
-#define ATL2_SERDES	0x1424
+#define LII_SERDES	0x1424
 #define 	SERDES_LOCK_DETECT	0x01
 #define 	SERDES_LOCK_DETECT_EN	0x02
 
 /* MAC Control register */
-#define ATL2_MACC	0x1480
+#define LII_MACC	0x1480
 #define 	MACC_TX_EN		0x00000001
 #define 	MACC_RX_EN		0x00000002
 #define 	MACC_TX_FLOW_EN		0x00000004
@@ -196,7 +196,7 @@
 #define 	MACC_HDX_LEFT_BUF_SHIFT	28
 
 /* MAC IPG/IFG Control register */
-#define ATL2_MIPFG	0x1484
+#define LII_MIPFG	0x1484
 #define 	MIPFG_IPGT_MASK		0x0000007f
 #define 	MIPFG_IPGT_SHIFT	0
 #define 	MIPFG_MIFG_MASK		0xff
@@ -207,14 +207,14 @@
 #define 	MIPFG_IPGR2_SHIFT	24
 
 /* MAC Address registers */
-#define ATL2_MAC_ADDR_0	0x1488
-#define ATL2_MAC_ADDR_1	0x148c
+#define LII_MAC_ADDR_0	0x1488
+#define LII_MAC_ADDR_1	0x148c
 
 /* Multicast Hash Table register */
-#define ATL2_MHT	0x1490
+#define LII_MHT		0x1490
 
 /* MAC Half-Duplex Control register */
-#define ATL2_MHDC	0x1498
+#define LII_MHDC	0x1498
 #define 	MHDC_LCOL_MASK		0x000003ff
 #define 	MHDC_LCOL_SHIFT		0
 #define 	MHDC_RETRY_MASK		0x0f
@@ -229,10 +229,10 @@
 #define 	MHDC_JAMIPG_SHIFT	24
 
 /* MTU Control register */
-#define ATL2_MTU	0x149c
+#define LII_MTU		0x149c
 
 /* WOL Control register */
-#define ATL2_WOLC
+#define LII_WOLC
 #define 	WOLC_PATTERN_EN		0x00000001
 #define 	WOLC_PATTERN_PME_EN	0x00000002
 #define 	WOLC_MAGIC_EN		0x00000004
@@ -254,39 +254,39 @@
 #define 	WOLC_PT4_MATCH		0x10000000
 
 /* Internal SRAM Partition register */
-#define ATL2_SRAM_TXRAM_END	0x1500
-#define ATL2_SRAM_RXRAM_END	0x1502
+#define LII_SRAM_TXRAM_END	0x1500
+#define LII_SRAM_RXRAM_END	0x1502
 
 /* Descriptor Control registers */
-#define ATL2_DESC_BASE_ADDR_HI	0x1540
-#define ATL2_TXD_BASE_ADDR_LO	0x1544
-#define ATL2_TXD_BUFFER_SIZE	0x1548
-#define ATL2_TXS_BASE_ADDR_LO	0x154c
-#define ATL2_TXS_NUM_ENTRIES	0x1550
-#define ATL2_RXD_BASE_ADDR_LO	0x1554
-#define ATL2_RXD_NUM_ENTRIES	0x1558
+#define LII_DESC_BASE_ADDR_HI	0x1540
+#define LII_TXD_BASE_ADDR_LO	0x1544
+#define LII_TXD_BUFFER_SIZE	0x1548
+#define LII_TXS_BASE_ADDR_LO	0x154c
+#define LII_TXS_NUM_ENTRIES	0x1550
+#define LII_RXD_BASE_ADDR_LO	0x1554
+#define LII_RXD_NUM_ENTRIES	0x1558
 
 /* DMAR Control register */
-#define ATL2_DMAR	0x1580
+#define LII_DMAR	0x1580
 #define 	DMAR_EN		0x01
 
 /* TX Cur-Through Control register */
-#define ATL2_TX_CUT_THRESH	0x1590
+#define LII_TX_CUT_THRESH	0x1590
 
 /* DMAW Control register */
-#define ATL2_DMAW	0x15a0
+#define LII_DMAW	0x15a0
 #define 	DMAW_EN		0x01
 
 /* Flow Control registers */
-#define ATL2_PAUSE_ON_TH	0x15a8
-#define ATL2_PAUSE_OFF_TH	0x15aa
+#define LII_PAUSE_ON_TH		0x15a8
+#define LII_PAUSE_OFF_TH	0x15aa
 
 /* Mailbox registers */
-#define ATL2_MB_TXD_WR_IDX	0x15f0
-#define ATL2_MB_RXD_RD_IDX	0x15f4
+#define LII_MB_TXD_WR_IDX	0x15f0
+#define LII_MB_RXD_RD_IDX	0x15f4
 
 /* Interrupt Status register */
-#define ATL2_ISR	0x1600
+#define LII_ISR		0x1600
 #define 	ISR_TIMER		0x00000001
 #define 	ISR_MANUAL		0x00000002
 #define 	ISR_RXF_OV		0x00000004
@@ -316,56 +316,56 @@
 					 ISR_HOST_RXD_OV | ISR_RS_UPDATE)
 
 /* Interrupt Mask register */
-#define ATL2_IMR	0x1604
+#define LII_IMR		0x1604
 #define 	IMR_NORMAL_MASK		(ISR_DMAR_TO_RST | ISR_DMAW_TO_RST | \
 					 ISR_PHY | ISR_PHY_LINKDOWN | \
 					 ISR_TS_UPDATE | ISR_RS_UPDATE)
 
 /* MAC RX Statistics registers */
-#define ATL2_STS_RX_PAUSE	0x1700
-#define ATL2_STS_RXD_OV		0x1704
-#define ATL2_STS_RXS_OV		0x1708
-#define ATL2_STS_RX_FILTER	0x170c
+#define LII_STS_RX_PAUSE	0x1700
+#define LII_STS_RXD_OV		0x1704
+#define LII_STS_RXS_OV		0x1708
+#define LII_STS_RX_FILTER	0x170c
 
 struct tx_pkt_header {
 	uint16_t	txph_size;
-#define ATL2_TXH_ADD_VLAN_TAG	0x8000
+#define LII_TXH_ADD_VLAN_TAG	0x8000
 	uint16_t	txph_vlan;
 } __packed;
 
 struct tx_pkt_status {
 	uint16_t	txps_size;
 	uint16_t	txps_flags :15;
-#define ATL2_TXF_SUCCESS	0x0001
-#define ATL2_TXF_BCAST		0x0002
-#define ATL2_TXF_MCAST		0x0004
-#define ATL2_TXF_PAUSE		0x0008
-#define ATL2_TXF_CTRL		0x0010
-#define ATL2_TXF_DEFER		0x0020
-#define ATL2_TXF_EXC_DEFER	0x0040
-#define ATL2_TXF_SINGLE_COL	0x0080
-#define ATL2_TXF_MULTI_COL	0x0100
-#define ATL2_TXF_LATE_COL	0x0200
-#define ATL2_TXF_ABORT_COL	0x0400
-#define ATL2_TXF_UNDERRUN	0x0800
+#define LII_TXF_SUCCESS		0x0001
+#define LII_TXF_BCAST		0x0002
+#define LII_TXF_MCAST		0x0004
+#define LII_TXF_PAUSE		0x0008
+#define LII_TXF_CTRL		0x0010
+#define LII_TXF_DEFER		0x0020
+#define LII_TXF_EXC_DEFER	0x0040
+#define LII_TXF_SINGLE_COL	0x0080
+#define LII_TXF_MULTI_COL	0x0100
+#define LII_TXF_LATE_COL	0x0200
+#define LII_TXF_ABORT_COL	0x0400
+#define LII_TXF_UNDERRUN	0x0800
 	uint16_t	txps_update:1;
 } __packed;
 
 struct rx_pkt {
 	uint16_t	rxp_size;
 	uint16_t	rxp_flags :15;
-#define ATL2_RXF_SUCCESS	0x0001
-#define ATL2_RXF_BCAST		0x0002
-#define ATL2_RXF_MCAST		0x0004
-#define ATL2_RXF_PAUSE		0x0008
-#define ATL2_RXF_CTRL		0x0010
-#define ATL2_RXF_CRC		0x0020
-#define ATL2_RXF_CODE		0x0040
-#define ATL2_RXF_RUNT		0x0080
-#define ATL2_RXF_FRAG		0x0100
-#define ATL2_RXF_TRUNC		0x0200
-#define ATL2_RXF_ALIGN		0x0400
-#define ATL2_RXF_VLAN		0x0800
+#define LII_RXF_SUCCESS		0x0001
+#define LII_RXF_BCAST		0x0002
+#define LII_RXF_MCAST		0x0004
+#define LII_RXF_PAUSE		0x0008
+#define LII_RXF_CTRL		0x0010
+#define LII_RXF_CRC		0x0020
+#define LII_RXF_CODE		0x0040
+#define LII_RXF_RUNT		0x0080
+#define LII_RXF_FRAG		0x0100
+#define LII_RXF_TRUNC		0x0200
+#define LII_RXF_ALIGN		0x0400
+#define LII_RXF_VLAN		0x0800
 	uint16_t	rxp_update:1;
 	uint16_t	rxp_vlan;
 	uint16_t	__pad;
