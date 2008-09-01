@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.54 2008/05/18 06:53:56 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.55 2008/09/01 05:45:54 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: May 18 2008 $
+.Dd $Mdocdate: September 1 2008 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ name
 is set to 1.
 .Nm
 may be invoked from the console by the key sequence
-.Li Ctl-Alt-Esc
+.Li Ctrl-Alt-Esc
 or by sending a
 .Dv BREAK
 if using a serial console, when the
@@ -737,7 +737,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-prints all
+modifier is specified prints out all
 .Li bufs
 (see also
 .Cm show buf )
