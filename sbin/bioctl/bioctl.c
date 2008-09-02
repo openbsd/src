@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.76 2008/08/22 06:41:36 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.77 2008/09/02 23:05:12 dtucker Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -532,7 +532,7 @@ bio_getvolbyname(char *name)
 }
 
 void
-bio_setstate(char *arg, int status, char *devname)
+bio_setstate(char *arg, int status, char *devicename)
 {
 	struct bioc_setstate	bs;
 	struct locator		location;
@@ -559,9 +559,9 @@ bio_setstate(char *arg, int status, char *devname)
 	bs.bs_status = status;
 
 	/* make sure user supplied a sd device */
-	bs.bs_volid = bio_getvolbyname(devname);
+	bs.bs_volid = bio_getvolbyname(devicename);
 	if (bs.bs_volid == -1)
-		errx(1, "invalid device %s", devname);
+		errx(1, "invalid device %s", devicename);
 
 	rv = ioctl(devh, BIOCSETSTATE, &bs);
 	if (rv == -1)
