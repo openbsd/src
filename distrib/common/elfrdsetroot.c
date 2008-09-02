@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.12 2007/08/02 23:10:05 ray Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.13 2008/09/02 19:21:28 drahn Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -177,7 +177,8 @@ main(int argc, char **argv)
 		}
 		if (S_ISREG(sstat.st_mode) &&
 		    sstat.st_size > rd_root_size_val) {
-			fprintf(stderr, "ramdisk too small\n");
+			fprintf(stderr, "ramdisk too small 0x%x 0x%x\n",
+			    (long)sstat.st_size, rd_root_size_val);
 			exit(1);
 		}
 		n = read(STDIN_FILENO, dataseg + rd_root_image_off,
