@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.20 2008/08/29 08:17:28 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.21 2008/09/02 11:38:06 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -30,7 +30,14 @@ PAGER="${PAGER:=/usr/bin/more}"
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 
-trap "rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+# clean leftovers created by make in src
+clean_src() {
+	if [ "${SRCDIR}" ]; then
+		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir 1> /dev/null
+	fi
+}
+
+trap "clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if [ -z "${FETCH_CMD}" ]; then
 	if [ -z "${FTP_KEEPALIVE}" ]; then
@@ -418,10 +425,7 @@ do_post() {
 		fi
 	fi
 
-	# clean leftovers created by make in src
-	if [ "${SRCDIR}" ]; then
-		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir 1> /dev/null
-	fi
+	clean_src
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
