@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.23 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.24 2008/09/02 00:14:23 deraadt Exp $	*/
 /*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.23 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.24 2008/09/02 00:14:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -297,9 +297,11 @@ noresponse(void)
 static int
 chksize(int size)
 {
-	int spacefree;
+	int64_t spacefree;
 	struct statfs sfb;
 
+	if (size <= 0)
+		return (0);
 	if (statfs(".", &sfb) < 0) {
 		syslog(LOG_ERR, "%s: %m", "statfs(\".\")");
 		return (1);
