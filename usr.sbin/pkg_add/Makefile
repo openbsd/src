@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2008/04/07 11:02:24 espie Exp $
+# $OpenBSD: Makefile,v 1.50 2008/09/02 04:19:46 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ MAN1=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg_merge.1 \
 	pkg.1 pkg_mklocatedb.1
 MAN5=package.5
 MAN=${MAN1} ${MAN5}
+NOPROG=
 
 POD2MAN=/usr/bin/pod2man
 
@@ -109,15 +110,15 @@ mansrc.build:
 	cd ${.CURDIR}/pod && ${POD2MAN} --section=3p --official ${_quick3p}
 .endif
 
-# Nothing to build
-depend:
 all: ${MANSRC_COOKIE} .WAIT ${MANALL} ${PSALL}
 
 stamp-mansrc.build:
 	@cd ${.CURDIR} && exec ${MAKE} mansrc.build
 	@touch $@
 
-install: 
+CLEANFILES= ${PACKAGES} ${MANSRCALL} ${MANALL} stamp-mansrc.build
+
+realinstall: 
 .for i in ${PACKAGEDIRS}
 	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m ${DIRMODE} \
 		${DESTDIR}${LIBBASE}/$i
@@ -131,13 +132,6 @@ install:
 		${.CURDIR}/$i ${DESTDIR}${BINDIR}/$i
 .endfor
 
-clean:
 
-.if !defined(NOMAN)
-install: maninstall
-.include <bsd.man.mk>
-.endif
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
 .PHONY: mansrc.build
