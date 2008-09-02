@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.41 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: malloc.9,v 1.42 2008/09/02 21:42:05 chl Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,21 +28,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 2 2008 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
-.Nm malloc
+.Nm malloc ,
+.Nm free
 .Nd kernel memory allocator
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/malloc.h>
 .Ft void *
 .Fn malloc "unsigned long size" "int type" "int flags"
-.Fn MALLOC "space" "cast" "unsigned long size" "int type" "int flags"
 .Ft void
 .Fn free "void *addr" "int type"
-.Fn FREE "void *addr" "int type"
 .Sh DESCRIPTION
 The
 .Fn malloc
@@ -55,23 +54,6 @@ releases memory at address
 that was previously allocated by
 .Fn malloc
 for re-use.
-The
-.Fn MALLOC
-macro variant is functionally equivalent to
-.Bd -literal -offset indent
-(space) = (cast)malloc((u_long)(size), type, flags)
-.Ed
-.Pp
-and the
-.Fn FREE
-macro variant is equivalent to
-.Bd -literal -offset indent
-free((caddr_t)(addr), type)
-.Ed
-.Pp
-These macros should only be used when the
-.Fa size
-argument is a constant.
 .Pp
 Unlike its standard C library counterpart
 .Pq Xr malloc 3 ,

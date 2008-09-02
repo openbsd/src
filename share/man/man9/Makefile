@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.143 2008/07/23 11:45:21 art Exp $
+#	$OpenBSD: Makefile,v 1.144 2008/09/02 21:42:05 chl Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -194,7 +194,7 @@ MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9 \
 	lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9
 MLINKS+=log.9 addlog.9
-MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
+MLINKS+=malloc.9 free.9
 MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 m_get.9 mbuf.9 MGET.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 \
 	mbuf.9 MGETHDR.9 mbuf.9 m_prepend.9 mbuf.9 M_PREPEND.9 \
