@@ -562,6 +562,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define PRB1_HEAD	0x02044 /* 915+ only */
 #define PRB1_START	0x02048 /* 915+ only */
 #define PRB1_CTL	0x0204c /* 915+ only */
+#define ACTHD_I965	0x02074
 #define HWS_PGA		0x02080
 #define IPEIR		0x02088
 #define NOPID		0x02094
@@ -592,6 +593,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define EMR		0x020b4
 #define ESR		0x020b8
 #define INSTPM	        0x020c0
+#define ACTHD		0x020c8
 #define FW_BLC		0x020d8
 #define FW_BLC_SELF	0x020e0 /* 915+ only */
 #define MI_ARB_STATE	0x020e4 /* 915+ only */
