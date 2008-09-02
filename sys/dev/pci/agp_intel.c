@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.10 2008/01/04 00:23:26 kettenis Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.11 2008/09/02 10:29:34 jsg Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ agp_intel_attach(struct agp_softc *sc, struct pci_attach_args *pa)
 	case CHIP_I443:
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
 		    AGPCTRL_AGPRSE | AGPCTRL_GTLB);
-
+		break;
 	default:
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL,
 		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_INTEL_AGPCTRL)
