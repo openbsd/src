@@ -1,8 +1,26 @@
+/*-
+ * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #include <sys/param.h>
 #include <crypto/rijndael.h>
 #include <crypto/cmac.h>
+#include <stdio.h>
 
-void print_hex(char *str, unsigned char *buf, int len)
+static void
+print_hex(char *str, unsigned char *buf, int len)
 {
       int     i;
 
@@ -15,7 +33,8 @@ void print_hex(char *str, unsigned char *buf, int len)
       if ( (i % 16) != 0 ) printf("\n");
 }
 
-void print128(unsigned char *bytes)
+static void
+print128(unsigned char *bytes)
 {
       int         j;
       for (j=0; j<16;j++) {
@@ -27,7 +46,7 @@ void print128(unsigned char *bytes)
 int
 main(void)
 {
-      unsigned char L[16], K1[16], K2[16], T[16], TT[12];
+      unsigned char T[16];
       unsigned char M[64] = {
           0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
           0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
