@@ -31,11 +31,11 @@
 paddr_t
 drmmmap(dev_t kdev, off_t offset, int prot)
 {
-	struct drm_device *dev = drm_get_device_from_kdev(kdev);
-	drm_local_map_t *map;
-	struct drm_file *priv;
-	drm_map_type_t type;
-	paddr_t phys;
+	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
+	drm_local_map_t		*map;
+	struct drm_file		*priv;
+	enum drm_map_type	 type;
+	paddr_t			 phys;
 
 	DRM_LOCK();
 	priv = drm_find_file_by_minor(dev, minor(kdev));

@@ -63,7 +63,7 @@ drm_device_is_pcie(struct drm_device *dev)
 }
 
 int
-drm_agp_info(struct drm_device * dev, drm_agp_info_t *info)
+drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 {
 	struct agp_info	*kern;
 
@@ -91,7 +91,7 @@ int
 drm_agp_info_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_info_t	*info = data;
+	struct drm_agp_info	*info = data;
 
 	return (drm_agp_info(dev, info));
 }
@@ -159,13 +159,13 @@ int
 drm_agp_enable_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_mode_t	*mode = data;
+	struct drm_agp_mode	*mode = data;
 
 	return (drm_agp_enable(dev, *mode));
 }
 
 int
-drm_agp_alloc(struct drm_device *dev, drm_agp_buffer_t *request)
+drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 {
 #ifndef DRM_NO_AGP
 	struct drm_agp_mem	*entry;
@@ -210,7 +210,7 @@ int
 drm_agp_alloc_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_buffer_t	*request = data;
+	struct drm_agp_buffer	*request = data;
 	int			 retcode;
 
 	DRM_LOCK();
@@ -232,7 +232,7 @@ drm_agp_lookup_entry(struct drm_device *dev, void *handle)
 }
 
 int
-drm_agp_unbind(struct drm_device *dev, drm_agp_binding_t *request)
+drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 {
 	struct drm_agp_mem	*entry;
 	int			 retcode;
@@ -258,7 +258,7 @@ int
 drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_binding_t	*request = data;
+	struct drm_agp_binding	*request = data;
 	int			 retcode;
 
 	DRM_LOCK();
@@ -269,7 +269,7 @@ drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
 }
 
 int
-drm_agp_bind(struct drm_device *dev, drm_agp_binding_t *request)
+drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 {
 	struct drm_agp_mem	*entry;
 	int			 retcode, page;
@@ -298,7 +298,7 @@ int
 drm_agp_bind_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_binding_t	*request = data;
+	struct drm_agp_binding	*request = data;
 	int			 retcode;
 
 	DRM_LOCK();
@@ -309,7 +309,7 @@ drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 }
 
 int
-drm_agp_free(struct drm_device *dev, drm_agp_buffer_t *request)
+drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request)
 {
 	struct drm_agp_mem	*entry;
 	
@@ -338,7 +338,7 @@ int
 drm_agp_free_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_agp_buffer_t	*request = data;
+	struct drm_agp_buffer	*request = data;
 	int			 retcode;
 
 	DRM_LOCK();

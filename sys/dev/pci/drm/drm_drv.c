@@ -457,8 +457,8 @@ drm_lastclose(struct drm_device *dev)
 int
 drm_version(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_version_t *version = data;
-	int len;
+	struct drm_version	*version = data;
+	int			 len;
 
 #define DRM_COPY(name, value)						\
 	len = strlen( value );						\

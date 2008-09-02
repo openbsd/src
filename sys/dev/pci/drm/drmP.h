@@ -374,11 +374,11 @@ struct drm_file {
 };
 
 struct drm_lock_data {
-	drm_hw_lock_t	*hw_lock;	/* Hardware lock */
+	struct drm_hw_lock	*hw_lock;	/* Hardware lock */
 	/* Unique identifier of holding process (NULL is kernel) */
-	struct drm_file	*file_priv;
-	int		 lock_queue;	/* Queue of blocked processes */
-	unsigned long	 lock_time;	/* Time of last lock in jiffies */
+	struct drm_file		*file_priv;
+	int			 lock_queue;	/* Queue of blocked processes */
+	unsigned long	 	 lock_time;	/* Time of last lock */
 };
 
 /* This structure, in the struct drm_device, is always initialized while
@@ -451,11 +451,11 @@ typedef struct drm_local_map {
 	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
 	bus_space_handle_t		 bsh;	/* Handle to mapped pci mem */
 	u_long				 ext;	/* extent for mmap */
-	drm_map_flags_t			 flags;	/* Flags */
+	enum drm_map_flags		 flags;	/* Flags */
 	int				 mtrr;	/* Boolean: MTRR used */
 	unsigned long			 offset;/* Physical address */
 	unsigned long			 size;	/* Physical size (bytes) */
-	drm_map_type_t			 type;	/* Type of memory mapped */
+	enum drm_map_type		 type;	/* Type of memory mapped */
 } drm_local_map_t;
 
 struct drm_vblank {
@@ -581,7 +581,7 @@ struct drm_device {
 
 				/* Performance counters */
 	unsigned long     counters;
-	drm_stat_type_t   types[15];
+	enum drm_stat_type   types[15];
 	atomic_t          counts[15];
 
 				/* Authentication */
@@ -696,10 +696,10 @@ int	drm_order(unsigned long);
 drm_local_map_t
 	*drm_find_matching_map(struct drm_device *, drm_local_map_t *);
 int	drm_addmap(struct drm_device *, unsigned long, unsigned long,
-	    drm_map_type_t, drm_map_flags_t, drm_local_map_t **);
-int	drm_addbufs_pci(struct drm_device *, drm_buf_desc_t *);
-int	drm_addbufs_sg(struct drm_device *, drm_buf_desc_t *);
-int	drm_addbufs_agp(struct drm_device *, drm_buf_desc_t *);
+	    enum drm_map_type, enum drm_lock_flags, drm_local_map_t **);
+int	drm_addbufs_pci(struct drm_device *, struct drm_buf_desc *);
+int	drm_addbufs_sg(struct drm_device *, struct drm_buf_desc *);
+int	drm_addbufs_agp(struct drm_device *, struct drm_buf_desc *);
 
 /* DMA support (drm_dma.c) */
 int	drm_dma_setup(struct drm_device *);
@@ -729,20 +729,20 @@ int	drm_device_is_pcie(struct drm_device *);
 drm_agp_head_t *drm_agp_init(void);
 int	drm_agp_acquire(struct drm_device *);
 int	drm_agp_release(struct drm_device *);
-int	drm_agp_info(struct drm_device *, drm_agp_info_t *);
-int	drm_agp_enable(struct drm_device *, drm_agp_mode_t);
+int	drm_agp_info(struct drm_device *, struct drm_agp_info *);
+int	drm_agp_enable(struct drm_device *, struct drm_agp_mode);
 void	*drm_agp_allocate_memory(size_t, u32);
 int	drm_agp_free_memory(void *);
 int	drm_agp_bind_memory(void *, off_t);
 int	drm_agp_unbind_memory(void *);
-int	drm_agp_alloc(struct drm_device *, drm_agp_buffer_t *);
-int	drm_agp_free(struct drm_device *, drm_agp_buffer_t *);
-int	drm_agp_bind(struct drm_device *, drm_agp_binding_t *);
-int	drm_agp_unbind(struct drm_device *, drm_agp_binding_t *);
+int	drm_agp_alloc(struct drm_device *, struct drm_agp_buffer *);
+int	drm_agp_free(struct drm_device *, struct drm_agp_buffer *);
+int	drm_agp_bind(struct drm_device *, struct drm_agp_binding *);
+int	drm_agp_unbind(struct drm_device *, struct drm_agp_binding *);
 
 /* Scatter Gather Support (drm_scatter.c) */
 void	drm_sg_cleanup(drm_sg_mem_t *);
-int	drm_sg_alloc(struct drm_device *, drm_scatter_gather_t *);
+int	drm_sg_alloc(struct drm_device *, struct drm_scatter_gather *);
 
 /* ATI PCIGART support (ati_pcigart.c) */
 int	drm_ati_pcigart_init(struct drm_device *,

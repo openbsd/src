@@ -120,7 +120,7 @@ drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 int
 drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-        drm_lock_t	*lock = data;
+        struct drm_lock	*lock = data;
         int		 ret = 0;
 
         if (lock->context == DRM_KERNEL_CONTEXT) {
@@ -169,7 +169,7 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_lock_t	*lock = data;
+	struct drm_lock	*lock = data;
 
 	if (lock->context == DRM_KERNEL_CONTEXT) {
 		DRM_ERROR("Process %d using kernel context %d\n",

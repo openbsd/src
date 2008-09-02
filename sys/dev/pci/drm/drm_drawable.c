@@ -86,8 +86,8 @@ drm_get_drawable_info(struct drm_device *dev, unsigned int handle)
 int
 drm_adddraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_draw_t *draw = data;
-	struct bsd_drm_drawable_info *info;
+	struct drm_draw			*draw = data;
+	struct bsd_drm_drawable_info	*info;
 
 	info = drm_calloc(1, sizeof(struct bsd_drm_drawable_info),
 	    DRM_MEM_DRAWABLE);
@@ -108,8 +108,8 @@ drm_adddraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_rmdraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_draw_t *draw = (drm_draw_t *)data;
-	struct bsd_drm_drawable_info *info;
+	struct drm_draw			*draw = (drm_draw_t *)data;
+	struct bsd_drm_drawable_info	*info;
 
 	DRM_SPINLOCK(&dev->drw_lock);
 	info = drm_get_drawable(dev, draw->handle);
