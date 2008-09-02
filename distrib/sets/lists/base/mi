@@ -66,6 +66,7 @@
 ./etc/kerberosV
 ./etc/kerberosV/README
 ./etc/kerberosV/krb5.conf.example
+./etc/magic
 ./etc/mail
 ./etc/mtree
 ./etc/ppp

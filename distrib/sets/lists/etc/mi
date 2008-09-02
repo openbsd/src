@@ -38,7 +38,6 @@
 ./etc/locate.rc
 ./etc/login.conf
 ./etc/lynx.cfg
-./etc/magic
 ./etc/mail.rc
 ./etc/mail/Makefile
 ./etc/mail/README
