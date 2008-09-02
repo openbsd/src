@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.73 2008/05/07 13:45:35 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.74 2008/09/02 17:35:16 chl Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -422,16 +422,12 @@ vlan_unconfig(struct ifnet *ifp)
 	struct sockaddr_dl *sdl;
 	struct ifvlan *ifv;
 	struct ifnet *p;
-	struct ifreq *ifr, *ifr_p;
 	int s;
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
 	if (p == NULL)
 		return 0;
-
-	ifr = (struct ifreq *)&ifp->if_data;
-	ifr_p = (struct ifreq *)&ifv->ifv_p->if_data;
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);

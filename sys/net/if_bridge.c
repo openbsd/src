@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.170 2008/06/14 21:46:22 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.171 2008/09/02 17:35:16 chl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -999,7 +999,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 {
 	struct ether_header *eh;
 	struct ifnet *dst_if;
-	struct ether_addr *src, *dst;
+	struct ether_addr *dst;
 	struct bridge_softc *sc;
 	int s, error, len;
 #ifdef IPSEC
@@ -1020,7 +1020,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	}
 	eh = mtod(m, struct ether_header *);
 	dst = (struct ether_addr *)&eh->ether_dhost[0];
-	src = (struct ether_addr *)&eh->ether_shost[0];
 
 	s = splnet();
 
@@ -2590,7 +2589,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 {
 	struct llc llc;
 	struct mbuf *m0;
-	int s, len, error = 0;
+	int s, error = 0;
 	int hassnap = 0;
 #ifdef INET
 	u_int16_t etype;
@@ -2671,7 +2670,6 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 				error = ENOBUFS;
 				continue;
 			}
-			len = m->m_pkthdr.len;
 			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
 			s = splnet();
 			error = bridge_ifenqueue(sc, ifp, m);
