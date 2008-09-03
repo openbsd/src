@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.617 2008/09/02 17:35:16 chl Exp $ */
+/*	$OpenBSD: pf.c,v 1.618 2008/09/03 12:57:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -242,6 +242,8 @@ void			 pf_print_state_parts(struct pf_state *,
 			    struct pf_state_key *, struct pf_state_key *);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
+int			 pf_compare_state_keys(struct pf_state_key *,
+			    struct pf_state_key *, struct pfi_kif *, u_int);
 struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
@@ -851,6 +853,37 @@ pf_find_state_byid(struct pf_state_cmp *key)
 	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
+/* XXX debug function, intended to be removed one day */
+int
+pf_compare_state_keys(struct pf_state_key *a, struct pf_state_key *b,
+    struct pfi_kif *kif, u_int dir)
+{
+	/* a (from hdr) and b (new) must be exact opposites of each other */
+	if (a->af == b->af && a->proto == b->proto &&
+	    PF_AEQ(&a->addr[0], &b->addr[1], a->af) &&
+	    PF_AEQ(&a->addr[1], &b->addr[0], a->af) &&
+	    a->port[0] == b->port[1] &&
+	    a->port[1] == b->port[0])
+		return (0);
+	else {
+		/* mismatch. must not happen. */
+		printf("pf: state key linking mismatch! dir=%s, "
+		    "if=%s, stored af=%u, a0: ",
+		    dir == PF_OUT ? "OUT" : "IN", kif->pfik_name, a->af);
+		pf_print_host(&a->addr[0], a->port[0], a->af);
+		printf(", a1: ");
+		pf_print_host(&a->addr[1], a->port[1], a->af);
+		printf(", proto=%u", a->proto);
+		printf(", found af=%u, a0: ", b->af);
+		pf_print_host(&b->addr[0], b->port[0], b->af);
+		printf(", a1: ");
+		pf_print_host(&b->addr[1], b->port[1], b->af);
+		printf(", proto=%u", b->proto);
+		printf(".\n");
+		return (-1);
+	}
+}
+
 struct pf_state *
 pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
     struct mbuf *m)
@@ -867,7 +900,9 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
 		    (struct pf_state_key *)key)) == NULL)
 			return (NULL);
-		if (dir == PF_OUT && m->m_pkthdr.pf.statekey) {
+		if (dir == PF_OUT && m->m_pkthdr.pf.statekey &&
+		    pf_compare_state_keys(m->m_pkthdr.pf.statekey, sk,
+		    kif, dir) == 0) {
 			((struct pf_state_key *)
 			    m->m_pkthdr.pf.statekey)->reverse = sk;
 			sk->reverse = m->m_pkthdr.pf.statekey;
