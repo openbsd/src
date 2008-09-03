@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.7 2008/08/15 14:41:21 jsing Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.8 2008/09/03 23:24:25 krw Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -41,6 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 
 #include <dev/vndioctl.h>
 
@@ -67,7 +68,8 @@ int verbose = 0;
 int run_mount_vnd = 0;
 
 __dead void	 usage(void);
-int		 config(char *, char *, int, size_t, char *, size_t);
+int		 config(char *, char *, int, struct disklabel *, char *,
+		     size_t);
 int		 getinfo(const char *);
 char		*get_pkcs_key(char *, char *);
 
@@ -76,9 +78,10 @@ main(int argc, char **argv)
 {
 	int	 ch, rv, action, opt_c, opt_k, opt_K, opt_l, opt_u;
 	char	*key, *mntopts, *rounds, *saltopt;
-	size_t	 keylen = 0, secsize = 0;
+	size_t	 keylen = 0;
 	const char *errstr;
 	extern char *__progname;
+	struct disklabel *dp = NULL;
 
 	if (strcasecmp(__progname, "mount_vnd") == 0)
 		run_mount_vnd = 1;
@@ -87,7 +90,7 @@ main(int argc, char **argv)
 	key = mntopts = rounds = saltopt = NULL;
 	action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "ckK:lo:s:S:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "ckK:lo:S:t:uv")) != -1) {
 		switch (ch) {
 		case 'c':
 			opt_c = 1;
@@ -108,10 +111,10 @@ main(int argc, char **argv)
 		case 'S':
 			saltopt = optarg;
 			break;
-		case 's':
-			secsize = strtonum(optarg, 512, 65536, &errstr);
-			if (errstr || (secsize & 0x1ff) != 0)
-				errx(1, "invalid sector size: %s", optarg);
+		case 't':
+			dp = getdiskbyname(optarg);
+			if (dp == NULL)
+				errx(1, "unknown disk type: %s", optarg);
 			break;
 		case 'u':
 			opt_u = 1;
@@ -162,10 +165,10 @@ main(int argc, char **argv)
 			ind_raw = 0;
 			ind_reg = 1;
 		}
-		rv = config(argv[ind_raw], argv[ind_reg], action, secsize, key,
+		rv = config(argv[ind_raw], argv[ind_reg], action, dp, key,
 		    keylen);
 	} else if (action == VND_UNCONFIG && argc == 1)
-		rv = config(argv[0], NULL, action, 0, NULL, 0);
+		rv = config(argv[0], NULL, action, NULL, NULL, 0);
 	else if (action == VND_GET)
 		rv = getinfo(argc ? argv[0] : NULL);
 	else
@@ -281,7 +284,7 @@ query:
 }
 
 int
-config(char *dev, char *file, int action, size_t secsize, char *key,
+config(char *dev, char *file, int action, struct disklabel *dp, char *key,
     size_t keylen)
 {
 	struct vnd_ioctl vndio;
@@ -297,7 +300,9 @@ config(char *dev, char *file, int action, size_t secsize, char *key,
 		goto out;
 	}
 	vndio.vnd_file = file;
-	vndio.vnd_secsize = secsize;
+	vndio.vnd_secsize = (dp && dp->d_secsize) ? dp->d_secsize : DEV_BSIZE;
+	vndio.vnd_nsectors = (dp && dp->d_nsectors) ? dp->d_nsectors : 100;
+	vndio.vnd_ntracks = (dp && dp->d_ntracks) ? dp->d_ntracks : 1;
 	vndio.vnd_key = (u_char *)key;
 	vndio.vnd_keylen = keylen;
 
@@ -339,12 +344,12 @@ usage(void)
 	if (run_mount_vnd)
 		(void)fprintf(stderr,
 		    "usage: mount_vnd [-k] [-K rounds] [-o options] "
-		    "[-S saltfile] [-s secsize]\n"
+		    "[-S saltfile] [-t disktype]\n"
 		    "\t\t image vnd_dev\n");
 	else
 		(void)fprintf(stderr,
 		    "usage: %s [-ckluv] [-K rounds] [-S saltfile] "
-		    "[-s secsize] vnd_dev image\n", __progname);
+		    "[-t disktype] vnd_dev image\n", __progname);
 
 	exit(1);
 }

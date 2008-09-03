@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.89 2008/08/14 17:10:29 jsing Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.90 2008/09/03 23:24:25 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -130,6 +130,8 @@ struct vnd_softc {
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of vnd in sectors */
 	size_t		 sc_secsize;		/* sector size in bytes */
+	size_t		 sc_nsectors;		/* # of sectors per track */
+	size_t		 sc_ntracks;		/* # of tracks per cylinder */
 	struct vnode	*sc_vp;			/* vnode */
 	struct ucred	*sc_cred;		/* credentials */
 	struct buf	 sc_tab;		/* transfer queue */
@@ -307,10 +309,10 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = sc->sc_secsize;
-	lp->d_ntracks = 1;
-	lp->d_nsectors = 100;
-	lp->d_ncylinders = sc->sc_size / 100;
-	lp->d_secpercyl = 100;		/* lp->d_ntracks * lp->d_nsectors */
+	lp->d_nsectors = sc->sc_nsectors;
+	lp->d_ntracks = sc->sc_ntracks;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_ncylinders = sc->sc_size / lp->d_secpercyl;
 
 	strncpy(lp->d_typename, "vnd device", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_VND;
@@ -790,13 +792,10 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return(ENXIO);
 		}
 
-		/* Set sector size for device, if specified. */
-		if (vio->vnd_secsize == 0)
-			vnd->sc_secsize = DEV_BSIZE;
-		else if (vio->vnd_secsize % DEV_BSIZE == 0)
-			vnd->sc_secsize = vio->vnd_secsize;
-		else
-			return (EINVAL);
+		/* Set geometry for device. */
+		vnd->sc_secsize = vio->vnd_secsize;
+		vnd->sc_ntracks = vio->vnd_ntracks;
+		vnd->sc_nsectors = vio->vnd_nsectors;
 
 		/*
 		 * Open for read and write first. This lets vn_open() weed out
