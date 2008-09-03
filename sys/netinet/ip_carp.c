@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.167 2008/06/14 21:46:22 reyk Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.168 2008/09/03 08:37:51 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2577,7 +2577,7 @@ carp_group_demote_count(struct carp_softc *sc)
 	TAILQ_FOREACH(ifgl, &sc->sc_if.if_groups, ifgl_next)
 		count += ifgl->ifgl_group->ifg_carp_demoted;
 
-	return (count);
+	return (count > 255 ? 255 : count);
 }
 
 void
