@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.92 2008/09/03 19:43:59 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.93 2008/09/03 19:47:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2125,9 +2125,9 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (ic->ic_flags & IEEE80211_F_QOS) {
 		iwi_update_edca(ic);
 
-		frm = ieee80211_add_edca_params(buf, ic);
-		DPRINTF(("Setting EDCA IE length %d\n", frm - buf));
-		error = iwi_cmd(sc, IWI_CMD_SET_EDCAIE, buf, frm - buf, 1);
+		frm = ieee80211_add_qos_capability(buf, ic);
+		DPRINTF(("Setting QoS Capability IE length %d\n", frm - buf));
+		error = iwi_cmd(sc, IWI_CMD_SET_QOS_CAP, buf, frm - buf, 1);
 		if (error != 0)
 			return error;
 	}

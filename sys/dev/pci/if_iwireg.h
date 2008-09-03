@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.26 2008/08/28 15:52:20 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.27 2008/09/03 19:47:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -264,7 +264,7 @@ struct iwi_cmd_desc {
 #define IWI_CMD_SET_RANDOM_SEED		34
 #define IWI_CMD_SET_TX_POWER		35
 #define IWI_CMD_SET_SENSITIVITY		42
-#define IWI_CMD_SET_EDCAIE		84
+#define IWI_CMD_SET_QOS_CAP		84
 
 	uint8_t		len;
 	uint16_t	reserved;
