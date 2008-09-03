@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.9 2003/06/02 19:55:59 millert Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.10 2008/09/03 21:29:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.9 2003/06/02 19:55:59 millert Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.10 2008/09/03 21:29:30 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -470,4 +470,19 @@ morepages(int n)
 	close(fd);
 #endif
 	return n;
+}
+
+void *
+calloc(size_t num, size_t size)
+{
+	void *p;
+
+	if (num && SIZE_MAX / num < size) {
+		return NULL;
+	}
+	size *= num;
+	p = malloc(size);
+	if (p)
+		memset(p, 0, size);
+	return(p);
 }
