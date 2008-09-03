@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.79 2008/08/28 16:02:14 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.80 2008/09/03 19:43:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -83,6 +83,8 @@ void		ipw_release_sbd(struct ipw_softc *, struct ipw_soft_bd *);
 void		ipw_tx_intr(struct ipw_softc *);
 int		ipw_intr(void *);
 int		ipw_cmd(struct ipw_softc *, uint32_t, void *, uint32_t);
+int		ipw_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
+		    int, int);
 int		ipw_tx_start(struct ifnet *, struct mbuf *,
 		    struct ieee80211_node *);
 void		ipw_start(struct ifnet *);
@@ -271,6 +273,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ipw_newstate;
+	ic->ic_send_mgmt = ipw_send_mgmt;
 	ieee80211_media_init(ifp, ipw_media_change, ipw_media_status);
 
 	sc->powerhook = powerhook_establish(ipw_power, sc);
@@ -1111,6 +1114,14 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	return error;
 }
 
+/* ARGSUSED */
+int
+ipw_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
+    int arg)
+{
+	return EOPNOTSUPP;
+}
+
 int
 ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 {
@@ -1287,11 +1298,10 @@ ipw_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	for (;;) {
-		IF_PURGE(&ic->ic_mgtq);
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
 
-		if (ic->ic_state != IEEE80211_S_RUN)
-			return;
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;

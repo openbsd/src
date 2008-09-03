@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.91 2008/08/28 15:55:37 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.92 2008/09/03 19:43:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -99,6 +99,8 @@ void		iwi_rx_intr(struct iwi_softc *);
 void		iwi_tx_intr(struct iwi_softc *, struct iwi_tx_ring *);
 int		iwi_intr(void *);
 int		iwi_cmd(struct iwi_softc *, uint8_t, void *, uint8_t, int);
+int		iwi_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
+		    int, int);
 int		iwi_tx_start(struct ifnet *, struct mbuf *,
 		    struct ieee80211_node *);
 void		iwi_start(struct ifnet *);
@@ -331,6 +333,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwi_newstate;
+	ic->ic_send_mgmt = iwi_send_mgmt;
 	ieee80211_media_init(ifp, iwi_media_change, iwi_media_status);
 
 	sc->powerhook = powerhook_establish(iwi_power, sc);
@@ -893,7 +896,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 		ifp->if_ierrors++;
 		return;
 	}
-
 	MCLGET(mnew, M_DONTWAIT);
 	if (!(mnew->m_flags & M_EXT)) {
 		m_freem(mnew);
@@ -1241,6 +1243,14 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len, int async)
 	return async ? 0 : tsleep(sc, 0, "iwicmd", hz);
 }
 
+/* ARGSUSED */
+int
+iwi_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
+    int arg)
+{
+	return EOPNOTSUPP;
+}
+
 int
 iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 {
@@ -1401,11 +1411,10 @@ iwi_start(struct ifnet *ifp)
 	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
-	for (;;) {
-		IF_PURGE(&ic->ic_mgtq);
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
 
-		if (ic->ic_state != IEEE80211_S_RUN)
-			return;
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
