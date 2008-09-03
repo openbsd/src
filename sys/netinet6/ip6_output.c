@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.104 2008/08/08 17:49:21 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.105 2008/09/03 08:41:57 mpf Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2253,25 +2253,6 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	return (ENOBUFS);
 }
 #undef PKTOPT_EXTHDRCPY
-
-struct ip6_pktopts *
-ip6_copypktopts(struct ip6_pktopts *src, int canwait)
-{
-	int error;
-	struct ip6_pktopts *dst;
-
-	dst = malloc(sizeof(*dst), M_IP6OPT, canwait);
-	if (dst == NULL && canwait == M_NOWAIT)
-		return (NULL);
-	ip6_initpktopts(dst);
-
-	if ((error = copypktopts(dst, src, canwait)) != 0) {
-		free(dst, M_IP6OPT);
-		return (NULL);
-	}
-
-	return (dst);
-}
 
 void
 ip6_freepcbopts(struct ip6_pktopts *pktopt)
