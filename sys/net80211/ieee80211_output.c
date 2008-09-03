@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.76 2008/09/01 19:55:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.77 2008/09/03 19:53:37 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1196,7 +1196,7 @@ ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 struct mbuf *
 ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
-    int reassoc)
+    int type)
 {
 	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct mbuf *m;
@@ -1205,7 +1205,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    2 + 2 +
-	    ((reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
+	    ((type == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
 		IEEE80211_ADDR_LEN : 0) +
 	    2 + ni->ni_esslen +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
@@ -1233,7 +1233,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 	LE_WRITE_2(frm, capinfo); frm += 2;
 	LE_WRITE_2(frm, ic->ic_lintval); frm += 2;
-	if (reassoc) {
+	if (type == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
 		IEEE80211_ADDR_COPY(frm, ic->ic_bss->ni_bssid);
 		frm += IEEE80211_ADDR_LEN;
 	}
