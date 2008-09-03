@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.51 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.52 2008/09/03 13:41:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,6 +58,7 @@ pfe_sig_handler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGTERM:
 		pfe_shutdown();
+		break;
 	default:
 		fatalx("pfe_sig_handler: unexpected signal");
 	}

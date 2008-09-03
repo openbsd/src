@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.19 2008/07/18 12:30:06 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.20 2008/09/03 13:41:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -60,6 +60,7 @@ snmpe_sig_handler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGTERM:
 		snmpe_shutdown();
+		break;
 	default:
 		fatalx("snmpe_sig_handler: unexpected signal");
 	}
