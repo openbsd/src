@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.43 2008/07/21 04:12:21 kevlo Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.44 2008/09/03 19:29:48 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -194,6 +194,10 @@
 #define DC_RXSTATE_CLOSE	0x000A0000	/* 101 - close tx desc */
 #define DC_RXSTATE_FLUSH	0x000C0000	/* 110 - flush from FIFO */
 #define DC_RXSTATE_DEQUEUE	0x000E0000	/* 111 - dequeue from FIFO */
+
+#define DC_HAS_BROKEN_RXSTATE(x)					\
+	(DC_IS_CENTAUR(x) || DC_IS_CONEXANT(x) || (DC_IS_DAVICOM(x) &&	\
+	sc->dc_revision >= DC_REVISION_DM9102A))
 
 #define DC_TXSTATE_RESET	0x00000000	/* 000 - reset */
 #define DC_TXSTATE_FETCH	0x00100000	/* 001 - fetching descriptor */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.99 2007/11/26 17:45:14 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.100 2008/09/03 19:29:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1264,9 +1264,16 @@ dc_setcfg(sc, media)
 			DELAY(10);
 		}
 
-		if (i == DC_TIMEOUT)
-			printf("%s: failed to force tx and "
-			    "rx to idle state\n", sc->sc_dev.dv_xname);
+		if (i == DC_TIMEOUT) {
+			if (!(isr & DC_ISR_TX_IDLE) && !DC_IS_ASIX(sc))
+				printf("%s: failed to force tx to idle state\n",
+				    sc->sc_dev.dv_xname);
+			if (!((isr & DC_ISR_RX_STATE) == DC_RXSTATE_STOPPED ||
+			    (isr & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT) &&
+			    !DC_HAS_BROKEN_RXSTATE(sc))
+				printf("%s: failed to force rx to idle state\n",
+				    sc->sc_dev.dv_xname);
+		}
 	}
 
 	if (IFM_SUBTYPE(media) == IFM_100_TX) {
