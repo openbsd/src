@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.27 2008/09/03 19:47:58 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.28 2008/09/04 15:59:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -32,29 +32,17 @@
 #define IWI_CSR_IO		0x0030
 #define IWI_CSR_CMD_BASE	0x0200
 #define IWI_CSR_CMD_SIZE	0x0204
-#define IWI_CSR_TX1_BASE	0x0208
-#define IWI_CSR_TX1_SIZE	0x020c
-#define IWI_CSR_TX2_BASE	0x0210
-#define IWI_CSR_TX2_SIZE	0x0214
-#define IWI_CSR_TX3_BASE	0x0218
-#define IWI_CSR_TX3_SIZE	0x021c
-#define IWI_CSR_TX4_BASE	0x0220
-#define IWI_CSR_TX4_SIZE	0x0224
+#define IWI_CSR_TX_BASE(ac)	(0x0208 + (ac) * 8)
+#define IWI_CSR_TX_SIZE(ac)	(0x020c + (ac) * 8)
 #define IWI_CSR_CMD_RIDX	0x0280
-#define IWI_CSR_TX1_RIDX	0x0284
-#define IWI_CSR_TX2_RIDX	0x0288
-#define IWI_CSR_TX3_RIDX	0x028c
-#define IWI_CSR_TX4_RIDX	0x0290
+#define IWI_CSR_TX_RIDX(ac)	(0x0284 + (ac) * 4)
 #define IWI_CSR_RX_RIDX		0x02a0
 #define IWI_CSR_RX_BASE		0x0500
 #define IWI_CSR_TABLE0_SIZE	0x0700
 #define IWI_CSR_TABLE0_BASE	0x0704
 #define IWI_CSR_NODE_BASE	0x0c0c
 #define IWI_CSR_CMD_WIDX	0x0f80
-#define IWI_CSR_TX1_WIDX	0x0f84
-#define IWI_CSR_TX2_WIDX	0x0f88
-#define IWI_CSR_TX3_WIDX	0x0f8c
-#define IWI_CSR_TX4_WIDX	0x0f90
+#define IWI_CSR_TX_WIDX(ac)	(0x0f84 + (ac) * 4)
 #define IWI_CSR_RX_WIDX		0x0fa0
 #define IWI_CSR_READ_INT	0x0ff4
 

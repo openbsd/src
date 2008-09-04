@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.93 2008/09/03 19:47:58 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.94 2008/09/04 15:59:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -79,7 +79,7 @@ int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 int		iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
-		    bus_size_t, bus_size_t);
+		    int);
 void		iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 void		iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 int		iwi_alloc_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
@@ -168,7 +168,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	uint16_t val;
-	int error, i;
+	int error, ac, i;
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -215,44 +215,19 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate rings.
 	 */
-	error = iwi_alloc_cmd_ring(sc, &sc->cmdq);
-	if (error != 0) {
+	if (iwi_alloc_cmd_ring(sc, &sc->cmdq) != 0) {
 		printf(": could not allocate Cmd ring\n");
 		return;
 	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[0], IWI_CSR_TX1_RIDX,
-	    IWI_CSR_TX1_WIDX);
-	if (error != 0) {
-		printf(": could not allocate Tx ring 1\n");
-		goto fail1;
+	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
+		if (iwi_alloc_tx_ring(sc, &sc->txq[ac], ac) != 0) {
+			printf(": could not allocate Tx ring %d\n", ac);
+			goto fail;
+		}
 	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[1], IWI_CSR_TX2_RIDX,
-	    IWI_CSR_TX2_WIDX);
-	if (error != 0) {
-		printf(": could not allocate Tx ring 2\n");
-		goto fail2;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[2], IWI_CSR_TX3_RIDX,
-	    IWI_CSR_TX3_WIDX);
-	if (error != 0) {
-		printf(": could not allocate Tx ring 3\n");
-		goto fail3;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[3], IWI_CSR_TX4_RIDX,
-	    IWI_CSR_TX4_WIDX);
-	if (error != 0) {
-		printf(": could not allocate Tx ring 4\n");
-		goto fail4;
-	}
-
-	error = iwi_alloc_rx_ring(sc, &sc->rxq);
-	if (error != 0) {
+	if (iwi_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		printf(": could not allocate Rx ring\n");
-		goto fail5;
+		goto fail;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -353,11 +328,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail5:	iwi_free_tx_ring(sc, &sc->txq[3]);
-fail4:	iwi_free_tx_ring(sc, &sc->txq[2]);
-fail3:	iwi_free_tx_ring(sc, &sc->txq[1]);
-fail2:	iwi_free_tx_ring(sc, &sc->txq[0]);
-fail1:	iwi_free_cmd_ring(sc, &sc->cmdq);
+fail:	while (--ac >= 0)
+		iwi_free_tx_ring(sc, &sc->txq[ac]);
+	iwi_free_cmd_ring(sc, &sc->cmdq);
 }
 
 void
@@ -366,6 +339,7 @@ iwi_power(int why, void *arg)
 	struct iwi_softc *sc = arg;
 	struct ifnet *ifp;
 	pcireg_t data;
+	int s;
 
 	if (why != PWR_RESUME)
 		return;
@@ -375,12 +349,14 @@ iwi_power(int why, void *arg)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
+	s = splnet();
 	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
 		ifp->if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)
 			ifp->if_start(ifp);
 	}
+	splx(s);
 }
 
 int
@@ -457,16 +433,15 @@ iwi_free_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 }
 
 int
-iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
-    bus_size_t csr_ridx, bus_size_t csr_widx)
+iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring, int ac)
 {
 	struct iwi_tx_data *data;
 	int i, nsegs, error;
 
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
-	ring->csr_ridx = csr_ridx;
-	ring->csr_widx = csr_widx;
+	ring->csr_ridx = IWI_CSR_TX_RIDX(ac);
+	ring->csr_widx = IWI_CSR_TX_WIDX(ac);
 
 	error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_COUNT, 1,
@@ -1240,7 +1215,7 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len, int async)
 		CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.next);
 	}
 
-	return async ? 0 : tsleep(sc, 0, "iwicmd", hz);
+	return async ? 0 : tsleep(sc, PCATCH, "iwicmd", hz);
 }
 
 /* ARGSUSED */
@@ -1542,6 +1517,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 iwi_stop_master(struct iwi_softc *sc)
 {
+	uint32_t tmp;
 	int ntries;
 
 	/* disable interrupts */
@@ -1558,8 +1534,8 @@ iwi_stop_master(struct iwi_softc *sc)
 		    sc->sc_dev.dv_xname);
 	}
 
-	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
-	    IWI_RST_PRINCETON_RESET);
+	tmp = CSR_READ_4(sc, IWI_CSR_RST);
+	CSR_WRITE_4(sc, IWI_CSR_RST, tmp | IWI_RST_PRINCETON_RESET);
 
 	sc->flags &= ~IWI_FLAG_FW_INITED;
 }
@@ -1567,13 +1543,14 @@ iwi_stop_master(struct iwi_softc *sc)
 int
 iwi_reset(struct iwi_softc *sc)
 {
+	uint32_t tmp;
 	int i, ntries;
 
 	iwi_stop_master(sc);
 
 	/* move adapter to D0 state */
-	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
-	    IWI_CTL_INIT);
+	tmp = CSR_READ_4(sc, IWI_CSR_CTL);
+	CSR_WRITE_4(sc, IWI_CSR_CTL, tmp | IWI_CTL_INIT);
 
 	CSR_WRITE_4(sc, IWI_CSR_READ_INT, IWI_READ_INT_INIT_HOST);
 
@@ -1589,13 +1566,13 @@ iwi_reset(struct iwi_softc *sc)
 		return ETIMEDOUT;
 	}
 
-	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
-	    IWI_RST_SW_RESET);
+	tmp = CSR_READ_4(sc, IWI_CSR_RST);
+	CSR_WRITE_4(sc, IWI_CSR_RST, tmp | IWI_RST_SW_RESET);
 
 	DELAY(10);
 
-	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
-	    IWI_CTL_INIT);
+	tmp = CSR_READ_4(sc, IWI_CSR_CTL);
+	CSR_WRITE_4(sc, IWI_CSR_CTL, tmp | IWI_CTL_INIT);
 
 	/* clear NIC memory */
 	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_ADDR, 0);
@@ -1609,10 +1586,11 @@ int
 iwi_load_ucode(struct iwi_softc *sc, const char *data, int size)
 {
 	const uint16_t *w;
+	uint32_t tmp;
 	int ntries, i;
 
-	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
-	    IWI_RST_STOP_MASTER);
+	tmp = CSR_READ_4(sc, IWI_CSR_RST);
+	CSR_WRITE_4(sc, IWI_CSR_RST, tmp | IWI_RST_STOP_MASTER);
 	for (ntries = 0; ntries < 5; ntries++) {
 		if (CSR_READ_4(sc, IWI_CSR_RST) & IWI_RST_MASTER_DISABLED)
 			break;
@@ -1627,8 +1605,8 @@ iwi_load_ucode(struct iwi_softc *sc, const char *data, int size)
 	MEM_WRITE_4(sc, 0x3000e0, 0x80000000);
 	DELAY(5000);
 
-	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) &
-	    ~IWI_RST_PRINCETON_RESET);
+	tmp = CSR_READ_4(sc, IWI_CSR_RST);
+	CSR_WRITE_4(sc, IWI_CSR_RST, tmp & ~IWI_RST_PRINCETON_RESET);
 
 	DELAY(5000);
 	MEM_WRITE_4(sc, 0x3000e0, 0);
@@ -1679,7 +1657,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	bus_dma_segment_t seg;
 	caddr_t virtaddr;
 	u_char *p, *end;
-	uint32_t sentinel, ctl, src, dst, sum, len, mlen;
+	uint32_t sentinel, tmp, ctl, src, dst, sum, len, mlen;
 	int ntries, nsegs, error;
 
 	/* allocate DMA memory to store firmware image */
@@ -1761,8 +1739,9 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	sentinel = CSR_READ_4(sc, IWI_CSR_AUTOINC_ADDR);
 	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, 0);
 
-	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) &
-	    ~(IWI_RST_MASTER_DISABLED | IWI_RST_STOP_MASTER));
+	tmp = CSR_READ_4(sc, IWI_CSR_RST);
+	tmp &= ~(IWI_RST_MASTER_DISABLED | IWI_RST_STOP_MASTER);
+	CSR_WRITE_4(sc, IWI_CSR_RST, tmp);
 
 	/* tell the adapter to start processing command blocks */
 	MEM_WRITE_4(sc, 0x3000a4, 0x540100);
@@ -1788,11 +1767,11 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	/* tell the adapter to initialize the firmware */
 	CSR_WRITE_4(sc, IWI_CSR_RST, 0);
 
-	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
-	    IWI_CTL_ALLOW_STANDBY);
+	tmp = CSR_READ_4(sc, IWI_CSR_CTL);
+	CSR_WRITE_4(sc, IWI_CSR_CTL, tmp | IWI_CTL_ALLOW_STANDBY);
 
 	/* wait at most one second for firmware initialization to complete */
-	if ((error = tsleep(sc, 0, "iwiinit", hz)) != 0) {
+	if ((error = tsleep(sc, PCATCH, "iwiinit", hz)) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
 		goto fail5;
@@ -1936,7 +1915,7 @@ iwi_config(struct iwi_softc *sc)
 			return error;
 	}
 
-	data = arc4random();
+	arc4random_buf(&data, sizeof data);
 	DPRINTF(("Setting random seed to %u\n", data));
 	error = iwi_cmd(sc, IWI_CMD_SET_RANDOM_SEED, &data, sizeof data, 0);
 	if (error != 0)
@@ -2167,7 +2146,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		assoc.plen = IWI_ASSOC_SHPREAMBLE;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
 	capinfo = IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & (IEEE80211_F_WEPON | IEEE80211_F_RSNON))
+	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
@@ -2200,7 +2179,7 @@ iwi_init(struct ifnet *ifp)
 	const char *name, *fw;
 	u_char *data;
 	size_t size;
-	int i, error;
+	int i, ac, error;
 
 	iwi_stop(ifp, 0);
 
@@ -2209,7 +2188,7 @@ iwi_init(struct ifnet *ifp)
 		goto fail1;
 	}
 
-	switch (sc->sc_ic.ic_opmode) {
+	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		name = "iwi-bss";
 		break;
@@ -2233,14 +2212,12 @@ iwi_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, error, name);
 		goto fail1;
 	}
-
 	if (size < sizeof (struct iwi_firmware_hdr)) {
 		printf("%s: firmware image too short: %u bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
 	}
-
 	hdr = (struct iwi_firmware_hdr *)data;
 
 	if (hdr->vermaj < 3 || hdr->bootsz == 0 || hdr->ucodesz == 0 ||
@@ -2279,21 +2256,12 @@ iwi_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, IWI_CSR_CMD_SIZE, IWI_CMD_RING_COUNT);
 	CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX1_BASE, sc->txq[0].map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_SIZE, IWI_TX_RING_COUNT);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_WIDX, sc->txq[0].cur);
-
-	CSR_WRITE_4(sc, IWI_CSR_TX2_BASE, sc->txq[1].map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_SIZE, IWI_TX_RING_COUNT);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_WIDX, sc->txq[1].cur);
-
-	CSR_WRITE_4(sc, IWI_CSR_TX3_BASE, sc->txq[2].map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_SIZE, IWI_TX_RING_COUNT);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_WIDX, sc->txq[2].cur);
-
-	CSR_WRITE_4(sc, IWI_CSR_TX4_BASE, sc->txq[3].map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_SIZE, IWI_TX_RING_COUNT);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_WIDX, sc->txq[3].cur);
+	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
+		CSR_WRITE_4(sc, IWI_CSR_TX_BASE(ac),
+		    sc->txq[ac].map->dm_segs[0].ds_addr);
+		CSR_WRITE_4(sc, IWI_CSR_TX_SIZE(ac), IWI_TX_RING_COUNT);
+		CSR_WRITE_4(sc, IWI_CSR_TX_WIDX(ac), sc->txq[ac].cur);
+	}
 
 	for (i = 0; i < IWI_RX_RING_COUNT; i++) {
 		struct iwi_rx_data *data = &sc->rxq.data[i];
@@ -2339,7 +2307,7 @@ iwi_stop(struct ifnet *ifp, int disable)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int i;
+	int ac;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
@@ -2353,8 +2321,8 @@ iwi_stop(struct ifnet *ifp, int disable)
 
 	/* reset rings */
 	iwi_reset_cmd_ring(sc, &sc->cmdq);
-	for (i = 0; i < 4; i++)
-		iwi_reset_tx_ring(sc, &sc->txq[i]);
+	for (ac = 0; ac < EDCA_NUM_AC; ac++)
+		iwi_reset_tx_ring(sc, &sc->txq[ac]);
 	iwi_reset_rx_ring(sc, &sc->rxq);
 }
 
