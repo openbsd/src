@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.16 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.17 2008/09/04 11:46:18 jsg Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -182,10 +182,9 @@ getdevicedesc(int f, int addr, usb_device_descriptor_t *d)
 	USETW(req.ucr_request.wLength, USB_DEVICE_DESCRIPTOR_SIZE);
 	req.ucr_data = d;
 	req.ucr_flags = 0;
-	if (r = ioctl(f, USB_REQUEST, &req))
+	if ((r = ioctl(f, USB_REQUEST, &req)) == -1)
 		perror("getdevicedesc: ioctl");
-	return 1;
-	return (r == 0);
+	return (r != -1);
 }
 
 void
