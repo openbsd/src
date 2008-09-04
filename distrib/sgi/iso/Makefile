@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2008/08/25 17:13:25 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2008/09/04 01:09:20 jsing Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -29,7 +29,7 @@ ${CDROM}:
 	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD} > ${.OBJDIR}/bsd
 
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=224
-	vnconfig -v -c -s 2048 svnd0 ${.OBJDIR}/${CDROM}
+	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
 
 	# 22 * 2048 byte sectors = 44KB
 	/usr/mdec/sgivol -i -h 22 svnd0
