@@ -481,6 +481,7 @@
 ./usr/include/dev/pci
 ./usr/include/dev/pci/agpreg.h
 ./usr/include/dev/pci/agpvar.h
+./usr/include/dev/pci/auacerreg.h
 ./usr/include/dev/pci/auixpreg.h
 ./usr/include/dev/pci/auixpvar.h
 ./usr/include/dev/pci/autrireg.h
@@ -658,7 +659,6 @@
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
-./usr/include/dev/pci/auacerreg.h
 ./usr/include/dev/pci/ydsreg.h
 ./usr/include/dev/pci/ydsvar.h
 ./usr/include/dev/pckbc
@@ -5702,14 +5702,12 @@
 ./usr/share/man/cat3/ypprot_err.0
 ./usr/share/man/cat3/zlibCompileFlags.0
 ./usr/share/man/cat3/zlibVersion.0
-./usr/share/man/cat9/FREE.0
 ./usr/share/man/cat9/FREF.0
 ./usr/share/man/cat9/FRELE.0
 ./usr/share/man/cat9/KASSERT.0
 ./usr/share/man/cat9/KDASSERT.0
 ./usr/share/man/cat9/KNOTE.0
 ./usr/share/man/cat9/KTRPOINT.0
-./usr/share/man/cat9/MALLOC.0
 ./usr/share/man/cat9/MCHTYPE.0
 ./usr/share/man/cat9/MCLGET.0
 ./usr/share/man/cat9/MD5Init.0
