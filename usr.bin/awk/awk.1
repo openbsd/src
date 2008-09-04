@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.31 2008/07/25 05:09:55 deraadt Exp $
+.\"	$OpenBSD: awk.1,v 1.32 2008/09/04 15:51:28 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -23,7 +23,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2008 $
+.Dd $Mdocdate: September 4 2008 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -774,6 +774,9 @@ as well as the commands
 .Cm fflush , compl , and , or ,
 .Cm xor , lshift , rshift ,
 are extensions to that specification.
+.Pp
+.Nm
+does not support {n,m} pattern matching.
 .Sh HISTORY
 An
 .Nm
