@@ -1710,7 +1710,7 @@ lockdbm:
 		{
 			map->map_mflags |= MF_OPEN;
 			map->map_pid = CurrentPid;
-			if ((omode && O_ACCMODE) == O_RDWR)
+			if ((omode & O_ACCMODE) == O_RDWR)
 				map->map_mflags |= MF_WRITABLE;
 			goto lockdbm;
 		}
@@ -2359,7 +2359,7 @@ db_map_lookup(map, name, av, statp)
 		{
 			map->map_mflags |= MF_OPEN;
 			map->map_pid = CurrentPid;
-			if ((omode && O_ACCMODE) == O_RDWR)
+			if ((omode & O_ACCMODE) == O_RDWR)
 				map->map_mflags |= MF_WRITABLE;
 			db = (DB *) map->map_db2;
 			goto lockdb;
