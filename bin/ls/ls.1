@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.52 2007/05/31 19:19:15 jmc Exp $
+.\"	$OpenBSD: ls.1,v 1.53 2008/09/04 15:44:41 jmc Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ls.1	8.7 (Berkeley) 7/29/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 4 2008 $
 .Dt LS 1
 .Os
 .Sh NAME
@@ -62,6 +62,15 @@ If more than one operand is given,
 non-directory operands are displayed first; directory
 and non-directory operands are sorted separately and in
 lexicographical order.
+By default,
+.Nm
+lists one entry per line to standard
+output; the exceptions are to terminals or when the
+.Fl C ,
+.Fl m ,
+or
+.Fl x
+options are specified.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -113,9 +122,19 @@ after each that is a FIFO.
 .It Fl f
 Output is not sorted.
 .It Fl g
-The same as
+List in long format as in
 .Fl l ,
 except that the owner is not printed.
+The output of
+.Fl gn
+and
+.Fl ng
+is identical:
+a long listing with numerical group ID,
+and no numerical user ID.
+.Fl g
+is always overridden by
+.Fl l .
 .It Fl h
 When used with a long format
 option, use unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte,
@@ -149,6 +168,19 @@ Stream output format; list files across the page, separated by commas.
 List in long format as in
 .Fl l ,
 but retain user and group IDs in a numeric format.
+The output of
+.Fl gn
+and
+.Fl ng
+is identical:
+a long listing with numerical group ID,
+and no numerical user ID.
+The output of
+.Fl ln
+and
+.Fl \&nl
+is identical:
+a long listing with numerical group and user ID.
 .It Fl o
 Include the file flags in a long format
 .Pf ( Fl g , l ,
@@ -204,52 +236,42 @@ or
 Multi-column output sorted across the page rather than down the page.
 .El
 .Pp
-The
+It is not an error to specify more than one of
+the following mutually exclusive options:
 .Fl 1 ,
 .Fl C ,
 .Fl g ,
 .Fl l ,
-and
-.Fl n
-options all override each other; the last one specified determines
-the format used with the exception that if both
-.Fl l
-and
-.Fl g
-are specified,
-.Fl l
-will always override
-.Fl g .
-.Pp
-The
-.Fl c
-and
-.Fl u
-options override each other; the last one specified determines
-the file time used.
-The
-.Fl f
-option overrides any occurrence of either.
-.Pp
-By default,
-.Nm
-lists one entry per line to standard
-output; the exceptions are to terminals or when the
-.Fl C ,
 .Fl m ,
-or
-.Fl x
-options are specified.
-.Pp
-File information is displayed with one or more
-.Ao blank Ac Ns s
-separating the information associated with the
-.Fl i ,
-.Fl s ,
-.Fl l ,
+.Fl n ,
 and
-.Fl n
-options.
+.Fl x ;
+.Fl c ,
+.Fl S ,
+.Fl t ,
+and
+.Fl u ;
+.Fl k
+and
+.Fl h .
+Where more than one option is specified from the same
+mutually exclusive group,
+the last option given overrides the others,
+except that
+.Fl l
+always overrides
+.Fl g ;
+.Fl k
+always overides
+.Fl h ;
+and
+.Fl f
+always overrides
+.Fl c ,
+.Fl S ,
+.Fl t ,
+and
+.Fl u .
 .Ss The Long Format
 If the
 .Fl g ,

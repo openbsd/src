@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.29 2007/05/07 18:39:28 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.30 2008/09/04 15:44:41 jmc Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.29 2007/05/07 18:39:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.30 2008/09/04 15:44:41 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,43 +135,44 @@ ls_main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "1ACFLRSTacdfghiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
-		 * The -1, -C and -l, -m and -x options all override each
+		 * The -1, -C and -l, -m, -n and -x options all override each
 		 * other so shell aliasing works right.
 		 */
 		case '1':
 			f_singlecol = 1;
-			f_column = f_columnacross = f_longform = f_stream = 0;
+			f_column = f_columnacross = f_longform = 0;
+			f_numericonly = f_stream = 0;
 			break;
 		case 'C':
 			f_column = 1;
-			f_longform = f_columnacross = f_singlecol = f_stream = 0;
+			f_columnacross = f_longform = f_numericonly = 0;
+			f_singlecol = f_stream = 0;
 			break;
 		case 'g':
 			f_longform = 1;
 			if (f_grouponly != -1)
 				f_grouponly = 1;
-			f_numericonly = 0;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
 			break;
 		case 'l':
 			f_longform = 1;
 			f_grouponly = -1;	/* -l always overrides -g */
-			f_numericonly = 0;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
 			break;
 		case 'm':
 			f_stream = 1;
-			f_column = f_columnacross = f_singlecol = 0;
-			f_singlecol = 0;
+			f_column = f_columnacross = f_longform = 0;
+			f_numericonly = f_singlecol = 0;
 			break;
 		case 'x':
 			f_columnacross = 1;
-			f_column = f_longform = f_singlecol = f_stream = 0;
+			f_column = f_longform = f_numericonly = 0;
+			f_singlecol = f_stream = 0;
 			break;
 		case 'n':
 			f_longform = 1;
 			f_numericonly = 1;
-			f_column = f_singlecol = 0;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
 			break;
 		/* The -c and -u options override each other. */
 		case 'c':
