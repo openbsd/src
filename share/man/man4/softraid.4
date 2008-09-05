@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.18 2008/06/14 00:16:38 hshoexer Exp $
+.\"	$OpenBSD: softraid.4,v 1.19 2008/09/05 06:58:42 fkr Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2008 $
+.Dd $Mdocdate: September 5 2008 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -42,8 +42,8 @@ supports a number of
 .Em disciplines .
 A discipline is a collection of functions
 that provides specific I/O functionality.
-This includes I/O path, bring-up, failure recovery, statistical
-information gathering etc.\&
+This includes I/O path, bring-up, failure recovery, and statistical
+information gathering.
 Essentially a discipline is a lower
 level driver that provides the I/O transformation for the softraid
 device.
