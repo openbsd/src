@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.189 2008/07/27 21:14:31 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.190 2008/09/05 13:15:34 chl Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 27 2008 $
+.Dd $Mdocdate: September 5 2008 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -529,12 +529,6 @@ and
 The kernel memory allocator,
 .Xr malloc 9 ,
 will keep statistics on its performance if this option is enabled.
-Unfortunately, this option therefore essentially disables
-.Fn MALLOC
-and
-.Fn FREE
-forms of the memory allocator, which are used to enhance the
-performance of certain critical sections of code in the kernel.
 This option therefore can lead to a significant decrease in the performance
 of certain code in the kernel if enabled.
 Examples of such code include the
