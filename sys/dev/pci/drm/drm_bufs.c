@@ -38,7 +38,6 @@
 #include "drmP.h"
 
 int	drm_alloc_resource(struct drm_device *, int);
-void	drm_cleanup_buf_error(struct drm_device *, drm_buf_entry_t *);
 int	drm_do_addbufs_agp(struct drm_device *, drm_buf_desc_t *);
 int	drm_do_addbufs_pci(struct drm_device *, drm_buf_desc_t *);
 int	drm_do_addbufs_sg(struct drm_device *, drm_buf_desc_t *);
@@ -398,31 +397,6 @@ drm_rmmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 
-void
-drm_cleanup_buf_error(struct drm_device *dev, drm_buf_entry_t *entry)
-{
-	int i;
-
-	if (entry->seg_count) {
-		for (i = 0; i < entry->seg_count; i++)
-			drm_pci_free(dev, entry->seglist[i]);
-		drm_free(entry->seglist, entry->seg_count *
-		    sizeof(*entry->seglist), DRM_MEM_BUFS);
-
-		entry->seg_count = 0;
-	}
-
-   	if (entry->buf_count) {
-	   	for (i = 0; i < entry->buf_count; i++) {
-			drm_free(entry->buflist[i].dev_private,
-			    entry->buflist[i].dev_priv_size, DRM_MEM_BUFS);
-		}
-		drm_free(entry->buflist, entry->buf_count *
-		    sizeof(*entry->buflist), DRM_MEM_BUFS);
-
-		entry->buf_count = 0;
-	}
-}
 
 int
 drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
@@ -519,7 +493,7 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
-			drm_cleanup_buf_error(dev, entry);
+			drm_cleanup_buf(dev, entry);
 			return ENOMEM;
 		}
 
@@ -536,7 +510,7 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
-		drm_cleanup_buf_error(dev, entry);
+		drm_cleanup_buf(dev, entry);
 		return ENOMEM;
 	}
 	dma->buflist = temp_buflist;
@@ -631,7 +605,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			entry->seg_count = count;
-			drm_cleanup_buf_error(dev, entry);
+			drm_cleanup_buf(dev, entry);
 			drm_free(temp_pagelist, (dma->page_count +
 			   (count << page_order)) * sizeof(*dma->pagelist),
 			   DRM_MEM_BUFS);
@@ -667,7 +641,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 				/* Set count so we free the proper amount. */
 				entry->buf_count = count;
 				entry->seg_count = count;
-				drm_cleanup_buf_error(dev, entry);
+				drm_cleanup_buf(dev, entry);
 				drm_free(temp_pagelist, (dma->page_count +
 				    (count << page_order)) *
 				    sizeof(*dma->pagelist),
@@ -686,7 +660,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
-		drm_cleanup_buf_error(dev, entry);
+		drm_cleanup_buf(dev, entry);
 		drm_free(temp_pagelist, (dma->page_count +
 		    (count << page_order)) * sizeof(*dma->pagelist),
 		    DRM_MEM_BUFS);
@@ -785,7 +759,7 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
-			drm_cleanup_buf_error(dev, entry);
+			drm_cleanup_buf(dev, entry);
 			return ENOMEM;
 		}
 
@@ -803,7 +777,7 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 	    (dma->buf_count + entry->buf_count) * sizeof(*dma->buflist), M_DRM);
 	if (temp_buflist == NULL) {
 		/* Free the entry because it isn't valid */
-		drm_cleanup_buf_error(dev, entry);
+		drm_cleanup_buf(dev, entry);
 		return ENOMEM;
 	}
 	dma->buflist = temp_buflist;

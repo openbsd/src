@@ -52,43 +52,43 @@ drm_dma_setup(struct drm_device *dev)
 }
 
 void
+drm_cleanup_buf(struct drm_device *dev, drm_buf_entry_t *entry)
+{
+	int i;
+
+	if (entry->seg_count) {
+		for (i = 0; i < entry->seg_count; i++)
+			drm_pci_free(dev, entry->seglist[i]);
+		drm_free(entry->seglist, entry->seg_count *
+		    sizeof(*entry->seglist), DRM_MEM_BUFS);
+
+		entry->seg_count = 0;
+	}
+
+   	if (entry->buf_count) {
+	   	for (i = 0; i < entry->buf_count; i++) {
+			drm_free(entry->buflist[i].dev_private,
+			    entry->buflist[i].dev_priv_size, DRM_MEM_BUFS);
+		}
+		drm_free(entry->buflist, entry->buf_count *
+		    sizeof(*entry->buflist), DRM_MEM_BUFS);
+
+		entry->buf_count = 0;
+	}
+}
+
+void
 drm_dma_takedown(struct drm_device *dev)
 {
 	drm_device_dma_t *dma = dev->dma;
-	int i, j;
+	int i;
 
 	if (dma == NULL)
 		return;
 
 	/* Clear dma buffers */
-	for (i = 0; i <= DRM_MAX_ORDER; i++) {
-		if (dma->bufs[i].seg_count) {
-			DRM_DEBUG("order %d: buf_count = %d,"
-			    " seg_count = %d\n", i, dma->bufs[i].buf_count,
-			    dma->bufs[i].seg_count);
-			for (j = 0; j < dma->bufs[i].seg_count; j++) {
-				drm_pci_free(dev, dma->bufs[i].seglist[j]);
-			}
-			if (dma->bufs[i].seglist)
-				drm_free(dma->bufs[i].seglist,
-				    dma->bufs[i].seg_count *
-				    sizeof(*dma->bufs[i].seglist),
-				    DRM_MEM_BUFS);
-		}
-
-	   	if (dma->bufs[i].buf_count) {
-		   	for (j = 0; j < dma->bufs[i].buf_count; j++) {
-				drm_free(dma->bufs[i].buflist[j].dev_private,
-				    dma->bufs[i].buflist[j].dev_priv_size,
-				    DRM_MEM_BUFS);
-			}
-			if (dma->bufs[i].buflist)
-		   		drm_free(dma->bufs[i].buflist,
-				    dma->bufs[i].buf_count *
-				    sizeof(*dma->bufs[i].buflist),
-				    DRM_MEM_BUFS);
-		}
-	}
+	for (i = 0; i <= DRM_MAX_ORDER; i++)
+		drm_cleanup_buf(dev, &dma->bufs[i]);
 
 	drm_free(dma->buflist, dma->buf_count * sizeof(*dma->buflist),
 	    DRM_MEM_BUFS);

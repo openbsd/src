@@ -704,6 +704,7 @@ int	drm_addbufs_agp(struct drm_device *, struct drm_buf_desc *);
 /* DMA support (drm_dma.c) */
 int	drm_dma_setup(struct drm_device *);
 void	drm_dma_takedown(struct drm_device *);
+void	drm_cleanup_buf(struct drm_device *, drm_buf_entry_t *);
 void	drm_free_buffer(struct drm_device *, drm_buf_t *);
 void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 #define drm_core_reclaim_buffers drm_reclaim_buffers
