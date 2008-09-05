@@ -35,77 +35,6 @@
 
 #include "drmP.h"
 
-struct drm_file	*drm_find_file(struct drm_device *, drm_magic_t);
-int		 drm_add_magic(struct drm_device *, struct drm_file *,
-		     drm_magic_t);
-int		 drm_remove_magic(struct drm_device *, drm_magic_t);
-
-/**
- * Returns the file private associated with the given magic number.
- */
-struct drm_file *
-drm_find_file(struct drm_device *dev, drm_magic_t magic)
-{
-	struct drm_magic_entry	*pt;
-	struct drm_magic_entry	 key;
-
-	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
-
-	key.magic = magic;
-	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) != NULL)
-		return (pt->priv);
-	return (NULL);
-}
-
-/**
- * Inserts the given magic number into the hash table of used magic number
- * lists.
- */
-int
-drm_add_magic(struct drm_device *dev, struct drm_file *priv, drm_magic_t magic)
-{
-	struct drm_magic_entry	*entry;
-
-	DRM_DEBUG("%d\n", magic);
-
-	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
-
-	DRM_UNLOCK();
-	entry = drm_alloc(sizeof(*entry), DRM_MEM_MAGIC);
-	DRM_LOCK();
-	if (entry == NULL)
-		return (ENOMEM);
-	entry->magic = magic;
-	entry->priv = priv;
-	SPLAY_INSERT(drm_magic_tree, &dev->magiclist, entry);
-
-	return (0);
-}
-
-/**
- * Removes the given magic number from the hash table of used magic number
- * lists.
- */
-int
-drm_remove_magic(struct drm_device *dev, drm_magic_t magic)
-{
-	struct drm_magic_entry	*pt;
-	struct drm_magic_entry	 key;
-
-	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
-
-	DRM_DEBUG("%d\n", magic);
-
-	key.magic = magic;
-	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) == NULL)
-		return (EINVAL);
-	SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
-	DRM_UNLOCK();
-	drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
-	DRM_LOCK();
-	return (0);
-}
-
 /**
  * Called by the client, this returns a unique magic number to be authorized
  * by the master.
@@ -117,15 +46,22 @@ drm_remove_magic(struct drm_device *dev, drm_magic_t magic)
 int
 drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	struct drm_auth	*auth = data;
+	struct drm_auth		*auth = data;
+	struct drm_magic_entry	*entry;
 
 	/* Find unique magic */
 	if (file_priv->magic) {
 		auth->magic = file_priv->magic;
 	} else {
+		entry = drm_alloc(sizeof(*entry), DRM_MEM_MAGIC);
+		if (entry == NULL)
+			return (ENOMEM);
 		DRM_LOCK();
-		file_priv->magic = auth->magic = dev->magicid++;
-		drm_add_magic(dev, file_priv, auth->magic);
+		entry->magic = file_priv->magic = auth->magic = dev->magicid++;
+		entry->priv = file_priv;
+		SPLAY_INSERT(drm_magic_tree, &dev->magiclist, entry);
+
+		DRM_DEBUG("%d\n", auth->magic);
 		DRM_UNLOCK();
 	}
 
@@ -140,22 +76,26 @@ drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	struct drm_auth	*auth = data;
-	struct drm_file	*priv;
+	struct drm_auth		*auth = data;
+	struct drm_magic_entry	*pt, key;
 
 	DRM_DEBUG("%u\n", auth->magic);
 
+	key.magic = auth->magic;
 	DRM_LOCK();
-	priv = drm_find_file(dev, auth->magic);
-	if (priv != NULL) {
-		priv->authenticated = 1;
-		drm_remove_magic(dev, auth->magic);
-		DRM_UNLOCK();
-		return (0);
-	} else {
+	if ((pt = SPLAY_FIND(drm_magic_tree, &dev->magiclist, &key)) == NULL ||
+	    pt->priv == NULL) {
 		DRM_UNLOCK();
 		return (EINVAL);
 	}
+
+	pt->priv->authenticated = 1;
+	SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
+	DRM_UNLOCK();
+
+	drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
+
+	return (0);
 }
 
 int
