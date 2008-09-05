@@ -38,8 +38,8 @@ int	i915_wait_irq(struct drm_device *, int);
 
 /** These are the interrupts used by the driver */
 #define I915_INTERRUPT_ENABLE_MASK	(I915_USER_INTERRUPT |		\
-					I915_DISPLAY_PIPE_A_VBLANK_INTERRUPT | \
-					I915_DISPLAY_PIPE_B_VBLANK_INTERRUPT)
+					I915_DISPLAY_PIPE_A_EVENT_INTERRUPT | \
+					I915_DISPLAY_PIPE_B_EVENT_INTERRUPT)
 
 inline void
 i915_enable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
