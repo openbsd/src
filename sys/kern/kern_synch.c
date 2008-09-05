@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.85 2008/09/05 14:17:50 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.86 2008/09/05 14:38:15 oga Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ msleep(void *ident, struct mutex *mtx,  int priority, const char *wmesg, int tim
 		 * correct when the sched_lock is a mutex.
 		 */
 		spl = MUTEX_OLDIPL(mtx);
-		MUTEX_OLDIPL(mtx) = IPL_SCHED;
+		MUTEX_OLDIPL(mtx) = splsched();
 		mtx_leave(mtx);
 	}
 
