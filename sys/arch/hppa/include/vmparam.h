@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.34 2008/08/22 10:41:37 kurt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.35 2008/09/06 19:49:05 kettenis Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -59,7 +59,7 @@
 #define STACKGAP_RANDOM	256*1024
 
 #ifndef USRIOSIZE
-#define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 2mb */
+#define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 8mb */
 #endif
 
 /*
