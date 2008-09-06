@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.21 2008/08/21 21:57:45 simon Exp $
+# $OpenBSD: pkg-config,v 1.22 2008/09/06 10:49:28 simon Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -485,7 +485,7 @@ Usage: $0 [options]
 --variable var package - return the definition of <var> in <package>
 EOF
 ;
-	exit 1;
+	exit 0;
 }
 
 # do we meet/beat the version the caller requested?
