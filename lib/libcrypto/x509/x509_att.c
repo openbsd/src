@@ -67,8 +67,7 @@
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 {
-	if (!x) return 0;
-	return(sk_X509_ATTRIBUTE_num(x));
+	return sk_X509_ATTRIBUTE_num(x);
 }
 
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
@@ -125,7 +124,13 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 	X509_ATTRIBUTE *new_attr=NULL;
 	STACK_OF(X509_ATTRIBUTE) *sk=NULL;
 
-	if ((x != NULL) && (*x == NULL))
+	if (x == NULL)
+		{
+		X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_PASSED_NULL_PARAMETER);
+		goto err2;
+		} 
+
+	if (*x == NULL)
 		{
 		if ((sk=sk_X509_ATTRIBUTE_new_null()) == NULL)
 			goto err;
@@ -137,11 +142,11 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 		goto err2;
 	if (!sk_X509_ATTRIBUTE_push(sk,new_attr))
 		goto err;
-	if ((x != NULL) && (*x == NULL))
+	if (*x == NULL)
 		*x=sk;
 	return(sk);
 err:
-	X509err(X509_F_X509_ADD_ATTR,ERR_R_MALLOC_FAILURE);
+	X509err(X509_F_X509AT_ADD1_ATTR,ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_attr != NULL) X509_ATTRIBUTE_free(new_attr);
 	if (sk != NULL) sk_X509_ATTRIBUTE_free(sk);
@@ -185,6 +190,22 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
 	ret = X509at_add1_attr(x, attr);
 	X509_ATTRIBUTE_free(attr);
 	return ret;
+}
+
+void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
+				ASN1_OBJECT *obj, int lastpos, int type)
+{
+	int i;
+	X509_ATTRIBUTE *at;
+	i = X509at_get_attr_by_OBJ(x, obj, lastpos);
+	if (i == -1)
+		return NULL;
+	if ((lastpos <= -2) && (X509at_get_attr_by_OBJ(x, obj, i) != -1))
+		return NULL;
+	at = X509at_get_attr(x, i);
+	if (lastpos <= -3 && (X509_ATTRIBUTE_count(at) != 1))
+		return NULL;
+	return X509_ATTRIBUTE_get0_data(at, 0, type, NULL);
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
@@ -264,8 +285,8 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data, int len)
 {
 	ASN1_TYPE *ttmp;
-	ASN1_STRING *stmp;
-	int atype;
+	ASN1_STRING *stmp = NULL;
+	int atype = 0;
 	if (!attr) return 0;
 	if(attrtype & MBSTRING_FLAG) {
 		stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
@@ -275,16 +296,22 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 			return 0;
 		}
 		atype = stmp->type;
-	} else {
+	} else if (len != -1){
 		if(!(stmp = ASN1_STRING_type_new(attrtype))) goto err;
 		if(!ASN1_STRING_set(stmp, data, len)) goto err;
 		atype = attrtype;
 	}
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
+	if (len == -1)
+		{
+		if (!ASN1_TYPE_set1(ttmp, attrtype, data))
+			goto err;
+		}
+	else
+		ASN1_TYPE_set(ttmp, atype, stmp);
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
 	attr->single = 0;
-	ASN1_TYPE_set(ttmp, atype, stmp);
 	return 1;
 	err:
 	X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);

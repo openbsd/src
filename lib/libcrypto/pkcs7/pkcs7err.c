@@ -77,16 +77,20 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_CRL),	"PKCS7_add_crl"},
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_RECIPIENT_INFO),	"PKCS7_add_recipient_info"},
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNER),	"PKCS7_add_signer"},
+{ERR_FUNC(PKCS7_F_PKCS7_BIO_ADD_DIGEST),	"PKCS7_BIO_ADD_DIGEST"},
 {ERR_FUNC(PKCS7_F_PKCS7_CTRL),	"PKCS7_ctrl"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATADECODE),	"PKCS7_dataDecode"},
+{ERR_FUNC(PKCS7_F_PKCS7_DATAFINAL),	"PKCS7_dataFinal"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATAINIT),	"PKCS7_dataInit"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATASIGN),	"PKCS7_DATASIGN"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATAVERIFY),	"PKCS7_dataVerify"},
 {ERR_FUNC(PKCS7_F_PKCS7_DECRYPT),	"PKCS7_decrypt"},
 {ERR_FUNC(PKCS7_F_PKCS7_ENCRYPT),	"PKCS7_encrypt"},
+{ERR_FUNC(PKCS7_F_PKCS7_FIND_DIGEST),	"PKCS7_FIND_DIGEST"},
 {ERR_FUNC(PKCS7_F_PKCS7_GET0_SIGNERS),	"PKCS7_get0_signers"},
 {ERR_FUNC(PKCS7_F_PKCS7_SET_CIPHER),	"PKCS7_set_cipher"},
 {ERR_FUNC(PKCS7_F_PKCS7_SET_CONTENT),	"PKCS7_set_content"},
+{ERR_FUNC(PKCS7_F_PKCS7_SET_DIGEST),	"PKCS7_set_digest"},
 {ERR_FUNC(PKCS7_F_PKCS7_SET_TYPE),	"PKCS7_set_type"},
 {ERR_FUNC(PKCS7_F_PKCS7_SIGN),	"PKCS7_sign"},
 {ERR_FUNC(PKCS7_F_PKCS7_SIGNATUREVERIFY),	"PKCS7_signatureVerify"},
@@ -120,11 +124,13 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 {ERR_REASON(PKCS7_R_NO_MULTIPART_BODY_FAILURE),"no multipart body failure"},
 {ERR_REASON(PKCS7_R_NO_MULTIPART_BOUNDARY),"no multipart boundary"},
 {ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE),"no recipient matches certificate"},
+{ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_KEY),"no recipient matches key"},
 {ERR_REASON(PKCS7_R_NO_SIGNATURES_ON_DATA),"no signatures on data"},
 {ERR_REASON(PKCS7_R_NO_SIGNERS)          ,"no signers"},
 {ERR_REASON(PKCS7_R_NO_SIG_CONTENT_TYPE) ,"no sig content type"},
 {ERR_REASON(PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE),"operation not supported on this type"},
 {ERR_REASON(PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR),"pkcs7 add signature error"},
+{ERR_REASON(PKCS7_R_PKCS7_DATAFINAL)     ,"pkcs7 datafinal"},
 {ERR_REASON(PKCS7_R_PKCS7_DATAFINAL_ERROR),"pkcs7 datafinal error"},
 {ERR_REASON(PKCS7_R_PKCS7_DATASIGN)      ,"pkcs7 datasign"},
 {ERR_REASON(PKCS7_R_PKCS7_PARSE_ERROR)   ,"pkcs7 parse error"},
@@ -150,15 +156,12 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 
 void ERR_load_PKCS7_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(PKCS7_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,PKCS7_str_functs);
 		ERR_load_strings(0,PKCS7_str_reasons);
-#endif
-
 		}
+#endif
 	}

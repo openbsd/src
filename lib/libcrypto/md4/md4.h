@@ -60,6 +60,7 @@
 #define HEADER_MD4_H
 
 #include <openssl/e_os2.h>
+#include <stddef.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -101,16 +102,13 @@ typedef struct MD4state_st
 	MD4_LONG A,B,C,D;
 	MD4_LONG Nl,Nh;
 	MD4_LONG data[MD4_LBLOCK];
-	int num;
+	unsigned int num;
 	} MD4_CTX;
 
-#ifdef OPENSSL_FIPS
-int private_MD4_Init(MD4_CTX *c);
-#endif
 int MD4_Init(MD4_CTX *c);
-int MD4_Update(MD4_CTX *c, const void *data, unsigned long len);
+int MD4_Update(MD4_CTX *c, const void *data, size_t len);
 int MD4_Final(unsigned char *md, MD4_CTX *c);
-unsigned char *MD4(const unsigned char *d, unsigned long n, unsigned char *md);
+unsigned char *MD4(const unsigned char *d, size_t n, unsigned char *md);
 void MD4_Transform(MD4_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

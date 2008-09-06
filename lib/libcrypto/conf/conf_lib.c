@@ -63,7 +63,7 @@
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
 
-const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;
+const char CONF_version[]="CONF" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD *default_CONF_method=NULL;
 
@@ -184,7 +184,7 @@ long CONF_get_number(LHASH *conf,const char *group,const char *name)
 	if (status == 0)
 		{
 		/* This function does not believe in errors... */
-		ERR_get_error();
+		ERR_clear_error();
 		}
 	return result;
 	}

@@ -65,6 +65,8 @@
 #ifndef HEADER_DSA_H
 #define HEADER_DSA_H
 
+#include <openssl/e_os2.h>
+
 #ifdef OPENSSL_NO_DSA
 #error DSA is disabled.
 #endif
@@ -72,11 +74,18 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
+
+#ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
+#endif
+#endif
+
+#ifndef OPENSSL_DSA_MAX_MODULUS_BITS
+# define OPENSSL_DSA_MAX_MODULUS_BITS	10000
 #endif
 
 #define OPENSSL_DSA_MAX_MODULUS_BITS	3072
@@ -90,22 +99,13 @@
                                               * be used for all exponents.
                                               */
 
-/* If this flag is set external DSA_METHOD callbacks are allowed in FIPS mode
- * it is then the applications responsibility to ensure the external method
- * is compliant.
- */
-
-#define DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW	0x04
-
-#if defined(OPENSSL_FIPS)
-#define FIPS_DSA_SIZE_T	int
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-typedef struct dsa_st DSA;
+/* Already defined in ossl_typ.h */
+/* typedef struct dsa_st DSA; */
+/* typedef struct dsa_method DSA_METHOD; */
 
 typedef struct DSA_SIG_st
 	{
@@ -113,7 +113,8 @@ typedef struct DSA_SIG_st
 	BIGNUM *s;
 	} DSA_SIG;
 
-typedef struct dsa_method {
+struct dsa_method
+	{
 	const char *name;
 	DSA_SIG * (*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
 	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
@@ -130,7 +131,14 @@ typedef struct dsa_method {
 	int (*finish)(DSA *dsa);
 	int flags;
 	char *app_data;
-} DSA_METHOD;
+	/* If this is non-NULL, it is used to generate DSA parameters */
+	int (*dsa_paramgen)(DSA *dsa, int bits,
+			unsigned char *seed, int seed_len,
+			int *counter_ret, unsigned long *h_ret,
+			BN_GENCB *cb);
+	/* If this is non-NULL, it is used to generate DSA keys */
+	int (*dsa_keygen)(DSA *dsa);
+	};
 
 struct dsa_st
 	{
@@ -151,7 +159,7 @@ struct dsa_st
 
 	int flags;
 	/* Normally used to cache montgomery values */
-	char *method_mont_p;
+	BN_MONT_CTX *method_mont_p;
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DSA_METHOD *meth;
@@ -159,16 +167,13 @@ struct dsa_st
 	ENGINE *engine;
 	};
 
-#define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \
-		(char *(*)())d2i_DSAparams,(char *)(x))
+#define DSAparams_dup(x) ASN1_dup_of_const(DSA,i2d_DSAparams,d2i_DSAparams,x)
 #define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
 		(char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
 #define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
 		(unsigned char *)(x))
-#define d2i_DSAparams_bio(bp,x) (DSA *)ASN1_d2i_bio((char *(*)())DSA_new, \
-		(char *(*)())d2i_DSAparams,(bp),(unsigned char **)(x))
-#define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio(i2d_DSAparams,(bp), \
-		(unsigned char *)(x))
+#define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
+#define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
 
 
 DSA_SIG * DSA_SIG_new(void);
@@ -206,10 +211,20 @@ void *DSA_get_ex_data(DSA *d, int idx);
 DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+
+/* Deprecated version */
+#ifndef OPENSSL_NO_DEPRECATED
 DSA *	DSA_generate_parameters(int bits,
 		unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
 		(*callback)(int, int, void *),void *cb_arg);
+#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+
+/* New version */
+int	DSA_generate_parameters_ex(DSA *dsa, int bits,
+		unsigned char *seed,int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
 int	DSA_generate_key(DSA *a);
 int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);

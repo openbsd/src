@@ -119,20 +119,6 @@ extern "C" {
 #endif
 
 
-/* Used for temp variables */
-#define BN_CTX_NUM	32
-#define BN_CTX_NUM_POS	12
-struct bignum_ctx
-	{
-	int tos;
-	BIGNUM bn[BN_CTX_NUM];
-	int flags;
-	int depth;
-	int pos[BN_CTX_NUM_POS];
-	int too_many;
-	} /* BN_CTX */;
-
-
 /*
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
  *
@@ -284,6 +270,15 @@ struct bignum_ctx
 		: "a"(a),"g"(b)		\
 		: "cc");
 #  endif
+# elif (defined(_M_AMD64) || defined(_M_X64)) && defined(SIXTY_FOUR_BIT)
+#  if defined(_MSC_VER) && _MSC_VER>=1400
+    unsigned __int64 __umulh	(unsigned __int64 a,unsigned __int64 b);
+    unsigned __int64 _umul128	(unsigned __int64 a,unsigned __int64 b,
+				 unsigned __int64 *h);
+#   pragma intrinsic(__umulh,_umul128)
+#   define BN_UMULT_HIGH(a,b)		__umulh((a),(b))
+#   define BN_UMULT_LOHI(low,high,a,b)	((low)=_umul128((a),(b),&(high)))
+#  endif
 # endif		/* cpu */
 #endif		/* OPENSSL_NO_ASM */
 
@@ -293,44 +288,17 @@ struct bignum_ctx
 #define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
 #define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
-/* This is used for internal error checking and is not normally used */
-#ifdef BN_DEBUG
-# include <assert.h>
-# define bn_check_top(a) assert ((a)->top >= 0 && (a)->top <= (a)->dmax);
-#else
-# define bn_check_top(a)
-#endif
-
-/* This macro is to add extra stuff for development checking */
-#ifdef BN_DEBUG
-#define	bn_set_max(r) ((r)->max=(r)->top,BN_set_flags((r),BN_FLG_STATIC_DATA))
-#else
-#define	bn_set_max(r)
-#endif
-
-/* These macros are used to 'take' a section of a bignum for read only use */
-#define bn_set_low(r,a,n) \
+#ifdef BN_DEBUG_RAND
+#define bn_clear_top2max(a) \
 	{ \
-	(r)->top=((a)->top > (n))?(n):(a)->top; \
-	(r)->d=(a)->d; \
-	(r)->neg=(a)->neg; \
-	(r)->flags|=BN_FLG_STATIC_DATA; \
-	bn_set_max(r); \
+	int      ind = (a)->dmax - (a)->top; \
+	BN_ULONG *ftl = &(a)->d[(a)->top-1]; \
+	for (; ind != 0; ind--) \
+		*(++ftl) = 0x0; \
 	}
-
-#define bn_set_high(r,a,n) \
-	{ \
-	if ((a)->top > (n)) \
-		{ \
-		(r)->top=(a)->top-n; \
-		(r)->d= &((a)->d[n]); \
-		} \
-	else \
-		(r)->top=0; \
-	(r)->neg=(a)->neg; \
-	(r)->flags|=BN_FLG_STATIC_DATA; \
-	bn_set_max(r); \
-	}
+#else
+#define bn_clear_top2max(a)
+#endif
 
 #ifdef BN_LLONG
 #define mul_add(r,a,w,c) { \
@@ -352,6 +320,33 @@ struct bignum_ctx
 	t=(BN_ULLONG)(a)*(a); \
 	(r0)=Lw(t); \
 	(r1)=Hw(t); \
+	}
+
+#elif defined(BN_UMULT_LOHI)
+#define mul_add(r,a,w,c) {		\
+	BN_ULONG high,low,ret,tmp=(a);	\
+	ret =  (r);			\
+	BN_UMULT_LOHI(low,high,w,tmp);	\
+	ret += (c);			\
+	(c) =  (ret<(c))?1:0;		\
+	(c) += high;			\
+	ret += low;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define mul(r,a,w,c)	{		\
+	BN_ULONG high,low,ret,ta=(a);	\
+	BN_UMULT_LOHI(low,high,w,ta);	\
+	ret =  low + (c);		\
+	(c) =  high;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define sqr(r0,r1,a)	{		\
+	BN_ULONG tmp=(a);		\
+	BN_UMULT_LOHI(r0,r1,tmp,tmp);	\
 	}
 
 #elif defined(BN_UMULT_HIGH)
@@ -472,18 +467,21 @@ void bn_sqr_comba4(BN_ULONG *r,const BN_ULONG *a);
 int bn_cmp_words(const BN_ULONG *a,const BN_ULONG *b,int n);
 int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
 	int cl, int dl);
-#ifdef BN_RECURSION
-void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
-	BN_ULONG *t);
-void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
-	int n, BN_ULONG *t);
+void bn_mul_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
+	int dna,int dnb,BN_ULONG *t);
+void bn_mul_part_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,
+	int n,int tna,int tnb,BN_ULONG *t);
+void bn_sqr_recursive(BN_ULONG *r,const BN_ULONG *a, int n2, BN_ULONG *t);
+void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
 void bn_mul_low_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
 	BN_ULONG *t);
 void bn_mul_high(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,BN_ULONG *l,int n2,
 	BN_ULONG *t);
-void bn_sqr_recursive(BN_ULONG *r,const BN_ULONG *a, int n2, BN_ULONG *t);
-#endif
-void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
+BN_ULONG bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl);
+BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl);
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 
 #ifdef  __cplusplus
 }

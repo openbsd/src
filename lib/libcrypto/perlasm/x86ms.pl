@@ -27,7 +27,13 @@ $label="L000";
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
 sub main'get_labels { return(@labels); }
-sub main'external_label { push(@labels,@_); }
+sub main'external_label
+{
+	push(@labels,@_);
+	foreach (@_) {
+		push(@out, "EXTRN\t_$_:DWORD\n");
+	}
+}
 
 sub main'LB
 	{
@@ -49,6 +55,11 @@ sub main'BP
 sub main'DWP
 	{
 	&get_mem("DWORD",@_);
+	}
+
+sub main'QWP
+	{
+	&get_mem("QWORD",@_);
 	}
 
 sub main'BC
@@ -87,7 +98,7 @@ sub get_mem
 		$reg2=&conv($1);
 		$addr="_$2";
 		}
-	elsif ($addr =~ /^[_a-zA-Z]/)
+	elsif ($addr =~ /^[_a-z][_a-z0-9]*$/i)
 		{
 		$addr="_$addr";
 		}
@@ -128,12 +139,14 @@ sub main'xorb	{ &out2("xor",@_); }
 sub main'add	{ &out2("add",@_); }
 sub main'adc	{ &out2("adc",@_); }
 sub main'sub	{ &out2("sub",@_); }
+sub main'sbb	{ &out2("sbb",@_); }
 sub main'rotl	{ &out2("rol",@_); }
 sub main'rotr	{ &out2("ror",@_); }
 sub main'exch	{ &out2("xchg",@_); }
 sub main'cmp	{ &out2("cmp",@_); }
 sub main'lea	{ &out2("lea",@_); }
 sub main'mul	{ &out1("mul",@_); }
+sub main'imul	{ &out2("imul",@_); }
 sub main'div	{ &out1("div",@_); }
 sub main'dec	{ &out1("dec",@_); }
 sub main'inc	{ &out1("inc",@_); }
@@ -155,26 +168,54 @@ sub main'jne	{ &out1("jne",@_); }
 sub main'jno	{ &out1("jno",@_); }
 sub main'push	{ &out1("push",@_); $stack+=4; }
 sub main'pop	{ &out1("pop",@_); $stack-=4; }
+sub main'pushf	{ &out0("pushfd"); $stack+=4; }
+sub main'popf	{ &out0("popfd"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'test	{ &out2("test",@_); }
+sub main'bt	{ &out2("bt",@_); }
+sub main'leave	{ &out0("leave"); }
+sub main'cpuid  { &out0("DW\t0A20Fh"); }
+sub main'rdtsc  { &out0("DW\t0310Fh"); }
+sub main'halt	{ &out0("hlt"); }
 sub main'movz	{ &out2("movzx",@_); }
+sub main'neg	{ &out1("neg",@_); }
+sub main'cld	{ &out0("cld"); }
+
+# SSE2
+sub main'emms	{ &out0("emms"); }
+sub main'movd	{ &out2("movd",@_); }
+sub main'movq	{ &out2("movq",@_); }
+sub main'movdqu	{ &out2("movdqu",@_); }
+sub main'movdqa	{ &out2("movdqa",@_); }
+sub main'movdq2q{ &out2("movdq2q",@_); }
+sub main'movq2dq{ &out2("movq2dq",@_); }
+sub main'paddq	{ &out2("paddq",@_); }
+sub main'pmuludq{ &out2("pmuludq",@_); }
+sub main'psrlq	{ &out2("psrlq",@_); }
+sub main'psllq	{ &out2("psllq",@_); }
+sub main'pxor	{ &out2("pxor",@_); }
+sub main'por	{ &out2("por",@_); }
+sub main'pand	{ &out2("pand",@_); }
 
 sub out2
 	{
 	local($name,$p1,$p2)=@_;
-	local($l,$t);
+	local($l,$t,$line);
 
-	push(@out,"\t$name\t");
+	$line="\t$name\t";
 	$t=&conv($p1).",";
 	$l=length($t);
-	push(@out,$t);
+	$line.="$t";
 	$l=4-($l+9)/8;
-	push(@out,"\t" x $l);
-	push(@out,&conv($p2));
-	push(@out,"\n");
+	$line.="\t" x $l;
+	$line.=&conv($p2);
+	if ($line=~/\bxmm[0-7]\b/i) { $line=~s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i; }
+	push(@out,$line."\n");
 	}
 
 sub out0
@@ -214,7 +255,9 @@ sub main'file
 	local($tmp)=<<"EOF";
 	TITLE	$file.asm
         .386
-.model FLAT
+.model	FLAT
+_TEXT\$	SEGMENT PAGE 'CODE'
+
 EOF
 	push(@out,$tmp);
 	}
@@ -226,7 +269,6 @@ sub main'function_begin
 	push(@labels,$func);
 
 	local($tmp)=<<"EOF";
-_TEXT	SEGMENT
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -244,7 +286,6 @@ sub main'function_begin_B
 	local($func,$extra)=@_;
 
 	local($tmp)=<<"EOF";
-_TEXT	SEGMENT
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -264,7 +305,6 @@ sub main'function_end
 	pop	ebp
 	ret
 _$func ENDP
-_TEXT	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -277,7 +317,6 @@ sub main'function_end_B
 
 	local($tmp)=<<"EOF";
 _$func ENDP
-_TEXT	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -300,6 +339,20 @@ EOF
 
 sub main'file_end
 	{
+	# try to detect if SSE2 or MMX extensions were used...
+	my $xmmheader=<<___;
+.686
+.XMM
+IF \@Version LT 800
+XMMWORD STRUCT 16
+	DQ  2 dup (?)
+XMMWORD ENDS
+ENDIF
+___
+	if (grep {/\b[x]?mm[0-7]\b/i} @out) {
+		grep {s/\.[3-7]86/$xmmheader/} @out;
+		}
+	push(@out,"_TEXT\$	ENDS\n");
 	push(@out,"END\n");
 	}
 
@@ -331,6 +384,12 @@ sub main'comment
 		}
 	}
 
+sub main'public_label
+	{
+	$label{$_[0]}="_$_[0]"	if (!defined($label{$_[0]}));
+	push(@out,"PUBLIC\t$label{$_[0]}\n");
+	}
+
 sub main'label
 	{
 	if (!defined($label{$_[0]}))
@@ -348,9 +407,17 @@ sub main'set_label
 		$label{$_[0]}="\$${label}${_[0]}";
 		$label++;
 		}
+	if ($_[1]!=0 && $_[1]>1)
+		{
+		main'align($_[1]);
+		}
 	if((defined $_[2]) && ($_[2] == 1))
 		{
 		push(@out,"$label{$_[0]}::\n");
+		}
+	elsif ($label{$_[0]} !~ /^\$/)
+		{
+		push(@out,"$label{$_[0]}\tLABEL PTR\n");
 		}
 	else
 		{
@@ -358,9 +425,19 @@ sub main'set_label
 		}
 	}
 
+sub main'data_byte
+	{
+	push(@out,"\tDB\t".join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
-	push(@out,"\tDD\t$_[0]\n");
+	push(@out,"\tDD\t".join(',',@_)."\n");
+	}
+
+sub main'align
+	{
+	push(@out,"\tALIGN\t$_[0]\n");
 	}
 
 sub out1p
@@ -368,7 +445,7 @@ sub out1p
 	local($name,$p1)=@_;
 	local($l,$t);
 
-	push(@out,"\t$name\t ".&conv($p1)."\n");
+	push(@out,"\t$name\t".&conv($p1)."\n");
 	}
 
 sub main'picmeup
@@ -378,3 +455,18 @@ sub main'picmeup
 	}
 
 sub main'blindpop { &out1("pop",@_); }
+
+sub main'initseg 
+	{
+	local($f)=@_;
+	local($tmp)=<<___;
+OPTION	DOTNAME
+.CRT\$XCU	SEGMENT DWORD PUBLIC 'DATA'
+EXTRN	_$f:NEAR
+DD	_$f
+.CRT\$XCU	ENDS
+___
+	push(@out,$tmp);
+	}
+
+1;

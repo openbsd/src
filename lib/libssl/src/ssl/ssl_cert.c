@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,12 +73,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
+ *    openssl-core@openssl.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -87,7 +87,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -102,6 +102,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
 #include <stdio.h>
@@ -111,45 +121,42 @@
 # include <sys/types.h>
 #endif
 
-#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) && !defined(NeXT) && !defined(MAC_OS_pre_X)
-#include <dirent.h>
-#endif
-
-#if defined(WIN32)
-#include <windows.h>
-#include <tchar.h>
-#endif
-
-#ifdef NeXT
-#include <sys/dir.h>
-#define dirent direct
-#endif
-
+#include "o_dir.h"
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
+#include <openssl/bn.h>
 #include "ssl_locl.h"
-#include <openssl/fips.h>
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{
 	static volatile int ssl_x509_store_ctx_idx= -1;
+	int got_write_lock = 0;
+
+	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 
 	if (ssl_x509_store_ctx_idx < 0)
 		{
-		/* any write lock will do; usually this branch
-		 * will only be taken once anyway */
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		got_write_lock = 1;
 		
 		if (ssl_x509_store_ctx_idx < 0)
 			{
 			ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
 				0,"SSL for verify callback",NULL,NULL,NULL);
 			}
-		
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 		}
+
+	if (got_write_lock)
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	else
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+	
 	return ssl_x509_store_ctx_idx;
 	}
 
@@ -205,7 +212,6 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef OPENSSL_NO_DH
 	if (cert->dh_tmp != NULL)
 		{
-		/* DH parameters don't have a reference count */
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL)
 			{
@@ -234,6 +240,19 @@ CERT *ssl_cert_dup(CERT *cert)
 			}
 		}
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+	if (cert->ecdh_tmp)
+		{
+		ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
+		if (ret->ecdh_tmp == NULL)
+			{
+			SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_EC_LIB);
+			goto err;
+			}
+		}
+	ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
 #endif
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
@@ -270,7 +289,11 @@ CERT *ssl_cert_dup(CERT *cert)
 			case SSL_PKEY_DH_DSA:
 				/* We have a DH key. */
 				break;
-				
+
+			case SSL_PKEY_ECC:
+				/* We have an ECC key */
+				break;
+
 			default:
 				/* Can't happen. */
 				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
@@ -285,7 +308,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
-#ifndef OPENSSL_NO_DH /* avoid 'unreferenced label' warning if OPENSSL_NO_DH is defined */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
 err:
 #endif
 #ifndef OPENSSL_NO_RSA
@@ -295,6 +318,10 @@ err:
 #ifndef OPENSSL_NO_DH
 	if (ret->dh_tmp != NULL)
 		DH_free(ret->dh_tmp);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	if (ret->ecdh_tmp != NULL)
+		EC_KEY_free(ret->ecdh_tmp);
 #endif
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
@@ -334,6 +361,9 @@ void ssl_cert_free(CERT *c)
 #endif
 #ifndef OPENSSL_NO_DH
 	if (c->dh_tmp) DH_free(c->dh_tmp);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	if (c->ecdh_tmp) EC_KEY_free(c->ecdh_tmp);
 #endif
 
 	for (i=0; i<SSL_PKEY_NUM; i++)
@@ -441,6 +471,10 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 	if (sc->peer_dh_tmp != NULL)
 		DH_free(sc->peer_dh_tmp);
 #endif
+#ifndef OPENSSL_NO_ECDH
+	if (sc->peer_ecdh_tmp != NULL)
+		EC_KEY_free(sc->peer_ecdh_tmp);
+#endif
 
 	OPENSSL_free(sc);
 	}
@@ -466,20 +500,22 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,ERR_R_X509_LIB);
 		return(0);
 		}
+	if (s->param)
+		X509_VERIFY_PARAM_inherit(X509_STORE_CTX_get0_param(&ctx),
+						s->param);
+#if 0
 	if (SSL_get_verify_depth(s) >= 0)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
+#endif
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),s);
 
-	/* We need to set the verify purpose. The purpose can be determined by
+	/* We need to inherit the verify parameters. These can be determined by
 	 * the context: if its a server it will verify SSL client certificates
 	 * or vice versa.
 	 */
-	if (s->server)
-		i = X509_PURPOSE_SSL_CLIENT;
-	else
-		i = X509_PURPOSE_SSL_SERVER;
 
-	X509_STORE_CTX_purpose_inherit(&ctx, i, s->purpose, s->trust);
+	X509_STORE_CTX_set_default(&ctx,
+				s->server ? "ssl_client" : "ssl_server");
 
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
@@ -726,7 +762,7 @@ err:
 	if(x != NULL)
 		X509_free(x);
 	
-	sk_X509_NAME_set_cmp_func(stack,oldcmp);
+	(void)sk_X509_NAME_set_cmp_func(stack,oldcmp);
 
 	return ret;
 	}
@@ -742,157 +778,52 @@ err:
  * certs may have been added to \c stack.
  */
 
-#ifndef OPENSSL_SYS_WIN32
-#ifndef OPENSSL_SYS_VMS		/* XXXX This may be fixed in the future */
-#ifndef OPENSSL_SYS_MACINTOSH_CLASSIC /* XXXXX: Better scheme needed! */
-
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
 	{
-	DIR *d;
-	struct dirent *dstruct;
+	OPENSSL_DIR_CTX *d = NULL;
+	const char *filename;
 	int ret = 0;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-	d = opendir(dir);
 
 	/* Note that a side effect is that the CAs will be sorted by name */
-	if(!d)
-		{
-		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-		ERR_add_error_data(3, "opendir('", dir, "')");
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err;
-		}
-	
-	while((dstruct=readdir(d)))
+
+	while((filename = OPENSSL_DIR_read(&d, dir)))
 		{
 		char buf[1024];
 		int r;
-		
-		if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
+
+		if(strlen(dir)+strlen(filename)+2 > sizeof buf)
 			{
 			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
 			goto err;
 			}
-		
-		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,dstruct->d_name);
-		if (r <= 0 || r >= sizeof buf)
+
+#ifdef OPENSSL_SYS_VMS
+		r = BIO_snprintf(buf,sizeof buf,"%s%s",dir,filename);
+#else
+		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,filename);
+#endif
+		if (r <= 0 || r >= (int)sizeof(buf))
 			goto err;
 		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
 			goto err;
 		}
-	ret = 1;
 
-err:	
-	if (d) closedir(d);
-	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
-	return ret;
-	}
-
-#endif
-#endif
-
-#else /* OPENSSL_SYS_WIN32 */
-
-#if defined(_WIN32_WCE)
-# ifndef UNICODE
-#  error "WinCE comes in UNICODE flavor only..."
-# endif
-# if _WIN32_WCE<101 && !defined(OPENSSL_NO_MULTIBYTE)
-#  define OPENSSL_NO_MULTIBYTE
-# endif
-# ifndef  FindFirstFile
-#  define FindFirstFile FindFirstFileW
-# endif
-# ifndef  FindNextFile
-#  define FindNextFile FindNextFileW
-# endif
-#endif
-
-int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-				       const char *dir)
-	{
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
-	int    ret = 0;
-	TCHAR *wdir = NULL;
-	size_t i,len_0 = strlen(dir)+1;	/* len_0 accounts for trailing 0 */
-	char   buf[1024],*slash;
-
-	if (len_0 > (sizeof(buf)-14))	/* 14 is just some value... */
-		{
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
-		return ret;
-		}
-
-	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-
-	if (sizeof(TCHAR) != sizeof(char))
-		{
-		wdir = (TCHAR *)malloc(len_0*sizeof(TCHAR));
-		if (wdir == NULL)
-			goto err_noclose;
-#ifndef OPENSSL_NO_MULTIBYTE
-		if (!MultiByteToWideChar(CP_ACP,0,dir,len_0,
-					(WCHAR *)wdir,len_0))
-#endif
-			for (i=0;i<len_0;i++) wdir[i]=(TCHAR)dir[i];
-
-		hFind = FindFirstFile(wdir, &FindFileData);
-		}
-	else	hFind = FindFirstFile((const TCHAR *)dir, &FindFileData);
-
-	/* Note that a side effect is that the CAs will be sorted by name */
-	if(hFind == INVALID_HANDLE_VALUE)
+	if (errno)
 		{
 		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-		ERR_add_error_data(3, "opendir('", dir, "')");
+		ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err_noclose;
+		goto err;
 		}
 
-	strncpy(buf,dir,sizeof(buf));	/* strcpy is safe too... */
-	buf[len_0-1]='/';		/* no trailing zero!     */
-	slash=buf+len_0;
-
-	do	{
-		const TCHAR *fnam=FindFileData.cFileName;
-		size_t flen_0=_tcslen(fnam)+1;
-
-		if (flen_0 > (sizeof(buf)-len_0))
-			{
-			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
-			goto err;
-			}
-		/* else strcpy would be safe too... */
-
-		if (sizeof(TCHAR) != sizeof(char))
-			{
-#ifndef OPENSSL_NO_MULTIBYTE
-			if (!WideCharToMultiByte(CP_ACP,0,
-						(WCHAR *)fnam,flen_0,
-						slash,sizeof(buf)-len_0,
-						NULL,0))
-#endif
-				for (i=0;i<flen_0;i++) slash[i]=(char)fnam[i];
-			}
-		else	strncpy(slash,(const char *)fnam,sizeof(buf)-len_0);
-
-		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
-			goto err;
-		}
-	while (FindNextFile(hFind, &FindFileData) != FALSE);
 	ret = 1;
 
-err:	
-	FindClose(hFind);
-err_noclose:
-	if (wdir != NULL)
-		free(wdir);
-
+err:
+	if (d) OPENSSL_DIR_end(&d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
 
-#endif

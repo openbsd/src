@@ -73,6 +73,7 @@ static ERR_STRING_DATA BIO_str_functs[]=
 {ERR_FUNC(BIO_F_ACPT_STATE),	"ACPT_STATE"},
 {ERR_FUNC(BIO_F_BIO_ACCEPT),	"BIO_accept"},
 {ERR_FUNC(BIO_F_BIO_BER_GET_HEADER),	"BIO_BER_GET_HEADER"},
+{ERR_FUNC(BIO_F_BIO_CALLBACK_CTRL),	"BIO_callback_ctrl"},
 {ERR_FUNC(BIO_F_BIO_CTRL),	"BIO_ctrl"},
 {ERR_FUNC(BIO_F_BIO_GETHOSTBYNAME),	"BIO_gethostbyname"},
 {ERR_FUNC(BIO_F_BIO_GETS),	"BIO_gets"},
@@ -142,15 +143,12 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 
 void ERR_load_BIO_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(BIO_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,BIO_str_functs);
 		ERR_load_strings(0,BIO_str_reasons);
-#endif
-
 		}
+#endif
 	}

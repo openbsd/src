@@ -72,7 +72,7 @@
 #undef POSTFIX
 #define	POSTFIX	".rvk"
 
-static char *crl_usage[]={
+static const char *crl_usage[]={
 "usage: crl args\n",
 "\n",
 " -inform arg     - input format - default PEM (DER or PEM)\n",
@@ -108,14 +108,14 @@ int MAIN(int argc, char **argv)
 	char *infile=NULL,*outfile=NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
 	int fingerprint = 0;
-	char **pp;
+	const char **pp;
 	X509_STORE *store = NULL;
 	X509_STORE_CTX ctx;
 	X509_LOOKUP *lookup = NULL;
 	X509_OBJECT xobj;
 	EVP_PKEY *pkey;
 	int do_ver = 0;
-	const EVP_MD *md_alg,*digest=EVP_md5();
+	const EVP_MD *md_alg,*digest=EVP_sha1();
 
 	apps_startup();
 

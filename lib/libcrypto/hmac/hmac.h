@@ -58,17 +58,15 @@
 #ifndef HEADER_HMAC_H
 #define HEADER_HMAC_H
 
+#include <openssl/opensslconf.h>
+
 #ifdef OPENSSL_NO_HMAC
 #error HMAC is disabled.
 #endif
 
 #include <openssl/evp.h>
 
-#ifdef OPENSSL_FIPS
-#define HMAC_MAX_MD_CBLOCK	128
-#else
-#define HMAC_MAX_MD_CBLOCK	64
-#endif
+#define HMAC_MAX_MD_CBLOCK	128	/* largest known is SHA512 */
 
 #ifdef  __cplusplus
 extern "C" {
@@ -96,13 +94,12 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	       const EVP_MD *md); /* deprecated */
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl);
-void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
+void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-		    const unsigned char *d, int n, unsigned char *md,
+		    const unsigned char *d, size_t n, unsigned char *md,
 		    unsigned int *md_len);
 
-void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
 
 #ifdef  __cplusplus
 }

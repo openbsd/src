@@ -59,12 +59,12 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
+#include <openssl/e_os2.h>	/* OPENSSL_EXTERN, OPENSSL_NO_DES,
+				   DES_LONG (via openssl/opensslconf.h */
+
 #ifdef OPENSSL_NO_DES
 #error DES is disabled.
 #endif
-
-#include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
@@ -130,7 +130,7 @@ OPENSSL_DECLARE_GLOBAL(int,DES_rw_mode);	/* defaults to DES_PCBC_MODE */
 #define DES_rw_mode OPENSSL_GLOBAL_REF(DES_rw_mode)
 
 const char *DES_options(void);
-void DES_ecb3_encrypt(const unsigned char *input, unsigned char *output,
+void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
 		      DES_key_schedule *ks1,DES_key_schedule *ks2,
 		      DES_key_schedule *ks3, int enc);
 DES_LONG DES_cbc_cksum(const unsigned char *input,DES_cblock *output,
@@ -197,9 +197,10 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,DES_key_schedule *ks1,
 			    DES_key_schedule *ks2,DES_key_schedule *ks3,
 			    DES_cblock *ivec,int *num);
-
+#if 0
 void DES_xwhite_in2out(const_DES_cblock *DES_key,const_DES_cblock *in_white,
 		       DES_cblock *out_white);
+#endif
 
 int DES_enc_read(int fd,void *buf,int len,DES_key_schedule *sched,
 		 DES_cblock *iv);

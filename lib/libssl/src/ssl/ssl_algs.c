@@ -82,6 +82,16 @@ int SSL_library_init(void)
 	EVP_add_cipher(EVP_aes_192_cbc());
 	EVP_add_cipher(EVP_aes_256_cbc());
 #endif
+
+#ifndef OPENSSL_NO_CAMELLIA
+	EVP_add_cipher(EVP_camellia_128_cbc());
+	EVP_add_cipher(EVP_camellia_256_cbc());
+#endif
+
+#ifndef OPENSSL_NO_SEED
+	EVP_add_cipher(EVP_seed_cbc());
+#endif
+
 #ifndef OPENSSL_NO_MD2
 	EVP_add_digest(EVP_md2());
 #endif
@@ -101,11 +111,22 @@ int SSL_library_init(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	EVP_add_digest(EVP_ecdsa());
+#endif
 	/* If you want support for phased out ciphers, add the following */
 #if 0
 	EVP_add_digest(EVP_sha());
 	EVP_add_digest(EVP_dss());
 #endif
+#ifndef OPENSSL_NO_COMP
+	/* This will initialise the built-in compression algorithms.
+	   The value returned is a STACK_OF(SSL_COMP), but that can
+	   be discarded safely */
+	(void)SSL_COMP_get_compression_methods();
+#endif
+	/* initialize cipher/digest methods table */
+	ssl_load_ciphers();
 	return(1);
 	}
 

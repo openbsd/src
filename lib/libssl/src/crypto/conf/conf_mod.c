@@ -126,17 +126,18 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 	{
 	STACK_OF(CONF_VALUE) *values;
 	CONF_VALUE *vl;
-	char *vsection;
+	char *vsection = NULL;
 
 	int ret, i;
 
 	if (!cnf)
 		return 1;
 
-	if (appname == NULL)
-		appname = "openssl_conf";
+	if (appname)
+		vsection = NCONF_get_string(cnf, NULL, appname);
 
-	vsection = NCONF_get_string(cnf, NULL, appname); 
+	if (!appname || (!vsection && (flags & CONF_MFLAGS_DEFAULT_SECTION)))
+		vsection = NCONF_get_string(cnf, NULL, "openssl_conf");
 
 	if (!vsection)
 		{
@@ -231,7 +232,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 		if (!(flags & CONF_MFLAGS_SILENT))
 			{
 			char rcode[DECIMAL_SIZE(ret)+1];
-			CONFerr(CONF_F_CONF_MODULES_LOAD, CONF_R_MODULE_INITIALIZATION_ERROR);
+			CONFerr(CONF_F_MODULE_RUN, CONF_R_MODULE_INITIALIZATION_ERROR);
 			BIO_snprintf(rcode, sizeof rcode, "%-8d", ret);
 			ERR_add_error_data(6, "module=", name, ", value=", value, ", retcode=", rcode);
 			}
@@ -254,7 +255,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
 	path = NCONF_get_string(cnf, value, "path");
 	if (!path)
 		{
-		ERR_get_error();
+		ERR_clear_error();
 		path = name;
 		}
 	dso = DSO_load(NULL, path, NULL, 0);
@@ -431,7 +432,7 @@ void CONF_modules_unload(int all)
 		if (((md->links > 0) || !md->dso) && !all)
 			continue;
 		/* Since we're working in reverse this is OK */
-		sk_CONF_MODULE_delete(supported_modules, i);
+		(void)sk_CONF_MODULE_delete(supported_modules, i);
 		module_free(md);
 		}
 	if (sk_CONF_MODULE_num(supported_modules) == 0)

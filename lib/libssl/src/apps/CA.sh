@@ -32,7 +32,8 @@
 
 if [ -z "$OPENSSL" ]; then OPENSSL=openssl; fi
 
-DAYS="-days 365"
+DAYS="-days 365"	# 1 year
+CADAYS="-days 1095"	# 3 years
 REQ="$OPENSSL req $SSLEAY_CONFIG"
 CA="$OPENSSL ca $SSLEAY_CONFIG"
 VERIFY="$OPENSSL verify"
@@ -40,6 +41,7 @@ X509="$OPENSSL x509"
 
 CATOP=./demoCA
 CAKEY=./cakey.pem
+CAREQ=./careq.pem
 CACERT=./cacert.pem
 
 for i
@@ -72,7 +74,7 @@ case $i in
 	mkdir ${CATOP}/crl 
 	mkdir ${CATOP}/newcerts
 	mkdir ${CATOP}/private
-	echo "01" > ${CATOP}/serial
+	echo "00" > ${CATOP}/serial
 	touch ${CATOP}/index.txt
     fi
     if [ ! -f ${CATOP}/private/$CAKEY ]; then
@@ -85,8 +87,11 @@ case $i in
 	    RET=$?
 	else
 	    echo "Making CA certificate ..."
-	    $REQ -new -x509 -keyout ${CATOP}/private/$CAKEY \
-			   -out ${CATOP}/$CACERT $DAYS
+	    $REQ -new -keyout ${CATOP}/private/$CAKEY \
+			   -out ${CATOP}/$CAREQ
+	    $CA -out ${CATOP}/$CACERT $CADAYS -batch \
+			   -keyfile ${CATOP}/private/$CAKEY -selfsign \
+			   -infiles ${CATOP}/$CAREQ 
 	    RET=$?
 	fi
     fi

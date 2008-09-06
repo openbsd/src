@@ -66,6 +66,9 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
+#endif
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -83,7 +86,7 @@ int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cfla
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
-		X509err(X509_F_X509_PRINT_FP,ERR_R_BUF_LIB);
+		X509err(X509_F_X509_PRINT_EX_FP,ERR_R_BUF_LIB);
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);
@@ -226,6 +229,14 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			{
 			BIO_printf(bp,"%12sDSA Public Key:\n","");
 			DSA_print(bp,pkey->pkey.dsa,16);
+			}
+		else
+#endif
+#ifndef OPENSSL_NO_EC
+		if (pkey->type == EVP_PKEY_EC)
+			{
+			BIO_printf(bp, "%12sEC Public Key:\n","");
+			EC_KEY_print(bp, pkey->pkey.ec, 16);
 			}
 		else
 #endif
@@ -434,19 +445,18 @@ err:
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	{
 	char *s,*c,*b;
-	int ret=0,l,ll,i,first=1;
+	int ret=0,l,i;
 
-	ll=80-2-obase;
+	l=80-2-obase;
 
-	b=s=X509_NAME_oneline(name,NULL,0);
-	if (!*s)
+	b=X509_NAME_oneline(name,NULL,0);
+	if (!*b)
 		{
 		OPENSSL_free(b);
 		return 1;
 		}
-	s++; /* skip the first slash */
+	s=b+1; /* skip the first slash */
 
-	l=ll;
 	c=s;
 	for (;;)
 		{
@@ -468,20 +478,9 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 			(*s == '\0'))
 #endif
 			{
-			if ((l <= 0) && !first)
-				{
-				first=0;
-				if (BIO_write(bp,"\n",1) != 1) goto err;
-				for (i=0; i<obase; i++)
-					{
-					if (BIO_write(bp," ",1) != 1) goto err;
-					}
-				l=ll;
-				}
 			i=s-c;
 			if (BIO_write(bp,c,i) != i) goto err;
-			c+=i;
-			c++;
+			c=s+1;	/* skip following slash */
 			if (*s != '\0')
 				{
 				if (BIO_write(bp,", ",2) != 2) goto err;

@@ -52,7 +52,7 @@
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
-#include <openssl/e_os2.h>
+#include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_NO_AES
 #error AES is disabled.
@@ -66,17 +66,17 @@
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
 
-#if defined(OPENSSL_FIPS)
-#define FIPS_AES_SIZE_T	int
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /* This should be a hidden type, but EVP requires that the size be known */
 struct aes_key_st {
+#ifdef AES_LONG
     unsigned long rd_key[4 *(AES_MAXNR + 1)];
+#else
+    unsigned int rd_key[4 *(AES_MAXNR + 1)];
+#endif
     int rounds;
 };
 typedef struct aes_key_st AES_KEY;
@@ -119,6 +119,23 @@ void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char ecount_buf[AES_BLOCK_SIZE],
 	unsigned int *num);
 
+/* For IGE, see also http://www.links.org/files/openssl-ige.pdf */
+/* NB: the IV is _two_ blocks long */
+void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
+		     const unsigned long length, const AES_KEY *key,
+		     unsigned char *ivec, const int enc);
+/* NB: the IV is _four_ blocks long */
+void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
+			const unsigned long length, const AES_KEY *key,
+			const AES_KEY *key2, const unsigned char *ivec,
+			const int enc);
+
+int AES_wrap_key(AES_KEY *key, const unsigned char *iv,
+		unsigned char *out,
+		const unsigned char *in, unsigned int inlen);
+int AES_unwrap_key(AES_KEY *key, const unsigned char *iv,
+		unsigned char *out,
+		const unsigned char *in, unsigned int inlen);
 
 #ifdef  __cplusplus
 }

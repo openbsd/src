@@ -75,6 +75,8 @@ static ERR_STRING_DATA CONF_str_functs[]=
 {ERR_FUNC(CONF_F_CONF_LOAD_BIO),	"CONF_load_bio"},
 {ERR_FUNC(CONF_F_CONF_LOAD_FP),	"CONF_load_fp"},
 {ERR_FUNC(CONF_F_CONF_MODULES_LOAD),	"CONF_modules_load"},
+{ERR_FUNC(CONF_F_DEF_LOAD),	"DEF_LOAD"},
+{ERR_FUNC(CONF_F_DEF_LOAD_BIO),	"DEF_LOAD_BIO"},
 {ERR_FUNC(CONF_F_MODULE_INIT),	"MODULE_INIT"},
 {ERR_FUNC(CONF_F_MODULE_LOAD_DSO),	"MODULE_LOAD_DSO"},
 {ERR_FUNC(CONF_F_MODULE_RUN),	"MODULE_RUN"},
@@ -116,15 +118,12 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 
 void ERR_load_CONF_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(CONF_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,CONF_str_functs);
 		ERR_load_strings(0,CONF_str_reasons);
-#endif
-
 		}
+#endif
 	}

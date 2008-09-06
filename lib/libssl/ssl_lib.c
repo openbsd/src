@@ -110,7 +110,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifdef REF_CHECK
 #  include <assert.h>
@@ -121,7 +125,11 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
-#include <openssl/fips.h>
+#include <openssl/rand.h>
+#include <openssl/ocsp.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -132,7 +140,14 @@ SSL3_ENC_METHOD ssl3_undef_enc_method={
 	ssl_undefined_function,
 	(int (*)(SSL *, unsigned char *, unsigned char *, int))ssl_undefined_function,
 	(int (*)(SSL*, int))ssl_undefined_function,
-	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function
+	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function,
+	0,	/* finish_mac_length */
+	(int (*)(SSL *, EVP_MD_CTX *, unsigned char *))ssl_undefined_function,
+	NULL,	/* client_finished_label */
+	0,	/* client_finished_label_len */
+	NULL,	/* server_finished_label */
+	0,	/* server_finished_label_len */
+	(int (*)(int))ssl_undefined_function
 	};
 
 int SSL_clear(SSL *s)
@@ -272,19 +287,40 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->msg_callback=ctx->msg_callback;
 	s->msg_callback_arg=ctx->msg_callback_arg;
 	s->verify_mode=ctx->verify_mode;
+#if 0
 	s->verify_depth=ctx->verify_depth;
+#endif
 	s->sid_ctx_length=ctx->sid_ctx_length;
 	OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
 	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_callback=ctx->default_verify_callback;
 	s->generate_session_id=ctx->generate_session_id;
+
+	s->param = X509_VERIFY_PARAM_new();
+	if (!s->param)
+		goto err;
+	X509_VERIFY_PARAM_inherit(s->param, ctx->param);
+#if 0
 	s->purpose = ctx->purpose;
 	s->trust = ctx->trust;
+#endif
 	s->quiet_shutdown=ctx->quiet_shutdown;
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
-
+#ifndef OPENSSL_NO_TLSEXT
+	s->tlsext_debug_cb = 0;
+	s->tlsext_debug_arg = NULL;
+	s->tlsext_ticket_expected = 0;
+	s->tlsext_status_type = -1;
+	s->tlsext_status_expected = 0;
+	s->tlsext_ocsp_ids = NULL;
+	s->tlsext_ocsp_exts = NULL;
+	s->tlsext_ocsp_resp = NULL;
+	s->tlsext_ocsp_resplen = -1;
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	s->initial_ctx=ctx;
+#endif
 	s->verify_result=X509_V_OK;
 
 	s->method=ctx->method;
@@ -393,22 +429,22 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 	{
-	return X509_PURPOSE_set(&s->purpose, purpose);
+	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
 	}
 
 int SSL_set_purpose(SSL *s, int purpose)
 	{
-	return X509_PURPOSE_set(&s->purpose, purpose);
+	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
 	}
 
 int SSL_CTX_set_trust(SSL_CTX *s, int trust)
 	{
-	return X509_TRUST_set(&s->trust, trust);
+	return X509_VERIFY_PARAM_set_trust(s->param, trust);
 	}
 
 int SSL_set_trust(SSL *s, int trust)
 	{
-	return X509_TRUST_set(&s->trust, trust);
+	return X509_VERIFY_PARAM_set_trust(s->param, trust);
 	}
 
 void SSL_free(SSL *s)
@@ -430,6 +466,9 @@ void SSL_free(SSL *s)
 		abort(); /* ok */
 		}
 #endif
+
+	if (s->param)
+		X509_VERIFY_PARAM_free(s->param);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
@@ -467,7 +506,16 @@ void SSL_free(SSL *s)
 	/* Free up if allocated */
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
-
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
+	if (s->tlsext_ocsp_exts)
+		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+						X509_EXTENSION_free);
+	if (s->tlsext_ocsp_ids)
+		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+	if (s->tlsext_ocsp_resp)
+		OPENSSL_free(s->tlsext_ocsp_resp);
+#endif
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
 
@@ -643,7 +691,7 @@ int SSL_get_verify_mode(const SSL *s)
 
 int SSL_get_verify_depth(const SSL *s)
 	{
-	return(s->verify_depth);
+	return X509_VERIFY_PARAM_get_depth(s->param);
 	}
 
 int (*SSL_get_verify_callback(const SSL *s))(int,X509_STORE_CTX *)
@@ -658,7 +706,7 @@ int SSL_CTX_get_verify_mode(const SSL_CTX *ctx)
 
 int SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 	{
-	return(ctx->verify_depth);
+	return X509_VERIFY_PARAM_get_depth(ctx->param);
 	}
 
 int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int,X509_STORE_CTX *)
@@ -676,7 +724,7 @@ void SSL_set_verify(SSL *s,int mode,
 
 void SSL_set_verify_depth(SSL *s,int depth)
 	{
-	s->verify_depth=depth;
+	X509_VERIFY_PARAM_set_depth(s->param, depth);
 	}
 
 void SSL_set_read_ahead(SSL *s,int yes)
@@ -850,7 +898,7 @@ int SSL_peek(SSL *s,void *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
-		SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
+		SSLerr(SSL_F_SSL_PEEK, SSL_R_UNINITIALIZED);
 		return -1;
 		}
 
@@ -941,12 +989,19 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		l=s->max_cert_list;
 		s->max_cert_list=larg;
 		return(l);
+	case SSL_CTRL_SET_MTU:
+		if (SSL_version(s) == DTLS1_VERSION)
+			{
+			s->d1->mtu = larg;
+			return larg;
+			}
+		return 0;
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
 	}
 
-long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
+long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 	{
 	switch(cmd)
 		{
@@ -1034,7 +1089,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,void *parg)
 		}
 	}
 
-long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
+long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	{
 	switch(cmd)
 		{
@@ -1269,6 +1324,29 @@ err:
 	return(NULL);
 	}
 
+#ifndef OPENSSL_NO_TLSEXT
+/** return a servername extension value if provided in Client Hello, or NULL.
+ * So far, only host_name types are defined (RFC 3546).
+ */
+
+const char *SSL_get_servername(const SSL *s, const int type)
+	{
+	if (type != TLSEXT_NAMETYPE_host_name)
+		return NULL;
+
+	return s->session && !s->tlsext_hostname ?
+		s->session->tlsext_hostname :
+		s->tlsext_hostname;
+	}
+
+int SSL_get_servername_type(const SSL *s)
+	{
+	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname))
+		return TLSEXT_NAMETYPE_host_name;
+	return -1;
+	}
+#endif
+
 unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
 	{
 	unsigned long l;
@@ -1311,14 +1389,6 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_NULL_SSL_METHOD_PASSED);
 		return(NULL);
 		}
-
-#ifdef OPENSSL_FIPS
-	if (FIPS_mode() && (meth->version < TLS1_VERSION))	
-		{
-		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-		return NULL;
-		}
-#endif
 
 	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0)
 		{
@@ -1368,7 +1438,9 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->msg_callback=0;
 	ret->msg_callback_arg=NULL;
 	ret->verify_mode=SSL_VERIFY_NONE;
+#if 0
 	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
+#endif
 	ret->sid_ctx_length=0;
 	ret->default_verify_callback=NULL;
 	if ((ret->cert=ssl_cert_new()) == NULL)
@@ -1377,6 +1449,8 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->default_passwd_callback=0;
 	ret->default_passwd_callback_userdata=NULL;
 	ret->client_cert_cb=0;
+	ret->app_gen_cookie_cb=0;
+	ret->app_verify_cookie_cb=0;
 
 	ret->sessions=lh_new(LHASH_HASH_FN(SSL_SESSION_hash),
 			LHASH_COMP_FN(SSL_SESSION_cmp));
@@ -1393,6 +1467,10 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_LIBRARY_HAS_NO_CIPHERS);
 		goto err2;
 		}
+
+	ret->param = X509_VERIFY_PARAM_new();
+	if (!ret->param)
+		goto err;
 
 	if ((ret->rsa_md5=EVP_get_digestbyname("ssl2-md5")) == NULL)
 		{
@@ -1417,6 +1495,20 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
+
+#ifndef OPENSSL_NO_TLSEXT
+	ret->tlsext_servername_callback = 0;
+	ret->tlsext_servername_arg = NULL;
+	/* Setup RFC4507 ticket keys */
+	if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+		ret->options |= SSL_OP_NO_TICKET;
+
+	ret->tlsext_status_cb = 0;
+	ret->tlsext_status_arg = NULL;
+
+#endif
 
 	return(ret);
 err:
@@ -1449,6 +1541,9 @@ void SSL_CTX_free(SSL_CTX *a)
 		abort(); /* ok */
 		}
 #endif
+
+	if (a->param)
+		X509_VERIFY_PARAM_free(a->param);
 
 	/*
 	 * Free internal session cache. However: the remove_cb() may reference
@@ -1512,7 +1607,7 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
 	{
-	ctx->verify_depth=depth;
+	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 	}
 
 void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
@@ -1522,6 +1617,13 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
 	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
+	int have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+#ifndef OPENSSL_NO_ECDH
+	int have_ecdh_tmp;
+#endif
+	X509 *x = NULL;
+	EVP_PKEY *ecc_pkey = NULL;
+	int signature_nid = 0;
 
 	if (c == NULL) return;
 
@@ -1542,6 +1644,9 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	dh_tmp=dh_tmp_export=0;
 #endif
 
+#ifndef OPENSSL_NO_ECDH
+	have_ecdh_tmp=(c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
+#endif
 	cpk= &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc= (cpk->x509 != NULL && cpk->privatekey != NULL);
 	rsa_enc_export=(rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
@@ -1556,7 +1661,8 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 /* FIX THIS EAY EAY EAY */
 	dh_dsa=  (cpk->x509 != NULL && cpk->privatekey != NULL);
 	dh_dsa_export=(dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
-
+	cpk= &(c->pkeys[SSL_PKEY_ECC]);
+	have_ecc_cert= (cpk->x509 != NULL && cpk->privatekey != NULL);
 	mask=0;
 	emask=0;
 
@@ -1613,9 +1719,125 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	emask|=SSL_kKRB5|SSL_aKRB5;
 #endif
 
+	/* An ECC certificate may be usable for ECDH and/or
+	 * ECDSA cipher suites depending on the key usage extension.
+	 */
+	if (have_ecc_cert)
+		{
+                /* This call populates extension flags (ex_flags) */
+		x = (c->pkeys[SSL_PKEY_ECC]).x509;
+		X509_check_purpose(x, -1, 0);
+		ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
+		    (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
+		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
+		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
+		ecc_pkey = X509_get_pubkey(x);
+		ecc_pkey_size = (ecc_pkey != NULL) ? 
+		    EVP_PKEY_bits(ecc_pkey) : 0;
+		EVP_PKEY_free(ecc_pkey);
+		if ((x->sig_alg) && (x->sig_alg->algorithm))
+			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+#ifndef OPENSSL_NO_ECDH
+		if (ecdh_ok)
+			{
+			if ((signature_nid == NID_md5WithRSAEncryption) ||
+			    (signature_nid == NID_md4WithRSAEncryption) ||
+			    (signature_nid == NID_md2WithRSAEncryption))
+				{
+				mask|=SSL_kECDH|SSL_aRSA;
+				if (ecc_pkey_size <= 163)
+					emask|=SSL_kECDH|SSL_aRSA;
+				}
+			if (signature_nid == NID_ecdsa_with_SHA1)
+				{
+				mask|=SSL_kECDH|SSL_aECDSA;
+				if (ecc_pkey_size <= 163)
+					emask|=SSL_kECDH|SSL_aECDSA;
+				}
+			}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+		if (ecdsa_ok)
+			{
+			mask|=SSL_aECDSA;
+			emask|=SSL_aECDSA;
+			}
+#endif
+		}
+
+#ifndef OPENSSL_NO_ECDH
+	if (have_ecdh_tmp)
+		{
+		mask|=SSL_kECDHE;
+		emask|=SSL_kECDHE;
+		}
+#endif
 	c->mask=mask;
 	c->export_mask=emask;
 	c->valid=1;
+	}
+
+/* This handy macro borrowed from crypto/x509v3/v3_purp.c */
+#define ku_reject(x, usage) \
+	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
+
+int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
+	{
+	unsigned long alg = cs->algorithms;
+	EVP_PKEY *pkey = NULL;
+	int keysize = 0;
+	int signature_nid = 0;
+
+	if (SSL_C_IS_EXPORT(cs))
+		{
+		/* ECDH key length in export ciphers must be <= 163 bits */
+		pkey = X509_get_pubkey(x);
+		if (pkey == NULL) return 0;
+		keysize = EVP_PKEY_bits(pkey);
+		EVP_PKEY_free(pkey);
+		if (keysize > 163) return 0;
+		}
+
+	/* This call populates the ex_flags field correctly */
+	X509_check_purpose(x, -1, 0);
+	if ((x->sig_alg) && (x->sig_alg->algorithm))
+		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+	if (alg & SSL_kECDH) 
+		{
+		/* key usage, if present, must allow key agreement */
+		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
+			{
+			return 0;
+			}
+		if (alg & SSL_aECDSA) 
+			{
+			/* signature alg must be ECDSA */
+			if (signature_nid != NID_ecdsa_with_SHA1)
+				{
+				return 0;
+				}
+			}
+		if (alg & SSL_aRSA)
+			{
+			/* signature alg must be RSA */
+			if ((signature_nid != NID_md5WithRSAEncryption) &&
+			    (signature_nid != NID_md4WithRSAEncryption) &&
+			    (signature_nid != NID_md2WithRSAEncryption))
+				{
+				return 0;
+				}
+			}
+		} 
+	else if (alg & SSL_aECDSA)
+		{
+		/* key usage, if present, must allow signing */
+		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
+			{
+			return 0;
+			}
+		}
+
+	return 1;  /* all checks are ok */
 	}
 
 /* THIS NEEDS CLEANING UP */
@@ -1632,7 +1854,26 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	mask=is_export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 
-	if 	(kalg & SSL_kDHr)
+	if (kalg & SSL_kECDH)
+		{
+		/* we don't need to look at SSL_kECDHE 
+		 * since no certificate is needed for
+		 * anon ECDH and for authenticated
+		 * ECDHE, the check for the auth 
+		 * algorithm will set i correctly
+		 * NOTE: For ECDH-RSA, we need an ECC
+		 * not an RSA cert but for ECDHE-RSA
+		 * we need an RSA cert. Placing the
+		 * checks for SSL_kECDH before RSA
+		 * checks ensures the correct cert is chosen.
+		 */
+		i=SSL_PKEY_ECC;
+		}
+	else if (kalg & SSL_aECDSA)
+		{
+		i=SSL_PKEY_ECC;
+		}
+	else if (kalg & SSL_kDHr)
 		i=SSL_PKEY_DH_RSA;
 	else if (kalg & SSL_kDHd)
 		i=SSL_PKEY_DH_DSA;
@@ -1656,6 +1897,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		return(NULL);
 		}
 	if (c->pkeys[i].x509 == NULL) return(NULL);
+
 	return(c->pkeys[i].x509);
 	}
 
@@ -1679,6 +1921,9 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
 		else
 			return(NULL);
 		}
+	else if ((alg & SSL_aECDSA) &&
+	         (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
+		return(c->pkeys[SSL_PKEY_ECC].privatekey);
 	else /* if (alg & SSL_aNULL) */
 		{
 		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,ERR_R_INTERNAL_ERROR);
@@ -1884,6 +2129,12 @@ int ssl_undefined_function(SSL *s)
 	return(0);
 	}
 
+int ssl_undefined_void_function(void)
+	{
+	SSLerr(SSL_F_SSL_UNDEFINED_VOID_FUNCTION,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	return(0);
+	}
+
 int ssl_undefined_const_function(const SSL *s)
 	{
 	SSLerr(SSL_F_SSL_UNDEFINED_CONST_FUNCTION,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1999,8 +2250,8 @@ SSL *SSL_dup(SSL *s)
 	ret->rstate=s->rstate;
 	ret->init_num = 0; /* would have to copy ret->init_buf, ret->init_msg, ret->init_num, ret->init_off */
 	ret->hit=s->hit;
-	ret->purpose=s->purpose;
-	ret->trust=s->trust;
+
+	X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
 	/* dup the cipher_list and cipher_list_by_id stacks */
 	if (s->cipher_list != NULL)
@@ -2052,6 +2303,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		OPENSSL_free(s->enc_write_ctx);
 		s->enc_write_ctx=NULL;
 		}
+#ifndef OPENSSL_NO_COMP
 	if (s->expand != NULL)
 		{
 		COMP_CTX_free(s->expand);
@@ -2062,6 +2314,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		COMP_CTX_free(s->compress);
 		s->compress=NULL;
 		}
+#endif
 	}
 
 /* Fix this function so that it takes an optional type parameter */
@@ -2088,6 +2341,31 @@ SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 		return(s->session->cipher);
 	return(NULL);
 	}
+#ifdef OPENSSL_NO_COMP
+const void *SSL_get_current_compression(SSL *s)
+	{
+	return NULL;
+	}
+const void *SSL_get_current_expansion(SSL *s)
+	{
+	return NULL;
+	}
+#else
+
+const COMP_METHOD *SSL_get_current_compression(SSL *s)
+	{
+	if (s->compress != NULL)
+		return(s->compress->meth);
+	return(NULL);
+	}
+
+const COMP_METHOD *SSL_get_current_expansion(SSL *s)
+	{
+	if (s->expand != NULL)
+		return(s->expand->meth);
+	return(NULL);
+	}
+#endif
 
 int ssl_init_wbio_buffer(SSL *s,int push)
 	{
@@ -2181,6 +2459,24 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 	return(ssl->ctx);
 	}
 
+SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
+	{
+	if (ssl->ctx == ctx)
+		return ssl->ctx;
+#ifndef OPENSSL_NO_TLSEXT
+	if (ctx == NULL)
+		ctx = ssl->initial_ctx;
+#endif
+	if (ssl->cert != NULL)
+		ssl_cert_free(ssl->cert);
+	ssl->cert = ssl_cert_dup(ctx->cert);
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	if (ssl->ctx != NULL)
+		SSL_CTX_free(ssl->ctx); /* decrement reference count */
+	ssl->ctx = ctx;
+	return(ssl->ctx);
+	}
+
 #ifndef OPENSSL_NO_STDIO
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 	{
@@ -2190,19 +2486,19 @@ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 		const char *CApath)
 	{
-	int r;
-	r=X509_STORE_load_locations(ctx->cert_store,CAfile,CApath);
-	return r;
+	return(X509_STORE_load_locations(ctx->cert_store,CAfile,CApath));
 	}
 #endif
 
 void SSL_set_info_callback(SSL *ssl,
-			   void (*cb)(const SSL *ssl,int type,int val))
+	void (*cb)(const SSL *ssl,int type,int val))
 	{
 	ssl->info_callback=cb;
 	}
 
-void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,int type,int val)
+/* One compiler (Diab DCC) doesn't like argument names in returned
+   function pointer.  */
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/) 
 	{
 	return ssl->info_callback;
 	}
@@ -2289,14 +2585,14 @@ void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,
 							  int is_export,
 							  int keylength))
     {
-    SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,(void (*)())cb);
+    SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,(void (*)(void))cb);
     }
 
 void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,
 						  int is_export,
 						  int keylength))
     {
-    SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,(void (*)())cb);
+    SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,(void (*)(void))cb);
     }
 #endif
 
@@ -2325,24 +2621,38 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
 	{
-	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
+	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)(void))dh);
 	}
 
 void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 						int keylength))
 	{
-	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
+	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)(void))dh);
+	}
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+							int keylength))
+	{
+	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
+	}
+
+void SSL_set_tmp_ecdh_callback(SSL *ssl,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+						int keylength))
+	{
+	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
 	}
 #endif
 
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
 	{
-	SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_MSG_CALLBACK, (void (*)())cb);
+	SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
 	}
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
 	{
-	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)())cb);
+	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
 	}
 
 

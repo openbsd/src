@@ -31,6 +31,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why does my browser give a warning about a mismatched hostname?
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
+* How can I set up a bundle of commercial root CA certificates?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -46,6 +48,9 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail on MacOS X?
 * Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 * Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+* Why does compiler fail to compile sha512.c?
+* Test suite still fails, what to do?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -62,6 +67,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why doesn't my server application receive a client certificate?
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
 * I think I've detected a memory leak, is this a bug?
+* Why does Valgrind complain about the use of uninitialized data?
 
 ===============================================================================
 
@@ -70,7 +76,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.7j was released on May 4, 2006.
+OpenSSL 0.9.8h was released on May 28th, 2008.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -152,7 +158,8 @@ Use MD5 to check that a tarball from a mirror site is identical:
    md5sum TARBALL | awk '{print $1;}' | cmp - TARBALL.md5
 
 You can check authenticity using pgp or gpg. You need the OpenSSL team
-member public key used to sign it (download it from a key server). Then
+member public key used to sign it (download it from a key server, see a
+list of keys at <URL: http://www.openssl.org/about/>). Then
 just do:
 
    pgp TARBALL.asc
@@ -166,8 +173,8 @@ you if you want to use OpenSSL.  For information on intellectual
 property rights, please consult a lawyer.  The OpenSSL team does not
 offer legal advice.
 
-You can configure OpenSSL so as not to use RC5 and IDEA by using
- ./config no-rc5 no-idea
+You can configure OpenSSL so as not to use IDEA, MDC2 and RC5 by using
+ ./config no-idea no-mdc2 no-rc5
 
 
 * Can I use OpenSSL with GPL software?
@@ -383,6 +390,57 @@ interface, the "-nameopt" option could be introduded. See the manual
 page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
 
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
+
+The term "128 bit certificate" is a highly misleading marketing term. It does
+*not* refer to the size of the public key in the certificate! A certificate
+containing a 128 bit RSA key would have negligible security.
+
+There were various other names such as "magic certificates", "SGC
+certificates", "step up certificates" etc.
+
+You can't generally create such a certificate using OpenSSL but there is no
+need to any more. Nowadays web browsers using unrestricted strong encryption
+are generally available.
+
+When there were tight export restrictions on the export of strong encryption
+software from the US only weak encryption algorithms could be freely exported
+(initially 40 bit and then 56 bit). It was widely recognised that this was
+inadequate. A relaxation the rules allowed the use of strong encryption but
+only to an authorised server.
+
+Two slighly different techniques were developed to support this, one used by
+Netscape was called "step up", the other used by MSIE was called "Server Gated
+Cryptography" (SGC). When a browser initially connected to a server it would
+check to see if the certificate contained certain extensions and was issued by
+an authorised authority. If these test succeeded it would reconnect using
+strong encryption.
+
+Only certain (initially one) certificate authorities could issue the
+certificates and they generally cost more than ordinary certificates.
+
+Although OpenSSL can create certificates containing the appropriate extensions
+the certificate would not come from a permitted authority and so would not
+be recognized.
+
+The export laws were later changed to allow almost unrestricted use of strong
+encryption so these certificates are now obsolete.
+
+
+* How can I set up a bundle of commercial root CA certificates?
+
+The OpenSSL software is shipped without any root CA certificate as the
+OpenSSL project does not have any policy on including or excluding
+any specific CA and does not intend to set up such a policy. Deciding
+about which CAs to support is up to application developers or
+administrators.
+
+Other projects do have other policies so you can for example extract the CA
+bundle used by Mozilla and/or modssl as described in this article:
+
+  http://www.mail-archive.com/modssl-users@modssl.org/msg16980.html
+
+
 [BUILD] =======================================================================
 
 * Why does the linker complain about undefined symbols?
@@ -462,7 +520,7 @@ get the best result from OpenSSL.  A bit more complicated solution is the
 following:
 
 ----- snip:start -----
-  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile | \
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
        sed -e 's/ -O[0-9] / -O0 /'`"
   rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
   make
@@ -472,7 +530,7 @@ This will only compile sha_dgst.c with -O0, the rest with the optimization
 level chosen by the configuration process.  When the above is done, do the
 test and installation and you're set.
 
-3. Reconfigure the toolkit with no-sha0 option to leave out SHA0. It
+3. Reconfigure the toolkit with no-sha0 option to leave out SHA0. It 
 should not be used and is not used in SSL/TLS nor any other recognized
 protocol in either case.
 
@@ -597,6 +655,35 @@ Reportedly elder *BSD a.out platforms also suffer from this problem and
 remedy should be same. Provided binary is statically linked and should be
 working across wider range of *BSD branches, not just OpenBSD.
 
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+
+If the test program in question fails withs SIGILL, Illegal Instruction
+exception, then you more than likely to run SSE2-capable CPU, such as
+Intel P4, under control of kernel which does not support SSE2
+instruction extentions. See accompanying INSTALL file and
+OPENSSL_ia32cap(3) documentation page for further information.
+
+* Why does compiler fail to compile sha512.c?
+
+OpenSSL SHA-512 implementation depends on compiler support for 64-bit
+integer type. Few elder compilers [ULTRIX cc, SCO compiler to mention a
+couple] lack support for this and therefore are incapable of compiling
+the module in question. The recommendation is to disable SHA-512 by
+adding no-sha512 to ./config [or ./Configure] command line. Another
+possible alternative might be to switch to GCC.
+
+* Test suite still fails, what to do?
+
+Another common reason for failure to complete some particular test is
+simply bad code generated by a buggy component in toolchain or deficiency
+in run-time environment. There are few cases documented in PROBLEMS file,
+consult it for possible workaround before you beat the drum. Even if you
+don't find solution or even mention there, do reserve for possibility of
+a compiler bug. Compiler bugs might appear in rather bizarre ways, they
+never make sense, and tend to emerge when you least expect them. In order
+to identify one, drop optimization level, e.g. by editing CFLAG line in
+top-level Makefile, recompile and re-run the test.
+
 [PROG] ========================================================================
 
 * Is OpenSSL thread-safe?
@@ -608,8 +695,9 @@ libraries.  If your platform is not one of these, consult the INSTALL
 file.
 
 Multi-threaded applications must provide two callback functions to
-OpenSSL.  This is described in the threads(3) manpage.
-
+OpenSSL by calling CRYPTO_set_locking_callback() and
+CRYPTO_set_id_callback().  This is described in the threads(3)
+manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 
@@ -629,10 +717,10 @@ your application must link  against the same by which OpenSSL was
 built.  If you are using MS Visual C++ (Studio) this can be changed
 by:
 
-1.  Select Settings... from the Project Menu.
-2.  Select the C/C++ Tab.
-3.  Select "Code Generation from the "Category" drop down list box
-4.  Select the Appropriate library (see table below) from the "Use
+ 1. Select Settings... from the Project Menu.
+ 2. Select the C/C++ Tab.
+ 3. Select "Code Generation from the "Category" drop down list box
+ 4. Select the Appropriate library (see table below) from the "Use
     run-time library" drop down list box.  Perform this step for both
     your debug and release versions of your application (look at the
     top left of the settings panel to change between the two)
@@ -651,30 +739,44 @@ by:
 Note that debug and release libraries are NOT interchangeable.  If you
 built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 
+As per 0.9.8 the above limitation is eliminated for .DLLs. OpenSSL
+.DLLs compiled with some specific run-time option [we insist on the
+default /MD] can be deployed with application compiled with different
+option or even different compiler. But there is a catch! Instead of
+re-compiling OpenSSL toolkit, as you would have to with prior versions,
+you have to compile small C snippet with compiler and/or options of
+your choice. The snippet gets installed as
+<install-root>/include/openssl/applink.c and should be either added to
+your application project or simply #include-d in one [and only one]
+of your application source files. Failure to link this shim module
+into your application manifests itself as fatal "no OPENSSL_Applink"
+run-time error. An explicit reminder is due that in this situation
+[mixing compiler options] it is as important to add CRYPTO_malloc_init
+prior first call to OpenSSL.
 
 * How do I read or write a DER encoded buffer using the ASN1 functions?
 
 You have two options. You can either use a memory BIO in conjunction
-with the i2d_XXX_bio() or d2i_XXX_bio() functions or you can use the
-i2d_XXX(), d2i_XXX() functions directly. Since these are often the
+with the i2d_*_bio() or d2i_*_bio() functions or you can use the
+i2d_*(), d2i_*() functions directly. Since these are often the
 cause of grief here are some code fragments using PKCS7 as an example:
 
-unsigned char *buf, *p;
-int len;
+ unsigned char *buf, *p;
+ int len;
 
-len = i2d_PKCS7(p7, NULL);
-buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
-p = buf;
-i2d_PKCS7(p7, &p);
+ len = i2d_PKCS7(p7, NULL);
+ buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
+ p = buf;
+ i2d_PKCS7(p7, &p);
 
 At this point buf contains the len bytes of the DER encoding of
 p7.
 
 The opposite assumes we already have len bytes in buf:
 
-unsigned char *p;
-p = buf;
-p7 = d2i_PKCS7(NULL, &p, len);
+ unsigned char *p;
+ p = buf;
+ p7 = d2i_PKCS7(NULL, &p, len);
 
 At this point p7 contains a valid PKCS7 structure of NULL if an error
 occurred. If an error occurred ERR_print_errors(bio) should give more
@@ -736,11 +838,11 @@ code itself (the hex digits after the second colon).
 
 * Why do I get errors about unknown algorithms?
 
-This can happen under several circumstances such as reading in an
-encrypted private key or attempting to decrypt a PKCS#12 file. The cause
-is forgetting to load OpenSSL's table of algorithms with
-OpenSSL_add_all_algorithms(). See the manual page for more information.
-
+The cause is forgetting to load OpenSSL's table of algorithms with
+OpenSSL_add_all_algorithms(). See the manual page for more information. This
+can cause several problems such as being unable to read in an encrypted
+PEM file, unable to decrypt a PKCS#12 file or signature failure when
+verifying certificates.
 
 * Why can't the OpenSSH configure script detect OpenSSL?
 
@@ -806,6 +908,16 @@ thread-safe):
 "Brutal" (thread-unsafe) Application-global cleanup functions:
 
   ERR_free_strings(), EVP_cleanup() and CRYPTO_cleanup_all_ex_data().
+
+
+* Why does Valgrind complain about the use of uninitialized data?
+
+When OpenSSL's PRNG routines are called to generate random numbers the supplied
+buffer contents are mixed into the entropy pool: so it technically does not
+matter whether the buffer is initialized at this point or not.  Valgrind (and
+other test tools) will complain about this. When using Valgrind, make sure the
+OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
+to get rid of these warnings.
 
 
 ===============================================================================

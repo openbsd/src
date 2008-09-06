@@ -218,7 +218,7 @@ int MAIN(int argc, char **argv)
 		int chunk;
 
 		chunk = num;
-		if (chunk > sizeof buf)
+		if (chunk > (int)sizeof(buf))
 			chunk = sizeof buf;
 		r = RAND_bytes(buf, chunk);
 		if (r <= 0)
@@ -232,7 +232,7 @@ int MAIN(int argc, char **argv)
 		}
 		num -= chunk;
 		}
-	BIO_flush(out);
+	(void)BIO_flush(out);
 
 	app_RAND_write_file(NULL, bio_err);
 	ret = 0;

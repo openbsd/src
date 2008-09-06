@@ -14,7 +14,6 @@
 # not contain symbolic links and that the parent of / is never referenced.
 # Apart from this, this script should be able to handle even the most
 # pathological cases.
-#
 
 use Cwd;
 

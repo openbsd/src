@@ -69,7 +69,7 @@
 #include <openssl/des.h>
 #endif
 
-const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
+const char PEM_version[]="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
 
@@ -81,7 +81,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 #ifdef OPENSSL_NO_FP_API
 	/* We should not ever call the default callback routine from
 	 * windows. */
-	PEMerr(PEM_F_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	PEMerr(PEM_F_PEM_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(-1);
 #else
 	int i,j;
@@ -102,7 +102,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 		i=EVP_read_pw_string(buf,num,prompt,w);
 		if (i != 0)
 			{
-			PEMerr(PEM_F_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
+			PEMerr(PEM_F_PEM_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
 			memset(buf,0,(unsigned int)num);
 			return(-1);
 			}
@@ -158,11 +158,11 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	}
 
 #ifndef OPENSSL_NO_FP_API
-char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
-	     pem_password_cb *cb, void *u)
+void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
+		    pem_password_cb *cb, void *u)
 	{
         BIO *b;
-        char *ret;
+        void *ret;
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
@@ -195,6 +195,8 @@ static int check_pem(const char *nm, const char *name)
 	if(!strcmp(nm,PEM_STRING_DSA) &&
 		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
 
+ 	if(!strcmp(nm,PEM_STRING_ECPRIVATEKEY) &&
+ 		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
 	/* Permit older strings */
 
 	if(!strcmp(nm,PEM_STRING_X509_OLD) &&
@@ -258,9 +260,9 @@ err:
 	}
 
 #ifndef OPENSSL_NO_FP_API
-int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
-	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     pem_password_cb *callback, void *u)
+int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
+		   char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		   int klen, pem_password_cb *callback, void *u)
         {
         BIO *b;
         int ret;
@@ -277,9 +279,9 @@ int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
         }
 #endif
 
-int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
-	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     pem_password_cb *callback, void *u)
+int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
+		       char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		       int klen, pem_password_cb *callback, void *u)
 	{
 	EVP_CIPHER_CTX ctx;
 	int dsize=0,i,j,ret=0;
@@ -336,7 +338,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 			kstr=(unsigned char *)buf;
 			}
 		RAND_add(data,i,0);/* put in the RSA key. */
-		OPENSSL_assert(enc->iv_len <= sizeof iv);
+		OPENSSL_assert(enc->iv_len <= (int)sizeof(iv));
 		if (RAND_pseudo_bytes(iv,enc->iv_len) < 0) /* Generate a salt */
 			goto err;
 		/* The 'iv' is used as the iv and as a salt.  It is
@@ -577,6 +579,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 		}
 	EVP_EncodeFinal(&ctx,buf,&outl);
 	if ((outl > 0) && (BIO_write(bp,(char *)buf,outl) != outl)) goto err;
+	OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
 	OPENSSL_free(buf);
 	buf = NULL;
 	if (	(BIO_write(bp,"-----END ",9) != 9) ||
@@ -585,8 +588,10 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 		goto err;
 	return(i+outl);
 err:
-	if (buf)
+	if (buf) {
+		OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
 		OPENSSL_free(buf);
+	}
 	PEMerr(PEM_F_PEM_WRITE_BIO,reason);
 	return(0);
 	}

@@ -56,13 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_RC4
-
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_RC4
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "evp_locl.h"
 #include <openssl/rc4.h>
 
 /* FIXME: surely this is available elsewhere? */
@@ -90,6 +90,7 @@ static const EVP_CIPHER r4_cipher=
 	sizeof(EVP_RC4_KEY),
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 
@@ -103,6 +104,7 @@ static const EVP_CIPHER r4_40_cipher=
 	NULL,
 	sizeof(EVP_RC4_KEY),
 	NULL, 
+	NULL,
 	NULL,
 	NULL
 	};

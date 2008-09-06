@@ -54,22 +54,6 @@ SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
 VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
 
 
-
- 
-
-# Check for VC++ presence first.
-#
-#if [ "x$MSVCDIR" != "x" -o "x$VCINSTALLDIR" != "x" ]; then
-#	perl Configure VC-WIN32 $*
-#	cmd /c ms\\do_masm.bat
-#	perl util/mk1mf.pl VC-WIN32-GMAKE >mak.tmp
-#	rm Makefile
-#	mv mak.tmp Makefile
-#	echo "Configured for VC++ using GNU make"
-#	exit 0
-#fi
-#
-
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
 # We need to work around FreeBSD 1.1.5.1 
@@ -98,9 +82,9 @@ if [ "x$XREL" != "x" ]; then
 		esac
 		;;
 	    4.2)
-		echo "i386-whatever-unixware1"; exit 0
+		echo "whatever-whatever-unixware1"; exit 0
 		;;
-	    5)
+	    5*)
 		case "x${VERSION}" in
 		    # We hardcode i586 in place of ${MACHINE} for the
 		    # following reason. The catch is that even though Pentium
@@ -109,8 +93,7 @@ if [ "x$XREL" != "x" ]; then
 		    # with i386 is that it makes ./config pass 386 to
 		    # ./Configure, which in turn makes make generate
 		    # inefficient SHA-1 (for this moment) code.
-		    x7*)  echo "i586-sco-unixware7";           exit 0 ;;
-		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}"; exit 0 ;;
+		    x[678]*)  echo "i586-sco-unixware7"; exit 0 ;;
 		esac
 		;;
 	esac
@@ -354,11 +337,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     MINGW*)
-	echo "${MACHINE}-whatever-mingw"; echo 0;
-	# Save fipslib path so VC++ build can find it
-	(cd /usr/local/ssl/lib ; pwd -W ) > util/fipslib_path.txt
-	# Extract _chkstk.o so VC++ can use it, to avoid __alloca link error
-	(cd ms ; ar x `gcc -print-libgcc-file-name` _chkstk.o)
+	echo "${MACHINE}-whatever-mingw"; exit 0;
 	;;
     CYGWIN*)
 	case "$RELEASE" in
@@ -472,8 +451,6 @@ if [ "$SYSTEM" = "SunOS" ]; then
       echo "         patch #107357-01 or later applied."
       sleep 5
     fi
-  elif [ "$CC" = "cc" -a $CCVER -gt 0 ]; then
-    CC=sc3
   fi
 fi
 
@@ -539,35 +516,22 @@ case "$GUESSOS" in
         #fi
 	OUT="irix-mips3-$CC"
 	;;
+  ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
+  ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
+  i386-apple-darwin*) OUT="darwin-i386-cc" ;;
   alpha-*-linux2)
-        ISA=`awk '/cpu model/{print$4}' /proc/cpuinfo`
+        ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
 	case ${ISA:-generic} in
-	*[67])	OUT="linux-alpha+bwx-$CC" ;;
+	*[678])	OUT="linux-alpha+bwx-$CC" ;;
 	*)	OUT="linux-alpha-$CC" ;;
 	esac
 	if [ "$CC" = "gcc" ]; then
 	    case ${ISA:-generic} in
 	    EV5|EV45)		options="$options -mcpu=ev5";;
 	    EV56|PCA56)		options="$options -mcpu=ev56";;
-	    EV6|EV67|PCA57)	options="$options -mcpu=ev6";;
+	    *)			options="$options -mcpu=ev6";;
 	    esac
 	fi
-	;;
-  mips-*-linux?)
-          cat >dummy.c <<EOF
-#include <stdio.h>  /* for printf() prototype */
-        int main (argc, argv) int argc; char *argv[]; {
-#ifdef __MIPSEB__
-  printf ("linux-%s\n", argv[1]);
-#endif
-#ifdef __MIPSEL__
-  printf ("linux-%sel\n", argv[1]);
-#endif
-  return 0;
-}
-EOF
-	${CC} -o dummy dummy.c && OUT=`./dummy ${MACHINE}`
-	rm dummy dummy.c
 	;;
   ppc64-*-linux2)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
@@ -579,11 +543,7 @@ EOF
 	OUT="linux-ppc"
 	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
-  m68k-*-linux*) OUT="linux-m68k" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
-  ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
-  ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
-  i386-apple-darwin*) OUT="darwin-i386-cc" ;;
   sparc64-*-linux2)
 	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
 	echo "         and wish to build 64-bit library, then you have to"
@@ -594,16 +554,18 @@ EOF
 	fi
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
-	KARCH=`awk '/^type/{print$3}' /proc/cpuinfo`
+	KARCH=`awk '/^type/{print$3;exit(0);}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
 	sun4u*)	OUT="linux-sparcv9" ;;
 	sun4m)	OUT="linux-sparcv8" ;;
 	sun4d)	OUT="linux-sparcv8" ;;
-	*)	OUT="linux-sparcv7" ;;
+	*)	OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
 	esac ;;
-  parisc-*-linux2)
-        CPUARCH=`awk '/cpu family/{print substr($5,1,3)}' /proc/cpuinfo`
-	CPUSCHEDULE=`awk '/^cpu.[ 	]: PA/{print substr($3,3)}' /proc/cpuinfo`
+  parisc*-*-linux2)
+	# 64-bit builds under parisc64 linux are not supported and
+	# compiler is expected to generate 32-bit objects...
+	CPUARCH=`awk '/cpu family/{print substr($5,1,3); exit(0);}' /proc/cpuinfo`
+	CPUSCHEDULE=`awk '/^cpu.[ 	]*: PA/{print substr($3,3); exit(0);}' /proc/cpuinfo`
 
 	# ??TODO ??  Model transformations
 	# 0. CPU Architecture for the 1.1 processor has letter suffixes. We strip that off
@@ -616,31 +578,34 @@ EOF
 	#         PA8500   -> 8000   (2.0)
 	#         PA8600   -> 8000   (2.0)
 
-	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8?00/8000/'`
+	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8.00/8000/'`
 	# Finish Model transformations
 
-	options="$options -mschedule=$CPUSCHEDULE -march=$CPUARCH"
-	OUT="linux-parisc" ;;
-  arm*b-*-linux2) OUT="linux-elf-arm"; options="$options -DB_ENDIAN" ;;
-  arm*l-*-linux2) OUT="linux-elf-arm"; options="$options -DL_ENDIAN" ;;
-  arm*-*-linux2)  OUT="linux-elf-arm" ;;
-  s390-*-linux2) OUT="linux-s390" ;;
-  s390x-*-linux?) OUT="linux-s390x" ;;
+	options="$options -DB_ENDIAN -mschedule=$CPUSCHEDULE -march=$CPUARCH"
+	OUT="linux-generic32" ;;
+  arm*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
+  arm*l-*-linux2) OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
+  sh*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
+  sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
+  m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
+  s390-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN -DNO_ASM" ;;
+  s390x-*-linux2) OUT="linux-generic64"; options="$options -DB_ENDIAN" ;;
   x86_64-*-linux?) OUT="linux-x86_64" ;;
-  *-*-linux2) OUT="linux-elf"
+  *86-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then
           if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
-            OUT="linux-pentium"
+	    options="$options -march=pentium"
           fi
           if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
-            OUT="linux-ppro"
+	    options="$options -march=pentiumpro"
           fi
           if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
-            OUT="linux-k6"
+	    options="$options -march=k6"
           fi
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
-  sun4u*-*-solaris2)
+  *-*-linux2) OUT="linux-generic32" ;;
+  sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" ]; then
@@ -683,48 +648,43 @@ EOF
 	    OUT="solaris64-x86_64-$CC"
 	else
 	    OUT="solaris-x86-$CC"
+	    if [ `uname -r | sed -e 's/5\.//'` -lt 10 ]; then
+		options="$options no-sse2"
+	    fi
 	fi
 	;;
-  *-*-sunos4) OUT="sunos-$CC" ;;
-  alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
-  sparc64-*-freebsd*) OUT="FreeBSD-sparc64" ;;
-  ia64-*-freebsd*) OUT="FreeBSD-ia64" ;;
-  *-freebsd[3-9]*) OUT="FreeBSD-elf" ;;
-  *-freebsd[1-2]*) OUT="FreeBSD" ;;
-  *86*-*-netbsd) OUT="NetBSD-x86" ;;
-  sun3*-*-netbsd) OUT="NetBSD-m68" ;;
-  *-*-netbsd) OUT="NetBSD-sparc" ;;
-  alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
-  *86*-*-openbsd) OUT="OpenBSD-i386" ;;
-  m68k*-*-openbsd) OUT="OpenBSD-m68k" ;;
-  m88k*-*-openbsd) OUT="OpenBSD-m88k" ;;
-  mips*-*-openbsd) OUT="OpenBSD-mips" ;;
-  pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
-  powerpc*-*-openbsd) OUT="OpenBSD-powerpc" ;;
-  sparc64*-*-openbsd) OUT="OpenBSD-sparc64" ;;
-  sparc*-*-openbsd) OUT="OpenBSD-sparc" ;;
-  vax*-*-openbsd) OUT="OpenBSD-vax" ;;
-  hppa*-*-openbsd) OUT="OpenBSD-hppa" ;;
-  *-*-openbsd) OUT="OpenBSD" ;;
-  *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
-  *-*-osf) OUT="alphaold-cc" ;;
-  *-*-tru64) OUT="alpha-cc" ;;
-  *-*-OpenUNIX*)
+  *-*-sunos4)		OUT="sunos-$CC" ;;
+
+  *86*-*-bsdi4)		OUT="BSD-x86-elf"; options="$options no-sse2 -ldl" ;;
+  alpha*-*-*bsd*)	OUT="BSD-generic64"; options="$options -DL_ENDIAN" ;;
+  powerpc64-*-*bsd*)	OUT="BSD-generic64"; options="$options -DB_ENDIAN" ;;
+  sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
+  ia64-*-*bsd*)		OUT="BSD-ia64" ;;
+  amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
+  *86*-*-*bsd*)		# mimic ld behaviour when it's looking for libc...
+			if [ -L /usr/lib/libc.so ]; then	# [Free|Net]BSD
+			    libc=/usr/lib/libc.so
+			else					# OpenBSD
+			    # ld searches for highest libc.so.* and so do we
+			    libc=`(ls /usr/lib/libc.so.* | tail -1) 2>/dev/null`
+			fi
+			case "`(file -L $libc) 2>/dev/null`" in
+			*ELF*)	OUT="BSD-x86-elf" ;;
+			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
+			esac ;;
+  *-*-*bsd*)		OUT="BSD-generic32" ;;
+
+  *-*-osf)		OUT="osf1-alpha-cc" ;;
+  *-*-tru64)		OUT="tru64-alpha-cc" ;;
+  *-*-[Uu]nix[Ww]are7)
 	if [ "$CC" = "gcc" ]; then
-	  OUT="OpenUNIX-8-gcc" 
+	  OUT="unixware-7-gcc" ; options="$options no-sse2"
 	else    
-	  OUT="OpenUNIX-8" 
+	  OUT="unixware-7" ; options="$options no-sse2 -D__i386__"
 	fi
 	;;
-  *-*-unixware7) OUT="unixware-7" ;;
-  *-*-UnixWare7) OUT="unixware-7" ;;
-  *-*-Unixware7) OUT="unixware-7" ;;
-  *-*-unixware20*) OUT="unixware-2.0" ;;
-  *-*-unixware21*) OUT="unixware-2.1" ;;
-  *-*-UnixWare20*) OUT="unixware-2.0" ;;
-  *-*-UnixWare21*) OUT="unixware-2.1" ;;
-  *-*-Unixware20*) OUT="unixware-2.0" ;;
-  *-*-Unixware21*) OUT="unixware-2.1" ;;
+  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0"; options="$options no-sse2 no-sha512" ;;
+  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1"; options="$options no-sse2 no-sha512" ;;
   *-*-vos)
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"
@@ -733,15 +693,8 @@ EOF
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
   *-hpux1*)
-	if [ $CC = "gcc" ];
-	then
-	  if [ $GCC_BITS = "64" ]; then
+	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
 	    OUT="hpux64-parisc2-gcc"
-	  else
-	    OUT="hpux-parisc-gcc"
-	  fi
-	else
-	  OUT="hpux-parisc-$CC"
 	fi
 	KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
@@ -758,9 +711,7 @@ EOF
 	     fi
 	     OUT="hpux64-ia64-cc"
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
-	     if [ "$CC" = "cc" ]; then
-		OUT="hpux-parisc2-cc" # can't we have hpux-parisc2-gcc?
-	     fi
+	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
 		echo "WARNING! If you wish to build 64-bit library then you have to"
 		echo "         invoke './Configure hpux64-parisc2-cc' *manually*."
@@ -770,9 +721,9 @@ EOF
 		fi
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     :
+	     OUT="hpux-parisc-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
-	     :
+	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
 	     OUT="hpux-$CC"
 	fi
@@ -798,6 +749,11 @@ EOF
 		fi
 	    fi
 	fi
+	if (lsattr -E -O -l `lsdev -c processor|awk '{print$1;exit}'` | grep -i powerpc) >/dev/null 2>&1; then
+	    :	# this applies even to Power3 and later, as they return PowerPC_POWER[345]
+	else
+	    options="$options no-asm"
+	fi
 	;;
   # these are all covered by the catchall below
   # *-dgux) OUT="dgux" ;;
@@ -822,12 +778,13 @@ esac
 #  options="$options -DATALLA"
 #fi
 
-# gcc < 2.8 does not support -mcpu=ultrasparc
+# gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
-  echo "WARNING! Do consider upgrading to gcc-2.8 or later."
+  echo "WARNING! Falling down to 'solaris-sparcv8-gcc'."
+  echo "         Upgrade to gcc-2.8 or later."
   sleep 5
-  OUT=solaris-sparcv9-gcc27
+  OUT=solaris-sparcv8-gcc
 fi
 if [ "$OUT" = "linux-sparcv9" -a $GCCVER -lt 28 ]
 then
@@ -841,7 +798,7 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in bf cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 aes ripemd rsa sha
+for i in aes bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha
 do
   if [ ! -d crypto/$i ]
   then

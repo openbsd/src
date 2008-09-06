@@ -91,6 +91,9 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	EVP_add_digest(EVP_ecdsa());
+#endif
 #endif
 #if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DES)
 	EVP_add_digest(EVP_mdc2());
@@ -100,7 +103,6 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest_alias(SN_ripemd160,"ripemd");
 	EVP_add_digest_alias(SN_ripemd160,"rmd160");
 #endif
-#ifdef OPENSSL_FIPS
 #ifndef OPENSSL_NO_SHA256
 	EVP_add_digest(EVP_sha224());
 	EVP_add_digest(EVP_sha256());
@@ -108,6 +110,5 @@ void OpenSSL_add_all_digests(void)
 #ifndef OPENSSL_NO_SHA512
 	EVP_add_digest(EVP_sha384());
 	EVP_add_digest(EVP_sha512());
-#endif
 #endif
 	}

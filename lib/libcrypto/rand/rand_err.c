@@ -70,7 +70,6 @@
 
 static ERR_STRING_DATA RAND_str_functs[]=
 	{
-{ERR_FUNC(RAND_F_FIPS_RAND_BYTES),	"FIPS_RAND_BYTES"},
 {ERR_FUNC(RAND_F_RAND_GET_RAND_METHOD),	"RAND_get_rand_method"},
 {ERR_FUNC(RAND_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
@@ -78,12 +77,7 @@ static ERR_STRING_DATA RAND_str_functs[]=
 
 static ERR_STRING_DATA RAND_str_reasons[]=
 	{
-{ERR_REASON(RAND_R_NON_FIPS_METHOD)      ,"non fips method"},
-{ERR_REASON(RAND_R_PRNG_ASKING_FOR_TOO_MUCH),"prng asking for too much"},
-{ERR_REASON(RAND_R_PRNG_NOT_REKEYED)     ,"prng not rekeyed"},
-{ERR_REASON(RAND_R_PRNG_NOT_RESEEDED)    ,"prng not reseeded"},
 {ERR_REASON(RAND_R_PRNG_NOT_SEEDED)      ,"PRNG not seeded"},
-{ERR_REASON(RAND_R_PRNG_STUCK)           ,"prng stuck"},
 {0,NULL}
 	};
 
@@ -91,15 +85,12 @@ static ERR_STRING_DATA RAND_str_reasons[]=
 
 void ERR_load_RAND_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(RAND_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,RAND_str_functs);
 		ERR_load_strings(0,RAND_str_reasons);
-#endif
-
 		}
+#endif
 	}

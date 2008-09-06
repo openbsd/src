@@ -153,7 +153,7 @@ static int md_write(BIO *b, const char *in, int inl)
 		{
 		if (ret > 0)
 			{
-			EVP_DigestUpdate(ctx,(unsigned char *)in,
+			EVP_DigestUpdate(ctx,(const unsigned char *)in,
 				(unsigned int)ret);
 			}
 		}
@@ -192,8 +192,13 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret=0;
 		break;
 	case BIO_C_GET_MD_CTX:
-		pctx=ptr;
-		*pctx=ctx;
+		if (b->init)
+			{
+			pctx=ptr;
+			*pctx=ctx;
+			}
+		else
+			ret=0;
 		break;
 	case BIO_C_SET_MD_CTX:
 		if (b->init)

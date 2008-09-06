@@ -59,6 +59,8 @@
 #ifndef HEADER_RC5_H
 #define HEADER_RC5_H
 
+#include <openssl/opensslconf.h> /* OPENSSL_NO_RC5 */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -92,10 +94,7 @@ typedef struct rc5_key_st
 	RC5_32_INT data[2*(RC5_16_ROUNDS+1)];
 	} RC5_32_KEY;
 
-#ifdef OPENSSL_FIPS 
-void private_RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
-	int rounds);
-#endif
+ 
 void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
 	int rounds);
 void RC5_32_ecb_encrypt(const unsigned char *in,unsigned char *out,RC5_32_KEY *key,

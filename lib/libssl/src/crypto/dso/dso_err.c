@@ -73,11 +73,13 @@ static ERR_STRING_DATA DSO_str_functs[]=
 {ERR_FUNC(DSO_F_DLFCN_BIND_FUNC),	"DLFCN_BIND_FUNC"},
 {ERR_FUNC(DSO_F_DLFCN_BIND_VAR),	"DLFCN_BIND_VAR"},
 {ERR_FUNC(DSO_F_DLFCN_LOAD),	"DLFCN_LOAD"},
+{ERR_FUNC(DSO_F_DLFCN_MERGER),	"DLFCN_MERGER"},
 {ERR_FUNC(DSO_F_DLFCN_NAME_CONVERTER),	"DLFCN_NAME_CONVERTER"},
 {ERR_FUNC(DSO_F_DLFCN_UNLOAD),	"DLFCN_UNLOAD"},
 {ERR_FUNC(DSO_F_DL_BIND_FUNC),	"DL_BIND_FUNC"},
 {ERR_FUNC(DSO_F_DL_BIND_VAR),	"DL_BIND_VAR"},
 {ERR_FUNC(DSO_F_DL_LOAD),	"DL_LOAD"},
+{ERR_FUNC(DSO_F_DL_MERGER),	"DL_MERGER"},
 {ERR_FUNC(DSO_F_DL_NAME_CONVERTER),	"DL_NAME_CONVERTER"},
 {ERR_FUNC(DSO_F_DL_UNLOAD),	"DL_UNLOAD"},
 {ERR_FUNC(DSO_F_DSO_BIND_FUNC),	"DSO_bind_func"},
@@ -88,17 +90,22 @@ static ERR_STRING_DATA DSO_str_functs[]=
 {ERR_FUNC(DSO_F_DSO_GET_FILENAME),	"DSO_get_filename"},
 {ERR_FUNC(DSO_F_DSO_GET_LOADED_FILENAME),	"DSO_get_loaded_filename"},
 {ERR_FUNC(DSO_F_DSO_LOAD),	"DSO_load"},
+{ERR_FUNC(DSO_F_DSO_MERGE),	"DSO_merge"},
 {ERR_FUNC(DSO_F_DSO_NEW_METHOD),	"DSO_new_method"},
 {ERR_FUNC(DSO_F_DSO_SET_FILENAME),	"DSO_set_filename"},
 {ERR_FUNC(DSO_F_DSO_SET_NAME_CONVERTER),	"DSO_set_name_converter"},
 {ERR_FUNC(DSO_F_DSO_UP_REF),	"DSO_up_ref"},
-{ERR_FUNC(DSO_F_VMS_BIND_VAR),	"VMS_BIND_VAR"},
+{ERR_FUNC(DSO_F_VMS_BIND_SYM),	"VMS_BIND_SYM"},
 {ERR_FUNC(DSO_F_VMS_LOAD),	"VMS_LOAD"},
+{ERR_FUNC(DSO_F_VMS_MERGER),	"VMS_MERGER"},
 {ERR_FUNC(DSO_F_VMS_UNLOAD),	"VMS_UNLOAD"},
 {ERR_FUNC(DSO_F_WIN32_BIND_FUNC),	"WIN32_BIND_FUNC"},
 {ERR_FUNC(DSO_F_WIN32_BIND_VAR),	"WIN32_BIND_VAR"},
+{ERR_FUNC(DSO_F_WIN32_JOINER),	"WIN32_JOINER"},
 {ERR_FUNC(DSO_F_WIN32_LOAD),	"WIN32_LOAD"},
+{ERR_FUNC(DSO_F_WIN32_MERGER),	"WIN32_MERGER"},
 {ERR_FUNC(DSO_F_WIN32_NAME_CONVERTER),	"WIN32_NAME_CONVERTER"},
+{ERR_FUNC(DSO_F_WIN32_SPLITTER),	"WIN32_SPLITTER"},
 {ERR_FUNC(DSO_F_WIN32_UNLOAD),	"WIN32_UNLOAD"},
 {0,NULL}
 	};
@@ -107,11 +114,15 @@ static ERR_STRING_DATA DSO_str_reasons[]=
 	{
 {ERR_REASON(DSO_R_CTRL_FAILED)           ,"control command failed"},
 {ERR_REASON(DSO_R_DSO_ALREADY_LOADED)    ,"dso already loaded"},
+{ERR_REASON(DSO_R_EMPTY_FILE_STRUCTURE)  ,"empty file structure"},
+{ERR_REASON(DSO_R_FAILURE)               ,"failure"},
 {ERR_REASON(DSO_R_FILENAME_TOO_BIG)      ,"filename too big"},
 {ERR_REASON(DSO_R_FINISH_FAILED)         ,"cleanup method function failed"},
+{ERR_REASON(DSO_R_INCORRECT_FILE_SYNTAX) ,"incorrect file syntax"},
 {ERR_REASON(DSO_R_LOAD_FAILED)           ,"could not load the shared library"},
 {ERR_REASON(DSO_R_NAME_TRANSLATION_FAILED),"name translation failed"},
 {ERR_REASON(DSO_R_NO_FILENAME)           ,"no filename"},
+{ERR_REASON(DSO_R_NO_FILE_SPECIFICATION) ,"no file specification"},
 {ERR_REASON(DSO_R_NULL_HANDLE)           ,"a null shared library handle was used"},
 {ERR_REASON(DSO_R_SET_FILENAME_FAILED)   ,"set filename failed"},
 {ERR_REASON(DSO_R_STACK_ERROR)           ,"the meth_data stack is corrupt"},
@@ -125,15 +136,12 @@ static ERR_STRING_DATA DSO_str_reasons[]=
 
 void ERR_load_DSO_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(DSO_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,DSO_str_functs);
 		ERR_load_strings(0,DSO_str_reasons);
-#endif
-
 		}
+#endif
 	}

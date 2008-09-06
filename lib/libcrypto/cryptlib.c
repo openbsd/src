@@ -1,4 +1,57 @@
 /* crypto/cryptlib.c */
+/* ====================================================================
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,11 +108,13 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
-#include <stdio.h>
-#include <string.h>
 #include "cryptlib.h"
-#include <openssl/crypto.h>
 #include <openssl/safestack.h>
 
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
@@ -70,7 +125,7 @@ DECLARE_STACK_OF(CRYPTO_dynlock)
 IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
-static const char* lock_names[CRYPTO_NUM_LOCKS] =
+static const char* const lock_names[CRYPTO_NUM_LOCKS] =
 	{
 	"<<ERROR>>",
 	"err",
@@ -104,10 +159,14 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dynlock",
 	"engine",
 	"ui",
-	"hwcrhk",		/* This is a HACK which will disappear in 0.9.8 */
-	"fips",
-	"fips2",
-#if CRYPTO_NUM_LOCKS != 35
+	"ecdsa",
+	"ec",
+	"ecdh",
+	"bn",
+	"ec_pre_comp",
+	"store",
+	"comp",
+#if CRYPTO_NUM_LOCKS != 39
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
@@ -218,7 +277,7 @@ int CRYPTO_get_new_dynlockid(void)
 	else
 		/* If we found a place with a NULL pointer, put our pointer
 		   in it.  */
-		sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
+		(void)sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	if (i == -1)
@@ -260,7 +319,7 @@ void CRYPTO_destroy_dynlockid(int i)
 #endif
 			if (pointer->references <= 0)
 				{
-				sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
+				(void)sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
 				}
 			else
 				pointer = NULL;
@@ -480,9 +539,48 @@ const char *CRYPTO_get_lock_name(int type)
 		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
-int OPENSSL_NONPIC_relocated=0;
+#if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+	defined(__INTEL__) || \
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
 
-#if defined(_WIN32) && defined(_WINDLL)
+unsigned long  OPENSSL_ia32cap_P=0;
+unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
+
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#define OPENSSL_CPUID_SETUP
+void OPENSSL_cpuid_setup(void)
+{ static int trigger=0;
+  unsigned long OPENSSL_ia32_cpuid(void);
+  char *env;
+
+    if (trigger)	return;
+
+    trigger=1;
+    if ((env=getenv("OPENSSL_ia32cap")))
+	OPENSSL_ia32cap_P = strtoul(env,NULL,0)|(1<<10);
+    else
+	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid()|(1<<10);
+    /*
+     * |(1<<10) sets a reserved bit to signal that variable
+     * was initialized already... This is to avoid interference
+     * with cpuid snippets in ELF .init segment.
+     */
+}
+#endif
+
+#else
+unsigned long *OPENSSL_ia32cap_loc(void) { return NULL; }
+#endif
+int OPENSSL_NONPIC_relocated = 0;
+#if !defined(OPENSSL_CPUID_SETUP)
+void OPENSSL_cpuid_setup(void) {}
+#endif
+
+#if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
+#ifdef __CYGWIN__
+/* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
+#include <windows.h>
+#endif
 
 /* All we really need to do is remove the 'error' state when a thread
  * detaches */
@@ -493,6 +591,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	switch(fdwReason)
 		{
 	case DLL_PROCESS_ATTACH:
+		OPENSSL_cpuid_setup();
 #if defined(_WIN32_WINNT)
 		{
 		IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *)hinstDLL;
@@ -521,11 +620,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-static int IsService(void)
+int OPENSSL_isservice(void)
 { HWINSTA h;
   DWORD len;
   WCHAR *name;
@@ -562,12 +661,15 @@ static int IsService(void)
 #endif
     else				return 0;
 }
+#else
+int OPENSSL_isservice(void) { return 0; }
 #endif
 
 void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
   TCHAR buf[256];
   const TCHAR *fmt;
+#ifdef STD_ERROR_HANDLE	/* what a dirty trick! */
   HANDLE h;
 
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
@@ -578,6 +680,7 @@ void OPENSSL_showfatal (const char *fmta,...)
 	va_end (ap);
 	return;
     }
+#endif
 
     if (sizeof(TCHAR)==sizeof(char))
 	fmt=(const TCHAR *)fmta;
@@ -623,7 +726,7 @@ void OPENSSL_showfatal (const char *fmta,...)
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
     /* this -------------v--- guards NT-specific calls */
-    if (GetVersion() < 0x80000000 && IsService())
+    if (GetVersion() < 0x80000000 && OPENSSL_isservice())
     {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
 	const TCHAR *pmsg=buf;
 	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
@@ -631,21 +734,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     }
     else
 #endif
-    {	MSGBOXPARAMS         m;
-
-	m.cbSize             = sizeof(m);
-	m.hwndOwner          = NULL;
-	m.lpszCaption        = _T("OpenSSL: FATAL");
-	m.dwStyle            = MB_OK;
-	m.hInstance          = NULL;
-	m.lpszIcon           = IDI_ERROR;
-	m.dwContextHelpId    = 0;
-	m.lpfnMsgBoxCallback = NULL;
-	m.dwLanguageId       = MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US);
-	m.lpszText           = buf;
-
-	MessageBoxIndirect (&m);
-    }
+	MessageBox (NULL,buf,_T("OpenSSL: FATAL"),MB_OK|MB_ICONSTOP);
 }
 #else
 void OPENSSL_showfatal (const char *fmta,...)
@@ -655,6 +744,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     vfprintf (stderr,fmta,ap);
     va_end (ap);
 }
+int OPENSSL_isservice (void) { return 0; }
 #endif
 
 void OpenSSLDie(const char *file,int line,const char *assertion)
@@ -666,79 +756,3 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	}
 
 void *OPENSSL_stderr(void)	{ return stderr; }
-
-#ifdef OPENSSL_FIPS
-
-void fips_w_lock(void)		{ CRYPTO_w_lock(CRYPTO_LOCK_FIPS); }
-void fips_w_unlock(void)	{ CRYPTO_w_unlock(CRYPTO_LOCK_FIPS); }
-void fips_r_lock(void)		{ CRYPTO_r_lock(CRYPTO_LOCK_FIPS); }
-void fips_r_unlock(void)	{ CRYPTO_r_unlock(CRYPTO_LOCK_FIPS); }
-
-static int fips_started = 0;
-static unsigned long fips_thread = 0;
-
-void fips_set_started(void)
-	{
-	fips_started = 1;
-	}
-
-int fips_is_started(void)
-	{
-	return fips_started;
-	}
-
-int fips_is_owning_thread(void)
-	{
-	int ret = 0;
-
-	if (fips_is_started())
-		{
-		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
-		if (fips_thread != 0 && fips_thread == CRYPTO_thread_id())
-			ret = 1;
-		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
-		}
-	return ret;
-	}
-
-int fips_set_owning_thread(void)
-	{
-	int ret = 0;
-
-	if (fips_is_started())
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
-		if (fips_thread == 0)
-			{
-			fips_thread = CRYPTO_thread_id();
-			ret = 1;
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_FIPS2);
-		}
-	return ret;
-	}
-
-int fips_clear_owning_thread(void)
-	{
-	int ret = 0;
-
-	if (fips_is_started())
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
-		if (fips_thread == CRYPTO_thread_id())
-			{
-			fips_thread = 0;
-			ret = 1;
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_FIPS2);
-		}
-	return ret;
-	}
-
-unsigned char *fips_signature_witness(void)
-	{
-	extern unsigned char FIPS_signature[];
-	return FIPS_signature;
-	}
-#endif /* OPENSSL_FIPS */
-

@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,18 +70,30 @@
 
 static ERR_STRING_DATA BN_str_functs[]=
 	{
-{ERR_FUNC(BN_F_BN_BLINDING_CONVERT),	"BN_BLINDING_convert"},
-{ERR_FUNC(BN_F_BN_BLINDING_INVERT),	"BN_BLINDING_invert"},
+{ERR_FUNC(BN_F_BNRAND),	"BNRAND"},
+{ERR_FUNC(BN_F_BN_BLINDING_CONVERT_EX),	"BN_BLINDING_convert_ex"},
+{ERR_FUNC(BN_F_BN_BLINDING_CREATE_PARAM),	"BN_BLINDING_create_param"},
+{ERR_FUNC(BN_F_BN_BLINDING_INVERT_EX),	"BN_BLINDING_invert_ex"},
 {ERR_FUNC(BN_F_BN_BLINDING_NEW),	"BN_BLINDING_new"},
 {ERR_FUNC(BN_F_BN_BLINDING_UPDATE),	"BN_BLINDING_update"},
 {ERR_FUNC(BN_F_BN_BN2DEC),	"BN_bn2dec"},
 {ERR_FUNC(BN_F_BN_BN2HEX),	"BN_bn2hex"},
 {ERR_FUNC(BN_F_BN_CTX_GET),	"BN_CTX_get"},
 {ERR_FUNC(BN_F_BN_CTX_NEW),	"BN_CTX_new"},
+{ERR_FUNC(BN_F_BN_CTX_START),	"BN_CTX_start"},
 {ERR_FUNC(BN_F_BN_DIV),	"BN_div"},
+{ERR_FUNC(BN_F_BN_DIV_NO_BRANCH),	"BN_div_no_branch"},
+{ERR_FUNC(BN_F_BN_DIV_RECP),	"BN_div_recp"},
 {ERR_FUNC(BN_F_BN_EXP),	"BN_exp"},
 {ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
 {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL),	"BN_EXPAND_INTERNAL"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD),	"BN_GF2m_mod"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_EXP),	"BN_GF2m_mod_exp"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_MUL),	"BN_GF2m_mod_mul"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD),	"BN_GF2m_mod_solve_quad"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR),	"BN_GF2m_mod_solve_quad_arr"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_SQR),	"BN_GF2m_mod_sqr"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_SQRT),	"BN_GF2m_mod_sqrt"},
 {ERR_FUNC(BN_F_BN_MOD_EXP2_MONT),	"BN_mod_exp2_mont"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_MONT),	"BN_mod_exp_mont"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_MONT_CONSTTIME),	"BN_mod_exp_mont_consttime"},
@@ -89,6 +101,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_MOD_EXP_RECP),	"BN_mod_exp_recp"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_SIMPLE),	"BN_mod_exp_simple"},
 {ERR_FUNC(BN_F_BN_MOD_INVERSE),	"BN_mod_inverse"},
+{ERR_FUNC(BN_F_BN_MOD_INVERSE_NO_BRANCH),	"BN_mod_inverse_no_branch"},
 {ERR_FUNC(BN_F_BN_MOD_LSHIFT_QUICK),	"BN_mod_lshift_quick"},
 {ERR_FUNC(BN_F_BN_MOD_MUL_RECIPROCAL),	"BN_mod_mul_reciprocal"},
 {ERR_FUNC(BN_F_BN_MOD_SQRT),	"BN_mod_sqrt"},
@@ -115,6 +128,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {ERR_REASON(BN_R_NOT_A_SQUARE)           ,"not a square"},
 {ERR_REASON(BN_R_NOT_INITIALIZED)        ,"not initialized"},
 {ERR_REASON(BN_R_NO_INVERSE)             ,"no inverse"},
+{ERR_REASON(BN_R_NO_SOLUTION)            ,"no solution"},
 {ERR_REASON(BN_R_P_IS_NOT_PRIME)         ,"p is not prime"},
 {ERR_REASON(BN_R_TOO_MANY_ITERATIONS)    ,"too many iterations"},
 {ERR_REASON(BN_R_TOO_MANY_TEMPORARY_VARIABLES),"too many temporary variables"},
@@ -125,15 +139,12 @@ static ERR_STRING_DATA BN_str_reasons[]=
 
 void ERR_load_BN_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(BN_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,BN_str_functs);
 		ERR_load_strings(0,BN_str_reasons);
-#endif
-
 		}
+#endif
 	}

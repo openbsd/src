@@ -1,4 +1,4 @@
-/* dso_vms.c */
+/* dso_vms.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -63,6 +63,7 @@
 #include <openssl/dso.h>
 #ifdef OPENSSL_SYS_VMS
 #pragma message disable DOLLARID
+#include <rms.h>
 #include <lib$routines.h>
 #include <stsdef.h>
 #include <descrip.h>
@@ -89,6 +90,8 @@ static int vms_finish(DSO *dso);
 static long vms_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
 static char *vms_name_converter(DSO *dso, const char *filename);
+static char *vms_merger(DSO *dso, const char *filespec1,
+	const char *filespec2);
 
 static DSO_METHOD dso_meth_vms = {
 	"OpenSSL 'VMS' shared library method",
@@ -103,6 +106,7 @@ static DSO_METHOD dso_meth_vms = {
 #endif
 	NULL, /* ctrl */
 	vms_name_converter,
+	vms_merger,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -140,7 +144,7 @@ static int vms_load(DSO *dso)
 
 	if(filename == NULL)
 		{
-		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_NO_FILENAME);
+		DSOerr(DSO_F_VMS_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
 
@@ -295,19 +299,19 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 
 	if((dso == NULL) || (symname == NULL))
 		{
-		DSOerr(DSO_F_VMS_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
+		DSOerr(DSO_F_VMS_BIND_SYM,ERR_R_PASSED_NULL_PARAMETER);
 		return;
 		}
 	if(sk_num(dso->meth_data) < 1)
 		{
-		DSOerr(DSO_F_VMS_BIND_VAR,DSO_R_STACK_ERROR);
+		DSOerr(DSO_F_VMS_BIND_SYM,DSO_R_STACK_ERROR);
 		return;
 		}
 	ptr = (DSO_VMS_INTERNAL *)sk_value(dso->meth_data,
 		sk_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
-		DSOerr(DSO_F_VMS_BIND_VAR,DSO_R_NULL_HANDLE);
+		DSOerr(DSO_F_VMS_BIND_SYM,DSO_R_NULL_HANDLE);
 		return;
 		}
 
@@ -336,7 +340,7 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 			{
 			errstring[length] = '\0';
 
-			DSOerr(DSO_F_VMS_BIND_VAR,DSO_R_SYM_FAILURE);
+			DSOerr(DSO_F_VMS_BIND_SYM,DSO_R_SYM_FAILURE);
 			if (ptr->imagename_dsc.dsc$w_length)
 				ERR_add_error_data(9,
 					"Symbol ", symname,
@@ -366,6 +370,127 @@ static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
 	DSO_FUNC_TYPE sym = 0;
 	vms_bind_sym(dso, symname, (void **)&sym);
 	return sym;
+	}
+
+static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
+	{
+	int status;
+	int filespec1len, filespec2len;
+	struct FAB fab;
+#ifdef NAML$C_MAXRSS
+	struct NAML nam;
+	char esa[NAML$C_MAXRSS];
+#else
+	struct NAM nam;
+	char esa[NAM$C_MAXRSS];
+#endif
+	char *merged;
+
+	if (!filespec1) filespec1 = "";
+	if (!filespec2) filespec2 = "";
+	filespec1len = strlen(filespec1);
+	filespec2len = strlen(filespec2);
+
+	fab = cc$rms_fab;
+#ifdef NAML$C_MAXRSS
+	nam = cc$rms_naml;
+#else
+	nam = cc$rms_nam;
+#endif
+
+	fab.fab$l_fna = (char *)filespec1;
+	fab.fab$b_fns = filespec1len;
+	fab.fab$l_dna = (char *)filespec2;
+	fab.fab$b_dns = filespec2len;
+#ifdef NAML$C_MAXRSS
+	if (filespec1len > NAM$C_MAXRSS)
+		{
+		fab.fab$l_fna = 0;
+		fab.fab$b_fns = 0;
+		nam.naml$l_long_filename = (char *)filespec1;
+		nam.naml$l_long_filename_size = filespec1len;
+		}
+	if (filespec2len > NAM$C_MAXRSS)
+		{
+		fab.fab$l_dna = 0;
+		fab.fab$b_dns = 0;
+		nam.naml$l_long_defname = (char *)filespec2;
+		nam.naml$l_long_defname_size = filespec2len;
+		}
+	nam.naml$l_esa = esa;
+	nam.naml$b_ess = NAM$C_MAXRSS;
+	nam.naml$l_long_expand = esa;
+	nam.naml$l_long_expand_alloc = sizeof(esa);
+	nam.naml$b_nop = NAM$M_SYNCHK | NAM$M_PWD;
+	nam.naml$v_no_short_upcase = 1;
+	fab.fab$l_naml = &nam;
+#else
+	nam.nam$l_esa = esa;
+	nam.nam$b_ess = NAM$C_MAXRSS;
+	nam.nam$b_nop = NAM$M_SYNCHK | NAM$M_PWD;
+	fab.fab$l_nam = &nam;
+#endif
+
+	status = sys$parse(&fab, 0, 0);
+
+	if(!$VMS_STATUS_SUCCESS(status))
+		{
+		unsigned short length;
+		char errstring[257];
+		struct dsc$descriptor_s errstring_dsc;
+
+		errstring_dsc.dsc$w_length = sizeof(errstring);
+		errstring_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
+		errstring_dsc.dsc$b_class = DSC$K_CLASS_S;
+		errstring_dsc.dsc$a_pointer = errstring;
+
+		status = sys$getmsg(status, &length, &errstring_dsc, 1, 0);
+
+		if (!$VMS_STATUS_SUCCESS(status))
+			lib$signal(status); /* This is really bad.  Abort!  */
+		else
+			{
+			errstring[length] = '\0';
+
+			DSOerr(DSO_F_VMS_MERGER,DSO_R_FAILURE);
+			ERR_add_error_data(7,
+					   "filespec \"", filespec1, "\", ",
+					   "defaults \"", filespec2, "\": ",
+					   errstring);
+			}
+		return(NULL);
+		}
+#ifdef NAML$C_MAXRSS
+	if (nam.naml$l_long_expand_size)
+		{
+		merged = OPENSSL_malloc(nam.naml$l_long_expand_size + 1);
+		if(!merged)
+			goto malloc_err;
+		strncpy(merged, nam.naml$l_long_expand,
+			nam.naml$l_long_expand_size);
+		merged[nam.naml$l_long_expand_size] = '\0';
+		}
+	else
+		{
+		merged = OPENSSL_malloc(nam.naml$b_esl + 1);
+		if(!merged)
+			goto malloc_err;
+		strncpy(merged, nam.naml$l_esa,
+			nam.naml$b_esl);
+		merged[nam.naml$b_esl] = '\0';
+		}
+#else
+	merged = OPENSSL_malloc(nam.nam$b_esl + 1);
+	if(!merged)
+		goto malloc_err;
+	strncpy(merged, nam.nam$l_esa,
+		nam.nam$b_esl);
+	merged[nam.nam$b_esl] = '\0';
+#endif
+	return(merged);
+ malloc_err:
+	DSOerr(DSO_F_VMS_MERGER,
+		ERR_R_MALLOC_FAILURE);
 	}
 
 static char *vms_name_converter(DSO *dso, const char *filename)

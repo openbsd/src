@@ -79,6 +79,8 @@ ASN1_SEQUENCE(X509_CINF) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
 
+extern void policy_cache_free(X509_POLICY_CACHE *cache);
+
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	X509 *ret = (X509 *)*pval;
@@ -92,6 +94,10 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 		ret->ex_pathlen = -1;
 		ret->skid = NULL;
 		ret->akid = NULL;
+#ifndef OPENSSL_NO_RFC3779
+		ret->rfc3779_addr = NULL;
+		ret->rfc3779_asid = NULL;
+#endif
 		ret->aux = NULL;
 		CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
 		break;
@@ -106,6 +112,11 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 		X509_CERT_AUX_free(ret->aux);
 		ASN1_OCTET_STRING_free(ret->skid);
 		AUTHORITY_KEYID_free(ret->akid);
+		policy_cache_free(ret->policy_cache);
+#ifndef OPENSSL_NO_RFC3779
+		sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
+		ASIdentifiers_free(ret->rfc3779_asid);
+#endif
 
 		if (ret->name != NULL) OPENSSL_free(ret->name);
 		break;
@@ -125,11 +136,13 @@ ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
-static ASN1_METHOD meth={
-	(int (*)())  i2d_X509,
-	(char *(*)())d2i_X509,
-	(char *(*)())X509_new,
-	(void (*)()) X509_free};
+static ASN1_METHOD meth=
+    {
+    (I2D_OF(void))  i2d_X509,
+    (D2I_OF(void)) d2i_X509,
+    (void *(*)(void))X509_new,
+    (void (*)(void *)) X509_free
+    };
 
 ASN1_METHOD *X509_asn1_meth(void)
 	{
@@ -161,9 +174,9 @@ void *X509_get_ex_data(X509 *r, int idx)
  *
  */
 
-X509 *d2i_X509_AUX(X509 **a, unsigned char **pp, long length)
+X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
 {
-	unsigned char *q;
+	const unsigned char *q;
 	X509 *ret;
 	/* Save start position */
 	q = *pp;

@@ -17,6 +17,8 @@ extern int rsa_main(int argc,char *argv[]);
 extern int rsautl_main(int argc,char *argv[]);
 extern int dsa_main(int argc,char *argv[]);
 extern int dsaparam_main(int argc,char *argv[]);
+extern int ec_main(int argc,char *argv[]);
+extern int ecparam_main(int argc,char *argv[]);
 extern int x509_main(int argc,char *argv[]);
 extern int genrsa_main(int argc,char *argv[]);
 extern int gendsa_main(int argc,char *argv[]);
@@ -26,6 +28,7 @@ extern int speed_main(int argc,char *argv[]);
 extern int s_time_main(int argc,char *argv[]);
 extern int version_main(int argc,char *argv[]);
 extern int pkcs7_main(int argc,char *argv[]);
+extern int cms_main(int argc,char *argv[]);
 extern int crl2pkcs7_main(int argc,char *argv[]);
 extern int sess_id_main(int argc,char *argv[]);
 extern int ciphers_main(int argc,char *argv[]);
@@ -35,11 +38,9 @@ extern int pkcs8_main(int argc,char *argv[]);
 extern int spkac_main(int argc,char *argv[]);
 extern int smime_main(int argc,char *argv[]);
 extern int rand_main(int argc,char *argv[]);
-extern int prime_main(int argc,char *argv[]);
-#ifndef OPENSSL_NO_ENGINE
 extern int engine_main(int argc,char *argv[]);
-#endif
 extern int ocsp_main(int argc,char *argv[]);
+extern int prime_main(int argc,char *argv[]);
 
 #define FUNC_TYPE_GENERAL	1
 #define FUNC_TYPE_MD		2
@@ -47,8 +48,8 @@ extern int ocsp_main(int argc,char *argv[]);
 
 typedef struct {
 	int type;
-	char *name;
-	int (*func)();
+	const char *name;
+	int (*func)(int argc,char *argv[]);
 	} FUNCTION;
 
 FUNCTION functions[] = {
@@ -82,6 +83,12 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_DSA
 	{FUNC_TYPE_GENERAL,"dsaparam",dsaparam_main},
 #endif
+#ifndef OPENSSL_NO_EC
+	{FUNC_TYPE_GENERAL,"ec",ec_main},
+#endif
+#ifndef OPENSSL_NO_EC
+	{FUNC_TYPE_GENERAL,"ecparam",ecparam_main},
+#endif
 	{FUNC_TYPE_GENERAL,"x509",x509_main},
 #ifndef OPENSSL_NO_RSA
 	{FUNC_TYPE_GENERAL,"genrsa",genrsa_main},
@@ -103,6 +110,9 @@ FUNCTION functions[] = {
 #endif
 	{FUNC_TYPE_GENERAL,"version",version_main},
 	{FUNC_TYPE_GENERAL,"pkcs7",pkcs7_main},
+#ifndef OPENSSL_NO_CMS
+	{FUNC_TYPE_GENERAL,"cms",cms_main},
+#endif
 	{FUNC_TYPE_GENERAL,"crl2pkcs7",crl2pkcs7_main},
 	{FUNC_TYPE_GENERAL,"sess_id",sess_id_main},
 #if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
@@ -116,11 +126,11 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"spkac",spkac_main},
 	{FUNC_TYPE_GENERAL,"smime",smime_main},
 	{FUNC_TYPE_GENERAL,"rand",rand_main},
-	{FUNC_TYPE_GENERAL,"prime",prime_main},
 #ifndef OPENSSL_NO_ENGINE
 	{FUNC_TYPE_GENERAL,"engine",engine_main},
 #endif
 	{FUNC_TYPE_GENERAL,"ocsp",ocsp_main},
+	{FUNC_TYPE_GENERAL,"prime",prime_main},
 #ifndef OPENSSL_NO_MD2
 	{FUNC_TYPE_MD,"md2",dgst_main},
 #endif
@@ -160,6 +170,24 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_AES
 	{FUNC_TYPE_CIPHER,"aes-256-ecb",enc_main},
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-128-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-128-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-192-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-192-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-256-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-256-ecb",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"base64",enc_main},
 #ifndef OPENSSL_NO_DES
 	{FUNC_TYPE_CIPHER,"des",enc_main},
@@ -172,6 +200,9 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_IDEA
 	{FUNC_TYPE_CIPHER,"idea",enc_main},
+#endif
+#ifndef OPENSSL_NO_SEED
+	{FUNC_TYPE_CIPHER,"seed",enc_main},
 #endif
 #ifndef OPENSSL_NO_RC4
 	{FUNC_TYPE_CIPHER,"rc4",enc_main},
@@ -238,6 +269,18 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_IDEA
 	{FUNC_TYPE_CIPHER,"idea-ofb",enc_main},
+#endif
+#ifndef OPENSSL_NO_SEED
+	{FUNC_TYPE_CIPHER,"seed-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_SEED
+	{FUNC_TYPE_CIPHER,"seed-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_SEED
+	{FUNC_TYPE_CIPHER,"seed-cfb",enc_main},
+#endif
+#ifndef OPENSSL_NO_SEED
+	{FUNC_TYPE_CIPHER,"seed-ofb",enc_main},
 #endif
 #ifndef OPENSSL_NO_RC2
 	{FUNC_TYPE_CIPHER,"rc2-cbc",enc_main},

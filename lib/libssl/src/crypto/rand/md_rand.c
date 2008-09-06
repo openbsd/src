@@ -126,7 +126,6 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/fips.h>
 
 #ifdef BN_DEBUG
 # define PREDICT
@@ -153,7 +152,7 @@ static unsigned long locking_thread = 0; /* valid iff crypto_lock_rand is set */
 int rand_predictable=0;
 #endif
 
-const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
+const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
@@ -301,7 +300,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	 * other thread's seeding remains without effect (except for
 	 * the incremented counter).  By XORing it we keep at least as
 	 * much entropy as fits into md. */
-	for (k = 0; k < sizeof md; k++)
+	for (k = 0; k < (int)sizeof(md); k++)
 		{
 		md[k] ^= local_md[k];
 		}
@@ -316,7 +315,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 
 static void ssleay_rand_seed(const void *buf, int num)
 	{
-	ssleay_rand_add(buf, num, num);
+	ssleay_rand_add(buf, num, (double)num);
 	}
 
 static int ssleay_rand_bytes(unsigned char *buf, int num)
@@ -332,14 +331,6 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	pid_t curr_pid = getpid();
 #endif
 	int do_stir_pool = 0;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_mode())
-	    {
-	    FIPSerr(FIPS_F_SSLEAY_RAND_BYTES,FIPS_R_NON_FIPS_METHOD);
-	    return 0;
-	    }
-#endif
 
 #ifdef PREDICT
 	if (rand_predictable)
@@ -529,7 +520,7 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 		err = ERR_peek_error();
 		if (ERR_GET_LIB(err) == ERR_LIB_RAND &&
 		    ERR_GET_REASON(err) == RAND_R_PRNG_NOT_SEEDED)
-			(void)ERR_get_error();
+			ERR_clear_error();
 		}
 	return (ret);
 	}

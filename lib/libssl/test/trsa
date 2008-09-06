@@ -1,12 +1,5 @@
 #!/bin/sh
 
-if test "$OSTYPE" = msdosdjgpp; then
-    PATH=../apps\;$PATH
-else
-    PATH=../apps:$PATH
-fi
-export PATH
-
 if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
   echo skipping rsa conversion test
   exit 0

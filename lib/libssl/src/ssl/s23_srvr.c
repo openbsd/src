@@ -132,28 +132,10 @@ static SSL_METHOD *ssl23_get_server_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_server_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv23_server_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv23_server_data,
-				(char *)sslv23_base_method(),sizeof(SSL_METHOD));
-			SSLv23_server_data.ssl_accept=ssl23_accept;
-			SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
-			init=0;
-			}
-
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv23_server_data);
-	}
+IMPLEMENT_ssl23_meth_func(SSLv23_server_method,
+			ssl23_accept,
+			ssl_undefined_function,
+			ssl23_get_server_method)
 
 int ssl23_accept(SSL *s)
 	{
@@ -404,15 +386,6 @@ int ssl23_get_client_hello(SSL *s)
 			}
 		}
 
-#ifdef OPENSSL_FIPS
-	if (FIPS_mode() && (s->version < TLS1_VERSION))
-		{
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
-					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-		goto err;
-		}
-#endif
-
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
 		/* we have SSLv3/TLSv1 in an SSLv2 header
@@ -592,7 +565,6 @@ int ssl23_get_client_hello(SSL *s)
 	s->init_num=0;
 
 	if (buf != buf_space) OPENSSL_free(buf);
-	s->first_packet=1;
 	return(SSL_accept(s));
 err:
 	if (buf != buf_space) OPENSSL_free(buf);

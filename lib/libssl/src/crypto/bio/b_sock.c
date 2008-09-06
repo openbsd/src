@@ -56,14 +56,21 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_SOCK
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
 #include <openssl/bio.h>
+#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
+#include <netdb.h>
+#if defined(NETWARE_CLIB)
+#include <sys/ioctl.h>
+NETDB_DEFINE_CONTEXT
+#endif
+#endif
+
+#ifndef OPENSSL_NO_SOCK
 
 #ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
@@ -79,7 +86,7 @@
 #define MAX_LISTEN  32
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
+#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static int wsa_init_done=0;
 #endif
 
@@ -175,11 +182,11 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
- 		s=getservbyname(
 #ifndef CONST_STRICT
-		    (char *)
+		s=getservbyname((char *)str,"tcp");
+#else
+		s=getservbyname(str,"tcp");
 #endif
-		    str,"tcp");
 		if(s != NULL)
 			*port_ptr=ntohs((unsigned short)s->s_port);
 		CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
@@ -357,7 +364,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 #if 1
 	/* Caching gethostbyname() results forever is wrong,
 	 * so we have to let the true gethostbyname() worry about this */
+#if (defined(NETWARE_BSDSOCK) && !defined(__NOVELL_LIBC__))
+	return gethostbyname((char*)name);
+#else
 	return gethostbyname(name);
+#endif
 #else
 	struct hostent *ret;
 	int i,lowi=0,j;
@@ -397,11 +408,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
-		ret=gethostbyname(
 #  ifndef CONST_STRICT
-		    (char *)
+		ret=gethostbyname((char *)name);
+#  else
+		ret=gethostbyname(name);
 #  endif
-		    name);
 
 		if (ret == NULL)
 			goto end;
@@ -453,9 +464,6 @@ int BIO_sock_init(void)
 		{
 		int err;
 	  
-#ifdef SIGINT
-		signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-#endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
 		if (WSAStartup(0x0101,&wsa_state)!=0)
@@ -473,6 +481,26 @@ int BIO_sock_init(void)
 	if (sock_init())
 		return (-1);
 #endif
+
+#if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
+    WORD wVerReq;
+    WSADATA wsaData;
+    int err;
+
+    if (!wsa_init_done)
+    {
+        wsa_init_done=1;
+        wVerReq = MAKEWORD( 2, 0 );
+        err = WSAStartup(wVerReq,&wsaData);
+        if (err != 0)
+        {
+            SYSerr(SYS_F_WSASTARTUP,err);
+            BIOerr(BIO_F_BIO_SOCK_INIT,BIO_R_WSASTARTUP);
+            return(-1);
+			}
+		}
+#endif
+
 	return(1);
 	}
 
@@ -483,9 +511,15 @@ void BIO_sock_cleanup(void)
 		{
 		wsa_init_done=0;
 #ifndef OPENSSL_SYS_WINCE
-		WSACancelBlockingCall();
+		WSACancelBlockingCall();	/* Winsock 1.1 specific */
 #endif
 		WSACleanup();
+		}
+#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
+   if (wsa_init_done)
+        {
+        wsa_init_done=0;
+        WSACleanup();
 		}
 #endif
 	}

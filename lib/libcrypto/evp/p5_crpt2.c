@@ -55,10 +55,10 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#if !defined(OPENSSL_NO_HMAC) && !defined(OPENSSL_NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include "cryptlib.h"
+#if !defined(OPENSSL_NO_HMAC) && !defined(OPENSSL_NO_SHA)
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -77,7 +77,7 @@
  */
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-			   unsigned char *salt, int saltlen, int iter,
+			   const unsigned char *salt, int saltlen, int iter,
 			   int keylen, unsigned char *out)
 {
 	unsigned char digtmp[SHA_DIGEST_LENGTH], *p, itmp[4];
@@ -148,16 +148,23 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                          ASN1_TYPE *param, const EVP_CIPHER *c, const EVP_MD *md,
                          int en_de)
 {
-	unsigned char *pbuf, *salt, key[EVP_MAX_KEY_LENGTH];
-	int saltlen, keylen, iter, plen;
+	unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
+	const unsigned char *pbuf;
+	int saltlen, iter, plen;
+	unsigned int keylen;
 	PBE2PARAM *pbe2 = NULL;
 	const EVP_CIPHER *cipher;
 	PBKDF2PARAM *kdf = NULL;
 
+	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
+	    param->value.sequence == NULL) {
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		return 0;
+	}
+
 	pbuf = param->value.sequence->data;
 	plen = param->value.sequence->length;
-	if(!param || (param->type != V_ASN1_SEQUENCE) ||
-				   !(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
+	if(!(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		return 0;
 	}
@@ -213,7 +220,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 	/* Now check the parameters of the kdf */
 
-	if(kdf->keylength && (ASN1_INTEGER_get(kdf->keylength) != keylen)){
+	if(kdf->keylength && (ASN1_INTEGER_get(kdf->keylength) != (int)keylen)){
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
 						EVP_R_UNSUPPORTED_KEYLENGTH);
 		goto err;

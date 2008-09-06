@@ -60,9 +60,9 @@ mkdir /usr/local
 mkdir /usr/local/ssl
 mkdir /usr/local/ssl/lib
 chmod 444 lib*_pic.a
-chmod 555 lib*.sl.0.9.7
-cp -p lib*_pic.a lib*.sl.0.9.7 /usr/local/ssl/lib
-(cd /usr/local/ssl/lib ; ln -sf libcrypto.sl.0.9.7 libcrypto.sl ; ln -sf libssl.sl.0.9.7 libssl.sl)
+chmod 555 lib*.sl.0.9.8
+cp -p lib*_pic.a lib*.sl.0.9.8 /usr/local/ssl/lib
+(cd /usr/local/ssl/lib ; ln -sf libcrypto.sl.0.9.8 libcrypto.sl ; ln -sf libssl.sl.0.9.8 libssl.sl)
 
 # Reconfigure without pic to compile the executables. Unfortunately, while
 # performing this task we have to recompile the library components, even
@@ -74,9 +74,9 @@ make clean
 
 # Hack the Makefiles to pick up the dynamic libraries during linking
 #
-sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib/' Makefile >xxx; mv xxx Makefile.ssl
-sed 's/-L\.\.//' apps/Makefile >xxx; mv xxx apps/Makefile
-sed 's/-L\.\.//' test/Makefile >xxx; mv xxx test/Makefile
+sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib/' Makefile.ssl >xxx; mv xxx Makefile.ssl
+sed 's/-L\.\.//' apps/Makefile.ssl >xxx; mv xxx apps/Makefile.ssl
+sed 's/-L\.\.//' test/Makefile.ssl >xxx; mv xxx test/Makefile.ssl
 # Build the static libs and the executables in one make.
 make
 # Install everything

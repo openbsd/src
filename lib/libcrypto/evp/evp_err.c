@@ -71,29 +71,31 @@
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
+{ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
-{ERR_FUNC(EVP_F_EVP_ADD_CIPHER),	"EVP_add_cipher"},
-{ERR_FUNC(EVP_F_EVP_ADD_DIGEST),	"EVP_add_digest"},
-{ERR_FUNC(EVP_F_EVP_CIPHERINIT),	"EVP_CipherInit"},
+{ERR_FUNC(EVP_F_DSAPKEY2PKCS8),	"DSAPKEY2PKCS8"},
+{ERR_FUNC(EVP_F_DSA_PKEY2PKCS8),	"DSA_PKEY2PKCS8"},
+{ERR_FUNC(EVP_F_ECDSA_PKEY2PKCS8),	"ECDSA_PKEY2PKCS8"},
+{ERR_FUNC(EVP_F_ECKEY_PKEY2PKCS8),	"ECKEY_PKEY2PKCS8"},
+{ERR_FUNC(EVP_F_EVP_CIPHERINIT_EX),	"EVP_CipherInit_ex"},
 {ERR_FUNC(EVP_F_EVP_CIPHER_CTX_CTRL),	"EVP_CIPHER_CTX_ctrl"},
 {ERR_FUNC(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH),	"EVP_CIPHER_CTX_set_key_length"},
-{ERR_FUNC(EVP_F_EVP_DECRYPTFINAL),	"EVP_DecryptFinal"},
-{ERR_FUNC(EVP_F_EVP_DIGESTINIT),	"EVP_DigestInit"},
-{ERR_FUNC(EVP_F_EVP_ENCRYPTFINAL),	"EVP_EncryptFinal"},
-{ERR_FUNC(EVP_F_EVP_GET_CIPHERBYNAME),	"EVP_get_cipherbyname"},
-{ERR_FUNC(EVP_F_EVP_GET_DIGESTBYNAME),	"EVP_get_digestbyname"},
-{ERR_FUNC(EVP_F_EVP_MD_CTX_COPY),	"EVP_MD_CTX_copy"},
+{ERR_FUNC(EVP_F_EVP_DECRYPTFINAL_EX),	"EVP_DecryptFinal_ex"},
+{ERR_FUNC(EVP_F_EVP_DIGESTINIT_EX),	"EVP_DigestInit_ex"},
+{ERR_FUNC(EVP_F_EVP_ENCRYPTFINAL_EX),	"EVP_EncryptFinal_ex"},
+{ERR_FUNC(EVP_F_EVP_MD_CTX_COPY_EX),	"EVP_MD_CTX_copy_ex"},
 {ERR_FUNC(EVP_F_EVP_OPENINIT),	"EVP_OpenInit"},
 {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD),	"EVP_PBE_alg_add"},
 {ERR_FUNC(EVP_F_EVP_PBE_CIPHERINIT),	"EVP_PBE_CipherInit"},
 {ERR_FUNC(EVP_F_EVP_PKCS82PKEY),	"EVP_PKCS82PKEY"},
-{ERR_FUNC(EVP_F_EVP_PKCS8_SET_BROKEN),	"EVP_PKCS8_SET_BROKEN"},
-{ERR_FUNC(EVP_F_EVP_PKEY2PKCS8),	"EVP_PKEY2PKCS8"},
+{ERR_FUNC(EVP_F_EVP_PKEY2PKCS8_BROKEN),	"EVP_PKEY2PKCS8_broken"},
 {ERR_FUNC(EVP_F_EVP_PKEY_COPY_PARAMETERS),	"EVP_PKEY_copy_parameters"},
 {ERR_FUNC(EVP_F_EVP_PKEY_DECRYPT),	"EVP_PKEY_decrypt"},
 {ERR_FUNC(EVP_F_EVP_PKEY_ENCRYPT),	"EVP_PKEY_encrypt"},
 {ERR_FUNC(EVP_F_EVP_PKEY_GET1_DH),	"EVP_PKEY_get1_DH"},
 {ERR_FUNC(EVP_F_EVP_PKEY_GET1_DSA),	"EVP_PKEY_get1_DSA"},
+{ERR_FUNC(EVP_F_EVP_PKEY_GET1_ECDSA),	"EVP_PKEY_GET1_ECDSA"},
+{ERR_FUNC(EVP_F_EVP_PKEY_GET1_EC_KEY),	"EVP_PKEY_get1_EC_KEY"},
 {ERR_FUNC(EVP_F_EVP_PKEY_GET1_RSA),	"EVP_PKEY_get1_RSA"},
 {ERR_FUNC(EVP_F_EVP_PKEY_NEW),	"EVP_PKEY_new"},
 {ERR_FUNC(EVP_F_EVP_RIJNDAEL),	"EVP_RIJNDAEL"},
@@ -101,6 +103,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_EVP_VERIFYFINAL),	"EVP_VerifyFinal"},
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN),	"PKCS5_v2_PBE_keyivgen"},
+{ERR_FUNC(EVP_F_PKCS8_SET_BROKEN),	"PKCS8_set_broken"},
 {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH),	"RC2_MAGIC_TO_METH"},
 {ERR_FUNC(EVP_F_RC5_CTRL),	"RC5_CTRL"},
 {0,NULL}
@@ -109,23 +112,26 @@ static ERR_STRING_DATA EVP_str_functs[]=
 static ERR_STRING_DATA EVP_str_reasons[]=
 	{
 {ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED)  ,"aes key setup failed"},
+{ERR_REASON(EVP_R_ASN1_LIB)              ,"asn1 lib"},
 {ERR_REASON(EVP_R_BAD_BLOCK_LENGTH)      ,"bad block length"},
 {ERR_REASON(EVP_R_BAD_DECRYPT)           ,"bad decrypt"},
 {ERR_REASON(EVP_R_BAD_KEY_LENGTH)        ,"bad key length"},
 {ERR_REASON(EVP_R_BN_DECODE_ERROR)       ,"bn decode error"},
 {ERR_REASON(EVP_R_BN_PUBKEY_ERROR)       ,"bn pubkey error"},
+{ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED),"camellia key setup failed"},
 {ERR_REASON(EVP_R_CIPHER_PARAMETER_ERROR),"cipher parameter error"},
 {ERR_REASON(EVP_R_CTRL_NOT_IMPLEMENTED)  ,"ctrl not implemented"},
 {ERR_REASON(EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED),"ctrl operation not implemented"},
 {ERR_REASON(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH),"data not multiple of block length"},
 {ERR_REASON(EVP_R_DECODE_ERROR)          ,"decode error"},
 {ERR_REASON(EVP_R_DIFFERENT_KEY_TYPES)   ,"different key types"},
-{ERR_REASON(EVP_R_DISABLED_FOR_FIPS)     ,"disabled for fips"},
 {ERR_REASON(EVP_R_ENCODE_ERROR)          ,"encode error"},
 {ERR_REASON(EVP_R_EVP_PBE_CIPHERINIT_ERROR),"evp pbe cipherinit error"},
 {ERR_REASON(EVP_R_EXPECTING_AN_RSA_KEY)  ,"expecting an rsa key"},
 {ERR_REASON(EVP_R_EXPECTING_A_DH_KEY)    ,"expecting a dh key"},
 {ERR_REASON(EVP_R_EXPECTING_A_DSA_KEY)   ,"expecting a dsa key"},
+{ERR_REASON(EVP_R_EXPECTING_A_ECDSA_KEY) ,"expecting a ecdsa key"},
+{ERR_REASON(EVP_R_EXPECTING_A_EC_KEY)    ,"expecting a ec key"},
 {ERR_REASON(EVP_R_INITIALIZATION_ERROR)  ,"initialization error"},
 {ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED) ,"input not initialized"},
 {ERR_REASON(EVP_R_INVALID_KEY_LENGTH)    ,"invalid key length"},
@@ -157,15 +163,12 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 
 void ERR_load_EVP_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(EVP_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,EVP_str_functs);
 		ERR_load_strings(0,EVP_str_reasons);
-#endif
-
 		}
+#endif
 	}

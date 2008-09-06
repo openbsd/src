@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,14 +74,14 @@ struct v3_ext_ctx;
 
 typedef void * (*X509V3_EXT_NEW)(void);
 typedef void (*X509V3_EXT_FREE)(void *);
-typedef void * (*X509V3_EXT_D2I)(void *, unsigned char ** , long);
+typedef void * (*X509V3_EXT_D2I)(void *, const unsigned char ** , long);
 typedef int (*X509V3_EXT_I2D)(void *, unsigned char **);
 typedef STACK_OF(CONF_VALUE) * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK_OF(CONF_VALUE) *extlist);
 typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK_OF(CONF_VALUE) *values);
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, void *ext);
-typedef void * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+typedef void * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, const char *str);
 typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, void *ext, BIO *out, int indent);
-typedef void * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+typedef void * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, const char *str);
 
 /* V3 extension structure */
 
@@ -132,7 +132,6 @@ void *db;
 };
 
 typedef struct v3_ext_method X509V3_EXT_METHOD;
-typedef struct v3_ext_ctx X509V3_CTX;
 
 DECLARE_STACK_OF(X509V3_EXT_METHOD)
 
@@ -287,6 +286,33 @@ typedef STACK_OF(POLICYINFO) CERTIFICATEPOLICIES;
 DECLARE_STACK_OF(POLICYINFO)
 DECLARE_ASN1_SET_OF(POLICYINFO)
 
+typedef struct POLICY_MAPPING_st {
+	ASN1_OBJECT *issuerDomainPolicy;
+	ASN1_OBJECT *subjectDomainPolicy;
+} POLICY_MAPPING;
+
+DECLARE_STACK_OF(POLICY_MAPPING)
+
+typedef STACK_OF(POLICY_MAPPING) POLICY_MAPPINGS;
+
+typedef struct GENERAL_SUBTREE_st {
+	GENERAL_NAME *base;
+	ASN1_INTEGER *minimum;
+	ASN1_INTEGER *maximum;
+} GENERAL_SUBTREE;
+
+DECLARE_STACK_OF(GENERAL_SUBTREE)
+
+typedef struct NAME_CONSTRAINTS_st {
+	STACK_OF(GENERAL_SUBTREE) *permittedSubtrees;
+	STACK_OF(GENERAL_SUBTREE) *excludedSubtrees;
+} NAME_CONSTRAINTS;
+
+typedef struct POLICY_CONSTRAINTS_st {
+	ASN1_INTEGER *requireExplicitPolicy;
+	ASN1_INTEGER *inhibitPolicyMapping;
+} POLICY_CONSTRAINTS;
+
 /* Proxy certificate structures, see RFC 3820 */
 typedef struct PROXY_POLICY_st
 	{
@@ -343,6 +369,8 @@ DECLARE_ASN1_FUNCTIONS(PROXY_CERT_INFO_EXTENSION)
 #define EXFLAG_SET		0x100
 #define EXFLAG_CRITICAL		0x200
 #define EXFLAG_PROXY		0x400
+
+#define EXFLAG_INVALID_POLICY	0x400
 
 #define KU_DIGITAL_SIGNATURE	0x0080
 #define KU_NON_REPUDIATION	0x0040
@@ -442,6 +470,13 @@ DECLARE_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
 DECLARE_ASN1_FUNCTIONS(GENERAL_NAME)
 
+
+ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
+				ASN1_BIT_STRING *bits,
+				STACK_OF(CONF_VALUE) *extlist);
+
 STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen, STACK_OF(CONF_VALUE) *ret);
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen);
 
@@ -474,8 +509,24 @@ DECLARE_ASN1_FUNCTIONS(DIST_POINT_NAME)
 DECLARE_ASN1_FUNCTIONS(ACCESS_DESCRIPTION)
 DECLARE_ASN1_FUNCTIONS(AUTHORITY_INFO_ACCESS)
 
+DECLARE_ASN1_ITEM(POLICY_MAPPING)
+DECLARE_ASN1_ALLOC_FUNCTIONS(POLICY_MAPPING)
+DECLARE_ASN1_ITEM(POLICY_MAPPINGS)
+
+DECLARE_ASN1_ITEM(GENERAL_SUBTREE)
+DECLARE_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
+
+DECLARE_ASN1_ITEM(NAME_CONSTRAINTS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
+
+DECLARE_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
+DECLARE_ASN1_ITEM(POLICY_CONSTRAINTS)
+
 #ifdef HEADER_CONF_H
-GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_VALUE *cnf);
+GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+							CONF_VALUE *cnf);
+GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out, X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, CONF_VALUE *cnf, int is_nc);
 void X509V3_conf_free(CONF_VALUE *val);
 
 X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid, char *value);
@@ -566,7 +617,164 @@ int X509_PURPOSE_get_id(X509_PURPOSE *);
 STACK *X509_get1_email(X509 *x);
 STACK *X509_REQ_get1_email(X509_REQ *x);
 void X509_email_free(STACK *sk);
+STACK *X509_get1_ocsp(X509 *x);
 
+ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
+ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
+int a2i_ipadd(unsigned char *ipout, const char *ipasc);
+int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
+						unsigned long chtype);
+
+void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
+
+#ifndef OPENSSL_NO_RFC3779
+
+typedef struct ASRange_st {
+  ASN1_INTEGER *min, *max;
+} ASRange;
+
+#define	ASIdOrRange_id		0
+#define	ASIdOrRange_range	1
+
+typedef struct ASIdOrRange_st {
+  int type;
+  union {
+    ASN1_INTEGER *id;
+    ASRange      *range;
+  } u;
+} ASIdOrRange;
+
+typedef STACK_OF(ASIdOrRange) ASIdOrRanges;
+DECLARE_STACK_OF(ASIdOrRange)
+
+#define	ASIdentifierChoice_inherit		0
+#define	ASIdentifierChoice_asIdsOrRanges	1
+
+typedef struct ASIdentifierChoice_st {
+  int type;
+  union {
+    ASN1_NULL    *inherit;
+    ASIdOrRanges *asIdsOrRanges;
+  } u;
+} ASIdentifierChoice;
+
+typedef struct ASIdentifiers_st {
+  ASIdentifierChoice *asnum, *rdi;
+} ASIdentifiers;
+
+DECLARE_ASN1_FUNCTIONS(ASRange)
+DECLARE_ASN1_FUNCTIONS(ASIdOrRange)
+DECLARE_ASN1_FUNCTIONS(ASIdentifierChoice)
+DECLARE_ASN1_FUNCTIONS(ASIdentifiers)
+
+
+typedef struct IPAddressRange_st {
+  ASN1_BIT_STRING	*min, *max;
+} IPAddressRange;
+
+#define	IPAddressOrRange_addressPrefix	0
+#define	IPAddressOrRange_addressRange	1
+
+typedef struct IPAddressOrRange_st {
+  int type;
+  union {
+    ASN1_BIT_STRING	*addressPrefix;
+    IPAddressRange	*addressRange;
+  } u;
+} IPAddressOrRange;
+
+typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
+DECLARE_STACK_OF(IPAddressOrRange)
+
+#define	IPAddressChoice_inherit			0
+#define	IPAddressChoice_addressesOrRanges	1
+
+typedef struct IPAddressChoice_st {
+  int type;
+  union {
+    ASN1_NULL		*inherit;
+    IPAddressOrRanges	*addressesOrRanges;
+  } u;
+} IPAddressChoice;
+
+typedef struct IPAddressFamily_st {
+  ASN1_OCTET_STRING	*addressFamily;
+  IPAddressChoice	*ipAddressChoice;
+} IPAddressFamily;
+
+typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
+DECLARE_STACK_OF(IPAddressFamily)
+
+DECLARE_ASN1_FUNCTIONS(IPAddressRange)
+DECLARE_ASN1_FUNCTIONS(IPAddressOrRange)
+DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
+DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
+
+/*
+ * API tag for elements of the ASIdentifer SEQUENCE.
+ */
+#define	V3_ASID_ASNUM	0
+#define	V3_ASID_RDI	1
+
+/*
+ * AFI values, assigned by IANA.  It'd be nice to make the AFI
+ * handling code totally generic, but there are too many little things
+ * that would need to be defined for other address families for it to
+ * be worth the trouble.
+ */
+#define	IANA_AFI_IPV4	1
+#define	IANA_AFI_IPV6	2
+
+/*
+ * Utilities to construct and extract values from RFC3779 extensions,
+ * since some of the encodings (particularly for IP address prefixes
+ * and ranges) are a bit tedious to work with directly.
+ */
+int v3_asid_add_inherit(ASIdentifiers *asid, int which);
+int v3_asid_add_id_or_range(ASIdentifiers *asid, int which,
+			    ASN1_INTEGER *min, ASN1_INTEGER *max);
+int v3_addr_add_inherit(IPAddrBlocks *addr,
+			const unsigned afi, const unsigned *safi);
+int v3_addr_add_prefix(IPAddrBlocks *addr,
+		       const unsigned afi, const unsigned *safi,
+		       unsigned char *a, const int prefixlen);
+int v3_addr_add_range(IPAddrBlocks *addr,
+		      const unsigned afi, const unsigned *safi,
+		      unsigned char *min, unsigned char *max);
+unsigned v3_addr_get_afi(const IPAddressFamily *f);
+int v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
+		      unsigned char *min, unsigned char *max,
+		      const int length);
+
+/*
+ * Canonical forms.
+ */
+int v3_asid_is_canonical(ASIdentifiers *asid);
+int v3_addr_is_canonical(IPAddrBlocks *addr);
+int v3_asid_canonize(ASIdentifiers *asid);
+int v3_addr_canonize(IPAddrBlocks *addr);
+
+/*
+ * Tests for inheritance and containment.
+ */
+int v3_asid_inherits(ASIdentifiers *asid);
+int v3_addr_inherits(IPAddrBlocks *addr);
+int v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b);
+int v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
+
+/*
+ * Check whether RFC 3779 extensions nest properly in chains.
+ */
+int v3_asid_validate_path(X509_STORE_CTX *);
+int v3_addr_validate_path(X509_STORE_CTX *);
+int v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+				  ASIdentifiers *ext,
+				  int allow_inheritance);
+int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+				  IPAddrBlocks *ext,
+				  int allow_inheritance);
+
+#endif /* OPENSSL_NO_RFC3779 */
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
@@ -577,46 +785,63 @@ void ERR_load_X509V3_strings(void);
 /* Error codes for the X509V3 functions. */
 
 /* Function codes. */
+#define X509V3_F_ASIDENTIFIERCHOICE_CANONIZE		 156
+#define X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL	 157
 #define X509V3_F_COPY_EMAIL				 122
 #define X509V3_F_COPY_ISSUER				 123
+#define X509V3_F_DO_DIRNAME				 144
 #define X509V3_F_DO_EXT_CONF				 124
 #define X509V3_F_DO_EXT_I2D				 135
+#define X509V3_F_DO_EXT_NCONF				 151
+#define X509V3_F_DO_I2V_NAME_CONSTRAINTS		 148
 #define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
-#define X509V3_F_I2S_ASN1_IA5STRING			 142
+#define X509V3_F_I2S_ASN1_IA5STRING			 149
 #define X509V3_F_I2S_ASN1_INTEGER			 120
 #define X509V3_F_I2V_AUTHORITY_INFO_ACCESS		 138
 #define X509V3_F_NOTICE_SECTION				 132
 #define X509V3_F_NREF_NOS				 133
 #define X509V3_F_POLICY_SECTION				 131
+#define X509V3_F_PROCESS_PCI_VALUE			 150
 #define X509V3_F_R2I_CERTPOL				 130
-#define X509V3_F_R2I_PCI				 142
+#define X509V3_F_R2I_PCI				 155
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
 #define X509V3_F_S2I_ASN1_INTEGER			 108
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
 #define X509V3_F_S2I_ASN1_SKEY_ID			 114
-#define X509V3_F_S2I_S2I_SKEY_ID			 115
+#define X509V3_F_S2I_SKEY_ID				 115
 #define X509V3_F_STRING_TO_HEX				 113
-#define X509V3_F_SXNET_ADD_ASC				 125
+#define X509V3_F_SXNET_ADD_ID_ASC			 125
 #define X509V3_F_SXNET_ADD_ID_INTEGER			 126
 #define X509V3_F_SXNET_ADD_ID_ULONG			 127
 #define X509V3_F_SXNET_GET_ID_ASC			 128
 #define X509V3_F_SXNET_GET_ID_ULONG			 129
-#define X509V3_F_V2I_ACCESS_DESCRIPTION			 139
+#define X509V3_F_V2I_ASIDENTIFIERS			 158
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
+#define X509V3_F_V2I_AUTHORITY_INFO_ACCESS		 139
 #define X509V3_F_V2I_AUTHORITY_KEYID			 119
 #define X509V3_F_V2I_BASIC_CONSTRAINTS			 102
 #define X509V3_F_V2I_CRLD				 134
-#define X509V3_F_V2I_EXT_KU				 103
-#define X509V3_F_V2I_GENERAL_NAME			 117
+#define X509V3_F_V2I_EXTENDED_KEY_USAGE			 103
 #define X509V3_F_V2I_GENERAL_NAMES			 118
+#define X509V3_F_V2I_GENERAL_NAME_EX			 117
+#define X509V3_F_V2I_IPADDRBLOCKS			 159
+#define X509V3_F_V2I_ISSUER_ALT				 153
+#define X509V3_F_V2I_NAME_CONSTRAINTS			 147
+#define X509V3_F_V2I_POLICY_CONSTRAINTS			 146
+#define X509V3_F_V2I_POLICY_MAPPINGS			 145
+#define X509V3_F_V2I_SUBJECT_ALT			 154
+#define X509V3_F_V3_ADDR_VALIDATE_PATH_INTERNAL		 160
 #define X509V3_F_V3_GENERIC_EXTENSION			 116
-#define X509V3_F_X509V3_ADD_I2D				 140
+#define X509V3_F_X509V3_ADD1_I2D			 140
 #define X509V3_F_X509V3_ADD_VALUE			 105
 #define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_EXT_ADD_ALIAS			 106
 #define X509V3_F_X509V3_EXT_CONF			 107
 #define X509V3_F_X509V3_EXT_I2D				 136
+#define X509V3_F_X509V3_EXT_NCONF			 152
+#define X509V3_F_X509V3_GET_SECTION			 142
+#define X509V3_F_X509V3_GET_STRING			 143
 #define X509V3_F_X509V3_GET_VALUE_BOOL			 110
 #define X509V3_F_X509V3_PARSE_LIST			 109
 #define X509V3_F_X509_PURPOSE_ADD			 137
@@ -627,6 +852,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_BAD_OBJECT				 119
 #define X509V3_R_BN_DEC2BN_ERROR			 100
 #define X509V3_R_BN_TO_ASN1_INTEGER_ERROR		 101
+#define X509V3_R_DIRNAME_ERROR				 149
 #define X509V3_R_DUPLICATE_ZONE_ID			 133
 #define X509V3_R_ERROR_CONVERTING_ZONE			 131
 #define X509V3_R_ERROR_CREATING_EXTENSION		 144
@@ -637,10 +863,15 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_EXTENSION_NOT_FOUND			 102
 #define X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED	 103
 #define X509V3_R_EXTENSION_VALUE_ERROR			 116
+#define X509V3_R_ILLEGAL_EMPTY_EXTENSION		 151
 #define X509V3_R_ILLEGAL_HEX_DIGIT			 113
-#define X509V3_R_INCORRECT_POLICY_SYNTAX_TAG		 153
+#define X509V3_R_INCORRECT_POLICY_SYNTAX_TAG		 152
+#define X509V3_R_INVALID_ASNUMBER			 160
+#define X509V3_R_INVALID_ASRANGE			 161
 #define X509V3_R_INVALID_BOOLEAN_STRING			 104
 #define X509V3_R_INVALID_EXTENSION_STRING		 105
+#define X509V3_R_INVALID_INHERITANCE			 162
+#define X509V3_R_INVALID_IPADDRESS			 163
 #define X509V3_R_INVALID_NAME				 106
 #define X509V3_R_INVALID_NULL_ARGUMENT			 107
 #define X509V3_R_INVALID_NULL_NAME			 108
@@ -650,9 +881,9 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_INVALID_OBJECT_IDENTIFIER		 110
 #define X509V3_R_INVALID_OPTION				 138
 #define X509V3_R_INVALID_POLICY_IDENTIFIER		 134
-#define X509V3_R_INVALID_PROXY_POLICY_IDENTIFIER	 147
-#define X509V3_R_INVALID_PROXY_POLICY_SETTING		 151
+#define X509V3_R_INVALID_PROXY_POLICY_SETTING		 153
 #define X509V3_R_INVALID_PURPOSE			 146
+#define X509V3_R_INVALID_SAFI				 164
 #define X509V3_R_INVALID_SECTION			 135
 #define X509V3_R_INVALID_SYNTAX				 143
 #define X509V3_R_ISSUER_DECODE_ERROR			 126
@@ -662,16 +893,18 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_NO_ISSUER_CERTIFICATE			 121
 #define X509V3_R_NO_ISSUER_DETAILS			 127
 #define X509V3_R_NO_POLICY_IDENTIFIER			 139
-#define X509V3_R_NO_PROXY_CERT_POLICY_LANGUAGE_DEFINED	 148
+#define X509V3_R_NO_PROXY_CERT_POLICY_LANGUAGE_DEFINED	 154
 #define X509V3_R_NO_PUBLIC_KEY				 114
 #define X509V3_R_NO_SUBJECT_DETAILS			 125
 #define X509V3_R_ODD_NUMBER_OF_DIGITS			 112
-#define X509V3_R_POLICY_LANGUAGE_ALREADTY_DEFINED	 149
-#define X509V3_R_POLICY_PATH_LENGTH			 152
-#define X509V3_R_POLICY_PATH_LENGTH_ALREADTY_DEFINED	 150
-#define X509V3_R_POLICY_SYNTAX_NOT			 154
-#define X509V3_R_POLICY_SYNTAX_NOT_CURRENTLY_SUPPORTED	 155
-#define X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY 156
+#define X509V3_R_OPERATION_NOT_DEFINED			 148
+#define X509V3_R_OTHERNAME_ERROR			 147
+#define X509V3_R_POLICY_LANGUAGE_ALREADTY_DEFINED	 155
+#define X509V3_R_POLICY_PATH_LENGTH			 156
+#define X509V3_R_POLICY_PATH_LENGTH_ALREADTY_DEFINED	 157
+#define X509V3_R_POLICY_SYNTAX_NOT_CURRENTLY_SUPPORTED	 158
+#define X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY 159
+#define X509V3_R_SECTION_NOT_FOUND			 150
 #define X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS		 122
 #define X509V3_R_UNABLE_TO_GET_ISSUER_KEYID		 123
 #define X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT		 111

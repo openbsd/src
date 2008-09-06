@@ -322,16 +322,10 @@ unsigned long X509_NAME_hash(X509_NAME *x)
 	{
 	unsigned long ret=0;
 	unsigned char md[16];
-	EVP_MD_CTX md_ctx;
 
 	/* Make sure X509_NAME structure contains valid cached encoding */
 	i2d_X509_NAME(x,NULL);
-	EVP_MD_CTX_init(&md_ctx);
-	EVP_MD_CTX_set_flags(&md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	EVP_DigestInit_ex(&md_ctx, EVP_md5(), NULL);
-	EVP_DigestUpdate(&md_ctx, x->bytes->data, x->bytes->length);
-	EVP_DigestFinal_ex(&md_ctx,md,NULL);
-	EVP_MD_CTX_cleanup(&md_ctx);
+	EVP_Digest(x->bytes->data, x->bytes->length, md, NULL, EVP_md5(), NULL);
 
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
@@ -396,45 +390,36 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 	int ok=0;
 
 	xk=X509_get_pubkey(x);
-	if (xk->type != k->type)
-	    {
-	    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
-	    goto err;
-	    }
-	switch (k->type)
+	switch (EVP_PKEY_cmp(xk, k))
 		{
-#ifndef OPENSSL_NO_RSA
-	case EVP_PKEY_RSA:
-		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0
-		    || BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0)
-		    {
-		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
-		    goto err;
-		    }
+	case 1:
+		ok=1;
 		break;
-#endif
-#ifndef OPENSSL_NO_DSA
-	case EVP_PKEY_DSA:
-		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
-		    {
-		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
-		    goto err;
-		    }
+	case 0:
+		X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
 		break;
+	case -1:
+		X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
+		break;
+	case -2:
+#ifndef OPENSSL_NO_EC
+		if (k->type == EVP_PKEY_EC)
+			{
+			X509err(X509_F_X509_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
+			break;
+			}
 #endif
 #ifndef OPENSSL_NO_DH
-	case EVP_PKEY_DH:
-		/* No idea */
-	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
-		goto err;
+		if (k->type == EVP_PKEY_DH)
+			{
+			/* No idea */
+			X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
+			break;
+			}
 #endif
-	default:
 	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_UNKNOWN_KEY_TYPE);
-		goto err;
 		}
 
-	ok=1;
-err:
 	EVP_PKEY_free(xk);
 	return(ok);
 	}

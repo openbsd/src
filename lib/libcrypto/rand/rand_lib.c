@@ -63,8 +63,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include <openssl/fips.h>
-#include <openssl/fips_rand.h>
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -104,22 +102,8 @@ const RAND_METHOD *RAND_get_rand_method(void)
 			funct_ref = e;
 		else
 #endif
-#ifdef OPENSSL_FIPS
-			if(FIPS_mode())
-				default_RAND_meth=FIPS_rand_method();
-			else
-#endif
-				default_RAND_meth = RAND_SSLeay();
+			default_RAND_meth = RAND_SSLeay();
 		}
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_mode()
-		&& default_RAND_meth != FIPS_rand_check())
-	    {
-	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
-	    return 0;
-	    }
-#endif
 	return default_RAND_meth;
 	}
 

@@ -82,15 +82,18 @@ int ssl2_enc_init(SSL *s, int client)
 		((s->enc_read_ctx=(EVP_CIPHER_CTX *)
 		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
+
+	/* make sure it's intialized in case the malloc for enc_write_ctx fails
+	 * and we exit with an error */
+	rs= s->enc_read_ctx;
+	EVP_CIPHER_CTX_init(rs);
+
 	if ((s->enc_write_ctx == NULL) &&
 		((s->enc_write_ctx=(EVP_CIPHER_CTX *)
 		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 
-	rs= s->enc_read_ctx;
 	ws= s->enc_write_ctx;
-
-	EVP_CIPHER_CTX_init(rs);
 	EVP_CIPHER_CTX_init(ws);
 
 	num=c->key_len;
@@ -100,7 +103,7 @@ int ssl2_enc_init(SSL *s, int client)
 	if (ssl2_generate_key_material(s) <= 0)
 		return 0;
 
-	OPENSSL_assert(c->iv_len <= sizeof s->session->key_arg);
+	OPENSSL_assert(c->iv_len <= (int)sizeof(s->session->key_arg));
 	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
 	EVP_DecryptInit_ex(rs,c,NULL,&(s->s2->key_material[(client)?0:num]),

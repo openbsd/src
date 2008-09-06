@@ -71,14 +71,21 @@
 static ERR_STRING_DATA RSA_str_functs[]=
 	{
 {ERR_FUNC(RSA_F_MEMORY_LOCK),	"MEMORY_LOCK"},
+{ERR_FUNC(RSA_F_RSA_BUILTIN_KEYGEN),	"RSA_BUILTIN_KEYGEN"},
 {ERR_FUNC(RSA_F_RSA_CHECK_KEY),	"RSA_check_key"},
 {ERR_FUNC(RSA_F_RSA_EAY_PRIVATE_DECRYPT),	"RSA_EAY_PRIVATE_DECRYPT"},
 {ERR_FUNC(RSA_F_RSA_EAY_PRIVATE_ENCRYPT),	"RSA_EAY_PRIVATE_ENCRYPT"},
 {ERR_FUNC(RSA_F_RSA_EAY_PUBLIC_DECRYPT),	"RSA_EAY_PUBLIC_DECRYPT"},
 {ERR_FUNC(RSA_F_RSA_EAY_PUBLIC_ENCRYPT),	"RSA_EAY_PUBLIC_ENCRYPT"},
 {ERR_FUNC(RSA_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
+{ERR_FUNC(RSA_F_RSA_MEMORY_LOCK),	"RSA_memory_lock"},
 {ERR_FUNC(RSA_F_RSA_NEW_METHOD),	"RSA_new_method"},
 {ERR_FUNC(RSA_F_RSA_NULL),	"RSA_NULL"},
+{ERR_FUNC(RSA_F_RSA_NULL_MOD_EXP),	"RSA_NULL_MOD_EXP"},
+{ERR_FUNC(RSA_F_RSA_NULL_PRIVATE_DECRYPT),	"RSA_NULL_PRIVATE_DECRYPT"},
+{ERR_FUNC(RSA_F_RSA_NULL_PRIVATE_ENCRYPT),	"RSA_NULL_PRIVATE_ENCRYPT"},
+{ERR_FUNC(RSA_F_RSA_NULL_PUBLIC_DECRYPT),	"RSA_NULL_PUBLIC_DECRYPT"},
+{ERR_FUNC(RSA_F_RSA_NULL_PUBLIC_ENCRYPT),	"RSA_NULL_PUBLIC_ENCRYPT"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_NONE),	"RSA_padding_add_none"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP),	"RSA_padding_add_PKCS1_OAEP"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_PSS),	"RSA_padding_add_PKCS1_PSS"},
@@ -94,6 +101,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_X931),	"RSA_padding_check_X931"},
 {ERR_FUNC(RSA_F_RSA_PRINT),	"RSA_print"},
 {ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_print_fp"},
+{ERR_FUNC(RSA_F_RSA_SETUP_BLINDING),	"RSA_setup_blinding"},
 {ERR_FUNC(RSA_F_RSA_SIGN),	"RSA_sign"},
 {ERR_FUNC(RSA_F_RSA_SIGN_ASN1_OCTET_STRING),	"RSA_sign_ASN1_OCTET_STRING"},
 {ERR_FUNC(RSA_F_RSA_VERIFY),	"RSA_verify"},
@@ -130,20 +138,21 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
 {ERR_REASON(RSA_R_LAST_OCTET_INVALID)    ,"last octet invalid"},
 {ERR_REASON(RSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
+{ERR_REASON(RSA_R_NO_PUBLIC_EXPONENT)    ,"no public exponent"},
 {ERR_REASON(RSA_R_NULL_BEFORE_BLOCK_MISSING),"null before block missing"},
 {ERR_REASON(RSA_R_N_DOES_NOT_EQUAL_P_Q)  ,"n does not equal p q"},
 {ERR_REASON(RSA_R_OAEP_DECODING_ERROR)   ,"oaep decoding error"},
-{ERR_REASON(RSA_R_SLEN_RECOVERY_FAILED)  ,"salt length recovery failed"},
 {ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  ,"padding check failed"},
 {ERR_REASON(RSA_R_P_NOT_PRIME)           ,"p not prime"},
 {ERR_REASON(RSA_R_Q_NOT_PRIME)           ,"q not prime"},
 {ERR_REASON(RSA_R_RSA_OPERATIONS_NOT_SUPPORTED),"rsa operations not supported"},
+{ERR_REASON(RSA_R_SLEN_CHECK_FAILED)     ,"salt length check failed"},
+{ERR_REASON(RSA_R_SLEN_RECOVERY_FAILED)  ,"salt length recovery failed"},
 {ERR_REASON(RSA_R_SSLV3_ROLLBACK_ATTACK) ,"sslv3 rollback attack"},
 {ERR_REASON(RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),"the asn1 object identifier is not known for this md"},
 {ERR_REASON(RSA_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
 {ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  ,"unknown padding type"},
 {ERR_REASON(RSA_R_WRONG_SIGNATURE_LENGTH),"wrong signature length"},
-{ERR_REASON(RSA_R_SLEN_CHECK_FAILED)     ,"salt length check failed"},
 {0,NULL}
 	};
 
@@ -151,15 +160,12 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 
 void ERR_load_RSA_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(RSA_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,RSA_str_functs);
 		ERR_load_strings(0,RSA_str_reasons);
-#endif
-
 		}
+#endif
 	}

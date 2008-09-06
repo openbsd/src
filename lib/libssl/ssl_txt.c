@@ -81,7 +81,7 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	{
 	unsigned int i;
-	char *s;
+	const char *s;
 
 	if (x == NULL) goto err;
 	if (BIO_puts(bp,"SSL-Session:\n") <= 0) goto err;
@@ -151,9 +151,25 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 			if (BIO_printf(bp,"%02X",x->krb5_client_princ[i]) <= 0) goto err;
 			}
 #endif /* OPENSSL_NO_KRB5 */
+#ifndef OPENSSL_NO_TLSEXT
+	if (x->tlsext_tick_lifetime_hint)
+		{
+		if (BIO_printf(bp,
+			"\n    TLS session ticket lifetime hint: %ld (seconds)",
+			x->tlsext_tick_lifetime_hint) <=0)
+			goto err;
+		}
+	if (x->tlsext_tick)
+		{
+		if (BIO_puts(bp, "\n    TLS session ticket:\n") <= 0) goto err;
+		if (BIO_dump_indent(bp, (char *)x->tlsext_tick, x->tlsext_ticklen, 4) <= 0)
+			goto err;
+		}
+#endif
+#ifndef OPENSSL_NO_COMP
 	if (x->compress_meth != 0)
 		{
-		SSL_COMP *comp;
+		SSL_COMP *comp = NULL;
 
 		ssl_cipher_get_evp(x,NULL,NULL,&comp);
 		if (comp == NULL)
@@ -165,6 +181,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 			if (BIO_printf(bp,"\n   Compression: %d (%s)", comp->id,comp->method->name) <= 0) goto err;
 			}
 		}	
+#endif
 	if (x->time != 0L)
 		{
 		if (BIO_printf(bp, "\n    Start Time: %ld",x->time) <= 0) goto err;
