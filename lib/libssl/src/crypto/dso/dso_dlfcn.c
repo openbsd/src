@@ -269,6 +269,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	const char *filespec2)
 	{
 	char *merged;
+	size_t len;
 
 	if(!filespec1 && !filespec2)
 		{
@@ -280,18 +281,20 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	   same goes if the second file specification is missing. */
 	if (!filespec2 || filespec1[0] == '/')
 		{
-		merged = OPENSSL_malloc(strlen(filespec1) + 1);
+		len = strlen(filespec1) + 1;
+		merged = OPENSSL_malloc(len);
 		if(!merged)
 			{
 			DSOerr(DSO_F_DLFCN_MERGER,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		strcpy(merged, filespec1);
+		strlcpy(merged, filespec1, len);
 		}
 	/* If the first file specification is missing, the second one rules. */
 	else if (!filespec1)
 		{
+		len = strlen(filespec2) + 1;
 		merged = OPENSSL_malloc(strlen(filespec2) + 1);
 		if(!merged)
 			{
@@ -299,7 +302,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		strcpy(merged, filespec2);
+		strlcpy(merged, filespec2, len);
 		}
 	else
 		/* This part isn't as trivial as it looks.  It assumes that
@@ -325,9 +328,9 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		strcpy(merged, filespec2);
+		strlcpy(merged, filespec2, len + 2);
 		merged[spec2len] = '/';
-		strcpy(&merged[spec2len + 1], filespec1);
+		strlcpy(&merged[spec2len + 1], filespec1, len + 1 - spec2len);
 		}
 	return(merged);
 	}

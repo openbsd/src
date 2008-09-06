@@ -226,18 +226,16 @@ static int ssl_sock_init(void)
 	return(1);
 	}
 
-int init_client(int *sock, char *host, int port, int type, int af)
+int init_client(int *sock, char *host, char *port, int type, int af)
 	{
 	struct addrinfo hints, *ai_top, *ai;
 	int i, s;
-	char port_s[NI_MAXSERV];
 
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_family = af;
 	hints.ai_socktype = type;
 
-	snprintf(port_s, sizeof(port_s), "%d", port);
-	if ((i = getaddrinfo(host, port_s, &hints, &ai_top)) != 0 ||
+	if ((i = getaddrinfo(host, port, &hints, &ai_top)) != 0 ||
 	    ai_top == NULL || ai_top->ai_addr == NULL)
 		{
 		BIO_printf(bio_err,"getaddrinfo: %s\n", gai_strerror(i));
@@ -246,7 +244,7 @@ int init_client(int *sock, char *host, int port, int type, int af)
 
 	for (ai = ai_top; ai != NULL; ai = ai->ai_next)
 		{
-		s=socket(ai->ai_addr->sa_family, SOCK_STREAM, SOCKET_PROTOCOL);
+		s=socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s == INVALID_SOCKET) { continue; }
 #ifndef OPENSSL_SYS_MPE
 	if (type == SOCK_STREAM)
@@ -256,7 +254,7 @@ int init_client(int *sock, char *host, int port, int type, int af)
 		if (i < 0) { perror("keepalive"); return(0); }
 		}
 #endif
-		if ((i = connect(s, ai->ai_addr, ai->ai_addr->sa_len)) == 0)
+		if ((i = connect(s, ai->ai_addr, ai->ai_addrlen)) == 0)
 			{ *sock=s; freeaddrinfo(ai_top); return (1);}
 
 		close(s);

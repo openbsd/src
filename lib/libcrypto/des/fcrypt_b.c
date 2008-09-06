@@ -68,6 +68,8 @@
 #include "des_locl.h"
 #undef DES_FCRYPT
 
+#ifndef OPENBSD_DES_ASM
+
 #undef PERM_OP
 #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
 	(b)^=(t),\
@@ -143,3 +145,4 @@ void fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 	out[1]=l;
 	}
 
+#endif /* OPENBSD_DES_ASM */

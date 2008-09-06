@@ -4,19 +4,73 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
+#ifndef OPENSSL_NO_CAMELLIA
+# define OPENSSL_NO_CAMELLIA
+#endif
+#ifndef OPENSSL_NO_CMS
+# define OPENSSL_NO_CMS
+#endif
+#ifndef OPENSSL_NO_GMP
+# define OPENSSL_NO_GMP
+#endif
 #ifndef OPENSSL_NO_KRB5
 # define OPENSSL_NO_KRB5
 #endif
+#ifndef OPENSSL_NO_MDC2
+# define OPENSSL_NO_MDC2
+#endif
+#ifndef OPENSSL_NO_RC5
+# define OPENSSL_NO_RC5
+#endif
+#ifndef OPENSSL_NO_RFC3779
+# define OPENSSL_NO_RFC3779
+#endif
+#ifndef OPENSSL_NO_SEED
+# define OPENSSL_NO_SEED
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+# define OPENSSL_NO_TLSEXT
+#endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
+#ifndef OPENSSL_THREADS
+# define OPENSSL_THREADS
+#endif
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# define OPENSSL_NO_DYNAMIC_ENGINE
+#endif
 
 /* The OPENSSL_NO_* macros are also defined as NO_* if the application
    asks for it.  This is a transient feature that is provided for those
    who haven't had the time to do the appropriate changes in their
    applications.  */
 #ifdef OPENSSL_ALGORITHM_DEFINES
+# if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
+#  define NO_CAMELLIA
+# endif
+# if defined(OPENSSL_NO_CMS) && !defined(NO_CMS)
+#  define NO_CMS
+# endif
+# if defined(OPENSSL_NO_GMP) && !defined(NO_GMP)
+#  define NO_GMP
+# endif
 # if defined(OPENSSL_NO_KRB5) && !defined(NO_KRB5)
 #  define NO_KRB5
+# endif
+# if defined(OPENSSL_NO_MDC2) && !defined(NO_MDC2)
+#  define NO_MDC2
+# endif
+# if defined(OPENSSL_NO_RC5) && !defined(NO_RC5)
+#  define NO_RC5
+# endif
+# if defined(OPENSSL_NO_RFC3779) && !defined(NO_RFC3779)
+#  define NO_RFC3779
+# endif
+# if defined(OPENSSL_NO_SEED) && !defined(NO_SEED)
+#  define NO_SEED
+# endif
+# if defined(OPENSSL_NO_TLSEXT) && !defined(NO_TLSEXT)
+#  define NO_TLSEXT
 # endif
 #endif
 
@@ -27,6 +81,7 @@
 
 #if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
+#define ENGINESDIR "/usr/lib/engines"
 #define OPENSSLDIR "/etc/ssl"
 #endif
 #endif
@@ -65,11 +120,11 @@
  * This enables code handling data aligned at natural CPU word
  * boundary. See crypto/rc4/rc4_enc.c for further details.
  */
-#undef RC4_CHUNK
+#define RC4_CHUNK unsigned long
 #endif
 #endif
 
-#if (defined(HEADER_DES_H) || defined(HEADER_DES_OLD_H)) && !defined(DES_LONG)
+#if (defined(HEADER_NEW_DES_H) || defined(HEADER_DES_H)) && !defined(DES_LONG)
 /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
  * %20 speed up (longs are 8 bytes, int's are 4). */
 #ifndef DES_LONG
@@ -112,7 +167,7 @@
 /* the following is tweaked from a config script, that is why it is a
  * protected undef/define */
 #ifndef DES_PTR
-#define DES_PTR
+#undef DES_PTR
 #endif
 
 /* This helps C compiler generate the correct code for multiple functional
@@ -123,7 +178,7 @@
 #endif
 
 #ifndef DES_RISC2
-#define DES_RISC2
+#undef DES_RISC2
 #endif
 
 #if defined(DES_RISC1) && defined(DES_RISC2)
@@ -133,7 +188,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
  * Very mucy CPU dependant */
 #ifndef DES_UNROLL
-#undef DES_UNROLL
+#define DES_UNROLL
 #endif
 
 /* These default values were supplied by

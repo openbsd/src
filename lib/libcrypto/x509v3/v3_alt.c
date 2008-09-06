@@ -147,9 +147,9 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 				BIO_snprintf(htmp, sizeof htmp,
 					     "%X", p[0] << 8 | p[1]);
 				p += 2;
-				strcat(oline, htmp);
+				strlcat(oline, htmp, sizeof oline);
 				if (i != 7)
-					strcat(oline, ":");
+					strlcat(oline, ":", sizeof oline);
 				}
 			}
 		else

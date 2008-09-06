@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2005/11/24 20:49:23 deraadt Exp $
+# $OpenBSD: Makefile,v 1.22 2008/09/06 12:20:16 djm Exp $
 
 LIB=	ssl
 WANTLINT=
@@ -24,7 +24,7 @@ CFLAGS+= -DB_ENDIAN
 CFLAGS+= -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR 
 CFLAGS+= -DOPENSSL_NO_MDC2
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5 -DHAVE_DLFCN_H 
-CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
+CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST} -I${.CURDIR}/../${SSLEAYDIST}/crypto
 
 SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
 	t1_srvr.c s23_clnt.c s2_enc.c s3_clnt.c ssl_algs.c ssl_lib.c	\
@@ -32,9 +32,10 @@ SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
 	t1_clnt.c s23_meth.c s2_meth.c s3_lib.c ssl_cert.c ssl_sess.c	\
 	t1_enc.c s23_pkt.c s2_pkt.c s3_meth.c ssl_ciph.c ssl_stat.c	\
 	t1_lib.c s23_srvr.c s2_srvr.c s3_pkt.c ssl_err.c \
-	t1_meth.c 
+	t1_meth.c \
+	d1_both.c d1_clnt.c d1_enc.c d1_lib.c d1_meth.c d1_pkt.c d1_srvr.c
 
-HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h 
+HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h dtls1.h
 
 .PATH:	${LSSL_SRC}
 
