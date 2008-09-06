@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.83 2008/06/22 16:32:06 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.84 2008/09/06 15:35:02 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1996,13 +1996,12 @@ st_interpret_sense(struct scsi_xfer *xs)
 				/*
 				 * huh? the residual is bigger than the request
 				 */
-				if ((xs->flags & SCSI_SILENT) == 0) {
+				if ((xs->flags & SCSI_SILENT) == 0)
 					printf(
 					    "%s: bad residual %d out of %d\n",
 					    st->sc_dev.dv_xname, info,
 					    xs->datalen);
-					return (EIO);
-				}
+				return (EIO);
 			}
 			xs->resid = info;
 			if (bp)
