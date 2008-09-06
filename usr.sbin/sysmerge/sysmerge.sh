@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.21 2008/09/02 11:38:06 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.22 2008/09/06 13:25:48 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -440,7 +440,7 @@ do_post() {
 		fi
 		if [ "${FILES_IN_TEMPROOT}" ]; then
 			echo "===> File(s) remaining for you to merge by hand:"
-			find "${TEMPROOT}" -type f -size +0 -exec echo "     {}" \;
+			find "${TEMPROOT}" -type f ! -name \*.merged -size +0 -exec echo "     {}" \;
 		fi
 		if [ "${FILES_IN_BKPDIR}" ]; then
 			echo "===> Backup of replaced file(s) can be found under"
