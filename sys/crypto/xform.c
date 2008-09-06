@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.35 2008/06/09 16:11:36 djm Exp $	*/
+/*	$OpenBSD: xform.c,v 1.36 2008/09/06 22:23:21 djm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -112,9 +112,9 @@ void aes_xts_reinit(caddr_t, u_int8_t *);
 int MD5Update_int(void *, const u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
 int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
-int SHA256_Update_int(void *, const u_int8_t *, u_int16_t);
-int SHA384_Update_int(void *, const u_int8_t *, u_int16_t);
-int SHA512_Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA256Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA384Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA512Update_int(void *, const u_int8_t *, u_int16_t);
 
 u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
@@ -249,23 +249,23 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 
 struct auth_hash auth_hash_hmac_sha2_256_96 = {
 	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2-256",
-	32, 32, 12, sizeof(SHA256_CTX),
-	(void (*)(void *)) SHA256_Init, SHA256_Update_int,
-	(void (*)(u_int8_t *, void *)) SHA256_Final
+	32, 32, 12, sizeof(SHA2_CTX),
+	(void (*)(void *)) SHA256Init, SHA256Update_int,
+	(void (*)(u_int8_t *, void *)) SHA256Final
 };
 
 struct auth_hash auth_hash_hmac_sha2_384_96 = {
 	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
-	48, 48, 12, sizeof(SHA384_CTX),
-	(void (*)(void *)) SHA384_Init, SHA384_Update_int,
-	(void (*)(u_int8_t *, void *)) SHA384_Final
+	48, 48, 12, sizeof(SHA2_CTX),
+	(void (*)(void *)) SHA384Init, SHA384Update_int,
+	(void (*)(u_int8_t *, void *)) SHA384Final
 };
 
 struct auth_hash auth_hash_hmac_sha2_512_96 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
-	64, 64, 12, sizeof(SHA512_CTX),
-	(void (*)(void *)) SHA512_Init, SHA512_Update_int,
-	(void (*)(u_int8_t *, void *)) SHA512_Final
+	64, 64, 12, sizeof(SHA2_CTX),
+	(void (*)(void *)) SHA512Init, SHA512Update_int,
+	(void (*)(u_int8_t *, void *)) SHA512Final
 };
 
 struct auth_hash auth_hash_key_md5 = {
@@ -725,23 +725,23 @@ SHA1Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 }
 
 int
-SHA256_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA256Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
-	SHA256_Update(ctx, buf, len);
+	SHA256Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA384_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA384Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
-	SHA384_Update(ctx, buf, len);
+	SHA384Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA512_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
-	SHA512_Update(ctx, buf, len);
+	SHA512Update(ctx, buf, len);
 	return 0;
 }
 

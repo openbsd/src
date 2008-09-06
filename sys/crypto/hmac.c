@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmac.c,v 1.1 2008/08/12 15:43:00 damien Exp $	*/
+/*	$OpenBSD: hmac.c,v 1.2 2008/09/06 22:23:20 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -144,9 +144,9 @@ HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const u_int8_t *key, u_int key_len)
 	int i;
 
 	if (key_len > SHA256_BLOCK_LENGTH) {
-		SHA256_Init(&ctx->ctx);
-		SHA256_Update(&ctx->ctx, key, key_len);
-		SHA256_Final(ctx->key, &ctx->ctx);
+		SHA256Init(&ctx->ctx);
+		SHA256Update(&ctx->ctx, key, key_len);
+		SHA256Final(ctx->key, &ctx->ctx);
 		ctx->key_len = SHA256_DIGEST_LENGTH;
 	} else {
 		bcopy(key, ctx->key, key_len);
@@ -158,8 +158,8 @@ HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const u_int8_t *key, u_int key_len)
 	for (i = 0; i < SHA256_BLOCK_LENGTH; i++)
 		k_ipad[i] ^= 0x36;
 
-	SHA256_Init(&ctx->ctx);
-	SHA256_Update(&ctx->ctx, k_ipad, SHA256_BLOCK_LENGTH);
+	SHA256Init(&ctx->ctx);
+	SHA256Update(&ctx->ctx, k_ipad, SHA256_BLOCK_LENGTH);
 
 	bzero(k_ipad, sizeof k_ipad);
 }
@@ -167,7 +167,7 @@ HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const u_int8_t *key, u_int key_len)
 void
 HMAC_SHA256_Update(HMAC_SHA256_CTX *ctx, const u_int8_t *data, u_int len)
 {
-	SHA256_Update(&ctx->ctx, data, len);
+	SHA256Update(&ctx->ctx, data, len);
 }
 
 void
@@ -176,17 +176,17 @@ HMAC_SHA256_Final(u_int8_t digest[SHA256_DIGEST_LENGTH], HMAC_SHA256_CTX *ctx)
 	u_int8_t k_opad[SHA256_BLOCK_LENGTH];
 	int i;
 
-	SHA256_Final(digest, &ctx->ctx);
+	SHA256Final(digest, &ctx->ctx);
 
 	bzero(k_opad, SHA256_BLOCK_LENGTH);
 	bcopy(ctx->key, k_opad, ctx->key_len);
 	for (i = 0; i < SHA256_BLOCK_LENGTH; i++)
 		k_opad[i] ^= 0x5c;
 
-	SHA256_Init(&ctx->ctx);
-	SHA256_Update(&ctx->ctx, k_opad, SHA256_BLOCK_LENGTH);
-	SHA256_Update(&ctx->ctx, digest, SHA256_DIGEST_LENGTH);
-	SHA256_Final(digest, &ctx->ctx);
+	SHA256Init(&ctx->ctx);
+	SHA256Update(&ctx->ctx, k_opad, SHA256_BLOCK_LENGTH);
+	SHA256Update(&ctx->ctx, digest, SHA256_DIGEST_LENGTH);
+	SHA256Final(digest, &ctx->ctx);
 
 	bzero(k_opad, sizeof k_opad);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.2 2004/04/28 23:11:57 millert Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.3 2008/09/06 22:23:20 djm Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -50,39 +50,35 @@
 #define SHA512_DIGEST_STRING_LENGTH	(SHA512_DIGEST_LENGTH * 2 + 1)
 
 
-/*** SHA-256/384/512 Context Structures *******************************/
-typedef struct _SHA256_CTX {
-	u_int32_t	state[8];
-	u_int64_t	bitcount;
-	u_int8_t	buffer[SHA256_BLOCK_LENGTH];
-} SHA256_CTX;
-typedef struct _SHA512_CTX {
-	u_int64_t	state[8];
+/*** SHA-256/384/512 Context Structure *******************************/
+typedef struct _SHA2_CTX {
+	union {
+		u_int32_t	st32[8];
+		u_int64_t	st64[8];
+	} state;
 	u_int64_t	bitcount[2];
 	u_int8_t	buffer[SHA512_BLOCK_LENGTH];
-} SHA512_CTX;
-
-typedef SHA512_CTX SHA384_CTX;
+} SHA2_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void SHA256_Init(SHA256_CTX *);
-void SHA256_Update(SHA256_CTX *, const u_int8_t *, size_t)
+void SHA256Init(SHA2_CTX *);
+void SHA256Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA256_Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX *)
+void SHA256Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA256_DIGEST_LENGTH)));
 
-void SHA384_Init(SHA384_CTX *);
-void SHA384_Update(SHA384_CTX *, const u_int8_t *, size_t)
+void SHA384Init(SHA2_CTX *);
+void SHA384Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA384_Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX *)
+void SHA384Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA384_DIGEST_LENGTH)));
 
-void SHA512_Init(SHA512_CTX *);
-void SHA512_Update(SHA512_CTX *, const u_int8_t *, size_t)
+void SHA512Init(SHA2_CTX *);
+void SHA512Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA512_Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX *)
+void SHA512Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA512_DIGEST_LENGTH)));
 __END_DECLS
 
