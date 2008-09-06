@@ -1,4 +1,4 @@
-/* $OpenBSD: md-sha256.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
+/* $OpenBSD: md-sha256.c,v 1.6 2008/09/06 12:01:34 djm Exp $ */
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
  *
@@ -29,28 +29,28 @@ const EVP_MD *evp_ssh_sha256(void);
 static int
 ssh_sha256_init(EVP_MD_CTX *ctxt)
 {
-	SHA256_Init(ctxt->md_data);
+	SHA256Init(ctxt->md_data);
 	return (1);
 }
 
 static int
 ssh_sha256_update(EVP_MD_CTX *ctxt, const void *data, unsigned long len)
 {
-	SHA256_Update(ctxt->md_data, data, len);
+	SHA256Update(ctxt->md_data, data, len);
 	return (1);
 }
 
 static int
 ssh_sha256_final(EVP_MD_CTX *ctxt, unsigned char *digest)
 {
-	SHA256_Final(digest, ctxt->md_data);
+	SHA256Final(digest, ctxt->md_data);
 	return (1);
 }
 
 static int
 ssh_sha256_cleanup(EVP_MD_CTX *ctxt)
 {
-	memset(ctxt->md_data, 0, sizeof(SHA256_CTX));
+	memset(ctxt->md_data, 0, sizeof(SHA2_CTX));
 	return (1);
 }
 
@@ -67,7 +67,7 @@ evp_ssh_sha256(void)
 	ssh_sha256.final = ssh_sha256_final;
 	ssh_sha256.cleanup = ssh_sha256_cleanup;
 	ssh_sha256.block_size = SHA256_BLOCK_LENGTH;
-	ssh_sha256.ctx_size = sizeof(SHA256_CTX);
+	ssh_sha256.ctx_size = sizeof(SHA2_CTX);
 
 	return (&ssh_sha256);
 }
