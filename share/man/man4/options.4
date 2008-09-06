@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.190 2008/09/05 13:15:34 chl Exp $
+.\"	$OpenBSD: options.4,v 1.191 2008/09/06 14:04:48 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 5 2008 $
+.Dd $Mdocdate: September 6 2008 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -235,8 +235,7 @@ Note that many parts of the kernel (typically device drivers) include their own
 .Em #ifdef XXX_DEBUG
 conditionals instead.
 This option also turns on certain other options, notably
-.Cm option KMEMSTATS ,
-which may decrease system performance.
+.Cm option KMEMSTATS .
 .It Cd option DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
@@ -529,18 +528,8 @@ and
 The kernel memory allocator,
 .Xr malloc 9 ,
 will keep statistics on its performance if this option is enabled.
-This option therefore can lead to a significant decrease in the performance
-of certain code in the kernel if enabled.
-Examples of such code include the
-.Fn namei
-routine, the
-.Xr ccd 4
-driver,
-the
-.Xr siop 4
-driver, and much of the networking code.
 Note that this option is silently turned on by the
-.Em DEBUG
+.Cm DEBUG
 option.
 .It Cd option LKM
 Enables support for loadable kernel modules.
