@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2004/05/03 17:30:14 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2008/09/06 12:00:19 djm Exp $
 
 # hash functions
 .PATH: ${LIBCSRCDIR}/hash
@@ -19,15 +19,15 @@ MLINKS+=rmd160.3 RMD160FileChunk.3 rmd160.3 RMD160Pad.3  rmd160.3 RMD160Data.3
 MLINKS+=sha1.3 SHA1Transform.3 sha1.3 SHA1Init.3 sha1.3 SHA1Final.3
 MLINKS+=sha1.3 SHA1Update.3    sha1.3 SHA1End.3  sha1.3 SHA1File.3
 MLINKS+=sha1.3 SHA1FileChunk.3 sha1.3 SHA1Pad.3  sha1.3 SHA1Data.3
-MLINKS+=sha2.3 SHA256_Init.3 sha2.3 SHA256_Update.3 sha2.3 SHA256_Final.3
-MLINKS+=sha2.3 SHA256_End.3  sha2.3 SHA256_File.3   sha2.3 SHA256_Data.3
-MLINKS+=sha2.3 SHA256_Pad.3  sha2.3 SHA256_FileChunk.3
-MLINKS+=sha2.3 SHA384_Init.3 sha2.3 SHA384_Update.3 sha2.3 SHA384_Final.3
-MLINKS+=sha2.3 SHA384_End.3  sha2.3 SHA384_File.3   sha2.3 SHA384_Data.3
-MLINKS+=sha2.3 SHA384_Pad.3  sha2.3 SHA384_FileChunk.3
-MLINKS+=sha2.3 SHA512_Init.3 sha2.3 SHA512_Update.3 sha2.3 SHA512_Final.3
-MLINKS+=sha2.3 SHA512_End.3  sha2.3 SHA512_File.3   sha2.3 SHA512_Data.3
-MLINKS+=sha2.3 SHA512_Pad.3  sha2.3 SHA512_FileChunk.3
+MLINKS+=sha2.3 SHA256Init.3  sha2.3 SHA256Update.3    sha2.3 SHA256Pad.3
+MLINKS+=sha2.3 SHA256Final.3 sha2.3 SHA256Transform.3 sha2.3 SHA256End.3
+MLINKS+=sha2.3 SHA256File.3  sha2.3 SHA256FileChunk.3 sha2.3 SHA256Data.3
+MLINKS+=sha2.3 SHA384Init.3  sha2.3 SHA384Update.3    sha2.3 SHA384Pad.3
+MLINKS+=sha2.3 SHA384Final.3 sha2.3 SHA384Transform.3 sha2.3 SHA384End.3
+MLINKS+=sha2.3 SHA384File.3  sha2.3 SHA384FileChunk.3 sha2.3 SHA384Data.3
+MLINKS+=sha2.3 SHA512Init.3  sha2.3 SHA512Update.3    sha2.3 SHA512Pad.3
+MLINKS+=sha2.3 SHA512Final.3 sha2.3 SHA512Transform.3 sha2.3 SHA512End.3
+MLINKS+=sha2.3 SHA512File.3  sha2.3 SHA512FileChunk.3 sha2.3 SHA512Data.3
 CLEANFILES+= ${HELPER} md[45].3
 
 .ifndef NOMAN
@@ -53,12 +53,18 @@ sha1hl.c:	helper.c
 	sed -e 's/hashinc/sha1.h/g' -e 's/HASH/SHA1/g' $> > $@
 
 sha256hl.c:	helper.c
-	sed -e 's/hashinc/sha2.h/g' -e 's/HASH_\{0,1\}/SHA256_/g' $> > $@
+	sed -e 's/hashinc/sha2.h/g' \
+	    -e 's/HASH/SHA256/g' \
+	    -e 's/SHA[0-9][0-9][0-9]_CTX/SHA2_CTX/g' $> > $@
 
 sha384hl.c:	helper.c
-	sed -e 's/hashinc/sha2.h/g' -e 's/HASH_\{0,1\}/SHA384_/g' $> > $@
+	sed -e 's/hashinc/sha2.h/g' \
+	    -e 's/HASH/SHA384/g' \
+	    -e 's/SHA[0-9][0-9][0-9]_CTX/SHA2_CTX/g' $> > $@
 
 sha512hl.c:	helper.c
-	sed -e 's/hashinc/sha2.h/g' -e 's/HASH_\{0,1\}/SHA512_/g' $> > $@
+	sed -e 's/hashinc/sha2.h/g' \
+	    -e 's/HASH/SHA512/g' \
+	    -e 's/SHA[0-9][0-9][0-9]_CTX/SHA2_CTX/g' $> > $@
 
 beforedepend: md4hl.c md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
