@@ -478,17 +478,14 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 		buf = &entry->buflist[entry->buf_count];
 		buf->idx = dma->buf_count + entry->buf_count;
 		buf->total = alignment;
-		buf->order = order;
 		buf->used = 0;
 
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
-		buf->address = (void *)(agp_offset + offset);
 		buf->pending = 0;
 		buf->file_priv = NULL;
 
-		buf->dev_priv_size = dev->driver.buf_priv_size;
-		buf->dev_private = drm_calloc(1, buf->dev_priv_size,
+		buf->dev_private = drm_calloc(1, dev->driver.buf_priv_size,
 		    DRM_MEM_BUFS);
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
@@ -626,17 +623,14 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			buf = &entry->buflist[entry->buf_count];
 			buf->idx = dma->buf_count + entry->buf_count;
 			buf->total = alignment;
-			buf->order = order;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-			buf->address = ((char *)dmah->vaddr + offset);
 			buf->bus_address = dmah->busaddr + offset;
 			buf->pending = 0;
 			buf->file_priv = NULL;
 
-			buf->dev_priv_size = dev->driver.buf_priv_size;
-			buf->dev_private = drm_calloc(1, buf->dev_priv_size,
-			    DRM_MEM_BUFS);
+			buf->dev_private = drm_calloc(1,
+			    dev->driver.buf_priv_size, DRM_MEM_BUFS);
 			if (buf->dev_private == NULL) {
 				/* Set count so we free the proper amount. */
 				entry->buf_count = count;
@@ -649,8 +643,8 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 				return ENOMEM;
 			}
 
-			DRM_DEBUG("buffer %d @ %p\n",
-			    entry->buf_count, buf->address);
+			DRM_DEBUG("buffer %d\n",
+			    entry->buf_count);
 		}
 		byte_count += PAGE_SIZE << page_order;
 	}
@@ -744,17 +738,14 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 		buf = &entry->buflist[entry->buf_count];
 		buf->idx = dma->buf_count + entry->buf_count;
 		buf->total = alignment;
-		buf->order = order;
 		buf->used = 0;
 
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
-		buf->address = (void *)(agp_offset + offset + dev->sg->handle);
 		buf->pending = 0;
 		buf->file_priv = NULL;
 
-		buf->dev_priv_size = dev->driver.buf_priv_size;
-		buf->dev_private = drm_calloc(1, buf->dev_priv_size,
+		buf->dev_private = drm_calloc(1, dev->driver.buf_priv_size,
 		    DRM_MEM_BUFS);
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
@@ -763,7 +754,7 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 			return ENOMEM;
 		}
 
-		DRM_DEBUG("buffer %d @ %p\n", entry->buf_count, buf->address);
+		DRM_DEBUG("buffer %d\n", entry->buf_count);
 
 		offset += alignment;
 		entry->buf_count++;

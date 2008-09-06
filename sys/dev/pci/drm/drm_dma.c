@@ -68,7 +68,7 @@ drm_cleanup_buf(struct drm_device *dev, drm_buf_entry_t *entry)
    	if (entry->buf_count) {
 	   	for (i = 0; i < entry->buf_count; i++) {
 			drm_free(entry->buflist[i].dev_private,
-			    entry->buflist[i].dev_priv_size, DRM_MEM_BUFS);
+			    dev->driver.buf_priv_size, DRM_MEM_BUFS);
 		}
 		drm_free(entry->buflist, entry->buf_count *
 		    sizeof(*entry->buflist), DRM_MEM_BUFS);
@@ -120,19 +120,8 @@ drm_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 	if (dma == NULL)
 		return;
 	for (i = 0; i < dma->buf_count; i++) {
-		if (dma->buflist[i]->file_priv == file_priv) {
-			switch (dma->buflist[i]->list) {
-			case DRM_LIST_NONE:
+		if (dma->buflist[i]->file_priv == file_priv)
 				drm_free_buffer(dev, dma->buflist[i]);
-				break;
-			case DRM_LIST_WAIT:
-				dma->buflist[i]->list = DRM_LIST_RECLAIM;
-				break;
-			default:
-				/* Buffer already on hardware. */
-				break;
-			}
-		}
 	}
 }
 
