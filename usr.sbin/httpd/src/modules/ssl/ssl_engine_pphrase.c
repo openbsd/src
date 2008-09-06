@@ -489,7 +489,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
         prompt = "Enter pass phrase:";
         for (;;) {
             if ((i = EVP_read_pw_string(buf, bufsize, prompt, FALSE)) != 0) {
-                PEMerr(PEM_F_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
+                PEMerr(PEM_F_PEM_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
                 memset(buf, 0, (unsigned int)bufsize);
                 return (-1);
             }

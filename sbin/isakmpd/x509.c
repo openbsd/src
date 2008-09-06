@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.111 2007/09/02 15:19:24 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.112 2008/09/06 12:22:57 djm Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -832,7 +832,13 @@ x509_cert_validate(void *scert)
 	 * we trust.
 	 */
 	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L
+	/* XXX See comment in x509_read_crls_from_dir.  */
+	if (x509_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
+		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
+		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
+	}
+#elif OPENSSL_VERSION_NUMBER >= 0x00907000L
 	/* XXX See comment in x509_read_crls_from_dir.  */
 	if (x509_cas->flags & X509_V_FLAG_CRL_CHECK) {
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
