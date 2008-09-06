@@ -579,11 +579,6 @@ struct drm_device {
 	int		  open_count;	/* Outstanding files open	   */
 	int		  buf_use;	/* Buffers in use -- cannot alloc  */
 
-				/* Performance counters */
-	unsigned long     counters;
-	enum drm_stat_type   types[15];
-	atomic_t          counts[15];
-
 				/* Authentication */
 	drm_file_list_t   files;
 	drm_magic_t	  magicid;

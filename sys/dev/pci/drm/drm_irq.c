@@ -426,7 +426,6 @@ drm_locked_task(void *context, void *pending)
 
 	dev->lock.file_priv = NULL; /* kernel owned */
 	dev->lock.lock_time = jiffies;
-	atomic_inc(&dev->counts[_DRM_STAT_LOCKS]);
 
 	DRM_UNLOCK();
 

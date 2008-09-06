@@ -407,11 +407,6 @@ int mga_driver_load(struct drm_device *dev, unsigned long flags)
 	dev_priv->mmio_base = drm_get_resource_start(dev, 1);
 	dev_priv->mmio_size = drm_get_resource_len(dev, 1);
 
-	dev->counters += 3;
-	dev->types[6] = _DRM_STAT_IRQ;
-	dev->types[7] = _DRM_STAT_PRIMARY;
-	dev->types[8] = _DRM_STAT_SECONDARY;
-
 	return 0;
 }
 
