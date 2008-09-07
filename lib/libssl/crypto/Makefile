@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.47 2008/09/06 12:20:07 djm Exp $
+# $OpenBSD: Makefile,v 1.48 2008/09/07 19:22:21 deraadt Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -19,6 +19,10 @@ CFLAGS+= -DB_ENDIAN
 .include <bsd.own.mk>		# for 'NOPIC' definition
 .if !defined(NOPIC)
 CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H
+.endif
+
+.if ${MACHINE_ARCH} == "sparc"
+PICFLAG=-fPIC
 .endif
 
 CFLAGS+= -DTERMIOS -DANSI_SOURCE -DNO_ERR -DNO_WINDOWS_BRAINDEATH
