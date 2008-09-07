@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.165 2008/09/07 02:22:34 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.166 2008/09/07 06:45:51 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -284,6 +284,9 @@ This should be specified as six colon-separated hex values.
 .It Cm media Op Ar type
 Set the media type of the interface to
 .Ar type .
+If no argument is given,
+display a list of all available media.
+.Pp
 Some interfaces support the mutually exclusive use of one of several
 different physical media connectors.
 For example, a 10Mb/s Ethernet interface might support the use of either
@@ -582,9 +585,8 @@ Set the channel (radio frequency) to be used for IEEE 802.11-based
 wireless network interfaces to
 .Ar n .
 .Pp
-With no
-.Ar id
-specified, show the results of an access point scan.
+With no channel specified,
+show the results of an access point scan.
 In Host AP mode, this will dump the list of known nodes without scanning.
 .It Fl chan
 Unset the desired channel to be used for IEEE 802.11-based wireless
