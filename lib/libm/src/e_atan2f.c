@@ -29,7 +29,7 @@ pi      = 3.1415925026e+00, /* 0x40490fda */
 pi_lo   = 1.5099578832e-07; /* 0x34222168 */
 
 float
-__ieee754_atan2f(float y, float x)
+atan2f(float y, float x)
 {  
 	float z;
 	int32_t k,m,hx,hy,ix,iy;

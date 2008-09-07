@@ -15,7 +15,7 @@ static char rcsid[] = "$NetBSD: e_scalb.c,v 1.6 1995/05/10 20:46:09 jtc Exp $";
 #endif
 
 /*
- * __ieee754_scalb(x, fn) is provide for
+ * scalb(x, fn) is provide for
  * passing various standard test suite. One 
  * should use scalbn() instead.
  */
@@ -25,7 +25,7 @@ static char rcsid[] = "$NetBSD: e_scalb.c,v 1.6 1995/05/10 20:46:09 jtc Exp $";
 
 #ifdef _SCALB_INT
 double
-__ieee754_scalb(double x, int fn)
+scalb(double x, int fn)
 {
 	return scalbn(x, fn);
 }
@@ -33,7 +33,7 @@ __ieee754_scalb(double x, int fn)
 #else
 
 double
-__ieee754_scalb(double x, double fn)
+scalb(double x, double fn)
 {
 	if (isnan(x)||isnan(fn)) return x*fn;
 	if (!finite(fn)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.2 2008/09/07 20:36:08 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -34,16 +34,3 @@ isinff(float f)
  
 	return (p->sng_exp == SNG_EXP_INFNAN && p->sng_frac == 0);
 }
-
-#if 0	/* XXX */
-int
-__isinfl(long double e)
-{
-	struct ieee_ext *p = (struct ieee_ext *)&e;
-
-	p->ext_frach &= ~0x80000000;	/* clear sign bit */
-
-	return (p->ext_exp == EXT_EXP_INFNAN &&
-	    p->ext_frach == 0 && p->ext_fracl == 0);
-}
-#endif	/* XXX */

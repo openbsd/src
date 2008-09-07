@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_atan2.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: e_atan2.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -8,7 +8,7 @@
 
 #include "abi.h"
 
-ENTRY(__ieee754_atan2)
+ENTRY(atan2)
 	XMM_TWO_ARG_DOUBLE_PROLOGUE
 	fldl	ARG_DOUBLE_ONE
 	fldl	ARG_DOUBLE_TWO

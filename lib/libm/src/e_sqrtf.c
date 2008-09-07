@@ -23,7 +23,7 @@ static char rcsid[] = "$NetBSD: e_sqrtf.c,v 1.4 1995/05/10 20:46:19 jtc Exp $";
 static	const float	one	= 1.0, tiny=1.0e-30;
 
 float
-__ieee754_sqrtf(float x)
+sqrtf(float x)
 {
 	float z;
 	int32_t sign = (int)0x80000000; 

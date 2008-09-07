@@ -23,5 +23,5 @@ static char rcsid[] = "$NetBSD: s_significandf.c,v 1.3 1995/05/10 20:48:13 jtc E
 float
 significandf(float x)
 {
-	return __ieee754_scalbf(x,(float) -ilogbf(x));
+	return scalbf(x,(float) -ilogbf(x));
 }

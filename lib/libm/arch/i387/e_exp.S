@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.7 2006/03/18 23:56:14 kettenis Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.8 2008/09/07 20:36:08 martynas Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 /* e^x = 2^(x * log2(e)) */
-ENTRY(__ieee754_exp)
+ENTRY(exp)
 	/*
 	 * If x is +-Inf, then the subtraction would give Inf-Inf = NaN.
 	 * Avoid this.  Also avoid it if x is NaN for convenience.

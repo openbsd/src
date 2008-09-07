@@ -15,7 +15,7 @@ static char rcsid[] = "$NetBSD: e_jn.c,v 1.9 1995/05/10 20:45:34 jtc Exp $";
 #endif
 
 /*
- * __ieee754_jn(n, x), __ieee754_yn(n, x)
+ * jn(n, x), yn(n, x)
  * floating point Bessel's function of the 1st and 2nd kind
  * of order n
  *          
@@ -51,7 +51,7 @@ one   =  1.00000000000000000000e+00; /* 0x3FF00000, 0x00000000 */
 static const double zero  =  0.00000000000000000000e+00;
 
 double
-__ieee754_jn(int n, double x)
+jn(int n, double x)
 {
 	int32_t i,hx,ix,lx, sgn;
 	double a, b, temp, di;
@@ -69,8 +69,8 @@ __ieee754_jn(int n, double x)
 		x = -x;
 		hx ^= 0x80000000;
 	}
-	if(n==0) return(__ieee754_j0(x));
-	if(n==1) return(__ieee754_j1(x));
+	if(n==0) return(j0(x));
+	if(n==1) return(j1(x));
 	sgn = (n&1)&(hx>>31);	/* even n -- 0, odd n -- sign(x) */
 	x = fabs(x);
 	if((ix|lx)==0||ix>=0x7ff00000) 	/* if x is 0 or inf */
@@ -99,8 +99,8 @@ __ieee754_jn(int n, double x)
 		}
 		b = invsqrtpi*temp/sqrt(x);
 	    } else {	
-	        a = __ieee754_j0(x);
-	        b = __ieee754_j1(x);
+	        a = j0(x);
+	        b = j1(x);
 	        for(i=1;i<n;i++){
 		    temp = b;
 		    b = b*((double)(i+i)/x) - a; /* avoid underflow */
@@ -176,7 +176,7 @@ __ieee754_jn(int n, double x)
 		 */
 		tmp = n;
 		v = two/x;
-		tmp = tmp*__ieee754_log(fabs(v*tmp));
+		tmp = tmp*log(fabs(v*tmp));
 		if(tmp<7.09782712893383973096e+02) {
 	    	    for(i=n-1,di=(double)(i+i);i>0;i--){
 		        temp = b;
@@ -200,14 +200,14 @@ __ieee754_jn(int n, double x)
 			}
 	     	    }
 		}
-	    	b = (t*__ieee754_j0(x)/b);
+	    	b = (t*j0(x)/b);
 	    }
 	}
 	if(sgn==1) return -b; else return b;
 }
 
 double
-__ieee754_yn(int n, double x) 
+yn(int n, double x) 
 {
 	int32_t i,hx,ix,lx;
 	int32_t sign;
@@ -224,8 +224,8 @@ __ieee754_yn(int n, double x)
 		n = -n;
 		sign = 1 - ((n&1)<<1);
 	}
-	if(n==0) return(__ieee754_y0(x));
-	if(n==1) return(sign*__ieee754_y1(x));
+	if(n==0) return(y0(x));
+	if(n==1) return(sign*y1(x));
 	if(ix==0x7ff00000) return zero;
 	if(ix>=0x52D00000) { /* x > 2**302 */
     /* (x >> n**2) 
@@ -250,8 +250,8 @@ __ieee754_yn(int n, double x)
 		b = invsqrtpi*temp/sqrt(x);
 	} else {
 	    u_int32_t high;
-	    a = __ieee754_y0(x);
-	    b = __ieee754_y1(x);
+	    a = y0(x);
+	    b = y1(x);
 	/* quit if b is -inf */
 	    GET_HIGH_WORD(high,b);
 	    for(i=1;i<n&&high!=0xfff00000;i++){ 

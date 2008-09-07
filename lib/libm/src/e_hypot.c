@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_hypot.c,v 1.9 1995/05/12 04:57:27 jtc Exp $";
 #endif
 
-/* __ieee754_hypot(x,y)
+/* hypot(x,y)
  *
  * Method :                  
  *	If (assume round-to-nearest) z=x*x+y*y 
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: e_hypot.c,v 1.9 1995/05/12 04:57:27 jtc Exp $";
 #include "math_private.h"
 
 double
-__ieee754_hypot(double x, double y)
+hypot(double x, double y)
 {
 	double a=x,b=y,t1,t2,yy1,y2,w;
 	int32_t j,k,ha,hb;
@@ -103,7 +103,7 @@ __ieee754_hypot(double x, double y)
 	    t1 = 0;
 	    SET_HIGH_WORD(t1,ha);
 	    t2 = a-t1;
-	    w  = __ieee754_sqrt(t1*t1-(b*(-b)-t2*(a+t1)));
+	    w  = sqrt(t1*t1-(b*(-b)-t2*(a+t1)));
 	} else {
 	    a  = a+a;
 	    yy1 = 0;
@@ -112,7 +112,7 @@ __ieee754_hypot(double x, double y)
 	    t1 = 0;
 	    SET_HIGH_WORD(t1,ha+0x00100000);
 	    t2 = a - t1;
-	    w  = __ieee754_sqrt(t1*yy1-(w*(-w)-(t1*y2+t2*b)));
+	    w  = sqrt(t1*yy1-(w*(-w)-(t1*y2+t2*b)));
 	}
 	if(k!=0) {
 	    u_int32_t high;

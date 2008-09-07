@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_acos.S,v 1.3 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: e_acos.S,v 1.4 2008/09/07 20:36:08 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -9,7 +9,7 @@
 #include "abi.h"
 
 /* acos = atan (sqrt(1 - x^2) / x) */
-ENTRY(__ieee754_acos)
+ENTRY(acos)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	fldl	ARG_DOUBLE_ONE		/* x */
 	fld	%st(0)

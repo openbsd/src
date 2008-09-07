@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.9 2008/07/24 09:40:16 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.10 2008/09/07 20:36:09 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -213,73 +213,15 @@ do {								\
 #endif
 #endif
 
-/* ieee style elementary functions */
-extern double __ieee754_sqrt(double);
-extern double __ieee754_acos(double);
-extern double __ieee754_acosh(double);
-extern double __ieee754_log(double);
-extern double __ieee754_atanh(double);
-extern double __ieee754_asin(double);
-extern double __ieee754_atan2(double,double);
-extern double __ieee754_exp(double);
-extern double __ieee754_cosh(double);
-extern double __ieee754_fmod(double,double);
-extern double __ieee754_pow(double,double);
-extern double __ieee754_lgamma_r(double,int *);
-extern double __ieee754_gamma_r(double,int *);
-extern double __ieee754_lgamma(double);
-extern double __ieee754_gamma(double);
-extern double __ieee754_log10(double);
-extern double __ieee754_sinh(double);
-extern double __ieee754_hypot(double,double);
-extern double __ieee754_j0(double);
-extern double __ieee754_j1(double);
-extern double __ieee754_y0(double);
-extern double __ieee754_y1(double);
-extern double __ieee754_jn(int,double);
-extern double __ieee754_yn(int,double);
-extern double __ieee754_remainder(double,double);
-extern int    __ieee754_rem_pio2(double,double*);
-extern double __ieee754_scalb(double,double);
-
 /* fdlibm kernel function */
-extern double __kernel_standard(double,double,int);
+extern int    __ieee754_rem_pio2(double,double*);
 extern double __kernel_sin(double,double,int);
 extern double __kernel_cos(double,double);
 extern double __kernel_tan(double,double,int);
 extern int    __kernel_rem_pio2(double*,double*,int,int,int,const int*);
 
-
-/* ieee style elementary float functions */
-extern float __ieee754_sqrtf(float);
-extern float __ieee754_acosf(float);
-extern float __ieee754_acoshf(float);
-extern float __ieee754_logf(float);
-extern float __ieee754_atanhf(float);
-extern float __ieee754_asinf(float);
-extern float __ieee754_atan2f(float,float);
-extern float __ieee754_expf(float);
-extern float __ieee754_coshf(float);
-extern float __ieee754_fmodf(float,float);
-extern float __ieee754_powf(float,float);
-extern float __ieee754_lgammaf_r(float,int *);
-extern float __ieee754_gammaf_r(float,int *);
-extern float __ieee754_lgammaf(float);
-extern float __ieee754_gammaf(float);
-extern float __ieee754_log10f(float);
-extern float __ieee754_sinhf(float);
-extern float __ieee754_hypotf(float,float);
-extern float __ieee754_j0f(float);
-extern float __ieee754_j1f(float);
-extern float __ieee754_y0f(float);
-extern float __ieee754_y1f(float);
-extern float __ieee754_jnf(int,float);
-extern float __ieee754_ynf(int,float);
-extern float __ieee754_remainderf(float,float);
-extern int   __ieee754_rem_pio2f(float,float*);
-extern float __ieee754_scalbf(float,float);
-
 /* float versions of fdlibm kernel functions */
+extern int   __ieee754_rem_pio2f(float,float*);
 extern float __kernel_sinf(float,float,int);
 extern float __kernel_cosf(float,float);
 extern float __kernel_tanf(float,float,int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.4 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: ieee.h,v 1.5 2008/09/07 20:36:06 martynas Exp $	*/
 /*	$NetBSD: ieee.h,v 1.1 1995/02/13 23:07:40 cgd Exp $	*/
 
 /*
@@ -81,6 +81,8 @@
 #define	SNG_FRACBITS	23
 
 #define	DBL_EXPBITS	11
+#define	DBL_FRACHBITS	20
+#define	DBL_FRACLBITS	32
 #define	DBL_FRACBITS	52
 
 struct ieee_single {

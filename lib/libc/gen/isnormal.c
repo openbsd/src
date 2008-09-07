@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnormal.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: isnormal.c,v 1.2 2008/09/07 20:36:08 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -33,13 +33,3 @@ __isnormalf(float f)
 
 	return (p->sng_exp != 0 && p->sng_exp != SNG_EXP_INFNAN);
 }
-
-#if 0	/* XXX */
-int
-__isnormall(long double e)
-{
-	struct ieee_ext *p = (struct ieee_ext *)&e;
-
-	return (p->ext_exp != 0 && p->ext_exp != EXT_EXP_INFNAN);
-}
-#endif	/* XXX */

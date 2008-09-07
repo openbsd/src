@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgamma.c,v 1.1 2008/06/11 15:07:34 martynas Exp $	*/
+/*	$OpenBSD: tgamma.c,v 1.2 2008/09/07 20:36:10 martynas Exp $	*/
 
 /*	Written by Martynas Venckus, 2008,  Public domain.	*/
 
@@ -83,8 +83,12 @@ main(void)
 	if (!_isinf(x))
 		errx(1, "tgamma(171.64) = %f", x);
 
-	x = tgamma(0);
-	if (!_isinf(x))
+	x = tgamma(0.0);
+	if (!_isinf(x) || x < 0)
+		errx(1, "tgamma(0) = %f", x);
+
+	x = tgamma(-0.0);
+	if (!_isinf(x) || x > 0)
 		errx(1, "tgamma(0) = %f", x);
 
 	x = tgamma(-HUGE_VAL);
@@ -95,8 +99,8 @@ main(void)
 	if (!_isinf(x))
 		errx(1, "tgamma(HUGE_VAL) = %f", x);
 
-#if _IEEE		/* VAX doesn't have NaN */
-	x = tgamma(0.0/0.0);
+#ifdef NAN
+	x = tgamma(NAN);
 	if (!_isnan(x))
 		errx(1, "tgamma(NaN) = %f", x);
 #endif

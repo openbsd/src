@@ -37,7 +37,7 @@ qS3 = -6.8828397989e-01, /* 0xbf303361 */
 qS4 =  7.7038154006e-02; /* 0x3d9dc62e */
 
 float
-__ieee754_acosf(float x)
+acosf(float x)
 {
 	float z,p,q,r,w,s,c,df;
 	int32_t hx,ix;
@@ -60,14 +60,14 @@ __ieee754_acosf(float x)
 	    z = (one+x)*(float)0.5;
 	    p = z*(pS0+z*(pS1+z*(pS2+z*(pS3+z*(pS4+z*pS5)))));
 	    q = one+z*(qS1+z*(qS2+z*(qS3+z*qS4)));
-	    s = __ieee754_sqrtf(z);
+	    s = sqrtf(z);
 	    r = p/q;
 	    w = r*s-pio2_lo;
 	    return pi - (float)2.0*(s+w);
 	} else {			/* x > 0.5 */
 	    int32_t idf;
 	    z = (one-x)*(float)0.5;
-	    s = __ieee754_sqrtf(z);
+	    s = sqrtf(z);
 	    df = s;
 	    GET_FLOAT_WORD(idf,df);
 	    SET_FLOAT_WORD(df,idf&0xfffff000);

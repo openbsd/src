@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.2 2008/07/24 17:36:52 deraadt Exp $	*/
+/*	$OpenBSD: ieee.h,v 1.3 2008/09/07 20:36:06 martynas Exp $	*/
 /*	$NetBSD: ieee.h,v 1.2 2001/02/21 17:43:50 bjh21 Exp $	*/
 
 /*
@@ -92,13 +92,21 @@
 #define	SNG_FRACBITS	23
 
 #define	DBL_EXPBITS	11
+#define	DBL_FRACHBITS	20
+#define	DBL_FRACLBITS	32
 #define	DBL_FRACBITS	52
 
 #ifndef __VFP_FP__
 #define	E80_EXPBITS	15
+#define	E80_FRACHBITS	31
+#define	E80_FRACLBITS	32
 #define	E80_FRACBITS	64
 
 #define	EXT_EXPBITS	15
+#define	EXT_FRACHBITS	16
+#define	EXT_FRACHMBITS	32
+#define	EXT_FRACLMBITS	32
+#define	EXT_FRACLBITS	32
 #define	EXT_FRACBITS	112
 #endif
 

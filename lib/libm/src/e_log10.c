@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_log10.c,v 1.9 1995/05/10 20:45:51 jtc Exp $";
 #endif
 
-/* __ieee754_log10(x)
+/* log10(x)
  * Return the base 10 logarithm of x
  * 
  * Method :
@@ -59,7 +59,7 @@ log10_2lo  =  3.69423907715893078616e-13; /* 0x3D59FEF3, 0x11F12B36 */
 static const double zero   =  0.0;
 
 double
-__ieee754_log10(double x)
+log10(double x)
 {
 	double y,z;
 	int32_t i,k,hx;
@@ -81,6 +81,6 @@ __ieee754_log10(double x)
         hx = (hx&0x000fffff)|((0x3ff-i)<<20);
         y  = (double)(k+i);
 	SET_HIGH_WORD(x,hx);
-	z  = y*log10_2lo + ivln10*__ieee754_log(x);
+	z  = y*log10_2lo + ivln10*log(x);
 	return  z+y*log10_2hi;
 }

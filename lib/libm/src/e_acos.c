@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_acos.c,v 1.9 1995/05/12 04:57:13 jtc Exp $";
 #endif
 
-/* __ieee754_acos(x)
+/* acos(x)
  * Method :                  
  *	acos(x)  = pi/2 - asin(x)
  *	acos(-x) = pi/2 + asin(x)
@@ -35,7 +35,7 @@ static char rcsid[] = "$NetBSD: e_acos.c,v 1.9 1995/05/12 04:57:13 jtc Exp $";
  *	if x is NaN, return x itself;
  *	if |x|>1, return NaN with invalid signal.
  *
- * Function needed: __ieee754_sqrt
+ * Function needed: sqrt
  */
 
 #include "math.h"
@@ -58,7 +58,7 @@ qS3 = -6.88283971605453293030e-01, /* 0xBFE6066C, 0x1B8D0159 */
 qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 
 double
-__ieee754_acos(double x)
+acos(double x)
 {
 	double z,p,q,r,w,s,c,df;
 	int32_t hx,ix;
@@ -84,13 +84,13 @@ __ieee754_acos(double x)
 	    z = (one+x)*0.5;
 	    p = z*(pS0+z*(pS1+z*(pS2+z*(pS3+z*(pS4+z*pS5)))));
 	    q = one+z*(qS1+z*(qS2+z*(qS3+z*qS4)));
-	    s = __ieee754_sqrt(z);
+	    s = sqrt(z);
 	    r = p/q;
 	    w = r*s-pio2_lo;
 	    return pi - 2.0*(s+w);
 	} else {			/* x > 0.5 */
 	    z = (one-x)*0.5;
-	    s = __ieee754_sqrt(z);
+	    s = sqrt(z);
 	    df = s;
 	    SET_LOW_WORD(df,0);
 	    c  = (z-df*df)/(s+df);

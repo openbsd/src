@@ -15,7 +15,7 @@ static char rcsid[] = "$NetBSD: e_fmod.c,v 1.8 1995/05/10 20:45:07 jtc Exp $";
 #endif
 
 /* 
- * __ieee754_fmod(x,y)
+ * fmod(x,y)
  * Return x mod y in exact arithmetic
  * Method: shift and subtract
  */
@@ -26,7 +26,7 @@ static char rcsid[] = "$NetBSD: e_fmod.c,v 1.8 1995/05/10 20:45:07 jtc Exp $";
 static const double one = 1.0, Zero[] = {0.0, -0.0,};
 
 double
-__ieee754_fmod(double x, double y)
+fmod(double x, double y)
 {
 	int32_t n,hx,hy,hz,ix,iy,sx,i;
 	u_int32_t lx,ly,lz;

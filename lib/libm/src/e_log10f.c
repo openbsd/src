@@ -29,7 +29,7 @@ log10_2lo  =  7.9034151668e-07; /* 0x355427db */
 static const float zero   =  0.0;
 
 float
-__ieee754_log10f(float x)
+log10f(float x)
 {
 	float y,z;
 	int32_t i,k,hx;
@@ -50,6 +50,6 @@ __ieee754_log10f(float x)
         hx = (hx&0x007fffff)|((0x7f-i)<<23);
         y  = (float)(k+i);
 	SET_FLOAT_WORD(x,hx);
-	z  = y*log10_2lo + ivln10*__ieee754_logf(x);
+	z  = y*log10_2lo + ivln10*logf(x);
 	return  z+y*log10_2hi;
 }

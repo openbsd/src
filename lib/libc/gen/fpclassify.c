@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpclassify.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: fpclassify.c,v 1.2 2008/09/07 20:36:08 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -62,29 +62,3 @@ __fpclassifyf(float f)
 
 	return FP_NORMAL;
 }
-
-#if 0	/* XXX */
-int
-__fpclassifyl(long double e)
-{
-	struct ieee_ext *p = (struct ieee_ext *)&e;
-
-	if (p->ext_exp == 0) {
-		if (p->ext_frach == 0 && p->ext_fracl == 0)
-			return FP_ZERO;
-		else
-			return FP_SUBNORMAL;
-	}
-
-	p->ext_frach &= ~0x80000000;	/* clear sign bit */
-
-	if (p->ext_exp == EXT_EXP_INFNAN) {
-		if (p->ext_frach == 0 && p->ext_fracl == 0)
-			return FP_INFINITE;
-		else
-			return FP_NAN;
-	}
-
-	return FP_NORMAL;
-}
-#endif	/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.4 2006/03/19 00:01:04 kettenis Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.5 2008/09/07 20:36:08 martynas Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include "abi.h"
 
 /* e^x = 2^(x * log2(e)) */
-ENTRY(__ieee754_exp)
+ENTRY(exp)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	/*
 	 * If x is +-Inf, then the subtraction would give Inf-Inf = NaN.

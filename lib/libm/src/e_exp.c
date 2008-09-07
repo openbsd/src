@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_exp.c,v 1.8 1995/05/10 20:45:03 jtc Exp $";
 #endif
 
-/* __ieee754_exp(x)
+/* exp(x)
  * Returns the exponential of x.
  *
  * Method
@@ -100,7 +100,7 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 
 
 double
-__ieee754_exp(double x)	/* default IEEE double exp */
+exp(double x)	/* default IEEE double exp */
 {
 	double y,hi,lo,c,t;
 	int32_t k,xsb;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.145 2008/08/22 13:02:53 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.146 2008/09/07 20:36:07 martynas Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -12,7 +12,7 @@ USE_GCC3?=No
 
 # Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
-	cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
+	complex.h cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
 	dlfcn.h elf_abi.h err.h errno.h fnmatch.h fstab.h fts.h ftw.h getopt.h \
 	glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h langinfo.h \
 	libgen.h limits.h locale.h login_cap.h malloc.h math.h md4.h \

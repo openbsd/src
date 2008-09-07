@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_remainder.c,v 1.8 1995/05/10 20:46:05 jtc Exp $";
 #endif
 
-/* __ieee754_remainder(x,p)
+/* remainder(x,p)
  * Return :                  
  * 	returns  x REM p  =  x - [x/p]*p as if in infinite 
  * 	precise arithmetic, where [x/p] is the (infinite bit) 
@@ -30,7 +30,7 @@ static const double zero = 0.0;
 
 
 double
-__ieee754_remainder(double x, double p)
+remainder(double x, double p)
 {
 	int32_t hx,hp;
 	u_int32_t sx,lx,lp;
@@ -50,7 +50,7 @@ __ieee754_remainder(double x, double p)
 	    return (x*p)/(x*p);
 
 
-	if (hp<=0x7fdfffff) x = __ieee754_fmod(x,p+p);	/* now x < 2p */
+	if (hp<=0x7fdfffff) x = fmod(x,p+p);	/* now x < 2p */
 	if (((hx-hp)|(lx-lp))==0) return zero*x;
 	x  = fabs(x);
 	p  = fabs(p);

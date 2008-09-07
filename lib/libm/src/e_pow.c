@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_pow.c,v 1.9 1995/05/12 04:57:32 jtc Exp $";
 #endif
 
-/* __ieee754_pow(x,y) return x**y
+/* pow(x,y) return x**y
  *
  *		      n
  * Method:  Let x =  2   * (1+f)
@@ -96,7 +96,7 @@ ivln2_h  =  1.44269502162933349609e+00, /* 0x3FF71547, 0x60000000 =24b 1/ln2*/
 ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 
 double
-__ieee754_pow(double x, double y)
+pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
 	double yy1,t1,t2,r,s,t,u,v,w;
@@ -152,7 +152,7 @@ __ieee754_pow(double x, double y)
 	    if(hy==0x40000000) return x*x; /* y is  2 */
 	    if(hy==0x3fe00000) {	/* y is  0.5 */
 		if(hx>=0)	/* x >= +0 */
-		return __ieee754_sqrt(x);
+		return sqrt(x);
 	    }
 	}
 

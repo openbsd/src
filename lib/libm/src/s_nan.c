@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_nan.c,v 1.3 2008/08/08 00:41:17 martynas Exp $	*/
+/*	$OpenBSD: s_nan.c,v 1.4 2008/09/07 20:36:09 martynas Exp $	*/
 /*-
  * Copyright (c) 2007 David Schultz
  * All rights reserved.
@@ -40,7 +40,7 @@
 /*
  * OpenBSD's ctype doesn't have digittoint, so we define it here.
  */
-int
+static int
 _digittoint(int c)
 {
 	if (!isxdigit(c))

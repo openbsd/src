@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_atan2.c,v 1.8 1995/05/10 20:44:51 jtc Exp $";
 #endif
 
-/* __ieee754_atan2(y,x)
+/* atan2(y,x)
  * Method :
  *	1. Reduce y to positive by atan2(y,x)=-atan2(-y,x).
  *	2. Reduce x to positive by (if x and y are unexceptional): 
@@ -53,7 +53,7 @@ pi      = 3.1415926535897931160E+00, /* 0x400921FB, 0x54442D18 */
 pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 
 double
-__ieee754_atan2(double y, double x)
+atan2(double y, double x)
 {  
 	double z;
 	int32_t k,m,hx,hy,ix,iy;

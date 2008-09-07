@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_log10.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: e_log10.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -8,7 +8,7 @@
 
 #include "abi.h"
 
-ENTRY(__ieee754_log10)
+ENTRY(log10)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	fldlg2
 	fldl	ARG_DOUBLE_ONE

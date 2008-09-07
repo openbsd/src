@@ -14,7 +14,7 @@
 static char rcsid[] = "$NetBSD: e_atanh.c,v 1.8 1995/05/10 20:44:55 jtc Exp $";
 #endif
 
-/* __ieee754_atanh(x)
+/* atanh(x)
  * Method :
  *    1.Reduced x to positive by atanh(-x) = -atanh(x)
  *    2.For x>=0.5
@@ -39,7 +39,7 @@ static const double one = 1.0, huge = 1e300;
 static const double zero = 0.0;
 
 double
-__ieee754_atanh(double x)
+atanh(double x)
 {
 	double t;
 	int32_t hx,ix;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2005/06/17 20:37:31 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2008/09/07 20:36:07 martynas Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -33,6 +33,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/compat-43/Makefile.inc"
 .include "${LIBCSRCDIR}/gen/Makefile.inc"
 .include "${LIBCSRCDIR}/crypt/Makefile.inc"
+.include "${LIBCSRCDIR}/gdtoa/Makefile.inc"
 .include "${LIBCSRCDIR}/gmon/Makefile.inc"
 .include "${LIBCSRCDIR}/hash/Makefile.inc"
 .include "${LIBCSRCDIR}/locale/Makefile.inc"

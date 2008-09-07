@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: ieee.h,v 1.2 2008/09/07 20:36:06 martynas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,8 @@
 #define	SNG_FRACBITS	23
 
 #define	DBL_EXPBITS	11
+#define	DBL_FRACHBITS	20
+#define	DBL_FRACLBITS	32
 #define	DBL_FRACBITS	52
 
 #ifdef notyet
@@ -86,7 +88,20 @@
 #endif
 
 #define	EXT_EXPBITS	15
+#define	EXT_FRACHBITS	16
+#define	EXT_FRACHMBITS	32
+#define	EXT_FRACLMBITS	32
+#define	EXT_FRACLBITS	32
 #define	EXT_FRACBITS	112
+
+#define	EXT_IMPLICIT_NBIT
+
+#define	EXT_TO_ARRAY32(p, a) do {		\
+	(a)[0] = (uint32_t)(p)->ext_fracl;	\
+	(a)[1] = (uint32_t)(p)->ext_fraclm;	\
+	(a)[2] = (uint32_t)(p)->ext_frachm;	\
+	(a)[3] = (uint32_t)(p)->ext_frach;	\
+} while(0)
 
 struct ieee_single {
 	u_int	sng_sign:1;

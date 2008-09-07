@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_atan2f.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: e_atan2f.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -6,7 +6,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__ieee754_atan2f)
+ENTRY(atan2f)
 	flds	4(%esp)
 	flds	8(%esp)
 	fpatan
