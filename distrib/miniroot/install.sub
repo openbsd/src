@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.436 2008/07/07 15:53:15 jdixon Exp $
+#	$OpenBSD: install.sub,v 1.437 2008/09/07 14:09:37 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -556,11 +556,11 @@ configure_ifs() {
 		_name=$resp
 
 		# Get and apply media options.
-		_media=$(ifconfig -m $_ifs | grep "media ")
+		_media=$(ifconfig $_ifs media | grep "media ")
 		if [[ -n $_media ]]; then
 			cat <<__EOT
 The media options for $_ifs are currently
-$(ifconfig -m $_ifs | sed -n '/supported/D;/media:/p')
+$(ifconfig $_ifs media | sed -n '/supported/D;/media:/p')
 __EOT
 			ask_yn "Do you want to change the media options?"
 			case $resp in
@@ -899,7 +899,7 @@ enable_network() {
 
 	# Display results...
 	echo "Network interface configuration:"
-	ifconfig -am
+	ifconfig -a media
 
 	# enable the resolver if resolv.conf is available
 	route -n show
