@@ -111,20 +111,13 @@
 
 #define __OS_HAS_AGP	1
 
-#define DRM_DEV_MODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP)
-#define DRM_DEV_UID	0
-#define DRM_DEV_GID	0
-
 #define wait_queue_head_t	atomic_t
 #define DRM_WAKEUP(w)		wakeup((void *)w)
 #define DRM_WAKEUP_INT(w)	wakeup(w)
 #define DRM_INIT_WAITQUEUE(queue) do {(void)(queue);} while (0)
 
-#define DRM_CDEV		dev_t
 #define DRM_CURPROC		curproc
-#define DRM_STRUCTPROC		struct proc
-#define DRM_STRUCTCDEVPROC	struct proc
-#define DRM_PROC(p)		(p)
+#define DRM_CURRENTPID		curproc->p_pid
 #define DRM_NOOP		do {} while(0)
 #define DRM_SPINTYPE		struct mutex
 #define DRM_SPININIT(l,name)	mtx_init(l,IPL_NONE)
@@ -139,10 +132,6 @@
 #define DRM_SPINLOCK_ASSERT(l)	DRM_NOOP
 #define DRM_LOCK()		DRM_SPINLOCK(&dev->dev_lock)
 #define DRM_UNLOCK()		DRM_SPINUNLOCK(&dev->dev_lock)
-#define DRM_SLEEPLOCK(v,l,f,s,i)	msleep(v,l,f,s,i);
-#define DRM_PID(p)		(p)->p_pid
-#define DRM_CURRENTPID		DRM_PID(curproc)
-#define DRM_UID(p)		(p)->p_pid
 #define DRM_MAXUNITS	8
 extern struct drm_device *drm_units[];
 
@@ -244,7 +233,6 @@ typedef u_int8_t u8;
 
 #define DRM_HZ			hz
 #define DRM_UDELAY(udelay)	DELAY(udelay)
-#define DRM_TIME_SLICE		(hz/20)  /* Time slice for GLXContexts	  */
 
 #define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
 do {									\
@@ -356,8 +344,6 @@ struct drm_file {
 	int			 flags;
 	int			 master;
 	int			 minor;
-	pid_t			 pid;
-	uid_t			 uid;
 };
 
 struct drm_lock_data {
@@ -638,8 +624,8 @@ dev_type_mmap(drmmmap);
 extern drm_local_map_t	*drm_getsarea(struct drm_device *);
 
 /* File operations helpers (drm_fops.c) */
-int		drm_open_helper(DRM_CDEV, int, int, 
-		    DRM_STRUCTPROC *, struct drm_device *);
+int		 drm_open_helper(dev_t, int, int, struct proc *,
+		     struct drm_device *);
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
 
 /* Memory management support (drm_memory.c) */

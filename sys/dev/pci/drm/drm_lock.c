@@ -145,7 +145,7 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 
 		/* Contention */
-		ret = DRM_SLEEPLOCK((void *)&dev->lock.lock_queue,
+		ret = msleep((void *)&dev->lock.lock_queue,
 		    &dev->dev_lock, PZERO | PCATCH, "drmlkq", 0);
 		if (ret != 0)
 			break;

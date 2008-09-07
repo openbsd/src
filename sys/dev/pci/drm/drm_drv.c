@@ -470,7 +470,7 @@ drm_version(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 int
-drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 {
 	struct drm_device *dev = NULL;
 	int retcode = 0;
@@ -494,7 +494,7 @@ drmopen(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 }
 
 int
-drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 {
 	struct drm_device *dev = drm_get_device_from_kdev(kdev);
 	struct drm_file *file_priv;
@@ -547,7 +547,7 @@ drmclose(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 				break;	/* Got lock */
 			}
 				/* Contention */
-			retcode = DRM_SLEEPLOCK((void *)&dev->lock.lock_queue,
+			retcode = msleep((void *)&dev->lock.lock_queue,
 			    &dev->dev_lock, PZERO | PCATCH, "drmlk2", 0);
 			if (retcode)
 				break;
@@ -585,8 +585,8 @@ done:
 /* drmioctl is called whenever a process performs an ioctl on /dev/drm.
  */
 int
-drmioctl(DRM_CDEV kdev, u_long cmd, caddr_t data, int flags, 
-    DRM_STRUCTPROC *p)
+drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, 
+    struct proc *p)
 {
 	struct drm_device *dev = drm_get_device_from_kdev(kdev);
 	int retcode = 0;
