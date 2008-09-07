@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.19 2008/06/13 23:39:26 deraadt Exp $
+.\"	$OpenBSD: xdr.3,v 1.20 2008/09/07 14:59:41 marco Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .\" Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -28,7 +28,7 @@
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
 .\"
-.Dd $Mdocdate: June 13 2008 $
+.Dd $Mdocdate: September 7 2008 $
 .Dt XDR 3
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@
 .Ft int
 .Fn xdrrec_endofrecord "XDR *xdrs" "int sendnow"
 .Ft int
-.Fn xdrrec_eof "XDR *xdrs" "int empty"
+.Fn xdrrec_eof "XDR *xdrs"
 .Ft int
 .Fn xdrrec_skiprecord "XDR *xdrs"
 .Ft int
