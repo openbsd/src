@@ -361,9 +361,6 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	int local_blinding = 0;
 	BN_BLINDING *blinding = NULL;
 
-	BN_init(&f);
-	BN_init(&ret);
-
 	if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS)
 		{
 		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_MODULUS_TOO_LARGE);
