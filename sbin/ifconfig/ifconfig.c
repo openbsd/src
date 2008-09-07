@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.202 2008/07/17 08:14:24 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.203 2008/09/07 02:22:34 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -123,12 +123,13 @@ u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
-int	mflag;
-int	net80211flag;
 int	explicit_prefix = 0;
 #ifdef INET6
 int	Lflag = 1;
 #endif /* INET6 */
+
+int	showmediaflag;
+int	shownet80211flag;
 
 void	notealias(const char *, int);
 void	notrailers(const char *, int);
@@ -251,9 +252,11 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
 #define	A_MEDIAMODE	0x0010		/* mode command */
+#define A_SILENT	0x8000000	/* doing operation, do not print */
 
-#define	NEXTARG		0xffffff
-#define NEXTARG2	0xfffffe
+#define	NEXTARG0	0xffffff
+#define NEXTARG		0xfffffe
+#define	NEXTARG2	0xfffffd
 
 const struct	cmd {
 	char	*c_name;
@@ -299,7 +302,7 @@ const struct	cmd {
 	{ "wpaprotos",	NEXTARG,	0,		setifwpaprotos },
 	{ "wpapsk",	NEXTARG,	0,		setifwpapsk },
 	{ "-wpapsk",	-1,		0,		setifwpapsk },
-	{ "chan",	NEXTARG,	0,		setifchan },
+	{ "chan",	NEXTARG0,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
 	{ "powersave",	1,		0,		setifpowersave },
 	{ "-powersave",	0,		0,		setifpowersave },
@@ -381,7 +384,7 @@ const struct	cmd {
 	{ "-link1",	-IFF_LINK1,	0,		setifflags } ,
 	{ "link2",	IFF_LINK2,	0,		setifflags } ,
 	{ "-link2",	-IFF_LINK2,	0,		setifflags } ,
-	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
+	{ "media",	NEXTARG0,	A_MEDIA,	setmedia },
 	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "mode",	NEXTARG,	A_MEDIAMODE,	setmediamode },
@@ -469,13 +472,14 @@ const struct afswtch {
 
 const struct afswtch *afp;	/*the address family being set or asked about*/
 
+int ifaliases = 0;
+int aflag = 0;
+
 int
 main(int argc, char *argv[])
 {
 	const struct afswtch *rafp = NULL;
 	int create = 0;
-	int aflag = 0;
-	int ifaliases = 0;
 	int Cflag = 0;
 	int gflag = 0;
 	int i;
@@ -502,12 +506,6 @@ main(int argc, char *argv[])
 				break;
 			case 'g':
 				gflag = 1;
-				break;
-			case 'm':
-				mflag = 1;
-				break;
-			case 'M':
-				net80211flag = 1;
 				break;
 			case 'C':
 				Cflag = 1;
@@ -540,7 +538,7 @@ main(int argc, char *argv[])
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
 	}
 	if (Cflag) {
-		if (argc > 0 || mflag || aflag)
+		if (argc > 0 || aflag)
 			usage(1);
 		list_cloners();
 		exit(0);
@@ -552,17 +550,7 @@ main(int argc, char *argv[])
 			setgroupattribs(name, argc, argv);
 		exit(0);
 	}
-	if (aflag) {
-		if (argc > 0)
-			usage(0);
-		printif(NULL, ifaliases);
-		exit(0);
-	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (argc == 0) {
-		printif(ifr.ifr_name, 1);
-		exit(0);
-	}
 
 #ifdef INET6
 	/* initialization */
@@ -579,9 +567,11 @@ main(int argc, char *argv[])
 		if (argc == 0)
 			exit(0);
 	}
-	create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
-	if (getinfo(&ifr, create) < 0)
-		exit(1);
+	if (aflag == 0) {
+		create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
+		if (getinfo(&ifr, create) < 0)
+			exit(1);
+	}
 	while (argc > 0) {
 		const struct cmd *p;
 
@@ -595,12 +585,31 @@ main(int argc, char *argv[])
 					errx(1, "%s: bad value", *argv);
 			}
 		if (p->c_func || p->c_func2) {
-			if (p->c_parameter == NEXTARG) {
+			if (p->c_parameter == NEXTARG0) {
+				const struct cmd *p0;
+				int noarg = 1;
+
+				if (argv[1]) {
+					for (p0 = cmds; p0->c_name; p0++)
+						if (strcmp(argv[1], p0->c_name) == 0) {
+							noarg = 0;
+							break;
+						}
+				} else
+					noarg = 0;
+
+				if (noarg == 0)
+					(*p->c_func)(NULL, 0);
+				else
+					goto nextarg;
+			} else if (p->c_parameter == NEXTARG) {
+nextarg:
 				if (argv[1] == NULL)
 					errx(1, "'%s' requires argument",
 					    p->c_name);
 				(*p->c_func)(argv[1], 0);
 				argc--, argv++;
+				actions = actions | A_SILENT | p->c_action;
 			} else if (p->c_parameter == NEXTARG2) {
 				if ((argv[1] == NULL) ||
 				    (argv[2] == NULL))
@@ -609,11 +618,18 @@ main(int argc, char *argv[])
 				(*p->c_func2)(argv[1], argv[2]);
 				argc -= 2;
 				argv += 2;
-			} else
+				actions = actions | A_SILENT | p->c_action;
+			} else {
 				(*p->c_func)(*argv, p->c_parameter);
-			actions |= p->c_action;
+				actions = actions | A_SILENT | p->c_action;
+			}
 		}
 		argc--, argv++;
+	}
+
+	if (argc == 0 && actions == 0) {
+		printif(ifr.ifr_name, 1);
+		exit(0);
 	}
 
 	/* Process any media commands that may have been issued. */
@@ -797,6 +813,8 @@ printif(char *ifname, int ifaliases)
 	int count = 0, noinet = 1;
 	size_t nlen = 0;
 
+	if (aflag)
+		ifname = NULL;
 	if (ifname) {
 		if ((oname = strdup(ifname)) == NULL)
 			err(1, "strdup");
@@ -1601,6 +1619,12 @@ setifchan(const char *val, int d)
 	struct ieee80211chanreq channel;
 	int chan;
 
+	if (val == NULL) {
+		if (shownet80211flag)
+			usage(1);
+		shownet80211flag = 1;
+		return;
+	}
 	if (d != 0)
 		chan = IEEE80211_CHAN_ANY;
 	else {
@@ -1934,7 +1958,7 @@ ieee80211_status(void)
 	}
 
 	putchar('\n');
-	if (net80211flag)
+	if (shownet80211flag)
 		ieee80211_listnodes();
 }
 
@@ -2083,7 +2107,7 @@ process_media_commands(void)
 	ifr.ifr_media = media_current;
 
 	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
-		err(1, "SIOCSIFMEDIA");
+		;
 }
 
 /* ARGSUSED */
@@ -2091,6 +2115,13 @@ void
 setmedia(const char *val, int d)
 {
 	int type, subtype, inst;
+
+	if (val == NULL) {
+		if (showmediaflag)
+			usage(1);
+		showmediaflag = 1;
+		return;
+	}
 
 	init_current_media();
 
@@ -2630,7 +2661,7 @@ status(int link, struct sockaddr_dl *sdl)
 
 	ieee80211_status();
 
-	if (mflag) {
+	if (showmediaflag) {
 		int type, printed_type = 0;
 
 		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
@@ -4055,7 +4086,7 @@ trunk_status(void)
 			putchar('\n');
 		}
 
-		if (mflag) {
+		if (showmediaflag) {
 			printf("\tsupported trunk protocols:\n");
 			for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++)
 				printf("\t\ttrunkproto %s\n", tpr[i].tpr_name);
@@ -4288,7 +4319,7 @@ void
 usage(int value)
 {
 	fprintf(stderr,
-	    "usage: ifconfig [-AaCm] [interface] [address_family] "
+	    "usage: ifconfig [-AaC] [interface] [address_family] "
 	    "[address [dest_address]]\n"
 	    "\t\t[parameters]\n");
 	exit(value);
