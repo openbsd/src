@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.41 2007/05/31 19:19:53 jmc Exp $
+.\"	$OpenBSD: xl.4,v 1.42 2008/09/07 06:55:34 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     $FreeBSD: xl.4,v 1.1 1998/08/16 17:19:58 wpaul Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 7 2008 $
 .Dt XL 4
 .Os
 .Sh NAME
@@ -134,9 +134,9 @@ Set 10base2 (thin-net) operation (half-duplex only).
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by this card try
-.Ic ifconfig -m <device> .
+.Ic ifconfig <device> media .
 For example,
-.Ic ifconfig -m xl0 .
+.Ic ifconfig xl0 media .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "xl%d: couldn't map memory"
