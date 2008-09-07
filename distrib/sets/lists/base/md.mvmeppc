@@ -640,6 +640,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/com_err.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/arc4.ph

@@ -656,6 +656,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/com_err.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/arc4.ph

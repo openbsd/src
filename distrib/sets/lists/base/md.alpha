@@ -709,6 +709,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/com_err.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/arc4.ph

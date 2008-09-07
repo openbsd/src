@@ -687,6 +687,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/com_err.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/arc4.ph

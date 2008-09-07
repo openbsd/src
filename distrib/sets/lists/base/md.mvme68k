@@ -603,6 +603,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/com_err.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/arc4.ph
