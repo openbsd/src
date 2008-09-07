@@ -1846,7 +1846,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/blowfish.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/bn.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/buffer.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/conf_api.ph
@@ -1856,9 +1858,12 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dso.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ec.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ecdh.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ecdsa.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/evp.ph
@@ -1882,6 +1887,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pkcs7.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pq_compat.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rc4.ph
@@ -1889,12 +1896,14 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/safestack.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ssl23.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/stack.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/store.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/tmdiff.ph

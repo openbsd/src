@@ -81,9 +81,9 @@
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.4/3.3.5/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.4/3.3.5/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.48.0
+./usr/lib/libc.so.49.0
 ./usr/lib/libcom_err.so.16.0
-./usr/lib/libcrypto.so.14.0
+./usr/lib/libcrypto.so.15.0
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
@@ -112,7 +112,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
-./usr/lib/libssl.so.11.0
+./usr/lib/libssl.so.12.0
 ./usr/lib/libstdc++.so.45.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
@@ -1966,7 +1966,9 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/blowfish.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/bn.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/buffer.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/conf_api.ph
@@ -1976,9 +1978,12 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/dso.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ec.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ecdh.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ecdsa.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/evp.ph
@@ -2002,6 +2007,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/pkcs7.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/pq_compat.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/rc4.ph
@@ -2009,12 +2016,14 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/safestack.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ssl23.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/stack.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/store.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/tmdiff.ph
