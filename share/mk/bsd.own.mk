@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.99 2008/03/28 17:10:57 drahn Exp $
+#	$OpenBSD: bsd.own.mk,v 1.100 2008/09/07 19:22:03 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -122,9 +122,9 @@ NOPIC=
 
 # pic relocation flags.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
-PICFLAG=-fPIC
+PICFLAG?=-fPIC
 .else
-PICFLAG=-fpic
+PICFLAG?=-fpic
 . if ${MACHINE_ARCH} == "m68k"
 # Function CSE makes gas -k not recognize external function calls as lazily
 # resolvable symbols, thus sometimes making ld.so report undefined symbol
