@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.18 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: printf.1,v 1.19 2008/09/08 20:16:13 martynas Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 8 2008 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -142,6 +142,7 @@ For
 .Cm e ,
 .Cm E ,
 .Cm f ,
+.Cm F ,
 .Cm g ,
 and
 .Cm G
@@ -205,7 +206,7 @@ from a string; if the digit string is missing, the precision is treated
 as zero.
 .It Format:
 A character which indicates the type of format to use (one of
-.Cm diouxXfEgGbcs ) .
+.Cm diouxXfFeEgGbcs ) .
 .El
 .Pp
 A field width or precision may be
@@ -226,7 +227,7 @@ unsigned octal, unsigned decimal,
 or unsigned hexadecimal
 .Pq Cm x No or Cm X ,
 respectively.
-.It Cm f
+.It Cm fF
 The
 .Ar argument
 is printed in the style
@@ -238,6 +239,18 @@ after the decimal point is equal to the precision specification for
 the argument.
 If the precision is missing, 6 digits are given; if the precision
 is explicitly 0, no digits and no decimal point are printed.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm f
+or [-]INF
+.Pq Cm F ,   
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm f
+or [-]NAN
+.Pq Cm F ,
+respectively.
 .It Cm eE
 The
 .Ar argument
