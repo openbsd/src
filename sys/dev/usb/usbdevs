@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.382 2008/09/08 16:53:35 martynas Exp $
+$OpenBSD: usbdevs,v 1.383 2008/09/08 16:57:04 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -132,6 +132,7 @@ vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
 vendor ITUNER		0x04d8	Ituner
+vendor HOLTEK		0x04d9	Holtek
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
@@ -1515,6 +1516,9 @@ product ABOCOM UF200		0x420a	UF200 Ethernet
 
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
+
+/* Holtek Semiconductor, Inc. */
+product HOLTEK MOUSE		0x0499	Mouse
 
 /* HP products */
 product HP 895C			0x0004	DeskJet 895C
