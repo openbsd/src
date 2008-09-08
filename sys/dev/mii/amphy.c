@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.17 2008/03/12 11:32:17 brad Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.18 2008/09/08 07:38:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -225,10 +225,10 @@ amphy_status(struct mii_softc *sc)
 		if (PHY_READ(sc, MII_ANER) & ANER_LPAN) {
 			anlpar = PHY_READ(sc, MII_ANAR) &
 			    PHY_READ(sc, MII_ANLPAR);
-			if (anlpar & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
-			else if (anlpar & ANLPAR_TX_FD)
+			if (anlpar & ANLPAR_TX_FD)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			else if (anlpar & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
 			else if (anlpar & ANLPAR_TX)
 				mii->mii_media_active |= IFM_100_TX|IFM_HDX;
 			else if (anlpar & ANLPAR_10_FD)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.16 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.17 2008/09/08 07:38:33 brad Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -254,10 +254,10 @@ inphy_status(sc)
 		}
 
 		scr = PHY_READ(sc, MII_INPHY_SCR);
-		if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
-			mii->mii_media_active |= IFM_100_T4;
-		else if (scr & SCR_S100)
+		if (scr & SCR_S100)
 			mii->mii_media_active |= IFM_100_TX;
+		else if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
+			mii->mii_media_active |= IFM_100_T4;
 		else
 			mii->mii_media_active |= IFM_10_T;
 

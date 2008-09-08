@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.91 2008/05/31 02:08:14 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.92 2008/09/08 07:38:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1826,10 +1826,10 @@ txp_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		}
 
 		anlpar &= anar;
-		if (anlpar & ANLPAR_T4)
-			ifmr->ifm_active |= IFM_100_T4|IFM_HDX;
-		else if (anlpar & ANLPAR_TX_FD)
+		if (anlpar & ANLPAR_TX_FD)
 			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
+		else if (anlpar & ANLPAR_T4)
+			ifmr->ifm_active |= IFM_100_T4|IFM_HDX;
 		else if (anlpar & ANLPAR_TX)
 			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
 		else if (anlpar & ANLPAR_10_FD)
