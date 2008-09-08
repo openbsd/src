@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.73 2008/08/22 08:52:35 sobrado Exp $
+.\" 	$OpenBSD: ftp.1,v 1.74 2008/09/08 19:31:16 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: August 22 2008 $
+.Dd $Mdocdate: September 8 2008 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -565,7 +565,8 @@ on the remote machine.
 A synonym for
 .Ic mls .
 .It Xo Ic mget
-.Op Fl cr
+.Op Fl cnr
+.Op Fl d Ar depth
 .Ar remote-files
 .Xc
 Expand the
@@ -589,18 +590,26 @@ which can be changed with
 new local directories can be created with
 .Ql "\&! mkdir directory" .
 .Pp
-If the
-.Fl c
-flag is specified then
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Use
 .Ic reget
-is used instead of
+instead of
 .Ic get .
-If the
-.Fl r
-flag is specified,
-.Nm
-recursively descends the directory tree,
-transferring all files and directories.
+.It Fl d Ar depth
+Specify the maximum recursion level
+.Ar depth .
+The default is 0, which means unlimited.
+.It Fl n
+Use
+.Ic newer
+instead of
+.Ic get .
+.It Fl r
+Recursively descend the directory tree, transferring all files and
+directories.
+.El
 .It Ic mkdir Ar directory-name
 Make a directory on the remote machine.
 .It Ic mls Ar remote-files local-file

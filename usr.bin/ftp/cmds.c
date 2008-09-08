@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.64 2008/08/22 08:52:35 sobrado Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.65 2008/09/08 19:31:16 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.64 2008/08/22 08:52:35 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.65 2008/09/08 19:31:16 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -618,7 +618,7 @@ usage:
 #endif /* !SMALL */
 
 	recvrequest("RETR", argv[2], argv[1], mode,
-	    argv[1] != oldargv1 || argv[2] != oldargv2, loc);
+	    argv[1] != oldargv1 || argv[2] != oldargv2 || !interactive, loc);
 	restart_point = 0;
 freegetit:
 	if (oldargv2 != globargv2)	/* free up after globulize() */
@@ -649,25 +649,44 @@ mget(int argc, char *argv[])
 {
 	extern int optind, optreset;
 	sig_t oldintr;
-	int ch;
-	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN], localcwd[MAXPATHLEN];
+	int ch, xargc = 2;
+	char *cp, localcwd[MAXPATHLEN], *xargv[] = {argv[0], NULL, NULL};
+	static int restartit = 0;
 #ifndef SMALL
-	int i = 1, restartit = 0, xargc = 2;
-	char type = NULL, *xargv[] = {argv[0], ".", NULL, NULL};
+	extern char *optarg;
+	int i = 1;
+	char type = NULL, *dummyargv[] = {argv[0], ".", NULL};
 	FILE *ftemp = NULL;
-	static int depth = 0;
+	static int depth = 0, max_depth = 0;
 #endif /* !SMALL */
 
 	optind = optreset = 1;
 
 #ifndef SMALL
-	while ((ch = getopt(argc, argv, "cr")) != -1) {
+	const char *errstr;
+
+	if (depth)
+		depth++;
+
+	while ((ch = getopt(argc, argv, "cd:nr")) != -1) {
 		switch(ch) {
 		case 'c':
 			restartit = 1;
 			break;
+		case 'd':
+			max_depth = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				fprintf(ttyout, "bad depth value, %s: %s\n",
+				    errstr, optarg);
+				code = -1;
+				return;
+			}
+			break;
+		case 'n':
+			restartit = -1;
+			break;
 		case 'r':
-			depth++;
+			depth = 1;
 			break;
 		default:
 			goto usage;
@@ -677,7 +696,8 @@ mget(int argc, char *argv[])
 
 	if (argc - optind < 1 && !another(&argc, &argv, "remote-files")) {
 usage:
-		fprintf(ttyout, "usage: %s [-cr] remote-files\n", argv[0]);
+		fprintf(ttyout, "usage: %s [-cnr] [-d depth] remote-files\n",
+		    argv[0]);
 		code = -1;
 		return;
 	}
@@ -697,7 +717,7 @@ usage:
 	(void)setjmp(jabort);
 	while ((cp =
 #ifndef SMALL
-	    depth ? remglob2(xargv, proxy, NULL, &ftemp, &type) :
+	    depth ? remglob2(dummyargv, proxy, NULL, &ftemp, &type) :
 #endif /* !SMALL */
 	    remglob(argv, proxy, NULL)) != NULL
 #ifndef SMALL
@@ -723,6 +743,10 @@ usage:
 			    cp);
 			continue;
 		}
+#ifndef SMALL
+		if (type == 'd' && depth == max_depth)
+			continue;
+#endif /* !SMALL */
 		if (confirm(argv[0], cp)) {
 #ifndef SMALL
 			if (type == 'd') {
@@ -733,21 +757,14 @@ usage:
 				}
 
 				xargv[1] = cp;
-				xargv[2] = NULL;
-				xargc = 2;
 				cd(xargc, xargv);
 				if (dirchange != 1)
 					goto out;
 
-				xargv[1] = (restartit == 1) ? "-cr" : "-r";
-				xargv[2] = "*";
-				xargv[3] = NULL;
-				xargc = 3;
+				xargv[1] = "*";
 				mget(xargc, xargv);
 
 				xargv[1] = "..";
-				xargv[2] = NULL;
-				xargc = 2;
 				cd(xargc, xargv);
 				if (dirchange != 1) {
 					mflag = 0;
@@ -759,39 +776,15 @@ out:
 					warn("local: %s", cp);
 					mflag = 0;
 				}
-
-				xargv[1] = ".";
-				xargv[2] = NULL;
-				xargc = 2;
 				continue;
 			}
 			if (type == 's')
 				/* Currently ignored. */
 				continue;
 #endif /* !SMALL */
-			tp = cp;
-			if (mcase) {
-				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
-					*tp2++ = isupper(ch) ? tolower(ch) : ch;
-				*tp2 = '\0';
-				tp = tmpbuf;
-			}
-			if (ntflag)
-				tp = dotrans(tp);
-			if (mapflag)
-				tp = domap(tp);
-#ifndef SMALL
-			if (restartit == 1) {
-				struct stat stbuf;
-				int ret;
-
-				ret = stat(tp, &stbuf);
-				restart_point = (ret < 0) ? 0 : stbuf.st_size;
-			}
-#endif /* !SMALL */
-			recvrequest("RETR", tp, cp, restart_point ? "r+w" : "w",
-			    tp != cp || !interactive, 1);
-			restart_point = 0;
+			xargv[1] = cp;
+			(void)getit(xargc, xargv, restartit,
+			    (restartit == 1 || restart_point) ? "r+w" : "w");
 			if (!mflag && fromatty) {
 				if (confirm(argv[0], NULL))
 					mflag = 1;
@@ -803,7 +796,7 @@ out:
 	if (depth)
 		depth--;
 	if (depth == 0 || mflag == 0)
-		depth = mflag = 0;
+		depth = max_depth = mflag = restartit = 0;
 #else /* !SMALL */
 	mflag = 0;
 #endif /* !SMALL */
