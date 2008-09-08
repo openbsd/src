@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.54 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ugen.c,v 1.55 2008/09/08 19:35:25 martynas Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -903,7 +903,6 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
 		return (err);
-	/* XXX should only do this after setting new altno has succeeded */
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
@@ -917,11 +916,13 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	/* change setting */
 	err = usbd_set_interface(iface, altno);
 	if (err)
-		return (err);
+		goto out;
 
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
-		return (err);
+		goto out;
+
+out:
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
@@ -931,7 +932,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 		sce->edesc = ed;
 		sce->iface = iface;
 	}
-	return (0);
+	return (err);
 }
 
 /* Retrieve a complete descriptor for a certain device and index. */
