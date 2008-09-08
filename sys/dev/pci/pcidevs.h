@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1404 2008/09/05 21:16:32 okan Exp 
+ *	OpenBSD: pcidevs,v 1.1405 2008/09/08 08:33:12 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1060,14 +1060,18 @@
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7187		/* Radeon X1300 */
 #define	PCI_PRODUCT_ATI_RADEON_X1300PRO_S	0x71a3		/* Radeon X1300 Pro Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x71a7		/* Radeon X1300 Sec */
-#define	PCI_PRODUCT_ATI_RADEON_X1600_PRO	0x71c2		/* Radeon X1600 PRO */
+#define	PCI_PRODUCT_ATI_RADEON_X1600_PRO	0x71c2		/* Radeon X1600 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X1600_M	0x71c5		/* Radeon Mobility X1600 */
+#define	PCI_PRODUCT_ATI_RADEON_X1650_PRO	0x71c6		/* Radeon X1650 Pro */
+#define	PCI_PRODUCT_ATI_RADEON_X1650_PRO2	0x71c7		/* Radeon X1650 Pro */
 #define	PCI_PRODUCT_ATI_RV530_M56	0x71d4		/* Mobility FireGL V5250 */
-#define	PCI_PRODUCT_ATI_RADEON_X1600_PRO2	0x71e2		/* Radeon X1600 PRO (Secondary) */
+#define	PCI_PRODUCT_ATI_RADEON_X1600_PRO_S	0x71e2		/* Radeon X1600 Pro Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X1650_PRO_S	0x71e6		/* Radeon X1650 Pro Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X1650_PRO2_S	0x71e7		/* Radeon X1650 Pro Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X1950_PRO	0x7280		/* Radeon X1950 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_RX1650_XT	0x7291		/* Radeon RX1650 XT */
 #define	PCI_PRODUCT_ATI_RADEON_X1950_PRO_S	0x72a0		/* Radeon X1950 Pro Sec */
-#define	PCI_PRODUCT_ATI_RADEON_RX1650_XT2	0x72b1		/* Radeon RX1650 XT (Secondary) */
+#define	PCI_PRODUCT_ATI_RADEON_RX1650_XT_2	0x72b1		/* Radeon RX1650 XT Sec */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */
 #define	PCI_PRODUCT_ATI_RS740_HB	0x7911		/* RS740 Host */
 #define	PCI_PRODUCT_ATI_RS690_PCIE_1	0x7912		/* RS690 PCIE */
