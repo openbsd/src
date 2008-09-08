@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.12 2006/12/27 19:11:09 kettenis Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.13 2008/09/08 07:50:15 brad Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -116,10 +116,7 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
-	/* Don't do loopback on this PHY. */
-	sc->mii_flags |= MIIF_NOLOOP;
-	/* Don't do isolate on this PHY. */
-	sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
 	if (mii->mii_instance != 0) {
 		printf("%s: ignoring this PHY, non-zero instance\n",
