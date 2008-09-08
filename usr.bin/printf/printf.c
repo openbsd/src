@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.13 2008/06/19 16:24:00 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.14 2008/09/08 17:04:20 martynas Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.13 2008/06/19 16:24:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.14 2008/09/08 17:04:20 martynas Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -218,9 +218,12 @@ main(int argc, char *argv[])
 					PF(f, p);
 					break;
 				}
+				case 'a':
+				case 'A':
 				case 'e':
 				case 'E':
 				case 'f':
+				case 'F':
 				case 'g':
 				case 'G': {
 					double p = getdouble();
