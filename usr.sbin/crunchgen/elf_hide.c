@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.2 2008/09/08 20:42:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -225,8 +225,8 @@ dump_symtab(Elf_Shdr * symsect, Elf_Sym * symtab, int symtabsize)
 			printf("symbol %d:\n", i);
 			printf("st_name %x \"%s\"\n", psymtab->st_name,
 			    get_str(psymtab->st_name));
-			printf("st_value %x\n", psymtab->st_value);
-			printf("st_size %x\n", psymtab->st_size);
+			printf("st_value %llx\n", (unsigned long long)psymtab->st_value);
+			printf("st_size %llx\n", (unsigned long long)psymtab->st_size);
 			printf("st_info %x\n", psymtab->st_info);
 			printf("st_other %x\n", psymtab->st_other);
 			printf("st_shndx %x\n", psymtab->st_shndx);
@@ -304,7 +304,9 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
     Elf_Sym * symtab, int symtabsize, int symtabsecnum)
 {
 	int             i;
+#ifndef __mips__
 	unsigned char   info;
+#endif
 	Elf_Sym        *psymtab;
 
 #ifdef __mips__
