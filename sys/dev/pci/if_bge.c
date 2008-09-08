@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.241 2008/08/26 19:43:05 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.242 2008/09/08 08:10:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3215,6 +3215,20 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);
+
+	/*
+	 * Force an interrupt so that we will call bge_link_upd
+	 * if needed and clear any pending link state attention.
+	 * Without this we are not getting any further interrupts
+	 * for link state changes and thus will not UP the link and
+	 * not be able to send in bge_start. The only way to get
+	 * things working was to receive a packet and get a RX intr.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+	    sc->bge_flags & BGE_IS_5788)
+		BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_SET);
+	else
+		BGE_SETBIT(sc, BGE_HCC_MODE, BGE_HCCMODE_COAL_NOW);
 
 	return (0);
 }
