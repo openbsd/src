@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.52 2008/09/01 19:55:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.53 2008/09/08 13:13:01 jsg Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -36,6 +36,10 @@
 /*
  * Definitions for IEEE 802.11 drivers.
  */
+
+#ifdef	SMALL_KERNEL
+#define IEEE80211_STA_ONLY 1
+#endif
 
 #include <sys/timeout.h>
 
