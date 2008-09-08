@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.381 2008/09/03 13:58:01 sthen Exp $
+$OpenBSD: usbdevs,v 1.382 2008/09/08 16:53:35 martynas Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -163,6 +163,7 @@ vendor ASAHIKASEI	0x0556	Asahi Kasei Microsystems
 vendor ATEN		0x0557	ATEN International
 vendor SAMSUNG		0x055d	Samsung
 vendor MUSTEK		0x055f	Mustek Systems
+vendor MUSTEK2		0x0665	Mustek Systems
 vendor TELEX		0x0562	Telex Communications
 vendor PERACOM		0x0565	Peracom Networks
 vendor ALCOR2		0x0566	Alcor Micro
@@ -2020,6 +2021,7 @@ product MUSTEK BEARPAW1200F	0x0010	BearPaw 1200F
 product MUSTEK 600USB		0x0873	600
 product MUSTEK MDC800		0xa800	MDC-800
 product MUSTEK DV2000		0xc441	DV2000
+product MUSTEK2 PM800		0x5161	PowerMust 800
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
