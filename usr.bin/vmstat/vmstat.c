@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.109 2008/03/16 11:11:59 sobrado Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.110 2008/09/08 09:06:25 otto Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.109 2008/03/16 11:11:59 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.110 2008/09/08 09:06:25 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -949,7 +949,7 @@ print_pool(struct pool *pp, char *name)
 		    "Size",
 		    "Requests",
 		    "Fail",
-		    "Releases",
+		    "InUse",
 		    "Pgreq",
 		    "Pgrel",
 		    "Npage",
@@ -989,7 +989,7 @@ print_pool(struct pool *pp, char *name)
 	PRWORD(ovflw, " %*u", 5, 1, pp->pr_size);
 	PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
 	PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
-	PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
+	PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget - pp->pr_nput);
 	PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
 	PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
 	PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
