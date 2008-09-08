@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.48 2008/09/07 19:22:21 deraadt Exp $
+# $OpenBSD: Makefile,v 1.49 2008/09/08 07:23:38 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -325,17 +325,17 @@ CFLAGS+= -DMD5_ASM
 CFLAGS+= -DSHA1_ASM
 CFLAGS+= -DRMD160_ASM
 CFLAGS+= -DOPENBSD_DES_ASM
-CFLAGS+= -DOPENBSD_CAST_ASM
 CFLAGS+= -DOPENSSL_BN_ASM_PART_WORDS
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 CFLAGS+= -DOPENSSL_CPUID_OBJ
+# XXX bad relocation in CAST ASM code leads to TEXTREL for shared libcrypto
+#CFLAGS+= -DOPENBSD_CAST_ASM
 SSLASM=\
 	aes aes-586 \
 	bf bf-586 \
 	bn bn-586 \
 	bn co-586 \
 	bn mo-586 \
-	cast cast-586 \
 	des crypt586 \
 	des des-586 \
 	md5 md5-586 \
