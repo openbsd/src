@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.618 2008/09/03 12:57:19 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.619 2008/09/09 13:56:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,6 +38,7 @@
 #include "bpfilter.h"
 #include "pflog.h"
 #include "pfsync.h"
+#include "pflow.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +79,7 @@
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
 #include <net/if_pflog.h>
+#include <net/if_pflow.h>
 
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
@@ -1090,6 +1092,10 @@ pf_unlink_state(struct pf_state *cur)
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL);
 	}
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
+#if NPFLOW
+	if (cur->state_flags & PFSTATE_PFLOW)
+		export_pflow(cur);
+#endif
 #if NPFSYNC
 	if (cur->creatorid == pf_status.hostid)
 		pfsync_delete_state(cur);
@@ -3453,6 +3459,8 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 		s->state_flags |= PFSTATE_ALLOWOPTS;
 	if (r->rule_flag & PFRULE_STATESLOPPY)
 		s->state_flags |= PFSTATE_SLOPPY;
+	if (r->rule_flag & PFRULE_PFLOW)
+		s->state_flags |= PFSTATE_PFLOW;
 	s->log = r->log & PF_LOG_ALL;
 	if (nr != NULL)
 		s->log |= nr->log & PF_LOG_ALL;

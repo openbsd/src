@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.240 2008/06/10 20:55:02 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.241 2008/09/09 13:56:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -932,6 +932,12 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("sloppy");
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_PFLOW) {
+			if (!opts)
+				printf(", ");
+			printf("pflow");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)

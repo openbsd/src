@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.203 2008/09/07 02:22:34 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.204 2008/09/09 13:56:38 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <net80211/ieee80211_ioctl.h>
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
+#include <net/if_pflow.h>
 #include <net/if_pppoe.h>
 #include <net/if_trunk.h>
 #include <net/if_sppp.h>
@@ -232,6 +233,14 @@ void	settrunkproto(const char *, int);
 void	trunk_status(void);
 int	main(int, char *[]);
 int	prefix(void *val, int);
+
+#ifndef SMALL
+void	pflow_status(void);
+void	setpflow_sender(const char *, int);
+void	unsetpflow_sender(const char *, int);
+void	setpflow_receiver(const char *, int);
+void	unsetpflow_receiver(const char *, int);
+#endif
 
 /*
  * Media stuff.  Whenever a media command is first performed, the
@@ -395,6 +404,12 @@ const struct	cmd {
 	{ "descr",	NEXTARG,	0,		setifdesc },
 	{ "-description", 1,		0,		unsetifdesc },
 	{ "-descr",	1,		0,		unsetifdesc },
+#ifndef SMALL
+	{ "flowsrc",	NEXTARG,	0,		setpflow_sender },
+	{ "-flowsrc",	1,		0,		unsetpflow_sender },
+	{ "flowdst", 	NEXTARG,	0,		setpflow_receiver },
+	{ "-flowdst", 1,		0,		unsetpflow_receiver },
+#endif
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -2592,6 +2607,7 @@ status(int link, struct sockaddr_dl *sdl)
 	sppp_status();
 	trunk_status();
 	mpe_status();
+	pflow_status();
 #endif
 	getifgroups();
 
@@ -3673,6 +3689,124 @@ pfsync_status(void)
 		printf("maxupd: %d\n", preq.pfsyncr_maxupdates);
 	}
 }
+
+#ifndef SMALL
+void
+pflow_status(void)
+{
+	struct pflowreq preq;
+
+	bzero((char *)&preq, sizeof(struct pflowreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFLOW, (caddr_t)&ifr) == -1)
+		 return;
+
+	printf("\tpflow: sender: %s ", inet_ntoa(preq.sender_ip));
+	printf("receiver: %s:%u\n", inet_ntoa(preq.receiver_ip),
+	    ntohs(preq.receiver_port));
+}
+
+/* ARGSUSED */
+void
+setpflow_sender(const char *val, int d)
+{
+	struct pflowreq preq;
+	struct addrinfo hints, *sender;
+	int ecode;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+
+	if ((ecode = getaddrinfo(val, NULL, &hints, &sender)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if (sender->ai_addr->sa_family != AF_INET)
+		errx(1, "only IPv4 addresses supported for the sender");
+
+	bzero((char *)&preq, sizeof(struct pflowreq));
+	ifr.ifr_data = (caddr_t)&preq;
+	preq.addrmask |= PFLOW_MASK_SRCIP;
+	preq.sender_ip.s_addr = ((struct sockaddr_in *)
+	    sender->ai_addr)->sin_addr.s_addr;
+	
+
+	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFLOW");
+
+	freeaddrinfo(sender);
+}
+
+void
+unsetpflow_sender(const char *val, int d)
+{
+	struct pflowreq preq;
+
+	bzero((char *)&preq, sizeof(struct pflowreq));
+	preq.addrmask |= PFLOW_MASK_SRCIP;
+	ifr.ifr_data = (caddr_t)&preq;
+	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFLOW");
+}
+
+/* ARGSUSED */
+void
+setpflow_receiver(const char *val, int d)
+{
+	const char *errmsg = NULL;
+	struct pflowreq preq;
+	struct addrinfo hints, *receiver;
+	int ecode;
+	char *ip, *port, buf[MAXHOSTNAMELEN+sizeof (":65535")];
+
+	if (strchr (val, ':') == NULL)
+		errx(1, "%s bad value", val);
+
+	if (strlcpy(buf, val, sizeof(buf)) >= sizeof(buf))
+		errx(1, "%s bad value", val);
+	port = strchr(buf, ':');
+	*port++ = '\0';
+	ip = buf;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+
+	if ((ecode = getaddrinfo(ip, port, &hints, &receiver)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if (receiver->ai_addr->sa_family != AF_INET)
+		errx(1, "only IPv4 addresses supported for the receiver");
+
+	bzero((char *)&preq, sizeof(struct pflowreq));
+	ifr.ifr_data = (caddr_t)&preq;
+	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
+	preq.receiver_ip.s_addr = ((struct sockaddr_in *)
+	    receiver->ai_addr)->sin_addr.s_addr;
+	preq.receiver_port = (u_int16_t) ((struct sockaddr_in *)
+	    receiver->ai_addr)->sin_port;
+
+	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFLOW");
+
+	freeaddrinfo(receiver);
+}
+
+void
+unsetpflow_receiver(const char *val, int d)
+{
+	struct pflowreq preq;
+
+	bzero((char *)&preq, sizeof(struct pflowreq));
+	ifr.ifr_data = (caddr_t)&preq;
+	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
+	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFLOW");
+}
+#endif /* SMALL */
 
 void
 pppoe_status(void)
