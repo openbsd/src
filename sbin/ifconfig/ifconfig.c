@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.204 2008/09/09 13:56:38 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.205 2008/09/09 20:45:23 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -584,8 +584,7 @@ main(int argc, char *argv[])
 	}
 	if (aflag == 0) {
 		create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
-		if (getinfo(&ifr, create) < 0)
-			exit(1);
+		(void)getinfo(&ifr, create);
 	}
 	while (argc > 0) {
 		const struct cmd *p;
@@ -705,28 +704,24 @@ getinfo(struct ifreq *ifr, int create)
 	getsock(af);
 	if (s < 0)
 		err(1, "socket");
+	if (!isdigit(name[strlen(name) - 1]))
+		return (-1);	/* ignore groups here */
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
 		int oerrno = errno;
 
-		if (!create) {
-			warn("SIOCGIFFLAGS");
+		if (!create)
 			return (-1);
-		}
 		if (ioctl(s, SIOCIFCREATE, (caddr_t)ifr) < 0) {
 			errno = oerrno;
-			warn("SIOCGIFFLAGS");
 			return (-1);
 		}
-		if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-			warn("SIOCGIFFLAGS");
+		if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0)
 			return (-1);
-		}
 	}
 	flags = ifr->ifr_flags;
-	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
-		warn("SIOCGIFMETRIC");
+	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0)
 		metric = 0;
-	} else
+	else
 		metric = ifr->ifr_metric;
 	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
 		mtu = 0;
