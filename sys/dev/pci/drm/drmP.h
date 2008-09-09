@@ -171,12 +171,6 @@ extern int ticks;		/* really should be in a header */
 
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
 
-#ifdef DRM_NO_AGP
-#define DRM_AGP_FIND_DEVICE()	0
-#else
-#define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
-#endif
-
 extern struct cfdriver drm_cd;
 
 typedef unsigned long dma_addr_t;
@@ -382,7 +376,7 @@ struct drm_agp_mem {
 	TAILQ_ENTRY(drm_agp_mem) link;
 };
 
-typedef struct drm_agp_head {
+struct drm_agp_head {
 	struct device				*agpdev;
 	const char				*chipset;
 	TAILQ_HEAD(agp_memlist, drm_agp_mem)	 memory;
@@ -394,7 +388,7 @@ typedef struct drm_agp_head {
 	int					 cant_use_aperture;
 	int					 enabled;
    	int					 mtrr;
-} drm_agp_head_t;
+};
 
 struct drm_sg_dmamem {
 	bus_dma_tag_t		sg_tag;
@@ -593,12 +587,12 @@ struct drm_device {
 
 	pid_t		  buf_pgid;
 
-	drm_agp_head_t    *agp;
-	drm_sg_mem_t      *sg;  /* Scatter gather memory */
-	atomic_t          *ctx_bitmap;
-	void		  *dev_private;
-	unsigned int	  agp_buffer_token;
-	drm_local_map_t   *agp_buffer_map;
+	struct drm_agp_head	*agp;
+	drm_sg_mem_t		*sg;  /* Scatter gather memory */
+	atomic_t		*ctx_bitmap;
+	void			*dev_private;
+	unsigned int		 agp_buffer_token;
+	drm_local_map_t		*agp_buffer_map;
 
 	u_int		  drw_no;
 	/* RB tree of drawable infos */
@@ -695,7 +689,8 @@ void	drm_handle_vblank(struct drm_device *, int);
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(struct drm_device *);
 int	drm_device_is_pcie(struct drm_device *);
-drm_agp_head_t *drm_agp_init(void);
+struct drm_agp_head *drm_agp_init(void);
+void	drm_agp_takedown(struct drm_device *);
 int	drm_agp_acquire(struct drm_device *);
 int	drm_agp_release(struct drm_device *);
 int	drm_agp_info(struct drm_device *, struct drm_agp_info *);

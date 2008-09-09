@@ -36,6 +36,8 @@
 #include "drmP.h"
 
 struct drm_agp_mem	*drm_agp_lookup_entry(struct drm_device *, void *);
+void			 drm_agp_remove_entry(struct drm_device *,
+			     struct drm_agp_mem *);
 
 int
 drm_device_is_agp(struct drm_device *dev)
@@ -185,7 +187,8 @@ drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 	type = (u_int32_t)request->type;
 
 	DRM_UNLOCK();
-	handle = drm_agp_allocate_memory(pages, type);
+	handle = agp_alloc_memory(dev->agp->agpdev, type,
+	    pages << AGP_PAGE_SHIFT);
 	DRM_LOCK();
 	if (handle == NULL) {
 		drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
@@ -245,7 +248,7 @@ drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 		return (EINVAL);
 
 	DRM_UNLOCK();
-	retcode = drm_agp_unbind_memory(entry->handle);
+	retcode =  agp_unbind_memory(dev->agp->agpdev, entry->handle);
 	DRM_LOCK();
 
 	if (retcode == 0)
@@ -286,7 +289,8 @@ drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 	page = (request->offset + PAGE_SIZE - 1) / PAGE_SIZE;
 
 	DRM_UNLOCK();
-	retcode = drm_agp_bind_memory(entry->handle, page);
+	retcode = agp_bind_memory(dev->agp->agpdev, entry->handle,
+	    page * PAGE_SIZE);
 	DRM_LOCK();
 	if (retcode == 0)
 		entry->bound = dev->agp->base + (page << PAGE_SHIFT);
@@ -308,6 +312,43 @@ drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 	return (retcode);
 }
 
+/*
+ * Remove entry from list and free. Call locked.
+ */
+void
+drm_agp_remove_entry(struct drm_device *dev, struct drm_agp_mem *entry)
+{
+	TAILQ_REMOVE(&dev->agp->memory, entry, link);
+
+	DRM_UNLOCK();
+	if (entry->bound)
+		agp_unbind_memory(dev->agp->agpdev, entry->handle);
+	agp_free_memory(dev->agp->agpdev, entry->handle);
+	drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
+	DRM_LOCK();
+}
+
+void
+drm_agp_takedown(struct drm_device *dev)
+{
+	struct drm_agp_mem	*entry;
+
+	if (dev->agp == NULL)
+		return;
+
+	/*
+	 * Remove AGP resources, but leave dev->agp intact until
+	 * we detach the device
+	 */
+	DRM_LOCK();
+	while ((entry = TAILQ_FIRST(&dev->agp->memory)) != NULL)
+		drm_agp_remove_entry(dev, entry);
+	DRM_UNLOCK();
+
+	drm_agp_release(dev);
+	dev->agp->enabled  = 0;
+}
+
 int
 drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request)
 {
@@ -319,19 +360,10 @@ drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request)
 	entry = drm_agp_lookup_entry(dev, (void*)request->handle);
 	if (entry == NULL)
 		return (EINVAL);
+
+	drm_agp_remove_entry(dev, entry);
    
-	TAILQ_REMOVE(&dev->agp->memory, entry, link);
-
-	DRM_UNLOCK();
-	if (entry->bound)
-		drm_agp_unbind_memory(entry->handle);
-	drm_agp_free_memory(entry->handle);
-	DRM_LOCK();
-
-	drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
-
 	return (0);
-
 }
 
 int
@@ -348,15 +380,15 @@ drm_agp_free_ioctl(struct drm_device *dev, void *data,
 	return (retcode);
 }
 
-drm_agp_head_t *
+struct drm_agp_head *
 drm_agp_init(void)
 {
 #ifndef DRM_NO_AGP
-	struct device	*agpdev;
-	drm_agp_head_t	*head = NULL;
-	int		 agp_available = 1;
+	struct device		*agpdev;
+	struct drm_agp_head	*head = NULL;
+	int		 	 agp_available = 1;
    
-	agpdev = DRM_AGP_FIND_DEVICE();
+	agpdev = agp_find_device(0);
 	if (agpdev == NULL)
 		agp_available = 0;
 
@@ -374,62 +406,5 @@ drm_agp_init(void)
 	return (head);
 #else
 	return (NULL);
-#endif
-}
-
-void *
-drm_agp_allocate_memory(size_t pages, u32 type)
-{
-	struct device	*agpdev;
-
-	agpdev = DRM_AGP_FIND_DEVICE();
-	if (agpdev == NULL)
-		return (NULL);
-
-	return (agp_alloc_memory(agpdev, type, pages << AGP_PAGE_SHIFT));
-}
-
-int
-drm_agp_free_memory(void *handle)
-{
-	struct device	*agpdev;
-
-	agpdev = DRM_AGP_FIND_DEVICE();
-	if (agpdev == NULL || handle == NULL)
-		return (0);
-
-	agp_free_memory(agpdev, handle);
-	return (1);
-}
-
-int
-drm_agp_bind_memory(void *handle, off_t start)
-{
-#ifndef DRM_NO_AGP
-	struct device	*agpdev;
-
-	agpdev = DRM_AGP_FIND_DEVICE();
-	if (agpdev == NULL || handle == NULL)
-		return (EINVAL);
-
-	return (agp_bind_memory(agpdev, handle, start * PAGE_SIZE));
-#else
-	return (0);
-#endif
-}
-
-int
-drm_agp_unbind_memory(void *handle)
-{
-#ifndef DRM_NO_AGP
-	struct device	*agpdev;
-
-	agpdev = DRM_AGP_FIND_DEVICE();
-	if (agpdev == NULL || handle == NULL)
-		return (EINVAL);
-
-	return (agp_unbind_memory(agpdev, handle));
-#else
-	return (0);
 #endif
 }

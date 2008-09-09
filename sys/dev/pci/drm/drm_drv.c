@@ -392,38 +392,25 @@ drm_lastclose(struct drm_device *dev)
 		dev->unique_len = 0;
 	}
 
-	drm_drawable_free_all(dev);
 	/* Clear pid list */
 	while ((pt = SPLAY_ROOT(&dev->magiclist)) != NULL) {
 		SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
 		drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
 	}
 
-				/* Clear AGP information */
-	if (dev->agp != NULL) {
-		struct drm_agp_mem *entry;
+	DRM_UNLOCK();
+	drm_agp_takedown(dev);
+	drm_drawable_free_all(dev);
+	drm_dma_takedown(dev);
+	DRM_LOCK();
 
-		/*
-		 * Remove AGP resources, but leave dev->agp intact until
-		 * we detach the device
-		 */
-		while ((entry = TAILQ_FIRST(&dev->agp->memory)) != NULL) {
-			if (entry->bound)
-				drm_agp_unbind_memory(entry->handle);
-			drm_agp_free_memory(entry->handle);
-			TAILQ_REMOVE(&dev->agp->memory, entry, link);
-			drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
-		}
-
-		if (dev->agp->acquired)
-			drm_agp_release(dev);
-
-		dev->agp->acquired = 0;
-		dev->agp->enabled  = 0;
-	}
 	if (dev->sg != NULL) {
-		drm_sg_cleanup(dev->sg);
+		drm_sg_mem_t *sg = dev->sg; 
 		dev->sg = NULL;
+
+		DRM_UNLOCK();
+		drm_sg_cleanup(sg);
+		DRM_LOCK();
 	}
 
 	for (map = TAILQ_FIRST(&dev->maplist); map != TAILQ_END(&dev->maplist);
@@ -433,7 +420,6 @@ drm_lastclose(struct drm_device *dev)
 			drm_rmmap(dev, map);
 	}
 
-	drm_dma_takedown(dev);
 	if (dev->lock.hw_lock != NULL) {
 		dev->lock.hw_lock = NULL; /* SHM removed */
 		dev->lock.file_priv = NULL;
