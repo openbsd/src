@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.1 2008/09/09 13:56:38 henning Exp $
+.\" $OpenBSD: pflow.4,v 1.2 2008/09/09 15:47:15 henning Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -45,7 +45,7 @@ The
 .Nm
 interface will attempt to export multiple pflow records in one
 UDP packet, but will not hold a record for longer than 30 seconds.
-The maximum number of flows is controlled by the
+The packet size and thus the maximum number of flows is controlled by the
 .Ar mtu
 parameter of ifconfig
 (see the
