@@ -1825,6 +1825,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/net/if_pflow.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_pppoe.ph

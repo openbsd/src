@@ -1069,6 +1069,7 @@
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
 ./usr/include/net/if_pflog.h
+./usr/include/net/if_pflow.h
 ./usr/include/net/if_pfsync.h
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppoe.h

@@ -1054,6 +1054,7 @@
 ./usr/share/man/cat4/ath.0
 ./usr/share/man/cat4/atu.0
 ./usr/share/man/cat4/atw.0
+./usr/share/man/cat4/auacer.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/auich.0
@@ -1467,6 +1468,7 @@
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
+./usr/share/man/cat4/pflow.0
 ./usr/share/man/cat4/pfsync.0
 ./usr/share/man/cat4/pgt.0
 ./usr/share/man/cat4/piixpm.0
