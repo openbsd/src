@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.21 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.22 2008/09/09 20:42:55 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -279,9 +279,7 @@ extern float ldexpf(float, int);
 extern float logf(float);
 extern float log10f(float);
 extern float log1pf(float);
-#if 0
 extern float log2f(float);
-#endif
 extern float logbf(float);
 extern float modff(float, float *);
 extern float scalbnf(float, int);
