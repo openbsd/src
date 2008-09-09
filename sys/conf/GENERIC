@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 2008/07/28 08:29:50 jmc Exp $
+#	$OpenBSD: GENERIC,v 1.142 2008/09/09 14:04:09 henning Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -70,6 +70,7 @@ scsibus*	at softraid?
 pseudo-device	pf		# packet filter
 pseudo-device	pflog		# pf log if
 pseudo-device	pfsync		# pf sync if
+pseudo-device	pflow		# pflow export if
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
