@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.81 2008/06/08 18:56:12 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.82 2008/09/10 09:10:55 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
  */
 
 #include "carp.h"
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +92,10 @@
 #if NCARP > 0
 #include <net/if_types.h>
 #include <netinet/ip_carp.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 /*
@@ -642,6 +647,10 @@ icmp_reflect(struct mbuf *m)
 		m_freem(m);	/* Bad return address */
 		goto done;	/* ip_output() will check for broadcast */
 	}
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
 	/*
