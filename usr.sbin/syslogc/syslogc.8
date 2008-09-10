@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogc.8,v 1.7 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: syslogc.8,v 1.8 2008/09/10 22:17:33 sobrado Exp $
 .\"
 .\" Copyright (c) 2004 Damien Miller
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2008 $
 .Dt SYSLOGC 8
 .Os
 .Sh NAME
@@ -21,11 +21,8 @@
 .Nd collect messages from syslog memory buffer
 .Sh SYNOPSIS
 .Nm syslogc
-.Op Fl Ccfoq
+.Op Fl Ccfo
 .Op Fl s Ar reporting_socket
-.Ar logname
-.Nm syslogc
-.Op Fl Cc
 .Ar logname
 .Nm syslogc
 .Fl q

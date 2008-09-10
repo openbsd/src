@@ -1,4 +1,4 @@
-.\"	$OpenBSD: savecore.8,v 1.16 2008/07/18 22:44:21 jmc Exp $
+.\"	$OpenBSD: savecore.8,v 1.17 2008/09/10 22:17:33 sobrado Exp $
 .\"	$NetBSD: savecore.8,v 1.11 1995/06/27 22:40:46 briggs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)savecore.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: July 18 2008 $
+.Dd $Mdocdate: September 10 2008 $
 .Dt SAVECORE 8
 .Os
 .Sh NAME
@@ -38,9 +38,7 @@
 .Nd "save a core dump of the operating system"
 .Sh SYNOPSIS
 .Nm savecore
-.Fl c
-.Nm savecore
-.Op Fl fvz
+.Op Fl cfvz
 .Op Fl N Ar system
 .Ar directory
 .Sh DESCRIPTION
