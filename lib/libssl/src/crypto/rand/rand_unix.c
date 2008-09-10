@@ -136,16 +136,10 @@
 #ifdef __OpenBSD__
 int RAND_poll(void)
 {
-	u_int32_t rnd = 0, i;
 	unsigned char buf[ENTROPY_NEEDED];
 
-	for (i = 0; i < sizeof(buf); i++) {
-		if (i % 4 == 0)
-			rnd = arc4random();
-		buf[i] = rnd;
-		rnd >>= 8;
-	}
-	RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
+	arc4random_buf(buf, sizeof(buf));
+	RAND_add(buf, sizeof(buf), sizeof(buf));
 	memset(buf, 0, sizeof(buf));
 
 	return 1;
