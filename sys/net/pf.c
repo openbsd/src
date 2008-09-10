@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.619 2008/09/09 13:56:39 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.620 2008/09/10 09:10:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5825,10 +5825,8 @@ done:
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
 
-#if 0
 	if (dir == PF_IN && s && s->key[PF_SK_STACK])
 		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
-#endif
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
@@ -6206,10 +6204,8 @@ done:
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, s ? s->tag : 0, r->rtableid);
 
-#if 0
 	if (dir == PF_IN && s && s->key[PF_SK_STACK])
 		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
-#endif
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
