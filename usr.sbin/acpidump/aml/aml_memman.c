@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_memman.c,v 1.2 2006/02/06 21:46:40 jmc Exp $	*/
+/*	$OpenBSD: aml_memman.c,v 1.3 2008/09/10 14:59:53 miod Exp $	*/
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_memman.c,v 1.2 2006/02/06 21:46:40 jmc Exp $
+ *	$Id: aml_memman.c,v 1.3 2008/09/10 14:59:53 miod Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_memman.c,v 1.2 2000/11/09 06:24:45 iwasaki Exp $
  */
 
@@ -408,7 +408,7 @@ memman_freeall(struct memman *memman)
 	}
 
 	LIST_FOREACH(info, &memman->flexmem_info_list, links) {
-		printf("memman_freeall: flex size (size = %d, addr = %p)\n",
+		printf("memman_freeall: flex size (size = %zu, addr = %p)\n",
 		    info->mem_size, info->addr);
 		memman_free_flexsize(memman, info->addr);
 	}
@@ -422,9 +422,9 @@ memman_statistics_fixedsize(struct memman *memman)
 	printf("    system malloc():	%d times\n", memman->salloc_called);
 	printf("    free():		%d times\n", memman->free_called);
 	printf("    system free():	%d times\n", memman->sfree_called);
-	printf("    required memory:	%d bytes\n", memman->required_mem);
-	printf("    allocated memory:	%d bytes\n", memman->allocated_mem);
-	printf("    reclaimed memory:	%d bytes\n", memman->reclaimed_mem);
+	printf("    required memory:	%zu bytes\n", memman->required_mem);
+	printf("    allocated memory:	%zu bytes\n", memman->allocated_mem);
+	printf("    reclaimed memory:	%zu bytes\n", memman->reclaimed_mem);
 }
 
 static void
@@ -437,13 +437,13 @@ memman_statistics_flexsize(struct memman *memman)
 	printf("    system malloc():	%d times\n", memman->flex_salloc_called);
 	printf("    free():		%d times\n", memman->flex_free_called);
 	printf("    system free():	%d times\n", memman->flex_sfree_called);
-	printf("    required memory:	%d bytes\n", memman->flex_required_mem);
-	printf("    allocated memory:	%d bytes\n", memman->flex_allocated_mem);
-	printf("    reclaimed memory:	%d bytes\n", memman->flex_reclaimed_mem);
-	printf("    peak memory usage:	%d bytes\n", memman->flex_peak_mem_usage);
-	printf("    min memory size:	%d bytes\n", memman->flex_mem_size_min);
-	printf("    max memory size:	%d bytes\n", memman->flex_mem_size_max);
-	printf("    avg memory size:	%d bytes\n",
+	printf("    required memory:	%zu bytes\n", memman->flex_required_mem);
+	printf("    allocated memory:	%zu bytes\n", memman->flex_allocated_mem);
+	printf("    reclaimed memory:	%zu bytes\n", memman->flex_reclaimed_mem);
+	printf("    peak memory usage:	%zu bytes\n", memman->flex_peak_mem_usage);
+	printf("    min memory size:	%zu bytes\n", memman->flex_mem_size_min);
+	printf("    max memory size:	%zu bytes\n", memman->flex_mem_size_max);
+	printf("    avg memory size:	%zu bytes\n",
 	    (memman->flex_alloc_called) ?
 	    memman->flex_allocated_mem / memman->flex_alloc_called : 0);
 

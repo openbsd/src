@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.4 2007/10/19 18:34:31 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.5 2008/09/10 14:59:51 miod Exp $	*/
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpidump.c,v 1.4 2007/10/19 18:34:31 deraadt Exp $
+ *	$Id: acpidump.c,v 1.5 2008/09/10 14:59:51 miod Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 
@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "acpidump.h"
@@ -42,7 +43,6 @@ asl_dump_from_file(char *file)
 {
 	u_int8_t	*dp;
 	u_int8_t	*end;
-	struct	ACPIsdt *dsdt;
 
 	acpi_load_dsdt(file, &dp, &end);
 	acpi_dump_dsdt(dp, end);
