@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcagpio.4,v 1.7 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: pcagpio.4,v 1.8 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,21 +14,23 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2008 $
 .Dt PCAGPIO 4
 .Os
 .Sh NAME
 .Nm pcagpio
-.Nd Philips PCA955[457] GPIO controller
+.Nd Philips PCA955[4567] GPIO controller
 .Sh SYNOPSIS
 .Cd "pcagpio* at iic?"
 .Cd "gpio* at pcagpio?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Philips PCA955[457] GPIO controller.
-The device has 8 pins which can be configured as either
-inputs or outputs, and accessed using
+driver provides support for the Philips PCA955[467] and PCA9555 GPIO
+controllers.
+The PCA955[467] devices have 8 pins and the PCA9555 device has 16 pins
+which can be configured as either inputs or outputs, and accessed
+using
 .Xr gpioctl 8 .
 .\" Both values are made available through the
 .\" .Xr sysctl 8

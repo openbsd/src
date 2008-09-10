@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.16 2007/10/26 15:00:49 martin Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.17 2008/09/10 16:13:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -26,21 +26,47 @@
 
 #include <dev/gpio/gpiovar.h>
 
-/* Philips 9554 registers */
+/* Philips 9554/6/7 registers */
 #define PCA9554_IN		0x00
 #define PCA9554_OUT		0x01
 #define PCA9554_POLARITY	0x02
 #define PCA9554_CONFIG		0x03
 
+/* Philips 9555 registers */
+#define PCA9555_IN0		0x00
+#define PCA9555_IN1		0x01
+#define PCA9555_OUT0		0x02
+#define PCA9555_OUT1		0x03
+#define PCA9555_POLARITY0	0x04
+#define PCA9555_POLARITY1	0x05
+#define PCA9555_CONFIG0		0x06
+#define PCA9555_CONFIG1		0x07
+
 /* Sensors */
-#define PCAGPIO_NPINS	8
+#define PCAGPIO_NPINS	16
+
+#define PCAGPIO_NPORTS	2
+#define PCAGPIO_PORT(_pin)	((_pin) > 7 ? 1 : 0)
+#define PCAGPIO_BIT(_pin)	(1 << ((_pin) % 8))
+
+/* Register mapping index */
+enum pcigpio_cmd {
+	PCAGPIO_IN		= 0,
+	PCAGPIO_OUT,
+	PCAGPIO_POLARITY,
+	PCAGPIO_CONFIG,
+	PCAGPIO_MAX
+};
 
 struct pcagpio_softc {
 	struct device	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
-	u_int8_t	sc_control;
-	u_int8_t	sc_polarity;
+
+	u_int8_t	sc_npins;
+	u_int8_t	sc_control[PCAGPIO_NPORTS];
+	u_int8_t	sc_polarity[PCAGPIO_NPORTS];
+	u_int8_t	sc_regs[PCAGPIO_NPORTS][PCAGPIO_MAX];
 
 	struct gpio_chipset_tag sc_gpio_gc;
         gpio_pin_t sc_gpio_pins[PCAGPIO_NPINS];
@@ -51,6 +77,7 @@ struct pcagpio_softc {
 
 int	pcagpio_match(struct device *, void *, void *);
 void	pcagpio_attach(struct device *, struct device *, void *);
+int	pcagpio_init(struct pcagpio_softc *, int, u_int8_t *);
 void	pcagpio_refresh(void *);
 
 int     pcagpio_gpio_pin_read(void *, int);
@@ -85,47 +112,51 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	struct pcagpio_softc *sc = (struct pcagpio_softc *)self;
 	struct i2c_attach_args *ia = aux;
 	struct gpiobus_attach_args gba;
-	u_int8_t cmd, data;
-	int outputs = 0, i;
+	int outputs = 0, i, port, bit;
+	u_int8_t data[PCAGPIO_NPORTS];
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	cmd = PCA9554_CONFIG;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		printf(": failed to initialize\n");
-		return;
+	if (strcmp(ia->ia_name, "pca9555") == 0) {
+		/* The pca9555 has two 8 bit ports */
+		sc->sc_regs[0][PCAGPIO_IN] = PCA9555_IN0;
+		sc->sc_regs[0][PCAGPIO_OUT] = PCA9555_OUT0;
+		sc->sc_regs[0][PCAGPIO_POLARITY] = PCA9555_POLARITY0;
+		sc->sc_regs[0][PCAGPIO_CONFIG] = PCA9555_CONFIG0;
+		sc->sc_regs[1][PCAGPIO_IN] = PCA9555_IN1;
+		sc->sc_regs[1][PCAGPIO_OUT] = PCA9555_OUT1;
+		sc->sc_regs[1][PCAGPIO_POLARITY] = PCA9555_POLARITY1;
+		sc->sc_regs[1][PCAGPIO_CONFIG] = PCA9555_CONFIG1;
+		sc->sc_npins = 16;
+	} else {
+		/* All other supported devices have one 8 bit port */
+		sc->sc_regs[0][PCAGPIO_IN] = PCA9554_IN;
+		sc->sc_regs[0][PCAGPIO_OUT] = PCA9554_OUT;
+		sc->sc_regs[0][PCAGPIO_POLARITY] = PCA9554_POLARITY;
+		sc->sc_regs[0][PCAGPIO_CONFIG] = PCA9554_CONFIG;
+		sc->sc_npins = 8;
 	}
-	sc->sc_control = data;
-	cmd = PCA9554_POLARITY;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		printf(": failed to initialize\n");
+	if (pcagpio_init(sc, 0, &data[0]) != 0)
 		return;
-	}
-	sc->sc_polarity = data;
-	cmd = PCA9554_OUT;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		printf(": failed to initialize\n");
+	if (sc->sc_npins > 8 && pcagpio_init(sc, 1, &data[1]) != 0)
 		return;
-	}
 
 	/* Initialize sensor data. */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	for (i = 0; i < PCAGPIO_NPINS; i++) {
+	for (i = 0; i < sc->sc_npins; i++) {
+		port = PCAGPIO_PORT(i);
+		bit = PCAGPIO_BIT(i);
 		sc->sc_sensor[i].type = SENSOR_INDICATOR;
-		if ((sc->sc_control & (1 << i)) == 0) {
+		if ((sc->sc_control[port] & bit) == 0) {
 			strlcpy(sc->sc_sensor[i].desc, "out",
 			    sizeof(sc->sc_sensor[i].desc));
 			outputs++;
 		} else
 			strlcpy(sc->sc_sensor[i].desc, "in",
 			    sizeof(sc->sc_sensor[i].desc));
-
 	}
 
 	if (sensor_task_register(sc, pcagpio_refresh, 5) == NULL) {
@@ -134,26 +165,29 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if 0
-	for (i = 0; i < PCAGPIO_NPINS; i++)
+	for (i = 0; i < sc->sc_npins; i++)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	sensordev_install(&sc->sc_sensordev);
 #endif
 
 	printf(":");
-	if (PCAGPIO_NPINS - outputs)
-		printf(" %d inputs", PCAGPIO_NPINS - outputs);
+	if (sc->sc_npins - outputs)
+		printf(" %d inputs", sc->sc_npins - outputs);
 	if (outputs)
 		printf(" %d outputs", outputs);
 	printf("\n");
 
-	for (i = 0; i < PCAGPIO_NPINS; i++) {
+	for (i = 0; i < sc->sc_npins; i++) {
+		port = PCAGPIO_PORT(i);
+		bit = PCAGPIO_BIT(i);
+
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 
-		if ((sc->sc_control & (1 << i)) == 0) {
+		if ((sc->sc_control[port] & bit) == 0) {
 			sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_OUTPUT;
-			sc->sc_gpio_pins[i].pin_state =
-			    data & (1 << i) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+			sc->sc_gpio_pins[i].pin_state = data[port] &
+			    bit ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 		}
 	}
 
@@ -166,37 +200,70 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
-	gba.gba_npins = PCAGPIO_NPINS;
+	gba.gba_npins = sc->sc_npins;
 
 	config_found(&sc->sc_dev, &gba, gpiobus_print);
 
+}
+
+int
+pcagpio_init(struct pcagpio_softc *sc, int port, u_int8_t *datap)
+{
+	u_int8_t cmd, data;
+
+	cmd = sc->sc_regs[port][PCAGPIO_CONFIG];
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		printf(": failed to initialize\n");
+		return (-1);
+	}
+	sc->sc_control[port] = data;
+	cmd = sc->sc_regs[port][PCAGPIO_POLARITY];
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		printf(": failed to initialize\n");
+		return (-1);
+	}
+	sc->sc_polarity[port] = data;
+	cmd = sc->sc_regs[port][PCAGPIO_OUT];
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		printf(": failed to initialize\n");
+		return (-1);
+	}
+
+	*datap = data;
+	return (0);
 }
 
 void
 pcagpio_refresh(void *arg)
 {
 	struct pcagpio_softc *sc = arg;
-	u_int8_t cmd, in, out, bit;
-	int i;
+	u_int8_t cmd, bit, in[PCAGPIO_NPORTS], out[PCAGPIO_NPORTS];
+	int i, port;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
-	cmd = PCA9554_IN;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &in, sizeof in, 0))
-		goto invalid;
+	for (i = 0; i < PCAGPIO_NPORTS; i++) {
+		cmd = sc->sc_regs[i][PCAGPIO_IN];
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &in[i], sizeof in[i], 0))
+			goto invalid;
 
-	cmd = PCA9554_OUT;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &out, sizeof out, 0))
-		goto invalid;
+		cmd = sc->sc_regs[i][PCAGPIO_OUT];
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &out[i], sizeof out[i], 0))
+			goto invalid;
+	}
 
-	for (i = 0; i < PCAGPIO_NPINS; i++) {
-		bit = 1 << i;
-		if ((sc->sc_control & bit))
-			sc->sc_sensor[i].value = (in & bit) ? 1 : 0;
+	for (i = 0; i < sc->sc_npins; i++) {
+		port = PCAGPIO_PORT(i);
+		bit = PCAGPIO_BIT(i);
+		if ((sc->sc_control[port] & bit))
+			sc->sc_sensor[i].value = (in[port] & bit) ? 1 : 0;
 		else
-			sc->sc_sensor[i].value = (out & bit) ? 1 : 0;
+			sc->sc_sensor[i].value = (out[port] & bit) ? 1 : 0;
 	}
 
 invalid:
@@ -209,12 +276,16 @@ pcagpio_gpio_pin_read(void *arg, int pin)
 {
 	struct pcagpio_softc *sc = arg;
 	u_int8_t cmd, in;
+	int port, bit;
 
-	cmd = PCA9554_IN;
+	port = PCAGPIO_PORT(pin);
+	bit = PCAGPIO_BIT(pin);
+
+	cmd = sc->sc_regs[port][PCAGPIO_IN];
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &in, sizeof in, 0))
 		return 0;
-	return ((in ^ sc->sc_polarity) & (1 << pin)) ? 1 : 0;
+	return ((in ^ sc->sc_polarity[port]) & bit) ? 1 : 0;
 }
 
 void
@@ -222,15 +293,19 @@ pcagpio_gpio_pin_write(void *arg, int pin, int value)
 {
 	struct pcagpio_softc *sc = arg;
 	u_int8_t cmd, out, mask;
+	int port, bit;
 
-	mask = 0xff ^ (1 << pin);
-	cmd = PCA9554_OUT;
+	port = PCAGPIO_PORT(pin);
+	bit = PCAGPIO_BIT(pin);
+
+	mask = 0xff ^ bit;
+	cmd = sc->sc_regs[port][PCAGPIO_OUT];
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &out, sizeof out, 0))
 		return;
-	out = (out & mask) | (value << pin);
+	out = (out & mask) | (value ? bit : 0);
 
-	cmd = PCA9554_OUT;
+	cmd = sc->sc_regs[port][PCAGPIO_OUT];
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &out, sizeof out, 0))
 		return;
