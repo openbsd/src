@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.169 2008/09/09 14:00:51 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.170 2008/09/10 14:54:47 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 9 2008 $
+.Dd $Mdocdate: September 10 2008 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -897,24 +897,31 @@ packets entering the MPLS domain.
 .Sh PFLOW
 .Nm ifconfig
 .Ar pflow-interface
-.Op Oo Fl Oc Cm flowdst Ar addr:port
+.Oo Oo Fl Oc Cm flowdst Ar addr :
+.Ar port Oc
 .Op Oo Fl Oc Cm flowsrc Ar addr
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Cm flowdst Ar addr:port
-set the receiver address and the port for the pflow packets.
+.It Cm flowdst Ar addr : Ns Ar port
+Set the receiver address and the port for
+.Xr pflow 4
+packets.
 Both must be defined to export pflow data.
-addr is the IP address and port is the port number of the flow collector.
+.Ar addr
+is the IP address and
+.Ar port
+is the port number of the flow collector.
 Pflow data will be sent to this address/port.
 .It Fl flowdst
-unset the receiver address and stop sending pflow data.
+Unset the receiver address and stop sending pflow data.
 .It Cm flowsrc Ar addr
-set the source IP adress for the pflow packets.
-addr is the IP address used as sender of the UDP packets and may be used to
-identify the source on the pflow collector.
+Set the source IP address for pflow packets.
+.Ar addr
+is the IP address used as sender of the UDP packets and may be used to
+identify the source of the data on the pflow collector.
 .It Fl flowsrc
-unset the source address.
+Unset the source address.
 .El
 .\" PFSYNC
 .Sh PFSYNC
