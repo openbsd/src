@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.21 2008/04/16 00:36:48 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.22 2008/09/10 00:22:49 reyk Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -207,11 +207,11 @@ void
 create_priority_list(unsigned char *priority_list, unsigned char *prl,
     int prl_len)
 {
-	int stored_list[256];
+	unsigned char stored_list[256];
 	int i, priority_len = 0;
 
-	bzero(stored_list, 256);
-	bzero(priority_list, 256);
+	/* clear stored_list, priority_list should be cleared before */
+	bzero(&stored_list, sizeof(stored_list));
 
 	/* Some options we don't want on the priority list. */
 	stored_list[DHO_PAD] = 1;
@@ -304,6 +304,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	 * list provided in the options. Lacking that use the list provided by
 	 * prl. If that is not available just use the default list.
 	 */
+	bzero(&priority_list, sizeof(priority_list));
 	if (inpacket && inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data)
 		create_priority_list(priority_list,
 		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data,
