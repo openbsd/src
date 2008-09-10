@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.5 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.6 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -906,7 +906,7 @@ sf_tick(void *arg)
 	sf_stats_update(sc);
 	splx(s);
 
-	timeout_add(&sc->sc_mii_timeout, hz);
+	timeout_add_sec(&sc->sc_mii_timeout, 1);
 }
 
 /*
@@ -1165,7 +1165,7 @@ sf_init(struct ifnet *ifp)
 	    GEC_TxDmaEn|GEC_RxDmaEn|GEC_TransmitEn|GEC_ReceiveEn);
 
 	/* Start the on second clock. */
-	timeout_add(&sc->sc_mii_timeout, hz);
+	timeout_add_sec(&sc->sc_mii_timeout, 1);
 
 	/*
 	 * Note that the interface is now running.

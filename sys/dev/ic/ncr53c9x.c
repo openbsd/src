@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.38 2008/08/31 17:21:57 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.39 2008/09/10 14:01:22 blambert Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2846,5 +2846,5 @@ ncr53c9x_watch(arg)
 		}
 	}
 	splx(s);
-	timeout_add(&sc->sc_watchdog, 60*hz);
+	timeout_add_sec(&sc->sc_watchdog, 60);
 }

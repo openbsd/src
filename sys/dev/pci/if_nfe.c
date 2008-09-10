@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.80 2008/08/09 21:00:52 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.81 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1183,7 +1183,7 @@ nfe_init(struct ifnet *ifp)
 	/* enable interrupts */
 	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1810,5 +1810,5 @@ nfe_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 }

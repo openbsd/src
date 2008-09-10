@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.171 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.172 2008/09/10 14:01:23 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -262,8 +262,8 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		if (ipsec_keep_invalid > 0) {
 			tdbp->tdb_flags |= TDBF_TIMER;
 			tdbp->tdb_exp_timeout = ipsec_keep_invalid;
-			timeout_add(&tdbp->tdb_timer_tmo,
-			    hz * ipsec_keep_invalid);
+			timeout_add_sec(&tdbp->tdb_timer_tmo,
+			    ipsec_keep_invalid);
 		}
 
 		return spi;

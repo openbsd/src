@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.13 2008/09/10 14:01:22 blambert Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1013,7 +1013,7 @@ et_init(struct ifnet *ifp)
 
 	et_enable_intrs(sc, ET_INTRS);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	CSR_WRITE_4(sc, ET_TIMER, sc->sc_timer);
 
@@ -1142,7 +1142,7 @@ et_start(struct ifnet *ifp)
 	}
 
 	if (trans) {
-		timeout_add(&sc->sc_txtick, hz);
+		timeout_add_sec(&sc->sc_txtick, 1);
 		ifp->if_timer = 5;
 	}
 }
@@ -2035,7 +2035,7 @@ et_tick(void *xsc)
 
 	s = splnet();
 	mii_tick(&sc->sc_miibus);
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 	splx(s);
 }
 

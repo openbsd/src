@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.30 2008/04/24 09:04:14 jakob Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.31 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -339,7 +339,7 @@ ciss_attach(struct ciss_softc *sc)
 	CISS_UNLOCK_SCRATCH(sc, lock);
 
 	timeout_set(&sc->sc_hb, ciss_heartbeat, sc);
-	timeout_add(&sc->sc_hb, hz * 3);
+	timeout_add_sec(&sc->sc_hb, 3);
 
 	/* map LDs */
 	if (ciss_ldmap(sc)) {
@@ -985,7 +985,7 @@ ciss_heartbeat(void *v)
 	else
 		sc->heartbeat = hb;
 
-	timeout_add(&sc->sc_hb, hz * 3);
+	timeout_add_sec(&sc->sc_hb, 3);
 }
 
 void

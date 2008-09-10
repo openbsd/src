@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.21 2007/10/08 04:15:15 krw Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.22 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -3534,7 +3534,7 @@ aft_led_timer(void *data)
 		}
 
 		splx(s);
-		timeout_add(&card->u.xilinx.led_timer, hz);
+		timeout_add_sec(&card->u.xilinx.led_timer, 1);
 	}
 }
 

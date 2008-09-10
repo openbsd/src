@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.85 2008/05/14 01:41:10 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.86 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1126,7 +1126,7 @@ axe_tick_task(void *xsc)
 			   axe_start(ifp);
 	}
 
-	timeout_add(&sc->axe_stat_ch, hz);
+	timeout_add_sec(&sc->axe_stat_ch, 1);
 
 	splx(s);
 }
@@ -1325,7 +1325,7 @@ axe_init(void *xsc)
 
 	splx(s);
 
-	timeout_add(&sc->axe_stat_ch, hz);
+	timeout_add_sec(&sc->axe_stat_ch, 1);
 	return;
 }
 

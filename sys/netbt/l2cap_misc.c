@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.4 2008/06/08 21:10:28 claudio Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.5 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ l2cap_request_alloc(struct l2cap_channel *chan, uint8_t code)
 	req->lr_link = link;
 
 	timeout_set(&req->lr_rtx, l2cap_rtx, req);
-	timeout_add(&req->lr_rtx, l2cap_response_timeout*hz);
+	timeout_add_sec(&req->lr_rtx, l2cap_response_timeout);
 
 	TAILQ_INSERT_TAIL(&link->hl_reqs, req, lr_next);
 

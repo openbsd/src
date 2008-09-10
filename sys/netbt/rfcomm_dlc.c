@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_dlc.c,v 1.2 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_dlc.c,v 1.3 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: rfcomm_dlc.c,v 1.4 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
@@ -176,8 +176,7 @@ rfcomm_dlc_close(struct rfcomm_dlc *dlc, int err)
 		if (rs->rs_state == RFCOMM_SESSION_LISTEN)
 			rfcomm_session_free(rs);
 		else
-			timeout_add(&rs->rs_timeout,
-			    rfcomm_ack_timeout * hz);
+			timeout_add_sec(&rs->rs_timeout, rfcomm_ack_timeout);
 	}
 }
 
@@ -274,7 +273,7 @@ rfcomm_dlc_connect(struct rfcomm_dlc *dlc)
 		return err;
 
 	dlc->rd_state = RFCOMM_DLC_WAIT_CONNECT;
-	timeout_add(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
+	timeout_add_sec(&dlc->rd_timeout, rfcomm_mcc_timeout);
 
 	return 0;
 }
@@ -303,7 +302,7 @@ rfcomm_dlc_open(struct rfcomm_dlc *dlc)
 	if (err)
 		return err;
 
-	timeout_add(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
+	timeout_add_sec(&dlc->rd_timeout, rfcomm_mcc_timeout);
 
 	dlc->rd_state = RFCOMM_DLC_OPEN;
 	(*dlc->rd_proto->connected)(dlc->rd_upper);

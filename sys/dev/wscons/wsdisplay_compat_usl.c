@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.19 2007/02/14 01:12:16 jsg Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.20 2008/09/10 14:01:23 blambert Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -188,7 +188,7 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
 	psignal(sd->s_proc, sd->s_relsig);
-	timeout_add(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
+	timeout_add_sec(&sd->s_detach_ch, wscompat_usl_synctimeout);
 
 	return (EAGAIN);
 }
@@ -253,7 +253,7 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
 	psignal(sd->s_proc, sd->s_acqsig);
-	timeout_add(&sd->s_attach_ch, wscompat_usl_synctimeout * hz);
+	timeout_add_sec(&sd->s_attach_ch, wscompat_usl_synctimeout);
 
 	return (EAGAIN);
 }

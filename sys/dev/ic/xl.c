@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.79 2008/05/11 03:01:29 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.80 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1597,7 +1597,7 @@ xl_stats_update(void *xsc)
 	XL_SEL_WIN(7);
 
 	if (!sc->xl_stats_no_timeout)
-		timeout_add(&sc->xl_stsup_tmo, hz);
+		timeout_add_sec(&sc->xl_stsup_tmo, 1);
 }
 
 /*
@@ -2143,7 +2143,7 @@ xl_init(void *xsc)
 
 	splx(s);
 
-	timeout_add(&sc->xl_stsup_tmo, hz);
+	timeout_add_sec(&sc->xl_stsup_tmo, 1);
 }
 
 /*

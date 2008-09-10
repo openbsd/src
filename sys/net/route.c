@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.96 2008/08/07 21:32:08 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.97 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1110,7 +1110,7 @@ rt_timer_init()
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
-	timeout_add(&rt_timer_timeout, hz);	/* every second */
+	timeout_add_sec(&rt_timer_timeout, 1);
 	rt_init_done = 1;
 }
 
@@ -1277,7 +1277,7 @@ rt_timer_timer(void *arg)
 	}
 	splx(s);
 
-	timeout_add(to, hz);		/* every second */
+	timeout_add_sec(to, 1);
 }
 
 u_int16_t

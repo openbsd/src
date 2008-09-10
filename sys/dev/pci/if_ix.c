@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.7 2008/06/19 08:43:55 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.8 2008/09/10 14:01:22 blambert Exp $	*/
 
 /******************************************************************************
 
@@ -685,7 +685,7 @@ ixgbe_init(void *arg)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_RXDCTL(i), rxdctl);
 	}
 
-	timeout_add(&sc->timer, hz);
+	timeout_add_sec(&sc->timer, 1);
 
 	/* Set up MSI/X routing */
 	ixgbe_configure_ivars(sc);
@@ -741,7 +741,7 @@ ixgbe_legacy_irq(void *arg)
 		if (reg_eicr & IXGBE_EICR_LSC) {
 			timeout_del(&sc->timer);
 		        ixgbe_update_link_status(sc);
-			timeout_add(&sc->timer, hz);
+			timeout_add_sec(&sc->timer, 1);
 		}
 	}
 
@@ -1100,7 +1100,7 @@ ixgbe_local_timer(void *arg)
 		ixgbe_print_hw_stats(sc);
 #endif
 
-	timeout_add(&sc->timer, hz);
+	timeout_add_sec(&sc->timer, 1);
 
 	splx(s);
 }

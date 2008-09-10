@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.17 2008/07/18 23:43:31 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.18 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -269,7 +269,7 @@ schedcpu(void *arg)
 	}
 	uvm_meter();
 	wakeup(&lbolt);
-	timeout_add(to, hz);
+	timeout_add_sec(to, 1);
 }
 
 /*

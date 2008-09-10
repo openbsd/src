@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.39 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.40 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1084,7 +1084,7 @@ stge_tick(void *arg)
 	stge_stats_update(sc);
 	splx(s);
 
-	timeout_add(&sc->sc_timeout, hz);
+	timeout_add_sec(&sc->sc_timeout, 1);
 }
 
 /*
@@ -1345,7 +1345,7 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Start the one second MII clock.
 	 */
-	timeout_add(&sc->sc_timeout, hz);
+	timeout_add_sec(&sc->sc_timeout, 1);
 
 	/*
 	 * ...all done!

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.64 2008/06/24 23:02:42 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.65 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4327,7 +4327,7 @@ bnx_init(void *xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout_add(&sc->bnx_timeout, hz);
+	timeout_add_sec(&sc->bnx_timeout, 1);
 
 bnx_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
@@ -5140,7 +5140,7 @@ bnx_tick(void *xsc)
 	bnx_stats_update(sc);
 
 	/* Schedule the next tick. */
-	timeout_add(&sc->bnx_timeout, hz);
+	timeout_add_sec(&sc->bnx_timeout, 1);
 
 	/* If link is up already up then we're done. */
 	if (sc->bnx_link)

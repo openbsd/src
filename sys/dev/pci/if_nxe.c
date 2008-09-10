@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.54 2008/05/05 23:56:21 claudio Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.55 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1853,7 +1853,7 @@ nxe_tick(void *xsc)
 		break;
 	}
 
-	timeout_add(&sc->sc_tick, hz * 5);
+	timeout_add_sec(&sc->sc_tick, 5);
 }
 
 

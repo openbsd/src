@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.10 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.11 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -900,7 +900,7 @@ epic_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_mii_timeout, hz);
+	timeout_add_sec(&sc->sc_mii_timeout, 1);
 }
 
 /*
@@ -1088,7 +1088,7 @@ epic_init(struct ifnet *ifp)
 	/*
 	 * Start the one second clock.
 	 */
-	timeout_add(&sc->sc_mii_timeout, hz);
+	timeout_add_sec(&sc->sc_mii_timeout, 1);
 
 	/*
 	 * Attempt to start output on the interface.

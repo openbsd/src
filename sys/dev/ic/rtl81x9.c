@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.58 2008/04/20 00:23:28 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.59 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1052,7 +1052,7 @@ void rl_init(xsc)
 	splx(s);
 
 	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
-	timeout_add(&sc->sc_tick_tmo, hz);
+	timeout_add_sec(&sc->sc_tick_tmo, 1);
 }
 
 /*
@@ -1473,7 +1473,7 @@ rl_tick(v)
 	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
-	timeout_add(&sc->sc_tick_tmo, hz);
+	timeout_add_sec(&sc->sc_tick_tmo, 1);
 }
 
 struct cfdriver rl_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.37 2008/05/22 19:23:04 mk Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.38 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1200,7 +1200,7 @@ vge_tick(void *xsc)
 				vge_start(ifp);
 		}
 	}
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 	splx(s);
 }
 
@@ -1622,7 +1622,7 @@ vge_init(struct ifnet *ifp)
 	sc->vge_link = 0;
 
 	if (!timeout_pending(&sc->timer_handle))
-		timeout_add(&sc->timer_handle, hz);
+		timeout_add_sec(&sc->timer_handle, 1);
 
 	return (0);
 }

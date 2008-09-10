@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.77 2008/08/30 07:39:12 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.78 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -417,7 +417,7 @@ gem_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 }
 
 int
@@ -815,7 +815,7 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_RX_KICK, GEM_NRXDESC-4);
 
 	/* Start the one second timer. */
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

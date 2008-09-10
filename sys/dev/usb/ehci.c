@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.89 2008/09/08 07:08:27 brad Exp $ */
+/*	$OpenBSD: ehci.c,v 1.90 2008/09/10 14:01:23 blambert Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -671,7 +671,7 @@ ehci_softintr(void *v)
 	/* Schedule a callout to catch any dropped transactions. */
 	if ((sc->sc_flags & EHCIF_DROPPED_INTR_WORKAROUND) &&
 	    !LIST_EMPTY(&sc->sc_intrhead)) {
-		timeout_add(&sc->sc_tmo_intrlist, hz);
+		timeout_add_sec(&sc->sc_tmo_intrlist, 1);
 	}
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS

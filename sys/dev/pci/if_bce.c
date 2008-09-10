@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.24 2008/05/23 08:49:27 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.25 2008/09/10 14:01:22 blambert Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -1009,7 +1009,7 @@ bce_init(struct ifnet *ifp)
 	    BCE_ENET_CTL) | EC_EE);
 
 	/* start timer */
-	timeout_add(&sc->bce_timeout, hz);
+	timeout_add_sec(&sc->bce_timeout, 1);
 
 	/* mark as running, and no outputs active */
 	ifp->if_flags |= IFF_RUNNING;
@@ -1495,5 +1495,5 @@ bce_tick(void *v)
 	mii_tick(&sc->bce_mii);
 	splx(s);
 
-	timeout_add(&sc->bce_timeout, hz);
+	timeout_add_sec(&sc->bce_timeout, 1);
 }

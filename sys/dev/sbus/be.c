@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.20 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: be.c,v 1.21 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -1105,7 +1105,7 @@ beinit(struct be_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	be_ifmedia_upd(ifp);
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 	splx(s);
 }
 
@@ -1369,7 +1369,7 @@ be_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	(void)be_intphy_service(sc, &sc->sc_mii, MII_TICK);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 	splx(s);
 }
 

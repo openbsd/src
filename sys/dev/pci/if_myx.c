@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.7 2008/05/23 08:49:27 brad Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.8 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -290,7 +290,7 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->sc_tick, myx_tick, sc);
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	mountroothook_establish(myx_attachhook, sc);
 
@@ -810,7 +810,7 @@ myx_tick(void *arg)
 		return;
 
 	myx_link_state(sc);
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int

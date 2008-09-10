@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.87 2008/06/29 10:04:15 yuo Exp $ */
+/*	$OpenBSD: ohci.c,v 1.88 2008/09/10 14:01:23 blambert Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1181,7 +1181,7 @@ ohci_intr1(ohci_softc_t *sc)
 			     sc->sc_bus.bdev.dv_xname));
 
 		/* Do not allow RHSC interrupts > 1 per second */
-                timeout_add(&sc->sc_tmo_rhsc, hz);
+                timeout_add_sec(&sc->sc_tmo_rhsc, 1);
 		eintrs &= ~OHCI_RHSC;
 	}
 

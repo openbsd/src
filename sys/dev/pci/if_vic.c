@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.53 2008/07/07 00:42:34 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.54 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1286,7 +1286,7 @@ vic_init(struct ifnet *ifp)
 
 	splx(s);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 void
@@ -1356,7 +1356,7 @@ vic_tick(void *arg)
 
 	vic_link_state(sc);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 u_int32_t

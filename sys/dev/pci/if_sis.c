@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.80 2008/07/15 12:10:48 thib Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.81 2008/09/10 14:01:22 blambert Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1463,7 +1463,7 @@ sis_tick(void *xsc)
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
 			sis_start(ifp);
 	}
-	timeout_add(&sc->sis_timeout, hz);
+	timeout_add_sec(&sc->sis_timeout, 1);
 
 	splx(s);
 }
@@ -1841,7 +1841,7 @@ sis_init(void *xsc)
 
 	splx(s);
 
-	timeout_add(&sc->sis_timeout, hz);
+	timeout_add_sec(&sc->sis_timeout, 1);
 }
 
 /*

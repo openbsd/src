@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.89 2008/08/29 22:59:56 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.90 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1524,7 +1524,7 @@ re_tick(void *xsc)
 	}
 	splx(s);
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 }
 
 int
@@ -2007,7 +2007,7 @@ re_init(struct ifnet *ifp)
 
 	sc->rl_flags &= ~RL_FLAG_LINK;
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 
 	return (0);
 }

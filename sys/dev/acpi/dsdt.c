@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.131 2008/08/14 17:41:20 jsing Exp $ */
+/* $OpenBSD: dsdt.c,v 1.132 2008/09/10 14:01:22 blambert Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -500,7 +500,7 @@ acpi_poll(void *arg)
 	dsdt_softc->sc_wakeup = 0;
 	wakeup(dsdt_softc);
 
-	timeout_add(&dsdt_softc->sc_dev_timeout, 10 * hz);
+	timeout_add_sec(&dsdt_softc->sc_dev_timeout, 10);
 }
 
 void
@@ -525,7 +525,7 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 	SLIST_INSERT_HEAD(&aml_notify_list, pdata, link);
 
 	if (poll && !acpi_poll_enabled)
-		timeout_add(&dsdt_softc->sc_dev_timeout, 10 * hz);
+		timeout_add_sec(&dsdt_softc->sc_dev_timeout, 10);
 }
 
 void

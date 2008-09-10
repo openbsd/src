@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.4 2008/06/11 17:11:36 mbalmer Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.5 2008/09/10 14:01:23 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -53,7 +53,6 @@ void	mstsattach(int);
 #endif
 
 int msts_count, msts_nxid;
-static int t_trust;
 
 struct msts {
 	char			cbuf[MSTSMAX];	/* receive buffer */
@@ -92,7 +91,6 @@ mstsopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;
 	struct msts *np;
-	struct timeval t;
 	int error;
 
 	DPRINTF(("mstsopen\n"));
@@ -128,11 +126,6 @@ mstsopen(dev_t dev, struct tty *tp)
 	} else {
 		sensordev_install(&np->timedev);
 		timeout_set(&np->msts_tout, msts_timeout, np);
-
-		/* convert timevals to hz */
-		t.tv_sec = TRUSTTIME;
-		t.tv_usec = 0;
-		t_trust = tvtohz(&t);
 	}
 
 	return error;
@@ -280,7 +273,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 #ifdef MSTS_DEBUG
 	if (np->time.status == SENSOR_S_UNKNOWN) {
 		np->time.status = SENSOR_S_OK;
-		timeout_add(&np->msts_tout, t_trust);
+		timeout_add_sec(&np->msts_tout, TRUSTTIME);
 	}
 	np->gapno = 0;
 #endif
@@ -305,7 +298,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 	if (fld[3][0] == ' ' && fld[3][1] == ' ') {
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
-		timeout_add(&np->msts_tout, t_trust);
+		timeout_add_sec(&np->msts_tout, TRUSTTIME);
 	} else
 		np->signal.status = SENSOR_S_WARN;
 
@@ -428,7 +421,7 @@ msts_timeout(void *xnp)
 		 * further degrade in TRUSTTIME seconds if no new valid MSTS
 		 * strings are received.
 		 */
-		timeout_add(&np->msts_tout, t_trust);
+		timeout_add_sec(&np->msts_tout, TRUSTTIME);
 	} else
 		np->time.status = SENSOR_S_CRIT;
 }

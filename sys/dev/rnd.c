@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.92 2008/06/11 19:38:00 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.93 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -819,7 +819,6 @@ arc4_reinit(void *v)
 static void
 arc4maybeinit(void)
 {
-	extern int hz;
 
 	if (!arc4random_initialized) {
 #ifdef DIAGNOSTIC
@@ -829,7 +828,7 @@ arc4maybeinit(void)
 		arc4random_initialized++;
 		arc4_stir();
 		/* 10 minutes, per dm@'s suggestion */
-		timeout_add(&arc4_timeout, 10 * 60 * hz);
+		timeout_add_sec(&arc4_timeout, 10 * 60);
 	}
 }
 

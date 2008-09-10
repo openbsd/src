@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.33 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.34 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -1028,7 +1028,7 @@ stripstart(tp)
 #if 0
 	/* schedule timeout to start output */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout_add(&sc->sc_timo, hz);
+		timeout_add_sec(&sc->sc_timo, 1);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif
@@ -1040,7 +1040,7 @@ stripstart(tp)
 	 * after it has drained the t_outq.
 	 */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout_add(&sc->sc_timo, hz);
+		timeout_add_sec(&sc->sc_timo, 1);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif

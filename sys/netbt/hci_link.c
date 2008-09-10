@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.7 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.8 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.16 2007/11/10 23:12:22 plunky Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ hci_acl_close(struct hci_link *link, int err)
 		if (link->hl_state == HCI_LINK_CLOSED)
 			hci_link_free(link, err);
 		else if (hci_acl_expiry > 0)
-			timeout_add(&link->hl_expire, hci_acl_expiry * hz);
+			timeout_add_sec(&link->hl_expire, hci_acl_expiry);
 	}
 }
 
@@ -185,7 +185,7 @@ hci_acl_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 		bdaddr_copy(&link->hl_bdaddr, bdaddr);
 
 		if (hci_acl_expiry > 0)
-			timeout_add(&link->hl_expire, hci_acl_expiry * hz);
+			timeout_add_sec(&link->hl_expire, hci_acl_expiry);
 	}
 
 	return link;

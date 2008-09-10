@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.30 2008/07/22 06:06:47 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.31 2008/09/10 14:01:23 blambert Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -50,7 +50,6 @@ void	nmeaattach(int);
 #endif
 
 int nmea_count, nmea_nxid;
-static int t_trust;
 
 struct nmea {
 	char			cbuf[NMEAMAX];	/* receive buffer */
@@ -97,7 +96,6 @@ nmeaopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;
 	struct nmea *np;
-	struct timeval t;
 	int error;
 
 	if (tp->t_line == NMEADISC)
@@ -130,11 +128,6 @@ nmeaopen(dev_t dev, struct tty *tp)
 	} else {
 		sensordev_install(&np->timedev);
 		timeout_set(&np->nmea_tout, nmea_timeout, np);
-
-		/* convert timevals to hz */
-		t.tv_sec = TRUSTTIME;
-		t.tv_usec = 0;
-		t_trust = tvtohz(&t);
 	}
 	return error;
 }
@@ -317,7 +310,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 #ifdef NMEA_DEBUG
 	if (np->time.status == SENSOR_S_UNKNOWN) {
 		np->time.status = SENSOR_S_OK;
-		timeout_add(&np->nmea_tout, t_trust);
+		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 	}
 	np->gapno = 0;
 	if (nmeadebug > 0) {
@@ -373,7 +366,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
-		timeout_add(&np->nmea_tout, t_trust);
+		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 		break;
 	case 'V':	/*
 			 * The GPS indicates a warning status, do not add to
@@ -547,7 +540,7 @@ nmea_timeout(void *xnp)
 		 * further degrade in TRUSTTIME seconds if no new valid NMEA
 		 * sentences are received.
 		 */
-		timeout_add(&np->nmea_tout, t_trust);
+		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 	} else
 		np->time.status = SENSOR_S_CRIT;
 }

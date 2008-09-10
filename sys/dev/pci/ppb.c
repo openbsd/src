@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.26 2007/12/31 19:13:36 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.27 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ ppb_hotplug_insert(void *arg1, void *arg2)
 	/* XXX Turn on LEDs. */
 
 	/* Wait a second for things to settle. */
-	timeout_add(&sc->sc_to, 1 * hz);
+	timeout_add_sec(&sc->sc_to, 1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.64 2008/04/12 10:47:22 kettenis Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.65 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -704,7 +704,7 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-		timeout_add(&sc->sc_dtr_tmo, hz * 2);
+		timeout_add_sec(&sc->sc_dtr_tmo, 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		compwroff(sc);
@@ -1268,7 +1268,8 @@ comsoft(void)
 				if (ISSET(lsr, LSR_OE)) {
 					sc->sc_overflows++;
 					if (sc->sc_errors++ == 0)
-						timeout_add(&sc->sc_diag_tmo, 60 * hz);
+						timeout_add_sec(
+						    &sc->sc_diag_tmo, 60);
 				}
 				rxget = (rxget + 1) & RBUFMASK;
 				c |= lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];

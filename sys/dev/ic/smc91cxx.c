@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.27 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.28 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -518,7 +518,7 @@ smc91cxx_init(sc)
 	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
 		/* Start the one second clock. */
 		timeout_set(&sc->sc_mii_timeout, smc91cxx_tick, sc);
-		timeout_add(&sc->sc_mii_timeout, hz);
+		timeout_add_sec(&sc->sc_mii_timeout, 1);
 	}
 
 	/*
@@ -1362,5 +1362,5 @@ smc91cxx_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_mii_timeout, hz);
+	timeout_add_sec(&sc->sc_mii_timeout, 1);
 }

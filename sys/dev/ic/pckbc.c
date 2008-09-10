@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.17 2008/07/29 04:20:37 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.18 2008/09/10 14:01:22 blambert Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -532,7 +532,7 @@ pckbc_slot_enable(self, slot, on)
 
 	if (slot == PCKBC_KBD_SLOT) {
 		if (on)
-			timeout_add(&t->t_poll, hz);
+			timeout_add_sec(&t->t_poll, 1);
 		else
 			timeout_del(&t->t_poll);
 	}
@@ -885,7 +885,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 		} else
 			res = nc->status;
 	} else
-		timeout_add(&t->t_cleanup, hz);
+		timeout_add_sec(&t->t_cleanup, 1);
 
 	if (sync) {
 		if (respbuf)
@@ -919,7 +919,7 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 	sc->subname[slot] = name;
 
 	if (pckbc_console && slot == PCKBC_KBD_SLOT)
-		timeout_add(&t->t_poll, hz);
+		timeout_add_sec(&t->t_poll, 1);
 }
 
 void
@@ -931,7 +931,7 @@ pckbc_poll(v)
 
 	s = spltty();
 	(void)pckbcintr_internal(t, t->t_sc);
-	timeout_add(&t->t_poll, hz);
+	timeout_add_sec(&t->t_poll, 1);
 	splx(s);
 }
 
@@ -956,7 +956,7 @@ pckbcintr_internal(t, sc)
 
 	/* reschedule timeout further into the idle times */
 	if (timeout_pending(&t->t_poll))
-		timeout_add(&t->t_poll, hz);
+		timeout_add_sec(&t->t_poll, 1);
 
 	for(;;) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);

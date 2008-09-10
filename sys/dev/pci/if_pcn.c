@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.18 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.19 2008/09/10 14:01:22 blambert Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1520,7 +1520,7 @@ pcn_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick_timeout, hz);
+	timeout_add_sec(&sc->sc_tick_timeout, 1);
 }
 
 /*
@@ -1762,7 +1762,7 @@ pcn_init(struct ifnet *ifp)
 
 	if (sc->sc_flags & PCN_F_HAS_MII) {
 		/* Start the one second MII clock. */
-		timeout_add(&sc->sc_tick_timeout, hz);
+		timeout_add_sec(&sc->sc_tick_timeout, 1);
 	}
 
 	/* ...all done! */

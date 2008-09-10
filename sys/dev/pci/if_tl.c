@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.43 2007/05/08 21:19:13 deraadt Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.44 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1447,7 +1447,7 @@ void tl_stats_update(xsc)
 		}
 	}
 
-	timeout_add(&sc->tl_stats_tmo, hz);
+	timeout_add_sec(&sc->tl_stats_tmo, 1);
 
 	if (!sc->tl_bitrate)
 		mii_tick(&sc->sc_mii);
@@ -1719,9 +1719,9 @@ void tl_init(xsc)
 
 	/* Start the stats update counter */
 	timeout_set(&sc->tl_stats_tmo, tl_stats_update, sc);
-	timeout_add(&sc->tl_stats_tmo, hz);
+	timeout_add_sec(&sc->tl_stats_tmo, 1);
 	timeout_set(&sc->tl_wait_tmo, tl_wait_up, sc);
-	timeout_add(&sc->tl_wait_tmo, 2 * hz);
+	timeout_add_sec(&sc->tl_wait_tmo, 2);
 
 	return;
 }

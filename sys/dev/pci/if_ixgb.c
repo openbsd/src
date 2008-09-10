@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.44 2008/06/08 16:54:34 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.45 2008/09/10 14:01:22 blambert Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -546,7 +546,7 @@ ixgb_init(void *arg)
 	temp_reg |= IXGB_CTRL0_JFE;
 	IXGB_WRITE_REG(&sc->hw, CTRL0, temp_reg);
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 	ixgb_clear_hw_cntrs(&sc->hw);
 	ixgb_enable_intr(sc);
 
@@ -590,7 +590,7 @@ ixgb_intr(void *arg)
 			timeout_del(&sc->timer_handle);
 			ixgb_check_for_link(&sc->hw);
 			ixgb_update_link_status(sc);
-			timeout_add(&sc->timer_handle, hz);
+			timeout_add_sec(&sc->timer_handle, 1);
 		}
 
 		if (rxdmt0 && sc->raidc) {
@@ -840,7 +840,7 @@ ixgb_local_timer(void *arg)
 		ixgb_print_hw_stats(sc);
 #endif
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 
 	splx(s);
 }

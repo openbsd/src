@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.40 2007/07/17 23:25:15 krw Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.41 2008/09/10 14:01:22 blambert Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -815,7 +815,7 @@ ste_stats_update(void *xsc)
 		}
 	}
 
-	timeout_add(&sc->sc_stats_tmo, hz);
+	timeout_add_sec(&sc->sc_stats_tmo, 1);
 	splx(s);
 
 	return;
@@ -1196,7 +1196,7 @@ ste_init(void *xsc)
 	splx(s);
 
 	timeout_set(&sc->sc_stats_tmo, ste_stats_update, sc);
-	timeout_add(&sc->sc_stats_tmo, hz);
+	timeout_add_sec(&sc->sc_stats_tmo, 1);
 
 	return;
 }

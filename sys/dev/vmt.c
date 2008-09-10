@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.2 2008/07/12 23:17:33 ckuethe Exp $ */
+/*	$OpenBSD: vmt.c,v 1.3 2008/09/10 14:01:23 blambert Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -247,7 +247,7 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 
 	timeout_set(&sc->sc_tick, vmt_tick, sc);
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	printf("\n");
 	return;
@@ -340,7 +340,7 @@ vmt_tick(void *xarg)
 	printf("%s: \"%s\"\n", DEVNAME(sc), sc->sc_rpc_buf);
 
 out:
-	timeout_add(&sc->sc_tick, hz * 15);
+	timeout_add_sec(&sc->sc_tick, 15);
 }
 
 #define BACKDOOR_OP(op, frame)			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.17 2008/09/01 14:38:31 brad Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.18 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -701,7 +701,7 @@ lii_init(struct ifnet *ifp)
 
 	LII_WRITE_4(sc, LII_IMR, IMR_NORMAL_MASK);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1159,5 +1159,5 @@ lii_tick(void *v)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }

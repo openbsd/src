@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.4 2008/02/24 21:34:48 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.5 2008/09/10 14:01:23 blambert Exp $	*/
 /*	$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $	*/
 
 /*-
@@ -247,7 +247,7 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
 		dlc->rd_state = RFCOMM_DLC_WAIT_DISCONNECT;
 		err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_DISC,
 							dlc->rd_dlci);
-		timeout_add(&dlc->rd_timeout, rfcomm_ack_timeout * hz);
+		timeout_add_sec(&dlc->rd_timeout, rfcomm_ack_timeout);
 		break;
 
 	case RFCOMM_DLC_WAIT_DISCONNECT:

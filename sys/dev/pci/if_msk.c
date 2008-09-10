@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.64 2008/06/21 21:15:20 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.65 2008/09/10 14:01:22 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1802,7 +1802,7 @@ msk_tick(void *xsc_if)
 	s = splnet();
 	mii_tick(mii);
 	splx(s);
-	timeout_add(&sc_if->sk_tick_ch, hz);
+	timeout_add_sec(&sc_if->sk_tick_ch, 1);
 }
 
 void
@@ -2133,7 +2133,7 @@ msk_init(void *xsc_if)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout_add(&sc_if->sk_tick_ch, hz);
+	timeout_add_sec(&sc_if->sk_tick_ch, 1);
 
 	splx(s);
 }

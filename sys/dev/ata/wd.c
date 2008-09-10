@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.71 2008/06/27 06:03:08 ray Exp $ */
+/*	$OpenBSD: wd.c,v 1.72 2008/09/10 14:01:22 blambert Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -561,7 +561,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	disk_busy(&wd->sc_dk);
 	switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case WDC_TRY_AGAIN:
-		timeout_add(&wd->sc_restart_timeout, hz);
+		timeout_add_sec(&wd->sc_restart_timeout, 1);
 		break;
 	case WDC_QUEUED:
 		break;

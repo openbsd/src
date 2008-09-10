@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.6 2007/11/23 16:34:47 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.7 2008/09/10 14:01:23 blambert Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -177,7 +177,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
-	struct timeval t;
 	struct mbg_time tframe;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
@@ -284,13 +283,9 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    &sc->sc_dev);
 
-	/* convert timevals to hz */
-	t.tv_sec = 5L;
-	t.tv_usec = 0L;
-	t_wait = tvtohz(&t);
+	t_wait = 5;
 
-	t.tv_sec = TRUSTTIME;
-	t_trust = tvtohz(&t);
+	t_trust = TRUSTTIME;
 
 	usb_add_task(sc->sc_udev, &sc->sc_task);
 	return;
@@ -380,7 +375,7 @@ umbg_task(void *arg)
 	if (sc->sc_timedelta.status == SENSOR_S_UNKNOWN ||
 		!(letoh16(tframe.status) & MBG_FREERUN)) {
 		sc->sc_timedelta.status = SENSOR_S_OK;
-		timeout_add(&sc->sc_it_to, t_trust);
+		timeout_add_sec(&sc->sc_it_to, t_trust);
 	}
 
 	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
@@ -399,7 +394,7 @@ umbg_task(void *arg)
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
 bail_out:
-	timeout_add(&sc->sc_to, t_wait);
+	timeout_add_sec(&sc->sc_to, t_wait);
 	
 }
 
@@ -456,7 +451,7 @@ umbg_it_intr(void *xsc)
 		 * further degrade in TRUSTTIME seconds if the clocks remains
 		 * free running.
 		 */
-		timeout_add(&sc->sc_it_to, t_trust);
+		timeout_add_sec(&sc->sc_it_to, t_trust);
 	} else
 		sc->sc_timedelta.status = SENSOR_S_CRIT;
 }

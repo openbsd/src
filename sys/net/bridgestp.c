@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.35 2008/08/07 18:09:22 damien Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.36 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1762,7 +1762,7 @@ bstp_tick(void *arg)
 	}
 
 	if (bs->bs_ifp->if_flags & IFF_RUNNING)
-		timeout_add(&bs->bs_bstptimeout, hz);
+		timeout_add_sec(&bs->bs_bstptimeout, 1);
 
 	splx(s);
 }
@@ -1923,7 +1923,7 @@ bstp_initialization(struct bstp_state *bs)
 		timeout_set(&bs->bs_bstptimeout, bstp_tick, bs);
 	if (bs->bs_ifflags & IFF_RUNNING &&
 	    !timeout_pending(&bs->bs_bstptimeout))
-		timeout_add(&bs->bs_bstptimeout, hz);
+		timeout_add_sec(&bs->bs_bstptimeout, 1);
 
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
 		bp->bp_port_id = (bp->bp_priority << 8) |

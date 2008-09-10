@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.10 2007/06/14 19:13:37 grange Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.11 2008/09/10 14:01:22 blambert Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -312,7 +312,7 @@ viasio_hm_init(struct viasio_softc *sc)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_hm_sensors[i]);
 	sensordev_install(&sc->sc_sensordev);
 	timeout_set(&sc->sc_hm_timo, viasio_hm_refresh, sc);
-	timeout_add(&sc->sc_hm_timo, hz);
+	timeout_add_sec(&sc->sc_hm_timo, 1);
 }
 
 void
@@ -425,7 +425,7 @@ viasio_hm_refresh(void *arg)
 		sc->sc_hm_sensors[VT1211_HMS_FAN2].flags |= SENSOR_FINVALID;
 	}
 
-	timeout_add(&sc->sc_hm_timo, hz);
+	timeout_add_sec(&sc->sc_hm_timo, 1);
 }
 
 void

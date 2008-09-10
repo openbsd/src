@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.99 2008/09/02 17:35:16 chl Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.100 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -881,7 +881,7 @@ pfsync_input(struct mbuf *m, ...)
 					printf("pfsync: received "
 					    "bulk update request\n");
 				pfsync_send_bus(sc, PFSYNC_BUS_START);
-				timeout_add(&sc->sc_bulk_tmo, 1 * hz);
+				timeout_add_sec(&sc->sc_bulk_tmo, 1);
 			} else {
 				st = pf_find_state_byid(&id_key);
 				if (st == NULL) {
@@ -1098,7 +1098,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			pfsync_sync_ok = 0;
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: requesting bulk update\n");
-			timeout_add(&sc->sc_bulkfail_tmo, 5 * hz);
+			timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
 			error = pfsync_request_update(NULL, NULL);
 			if (error == ENOMEM) {
 				splx(s);
@@ -1203,9 +1203,9 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 
 	*sp = (void *)((char *)h + PFSYNC_HDRLEN);
 	if (action == PFSYNC_ACT_TDB_UPD)
-		timeout_add(&sc->sc_tdb_tmo, hz);
+		timeout_add_sec(&sc->sc_tdb_tmo, 1);
 	else
-		timeout_add(&sc->sc_tmo, hz);
+		timeout_add_sec(&sc->sc_tmo, 1);
 	return (m);
 }
 
@@ -1555,7 +1555,7 @@ pfsync_bulkfail(void *v)
 
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again in a bit */
-		timeout_add(&sc->sc_bulkfail_tmo, 5 * hz);
+		timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
 		s = splnet();
 		error = pfsync_request_update(NULL, NULL);
 		if (error == ENOMEM) {

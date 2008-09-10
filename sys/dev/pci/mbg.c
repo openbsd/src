@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.24 2007/11/26 19:44:43 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.25 2008/09/10 14:01:23 blambert Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -48,7 +48,7 @@ struct mbg_softc {
 	struct ksensor		sc_signal;
 	struct ksensordev	sc_sensordev;
 	struct timeout		sc_timeout;	/* invalidate sensor */
-	int			sc_trust;	/* trust time in ticks */
+	int			sc_trust;	/* trust time in seconds */
 	
 	int			(*sc_read)(struct mbg_softc *, int cmd,
 				    char *buf, size_t len,
@@ -177,7 +177,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	struct mbg_softc *sc = (struct mbg_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	struct mbg_time tframe;
-	struct timeval tv_trust;
 	pcireg_t memtype;
 	bus_size_t iosize, iosize2;
 	int bar = PCI_MAPREG_START, signal, t_trust;
@@ -262,9 +261,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	tv_trust.tv_sec = t_trust;
-	tv_trust.tv_usec = 0L;
-	sc->sc_trust = tvtohz(&tv_trust);
+	sc->sc_trust = t_trust;
 
 	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
@@ -302,7 +299,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	printf("\n");
 	sensordev_install(&sc->sc_sensordev);
-	timeout_add(&sc->sc_timeout, sc->sc_trust);
+	timeout_add_sec(&sc->sc_timeout, sc->sc_trust);
 }
 
 /*
@@ -397,7 +394,7 @@ mbg_update_sensor(struct mbg_softc *sc, struct timespec *tstamp,
 	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 	if (!(status & MBG_FREERUN)) {
 		sc->sc_timedelta.status = SENSOR_S_OK;
-		timeout_add(&sc->sc_timeout, sc->sc_trust);
+		timeout_add_sec(&sc->sc_timeout, sc->sc_trust);
 	}
 }
 
@@ -579,7 +576,7 @@ mbg_timeout(void *xsc)
 		 * further degrade in TRUSTTIME seconds if no new valid NMEA
 		 * sentences are received.
 		 */
-		timeout_add(&sc->sc_timeout, sc->sc_trust);
+		timeout_add_sec(&sc->sc_timeout, sc->sc_trust);
 	} else
 		sc->sc_timedelta.status = SENSOR_S_CRIT;
 }

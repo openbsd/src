@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.75 2008/07/24 19:01:28 thib Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.76 2008/09/10 14:01:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -951,7 +951,7 @@ vr_tick(void *xsc)
 	}           
 
 	mii_tick(&sc->sc_mii);
-	timeout_add(&sc->sc_to, hz);
+	timeout_add_sec(&sc->sc_to, 1);
 	splx(s);
 }
 
@@ -1289,7 +1289,7 @@ vr_init(void *xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (!timeout_pending(&sc->sc_to))
-		timeout_add(&sc->sc_to, hz);
+		timeout_add_sec(&sc->sc_to, 1);
 
 	splx(s);
 }

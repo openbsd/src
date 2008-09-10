@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.50 2007/11/23 15:43:02 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.51 2008/09/10 14:01:23 blambert Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -574,7 +574,7 @@ url_init(struct ifnet *ifp)
 
 	splx(s);
 
-	timeout_add(&sc->sc_stat_ch, hz);
+	timeout_add_sec(&sc->sc_stat_ch, 1);
 
 	return (0);
 }
@@ -1381,7 +1381,7 @@ url_tick_task(void *xsc)
 			   url_start(ifp);
 	}
 
-	timeout_add(&sc->sc_stat_ch, hz);
+	timeout_add_sec(&sc->sc_stat_ch, 1);
 
 	splx(s);
 }

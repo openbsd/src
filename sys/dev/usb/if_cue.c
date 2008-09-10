@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.48 2007/11/23 15:43:02 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.49 2008/09/10 14:01:23 blambert Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1056,7 +1056,7 @@ cue_init(void *xsc)
 
 	splx(s);
 
-	timeout_add(&sc->cue_stat_ch, hz);
+	timeout_add_sec(&sc->cue_stat_ch, 1);
 }
 
 int
