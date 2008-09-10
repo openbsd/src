@@ -71,8 +71,6 @@ drm_ctxbitmap_next(struct drm_device *dev)
 
 	set_bit(bit, dev->ctx_bitmap);
 	DRM_DEBUG("drm_ctxbitmap_next bit : %d\n", bit);
-	if ((bit+1) > dev->max_context)
-		dev->max_context = (bit+1);
 	DRM_UNLOCK();
 	return bit;
 }
@@ -89,7 +87,6 @@ drm_ctxbitmap_init(struct drm_device *dev)
 		return (ENOMEM);
 	DRM_LOCK();
 	dev->ctx_bitmap = bitmap;
-	dev->max_context = -1;
 	DRM_UNLOCK();
 
 	for (i = 0; i < DRM_RESERVED_CONTEXTS; i++) {

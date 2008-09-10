@@ -555,8 +555,6 @@ struct drm_device {
 	struct extent	*handle_ext;
 	drm_map_list_t	  maplist;
 
-	int		  max_context;
-
 	struct drm_lock_data  lock;	/* Information on hardware lock	*/
 
 				/* DMA queues (contexts) */
