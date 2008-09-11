@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.26 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.27 2008/09/11 12:45:20 miod Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -182,6 +182,7 @@ acpitz_setcpu(struct acpitz_softc *sc, int perc)
 int
 acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 {
+	struct aml_node		*node;
 	struct aml_value	res0, res1, res2, *ref;
 	char			name[8];
 	int			rv = 1, x, y;
@@ -200,12 +201,24 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 	}
 
 	for (x = 0; x < res0.length; x++) {
-		if (res0.v_package[x]->type != AML_OBJTYPE_OBJREF) {
-			printf("%s: %s[%d] not a object ref\n", DEVNAME(sc),
+		ref = res0.v_package[x];
+		if (ref->type == AML_OBJTYPE_STRING) {
+			node = aml_searchrel(sc->sc_devnode, ref->v_string);
+			if (node == NULL) {
+				printf("%s: %s[%d] not a valid device\n",
+				    DEVNAME(sc), name, x);
+				continue;
+			}
+			ref = node->value;
+		}
+		if (ref->type == AML_OBJTYPE_OBJREF) {
+			ref = ref->v_objref.ref;
+		}
+		if (ref->type != AML_OBJTYPE_DEVICE) {
+			printf("%s: %s[%d] not a valid object\n", DEVNAME(sc),
 			    name, x);
 			continue;
 		}
-		ref = res0.v_package[x]->v_objref.ref;
 		if (aml_evalname(sc->sc_acpi, ref->node, "_PR0",0 , NULL,
 		    &res1)) {
 			printf("%s: %s[%d] _PR0 failed\n", DEVNAME(sc),
@@ -220,12 +233,26 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			continue;
 		}
 		for (y = 0; y < res1.length; y++) {
-			if (res1.v_package[y]->type != AML_OBJTYPE_OBJREF) {
-				printf("%s: %s[%d.%d] _PR0 not a package\n",
+			ref = res1.v_package[y];
+			if (ref->type == AML_OBJTYPE_STRING) {
+				node = aml_searchrel(sc->sc_devnode,
+				    ref->v_string);
+				if (node == NULL) {
+					printf("%s: %s[%d.%d] _PRO"
+					    " not a valid device\n",
+					    DEVNAME(sc), name, x, y);
+					continue;
+				}
+				ref = node->value;
+			}
+			if (ref->type == AML_OBJTYPE_OBJREF) {
+				ref = ref->v_objref.ref;
+			}
+			if (ref->type != AML_OBJTYPE_DEVICE) {
+				printf("%s: %s[%d.%d] _PRO not a package\n",
 				    DEVNAME(sc), name, x, y);
 				continue;
 			}
-			ref = res1.v_package[y]->v_objref.ref;
 			if (aml_evalname(sc->sc_acpi, ref->node, method, 0,
 			    NULL, NULL))
 				printf("%s: %s[%d.%d] %s fails\n",
@@ -315,7 +342,7 @@ acpitz_refresh(void *arg)
 int
 acpitz_getreading(struct acpitz_softc *sc, char *name)
 {
-	struct aml_value	res;
+	struct aml_value	res, *ref;
 	int			rv = -1;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res)) {
@@ -323,7 +350,18 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 		    name);
 		goto out;
 	}
-	rv = aml_val2int(&res);
+	if (res.type == AML_OBJTYPE_STRING) {
+		struct aml_node *node;
+		node = aml_searchrel(sc->sc_devnode, res.v_string);
+		if (node == NULL)
+			goto out;
+		ref = node->value;
+	} else
+		ref = &res;
+	if (ref->type == AML_OBJTYPE_OBJREF) {
+		ref = ref->v_objref.ref;
+	}
+	rv = aml_val2int(ref);
 out:
 	aml_freevalue(&res);
 	return (rv);
