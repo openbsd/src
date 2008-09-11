@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.6 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.7 2008/09/11 11:30:14 jsg Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -273,7 +273,7 @@ wsintr(chan)
 #endif
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
 	}
-	if (rr && RR_TXRDY)
+	if (rr & RR_TXRDY)
 		sio->sio_cmd = WR0_RSTPEND;
 	/* not capable of transmit, yet */
 }
