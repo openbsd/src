@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fminf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_fminf.c,v 1.2 2008/09/11 19:18:12 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,27 +25,23 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <machine/ieee.h>
 #include <math.h>
 
 float
 fminf(float x, float y)
 {
-	struct ieee_single *px = (struct ieee_single *)&x;
-	struct ieee_single *py = (struct ieee_single *)&y;
-
 	/* Check for NaNs to avoid raising spurious exceptions. */
-	if (px->sng_exp == SNG_EXP_INFNAN && px->sng_frac != 0)
+	if (isnan(x))
 		return (y);
-	if (py->sng_exp == SNG_EXP_INFNAN && py->sng_frac != 0)
+	if (isnan(y))
 		return (x);
 
 	/* Handle comparisons of signed zeroes. */
-	if (px->sng_sign != py->sng_sign && py->sng_sign == 1)
-		return (y);
-	if (px->sng_sign != py->sng_sign && py->sng_sign == 0)
-		return (x);
+	if (signbit(x) != signbit(y))
+		if (signbit(y))
+			return (y);
+		else
+			return (x);
 
 	return (x < y ? x : y);
 }

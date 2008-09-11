@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmin.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_fmin.c,v 1.2 2008/09/11 19:18:12 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,31 +25,23 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <machine/ieee.h>
 #include <math.h>
 
 double
 fmin(double x, double y)
 {
-	struct ieee_double *px = (struct ieee_double *)&x;
-	struct ieee_double *py = (struct ieee_double *)&y;
-
 	/* Check for NaNs to avoid raising spurious exceptions. */
-	if (px->dbl_exp == DBL_EXP_INFNAN &&
-	    (px->dbl_frach | px->dbl_fracl) != 0)
+	if (isnan(x))
 		return (y);
-	if (py->dbl_exp == DBL_EXP_INFNAN &&
-	    (py->dbl_frach | py->dbl_fracl) != 0)
+	if (isnan(y))
 		return (x);
 
 	/* Handle comparisons of signed zeroes. */
-	if (px->dbl_sign != py->dbl_sign &&
-	    py->dbl_sign == 1)
-		return (y);
-	if (px->dbl_sign != py->dbl_sign &&
-	    py->dbl_sign == 0)
-		return (x);
+	if (signbit(x) != signbit(y))
+		if (signbit(y))
+			return (y);
+		else
+			return (x);
 
 	return (x < y ? x : y);
 }
