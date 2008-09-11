@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.141 2008/08/19 06:42:25 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.142 2008/09/11 05:28:25 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -444,6 +444,7 @@ Supported devices {:-include-:}:
 		detected as PCMCIA adapters)
 		    Ambicom WL54CF
 		    I-O DATA WN-G54/CF
+		    SparkLAN WCFM-100
 		Ralink Technology IEEE 802.11a/b/g CardBus adapters
 		    A-Link WL54PC
 		    Alfa AWPC036
