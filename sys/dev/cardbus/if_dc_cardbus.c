@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.26 2008/09/11 04:32:23 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.27 2008/09/11 06:49:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,9 +111,7 @@ const struct cardbus_matchid dc_cardbus_devices[] = {
 };
 
 int
-dc_cardbus_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+dc_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
 	    dc_cardbus_devices,
@@ -121,9 +119,7 @@ dc_cardbus_match(parent, match, aux)
 }
 
 void
-dc_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dc_cardbus_softc *csc = (struct dc_cardbus_softc *)self;
 	struct dc_softc *sc = &csc->sc_dc;
@@ -244,8 +240,7 @@ dc_cardbus_attach(parent, self, aux)
 }
 
 int
-dc_detach(sc)
-	struct dc_softc *sc;
+dc_detach(struct dc_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -269,9 +264,7 @@ dc_detach(sc)
 }
 
 int
-dc_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+dc_cardbus_detach(struct device *self, int flags)
 {
 	struct dc_cardbus_softc *csc = (struct dc_cardbus_softc *)self;
 	struct dc_softc *sc = &csc->sc_dc;
@@ -293,8 +286,7 @@ dc_cardbus_detach(self, flags)
 }
 
 void
-dc_cardbus_setup(csc)
-	struct dc_cardbus_softc *csc;
+dc_cardbus_setup(struct dc_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;

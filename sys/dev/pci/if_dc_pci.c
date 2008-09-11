@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.60 2008/09/11 05:39:51 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.61 2008/09/11 06:49:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,9 +121,7 @@ void dc_pci_acpi(struct device *, void *);
  * IDs against our list and return a device name if we find a match.
  */
 int
-dc_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+dc_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct dc_type *t;
@@ -155,9 +153,8 @@ dc_pci_match(parent, match, aux)
 	return (0);
 }
 
-void dc_pci_acpi(self, aux)
-	struct device *self;
-	void *aux;
+void
+dc_pci_acpi(struct device *self, void *aux)
 {
 	struct dc_softc		*sc = (struct dc_softc *)self;
 	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
@@ -199,9 +196,8 @@ void dc_pci_acpi(self, aux)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void dc_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void
+dc_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char		*intrstr = NULL;
 	pcireg_t		command;
