@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.55 2008/09/09 20:42:55 martynas Exp $
+#  $OpenBSD: Makefile,v 1.56 2008/09/11 19:19:34 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -101,7 +101,8 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
-	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_tgamma.c \
+	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c n_fmax.c \
+	n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_tgamma.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
 	n_log__L.c n_pow.c n_sinh.c n_tanh.c n_atan2.c n_cabs.c n_cbrt.c \
 	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c \
