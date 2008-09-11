@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.100 2008/09/03 19:29:48 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.101 2008/09/11 03:21:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2417,8 +2417,12 @@ dc_tick(xsc)
 			if (sc->dc_link == 0)
 				mii_tick(mii);
 		} else {
-			r = CSR_READ_4(sc, DC_ISR);
-			if ((r & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT &&
+			/*
+			 * For NICs which never report DC_RXSTATE_WAIT, we
+			 * have to bite the bullet...
+			 */
+			if ((DC_HAS_BROKEN_RXSTATE(sc) || (CSR_READ_4(sc,
+			    DC_ISR) & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT) &&
 			    sc->dc_cdata.dc_tx_cnt == 0 && !DC_IS_ASIX(sc)) {
 				mii_tick(mii);
 				if (!(mii->mii_media_status & IFM_ACTIVE))
