@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.13 2008/08/20 12:08:04 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.14 2008/09/11 16:06:01 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -134,9 +134,14 @@ nfs_kqpoll(void *arg)
 			/* following is a bit fragile, but about best
 			 * we can get */
 			if (attr.va_size != osize) {
-				int extended = (attr.va_size > osize);
-				VN_KNOTE(ke->vp, NOTE_WRITE
-				    | (extended ? NOTE_EXTEND : 0));
+				int flags = NOTE_WRITE;
+
+				if (attr.va_size > osize)
+					flags |= NOTE_EXTEND;
+				else
+					flags |= NOTE_TRUNCATE;
+
+				VN_KNOTE(ke->vp, flags);
 				ke->omtime = attr.va_mtime;
 			} else if (attr.va_mtime.tv_sec != ke->omtime.tv_sec
 			    || attr.va_mtime.tv_nsec != ke->omtime.tv_nsec) {
