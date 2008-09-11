@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.403 2008/09/10 15:07:47 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.404 2008/09/11 17:57:45 brad Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2008 $
+.Dd $Mdocdate: September 11 2008 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -901,7 +901,7 @@ Defines a list of subqueues to create on an interface.
 .El
 .Pp
 In the following example, the interface dc0
-should queue up to 5 Mbit/s in four second-level queues using
+should queue up to 5Mbps in four second-level queues using
 Class Based Queueing.
 Those four queues will be shown in a later example.
 .Bd -literal -offset indent
