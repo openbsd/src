@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.29 2008/09/08 07:38:33 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.30 2008/09/11 18:26:58 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -193,12 +193,6 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			break;
 
 		/*
 		 * The RealTek PHY's autonegotiation doesn't need to be
