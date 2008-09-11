@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.13 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.arm,v 1.14 2008/09/11 02:38:14 kevlo Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # Floating point emulator
@@ -53,8 +53,9 @@ file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
 file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
-file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm10
-file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm10 |
+file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
+file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
+							cpu_arm10 |
 							cpu_sa110 |
 							cpu_sa1100 |
 							cpu_sa1110 |
@@ -63,6 +64,8 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm10 |
 							cpu_xscale_80321 |
 							cpu_xscale_ixp425 |
 							cpu_xscale_pxa2x0
+file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
+file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_sa1110 |
 							cpu_ixp12x0

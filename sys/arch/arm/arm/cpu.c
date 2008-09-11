@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2007/07/01 19:09:20 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2008/09/11 02:38:14 kevlo Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -165,6 +165,7 @@ enum cpu_class {
 	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
+	CPU_CLASS_ARM9EJS,
 	CPU_CLASS_ARM10E,
 	CPU_CLASS_SA1,
 	CPU_CLASS_XSCALE
@@ -310,6 +311,8 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
 	  generic_steppings },
+	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
+	  generic_steppings },
 	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T",
 	  generic_steppings },
 	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
@@ -393,7 +396,8 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
 	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
-	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
+	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." }	/* CPU_CLASS_XSCALE */
@@ -468,6 +472,8 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			printf(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
+	case CPU_CLASS_ARM9ES:
+	case CPU_CLASS_ARM9EJS:
 	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
@@ -541,6 +547,10 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
+#endif
+#ifdef CPU_ARM9E
+	case CPU_CLASS_ARM9ES:
+	case CPU_CLASS_ARM9EJS:
 #endif
 #ifdef CPU_ARM10
 	case CPU_CLASS_ARM10E:

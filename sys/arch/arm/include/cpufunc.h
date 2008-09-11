@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.4 2007/09/22 19:57:45 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.5 2008/09/11 02:38:14 kevlo Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -311,58 +311,77 @@ void	sa1_cache_syncI_rng	(vaddr_t start, vsize_t end);
 #endif
 
 #ifdef CPU_ARM9
-void	arm9_setttb		(u_int);
+void	arm9_setttb			(u_int);
 
-void	arm9_tlb_flushID_SE	(u_int va);
+void	arm9_tlb_flushID_SE		(u_int);
 
-void	arm9_cache_flushID	(void);
-void	arm9_cache_flushID_SE	(u_int);
-void	arm9_cache_flushI	(void);
-void	arm9_cache_flushI_SE	(u_int);
-void	arm9_cache_flushD	(void);
-void	arm9_cache_flushD_SE	(u_int);
+void	arm9_icache_sync_all		(void);
+void	arm9_icache_sync_range		(vaddr_t, vsize_t);
 
-void	arm9_cache_cleanID	(void);
+void	arm9_dcache_wbinv_all		(void);
+void	arm9_dcache_wbinv_range		(vaddr_t, vsize_t);
+void	arm9_dcache_inv_range		(vaddr_t, vsize_t);
+void	arm9_dcache_wb_range		(vaddr_t, vsize_t);
 
-void	arm9_cache_syncI	(void);
-void	arm9_cache_flushID_rng	(vaddr_t, vsize_t);
-void	arm9_cache_flushD_rng	(vaddr_t, vsize_t);
-void	arm9_cache_syncI_rng	(vaddr_t, vsize_t);
+void	arm9_idcache_wbinv_all		(void);
+void	arm9_idcache_wbinv_range	(vaddr_t, vsize_t);
 
-void	arm9_context_switch	(u_int);
+void	arm9_context_switch		(u_int);
 
-void	arm9_setup		(char *string);
+void	arm9_setup			(char *string);
+
+extern unsigned arm9_dcache_sets_max;
+extern unsigned arm9_dcache_sets_inc;
+extern unsigned arm9_dcache_index_max;
+extern unsigned arm9_dcache_index_inc;
 #endif
 
-#ifdef CPU_ARM10
-void	arm10_setttb		(u_int);
-
+#if defined(CPU_ARM9E) || defined(CPU_ARM10)
 void	arm10_tlb_flushID_SE	(u_int);
 void	arm10_tlb_flushI_SE	(u_int);
-
-void	arm10_icache_sync_all	(void);
-void	arm10_icache_sync_range	(vaddr_t, vsize_t);
-
-void	arm10_dcache_wbinv_all	(void);
-void	arm10_dcache_wbinv_range (vaddr_t, vsize_t);
-void	arm10_dcache_inv_range	(vaddr_t, vsize_t);
-void	arm10_dcache_wb_range	(vaddr_t, vsize_t);
-
-void	arm10_idcache_wbinv_all	(void);
-void	arm10_idcache_wbinv_range (vaddr_t, vsize_t);
 
 void	arm10_context_switch	(u_int);
 
 void	arm10_setup		(char *string);
-
-extern unsigned arm10_dcache_sets_max;
-extern unsigned arm10_dcache_sets_inc;
-extern unsigned arm10_dcache_index_max;
-extern unsigned arm10_dcache_index_inc;
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \
-    defined(CPU_SA1100) || defined(CPU_SA1110) || \
+#if defined(CPU_ARM9E) || defined (CPU_ARM10)
+void	armv5_ec_setttb			(u_int);
+
+void	armv5_ec_icache_sync_all	(void);
+void	armv5_ec_icache_sync_range	(vaddr_t, vsize_t);
+
+void	armv5_ec_dcache_wbinv_all	(void);
+void	armv5_ec_dcache_wbinv_range	(vaddr_t, vsize_t);
+void	armv5_ec_dcache_inv_range	(vaddr_t, vsize_t);
+void	armv5_ec_dcache_wb_range	(vaddr_t, vsize_t);
+
+void	armv5_ec_idcache_wbinv_all	(void);
+void	armv5_ec_idcache_wbinv_range	(vaddr_t, vsize_t);
+#endif
+
+#if defined (CPU_ARM10)
+void	armv5_setttb			(u_int);
+
+void	armv5_icache_sync_all		(void);
+void	armv5_icache_sync_range		(vaddr_t, vsize_t);
+
+void	armv5_dcache_wbinv_all		(void);
+void	armv5_dcache_wbinv_range	(vaddr_t, vsize_t);
+void	armv5_dcache_inv_range		(vaddr_t, vsize_t);
+void	armv5_dcache_wb_range		(vaddr_t, vsize_t);
+
+void	armv5_idcache_wbinv_all		(void);
+void	armv5_idcache_wbinv_range	(vaddr_t, vsize_t);
+
+extern unsigned armv5_dcache_sets_max;
+extern unsigned armv5_dcache_sets_inc;
+extern unsigned armv5_dcache_index_max;
+extern unsigned armv5_dcache_index_inc;
+#endif
+
+#if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
+    defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 

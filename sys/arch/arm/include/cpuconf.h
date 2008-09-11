@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.3 2006/05/27 20:36:05 miod Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.4 2008/09/11 02:38:14 kevlo Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -61,14 +61,15 @@
 #endif
 
 #if (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
-     defined(CPU_ARM10) || defined(CPU_SA110) || defined(CPU_SA1100) || \
-     defined(CPU_SA1110) || defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+     defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
 #endif
 
-#if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
+#if (defined(CPU_ARM9E) || defined(CPU_ARM10) || 			\
+     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
      defined(CPU_XSCALE_PXA2X0))
 #define	ARM_ARCH_5	1
 #else
@@ -97,7 +98,8 @@
 #endif
 
 #if (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10))
+     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
+     defined(CPU_ARM10))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0

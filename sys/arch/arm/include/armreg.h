@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.3 2006/05/29 17:01:42 drahn Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.4 2008/09/11 02:38:14 kevlo Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -184,6 +184,7 @@
 #define CPU_ID_ARM810		0x41018100
 #define CPU_ID_ARM920T		0x41129200
 #define CPU_ID_ARM922T		0x41029220
+#define CPU_ID_ARM926EJS	0x41069260
 #define CPU_ID_ARM940T		0x41029400 /* XXX no MMU */
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */

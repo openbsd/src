@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.7 2006/06/15 21:35:30 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.8 2008/09/11 02:38:14 kevlo Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -417,17 +417,17 @@ struct cpu_functions arm9_cpufuncs = {
 
 	/* Cache operations */
 
-	arm9_cache_syncI,		/* icache_sync_all	*/
-	arm9_cache_syncI_rng,		/* icache_sync_range	*/
+	arm9_icache_sync_all,		/* icache_sync_all	*/
+	arm9_icache_sync_range,		/* icache_sync_range	*/
 
 		/* ...cache in write-though mode... */
-	arm9_cache_flushD,		/* dcache_wbinv_all	*/
-	arm9_cache_flushD_rng,		/* dcache_wbinv_range	*/
-	arm9_cache_flushD_rng,		/* dcache_inv_range	*/
-	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
+	arm9_dcache_wbinv_all,		/* dcache_wbinv_all	*/
+	arm9_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	arm9_dcache_wbinv_range,	/* dcache_inv_range	*/
+	arm9_dcache_wb_range,		/* dcache_wb_range	*/
 
-	arm9_cache_flushID,		/* idcache_wbinv_all	*/
-	arm9_cache_flushID_rng,		/* idcache_wbinv_range	*/
+	arm9_idcache_wbinv_all,		/* idcache_wbinv_all	*/
+	arm9_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -450,8 +450,8 @@ struct cpu_functions arm9_cpufuncs = {
 };
 #endif /* CPU_ARM9 */
 
-#ifdef CPU_ARM10
-struct cpu_functions arm10_cpufuncs = {
+#if defined(CPU_ARM9E) || defined(CPU_ARM10)
+struct cpu_functions armv5_ec_cpufuncs = {
 	/* CPU functions */
 
 	cpufunc_id,			/* id			*/
@@ -461,7 +461,7 @@ struct cpu_functions arm10_cpufuncs = {
 
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* Domain		*/
-	arm10_setttb,			/* Setttb		*/
+	armv5_ec_setttb,		/* Setttb		*/
 	cpufunc_faultstatus,		/* Faultstatus		*/
 	cpufunc_faultaddress,		/* Faultaddress		*/
 
@@ -476,16 +476,76 @@ struct cpu_functions arm10_cpufuncs = {
 
 	/* Cache operations */
 
-	arm10_icache_sync_all,		/* icache_sync_all	*/
-	arm10_icache_sync_range,	/* icache_sync_range	*/
+	armv5_ec_icache_sync_all,	/* icache_sync_all	*/
+	armv5_ec_icache_sync_range,	/* icache_sync_range	*/
 
-	arm10_dcache_wbinv_all,		/* dcache_wbinv_all	*/
-	arm10_dcache_wbinv_range,	/* dcache_wbinv_range	*/
-	arm10_dcache_inv_range,		/* dcache_inv_range	*/
-	arm10_dcache_wb_range,		/* dcache_wb_range	*/
+		/* ...cache in write-though mode... */
+	armv5_ec_dcache_wbinv_all,	/* dcache_wbinv_all	*/
+	armv5_ec_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	armv5_ec_dcache_wbinv_range,	/* dcache_inv_range	*/
+	armv5_ec_dcache_wb_range,	/* dcache_wb_range	*/
 
-	arm10_idcache_wbinv_all,	/* idcache_wbinv_all	*/
-	arm10_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+	armv5_ec_idcache_wbinv_all,	/* idcache_wbinv_all	*/
+	armv5_ec_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	arm10_context_switch,		/* context_switch	*/
+
+	arm10_setup			/* cpu setup		*/
+
+};
+#endif /* CPU_ARM9E || CPU_ARM10 */
+
+
+#ifdef CPU_ARM10
+struct cpu_functions arm10_cpufuncs = {
+	/* CPU functions */
+
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* Domain		*/
+	armv5_setttb,			/* Setttb		*/
+	cpufunc_faultstatus,		/* Faultstatus		*/
+	cpufunc_faultaddress,		/* Faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	arm10_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	arm10_tlb_flushI_SE,		/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	armv5_icache_sync_all,		/* icache_sync_all	*/
+	armv5_icache_sync_range,	/* icache_sync_range	*/
+
+	armv5_dcache_wbinv_all,		/* dcache_wbinv_all	*/
+	armv5_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	armv5_dcache_inv_range,		/* dcache_inv_range	*/
+	armv5_dcache_wb_range,		/* dcache_wb_range	*/
+
+	armv5_idcache_wbinv_all,	/* idcache_wbinv_all	*/
+	armv5_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -747,7 +807,7 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined (CPU_ARM10) || \
+    defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 static void get_cachetype_cp15 (void);
@@ -964,10 +1024,25 @@ set_cpufuncs()
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
+		arm9_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		arm9_dcache_sets_max =
+		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    arm9_dcache_sets_inc;
+		arm9_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		arm9_dcache_index_max = 0U - arm9_dcache_index_inc;
 		pmap_pte_init_arm9();
 		return 0;
 	}
 #endif /* CPU_ARM9 */
+#if defined(CPU_ARM9E) || defined(CPU_ARM10)
+	if (cputype == CPU_ID_ARM926EJS || cputype == CPU_ID_ARM1026EJS) {
+		cpufuncs = armv5_ec_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
+		get_cachetype_cp15();
+		pmap_pte_init_generic();
+		return 0;
+	}
+#endif /* CPU_ARM9E || CPU_ARM10 */
 #ifdef CPU_ARM10
 	if (/* cputype == CPU_ID_ARM1020T || */
 	    cputype == CPU_ID_ARM1020E) {
@@ -978,12 +1053,12 @@ set_cpufuncs()
 		cpufuncs = arm10_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
-		arm10_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		arm10_dcache_sets_max =
+		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		armv5_dcache_sets_max =
 		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
-		    arm10_dcache_sets_inc;
-		arm10_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
-		arm10_dcache_index_max = 0U - arm10_dcache_index_inc;
+		    armv5_dcache_sets_inc;
+		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		pmap_pte_init_generic();
 		return 0;
 	}
@@ -1528,10 +1603,11 @@ late_abort_fixup(arg)
  */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
-	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
-	defined(CPU_SA1100) || defined(CPU_SA1110) || \
+	defined(CPU_ARM8) || defined (CPU_ARM9) || defined (CPU_ARM9E) || \
+	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-	defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+	defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425) || \
+	defined(CPU_ARM10)
 
 #define IGN	0
 #define OR	1
@@ -1833,8 +1909,8 @@ arm9_setup(args)
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
-		 | CPU_CONTROL_CPCLK;
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_VECRELOC
+		 | CPU_CONTROL_ROUNDROBIN;
 
 #ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
@@ -1846,17 +1922,20 @@ arm9_setup(args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
+	cpu_control(cpuctrlmask, cpuctrl);
 
 }
 #endif	/* CPU_ARM9 */
 
-#ifdef CPU_ARM10
+#if defined(CPU_ARM9E) || defined(CPU_ARM10)
 struct cpu_option arm10_options[] = {
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -1895,11 +1974,17 @@ arm10_setup(args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
-	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+	__asm __volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm __volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -1908,7 +1993,7 @@ arm10_setup(args)
 	/* And again. */
 	cpu_idcache_wbinv_all();
 }
-#endif	/* CPU_ARM10 */
+#endif	/* CPU_ARM9E || CPU_ARM10 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {
