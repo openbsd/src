@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.10 2007/12/23 18:26:13 henning Exp $ */
+/*	$OpenBSD: log.h,v 1.11 2008/09/11 14:49:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,5 +119,6 @@ static const char * const timernames[] = {
 	"HoldTimer",
 	"IdleHoldTimer",
 	"IdleHoldResetTimer",
+	"CarpUndemoteTimer",
 	""
 };
