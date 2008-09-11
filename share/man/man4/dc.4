@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.43 2007/05/31 19:19:49 jmc Exp $
+.\"	$OpenBSD: dc.4,v 1.44 2008/09/11 17:31:26 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/dc.4,v 1.1 1999/12/04 17:41:24 wpaul Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 11 2008 $
 .Dt DC 4
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ media attachments, 10 and 100Mbps speeds in full or half duplex,
 built-in NWAY autonegotiation and wake on LAN.
 The 21143 also offers several receive filter programming options including
 perfect filtering, inverse perfect filtering and hash table filtering.
-The 21145 seems to be 10 MBit/s only and has an additional (unsupported)
+The 21145 seems to be 10Mbps only and has an additional (unsupported)
 HomePNA PHY.
 .Pp
 Some clone chips duplicate the 21143 fairly closely while others
@@ -220,7 +220,8 @@ is not specified.
 .Pp
 Note that the 100baseTX media type may not be available on certain
 Intel 21143 adapters which support 10Mbps media attachments only.
-The Intel 21145 supports 10 MBit/s half-duplex only.
+The Intel 21145 supports 10Mbps half-duplex only.
+.Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
