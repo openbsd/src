@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.23 2008/09/12 13:23:17 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.24 2008/09/12 13:31:59 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -26,9 +26,10 @@
 
 umask 0022
 
-PAGER="${PAGER:=/usr/bin/more}"
-SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
+SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
+PAGER="${PAGER:=/usr/bin/more}"
+MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 
 # clean leftovers created by make in src
 clean_src() {
@@ -193,11 +194,13 @@ mm_install() {
 
 
 merge_loop() {
-	echo "===> Type h at the sdiff prompt (%) to get usage help\n"
+	if [ `expr "$MERGE_CMD" : ^sdiff.*` -gt 0 ]; then
+		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
+	fi
 	MERGE_AGAIN=1
 	while [ "${MERGE_AGAIN}" ]; do
 		cp -p "${COMPFILE}" "${COMPFILE}.merged"
-		sdiff -as -o "${COMPFILE}.merged" -w ${SWIDTH} \
+		${MERGE_CMD} "${COMPFILE}.merged" \
 			"${DESTDIR}${COMPFILE#.}" "${COMPFILE}"
 		INSTALL_MERGED=v
 		while [ "${INSTALL_MERGED}" = "v" ]; do

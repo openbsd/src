@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.10 2008/07/04 15:03:45 sthen Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.11 2008/09/12 13:31:59 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2008 $
+.Dd $Mdocdate: September 12 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -109,8 +109,8 @@ mode.
 .Pp
 .Nm
 will work through the fileset,
-offering the chance to merge any differences using
-.Xr sdiff 1 .
+offering the chance to merge any differences
+using ${MERGE_CMD}.
 Files may also be left to deal with at a later date.
 Should any problems occur,
 such as a failure to upgrade a file,
@@ -181,6 +181,13 @@ If unset, this defaults to
 Command used to fetch remote files.
 Defaults to
 .Xr ftp 1 .
+.It Ev MERGE_CMD
+Command used to merge diffs.
+This will be called with three arguments: the first argument is the
+output file to create, the second argument is the currently installed
+file and the third argument is the reference file.
+If unset, this defaults to
+.Dq sdiff -as -w ${SWIDTH} -o .
 .It Ev TMPDIR
 Directory in which the work directory is created.
 If unset, this defaults to
