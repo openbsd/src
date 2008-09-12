@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.106 2008/06/10 03:46:09 naddy Exp $ */
+/*	$OpenBSD: ntp.c,v 1.107 2008/09/12 10:46:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,11 +35,13 @@
 
 #define	PFD_PIPE_MAIN	0
 #define	PFD_HOTPLUG	1
-#define	PFD_MAX		2
+#define	PFD_PIPE_DNS	2
+#define	PFD_MAX		3
 
 volatile sig_atomic_t	 ntp_quit = 0;
 volatile sig_atomic_t	 ntp_report = 0;
 struct imsgbuf		*ibuf_main;
+struct imsgbuf		*ibuf_dns;
 struct ntpd_conf	*conf;
 u_int			 peer_cnt;
 u_int			 sensors_cnt;
@@ -47,6 +49,7 @@ time_t			 lastreport;
 
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
+int	ntp_dispatch_imsg_dns(void);
 void	peer_add(struct ntp_peer *);
 void	peer_remove(struct ntp_peer *);
 void	report_peers(int);
@@ -69,10 +72,10 @@ pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 {
 	int			 a, b, nfds, i, j, idx_peers, timeout;
-	int			 hotplugfd, nullfd;
+	int			 hotplugfd, nullfd, pipe_dns[2];
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
-	pid_t			 pid;
+	pid_t			 pid, dns_pid;
 	struct pollfd		*pfd = NULL;
 	struct servent		*se;
 	struct listen_addr	*la;
@@ -106,6 +109,11 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
 	hotplugfd = sensor_hotplugfd();
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_dns) == -1)
+		fatal("socketpair");
+	dns_pid = ntp_dns(pipe_dns, nconf, pw);
+	close(pipe_dns[1]);
 
 	if (stat(pw->pw_dir, &stb) == -1)
 		fatal("stat");
@@ -146,6 +154,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_main, pipe_prnt[1]);
+	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
+		fatal(NULL);
+	imsg_init(ibuf_dns, pipe_dns[0]);
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		client_peer_init(p);
@@ -212,6 +223,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_HOTPLUG].fd = hotplugfd;
 		pfd[PFD_HOTPLUG].events = POLLIN;
+		pfd[PFD_PIPE_DNS].fd = ibuf_dns->fd;
+		pfd[PFD_PIPE_DNS].events = POLLIN;
 
 		i = PFD_MAX;
 		TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
@@ -289,6 +302,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 
 		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
+		if (ibuf_dns->w.queued > 0)
+			pfd[PFD_PIPE_DNS].events |= POLLOUT;
 
 		timeout = nextaction - getmonotime();
 		if (timeout < 0)
@@ -309,6 +324,18 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & (POLLIN|POLLERR)) {
 			nfds--;
 			if (ntp_dispatch_imsg() == -1)
+				ntp_quit = 1;
+		}
+
+		if (nfds > 0 && (pfd[PFD_PIPE_DNS].revents & POLLOUT))
+			if (msgbuf_write(&ibuf_dns->w) < 0) {
+				log_warn("pipe write error (to dns engine)");
+				ntp_quit = 1;
+			}
+
+		if (nfds > 0 && pfd[PFD_PIPE_DNS].revents & (POLLIN|POLLERR)) {
+			nfds--;
+			if (ntp_dispatch_imsg_dns() == -1)
 				ntp_quit = 1;
 		}
 
@@ -345,6 +372,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 	msgbuf_write(&ibuf_main->w);
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
+	msgbuf_write(&ibuf_dns->w);
+	msgbuf_clear(&ibuf_dns->w);
+	free(ibuf_dns);
 
 	log_info("ntp engine exiting");
 	_exit(0);
@@ -355,10 +385,6 @@ ntp_dispatch_imsg(void)
 {
 	struct imsg		 imsg;
 	int			 n;
-	struct ntp_peer		*peer, *npeer;
-	u_int16_t		 dlen;
-	u_char			*p;
-	struct ntp_addr		*h;
 
 	if ((n = imsg_read(ibuf_main)) == -1)
 		return (-1);
@@ -386,6 +412,40 @@ ntp_dispatch_imsg(void)
 				conf->status.synced = 0;
 			}
 			break;
+		default:
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	return (0);
+}
+
+int
+ntp_dispatch_imsg_dns(void)
+{
+	struct imsg		 imsg;
+	struct ntp_peer		*peer, *npeer;
+	u_int16_t		 dlen;
+	u_char			*p;
+	struct ntp_addr		*h;
+	int			 n;
+
+	if ((n = imsg_read(ibuf_dns)) == -1)
+		return (-1);
+
+	if (n == 0) {	/* connection closed */
+		log_warnx("ntp_dispatch_imsg_dns in ntp engine: pipe closed");
+		return (-1);
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf_dns, &imsg)) == -1)
+			return (-1);
+
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
 		case IMSG_HOST_DNS:
 			TAILQ_FOREACH(peer, &conf->ntp_peers, entry)
 				if (peer->id == imsg.hdr.peerid)
@@ -633,7 +693,7 @@ priv_host_dns(char *name, u_int32_t peerid)
 	u_int16_t	dlen;
 
 	dlen = strlen(name) + 1;
-	imsg_compose(ibuf_main, IMSG_HOST_DNS, peerid, 0, name, dlen);
+	imsg_compose(ibuf_dns, IMSG_HOST_DNS, peerid, 0, name, dlen);
 }
 
 void
@@ -727,4 +787,3 @@ report_peers(int always)
 		}
 	}
 }
-
