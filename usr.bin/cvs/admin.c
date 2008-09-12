@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.63 2008/06/20 16:32:06 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.64 2008/09/12 13:20:36 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -50,14 +50,14 @@ struct cvs_cmd cvs_cmd_admin = {
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
 static char	*alist, *comment, *elist, *logmsg, *logstr, *koptstr;
-static char	*oldfilename, *orange, *state, *statestr;
-static RCSNUM	*logrev;
+static char	*oldfilename, *orange, *state, *staterevstr;
 
 int
 cvs_admin(int argc, char **argv)
 {
 	int ch;
 	int flags;
+	char *statestr;
 	struct cvs_recursion cr;
 
 	flags = CR_RECURSE_DIRS;
@@ -181,6 +181,16 @@ cvs_admin(int argc, char **argv)
 			cvs_client_send_request("Argument -q");
 
 	} else {
+		if (statestr != NULL) {
+			if ((staterevstr = strchr(statestr, ':')) != NULL)
+				*staterevstr++ = '\0';
+			state = statestr;
+			if (rcs_state_check(state) < 0) {
+				cvs_log(LP_ERR, "invalid state `%s'", state);
+				state = NULL;
+			}
+		}
+
 		flags |= CR_REPO;
 		cr.fileproc = cvs_admin_local;
 	}
@@ -203,6 +213,7 @@ void
 cvs_admin_local(struct cvs_file *cf)
 {
 	int i;
+	RCSNUM *rev;
 
 	cvs_log(LP_TRACE, "cvs_admin_local(%s)", cf->file_path);
 
@@ -314,19 +325,19 @@ cvs_admin_local(struct cvs_file *cf)
 		}
 
 		*logmsg++ = '\0';
-		if ((logrev = rcsnum_parse(logstr)) == NULL) {
+		if ((rev = rcsnum_parse(logstr)) == NULL) {
 			cvs_log(LP_ERR, "`%s' bad revision number", logstr);
 			return;
 		}
 
-		if (rcs_rev_setlog(cf->file_rcs, logrev, logmsg) < 0) {
+		if (rcs_rev_setlog(cf->file_rcs, rev, logmsg) < 0) {
 			cvs_log(LP_ERR, "failed to set logmsg for `%s' to `%s'",
 			    logstr, logmsg);
-			rcsnum_free(logrev);
+			rcsnum_free(rev);
 			return;
 		}
 
-		rcsnum_free(logrev);
+		rcsnum_free(rev);
 	}
 
 	if (orange != NULL) {
@@ -351,42 +362,24 @@ cvs_admin_local(struct cvs_file *cf)
 		}
 	}
 
-	if (statestr != NULL) {
-		struct cvs_argvector *sargv;
-
-		sargv = cvs_strsplit(statestr, ":");
-		if (sargv->argv[1] != NULL) {
-			state = xstrdup(sargv->argv[0]);
-
-			if ((logrev = rcsnum_parse(sargv->argv[1])) == NULL) {
-				cvs_log(LP_ERR, "`%s' bad revision number", statestr);
-				cvs_argv_destroy(sargv);
-				xfree(state);
+	if (state != NULL) {
+		if (staterevstr != NULL) {
+			if ((rev = rcsnum_parse(staterevstr)) == NULL) {
+				cvs_log(LP_ERR, "`%s' bad revision number",
+				    staterevstr);
 				return;
 			}
 		} else if (cf->file_rcs->rf_head != NULL) {
-			state = xstrdup(statestr);
-			logrev = rcsnum_alloc();
-			rcsnum_cpy(cf->file_rcs->rf_head, logrev, 0);
+			rev = rcsnum_alloc();
+			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
 		} else {
 			cvs_log(LP_ERR, "head revision missing");
-			cvs_argv_destroy(sargv);
 			return;
 		}
 
-		if (rcs_state_check(state) < 0) {
-			cvs_log(LP_ERR, "invalid state `%s'", state);
-			cvs_argv_destroy(sargv);
-			rcsnum_free(logrev);
-			xfree(state);
-			return;
-		}
+		(void)rcs_state_set(cf->file_rcs, rev, state);
 
-		(void)rcs_state_set(cf->file_rcs, logrev, state);
-
-		cvs_argv_destroy(sargv);
-		rcsnum_free(logrev);
-		xfree(state);
+		rcsnum_free(rev);
 	}
 
 	if (lkmode != RCS_LOCK_INVAL)
