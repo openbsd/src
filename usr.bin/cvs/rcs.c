@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.278 2008/06/26 21:31:40 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.279 2008/09/12 13:11:15 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2608,7 +2608,7 @@ rcs_state_set(RCSFILE *rfp, RCSNUM *rev, const char *state)
 int
 rcs_state_check(const char *state)
 {
-	if (strchr(state, ' ') != NULL)
+	if (strcmp(state, RCS_STATE_DEAD) && strcmp(state, RCS_STATE_EXP))
 		return (-1);
 
 	return (0);
