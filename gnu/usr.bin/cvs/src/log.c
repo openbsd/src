@@ -151,7 +151,7 @@ static const char *const log_usage[] =
     "\t-t\tOnly print header and descriptive text.\n",
     "\t-N\tDo not list tags.\n",
     "\t-b\tOnly list revisions on the default branch.\n",
-    "\t-r[revisions]\tSpecify revision(s)s to list.\n",
+    "\t-r[revisions]\tSpecify revision(s) to list.\n",
     "\t   rev1:rev2   Between rev1 and rev2, including rev1 and rev2.\n",
     "\t   rev1::rev2  Between rev1 and rev2, excluding rev1 and rev2.\n",
     "\t   rev:        rev and following revisions on the same branch.\n",
