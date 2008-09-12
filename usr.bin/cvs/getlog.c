@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.89 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.90 2008/09/12 13:38:35 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -215,6 +215,11 @@ cvs_log_local(struct cvs_file *cf)
 		return;
 	}
 
+	if (logrev != NULL)
+		nrev = cvs_revision_select(cf->file_rcs, logrev);
+	else
+		nrev = cf->file_rcs->rf_ndelta;
+
 	cvs_printf("\nRCS file: %s", cf->file_rpath);
 
 	if (cvs_cmdop != CVS_OP_RLOG)
@@ -259,11 +264,6 @@ cvs_log_local(struct cvs_file *cf)
 	    cf->file_rcs->rf_expand == NULL ? "kv" : cf->file_rcs->rf_expand);
 
 	cvs_printf("total revisions: %u", cf->file_rcs->rf_ndelta);
-
-	if (logrev != NULL)
-		nrev = cvs_revision_select(cf->file_rcs, logrev);
-	else
-		nrev = cf->file_rcs->rf_ndelta;
 
 	if (cf->file_rcs->rf_head != NULL &&
 	    !(runflags & L_HEAD) && !(runflags & L_HEAD_DESCR))
