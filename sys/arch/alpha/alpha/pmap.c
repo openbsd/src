@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.55 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: pmap.c,v 1.56 2008/09/12 08:43:18 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2129,6 +2129,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			/* nothing */
 		} else if (va <= ALPHA_K0SEG_END) {
 			pa = ALPHA_K0SEG_TO_PHYS(va);
+			*pap = pa;
 			rv = TRUE;
 		} else {
 			l3pte = PMAP_KERNEL_PTE(va);
