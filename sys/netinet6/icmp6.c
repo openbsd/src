@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.99 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.100 2008/09/12 12:53:55 henning Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 
 #include "faith.h"
 #include "carp.h"
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +97,10 @@
 
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 /* inpcb members */
@@ -1067,6 +1072,9 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		ip6cp.ip6c_finaldst = finaldst;
 		ip6cp.ip6c_src = &icmp6src;
 		ip6cp.ip6c_nxt = nxt;
+#if NPF > 0
+		pf_pkt_addr_changed(m);
+#endif
 
 		if (icmp6type == ICMP6_PACKET_TOO_BIG) {
 			notifymtu = ntohl(icmp6->icmp6_mtu);
