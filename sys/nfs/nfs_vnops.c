@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.102 2008/08/21 01:17:39 pedro Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.103 2008/09/12 16:17:57 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -528,6 +528,7 @@ nfs_setattr(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap = ap->a_vap;
+	int hint = NOTE_ATTRIB;
 	int error = 0;
 	u_quad_t tsize = 0;
 
@@ -592,7 +593,10 @@ nfs_setattr(v)
 		uvm_vnp_setsize(vp, np->n_size);
 	}
 
-	VN_KNOTE(vp, NOTE_ATTRIB); /* XXX setattrrpc? */
+	if (vap->va_size != VNOVAL && vap->va_size < tsize)
+		hint |= NOTE_TRUNCATE;
+
+	VN_KNOTE(vp, hint); /* XXX setattrrpc? */
 
 	return (error);
 }
