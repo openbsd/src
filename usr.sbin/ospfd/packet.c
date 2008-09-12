@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.25 2008/03/24 16:11:04 deraadt Exp $ */
+/*	$OpenBSD: packet.c,v 1.26 2008/09/12 09:54:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -333,7 +333,6 @@ find_iface(struct ospfd_conf *xconf, unsigned int ifindex, struct in_addr src)
 				break;
 			case IF_TYPE_POINTOPOINT:
 				if (ifindex == iface->ifindex &&
-				    iface->dst.s_addr == src.s_addr &&
 				    !iface->passive)
 					return (iface);
 				break;
