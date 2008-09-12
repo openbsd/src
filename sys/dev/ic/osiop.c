@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.33 2008/05/27 21:08:48 kettenis Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.34 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -376,10 +376,6 @@ osiop_scsicmd(xs)
 	struct osiop_acb *acb;
 	struct osiop_softc *sc = periph->adapter_softc;
 	int err, s;
-
-	/* XXXX ?? */
-	if (xs->flags & SCSI_DATA_UIO)
-		panic("osiop: scsi data uio requested");
 
 	/* XXXX ?? */
 	if (sc->sc_nexus && (xs->flags & SCSI_POLL))

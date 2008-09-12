@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.26 2007/11/05 17:12:41 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.27 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -953,9 +953,6 @@ ahb_scsi_cmd(xs)
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
-#ifdef TFS
-	struct iovec *iovp;
-#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
@@ -1026,76 +1023,56 @@ ahb_scsi_cmd(xs)
 		ecb->data_addr = KVTOPHYS(ecb->ahb_dma);
 		sg = ecb->ahb_dma;
 		seg = 0;
-#ifdef	TFS
-		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *) xs->data)->uio_iov;
-			datalen = ((struct uio *) xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < AHB_NSEG) {
-				sg->seg_addr = (physaddr)iovp->iov_base;
-				sg->seg_len = iovp->iov_len;
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
-		}
-		else
-#endif /*TFS */
-		{
-			/*
-			 * Set up the scatter gather block
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
-			datalen = xs->datalen;
-			thiskv = (long) xs->data;
-			thisphys = KVTOPHYS(thiskv);
 
-			while (datalen && seg < AHB_NSEG) {
-				bytes_this_seg = 0;
+		/*
+		 * Set up the scatter gather block
+		 */
+		SC_DEBUG(sc_link, SDEV_DB4,
+		    ("%d @0x%x:- ", xs->datalen, xs->data));
+		datalen = xs->datalen;
+		thiskv = (long) xs->data;
+		thisphys = KVTOPHYS(thiskv);
 
-				/* put in the base address */
-				sg->seg_addr = thisphys;
+		while (datalen && seg < AHB_NSEG) {
+			bytes_this_seg = 0;
 
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
+			/* put in the base address */
+			sg->seg_addr = thisphys;
 
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the last, just extend the
-					 * length
-					 */
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
+			SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
 
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
+			/* do it at least once */
+			nextphys = thisphys;
+			while (datalen && thisphys == nextphys) {
 				/*
-				 * next page isn't contiguous, finish the seg
+				 * This page is contiguous (physically)
+				 * with the last, just extend the
+				 * length
 				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				sg->seg_len = bytes_this_seg;
-				sg++;
-				seg++;
+				/* how far to the end of the page */
+				nextphys = (thisphys & ~PGOFSET) + NBPG;
+				bytes_this_page = nextphys - thisphys;
+				/**** or the data ****/
+				bytes_this_page = min(bytes_this_page,
+						      datalen);
+				bytes_this_seg += bytes_this_page;
+				datalen -= bytes_this_page;
+
+				/* get more ready for the next page */
+				thiskv = (thiskv & ~PGOFSET) + NBPG;
+				if (datalen)
+					thisphys = KVTOPHYS(thiskv);
 			}
+			/*
+			 * next page isn't contiguous, finish the seg
+			 */
+			SC_DEBUGN(sc_link, SDEV_DB4,
+			    ("(0x%x)", bytes_this_seg));
+			sg->seg_len = bytes_this_seg;
+			sg++;
+			seg++;
 		}
-		/*end of iov/kv decision */
+
 		ecb->data_length = seg * sizeof(struct ahb_dma_seg);
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 		if (datalen) {

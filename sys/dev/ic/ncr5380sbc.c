@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.19 2006/12/10 16:15:37 miod Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.20 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -606,9 +606,6 @@ ncr5380_scsi_cmd(xs)
 
 	if (sc->sc_flags & NCR5380_FORCE_POLLING)
 		flags |= SCSI_POLL;
-
-	if (flags & SCSI_DATA_UIO)
-		panic("ncr5380: scsi data uio requested");
 
 	s = splbio();
 

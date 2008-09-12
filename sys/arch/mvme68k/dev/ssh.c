@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.18 2008/08/05 04:29:03 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.19 2008/09/12 11:14:02 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -157,10 +157,6 @@ struct scsi_xfer *xs;
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
 	flags = xs->flags;
-
-	/* XXXX ?? */
-	if (flags & SCSI_DATA_UIO)
-		panic("ssh: scsi data uio requested");
 
 	/* XXXX ?? */
 	if (sc->sc_nexus && flags & SCSI_POLL)

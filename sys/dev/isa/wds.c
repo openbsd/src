@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.24 2007/11/05 17:12:41 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.25 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1056,9 +1056,6 @@ wds_scsi_cmd(xs)
 	int seg;
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
-#ifdef TFS
-	struct iovec *iovp;
-#endif
 	int s;
 #ifdef notyet
 	int mflags;
@@ -1084,14 +1081,6 @@ wds_scsi_cmd(xs)
 	scb->xs = xs;
 	scb->timeout = xs->timeout;
 
-	if (xs->flags & SCSI_DATA_UIO) {
-		/* XXX Fix me! */
-		/* Let's not worry about UIO. There isn't any code for the *
-		 * non-SG boards anyway! */
-		printf("%s: UIO is untested and disabled!\n", sc->sc_dev.dv_xname);
-		goto bad;
-	}
-
 	/* Zero out the command structure. */
 	bzero(&scb->cmd, sizeof scb->cmd);
 	bcopy(xs->cmd, &scb->cmd.scb, xs->cmdlen < 12 ? xs->cmdlen : 12);
@@ -1107,94 +1096,75 @@ wds_scsi_cmd(xs)
 	if (!NEEDBUFFER(sc) && xs->datalen) {
 		sg = scb->scat_gath;
 		seg = 0;
-#ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *)xs->data)->uio_iov;
-			datalen = ((struct uio *)xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < WDS_NSEG) {
-				ltophys(iovp->iov_base, sg->seg_addr);
-				ltophys(iovp->iov_len, sg->seg_len);
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
-		} else
-#endif /* TFS */
-		{
-			/*
-			 * Set up the scatter-gather block.
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
+
+		/*
+		 * Set up the scatter-gather block.
+		 */
+		SC_DEBUG(sc_link, SDEV_DB4,
+		    ("%d @0x%x:- ", xs->datalen, xs->data));
 
 #ifdef notyet
-			scb->data_nseg = isadma_map(xs->data, xs->datalen,
-						    scb->data_phys, mflags);
-			for (seg = 0; seg < scb->data_nseg; seg++) {
-				ltophys(scb->data_phys[seg].addr,
-				       sg[seg].seg_addr);
-				ltophys(scb->data_phys[seg].length,
-				       sg[seg].seg_len);
-			}
-#else
-			datalen = xs->datalen;
-			thiskv = (int)xs->data;
-			thisphys = KVTOPHYS(xs->data);
-
-			while (datalen && seg < WDS_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				ltophys(thisphys, sg->seg_addr);
-
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the last, just extend the
-					 * length
-					 */
-					/* check it fits on the ISA bus */
-					if (thisphys > 0xFFFFFF) {
-						printf("%s: DMA beyond"
-							" end of ISA\n",
-							sc->sc_dev.dv_xname);
-						goto bad;
-					}
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				ltophys(bytes_this_seg, sg->seg_len);
-				sg++;
-				seg++;
-#endif
-			}
+		scb->data_nseg = isadma_map(xs->data, xs->datalen,
+					    scb->data_phys, mflags);
+		for (seg = 0; seg < scb->data_nseg; seg++) {
+			ltophys(scb->data_phys[seg].addr,
+			       sg[seg].seg_addr);
+			ltophys(scb->data_phys[seg].length,
+			       sg[seg].seg_len);
 		}
-		/* end of iov/kv decision */
+#else
+		datalen = xs->datalen;
+		thiskv = (int)xs->data;
+		thisphys = KVTOPHYS(xs->data);
+
+		while (datalen && seg < WDS_NSEG) {
+			bytes_this_seg = 0;
+
+			/* put in the base address */
+			ltophys(thisphys, sg->seg_addr);
+
+			SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
+
+			/* do it at least once */
+			nextphys = thisphys;
+			while (datalen && thisphys == nextphys) {
+				/*
+				 * This page is contiguous (physically)
+				 * with the last, just extend the
+				 * length
+				 */
+				/* check it fits on the ISA bus */
+				if (thisphys > 0xFFFFFF) {
+					printf("%s: DMA beyond"
+						" end of ISA\n",
+						sc->sc_dev.dv_xname);
+					goto bad;
+				}
+				/* how far to the end of the page */
+				nextphys = (thisphys & ~PGOFSET) + NBPG;
+				bytes_this_page = nextphys - thisphys;
+				/**** or the data ****/
+				bytes_this_page = min(bytes_this_page,
+						      datalen);
+				bytes_this_seg += bytes_this_page;
+				datalen -= bytes_this_page;
+
+				/* get more ready for the next page */
+				thiskv = (thiskv & ~PGOFSET) + NBPG;
+				if (datalen)
+					thisphys = KVTOPHYS(thiskv);
+			}
+			/*
+			 * next page isn't contiguous, finish the seg
+			 */
+			SC_DEBUGN(sc_link, SDEV_DB4,
+			    ("(0x%x)", bytes_this_seg));
+			ltophys(bytes_this_seg, sg->seg_len);
+			sg++;
+			seg++;
+#endif
+		}
+
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 		if (datalen) {
 			/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.19 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: adv.c,v 1.20 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -743,18 +743,9 @@ adv_scsi_cmd(xs)
 		/*
                  * Map the DMA transfer.
                  */
-#ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-				  ccb->dmamap_xfer, (struct uio *) xs->data,
-						    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-		} else
-#endif				/* TFS */
-		{
-			error = bus_dmamap_load(dmat,
-			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-						(flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-		}
+		error = bus_dmamap_load(dmat,
+		      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
+					(flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
 		if (error) {
 			if (error == EFBIG) {

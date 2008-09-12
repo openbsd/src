@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.29 2007/12/29 03:04:19 dlg Exp $ */
+/*	$OpenBSD: iha.c,v 1.30 2008/09/12 11:14:04 miod Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -298,18 +298,10 @@ iha_scsi_cmd(xs)
 	pScb->SCB_BufCharsLeft = pScb->SCB_BufChars = xs->datalen;
 
 	if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
-#ifdef TFS
-		if (pScb->SCB_Flags & SCSI_DATA_UIO)
-			error = bus_dmamap_load_uio(sc->sc_dmat,
-			    pScb->SCB_DataDma, (struct uio *)xs->data,
-			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-		else
-#endif /* TFS */
-			error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_DataDma,
-			    xs->data, pScb->SCB_BufChars, NULL,
-			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_DataDma,
+		    xs->data, pScb->SCB_BufChars, NULL,
+		    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
 		if (error) {
 			sc_print_addr(xs->sc_link);

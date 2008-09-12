@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.12 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: bha.c,v 1.13 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -1430,20 +1430,10 @@ bha_scsi_cmd(xs)
 		/*
 		 * Map the DMA transfer.
 		 */
-#ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-			    ccb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		} else
-#endif /* TFS */
-		{
-			error = bus_dmamap_load(dmat,
-			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		}
+		error = bus_dmamap_load(dmat,
+		    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
+		    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+		    BUS_DMA_WAITOK);
 
 		if (error) {
 			if (error == EFBIG) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.58 2007/10/09 17:06:18 gilles Exp $	*/
+/*	$OpenBSD: aha.c,v 1.59 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1261,10 +1261,6 @@ aha_scsi_cmd(xs)
 	struct aha_ccb *ccb;
 	struct aha_scat_gath *sg;
 	int seg, flags;
-#ifdef	TFS
-	struct iovec *iovp;
-	int datalen;
-#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
@@ -1297,40 +1293,21 @@ aha_scsi_cmd(xs)
 	if (xs->datalen) {
 		sg = ccb->scat_gath;
 		seg = 0;
-#ifdef	TFS
-		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *)xs->data)->uio_iov;
-			datalen = ((struct uio *)xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < AHA_NSEG) {
-				ltophys(iovp->iov_base, sg->seg_addr);
-				ltophys(iovp->iov_len, sg->seg_len);
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
-		} else
-#endif /* TFS */
-		{
-			/*
-			 * Set up the scatter-gather block.
-			 */
-			if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
-			    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
-				aha_free_ccb(sc, ccb);
-				xs->error = XS_DRIVER_STUFFUP;
-				return (TRY_AGAIN_LATER);
-			}
-			for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {
-				ltophys(ccb->dmam->dm_segs[seg].ds_addr,
-				    sg[seg].seg_addr);
-				ltophys(ccb->dmam->dm_segs[seg].ds_len,
-				    sg[seg].seg_len);
-			}
+
+		/*
+		 * Set up the scatter-gather block.
+		 */
+		if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
+		    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
+			aha_free_ccb(sc, ccb);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+		for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {
+			ltophys(ccb->dmam->dm_segs[seg].ds_addr,
+			    sg[seg].seg_addr);
+			ltophys(ccb->dmam->dm_segs[seg].ds_len,
+			    sg[seg].seg_len);
 		}
 		if (flags & SCSI_DATA_OUT)
 			bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.16 2008/07/30 18:08:04 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.17 2008/09/12 11:14:04 miod Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -1115,33 +1115,16 @@ dpt_scsi_cmd(xs)
 	    
 	if (xs->datalen) {
 		xfer = ccb->ccb_dmamap_xfer;
-#ifdef	TFS
 #ifdef __NetBSD__
-		if ((flags & XS_CTL_DATA_UIO) != 0) {
-			error = bus_dmamap_load_uio(dmat, xfer, 
-			    (struct uio *)xs->data, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		error = bus_dmamap_load(dmat, xfer, xs->data, 
+		    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-		if ((xs->flags & SCSI_DATA_UIO) != 0) {
-			error = bus_dmamap_load_uio(dmat, xfer, 
-			    (xs->flags & SCSI_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		error = bus_dmamap_load(dmat, xfer, xs->data, 
+		    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 #endif /* __OpenBSD__ */
-		} else
-#endif /*TFS */
-		{
-#ifdef __NetBSD__
-			error = bus_dmamap_load(dmat, xfer, xs->data, 
-			    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-			error = bus_dmamap_load(dmat, xfer, xs->data, 
-			    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-#endif /* __OpenBSD__ */
-		}
 
 		if (error) {
 			printf("%s: dpt_scsi_cmd: ", sc->sc_dv.dv_xname); 
