@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.47 2008/01/05 07:33:37 brad Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.48 2008/09/12 12:27:27 blambert Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1802,8 +1802,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	struct str_message *msg;
 	struct str_msg_child *msg_child;
 
-	nstrp = pool_get(&systr_proc_pl, PR_WAITOK);
-	memset(nstrp, 0, sizeof(struct str_process));
+	nstrp = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
 
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    nstrp, strp->pid, npid));
@@ -1832,8 +1831,7 @@ systrace_msg_policyfree(struct fsystrace *fst, struct str_policy *strpol)
 	struct str_process *nstrp;
 	struct str_message *msg;
 
-	nstrp = pool_get(&systr_proc_pl, PR_WAITOK);
-	memset(nstrp, 0, sizeof(struct str_process));
+	nstrp = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
 
 	DPRINTF(("%s: free %d\n", __func__, strpol->nr));
 

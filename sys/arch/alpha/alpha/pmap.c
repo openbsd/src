@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.56 2008/09/12 08:43:18 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.57 2008/09/12 12:27:26 blambert Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1167,8 +1167,7 @@ pmap_create(void)
 		printf("pmap_create()\n");
 #endif
 
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	memset(pmap, 0, sizeof(*pmap));
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK|PR_ZERO);
 
 	pmap->pm_asn = pool_get(&pmap_asn_pool, PR_WAITOK);
 	pmap->pm_asngen = pool_get(&pmap_asngen_pool, PR_WAITOK);

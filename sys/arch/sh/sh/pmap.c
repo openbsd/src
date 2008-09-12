@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2008/09/12 12:27:27 blambert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -215,8 +215,7 @@ pmap_create()
 {
 	pmap_t pmap;
 
-	pmap = pool_get(&__pmap_pmap_pool, PR_WAITOK);
-	memset(pmap, 0, sizeof(struct pmap));
+	pmap = pool_get(&__pmap_pmap_pool, PR_WAITOK|PR_ZERO);
 	pmap->pm_asid = -1;
 	pmap->pm_refcnt = 1;
 	/* Allocate page table page holder (512 slot) */
