@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.50 2008/06/30 12:03:51 ragge Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.51 2008/09/12 16:12:08 moritz Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.50 2008/06/30 12:03:51 ragge Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.51 2008/09/12 16:12:08 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -1088,7 +1088,7 @@ lookup(p, cmd)
 /*
  * getline - a hacked up version of fgets to ignore TELNET escape codes.
  */
-char *
+int
 getline(s, n, iop)
 	char *s;
 	int n;
@@ -1106,7 +1106,7 @@ getline(s, n, iop)
 			if (debug)
 				syslog(LOG_DEBUG, "command: %s", s);
 			tmpline[0] = '\0';
-			return(s);
+			return(0);
 		}
 		if (c == 0)
 			tmpline[0] = '\0';
@@ -1137,11 +1137,22 @@ getline(s, n, iop)
 		    }
 		}
 		*cs++ = c;
-		if (--n <= 0 || c == '\n')
+		if (--n <= 0) {
+			/*
+			 * If command doesn't fit into buffer, discard the
+			 * rest of the command and indicate truncation.
+			 * This prevents the command to be split up into
+			 * multiple commands.
+			 */
+			while ((c = getc(iop)) != EOF && c != '\n')
+				;
+			return (-2);
+		}
+		if (c == '\n')
 			break;
 	}
 	if (c == EOF && cs == s)
-		return (NULL);
+		return (-1);
 	*cs++ = '\0';
 	if (debug) {
 		if (!guest && strncasecmp("pass ", s, 5) == 0) {
@@ -1161,7 +1172,7 @@ getline(s, n, iop)
 			syslog(LOG_DEBUG, "command: %.*s", len, s);
 		}
 	}
-	return (s);
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -1193,9 +1204,13 @@ yylex()
 
 		case CMD:
 			(void) alarm((unsigned) timeout);
-			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+			n = getline(cbuf, sizeof(cbuf)-1, stdin);
+			if (n == -1) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
+			} else if (n == -2) {
+				/* Ignore truncated command */
+				break;
 			}
 			(void) alarm(0);
 			if ((cp = strchr(cbuf, '\r'))) {

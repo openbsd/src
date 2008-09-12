@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.183 2008/06/30 12:03:51 ragge Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.184 2008/09/12 16:12:08 moritz Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.183 2008/06/30 12:03:51 ragge Exp $";
+    "$OpenBSD: ftpd.c,v 1.184 2008/09/12 16:12:08 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -2214,14 +2214,19 @@ static void
 myoob(void)
 {
 	char *cp;
+	int ret;
 
 	/* only process if transfer occurring */
 	if (!transflag)
 		return;
 	cp = tmpline;
-	if (getline(cp, 7, stdin) == NULL) {
+	ret = getline(cp, 7, stdin);
+	if (ret == -1) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
+	} else if (ret == -2) {
+		/* Ignore truncated command */
+		return;
 	}
 	upper(cp);
 	if (strcmp(cp, "ABOR\r\n") == 0) {
