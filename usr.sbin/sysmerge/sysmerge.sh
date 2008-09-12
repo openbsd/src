@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.22 2008/09/06 13:25:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.23 2008/09/12 13:23:17 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -37,7 +37,23 @@ clean_src() {
 	fi
 }
 
+# remove newly created work directory and exit with status 1
+error_rm_wrkdir() {
+	rmdir ${WRKDIR} 2> /dev/null
+	exit 1
+}
+
+usage() {
+	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
+}
+
 trap "clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+
+if [ `id -u` -ne 0 ]; then
+	echo " *** ERROR: Need root privileges to run this script"
+	usage
+	error_rm_wrkdir
+fi
 
 if [ -z "${FETCH_CMD}" ]; then
 	if [ -z "${FTP_KEEPALIVE}" ]; then
@@ -454,72 +470,56 @@ do_post() {
 }
 
 
-ARGS=`getopt abs:x: $*`
-if [ $? -ne 0 ]; then
-	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
-	exit 1
-fi
-
-if [ `id -u` -ne 0 ]; then
-	echo " *** ERROR: Need root privilege to run this script"
-	exit 1
-fi
-
-set -- ${ARGS}
-while [ $# -ne 0 ]
-do
-	case "$1" in
-	-a)
+while getopts abs:x: arg; do
+	case ${arg} in
+	a)
 		AUTOMODE=1
-		shift;;
-	-b)
+		;;
+	b)
 		BATCHMODE=1
-		shift;;
-	-s)
-		WHERE="${2}"
-		shift 2
-		if [ -f "${WHERE}/etc/Makefile" ]; then
-			SRCDIR=${WHERE}
-		elif [ -f "${WHERE}" ] && echo -n ${WHERE} |		\
-		    awk -F/ '{print $NF}' | 				\
+		;;
+	s)
+		if [ -f "${OPTARG}/etc/Makefile" ]; then
+			SRCDIR=${OPTARG}
+		elif [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
+		    awk -F/ '{print $NF}' | \
 		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
-			TGZ=${WHERE}
-		elif echo ${WHERE} | \
+			TGZ=${OPTARG}
+		elif echo ${OPTARG} | \
 		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
 			TGZ=${WRKDIR}/etc.tgz
-			TGZURL="${WHERE}"
+			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
 				echo " *** ERROR: Could not retrieve ${TGZURL}"
-				exit 1
+				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${WHERE} is not a path to src nor etcXX.tgz"
-			exit 1
+			echo " *** ERROR: ${OPTARG} is not a path to src nor etcXX.tgz"
+			error_rm_wrkdir
 		fi
 		;;
-	-x)
-		WHERE="${2}"
-		shift 2
-		if [ -f "${WHERE}" ] && echo -n ${WHERE} | 		\
-		    awk -F/ '{print $NF}' | 				\
+	x)
+		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
+		    awk -F/ '{print $NF}' | \
 		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
-			XTGZ=${WHERE}
-		elif echo ${WHERE} | \
+			XTGZ=${OPTARG}
+		elif echo ${OPTARG} | \
 		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
 			XTGZ=${WRKDIR}/xetc.tgz
-			XTGZURL="${WHERE}"
+			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
 				echo " *** ERROR: Could not retrieve ${XTGZURL}"
-				exit 1
+				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${WHERE} is not a path to xetcXX.tgz"
-			exit 1
+			echo " *** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
+			error_rm_wrkdir
 		fi
 		;;
-	--)
-		shift
-		break;;
+	*)
+		usage
+		error_rm_wrkdir
+		;;
 	esac
 done
 
