@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.71 2008/08/08 20:44:38 blambert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.72 2008/09/12 15:41:40 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -74,18 +74,45 @@
 #include <nfs/nfs_var.h>
 
 /* Global defs. */
-extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
-						struct nfssvc_sock *,
-						struct proc *, struct mbuf **);
 extern int nfs_numasync;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
 struct nfssvc_sock *nfs_udpsock;
 int nfsd_waiting = 0;
+
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
 static struct nfsdrt nfsdrt;
+int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
+    struct nfssvc_sock *, struct proc *, struct mbuf **) = {
+	nfsrv_null,
+	nfsrv_getattr,
+	nfsrv_setattr,
+	nfsrv_lookup,
+	nfsrv3_access,
+	nfsrv_readlink,
+	nfsrv_read,
+	nfsrv_write,
+	nfsrv_create,
+	nfsrv_mkdir,
+	nfsrv_symlink,
+	nfsrv_mknod,
+	nfsrv_remove,
+	nfsrv_rmdir,
+	nfsrv_rename,
+	nfsrv_link,
+	nfsrv_readdir,
+	nfsrv_readdirplus,
+	nfsrv_statfs,
+	nfsrv_fsinfo,
+	nfsrv_pathconf,
+	nfsrv_commit,
+	nfsrv_noop,
+	nfsrv_noop,
+	nfsrv_noop,
+	nfsrv_noop
+};
 #endif
 
 struct nfssvc_sockhead nfssvc_sockhead;

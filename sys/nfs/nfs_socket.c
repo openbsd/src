@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.67 2008/07/10 18:17:56 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.68 2008/09/12 15:41:40 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1589,37 +1589,6 @@ nfs_msg(p, server, msg)
 }
 
 #ifdef NFSSERVER
-int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
-				    struct nfssvc_sock *, struct proc *,
-				    struct mbuf **) = {
-	nfsrv_null,
-	nfsrv_getattr,
-	nfsrv_setattr,
-	nfsrv_lookup,
-	nfsrv3_access,
-	nfsrv_readlink,
-	nfsrv_read,
-	nfsrv_write,
-	nfsrv_create,
-	nfsrv_mkdir,
-	nfsrv_symlink,
-	nfsrv_mknod,
-	nfsrv_remove,
-	nfsrv_rmdir,
-	nfsrv_rename,
-	nfsrv_link,
-	nfsrv_readdir,
-	nfsrv_readdirplus,
-	nfsrv_statfs,
-	nfsrv_fsinfo,
-	nfsrv_pathconf,
-	nfsrv_commit,
-	nfsrv_noop,
-	nfsrv_noop,
-	nfsrv_noop,
-	nfsrv_noop
-};
-
 /*
  * Socket upcall routine for the nfsd sockets.
  * The caddr_t arg is a pointer to the "struct nfssvc_sock".
