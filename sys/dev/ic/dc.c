@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.102 2008/09/11 06:49:14 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.103 2008/09/12 05:44:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2317,13 +2317,12 @@ dc_txeof(struct dc_softc *sc)
 		sc->dc_cdata.dc_tx_cnt--;
 		DC_INC(idx, DC_TX_LIST_CNT);
 	}
+	sc->dc_cdata.dc_tx_cons = idx;
 
-	if (idx != sc->dc_cdata.dc_tx_cons) {
-		/* some buffers have been freed */
-		sc->dc_cdata.dc_tx_cons = idx;
+	if (DC_TX_LIST_CNT - sc->dc_cdata.dc_tx_cnt > 5)
 		ifp->if_flags &= ~IFF_OACTIVE;
-	}
-	ifp->if_timer = (sc->dc_cdata.dc_tx_cnt == 0) ? 0 : 5;
+	if (sc->dc_cdata.dc_tx_cnt == 0)
+		ifp->if_timer = 0;
 }
 
 void
