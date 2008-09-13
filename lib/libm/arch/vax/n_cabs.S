@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_cabs.S,v 1.4 2008/09/13 21:25:40 martynas Exp $	*/
 /*	$NetBSD: n_cabs.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -49,14 +49,6 @@ ALTENTRY(hypot)
 ENTRY(cabs, 0x8000|R2|R3|R4|R5|R6)	# enable floating overflow
 	movq	4(ap),r0	# r0:1 = x
 	movq	12(ap),r2	# r2:3 = y
-	jmp	cabs2
-/*	entry for Fortran use, call by:   d = abs(z) */
-ENTRY(z_abs, 0x8000|R2|R3|R4|R5|R6)	# enable floating overflow
-	movl	4(ap),r2	# indirect addressing is necessary here
-	movq	(r2)+,r0	# r0:1 = x
-	movq	(r2),r2		# r2:3 = y
-
-cabs2:
 	bicw3	$0x7f,r0,r4	# r4 has signed biased exp of x
 	cmpw	$0x8000,r4
 	jeql	return		# x is a reserved operand, so return it

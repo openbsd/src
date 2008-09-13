@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.10 2008/07/17 15:36:28 martynas Exp $	*/
+/*	$OpenBSD: n_cabs.c,v 1.11 2008/09/13 21:25:40 martynas Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -175,12 +175,6 @@ double
 cabs(struct complex z)
 {
 	return hypot(z.x,z.y);
-}
-
-double
-z_abs(struct complex *z)
-{
-	return hypot(z->x,z->y);
 }
 
 /* A faster but less accurate version of cabs(x,y) */
