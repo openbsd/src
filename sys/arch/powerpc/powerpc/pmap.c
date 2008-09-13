@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2008/06/14 10:55:20 mk Exp $ */
+/*	$OpenBSD: pmap.c,v 1.106 2008/09/13 18:18:25 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -719,11 +719,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
-		/* XXX - future panic? */
-		printf("pted not preallocated in pmap_kernel() va %lx pa %lx\n",
+		panic("pted not preallocated in pmap_kernel() va %lx pa %lx\n",
 		    va, pa);
-		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);
-		pmap_vp_enter(pm, va, pted);
 	}
 
 	if (cache == PMAP_CACHE_DEFAULT) {
