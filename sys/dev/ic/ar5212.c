@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.47 2008/08/29 10:05:00 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.48 2008/09/13 13:35:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -229,7 +229,12 @@ ar5k_ar5212_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 
 	/* Identify the chipset (this has to be done in an early step) */
 	hal->ah_version = AR5K_AR5212;
-	if (srev == AR5K_SREV_VER_AR2425) {
+	if (device == AR5K_VERSION_DEV) {
+		hal->ah_radio = AR5K_AR5413;
+		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5424;
+		hal->ah_radio_5ghz_revision = hal->ah_radio_2ghz_revision =
+		    AR5K_SREV_VER_AR5413;
+	} else if (srev == AR5K_SREV_VER_AR2425) {
 		hal->ah_radio = AR5K_AR2425;
 		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112;
 	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112) {
@@ -2809,9 +2814,21 @@ HAL_BOOL
 ar5k_ar5212_get_capabilities(struct ath_hal *hal)
 {
 	u_int16_t ee_header;
+	u_int a, b, g;
 
 	/* Capabilities stored in the EEPROM */
 	ee_header = hal->ah_capabilities.cap_eeprom.ee_header;
+
+	a = AR5K_EEPROM_HDR_11A(ee_header);
+	b = AR5K_EEPROM_HDR_11B(ee_header);
+	g = AR5K_EEPROM_HDR_11G(ee_header);
+
+	/*
+	 * If the EEPROM is not reporting any mode, we try 11b.
+	 * This might fix a few broken devices with invalid EEPROM.
+	 */
+	if (a == b == g == 0)
+		b = 1;
 
 	/*
 	 * XXX The AR5212 tranceiver supports frequencies from 4920 to 6100GHz
@@ -2827,7 +2844,7 @@ ar5k_ar5212_get_capabilities(struct ath_hal *hal)
 	 * Set radio capabilities
 	 */
 
-	if (AR5K_EEPROM_HDR_11A(ee_header)) {
+	if (a) {
 		hal->ah_capabilities.cap_range.range_5ghz_min = 5005; /* 4920 */
 		hal->ah_capabilities.cap_range.range_5ghz_max = 6100;
 
@@ -2837,14 +2854,14 @@ ar5k_ar5212_get_capabilities(struct ath_hal *hal)
 	}
 
 	/* This chip will support 802.11b if the 2GHz radio is connected */
-	if (AR5K_EEPROM_HDR_11B(ee_header) || AR5K_EEPROM_HDR_11G(ee_header)) {
+	if (b || g) {
 		hal->ah_capabilities.cap_range.range_2ghz_min = 2412; /* 2312 */
 		hal->ah_capabilities.cap_range.range_2ghz_max = 2732;
 
-		if (AR5K_EEPROM_HDR_11B(ee_header))
+		if (b)
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11B;
 #if 0
-		if (AR5K_EEPROM_HDR_11G(ee_header))
+		if (g)
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11G;
 #endif
 	}

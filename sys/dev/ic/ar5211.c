@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.39 2008/08/29 10:05:00 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.40 2008/09/13 13:35:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2402,9 +2402,21 @@ HAL_BOOL
 ar5k_ar5211_get_capabilities(struct ath_hal *hal)
 {
 	u_int16_t ee_header;
+	u_int a, b, g;
 
 	/* Capabilities stored in the EEPROM */
 	ee_header = hal->ah_capabilities.cap_eeprom.ee_header;
+
+	a = AR5K_EEPROM_HDR_11A(ee_header);
+	b = AR5K_EEPROM_HDR_11B(ee_header);
+	g = AR5K_EEPROM_HDR_11G(ee_header);
+
+	/*
+	 * If the EEPROM is not reporting any mode, we try 11b.
+	 * This might fix a few broken devices with invalid EEPROM.
+	 */
+	if (a == b == g == 0)
+		b = 1;
 
 	/*
 	 * XXX The AR5211 tranceiver supports frequencies from 4920 to 6100GHz
@@ -2420,7 +2432,7 @@ ar5k_ar5211_get_capabilities(struct ath_hal *hal)
 	 * Set radio capabilities
 	 */
 
-	if (AR5K_EEPROM_HDR_11A(ee_header)) {
+	if (a) {
 		hal->ah_capabilities.cap_range.range_5ghz_min = 5005; /* 4920 */
 		hal->ah_capabilities.cap_range.range_5ghz_max = 6100;
 
@@ -2429,14 +2441,14 @@ ar5k_ar5211_get_capabilities(struct ath_hal *hal)
 	}
 
 	/* This chip will support 802.11b if the 2GHz radio is connected */
-	if (AR5K_EEPROM_HDR_11B(ee_header) || AR5K_EEPROM_HDR_11G(ee_header)) {
+	if (b || g) {
 		hal->ah_capabilities.cap_range.range_2ghz_min = 2412; /* 2312 */
 		hal->ah_capabilities.cap_range.range_2ghz_max = 2732;
 
-		if (AR5K_EEPROM_HDR_11B(ee_header))
+		if (b)
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11B;
 #if 0
-		if (AR5K_EEPROM_HDR_11G(ee_header))
+		if (g)
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11G;
 #endif
 	}
