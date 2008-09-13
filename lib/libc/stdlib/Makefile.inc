@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.40 2008/09/07 20:36:08 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.41 2008/09/13 22:48:45 martynas Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
@@ -64,7 +64,7 @@ MLINKS+=random.3 srandom.3 random.3 srandomdev.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
 MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
-MLINKS+=strtod.3 strtof.3
+MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
 MLINKS+=strtol.3 strtoll.3 strtol.3 strtoq.3 strtol.3 strtoimax.3
 MLINKS+=strtoul.3 strtoull.3 strtoul.3 strtouq.3 strtoul.3 strtoumax.3
 MLINKS+=tsearch.3 tfind.3

@@ -29,17 +29,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtod.3,v 1.13 2008/09/13 22:25:49 martynas Exp $
+.\"	$OpenBSD: strtod.3,v 1.14 2008/09/13 22:48:45 martynas Exp $
 .\"
 .Dd $Mdocdate: September 13 2008 $
 .Dt STRTOD 3
 .Os
 .Sh NAME
 .Nm strtod ,
-.Nm strtof
+.Nm strtof ,
+.Nm strtold
 .Nd convert
 .Tn ASCII
-string to double or float
+string to double, float or long double
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Fd #include <stdlib.h>
@@ -48,6 +49,9 @@ string to double or float
 .Pp
 .Ft float
 .Fn strtof "const char *nptr" "char **endptr"
+.Pp
+.Ft long double
+.Fn strtold "const char *nptr" "char **endptr"
 .Sh DESCRIPTION
 The
 .Fn strtod
@@ -62,6 +66,13 @@ function converts the initial portion of the string pointed to by
 .Fa nptr
 to
 .Li float
+representation.
+The
+.Fn strtold
+function converts the initial portion of the string pointed to by
+.Fa nptr
+to
+.Li long double
 representation.
 .Pp
 The expected form of the string is an optional plus
@@ -81,9 +92,10 @@ Leading whitespace characters in the string (as defined by the
 function) are skipped.
 .Sh RETURN VALUES
 The
-.Fn strtod
-and
+.Fn strtod ,
 .Fn strtof
+and
+.Fn strtold
 functions return the converted value, if any.
 .Pp
 If
@@ -123,9 +135,11 @@ Overflow or underflow occurred.
 .Sh STANDARDS
 The
 .Fn strtod
-function conform to
-.St -ansiC-89
-and
+function conforms to
+.St -ansiC-89 .
+The
 .Fn strtof
-conform to
+and
+.Fn strtold
+functions conform to
 .St -ansiC-99 .
