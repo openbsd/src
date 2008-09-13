@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.82 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.83 2008/09/13 12:33:52 chl Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1112,7 +1112,7 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
-	int error;
+	int error = 0;
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "  dev=%lx", sdp->swd_dev,0,0,0);
 
