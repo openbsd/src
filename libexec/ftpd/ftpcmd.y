@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.51 2008/09/12 16:12:08 moritz Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.52 2008/09/13 12:04:49 moritz Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.51 2008/09/12 16:12:08 moritz Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.52 2008/09/13 12:04:49 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -1144,7 +1144,7 @@ getline(s, n, iop)
 			 * This prevents the command to be split up into
 			 * multiple commands.
 			 */
-			while ((c = getc(iop)) != EOF && c != '\n')
+			while (c != '\n' && (c = getc(iop)) != EOF)
 				;
 			return (-2);
 		}
@@ -1209,8 +1209,9 @@ yylex()
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
 			} else if (n == -2) {
-				/* Ignore truncated command */
-				break;
+				reply(500, "Command too long.");
+				alarm(0);
+				continue;
 			}
 			(void) alarm(0);
 			if ((cp = strchr(cbuf, '\r'))) {
