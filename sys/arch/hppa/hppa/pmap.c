@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.132 2008/04/18 06:42:21 djm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.133 2008/09/14 10:09:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -438,7 +438,7 @@ pmap_bootstrap(vstart)
 	extern int resvphysmem, etext, __rodata_end, __data_start;
 	extern u_int *ie_mem;
 	extern paddr_t hppa_vtop;
-	vaddr_t va, addr = round_page(vstart), eaddr, t;
+	vaddr_t va, addr = round_page(vstart), eaddr;
 	vsize_t size;
 	struct pmap *kpm;
 	int npdes, nkpdes;
@@ -522,11 +522,24 @@ pmap_bootstrap(vstart)
 
 	/* XXX PCXS needs this inserted into an IBTLB */
 	/*	and can block-map the whole phys w/ another */
-	t = (vaddr_t)&etext;
-	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
-	    pmap_sid2pid(HPPA_SID_KERNEL) |
-	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
-		printf("WARNING: cannot block map kernel text\n");
+
+	/*
+	 * We use separate mappings for the first 4MB of kernel text
+	 * and whetever is left to avoid the mapping to cover kernel
+	 * data.
+	 */
+	for (va = 0; va < (vaddr_t)&etext; va += size) {
+		size = (vaddr_t)&etext - va;
+		if (size > 4 * 1024 * 1024)
+			size = 4 * 1024 * 1024;
+
+		if (btlb_insert(HPPA_SID_KERNEL, va, va, &size,
+		    pmap_sid2pid(HPPA_SID_KERNEL) |
+		    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0) {
+			printf("WARNING: cannot block map kernel text\n");
+			break;
+	       }
+	}
 
 	if (&__rodata_end < &__data_start) {
 		physical_steal = (vaddr_t)&__rodata_end;
