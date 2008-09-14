@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.55 2008/08/26 18:29:12 martynas Exp $
+.\"	$OpenBSD: printf.3,v 1.56 2008/09/14 11:44:54 martynas Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 26 2008 $
+.Dd $Mdocdate: September 14 2008 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -203,6 +203,8 @@ for
 .Cm X
 conversions) prepended to it.
 For
+.Cm a ,
+.Cm A ,
 .Cm e ,
 .Cm E ,
 .Cm f ,
@@ -254,6 +256,8 @@ if both are given.
 A space, specifying that a blank should be left before a positive number
 produced by a signed conversion
 .Pf ( Cm d ,
+.Cm a ,
+.Cm A ,
 .Cm e ,
 .Cm E ,
 .Cm f ,
@@ -292,6 +296,8 @@ This gives the minimum number of digits to appear for
 and
 .Cm X
 conversions, the number of digits to appear after the decimal-point for
+.Cm a ,
+.Cm A ,
 .Cm e ,
 .Cm E ,
 .Cm f ,
@@ -351,6 +357,8 @@ equivalent in size to a
 .Vt size_t .
 .Pp
 The following length modifier is valid for the
+.Cm a ,
+.Cm A ,
 .Cm e ,
 .Cm E ,
 .Cm f ,
@@ -502,6 +510,54 @@ is used if the exponent from its conversion is less than -4 or greater than
 or equal to the precision.
 Trailing zeros are removed from the fractional part of the result; a
 decimal point appears only if it is followed by at least one digit.
+.It Cm aA
+The
+.Li double
+argument is rounded and converted to hexadecimal notation in the style
+.Sm off
+.Pf [\-]0xh Cm \&. No hhh Cm p No [\\*(Pm]d
+.Sm on
+where the number of digits after the hexadecimal-point character
+is equal to the precision specification.
+If the precision is missing, it is taken as enough to represent
+the floating-point number exactly, and no rounding occurs.
+If the precision is zero, no hexadecimal-point character appears.
+The
+.Cm p
+is a literal character
+.Ql p ,
+and the exponent consists of a positive or negative sign
+followed by a decimal number representing an exponent of 2.
+The
+.Cm A
+conversion uses the prefix
+.Dq Li 0X
+(rather than
+.Dq Li 0x ) ,
+the letters
+.Dq Li ABCDEF
+(rather than
+.Dq Li abcdef )
+to represent the hex digits, and the letter
+.Ql P
+(rather than
+.Ql p )
+to separate the mantissa and exponent.
+.Pp
+Note that there may be multiple valid ways to represent floating-point
+numbers in this hexadecimal format.
+For example,
+.Li 0x3.24p+0 , 0x6.48p-1
+and
+.Li 0xc.9p-2
+are all equivalent.
+The format chosen depends on the internal representation of the
+number, but the implementation guarantees that the length of the
+mantissa will be minimized.
+Zeroes are always represented with a mantissa of 0 (preceded by a
+.Ql -
+if appropriate) and an exponent of
+.Li +0 .
 .It Cm c
 The
 .Li int

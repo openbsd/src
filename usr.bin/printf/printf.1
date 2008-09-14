@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.19 2008/09/08 20:16:13 martynas Exp $
+.\"	$OpenBSD: printf.1,v 1.20 2008/09/14 11:44:54 martynas Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: September 8 2008 $
+.Dd $Mdocdate: September 14 2008 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -139,6 +139,8 @@ format, a non-zero result has the string
 .Pq Li 0X
 prepended to it.
 For
+.Cm a ,
+.Cm A ,
 .Cm e ,
 .Cm E ,
 .Cm f ,
@@ -206,7 +208,7 @@ from a string; if the digit string is missing, the precision is treated
 as zero.
 .It Format:
 A character which indicates the type of format to use (one of
-.Cm diouxXfFeEgGbcs ) .
+.Cm diouxXfFeEgGaAbcs ) .
 .El
 .Pp
 A field width or precision may be
@@ -243,7 +245,7 @@ is explicitly 0, no digits and no decimal point are printed.
 If the argument is infinity, it will be converted to [-]inf
 .Pq Cm f
 or [-]INF
-.Pq Cm F ,   
+.Pq Cm F ,
 respectively.
 If the argument is not-a-number (NaN), it will be converted to
 [-]nan
@@ -276,6 +278,17 @@ or in style
 .Cm e
 .Pq Cm E
 whichever gives full precision in minimum space.
+.It Cm aA
+The
+.Ar argument
+is printed in style
+.Sm off
+.Pf [\-]0xh Cm \&. No hhh Cm p No [\\*(Pm]d
+.Sm on
+where there is one digit before the hexadecimal point and the number
+after is equal to the precision specification for the argument.
+When the precision is missing, enough digits are produced to convey
+the argument's exact double-precision floating-point representation.
 .It Cm b
 Characters from the string
 .Ar argument
