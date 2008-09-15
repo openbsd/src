@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.5 2006/12/18 01:08:58 stevesk Exp $ */
+/*	$OpenBSD: bpf.c,v 1.6 2008/09/15 20:39:21 claudio Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -67,7 +67,7 @@ if_register_bpf(struct interface_info *info)
 	for (b = 0; 1; b++) {
 		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
 		sock = open(filename, O_RDWR, 0);
-		if (sock < 0) {
+		if (sock == -1) {
 			if (errno == EBUSY)
 				continue;
 			else
@@ -77,7 +77,7 @@ if_register_bpf(struct interface_info *info)
 	}
 
 	/* Set the BPF device to point at this interface. */
-	if (ioctl(sock, BIOCSETIF, info->ifp) < 0)
+	if (ioctl(sock, BIOCSETIF, info->ifp) == -1)
 		error("Can't attach interface %s to bpf device %s: %m",
 		    info->name, filename);
 
@@ -170,7 +170,7 @@ if_register_receive(struct interface_info *info)
 	info->rfdesc = if_register_bpf(info);
 
 	/* Make sure the BPF version is in range... */
-	if (ioctl(info->rfdesc, BIOCVERSION, &v) < 0)
+	if (ioctl(info->rfdesc, BIOCVERSION, &v) == -1)
 		error("Can't get BPF version: %m");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
@@ -182,15 +182,15 @@ if_register_receive(struct interface_info *info)
 	 * comes in, rather than waiting for the input buffer to fill
 	 * with packets.
 	 */
-	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) < 0)
+	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) == -1)
 		error("Can't set immediate mode on bpf device: %m");
 
 	/* make sure kernel fills in the source ethernet address */
-	if (ioctl(info->rfdesc, BIOCSHDRCMPLT, &cmplt) < 0)
+	if (ioctl(info->rfdesc, BIOCSHDRCMPLT, &cmplt) == -1)
 		error("Can't set header complete flag on bpf device: %m");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) < 0)
+	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) == -1)
 		error("Can't get bpf buffer length: %m");
 	info->rbuf_max = sz;
 	info->rbuf = malloc(info->rbuf_max);
@@ -204,18 +204,18 @@ if_register_receive(struct interface_info *info)
 	p.bf_len = dhcp_bpf_filter_len;
 	p.bf_insns = dhcp_bpf_filter;
 
-	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
+	if (ioctl(info->rfdesc, BIOCSETF, &p) == -1)
 		error("Can't install packet filter program: %m");
 
 	/* Set up the bpf write filter program structure. */
 	p.bf_len = dhcp_bpf_wfilter_len;
 	p.bf_insns = dhcp_bpf_wfilter;
 
-	if (ioctl(info->rfdesc, BIOCSETWF, &p) < 0)
+	if (ioctl(info->rfdesc, BIOCSETWF, &p) == -1)
 		error("Can't install write filter program: %m");
 
 	/* make sure these settings cannot be changed after dropping privs */
-	if (ioctl(info->rfdesc, BIOCLOCK) < 0)
+	if (ioctl(info->rfdesc, BIOCLOCK) == -1)
 		error("Failed to lock bpf descriptor: %m");
 }
 
@@ -240,7 +240,7 @@ send_packet(struct interface_info *interface,
 	iov[1].iov_len = len;
 
 	result = writev(interface->wfdesc, iov, 2);
-	if (result < 0)
+	if (result == -1)
 		warning("send_packet: %m");
 	return (result);
 }

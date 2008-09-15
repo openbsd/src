@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.7 2007/09/02 15:19:38 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.8 2008/09/15 20:39:21 claudio Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -290,7 +290,7 @@ interface_status(struct interface_info *ifinfo)
 	/* get interface flags */
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
+	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) == -1) {
 		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 		goto inactive;
 	}
@@ -306,7 +306,7 @@ interface_status(struct interface_info *ifinfo)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		if (errno != EINVAL) {
 			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
 			    ifname);
