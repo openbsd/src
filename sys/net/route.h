@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.51 2008/06/08 19:12:28 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.52 2008/09/15 20:11:05 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -166,6 +166,8 @@ struct rtentry {
 #define RTP_DEFAULT	48	/* routes that have nothing set */
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
+#define RTP_MASK	0x7f
+#define RTP_DOWN	0x80	/* route/link is down */
 
 /*
  * Routing statistics.
