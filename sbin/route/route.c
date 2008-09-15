@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.119 2008/05/09 07:14:56 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.120 2008/09/15 20:12:11 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	default:
-		printf("priority %d, ", rtm->rtm_priority);
+		printf("priority %d, ", rtm->rtm_priority & RTP_MASK);
 		printf("table %u, pid: %ld, seq %d, errno %d\nflags:",
 		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
 		    rtm->rtm_errno);
@@ -1250,7 +1250,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 char *
 priorityname(u_int8_t prio)
 {
-	switch (prio) {
+	switch (prio & RTP_MASK) {
 	case 0:
 		return ("none");
 	case 4:
@@ -1343,7 +1343,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    ifp->sdl_nlen, ifp->sdl_data);
 	if (ifa)
 		printf(" if address: %s\n", routename(ifa));
-	printf("   priority: %u (%s)\n", rtm->rtm_priority,
+	printf("   priority: %u (%s)\n", rtm->rtm_priority & RTP_MASK,
 	   priorityname(rtm->rtm_priority)); 
 	printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
