@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.45 2008/09/15 16:11:35 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.46 2008/09/15 16:13:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -352,9 +352,9 @@ lnewline_at(struct line *lp1, int doto)
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 		undo_add_insert(lp2, 0, 1);
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 		return (TRUE);
 	}
 
@@ -382,9 +382,9 @@ lnewline_at(struct line *lp1, int doto)
 			wp->w_marko -= doto;
 		}
 	}
-	undo_add_boundary();
+	undo_add_boundary(FFRAND, 1);
 	undo_add_insert(lp1, llength(lp1), 1);
-	undo_add_boundary();
+	undo_add_boundary(FFRAND, 1);
 	return (TRUE);
 }
 
@@ -596,8 +596,7 @@ lreplace(RSIZE plen, char *st)
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
-	undo_add_boundary();
-	undo_boundary_enable(FALSE);
+	undo_boundary_enable(FFRAND, 0);
 
 	(void)backchar(FFARG | FFRAND, (int)plen);
 	(void)ldelete(plen, KNONE);
@@ -606,8 +605,7 @@ lreplace(RSIZE plen, char *st)
 	region_put_data(st, rlen);
 	lchange(WFFULL);
 
-	undo_boundary_enable(TRUE);
-	undo_add_boundary();
+	undo_boundary_enable(FFRAND, 1);
 	return (TRUE);
 }
 

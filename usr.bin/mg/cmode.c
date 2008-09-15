@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.4 2008/06/14 08:39:30 kjell Exp $ */
+/* $OpenBSD: cmode.c,v 1.5 2008/09/15 16:13:35 kjell Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -164,8 +164,7 @@ cc_indent(int f, int n)
 	if (n < 0)
 		return (FALSE);
 
-	undo_add_boundary();
-	undo_boundary_enable(FALSE);
+	undo_boundary_enable(FFRAND, 0);
 	if (cc_strip_trailp)
 		deltrailwhite(FFRAND, 1);
 
@@ -188,8 +187,7 @@ cc_indent(int f, int n)
 	else
 		ret = indent(FFOTHARG, pi + ci);
 	
-	undo_boundary_enable(TRUE);
-	undo_add_boundary();
+	undo_boundary_enable(FFRAND, 1);
 	
 	return (ret);
 }

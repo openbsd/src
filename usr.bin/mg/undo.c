@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.46 2008/06/14 07:38:53 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.47 2008/09/15 16:13:35 kjell Exp $ */
 /*
  * This file is in the public domain
  */
@@ -159,56 +159,77 @@ undo_enabled(void)
 }
 
 /*
- * undo_enable(TRUE/FALSE) will enable / disable the undo mechanism.
- * Returns TRUE if previously enabled, FALSE otherwise.
+ * undo_enable: toggle undo_enable.
+ * Returns the previous value of the flag.
  */
 int
-undo_enable(int on)
+undo_enable(int f, int n)
 {
 	int pon = undo_enable_flag;
 
-	undo_enable_flag = on;
+	if (f & (FFARG | FFRAND))
+		undo_enable_flag = n > 0;
+	else
+		undo_enable_flag = !undo_enable_flag;
+
+	if (!(f & FFRAND))
+		ewprintf("Undo %sabled", undo_enable_flag ? "en" : "dis");
+
 	return (pon);
 }
 
 /*
  * If undo is enabled, then:
- *   undo_boundary_enable(FALSE) stops recording undo boundaries
- *   between actions.
- *   undo_boundary_enable(TRUE) enables undo boundaries.
+ *  Toggle undo boundary recording.
+ *  If called with an argument, (n > 0) => enable. Otherwise disable.
+ * In either case, add an undo boundary
  * If undo is disabled, this function has no effect.
  */
-
-void
-undo_boundary_enable(int flag)
+int
+undo_boundary_enable(int f, int n)
 {
-	if (undo_enable_flag == TRUE)
-		boundary_flag = flag;
+	int bon = boundary_flag;
+
+	if (!undo_enable_flag)
+		return (FALSE);
+
+	undo_add_boundary(FFRAND, 1);
+
+	if (f & (FFARG | FFRAND))
+		boundary_flag = n > 0;
+	else
+		boundary_flag = !boundary_flag;
+
+	if (!(f & FFRAND))
+		ewprintf("Undo boundaries %sabled",
+		    boundary_flag ? "en" : "dis");
+
+	return (bon);
 }
 
 /*
  * Record an undo boundary, unless boundary_flag == FALSE.
  * Does nothing if previous undo entry is already a boundary or 'modified' flag.
  */
-void
-undo_add_boundary(void)
+int
+undo_add_boundary(int f, int n)
 {
 	struct undo_rec *rec;
 	int last;
 
 	if (boundary_flag == FALSE)
-		return;
+		return (FALSE);
 
 	last = lastrectype();
 	if (last == BOUNDARY || last == MODIFIED)
-		return;
+		return (TRUE);
 
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
-	return;
+	return (TRUE);
 }
 
 /*
@@ -234,7 +255,7 @@ undo_add_insert(struct line *lp, int offset, int size)
 	struct	undo_rec *rec;
 	int	pos;
 
-	if (undo_enable_flag == FALSE)
+	if (!undo_enable_flag)
 		return (TRUE);
 	reg.r_linep = lp;
 	reg.r_offset = offset;
@@ -262,7 +283,7 @@ undo_add_insert(struct line *lp, int offset, int size)
 	memmove(&rec->region, &reg, sizeof(struct region));
 	rec->content = NULL;
 
-	undo_add_boundary();
+	undo_add_boundary(FFRAND, 1);
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
@@ -279,7 +300,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 	struct	undo_rec *rec;
 	int	pos;
 
-	if (undo_enable_flag == FALSE)
+	if (!undo_enable_flag)
 		return (TRUE);
 
 	reg.r_linep = lp;
@@ -289,7 +310,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 	pos = find_dot(lp, offset);
 
 	if (offset == llength(lp))	/* if it's a newline... */
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 	else if ((rec = LIST_FIRST(&curbp->b_undo)) != NULL) {
 		/*
 		 * Separate this command from the previous one if we're not
@@ -297,7 +318,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 		 */
 		if (rec->type == DELETE) {
 			if (rec->pos - rec->region.r_size != pos)
-				undo_add_boundary();
+				undo_add_boundary(FFRAND, 1);
 		}
 	}
 	rec = new_undo_record();
@@ -315,7 +336,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 	region_get_data(&reg, rec->content, reg.r_size);
 
 	if (lastrectype() != DELETE)
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
@@ -328,14 +349,14 @@ undo_add_delete(struct line *lp, int offset, int size)
 int
 undo_add_change(struct line *lp, int offset, int size)
 {
-	if (undo_enable_flag == FALSE)
+	if (!undo_enable_flag)
 		return (TRUE);
-	undo_add_boundary();
+	undo_add_boundary(FFRAND, 1);
 	boundary_flag = FALSE;
 	undo_add_delete(lp, offset, size);
 	undo_add_insert(lp, offset, size);
 	boundary_flag = TRUE;
-	undo_add_boundary();
+	undo_add_boundary(FFRAND, 1);
 
 	return (TRUE);
 }
@@ -484,7 +505,7 @@ undo(int f, int n)
 		 * finished the current action...
 		 */
 
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 
 		save = boundary_flag;
 		boundary_flag = FALSE;
@@ -541,7 +562,7 @@ undo(int f, int n)
 		} while (ptr != NULL && !done);
 
 		boundary_flag = save;
-		undo_add_boundary();
+		undo_add_boundary(FFRAND, 1);
 
 		ewprintf("Undo!");
 	}

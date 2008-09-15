@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.6 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: yank.c,v 1.7 2008/09/15 16:13:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -222,8 +222,7 @@ yank(int f, int n)
 	/* newline counting */
 	nline = 0;
 
-	undo_add_boundary();
-	undo_boundary_enable(FALSE);
+	undo_boundary_enable(FFRAND, 0);
 	while (n--) {
 		/* mark around last yank */
 		isetmark();
@@ -251,8 +250,7 @@ yank(int f, int n)
 		curwp->w_linep = lp;
 		curwp->w_flag |= WFFULL;
 	}
-	undo_boundary_enable(TRUE);
-	undo_add_boundary();
+	undo_boundary_enable(FFRAND, 1);
 	return (TRUE);
 }
 

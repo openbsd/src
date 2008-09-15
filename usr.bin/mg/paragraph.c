@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.16 2008/06/12 21:36:47 kjell Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.17 2008/09/15 16:13:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -130,8 +130,7 @@ fillpara(int f, int n)
 	struct line	*eopline;	/* pointer to line just past EOP	*/
 	char	 wbuf[MAXWORD];	/* buffer for current word		*/
 
-	undo_add_boundary();
-	undo_boundary_enable(FALSE);
+	undo_boundary_enable(FFRAND, 0);
 
 	/* record the pointer to the line just past the EOP */
 	(void)gotoeop(FFRAND, 1);
@@ -237,8 +236,7 @@ fillpara(int f, int n)
 	(void)backchar(FFRAND, 1);
 	retval = TRUE;
 cleanup:
-	undo_boundary_enable(TRUE);
-	undo_add_boundary();
+	undo_boundary_enable(FFRAND, 1);
 	return (retval);
 }
 
