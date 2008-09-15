@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.73 2008/05/25 23:59:33 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.74 2008/09/15 22:40:50 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -133,12 +133,11 @@
 #define		ICH_SIS_CTL_UNMUTE	0x01	/* un-mute the output */
 
 /*
- * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
- * in our limits perfectly, i.e. setting it to higher value
- * in your kernel config would improve perfomance, still 2^21 is the max
+ * There are 32 buffer descriptors.  Each can reference up to 2^16 16-bit
+ * samples.
  */
 #define	AUICH_DMALIST_MAX	32
-#define	AUICH_DMASEG_MAX	(65536*2)	/* 64k samples, 2x16 bit samples */
+#define	AUICH_DMASEG_MAX	(65536*2)
 struct auich_dmalist {
 	u_int32_t	base;
 	u_int32_t	len;
@@ -155,10 +154,9 @@ struct auich_dmalist {
 struct auich_dma {
 	bus_dmamap_t map;
 	caddr_t addr;
-	bus_dma_segment_t segs[AUICH_DMALIST_MAX];
+	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;
-	struct auich_dma *next;
 };
 
 struct auich_cdata {
@@ -205,7 +203,9 @@ struct auich_softc {
 		void *arg;
 	} pcmo, pcmi, mici;
 
-	struct auich_dma *sc_dmas;
+	struct auich_dma *sc_pdma;	/* play */
+	struct auich_dma *sc_rdma;	/* record */
+	struct auich_dma *sc_cdma;	/* calibrate */
 
 #ifdef AUICH_DEBUG
 	int pcmi_fifoe;
@@ -1194,8 +1194,12 @@ auich_allocm(v, direction, size, pool, flags)
 		return NULL;
 	}
 
-	p->next = sc->sc_dmas;
-	sc->sc_dmas = p;
+	if (direction == AUMODE_PLAY)
+		sc->sc_pdma = p;
+	else if (direction == AUMODE_RECORD)
+		sc->sc_rdma = p;
+	else
+		sc->sc_cdma = p;
 
 	return p->addr;
 }
@@ -1204,17 +1208,20 @@ void
 auich_freem(void *v, void *ptr, int pool)
 {
 	struct auich_softc *sc;
-	struct auich_dma *p, **pp;
+	struct auich_dma *p;
 
 	sc = v;
-	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
-		if (p->addr == ptr) {
-			auich_freemem(sc, p);
-			*pp = p->next;
-			free(p, pool);
-			return;
-		}
-	}
+	if (sc->sc_pdma != NULL && sc->sc_pdma->addr == ptr)
+		p = sc->sc_pdma;
+	else if (sc->sc_rdma != NULL && sc->sc_rdma->addr == ptr)
+		p = sc->sc_rdma;
+	else if (sc->sc_cdma != NULL && sc->sc_cdma->addr == ptr)
+		p = sc->sc_cdma;
+	else
+		return;
+
+	auich_freemem(sc, p);
+	free(p, pool);
 }
 
 size_t
@@ -1242,8 +1249,12 @@ auich_mappage(v, mem, off, prot)
 	if (off < 0)
 		return -1;
 
-	for (p = sc->sc_dmas; p && p->addr != mem; p = p->next);
-	if (!p)
+	p = NULL;
+	if (sc->sc_pdma != NULL && sc->sc_pdma->addr == mem)
+		p = sc->sc_pdma;
+	else if (sc->sc_rdma != NULL && sc->sc_rdma->addr == mem)
+		p = sc->sc_rdma;
+	else
 		return -1;
 
 	return bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
@@ -1417,8 +1428,9 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
-	if (!p)
+	if (sc->sc_pdma->addr == start)
+		p = sc->sc_pdma;
+	else
 		return -1;
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
@@ -1460,8 +1472,9 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
-	if (!p)
+	if (sc->sc_rdma->addr == start)
+		p = sc->sc_rdma;
+	else
 		return -1;
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
@@ -1570,7 +1583,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 		goto fail_0;
 	}
 
-	if ((error = bus_dmamem_map(sc->dmat, &seg, rseg,
+	if ((error = bus_dmamem_map(sc->dmat, &seg, 1,
 	    sizeof(struct auich_cdata), (caddr_t *) &sc->sc_cdata,
 	    sc->sc_dmamap_flags)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
@@ -1663,13 +1676,12 @@ auich_calibrate(struct auich_softc *sc)
 
 	/* Setup a buffer */
 	bytes = 16000;
-	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF,
-	    M_NOWAIT);
+	temp_buffer = auich_allocm(sc, 0, bytes, M_DEVBUF, M_NOWAIT);
 	if (temp_buffer == NULL)
 		return (ac97rate);
-	for (p = sc->sc_dmas; p && p->addr != temp_buffer; p = p->next)
-		;
-	if (p == NULL) {
+	if (sc->sc_cdma->addr == temp_buffer) {
+		p = sc->sc_cdma;
+	} else {
 		printf("auich_calibrate: bad address %p\n", temp_buffer);
 		return (ac97rate);
 	}
@@ -1721,9 +1733,7 @@ auich_calibrate(struct auich_softc *sc)
 	/* turn time delta into us */
 	wait_us = ((t2.tv_sec - t1.tv_sec) * 1000000) + t2.tv_usec - t1.tv_usec;
 
-#if 0
 	auich_freem(sc, temp_buffer, M_DEVBUF);
-#endif
 
 	if (nciv == ociv) {
 		printf("%s: ac97 link rate calibration timed out after %d us\n",
