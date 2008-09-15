@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.20 2008/08/10 09:59:55 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.21 2008/09/15 19:25:36 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,6 +33,8 @@
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 
 #include <machine/mpbiosvar.h>
 
@@ -175,7 +177,9 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			caa.caa_name = "cpu";
 			caa.cpu_number = entry->madt_lapic.apic_id;
+#ifdef MULTIPROCESSOR
 			caa.cpu_func = &mp_cpu_funcs;
+#endif
 #ifdef __i386__
 			/*
 			 * XXX utterly wrong.  These are the

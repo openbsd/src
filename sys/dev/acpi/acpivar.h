@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.42 2007/12/05 19:17:13 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.43 2008/09/15 19:25:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -34,10 +34,8 @@ extern int acpi_debug;
 
 extern int acpi_hasprocfvs;
 
-#ifdef MULTIPROCESSOR
 #define LAPIC_MAP_SIZE	256
 extern u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
-#endif
 
 struct klist;
 struct acpiec_softc;
