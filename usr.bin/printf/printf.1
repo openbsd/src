@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.20 2008/09/14 11:44:54 martynas Exp $
+.\"	$OpenBSD: printf.1,v 1.21 2008/09/15 19:22:32 martynas Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: September 14 2008 $
+.Dd $Mdocdate: September 15 2008 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -269,6 +269,18 @@ An upper-case
 is used for an
 .Cm E
 format.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm e
+or [-]INF
+.Pq Cm E ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm e
+or [-]NAN
+.Pq Cm E ,
+respectively.
 .It Cm gG
 The
 .Ar argument
@@ -278,6 +290,18 @@ or in style
 .Cm e
 .Pq Cm E
 whichever gives full precision in minimum space.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm g
+or [-]INF
+.Pq Cm G ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm g
+or [-]NAN
+.Pq Cm G ,
+respectively.
 .It Cm aA
 The
 .Ar argument
@@ -289,6 +313,18 @@ where there is one digit before the hexadecimal point and the number
 after is equal to the precision specification for the argument.
 When the precision is missing, enough digits are produced to convey
 the argument's exact double-precision floating-point representation.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm a
+or [-]INF
+.Pq Cm A ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm a
+or [-]NAN
+.Pq Cm A ,
+respectively.
 .It Cm b
 Characters from the string
 .Ar argument

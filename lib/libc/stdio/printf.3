@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.56 2008/09/14 11:44:54 martynas Exp $
+.\"	$OpenBSD: printf.3,v 1.57 2008/09/15 19:22:32 martynas Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 14 2008 $
+.Dd $Mdocdate: September 15 2008 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -465,6 +465,18 @@ conversion uses the letter
 to introduce the exponent.
 The exponent always contains at least two digits; if the value is zero,
 the exponent is 00.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm e
+or [-]INF
+.Pq Cm E ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm e
+or [-]NAN
+.Pq Cm E ,
+respectively.
 .It Cm fF
 The
 .Li double
@@ -510,6 +522,18 @@ is used if the exponent from its conversion is less than -4 or greater than
 or equal to the precision.
 Trailing zeros are removed from the fractional part of the result; a
 decimal point appears only if it is followed by at least one digit.
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm g
+or [-]INF
+.Pq Cm G ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm g
+or [-]NAN
+.Pq Cm G ,
+respectively.
 .It Cm aA
 The
 .Li double
@@ -558,6 +582,18 @@ Zeroes are always represented with a mantissa of 0 (preceded by a
 .Ql -
 if appropriate) and an exponent of
 .Li +0 .
+.Pp
+If the argument is infinity, it will be converted to [-]inf
+.Pq Cm a
+or [-]INF
+.Pq Cm A ,
+respectively.
+If the argument is not-a-number (NaN), it will be converted to
+[-]nan
+.Pq Cm a
+or [-]NAN
+.Pq Cm A ,
+respectively.
 .It Cm c
 The
 .Li int
