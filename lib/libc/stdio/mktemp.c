@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.23 2008/08/22 00:56:13 millert Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.24 2008/09/15 20:28:44 chl Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 
