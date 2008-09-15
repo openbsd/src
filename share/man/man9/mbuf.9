@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.33 2008/08/29 08:13:08 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.34 2008/09/15 17:16:14 naddy Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2008 $
+.Dd $Mdocdate: September 15 2008 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -252,8 +252,14 @@ header was authenticated (AH).
 header was IP-in-IP encapsulated by tunnel mode IPsec.
 .It Dv M_ANYCAST6
 received as IPv6 anycast.
+.It Dv M_LINK0
+link layer specific flag.
 .It Dv M_LOOP
 for mbuf statistics.
+.It Dv M_FILDROP
+dropped by
+.Xr bpf 4
+filter.
 .El
 .Pp
 An external cluster is used when the data to hold in the mbuf is
