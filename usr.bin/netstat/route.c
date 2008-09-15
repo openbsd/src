@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.81 2008/06/13 21:44:32 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.82 2008/09/15 20:13:10 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ p_krtentry(struct rtentry *rt)
 	else
 		printf("%5s ", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
-	printf("  %2d", rt->rt_priority);
+	printf("  %2d", rt->rt_priority & RTP_MASK);
 
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
