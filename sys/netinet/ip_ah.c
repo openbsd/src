@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.91 2007/10/17 20:01:26 hshoexer Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.92 2008/09/15 21:46:01 chl Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -736,7 +736,6 @@ ah_input_cb(void *op)
 	int s, roff, rplen, error, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m1, *m0, *m;
-	struct cryptodesc *crd;
 	struct auth_hash *ahx;
 	struct tdb_crypto *tc;
 	struct cryptop *crp;
@@ -747,7 +746,6 @@ ah_input_cb(void *op)
 	caddr_t ptr;
 
 	crp = (struct cryptop *) op;
-	crd = crp->crp_desc;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -1261,7 +1259,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 int
 ah_output_cb(void *op)
 {
-	int skip, protoff, error;
+	int skip, error;
 	struct tdb_crypto *tc;
 	struct cryptop *crp;
 	struct tdb *tdb;
@@ -1272,7 +1270,6 @@ ah_output_cb(void *op)
 	crp = (struct cryptop *) op;
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
-	protoff = tc->tc_protoff;
 	ptr = (caddr_t) (tc + 1);
 
 	m = (struct mbuf *) crp->crp_buf;

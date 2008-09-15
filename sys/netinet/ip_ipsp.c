@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.172 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.173 2008/09/15 21:46:01 chl Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -701,14 +701,12 @@ tdb_delete(struct tdb *tdbp)
 
 	s = spltdb();
 	if (tdbh[hashval] == tdbp) {
-		tdbpp = tdbp;
 		tdbh[hashval] = tdbp->tdb_hnext;
 	} else {
 		for (tdbpp = tdbh[hashval]; tdbpp != NULL;
 		    tdbpp = tdbpp->tdb_hnext) {
 			if (tdbpp->tdb_hnext == tdbp) {
 				tdbpp->tdb_hnext = tdbp->tdb_hnext;
-				tdbpp = tdbp;
 				break;
 			}
 		}
@@ -719,14 +717,12 @@ tdb_delete(struct tdb *tdbp)
 	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	if (tdbaddr[hashval] == tdbp) {
-		tdbpp = tdbp;
 		tdbaddr[hashval] = tdbp->tdb_anext;
 	} else {
 		for (tdbpp = tdbaddr[hashval]; tdbpp != NULL;
 		    tdbpp = tdbpp->tdb_anext) {
 			if (tdbpp->tdb_anext == tdbp) {
 				tdbpp->tdb_anext = tdbp->tdb_anext;
-				tdbpp = tdbp;
 				break;
 			}
 		}
@@ -735,7 +731,6 @@ tdb_delete(struct tdb *tdbp)
 	hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
 
 	if (tdbsrc[hashval] == tdbp) {
-		tdbpp = tdbp;
 		tdbsrc[hashval] = tdbp->tdb_snext;
 	}
 	else {
@@ -743,7 +738,6 @@ tdb_delete(struct tdb *tdbp)
 		    tdbpp = tdbpp->tdb_snext) {
 			if (tdbpp->tdb_snext == tdbp) {
 				tdbpp->tdb_snext = tdbp->tdb_snext;
-				tdbpp = tdbp;
 				break;
 			}
 		}

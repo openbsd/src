@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.22 2007/10/06 02:18:38 krw Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.23 2008/09/15 21:46:01 chl Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -210,8 +210,6 @@ ipcomp_input_cb(op)
 	int error, s, skip, protoff, roff, hlen = IPCOMP_HLENGTH, clen;
 	u_int8_t nproto;
 	struct mbuf *m, *m1, *mo;
-	struct cryptodesc *crd;
-	struct comp_algo *ipcompx;
 	struct tdb_crypto *tc;
 	struct cryptop *crp;
 	struct tdb *tdb;
@@ -219,7 +217,6 @@ ipcomp_input_cb(op)
 	caddr_t addr;
 
 	crp = (struct cryptop *) op;
-	crd = crp->crp_desc;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -245,7 +242,6 @@ ipcomp_input_cb(op)
 		error = EPERM;
 		goto baddone;
 	}
-	ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
 
 	/* update the counters */
 	tdb->tdb_cur_bytes += m->m_pkthdr.len - (skip + hlen);
