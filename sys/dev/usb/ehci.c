@@ -1,13 +1,13 @@
-/*	$OpenBSD: ehci.c,v 1.90 2008/09/10 14:01:23 blambert Exp $ */
+/*	$OpenBSD: ehci.c,v 1.91 2008/09/15 11:31:06 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
- * Copyright (c) 2008 Jeremy Morse <jeremy.morse@gmail.com>
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) and by Charles M. Hannum.
+ * by Lennart Augustsson (lennart@augustsson.net), Charles M. Hannum and
+ * Jeremy Morse (jeremy.morse@gmail.com).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,16 +42,12 @@
 
 /*
  * TODO:
- * 1) The meaty part to implement is isochronous transactions. They are
- *    needed for USB 1 devices below USB 2.0 hubs. They are quite complicated
- *    since they need to be able to do "transaction translation", ie,
- *    converting to/from USB 2 and USB 1.
- *    So the hub driver needs to handle and schedule these things, to
- *    assign place in frame where different devices get to go. See chapter
+ * 1) The hub driver needs to handle and schedule the transaction translator,
+ *    to assign place in frame where different devices get to go. See chapter
  *    on hubs in USB 2.0 for details.
  *
  * 2) Command failures are not recovered correctly.
-*/
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1533,8 +1529,10 @@ ehci_open(usbd_pipe_handle pipe)
 		panic("ehci_open: bad device speed %d", dev->speed);
 	}
 	if (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_ISOCHRONOUS) {
-		printf("%s: *** Error: opening low/full speed isoc device on"
-		    "ehci, this does not work yet. Feel free to implement\n",
+		printf("%s: Error opening low/full speed isoc endpoint.\n"
+		    "A low/full speed device is attached to a USB2 hub, and "
+		    "transaction translations are not yet supported.\n"
+		    "Reattach the device to the root hub instead.\n",
 		    sc->sc_bus.bdev.dv_xname);
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 		    hshubaddr, hshubport));
@@ -3796,6 +3794,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 			if (trans_count >= xfer->nframes) { /*Set IOC*/
 				itd->itd.itd_ctl[j] |= htole32(EHCI_ITD_IOC);
+				break;
 			}
 		}       
 
