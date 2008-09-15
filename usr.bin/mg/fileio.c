@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.81 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.82 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,8 +8,8 @@
 #include "def.h"
 
 
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -31,8 +31,6 @@ static FILE	*ffp;
 int
 ffropen(const char *fn, struct buffer *bp)
 {
-	struct stat	statbuf;
-
 	if ((ffp = fopen(fn, "r")) == NULL) {
 		if (errno == ENOENT)
 			return (FIOFNF);
@@ -43,13 +41,44 @@ ffropen(const char *fn, struct buffer *bp)
 	if (fisdir(fn) == TRUE)
 		return (FIODIR);
 
-	if (bp && fstat(fileno(ffp), &statbuf) == 0) {
-		/* set highorder bit to make sure this isn't all zero */
-		bp->b_fi.fi_mode = statbuf.st_mode | 0x8000;
-		bp->b_fi.fi_uid = statbuf.st_uid;
-		bp->b_fi.fi_gid = statbuf.st_gid;
-	}
+	ffstat(bp);
+	
+	return (FIOSUC);
+}
 
+/*
+ * Update stat/dirty info
+ */
+void
+ffstat(struct buffer *bp)
+{
+	struct stat	sb;
+
+	if (bp && fstat(fileno(ffp), &sb) == 0) {
+		/* set highorder bit to make sure this isn't all zero */
+		bp->b_fi.fi_mode = sb.st_mode | 0x8000;
+		bp->b_fi.fi_uid = sb.st_uid;
+		bp->b_fi.fi_gid = sb.st_gid;
+		bp->b_fi.fi_mtime = sb.st_mtimespec;
+		/* Clear the ignore flag */
+		bp->b_flag &= ~(BFIGNDIRTY | BFDIRTY);
+	}
+}
+
+/*
+ * Update the status/dirty info. If there is an error,
+ * there's not a lot we can do.
+ */
+int
+fupdstat(struct buffer *bp)
+{
+	if ((ffp = fopen(bp->b_fname, "r")) == NULL) {
+		if (errno == ENOENT)
+			return (FIOFNF);
+		return (FIOERR);
+	}
+	ffstat(bp);
+	ffclose(bp);
 	return (FIOSUC);
 }
 
@@ -558,4 +587,25 @@ fisdir(const char *fname)
 		return (TRUE);
 
 	return (FALSE);
+}
+
+/*
+ * Check the mtime of the supplied filename.
+ * Return TRUE if last mtime matches, FALSE if not,
+ * If the stat fails, return TRUE and try the save anyway
+ */
+int
+fchecktime(struct buffer *bp)
+{
+	struct stat sb;
+
+	if (stat(bp->b_fname, &sb) == -1)
+		return (TRUE);
+
+	if (bp->b_fi.fi_mtime.tv_sec != sb.st_mtimespec.tv_sec ||
+	    bp->b_fi.fi_mtime.tv_nsec != sb.st_mtimespec.tv_nsec)
+		return (FALSE);
+
+	return (TRUE);
+	
 }

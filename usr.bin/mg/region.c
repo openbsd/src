@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.26 2008/06/10 23:23:53 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.27 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -98,6 +98,8 @@ lowerregion(int f, int n)
 	struct region	 region;
 	int	 loffs, c, s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
 		return (FALSE);
@@ -139,6 +141,8 @@ upperregion(int f, int n)
 	struct region	  region;
 	int	  loffs, c, s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
 		return (FALSE);
@@ -261,6 +265,8 @@ prefixregion(int f, int n)
 	int	 nline;
 	int	 s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
 		return (FALSE);

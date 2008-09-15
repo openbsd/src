@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.44 2006/12/24 01:20:53 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.45 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -142,7 +142,10 @@ linsert_str(const char *s, int n)
 	struct line	*lp1;
 	struct mgwin	*wp;
 	RSIZE	 i;
-	int	 doto;
+	int	 doto, k;
+
+	if ((k = checkdirty(curbp)) != TRUE)
+		return (k);
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
@@ -233,10 +236,14 @@ linsert(int n, int c)
 	struct mgwin	*wp;
 	RSIZE	 i;
 	int	 doto;
+	int s;
 
 	if (!n)
 		return (TRUE);
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
+	
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);
@@ -388,6 +395,10 @@ lnewline_at(struct line *lp1, int doto)
 int
 lnewline(void)
 {
+	int s;
+
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);
@@ -414,7 +425,10 @@ ldelete(RSIZE n, int kflag)
 	size_t		 len;
 	char		*sv;
 	int		 end;
+	int		 s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);
@@ -497,7 +511,10 @@ ldelnewline(void)
 {
 	struct line	*lp1, *lp2, *lp3;
 	struct mgwin	*wp;
+	int s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);
@@ -571,7 +588,10 @@ int
 lreplace(RSIZE plen, char *st)
 {
 	RSIZE	rlen;	/* replacement length		 */
+	int s;
 
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);

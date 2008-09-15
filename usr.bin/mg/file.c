@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.67 2008/06/18 17:13:53 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.68 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -212,7 +212,7 @@ readin(char *fname)
 	if (bclear(curbp) != TRUE)
 		return (TRUE);
 	/* Clear readonly. May be set by autoexec path */
-	curbp->b_flag &=~ BFREADONLY;
+	curbp->b_flag &= ~BFREADONLY;
 	if ((status = insertfile(fname, fname, TRUE)) != TRUE) {
 		ewprintf("File is not readable: %s", fname);
 		return (FALSE);
@@ -566,6 +566,14 @@ buffsave(struct buffer *bp)
 		return (FALSE);
 	}
 
+	/* Ensure file has not been modified elsewhere */
+	/* We don't use the ignore flag here */
+	if (fchecktime(bp) != TRUE) {
+		if ((s = eyesno("File has changed on disk since last save. "
+		    "Save anyway")) != TRUE)
+			return (s);
+	}
+	
 	if (makebackup && (bp->b_flag & BFBAK)) {
 		s = fbackupfile(bp->b_fname);
 		/* hard error */
@@ -632,6 +640,7 @@ writeout(struct buffer *bp, char *fn)
 	} else
 		/* ignore close error if it is a write error */
 		(void)ffclose(bp);
+	(void)fupdstat(bp);
 	return (s == FIOSUC);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.29 2008/06/11 00:03:49 tobias Exp $	*/
+/*	$OpenBSD: tty.c,v 1.30 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -127,6 +127,11 @@ ttinit(void)
 void
 ttreinit(void)
 {
+	/* check if file was modified while we were gone */
+	if (fchecktime(curbp) != TRUE) {
+		curbp->b_flag |= BFDIRTY;
+	}
+
 	if (enter_ca_mode)
 		/* enter application mode */
 		putpad(enter_ca_mode, 1);

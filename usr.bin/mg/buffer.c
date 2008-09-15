@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.67 2007/05/28 17:52:17 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.68 2008/09/15 16:11:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,10 +22,14 @@ extern int globalwd;
 int
 togglereadonly(int f, int n)
 {
+	int s;
+
+	if ((s = checkdirty(curbp)) != TRUE)
+		return (s);
 	if (!(curbp->b_flag & BFREADONLY))
 		curbp->b_flag |= BFREADONLY;
 	else {
-		curbp->b_flag &=~ BFREADONLY;
+		curbp->b_flag &= ~BFREADONLY;
 		if (curbp->b_flag & BFCHG)
 			ewprintf("Warning: Buffer was modified");
 	}
@@ -572,13 +576,17 @@ bclear(struct buffer *bp)
 
 /*
  * Display the given buffer in the given window. Flags indicated
- * action on redisplay.
+ * action on redisplay. Update modified flag so insert loop can check it.
  */
 int
 showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 {
 	struct buffer	*obp;
 	struct mgwin	*owp;
+
+	/* Ensure file has not been modified elsewhere */
+	if (fchecktime(bp) != TRUE)
+		bp->b_flag |= BFDIRTY;
 
 	if (wp->w_bufp == bp) {	/* Easy case! */
 		wp->w_flag |= flags;
@@ -798,3 +806,23 @@ error:
 	return (FALSE);
 }
 
+/*
+ * Ensures a buffer has not been modified elsewhere.
+ * Returns TRUE if it has NOT. FALSE or ABORT otherwise
+ */
+int
+checkdirty(struct buffer *bp)
+{
+	int s;
+	
+	if ((bp->b_flag & (BFDIRTY | BFIGNDIRTY)) == BFDIRTY) {
+		if ((s = eyorn("File changed on disk; really edit the buffer"))
+		    != TRUE)
+			return (s);
+		bp->b_flag &= ~BFDIRTY;
+		bp->b_flag |= BFIGNDIRTY;
+	}
+
+	return (TRUE);
+}
+	
