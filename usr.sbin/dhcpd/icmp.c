@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.9 2004/09/16 18:35:43 deraadt Exp $ */
+/*	$OpenBSD: icmp.c,v 1.10 2008/09/15 20:38:17 claudio Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -70,7 +70,7 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-	    &state, sizeof(state)) < 0)
+	    &state, sizeof(state)) == -1)
 		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
@@ -103,7 +103,7 @@ icmp_echorequest(struct iaddr *addr)
 	/* Send the ICMP packet... */
 	status = sendto(icmp_protocol_fd, &icmp, sizeof(icmp), 0,
 	    (struct sockaddr *)&to, sizeof(to));
-	if (status < 0)
+	if (status == -1)
 		warning("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
@@ -125,7 +125,7 @@ icmp_echoreply(struct protocol *protocol)
 	salen = sizeof from;
 	status = recvfrom(protocol->fd, icbuf, sizeof(icbuf), 0,
 	    (struct sockaddr *)&from, &salen);
-	if (status < 0) {
+	if (status == -1) {
 		warning("icmp_echoreply: %m");
 		return;
 	}
