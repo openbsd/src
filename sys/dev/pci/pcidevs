@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1409 2008/09/11 20:51:52 brad Exp $
+$OpenBSD: pcidevs,v 1.1410 2008/09/15 16:21:40 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1853,6 +1853,7 @@ product ICENSEMBLE VT172x	0x1724	Envy24PT/HT Audio
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
+product IDT 89HPES12N3A		0x8018	89HPES12N3A
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	WDT 50x Watchdog Timer
@@ -3779,7 +3780,7 @@ product PLATFORM ES1849		0x0100	ES1849
 /* PLX products */
 product PLX 1076		0x1076	I/O 1076
 product PLX 1077		0x1077	I/O 1077
-product PLX 6520_PCIX		0x6520	6520 PCIX-PCIX
+product PLX PCI_6520		0x6520	PCI 6520
 product PLX PEX_8112		0x8112	PEX 8112
 product PLX PEX_8114		0x8114	PEX 8114
 product PLX PEX_8517		0x8517	PEX 8517
