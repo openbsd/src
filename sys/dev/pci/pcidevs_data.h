@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1409 2008/09/11 20:51:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1410 2008/09/15 16:21:40 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5210,6 +5210,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
 	    "77201/77211 ATM (NICStAR)",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES12N3A,
+	    "89HPES12N3A",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
@@ -12212,8 +12216,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I/O 1077",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_6520_PCIX,
-	    "6520 PCIX-PCIX",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PCI_6520,
+	    "PCI 6520",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8112,

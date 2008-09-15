@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1409 2008/09/11 20:51:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1410 2008/09/15 16:21:40 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1858,6 +1858,7 @@
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
+#define	PCI_PRODUCT_IDT_89HPES12N3A	0x8018		/* 89HPES12N3A */
 
 /* Industrial Computer Source */
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* WDT 50x Watchdog Timer */
@@ -3784,7 +3785,7 @@
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O 1076 */
 #define	PCI_PRODUCT_PLX_1077	0x1077		/* I/O 1077 */
-#define	PCI_PRODUCT_PLX_6520_PCIX	0x6520		/* 6520 PCIX-PCIX */
+#define	PCI_PRODUCT_PLX_PCI_6520	0x6520		/* PCI 6520 */
 #define	PCI_PRODUCT_PLX_PEX_8112	0x8112		/* PEX 8112 */
 #define	PCI_PRODUCT_PLX_PEX_8114	0x8114		/* PEX 8114 */
 #define	PCI_PRODUCT_PLX_PEX_8517	0x8517		/* PEX 8517 */
