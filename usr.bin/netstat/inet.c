@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.106 2008/05/08 03:13:55 mpf Exp $	*/
+/*	$OpenBSD: inet.c,v 1.107 2008/09/16 15:48:12 gollo Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include <net/if.h>
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
+#include <net/if_pflow.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
@@ -1033,6 +1034,37 @@ pfsync_stats(char *name)
 	p(pfsyncs_opackets6, "\t%llu packet%s sent (IPv6)\n");
 	p2(pfsyncs_onomem, "\t\t%llu send failed due to mbuf memory error\n");
 	p2(pfsyncs_oerrors, "\t\t%llu send error\n");
+#undef p
+#undef p2
+}
+
+/*
+ * Dump pflow statistics structure.
+ */
+void
+pflow_stats(char *name)
+{
+	struct pflowstats flowstats;
+	int mib[] = { CTL_NET, PF_PFLOW, NET_PFLOW_STATS };
+	size_t len = sizeof(struct pflowstats);
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &flowstats, &len,
+	    NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
+		return;
+	}
+
+	printf("%s:\n", name);
+#define p(f, m) if (flowstats.f || sflag <= 1) \
+	printf(m, flowstats.f, plural(flowstats.f))
+#define p2(f, m) if (flowstats.f || sflag <= 1) \
+	printf(m, flowstats.f)
+
+	p(pflow_flows, "\t%llu flow%s sent\n");
+	p(pflow_packets, "\t%llu packet%s sent\n");
+	p2(pflow_onomem, "\t\t%llu send failed due to mbuf memory error\n");
+	p2(pflow_oerrors, "\t\t%llu send error\n");
 #undef p
 #undef p2
 }

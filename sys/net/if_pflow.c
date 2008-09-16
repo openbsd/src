@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.2 2008/09/16 13:58:55 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.3 2008/09/16 15:48:12 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -619,4 +619,23 @@ pflow_get_dynport(void)
 	}
 
 	return (htons(ipport_hilastauto)); /* XXX */
+}
+
+int
+pflow_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case NET_PFLOW_STATS:
+		if (newp != NULL)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &pflowstats, sizeof(pflowstats)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	return (0);
 }

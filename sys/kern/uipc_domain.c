@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.27 2008/04/23 10:55:14 norby Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.28 2008/09/16 15:48:12 gollo Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 
 #include "bluetooth.h"
 #include "bpfilter.h"
+#include "pflow.h"
 
 struct	domain *domains;
 
@@ -200,6 +201,11 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #if NBPFILTER > 0
 	if (family == PF_BPF)
 		return (bpf_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#if NPFLOW > 0
+	if (family == PF_PFLOW)
+		return (pflow_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
 	dp = pffinddomain(family);

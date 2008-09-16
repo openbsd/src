@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.1 2008/09/09 13:56:39 henning Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.2 2008/09/16 15:48:12 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -118,6 +118,7 @@ struct pflowreq {
 
 #ifdef _KERNEL
 int export_pflow(struct pf_state *);
+int pflow_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_PFLOW_H_ */

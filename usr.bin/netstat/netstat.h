@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.47 2008/01/03 21:01:40 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.48 2008/09/16 15:48:13 gollo Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ void	esp_stats(char *);
 void	ipip_stats(char *);
 void	carp_stats (char *);
 void	pfsync_stats (char *);
+void	pflow_stats (char *);
 void	etherip_stats(char *);
 void	ipcomp_stats(char *);
 

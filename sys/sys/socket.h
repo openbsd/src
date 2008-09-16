@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.58 2008/05/09 02:52:15 markus Exp $	*/
+/*	$OpenBSD: socket.h,v 1.59 2008/09/16 15:48:12 gollo Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -137,7 +137,8 @@ struct	linger {
 					   in interface output routine */
 #define	AF_BLUETOOTH	32		/* Bluetooth */
 #define AF_MPLS         33              /* MPLS */
-#define AF_MAX          34
+#define pseudo_AF_PFLOW 34		/* pflow */
+#define AF_MAX          35
 
 /*
  * Structure used by kernel to store most
@@ -217,6 +218,7 @@ struct sockproto {
 #define PF_BPF		pseudo_AF_HDRCMPLT
 #define	PF_BLUETOOTH	AF_BLUETOOTH
 #define PF_MPLS		AF_MPLS
+#define PF_PFLOW	pseudo_AF_PFLOW
 #define	PF_MAX		AF_MAX
 
 /*
@@ -289,6 +291,7 @@ struct sockcred {
 	{ "bpf", CTLTYPE_NODE }, \
 	{ "bluetooth", CTLTYPE_NODE }, \
 	{ "mpls", CTLTYPE_NODE }, \
+	{ "pflow", CTLTYPE_NODE }, \
 }
 
 /*
@@ -338,6 +341,17 @@ struct sockcred {
 	{ 0, 0 }, \
 	{ "bufsize", CTLTYPE_INT }, \
 	{ "maxbufsize", CTLTYPE_INT }, \
+}
+
+/*
+ * PF_PFLOW not really a family, but connected under CTL_NET
+ */
+#define NET_PFLOW_STATS		1		/* statistics */
+#define NET_PFLOW_MAXID		2
+
+#define CTL_NET_PFLOW_NAMES { \
+	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 /*

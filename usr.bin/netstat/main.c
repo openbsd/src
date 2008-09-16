@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2008/05/08 07:18:47 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2008/09/16 15:48:13 gollo Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ struct protox {
 	{ -1,		NULL,		carp_stats,	NULL,		"carp" },
 	{ -1,		NULL,		pfsync_stats,	NULL,		"pfsync" },
 	{ -1,		NULL,		pim_stats,	NULL,		"pim" },
+	{ -1,		NULL,		pflow_stats,	NULL,		"pflow" },
 	{ -1,		NULL,		NULL,		NULL,		NULL }
 };
 
@@ -189,6 +190,8 @@ main(int argc, char *argv[])
 				af = AF_APPLETALK;
 			else if (strcmp(optarg, "mpls") == 0)
 				af = AF_MPLS;
+			else if (strcmp(optarg, "pflow") == 0)
+				af = PF_PFLOW;
 			else if (strcmp(optarg, "mask") == 0)
 				af = 0xff;
 			else {
@@ -409,6 +412,10 @@ main(int argc, char *argv[])
 			printproto(tp, p->p_name);
 		}
 		endprotoent();
+	}
+	if (af == PF_PFLOW || af == AF_UNSPEC) {
+		tp = name2protox("pflow");
+		printproto(tp, tp->pr_name);
 	}
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
