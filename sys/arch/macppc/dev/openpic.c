@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.47 2008/08/25 03:16:22 todd Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.48 2008/09/16 04:20:42 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -75,7 +75,14 @@ void openpic_enable_irq_mask(int irq_mask);
 #define HWIRQ_MASK 0x0fffffff
 
 /* IRQ vector used for inter-processor interrupts. */
-#define IPI_VECTOR	64
+#define IPI_VECTOR_NOP	64
+#define IPI_VECTOR_DDB	65
+#ifdef MULTIPROCESSOR
+static struct evcount ipi_ddb[PPC_MAXPROCS];
+static struct evcount ipi_nop[PPC_MAXPROCS];
+static int ipi_nopirq = IPI_VECTOR_NOP;
+static int ipi_ddbirq = IPI_VECTOR_DDB;
+#endif
 
 static __inline u_int openpic_read(int);
 static __inline void openpic_write(int, u_int);
@@ -84,6 +91,7 @@ void openpic_enable_irq(int);
 void openpic_disable_irq(int);
 void openpic_init(void);
 void openpic_set_priority(int, int);
+void openpic_ipi_ddb(void);
 static __inline int openpic_read_irq(int);
 static __inline void openpic_eoi(int);
 
@@ -141,6 +149,9 @@ vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
 	int (*ih_fun)(void *), void *ih_arg, char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
+#ifdef MULTIPROCESSOR
+intr_send_ipi_t openpic_send_ipi;
+#endif
 void openpic_collect_preconf_intr(void);
 int openpic_big_endian;
 
@@ -148,10 +159,6 @@ void
 openpic_attach(struct device *parent, struct device  *self, void *aux)
 {
 	struct confargs *ca = aux;
-	extern intr_establish_t *intr_establish_func;
-	extern intr_disestablish_t *intr_disestablish_func;
-	extern intr_establish_t *mac_intr_establish_func;
-	extern intr_disestablish_t *mac_intr_disestablish_func;
 	u_int32_t reg;
 
 	reg = 0;
@@ -171,6 +178,9 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 	intr_disestablish_func  = openpic_intr_disestablish;
 	mac_intr_establish_func  = openpic_intr_establish;
 	mac_intr_disestablish_func  = openpic_intr_disestablish;
+#ifdef MULTIPROCESSOR
+	intr_send_ipi_func = openpic_send_ipi;
+#endif
 	install_extint(ext_intr_openpic);
 
 #if 1
@@ -181,6 +191,7 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
 		IPL_HIGH, openpic_prog_button, (void *)0x37, "progbutton");
 #endif
+
 	ppc_intr_enable(1);
 
 	printf("\n");
@@ -657,9 +668,21 @@ openpic_eoi(int cpu)
 #ifdef MULTIPROCESSOR
 
 void
-openpic_send_ipi(int cpu)
+openpic_send_ipi(struct cpu_info *ci, int id)
 {
-	openpic_write(OPENPIC_IPI(curcpu()->ci_cpuid, 0), 1 << cpu);
+	switch (id) {
+	case PPC_IPI_NOP:
+		id = 0;
+		break;
+	case PPC_IPI_DDB:
+		id = 1;
+		break;
+	default:
+		panic("invalid ipi send to cpu %d %d\n", ci->ci_cpuid, id);
+	}
+		
+		
+	openpic_write(OPENPIC_IPI(curcpu()->ci_cpuid, id), 1 << ci->ci_cpuid);
 }
 
 #endif
@@ -679,8 +702,16 @@ ext_intr_openpic()
 
 	while (realirq != 255) {
 #ifdef MULTIPROCESSOR
-		if (realirq == IPI_VECTOR) {
+		if (realirq == IPI_VECTOR_NOP) {
+			ipi_nop[ci->ci_cpuid].ec_count++;
 			openpic_eoi(ci->ci_cpuid);
+			realirq = openpic_read_irq(ci->ci_cpuid);
+			continue;
+		}
+		if (realirq == IPI_VECTOR_DDB) {
+			ipi_ddb[ci->ci_cpuid].ec_count++;
+			openpic_eoi(ci->ci_cpuid);
+			openpic_ipi_ddb();
 			realirq = openpic_read_irq(ci->ci_cpuid);
 			continue;
 		}
@@ -759,10 +790,25 @@ openpic_init()
 
 #ifdef MULTIPROCESSOR
 	/* Set up inter-processor interrupts. */
+	/* IPI0 - NOP */
 	x = openpic_read(OPENPIC_IPI_VECTOR(0));
 	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
-	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR;
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR_NOP;
 	openpic_write(OPENPIC_IPI_VECTOR(0), x);
+	/* IPI1 - DDB */
+	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR_DDB;
+	openpic_write(OPENPIC_IPI_VECTOR(1), x);
+
+	evcount_attach(&ipi_nop[0], "ipi_nop0", (void *)&ipi_nopirq,
+	    &evcount_intr);
+	evcount_attach(&ipi_nop[1], "ipi_nop1", (void *)&ipi_nopirq,
+	    &evcount_intr);
+	evcount_attach(&ipi_ddb[0], "ipi_ddb0", (void *)&ipi_ddbirq,
+	    &evcount_intr);
+	evcount_attach(&ipi_ddb[1], "ipi_ddb1", (void *)&ipi_ddbirq,
+	    &evcount_intr);
 #endif
 
 	/* XXX set spurious intr vector */
@@ -795,3 +841,11 @@ openpic_prog_button (void *arg)
 #endif
 	return 1;
 }
+
+
+void
+openpic_ipi_ddb(void)
+{
+	Debugger();
+}
+

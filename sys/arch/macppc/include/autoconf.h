@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2006/02/12 16:50:12 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2008/09/16 04:20:42 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -102,10 +102,16 @@ typedef int mac_intr_handle_t;
 typedef void     *(intr_establish_t)(void *, mac_intr_handle_t,
     int, int, int (*func)(void *), void *, char *);
 typedef void     (intr_disestablish_t)(void *, void *);
+struct cpu_info;
+typedef void     (intr_send_ipi_t)(struct cpu_info *, int);
 
 intr_establish_t mac_intr_establish;
 intr_disestablish_t mac_intr_disestablish;
 extern intr_establish_t *intr_establish_func;
 extern intr_disestablish_t *intr_disestablish_func;
+extern intr_establish_t *mac_intr_establish_func;
+extern intr_disestablish_t *mac_intr_disestablish_func;
+extern intr_send_ipi_t *intr_send_ipi_func;
+
 
 #endif /* _MACHINE_AUTOCONF_H_ */

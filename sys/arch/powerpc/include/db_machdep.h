@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.21 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.22 2008/09/16 04:20:42 drahn Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -93,11 +93,22 @@ extern	db_regs_t ddb_regs;		/* register state */
 
 #ifdef _KERNEL
 
+int db_enter_ddb(void);
+void db_startcpu(int);
+void db_stopcpu(int);
+void ppc_ipi_db(struct cpu_info *);
+
 void	kdb_kintr(void *);
 int	kdb_trap(int, void *);
 void	db_save_regs(struct trapframe *frame);
 void	ddb_trap(void);
 db_expr_t db_dumpframe(u_int32_t pframe, int (*pr)(const char *, ...));
+
+extern struct mutex ddb_mp_mutex;
+
+#define DDB_STATE_NOT_RUNNING	0
+#define DDB_STATE_RUNNING	1
+#define DDB_STATE_EXITING	2
 
 #endif /* _KERNEL */
 

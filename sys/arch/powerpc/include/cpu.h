@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2008/07/18 23:43:31 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2008/09/16 04:20:42 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -72,6 +72,13 @@ struct cpu_info {
 	volatile u_int64_t ci_lasttb;
 	volatile u_int64_t ci_nextstatevent;
 	int ci_statspending;
+
+	volatile int    ci_ddb_paused;
+#define	CI_DDB_RUNNING	0
+#define	CI_DDB_SHOULDSTOP	1
+#define	CI_DDB_STOPPED		2
+#define	CI_DDB_ENTERDDB		3
+#define	CI_DDB_INDDB		4
 
 	u_long ci_randseed;
 };

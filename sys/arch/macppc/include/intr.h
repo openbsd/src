@@ -1,10 +1,9 @@
-/*	$OpenBSD: intr.h,v 1.3 2008/05/01 08:25:32 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2008/09/16 04:20:42 drahn Exp $	*/
 
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
 void softtty(void);
 
-void openpic_send_ipi(int);
 void openpic_set_priority(int, int);
 #endif

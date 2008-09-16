@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.34 2007/11/14 20:33:32 thib Exp $ */
+/*	$OpenBSD: intr.h,v 1.35 2008/09/16 04:20:42 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -123,6 +123,11 @@ extern int ppc_configed_intr_cnt;
 #define MAX_PRECONF_INTR 16
 extern struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
 void softnet(int isr);
+
+#define PPC_IPI_NOP		0
+#define PPC_IPI_DDB		1
+
+void ppc_send_ipi(struct cpu_info *, int);
 
 #endif /* _LOCORE */
 #endif /* _POWERPC_INTR_H_ */
