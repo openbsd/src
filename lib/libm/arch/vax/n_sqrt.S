@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sqrt.S,v 1.4 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_sqrt.S,v 1.5 2008/09/16 22:13:12 martynas Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -42,12 +42,8 @@
  * W. Kahan's magic square root
  * coded by Heidi Stettner and revised by Emile LeBlanc 8/18/82
  *
- * entry points:d_sqrt		address of double arg is on the stack
- *		sqrt		double arg is on the stack
+ * entry points: sqrt		double arg is on the stack
  */
-ENTRY(d_sqrt, R2|R3|R4|R5)
-	movq	*4(ap),r0
-	jmp  	dsqrt2
 ENTRY(sqrt, R2|R3|R4|R5)
 	movq    4(ap),r0
 dsqrt2:	bicw3	$0x807f,r0,r2	# check exponent of input
