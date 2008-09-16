@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.25 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: ptrace.2,v 1.26 2008/09/16 19:41:06 kettenis Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 16 2008 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -217,11 +217,15 @@ Possible values are:
 .It PIOD_WRITE_D
 .It PIOD_READ_I
 .It PIOD_WRITE_I
+.It PIOD_READ_AUXV
 .El
 .Pp
 See also the description of
 .Dv PT_READ_I
 for the difference between D and I spaces.
+The
+.Dv PIOD_READ_AUXV
+operation can be used to read from the ELF auxiliary vector.
 A pointer to the descriptor is passed in
 .Fa addr .
 On return the
