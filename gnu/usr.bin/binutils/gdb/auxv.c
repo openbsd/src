@@ -267,6 +267,8 @@ fprint_target_auxv (struct ui_file *file, struct target_ops *ops)
 	  break;
 	}
       ++ents;
+      if (type == AT_NULL)
+	break;
     }
 
   xfree (data);
