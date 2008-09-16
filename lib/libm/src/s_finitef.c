@@ -18,7 +18,7 @@ static char rcsid[] = "$NetBSD: s_finitef.c,v 1.4 1995/05/10 20:47:18 jtc Exp $"
 #endif
 
 /*
- * finitef(x) returns 1 is x is finite, else 0;
+ * finitef(x) returns 1 if x is finite, else 0;
  * no branching!
  */
 
