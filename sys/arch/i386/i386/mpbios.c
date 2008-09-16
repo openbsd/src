@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.24 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.25 2008/09/16 20:02:47 brad Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -721,7 +721,9 @@ mpbios_cpu(const u_int8_t *ent, struct device *self)
 
 	caa.caa_name = "cpu";
 	caa.cpu_number = entry->apic_id;
+#ifdef MULTIPROCESSOR
 	caa.cpu_func = &mp_cpu_funcs;
+#endif
 #if 1 /* XXX Will be removed when the real stuff is probed */
 	caa.cpu_signature = entry->cpu_signature;
 
