@@ -552,6 +552,23 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
       return -1;
 
     case TARGET_OBJECT_AUXV:
+#if defined (PT_IO) && defined (PIOD_READ_AUXV)
+      {
+	struct ptrace_io_desc piod;
+
+	if (writebuf)
+		return -1;
+	piod.piod_op = PIOD_READ_AUXV;
+	piod.piod_addr = readbuf;
+	piod.piod_offs = (void *) (long) offset;
+	piod.piod_len = len;
+
+	errno = 0;
+	if (ptrace (PT_IO, pid, (caddr_t)&piod, 0) == 0)
+	  /* Return the actual number of bytes read or written.  */
+	  return piod.piod_len;
+      }
+#endif
       return -1;
 
     case TARGET_OBJECT_WCOOKIE:
