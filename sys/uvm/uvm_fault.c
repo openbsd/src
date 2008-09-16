@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.49 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.50 2008/09/16 18:52:52 chl Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -772,7 +772,7 @@ ReFault:
 			anons += nback;
 		startva += (nback << PAGE_SHIFT);
 		npages -= nback;
-		nback = centeridx = 0;
+		centeridx = 0;
 	}
 
 	/* locked: maps(read), amap(if there) */

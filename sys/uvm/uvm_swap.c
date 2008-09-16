@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.83 2008/09/13 12:33:52 chl Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.84 2008/09/16 18:52:52 chl Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -358,14 +358,11 @@ boolean_t
 uvm_swap_allocpages(struct vm_page **pps, int npages)
 {
 	int i;
-	int minus, reserve;
 	boolean_t fail;
 
 	/* Estimate if we will succeed */
 	uvm_lock_fpageq();
 
-	minus = uvmexp.free - npages;
-	reserve = uvmexp.reserve_kernel;
 	fail = uvmexp.free - npages < uvmexp.reserve_kernel;
 
 	uvm_unlock_fpageq();
