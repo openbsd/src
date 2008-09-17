@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.24 2008/09/12 13:31:59 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.25 2008/09/17 08:04:17 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -206,6 +206,8 @@ merge_loop() {
 		while [ "${INSTALL_MERGED}" = "v" ]; do
 			echo ""
 			echo "  Use 'i' to install merged file"
+			echo "  Use 'n' to view a diff between the merged and new files"
+			echo "  Use 'o' to view a diff between the old and merged files"
 			echo "  Use 'r' to re-do the merge"
 			echo "  Use 'v' to view the merged file"
 			echo "  Default is to leave the temporary file to deal with by hand"
@@ -222,6 +224,16 @@ merge_loop() {
 						echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
 					fi
 				unset MERGE_AGAIN
+				;;
+			[nN])
+				echo "comparison between merged and new files:\n"
+				diff -u ${COMPFILE}.merged ${COMPFILE}
+				INSTALL_MERGED=v
+				;;
+			[oO])
+				echo "comparison between old and merged files:\n"
+				diff -u ${DESTDIR}${COMPFILE#.} ${COMPFILE}.merged
+				INSTALL_MERGED=v
 				;;
 			[rR])
 				rm "${COMPFILE}.merged"
