@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.3 2008/09/16 15:48:12 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.4 2008/09/17 20:25:41 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -585,8 +585,8 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 
 	/*
- 	 * Compute the pseudo-header checksum; defer further checksumming
- 	 * until ip_output() or hardware (if it exists).
+	 * Compute the pseudo-header checksum; defer further checksumming
+	 * until ip_output() or hardware (if it exists).
 	 */
 	m->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
 	ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
