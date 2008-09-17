@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.86 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.87 2008/09/17 05:43:14 chl Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -802,7 +802,6 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
 	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
-	u_int8_t *opt;
 
 	/* validation of the length of the header */
 	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
@@ -820,7 +819,6 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
 	}
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
-	opt = (u_int8_t *)hbh + sizeof(struct ip6_hbh);
 
 	if (ip6_process_hopopts(m, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
 				hbhlen, rtalertp, plenp) < 0)

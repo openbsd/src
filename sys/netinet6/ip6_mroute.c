@@ -1749,8 +1749,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
 		u_int32_t *reghdr;
-		int rc;
-	
+
 		++pim6stat.pim6s_rcv_registers;
 
 		if ((reg_mif_num >= nummifs) || (reg_mif_num == (mifi_t) -1)) {
@@ -1851,7 +1850,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 		}
 #endif
 
-		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
+		looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
 	

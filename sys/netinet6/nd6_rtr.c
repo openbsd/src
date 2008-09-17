@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.47 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.48 2008/09/17 05:43:15 chl Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1045,7 +1045,6 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr,
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int newprefix = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1100,8 +1099,6 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr,
 			pfxrtr_add(pr, dr);
 	} else {
 		struct nd_prefix *newpr = NULL;
-
-		newprefix = 1;
 
 		if (new->ndpr_vltime == 0)
 			goto end;
