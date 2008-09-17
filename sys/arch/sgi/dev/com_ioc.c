@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.2 2008/05/01 13:36:08 miod Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.3 2008/09/17 01:29:39 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,7 +58,7 @@ com_ioc_probe(struct device *parent, void *match, void *aux)
 	int rv = 0, console;
 
 	console = iot->bus_base + iaa->iaa_base ==
-	    sys_config.cons_iot->bus_base + comconsaddr;
+	    comconsiot->bus_base + comconsaddr;
 
 	/* if it's in use as console, it's there. */
 	if (!(console && !comconsattached)) {
@@ -80,7 +80,7 @@ com_ioc_attach(struct device *parent, struct device *self, void *aux)
 	int console;
 
 	console = iaa->iaa_memt->bus_base + iaa->iaa_base ==
-	    sys_config.cons_iot->bus_base + comconsaddr;
+	    comconsiot->bus_base + comconsaddr;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
