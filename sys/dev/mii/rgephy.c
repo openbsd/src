@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.28 2008/06/10 21:15:14 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.29 2008/09/17 07:19:19 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -220,7 +220,6 @@ setit:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
 			break;
 #endif
-		case IFM_100_T4:
 		default:
 			return (EINVAL);
 		}

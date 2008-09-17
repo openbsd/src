@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.20 2008/06/10 21:15:14 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.21 2008/09/17 07:19:19 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -209,7 +209,6 @@ setit:
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
 			break;
-		case IFM_100_T4:
 		default:
 			return (EINVAL);
 		}
