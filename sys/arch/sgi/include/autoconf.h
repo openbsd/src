@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.15 2008/04/24 13:12:59 jsing Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.16 2008/09/17 01:30:58 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -67,7 +67,6 @@ struct sys_rec {
 
 	/* Serial console configuration. */
 	struct mips_bus_space console_io;
-	struct mips_bus_space *cons_iot;
 };
 
 extern struct sys_rec sys_config;
