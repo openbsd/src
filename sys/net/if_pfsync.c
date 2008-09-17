@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.100 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.101 2008/09/17 20:10:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -520,7 +520,6 @@ pfsync_input(struct mbuf *m, ...)
 	case PFSYNC_ACT_CLR: {
 		struct pf_state *nexts;
 		struct pf_state_key *nextsk;
-		struct pfi_kif *kif;
 		u_int32_t creatorid;
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    sizeof(*cp), &offp)) == NULL) {
@@ -541,7 +540,7 @@ pfsync_input(struct mbuf *m, ...)
 				}
 			}
 		} else {
-			if ((kif = pfi_kif_get(cp->ifname)) == NULL) {
+			if (pfi_kif_get(cp->ifname) == NULL) {
 				splx(s);
 				return;
 			}

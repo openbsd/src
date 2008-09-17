@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.620 2008/09/10 09:10:17 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.621 2008/09/17 20:10:37 chl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3036,7 +3036,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 match = 0;
 	int			 state_icmp = 0;
 	u_int16_t		 sport, dport;
-	u_int16_t		 nport = 0;
 	u_int16_t		 bproto_sum = 0, bip_sum;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
@@ -3097,7 +3096,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 
-	nport = sport;
 	/* check packet for BINAT/NAT/RDR */
 	if ((nr = pf_get_translation(pd, m, off, direction, kif, &nsn,
 	    &skw, &sks, &sk, &nk, saddr, daddr, sport, dport)) != NULL) {
@@ -5404,7 +5402,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
-	int			 error = 0;
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -5487,7 +5484,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (IN6_IS_SCOPE_EMBED(&dst->sin6_addr))
 		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		error = nd6_output(ifp, ifp, m0, dst, NULL);
+		nd6_output(ifp, ifp, m0, dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)

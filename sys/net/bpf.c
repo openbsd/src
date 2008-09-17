@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.68 2008/01/25 16:14:56 mglocker Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.69 2008/09/17 20:10:37 chl Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1319,7 +1319,6 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 			d->bd_rdStart = 0;
 			ROTATE_BUFFERS(d);
 			bpf_wakeup(d);
-			curlen = 0;
 		}
 	}
 }

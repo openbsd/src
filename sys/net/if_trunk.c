@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.49 2008/08/07 18:06:17 damien Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.50 2008/09/17 20:10:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -479,14 +479,13 @@ trunk_port_destroy(struct trunk_port *tp)
 void
 trunk_port_watchdog(struct ifnet *ifp)
 {
-	struct trunk_softc *tr;
 	struct trunk_port *tp;
 
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG)
 		return;
 	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL ||
-	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
+	    tp->tp_trunk == NULL)
 		return;
 
 	if (tp->tp_watchdog != NULL)
@@ -499,7 +498,7 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct trunk_reqport *rp = (struct trunk_reqport *)data;
 	struct trunk_softc *tr;
-	struct trunk_port *tp;
+	struct trunk_port *tp = NULL;
 	int s, error = 0;
 
 	s = splnet();

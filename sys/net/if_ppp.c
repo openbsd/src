@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.50 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.51 2008/09/17 20:10:37 chl Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1051,12 +1051,12 @@ ppp_dequeue(sc)
     if (protocol != PPP_LCP && protocol != PPP_CCP
 	&& sc->sc_xc_state && (sc->sc_flags & SC_COMP_RUN)) {
 	struct mbuf *mcomp = NULL;
-	int slen, clen;
+	int slen;
 
 	slen = 0;
 	for (mp = m; mp != NULL; mp = mp->m_next)
 	    slen += mp->m_len;
-	clen = (*sc->sc_xcomp->compress)
+	(*sc->sc_xcomp->compress)
 	    (sc->sc_xc_state, &mcomp, m, slen,
 	     (sc->sc_flags & SC_CCP_UP ? sc->sc_if.if_mtu + PPP_HDRLEN : 0));
 	if (mcomp != NULL) {
