@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1411 2008/09/17 05:06:22 brad Exp $
+$OpenBSD: pcidevs,v 1.1412 2008/09/17 05:29:25 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3194,8 +3194,8 @@ product NVIDIA NFORCE2_IDE	0x0065	nForce2 IDE
 product NVIDIA NFORCE2_LAN	0x0066	nForce2 LAN
 product NVIDIA NFORCE2_OHCI	0x0067	nForce2 USB
 product NVIDIA NFORCE2_EHCI	0x0068	nForce2 USB
-product NVIDIA NFORCE2_ACA	0x006a	nForce2	AC97
-product NVIDIA NFORCE2_APU	0x006b	nForce2	Audio
+product NVIDIA NFORCE2_ACA	0x006a	nForce2 AC97
+product NVIDIA NFORCE2_APU	0x006b	nForce2 Audio
 product NVIDIA NFORCE2_PPB	0x006c	nForce2 PCI-PCI
 product NVIDIA NFORCE2_PPB2	0x006d	nForce2 PCI-PCI
 product NVIDIA NFORCE2_FW	0x006e	nForce2 FireWire
@@ -4394,7 +4394,7 @@ product UMC UM8891N		0xe891	UM8891N
 /* ULSI Systems products */
 product ULSI US201		0x0201	US201
 
-/* US Rebotics */
+/* US Robotics */
 product USR2 USR997902		0x0116	USR997902
 product USR 3CP5610		0x1008	3CP5610
 product USR2 WL11000P		0x3685	WL11000P
