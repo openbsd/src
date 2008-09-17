@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.47 2008/05/11 12:13:41 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.48 2008/09/17 06:47:57 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1350,6 +1350,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	time_t now;
 	struct passwd *pw;
 	struct rcs_delta *ordp, *rdp;
+	uid_t uid;
 
 	if (rev == RCS_HEAD_REV) {
 		if (rf->rf_flags & RCS_CREATE) {
@@ -1367,7 +1368,8 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		}
 	}
 
-	if ((pw = getpwuid(getuid())) == NULL)
+	uid = getuid();
+	if ((pw = getpwuid(uid)) == NULL)
 		errx(1, "getpwuid failed");
 
 	rdp = xcalloc(1, sizeof(*rdp));
@@ -1385,8 +1387,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		rcsnum_cpy(ordp->rd_num, rdp->rd_next, 0);
 	}
 
-
-	if (username == NULL)
+	if (uid == 0)
+		username = getlogin();
+	if (username == NULL || *username == '\0')
 		username = pw->pw_name;
 
 	rdp->rd_author = xstrdup(username);
