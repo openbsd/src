@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.4 2008/09/17 20:25:41 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.5 2008/09/17 22:18:00 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -517,7 +517,7 @@ pflow_timeout(void *v)
 int
 pflow_sendout(struct pflow_softc *sc)
 {
-	struct mbuf		*m;
+	struct mbuf		*m = sc->sc_mbuf;
 	struct pflow_header	*h;
 #if NBPFILTER > 0
 	struct ifnet		*ifp = &sc->sc_if;
@@ -525,19 +525,17 @@ pflow_sendout(struct pflow_softc *sc)
 
 	timeout_del(&sc->sc_tmo);
 
-	if (sc->sc_mbuf == NULL)
+	if (m == NULL)
 		return (0);
 
-	pflowstats.pflow_packets++;
-
+	sc->sc_mbuf = NULL;
+	sc->sc_flowp.s = NULL;
 	if (!(ifp->if_flags & IFF_RUNNING)) {
 		m_freem(m);
 		return (0);
 	}
 
-	m = sc->sc_mbuf;
-	sc->sc_mbuf = NULL;
-	sc->sc_flowp.s = NULL;
+	pflowstats.pflow_packets++;
 	h = mtod(m, struct pflow_header *);
 	h->count = htons(sc->sc_count);
 
