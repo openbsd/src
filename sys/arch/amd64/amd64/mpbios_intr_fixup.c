@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios_intr_fixup.c,v 1.5 2006/07/17 22:29:53 deraadt Exp $	*/
+/*	$OpenBSD: mpbios_intr_fixup.c,v 1.6 2008/09/17 16:48:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -40,7 +40,7 @@ const struct mpbios_icu_table {
 } mpbios_icu_table[] = {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237_ISA,
 	  via8237_mpbios_fixup },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_ISA,
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_ISA1,
 	  nforce4_mpbios_fixup },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_ISA2,
 	  nforce4_mpbios_fixup },
