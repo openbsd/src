@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1411 2008/09/17 05:06:22 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1412 2008/09/17 05:29:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4399,7 +4399,7 @@
 /* ULSI Systems products */
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
 
-/* US Rebotics */
+/* US Robotics */
 #define	PCI_PRODUCT_USR2_USR997902	0x0116		/* USR997902 */
 #define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
 #define	PCI_PRODUCT_USR2_WL11000P	0x3685		/* WL11000P */
