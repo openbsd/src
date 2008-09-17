@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1410 2008/09/15 16:21:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1411 2008/09/17 05:06:22 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9936,7 +9936,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP04 SATA",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ISA,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ISA1,
 	    "nForce4 ISA",
 	},
 	{
@@ -9972,11 +9972,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce4 AC97",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_OHCI,
 	    "nForce4 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB2,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_EHCI,
 	    "nForce4 USB",
 	},
 	{
@@ -10008,11 +10008,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce2 LAN",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_OHCI,
 	    "nForce2 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_USB2,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_EHCI,
 	    "nForce2 USB",
 	},
 	{
@@ -10056,12 +10056,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce3 LAN",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI,
 	    "nForce2 400 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_USB2,
-	    "nForce2 400 USB2",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI,
+	    "nForce2 400 USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_ACA,
@@ -10128,11 +10128,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce3 LAN",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_OHCI,
 	    "nForce3 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_USB2,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_EHCI,
 	    "nForce3 USB",
 	},
 	{
@@ -10180,12 +10180,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce3 LAN",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_OHCI,
 	    "nForce3 250 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_USB2,
-	    "nForce3 250 USB2",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_EHCI,
+	    "nForce3 250 USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_ACA,
@@ -10428,7 +10428,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce IDE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_USB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_OHCI,
 	    "nForce USB",
 	},
 	{
@@ -10848,23 +10848,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP55 SMBus",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_USB_1,
-	    "MCP55 USB",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_USB_2,
-	    "MCP55 USB",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
-	    "MCP55 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM1,
 	    "MCP55 Memory",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM3,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2,
 	    "MCP55 Memory",
 	},
 	{
@@ -10874,6 +10862,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_EHCI,
 	    "MCP55 USB",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
+	    "MCP55 IDE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PPB_6,
@@ -10912,7 +10904,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP55 PCIE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM3,
 	    "MCP55 Memory",
 	},
 	{
@@ -11088,7 +11080,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP61 PCIE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_MEM,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_MEM1,
 	    "MCP61 Memory",
 	},
 	{
@@ -11160,7 +11152,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 8400M G",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA1,
 	    "MCP65 ISA",
 	},
 	{
@@ -11168,7 +11160,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP65 ISA",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM1,
 	    "MCP65 Memory",
 	},
 	{
@@ -11184,7 +11176,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP65 IDE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1,
 	    "MCP65 PCI",
 	},
 	{
@@ -11244,15 +11236,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP65 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1,
-	    "MCP65 PCIE",
-	},
-	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_2,
 	    "MCP65 PCIE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_3,
+	    "MCP65 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_4,
+	    "MCP65 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_5,
 	    "MCP65 PCIE",
 	},
 	{
@@ -11276,7 +11272,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 7000M",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM2,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM1,
 	    "MCP67 Memory",
 	},
 	{
@@ -11284,12 +11280,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP67 SMBus",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM_1,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_COPROC,
+	    "MCP67 Co-processor",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM2,
 	    "MCP67 Memory",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HB_1,
-	    "MCP67 Host",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_ISA,
+	    "MCP67 ISA",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1,
@@ -11384,6 +11384,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP67 PCIE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_PPB_3,
+	    "MCP67 PCIE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_EHCI,
 	    "MCP73 USB",
 	},
@@ -11452,7 +11456,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP73 Memory",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_MEM1,
 	    "MCP73 Memory",
 	},
 	{
