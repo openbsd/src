@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.141 2008/09/17 06:14:09 brad Exp $ */
+/*	$OpenBSD: ahci.c,v 1.142 2008/09/17 06:18:45 brad Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -50,8 +50,8 @@ int ahcidebug = AHCI_D_VERBOSE;
 #endif
 
 #define AHCI_PCI_BAR		0x24
-#define AHCI_PCI_ATI_IXP600_MAGIC	0x40
-#define AHCI_PCI_ATI_IXP600_LOCKED	0x01
+#define AHCI_PCI_ATI_SB600_MAGIC	0x40
+#define AHCI_PCI_ATI_SB600_LOCKED	0x01
 #define AHCI_PCI_INTERFACE	0x01
 
 #define AHCI_REG_CAP		0x000 /* HBA Capabilities */
@@ -421,14 +421,14 @@ const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
 int			ahci_no_match(struct pci_attach_args *);
 int			ahci_vt8251_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
-int			ahci_ati_ixp600_attach(struct ahci_softc *,
+int			ahci_ati_sb600_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
 	    ahci_no_match,	ahci_vt8251_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
-	    NULL,		ahci_ati_ixp600_attach }
+	    NULL,		ahci_ati_sb600_attach }
 };
 
 int			ahci_pci_match(struct device *, void *, void *);
@@ -562,16 +562,16 @@ ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 }
 
 int
-ahci_ati_ixp600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t			magic;
 
 	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
 		magic = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_IXP600_MAGIC);
+		    AHCI_PCI_ATI_SB600_MAGIC);
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_IXP600_MAGIC,
-		    magic | AHCI_PCI_ATI_IXP600_LOCKED);
+		    AHCI_PCI_ATI_SB600_MAGIC,
+		    magic | AHCI_PCI_ATI_SB600_LOCKED);
 
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG,
 		    PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT |
@@ -580,7 +580,7 @@ ahci_ati_ixp600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 		    PCI_REVISION(pa->pa_class) << PCI_REVISION_SHIFT);
 
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_IXP600_MAGIC, magic);
+		    AHCI_PCI_ATI_SB600_MAGIC, magic);
 	}
 
 	sc->sc_flags |= AHCI_F_IGN_FR;

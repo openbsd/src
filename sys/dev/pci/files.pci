@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.255 2008/08/28 10:21:23 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.256 2008/09/17 06:18:45 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -150,7 +150,7 @@ device	autri: audio, auconv, mulaw, ac97, midibus
 attach	autri at pci
 file	dev/pci/autri.c			autri
 
-# ATI IXP 200/300/400 series AC'97 Audio
+# ATI SB200/300/400 series AC'97 Audio
 device	auixp: audio, auconv, mulaw, ac97
 attach	auixp at pci
 file	dev/pci/auixp.c			auixp
