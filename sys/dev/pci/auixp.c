@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.19 2008/05/25 23:59:33 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.20 2008/09/17 06:14:09 brad Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -90,9 +90,9 @@
 #define	DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
 
 const struct pci_matchid auixp_pci_devices[] = {
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_200 },
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300 },
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400 },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_AUDIO },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_AUDIO },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_AUDIO }
 };
 
 struct cfdriver auixp_cd = {

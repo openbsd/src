@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.140 2008/05/31 23:50:32 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.141 2008/09/17 06:14:09 brad Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -427,7 +427,7 @@ int			ahci_ati_ixp600_attach(struct ahci_softc *,
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
 	    ahci_no_match,	ahci_vt8251_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_IXP_SATA_600,
+	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
 	    NULL,		ahci_ati_ixp600_attach }
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.287 2008/07/29 20:09:11 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.288 2008/09/17 06:14:09 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1076,35 +1076,35 @@ const struct pciide_product_desc pciide_ite_products[] = {
 };
 
 const struct pciide_product_desc pciide_ati_products[] = {
-	{ PCI_PRODUCT_ATI_IXP_IDE_200,
+	{ PCI_PRODUCT_ATI_SB200_IDE,
 	  0,
 	  ixp_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_IDE_300,
+	{ PCI_PRODUCT_ATI_SB300_IDE,
 	  0,
 	  ixp_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_IDE_400,
+	{ PCI_PRODUCT_ATI_SB400_IDE,
 	  0,
 	  ixp_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_IDE_600,
+	{ PCI_PRODUCT_ATI_SB600_IDE,
 	  0,
 	  ixp_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_IDE_700,
+	{ PCI_PRODUCT_ATI_SB700_IDE,
 	  0,
 	  ixp_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_SATA_300,
+	{ PCI_PRODUCT_ATI_SB300_SATA,
 	  0,
 	  sii3112_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
+	{ PCI_PRODUCT_ATI_SB400_SATA_1,
 	  0,
 	  sii3112_chip_map
 	},
-	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
+	{ PCI_PRODUCT_ATI_SB400_SATA_2,
 	  0,
 	  sii3112_chip_map
 	}
