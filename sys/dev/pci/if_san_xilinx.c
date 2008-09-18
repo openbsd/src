@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.22 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.23 2008/09/18 15:16:30 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -1977,7 +1977,8 @@ xilinx_dma_tx_complete(sdla_t *card, xilinx_softc_t *sc)
 	}
 
 	sc->pci_retry = 0;
-	sc->tx_dma_mbuf->m_pkthdr.csum_flags = reg;
+	sc->tx_dma_mbuf->m_pkthdr.csum_flags = reg & 0xFFFF;
+	sc->tx_dma_mbuf->m_pkthdr.ether_vtag = (reg >> 16) & 0xFFFF;
 	IF_ENQUEUE(&sc->wp_tx_complete_list, sc->tx_dma_mbuf);
 	sc->tx_dma_mbuf = NULL;
 
@@ -1990,9 +1991,10 @@ static void
 xilinx_tx_post_complete(sdla_t *card, xilinx_softc_t *sc, struct mbuf *m)
 {
 	struct ifnet	*ifp;
-	unsigned long	reg = m->m_pkthdr.csum_flags;
+	u_int32_t reg;
 
 	WAN_ASSERT1(sc == NULL);
+	reg = (m->m_pkthdr.ether_vtag << 16) + m->m_pkthdr.csum_flags;
 	ifp = (struct ifnet *)&sc->common.ifp;
 	if ((bit_test((u_int8_t *)&reg, TxDMA_HI_DMA_GO_READY_BIT)) ||
 	    (reg & TxDMA_HI_DMA_DATA_LENGTH_MASK) ||

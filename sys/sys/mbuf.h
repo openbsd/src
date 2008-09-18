@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.103 2008/08/29 08:13:08 jmc Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.104 2008/09/18 15:16:30 naddy Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -96,7 +96,8 @@ struct	pkthdr {
 	struct ifnet		*rcvif;		/* rcv interface */
 	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int			 len;		/* total packet length */
-	int			 csum_flags;	/* checksum flags */
+	u_int16_t		 csum_flags;	/* checksum flags */
+	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
 	struct pkthdr_pf	 pf;
 };
 
@@ -159,12 +160,14 @@ struct mbuf {
 #define M_TUNNEL	0x1000  /* IP-in-IP added by tunnel mode IPsec */
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
 #define M_LINK0		0x8000	/* link layer specific flag */
+#define M_VLANTAG	0x0020	/* ether_vtag is valid */
 #define M_LOOP		0x0040	/* for Mbuf statistics */
 #define M_FILDROP	0x0080	/* dropped by bpf filter */
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
-			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0|M_FILDROP)
+			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|\
+			 M_FILDROP)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.93 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.94 2008/09/18 15:16:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -609,7 +609,8 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	u_int32_t roff, woff;
-	int sumflags = 0, idx;
+	int idx;
+	u_int16_t sumflags = 0;
 
 	roff = letoh32(*r->r_roff);
 	woff = letoh32(*r->r_woff);

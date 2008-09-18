@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.80 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: xl.c,v 1.81 2008/09/18 15:16:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1184,8 +1184,9 @@ xl_rxeof(struct xl_softc *sc)
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct xl_chain_onefrag	*cur_rx;
-	int			total_len = 0, sumflags = 0;
+	int			total_len = 0;
 	u_int32_t		rxstat;
+	u_int16_t		sumflags = 0;
 
 	ifp = &sc->sc_arpcom.ac_if;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.243 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.244 2008/09/18 15:16:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2449,7 +2449,7 @@ bge_rxeof(struct bge_softc *sc)
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
 #ifdef BGE_CHECKSUM
-		int			sumflags = 0;
+		u_int16_t		sumflags = 0;
 #endif
 
 		cur_rx = &sc->bge_rdata->

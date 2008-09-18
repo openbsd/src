@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.85 2008/06/07 19:03:13 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.86 2008/09/18 15:16:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1767,7 +1767,7 @@ ti_rxeof(struct ti_softc *sc)
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-		int			sumflags = 0;
+		u_int16_t		sumflags = 0;
 		bus_dmamap_t		dmamap;
 
 		cur_rx =
