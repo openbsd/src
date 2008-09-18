@@ -615,7 +615,6 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 	ssize_t n;
 	struct statctx sc;
 	u_int i, scnt = 0;
-	const char *errstr;
 
 	if ((buf = malloc(Bflag)) == NULL)
 		err(1, "malloc");
