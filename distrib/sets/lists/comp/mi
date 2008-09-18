@@ -5380,6 +5380,7 @@
 ./usr/share/man/cat3/strtof.0
 ./usr/share/man/cat3/strtofflags.0
 ./usr/share/man/cat3/strtoimax.0
+./usr/share/man/cat3/strtold.0
 ./usr/share/man/cat3/strtok.0
 ./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/strtol.0
