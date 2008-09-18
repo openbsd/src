@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.18 2007/11/26 09:28:33 martynas Exp $ */
+/*	$OpenBSD: musycc.c,v 1.19 2008/09/18 09:06:27 chl Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -596,7 +596,7 @@ musycc_activate_channel(struct musycc_group *mg, int chan)
 void
 musycc_stop_channel(struct channel_softc *cc)
 {
-	struct musycc_group	*mg;
+	struct musycc_group	*mg = cc->cc_group;
 
 	if (cc->cc_state == CHAN_FLOAT) {
 		/* impossible */
@@ -607,7 +607,6 @@ musycc_stop_channel(struct channel_softc *cc)
 		return;
 	}
 
-	mg = cc->cc_group;
 	ACCOOM_PRINTF(2, ("%s: musycc_stop_channel\n", cc->cc_ifp->if_xname));
 	musycc_sreq(mg, cc->cc_channel, MUSYCC_SREQ_SET(9), MUSYCC_SREQ_BOTH,
 	    EV_STOP);
