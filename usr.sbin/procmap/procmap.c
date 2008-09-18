@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.29 2008/06/26 05:42:21 ray Exp $ */
+/*	$OpenBSD: procmap.c,v 1.30 2008/09/18 07:50:39 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -43,6 +43,7 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
+#include <uvm/uvm_amap.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -97,9 +98,15 @@ void *ubc_pager;
 void *kernel_floor;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose;
-int print_all, print_map, print_maps, print_solaris, print_ddb;
+int print_all, print_map, print_maps, print_solaris, print_ddb, print_amap;
 int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
 rlim_t maxssiz;
+
+struct sum {
+	unsigned long s_am_nslots;
+	unsigned long s_am_maxslots;
+	unsigned long s_am_nusedslots;
+};
 
 struct kbit {
 	/*
@@ -130,6 +137,7 @@ struct kbit {
 		struct inode inode;
 		struct iso_node iso_node;
 		struct uvm_device uvm_device;
+		struct vm_amap vm_amap;
 	} k_data;
 };
 
@@ -178,8 +186,9 @@ struct nlist nl[] = {
 };
 
 void load_symbols(kvm_t *);
-void process_map(kvm_t *, pid_t, struct kinfo_proc2 *);
-size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int);
+void process_map(kvm_t *, pid_t, struct kinfo_proc2 *, struct sum *);
+size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int,
+    struct sum *);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	    struct kbit *, struct kbit *);
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
@@ -187,19 +196,24 @@ void load_name_cache(kvm_t *);
 void cache_enter(struct namecache *);
 static void __dead usage(void);
 static pid_t strtopid(const char *);
+void print_sum(struct sum *, struct sum *);
 
 int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX], *kmem = NULL, *kernel = NULL;
 	struct kinfo_proc2 *kproc;
+	struct sum total_sum;
 	int many, ch, rc;
 	kvm_t *kd;
 	pid_t pid = -1;
 	gid_t gid;
 
-	while ((ch = getopt(argc, argv, "aD:dlmM:N:p:Prsvx")) != -1) {
+	while ((ch = getopt(argc, argv, "AaD:dlmM:N:p:Prsvx")) != -1) {
 		switch (ch) {
+		case 'A':
+			print_amap = 1;
+			break;
 		case 'a':
 			print_all = 1;
 			break;
@@ -275,7 +289,13 @@ main(int argc, char *argv[])
 	/* get "bootstrap" addresses from kernel */
 	load_symbols(kd);
 
+	memset(&total_sum, 0, sizeof(total_sum));
+
 	do {
+		struct sum sum;
+
+		memset(&sum, 0, sizeof(sum));
+
 		if (pid == -1) {
 			if (argc == 0)
 				pid = getppid();
@@ -308,9 +328,14 @@ main(int argc, char *argv[])
 				printf("kernel:\n");
 		}
 
-		process_map(kd, pid, kproc);
+		process_map(kd, pid, kproc, &sum);
+		if (print_amap)
+			print_sum(&sum, &total_sum);
 		pid = -1;
 	} while (argc > 0);
+
+	if (print_amap)
+		print_sum(&total_sum, NULL);
 
 	/* done.  go away. */
 	rc = kvm_close(kd);
@@ -321,7 +346,22 @@ main(int argc, char *argv[])
 }
 
 void
-process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
+print_sum(struct sum *sum, struct sum *total_sum)
+{
+	const char *t = total_sum == NULL ? "total " : "";
+	printf("%samap allocated slots: %lu\n", t, sum->s_am_maxslots);
+	printf("%samap mapped slots: %lu\n", t, sum->s_am_nslots);
+	printf("%samap used slots: %lu\n", t, sum->s_am_nusedslots);
+
+	if (total_sum) {
+		total_sum->s_am_maxslots += sum->s_am_maxslots;
+		total_sum->s_am_nslots += sum->s_am_nslots;
+		total_sum->s_am_nusedslots += sum->s_am_nusedslots;
+	}
+}
+
+void
+process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc, struct sum *sum)
 {
 	struct kbit kbit[4], *vmspace, *vm_map, *header, *vm_map_entry;
 	struct vm_map_entry *last;
@@ -431,7 +471,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 	A(header) = A(vm_map) + offsetof(struct vm_map, header);
 	S(header) = sizeof(struct vm_map_entry);
 	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
-	dump_vm_map_entry(kd, vmspace, header, 1);
+	dump_vm_map_entry(kd, vmspace, header, 1, sum);
 
 	/* headers */
 #ifdef DISABLED_HEADERS
@@ -468,7 +508,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 		A(vm_map_entry) = addr;
 		S(vm_map_entry) = sizeof(struct vm_map_entry);
 		KDEREF(kd, vm_map_entry);
-		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, 0);
+		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, 0, sum);
 		next = (u_long)D(vm_map_entry, vm_map_entry)->next;
 	}
 	if (print_solaris)
@@ -516,9 +556,9 @@ load_symbols(kvm_t *kd)
 
 size_t
 dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
-    struct kbit *vm_map_entry, int ishead)
+    struct kbit *vm_map_entry, int ishead, struct sum *sum)
 {
-	struct kbit kbit[3], *uvm_obj, *vp, *vfs;
+	struct kbit kbit[4], *uvm_obj, *vp, *vfs, *amap;
 	struct vm_map_entry *vme;
 	ino_t inode = 0;
 	dev_t dev = 0;
@@ -528,6 +568,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	uvm_obj = &kbit[0];
 	vp = &kbit[1];
 	vfs = &kbit[2];
+	amap = &kbit[3];
 
 	A(uvm_obj) = 0;
 	A(vp) = 0;
@@ -578,6 +619,12 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 			S(vp) = sizeof(struct vnode);
 			KDEREF(kd, vp);
 		}
+	}
+
+	if (vme->aref.ar_amap != NULL) {
+		P(amap) = vme->aref.ar_amap;
+		S(amap) = sizeof(struct vm_amap);
+		KDEREF(kd, amap);
 	}
 
 	A(vfs) = NULL;
@@ -719,6 +766,20 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		if (A(vp))
 			printf(" [%p]", P(vp));
 		printf("\n");
+	}
+
+	if (print_amap && vme->aref.ar_amap) {
+		printf(" amap - ref: %d fl: 0x%x maxsl: %d nsl: %d nuse: %d\n",
+		    D(amap, vm_amap)->am_ref,
+		    D(amap, vm_amap)->am_flags,
+		    D(amap, vm_amap)->am_maxslot,
+		    D(amap, vm_amap)->am_nslot,
+		    D(amap, vm_amap)->am_nused);
+		if (sum) {
+			sum->s_am_nslots += D(amap, vm_amap)->am_nslot;
+			sum->s_am_maxslots += D(amap, vm_amap)->am_maxslot;
+			sum->s_am_nusedslots += D(amap, vm_amap)->am_nused;
+		}
 	}
 
 	/* no access allowed, don't count space */
