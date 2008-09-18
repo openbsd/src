@@ -49,57 +49,6 @@ drm_find_file_by_minor(struct drm_device *dev, int minor)
 	return (NULL);
 }
 
-/* drm_open_helper is called whenever a process opens /dev/drm. */
-int
-drm_open_helper(dev_t kdev, int flags, int fmt, struct proc *p,
-    struct drm_device *dev)
-{
-	struct drm_file   *priv;
-	int m, retcode;
-
-	m = minor(kdev);
-	if (flags & O_EXCL)
-		return (EBUSY); /* No exclusive opens */
-
-	DRM_DEBUG("minor = %d\n", DRM_CURRENTPID, m);
-
-	priv = drm_calloc(1, sizeof(*priv), DRM_MEM_FILES);
-	if (priv == NULL)
-		return (ENOMEM);
-
-	priv->kdev = kdev;
-	priv->flags = flags;
-	priv->minor = m;
-
-	/* for compatibility root is always authenticated */
-	priv->authenticated = DRM_SUSER(p);
-
-	DRM_LOCK();
-	if (dev->driver.open) {
-		/* shared code returns -errno */
-		retcode = -dev->driver.open(dev, priv);
-		if (retcode != 0) {
-			DRM_UNLOCK();
-			drm_free(priv, sizeof(*priv), DRM_MEM_FILES);
-			return (retcode);
-		}
-	}
-
-	/* first opener automatically becomes master if root */
-	if (TAILQ_EMPTY(&dev->files) && !DRM_SUSER(p)) {
-		DRM_UNLOCK();
-		drm_free(priv, sizeof(*priv), DRM_MEM_FILES);
-		return (EPERM);
-	}
-
-	priv->master = TAILQ_EMPTY(&dev->files);
-
-	TAILQ_INSERT_TAIL(&dev->files, priv, link);
-	DRM_UNLOCK();
-	return (0);
-}
-
-
 /* The drm_read and drm_poll are stubs to prevent spurious errors
  * on older X Servers (4.3.0 and earlier) */
 

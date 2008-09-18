@@ -79,41 +79,26 @@ drm_lock_take(struct drm_lock_data *lock_data, unsigned int context)
 	return 0;
 }
 
-/* This takes a lock forcibly and hands it to context.	Should ONLY be used
-   inside *_unlock to give lock to kernel before calling *_dma_schedule. */
-int
-drm_lock_transfer(struct drm_lock_data *lock_data, unsigned int context)
-{
-	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
-	unsigned int		 old, new;
-
-	lock_data->file_priv = NULL;
-	do {
-		old  = *lock;
-		new  = context | _DRM_LOCK_HELD;
-	} while (!atomic_cmpset_int(lock, old, new));
-
-	return 1;
-}
-
 int
 drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 {
 	volatile unsigned int	*lock = &lock_data->hw_lock->lock;
 	unsigned int		 old, new;
 
+	mtx_enter(&lock_data->spinlock);
 	lock_data->file_priv = NULL;
 	do {
 		old  = *lock;
 		new  = 0;
 	} while (!atomic_cmpset_int(lock, old, new));
+	mtx_leave(&lock_data->spinlock);
 
 	if (_DRM_LOCK_IS_HELD(old) && _DRM_LOCKING_CONTEXT(old) != context) {
 		DRM_ERROR("%d freed heavyweight lock held by %d\n",
 			  context, _DRM_LOCKING_CONTEXT(old));
 		return 1;
 	}
-	DRM_WAKEUP_INT((void *)&lock_data->lock_queue);
+	wakeup(lock_data);
 	return 0;
 }
 
@@ -136,7 +121,7 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
         if (dev->driver.use_dma_queue && lock->context < 0)
                 return EINVAL;
 
-	DRM_LOCK();
+	mtx_enter(&dev->lock.spinlock);
 	for (;;) {
 		if (drm_lock_take(&dev->lock, lock->context)) {
 			dev->lock.file_priv = file_priv;
@@ -145,12 +130,12 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 
 		/* Contention */
-		ret = msleep((void *)&dev->lock.lock_queue,
-		    &dev->dev_lock, PZERO | PCATCH, "drmlkq", 0);
+		ret = msleep(&dev->lock, &dev->lock.spinlock,
+		    PZERO | PCATCH, "drmlkq", 0);
 		if (ret != 0)
 			break;
 	}
-	DRM_UNLOCK();
+	mtx_leave(&dev->lock.spinlock);
 	DRM_DEBUG("%d %s\n", lock->context, ret ? "interrupted" : "has lock");
 
 	if (ret != 0)
@@ -189,13 +174,9 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 	DRM_SPINUNLOCK(&dev->tsk_lock);
 
-	DRM_LOCK();
-	drm_lock_transfer(&dev->lock, DRM_KERNEL_CONTEXT);
-
-	if (drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT)) {
+	if (drm_lock_free(&dev->lock, lock->context)) {
 		DRM_ERROR("\n");
 	}
-	DRM_UNLOCK();
 
 	return 0;
 }

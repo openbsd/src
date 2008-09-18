@@ -94,10 +94,9 @@ drm_adddraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (info == NULL)
 		return (ENOMEM);
 
-	info->handle = ++dev->drw_no;
 	DRM_SPINLOCK(&dev->drw_lock);
+	draw->handle = info->handle = ++dev->drw_no;
 	RB_INSERT(drawable_tree, &dev->drw_head, info);
-	draw->handle = info->handle;
 	DRM_SPINUNLOCK(&dev->drw_lock);
 
 	DRM_DEBUG("%d\n", draw->handle);
@@ -197,13 +196,10 @@ drm_drawable_free(struct drm_device *dev, struct bsd_drm_drawable_info *draw)
 void
 drm_drawable_free_all(struct drm_device *dev)
 {
-	struct bsd_drm_drawable_info *draw, *nxt;
+	struct bsd_drm_drawable_info *draw;
 
 	DRM_SPINLOCK(&dev->drw_lock);
-	for (draw = RB_MIN(drawable_tree, &dev->drw_head); draw != NULL;
-	    draw = nxt) {
-		nxt = RB_NEXT(drawable_tree, &dev->drw_head, draw);
+	while ((draw = RB_ROOT(&dev->drw_head)) != NULL)
 		drm_drawable_free(dev, draw);
-	}
 	DRM_SPINUNLOCK(&dev->drw_lock);
 }

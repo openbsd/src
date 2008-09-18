@@ -65,7 +65,7 @@ int i915_wait_ring(struct drm_device * dev, int n, const char *caller)
 
 		last_head = ring->head;
 		last_acthd = acthd;
-		msleep(dev_priv, &dev->dev_lock, PZERO | PCATCH, "i915wt",
+		tsleep(dev_priv, PZERO | PCATCH, "i915wt",
 		    hz / 100);
 	}
 

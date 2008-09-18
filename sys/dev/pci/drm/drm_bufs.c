@@ -72,14 +72,10 @@ drm_alloc_resource(struct drm_device *dev, int resource)
 		return 1;
 	}
 
-	DRM_UNLOCK();
-	if (dev->pcir[resource] != NULL) {
-		DRM_LOCK();
+	if (dev->pcir[resource] != NULL)
 		return 0;
-	}
 
 	dev->pcir[resource] = vga_pci_bar_info(dev->vga_softc, resource);
-	DRM_LOCK();
 	if (dev->pcir[resource] == NULL) {
 		DRM_ERROR("Can't get bar info for resource 0x%x\n", resource);
 		return 1;
@@ -144,6 +140,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 	 * Check if this is just another version of a kernel-allocated map, and
 	 * just hand that back if so.
 	 */
+	DRM_LOCK();
 	if (type == _DRM_REGISTERS || type == _DRM_FRAME_BUFFER ||
 	    type == _DRM_SHM) {
 		TAILQ_FOREACH(map, &dev->maplist, link) {
@@ -179,18 +176,15 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 		DRM_ERROR("can't find free offset\n");
 		DRM_UNLOCK();
 		drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-		DRM_LOCK();
-		return ret;
+		return (ret);
 	}
 	DRM_UNLOCK();
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
 		map->handle = drm_ioremap(dev, map);
-		if (map->handle == NULL) {
-			DRM_LOCK();
-			return EINVAL;
-		}
+		if (map->handle == NULL)
+			return (EINVAL);
 		if (!(map->flags & _DRM_WRITE_COMBINING))
 			break;
 		/* FALLTHROUGH */
@@ -217,6 +211,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 		 * If agp is in control of userspace (some intel drivers for
 		 * example. In which case ignore this loop.
 		 */
+		DRM_LOCK();
 		TAILQ_FOREACH(entry, &dev->agp->memory, link) {
 			DRM_DEBUG("bound = %p, pages = %p, %p\n",
 			    entry->bound, entry->pages,
@@ -229,18 +224,18 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 			}
 		}
 		if (!TAILQ_EMPTY(&dev->agp->memory) && !valid) {
+			DRM_UNLOCK();
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-			DRM_LOCK();
 			DRM_ERROR("invalid agp map requested\n");
-			return EACCES;
+			return (EACCES);
 		}
+		DRM_UNLOCK();
 #endif
 		break;
 	case _DRM_SCATTER_GATHER:
 		if (dev->sg == NULL) {
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-			DRM_LOCK();
-			return EINVAL;
+			return (EINVAL);
 		}
 		map->offset = map->offset + dev->sg->handle;
 		break;
@@ -258,8 +253,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 		map->dmah = drm_pci_alloc(dev, map->size, align, 0xfffffffful);
 		if (map->dmah == NULL) {
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-			DRM_LOCK();
-			return ENOMEM;
+			return (ENOMEM);
 		}
 		map->handle = map->dmah->vaddr;
 		map->offset = map->dmah->busaddr;
@@ -270,8 +264,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 				DRM_UNLOCK();
 				drm_pci_free(dev, map->dmah);
 				drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-				DRM_LOCK();
-				return EBUSY;
+				return (EBUSY);
 			}
 			dev->lock.hw_lock = map->handle;
 			DRM_UNLOCK();
@@ -280,15 +273,13 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
 		drm_free(map, sizeof(*map), DRM_MEM_MAPS);
-		DRM_LOCK();
 		return EINVAL;
 	}
 
 	DRM_LOCK();
 	TAILQ_INSERT_TAIL(&dev->maplist, map, link);
-
 done:
-	/* Jumped to, with lock held, when a kernel map is found. */
+	DRM_UNLOCK();
 
 	DRM_DEBUG("Added map %d 0x%lx/0x%lx\n", map->type, map->offset,
 	    map->size);
@@ -308,10 +299,8 @@ drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (!(file_priv->flags & (FREAD|FWRITE)))
 		return EACCES; /* Require read/write */
 
-	DRM_LOCK();
 	err = drm_addmap(dev, request->offset, request->size, request->type,
 	    request->flags, &map);
-	DRM_UNLOCK();
 	if (err != 0)
 		return err;
 
@@ -330,8 +319,15 @@ drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 void
 drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 {
-	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+	DRM_LOCK();
+	drm_rmmap_locked(dev, map);
+	DRM_UNLOCK();
+}
 
+
+void
+drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
+{
 	TAILQ_REMOVE(&dev->maplist, map, link);
 
 	switch (map->type) {
@@ -362,7 +358,6 @@ drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 	/* NOCOALESCE set, can't fail */
 	extent_free(dev->handle_ext, map->ext, map->size, EX_NOWAIT);
 
-
 	drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 }
 
@@ -386,10 +381,10 @@ drm_rmmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	/* No match found. */
 	if (map == NULL) {
 		DRM_UNLOCK();
-		return EINVAL;
+		return (EINVAL);
 	}
 
-	drm_rmmap(dev, map);
+	drm_rmmap_locked(dev, map);
 
 	DRM_UNLOCK();
 
@@ -448,6 +443,7 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 	 */
 #if 0 /* disabled for now */
 	valid = 0;
+	DRM_LOCK();
 	TAILQ_FOREACH(agp_entry, &dev->agp->memory, link) {
 		if ((agp_offset >= agp_entry->bound) &&
 		    (agp_offset + total * count <=
@@ -458,8 +454,10 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 	}
 	if (!TAILQ_EMPTY(&dev->agp->memory) && !valid) {
 		DRM_DEBUG("zone invalid\n");
-		return EINVAL;
+		DRM_UNLOCK();
+		return (EINVAL);
 	}
+	DRM_UNLOCK();
 #endif
 
 	entry = &dma->bufs[order];

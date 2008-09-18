@@ -61,8 +61,8 @@ drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		entry->priv = file_priv;
 		SPLAY_INSERT(drm_magic_tree, &dev->magiclist, entry);
 
-		DRM_DEBUG("%d\n", auth->magic);
 		DRM_UNLOCK();
+		DRM_DEBUG("%d\n", auth->magic);
 	}
 
 	DRM_DEBUG("%u\n", auth->magic);

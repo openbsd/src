@@ -113,7 +113,6 @@
 
 #define wait_queue_head_t	atomic_t
 #define DRM_WAKEUP(w)		wakeup((void *)w)
-#define DRM_WAKEUP_INT(w)	wakeup(w)
 #define DRM_INIT_WAITQUEUE(queue) do {(void)(queue);} while (0)
 
 #define DRM_CURPROC		curproc
@@ -130,8 +129,8 @@
 } while (0)
 #define DRM_SPINUNLOCK_IRQRESTORE(u, irqflags) DRM_SPINUNLOCK(u)
 #define DRM_SPINLOCK_ASSERT(l)	DRM_NOOP
-#define DRM_LOCK()		DRM_SPINLOCK(&dev->dev_lock)
-#define DRM_UNLOCK()		DRM_SPINUNLOCK(&dev->dev_lock)
+#define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
+#define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
 #define DRM_MAXUNITS	8
 extern struct drm_device *drm_units[];
 
@@ -239,20 +238,15 @@ do {									\
 } while (0)
 
 /* Returns -errno to shared code */
-#define DRM_WAIT_ON( ret, queue, timeout, condition )		\
-ret = 0;							\
-while ( ret == 0 ) {						\
-	DRM_UNLOCK();						\
-	DRM_SPINLOCK(&dev->irq_lock);				\
-	if (condition) {					\
-		DRM_SPINUNLOCK(&dev->irq_lock);			\
-		break;						\
-	}							\
-	ret = -msleep(&(queue), &dev->irq_lock,		 	\
-	     PZERO | PCATCH, "drmwtq", (timeout));		\
-	DRM_SPINUNLOCK(&dev->irq_lock);				\
-	DRM_LOCK();						\
-}
+#define DRM_WAIT_ON( ret, queue, timeout, condition )	\
+DRM_SPINLOCK(&dev->irq_lock);				\
+while ( ret == 0 ) {					\
+	if (condition)					\
+		break;					\
+	ret = -msleep(&(queue), &dev->irq_lock,	 	\
+	     PZERO | PCATCH, "drmwtq", (timeout));	\
+}							\
+DRM_SPINUNLOCK(&dev->irq_lock)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
@@ -344,8 +338,8 @@ struct drm_lock_data {
 	struct drm_hw_lock	*hw_lock;	/* Hardware lock */
 	/* Unique identifier of holding process (NULL is kernel) */
 	struct drm_file		*file_priv;
-	int			 lock_queue;	/* Queue of blocked processes */
 	unsigned long	 	 lock_time;	/* Time of last lock */
+	struct mutex		 spinlock;
 };
 
 /* This structure, in the struct drm_device, is always initialized while
@@ -428,7 +422,6 @@ typedef struct drm_local_map {
 struct drm_vblank {
 	u_int32_t	last_vblank;	/* Last vblank we recieved */
 	atomic_t	vbl_count;	/* Number of interrupts */
-	int		vbl_queue;	/* sleep on this when waiting */
 	atomic_t	vbl_refcount;	/* Number of users */
 	int		vbl_enabled;	/* Enabled? */
 	int		vbl_inmodeset;	/* is the DDX currently modesetting */
@@ -538,7 +531,7 @@ struct drm_device {
 				/* Locks */
 	DRM_SPINTYPE	  dma_lock;	/* protects dev->dma */
 	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */
-	DRM_SPINTYPE	  dev_lock;	/* protects everything else */
+	struct rwlock	  dev_lock;	/* protects everything else */
 	DRM_SPINTYPE	  drw_lock;
 	DRM_SPINTYPE	  tsk_lock;
 
@@ -616,8 +609,6 @@ dev_type_mmap(drmmmap);
 extern drm_local_map_t	*drm_getsarea(struct drm_device *);
 
 /* File operations helpers (drm_fops.c) */
-int		 drm_open_helper(dev_t, int, int, struct proc *,
-		     struct drm_device *);
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
 
 /* Memory management support (drm_memory.c) */
@@ -645,13 +636,13 @@ void	drm_write32(drm_local_map_t *, unsigned long, u_int32_t);
 
 /* Locking IOCTL support (drm_lock.c) */
 int	drm_lock_take(struct drm_lock_data *, unsigned int);
-int	drm_lock_transfer(struct drm_lock_data *, unsigned int);
 int	drm_lock_free(struct drm_lock_data *, unsigned int);
 
 /* Buffer management support (drm_bufs.c) */
 unsigned long drm_get_resource_start(struct drm_device *, unsigned int);
 unsigned long drm_get_resource_len(struct drm_device *, unsigned int);
 void	drm_rmmap(struct drm_device *, drm_local_map_t *);
+void	drm_rmmap_locked(struct drm_device *, drm_local_map_t *);
 int	drm_order(unsigned long);
 drm_local_map_t
 	*drm_find_matching_map(struct drm_device *, drm_local_map_t *);
@@ -797,12 +788,13 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 {
 	drm_local_map_t *map;
 
-	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (offset == map->ext)
-			return map;
+			break;
 	}
-	return NULL;
+	DRM_UNLOCK();
+	return (map);
 }
 
 #endif /* __KERNEL__ */

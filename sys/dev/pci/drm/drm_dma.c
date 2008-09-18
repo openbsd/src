@@ -46,6 +46,8 @@ drm_dma_setup(struct drm_device *dev)
 	if (dev->dma == NULL)
 		return ENOMEM;
 
+	dev->buf_use = 0;
+
 	DRM_SPININIT(&dev->dma_lock, "drmdma");
 
 	return 0;
