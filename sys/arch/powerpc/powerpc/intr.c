@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2007/11/14 20:47:34 thib Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2008/09/18 03:56:25 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -35,45 +35,121 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/lock.h>
+
+int ppc_dflt_splraise(int);
+int ppc_dflt_spllower(int);
+void ppc_dflt_splx(int);
+
+/* provide a function for asm code to call */
+#undef splraise
+#undef spllower
+#undef splx
+
+int ppc_smask[IPL_NUM];
+
+void
+ppc_smask_init()
+{
+	int i;
+
+        for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
+                ppc_smask[i] = 0;
+#if 0
+	/* NOT YET */
+                if (i < IPL_SOFT)
+                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFT);
+#endif
+                if (i < IPL_SOFTCLOCK)
+                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
+                if (i < IPL_SOFTNET)
+                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
+                if (i < IPL_SOFTTTY)
+                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
+        }
+}
+
 
 int
 splraise(int newcpl)
 {
-	struct cpu_info *ci = curcpu();
-	int oldcpl;
-
-	__asm__ volatile("":::"memory");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = oldcpl | newcpl;
-	__asm__ volatile("":::"memory");
-
-	return (oldcpl);
+	return ppc_intr_func.raise(newcpl);
 }
 
 int
 spllower(int newcpl)
 {
-	struct cpu_info *ci = curcpu();
-	int oldcpl;
-
-	__asm__ volatile("":::"memory");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = newcpl;
-	if (ci->ci_ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("":::"memory");
-
-	return (oldcpl);
+	return ppc_intr_func.lower(newcpl);
 }
 
 void
 splx(int newcpl)
 {
+	ppc_intr_func.x(newcpl);
+}
+
+int
+ppc_dflt_splraise(int newcpl)
+{
+	struct cpu_info *ci = curcpu();
+	int oldcpl;
+
+	oldcpl = ci->ci_cpl;
+	if (newcpl < oldcpl)
+		newcpl = oldcpl;
+	ci->ci_cpl = newcpl;
+
+	return (oldcpl);
+}
+
+/*
+ * functions with 'default' behavior to use before the real
+ * interrupt controller attaches
+ */
+int
+ppc_dflt_spllower(int newcpl)
+{
+	struct cpu_info *ci = curcpu();
+	int oldcpl;
+
+	oldcpl = ci->ci_cpl;
+
+	splx(newcpl);
+
+	return (oldcpl);
+}
+
+void
+ppc_dflt_splx(int newcpl)
+{
 	struct cpu_info *ci = curcpu();
 
-	__asm__ volatile("":::"memory");	/* reorder protect */
 	ci->ci_cpl = newcpl;
-	if (ci->ci_ipending & ~newcpl)
+
+	if (ci->ci_ipending & ppc_smask[newcpl])
 		do_pending_int();
-	__asm__ volatile("":::"memory");
+}
+
+struct ppc_intr_func ppc_intr_func =
+{
+	ppc_dflt_splraise,
+	ppc_dflt_spllower,
+	ppc_dflt_splx
+};
+
+char *
+ppc_intr_typename(int type)
+{
+	switch (type) {
+        case IST_NONE :
+		return ("none");
+        case IST_PULSE:
+		return ("pulsed");
+        case IST_EDGE:
+		return ("edge-triggered");
+        case IST_LEVEL:
+		return ("level-triggered");
+	default:
+		return ("unknown");
+	}
 }
