@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.9 2008/06/26 05:42:21 ray Exp $
+.\"	$OpenBSD: procmap.1,v 1.10 2008/09/18 08:02:53 otto Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 18 2008 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -65,6 +65,8 @@ then information for the kernel's memory map is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width XXXnumberXX
+.It Fl A
+Print more detailed information on anonymous map usage.
 .It Fl a
 Display
 .Dq all

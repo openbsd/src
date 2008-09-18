@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.30 2008/09/18 07:50:39 art Exp $ */
+/*	$OpenBSD: procmap.c,v 1.31 2008/09/18 08:02:53 otto Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -989,7 +989,7 @@ static void __dead
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-adlmPsv] [-D number] "
+	fprintf(stderr, "usage: %s [-AadlmPsv] [-D number] "
 	    "[-M core] [-N system] [-p pid] [pid ...]\n",
 	    __progname);
 	exit(1);
