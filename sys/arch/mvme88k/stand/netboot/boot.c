@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2008/04/02 21:53:18 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.9 2008/09/19 20:18:03 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -70,6 +70,8 @@ main()
 {
 	char *cp, *file;
 	int ask = 0, howto, ret;
+
+	board_setup();
 
 	printf("\n>> OpenBSD/mvme88k netboot [%s]\n", version);
 

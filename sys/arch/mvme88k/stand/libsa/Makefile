@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/04/02 21:53:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2008/09/19 20:18:03 miod Exp $
 
 LIB=sa
 
@@ -8,7 +8,7 @@ NOPROFILE=noprofile
 # Logically src/sys
 S=${.CURDIR}/../../../..
 
-SRCS=	bugdev.c clock.c parse_args.c exec_mvme.c
+SRCS=	board.c bugdev.c clock.c parse_args.c exec_mvme.c
 
 .PATH:	${S}/lib/libsa
 SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
@@ -41,8 +41,9 @@ install:
 
 .if !make(obj)
 .BEGIN:
+	@([ -h dev ] || ln -s ${.CURDIR}/../../../${MACHINE}/dev dev)
 	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
 	@([ -h m88k ] || ln -s ${.CURDIR}/../../../m88k/include m88k)
-.NOPATH: machine m88k
-CLEANFILES+=	machine m88k
+.NOPATH: dev machine m88k
+CLEANFILES+=	dev machine m88k
 .endif

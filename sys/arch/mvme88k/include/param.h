@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.39 2008/01/13 20:18:54 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.40 2008/09/19 20:18:01 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +53,7 @@
 #define KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
 
-#ifdef   _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(_LOCORE)
 extern int brdtyp;
 #endif
@@ -66,5 +66,5 @@ extern int brdtyp;
 #define BRD_197		0x197
 #define BRD_8120	0x8120
 
-#endif	/* _KERNEL */
+#endif	/* _KERNEL || _STANDALONE */
 #endif /* !_MACHINE_PARAM_H_ */

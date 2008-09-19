@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.26 2007/12/27 23:20:31 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.27 2008/09/19 20:18:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -329,9 +329,7 @@ m197_bootstrap()
 	extern struct cmmu_p cmmu88410;
 	extern int cpuspeed;
 	u_int16_t cpu;
-#ifndef MULTIPROCESSOR
-	u_int8_t btimer, pbt;
-#endif
+	u_int8_t version, btimer, pbt;
 
 	if (mc88410_present()) {
 		cmmu = &cmmu88410;	/* 197SP/197DP */
@@ -355,23 +353,28 @@ m197_bootstrap()
 	 */
 	cpuspeed = 256 - *(volatile u_int8_t *)(BS_BASE + BS_PADJUST);
 
-#ifndef MULTIPROCESSOR
 	/*
 	 * Kernels running without snooping enabled (i.e. without
 	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
 	 * bus timeout limits, or the instruction cache might not be able
-	 * to fill or answer fast enough.
+	 * to fill or answer fast enough. It does not hurt to increase
+	 * them unconditionnaly, though.
 	 *
 	 * Do this as soon as possible (i.e. now...), since this is
 	 * especially critical on 40MHz boards, while some 50MHz boards can
 	 * run without this timeout change... but better be safe than sorry.
+	 *
+	 * Boot blocks do this for us now, but again, better stay on the
+	 * safe side. Be sure to update the boot blocks code if the logic
+	 * below changes.
 	 */
+	version = *(volatile u_int8_t *)(BS_BASE + BS_CHIPREV);
 	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
 	pbt = btimer & BS_BTIMER_PBT_MASK;
 	btimer = (btimer & ~BS_BTIMER_PBT_MASK);
 	
-	/* PBT256 only be necessary for busswitch rev1? */
-	if (cpuspeed < 50) {
+	/* XXX PBT256 might only be necessary for busswitch rev1? */
+	if (cpuspeed < 50 || version <= 0x01) {
 		if (pbt < BS_BTIMER_PBT256)
 			pbt = BS_BTIMER_PBT256;
 	} else {
@@ -380,7 +383,6 @@ m197_bootstrap()
 	}
 
 	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer | pbt;
-#endif
 
 	md_interrupt_func_ptr = m197_ext_int;
 	md_getipl = m197_getipl;
