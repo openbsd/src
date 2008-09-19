@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.18 2007/05/28 23:10:10 beck Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.19 2008/09/19 05:41:29 djm Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
 	emul_osf1, emul_sunos, emul_svr4, emul_ultrix;
 
 struct execsw execsw[] = {
-	{ MAXINTERP, exec_script_makecmds, &emul_native, },	/* shell scripts */
+	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds, &emul_native, },	/* shell scripts */
 #ifdef _KERN_DO_AOUT
 #ifdef COMPAT_AOUT
 	{ sizeof(struct exec), exec_aout_makecmds, &emul_aout },

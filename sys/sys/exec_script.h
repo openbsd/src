@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.h,v 1.4 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: exec_script.h,v 1.5 2008/09/19 05:41:29 djm Exp $	*/
 /*	$NetBSD: exec_script.h,v 1.6 1995/03/26 20:24:11 jtc Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 #define	EXEC_SCRIPT_MAGIC	"#!"
 #define	EXEC_SCRIPT_MAGICLEN	2
+#define EXEC_SCRIPT_HDRSZ	(EXEC_SCRIPT_MAGICLEN + 1 + MAXINTERP + 1)
 
 #define	SETUIDSCRIPTS		/* they are secure, so enable them */
 
