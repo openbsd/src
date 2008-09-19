@@ -47,6 +47,8 @@ CRT\$XIU	ENDS
 
 ___
 print<<___ if(!defined($masm));
+#include <machine/asm.h>
+
 .text
 
 .globl	OPENSSL_atomic_add
@@ -95,7 +97,7 @@ OPENSSL_wipe_cpu:
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
 .section	.init
-	call	OPENSSL_cpuid_setup
+	call	PIC_PLT(OPENSSL_cpuid_setup)
 
 ___
 

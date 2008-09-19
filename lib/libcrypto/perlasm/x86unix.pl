@@ -345,7 +345,7 @@ sub main'file
 	local($file)=@_;
 
 	if ($main'openbsd)
-		{ push(@out,"#include <machine/asm.h>\n"); return; }
+		{ push(@out,"#include <machine/asm.h>\n"); }
 
 	local($tmp)=<<"EOF";
 	.file	"$file.s"
@@ -355,13 +355,17 @@ EOF
 
 sub main'function_begin
 	{
-	local($func)=@_;
+	local($func,$junk,$llabel)=@_;
 
 	&main'external_label($func);
 	$func=$under.$func;
 
 	if ($main'openbsd)
-		{ push (@out, "\nENTRY($func)\n"); goto skip; }
+		{
+		push (@out, "\nENTRY($func)\n");
+		push (@out, "$llabel:\n") if $llabel;
+		goto skip;
+		}
 
 	local($tmp)=<<"EOF";
 .text
@@ -398,6 +402,44 @@ sub main'function_begin_B
 
 	if ($main'openbsd)
 		{ push(@out, "\nENTRY($func)\n"); goto skip; }
+
+	local($tmp)=<<"EOF";
+.text
+.globl	$func
+EOF
+	push(@out,$tmp);
+	if ($main'cpp)
+		{ push(@out,"TYPE($func,\@function)\n"); }
+	elsif ($main'coff)
+		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+	elsif ($main'aout and !$main'pic)
+		{ }
+	else	{ push(@out,".type	$func,\@function\n"); }
+	push(@out,".align\t$align\n");
+	push(@out,"$func:\n");
+skip:
+	$stack=4;
+	}
+
+# Like function_begin_B but with static linkage
+sub main'function_begin_C
+	{
+	local($func,$extra)=@_;
+
+	&main'external_label($func);
+	$func=$under.$func;
+
+	if ($main'openbsd)
+		{
+			local($tmp)=<<"EOF";
+.text
+_ALIGN_TEXT
+.type $func,\@function
+$func:
+EOF
+			push(@out, $tmp);
+			goto skip;
+		}
 
 	local($tmp)=<<"EOF";
 .text
@@ -474,6 +516,8 @@ sub main'function_end_B
 	%label=();
 	}
 
+sub main'function_end_C { function_end_B(@_); }
+
 sub main'wparam
 	{
 	local($num)=@_;
@@ -510,7 +554,7 @@ sub main'swtmp
 
 sub main'comment
 	{
-	if (!defined($com_start) or $main'elf)
+	if (!defined($com_start) or (!$main'openbsd && $main'elf))
 		{	# Regarding $main'elf above...
 			# GNU and SVR4 as'es use different comment delimiters,
 		push(@out,"\n");	# so we just skip ELF comments...
@@ -731,7 +775,9 @@ sub main'initseg
 		{
 		$tmp=<<___;
 .section	.init
-	call	$under$f
+		PIC_PROLOGUE
+		call	PIC_PLT($under$f)
+		PIC_EPILOGUE
 	jmp	.Linitalign
 .align	$align
 .Linitalign:

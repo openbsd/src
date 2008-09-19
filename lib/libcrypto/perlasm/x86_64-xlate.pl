@@ -163,7 +163,8 @@ my $current_function;
 	local	*line = shift;
 	undef	$ret;
 
-	if ($line =~ /^([^\(,]*)\(([%\w,]+)\)/) {
+	if ($line =~ /^([^\(,]*)\(([%\w,]+)\)/ &&
+	    !($line =~ /^PIC_(GOT|PLT)/)) {
 	    $self->{label} = $1;
 	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$2);
 	    $self->{scale} = 1 if (!defined($self->{scale}));
@@ -428,6 +429,8 @@ my $current_function;
 	$self->{value};
     }
 }
+
+print "#include <machine/asm.h>\n";
 
 while($line=<>) {
 

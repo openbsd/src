@@ -250,7 +250,7 @@ sub enclast()
 sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 
 &public_label("AES_Te");
-&function_begin_B("_x86_AES_encrypt");
+&function_begin_C("_x86_AES_encrypt");
 	if ($vertical_spin) {
 		# I need high parts of volatile registers to be accessible...
 		&exch	($s1="edi",$key="ebx");
@@ -539,7 +539,7 @@ sub declast()
 }
 
 &public_label("AES_Td");
-&function_begin_B("_x86_AES_decrypt");
+&function_begin_C("_x86_AES_decrypt");
 	# note that caller is expected to allocate stack frame for me!
 	&mov	(&DWP(12,"esp"),$key);		# save key
 
@@ -1240,7 +1240,7 @@ sub enckey()
 # int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 #                        AES_KEY *key)
 &public_label("AES_Te");
-&function_begin("AES_set_encrypt_key");
+&function_begin("AES_set_encrypt_key", "", "_x86_AES_set_encrypt_key");
 	&mov	("esi",&wparam(0));		# user supplied key
 	&mov	("edi",&wparam(2));		# private key schedule
 
@@ -1467,7 +1467,7 @@ sub deckey()
 	&mov	(&DWP(0,"esp"),"eax");
 	&mov	(&DWP(4,"esp"),"ecx");
 	&mov	(&DWP(8,"esp"),"edx");
-	&call	("AES_set_encrypt_key");
+	&call	("_x86_AES_set_encrypt_key");
 	&add	("esp",12);
 	&cmp	("eax",0);
 	&je	(&label("proceed"));
