@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.36 2008/09/18 03:56:25 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.37 2008/09/19 01:42:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -171,11 +171,6 @@ void softnet(int isr);
 	"net",			\
 	"serial",		\
 }
-
-#define PPC_IPI_NOP		0
-#define PPC_IPI_DDB		1
-
-void ppc_send_ipi(struct cpu_info *, int);
 
 #define PPC_IPI_NOP		0
 #define PPC_IPI_DDB		1
