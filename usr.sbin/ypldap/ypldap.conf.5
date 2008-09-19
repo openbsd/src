@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.5 2008/06/29 22:04:19 pyr Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.6 2008/09/19 08:06:16 pyr Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2008 $
+.Dd $Mdocdate: September 19 2008 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -71,8 +71,8 @@ from LDAP.
 .It provide map Ar string
 Specify a map that should be provided by
 .Nm
-The currently implemented maps are: passwd.byname, passwd.byid,
-group.byname, group.byid.
+The currently implemented maps are: passwd.byname, passwd.byuid,
+group.byname, group.bygid.
 .El
 .Sh DIRECTORIES
 Directories are used to describe the LDAP schema and help
