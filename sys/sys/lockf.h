@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.7 2005/03/10 17:26:10 tedu Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.8 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct lockf {
 	struct	locklist lf_blkhd;	/* The list of blocked locks */
 	TAILQ_ENTRY(lockf) lf_block; /* A request waiting for a lock */
 	uid_t	lf_uid;		/* User ID responsible */
+	pid_t	lf_pid;		/* POSIX - owner pid */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.18 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.19 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -282,8 +282,8 @@ hpux_sys_fcntl(p, v, retval)
 				goto out;
 			}
 
-			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg);
+			atomic_setbits_int(&fdp->fd_flags, FD_ADVLOCK);
+			error = VOP_ADVLOCK(vp, fdp, F_SETLK, &fl, flg);
 			goto out;
 
 		case F_WRLCK:
@@ -291,13 +291,12 @@ hpux_sys_fcntl(p, v, retval)
 				error = EBADF;
 				goto out;
 			}
-			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg);
+			atomic_setbits_int(&fdp->fd_flags, FD_ADVLOCK);
+			error = VOP_ADVLOCK(vp, fdp, F_SETLK, &fl, flg);
 			goto out;
 
 		case F_UNLCK:
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
-			    F_POSIX);
+			error = VOP_ADVLOCK(vp, fdp, F_UNLCK, &fl, F_POSIX);
 			goto out;
 
 		default:
@@ -328,8 +327,7 @@ hpux_sys_fcntl(p, v, retval)
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
 
-		if ((error =
-		    VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX)))
+		if ((error = VOP_ADVLOCK(vp, fdp, F_GETLK, &fl, F_POSIX)))
 			goto out;
 
 		hfl.hl_start = fl.l_start;

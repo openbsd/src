@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.59 2008/04/08 14:46:45 thib Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.60 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/tty.h>
 #include <sys/cdio.h>
 #include <sys/poll.h>
+#include <sys/filedesc.h>
 
 #include <uvm/uvm_extern.h>
 #include <miscfs/specfs/specdev.h>
@@ -482,8 +483,18 @@ vn_lock(struct vnode *vp, int flags, struct proc *p)
 int
 vn_closefile(struct file *fp, struct proc *p)
 {
-	return (vn_close(((struct vnode *)fp->f_data), fp->f_flag,
-		fp->f_cred, p));
+	struct vnode *vp = fp->f_data;
+	struct flock lf;
+	
+	if ((fp->f_flag & FHASLOCK)) {
+		lf.l_whence = SEEK_SET;
+		lf.l_start = 0;
+		lf.l_len = 0;
+		lf.l_type = F_UNLCK;
+		(void) VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
+	}
+
+	return (vn_close(vp, fp->f_flag, fp->f_cred, p));
 }
 
 int

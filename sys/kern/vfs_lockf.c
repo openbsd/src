@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.12 2005/11/20 21:55:15 pedro Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.13 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -192,6 +192,7 @@ lf_advlock(struct lockf **head, off_t size, caddr_t id, int op,
 	lock->lf_next = NULL;
 	TAILQ_INIT(&lock->lf_blkhd);
 	lock->lf_flags = flags;
+	lock->lf_pid = (flags & F_POSIX) ? curproc->p_pid : -1;
 	/*
 	 * Do the requested operation.
 	 */
@@ -544,10 +545,7 @@ lf_getlock(struct lockf *lock, struct flock *fl)
 			fl->l_len = 0;
 		else
 			fl->l_len = block->lf_end - block->lf_start + 1;
-		if (block->lf_flags & F_POSIX)
-			fl->l_pid = ((struct proc *)(block->lf_id))->p_pid;
-		else
-			fl->l_pid = -1;
+		fl->l_pid = block->lf_pid;
 	} else {
 		fl->l_type = F_UNLCK;
 	}

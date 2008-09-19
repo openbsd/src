@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.19 2004/07/22 06:11:10 tedu Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.20 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -74,6 +74,8 @@ struct filedesc {
 	struct	klist *fd_knlist;	/* list of attached knotes */
 	u_long	fd_knhashmask;		/* size of knhash */
 	struct	klist *fd_knhash;	/* hash table for attached knotes */
+
+	int fd_flags;			/* flags on the file descriptor table */
 };
 
 /*
@@ -100,6 +102,11 @@ struct filedesc0 {
  * Per-process open flags.
  */
 #define	UF_EXCLOSE 	0x01		/* auto-close on exec */
+
+/*
+ * Flags on the file descriptor table.
+ */
+#define FD_ADVLOCK	0x01		/* May hold a POSIX adv. lock. */
 
 /*
  * Storage required per open file descriptor.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.79 2008/06/12 18:10:06 thib Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.80 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -430,28 +430,42 @@ restart:
 				error = EBADF;
 				goto out;
 			}
-			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
-			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
-			goto out;
+			atomic_setbits_int(&fdp->fd_flags, FD_ADVLOCK);
+			error = VOP_ADVLOCK(vp, fdp, F_SETLK, &fl, flg);
+			break;
 
 		case F_WRLCK:
 			if ((fp->f_flag & FWRITE) == 0) {
 				error = EBADF;
 				goto out;
 			}
-			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
-			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
-			goto out;
+			atomic_setbits_int(&fdp->fd_flags, FD_ADVLOCK);
+			error = VOP_ADVLOCK(vp, fdp, F_SETLK, &fl, flg);
+			break;
 
 		case F_UNLCK:
-			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
-				F_POSIX));
+			error = VOP_ADVLOCK(vp, fdp, F_UNLCK, &fl, F_POSIX);
 			goto out;
 
 		default:
 			error = EINVAL;
 			goto out;
 		}
+
+		if (fp != fd_getfile(fdp, fd)) {
+			/*
+			 * We have lost the race with close() or dup2()
+			 * unlock, pretend that we'd won the race and that
+			 * lock had been removed by close()
+			 */
+			fl.l_whence = SEEK_SET;
+			fl.l_start = 0;
+			fl.l_len = 0;
+			VOP_ADVLOCK(vp, fdp, F_UNLCK, &fl, F_POSIX);
+			fl.l_type = F_UNLCK;
+		}
+		goto out;
+
 
 	case F_GETLK:
 		if (fp->f_type != DTYPE_VNODE) {
@@ -479,7 +493,7 @@ restart:
 			error = EINVAL;
 			break;
 		}
-		error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX);
+		error = VOP_ADVLOCK(vp, fdp, F_GETLK, &fl, F_POSIX);
 		if (error)
 			break;
 		error = (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
@@ -1013,12 +1027,34 @@ fdfree(struct proc *p)
 int
 closef(struct file *fp, struct proc *p)
 {
-	struct vnode *vp;
-	struct flock lf;
+	struct filedesc *fdp;
+	int references_left;
 	int error;
 
 	if (fp == NULL)
 		return (0);
+
+	/*
+	 * Some files passed to this function could be accessed
+	 * without a FILE_IS_USABLE check (and in some cases it's perfectly
+	 * legal), we must beware of files where someone already won the
+	 * race to FIF_WANTCLOSE.
+	 */
+	if ((fp->f_iflags & FIF_WANTCLOSE) != 0 ||
+	    --fp->f_count > 0) {
+		references_left = 1;
+	} else {
+		references_left = 0;
+#ifdef DIAGNOSTIC
+		if (fp->f_count < 0)
+			panic("closef: count < 0");
+#endif
+
+		/* Wait for the last usecount to drain. */
+		fp->f_iflags |= FIF_WANTCLOSE;
+		while (fp->f_usecount > 1)
+			tsleep(&fp->f_usecount, PRIBIO, "closef", 0);
+	}
 
 	/*
 	 * POSIX record locking dictates that any close releases ALL
@@ -1028,49 +1064,24 @@ closef(struct file *fp, struct proc *p)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if (p && (p->p_flag & P_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
+	if (p && ((fdp = p->p_fd) != NULL) &&
+	    (fdp->fd_flags & FD_ADVLOCK) &&
+	    fp->f_type == DTYPE_VNODE) {
+		struct vnode *vp = fp->f_data;
+		struct flock lf;
+
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
-		vp = (struct vnode *)fp->f_data;
-		(void) VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &lf, F_POSIX);
+		(void) VOP_ADVLOCK(vp, fdp, F_UNLCK, &lf, F_POSIX);
 	}
 
-	/*
-	 * Some files passed to this function could be accessed
-	 * without a FILE_IS_USABLE check (and in some cases it's perfectly
-	 * legal), we must beware of files where someone already won the
-	 * race to FIF_WANTCLOSE.
-	 */
-	if ((fp->f_iflags & FIF_WANTCLOSE) != 0) {
+	if (references_left) {
 		FRELE(fp);
 		return (0);
 	}
 
-	if (--fp->f_count > 0) {
-		FRELE(fp);
-		return (0);
-	}
-
-#ifdef DIAGNOSTIC
-	if (fp->f_count < 0)
-		panic("closef: count < 0");
-#endif
-
-	/* Wait for the last usecount to drain. */
-	fp->f_iflags |= FIF_WANTCLOSE;
-	while (fp->f_usecount > 1)
-		tsleep(&fp->f_usecount, PRIBIO, "closef", 0);
-
-	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
-		lf.l_whence = SEEK_SET;
-		lf.l_start = 0;
-		lf.l_len = 0;
-		lf.l_type = F_UNLCK;
-		vp = (struct vnode *)fp->f_data;
-		(void) VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
-	}
 	if (fp->f_ops)
 		error = (*fp->f_ops->fo_close)(fp, p);
 	else
@@ -1115,6 +1126,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EOPNOTSUPP);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
@@ -1139,6 +1151,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 	else
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
 out:
+	FRELE(fp);
 	return (error);
 }
 

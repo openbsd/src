@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.103 2008/05/05 15:37:41 thib Exp $	*/
+/*	$OpenBSD: proc.h,v 1.104 2008/09/19 12:24:55 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -269,7 +269,6 @@ struct proc {
 #define P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /* These flags are kept in p_flag. */
-#define	P_ADVLOCK	0x000001	/* Proc may hold a POSIX adv. lock. */
 #define	P_CONTROLT	0x000002	/* Has a controlling terminal. */
 #define	P_INMEM		0x000004	/* Loaded into memory. UNUSED */
 #define	P_NOCLDSTOP	0x000008	/* No SIGCHLD when children stop. */
