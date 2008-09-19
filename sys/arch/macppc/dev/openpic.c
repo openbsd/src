@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.49 2008/09/18 03:56:25 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.50 2008/09/19 01:49:54 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -461,7 +461,7 @@ openpic_do_pending_int(int pcpl)
 
 	do {
 		loopcount ++;
-		if (loopcount > 5)
+		if (loopcount > 50)
 			printf("do_pending looping %d pcpl %x %x\n", loopcount,
 			    pcpl, ci->ci_cpl);
 		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
@@ -625,7 +625,9 @@ openpic_ext_intr()
  		}
 		if (spurious) {
 			openpic_spurious.ec_count++;
+#ifdef OPENPIC_NOISY
 			printf("spurious intr %d\n", irq);
+#endif
 		}
 
 		uvmexp.intrs++;
@@ -743,6 +745,8 @@ openpic_prog_button (void *arg)
 void
 openpic_ipi_ddb()
 {
+#ifdef OPENPIC_NOISY
 	printf("ipi_ddb() called\n");
+#endif
 	Debugger();
 }
