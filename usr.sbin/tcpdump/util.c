@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2008/09/19 08:52:16 mpf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: util.c,v 1.23 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: util.c,v 1.24 2008/09/19 08:52:16 mpf Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -337,8 +337,9 @@ printb(char *s, unsigned short v, char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	bits++;
+
 	if (bits) {
+		bits++;
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
