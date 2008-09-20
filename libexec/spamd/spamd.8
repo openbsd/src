@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.110 2008/08/11 20:28:55 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.111 2008/09/20 20:38:23 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2008 $
+.Dd $Mdocdate: September 20 2008 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -348,6 +348,17 @@ section can be used to log connection details to a dedicated file:
 !spamd
 daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Ed
+.Pp
+A typical entry shows the time of the connection and
+the IP address of the connecting host.
+When a host connects,
+the total number of active connections and
+the number of connections from blacklisted hosts is shown
+.Pq connected (xx/xx) .
+When a host disconnects,
+the amount of time spent talking to
+.Nm
+is shown.
 .Sh GREYTRAPPING
 When running
 .Nm
