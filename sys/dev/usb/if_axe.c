@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.86 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.87 2008/09/21 23:59:20 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1337,7 +1337,9 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct mii_data		*mii;
 	uWord			rxmode;
-	int			error = 0;
+	int			s, error = 0;
+
+	s = splnet();
 
 	switch(cmd) {
 	case SIOCSIFADDR:
@@ -1410,6 +1412,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
+	splx(s);
 	return(error);
 }
 
