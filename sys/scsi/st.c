@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.84 2008/09/06 15:35:02 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.85 2008/09/22 19:44:41 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -534,7 +534,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct scsi_link *sc_link;
 	struct st_softc *st;
-	int error;
+	int error = 0;
 
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
