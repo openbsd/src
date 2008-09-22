@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.278 2008/09/09 13:56:39 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.279 2008/09/22 10:22:19 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -765,12 +765,12 @@ struct pf_state {
 	u_int8_t		 state_flags;
 #define	PFSTATE_ALLOWOPTS	0x01
 #define	PFSTATE_SLOPPY		0x02
+#define	PFSTATE_PFLOW		0x04
 	u_int8_t		 timeout;
 	u_int8_t		 sync_flags;
 #define	PFSTATE_NOSYNC		0x01
 #define	PFSTATE_FROMSYNC	0x02
 #define	PFSTATE_STALE		0x04
-#define	PFSTATE_PFLOW		0x08
 };
 
 /*
