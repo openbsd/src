@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.30 2008/08/15 11:18:10 djm Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.31 2008/09/22 19:44:00 miod Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -80,7 +80,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 {
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct cryptop		*crp;
+	struct cryptop		*crp = NULL;
 	struct cryptodesc	*crd;
 	struct uio		*uio = NULL;
 	int			flags, i, n, s;
