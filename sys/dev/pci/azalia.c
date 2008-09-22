@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.53 2008/09/17 06:14:09 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.54 2008/09/22 19:42:07 miod Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -556,7 +556,7 @@ azalia_intr(void *v)
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 
-	if (intsts & HDA_INTCTL_CIE) {
+	if (intsts & HDA_INTSTS_CIS) {
 		if (rirbctl & HDA_RIRBCTL_RINTCTL) {
 			if (rirbsts & HDA_RIRBSTS_RINTFL)
 				azalia_rirb_intr(az);
@@ -1047,14 +1047,12 @@ void
 azalia_rirb_intr(azalia_t *az)
 {
 	const rirb_entry_t *rirb;
-	uint16_t wp, rp;
+	uint16_t wp;
 	uint8_t rirbsts;
 
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 
 	wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
-	if (rp == wp)
-		return;		/* interrupted but no data in RIRB */
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
 	while (az->rirb_rp != wp) {
 		if (++az->rirb_rp >= az->rirb_size)
@@ -2309,7 +2307,7 @@ azalia_set_port(void *v, mixer_ctrl_t *mc)
 
 	az = v;
 	co = &az->codecs[az->codecno];
-	if (mc->dev < 0 || mc->dev > co->nmixers)
+	if (mc->dev < 0 || mc->dev >= co->nmixers)
 		return EINVAL;
 	return co->set_port(co, mc);
 }
@@ -2322,7 +2320,7 @@ azalia_get_port(void *v, mixer_ctrl_t *mc)
 
 	az = v;
 	co = &az->codecs[az->codecno];
-	if (mc->dev < 0 || mc->dev > co->nmixers)
+	if (mc->dev < 0 || mc->dev >= co->nmixers)
 		return EINVAL;
 	return co->get_port(co, mc);
 }
