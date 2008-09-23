@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.244 2008/09/18 15:16:30 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.245 2008/09/23 00:27:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1353,17 +1353,19 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (BGE_IS_5705_OR_BEYOND(sc)) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
+		} else {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
+		}
+	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
-	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
-	} else {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	}
 
@@ -1663,18 +1665,13 @@ bge_blockinit(struct bge_softc *sc)
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
 
+	val = BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS;
+
+	if (sc->bge_flags & BGE_PCIE)
+		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
+
 	/* Turn on read DMA state machine */
-	{
-		uint32_t dma_read_modebits;
-
-		dma_read_modebits =
-		  BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
-
-		if (sc->bge_flags & BGE_PCIE)
-			dma_read_modebits |= BGE_RDMAMODE_FIFO_LONG_BURST;
-
-		CSR_WRITE_4(sc, BGE_RDMA_MODE, dma_read_modebits);
-	}
+	CSR_WRITE_4(sc, BGE_RDMA_MODE, val);
 
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
