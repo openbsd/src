@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_time.c,v 1.2 2001/07/09 05:15:24 fgsch Exp $	*/
+/*	$OpenBSD: osf1_time.c,v 1.3 2008/09/23 04:31:41 miod Exp $	*/
 /*	$NetBSD: osf1_time.c,v 1.1 1999/05/01 05:25:37 cgd Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ osf1_sys_setitimer(p, v, retval)
 	    sizeof o_itv);
 	if (error == 0) {
 
-		/* fill in and copy out the NetBSD timeval */
+		/* fill in and copy out the OpenBSD timeval */
 		memset(&b_itv, 0, sizeof b_itv);
 		b_itv.it_interval.tv_sec = o_itv.it_interval.tv_sec;
 		b_itv.it_interval.tv_usec = o_itv.it_interval.tv_usec;
@@ -156,12 +156,12 @@ osf1_sys_setitimer(p, v, retval)
 		error = sys_setitimer(p, &a, retval);
 
 	if (error == 0 && SCARG(uap, oitv) != NULL) {
-		/* get the NetBSD itimerval return value */
+		/* get the OpenBSD itimerval return value */
 		error = copyin((caddr_t)SCARG(&a, oitv), (caddr_t)&b_oitv,
 		    sizeof b_oitv);
 		if (error == 0) {
 	
-			/* fill in and copy out the NetBSD timeval */
+			/* fill in and copy out the OpenBSD timeval */
 			memset(&o_oitv, 0, sizeof o_oitv);
 			o_oitv.it_interval.tv_sec = b_oitv.it_interval.tv_sec;
 			o_oitv.it_interval.tv_usec = b_oitv.it_interval.tv_usec;
@@ -188,7 +188,7 @@ osf1_sys_settimeofday(p, v, retval)
 	struct osf1_timezone otz;
 	struct timeval tv;
 	struct timezone tz;
-	int error;
+	int error = 0;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
@@ -202,7 +202,7 @@ osf1_sys_settimeofday(p, v, retval)
 		    (caddr_t)&otv, sizeof otv);
 		if (error == 0) {
 
-			/* fill in and copy out the NetBSD timeval */
+			/* fill in and copy out the OpenBSD timeval */
 			memset(&tv, 0, sizeof tv);
 			tv.tv_sec = otv.tv_sec;
 			tv.tv_usec = otv.tv_usec;
@@ -222,7 +222,7 @@ osf1_sys_settimeofday(p, v, retval)
 		    (caddr_t)&otz, sizeof otz);
 		if (error == 0) {
 
-			/* fill in and copy out the NetBSD timezone */
+			/* fill in and copy out the OpenBSD timezone */
 			memset(&tz, 0, sizeof tz);
 			tz.tz_minuteswest = otz.tz_minuteswest;
 			tz.tz_dsttime = otz.tz_dsttime;
