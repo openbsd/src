@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.38 2006/07/28 21:46:02 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.39 2008/09/23 04:44:31 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -957,6 +957,7 @@ ccode(struct vxsoftc *sc, int port, char c)
 	struct vx_info *vxt;
 	struct tty *tp;
 
+	vxt = &sc->sc_info[port];
 	tp = vxt->tty;
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
