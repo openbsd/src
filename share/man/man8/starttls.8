@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.15 2007/05/31 19:19:59 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.16 2008/09/23 11:03:41 grunk Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,14 +23,14 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 23 2008 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
 .Nm starttls
 .Nd ESMTP over TLS/SSL
 .Sh DESCRIPTION
-STARTTLS is an ESMTP option, defined in RFC 2487, which is used to conduct
+STARTTLS is an ESMTP option, defined in RFC 3207, which is used to conduct
 ESMTP transactions over TLS circuits.
 This is used to increase the security of mail server transactions.
 As of version 8.11,
@@ -375,7 +375,7 @@ Lastly, interoperability problems can appear between different implementations.
 .Xr ssl 8
 .Pp
 .Tn DARPA
-Internet Request for Comments RFC 2487
+Internet Request for Comments RFC 3207
 .Pp
 http://www.sendmail.org/~ca/email/starttls.html
 .Sh HISTORY
