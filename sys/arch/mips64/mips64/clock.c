@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2008/04/07 22:36:26 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.21 2008/09/23 04:33:07 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -365,6 +365,7 @@ resettodr()
 	c.dow = (t2 + 5) % 7 + 1;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
+	t = 0;
 	t2 = time_second / SECDAY;
 	c.year = 69;
 	while (t2 >= 0) {	/* whittle off years */
