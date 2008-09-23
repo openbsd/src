@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.2 2008/07/07 14:38:42 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.3 2008/09/23 22:44:19 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -132,7 +132,7 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct vcons_softc *sc;
 	struct tty *tp;
 	int unit = minor(dev);
-	int error, setuptimeout;
+	int error, setuptimeout = 0;
 
 	if (unit > vcons_cd.cd_ndevs)
 		return (ENXIO);
