@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.103 2008/07/25 12:05:04 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.104 2008/09/23 13:25:46 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -98,6 +98,7 @@ static struct timeval uvm_kmapent_last_warn_time;
 static struct timeval uvm_kmapent_warn_rate = { 10, 0 };
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
+struct uvm_cnt map_nousermerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
 
@@ -538,6 +539,7 @@ uvm_map_init(void)
 	UVMCNT_INIT(map_backmerge, UVMCNT_CNT, 0, "# uvm_map() back merges", 0);
 	UVMCNT_INIT(map_forwmerge, UVMCNT_CNT, 0, "# uvm_map() missed forward",
 	    0);
+	UVMCNT_INIT(map_nousermerge, UVMCNT_CNT, 0, "# back merges skipped", 0);
 	UVMCNT_INIT(uvm_mlk_call,  UVMCNT_CNT, 0, "# map lookup calls", 0);
 	UVMCNT_INIT(uvm_mlk_hint,  UVMCNT_CNT, 0, "# map lookup hint hits", 0);
 
@@ -831,6 +833,15 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 
 		if (prev_entry->aref.ar_amap &&
 		    amap_refs(prev_entry->aref.ar_amap) != 1) {
+			goto step3;
+		}
+
+		/*
+		 * Only merge kernel mappings, but keep track
+		 * of how much we skipped.
+		 */
+		if (map != kernel_map && map != kmem_map) {
+			UVMCNT_INCR(map_nousermerge);
 			goto step3;
 		}
 
