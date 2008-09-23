@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.34 2008/01/23 16:37:57 jsing Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.35 2008/09/23 20:45:27 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -383,6 +383,8 @@ vgafb_mmap(void *v, off_t offset, int prot)
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (offset >= 0x00000 && offset < vc->memsize)
 			h = vc->vc_paddr + offset;
+		else
+			h = -1;
 		break;
 
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2008/09/18 03:56:25 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2008/09/23 20:45:26 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ cpu_startclock()
 void
 calc_delayconst(void)
 {
-	int qhandle, phandle;
+	int qhandle, phandle = 0;
 	char name[32];
 	int s;
 

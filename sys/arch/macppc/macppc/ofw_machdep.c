@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.32 2008/06/15 07:37:05 todd Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.33 2008/09/23 20:45:26 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ ofw_find_keyboard()
 {
 	int stdin_node;
 	char iname[32];
-	int len, attach;
+	int len, attach = 0;
 
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
@@ -335,13 +335,13 @@ ofw_find_keyboard()
 #if NUKBD > 0
 		printf(", using USB\n");
 		ukbd_cnattach();
-		attach=1;
+		attach = 1;
 #endif
 	} else if (ofw_have_kbd == OFW_HAVE_ADBKBD) {
 #if NAKBD >0
 		printf(", using ADB\n");
 		akbd_cnattach();
-		attach=1;
+		attach = 1;
 #endif
 	} 
 	if (attach == 0) {
