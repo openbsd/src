@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2008/06/14 10:55:20 mk Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2008/09/23 04:34:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -183,7 +183,7 @@ pmap_bootstrap()
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int i, j, x;
+	int i, j;
 	int npg;
 	vaddr_t va;
 	paddr_t pa;
@@ -216,8 +216,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 				panic("pmap_steal_memory: out of memory!");
 
 			vm_nphysseg--;
-			for (j = i; j < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
+			for (j = i; j < vm_nphysseg; j++)
+				vm_physmem[j] = vm_physmem[j + 1];
 		}
 		if (vstartp)
 			*vstartp = round_page(virtual_start);
