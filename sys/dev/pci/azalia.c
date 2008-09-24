@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.54 2008/09/22 19:42:07 miod Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.55 2008/09/24 19:09:05 chl Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1299,12 +1299,10 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 	const convgroup_t *group;
 	uint32_t bits_rates;
-	int prev_dac, prev_adc;
 	int pvariation, rvariation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
 
-	prev_dac = this->dacs.cur;
 	this->dacs.cur = newdac;
 	group = &this->dacs.groups[this->dacs.cur];
 	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
@@ -1326,7 +1324,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 	pvariation = group->nconv * nbits;
 
-	prev_adc = this->adcs.cur;
 	this->adcs.cur = newadc;
 	group = &this->adcs.groups[this->adcs.cur];
 	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
