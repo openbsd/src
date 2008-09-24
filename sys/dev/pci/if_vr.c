@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.76 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.77 2008/09/24 08:41:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -808,7 +808,8 @@ vr_rxeof(struct vr_softc *sc)
 		{
 			m0 = m_devget(mtod(m, caddr_t) - ETHER_ALIGN,
 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
-			if (m0 == NULL || vr_alloc_mbuf(sc, cur_rx, m)) {
+			vr_alloc_mbuf(sc, cur_rx, m);
+			if (m0 == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
