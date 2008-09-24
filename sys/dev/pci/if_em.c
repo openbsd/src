@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.187 2008/08/29 23:28:34 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.188 2008/09/24 19:12:59 chl Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2420,11 +2420,9 @@ em_initialize_receive_unit(struct em_softc *sc)
 {
 	u_int32_t	reg_rctl;
 	u_int32_t	reg_rxcsum;
-	struct ifnet	*ifp;
 	u_int64_t	bus_addr;
 
 	INIT_DEBUGOUT("em_initialize_receive_unit: begin");
-	ifp = &sc->interface_data.ac_if;
 
 	/* Make sure receives are disabled while setting up the descriptor ring */
 	E1000_WRITE_REG(&sc->hw, RCTL, 0);

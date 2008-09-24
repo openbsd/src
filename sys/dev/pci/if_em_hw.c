@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.29 2008/03/21 00:20:55 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.30 2008/09/24 19:12:59 chl Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -243,7 +243,6 @@ em_set_phy_type(struct em_hw *hw)
 static void
 em_phy_init_script(struct em_hw *hw)
 {
-    uint32_t ret_val;
     uint16_t phy_saved_data;
 
     DEBUGFUNC("em_phy_init_script");
@@ -253,7 +252,7 @@ em_phy_init_script(struct em_hw *hw)
 
         /* Save off the current value of register 0x2F5B to be restored at
          * the end of this routine. */
-        ret_val = em_read_phy_reg(hw, 0x2F5B, &phy_saved_data);
+        em_read_phy_reg(hw, 0x2F5B, &phy_saved_data);
 
         /* Disabled the PHY transmitter */
         em_write_phy_reg(hw, 0x2F5B, 0x0003);

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.45 2008/09/10 14:01:22 blambert Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.46 2008/09/24 19:12:59 chl Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1475,10 +1475,7 @@ ixgb_get_buf(struct ixgb_softc *sc, int i,
 {
 	struct mbuf *mp = nmp;
 	struct ixgb_buffer *rx_buffer;
-	struct ifnet   *ifp;
 	int             error;
-
-	ifp = &sc->interface_data.ac_if;
 
 	if (mp == NULL) {
 		MGETHDR(mp, M_DONTWAIT, MT_DATA);
@@ -1605,10 +1602,7 @@ ixgb_initialize_receive_unit(struct ixgb_softc *sc)
 	u_int32_t       reg_rctl;
 	u_int32_t       reg_rxcsum;
 	u_int32_t       reg_rxdctl;
-	struct ifnet   *ifp;
 	u_int64_t       bus_addr;
-
-	ifp = &sc->interface_data.ac_if;
 
 	/*
 	 * Make sure receives are disabled while setting up the descriptor
