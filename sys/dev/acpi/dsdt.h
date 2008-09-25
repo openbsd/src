@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.38 2008/06/13 00:04:33 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.39 2008/09/25 19:12:28 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -48,7 +48,6 @@ struct aml_opcode {
 };
 
 const char		*aml_eisaid(u_int32_t);
-const char		*aml_args(int);
 const char		*aml_mnem(int, uint8_t *);
 int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
@@ -90,6 +89,7 @@ int			acpi_mutex_acquire(struct aml_value *, int);
 void			acpi_mutex_release(struct aml_value *);
 
 const char		*aml_nodename(struct aml_node *);
+int aml_evalhid(struct aml_node *, struct aml_value *);
 
 #define SR_IRQ			0x04
 #define SR_DMA			0x05
@@ -254,6 +254,8 @@ void aml_disasm(struct aml_scope *scope, int lvl,
         void (*dbprintf)(void *, const char *, ...), 
     	void *arg);
 int aml_xgetpci(struct aml_node *, int64_t *);
+
+int acpi_walkmem(int, const char *);
 
 #define aml_get8(p)    *(uint8_t *)(p)
 #define aml_get16(p)   *(uint16_t *)(p)
