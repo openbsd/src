@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.288 2008/09/17 06:14:09 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.289 2008/09/25 19:06:57 chl Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4233,7 +4233,6 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 void
 sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
-	struct pciide_channel *pc;
 	int chan, reg;
 	bus_size_t size;
 	struct pciide_satalink *sl = sc->sc_cookie;
@@ -4250,7 +4249,6 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_dma_iot = sl->ba5_st;
 	for (chan = 0; chan < 4; chan++) {
-		pc = &sc->pciide_channels[chan];
 		for (reg = 0; reg < IDEDMA_NREGS; reg++) {
 			size = 4;
 			if (size > (IDEDMA_SCH_OFFSET - reg))
@@ -8469,7 +8467,6 @@ pio:
 		if (mode <= 2) {
 			drvp->DMA_mode = 0;
 			drvp->PIO_mode = 0;
-			mode = 0;
 		} else {
 			drvp->PIO_mode = mode;
 			drvp->DMA_mode = mode - 2;
