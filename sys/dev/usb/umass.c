@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.57 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: umass.c,v 1.58 2008/09/25 11:07:12 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -1740,8 +1740,6 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			sc->transfer_cb(sc, sc->transfer_priv,
 			    sc->transfer_datalen - sc->transfer_actlen, status);
 		} else {
-			int status;
-
 			/* Command Interrupt Data Block */
 
 			DPRINTF(UDMASS_CBI, ("%s: type=0x%02x, value=0x%02x\n",
@@ -1749,6 +1747,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				sc->sbl.common.type, sc->sbl.common.value));
 
 			if (sc->sbl.common.type == IDB_TYPE_CCI) {
+				int status;
 				switch (sc->sbl.common.value &
 				    IDB_VALUE_STATUS_MASK) {
 				case IDB_VALUE_PASS:
@@ -1759,6 +1758,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					status = STATUS_CMD_FAILED;
 					break;
 				case IDB_VALUE_PHASE:
+				default:
 					status = STATUS_WIRE_FAILED;
 					break;
  				}
