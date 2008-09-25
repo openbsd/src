@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.62 2008/05/05 12:19:38 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.63 2008/09/25 11:00:48 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -714,8 +714,8 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_identify	*id = &ap->ap_identify;
-        struct scsi_read_cap_data rcd;
-        u_int64_t		capacity;
+	struct scsi_read_cap_data rcd;
+	u_int64_t		capacity = 0;
 	int			i;
 
 	bzero(&rcd, sizeof(rcd));
