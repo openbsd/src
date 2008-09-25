@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.156 2008/08/31 09:50:12 jsg Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.157 2008/09/25 17:55:28 chl Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1009,7 +1009,7 @@ hifn_writeramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 		printf("%s: writeramaddr -- "
 		    "result[%d](addr %d) still valid\n",
 		    sc->sc_dv.dv_xname, resi, addr);
-		r = -1;
+
 		return (-1);
 	} else
 		r = 0;
