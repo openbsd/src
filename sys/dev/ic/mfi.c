@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.80 2008/02/16 15:24:05 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.81 2008/09/25 11:23:54 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1808,7 +1808,7 @@ int
 mfi_create_sensors(struct mfi_softc *sc)
 {
 	struct device		*dev;
-	struct scsibus_softc	*ssc;
+	struct scsibus_softc	*ssc = NULL;
 	int			i;
 
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
