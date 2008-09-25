@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.103 2008/09/09 00:26:38 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.104 2008/09/25 20:51:20 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.100 2008/09/09 00:25:55 brad Exp 
+ *	OpenBSD: miidevs,v 1.101 2008/09/25 20:51:10 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -127,9 +127,11 @@
 #define	MII_MODEL_AGERE_ET1011	0x0004
 #define	MII_STR_AGERE_ET1011	"ET1011 10/100/1000baseT PHY"
 
-/* Atheros PHYs */
+/* Atheros Communications PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
-#define	MII_STR_ATHEROS_F1	"F1 10/100/1000baseT PHY"
+#define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
+#define	MII_MODEL_ATHEROS_F2	0x0002
+#define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
 
 /* Altima Communications PHYs */
 #define	MII_MODEL_xxALTIMA_AC_UNKNOWN	0x0001
