@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.256 2008/09/17 06:18:45 brad Exp $
+#	$OpenBSD: files.pci,v 1.257 2008/09/26 10:35:15 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -626,6 +626,11 @@ file	dev/pci/if_nfe.c		nfe
 device	et: ether, ifnet, mii, ifmedia, mii_phy
 attach	et at pci
 file	dev/pci/if_et.c			et
+
+# JMicron JMC250/JMC260 Ethernet
+device	jme: ether, ifnet, mii, ifmedia, mii_phy
+attach	jme at pci
+file	dev/pci/if_jme.c		jme
 
 # AMD-76x PM and SMBus controller
 device	amdpm: i2cbus
