@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.9 2008/09/26 15:19:55 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.10 2008/09/26 19:26:24 jmc Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -74,7 +74,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-n] command [arg ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-n] [-s socket] command [arg ...]\n", __progname);
 	exit(1);
 }
 
