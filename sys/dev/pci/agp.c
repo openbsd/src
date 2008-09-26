@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.25 2008/08/17 21:31:38 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.26 2008/09/26 21:15:53 mikeb Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -93,6 +93,7 @@ const struct agp_product agp_products[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_HB, agp_i810_attach },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_HB, agp_i810_attach },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_HB, agp_i810_attach },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_HB, agp_i810_attach },
 #endif 
 #if NAGP_INTEL > 0
 	{ PCI_VENDOR_INTEL, -1, agp_intel_attach },
