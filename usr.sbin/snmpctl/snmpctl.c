@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.8 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.9 2008/09/26 15:19:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -95,15 +95,19 @@ main(int argc, char *argv[])
 	int			 done = 0;
 	int			 n;
 	int			 ch;
+	const char		*sock = SNMPD_SOCKET;
 
 	if ((env = calloc(1, sizeof(struct snmpd *))) == NULL)
 		err(1, "calloc");
 	gettimeofday(&env->sc_starttime, NULL);
 
-	while ((ch = getopt(argc, argv, "n")) != -1) {
+	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
 		case 'n':
 			env->sc_flags |= SNMPD_F_NONAMES;
+			break;
+		case 's':
+			sock = optarg;
 			break;
 		default:
 			usage();
@@ -140,7 +144,7 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, SNMPD_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, sock, sizeof(sun.sun_path));
  reconnect:
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		/* Keep retrying if running in monitor mode */
@@ -149,7 +153,7 @@ main(int argc, char *argv[])
 			usleep(100);
 			goto reconnect;
 		}
-		err(1, "connect: %s", SNMPD_SOCKET);
+		err(1, "connect: %s", sock);
 	}
 
 	if (res->ibuf != NULL)

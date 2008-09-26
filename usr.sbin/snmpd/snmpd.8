@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.8,v 1.8 2008/03/30 17:56:27 martin Exp $
+.\" $OpenBSD: snmpd.8,v 1.9 2008/09/26 15:19:55 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2008 $
+.Dd $Mdocdate: September 26 2008 $
 .Dt SNMPD 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Fl D Ar macro Ns = Ns Ar value Oc
 .Xc
 .Op Fl f Ar file
+.Op Fl r Ar path
 .Sh DESCRIPTION
 .Nm
 is a daemon which implements the SNMP protocol.
@@ -55,15 +56,26 @@ Show numeric OID values instead of their symbolic names.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl r Ar path
+Open a second, restricted, control socket that
+.Xr snmpctl 8
+can use.
+Only
+.Em trap
+requests are allowed on this socket.
 .It Fl v
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/snmpd.confXXX" -compact
+.Bl -tag -width "/var/run/snmpd.sockXXX" -compact
 .It Pa /etc/snmpd.conf
 default
 .Nm
 configuration file
+.It Pa /var/run/snmpd.sock
+default
+.Nm
+control socket
 .El
 .Sh SEE ALSO
 .Xr snmpd.conf 5 ,

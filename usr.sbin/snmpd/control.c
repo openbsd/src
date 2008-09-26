@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2008/02/07 11:33:26 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2008/09/26 15:19:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,14 +43,15 @@ struct ctl_connlist ctl_conns;
 struct ctl_conn	*control_connbyfd(int);
 void		 control_close(int);
 
-struct imsgbuf	*ibuf_parent = NULL;
-
 int
-control_init(void)
+control_init(struct control_sock *cs)
 {
 	struct sockaddr_un	 sun;
 	int			 fd;
-	mode_t			 old_umask;
+	mode_t			 old_umask, mode;
+
+	if (cs->cs_name == NULL)
+		return (0);
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		log_warn("control_init: socket");
@@ -58,74 +59,84 @@ control_init(void)
 	}
 
 	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, SNMPD_SOCKET,
+	if (strlcpy(sun.sun_path, cs->cs_name,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
-		log_warn("control_init: %s name too long", SNMPD_SOCKET);
+		log_warn("control_init: %s name too long", cs->cs_name);
 		close(fd);
 		return (-1);
 	}
 
-	if (unlink(SNMPD_SOCKET) == -1)
+	if (unlink(cs->cs_name) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", SNMPD_SOCKET);
+			log_warn("control_init: unlink %s", cs->cs_name);
 			close(fd);
 			return (-1);
 		}
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	if (cs->cs_restricted) {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	} else {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
+	}
+
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", SNMPD_SOCKET);
+		log_warn("control_init: bind: %s", cs->cs_name);
 		close(fd);
 		(void)umask(old_umask);
 		return (-1);
 	}
 	(void)umask(old_umask);
 
-	if (chmod(SNMPD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(cs->cs_name, mode) == -1) {
 		log_warn("control_init: chmod");
 		close(fd);
-		(void)unlink(SNMPD_SOCKET);
+		(void)unlink(cs->cs_name);
 		return (-1);
 	}
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
-	control_state.fd = fd;
+	cs->cs_fd = fd;
 
 	return (0);
 }
 
 int
-control_listen(struct snmpd *env, struct imsgbuf *parent)
+control_listen(struct control_sock *cs)
 {
-	ibuf_parent = parent;
+	if (cs->cs_name == NULL)
+		return (0);
 
-	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
+	if (listen(cs->cs_fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_listen: listen");
 		return (-1);
 	}
 
-	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
-	    control_accept, env);
-	event_add(&control_state.ev, NULL);
+	event_set(&cs->cs_ev, cs->cs_fd, EV_READ | EV_PERSIST,
+	    control_accept, cs);
+	event_add(&cs->cs_ev, NULL);
 
 	return (0);
 }
 
 void
-control_cleanup(void)
+control_cleanup(struct control_sock *cs)
 {
-	(void)unlink(SNMPD_SOCKET);
+	if (cs->cs_name == NULL)
+		return;
+	(void)unlink(cs->cs_name);
 }
 
 /* ARGSUSED */
 void
 control_accept(int listenfd, short event, void *arg)
 {
+	struct control_sock	*cs = (struct control_sock *)arg;
 	int			 connfd;
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
-	struct snmpd		*env = arg;
 
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
@@ -146,7 +157,7 @@ control_accept(int listenfd, short event, void *arg)
 	imsg_init(&c->ibuf, connfd, control_dispatch_imsg);
 	c->ibuf.events = EV_READ;
 	event_set(&c->ibuf.ev, c->ibuf.fd, c->ibuf.events,
-	    c->ibuf.handler, env);
+	    c->ibuf.handler, cs);
 	event_add(&c->ibuf.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
@@ -184,6 +195,7 @@ control_close(int fd)
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {
+	struct control_sock	*cs = (struct control_sock *)arg;
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
 	int			 n;
@@ -220,7 +232,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		if (c->flags & CTL_CONN_LOCKED) {
+		if (cs->cs_restricted || (c->flags & CTL_CONN_LOCKED)) {
 			switch (imsg.hdr.type) {
 			case IMSG_SNMP_TRAP:
 			case IMSG_SNMP_ELEMENT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.7 2008/05/12 19:15:02 pyr Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.8 2008/09/26 15:19:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -84,8 +84,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dNnv] [-D macro=value] [-f file]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-dNnv] [-D macro=value] "
+	    "[-f file] [-r path]\n", __progname);
 	exit(1);
 }
 
@@ -102,12 +102,13 @@ main(int argc, char *argv[])
 	u_int			 flags = 0;
 	int			 noaction = 0;
 	const char		*conffile = CONF_FILE;
+	const char		*rcsock = NULL;
 
 	smi_init();
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((c = getopt(argc, argv, "dD:nNf:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nNf:r:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -125,6 +126,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
+			break;
+		case 'r':
+			rcsock = optarg;
 			break;
 		case 'v':
 			flags |= SNMPD_F_VERBOSE;
@@ -153,6 +157,11 @@ main(int argc, char *argv[])
 
 	if (getpwnam(SNMPD_USER) == NULL)
 		errx(1, "unknown user %s", SNMPD_USER);
+
+	/* Configure the control sockets */
+	env->sc_csock.cs_name = SNMPD_SOCKET;
+	env->sc_rcsock.cs_name = rcsock;
+	env->sc_rcsock.cs_restricted = 1;
 
 	log_init(debug);
 
@@ -218,7 +227,8 @@ snmpd_shutdown(struct snmpd *env)
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	control_cleanup();
+	control_cleanup(&env->sc_csock);
+	control_cleanup(&env->sc_rcsock);
 	log_info("terminating");
 	exit(0);
 }

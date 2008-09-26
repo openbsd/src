@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.20 2008/07/18 12:30:06 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.21 2008/09/26 15:19:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -118,10 +118,12 @@ enum {
 } snmpd_process;
 
 /* initially control.h */
-struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
+struct control_sock {
+	const char	*cs_name;
+	struct event	 cs_ev;
+	int		 cs_fd;
+	int		 cs_restricted;
+};
 
 enum blockmodes {
 	BM_NORMAL,
@@ -322,6 +324,9 @@ struct snmpd {
 	struct event		 sc_ev;
 	struct timeval		 sc_starttime;
 
+	struct control_sock	 sc_csock;
+	struct control_sock	 sc_rcsock;
+
 	char			 sc_rdcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
@@ -332,12 +337,12 @@ struct snmpd {
 };
 
 /* control.c */
-int		 control_init(void);
-int		 control_listen(struct snmpd *, struct imsgbuf *);
+int		 control_init(struct control_sock *);
+int		 control_listen(struct control_sock *);
 void		 control_accept(int, short, void *);
 void		 control_dispatch_imsg(int, short, void *);
 void		 control_imsg_forward(struct imsg *);
-void		 control_cleanup(void);
+void		 control_cleanup(struct control_sock *);
 
 void		 session_socket_blockmode(int, enum blockmodes);
 
