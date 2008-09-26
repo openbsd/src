@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.80 2008/07/08 21:07:57 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.81 2008/09/26 11:11:59 espie Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.80 2008/07/08 21:07:57 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.81 2008/09/26 11:11:59 espie Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -82,7 +82,7 @@ int		ftp_printf(FILE *, SSL *, const char *, ...) __attribute__((format(printf, 
 char		*ftp_readline(FILE *, SSL *, size_t *);
 size_t		ftp_read(FILE *, SSL *, char *, size_t);
 #ifndef SMALL
-int		proxy_connect(int, char *);
+int		proxy_connect(int, char *, char *);
 int		SSL_vprintf(SSL *, const char *, va_list);
 char		*SSL_readline(SSL *, size_t *);
 #endif /* !SMALL */
@@ -222,23 +222,27 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 
 		path = strchr(host, '@');	/* look for credentials in proxy */
 		if (!EMPTYSTRING(path)) {
-			*path++ = '\0';
+			*path = '\0';
 			cookie = strchr(host, ':');
 			if (EMPTYSTRING(cookie)) {
 				warnx("Malformed proxy URL: %s", proxyenv);
 				goto cleanup_url_get;
 			}
 			cookie  = malloc(COOKIE_MAX_LEN);
-			b64_ntop(host, strlen(host), cookie, COOKIE_MAX_LEN);
+			if (cookie == NULL)
+				errx(1, "out of memory");
+			if (b64_ntop(host, strlen(host), cookie, COOKIE_MAX_LEN) == -1)
+				errx(1, "error in base64 encoding");
+			*path = '@'; /* restore @ in proxyurl */
 			/*
-			 * This removes the password from proxyenv,
+			 * This removes the password from proxyurl,
 			 * filling with stars
 			 */
-			for (host = strchr(proxyenv + 5, ':');  *host != '@';
+			for (host = 1 + strchr(proxyurl + 5, ':');  *host != '@';
 			     host++)
 				*host = '*';
 
-			host = path;
+			host = path + 1;
 		}
 		path = newline;
 	}
@@ -423,7 +427,7 @@ again:
 
 #ifndef SMALL
 		if (proxyenv && sslhost)
-			proxy_connect(s, sslhost);
+			proxy_connect(s, sslhost, cookie);
 #endif /* !SMALL */
 		break;
 	}
@@ -474,7 +478,7 @@ again:
 #endif /* !SMALL */
 	if (proxyurl) {
 		if (verbose)
-			fprintf(ttyout, " (via %s)\n", proxyenv);
+			fprintf(ttyout, " (via %s)\n", proxyurl);
 		/*
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).  We do not attach it at this moment.
@@ -649,6 +653,7 @@ again:
 				close(s);
 			free(proxyurl);
 			free(newline);
+			free(cookie);
 			rval = url_get(cp, proxyenv, outfile);
 			free(buf);
 			return (rval);
@@ -760,6 +765,7 @@ cleanup_url_get:
 	free(buf);
 	free(proxyurl);
 	free(newline);
+	free(cookie);
 	return (rval);
 }
 
@@ -1262,7 +1268,7 @@ SSL_readline(SSL *ssl, size_t *lenp)
 }
 
 int
-proxy_connect(int socket, char *host)
+proxy_connect(int socket, char *host, char *cookie)
 {
 	int l;
 	char buf[1024];
@@ -1281,7 +1287,15 @@ proxy_connect(int socket, char *host)
 	if (!port)
 		port = "443";
 
-	l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\n\n", host, port);
+	if (cookie) {
+		l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\r\n"
+			"Proxy-Authorization: Basic %s\r\n%s\r\n\r\n",
+			host, port, cookie, HTTP_USER_AGENT);
+	} else {
+		l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\r\n%s\r\n\r\n",
+			host, port, HTTP_USER_AGENT);
+	}
+
 	if (l == -1)
 		errx(1, "Could not allocate memory to assemble connect string!");
 #ifndef SMALL
