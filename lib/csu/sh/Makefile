@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/09/26 16:22:15 drahn Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS+=	-DLIBC_SCCS
@@ -8,9 +8,6 @@ SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
 CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
-
-#PICFLAG?=-fpic
-PICFLAG=
 
 all: ${OBJS}
 
