@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.24 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.25 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_crypto.h>
 #include <net80211/ieee80211_ioctl.h>
 
 void	 ieee80211_node2req(struct ieee80211com *,
@@ -237,11 +238,15 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 
 	ic->ic_rsnakms = 0;
 	if (wpa->i_akms & IEEE80211_WPA_AKM_PSK)
-		ic->ic_rsnakms |= IEEE80211_AKM_PSK;
+		ic->ic_rsnakms |=
+		    IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK;
 	if (wpa->i_akms & IEEE80211_WPA_AKM_IEEE8021X)
-		ic->ic_rsnakms |= IEEE80211_AKM_8021X;
+		ic->ic_rsnakms |=
+		    IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X;
 	if (ic->ic_rsnakms == 0)	/* set to default (PSK+802.1X) */
-		ic->ic_rsnakms = IEEE80211_AKM_PSK | IEEE80211_AKM_8021X;
+		ic->ic_rsnakms =
+		    IEEE80211_AKM_PSK | IEEE80211_AKM_8021X |
+		    IEEE80211_AKM_SHA256_PSK | IEEE80211_AKM_SHA256_8021X;
 
 	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_WEP40;
@@ -287,9 +292,11 @@ ieee80211_ioctl_getwpaparms(struct ieee80211com *ic,
 		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA2;
 
 	wpa->i_akms = 0;
-	if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+	if (ic->ic_rsnakms &
+	    (IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK))
 		wpa->i_akms |= IEEE80211_WPA_AKM_PSK;
-	if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+	if (ic->ic_rsnakms &
+	    (IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X))
 		wpa->i_akms |= IEEE80211_WPA_AKM_IEEE8021X;
 
 	if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_WEP40)
@@ -323,6 +330,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211_nwid nwid;
 	struct ieee80211_wpapsk *psk;
 	struct ieee80211_wmmparams *wmm;
+	struct ieee80211_keyavail *ka;
+	struct ieee80211_keyrun *kr;
 	struct ieee80211_power *power;
 	struct ieee80211_bssid *bssid;
 	struct ieee80211chanreq *chanreq;
@@ -434,6 +443,21 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			memcpy(psk->i_psk, ic->ic_psk, sizeof(psk->i_psk));
 		} else
 			psk->i_enabled = 0;
+		break;
+	case SIOCS80211KEYAVAIL:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		ka = (struct ieee80211_keyavail *)data;
+		(void)ieee80211_pmksa_add(ic, IEEE80211_AKM_8021X,
+		    ka->i_macaddr, ka->i_key, ka->i_lifetime);
+		(void)ieee80211_pmksa_add(ic, IEEE80211_AKM_SHA256_8021X,
+		    ka->i_macaddr, ka->i_key, ka->i_lifetime);
+		break;
+	case SIOCS80211KEYRUN:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		kr = (struct ieee80211_keyrun *)data;
+		error = ieee80211_keyrun(ic, kr->i_macaddr);
 		break;
 	case SIOCS80211POWER:
 		if ((error = suser(curproc, 0)) != 0)

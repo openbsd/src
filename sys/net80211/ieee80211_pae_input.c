@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.12 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.13 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -131,8 +131,7 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 	if (desc < EAPOL_KEY_DESC_V1 || desc > EAPOL_KEY_DESC_V3)
 		goto done;
 
-	if (ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X ||
-	    ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK) {
+	if (ieee80211_is_sha256_akm(ni->ni_rsnakms)) {
 		if (desc != EAPOL_KEY_DESC_V3)
 			goto done;
 	} else if (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
@@ -193,9 +192,9 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_ptk tptk;
+	struct ieee80211_pmk *pmk;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *pmkid;
-	const u_int8_t *pmk;
 
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
@@ -232,22 +231,31 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		frm += 2 + frm[1];
 	}
 	/* check that the PMKID KDE is valid (if present) */
-	if (pmkid != NULL && pmkid[1] < 4 + 16)
+	if (pmkid != NULL && pmkid[1] != 4 + 16)
 		return;
 
-	/* retrieve PMK */
-	if ((pmk = ieee80211_get_pmk(ic, ni, &pmkid[6])) == NULL) {
-		/* no PMK configured for this STA/PMKID */
-		return;
-	}
+	if (ieee80211_is_8021x_akm(ni->ni_rsnakms)) {
+		/* retrieve the PMK for this (AP,PMKID) */
+		pmk = ieee80211_pmksa_find(ic, ni,
+		    (pmkid != NULL) ? &pmkid[6] : NULL);
+		if (pmk == NULL) {
+			DPRINTF(("no PMK available for %s\n",
+			    ether_sprintf(ni->ni_macaddr)));
+			return;
+		}
+		memcpy(ni->ni_pmk, pmk->pmk_key, IEEE80211_PMK_LEN);
+	} else	/* use pre-shared key */
+		memcpy(ni->ni_pmk, ic->ic_psk, IEEE80211_PMK_LEN);
+	ni->ni_flags |= IEEE80211_NODE_PMK;
+
 	/* save authenticator's nonce (ANonce) */
 	memcpy(ni->ni_nonce, key->nonce, EAPOL_KEY_NONCE_LEN);
 
 	/* generate supplicant's nonce (SNonce) */
 	arc4random_buf(ic->ic_nonce, EAPOL_KEY_NONCE_LEN);
 
-	/* derive TPTK */
-	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ni->ni_macaddr,
+	/* TPTK = CalcPTK(PMK, ANonce, SNonce) */
+	ieee80211_derive_ptk(ni->ni_rsnakms, ni->ni_pmk, ni->ni_macaddr,
 	    ic->ic_myaddr, ni->ni_nonce, ic->ic_nonce, &tptk);
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
@@ -269,7 +277,6 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
     const u_int8_t *rsnie)
 {
 	struct ieee80211_ptk tptk;
-	const u_int8_t *pmk;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -283,14 +290,10 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	}
 	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING;
 
-	/* replay counter has already been verified by caller */
+	/* NB: replay counter has already been verified by caller */
 
-	/* retrieve PMK and derive TPTK */
-	if ((pmk = ieee80211_get_pmk(ic, ni, NULL)) == NULL) {
-		/* no PMK configured for this STA */
-		return;	/* will timeout.. */
-	}
-	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ic->ic_myaddr,
+	/* PTK = CalcPTK(ANonce, SNonce) */
+	ieee80211_derive_ptk(ni->ni_rsnakms, ni->ni_pmk, ic->ic_myaddr,
 	    ni->ni_macaddr, ni->ni_nonce, key->nonce, &tptk);
 
 	/* check Key MIC field using KCK */
@@ -340,7 +343,6 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rsnie1, *rsnie2, *gtk, *igtk;
-	const u_int8_t *pmk;
 	u_int16_t info, reason = 0;
 	int keylen;
 
@@ -354,18 +356,19 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
 	}
-
-	/* check that ANonce matches that of message 1 */
+	/* make sure that a PMK as been selected */
+	if (!(ni->ni_flags & IEEE80211_NODE_PMK)) {
+		DPRINTF(("no PMK found for %s\n",
+		    ether_sprintf(ni->ni_macaddr)));
+		return;
+	}
+	/* check that ANonce matches that of Message 1 */
 	if (memcmp(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN) != 0) {
 		DPRINTF(("ANonce does not match msg 1/4\n"));
 		return;
 	}
-	/* retrieve PMK and derive TPTK */
-	if ((pmk = ieee80211_get_pmk(ic, ni, NULL)) == NULL) {
-		/* no PMK configured for this STA */
-		return;
-	}
-	ieee80211_derive_ptk(ni->ni_rsnakms, pmk, ni->ni_macaddr,
+	/* TPTK = CalcPTK(PMK, ANonce, SNonce) */
+	ieee80211_derive_ptk(ni->ni_rsnakms, ni->ni_pmk, ni->ni_macaddr,
 	    ic->ic_myaddr, key->nonce, ic->ic_nonce, &tptk);
 
 	info = BE_READ_2(key->info);
@@ -451,6 +454,12 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		DPRINTF(("IGTK KDE found but GTK KDE missing\n"));
 		return;
 	}
+	/* check that the Install bit is set if using pairwise keys */
+	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP &&
+	    !(info & EAPOL_KEY_INSTALL)) {
+		DPRINTF(("pairwise cipher but !Install\n"));
+		return;
+	}
 
 	/*
 	 * Check that first WPA/RSN IE is identical to the one received in
@@ -496,7 +505,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (ieee80211_send_4way_msg4(ic, ni) != 0)
 		return;	/* ..authenticator will retry */
 
-	if (info & EAPOL_KEY_INSTALL) {
+	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP) {
 		u_int64_t prsc;
 
 		/* check that key length matches that of pairwise cipher */
@@ -619,7 +628,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 		return;
 	}
 
-	/* replay counter has already been verified by caller */
+	/* NB: replay counter has already been verified by caller */
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0) {

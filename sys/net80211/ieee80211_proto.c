@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.35 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.36 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -362,6 +362,59 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 	/* notify the driver */
 	if (ic->ic_updateslot != NULL)
 		ic->ic_updateslot(ic);
+}
+
+/*
+ * This function is called by the 802.1X PACP machine (via an ioctl) when
+ * the transmit key machine (4-Way Handshake for 802.11) should run.
+ */
+int
+ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
+{
+#ifndef IEEE80211_STA_ONLY
+	struct ieee80211_node *ni;
+	struct ieee80211_pmk *pmk;
+#endif
+
+	/* STA must be associated or AP must be ready */
+	if (ic->ic_state != IEEE80211_S_RUN ||
+	    !(ic->ic_flags & IEEE80211_F_RSNON))
+		return ENETDOWN;
+
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_STA)
+#endif
+		return 0;	/* supplicant only, do nothing */
+
+#ifndef IEEE80211_STA_ONLY
+	/* find the STA with which we must start the key exchange */
+	if ((ni = ieee80211_find_node(ic, macaddr)) == NULL) {
+		DPRINTF(("no node found for %s\n", ether_sprintf(macaddr)));
+		return EINVAL;
+	}
+	/* check that the STA is in the correct state */
+	if (ni->ni_state != IEEE80211_STA_ASSOC ||
+	    ni->ni_rsn_state != RSNA_AUTHENTICATION_2) {
+		DPRINTF(("unexpected in state %d\n", ni->ni_rsn_state));
+		return EINVAL;
+	}
+	ni->ni_rsn_state = RSNA_INITPMK;
+
+	/* make sure a PMK is available for this STA, otherwise deauth it */
+	if ((pmk = ieee80211_pmksa_find(ic, ni, NULL)) == NULL) {
+		DPRINTF(("no PMK available for %s\n", ether_sprintf(macaddr)));
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_node_leave(ic, ni);
+		return EINVAL;
+	}
+	memcpy(ni->ni_pmk, pmk->pmk_key, IEEE80211_PMK_LEN);
+	memcpy(ni->ni_pmkid, pmk->pmk_pmkid, IEEE80211_PMKID_LEN);
+	ni->ni_flags |= IEEE80211_NODE_PMK;
+
+	/* initiate key exchange (4-Way Handshake) with STA */
+	return ieee80211_send_4way_msg1(ic, ni);
+#endif	/* IEEE80211_STA_ONLY */
 }
 
 #ifndef IEEE80211_STA_ONLY

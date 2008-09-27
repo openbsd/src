@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.32 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.33 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -156,6 +156,8 @@ struct ieee80211_node {
 	u_int16_t		ni_rsncaps;
 	enum ieee80211_cipher	ni_rsncipher;
 	u_int8_t		ni_nonce[EAPOL_KEY_NONCE_LEN];
+	u_int8_t		ni_pmk[IEEE80211_PMK_LEN];
+	u_int8_t		ni_pmkid[IEEE80211_PMKID_LEN];
 	u_int64_t		ni_replaycnt;
 	u_int8_t		ni_replaycnt_ok;
 	u_int64_t		ni_reqreplaycnt;
@@ -177,17 +179,19 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
 
-	u_int8_t		ni_flags;	/* special-purpose state */
-#define IEEE80211_NODE_ERP		0x01
-#define IEEE80211_NODE_QOS		0x02
-#define IEEE80211_NODE_REKEY		0x04	/* GTK rekeying in progress */
-#define IEEE80211_NODE_RXPROT		0x08	/* RX protection ON */
-#define IEEE80211_NODE_TXPROT		0x10	/* TX protection ON */
+	u_int16_t		ni_flags;	/* special-purpose state */
+#define IEEE80211_NODE_ERP		0x0001
+#define IEEE80211_NODE_QOS		0x0002
+#define IEEE80211_NODE_REKEY		0x0004	/* GTK rekeying in progress */
+#define IEEE80211_NODE_RXPROT		0x0008	/* RX protection ON */
+#define IEEE80211_NODE_TXPROT		0x0010	/* TX protection ON */
 #define IEEE80211_NODE_TXRXPROT	\
 	(IEEE80211_NODE_TXPROT | IEEE80211_NODE_RXPROT)
-#define IEEE80211_NODE_RXMGMTPROT	0x20	/* RX MMPDU protection ON */
-#define IEEE80211_NODE_TXMGMTPROT	0x40	/* TX MMPDU protection ON */
-#define IEEE80211_NODE_MFP		0x80	/* MFP negotiated */
+#define IEEE80211_NODE_RXMGMTPROT	0x0020	/* RX MMPDU protection ON */
+#define IEEE80211_NODE_TXMGMTPROT	0x0040	/* TX MMPDU protection ON */
+#define IEEE80211_NODE_MFP		0x0080	/* MFP negotiated */
+#define IEEE80211_NODE_PMK		0x0100	/* ni_pmk set */
+#define IEEE80211_NODE_PMKID		0x0200	/* ni_pmkid set */
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);

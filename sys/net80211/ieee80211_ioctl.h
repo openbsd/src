@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.13 2008/08/12 16:51:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.14 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -226,6 +226,21 @@ struct ieee80211_wmmparams {
 
 #define SIOCS80211WMMPARMS	 _IOW('i', 249, struct ieee80211_wmmparams)
 #define SIOCG80211WMMPARMS	_IOWR('i', 250, struct ieee80211_wmmparams)
+
+struct ieee80211_keyavail {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int8_t	i_macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t	i_key[32];
+	u_int32_t	i_lifetime;
+};
+
+struct ieee80211_keyrun {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int8_t	i_macaddr[IEEE80211_ADDR_LEN];
+};
+
+#define SIOCS80211KEYAVAIL	 _IOW('i', 251, struct ieee80211_keyavail)
+#define SIOCS80211KEYRUN	 _IOW('i', 252, struct ieee80211_keyrun)
 
 /* scan request (will block) */
 #define IEEE80211_SCAN_TIMEOUT	30	/* timeout in seconds */

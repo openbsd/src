@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.105 2008/09/27 15:00:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.106 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -782,10 +782,6 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 			return IEEE80211_AKM_8021X;
 		case 2:	/* PSK */
 			return IEEE80211_AKM_PSK;
-		case 3:	/* Fast BSS Transition IEEE 802.1X */
-			return IEEE80211_AKM_FBT_8021X;
-		case 4:	/* Fast BSS Transition PSK */
-			return IEEE80211_AKM_FBT_PSK;
 		case 5:	/* IEEE 802.1X with SHA256 KDF */
 			return IEEE80211_AKM_SHA256_8021X;
 		case 6:	/* PSK with SHA256 KDF */
@@ -825,6 +821,7 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	rsn->rsn_akms = IEEE80211_AKM_8021X;
 	/* if RSN capabilities missing, default to 0 */
 	rsn->rsn_caps = 0;
+	rsn->rsn_npmkids = 0;
 
 	/* read Group Data Cipher Suite field */
 	if (frm + 4 > efrm)
@@ -879,15 +876,15 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	/* read PMKID Count field */
 	if (frm + 2 > efrm)
 		return 0;
-	s = LE_READ_2(frm);
+	s = rsn->rsn_npmkids = LE_READ_2(frm);
 	frm += 2;
 
 	/* read PMKID List */
 	if (frm + s * IEEE80211_PMKID_LEN > efrm)
 		return IEEE80211_STATUS_IE_INVALID;
-	while (s-- > 0) {
-		/* ignore PMKIDs for now */
-		frm += IEEE80211_PMKID_LEN;
+	if (s != 0) {
+		rsn->rsn_pmkids = frm;
+		frm += s * IEEE80211_PMKID_LEN;
 	}
 
 	/* read Group Management Cipher Suite field */
@@ -1613,6 +1610,28 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_rsngroupcipher = ic->ic_bss->ni_rsngroupcipher;
 		ni->ni_rsngroupmgmtcipher = ic->ic_bss->ni_rsngroupmgmtcipher;
 		ni->ni_rsncaps = rsn.rsn_caps;
+
+		if (ieee80211_is_8021x_akm(ni->ni_rsnakms)) {
+			struct ieee80211_pmk *pmk = NULL;
+			const u_int8_t *pmkid = rsn.rsn_pmkids;
+			/*
+			 * Check if we have a cached PMK entry matching one
+			 * of the PMKIDs specified in the RSN IE.
+			 */
+			while (rsn.rsn_npmkids-- > 0) {
+				pmk = ieee80211_pmksa_find(ic, ni, pmkid);
+				if (pmk != NULL)
+					break;
+				pmkid += IEEE80211_PMKID_LEN;
+			}
+			if (pmk != NULL) {
+				memcpy(ni->ni_pmk, pmk->pmk_key,
+				    IEEE80211_PMK_LEN);
+				memcpy(ni->ni_pmkid, pmk->pmk_pmkid,
+				    IEEE80211_PMKID_LEN);
+				ni->ni_flags |= IEEE80211_NODE_PMK;
+			}
+		}
 	} else
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 

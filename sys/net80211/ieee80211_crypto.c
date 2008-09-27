@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.55 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.56 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -54,21 +54,21 @@
 
 void	ieee80211_prf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
-#ifdef notyet
 void	ieee80211_kdf(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    const u_int8_t *, size_t, u_int8_t *, size_t);
-void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, u_int8_t *);
-#endif
+void	ieee80211_derive_pmkid(enum ieee80211_akm, const u_int8_t *,
+	    const u_int8_t *, const u_int8_t *, u_int8_t *);
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
+	TAILQ_INIT(&ic->ic_pmksa);
 	if (ic->ic_caps & IEEE80211_C_RSN) {
 		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
-		ic->ic_rsnakms = IEEE80211_AKM_PSK | IEEE80211_AKM_8021X;
+		ic->ic_rsnakms = IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK |
+		    IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X;
 		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
 		    IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
@@ -82,15 +82,25 @@ void
 ieee80211_crypto_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211_pmk *pmk;
 	int i;
 
-	/* clear all keys from memory */
+	/* purge the PMKSA cache */
+	while ((pmk = TAILQ_FIRST(&ic->ic_pmksa)) != NULL) {
+		TAILQ_REMOVE(&ic->ic_pmksa, pmk, pmk_next);
+		memset(pmk, 0, sizeof(*pmk));
+		free(pmk, M_DEVBUF);
+	}
+
+	/* clear all group keys from memory */
 	for (i = 0; i < IEEE80211_GROUP_NKID; i++) {
 		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 		if (k->k_cipher != IEEE80211_CIPHER_NONE)
 			(*ic->ic_delete_key)(ic, NULL, k);
 		memset(k, 0, sizeof(*k));
 	}
+
+	/* clear pre-shared key from memory */
 	memset(ic->ic_psk, 0, IEEE80211_PMK_LEN);
 }
 
@@ -166,24 +176,6 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 	}
 	memset(k, 0, sizeof(*k));
-}
-
-/*
- * Retrieve the pairwise master key configured for a given node.
- * When PSK AKMP is in use, the pairwise master key is the pre-shared key
- * and the node is not used.
- */
-const u_int8_t *
-ieee80211_get_pmk(struct ieee80211com *ic, struct ieee80211_node *ni,
-    const u_int8_t *pmkid)
-{
-	if (ni->ni_rsnakms == IEEE80211_AKM_PSK ||
-	    ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK)
-		return ic->ic_psk;	/* the PMK is the PSK */
-
-	/* XXX find the PMK in the PMKSA cache using the PMKID */
-
-	return NULL;	/* not yet supported */
 }
 
 struct ieee80211_key *
@@ -336,7 +328,6 @@ ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 /*
  * SHA256-based Key Derivation Function (see 8.5.1.5.2).
  */
-#ifdef notyet
 void
 ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
     size_t label_len, const u_int8_t *context, size_t context_len,
@@ -365,7 +356,6 @@ ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 		len -= SHA256_DIGEST_LENGTH;
 	}
 }
-#endif
 
 /*
  * Derive Pairwise Transient Key (PTK) (see 8.5.1.2).
@@ -375,6 +365,8 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
     const u_int8_t *aa, const u_int8_t *spa, const u_int8_t *anonce,
     const u_int8_t *snonce, struct ieee80211_ptk *ptk)
 {
+	void (*kdf)(const u_int8_t *, size_t, const u_int8_t *, size_t,
+	    const u_int8_t *, size_t, u_int8_t *, size_t);
 	u_int8_t buf[2 * IEEE80211_ADDR_LEN + 2 * EAPOL_KEY_NONCE_LEN];
 	int ret;
 
@@ -388,30 +380,55 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
 	memcpy(&buf[12], ret ? anonce : snonce, EAPOL_KEY_NONCE_LEN);
 	memcpy(&buf[44], ret ? snonce : anonce, EAPOL_KEY_NONCE_LEN);
 
-	ieee80211_prf(pmk, IEEE80211_PMK_LEN, "Pairwise key expansion", 23,
+	kdf = ieee80211_is_sha256_akm(akm) ? ieee80211_kdf : ieee80211_prf;
+	(*kdf)(pmk, IEEE80211_PMK_LEN, "Pairwise key expansion", 23,
 	    buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
 }
 
-/*
- * Derive Pairwise Master Key Identifier (PMKID) (see 8.5.1.2).
- */
-#ifdef notyet
-void
-ieee80211_derive_pmkid(const u_int8_t *pmk, size_t pmk_len, const u_int8_t *aa,
+static void
+ieee80211_pmkid_sha1(const u_int8_t *pmk, const u_int8_t *aa,
     const u_int8_t *spa, u_int8_t *pmkid)
 {
 	HMAC_SHA1_CTX ctx;
 	u_int8_t digest[SHA1_DIGEST_LENGTH];
 
-	HMAC_SHA1_Init(&ctx, pmk, pmk_len);
+	HMAC_SHA1_Init(&ctx, pmk, IEEE80211_PMK_LEN);
 	HMAC_SHA1_Update(&ctx, "PMK Name", 8);
 	HMAC_SHA1_Update(&ctx, aa, IEEE80211_ADDR_LEN);
 	HMAC_SHA1_Update(&ctx, spa, IEEE80211_ADDR_LEN);
 	HMAC_SHA1_Final(digest, &ctx);
-	/* use the first 128 bits of the HMAC-SHA1 */
+	/* use the first 128 bits of HMAC-SHA1 */
 	memcpy(pmkid, digest, IEEE80211_PMKID_LEN);
 }
-#endif
+
+static void
+ieee80211_pmkid_sha256(const u_int8_t *pmk, const u_int8_t *aa,
+    const u_int8_t *spa, u_int8_t *pmkid)
+{
+	HMAC_SHA256_CTX ctx;
+	u_int8_t digest[SHA256_DIGEST_LENGTH];
+
+	HMAC_SHA256_Init(&ctx, pmk, IEEE80211_PMK_LEN);
+	HMAC_SHA256_Update(&ctx, "PMK Name", 8);
+	HMAC_SHA256_Update(&ctx, aa, IEEE80211_ADDR_LEN);
+	HMAC_SHA256_Update(&ctx, spa, IEEE80211_ADDR_LEN);
+	HMAC_SHA256_Final(digest, &ctx);
+	/* use the first 128 bits of HMAC-SHA-256 */
+	memcpy(pmkid, digest, IEEE80211_PMKID_LEN);
+}
+
+/*
+ * Derive Pairwise Master Key Identifier (PMKID) (see 8.5.1.2).
+ */
+void
+ieee80211_derive_pmkid(enum ieee80211_akm akm, const u_int8_t *pmk,
+    const u_int8_t *aa, const u_int8_t *spa, u_int8_t *pmkid)
+{
+	if (ieee80211_is_sha256_akm(akm))
+		ieee80211_pmkid_sha256(pmk, aa, spa, pmkid);
+	else
+		ieee80211_pmkid_sha1(pmk, aa, spa, pmkid);
+}
 
 typedef union _ANY_CTX {
 	HMAC_MD5_CTX	md5;
@@ -575,4 +592,61 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 	}
 
 	return 1;	/* unknown Key Descriptor Version */
+}
+
+/*
+ * Add a PMK entry to the PMKSA cache.
+ */
+struct ieee80211_pmk *
+ieee80211_pmksa_add(struct ieee80211com *ic, enum ieee80211_akm akm,
+    const u_int8_t *macaddr, const u_int8_t *key, u_int32_t lifetime)
+{
+	struct ieee80211_pmk *pmk;
+
+	/* check if an entry already exists for this (STA,AKMP) */
+	TAILQ_FOREACH(pmk, &ic->ic_pmksa, pmk_next) {
+		if (pmk->pmk_akm == akm &&
+		    IEEE80211_ADDR_EQ(pmk->pmk_macaddr, macaddr))
+			break;
+	}
+	if (pmk == NULL) {
+		/* allocate a new PMKSA entry */
+		if ((pmk = malloc(sizeof(*pmk), M_DEVBUF, M_NOWAIT)) == NULL)
+			return NULL;
+		pmk->pmk_akm = akm;
+		IEEE80211_ADDR_COPY(pmk->pmk_macaddr, macaddr);
+		TAILQ_INSERT_TAIL(&ic->ic_pmksa, pmk, pmk_next);
+	}
+	memcpy(pmk->pmk_key, key, IEEE80211_PMK_LEN);
+	pmk->pmk_lifetime = lifetime;	/* XXX not used yet */
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		ieee80211_derive_pmkid(pmk->pmk_akm, pmk->pmk_key,
+		    ic->ic_myaddr, macaddr, pmk->pmk_pmkid);
+	} else
+#endif
+	{
+		ieee80211_derive_pmkid(pmk->pmk_akm, pmk->pmk_key,
+		    macaddr, ic->ic_myaddr, pmk->pmk_pmkid);
+	}
+	return pmk;
+}
+
+/*
+ * Check if we have a cached PMK entry for the specified node and PMKID.
+ */
+struct ieee80211_pmk *
+ieee80211_pmksa_find(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *pmkid)
+{
+	struct ieee80211_pmk *pmk;
+
+	TAILQ_FOREACH(pmk, &ic->ic_pmksa, pmk_next) {
+		if (pmk->pmk_akm == ni->ni_rsnakms &&
+		    IEEE80211_ADDR_EQ(pmk->pmk_macaddr, ni->ni_macaddr) &&
+		    (pmkid == NULL ||
+		     memcmp(pmk->pmk_pmkid, pmkid, IEEE80211_PMKID_LEN) == 0))
+			break;
+	}
+	return pmk;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_priv.h,v 1.3 2008/08/12 19:05:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_priv.h,v 1.4 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -58,6 +58,18 @@ extern int ieee80211_debug;
 	 4 * 2 +	/* Pairwise Cipher Suite List (max 2) */	\
 	 2 +		/* AKM Suite List Count */			\
 	 4 * 2)		/* AKM Suite List (max 2) */
+
+struct ieee80211_rsnparams {
+	u_int16_t		rsn_nakms;
+	u_int32_t		rsn_akms;
+	u_int16_t		rsn_nciphers;
+	u_int32_t		rsn_ciphers;
+	enum ieee80211_cipher	rsn_groupcipher;
+	enum ieee80211_cipher	rsn_groupmgmtcipher;
+	u_int16_t		rsn_caps;
+	u_int8_t		rsn_npmkids;
+	const u_int8_t		*rsn_pmkids;
+};
 
 /* unaligned big endian access */
 #define BE_READ_2(p)				\

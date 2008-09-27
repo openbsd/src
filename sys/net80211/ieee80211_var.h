@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.53 2008/09/08 13:13:01 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.54 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -171,16 +171,6 @@ struct ieee80211_edca_ac_params {
 #define IEEE80211_PROTO_RSN	(1 << 0)
 #define IEEE80211_PROTO_WPA	(1 << 1)
 
-struct ieee80211_rsnparams {
-	u_int16_t		rsn_nakms;
-	u_int32_t		rsn_akms;
-	u_int16_t		rsn_nciphers;
-	u_int32_t		rsn_ciphers;
-	enum ieee80211_cipher	rsn_groupcipher;
-	enum ieee80211_cipher	rsn_groupmgmtcipher;
-	u_int16_t		rsn_caps;
-};
-
 struct ieee80211_rxinfo {
 	u_int32_t		rxi_flags;
 	u_int32_t		rxi_tstamp;
@@ -288,6 +278,7 @@ struct ieee80211com {
 	u_int16_t		ic_rsn_keydonesta;
 	int			ic_tkip_micfail;
 
+	TAILQ_HEAD(, ieee80211_pmk) ic_pmksa;	/* PMKSA cache */
 	u_int			ic_rsnprotos;
 	u_int			ic_rsnakms;
 	u_int			ic_rsnciphers;

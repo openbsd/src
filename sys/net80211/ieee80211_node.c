@@ -1,9 +1,10 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.45 2008/08/29 12:14:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.46 2008/09/27 15:16:09 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2008 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,6 +74,7 @@ struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
 void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *,
     const struct ieee80211_node *);
+void ieee80211_choose_rsnparams(struct ieee80211com *);
 u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
     const struct ieee80211_node *);
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
@@ -80,6 +82,7 @@ void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
 void ieee80211_node_join_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
@@ -421,9 +424,12 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 			fail |= 0x40;
 		if ((ni->ni_rsnakms & ic->ic_rsnakms) == 0)
 			fail |= 0x40;
-		if ((ni->ni_rsnakms & ic->ic_rsnakms) == IEEE80211_AKM_PSK &&
-		    !(ic->ic_flags & IEEE80211_F_PSK))
-			fail |= 0x40;
+		if ((ni->ni_rsnakms & ic->ic_rsnakms &
+		     ~(IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK)) == 0) {
+			/* AP only supports PSK AKMPs */
+			if (!(ic->ic_flags & IEEE80211_F_PSK))
+				fail |= 0x40;
+		}
 		if ((ni->ni_rsnciphers & ic->ic_rsnciphers) == 0)
 			fail |= 0x40;
 
@@ -592,39 +598,9 @@ ieee80211_end_scan(struct ifnet *ifp)
 	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
 	ieee80211_reset_erp(ic);
 
-	if (ic->ic_flags & IEEE80211_F_RSNON) {
-		/* prefer RSN (WPA2) over WPA */
-		ni->ni_rsnprotos &= ic->ic_rsnprotos;
-		if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
-			ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
-		else
-			ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
-		/*
-		 * If a pre-shared key is configured and AP supports PSK,
-		 * choose PSK as AKMP.
-		 */
-		ni->ni_rsnakms &= ic->ic_rsnakms;
-		if ((ni->ni_rsnakms & IEEE80211_AKM_PSK) &&
-		    (ic->ic_flags & IEEE80211_F_PSK))
-			ni->ni_rsnakms = IEEE80211_AKM_PSK;
-		else
-			ni->ni_rsnakms = IEEE80211_AKM_8021X;
-
-		/* prefer CCMP over TKIP if the AP supports it */
-		ni->ni_rsnciphers &= ic->ic_rsnciphers;
-		if (ni->ni_rsnciphers & IEEE80211_CIPHER_CCMP)
-			ni->ni_rsnciphers = IEEE80211_CIPHER_CCMP;
-		else
-			ni->ni_rsnciphers = IEEE80211_CIPHER_TKIP;
-
-		ni->ni_rsncipher = ni->ni_rsnciphers;
-
-		/* use MFP if we both support it */
-		if ((ic->ic_caps & IEEE80211_C_MFP) &&
-		    (ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC))
-			ni->ni_flags |= IEEE80211_NODE_MFP;
-
-	} else if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_RSNON)
+		ieee80211_choose_rsnparams(ic);
+	else if (ic->ic_flags & IEEE80211_F_WEPON)
 		ni->ni_rsncipher = IEEE80211_CIPHER_USEGROUP;
 
 	ieee80211_node_newstate(selbs, IEEE80211_STA_BSS);
@@ -646,6 +622,63 @@ ieee80211_end_scan(struct ifnet *ifp)
 	}
 
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+}
+
+/*
+ * Autoselect the best RSN parameters (protocol, AKMP, pairwise cipher...)
+ * that are supported by both peers (STA mode only).
+ */
+void
+ieee80211_choose_rsnparams(struct ieee80211com *ic)
+{
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct ieee80211_pmk *pmk;
+
+	/* filter out unsupported protocol versions */
+	ni->ni_rsnprotos &= ic->ic_rsnprotos;
+	/* prefer RSN (aka WPA2) over WPA */
+	if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
+		ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
+	else
+		ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
+
+	/* filter out unsupported AKMPs */
+	ni->ni_rsnakms &= ic->ic_rsnakms;
+	/* prefer SHA-256 based AKMPs */
+	if ((ic->ic_flags & IEEE80211_F_PSK) && (ni->ni_rsnakms &
+	    (IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK))) {
+		/* AP supports PSK AKMP and a PSK is configured */
+		if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_PSK)
+			ni->ni_rsnakms = IEEE80211_AKM_SHA256_PSK;
+		else
+			ni->ni_rsnakms = IEEE80211_AKM_PSK;
+	} else {
+		if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_8021X)
+			ni->ni_rsnakms = IEEE80211_AKM_SHA256_8021X;
+		else
+			ni->ni_rsnakms = IEEE80211_AKM_8021X;
+		/* check if we have a cached PMK for this AP */
+		if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN &&
+		    (pmk = ieee80211_pmksa_find(ic, ni, NULL)) != NULL) {
+			memcpy(ni->ni_pmkid, pmk->pmk_pmkid,
+			    IEEE80211_PMKID_LEN);
+			ni->ni_flags |= IEEE80211_NODE_PMKID;
+		}
+	}
+
+	/* filter out unsupported pairwise ciphers */
+	ni->ni_rsnciphers &= ic->ic_rsnciphers;
+	/* prefer CCMP over TKIP */
+	if (ni->ni_rsnciphers & IEEE80211_CIPHER_CCMP)
+		ni->ni_rsnciphers = IEEE80211_CIPHER_CCMP;
+	else
+		ni->ni_rsnciphers = IEEE80211_CIPHER_TKIP;
+	ni->ni_rsncipher = ni->ni_rsnciphers;
+
+	/* use MFP if we both support it */
+	if ((ic->ic_caps & IEEE80211_C_MFP) &&
+	    (ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC))
+		ni->ni_flags |= IEEE80211_NODE_MFP;
 }
 
 int
@@ -1150,6 +1183,22 @@ ieee80211_iserp_sta(const struct ieee80211_node *ni)
 }
 
 /*
+ * This function is called to notify the 802.1X PACP machine that a new
+ * 802.1X port is enabled and must be authenticated. For 802.11, a port
+ * becomes enabled whenever a STA successfully completes Open System
+ * authentication with an AP.
+ */
+void
+ieee80211_needs_auth(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	/*
+	 * XXX this could be done via the route socket of via a dedicated
+	 * EAP socket or another kernel->userland notification mechanism.
+	 * The notification should include the MAC address (ni_macaddr).
+	 */
+}
+
+/*
  * Handle a station joining an RSN network.
  */
 void
@@ -1176,9 +1225,17 @@ ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* generate a new authenticator nonce (ANonce) */
 	arc4random_buf(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
-	/* initiate 4-way handshake */
-	if (ni->ni_rsnakms == IEEE80211_AKM_PSK)
+	if (!ieee80211_is_8021x_akm(ni->ni_rsnakms)) {
+		memcpy(ni->ni_pmk, ic->ic_psk, IEEE80211_PMK_LEN);
+		ni->ni_flags |= IEEE80211_NODE_PMK;
 		(void)ieee80211_send_4way_msg1(ic, ni);
+	} else if (ni->ni_flags & IEEE80211_NODE_PMK) {
+		/* skip 802.1X auth if a cached PMK was found */
+		(void)ieee80211_send_4way_msg1(ic, ni);
+	} else {
+		/* no cached PMK found, needs full 802.1X auth */
+		ieee80211_needs_auth(ic, ni);
+	}
 }
 
 /*
@@ -1298,6 +1355,7 @@ ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_setkeysdone(ic);
 	ni->ni_flags &= ~IEEE80211_NODE_REKEY;
 
+	ni->ni_flags &= ~IEEE80211_NODE_PMK;
 	ni->ni_rsn_gstate = RSNA_IDLE;
 
 	timeout_del(&ni->ni_rsn_timeout);

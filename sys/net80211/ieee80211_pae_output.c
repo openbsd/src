@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.13 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.14 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -91,8 +91,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 
 	info = BE_READ_2(key->info);
 	/* use V3 descriptor if KDF is SHA256-based */
-	if (ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X ||
-	    ni->ni_rsnakms == IEEE80211_AKM_SHA256_PSK)
+	if (ieee80211_is_sha256_akm(ni->ni_rsnakms))
 		info |= EAPOL_KEY_DESC_V3;
 	/* use V2 descriptor if pairwise or group cipher is CCMP */
 	else if (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
@@ -296,13 +295,10 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
-	/* WPA does not have PMKID KDE */
+	/* NB: WPA does not have PMKID KDE */
 	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN &&
-	    (ni->ni_rsnakms == IEEE80211_AKM_8021X ||
-	     ni->ni_rsnakms == IEEE80211_AKM_SHA256_8021X)) {
-		/* XXX retrieve PMKID from the PMKSA cache */
-		/* frm = ieee80211_add_pmkid_kde(frm, pmkid); */
-	}
+	    ieee80211_is_8021x_akm(ni->ni_rsnakms))
+		frm = ieee80211_add_pmkid_kde(frm, ni->ni_pmkid);
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.20 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.21 2008/09/27 15:16:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -43,11 +43,23 @@ enum ieee80211_akm {
 	IEEE80211_AKM_NONE		= 0x00000000,
 	IEEE80211_AKM_8021X		= 0x00000001,
 	IEEE80211_AKM_PSK		= 0x00000002,
-	IEEE80211_AKM_FBT_8021X		= 0x00000004,	/* 11r */
-	IEEE80211_AKM_FBT_PSK		= 0x00000008,	/* 11r */
-	IEEE80211_AKM_SHA256_8021X	= 0x00000010,	/* 11w */
-	IEEE80211_AKM_SHA256_PSK	= 0x00000020	/* 11w */
+	IEEE80211_AKM_SHA256_8021X	= 0x00000004,	/* 11w */
+	IEEE80211_AKM_SHA256_PSK	= 0x00000008	/* 11w */
 };
+
+static __inline int
+ieee80211_is_8021x_akm(enum ieee80211_akm akm)
+{
+	return akm == IEEE80211_AKM_8021X ||
+	    akm == IEEE80211_AKM_SHA256_8021X;
+}
+
+static __inline int
+ieee80211_is_sha256_akm(enum ieee80211_akm akm)
+{
+	return akm == IEEE80211_AKM_SHA256_8021X ||
+	    akm == IEEE80211_AKM_SHA256_PSK;
+}
 
 #define	IEEE80211_KEYBUF_SIZE	16
 
@@ -73,6 +85,21 @@ struct ieee80211_key {
 	u_int64_t		k_tsc;
 	u_int8_t		k_key[32];
 	void			*k_priv;
+};
+
+/*
+ * Entry in the PMKSA cache.
+ */
+struct ieee80211_pmk {
+	enum ieee80211_akm	pmk_akm;
+	u_int32_t		pmk_lifetime;
+#define IEEE80211_PMK_INFINITE	0
+
+	u_int8_t		pmk_pmkid[IEEE80211_PMKID_LEN];
+	u_int8_t		pmk_macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t		pmk_key[IEEE80211_PMK_LEN];
+
+	TAILQ_ENTRY(ieee80211_pmk) pmk_next;
 };
 
 /* forward references */
@@ -107,7 +134,9 @@ void	ieee80211_eapol_key_encrypt(struct ieee80211com *,
 int	ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
 	    const u_int8_t *);
 
-const	u_int8_t *ieee80211_get_pmk(struct ieee80211com *,
+struct	ieee80211_pmk *ieee80211_pmksa_add(struct ieee80211com *,
+	    enum ieee80211_akm, const u_int8_t *, const u_int8_t *, u_int32_t);
+struct	ieee80211_pmk *ieee80211_pmksa_find(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *);
 void	ieee80211_derive_ptk(enum ieee80211_akm, const u_int8_t *,
 	    const u_int8_t *, const u_int8_t *, const u_int8_t *,
