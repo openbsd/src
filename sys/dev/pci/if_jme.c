@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.1 2008/09/26 10:35:15 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.2 2008/09/27 13:03:30 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -628,7 +628,6 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, JME_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	printf("XNAME= '%s'\n", ifp->if_xname);
 
 	/* JMC250 supports Tx/Rx checksum offload and hardware vlan tagging. */
 #if 0
