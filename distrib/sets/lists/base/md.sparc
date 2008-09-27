@@ -495,6 +495,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/iophyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/ipgphyreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/jmphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/lxtphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/mii.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/mii_bitbang.ph
@@ -615,6 +616,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_ix.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_ixgb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_ixgb_osdep.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_jmereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_jmevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_liireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_lmc_types.ph

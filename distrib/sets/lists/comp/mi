@@ -453,6 +453,7 @@
 ./usr/include/dev/mii/iophyreg.h
 ./usr/include/dev/mii/ipgphyreg.h
 ./usr/include/dev/mii/lxtphyreg.h
+./usr/include/dev/mii/jmphyreg.h
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/mii_bitbang.h
 ./usr/include/dev/mii/miidevs.h
@@ -572,6 +573,8 @@
 ./usr/include/dev/pci/if_ix.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
+./usr/include/dev/pci/if_jmereg.h
+./usr/include/dev/pci/if_jmevar.h
 ./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_liireg.h
 ./usr/include/dev/pci/if_lmc_types.h
