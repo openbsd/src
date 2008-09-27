@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.46 2008/09/01 19:55:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.47 2008/09/27 15:00:08 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -237,6 +237,52 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	/* FCS */
 } __packed;
 
+#ifdef _KERNEL
+static __inline int
+ieee80211_has_seq(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_CTL;
+}
+
+static __inline int
+ieee80211_has_addr4(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+	    IEEE80211_FC1_DIR_DSTODS;
+}
+
+static __inline int
+ieee80211_has_qos(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS);
+}
+
+static __inline int
+ieee80211_has_htc(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_ORDER) &&
+	    (ieee80211_has_qos(wh) ||
+	     (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT);
+}
+
+static __inline u_int16_t
+ieee80211_get_qos(const struct ieee80211_frame *wh)
+{
+	const u_int8_t *frm;
+
+	if (ieee80211_has_addr4(wh))
+		frm = ((const struct ieee80211_qosframe_addr4 *)wh)->i_qos;
+	else
+		frm = ((const struct ieee80211_qosframe *)wh)->i_qos;
+
+	return letoh16(*(const u_int16_t *)frm);
+}
+#endif	/* _KERNEL */
+
 /*
  * Capability Information field (see 7.3.1.4).
  */
@@ -336,6 +382,14 @@ enum {
  */
 #define IEEE80211_RSNCAP_PREAUTH		0x0001
 #define IEEE80211_RSNCAP_NOPAIRWISE		0x0002
+#define IEEE80211_RSNCAP_PTKSA_RCNT_MASK	0x000c
+#define IEEE80211_RSNCAP_PTKSA_RCNT_SHIFT	2
+#define IEEE80211_RSNCAP_GTKSA_RCNT_MASK	0x0030
+#define IEEE80211_RSNCAP_GTKSA_RCNT_SHIFT	4
+#define IEEE80211_RSNCAP_RCNT1			0
+#define IEEE80211_RSNCAP_RCNT2			1
+#define IEEE80211_RSNCAP_RCNT4			2
+#define IEEE80211_RSNCAP_RCNT16			3
 #define IEEE80211_RSNCAP_MFPR			0x0040	/* 11w */
 #define IEEE80211_RSNCAP_MFPC			0x0080	/* 11w */
 #define IEEE80211_RSNCAP_PEERKEYENA		0x0200

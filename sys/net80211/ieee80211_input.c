@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.104 2008/09/01 19:41:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.105 2008/09/27 15:00:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -102,24 +102,19 @@ void	ieee80211_recv_action(struct ieee80211com *, struct mbuf *,
  * Retrieve the length in bytes of a 802.11 header.
  */
 u_int
-ieee80211_get_hdrlen(const void *data)
+ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
 {
-	const u_int8_t *fc = data;
-	u_int size = sizeof(struct ieee80211_frame);
+	u_int size = sizeof(*wh);
 
-	/* NB: doesn't work with control frames */
-	KASSERT((fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL);
+	/* NB: does not work with control frames */
+	KASSERT(ieee80211_has_seq(wh));
 
-	if ((fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
-		size += IEEE80211_ADDR_LEN;		/* i_addr4 */
-	if ((fc[0] & (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		size += sizeof(u_int16_t);		/* i_qos */
-		if (fc[1] & IEEE80211_FC1_ORDER)
-			size += sizeof(u_int32_t);	/* i_ht */
-	} else if ((fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	     IEEE80211_FC0_TYPE_MGT && (fc[1] & IEEE80211_FC1_ORDER))
-		size += sizeof(u_int32_t);		/* i_ht */
+	if (ieee80211_has_addr4(wh))
+		size += IEEE80211_ADDR_LEN;	/* i_addr4 */
+	if (ieee80211_has_qos(wh))
+		size += sizeof(u_int16_t);	/* i_qos */
+	if (ieee80211_has_htc(wh))
+		size += sizeof(u_int32_t);	/* i_ht */
 	return size;
 }
 
@@ -181,22 +176,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 	}
 	/* check and save sequence control field, if present */
-	if (ic->ic_state != IEEE80211_S_SCAN &&
-	    type != IEEE80211_FC0_TYPE_CTL) {
+	if (ieee80211_has_seq(wh) &&
+	    ic->ic_state != IEEE80211_S_SCAN) {
 		nrxseq = letoh16(*(u_int16_t *)wh->i_seq) >>
 		    IEEE80211_SEQ_SEQ_SHIFT;
-		if ((wh->i_fc[0] &
-		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-		    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-			if (dir == IEEE80211_FC1_DIR_DSTODS) {
-				struct ieee80211_qosframe_addr4 *qwh4 =
-				    (struct ieee80211_qosframe_addr4 *)wh;
-				tid = qwh4->i_qos[0] & 0x0f;
-			} else {
-				struct ieee80211_qosframe *qwh =
-				    (struct ieee80211_qosframe *)wh;
-				tid = qwh->i_qos[0] & 0x0f;
-			}
+		if (ieee80211_has_qos(wh)) {
+			tid = ieee80211_get_qos(wh) & IEEE80211_QOS_TID;
 			orxseq = &ni->ni_qos_rxseqs[tid];
 		} else
 			orxseq = &ni->ni_rxseq;

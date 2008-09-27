@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.34 2008/09/01 19:41:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.35 2008/09/27 15:00:08 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ extern	void ieee80211_proto_detach(struct ifnet *);
 struct ieee80211_node;
 struct ieee80211_rxinfo;
 struct ieee80211_rsnparams;
-extern	u_int ieee80211_get_hdrlen(const void *);
+extern	u_int ieee80211_get_hdrlen(const struct ieee80211_frame *);
 extern	void ieee80211_input(struct ifnet *, struct mbuf *,
 		struct ieee80211_node *, struct ieee80211_rxinfo *);
 extern	int ieee80211_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -100,6 +100,7 @@ extern	int ieee80211_pwrsave(struct ieee80211com *, struct mbuf *,
 extern	struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *, int);
 #define	ieee80211_new_state(_ic, _nstate, _arg) \
 	(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))
+extern	enum ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 extern	u_int8_t *ieee80211_add_capinfo(u_int8_t *, struct ieee80211com *,
 		const struct ieee80211_node *);
 extern	u_int8_t *ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);

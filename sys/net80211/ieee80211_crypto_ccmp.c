@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.6 2008/08/12 17:54:57 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.7 2008/09/27 15:00:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -101,9 +101,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	*aad &= ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 	    IEEE80211_FC1_MORE_DATA);
 	/* 11n: conditionnally mask order bit */
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+	if (ieee80211_has_htc(wh))
 		*aad &= ~IEEE80211_FC1_ORDER;
 	aad++;
 	IEEE80211_ADDR_COPY(aad, wh->i_addr1); aad += IEEE80211_ADDR_LEN;
@@ -111,26 +109,13 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	IEEE80211_ADDR_COPY(aad, wh->i_addr3); aad += IEEE80211_ADDR_LEN;
 	*aad++ = wh->i_seq[0] & ~0xf0;
 	*aad++ = 0;
-	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
-	    IEEE80211_FC1_DIR_DSTODS) {
-		const struct ieee80211_frame_addr4 *wh4 =
-		    (const struct ieee80211_frame_addr4 *)wh;
-		IEEE80211_ADDR_COPY(aad, wh4->i_addr4);
+	if (ieee80211_has_addr4(wh)) {
+		IEEE80211_ADDR_COPY(aad,
+		    ((const struct ieee80211_frame_addr4 *)wh)->i_addr4);
 		aad += IEEE80211_ADDR_LEN;
-		if ((wh->i_fc[0] &
-		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-		    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-			const struct ieee80211_qosframe_addr4 *qwh4 =
-			    (const struct ieee80211_qosframe_addr4 *)wh;
-			*aad++ = tid = qwh4->i_qos[0] & 0x0f;
-			*aad++ = 0;
-		}
-	} else if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		const struct ieee80211_qosframe *qwh =
-		    (const struct ieee80211_qosframe *)wh;
-		*aad++ = tid = qwh->i_qos[0] & 0x0f;
+	}
+	if (ieee80211_has_qos(wh)) {
+		*aad++ = tid = ieee80211_get_qos(wh) & IEEE80211_QOS_TID;
 		*aad++ = 0;
 	}
 
@@ -343,25 +328,12 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		return NULL;
 	}
 
-	/* retrieve last seen packet number for this frame type/TID */
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		u_int8_t tid;
-		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
-		    IEEE80211_FC1_DIR_DSTODS) {
-			struct ieee80211_qosframe_addr4 *qwh4 =
-			    (struct ieee80211_qosframe_addr4 *)wh;
-			tid = qwh4->i_qos[0] & 0x0f;
-		} else {
-			struct ieee80211_qosframe *qwh =
-			    (struct ieee80211_qosframe *)wh;
-			tid = qwh->i_qos[0] & 0x0f;
-		}
+	/* retrieve last seen packet number for this frame type/priority */
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_DATA) {
+		u_int8_t tid = ieee80211_has_qos(wh) ?
+		    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
 		prsc = &k->k_rsc[tid];
-	} else if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
-	    IEEE80211_FC0_TYPE_MGT) {
-		prsc = &k->k_rsc[0];
 	} else	/* 11w: management frames have their own counters */
 		prsc = &k->k_mgmt_rsc;
 

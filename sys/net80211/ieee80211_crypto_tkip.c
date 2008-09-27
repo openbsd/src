@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.8 2008/08/27 09:05:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.9 2008/09/27 15:00:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -150,20 +150,9 @@ ieee80211_tkip_mic(struct mbuf *m0, int off, const u_int8_t *key,
 		    ((const struct ieee80211_frame_addr4 *)wh)->i_addr4);
 		break;
 	}
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
-		    IEEE80211_FC1_DIR_DSTODS) {
-			const struct ieee80211_qosframe_addr4 *qwh4 =
-			    (const struct ieee80211_qosframe_addr4 *)wh;
-			wht.i_pri = qwh4->i_qos[0] & 0xf;
-		} else {
-			const struct ieee80211_qosframe *qwh =
-			    (const struct ieee80211_qosframe *)wh;
-			wht.i_pri = qwh->i_qos[0] & 0xf;
-		}
-	} else
+	if (ieee80211_has_qos(wh))
+		wht.i_pri = ieee80211_get_qos(wh) & IEEE80211_QOS_TID;
+	else
 		wht.i_pri = 0;
 	wht.i_pad[0] = wht.i_pad[1] = wht.i_pad[2] = 0;
 
@@ -334,6 +323,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	u_int64_t tsc, *prsc;
 	u_int32_t crc, crc0;
 	u_int8_t *ivp, *mic0;
+	u_int8_t tid;
 	struct mbuf *n0, *m, *n;
 	int hdrlen, left, moff, noff, len;
 
@@ -352,24 +342,10 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		return NULL;
 	}
 
-	/* retrieve last seen packet number for this frame TID */
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
-		u_int8_t tid;
-		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
-		    IEEE80211_FC1_DIR_DSTODS) {
-			struct ieee80211_qosframe_addr4 *qwh4 =
-			    (struct ieee80211_qosframe_addr4 *)wh;
-			tid = qwh4->i_qos[0] & 0x0f;
-		} else {
-			struct ieee80211_qosframe *qwh =
-			    (struct ieee80211_qosframe *)wh;
-			tid = qwh->i_qos[0] & 0x0f;
-		}
-		prsc = &k->k_rsc[tid];
-	} else
-		prsc = &k->k_rsc[0];
+	/* retrieve last seen packet number for this frame priority */
+	tid = ieee80211_has_qos(wh) ?
+	    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+	prsc = &k->k_rsc[tid];
 
 	/* extract the 48-bit TSC from the TKIP header */
 	tsc = (u_int64_t)ivp[2]       |

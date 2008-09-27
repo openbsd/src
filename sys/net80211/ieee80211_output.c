@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.77 2008/09/03 19:53:37 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.78 2008/09/27 15:00:08 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
 
-enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
