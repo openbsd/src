@@ -1,7 +1,7 @@
-$OpenBSD: README,v 1.4 2007/12/11 16:43:14 millert Exp $
+$OpenBSD: README,v 1.5 2008/09/27 19:17:10 martynas Exp $
 
-This directory contains the configuration files for sendmail(8).
-The source for the .cf files lives in /usr/share/sendmail/cf.
+This directory contains the configuration files for sendmail(8) and
+spamd(8).  The source for the .cf files lives in /usr/share/sendmail/cf.
 You should make changes in the corresponding .mc file and not edit
 the .cf files directly.  Useful information may be found in
 /usr/share/sendmail/README, /usr/share/sendmail/TUNING, and
@@ -9,10 +9,6 @@ the .cf files directly.  Useful information may be found in
 encrypted SMTP, see the starttls(8) man page.
 
 Sendmail configuration files:
-    submit.cf		Built from /usr/share/sendmail/cf/submit.mc.
-			Used when sendmail is invoked directly from
-			the command line to send mail (for instance,
-			when called by mail(1)).
 
     localhost.cf	Built from /usr/share/sendmail/cf/openbsd-localhost.mc.
 			Only allows connections from the local host, not
@@ -24,12 +20,20 @@ Sendmail configuration files:
 			A more full-featured configuration file that
 			allows SMTP connections from the internet.
 
+    submit.cf		Built from /usr/share/sendmail/cf/submit.mc.
+			Used when sendmail is invoked directly from
+			the command line to send mail (for instance,
+			when called by mail(1)).
 
 Other files used by sendmail(8) in this directory include:
 
     access		Access database (blacklist, whitelist, etc).
 
     aliases		System aliases database.
+
+    genericstable	Used to rewrite the From: line to a generic form.
+			Most often used to map login name -> First.Last
+			name in outgoing messages.
 
     helpfile		Help file for sendmail(8).
 
@@ -39,10 +43,6 @@ Other files used by sendmail(8) in this directory include:
 			interface or a CNAME that points to one of
 			those names.  This file is read only at startup
 			or when sendmail(8) is sent SIGHUP.
-
-    genericstable	Used to rewrite the From: line to a generic form.
-			Most often used to map login name -> First.Last
-			name in outgoing messages.
 
     mailertable		Used to override routing for particular (non-local)
 			domains.
@@ -54,8 +54,30 @@ Other files used by sendmail(8) in this directory include:
 			will be rejected.  This file is read only at
 			startup or when sendmail(8) is sent SIGHUP.
 
+    trusted-users	This file contains a list of users (one per
+			line) that may set their envelope "from"
+			address to a different user via "sendmail
+			-f".  Common values include "majordomo",
+			"mailman" and "www".  In other words, if a
+			daemon (or mailing list manager) sends mail
+			purporting to be from a different user, the
+			user it runs as should be listed here.  The
+			users "root" and "daemon" are implicitly
+			included in this list.  This file is read
+			only at startup or when sendmail(8) is sent
+			SIGHUP.
+
     virtusertable	Virtual user table; maps incoming mail addresses
 			to alternate local usernames or aliases.
+
+Spamd configuration files:
+
+    spamd.conf		The spamd.conf file is read by spamd-setup(8)
+			to configure blacklists for spamd(8).
+			Blacklists are lists of addresses of likely
+			spammers.  Mail from these addresses never
+			reaches the actual mail server, but is
+			instead redirected to spamd(8) and tarpitted.
 
 Note that by default, only sendmail.cf will use the access, local-host-names,
 mailertable, relay-domains, userdb, and virtusertable files.
