@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.35 2008/09/27 15:00:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.36 2008/09/28 06:43:07 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@ extern	void ieee80211_auth_open(struct ieee80211com *,
 	    const struct ieee80211_frame *, struct ieee80211_node *,
 	    struct ieee80211_rxinfo *rs, u_int16_t, u_int16_t);
 extern	void ieee80211_gtk_rekey_timeout(void *);
+extern	int ieee80211_keyrun(struct ieee80211com *, u_int8_t *);
 extern	void ieee80211_setkeys(struct ieee80211com *);
 extern	void ieee80211_setkeysdone(struct ieee80211com *);
 
