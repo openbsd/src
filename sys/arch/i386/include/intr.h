@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.35 2008/05/07 20:42:02 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.36 2008/09/28 20:43:31 brad Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -36,12 +36,7 @@
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
-
-#ifdef MULTIPROCESSOR
-#include <machine/i82489reg.h>
-#include <machine/i82489var.h>
 #include <machine/cpu.h>
-#endif
 
 extern volatile u_int32_t lapic_tpr;	/* Current interrupt priority level. */
 
