@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.103 2008/07/18 23:43:31 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.104 2008/09/28 20:32:17 brad Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -49,10 +49,6 @@
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-
-/* XXX for now... */
-#define NLAPIC 1
-
 #endif
 
 /*
