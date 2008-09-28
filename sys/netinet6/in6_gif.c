@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.26 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.27 2008/09/28 15:25:32 jsing Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -30,6 +30,8 @@
  * SUCH DAMAGE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -41,6 +43,10 @@
 
 #include <net/if.h>
 #include <net/route.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -75,7 +81,7 @@ int
 in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-     struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+	struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct tdb tdb;
@@ -166,6 +172,9 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL, NULL);
 
 	return error;
