@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.621 2008/09/17 20:10:37 chl Exp $ */
+/*	$OpenBSD: pf.c,v 1.622 2008/09/28 14:39:55 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1294,6 +1294,12 @@ pf_print_state_parts(struct pf_state *s,
 	dir = s ? s->direction : 0;
 
 	switch (proto) {
+	case IPPROTO_IPV4:
+		printf("IPv4");
+		break;
+	case IPPROTO_IPV6:
+		printf("IPv6");
+		break;
 	case IPPROTO_TCP:
 		printf("TCP");
 		break;
@@ -1304,7 +1310,7 @@ pf_print_state_parts(struct pf_state *s,
 		printf("ICMP");
 		break;
 	case IPPROTO_ICMPV6:
-		printf("ICMPV6");
+		printf("ICMPv6");
 		break;
 	default:
 		printf("%u", skw->proto);
