@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.34 2008/09/28 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.35 2008/09/28 16:14:40 jsing Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -60,10 +60,7 @@
 #endif
 
 int
-in_gif_output(ifp, family, m)
-	struct ifnet	*ifp;
-	int		family;
-	struct mbuf	*m;
+in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;

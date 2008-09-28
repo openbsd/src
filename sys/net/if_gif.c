@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.49 2008/05/07 13:45:35 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.50 2008/09/28 16:14:39 jsing Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -77,17 +77,14 @@ struct if_clone gif_cloner =
 
 /* ARGSUSED */
 void
-gifattach(count)
-	int count;
+gifattach(int count)
 {
 	LIST_INIT(&gif_softc_list);
 	if_clone_attach(&gif_cloner);
 }
 
 int
-gif_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 	int s;
@@ -122,8 +119,7 @@ gif_clone_create(ifc, unit)
 }
 
 int
-gif_clone_destroy(ifp)
-	struct ifnet *ifp;
+gif_clone_destroy(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int s;
@@ -145,8 +141,7 @@ gif_clone_destroy(ifp)
 }
 
 void
-gif_start(ifp)
-	struct ifnet *ifp;
+gif_start(struct ifnet *ifp)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct mbuf *m;
@@ -265,11 +260,8 @@ gif_start(ifp)
 }
 
 int
-gif_output(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;	/* added in net2 */
+gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
@@ -319,10 +311,7 @@ end:
 }
 
 int
-gif_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
