@@ -1,6 +1,6 @@
 package FileCache;
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 =head1 NAME
 
@@ -80,7 +80,6 @@ so you may have to set I<maxopen> yourself.
 
 require 5.006;
 use Carp;
-use Config;
 use strict;
 no strict 'refs';
 
@@ -137,7 +136,7 @@ sub cacheout_open {
 sub cacheout_close {
   # Short-circuit in case the filehandle disappeared
   my $pkg = caller($_[1]||0);
-  fileno(*{$pkg . '::' . $_[0]}) &&
+  defined fileno(*{$pkg . '::' . $_[0]}) &&
     CORE::close(*{$pkg . '::' . $_[0]});
   delete $isopen{$_[0]};
 }

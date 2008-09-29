@@ -514,7 +514,7 @@ sub expr {
 		}
 	    } else {
 		if ($inif && $new !~ /defined\s*\($/) {
-		    $new .= '(defined(&' . $id . ') ? &' . $id . ' : 0)';
+		    $new .= '(defined(&' . $id . ') ? &' . $id . ' : undef)';
 		} elsif (/^\[/) {
 		    $new .= " \$$id";
 		} else {
@@ -772,25 +772,33 @@ sub build_preamble_if_necessary
     my (%define) = _extract_cc_defines();
 
     open  PREAMBLE, ">$preamble" or die "Cannot open $preamble:  $!";
-        print PREAMBLE "# This file was created by h2ph version $VERSION\n";
+	print PREAMBLE "# This file was created by h2ph version $VERSION\n";
 
-        foreach (sort keys %define) {
-            if ($opt_D) {
-                print PREAMBLE "# $_=$define{$_}\n";
-            }
-
-            if ($define{$_} =~ /^(\d+)U?L{0,2}$/i) {
-                print PREAMBLE
-                    "unless (defined &$_) { sub $_() { $1 } }\n\n";
-            } elsif ($define{$_} =~ /^\w+$/) {
-                print PREAMBLE
-                    "unless (defined &$_) { sub $_() { &$define{$_} } }\n\n";
-            } else {
-                print PREAMBLE
-                    "unless (defined &$_) { sub $_() { \"",
-                    quotemeta($define{$_}), "\" } }\n\n";
-            }
-        }
+	foreach (sort keys %define) {
+	    if ($opt_D) {
+		print PREAMBLE "# $_=$define{$_}\n";
+	    }
+	    if ($define{$_} =~ /^\((.*)\)$/) {
+		# parenthesized value:  d=(v)
+		$define{$_} = $1;
+	    }
+	    if ($define{$_} =~ /^([+-]?(\d+)?\.\d+([eE][+-]?\d+)?)[FL]?$/) {
+		# float:
+		print PREAMBLE
+		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+	    } elsif ($define{$_} =~ /^([+-]?\d+)U?L{0,2}$/i) {
+		# integer:
+		print PREAMBLE
+		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+	    } elsif ($define{$_} =~ /^\w+$/) {
+		print PREAMBLE
+		    "unless (defined &$_) { sub $_() { &$define{$_} } }\n\n";
+	    } else {
+		print PREAMBLE
+		    "unless (defined &$_) { sub $_() { \"",
+		    quotemeta($define{$_}), "\" } }\n\n";
+	    }
+	}
     close PREAMBLE               or die "Cannot close $preamble:  $!";
 }
 
@@ -802,15 +810,14 @@ sub _extract_cc_defines
 {
     my %define;
     my $allsymbols  = join " ",
-        @Config{'ccsymbols', 'cppsymbols', 'cppccsymbols'};
+	@Config{'ccsymbols', 'cppsymbols', 'cppccsymbols'};
 
     # Split compiler pre-definitions into `key=value' pairs:
-    foreach (split /\s+/, $allsymbols) {
-        /(.+?)=(.+)/ and $define{$1} = $2;
-
-        if ($opt_D) {
-            print STDERR "$_:  $1 -> $2\n";
-        }
+    while ($allsymbols =~ /([^\s]+)=((\\\s|[^\s])+)/g) {
+	$define{$1} = $2;
+	if ($opt_D) {
+	    print STDERR "$_:  $1 -> $2\n";
+	}
     }
 
     return %define;
@@ -860,7 +867,7 @@ If run with no arguments, filters standard input to standard output.
 =item -d destination_dir
 
 Put the resulting B<.ph> files beneath B<destination_dir>, instead of
-beneath the default Perl library location (C<$Config{'installsitsearch'}>).
+beneath the default Perl library location (C<$Config{'installsitearch'}>).
 
 =item -r
 
@@ -945,10 +952,10 @@ installation.
 Doesn't handle complicated expressions built piecemeal, a la:
 
     enum {
-        FIRST_VALUE,
-        SECOND_VALUE,
+	FIRST_VALUE,
+	SECOND_VALUE,
     #ifdef ABC
-        THIRD_VALUE
+	THIRD_VALUE
     #endif
     };
 

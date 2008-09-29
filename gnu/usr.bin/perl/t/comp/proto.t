@@ -585,20 +585,25 @@ print "ok ", $i++, "\n";
     print "ok ", $i++, "\n";
 
     eval q/sub multi1 (\[%@]) { 1 } multi1 $myvar;/;
-    print "not " unless $@ =~ /Type of arg 1 to main::multi1 must be one of/;
+    print "not "
+	unless $@ =~ /Type of arg 1 to main::multi1 must be one of \[%\@\] /;
     print "ok ", $i++, "\n";
     eval q/sub multi2 (\[$*&]) { 1 } multi2 @myarray;/;
-    print "not " unless $@ =~ /Type of arg 1 to main::multi2 must be one of/;
+    print "not "
+	unless $@ =~ /Type of arg 1 to main::multi2 must be one of \[\$\*&\] /;
     print "ok ", $i++, "\n";
     eval q/sub multi3 (\[$@]) { 1 } multi3 %myhash;/;
-    print "not " unless $@ =~ /Type of arg 1 to main::multi3 must be one of/;
+    print "not "
+	unless $@ =~ /Type of arg 1 to main::multi3 must be one of \[\$\@\] /;
     print "ok ", $i++, "\n";
     eval q/sub multi4 ($\[%]) { 1 } multi4 1, &mysub;/;
-    print "not " unless $@ =~ /Type of arg 2 to main::multi4 must be one of/;
+    print "not "
+	unless $@ =~ /Type of arg 2 to main::multi4 must be one of \[%\] /;
     print "ok ", $i++, "\n";
     eval q/sub multi5 (\[$@]$) { 1 } multi5 *myglob;/;
-    print "not " unless $@ =~ /Type of arg 1 to main::multi5 must be one of/
-		     && $@ =~ /Not enough arguments/;
+    print "not "
+	unless $@ =~ /Type of arg 1 to main::multi5 must be one of \[\$\@\] /
+	    && $@ =~ /Not enough arguments/;
     print "ok ", $i++, "\n";
 }
 
@@ -630,6 +635,7 @@ eval "sub good (\$\t\$\n\$) { 1; }";
 print "not " if $@;
 print "ok ", $i++, "\n";
 
+# Ought to fail, doesn't in 5.8.1.
 eval 'sub bug (\[%@]) {  } my $array = [0 .. 1]; bug %$array;';
 print "not " unless $@ =~ /Not a HASH reference/;
-print "ok ", $i++, " # TODO Ought to fail, doesn't in 5.8.2\n";
+print "ok ", $i++, "\n";

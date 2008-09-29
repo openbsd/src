@@ -24,7 +24,7 @@ case "$ld" in
 '') ld='c89' ;;
 esac
 
-# -DMAXSIG=38 maximum signal number
+# -DMAXSIG=39 maximum signal number
 # -DOEMVS is used in place of #ifdef __MVS__ in certain places.
 # -D_OE_SOCKETS alters system headers.
 # -D_XOPEN_SOURCE_EXTENDEDA alters system headers.
@@ -33,8 +33,8 @@ esac
 # -DEBCDIC should come from Configure and need not be mentioned here.
 # Prepend your favorites with Configure -Dccflags=your_favorites
 case "$ccflags" in
-'') ccflags='-DMAXSIG=38 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC' ;;
-*) ccflags="$ccflags -DMAXSIG=38 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC" ;;
+'') ccflags='-2 -Wc,XPLINK -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC' ;;
+*) ccflags="$ccflags -2 -Wc,XPLINK -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC" ;;
 esac
 
 # Turning on optimization breaks perl.
@@ -72,7 +72,7 @@ esac
 # information at the end of the executable (=> smaller binaries).
 # Override this option with -Dldflags='whatever else you wanted'.
 case "$ldflags" in
-'') ldflags='-Wl,EDIT=NO' ;;
+'') ldflags='-Wl,EDIT=NO -Wl,XPLINK,dll' ;;
 esac
 
 # In order to build with dynamic be sure to specify:
@@ -111,11 +111,11 @@ define)
     esac
     libperl="libperl.$so"
     ccflags="$ccflags -D_SHR_ENVIRON -DPERL_EXTERNAL_GLOB -Wc,dll"
-    cccdlflags='-c -Wc,dll,EXPORTALL'
+    cccdlflags='-c -Wc,XPLINK,dll,EXPORTALL'
     # The following will need to be modified for the installed libperl.x.
     # The modification to Config.pm is done by the installperl script after the build and test.
-    ccdlflags="-W l,dll `pwd`/libperl.x"
-    lddlflags="-W l,dll `pwd`/libperl.x"
+    ccdlflags="-W l,XPLINK,dll `pwd`/libperl.x"
+    lddlflags="-W l,XPLINK,dll `pwd`/libperl.x"
     ;;
 esac
 # even on static builds using LIBPATH should be OK.
@@ -158,10 +158,10 @@ esac
 # under a compiler other than c89.
 case "$usedl" in
 define)
-echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -D_SHR_ENVIRON -E -Wc,NOLOC ${1+"$@"} .$$.c; rm .$$.c' > cppstdin
+echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -D_SHR_ENVIRON -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | grep -v "??="; rm .$$.c' > cppstdin
     ;;
 *)
-echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -E -Wc,NOLOC ${1+"$@"} .$$.c; rm .$$.c' > cppstdin
+echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | grep -v "??="; rm .$$.c' > cppstdin
     ;;
 esac
 
@@ -225,3 +225,9 @@ cat >config.arch<<'__CONFIG_ARCH__'
 ccflags="$ccflags -W 0,float(ieee)"
 
 __CONFIG_ARCH__
+
+# Configure gets these wrong for some reason.
+d_gethostbyaddr_r='undef'
+d_gethostbyname_r='undef'
+d_gethostent_r='undef'
+

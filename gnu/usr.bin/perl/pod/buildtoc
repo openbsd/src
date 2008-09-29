@@ -33,6 +33,7 @@ $masterpodfile = File::Spec->catdir($Up, "pod.lst");
      podmak => File::Spec->catdir($Up, "win32", "pod.mak"),
      # plan9 =>  File::Spec->catdir($Up, "plan9", "mkfile"),
      unix => File::Spec->catdir($Up, "Makefile.SH"),
+     # TODO: add roffitall
     );
 
 {
@@ -69,7 +70,6 @@ __USAGE__
 # Don't copy these top level READMEs
 %Ignore
   = (
-     Y2K => 1,
      micro => 1,
 #     vms => 1,
      );
@@ -274,7 +274,7 @@ close MASTER;
   }
 }
 
-# OK. Now a lot of ancillay function definitions follow
+# OK. Now a lot of ancillary function definitions follow
 # Main program returns at "Do stuff"
 
 sub path2modname {
@@ -383,6 +383,8 @@ sub podset {
 	    unhead1();
 	    output "\n \n\n=head2 ";
 	    $_ = <>;
+	    # Remove svn keyword expansions from the Perl FAQ
+	    s/ \(\$Revision: \d+ \$\)//g;
 	    if ( /^\s*$pod\b/ ) {
 		s/$pod\.pm/$pod/;       # '.pm' in NAME !?
 		output $_;
@@ -628,7 +630,7 @@ sub do_perlpod {
 		   )+
 		  }
 	  {$1 . join "", &generate_perlpod}mxe) {
-    die "$0: Failed to insert ammendments in do_perlpod";
+    die "$0: Failed to insert amendments in do_perlpod";
   }
   $pod;
 }

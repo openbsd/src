@@ -78,9 +78,6 @@ dont_use_nlink=define
 
 cat <<'EOM' >&4
 
-During Configure, you may get two "WHOA THERE" messages, for $d_setlocale
-and $i_db being 'undef'. You may keep the undef value.
-
 At the end of Configure, you will see a harmless message
 
 Hmm...You had some extra variables I don't know about...I'll try to keep 'em.

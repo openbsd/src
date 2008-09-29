@@ -14,7 +14,7 @@ B<perl>	S<[ B<-sTtuUWX> ]>
 	S<[ B<-S> ]>
 	S<[ B<-x>[I<dir>] ]>
 	S<[ B<-i>[I<extension>] ]>
-	S<[ B<-e> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
+	S<[ B<-eE> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
 
 =head1 DESCRIPTION
 
@@ -29,7 +29,7 @@ places:
 
 =item 1.
 
-Specified line by line via B<-e> switches on the command line.
+Specified line by line via B<-e> or B<-E> switches on the command line.
 
 =item 2.
 
@@ -280,25 +280,35 @@ An alternate delimiter may be specified using B<-F>.
 =item B<-C [I<number/list>]>
 X<-C>
 
-The C<-C> flag controls some Unicode of the Perl Unicode features.
+The C<-C> flag controls some of the Perl Unicode features.
 
 As of 5.8.1, the C<-C> can be followed either by a number or a list
 of option letters.  The letters, their numeric values, and effects
 are as follows; listing the letters is equal to summing the numbers.
 
-    I     1    STDIN is assumed to be in UTF-8
-    O     2    STDOUT will be in UTF-8
-    E     4    STDERR will be in UTF-8
-    S     7    I + O + E
-    i     8    UTF-8 is the default PerlIO layer for input streams
-    o    16    UTF-8 is the default PerlIO layer for output streams
-    D    24    i + o
-    A    32    the @ARGV elements are expected to be strings encoded in UTF-8
-    L    64    normally the "IOEioA" are unconditional,
-               the L makes them conditional on the locale environment
-               variables (the LC_ALL, LC_TYPE, and LANG, in the order
-               of decreasing precedence) -- if the variables indicate
-               UTF-8, then the selected "IOEioA" are in effect
+    I     1   STDIN is assumed to be in UTF-8
+    O     2   STDOUT will be in UTF-8
+    E     4   STDERR will be in UTF-8
+    S     7   I + O + E
+    i     8   UTF-8 is the default PerlIO layer for input streams
+    o    16   UTF-8 is the default PerlIO layer for output streams
+    D    24   i + o
+    A    32   the @ARGV elements are expected to be strings encoded
+              in UTF-8
+    L    64   normally the "IOEioA" are unconditional,
+              the L makes them conditional on the locale environment
+              variables (the LC_ALL, LC_TYPE, and LANG, in the order
+              of decreasing precedence) -- if the variables indicate
+              UTF-8, then the selected "IOEioA" are in effect
+    a   256   Set ${^UTF8CACHE} to -1, to run the UTF-8 caching code in
+              debugging mode.
+
+=for documenting_the_underdocumented
+perl.h gives W/128 as PERL_UNICODE_WIDESYSCALLS "/* for Sarathy */"
+
+=for todo
+perltodo mentions Unicode in %ENV and filenames. I guess that these will be
+options e and f (or F).
 
 For example, C<-COE> and C<-C6> will both turn on UTF-8-ness on both
 STDOUT and STDERR.  Repeating letters is just redundant, not cumulative
@@ -336,10 +346,10 @@ switch was therefore "recycled".)
 X<-c>
 
 causes Perl to check the syntax of the program and then exit without
-executing it.  Actually, it I<will> execute C<BEGIN>, C<CHECK>, and
-C<use> blocks, because these are considered as occurring outside the
-execution of your program.  C<INIT> and C<END> blocks, however, will
-be skipped.
+executing it.  Actually, it I<will> execute C<BEGIN>, C<UNITCHECK>,
+C<CHECK>, and C<use> blocks, because these are considered as occurring
+outside the execution of your program.  C<INIT> and C<END> blocks,
+however, will be skipped.
 
 =item B<-d>
 X<-d> X<-dt>
@@ -379,7 +389,7 @@ the format of the output is explained in L<perldebguts>.
 As an alternative, specify a number instead of list of letters (e.g.,
 B<-D14> is equivalent to B<-Dtls>):
 
-        1  p  Tokenizing and parsing
+        1  p  Tokenizing and parsing (with v, displays parse stack)
         2  s  Stack snapshots (with v, displays all stacks)
         4  l  Context (loop) stack processing
         8  t  Trace execution
@@ -391,7 +401,7 @@ B<-D14> is equivalent to B<-Dtls>):
       512  r  Regular expression parsing and execution
      1024  x  Syntax tree dump
      2048  u  Tainting checks
-     4096     (Obsolete, previously used for LEAKTEST)
+     4096  U  Unofficial, User hacking (reserved for private, unreleased use)
      8192  H  Hash dump -- usurps values()
     16384  X  Scratchpad allocation
     32768  D  Cleaning up
@@ -400,6 +410,8 @@ B<-D14> is equivalent to B<-Dtls>):
    262144  R  Include reference counts of dumped variables (eg when using -Ds)
    524288  J  Do not s,t,P-debug (Jump over) opcodes within package DB
   1048576  v  Verbose: use in conjunction with other flags
+  2097152  C  Copy On Write
+  4194304  A  Consistency checks on internal structures
   8388608  q  quiet - currently only suppresses the "EXECUTING" message
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
@@ -430,6 +442,12 @@ may be used to enter one line of program.  If B<-e> is given, Perl
 will not look for a filename in the argument list.  Multiple B<-e>
 commands may be given to build up a multi-line script.  Make sure
 to use semicolons where you would in a normal program.
+
+=item B<-E> I<commandline>
+X<-E>
+
+behaves just like B<-e>, except that it implicitly enables all
+optional features (in the main compilation unit). See L<feature>.
 
 =item B<-f>
 X<-f>
@@ -681,7 +699,8 @@ the implicit loop, just as in B<awk>.
 X<-P>
 
 B<NOTE: Use of -P is strongly discouraged because of its inherent
-problems, including poor portability.>
+problems, including poor portability. It is deprecated and will be
+removed in a future version of Perl.>
 
 This option causes your program to be run through the C preprocessor before
 compilation by Perl.  Because both comments and B<cpp> directives begin
@@ -851,10 +870,6 @@ execute a portion of your program before dumping, use the dump()
 operator instead.  Note: availability of B<undump> is platform
 specific and may not be available for a specific port of Perl.
 
-This switch has been superseded in favor of the new Perl code
-generator backends to the compiler.  See L<B> and L<B::Bytecode>
-for details.
-
 =item B<-U>
 X<-U>
 
@@ -949,7 +964,7 @@ See L<perllexwarn>.
 =item B<-x>
 X<-x>
 
-=item B<-x> I<directory>
+=item B<-x>I<directory>
 
 tells Perl that the program is embedded in a larger chunk of unrelated
 ASCII text, such as in a mail message.  Leading garbage will be
@@ -961,6 +976,9 @@ disposal of leading garbage.  The program must be terminated with
 C<__END__> if there is trailing garbage to be ignored (the program
 can process any or all of the trailing garbage via the DATA filehandle
 if desired).
+
+The directory, if specified, must appear immediately following the B<-x>
+with no intervening whitespace.
 
 =back
 
@@ -991,14 +1009,17 @@ X<PERL5LIB>
 A list of directories in which to look for Perl library
 files before looking in the standard library and the current
 directory.  Any architecture-specific directories under the specified
-locations are automatically included if they exist.  If PERL5LIB is not
-defined, PERLLIB is used.  Directories are separated (like in PATH) by
-a colon on unixish platforms and by a semicolon on Windows (the proper
-path separator being given by the command C<perl -V:path_sep>).
+locations are automatically included if they exist (this lookup
+being done at interpreter startup time.)
+
+If PERL5LIB is not defined, PERLLIB is used.  Directories are separated
+(like in PATH) by a colon on unixish platforms and by a semicolon on
+Windows (the proper path separator being given by the command C<perl
+-V:path_sep>).
 
 When running taint checks (either because the program was running setuid
-or setgid, or the B<-T> switch was used), neither variable is used.
-The program should instead say:
+or setgid, or the B<-T> or B<-t> switch was specified), neither variable
+is used. The program should instead say:
 
     use lib "/my/directory";
 
@@ -1006,7 +1027,7 @@ The program should instead say:
 X<PERL5OPT>
 
 Command-line options (switches).  Switches in this variable are taken
-as if they were on every Perl command line.  Only the B<-[DIMUdmtw]>
+as if they were on every Perl command line.  Only the B<-[CDIMUdmtw]>
 switches are allowed.  When running taint checks (because the program
 was running setuid or setgid, or the B<-T> switch was used), this
 variable is ignored.  If PERL5OPT begins with B<-T>, tainting will be
@@ -1023,7 +1044,9 @@ emphasise their similarity to variable "attributes". But the code that parses
 layer specification strings (which is also used to decode the PERLIO
 environment variable) treats the colon as a separator.
 
-An unset or empty PERLIO is equivalent to C<:stdio>.
+An unset or empty PERLIO is equivalent to the default set of layers for
+your platform, for example C<:unix:perlio> on UNIX-like systems
+and C<:unix:crlf> on Windows and other DOS-like systems.
 
 The list becomes the default for I<all> perl's IO. Consequently only built-in
 layers can appear in this list, as external layers (such as :encoding()) need
@@ -1101,9 +1124,9 @@ X<:utf8>
 
 A pseudolayer that turns on a flag on the layer below to tell perl
 that output should be in utf8 and that input should be regarded as
-already in utf8 form.  May be useful in PERLIO environment
-variable to make UTF-8 the default. (To turn off that behaviour
-use C<:bytes> layer.)
+already in valid utf8 form. It does not check for validity and as such
+should be handled with caution for input. Generally C<:encoding(utf8)> is
+the best option when reading UTF-8 encoded data.
 
 =item :win32
 X<:win32>
@@ -1235,20 +1258,23 @@ PERL_ENCODING environment variable is consulted for an encoding name.
 =item PERL_HASH_SEED
 X<PERL_HASH_SEED>
 
-(Since Perl 5.8.1.)  Used to randomise Perl's internal hash function.
+(Since Perl 5.8.1.)  Used to randomise perl's internal hash function.
 To emulate the pre-5.8.1 behaviour, set to an integer (zero means
 exactly the same order as 5.8.0).  "Pre-5.8.1" means, among other
-things, that hash keys will be ordered the same between different runs
-of Perl.
+things, that hash keys will always have the same ordering between
+different runs of perl.
+
+Most hashes return elements in the same order as Perl 5.8.0 by default.
+On a hash by hash basis, if pathological data is detected during a hash
+key insertion, then that hash will switch to an alternative random hash
+seed.
 
 The default behaviour is to randomise unless the PERL_HASH_SEED is set.
-If Perl has been compiled with C<-DUSE_HASH_SEED_EXPLICIT>, the default
+If perl has been compiled with C<-DUSE_HASH_SEED_EXPLICIT>, the default
 behaviour is B<not> to randomise unless the PERL_HASH_SEED is set.
 
-If PERL_HASH_SEED is unset or set to a non-numeric string, Perl uses
+If PERL_HASH_SEED is unset or set to a non-numeric string, perl uses
 the pseudorandom seed supplied by the operating system and libraries.
-This means that each different run of Perl will have a different
-ordering of the results of keys(), values(), and each().
 
 B<Please note that the hash seed is sensitive information>. Hashes are
 randomized to protect against local and remote attacks against Perl

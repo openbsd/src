@@ -1,5 +1,5 @@
 # Pod::Text::Overstrike -- Convert POD data to formatted overstrike text
-# $Id: Overstrike.pm,v 1.4 2003/12/03 03:02:40 millert Exp $
+# $Id: Overstrike.pm,v 1.5 2008/09/29 17:36:14 millert Exp $
 #
 # Created by Joe Smith <Joe.Smith@inwap.com> 30-Nov-2000
 #   (based on Pod::Text::Color by Russ Allbery <rra@stanford.edu>)
@@ -36,8 +36,7 @@ use vars qw(@ISA $VERSION);
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.  This
 # number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 1.10;
-
+$VERSION = 2.00;
 
 ##############################################################################
 # Overrides
@@ -45,54 +44,55 @@ $VERSION = 1.10;
 
 # Make level one headings bold, overridding any existing formatting.
 sub cmd_head1 {
-    my ($self, $text, $line) = @_;
+    my ($self, $attrs, $text) = @_;
     $text =~ s/\s+$//;
-    $text = $self->strip_format ($self->interpolate ($text, $line));
+    $text = $self->strip_format ($text);
     $text =~ s/(.)/$1\b$1/g;
-    $self->SUPER::cmd_head1 ($text);
+    return $self->SUPER::cmd_head1 ($attrs, $text);
 }
 
 # Make level two headings bold, overriding any existing formatting.
 sub cmd_head2 {
-    my ($self, $text, $line) = @_;
+    my ($self, $attrs, $text) = @_;
     $text =~ s/\s+$//;
-    $text = $self->strip_format ($self->interpolate ($text, $line));
+    $text = $self->strip_format ($text);
     $text =~ s/(.)/$1\b$1/g;
-    $self->SUPER::cmd_head2 ($text);
+    return $self->SUPER::cmd_head2 ($attrs, $text);
 }
 
 # Make level three headings underscored, overriding any existing formatting.
 sub cmd_head3 {
-    my ($self, $text, $line) = @_;
+    my ($self, $attrs, $text) = @_;
     $text =~ s/\s+$//;
-    $text = $self->strip_format ($self->interpolate ($text, $line));
+    $text = $self->strip_format ($text);
     $text =~ s/(.)/_\b$1/g;
-    $self->SUPER::cmd_head3 ($text);
+    return $self->SUPER::cmd_head3 ($attrs, $text);
 }
 
 # Level four headings look like level three headings.
 sub cmd_head4 {
-    my ($self, $text, $line) = @_;
+    my ($self, $attrs, $text) = @_;
     $text =~ s/\s+$//;
-    $text = $self->strip_format ($self->interpolate ($text, $line));
+    $text = $self->strip_format ($text);
     $text =~ s/(.)/_\b$1/g;
-    $self->SUPER::cmd_head4 ($text);
+    return $self->SUPER::cmd_head4 ($attrs, $text);
 }
 
 # The common code for handling all headers.  We have to override to avoid
 # interpolating twice and because we don't want to honor alt.
 sub heading {
-    my ($self, $text, $line, $indent, $marker) = @_;
+    my ($self, $text, $indent, $marker) = @_;
     $self->item ("\n\n") if defined $$self{ITEM};
-    $text .= "\n" if $$self{loose};
-    my $margin = ' ' x ($$self{margin} + $indent);
+    $text .= "\n" if $$self{opt_loose};
+    my $margin = ' ' x ($$self{opt_margin} + $indent);
     $self->output ($margin . $text . "\n");
+    return '';
 }
 
 # Fix the various formatting codes.
-sub seq_b { local $_ = strip_format (@_); s/(.)/$1\b$1/g; $_ }
-sub seq_f { local $_ = strip_format (@_); s/(.)/_\b$1/g; $_ }
-sub seq_i { local $_ = strip_format (@_); s/(.)/_\b$1/g; $_ }
+sub cmd_b { local $_ = $_[0]->strip_format ($_[2]); s/(.)/$1\b$1/g; $_ }
+sub cmd_f { local $_ = $_[0]->strip_format ($_[2]); s/(.)/_\b$1/g; $_ }
+sub cmd_i { local $_ = $_[0]->strip_format ($_[2]); s/(.)/_\b$1/g; $_ }
 
 # Output any included code in bold.
 sub output_code {
@@ -108,7 +108,7 @@ sub wrap {
     local $_ = shift;
     my $output = '';
     my $spaces = ' ' x $$self{MARGIN};
-    my $width = $$self{width} - $$self{MARGIN};
+    my $width = $$self{opt_width} - $$self{MARGIN};
     while (length > $width) {
         # This regex represents a single character, that's possibly underlined
         # or in bold (in which case, it's three characters; the character, a
@@ -123,7 +123,7 @@ sub wrap {
     }
     $output .= $spaces . $_;
     $output =~ s/\s+$/\n\n/;
-    $output;
+    return $output;
 }
 
 ##############################################################################
@@ -186,7 +186,7 @@ There may be some better approach possible.
 
 =head1 SEE ALSO
 
-L<Pod::Text>, L<Pod::Parser>
+L<Pod::Text>, L<Pod::Simple>
 
 The current version of this module is always available from its web site at
 L<http://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
@@ -200,7 +200,7 @@ Joe Smith <Joe.Smith@inwap.com>, using the framework created by Russ Allbery
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 2000 by Joe Smith <Joe.Smith@inwap.com>.
-Copyright 2001 by Russ Allbery <rra@stanford.edu>.
+Copyright 2001, 2004 by Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -6,12 +6,6 @@ BEGIN {
     require './test.pl';
 }
 
-# Cheat. Until we figure out a solution for BEGIN blocks not setting a new
-# stack (and thus perl API calls possibly moving the stack by extending it)
-# which doesn't in turn break calling exit from inside a signal handler inside
-# a BEGIN block.
-eval {require Errno};
-
 $|  = 1;
 use warnings;
 use Config;

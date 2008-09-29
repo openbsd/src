@@ -151,8 +151,9 @@ There is a special array within each package called @ISA, which says
 where else to look for a method if you can't find it in the current
 package.  This is how Perl implements inheritance.  Each element of the
 @ISA array is just the name of another package that happens to be a
-class package.  The classes are searched (depth first) for missing
-methods in the order that they occur in @ISA.  The classes accessible
+class package.  The classes are searched for missing methods in
+depth-first, left-to-right order by default (see L<mro> for alternative
+search order and other in-depth information).  The classes accessible
 through @ISA are known as base classes of the current class.
 
 All classes implicitly inherit from class C<UNIVERSAL> as their

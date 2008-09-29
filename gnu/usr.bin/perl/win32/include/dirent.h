@@ -42,7 +42,7 @@ typedef struct _dir_struc
 } DIR;
 
 #if 0		/* these have moved to win32iop.h */
-DIR *		win32_opendir(char *filename);
+DIR *		win32_opendir(const char *filename);
 struct direct *	win32_readdir(DIR *dirp);
 long		win32_telldir(DIR *dirp);
 void		win32_seekdir(DIR *dirp,long loc);

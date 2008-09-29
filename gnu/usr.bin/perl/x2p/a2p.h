@@ -73,6 +73,18 @@
 #endif /* USE_NEXT_CTYPE */
 
 #define MEM_SIZE Size_t
+#ifdef PERL_MEM_LOG
+/* Blindly copied from ../perl.h. -- AD 2/2006. */
+/* Configure gets this right but the UTS compiler gets it wrong.
+   -- Hal Morris <hom00@utsglobal.com> */
+#  ifdef UTS
+#    undef  UVTYPE
+#    define UVTYPE unsigned
+#  endif
+
+  typedef IVTYPE IV;
+  typedef UVTYPE UV;
+#endif
 
 #ifndef STANDARD_C
     Malloc_t malloc (MEM_SIZE nbytes);

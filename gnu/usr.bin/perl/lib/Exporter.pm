@@ -9,9 +9,10 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.58';
+our $VERSION = '5.62';
 our (%Cache);
-$Carp::Internal{Exporter} = 1;
+# Carp does this now for us, so we can finally live w/o Carp
+#$Carp::Internal{Exporter} = 1;
 
 sub as_heavy {
   require Exporter::Heavy;
@@ -118,6 +119,9 @@ In other files which wish to use YourModule:
 
   use ModuleName qw(frobnicate);      # import listed symbols
   frobnicate ($left, $right)          # calls YourModule::frobnicate
+
+Take a look at L</Good Practices> for some variants
+you will like to use in modern Perl code.
 
 =head1 DESCRIPTION
 
@@ -313,6 +317,9 @@ which will export Exporter's own import() method into YourModule.
 Everything will work as before but you won't need to include Exporter in
 @YourModule::ISA.
 
+Note: This feature was introduced in version 5.57
+of Exporter, released with perl 5.8.3.
+
 =head2 Module Version Checking
 
 The Exporter module will convert an attempt to import a number from a
@@ -436,5 +443,141 @@ SO_LINGER is encountered later in C<My> package.
 If you are writing a package that C<AUTOLOAD>s, consider forcing
 an C<AUTOLOAD> for any constants explicitly imported by other packages
 or which are usually used when your package is C<use>d.
+
+=head1 Good Practices
+
+=head2 Declaring C<@EXPORT_OK> and Friends
+
+When using C<Exporter> with the standard C<strict> and C<warnings>
+pragmas, the C<our> keyword is needed to declare the package
+variables C<@EXPORT_OK>, C<@EXPORT>, C<@ISA>, etc.
+
+  our @ISA = qw(Exporter);
+  our @EXPORT_OK = qw(munge frobnicate);
+
+If backward compatibility for Perls under 5.6 is important,
+one must write instead a C<use vars> statement.
+
+  use vars qw(@ISA @EXPORT_OK);
+  @ISA = qw(Exporter);
+  @EXPORT_OK = qw(munge frobnicate);
+
+=head2 Playing Safe
+
+There are some caveats with the use of runtime statements
+like C<require Exporter> and the assignment to package
+variables, which can very subtle for the unaware programmer.
+This may happen for instance with mutually recursive
+modules, which are affected by the time the relevant
+constructions are executed.
+
+The ideal (but a bit ugly) way to never have to think
+about that is to use C<BEGIN> blocks. So the first part
+of the L</SYNOPSIS> code could be rewritten as:
+
+  package YourModule;
+
+  use strict;
+  use warnings;
+
+  our (@ISA, @EXPORT_OK);
+  BEGIN {
+     require Exporter;
+     @ISA = qw(Exporter);
+     @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+  }
+
+The C<BEGIN> will assure that the loading of F<Exporter.pm>
+and the assignments to C<@ISA> and C<@EXPORT_OK> happen
+immediately, leaving no room for something to get awry
+or just plain wrong.
+
+With respect to loading C<Exporter> and inheriting, there
+are alternatives with the use of modules like C<base> and C<parent>.
+
+  use base qw( Exporter );
+  # or
+  use parent qw( Exporter );
+
+Any of these statements are nice replacements for
+C<BEGIN { require Exporter; @ISA = qw(Exporter); }>
+with the same compile-time effect. The basic difference
+is that C<base> code interacts with declared C<fields>
+while C<parent> is a streamlined version of the older
+C<base> code to just establish the IS-A relationship.
+
+For more details, see the documentation and code of
+L<base> and L<parent>.
+
+Another thorough remedy to that runtime vs. 
+compile-time trap is to use L<Exporter::Easy>,
+which is a wrapper of Exporter that allows all
+boilerplate code at a single gulp in the
+use statement.
+
+   use Exporter::Easy (
+       OK => [ qw(munge frobnicate) ],
+   );
+   # @ISA setup is automatic
+   # all assignments happen at compile time
+
+=head2 What not to Export
+
+You have been warned already in L</Selecting What To Export>
+to not export:
+
+=over 4
+
+=item *
+
+method names (because you don't need to
+and that's likely to not do what you want),
+
+=item *
+
+anything by default (because you don't want to surprise your users...
+badly)
+
+=item *
+
+anything you don't need to (because less is more)
+
+=back
+
+There's one more item to add to this list. Do B<not>
+export variable names. Just because C<Exporter> lets you
+do that, it does not mean you should.
+
+  @EXPORT_OK = qw( $svar @avar %hvar ); # DON'T!
+
+Exporting variables is not a good idea. They can
+change under the hood, provoking horrible
+effects at-a-distance, that are too hard to track
+and to fix. Trust me: they are not worth it.
+
+To provide the capability to set/get class-wide
+settings, it is best instead to provide accessors
+as subroutines or class methods instead.
+
+=head1 SEE ALSO
+
+C<Exporter> is definitely not the only module with
+symbol exporter capabilities. At CPAN, you may find
+a bunch of them. Some are lighter. Some
+provide improved APIs and features. Peek the one
+that fits your needs. The following is
+a sample list of such modules.
+
+    Exporter::Easy
+    Exporter::Lite
+    Exporter::Renaming
+    Exporter::Tidy
+    Sub::Exporter / Sub::Installer
+    Perl6::Export / Perl6::Export::Attrs
+
+=head1 LICENSE
+
+This library is free software. You can redistribute it
+and/or modify it under the same terms as Perl itself.
 
 =cut

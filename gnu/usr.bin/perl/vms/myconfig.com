@@ -55,7 +55,7 @@ $  stop = f$locate("'",line)
 $  value = f$extract(start,stop-start,line)
 $  if (f$locate("#",name).eqs.f$length(name)).and. -
       (name.nes."").and. -
-      (name.nes."'") -               !bug in genconfig.pl (vms) for osvers='' ?
+      (name.nes."'") -               !bug in configure.com for osvers='' ?
         then $$'name' = "'" + value  !$ not necessary but looks more sh-ish
 $ goto Loop
 
@@ -79,8 +79,7 @@ $!  hard-coded stuff (for now):
 $ $cppflags = "'"+"'"  !(vestigal)
 $ $optimize = "'"+"'"  !descrip.mms has /Optimize=2 in $(XTRACCFLAGS)
 
-$!  following assigns done via `dcl` calls in genconfig.pl anyway:
-$ $osname = "'"+f$edit(f$getsyi("NODE_SWTYPE"),"COLLAPSE") !genconfig.pl has "osname='VMS'"
+$ $osname = "'"+f$edit(f$getsyi("NODE_SWTYPE"),"COLLAPSE")
 $ $osvers = f$edit(f$getsyi("VERSION")-"V","COLLAPSE")
 $ if f$getsyi("HW_MODEL").GT.1024
 $   then $$archname = "'VMS_AXP'"  !string from descrip.mms vmsperl 12-21-95
@@ -94,7 +93,7 @@ $  if $myname.eqs."" then $$myname = f$trnlnm("UCX$INET_HOST_NAME")
 $  if $myname.eqs."" then $$myname = f$trnlnm("TCPWARE_DOMAINNAME")
 $  if $myname.eqs."" then $$myname = f$trnlnm("NEWS_ADDRESS")
 $  if $myname.eqs."" then $$myname = f$trnlnm("SYS$NODE")
-$!  Is this same as genconfig.pl ? (spacing/order unknown):
+$!  Is this same as configure.com ? (spacing/order unknown):
 $ $myuname=$osname+" "+$myname+" "+$osvers+" "+F$GetSyi("HW_NAME")+"'"
 $ $osname = $osname+"'"
 $ $osvers = "'"+$osvers+"'"
@@ -113,7 +112,7 @@ $         goto Research_patchlevel_h
 $       else
 $ 	  ECHO "Can't find the header file patchlevel.h used to make config.sh"
 $         set default 'RATHER_LONG_DEFAULT_DIRECTORY_NAME'
-$         goto look_for_genconfig.pl
+$         goto spit_it_out
 $     endif
 $ endif
 
@@ -140,161 +139,9 @@ $ if $PATCHLEVEL.eqs.""
 $   then
 $     echo "warning: PERL_VERSION was not found in ''RATHER_LONG_FILENAME_TO_FIND':" 
 $ endif
-
-$look_for_genconfig_pl:
 $!
-$ if f$search("VMS.DIR").nes."" then set default [.vms]
-$ RATHER_LONG_FILENAME_TO_FIND = "GENCONFIG.PL"
-$ genconfig_pl_dir = ""
-$Research_genconfig_pl:
-$ RATHER_LONG_FILENAME_SEARCH = F$Search(RATHER_LONG_FILENAME_TO_FIND)
-$ if RATHER_LONG_FILENAME_SEARCH.EQS."" 
-$   then
-$     if f$parse(f$environment("DEFAULT"),,,"DIRECTORY",).NES."[000000]"
-$       then 
-$         set default [-]
-$         goto Research_genconfig_pl
-$       else
-$ 	  ECHO "Can't find the perl genconfig.pl used to make config.sh"
-$         set default 'RATHER_LONG_DEFAULT_DIRECTORY_NAME'
-$         goto look_for_config_vms
-$     endif
-$   else    !genconfig.pl has been found
-$     genconfig_pl_dir = f$parse(f$environment("DEFAULT"),,,"DIRECTORY",)
-$ endif
-
-$ cnfg_keys = "package/hintfile/ld/dlext/d_stdstdio/"
-$ cnfg_keys = cnfg_keys + "usevfork/usemymalloc/so/libpth/"
-$ cnfg_keys = cnfg_keys + "dlsrc/cccdlflags/ccdlflags/lddlflags/"
-
-$ cnfg_vars = "$package/$hint/$ld/$dlext/$d_stdstdio/"
-$ cnfg_vars = cnfg_vars + "$usevfork/$usemymalloc/$so/$libpth/"
-$ cnfg_vars = cnfg_vars + "$dlsrc/$cccdlflags/$ccdlflags/$lddlflags/" 
-
-$ open/read RATHER_LONG_CONFIG_FILE_HANDLE 'RATHER_LONG_FILENAME_SEARCH' 
-$read_genconfig_pl:
-$ read/end_of_file = Genconfig_pl_Done RATHER_LONG_CONFIG_FILE_HANDLE  line
-$ if f$locate("=",line).ne.f$length(line)   !then may be an assigment
-$   then
-$     name = f$edit( f$extract(0,f$locate("=",line),line), "COLLAPSE")
-$     num = 0
-$key_genconfig_pl:
-$     key = f$element(num,"/",cnfg_keys)
-$     if (key .nes. "/").and.(key .nes. "") !not end of cnfg_keys
-$       then
-$         if key.eqs.name  !then is key
-$           then
-$             start = f$locate("=",line)+1
-$             stop = f$length(line)
-$             value = f$extract(start,stop-start,line)
-$             var = f$element(num,"/",cnfg_vars)
-$             'var' = value  
-$             cnfg_keys = cnfg_keys - ("''name'/" ) !trim to shorten future matches
-$             cnfg_vars = cnfg_vars - ("''var'/" ) !trim to shorten future matches
-$         endif
-$         num = num + 1
-$         goto key_genconfig_pl
-$     endif ! not end of cnfg_keys
-$ endif ! then may be an assigment
-$ goto read_genconfig_pl
-
-$Genconfig_pl_Done:
-$ close RATHER_LONG_CONFIG_FILE_HANDLE 
-$ if cnfg_vars.nes.""
-$   then
-$     echo "warning: the following variables were not found in ''RATHER_LONG_FILENAME_TO_FIND':" 
-$     echo "''cnfg_vars'"
-$ endif
-
-$ if (p8.nes."").and.($ld.nes."") then $ld = $ld + " DBG='"+p8+"'" 
-
-$look_for_config_vms:
-$ RATHER_LONG_FILENAME_TO_FIND = "''genconfig_pl_dir'CONFIG.VMS"
-
-$Research_config_vms:
-$ RATHER_LONG_FILENAME_SEARCH = F$Search(RATHER_LONG_FILENAME_TO_FIND)
-$ if RATHER_LONG_FILENAME_SEARCH.EQS."" 
-$   then
-$     if f$parse(f$environment("DEFAULT"),,,"DIRECTORY",).NES."[000000]"
-$       then 
-$         set default [-]
-$         goto Research_config_vms
-$       else
-$ 	  ECHO "Can't find the perl config.vms used to make config.sh"
-$         set default 'RATHER_LONG_DEFAULT_DIRECTORY_NAME'
-$         stop
-$         exit 3 
-$     endif
-$ endif
-
-$ cnfg_keys = "MEM_ALIGNBYTES/CASTNEGFLOAT/CASTFLAGS/RANDBITS/STDCHAR/"
-$ cnfg_keys = cnfg_keys+"CASTI32/INTSIZE/VOIDFLAGS/DLSYM_NEEDS_UNDERSCORE"
-
-$ cnfg_vars = "$alignbytes/$d_castneg/$castflags/$randbits/$stdchar/"
-$ cnfg_vars = cnfg_vars+"$d_casti32/$intsize/$voidflags/$d_dlsymun/"
-
-$ open/read RATHER_LONG_CONFIG_FILE_HANDLE 'RATHER_LONG_FILENAME_SEARCH' 
-$read_config_vms:
-$ read/end_of_file = config_vms_Done RATHER_LONG_CONFIG_FILE_HANDLE  line
-$! look for "#define" or "#undef"
-$ if (f$length(line).ne.0).and.-
-   ((f$locate("#define",line).eq.0).or.(f$locate("#undef",line).eq.0)) 
-$   then
-$     line = f$edit(line,"COMPRESS, TRIM")
-$     name = f$element(1," ",line) !macro
-$     num = 0
-$key_config_vms:
-$     key = f$element(num,"/",cnfg_keys)
-$     if (key .nes. "/").and.(key .nes. "") !not end of cnfg_keys
-$       then
-$         if key.eqs.name  !then is key
-$           then
-$             var = f$element(num,"/",cnfg_vars)
-$             cnfg_keys = cnfg_keys - ("''name'/" ) !trim to shorten future matches
-$             cnfg_vars = cnfg_vars - ("''var'/" ) !trim to shorten future matches
-$             if (f$locate("#undef",line).eq.0)
-$               then
-$                 'var' = "'undef'"
-$               else                  !is a #define
-$strip_comment:
-$                 start = f$locate("/*",line)
-$                 if start.ne.f$length(line) !comment started
-$                   then
-$                     if f$locate("*/",line).ne.f$length(line) !comment stopped
-$                       then stop = f$locate("*/",line)+2
-$                       else stop = f$locate("*/",line)
-$                     endif
-$                     comment = f$extract(start,stop-start,line)
-$                     line = line - comment
-$                     goto strip_comment
-$                 endif
-$                 line = f$edit(line,"TRIM")
-$                 start = f$locate(key,line)+f$length(key)
-$                 stop = f$length(line)
-$                 value = f$edit(f$extract(start,stop-start,line),"TRIM")
-$                 if (value.nes."") 
-$                   then 
-$                     'var' = "'"+value+"'"
-$                   else 
-$                     'var' = "'define'"
-$                 endif
-$             endif            !#define
-$         endif                ! is key of interest
-$         num = num + 1
-$         goto key_config_vms
-$     endif ! not end of cnfg_keys
-$ endif ! then may be #define or #undef of interest
-$ goto read_config_vms
-
-$config_vms_Done:
-$ close RATHER_LONG_CONFIG_FILE_HANDLE 
-$ if cnfg_vars.nes.""
-$   then
-$     echo "warning: the following variables were not found in ''RATHER_LONG_FILENAME_TO_FIND':" 
-$     echo "''cnfg_vars'"
-$ endif
-
 $spit_it_out:
+$ if (p8.nes."").and.($ld.nes."") then $ld = $ld + " DBG='"+p8+"'" 
 $! $spitshell = ECHO !<<!GROK!THIS! 
 $ ECHO " "
 $ ECHO "Summary of my ''$package' (version ''$PATCHLEVEL' subversion ''$SUBVERSION') configuration:"

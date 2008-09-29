@@ -54,9 +54,33 @@ function with something that doesn't look like a debugger command, such
 as a leading C<;> or perhaps a C<+>, or by wrapping it with parentheses
 or braces.
 
+=head2 Calling the debugger
+
+There are several ways to call the debugger:
+
+=over 4
+
+=item perl -d program_name
+
+On the given program identified by C<program_name>.
+
+=item perl -d -e 0 
+
+Interactively supply an arbitrary C<expression> using C<-e>.
+
+=item perl -d:Ptkdb program_name
+
+Debug a given program via the C<Devel::Ptkdb> GUI.
+
+=item perl -dt threaded_program_name
+
+Debug a given program using threads (experimental).
+
+=back
+
 =head2 Debugger Commands
 
-The debugger understands the following commands:
+The interactive debugger understands the following commands:
 
 =over 12
 
@@ -430,7 +454,7 @@ X<< debugger command, > >>
 Set an action (Perl command) to happen after the prompt when you've
 just given a command to return to executing the script.  A multi-line
 command may be entered by backslashing the newlines (we bet you
-couldn't've guessed this by now).
+couldn't have guessed this by now).
 
 =item > *
 X<< debugger command, > >>
@@ -638,7 +662,7 @@ of warning (this is often annoying) or exception (this is
 often valuable).  Unfortunately, the debugger cannot discern fatal
 exceptions from non-fatal ones.  If C<dieLevel> is even 1, then your
 non-fatal exceptions are also traced and unceremoniously altered if they
-came from C<eval'd> strings or from any kind of C<eval> within modules
+came from C<eval'ed> strings or from any kind of C<eval> within modules
 you're attempting to load.  If C<dieLevel> is 2, the debugger doesn't
 care where they came from:  It usurps your exception handler and prints
 out a trace, then modifies all exceptions with its own embellishments.
@@ -956,12 +980,12 @@ for incredibly long examples of these.
 =head2 Debugging compile-time statements
 
 If you have compile-time executable statements (such as code within
-BEGIN and CHECK blocks or C<use> statements), these will I<not> be
-stopped by debugger, although C<require>s and INIT blocks will, and
-compile-time statements can be traced with C<AutoTrace> option set
-in C<PERLDB_OPTS>).  From your own Perl code, however, you can
-transfer control back to the debugger using the following statement,
-which is harmless if the debugger is not running:
+BEGIN, UNITCHECK and CHECK blocks or C<use> statements), these will
+I<not> be stopped by debugger, although C<require>s and INIT blocks
+will, and compile-time statements can be traced with C<AutoTrace>
+option set in C<PERLDB_OPTS>).  From your own Perl code, however, you
+can transfer control back to the debugger using the following
+statement, which is harmless if the debugger is not running:
 
     $DB::single = 1;
 

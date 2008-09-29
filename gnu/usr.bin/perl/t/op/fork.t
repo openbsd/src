@@ -6,12 +6,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require Config; import Config;
-    unless ($Config{'d_fork'}
-	    or (($^O eq 'MSWin32' || $^O eq 'NetWare') and $Config{useithreads}
-		and $Config{ccflags} =~ /-DPERL_IMPLICIT_SYS/ 
-#               and !defined $Config{'useperlio'}
-               ))
-    {
+    unless ($Config{'d_fork'} or $Config{'d_pseudofork'}) {
 	print "1..0 # Skip: no fork\n";
 	exit 0;
     }
@@ -91,6 +86,24 @@ if ($cid = fork) {
 else {
     print "ok 1\n";
     sleep 10;
+}
+EXPECT
+ok 1
+ok 2
+########
+$| = 1;
+if ($cid = fork) {
+    sleep 1;
+    print "not " unless kill 'INT', $cid;
+    print "ok 2\n";
+}
+else {
+    # XXX On Windows the default signal handler kills the
+    # XXX whole process, not just the thread (pseudo-process)
+    $SIG{INT} = sub { exit };
+    print "ok 1\n";
+    sleep 5;
+    die;
 }
 EXPECT
 ok 1
@@ -232,6 +245,7 @@ EXPECT
 ########
 $| = 1;
 use Cwd;
+my $cwd = cwd(); # Make sure we load Win32.pm while "../lib" still works.
 $\ = "\n";
 my $dir;
 if (fork) {
@@ -443,4 +457,10 @@ if ($pid == 0) {
     print $rand_child ne $rand_parent, "\n";
 }
 EXPECT
+1
+########
+# [perl #39145] Perl_dounwind() crashing with Win32's fork() emulation
+sub { @_ = 3; fork ? die "1\n" : die "1\n" }->(2);
+EXPECT
+1
 1

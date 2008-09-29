@@ -10,7 +10,7 @@ BEGIN {
         skip_all("fork required to pipe");
     }
     else {
-        plan(tests => 22);
+        plan(tests => 24);
     }
 }
 
@@ -30,7 +30,7 @@ close PIPE;
 SKIP: {
     # Technically this should be TODO.  Someone try it if you happen to
     # have a vmesa machine.
-    skip "Doesn't work here yet", 4 if $^O eq 'vmesa';
+    skip "Doesn't work here yet", 6 if $^O eq 'vmesa';
 
     if (open(PIPE, "-|")) {
 	while(<PIPE>) {
@@ -49,6 +49,49 @@ SKIP: {
 
     # This has to be *outside* the fork
     next_test() for 1..2;
+
+    my $raw = "abc\nrst\rxyz\r\nfoo\n";
+    if (open(PIPE, "-|")) {
+	$_ = join '', <PIPE>;
+	(my $raw1 = $_) =~ s/not ok \d+ - //;
+	my @r  = map ord, split //, $raw;
+	my @r1 = map ord, split //, $raw1;
+        if ($raw1 eq $raw) {
+	    s/^not (ok \d+ -) .*/$1 '@r1' passes through '-|'\n/s;
+	} else {
+	    s/^(not ok \d+ -) .*/$1 expect '@r', got '@r1'\n/s;
+	}
+	print;
+	close PIPE;        # avoid zombies
+    }
+    else {
+	printf STDOUT "not ok %d - $raw", curr_test();
+        exec $Perl, '-e0';	# Do not run END()...
+    }
+
+    # This has to be *outside* the fork
+    next_test();
+
+    if (open(PIPE, "|-")) {
+	printf PIPE "not ok %d - $raw", curr_test();
+	close PIPE;        # avoid zombies
+    }
+    else {
+	$_ = join '', <STDIN>;
+	(my $raw1 = $_) =~ s/not ok \d+ - //;
+	my @r  = map ord, split //, $raw;
+	my @r1 = map ord, split //, $raw1;
+        if ($raw1 eq $raw) {
+	    s/^not (ok \d+ -) .*/$1 '@r1' passes through '|-'\n/s;
+	} else {
+	    s/^(not ok \d+ -) .*/$1 expect '@r', got '@r1'\n/s;
+	}
+	print;
+        exec $Perl, '-e0';	# Do not run END()...
+    }
+
+    # This has to be *outside* the fork
+    next_test();
 
     SKIP: {
         skip "fork required", 2 unless $Config{d_fork};
@@ -167,6 +210,7 @@ SKIP: {
 # Test new semantics for missing command in piped open
 # 19990114 M-J. Dominus mjd@plover.com
 { local *P;
+  no warnings 'pipe';
   ok( !open(P, "|    "),        'missing command in piped open input' );
   ok( !open(P, "     |"),       '                              output');
 }

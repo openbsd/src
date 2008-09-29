@@ -2,10 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw(. ../lib);
 }
 
-print "1..10\n";
+require 'test.pl';
+plan( tests => 15 );
 
 @oops = @ops = <op/*>;
 
@@ -26,12 +27,11 @@ else {
   map { $files{$_}++ } <op/*>;
   map { delete $files{$_} } split /[\s\n]/, `echo op/*`;
 }
-if (keys %files) {
-	print "not ok 1\t(",join(' ', sort keys %files),"\n";
-} else { print "ok 1\n"; }
+ok( !(keys(%files)),'leftover op/* files' ) or diag(join(' ',sort keys %files));
 
-print $/ eq "\n" ? "ok 2\n" : "not ok 2\n";
+cmp_ok($/,'eq',"\n",'sane input record separator');
 
+$not = '';
 if ($^O eq 'MacOS') {
     while (<jskdfjskdfj* :op:* jskdjfjkosvk*>) {
 	$not = "not " unless $_ eq shift @ops;
@@ -43,49 +43,52 @@ if ($^O eq 'MacOS') {
 	$not = "not at all " if $/ eq "\0";
     }
 }
-print "${not}ok 3\n";
+ok(!$not,"glob amid garbage [$not]");
 
-print $/ eq "\n" ? "ok 4\n" : "not ok 4\n";
+cmp_ok($/,'eq',"\n",'input record separator still sane');
 
-# test the "glob" operator
 $_ = $^O eq 'MacOS' ? ":op:*" : "op/*";
 @glops = glob $_;
-print "@glops" eq "@oops" ? "ok 5\n" : "not ok 5\n";
+cmp_ok("@glops",'eq',"@oops",'glob operator 1');
 
 @glops = glob;
-print "@glops" eq "@oops" ? "ok 6\n" : "not ok 6\n";
+cmp_ok("@glops",'eq',"@oops",'glob operator 2');
 
 # glob should still work even after the File::Glob stash has gone away
 # (this used to dump core)
 my $i = 0;
 for (1..2) {
     eval "<.>";
+    ok(!length($@),"eval'ed a glob $_");
     undef %File::Glob::;
     ++$i;
 }
-print $i == 2 ? "ok 7\n" : "not ok 7\n";
+cmp_ok($i,'==',2,'remore File::Glob stash');
 
 # ... while ($var = glob(...)) should test definedness not truth
 
-if( $INC{'File/Glob.pm'} ) {
-    my $ok = "not ok 8\n";
-    $ok = "ok 8\n" while my $var = glob("0");
-    print $ok;
+SKIP: {
+    skip('no File::Glob to emulate Unix-ism', 1)
+	unless $INC{'File/Glob.pm'};
+    my $ok = 0;
+    $ok = 1 while my $var = glob("0");
+    ok($ok,'define versus truth');
 }
-else {
-    print "ok 8 # skip: File::Glob emulated Unixism\n";
-}
-
 
 # The formerly-broken test for the situation above would accidentally
 # test definedness for an assignment with a LOGOP on the right:
-my $f=0;
-$ok="ok 9\n";
-$ok="not ok 9\n", undef $f while $x = $f||$f;
-print $ok;
-
-# Better check that glob actually returned some entries
 {
-   my $not = (scalar @oops > 0) ? '' : 'not ';
-   print "${not}ok 10\n";
+    my $f = 0;
+    my $ok = 1;
+    $ok = 0, undef $f while $x = $f||$f;
+    ok($ok,'test definedness with LOGOP');
 }
+
+cmp_ok(scalar(@oops),'>',0,'glob globbed something');
+
+*aieee = 4;
+pass('Can assign integers to typeglobs');
+*aieee = 3.14;
+pass('Can assign floats to typeglobs');
+*aieee = 'pi';
+pass('Can assign strings to typeglobs');

@@ -5,7 +5,7 @@
 ######################### We start with some black magic to print on failure.
 use lib '../blib/lib','../blib/arch';
 
-BEGIN {$| = 1; print "1..59\n"; }
+BEGIN {$| = 1; print "1..57\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Config;
 use CGI::Util qw(escape unescape);
@@ -31,7 +31,7 @@ my %punct = (
     ':' => '3A',  ';' => '3B',  '<' => '3C',  '=' =>  '3D', 
     '>' => '3E',  '?' => '3F',  '[' => '5B',  '\\' => '5C', 
     ']' => '5D',  '^' => '5E',                '`' =>  '60',  # '_' => '5F',
-    '{' => '7B',  '|' => '7C',  '}' => '7D',  '~' =>  '7E', 
+    '{' => '7B',  '|' => '7C',  '}' => '7D',  # '~' =>  '7E', 
          );
 
 # The sort order may not be ASCII on EBCDIC machines:

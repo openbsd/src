@@ -17,14 +17,17 @@ use Config;
 use File::Spec::Functions;
 
 BEGIN { require './test.pl'; }
-plan tests => 238;
-
+plan tests => 267;
 
 $| = 1;
 
 use vars qw($ipcsysv); # did we manage to load IPC::SysV?
 
+my ($old_env_path, $old_env_dcl_path, $old_env_term);
 BEGIN {
+   $old_env_path = $ENV{'PATH'};
+   $old_env_dcl_path = $ENV{'DCL$PATH'};
+   $old_env_term = $ENV{'TERM'};
   if ($^O eq 'VMS' && !defined($Config{d_setenv})) {
       $ENV{PATH} = $ENV{PATH};
       $ENV{TERM} = $ENV{TERM} ne ''? $ENV{TERM} : 'dummy';
@@ -45,7 +48,8 @@ my $Is_MSWin32  = $^O eq 'MSWin32';
 my $Is_NetWare  = $^O eq 'NetWare';
 my $Is_Dos      = $^O eq 'dos';
 my $Is_Cygwin   = $^O eq 'cygwin';
-my $Invoke_Perl = $Is_VMS      ? 'MCR Sys$Disk:[]Perl.' :
+my $Is_OpenBSD  = $^O eq 'openbsd';
+my $Invoke_Perl = $Is_VMS      ? 'MCR Sys$Disk:[]Perl.exe' :
                   $Is_MSWin32  ? '.\perl'               :
                   $Is_MacOS    ? ':perl'                :
                   $Is_NetWare  ? 'perl'                 : 
@@ -57,11 +61,22 @@ if ($Is_VMS) {
     for $x ('DCL$PATH', @MoreEnv) {
 	($old{$x}) = $ENV{$x} =~ /^(.*)$/ if exists $ENV{$x};
     }
+    # VMS note:  PATH and TERM are automatically created by the C
+    # library in VMS on reference to the their keys in %ENV.
+    # There is currently no way to determine if they did not exist
+    # before this test was run.
     eval <<EndOfCleanup;
 	END {
-	    \$ENV{PATH} = '' if $Config{d_setenv};
-	    warn "# Note: logical name 'PATH' may have been deleted\n";
+	    \$ENV{PATH} = \$old_env_path;
+	    warn "# Note: logical name 'PATH' may have been created\n";
+	    \$ENV{'TERM'} = \$old_env_term;
+	    warn "# Note: logical name 'TERM' may have been created\n";
 	    \@ENV{keys %old} = values %old;
+	    if (defined \$old_env_dcl_path) {
+		\$ENV{'DCL\$PATH'} = \$old_env_dcl_path;
+	    } else {
+		delete \$ENV{'DCL\$PATH'};
+	    }
 	}
 EndOfCleanup
 }
@@ -150,26 +165,9 @@ my $TEST = catfile(curdir(), 'TEST');
 	    };
 	}
     }
-
-    $ENV{PATH} = '';
+    $ENV{PATH} = ($Is_Cygwin) ? '/usr/bin' : '';
     delete @ENV{@MoreEnv};
     $ENV{TERM} = 'dumb';
-
-    if ($Is_Cygwin && ! -f 'cygwin1.dll') {
-	system("/usr/bin/cp /usr/bin/cygwin1.dll .") &&
-	    die "$0: failed to cp cygwin1.dll: $!\n";
-	eval q{
-	    END { unlink "cygwin1.dll" }
-	};
-    }
-
-    if ($Is_Cygwin && ! -f 'cygcrypt-0.dll' && -f '/usr/bin/cygcrypt-0.dll') {
-	system("/usr/bin/cp /usr/bin/cygcrypt-0.dll .") &&
-	    die "$0: failed to cp cygcrypt-0.dll: $!\n";
-	eval q{
-	    END { unlink "cygcrypt-0.dll" }
-	};
-    }
 
     test eval { `$echo 1` } eq "1\n";
 
@@ -1106,3 +1104,184 @@ TERNARY_CONDITIONALS: {
         test not any_tainted @bar;
     }
 }
+
+# at scope exit, a restored localised value should have its old
+# taint status, not the taint status of the current statement
+
+{
+    our $x99 = $^X;
+    test tainted $x99;
+
+    $x99 = '';
+    test not tainted $x99;
+
+    my $c = do { local $x99; $^X };
+    test not tainted $x99;
+}
+{
+    our $x99 = $^X;
+    test tainted $x99;
+
+    my $c = do { local $x99; '' };
+    test tainted $x99;
+}
+
+# an mg_get of a tainted value during localization shouldn't taint the
+# statement
+
+{
+    eval { local $0, eval '1' };
+    test $@ eq '';
+}
+
+# [perl #8262] //g loops infinitely on tainted data
+
+{
+    my @a;
+    local $::TODO = 1;
+    $a[0] = $^X;
+    my $i = 0;
+    while($a[0]=~ m/(.)/g ) {
+	last if $i++ > 10000;
+    }
+    cmp_ok $i, '<', 10000, "infinite m//g";
+}
+
+SKIP:
+{
+    my $got_dualvar;
+    eval 'use Scalar::Util "dualvar"; $got_dualvar++';
+    skip "No Scalar::Util::dualvar" unless $got_dualvar;
+    my $a = Scalar::Util::dualvar(3, $^X);
+    my $b = $a + 5;
+    is ($b, 8, "Arithmetic on tainted dualvars works");
+}
+
+# opening '|-' should not trigger $ENV{PATH} check
+
+{
+    SKIP: {
+	skip "fork() is not available", 3 unless $Config{'d_fork'};
+	skip "opening |- is not stable on threaded OpenBSD with taint", 3
+            if $Config{useithreads} && $Is_OpenBSD;
+
+	$ENV{'PATH'} = $TAINT;
+	local $SIG{'PIPE'} = 'IGNORE';
+	eval {
+	    my $pid = open my $pipe, '|-';
+	    if (!defined $pid) {
+		die "open failed: $!";
+	    }
+	    if (!$pid) {
+		kill 'KILL', $$;	# child suicide
+	    }
+	    close $pipe;
+	};
+	test $@ !~ /Insecure \$ENV/, 'fork triggers %ENV check';
+	test $@ eq '',               'pipe/fork/open/close failed';
+	eval {
+	    open my $pipe, "|$Invoke_Perl -e 1";
+	    close $pipe;
+	};
+	test $@ =~ /Insecure \$ENV/, 'popen neglects %ENV check';
+    }
+}
+
+{
+    package AUTOLOAD_TAINT;
+    sub AUTOLOAD {
+        our $AUTOLOAD;
+        return if $AUTOLOAD =~ /DESTROY/;
+        if ($AUTOLOAD =~ /untainted/) {
+            main::ok(!main::tainted($AUTOLOAD), '$AUTOLOAD can be untainted');
+        } else {
+            main::ok(main::tainted($AUTOLOAD), '$AUTOLOAD can be tainted');
+        }
+    }
+
+    package main;
+    my $o = bless [], 'AUTOLOAD_TAINT';
+    $o->$TAINT;
+    $o->untainted;
+}
+
+{
+    # tests for tainted format in s?printf
+    eval { printf($TAINT . "# %s\n", "foo") };
+    like($@, qr/^Insecure dependency in printf/, q/printf doesn't like tainted formats/);
+    eval { printf("# %s\n", $TAINT . "foo") };
+    ok(!$@, q/printf accepts other tainted args/);
+    eval { sprintf($TAINT . "# %s\n", "foo") };
+    like($@, qr/^Insecure dependency in sprintf/, q/sprintf doesn't like tainted formats/);
+    eval { sprintf("# %s\n", $TAINT . "foo") };
+    ok(!$@, q/sprintf accepts other tainted args/);
+}
+
+{
+    # 40708
+    my $n  = 7e9;
+    8e9 - $n;
+
+    my $val = $n;
+    is ($val, '7000000000', 'Assignment to untainted variable');
+    $val = $TAINT;
+    $val = $n;
+    is ($val, '7000000000', 'Assignment to tainted variable');
+}
+
+{
+    my $val = 0;
+    my $tainted = '1' . $TAINT;
+    eval '$val = eval $tainted;';
+    is ($val, 0, "eval doesn't like tainted strings");
+    like ($@, qr/^Insecure dependency in eval/);
+
+    # Rather nice code to get a tainted undef by from Rick Delaney
+    open FH, "test.pl" or die $!;
+    seek FH, 0, 2 or die $!;
+    $tainted = <FH>;
+
+    eval 'eval $tainted';
+    like ($@, qr/^Insecure dependency in eval/);
+}
+
+foreach my $ord (78, 163, 256) {
+    # 47195
+    my $line = 'A1' . $TAINT . chr $ord;
+    chop $line;
+    is($line, 'A1');
+    $line =~ /(A\S*)/;
+    ok(!tainted($1), "\\S match with chr $ord");
+}
+
+# This may bomb out with the alarm signal so keep it last
+SKIP: {
+    skip "No alarm()"  unless $Config{d_alarm};
+    # Test from RT #41831]
+    # [PATCH] Bug & fix: hang when using study + taint mode (perl 5.6.1, 5.8.x)
+
+    my $DATA = <<'END' . $TAINT;
+line1 is here
+line2 is here
+line3 is here
+line4 is here
+
+END
+
+    #study $DATA;
+
+    ## don't set $SIG{ALRM}, since we'd never get to a user-level handler as
+    ## perl is stuck in a regexp infinite loop!
+
+    alarm(10);
+
+    if ($DATA =~ /^line2.*line4/m) {
+	fail("Should not be a match")
+    } else {
+	pass("Match on tainted multiline data should fail promptly");
+    }
+
+    alarm(0);
+}
+__END__
+# Keep the previous test last

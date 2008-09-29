@@ -7,6 +7,31 @@ BEGIN {
     $ENV{PERL5LIB} = 'lib';
 }
 
+BEGIN {
+    use Config;
+    if ($Config{userelocatableinc}) {
+	# This might be a considered a hack. Need to get information about the
+	# configuration from Config.pm *before* Config.pm expands any .../
+	# prefixes.
+	#
+	# So we set $^X to pretend that we're the already installed perl, so
+	# Config.pm doesits ... expansion off that location.
+
+	my $location = $Config{initialinstalllocation};
+	die <<'OS' unless defined $location;
+$Config{initialinstalllocation} is not defined - can't install a relocatable
+perl without this.
+OS
+	$^X = "$location/perl";
+	# And then remove all trace of ever having loaded Config.pm, so that
+	# it will reload with the revised $^X
+	undef %Config::;
+	delete $INC{"Config.pm"};
+	delete $INC{"Config_heavy.pl"};
+	# You never saw us. We weren't here.
+    }
+}
+
 use strict;
 my ($Is_VMS, $Is_W32, $Is_OS2, $Is_Cygwin, $Is_Darwin,
     $nonono, $dostrip, $versiononly, $silent, $verbose, $force,
@@ -156,11 +181,8 @@ find(sub {
     if ("$File::Find::dir/$_" =~ m{^ext\b(.*)/([^/]+)\.pm$}) {
 	my($path, $modname) = ($1,$2);
 
-	# strip trailing component first
-	$path =~ s{/[^/]*$}{};
-
-	# strip optional "/lib";
-	$path =~ s{/lib\b}{};
+	# strip to optional "/lib", or remove trailing component
+	$path =~ s{.*/lib\b}{} or $path =~ s{/[^/]*$}{};
 
 	# strip any leading /
 	$path =~ s{^/}{};
@@ -263,39 +285,8 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
 	my $v_e_r_s = $ver; $v_e_r_s =~ tr/./_/;
 	$perldll =~ s/(\..*)?$/$v_e_r_s.$dlext/;
 	$perldll =~ s/^lib/cyg/;
-	if ($Config{useshrplib} eq 'true') {
-	    # install ld2 and perlld as well
-	    foreach ('ld2', 'perlld') {
-		safe_unlink("$installbin/$_");
-		copy("$_", "$installbin/$_");
-		chmod(0755, "$installbin/$_");
-		$packlist->{"$installbin/$_"} = { type => 'file' };
-	    };
-	    open (LD2, ">$installbin/ld2");
-	    print LD2 <<SHELL;
-#!/bin/sh
-#
-# ld wrapper, passes all args to perlld;
-#
-for trythis in $installbin/perl
-do
-  if [ -x \$trythis ]
-  then
-    \$trythis $installbin/perlld "\$\@"
-    exit \$?
-  fi
-done
-# hard luck!
-echo I see no perl executable around there
-echo perl is required to build dynamic libraries
-echo look if the path to perl in /bin/ld2 is correct
-exit 1
-SHELL
-	    close LD2;
-	    chmod(0755, "$installbin/ld2");
-	};
     } else {
-	$perldll = 'perl58.' . $dlext;
+	$perldll = 'perl510.' . $dlext;
     }
 
     if ($dlsrc ne "dl_none.xs") {
@@ -408,7 +399,7 @@ if ($Is_VMS) {  # We did core file selection during build
 }
 else {
     # [als] hard-coded 'libperl' name... not good!
-    #@corefiles = <*.h *.inc libperl*.* perl*$Config{lib_ext}>;
+    #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
     @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
     push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
 
@@ -432,14 +423,6 @@ foreach my $file (@corefiles) {
 	} else {
 	    chmod(0444, "$installarchlib/CORE/$file");
 	}
-    }
-}
-
-# Switch in the 5.005-threads versions of he threadsafe queue and semaphore
-# modules if so needed.
-if ($Config{use5005threads}) {
-    for my $m (qw(Queue Semaphore)) {
-	install("ext/Thread/$m.pmx", "$installprivlib/Thread/$m.pm", "0444");
     }
 }
 
@@ -589,7 +572,7 @@ if ($versiononly) {
 # Install pod pages.  Where? I guess in $installprivlib/pod
 # ($installprivlib/pods for cygwin).
 
-my $pod = ($Is_Cygwin || $Is_Darwin || $Is_VMS) ? 'pods' : 'pod';
+my $pod = ($Is_Cygwin || $Is_Darwin || $Is_VMS || $Is_W32) ? 'pods' : 'pod';
 if ( !$versiononly || ($installprivlib =~ m/\Q$ver/)) {
     mkpath("${installprivlib}/$pod", $verbose, 0777);
 
@@ -793,8 +776,8 @@ sub install {
     $xto =~ s/^\Q$destdir\E// if $destdir;
     print $verbose ? "  install $from $xto\n" : "  $xto\n" unless $silent;
     unless ($nonono) {
-	system($cmd);
-	warn "Couldn't $cmd\n" if $?;
+       system($cmd);
+       warn "Couldn't $cmd\n" if $?;
     }
     $packlist->{$xto} = { type => 'file' };
 }
@@ -830,29 +813,37 @@ sub installlib {
 
     # ignore patch backups, RCS files, emacs backup & temp files and the
     # .exists files, .PL files, and test files.
-    return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$} ||
+    return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$|^dbm_filter_util.pl$} ||
 	      $dir  =~ m{/t(?:/|$)};
-
-    # XXX xsubpp back out of the list. prove now integrated. Out of order, so
-    # p4 will conflict on the next update to the following lines:
-
     # ignore the cpan script in lib/CPAN/bin, the instmodsh and xsubpp
-    # scripts in lib/ExtUtils, and the prove script in lib/Test/Harness
+    # scripts in lib/ExtUtils, the prove script in lib/Test/Harness,
+    # the corelist script from lib/Module/CoreList/bin and ptar* in
+    # lib/Archive/Tar/bin, the config_data script in lib/Module/Build/scripts
     # (they're installed later with other utils)
-    return if $name =~ /^(?:cpan|instmodsh|prove)\z/;
-
+    return if $name =~ /^(?:cpan|instmodsh|prove|corelist|ptar|cpan2dist|cpanp|cpanp-run-perl|ptardiff|config_data)\z/;
     # ignore the Makefiles
     return if $name =~ /^makefile$/i;
     # ignore the test extensions
-    return if $dir =~ m{ext/XS/(?:APItest|Typemap)/};
+    return if $dir =~ m{\bXS/(?:APItest|Typemap)\b};
+    return if $name =~ m{\b(?:APItest|Typemap)\.pm$};
     # ignore the demo files
-    return if $dir =~ /\bdemos?\b/;
+    return if $dir =~ /\b(?:demos?|eg)\b/;
 
     # ignore READMEs, MANIFESTs, INSTALL docs, META.ymls and change logs.
     # Changes.e2x and README.e2x are needed by enc2xs.
-    return if $name =~ m{^(?:README(?:\.\w+)?|MANIFEST|META\.yml|INSTALL)$} && $name ne 'README.e2x';
-    return if $name =~ m{^(?:TODO|BUGS|CREDITS)$}i;
+    return if $name =~ m{^(?:README(?:\.\w+)?)$} && $name ne 'README.e2x';
+    return if $name =~ m{^(?:MANIFEST|META\.yml)$};
+    return if $name =~ m{^(?:INSTALL|TODO|BUGS|CREDITS)$}i;
     return if $name =~ m{^change(?:s|log)(?:\.libnet)?$}i;
+    return if $name =~ m{^(?:SIGNATURE|PAUSE200\d\.pub)$}; # CPAN files
+    return if $name =~ m{^(?:NOTES|PATCHING)$}; # ExtUtils files
+
+    # if using a shared perl library then ignore:
+    # - static library files [of statically linked extensions];
+    # - import library files and export library files (only present on Win32
+    #   anyway?) and empty bootstrap files [of dynamically linked extensions].
+    return if $Config{useshrplib} eq 'true' and
+             ($name =~ /$Config{_a}$/ or $name =~ /\.exp$/ or ($name =~ /\.bs$/ and -z $name));
 
     $name = "$dir/$name" if $dir ne '';
 
@@ -869,7 +860,7 @@ sub installlib {
     }
 
     if (-f $_) {
-	if (/\.(?:al|ix)$/ && !($dir =~ m[^auto/(.*)$] && $archpms{$1})) {
+	if (/\.(?:al|ix)$/ && !($dir =~ m[^auto/(.*)$])) {
 	    $installlib = $installprivlib;
 	    #We're installing *.al and *.ix files into $installprivlib,
 	    #but we have to delete old *.al and *.ix files from the 5.000

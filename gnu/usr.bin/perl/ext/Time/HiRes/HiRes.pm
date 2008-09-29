@@ -19,9 +19,11 @@ require DynaLoader;
 		 TIMER_ABSTIME
 		 d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
 		 d_nanosleep d_clock_gettime d_clock_getres
-		 d_clock d_clock_nanosleep);
+		 d_clock d_clock_nanosleep
+		 stat
+		);
 	
-$VERSION = '1.86';
+$VERSION = '1.9711';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -83,7 +85,8 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
 =head1 SYNOPSIS
 
   use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep
-		      clock_gettime clock_getres clock_nanosleep clock );
+		      clock_gettime clock_getres clock_nanosleep clock
+                      stat );
 
   usleep ($microseconds);
   nanosleep ($nanoseconds);
@@ -105,19 +108,26 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
   alarm ($floating_seconds);
   alarm ($floating_seconds, $floating_interval);
 
-  use Time::HiRes qw( setitimer getitimer
-		      ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF ITIMER_REALPROF );
+  use Time::HiRes qw( setitimer getitimer );
 
   setitimer ($which, $floating_seconds, $floating_interval );
   getitimer ($which);
 
+  use Time::HiRes qw( clock_gettime clock_getres clock_nanosleep
+		      ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF ITIMER_REALPROF );
+
   $realtime   = clock_gettime(CLOCK_REALTIME);
   $resolution = clock_getres(CLOCK_REALTIME);
 
-  clock_nanosleep(CLOCK_REALTIME, 1.5);
-  clock_nanosleep(CLOCK_REALTIME, time() + 10, TIMER_ABSTIME);
+  clock_nanosleep(CLOCK_REALTIME, 1.5e9);
+  clock_nanosleep(CLOCK_REALTIME, time()*1e9 + 10e9, TIMER_ABSTIME);
 
   my $ticktock = clock();
+
+  use Time::HiRes qw( stat );
+
+  my @stat = stat("file");
+  my @stat = stat(FH);
 
 =head1 DESCRIPTION
 
@@ -152,6 +162,14 @@ If you are using C<nanosleep> for something else than mixing sleeping
 with signals, give some thought to whether Perl is the tool you should
 be using for work requiring nanosecond accuracies.
 
+Remember that unless you are working on a I<hard realtime> system,
+any clocks and timers will be imprecise, especially so if you are working
+in a pre-emptive multiuser system.  Understand the difference between
+I<wallclock time> and process time (in UNIX-like systems the sum of
+I<user> and I<system> times).  Any attempt to sleep for X seconds will
+most probably end up sleeping B<more> than that, but don't be surpised
+if you end up sleeping slightly B<less>.
+
 The following functions can be imported from this module.
 No functions are exported by default.
 
@@ -166,9 +184,9 @@ seconds like C<Time::HiRes::time()> (see below).
 =item usleep ( $useconds )
 
 Sleeps for the number of microseconds (millionths of a second)
-specified.  Returns the number of microseconds actually slept.  Can
-sleep for more than one second, unlike the C<usleep> system call. Can
-also sleep for zero seconds, which often works like a I<thread yield>.
+specified.  Returns the number of microseconds actually slept.
+Can sleep for more than one second, unlike the C<usleep> system call.
+Can also sleep for zero seconds, which often works like a I<thread yield>.
 See also C<Time::HiRes::usleep()>, C<Time::HiRes::sleep()>, and
 C<Time::HiRes::clock_nanosleep()>.
 
@@ -179,8 +197,8 @@ Do not expect usleep() to be exact down to one microsecond.
 Sleeps for the number of nanoseconds (1e9ths of a second) specified.
 Returns the number of nanoseconds actually slept (accurate only to
 microseconds, the nearest thousand of them).  Can sleep for more than
-one second.  Can also sleep for zero seconds, which often works like a
-I<thread yield>.  See also C<Time::HiRes::sleep()>,
+one second.  Can also sleep for zero seconds, which often works like
+a I<thread yield>.  See also C<Time::HiRes::sleep()>,
 C<Time::HiRes::usleep()>, and C<Time::HiRes::clock_nanosleep()>.
 
 Do not expect nanosleep() to be exact down to one nanosecond.
@@ -190,6 +208,8 @@ Getting even accuracy of one thousand nanoseconds is good.
 
 Issues a C<ualarm> call; the C<$interval_useconds> is optional and
 will be zero if unspecified, resulting in C<alarm>-like behaviour.
+
+ualarm(0) will cancel an outstanding ualarm().
 
 Note that the interaction between alarms and sleeps is unspecified.
 
@@ -255,7 +275,7 @@ Note that the interaction between alarms and sleeps is unspecified.
 
 =item setitimer ( $which, $floating_seconds [, $interval_floating_seconds ] )
 
-Start up an interval timer: after a certain time, a signal arrives,
+Start up an interval timer: after a certain time, a signal ($which) arrives,
 and more signals may keep arriving at certain intervals.  To disable
 an "itimer", use C<$floating_seconds> of zero.  If the
 C<$interval_floating_seconds> is set to zero (or unspecified), the
@@ -269,7 +289,7 @@ In scalar context, the remaining time in the timer is returned.
 
 In list context, both the remaining time and the interval are returned.
 
-There are usually three or four interval timers available: the
+There are usually three or four interval timers (signals) available: the
 C<$which> can be C<ITIMER_REAL>, C<ITIMER_VIRTUAL>, C<ITIMER_PROF>, or
 C<ITIMER_REALPROF>.  Note that which ones are available depends: true
 UNIX platforms usually have the first three, but (for example) Win32
@@ -294,7 +314,8 @@ delivered when the timer expires.  C<SIGPROF> can interrupt system calls.
 
 The semantics of interval timers for multithreaded programs are
 system-specific, and some systems may support additional interval
-timers.  See your C<setitimer()> documentation.
+timers.  For example, it is unspecified which thread gets the signals.
+See your C<setitimer()> documentation.
 
 =item getitimer ( $which )
 
@@ -326,10 +347,10 @@ specified by C<$which>.  All implementations that support POSIX high
 resolution timers are supposed to support at least the C<$which> value
 of C<CLOCK_REALTIME>, see L</clock_gettime>.
 
-=item clock_nanosleep ( $which, $seconds, $flags = 0)
+=item clock_nanosleep ( $which, $nanoseconds, $flags = 0)
 
-Sleeps for the number of seconds (1e9ths of a second) specified.
-Returns the number of seconds actually slept.  The $which is the
+Sleeps for the number of nanoseconds (1e9ths of a second) specified.
+Returns the number of nanoseconds actually slept.  The $which is the
 "clock id", as with clock_gettime() and clock_getres().  The flags
 default to zero but C<TIMER_ABSTIME> can specified (must be exported
 explicitly) which means that C<$nanoseconds> is not a time interval
@@ -357,6 +378,44 @@ but not necessarily identical.  Note that due to backward
 compatibility limitations the returned value may wrap around at about
 2147 seconds or at about 36 minutes.
 
+=item stat
+
+=item stat FH
+
+=item stat EXPR
+
+As L<perlfunc/stat> but with the access/modify/change file timestamps
+in subsecond resolution, if the operating system and the filesystem
+both support such timestamps.  To override the standard stat():
+
+    use Time::HiRes qw(stat);
+
+Test for the value of &Time::HiRes::d_hires_stat to find out whether
+the operating system supports subsecond file timestamps: a value
+larger than zero means yes. There are unfortunately no easy
+ways to find out whether the filesystem supports such timestamps.
+UNIX filesystems often do; NTFS does; FAT doesn't (FAT timestamp
+granularity is B<two> seconds).
+
+A zero return value of &Time::HiRes::d_hires_stat means that
+Time::HiRes::stat is a no-op passthrough for CORE::stat(),
+and therefore the timestamps will stay integers.  The same
+thing will happen if the filesystem does not do subsecond timestamps,
+even if the &Time::HiRes::d_hires_stat is non-zero.
+
+In any case do not expect nanosecond resolution, or even a microsecond
+resolution.  Also note that the modify/access timestamps might have
+different resolutions, and that they need not be synchronized, e.g.
+if the operations are
+
+    write
+    stat # t1
+    read
+    stat # t2
+
+the access time stamp from t2 need not be greater-than the modify
+time stamp from t1: it may be equal or I<less>.
+
 =back
 
 =head1 EXAMPLES
@@ -368,6 +427,8 @@ compatibility limitations the returned value may wrap around at about
 
   # signal alarm in 2.5s & every .1s thereafter
   ualarm(2_500_000, 100_000);
+  # cancel that ualarm
+  ualarm(0);
 
   # get seconds and microseconds since the epoch
   ($s, $usec) = gettimeofday();
@@ -421,6 +482,9 @@ compatibility limitations the returned value may wrap around at about
   my $clock1 = clock();
   my $clockd = $clock1 - $clock0;
 
+  use Time::HiRes qw( stat );
+  my ($atime, $mtime, $ctime) = (stat("istics"))[8, 9, 10];
+
 =head1 C API
 
 In addition to the perl API described above, a C API is available for
@@ -448,6 +512,12 @@ Here is an example of using C<NVtime> from C:
   printf("The current time is: %f\n", (*myNVtime)());
 
 =head1 DIAGNOSTICS
+
+=head2 useconds or interval more than ...
+
+In ualarm() you tried to use number of microseconds or interval (also
+in microseconds) more than 1_000_000 and setitimer() is not available
+in your system to emulate that case.
 
 =head2 negative time not invented yet
 
@@ -478,8 +548,9 @@ might help in this (in case your system supports CLOCK_MONOTONIC).
 
 Perl modules L<BSD::Resource>, L<Time::TAI64>.
 
-Your system documentation for C<clock_gettime>, C<clock_settime>,
-C<gettimeofday>, C<getitimer>, C<setitimer>, C<ualarm>.
+Your system documentation for C<clock>, C<clock_gettime>,
+C<clock_getres>, C<clock_nanosleep>, C<clock_settime>, C<getitimer>,
+C<gettimeofday>, C<setitimer>, C<sleep>, C<stat>, C<ualarm>.
 
 =head1 AUTHORS
 
@@ -492,7 +563,7 @@ G. Aas <gisle@aas.no>
 
 Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.
 
-Copyright (c) 2002, 2003, 2004, 2005 Jarkko Hietaniemi.  All rights reserved.
+Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007 Jarkko Hietaniemi.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

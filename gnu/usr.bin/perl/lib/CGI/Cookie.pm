@@ -13,9 +13,10 @@ package CGI::Cookie;
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Cookie::VERSION='1.26';
+$CGI::Cookie::VERSION='1.28';
 
 use CGI::Util qw(rearrange unescape escape);
+use CGI;
 use overload '""' => \&as_string,
     'cmp' => \&compare,
     'fallback'=>1;
@@ -50,7 +51,7 @@ sub fetch {
    my %results;
    my($key,$value);
    
-   my(@pairs) = split("; ?",$raw_cookie);
+   my(@pairs) = split("[;,] ?",$raw_cookie);
    foreach (@pairs) {
      s/\s*(.*?)\s*/$1/;
      if (/^([^=]+)=(.*)/) {
@@ -112,8 +113,11 @@ sub parse {
 sub new {
   my $class = shift;
   $class = ref($class) if ref($class);
-  my($name,$value,$path,$domain,$secure,$expires) =
-    rearrange([NAME,[VALUE,VALUES],PATH,DOMAIN,SECURE,EXPIRES],@_);
+  # Ignore mod_perl request object--compatability with Apache::Cookie.
+  shift if ref $_[0]
+        && eval { $_[0]->isa('Apache::Request::Req') || $_[0]->isa('Apache') };
+  my($name,$value,$path,$domain,$secure,$expires,$httponly) =
+    rearrange([NAME,[VALUE,VALUES],PATH,DOMAIN,SECURE,EXPIRES,HTTPONLY],@_);
   
   # Pull out our parameters.
   my @values;
@@ -142,6 +146,7 @@ sub new {
   $self->domain($domain) if defined $domain;
   $self->secure($secure) if defined $secure;
   $self->expires($expires) if defined $expires;
+  $self->httponly($httponly) if defined $httponly;
 #  $self->max_age($expires) if defined $expires;
   return $self;
 }
@@ -150,16 +155,17 @@ sub as_string {
     my $self = shift;
     return "" unless $self->name;
 
-    my(@constant_values,$domain,$path,$expires,$max_age,$secure);
+    my(@constant_values,$domain,$path,$expires,$max_age,$secure,$httponly);
 
     push(@constant_values,"domain=$domain")   if $domain = $self->domain;
     push(@constant_values,"path=$path")       if $path = $self->path;
     push(@constant_values,"expires=$expires") if $expires = $self->expires;
     push(@constant_values,"max-age=$max_age") if $max_age = $self->max_age;
     push(@constant_values,"secure") if $secure = $self->secure;
+    push(@constant_values,"HttpOnly") if $httponly = $self->httponly;
 
     my($key) = escape($self->name);
-    my($cookie) = join("=",($key||''),join("&",map escape($_||''),$self->value));
+    my($cookie) = join("=",(defined $key ? $key : ''),join("&",map escape(defined $_ ? $_ : ''),$self->value));
     return join("; ",$cookie,@constant_values);
 }
 
@@ -167,6 +173,22 @@ sub compare {
     my $self = shift;
     my $value = shift;
     return "$self" cmp $value;
+}
+
+sub bake {
+  my ($self, $r) = @_;
+
+  $r ||= eval {
+      $MOD_PERL == 2
+          ? Apache2::RequestUtil->request()
+          : Apache->request
+  } if $MOD_PERL;
+  if ($r) {
+      $r->headers_out->add('Set-Cookie' => $self->as_string);
+  } else {
+      print CGI::header(-cookie => $self);
+  }
+
 }
 
 # accessors
@@ -229,6 +251,14 @@ sub path {
     my $path = shift;
     $self->{'path'} = $path if defined $path;
     return $self->{'path'};
+}
+
+
+sub httponly { # HttpOnly
+    my $self     = shift;
+    my $httponly = shift;
+    $self->{'httponly'} = $httponly if defined $httponly;
+    return $self->{'httponly'};
 }
 
 1;
@@ -317,11 +347,24 @@ that all scripts at your site will receive the cookie.
 If the "secure" attribute is set, the cookie will only be sent to your
 script if the CGI request is occurring on a secure channel, such as SSL.
 
+=item B<4. httponly flag>
+
+If the "httponly" attribute is set, the cookie will only be accessible
+through HTTP Requests. This cookie will be inaccessible via JavaScript
+(to prevent XSS attacks).
+
+But, currently this feature only used and recognised by 
+MS Internet Explorer 6 Service Pack 1 and later.
+
+See this URL for more information:
+
+L<http://msdn.microsoft.com/workshop/author/dhtml/httponly_cookies.asp>
+
 =back
 
 =head2 Creating New Cookies
 
-	$c = new CGI::Cookie(-name    =>  'foo',
+	my $c = new CGI::Cookie(-name    =>  'foo',
                              -value   =>  'bar',
                              -expires =>  '+3M',
                              -domain  =>  '.capricorn.com',
@@ -351,11 +394,31 @@ pages at your site.
 B<-secure> if set to a true value instructs the browser to return the
 cookie only when a cryptographic protocol is in use.
 
+B<-httponly> if set to a true value, the cookie will not be accessible
+via JavaScript.
+
+For compatibility with Apache::Cookie, you may optionally pass in
+a mod_perl request object as the first argument to C<new()>. It will
+simply be ignored:
+
+  my $c = new CGI::Cookie($r,
+                          -name    =>  'foo',
+                          -value   =>  ['bar','baz']);
+
 =head2 Sending the Cookie to the Browser
 
-Within a CGI script you can send a cookie to the browser by creating
-one or more Set-Cookie: fields in the HTTP header.  Here is a typical
-sequence:
+The simplest way to send a cookie to the browser is by calling the bake()
+method:
+
+  $c->bake;
+
+Under mod_perl, pass in an Apache request object:
+
+  $c->bake($r);
+
+If you want to set the cookie yourself, Within a CGI script you can send
+a cookie to the browser by creating one or more Set-Cookie: fields in the
+HTTP header.  Here is a typical sequence:
 
   my $c = new CGI::Cookie(-name    =>  'foo',
                           -value   =>  ['bar','baz'],

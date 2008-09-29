@@ -24,15 +24,15 @@ at http://faq.perl.org/ . The perlfaq-workers periodically post extracts
 of the latest perlfaq to comp.lang.perl.misc.
 
 You can view the source tree at
-http://cvs.perl.org/viewcvs/cvs-public/perlfaq/ (which is outside of the
-main Perl source tree).  The CVS repository notes all changes to the FAQ
+https://svn.perl.org/modules/perlfaq/trunk/ (which is outside of the
+main Perl source tree).  The SVN repository notes all changes to the FAQ
 and holds the latest version of the working documents and may vary
 significantly from the version distributed with the latest version of
 Perl. Check the repository before sending your corrections.
 
 =head2 How to contribute to the perlfaq
 
-You can mail corrections, additions, and suggestions to 
+You can mail corrections, additions, and suggestions to
 C<< <perlfaq-workers AT perl DOT org> >>. The perlfaq volunteers use this
 address to coordinate their efforts and track the perlfaq development.
 They appreciate your contributions to the FAQ but do not have time to
@@ -61,13 +61,13 @@ it, try the resources in L<perlfaq2>.
 
 Tom Christiansen wrote the original perlfaq then expanded it with the
 help of Nat Torkington.  The perlfaq-workers maintain current document
-and the dezinens of comp.lang.perl.misc regularly review and update the
+and the denizens of comp.lang.perl.misc regularly review and update the
 FAQ. Several people have contributed answers, corrections, and comments,
 and the perlfaq notes those contributions wherever appropriate.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Tom Christainsen wrote the original version of this document.
+Tom Christiansen wrote the original version of this document.
 brian d foy C<< <bdfoy@cpan.org> >> wrote this version. See the
 individual perlfaq documents for additional copyright information.
 
@@ -123,15 +123,15 @@ Which version of Perl should I use?
 
 =item *
 
-What are perl4, perl5, or perl6?
+What are Perl 4, Perl 5, or Perl 6?
 
 =item *
 
-What is Ponie?
+What was Ponie?
 
 =item *
 
-What is perl6?
+What is Perl 6?
 
 =item *
 
@@ -171,7 +171,7 @@ Where can I get a list of Larry Wall witticisms?
 
 =item *
 
-How can I convince my sysadmin/supervisor/employees to use version 5/5.6.1/Perl instead of some other language?
+How can I convince others to use Perl?
 
 =back
 
@@ -313,7 +313,7 @@ How can I use curses with Perl?
 
 =item *
 
-How can I use X or Tk with Perl?
+How can I write a GUI (X, Tk, Gtk, etc.) in Perl?
 
 =item *
 
@@ -342,10 +342,6 @@ How can I hide the source for my Perl program?
 =item *
 
 How can I compile my Perl program into byte code or C?
-
-=item *
-
-How can I compile Perl into Java?
 
 =item *
 
@@ -462,7 +458,7 @@ How do I find yesterday's date?
 
 =item *
 
-Does Perl have a Year 2000 problem?  Is Perl Y2K compliant?
+Does Perl have a Year 2000 problem? Is Perl Y2K compliant?
 
 =item *
 
@@ -711,7 +707,7 @@ How do I flush/unbuffer an output filehandle?  Why must I do this?
 
 =item *
 
-How do I change one line in a file/delete a line in a file/insert a line in the middle of a file/append to the beginning of a file?
+How do I change, delete, or insert a line in a file, or append to the beginning of a file?
 
 =item *
 
@@ -748,6 +744,10 @@ How can I set up a footer format to be used with write()?
 =item *
 
 How can I write() into a string?
+
+=item *
+
+How can I open a filehandle to a string?
 
 =item *
 
@@ -956,7 +956,7 @@ How can I match strings with multibyte characters?
 
 =item *
 
-How do I match a pattern that is supplied by the user?
+How do I match a regular expression that's in a variable?
 
 =back
 
@@ -1002,6 +1002,10 @@ How do I declare/create a structure?
 =item *
 
 How do I create a module?
+
+=item *
+
+How do I adopt or take over a module already on CPAN?
 
 =item *
 
@@ -1327,7 +1331,7 @@ How do I download a file from the user's machine?  How do I open a file on anoth
 
 =item *
 
-How do I make a pop-up menu in HTML?
+How do I make an HTML pop-up menu with Perl?
 
 =item *
 

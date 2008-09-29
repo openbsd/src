@@ -5,6 +5,10 @@ import VMS::Stdio qw(&flush &getname &rewind &sync &tmpnam);
 print "1..18\n";
 print +(defined(&getname) ? '' : 'not '), "ok 1\n";
 
+#VMS can pretend that it is UNIX.
+my $perl = $^X;
+$perl = VMS::Filespec::vmsify($perl) if $^O eq 'VMS';
+
 $name = "test$$";
 $name++ while -e "$name.tmp";
 $fh = VMS::Stdio::vmsopen("+>$name",'ctx=rec','shr=put','fop=dlt','dna=.tmp');
@@ -28,6 +32,11 @@ chop($line = <$fh>);
 print +($line eq localtime($time) ? '' : 'not '), "ok 9\n";
 
 ($gotname) = (getname($fh) =~/\](.*);/);
+
+#we may be in UNIX emulation mode.
+if (!defined($gotname)) {
+   ($gotname) = (VMS::Filespec::vmsify(getname($fh)) =~/\](.*)/);
+}
 print +("\U$gotname" eq "\U$name.tmp" ? '' : 'not '), "ok 10\n";
 
 $sfh = VMS::Stdio::vmssysopen($name, O_RDONLY, 0,
@@ -43,7 +52,7 @@ print +(stat("$name.tmp") ? 'not ' : ''),"ok 13\n";
 
 print +(&VMS::Stdio::tmpnam ? '' : 'not '),"ok 14\n";
 
-#if (open(P, qq[| MCR $^X -e "1 while (<STDIN>);print 'Foo';1 while (<STDIN>); print 'Bar'" >$name.tmp])) {
+#if (open(P, qq[| $^X -e "1 while (<STDIN>);print 'Foo';1 while (<STDIN>); print 'Bar'" >$name.tmp])) {
 #  print P "Baz\nQuux\n";
 #  print +(VMS::Stdio::writeof(P) ? '' : 'not '),"ok 15\n";
 #  print P "Baz\nQuux\n";
@@ -59,7 +68,7 @@ print "ok 15\nok 16\nok 17\n";
 #}
 
 $sfh = VMS::Stdio::vmsopen(">$name.tmp");
-$setuperl = "\$ MCR $^X\nBEGIN { \@INC = qw(@INC) };\nuse VMS::Stdio qw(&setdef);";
+$setuperl = "\$ MCR $perl\nBEGIN { \@INC = qw(@INC) };\nuse VMS::Stdio qw(&setdef);";
 print $sfh qq[\$ here = F\$Environment("Default")\n];
 print $sfh "$setuperl\nsetdef();\n\$ Show Default\n\$ Set Default 'here'\n";
 print $sfh "$setuperl\nsetdef('..');\n\$ Show Default\n";

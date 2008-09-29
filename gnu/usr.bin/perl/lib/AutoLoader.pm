@@ -15,11 +15,59 @@ BEGIN {
     $is_epoc = $^O eq 'epoc';
     $is_vms = $^O eq 'VMS';
     $is_macos = $^O eq 'MacOS';
-    $VERSION = '5.60';
+    $VERSION = '5.63';
 }
 
 AUTOLOAD {
     my $sub = $AUTOLOAD;
+    my $filename = AutoLoader::find_filename( $sub );
+
+    my $save = $@;
+    local $!; # Do not munge the value. 
+    eval { local $SIG{__DIE__}; require $filename };
+    if ($@) {
+	if (substr($sub,-9) eq '::DESTROY') {
+	    no strict 'refs';
+	    *$sub = sub {};
+	    $@ = undef;
+	} elsif ($@ =~ /^Can't locate/) {
+	    # The load might just have failed because the filename was too
+	    # long for some old SVR3 systems which treat long names as errors.
+	    # If we can successfully truncate a long name then it's worth a go.
+	    # There is a slight risk that we could pick up the wrong file here
+	    # but autosplit should have warned about that when splitting.
+	    if ($filename =~ s/(\w{12,})\.al$/substr($1,0,11).".al"/e){
+		eval { local $SIG{__DIE__}; require $filename };
+	    }
+	}
+	if ($@){
+	    $@ =~ s/ at .*\n//;
+	    my $error = $@;
+	    require Carp;
+	    Carp::croak($error);
+	}
+    }
+    $@ = $save;
+    goto &$sub;
+}
+
+sub can {
+    my ($self, $method) = @_;
+
+    my $parent          = $self->SUPER::can( $method );
+    return $parent if $parent;
+
+    my $package         = ref( $self ) || $self;
+    my $filename        = AutoLoader::find_filename( $package . '::' . $method );
+    local $@;
+    return unless eval { require $filename };
+
+    no strict 'refs';
+    return \&{ $package . '::' . $method };
+}
+
+sub find_filename {
+    my $sub = shift;
     my $filename;
     # Braces used to preserve $1 et al.
     {
@@ -58,11 +106,11 @@ AUTOLOAD {
 		unless ($filename =~ m|^/|s) {
 		    if ($is_dosish) {
 			unless ($filename =~ m{^([a-z]:)?[\\/]}is) {
-			     if ($^O ne 'NetWare') {
-					$filename = "./$filename";
-				} else {
-					$filename = "$filename";
-				}
+			    if ($^O ne 'NetWare') {
+				$filename = "./$filename";
+			    } else {
+				$filename = "$filename";
+			    }
 			}
 		    }
 		    elsif ($is_epoc) {
@@ -89,33 +137,7 @@ AUTOLOAD {
 	    $filename =~ s#::#/#g;
 	}
     }
-    my $save = $@;
-    local $!; # Do not munge the value. 
-    eval { local $SIG{__DIE__}; require $filename };
-    if ($@) {
-	if (substr($sub,-9) eq '::DESTROY') {
-	    no strict 'refs';
-	    *$sub = sub {};
-	    $@ = undef;
-	} elsif ($@ =~ /^Can't locate/) {
-	    # The load might just have failed because the filename was too
-	    # long for some old SVR3 systems which treat long names as errors.
-	    # If we can successfully truncate a long name then it's worth a go.
-	    # There is a slight risk that we could pick up the wrong file here
-	    # but autosplit should have warned about that when splitting.
-	    if ($filename =~ s/(\w{12,})\.al$/substr($1,0,11).".al"/e){
-		eval { local $SIG{__DIE__}; require $filename };
-	    }
-	}
-	if ($@){
-	    $@ =~ s/ at .*\n//;
-	    my $error = $@;
-	    require Carp;
-	    Carp::croak($error);
-	}
-    }
-    $@ = $save;
-    goto &$sub;
+    return $filename;
 }
 
 sub import {
@@ -127,9 +149,11 @@ sub import {
     #
 
     if ($pkg eq 'AutoLoader') {
-	no strict 'refs';
-	*{ $callpkg . '::AUTOLOAD' } = \&AUTOLOAD
-	    if @_ and $_[0] =~ /^&?AUTOLOAD$/;
+	if ( @_ and $_[0] =~ /^&?AUTOLOAD$/ ) {
+	    no strict 'refs';
+	    *{ $callpkg . '::AUTOLOAD' } = \&AUTOLOAD;
+	    *{ $callpkg . '::can'      } = \&can;
+	}
     }
 
     #
@@ -173,9 +197,12 @@ sub unimport {
     my $callpkg = caller;
 
     no strict 'refs';
-    my $symname = $callpkg . '::AUTOLOAD';
-    undef *{ $symname } if \&{ $symname } == \&AUTOLOAD;
-    *{ $symname } = \&{ $symname };
+
+    for my $exported (qw( AUTOLOAD can )) {
+	my $symname = $callpkg . '::' . $exported;
+	undef *{ $symname } if \&{ $symname } == \&{ $exported };
+	*{ $symname } = \&{ $symname };
+    }
 }
 
 1;

@@ -13,7 +13,7 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 
 MANLOCALBUILD=	yes
 
-MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
+MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 perl5100delta.1 perldelta.1\
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
 		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
 		File::Basename.3p fileparse.3p
@@ -26,12 +26,17 @@ MANSRCALL=
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
     c2ph 1			utils/c2ph \
+    config_data 1		lib/Module/Build/scripts/config_data \
+    corelist 1			utils/corelist \
     cpan 1			lib/CPAN/bin/cpan \
+    cpan2dist 1			utils/cpan2dist \
+    cpanp 1			utils/cpanp \
     dprofpp 1 			utils/dprofpp \
     enc2xs 1			ext/Encode/bin/enc2xs \
     find2perl 1			x2p/find2perl \
     h2ph 1			utils/h2ph \
     h2xs 1			utils/h2xs \
+    instmodsh 1			lib/ExtUtils/instmodsh \
     libnetcfg 1			utils/libnetcfg.PL \
     perl 1			pod/perl.pod \
     perl5004delta 1		pod/perl5004delta.pod \
@@ -51,6 +56,13 @@ MANSRCALL=
     perl586delta 1		pod/perl586delta.pod \
     perl587delta 1		pod/perl587delta.pod \
     perl588delta 1		pod/perl588delta.pod \
+    perl590delta 1		pod/perl590delta.pod \
+    perl591delta 1		pod/perl591delta.pod \
+    perl592delta 1		pod/perl592delta.pod \
+    perl593delta 1		pod/perl593delta.pod \
+    perl594delta 1		pod/perl594delta.pod \
+    perl595delta 1		pod/perl595delta.pod \
+    perl5100delta 1		pod/perl5100delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -59,10 +71,10 @@ MANSRCALL=
     perlbot 1			pod/perlbot.pod \
     perlbug 1			utils/perlbug \
     perlcall 1			pod/perlcall.pod \
-    perlcc 1			utils/perlcc \
     perlcheat 1			pod/perlcheat.pod \
     perlclib 1			pod/perlclib.pod \
     perlcn 1			README.cn \
+    perlcommunity 1		pod/perlcommunity.pod \
     perlcompile 1		pod/perlcompile.pod \
     perldata 1			pod/perldata.pod \
     perldbmfilter 1		pod/perldbmfilter.pod \
@@ -116,7 +128,12 @@ MANSRCALL=
     perlpod 1			pod/perlpod.pod \
     perlpodspec 1		pod/perlpodspec.pod \
     perlport 1			pod/perlport.pod \
+    perlpragma 1		pod/perlpragma.pod \
     perlre 1			pod/perlre.pod \
+    perlreapi 1			pod/perlreapi.pod \
+    perlrebackslash 1		pod/perlrebackslash.pod \
+    perlrecharclass 1		pod/perlrecharclass.pod \
+    perlreguts 1		pod/perlreguts.pod \
     perlref 1			pod/perlref.pod \
     perlreftut 1		pod/perlreftut.pod \
     perlrequick	1		pod/perlrequick.pod \
@@ -136,7 +153,9 @@ MANSRCALL=
     perltrap 1			pod/perltrap.pod \
     perltw 1			README.tw \
     perlunicode 1		pod/perlunicode.pod \
+    perlunifaq 1		pod/perlunifaq.pod \
     perluniintro 1		pod/perluniintro.pod \
+    perlunitut 1		pod/perlunitut.pod \
     perlutil 1			pod/perlutil.pod \
     perlvar 1			pod/perlvar.pod \
     perlxs 1			pod/perlxs.pod \
@@ -155,28 +174,21 @@ MANSRCALL=
     splain 1			utils/splain \
     xsubpp 1			lib/ExtUtils/xsubpp \
     AnyDBM_File	3p		lib/AnyDBM_File.pm \
+    Archive::Extract 3p		lib/Archive/Extract.pm \
+    Archive::Tar 3p		lib/Archive/Tar.pm \
+    Archive::Tar::File 3p	lib/Archive/Tar/File.pm \
     Attribute::Handlers 3p	lib/Attribute/Handlers.pm \
     AutoLoader 3p		lib/AutoLoader.pm \
     AutoSplit 3p		lib/AutoSplit.pm \
     B 3p			ext/B/B.pm \
-    B::Asmdata 3p		ext/B/B/Asmdata.pm \
-    B::Assembler 3p		ext/B/B/Assembler.pm \
-    B::Bblock 3p		ext/B/B/Bblock.pm \
-    B::Bytecode 3p		ext/B/B/Bytecode.pm \
-    B::C 3p			ext/B/B/C.pm \
-    B::CC 3p			ext/B/B/CC.pm \
     B::Concise 3p		ext/B/B/Concise.pm \
     B::Debug 3p			ext/B/B/Debug.pm \
     B::Deparse 3p		ext/B/B/Deparse.pm \
-    B::Disassembler 3p		ext/B/B/Disassembler.pm \
     B::Lint 3p			ext/B/B/Lint.pm \
     B::Showlex 3p		ext/B/B/Showlex.pm \
-    B::Stackobj 3p		ext/B/B/Stackobj.pm \
-    B::Stash 3p			ext/B/B/Stash.pm \
     B::Terse 3p			ext/B/B/Terse.pm \
     B::Xref 3p			ext/B/B/Xref.pm \
     Benchmark 3p		lib/Benchmark.pm \
-    ByteLoader 3p		ext/ByteLoader/ByteLoader.pm \
     CGI 3p			lib/CGI.pm \
     CGI::Apache 3p		lib/CGI/Apache.pm \
     CGI::Carp 3p		lib/CGI/Carp.pm \
@@ -186,32 +198,79 @@ MANSRCALL=
     CGI::Push 3p		lib/CGI/Push.pm \
     CGI::Switch 3p		lib/CGI/Switch.pm \
     CGI::Util 3p		lib/CGI/Util.pm \
+    CORE 3p			lib/CORE.pod \
     CPAN 3p			lib/CPAN.pm \
+    CPAN::API::HOWTO 3p		lib/CPAN/API/HOWTO.pm \
+    CPAN::Debug 3p		lib/CPAN/Debug.pm \
     CPAN::FirstTime 3p		lib/CPAN/FirstTime.pm \
+    CPAN::HandleConfig 3p	lib/CPAN/HandleConfig.pm \
+    CPAN::Kwalify 3p		lib/CPAN/Kwalify.pm \
     CPAN::Nox 3p		lib/CPAN/Nox.pm \
+    CPAN::Queue 3p		lib/CPAN/Queue.pm \
+    CPAN::Tarzip 3p		lib/CPAN/Tarzip.pm \
+    CPAN::Version 3p		lib/CPAN/Version.pm \
+    CPANPLUS 3p	lib/CPANPLUS.pm \
+    CPANPLUS::Backend 3p	lib/CPANPLUS/Backend.pm \
+    CPANPLUS::Backend::RV 3p	lib/CPANPLUS/Backend/RV.pm \
+    CPANPLUS::Config 3p		lib/CPANPLUS/Config.pm \
+    CPANPLUS::Configure 3p	lib/CPANPLUS/Configure.pm \
+    CPANPLUS::Dist 3p		lib/CPANPLUS/Dist.pm \
+    CPANPLUS::Dist::Base 3p	lib/CPANPLUS/Dist/Base.pm \
+    CPANPLUS::Dist::Build 3p	lib/CPANPLUS/Dist/Build.pm \
+    CPANPLUS::Dist::MM 3p	lib/CPANPLUS/Dist/MM.pm \
+    CPANPLUS::Dist::Sample 3p	lib/CPANPLUS/Dist/Sample.pm \
+    CPANPLUS::Error 3p		lib/CPANPLUS/Error.pm \
+    CPANPLUS::FAQ 3p		lib/CPANPLUS/FAQ.pod \
+    CPANPLUS::Hacking 3p	lib/CPANPLUS/Hacking.pod \
+    CPANPLUS::Internals 3p	lib/CPANPLUS/Internals.pm \
+    CPANPLUS::Internals::Extract 3p	lib/CPANPLUS/Internals/Extract.pm \
+    CPANPLUS::Internals::Fetch 3p	lib/CPANPLUS/Internals/Fetch.pm \
+    CPANPLUS::Internals::Report 3p	lib/CPANPLUS/Internals/Report.pm \
+    CPANPLUS::Internals::Search 3p	lib/CPANPLUS/Internals/Search.pm \
+    CPANPLUS::Internals::Source 3p	lib/CPANPLUS/Internals/Source.pm \
+    CPANPLUS::Internals::Utils 3p	lib/CPANPLUS/Internals/Utils.pm \
+    CPANPLUS::Module 3p		lib/CPANPLUS/Module.pm \
+    CPANPLUS::Module::Author 3p	lib/CPANPLUS/Module/Author.pm \
+    CPANPLUS::Module::Author::Fake 3p	lib/CPANPLUS/Module/Author/Fake.pm \
+    CPANPLUS::Module::Checksums 3p	lib/CPANPLUS/Module/Checksums.pm \
+    CPANPLUS::Module::Fake 3p	lib/CPANPLUS/Module/Fake.pm \
+    CPANPLUS::Selfupdate 3p	lib/CPANPLUS/Selfupdate.pm \
+    CPANPLUS::Shell 3p		lib/CPANPLUS/Shell.pm \
+    CPANPLUS::Shell::Classic 3p	lib/CPANPLUS/Shell/Classic.pm \
+    CPANPLUS::Shell::Default 3p	lib/CPANPLUS/Shell/Default.pm \
+    CPANPLUS::Shell::Default::Plugins::CustomSource 3p	lib/CPANPLUS/Shell/Default/Plugins/CustomSource.pm \
+    CPANPLUS::Shell::Default::Plugins::HOWTO 3p	lib/CPANPLUS/Shell/Default/Plugins/HOWTO.pod \
+    CPANPLUS::Shell::Default::Plugins::Remote 3p	lib/CPANPLUS/Shell/Default/Plugins/Remote.pm \
+    CPANPLUS::Shell::Default::Plugins::Source 3p	lib/CPANPLUS/Shell/Default/Plugins/Source.pm \
+    CPANPLUS::inc 3p		lib/CPANPLUS/inc.pm \
     Carp 3p			lib/Carp.pm \
     Carp::Heavy 3p		lib/Carp/Heavy.pm \
     Class::ISA 3p		lib/Class/ISA.pm \
     Class::Struct 3p		lib/Class/Struct.pm \
+    Compress::Raw::Zlib 3p	lib/Compress/Raw/Zlib.pm \
+    Compress::Zlib 3p		lib/Compress/Zlib.pm \
     Config 3p			lib/Config.pod \
+    Config::Extensions 3p	lib/Config/Extensions.pm \
     Cwd 3p			lib/Cwd.pm \
     DB 3p			lib/DB.pm \
-    DB_File 3p			ext/DB_File/DB_File.pm \
     DBM_Filter 3p		lib/DBM_Filter.pm \
     DBM_Filter::compress 3p	lib/DBM_Filter/compress.pm \
     DBM_Filter::encode 3p	lib/DBM_Filter/encode.pm \
     DBM_Filter::int32 3p	lib/DBM_Filter/int32.pm \
     DBM_Filter::null 3p		lib/DBM_Filter/null.pm \
     DBM_Filter::utf8 3p		lib/DBM_Filter/utf8.pm \
+    DB_File 3p			ext/DB_File/DB_File.pm \
     Data::Dumper 3p		ext/Data/Dumper/Dumper.pm \
     Devel::DProf 3p		ext/Devel/DProf/DProf.pm \
+    Devel::InnerPackage 3p	lib/Devel/InnerPackage.pm \
     Devel::PPPort 3p		ext/Devel/PPPort/PPPort.pm \
     Devel::Peek 3p		ext/Devel/Peek/Peek.pm \
     Devel::SelfStubber 3p	lib/Devel/SelfStubber.pm \
     Digest 3p			lib/Digest.pm \
+    Digest::MD5 3p		ext/Digest/MD5/MD5.pm \
+    Digest::SHA 3p		lib/Digest/SHA.pm \
     Digest::base 3p		lib/Digest/base.pm \
     Digest::file 3p		lib/Digest/file.pm \
-    Digest::MD5 3p		ext/Digest/MD5/MD5.pm \
     DirHandle 3p		lib/DirHandle.pm \
     Dumpvalue 3p		lib/Dumpvalue.pm \
     DynaLoader 3p		ext/DynaLoader/XSLoader_pm.PL \
@@ -225,6 +284,7 @@ MANSRCALL=
     Encode::EBCDIC 3p		ext/Encode/EBCDIC/EBCDIC.pm \
     Encode::Encoder 3p		ext/Encode/lib/Encode/Encoder.pm \
     Encode::Encoding 3p		ext/Encode/lib/Encode/Encoding.pm \
+    Encode::GSM0338 3p		lib/Encode/GSM0338.pm \
     Encode::Guess 3p		ext/Encode/lib/Encode/Guess.pm \
     Encode::JP 3p		ext/Encode/JP/JP.pm \
     Encode::JP::H2Z 3p		ext/Encode/lib/Encode/JP/H2Z.pm \
@@ -232,6 +292,7 @@ MANSRCALL=
     Encode::KR 3p		ext/Encode/KR/KR.pm \
     Encode::KR::2022_KR 3p	ext/Encode/lib/Encode/KR/2022_KR.pm \
     Encode::MIME::Header 3p	ext/Encode/lib/Encode/MIME/Header.pm \
+    Encode::MIME::Name 3p	lib/Encode/MIME/Name.pm \
     Encode::PerlIO 3p		ext/Encode/lib/Encode/PerlIO.pod \
     Encode::Supported 3p	ext/Encode/lib/Encode/Supported.pod \
     Encode::Symbol 3p		ext/Encode/Symbol/Symbol.pm \
@@ -243,6 +304,8 @@ MANSRCALL=
     Errno 3p			ext/Errno/Errno_pm.PL \
     Exporter 3p			lib/Exporter.pm \
     Exporter::Heavy 3p		lib/Exporter/Heavy.pm \
+    ExtUtils::CBuilder 3p	lib/ExtUtils/CBuilder.pm \
+    ExtUtils::CBuilder::Platform::Windows 3p	lib/ExtUtils/CBuilder/Platform/Windows.pm \
     ExtUtils::Command 3p	lib/ExtUtils/Command.pm \
     ExtUtils::Command::MM 3p	lib/ExtUtils/Command/MM.pm \
     ExtUtils::Constant 3p	lib/ExtUtils/Constant.pm \
@@ -281,6 +344,7 @@ MANSRCALL=
     ExtUtils::Mkbootstrap 3p	lib/ExtUtils/Mkbootstrap.pm \
     ExtUtils::Mksymlists 3p	lib/ExtUtils/Mksymlists.pm \
     ExtUtils::Packlist 3p	lib/ExtUtils/Packlist.pm \
+    ExtUtils::ParseXS 3p	lib/ExtUtils/ParseXS.pm \
     ExtUtils::testlib 3p	lib/ExtUtils/testlib.pm \
     Fatal 3p			lib/Fatal.pm \
     Fcntl 3p			lib/Fcntl.pm \
@@ -289,8 +353,10 @@ MANSRCALL=
     File::Compare 3p		lib/File/Compare.pm \
     File::Copy 3p		lib/File/Copy.pm \
     File::DosGlob 3p		lib/File/DosGlob.pm \
+    File::Fetch 3p		lib/File/Fetch.pm \
     File::Find 3p		lib/File/Find.pm \
     File::Glob 3p		lib/File/Glob.pm \
+    File::GlobMapper 3p		lib/File/GlobMapper.pm \
     File::Path 3p		lib/File/Path.pm \
     File::Spec 3p		lib/File/Spec.pm \
     File::Spec::Cygwin 3p	lib/File/Spec/Cygwin.pm \
@@ -311,12 +377,18 @@ MANSRCALL=
     Getopt::Long 3p		lib/Getopt/Long.pm \
     Getopt::Std 3p		lib/Getopt/Std.pm \
     Hash::Util 3p		lib/Hash/Util.pm \
+    Hash::Util::FieldHash 3p	lib/Hash/Util/FieldHash.pm \
     I18N::Collate 3p		lib/I18N/Collate.pm \
     I18N::LangTags 3p		lib/I18N/LangTags.pm \
     I18N::LangTags::Detect 3p	lib/I18N/LangTags/Detect.pm \
     I18N::LangTags::List 3p	lib/I18N/LangTags/List.pm \
     I18N::Langinfo 3p		ext/I18N/Langinfo/Langinfo.pm \
     IO 3p			lib/IO.pm \
+    IO::Compress::Base 3p	lib/IO/Compress/Base.pm \
+    IO::Compress::Deflate 3p	lib/IO/Compress/Deflate.pm \
+    IO::Compress::Gzip 3p	lib/IO/Compress/Gzip.pm \
+    IO::Compress::RawDeflate 3p	lib/IO/Compress/RawDeflate.pm \
+    IO::Compress::Zip 3p	lib/IO/Compress/Zip.pm \
     IO::Dir 3p			lib/IO/Dir.pm \
     IO::File 3p			lib/IO/File.pm \
     IO::Handle 3p		lib/IO/Handle.pm \
@@ -327,6 +399,15 @@ MANSRCALL=
     IO::Socket 3p		lib/IO/Socket.pm \
     IO::Socket::INET 3p		lib/IO/Socket/INET.pm \
     IO::Socket::UNIX 3p		lib/IO/Socket/UNIX.pm \
+    IO::Uncompress::AnyInflate 3p	lib/IO/Uncompress/AnyInflate.pm \
+    IO::Uncompress::AnyUncompress 3p	lib/IO/Uncompress/AnyUncompress.pm \
+    IO::Uncompress::Base 3p	lib/IO/Uncompress/Base.pm \
+    IO::Uncompress::Gunzip 3p	lib/IO/Uncompress/Gunzip.pm \
+    IO::Uncompress::Inflate 3p	lib/IO/Uncompress/Inflate.pm \
+    IO::Uncompress::RawInflate 3p	lib/IO/Uncompress/RawInflate.pm \
+    IO::Uncompress::Unzip 3p	lib/IO/Uncompress/Unzip.pm \
+    IO::Zlib 3p			lib/IO/Zlib.pm \
+    IPC::Cmd 3p			lib/IPC/Cmd.pm \
     IPC::Msg 3p			lib/IPC/Msg.pm \
     IPC::Open2 3p		lib/IPC/Open2.pm \
     IPC::Open3 3p		lib/IPC/Open3.pm \
@@ -338,14 +419,21 @@ MANSRCALL=
     Locale::Currency 3p		lib/Locale/Currency.pod \
     Locale::Language 3p		lib/Locale/Language.pod \
     Locale::Maketext 3p		lib/Locale/Maketext.pod \
+    Locale::Maketext::Simple 3p	lib/Locale/Maketext/Simple.pm \
     Locale::Maketext::TPJ13 3p	lib/Locale/Maketext/TPJ13.pod \
     Locale::Script 3p		lib/Locale/Script.pod \
+    Log::Message 3p		lib/Log/Message.pm \
+    Log::Message::Config 3p	lib/Log/Message/Config.pm \
+    Log::Message::Handlers 3p	lib/Log/Message/Handlers.pm \
+    Log::Message::Item 3p	lib/Log/Message/Item.pm \
+    Log::Message::Simple 3p	lib/Log/Message/Simple.pm \
     MIME::Base64 3p		ext/MIME/Base64/Base64.pm \
     MIME::QuotedPrint 3p	ext/MIME/Base64/QuotedPrint.pm \
     Math::BigFloat 3p		lib/Math/BigFloat.pm \
     Math::BigInt 3p		lib/Math/BigInt.pm \
     Math::BigInt::Calc 3p	lib/Math/BigInt/Calc.pm \
     Math::BigInt::CalcEmu 3p	lib/Math/BigInt/CalcEmu.pm \
+    Math::BigInt::FastCalc 3p	lib/Math/BigInt/FastCalc.pm \
     Math::BigRat 3p		lib/Math/BigRat.pm \
     Math::Complex 3p		lib/Math/Complex.pm \
     Math::Trig 3p		lib/Math/Trig.pm \
@@ -357,6 +445,25 @@ MANSRCALL=
     Memoize::NDBM_File 3p	lib/Memoize/NDBM_File.pm \
     Memoize::SDBM_File 3p	lib/Memoize/SDBM_File.pm \
     Memoize::Storable 3p	lib/Memoize/Storable.pm \
+    Module::Build 3p		lib/Module/Build.pm \
+    Module::Build::API 3p	lib/Module/Build/API.pod \
+    Module::Build::Authoring 3p	lib/Module/Build/Authoring.pod \
+    Module::Build::Base 3p	lib/Module/Build/Base.pm \
+    Module::Build::Compat 3p	lib/Module/Build/Compat.pm \
+    Module::Build::ConfigData 3p	lib/Module/Build/ConfigData.pm \
+    Module::Build::Cookbook 3p	lib/Module/Build/Cookbook.pm \
+    Module::Build::ModuleInfo 3p	lib/Module/Build/ModuleInfo.pm \
+    Module::Build::Notes 3p	lib/Module/Build/Notes.pm \
+    Module::Build::PPMMaker 3p	lib/Module/Build/PPMMaker.pm \
+    Module::Build::Platform::Default 3p	lib/Module/Build/Platform/Default.pm \
+    Module::Build::Platform::Unix 3p	lib/Module/Build/Platform/Unix.pm \
+    Module::Build::YAML 3p	lib/Module/Build/YAML.pm \
+    Module::CoreList 3p		lib/Module/CoreList.pm \
+    Module::Load 3p		lib/Module/Load.pm \
+    Module::Load::Conditional 3p	lib/Module/Load/Conditional.pm \
+    Module::Loaded 3p		lib/Module/Loaded.pm \
+    Module::Pluggable 3p	lib/Module/Pluggable.pm \
+    Module::Pluggable::Object 3p	lib/Module/Pluggable/Object.pm \
     NDBM_File 3p		lib/NDBM_File.pm \
     NEXT 3p			lib/NEXT.pm \
     Net::Cmd 3p			lib/Net/Cmd.pm \
@@ -376,14 +483,18 @@ MANSRCALL=
     Net::servent 3p		lib/Net/servent.pm \
     O 3p			lib/O.pm \
     ODBM_File 3p		lib/ODBM_File.pm \
+    Object::Accessor 3p		lib/Object/Accessor.pm \
     Opcode 3p			lib/Opcode.pm \
     POSIX 3p			lib/POSIX.pod \
+    Package::Constants 3p	lib/Package/Constants.pm \
+    Params::Check 3p		lib/Params/Check.pm \
     PerlIO 3p			lib/PerlIO.pm \
     PerlIO::encoding 3p		ext/PerlIO/encoding/encoding.pm \
     PerlIO::scalar 3p		ext/PerlIO/scalar/scalar.pm \
     PerlIO::via 3p		ext/PerlIO/via/via.pm \
     PerlIO::via::QuotedPrint 3p	lib/PerlIO/via/QuotedPrint.pm \
     Pod::Checker 3p		lib/Pod/Checker.pm \
+    Pod::Escapes 3p		lib/Pod/Escapes.pm \
     Pod::Find 3p		lib/Pod/Find.pm \
     Pod::Html 3p		lib/Pod/Html.pm \
     Pod::InputObjects 3p	lib/Pod/InputObjects.pm \
@@ -403,6 +514,27 @@ MANSRCALL=
     Pod::PlainText 3p		lib/Pod/PlainText.pm \
     Pod::Plainer 3p		lib/Pod/Plainer.pm \
     Pod::Select 3p		lib/Pod/Select.pm \
+    Pod::Simple 3p		lib/Pod/Simple.pod \
+    Pod::Simple::Checker 3p	lib/Pod/Simple/Checker.pm \
+    Pod::Simple::Debug 3p	lib/Pod/Simple/Debug.pm \
+    Pod::Simple::DumpAsText 3p	lib/Pod/Simple/DumpAsText.pm \
+    Pod::Simple::DumpAsXML 3p	lib/Pod/Simple/DumpAsXML.pm \
+    Pod::Simple::HTML 3p	lib/Pod/Simple/HTML.pm \
+    Pod::Simple::HTMLBatch 3p	lib/Pod/Simple/HTMLBatch.pm \
+    Pod::Simple::LinkSection 3p	lib/Pod/Simple/LinkSection.pm \
+    Pod::Simple::Methody 3p	lib/Pod/Simple/Methody.pm \
+    Pod::Simple::PullParser 3p	lib/Pod/Simple/PullParser.pm \
+    Pod::Simple::PullParserEndToken 3p	lib/Pod/Simple/PullParserEndToken.pm \
+    Pod::Simple::PullParserStartToken 3p	lib/Pod/Simple/PullParserStartToken.pm \
+    Pod::Simple::PullParserTextToken 3p	lib/Pod/Simple/PullParserTextToken.pm \
+    Pod::Simple::PullParserToken 3p	lib/Pod/Simple/PullParserToken.pm \
+    Pod::Simple::RTF 3p	lib/Pod/Simple/RTF.pm \
+    Pod::Simple::Search 3p	lib/Pod/Simple/Search.pm \
+    Pod::Simple::SimpleTree 3p	lib/Pod/Simple/SimpleTree.pm \
+    Pod::Simple::Subclassing 3p	lib/Pod/Simple/Subclassing.pod \
+    Pod::Simple::Text 3p	lib/Pod/Simple/Text.pm \
+    Pod::Simple::TextContent 3p	lib/Pod/Simple/TextContent.pm \
+    Pod::Simple::XMLOutStream 3p	lib/Pod/Simple/XMLOutStream.pm \
     Pod::Text 3p		lib/Pod/Text.pm \
     Pod::Text::Color 3p		lib/Pod/Text/Color.pm \
     Pod::Text::Overstrike 3p	lib/Pod/Text/Overstrike.pm \
@@ -425,6 +557,8 @@ MANSRCALL=
     Term::Cap 3p		lib/Term/Cap.pm \
     Term::Complete 3p		lib/Term/Complete.pm \
     Term::ReadLine 3p		lib/Term/ReadLine.pm \
+    Term::UI 3p			lib/Term/UI.pm \
+    Term::UI::History 3p	lib/Term/UI/History.pm \
     Test 3p			lib/Test.pm \
     Test::Builder 3p		lib/Test/Builder.pm \
     Test::Builder::Module 3p	lib/Test/Builder/Module.pm \
@@ -434,8 +568,10 @@ MANSRCALL=
     Test::Harness::Assert 3p	lib/Test/Harness/Assert.pm \
     Test::Harness::Iterator 3p	lib/Test/Harness/Iterator.pm \
     Test::Harness::Point 3p	lib/Test/Harness/Point.pm \
+    Test::Harness::Results 3p	lib/Test/Harness/Results.pm \
     Test::Harness::Straps 3p	lib/Test/Harness/Straps.pm \
     Test::Harness::TAP 3p	lib/Test/Harness/TAP.pod \
+    Test::Harness::Util 3p	lib/Test/Harness/Util.pm \
     Test::More 3p		lib/Test/More.pm \
     Test::Simple 3p		lib/Test/Simple.pm \
     Test::Tutorial 3p		lib/Test/Tutorial.pod \
@@ -452,12 +588,15 @@ MANSRCALL=
     Tie::File 3p		lib/Tie/File.pm \
     Tie::Handle 3p		lib/Tie/Handle.pm \
     Tie::Hash 3p		lib/Tie/Hash.pm \
+    Tie::Hash::NamedCapture 3p	lib/Tie/Hash/NamedCapture.pm \
     Tie::Memoize 3p		lib/Tie/Memoize.pm \
     Tie::RefHash 3p		lib/Tie/RefHash.pm \
     Tie::Scalar 3p		lib/Tie/Scalar.pm \
     Tie::SubstrHash 3p		lib/Tie/SubstrHash.pm \
     Time::HiRes 3p		ext/Time/HiRes/HiRes.pm \
     Time::Local 3p		lib/Time/Local.pm \
+    Time::Piece 3p		lib/Time/Piece.pm \
+    Time::Seconds 3p		lib/Time/Seconds.pm \
     Time::gmtime 3p		lib/Time/gmtime.pm \
     Time::localtime 3p		lib/Time/localtime.pm \
     Time::tm 3p			lib/Time/tm.pm \
@@ -483,6 +622,8 @@ MANSRCALL=
     constant 3p			lib/constant.pm \
     diagnostics 3p		lib/diagnostics.pm \
     encoding 3p			ext/Encode/encoding.pm \
+    encoding::warnings 3p	lib/encoding/warnings.pm \
+    feature 3p			lib/feature.pm \
     fields 3p			lib/fields.pm \
     filetest 3p			lib/filetest.pm \
     if 3p			lib/if.pm \
@@ -490,6 +631,7 @@ MANSRCALL=
     less 3p			lib/less.pm \
     lib 3p			lib/lib.pm \
     locale 3p			lib/locale.pm \
+    mro 3p			lib/mro.pm \
     open 3p			lib/open.pm \
     ops 3p			lib/ops.pm \
     overload 3p			lib/overload.pm \
@@ -502,6 +644,7 @@ MANSRCALL=
     threads::shared 3p		ext/threads/shared/shared.pm \
     utf8 3p			lib/utf8.pm \
     vars 3p			lib/vars.pm \
+    version 3p			lib/version.pod \
     vmsish 3p			lib/vmsish.pm \
     warnings 3p			lib/warnings.pm \
     warnings::register 3p	lib/warnings/register.pm
@@ -521,7 +664,7 @@ ${page}.${sect}: ${file}
 	${POD2MAN} --section=${sect} --official ${.ALLSRC} $@
 .endfor
 
-mansrc.build: 
+mansrc.build:
 .for sect in 1 3p
 .  if !empty(_quick${sect})
 	cd ${.OBJDIR} && ${POD2MAN} --section=${sect} --official ${_quick${sect}}

@@ -1,52 +1,55 @@
 #!./perl
 
-# $RCSfile: auto.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:39 $
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = qw(. ../lib);
+}
 
-print "1..37\n";
+require "test.pl";
+plan( tests => 37 );
 
 $x = 10000;
-if (0 + ++$x - 1 == 10000) { print "ok 1\n";} else {print "not ok 1\n";}
-if (0 + $x-- - 1 == 10000) { print "ok 2\n";} else {print "not ok 2\n";}
-if (1 * $x == 10000) { print "ok 3\n";} else {print "not ok 3\n";}
-if (0 + $x-- - 0 == 10000) { print "ok 4\n";} else {print "not ok 4\n";}
-if (1 + $x == 10000) { print "ok 5\n";} else {print "not ok 5\n";}
-if (1 + $x++ == 10000) { print "ok 6\n";} else {print "not ok 6\n";}
-if (0 + $x == 10000) { print "ok 7\n";} else {print "not ok 7\n";}
-if (0 + --$x + 1 == 10000) { print "ok 8\n";} else {print "not ok 8\n";}
-if (0 + ++$x + 0 == 10000) { print "ok 9\n";} else {print "not ok 9\n";}
-if ($x == 10000) { print "ok 10\n";} else {print "not ok 10\n";}
+cmp_ok(0 + ++$x - 1,'==',10000,'scalar ++x - 1');
+cmp_ok(0 + $x-- - 1,'==',10000,'scalar x-- - 1');
+cmp_ok(1 * $x,      '==',10000,'scalar 1 * x');
+cmp_ok(0 + $x-- - 0,'==',10000,'scalar x-- - 0');
+cmp_ok(1 + $x,      '==',10000,'scalar 1 + x');
+cmp_ok(1 + $x++,    '==',10000,'scalar 1 + x++');
+cmp_ok(0 + $x,      '==',10000,'scalar x');
+cmp_ok(0 + --$x + 1,'==',10000,'scalar --x + 1');
+cmp_ok(0 + ++$x + 0,'==',10000,'scalar ++x + 0');
+cmp_ok($x,          '==',10000,'scalar x final');
 
 $x[0] = 10000;
-if (0 + ++$x[0] - 1 == 10000) { print "ok 11\n";} else {print "not ok 11\n";}
-if (0 + $x[0]-- - 1 == 10000) { print "ok 12\n";} else {print "not ok 12\n";}
-if (1 * $x[0] == 10000) { print "ok 13\n";} else {print "not ok 13\n";}
-if (0 + $x[0]-- - 0 == 10000) { print "ok 14\n";} else {print "not ok 14\n";}
-if (1 + $x[0] == 10000) { print "ok 15\n";} else {print "not ok 15\n";}
-if (1 + $x[0]++ == 10000) { print "ok 16\n";} else {print "not ok 16\n";}
-if (0 + $x[0] == 10000) { print "ok 17\n";} else {print "not ok 17\n";}
-if (0 + --$x[0] + 1 == 10000) { print "ok 18\n";} else {print "not ok 18\n";}
-if (0 + ++$x[0] + 0 == 10000) { print "ok 19\n";} else {print "not ok 19\n";}
-if ($x[0] == 10000) { print "ok 20\n";} else {print "not ok 20\n";}
+cmp_ok(0 + ++$x[0] - 1,'==',10000,'aelem ++x - 1');
+cmp_ok(0 + $x[0]-- - 1,'==',10000,'aelem x-- - 1');
+cmp_ok(1 * $x[0],      '==',10000,'aelem 1 * x');
+cmp_ok(0 + $x[0]-- - 0,'==',10000,'aelem x-- - 0');
+cmp_ok(1 + $x[0],      '==',10000,'aelem 1 + x');
+cmp_ok(1 + $x[0]++,    '==',10000,'aelem 1 + x++');
+cmp_ok(0 + $x[0],      '==',10000,'aelem x');
+cmp_ok(0 + --$x[0] + 1,'==',10000,'aelem --x + 1');
+cmp_ok(0 + ++$x[0] + 0,'==',10000,'aelem ++x + 0');
+cmp_ok($x[0],          '==',10000,'aelem x final');
 
 $x{0} = 10000;
-if (0 + ++$x{0} - 1 == 10000) { print "ok 21\n";} else {print "not ok 21\n";}
-if (0 + $x{0}-- - 1 == 10000) { print "ok 22\n";} else {print "not ok 22\n";}
-if (1 * $x{0} == 10000) { print "ok 23\n";} else {print "not ok 23\n";}
-if (0 + $x{0}-- - 0 == 10000) { print "ok 24\n";} else {print "not ok 24\n";}
-if (1 + $x{0} == 10000) { print "ok 25\n";} else {print "not ok 25\n";}
-if (1 + $x{0}++ == 10000) { print "ok 26\n";} else {print "not ok 26\n";}
-if (0 + $x{0} == 10000) { print "ok 27\n";} else {print "not ok 27\n";}
-if (0 + --$x{0} + 1 == 10000) { print "ok 28\n";} else {print "not ok 28\n";}
-if (0 + ++$x{0} + 0 == 10000) { print "ok 29\n";} else {print "not ok 29\n";}
-if ($x{0} == 10000) { print "ok 30\n";} else {print "not ok 30\n";}
+cmp_ok(0 + ++$x{0} - 1,'==',10000,'helem ++x - 1');
+cmp_ok(0 + $x{0}-- - 1,'==',10000,'helem x-- - 1');
+cmp_ok(1 * $x{0},      '==',10000,'helem 1 * x');
+cmp_ok(0 + $x{0}-- - 0,'==',10000,'helem x-- - 0');
+cmp_ok(1 + $x{0},      '==',10000,'helem 1 + x');
+cmp_ok(1 + $x{0}++,    '==',10000,'helem 1 + x++');
+cmp_ok(0 + $x{0},      '==',10000,'helem x');
+cmp_ok(0 + --$x{0} + 1,'==',10000,'helem --x + 1');
+cmp_ok(0 + ++$x{0} + 0,'==',10000,'helem ++x + 0');
+cmp_ok($x{0},          '==',10000,'helem x final');
 
 # test magical autoincrement
 
-if (++($foo = '99') eq '100') {print "ok 31\n";} else {print "not ok 31\n";}
-if (++($foo = 'a0') eq 'a1') {print "ok 32\n";} else {print "not ok 32\n";}
-if (++($foo = 'Az') eq 'Ba') {print "ok 33\n";} else {print "not ok 33\n";}
-if (++($foo = 'zz') eq 'aaa') {print "ok 34\n";} else {print "not ok 34\n";}
-if (++($foo = 'A99') eq 'B00') {print "ok 35\n";} else {print "not ok 35\n";}
-# EBCDIC guards: i and j, r and s, are not contiguous.
-if (++($foo = 'zi') eq 'zj') {print "ok 36\n";} else {print "not ok 36\n";}
-if (++($foo = 'zr') eq 'zs') {print "ok 37\n";} else {print "not ok 37\n";}
+cmp_ok(++($foo = '99'), 'eq','100','99 incr 100');
+cmp_ok(++($foo = 'a0'), 'eq','a1','a0 incr a1');
+cmp_ok(++($foo = 'Az'), 'eq','Ba','Az incr Ba');
+cmp_ok(++($foo = 'zz'), 'eq','aaa','zzz incr aaa');
+cmp_ok(++($foo = 'A99'),'eq','B00','A99 incr B00');
+cmp_ok(++($foo = 'zi'), 'eq','zj','zi incr zj (EBCDIC i,j non-contiguous check)');
+cmp_ok(++($foo = 'zr'), 'eq','zs','zr incr zs (EBCDIC r,s non-contiguous check)');

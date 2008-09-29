@@ -1,4 +1,4 @@
-#!./perl -wT
+#!./perl -w
 
 BEGIN {
     chdir 't' if -d 't';
@@ -7,7 +7,7 @@ BEGIN {
 }
 
 require './test.pl';
-plan( tests => 131 );
+plan( tests => 136 );
 
 $x = 'foo';
 $_ = "x";
@@ -552,4 +552,34 @@ is($name, "cis", q[#22351 bug with 'e' substitution modifier]);
     is(length($x), 2, '[perl #34171]');
 }
 
+
+{ # [perl #27940] perlbug: [\x00-\x1f] works, [\c@-\c_] does not
+    my $c;
+
+    ($c = "\x20\c@\x30\cA\x40\cZ\x50\c_\x60") =~ s/[\c@-\c_]//g;
+    is($c, "\x20\x30\x40\x50\x60", "s/[\\c\@-\\c_]//g");
+
+    ($c = "\x20\x00\x30\x01\x40\x1A\x50\x1F\x60") =~ s/[\x00-\x1f]//g;
+    is($c, "\x20\x30\x40\x50\x60", "s/[\\x00-\\x1f]//g");
+}
+{
+    $_ = "xy";
+    no warnings 'uninitialized';
+    /(((((((((x)))))))))(z)/;	# clear $10
+    s/(((((((((x)))))))))(y)/${10}/;
+    is($_,"y","RT#6006: \$_ eq '$_'");
+    $_ = "xr";
+    s/(((((((((x)))))))))(r)/fooba${10}/;
+    is($_,"foobar","RT#6006: \$_ eq '$_'");
+}
+{
+    my $want=("\n" x 11).("B\n" x 11)."B";
+    $_="B";
+    our $i;
+    for $i(1..11){
+	s/^.*$/$&/gm;
+	$_="\n$_\n$&";
+    }
+    is($want,$_,"RT#17542");
+}
 

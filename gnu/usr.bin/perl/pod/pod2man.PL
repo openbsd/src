@@ -36,9 +36,9 @@ $Config{startperl}
 print OUT <<'!NO!SUBS!';
 
 # pod2man -- Convert POD data to formatted *roff input.
-# $Id: pod2man.PL,v 1.7 2003/12/03 03:02:47 millert Exp $
+# $Id: pod2man.PL,v 1.16 2006-01-21 01:53:55 eagle Exp $
 #
-# Copyright 1999, 2000, 2001 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -55,8 +55,7 @@ use strict;
 use vars qw($running_under_some_shell);
 
 # Insert -- into @ARGV before any single dash argument to hide it from
-# Getopt::Long; we want to interpret it as meaning stdin (which Pod::Parser
-# does correctly).
+# Getopt::Long; we want to interpret it as meaning stdin.
 my $stdin;
 @ARGV = map { $_ eq '-' && !$stdin++ ? ('--', $_) : $_ } @ARGV;
 
@@ -101,7 +100,7 @@ pod2man - Convert POD data to formatted *roff input
 
 =head1 SYNOPSIS
 
-pod2man [B<--section>=I<manext>] [B<--release>=I<version>]
+pod2man [B<--section>=I<manext>] [B<--release>[=I<version>]]
 [B<--center>=I<string>] [B<--date>=I<string>] [B<--fixed>=I<font>]
 [B<--fixedbold>=I<font>] [B<--fixeditalic>=I<font>]
 [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--official>]
@@ -252,7 +251,7 @@ Print out the name of each output file as it is being generated.
 
 =head1 DIAGNOSTICS
 
-If B<pod2man> fails with errors, see L<Pod::Man> and L<Pod::Parser> for
+If B<pod2man> fails with errors, see L<Pod::Man> and L<Pod::Simple> for
 information about what those errors might mean.
 
 =head1 EXAMPLES
@@ -442,20 +441,6 @@ Bugs you don't plan to fix.  :-)
 
 Miscellaneous commentary.
 
-=item SEE ALSO
-
-Other man pages to check out, like man(1), man(7), makewhatis(8), or
-catman(8).  Normally a simple list of man pages separated by commas, or a
-paragraph giving the name of a reference work.  Man page references, if they
-use the standard C<name(section)> form, don't have to be enclosed in
-LE<lt>E<gt> (although it's recommended), but other things in this section
-probably should be when appropriate.
-
-If the package has a mailing list, include a URL or subscription
-instructions here.
-
-If the package has a web site, include a URL here.
-
 =item AUTHOR
 
 Who wrote it (use AUTHORS for multiple people).  Including your current
@@ -463,6 +448,12 @@ e-mail address (or some e-mail address to which bug reports should be sent)
 so that users have a way of contacting you is a good idea.  Remember that
 program documentation tends to roam the wild for far longer than you expect
 and pick an e-mail address that's likely to last if possible.
+
+=item HISTORY
+
+Programs derived from other sources sometimes have this, or you might keep
+a modification log here.  If the log gets overly long or detailed,
+consider maintaining it in a separate file, though.
 
 =item COPYRIGHT AND LICENSE
 
@@ -481,11 +472,19 @@ This makes it easy for people to use your module with Perl.  Note that
 this licensing is neither an endorsement or a requirement, you are of
 course free to choose any licensing.
 
-=item HISTORY
+=item SEE ALSO
 
-Programs derived from other sources sometimes have this, or you might keep
-a modification log here.  If the log gets overly long or detailed,
-consider maintaining it in a separate file, though.
+Other man pages to check out, like man(1), man(7), makewhatis(8), or
+catman(8).  Normally a simple list of man pages separated by commas, or a
+paragraph giving the name of a reference work.  Man page references, if they
+use the standard C<name(section)> form, don't have to be enclosed in
+LE<lt>E<gt> (although it's recommended), but other things in this section
+probably should be when appropriate.
+
+If the package has a mailing list, include a URL or subscription
+instructions here.
+
+If the package has a web site, include a URL here.
 
 =back
 
@@ -511,7 +510,7 @@ function names, man page references, and the like unadorned by markup and
 the POD translators will figure it out for you.  This makes it much easier
 to later edit the documentation.  Note that many existing translators
 (including this one currently) will do the wrong thing with e-mail addresses
-or URLs when wrapped in LE<lt>E<gt>, so don't do that.
+when wrapped in LE<lt>E<gt>, so don't do that.
 
 For additional information that may be more accurate for your specific
 system, see either L<man(5)> or L<man(7)> depending on your system manual
@@ -519,7 +518,7 @@ section numbering conventions.
 
 =head1 SEE ALSO
 
-L<Pod::Man>, L<Pod::Parser>, L<man(1)>, L<nroff(1)>, L<podchecker(1)>,
+L<Pod::Man>, L<Pod::Simple>, L<man(1)>, L<nroff(1)>, L<podchecker(1)>,
 L<troff(1)>, L<man(7)>
 
 The man page documenting the an macro set may be L<man(5)> instead of
@@ -538,7 +537,7 @@ page, are taken from the B<pod2man> documentation by Tom.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

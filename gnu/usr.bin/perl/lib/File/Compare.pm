@@ -6,14 +6,18 @@ use warnings;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Too_Big);
 
 require Exporter;
-use Carp;
 
-$VERSION = '1.1003';
+$VERSION = '1.1005';
 @ISA = qw(Exporter);
 @EXPORT = qw(compare);
 @EXPORT_OK = qw(cmp compare_text);
 
 $Too_Big = 1024 * 1024 * 2;
+
+sub croak {
+    require Carp;
+    goto &Carp::croak;
+}
 
 sub compare {
     croak("Usage: compare( file1, file2 [, buffersize]) ")
@@ -34,7 +38,7 @@ sub compare {
     } elsif (ref(\$from) eq 'GLOB') {
 	*FROM = $from;
     } else {
-	open(FROM,"<$from") or goto fail_open1;
+	open(FROM,"<",$from) or goto fail_open1;
 	unless ($text_mode) {
 	    binmode FROM;
 	    $fromsize = -s FROM;
@@ -48,7 +52,7 @@ sub compare {
     } elsif (ref(\$to) eq 'GLOB') {
 	*TO = $to;
     } else {
-	open(TO,"<$to") or goto fail_open2;
+	open(TO,"<",$to) or goto fail_open2;
 	binmode TO unless $text_mode;
 	$closeto = 1;
     }

@@ -3,7 +3,7 @@
 #
 #   Version:  see $VERSION below
 #   Author:   Charles Bailey  bailey@newman.upenn.edu
-#   Revised:  08-Mar-1995
+#   Revised:  8-DEC-2007
 
 =head1 NAME
 
@@ -11,15 +11,18 @@ VMS::Filespec - convert between VMS and Unix file specification syntax
 
 =head1 SYNOPSIS
 
-use VMS::Filespec;
-$fullspec = rmsexpand('[.VMS]file.specification'[, 'default:[file.spec]']);
-$vmsspec = vmsify('/my/Unix/file/specification');
-$unixspec = unixify('my:[VMS]file.specification');
-$path = pathify('my:[VMS.or.Unix.directory]specification.dir');
-$dirfile = fileify('my:[VMS.or.Unix.directory.specification]');
-$vmsdir = vmspath('my/VMS/or/Unix/directory/specification.dir');
-$unixdir = unixpath('my:[VMS.or.Unix.directory]specification.dir');
-candelete('my:[VMS.or.Unix]file.specification');
+  use VMS::Filespec;
+  $fullspec = rmsexpand('[.VMS]file.specification'[, 'default:[file.spec]']);
+  $vmsspec = vmsify('/my/Unix/file/specification');
+  $unixspec = unixify('my:[VMS]file.specification');
+  $path = pathify('my:[VMS.or.Unix.directory]specification.dir');
+  $dirfile = fileify('my:[VMS.or.Unix.directory.specification]');
+  $vmsdir = vmspath('my/VMS/or/Unix/directory/specification.dir');
+  $unixdir = unixpath('my:[VMS.or.Unix.directory]specification.dir');
+  candelete('my:[VMS.or.Unix]file.specification');
+  $case_tolerant = case_tolerant_process;
+  $unixspec = unixrealpath('file_specification');
+  $vmsspec = vmsrealpath('file_specification');
 
 =head1 DESCRIPTION
 
@@ -72,13 +75,79 @@ file specification or the default specification passed to C<rmsexpand>.
 as possible.)  If an error occurs, returns C<undef> and sets C<$!>
 and C<$^E>.
 
+C<rmsexpand> on success will produce a name that fits in a 255 byte buffer,
+which is required for parameters passed to the DCL interpreter.
+
 =head2 vmsify
 
-Converts a file specification to VMS syntax.
+Converts a file specification to VMS syntax.  If the file specification
+cannot be converted to or is already in VMS syntax, it will be
+passed through unchanged.
+
+The file specifications of C<.> and C<..> will be converted to
+C<[]> and C<[-]>.
+
+If the file specification is already in a valid VMS syntax, it will
+be passed through unchanged, except that the UTF-8 flag will be cleared
+since VMS format file specifications are never in UTF-8.
+
+When Perl is running on an OpenVMS system, if the C<DECC$EFS_CHARSET>
+feature is not enabled, extra dots in the file specification will
+be converted to underscore characters, and the C<?> character will
+be converted to a C<%> character, if a conversion is done.
+
+When Perl is running on an OpenVMS system, if the C<DECC$EFS_CHARSET>
+feature is enabled, this implies that the Unix pathname cannot have
+a version, and that a path consisting of three dots, C<./.../>, will be
+converted to C<[.^.^.^.]>.
+
+Unix style shell macros like C<$(abcd)> are passed through instead
+of being converted to C<$^(abcd^)> independent of the C<DECC$EFS_CHARSET>
+feature setting.  Unix style shell macros should not use characters
+that are not in the ASCII character set, as the resulting specification
+may or may not be still in UTF8 format.
+
+The feature logical name C<PERL_VMS_VTF7_FILENAMES> controls if UNICODE
+characters in Unix filenames are encoded in VTF-7 notation in the resulting
+OpenVMS file specification.  [Currently under development]
+
+C<unixify> on the resulting file specification may not result in the
+original Unix file specification, so programs should not plan to convert
+a file specification from Unix to VMS and then back to Unix again after
+modification of the components.
 
 =head2 unixify
 
-Converts a file specification to Unix syntax.
+Converts a file specification to Unix syntax.  If the file specification
+cannot be converted to or is already in Unix syntax, it will be passed
+through unchanged.
+
+When Perl is running on an OpenVMS system, the following C<DECC$> feature
+settings will control how the filename is converted:
+
+ C<decc$disable_to_vms_logname_translation:> default = C<ENABLE>
+ C<decc$disable_posix_root:>                 default = C<ENABLE>
+ C<decc$efs_charset:>                        default = C<DISABLE>
+ C<decc$filename_unix_no_version:>           default = C<DISABLE>
+ C<decc$readdir_dropdotnotype:>              default = C<ENABLE>
+
+When Perl is being run under a Unix shell on OpenVMS, the defaults at
+a future time may be more appropriate for it.
+
+When Perl is running on an OpenVMS system with C<DECC$EFS_CHARSET>
+enabled, a wild card directory name of C<[...]> cannot be translated to
+a valid Unix file specification.  Also, directory file specifications
+will have their implied ".dir;1" removed, and a trailing C<.> character
+indicating a null extension will be removed.
+
+Note that C<DECC$EFS_CHARSET> requires C<DECC$FILENAME_UNIX_NO_VERSION> because
+the conversion routine cannot differentiate whether the last C<.> of a Unix
+specification is delimiting a version, or is just part of a file specification.
+
+C<vmsify> on the resulting file specification may not result in the
+original VMS file specification, so programs should not plan to convert
+a file specification from VMS to Unix and then back to VMS again after
+modification.
 
 =head2 pathify
 
@@ -119,16 +188,42 @@ it's a list operator, so you need to be careful about parentheses.  Both of
 these restrictions may be removed in the future if the functionality of
 C<candelete> becomes part of the Perl core.
 
+=head2 case_tolerant_process
+
+This reports whether the VMS process has been set to a case tolerant
+state, and returns true when the process is in the traditional case
+tolerant mode and false when case sensitivity has been enabled for the
+process.   It is intended for use by the File::Spec::VMS->case_tolerant
+method only, and it is recommended that you only use
+File::Spec->case_tolerant.
+
+=head2 unixrealpath
+
+This exposes the VMS C library C<realpath> function where available.
+It will always return a Unix format specification.
+
+If the C<realpath> function is not available, or is unable to return the
+real path of the file, C<unixrealpath> will use the same internal
+procedure as the C<vmsrealpath> function and convert the output to a
+Unix format specification.  It is not available on non-VMS systems.
+
+=head2 vmsrealpath
+
+This uses the C<LIB$FID_TO_NAME> run-time library call to find the name
+of the primary link to a file, and returns the filename in VMS format. 
+This function is not available on non-VMS systems.
+
+
 =head1 REVISION
 
-This document was last revised 22-Feb-1996, for Perl 5.002.
+This document was last revised 8-DEC-2007, for Perl 5.10.0
 
 =cut
 
 package VMS::Filespec;
 require 5.002;
 
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 
 # If you want to use this package on a non-VMS system,
 # uncomment the following line.
@@ -138,7 +233,7 @@ require Exporter;
 @ISA = qw( Exporter );
 @EXPORT = qw( &vmsify &unixify &pathify &fileify
               &vmspath &unixpath &candelete &rmsexpand );
-
+@EXPORT_OK = qw( &unixrealpath &vmsrealpath &case_tolerant_process );
 1;
 
 
@@ -348,4 +443,8 @@ sub candelete ($) {
     return (-w fileify($parent));
   }
   else { return (-w '[-]'); }
+}
+
+sub case_tolerant_process () {
+    return 0;
 }

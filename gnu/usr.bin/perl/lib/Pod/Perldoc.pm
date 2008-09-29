@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catfile catdir splitdir);
 use vars qw($VERSION @Pagers $Bindir $Pod2man
   $Temp_Files_Created $Temp_File_Lifetime
 );
-$VERSION = '3.14';
+$VERSION = '3.14_02';
 #..........................................................................
 
 BEGIN {  # Make a DEBUG constant very first thing...
@@ -62,7 +62,7 @@ $Pod2man = "pod2man" . ( $Config{'versiononly'} ? $Config{'version'} : '' );
 #
 # Option accessors...
 
-foreach my $subname (map "opt_$_", split '', q{mhlvriFfXqnTdU}) {
+foreach my $subname (map "opt_$_", split '', q{mhlvriFfXqnTdUL}) {
   no strict 'refs';
   *$subname = do{ use strict 'refs';  sub () { shift->_elem($subname, @_) } };
 }
@@ -71,6 +71,7 @@ foreach my $subname (map "opt_$_", split '', q{mhlvriFfXqnTdU}) {
 sub opt_f_with { shift->_elem('opt_f', @_) }
 sub opt_q_with { shift->_elem('opt_q', @_) }
 sub opt_d_with { shift->_elem('opt_d', @_) }
+sub opt_L_with { shift->_elem('opt_L', @_) }
 
 sub opt_w_with { # Specify an option for the formatter subclass
   my($self, $value) = @_;
@@ -247,18 +248,19 @@ Options:
     -i   Ignore case
     -t   Display pod using pod2text instead of pod2man and nroff
              (-t is the default on win32 unless -n is specified)
-    -u	 Display unformatted pod text
+    -u   Display unformatted pod text
     -m   Display module's file in its entirety
     -n   Specify replacement for nroff
     -l   Display the module's file name
     -F   Arguments are file names, not modules
-    -v	 Verbosely describe what's going on
+    -v   Verbosely describe what's going on
     -T   Send output to STDOUT without any pager
     -d output_filename_to_send_to
     -o output_format_name
     -M FormatterModuleNameToUse
     -w formatter_option:option_value
-    -X	 use index if present (looks for pod.idx at $Config{archlib})
+    -L translation_code   Choose doc translation (if any)
+    -X   use index if present (looks for pod.idx at $Config{archlib})
     -q   Search the text of questions (not answers) in perlfaq[1-9]
 
 PageName|ModuleName...
@@ -291,7 +293,7 @@ sub usage_brief {
   $me =~ s,.*[/\\],,; # get basename
   
   die <<"EOUSAGE";
-Usage: $me [-h] [-V] [-r] [-i] [-v] [-t] [-u] [-m] [-n nroffer_program] [-l] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-F] [-X] PageName|ModuleName|ProgramName
+Usage: $me [-h] [-V] [-r] [-i] [-v] [-t] [-u] [-m] [-n nroffer_program] [-l] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName
        $me -f PerlFunc
        $me -q FAQKeywords
 
@@ -347,6 +349,9 @@ sub init {
 
   DEBUG > 3 and printf "Formatter switches now: [%s]\n",
    join ' ', map "[@$_]", @{ $self->{'formatter_switches'} };
+
+  $self->{'translators'} = [];
+  $self->{'extra_search_dirs'} = [];
 
   return;
 }
@@ -487,7 +492,7 @@ sub find_good_formatter_class {
       } else {
         $^W = 0;
         # The average user just has no reason to be seeing
-        #  $^W-suppressable warnings from the require!
+        #  $^W-suppressible warnings from the require!
       }
 
       eval "require $c";
@@ -646,6 +651,9 @@ sub options_processing {
     $self->opt_n("nroff") unless $self->opt_n;
     $self->add_formatter_option( '__nroffer' => $self->opt_n );
 
+    # Adjust for using translation packages
+    $self->add_translator($self->opt_L) if $self->opt_L;
+
     return;
 }
 
@@ -668,6 +676,16 @@ sub options_sanity {
     
     # Any sanity-checking need doing here?
     
+    # But does not make sense to set either -f or -q in $ENV{"PERLDOC"} 
+    if( $self->opt_f or $self->opt_q ) { 
+	$self->usage("Only one of -f -or -q") if $self->opt_f and $self->opt_q;
+	warn 
+	    "Perldoc is only really meant for reading one word at a time.\n",
+	    "So these parameters are being ignored: ",
+	    join(' ', @{$self->{'args'}}),
+	    "\n"
+		if @{$self->{'args'}}
+    }
     return;
 }
 
@@ -697,10 +715,14 @@ sub grand_search_init {
             next;
         }
 
+        my @searchdirs;
+
+        # prepend extra search directories (including language specific)
+        push @searchdirs, @{ $self->{'extra_search_dirs'} };
+
         # We must look both in @INC for library modules and in $bindir
         # for executables, like h2xs or perldoc itself.
-
-        my @searchdirs = ($self->{'bindir'}, @INC);
+        push @searchdirs, ($self->{'bindir'}, @INC);
         unless ($self->opt_m) {
             if (IS_VMS) {
                 my($i,$trn);
@@ -800,6 +822,39 @@ sub add_formatter_option { # $self->add_formatter_option('key' => 'value');
   return;
 }
 
+#.........................................................................
+
+sub pod_dirs { # @dirs = pod_dirs($translator);
+    my $tr = shift;
+    return $tr->pod_dirs if $tr->can('pod_dirs');
+    
+    my $mod = ref $tr || $tr;
+    $mod =~ s|::|/|g;
+    $mod .= '.pm';
+
+    my $dir = $INC{$mod};
+    $dir =~ s/\.pm\z//;
+    return $dir;
+}
+
+#.........................................................................
+
+sub add_translator { # $self->add_translator($lang);
+    my $self = shift;
+    for my $lang (@_) {
+        my $pack = 'POD2::' . uc($lang);
+        eval "require $pack";
+        if ( $@ ) {
+            # XXX warn: non-installed translator package
+        } else {
+            push @{ $self->{'translators'} }, $pack;
+            push @{ $self->{'extra_search_dirs'} }, pod_dirs($pack);
+            # XXX DEBUG
+        }
+    }
+    return;
+}
+
 #..........................................................................
 
 sub search_perlfunc {
@@ -817,11 +872,17 @@ sub search_perlfunc {
 
     DEBUG > 2 and
      print "Going to perlfunc-scan for $search_re in $perlfunc\n";
-    
+
+    my $re = 'Alphabetical Listing of Perl Functions';
+    if ( $self->opt_L ) {
+        my $tr = $self->{'translators'}->[0];
+        $re =  $tr->search_perlfunc_re if $tr->can('search_perlfunc_re');
+    }
+
     # Skip introduction
     local $_;
     while (<PFUNC>) {
-        last if /^=head2 Alphabetical Listing of Perl Functions/;
+        last if /^=head2 $re/;
     }
 
     # Look for our function
@@ -915,7 +976,7 @@ sub render_findings {
     die "Nothing found?!";
     # should have been caught before here
   } elsif(@$found_things > 1) {
-    warn join '',
+    warn 
      "Perldoc is only really meant for reading one document at a time.\n",
      "So these parameters are being ignored: ",
      join(' ', @$found_things[1 .. $#$found_things] ),
@@ -1533,6 +1594,7 @@ sub searchfor {
     $self->{'target'} = (splitdir $s)[-1];  # XXX: why not use File::Basename?
     for ($i=0; $i<@dirs; $i++) {
 	$dir = $dirs[$i];
+	next unless -d $dir;
 	($dir = VMS::Filespec::unixpath($dir)) =~ s!/\z!! if IS_VMS;
 	if (       (! $self->opt_m && ( $ret = $self->check_file($dir,"$s.pod")))
 		or ( $ret = $self->check_file($dir,"$s.pm"))

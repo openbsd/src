@@ -119,7 +119,7 @@ handlers:
 But that will be problematic for the more complicated handlers that need
 to reinstall themselves.  Because Perl's signal mechanism is currently
 based on the signal(3) function from the C library, you may sometimes be so
-misfortunate as to run on systems where that function is "broken", that
+unfortunate as to run on systems where that function is "broken", that
 is, it behaves in the old unreliable SysV way rather than the newer, more
 reasonable BSD and POSIX fashion.  So you'll see defensive people writing
 signal handlers like this:
@@ -309,7 +309,7 @@ There were two things you could do, knowing this: be paranoid or be
 pragmatic.  The paranoid approach was to do as little as possible in your
 signal handler.  Set an existing integer variable that already has a
 value, and return.  This doesn't help you if you're in a slow system call,
-which will just restart.  That means you have to C<die> to longjump(3) out
+which will just restart.  That means you have to C<die> to longjmp(3) out
 of the handler.  Even this is a little cavalier for the true paranoiac,
 who avoids C<die> in a handler because the system I<is> out to get you.
 The pragmatic approach was to say "I know the risks, but prefer the
@@ -330,12 +330,27 @@ previous Perls in the following ways:
 
 =over 4
 
-=item Long running opcodes
+=item Long-running opcodes
 
-As Perl interpreter only looks at the signal flags when it about to
-execute a new opcode if a signal arrives during a long running opcode
-(e.g. a regular expression operation on a very large string) then
-signal will not be seen until operation completes.
+As the Perl interpreter only looks at the signal flags when it is about
+to execute a new opcode, a signal that arrives during a long-running
+opcode (e.g. a regular expression operation on a very large string) will
+not be seen until the current opcode completes.
+
+N.B. If a signal of any given type fires multiple times during an opcode 
+(such as from a fine-grained timer), the handler for that signal will
+only be called once after the opcode completes, and all the other
+instances will be discarded.  Furthermore, if your system's signal queue
+gets flooded to the point that there are signals that have been raised
+but not yet caught (and thus not deferred) at the time an opcode
+completes, those signals may well be caught and deferred during
+subsequent opcodes, with sometimes surprising results.  For example, you
+may see alarms delivered even after calling C<alarm(0)> as the latter
+stops the raising of alarms but does not cancel the delivery of alarms
+raised but not yet caught.  Do not depend on the behaviors described in
+this paragraph as they are side effects of the current implementation and
+may change in future versions of Perl.
+
 
 =item Interrupting IO
 
@@ -371,6 +386,10 @@ try something like the following:
                      POSIX::SigAction->new(sub { die "alarm" }))
           or die "Error setting SIGALRM handler: $!\n";
 
+Another way to disable the safe signal behavior locally is to use
+the C<Perl::Unsafe::Signals> module from CPAN (which will affect
+all signals).
+
 =item Restartable system calls
 
 On systems that supported it, older versions of Perl used the
@@ -387,18 +406,10 @@ C<waitpid> calls will always be retried.
 
 =item Signals as "faults"
 
-Certain signals e.g. SEGV, ILL, BUS are generated as a result of
-virtual memory or other "faults". These are normally fatal and there
-is little a Perl-level handler can do with them. (In particular the
-old signal scheme was particularly unsafe in such cases.)  However if
-a %SIG handler is set the new scheme simply sets a flag and returns as
-described above. This may cause the operating system to try the
-offending machine instruction again and - as nothing has changed - it
-will generate the signal again. The result of this is a rather odd
-"loop". In future Perl's signal mechanism may be changed to avoid this
-- perhaps by simply disallowing %SIG handlers on signals of that
-type. Until then the work-round is not to set a %SIG handler on those
-signals. (Which signals they are is operating system dependent.)
+Certain signals, e.g. SEGV, ILL, and BUS, are generated as a result of
+virtual memory or other "faults". These are normally fatal and there is
+little a Perl-level handler can do with them, so Perl now delivers them
+immediately rather than attempting to defer them.
 
 =item Signals triggered by operating system state
 
@@ -532,7 +543,7 @@ output doesn't wind up on the user's terminal).
 The fork() has to come before the setsid() to ensure that you aren't a
 process group leader (the setsid() will fail if you are).  If your
 system doesn't have the setsid() function, open F</dev/tty> and use the
-C<TIOCNOTTY> ioctl() on it instead.  See L<tty(4)> for details.
+C<TIOCNOTTY> ioctl() on it instead.  See tty(4) for details.
 
 Non-Unix users should check their Your_OS::Process module for other
 solutions.
@@ -915,67 +926,91 @@ go back to service a new client.
     my $paddr;
 
     use POSIX ":sys_wait_h";
+    use Errno;
+
     sub REAPER {
-	my $child;
-        while (($waitedpid = waitpid(-1,WNOHANG)) > 0) {
-	    logmsg "reaped $waitedpid" . ($? ? " with exit $?" : '');
-	}
-	$SIG{CHLD} = \&REAPER;  # loathe sysV
+        local $!;   # don't let waitpid() overwrite current error
+        while ((my $pid = waitpid(-1,WNOHANG)) > 0 && WIFEXITED($?)) {
+            logmsg "reaped $waitedpid" . ($? ? " with exit $?" : '');
+        }
+        $SIG{CHLD} = \&REAPER;  # loathe sysV
     }
 
     $SIG{CHLD} = \&REAPER;
 
-    for ( $waitedpid = 0;
-	  ($paddr = accept(Client,Server)) || $waitedpid;
-	  $waitedpid = 0, close Client)
-    {
-	next if $waitedpid and not $paddr;
-	my($port,$iaddr) = sockaddr_in($paddr);
-	my $name = gethostbyaddr($iaddr,AF_INET);
+    while(1) {
+        $paddr = accept(Client, Server) || do {
+            # try again if accept() returned because a signal was received
+            next if $!{EINTR};
+            die "accept: $!";
+        };
+        my ($port, $iaddr) = sockaddr_in($paddr);
+        my $name = gethostbyaddr($iaddr, AF_INET);
 
-	logmsg "connection from $name [",
-		inet_ntoa($iaddr), "]
-		at port $port";
+        logmsg "connection from $name [",
+               inet_ntoa($iaddr),
+               "] at port $port";
 
-	spawn sub {
-	    $|=1;
-	    print "Hello there, $name, it's now ", scalar localtime, $EOL;
-	    exec '/usr/games/fortune'		# XXX: `wrong' line terminators
-		or confess "can't exec fortune: $!";
-	};
-
+        spawn sub {
+            $|=1;
+            print "Hello there, $name, it's now ", scalar localtime, $EOL;
+            exec '/usr/games/fortune'       # XXX: `wrong' line terminators
+                or confess "can't exec fortune: $!";
+        };
+        close Client;
     }
 
     sub spawn {
-	my $coderef = shift;
+        my $coderef = shift;
 
-	unless (@_ == 0 && $coderef && ref($coderef) eq 'CODE') {
-	    confess "usage: spawn CODEREF";
-	}
+        unless (@_ == 0 && $coderef && ref($coderef) eq 'CODE') {
+            confess "usage: spawn CODEREF";
+        }
 
-	my $pid;
-	if (!defined($pid = fork)) {
-	    logmsg "cannot fork: $!";
-	    return;
-	} elsif ($pid) {
-	    logmsg "begat $pid";
-	    return; # I'm the parent
-	}
-	# else I'm the child -- go spawn
+        my $pid;
+        if (! defined($pid = fork)) {
+            logmsg "cannot fork: $!";
+            return;
+        } 
+        elsif ($pid) {
+            logmsg "begat $pid";
+            return; # I'm the parent
+        }
+        # else I'm the child -- go spawn
 
-	open(STDIN,  "<&Client")   || die "can't dup client to stdin";
-	open(STDOUT, ">&Client")   || die "can't dup client to stdout";
-	## open(STDERR, ">&STDOUT") || die "can't dup stdout to stderr";
-	exit &$coderef();
+        open(STDIN,  "<&Client")   || die "can't dup client to stdin";
+        open(STDOUT, ">&Client")   || die "can't dup client to stdout";
+        ## open(STDERR, ">&STDOUT") || die "can't dup stdout to stderr";
+        exit &$coderef();
     }
 
-This server takes the trouble to clone off a child version via fork() for
-each incoming request.  That way it can handle many requests at once,
-which you might not always want.  Even if you don't fork(), the listen()
-will allow that many pending connections.  Forking servers have to be
-particularly careful about cleaning up their dead children (called
-"zombies" in Unix parlance), because otherwise you'll quickly fill up your
-process table.
+This server takes the trouble to clone off a child version via fork()
+for each incoming request.  That way it can handle many requests at
+once, which you might not always want.  Even if you don't fork(), the
+listen() will allow that many pending connections.  Forking servers
+have to be particularly careful about cleaning up their dead children
+(called "zombies" in Unix parlance), because otherwise you'll quickly
+fill up your process table.  The REAPER subroutine is used here to
+call waitpid() for any child processes that have finished, thereby
+ensuring that they terminate cleanly and don't join the ranks of the
+living dead.
+
+Within the while loop we call accept() and check to see if it returns
+a false value.  This would normally indicate a system error that needs
+to be reported.  However the introduction of safe signals (see
+L</Deferred Signals (Safe Signals)> above) in Perl 5.7.3 means that
+accept() may also be interrupted when the process receives a signal.
+This typically happens when one of the forked sub-processes exits and
+notifies the parent process with a CHLD signal.  
+
+If accept() is interrupted by a signal then $! will be set to EINTR.
+If this happens then we can safely continue to the next iteration of
+the loop and another call to accept().  It is important that your
+signal handling code doesn't modify the value of $! or this test will
+most likely fail.  In the REAPER subroutine we create a local version
+of $! before calling waitpid().  When waitpid() sets $! to ECHILD (as
+it inevitably does when it has no more children waiting), it will
+update the local copy leaving the original unchanged.
 
 We suggest that you use the B<-T> flag to use taint checking (see L<perlsec>)
 even if we aren't running setuid or setgid.  This is always a good idea
@@ -1537,10 +1572,10 @@ you weren't wanting it to.
 
 Here's a small example showing shared memory usage.
 
-    use IPC::SysV qw(IPC_PRIVATE IPC_RMID S_IRWXU);
+    use IPC::SysV qw(IPC_PRIVATE IPC_RMID S_IRUSR S_IWUSR);
 
     $size = 2000;
-    $id = shmget(IPC_PRIVATE, $size, S_IRWXU) || die "$!";
+    $id = shmget(IPC_PRIVATE, $size, S_IRUSR|S_IWUSR) || die "$!";
     print "shm key $id\n";
 
     $message = "Message #1";
@@ -1615,9 +1650,9 @@ which is included with Perl starting from Perl 5.005.
 
 A small example demonstrating SysV message queues:
 
-    use IPC::SysV qw(IPC_PRIVATE IPC_RMID IPC_CREAT S_IRWXU);
+    use IPC::SysV qw(IPC_PRIVATE IPC_RMID IPC_CREAT S_IRUSR S_IWUSR);
 
-    my $id = msgget(IPC_PRIVATE, IPC_CREAT | S_IRWXU);
+    my $id = msgget(IPC_PRIVATE, IPC_CREAT | S_IRUSR | S_IWUSR);
 
     my $sent = "message";
     my $type_sent = 1234;

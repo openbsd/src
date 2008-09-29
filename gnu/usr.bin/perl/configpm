@@ -1,4 +1,41 @@
 #!./miniperl -w
+#
+# configpm
+#
+# Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+# 2002, 2003, 2004, 2005, 2006, 2007 Larry Wall and others.
+#
+#
+# Regenerate the files
+#
+#    lib/Config.pm
+#    lib/Config_heavy.pl
+#    lib/Config.pod
+#    lib/Cross.pm (optionally)
+#
+#
+# from the contents of the static files
+#
+#    Porting/Glossary
+#    myconfig.SH
+#
+# and from the contents of the Configure-generated file
+#
+#    config.sh
+#
+# Note that output directory is xlib/[cross-name]/ for cross-compiling
+#
+# It will only update Config.pm and Config_heavy.pl if the contents of
+# either file would be different. Note that *both* files are updated in
+# this case, since for example an extension makefile that has a dependency
+# on Config.pm should trigger even if only Config_heavy.pl has changed.
+
+sub usage { die <<EOF }
+usage: $0  [ options ]
+    --cross=PLATFORM    cross-compile for a different platform
+    --no-glossary       don't include Porting/Glossary in lib/Config.pod
+EOF
+
 use strict;
 use vars qw(%Config $Config_SH_expanded);
 
@@ -20,15 +57,14 @@ my %Extensions = map {($_,$_)}
 
 # libpaths that should be truncated after the first path element
 my %Libpathtrunc = map {($_,$_)}
-		   qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
-		      sitelib sitelibexp);
+                   qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
+                      sitelib sitelibexp);
 
 # allowed opts as well as specifies default and initial values
 my %Allowed_Opts = (
     'cross'    => '', # --cross=PLATFORM - crosscompiling for PLATFORM
     'glossary' => 1,  # --no-glossary  - no glossary file inclusion,
                       #                  for compactness
-    'heavy' => '',   # pathname of the Config_heavy.pl file
 );
 
 sub opts {
@@ -43,7 +79,8 @@ sub opts {
     my %opts = (%Allowed_Opts, %given_opts);
 
     for my $opt (grep {!exists $Allowed_Opts{$_}} keys %given_opts) {
-        die "option '$opt' is not recognized";
+        warn "option '$opt' is not recognized";
+	usage;
     }
     @ARGV = grep {!/^--/} @ARGV;
 
@@ -53,31 +90,30 @@ sub opts {
 
 my %Opts = opts();
 
-my ($Config_PM, $Config_heavy);
-my $Glossary = $ARGV[1] || 'Porting/Glossary';
+my ($Config_SH, $Config_PM, $Config_heavy, $Config_POD);
+my $Glossary = 'Porting/Glossary';
 
 if ($Opts{cross}) {
   # creating cross-platform config file
   mkdir "xlib";
   mkdir "xlib/$Opts{cross}";
-  $Config_PM = $ARGV[0] || "xlib/$Opts{cross}/Config.pm";
+  $Config_PM = "xlib/$Opts{cross}/Config.pm";
+  $Config_POD = "xlib/$Opts{cross}/Config.pod";
+  $Config_SH = "Cross/config-$Opts{cross}.sh";
 }
 else {
-  $Config_PM = $ARGV[0] || 'lib/Config.pm';
+  $Config_PM = "lib/Config.pm";
+  $Config_POD = "lib/Config.pod";
+  $Config_SH = "config.sh";
 }
-if ($Opts{heavy}) {
-  $Config_heavy = $Opts{heavy};
-}
-else {
-  ($Config_heavy = $Config_PM) =~ s!\.pm$!_heavy.pl!;
-  die "Can't automatically determine name for Config_heavy.pl from '$Config_PM'"
-    if $Config_heavy eq $Config_PM;
-}
+($Config_heavy = $Config_PM) =~ s/\.pm$/_heavy.pl/;
+die "Can't automatically determine name for Config_heavy.pl from '$Config_PM'"
+  if $Config_heavy eq $Config_PM;
 
-open CONFIG, ">$Config_PM" or die "Can't open $Config_PM: $!\n";
-open CONFIG_HEAVY, ">$Config_heavy" or die "Can't open $Config_heavy: $!\n";
+my $config_txt;
+my $heavy_txt;
 
-print CONFIG_HEAVY <<'ENDOFBEG';
+$heavy_txt .= <<'ENDOFBEG';
 # This file was created by configpm when Perl was built. Any changes
 # made to this file will be lost the next time perl is built.
 
@@ -87,9 +123,9 @@ use strict;
 # use vars pulls in Carp
 ENDOFBEG
 
-my $myver = sprintf "v%vd", $^V;
+my $myver = sprintf "%vd", $^V;
 
-printf CONFIG <<'ENDOFBEG', ($myver) x 3;
+$config_txt .= sprintf <<'ENDOFBEG', ($myver) x 3;
 # This file was created by configpm when Perl was built. Any changes
 # made to this file will be lost the next time perl is built.
 
@@ -151,7 +187,7 @@ my %Data     = ();
 my %seen_quotes;
 {
   my ($name, $val);
-  open(CONFIG_SH, 'config.sh') || die "Can't open config.sh: $!";
+  open(CONFIG_SH, $Config_SH) || die "Can't open $Config_SH: $!";
   while (<CONFIG_SH>) {
     next if m:^#!/bin/sh:;
 
@@ -303,16 +339,128 @@ EOT
     $byteorder_code = "our \$byteorder = '?'x$s;\n";
 }
 
-print CONFIG_HEAVY @non_v, "\n";
+my @need_relocation;
+
+if (fetch_string({},'userelocatableinc')) {
+    foreach my $what (qw(prefixexp
+
+			 archlibexp
+			 html1direxp
+			 html3direxp
+			 man1direxp
+			 man3direxp
+			 privlibexp
+			 scriptdirexp
+			 sitearchexp
+			 sitebinexp
+			 sitehtml1direxp
+			 sitehtml3direxp
+			 sitelibexp
+			 siteman1direxp
+			 siteman3direxp
+			 sitescriptexp
+			 vendorarchexp
+			 vendorbinexp
+			 vendorhtml1direxp
+			 vendorhtml3direxp
+			 vendorlibexp
+			 vendorman1direxp
+			 vendorman3direxp
+			 vendorscriptexp
+
+			 siteprefixexp
+			 sitelib_stem
+			 vendorlib_stem
+
+			 installarchlib
+			 installhtml1dir
+			 installhtml3dir
+			 installman1dir
+			 installman3dir
+			 installprefix
+			 installprefixexp
+			 installprivlib
+			 installscript
+			 installsitearch
+			 installsitebin
+			 installsitehtml1dir
+			 installsitehtml3dir
+			 installsitelib
+			 installsiteman1dir
+			 installsiteman3dir
+			 installsitescript
+			 installvendorarch
+			 installvendorbin
+			 installvendorhtml1dir
+			 installvendorhtml3dir
+			 installvendorlib
+			 installvendorman1dir
+			 installvendorman3dir
+			 installvendorscript
+			 )) {
+	push @need_relocation, $what if fetch_string({}, $what) =~ m!^\.\.\./!;
+    }
+}
+
+my %need_relocation;
+@need_relocation{@need_relocation} = @need_relocation;
+
+# This can have .../ anywhere:
+if (fetch_string({}, 'otherlibdirs') =~ m!\.\.\./!) {
+    $need_relocation{otherlibdirs} = 'otherlibdirs';
+}
+
+my $relocation_code = <<'EOT';
+
+sub relocate_inc {
+  my $libdir = shift;
+  return $libdir unless $libdir =~ s!^\.\.\./!!;
+  my $prefix = $^X;
+  if ($prefix =~ s!/[^/]*$!!) {
+    while ($libdir =~ m!^\.\./!) {
+      # Loop while $libdir starts "../" and $prefix still has a trailing
+      # directory
+      last unless $prefix =~ s!/([^/]+)$!!;
+      # but bail out if the directory we picked off the end of $prefix is .
+      # or ..
+      if ($1 eq '.' or $1 eq '..') {
+	# Undo! This should be rare, hence code it this way rather than a
+	# check each time before the s!!! above.
+	$prefix = "$prefix/$1";
+	last;
+      }
+      # Remove that leading ../ and loop again
+      substr ($libdir, 0, 3, '');
+    }
+    $libdir = "$prefix/$libdir";
+  }
+  $libdir;
+}
+EOT
+
+if (%need_relocation) {
+  my $relocations_in_common;
+  # otherlibdirs only features in the hash
+  foreach (keys %need_relocation) {
+    $relocations_in_common++ if $Common{$_};
+  }
+  if ($relocations_in_common) {
+    $config_txt .= $relocation_code;
+  } else {
+    $heavy_txt .= $relocation_code;
+  }
+}
+
+$heavy_txt .= join('', @non_v) . "\n";
 
 # copy config summary format from the myconfig.SH script
-print CONFIG_HEAVY "our \$summary = <<'!END!';\n";
+$heavy_txt .= "our \$summary = <<'!END!';\n";
 open(MYCONFIG,"<myconfig.SH") || die "open myconfig.SH failed: $!";
 1 while defined($_ = <MYCONFIG>) && !/^Summary of/;
-do { print CONFIG_HEAVY $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
+do { $heavy_txt .= $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
 close(MYCONFIG);
 
-print CONFIG_HEAVY "\n!END!\n", <<'EOT';
+$heavy_txt .= "\n!END!\n" . <<'EOT';
 my $summary_expanded;
 
 sub myconfig {
@@ -326,17 +474,34 @@ local *_ = \my $a;
 $_ = <<'!END!';
 EOT
 
-print CONFIG_HEAVY join('', sort @v_others), "!END!\n";
+$heavy_txt .= join('', sort @v_others) . "!END!\n";
 
 # Only need the dynamic byteorder code in Config.pm if 'byteorder' is one of
 # the precached keys
 if ($Common{byteorder}) {
-    print CONFIG $byteorder_code;
+    $config_txt .= $byteorder_code;
 } else {
-    print CONFIG_HEAVY $byteorder_code;
+    $heavy_txt .= $byteorder_code;
 }
 
-print CONFIG_HEAVY <<'EOT';
+if (@need_relocation) {
+$heavy_txt .= 'foreach my $what (qw(' . join (' ', @need_relocation) .
+      ")) {\n" . <<'EOT';
+    s/^($what=)(['"])(.*?)\2/$1 . $2 . relocate_inc($3) . $2/me;
+}
+EOT
+# Currently it only makes sense to do the ... relocation on Unix, so there's
+# no need to emulate the "which separator for this platform" logic in perl.c -
+# ':' will always be applicable
+if ($need_relocation{otherlibdirs}) {
+$heavy_txt .= << 'EOT';
+s{^(otherlibdirs=)(['"])(.*?)\2}
+ {$1 . $2 . join ':', map {relocate_inc($_)} split ':', $3 . $2}me;
+EOT
+}
+}
+
+$heavy_txt .= <<'EOT';
 s/(byteorder=)(['"]).*?\2/$1$2$Config::byteorder$2/m;
 
 my $config_sh_len = length $_;
@@ -347,12 +512,16 @@ EOT
 foreach my $prefix (qw(ccflags ldflags)) {
     my $value = fetch_string ({}, $prefix);
     my $withlargefiles = fetch_string ({}, $prefix . "_uselargefiles");
-    $value =~ s/\Q$withlargefiles\E\b//;
-    print CONFIG_HEAVY "${prefix}_nolargefiles='$value'\n";
+    if (defined $withlargefiles) {
+        $value =~ s/\Q$withlargefiles\E\b//;
+        $heavy_txt .= "${prefix}_nolargefiles='$value'\n";
+    }
 }
 
 foreach my $prefix (qw(libs libswanted)) {
     my $value = fetch_string ({}, $prefix);
+    my $withlf = fetch_string ({}, 'libswanted_uselargefiles');
+    next unless defined $withlf;
     my @lflibswanted
        = split(' ', fetch_string ({}, 'libswanted_uselargefiles'));
     if (@lflibswanted) {
@@ -369,14 +538,14 @@ foreach my $prefix (qw(libs libswanted)) {
 	    $value = join(' ', @libswanted);
 	}
     }
-    print CONFIG_HEAVY "${prefix}_nolargefiles='$value'\n";
+    $heavy_txt .= "${prefix}_nolargefiles='$value'\n";
 }
 
-print CONFIG_HEAVY "EOVIRTUAL\n";
+$heavy_txt .= "EOVIRTUAL\n";
 
-print CONFIG_HEAVY $fetch_string;
+$heavy_txt .= $fetch_string;
 
-print CONFIG <<'ENDOFEND';
+$config_txt .= <<'ENDOFEND';
 
 sub FETCH {
     my($self, $key) = @_;
@@ -388,7 +557,7 @@ sub FETCH {
 }
 ENDOFEND
 
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
 
 my $prevpos = 0;
 
@@ -400,7 +569,7 @@ sub FIRSTKEY {
 sub NEXTKEY {
 ENDOFEND
 if ($seen_quotes{'"'}) {
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
     # Find out how the current key's quoted so we can skip to its end.
     my $quote = substr($Config_SH_expanded,
 		       index($Config_SH_expanded, "=", $prevpos)+1, 1);
@@ -408,11 +577,11 @@ print CONFIG_HEAVY <<'ENDOFEND';
 ENDOFEND
 } else {
     # Just ' quotes, so it's much easier.
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
     my $pos = index($Config_SH_expanded, qq('\n), $prevpos) + 2;
 ENDOFEND
 }
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
     my $len = index($Config_SH_expanded, "=", $pos) - $pos;
     $prevpos = $pos;
     $len > 0 ? substr($Config_SH_expanded, $pos, $len) : undef;
@@ -424,11 +593,11 @@ sub EXISTS {
     return(index($Config_SH_expanded, "\n$_[1]='") != -1
 ENDOFEND
 if ($seen_quotes{'"'}) {
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
            or index($Config_SH_expanded, "\n$_[1]=\"") != -1
 ENDOFEND
 }
-print CONFIG_HEAVY <<'ENDOFEND';
+$heavy_txt .= <<'ENDOFEND';
           );
 }
 
@@ -480,7 +649,7 @@ sub launcher {
 ENDOFEND
 
 if ($^O eq 'os2') {
-    print CONFIG <<'ENDOFSET';
+    $config_txt .= <<'ENDOFSET';
 my %preconfig;
 if ($OS2::is_aout) {
     my ($value, $v) = $Config_SH_expanded =~ m/^used_aout='(.*)'\s*$/m;
@@ -500,11 +669,11 @@ ENDOFSET
 	    $dll = $1, last if /^PERL_DLL_BASE\s*=\s*(\S*)\s*$/;
 	}
     }
-    print CONFIG <<ENDOFSET if $dll;
+    $config_txt .= <<ENDOFSET if $dll;
 \$preconfig{dll_name} = '$dll';
 ENDOFSET
 } else {
-    print CONFIG <<'ENDOFSET';
+    $config_txt .= <<'ENDOFSET';
 sub TIEHASH {
     bless $_[1], $_[0];
 }
@@ -520,6 +689,11 @@ foreach my $key (keys %Common) {
 	$value =~ s!\\!\\\\!g;
 	$value =~ s!'!\\'!g;
 	$value = "'$value'";
+	if ($key eq 'otherlibdirs') {
+	    $value = "join (':', map {relocate_inc(\$_)} split (':', $value))";
+	} elsif ($need_relocation{$key}) {
+	    $value = "relocate_inc($value)";
+	}
     } else {
 	$value = "undef";
     }
@@ -533,7 +707,7 @@ my $fast_config = join '', map { "    $_,\n" } sort values %Common;
 
 # Sanity check needed to stop an infite loop if Config_heavy.pl fails to define
 # &launcher for some reason (eg it got truncated)
-print CONFIG sprintf <<'ENDOFTIE', $fast_config;
+$config_txt .= sprintf <<'ENDOFTIE', $fast_config;
 
 sub DESTROY { }
 
@@ -549,7 +723,7 @@ tie %%Config, 'Config', {
 ENDOFTIE
 
 
-open(CONFIG_POD, ">lib/Config.pod") or die "Can't open lib/Config.pod: $!";
+open(CONFIG_POD, ">$Config_POD") or die "Can't open $Config_POD: $!";
 print CONFIG_POD <<'ENDOFTAIL';
 =head1 NAME
 
@@ -747,10 +921,30 @@ outside of it.
 
 ENDOFTAIL
 
-close(CONFIG_HEAVY);
-close(CONFIG);
-close(GLOS);
+close(GLOS) if $Opts{glossary};
 close(CONFIG_POD);
+print "written $Config_POD\n";
+
+my $orig_config_txt = "";
+my $orig_heavy_txt = "";
+{
+    local $/;
+    my $fh;
+    $orig_config_txt = <$fh> if open $fh, "<", $Config_PM;
+    $orig_heavy_txt  = <$fh> if open $fh, "<", $Config_heavy;
+}
+
+if ($orig_config_txt ne $config_txt or $orig_heavy_txt ne $heavy_txt) {
+    open CONFIG, ">", $Config_PM or die "Can't open $Config_PM: $!\n";
+    open CONFIG_HEAVY, ">", $Config_heavy or die "Can't open $Config_heavy: $!\n";
+    print CONFIG $config_txt;
+    print CONFIG_HEAVY $heavy_txt;
+    close(CONFIG_HEAVY);
+    close(CONFIG);
+    print "updated $Config_PM\n";
+    print "updated $Config_heavy\n";
+}
+
 
 # Now create Cross.pm if needed
 if ($Opts{cross}) {
@@ -777,10 +971,13 @@ EOS
   $cross =~ s/\*\*\*replace-marker\*\*\*/$Opts{cross}/g;
   print CROSS $cross;
   close CROSS;
+  print "written lib/Cross.pm\n";
+  unshift(@INC,"xlib/$Opts{cross}");
 }
 
 # Now do some simple tests on the Config.pm file we have created
 unshift(@INC,'lib');
+unshift(@INC,'xlib/symbian') if $Opts{cross};
 require $Config_PM;
 require $Config_heavy;
 import Config;

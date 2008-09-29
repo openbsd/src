@@ -1,6 +1,32 @@
 #!./perl -w
 BEGIN { @INC = qw(lib) }
 use strict;
+
+BEGIN {
+    use Config;
+    if ($Config{userelocatableinc}) {
+	# This might be a considered a hack. Need to get information about the
+	# configuration from Config.pm *before* Config.pm expands any .../
+	# prefixes.
+	#
+	# So we set $^X to pretend that we're the already installed perl, so
+	# Config.pm doesits ... expansion off that location.
+
+	my $location = $Config{initialinstalllocation};
+	die <<'OS' unless defined $location;
+$Config{initialinstalllocation} is not defined - can't install a relocatable
+perl without this.
+OS
+	$^X = "$location/perl";
+	# And then remove all trace of ever having loaded Config.pm, so that
+	# it will reload with the revised $^X
+	undef %Config::;
+	delete $INC{"Config.pm"};
+	delete $INC{"Config_heavy.pl"};
+	# You never saw us. We weren't here.
+    }
+}
+
 use Config;
 use Getopt::Long;
 use File::Find;
@@ -44,6 +70,7 @@ GetOptions( \%opts,
                 destdir:s notify n help silent S verbose V)) 
 	|| die $usage;
 die $usage if $opts{help};
+$opts{destdir} //= '';
 
 $opts{man1dir} = "$opts{destdir}$Config{'installman1dir'}"
     unless defined($opts{man1dir}); 
@@ -180,13 +207,13 @@ sub pod2man {
 	push @to_process, [$mod, $tmp, $manpage];
     }
 
-    my $parser = Pod::Man->new( section => $manext,
-                                official=> 1,
-                                center  => 'Perl Programmers Reference Guide'
-                              );
     foreach my $page (@to_process) {
 	my($pod, $tmp, $manpage) = @$page;
 
+        my $parser = Pod::Man->new( section => $manext,
+                                    official=> 1,
+                                    center  => 'Perl Programmers Reference Guide'
+                                  );
 	my $xmanpage = $manpage;
 	$xmanpage =~ s/^\Q$opts{'destdir'}\E// if $opts{'destdir'};
         print "  $xmanpage\n";
@@ -206,7 +233,6 @@ $packlist->write() unless $opts{notify};
 print "  Installation complete\n" if $opts{verbose};
 
 exit 0;
-    
 
 ###############################################################################
 # Utility subroutines from installperl

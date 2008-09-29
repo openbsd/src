@@ -1,12 +1,13 @@
 package Text::Wrap;
 
+use warnings::register;
 require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(wrap fill);
 @EXPORT_OK = qw($columns $break $huge);
 
-$VERSION = 2005.0824_01;
+$VERSION = 2006.1117;
 
 use vars qw($VERSION $columns $debug $break $huge $unexpand $tabstop
 	$separator $separator2);
@@ -43,8 +44,8 @@ sub wrap
 	use re 'taint';
 
 	pos($t) = 0;
-	while ($t !~ /\G\s*\Z/gc) {
-		if ($t =~ /\G([^\n]{0,$ll})($break|\n*\z)/xmgc) {
+	while ($t !~ /\G(?:$break)*\Z/gc) {
+		if ($t =~ /\G([^\n]{0,$ll})($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
@@ -54,13 +55,17 @@ sub wrap
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = defined($separator2) ? $separator2 : $separator;
-		} elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)($break|\z)/xmgc) {
+		} elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = $2;
 		} elsif ($huge eq 'die') {
 			die "couldn't wrap '$t'";
+		} elsif ($columns < 2) {
+			warnings::warnif "Increasing \$Text::Wrap::columns from $columns to 2";
+			$columns = 2;
+			return ($ip, $xp, @t);
 		} else {
 			die "This shouldn't happen";
 		}
@@ -117,7 +122,7 @@ Text::Wrap - line wrapping to form simple paragraphs
 
 B<Example 1>
 
-	use Text::Wrap
+	use Text::Wrap;
 
 	$initial_tab = "\t";	# Tab before first line
 	$subsequent_tab = "";	# All other lines flush left
@@ -139,8 +144,8 @@ B<Example 2>
 	$huge = 'overflow';
 
 B<Example 3>
-
-	use Text::Wrap
+	
+	use Text::Wrap;
 
 	$Text::Wrap::columns = 72;
 	print wrap('', '', @text);
@@ -148,17 +153,19 @@ B<Example 3>
 =head1 DESCRIPTION
 
 C<Text::Wrap::wrap()> is a very simple paragraph formatter.  It formats a
-single paragraph at a time by breaking lines at word boundries.
+single paragraph at a time by breaking lines at word boundaries.
 Indentation is controlled for the first line (C<$initial_tab>) and
 all subsequent lines (C<$subsequent_tab>) independently.  Please note: 
 C<$initial_tab> and C<$subsequent_tab> are the literal strings that will
-be used: it is unlikley you would want to pass in a number.
+be used: it is unlikely you would want to pass in a number.
 
 Text::Wrap::fill() is a simple multi-paragraph formatter.  It formats
 each paragraph separately and then joins them together when it's done.  It
 will destroy any whitespace in the original text.  It breaks text into
 paragraphs by looking for whitespace after a newline.  In other respects
 it acts like wrap().
+
+Both C<wrap()> and C<fill()> return a single string.
 
 =head1 OVERRIDES
 
@@ -208,15 +215,35 @@ left intact.
 Historical notes: 'die' used to be the default value of
 C<$huge>.  Now, 'wrap' is the default value.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
-	print wrap("\t","","This is a bit of text that forms 
-		a normal book-style paragraph");
+Code:
+
+  print wrap("\t","",<<END);
+  This is a bit of text that forms 
+  a normal book-style indented paragraph
+  END
+
+Result:
+
+  "	This is a bit of text that forms
+  a normal book-style indented paragraph   
+  "
+
+Code:
+
+  $Text::Wrap::columns=20;
+  $Text::Wrap::separator="|";
+  print wrap("","","This is a bit of text that forms a normal book-style paragraph");
+
+Result:
+
+  "This is a bit of|text that forms a|normal book-style|paragraph"
 
 =head1 LICENSE
 
 David Muir Sharnoff <muir@idiom.com> with help from Tim Pierce and
-many many others.  Copyright (C) 1996-2002 David Muir Sharnoff.  
+many many others.  Copyright (C) 1996-2006 David Muir Sharnoff.  
 This module may be modified, used, copied, and redistributed at
 your own risk.  Publicly redistributed modified versions must use 
 a different name.

@@ -9,7 +9,7 @@ BEGIN{
 use base 'Exporter';
 use CPAN;
 
-$VERSION = "1.03";
+$VERSION = sprintf "%.6f", substr(q$Rev: 2411 $,4)/1000000 + 5.4;
 $CPAN::META->has_inst('Digest::MD5','no');
 $CPAN::META->has_inst('LWP','no');
 $CPAN::META->has_inst('Compress::Zlib','no');
@@ -38,9 +38,14 @@ prevent the usage of compiled extensions during its own
 execution. Its primary purpose is a rescue in case you upgraded perl
 and broke binary compatibility somehow.
 
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
 =head1  SEE ALSO
 
-CPAN(3)
+L<CPAN>
 
 =cut
 

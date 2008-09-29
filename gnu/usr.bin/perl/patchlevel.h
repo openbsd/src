@@ -1,7 +1,7 @@
 /*    patchlevel.h
  *
- *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, by Larry Wall and others
+ *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+ *    2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -14,8 +14,8 @@
  * exactly on the third column */
 
 #define PERL_REVISION	5		/* age */
-#define PERL_VERSION	8		/* epoch */
-#define PERL_SUBVERSION	8		/* generation */
+#define PERL_VERSION	10		/* epoch */
+#define PERL_SUBVERSION	0		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -31,7 +31,7 @@
    to include in @INC.  See INSTALL for how this works.
 */
 #define PERL_API_REVISION	5	/* Adjust manually as needed.  */
-#define PERL_API_VERSION	8	/* Adjust manually as needed.  */
+#define PERL_API_VERSION	10	/* Adjust manually as needed.  */
 #define PERL_API_SUBVERSION	0	/* Adjust manually as needed.  */
 /*
    XXX Note:  The selection of non-default Configure options, such
@@ -115,11 +115,8 @@ hunk.
 
  */
 
-
-
-
 #if !defined(PERL_PATCHLEVEL_H_IMPLICIT) && !defined(LOCAL_PATCH_COUNT)
-static const char *local_patches[] = {
+static const char * const local_patches[] = {
 	NULL
 	,NULL
 };
@@ -128,7 +125,7 @@ static const char *local_patches[] = {
 
 /* Initial space prevents this variable from being inserted in config.sh  */
 #  define	LOCAL_PATCH_COUNT	\
-	(sizeof(local_patches)/sizeof(local_patches[0])-2)
+	((int)(sizeof(local_patches)/sizeof(local_patches[0])-2))
 
 /* the old terms of reference, add them only when explicitly included */
 #define PATCHLEVEL		PERL_VERSION

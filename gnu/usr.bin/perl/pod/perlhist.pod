@@ -391,6 +391,11 @@ the strings?).
  Rafael   5.9.1         2004-Mar-16
           5.9.2         2005-Apr-01
           5.9.3         2006-Jan-28
+          5.9.4         2006-Aug-15
+          5.9.5         2007-Jul-07
+          5.10.0-RC1    2007-Nov-17
+          5.10.0-RC2    2007-Nov-25
+          5.10.0        2007-Dec-18
 
 =head2 SELECTED RELEASE SIZES
 

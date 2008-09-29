@@ -40,6 +40,9 @@ xs_init(pTHX)
 
 #ifdef PERL_IMPLICIT_SYS
 
+/* WINCE: include replaced by:
+extern "C" void win32_checkTLS(PerlInterpreter *host_perl);
+*/
 #include "perlhost.h"
 
 void
@@ -48,10 +51,44 @@ win32_checkTLS(PerlInterpreter *host_perl)
     dTHX;
     if (host_perl != my_perl) {
 	int *nowhere = NULL;
-        *nowhere = 0; 
+#ifdef UNDER_CE
+	printf(" ... bad in win32_checkTLS\n");
+	printf("  %08X ne %08X\n",host_perl,my_perl);
+#endif
 	abort();
     }
 }
+
+#ifdef UNDER_CE
+int GetLogicalDrives() {
+    return 0; /* no logical drives on CE */
+}
+int GetLogicalDriveStrings(int size, char addr[]) {
+    return 0; /* no logical drives on CE */
+}
+/* TBD */
+DWORD GetFullPathNameA(LPCSTR fn, DWORD blen, LPTSTR buf,  LPSTR *pfile) {
+    return 0;
+}
+/* TBD */
+DWORD GetFullPathNameW(CONST WCHAR *fn, DWORD blen, WCHAR * buf,  WCHAR **pfile) {
+    return 0;
+}
+/* TBD */
+DWORD SetCurrentDirectoryA(LPSTR pPath) {
+    return 0;
+}
+/* TBD */
+DWORD SetCurrentDirectoryW(CONST WCHAR *pPath) {
+    return 0;
+}
+int xcesetuid(uid_t id){return 0;}
+int xceseteuid(uid_t id){  return 0;}
+int xcegetuid() {return 0;}
+int xcegeteuid(){ return 0;}
+#endif
+
+/* WINCE??: include "perlhost.h" */
 
 EXTERN_C void
 perl_get_host_info(struct IPerlMemInfo* perlMemInfo,
@@ -170,17 +207,25 @@ RunPerl(int argc, char **argv, char **env)
 {
     int exitstatus;
     PerlInterpreter *my_perl, *new_perl = NULL;
-
-#ifndef __BORLANDC__
-    /* XXX this _may_ be a problem on some compilers (e.g. Borland) that
-     * want to free() argv after main() returns.  As luck would have it,
-     * Borland's CRT does the right thing to argv[0] already. */
+    OSVERSIONINFO osver;
     char szModuleName[MAX_PATH];
+    char *arg0 = argv[0];
+    char *ansi = NULL;
+    bool use_environ = (env == environ);
 
-    GetModuleFileName(NULL, szModuleName, sizeof(szModuleName));
-    (void)win32_longpath(szModuleName);
-    argv[0] = szModuleName;
-#endif
+    osver.dwOSVersionInfoSize = sizeof(osver);
+    GetVersionEx(&osver);
+
+    if (osver.dwMajorVersion > 4) {
+        WCHAR widename[MAX_PATH];
+        GetModuleFileNameW(NULL, widename, sizeof(widename)/sizeof(WCHAR));
+        argv[0] = ansi = win32_ansipath(widename);
+    }
+    else {
+        Win_GetModuleFileName(NULL, szModuleName, sizeof(szModuleName));
+        (void)win32_longpath(szModuleName);
+        argv[0] = szModuleName;
+    }
 
 #ifdef PERL_GLOBAL_STRUCT
 #define PERLVAR(var,type) /**/
@@ -200,6 +245,16 @@ RunPerl(int argc, char **argv, char **env)
 	return (1);
     perl_construct(my_perl);
     PL_perl_destruct_level = 0;
+
+    /* PERL_SYS_INIT() may update the environment, e.g. via ansify_path().
+     * This may reallocate the RTL environment block. Therefore we need
+     * to make sure that `env` continues to have the same value as `environ`
+     * if we have been called this way.  If we have been called with any
+     * other value for `env` then all environment munging by PERL_SYS_INIT()
+     * will be lost again.
+     */
+    if (use_environ)
+        env = environ;
 
     exitstatus = perl_parse(my_perl, xs_init, argc, argv, env);
     if (!exitstatus) {
@@ -221,6 +276,11 @@ RunPerl(int argc, char **argv, char **env)
 	perl_free(new_perl);
     }
 #endif
+
+    /* At least the Borland RTL wants to free argv[] after main() returns. */
+    argv[0] = arg0;
+    if (ansi)
+        win32_free(ansi);
 
     PERL_SYS_TERM();
 
@@ -254,7 +314,11 @@ DllMain(HANDLE hModule,		/* DLL module handle */
 	setmode( fileno( stderr ), O_BINARY );
 	_fmode = O_BINARY;
 #endif
+
+#ifndef UNDER_CE
 	DisableThreadLibraryCalls((HMODULE)hModule);
+#endif
+
 	w32_perldll_handle = hModule;
 	set_w32_module_name();
 	break;
@@ -270,7 +334,7 @@ DllMain(HANDLE hModule,		/* DLL module handle */
             PerlIO_cleanup() was done here but fails (B).
          */     
 	EndSockets();
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+#if defined(USE_ITHREADS)
 	if (PL_curinterp)
 	    FREE_THREAD_KEY;
 #endif
@@ -289,6 +353,7 @@ DllMain(HANDLE hModule,		/* DLL module handle */
     }
     return TRUE;
 }
+
 
 #if defined(USE_ITHREADS) && defined(PERL_IMPLICIT_SYS)
 EXTERN_C PerlInterpreter *

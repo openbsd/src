@@ -227,10 +227,10 @@ indirectly by the run-time system itself, usually due to a triggered event.
 Subroutines that do special, pre-defined things include C<AUTOLOAD>, C<CLONE>,
 C<DESTROY> plus all functions mentioned in L<perltie> and L<PerlIO::via>.
 
-The C<BEGIN>, C<CHECK>, C<INIT> and C<END> subroutines are not so much
-subroutines as named special code blocks, of which you can have more
-than one in a package, and which you can B<not> call explicitly.  See
-L<perlmod/"BEGIN, CHECK, INIT and END">
+The C<BEGIN>, C<UNITCHECK>, C<CHECK>, C<INIT> and C<END> subroutines
+are not so much subroutines as named special code blocks, of which you
+can have more than one in a package, and which you can B<not> call
+explicitly.  See L<perlmod/"BEGIN, UNITCHECK, CHECK, INIT and END">
 
 =head2 Private Variables via my()
 X<my> X<variable, lexical> X<lexical> X<lexical variable> X<scope, lexical>
@@ -394,7 +394,6 @@ never fully qualified with the package name.  In particular, you're not
 allowed to try to make a package variable (or other global) lexical:
 
     my $pack::var;	# ERROR!  Illegal syntax
-    my $_;		# also illegal (currently)
 
 In fact, a dynamic variable (also known as package or global variables)
 are still accessible using the fully qualified C<::> notation even while a
@@ -432,7 +431,34 @@ L<perlref/"Function Templates"> for something of a work-around to
 this.
 
 =head2 Persistent Private Variables
-X<static> X<variable, persistent> X<variable, static> X<closure>
+X<state> X<state variable> X<static> X<variable, persistent> X<variable, static> X<closure>
+
+There are two ways to build persistent private variables in Perl 5.10.
+First, you can simply use the C<state> feature. Or, you can use closures,
+if you want to stay compatible with releases older than 5.10.
+
+=head3 Persistent variables via state()
+
+Beginning with perl 5.9.4, you can declare variables with the C<state>
+keyword in place of C<my>. For that to work, though, you must have
+enabled that feature beforehand, either by using the C<feature> pragma, or
+by using C<-E> on one-liners. (see L<feature>)
+
+For example, the following code maintains a private counter, incremented
+each time the gimme_another() function is called:
+
+    use feature 'state';
+    sub gimme_another { state $x; return ++$x }
+
+Also, since C<$x> is lexical, it can't be reached or modified by any Perl
+code outside.
+
+When combined with variable declaration, simple scalar assignment to C<state>
+variables (as in C<state $x = 42>) is executed only the first time.  When such
+statements are evaluated subsequent times, the assignment is ignored.  The
+behavior of this sort of assignment to non-scalar variables is undefined.
+
+=head3 Persistent variables with closures
 
 Just because a lexical variable is lexically (also called statically)
 scoped to its enclosing block, C<eval>, or C<do> FILE, this doesn't mean that
@@ -479,8 +505,9 @@ starts to run:
 	}
     }
 
-See L<perlmod/"BEGIN, CHECK, INIT and END"> about the
-special triggered code blocks, C<BEGIN>, C<CHECK>, C<INIT> and C<END>.
+See L<perlmod/"BEGIN, UNITCHECK, CHECK, INIT and END"> about the
+special triggered code blocks, C<BEGIN>, C<UNITCHECK>, C<CHECK>,
+C<INIT> and C<END>.
 
 If declared at the outermost scope (the file scope), then lexicals
 work somewhat like C's file statics.  They are available to all
@@ -619,6 +646,8 @@ separator.
 Notably, if you want to work with a brand new value of the default scalar
 $_, and avoid the potential problem listed above about $_ previously
 carrying a magic value, you should use C<local *_> instead of C<local $_>.
+As of perl 5.9.1, you can also use the lexical form of C<$_> (declaring it
+with C<my $_>), which avoids completely this problem.
 
 =head3 Localization of elements of composite types
 X<local, composite type element> X<local, array element> X<local, hash element>
@@ -1010,7 +1039,7 @@ corresponding built-in.
     sub myopen (*;$)	     myopen HANDLE, $name
     sub mypipe (**)	     mypipe READHANDLE, WRITEHANDLE
     sub mygrep (&@)	     mygrep { /foo/ } $a, $b, $c
-    sub myrand ($)	     myrand 42
+    sub myrand (;$)	     myrand 42
     sub mytime ()	     mytime
 
 Any backslashed prototype character represents an actual argument
@@ -1054,8 +1083,12 @@ follows:
 	...
     }
 
-A semicolon separates mandatory arguments from optional arguments.
+A semicolon (C<;>) separates mandatory arguments from optional arguments.
 It is redundant before C<@> or C<%>, which gobble up everything else.
+
+As the last character of a prototype, or just before a semicolon, you can
+use C<_> in place of C<$>: if this argument is not provided, C<$_> will be
+used instead.
 
 Note how the last three examples in the table above are treated
 specially by the parser.  C<mygrep()> is parsed as a true list
@@ -1268,10 +1301,9 @@ that understands regular expressions.
     sub glob {
 	my $pat = shift;
 	my @got;
-	local *D;
-	if (opendir D, '.') { 
-	    @got = grep /$pat/, readdir D; 
-	    closedir D;   
+	if (opendir my $d, '.') { 
+	    @got = grep /$pat/, readdir $d; 
+	    closedir $d;   
 	}
 	return @got;
     }
@@ -1320,10 +1352,11 @@ C<require> replacement as C<require Foo::Bar>, it will actually receive
 the argument C<"Foo/Bar.pm"> in @_.  See L<perlfunc/require>.
 
 And, as you'll have noticed from the previous example, if you override
-C<glob>, the C<E<lt>*E<gt>> glob operator is overridden as well.
+C<glob>, the C<< <*> >> glob operator is overridden as well.
 
 In a similar fashion, overriding the C<readline> function also overrides
-the equivalent I/O operator C<< <FILEHANDLE> >>.
+the equivalent I/O operator C<< <FILEHANDLE> >>. Also, overriding
+C<readpipe> also overrides the operators C<``> and C<qx//>.
 
 Finally, some built-ins (e.g. C<exists> or C<grep>) can't be overridden.
 
@@ -1341,7 +1374,8 @@ been passed to the original subroutine.  The fully qualified name
 of the original subroutine magically appears in the global $AUTOLOAD
 variable of the same package as the C<AUTOLOAD> routine.  The name
 is not passed as an ordinary argument because, er, well, just
-because, that's why...
+because, that's why.  (As an exception, a method call to a nonexistent
+C<import> or C<unimport> method is just skipped instead.)
 
 Many C<AUTOLOAD> routines load in a definition for the requested
 subroutine using eval(), then execute that subroutine using a special
@@ -1367,7 +1401,7 @@ even need parentheses:
     use subs qw(date who ls);
     date;
     who "am", "i";
-    ls -l;
+    ls '-l';
 
 A more complete example of this is the standard Shell module, which
 can treat undefined subroutine calls as calls to external programs.

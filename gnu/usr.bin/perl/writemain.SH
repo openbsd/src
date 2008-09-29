@@ -39,8 +39,8 @@ args=''
 : Remove any .a suffixes and any leading path components
 for file in $orig ; do
         case "$file" in
-           *.a)  file=`echo $file | sed 's/\.a//g'`
-                 ;;
+           *.a)  file=`echo $file | sed 's/\.a//g'`;;
+           *.o)  file=`echo $file | sed 's/\.o//g'`;;
         esac
 	case "$file" in
 	ext/*)	file=`echo $file | sed 's:ext/\(.*\)/[^/]*:\1:'`
@@ -77,7 +77,7 @@ xs_init(pTHX)
 EOP
 
 if test X"$args" != "X" ; then
-    echo "    const char file[] = __FILE__;"
+    echo "    static const char file[] = __FILE__;"
     echo "    dXSUB_SYS;"
 
     ai=''
@@ -92,9 +92,9 @@ if test X"$args" != "X" ; then
 	if test "$ext" = "DynaLoader"; then
 	    : Must NOT install 'DynaLoader::boot_DynaLoader' as 'bootstrap'!
 	    : boot_DynaLoader is called directly in DynaLoader.pm
-	    echo "        newXS(\"${mname}::boot_${ext}\", boot_${cname}, (char *)file);"
+	    echo "        newXS(\"${mname}::boot_${ext}\", boot_${cname}, file);"
 	else
-	    echo "        newXS(\"${mname}::bootstrap\", boot_${cname}, (char *)file);"
+	    echo "        newXS(\"${mname}::bootstrap\", boot_${cname}, file);"
 	fi
     done
 fi

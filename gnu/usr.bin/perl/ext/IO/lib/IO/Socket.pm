@@ -23,7 +23,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.29";
+$VERSION = "1.30_01";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -112,23 +112,27 @@ sub connect {
 
     $blocking = $sock->blocking(0) if $timeout;
     if (!connect($sock, $addr)) {
-	if (defined $timeout && $!{EINPROGRESS}) {
+	if (defined $timeout && ($!{EINPROGRESS} || $!{EWOULDBLOCK})) {
 	    require IO::Select;
 
 	    my $sel = new IO::Select $sock;
 
+	    undef $!;
 	    if (!$sel->can_write($timeout)) {
 		$err = $! || (exists &Errno::ETIMEDOUT ? &Errno::ETIMEDOUT : 1);
 		$@ = "connect: timeout";
 	    }
-	    elsif (!connect($sock,$addr) && not $!{EISCONN}) {
+	    elsif (!connect($sock,$addr) &&
+                not ($!{EISCONN} || ($! == 10022 && $^O eq 'MSWin32'))
+            ) {
 		# Some systems refuse to re-connect() to
 		# an already open socket and set errno to EISCONN.
+		# Windows sets errno to WSAEINVAL (10022)
 		$err = $!;
 		$@ = "connect: $!";
 	    }
 	}
-        elsif ($blocking || !$!{EINPROGRESS})  {
+        elsif ($blocking || !($!{EINPROGRESS} || $!{EWOULDBLOCK}))  {
 	    $err = $!;
 	    $@ = "connect: $!";
 	}
@@ -139,6 +143,56 @@ sub connect {
     $! = $err if $err;
 
     $err ? undef : $sock;
+}
+
+# Enable/disable blocking IO on sockets.
+# Without args return the current status of blocking,
+# with args change the mode as appropriate, returning the
+# old setting, or in case of error during the mode change
+# undef.
+
+sub blocking {
+    my $sock = shift;
+
+    return $sock->SUPER::blocking(@_)
+        if $^O ne 'MSWin32';
+
+    # Windows handles blocking differently
+    #
+    # http://groups.google.co.uk/group/perl.perl5.porters/browse_thread/thread/b4e2b1d88280ddff/630b667a66e3509f?#630b667a66e3509f
+    # http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winsock/winsock/ioctlsocket_2.asp
+    #
+    # 0x8004667e is FIONBIO
+    #
+    # which is used to set blocking behaviour.
+
+    # NOTE: 
+    # This is a little confusing, the perl keyword for this is
+    # 'blocking' but the OS level behaviour is 'non-blocking', probably
+    # because sockets are blocking by default.
+    # Therefore internally we have to reverse the semantics.
+
+    my $orig= !${*$sock}{io_sock_nonblocking};
+        
+    return $orig unless @_;
+
+    my $block = shift;
+    
+    if ( !$block != !$orig ) {
+        ${*$sock}{io_sock_nonblocking} = $block ? 0 : 1;
+        ioctl($sock, 0x8004667e, pack("L!",${*$sock}{io_sock_nonblocking}))
+            or return undef;
+    }
+    
+    return $orig;        
+}
+
+
+sub close {
+    @_ == 1 or croak 'usage: $sock->close()';
+    my $sock = shift;
+    ${*$sock}{'io_socket_peername'} = undef;
+    $sock->SUPER::close();
 }
 
 sub bind {
@@ -211,7 +265,7 @@ sub send {
     my $peer  = $_[3] || $sock->peername;
 
     croak 'send: Cannot determine peer address'
-	 unless(defined($peer));
+	 unless(defined $peer);
 
     my $r = defined(getpeername($sock))
 	? send($sock, $_[1], $flags)
@@ -242,7 +296,7 @@ sub shutdown {
 }
 
 sub setsockopt {
-    @_ == 4 or croak '$sock->setsockopt(LEVEL, OPTNAME)';
+    @_ == 4 or croak '$sock->setsockopt(LEVEL, OPTNAME, OPTVAL)';
     setsockopt($_[0],$_[1],$_[2],$_[3]);
 }
 

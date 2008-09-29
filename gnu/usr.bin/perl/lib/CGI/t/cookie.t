@@ -7,7 +7,7 @@ use strict;
 # ensure the blib's are in @INC, else we might use the core CGI.pm
 use lib qw(blib/lib blib/arch);
 
-use Test::More tests => 86;
+use Test::More tests => 96;
 use CGI::Util qw(escape unescape);
 use POSIX qw(strftime);
 
@@ -325,3 +325,51 @@ my @test_cookie = (
   ok(!$c->secure(0), 'secure attribute is cleared');
   ok(!$c->secure,    'secure attribute is cleared');
 }
+
+#-----------------------------------------------------------------------------
+# Apache2?::Cookie compatibility.
+#-----------------------------------------------------------------------------
+APACHEREQ: {
+    my $r = Apache::Faker->new;
+    isa_ok $r, 'Apache';
+    ok my $c = CGI::Cookie->new(
+        $r,
+        -name  => 'Foo',
+        -value => 'Bar',
+    ), 'Pass an Apache object to the CGI::Cookie constructor';
+    isa_ok $c, 'CGI::Cookie';
+    ok $c->bake($r), 'Bake the cookie';
+    ok eq_array( $r->{check}, [ 'Set-Cookie', $c->as_string ]),
+        'bake() should call headers_out->set()';
+
+    $r = Apache2::Faker->new;
+    isa_ok $r, 'Apache2::RequestReq';
+    ok $c = CGI::Cookie->new(
+        $r,
+        -name  => 'Foo',
+        -value => 'Bar',
+    ), 'Pass an Apache::RequestReq object to the CGI::Cookie constructor';
+    isa_ok $c, 'CGI::Cookie';
+    ok $c->bake($r), 'Bake the cookie';
+    ok eq_array( $r->{check}, [ 'Set-Cookie', $c->as_string ]),
+        'bake() should call headers_out->set()';
+}
+
+
+package Apache::Faker;
+sub new { bless {}, shift }
+sub isa {
+    my ($self, $pkg) = @_;
+    return $pkg eq 'Apache';
+}
+sub headers_out { shift }
+sub add { shift->{check} = \@_; }
+
+package Apache2::Faker;
+sub new { bless {}, shift }
+sub isa {
+    my ($self, $pkg) = @_;
+    return $pkg eq 'Apache2::RequestReq';
+}
+sub headers_out { shift }
+sub add { shift->{check} = \@_; }

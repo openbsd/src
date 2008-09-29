@@ -4,7 +4,7 @@
 # ensure the blib's are in @INC, else we might use the core CGI.pm
 use lib qw(. ./blib/lib ./blib/arch);
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 BEGIN { use_ok('CGI'); };
 use CGI (':standard','-no_debug','-tabindex');
@@ -127,3 +127,10 @@ is(scrolling_list(-name => 'game',
 <option selected="selected" value="cribbage">cribbage</option>
 </select>',
   'scrolling_list()');
+
+is(checkbox_group(-name   => 'game',
+		  -Values => [qw/checkers chess cribbage/],
+		 -disabled => ['checkers']),
+   qq(<label><input type="checkbox" name="game" value="checkers" checked="checked" tabindex="23" disabled='1'/><span style="color:gray">checkers</span></label> <label><input type="checkbox" name="game" value="chess" checked="checked" tabindex="24" />chess</label> <label><input type="checkbox" name="game" value="cribbage" tabindex="25" />cribbage</label>),
+   'checkbox_group()');
+

@@ -170,11 +170,12 @@ sub xlate {
 __END__
 AUTOLOAD
 BEGIN
+CHECK
 CORE
 DESTROY
 END
 INIT
-CHECK
+UNITCHECK
 abs
 accept
 alarm

@@ -16,7 +16,7 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(pingecho);
-$VERSION = "2.31";
+$VERSION = "2.33";
 
 sub SOL_IP { 0; };
 sub IP_TOS { 1; };
@@ -35,11 +35,11 @@ $syn_forking = 0;
 if ($^O =~ /Win32/i) {
   # Hack to avoid this Win32 spewage:
   # Your vendor has not defined POSIX macro ECONNREFUSED
-  *ECONNREFUSED = sub {10061;}; # "Unknown Error" Special Win32 Response?
-  *ENOTCONN     = sub {10057;};
-  *ECONNRESET   = sub {10054;};
-  *EINPROGRESS  = sub {10036;};
-  *EWOULDBLOCK  = sub {10035;};
+  *ECONNREFUSED = sub() {10061;}; # "Unknown Error" Special Win32 Response?
+  *ENOTCONN     = sub() {10057;};
+  *ECONNRESET   = sub() {10054;};
+  *EINPROGRESS  = sub() {10036;};
+  *EWOULDBLOCK  = sub() {10035;};
 #  $syn_forking = 1;    # XXX possibly useful in < Win2K ?
 };
 
@@ -240,6 +240,7 @@ sub mselect
 	while (1) {
 	    $gran = $t if $gran > $t;
 	    my $nfound = select($_[0], $_[1], $_[2], $gran);
+	    undef $nfound if $nfound == -1;
 	    $t -= $gran;
 	    return $nfound if $nfound or !defined($nfound) or $t <= 0;
 
@@ -248,11 +249,13 @@ sub mselect
 	}
     }
     else {
-	return select($_[0], $_[1], $_[2], $_[3]);
+	my $nfound = select($_[0], $_[1], $_[2], $_[3]);
+	undef $nfound if $nfound == -1;
+	return $nfound;
     }
 }
 
-# Description: Allow UDP source endpoint comparision to be
+# Description: Allow UDP source endpoint comparison to be
 #              skipped for those remote interfaces that do
 #              not response from the same endpoint.
 
@@ -395,12 +398,13 @@ sub ping_external {
   return Net::Ping::External::ping(ip => $ip, timeout => $timeout);
 }
 
-use constant ICMP_ECHOREPLY => 0; # ICMP packet types
-use constant ICMP_ECHO      => 8;
-use constant ICMP_STRUCT    => "C2 n3 A";  # Structure of a minimal ICMP packet
-use constant SUBCODE        => 0; # No ICMP subcode for ECHO and ECHOREPLY
-use constant ICMP_FLAGS     => 0; # No special flags for send or recv
-use constant ICMP_PORT      => 0; # No port with ICMP
+use constant ICMP_ECHOREPLY   => 0; # ICMP packet types
+use constant ICMP_UNREACHABLE => 3; # ICMP packet types
+use constant ICMP_ECHO        => 8;
+use constant ICMP_STRUCT      => "C2 n3 A"; # Structure of a minimal ICMP packet
+use constant SUBCODE          => 0; # No ICMP subcode for ECHO and ECHOREPLY
+use constant ICMP_FLAGS       => 0; # No special flags for send or recv
+use constant ICMP_PORT        => 0; # No port with ICMP
 
 sub ping_icmp
 {
@@ -477,11 +481,14 @@ sub ping_icmp
       $self->{"from_type"} = $from_type;
       $self->{"from_subcode"} = $from_subcode;
       if (($from_pid == $self->{"pid"}) && # Does the packet check out?
+          (! $source_verify || (inet_ntoa($from_ip) eq inet_ntoa($ip))) &&
           ($from_seq == $self->{"seq"})) {
-        if ($from_type == ICMP_ECHOREPLY){
+        if ($from_type == ICMP_ECHOREPLY) {
           $ret = 1;
+	  $done = 1;
+        } elsif ($from_type == ICMP_UNREACHABLE) {
+          $done = 1;
         }
-        $done = 1;
       }
     } else {     # Oops, timed out
       $done = 1;
@@ -1363,6 +1370,15 @@ sub close
   }
 }
 
+sub port_number {
+   my $self = shift;
+   if(@_) {
+       $self->{port_num} = shift @_;
+       $self->service_check(1);
+   }
+   return $self->{port_num};
+}
+
 
 1;
 __END__
@@ -1392,7 +1408,7 @@ Net::Ping - check a remote host for reachability
 
     $p = Net::Ping->new("tcp", 2);
     # Try connecting to the www port instead of the echo port
-    $p->{port_num} = getservbyname("http", "tcp");
+    $p->port_number(getservbyname("http", "tcp"));
     while ($stop_time > time())
     {
         print "$host not reachable ", scalar(localtime()), "\n"
@@ -1403,7 +1419,7 @@ Net::Ping - check a remote host for reachability
 
     # Like tcp protocol, but with many hosts
     $p = Net::Ping->new("syn");
-    $p->{port_num} = getservbyname("http", "tcp");
+    $p->port_number(getservbyname("http", "tcp"));
     foreach $host (@host_array) {
       $p->ping($host);
     }
@@ -1471,7 +1487,7 @@ otherwise it will return false.  NOTE: Unlike the other protocols,
 the return value does NOT determine if the remote host is alive or
 not since the full TCP three-way handshake may not have completed
 yet.  The remote host is only considered reachable if it receives
-a TCP ACK within the timeout specifed.  To begin waiting for the
+a TCP ACK within the timeout specified.  To begin waiting for the
 ACK packets, use the ack() method as explained below.  Use the
 "syn" protocol instead the "tcp" protocol to determine reachability
 of multiple destinations simultaneously by sending parallel TCP
@@ -1503,10 +1519,10 @@ otherwise.  The maximum number of data bytes that can be specified is
 1024.
 
 If $device is given, this device is used to bind the source endpoint
-before sending the ping packet.  I beleive this only works with
+before sending the ping packet.  I believe this only works with
 superuser privileges and with udp and icmp protocols at this time.
 
-If $tos is given, this ToS is configured into the soscket.
+If $tos is given, this ToS is configured into the socket.
 
 =item $p->ping($host [, $timeout]);
 
@@ -1559,7 +1575,7 @@ This is disabled by default.
 
 =item $p->tcp_service_check( { 0 | 1 } );
 
-Depricated method, but does the same as service_check() method.
+Deprecated method, but does the same as service_check() method.
 
 =item $p->hires( { 0 | 1 } );
 
@@ -1608,7 +1624,7 @@ connection will not be established and ack() will return
 undef.  In list context, the host, the ack time, and the
 dotted ip string will be returned instead of just the host.
 If the optional $host argument is specified, the return
-value will be partaining to that host only.
+value will be pertaining to that host only.
 This call simply does nothing if you are using any protocol
 other than syn.
 
@@ -1624,6 +1640,14 @@ Close the network connection for this ping object.  The network
 connection is also closed by "undef $p".  The network connection is
 automatically closed if the ping object goes out of scope (e.g. $p is
 local to a subroutine and you leave the subroutine).
+
+=item $p->port_number([$port_number])
+
+When called with a port number, the port number used to ping is set to
+$port_number rather than using the echo port.  It also has the effect
+of calling C<$p-E<gt>service_check(1)> causing a ping to return a successful
+response only if that specific port is accessible.  This function returns
+the value of the port that C<ping()> will connect to.
 
 =item pingecho($host [, $timeout]);
 
@@ -1739,6 +1763,6 @@ Copyright (c) 2001, Colin McMillen.  All rights reserved.
 This program is free software; you may redistribute it and/or
 modify it under the same terms as Perl itself.
 
-$Id: Ping.pm,v 1.7 2003/12/03 03:02:39 millert Exp $
+$Id: Ping.pm,v 1.8 2008/09/29 17:36:13 millert Exp $
 
 =cut

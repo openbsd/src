@@ -60,6 +60,10 @@ $isvax = `\$ Write Sys\$Output \(F\$GetSyI(\"HW_MODEL\") .LE. 1024 .AND. F\$GetS
 chomp $isvax;
 print "\$isvax: \\$isvax\\\n" if $debug;
 
+$isi64 = `\$ Write Sys\$Output \(F\$GetSyI(\"HW_MODEL\") .GE. 4096)`;
+chomp $isi64;
+print "\$isi64: \\$isi64\\\n" if $debug;
+
 print "Input \$cc_cmd: \\$cc_cmd\\\n" if $debug;
 $docc = ($cc_cmd !~ /^~~/);
 print "\$docc = $docc\n" if $debug;
@@ -150,7 +154,7 @@ sub scan_func {
 
   for my $line (@lines) {
     print "\tchecking for global routine\n" if $debug > 1;
-    $line =~ s/\b(IV|Off_t|Size_t|SSize_t|void)\b//i;
+    $line =~ s/\b(IV|Off_t|Size_t|SSize_t|void|int)\b//i;
     if ( $line =~ /(\w+)\s*\(/ ) {
       print "\troutine name is \\$1\\\n" if $debug > 1;
       if ($1 eq 'main' || $1 eq 'perl_init_ext' || $1 eq '__attribute__format__'
@@ -170,38 +174,46 @@ if ($use_mymalloc) {
   $fcns{'Perl_mfree'}++;
 }
 
-if ($use_perlio) {
-  $preprocess_list = "${dir}perl.h+${dir}perlapi.h,${dir}perliol.h";
-} else {
-  $preprocess_list = "${dir}perl.h+${dir}perlapi.h";
-}
-
 $used_expectation_enum = $used_opcode_enum = 0; # avoid warnings
 if ($docc) {
+  1 while unlink 'perlincludes.tmp';
+  END { 1 while unlink 'perlincludes.tmp'; }  # and clean up after
+
+  open(PERLINC, '>perlincludes.tmp') or die "Couldn't open 'perlincludes.tmp' $!";
+
+  print PERLINC qq/#include "${dir}perl.h"\n/;
+  print PERLINC qq/#include "${dir}perlapi.h"\n/; 
+  print PERLINC qq/#include "${dir}perliol.h"\n/ if $use_perlio;
+  print PERLINC qq/#include "${dir}regcomp.h"\n/;
+
+  close PERLINC;
+  $preprocess_list = 'perlincludes.tmp';
+
   open(CPP,"${cc_cmd}/NoObj/PreProc=Sys\$Output $preprocess_list|")
     or die "$0: Can't preprocess $preprocess_list: $!\n";
 }
 else {
   open(CPP,"$cpp_file") or die "$0: Can't read preprocessed file $cpp_file: $!\n";
 }
-%checkh = map { $_,1 } qw( thread bytecode byterun proto perlapi perlio perlvars intrpvar thrdvar );
+%checkh = map { $_,1 } qw( bytecode byterun intrpvar perlapi perlio perliol 
+                           perlvars proto regcomp thrdvar thread );
 $ckfunc = 0;
 LINE: while (<CPP>) {
   while (/^#.*vmsish\.h/i .. /^#.*perl\.h/i) {
     while (/__VMS_PROTOTYPES__/i .. /__VMS_SEPYTOTORP__/i) {
       print "vms_proto>> $_" if $debug > 2;
-      if (/^\s*EXT/) { &scan_var($_);  }
+      if (/^\s*EXT(CONST|\s+)/) { &scan_var($_);  }
       else        { &scan_func($_); }
       last LINE unless defined($_ = <CPP>);
     }
     print "vmsish.h>> $_" if $debug > 2;
-    if (/^\s*EXT/) { &scan_var($_); }
+    if (/^\s*EXT(CONST|\s+)/) { &scan_var($_); }
     last LINE unless defined($_ = <CPP>);
   }    
   while (/^#.*opcode\.h/i .. /^#.*perl\.h/i) {
     print "opcode.h>> $_" if $debug > 2;
     if (/^OP \*\s/) { &scan_func($_); }
-    if (/^\s*EXT/) { &scan_var($_); }
+    if (/^\s*EXT(CONST|\s+)/) { &scan_var($_); }
     last LINE unless defined($_ = <CPP>);
   }
   # Check for transition to new header file
@@ -210,19 +222,18 @@ LINE: while (<CPP>) {
     # Pull name from library module or header filespec
     $spec =~ /^(\w+)$/ or $spec =~ /(\w+)\.h/i;
     my $name = lc $1;
-    $name = 'perlio' if $name eq 'perliol';
     $ckfunc = exists $checkh{$name} ? 1 : 0;
     $scanname = $name if $ckfunc;
     print "Header file transition: ckfunc = $ckfunc for $name.h\n" if $debug > 1;
   }
   if ($ckfunc) {
     print "$scanname>> $_" if $debug > 2;
-    if (/^\s*EXT/) { &scan_var($_);  }
+    if (/^\s*EXT(CONST|\s+)/) { &scan_var($_);  }
     else           { &scan_func($_); }
   }
   else {
     print $_ if $debug > 3 && ($debug > 5 || length($_));
-    if (/^\s*EXT/) { &scan_var($_); }
+    if (/^\s*EXT(CONST|\s+)/) { &scan_var($_); }
   }
 }
 close CPP;
@@ -258,8 +269,14 @@ if ($isvax) {
 }
 
 unless ($isgcc) {
-  print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,PIC,NOEXE,RD,NOWRT,SHR\n";
-  print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,PIC,NOEXE,RD,WRT,NOSHR\n";
+  if ($isi64) {
+    print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,NOEXE,RD,NOWRT,SHR\n";
+    print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,NOEXE,RD,WRT,NOSHR\n";
+  }
+  else {
+    print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,PIC,NOEXE,RD,NOWRT,SHR\n";
+    print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,PIC,NOEXE,RD,WRT,NOSHR\n";
+  }
 }
 print OPTBLD "case_sensitive=yes\n" if $care_about_case;
 foreach $var (sort (keys %vars,keys %cvars)) {
@@ -380,6 +397,5 @@ exec "\$ \@$drvrname" if $isvax;
 __END__
 
 # Oddball cases, so we can keep the perl.h scan above simple
-regkind=vars    # declared in regcomp.h
-simple=vars     # declared in regcomp.h
-varies=vars     # declared in regcomp.h
+#Foo=vars    # uncommented becomes PL_Foo
+#Bar=funcs   # uncommented becomes Perl_Bar

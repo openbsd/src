@@ -1,7 +1,7 @@
 /*    scope.h
  *
  *    Copyright (C) 1993, 1994, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2004, 2005 by Larry Wall and others
+ *    2000, 2001, 2002, 2004, 2005, 2006, 2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -47,14 +47,20 @@
 #define SAVEt_MORTALIZESV	36
 #define SAVEt_SHARED_PVREF	37
 #define SAVEt_BOOL		38
+#define SAVEt_SET_SVFLAGS	39
 #define SAVEt_SAVESWITCHSTACK	40
+#define SAVEt_COP_ARYBASE	41
+#define SAVEt_RE_STATE		42
+#define SAVEt_COMPILE_WARNINGS	43
+#define SAVEt_STACK_CXPOS	44
+#define SAVEt_PARSER		45
 
 #ifndef SCOPE_SAVES_SIGNAL_MASK
 #define SCOPE_SAVES_SIGNAL_MASK 0
 #endif
 
-#define SSCHECK(need) if (PL_savestack_ix + (need) > PL_savestack_max) savestack_grow()
-#define SSGROW(need) if (PL_savestack_ix + (need) > PL_savestack_max) savestack_grow_cnt(need)
+#define SSCHECK(need) if (PL_savestack_ix + (I32)(need) > PL_savestack_max) savestack_grow()
+#define SSGROW(need) if (PL_savestack_ix + (I32)(need) > PL_savestack_max) savestack_grow_cnt(need)
 #define SSPUSHINT(i) (PL_savestack[PL_savestack_ix++].any_i32 = (I32)(i))
 #define SSPUSHLONG(i) (PL_savestack[PL_savestack_ix++].any_long = (long)(i))
 #define SSPUSHBOOL(p) (PL_savestack[PL_savestack_ix++].any_bool = (p))
@@ -110,36 +116,33 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #endif
 #define LEAVE_SCOPE(old) if (PL_savestack_ix > old) leave_scope(old)
 
-/*
- * Not using SOFT_CAST on SAVESPTR, SAVEGENERICSV and SAVEFREESV
- * because these are used for several kinds of pointer values
- */
-#define SAVEI8(i)	save_I8(SOFT_CAST(I8*)&(i))
-#define SAVEI16(i)	save_I16(SOFT_CAST(I16*)&(i))
-#define SAVEI32(i)	save_I32(SOFT_CAST(I32*)&(i))
-#define SAVEINT(i)	save_int(SOFT_CAST(int*)&(i))
-#define SAVEIV(i)	save_iv(SOFT_CAST(IV*)&(i))
-#define SAVELONG(l)	save_long(SOFT_CAST(long*)&(l))
-#define SAVEBOOL(b)	save_bool(SOFT_CAST(bool*)&(b))
+#define SAVEI8(i)	save_I8((I8*)&(i))
+#define SAVEI16(i)	save_I16((I16*)&(i))
+#define SAVEI32(i)	save_I32((I32*)&(i))
+#define SAVEINT(i)	save_int((int*)&(i))
+#define SAVEIV(i)	save_iv((IV*)&(i))
+#define SAVELONG(l)	save_long((long*)&(l))
+#define SAVEBOOL(b)	save_bool((bool*)&(b))
 #define SAVESPTR(s)	save_sptr((SV**)&(s))
-#define SAVEPPTR(s)	save_pptr(SOFT_CAST(char**)&(s))
+#define SAVEPPTR(s)	save_pptr((char**)&(s))
 #define SAVEVPTR(s)	save_vptr((void*)&(s))
 #define SAVEPADSV(s)	save_padsv(s)
 #define SAVEFREESV(s)	save_freesv((SV*)(s))
 #define SAVEMORTALIZESV(s)	save_mortalizesv((SV*)(s))
-#define SAVEFREEOP(o)	save_freeop(SOFT_CAST(OP*)(o))
-#define SAVEFREEPV(p)	save_freepv(SOFT_CAST(char*)(p))
-#define SAVECLEARSV(sv)	save_clearsv(SOFT_CAST(SV**)&(sv))
+#define SAVEFREEOP(o)	save_freeop((OP*)(o))
+#define SAVEFREEPV(p)	save_freepv((char*)(p))
+#define SAVECLEARSV(sv)	save_clearsv((SV**)&(sv))
 #define SAVEGENERICSV(s)	save_generic_svref((SV**)&(s))
 #define SAVEGENERICPV(s)	save_generic_pvref((char**)&(s))
 #define SAVESHAREDPV(s)		save_shared_pvref((char**)&(s))
+#define SAVESETSVFLAGS(sv,mask,val)	save_set_svflags(sv,mask,val)
 #define SAVEDELETE(h,k,l) \
-	  save_delete(SOFT_CAST(HV*)(h), SOFT_CAST(char*)(k), (I32)(l))
+	  save_delete((HV*)(h), (char*)(k), (I32)(l))
 #define SAVEDESTRUCTOR(f,p) \
-	  save_destructor((DESTRUCTORFUNC_NOCONTEXT_t)(f), SOFT_CAST(void*)(p))
+	  save_destructor((DESTRUCTORFUNC_NOCONTEXT_t)(f), (void*)(p))
 
 #define SAVEDESTRUCTOR_X(f,p) \
-	  save_destructor_x((DESTRUCTORFUNC_t)(f), SOFT_CAST(void*)(p))
+	  save_destructor_x((DESTRUCTORFUNC_t)(f), (void*)(p))
 
 #define SAVESTACK_POS() \
     STMT_START {				\
@@ -152,11 +155,17 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 
 #define SAVEHINTS() \
     STMT_START {					\
-	SSCHECK(3);					\
+	SSCHECK(4);					\
 	if (PL_hints & HINT_LOCALIZE_HH) {		\
 	    SSPUSHPTR(GvHV(PL_hintgv));			\
-	    GvHV(PL_hintgv) = newHVhv(GvHV(PL_hintgv));	\
+	    GvHV(PL_hintgv) = Perl_hv_copy_hints_hv(aTHX_ GvHV(PL_hintgv)); \
 	}						\
+	if (PL_compiling.cop_hints_hash) {		\
+	    HINTS_REFCNT_LOCK;				\
+	    PL_compiling.cop_hints_hash->refcounted_he_refcnt++;	\
+	    HINTS_REFCNT_UNLOCK;			\
+	}						\
+	SSPUSHPTR(PL_compiling.cop_hints_hash);		\
 	SSPUSHINT(PL_hints);				\
 	SSPUSHINT(SAVEt_HINTS);				\
     } STMT_END
@@ -178,16 +187,55 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 	PL_curstackinfo->si_stack = (t);		\
     } STMT_END
 
+#define SAVECOPARYBASE(c) \
+    STMT_START {					\
+	SSCHECK(3);					\
+	SSPUSHINT(CopARYBASE_get(c));			\
+	SSPUSHPTR(c);					\
+	SSPUSHINT(SAVEt_COP_ARYBASE);			\
+    } STMT_END
+
+/* Need to do the cop warnings like this, rather than a "SAVEFREESHAREDPV",
+   because realloc() means that the value can actually change. Possibly
+   could have done savefreesharedpvREF, but this way actually seems cleaner,
+   as it simplifies the code that does the saves, and reduces the load on the
+   save stack.  */
+#define SAVECOMPILEWARNINGS() \
+    STMT_START {					\
+	SSCHECK(2);					\
+	SSPUSHPTR(PL_compiling.cop_warnings);		\
+	SSPUSHINT(SAVEt_COMPILE_WARNINGS);		\
+    } STMT_END
+
+#define SAVESTACK_CXPOS() \
+    STMT_START {                                  \
+        SSCHECK(3);                               \
+        SSPUSHINT(cxstack[cxstack_ix].blk_oldsp); \
+        SSPUSHINT(cxstack_ix);                    \
+        SSPUSHINT(SAVEt_STACK_CXPOS);             \
+    } STMT_END
+
+#define SAVEPARSER(p) \
+    STMT_START {                                  \
+        SSCHECK(2);                               \
+        SSPUSHPTR(p);		                  \
+        SSPUSHINT(SAVEt_PARSER); 	          \
+    } STMT_END
+
 #ifdef USE_ITHREADS
 #  define SAVECOPSTASH(c)	SAVEPPTR(CopSTASHPV(c))
 #  define SAVECOPSTASH_FREE(c)	SAVESHAREDPV(CopSTASHPV(c))
 #  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
 #  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
+#  define SAVECOPLABEL(c)	SAVEPPTR(CopLABEL(c))
+#  define SAVECOPLABEL_FREE(c)	SAVESHAREDPV(CopLABEL(c))
 #else
 #  define SAVECOPSTASH(c)	SAVESPTR(CopSTASH(c))
 #  define SAVECOPSTASH_FREE(c)	SAVECOPSTASH(c)	/* XXX not refcounted */
 #  define SAVECOPFILE(c)	SAVESPTR(CopFILEGV(c))
 #  define SAVECOPFILE_FREE(c)	SAVEGENERICSV(CopFILEGV(c))
+#  define SAVECOPLABEL(c)	SAVEPPTR(CopLABEL(c))
+#  define SAVECOPLABEL_FREE(c)	SAVEPPTR(CopLABEL(c))
 #endif
 
 #define SAVECOPLINE(c)		SAVEI32(CopLINE(c))
@@ -212,200 +260,3 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #define SSPTR(off,type)         ((type)  ((char*)PL_savestack + off))
 #define SSPTRt(off,type)        ((type*) ((char*)PL_savestack + off))
 
-/* A jmpenv packages the state required to perform a proper non-local jump.
- * Note that there is a start_env initialized when perl starts, and top_env
- * points to this initially, so top_env should always be non-null.
- *
- * Existence of a non-null top_env->je_prev implies it is valid to call
- * longjmp() at that runlevel (we make sure start_env.je_prev is always
- * null to ensure this).
- *
- * je_mustcatch, when set at any runlevel to TRUE, means eval ops must
- * establish a local jmpenv to handle exception traps.  Care must be taken
- * to restore the previous value of je_mustcatch before exiting the
- * stack frame iff JMPENV_PUSH was not called in that stack frame.
- * GSAR 97-03-27
- */
-
-struct jmpenv {
-    struct jmpenv *	je_prev;
-    Sigjmp_buf		je_buf;		/* only for use if !je_throw */
-    int			je_ret;		/* last exception thrown */
-    bool		je_mustcatch;	/* need to call longjmp()? */
-#ifdef PERL_FLEXIBLE_EXCEPTIONS
-    void		(*je_throw)(int v); /* last for bincompat */
-    bool		je_noset;	/* no need for setjmp() */
-#endif
-};
-
-typedef struct jmpenv JMPENV;
-
-#ifdef OP_IN_REGISTER
-#define OP_REG_TO_MEM	PL_opsave = op
-#define OP_MEM_TO_REG	op = PL_opsave
-#else
-#define OP_REG_TO_MEM	NOOP
-#define OP_MEM_TO_REG	NOOP
-#endif
-
-/*
- * How to build the first jmpenv.
- *
- * top_env needs to be non-zero. It points to an area
- * in which longjmp() stuff is stored, as C callstack
- * info there at least is thread specific this has to
- * be per-thread. Otherwise a 'die' in a thread gives
- * that thread the C stack of last thread to do an eval {}!
- */
-
-#define JMPENV_BOOTSTRAP \
-    STMT_START {				\
-	Zero(&PL_start_env, 1, JMPENV);		\
-	PL_start_env.je_ret = -1;		\
-	PL_start_env.je_mustcatch = TRUE;	\
-	PL_top_env = &PL_start_env;		\
-    } STMT_END
-
-#ifdef PERL_FLEXIBLE_EXCEPTIONS
-
-/*
- * These exception-handling macros are split up to
- * ease integration with C++ exceptions.
- *
- * To use C++ try+catch to catch Perl exceptions, an extension author
- * needs to first write an extern "C" function to throw an appropriate
- * exception object; typically it will be or contain an integer,
- * because Perl's internals use integers to track exception types:
- *    extern "C" { static void thrower(int i) { throw i; } }
- *
- * Then (as shown below) the author needs to use, not the simple
- * JMPENV_PUSH, but several of its constitutent macros, to arrange for
- * the Perl internals to call thrower() rather than longjmp() to
- * report exceptions:
- *
- *    dJMPENV;
- *    JMPENV_PUSH_INIT(thrower);
- *    try {
- *        ... stuff that may throw exceptions ...
- *    }
- *    catch (int why) {  // or whatever matches thrower()
- *        JMPENV_POST_CATCH;
- *        EXCEPT_SET(why);
- *        switch (why) {
- *          ... // handle various Perl exception codes
- *        }
- *    }
- *    JMPENV_POP;  // don't forget this!
- */
-
-/*
- * Function that catches/throws, and its callback for the
- *  body of protected processing.
- */
-typedef void *(CPERLscope(*protect_body_t)) (pTHX_ va_list);
-typedef void *(CPERLscope(*protect_proc_t)) (pTHX_ volatile JMPENV *pcur_env,
-					     int *, protect_body_t, ...);
-
-#define dJMPENV	JMPENV cur_env;	\
-		volatile JMPENV *pcur_env = ((cur_env.je_noset = 0),&cur_env)
-
-#define JMPENV_PUSH_INIT_ENV(ce,THROWFUNC) \
-    STMT_START {					\
-	(ce).je_throw = (THROWFUNC);			\
-	(ce).je_ret = -1;				\
-	(ce).je_mustcatch = FALSE;			\
-	(ce).je_prev = PL_top_env;			\
-	PL_top_env = &(ce);				\
-	OP_REG_TO_MEM;					\
-    } STMT_END
-
-#define JMPENV_PUSH_INIT(THROWFUNC) JMPENV_PUSH_INIT_ENV(*(JMPENV*)pcur_env,THROWFUNC)
-
-#define JMPENV_POST_CATCH_ENV(ce) \
-    STMT_START {					\
-	OP_MEM_TO_REG;					\
-	PL_top_env = &(ce);				\
-    } STMT_END
-
-#define JMPENV_POST_CATCH JMPENV_POST_CATCH_ENV(*(JMPENV*)pcur_env)
-
-#define JMPENV_PUSH_ENV(ce,v) \
-    STMT_START {						\
-	if (!(ce).je_noset) {					\
-	    DEBUG_l(Perl_deb(aTHX_ "Setting up jumplevel %p, was %p\n",	\
-			     ce, PL_top_env));			\
-	    JMPENV_PUSH_INIT_ENV(ce,NULL);			\
-	    EXCEPT_SET_ENV(ce,PerlProc_setjmp((ce).je_buf, SCOPE_SAVES_SIGNAL_MASK));\
-	    (ce).je_noset = 1;					\
-	}							\
-	else							\
-	    EXCEPT_SET_ENV(ce,0);				\
-	JMPENV_POST_CATCH_ENV(ce);				\
-	(v) = EXCEPT_GET_ENV(ce);				\
-    } STMT_END
-
-#define JMPENV_PUSH(v) JMPENV_PUSH_ENV(*(JMPENV*)pcur_env,v)
-
-#define JMPENV_POP_ENV(ce) \
-    STMT_START {						\
-	if (PL_top_env == &(ce))				\
-	    PL_top_env = (ce).je_prev;				\
-    } STMT_END
-
-#define JMPENV_POP  JMPENV_POP_ENV(*(JMPENV*)pcur_env)
-
-#define JMPENV_JUMP(v) \
-    STMT_START {						\
-	OP_REG_TO_MEM;						\
-	if (PL_top_env->je_prev) {				\
-	    if (PL_top_env->je_throw)				\
-		PL_top_env->je_throw(v);			\
-	    else						\
-		PerlProc_longjmp(PL_top_env->je_buf, (v));	\
-	}							\
-	if ((v) == 2)						\
-	    PerlProc_exit(STATUS_NATIVE_EXPORT);		\
-	PerlIO_printf(Perl_error_log, "panic: top_env\n");	\
-	PerlProc_exit(1);					\
-    } STMT_END
-
-#define EXCEPT_GET_ENV(ce)	((ce).je_ret)
-#define EXCEPT_GET		EXCEPT_GET_ENV(*(JMPENV*)pcur_env)
-#define EXCEPT_SET_ENV(ce,v)	((ce).je_ret = (v))
-#define EXCEPT_SET(v)		EXCEPT_SET_ENV(*(JMPENV*)pcur_env,v)
-
-#else /* !PERL_FLEXIBLE_EXCEPTIONS */
-
-#define dJMPENV		JMPENV cur_env
-
-#define JMPENV_PUSH(v) \
-    STMT_START {							\
-	DEBUG_l(Perl_deb(aTHX_ "Setting up jumplevel %p, was %p\n",	\
-			 &cur_env, PL_top_env));			\
-	cur_env.je_prev = PL_top_env;					\
-	OP_REG_TO_MEM;							\
-	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, SCOPE_SAVES_SIGNAL_MASK);		\
-	OP_MEM_TO_REG;							\
-	PL_top_env = &cur_env;						\
-	cur_env.je_mustcatch = FALSE;					\
-	(v) = cur_env.je_ret;						\
-    } STMT_END
-
-#define JMPENV_POP \
-    STMT_START { PL_top_env = cur_env.je_prev; } STMT_END
-
-#define JMPENV_JUMP(v) \
-    STMT_START {						\
-	OP_REG_TO_MEM;						\
-	if (PL_top_env->je_prev)				\
-	    PerlProc_longjmp(PL_top_env->je_buf, (v));		\
-	if ((v) == 2)						\
-	    PerlProc_exit(STATUS_NATIVE_EXPORT);		\
-	PerlIO_printf(PerlIO_stderr(), "panic: top_env\n");	\
-	PerlProc_exit(1);					\
-    } STMT_END
-
-#endif /* PERL_FLEXIBLE_EXCEPTIONS */
-
-#define CATCH_GET		(PL_top_env->je_mustcatch)
-#define CATCH_SET(v)		(PL_top_env->je_mustcatch = (v))

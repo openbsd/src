@@ -14,9 +14,11 @@ my $Is_VMSish = ($^O eq 'VMS');
 
 if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
     $wd = `cd`;
-} elsif ($^O eq 'VMS') {
+}
+elsif ($^O eq 'VMS') {
     $wd = `show default`;
-} else {
+}
+else {
     $wd = `pwd`;
 }
 chomp($wd);
@@ -47,7 +49,7 @@ $needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 my $skip_mode_checks =
     $^O eq 'cygwin' && $ENV{CYGWIN} !~ /ntsec/;
 
-plan tests => 42;
+plan tests => 51;
 
 
 if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
@@ -56,6 +58,7 @@ if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
 }
 elsif ($^O eq 'VMS') {
     `if f\$search("[.tmp]*.*") .nes. "" then delete/nolog/noconfirm [.tmp]*.*.*`;
+    `if f\$search("tmp.dir") .nes. "" then set file/prot=o:rwed tmp.dir;`;
     `if f\$search("tmp.dir") .nes. "" then delete/nolog/noconfirm tmp.dir;`;
     `create/directory [.tmp]`;
 }
@@ -200,7 +203,7 @@ SKIP: {
     skip "has fchown", 1 if ($Config{d_fchown} || "") eq "define";
     open(my $fh, "<", "a");
     eval { chown(0, 0, $fh); };
-    like($@, qr/^The fchown function is unimplemented at/, "fchown is unimplemented");
+    like($@, qr/^The f?chown function is unimplemented at/, "fchown is unimplemented");
 }
 
 is(rename('a','b'), 1, "rename a b");
@@ -212,58 +215,85 @@ is($ino, undef, "ino of renamed file a should be undef");
 
 $delta = $accurate_timestamps ? 1 : 2;	# Granularity of time on the filesystem
 chmod 0777, 'b';
+
 $foo = (utime 500000000,500000000 + $delta,'b');
-
 is($foo, 1, "utime");
+check_utime_result();
 
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('b');
+utime undef, undef, 'b';
+($atime,$mtime) = (stat 'b')[8,9];
+print "# utime undef, undef --> $atime, $mtime\n";
+isnt($atime, 500000000, 'atime');
+isnt($mtime, 500000000 + $delta, 'mtime');
 
 SKIP: {
-    skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+    skip "no futimes", 4 unless ($Config{d_futimes} || "") eq "define";
+    open(my $fh, "<", 'b');
+    $foo = (utime 500000000,500000000 + $delta, $fh);
+    is($foo, 1, "futime");
+    check_utime_result();
+}
 
-    ok($ino,    'non-zero inode num');
+
+sub check_utime_result {
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('b');
+
+ SKIP: {
+	skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+
+	ok($ino,    'non-zero inode num');
+    }
+
+ SKIP: {
+	skip "filesystem atime/mtime granularity too low", 2
+	    unless $accurate_timestamps;
+
+	print "# atime - $atime  mtime - $mtime  delta - $delta\n";
+	if($atime == 500000000 && $mtime == 500000000 + $delta) {
+	    pass('atime');
+	    pass('mtime');
+	}
+	else {
+	    if ($^O =~ /\blinux\b/i) {
+		print "# Maybe stat() cannot get the correct atime, ".
+		    "as happens via NFS on linux?\n";
+		$foo = (utime 400000000,500000000 + 2*$delta,'b');
+		my ($new_atime, $new_mtime) = (stat('b'))[8,9];
+		print "# newatime - $new_atime  nemtime - $new_mtime\n";
+		if ($new_atime == $atime && $new_mtime - $mtime == $delta) {
+		    pass("atime - accounted for possible NFS/glibc2.2 bug on linux");
+		    pass("mtime - accounted for possible NFS/glibc2.2 bug on linux");
+		}
+		else {
+		    fail("atime - $atime/$new_atime $mtime/$new_mtime");
+		    fail("mtime - $atime/$new_atime $mtime/$new_mtime");
+		}
+	    }
+	    elsif ($^O eq 'VMS') {
+		# why is this 1 second off?
+		is( $atime, 500000001,          'atime' );
+		is( $mtime, 500000000 + $delta, 'mtime' );
+	    }
+	    elsif ($^O eq 'beos') {
+            SKIP: {
+		    skip "atime not updated", 1;
+		}
+		is($mtime, 500000001, 'mtime');
+	    }
+	    else {
+		fail("atime");
+		fail("mtime");
+	    }
+	}
+    }
 }
 
 SKIP: {
-    skip "filesystem atime/mtime granularity too low", 2
-      unless $accurate_timestamps;
-
-    print "# atime - $atime  mtime - $mtime  delta - $delta\n";
-    if($atime == 500000000 && $mtime == 500000000 + $delta) {
-        pass('atime');
-        pass('mtime');
-    }
-    else {
-        if ($^O =~ /\blinux\b/i) {
-            print "# Maybe stat() cannot get the correct atime, ".
-                  "as happens via NFS on linux?\n";
-            $foo = (utime 400000000,500000000 + 2*$delta,'b');
-            my ($new_atime, $new_mtime) = (stat('b'))[8,9];
-            print "# newatime - $new_atime  nemtime - $new_mtime\n";
-            if ($new_atime == $atime && $new_mtime - $mtime == $delta) {
-                pass("atime - accounted for possible NFS/glibc2.2 bug on linux");
-                pass("mtime - accounted for possible NFS/glibc2.2 bug on linux");
-            }
-            else {
-                fail("atime - $atime/$new_atime $mtime/$new_mtime");
-                fail("mtime - $atime/$new_atime $mtime/$new_mtime");
-            }
-        }
-        elsif ($^O eq 'VMS') {
-            # why is this 1 second off?
-            is( $atime, 500000001,          'atime' );
-            is( $mtime, 500000000 + $delta, 'mtime' );
-        }
-        elsif ($^O eq 'beos') {
-            SKIP: { skip "atime not updated", 1; }
-            is($mtime, 500000001, 'mtime');
-        }
-        else {
-            fail("atime");
-            fail("mtime");
-        }
-    }
+    skip "has futimes", 1 if ($Config{d_futimes} || "") eq "define";
+    open(my $fh, "<", "b") || die;
+    eval { utime(undef, undef, $fh); };
+    like($@, qr/^The futimes function is unimplemented at/, "futimes is unimplemented");
 }
 
 is(unlink('b'), 1, "unlink b");
@@ -383,7 +413,7 @@ SKIP: {
 # check if rename() can be used to just change case of filename
 SKIP: {
     skip "Works in Cygwin only if check_case is set to relaxed", 1
-      if $^O eq 'cygwin';
+      if ($ENV{'CYGWIN'} && ($ENV{'CYGWIN'} =~ /check_case:(?:adjust|strict)/));
 
     chdir './tmp';
     open(FH,'>x') || die "Can't create x";
@@ -403,28 +433,14 @@ if ($^O eq 'VMS') {
     `set file tmp.dir/protection=o:d`;
     ok(rename('tmp.dir', 'tmp1.dir'), "rename on directories") ||
       print "# errno: $!\n";
-} else {
+}
+else {
     ok(rename('tmp', 'tmp1'), "rename on directories");
 }
 
 ok(-d 'tmp1', "rename on directories working");
 
-# FIXME - for some reason change 26009/26011 merged as 26627 still segfaults
-# after all the tests have completed:
-# #0  0x08124dd0 in Perl_pop_scope (my_perl=0x81b5ec8) at scope.c:143
-# #1  0x080e88d8 in Perl_pp_leave (my_perl=0x81b5ec8) at pp_hot.c:1843
-# #2  0x080c7dc1 in Perl_runops_debug (my_perl=0x81b5ec8) at dump.c:1459
-# #3  0x080660af in S_run_body (my_perl=0x81b5ec8, oldscope=1) at perl.c:2369
-# #4  0x08065ab1 in perl_run (my_perl=0x81b5ec8) at perl.c:2286
-# #5  0x080604c3 in main (argc=2, argv=0xbffffc64, env=0xbffffc70)
-#     at perlmain.c:99
-#
-# 143         const I32 oldsave = PL_scopestack[--PL_scopestack_ix];
-# (gdb) p my_perl->Tscopestack_ix
-# $1 = 136787683
-#
-
-if (0) {
+{
     # Change 26011: Re: A surprising segfault
     # to make sure only that these obfuscated sentences will not crash.
 

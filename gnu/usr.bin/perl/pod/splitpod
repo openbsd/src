@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use lib '../lib';  # If you haven't installed perl yet.
+BEGIN { push @INC, '../lib' } # If you haven't installed perl yet.
 use Pod::Functions;
 
 local $/ = '';
@@ -48,15 +48,15 @@ for $f ( keys %syn ) {
     $body =~ s/^=back\s*//m if $has_back and !$has_over;
     open (POD, "> $name.pod") || die "can't open $name.pod: $!";
     print POD <<EOF;
-=head1 NAME
+\=head1 NAME
 
 $orig - $flavor
 
-=head1 SYNOPSIS
+\=head1 SYNOPSIS
 
 $syn{$orig}
 
-=head1 DESCRIPTION
+\=head1 DESCRIPTION
 
 $body
 

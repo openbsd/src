@@ -1,7 +1,7 @@
 # Pod::Text::Termcap -- Convert POD data to ASCII text with format escapes.
-# $Id: Termcap.pm,v 1.5 2003/12/03 03:02:40 millert Exp $
+# $Id: Termcap.pm,v 1.6 2008/09/29 17:36:14 millert Exp $
 #
-# Copyright 1999, 2001, 2002 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2001, 2002, 2004, 2006 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -30,8 +30,7 @@ use vars qw(@ISA $VERSION);
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.  This
 # number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 1.11;
-
+$VERSION = 2.03;
 
 ##############################################################################
 # Overrides
@@ -39,9 +38,10 @@ $VERSION = 1.11;
 
 # In the initialization method, grab our terminal characteristics as well as
 # do all the stuff we normally do.
-sub initialize {
-    my $self = shift;
+sub new {
+    my ($self, @args) = @_;
     my ($ospeed, $term, $termios);
+    $self = $self->SUPER::new (@args);
 
     # $ENV{HOME} is usually not set on Windows.  The default Term::Cap path
     # may not work on Solaris.
@@ -66,32 +66,30 @@ sub initialize {
     $$self{NORM} = $$term{_me} || "\e[m";
 
     unless (defined $$self{width}) {
-        $$self{width} = $ENV{COLUMNS} || $$term{_co} || 80;
-        $$self{width} -= 2;
+        $$self{opt_width} = $ENV{COLUMNS} || $$term{_co} || 80;
+        $$self{opt_width} -= 2;
     }
 
-    $self->SUPER::initialize;
+    return $self;
 }
 
 # Make level one headings bold.
 sub cmd_head1 {
-    my $self = shift;
-    local $_ = shift;
-    s/\s+$//;
-    $self->SUPER::cmd_head1 ("$$self{BOLD}$_$$self{NORM}");
+    my ($self, $attrs, $text) = @_;
+    $text =~ s/\s+$//;
+    $self->SUPER::cmd_head1 ($attrs, "$$self{BOLD}$text$$self{NORM}");
 }
 
 # Make level two headings bold.
 sub cmd_head2 {
-    my $self = shift;
-    local $_ = shift;
-    s/\s+$//;
-    $self->SUPER::cmd_head2 ("$$self{BOLD}$_$$self{NORM}");
+    my ($self, $attrs, $text) = @_;
+    $text =~ s/\s+$//;
+    $self->SUPER::cmd_head2 ($attrs, "$$self{BOLD}$text$$self{NORM}");
 }
 
 # Fix up B<> and I<>.  Note that we intentionally don't do F<>.
-sub seq_b { my $self = shift; return "$$self{BOLD}$_[0]$$self{NORM}" }
-sub seq_i { my $self = shift; return "$$self{UNDL}$_[0]$$self{NORM}" }
+sub cmd_b { my $self = shift; return "$$self{BOLD}$_[1]$$self{NORM}" }
+sub cmd_i { my $self = shift; return "$$self{UNDL}$_[1]$$self{NORM}" }
 
 # Output any included code in bold.
 sub output_code {
@@ -105,11 +103,18 @@ sub wrap {
     local $_ = shift;
     my $output = '';
     my $spaces = ' ' x $$self{MARGIN};
-    my $width = $$self{width} - $$self{MARGIN};
-    my $code = "(?:\Q$$self{BOLD}\E|\Q$$self{UNDL}\E|\Q$$self{NORM}\E)";
+    my $width = $$self{opt_width} - $$self{MARGIN};
+
+    # $codes matches a single special sequence.  $char matches any number of
+    # special sequences preceeding a single character other than a newline.
+    # We have to do $shortchar and $longchar in variables because the
+    # construct ${char}{0,$width} didn't do the right thing until Perl 5.8.x.
+    my $codes = "(?:\Q$$self{BOLD}\E|\Q$$self{UNDL}\E|\Q$$self{NORM}\E)";
+    my $char = "(?:$codes*[^\\n])";
+    my $shortchar = $char . "{0,$width}";
+    my $longchar = $char . "{$width}";
     while (length > $width) {
-        if (s/^((?:$code?[^\n]){0,$width})\s+//
-            || s/^((?:$code?[^\n]){$width})//) {
+        if (s/^($shortchar)\s+// || s/^($longchar)//) {
             $output .= $spaces . $1 . "\n";
         } else {
             last;
@@ -117,9 +122,8 @@ sub wrap {
     }
     $output .= $spaces . $_;
     $output =~ s/\s+$/\n\n/;
-    $output;
+    return $output;
 }
-
 
 ##############################################################################
 # Module return value and documentation
@@ -160,7 +164,7 @@ termcap information.
 
 =head1 SEE ALSO
 
-L<Pod::Text>, L<Pod::Parser>, L<Term::Cap>
+L<Pod::Text>, L<Pod::Simple>, L<Term::Cap>
 
 The current version of this module is always available from its web site at
 L<http://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
@@ -172,7 +176,7 @@ Russ Allbery <rra@stanford.edu>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001, 2002 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2001, 2002, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

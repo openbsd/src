@@ -119,7 +119,7 @@ dl_load_file(filename,flags=0)
 	RETVAL = PerlProc_DynaLoad(filename);
     }
     else
-	RETVAL = (void*) GetModuleHandle(NULL);
+	RETVAL = (void*) Win_GetModuleHandle(NULL);
     DLDEBUG(2,PerlIO_printf(Perl_debug_log," libref=%x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)

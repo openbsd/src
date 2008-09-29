@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 /* most changes between the version above and the one below have been ported:
-static char sscsid[]=  "$OpenBSD: bsd_glob.c,v 1.5 2006/03/28 19:23:03 millert Exp $";
+static char sscsid[]=  "$OpenBSD: bsd_glob.c,v 1.6 2008/09/29 17:36:04 millert Exp $";
  */
 #endif /* LIBC_SCCS and not lint */
 
@@ -431,7 +431,7 @@ globexp2(const Char *ptr, const Char *pattern,
 {
 	int     i;
 	Char   *lm, *ls;
-	const Char *pe, *pm, *pl;
+	const Char *pe, *pm, *pm1, *pl;
 	Char    patbuf[MAXPATHLEN];
 
 	/* copy part up to the brace */
@@ -471,14 +471,14 @@ globexp2(const Char *ptr, const Char *pattern,
 		switch (*pm) {
 		case BG_LBRACKET:
 			/* Ignore everything between [] */
-			for (pl = pm++; *pm != BG_RBRACKET && *pm != BG_EOS; pm++)
+			for (pm1 = pm++; *pm != BG_RBRACKET && *pm != BG_EOS; pm++)
 				;
 			if (*pm == BG_EOS) {
 				/*
 				 * We could not find a matching BG_RBRACKET.
 				 * Ignore and just look for BG_RBRACE
 				 */
-				pm = pl;
+				pm = pm1;
 			}
 			break;
 
@@ -935,7 +935,7 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		readdirfunc = (Direntry_t *(*)(DIR *))pglob->gl_readdir;
 	else
-		readdirfunc = my_readdir;
+		readdirfunc = (Direntry_t *(*)(DIR *))my_readdir;
 	while ((dp = (*readdirfunc)(dirp))) {
 		register U8 *sc;
 		register Char *dc;
@@ -1131,9 +1131,9 @@ g_opendir(register Char *str, glob_t *pglob)
 
 	if (!*str) {
 #ifdef MACOS_TRADITIONAL
-		strcpy(buf, ":");
+		my_strlcpy(buf, ":", sizeof(buf));
 #else
-		strcpy(buf, ".");
+		my_strlcpy(buf, ".", sizeof(buf));
 #endif
 	} else {
 		if (g_Ctoc(str, buf, sizeof(buf)))
@@ -1141,7 +1141,7 @@ g_opendir(register Char *str, glob_t *pglob)
 	}
 
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
-		return((*pglob->gl_opendir)(buf));
+		return((DIR*)(*pglob->gl_opendir)(buf));
 
 	return(PerlDir_open(buf));
 }

@@ -15,7 +15,7 @@ int	dbminit(char* filename);
 int	dbmclose(void);
 datum	fetch(datum key);
 int	store(datum key, datum dat);
-int	delete(datum key);
+int	delete(datum key); 
 datum	firstkey(void);
 datum	nextkey(datum key);
 #endif

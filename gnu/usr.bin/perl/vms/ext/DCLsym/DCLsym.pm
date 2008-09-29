@@ -7,7 +7,7 @@ use strict;
 
 # Package globals
 @ISA = ( 'DynaLoader' );
-$VERSION = '1.02';
+$VERSION = '1.03';
 my(%Locsyms) = ( ':ID' => 'LOCAL' );
 my(%Gblsyms) = ( ':ID' => 'GLOBAL');
 my $DoCache = 1;
@@ -106,7 +106,7 @@ sub FIRSTKEY {
     open(P,'Show Symbol * |');
     while (<P>) {
       ($name,$eqs,$val) = /^\s+(\S+) (=+) (.+)/
-        or carp "VMS::CLISym: unparseable line $_";
+        or carp "VMS::DCLsym: unparseable line $_";
       $name =~ s#\*##;
       $val =~ s/"(.*)"$/$1/ or $val =~ s/^(\S+).*/$1/;
       if ($eqs eq '==') { $Gblsyms{$name} = $val; }
@@ -157,7 +157,7 @@ VMS::DCLsym - Perl extension to manipulate DCL symbols
   tie %cgisyms, VMS::DCLsym, 'GLOBAL';
 
 
-  $handle = new VMS::DCLsyms;
+  $handle = new VMS::DCLsym;
   $value = $handle->getsym($name);
   $handle->setsym($name,$value,'GLOBAL') or die "Can't create symbol: $!\n";
   $handle->delsym($name,'LOCAL') or die "Can't delete symbol: $!\n";

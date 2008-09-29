@@ -1,9 +1,0 @@
-ithread *	T_ITHREAD
-
-INPUT
-T_ITHREAD
-	$var = SV_to_ithread(aTHX_ $arg)
-
-OUTPUT
-T_ITHREAD
-	ithread_to_SV(aTHX_ $arg, $var, classname, TRUE);

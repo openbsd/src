@@ -7,17 +7,17 @@
 require Exporter;
 package Math::Trig;
 
-use 5.006;
+use 5.005;
 use strict;
 
-use Math::Complex 1.35;
-use Math::Complex qw(:trig);
+use Math::Complex 1.36;
+use Math::Complex qw(:trig :pi);
 
-our($VERSION, $PACKAGE, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+use vars qw($VERSION $PACKAGE @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-$VERSION = 1.03;
+$VERSION = 1.04;
 
 my @angcnv = qw(rad2deg rad2grad
 		deg2rad deg2grad
@@ -42,7 +42,7 @@ my @greatcircle = qw(
 		     great_circle_destination
 		    );
 
-my @pi = qw(pi2 pip2 pip4);
+my @pi = qw(pi pi2 pi4 pip2 pip4);
 
 @EXPORT_OK = (@rdlcnv, @greatcircle, @pi);
 
@@ -54,22 +54,18 @@ my @pi = qw(pi2 pip2 pip4);
 	        'great_circle' => [ @greatcircle ],
 	        'pi'     => [ @pi ]);
 
-sub pi2  () { 2 * pi }
-sub pip2 () { pi / 2 }
-sub pip4 () { pi / 4 }
-
-sub DR  () { pi2/360 }
-sub RD  () { 360/pi2 }
-sub DG  () { 400/360 }
-sub GD  () { 360/400 }
-sub RG  () { 400/pi2 }
-sub GR  () { pi2/400 }
+sub _DR  () { pi2/360 }
+sub _RD  () { 360/pi2 }
+sub _DG  () { 400/360 }
+sub _GD  () { 360/400 }
+sub _RG  () { 400/pi2 }
+sub _GR  () { pi2/400 }
 
 #
 # Truncating remainder.
 #
 
-sub remt ($$) {
+sub _remt ($$) {
     # Oh yes, POSIX::fmod() would be faster. Possibly. If it is available.
     $_[0] - $_[1] * int($_[0] / $_[1]);
 }
@@ -78,23 +74,23 @@ sub remt ($$) {
 # Angle conversions.
 #
 
-sub rad2rad($)     { remt($_[0], pi2) }
+sub rad2rad($)     { _remt($_[0], pi2) }
 
-sub deg2deg($)     { remt($_[0], 360) }
+sub deg2deg($)     { _remt($_[0], 360) }
 
-sub grad2grad($)   { remt($_[0], 400) }
+sub grad2grad($)   { _remt($_[0], 400) }
 
-sub rad2deg ($;$)  { my $d = RD * $_[0]; $_[1] ? $d : deg2deg($d) }
+sub rad2deg ($;$)  { my $d = _RD * $_[0]; $_[1] ? $d : deg2deg($d) }
 
-sub deg2rad ($;$)  { my $d = DR * $_[0]; $_[1] ? $d : rad2rad($d) }
+sub deg2rad ($;$)  { my $d = _DR * $_[0]; $_[1] ? $d : rad2rad($d) }
 
-sub grad2deg ($;$) { my $d = GD * $_[0]; $_[1] ? $d : deg2deg($d) }
+sub grad2deg ($;$) { my $d = _GD * $_[0]; $_[1] ? $d : deg2deg($d) }
 
-sub deg2grad ($;$) { my $d = DG * $_[0]; $_[1] ? $d : grad2grad($d) }
+sub deg2grad ($;$) { my $d = _DG * $_[0]; $_[1] ? $d : grad2grad($d) }
 
-sub rad2grad ($;$) { my $d = RG * $_[0]; $_[1] ? $d : grad2grad($d) }
+sub rad2grad ($;$) { my $d = _RG * $_[0]; $_[1] ? $d : grad2grad($d) }
 
-sub grad2rad ($;$) { my $d = GR * $_[0]; $_[1] ? $d : rad2rad($d) }
+sub grad2rad ($;$) { my $d = _GR * $_[0]; $_[1] ? $d : rad2rad($d) }
 
 sub cartesian_to_spherical {
     my ( $x, $y, $z ) = @_;
@@ -193,7 +189,7 @@ sub great_circle_waypoint {
     my $z = $A * sin($lat0)                + $B * sin($lat1);
 
     my $theta = atan2($y, $x);
-    my $phi   = atan2($z, sqrt($x*$x + $y*$y));
+    my $phi   = acos($z);
     
     return ($theta, $phi);
 }
@@ -229,24 +225,24 @@ Math::Trig - trigonometric functions
 
 =head1 SYNOPSIS
 
-	use Math::Trig;
+    use Math::Trig;
 
-	$x = tan(0.9);
-	$y = acos(3.7);
-	$z = asin(2.4);
+    $x = tan(0.9);
+    $y = acos(3.7);
+    $z = asin(2.4);
 
-	$halfpi = pi/2;
+    $halfpi = pi/2;
 
-	$rad = deg2rad(120);
+    $rad = deg2rad(120);
 
-        # Import constants pi2, pip2, pip4 (2*pi, pi/2, pi/4).
-	use Math::Trig ':pi';
+    # Import constants pi2, pip2, pip4 (2*pi, pi/2, pi/4).
+    use Math::Trig ':pi';
 
-        # Import the conversions between cartesian/spherical/cylindrical.
-	use Math::Trig ':radial';
+    # Import the conversions between cartesian/spherical/cylindrical.
+    use Math::Trig ':radial';
 
         # Import the great circle formulas.
-	use Math::Trig ':great_circle';
+    use Math::Trig ':great_circle';
 
 =head1 DESCRIPTION
 
@@ -280,7 +276,7 @@ The principal value of the arc tangent of y/x
 B<atan2>(y, x)
 
 The arcus cofunctions of the sine, cosine, and tangent (acosec/acsc
-and acotan/acot are aliases)
+and acotan/acot are aliases).  Note that atan2(0, 0) is not well-defined.
 
 B<acsc>, B<acosec>, B<asec>, B<acot>, B<acotan>
 
@@ -303,48 +299,51 @@ The arcus cofunctions of the hyperbolic sine, cosine, and tangent
 
 B<acsch>, B<acosech>, B<asech>, B<acoth>, B<acotanh>
 
-The trigonometric constant B<pi> is also defined.
+The trigonometric constant B<pi> and some of handy multiples
+of it are also defined.
 
-$pi2 = 2 * B<pi>;
+B<pi, pi2, pi4, pip2, pip4>
 
 =head2 ERRORS DUE TO DIVISION BY ZERO
 
 The following functions
 
-	acoth
-	acsc
-	acsch
-	asec
-	asech
-	atanh
-	cot
-	coth
-	csc
-	csch
-	sec
-	sech
-	tan
-	tanh
+    acoth
+    acsc
+    acsch
+    asec
+    asech
+    atanh
+    cot
+    coth
+    csc
+    csch
+    sec
+    sech
+    tan
+    tanh
 
 cannot be computed for all arguments because that would mean dividing
 by zero or taking logarithm of zero. These situations cause fatal
 runtime errors looking like this
 
-	cot(0): Division by zero.
-	(Because in the definition of cot(0), the divisor sin(0) is 0)
-	Died at ...
+    cot(0): Division by zero.
+    (Because in the definition of cot(0), the divisor sin(0) is 0)
+    Died at ...
 
 or
 
-	atanh(-1): Logarithm of zero.
-	Died at...
+    atanh(-1): Logarithm of zero.
+    Died at...
 
 For the C<csc>, C<cot>, C<asec>, C<acsc>, C<acot>, C<csch>, C<coth>,
 C<asech>, C<acsch>, the argument cannot be C<0> (zero).  For the
 C<atanh>, C<acoth>, the argument cannot be C<1> (one).  For the
 C<atanh>, C<acoth>, the argument cannot be C<-1> (minus one).  For the
 C<tan>, C<sec>, C<tanh>, C<sech>, the argument cannot be I<pi/2 + k *
-pi>, where I<k> is any integer.  atan2(0, 0) is undefined.
+pi>, where I<k> is any integer.
+
+Note that atan2(0, 0) is not well-defined.
 
 =head2 SIMPLE (REAL) ARGUMENTS, COMPLEX RESULTS
 
@@ -364,11 +363,11 @@ for more information. In practice you need not to worry about getting
 complex numbers as results because the C<Math::Complex> takes care of
 details like for example how to display complex numbers. For example:
 
-	print asin(2), "\n";
+    print asin(2), "\n";
 
 should produce something like this (take or leave few last decimals):
 
-	1.5707963267949-1.31695789692482i
+    1.5707963267949-1.31695789692482i
 
 That is, a complex number with the real part of approximately C<1.571>
 and the imaginary part of approximately C<-1.317>.
@@ -377,24 +376,59 @@ and the imaginary part of approximately C<-1.317>.
 
 (Plane, 2-dimensional) angles may be converted with the following functions.
 
-	$radians  = deg2rad($degrees);
-	$radians  = grad2rad($gradians);
+=over
 
-	$degrees  = rad2deg($radians);
-	$degrees  = grad2deg($gradians);
+=item deg2rad
 
-	$gradians = deg2grad($degrees);
-	$gradians = rad2grad($radians);
+    $radians  = deg2rad($degrees);
+
+=item grad2rad
+
+    $radians  = grad2rad($gradians);
+
+=item rad2deg
+
+    $degrees  = rad2deg($radians);
+
+=item grad2deg
+
+    $degrees  = grad2deg($gradians);
+
+=item deg2grad
+
+    $gradians = deg2grad($degrees);
+
+=item rad2grad
+
+    $gradians = rad2grad($radians);
+
+=back
 
 The full circle is 2 I<pi> radians or I<360> degrees or I<400> gradians.
 The result is by default wrapped to be inside the [0, {2pi,360,400}[ circle.
 If you don't want this, supply a true second argument:
 
-	$zillions_of_radians  = deg2rad($zillions_of_degrees, 1);
-	$negative_degrees     = rad2deg($negative_radians, 1);
+    $zillions_of_radians  = deg2rad($zillions_of_degrees, 1);
+    $negative_degrees     = rad2deg($negative_radians, 1);
 
 You can also do the wrapping explicitly by rad2rad(), deg2deg(), and
 grad2grad().
+
+=over 4
+
+=item rad2rad
+
+    $radians_wrapped_by_2pi = rad2rad($radians);
+
+=item deg2deg
+
+    $degrees_wrapped_by_360 = deg2deg($degrees);
+
+=item grad2grad
+
+    $gradians_wrapped_by_400 = grad2grad($gradians);
+
+=back
 
 =head1 RADIAL COORDINATE CONVERSIONS
 
@@ -454,35 +488,42 @@ I<-pi> angles.
 
 =item cartesian_to_cylindrical
 
-        ($rho, $theta, $z) = cartesian_to_cylindrical($x, $y, $z);
+    ($rho, $theta, $z) = cartesian_to_cylindrical($x, $y, $z);
 
 =item cartesian_to_spherical
 
-        ($rho, $theta, $phi) = cartesian_to_spherical($x, $y, $z);
+    ($rho, $theta, $phi) = cartesian_to_spherical($x, $y, $z);
 
 =item cylindrical_to_cartesian
 
-        ($x, $y, $z) = cylindrical_to_cartesian($rho, $theta, $z);
+    ($x, $y, $z) = cylindrical_to_cartesian($rho, $theta, $z);
 
 =item cylindrical_to_spherical
 
-        ($rho_s, $theta, $phi) = cylindrical_to_spherical($rho_c, $theta, $z);
+    ($rho_s, $theta, $phi) = cylindrical_to_spherical($rho_c, $theta, $z);
 
 Notice that when C<$z> is not 0 C<$rho_s> is not equal to C<$rho_c>.
 
 =item spherical_to_cartesian
 
-        ($x, $y, $z) = spherical_to_cartesian($rho, $theta, $phi);
+    ($x, $y, $z) = spherical_to_cartesian($rho, $theta, $phi);
 
 =item spherical_to_cylindrical
 
-        ($rho_c, $theta, $z) = spherical_to_cylindrical($rho_s, $theta, $phi);
+    ($rho_c, $theta, $z) = spherical_to_cylindrical($rho_s, $theta, $phi);
 
 Notice that when C<$z> is not 0 C<$rho_c> is not equal to C<$rho_s>.
 
 =back
 
 =head1 GREAT CIRCLE DISTANCES AND DIRECTIONS
+
+A great circle is section of a circle that contains the circle
+diameter: the shortest distance between two (non-antipodal) points on
+the spherical surface goes along the great circle connecting those two
+points.
+
+=head2 great_circle_distance
 
 You can compute spherical distances, called B<great circle distances>,
 by importing the great_circle_distance() function:
@@ -508,6 +549,8 @@ degrees).
   $distance = great_circle_distance($lon0, pi/2 - $lat0,
                                     $lon1, pi/2 - $lat1, $rho);
 
+=head2 great_circle_direction
+
 The direction you must follow the great circle (also known as I<bearing>)
 can be computed by the great_circle_direction() function:
 
@@ -515,12 +558,22 @@ can be computed by the great_circle_direction() function:
 
   $direction = great_circle_direction($theta0, $phi0, $theta1, $phi1);
 
-(Alias 'great_circle_bearing' is also available.)
-The result is in radians, zero indicating straight north, pi or -pi
-straight south, pi/2 straight west, and -pi/2 straight east.
+=head2 great_circle_bearing
+
+Alias 'great_circle_bearing' for 'great_circle_direction' is also available.
+
+  use Math::Trig 'great_circle_bearing';
+
+  $direction = great_circle_bearing($theta0, $phi0, $theta1, $phi1);
+
+The result of great_circle_direction is in radians, zero indicating
+straight north, pi or -pi straight south, pi/2 straight west, and
+-pi/2 straight east.
 
 You can inversely compute the destination if you know the
 starting point, direction, and distance:
+
+=head2 great_circle_destination
 
   use Math::Trig 'great_circle_destination';
 
@@ -532,12 +585,16 @@ starting point, direction, and distance:
 
 or the midpoint if you know the end points:
 
+=head2 great_circle_midpoint
+
   use Math::Trig 'great_circle_midpoint';
 
   ($thetam, $phim) =
     great_circle_midpoint($theta0, $phi0, $theta1, $phi1);
 
 The great_circle_midpoint() is just a special case of
+
+=head2 great_circle_waypoint
 
   use Math::Trig 'great_circle_waypoint';
 
@@ -569,28 +626,28 @@ Asia do often cross the polar regions.
 To calculate the distance between London (51.3N 0.5W) and Tokyo
 (35.7N 139.8E) in kilometers:
 
-        use Math::Trig qw(great_circle_distance deg2rad);
+    use Math::Trig qw(great_circle_distance deg2rad);
 
-        # Notice the 90 - latitude: phi zero is at the North Pole.
-	sub NESW { deg2rad($_[0]), deg2rad(90 - $_[1]) }
-	my @L = NESW( -0.5, 51.3);
-        my @T = NESW(139.8, 35.7);
-        my $km = great_circle_distance(@L, @T, 6378); # About 9600 km.
+    # Notice the 90 - latitude: phi zero is at the North Pole.
+    sub NESW { deg2rad($_[0]), deg2rad(90 - $_[1]) }
+    my @L = NESW( -0.5, 51.3);
+    my @T = NESW(139.8, 35.7);
+    my $km = great_circle_distance(@L, @T, 6378); # About 9600 km.
 
 The direction you would have to go from London to Tokyo (in radians,
 straight north being zero, straight east being pi/2).
 
-        use Math::Trig qw(great_circle_direction);
+    use Math::Trig qw(great_circle_direction);
 
-        my $rad = great_circle_direction(@L, @T); # About 0.547 or 0.174 pi.
+    my $rad = great_circle_direction(@L, @T); # About 0.547 or 0.174 pi.
 
 The midpoint between London and Tokyo being
 
-        use Math::Trig qw(great_circle_midpoint);
+    use Math::Trig qw(great_circle_midpoint);
 
-        my @M = great_circle_midpoint(@L, @T);
+    my @M = great_circle_midpoint(@L, @T);
 
-or about 68.11N 24.74E, in the Finnish Lapland.
+or about 89.16N 68.93E, practically at the North Pole.
 
 =head2 CAVEAT FOR GREAT CIRCLE FORMULAS
 
@@ -614,8 +671,8 @@ Do not attempt navigation using these formulas.
 
 =head1 AUTHORS
 
-Jarkko Hietaniemi <F<jhi@iki.fi>> and 
-Raphael Manfredi <F<Raphael_Manfredi@pobox.com>>.
+Jarkko Hietaniemi <F<jhi!at!iki.fi>> and 
+Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>.
 
 =cut
 

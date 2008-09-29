@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: cond.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:02 $
-
 # make sure conditional operators work
 
 print "1..4\n";

@@ -7,7 +7,7 @@ require Exporter;
 @EXPORT = qw(expand unexpand $tabstop);
 
 use vars qw($VERSION $tabstop $debug);
-$VERSION = 2005.0824;
+$VERSION = 2007.1117;
 
 use strict;
 
@@ -44,15 +44,17 @@ sub unexpand
 	my $line;
 	my @lines;
 	my $lastbit;
+	my $ts_as_space = " "x$tabstop;
 	for $x (@l) {
 		@lines = split("\n", $x, -1);
 		for $line (@lines) {
 			$line = expand($line);
 			@e = split(/(.{$tabstop})/,$line,-1);
 			$lastbit = pop(@e);
-			$lastbit = '' unless defined $lastbit;
+			$lastbit = '' 
+				unless defined $lastbit;
 			$lastbit = "\t"
-				if $lastbit eq " "x$tabstop;
+				if $lastbit eq $ts_as_space;
 			for $_ (@e) {
 				if ($debug) {
 					my $x = $_;
@@ -95,26 +97,39 @@ Text::Tabs -- expand and unexpand tabs per the unix expand(1) and unexpand(1)
 
   use Text::Tabs;
 
-  $tabstop = 4;
+  $tabstop = 4;  # default = 8
   @lines_without_tabs = expand(@lines_with_tabs);
   @lines_with_tabs = unexpand(@lines_without_tabs);
 
 =head1 DESCRIPTION
 
-Text::Tabs does about what the unix utilities expand(1) and unexpand(1)
+Text::Tabs does about what the unix utilities expand(1) and unexpand(1) 
 do.  Given a line with tabs in it, expand will replace the tabs with
 the appropriate number of spaces.  Given a line with or without tabs in
-it, unexpand will add tabs when it can save bytes by doing so.  Invisible
-compression with plain ascii!
+it, unexpand will add tabs when it can save bytes by doing so (just
+like C<unexpand -a>).  Invisible compression with plain ASCII! 
 
-=head1 BUGS
+=head1 EXAMPLE
 
-expand doesn't handle newlines very quickly -- do not feed it an
-entire document in one string.  Instead feed it an array of lines.
+  #!perl
+  # unexpand -a
+  use Text::Tabs;
+
+  while (<>) {
+    print unexpand $_;
+  }
+
+Instead of the C<expand> comand, use:
+
+  perl -MText::Tabs -n -e 'print expand $_'
+
+Instead of the C<unexpand -a> command, use:
+
+  perl -MText::Tabs -n -e 'print unexpand $_'
 
 =head1 LICENSE
 
-Copyright (C) 1996-2002,2005 David Muir Sharnoff.  
+Copyright (C) 1996-2002,2005,2006 David Muir Sharnoff.  
 Copyright (C) 2005 Aristotle Pagaltzis 
 This module may be modified, used, copied, and redistributed at your own risk.
 Publicly redistributed modified versions must use a different name.

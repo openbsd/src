@@ -16,8 +16,7 @@ use vars qw(
     @ISA @EXPORT @EXPORT_OK 
     $Verbose $Switches $Debug
     $verbose $switches $debug
-    $Curtest
-    $Columns 
+    $Columns
     $Timer
     $ML $Last_ML_Print
     $Strap
@@ -25,7 +24,7 @@ use vars qw(
 );
 
 BEGIN {
-    eval "use Time::HiRes 'time'";
+    eval q{use Time::HiRes 'time'};
     $has_time_hires = !$@;
 }
 
@@ -35,11 +34,11 @@ Test::Harness - Run Perl standard test scripts with statistics
 
 =head1 VERSION
 
-Version 2.56
+Version 2.64
 
 =cut
 
-$VERSION = "2.56";
+$VERSION = '2.64';
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
@@ -55,22 +54,49 @@ END {
     delete $ENV{HARNESS_VERSION};
 }
 
-# Some experimental versions of OS/2 build have broken $?
-my $Ignore_Exitcode = $ENV{HARNESS_IGNORE_EXITCODE};
-
 my $Files_In_Dir = $ENV{HARNESS_FILELEAK_IN_DIR};
 
-$Strap = Test::Harness::Straps->new;
+# Stolen from Params::Util
+sub _CLASS {
+    (defined $_[0] and ! ref $_[0] and $_[0] =~ m/^[^\W\d]\w*(?:::\w+)*$/s) ? $_[0] : undef;
+}
+
+# Strap Overloading
+if ( $ENV{HARNESS_STRAPS_CLASS} ) {
+    die 'Set HARNESS_STRAP_CLASS, singular, not HARNESS_STRAPS_CLASS';
+}
+my $HARNESS_STRAP_CLASS  = $ENV{HARNESS_STRAP_CLASS} || 'Test::Harness::Straps';
+if ( $HARNESS_STRAP_CLASS =~ /\.pm$/ ) {
+    # "Class" is actually a filename, that should return the
+    # class name as its true return value.
+    $HARNESS_STRAP_CLASS = require $HARNESS_STRAP_CLASS;
+    if ( !_CLASS($HARNESS_STRAP_CLASS) ) {
+        die "HARNESS_STRAP_CLASS '$HARNESS_STRAP_CLASS' is not a valid class name";
+    }
+}
+else {
+    # It is a class name within the current @INC
+    if ( !_CLASS($HARNESS_STRAP_CLASS) ) {
+        die "HARNESS_STRAP_CLASS '$HARNESS_STRAP_CLASS' is not a valid class name";
+    }
+    eval "require $HARNESS_STRAP_CLASS";
+    die $@ if $@;
+}
+if ( !$HARNESS_STRAP_CLASS->isa('Test::Harness::Straps') ) {
+    die "HARNESS_STRAP_CLASS '$HARNESS_STRAP_CLASS' must be a Test::Harness::Straps subclass";
+}
+
+$Strap = $HARNESS_STRAP_CLASS->new;
 
 sub strap { return $Strap };
 
 @ISA = ('Exporter');
 @EXPORT    = qw(&runtests);
-@EXPORT_OK = qw($verbose $switches);
+@EXPORT_OK = qw(&execute_tests $verbose $switches);
 
 $Verbose  = $ENV{HARNESS_VERBOSE} || 0;
 $Debug    = $ENV{HARNESS_DEBUG} || 0;
-$Switches = "-w";
+$Switches = '-w';
 $Columns  = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
 $Columns--;             # Some shells have trouble with a full line of text.
 $Timer    = $ENV{HARNESS_TIMER} || 0;
@@ -126,7 +152,7 @@ flag will set this.
 
 The package variable C<$Test::Harness::switches> is exportable and can be
 used to set perl command line options used for running the test
-script(s). The default value is C<-w>. It overrides C<HARNESS_SWITCHES>.
+script(s). The default value is C<-w>. It overrides C<HARNESS_PERL_SWITCHES>.
 
 =item C<$Test::Harness::Timer>
 
@@ -148,9 +174,9 @@ When tests fail, analyze the summary report:
           Test returned status 3 (wstat 768, 0x300)
   DIED. FAILED tests 1, 3, 5, 7, 9, 11, 13, 15, 17, 19
           Failed 10/20 tests, 50.00% okay
-  Failed Test  Stat Wstat Total Fail  Failed  List of Failed
-  -----------------------------------------------------------------------
-  t/waterloo.t    3   768    20   10  50.00%  1 3 5 7 9 11 13 15 17 19
+  Failed Test  Stat Wstat Total Fail  List of Failed
+  ---------------------------------------------------------------
+  t/waterloo.t    3   768    20   10  1 3 5 7 9 11 13 15 17 19
   Failed 1/5 test scripts, 80.00% okay. 10/44 subtests failed, 77.27% okay.
 
 Everything passed but F<t/waterloo.t>.  It failed 10 of 20 tests and
@@ -180,10 +206,6 @@ Total number of tests expected to run.
 
 Number which failed, either from "not ok" or because they never ran.
 
-=item B<Failed>
-
-Percentage of the total tests which failed.
-
 =item B<List of Failed>
 
 A list of the tests which failed.  Successive failures may be
@@ -193,15 +215,11 @@ abbreviated (ie. 15-20 to indicate that tests 15, 16, 17, 18, 19 and
 =back
 
 
-=head2 Functions
+=head1 FUNCTIONS
 
-Test::Harness currently only has one function, here it is.
+The following functions are available.
 
-=over 4
-
-=item B<runtests>
-
-  my $allok = runtests(@test_files);
+=head2 runtests( @test_files )
 
 This runs all the given I<@test_files> and divines whether they passed
 or failed based on their output to STDOUT (details above).  It prints
@@ -218,26 +236,24 @@ sub runtests {
 
     local ($\, $,);
 
-    my($tot, $failedtests) = _run_all_tests(@tests);
-    _show_results($tot, $failedtests);
+    my ($tot, $failedtests,$todo_passed) = execute_tests(tests => \@tests);
+    print get_results($tot, $failedtests,$todo_passed);
 
     my $ok = _all_ok($tot);
 
     assert(($ok xor keys %$failedtests), 
            q{ok status jives with $failedtests});
 
+    if (! $ok) {
+        die("Failed $tot->{bad}/$tot->{tests} test programs. " .
+            "@{[$tot->{max} - $tot->{ok}]}/$tot->{max} subtests failed.\n");
+    }
+
     return $ok;
 }
 
-=begin _private
-
-=item B<_all_ok>
-
-  my $ok = _all_ok(\%tot);
-
-Tells you if this test run is overall successful or not.
-
-=cut
+# my $ok = _all_ok(\%tot);
+# Tells you if this test run is overall successful or not.
 
 sub _all_ok {
     my($tot) = shift;
@@ -245,30 +261,30 @@ sub _all_ok {
     return $tot->{bad} == 0 && ($tot->{max} || $tot->{skipped}) ? 1 : 0;
 }
 
-=item B<_globdir>
+# Returns all the files in a directory.  This is shorthand for backwards
+# compatibility on systems where C<glob()> doesn't work right.
 
-  my @files = _globdir $dir;
+sub _globdir {
+    local *DIRH;
 
-Returns all the files in a directory.  This is shorthand for backwards
-compatibility on systems where C<glob()> doesn't work right.
-
-=cut
-
-sub _globdir { 
-    opendir DIRH, shift; 
-    my @f = readdir DIRH; 
-    closedir DIRH; 
+    opendir DIRH, shift;
+    my @f = readdir DIRH;
+    closedir DIRH;
 
     return @f;
 }
 
-=item B<_run_all_tests>
+=head2 execute_tests( tests => \@test_files, out => \*FH )
 
-  my($total, $failed) = _run_all_tests(@test_files);
+Runs all the given C<@test_files> (just like C<runtests()>) but
+doesn't generate the final report.  During testing, progress
+information will be written to the currently selected output
+filehandle (usually C<STDOUT>), or to the filehandle given by the
+C<out> parameter.  The I<out> is optional.
 
-Runs all the given C<@test_files> (as C<runtests()>) but does it
-quietly (no report).  $total is a hash ref summary of all the tests
-run.  Its keys and values are this:
+Returns a list of two values, C<$total> and C<$failed>, describing the
+results.  C<$total> is a hash ref summary of all the tests run.  Its
+keys and values are this:
 
     bonus           Number of individual todo tests unexpectedly passed
     max             Number of individual tests ran
@@ -285,7 +301,7 @@ run.  Its keys and values are this:
 If C<< $total->{bad} == 0 >> and C<< $total->{max} > 0 >>, you've
 got a successful test.
 
-$failed is a hash ref of all the test scripts which failed.  Each key
+C<$failed> is a hash ref of all the test scripts that failed.  Each key
 is the name of a test script, each value is another hash representing
 how that script failed.  Its keys are these:
 
@@ -294,30 +310,24 @@ how that script failed.  Its keys are these:
     wstat       Script's wait status
     max         Number of individual tests
     failed      Number which failed
-    percent     Percentage of tests which failed
     canon       List of tests which failed (as string).
 
 C<$failed> should be empty if everything passed.
 
-B<NOTE> Currently this function is still noisy.  I'm working on it.
-
 =cut
 
-# Turns on autoflush for the handle passed
-sub _autoflush {
-    my $flushy_fh = shift;
-    my $old_fh = select $flushy_fh;
-    $| = 1;
-    select $old_fh;
-}
+sub execute_tests {
+    my %args = @_;
+    my @tests = @{$args{tests}};
+    my $out = $args{out} || select();
 
-sub _run_all_tests {
-    my @tests = @_;
-
-    _autoflush(\*STDOUT);
+    # We allow filehandles that are symbolic refs
+    no strict 'refs';
+    _autoflush($out);
     _autoflush(\*STDERR);
 
-    my(%failedtests);
+    my %failedtests;
+    my %todo_passed;
 
     # Test-wide totals.
     my(%tot) = (
@@ -334,7 +344,8 @@ sub _run_all_tests {
                 bench    => 0,
                );
 
-    my @dir_files = _globdir $Files_In_Dir if defined $Files_In_Dir;
+    my @dir_files;
+    @dir_files = _globdir $Files_In_Dir if defined $Files_In_Dir;
     my $run_start_time = new Benchmark;
 
     my $width = _leader_width(@tests);
@@ -343,25 +354,25 @@ sub _run_all_tests {
         my($leader, $ml) = _mk_leader($tfile, $width);
         local $ML = $ml;
 
-        print $leader;
+        print $out $leader;
 
         $tot{files}++;
 
         $Strap->{_seen_header} = 0;
         if ( $Test::Harness::Debug ) {
-            print "# Running: ", $Strap->_command_line($tfile), "\n";
+            print $out "# Running: ", $Strap->_command_line($tfile), "\n";
         }
         my $test_start_time = $Timer ? time : 0;
-        my %results = $Strap->analyze_file($tfile) or
+        my $results = $Strap->analyze_file($tfile) or
           do { warn $Strap->{error}, "\n";  next };
         my $elapsed;
         if ( $Timer ) {
             $elapsed = time - $test_start_time;
             if ( $has_time_hires ) {
-                $elapsed = sprintf( " %8.3fs", $elapsed );
+                $elapsed = sprintf( " %8d ms", $elapsed*1000 );
             }
             else {
-                $elapsed = sprintf( " %8ss", $elapsed ? $elapsed : "<1" );
+                $elapsed = sprintf( " %8s s", $elapsed ? $elapsed : "<1" );
             }
         }
         else {
@@ -369,47 +380,66 @@ sub _run_all_tests {
         }
 
         # state of the current test.
-        my @failed = grep { !$results{details}[$_-1]{ok} }
-                     1..@{$results{details}};
+        my @failed = grep { !$results->details->[$_-1]{ok} }
+                     1..@{$results->details};
+        my @todo_pass = grep { $results->details->[$_-1]{actual_ok} &&
+                               $results->details->[$_-1]{type} eq 'todo' }
+                        1..@{$results->details};
+
         my %test = (
-                    ok          => $results{ok},
-                    'next'      => $Strap->{'next'},
-                    max         => $results{max},
-                    failed      => \@failed,
-                    bonus       => $results{bonus},
-                    skipped     => $results{skip},
-                    skip_reason => $results{skip_reason},
-                    skip_all    => $Strap->{skip_all},
-                    ml          => $ml,
-                   );
+            ok          => $results->ok,
+            'next'      => $Strap->{'next'},
+            max         => $results->max,
+            failed      => \@failed,
+            todo_pass   => \@todo_pass,
+            todo        => $results->todo,
+            bonus       => $results->bonus,
+            skipped     => $results->skip,
+            skip_reason => $results->skip_reason,
+            skip_all    => $Strap->{skip_all},
+            ml          => $ml,
+        );
 
-        $tot{bonus}       += $results{bonus};
-        $tot{max}         += $results{max};
-        $tot{ok}          += $results{ok};
-        $tot{todo}        += $results{todo};
-        $tot{sub_skipped} += $results{skip};
+        $tot{bonus}       += $results->bonus;
+        $tot{max}         += $results->max;
+        $tot{ok}          += $results->ok;
+        $tot{todo}        += $results->todo;
+        $tot{sub_skipped} += $results->skip;
 
-        my($estatus, $wstatus) = @results{qw(exit wait)};
+        my $estatus = $results->exit;
+        my $wstatus = $results->wait;
 
-        if ($results{passing}) {
+        if ( $results->passing ) {
             # XXX Combine these first two
             if ($test{max} and $test{skipped} + $test{bonus}) {
                 my @msg;
                 push(@msg, "$test{skipped}/$test{max} skipped: $test{skip_reason}")
                     if $test{skipped};
-                push(@msg, "$test{bonus}/$test{max} unexpectedly succeeded")
-                    if $test{bonus};
-                print "$test{ml}ok$elapsed\n        ".join(', ', @msg)."\n";
+                if ($test{bonus}) {
+                    my ($txt, $canon) = _canondetail($test{todo},0,'TODO passed',
+                                                    @{$test{todo_pass}});
+                    $todo_passed{$tfile} = {
+                        canon   => $canon,
+                        max     => $test{todo},
+                        failed  => $test{bonus},
+                        name    => $tfile,
+                        estat   => '',
+                        wstat   => '',
+                    };
+
+                    push(@msg, "$test{bonus}/$test{max} unexpectedly succeeded\n$txt");
+                }
+                print $out "$test{ml}ok$elapsed\n        ".join(', ', @msg)."\n";
             }
             elsif ( $test{max} ) {
-                print "$test{ml}ok$elapsed\n";
+                print $out "$test{ml}ok$elapsed\n";
             }
             elsif ( defined $test{skip_all} and length $test{skip_all} ) {
-                print "skipped\n        all skipped: $test{skip_all}\n";
+                print $out "skipped\n        all skipped: $test{skip_all}\n";
                 $tot{skipped}++;
             }
             else {
-                print "skipped\n        all skipped: no reason given\n";
+                print $out "skipped\n        all skipped: no reason given\n";
                 $tot{skipped}++;
             }
             $tot{good}++;
@@ -421,7 +451,7 @@ sub _run_all_tests {
             }
             # List overruns as failures.
             else {
-                my $details = $results{details};
+                my $details = $results->details;
                 foreach my $overrun ($test{max}+1..@$details) {
                     next unless ref $details->[$overrun-1];
                     push @{$test{failed}}, $overrun
@@ -433,28 +463,26 @@ sub _run_all_tests {
                                                        $estatus, $wstatus);
                 $failedtests{$tfile}{name} = $tfile;
             }
-            elsif($results{seen}) {
+            elsif ( $results->seen ) {
                 if (@{$test{failed}} and $test{max}) {
-                    my ($txt, $canon) = _canonfailed($test{max},$test{skipped},
+                    my ($txt, $canon) = _canondetail($test{max},$test{skipped},'Failed',
                                                     @{$test{failed}});
-                    print "$test{ml}$txt";
+                    print $out "$test{ml}$txt";
                     $failedtests{$tfile} = { canon   => $canon,
                                              max     => $test{max},
                                              failed  => scalar @{$test{failed}},
                                              name    => $tfile, 
-                                             percent => 100*(scalar @{$test{failed}})/$test{max},
                                              estat   => '',
                                              wstat   => '',
                                            };
                 }
                 else {
-                    print "Don't know which tests failed: got $test{ok} ok, ".
+                    print $out "Don't know which tests failed: got $test{ok} ok, ".
                           "expected $test{max}\n";
                     $failedtests{$tfile} = { canon   => '??',
                                              max     => $test{max},
                                              failed  => '??',
                                              name    => $tfile, 
-                                             percent => undef,
                                              estat   => '', 
                                              wstat   => '',
                                            };
@@ -462,13 +490,12 @@ sub _run_all_tests {
                 $tot{bad}++;
             }
             else {
-                print "FAILED before any test output arrived\n";
+                print $out "FAILED before any test output arrived\n";
                 $tot{bad}++;
                 $failedtests{$tfile} = { canon       => '??',
                                          max         => '??',
                                          failed      => '??',
                                          name        => $tfile,
-                                         percent     => undef,
                                          estat       => '', 
                                          wstat       => '',
                                        };
@@ -482,7 +509,7 @@ sub _run_all_tests {
                 @f{@new_dir_files} = (1) x @new_dir_files;
                 delete @f{@dir_files};
                 my @f = sort keys %f;
-                print "LEAKED FILES: @f\n";
+                print $out "LEAKED FILES: @f\n";
                 @dir_files = @new_dir_files;
             }
         }
@@ -491,12 +518,20 @@ sub _run_all_tests {
 
     $Strap->_restore_PERL5LIB;
 
-    return(\%tot, \%failedtests);
+    return(\%tot, \%failedtests, \%todo_passed);
 }
 
-=item B<_mk_leader>
+# Turns on autoflush for the handle passed
+sub _autoflush {
+    my $flushy_fh = shift;
+    my $old_fh = select $flushy_fh;
+    $| = 1;
+    select $old_fh;
+}
 
-  my($leader, $ml) = _mk_leader($test_file, $width);
+=for private _mk_leader
+
+    my($leader, $ml) = _mk_leader($test_file, $width);
 
 Generates the 't/foo........' leader for the given C<$test_file> as well
 as a similar version which will overwrite the current line (by use of
@@ -525,7 +560,7 @@ sub _mk_leader {
     return($leader, $ml);
 }
 
-=item B<_leader_width>
+=for private _leader_width
 
   my($width) = _leader_width(@test_files);
 
@@ -548,15 +583,26 @@ sub _leader_width {
     return $maxlen + 3 - $maxsuflen;
 }
 
+sub get_results {
+    my $tot = shift;
+    my $failedtests = shift;
+    my $todo_passed = shift;
 
-sub _show_results {
-    my($tot, $failedtests) = @_;
+    my $out = '';
 
-    my $pct;
     my $bonusmsg = _bonusmsg($tot);
 
     if (_all_ok($tot)) {
-        print "All tests successful$bonusmsg.\n";
+        $out .= "All tests successful$bonusmsg.\n";
+        if ($tot->{bonus}) {
+            my($fmt_top, $fmt) = _create_fmts("Passed TODO",$todo_passed);
+            # Now write to formats
+            $out .= swrite( $fmt_top );
+            for my $script (sort keys %{$todo_passed||{}}) {
+                my $Curtest = $todo_passed->{$script};
+                $out .= swrite( $fmt, @{ $Curtest }{qw(name estat wstat max failed canon)} );
+            }
+        }
     }
     elsif (!$tot->{tests}){
         die "FAILED--no tests were run for some reason.\n";
@@ -567,39 +613,47 @@ sub _show_results {
             "alas--no output ever seen\n";
     }
     else {
-        $pct = sprintf("%.2f", $tot->{good} / $tot->{tests} * 100);
-        my $percent_ok = 100*$tot->{ok}/$tot->{max};
-        my $subpct = sprintf " %d/%d subtests failed, %.2f%% okay.",
-                              $tot->{max} - $tot->{ok}, $tot->{max}, 
-                              $percent_ok;
+        my $subresults = sprintf( " %d/%d subtests failed.",
+                              $tot->{max} - $tot->{ok}, $tot->{max} );
 
-        my($fmt_top, $fmt) = _create_fmts($failedtests);
+        my($fmt_top, $fmt1, $fmt2) = _create_fmts("Failed Test",$failedtests);
 
         # Now write to formats
+        $out .= swrite( $fmt_top );
         for my $script (sort keys %$failedtests) {
-          $Curtest = $failedtests->{$script};
-          write;
+            my $Curtest = $failedtests->{$script};
+            $out .= swrite( $fmt1, @{ $Curtest }{qw(name estat wstat max failed canon)} );
+            $out .= swrite( $fmt2, $Curtest->{canon} );
         }
         if ($tot->{bad}) {
             $bonusmsg =~ s/^,\s*//;
-            print "$bonusmsg.\n" if $bonusmsg;
-            die "Failed $tot->{bad}/$tot->{tests} test scripts, $pct% okay.".
-                "$subpct\n";
+            $out .= "$bonusmsg.\n" if $bonusmsg;
+            $out .= "Failed $tot->{bad}/$tot->{tests} test scripts.$subresults\n";
         }
     }
 
-    printf("Files=%d, Tests=%d, %s\n",
+    $out .= sprintf("Files=%d, Tests=%d, %s\n",
            $tot->{files}, $tot->{max}, timestr($tot->{bench}, 'nop'));
+    return $out;
+}
+
+sub swrite {
+    my $format = shift;
+    $^A = '';
+    formline($format,@_);
+    my $out = $^A;
+    $^A = '';
+    return $out;
 }
 
 
 my %Handlers = (
-    header => \&header_handler,
-    test => \&test_handler,
+    header  => \&header_handler,
+    test    => \&test_handler,
     bailout => \&bailout_handler,
 );
 
-$Strap->{callback} = \&strap_callback;
+$Strap->set_callback(\&strap_callback);
 sub strap_callback {
     my($self, $line, $type, $totals) = @_;
     print $line if $Verbose;
@@ -617,30 +671,29 @@ sub header_handler {
     $self->{_seen_header}++;
 
     warn "1..M can only appear at the beginning or end of tests\n"
-      if $totals->{seen} && 
-         $totals->{max}  < $totals->{seen};
+      if $totals->seen && ($totals->max < $totals->seen);
 };
 
 sub test_handler {
     my($self, $line, $type, $totals) = @_;
 
-    my $curr = $totals->{seen};
+    my $curr = $totals->seen;
     my $next = $self->{'next'};
-    my $max  = $totals->{max};
-    my $detail = $totals->{details}[-1];
+    my $max  = $totals->max;
+    my $detail = $totals->details->[-1];
 
     if( $detail->{ok} ) {
         _print_ml_less("ok $curr/$max");
 
         if( $detail->{type} eq 'skip' ) {
-            $totals->{skip_reason} = $detail->{reason}
-              unless defined $totals->{skip_reason};
-            $totals->{skip_reason} = 'various reasons'
-              if $totals->{skip_reason} ne $detail->{reason};
+            $totals->set_skip_reason( $detail->{reason} )
+              unless defined $totals->skip_reason;
+            $totals->set_skip_reason( 'various reasons' )
+              if $totals->skip_reason ne $detail->{reason};
         }
     }
     else {
-        _print_ml("NOK $curr");
+        _print_ml("NOK $curr/$max");
     }
 
     if( $curr > $next ) {
@@ -697,14 +750,15 @@ sub _bonusmsg {
                      . ($tot->{sub_skipped} != 1 ? 's' : '')
                      . " skipped";
     }
-
     return $bonusmsg;
 }
 
 # Test program go boom.
 sub _dubious_return {
     my($test, $tot, $estatus, $wstatus) = @_;
-    my ($failed, $canon, $percent) = ('??', '??');
+
+    my $failed = '??';
+    my $canon  = '??';
 
     printf "$test->{ml}dubious\n\tTest returned status $estatus ".
            "(wstat %d, 0x%x)\n",
@@ -716,32 +770,32 @@ sub _dubious_return {
     if ($test->{max}) {
         if ($test->{'next'} == $test->{max} + 1 and not @{$test->{failed}}) {
             print "\tafter all the subtests completed successfully\n";
-            $percent = 0;
             $failed = 0;        # But we do not set $canon!
         }
         else {
             push @{$test->{failed}}, $test->{'next'}..$test->{max};
             $failed = @{$test->{failed}};
-            (my $txt, $canon) = _canonfailed($test->{max},$test->{skipped},@{$test->{failed}});
-            $percent = 100*(scalar @{$test->{failed}})/$test->{max};
+            (my $txt, $canon) = _canondetail($test->{max},$test->{skipped},'Failed',@{$test->{failed}});
             print "DIED. ",$txt;
         }
     }
 
     return { canon => $canon,  max => $test->{max} || '??',
              failed => $failed, 
-             percent => $percent,
              estat => $estatus, wstat => $wstatus,
            };
 }
 
 
 sub _create_fmts {
-    my($failedtests) = @_;
+    my $failed_str = shift;
+    my $failedtests = shift;
 
-    my $failed_str = "Failed Test";
-    my $middle_str = " Stat Wstat Total Fail  Failed  ";
-    my $list_str = "List of Failed";
+    my ($type) = split /\s/,$failed_str;
+    my $short = substr($type,0,4);
+    my $total = $short eq 'Pass' ? 'TODOs' : 'Total';
+    my $middle_str = " Stat Wstat $total $short  ";
+    my $list_str = "List of $type";
 
     # Figure out our longest name string for formatting purposes.
     my $max_namelen = length($failed_str);
@@ -760,47 +814,37 @@ sub _create_fmts {
         }
     }
 
-    my $fmt_top = "format STDOUT_TOP =\n"
-                  . sprintf("%-${max_namelen}s", $failed_str)
+    my $fmt_top =   sprintf("%-${max_namelen}s", $failed_str)
                   . $middle_str
                   . $list_str . "\n"
                   . "-" x $Columns
-                  . "\n.\n";
+                  . "\n";
 
-    my $fmt = "format STDOUT =\n"
-              . "@" . "<" x ($max_namelen - 1)
-              . "  @>> @>>>> @>>>> @>>> ^##.##%  "
-              . "^" . "<" x ($list_len - 1) . "\n"
-              . '{ $Curtest->{name}, $Curtest->{estat},'
-              . '  $Curtest->{wstat}, $Curtest->{max},'
-              . '  $Curtest->{failed}, $Curtest->{percent},'
-              . '  $Curtest->{canon}'
-              . "\n}\n"
-              . "~~" . " " x ($Columns - $list_len - 2) . "^"
-              . "<" x ($list_len - 1) . "\n"
-              . '$Curtest->{canon}'
-              . "\n.\n";
+    my $fmt1 =  "@" . "<" x ($max_namelen - 1)
+              . "  @>> @>>>> @>>>> @>>>  "
+              . "^" . "<" x ($list_len - 1) . "\n";
+    my $fmt2 =  "~~" . " " x ($Columns - $list_len - 2) . "^"
+              . "<" x ($list_len - 1) . "\n";
 
-    eval $fmt_top;
-    die $@ if $@;
-    eval $fmt;
-    die $@ if $@;
-
-    return($fmt_top, $fmt);
+    return($fmt_top, $fmt1, $fmt2);
 }
 
-sub _canonfailed ($$@) {
-    my($max,$skipped,@failed) = @_;
+sub _canondetail {
+    my $max = shift;
+    my $skipped = shift;
+    my $type = shift;
+    my @detail = @_;
     my %seen;
-    @failed = sort {$a <=> $b} grep !$seen{$_}++, @failed;
-    my $failed = @failed;
+    @detail = sort {$a <=> $b} grep !$seen{$_}++, @detail;
+    my $detail = @detail;
     my @result = ();
     my @canon = ();
     my $min;
-    my $last = $min = shift @failed;
+    my $last = $min = shift @detail;
     my $canon;
-    if (@failed) {
-        for (@failed, $failed[-1]) { # don't forget the last one
+    my $uc_type = uc($type);
+    if (@detail) {
+        for (@detail, $detail[-1]) { # don't forget the last one
             if ($_ > $last+1 || $_ == $last) {
                 push @canon, ($min == $last) ? $last : "$min-$last";
                 $min = $_;
@@ -808,24 +852,26 @@ sub _canonfailed ($$@) {
             $last = $_;
         }
         local $" = ", ";
-        push @result, "FAILED tests @canon\n";
+        push @result, "$uc_type tests @canon\n";
         $canon = join ' ', @canon;
     }
     else {
-        push @result, "FAILED test $last\n";
+        push @result, "$uc_type test $last\n";
         $canon = $last;
     }
 
-    push @result, "\tFailed $failed/$max tests, ";
+    return (join("", @result), $canon)
+        if $type=~/todo/i;
+    push @result, "\t$type $detail/$max tests, ";
     if ($max) {
-	push @result, sprintf("%.2f",100*(1-$failed/$max)), "% okay";
+	push @result, sprintf("%.2f",100*(1-$detail/$max)), "% okay";
     }
     else {
 	push @result, "?% okay";
     }
     my $ender = 's' x ($skipped > 1);
     if ($skipped) {
-        my $good = $max - $failed - $skipped;
+        my $good = $max - $detail - $skipped;
 	my $skipmsg = " (less $skipped skipped test$ender: $good okay, ";
 	if ($max) {
 	    my $goodper = sprintf("%.2f",100*($good/$max));
@@ -838,15 +884,8 @@ sub _canonfailed ($$@) {
     }
     push @result, "\n";
     my $txt = join "", @result;
-    ($txt, $canon);
+    return ($txt, $canon);
 }
-
-=end _private
-
-=back
-
-=cut
-
 
 1;
 __END__
@@ -856,7 +895,8 @@ __END__
 
 C<&runtests> is exported by Test::Harness by default.
 
-C<$verbose>, C<$switches> and C<$debug> are exported upon request.
+C<&execute_tests>, C<$verbose>, C<$switches> and C<$debug> are
+exported upon request.
 
 =head1 DIAGNOSTICS
 
@@ -945,10 +985,6 @@ If relative, directory name is with respect to the current directory at
 the moment runtests() was called.  Putting absolute path into 
 C<HARNESS_FILELEAK_IN_DIR> may give more predictable results.
 
-=item C<HARNESS_IGNORE_EXITCODE>
-
-Makes harness ignore the exit status of child processes when defined.
-
 =item C<HARNESS_NOTTY>
 
 When set to a true value, forces it to behave as though STDOUT were
@@ -971,11 +1007,32 @@ Its value will be prepended to the switches used to invoke perl on
 each test.  For example, setting C<HARNESS_PERL_SWITCHES> to C<-W> will
 run all tests with all warnings enabled.
 
+=item C<HARNESS_TIMER>
+
+Setting this to true will make the harness display the number of
+milliseconds each test took.  You can also use F<prove>'s C<--timer>
+switch.
+
 =item C<HARNESS_VERBOSE>
 
 If true, Test::Harness will output the verbose results of running
 its tests.  Setting C<$Test::Harness::verbose> will override this,
 or you can use the C<-v> switch in the F<prove> utility.
+
+If true, Test::Harness will output the verbose results of running
+its tests.  Setting C<$Test::Harness::verbose> will override this,
+or you can use the C<-v> switch in the F<prove> utility.
+
+=item C<HARNESS_STRAP_CLASS>
+
+Defines the Test::Harness::Straps subclass to use.  The value may either
+be a filename or a class name.
+
+If HARNESS_STRAP_CLASS is a class name, the class must be in C<@INC>
+like any other class.
+
+If HARNESS_STRAP_CLASS is a filename, the .pm file must return the name
+of the class, instead of the canonical "1".
 
 =back
 
@@ -1027,13 +1084,9 @@ Remember exit code
 
 Completely redo the print summary code.
 
-Implement Straps callbacks.  (experimentally implemented)
-
 Straps->analyze_file() not taint clean, don't know if it can be
 
 Fix that damned VMS nit.
-
-HARNESS_TODOFAIL to display TODO failures
 
 Add a test for verbose.
 
@@ -1049,17 +1102,53 @@ Clean up how the summary is printed.  Get rid of those damned formats.
 
 =head1 BUGS
 
-HARNESS_COMPILE_TEST currently assumes it's run from the Perl source
-directory.
+Please report any bugs or feature requests to
+C<bug-test-harness at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-Harness>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
 
-Please use the CPAN bug ticketing system at L<http://rt.cpan.org/>.
-You can also mail bugs, fixes and enhancements to 
-C<< <bug-test-harness >> at C<< rt.cpan.org> >>.
+=head1 SUPPORT
+
+You can find documentation for this module with the F<perldoc> command.
+
+    perldoc Test::Harness
+
+You can get docs for F<prove> with
+
+    prove --man
+
+You can also look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Test-Harness>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/Test-Harness>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-Harness>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Test-Harness>
+
+=back
+
+=head1 SOURCE CODE
+
+The source code repository for Test::Harness is at
+L<http://svn.perl.org/modules/Test-Harness>.
 
 =head1 AUTHORS
 
 Either Tim Bunce or Andreas Koenig, we don't know. What we know for
-sure is, that it was inspired by Larry Wall's TEST script that came
+sure is, that it was inspired by Larry Wall's F<TEST> script that came
 with perl distributions for ages. Numerous anonymous contributors
 exist.  Andreas Koenig held the torch for many years, and then
 Michael G Schwern.
@@ -1068,7 +1157,7 @@ Current maintainer is Andy Lester C<< <andy at petdance.com> >>.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2005
+Copyright 2002-2006
 by Michael G Schwern C<< <schwern at pobox.com> >>,
 Andy Lester C<< <andy at petdance.com> >>.
 

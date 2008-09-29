@@ -23,7 +23,7 @@ $SIG{__WARN__} = sub {
 
 require './test.pl';
 
-plan(325);
+plan(334);
 
 $FATAL_MSG = qr/^substr outside of string/;
 
@@ -618,6 +618,26 @@ is($x, "\x{100}\x{200}\xFFb");
     my $x = "0123456789\x{500}";
     my $y = substr $x, 4;
     is(substr($x, 7, 1), "7");
+}
+
+# multiple assignments to lvalue [perl #24346]   
+{
+    my $x = "abcdef";
+    for (substr($x,1,3)) {
+	is($_, 'bcd');
+	$_ = 'XX';
+	is($_, 'XX');
+	is($x, 'aXXef'); 
+	$_ = "\xFF";
+	is($_, "\xFF"); 
+	is($x, "a\xFFef");
+	$_ = "\xF1\xF2\xF3\xF4\xF5\xF6";
+	is($_, "\xF1\xF2\xF3\xF4\xF5\xF6");
+	is($x, "a\xF1\xF2\xF3\xF4\xF5\xF6ef"); 
+	$_ = 'YYYY';
+	is($_, 'YYYY'); 
+	is($x, 'aYYYYef');
+    }
 }
 
 # [perl #24200] string corruption with lvalue sub

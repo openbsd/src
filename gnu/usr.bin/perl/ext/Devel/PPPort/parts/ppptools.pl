@@ -4,13 +4,13 @@
 #
 ################################################################################
 #
-#  $Revision: 1.2 $
+#  $Revision: 1.3 $
 #  $Author: millert $
-#  $Date: 2006/03/28 19:23:02 $
+#  $Date: 2008/09/29 17:36:03 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2007, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -19,6 +19,24 @@
 #
 ################################################################################
 
+sub cat_file
+{
+  eval { require File::Spec };
+  return $@ ? join('/', @_) : File::Spec->catfile(@_);
+}
+
+sub all_files_in_dir
+{
+  my $dir = shift;
+  local *DIR;
+
+  opendir DIR, $dir or die "cannot open directory $dir: $!\n";
+  my @files = grep { !-d && !/^\./ } readdir DIR;  # no dirs or hidden files
+  closedir DIR;
+
+  return map { cat_file($dir, $_) } @files;
+}
+
 sub parse_todo
 {
   my $dir = shift || 'parts/todo';
@@ -26,7 +44,7 @@ sub parse_todo
   my %todo;
   my $todo;
 
-  for $todo (glob "$dir/*") {
+  for $todo (all_files_in_dir($dir)) {
     open TODO, $todo or die "cannot open $todo: $!\n";
     my $perl = <TODO>;
     chomp $perl;
@@ -50,10 +68,8 @@ sub expand_version
   my($op, $ver) = @_;
   my($r, $v, $s) = parse_version($ver);
   $r == 5 or die "only Perl revision 5 is supported\n";
-  $op eq '=='     and return "((PERL_VERSION == $v) && (PERL_SUBVERSION == $s))";
-  $op eq '!='     and return "((PERL_VERSION != $v) || (PERL_SUBVERSION != $s))";
-  $op =~ /([<>])/ and return "((PERL_VERSION $1 $v) || ((PERL_VERSION == $v) && (PERL_SUBVERSION $op $s)))";
-  die "cannot expand version expression ($op $ver)\n";
+  my $bcdver = sprintf "0x%d%03d%03d", $r, $v, $s;
+  return "(PERL_BCDVERSION $op $bcdver)";
 }
 
 sub parse_partspec
@@ -67,13 +83,18 @@ sub parse_partspec
 
   open F, $file or die "$file: $!\n";
   while (<F>) {
+    /[ \t]+$/ and warn "$file:$.: warning: trailing whitespace\n";
+    if ($section eq 'implementation') {
+      m!//! && !m!(?:=~|s/).*//! && !m!(?:ht|f)tp://!
+          and warn "$file:$.: warning: potential C++ comment\n";
+    }
     /^##/ and next;
     if (/^=($vsec)(?:\s+(.*))?/) {
       $section = $1;
       if (defined $2) {
         my $opt = $2;
         $options{$section} = eval "{ $opt }";
-        $@ and die "Invalid options ($opt) in section $section of $file: $@\n";
+        $@ and die "$file:$.: invalid options ($opt) in section $section: $@\n";
       }
       next;
     }
@@ -171,7 +192,7 @@ sub parse_partspec
                              (defined $nop && exists $dontwarn{$nop}) ||
                              $h{$_}++;
                        }
-                       $data{implementation} =~ /^\s*#\s*define\s+(\w+)/g };
+                       $data{implementation} =~ /^\s*#\s*define\s+(\w+)/gm };
 
   if (@maybeprov) {
     warn "$file seems to provide these macros, but doesn't list them:\n  "

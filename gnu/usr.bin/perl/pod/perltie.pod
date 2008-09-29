@@ -1010,7 +1010,7 @@ a scalar.
     sub TIESCALAR {
         my $class = shift;
         my $filename = shift;
-        my $handle = new IO::File "> $filename"
+        my $handle = IO::File->new( "> $filename" )
                          or die "Cannot open $filename: $!\n";
 
         print $handle "The Start\n";

@@ -177,7 +177,7 @@ subsequent call to setlocale().
 If no second argument is provided and the category is LC_ALL, the
 result is implementation-dependent.  It may be a string of
 concatenated locales names (separator also implementation-dependent)
-or a single locale name.  Please consult your L<setlocale(3)> for
+or a single locale name.  Please consult your setlocale(3) man page for
 details.
 
 If a second argument is given and it corresponds to a valid locale,
@@ -197,11 +197,11 @@ be noticed, depending on your system's C library.
 If the second argument does not correspond to a valid locale, the locale
 for the category is not changed, and the function returns I<undef>.
 
-For further information about the categories, consult L<setlocale(3)>.
+For further information about the categories, consult setlocale(3).
 
 =head2 Finding locales
 
-For locales available in your system, consult also L<setlocale(3)> to
+For locales available in your system, consult also setlocale(3) to
 see whether it leads to the list of available locales (search for the
 I<SEE ALSO> section).  If that fails, try the following command lines:
 
@@ -289,7 +289,7 @@ than the PERL_BADLANG approach, but setting LC_ALL (or
 other locale variables) may affect other programs as well, not just
 Perl.  In particular, external programs run from within Perl will see
 these changes.  If you make the new settings permanent (read on), all
-programs you run see the changes.  See L<ENVIRONMENT> for
+programs you run see the changes.  See L<"ENVIRONMENT"> for
 the full list of relevant environment variables and L<USING LOCALES>
 for their effects in Perl.  Effects in other programs are 
 easily deducible.  For example, the variable LC_COLLATE may well affect
@@ -574,23 +574,23 @@ should use C<\w> inside a C<no locale> block.  See L<"SECURITY">.
 
 =head2 Category LC_NUMERIC: Numeric Formatting
 
-In the scope of S<C<use locale>>, Perl obeys the C<LC_NUMERIC> locale
-information, which controls an application's idea of how numbers should
-be formatted for human readability by the printf(), sprintf(), and
-write() functions.  String-to-numeric conversion by the POSIX::strtod()
+After a proper POSIX::setlocale() call, Perl obeys the C<LC_NUMERIC>
+locale information, which controls an application's idea of how numbers
+should be formatted for human readability by the printf(), sprintf(), and
+write() functions. String-to-numeric conversion by the POSIX::strtod()
 function is also affected.  In most implementations the only effect is to
 change the character used for the decimal point--perhaps from '.'  to ','.
 These functions aren't aware of such niceties as thousands separation and
-so on.  (See L<The localeconv function> if you care about these things.)
+so on. (See L<The localeconv function> if you care about these things.)
 
 Output produced by print() is also affected by the current locale: it
-depends on whether C<use locale> or C<no locale> is in effect, and
 corresponds to what you'd get from printf() in the "C" locale.  The
 same is true for Perl's internal conversions between numeric and
 string formats:
 
-        use POSIX qw(strtod);
-        use locale;
+        use POSIX qw(strtod setlocale LC_NUMERIC);
+
+	setlocale LC_NUMERIC, "";
 
         $n = 5/2;   # Assign numeric 2.5 to $n
 
@@ -908,6 +908,23 @@ is used as the last resort after the overall C<LC_ALL> and the
 category-specific C<LC_...>.
 
 =back
+
+=head2 Examples
+
+The LC_NUMERIC controls the numeric output:
+
+        use locale;
+        use POSIX qw(locale_h); # Imports setlocale() and the LC_ constants.
+        setlocale(LC_NUMERIC, "fr_FR") or die "Pardon";
+        printf "%g\n", 1.23; # If the "fr_FR" succeeded, probably shows 1,23.
+
+and also how strings are parsed by POSIX::strtod() as numbers:
+
+        use locale;
+        use POSIX qw(locale_h strtod);
+        setlocale(LC_NUMERIC, "de_DE") or die "Entschuldigung";
+        my $x = strtod("2,34") + 5;
+        print $x, "\n"; # Probably shows 7,34.
 
 =head1 NOTES
 

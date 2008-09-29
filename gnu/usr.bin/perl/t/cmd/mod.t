@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: mod.t,v $$Revision: 1.7 $$Date: 2003/12/03 03:02:47 $
-
 print "1..13\n";
 
 print "ok 1\n" if 1;

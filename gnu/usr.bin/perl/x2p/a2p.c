@@ -10,7 +10,7 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 extern int yyparse(void);
 #define YYPREFIX "yy"
 #line 2 "a2p.y"
-/* $RCSfile: a2p.c,v $$Revision: 1.9 $$Date: 2008/07/09 13:54:44 $
+/* $RCSfile: a2p.y,v $$Revision: 4.1 $$Date: 92/08/07 18:29:12 $
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1996, 1997, 1999, 2000,
  *    by Larry Wall and others
@@ -18,13 +18,7 @@ extern int yyparse(void);
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
- * $Log: a2p.c,v $
- * Revision 1.9  2008/07/09 13:54:44  millert
- * Incorporate Otto's yacc skeleton fix.
- *
- * Revision 1.8  2006/03/28 19:23:15  millert
- * merge in perl 5.8.8
- *
+ * $Log:	a2p.y,v $
  */
 
 #include "INTERN.h"
@@ -2185,13 +2179,21 @@ int yyparse (void);
 #define YYREJECT goto yyabort
 #define YYACCEPT goto yyaccept
 #define YYERROR goto yyerrlab
+
+#if YYDEBUG
+#  if defined(WIN32) && !defined(__BORLANDC__)
+EXTERN_C _CRTIMP char *getenv(const char *);
+#  else
+EXTERN_C char *getenv(const char *);
+#  endif
+#endif
+
 int
 yyparse(void)
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
     register char *yys;
-    extern char *getenv();
 
     if ((yys = getenv("YYDEBUG")))
     {
@@ -2318,10 +2320,7 @@ yyreduce:
                 YYPREFIX, yystate, yyn, yyrule[yyn]);
 #endif
     yym = yylen[yyn];
-    if (yym)
-	yyval = yyvsp[1-yym];
-    else
-	memset(&yyval, 0, sizeof(yyval));
+    yyval = yyvsp[1-yym];
     switch (yyn)
     {
 case 1:

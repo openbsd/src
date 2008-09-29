@@ -199,7 +199,7 @@ much harder to read:
 Is it the same?  Well, maybe so--and maybe not.  The subtle difference
 is that when you assign something in square brackets, you know for sure
 it's always a brand new reference with a new I<copy> of the data.
-Something else could be going on in this new case with the C<@{$AoA[$i]}}>
+Something else could be going on in this new case with the C<@{$AoA[$i]}>
 dereference on the left-hand-side of the assignment.  It all depends on
 whether C<$AoA[$i]> had been undefined to start with, or whether it
 already contained a reference.  If you had already populated @AoA with

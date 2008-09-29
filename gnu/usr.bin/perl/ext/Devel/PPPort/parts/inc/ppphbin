@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.2 $
+##  $Revision: 1.3 $
 ##  $Author: millert $
-##  $Date: 2006/03/28 19:23:02 $
+##  $Date: 2008/09/29 17:36:03 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2007, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -19,9 +19,12 @@
 
 =implementation
 
-=cut
-
 use strict;
+
+# Disable broken TRIE-optimization
+BEGIN { eval '${^RE_TRIE_MAXBUF} = -1' if $] >= 5.009004 && $] <= 5.009005 }
+
+my $VERSION = __VERSION__;
 
 my %opt = (
   quiet     => 0,
@@ -30,16 +33,24 @@ my %opt = (
   changes   => 1,
   cplusplus => 0,
   filter    => 1,
+  strip     => 0,
+  version   => 0,
 );
 
 my($ppport) = $0 =~ /([\w.]+)$/;
 my $LF = '(?:\r\n|[\r\n])';   # line feed
 my $HS = "[ \t]";             # horizontal whitespace
 
+# Never use C comments in this file!
+my $ccs  = '/'.'*';
+my $cce  = '*'.'/';
+my $rccs = quotemeta $ccs;
+my $rcce = quotemeta $cce;
+
 eval {
   require Getopt::Long;
   Getopt::Long::GetOptions(\%opt, qw(
-    help quiet diag! filter! hints! changes! cplusplus
+    help quiet diag! filter! hints! changes! cplusplus strip version
     patch=s copy=s diff=s compat-version=s
     list-provided list-unsupported api-info=s
   )) or usage();
@@ -50,7 +61,13 @@ if ($@ and grep /^-/, @ARGV) {
   die "Getopt::Long not found. Please don't use any options.\n";
 }
 
+if ($opt{version}) {
+  print "This is $0 $VERSION.\n";
+  exit 0;
+}
+
 usage() if $opt{help};
+strip() if $opt{strip};
 
 if (exists $opt{'compat-version'}) {
   my($r,$v,$s) = eval { parse_version($opt{'compat-version'}) };
@@ -64,12 +81,6 @@ if (exists $opt{'compat-version'}) {
 else {
   $opt{'compat-version'} = 5;
 }
-
-# Never use C comments in this file!!!!!
-my $ccs  = '/'.'*';
-my $cce  = '*'.'/';
-my $rccs = quotemeta $ccs;
-my $rcce = quotemeta $cce;
 
 my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
                 ? ( $1 => {
@@ -94,21 +105,64 @@ if (exists $opt{'list-unsupported'}) {
 
 # Scan for possible replacement candidates
 
-my(%replace, %need, %hints, %depends);
+my(%replace, %need, %hints, %warnings, %depends);
 my $replace = 0;
-my $hint = '';
+my($hint, $define, $function);
+
+sub find_api
+{
+  my $code = shift;
+  $code =~ s{
+    / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
+  | "[^"\\]*(?:\\.[^"\\]*)*"
+  | '[^'\\]*(?:\\.[^'\\]*)*' }{}egsx;
+  grep { exists $API{$_} } $code =~ /(\w+)/mg;
+}
 
 while (<DATA>) {
   if ($hint) {
+    my $h = $hint->[0] eq 'Hint' ? \%hints : \%warnings;
     if (m{^\s*\*\s(.*?)\s*$}) {
-      $hints{$hint} ||= '';  # suppress warning with older perls
-      $hints{$hint} .= "$1\n";
+      for (@{$hint->[1]}) {
+        $h->{$_} ||= '';  # suppress warning with older perls
+        $h->{$_} .= "$1\n";
+      }
+    }
+    else { undef $hint }
+  }
+
+  $hint = [$1, [split /,?\s+/, $2]]
+      if m{^\s*$rccs\s+(Hint|Warning):\s+(\w+(?:,?\s+\w+)*)\s*$};
+
+  if ($define) {
+    if ($define->[1] =~ /\\$/) {
+      $define->[1] .= $_;
     }
     else {
-      $hint = '';
+      if (exists $API{$define->[0]} && $define->[1] !~ /^DPPP_\(/) {
+        my @n = find_api($define->[1]);
+        push @{$depends{$define->[0]}}, @n if @n
+      }
+      undef $define;
     }
   }
-  $hint = $1 if m{^\s*$rccs\sHint:\s+(\w+)\s*$};
+
+  $define = [$1, $2] if m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(.*)};
+
+  if ($function) {
+    if (/^}/) {
+      if (exists $API{$function->[0]}) {
+        my @n = find_api($function->[1]);
+        push @{$depends{$function->[0]}}, @n if @n
+      }
+      undef $define;
+    }
+    else {
+      $function->[1] .= $_;
+    }
+  }
+
+  $function = [$1, ''] if m{^DPPP_\(my_(\w+)\)};
 
   $replace     = $1 if m{^\s*$rccs\s+Replace:\s+(\d+)\s+$rcce\s*$};
   $replace{$2} = $1 if $replace and m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+)};
@@ -120,6 +174,11 @@ while (<DATA>) {
   }
 
   $need{$1} = 1 if m{^#if\s+defined\(NEED_(\w+)(?:_GLOBAL)?\)};
+}
+
+for (values %depends) {
+  my %s;
+  $_ = [sort grep !$s{$_}++, @$_];
 }
 
 if (exists $opt{'api-info'}) {
@@ -140,20 +199,15 @@ if (exists $opt{'api-info'}) {
       print "Support by $ppport provided back to perl-$todo.\n";
       print "Support needs to be explicitly requested by NEED_$f.\n" if exists $need{$f};
       print "Depends on: ", join(', ', @{$depends{$f}}), ".\n" if exists $depends{$f};
-      print "$hints{$f}" if exists $hints{$f};
+      print "\n$hints{$f}" if exists $hints{$f};
+      print "\nWARNING:\n$warnings{$f}" if exists $warnings{$f};
       $info++;
     }
-    unless ($info) {
-      print "No portability information available.\n";
-    }
+    print "No portability information available.\n" unless $info;
     $count++;
   }
-  if ($count > 0) {
-    print "\n";
-  }
-  else {
-    print "Found no API matching '$opt{'api-info'}'.\n";
-  }
+  $count or print "Found no API matching '$opt{'api-info'}'.";
+  print "\n";
   exit 0;
 }
 
@@ -165,6 +219,7 @@ if (exists $opt{'list-provided'}) {
     push @flags, 'explicit' if exists $need{$f};
     push @flags, 'depend'   if exists $depends{$f};
     push @flags, 'hint'     if exists $hints{$f};
+    push @flags, 'warning'  if exists $warnings{$f};
     my $flags = @flags ? '  ['.join(', ', @flags).']' : '';
     print "$f$flags\n";
   }
@@ -172,23 +227,35 @@ if (exists $opt{'list-provided'}) {
 }
 
 my @files;
-my @srcext = qw( xs c h cc cpp );
-my $srcext = join '|', @srcext;
+my @srcext = qw( .xs .c .h .cc .cpp -c.inc -xs.inc );
+my $srcext = join '|', map { quotemeta $_ } @srcext;
 
 if (@ARGV) {
   my %seen;
-  @files = grep { -f && !exists $seen{$_} } map { glob $_ } @ARGV;
+  for (@ARGV) {
+    if (-e) {
+      if (-f) {
+        push @files, $_ unless $seen{$_}++;
+      }
+      else { warn "'$_' is not a file.\n" }
+    }
+    else {
+      my @new = grep { -f } glob $_
+          or warn "'$_' does not exist.\n";
+      push @files, grep { !$seen{$_}++ } @new;
+    }
+  }
 }
 else {
   eval {
     require File::Find;
     File::Find::find(sub {
-      $File::Find::name =~ /\.($srcext)$/i
+      $File::Find::name =~ /($srcext)$/i
           and push @files, $File::Find::name;
     }, '.');
   };
   if ($@) {
-    @files = map { glob "*.$_" } @srcext;
+    @files = map { glob "*$_" } @srcext;
   }
 }
 
@@ -196,7 +263,7 @@ if (!@ARGV || $opt{filter}) {
   my(@in, @out);
   my %xsc = map { /(.*)\.xs$/ ? ("$1.c" => 1, "$1.cc" => 1) : () } @files;
   for (@files) {
-    my $out = exists $xsc{$_} || /\b\Q$ppport\E$/i || !/\.($srcext)$/i;
+    my $out = exists $xsc{$_} || /\b\Q$ppport\E$/i || !/($srcext)$/i;
     push @{ $out ? \@out : \@in }, $_;
   }
   if (@ARGV && @out) {
@@ -205,9 +272,7 @@ if (!@ARGV || $opt{filter}) {
   @files = @in;
 }
 
-unless (@files) {
-  die "No input files given!\n";
-}
+die "No input files given!\n" unless @files;
 
 my(%files, %global, %revreplace);
 %revreplace = reverse %replace;
@@ -227,30 +292,22 @@ for $filename (@files) {
 
   my %file = (orig => $c, changes => 0);
 
-  # temporarily remove C comments from the code
+  # Temporarily remove C/XS comments and strings from the code
   my @ccom;
+
   $c =~ s{
-    (
-        [^"'/]+
-      |
-        (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
-      |
-        (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+
-    )
-  |
-    (/ (?:
-        \*[^*]*\*+(?:[^$ccs][^*]*\*+)* /
-        |
-        /[^\r\n]*
-      ))
-  }{
-    defined $2 and push @ccom, $2;
-    defined $1 ? $1 : "$ccs$#ccom$cce";
-  }egsx;
+    ( ^$HS*\#$HS*include\b[^\r\n]+\b(?:\Q$ppport\E|XSUB\.h)\b[^\r\n]*
+    | ^$HS*\#$HS*(?:define|elif|if(?:def)?)\b[^\r\n]* )
+  | ( ^$HS*\#[^\r\n]*
+    | "[^"\\]*(?:\\.[^"\\]*)*"
+    | '[^'\\]*(?:\\.[^'\\]*)*'
+    | / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]* ) )
+  }{ defined $2 and push @ccom, $2;
+     defined $1 ? $1 : "$ccs$#ccom$cce" }mgsex;
 
   $file{ccom} = \@ccom;
   $file{code} = $c;
-  $file{has_inc_ppport} = ($c =~ /#.*include.*\Q$ppport\E/);
+  $file{has_inc_ppport} = $c =~ /^$HS*#$HS*include[^\r\n]+\b\Q$ppport\E\b/m;
 
   my $func;
 
@@ -261,6 +318,7 @@ for $filename (@files) {
       $file{uses_replace}{$1}++ if exists $revreplace{$func} && $1 eq $revreplace{$func};
       $file{uses_Perl}{$func}++ if $c =~ /\bPerl_$func\b/;
       if (exists $API{$func}{provided}) {
+        $file{uses_provided}{$func}++;
         if (!exists $API{$func}{base} || $API{$func}{base} > $opt{'compat-version'}) {
           $file{uses}{$func}++;
           my @deps = rec_depend($func);
@@ -271,9 +329,7 @@ for $filename (@files) {
             }
           }
           for ($func, @deps) {
-            if (exists $need{$_}) {
-              $file{needs}{$_} = 'static';
-            }
+            $file{needs}{$_} = 'static' if exists $need{$_};
           }
         }
       }
@@ -289,9 +345,7 @@ for $filename (@files) {
     if (exists $need{$2}) {
       $file{defined $3 ? 'needed_global' : 'needed_static'}{$2}++;
     }
-    else {
-      warning("Possibly wrong #define $1 in $filename");
-    }
+    else { warning("Possibly wrong #define $1 in $filename") }
   }
 
   for (qw(uses needs uses_todo needed_global needed_static)) {
@@ -328,14 +382,17 @@ for $filename (@files) {
   my %file = %{$files{$filename}};
   my $func;
   my $c = $file{code};
+  my $warnings = 0;
 
   for $func (sort keys %{$file{uses_Perl}}) {
     if ($API{$func}{varargs}) {
-      my $changes = ($c =~ s{\b(Perl_$func\s*\(\s*)(?!aTHX_?)(\)|[^\s)]*\))}
-                            { $1 . ($2 eq ')' ? 'aTHX' : 'aTHX_ ') . $2 }ge);
-      if ($changes) {
-        warning("Doesn't pass interpreter argument aTHX to Perl_$func");
-        $file{changes} += $changes;
+      unless ($API{$func}{nothxarg}) {
+        my $changes = ($c =~ s{\b(Perl_$func\s*\(\s*)(?!aTHX_?)(\)|[^\s)]*\))}
+                              { $1 . ($2 eq ')' ? 'aTHX' : 'aTHX_ ') . $2 }ge);
+        if ($changes) {
+          warning("Doesn't pass interpreter argument aTHX to Perl_$func");
+          $file{changes} += $changes;
+        }
       }
     }
     else {
@@ -350,24 +407,24 @@ for $filename (@files) {
     $file{changes} += ($c =~ s/\b$func\b/$replace{$func}/g);
   }
 
-  for $func (sort keys %{$file{uses}}) {
-    next unless $file{uses}{$func};   # if it's only a dependency
-    if (exists $file{uses_deps}{$func}) {
-      diag("Uses $func, which depends on ", join(', ', @{$file{uses_deps}{$func}}));
+  for $func (sort keys %{$file{uses_provided}}) {
+    if ($file{uses}{$func}) {
+      if (exists $file{uses_deps}{$func}) {
+        diag("Uses $func, which depends on ", join(', ', @{$file{uses_deps}{$func}}));
+      }
+      else {
+        diag("Uses $func");
+      }
     }
-    elsif (exists $replace{$func}) {
-      warning("Uses $func instead of $replace{$func}");
-      $file{changes} += ($c =~ s/\b$func\b/$replace{$func}/g);
-    }
-    else {
-      diag("Uses $func");
-    }
-    hint($func);
+    $warnings += hint($func);
   }
 
-  for $func (sort keys %{$file{uses_todo}}) {
-    warning("Uses $func, which may not be portable below perl ",
-            format_version($API{$func}{todo}));
+  unless ($opt{quiet}) {
+    for $func (sort keys %{$file{uses_todo}}) {
+      print "*** WARNING: Uses $func, which may not be portable below perl ",
+            format_version($API{$func}{todo}), ", even with '$ppport'\n";
+      $warnings++;
+    }
   }
 
   for $func (sort keys %{$file{needed_static}}) {
@@ -466,6 +523,10 @@ for $filename (@files) {
     warning("Uses $cppc C++ style comment$s, which is not portable");
   }
 
+  my $s = $warnings != 1 ? 's' : '';
+  my $warn = $warnings ? " ($warnings warning$s)" : '';
+  info("Analysis completed$warn");
+
   if ($file{changes}) {
     if (exists $opt{copy}) {
       my $newfile = "$filename$opt{copy}";
@@ -521,6 +582,8 @@ exit 0;
 
 #######################################################################
 
+sub try_use { eval "use @_;"; return $@ eq '' }
+
 sub mydiff
 {
   local *F = shift;
@@ -531,7 +594,7 @@ sub mydiff
     $diff = run_diff($opt{diff}, $file, $str);
   }
 
-  if (!defined $diff and can_use('Text::Diff')) {
+  if (!defined $diff and try_use('Text::Diff')) {
     $diff = Text::Diff::diff($file, \$str, { STYLE => 'Unified' });
     $diff = <<HEADER . $diff;
 --- $file
@@ -553,7 +616,6 @@ HEADER
   }
 
   print F $diff;
-
 }
 
 sub run_diff
@@ -590,18 +652,14 @@ sub run_diff
   return undef;
 }
 
-sub can_use
-{
-  eval "use @_;";
-  return $@ eq '';
-}
-
 sub rec_depend
 {
-  my $func = shift;
-  my %seen;
+  my($func, $seen) = @_;
   return () unless exists $depends{$func};
-  grep !$seen{$_}++, map { ($_, rec_depend($_)) } @{$depends{$func}};
+  $seen = {%{$seen||{}}};
+  return () if $seen->{$func}++;
+  my %s;
+  grep !$s{$_}++, map { ($_, rec_depend($_, $seen)) } @{$depends{$func}};
 }
 
 sub parse_version
@@ -681,16 +739,24 @@ sub error
 }
 
 my %given_hints;
+my %given_warnings;
 sub hint
 {
   $opt{quiet} and return;
-  $opt{hints} or return;
   my $func = shift;
-  exists $hints{$func} or return;
-  $given_hints{$func}++ and return;
-  my $hint = $hints{$func};
-  $hint =~ s/^/   /mg;
-  print "   --- hint for $func ---\n", $hint;
+  my $rv = 0;
+  if (exists $warnings{$func} && !$given_warnings{$func}++) {
+    my $warn = $warnings{$func};
+    $warn =~ s!^!*** !mg;
+    print "*** WARNING: $func\n", $warn;
+    $rv++;
+  }
+  if ($opt{hints} && exists $hints{$func} && !$given_hints{$func}++) {
+    my $hint = $hints{$func};
+    $hint =~ s/^/   /mg;
+    print "   --- hint for $func ---\n", $hint;
+  }
+  $rv;
 }
 
 sub usage
@@ -709,4 +775,50 @@ See perldoc $0 for details.
 ENDUSAGE
 
   exit 2;
+}
+
+sub strip
+{
+  my $self = do { local(@ARGV,$/)=($0); <> };
+  my($copy) = $self =~ /^=head\d\s+COPYRIGHT\s*^(.*?)^=\w+/ms;
+  $copy =~ s/^(?=\S+)/    /gms;
+  $self =~ s/^$HS+Do NOT edit.*?(?=^-)/$copy/ms;
+  $self =~ s/^SKIP.*(?=^__DATA__)/SKIP
+if (\@ARGV && \$ARGV[0] eq '--unstrip') {
+  eval { require Devel::PPPort };
+  \$@ and die "Cannot require Devel::PPPort, please install.\\n";
+  if (\$Devel::PPPort::VERSION < $VERSION) {
+    die "$0 was originally generated with Devel::PPPort $VERSION.\\n"
+      . "Your Devel::PPPort is only version \$Devel::PPPort::VERSION.\\n"
+      . "Please install a newer version, or --unstrip will not work.\\n";
+  }
+  Devel::PPPort::WriteFile(\$0);
+  exit 0;
+}
+print <<END;
+
+Sorry, but this is a stripped version of \$0.
+
+To be able to use its original script and doc functionality,
+please try to regenerate this file using:
+
+  \$^X \$0 --unstrip
+
+END
+/ms;
+  my($pl, $c) = $self =~ /(.*^__DATA__)(.*)/ms;
+  $c =~ s{
+    / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
+  | ( "[^"\\]*(?:\\.[^"\\]*)*"
+    | '[^'\\]*(?:\\.[^'\\]*)*' )
+  | ($HS+) }{ defined $2 ? ' ' : ($1 || '') }gsex;
+  $c =~ s!\s+$!!mg;
+  $c =~ s!^$LF!!mg;
+  $c =~ s!^\s*#\s*!#!mg;
+  $c =~ s!^\s+!!mg;
+
+  open OUT, ">$0" or die "cannot strip $0: $!\n";
+  print OUT "$pl$c\n";
+
+  exit 0;
 }

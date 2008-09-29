@@ -1,5 +1,9 @@
 package ExtUtils::testlib;
-$VERSION = 1.15;
+
+use strict;
+
+use vars qw($VERSION);
+$VERSION = 6.42;
 
 use Cwd;
 use File::Spec;

@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 55;
+plan tests => 135;
 
 $FS = ':';
 
@@ -297,4 +297,64 @@ ok(@ary == 3 &&
     $x = \$a[2];
     is (ref $x, 'SCALAR', '#28938 - garbage after extend');
 }
+{
+    # check the special casing of split /\s/ and unicode
+    use charnames qw(:full);
+    # below test data is extracted from
+    # PropList-5.0.0.txt
+    # Date: 2006-06-07, 23:22:52 GMT [MD]
+    #
+    # Unicode Character Database
+    # Copyright (c) 1991-2006 Unicode, Inc.
+    # For terms of use, see http://www.unicode.org/terms_of_use.html
+    # For documentation, see UCD.html
+    my @spaces=(
+	ord("\t"),      # Cc       <control-0009>
+	ord("\n"),      # Cc       <control-000A>
+	# not PerlSpace # Cc       <control-000B>
+	ord("\f"),      # Cc       <control-000C>
+	ord("\r"),      # Cc       <control-000D>
+	ord(" "),       # Zs       SPACE
+	ord("\N{NEL}"), # Cc       <control-0085>
+	ord("\N{NO-BREAK SPACE}"),
+			# Zs       NO-BREAK SPACE
+        0x1680,         # Zs       OGHAM SPACE MARK
+        0x180E,         # Zs       MONGOLIAN VOWEL SEPARATOR
+        0x2000..0x200A, # Zs  [11] EN QUAD..HAIR SPACE
+        0x2028,         # Zl       LINE SEPARATOR
+        0x2029,         # Zp       PARAGRAPH SEPARATOR
+        0x202F,         # Zs       NARROW NO-BREAK SPACE
+        0x205F,         # Zs       MEDIUM MATHEMATICAL SPACE
+        0x3000          # Zs       IDEOGRAPHIC SPACE
+    );
+    #diag "Have @{[0+@spaces]} to test\n";
+    foreach my $cp (@spaces) {
+	my $msg = sprintf "Space: U+%04x", $cp;
+        my $space = chr($cp);
+        my $str="A:$space:B\x{FFFD}";
+        chop $str;
 
+        my @res=split(/\s+/,$str);
+        ok(@res == 2 && join('-',@res) eq "A:-:B", "$msg - /\\s+/");
+
+        my $s2 = "$space$space:A:$space$space:B\x{FFFD}";
+        chop $s2;
+
+        my @r2 = split(' ',$s2);
+        ok(@r2 == 2 && join('-', @r2) eq ":A:-:B",  "$msg - ' '");
+
+        my @r3 = split(/\s+/, $s2);
+        ok(@r3 == 3 && join('-', @r3) eq "-:A:-:B", "$msg - /\\s+/ No.2");
+    }
+}
+
+{
+    my $src = "ABC \0 FOO \0  XYZ";
+    my @s = split(" \0 ", $src);
+    my @r = split(/ \0 /, $src);
+    is(scalar(@s), 3);
+    is($s[0], "ABC");
+    is($s[1], "FOO");
+    is($s[2]," XYZ");
+    is(join(':',@s), join(':',@r));
+}

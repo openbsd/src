@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..78\n";
+print "1..80\n";
 
 for ($i = 0; $i <= 10; $i++) {
     $x[$i] = $i;
@@ -457,3 +457,24 @@ for my $i (reverse (map {$_} @array, 1)) {
     $r .= $i;
 }
 is ($r, '1CBA', 'Reverse for array and value via map with var');
+
+TODO: {
+    $test++;
+    local $TODO = "RT #1085: what should be output of perl -we 'print do { foreach (1, 2) { 1; } }'";
+    if (do {17; foreach (1, 2) { 1; } } != 17) {
+        print "not ";
+    }
+    print "ok $test # TODO $TODO\n";
+}
+
+TODO: {
+    $test++;
+    no warnings 'reserved';
+    local $TODO = "RT #2166: foreach spuriously autovivifies";
+    my %h;
+    foreach (@h{a, b}) {}
+    if(keys(%h)) {
+        print "not ";
+    }
+    print "ok $test # TODO $TODO\n";
+}

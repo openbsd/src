@@ -110,28 +110,41 @@ perl finds it.
 
 =head2 How do I debug my Perl programs?
 
-Have you tried C<use warnings> or used C<-w>?  They enable warnings
-to detect dubious practices.
+(contributed by brian d foy)
 
-Have you tried C<use strict>?  It prevents you from using symbolic
-references, makes you predeclare any subroutines that you call as bare
-words, and (probably most importantly) forces you to predeclare your
-variables with C<my>, C<our>, or C<use vars>.
+Before you do anything else, you can help yourself by ensuring that
+you let Perl tell you about problem areas in your code. By turning
+on warnings and strictures, you can head off many problems before
+they get too big. You can find out more about these in L<strict>
+and L<warnings>.
 
-Did you check the return values of each and every system call?  The operating
-system (and thus Perl) tells you whether they worked, and if not
-why.
+	#!/usr/bin/perl
+	use strict;
+	use warnings;
 
-  open(FH, "> /etc/cantwrite")
-    or die "Couldn't write to /etc/cantwrite: $!\n";
+Beyond that, the simplest debugger is the C<print> function. Use it
+to look at values as you run your program:
 
-Did you read L<perltrap>?  It's full of gotchas for old and new Perl
-programmers and even has sections for those of you who are upgrading
-from languages like I<awk> and I<C>.
+	print STDERR "The value is [$value]\n";
 
-Have you tried the Perl debugger, described in L<perldebug>?  You can
-step through your program and see what it's doing and thus work out
-why what it's doing isn't what it should be doing.
+The C<Data::Dumper> module can pretty-print Perl data structures:
+
+	use Data::Dumper qw( Dumper );
+	print STDERR "The hash is " . Dumper( \%hash ) . "\n";
+
+Perl comes with an interactive debugger, which you can start with the
+C<-d> switch. It's fully explained in L<perldebug>.
+
+If you'd like a graphical user interface and you have Tk, you can use
+C<ptkdb>. It's on CPAN and available for free.
+
+If you need something much more sophisticated and controllable, Leon
+Brocard's Devel::ebug (which you can call with the -D switch as -Debug)
+gives you the programmatic hooks into everything you need to write your
+own (without too much pain and suffering).
+
+You can also use a commercial debugger such as Affrus (Mac OS X), Komodo
+from Activestate (Windows and Mac OS X), or EPIC (most platforms).
 
 =head2 How do I profile my Perl programs?
 
@@ -197,17 +210,21 @@ the following settings in vi and its clones:
 
 Put that in your F<.exrc> file (replacing the caret characters
 with control characters) and away you go.  In insert mode, ^T is
-for indenting, ^D is for undenting, and ^O is for blockdenting--
-as it were.  A more complete example, with comments, can be found at
+for indenting, ^D is for undenting, and ^O is for blockdenting--as
+it were.  A more complete example, with comments, can be found at
 http://www.cpan.org/authors/id/TOMC/scripts/toms.exrc.gz
 
 The a2ps http://www-inf.enst.fr/%7Edemaille/a2ps/black+white.ps.gz does
 lots of things related to generating nicely printed output of
-documents, as does enscript at http://people.ssh.fi/mtr/genscript/ .
+documents.
 
 =head2 Is there a ctags for Perl?
 
 (contributed by brian d foy)
+
+Ctags uses an index to quickly find things in source code, and many
+popular editors support ctags for several different languages,
+including Perl.
 
 Exuberent ctags supports Perl: http://ctags.sourceforge.net/
 
@@ -310,9 +327,7 @@ If you are using MacOS, the same concerns apply.  MacPerl (for Classic
 environments) comes with a simple editor. Popular external editors are
 BBEdit ( http://www.bbedit.com/ ) or Alpha (
 http://www.his.com/~jguyer/Alpha/Alpha8.html ). MacOS X users can use
-Unix editors as well. Neil Bowers (the man behind Geekcruises) has a
-list of Mac editors that can handle Perl (
-http://www.neilbowers.org/macperleditors.html ).
+Unix editors as well.
 
 =over 4
 
@@ -384,7 +399,7 @@ http://www.slickedit.com/
 
 There is also a toyedit Text widget based editor written in Perl
 that is distributed with the Tk module on CPAN.  The ptkdb
-( http://world.std.com/~aep/ptkdb/ ) is a Perl/tk based debugger that
+( http://ptkdb.sourceforge.net/ ) is a Perl/tk based debugger that
 acts as a development environment of sorts.  Perl Composer
 ( http://perlcomposer.sourceforge.net/ ) is an IDE for Perl/Tk
 GUI creation.
@@ -410,7 +425,7 @@ http://www.primate.wisc.edu/software/csh-tcsh-book/
 
 =item Zsh
 
-ftp://ftp.blarg.net/users/amol/zsh/ , see also http://www.zsh.org/
+http://www.zsh.org/
 
 =back
 
@@ -484,19 +499,73 @@ directory http://www.cpan.org/authors/Tom_Christiansen/scripts/rep.gz ;
 this program repeats a command and updates the screen as needed, rendering
 B<rep ps axu> similar to B<top>.
 
-=head2 How can I use X or Tk with Perl?
+=head2 How can I write a GUI (X, Tk, Gtk, etc.) in Perl?
+X<GUI> X<Tk> X<Wx> X<WxWidgets> X<Gtk> X<Gtk2> X<CamelBones> X<Qt>
 
-Tk is a completely Perl-based, object-oriented interface to the Tk toolkit
-that doesn't force you to use Tcl just to get at Tk.  Sx is an interface
-to the Athena Widget set.  Both are available from CPAN.  See the
-directory http://www.cpan.org/modules/by-category/08_User_Interfaces/
+(contributed by Ben Morrow)
 
-Invaluable for Perl/Tk programming are the Perl/Tk FAQ at
-http://phaseit.net/claird/comp.lang.perl.tk/ptkFAQ.html , the Perl/Tk Reference
-Guide available at
-http://www.cpan.org/authors/Stephen_O_Lidie/ , and the
-online manpages at
-http://www-users.cs.umn.edu/%7Eamundson/perl/perltk/toc.html .
+There are a number of modules which let you write GUIs in Perl. Most
+GUI toolkits have a perl interface: an incomplete list follows.
+
+=over 4
+
+=item Tk
+
+This works under Unix and Windows, and the current version doesn't
+look half as bad under Windows as it used to. Some of the gui elements
+still don't 'feel' quite right, though. The interface is very natural
+and 'perlish', making it easy to use in small scripts that just need a
+simple gui. It hasn't been updated in a while.
+
+=item Wx
+
+This is a Perl binding for the cross-platform wxWidgets toolkit 
+L<http://www.wxwidgets.org>. It works under Unix, Win32 and Mac OS X,
+using native widgets (Gtk under Unix). The interface follows the C++
+interface closely, but the documentation is a little sparse for someone
+who doesn't know the library, mostly just referring you to the C++
+documentation.
+
+=item Gtk and Gtk2
+
+These are Perl bindings for the Gtk toolkit L<http://www.gtk.org>. The
+interface changed significantly between versions 1 and 2 so they have
+separate Perl modules. It runs under Unix, Win32 and Mac OS X (currently
+it requires an X server on Mac OS, but a 'native' port is underway), and
+the widgets look the same on every plaform: i.e., they don't match the
+native widgets. As with Wx, the Perl bindings follow the C API closely,
+and the documentation requires you to read the C documentation to
+understand it.
+
+=item Win32::GUI
+
+This provides access to most of the Win32 GUI widgets from Perl.
+Obviously, it only runs under Win32, and uses native widgets. The Perl
+interface doesn't really follow the C interface: it's been made more
+Perlish, and the documentation is pretty good. More advanced stuff may
+require familiarity with the C Win32 APIs, or reference to MSDN.
+
+=item CamelBones
+
+CamelBones L<http://camelbones.sourceforge.net> is a Perl interface to
+Mac OS X's Cocoa GUI toolkit, and as such can be used to produce native
+GUIs on Mac OS X. It's not on CPAN, as it requires frameworks that
+CPAN.pm doesn't know how to install, but installation is via the
+standard OSX package installer. The Perl API is, again, very close to
+the ObjC API it's wrapping, and the documentation just tells you how to
+translate from one to the other.
+
+=item Qt
+
+There is a Perl interface to TrollTech's Qt toolkit, but it does not
+appear to be maintained.
+
+=item Athena
+
+Sx is an interface to the Athena widget set which comes with X, but
+again it appears not to be much used nowadays.
+
+=back
 
 =head2 How can I make my Perl program run faster?
 
@@ -637,7 +706,7 @@ or
 Pass arrays and hashes by reference, not by value. For one thing, it's
 the only way to pass multiple lists or hashes (or both) in a single
 call/return. It also avoids creating a copy of all the contents. This
-requires some judgment, however, because any changes will be propagated
+requires some judgement, however, because any changes will be propagated
 back to the original data. If you really want to mangle (er, modify) a
 copy, you'll have to sacrifice the memory needed to make one.
 
@@ -745,11 +814,12 @@ You can try using encryption via source filters (Starting from Perl
 5.8 the Filter::Simple and Filter::Util::Call modules are included in
 the standard distribution), but any decent programmer will be able to
 decrypt it.  You can try using the byte code compiler and interpreter
-described below, but the curious might still be able to de-compile it.
-You can try using the native-code compiler described below, but
-crackers might be able to disassemble it.  These pose varying degrees
-of difficulty to people wanting to get at your code, but none can
-definitively conceal it (true of every language, not just Perl).
+described later in L<perlfaq3>, but the curious might still be able to
+de-compile it. You can try using the native-code compiler described
+later, but crackers might be able to disassemble it.  These pose
+varying degrees of difficulty to people wanting to get at your code,
+but none can definitively conceal it (true of every language, not just
+Perl).
 
 It is very easy to recover the source of Perl programs.  You simply
 feed the program to the perl interpreter and use the modules in
@@ -777,15 +847,9 @@ You probably won't see much of a speed increase either, since most
 solutions simply bundle a Perl interpreter in the final product
 (but see L<How can I make my Perl program run faster?>).
 
-The Perl Archive Toolkit ( http://par.perl.org/index.cgi ) is Perl's
+The Perl Archive Toolkit ( http://par.perl.org/ ) is Perl's
 analog to Java's JAR.  It's freely available and on CPAN (
 http://search.cpan.org/dist/PAR/ ).
-
-The B::* namespace, often called "the Perl compiler", but is really a way
-for Perl programs to peek at its innards rather than create pre-compiled
-versions of your program.  However. the B::Bytecode module can turn your
-script  into a bytecode format that could be loaded later by the
-ByteLoader module and executed as a regular Perl script.
 
 There are also some commercial products that may work for you, although
 you have to buy a license for them.
@@ -797,16 +861,6 @@ executables for HP-UX, Linux, Solaris and Windows."
 Perl2Exe ( http://www.indigostar.com/perl2exe.htm ) is a command line
 program for converting perl scripts to executable files.  It targets both
 Windows and unix platforms.
-
-=head2 How can I compile Perl into Java?
-
-You can also integrate Java and Perl with the
-Perl Resource Kit from O'Reilly Media.  See
-http://www.oreilly.com/catalog/prkunix/ .
-
-Perl 5.6 comes with Java Perl Lingo, or JPL.  JPL, still in
-development, allows Perl code to be called from Java.  See jpl/README
-in the Perl source tree.
 
 =head2 How can I get C<#!perl> to work on [MS-DOS,NT,...]?
 
@@ -874,13 +928,13 @@ or Plan9 systems.  You might also have to change a single % to a %%.
 
 For example:
 
-    # Unix
+    # Unix (including Mac OS X)
     perl -e 'print "Hello world\n"'
 
     # DOS, etc.
     perl -e "print \"Hello world\n\""
 
-    # Mac
+    # Mac Classic
     print "Hello world\n"
      (then Run "Myscript" or Shift-Command-R)
 
@@ -926,9 +980,8 @@ A good place to start is L<perltoot>, and you can use L<perlobj>,
 L<perlboot>, L<perltoot>, L<perltooc>, and L<perlbot> for reference.
 
 A good book on OO on Perl is the "Object-Oriented Perl"
-by Damian Conway from Manning Publications, or "Learning Perl
-References, Objects, & Modules" by Randal Schwartz and Tom
-Phoenix from O'Reilly Media.
+by Damian Conway from Manning Publications, or "Intermediate Perl"
+by Randal Schwartz, brian d foy, and Tom Phoenix from O'Reilly Media.
 
 =head2 Where can I learn about linking C with Perl?
 
@@ -971,13 +1024,24 @@ or
 
 =head2 What's MakeMaker?
 
-This module (part of the standard Perl distribution) is designed to
-write a Makefile for an extension module from a Makefile.PL.  For more
-information, see L<ExtUtils::MakeMaker>.
+(contributed by brian d foy)
+
+The C<ExtUtils::MakeMaker> module, better known simply as "MakeMaker",
+turns a Perl script, typically called C<Makefile.PL>, into a Makefile.
+The unix tool C<make> uses this file to manage dependencies and actions
+to process and install a Perl distribution.
+
+=head1 REVISION
+
+Revision: $Revision: 10127 $
+
+Date: $Date: 2007-10-27 21:40:20 +0200 (Sat, 27 Oct 2007) $
+
+See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

@@ -9,6 +9,12 @@
 #undef EXT
 #define EXT extern
 
+#ifdef __cplusplus
+#  define EXTERN_C extern "C"
+#else
+#  define EXTERN_C extern
+#endif
+
 #undef INIT
 #define INIT(x)
 

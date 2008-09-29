@@ -10,7 +10,6 @@ package File::Copy;
 use 5.006;
 use strict;
 use warnings;
-use Carp;
 use File::Spec;
 use Config;
 our(@ISA, @EXPORT, @EXPORT_OK, $VERSION, $Too_Big, $Syscopy_is_copy);
@@ -24,7 +23,7 @@ sub mv;
 # package has not yet been updated to work with Perl 5.004, and so it
 # would be a Bad Thing for the CPAN module to grab it and replace this
 # module.  Therefore, we set this module's version higher than 2.0.
-$VERSION = '2.09';
+$VERSION = '2.11';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -32,6 +31,16 @@ require Exporter;
 @EXPORT_OK = qw(cp mv);
 
 $Too_Big = 1024 * 1024 * 2;
+
+sub croak {
+    require Carp;
+    goto &Carp::croak;
+}
+
+sub carp {
+    require Carp;
+    goto &Carp::carp;
+}
 
 my $macfiles;
 if ($^O eq 'MacOS') {
@@ -55,6 +64,14 @@ sub _catname {
     return File::Spec->catfile($to, basename($from));
 }
 
+# _eq($from, $to) tells whether $from and $to are identical
+# works for strings and references
+sub _eq {
+    return $_[0] == $_[1] if ref $_[0] && ref $_[1];
+    return $_[0] eq $_[1] if !ref $_[0] && !ref $_[1];
+    return "";
+}
+
 sub copy {
     croak("Usage: copy(FROM, TO [, BUFFERSIZE]) ")
       unless(@_ == 2 || @_ == 3);
@@ -73,7 +90,7 @@ sub copy {
                             || UNIVERSAL::isa($to, 'IO::Handle'))
 			 : (ref(\$to) eq 'GLOB'));
 
-    if ($from eq $to) { # works for references, too
+    if (_eq($from, $to)) { # works for references, too
 	carp("'$from' and '$to' are identical (not copied)");
         # The "copy" was a success as the source and destination contain
         # the same data.
@@ -81,7 +98,7 @@ sub copy {
     }
 
     if ((($Config{d_symlink} && $Config{d_readlink}) || $Config{d_link}) &&
-	!($^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'vms')) {
+	!($^O eq 'MSWin32' || $^O eq 'os2')) {
 	my @fs = stat($from);
 	if (@fs) {
 	    my @ts = stat($to);
@@ -105,7 +122,28 @@ sub copy {
 	&& !($from_a_handle && $^O eq 'NetWare')
        )
     {
-	return syscopy($from, $to);
+	my $copy_to = $to;
+
+        if ($^O eq 'VMS' && -e $from) {
+
+            if (! -d $to && ! -d $from) {
+
+                # VMS has sticky defaults on extensions, which means that
+                # if there is a null extension on the destination file, it
+                # will inherit the extension of the source file
+                # So add a '.' for a null extension.
+
+                $copy_to = VMS::Filespec::vmsify($to);
+                my ($vol, $dirs, $file) = File::Spec->splitpath($copy_to);
+                $file = $file . '.' unless ($file =~ /(?<!\^)\./);
+                $copy_to = File::Spec->catpath($vol, $dirs, $file);
+
+                # Get rid of the old versions to be like UNIX
+                1 while unlink $copy_to;
+            }
+        }
+
+        return syscopy($from, $copy_to);
     }
 
     my $closefrom = 0;
@@ -198,13 +236,34 @@ sub move {
       # will not rename with overwrite
       unlink $to;
     }
-    return 1 if rename $from, $to;
+
+    my $rename_to = $to;
+    if (-$^O eq 'VMS' && -e $from) {
+
+        if (! -d $to && ! -d $from) {
+            # VMS has sticky defaults on extensions, which means that
+            # if there is a null extension on the destination file, it
+            # will inherit the extension of the source file
+            # So add a '.' for a null extension.
+
+            $rename_to = VMS::Filespec::vmsify($to);
+            my ($vol, $dirs, $file) = File::Spec->splitpath($rename_to);
+            $file = $file . '.' unless ($file =~ /(?<!\^)\./);
+            $rename_to = File::Spec->catpath($vol, $dirs, $file);
+
+            # Get rid of the old versions to be like UNIX
+            1 while unlink $rename_to;
+        }
+    }
+
+    return 1 if rename $from, $rename_to;
 
     # Did rename return an error even though it succeeded, because $to
     # is on a remote NFS file system, and NFS lost the server's ack?
     return 1 if defined($fromsz) && !-e $from &&           # $from disappeared
                 (($tosz2,$tomt2) = (stat($to))[7,9]) &&    # $to's there
-                ($tosz1 != $tosz2 or $tomt1 != $tomt2) &&  #   and changed
+                  ((!defined $tosz1) ||			   #  not before or
+		   ($tosz1 != $tosz2 or $tomt1 != $tomt2)) &&  #   was changed
                 $tosz2 == $fromsz;                         # it's all there
 
     ($tosz1,$tomt1) = (stat($to))[7,9];  # just in case rename did something
@@ -249,7 +308,8 @@ unless (defined &syscopy) {
 	    # preserve MPE file attributes.
 	    return system('/bin/cp', '-f', $_[0], $_[1]) == 0;
 	};
-    } elsif ($^O eq 'MSWin32') {
+    } elsif ($^O eq 'MSWin32' && defined &DynaLoader::boot_DynaLoader) {
+	# Win32::CopyFile() fill only work if we can load Win32.xs
 	*syscopy = sub {
 	    return 0 unless @_ == 2;
 	    return Win32::CopyFile(@_, 1);
@@ -305,7 +365,8 @@ one place to another.
 
 =over 4
 
-=item *
+=item copy
+X<copy> X<cp>
 
 The C<copy> function takes two
 parameters: a file to copy from and a file to copy to. Either
@@ -325,15 +386,16 @@ filehandle to a file, use C<binmode> on the filehandle.
 
 An optional third parameter can be used to specify the buffer
 size used for copying. This is the number of bytes from the
-first file, that wil be held in memory at any given time, before
+first file, that will be held in memory at any given time, before
 being written to the second file. The default buffer size depends
-upon the file, but will generally be the whole file (up to 2Mb), or
+upon the file, but will generally be the whole file (up to 2MB), or
 1k for filehandles that do not reference files (eg. sockets).
 
 You may use the syntax C<use File::Copy "cp"> to get at the
 "cp" alias for this function. The syntax is I<exactly> the same.
 
-=item *
+=item move
+X<move> X<mv> X<rename>
 
 The C<move> function also takes two parameters: the current name
 and the intended name of the file to be moved.  If the destination
@@ -349,7 +411,8 @@ copy of the file under the destination name.
 You may use the "mv" alias for this function in the same way that
 you may use the "cp" alias for C<copy>.
 
-=back
+=item syscopy
+X<syscopy>
 
 File::Copy also provides the C<syscopy> routine, which copies the
 file specified in the first parameter to the file specified in the
@@ -363,7 +426,7 @@ this calls C<Win32::CopyFile>.
 On Mac OS (Classic), C<syscopy> calls C<Mac::MoreFiles::FSpFileCopy>,
 if available.
 
-=head2 Special behaviour if C<syscopy> is defined (OS/2, VMS and Win32)
+B<Special behaviour if C<syscopy> is defined (OS/2, VMS and Win32)>:
 
 If both arguments to C<copy> are not file handles,
 then C<copy> will perform a "system copy" of
@@ -378,9 +441,8 @@ The system copy routine may also be called directly under VMS and OS/2
 as C<File::Copy::syscopy> (or under VMS as C<File::Copy::rmscopy>, which
 is the routine that does the actual work for syscopy).
 
-=over 4
-
 =item rmscopy($from,$to[,$date_flag])
+X<rmscopy>
 
 The first and second arguments may be strings, typeglobs, typeglob
 references, or objects inheriting from IO::Handle;
@@ -439,13 +501,13 @@ E.g.
   copy("file1", "tmp");        # creates the file 'tmp' in the current directory
   copy("file1", ":tmp:");      # creates :tmp:file1
   copy("file1", ":tmp");       # same as above
-  copy("file1", "tmp");        # same as above, if 'tmp' is a directory (but don't do   
+  copy("file1", "tmp");        # same as above, if 'tmp' is a directory (but don't do
                                # that, since it may cause confusion, see example #1)
   copy("file1", "tmp:file1");  # error, since 'tmp:' is not a volume
   copy("file1", ":tmp:file1"); # ok, partial path
   copy("file1", "DataHD:");    # creates DataHD:file1
-  
-  move("MacintoshHD:fileA", "DataHD:fileB"); # moves (don't copies) files from one 
+
+  move("MacintoshHD:fileA", "DataHD:fileB"); # moves (doesn't copy) files from one
                                              # volume to another
 
 =back

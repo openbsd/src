@@ -275,7 +275,9 @@ Perl's internal hashing algorithm is performing poorly on your data
 set.  For example, you stick 10,000 things in a hash, but evaluating
 %HASH in scalar context reveals C<"1/16">, which means only one out
 of sixteen buckets has been touched, and presumably contains all
-10,000 of your items.  This isn't supposed to happen.
+10,000 of your items.  This isn't supposed to happen.  If a tied hash
+is evaluated in scalar context, a fatal error will result, since this
+bucket usage information is currently not available for tied hashes.
 X<hash, scalar context> X<hash, bucket> X<bucket>
 
 You can preallocate space for a hash by assigning to the keys() function.
@@ -335,6 +337,12 @@ X<interpolation>
 
 There is no double interpolation in Perl, so the C<$100> is left as is.
 
+By default floating point numbers substituted inside strings use the
+dot (".")  as the decimal separator.  If C<use locale> is in effect,
+and POSIX::setlocale() has been called, the character used for the
+decimal separator is affected by the LC_NUMERIC locale.
+See L<perllocale> and L<POSIX>.
+
 As in some shells, you can enclose the variable name in braces to
 disambiguate it from following alphanumerics (and underscores).
 You must also do
@@ -364,8 +372,9 @@ equivalent to C<$version{2}++>, not to C<$version{'2.0'}++>.
 X<version string> X<vstring> X<v-string>
 
 B<Note:> Version Strings (v-strings) have been deprecated.  They will
-not be available after Perl 5.8.  The marginal benefits of v-strings
-were greatly outweighed by the potential for Surprise and Confusion.
+be removed in some future release after Perl 5.8.1.  The marginal
+benefits of v-strings were greatly outweighed by the potential for
+Surprise and Confusion.
 
 A literal of the form C<v1.20.300.4000> is parsed as a string composed
 of characters with the specified ordinals.  This form, known as
@@ -376,15 +385,14 @@ Unicode strings, and for comparing version "numbers" using the string
 comparison operators, C<cmp>, C<gt>, C<lt> etc.  If there are two or
 more dots in the literal, the leading C<v> may be omitted.
 
-    print v9786;              # prints UTF-8 encoded SMILEY, "\x{263a}"
+    print v9786;              # prints SMILEY, "\x{263a}"
     print v102.111.111;       # prints "foo"
     print 102.111.111;        # same
 
 Such literals are accepted by both C<require> and C<use> for
-doing a version check.  The C<$^V> special variable also contains the
-running Perl interpreter's version in this form.  See L<perlvar/$^V>.
-Note that using the v-strings for IPv4 addresses is not portable unless
-you also use the inet_aton()/inet_ntoa() routines of the Socket package.
+doing a version check.  Note that using the v-strings for IPv4
+addresses is not portable unless you also use the
+inet_aton()/inet_ntoa() routines of the Socket package.
 
 Note that since Perl 5.8.1 the single-number v-strings (like C<v65>)
 are not v-strings before the C<< => >> operator (which is usually used
@@ -416,7 +424,7 @@ token was encountered.  The filehandle is left open pointing to the
 contents after __DATA__.  It is the program's responsibility to
 C<close DATA> when it is done reading from it.  For compatibility with
 older scripts written before __DATA__ was introduced, __END__ behaves
-like __DATA__ in the toplevel script (but not in files loaded with
+like __DATA__ in the top level script (but not in files loaded with
 C<require> or C<do>) and leaves the remaining contents of the
 file accessible via C<main::DATA>.
 

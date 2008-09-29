@@ -24,17 +24,16 @@ __END__
 
 =head1 NAME
 
-DBM_Filter::utf8 -- UTF-8 DBM Filter
+DBM_Filter::utf8 - filter for DBM_Filter
 
 =head1 SYNOPSIS
 
     use SDBM_File; # or DB_File, or GDBM_File, or NDBM_File, or ODBM_File
     use DBM_Filter ;
-    
 
     $db = tie %hash, ...
     $db->Filter_Push('utf8');
-    
+
 =head1 DESCRIPTION
 
 This Filter will ensure that all data written to the DBM will be encoded

@@ -71,7 +71,7 @@ libperl_override.lib: libperl_override.imp
 	emximp -o $@ libperl_override.imp
 
 libperl_dllmain.imp: imp_version
-	echo	'main	$(PERL_DLL_BASE)	dll_perlmain	?' >> $@
+	echo	'main	$(PERL_DLL_BASE)	dll_perlmain	?' > $@
 
 libperl_dllmain.lib: libperl_dllmain.imp
 	emximp -o $@ libperl_dllmain.imp
@@ -218,6 +218,10 @@ $(AOUT_DYNALOADER_OBJ) : $(DYNALOADER_OBJ)
 
 $(DYNALOADER_OBJ) : $(DYNALOADER)
 	@sh -c true
+
+# Quick hack to construct directories necessary for /*/% stuff:
+
+$(aout_static_ext) : $(static_ext) $(dynamic_ext)
 
 $(AOUT_LIBPERL) : $(aout_obj) perl$(AOUT_OBJ_EXT)
 	rm -f $@

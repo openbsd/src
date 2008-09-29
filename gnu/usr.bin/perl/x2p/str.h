@@ -1,6 +1,6 @@
 /*    str.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1999, 2000,
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2005
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public

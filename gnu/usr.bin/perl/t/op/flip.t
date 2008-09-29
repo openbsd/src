@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: flip.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:52 $
-
 chdir 't' if -d 't';
 
 print "1..15\n";

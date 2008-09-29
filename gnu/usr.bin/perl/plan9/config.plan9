@@ -1961,6 +1961,12 @@
  *	This symbol, if defined, indicates that the localtime_r routine
  *	is available to localtime re-entrantly.
  */
+/* LOCALTIME_R_NEEDS_TZSET:
+ *	Many libc's localtime_r implementations do not call tzset,
+ *	making them differ from localtime(), and making timezone
+ *	changes using $ENV{TZ} without explicitly calling tzset
+ *	impossible. This symbol makes us call tzset before localtime_r
+ */
 /* LOCALTIME_R_PROTO:
  *	This symbol encodes the prototype of localtime_r.
  *	It is zero if d_localtime_r is undef, and one of the
@@ -1968,6 +1974,7 @@
  *	is defined.
  */
 /*#define HAS_LOCALTIME_R	   / **/
+/*#define LOCALTIME_R_NEEDS_TZSET	   / **/
 #define LOCALTIME_R_PROTO 0	   /**/
 
 /* HAS_LONG_DOUBLE:
@@ -3357,8 +3364,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.8.8"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.8.8"		/**/
+#define PRIVLIB "/sys/lib/perl/5.10.0"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/5.10.0"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3485,9 +3492,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.8.8/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.8.8/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.8.8/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/5.10.0/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/5.10.0/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/5.10.0/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.
@@ -3597,7 +3604,7 @@
  *	Defaults to define in Perls 5.8 and earlier, to undef later.
  */
 #ifndef USE_FAST_STDIO
-#define	USE_FAST_STDIO		/**/
+/*#define	USE_FAST_STDIO		/ **/
 #endif
 
 /* USE_LARGE_FILES:
@@ -3830,6 +3837,12 @@
  *	available.  If aintl is also present we can emulate modfl.
  */
 /*#define HAS_COPYSIGNL		/**/
+
+/* USE_CPLUSPLUS:
+ *	This symbol, if defined, indicates that a C++ compiler was
+ *	used to compiled Perl and will be used to compile extensions.
+ */
+/*#define USE_CPLUSPLUS		/**/
 
 /* HAS_DBMINIT_PROTO:
  *	This symbol, if defined, indicates that the system provides

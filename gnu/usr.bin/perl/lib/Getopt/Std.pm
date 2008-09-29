@@ -28,6 +28,7 @@ there is a space between the switch and the argument.
 The getopts() function is similar, but you should pass to it the list of all
 switches to be recognized.  If unspecified switches are found on the
 command-line, the user will be warned that an unknown option was given.
+The getopts() function returns true unless an invalid option was found.
 
 Note that, if your code is running under the recommended C<use strict
 'vars'> pragma, you will need to declare these package variables

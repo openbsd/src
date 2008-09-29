@@ -1,6 +1,6 @@
 #!./perl
 
-BEGIN: {
+BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib');
     require './test.pl';
@@ -19,7 +19,7 @@ my $Is_Win32 = $^O eq 'MSWin32';
 
 skip_all("Tests mostly usesless on MacOS") if $^O eq 'MacOS';
 
-plan(tests => 21);
+plan(tests => 22);
 
 my $Perl = which_perl();
 
@@ -96,7 +96,7 @@ unless( ok($rc == 255 << 8 or $rc == -1 or $rc == 256 or $rc == 512) ) {
 
 unless ( ok( $! == 2  or  $! =~ /\bno\b.*\bfile/i or  
              $! == 13 or  $! =~ /permission denied/i or
-             $! == 22 or  $! =~ /invalid argument/           ) ) {
+             $! == 22 or  $! =~ /invalid argument/i  ) ) {
     printf "# \$! eq %d, '%s'\n", $!, $!;
 }
 
@@ -106,6 +106,10 @@ is( <<`END`,                    "ok\n",     '<<`HEREDOC`' );
 $Perl -le "print 'ok'"
 END
 
+{
+    my $_ = qq($Perl -le "print 'ok'");
+    is( readpipe, "ok\n", 'readpipe default argument' );
+}
 
 TODO: {
     my $tnum = curr_test();

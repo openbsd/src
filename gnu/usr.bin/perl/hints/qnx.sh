@@ -9,7 +9,12 @@
 #  socket3r.lib Nov21 1996.
 # perl-5.7.3 fails 2 known tests under QNX6.1.0
 #
-# As with many unix ports, this one depends on a few "standard"
+# perl-5.10.0-tobe compiles with Watcom C 10.6
+#                and QNX 4.25 patch G w/TCPSDK installed
+#  Some tests still fail, mostly to do with dynamic/static
+#  or unsuported features in QNX.
+# 
+## As with many unix ports, this one depends on a few "standard"
 # unix utilities which are not necessarily standard for QNX4.
 #
 # /bin/sh  This is used heavily by Configure and then by
@@ -229,6 +234,11 @@ if [ "$osname" = "qnx" ]; then
 	  /usr/local/bin or some other suitable location.
 	EOF
   fi
+
+  # includes a matherr() to silence noise from watcom libc
+  archobjs="qnx.o"
+  test -f qnx.c || cp qnx/qnx.c .
+
 else
   # $^O eq nto
 
@@ -243,7 +253,13 @@ else
   # recognize that option, so we're better off setting cc=gcc.
   cc='gcc'
 
+  # gcc uses $QNX_TARGET/usr/include as the include directory.
+  usrinc="$QNX_TARGET/usr/include"
+
   # If we use perl's malloc, it dies with an invalid sbrk.
   # This is probably worth tracking down someday.
   usemymalloc='false'
+
+  # crypt isn't detected in the C library even though it's there.
+  d_crypt='define'
 fi

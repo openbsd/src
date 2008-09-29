@@ -183,7 +183,7 @@ ok($@ =~ /Can\'t modify.*chop.*in.*assignment/);
 eval 'chomp($x, $y) = (1, 2);';
 ok($@ =~ /Can\'t modify.*chom?p.*in.*assignment/);
 
-my @chars = ("N", "\xd3", substr ("\xd4\x{100}", 0, 1), chr 1296);
+my @chars = ("N", ord('A') == 193 ? "\xee" : "\xd3", substr ("\xd4\x{100}", 0, 1), chr 1296);
 foreach my $start (@chars) {
   foreach my $end (@chars) {
     local $/ = $end;

@@ -1,13 +1,13 @@
 #!./perl
 
-print "1..55\n";
+print "1..56\n";
 
 $x = 'x';
 
 print "#1	:$x: eq :x:\n";
 if ($x eq 'x') {print "ok 1\n";} else {print "not ok 1\n";}
 
-$x = $#;	# this is the register $#
+$x = $#[0];
 
 if ($x eq '') {print "ok 2\n";} else {print "not ok 2\n";}
 
@@ -263,3 +263,7 @@ print ((exists $str{xyz::bar} ? "" : "not ")."ok $test\n"); ++$test;
 
 sub foo::::::bar { print "ok $test\n"; $test++ }
 foo::::::bar;
+
+eval "\$x =\xE2foo";
+if ($@ =~ /Unrecognized character \\xE2 in column 5/) { print "ok $test\n"; } else { print "not ok $test\n"; }
+$test++;

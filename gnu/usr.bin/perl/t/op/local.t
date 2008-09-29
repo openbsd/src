@@ -2,9 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = qw(. ../lib);
     require './test.pl';
 }
-plan tests => 81;
+plan tests => 122;
 
 my $list_assignment_supported = 1;
 
@@ -313,3 +314,148 @@ while (/(o.+?),/gc) {
     { local @x{c,d,e}; }
     ok(! exists $x{c});
 }
+
+# local() and readonly magic variables
+
+eval { local $1 = 1 };
+like($@, qr/Modification of a read-only value attempted/);
+
+eval { for ($1) { local $_ = 1 } };
+like($@, qr/Modification of a read-only value attempted/);
+
+# make sure $1 is still read-only
+eval { for ($1) { local $_ = 1 } };
+like($@, qr/Modification of a read-only value attempted/);
+
+# The s/// adds 'g' magic to $_, but it should remain non-readonly
+eval { for("a") { for $x (1,2) { local $_="b"; s/(.*)/+$1/ } } };
+is($@, "");
+
+# RT #4342 Special local() behavior for $[
+{
+    local $[ = 1;
+    ok(1 == $[, 'lexcical scope of local $[');
+    f();
+}
+
+sub f { ok(0 == $[); }
+
+# sub localisation
+{
+	package Other;
+
+	sub f1 { "f1" }
+	sub f2 { "f2" }
+
+	no warnings "redefine";
+	{
+		local *f1 = sub  { "g1" };
+		::ok(f1() eq "g1", "localised sub via glob");
+	}
+	::ok(f1() eq "f1", "localised sub restored");
+	{
+		local $Other::{"f1"} = sub { "h1" };
+		::ok(f1() eq "h1", "localised sub via stash");
+	}
+	::ok(f1() eq "f1", "localised sub restored");
+	{
+		local @Other::{qw/ f1 f2 /} = (sub { "j1" }, sub { "j2" });
+		::ok(f1() eq "j1", "localised sub via stash slice");
+		::ok(f2() eq "j2", "localised sub via stash slice");
+	}
+	::ok(f1() eq "f1", "localised sub restored");
+	::ok(f2() eq "f2", "localised sub restored");
+}
+
+# Localising unicode keys (bug #38815)
+{
+    my %h;
+    $h{"\243"} = "pound";
+    $h{"\302\240"} = "octects";
+    is(scalar keys %h, 2);
+    {
+	my $unicode = chr 256;
+	my $ambigous = "\240" . $unicode;
+	chop $ambigous;
+	local $h{$unicode} = 256;
+	local $h{$ambigous} = 160;
+
+	is(scalar keys %h, 4);
+	is($h{"\243"}, "pound");
+	is($h{$unicode}, 256);
+	is($h{$ambigous}, 160);
+	is($h{"\302\240"}, "octects");
+    }
+    is(scalar keys %h, 2);
+    is($h{"\243"}, "pound");
+    is($h{"\302\240"}, "octects");
+}
+
+# And with slices
+{
+    my %h;
+    $h{"\243"} = "pound";
+    $h{"\302\240"} = "octects";
+    is(scalar keys %h, 2);
+    {
+	my $unicode = chr 256;
+	my $ambigous = "\240" . $unicode;
+	chop $ambigous;
+	local @h{$unicode, $ambigous} = (256, 160);
+
+	is(scalar keys %h, 4);
+	is($h{"\243"}, "pound");
+	is($h{$unicode}, 256);
+	is($h{$ambigous}, 160);
+	is($h{"\302\240"}, "octects");
+    }
+    is(scalar keys %h, 2);
+    is($h{"\243"}, "pound");
+    is($h{"\302\240"}, "octects");
+}
+
+# [perl #39012] localizing @_ element then shifting frees element too # soon
+
+{
+    my $x;
+    my $y = bless [], 'X39012';
+    sub X39012::DESTROY { $x++ }
+    sub { local $_[0]; shift }->($y);
+    ok(!$x,  '[perl #39012]');
+    
+}
+
+# when localising a hash element, the key should be copied, not referenced
+
+{
+    my %h=('k1' => 111);
+    my $k='k1';
+    {
+	local $h{$k}=222;
+
+	is($h{'k1'},222);
+	$k='k2';
+    }
+    ok(! exists($h{'k2'}));
+    is($h{'k1'},111);
+}
+{
+    my %h=('k1' => 111);
+    our $k = 'k1';  # try dynamic too
+    {
+	local $h{$k}=222;
+	is($h{'k1'},222);
+	$k='k2';
+    }
+    ok(! exists($h{'k2'}));
+    is($h{'k1'},111);
+}
+
+# Keep this test last, as it can SEGV
+{
+    local *@;
+    pass("Localised *@");
+    eval {1};
+    pass("Can eval with *@ localised");
+}
+

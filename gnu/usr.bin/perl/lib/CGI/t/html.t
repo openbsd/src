@@ -10,7 +10,7 @@ $loaded = 1;
 print "ok 1\n";
 
 BEGIN {
-   $| = 1; print "1..27\n";
+   $| = 1; print "1..28\n";
   if( $] > 5.006 ) {
     # no utf8
     require utf8; # we contain Latin-1
@@ -110,3 +110,4 @@ test(25,$q->p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hel
 $q->autoEscape(0);
 test(26,$q->p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hello world&egrave;">hello &aacute;</p>');
 test(27,p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hello world&amp;egrave;">hello &aacute;</p>');
+test(28,header(-type=>'image/gif',-charset=>'UTF-8') eq "Content-Type: image/gif; charset=UTF-8${CRLF}${CRLF}","header()");

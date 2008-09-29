@@ -52,8 +52,10 @@ The Borland C++ and Microsoft Visual C++ compilers are also now being given
 away free.  The Borland compiler is available as "Borland C++ Compiler Free
 Command Line Tools" and is the same compiler that ships with the full
 "Borland C++ Builder" product.  The Microsoft compiler is available as
-"Visual C++ Toolkit 2003", and also as part of the ".NET Framework SDK", and
-is the same compiler that ships with "Visual Studio .NET 2003 Professional".
+"Visual C++ Toolkit 2003" or "Visual C++ 2005/2008 Express Edition" (and also
+as part of the ".NET Framework SDK") and is the same compiler that ships with
+"Visual C++ .NET 2003 Professional" or "Visual C++ 2005/2008 Professional"
+respectively.
 
 This port can also be built on the Intel IA64 using:
 
@@ -133,10 +135,87 @@ and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
 
+=item Microsoft Visual C++ 2008 Express Edition Beta 2
+
+This free version of Visual C++ 2008 Professional contains the same compiler
+and linker that ship with the full version, and also contains everything
+necessary to build Perl, rather than requiring a separate download of the
+Platform SDK like previous versions did.
+
+The Beta 2 package is currently available from 
+
+http://msdn2.microsoft.com/en-us/express/future/default.aspx
+http://msdn2.microsoft.com/en-gb/express/future/default.aspx
+
+The final release version will probably be found by searching in the Download
+Center at http://www.microsoft.com/downloads/search.aspx?displaylang=en in due
+course.
+
+Install Visual C++ 2008, then setup your environment using
+
+	C:\Program Files\Microsoft Visual Studio 9.0\Common7\Tools\vsvars32.bat
+
+(assuming the default installation location was chosen).
+
+Perl should now build using the win32/Makefile.  You will need to edit that
+file to set
+
+	CCTYPE = MSVC90FREE
+
+first.
+
+=item Microsoft Visual C++ 2005 Express Edition
+
+This free version of Visual C++ 2005 Professional contains the same compiler
+and linker that ship with the full version, but doesn't contain everything
+necessary to build Perl.
+
+You will also need to download the "Platform SDK" (the "Core SDK" and "MDAC
+SDK" components are required) for more header files and libraries.
+
+These packages can both be downloaded by searching in the Download Center at
+http://www.microsoft.com/downloads/search.aspx?displaylang=en.  (Providing exact
+links to these packages has proven a pointless task because the links keep on
+changing so often.)
+
+Try to obtain the latest version of the Platform SDK.  Sometimes these packages
+contain a particular Windows OS version in their name, but actually work on
+other OS versions too.  For example, the "Windows Server 2003 R2 Platform SDK"
+also runs on Windows XP SP2 and Windows 2000.
+
+According to the download pages these packages are only supported on Windows
+2000/XP/2003, so trying to use these tools on Windows 95/98/ME and even Windows
+NT probably won't work.
+
+Install Visual C++ 2005 first, then the Platform SDK.  Setup your environment
+as follows (assuming default installation locations were chosen):
+
+	SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
+
+	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual Studio 8\Common7\IDE;C:\Program Files\Microsoft Visual Studio 8\VC\BIN;C:\Program Files\Microsoft Visual Studio 8\Common7\Tools;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\bin;C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727;C:\Program Files\Microsoft Visual Studio 8\VC\VCPackages;%PlatformSDKDir%\Bin
+
+	SET INCLUDE=C:\Program Files\Microsoft Visual Studio 8\VC\INCLUDE;%PlatformSDKDir%\include
+
+	SET LIB=C:\Program Files\Microsoft Visual Studio 8\VC\LIB;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\lib;%PlatformSDKDir%\lib
+
+	SET LIBPATH=C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727
+
+(The PlatformSDKDir might need to be set differently depending on which version
+you are using. Earlier versions installed into "C:\Program Files\Microsoft SDK",
+while the latest versions install into version-specific locations such as
+"C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2".)
+
+Perl should now build using the win32/Makefile.  You will need to edit that
+file to set
+
+	CCTYPE = MSVC80FREE
+
+and to set CCHOME, CCINCDIR and CCLIBDIR as per the environment setup above.
+
 =item Microsoft Visual C++ Toolkit 2003
 
 This free toolkit contains the same compiler and linker that ship with
-Visual Studio .NET 2003 Professional, but doesn't contain everything
+Visual C++ .NET 2003 Professional, but doesn't contain everything
 necessary to build Perl.
 
 You will also need to download the "Platform SDK" (the "Core SDK" and "MDAC
@@ -153,20 +232,29 @@ changing so often.)
 
 Try to obtain the latest version of the Platform SDK.  Sometimes these packages
 contain a particular Windows OS version in their name, but actually work on
-other OS versions too.  For example, the "Windows Server 2003 SP1 Platform SDK"
+other OS versions too.  For example, the "Windows Server 2003 R2 Platform SDK"
 also runs on Windows XP SP2 and Windows 2000.
 
-According to the download pages the Toolkit and the .NET Framework SDK are only
-supported on Windows 2000/XP/2003, so trying to use these tools on Windows
-95/98/ME and even Windows NT probably won't work.
+According to the download pages these packages are only supported on Windows
+2000/XP/2003, so trying to use these tools on Windows 95/98/ME and even Windows
+NT probably won't work.
 
 Install the Toolkit first, then the Platform SDK, then the .NET Framework SDK.
 Setup your environment as follows (assuming default installation locations
 were chosen):
 
-	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin;C:\Program Files\Microsoft SDK\Bin;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin
-	SET INCLUDE=C:\Program Files\Microsoft Visual C++ Toolkit 2003\include;C:\Program Files\Microsoft SDK\include;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\include
-	SET LIB=C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib;C:\Program Files\Microsoft SDK\lib;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib
+	SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
+
+	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin;%PlatformSDKDir%\Bin;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin
+
+	SET INCLUDE=C:\Program Files\Microsoft Visual C++ Toolkit 2003\include;%PlatformSDKDir%\include;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\include
+
+	SET LIB=C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib;%PlatformSDKDir%\lib;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib
+
+(The PlatformSDKDir might need to be set differently depending on which version
+you are using. Earlier versions installed into "C:\Program Files\Microsoft SDK",
+while the latest versions install into version-specific locations such as
+"C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2".)
 
 Several required files will still be missing:
 
@@ -180,7 +268,7 @@ following:
 
 	C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322
 
-Copy it from there to C:\Program Files\Microsoft SDK\Bin
+Copy it from there to %PlatformSDKDir%\Bin
 
 =item *
 
@@ -209,12 +297,12 @@ $Config{ar}.
 
 setargv.obj is required to build perlglob.exe (and perl.exe if the USE_SETARGV
 option is enabled).  The Platform SDK supplies this object file in source form
-in C:\Program Files\Microsoft SDK\src\crt.  Copy setargv.c, cruntime.h and
+in %PlatformSDKDir%\src\crt.  Copy setargv.c, cruntime.h and
 internal.h from there to some temporary location and build setargv.obj using
 
 	cl.exe /c /I. /D_CRTBLD setargv.c
 
-Then copy setargv.obj to C:\Program Files\Microsoft SDK\lib
+Then copy setargv.obj to %PlatformSDKDir%\lib
 
 Alternatively, if you don't need perlglob.exe and don't need to enable the
 USE_SETARGV option then you can safely just remove all mention of $(GLOBEXE)
@@ -321,6 +409,9 @@ You may also need to comment out the C<DELAYLOAD = ...> line in the
 Makefile if you're using VC++ 6.0 without the latest service pack and
 the linker reports an internal error.
 
+If you are using VC++ 4.2 or earlier then you'll have to change the /EHsc
+option in the CXX_FLAG macro to the equivalent /GX option.
+
 If you have either the source or a library that contains des_fcrypt(),
 enable the appropriate option in the makefile.  A ready-to-use version
 of fcrypt.c, based on the version originally written by Eric Young at
@@ -341,7 +432,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl58.dll at the perl toplevel, and various other extension dll's
+perl510.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -377,20 +468,8 @@ option -VI- for backward (bugward) compatibility for using the old Borland
 search algorithm  to locate header files.
 
 If you run the tests on a FAT partition, you may see some failures for
-C<link()> related tests:
-
-    Failed Test                     Stat Wstat Total Fail  Failed  List
-
-    ../ext/IO/lib/IO/t/io_dup.t                    6    4  66.67%  2-5
-    ../lib/File/Temp/t/mktemp.t                    9    1  11.11%  2
-    ../lib/File/Temp/t/posix.t                     7    1  14.29%  3
-    ../lib/File/Temp/t/security.t                 13    1   7.69%  2
-    ../lib/File/Temp/t/tempfile.t                 20    2  10.00%  2 4
-    comp/multiline.t                               6    2  33.33%  5-6
-    io/dup.t                                       8    6  75.00%  2-7
-    op/write.t                                    47    7  14.89%  1-3 6 9-11
-
-Testing on NTFS avoids these errors.
+C<link()> related tests (I<op/write.t>, I<op/stat.t> ...). Testing on
+NTFS avoids these errors.
 
 Furthermore, you should make sure that during C<make test> you do not
 have any GNU tool packages in your path: some toolkits like Unixutils
@@ -919,6 +998,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 30 September 2005
+Last updated: 29 August 2007
 
 =cut

@@ -3,8 +3,8 @@
  DB_File.xs -- Perl 5 interface to Berkeley DB 
 
  written by Paul Marquess <pmqs@cpan.org>
- last modified 11th November 2005
- version 1.814
+ last modified 4th February 2007
+ version 1.815
 
  All comments/suggestions/problems are welcome
 
@@ -114,6 +114,7 @@
         1.812 - no change
         1.813 - no change
         1.814 - no change
+        1.814 - C++ casting fixes
 
 */
 
@@ -410,12 +411,12 @@ typedef struct {
 typedef DB_File_type * DB_File ;
 typedef DBT DBTKEY ;
 
-#define my_sv_setpvn(sv, d, s) sv_setpvn(sv, (s ? d : (void*)""), s)
+#define my_sv_setpvn(sv, d, s) sv_setpvn(sv, (s ? d : (const char *)""), s)
 
 #define OutputValue(arg, name)  					\
 	{ if (RETVAL == 0) {						\
 	      SvGETMAGIC(arg) ;          				\
-	      my_sv_setpvn(arg, name.data, name.size) ;			\
+	      my_sv_setpvn(arg, (const char *)name.data, name.size) ;			\
 	      TAINT;                                       		\
 	      SvTAINTED_on(arg);                                       	\
 	      SvUTF8_off(arg);                                       	\
@@ -428,7 +429,7 @@ typedef DBT DBTKEY ;
 	  { 								\
 		SvGETMAGIC(arg) ;          				\
 		if (db->type != DB_RECNO) {				\
-		    my_sv_setpvn(arg, name.data, name.size); 		\
+		    my_sv_setpvn(arg, (const char *)name.data, name.size); 		\
 		}							\
 		else 							\
 		    sv_setiv(arg, (I32)*(I32*)name.data - 1); 		\
@@ -597,8 +598,8 @@ const DBT * key2 ;
 
     PUSHMARK(SP) ;
     EXTEND(SP,2) ;
-    PUSHs(sv_2mortal(newSVpvn(data1,key1->size)));
-    PUSHs(sv_2mortal(newSVpvn(data2,key2->size)));
+    PUSHs(sv_2mortal(newSVpvn((const char*)data1,key1->size)));
+    PUSHs(sv_2mortal(newSVpvn((const char*)data2,key2->size)));
     PUTBACK ;
 
     count = perl_call_sv(CurrentDB->compare, G_SCALAR); 
@@ -1191,7 +1192,7 @@ SV *   sv ;
             Flags |= DB_TRUNCATE ;
 #endif
 
-        status = db_open(name, RETVAL->type, Flags, mode, NULL, openinfo, &RETVAL->dbp) ; 
+        status = db_open(name, RETVAL->type, Flags, mode, NULL, (DB_INFO*)openinfo, &RETVAL->dbp) ; 
         if (status == 0)
 #if DB_VERSION_MAJOR == 2 && DB_VERSION_MINOR < 6
             status = (RETVAL->dbp->cursor)(RETVAL->dbp, NULL, &RETVAL->cursor) ;

@@ -28,10 +28,8 @@ open PATCH_LEVEL, "<" . catfile(updir, "patchlevel.h")
     or die "Can't open patchlevel.h: $!";
 
 my $patchlevel_date = (stat PATCH_LEVEL)[9];
-my $patchnum = "";
 
 while (<PATCH_LEVEL>) {
-    $patchnum = $1 if /#define PERL_PATCHNUM\s+(\d+)/;
     last if $_ =~ /^\s*static\s+(?:const\s+)?char.*?local_patches\[\]\s*=\s*{\s*$/;
 }
 
@@ -44,7 +42,6 @@ while (<PATCH_LEVEL>) {
     last if /^\s*}/;
     chomp;
     s/^\s+,?\s*"?//;
-    s/"\s+STRINGIFY\(PERL_PATCHNUM\)/$patchnum"/;
     s/"?\s*,?$//;
     s/(['\\])/\\$1/g;
     push @patches, $_ unless $_ eq 'NULL';
@@ -64,7 +61,7 @@ print "Extracting $file (with variable substitutions)\n";
 # In this section, perl variables will be expanded during extraction.
 # You can use $Config{...} to use Configure variables.
 
-my $extract_version = sprintf("v%vd", $^V);
+my $extract_version = sprintf("%vd", $^V);
 
 print OUT <<"!GROK!THIS!";
 $Config{startperl}
@@ -99,9 +96,11 @@ BEGIN {
     # use secure tempfiles wherever possible
     eval "require File::Temp;";
     $::HaveTemp = ($@ eq "");
+    eval { require Module::CoreList; };
+    $::HaveCoreList = ($@ eq "");
 };
 
-my $Version = "1.35";
+my $Version = "1.36";
 
 # Changed in 1.06 to skip Mail::Send and Mail::Util if not available.
 # Changed in 1.07 to see more sendmail execs, and added pipe output.
@@ -141,6 +140,7 @@ my $Version = "1.35";
 # Changed in 1.33 Don't require -t STDOUT for -ok.
 # Changed in 1.34 Added Message-Id RFOLEY 18-06-2002 
 # Changed in 1.35 Use File::Temp (patch from Solar Designer) NWCLARK 28-02-2004
+# Changed in 1.36 Initial Module::CoreList support Alexandr Ciornii 11-07-2007
 
 # TODO: - Allow the user to re-name the file on mail failure, and
 #       make sure failure (transmission-wise) of Mail::Send is
@@ -152,7 +152,7 @@ my( $file, $usefile, $cc, $address, $perlbug, $testaddress, $filename, $messagei
     $fh, $me, $Is_MSWin32, $Is_Linux, $Is_VMS, $msg, $body, $andcc, %REP, $ok,
     $Is_OpenBSD);
 
-my $perl_version = $^V ? sprintf("v%vd", $^V) : $];
+my $perl_version = $^V ? sprintf("%vd", $^V) : $];
 
 my $config_tag2 = "$perl_version - $Config{cf_time}";
 
@@ -503,6 +503,29 @@ EOF
 	    $usefile = 1;
 	} elsif ($entry ne "") {
 	    $ed = $entry;
+	}
+    }
+    my $report_about_module = '';
+    if ($::HaveCoreList) {
+	paraprint <<EOF;
+Is your report about a Perl module? If yes, enter its name. If not, skip.
+EOF
+	print "Module []: ";
+	my $entry = scalar <>;
+	$entry =~ s/^\s+//s;
+	$entry =~ s/\s+$//s;
+	if ($entry ne q{}) {
+	    $category ||= 'library';
+	    $report_about_module = $entry;
+	    my $first_release = Module::CoreList->first_release($entry);
+	    unless ($first_release) {
+		paraprint <<EOF;
+Module $entry is not a core module. Please check that
+you entered its name correctly. If it is correct,
+abort this program, try searching for $entry on
+search.cpan.org, and report it there.
+EOF
+	    }
 	}
     }
 

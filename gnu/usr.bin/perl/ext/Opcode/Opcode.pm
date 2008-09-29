@@ -4,10 +4,9 @@ use 5.006_001;
 
 use strict;
 
-our($VERSION, $XS_VERSION, @ISA, @EXPORT_OK);
+our($VERSION, @ISA, @EXPORT_OK);
 
-$VERSION = "1.06";
-$XS_VERSION = "1.03";
+$VERSION = "1.11";
 
 use Carp;
 use Exporter ();
@@ -29,7 +28,7 @@ sub opset_to_hex ($);
 sub opdump (;$);
 use subs @EXPORT_OK;
 
-XSLoader::load 'Opcode', $XS_VERSION;
+XSLoader::load 'Opcode', $VERSION;
 
 _init_optags();
 
@@ -331,7 +330,7 @@ invert_opset function.
 
     list lslice splice push pop shift unshift reverse
 
-    cond_expr flip flop andassign orassign and or xor
+    cond_expr flip flop andassign orassign dorassign and or dor xor
 
     warn die lineseq nextstate scope enter leave setstate
 
@@ -374,14 +373,15 @@ used to implement a resource attack (e.g., consume all available CPU time).
 
 These ops enable I<filehandle> (rather than filename) based input and
 output. These are safe on the assumption that only pre-existing
-filehandles are available for use.  To create new filehandles other ops
-such as open would need to be enabled.
+filehandles are available for use.  Usually, to create new filehandles
+other ops such as open would need to be enabled, if you don't take into
+account the magical open of ARGV.
 
     readline rcatline getc read
 
     formline enterwrite leavewrite
 
-    print sysread syswrite send recv
+    print say sysread syswrite send recv
 
     eof tell seek sysseek
 
@@ -394,6 +394,8 @@ These are a hotchpotch of opcodes still waiting to be considered
     gvsv gv gelem
 
     padsv padav padhv padany
+
+    once
 
     rv2gv refgen srefgen ref
 
@@ -415,6 +417,11 @@ These are a hotchpotch of opcodes still waiting to be considered
 
     entertry leavetry -- can be used to 'hide' fatal errors
 
+    entergiven leavegiven
+    enterwhen leavewhen
+    break continue
+    smartmatch
+
     custom -- where should this go
 
 =item :base_math
@@ -434,18 +441,19 @@ beyond the scope of the compartment.
 
 These ops are related to multi-threading.
 
-    lock threadsv
+    lock
 
 =item :default
 
 A handy tag name for a I<reasonable> default set of ops.  (The current ops
 allowed are unstable while development continues. It will change.)
 
-    :base_core :base_mem :base_loop :base_io :base_orig :base_thread
+    :base_core :base_mem :base_loop :base_orig :base_thread
+
+This list used to contain :base_io prior to Opcode 1.07.
 
 If safety matters to you (and why else would you be using the Opcode module?)
 then you should not rely on the definition of this, or indeed any other, optag!
-
 
 =item :filesys_read
 
@@ -528,6 +536,14 @@ SystemV Interprocess Communications:
 
     shmctl shmget shmread shmwrite
 
+=item :load
+
+This tag holds opcodes related to loading modules and getting information
+about calling environment and args.
+
+    require dofile 
+    caller
+
 =item :still_to_be_decided
 
     chdir
@@ -542,9 +558,6 @@ SystemV Interprocess Communications:
     pack unpack -- can be used to create/use memory pointers
 
     entereval -- can be used to hide code from initial compile
-    require dofile 
-
-    caller -- get info about calling environment and args
 
     reset
 
@@ -557,14 +570,13 @@ a tag name but need to be tagged for completeness and documentation.
 
     syscall dump chroot
 
-
 =back
 
 =head1 SEE ALSO
 
-ops(3) -- perl pragma interface to Opcode module.
+L<ops> -- perl pragma interface to Opcode module.
 
-Safe(3) -- Opcode and namespace limited execution compartments
+L<Safe> -- Opcode and namespace limited execution compartments
 
 =head1 AUTHORS
 

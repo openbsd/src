@@ -16,7 +16,7 @@ ignores lines beginning with '#'.
 If you know that Perl is basically working but expect that some tests
 will fail, you may want to use Test::Harness thusly:
         cd t
-	./perl -I../lib harness
+        ./perl harness
 This method pinpoints failed tests automatically.
 
 If you come up with new tests, please send them to perlbug@perl.org.

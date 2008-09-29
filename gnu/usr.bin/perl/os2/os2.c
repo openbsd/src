@@ -490,7 +490,7 @@ os2_cond_wait(perl_cond *c, perl_mutex *m)
     int rc;
     STRLEN n_a;
     if ((rc = DosResetEventSem(*c,&n_a)) && (rc != ERROR_ALREADY_RESET))
-	Perl_rc = rc, croak_with_os2error("panic: COND_WAIT-reset");
+	Perl_rc = CheckOSError(rc), croak_with_os2error("panic: COND_WAIT-reset");
     if (m) MUTEX_UNLOCK(m);					
     if (CheckOSError(DosWaitEventSem(*c,SEM_INDEFINITE_WAIT))
 	&& (rc != ERROR_INTERRUPT))
@@ -1469,42 +1469,47 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     return rc;
 }
 
+#define ASPAWN_WAIT	0
+#define ASPAWN_EXEC	1
+#define ASPAWN_NOWAIT	2
+
 /* Array spawn/exec.  */
 int
-os2_aspawn4(pTHX_ SV *really, register SV **vmark, register SV **vsp, int execing)
+os2_aspawn_4(pTHX_ SV *really, register SV **args, I32 cnt, int execing)
 {
-    register SV **mark = (SV **)vmark;
-    register SV **sp = (SV **)vsp;
+    register SV **argp = (SV **)args;
+    register SV **last = argp + cnt;
     register char **a;
     int rc;
     int flag = P_WAIT, flag_set = 0;
     STRLEN n_a;
 
-    if (sp > mark) {
-	Newx(PL_Argv, sp - mark + 3, char*);
+    if (cnt) {
+	Newx(PL_Argv, cnt + 3, char*); /* 3 extra to expand #! */
 	a = PL_Argv;
 
-	if (mark < sp && SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
-		++mark;
-		flag = SvIVx(*mark);
-		flag_set = 1;
+	if (cnt > 1 && SvNIOKp(*argp) && !SvPOKp(*argp)) {
+	    flag = SvIVx(*argp);
+	    flag_set = 1;
+	} else
+	    --argp;
 
-	}
-
-	while (++mark <= sp) {
-	    if (*mark)
-		*a++ = SvPVx(*mark, n_a);
+	while (++argp < last) {
+	    if (*argp)
+		*a++ = SvPVx(*argp, n_a);
 	    else
 		*a++ = "";
 	}
 	*a = Nullch;
 
 	if ( flag_set && (a == PL_Argv + 1)
-	     && !really && !execing ) { 		/* One arg? */
+	     && !really && execing == ASPAWN_WAIT ) { 		/* One arg? */
 	    rc = do_spawn3(aTHX_ a[-1], EXECF_SPAWN_BYFLAG, flag);
-	} else
-	    rc = do_spawn_ve(aTHX_ really, flag,
-			     (execing ? EXECF_EXEC : EXECF_SPAWN), NULL, 0);
+	} else {
+	    const int execf[3] = {EXECF_SPAWN, EXECF_EXEC, EXECF_SPAWN_NOWAIT};
+	    
+	    rc = do_spawn_ve(aTHX_ really, flag, execf[execing], NULL, 0);
+	}
     } else
     	rc = -1;
     do_execfree();
@@ -1515,14 +1520,14 @@ os2_aspawn4(pTHX_ SV *really, register SV **vmark, register SV **vsp, int execin
 int
 os2_do_aspawn(pTHX_ SV *really, register SV **vmark, register SV **vsp)
 {
-    return os2_aspawn4(aTHX_ really, vmark, vsp, 0);
+    return os2_aspawn_4(aTHX_ really, vmark + 1, vsp - vmark, ASPAWN_WAIT);
 }
 
 /* Array exec.  */
 bool
 Perl_do_aexec(pTHX_ SV* really, SV** vmark, SV** vsp)
 {
-    return os2_aspawn4(aTHX_ really, vmark, vsp, 1);
+    return os2_aspawn_4(aTHX_ really, vmark + 1, vsp - vmark, ASPAWN_EXEC);
 }
 
 int
@@ -1538,7 +1543,7 @@ do_spawn_nowait(pTHX_ char *cmd)
 }
 
 bool
-Perl_do_exec(pTHX_ char *cmd)
+Perl_do_exec(pTHX_ const char *cmd)
 {
     do_spawn3(aTHX_ cmd, EXECF_EXEC, 0);
     return FALSE;
@@ -1551,7 +1556,7 @@ os2exec(pTHX_ char *cmd)
 }
 
 PerlIO *
-my_syspopen(pTHX_ char *cmd, char *mode)
+my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
 {
 #ifndef USE_POPEN
     int p[2];
@@ -1599,7 +1604,10 @@ my_syspopen(pTHX_ char *cmd, char *mode)
     fcntl(p[this], F_SETFD, FD_CLOEXEC);
     if (newfd != -1)
 	fcntl(newfd, F_SETFD, FD_CLOEXEC);
-    pid = do_spawn_nowait(aTHX_ cmd);
+    if (cnt) {	/* Args: "Real cmd", before first arg, the last, execing */
+	pid = os2_aspawn_4(aTHX_ Nullsv, args, cnt, ASPAWN_NOWAIT);
+    } else
+	pid = do_spawn_nowait(aTHX_ cmd);
     if (newfd == -1)
 	close(*mode == 'r');		/* It was closed initially */
     else if (newfd != (*mode == 'r')) {	/* Probably this check is not needed */
@@ -1630,6 +1638,9 @@ my_syspopen(pTHX_ char *cmd, char *mode)
     PerlIO *res;
     SV *sv;
 
+    if (cnt)
+	Perl_croak(aTHX_ "List form of piped open not implemented");
+
 #  ifdef TRYSHELL
     res = popen(cmd, mode);
 #  else
@@ -1646,6 +1657,12 @@ my_syspopen(pTHX_ char *cmd, char *mode)
 
 #endif /* USE_POPEN */
 
+}
+
+PerlIO *
+my_syspopen(pTHX_ char *cmd, char *mode)
+{
+    return my_syspopen4(aTHX_ cmd, mode, 0, NULL);
 }
 
 /******************************************************************/
@@ -1868,7 +1885,7 @@ XS(XS_OS2_replaceModule)
 	if (!replaceModule(target, source, backup))
 	    croak_with_os2error("replaceModule() error");
     }
-    XSRETURN_EMPTY;
+    XSRETURN_YES;
 }
 
 /* APIRET APIENTRY DosPerfSysCall(ULONG ulCommand, ULONG ulParm1,
@@ -1955,6 +1972,7 @@ XS(XS_OS2_perfSysCall)
 	RETVAL = perfSysCall(ulCommand, ulParm1, ulParm2, ulParm3);
 	if (!RETVAL)
 	    croak_with_os2error("perfSysCall() error");
+	XSprePUSH;
 	if (total) {
 	    int i,j;
 
@@ -1962,6 +1980,7 @@ XS(XS_OS2_perfSysCall)
 		PUSHn(u[0][0]);		/* Total ticks on the first processor */
 		XSRETURN(1);
 	    }
+	    EXTEND(SP, 4*total);
 	    for (i=0; i < total; i++)
 		for (j=0; j < 4; j++)
 		    PUSHs(sv_2mortal(newSVnv(u[i][j])));
@@ -2086,6 +2105,21 @@ os2error(int rc)
 		break;
 	    case PMERR_NOT_IN_A_PM_SESSION:
 		name = "PMERR_NOT_IN_A_PM_SESSION";
+		break;
+	    case PMERR_INVALID_ATOM:
+		name = "PMERR_INVALID_ATOM";
+		break;
+	    case PMERR_INVALID_HATOMTBL:
+		name = "PMERR_INVALID_HATOMTMB";
+		break;
+	    case PMERR_INVALID_INTEGER_ATOM:
+		name = "PMERR_INVALID_INTEGER_ATOM";
+		break;
+	    case PMERR_INVALID_ATOM_NAME:
+		name = "PMERR_INVALID_ATOM_NAME";
+		break;
+	    case PMERR_ATOM_NAME_NOT_FOUND:
+		name = "PMERR_ATOM_NAME_NOT_FOUND";
 		break;
 	    }
 	    sprintf(s, "%s%s[No description found in OSO001.MSG]", 
@@ -2699,7 +2733,7 @@ XS(XS_OS2_ms_sleep)		/* for testing only... */
     ms = SvUV(ST(0));
     lim = items > 1 ? SvUV(ST(1)) : ms + 1;
     async_mssleep(ms, lim);
-    XSRETURN_EMPTY;
+    XSRETURN_YES;
 }
 
 ULONG (*pDosTmrQueryFreq) (PULONG);
@@ -2866,20 +2900,35 @@ XS(XS_OS2_DevCap)
 					  - CAPS_FAMILY + 1,
 					si)))
 	    rc1 = Perl_rc;
+	else {
+	    EXTEND(SP,2*(CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1));
+	    while (i < CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1) {
+		ST(j) = sv_newmortal();
+		sv_setpv(ST(j++), dc_fields[i]);
+		ST(j) = sv_newmortal();
+		sv_setiv(ST(j++), si[i]);
+		i++;
+	    }
+	    i = CAPS_DEVICE_POLYSET_POINTS + 1;
+	    while (i < CAPS_DEVICE_POLYSET_POINTS + 11) { /* Just in case... */
+		LONG l;
+
+		if (CheckWinError(pDevQueryCaps(hScreenDC, i, 1, &l)))
+		    break;
+		EXTEND(SP, j + 2);
+		ST(j) = sv_newmortal();
+		sv_setiv(ST(j++), i);
+		ST(j) = sv_newmortal();
+		sv_setiv(ST(j++), l);
+		i++;
+	    }	    
+	}
 	if (!items && CheckWinError(pDevCloseDC(hScreenDC)))
 	    Perl_warn_nocontext("DevCloseDC() failed: %s", os2error(Perl_rc));
 	if (rc1)
 	    Perl_rc = rc1, croak_with_os2error("DevQueryCaps() failed");
-	EXTEND(SP,2*(CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1));
-	while (i < CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1) {
-	    ST(j) = sv_newmortal();
-	    sv_setpv(ST(j++), dc_fields[i]);
-	    ST(j) = sv_newmortal();
-	    sv_setiv(ST(j++), si[i]);
-	    i++;
-	}
+	XSRETURN(j);
     }
-    XSRETURN(2 * (CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1));
 }
 
 LONG (*pWinQuerySysValue) (HWND hwndDesktop, LONG iSysValue);
@@ -3077,7 +3126,7 @@ XS(XS_OS2_SysValues_set)
 	if (CheckWinError(pWinSetSysValue(hwnd, which, val)))
 	    croak_with_os2error("SysValues_set()");
     }
-    XSRETURN_EMPTY;
+    XSRETURN_YES;
 }
 
 #define QSV_MAX_WARP3				QSV_MAX_COMP_LENGTH
@@ -3132,7 +3181,7 @@ XS(XS_OS2_SysInfo)
 					 (PVOID)si,
 					 sizeof(si))))
 	    croak_with_os2error("DosQuerySysInfo() failed");
-	while (last++ <= C_ARRAY_LENGTH(si)) {
+	while (++last <= C_ARRAY_LENGTH(si)) {
 	    if (CheckOSError(DosQuerySysInfo(last, last, /* One entry only */
 					     (PVOID)(si+last-1),
 					     sizeof(*si)))) {
@@ -3141,13 +3190,16 @@ XS(XS_OS2_SysInfo)
 		break;
 	    }
 	}
-	last--;
+	last--;			/* Count of successfully processed offsets */
 	EXTEND(SP,2*last);
 	while (i < last) {
 	    ST(j) = sv_newmortal();
-	    sv_setpv(ST(j++), si_fields[i]);
+	    if (i < C_ARRAY_LENGTH(si_fields))
+		sv_setpv(ST(j++),  si_fields[i]);
+	    else
+		sv_setiv(ST(j++),  i + 1);
 	    ST(j) = sv_newmortal();
-	    sv_setiv(ST(j++), si[i]);
+	    sv_setuv(ST(j++), si[i]);
 	    i++;
 	}
 	XSRETURN(2 * last);
@@ -3219,7 +3271,7 @@ XS(XS_OS2_Beep)
 	if (CheckOSError(DosBeep(freq, ms)))
 	    croak_with_os2error("SysValues_set()");
     }
-    XSRETURN_EMPTY;
+    XSRETURN_YES;
 }
 
 
@@ -3919,7 +3971,7 @@ XS(XS_OS2_mytype_set)
     else
 	Perl_croak(aTHX_ "Usage: OS2::mytype_set(type)");
     my_type_set(type);
-    XSRETURN_EMPTY;
+    XSRETURN_YES;
 }
 
 
@@ -3990,6 +4042,459 @@ XS(XS_OS2_incrMaxFHandles)		/* DosSetRelMaxFH */
     XSRETURN(1);
 }
 
+/* wait>0: force wait, wait<0: force nowait;
+   if restore, save/restore flags; otherwise flags are in oflags.
+
+   Returns 1 if connected, 0 if not (due to nowait); croaks on error. */
+static ULONG
+connectNPipe(ULONG hpipe, int wait, ULONG restore, ULONG oflags)
+{
+    ULONG ret = ERROR_INTERRUPT, rc, flags;
+
+    if (restore && wait)
+	os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
+    /* DosSetNPHState fails if more bits than NP_NOWAIT|NP_READMODE_MESSAGE */
+    oflags &= (NP_NOWAIT | NP_READMODE_MESSAGE);
+    flags = (oflags & ~NP_NOWAIT) | (wait > 0 ? NP_WAIT : NP_NOWAIT);
+    /* We know (o)flags unless wait == 0 && restore */
+    if (wait && (flags != oflags))
+	os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
+    while (ret == ERROR_INTERRUPT)
+	ret = DosConnectNPipe(hpipe);
+    (void)CheckOSError(ret);
+    if (restore && wait && (flags != oflags))
+	os2cp_croak(DosSetNPHState(hpipe, oflags), "DosSetNPHState() back");
+    /* We know flags unless wait == 0 && restore */
+    if ( ((wait || restore) ? (flags & NP_NOWAIT) : 1)
+	 && (ret == ERROR_PIPE_NOT_CONNECTED) )
+	return 0;			/* normal return value */
+    if (ret == NO_ERROR)
+	return 1;
+    croak_with_os2error("DosConnectNPipe()");
+}
+
+/* With a lot of manual editing:
+NO_OUTPUT ULONG
+DosCreateNPipe(PCSZ pszName, OUTLIST HPIPE hpipe, ULONG ulOpenMode, int connect = 1, int count = 1, ULONG ulInbufLength = 8192, ULONG ulOutbufLength = ulInbufLength, ULONG ulPipeMode = count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ULONG ulTimeout = 0)
+   PREINIT:
+	ULONG rc;
+   C_ARGS:
+	pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout
+   POSTCALL:
+	if (CheckOSError(RETVAL))
+	    croak_with_os2error("OS2::mkpipe() error");
+*/
+XS(XS_OS2_pipe); /* prototype to pass -Wmissing-prototypes */
+XS(XS_OS2_pipe)
+{
+    dXSARGS;
+    if (items < 2 || items > 8)
+	Perl_croak(aTHX_ "Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
+    {
+	ULONG	RETVAL;
+	PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV(ST(0),PL_na) : NULL );
+	HPIPE	hpipe;
+	SV	*OpenMode = ST(1);
+	ULONG	ulOpenMode;
+	int	connect = 0, count, message_r = 0, message = 0, b = 0;
+	ULONG	ulInbufLength,	ulOutbufLength,	ulPipeMode, ulTimeout, rc;
+	STRLEN	len;
+	char	*s, buf[10], *s1, *perltype = Nullch;
+	PerlIO	*perlio;
+	double	timeout;
+
+	if (!pszName || !*pszName)
+	    Perl_croak(aTHX_ "OS2::pipe(): empty pipe name");
+	s = SvPV(OpenMode, len);
+	if (len == 4 && strEQ(s, "wait")) {	/* DosWaitNPipe() */
+	    ULONG ms = 0xFFFFFFFF, ret = ERROR_INTERRUPT; /* Indefinite */
+
+	    if (items == 3) {
+		timeout = (double)SvNV(ST(2));
+		ms = timeout * 1000;
+		if (timeout < 0)
+		    ms = 0xFFFFFFFF; /* Indefinite */
+		else if (timeout && !ms)
+		    ms = 1;
+	    } else if (items > 3)
+		Perl_croak(aTHX_ "OS2::pipe(): too many arguments for wait-for-connect: %ld", (long)items);
+
+	    while (ret == ERROR_INTERRUPT)
+		ret = DosWaitNPipe(pszName, ms);	/* XXXX Update ms? */
+	    os2cp_croak(ret, "DosWaitNPipe()");
+	    XSRETURN_YES;
+	}
+	if (len == 4 && strEQ(s, "call")) {	/* DosCallNPipe() */
+	    ULONG ms = 0xFFFFFFFF, got; /* Indefinite */
+	    STRLEN l;
+	    char *s;
+	    char buf[8192];
+	    STRLEN ll = sizeof(buf);
+	    char *b = buf;
+
+	    if (items < 3 || items > 5)
+		Perl_croak(aTHX_ "usage: OS2::pipe(pszName, 'call', write [, timeout= 0xFFFFFFFF, buffsize = 8192])");
+	    s = SvPV(ST(2), l);
+	    if (items >= 4) {
+		timeout = (double)SvNV(ST(3));
+		ms = timeout * 1000;
+		if (timeout < 0)
+		    ms = 0xFFFFFFFF; /* Indefinite */
+		else if (timeout && !ms)
+		    ms = 1;
+	    }
+	    if (items >= 5) {
+		STRLEN lll = SvUV(ST(4));
+		SV *sv = NEWSV(914, lll);
+
+		sv_2mortal(sv);
+		ll = lll;
+		b = SvPVX(sv);
+	    }	    
+
+	    os2cp_croak(DosCallNPipe(pszName, s, l, b, ll, &got, ms),
+			"DosCallNPipe()");
+	    XSRETURN_PVN(b, got);
+	}
+	s1 = buf;
+	if (len && len <= 3 && !(*s >= '0' && *s <= '9')) {
+	    int r, w, R, W;
+
+	    r = strchr(s, 'r') != 0;
+	    w = strchr(s, 'w') != 0;
+	    R = strchr(s, 'R') != 0;
+	    W = strchr(s, 'W') != 0;
+	    b = strchr(s, 'b') != 0;
+	    if (r + w + R + W + b != len || (r && R) || (w && W))
+		Perl_croak(aTHX_ "OS2::pipe(): unknown OpenMode argument: `%s'", s);
+	    if ((r || R) && (w || W))
+		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_DUPLEX;
+	    else if (r || R)
+		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_INBOUND;
+	    else
+		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_OUTBOUND;
+	    if (R)
+		message = message_r = 1;
+	    if (W)
+		message = 1;
+	    else if (w && R)
+		Perl_croak(aTHX_ "OS2::pipe(): can't have message read mode for non-message pipes");
+	} else
+	    ulOpenMode = (ULONG)SvUV(OpenMode);	/* ST(1) */
+
+	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX
+	     || (ulOpenMode & 0x3) == NP_ACCESS_INBOUND )
+	    *s1++ = 'r';
+	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
+	    *s1++ = '+';
+	if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
+	    *s1++ = 'w';
+	if (b)
+	    *s1++ = 'b';
+	*s1 = 0;
+	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
+	    perltype = "+<&";
+	else if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
+	    perltype = ">&";
+	else
+	    perltype = "<&";
+
+	if (items < 3)
+	    connect = -1;			/* no wait */
+	else if (SvTRUE(ST(2))) {
+	    s = SvPV(ST(2), len);
+	    if (len == 6 && strEQ(s, "nowait"))
+		connect = -1;			/* no wait */
+	    else if (len == 4 && strEQ(s, "wait"))
+		connect = 1;			/* wait */
+	    else
+		Perl_croak(aTHX_ "OS2::pipe(): unknown connect argument: `%s'", s);
+	}
+
+	if (items < 4)
+	    count = 1;
+	else
+	    count = (int)SvIV(ST(3));
+
+	if (items < 5)
+	    ulInbufLength = 8192;
+	else
+	    ulInbufLength = (ULONG)SvUV(ST(4));
+
+	if (items < 6)
+	    ulOutbufLength = ulInbufLength;
+	else
+	    ulOutbufLength = (ULONG)SvUV(ST(5));
+
+	if (count < -1 || count == 0 || count >= 255)
+	    Perl_croak(aTHX_ "OS2::pipe(): count should be -1 or between 1 and 254: %ld", (long)count);
+	if (count < 0 )
+	    count = 255;		/* Unlimited */
+
+	ulPipeMode = count;
+	if (items < 7)
+	    ulPipeMode |= (NP_WAIT 
+			   | (message ? NP_TYPE_MESSAGE : NP_TYPE_BYTE)
+			   | (message_r ? NP_READMODE_MESSAGE : NP_READMODE_BYTE));
+	else
+	    ulPipeMode |= (ULONG)SvUV(ST(6));
+
+	if (items < 8)
+	    timeout = 0;
+	else
+	    timeout = (double)SvNV(ST(7));
+	ulTimeout = timeout * 1000;
+	if (timeout < 0)
+	    ulTimeout = 0xFFFFFFFF; /* Indefinite */
+	else if (timeout && !ulTimeout)
+	    ulTimeout = 1;
+
+	RETVAL = DosCreateNPipe(pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout);
+	if (CheckOSError(RETVAL))
+	    croak_with_os2error("OS2::pipe(): DosCreateNPipe() error");
+
+	if (connect)
+	    connectNPipe(hpipe, connect, 1, 0);	/* XXXX wait, retval */
+	hpipe = __imphandle(hpipe);
+
+	perlio = PerlIO_fdopen(hpipe, buf);
+	ST(0) = sv_newmortal();
+	{
+	    GV *gv = newGVgen("OS2::pipe");
+	    if ( do_open(gv, perltype, strlen(perltype), FALSE, 0, 0, perlio) )
+		sv_setsv(ST(0), sv_bless(newRV((SV*)gv), gv_stashpv("IO::Handle",1)));
+	    else
+		ST(0) = &PL_sv_undef;
+	}
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_pipeCntl); /* prototype to pass -Wmissing-prototypes */
+XS(XS_OS2_pipeCntl)
+{
+    dXSARGS;
+    if (items < 2 || items > 3)
+	Perl_croak(aTHX_ "Usage: OS2::pipeCntl(pipe, op [, wait])");
+    {
+	ULONG	rc;
+	PerlIO *perlio = IoIFP(sv_2io(ST(0)));
+	IV	fn = PerlIO_fileno(perlio);
+	HPIPE	hpipe = (HPIPE)fn;
+	STRLEN	len;
+	char	*s = SvPV(ST(1), len);
+	int	wait = 0, disconnect = 0, connect = 0, message = -1, query = 0;
+	int	peek = 0, state = 0, info = 0;
+
+	if (fn < 0)
+	    Perl_croak(aTHX_ "OS2::pipeCntl(): not a pipe");	
+	if (items == 3)
+	    wait = (SvTRUE(ST(2)) ? 1 : -1);
+
+	switch (len) {
+	case 4:
+	    if (strEQ(s, "byte"))
+		message = 0;
+	    else if (strEQ(s, "peek"))
+		peek = 1;
+	    else if (strEQ(s, "info"))
+		info = 1;
+	    else
+		goto unknown;
+	    break;
+	case 5:
+	    if (strEQ(s, "reset"))
+		disconnect = connect = 1;
+	    else if (strEQ(s, "state"))
+		query = 1;
+	    else
+		goto unknown;
+	    break;
+	case 7:
+	    if (strEQ(s, "connect"))
+		connect = 1;
+	    else if (strEQ(s, "message"))
+		message = 1;
+	    else
+		goto unknown;
+	    break;
+	case 9:
+	    if (!strEQ(s, "readstate"))
+		goto unknown;
+	    state = 1;
+	    break;
+	case 10:
+	    if (!strEQ(s, "disconnect"))
+		goto unknown;
+	    disconnect = 1;
+	    break;
+	default:
+	  unknown:
+	    Perl_croak(aTHX_ "OS2::pipeCntl(): unknown argument: `%s'", s);
+	    break;
+	}
+
+	if (items == 3 && !connect)
+	    Perl_croak(aTHX_ "OS2::pipeCntl(): no wait argument for `%s'", s);
+
+	XSprePUSH;		/* Do not need arguments any more */
+	if (disconnect) {
+	    os2cp_croak(DosDisConnectNPipe(hpipe), "OS2::pipeCntl(): DosDisConnectNPipe()");
+	    PerlIO_clearerr(perlio);
+	}
+	if (connect) {
+	    if (!connectNPipe(hpipe, wait , 1, 0))
+		XSRETURN_IV(-1);
+	}
+	if (query) {
+	    ULONG flags;
+
+	    os2cp_croak(DosQueryNPHState(hpipe, &flags), "DosQueryNPHState()");
+	    XSRETURN_UV(flags);
+	}
+	if (peek || state || info) {
+	    ULONG BytesRead, PipeState;
+	    AVAILDATA BytesAvail;
+
+	    os2cp_croak( DosPeekNPipe(hpipe, NULL, 0, &BytesRead, &BytesAvail,
+				      &PipeState), "DosPeekNPipe() for state");
+	    if (state) {
+		EXTEND(SP, 3);
+		PUSHs(newSVuv(PipeState));
+		/*   Bytes (available/in-message) */
+		PUSHs(newSViv(BytesAvail.cbpipe));
+		PUSHs(newSViv(BytesAvail.cbmessage));
+		XSRETURN(3);
+	    } else if (info) {
+		/* L S S C C C/Z*
+		   ID of the (remote) computer
+		   buffers (out/in)
+		   instances (max/actual)
+		 */
+		struct pipe_info_t {
+		    ULONG id;			/* char id[4]; */
+		    PIPEINFO pInfo;
+		    char buf[512];
+		} b;
+		int size;
+
+		os2cp_croak( DosQueryNPipeInfo(hpipe, 1, &b.pInfo, sizeof(b) - STRUCT_OFFSET(struct pipe_info_t, pInfo)),
+			     "DosQueryNPipeInfo(1)");
+		os2cp_croak( DosQueryNPipeInfo(hpipe, 2, &b.id, sizeof(b.id)),
+			     "DosQueryNPipeInfo(2)");
+		size = b.pInfo.cbName;
+		/* Trailing 0 is included in cbName - undocumented; so
+		   one should always extract with Z* */
+		if (size)		/* name length 254 or less */
+		    size--;
+		else
+		    size = strlen(b.pInfo.szName);
+		EXTEND(SP, 6);
+		PUSHs(newSVpvn(b.pInfo.szName, size));
+		PUSHs(newSVuv(b.id));
+		PUSHs(newSViv(b.pInfo.cbOut));
+		PUSHs(newSViv(b.pInfo.cbIn));
+		PUSHs(newSViv(b.pInfo.cbMaxInst));
+		PUSHs(newSViv(b.pInfo.cbCurInst));
+		XSRETURN(6);
+	    } else if (BytesAvail.cbpipe == 0) {
+		XSRETURN_NO;
+	    } else {
+		SV *tmp = NEWSV(914, BytesAvail.cbpipe);
+		char *s = SvPVX(tmp);
+
+		sv_2mortal(tmp);
+		os2cp_croak( DosPeekNPipe(hpipe, s, BytesAvail.cbpipe, &BytesRead,
+					  &BytesAvail, &PipeState), "DosPeekNPipe()");
+		SvCUR_set(tmp, BytesRead);
+		*SvEND(tmp) = 0;
+		SvPOK_on(tmp);
+		XSprePUSH; PUSHs(tmp);
+		XSRETURN(1);
+	    }
+	}
+	if (message > -1) {
+	    ULONG oflags, flags;
+
+	    os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
+	    /* DosSetNPHState fails if more bits than NP_NOWAIT|NP_READMODE_MESSAGE */
+	    oflags &= (NP_NOWAIT | NP_READMODE_MESSAGE);
+	    flags = (oflags & NP_NOWAIT)
+		| (message ? NP_READMODE_MESSAGE : NP_READMODE_BYTE);
+	    if (flags != oflags)
+		os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
+	}
+    }
+    XSRETURN_YES;
+}
+
+/*
+NO_OUTPUT ULONG
+DosOpen(PCSZ pszFileName, OUTLIST HFILE hFile, OUTLIST ULONG ulAction, ULONG ulOpenFlags, ULONG ulOpenMode = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ULONG ulAttribute = FILE_NORMAL, ULONG ulFileSize = 0, PEAOP2 pEABuf = NULL);
+   PREINIT:
+	ULONG rc;
+   C_ARGS:
+	pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf
+   POSTCALL:
+	if (CheckOSError(RETVAL))
+	    croak_with_os2error("OS2::open() error");
+*/
+XS(XS_OS2_open); /* prototype to pass -Wmissing-prototypes */
+XS(XS_OS2_open)
+{
+    dXSARGS;
+    if (items < 2 || items > 6)
+	Perl_croak(aTHX_ "Usage: OS2::open(pszFileName, ulOpenMode, ulOpenFlags= OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ulAttribute= FILE_NORMAL, ulFileSize= 0, pEABuf= NULL)");
+    {
+#line 39 "pipe.xs"
+	ULONG rc;
+#line 113 "pipe.c"
+	ULONG	RETVAL;
+	PCSZ	pszFileName = ( SvOK(ST(0)) ? (PCSZ)SvPV(ST(0),PL_na) : NULL );
+	HFILE	hFile;
+	ULONG	ulAction;
+	ULONG	ulOpenMode = (ULONG)SvUV(ST(1));
+	ULONG	ulOpenFlags;
+	ULONG	ulAttribute;
+	ULONG	ulFileSize;
+	PEAOP2	pEABuf;
+
+	if (items < 3)
+	    ulOpenFlags = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+	else {
+	    ulOpenFlags = (ULONG)SvUV(ST(2));
+	}
+
+	if (items < 4)
+	    ulAttribute = FILE_NORMAL;
+	else {
+	    ulAttribute = (ULONG)SvUV(ST(3));
+	}
+
+	if (items < 5)
+	    ulFileSize = 0;
+	else {
+	    ulFileSize = (ULONG)SvUV(ST(4));
+	}
+
+	if (items < 6)
+	    pEABuf = NULL;
+	else {
+	    pEABuf = (PEAOP2)SvUV(ST(5));
+	}
+
+	RETVAL = DosOpen(pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf);
+	if (CheckOSError(RETVAL))
+	    croak_with_os2error("OS2::open() error");
+	XSprePUSH;	EXTEND(SP,2);
+	PUSHs(sv_newmortal());
+	sv_setuv(ST(0), (UV)hFile);
+	PUSHs(sv_newmortal());
+	sv_setuv(ST(1), (UV)ulAction);
+    }
+    XSRETURN(2);
+}
+
 int
 Xs_OS2_init(pTHX)
 {
@@ -4041,6 +4546,9 @@ Xs_OS2_init(pTHX)
         newXSproto("OS2::SysValues", XS_OS2_SysValues, file, ";$$");
         newXSproto("OS2::SysValues_set", XS_OS2_SysValues_set, file, "$$;$");
         newXSproto("OS2::Beep", XS_OS2_Beep, file, ";$$");
+        newXSproto("OS2::pipe", XS_OS2_pipe, file, "$$;$$$$$$");
+        newXSproto("OS2::pipeCntl", XS_OS2_pipeCntl, file, "$$;$");
+        newXSproto("OS2::open", XS_OS2_open, file, "$$;$$$$");
 	gv = gv_fetchpv("OS2::is_aout", TRUE, SVt_PV);
 	GvMULTI_on(gv);
 #ifdef PERL_IS_AOUT

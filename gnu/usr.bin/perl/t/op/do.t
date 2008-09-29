@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: do.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:45 $
-
 sub foo1
 {
     ok($_[0]);
@@ -64,21 +62,21 @@ if (open(DO, ">$$.16")) {
     close DO or die "Could not close: $!";
 }
 
-my $a = do "$$.16";
+my $a = do "$$.16"; die $@ if $@;
 
 if (open(DO, ">$$.17")) {
     print DO "ok(1, 'do in list context') if defined wantarray &&     wantarray\n";
     close DO or die "Could not close: $!";
 }
 
-my @a = do "$$.17";
+my @a = do "$$.17"; die $@ if $@;
 
 if (open(DO, ">$$.18")) {
     print DO "ok(1, 'do in void context') if not defined wantarray\n";
     close DO or die "Could not close: $!";
 }
 
-do "$$.18";
+do "$$.18"; die $@ if $@;
 
 # bug ID 20010920.007
 eval qq{ do qq(a file that does not exist); };

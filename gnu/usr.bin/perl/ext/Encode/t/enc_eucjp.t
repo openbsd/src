@@ -1,4 +1,4 @@
-# $Id: enc_eucjp.t,v 1.4 2004/08/09 18:09:10 millert Exp $
+# $Id: enc_eucjp.t,v 1.5 2008/09/29 17:36:04 millert Exp $
 # This is the twin of enc_utf8.t .
 
 BEGIN {
@@ -8,16 +8,16 @@ BEGIN {
       exit 0;
     }
     unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: PerlIO was not built\n";
-	exit 0;
+    print "1..0 # Skip: PerlIO was not built\n";
+    exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # encoding pragma does not support EBCDIC platforms\n";
-	exit(0);
+    print "1..0 # encoding pragma does not support EBCDIC platforms\n";
+    exit(0);
     }
     if ($] <= 5.008 and !$Config{perl_patchlevel}){
-	print "1..0 # Skip: Perl 5.8.1 or later required\n";
-	exit 0;
+    print "1..0 # Skip: Perl 5.8.1 or later required\n";
+    exit 0;
     }
 }
 
@@ -62,9 +62,9 @@ close F;
 open(F, $f) or die "$0: failed to open '$f' for reading: $!";
 binmode(F, ":encoding(utf-8)");
 {
-	local $^W = 1;
-	local $SIG{__WARN__} = sub { $a = shift };
-	eval { <F> }; # This should get caught.
+    local $^W = 1;
+    local $SIG{__WARN__} = sub { $a = shift };
+    eval { <F> }; # This should get caught.
 }
 close F;
 print $a =~ qr{^utf8 "\\x80" does not map to Unicode} ?

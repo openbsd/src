@@ -1,11 +1,13 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+use strict;
+
 BEGIN {
     # Get function prototypes
     require 'regen_lib.pl';
 }
 
-$opcode_new = 'opcode.h-new';
-$opname_new = 'opnames.h-new';
+my $opcode_new = 'opcode.h-new';
+my $opname_new = 'opnames.h-new';
 open(OC, ">$opcode_new") || die "Can't create $opcode_new: $!\n";
 binmode OC;
 open(ON, ">$opname_new") || die "Can't create $opname_new: $!\n";
@@ -14,11 +16,15 @@ select OC;
 
 # Read data.
 
+my %seen;
+my (@ops, %desc, %check, %ckname, %flags, %args);
+
 while (<DATA>) {
     chop;
     next unless $_;
     next if /^#/;
-    ($key, $desc, $check, $flags, $args) = split(/\t+/, $_, 5);
+    my ($key, $desc, $check, $flags, $args) = split(/\t+/, $_, 5);
+    $args = '' unless defined $args;
 
     warn qq[Description "$desc" duplicates $seen{$desc}\n] if $seen{$desc};
     die qq[Opcode "$key" duplicates $seen{$key}\n] if $seen{$key};
@@ -33,16 +39,73 @@ while (<DATA>) {
     $args{$key} = $args;
 }
 
+# Set up aliases
+
+my %alias;
+
+# Format is "this function" => "does these op names"
+my @raw_alias = (
+		 Perl_do_kv => [qw( keys values )],
+		 Perl_unimplemented_op => [qw(padany mapstart custom)],
+		 # All the ops with a body of { return NORMAL; }
+		 Perl_pp_null => [qw(scalar regcmaybe lineseq scope)],
+
+		 Perl_pp_goto => ['dump'],
+		 Perl_pp_require => ['dofile'],
+		 Perl_pp_untie => ['dbmclose'],
+		 Perl_pp_sysread => [qw(read recv)],
+		 Perl_pp_sysseek => ['seek'],
+		 Perl_pp_ioctl => ['fcntl'],
+		 Perl_pp_ssockopt => ['gsockopt'],
+		 Perl_pp_getpeername => ['getsockname'],
+		 Perl_pp_stat => ['lstat'],
+		 Perl_pp_ftrowned => [qw(fteowned ftzero ftsock ftchr ftblk
+					 ftfile ftdir ftpipe ftsuid ftsgid
+ 					 ftsvtx)],
+		 Perl_pp_fttext => ['ftbinary'],
+		 Perl_pp_gmtime => ['localtime'],
+		 Perl_pp_semget => [qw(shmget msgget)],
+		 Perl_pp_semctl => [qw(shmctl msgctl)],
+		 Perl_pp_ghostent => [qw(ghbyname ghbyaddr)],
+		 Perl_pp_gnetent => [qw(gnbyname gnbyaddr)],
+		 Perl_pp_gprotoent => [qw(gpbyname gpbynumber)],
+		 Perl_pp_gservent => [qw(gsbyname gsbyport)],
+		 Perl_pp_gpwent => [qw(gpwnam gpwuid)],
+		 Perl_pp_ggrent => [qw(ggrnam ggrgid)],
+		 Perl_pp_ftis => [qw(ftsize ftmtime ftatime ftctime)],
+		 Perl_pp_chown => [qw(unlink chmod utime kill)],
+		 Perl_pp_link => ['symlink'],
+		 Perl_pp_ftrread => [qw(ftrwrite ftrexec fteread ftewrite
+ 					fteexec)],
+		 Perl_pp_shmwrite => [qw(shmread msgsnd msgrcv semop)],
+		 Perl_pp_send => ['syswrite'],
+		 Perl_pp_defined => [qw(dor dorassign)],
+                 Perl_pp_and => ['andassign'],
+		 Perl_pp_or => ['orassign'],
+		 Perl_pp_ucfirst => ['lcfirst'],
+		 Perl_pp_sle => [qw(slt sgt sge)],
+		 Perl_pp_print => ['say'],
+		 Perl_pp_index => ['rindex'],
+		 Perl_pp_oct => ['hex'],
+		 Perl_pp_shift => ['pop'],
+		 Perl_pp_sin => [qw(cos exp log sqrt)],
+		 Perl_pp_bit_or => ['bit_xor'],
+		 Perl_pp_rv2av => ['rv2hv'],
+		);
+
+while (my ($func, $names) = splice @raw_alias, 0, 2) {
+    $alias{$_} = $func for @$names;
+}
+
 # Emit defines.
 
-$i = 0;
 print <<"END";
 /* -*- buffer-read-only: t -*-
  *
  *    opcode.h
  *
- *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -52,10 +115,14 @@ print <<"END";
  *  will be lost!
  */
 
+#ifndef PERL_GLOBAL_STRUCT_INIT
+
 #define Perl_pp_i_preinc Perl_pp_preinc
 #define Perl_pp_i_predec Perl_pp_predec
 #define Perl_pp_i_postinc Perl_pp_postinc
 #define Perl_pp_i_postdec Perl_pp_postdec
+
+PERL_PPDEF(Perl_unimplemented_op)
 
 END
 
@@ -65,7 +132,7 @@ print ON <<"END";
  *    opnames.h
  *
  *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
- *    by Larry Wall and others
+ *    2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -79,6 +146,7 @@ print ON <<"END";
 typedef enum opcode {
 END
 
+my $i = 0;
 for (@ops) {
     print ON "\t", &tab(3,"OP_\U$_,"), "/* ", $i++, " */\n";
 }
@@ -91,9 +159,7 @@ print ON "#define OP_phoney_OUTPUT_ONLY -2\n\n";
 # Emit op names and descriptions.
 
 print <<END;
-
 START_EXTERN_C
-
 
 #define OP_NAME(o) ((o)->op_type == OP_CUSTOM ? custom_op_name(o) : \\
                     PL_op_name[(o)->op_type])
@@ -101,9 +167,9 @@ START_EXTERN_C
                     PL_op_desc[(o)->op_type])
 
 #ifndef DOINIT
-EXT char *PL_op_name[];
+EXTCONST char* const PL_op_name[];
 #else
-EXT char *PL_op_name[] = {
+EXTCONST char* const PL_op_name[] = {
 END
 
 for (@ops) {
@@ -118,9 +184,9 @@ END
 
 print <<END;
 #ifndef DOINIT
-EXT char *PL_op_desc[];
+EXTCONST char* const PL_op_desc[];
 #else
-EXT char *PL_op_desc[] = {
+EXTCONST char* const PL_op_desc[] = {
 END
 
 for (@ops) {
@@ -138,6 +204,7 @@ print <<END;
 
 END_EXTERN_C
 
+#endif /* !PERL_GLOBAL_STRUCT_INIT */
 END
 
 # Emit function declarations.
@@ -158,18 +225,34 @@ print <<END;
 
 START_EXTERN_C
 
-#ifndef DOINIT
-EXT OP * (CPERLscope(*PL_ppaddr)[])(pTHX);
+#ifdef PERL_GLOBAL_STRUCT_INIT
+#  define PERL_PPADDR_INITED
+static const Perl_ppaddr_t Gppaddr[]
 #else
-EXT OP * (CPERLscope(*PL_ppaddr)[])(pTHX) = {
+#  ifndef PERL_GLOBAL_STRUCT
+#    define PERL_PPADDR_INITED
+EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
+#  endif
+#endif /* PERL_GLOBAL_STRUCT */
+#if (defined(DOINIT) && !defined(PERL_GLOBAL_STRUCT)) || defined(PERL_GLOBAL_STRUCT_INIT)
+#  define PERL_PPADDR_INITED
+= {
 END
 
 for (@ops) {
-    print "\tMEMBER_TO_FPTR(Perl_pp_$_),\n" unless $_ eq "custom";
+    if (my $name = $alias{$_}) {
+	print "\tMEMBER_TO_FPTR($name),\t/* Perl_pp_$_ */\n";
+    }
+    else {
+	print "\tMEMBER_TO_FPTR(Perl_pp_$_),\n";
+    }
 }
 
 print <<END;
-};
+}
+#endif
+#ifdef PERL_PPADDR_INITED
+;
 #endif
 
 END
@@ -177,10 +260,18 @@ END
 # Emit check routines.
 
 print <<END;
-#ifndef DOINIT
-EXT OP * (CPERLscope(*PL_check)[]) (pTHX_ OP *op);
+#ifdef PERL_GLOBAL_STRUCT_INIT
+#  define PERL_CHECK_INITED
+static const Perl_check_t Gcheck[]
 #else
-EXT OP * (CPERLscope(*PL_check)[]) (pTHX_ OP *op) = {
+#  ifndef PERL_GLOBAL_STRUCT
+#    define PERL_CHECK_INITED
+EXT Perl_check_t PL_check[] /* or perlvars.h */
+#  endif
+#endif
+#if (defined(DOINIT) && !defined(PERL_GLOBAL_STRUCT)) || defined(PERL_GLOBAL_STRUCT_INIT)
+#  define PERL_CHECK_INITED
+= {
 END
 
 for (@ops) {
@@ -188,31 +279,36 @@ for (@ops) {
 }
 
 print <<END;
-};
+}
 #endif
+#ifdef PERL_CHECK_INITED
+;
+#endif /* #ifdef PERL_CHECK_INITED */
 
 END
 
 # Emit allowed argument types.
 
 print <<END;
+#ifndef PERL_GLOBAL_STRUCT_INIT
+
 #ifndef DOINIT
-EXT U32 PL_opargs[];
+EXTCONST U32 PL_opargs[];
 #else
-EXT U32 PL_opargs[] = {
+EXTCONST U32 PL_opargs[] = {
 END
 
-%argnum = (
-    S,	1,		# scalar
-    L,	2,		# list
-    A,	3,		# array value
-    H,	4,		# hash value
-    C,	5,		# code value
-    F,	6,		# file value
-    R,	7,		# scalar reference
+my %argnum = (
+    'S',  1,		# scalar
+    'L',  2,		# list
+    'A',  3,		# array value
+    'H',  4,		# hash value
+    'C',  5,		# code value
+    'F',  6,		# file value
+    'R',  7,		# scalar reference
 );
 
-%opclass = (
+my %opclass = (
     '0',  0,		# baseop
     '1',  1,		# unop
     '2',  2,		# binop
@@ -233,8 +329,8 @@ my %OP_IS_SOCKET;
 my %OP_IS_FILETEST;
 
 for (@ops) {
-    $argsum = 0;
-    $flags = $flags{$_};
+    my $argsum = 0;
+    my $flags = $flags{$_};
     $argsum |= 1 if $flags =~ /m/;		# needs stack mark
     $argsum |= 2 if $flags =~ /f/;		# fold constants
     $argsum |= 4 if $flags =~ /s/;		# always produces scalar
@@ -246,13 +342,13 @@ for (@ops) {
     $argsum |= 128 if $flags =~ /u/;		# defaults to $_
     $flags =~ /([\W\d_])/ or die qq[Opcode "$_" has no class indicator];
     $argsum |= $opclass{$1} << 9;
-    $mul = 0x2000;				# 2 ^ OASHIFT
-    for $arg (split(' ',$args{$_})) {
+    my $mul = 0x2000;				# 2 ^ OASHIFT
+    for my $arg (split(' ',$args{$_})) {
 	if ($arg =~ /^F/) {
            $OP_IS_SOCKET{$_}   = 1 if $arg =~ s/s//;
            $OP_IS_FILETEST{$_} = 1 if $arg =~ s/-//;
         }
-	$argnum = ($arg =~ s/\?//) ? 8 : 0;
+	my $argnum = ($arg =~ s/\?//) ? 8 : 0;
         die "op = $_, arg = $arg\n" unless length($arg) == 1;
 	$argnum += $argnum{$arg};
 	warn "# Conflicting bit 32 for '$_'.\n"
@@ -268,7 +364,10 @@ print <<END;
 };
 #endif
 
+#endif /* !PERL_GLOBAL_STRUCT_INIT */
+
 END_EXTERN_C
+
 END
 
 if (keys %OP_IS_SOCKET) {
@@ -297,8 +396,8 @@ foreach ('opcode.h', 'opnames.h') {
 safer_rename $opcode_new, 'opcode.h';
 safer_rename $opname_new, 'opnames.h';
 
-$pp_proto_new = 'pp_proto.h-new';
-$pp_sym_new  = 'pp.sym-new';
+my $pp_proto_new = 'pp_proto.h-new';
+my $pp_sym_new  = 'pp.sym-new';
 
 open PP, ">$pp_proto_new" or die "Error creating $pp_proto_new: $!";
 binmode PP;
@@ -359,7 +458,7 @@ END {
 
 ###########################################################################
 sub tab {
-    local($l, $t) = @_;
+    my ($l, $t) = @_;
     $t .= "\t" x ($l - (length($t) + 1) / 8);
     $t;
 }
@@ -423,7 +522,8 @@ sub tab {
 
 __END__
 
-# New ops always go at the end, just before 'custom'
+# New ops always go at the end
+# The restriction on having custom as the last op has been removed
 
 # A recapitulation of the format of this file:
 # The file consists of five columns: the name of the op, an English
@@ -494,10 +594,10 @@ bless		bless			ck_fun		s@	S S?
 
 # Pushy I/O.
 
-backtick	quoted execution (``, qx)	ck_open		t%	
+backtick	quoted execution (``, qx)	ck_open		tu%	S?
 # glob defaults its first arg to $_
 glob		glob			ck_glob		t@	S?
-readline	<HANDLE>		ck_null		t%	F?
+readline	<HANDLE>		ck_readline	t%	F?
 rcatline	append I/O operator	ck_null		t$
 
 # Bindable operators.
@@ -507,9 +607,9 @@ regcreset	regexp internal reset	ck_fun		s1	S
 regcomp		regexp compilation	ck_null		s|	S
 match		pattern match (m//)	ck_match	d/
 qr		pattern quote (qr//)	ck_match	s/
-subst		substitution (s///)	ck_null		dis/	S
+subst		substitution (s///)	ck_match	dis/	S
 substcont	substitution iterator	ck_null		dis|	
-trans		transliteration (tr///)	ck_null		is"	S
+trans		transliteration (tr///)	ck_match	is"	S
 
 # Lvalue operators.
 # sassign is special-cased for op class
@@ -589,6 +689,8 @@ i_negate	integer negation (-)	ck_null		ifsT1	S
 not		not			ck_null		ifs1	S
 complement	1's complement (~)	ck_bitop	fst1	S
 
+smartmatch	smart match		ck_smartmatch	s2
+
 # High falutin' math.
 
 atan2		atan2			ck_fun		fsT@	S S
@@ -647,7 +749,7 @@ hslice		hash slice		ck_null		m@	H L
 
 # Explosives and implosives.
 
-unpack		unpack			ck_fun		@	S S
+unpack		unpack			ck_unpack	@	S S?
 pack		pack			ck_fun		mst@	S L
 split		split			ck_split	t@	S S S
 join		join or string		ck_join		mst@	S L
@@ -664,7 +766,7 @@ push		push			ck_fun		imsT@	A L
 pop		pop			ck_shift	s%	A?
 shift		shift			ck_shift	s%	A?
 unshift		unshift			ck_fun		imsT@	A L
-sort		sort			ck_sort		m@	C? L
+sort		sort			ck_sort		dm@	C? L
 reverse		reverse			ck_fun		mt@	L
 
 grepstart	grep			ck_grep		dm@	C L
@@ -684,9 +786,11 @@ flop		range (or flop)		ck_null		1
 and		logical and (&&)		ck_null		|	
 or		logical or (||)			ck_null		|	
 xor		logical xor			ck_null		fs2	S S	
+dor		defined or (//)			ck_null		|
 cond_expr	conditional expression		ck_null		d|	
 andassign	logical and assignment (&&=)	ck_null		s|	
 orassign	logical or assignment (||=)	ck_null		s|	
+dorassign	defined or assignment (//=)	ck_null		s|
 
 method		method lookup		ck_method	d1
 entersub	subroutine entry	ck_subr		dmt1	L
@@ -715,10 +819,15 @@ redo		redo			ck_null		ds}
 dump		dump			ck_null		ds}	
 goto		goto			ck_null		ds}	
 exit		exit			ck_exit		ds%	S?
-# continued below
+setstate	set statement info	ck_null		s;
+method_named	method with known name	ck_null		d$
 
-#nswitch	numeric switch		ck_null		d	
-#cswitch	character switch	ck_null		d	
+entergiven	given()			ck_null		d|
+leavegiven	leave given block	ck_null		1
+enterwhen	when()			ck_null		d|
+leavewhen	leave when block	ck_null		1
+break		break			ck_null		0
+continue	continue		ck_null		0
 
 # I/O.
 
@@ -746,6 +855,7 @@ leavewrite	write exit		ck_null		1
 
 prtf		printf			ck_listiob	ims@	F? L
 print		print			ck_listiob	ims@	F? L
+say		say			ck_listiob	ims@	F? L
 
 sysopen		sysopen			ck_fun		s@	F S S S?
 sysseek		sysseek			ck_fun		s@	F S S
@@ -793,30 +903,31 @@ fteread		-r			ck_ftst		isu-	F-
 ftewrite	-w			ck_ftst		isu-	F-
 fteexec		-x			ck_ftst		isu-	F-
 ftis		-e			ck_ftst		isu-	F-
-fteowned	-o			ck_ftst		isu-	F-
-ftrowned	-O			ck_ftst		isu-	F-
-ftzero		-z			ck_ftst		isu-	F-
 ftsize		-s			ck_ftst		istu-	F-
 ftmtime		-M			ck_ftst		stu-	F-
 ftatime		-A			ck_ftst		stu-	F-
 ftctime		-C			ck_ftst		stu-	F-
+ftrowned	-O			ck_ftst		isu-	F-
+fteowned	-o			ck_ftst		isu-	F-
+ftzero		-z			ck_ftst		isu-	F-
 ftsock		-S			ck_ftst		isu-	F-
 ftchr		-c			ck_ftst		isu-	F-
 ftblk		-b			ck_ftst		isu-	F-
 ftfile		-f			ck_ftst		isu-	F-
 ftdir		-d			ck_ftst		isu-	F-
 ftpipe		-p			ck_ftst		isu-	F-
-ftlink		-l			ck_ftst		isu-	F-
 ftsuid		-u			ck_ftst		isu-	F-
 ftsgid		-g			ck_ftst		isu-	F-
 ftsvtx		-k			ck_ftst		isu-	F-
+ftlink		-l			ck_ftst		isu-	F-
 fttty		-t			ck_ftst		is-	F-
 fttext		-T			ck_ftst		isu-	F-
 ftbinary	-B			ck_ftst		isu-	F-
 
 # File calls.
 
-chdir		chdir			ck_fun		isT%	S?
+# chdir really behaves as if it had both "S?" and "F?"
+chdir		chdir			ck_chdir	isT%	S?
 chown		chown			ck_fun		imsT@	L
 chroot		chroot			ck_fun		isTu%	S?
 unlink		unlink			ck_fun		imsTu@	L
@@ -826,7 +937,7 @@ rename		rename			ck_fun		isT@	S S
 link		link			ck_fun		isT@	S S
 symlink		symlink			ck_fun		isT@	S S
 readlink	readlink		ck_fun		stu%	S?
-mkdir		mkdir			ck_fun		isT@	S S?
+mkdir		mkdir			ck_fun		isTu@	S? S?
 rmdir		rmdir			ck_fun		isTu%	S?
 
 # Directory calls.
@@ -881,9 +992,9 @@ msgrcv		msgrcv			ck_fun		imst@	S S S S S
 
 # Semaphores.
 
+semop		semop			ck_fun		imst@	S S
 semget		semget			ck_fun		imst@	S S S
 semctl		semctl			ck_fun		imst@	S S S S
-semop		semop			ck_fun		imst@	S S
 
 # Eval.
 
@@ -935,12 +1046,9 @@ syscall		syscall			ck_fun		imst@	S L
 
 # For multi-threading
 lock		lock			ck_rfun		s%	R
-threadsv	per-thread value	ck_null		ds0
 
-# Control (contd.)
-setstate	set statement info	ck_null		s;
-method_named	method with known name	ck_null		d$
+# For state support
 
-# Add new ops before this, the custom operator.
+once		once			ck_null		|	
 
 custom		unknown custom operator		ck_null		0

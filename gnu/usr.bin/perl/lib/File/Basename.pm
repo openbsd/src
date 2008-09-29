@@ -54,7 +54,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.74";
+$VERSION = "2.76";
 
 fileparse_set_fstype($^O);
 
@@ -62,6 +62,7 @@ fileparse_set_fstype($^O);
 =over 4
 
 =item C<fileparse>
+X<fileparse>
 
     my($filename, $directories, $suffix) = fileparse($path);
     my($filename, $directories, $suffix) = fileparse($path, @suffixes);
@@ -88,7 +89,7 @@ C<qr//>) matched against the end of the $filename.  The matching
 portion is removed and becomes the $suffix.
 
      # On Unix returns ("baz", "/foo/bar", ".txt")
-     fileparse("/foo/bar/baz", qr/\.[^.]*/);
+     fileparse("/foo/bar/baz.txt", qr/\.[^.]*/);
 
 If type is non-Unix (see C<fileparse_set_fstype()>) then the pattern
 matching for suffix removal is performed case-insensitively, since
@@ -143,13 +144,13 @@ sub fileparse {
     $dirpath ||= '';  # should always be defined
   }
   else { # Default to Unix semantics.
-    ($dirpath,$basename) = ($fullname =~ m#^(.*/)?(.*)#s);
-    if ($orig_type eq 'VMS' and $fullname =~ m:^(/[^/]+/000000(/|$))(.*):) {
+    ($dirpath,$basename) = ($fullname =~ m{^(.*/)?(.*)}s);
+    if ($orig_type eq 'VMS' and $fullname =~ m{^(/[^/]+/000000(/|$))(.*)}) {
       # dev:[000000] is top of VMS tree, similar to Unix '/'
       # so strip it off and treat the rest as "normal"
       my $devspec  = $1;
       my $remainder = $3;
-      ($dirpath,$basename) = ($remainder =~ m#^(.*/)?(.*)#s);
+      ($dirpath,$basename) = ($remainder =~ m{^(.*/)?(.*)}s);
       $dirpath ||= '';  # should always be defined
       $dirpath = $devspec.$dirpath;
     }
@@ -178,11 +179,12 @@ sub fileparse {
 
 
 =item C<basename>
+X<basename> X<filename>
 
     my $filename = basename($path);
     my $filename = basename($path, @suffixes);
 
-This function is provided for compatibility with the Unix shell command 
+This function is provided for compatibility with the Unix shell command
 C<basename(1)>.  It does B<NOT> always return the file name portion of a
 path as you might expect.  To be safe, if you want the file name portion of
 a path use C<fileparse()>.
@@ -237,6 +239,7 @@ sub basename {
 
 
 =item C<dirname>
+X<dirname>
 
 This function is provided for compatibility with the Unix shell
 command C<dirname(1)> and has inherited some of its quirks.  In spite of
@@ -310,7 +313,7 @@ sub dirname {
     elsif ($type eq 'AmigaOS') {
         if ( $dirname =~ /:\z/) { return $dirname }
         chop $dirname;
-        $dirname =~ s#[^:/]+\z## unless length($basename);
+        $dirname =~ s{[^:/]+\z}{} unless length($basename);
     }
     else {
         _strip_trailing_sep($dirname);
@@ -341,6 +344,7 @@ sub _strip_trailing_sep  {
 
 
 =item C<fileparse_set_fstype>
+X<filesystem>
 
   my $type = fileparse_set_fstype();
   my $previous_type = fileparse_set_fstype($type);

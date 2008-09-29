@@ -31,7 +31,6 @@ esac
 #  POSIX support in RiscOS is not useable
 useposix='false'
 
-# Will give WHOA message, but the prototype are defined in the GCC inc dirs
 case "$cc" in
 *gcc*) d_shmatprototype='define' ;;
 esac

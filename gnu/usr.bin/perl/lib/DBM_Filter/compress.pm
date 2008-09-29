@@ -25,7 +25,7 @@ __END__
 
 =head1 NAME
 
-DBM_Filter::compress -- compression DBM Filter
+DBM_Filter::compress - filter for DBM_Filter
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ DBM_Filter::compress -- compression DBM Filter
 
     $db = tie %hash, ...
     $db->Filter_Push('compress');
-    
+
 =head1 DESCRIPTION
 
 This DBM filter will compress all data before it is written to the database

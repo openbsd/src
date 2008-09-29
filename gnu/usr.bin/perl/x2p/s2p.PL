@@ -69,6 +69,7 @@ $0 =~ s/^.*?(\w+)[\.\w]*$/$1/;
 # (p)sed - a stream editor
 # History:  Aug 12 2000: Original version.
 #           Mar 25 2002: Rearrange generated Perl program.
+#           Jul 23 2007: Fix bug in regex stripping (M.Thorland)
 
 use strict;
 use integer;
@@ -742,15 +743,21 @@ sub Comment($$$$$$){
     0;
 }
 
-
-sub stripRegex($$){
-    my( $del, $sref ) = @_;
+# stripRegex from the current command. If we're in the first
+# part of s///, trailing spaces have to be kept as the initial
+# part of the replacement string.
+#
+sub stripRegex($$;$){
+    my( $del, $sref, $sub ) = @_;
     my $regex = $del;
     print "stripRegex:$del:$$sref:\n" if $useDEBUG;
     while( $$sref =~ s{^(.*?)(\\*)\Q$del\E(\s*)}{}s ){
         my $sl = $2;
 	$regex .= $1.$sl.$del;
 	if( length( $sl ) % 2 == 0 ){
+            if( $sub && (length( $3 ) > 0) ){
+                $$sref = $3 . $$sref;
+	    }
 	    return $regex;
 	}
 	$regex .= $3;
@@ -1353,7 +1360,7 @@ sub Parse(){
 	    }
 	    if( $cmd =~ s{^([^\\\n])}{} ){
 		my $del = $1;
-		my $regex = stripRegex( $del, \$cmd );
+		my $regex = stripRegex( $del, \$cmd, "s" );
 		if( ! defined( $regex ) ){
 		    Warn( "malformed regular expression", $fl );
 		    $error++;
@@ -1945,7 +1952,7 @@ script or script file.
 
 =item string lengths in `y' command differ
 
-The translation table strings in a B<y> commanf must have equal lengths.
+The translation table strings in a B<y> command must have equal lengths.
 
 =item undefined label `%s'
 

@@ -42,6 +42,17 @@ esac
 set `echo $glibpth | sed -e 's@/usr/ucblib@@' -e 's@ /lib @ @'`
 glibpth="$*"
 
+# Starting with Solaris 10, we don't want versioned shared libraries because
+# those often indicate a private use only library.  Especially badly that would
+# break things with SUNWbdb (Berkeley DB) being installed, which brings in
+# /usr/lib/libdb.so.1, but that is not really meant for public consumption.
+#  XXX Revisit after perl 5.10 -- should we apply this to older Solaris
+# versions too?  (A.D. 11/2007).
+case "`uname -r`" in
+5.[0-9]) ;;
+*) ignore_versioned_solibs=y ;;
+esac
+
 # Remove unwanted libraries.  -lucb contains incompatible routines.
 # -lld and -lsec don't do anything useful. -lcrypt does not
 # really provide anything we need over -lc, so we drop it, too.
@@ -81,7 +92,7 @@ END
 case "$cc" in
 '')	if test -f /opt/SUNWspro/bin/cc; then
 		cc=/opt/SUNWspro/bin/cc
-		cat <<EOF >&4	
+		cat <<EOF >&4
 
 You specified no cc but you seem to have the Workshop compiler
 ($cc) installed, using that.
@@ -153,7 +164,7 @@ esac
 # The path name is the last field in the output, but the type command
 # has an annoying array of possible outputs, e.g.:
 #	make is hashed (/opt/gnu/bin/make)
-# 	cc is /usr/ucb/cc
+#	cc is /usr/ucb/cc
 #	foo not found
 # use a command like type make | awk '{print $NF}' | sed 's/[()]//g'
 
@@ -197,7 +208,7 @@ cat > UU/cc.cbu <<'EOCBU'
 # be able to perform dynamic loading of extensions.  If you have a
 # problem with dynamic loading, be sure that you are using the Solaris
 # /usr/ccs/bin/as and /usr/ccs/bin/ld.  You can do that with
-#  		sh Configure -Dcc='gcc -B/usr/ccs/bin/'
+#	sh Configure -Dcc='gcc -B/usr/ccs/bin/'
 # (note the trailing slash is required).
 # Combinations that are known to work with the following hints:
 #
@@ -267,7 +278,7 @@ END
 	    # /full/path/to/ld will be the first word of the output.
 	    # Thus myld is something like /opt/gnu/sparc-sun-solaris2.5/bin/ld
 
-	    # Allow that $myld may be '', due to changes in gcc's output 
+	    # Allow that $myld may be '', due to changes in gcc's output
 	    if ${myld:-ld} -V 2>&1 |
 		grep "ld: Software Generation Utilities" >/dev/null 2>&1; then
 		# Ok, /usr/ccs/bin/ld eventually does get called.
@@ -404,13 +415,6 @@ EOM
 	if test "`arch`" = i86pc -a `uname -r` = 5.6 && \
 	   ${cc:-cc} try.c -lpthread >/dev/null 2>&1 && ./a.out; then
 	    d_sigsetjmp=$undef
-	    cat << 'EOM' >&2
-
-You will see a *** WHOA THERE!!! ***  message from Configure for
-d_sigsetjmp.  Keep the recommended value.  See hints/solaris_2.sh
-for more information.
-
-EOM
 	fi
 
 	# These prototypes should be visible since we using
@@ -463,6 +467,14 @@ case "$usemorebits" in
 	;;
 esac
 
+if test `uname -p` = i386; then
+    case "$use64bitint" in
+    "$define"|true|[yY]*)
+            ccflags="$ccflags -DPTR_IS_LONG"
+            ;;
+    esac
+fi
+
 if test `uname -p` = sparc -o `uname -p` = i386; then
     cat > UU/use64bitint.cbu <<'EOCBU'
 # This script UU/use64bitint.cbu will get 'called-back' by Configure
@@ -481,7 +493,7 @@ EOM
 
 # gcc-2.8.1 on Solaris 8 with -Duse64bitint fails op/pat.t test 822
 # if we compile regexec.c with -O.  Turn off optimization for that one
-# file.  See hints/README.hints , especially 
+# file.  See hints/README.hints , especially
 # =head2 Propagating variables to config.sh, method 3.
 #  A. Dougherty  May 24, 2002
     case "${gccversion}-${optimize}" in
@@ -490,7 +502,7 @@ EOM
 	case "$regexec_cflags" in
 	'') echo "Disabling optimization on regexec.c for gcc $gccversion" >&4
 	    regexec_cflags='optimize='
-	    echo "regexec_cflags='optimize=\"\"'" >> config.sh 
+	    echo "regexec_cflags='optimize=\"\"'" >> config.sh
 	    ;;
 	esac
 	;;
@@ -546,14 +558,15 @@ EOM
 		if test "$processor" = sparc; then
 		    loclibpth="/usr/lib/sparcv9 $loclibpth"
 		    ccflags="$ccflags -mcpu=v9"
-		fi 
-		ccflags="$ccflags -m64"
-		if test $processor = sparc -a X`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null` != X; then
-		    # This adds in -Wa,-xarch=v9.  I suspect that's superfluous,
-		    # since the -m64 above should do that already.  Someone
-		    # with gcc-3.x.x, please test with gcc -v.   A.D. 20-Nov-2003
-		    ccflags="$ccflags -Wa,`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"
 		fi
+		ccflags="$ccflags -m64"
+
+		# This adds in -Wa,-xarch=v9.  I suspect that's superfluous,
+		# since the -m64 above should do that already.  Someone
+		# with gcc-3.x.x, please test with gcc -v.   A.D. 20-Nov-2003
+#		if test $processor = sparc -a X`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null` != X; then
+#		    ccflags="$ccflags -Wa,`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"
+#		fi
 		ldflags="$ldflags -m64"
 		lddlflags="$lddlflags -G -m64"
 		;;
@@ -628,3 +641,17 @@ fi
 EOOVER
 
 rm -f try.c try.o try a.out
+
+# If using C++, the Configure scan for dlopen() will fail in Solaris
+# because one of the two (1) an extern "C" linkage definition is needed
+# (2) #include <dlfcn.h> is needed, *and* a cast to (void*(*)())
+# is needed for the &dlopen.  Adding any of these would require changing
+# a delicate spot in Configure, so easier just to force our guess here
+# for Solaris.  Much the same goes for dlerror().
+case "$cc" in
+*g++*|*CC*)
+  d_dlopen='define'
+  d_dlerror='define'
+  ;;
+esac
+

@@ -256,7 +256,7 @@ END_MARK_ONE
 
 	  $code .=  <<"END_MARK_TWO" if $nc_attempt;
     return if index(\$msg, 'will not stay shared') != -1;
-    return if index(\$msg, 'may be unavailable') != -1;
+    return if index(\$msg, 'is not available') != -1;
 END_MARK_TWO
 
 	  $code .= <<"END_MARK_THREE";		# Backwhack a lot!
@@ -602,14 +602,41 @@ sub linger {
     test { $watch eq '12' }
 }
 
-require "./test.pl";
+# bugid 10085
+# obj not freed early enough
 
-curr_test(182);
+sub linger2 { 
+    my $obj = Watch->new($_[0], '2');
+    sub { sub { $obj } };
+}   
+{
+    my $watch = '1';
+    linger2(\$watch);
+    test { $watch eq '12' }
+}
 
-# Because change #19637 was not applied to 5.8.1.
-SKIP: { skip("tests not in 5.8.", 3) }
+# bugid 16302 - named subs didn't capture lexicals on behalf of inner subs
 
-$test= 185;
+{
+    my $x = 1;
+    sub f16302 {
+	sub {
+	    test { defined $x and $x == 1 }
+	}->();
+    }
+}
+f16302();
+
+# The presence of an eval should turn cloneless anon subs into clonable
+# subs - otherwise the CvOUTSIDE of that sub may be wrong
+
+{
+    my %a;
+    for my $x (7,11) {
+	$a{$x} = sub { $x=$x; sub { eval '$x' } };
+    }
+    test { $a{7}->()->() + $a{11}->()->() == 18 };
+}
 
 {
    # bugid #23265 - this used to coredump during destruction of PL_maincv
@@ -660,3 +687,9 @@ __EOF__
     }
     test { $flag == 1 };
 }
+
+
+
+
+
+

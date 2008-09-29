@@ -80,6 +80,7 @@ if (@ARGV) {
         push @tests, <io/*.t>;
         push @tests, <op/*.t>;
         push @tests, <uni/*.t>;
+        push @tests, <mro/*.t>;
         push @tests, <lib/*.t>;
         push @tests, <japh/*.t> if $torture;
 	push @tests, <win32/*.t> if $^O eq 'MSWin32';
@@ -96,21 +97,27 @@ if (@ARGV) {
 	my $updir = File::Spec->updir;
 	my $mani  = File::Spec->catfile(File::Spec->updir, "MANIFEST");
 	if (open(MANI, $mani)) {
+	    my @manitests = ();
+	    my $ext_pat = $^O eq 'MSWin32' ? '(?:win32/)?ext' : 'ext';
 	    while (<MANI>) { # similar code in t/TEST
-		if (m!^(ext/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+		if (m!^($ext_pat/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
 		    my ($test, $extension) = ($1, $2);
 		    if (defined $extension) {
 			$extension =~ s!/t$!!;
 			# XXX Do I want to warn that I'm skipping these?
 			next if $skip{$extension};
 		    }
-		    push @tests, File::Spec->catfile($updir, $test);
+		    push @manitests, File::Spec->catfile($updir, $test);
 		}
 	    }
 	    close MANI;
+	    # Sort the list of test files read from MANIFEST into a sensible
+	    # order instead of using the order in which they are listed there
+	    push @tests, sort { lc $a cmp lc $b } @manitests;
 	} else {
 	    warn "$0: cannot open $mani: $!\n";
 	}
+	push @tests, <Module_Pluggable/*.t>;
 	push @tests, <pod/*.t>;
 	push @tests, <x2p/*.t>;
     }
@@ -121,42 +128,4 @@ if ($^O eq 'MSWin32') {
 @tests=grep /$re/, @tests 
     if $re;
 Test::Harness::runtests @tests;
-exit(0) unless -e "../testcompile";
-
-# %infinite =  qw (
-#        op/bop.t	1
-#        lib/hostname.t	1
-#	 op/lex_assign.t	1
-#	 lib/ph.t	1
-#        );
-
-my $dhwrapper = <<'EOT';
-open DATA,"<".__FILE__;
-until (($_=<DATA>) =~ /^__END__/) {};
-EOT
-
-@tests = grep (!$infinite{$_}, @tests);
-@tests = map {
-         my $new = $_;
-	 if ($datahandle{$_} && !( -f "$new.t") ) {
-             $new .= '.t';
-             local(*F, *T);
-             open(F,"<$_") or die "Can't open $_: $!";
-             open(T,">$new") or die "Can't open $new: $!";
-             print T $dhwrapper, <F>;
-             close F;
-             close T;
-         }
-         $new;
-         } @tests;
-
-print "The tests ", join(' ', keys(%infinite)),
-    " generate infinite loops! Skipping!\n";
-
-$ENV{'HARNESS_COMPILE_TEST'} = 1;
-$ENV{'PERLCC_TIMEOUT'} = 120 unless $ENV{'PERLCC_TIMEOUT'};
-
-Test::Harness::runtests @tests;
-foreach (keys %datahandle) {
-     unlink "$_.t";
-}
+exit(0);

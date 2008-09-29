@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: decl.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:19 $
-
 # check to see if subroutine declarations work everwhere
 
 sub one {

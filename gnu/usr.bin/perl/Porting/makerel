@@ -27,7 +27,6 @@ $patchlevel = $1 if $patchlevel_h =~ /PERL_VERSION\s+(\d+)/;
 $subversion = $1 if $patchlevel_h =~ /PERL_SUBVERSION\s+(\d+)/;
 die "Unable to parse patchlevel.h" unless $subversion >= 0;
 $vers = sprintf("%d.%d.%d", $revision, $patchlevel, $subversion);
-$vms_vers = sprintf("%d_%d_%d", $revision, $patchlevel, $subversion);
 
 # fetch list of local patches
 my (@local_patches, @lpatch_tags, $lpatch_tags);
@@ -57,10 +56,6 @@ die "Aborted.\n" if @$missentry or @$missfile;
 print "\n";
 
 # VMS no longer has hardcoded version numbers descrip.mms
-#print "Updating VMS version specific files with $vms_vers...\n";
-#system("perl -pi -e 's/^\QPERL_VERSION = \E\d\_\d+(\s*\#)/PERL_VERSION = $vms_vers$1/' vms/descrip.mms");
-
-
 
 print "Creating $relroot/$reldir release directory...\n";
 die "$relroot/$reldir release directory already exists\n"   if -e "$relroot/$reldir";
@@ -92,7 +87,6 @@ my @exe = qw(
     installman
     keywords.pl
     opcode.pl
-    perly.fixer
     t/TEST
     *.SH
     vms/ext/Stdio/test.pl
@@ -124,44 +118,52 @@ my @writables = qw(
     embed.h
     embedvar.h
     global.sym
+    overload.c
+    overload.h
     pod/perlintern.pod
     pod/perlapi.pod
+    pod/perltoc.pod
     perlapi.h
     perlapi.c
-    ext/ByteLoader/byterun.h
-    ext/ByteLoader/byterun.c
-    ext/B/B/Asmdata.pm
-    ext/Devel/PPPort/PPPort.xs
     ext/Devel/PPPort/module2.c
     ext/Devel/PPPort/module3.c
+    reentr.c
+    reentr.h
+    regcharclass.h
     regnodes.h
     warnings.h
     lib/warnings.pm
-    vms/perly_c.vms
-    vms/perly_h.vms
     win32/Makefile
+    win32/Makefile.ce
     win32/makefile.mk
     win32/config_H.bc
     win32/config_H.gc
     win32/config_H.vc
-    wince/config_H.ce
-    wince/Makefile.ce
+    utils/Makefile
+    uconfig.h
 );
 system("chmod +w @writables") == 0
     or die "system: $!";
 
 print "Adding CRs to DOSish files...\n";
+# This list is also in curliff.pl.
 my @crlf = qw(
     djgpp/configure.bat
     README.ce
     README.dos
+    README.symbian
     README.win32
+    symbian/config.pl
+    symbian/makesis.pl
+    symbian/README
+    symbian/xsbuild.pl
     win32/Makefile
+    win32/Makefile.ce
+    win32/ce-helpers/compile-all.bat
+    win32/ce-helpers/compile.bat
+    win32/ce-helpers/registry.bat
+    win32/distclean.bat
     win32/makefile.mk
-    wince/Makefile.ce
-    wince/compile-all.bat
-    wince/README.perlce
-    wince/registry.bat
 );
 system("perl -pi -e 's/\\015*\\012/\\015\\012/' @crlf") == 0
     or die "system: $!";

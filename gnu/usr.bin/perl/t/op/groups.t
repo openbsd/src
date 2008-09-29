@@ -56,6 +56,8 @@ GROUPS: {
     if (($groups = `id -a 2>/dev/null`) ne '') {
 	# $groups is of the form:
 	# uid=39957(gsar) gid=22(users) groups=33536,39181,22(users),0(root),1067(dev)
+	# FreeBSD since 6.2 has a fake id -a:
+	# uid=1001(tobez) gid=20(staff) groups=20(staff), 0(wheel), 68(dialer)
 	last GROUPS if $groups =~ /groups=/;
     }
     if (($groups = `id -Gn 2>/dev/null`) ne '') {
@@ -90,7 +92,7 @@ print "# groups = $groups\n";
 # That is: do not \w, do not \S.
 if ($groups =~ /groups=(.+)( [ug]id=|$)/) {
     my $gr = $1;
-    my @g0 = split /,/, $gr;
+    my @g0 = split /, ?/, $gr;
     my @g1;
     # prefer names over numbers
     for (@g0) {

@@ -1,7 +1,7 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
-# $Id: ANSIColor.pm,v 1.7 2006/03/28 19:23:08 millert Exp $
+# $Id: ANSIColor.pm,v 1.8 2008/09/29 17:36:14 millert Exp $
 #
-# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005
+# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006
 #   by Russ Allbery <rra@stanford.edu> and Zenin
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -32,9 +32,7 @@ use Exporter ();
                                  ON_CYAN ON_WHITE)]);
 Exporter::export_ok_tags ('constants');
 
-# Don't use the CVS revision as the version, since this module is also in Perl
-# core and too many things could munge CVS magic revision strings.
-$VERSION = '1.10';
+$VERSION = '1.12';
 
 ##############################################################################
 # Internal data structures
@@ -209,9 +207,10 @@ Term::ANSIColor - Color screen output using ANSI escape sequences
     print "This text is bold blue.\n";
     print color 'reset';
     print "This text is normal.\n";
-    print colored ("Yellow on magenta.\n", 'yellow on_magenta');
+    print colored ("Yellow on magenta.", 'yellow on_magenta'), "\n";
     print "This text is normal.\n";
-    print colored ['yellow on_magenta'], "Yellow on magenta.\n";
+    print colored ['yellow on_magenta'], 'Yellow on magenta.';
+    print "\n";
 
     use Term::ANSIColor qw(uncolor);
     print uncolor '01;31', "\n";
@@ -228,7 +227,7 @@ Term::ANSIColor - Color screen output using ANSI escape sequences
 
 This module has two interfaces, one through color() and colored() and the
 other through constants.  It also offers the utility function uncolor(),
-which has to be explicitly imported to be used (see L<SYNOPSIS>).
+which has to be explicitly imported to be used (see L</SYNOPSIS>).
 
 color() takes any number of strings as arguments and considers them to be
 space-separated lists of attributes.  It then forms and returns the escape
@@ -240,13 +239,13 @@ do anything else with it that you might care to).
 uncolor() performs the opposite translation, turning escape sequences
 into a list of strings.
 
-The recognized attributes (all of which should be fairly intuitive) are
-clear, reset, dark, bold, underline, underscore, blink, reverse, concealed,
-black, red, green, yellow, blue, magenta, on_black, on_red, on_green,
+The recognized attributes (all of which should be fairly intuitive) are clear,
+reset, dark, bold, underline, underscore, blink, reverse, concealed, black,
+red, green, yellow, blue, magenta, cyan, white, on_black, on_red, on_green,
 on_yellow, on_blue, on_magenta, on_cyan, and on_white.  Case is not
-significant.  Underline and underscore are equivalent, as are clear and
-reset, so use whichever is the most intuitive to you.  The color alone sets
-the foreground color, and on_color sets the background color.
+significant.  Underline and underscore are equivalent, as are clear and reset,
+so use whichever is the most intuitive to you.  The color alone sets the
+foreground color, and on_color sets the background color.
 
 Note that not all attributes are supported by all terminal types, and some
 terminals may not support any of these sequences.  Dark, blink, and
@@ -269,10 +268,12 @@ Normally, colored() just puts attribute codes at the beginning and end of
 the string, but if you set $Term::ANSIColor::EACHLINE to some string, that
 string will be considered the line delimiter and the attribute will be set
 at the beginning of each line of the passed string and reset at the end of
-each line.  This is often desirable if the output is being sent to a program
-like a pager that can be confused by attributes that span lines.  Normally
-you'll want to set $Term::ANSIColor::EACHLINE to C<"\n"> to use this
-feature.
+each line.  This is often desirable if the output contains newlines and
+you're using background colors, since a background color that persists
+across a newline is often interpreted by the terminal as providing the
+default background color for the next line.  Programs like pagers can also
+be confused by attributes that span lines.  Normally you'll want to set
+$Term::ANSIColor::EACHLINE to C<"\n"> to use this feature.
 
 Alternately, if you import C<:constants>, you can use the constants CLEAR,
 RESET, BOLD, DARK, UNDERLINE, UNDERSCORE, BLINK, REVERSE, CONCEALED, BLACK,
@@ -280,11 +281,14 @@ RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, ON_BLACK, ON_RED, ON_GREEN,
 ON_YELLOW, ON_BLUE, ON_MAGENTA, ON_CYAN, and ON_WHITE directly.  These are
 the same as color('attribute') and can be used if you prefer typing:
 
-    print BOLD BLUE ON_WHITE "Text\n", RESET;
+    print BOLD BLUE ON_WHITE "Text", RESET, "\n";
 
 to
 
-    print colored ("Text\n", 'bold blue on_white');
+    print colored ("Text", 'bold blue on_white'), "\n";
+
+(Note that the newline is kept separate to avoid confusing the terminal as
+described above since a background color is being used.)
 
 When using the constants, if you don't want to have to remember to add the
 C<, RESET> at the end of each print line, you can set
@@ -298,7 +302,9 @@ will reset the display mode afterwards, whereas:
 
     print BOLD, BLUE, "Text\n";
 
-will not.
+will not.  If you are using background colors, you will probably want to
+print the newline with a separate print statement to avoid confusing the
+terminal.
 
 The subroutine interface has the advantage over the constants interface in
 that only two subroutines are exported into your namespace, versus
@@ -306,7 +312,7 @@ twenty-two in the constants interface.  On the flip side, the constants
 interface has the advantage of better compile time error checking, since
 misspelled names of colors or attributes in calls to color() and colored()
 won't be caught until runtime whereas misspelled names of constants will be
-caught at compile time.  So, polute your namespace with almost two dozen
+caught at compile time.  So, pollute your namespace with almost two dozen
 subroutines that you may not even use that often, or risk a silly bug by
 mistyping an attribute.  Your choice, TMTOWTDI after all.
 
@@ -391,7 +397,7 @@ string.  (Of course, you may consider it a bug that commas between all the
 constants aren't required, in which case you may feel free to insert commas
 unless you're using $Term::ANSIColor::AUTORESET.)
 
-For easier debuging, you may prefer to always use the commas when not
+For easier debugging, you may prefer to always use the commas when not
 setting $Term::ANSIColor::AUTORESET so that you'll get a fatal compile error
 rather than a warning.
 
@@ -465,8 +471,8 @@ with input from Zenin.  Russ Allbery now maintains this module.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1996, 1997, 1998, 2000, 2001, 2002 Russ Allbery <rra@stanford.edu>
-and Zenin.  This program is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
+Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006 Russ Allbery
+<rra@stanford.edu> and Zenin.  This program is free software; you may
+redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut

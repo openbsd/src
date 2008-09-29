@@ -13,7 +13,7 @@ our @EXPORT  = qw(validate);
 
 =head1 NAME
 
-validate - run many filetest checks on a tree
+File::CheckTree - run many filetest checks on a tree
 
 =head1 SYNOPSIS
 
@@ -87,8 +87,17 @@ sub validate {
         # but earlier versions of File::CheckTree did not do this either
 
         # split a line like "/foo -r || die"
-        # so that $file is "/foo", $test is "-rwx || die"
-        ($file, $test) = split(' ', $check, 2);   # special whitespace split
+        # so that $file is "/foo", $test is "-r || die"
+        # (making special allowance for quoted filenames).
+        if ($check =~ m/^\s*"([^"]+)"\s+(.*?)\s*$/ or
+            $check =~ m/^\s*'([^']+)'\s+(.*?)\s*$/ or
+            $check =~ m/^\s*(\S+?)\s+(\S.*?)\s*$/)
+        {
+            ($file, $test) = ($1,$2);
+        }
+        else {
+            die "Malformed line: '$check'";
+        };
 
         # change a $test like "!-ug || die" to "!-Z || die",
         # capturing the bundled tests (e.g. "ug") in $2
@@ -155,12 +164,12 @@ sub validate {
                 eval $this;
 
                 # re-raise an exception caused by a "... || die" test 
-                if ($@) {
+                if (my $err = $@) {
                     # in case of any cd directives, return from whence we came
                     if ($starting_dir ne cwd) {
                         chdir($starting_dir) || die "$starting_dir: $!";
                     }
-                    die $@ if $@;
+                    die $err;
                 }
             }
 

@@ -842,7 +842,7 @@ True if (hard) link count of file matches N (see below).
 
 True if file's size matches N (see below) N is normally counted in
 512-byte blocks, but a suffix of "c" specifies that size should be
-counted in characters (bytes) and a suffix of "k" specifes that
+counted in characters (bytes) and a suffix of "k" specifies that
 size should be counted in 1024-byte blocks.
 
 =item C<-atime N>

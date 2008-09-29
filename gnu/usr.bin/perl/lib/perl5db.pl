@@ -221,7 +221,7 @@ file.
 
 =item * ReadLine 
 
-If false, a dummy  ReadLine is used, so you can debug
+if false, a dummy ReadLine is used, so you can debug
 ReadLine applications.
 
 =item * NonStop 
@@ -236,6 +236,16 @@ pipe, a short "emacs like" message is used.
 =item * RemotePort 
 
 host:port to connect to on remote host for remote debugging.
+
+=item * HistFile
+
+file to store session history to. There is no default and so no
+history file is written unless this variable is explicitly set.
+
+=item * HistSize
+
+number of commands to store to the file specified in C<HistFile>.
+Default is 100.
 
 =back
 
@@ -498,10 +508,10 @@ where it has to go.
 
 package DB;
 
-use IO::Handle;
+BEGIN {eval 'use IO::Handle'};	# Needed for flush only? breaks under miniperl
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
-$VERSION = 1.28;
+$VERSION = 1.30;
 
 $header = "perl5db.pl version $VERSION";
 
@@ -687,24 +697,6 @@ sub eval {
 # Note that no subroutine call is possible until &DB::sub is defined
 # (for subroutines defined outside of the package DB). In fact the same is
 # true if $deep is not defined.
-#
-# $Log: perl5db.pl,v $
-# Revision 1.10  2005/01/15 21:30:31  millert
-# sync in-tree perl with 5.8.6
-#
-# Revision 1.9  2004/08/09 18:09:28  millert
-# merge 5.8.5 into HEAD
-# remove now-unused files
-# crank libperl shared library major number
-# update Makefile.bsd-wrapper
-# tweak openbsd hints file for arm and m68k
-#
-# Revision 1.8  2004/04/07 21:33:04  millert
-# merge local changes into perl-5.8.3
-#
-# Revision 1.7  2003/12/03 03:02:36  millert
-# Resolve conflicts for perl 5.8.2, remove old files, and add OpenBSD-specific scaffolding
-#
 
 # Enhanced by ilya@math.ohio-state.edu (Ilya Zakharevich)
 
@@ -945,7 +937,11 @@ sub eval {
 #   + wrapped restart and enabled rerun [-n] (go back n steps) command.
 # Changes: 1.28: Oct 12, 2004 Richard Foley <richard.foley@rfi.net>
 #   + Added threads support (inc. e and E commands)
-####################################################################
+# Changes: 1.29: Nov 28, 2006 Bo Lindbergh <blgl@hagernas.com> 
+#   + Added macosx_get_fork_TTY support 
+# Changes: 1.30: Mar 06, 2007 Andreas Koenig <andk@cpan.org>
+#   + Added HistFile, HistSize
+########################################################################
 
 =head1 DEBUGGER INITIALIZATION
 
@@ -970,15 +966,6 @@ BEGIN {
     $ini_warn = $^W;
     $^W       = 0;
 }    # Switch compilation warnings off until another BEGIN.
-
-# test if assertions are supported and actived:
-BEGIN {
-    $ini_assertion = eval "sub asserting_test : assertion {1}; 1";
-
-    # $ini_assertion = undef => assertions unsupported,
-    #        "       = 1     => assertions supported
-    # print "\$ini_assertion=$ini_assertion\n";
-}
 
 local ($^W) = 0;    # Switch run-time warnings off during init.
 
@@ -1093,7 +1080,7 @@ are to be accepted.
 =cut
 
 @options = qw(
-  CommandSet
+  CommandSet   HistFile      HistSize
   hashDepth    arrayDepth    dumpDepth
   DumpDBFiles  DumpPackages  DumpReused
   compactDump  veryCompact   quote
@@ -1106,10 +1093,10 @@ are to be accepted.
   signalLevel  warnLevel     dieLevel
   inhibit_exit ImmediateStop bareStringify
   CreateTTY    RemotePort    windowSize
-  DollarCaretP OnlyAssertions WarnAssertions
+  DollarCaretP
 );
 
-@RememberOnROptions = qw(DollarCaretP OnlyAssertions);
+@RememberOnROptions = qw(DollarCaretP);
 
 =pod
 
@@ -1138,7 +1125,8 @@ state.
     ImmediateStop => \$ImmediateStop,
     RemotePort    => \$remoteport,
     windowSize    => \$window,
-    WarnAssertions => \$warnassertions,
+    HistFile      => \$histfile,
+    HistSize      => \$histsize,
 );
 
 =pod
@@ -1167,7 +1155,6 @@ option.
     ornaments     => \&ornaments,
     RemotePort    => \&RemotePort,
     DollarCaretP  => \&DollarCaretP,
-    OnlyAssertions=> \&OnlyAssertions,
 );
 
 =pod
@@ -1253,7 +1240,7 @@ signalLevel($signalLevel);
 =pod
 
 The pager to be used is needed next. We try to get it from the
-environment first.  if it's not defined there, we try to find it in
+environment first.  If it's not defined there, we try to find it in
 the Perl C<Config.pm>.  If it's not there, we default to C<more>. We
 then call the C<pager()> function to save the pager name.
 
@@ -1335,9 +1322,21 @@ if ( defined $ENV{PERLDB_PIDS} ) {
     # We're a child. Make us a label out of the current PID structure
     # recorded in PERLDB_PIDS plus our (new) PID. Mark us as not having
     # a term yet so the parent will give us one later via resetterm().
-    $pids = "[$ENV{PERLDB_PIDS}]";
-    $ENV{PERLDB_PIDS} .= "->$$";
-    $term_pid = -1;
+
+    my $env_pids = $ENV{PERLDB_PIDS};
+    $pids = "[$env_pids]";
+
+    # Unless we are on OpenVMS, all programs under the DCL shell run under
+    # the same PID.
+
+    if (($^O eq 'VMS') && ($env_pids =~ /\b$$\b/)) {
+        $term_pid         = $$;
+    }
+    else {
+        $ENV{PERLDB_PIDS} .= "->$$";
+        $term_pid = -1;
+    }
+
 } ## end if (defined $ENV{PERLDB_PIDS...
 else {
 
@@ -1345,7 +1344,7 @@ else {
     # child debugger, and mark us as the parent, so we'll know to set up
     # more TTY's is we have to.
     $ENV{PERLDB_PIDS} = "$$";
-    $pids             = "{pid=$$}";
+    $pids             = "[pid=$$]";
     $term_pid         = $$;
 }
 
@@ -1448,29 +1447,36 @@ if ( defined $ENV{PERLDB_OPTS} ) {
 
 The last thing we do during initialization is determine which subroutine is
 to be used to obtain a new terminal when a new debugger is started. Right now,
-the debugger only handles X Windows and OS/2.
+the debugger only handles X Windows, OS/2, and Mac OS X (darwin).
 
 =cut
 
 # Set up the get_fork_TTY subroutine to be aliased to the proper routine.
 # Works if you're running an xterm or xterm-like window, or you're on
-# OS/2. This may need some expansion: for instance, this doesn't handle
-# OS X Terminal windows.
+# OS/2, or on Mac OS X. This may need some expansion.
 
-if (
-    not defined &get_fork_TTY    # no routine exists,
-    and defined $ENV{TERM}       # and we know what kind
-                                 # of terminal this is,
-    and $ENV{TERM} eq 'xterm'    # and it's an xterm,
-#   and defined $ENV{WINDOWID}   # and we know what window this is, <- wrong metric
-    and defined $ENV{DISPLAY}    # and what display it's on,
-  )
+if (not defined &get_fork_TTY)       # only if no routine exists
 {
-    *get_fork_TTY = \&xterm_get_fork_TTY;    # use the xterm version
+    if (defined $ENV{TERM}                       # If we know what kind
+                                                 # of terminal this is,
+        and $ENV{TERM} eq 'xterm'                # and it's an xterm,
+        and defined $ENV{DISPLAY}                # and what display it's on,
+      )
+    {
+        *get_fork_TTY = \&xterm_get_fork_TTY;    # use the xterm version
+    }
+    elsif ( $^O eq 'os2' ) {                     # If this is OS/2,
+        *get_fork_TTY = \&os2_get_fork_TTY;      # use the OS/2 version
+    }
+    elsif ( $^O eq 'darwin'                      # If this is Mac OS X
+            and defined $ENV{TERM_PROGRAM}       # and we're running inside
+            and $ENV{TERM_PROGRAM}
+                eq 'Apple_Terminal'              # Terminal.app
+            )
+    {
+        *get_fork_TTY = \&macosx_get_fork_TTY;   # use the Mac OS X version
+    }
 } ## end if (not defined &get_fork_TTY...
-elsif ( $^O eq 'os2' ) {                     # If this is OS/2,
-    *get_fork_TTY = \&os2_get_fork_TTY;      # use the OS/2 version
-}
 
 # untaint $^O, which may have been tainted by the last statement.
 # see bug [perl #24674]
@@ -1727,7 +1733,7 @@ and if we can.
         if ($console) {
 
             # If we have a console, check to see if there are separate ins and
-            # outs to open. (They are assumed identiical if not.)
+            # outs to open. (They are assumed identical if not.)
 
             my ( $i, $o ) = split /,/, $console;
             $o = $i unless defined $o;
@@ -1846,7 +1852,7 @@ sub DB {
 	lock($DBGR);
 	my $tid;
 	if ($ENV{PERL5DB_THREADED}) {
-		$tid = eval { "[".threads->self->tid."]" };
+		$tid = eval { "[".threads->tid."]" };
 	}
 
     # Check for whether we should be running continuously or not.
@@ -2404,7 +2410,7 @@ Uses C<dumpvar.pl> to dump out the current values for selected variables.
                     @vars     = split( ' ', $2 );
 
                     # If main::dumpvar isn't here, get it.
-                    do 'dumpvar.pl' unless defined &main::dumpvar;
+                    do 'dumpvar.pl' || die $@ unless defined &main::dumpvar;
                     if ( defined &main::dumpvar ) {
 
                         # We got it. Turn off subroutine entry/exit messages
@@ -2603,7 +2609,7 @@ above the current one and then displays then using C<dumpvar.pl>.
                       and next CMD;
 
                     # Load up dumpvar if we don't have it. If we can, that is.
-                    do 'dumpvar.pl' unless defined &main::dumpvar;
+                    do 'dumpvar.pl' || die $@ unless defined &main::dumpvar;
                     defined &main::dumpvar
                       or print $OUT "dumpvar.pl not available.\n"
                       and next CMD;
@@ -3433,8 +3439,10 @@ any variables we might want to address in the C<DB> package.
                 $onetimedumpDepth = undef;
             }
             elsif ( $term_pid == $$ ) {
-                STDOUT->flush();
-                STDERR->flush();
+		eval {		# May run under miniperl, when not available...
+                    STDOUT->flush();
+                    STDERR->flush();
+		};
 
                 # XXX If this is the master pid, print a newline.
                 print $OUT "\n";
@@ -3629,10 +3637,10 @@ sub sub {
 		print "creating new thread\n"; 
 	}
 
-    # If the last ten characters are C'::AUTOLOAD', note we've traced
+    # If the last ten characters are '::AUTOLOAD', note we've traced
     # into AUTOLOAD for $sub.
     if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
-        $al = " for $$sub";
+        $al = " for $$sub" if defined $$sub;
     }
 
     # We stack the stack pointer and then increment it to protect us
@@ -3678,17 +3686,7 @@ sub sub {
         # Called in array context. call sub and capture output.
         # DB::DB will recursively get control again if appropriate; we'll come
         # back here when the sub is finished.
-        if ($assertion) {
-            $assertion = 0;
-            eval { @ret = &$sub; };
-            if ($@) {
-                print $OUT $@;
-                $signal = 1 unless $warnassertions;
-            }
-        }
-        else {
-            @ret = &$sub;
-        }
+	@ret = &$sub;
 
         # Pop the single-step value back off the stack.
         $single |= $stack[ $stack_depth-- ];
@@ -3729,32 +3727,17 @@ sub sub {
 
     # Scalar context.
     else {
-        if ($assertion) {
-            $assertion = 0;
-            eval {
+	if ( defined wantarray ) {
 
-                # Save the value if it's wanted at all.
-                $ret = &$sub;
-            };
-            if ($@) {
-                print $OUT $@;
-                $signal = 1 unless $warnassertions;
-            }
-            $ret = undef unless defined wantarray;
-        }
-        else {
-            if ( defined wantarray ) {
+	    # Save the value if it's wanted at all.
+	    $ret = &$sub;
+	}
+	else {
 
-                # Save the value if it's wanted at all.
-                $ret = &$sub;
-            }
-            else {
-
-                # Void return, explicitly.
-                &$sub;
-                undef $ret;
-            }
-        }    # if assertion
+	    # Void return, explicitly.
+	    &$sub;
+	    undef $ret;
+	}
 
         # Pop the single-step value off the stack.
         $single |= $stack[ $stack_depth-- ];
@@ -4655,7 +4638,7 @@ sub cmd_e {
 		print "threads not loaded($ENV{PERL5DB_THREADED})
 		please run the debugger with PERL5DB_THREADED=1 set in the environment\n";
 	} else {
-		my $tid = threads->self->tid;
+		my $tid = threads->tid;
 		print "thread id: $tid\n";
 	}
 } ## end sub cmd_e
@@ -4677,7 +4660,7 @@ sub cmd_E {
 		print "threads not loaded($ENV{PERL5DB_THREADED})
 		please run the debugger with PERL5DB_THREADED=1 set in the environment\n";
 	} else {
-		my $tid = threads->self->tid;
+		my $tid = threads->tid;
 		print "thread ids: ".join(', ', 
 			map { ($tid == $_->tid ? '<'.$_->tid.'>' : $_->tid) } threads->list
 		)."\n"; 
@@ -5324,38 +5307,6 @@ sub cmd_W {
 These are general support routines that are used in a number of places
 throughout the debugger.
 
-=over 4
-
-=item cmd_P
-
-Something to do with assertions
-
-=back
-
-=cut
-
-sub cmd_P {
-    unless ($ini_assertion) {
-        print $OUT "Assertions not supported in this Perl interpreter\n";
-    } else {
-        if ( $cmd =~ /^.\b\s*([+-]?)\s*(~?)\s*(\w+(\s*\|\s*\w+)*)\s*$/ ) {
-            my ( $how, $neg, $flags ) = ( $1, $2, $3 );
-            my $acu = parse_DollarCaretP_flags($flags);
-            if ( defined $acu ) {
-                $acu = ~$acu if $neg;
-                if ( $how eq '+' ) { $^P |= $acu }
-                elsif ( $how eq '-' ) { $^P &= ~$acu }
-                else { $^P = $acu }
-            }
-
-            # else { print $OUT "undefined acu\n" }
-        }
-        my $expanded = expand_DollarCaretP_flags($^P);
-        print $OUT "Internal Perl debugger flags:\n\$^P=$expanded\n";
-        $expanded;
-    }
-}
-
 =head2 save
 
 save() saves the user's versions of globals that would mess us up in C<@saved>,
@@ -5579,7 +5530,7 @@ sub dumpit {
 
     # Load dumpvar.pl unless we've already got the sub we need from it.
     unless ( defined &main::dumpValue ) {
-        do 'dumpvar.pl';
+        do 'dumpvar.pl' or die $@;
     }
 
     # If the load succeeded (or we already had dumpvalue()), go ahead
@@ -6061,6 +6012,8 @@ sub setterm {
 
     $term->MinLine(2);
 
+    &load_hist();
+
     if ( $term->Features->{setHistory} and "@hist" ne "?" ) {
         $term->SetHistory(@hist);
     }
@@ -6070,6 +6023,34 @@ sub setterm {
     ornaments($ornaments) if defined $ornaments;
     $term_pid = $$;
 } ## end sub setterm
+
+sub load_hist {
+    $histfile //= option_val("HistFile", undef);
+    return unless defined $histfile;
+    open my $fh, "<", $histfile or return;
+    local $/ = "\n";
+    @hist = ();
+    while (<$fh>) {
+        chomp;
+        push @hist, $_;
+    }
+    close $fh;
+}
+
+sub save_hist {
+    return unless defined $histfile;
+    eval { require File::Path } or return;
+    eval { require File::Basename } or return;
+    File::Path::mkpath(File::Basename::dirname($histfile));
+    open my $fh, ">", $histfile or die "Could not open '$histfile': $!";
+    $histsize //= option_val("HistSize",100);
+    my @copy = grep { $_ ne '?' } @hist;
+    my $start = scalar(@copy) > $histsize ? scalar(@copy)-$histsize : 0;
+    for ($start .. $#copy) {
+        print $fh "$copy[$_]\n";
+    }
+    close $fh or die "Could not write '$histfile': $!";
+}
 
 =head1 GET_FORK_TTY EXAMPLE FUNCTIONS
 
@@ -6084,9 +6065,10 @@ is tasked with doing all the necessary operating system mojo to get a new
 TTY (and probably another window) and to direct the new debugger to read and
 write there.
 
-The debugger provides C<get_fork_TTY> functions which work for X Windows and
-OS/2. Other systems are not supported. You are encouraged to write 
-C<get_fork_TTY> functions which work for I<your> platform and contribute them.
+The debugger provides C<get_fork_TTY> functions which work for X Windows,
+OS/2, and Mac OS X. Other systems are not supported. You are encouraged
+to write C<get_fork_TTY> functions which work for I<your> platform
+and contribute them.
 
 =head3 C<xterm_get_fork_TTY>
 
@@ -6129,65 +6111,107 @@ XXX It behooves an OS/2 expert to write the necessary documentation for this!
 =cut
 
 # This example function resets $IN, $OUT itself
-sub os2_get_fork_TTY {
-    local $^F = 40;    # XXXX Fixme!
+my $c_pipe = 0;
+sub os2_get_fork_TTY { # A simplification of the following (and works without):
     local $\  = '';
-    my ( $in1, $out1, $in2, $out2 );
-
-    # Having -d in PERL5OPT would lead to a disaster...
-    local $ENV{PERL5OPT} = $ENV{PERL5OPT} if $ENV{PERL5OPT};
-    $ENV{PERL5OPT} =~ s/(?:^|(?<=\s))-d\b//  if $ENV{PERL5OPT};
-    $ENV{PERL5OPT} =~ s/(?:^|(?<=\s))-d\B/-/ if $ENV{PERL5OPT};
-    print $OUT "Making kid PERL5OPT->`$ENV{PERL5OPT}'.\n" if $ENV{PERL5OPT};
-    local $ENV{PERL5LIB} = $ENV{PERL5LIB} ? $ENV{PERL5LIB} : $ENV{PERLLIB};
-    $ENV{PERL5LIB} = '' unless defined $ENV{PERL5LIB};
-    $ENV{PERL5LIB} = join ';', @ini_INC, split /;/, $ENV{PERL5LIB};
     ( my $name = $0 ) =~ s,^.*[/\\],,s;
-    my @args;
-
-    if (
-            pipe $in1, $out1
-        and pipe $in2, $out2
-
-        # system P_SESSION will fail if there is another process
-        # in the same session with a "dependent" asynchronous child session.
-        and @args = (
-            $rl, fileno $in1, fileno $out2, "Daughter Perl debugger $pids $name"
-        )
-        and (
-            ( $kpid = CORE::system 4, $^X, '-we',
-                <<'ES', @args ) >= 0    # P_SESSION
-END {sleep 5 unless $loaded}
-BEGIN {open STDIN,  '</dev/con' or warn "reopen stdin: $!"}
-use OS2::Process;
-
-my ($rl, $in) = (shift, shift);        # Read from $in and pass through
-set_title pop;
-system P_NOWAIT, $^X, '-we', <<EOS or die "Cannot start a grandkid";
-  open IN, '<&=$in' or die "open <&=$in: \$!";
-  \$| = 1; print while sysread IN, \$_, 1<<16;
-EOS
-
-my $out = shift;
-open OUT, ">&=$out" or die "Cannot open &=$out for writing: $!";
-select OUT;    $| = 1;
-require Term::ReadKey if $rl;
-Term::ReadKey::ReadMode(4) if $rl; # Nodelay on kbd.  Pipe is automatically nodelay...
-print while sysread STDIN, $_, 1<<($rl ? 16 : 0);
-ES
-            or warn "system P_SESSION: $!, $^E" and 0
-        )
-        and close $in1
-        and close $out2
-      )
-    {
-        $pidprompt = '';    # Shown anyway in titlebar
-        reset_IN_OUT( $in2, $out1 );
-        $tty = '*reset*';
-        return '';          # Indicate that reset_IN_OUT is called
-    } ## end if (pipe $in1, $out1 and...
-    return;
+    my %opt = (	title => "Daughter Perl debugger $pids $name",
+		($rl ? (read_by_key => 1) : ()) );
+    require OS2::Process;
+    my ($in, $out, $pid) = eval { OS2::Process::io_term(related => 0, %opt) }
+      or return;
+    $pidprompt = '';    # Shown anyway in titlebar
+    reset_IN_OUT($in, $out);
+    $tty = '*reset*';
+    return '';          # Indicate that reset_IN_OUT is called
 } ## end sub os2_get_fork_TTY
+
+=head3 C<macosx_get_fork_TTY>
+
+The Mac OS X version uses AppleScript to tell Terminal.app to create
+a new window.
+
+=cut
+
+# Notes about Terminal.app's AppleScript support,
+# (aka things that might break in future OS versions).
+#
+# The "do script" command doesn't return a reference to the new window
+# it creates, but since it appears frontmost and windows are enumerated
+# front to back, we can use "first window" === "window 1".
+#
+# Since "do script" is implemented by supplying the argument (plus a
+# return character) as terminal input, there's a potential race condition
+# where the debugger could beat the shell to reading the command.
+# To prevent this, we wait for the screen to clear before proceeding.
+#
+# 10.3 and 10.4:
+# There's no direct accessor for the tty device name, so we fiddle
+# with the window title options until it says what we want.
+#
+# 10.5:
+# There _is_ a direct accessor for the tty device name, _and_ there's
+# a new possible component of the window title (the name of the settings
+# set).  A separate version is needed.
+
+my @script_versions=
+
+    ([237, <<'__LEOPARD__'],
+tell application "Terminal"
+    do script "clear;exec sleep 100000"
+    tell first tab of first window
+        copy tty to thetty
+        set custom title to "forked perl debugger"
+        set title displays custom title to true
+        repeat while (length of first paragraph of (get contents)) > 0
+            delay 0.1
+        end repeat
+    end tell
+end tell
+thetty
+__LEOPARD__
+
+     [100, <<'__JAGUAR_TIGER__'],
+tell application "Terminal"
+    do script "clear;exec sleep 100000"
+    tell first window
+        set title displays shell path to false
+        set title displays window size to false
+        set title displays file name to false
+        set title displays device name to true
+        set title displays custom title to true
+        set custom title to ""
+        copy "/dev/" & name to thetty
+        set custom title to "forked perl debugger"
+        repeat while (length of first paragraph of (get contents)) > 0
+            delay 0.1
+        end repeat
+    end tell
+end tell
+thetty
+__JAGUAR_TIGER__
+
+);
+
+sub macosx_get_fork_TTY
+{
+    my($version,$script,$pipe,$tty);
+
+    return unless $version=$ENV{TERM_PROGRAM_VERSION};
+    foreach my $entry (@script_versions) {
+	if ($version>=$entry->[0]) {
+	    $script=$entry->[1];
+	    last;
+	}
+    }
+    return unless defined($script);
+    return unless open($pipe,'-|','/usr/bin/osascript','-e',$script);
+    $tty=readline($pipe);
+    close($pipe);
+    return unless defined($tty) && $tty =~ m(^/dev/);
+    chomp $tty;
+    return $tty;
+}
 
 =head2 C<create_IN_OUT($flags)>
 
@@ -6237,9 +6261,10 @@ EOP
 
 EOP
         print_help(<<EOP);
-  I know how to switch the output to a different window in xterms
-  and OS/2 consoles only.  For a manual switch, put the name of the created I<TTY>
-  in B<\$DB::fork_TTY>, or define a function B<DB::get_fork_TTY()> returning this.
+  I know how to switch the output to a different window in xterms, OS/2
+  consoles, and Mac OS X Terminal.app only.  For a manual switch, put the name
+  of the created I<TTY> in B<\$DB::fork_TTY>, or define a function
+  B<DB::get_fork_TTY()> returning this.
 
   On I<UNIX>-like systems one can get the name of a I<TTY> for the given window
   by typing B<tty>, and disconnect the I<shell> from I<TTY> by B<sleep 1000000>.
@@ -6372,9 +6397,13 @@ sub readline {
         $OUT->write( join( '', @_ ) );
 
         # Receive anything there is to receive.
-        my $stuff;
-        $IN->recv( $stuff, 2048 );    # XXX "what's wrong with sysread?"
-                                      # XXX Don't know. You tell me.
+        $stuff;
+        my $stuff = '';
+        my $buf;
+        do {
+            $IN->recv( $buf = '', 2048 );   # XXX "what's wrong with sysread?"
+                                            # XXX Don't know. You tell me.
+        } while length $buf and ($stuff .= $buf) !~ /\n/;
 
         # What we got.
         $stuff;
@@ -6736,6 +6765,19 @@ we go ahead and set C<$console> and C<$tty> to the file indicated.
 =cut
 
 sub TTY {
+
+    # With VMS we can get here with $term undefined, so we do not
+    # switch to this terminal.  There may be a better place to make
+    # sure that $term is defined on VMS
+    if ( @_ and ($^O eq 'VMS') and !defined($term) ) {
+	eval { require Term::ReadLine } or die $@;
+        if ( !$rl ) {
+	    $term = new Term::ReadLine::Stub 'perldb', $IN, $OUT;
+	}
+	else {
+	    $term = new Term::ReadLine 'perldb', $IN, $OUT;
+	}
+    }
     if ( @_ and $term and $term->Features->{newTTY} ) {
 
         # This terminal supports switching to a new TTY.
@@ -6866,33 +6908,6 @@ sub DollarCaretP {
     }
     $^P = parse_DollarCaretP_flags(shift) if @_;
     expand_DollarCaretP_flags($^P);
-}
-
-sub OnlyAssertions {
-    if ($term) {
-        &warn("Too late to set up OnlyAssertions mode, enabled on next 'R'!\n")
-          if @_;
-    }
-    if (@_) {
-        unless ( defined $ini_assertion ) {
-            if ($term) {
-                &warn("Current Perl interpreter doesn't support assertions");
-            }
-            return 0;
-        }
-        if (shift) {
-            unless ($ini_assertion) {
-                print "Assertions will be active on next 'R'!\n";
-                $ini_assertion = 1;
-            }
-            $^P &= ~$DollarCaretP_flags{PERLDBf_SUB};
-            $^P |= $DollarCaretP_flags{PERLDBf_ASSERTION};
-        }
-        else {
-            $^P |= $DollarCaretP_flags{PERLDBf_SUB};
-        }
-    }
-    !( $^P & $DollarCaretP_flags{PERLDBf_SUB} ) || 0;
 }
 
 =head2 C<pager>
@@ -7157,7 +7172,6 @@ B<i> I<class>       Prints nested parents of given class.
 B<e>         Display current thread id.
 B<E>         Display all thread ids the current one will be identified: <n>.
 B<y> [I<n> [I<Vars>]]   List lexicals in higher scope <n>.  Vars same as B<V>.
-B<P> Something to do with assertions...
 
 B<<> ?            List Perl commands to run before each prompt.
 B<<> I<expr>        Define Perl command to run before each prompt.
@@ -7204,7 +7218,7 @@ B<R>        Pure-man-restart of debugger, some of debugger state
 B<o> [I<opt>] ...    Set boolean option to true
 B<o> [I<opt>B<?>]    Query options
 B<o> [I<opt>B<=>I<val>] [I<opt>=B<\">I<val>B<\">] ... 
-        Set options.  Use quotes in spaces in value.
+        Set options.  Use quotes if spaces in value.
     I<recallCommand>, I<ShellBang>    chars used to recall command or spawn shell;
     I<pager>            program for output of \"|cmd\";
     I<tkRunning>            run Tk while prompting (with ReadLine);
@@ -7380,7 +7394,7 @@ B<R>        Pure-man-restart of debugger, some of debugger state
 B<O> [I<opt>] ...    Set boolean option to true
 B<O> [I<opt>B<?>]    Query options
 B<O> [I<opt>B<=>I<val>] [I<opt>=B<\">I<val>B<\">] ... 
-        Set options.  Use quotes in spaces in value.
+        Set options.  Use quotes if spaces in value.
     I<recallCommand>, I<ShellBang>    chars used to recall command or spawn shell;
     I<pager>            program for output of \"|cmd\";
     I<tkRunning>            run Tk while prompting (with ReadLine);
@@ -8684,8 +8698,7 @@ BEGIN {
         PERLDBf_GOTO      => 0x80,     # Report goto: call DB::goto
         PERLDBf_NAMEEVAL  => 0x100,    # Informative names for evals
         PERLDBf_NAMEANON  => 0x200,    # Informative names for anon subs
-        PERLDBf_ASSERTION => 0x400,    # Debug assertion subs enter/exit
-        PERLDB_ALL        => 0x33f,    # No _NONAME, _GOTO, _ASSERTION
+        PERLDB_ALL        => 0x33f,    # No _NONAME, _GOTO
     );
 
     %DollarCaretP_flags_r = reverse %DollarCaretP_flags;
@@ -8791,11 +8804,6 @@ sub restart {
 
     # If warn was on before, turn it on again.
     push @flags, '-w' if $ini_warn;
-    if ( $ini_assertion and @{^ASSERTING} ) {
-        push @flags,
-          ( map { /\:\^\(\?\:(.*)\)\$\)/ ? "-A$1" : "-A$_" }
-              @{^ASSERTING} );
-    }
 
     # Rebuild the -I flags that were on the initial
     # command line.
@@ -9007,8 +9015,12 @@ END {
     $fall_off_end = 1 unless $inhibit_exit;
 
     # Do not stop in at_exit() and destructors on exit:
-    $DB::single = !$fall_off_end && !$runnonstop;
-    DB::fake::at_exit() unless $fall_off_end or $runnonstop;
+    if ($fall_off_end or $runnonstop) {
+        &save_hist();
+    } else {
+        $DB::single = 1;
+        DB::fake::at_exit();
+    }
 } ## end END
 
 =head1 PRE-5.8 COMMANDS

@@ -1,7 +1,7 @@
 package ExtUtils::MakeMaker::FAQ;
 
 use vars qw($VERSION);
-$VERSION = '1.11';
+$VERSION = '1.12';
 
 1;
 __END__
@@ -18,6 +18,55 @@ FAQs, tricks and tips for C<ExtUtils::MakeMaker>.
 =head2 Module Installation
 
 =over 4
+
+=item How do I install a module into my home directory?
+
+If you're not the Perl administrator you probably don't have
+permission to install a module to its default location.  Then you
+should install it for your own use into your home directory like so:
+
+    # Non-unix folks, replace ~ with /path/to/your/home/dir
+    perl Makefile.PL INSTALL_BASE=~
+
+This will put modules into F<~/lib/perl5>, man pages into F<~/man> and
+programs into F<~/bin>.
+
+To ensure your Perl programs can see these newly installed modules,
+set your C<PERL5LIB> environment variable to F<~/lib/perl5> or tell
+each of your programs to look in that directory with the following:
+
+    use lib "$ENV{HOME}/lib/perl5";
+
+or if $ENV{HOME} isn't set and you don't want to set it for some
+reason, do it the long way.
+
+    use lib "/path/to/your/home/dir/lib/perl5";
+
+
+=item How do I get MakeMaker and Module::Build to install to the same place?
+
+Module::Build, as of 0.28, supports two ways to install to the same
+location as MakeMaker.
+
+1) Use INSTALL_BASE / C<--install_base>
+
+MakeMaker (as of 6.31) and Module::Build (as of 0.28) both can install
+to the same locations using the "install_base" concept.  See
+L<ExtUtils::MakeMaker/INSTALL_BASE> for details.  To get MM and MB to
+install to the same location simply set INSTALL_BASE in MM and
+C<--install_base> in MB to the same location.
+
+    perl Makefile.PL INSTALL_BASE=/whatever
+    perl Build.PL    --install_base /whatever
+
+2) Use PREFIX / C<--prefix>
+
+Module::Build 0.28 added support for C<--prefix> which works like
+MakeMaker's PREFIX.
+
+    perl Makefile.PL PREFIX=/whatever
+    perl Build.PL    --prefix /whatever
+
 
 =item How do I keep from installing man pages?
 
@@ -39,17 +88,35 @@ Two ways.  One is to build the module normally...
 
         perl Makefile.PL
         make
+        make test
 
 ...and then set the PERL5LIB environment variable to point at the
 blib/lib and blib/arch directories.
 
 The other is to install the module in a temporary location.
 
-        perl Makefile.PL PREFIX=~/tmp LIB=~/tmp/lib/perl
+        perl Makefile.PL INSTALL_BASE=~/tmp
+        make
+        make test
+        make install
 
-And then set PERL5LIB to F<~/tmp/lib/perl>.  This works well when you have
-multiple modules to work with.  It also ensures that the module goes
-through its full installation process which may modify it.
+And then set PERL5LIB to F<~/tmp/lib/perl5>.  This works well when you
+have multiple modules to work with.  It also ensures that the module
+goes through its full installation process which may modify it.
+
+=item PREFIX vs INSTALL_BASE from Module::Build::Cookbook
+
+The behavior of PREFIX is complicated and depends closely on how your
+Perl is configured. The resulting installation locations will vary from
+machine to machine and even different installations of Perl on the same machine.
+Because of this, its difficult to document where prefix will place your modules.
+
+In contrast, INSTALL_BASE has predictable, easy to explain installation locations.
+Now that Module::Build and MakeMaker both have INSTALL_BASE there is little reason
+to use PREFIX other than to preserve your existing installation locations. If you
+are starting a fresh Perl installation we encourage you to use INSTALL_BASE. If
+you have an existing installation installed via PREFIX, consider moving it to an
+installation structure matching INSTALL_BASE and using that instead.
 
 =back
 
@@ -115,23 +182,35 @@ by hand is a pain and you often forget.
 Simplest way to do it automatically is to use your version control
 system's revision number (you are using version control, right?).
 
-In CVS, RCS and SVN you use $Revision: 1.3 $ (see the documentation of your
-version control system for details) writing it like so:
+In CVS, RCS and SVN you use $Revision: 1.4 $ (see the documentation of your
+version control system for details).  Every time the file is checked
+in the $Revision: 1.4 $ will be updated, updating your $VERSION.
 
-    $VERSION = sprintf "%d.%03d", q$Revision: 1.3 $ =~ /(\d+)/g;
+SVN uses a simple integer for $Revision: 1.4 $ so you can adapt it for your
+$VERSION like so:
 
-Every time the file is checked in the $Revision: 1.3 $ will be updated,
-updating your $VERSION.
+    ($VERSION) = q$Revision: 1.4 $ =~ /(\d+)/;
 
-In CVS version 1.9 is followed by 1.10.  Since CPAN compares version
-numbers numerically we use a sprintf() to convert 1.9 to 1.009 and
-1.10 to 1.010 which compare properly.
+In CVS and RCS version 1.9 is followed by 1.10.  Since CPAN compares
+version numbers numerically we use a sprintf() to convert 1.9 to 1.009
+and 1.10 to 1.010 which compare properly.
 
-If branches are involved (ie. $Revision: 1.3 $) its a little more
+    $VERSION = sprintf "%d.%03d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/g;
+
+If branches are involved (ie. $Revision: 1.4 $) its a little more
 complicated.
 
     # must be all on one line or MakeMaker will get confused.
-    $VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+    $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+
+In SVN, $Revision: 1.4 $ should be the same for every file in the project so
+they would all have the same $VERSION.  CVS and RCS have a different
+$Revision: 1.4 $ per file so each file will have a differnt $VERSION.
+Distributed version control systems, such as SVK, may have a different
+$Revision: 1.4 $ based on who checks out the file leading to a different $VERSION
+on each machine!  Finally, some distributed version control systems, such
+as darcs, have no concept of revision number at all.
+
 
 =item What's this F<META.yml> thing and how did it get in my F<MANIFEST>?!
 
@@ -140,6 +219,54 @@ automatically generated as part of the 'distdir' target (and thus
 'dist').  See L<ExtUtils::MakeMaker/"Module Meta-Data">.
 
 To shut off its generation, pass the C<NO_META> flag to C<WriteMakefile()>.
+
+
+=item How do I delete everything not in my F<MANIFEST>?
+
+Some folks are surpried that C<make distclean> does not delete
+everything not listed in their MANIFEST (thus making a clean
+distribution) but only tells them what they need to delete.  This is
+done because it is considered too dangerous.  While developing your
+module you might write a new file, not add it to the MANIFEST, then
+run a C<distclean> and be sad because your new work was deleted.
+
+If you really want to do this, you can use
+C<ExtUtils::Manifest::manifind()> to read the MANIFEST and File::Find
+to delete the files.  But you have to be careful.  Here's a script to
+do that.  Use at your own risk.  Have fun blowing holes in your foot.
+
+    #!/usr/bin/perl -w
+    
+    use strict;
+    
+    use File::Spec;
+    use File::Find;
+    use ExtUtils::Manifest qw(maniread);
+    
+    my %manifest = map  {( $_ => 1 )}
+                   grep { File::Spec->canonpath($_) }
+                        keys %{ maniread() };
+
+    if( !keys %manifest ) {
+        print "No files found in MANIFEST.  Stopping.\n";
+        exit;
+    }
+    
+    find({
+          wanted   => sub {
+              my $path = File::Spec->canonpath($_);
+    
+              return unless -f $path;
+              return if exists $manifest{ $path };
+    
+              print "unlink $path\n";
+              unlink $path;
+          },
+          no_chdir => 1
+         },
+         "."
+    );
+
 
 =back
 
@@ -151,7 +278,7 @@ To shut off its generation, pass the C<NO_META> flag to C<WriteMakefile()>.
 
 XS code is very sensitive to the module version number and will
 complain if the version number in your Perl module doesn't match.  If
-you change your module's version # without reruning Makefile.PL the old
+you change your module's version # without rerunning Makefile.PL the old
 version number will remain in the Makefile causing the XS code to be built
 with the wrong number.
 
@@ -270,7 +397,7 @@ The following four files sum up all the details discussed so far.
 
 And of course a very basic test:
 
-  test.pl:
+  t/cool.t:
   --------
   use Test;
   BEGIN { plan tests => 1 };

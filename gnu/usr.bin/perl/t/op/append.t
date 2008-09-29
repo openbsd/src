@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: append.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:36 $
-
 print "1..13\n";
 
 $a = 'ab' . 'c';	# compile time

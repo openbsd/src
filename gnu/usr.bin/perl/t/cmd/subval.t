@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: subval.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:13 $
-
 sub foo1 {
     'true1';
     if ($_[0]) { 'true2'; }

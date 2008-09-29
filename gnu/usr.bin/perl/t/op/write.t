@@ -58,7 +58,7 @@ for my $tref ( @NumTests ){
 my $bas_tests = 20;
 
 # number of tests in section 3
-my $hmb_tests = 37;
+my $hmb_tests = 39;
 
 printf "1..%d\n", $bas_tests + $num_tests + $hmb_tests;
 
@@ -328,7 +328,7 @@ else
     { print "not ok 11\n"; }
 
 {
-    our $el;
+    my $el;
     format OUT12 =
 ok ^<<<<<<<<<<<<<<~~ # sv_chop() naze
 $el
@@ -526,6 +526,22 @@ if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'dos' || $^O eq 'MacOS' ||
 
 use strict;	# Amazed that this hackery can be made strict ...
 
+# DAPM. Exercise a couple of error codepaths
+
+{
+    local $~ = '';
+    eval { write };
+    print "not " unless $@ and $@ =~ /Not a format reference/;
+    print "ok $test - Not a format reference\n";
+    $test++;
+
+    $~ = "NOSUCHFORMAT";
+    eval { write };
+    print "not " unless $@ and $@ =~ /Undefined format/;
+    print "ok $test - Undefined format\n";
+    $test++;
+}
+
 # Just a complete test for format, including top-, left- and bottom marging
 # and format detection through glob entries
 
@@ -597,7 +613,7 @@ if ($opened) {
 	}
     }
     close FROM_CHILD;
-    print + (@data?"not ":""), "ok ", $test++, " - too litle output\n";
+    print + (@data?"not ":""), "ok ", $test++, " - too little output\n";
     exit;
 }
 

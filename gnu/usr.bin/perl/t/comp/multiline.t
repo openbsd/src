@@ -1,6 +1,6 @@
 #!./perl
 
-BEGIN: {
+BEGIN {
     chdir 't';
     @INC = '../lib';
     require './test.pl';

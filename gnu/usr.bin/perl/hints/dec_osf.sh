@@ -60,6 +60,42 @@
 
 cc=${cc:-cc}
 
+# Intentional leading tabs.
+	myosvers="`/usr/sbin/sizer -v 2>/dev/null || uname -r`"
+	unamer="`uname -r`"
+
+# Fancy compiler suites use optimising linker as well as compiler.
+# <spider@Orb.Nashua.NH.US>
+case "$unamer" in
+*[123].*)	# old loader
+		lddlflags="$lddlflags -O3"
+		;;
+*)            if $test "X$optimize" = "X$undef"; then
+                      lddlflags="$lddlflags -msym"
+              else
+		  case "$myosvers" in
+		  *4.0D*)
+		      # QAR 56761: -O4 + .so may produce broken code,
+		      # fixed in 4.0E or better.
+		      ;;
+		  *)
+                      lddlflags="$lddlflags $optimize"
+		      ;;
+		  esac
+		  # -msym: If using a sufficiently recent /sbin/loader,
+		  # keep the module symbols with the modules.
+                  lddlflags="$lddlflags -msym $_lddlflags_strict_ansi"
+              fi
+		;;
+esac
+# Yes, the above loses if gcc does not use the system linker.
+# If that happens, let me know about it. <jhi@iki.fi>
+
+# Because there is no other handy way to recognize 3.X.
+case "$unamer" in
+*3.*)	ccflags="$ccflags -DDEC_OSF1_3_X" ;;
+esac
+
 case "`$cc -v 2>&1 | grep cc`" in
 *gcc*) isgcc=gcc ;;
 esac
@@ -71,7 +107,7 @@ esac
 case "$isgcc" in
 gcc)	if [ "X$gccversion" = "X" ]; then
 	    # Done too late in Configure if hinted
-	    gccversion=`$cc --version | sed 's/.*(GCC) *//'`
+	    gccversion=`$cc -dumpversion`
 	fi
 	set $gccversion
 	if test "$1" -lt 2 -o \( "$1" -eq 2 -a \( "$2" -lt 95 -o \( "$2" -eq 95 -a "$3" -lt 3 \) \) \); then
@@ -113,8 +149,8 @@ EOF
 int main() { return 0; }
 EOF
 	ccversion=`cc -V | awk '/(Compaq|DEC) C/ {print $3}' | grep '^V'`
-    	# the main point is the '-v' flag of 'cc'.
-       	case "`cc -v -c try.c 2>&1`" in
+	# the main point is the '-v' flag of 'cc'.
+	case "`cc -v -c try.c 2>&1`" in
 	*/gemc_cc*)	# we have the new DEC GEM CC
 			_DEC_cc_style=new
 			;;
@@ -127,7 +163,7 @@ EOF
 	# but even then the lddlflags needs to stay -std1.
 	# If it is not, we must use -std1 for both flags.
 	#
-       	case "`cc -c99 try.c 2>&1`" in
+	case "`cc -c99 try.c 2>&1`" in
 	*"-c99: Unknown flag"*)
 		_ccflags_strict_ansi="-std1"
 		;;
@@ -152,7 +188,10 @@ EOF
 	_lddlflags_strict_ansi="-std1"
 	# -no_ansi_alias because Perl code is not that strict
 	# (also gcc uses by default -fno-strict-aliasing).
-	_ccflags_strict_ansi="$_ccflags_strict_ansi -no_ansi_alias"
+	case "$unamer" in
+	*[1234].*) ;;
+	*5.*)	_ccflags_strict_ansi="$_ccflags_strict_ansi -no_ansi_alias" ;;
+	esac
 	# Cleanup.
 	rm -f try.c try.o
 	;;
@@ -160,6 +199,18 @@ esac
 
 # Be nauseatingly ANSI
 ccflags="$ccflags $_ccflags_strict_ansi"
+
+# g++ needs a lot of definitions to see the same set of
+# prototypes from <unistd.h> et alia as cxx/cc see.
+# Note that we cannot define _XOPEN_SOURCE_EXTENDED or
+# its moral equivalent, _XOPEN_SOURCE=500 (which would
+# define a lot of the required prototypes for us), because
+# the gcc-processed version of <sys/wait.h> contains fatally
+# conflicting prototypes for wait3().  The _SOCKADDR_LEN is
+# needed to get struct sockaddr and struct sockaddr_in to align.
+case "$cc" in
+*g++*) ccflags="$ccflags -D_XOPEN_SOURCE -D_OSF_SOURCE -D_AES_SOURCE -D_BSD -D_POSIX_C_SOURCE=199309L -D_POSIX_PII_SOCKET -D_SOCKADDR_LEN" ;;
+esac
 
 # for gcc the Configure knows about the -fpic:
 # position-independent code for dynamic loading
@@ -172,8 +223,18 @@ case "$optimize" in
 	*)	case "$_DEC_cc_style" in
 		new)	optimize='-O4'			;;
 		old)	optimize='-O2 -Olimit 3200'	;;
-	    	esac
+		esac
 		ccflags="$ccflags -D_INTRINSICS"
+		;;
+	esac
+	;;
+esac
+
+case "$isgcc" in
+gcc)	;;
+*)	case "$optimize" in
+	*-O*)	# With both -O and -g, the -g must be -g3.
+		optimize="`echo $optimize | sed 's/-g[1-4]*/-g3/'`"
 		;;
 	esac
 	;;
@@ -183,6 +244,7 @@ esac
 case "$isgcc" in
 gcc) #  gcc 3.2.1 wants a lot of memory for -O3'ing toke.c
 cat >try.c <<EOF
+#include <stdio.h>
 #include <sys/resource.h>
 
 int main ()
@@ -267,47 +329,12 @@ libswanted="`echo $libswanted | sed -e 's/ ndbm / /'`"
 # the basic lddlflags used always
 lddlflags='-shared -expect_unresolved "*"'
 
-# Intentional leading tab.
-	myosvers="`/usr/sbin/sizer -v 2>/dev/null || uname -r`"
-
-# Fancy compiler suites use optimising linker as well as compiler.
-# <spider@Orb.Nashua.NH.US>
-case "`uname -r`" in
-*[123].*)	# old loader
-		lddlflags="$lddlflags -O3"
-		;;
-*)            if $test "X$optimize" = "X$undef"; then
-                      lddlflags="$lddlflags -msym"
-              else
-		  case "$myosvers" in
-		  *4.0D*)
-		      # QAR 56761: -O4 + .so may produce broken code,
-		      # fixed in 4.0E or better.
-		      ;;
-		  *)    
-                      lddlflags="$lddlflags $optimize"
-		      ;;
-		  esac
-		  # -msym: If using a sufficiently recent /sbin/loader,
-		  # keep the module symbols with the modules.
-                  lddlflags="$lddlflags -msym $_lddlflags_strict_ansi"
-              fi
-		;;
-esac
-# Yes, the above loses if gcc does not use the system linker.
-# If that happens, let me know about it. <jhi@iki.fi>
-
-# Because there is no other handy way to recognize 3.X.
-case "`uname -r`" in
-*3.*)	ccflags="$ccflags -DDEC_OSF1_3_X" ;;
-esac
-
 # If debugging or (old systems and doing shared)
 # then do not strip the lib, otherwise, strip.
 # As noted above the -DDEBUGGING is added automagically by Configure if -g.
 case "$optimize" in
 	*-g*) ;; # left intentionally blank
-*)	case "`uname -r`" in
+*)	case "$unamer" in
 	*[123].*)
 		case "$useshrplib" in
 		false|undef|'')	lddlflags="$lddlflags -s"	;;
@@ -315,8 +342,8 @@ case "$optimize" in
 		;;
         *) lddlflags="$lddlflags -s"
 	        ;;
-    	esac
-    	;;
+	esac
+	;;
 esac
 
 #
@@ -348,7 +375,7 @@ esac
 # The off_t is already 8 bytes, so we do have largefileness.
 
 cat > UU/usethreads.cbu <<'EOCBU'
-# This script UU/usethreads.cbu will get 'called-back' by Configure 
+# This script UU/usethreads.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use threads.
 case "$usethreads" in
 $define|true|[yY]*)
@@ -356,10 +383,10 @@ $define|true|[yY]*)
 	# cannot be used to compile a threaded Perl.
 	cat > pthread.c <<EOF
 #include <pthread.h>
-extern int foo;	
+extern int foo;
 EOF
 	$cc -c pthread.c 2> pthread.err
-	if grep -q "unrecognized compiler" pthread.err; then
+	if egrep -q "unrecognized compiler|syntax error" pthread.err; then
 	    cat >&4 <<EOF
 ***
 *** I'm sorry but your C compiler ($cc) cannot be used to
@@ -378,13 +405,13 @@ EOF
 	gcc)
 	    ccflags="-D_REENTRANT $ccflags"
 	    ;;
-	*)  case "`uname -r`" in
+	*)  case "$unamer" in
 	    *[123].*)	ccflags="-threads $ccflags" ;;
 	    *)          ccflags="-pthread $ccflags" ;;
 	    esac
 	    ;;
-	esac    
-	case "`uname -r`" in
+	esac
+	case "$unamer" in
 	*[123].*) libswanted="$libswanted pthreads mach exc c_r" ;;
 	*)        libswanted="$libswanted pthread exc" ;;
 	esac
@@ -410,7 +437,7 @@ case "$usemallocwrap" in
 esac
 
 cat > UU/uselongdouble.cbu <<'EOCBU'
-# This script UU/uselongdouble.cbu will get 'called-back' by Configure 
+# This script UU/uselongdouble.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use long doubles.
 case "$uselongdouble" in
 $define|true|[yY]*)
@@ -480,7 +507,7 @@ do
 	    '') LD_LIBRARY_PATH=$p                  ;;
 	    *)  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$p ;;
 	    esac
-	fi	
+	fi
 done
 case "$LD_LIBRARY_PATH" in
 "$old_LD_LIBRARY_PATH") ;;
@@ -496,7 +523,7 @@ esac
 #
 
 unset _DEC_cc_style
-    
+
 #
 # History:
 #
@@ -536,14 +563,14 @@ unset _DEC_cc_style
 #	* Restructuring Spider's suggestions.
 #
 #	* Older Digital UNIXes cannot handle -Olimit ... for $lddlflags.
-#	
+#
 #	* ld -s cannot be used in older Digital UNIXes when doing shared.
 #
 #
 #       21-Feb-1997 Spider Boardman <spider@Orb.Nashua.NH.US>
 #
 #	* -hidden removed.
-#	
+#
 #	* -DSTANDARD_C removed.
 #
 #	* -D_INTRINSICS added. (that -fast does not seem to buy much confirmed)
@@ -609,7 +636,7 @@ unset _DEC_cc_style
 #
 #	* now 'dl' is always removed from libswanted. Not only if
 #	  optimize is an empty string.
-#	 
+#
 #
 #	17-Jan-1997 Achim Bohnet <ach@rosat.mpe-garching.mpg.de>
 #
@@ -619,10 +646,10 @@ unset _DEC_cc_style
 #	  Because the dlopen, dlclose,... calls are in the
 #	  C library it not necessary at all to check for the
 #	  dl library.  Therefore dl is removed from libswanted.
-#	
+#
 #
 #	1-Jan-1997 Achim Bohnet <ach@rosat.mpe-garching.mpg.de>
-#	
+#
 #	* Set -Olimit to 3200 because perl_yylex.c got too big
 #	  for the optimizer.
 #

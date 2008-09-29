@@ -249,31 +249,6 @@ dont_use_nlink=define
 
 cat <<EOM >&4
 
-During Configure, you may see the message
-
-*** WHOA THERE!!! ***
-    The recommended value for \$d_msg on this machine was "undef"!
-    Keep the recommended value? [y]
-
-as well as similar messages concerning \$d_sem and \$d_shm.  Select the
-default answers: MachTen 4.1 appears to provide System V IPC support,
-but it is incomplete and buggy: perl should be built without it.
-Similar considerations apply to memory mapping of files, controlled
-by \$d_mmap and \$d_munmap.
-
-Similarly, when you see
-
-*** WHOA THERE!!! ***
-    The recommended value for \$d_vfork on this machine was "define"!
-    Keep the recommended value? [y]
-
-select the default answer: vfork() works, and avoids expensive data
-copying.
-
-You may also see "WHOA THERE!!!" messages concerning \$d_getspnam.
-Select the default answer: MachTen's support for shadow password
-file access is incomplete, and should not be used.
-
 At the end of Configure, you will see a harmless message
 
 Hmm...You had some extra variables I don't know about...I'll try to keep 'em.

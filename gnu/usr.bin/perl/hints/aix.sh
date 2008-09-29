@@ -109,7 +109,7 @@ case "$cc" in
 	ccdlflags='-Xlinker'
 	if [ "X$gccversion" = "X" ]; then
 	    # Done too late in Configure if hinted
-	    gccversion=`$cc --version | sed 's/.*(GCC) *//'`
+	    gccversion=`$cc -dumpversion`
 	    fi
 	;;
 
@@ -309,8 +309,36 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		;;
 	    esac
 
+	# -bmaxdata:0x80000000
+	# - This increases the size of heap memory available to perl.
+	#   Default is 256 MB, which sounds large but caused a software
+	#   vendor problems. So this sets heap to 2 GB maximum. Anything
+	#   higher and you'd want to consider 64 bit perl.
+	# - NOTE however, that setting this in 64bit mode will limit your
+	#   amount of available memory to 2GB, so we set this only in
+	#   32bit mode to avoid future problems a la "should be enough
+	#   for everyone" ...
+	#
+	case "$use64bitall" in
+	    $define|true|[yY]*)
+		:
+		;;
+	    *)
+	    	ldflags="$ldflags -bmaxdata:0x80000000"
+		;;
+	    esac
+
 	case "$gccversion" in
-	    '') ;;
+	    '') # Not using gcc.
+	    	# Due to calling $cc without $cflags when linking some
+		# binaries we need to hardwire $cc to the right mode.
+		# The correct fix would be to have Makefile.SH not set
+		# CLDFLAGS from $ldflags ...
+		case "$use64bitall" in
+		    $define|true|[yY]*) cc="$cc -q64"	;;
+		    *)			cc="$cc -q32"	;;
+		    esac
+		;;
 	    *)  # Remove xlc-specific -qflags.
 		ccflags="`echo $ccflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"
 		ldflags="`echo $ldflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"
@@ -319,9 +347,18 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		ldflags="`echo ' '$ldflags | sed -e 's@ -b@ -Wl,-b@g'`"
 		lddlflags="`echo ' '$lddlflags | sed -e 's@ -b@ -Wl,-b@g'`"
 		lddlflags="`echo ' '$lddlflags | sed -e 's@ -G @ -Wl,-G @g'`"
+
+	    	# Due to calling $cc without $cflags when linking some
+		# binaries we need to hardwire $cc to the right mode.
 		case "$use64bitall" in
-		    $define|true|[yY]*) ld="$cc -maix64"	;;
-		    *)			ld="$cc"		;;
+		    $define|true|[yY]*)
+			cc="$cc -maix64"
+			ld="$cc"
+			;;
+		    *)
+			cc="$cc -maix32"
+			ld="$cc"
+			;;
 		    esac
 		echo >&4 "(using ccflags   $ccflags)"
 		echo >&4 "(using ldflags   $ldflags)"
@@ -401,13 +438,10 @@ EOM
 	trylist="`echo $trylist | sed -e 's@^ar @@' -e 's@ ar @ @g' -e 's@ ar$@@'`"
 	ar="ar -X64"
 	nm_opt="-X64 $nm_opt"
-	# Note: Placing the 'qacflags' variable into the 'ldflags' string
-	# is NOT a typo.  ldflags is passed to the C compiler for final
-	# linking, and it wants -q64 (-b64 is for ld only!).
 	case "$qacflags$qaldflags$qalibs" in
 	    '') ;;
 	    *)  ccflags="$ccflags $qacflags"
-		ldflags="$ldflags $qacflags"
+		ldflags="$ldflags"
 		lddlflags="$qaldflags $lddlflags"
 		libswanted="$libswanted $qalibs"
 		;;
@@ -435,14 +469,9 @@ if test $usenativedlopen = 'true' ; then
     #			    ".so"-suffix libraries as well as ".a" suffix
     #			    libraries. AIX allows both .so and .a libraries to
     #			    contain dynamic shared objects.
-    # -bmaxdata:0x80000000  This increases the size of heap memory available
-    #			    to perl. Default is 256 MB, which sounds large but
-    #			    caused a software vendor problems. So this sets
-    #			    heap to 2 GB maximum. Anything higher and you'd
-    #			    want to consider 64 bit perl.
     case "$cc" in
-	*gcc*) ldflags="$ldflags -Wl,-brtl -Wl,-bdynamic -Wl,-bmaxdata:0x80000000" ;;
-	*)     ldflags="$ldflags -brtl -bdynamic -bmaxdata:0x80000000" ;;
+	*gcc*) ldflags="$ldflags -Wl,-brtl -Wl,-bdynamic" ;;
+	*)     ldflags="$ldflags -brtl -bdynamic" ;;
 	esac
 elif test -f /lib/libC.a -a X"`$cc -v 2>&1 | grep gcc`" = X; then
     # If the C++ libraries, libC and libC_r, are available we will

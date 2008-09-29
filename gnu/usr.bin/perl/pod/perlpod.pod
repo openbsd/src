@@ -214,7 +214,7 @@ formatter that can use that format will use the region, otherwise it
 will be completely ignored.
 
 A command "=begin I<formatname>", some paragraphs, and a
-command "=end I<formatname>", mean that the text/data inbetween
+command "=end I<formatname>", mean that the text/data in between
 is meant for formatters that understand the special format
 called I<formatname>.  For example,
 
@@ -424,8 +424,7 @@ C<LE<lt>Perl Error Messages|perldiagE<gt>>
 C<LE<lt>text|name/"sec"E<gt>> or C<LE<lt>text|name/secE<gt>>
 
 Link this text to that section in that manual page.  E.g.,
-C<LE<lt>SWITCH statements|perlsyn/"Basic BLOCKs and Switch
-Statements"E<gt>>
+C<LE<lt>postfix "if"|perlsyn/"Statement Modifiers"E<gt>>
 
 =item *
 

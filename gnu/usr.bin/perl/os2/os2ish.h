@@ -106,7 +106,7 @@
 # undef I_SYS_UN
 #endif 
 
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+#ifdef USE_ITHREADS
 
 #define do_spawn(a)      os2_do_spawn(aTHX_ (a))
 #define do_aspawn(a,b,c) os2_do_aspawn(aTHX_ (a),(b),(c))
@@ -209,12 +209,10 @@ int pthread_create(pthread_t *tid, const pthread_attr_t *attr,
 
 #define THREADS_ELSEWHERE
 
-#else /* USE_5005THREADS */
+#else /* USE_ITHREADS */
 
 #define do_spawn(a)      os2_do_spawn(a)
 #define do_aspawn(a,b,c) os2_do_aspawn((a),(b),(c))
-
-#endif /* USE_5005THREADS */
  
 void Perl_OS2_init(char **);
 void Perl_OS2_init3(char **envp, void **excH, int flags);
@@ -225,27 +223,31 @@ void Perl_OS2_term(void **excH, int exitstatus, int flags);
 /* These ones should be in the same block as PERL_SYS_TERM() */
 #ifdef PERL_CORE
 
-#  define PERL_SYS_INIT3(argcp, argvp, envp)	\
+#  define PERL_SYS_INIT3_BODY(argcp, argvp, envp)	\
   { void *xreg[2];				\
     MALLOC_CHECK_TAINT(*argcp, *argvp, *envp)	\
     _response(argcp, argvp);			\
     _wildcard(argcp, argvp);			\
-    Perl_OS2_init3(*envp, xreg, 0)
+    Perl_OS2_init3(*envp, xreg, 0);		\
+    PERLIO_INIT
 
-#  define PERL_SYS_INIT(argcp, argvp)  {	\
+#  define PERL_SYS_INIT_BODY(argcp, argvp)  {	\
   { void *xreg[2];				\
     _response(argcp, argvp);			\
     _wildcard(argcp, argvp);			\
-    Perl_OS2_init3(NULL, xreg, 0)
+    Perl_OS2_init3(NULL, xreg, 0);		\
+    PERLIO_INIT
 
 #else  /* Compiling embedded Perl or Perl extension */
 
-#  define PERL_SYS_INIT3(argcp, argvp, envp)	\
+#  define PERL_SYS_INIT3_BODY(argcp, argvp, envp)	\
   { void *xreg[2];				\
-    Perl_OS2_init3(*envp, xreg, 0)
-#  define PERL_SYS_INIT(argcp, argvp)	{	\
+    Perl_OS2_init3(*envp, xreg, 0);		\
+    PERLIO_INIT
+#  define PERL_SYS_INIT_BODY(argcp, argvp)	{	\
   { void *xreg[2];				\
-    Perl_OS2_init3(NULL, xreg, 0)
+    Perl_OS2_init3(NULL, xreg, 0);		\
+    PERLIO_INIT
 #endif
 
 #define FORCE_EMX_DEINIT_EXIT		1
@@ -254,13 +256,14 @@ void Perl_OS2_term(void **excH, int exitstatus, int flags);
 
 #define PERL_SYS_TERM2(xreg,flags)					\
   Perl_OS2_term(xreg, 0, flags);					\
+  PERLIO_TERM;								\
   MALLOC_TERM
 
 #define PERL_SYS_TERM1(xreg)						\
      Perl_OS2_term(xreg, 0, FORCE_EMX_DEINIT_RUN_ATEXIT)
 
-/* This one should come in pair with PERL_SYS_INIT() and in the same block */
-#define PERL_SYS_TERM()							\
+/* This one should come in pair with PERL_SYS_INIT_BODY() and in the same block */
+#define PERL_SYS_TERM_BODY()							\
      PERL_SYS_TERM1(xreg);						\
   }
 
@@ -268,7 +271,7 @@ void Perl_OS2_term(void **excH, int exitstatus, int flags);
 #  define PERL_CALLCONV _System
 #endif
 
-/* #define PERL_SYS_TERM() STMT_START {	\
+/* #define PERL_SYS_TERM_BODY() STMT_START {	\
     if (Perl_HAB_set) WinTerminate(Perl_hab);	} STMT_END */
 
 #define dXSUB_SYS OS2_XS_init()
@@ -309,7 +312,10 @@ void *sys_alloc(int size);
 #define TMPPATH1 "plXXXXXX"
 extern const char *tmppath;
 PerlIO *my_syspopen(pTHX_ char *cmd, char *mode);
-/* Cannot prototype with I32 at this point. */
+#ifdef PERL_CORE
+/* Cannot prototype with I32, SV at this point (used in x2p too). */
+PerlIO *my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args);
+#endif
 int my_syspclose(PerlIO *f);
 FILE *my_tmpfile (void);
 char *my_tmpnam (char *);

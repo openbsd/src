@@ -1,9 +1,7 @@
 package AutoSplit;
 
-use 5.006_001;
 use Exporter ();
 use Config qw(%Config);
-use Carp qw(carp);
 use File::Basename ();
 use File::Path qw(mkpath);
 use File::Spec::Functions qw(curdir catfile catdir);
@@ -11,7 +9,7 @@ use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Verbose, $Keep, $Maxlen,
     $CheckForAutoloader, $CheckModTime);
 
-$VERSION = "1.04";
+$VERSION = "1.05";
 @ISA = qw(Exporter);
 @EXPORT = qw(&autosplit &autosplit_lib_modules);
 @EXPORT_OK = qw($Verbose $Keep $Maxlen $CheckForAutoloader $CheckModTime);
@@ -147,15 +145,35 @@ if (defined (&Dos::UseLFN)) {
 }
 my $Is_VMS = ($^O eq 'VMS');
 
-# allow checking for valid ': attrlist' attachments
-# (we use 'our' rather than 'my' here, due to the rather complex and buggy
-# behaviour of lexicals with qr// and (??{$lex}) )
-our $nested;
-$nested = qr{ \( (?: (?> [^()]+ ) | (??{ $nested }) )* \) }x;
-our $one_attr = qr{ (?> (?! \d) \w+ (?:$nested)? ) (?:\s*\:\s*|\s+(?!\:)) }x;
-our $attr_list = qr{ \s* : \s* (?: $one_attr )* }x;
+# allow checking for valid ': attrlist' attachments.
+# extra jugglery required to support both 5.8 and 5.9/5.10 features
+# (support for 5.8 required for cross-compiling environments)
 
-
+my $attr_list = 
+  $] >= 5.009005 ?
+  eval <<'__QR__'
+  qr{
+    \s* : \s*
+    (?:
+	# one attribute
+	(?> # no backtrack
+	    (?! \d) \w+
+	    (?<nested> \( (?: [^()]++ | (?&nested)++ )*+ \) ) ?
+	)
+	(?: \s* : \s* | \s+ (?! :) )
+    )*
+  }x
+__QR__
+  :
+  do {
+    # In pre-5.9.5 world we have to do dirty tricks.
+    # (we use 'our' rather than 'my' here, due to the rather complex and buggy
+    # behaviour of lexicals with qr// and (??{$lex}) )
+    our $trick1; # yes, cannot our and assign at the same time.
+    $trick1 = qr{ \( (?: (?> [^()]+ ) | (??{ $trick1 }) )* \) }x;
+    our $trick2 = qr{ (?> (?! \d) \w+ (?:$trick1)? ) (?:\s*\:\s*|\s+(?!\:)) }x;
+    qr{ \s* : \s* (?: $trick2 )* }x;
+  };
 
 sub autosplit{
     my($file, $autodir,  $keep, $ckal, $ckmt) = @_;
@@ -168,15 +186,19 @@ sub autosplit{
     autosplit_file($file, $autodir, $keep, $ckal, $ckmt);
 }
 
+sub carp{
+    require Carp;
+    goto &Carp::carp;
+}
 
 # This function is used during perl building/installation
 # ./miniperl -e 'use AutoSplit; autosplit_lib_modules(@ARGV)' ...
 
-sub autosplit_lib_modules{
+sub autosplit_lib_modules {
     my(@modules) = @_; # list of Module names
-
-    while(defined($_ = shift @modules)){
-    	while (m#(.*?[^:])::([^:].*)#) { # in case specified as ABC::XYZ
+    local $_; # Avoid clobber.
+    while (defined($_ = shift @modules)) {
+	while (m#([^:]+)::([^:].*)#) { # in case specified as ABC::XYZ
 	    $_ = catfile($1, $2);
 	}
 	s|\\|/|g;		# bug in ksh OS/2
@@ -405,14 +427,14 @@ EOT
 		print "  deleting $file\n" if ($Verbose>=2);
 		my($deleted,$thistime);  # catch all versions on VMS
 		do { $deleted += ($thistime = unlink $file) } while ($thistime);
-		carp "Unable to delete $file: $!" unless $deleted;
+		carp ("Unable to delete $file: $!") unless $deleted;
 	    }
 	    closedir($outdir);
 	}
     }
 
     open(my $ts,">$al_idx_file") or
-	carp "AutoSplit: unable to create timestamp file ($al_idx_file): $!";
+	carp ("AutoSplit: unable to create timestamp file ($al_idx_file): $!");
     print $ts "# Index created by AutoSplit for $filename\n";
     print $ts "#    (file acts as timestamp)\n";
     $last_package = '';

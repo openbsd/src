@@ -51,8 +51,12 @@ as file descriptors.
 
 open3() returns the process ID of the child process.  It doesn't return on
 failure: it just raises an exception matching C</^open3:/>.  However,
-C<exec> failures in the child are not detected.  You'll have to 
-trap SIGPIPE yourself.
+C<exec> failures in the child (such as no such file or permission denied),
+are just reported to CHLD_ERR, as it is not possible to trap them.
+
+If the child process dies for any reason, the next write to CHLD_IN is
+likely to generate a SIGPIPE in the parent, which is fatal by default.
+So you may wish to handle this signal.
 
 Note if you specify C<-> as the command, in an analogous fashion to
 C<open(FOO, "-|")> the child process will just be the forked Perl
@@ -83,6 +87,21 @@ over source code being run in the child process, you can't control
 what it does with pipe buffering.  Thus you can't just open a pipe to
 C<cat -v> and continually read and write a line from it.
 
+=head1 See Also
+
+=over 4
+
+=item L<IPC::Open2>
+
+Like Open3 but without STDERR catpure.
+
+=item L<IPC::Run>
+
+This is a CPAN module that has better error handling and more facilities
+than Open3.
+
+=back
+
 =head1 WARNING
 
 The order of arguments differs from that of open2().
@@ -97,7 +116,7 @@ The order of arguments differs from that of open2().
 # allow fd numbers to be used, by Frank Tobin
 # allow '-' as command (c.f. open "-|"), by Adam Spiers <perl@adamspiers.org>
 #
-# $Id: Open3.pm,v 1.9 2006/03/28 19:23:07 millert Exp $
+# $Id: Open3.pm,v 1.10 2008/09/29 17:36:12 millert Exp $
 #
 # usage: $pid = open3('wtr', 'rdr', 'err' 'some cmd and args', 'optarg', ...);
 #
@@ -163,6 +182,10 @@ sub _open3 {
     local $Me = shift;
     my($package, $dad_wtr, $dad_rdr, $dad_err, @cmd) = @_;
     my($dup_wtr, $dup_rdr, $dup_err, $kidpid);
+
+    if (@cmd > 1 and $cmd[0] eq '-') {
+	croak "Arguments don't make sense when the command is '-'"
+    }
 
     # simulate autovivification of filehandles because
     # it's too ugly to use @_ throughout to make perl do it for us
@@ -237,14 +260,13 @@ sub _open3 {
 	} else {
 	    xopen \*STDERR, ">&STDOUT" if fileno(STDERR) != fileno(STDOUT);
 	}
-	if ($cmd[0] eq '-') {
-	    croak "Arguments don't make sense when the command is '-'"
-	      if @cmd > 1;
-	    return 0;
-	}
+	return 0 if ($cmd[0] eq '-');
 	local($")=(" ");
-	exec @cmd # XXX: wrong process to croak from
-	    or croak "$Me: exec of @cmd failed";
+	exec @cmd or do {
+	    carp "$Me: exec of @cmd failed";
+	    eval { require POSIX; POSIX::_exit(255); };
+	    exit 255;
+	};
     } elsif ($do_spawn) {
 	# All the bookkeeping of coincidence between handles is
 	# handled in spawn_with_handles.

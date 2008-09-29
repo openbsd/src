@@ -78,6 +78,30 @@ case "$osvers" in
 	d_setreuid="$undef"
 	;;
 esac
+case "$osvers" in
+0.9*|1.*|2.*|3.*|4.*)
+	d_getprotoent_r="$undef"
+	d_getprotobyname_r="$undef"
+	d_getprotobynumber_r="$undef"
+	d_setprotoent_r="$undef"
+	d_endprotoent_r="$undef"
+	d_getservent_r="$undef"
+	d_getservbyname_r="$undef"
+	d_getservbyport_r="$undef"
+	d_setservent_r="$undef"
+	d_endservent_r="$undef"
+	d_getprotoent_r_proto="0"
+	d_getprotobyname_r_proto="0"
+	d_getprotobynumber_r_proto="0"
+	d_setprotoent_r_proto="0"
+	d_endprotoent_r_proto="0"
+	d_getservent_r_proto="0"
+	d_getservbyname_r_proto="0"
+	d_getservbyport_r_proto="0"
+	d_setservent_r_proto="0"
+	d_endservent_r_proto="0"
+	;;
+esac
 
 # These are obsolete in any netbsd.
 d_setrgid="$undef"
@@ -89,11 +113,11 @@ usevfork=true
 # This is there but in machine/ieeefp_h.
 ieeefp_h="define"
 
-# This script UU/usethreads.cbu will get 'called-back' by Configure 
-# after it has prompted the user for whether to use threads. 
-cat > UU/usethreads.cbu <<'EOCBU' 
-case "$usethreads" in 
-$define|true|[yY]*) 
+# This script UU/usethreads.cbu will get 'called-back' by Configure
+# after it has prompted the user for whether to use threads.
+cat > UU/usethreads.cbu <<'EOCBU'
+case "$usethreads" in
+$define|true|[yY]*)
 	lpthread=
 	for xxx in pthread; do
 		for yyy in $loclibpth $plibpth $glibpth dummy; do
@@ -118,19 +142,37 @@ $define|true|[yY]*)
 		fi
 	done
 	if test "X$lpthread" != X; then
-		# Add -lpthread. 
-		libswanted="$libswanted $lpthread" 
+		# Add -lpthread.
+		libswanted="$libswanted $lpthread"
 		# There is no libc_r as of NetBSD 1.5.2, so no c -> c_r.
 		# This will be revisited when NetBSD gains a native pthreads
 		# implementation.
-        else 
+	else
 		echo "$0: No POSIX threads library (-lpthread) found.  " \
-		     "You may want to install GNU pth.  Aborting." >&4 
-		exit 1 
-        fi
+		     "You may want to install GNU pth.  Aborting." >&4
+		exit 1
+	fi
 	unset lpthread
-        ;; 
-esac 
+
+	# several reentrant functions are embeded in libc, but haven't
+	# been added to the header files yet.  Let's hold off on using
+	# them until they are a valid part of the API
+	case "$osvers" in
+	[012].*|3.[0-1])
+		d_getprotobyname_r=$undef
+		d_getprotobynumber_r=$undef
+		d_getprotoent_r=$undef
+		d_getservbyname_r=$undef
+		d_getservbyport_r=$undef
+		d_getservent_r=$undef
+		d_setprotoent_r=$undef
+		d_setservent_r=$undef
+		d_endprotoent_r=$undef
+		d_endservent_r=$undef ;;
+	esac
+	;;
+
+esac
 EOCBU
 
 # Set sensible defaults for NetBSD: look for local software in

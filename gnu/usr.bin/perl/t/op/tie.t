@@ -447,6 +447,37 @@ EXPECT
 ok
 ########
 
+# TODO [perl #948] cannot meaningfully tie $,
+package TieDollarComma;
+
+sub TIESCALAR {
+     my $pkg = shift;
+     return bless \my $x, $pkg;
+}
+
+sub STORE {
+    my $self = shift;
+    $$self = shift;
+    print "STORE set '$$self'\n";
+}
+
+sub FETCH {
+    my $self = shift;
+    print "FETCH\n";
+    return $$self;
+}
+package main;
+
+tie $,, 'TieDollarComma';
+$, = 'BOBBINS';
+print "join", "things", "up\n";
+EXPECT
+STORE set 'BOBBINS'
+FETCH
+FETCH
+joinBOBBINSthingsBOBBINSup
+########
+
 # test SCALAR method
 package TieScalar;
 
@@ -547,3 +578,63 @@ tie $h, "main";
 print $h,"\n";
 EXPECT
 3.3
+########
+sub TIESCALAR { bless {} }
+sub FETCH { shift()->{i} ++ }
+tie $h, "main";
+print $h.$h;
+EXPECT
+01
+########
+sub TIESCALAR { my $foo = $_[1]; bless \$foo, $_[0] }
+sub FETCH { ${$_[0]} }
+tie my $x, "main", 2;
+tie my $y, "main", 8;
+print $x | $y;
+EXPECT
+10
+########
+# Bug 36267
+sub TIEHASH  { bless {}, $_[0] }
+sub STORE    { $_[0]->{$_[1]} = $_[2] }
+sub FIRSTKEY { my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { each %{$_[0]} }
+sub DELETE   { delete $_[0]->{$_[1]} }
+sub CLEAR    { %{$_[0]} = () }
+$h{b}=1;
+delete $h{b};
+print scalar keys %h, "\n";
+tie %h, 'main';
+$i{a}=1;
+%h = %i;
+untie %h;
+print scalar keys %h, "\n";
+EXPECT
+0
+0
+########
+# Bug 37731
+sub foo::TIESCALAR { bless {value => $_[1]}, $_[0] }
+sub foo::FETCH { $_[0]->{value} }
+tie my $VAR, 'foo', '42';
+foreach my $var ($VAR) {
+    print +($var eq $VAR) ? "yes\n" : "no\n";
+}
+EXPECT
+yes
+########
+sub TIEARRAY { bless [], 'main' }
+{
+    local @a;
+    tie @a, 'main';
+}
+print "tied\n" if tied @a;
+EXPECT
+########
+sub TIEHASH { bless [], 'main' }
+{
+    local %h;
+    tie %h, 'main';
+}
+print "tied\n" if tied %h;
+EXPECT

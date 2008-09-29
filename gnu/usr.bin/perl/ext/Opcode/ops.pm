@@ -33,7 +33,7 @@ ops - Perl pragma to restrict unsafe operations when compiling
 
 =head1 DESCRIPTION
 
-Since the ops pragma currently has an irreversible global effect, it is
+Since the C<ops> pragma currently has an irreversible global effect, it is
 only of significant practical use with the C<-M> option on the command line.
 
 See the L<Opcode> module for information about opcodes, optags, opmasks
@@ -41,7 +41,7 @@ and important information about safety.
 
 =head1 SEE ALSO
 
-Opcode(3), Safe(3), perlrun(3)
+L<Opcode>, L<Safe>, L<perlrun>
 
 =cut
 

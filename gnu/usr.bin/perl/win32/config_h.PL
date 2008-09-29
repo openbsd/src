@@ -2,8 +2,8 @@
 BEGIN { warn "Running ".__FILE__."\n" };
 BEGIN 
  {
-  require "../lib/Config.pm";
-  die "../Config.pm:$@" if $@;
+  require "Config.pm";
+  die "Config.pm:$@" if $@;
   Config::->import;
  }
 use File::Compare qw(compare);
@@ -18,6 +18,7 @@ while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
  }
 
 $opt{CONFIG_H} ||= 'config.h';
+$opt{CORE_DIR} ||= '../lib/CORE';
 
 warn "Writing $opt{CONFIG_H}\n";
 
@@ -30,9 +31,9 @@ $patchlevel = qq["$patchlevel"];
 open(SH,"<$name") || die "Cannot open $name:$!";
 while (<SH>)
  {
-  last if /^sed/;
+  last if /^\s*sed/;
  }
-($term,$file,$pat) = /^sed\s+<<(\S+)\s+>(\S+)\s+(.*)$/;
+($term,$file,$pat) = /^\s*sed\s+<<(\S+)\s+>(\S+)\s+(.*)$/;
 
 $file =~ s/^\$(\w+)$/$opt{$1}/g;
 
@@ -76,9 +77,9 @@ close(H);
 close(SH);
 
 
-chmod(0666,"../lib/CORE/config.h");
-copy("$file.new","../lib/CORE/config.h") || die "Cannot copy:$!";
-chmod(0444,"../lib/CORE/config.h");
+chmod(0666,"$opt{CORE_DIR}/$opt{CONFIG_H}");
+copy("$file.new","$opt{CORE_DIR}/$opt{CONFIG_H}") || die "Cannot copy:$!";
+chmod(0444,"$opt{CORE_DIR}/$opt{CONFIG_H}");
 
 if (compare("$file.new",$file))
  {

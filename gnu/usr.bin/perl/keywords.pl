@@ -1,4 +1,5 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+use strict;
 
 require 'regen_lib.pl';
 safer_unlink ("keywords.h");
@@ -12,7 +13,7 @@ print <<EOM;
  *    keywords.h
  *
  *    Copyright (C) 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2005,
- *    2006, by Larry Wall and others
+ *    2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -25,12 +26,12 @@ EOM
 
 # Read & print data.
 
-$keynum = 0;
+my $keynum = 0;
 while (<DATA>) {
     chop;
     next unless $_;
     next if /^#/;
-    ($keyword) = split;
+    my ($keyword) = split;
     print &tab(5, "#define KEY_$keyword"), $keynum++, "\n";
 }
 
@@ -40,7 +41,7 @@ close KW or die "Error closing keywords.h: $!";
 
 ###########################################################################
 sub tab {
-    local($l, $t) = @_;
+    my ($l, $t) = @_;
     $t .= "\t" x ($l - (length($t) + 1) / 8);
     $t;
 }
@@ -55,6 +56,7 @@ __DATA__
 __END__
 AUTOLOAD
 BEGIN
+UNITCHECK
 CORE
 DESTROY
 END
@@ -68,6 +70,7 @@ atan2
 bind
 binmode
 bless
+break
 caller
 chdir
 chmod
@@ -85,6 +88,7 @@ cos
 crypt
 dbmclose
 dbmopen
+default
 defined
 delete
 die
@@ -141,6 +145,7 @@ getservbyport
 getservent
 getsockname
 getsockopt
+given
 glob
 gmtime
 goto
@@ -218,6 +223,7 @@ rewinddir
 rindex
 rmdir
 s
+say
 scalar
 seek
 seekdir
@@ -252,6 +258,7 @@ sprintf
 sqrt
 srand
 stat
+state
 study
 sub
 substr
@@ -288,6 +295,7 @@ wait
 waitpid
 wantarray
 warn
+when
 while
 write
 x

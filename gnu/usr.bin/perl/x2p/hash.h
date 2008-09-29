@@ -1,6 +1,6 @@
 /*    hash.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1999, 2000,
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2005
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -10,7 +10,7 @@
 #define FILLPCT 60		/* don't make greater than 99 */
 
 #ifdef DOINIT
-char const coeff[] = {
+EXTERN_C char const coeff[] = {
 		61,59,53,47,43,41,37,31,29,23,17,13,11,7,3,1,
 		61,59,53,47,43,41,37,31,29,23,17,13,11,7,3,1,
 		61,59,53,47,43,41,37,31,29,23,17,13,11,7,3,1,
@@ -20,7 +20,7 @@ char const coeff[] = {
 		61,59,53,47,43,41,37,31,29,23,17,13,11,7,3,1,
 		61,59,53,47,43,41,37,31,29,23,17,13,11,7,3,1};
 #else
-extern const char coeff[];
+EXTERN_C const char coeff[];
 #endif
 
 typedef struct hentry HENT;

@@ -65,6 +65,7 @@ ext*)	# Remove ext/ prefix and /pm_to_blib suffix
 	pname=`echo "$extspec" | sed -e 's:^ext/::' -e 's:/pm_to_blib$::' ` ;;
 *::*)	# Convert :: to /
 	pname=`echo "$extspec" | sed -e 's/::/\//g' ` ;;
+*.o)    pname=`echo "$extspec" | sed -e 's/\.o//'` ;;
 *)	pname="$extspec" ;;
 esac
 # echo "Converted $extspec to $pname"
@@ -80,9 +81,11 @@ if test ! -d "ext/$pname"; then
     exit 0 # not an error ?
 fi
 
-# XXX should find the race and fix it
-case "$mname" in
-SDBM_File) makeopts="$makeopts -j1";;
+case "$osname" in
+catamount) # Snowball's chance of building extensions.
+  echo "This is $osname, not building $mname, sorry."
+  exit 0
+  ;;
 esac
 
 echo "	Making $mname ($target)"
@@ -123,15 +126,10 @@ nonxs)      makeargs="";
 esac
 
 if test ! -f $makefile ; then
-	test -f Makefile.PL && ../$depth/miniperl -I../$depth/lib Makefile.PL INSTALLDIRS=perl PERL_CORE=1 $passthru
+	test -f Makefile.PL && $run ../$depth/miniperl -I../$depth/lib Makefile.PL INSTALLDIRS=perl INSTALLMAN3DIR=none PERL_CORE=1 $passthru
 fi
 if test ! -f $makefile ; then
-	if test -f Makefile.SH; then
-		echo "Warning: Writing $makefile from old-style Makefile.SH!"
-		sh Makefile.SH
-	else
-		echo "Warning: No Makefile!"
-	fi
+	echo "Warning: No Makefile!"
 fi
 
 case "$target" in
@@ -139,10 +137,10 @@ clean)		;;
 realclean)	;;
 *)	# Give makefile an opportunity to rewrite itself.
 	# reassure users that life goes on...
-	$MAKE config $passthru || echo "$MAKE config failed, continuing anyway..."
+	$MAKE config MAKE=$MAKE $passthru || echo "$MAKE config failed, continuing anyway..."
 	;;
 esac
 
-$MAKE $makeopts $target $makeargs $passthru || exit
+$MAKE $makeopts $target MAKE=$MAKE $makeargs $passthru || exit
 
 exit $?

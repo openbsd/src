@@ -32,9 +32,13 @@ compiler is required to build Perl.  VAX C is *not* ANSI compliant, as it
 died a natural death some time before the standard was set.  Therefore 
 VAX C will not compile Perl 5.005 or later.  We are sorry about that.
 
-If you are stuck without Compaq (formerly DEC) C consider trying Gnu C
-instead, though there have been no recent reports of builds using Gnu C. 
-There is minimal support for Compaq C++ but this support is not complete;
+There have been no recent reports of builds using Gnu C, but latent
+(and most likely outdated) support for it is still present in various
+parts of the sources.  Currently the HP (formerly Compaq, and even 
+more formerly DEC) C compiler is the only viable alternative for
+building Perl.
+
+There is minimal support for HP C++ but this support is not complete;
 if you get it working please write to the vmsperl list (for info see
 L</"Mailing Lists">).
 
@@ -53,11 +57,6 @@ There are still some unimplemented system functions, and of course we
 could use modules implementing useful VMS system services, so if you'd like
 to lend a hand we'd love to have you.  Join the Perl Porting Team Now!
 
-The current sources and build procedures have been tested on a VAX using
-DEC C, and on an AXP using DEC C. If you run into problems with
-other compilers, please let us know.  (Note: DEC C was renamed to Compaq C
-around version 6.2).
-
 There are issues with various versions of DEC C, so if you're not running a
 relatively modern version, check the "DEC C issues" section later on in this
 document.
@@ -70,7 +69,7 @@ In addition to VMS and DCL you will need two things:
 
 =item 1  A C compiler. 
 
-DEC (now Compaq) C or gcc for VMS (AXP or VAX).
+HP (formerly Compaq, more formerly DEC) C for VMS (VAX, Alpha, or Itanium).
 
 =item 2  A make tool. 
 
@@ -92,23 +91,25 @@ You may also want to have on hand:
 
 A de-compressor for *.gz and *.tgz files available from a number 
 of web/ftp sites and is distributed on the OpenVMS Freeware CD-ROM 
-from Compaq.
+from HP.
 
-    http://www.fsf.org/order/ftp.html
-    http://www.openvms.compaq.com/freeware/
+    http://www.hp.com/go/openvms/freeware/
     http://www.crinoid.com/utils/
 
 =item 2  VMS TAR 
 
 For reading and writing unix tape archives (*.tar files).  Vmstar is also 
 available from a number of web/ftp sites and is distributed on the OpenVMS
-Freeware CD-ROM from Compaq.
+Freeware CD-ROM from HP.
 
-    ftp://ftp.lp.se/vms/
-    http://www.openvms.compaq.com/freeware/
+    http://www.hp.com/go/openvms/freeware/
 
 Recent versions of VMS tar on ODS-5 volumes may extract tape archive
 files with ^. escaped periods in them.  See below for further workarounds.
+
+A port of GNU tar is also available as part of the GNV package:
+
+    http://gnv.sourceforge.net/
 
 =item 3  UNZIP.EXE for VMS
 
@@ -116,10 +117,10 @@ A combination decompressor and archive reader/writer for *.zip files.
 Unzip is available from a number of web/ftp sites.
 
     http://www.info-zip.org/UnZip.html
-    http://www.openvms.compaq.com/freeware/
-    ftp://ftp.openvms.compaq.com/
+    http://www.hp.com/go/openvms/freeware/
+    ftp://ftp.hp.com/pub/openvms
     ftp://ftp.madgoat.com/madgoat/
-    ftp://ftp.process.com/vms-freeware/
+    ftp://ftp.process.com/vms-freeware/fileserv
 
 =item 4  MOST
 
@@ -139,7 +140,7 @@ distribution) and applied with GNU patch.  VMS ports of these utilities are
 available here:
 
     http://www.crinoid.com/utils/
-    http://www.openvms.compaq.com/freeware/
+    http://www.hp.com/go/openvms/freeware/
 
 =back
 
@@ -158,28 +159,35 @@ for more details.
 
 You may need to set up a foreign symbol for the unpacking utility of choice.
 
-If you unpack a perl source kit with a name containing multiple periods on
-an ODS-5 volume using recent versions of vmstar (e.g. V3.4 or later) you may
-need to be especially careful in unpacking the tape archive file.  Try to use
-the ODS-2 compatability qualifiers such as:
+As of version 5.10.0, Perl will still build and run on ODS-2 volumes,
+including on VAX, but there are a number of modules whose temporary
+files and tests are much happier residing on ODS-5 volumes.  For
+example, CPANPLUS will fail most of its tests on an ODS-2 volume because
+it includes files with multiple dots that will have been converted to
+underscores and the tests will have difficulty finding them.  So your
+best bet is to unpack the Perl source kit on an ODS-5 volume using
+recent versions of vmstar (e.g. V3.4 or later).  Contrary to advice
+provided with previous versions of Perl, do I<not> use the ODS-2
+compatability qualifier.  Instead, use a command like the following:
 
-    vmstar /extract/verbose/ods2 perl-V^.VIII^.III.tar
+    vmstar /extract/verbose perl-V^.VIII^.III.tar
 
 or:
 
-    vmstar -xvof perl-5^.8^.8.tar
+    vmstar -xvf perl-5^.10^.0.tar
 
-If you neglected to use the /ODS2 qualifier or the -o switch then you
-could rename the source directory:
+Then rename the top-level source directory like so:
 
-    set security/protection=(o:rwed) perl-5^.8^.8.dir
-    rename perl-5^.8^.8.dir perl-5_8_8.dir
+    set security/protection=(o:rwed) perl-5^.10^.0.dir
+    rename perl-5^.10^.0.dir perl-5_10_0.dir
 
-Perl on VMS as of 5.8.8 does not completely handle extended file
-parse styles such as are encountered on ODS-5.  While it can be built,
-installed, and run on ODS-5 filesystems; it may encounter
-trouble with characters that are otherwise illegal on ODS-2
-volumes (notably the ^. escaped period sequence).
+The reason for this last step is that while filenames with multiple dots
+are generally supported by Perl on VMS, I<directory> names with multiple
+dots are a special case with special problems because the dot is the
+traditional directory delimiter on VMS.  Rudimentary support for
+multi-dot directory names is available, but some of the oldest and most
+essential parts of Perl (such as searching for and loading library
+modules) do not yet fully support the ODS-5 caret-escape syntax.
 
 =head1 Configuring the Perl build
 
@@ -267,10 +275,6 @@ inappropriate changes to configure.com or config_h.SH can render perl
 unbuildable; odds are that there's nothing in there you'll need to
 change.
 
-The one exception is the various *DIR install locations. Changing those
-requires changes in genconfig.pl as well.  Be really careful if you need to
-change these, as they can cause some fairly subtle problems.
-
 =head2 Socket Support (optional) for Perl on VMS
 
 Perl includes a number of functions for IP sockets, which are available if
@@ -279,20 +283,35 @@ optional addition to VMS, there are several different IP stacks available.
 How well integrated they are into the system depends on the stack, your 
 version of VMS, and the version of your C compiler.
 
-The most portable solution uses the SOCKETSHR library. In combination with
-either UCX or NetLib, this supports all the major TCP stacks (Multinet,
-Pathways, TCPWare, UCX, and CMU) on all versions of VMS Perl runs on, with
-all the compilers on both VAX and Alpha. The socket interface is also
-consistent across versions of VMS and C compilers. It has a problem with
-UDP sockets when used with Multinet, though, so you should be aware of
-that.
-
-The other solution available is to use the socket routines built into DEC
+The default solution available is to use the socket routines built into DEC
 C. Which routines are available depend on the version of VMS you're
 running, and require proper UCX emulation by your TCP/IP vendor.
 Relatively current versions of Multinet, TCPWare, Pathway, and UCX all
 provide the required libraries--check your manuals or release notes to see
 if your version is new enough.
+
+The other solution uses the SOCKETSHR library. Before VAX/VMS 5.5-2 it was
+the most portable solution.  The SOCKETSHR library has not been maintained
+since VAX/VMS 5.5-2, and it is not known if will even compile with the ANSI
+C that Perl currently requires.  It remains an option for historical reasons,
+just in case someone might find it useful.
+
+In combination with either UCX or NetLib, this supported all the major TCP
+stacks (Multinet, Pathways, TCPWare, UCX, and CMU) on all versions of VMS
+Perl ran on up to VAX/VMS 6.2 and Alpha VMS 1.5 with all the compilers on
+both VAX and Alpha. The portion of the socket interface was also consistent
+across versions of VMS and C compilers.
+
+It has a problem with UDP sockets when used with Multinet, though, so you
+should be aware of that.
+
+As of VAX/VMS 5.5-2 and later, CMU is the only TCP/IP program that requires
+socketshr, and the sources have been lost to the most recent CMU bug fixes,
+so CMU is limited to OpenVMS/VAX 6.2 or earlier, which is the last release
+that binaries for the last released patches are known to exist.
+
+There is currently no official web site for downloading either CMU or
+SOCKETSHR; however, copies may be found in the DECUS archives.
 
 =head1 Building Perl
 
@@ -340,7 +359,8 @@ test suite must be the owner of the directory tree in which Perl has been
 built; otherwise the manipulations of temporary files and directories
 attempted by some of the tests will fail.
 
-If any tests fail, it means something is wrong with Perl. If the test suite
+If any tests fail, it means something is wrong with Perl, or at least
+with the particular module or feature that reported failure. If the test suite
 hangs (some tests can take upwards of two or three minutes, or more if
 you're on an especially slow machine, depending on your machine speed, so
 don't be hasty), then the test *after* the last one displayed failed. Don't
@@ -520,8 +540,8 @@ to NOT INSTALL PERL.EXE with PRIVs!
 
 =head2 Running h2ph to create perl header files (optional) on VMS
 
-If using DEC C or Compaq C ensure that you have extracted loose versions
-of your compiler's header or *.H files.  Be sure to check the contents of:
+If using HP C, ensure that you have extracted loose versions of your 
+compiler's header or *.H files.  Be sure to check the contents of:
 
     SYS$LIBRARY:DECC$RTLDEF.TLB
     SYS$LIBRARY:SYS$LIB_C.TLB
@@ -740,11 +760,10 @@ Vmsperl pages on the web include:
     http://duphy4.physics.drexel.edu/pub/cgi_info.htmlx
     http://www.cpan.org/modules/by-module/VMS/
     http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
-    http://www.best.com/~pvhp/vms/
     http://www-ang.kfunigraz.ac.at/~binder/perl.html
     http://lists.perl.org/showlist.cgi?name=vmsperl
     http://archive.develooper.com/vmsperl@perl.org/
-    http://www.openvms.compaq.com/openvms/products/ips/apache/csws_modperl.html
+    http://h71000.www7.hp.com/openvms/products/ips/apache/csws_modperl.html
 
 =head1 SEE ALSO
 
@@ -755,7 +774,7 @@ of extending vmsperl with CPAN modules after Perl has been installed.
 
 =head1 AUTHORS
 
-Revised 10-October-2001 by Craig Berry craigberry@mac.com.  
+Revised 3-December-2007 by Craig Berry craigberry@mac.com.  
 Revised 25-February-2000 by Peter Prymmer pvhp@best.com.  
 Revised 27-October-1999 by Craig Berry craigberry@mac.com.  
 Revised 01-March-1999 by Dan Sugalski dan@sidhe.org.  

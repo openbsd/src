@@ -6,7 +6,8 @@ use File::Spec::Functions;
 
 our($capture_stderr, $raw, $VERSION, $AUTOLOAD);
 
-$VERSION = '0.6';
+$VERSION = '0.72_01';
+$VERSION = eval $VERSION;
 
 sub new { bless \my $foo, shift }
 sub DESTROY { }
@@ -16,9 +17,9 @@ sub import {
     my ($callpack, $callfile, $callline) = caller;
     my @EXPORT;
     if (@_) {
-	@EXPORT = @_;
+        @EXPORT = @_;
     } else {
-	@EXPORT = 'AUTOLOAD';
+        @EXPORT = 'AUTOLOAD';
     }
     foreach my $sym (@EXPORT) {
         no strict 'refs';
@@ -26,91 +27,114 @@ sub import {
     }
 }
 
+# NOTE: this is used to enable constant folding in 
+# expressions like (OS eq 'MSWin32') and 
+# (OS eq 'os2') just like it happened in  0.6  version 
+# which used eval "string" to install subs on the fly.
+use constant OS => $^O;
+
+=begin private
+
+=item B<_make_cmd>
+
+  $sub = _make_cmd($cmd);
+  $sub = $shell->_make_cmd($cmd);
+
+Creates a closure which invokes the system command C<$cmd>.
+
+=end private
+
+=cut
+
+sub _make_cmd {
+    shift if ref $_[0] && $_[0]->isa( 'Shell' );
+    my $cmd = shift;
+    my $null = File::Spec::Functions::devnull();
+    $Shell::capture_stderr ||= 0;
+    # closing over $^O, $cmd, and $null
+    return sub {
+            shift if ref $_[0] && $_[0]->isa( 'Shell' );
+            if (@_ < 1) {
+                $Shell::capture_stderr ==  1 ? `$cmd 2>&1` : 
+                $Shell::capture_stderr == -1 ? `$cmd 2>$null` : 
+                `$cmd`;
+            } elsif (OS eq 'os2') {
+                local(*SAVEOUT, *READ, *WRITE);
+
+                open SAVEOUT, '>&STDOUT' or die;
+                pipe READ, WRITE or die;
+                open STDOUT, '>&WRITE' or die;
+                close WRITE;
+
+                my $pid = system(1, $cmd, @_);
+                die "Can't execute $cmd: $!\n" if $pid < 0;
+
+                open STDOUT, '>&SAVEOUT' or die;
+                close SAVEOUT;
+
+                if (wantarray) {
+                    my @ret = <READ>;
+                    close READ;
+                    waitpid $pid, 0;
+                    @ret;
+                } else {
+                    local($/) = undef;
+                    my $ret = <READ>;
+                    close READ;
+                    waitpid $pid, 0;
+                    $ret;
+                }
+            } else {
+                my $a;
+                my @arr = @_;
+                unless( $Shell::raw ){
+                  if (OS eq 'MSWin32') {
+                    # XXX this special-casing should not be needed
+                    # if we do quoting right on Windows. :-(
+                    #
+                    # First, escape all quotes.  Cover the case where we
+                    # want to pass along a quote preceded by a backslash
+                    # (i.e., C<"param \""" end">).
+                    # Ugly, yup?  You know, windoze.
+                    # Enclose in quotes only the parameters that need it:
+                    #   try this: c:> dir "/w"
+                    #   and this: c:> dir /w
+                    for (@arr) {
+                        s/"/\\"/g;
+                        s/\\\\"/\\\\"""/g;
+                        $_ = qq["$_"] if /\s/;
+                    }
+                  } else {
+                    for (@arr) {
+                        s/(['\\])/\\$1/g;
+                        $_ = $_;
+                     }
+                  }
+                }
+                push @arr, '2>&1'        if $Shell::capture_stderr ==  1;
+                push @arr, '2>$null' if $Shell::capture_stderr == -1;
+                open(SUBPROC, join(' ', $cmd, @arr, '|'))
+                    or die "Can't exec $cmd: $!\n";
+                if (wantarray) {
+                    my @ret = <SUBPROC>;
+                    close SUBPROC;        # XXX Oughta use a destructor.
+                    @ret;
+                } else {
+                    local($/) = undef;
+                    my $ret = <SUBPROC>;
+                    close SUBPROC;
+                    $ret;
+                }
+            }
+        };
+        }
+
 sub AUTOLOAD {
     shift if ref $_[0] && $_[0]->isa( 'Shell' );
     my $cmd = $AUTOLOAD;
     $cmd =~ s/^.*:://;
-    my $null = File::Spec::Functions::devnull();
-    $Shell::capture_stderr ||= 0;
-    eval <<"*END*";
-	sub $AUTOLOAD {
-	    shift if ref \$_[0] && \$_[0]->isa( 'Shell' );
-	    if (\@_ < 1) {
-		\$Shell::capture_stderr ==  1 ? `$cmd 2>&1` : 
-		\$Shell::capture_stderr == -1 ? `$cmd 2>$null` : 
-		`$cmd`;
-	    } elsif ('$^O' eq 'os2') {
-		local(\*SAVEOUT, \*READ, \*WRITE);
-
-		open SAVEOUT, '>&STDOUT' or die;
-		pipe READ, WRITE or die;
-		open STDOUT, '>&WRITE' or die;
-		close WRITE;
-
-		my \$pid = system(1, '$cmd', \@_);
-		die "Can't execute $cmd: \$!\\n" if \$pid < 0;
-
-		open STDOUT, '>&SAVEOUT' or die;
-		close SAVEOUT;
-
-		if (wantarray) {
-		    my \@ret = <READ>;
-		    close READ;
-		    waitpid \$pid, 0;
-		    \@ret;
-		} else {
-		    local(\$/) = undef;
-		    my \$ret = <READ>;
-		    close READ;
-		    waitpid \$pid, 0;
-		    \$ret;
-		}
-	    } else {
-		my \$a;
-		my \@arr = \@_;
-		unless( \$Shell::raw ){
-		  if ('$^O' eq 'MSWin32') {
-		    # XXX this special-casing should not be needed
-		    # if we do quoting right on Windows. :-(
-		    #
-		    # First, escape all quotes.  Cover the case where we
-		    # want to pass along a quote preceded by a backslash
-		    # (i.e., C<"param \\""" end">).
-		    # Ugly, yup?  You know, windoze.
-		    # Enclose in quotes only the parameters that need it:
-		    #   try this: c:\> dir "/w"
-		    #   and this: c:\> dir /w
-		    for (\@arr) {
-			s/"/\\\\"/g;
-			s/\\\\\\\\"/\\\\\\\\"""/g;
-			\$_ = qq["\$_"] if /\\s/;
-		    }
-		  } else {
-		    for (\@arr) {
-			s/(['\\\\])/\\\\\$1/g;
-			\$_ = \$_;
- 		    }
-                  }
-		}
-		push \@arr, '2>&1'        if \$Shell::capture_stderr ==  1;
-		push \@arr, '2>$null' if \$Shell::capture_stderr == -1;
-		open(SUBPROC, join(' ', '$cmd', \@arr, '|'))
-		    or die "Can't exec $cmd: \$!\\n";
-		if (wantarray) {
-		    my \@ret = <SUBPROC>;
-		    close SUBPROC;	# XXX Oughta use a destructor.
-		    \@ret;
-		} else {
-		    local(\$/) = undef;
-		    my \$ret = <SUBPROC>;
-		    close SUBPROC;
-		    \$ret;
-		}
-	    }
-	}
-*END*
-
-    die "$@\n" if $@;
+    no strict 'refs';
+    *$AUTOLOAD = _make_cmd($cmd);
     goto &$AUTOLOAD;
 }
 
@@ -182,10 +206,14 @@ quotes (C<">) on Windows.
 
 =head2 Configuration
 
-If you set $Shell::capture_stderr to true, the module will attempt to
+If you set $Shell::capture_stderr to 1, the module will attempt to
 capture the standard error output of the process as well. This is
 done by adding C<2E<gt>&1> to the command line, so don't try this on
 a system not supporting this redirection.
+
+Setting $Shell::capture_stderr to -1 will send standard error to the
+bit bucket (i.e., the equivalent of adding C<2E<gt>/dev/null> to the
+command line).  The same caveat regarding redirection applies.
 
 If you set $Shell::raw to true no quoting whatsoever is done.
 
@@ -236,5 +264,7 @@ Changes by Jenda@Krynicky.cz and Dave Cottle <d.cottle@csc.canterbury.ac.nz>.
 Changes for OO syntax and bug fixes by Casey West <casey@geeknest.com>.
 
 C<$Shell::raw> and pod rewrite by Wolfgang Laun.
+
+Rewritten to use closures rather than C<eval "string"> by Adriano Ferreira.
 
 =cut

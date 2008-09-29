@@ -2,10 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw(. ../lib); require 'test.pl';
 }
 use warnings;
-print "1..129\n";
+plan( tests => 143 );
 
 # these shouldn't hang
 {
@@ -21,6 +21,7 @@ print "1..129\n";
 
 sub Backwards { $a lt $b ? 1 : $a gt $b ? -1 : 0 }
 sub Backwards_stacked($$) { my($a,$b) = @_; $a lt $b ? 1 : $a gt $b ? -1 : 0 }
+sub Backwards_other { $a lt $b ? 1 : $a gt $b ? -1 : 0 }
 
 my $upperfirst = 'A' lt 'a';
 
@@ -43,120 +44,121 @@ my $upperfirst = 'A' lt 'a';
 
 $x = join('', sort @harry);
 $expected = $upperfirst ? 'AbelCaincatdogx' : 'catdogxAbelCain';
-print "# 1: x = '$x', expected = '$expected'\n";
-print ($x eq $expected ? "ok 1\n" : "not ok 1\n");
+
+cmp_ok($x,'eq',$expected,'upper first 1');
 
 $x = join('', sort( Backwards @harry));
 $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-print "# 2: x = '$x', expected = '$expected'\n";
-print ($x eq $expected ? "ok 2\n" : "not ok 2\n");
+
+cmp_ok($x,'eq',$expected,'upper first 2');
 
 $x = join('', sort( Backwards_stacked @harry));
 $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-print "# 3: x = '$x', expected = '$expected'\n";
-print ($x eq $expected ? "ok 3\n" : "not ok 3\n");
+
+cmp_ok($x,'eq',$expected,'upper first 3');
 
 $x = join('', sort @george, 'to', @harry);
 $expected = $upperfirst ?
     'AbelAxedCaincatchaseddoggonepunishedtoxyz' :
     'catchaseddoggonepunishedtoxyzAbelAxedCain' ;
-print "# 4: x = '$x', expected = '$expected'\n";
-print ($x eq $expected ?"ok 4\n":"not ok 4\n");
 
+cmp_ok($x,'eq',$expected,'upper first 4');
+$" = ' ';
 @a = ();
 @b = reverse @a;
-print ("@b" eq "" ? "ok 5\n" : "not ok 5 (@b)\n");
+cmp_ok("@b",'eq',"",'reverse 1');
 
 @a = (1);
 @b = reverse @a;
-print ("@b" eq "1" ? "ok 6\n" : "not ok 6 (@b)\n");
+cmp_ok("@b",'eq',"1",'reverse 2');
 
 @a = (1,2);
 @b = reverse @a;
-print ("@b" eq "2 1" ? "ok 7\n" : "not ok 7 (@b)\n");
+cmp_ok("@b",'eq',"2 1",'reverse 3');
 
 @a = (1,2,3);
 @b = reverse @a;
-print ("@b" eq "3 2 1" ? "ok 8\n" : "not ok 8 (@b)\n");
+cmp_ok("@b",'eq',"3 2 1",'reverse 4');
 
 @a = (1,2,3,4);
 @b = reverse @a;
-print ("@b" eq "4 3 2 1" ? "ok 9\n" : "not ok 9 (@b)\n");
+cmp_ok("@b",'eq',"4 3 2 1",'reverse 5');
 
 @a = (10,2,3,4);
 @b = sort {$a <=> $b;} @a;
-print ("@b" eq "2 3 4 10" ? "ok 10\n" : "not ok 10 (@b)\n");
+cmp_ok("@b",'eq',"2 3 4 10",'sort numeric');
 
 $sub = 'Backwards';
 $x = join('', sort $sub @harry);
 $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-print "# 11: x = $x, expected = '$expected'\n";
-print ($x eq $expected ? "ok 11\n" : "not ok 11\n");
+
+cmp_ok($x,'eq',$expected,'sorter sub name in var 1');
 
 $sub = 'Backwards_stacked';
 $x = join('', sort $sub @harry);
 $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-print "# 12: x = $x, expected = '$expected'\n";
-print ($x eq $expected ? "ok 12\n" : "not ok 12\n");
+
+cmp_ok($x,'eq',$expected,'sorter sub name in var 2');
 
 # literals, combinations
 
 @b = sort (4,1,3,2);
-print ("@b" eq '1 2 3 4' ? "ok 13\n" : "not ok 13\n");
-print "# x = '@b'\n";
+cmp_ok("@b",'eq','1 2 3 4','just sort');
+
 
 @b = sort grep { $_ } (4,1,3,2);
-print ("@b" eq '1 2 3 4' ? "ok 14\n" : "not ok 14\n");
-print "# x = '@b'\n";
+cmp_ok("@b",'eq','1 2 3 4','grep then sort');
+
 
 @b = sort map { $_ } (4,1,3,2);
-print ("@b" eq '1 2 3 4' ? "ok 15\n" : "not ok 15\n");
-print "# x = '@b'\n";
+cmp_ok("@b",'eq','1 2 3 4','map then sort');
+
 
 @b = sort reverse (4,1,3,2);
-print ("@b" eq '1 2 3 4' ? "ok 16\n" : "not ok 16\n");
-print "# x = '@b'\n";
+cmp_ok("@b",'eq','1 2 3 4','reverse then sort');
 
-# redefining sort sub inside the sort sub should fail
-sub twoface { *twoface = sub { $a <=> $b }; &twoface }
+
+
+sub twoface { no warnings 'redefine'; *twoface = sub { $a <=> $b }; &twoface }
 eval { @b = sort twoface 4,1,3,2 };
-print ($@ =~ /redefine active sort/ ? "ok 17\n" : "not ok 17\n");
+cmp_ok("@b",'eq','1 2 3 4','redefine sort sub inside the sort sub');
 
-# redefining sort subs outside the sort should not fail
+
 eval { no warnings 'redefine'; *twoface = sub { &Backwards } };
-print $@ ? "not ok 18\n" : "ok 18\n";
+ok(!$@,"redefining sort subs outside the sort \$@=[$@]");
 
 eval { @b = sort twoface 4,1,3,2 };
-print ("@b" eq '4 3 2 1' ? "ok 19\n" : "not ok 19 |@b|\n");
+cmp_ok("@b",'eq','4 3 2 1','twoface redefinition');
 
 {
   no warnings 'redefine';
-  *twoface = sub { *twoface = *Backwards; $a <=> $b };
+  *twoface = sub { *twoface = *Backwards_other; $a <=> $b };
 }
-eval { @b = sort twoface 4,1 };
-print ($@ =~ /redefine active sort/ ? "ok 20\n" : "not ok 20\n");
+
+eval { @b = sort twoface 4,1,9,5 };
+ok(($@ eq "" && "@b" eq "1 4 5 9"),'redefinition should not take effect during the sort');
 
 {
   no warnings 'redefine';
   *twoface = sub {
                  eval 'sub twoface { $a <=> $b }';
-		 die($@ =~ /redefine active sort/ ? "ok 21\n" : "not ok 21\n");
+		 die($@ eq "" ? "good\n" : "bad\n");
 		 $a <=> $b;
 	       };
 }
 eval { @b = sort twoface 4,1 };
-print $@ ? "$@" : "not ok 21\n";
+cmp_ok(substr($@,0,4), 'eq', 'good', 'twoface eval');
 
 eval <<'CODE';
     my @result = sort main'Backwards 'one', 'two';
 CODE
-print $@ ? "not ok 22\n# $@" : "ok 22\n";
+cmp_ok($@,'eq','',q(old skool package));
 
 eval <<'CODE';
     # "sort 'one', 'two'" should not try to parse "'one" as a sort sub
     my @result = sort 'one', 'two';
 CODE
-print $@ ? "not ok 23\n# $@" : "ok 23\n";
+cmp_ok($@,'eq','',q(one is not a sub));
 
 {
   my $sortsub = \&Backwards;
@@ -164,13 +166,13 @@ print $@ ? "not ok 23\n# $@" : "ok 23\n";
   my $sortglobr = \*Backwards;
   my $sortname = 'Backwards';
   @b = sort $sortsub 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 24\n" : "not ok 24 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 1');
   @b = sort $sortglob 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 25\n" : "not ok 25 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 2');
   @b = sort $sortname 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 26\n" : "not ok 26 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 3');
   @b = sort $sortglobr 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 27\n" : "not ok 27 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 4');
 }
 
 {
@@ -179,13 +181,13 @@ print $@ ? "not ok 23\n# $@" : "ok 23\n";
   my $sortglobr = \*Backwards_stacked;
   my $sortname = 'Backwards_stacked';
   @b = sort $sortsub 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 28\n" : "not ok 28 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 5');
   @b = sort $sortglob 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 29\n" : "not ok 29 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 6');
   @b = sort $sortname 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 30\n" : "not ok 30 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 7');
   @b = sort $sortglobr 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 31\n" : "not ok 31 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname 8');
 }
 
 {
@@ -194,13 +196,13 @@ print $@ ? "not ok 23\n# $@" : "ok 23\n";
   local $sortglobr = \*Backwards;
   local $sortname = 'Backwards';
   @b = sort $sortsub 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 32\n" : "not ok 32 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 1');
   @b = sort $sortglob 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 33\n" : "not ok 33 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 2');
   @b = sort $sortname 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 34\n" : "not ok 34 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 3');
   @b = sort $sortglobr 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 35\n" : "not ok 35 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 4');
 }
 
 {
@@ -209,13 +211,13 @@ print $@ ? "not ok 23\n# $@" : "ok 23\n";
   local $sortglobr = \*Backwards_stacked;
   local $sortname = 'Backwards_stacked';
   @b = sort $sortsub 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 36\n" : "not ok 36 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 5');
   @b = sort $sortglob 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 37\n" : "not ok 37 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 6');
   @b = sort $sortname 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 38\n" : "not ok 38 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 7');
   @b = sort $sortglobr 4,1,3,2;
-  print ("@b" eq '4 3 2 1' ? "ok 39\n" : "not ok 39 |@b|\n");
+  cmp_ok("@b",'eq','4 3 2 1','sortname local 8');
 }
 
 ## exercise sort builtins... ($a <=> $b already tested)
@@ -224,58 +226,58 @@ print $@ ? "not ok 23\n# $@" : "ok 23\n";
     my $dummy;		# force blockness
     return $b <=> $a
 } @a;
-print ("@b" eq '1996 255 90 19 5' ? "ok 40\n" : "not ok 40\n");
-print "# x = '@b'\n";
+cmp_ok("@b",'eq','1996 255 90 19 5','force blockness');
+
 $x = join('', sort { $a cmp $b } @harry);
 $expected = $upperfirst ? 'AbelCaincatdogx' : 'catdogxAbelCain';
-print ($x eq $expected ? "ok 41\n" : "not ok 41\n");
-print "# x = '$x'; expected = '$expected'\n";
+cmp_ok($x,'eq',$expected,'a cmp b');
+
 $x = join('', sort { $b cmp $a } @harry);
 $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-print ($x eq $expected ? "ok 42\n" : "not ok 42\n");
-print "# x = '$x'; expected = '$expected'\n";
+cmp_ok($x,'eq',$expected,'b cmp a');
+
 {
     use integer;
     @b = sort { $a <=> $b } @a;
-    print ("@b" eq '5 19 90 255 1996' ? "ok 43\n" : "not ok 43\n");
-    print "# x = '@b'\n";
+    cmp_ok("@b",'eq','5 19 90 255 1996','integer a <=> b');
+
     @b = sort { $b <=> $a } @a;
-    print ("@b" eq '1996 255 90 19 5' ? "ok 44\n" : "not ok 44\n");
-    print "# x = '@b'\n";
+    cmp_ok("@b",'eq','1996 255 90 19 5','integer b <=> a');
+
     $x = join('', sort { $a cmp $b } @harry);
     $expected = $upperfirst ? 'AbelCaincatdogx' : 'catdogxAbelCain';
-    print ($x eq $expected ? "ok 45\n" : "not ok 45\n");
-    print "# x = '$x'; expected = '$expected'\n";
+    cmp_ok($x,'eq',$expected,'integer a cmp b');
+
     $x = join('', sort { $b cmp $a } @harry);
     $expected = $upperfirst ? 'xdogcatCainAbel' : 'CainAbelxdogcat';
-    print ($x eq $expected ? "ok 46\n" : "not ok 46\n");
-    print "# x = '$x'; expected = '$expected'\n";
+    cmp_ok($x,'eq',$expected,'integer b cmp a');
+
 }
 
-# test that an optimized-away comparison block doesn't take any other
-# arguments away with it
+
+
 $x = join('', sort { $a <=> $b } 3, 1, 2);
-print $x eq "123" ? "ok 47\n" : "not ok 47\n";
+cmp_ok($x,'eq','123',q(optimized-away comparison block doesn't take any other arguments away with it));
 
 # test sorting in non-main package
 package Foo;
 @a = ( 5, 19, 1996, 255, 90 );
 @b = sort { $b <=> $a } @a;
-print ("@b" eq '1996 255 90 19 5' ? "ok 48\n" : "not ok 48\n");
-print "# x = '@b'\n";
+main::cmp_ok("@b",'eq','1996 255 90 19 5','not in main:: 1');
+
 
 @b = sort main::Backwards_stacked @a;
-print ("@b" eq '90 5 255 1996 19' ? "ok 49\n" : "not ok 49\n");
-print "# x = '@b'\n";
+main::cmp_ok("@b",'eq','90 5 255 1996 19','not in main:: 2');
+
 
 # check if context for sort arguments is handled right
 
-$test = 49;
+
 sub test_if_list {
     my $gimme = wantarray;
-    print "not " unless $gimme;
-    ++$test;
-    print "ok $test\n";
+    main::is($gimme,1,'wantarray 1');
+
+
 }
 my $m = sub { $a <=> $b };
 
@@ -288,9 +290,9 @@ cxt_three();
 
 sub test_if_scalar {
     my $gimme = wantarray;
-    print "not " if $gimme or !defined($gimme);
-    ++$test;
-    print "ok $test\n";
+    main::is(!($gimme or !defined($gimme)),1,'wantarray 2');
+
+
 }
 
 $m = \&test_if_scalar;
@@ -314,25 +316,25 @@ sub cxt_six { sort test_if_scalar 1,2 }
 	Bar::reenter() unless $init++;
 	$a <=> $b
     } qw/4 3 1 2/;
-    print ("@b" eq '1 2 3 4' ? "ok 56\n" : "not ok 56\n");
-    print "# x = '@b'\n";
-    print !$def ? "ok 57\n" : "not ok 57\n";
+    main::cmp_ok("@b",'eq','1 2 3 4','reenter 1');
+
+    main::ok(!$def,'reenter 2');
 }
 
-# Bug 19991001.003
+
 {
     sub routine { "one", "two" };
     @a = sort(routine(1));
-    print "@a" eq "one two" ? "ok 58\n" : "not ok 58\n";
+    main::cmp_ok("@a",'eq',"one two",'bug id 19991001.003');
 }
 
 
-my $test = 59;
-sub ok {
-    print "not " unless $_[0] eq $_[1];
-    print "ok $test - $_[2]\n";
-    print "#[$_[0]] ne [$_[1]]\n" unless $_[0] eq $_[1];
-    $test++;
+#my $test = 59;
+sub ok { main::cmp_ok($_[0],'eq',$_[1],$_[2]);
+#    print "not " unless $_[0] eq $_[1];
+#    print "ok $test - $_[2]\n";
+#    print "#[$_[0]] ne [$_[1]]\n" unless $_[0] eq $_[1];
+#    $test++;
 }
 
 # check for in-place optimisation of @a = sort @a
@@ -673,3 +675,131 @@ ok "@output", "0 C B A", 'reversed sort with trailing argument';
 
 @output = reverse (0, sort(qw(C A B)));
 ok "@output", "C B A 0", 'reversed sort with leading argument';
+
+eval { @output = sort {goto sub {}} 1,2; };
+$fail_msg = q(Can't goto subroutine outside a subroutine);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'goto subr outside subr');
+
+
+
+sub goto_sub {goto sub{}}
+eval { @output = sort goto_sub 1,2; };
+$fail_msg = q(Can't goto subroutine from a sort sub);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'goto subr from a sort sub');
+
+
+
+eval { @output = sort {goto label} 1,2; };
+$fail_msg = q(Can't "goto" out of a pseudo block);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'goto out of a pseudo block 1');
+
+
+
+sub goto_label {goto label}
+label: eval { @output = sort goto_label 1,2; };
+$fail_msg = q(Can't "goto" out of a pseudo block);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'goto out of a pseudo block 2');
+
+
+
+sub self_immolate {undef &self_immolate; $a<=>$b}
+eval { @output = sort self_immolate 1,2,3 };
+$fail_msg = q(Can't undef active subroutine);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'undef active subr');
+
+
+
+{
+    my $failed = 0;
+
+    sub rec {
+	my $n = shift;
+	if (!defined($n)) {  # No arg means we're being called by sort()
+	    return 1;
+	}
+	if ($n<5) { rec($n+1); }
+	else { () = sort rec 1,2; }
+
+	$failed = 1 if !defined $n;
+    }
+
+    rec(1);
+    main::ok(!$failed, "sort from active sub");
+}
+
+# $a and $b are set in the package the sort() is called from,
+# *not* the package the sort sub is in. This is longstanding
+# de facto behaviour that shouldn't be broken.
+package main;
+my $answer = "good";
+() = sort OtherPack::foo 1,2,3,4;
+
+{
+    package OtherPack;
+    no warnings 'once';
+    sub foo {
+	$answer = "something was unexpectedly defined or undefined" if
+	defined($a) || defined($b) || !defined($main::a) || !defined($main::b);
+	$main::a <=> $main::b;
+    }
+}
+
+main::cmp_ok($answer,'eq','good','sort subr called from other package');
+
+
+# Bug 36430 - sort called in package2 while a
+# sort in package1 is active should set $package2::a/b.
+
+$answer = "good";
+my @list = sort { A::min(@$a) <=> A::min(@$b) }
+  [3, 1, 5], [2, 4], [0];
+
+main::cmp_ok($answer,'eq','good','bug 36430');
+
+package A;
+sub min {
+  my @list = sort {
+    $answer = '$a and/or $b are not defined ' if !defined($a) || !defined($b);
+    $a <=> $b;
+  } @_;
+  $list[0];
+}
+
+# Bug 7567 - an array shouldn't be modifiable while it's being
+# sorted in-place.
+eval { @a=(1..8); @a = sort { @a = (0) } @a; };
+
+$fail_msg = q(Modification of a read-only value attempted);
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'bug 7567');
+
+
+
+# Sorting shouldn't increase the refcount of a sub
+sub foo {(1+$a) <=> (1+$b)}
+my $refcnt = &Internals::SvREFCNT(\&foo);
+@output = sort foo 3,7,9;
+package Foo;
+ok($refcnt, &Internals::SvREFCNT(\&foo), "sort sub refcnt");
+$fail_msg = q(Modification of a read-only value attempted);
+# Sorting a read-only array in-place shouldn't be allowed
+my @readonly = (1..10);
+Internals::SvREADONLY(@readonly, 1);
+eval { @readonly = sort @readonly; };
+main::cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'in-place sort of read-only array');
+
+
+
+
+# Using return() should be okay even in a deeper context
+@b = sort {while (1) {return ($a <=> $b)} } 1..10;
+ok("@b", "1 2 3 4 5 6 7 8 9 10", "return within loop");
+
+# Using return() should be okay even if there are other items
+# on the stack at the time.
+@b = sort {$_ = ($a<=>$b) + do{return $b<=> $a}} 1..10;
+ok("@b", "10 9 8 7 6 5 4 3 2 1", "return with SVs on stack");
+
+# As above, but with a sort sub rather than a sort block.
+sub ret_with_stacked { $_ = ($a<=>$b) + do {return $b <=> $a} }
+@b = sort ret_with_stacked 1..10;
+ok("@b", "10 9 8 7 6 5 4 3 2 1", "return with SVs on stack");

@@ -5,9 +5,9 @@ BEGIN {
     @INC = '../lib';
 }
 
-require "./test.pl";
+BEGIN { require "./test.pl"; }
 
-plan(tests => 22);
+plan(tests => 23);
 
 use File::Spec;
 
@@ -38,6 +38,13 @@ is($x, "1a line\n2a line\n", '<> from two files');
     is($x, "foo\n", '   from just STDIN');
 }
 
+{
+    # 5.10 stopped autovivifying scalars in globs leading to a
+    # segfault when $ARGV is written to.
+    runperl( prog => 'eof()', stdin => "nothing\n" );
+    is( 0+$?, 0, q(eof() doesn't segfault) );
+}
+
 @ARGV = ('Io_argv1.tmp', 'Io_argv1.tmp', $devnull, 'Io_argv1.tmp');
 while (<>) {
     $y .= $. . $_;
@@ -56,7 +63,7 @@ close TRY or die "Could not close: $!";
 @ARGV = ('Io_argv1.tmp', 'Io_argv2.tmp');
 $^I = '_bak';   # not .bak which confuses VMS
 $/ = undef;
-my $i = 6;
+my $i = 7;
 while (<>) {
     s/^/ok $i\n/;
     ++$i;
@@ -81,7 +88,7 @@ open STDIN, 'Io_argv1.tmp' or die $!;
 @ARGV = ();
 ok( !eof(),     'STDIN has something' );
 
-is( <>, "ok 6\n" );
+is( <>, "ok 7\n" );
 
 open STDIN, $devnull or die $!;
 @ARGV = ();

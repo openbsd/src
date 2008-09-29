@@ -814,12 +814,12 @@ in the stash C<Baz::> in C<Bar::>'s stash.
 
 To get the stash pointer for a particular package, use the function:
 
-    HV*  gv_stashpv(const char* name, I32 create)
-    HV*  gv_stashsv(SV*, I32 create)
+    HV*  gv_stashpv(const char* name, I32 flags)
+    HV*  gv_stashsv(SV*, I32 flags)
 
 The first function takes a literal string, the second uses the string stored
 in the SV.  Remember that a stash is just a hash table, so you get back an
-C<HV*>.  The C<create> flag will create a new package if it is set.
+C<HV*>.  The C<flags> flag will create a new package if it is set to GV_ADD.
 
 The name that C<gv_stash*v> wants is the name of the package whose symbol table
 you want.  The default package is called C<main>.  If you have multiply nested
@@ -901,9 +901,9 @@ linked list of C<struct magic>'s, typedef'ed to C<MAGIC>.
         U16         mg_private;
         char        mg_type;
         U8          mg_flags;
+        I32         mg_len;
         SV*         mg_obj;
         char*       mg_ptr;
-        I32         mg_len;
     };
 
 Note this is current as of patchlevel 0, and could change at any time.
@@ -970,13 +970,19 @@ C<MGVTBL>, which is a structure of function pointers and stands for
 "Magic Virtual Table" to handle the various operations that might be
 applied to that variable.
 
-The C<MGVTBL> has five pointers to the following routine types:
+The C<MGVTBL> has five (or sometimes eight) pointers to the following
+routine types:
 
     int  (*svt_get)(SV* sv, MAGIC* mg);
     int  (*svt_set)(SV* sv, MAGIC* mg);
     U32  (*svt_len)(SV* sv, MAGIC* mg);
     int  (*svt_clear)(SV* sv, MAGIC* mg);
     int  (*svt_free)(SV* sv, MAGIC* mg);
+
+    int  (*svt_copy)(SV *sv, MAGIC* mg, SV *nsv, const char *name, int namlen);
+    int  (*svt_dup)(MAGIC *mg, CLONE_PARAMS *param);
+    int  (*svt_local)(SV *nsv, MAGIC *mg);
+
 
 This MGVTBL structure is set at compile-time in F<perl.h> and there are
 currently 19 types (or 21 with overloading turned on).  These different
@@ -988,8 +994,12 @@ actions depending on which function is being called.
     svt_get             Do something before the value of the SV is retrieved.
     svt_set             Do something after the SV is assigned a value.
     svt_len             Report on the SV's length.
-    svt_clear		Clear something the SV represents.
+    svt_clear           Clear something the SV represents.
     svt_free            Free any extra storage associated with the SV.
+
+    svt_copy            copy tied variable magic to a tied element
+    svt_dup             duplicate a magic structure during thread cloning
+    svt_local           copy magic to local value during 'local'
 
 For instance, the MGVTBL structure called C<vtbl_sv> (which corresponds
 to an C<mg_type> of C<PERL_MAGIC_sv>) contains:
@@ -1002,52 +1012,63 @@ called.  All the various routines for the various magical types begin
 with C<magic_>.  NOTE: the magic routines are not considered part of
 the Perl API, and may not be exported by the Perl library.
 
+The last three slots are a recent addition, and for source code
+compatibility they are only checked for if one of the three flags
+MGf_COPY, MGf_DUP or MGf_LOCAL is set in mg_flags. This means that most
+code can continue declaring a vtable as a 5-element value. These three are
+currently used exclusively by the threading code, and are highly subject
+to change.
+
 The current kinds of Magic Virtual Tables are:
 
     mg_type
-    (old-style char and macro)   MGVTBL         Type of magic
-    --------------------------   ------         ----------------------------
-    \0 PERL_MAGIC_sv             vtbl_sv        Special scalar variable
-    A  PERL_MAGIC_overload       vtbl_amagic    %OVERLOAD hash
+    (old-style char and macro)   MGVTBL          Type of magic
+    --------------------------   ------          -------------
+    \0 PERL_MAGIC_sv             vtbl_sv         Special scalar variable
+    A  PERL_MAGIC_overload       vtbl_amagic     %OVERLOAD hash
     a  PERL_MAGIC_overload_elem  vtbl_amagicelem %OVERLOAD hash element
-    c  PERL_MAGIC_overload_table (none)         Holds overload table (AMT)
-						on stash
-    B  PERL_MAGIC_bm             vtbl_bm        Boyer-Moore (fast string search)
-    D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data
-						(@+ and @- vars)
-    d  PERL_MAGIC_regdatum       vtbl_regdatum  Regex match position data
-						element
-    E  PERL_MAGIC_env            vtbl_env       %ENV hash
-    e  PERL_MAGIC_envelem        vtbl_envelem   %ENV hash element
-    f  PERL_MAGIC_fm             vtbl_fm        Formline ('compiled' format)
-    g  PERL_MAGIC_regex_global   vtbl_mglob     m//g target / study()ed string
-    I  PERL_MAGIC_isa            vtbl_isa       @ISA array
-    i  PERL_MAGIC_isaelem        vtbl_isaelem   @ISA array element
-    k  PERL_MAGIC_nkeys          vtbl_nkeys     scalar(keys()) lvalue
-    L  PERL_MAGIC_dbfile         (none)         Debugger %_<filename
-    l  PERL_MAGIC_dbline         vtbl_dbline    Debugger %_<filename element
-    m  PERL_MAGIC_mutex          vtbl_mutex     ???
-    o  PERL_MAGIC_collxfrm       vtbl_collxfrm  Locale collate transformation
-    P  PERL_MAGIC_tied           vtbl_pack      Tied array or hash
-    p  PERL_MAGIC_tiedelem       vtbl_packelem  Tied array or hash element
-    q  PERL_MAGIC_tiedscalar     vtbl_packelem  Tied scalar or handle
-    r  PERL_MAGIC_qr             vtbl_qr        precompiled qr// regex
-    S  PERL_MAGIC_sig            vtbl_sig       %SIG hash
-    s  PERL_MAGIC_sigelem        vtbl_sigelem   %SIG hash element
-    t  PERL_MAGIC_taint          vtbl_taint     Taintedness
-    U  PERL_MAGIC_uvar           vtbl_uvar      Available for use by extensions
-    v  PERL_MAGIC_vec            vtbl_vec       vec() lvalue
-    V  PERL_MAGIC_vstring        (none)         v-string scalars
-    w  PERL_MAGIC_utf8           vtbl_utf8      UTF-8 length+offset cache
-    x  PERL_MAGIC_substr         vtbl_substr    substr() lvalue
-    y  PERL_MAGIC_defelem        vtbl_defelem   Shadow "foreach" iterator
-						variable / smart parameter
-						vivification
-    *  PERL_MAGIC_glob           vtbl_glob      GV (typeglob)
-    #  PERL_MAGIC_arylen         vtbl_arylen    Array length ($#ary)
-    .  PERL_MAGIC_pos            vtbl_pos       pos() lvalue
-    <  PERL_MAGIC_backref        vtbl_backref   ???
-    ~  PERL_MAGIC_ext            (none)         Available for use by extensions
+    c  PERL_MAGIC_overload_table (none)          Holds overload table (AMT)
+                                                 on stash
+    B  PERL_MAGIC_bm             vtbl_bm         Boyer-Moore (fast string search)
+    D  PERL_MAGIC_regdata        vtbl_regdata    Regex match position data
+                                                 (@+ and @- vars)
+    d  PERL_MAGIC_regdatum       vtbl_regdatum   Regex match position data
+                                                 element
+    E  PERL_MAGIC_env            vtbl_env        %ENV hash
+    e  PERL_MAGIC_envelem        vtbl_envelem    %ENV hash element
+    f  PERL_MAGIC_fm             vtbl_fm         Formline ('compiled' format)
+    g  PERL_MAGIC_regex_global   vtbl_mglob      m//g target / study()ed string
+    H  PERL_MAGIC_hints          vtbl_sig        %^H hash
+    h  PERL_MAGIC_hintselem      vtbl_hintselem  %^H hash element
+    I  PERL_MAGIC_isa            vtbl_isa        @ISA array
+    i  PERL_MAGIC_isaelem        vtbl_isaelem    @ISA array element
+    k  PERL_MAGIC_nkeys          vtbl_nkeys      scalar(keys()) lvalue
+    L  PERL_MAGIC_dbfile         (none)          Debugger %_<filename
+    l  PERL_MAGIC_dbline         vtbl_dbline     Debugger %_<filename element
+    o  PERL_MAGIC_collxfrm       vtbl_collxfrm   Locale collate transformation
+    P  PERL_MAGIC_tied           vtbl_pack       Tied array or hash
+    p  PERL_MAGIC_tiedelem       vtbl_packelem   Tied array or hash element
+    q  PERL_MAGIC_tiedscalar     vtbl_packelem   Tied scalar or handle
+    r  PERL_MAGIC_qr             vtbl_qr         precompiled qr// regex
+    S  PERL_MAGIC_sig            vtbl_sig        %SIG hash
+    s  PERL_MAGIC_sigelem        vtbl_sigelem    %SIG hash element
+    t  PERL_MAGIC_taint          vtbl_taint      Taintedness
+    U  PERL_MAGIC_uvar           vtbl_uvar       Available for use by extensions
+    v  PERL_MAGIC_vec            vtbl_vec        vec() lvalue
+    V  PERL_MAGIC_vstring        (none)          v-string scalars
+    w  PERL_MAGIC_utf8           vtbl_utf8       UTF-8 length+offset cache
+    x  PERL_MAGIC_substr         vtbl_substr     substr() lvalue
+    y  PERL_MAGIC_defelem        vtbl_defelem    Shadow "foreach" iterator
+                                                 variable / smart parameter
+                                                 vivification
+    #  PERL_MAGIC_arylen         vtbl_arylen     Array length ($#ary)
+    .  PERL_MAGIC_pos            vtbl_pos        pos() lvalue
+    <  PERL_MAGIC_backref        vtbl_backref    back pointer to a weak ref 
+    ~  PERL_MAGIC_ext            (none)          Available for use by extensions
+    :  PERL_MAGIC_symtab         (none)          hash used as symbol table
+    %  PERL_MAGIC_rhash          (none)          hash used as restricted hash
+    @  PERL_MAGIC_arylen_p       vtbl_arylen_p   pointer to $#a from @a
+
 
 When an uppercase and lowercase letter both exist in the table, then the
 uppercase letter is typically used to represent some kind of composite type
@@ -1088,6 +1109,17 @@ sv_magic, so you can safely allocate it on the stack.
         uf.uf_set   = &my_set_fn;
         uf.uf_index = 0;
         sv_magic(sv, 0, PERL_MAGIC_uvar, (char*)&uf, sizeof(uf));
+
+Attaching C<PERL_MAGIC_uvar> to arrays is permissible but has no effect.
+
+For hashes there is a specialized hook that gives control over hash
+keys (but not values).  This hook calls C<PERL_MAGIC_uvar> 'get' magic
+if the "set" function in the C<ufuncs> structure is NULL.  The hook
+is activated whenever the hash is accessed with a key specified as
+an C<SV> through the functions C<hv_store_ent>, C<hv_fetch_ent>,
+C<hv_delete_ent>, and C<hv_exists_ent>.  Accessing the key as a string
+through the functions without the C<..._ent> suffix circumvents the
+hook.  See L<Hash::Util::Fieldhash/Guts> for a detailed description.
 
 Note that because multiple extensions may be using C<PERL_MAGIC_ext>
 or C<PERL_MAGIC_uvar> magic, it is important for extensions to take
@@ -1154,7 +1186,7 @@ to do this.
     CODE:
         hash = newHV();
         tie = newRV_noinc((SV*)newHV());
-        stash = gv_stashpv("MyTie", TRUE);
+        stash = gv_stashpv("MyTie", GV_ADD);
         sv_bless(tie, stash);
         hv_magic(hash, (GV*)tie, PERL_MAGIC_tied);
         RETVAL = newRV_noinc(hash);
@@ -1347,7 +1379,8 @@ Similar to C<save_scalar>, but localize C<@gv> and C<%gv>.
 
 Duplicates the current value of C<SV>, on the exit from the current
 C<ENTER>/C<LEAVE> I<pseudo-block> will restore the value of C<SV>
-using the stored value.
+using the stored value. It doesn't handle magic. Use C<save_scalar> if
+magic is affected.
 
 =item C<void save_list(SV **sarg, I32 maxsarg)>
 
@@ -1857,13 +1890,39 @@ interpreters, with one interpreter represented either as a C structure,
 or inside a thread-specific structure.  These structures contain all
 the context, the state of that interpreter.
 
-Two macros control the major Perl build flavors: MULTIPLICITY and
-USE_5005THREADS.  The MULTIPLICITY build has a C structure
-that packages all the interpreter state, and there is a similar thread-specific
-data structure under USE_5005THREADS.  In both cases,
-PERL_IMPLICIT_CONTEXT is also normally defined, and enables the
-support for passing in a "hidden" first argument that represents all three
-data structures.
+One macro controls the major Perl build flavor: MULTIPLICITY. The
+MULTIPLICITY build has a C structure that packages all the interpreter
+state. With multiplicity-enabled perls, PERL_IMPLICIT_CONTEXT is also
+normally defined, and enables the support for passing in a "hidden" first
+argument that represents all three data structures. MULTIPLICITY makes
+mutli-threaded perls possible (with the ithreads threading model, related
+to the macro USE_ITHREADS.)
+
+Two other "encapsulation" macros are the PERL_GLOBAL_STRUCT and
+PERL_GLOBAL_STRUCT_PRIVATE (the latter turns on the former, and the
+former turns on MULTIPLICITY.)  The PERL_GLOBAL_STRUCT causes all the
+internal variables of Perl to be wrapped inside a single global struct,
+struct perl_vars, accessible as (globals) &PL_Vars or PL_VarsPtr or
+the function  Perl_GetVars().  The PERL_GLOBAL_STRUCT_PRIVATE goes
+one step further, there is still a single struct (allocated in main()
+either from heap or from stack) but there are no global data symbols
+pointing to it.  In either case the global struct should be initialised
+as the very first thing in main() using Perl_init_global_struct() and
+correspondingly tear it down after perl_free() using Perl_free_global_struct(),
+please see F<miniperlmain.c> for usage details.  You may also need
+to use C<dVAR> in your coding to "declare the global variables"
+when you are using them.  dTHX does this for you automatically.
+
+To see whether you have non-const data you can use a BSD-compatible C<nm>:
+
+  nm libperl.a | grep -v ' [TURtr] '
+
+If this displays any C<D> or C<d> symbols, you have non-const data.
+
+For backward compatibility reasons defining just PERL_GLOBAL_STRUCT
+doesn't actually hide all symbols inside a big global struct: some
+PerlIO_xxx vtables are left visible.  The PERL_GLOBAL_STRUCT_PRIVATE
+then hides everything (see how the PERLIO_FUNCS_DECL is used).
 
 All this obviously requires a way for the Perl internal functions to be
 either subroutines taking some kind of structure as the first
@@ -1996,9 +2055,9 @@ your Foo.xs:
         #include "perl.h"
         #include "XSUB.h"
 
-        static my_private_function(int arg1, int arg2);
+        STATIC void my_private_function(int arg1, int arg2);
 
-        static SV *
+        STATIC void
         my_private_function(int arg1, int arg2)
         {
             dTHX;       /* fetch context */
@@ -2036,9 +2095,9 @@ the Perl guts:
         #include "XSUB.h"
 
         /* pTHX_ only needed for functions that call Perl API */
-        static my_private_function(pTHX_ int arg1, int arg2);
+        STATIC void my_private_function(pTHX_ int arg1, int arg2);
 
-        static SV *
+        STATIC void
         my_private_function(pTHX_ int arg1, int arg2)
         {
             /* dTHX; not needed here, because THX is an argument */
@@ -2066,6 +2125,13 @@ Never add a comma after C<pTHX> yourself--always use the form of the
 macro with the underscore for functions that take explicit arguments,
 or the form without the argument for functions with no explicit arguments.
 
+If one is compiling Perl with the C<-DPERL_GLOBAL_STRUCT> the C<dVAR>
+definition is needed if the Perl global variables (see F<perlvars.h>
+or F<globvar.sym>) are accessed in the function and C<dTHX> is not
+used (the C<dTHX> includes the C<dVAR> if necessary).  One notices
+the need for C<dVAR> only with the said compile-time define, because
+otherwise the Perl global variables are visible as-is.
+
 =head2 Should I do anything special if I call perl from multiple threads?
 
 If you create interpreters in one thread and then proceed to call them in
@@ -2092,8 +2158,8 @@ Just as PERL_IMPLICIT_CONTEXT provides a way to bundle up everything
 that the interpreter knows about itself and pass it around, so too are
 there plans to allow the interpreter to bundle up everything it knows
 about the environment it's running on.  This is enabled with the
-PERL_IMPLICIT_SYS macro.  Currently it only works with USE_ITHREADS
-and USE_5005THREADS on Windows (see inside iperlsys.h).
+PERL_IMPLICIT_SYS macro.  Currently it only works with USE_ITHREADS on
+Windows.
 
 This allows the ability to provide an extra pointer (called the "host"
 environment) for all the system calls.  This makes it possible for
@@ -2261,6 +2327,39 @@ and
         AV *av = ...;
         UV  uv = PTR2UV(av);
 
+=head2 Exception Handling
+
+There are a couple of macros to do very basic exception handling in XS
+modules. You have to define C<NO_XSLOCKS> before including F<XSUB.h> to
+be able to use these macros:
+
+        #define NO_XSLOCKS
+        #include "XSUB.h"
+
+You can use these macros if you call code that may croak, but you need
+to do some cleanup before giving control back to Perl. For example:
+
+        dXCPT;    /* set up necessary variables */
+
+        XCPT_TRY_START {
+          code_that_may_croak();
+        } XCPT_TRY_END
+
+        XCPT_CATCH
+        {
+          /* do cleanup here */
+          XCPT_RETHROW;
+        }
+
+Note that you always have to rethrow an exception that has been
+caught. Using these macros, it is not possible to just catch the
+exception and ignore it. If you have to ignore the exception, you
+have to use the C<call_*> function.
+
+The advantage of using the above macros is that you don't have
+to setup an extra function for C<call_*>, and that using these
+macros is faster than using C<call_*>.
+
 =head2 Source Documentation
 
 There's an effort going on to document the internal functions and
@@ -2331,8 +2430,8 @@ To fix this, some people formed Unicode, Inc. and
 produced a new character set containing all the characters you can
 possibly think of and more. There are several ways of representing these
 characters, and the one Perl uses is called UTF-8. UTF-8 uses
-a variable number of bytes to represent a character, instead of just
-one. You can learn more about Unicode at http://www.unicode.org/
+a variable number of bytes to represent a character. You can learn more
+about Unicode and Perl's Unicode model in L<perlunicode>.
 
 =head2 How can I recognise a UTF-8 string?
 
@@ -2343,16 +2442,17 @@ C<v196.172>. Unfortunately, the non-Unicode string C<chr(196).chr(172)>
 has that byte sequence as well. So you can't tell just by looking - this
 is what makes Unicode input an interesting problem.
 
-The API function C<is_utf8_string> can help; it'll tell you if a string
-contains only valid UTF-8 characters. However, it can't do the work for
-you. On a character-by-character basis, C<is_utf8_char> will tell you
-whether the current character in a string is valid UTF-8.
+In general, you either have to know what you're dealing with, or you
+have to guess.  The API function C<is_utf8_string> can help; it'll tell
+you if a string contains only valid UTF-8 characters. However, it can't
+do the work for you. On a character-by-character basis, C<is_utf8_char>
+will tell you whether the current character in a string is valid UTF-8. 
 
 =head2 How does UTF-8 represent Unicode characters?
 
 As mentioned above, UTF-8 uses a variable number of bytes to store a
-character. Characters with values 1...128 are stored in one byte, just
-like good ol' ASCII. Character 129 is stored as C<v194.129>; this
+character. Characters with values 0...127 are stored in one byte, just
+like good ol' ASCII. Character 128 is stored as C<v194.128>; this
 continues up to character 191, which is C<v194.191>. Now we've run out of
 bits (191 is binary C<10111111>) so we move on; 192 is C<v195.128>. And
 so it goes on, moving to three bytes at character 2048.
@@ -2409,9 +2509,11 @@ So don't do that!
 =head2 How does Perl store UTF-8 strings?
 
 Currently, Perl deals with Unicode strings and non-Unicode strings
-slightly differently. If a string has been identified as being UTF-8
-encoded, Perl will set a flag in the SV, C<SVf_UTF8>. You can check and
-manipulate this flag with the following macros:
+slightly differently. A flag in the SV, C<SVf_UTF8>, indicates that the
+string is internally encoded as UTF-8. Without it, the byte value is the
+codepoint number and vice versa (in other words, the string is encoded
+as iso-8859-1). You can check and manipulate this flag with the
+following macros:
 
     SvUTF8(sv)
     SvUTF8_on(sv)
@@ -2423,7 +2525,7 @@ C<length>, C<substr> and other string handling operations will have
 undesirable results.
 
 The problem comes when you have, for instance, a string that isn't
-flagged is UTF-8, and contains a byte sequence that could be UTF-8 -
+flagged as UTF-8, and contains a byte sequence that could be UTF-8 -
 especially when combining non-UTF-8 and UTF-8 strings.
 
 Never forget that the C<SVf_UTF8> flag is separate to the PV value; you
@@ -2441,7 +2543,7 @@ manipulating SVs. More specifically, you cannot expect to do this:
 
 The C<char*> string does not tell you the whole story, and you can't
 copy or reconstruct an SV just by copying the string value. Check if the
-old SV has the UTF-8 flag set, and act accordingly:
+old SV has the UTF8 flag set, and act accordingly:
 
     p = SvPV(sv, len);
     frobnicate(p);
@@ -2454,14 +2556,14 @@ not it's dealing with UTF-8 data, so that it can handle the string
 appropriately.
 
 Since just passing an SV to an XS function and copying the data of
-the SV is not enough to copy the UTF-8 flags, even less right is just
+the SV is not enough to copy the UTF8 flags, even less right is just
 passing a C<char *> to an XS function.
 
 =head2 How do I convert a string to UTF-8?
 
-If you're mixing UTF-8 and non-UTF-8 strings, you might find it necessary
-to upgrade one of the strings to UTF-8. If you've got an SV, the easiest
-way to do this is:
+If you're mixing UTF-8 and non-UTF-8 strings, it is necessary to upgrade
+one of the strings to UTF-8. If you've got an SV, the easiest way to do
+this is:
 
     sv_utf8_upgrade(sv);
 
@@ -2472,7 +2574,7 @@ However, you must not do this, for example:
 
 If you do this in a binary operator, you will actually change one of the
 strings that came into the operator, and, while it shouldn't be noticeable
-by the end user, it can cause problems.
+by the end user, it can cause problems in deficient code.
 
 Instead, C<bytes_to_utf8> will give you a UTF-8-encoded B<copy> of its
 string argument. This is useful for having the data available for

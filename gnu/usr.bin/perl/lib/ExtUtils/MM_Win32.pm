@@ -24,19 +24,17 @@ use File::Basename;
 use File::Spec;
 use ExtUtils::MakeMaker qw( neatvalue );
 
-use vars qw(@ISA $VERSION $BORLAND $GCC $DMAKE $NMAKE);
+use vars qw(@ISA $VERSION);
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-$VERSION = '1.12';
+$VERSION = '6.42';
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
-$BORLAND = 1 if $Config{'cc'} =~ /^bcc/i;
-$GCC     = 1 if $Config{'cc'} =~ /^gcc/i;
-$DMAKE = 1 if $Config{'make'} =~ /^dmake/i;
-$NMAKE = 1 if $Config{'make'} =~ /^nmake/i;
+my $BORLAND = 1 if $Config{'cc'} =~ /^bcc/i;
+my $GCC     = 1 if $Config{'cc'} =~ /^gcc/i;
 
 
 =head2 Overridden methods
@@ -130,10 +128,12 @@ Using \ for Windows.
 sub init_DIRFILESEP {
     my($self) = shift;
 
+    my $make = $self->make;
+
     # The ^ makes sure its not interpreted as an escape in nmake
-    $self->{DIRFILESEP} = $NMAKE ? '^\\' :
-                          $DMAKE ? '\\\\'
-                                 : '\\';
+    $self->{DIRFILESEP} = $make eq 'nmake' ? '^\\' :
+                          $make eq 'dmake' ? '\\\\'
+                                           : '\\';
 }
 
 =item B<init_others>
@@ -236,7 +236,7 @@ sub special_targets {
 
     my $make_frag = $self->SUPER::special_targets;
 
-    $make_frag .= <<'MAKE_FRAG' if $DMAKE;
+    $make_frag .= <<'MAKE_FRAG' if $self->make eq 'dmake';
 .USESHELL :
 MAKE_FRAG
 
@@ -331,7 +331,8 @@ $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).
     } elsif ($BORLAND) {
       push(@m,
        q{	$(LD) $(LDDLFLAGS) $(OTHERLDFLAGS) }.$ldfrom.q{,$@,,}
-       .($DMAKE ? q{$(PERL_ARCHIVE:s,/,\,) $(LDLOADLIBS:s,/,\,) }
+       .($self->make eq 'dmake' 
+                ? q{$(PERL_ARCHIVE:s,/,\,) $(LDLOADLIBS:s,/,\,) }
 		 .q{$(MYEXTLIB:s,/,\,),$(EXPORT_LIST:s,/,\,)}
 		: q{$(subst /,\,$(PERL_ARCHIVE)) $(subst /,\,$(LDLOADLIBS)) }
 		 .q{$(subst /,\,$(MYEXTLIB)),$(subst /,\,$(EXPORT_LIST))})
@@ -340,6 +341,14 @@ $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).
       push(@m,
        q{	$(LD) -out:$@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) }
       .q{$(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) -def:$(EXPORT_LIST)});
+
+      # VS2005 (aka VC 8) or higher, but not for 64-bit compiler from Platform SDK
+      if ($Config{ivsize} == 4 && $Config{cc} eq 'cl' and $Config{ccversion} =~ /^(\d+)/ and $1 >= 14) 
+    {
+        push(@m,
+          q{
+	mt -nologo -manifest $@.manifest -outputresource:$@;2 && del $@.manifest});
+      }
     }
     push @m, '
 	$(CHMOD) $(PERM_RWX) $@
@@ -410,7 +419,7 @@ banner.
 
 sub pasthru {
     my($self) = shift;
-    return "PASTHRU = " . ($NMAKE ? "-nologo" : "");
+    return "PASTHRU = " . ($self->make eq 'nmake' ? "-nologo" : "");
 }
 
 
@@ -434,7 +443,7 @@ sub oneliner {
 
     $switches = join ' ', @$switches;
 
-    return qq{\$(ABSPERLRUN) $switches -e $cmd};
+    return qq{\$(ABSPERLRUN) $switches -e $cmd --};
 }
 
 
@@ -449,7 +458,7 @@ sub quote_literal {
     # quotes; however it transforms {{ into { either inside and outside double
     # quotes.  It also translates }} into }.  The escaping below is not
     # 100% correct.
-    if( $DMAKE ) {
+    if( $self->make eq 'dmake' ) {
         $text =~ s/{/{{/g;
         $text =~ s/}}/}}}/g;
     }
@@ -478,23 +487,24 @@ wants:
     another_command
     cd ..
 
-B<NOTE> This cd can only go one level down.  So far this sufficient for
-what MakeMaker needs.
+NOTE: This only works with simple relative directories.  Throw it an absolute dir or something with .. in it and things will go wrong.
 
 =cut
 
 sub cd {
     my($self, $dir, @cmds) = @_;
 
-    return $self->SUPER::cd($dir, @cmds) unless $NMAKE;
+    return $self->SUPER::cd($dir, @cmds) unless $self->make eq 'nmake';
 
     my $cmd = join "\n\t", map "$_", @cmds;
 
+    my $updirs = $self->catdir(map { $self->updir } $self->splitdir($dir));
+
     # No leading tab and no trailing newline makes for easier embedding.
-    my $make_frag = sprintf <<'MAKE_FRAG', $dir, $cmd;
+    my $make_frag = sprintf <<'MAKE_FRAG', $dir, $cmd, $updirs;
 cd %s
 	%s
-	cd ..
+	cd %s
 MAKE_FRAG
 
     chomp $make_frag;
@@ -526,6 +536,33 @@ sub os_flavor {
     return('Win32');
 }
 
+
+=item cflags
+
+Defines the PERLDLL symbol if we are configured for static building since all
+code destined for the perl5xx.dll must be compiled with the PERLDLL symbol
+defined.
+
+=cut
+
+sub cflags {
+    my($self,$libperl)=@_;
+    return $self->{CFLAGS} if $self->{CFLAGS};
+    return '' unless $self->needs_linking();
+
+    my $base = $self->SUPER::cflags($libperl);
+    foreach (split /\n/, $base) {
+        /^(\S*)\s*=\s*(\S*)$/ and $self->{$1} = $2;
+    };
+    $self->{CCFLAGS} .= " -DPERLDLL" if ($self->{LINKTYPE} eq 'static');
+
+    return $self->{CFLAGS} = qq{
+CCFLAGS = $self->{CCFLAGS}
+OPTIMIZE = $self->{OPTIMIZE}
+PERLTYPE = $self->{PERLTYPE}
+};
+
+}
 
 1;
 __END__

@@ -132,7 +132,7 @@ new_opset(pTHX_ SV *old_opset)
 	opset = newSVsv(old_opset);
     }
     else {
-	opset = NEWSV(1156, opset_len);
+	opset = newSV(opset_len);
 	Zero(SvPVX_const(opset), opset_len + 1, char);
 	SvCUR_set(opset, opset_len);
 	(void)SvPOK_only(opset);
@@ -313,6 +313,10 @@ PPCODE:
     /* %INC must be clean for use/require in compartment */
     dummy_hv = save_hash(PL_incgv);
     GvHV(PL_incgv) = (HV*)SvREFCNT_inc(GvHV(gv_HVadd(gv_fetchpv("INC",TRUE,SVt_PVHV))));
+
+    /* Invalidate ISA and method caches */
+    ++PL_sub_generation;
+    hv_clear(PL_stashcache);
 
     PUSHMARK(SP);
     perl_call_sv(codesv, GIMME|G_EVAL|G_KEEPERR); /* use callers context */

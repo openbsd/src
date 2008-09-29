@@ -11,18 +11,18 @@ numbers, dates, strings, arrays, hashes, and miscellaneous data issues.
 
 =head2 Why am I getting long decimals (eg, 19.9499999999999) instead of the numbers I should be getting (eg, 19.95)?
 
-Internally, your computer represents floating-point numbers
-in binary. Digital (as in powers of two) computers cannot
-store all numbers exactly.  Some real numbers lose precision
-in the process.  This is a problem with how computers store
-numbers and affects all computer languages, not just Perl.
+Internally, your computer represents floating-point numbers in binary.
+Digital (as in powers of two) computers cannot store all numbers
+exactly.  Some real numbers lose precision in the process.  This is a
+problem with how computers store numbers and affects all computer
+languages, not just Perl.
 
-L<perlnumber> show the gory details of number
-representations and conversions.
+L<perlnumber> shows the gory details of number representations and
+conversions.
 
-To limit the number of decimal places in your numbers, you
-can use the printf or sprintf function.  See the
-L<"Floating Point Arithmetic"|perlop> for more details.
+To limit the number of decimal places in your numbers, you can use the
+printf or sprintf function.  See the L<"Floating Point
+Arithmetic"|perlop> for more details.
 
 	printf "%.2f", 10/3;
 
@@ -30,16 +30,16 @@ L<"Floating Point Arithmetic"|perlop> for more details.
 
 =head2 Why is int() broken?
 
-Your int() is most probably working just fine.  It's the numbers that
+Your C<int()> is most probably working just fine.  It's the numbers that
 aren't quite what you think.
 
-First, see the above item "Why am I getting long decimals
+First, see the answer to "Why am I getting long decimals
 (eg, 19.9499999999999) instead of the numbers I should be getting
 (eg, 19.95)?".
 
 For example, this
 
-    print int(0.6/0.2-2), "\n";
+	print int(0.6/0.2-2), "\n";
 
 will in most computers print 0, not 1, because even such simple
 numbers as 0.6 and 0.2 cannot be presented exactly by floating-point
@@ -50,54 +50,54 @@ numbers.  What you think in the above as 'three' is really more like
 
 Perl only understands octal and hex numbers as such when they occur as
 literals in your program.  Octal literals in perl must start with a
-leading "0" and hexadecimal literals must start with a leading "0x".
+leading C<0> and hexadecimal literals must start with a leading C<0x>.
 If they are read in from somewhere and assigned, no automatic
-conversion takes place.  You must explicitly use oct() or hex() if you
-want the values converted to decimal.  oct() interprets hex ("0x350"),
-octal ("0350" or even without the leading "0", like "377") and binary
-("0b1010") numbers, while hex() only converts hexadecimal ones, with
-or without a leading "0x", like "0x255", "3A", "ff", or "deadbeef".
+conversion takes place.  You must explicitly use C<oct()> or C<hex()> if you
+want the values converted to decimal.  C<oct()> interprets hexadecimal (C<0x350>),
+octal (C<0350> or even without the leading C<0>, like C<377>) and binary
+(C<0b1010>) numbers, while C<hex()> only converts hexadecimal ones, with
+or without a leading C<0x>, such as C<0x255>, C<3A>, C<ff>, or C<deadbeef>.
 The inverse mapping from decimal to octal can be done with either the
-"%o" or "%O" sprintf() formats.
+<%o> or C<%O> C<sprintf()> formats.
 
-This problem shows up most often when people try using chmod(), mkdir(),
-umask(), or sysopen(), which by widespread tradition typically take
-permissions in octal.
+This problem shows up most often when people try using C<chmod()>,
+C<mkdir()>, C<umask()>, or C<sysopen()>, which by widespread tradition
+typically take permissions in octal.
 
-    chmod(644,  $file);	# WRONG
-    chmod(0644, $file);	# right
+	chmod(644,  $file);   # WRONG
+	chmod(0644, $file);   # right
 
 Note the mistake in the first line was specifying the decimal literal
-644, rather than the intended octal literal 0644.  The problem can
+C<644>, rather than the intended octal literal C<0644>.  The problem can
 be seen with:
 
-    printf("%#o",644); # prints 01204
+	printf("%#o",644);   # prints 01204
 
 Surely you had not intended C<chmod(01204, $file);> - did you?  If you
 want to use numeric literals as arguments to chmod() et al. then please
 try to express them as octal constants, that is with a leading zero and
-with the following digits restricted to the set 0..7.
+with the following digits restricted to the set C<0..7>.
 
 =head2 Does Perl have a round() function?  What about ceil() and floor()?  Trig functions?
 
-Remember that int() merely truncates toward 0.  For rounding to a
-certain number of digits, sprintf() or printf() is usually the easiest
-route.
+Remember that C<int()> merely truncates toward 0.  For rounding to a
+certain number of digits, C<sprintf()> or C<printf()> is usually the
+easiest route.
 
-    printf("%.3f", 3.1415926535);	# prints 3.142
+	printf("%.3f", 3.1415926535);   # prints 3.142
 
-The POSIX module (part of the standard Perl distribution) implements
-ceil(), floor(), and a number of other mathematical and trigonometric
-functions.
+The C<POSIX> module (part of the standard Perl distribution)
+implements C<ceil()>, C<floor()>, and a number of other mathematical
+and trigonometric functions.
 
-    use POSIX;
-    $ceil   = ceil(3.5);			# 4
-    $floor  = floor(3.5);			# 3
+	use POSIX;
+	$ceil   = ceil(3.5);   # 4
+	$floor  = floor(3.5);  # 3
 
-In 5.000 to 5.003 perls, trigonometry was done in the Math::Complex
-module.  With 5.004, the Math::Trig module (part of the standard Perl
+In 5.000 to 5.003 perls, trigonometry was done in the C<Math::Complex>
+module.  With 5.004, the C<Math::Trig> module (part of the standard Perl
 distribution) implements the trigonometric functions. Internally it
-uses the Math::Complex module and some functions can break out from
+uses the C<Math::Complex> module and some functions can break out from
 the real axis into the complex plane, for example the inverse sine of
 2.
 
@@ -110,148 +110,148 @@ need yourself.
 To see why, notice how you'll still have an issue on half-way-point
 alternation:
 
-    for ($i = 0; $i < 1.01; $i += 0.05) { printf "%.1f ",$i}
+	for ($i = 0; $i < 1.01; $i += 0.05) { printf "%.1f ",$i}
 
-    0.0 0.1 0.1 0.2 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5 0.6 0.7 0.7
-    0.8 0.8 0.9 0.9 1.0 1.0
+	0.0 0.1 0.1 0.2 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5 0.6 0.7 0.7
+	0.8 0.8 0.9 0.9 1.0 1.0
 
-Don't blame Perl.  It's the same as in C.  IEEE says we have to do this.
-Perl numbers whose absolute values are integers under 2**31 (on 32 bit
-machines) will work pretty much like mathematical integers.  Other numbers
-are not guaranteed.
+Don't blame Perl.  It's the same as in C.  IEEE says we have to do
+this. Perl numbers whose absolute values are integers under 2**31 (on
+32 bit machines) will work pretty much like mathematical integers.
+Other numbers are not guaranteed.
 
 =head2 How do I convert between numeric representations/bases/radixes?
 
-As always with Perl there is more than one way to do it.  Below
-are a few examples of approaches to making common conversions
-between number representations.  This is intended to be representational
-rather than exhaustive.
+As always with Perl there is more than one way to do it.  Below are a
+few examples of approaches to making common conversions between number
+representations.  This is intended to be representational rather than
+exhaustive.
 
-Some of the examples below use the Bit::Vector module from CPAN.
-The reason you might choose Bit::Vector over the perl built in
-functions is that it works with numbers of ANY size, that it is
-optimized for speed on some operations, and for at least some
-programmers the notation might be familiar.
+Some of the examples later in L<perlfaq4> use the C<Bit::Vector>
+module from CPAN. The reason you might choose C<Bit::Vector> over the
+perl built in functions is that it works with numbers of ANY size,
+that it is optimized for speed on some operations, and for at least
+some programmers the notation might be familiar.
 
 =over 4
 
 =item How do I convert hexadecimal into decimal
 
-Using perl's built in conversion of 0x notation:
+Using perl's built in conversion of C<0x> notation:
 
-    $dec = 0xDEADBEEF;
+	$dec = 0xDEADBEEF;
 
-Using the hex function:
+Using the C<hex> function:
 
-    $dec = hex("DEADBEEF");
+	$dec = hex("DEADBEEF");
 
-Using pack:
+Using C<pack>:
 
-    $dec = unpack("N", pack("H8", substr("0" x 8 . "DEADBEEF", -8)));
+	$dec = unpack("N", pack("H8", substr("0" x 8 . "DEADBEEF", -8)));
 
-Using the CPAN module Bit::Vector:
+Using the CPAN module C<Bit::Vector>:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new_Hex(32, "DEADBEEF");
-    $dec = $vec->to_Dec();
+	use Bit::Vector;
+	$vec = Bit::Vector->new_Hex(32, "DEADBEEF");
+	$dec = $vec->to_Dec();
 
 =item How do I convert from decimal to hexadecimal
 
-Using sprintf:
+Using C<sprintf>:
 
-    $hex = sprintf("%X", 3735928559); # upper case A-F
-    $hex = sprintf("%x", 3735928559); # lower case a-f
+	$hex = sprintf("%X", 3735928559); # upper case A-F
+	$hex = sprintf("%x", 3735928559); # lower case a-f
 
-Using unpack:
+Using C<unpack>:
 
-    $hex = unpack("H*", pack("N", 3735928559));
+	$hex = unpack("H*", pack("N", 3735928559));
 
-Using Bit::Vector:
+Using C<Bit::Vector>:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new_Dec(32, -559038737);
-    $hex = $vec->to_Hex();
+	use Bit::Vector;
+	$vec = Bit::Vector->new_Dec(32, -559038737);
+	$hex = $vec->to_Hex();
 
-And Bit::Vector supports odd bit counts:
+And C<Bit::Vector> supports odd bit counts:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new_Dec(33, 3735928559);
-    $vec->Resize(32); # suppress leading 0 if unwanted
-    $hex = $vec->to_Hex();
+	use Bit::Vector;
+	$vec = Bit::Vector->new_Dec(33, 3735928559);
+	$vec->Resize(32); # suppress leading 0 if unwanted
+	$hex = $vec->to_Hex();
 
 =item How do I convert from octal to decimal
 
 Using Perl's built in conversion of numbers with leading zeros:
 
-    $dec = 033653337357; # note the leading 0!
+	$dec = 033653337357; # note the leading 0!
 
-Using the oct function:
+Using the C<oct> function:
 
-    $dec = oct("33653337357");
+	$dec = oct("33653337357");
 
-Using Bit::Vector:
+Using C<Bit::Vector>:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new(32);
-    $vec->Chunk_List_Store(3, split(//, reverse "33653337357"));
-    $dec = $vec->to_Dec();
+	use Bit::Vector;
+	$vec = Bit::Vector->new(32);
+	$vec->Chunk_List_Store(3, split(//, reverse "33653337357"));
+	$dec = $vec->to_Dec();
 
 =item How do I convert from decimal to octal
 
-Using sprintf:
+Using C<sprintf>:
 
-    $oct = sprintf("%o", 3735928559);
+	$oct = sprintf("%o", 3735928559);
 
-Using Bit::Vector:
+Using C<Bit::Vector>:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new_Dec(32, -559038737);
-    $oct = reverse join('', $vec->Chunk_List_Read(3));
+	use Bit::Vector;
+	$vec = Bit::Vector->new_Dec(32, -559038737);
+	$oct = reverse join('', $vec->Chunk_List_Read(3));
 
 =item How do I convert from binary to decimal
 
 Perl 5.6 lets you write binary numbers directly with
-the 0b notation:
+the C<0b> notation:
 
-    $number = 0b10110110;
+	$number = 0b10110110;
 
-Using oct:
+Using C<oct>:
 
-    my $input = "10110110";
-    $decimal = oct( "0b$input" );
+	my $input = "10110110";
+	$decimal = oct( "0b$input" );
 
-Using pack and ord:
+Using C<pack> and C<ord>:
 
-    $decimal = ord(pack('B8', '10110110'));
+	$decimal = ord(pack('B8', '10110110'));
 
-Using pack and unpack for larger strings:
+Using C<pack> and C<unpack> for larger strings:
 
-    $int = unpack("N", pack("B32",
+	$int = unpack("N", pack("B32",
 	substr("0" x 32 . "11110101011011011111011101111", -32)));
-    $dec = sprintf("%d", $int);
+	$dec = sprintf("%d", $int);
 
-    # substr() is used to left pad a 32 character string with zeros.
+	# substr() is used to left pad a 32 character string with zeros.
 
-Using Bit::Vector:
+Using C<Bit::Vector>:
 
-    $vec = Bit::Vector->new_Bin(32, "11011110101011011011111011101111");
-    $dec = $vec->to_Dec();
+	$vec = Bit::Vector->new_Bin(32, "11011110101011011011111011101111");
+	$dec = $vec->to_Dec();
 
 =item How do I convert from decimal to binary
 
-Using sprintf (perl 5.6+):
+Using C<sprintf> (perl 5.6+):
 
-    $bin = sprintf("%b", 3735928559);
+	$bin = sprintf("%b", 3735928559);
 
-Using unpack:
+Using C<unpack>:
 
-    $bin = unpack("B*", pack("N", 3735928559));
+	$bin = unpack("B*", pack("N", 3735928559));
 
-Using Bit::Vector:
+Using C<Bit::Vector>:
 
-    use Bit::Vector;
-    $vec = Bit::Vector->new_Dec(32, -559038737);
-    $bin = $vec->to_Bin();
+	use Bit::Vector;
+	$vec = Bit::Vector->new_Dec(32, -559038737);
+	$bin = $vec->to_Bin();
 
 The remaining transformations (e.g. hex -> oct, bin -> hex, etc.)
 are left as an exercise to the inclined reader.
@@ -274,16 +274,16 @@ Most problems with C<&> and C<|> arise because the programmer thinks
 they have a number but really it's a string.  The rest arise because
 the programmer says:
 
-    if ("\020\020" & "\101\101") {
-	# ...
-    }
+	if ("\020\020" & "\101\101") {
+		# ...
+		}
 
 but a string consisting of two null bytes (the result of C<"\020\020"
 & "\101\101">) is not a false value in Perl.  You need:
 
-    if ( ("\020\020" & "\101\101") !~ /[^\000]/) {
-	# ...
-    }
+	if ( ("\020\020" & "\101\101") !~ /[^\000]/) {
+		# ...
+		}
 
 =head2 How do I multiply matrices?
 
@@ -295,38 +295,38 @@ or the PDL extension (also available from CPAN).
 To call a function on each element in an array, and collect the
 results, use:
 
-    @results = map { my_func($_) } @array;
+	@results = map { my_func($_) } @array;
 
 For example:
 
-    @triple = map { 3 * $_ } @single;
+	@triple = map { 3 * $_ } @single;
 
 To call a function on each element of an array, but ignore the
 results:
 
-    foreach $iterator (@array) {
-        some_func($iterator);
-    }
+	foreach $iterator (@array) {
+		some_func($iterator);
+		}
 
 To call a function on each integer in a (small) range, you B<can> use:
 
-    @results = map { some_func($_) } (5 .. 25);
+	@results = map { some_func($_) } (5 .. 25);
 
 but you should be aware that the C<..> operator creates an array of
 all integers in the range.  This can take a lot of memory for large
 ranges.  Instead use:
 
-    @results = ();
-    for ($i=5; $i < 500_005; $i++) {
-        push(@results, some_func($i));
-    }
+	@results = ();
+	for ($i=5; $i < 500_005; $i++) {
+		push(@results, some_func($i));
+		}
 
 This situation has been fixed in Perl5.005. Use of C<..> in a C<for>
 loop will iterate over the range, without creating the entire range.
 
-    for my $i (5 .. 500_005) {
-        push(@results, some_func($i));
-    }
+	for my $i (5 .. 500_005) {
+		push(@results, some_func($i));
+		}
 
 will not create a list of 500,000 integers.
 
@@ -342,19 +342,19 @@ once at the start of your program to seed the random number generator.
 	 BEGIN { srand() if $] < 5.004 }
 
 5.004 and later automatically call C<srand> at the beginning.  Don't
-call C<srand> more than once---you make your numbers less random, rather
-than more.
+call C<srand> more than once--you make your numbers less random,
+rather than more.
 
 Computers are good at being predictable and bad at being random
 (despite appearances caused by bugs in your programs :-).  see the
 F<random> article in the "Far More Than You Ever Wanted To Know"
-collection in http://www.cpan.org/misc/olddoc/FMTEYEWTK.tgz , courtesy of
-Tom Phoenix, talks more about this.  John von Neumann said, "Anyone
+collection in http://www.cpan.org/misc/olddoc/FMTEYEWTK.tgz , courtesy
+of Tom Phoenix, talks more about this.  John von Neumann said, "Anyone
 who attempts to generate random numbers by deterministic means is, of
 course, living in a state of sin."
 
 If you want numbers that are more random than C<rand> with C<srand>
-provides, you should also check out the Math::TrulyRandom module from
+provides, you should also check out the C<Math::TrulyRandom> module from
 CPAN.  It uses the imperfections in your system's timer to generate
 random numbers, but this takes quite a while.  If you want a better
 pseudorandom generator than comes with your operating system, look at
@@ -362,28 +362,30 @@ pseudorandom generator than comes with your operating system, look at
 
 =head2 How do I get a random number between X and Y?
 
-C<rand($x)> returns a number such that
-C<< 0 <= rand($x) < $x >>. Thus what you want to have perl
-figure out is a random number in the range from 0 to the
-difference between your I<X> and I<Y>.
+To get a random number between two values, you can use the C<rand()>
+builtin to get a random number between 0 and 1. From there, you shift
+that into the range that you want.
 
-That is, to get a number between 10 and 15, inclusive, you
-want a random number between 0 and 5 that you can then add
-to 10.
+C<rand($x)> returns a number such that C<< 0 <= rand($x) < $x >>. Thus
+what you want to have perl figure out is a random number in the range
+from 0 to the difference between your I<X> and I<Y>.
 
-    my $number = 10 + int rand( 15-10+1 );
+That is, to get a number between 10 and 15, inclusive, you want a
+random number between 0 and 5 that you can then add to 10.
+
+	my $number = 10 + int rand( 15-10+1 );
 
 Hence you derive the following simple function to abstract
 that. It selects a random integer between the two given
-integers (inclusive), For example: C<random_int_in(50,120)>.
+integers (inclusive), For example: C<random_int_between(50,120)>.
 
-   sub random_int_in ($$) {
-     my($min, $max) = @_;
-      # Assumes that the two arguments are integers themselves!
-     return $min if $min == $max;
-     ($min, $max) = ($max, $min)  if  $min > $max;
-     return $min + int rand(1 + $max - $min);
-   }
+	sub random_int_between {
+		my($min, $max) = @_;
+		# Assumes that the two arguments are integers themselves!
+		return $min if $min == $max;
+		($min, $max) = ($max, $min)  if  $min > $max;
+		return $min + int rand(1 + $max - $min);
+		}
 
 =head1 Data: Dates
 
@@ -394,22 +396,21 @@ argument localtime uses the current time.
 
 	$day_of_year = (localtime)[7];
 
-The POSIX module can also format a date as the day of the year or
+The C<POSIX> module can also format a date as the day of the year or
 week of the year.
 
 	use POSIX qw/strftime/;
 	my $day_of_year  = strftime "%j", localtime;
 	my $week_of_year = strftime "%W", localtime;
 
-To get the day of year for any date, use the Time::Local module to get
+To get the day of year for any date, use C<POSIX>'s C<mktime> to get
 a time in epoch seconds for the argument to localtime.
 
-	use POSIX qw/strftime/;
-	use Time::Local;
+	use POSIX qw/mktime strftime/;
 	my $week_of_year = strftime "%W",
-		localtime( timelocal( 0, 0, 0, 18, 11, 1987 ) );
+		localtime( mktime( 0, 0, 0, 18, 11, 87 ) );
 
-The Date::Calc module provides two functions to calculate these.
+The C<Date::Calc> module provides two functions to calculate these.
 
 	use Date::Calc;
 	my $day_of_year  = Day_of_Year(  1987, 12, 18 );
@@ -419,62 +420,62 @@ The Date::Calc module provides two functions to calculate these.
 
 Use the following simple functions:
 
-    sub get_century    {
-	return int((((localtime(shift || time))[5] + 1999))/100);
-    }
+	sub get_century    {
+		return int((((localtime(shift || time))[5] + 1999))/100);
+		}
 
-    sub get_millennium {
-	return 1+int((((localtime(shift || time))[5] + 1899))/1000);
-    }
+	sub get_millennium {
+		return 1+int((((localtime(shift || time))[5] + 1899))/1000);
+		}
 
-On some systems, the POSIX module's strftime() function has
-been extended in a non-standard way to use a C<%C> format,
-which they sometimes claim is the "century".  It isn't,
-because on most such systems, this is only the first two
-digits of the four-digit year, and thus cannot be used to
-reliably determine the current century or millennium.
+On some systems, the C<POSIX> module's C<strftime()> function has been
+extended in a non-standard way to use a C<%C> format, which they
+sometimes claim is the "century". It isn't, because on most such
+systems, this is only the first two digits of the four-digit year, and
+thus cannot be used to reliably determine the current century or
+millennium.
 
 =head2 How can I compare two dates and find the difference?
 
 (contributed by brian d foy)
 
-You could just store all your dates as a number and then subtract. Life
-isn't always that simple though. If you want to work with formatted
-dates, the Date::Manip, Date::Calc, or DateTime modules can help you.
-
+You could just store all your dates as a number and then subtract.
+Life isn't always that simple though. If you want to work with
+formatted dates, the C<Date::Manip>, C<Date::Calc>, or C<DateTime>
+modules can help you.
 
 =head2 How can I take a string and turn it into epoch seconds?
 
 If it's a regular enough string that it always has the same format,
 you can split it up and pass the parts to C<timelocal> in the standard
-Time::Local module.  Otherwise, you should look into the Date::Calc
-and Date::Manip modules from CPAN.
+C<Time::Local> module.  Otherwise, you should look into the C<Date::Calc>
+and C<Date::Manip> modules from CPAN.
 
 =head2 How can I find the Julian Day?
 
 (contributed by brian d foy and Dave Cross)
 
-You can use the Time::JulianDay module available on CPAN.  Ensure that
-you really want to find a Julian day, though, as many people have
+You can use the C<Time::JulianDay> module available on CPAN.  Ensure
+that you really want to find a Julian day, though, as many people have
 different ideas about Julian days.  See
 http://www.hermetic.ch/cal_stud/jdn.htm for instance.
 
-You can also try the DateTime module, which can convert a date/time
+You can also try the C<DateTime> module, which can convert a date/time
 to a Julian Day.
 
-  $ perl -MDateTime -le'print DateTime->today->jd'
-  2453401.5
+	$ perl -MDateTime -le'print DateTime->today->jd'
+	2453401.5
 
 Or the modified Julian Day
 
-  $ perl -MDateTime -le'print DateTime->today->mjd'
-  53401
+	$ perl -MDateTime -le'print DateTime->today->mjd'
+	53401
 
 Or even the day of the year (which is what some people think of as a
 Julian day)
 
-  $ perl -MDateTime -le'print DateTime->today->doy'
-  31
+	$ perl -MDateTime -le'print DateTime->today->doy'
+	31
 
 =head2 How do I find yesterday's date?
 
@@ -489,24 +490,24 @@ give you the same time of day, only the day before.
 
 	print "Yesterday was $yesterday\n";
 
-You can also use the C<Date::Calc> module using its Today_and_Now
+You can also use the C<Date::Calc> module using its C<Today_and_Now>
 function.
 
 	use Date::Calc qw( Today_and_Now Add_Delta_DHMS );
 
 	my @date_time = Add_Delta_DHMS( Today_and_Now(), -1, 0, 0, 0 );
 
-	print "@date\n";
+	print "@date_time\n";
 
 Most people try to use the time rather than the calendar to figure out
 dates, but that assumes that days are twenty-four hours each.  For
 most people, there are two days a year when they aren't: the switch to
 and from summer time throws this off. Let the modules do the work.
 
-=head2 Does Perl have a Year 2000 problem?  Is Perl Y2K compliant?
+=head2 Does Perl have a Year 2000 problem? Is Perl Y2K compliant?
 
 Short answer: No, Perl does not have a Year 2000 problem.  Yes, Perl is
-Y2K compliant (whatever that means).  The programmers you've hired to
+Y2K compliant (whatever that means). The programmers you've hired to
 use it, however, probably are not.
 
 Long answer: The question belies a true understanding of the issue.
@@ -554,7 +555,7 @@ It depends just what you mean by "escape".  URL escapes are dealt
 with in L<perlfaq9>.  Shell escapes with the backslash (C<\>)
 character are removed with
 
-    s/\\(.)/$1/g;
+	s/\\(.)/$1/g;
 
 This won't expand C<"\n"> or C<"\t"> or any other special escapes.
 
@@ -569,7 +570,7 @@ store the matched character in the back-reference C<\1> and we use
 that to require that the same thing immediately follow it. We replace
 that part of the string with the character in C<$1>.
 
-    s/(.)\1/$1/g;
+	s/(.)\1/$1/g;
 
 We can also use the transliteration operator, C<tr///>. In this
 example, the search list side of our C<tr///> contains nothing, but
@@ -581,7 +582,7 @@ duplicated and consecutive characters in the string so a character
 does not show up next to itself
 
 	my $str = 'Haarlem';   # in the Netherlands
-    $str =~ tr///cs;       # Now Harlem, like in New York
+	$str =~ tr///cs;       # Now Harlem, like in New York
 
 =head2 How do I expand function calls in a string?
 
@@ -590,7 +591,7 @@ does not show up next to itself
 This is documented in L<perlref>, and although it's not the easiest
 thing to read, it does work. In each of these examples, we call the
 function inside the braces used to dereference a reference. If we
-have a more than one return value, we can construct and dereference an
+have more than one return value, we can construct and dereference an
 anonymous array. In this case, we call the function in list context.
 
 	print "The time values are @{ [localtime] }.\n";
@@ -598,7 +599,9 @@ anonymous array. In this case, we call the function in list context.
 If we want to call the function in scalar context, we have to do a bit
 more work. We can really have any code we like inside the braces, so
 we simply have to end with the scalar reference, although how you do
-that is up to you, and you can use code inside the braces.
+that is up to you, and you can use code inside the braces. Note that
+the use of parens creates a list context, so we need C<scalar> to
+force the scalar context on the function:
 
 	print "The time is ${\(scalar localtime)}.\n"
 
@@ -622,7 +625,7 @@ as well.
 In most cases, it is probably easier to simply use string concatenation,
 which also forces scalar context.
 
-	print "The time is " . localtime . ".\n";
+	print "The time is " . localtime() . ".\n";
 
 =head2 How do I find matching/nesting anything?
 
@@ -630,7 +633,7 @@ This isn't something that can be done in one regular expression, no
 matter how complicated.  To find something between two single
 characters, a pattern like C</x([^x]*)x/> will get the intervening
 bits in $1. For multiple ones, then something more like
-C</alpha(.*?)omega/> would be needed.  But none of these deals with
+C</alpha(.*?)omega/> would be needed. But none of these deals with
 nested patterns.  For balanced expressions using C<(>, C<{>, C<[> or
 C<< < >> as delimiters, use the CPAN module Regexp::Common, or see
 L<perlre/(??{ code })>.  For other cases, you'll have to write a
@@ -638,68 +641,68 @@ parser.
 
 If you are serious about writing a parser, there are a number of
 modules or oddities that will make your life a lot easier.  There are
-the CPAN modules Parse::RecDescent, Parse::Yapp, and Text::Balanced;
-and the byacc program.   Starting from perl 5.8 the Text::Balanced is
-part of the standard distribution.
+the CPAN modules C<Parse::RecDescent>, C<Parse::Yapp>, and
+C<Text::Balanced>; and the C<byacc> program. Starting from perl 5.8
+the C<Text::Balanced> is part of the standard distribution.
 
 One simple destructive, inside-out approach that you might try is to
 pull out the smallest nesting parts one at a time:
 
-    while (s/BEGIN((?:(?!BEGIN)(?!END).)*)END//gs) {
-	# do something with $1
-    }
+	while (s/BEGIN((?:(?!BEGIN)(?!END).)*)END//gs) {
+		# do something with $1
+		}
 
 A more complicated and sneaky approach is to make Perl's regular
 expression engine do it for you.  This is courtesy Dean Inada, and
 rather has the nature of an Obfuscated Perl Contest entry, but it
 really does work:
 
-    # $_ contains the string to parse
-    # BEGIN and END are the opening and closing markers for the
-    # nested text.
+	# $_ contains the string to parse
+	# BEGIN and END are the opening and closing markers for the
+	# nested text.
 
-    @( = ('(','');
-    @) = (')','');
-    ($re=$_)=~s/((BEGIN)|(END)|.)/$)[!$3]\Q$1\E$([!$2]/gs;
-    @$ = (eval{/$re/},$@!~/unmatched/i);
-    print join("\n",@$[0..$#$]) if( $$[-1] );
+	@( = ('(','');
+	@) = (')','');
+	($re=$_)=~s/((BEGIN)|(END)|.)/$)[!$3]\Q$1\E$([!$2]/gs;
+	@$ = (eval{/$re/},$@!~/unmatched/i);
+	print join("\n",@$[0..$#$]) if( $$[-1] );
 
 =head2 How do I reverse a string?
 
-Use reverse() in scalar context, as documented in
+Use C<reverse()> in scalar context, as documented in
 L<perlfunc/reverse>.
 
-    $reversed = reverse $string;
+	$reversed = reverse $string;
 
 =head2 How do I expand tabs in a string?
 
 You can do it yourself:
 
-    1 while $string =~ s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
+	1 while $string =~ s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
 
-Or you can just use the Text::Tabs module (part of the standard Perl
+Or you can just use the C<Text::Tabs> module (part of the standard Perl
 distribution).
 
-    use Text::Tabs;
-    @expanded_lines = expand(@lines_with_tabs);
+	use Text::Tabs;
+	@expanded_lines = expand(@lines_with_tabs);
 
 =head2 How do I reformat a paragraph?
 
-Use Text::Wrap (part of the standard Perl distribution):
+Use C<Text::Wrap> (part of the standard Perl distribution):
 
-    use Text::Wrap;
-    print wrap("\t", '  ', @paragraphs);
+	use Text::Wrap;
+	print wrap("\t", '  ', @paragraphs);
 
-The paragraphs you give to Text::Wrap should not contain embedded
-newlines.  Text::Wrap doesn't justify the lines (flush-right).
+The paragraphs you give to C<Text::Wrap> should not contain embedded
+newlines.  C<Text::Wrap> doesn't justify the lines (flush-right).
 
-Or use the CPAN module Text::Autoformat.  Formatting files can be easily
-done by making a shell alias, like so:
+Or use the CPAN module C<Text::Autoformat>.  Formatting files can be
+easily done by making a shell alias, like so:
 
-    alias fmt="perl -i -MText::Autoformat -n0777 \
-        -e 'print autoformat $_, {all=>1}' $*"
+	alias fmt="perl -i -MText::Autoformat -n0777 \
+		-e 'print autoformat $_, {all=>1}' $*"
 
-See the documentation for Text::Autoformat to appreciate its many
+See the documentation for C<Text::Autoformat> to appreciate its many
 capabilities.
 
 =head2 How can I access or change N characters of a string?
@@ -710,16 +713,16 @@ and grab the string of length 1.
 
 
 	$string = "Just another Perl Hacker";
-    $first_char = substr( $string, 0, 1 );  #  'J'
+	$first_char = substr( $string, 0, 1 );  #  'J'
 
 To change part of a string, you can use the optional fourth
 argument which is the replacement string.
 
-    substr( $string, 13, 4, "Perl 5.8.0" );
+	substr( $string, 13, 4, "Perl 5.8.0" );
 
 You can also use substr() as an lvalue.
 
-    substr( $string, 13, 4 ) =  "Perl 5.8.0";
+	substr( $string, 13, 4 ) =  "Perl 5.8.0";
 
 =head2 How do I change the Nth occurrence of something?
 
@@ -728,29 +731,29 @@ to change the fifth occurrence of C<"whoever"> or C<"whomever"> into
 C<"whosoever"> or C<"whomsoever">, case insensitively.  These
 all assume that $_ contains the string to be altered.
 
-    $count = 0;
-    s{((whom?)ever)}{
-	++$count == 5   	# is it the 5th?
-	    ? "${2}soever"	# yes, swap
-	    : $1		# renege and leave it there
-    }ige;
+	$count = 0;
+	s{((whom?)ever)}{
+	++$count == 5       # is it the 5th?
+	    ? "${2}soever"  # yes, swap
+	    : $1            # renege and leave it there
+		}ige;
 
 In the more general case, you can use the C</g> modifier in a C<while>
 loop, keeping count of matches.
 
-    $WANT = 3;
-    $count = 0;
-    $_ = "One fish two fish red fish blue fish";
-    while (/(\w+)\s+fish\b/gi) {
-        if (++$count == $WANT) {
-            print "The third fish is a $1 one.\n";
-        }
-    }
+	$WANT = 3;
+	$count = 0;
+	$_ = "One fish two fish red fish blue fish";
+	while (/(\w+)\s+fish\b/gi) {
+		if (++$count == $WANT) {
+			print "The third fish is a $1 one.\n";
+			}
+		}
 
 That prints out: C<"The third fish is a red one.">  You can also use a
 repetition count and repeated pattern like this:
 
-    /(?:\w+\s+fish\s+){2}(\w+)\s+fish/i;
+	/(?:\w+\s+fish\s+){2}(\w+)\s+fish/i;
 
 =head2 How can I count the number of occurrences of a substring within a string?
 
@@ -758,9 +761,9 @@ There are a number of ways, with varying efficiency.  If you want a
 count of a certain single character (X) within a string, you can use the
 C<tr///> function like so:
 
-    $string = "ThisXlineXhasXsomeXx'sXinXit";
-    $count = ($string =~ tr/X//);
-    print "There are $count X characters in the string";
+	$string = "ThisXlineXhasXsomeXx'sXinXit";
+	$count = ($string =~ tr/X//);
+	print "There are $count X characters in the string";
 
 This is fine if you are just looking for a single character.  However,
 if you are trying to count multiple character substrings within a
@@ -768,9 +771,9 @@ larger string, C<tr///> won't work.  What you can do is wrap a while()
 loop around a global pattern match.  For example, let's count negative
 integers:
 
-    $string = "-9 55 48 -2 23 -76 4 14 -44";
-    while ($string =~ /-\d+/g) { $count++ }
-    print "There are $count negative numbers in the string";
+	$string = "-9 55 48 -2 23 -76 4 14 -44";
+	while ($string =~ /-\d+/g) { $count++ }
+	print "There are $count negative numbers in the string";
 
 Another version uses a global match in list context, then assigns the
 result to a scalar, producing a count of the number of matches.
@@ -781,27 +784,28 @@ result to a scalar, producing a count of the number of matches.
 
 To make the first letter of each word upper case:
 
-        $line =~ s/\b(\w)/\U$1/g;
+	$line =~ s/\b(\w)/\U$1/g;
 
 This has the strange effect of turning "C<don't do it>" into "C<Don'T
 Do It>".  Sometimes you might want this.  Other times you might need a
 more thorough solution (Suggested by brian d foy):
 
-    $string =~ s/ (
-                 (^\w)    #at the beginning of the line
-                   |      # or
-                 (\s\w)   #preceded by whitespace
-                   )
-                /\U$1/xg;
-    $string =~ /([\w']+)/\u\L$1/g;
+	$string =~ s/ (
+				 (^\w)    #at the beginning of the line
+				   |      # or
+				 (\s\w)   #preceded by whitespace
+				   )
+				/\U$1/xg;
+
+	$string =~ s/([\w']+)/\u\L$1/g;
 
 To make the whole line upper case:
 
-        $line = uc($line);
+	$line = uc($line);
 
 To force each word to be lower case, with the first letter upper case:
 
-        $line =~ s/(\w+)/\u\L$1/g;
+	$line =~ s/(\w+)/\u\L$1/g;
 
 You can (and probably should) enable locale awareness of those
 characters by placing a C<use locale> pragma in your program.
@@ -815,52 +819,49 @@ Stop Worrying and Love the Bomb>, for example.
 Damian Conway's L<Text::Autoformat> module provides some smart
 case transformations:
 
-    use Text::Autoformat;
-    my $x = "Dr. Strangelove or: How I Learned to Stop ".
-      "Worrying and Love the Bomb";
+	use Text::Autoformat;
+	my $x = "Dr. Strangelove or: How I Learned to Stop ".
+	  "Worrying and Love the Bomb";
 
-    print $x, "\n";
-    for my $style (qw( sentence title highlight ))
-    {
-        print autoformat($x, { case => $style }), "\n";
-    }
+	print $x, "\n";
+	for my $style (qw( sentence title highlight )) {
+		print autoformat($x, { case => $style }), "\n";
+		}
 
 =head2 How can I split a [character] delimited string except when inside [character]?
 
-Several modules can handle this sort of pasing---Text::Balanced,
-Text::CSV, Text::CSV_XS, and Text::ParseWords, among others.
+Several modules can handle this sort of parsing--C<Text::Balanced>,
+C<Text::CSV>, C<Text::CSV_XS>, and C<Text::ParseWords>, among others.
 
 Take the example case of trying to split a string that is
 comma-separated into its different fields. You can't use C<split(/,/)>
 because you shouldn't split if the comma is inside quotes.  For
 example, take a data line like this:
 
-    SAR001,"","Cimetrix, Inc","Bob Smith","CAM",N,8,1,0,7,"Error, Core Dumped"
+	SAR001,"","Cimetrix, Inc","Bob Smith","CAM",N,8,1,0,7,"Error, Core Dumped"
 
 Due to the restriction of the quotes, this is a fairly complex
 problem.  Thankfully, we have Jeffrey Friedl, author of
 I<Mastering Regular Expressions>, to handle these for us.  He
-suggests (assuming your string is contained in $text):
+suggests (assuming your string is contained in C<$text>):
 
-     @new = ();
-     push(@new, $+) while $text =~ m{
-         "([^\"\\]*(?:\\.[^\"\\]*)*)",?  # groups the phrase inside the quotes
-       | ([^,]+),?
-       | ,
-     }gx;
-     push(@new, undef) if substr($text,-1,1) eq ',';
+	 @new = ();
+	 push(@new, $+) while $text =~ m{
+		 "([^\"\\]*(?:\\.[^\"\\]*)*)",?  # groups the phrase inside the quotes
+		| ([^,]+),?
+		| ,
+		}gx;
+	 push(@new, undef) if substr($text,-1,1) eq ',';
 
 If you want to represent quotation marks inside a
 quotation-mark-delimited field, escape them with backslashes (eg,
 C<"like \"this\"">.
 
-Alternatively, the Text::ParseWords module (part of the standard Perl
-distribution) lets you say:
+Alternatively, the C<Text::ParseWords> module (part of the standard
+Perl distribution) lets you say:
 
-    use Text::ParseWords;
-    @new = quotewords(",", 0, $text);
-
-There's also a Text::CSV (Comma-Separated Values) module on CPAN.
+	use Text::ParseWords;
+	@new = quotewords(",", 0, $text);
 
 =head2 How do I strip blank space from the beginning/end of a string?
 
@@ -901,7 +902,7 @@ to each logical line in the string by adding the C</m> flag (for
 embedded newline, so it doesn't remove it. It still removes the
 newline at the end of the string.
 
-    $string =~ s/^\s+|\s+$//gm;
+	$string =~ s/^\s+|\s+$//gm;
 
 Remember that lines consisting entirely of whitespace will disappear,
 since the first part of the alternation can match the entire string
@@ -926,20 +927,20 @@ truncate the result. The C<pack> function can only pad strings on the
 right with blanks and it will truncate the result to a maximum length of
 C<$pad_len>.
 
-    # Left padding a string with blanks (no truncation):
+	# Left padding a string with blanks (no truncation):
 	$padded = sprintf("%${pad_len}s", $text);
 	$padded = sprintf("%*s", $pad_len, $text);  # same thing
 
-    # Right padding a string with blanks (no truncation):
+	# Right padding a string with blanks (no truncation):
 	$padded = sprintf("%-${pad_len}s", $text);
 	$padded = sprintf("%-*s", $pad_len, $text); # same thing
 
-    # Left padding a number with 0 (no truncation):
+	# Left padding a number with 0 (no truncation):
 	$padded = sprintf("%0${pad_len}d", $num);
 	$padded = sprintf("%0*d", $pad_len, $num); # same thing
 
-    # Right padding a string with blanks using pack (will truncate):
-    $padded = pack("A$pad_len",$text);
+	# Right padding a string with blanks using pack (will truncate):
+	$padded = pack("A$pad_len",$text);
 
 If you need to pad with a character other than blank or zero you can use
 one of the following methods.  They all generate a pad string with the
@@ -948,99 +949,141 @@ not truncate C<$text>.
 
 Left and right padding with any character, creating a new string:
 
-    $padded = $pad_char x ( $pad_len - length( $text ) ) . $text;
-    $padded = $text . $pad_char x ( $pad_len - length( $text ) );
+	$padded = $pad_char x ( $pad_len - length( $text ) ) . $text;
+	$padded = $text . $pad_char x ( $pad_len - length( $text ) );
 
 Left and right padding with any character, modifying C<$text> directly:
 
-    substr( $text, 0, 0 ) = $pad_char x ( $pad_len - length( $text ) );
-    $text .= $pad_char x ( $pad_len - length( $text ) );
+	substr( $text, 0, 0 ) = $pad_char x ( $pad_len - length( $text ) );
+	$text .= $pad_char x ( $pad_len - length( $text ) );
 
 =head2 How do I extract selected columns from a string?
 
-Use substr() or unpack(), both documented in L<perlfunc>.
-If you prefer thinking in terms of columns instead of widths,
-you can use this kind of thing:
+(contributed by brian d foy)
 
-    # determine the unpack format needed to split Linux ps output
-    # arguments are cut columns
-    my $fmt = cut2fmt(8, 14, 20, 26, 30, 34, 41, 47, 59, 63, 67, 72);
+If you know where the columns that contain the data, you can
+use C<substr> to extract a single column.
 
-    sub cut2fmt {
-	my(@positions) = @_;
-	my $template  = '';
-	my $lastpos   = 1;
-	for my $place (@positions) {
-	    $template .= "A" . ($place - $lastpos) . " ";
-	    $lastpos   = $place;
-	}
-	$template .= "A*";
-	return $template;
-    }
+	my $column = substr( $line, $start_column, $length );
+
+You can use C<split> if the columns are separated by whitespace or
+some other delimiter, as long as whitespace or the delimiter cannot
+appear as part of the data.
+
+	my $line    = ' fred barney   betty   ';
+	my @columns = split /\s+/, $line;
+		# ( '', 'fred', 'barney', 'betty' );
+
+	my $line    = 'fred||barney||betty';
+	my @columns = split /\|/, $line;
+		# ( 'fred', '', 'barney', '', 'betty' );
+
+If you want to work with comma-separated values, don't do this since
+that format is a bit more complicated. Use one of the modules that
+handle that fornat, such as C<Text::CSV>, C<Text::CSV_XS>, or
+C<Text::CSV_PP>.
+
+If you want to break apart an entire line of fixed columns, you can use
+C<unpack> with the A (ASCII) format. by using a number after the format
+specifier, you can denote the column width. See the C<pack> and C<unpack>
+entries in L<perlfunc> for more details.
+
+	my @fields = unpack( $line, "A8 A8 A8 A16 A4" );
+
+Note that spaces in the format argument to C<unpack> do not denote literal
+spaces. If you have space separated data, you may want C<split> instead.
 
 =head2 How do I find the soundex value of a string?
 
 (contributed by brian d foy)
 
 You can use the Text::Soundex module. If you want to do fuzzy or close
-matching, you might also try the String::Approx, and Text::Metaphone,
-and Text::DoubleMetaphone modules.
+matching, you might also try the C<String::Approx>, and
+C<Text::Metaphone>, and C<Text::DoubleMetaphone> modules.
 
 =head2 How can I expand variables in text strings?
 
-Let's assume that you have a string that contains placeholder
-variables.
+(contributed by brian d foy)
 
-    $text = 'this has a $foo in it and a $bar';
+If you can avoid it, don't, or if you can use a templating system,
+such as C<Text::Template> or C<Template> Toolkit, do that instead. You
+might even be able to get the job done with C<sprintf> or C<printf>:
 
-You can use a substitution with a double evaluation.  The
-first /e turns C<$1> into C<$foo>, and the second /e turns
-C<$foo> into its value.  You may want to wrap this in an
-C<eval>: if you try to get the value of an undeclared variable
-while running under C<use strict>, you get a fatal error.
+	my $string = sprintf 'Say hello to %s and %s', $foo, $bar;
 
-    eval { $text =~ s/(\$\w+)/$1/eeg };
-    die if $@;
+However, for the one-off simple case where I don't want to pull out a
+full templating system, I'll use a string that has two Perl scalar
+variables in it. In this example, I want to expand C<$foo> and C<$bar>
+to their variable's values:
 
-It's probably better in the general case to treat those
-variables as entries in some special hash.  For example:
+	my $foo = 'Fred';
+	my $bar = 'Barney';
+	$string = 'Say hello to $foo and $bar';
 
-    %user_defs = (
-	foo  => 23,
-	bar  => 19,
-    );
-    $text =~ s/\$(\w+)/$user_defs{$1}/g;
+One way I can do this involves the substitution operator and a double
+C</e> flag.  The first C</e> evaluates C<$1> on the replacement side and
+turns it into C<$foo>. The second /e starts with C<$foo> and replaces
+it with its value. C<$foo>, then, turns into 'Fred', and that's finally
+what's left in the string:
+
+	$string =~ s/(\$\w+)/$1/eeg; # 'Say hello to Fred and Barney'
+
+The C</e> will also silently ignore violations of strict, replacing
+undefined variable names with the empty string. Since I'm using the
+C</e> flag (twice even!), I have all of the same security problems I 
+have with C<eval> in its string form. If there's something odd in
+C<$foo>, perhaps something like C<@{[ system "rm -rf /" ]}>, then
+I could get myself in trouble.
+
+To get around the security problem, I could also pull the values from
+a hash instead of evaluating variable names. Using a single C</e>, I
+can check the hash to ensure the value exists, and if it doesn't, I
+can replace the missing value with a marker, in this case C<???> to
+signal that I missed something:
+
+	my $string = 'This has $foo and $bar';
+	
+	my %Replacements = (
+		foo  => 'Fred',
+		);
+
+	# $string =~ s/\$(\w+)/$Replacements{$1}/g;
+	$string =~ s/\$(\w+)/
+		exists $Replacements{$1} ? $Replacements{$1} : '???'
+		/eg;
+
+	print $string;
 
 =head2 What's wrong with always quoting "$vars"?
 
-The problem is that those double-quotes force stringification--
-coercing numbers and references into strings--even when you
-don't want them to be strings.  Think of it this way: double-quote
-expansion is used to produce new strings.  If you already
+The problem is that those double-quotes force
+stringification--coercing numbers and references into strings--even
+when you don't want them to be strings.  Think of it this way:
+double-quote expansion is used to produce new strings.  If you already
 have a string, why do you need more?
 
 If you get used to writing odd things like these:
 
-    print "$var";   	# BAD
-    $new = "$old";   	# BAD
-    somefunc("$var");	# BAD
+	print "$var";   	# BAD
+	$new = "$old";   	# BAD
+	somefunc("$var");	# BAD
 
 You'll be in trouble.  Those should (in 99.8% of the cases) be
 the simpler and more direct:
 
-    print $var;
-    $new = $old;
-    somefunc($var);
+	print $var;
+	$new = $old;
+	somefunc($var);
 
 Otherwise, besides slowing you down, you're going to break code when
 the thing in the scalar is actually neither a string nor a number, but
 a reference:
 
-    func(\@array);
-    sub func {
-	my $aref = shift;
-	my $oref = "$aref";  # WRONG
-    }
+	func(\@array);
+	sub func {
+		my $aref = shift;
+		my $oref = "$aref";  # WRONG
+		}
 
 You can also get into subtle problems on those few operations in Perl
 that actually do care about the difference between a string and a
@@ -1049,9 +1092,9 @@ syscall() function.
 
 Stringification also destroys arrays.
 
-    @lines = `command`;
-    print "@lines";		# WRONG - extra blanks
-    print @lines;		# right
+	@lines = `command`;
+	print "@lines";     # WRONG - extra blanks
+	print @lines;       # right
 
 =head2 Why don't my E<lt>E<lt>HERE documents work?
 
@@ -1109,7 +1152,7 @@ subsequent line.
 
 This works with leading special strings, dynamically determined:
 
-    $remember_the_main = fix<<'    MAIN_INTERPRETER_LOOP';
+	$remember_the_main = fix<<'    MAIN_INTERPRETER_LOOP';
 	@@@ int
 	@@@ runops() {
 	@@@     SAVEI32(runlevel);
@@ -1118,12 +1161,12 @@ This works with leading special strings, dynamically determined:
 	@@@     TAINT_NOT;
 	@@@     return 0;
 	@@@ }
-    MAIN_INTERPRETER_LOOP
+	MAIN_INTERPRETER_LOOP
 
 Or with a fixed amount of leading whitespace, with remaining
 indentation correctly preserved:
 
-    $poem = fix<<EVER_ON_AND_ON;
+	$poem = fix<<EVER_ON_AND_ON;
        Now far ahead the Road has gone,
 	  And I must follow, if I can,
        Pursuing it with eager feet,
@@ -1131,29 +1174,29 @@ indentation correctly preserved:
        Where many paths and errands meet.
 	  And whither then? I cannot say.
 		--Bilbo in /usr/src/perl/pp_ctl.c
-    EVER_ON_AND_ON
+	EVER_ON_AND_ON
 
 =head1 Data: Arrays
 
 =head2 What is the difference between a list and an array?
 
-An array has a changeable length.  A list does not.  An array is something
-you can push or pop, while a list is a set of values.  Some people make
-the distinction that a list is a value while an array is a variable.
-Subroutines are passed and return lists, you put things into list
-context, you initialize arrays with lists, and you foreach() across
-a list.  C<@> variables are arrays, anonymous arrays are arrays, arrays
-in scalar context behave like the number of elements in them, subroutines
-access their arguments through the array C<@_>, and push/pop/shift only work
-on arrays.
+An array has a changeable length.  A list does not.  An array is
+something you can push or pop, while a list is a set of values.  Some
+people make the distinction that a list is a value while an array is a
+variable. Subroutines are passed and return lists, you put things into
+list context, you initialize arrays with lists, and you C<foreach()>
+across a list.  C<@> variables are arrays, anonymous arrays are
+arrays, arrays in scalar context behave like the number of elements in
+them, subroutines access their arguments through the array C<@_>, and
+C<push>/C<pop>/C<shift> only work on arrays.
 
 As a side note, there's no such thing as a list in scalar context.
 When you say
 
-    $scalar = (2, 5, 7, 9);
+	$scalar = (2, 5, 7, 9);
 
 you're using the comma operator in scalar context, so it uses the scalar
-comma operator.  There never was a list there at all!  This causes the
+comma operator.  There never was a list there at all! This causes the
 last value to be returned: 9.
 
 =head2 What is the difference between $array[1] and @array[1]?
@@ -1166,11 +1209,11 @@ scalar value in it (very, very rarely; nearly never, in fact).
 Sometimes it doesn't make a difference, but sometimes it does.
 For example, compare:
 
-    $good[0] = `some program that outputs several lines`;
+	$good[0] = `some program that outputs several lines`;
 
 with
 
-    @bad[0]  = `same program that outputs several lines`;
+	@bad[0]  = `same program that outputs several lines`;
 
 The C<use warnings> pragma and the B<-w> flag will warn you about these
 matters.
@@ -1187,11 +1230,21 @@ create the hash then extract the keys. It's not important how you
 create that hash: just that you use C<keys> to get the unique
 elements.
 
-   my %hash   = map { $_, 1 } @array;
-   # or a hash slice: @hash{ @array } = ();
-   # or a foreach: $hash{$_} = 1 foreach ( @array );
+	my %hash   = map { $_, 1 } @array;
+	# or a hash slice: @hash{ @array } = ();
+	# or a foreach: $hash{$_} = 1 foreach ( @array );
 
-   my @unique = keys %hash;
+	my @unique = keys %hash;
+
+If you want to use a module, try the C<uniq> function from
+C<List::MoreUtils>. In list context it returns the unique elements,
+preserving their order in the list. In scalar context, it returns the
+number of unique elements.
+
+	use List::MoreUtils qw(uniq);
+
+	my @unique = uniq( 1, 2, 3, 4, 4, 5, 6, 5, 7 ); # 1,2,3,4,5,6,7
+	my $unique = uniq( 1, 2, 3, 4, 4, 5, 6, 5, 7 ); # 7
 
 You can also go through each element and skip the ones you've seen
 before. Use a hash to keep track. The first time the loop sees an
@@ -1200,8 +1253,8 @@ creates the key and immediately uses its value, which is C<undef>, so
 the loop continues to the C<push> and increments the value for that
 key. The next time the loop sees that same element, its key exists in
 the hash I<and> the value for that key is true (since it's not 0 or
-undef), so the next skips that iteration and the loop goes to the next
-element.
+C<undef>), so the next skips that iteration and the loop goes to the
+next element.
 
 	my @unique = ();
 	my %seen   = ();
@@ -1215,8 +1268,8 @@ element.
 You can write this more briefly using a grep, which does the
 same thing.
 
-   my %seen = ();
-   my @unique = grep { ! $seen{ $_ }++ } @array;
+	my %seen = ();
+	my @unique = grep { ! $seen{ $_ }++ } @array;
 
 =head2 How can I tell whether a certain element is contained in a list or array?
 
@@ -1231,29 +1284,29 @@ are going to make this query many times over arbitrary string values,
 the fastest way is probably to invert the original array and maintain a
 hash whose keys are the first array's values.
 
-    @blues = qw/azure cerulean teal turquoise lapis-lazuli/;
-    %is_blue = ();
-    for (@blues) { $is_blue{$_} = 1 }
+	@blues = qw/azure cerulean teal turquoise lapis-lazuli/;
+	%is_blue = ();
+	for (@blues) { $is_blue{$_} = 1 }
 
-Now you can check whether $is_blue{$some_color}.  It might have been a
-good idea to keep the blues all in a hash in the first place.
+Now you can check whether C<$is_blue{$some_color}>.  It might have
+been a good idea to keep the blues all in a hash in the first place.
 
 If the values are all small integers, you could use a simple indexed
 array.  This kind of an array will take up less space:
 
-    @primes = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
-    @is_tiny_prime = ();
-    for (@primes) { $is_tiny_prime[$_] = 1 }
-    # or simply  @istiny_prime[@primes] = (1) x @primes;
+	@primes = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
+	@is_tiny_prime = ();
+	for (@primes) { $is_tiny_prime[$_] = 1 }
+	# or simply  @istiny_prime[@primes] = (1) x @primes;
 
 Now you check whether $is_tiny_prime[$some_number].
 
 If the values in question are integers instead of strings, you can save
 quite a lot of space by using bit strings instead:
 
-    @articles = ( 1..10, 150..2000, 2017 );
-    undef $read;
-    for (@articles) { vec($read,$_,1) = 1 }
+	@articles = ( 1..10, 150..2000, 2017 );
+	undef $read;
+	for (@articles) { vec($read,$_,1) = 1 }
 
 Now check whether C<vec($read,$n,1)> is true for some C<$n>.
 
@@ -1261,9 +1314,9 @@ These methods guarantee fast individual tests but require a re-organization
 of the original list or array.  They only pay off if you have to test
 multiple values against the same array.
 
-If you are testing only once, the standard module List::Util exports
+If you are testing only once, the standard module C<List::Util> exports
 the function C<first> for this purpose.  It works by stopping once it
-finds the element. It's written in C for speed, and its Perl equivalant
+finds the element. It's written in C for speed, and its Perl equivalent
 looks like this subroutine:
 
 	sub first (&@) {
@@ -1288,62 +1341,62 @@ list context.
 
 =head2 How do I compute the difference of two arrays?  How do I compute the intersection of two arrays?
 
-Use a hash.  Here's code to do both and more.  It assumes that
-each element is unique in a given array:
+Use a hash.  Here's code to do both and more.  It assumes that each
+element is unique in a given array:
 
-    @union = @intersection = @difference = ();
-    %count = ();
-    foreach $element (@array1, @array2) { $count{$element}++ }
-    foreach $element (keys %count) {
-	push @union, $element;
-	push @{ $count{$element} > 1 ? \@intersection : \@difference }, $element;
-    }
+	@union = @intersection = @difference = ();
+	%count = ();
+	foreach $element (@array1, @array2) { $count{$element}++ }
+	foreach $element (keys %count) {
+		push @union, $element;
+		push @{ $count{$element} > 1 ? \@intersection : \@difference }, $element;
+		}
 
-Note that this is the I<symmetric difference>, that is, all elements in
-either A or in B but not in both.  Think of it as an xor operation.
+Note that this is the I<symmetric difference>, that is, all elements
+in either A or in B but not in both.  Think of it as an xor operation.
 
 =head2 How do I test whether two arrays or hashes are equal?
 
-The following code works for single-level arrays.  It uses a stringwise
-comparison, and does not distinguish defined versus undefined empty
-strings.  Modify if you have other needs.
+The following code works for single-level arrays.  It uses a
+stringwise comparison, and does not distinguish defined versus
+undefined empty strings.  Modify if you have other needs.
 
-    $are_equal = compare_arrays(\@frogs, \@toads);
+	$are_equal = compare_arrays(\@frogs, \@toads);
 
-    sub compare_arrays {
-	my ($first, $second) = @_;
-	no warnings;  # silence spurious -w undef complaints
-	return 0 unless @$first == @$second;
-	for (my $i = 0; $i < @$first; $i++) {
-	    return 0 if $first->[$i] ne $second->[$i];
-	}
-	return 1;
-    }
+	sub compare_arrays {
+		my ($first, $second) = @_;
+		no warnings;  # silence spurious -w undef complaints
+		return 0 unless @$first == @$second;
+		for (my $i = 0; $i < @$first; $i++) {
+			return 0 if $first->[$i] ne $second->[$i];
+			}
+		return 1;
+		}
 
 For multilevel structures, you may wish to use an approach more
-like this one.  It uses the CPAN module FreezeThaw:
+like this one.  It uses the CPAN module C<FreezeThaw>:
 
-    use FreezeThaw qw(cmpStr);
-    @a = @b = ( "this", "that", [ "more", "stuff" ] );
+	use FreezeThaw qw(cmpStr);
+	@a = @b = ( "this", "that", [ "more", "stuff" ] );
 
-    printf "a and b contain %s arrays\n",
-        cmpStr(\@a, \@b) == 0
-	    ? "the same"
-	    : "different";
+	printf "a and b contain %s arrays\n",
+		cmpStr(\@a, \@b) == 0
+		? "the same"
+		: "different";
 
-This approach also works for comparing hashes.  Here
-we'll demonstrate two different answers:
+This approach also works for comparing hashes.  Here we'll demonstrate
+two different answers:
 
-    use FreezeThaw qw(cmpStr cmpStrHard);
+	use FreezeThaw qw(cmpStr cmpStrHard);
 
-    %a = %b = ( "this" => "that", "extra" => [ "more", "stuff" ] );
-    $a{EXTRA} = \%b;
-    $b{EXTRA} = \%a;
+	%a = %b = ( "this" => "that", "extra" => [ "more", "stuff" ] );
+	$a{EXTRA} = \%b;
+	$b{EXTRA} = \%a;
 
-    printf "a and b contain %s hashes\n",
+	printf "a and b contain %s hashes\n",
 	cmpStr(\%a, \%b) == 0 ? "the same" : "different";
 
-    printf "a and b contain %s hashes\n",
+	printf "a and b contain %s hashes\n",
 	cmpStrHard(\%a, \%b) == 0 ? "the same" : "different";
 
 
@@ -1354,19 +1407,19 @@ an exercise to the reader.
 =head2 How do I find the first array element for which a condition is true?
 
 To find the first array element which satisfies a condition, you can
-use the first() function in the List::Util module, which comes with
-Perl 5.8.  This example finds the first element that contains "Perl".
+use the C<first()> function in the C<List::Util> module, which comes
+with Perl 5.8. This example finds the first element that contains
+"Perl".
 
 	use List::Util qw(first);
 
 	my $element = first { /Perl/ } @array;
 
-If you cannot use List::Util, you can make your own loop to do the
+If you cannot use C<List::Util>, you can make your own loop to do the
 same thing.  Once you find the element, you stop the loop with last.
 
 	my $found;
-	foreach ( @array )
-		{
+	foreach ( @array ) {
 		if( /Perl/ ) { $found = $_; last }
 		}
 
@@ -1375,10 +1428,8 @@ and check the array element at each index until you find one
 that satisfies the condition.
 
 	my( $found, $index ) = ( undef, -1 );
-	for( $i = 0; $i < @array; $i++ )
-		{
-		if( $array[$i] =~ /Perl/ )
-			{
+	for( $i = 0; $i < @array; $i++ ) {
+		if( $array[$i] =~ /Perl/ ) {
 			$found = $array[$i];
 			$index = $i;
 			last;
@@ -1388,49 +1439,50 @@ that satisfies the condition.
 =head2 How do I handle linked lists?
 
 In general, you usually don't need a linked list in Perl, since with
-regular arrays, you can push and pop or shift and unshift at either end,
-or you can use splice to add and/or remove arbitrary number of elements at
-arbitrary points.  Both pop and shift are both O(1) operations on Perl's
-dynamic arrays.  In the absence of shifts and pops, push in general
-needs to reallocate on the order every log(N) times, and unshift will
-need to copy pointers each time.
+regular arrays, you can push and pop or shift and unshift at either
+end, or you can use splice to add and/or remove arbitrary number of
+elements at arbitrary points.  Both pop and shift are O(1)
+operations on Perl's dynamic arrays.  In the absence of shifts and
+pops, push in general needs to reallocate on the order every log(N)
+times, and unshift will need to copy pointers each time.
 
 If you really, really wanted, you could use structures as described in
-L<perldsc> or L<perltoot> and do just what the algorithm book tells you
-to do.  For example, imagine a list node like this:
+L<perldsc> or L<perltoot> and do just what the algorithm book tells
+you to do.  For example, imagine a list node like this:
 
-    $node = {
-        VALUE => 42,
-        LINK  => undef,
-    };
+	$node = {
+		VALUE => 42,
+		LINK  => undef,
+		};
 
 You could walk the list this way:
 
-    print "List: ";
-    for ($node = $head;  $node; $node = $node->{LINK}) {
-        print $node->{VALUE}, " ";
-    }
-    print "\n";
+	print "List: ";
+	for ($node = $head;  $node; $node = $node->{LINK}) {
+		print $node->{VALUE}, " ";
+		}
+	print "\n";
 
 You could add to the list this way:
 
-    my ($head, $tail);
-    $tail = append($head, 1);       # grow a new head
-    for $value ( 2 .. 10 ) {
-        $tail = append($tail, $value);
-    }
+	my ($head, $tail);
+	$tail = append($head, 1);       # grow a new head
+	for $value ( 2 .. 10 ) {
+		$tail = append($tail, $value);
+		}
 
-    sub append {
-        my($list, $value) = @_;
-        my $node = { VALUE => $value };
-        if ($list) {
-            $node->{LINK} = $list->{LINK};
-            $list->{LINK} = $node;
-        } else {
-            $_[0] = $node;      # replace caller's version
-        }
-        return $node;
-    }
+	sub append {
+		my($list, $value) = @_;
+		my $node = { VALUE => $value };
+		if ($list) {
+			$node->{LINK} = $list->{LINK};
+			$list->{LINK} = $node;
+			}
+		else {
+			$_[0] = $node;      # replace caller's version
+			}
+		return $node;
+		}
 
 But again, Perl's built-in are virtually always good enough.
 
@@ -1439,71 +1491,81 @@ But again, Perl's built-in are virtually always good enough.
 Circular lists could be handled in the traditional fashion with linked
 lists, or you could just do something like this with an array:
 
-    unshift(@array, pop(@array));  # the last shall be first
-    push(@array, shift(@array));   # and vice versa
+	unshift(@array, pop(@array));  # the last shall be first
+	push(@array, shift(@array));   # and vice versa
+
+You can also use C<Tie::Cycle>:
+
+	use Tie::Cycle;
+
+	tie my $cycle, 'Tie::Cycle', [ qw( FFFFFF 000000 FFFF00 ) ];
+
+	print $cycle; # FFFFFF
+	print $cycle; # 000000
+	print $cycle; # FFFF00
 
 =head2 How do I shuffle an array randomly?
 
 If you either have Perl 5.8.0 or later installed, or if you have
 Scalar-List-Utils 1.03 or later installed, you can say:
 
-    use List::Util 'shuffle';
+	use List::Util 'shuffle';
 
 	@shuffled = shuffle(@list);
 
 If not, you can use a Fisher-Yates shuffle.
 
-    sub fisher_yates_shuffle {
-        my $deck = shift;  # $deck is a reference to an array
-        my $i = @$deck;
-        while (--$i) {
-            my $j = int rand ($i+1);
-            @$deck[$i,$j] = @$deck[$j,$i];
-        }
-    }
+	sub fisher_yates_shuffle {
+		my $deck = shift;  # $deck is a reference to an array
+		my $i = @$deck;
+		while (--$i) {
+			my $j = int rand ($i+1);
+			@$deck[$i,$j] = @$deck[$j,$i];
+			}
+	}
 
-    # shuffle my mpeg collection
-    #
-    my @mpeg = <audio/*/*.mp3>;
-    fisher_yates_shuffle( \@mpeg );    # randomize @mpeg in place
-    print @mpeg;
+	# shuffle my mpeg collection
+	#
+	my @mpeg = <audio/*/*.mp3>;
+	fisher_yates_shuffle( \@mpeg );    # randomize @mpeg in place
+	print @mpeg;
 
 Note that the above implementation shuffles an array in place,
-unlike the List::Util::shuffle() which takes a list and returns
+unlike the C<List::Util::shuffle()> which takes a list and returns
 a new shuffled list.
 
 You've probably seen shuffling algorithms that work using splice,
 randomly picking another element to swap the current element with
 
-    srand;
-    @new = ();
-    @old = 1 .. 10;  # just a demo
-    while (@old) {
-	push(@new, splice(@old, rand @old, 1));
-    }
+	srand;
+	@new = ();
+	@old = 1 .. 10;  # just a demo
+	while (@old) {
+		push(@new, splice(@old, rand @old, 1));
+		}
 
-This is bad because splice is already O(N), and since you do it N times,
-you just invented a quadratic algorithm; that is, O(N**2).  This does
-not scale, although Perl is so efficient that you probably won't notice
-this until you have rather largish arrays.
+This is bad because splice is already O(N), and since you do it N
+times, you just invented a quadratic algorithm; that is, O(N**2).
+This does not scale, although Perl is so efficient that you probably
+won't notice this until you have rather largish arrays.
 
 =head2 How do I process/modify each element of an array?
 
 Use C<for>/C<foreach>:
 
-    for (@lines) {
+	for (@lines) {
 		s/foo/bar/;	# change that word
 		tr/XZ/ZX/;	# swap those letters
-    }
+		}
 
 Here's another; let's compute spherical volumes:
 
-    for (@volumes = @radii) {   # @volumes has changed parts
+	for (@volumes = @radii) {   # @volumes has changed parts
 		$_ **= 3;
 		$_ *= (4/3) * 3.14159;  # this will be constant folded
-    }
+		}
 
-which can also be done with map() which is made to transform
+which can also be done with C<map()> which is made to transform
 one list into another:
 
 	@volumes = map {$_ ** 3 * (4/3) * 3.14159} @radii;
@@ -1513,9 +1575,9 @@ hash, you can use the C<values> function.  As of Perl 5.6
 the values are not copied, so if you modify $orbit (in this
 case), you modify the value.
 
-    for $orbit ( values %orbits ) {
+	for $orbit ( values %orbits ) {
 		($orbit **= 3) *= (4/3) * 3.14159;
-    }
+		}
 
 Prior to perl 5.6 C<values> returned copies of the values,
 so older perl code often contains constructions such as
@@ -1524,43 +1586,49 @@ the hash is to be modified.
 
 =head2 How do I select a random element from an array?
 
-Use the rand() function (see L<perlfunc/rand>):
+Use the C<rand()> function (see L<perlfunc/rand>):
 
-    $index   = rand @array;
-    $element = $array[$index];
+	$index   = rand @array;
+	$element = $array[$index];
 
 Or, simply:
-    my $element = $array[ rand @array ];
+
+	my $element = $array[ rand @array ];
 
 =head2 How do I permute N elements of a list?
+X<List::Permuter> X<permute> X<Algorithm::Loops> X<Knuth>
+X<The Art of Computer Programming> X<Fischer-Krause>
 
-Use the List::Permutor module on CPAN.  If the list is
-actually an array, try the Algorithm::Permute module (also
-on CPAN).  It's written in XS code and is very efficient.
+Use the C<List::Permutor> module on CPAN. If the list is actually an
+array, try the C<Algorithm::Permute> module (also on CPAN). It's
+written in XS code and is very efficient:
 
 	use Algorithm::Permute;
+
 	my @array = 'a'..'d';
 	my $p_iterator = Algorithm::Permute->new ( \@array );
+
 	while (my @perm = $p_iterator->next) {
 	   print "next permutation: (@perm)\n";
-	}
+		}
 
 For even faster execution, you could do:
 
-   use Algorithm::Permute;
-   my @array = 'a'..'d';
-   Algorithm::Permute::permute {
-      print "next permutation: (@array)\n";
-   } @array;
+	use Algorithm::Permute;
 
-Here's a little program that generates all permutations of
-all the words on each line of input. The algorithm embodied
-in the permute() function is discussed in Volume 4 (still
-unpublished) of Knuth's I<The Art of Computer Programming>
-and will work on any list:
+	my @array = 'a'..'d';
+
+	Algorithm::Permute::permute {
+		print "next permutation: (@array)\n";
+		} @array;
+
+Here's a little program that generates all permutations of all the
+words on each line of input. The algorithm embodied in the
+C<permute()> function is discussed in Volume 4 (still unpublished) of
+Knuth's I<The Art of Computer Programming> and will work on any list:
 
 	#!/usr/bin/perl -n
-	# Fischer-Kause ordered permutation generator
+	# Fischer-Krause ordered permutation generator
 
 	sub permute (&@) {
 		my $code = shift;
@@ -1575,13 +1643,28 @@ and will work on any list:
 		}
 	}
 
-	permute {print"@_\n"} split;
+	permute { print "@_\n" } split;
+
+The C<Algorithm::Loops> module also provides the C<NextPermute> and
+C<NextPermuteNum> functions which efficiently find all unique permutations
+of an array, even if it contains duplicate values, modifying it in-place:
+if its elements are in reverse-sorted order then the array is reversed,
+making it sorted, and it returns false; otherwise the next
+permutation is returned.
+
+C<NextPermute> uses string order and C<NextPermuteNum> numeric order, so
+you can enumerate all the permutations of C<0..9> like this:
+
+	use Algorithm::Loops qw(NextPermuteNum);
+	
+    my @list= 0..9;
+    do { print "@list\n" } while NextPermuteNum @list;
 
 =head2 How do I sort an array by (anything)?
 
 Supply a comparison function to sort() (described in L<perlfunc/sort>):
 
-    @list = sort { $a <=> $b } @list;
+	@list = sort { $a <=> $b } @list;
 
 The default sort function is cmp, string comparison, which would
 sort C<(1, 2, 10)> into C<(1, 10, 2)>.  C<< <=> >>, used above, is
@@ -1594,26 +1677,27 @@ same element.  Here's an example of how to pull out the first word
 after the first number on each item, and then sort those words
 case-insensitively.
 
-    @idx = ();
-    for (@data) {
-	($item) = /\d+\s*(\S+)/;
-	push @idx, uc($item);
-    }
-    @sorted = @data[ sort { $idx[$a] cmp $idx[$b] } 0 .. $#idx ];
+	@idx = ();
+	for (@data) {
+		($item) = /\d+\s*(\S+)/;
+		push @idx, uc($item);
+	    }
+	@sorted = @data[ sort { $idx[$a] cmp $idx[$b] } 0 .. $#idx ];
 
 which could also be written this way, using a trick
 that's come to be known as the Schwartzian Transform:
 
-    @sorted = map  { $_->[0] }
-	      sort { $a->[1] cmp $b->[1] }
-	      map  { [ $_, uc( (/\d+\s*(\S+)/)[0]) ] } @data;
+	@sorted = map  { $_->[0] }
+		sort { $a->[1] cmp $b->[1] }
+		map  { [ $_, uc( (/\d+\s*(\S+)/)[0]) ] } @data;
 
 If you need to sort on several fields, the following paradigm is useful.
 
-    @sorted = sort { field1($a) <=> field1($b) ||
-                     field2($a) cmp field2($b) ||
-                     field3($a) cmp field3($b)
-                   }     @data;
+	@sorted = sort {
+		field1($a) <=> field1($b) ||
+		field2($a) cmp field2($b) ||
+		field3($a) cmp field3($b)
+		} @data;
 
 This can be conveniently combined with precalculation of keys as given
 above.
@@ -1622,48 +1706,53 @@ See the F<sort> article in the "Far More Than You Ever Wanted
 To Know" collection in http://www.cpan.org/misc/olddoc/FMTEYEWTK.tgz for
 more about this approach.
 
-See also the question below on sorting hashes.
+See also the question later in L<perlfaq4> on sorting hashes.
 
 =head2 How do I manipulate arrays of bits?
 
-Use pack() and unpack(), or else vec() and the bitwise operations.
+Use C<pack()> and C<unpack()>, or else C<vec()> and the bitwise
+operations.
 
-For example, this sets $vec to have bit N set if $ints[N] was set:
+For example, this sets C<$vec> to have bit N set if C<$ints[N]> was
+set:
 
-    $vec = '';
-    foreach(@ints) { vec($vec,$_,1) = 1 }
+	$vec = '';
+	foreach(@ints) { vec($vec,$_,1) = 1 }
 
-Here's how, given a vector in $vec, you can
-get those bits into your @ints array:
+Here's how, given a vector in C<$vec>, you can get those bits into your
+C<@ints> array:
 
-    sub bitvec_to_list {
-	my $vec = shift;
-	my @ints;
-	# Find null-byte density then select best algorithm
-	if ($vec =~ tr/\0// / length $vec > 0.95) {
-	    use integer;
-	    my $i;
-	    # This method is faster with mostly null-bytes
-	    while($vec =~ /[^\0]/g ) {
-		$i = -9 + 8 * pos $vec;
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-		push @ints, $i if vec($vec, ++$i, 1);
-	    }
-	} else {
-	    # This method is a fast general algorithm
-	    use integer;
-	    my $bits = unpack "b*", $vec;
-	    push @ints, 0 if $bits =~ s/^(\d)// && $1;
-	    push @ints, pos $bits while($bits =~ /1/g);
-	}
-	return \@ints;
-    }
+	sub bitvec_to_list {
+		my $vec = shift;
+		my @ints;
+		# Find null-byte density then select best algorithm
+		if ($vec =~ tr/\0// / length $vec > 0.95) {
+			use integer;
+			my $i;
+
+			# This method is faster with mostly null-bytes
+			while($vec =~ /[^\0]/g ) {
+				$i = -9 + 8 * pos $vec;
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				push @ints, $i if vec($vec, ++$i, 1);
+				}
+			}
+		else {
+			# This method is a fast general algorithm
+			use integer;
+			my $bits = unpack "b*", $vec;
+			push @ints, 0 if $bits =~ s/^(\d)// && $1;
+			push @ints, pos $bits while($bits =~ /1/g);
+			}
+
+		return \@ints;
+		}
 
 This method gets faster the more sparse the bit vector is.
 (Courtesy of Tim Bunce and Winfried Koenig.)
@@ -1672,60 +1761,60 @@ You can make the while loop a lot shorter with this suggestion
 from Benjamin Goldberg:
 
 	while($vec =~ /[^\0]+/g ) {
-	   push @ints, grep vec($vec, $_, 1), $-[0] * 8 .. $+[0] * 8;
-	}
+		push @ints, grep vec($vec, $_, 1), $-[0] * 8 .. $+[0] * 8;
+		}
 
-Or use the CPAN module Bit::Vector:
+Or use the CPAN module C<Bit::Vector>:
 
-    $vector = Bit::Vector->new($num_of_bits);
-    $vector->Index_List_Store(@ints);
-    @ints = $vector->Index_List_Read();
+	$vector = Bit::Vector->new($num_of_bits);
+	$vector->Index_List_Store(@ints);
+	@ints = $vector->Index_List_Read();
 
-Bit::Vector provides efficient methods for bit vector, sets of small integers
-and "big int" math.
+C<Bit::Vector> provides efficient methods for bit vector, sets of
+small integers and "big int" math.
 
 Here's a more extensive illustration using vec():
 
-    # vec demo
-    $vector = "\xff\x0f\xef\xfe";
-    print "Ilya's string \\xff\\x0f\\xef\\xfe represents the number ",
+	# vec demo
+	$vector = "\xff\x0f\xef\xfe";
+	print "Ilya's string \\xff\\x0f\\xef\\xfe represents the number ",
 	unpack("N", $vector), "\n";
-    $is_set = vec($vector, 23, 1);
-    print "Its 23rd bit is ", $is_set ? "set" : "clear", ".\n";
-    pvec($vector);
-
-    set_vec(1,1,1);
-    set_vec(3,1,1);
-    set_vec(23,1,1);
-
-    set_vec(3,1,3);
-    set_vec(3,2,3);
-    set_vec(3,4,3);
-    set_vec(3,4,7);
-    set_vec(3,8,3);
-    set_vec(3,8,7);
-
-    set_vec(0,32,17);
-    set_vec(1,32,17);
-
-    sub set_vec {
-	my ($offset, $width, $value) = @_;
-	my $vector = '';
-	vec($vector, $offset, $width) = $value;
-	print "offset=$offset width=$width value=$value\n";
+	$is_set = vec($vector, 23, 1);
+	print "Its 23rd bit is ", $is_set ? "set" : "clear", ".\n";
 	pvec($vector);
-    }
 
-    sub pvec {
-	my $vector = shift;
-	my $bits = unpack("b*", $vector);
-	my $i = 0;
-	my $BASE = 8;
+	set_vec(1,1,1);
+	set_vec(3,1,1);
+	set_vec(23,1,1);
 
-	print "vector length in bytes: ", length($vector), "\n";
-	@bytes = unpack("A8" x length($vector), $bits);
-	print "bits are: @bytes\n\n";
-    }
+	set_vec(3,1,3);
+	set_vec(3,2,3);
+	set_vec(3,4,3);
+	set_vec(3,4,7);
+	set_vec(3,8,3);
+	set_vec(3,8,7);
+
+	set_vec(0,32,17);
+	set_vec(1,32,17);
+
+	sub set_vec {
+		my ($offset, $width, $value) = @_;
+		my $vector = '';
+		vec($vector, $offset, $width) = $value;
+		print "offset=$offset width=$width value=$value\n";
+		pvec($vector);
+		}
+
+	sub pvec {
+		my $vector = shift;
+		my $bits = unpack("b*", $vector);
+		my $i = 0;
+		my $BASE = 8;
+
+		print "vector length in bytes: ", length($vector), "\n";
+		@bytes = unpack("A8" x length($vector), $bits);
+		print "bits are: @bytes\n\n";
+		}
 
 =head2 Why does defined() return true on empty arrays and hashes?
 
@@ -1737,15 +1826,57 @@ in the 5.004 release or later of Perl for more detail.
 
 =head2 How do I process an entire hash?
 
-Use the each() function (see L<perlfunc/each>) if you don't care
-whether it's sorted:
+(contributed by brian d foy)
 
-    while ( ($key, $value) = each %hash) {
-	print "$key = $value\n";
-    }
+There are a couple of ways that you can process an entire hash. You
+can get a list of keys, then go through each key, or grab a one
+key-value pair at a time.
 
-If you want it sorted, you'll have to use foreach() on the result of
-sorting the keys as shown in an earlier question.
+To go through all of the keys, use the C<keys> function. This extracts
+all of the keys of the hash and gives them back to you as a list. You
+can then get the value through the particular key you're processing:
+
+	foreach my $key ( keys %hash ) {
+		my $value = $hash{$key}
+		...
+		}
+
+Once you have the list of keys, you can process that list before you
+process the hashh elements. For instance, you can sort the keys so you
+can process them in lexical order:
+
+	foreach my $key ( sort keys %hash ) {
+		my $value = $hash{$key}
+		...
+		}
+
+Or, you might want to only process some of the items. If you only want
+to deal with the keys that start with C<text:>, you can select just
+those using C<grep>:
+
+	foreach my $key ( grep /^text:/, keys %hash ) {
+		my $value = $hash{$key}
+		...
+		}
+
+If the hash is very large, you might not want to create a long list of
+keys. To save some memory, you can grab on key-value pair at a time using
+C<each()>, which returns a pair you haven't seen yet:
+
+	while( my( $key, $value ) = each( %hash ) ) {
+		...
+		}
+
+The C<each> operator returns the pairs in apparently random order, so if
+ordering matters to you, you'll have to stick with the C<keys> method.
+
+The C<each()> operator can be a bit tricky though. You can't add or
+delete keys of the hash while you're using it without possibly
+skipping or re-processing some pairs after Perl internally rehashes
+all of the elements. Additionally, a hash has only one iterator, so if
+you use C<keys>, C<values>, or C<each> on the same hash, you can reset
+the iterator and mess up your processing. See the C<each> entry in
+L<perlfunc> for more details.
 
 =head2 What happens if I add or remove keys from a hash while iterating over it?
 
@@ -1763,23 +1894,23 @@ entry for C<each()> in L<perlfunc>.
 
 Create a reverse hash:
 
-    %by_value = reverse %by_key;
-    $key = $by_value{$value};
+	%by_value = reverse %by_key;
+	$key = $by_value{$value};
 
 That's not particularly efficient.  It would be more space-efficient
 to use:
 
-    while (($key, $value) = each %by_key) {
-	$by_value{$value} = $key;
-    }
+	while (($key, $value) = each %by_key) {
+		$by_value{$value} = $key;
+	    }
 
 If your hash could have repeated values, the methods above will only find
 one of the associated keys.   This may or may not worry you.  If it does
 worry you, you can always reverse the hash into a hash of arrays instead:
 
-     while (($key, $value) = each %by_key) {
-	 push @{$key_list_by_value{$value}}, $key;
-     }
+	while (($key, $value) = each %by_key) {
+		 push @{$key_list_by_value{$value}}, $key;
+		}
 
 =head2 How can I know how many entries are in a hash?
 
@@ -1840,24 +1971,28 @@ we can provide a secondary sort on the hash key.
 		} keys %hash;
 
 =head2 How can I always keep my hash sorted?
+X<hash tie sort DB_File Tie::IxHash>
 
-You can look into using the DB_File module and tie() using the
-$DB_BTREE hash bindings as documented in L<DB_File/"In Memory Databases">.
-The Tie::IxHash module from CPAN might also be instructive.
+You can look into using the C<DB_File> module and C<tie()> using the
+C<$DB_BTREE> hash bindings as documented in L<DB_File/"In Memory
+Databases">. The C<Tie::IxHash> module from CPAN might also be
+instructive. Although this does keep your hash sorted, you might not
+like the slow down you suffer from the tie interface. Are you sure you
+need to do this? :)
 
 =head2 What's the difference between "delete" and "undef" with hashes?
 
 Hashes contain pairs of scalars: the first is the key, the
 second is the value.  The key will be coerced to a string,
 although the value can be any kind of scalar: string,
-number, or reference.  If a key $key is present in
+number, or reference.  If a key C<$key> is present in
 %hash, C<exists($hash{$key})> will return true.  The value
 for a given key can be C<undef>, in which case
 C<$hash{$key}> will be C<undef> while C<exists $hash{$key}>
 will return true.  This corresponds to (C<$key>, C<undef>)
 being in the hash.
 
-Pictures help...  here's the %hash table:
+Pictures help...  here's the C<%hash> table:
 
 	  keys  values
 	+------+------+
@@ -1873,7 +2008,7 @@ And these conditions hold
 	$hash{'d'}                       is false
 	defined $hash{'d'}               is true
 	defined $hash{'a'}               is true
-	exists $hash{'a'}                is true (Perl5 only)
+	exists $hash{'a'}                is true (Perl 5 only)
 	grep ($_ eq 'a', keys %hash)     is true
 
 If you now say
@@ -1897,7 +2032,7 @@ and these conditions now hold; changes in caps:
 	$hash{'d'}                       is false
 	defined $hash{'d'}               is true
 	defined $hash{'a'}               is FALSE
-	exists $hash{'a'}                is true (Perl5 only)
+	exists $hash{'a'}                is true (Perl 5 only)
 	grep ($_ eq 'a', keys %hash)     is true
 
 Notice the last two: you have an undef value, but a defined key!
@@ -1921,7 +2056,7 @@ and these conditions now hold; changes in caps:
 	$hash{'d'}                       is false
 	defined $hash{'d'}               is true
 	defined $hash{'a'}               is false
-	exists $hash{'a'}                is FALSE (Perl5 only)
+	exists $hash{'a'}                is FALSE (Perl 5 only)
 	grep ($_ eq 'a', keys %hash)     is FALSE
 
 See, the whole entry is gone!
@@ -1936,36 +2071,42 @@ end up doing is not what they do with ordinary hashes.
 
 =head2 How do I reset an each() operation part-way through?
 
-Using C<keys %hash> in scalar context returns the number of keys in
-the hash I<and> resets the iterator associated with the hash.  You may
-need to do this if you use C<last> to exit a loop early so that when you
-re-enter it, the hash iterator has been reset.
+(contributed by brian d foy)
+
+You can use the C<keys> or C<values> functions to reset C<each>. To
+simply reset the iterator used by C<each> without doing anything else,
+use one of them in void context:
+
+	keys %hash; # resets iterator, nothing else.
+	values %hash; # resets iterator, nothing else.
+
+See the documentation for C<each> in L<perlfunc>.
 
 =head2 How can I get the unique keys from two hashes?
 
 First you extract the keys from the hashes into lists, then solve
 the "removing duplicates" problem described above.  For example:
 
-    %seen = ();
-    for $element (keys(%foo), keys(%bar)) {
-	$seen{$element}++;
-    }
-    @uniq = keys %seen;
+	%seen = ();
+	for $element (keys(%foo), keys(%bar)) {
+		$seen{$element}++;
+		}
+	@uniq = keys %seen;
 
 Or more succinctly:
 
-    @uniq = keys %{{%foo,%bar}};
+	@uniq = keys %{{%foo,%bar}};
 
 Or if you really want to save space:
 
-    %seen = ();
-    while (defined ($key = each %foo)) {
-        $seen{$key}++;
-    }
-    while (defined ($key = each %bar)) {
-        $seen{$key}++;
-    }
-    @uniq = keys %seen;
+	%seen = ();
+	while (defined ($key = each %foo)) {
+		$seen{$key}++;
+	}
+	while (defined ($key = each %bar)) {
+		$seen{$key}++;
+	}
+	@uniq = keys %seen;
 
 =head2 How can I store a multidimensional array in a DBM file?
 
@@ -1975,21 +2116,24 @@ it on top of either DB_File or GDBM_File.
 
 =head2 How can I make my hash remember the order I put elements into it?
 
-Use the Tie::IxHash from CPAN.
+Use the C<Tie::IxHash> from CPAN.
 
-    use Tie::IxHash;
-    tie my %myhash, 'Tie::IxHash';
-    for (my $i=0; $i<20; $i++) {
-        $myhash{$i} = 2*$i;
-    }
-    my @keys = keys %myhash;
-    # @keys = (0,1,2,3,...)
+	use Tie::IxHash;
+
+	tie my %myhash, 'Tie::IxHash';
+
+	for (my $i=0; $i<20; $i++) {
+		$myhash{$i} = 2*$i;
+		}
+
+	my @keys = keys %myhash;
+	# @keys = (0,1,2,3,...)
 
 =head2 Why does passing a subroutine an undefined element in a hash create it?
 
 If you say something like:
 
-    somefunc($hash{"nonesuch key here"});
+	somefunc($hash{"nonesuch key here"});
 
 Then that element "autovivifies"; that is, it springs into existence
 whether you store something there or not.  That's because functions
@@ -2006,14 +2150,14 @@ awk's behavior.
 
 Usually a hash ref, perhaps like this:
 
-    $record = {
-        NAME   => "Jason",
-        EMPNO  => 132,
-        TITLE  => "deputy peon",
-        AGE    => 23,
-        SALARY => 37_000,
-        PALS   => [ "Norbert", "Rhys", "Phineas"],
-    };
+	$record = {
+		NAME   => "Jason",
+		EMPNO  => 132,
+		TITLE  => "deputy peon",
+		AGE    => 23,
+		SALARY => 37_000,
+		PALS   => [ "Norbert", "Rhys", "Phineas"],
+	};
 
 References are documented in L<perlref> and the upcoming L<perlreftut>.
 Examples of complex data structures are given in L<perldsc> and
@@ -2026,32 +2170,27 @@ in L<perltoot>.
 
 Hash keys are strings, so you can't really use a reference as the key.
 When you try to do that, perl turns the reference into its stringified
-form (for instance, C<HASH(0xDEADBEEF)>). From there you can't get back
-the reference from the stringified form, at least without doing some
-extra work on your own. Also remember that hash keys must be unique, but
-two different variables can store the same reference (and those variables
-can change later).
+form (for instance, C<HASH(0xDEADBEEF)>). From there you can't get
+back the reference from the stringified form, at least without doing
+some extra work on your own. Also remember that hash keys must be
+unique, but two different variables can store the same reference (and
+those variables can change later).
 
-The Tie::RefHash module, which is distributed with perl, might be what
-you want. It handles that extra work.
+The C<Tie::RefHash> module, which is distributed with perl, might be
+what you want. It handles that extra work.
 
 =head1 Data: Misc
 
 =head2 How do I handle binary data correctly?
 
-Perl is binary clean, so this shouldn't be a problem.  For example,
-this works fine (assuming the files are found):
+Perl is binary clean, so it can handle binary data just fine.
+On Windows or DOS, however, you have to use C<binmode> for binary
+files to avoid conversions for line endings. In general, you should
+use C<binmode> any time you want to work with binary data.
 
-    if (`cat /vmunix` =~ /gzip/) {
-	print "Your kernel is GNU-zip enabled!\n";
-    }
+Also see L<perlfunc/"binmode"> or L<perlopentut>.
 
-On less elegant (read: Byzantine) systems, however, you have
-to play tedious games with "text" versus "binary" files.  See
-L<perlfunc/"binmode"> or L<perlopentut>.
-
-If you're concerned about 8-bit ASCII data, then see L<perllocale>.
-
+If you're concerned about 8-bit textual data then see L<perllocale>.
 If you want to deal with multibyte characters, however, there are
 some gotchas.  See the section on Regular Expressions.
 
@@ -2060,102 +2199,110 @@ some gotchas.  See the section on Regular Expressions.
 Assuming that you don't care about IEEE notations like "NaN" or
 "Infinity", you probably just want to use a regular expression.
 
-   if (/\D/)            { print "has nondigits\n" }
-   if (/^\d+$/)         { print "is a whole number\n" }
-   if (/^-?\d+$/)       { print "is an integer\n" }
-   if (/^[+-]?\d+$/)    { print "is a +/- integer\n" }
-   if (/^-?\d+\.?\d*$/) { print "is a real number\n" }
-   if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/) { print "is a decimal number\n" }
-   if (/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/)
+	if (/\D/)            { print "has nondigits\n" }
+	if (/^\d+$/)         { print "is a whole number\n" }
+	if (/^-?\d+$/)       { print "is an integer\n" }
+	if (/^[+-]?\d+$/)    { print "is a +/- integer\n" }
+	if (/^-?\d+\.?\d*$/) { print "is a real number\n" }
+	if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/) { print "is a decimal number\n" }
+	if (/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/)
 			{ print "a C float\n" }
 
 There are also some commonly used modules for the task.
 L<Scalar::Util> (distributed with 5.8) provides access to perl's
-internal function C<looks_like_number> for determining
-whether a variable looks like a number.  L<Data::Types>
-exports functions that validate data types using both the
-above and other regular expressions. Thirdly, there is
-C<Regexp::Common> which has regular expressions to match
-various types of numbers. Those three modules are available
-from the CPAN.
+internal function C<looks_like_number> for determining whether a
+variable looks like a number.  L<Data::Types> exports functions that
+validate data types using both the above and other regular
+expressions. Thirdly, there is C<Regexp::Common> which has regular
+expressions to match various types of numbers. Those three modules are
+available from the CPAN.
 
 If you're on a POSIX system, Perl supports the C<POSIX::strtod>
-function.  Its semantics are somewhat cumbersome, so here's a C<getnum>
-wrapper function for more convenient access.  This function takes
-a string and returns the number it found, or C<undef> for input that
-isn't a C float.  The C<is_numeric> function is a front end to C<getnum>
-if you just want to say, "Is this a float?"
+function.  Its semantics are somewhat cumbersome, so here's a
+C<getnum> wrapper function for more convenient access.  This function
+takes a string and returns the number it found, or C<undef> for input
+that isn't a C float.  The C<is_numeric> function is a front end to
+C<getnum> if you just want to say, "Is this a float?"
 
-    sub getnum {
-        use POSIX qw(strtod);
-        my $str = shift;
-        $str =~ s/^\s+//;
-        $str =~ s/\s+$//;
-        $! = 0;
-        my($num, $unparsed) = strtod($str);
-        if (($str eq '') || ($unparsed != 0) || $!) {
-            return undef;
-        } else {
-            return $num;
-        }
-    }
+	sub getnum {
+		use POSIX qw(strtod);
+		my $str = shift;
+		$str =~ s/^\s+//;
+		$str =~ s/\s+$//;
+		$! = 0;
+		my($num, $unparsed) = strtod($str);
+		if (($str eq '') || ($unparsed != 0) || $!) {
+				return undef;
+			}
+		else {
+			return $num;
+			}
+		}
 
-    sub is_numeric { defined getnum($_[0]) }
+	sub is_numeric { defined getnum($_[0]) }
 
 Or you could check out the L<String::Scanf> module on the CPAN
-instead. The POSIX module (part of the standard Perl distribution) provides
-the C<strtod> and C<strtol> for converting strings to double and longs,
-respectively.
+instead. The C<POSIX> module (part of the standard Perl distribution)
+provides the C<strtod> and C<strtol> for converting strings to double
+and longs, respectively.
 
 =head2 How do I keep persistent data across program calls?
 
 For some specific applications, you can use one of the DBM modules.
-See L<AnyDBM_File>.  More generically, you should consult the FreezeThaw
-or Storable modules from CPAN.  Starting from Perl 5.8 Storable is part
-of the standard distribution.  Here's one example using Storable's C<store>
+See L<AnyDBM_File>.  More generically, you should consult the C<FreezeThaw>
+or C<Storable> modules from CPAN.  Starting from Perl 5.8 C<Storable> is part
+of the standard distribution.  Here's one example using C<Storable>'s C<store>
 and C<retrieve> functions:
 
-    use Storable;
-    store(\%hash, "filename");
+	use Storable;
+	store(\%hash, "filename");
 
-    # later on...
-    $href = retrieve("filename");        # by ref
-    %hash = %{ retrieve("filename") };   # direct to hash
+	# later on...
+	$href = retrieve("filename");        # by ref
+	%hash = %{ retrieve("filename") };   # direct to hash
 
 =head2 How do I print out or copy a recursive data structure?
 
-The Data::Dumper module on CPAN (or the 5.005 release of Perl) is great
-for printing out data structures.  The Storable module on CPAN (or the
+The C<Data::Dumper> module on CPAN (or the 5.005 release of Perl) is great
+for printing out data structures.  The C<Storable> module on CPAN (or the
 5.8 release of Perl), provides a function called C<dclone> that recursively
 copies its argument.
 
-    use Storable qw(dclone);
-    $r2 = dclone($r1);
+	use Storable qw(dclone);
+	$r2 = dclone($r1);
 
-Where $r1 can be a reference to any kind of data structure you'd like.
+Where C<$r1> can be a reference to any kind of data structure you'd like.
 It will be deeply copied.  Because C<dclone> takes and returns references,
 you'd have to add extra punctuation if you had a hash of arrays that
 you wanted to copy.
 
-    %newhash = %{ dclone(\%oldhash) };
+	%newhash = %{ dclone(\%oldhash) };
 
 =head2 How do I define methods for every class/object?
 
-Use the UNIVERSAL class (see L<UNIVERSAL>).
+Use the C<UNIVERSAL> class (see L<UNIVERSAL>).
 
 =head2 How do I verify a credit card checksum?
 
-Get the Business::CreditCard module from CPAN.
+Get the C<Business::CreditCard> module from CPAN.
 
 =head2 How do I pack arrays of doubles or floats for XS code?
 
-The kgbpack.c code in the PGPLOT module on CPAN does just this.
+The kgbpack.c code in the C<PGPLOT> module on CPAN does just this.
 If you're doing a lot of float or double processing, consider using
-the PDL module from CPAN instead--it makes number-crunching easy.
+the C<PDL> module from CPAN instead--it makes number-crunching easy.
+
+=head1 REVISION
+
+Revision: $Revision: 10394 $
+
+Date: $Date: 2007-12-09 18:47:15 +0100 (Sun, 09 Dec 2007) $
+
+See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

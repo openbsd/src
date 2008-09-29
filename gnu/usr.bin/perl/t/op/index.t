@@ -3,11 +3,11 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use strict;
-require './test.pl';
-plan( tests => 58 );
+plan( tests => 69 );
 
 my $foo = 'Now is the time for all good men to come to the aid of their country.';
 
@@ -86,8 +86,15 @@ is(rindex($a, "foo",    ), 0);
 }
 
 {
-    my $search = "foo \xc9 bar";
-    my $text = "a\xa3\xa3a $search    $search quux";
+    my $search;
+    my $text;
+    if (ord('A') == 193) {
+	$search = "foo \x71 bar";
+	$text = "a\xb1\xb1a $search    $search quux";
+    } else {
+	$search = "foo \xc9 bar";
+	$text = "a\xa3\xa3a $search    $search quux";
+    }
 
     my $text_utf8 = $text;
     utf8::upgrade($text_utf8);
@@ -120,4 +127,31 @@ is(rindex($a, "foo",    ), 0);
     is (rindex($text_octets, $search), -1);
     is (index($text, $search_octets), -1);
     is (rindex($text, $search_octets), -1);
+}
+
+foreach my $utf8 ('', ', utf-8') {
+    foreach my $arraybase (0, 1, -1, -2) {
+	my $expect_pos = 2 + $arraybase;
+
+	my $prog = "\$[ = $arraybase; \$big = \"N\\xabN\\xab\"; ";
+	$prog .= '$big .= chr 256; chop $big; ' if $utf8;
+	$prog .= 'print rindex $big, "N", 2 + $[';
+
+	fresh_perl_is($prog, $expect_pos, {}, "\$[ = $arraybase$utf8");
+    }
+}
+
+SKIP: {
+    skip "UTF-EBCDIC is limited to 0x7fffffff", 3 if ord("A") == 193;
+
+    my $a = "\x{80000000}";
+    my $s = $a.'defxyz';
+    is(index($s, 'def'), 1, "0x80000000 is a single character");
+
+    my $b = "\x{fffffffd}";
+    my $t = $b.'pqrxyz';
+    is(index($t, 'pqr'), 1, "0xfffffffd is a single character");
+
+    local ${^UTF8CACHE} = -1;
+    is(index($t, 'xyz'), 4, "0xfffffffd and utf8cache");
 }

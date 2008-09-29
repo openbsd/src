@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.95';
+use version; $VERSION = qv('2.0.0');
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -48,7 +48,7 @@ sub _fail
 {
 	my ($wantarray, $textref, $message, $pos) = @_;
 	_failmsg $message, $pos if $message;
-	return ("",$$textref,"") if $wantarray;
+	return (undef,$$textref,undef) if $wantarray;
 	return undef;
 }
 
@@ -57,7 +57,7 @@ sub _succeed
 	$@ = undef;
 	my ($wantarray,$textref) = splice @_, 0, 2;
 	my ($extrapos, $extralen) = @_>18 ? splice(@_, -2, 2) : (0,0);
-	my ($startlen) = $_[5];
+	my ($startlen, $oppos) = @_[5,6];
 	my $remainderpos = $_[2];
 	if ($wantarray)
 	{
@@ -67,7 +67,7 @@ sub _succeed
 			push @res, substr($$textref,$from,$len);
 		}
 		if ($extralen) {	# CORRECT FILLET
-			my $extra = substr($res[0], $extrapos-$startlen, $extralen, "\n");
+			my $extra = substr($res[0], $extrapos-$oppos, $extralen, "\n");
 			$res[1] = "$extra$res[1]";
 			eval { substr($$textref,$remainderpos,0) = $extra;
 			       substr($$textref,$extrapos,$extralen,"\n")} ;
@@ -266,7 +266,7 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 	       );
 }
 
-sub revbracket($)
+sub _revbracket($)
 {
 	my $brack = reverse $_[0];
 	$brack =~ tr/[({</])}>/;
@@ -328,8 +328,8 @@ sub _match_tagged	# ($$$$$$$)
 
 	if (!defined $rdel)
 	{
-		$rdelspec = $&;
-		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". revbracket($1) /oes)
+		$rdelspec = substr($$textref, $-[0], $+[0] - $-[0]);
+		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". _revbracket($1) /oes)
 		{
 			_failmsg "Unable to construct closing tag to match: $rdel",
 				 pos $$textref;
@@ -748,8 +748,8 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		}
 		my $extrapos = pos($$textref);
 		$$textref =~ m{.*\n}gc;
-		$str1pos = pos($$textref);
-		unless ($$textref =~ m{.*?\n(?=$label\n)}gc) {
+		$str1pos = pos($$textref)--;
+		unless ($$textref =~ m{.*?\n(?=\Q$label\E\n)}gc) {
 			_failmsg qq{Missing here doc terminator ('$label') after "} .
 				     substr($$textref, $startpos, 20) .
 				     q{..."},
@@ -758,7 +758,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 			return;
 		}
 		$rd1pos = pos($$textref);
-		$$textref =~ m{$label\n}gc;
+        $$textref =~ m{\Q$label\E\n}gc;
 		$ld2pos = pos($$textref);
 		return (
 			$startpos,	$oppos-$startpos,	# PREFIX
@@ -791,15 +791,17 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 	if ($ldel1 =~ /[[(<{]/)
 	{
 		$rdel1 =~ tr/[({</])}>/;
-		_match_bracketed($textref,"",$ldel1,"","",$rdel1)
+		defined(_match_bracketed($textref,"",$ldel1,"","",$rdel1))
 		|| do { pos $$textref = $startpos; return };
+        $ld2pos = pos($$textref);
+        $rd1pos = $ld2pos-1;
 	}
 	else
 	{
-		$$textref =~ /$ldel1[^\\$ldel1]*(\\.[^\\$ldel1]*)*$ldel1/gcs
+		$$textref =~ /\G$ldel1[^\\$ldel1]*(\\.[^\\$ldel1]*)*$ldel1/gcs
 		|| do { pos $$textref = $startpos; return };
+        $ld2pos = $rd1pos = pos($$textref)-1;
 	}
-	$ld2pos = $rd1pos = pos($$textref)-1;
 
 	my $second_arg = $op =~ /s|tr|y/ ? 1 : 0;
 	if ($second_arg)
@@ -826,7 +828,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		if ($ldel2 =~ /[[(<{]/)
 		{
 			pos($$textref)--;	# OVERCOME BROKEN LOOKAHEAD 
-			_match_bracketed($textref,"",$ldel2,"","",$rdel2)
+			defined(_match_bracketed($textref,"",$ldel2,"","",$rdel2))
 			|| do { pos $$textref = $startpos; return };
 		}
 		else
@@ -919,18 +921,19 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 				$class = $class[$i];
 				$lastpos = pos $$textref;
 				if (ref($func) eq 'CODE')
-					{ ($field,$rem,$pref) = @bits = $func->($$textref);
-					# print "[$field|$rem]" if $field;
-					}
+					{ ($field,$rem,$pref) = @bits = $func->($$textref) }
 				elsif (ref($func) eq 'Text::Balanced::Extractor')
 					{ @bits = $field = $func->extract($$textref) }
 				elsif( $$textref =~ m/\G$func/gc )
-					{ @bits = $field = defined($1) ? $1 : $& }
+					{ @bits = $field = defined($1)
+                                ? $1
+                                : substr($$textref, $-[0], $+[0] - $-[0])
+                    }
 				$pref ||= "";
 				if (defined($field) && length($field))
 				{
 					if (!$igunk) {
-						$unkpos = pos $$textref
+						$unkpos = $lastpos
 							if length($pref) && !defined($unkpos);
 						if (defined $unkpos)
 						{
@@ -1126,9 +1129,9 @@ The substring to be extracted must appear at the
 current C<pos> location of the string's variable
 (or at index zero, if no C<pos> position is defined).
 In other words, the C<extract_...> subroutines I<don't>
-extract the first occurance of a substring anywhere
+extract the first occurrence of a substring anywhere
 in a string (like an unanchored regex would). Rather,
-they extract an occurance of the substring appearing
+they extract an occurrence of the substring appearing
 immediately at the current matching position in the
 string (like a C<\G>-anchored regex would).
 
@@ -1144,7 +1147,7 @@ elements of which are always:
 =item [0]
 
 The extracted string, including the specified delimiters.
-If the extraction fails an empty string is returned.
+If the extraction fails C<undef> is returned.
 
 =item [1]
 
@@ -1154,7 +1157,7 @@ extracted string). On failure, the entire string is returned.
 =item [2]
 
 The skipped prefix (i.e. the characters before the extracted string).
-On failure, the empty string is returned.
+On failure, C<undef> is returned.
 
 =back 
 
@@ -1394,7 +1397,7 @@ See also: C<"extract_quotelike"> and C<"extract_codeblock">.
 
 C<extract_variable> extracts any valid Perl variable or
 variable-involved expression, including scalars, arrays, hashes, array
-accesses, hash look-ups, method calls through objects, subroutine calles
+accesses, hash look-ups, method calls through objects, subroutine calls
 through subroutine references, etc.
 
 The subroutine takes up to two optional arguments:
@@ -2053,7 +2056,7 @@ If none of the extractor subroutines succeeds, then one
 character is extracted from the start of the text and the extraction
 subroutines reapplied. Characters which are thus removed are accumulated and
 eventually become the next field (unless the fourth argument is true, in which
-case they are disgarded).
+case they are discarded).
 
 For example, the following extracts substrings that are valid Perl variables:
 
@@ -2140,9 +2143,10 @@ If more delimiters than escape chars are specified, the last escape char
 is used for the remaining delimiters.
 If no escape char is specified for a given specified delimiter, '\' is used.
 
-Note that 
-C<gen_delimited_pat> was previously called
-C<delimited_pat>. That name may still be used, but is now deprecated.
+=head2 C<delimited_pat>
+
+Note that C<gen_delimited_pat> was previously called C<delimited_pat>.
+That name may still be used, but is now deprecated.
         
 
 =head1 DIAGNOSTICS

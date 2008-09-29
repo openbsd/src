@@ -32,7 +32,15 @@ d_suidsafe='undef'
 #   libgdbmg1-dev (development version of GNU libc 2-linked GDBM library)
 # So make sure that for any libraries you wish to link Perl with under
 # Debian or Red Hat you have the -dev packages installed.
-#
+
+# SuSE Linux can be used as cross-compilation host for Cray XT4 Catamount/Qk.
+if test -d /opt/xt-pe
+then
+  case "`cc -V 2>&1`" in
+  *catamount*) . hints/catamount.sh; return ;;
+  esac
+fi
+
 # Some operating systems (e.g., Solaris 2.6) will link to a versioned shared
 # library implicitly.  For example, on Solaris, `ld foo.o -lgdbm' will find an
 # appropriate version of libgdbm, if one is available; Linux, however, doesn't
@@ -77,7 +85,9 @@ esac
 case "`${cc:-cc} -V 2>&1`" in
 *"Intel(R) C++ Compiler"*|*"Intel(R) C Compiler"*)
     # This is needed for Configure's prototype checks to work correctly
-    ccflags="-we147 $ccflags"
+    # The -mp flag is needed to pass various floating point related tests
+    # The -no-gcc flag is needed otherwise, icc pretends (poorly) to be gcc
+    ccflags="-we147 -mp -no-gcc $ccflags"
     # If we're using ICC, we usually want the best performance
     case "$optimize" in
     '') optimize='-O3' ;;
@@ -87,6 +97,15 @@ case "`${cc:-cc} -V 2>&1`" in
     optimize='-xO2'
     cccdlflags='-KPIC'
     lddlflags='-G -Bdynamic'
+    # Sun C doesn't support gcc attributes, but, in many cases, doesn't
+    # complain either.  Not all cases, though.
+    d_attribute_format='undef'
+    d_attribute_malloc='undef'
+    d_attribute_nonnull='undef'
+    d_attribute_noreturn='undef'
+    d_attribute_pure='undef'
+    d_attribute_unused='undef'
+    d_attribute_warn_unused_result='undef'
     ;;
 esac
 
@@ -97,8 +116,18 @@ case "$optimize" in
     case "`uname -m`" in
         ppc*)
             # on ppc, it seems that gcc (at least gcc 3.3.2) isn't happy
-	    # with -O2 ; so downgrade to -O1.
+            # with -O2 ; so downgrade to -O1.
             optimize='-O1'
+        ;;
+        ia64*)
+            # This architecture has had various problems with gcc's
+            # in the 3.2, 3.3, and 3.4 releases when optimized to -O2.  See
+            # RT #37156 for a discussion of the problem.
+            case "`${cc:-gcc} -v 2>&1`" in
+            *"version 3.2"*|*"version 3.3"*|*"version 3.4"*)
+                ccflags="-fno-delete-null-pointer-checks $ccflags"
+            ;;
+            esac
         ;;
     esac
     ;;
@@ -110,6 +139,7 @@ cat >try.c <<'EOM'
 /* Test for whether ELF binaries are produced */
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
 main() {
 	char buffer[4];
 	int i=open("a.out",O_RDONLY);
@@ -260,6 +290,7 @@ case "`uname -m`" in
 sparc*)
 	case "$cccdlflags" in
 	*-fpic*) cccdlflags="`echo $cccdlflags|sed 's/-fpic/-fPIC/'`" ;;
+	*-fPIC*) ;;
 	*)	 cccdlflags="$cccdlflags -fPIC" ;;
 	esac
 	;;
@@ -285,12 +316,21 @@ fi
 # This script UU/usethreads.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use threads.
 cat > UU/usethreads.cbu <<'EOCBU'
+if getconf GNU_LIBPTHREAD_VERSION | grep NPTL >/dev/null 2>/dev/null
+then
+    threadshavepids=""
+else
+    threadshavepids="-DTHREADS_HAVE_PIDS"
+fi
 case "$usethreads" in
 $define|true|[yY]*)
-        ccflags="-D_REENTRANT -D_GNU_SOURCE -DTHREADS_HAVE_PIDS $ccflags"
-        set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
-        shift
-        libswanted="$*"
+        ccflags="-D_REENTRANT -D_GNU_SOURCE $threadshavepids $ccflags"
+        if echo $libswanted | grep -v pthread >/dev/null
+        then
+            set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
+            shift
+            libswanted="$*"
+        fi
 
 	# Somehow at least in Debian 2.2 these manage to escape
 	# the #define forest of <features.h> and <time.h> so that
@@ -328,5 +368,58 @@ $define|true|[yY]*)
     set `echo X "$libswanted "| sed -e 's/ c / /'`
     shift
     libswanted="$*"
+    ;;
+esac
+
+# If we are using g++ we must use nm and force ourselves to use
+# the /usr/lib/libc.a (resetting the libc below to an empty string
+# makes Configure to look for the right one) because the symbol
+# scanning tricks of Configure will crash and burn horribly.
+case "$cc" in
+*g++*) usenm=true
+       libc=''
+       ;;
+esac
+
+# If using g++, the Configure scan for dlopen() and (especially)
+# dlerror() might fail, easier just to forcibly hint them in.
+case "$cc" in
+*g++*)
+  d_dlopen='define'
+  d_dlerror='define'
+  ;;
+esac
+
+# Under some circumstances libdb can get built in such a way as to
+# need pthread explicitly linked.
+
+libdb_needs_pthread="N"
+
+if echo " $libswanted " | grep -v " pthread " >/dev/null
+then
+   if echo " $libswanted " | grep " db " >/dev/null
+   then
+     for DBDIR in $glibpth
+     do
+       DBLIB="$DBDIR/libdb.so"
+       if [ -f $DBLIB ]
+       then
+         if nm -u $DBLIB | grep pthread >/dev/null
+         then
+           if ldd $DBLIB | grep pthread >/dev/null
+           then
+             libdb_needs_pthread="N"
+           else
+             libdb_needs_pthread="Y"
+           fi
+         fi
+       fi
+     done
+   fi
+fi
+
+case "$libdb_needs_pthread" in
+  "Y")
+    libswanted="$libswanted pthread"
     ;;
 esac

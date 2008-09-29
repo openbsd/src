@@ -1875,6 +1875,49 @@ will be the return value as well (read more about C<eval_pv> in
 L<perlapi/eval_pv>).  Once this code reference is in hand, it
 can be mixed in with all the previous examples we've shown.
 
+=head1 LIGHTWEIGHT CALLBACKS
+
+Sometimes you need to invoke the same subroutine repeatedly.
+This usually happens with a function that acts on a list of
+values, such as Perl's built-in sort(). You can pass a
+comparison function to sort(), which will then be invoked
+for every pair of values that needs to be compared. The first()
+and reduce() functions from L<List::Util> follow a similar
+pattern.
+
+In this case it is possible to speed up the routine (often
+quite substantially) by using the lightweight callback API.
+The idea is that the calling context only needs to be
+created and destroyed once, and the sub can be called
+arbitrarily many times in between.
+
+It is usual to pass parameters using global variables -- typically
+$_ for one parameter, or $a and $b for two parameters -- rather
+than via @_. (It is possible to use the @_ mechanism if you know
+what you're doing, though there is as yet no supported API for
+it. It's also inherently slower.)
+
+The pattern of macro calls is like this:
+
+    dMULTICALL;			/* Declare local variables */
+    I32 gimme = G_SCALAR;	/* context of the call: G_SCALAR,
+				 * G_LIST, or G_VOID */
+
+    PUSH_MULTICALL(cv);		/* Set up the context for calling cv,
+				   and set local vars appropriately */
+
+    /* loop */ {
+        /* set the value(s) af your parameter variables */
+        MULTICALL;		/* Make the actual call */
+    } /* end of loop */
+
+    POP_MULTICALL;		/* Tear down the calling context */
+
+For some concrete examples, see the implementation of the
+first() and reduce() functions of List::Util 1.18. There you
+will also find a header file that emulates the multicall API
+on older versions of perl.
+
 =head1 SEE ALSO
 
 L<perlxs>, L<perlguts>, L<perlembed>

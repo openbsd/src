@@ -63,6 +63,10 @@ you carefully limit what these symbolic values are, people are able
 to call functions B<outside> your Perl code, such as POSIX::system,
 in which case they are able to run arbitrary external code.
 
+=item *
+
+Hash keys are B<never> tainted.
+
 =back
 
 For efficiency reasons, Perl takes a conservative view of
@@ -72,7 +76,7 @@ of the subexpression is not itself affected by the tainted data.
 
 Because taintedness is associated with each scalar value, some
 elements of an array or hash can be tainted and others not.
-The keys of a hash are never tainted.
+The keys of a hash are B<never> tainted.
 
 For example:
 
@@ -476,9 +480,9 @@ Algorithm::FastPermute), or for any cryptographic applications.
 
 =item *
 
-Regular expressions - Perl's regular expression engine is so called
-NFA (Non-Finite Automaton), which among other things means that it can
-rather easily consume large amounts of both time and space if the
+Regular expressions - Perl's regular expression engine is so called NFA
+(Non-deterministic Finite Automaton), which among other things means that
+it can rather easily consume large amounts of both time and space if the
 regular expression may match in several ways.  Careful crafting of the
 regular expressions can help but quite often there really isn't much
 one can do (the book "Mastering Regular Expressions" is required
@@ -497,7 +501,7 @@ its input data, so it cannot be similarly fooled.
 =back
 
 See L<http://www.cs.rice.edu/~scrosby/hash/> for more information,
-and any computer science text book on the algorithmic complexity.
+and any computer science textbook on the algorithmic complexity.
 
 =head1 SEE ALSO
 

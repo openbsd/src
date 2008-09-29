@@ -364,17 +364,25 @@ change the appropriate metaconfig units instead, and regenerate Configure.
 
 will regenerate Configure and config_h.SH.  Much more information
 on obtaining and running metaconfig is in the F<U/README> file
-that comes with Perl's metaconfig units.  Perl's metaconfig units
-should be available on CPAN.  A set of units that will work with
-perl5.005 is in the file F<mc_units-5.005_00-01.tar.gz> under
-http://www.cpan.org/authors/id/ANDYD/ .  The mc_units tar file
-should be unpacked in your main perl source directory.  Note: those
-units were for use with 5.005.  There may have been changes since then.
-Check for later versions or contact perl5-porters@perl.org to obtain a
+that comes with Perl's metaconfig units.
+
+Since metaconfig is hard to change, running correction scripts after
+this generation is sometimes needed. Configure gained complexity over
+time, and the order in which config_h.SH is generated can cause havoc
+when compiling perl. Therefor, you need to run Porting/config_h.pl
+after that generation. All that and more is described in the README
+files that come with the metaunits.
+
+Perl's metaconfig units should be available on CPAN.  A set of units
+that will work with perl5.9.x is in a file with a name similar to
+F<mc_units-20070423.tgz> under http://www.cpan.org/authors/id/H/HM/HMBRAND/ .
+The mc_units tar file should be unpacked in your main perl source directory.
+Note: those units were for use with 5.9.x.  There may have been changes since
+then.  Check for later versions or contact perl5-porters@perl.org to obtain a
 pointer to the current version.
 
-Alternatively, do consider if the F<*ish.h> files might be a better
-place for your changes.
+Alternatively, do consider if the F<*ish.h> files or the hint files might be
+a better place for your changes.
 
 =head2 MANIFEST
 
@@ -414,7 +422,6 @@ In all, the following files should probably be executable:
     keywords.pl
     myconfig
     opcode.pl
-    perly.fixer
     t/TEST
     t/*/*.t
     *.SH
@@ -478,51 +485,27 @@ you are not familiar with those systems.  You might want to issue your
 patch with a promise to quickly issue a follow-up that handles those
 directories.
 
-=head2 make run_byacc
+=head2 make regen_perly
 
-If you have byacc-1.8.2 (available from CPAN as
-http://www.cpan.org/src/misc/perl-byacc1.8.2.tar.gz), and if there have
-been changes to F<perly.y>, you can regenerate the F<perly.c> file.  The
-run_byacc makefile target does this by running byacc and then applying
-some patches so that byacc dynamically allocates space, rather than
-having fixed limits.  This patch is handled by the F<perly.fixer>
-script.  Depending on the nature of the changes to F<perly.y>, you may
-or may not have to hand-edit the patch to apply correctly.  If you do,
-you should include the edited patch in the new distribution.  (If you
-have byacc-1.9, the patch won't apply cleanly, notably changes to the printf
-output statements.  F<perly.fixer> could be fixed to detect this.)
+If perly.y has been edited, it is necessary to run this target to rebuild
+perly.h, perly.act and perly.tab. In fact this target just runs the Perl
+script regen_perly.pl. Note that perly.c is I<not> rebuilt; this is just a
+plain static file now. 
 
-If C<perly.c> or C<perly.h> changes, make sure you run C<perl vms/vms_yfix.pl> 
-to update the corresponding VMS files.  The run_byacc target in the Unix
-Makefile takes care of this.  See also L<VMS-specific updates>.
+This target relies on you having Bison installed on your system. Running
+the target will tell you if you haven't got the right version, and if so,
+where to get the right one. Or if you prefer, you could hack
+regen_perly.pl to work with your version of Bison. The important things
+are that the regexes can still extract out the right chunks of the Bison
+output into perly.act and perly.tab, and that the contents of those two
+files, plus perly.h, are functionally equivalent to those produced by the
+supported version of Bison.
 
-Some additional notes from Larry on this:
-
-Don't forget to regenerate perly_c.diff.
-
-    byacc -d perly.y
-    mv y.tab.c perly.c
-    patch perly.c <perly_c.diff
-    # manually apply any failed hunks
-    diff -u perly.c.orig perly.c >perly_c.diff
-
-One chunk of lines that often fails begins with
-
-    #line 29 "perly.y"
-
-and ends one line before
-
-    #define YYERRCODE 256
-
-This only happens when you add or remove a token type.  I suppose this
-could be automated, but it doesn't happen very often nowadays.
-
-Larry
+Note that in the old days, you had to do C<make run_byacc> instead.
 
 =head2 make regen_all
 
-This target takes care of the PERLYVMS, regen_headers, and regen_pods
-targets.
+This target takes care of the regen_headers, and regen_pods targets.
 
 =head2 make regen_headers
 
@@ -601,6 +584,15 @@ detailed descriptions ought to be easily available somewhere.
 If you update the subversion number in F<patchlevel.h>, you may need
 to change the version number near the top of the F<Changes> file.
 
+=head2 Bumping perl's version
+
+If you bump perl's version, you will need to update a few things:
+the L<perlhist> manpage for the date of release, the version number and
+perldelta reference in the top level F<README> (and maybe the copyright
+year too), the F<META.yml> file (generated via F<Porting/makemeta>, be
+sure to run it with the current bleadperl), and the meta-info about
+dual-lived modules in Module::Corelist (F<Porting/corelist.pl> does that).
+
 =head2 Todo
 
 The F<pod/perltodo.pod> file contains a roughly-categorized unordered
@@ -629,10 +621,6 @@ You can also consider the OS/2 diffs as reminders of portability
 things that need to be fixed in Configure.
 
 =head2 VMS-specific updates
-
-If you have changed F<perly.y> or F<perly.c>, then you most probably want
-to update F<vms/perly_{h,c}.vms> by running C<perl vms/vms_yfix.pl>, or
-by running `make regen_all` which will run that script for you.
 
 The Perl revision number appears as "perl5" in configure.com.
 It is courteous to update that if necessary.
@@ -738,44 +726,9 @@ supports dynamic loading, you can also test static loading with
 You can also hand-tweak your config.h to try out different #ifdef
 branches.
 
-=over 4
-
-=item CHECK_FORMAT
-
-If you have gcc, you can test the correct use of printf-style
-arguments.  Run C<Configure> with S<-Dccflags='-DCHECK_FORMAT
--Wformat'> (and S<-Dcc=gcc>, if you are not on a system where C<cc>
-is C<gcc>) and run C<make>.  The compiler will produce warnings of
-incorrect use of format arguments.  
-
-As of perl 5.8.7, CHECK_FORMAT changes perl-defined formats
-to obscure (but standard) formats, and then traps the obscure
-format.  The resulting perl executable operates properly but 
-you should not use the executable produced by this process.
+=head2 Other tests
 
 =over 4
-
-=item *
- 
-A more accurate approach is the following commands:
-
-    make clean
-    make all OPTIMIZE='-DCHECK_FORMAT -Wformat' >& make.log  
-    perl -nwe 'print if /^\S+:/ and not /^make\b/' make.log
-
-=item *
-
-A more thorough approach to compiler warnings is
-
-    make clean
-    make miniperl OPTIMIZE=-O\ -DCHECK_FORMAT >& make.log
-    make all OPTIMIZE=-O\ -DCHECK_FORMAT\ -Wall\ -Wno-unused\
-			    -Wno-uninitialized >>& make.log
-    perl -nwe 'print if /^\S+:/ and not /^make\b/' make.log
-
-=back
-
-(-Wformat support by Robin Barker.)
 
 =item gcc -ansi -pedantic
 
@@ -1611,4 +1564,5 @@ All opinions expressed herein are those of the authorZ<>(s).
 
 =head1 LAST MODIFIED
 
-$Id: pumpkin.pod,v 1.7 2004/04/07 21:33:01 millert Exp $
+27-04-2007 H.Merijn Brand
+$Id: pumpkin.pod,v 1.23 2000/01/13 19:45:13 doughera Released $

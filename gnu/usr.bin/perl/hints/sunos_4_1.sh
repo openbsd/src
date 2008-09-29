@@ -9,14 +9,12 @@ case "$cc" in
 *)	usevfork=true ;;
 esac
 
-# Configure will issue a WHOA warning.  The problem is that
 # Configure finds getzname, not tzname.  If you're in the System V
 # environment, you can set d_tzname='define' since tzname[] is
 # available in the System V environment.
 d_tzname='undef'
 
-# Configure will issue a WHOA warning.  The problem is that unistd.h
-# contains incorrect prototypes for some functions in the usual
+# unistd.h contains incorrect prototypes for some functions in the usual
 # BSD-ish environment.  In particular, it has
 # extern int	getgroups(/* int gidsetsize, gid_t grouplist[] */);
 # but groupslist[] ought to be of type int, not gid_t.
@@ -39,13 +37,6 @@ i_unistd='undef'
 # allocated memory somewhere and I don't know to automatically
 # fflush() them.  -- Andy Dougherty  Wed May 26 15:25:22 EDT 1999
 util_cflags='ccflags="$ccflags -DPERL_FFLUSH_ALL_FOPEN_MAX=32"'
-
-cat << 'EOM' >&4
-
-You will probably see  *** WHOA THERE!!! ***  messages from Configure for
-d_tzname and i_unistd.  Keep the recommended values.  See
-hints/sunos_4_1.sh for more information.
-EOM
 
 # The correct setting of groupstype depends on which version of the C
 # library is used.  If you are in the 'System V environment'

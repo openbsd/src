@@ -210,17 +210,18 @@ that most Perl programmers need trouble themselves about to begin with.
 =item 5.
 X<constructor> X<new>
 
-References are often returned by special subroutines called constructors.
-Perl objects are just references to a special type of object that happens to know
-which package it's associated with.  Constructors are just special
-subroutines that know how to create that association.  They do so by
-starting with an ordinary reference, and it remains an ordinary reference
-even while it's also being an object.  Constructors are often
-named new() and called indirectly:
+References are often returned by special subroutines called constructors.  Perl
+objects are just references to a special type of object that happens to know
+which package it's associated with.  Constructors are just special subroutines
+that know how to create that association.  They do so by starting with an
+ordinary reference, and it remains an ordinary reference even while it's also
+being an object.  Constructors are often named C<new()>.  You I<can> call them
+indirectly:
 
-    $objref = new Doggie (Tail => 'short', Ears => 'long');
+    $objref = new Doggie( Tail => 'short', Ears => 'long' );
 
-But don't have to be:
+But that can produce ambiguous syntax in certain cases, so it's often
+better to use the direct method invocation approach:
 
     $objref   = Doggie->new(Tail => 'short', Ears => 'long');
 
@@ -329,7 +330,6 @@ However, a "simple scalar" includes an identifier that itself uses method
     print $$$$refrefref;
 
 =item 2.
-X<${}> X<@{}> X<%{}>
 
 Anywhere you'd put an identifier (or chain of identifiers) as part of a
 variable or subroutine name, you can replace the identifier with a
@@ -366,7 +366,6 @@ called %hashref, not dereferencing through $hashref to the hash
 it's presumably referencing.  That would be case 3.
 
 =item 3.
-X<autovivification> X<< -> >> X<arrow>
 
 Subroutine calls and lookups of individual array elements arise often
 enough that it gets cumbersome to use method 2.  As a form of
@@ -404,7 +403,6 @@ Well, okay, not entirely like C's arrays, actually.  C doesn't know how
 to grow its arrays on demand.  Perl does.
 
 =item 4.
-X<encapsulation>
 
 If a reference happens to be a reference to an object, then there are
 probably methods to access the things referred to, and you should probably
@@ -453,6 +451,12 @@ dereferenced by C<@{...}> and stuck into the double-quoted string. This
 chicanery is also useful for arbitrary expressions:
 
     print "That yields @{[$n + 5]} widgets\n";
+
+Similarly, an expression that returns a reference to a scalar can be
+dereferenced via C<${...}>. Thus, the above expression may be written
+as:
+
+    print "That yields ${\($n + 5)} widgets\n";
 
 =head2 Symbolic references
 X<reference, symbolic> X<reference, soft>
@@ -562,77 +566,8 @@ string is effectively quoted.
 =head2 Pseudo-hashes: Using an array as a hash
 X<pseudo-hash> X<pseudo hash> X<pseudohash>
 
-B<WARNING>:  This section describes an experimental feature.  Details may
-change without notice in future versions.
-
-B<NOTE>: The current user-visible implementation of pseudo-hashes
-(the weird use of the first array element) is deprecated starting from
-Perl 5.8.0 and will be removed in Perl 5.10.0, and the feature will be
-implemented differently.  Not only is the current interface rather ugly,
-but the current implementation slows down normal array and hash use quite
-noticeably.  The 'fields' pragma interface will remain available.
-
-Beginning with release 5.005 of Perl, you may use an array reference
-in some contexts that would normally require a hash reference.  This
-allows you to access array elements using symbolic names, as if they
-were fields in a structure.
-
-For this to work, the array must contain extra information.  The first
-element of the array has to be a hash reference that maps field names
-to array indices.  Here is an example:
-
-    $struct = [{foo => 1, bar => 2}, "FOO", "BAR"];
-
-    $struct->{foo};  # same as $struct->[1], i.e. "FOO"
-    $struct->{bar};  # same as $struct->[2], i.e. "BAR"
-
-    keys %$struct;   # will return ("foo", "bar") in some order
-    values %$struct; # will return ("FOO", "BAR") in same some order
-
-    while (my($k,$v) = each %$struct) {
-       print "$k => $v\n";
-    }
-
-Perl will raise an exception if you try to access nonexistent fields.
-To avoid inconsistencies, always use the fields::phash() function
-provided by the C<fields> pragma.
-
-    use fields;
-    $pseudohash = fields::phash(foo => "FOO", bar => "BAR");
-
-For better performance, Perl can also do the translation from field
-names to array indices at compile time for typed object references.
-See L<fields>.
-
-There are two ways to check for the existence of a key in a
-pseudo-hash.  The first is to use exists().  This checks to see if the
-given field has ever been set.  It acts this way to match the behavior
-of a regular hash.  For instance:
-
-    use fields;
-    $phash = fields::phash([qw(foo bar pants)], ['FOO']);
-    $phash->{pants} = undef;
-
-    print exists $phash->{foo};    # true, 'foo' was set in the declaration
-    print exists $phash->{bar};    # false, 'bar' has not been used.
-    print exists $phash->{pants};  # true, your 'pants' have been touched
-
-The second is to use exists() on the hash reference sitting in the
-first array element.  This checks to see if the given key is a valid
-field in the pseudo-hash.
-
-    print exists $phash->[0]{bar};	# true, 'bar' is a valid field
-    print exists $phash->[0]{shoes};# false, 'shoes' can't be used
-
-delete() on a pseudo-hash element only deletes the value corresponding
-to the key, not the key itself.  To delete the key, you'll have to
-explicitly delete it from the first hash element.
-
-    print delete $phash->{foo};     # prints $phash->[1], "FOO"
-    print exists $phash->{foo};     # false
-    print exists $phash->[0]{foo};  # true, key still exists
-    print delete $phash->[0]{foo};  # now key is gone
-    print $phash->{foo};            # runtime exception
+Pseudo-hashes have been removed from Perl.  The 'fields' pragma
+remains available.
 
 =head2 Function Templates
 X<scope, lexical> X<closure> X<lexical> X<lexical scope>
@@ -678,16 +613,25 @@ above happens too late to be of much use.  You could address this by
 putting the whole loop of assignments within a BEGIN block, forcing it
 to occur during compilation.
 
-Access to lexicals that change over type--like those in the C<for> loop
-above--only works with closures, not general subroutines.  In the general
-case, then, named subroutines do not nest properly, although anonymous
-ones do. Thus is because named subroutines are created (and capture any
-outer lexicals) only once at compile time, whereas anonymous subroutines
-get to capture each time you execute the 'sub' operator.  If you are
-accustomed to using nested subroutines in other programming languages with
-their own private variables, you'll have to work at it a bit in Perl.  The
-intuitive coding of this type of thing incurs mysterious warnings about
-"will not stay shared".  For example, this won't work:
+Access to lexicals that change over time--like those in the C<for> loop
+above, basically aliases to elements from the surrounding lexical scopes--
+only works with anonymous subs, not with named subroutines. Generally
+said, named subroutines do not nest properly and should only be declared
+in the main package scope.
+
+This is because named subroutines are created at compile time so their
+lexical variables get assigned to the parent lexicals from the first
+execution of the parent block. If a parent scope is entered a second
+time, its lexicals are created again, while the nested subs still
+reference the old ones.
+
+Anonymous subroutines get to capture each time you execute the C<sub>
+operator, as they are created on the fly. If you are accustomed to using
+nested subroutines in other programming languages with their own private
+variables, you'll have to work at it a bit in Perl.  The intuitive coding
+of this type of thing incurs mysterious warnings about "will not stay
+shared" due to the reasons explained above. 
+For example, this won't work:
 
     sub outer {
         my $x = $_[0] + 35;
@@ -704,9 +648,9 @@ A work-around is the following:
     }
 
 Now inner() can only be called from within outer(), because of the
-temporary assignments of the closure (anonymous subroutine).  But when
-it does, it has normal access to the lexical variable $x from the scope
-of outer().
+temporary assignments of the anonymous subroutine. But when it does,
+it has normal access to the lexical variable $x from the scope of
+outer() at the time outer is invoked.
 
 This has the interesting effect of creating a function local to another
 function, something not normally supported in Perl.

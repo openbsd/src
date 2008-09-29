@@ -193,6 +193,9 @@ ok $@ =~ /^Modification of a read-only value attempted/;
        # Cygwin turns the symlink into the real file
        chomp($wd = `pwd`);
        $wd =~ s#/t$##;
+       if ($Is_Cygwin) {
+	   $wd = Cygwin::win_to_posix_path(Cygwin::posix_to_win_path($wd, 1));
+       }
     }
     elsif($Is_os2) {
        $wd = Cwd::sys_cwd();
@@ -205,6 +208,7 @@ ok $@ =~ /^Modification of a read-only value attempted/;
     }
     my $perl = ($Is_MacOS || $Is_VMS) ? $^X : "$wd/perl";
     my $headmaybe = '';
+    my $middlemaybe = '';
     my $tailmaybe = '';
     $script = "$wd/show-shebang";
     if ($Is_MSWin32) {
@@ -234,6 +238,12 @@ EOT
     elsif ($Is_VMS) {
       $script = "[]show-shebang";
     }
+    elsif ($Is_Cygwin) {
+      $middlemaybe = <<'EOX'
+$^X = Cygwin::win_to_posix_path(Cygwin::posix_to_win_path($^X, 1));
+$0 = Cygwin::win_to_posix_path(Cygwin::posix_to_win_path($0, 1));
+EOX
+    }
     if ($^O eq 'os390' or $^O eq 'posix-bc' or $^O eq 'vmesa') {  # no shebang
 	$headmaybe = <<EOH ;
     eval 'exec ./perl -S \$0 \${1+"\$\@"}'
@@ -242,7 +252,7 @@ EOH
     }
     $s1 = "\$^X is $perl, \$0 is $script\n";
     ok open(SCRIPT, ">$script"), $!;
-    ok print(SCRIPT $headmaybe . <<EOB . <<'EOF' . $tailmaybe), $!;
+    ok print(SCRIPT $headmaybe . <<EOB . $middlemaybe . <<'EOF' . $tailmaybe), $!;
 #!$wd/perl
 EOB
 print "\$^X is $^X, \$0 is $0\n";
@@ -257,7 +267,7 @@ EOF
     s{\\}{/}g;
     ok((($Is_MSWin32 || $Is_os2) ? uc($_) eq uc($s1) : $_ eq $s1), " :$_:!=:$s1:");
     $_ = `$perl $script`;
-    s/\.exe//i if $Is_Dos or $Is_os2;
+    s/\.exe//i if $Is_Dos or $Is_os2 or $Is_Cygwin;
     s{./$perl}{$perl} if $Is_BeOS; # revert BeOS execvp() side-effect
     s{\\}{/}g;
     ok((($Is_MSWin32 || $Is_os2) ? uc($_) eq uc($s1) : $_ eq $s1), " :$_:!=:$s1: after `$perl $script`");
@@ -440,7 +450,10 @@ ok "@+" eq "10 1 6 10";
 if (!$Is_VMS) {
     local @ISA;
     local %ENV;
-    eval { push @ISA, __PACKAGE__ };
+    # This used to be __PACKAGE__, but that causes recursive
+    #  inheritance, which is detected earlier now and broke
+    #  this test
+    eval { push @ISA, __FILE__ };
     ok( $@ eq '', 'Push a constant on a magic array');
     $@ and print "# $@";
     eval { %ENV = (PATH => __PACKAGE__) };

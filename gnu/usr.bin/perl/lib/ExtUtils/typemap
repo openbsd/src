@@ -61,22 +61,30 @@ T_SVREF
 	if (SvROK($arg))
 	    $var = (SV*)SvRV($arg);
 	else
-	    Perl_croak(aTHX_ \"$var is not a reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_AVREF
 	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVAV)
 	    $var = (AV*)SvRV($arg);
 	else
-	    Perl_croak(aTHX_ \"$var is not an array reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not an array reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_HVREF
 	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVHV)
 	    $var = (HV*)SvRV($arg);
 	else
-	    Perl_croak(aTHX_ \"$var is not a hash reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not a hash reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_CVREF
 	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVCV)
 	    $var = (CV*)SvRV($arg);
 	else
-	    Perl_croak(aTHX_ \"$var is not a code reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not a code reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_SYSRET
 	$var NOT IMPLEMENTED
 T_UV
@@ -119,28 +127,36 @@ T_PTRREF
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not a reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_REF_IV_REF
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type *, tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
 T_REF_IV_PTR
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type, tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
 T_PTROBJ
 	if (sv_derived_from($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
 T_PTRDESC
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
@@ -148,21 +164,27 @@ T_PTRDESC
 	    $var = ${type}_desc->ptr;
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
 T_REFREF
 	if (SvROK($arg)) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not a reference\")
+	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\")
 T_REFOBJ
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
 T_OPAQUE
 	$var = *($type *)SvPV_nolen($arg)
 T_OPAQUEPTR

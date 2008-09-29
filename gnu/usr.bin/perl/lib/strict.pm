@@ -1,6 +1,13 @@
 package strict;
 
-$strict::VERSION = "1.03";
+$strict::VERSION = "1.04";
+
+# Verify that we're called correctly so that strictures will work.
+unless ( __FILE__ =~ /(^|[\/\\])\Q${\__PACKAGE__}\E\.pmc?$/ ) {
+    # Can't use Carp, since Carp uses us!
+    my (undef, $f, $l) = caller;
+    die("Incorrect use of pragma '${\__PACKAGE__}' at $f line $l.\n");
+}
 
 my %bitmask = (
 refs => 0x00000002,
@@ -132,5 +139,9 @@ Starting with Perl 5.8.1 strict is strict about its restrictions:
 if unknown restrictions are used, the strict pragma will abort with
 
     Unknown 'strict' tag(s) '...'
+
+As of version 1.04 (Perl 5.10), strict verifies that it is used as
+"strict" to avoid the dreaded Strict trap on case insensitive file
+systems.
 
 =cut

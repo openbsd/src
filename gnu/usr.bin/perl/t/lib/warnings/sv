@@ -32,8 +32,6 @@
 
   Undefined value assigned to typeglob
 
-  Possible Y2K bug: %d format string following '19'
-
   Reference is already weak			[Perl_sv_rvweaken] <<TODO
 
   Mandatory Warnings
@@ -58,7 +56,7 @@ $x = 1 + $a[0] ; # a
 no warnings 'uninitialized' ;
 $x = 1 + $b[0] ; # a
 EXPECT
-Use of uninitialized value in integer addition (+) at - line 4.
+Use of uninitialized value $a[0] in integer addition (+) at - line 4.
 ########
 # sv.c (sv_2iv)
 package fred ;
@@ -73,7 +71,7 @@ $A *= 2 ;
 no warnings 'uninitialized' ;
 $A *= 2 ;
 EXPECT
-Use of uninitialized value in integer multiplication (*) at - line 10.
+Use of uninitialized value $A in integer multiplication (*) at - line 10.
 ########
 # sv.c
 use integer ;
@@ -82,7 +80,7 @@ my $x *= 2 ; #b
 no warnings 'uninitialized' ;
 my $y *= 2 ; #b 
 EXPECT
-Use of uninitialized value in integer multiplication (*) at - line 4.
+Use of uninitialized value $x in integer multiplication (*) at - line 4.
 ########
 # sv.c (sv_2uv)
 package fred ;
@@ -98,7 +96,7 @@ no warnings 'uninitialized' ;
 $B = 0 ;
 $B |= $A ;
 EXPECT
-Use of uninitialized value in bitwise or (|) at - line 10.
+Use of uninitialized value $A in bitwise or (|) at - line 10.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -108,7 +106,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = 1 | $b[$Y] ;
 EXPECT
-Use of uninitialized value in bitwise or (|) at - line 4.
+Use of uninitialized value within @a in bitwise or (|) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -118,7 +116,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = 1 & $b[$Y] ;
 EXPECT
-Use of uninitialized value in bitwise and (&) at - line 4.
+Use of uninitialized value within @a in bitwise and (&) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -128,7 +126,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = ~$b[$Y] ;
 EXPECT
-Use of uninitialized value in 1's complement (~) at - line 4.
+Use of uninitialized value within @a in 1's complement (~) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -136,7 +134,7 @@ my $x *= 1 ; # d
 no warnings 'uninitialized' ;
 my $y *= 1 ; # d
 EXPECT
-Use of uninitialized value in multiplication (*) at - line 3.
+Use of uninitialized value $x in multiplication (*) at - line 3.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -144,7 +142,7 @@ $x = 1 + $a[0] ; # e
 no warnings 'uninitialized' ;
 $x = 1 + $b[0] ; # e
 EXPECT
-Use of uninitialized value in addition (+) at - line 3.
+Use of uninitialized value $a[0] in addition (+) at - line 3.
 ########
 # sv.c (sv_2nv)
 package fred ;
@@ -158,7 +156,7 @@ $A *= 2 ;
 no warnings 'uninitialized' ;
 $A *= 2 ;
 EXPECT
-Use of uninitialized value in multiplication (*) at - line 9.
+Use of uninitialized value $A in multiplication (*) at - line 9.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -166,7 +164,7 @@ $x = $y + 1 ; # f
 no warnings 'uninitialized' ;
 $x = $z + 1 ; # f
 EXPECT
-Use of uninitialized value in addition (+) at - line 3.
+Use of uninitialized value $y in addition (+) at - line 3.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -182,7 +180,7 @@ $x = chop $y ; # h
 no warnings 'uninitialized' ;
 $x = chop $z ; # h
 EXPECT
-Use of uninitialized value in scalar chop at - line 3.
+Use of uninitialized value $y in scalar chop at - line 3.
 ########
 # sv.c (sv_2pv)
 package fred ;
@@ -198,7 +196,7 @@ no warnings 'uninitialized' ;
 $C = "" ;
 $C .= $A ;
 EXPECT
-Use of uninitialized value in concatenation (.) or string at - line 10.
+Use of uninitialized value $A in concatenation (.) or string at - line 10.
 ########
 # perlbug 20011116.125
 use warnings 'uninitialized';
@@ -207,9 +205,9 @@ $foo = join '', $a, "\n";
 $foo = "$a\n";
 $foo = "a:$a\n";
 EXPECT
-Use of uninitialized value in join or string at - line 4.
-Use of uninitialized value in concatenation (.) or string at - line 5.
-Use of uninitialized value in concatenation (.) or string at - line 6.
+Use of uninitialized value $a in join or string at - line 4.
+Use of uninitialized value $a in concatenation (.) or string at - line 5.
+Use of uninitialized value $a in concatenation (.) or string at - line 6.
 ########
 # sv.c 
 use warnings 'numeric' ;
@@ -317,40 +315,6 @@ EXPECT
 Undefined value assigned to typeglob at - line 3.
 ########
 # sv.c
-use warnings 'y2k';
-use Config;
-BEGIN {
-    unless ($Config{ccflags} =~ /Y2KWARN/) {
-	print "SKIPPED\n# perl not built with -DPERL_Y2KWARN";
-	exit 0;
-    }
-    $|=1;
-}
-my $x;
-my $yy = 78;
-$x     = printf  "19%02d\n", $yy;
-$x     = sprintf "#19%02d\n", $yy;
-$x     = printf  " 19%02d\n", 78;
-$x     = sprintf "19%02d\n", 78;
-$x     = printf  "319%02d\n", $yy;
-$x     = sprintf "319%02d\n", $yy;
-no warnings 'y2k';
-$x     = printf  "19%02d\n", $yy;
-$x     = sprintf "19%02d\n", $yy;
-$x     = printf  "19%02d\n", 78;
-$x     = sprintf "19%02d\n", 78;
-EXPECT
-Possible Y2K bug: %d format string following '19' at - line 16.
-Possible Y2K bug: %d format string following '19' at - line 13.
-1978
-Possible Y2K bug: %d format string following '19' at - line 14.
-Possible Y2K bug: %d format string following '19' at - line 15.
- 1978
-31978
-1978
-1978
-########
-# sv.c
 use warnings 'numeric' ;
 $a = "\x{100}\x{200}" * 42;
 no warnings 'numeric' ;
@@ -365,22 +329,3 @@ no warnings 'numeric' ;
 $a = "\x{100}\x{200}"; $a = -$a;
 EXPECT
 Argument "\x{100}\x{200}" isn't numeric in negation (-) at - line 3.
-########
-# sv.c
-open F, ">".($^O eq 'VMS'? 'NL:' : '/dev/null') ;
-use warnings 'printf';
-$a = "a\nb";
-$s = sprintf "%4s", $a;
-printf F "%4s", $a;
-$s = sprintf "%-4s", $a;
-printf F "%-4s", $a;
-$s = sprintf "%*s", -4, $a;
-no warnings 'printf';
-$s = sprintf "%4s", $a;
-printf F "%4s", $a;
-$s = sprintf "%-4s", $a;
-printf F "%-4s", $a;
-EXPECT
-Newline in left-justified string for sprintf at - line 7.
-Newline in left-justified string for printf at - line 8.
-Newline in left-justified string for sprintf at - line 9.

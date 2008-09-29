@@ -11,7 +11,7 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
     package NewHash;
     require Tie::Hash;
 
-    @ISA = (Tie::Hash);
+    @ISA = qw(Tie::Hash);
 
     sub DELETE { ... }		# Provides needed method
     sub CLEAR { ... }		# Overrides inherited method
@@ -20,7 +20,7 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
     package NewStdHash;
     require Tie::Hash;
 
-    @ISA = (Tie::StdHash);
+    @ISA = qw(Tie::StdHash);
 
     # All methods provided by default, define only those needing overrides
     # Accessors access the storage in %{$_[0]};
@@ -30,7 +30,7 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
     package NewExtraHash;
     require Tie::Hash;
 
-    @ISA = (Tie::ExtraHash);
+    @ISA = qw(Tie::ExtraHash);
 
     # All methods provided by default, define only those needing overrides
     # Accessors access the storage in %{$_[0][0]};

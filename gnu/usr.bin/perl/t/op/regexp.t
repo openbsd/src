@@ -28,83 +28,146 @@
 #
 # \n in the tests are interpolated, as are variables of the form ${\w+}.
 #
+# Blanks lines are treated as PASSING tests to keep the line numbers
+# linked to the test number.
+#
 # If you want to add a regular expression test that can't be expressed
 # in this format, don't add it here: put it in op/pat.t instead.
+#
+# Note that columns 2,3 and 5 are all enclosed in double quotes and then
+# evalled; so something like a\"\x{100}$1 has length 3+length($1).
 
+my $file;
 BEGIN {
+    $iters = shift || 1;	# Poor man performance suite, 10000 is OK.
+
+    # Do this open before any chdir
+    $file = shift;
+    if (defined $file) {
+	open TESTS, $file or die "Can't open $file";
+    }
+
     chdir 't' if -d 't';
     @INC = '../lib';
 }
 
-$iters = shift || 1;		# Poor man performance suite, 10000 is OK.
+use strict;
+use warnings FATAL=>"all";
+use vars qw($iters $numtests $bang $ffff $nulnul $OP);
+use vars qw($qr $skip_amp $qr_embed); # set by our callers
 
-open(TESTS,'op/re_tests') || open(TESTS,'t/op/re_tests') || open(TESTS,':op:re_tests') ||
-	die "Can't open re_tests";
 
-while (<TESTS>) { }
-$numtests = $.;
-seek(TESTS,0,0);
-$. = 0;
+if (!defined $file) {
+    open(TESTS,'op/re_tests') || open(TESTS,'t/op/re_tests')
+	|| open(TESTS,':op:re_tests') || die "Can't open re_tests";
+}
+
+my @tests = <TESTS>;
+
+close TESTS;
 
 $bang = sprintf "\\%03o", ord "!"; # \41 would not be portable.
 $ffff  = chr(0xff) x 2;
 $nulnul = "\0" x 2;
+$OP = $qr ? 'qr' : 'm';
 
 $| = 1;
-print "1..$numtests\n# $iters iterations\n";
+printf "1..%d\n# $iters iterations\n", scalar @tests;
+my $test;
 TEST:
-while (<TESTS>) {
+foreach (@tests) {
+    $test++;
+    if (!/\S/ || /^\s*#/) {
+        print "ok $test # (Blank line or comment)\n";
+        if (/\S/) { print $_ };
+        next;
+    }
     chomp;
     s/\\n/\n/g;
-    ($pat, $subject, $result, $repl, $expect, $reason) = split(/\t/,$_,6);
-    $input = join(':',$pat,$subject,$result,$repl,$expect);
-    infty_subst(\$pat);
-    infty_subst(\$expect);
-    $pat = "'$pat'" unless $pat =~ /^[:']/;
+    my ($pat, $subject, $result, $repl, $expect, $reason) = split(/\t/,$_,6);
+    $reason = '' unless defined $reason;
+    my $input = join(':',$pat,$subject,$result,$repl,$expect);
+    $pat = "'$pat'" unless $pat =~ /^[:'\/]/;
     $pat =~ s/(\$\{\w+\})/$1/eeg;
     $pat =~ s/\\n/\n/g;
-    $subject =~ s/(\$\{\w+\})/$1/eeg;
-    $subject =~ s/\\n/\n/g;
-    $expect =~ s/(\$\{\w+\})/$1/eeg;
-    $expect =~ s/\\n/\n/g;
+    $subject = eval qq("$subject"); die $@ if $@;
+    $expect  = eval qq("$expect"); die $@ if $@;
     $expect = $repl = '-' if $skip_amp and $input =~ /\$[&\`\']/;
-    $skip = ($skip_amp ? ($result =~ s/B//i) : ($result =~ s/B//));
+    my $skip = ($skip_amp ? ($result =~ s/B//i) : ($result =~ s/B//));
     $reason = 'skipping $&' if $reason eq  '' && $skip_amp;
     $result =~ s/B//i unless $skip;
-    for $study ('', 'study \$subject') {
- 	$c = $iters;
- 	eval "$study; \$match = (\$subject =~ m$pat) while \$c--; \$got = \"$repl\";";
-	chomp( $err = $@ );
+
+    for my $study ('', 'study $subject', 'utf8::upgrade($subject)',
+		   'utf8::upgrade($subject); study $subject') {
+	# Need to make a copy, else the utf8::upgrade of an alreay studied
+	# scalar confuses things.
+	my $subject = $subject;
+	my $c = $iters;
+	my ($code, $match, $got);
+        if ($repl eq 'pos') {
+            $code= <<EOFCODE;
+                $study;
+                pos(\$subject)=0;
+                \$match = ( \$subject =~ m${pat}g );
+                \$got = pos(\$subject);
+EOFCODE
+        }
+        elsif ($qr_embed) {
+            $code= <<EOFCODE;
+                my \$RE = qr$pat;
+                $study;
+                \$match = (\$subject =~ /(?:)\$RE(?:)/) while \$c--;
+                \$got = "$repl";
+EOFCODE
+        }
+        else {
+            $code= <<EOFCODE;
+                $study;
+                \$match = (\$subject =~ $OP$pat) while \$c--;
+                \$got = "$repl";
+EOFCODE
+        }
+        #$code.=qq[\n\$expect="$expect";\n];
+        #use Devel::Peek;
+        #die Dump($code) if $pat=~/\\h/ and $subject=~/\x{A0}/;
+	{
+	    # Probably we should annotate specific tests with which warnings
+	    # categories they're known to trigger, and hence should be
+	    # disabled just for that test
+	    no warnings qw(uninitialized regexp);
+	    eval $code;
+	}
+	chomp( my $err = $@ );
 	if ($result eq 'c') {
-	    if ($err !~ m!^\Q$expect!) { print "not ok $. (compile) $input => `$err'\n"; next TEST }
+	    if ($err !~ m!^\Q$expect!) { print "not ok $test (compile) $input => `$err'\n"; next TEST }
 	    last;  # no need to study a syntax error
 	}
 	elsif ( $skip ) {
-	    print "ok $. # skipped", length($reason) ? " $reason" : '', "\n";
+	    print "ok $test # skipped", length($reason) ? " $reason" : '', "\n";
 	    next TEST;
 	}
 	elsif ($@) {
-	    print "not ok $. $input => error `$err'\n"; next TEST;
+	    print "not ok $test $input => error `$err'\n$code\n$@\n"; next TEST;
 	}
 	elsif ($result eq 'n') {
-	    if ($match) { print "not ok $. ($study) $input => false positive\n"; next TEST }
+	    if ($match) { print "not ok $test ($study) $input => false positive\n"; next TEST }
 	}
 	else {
 	    if (!$match || $got ne $expect) {
- 		print "not ok $. ($study) $input => `$got', match=$match\n";
+	        eval { require Data::Dumper };
+		if ($@) {
+		    print "not ok $test ($study) $input => `$got', match=$match\n$code\n";
+		}
+		else { # better diagnostics
+		    my $s = Data::Dumper->new([$subject],['subject'])->Useqq(1)->Dump;
+		    my $g = Data::Dumper->new([$got],['got'])->Useqq(1)->Dump;
+		    print "not ok $test ($study) $input => `$got', match=$match\n$s\n$g\n$code\n";
+		}
 		next TEST;
 	    }
 	}
     }
-    print "ok $.\n";
+    print "ok $test\n";
 }
 
-close(TESTS);
-
-sub infty_subst                             # Special-case substitution
-{                                           #  of $reg_infty and friends
-    my $tp = shift;
-    $$tp =~ s/,\$reg_infty_m}/,$reg_infty_m}/o;
-    $$tp =~ s/,\$reg_infty_p}/,$reg_infty_p}/o;
-    $$tp =~ s/,\$reg_infty}/,$reg_infty}/o;
-}
+1;

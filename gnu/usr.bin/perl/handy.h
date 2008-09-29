@@ -1,7 +1,7 @@
 /*    handy.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
- *    2000, 2001, 2002, 2004, 2005, 2006, by Larry Wall and others
+ *    2000, 2001, 2002, 2004, 2005, 2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -24,7 +24,7 @@
 /*
 =head1 Handy Values
 
-=for apidoc AmU||Nullch 
+=for apidoc AmU||Nullch
 Null character pointer.
 
 =for apidoc AmU||Nullsv
@@ -59,7 +59,7 @@ Null SV pointer.
    g++ can be identified by __GNUG__.
    Andy Dougherty	February 2000
 */
-#ifdef __GNUG__ 	/* GNU g++ has bool built-in */
+#ifdef __GNUG__		/* GNU g++ has bool built-in */
 #  ifndef HAS_BOOL
 #    define HAS_BOOL 1
 #  endif
@@ -122,11 +122,11 @@ Null SV pointer.
    For dealing with issues that may arise from various 32/64-bit
    systems, we will ask Configure to check out
 
-   	SHORTSIZE == sizeof(short)
-   	INTSIZE == sizeof(int)
-   	LONGSIZE == sizeof(long)
+	SHORTSIZE == sizeof(short)
+	INTSIZE == sizeof(int)
+	LONGSIZE == sizeof(long)
 	LONGLONGSIZE == sizeof(long long) (if HAS_LONG_LONG)
-   	PTRSIZE == sizeof(void *)
+	PTRSIZE == sizeof(void *)
 	DOUBLESIZE == sizeof(double)
 	LONG_DOUBLESIZE == sizeof(long double) (if HAS_LONG_DOUBLE).
 
@@ -175,7 +175,7 @@ typedef U64TYPE U64;
 #endif
 
 /* HMB H.Merijn Brand - a placeholder for preparing Configure patches */
-#if defined(HAS_MALLOC_SIZE) && defined(HAS_MALLOC_GOOD_SIZE)
+#if defined(HAS_MALLOC_SIZE) && defined(LOCALTIME_R_NEEDS_TZSET) && defined(HAS_PSEUDOFORK)
 /* Not (yet) used at top level, but mention them for metaconfig */
 #endif
 
@@ -237,6 +237,70 @@ typedef U64TYPE U64;
 #define Ctl(ch) ((ch) & 037)
 
 /*
+=head1 SV-Body Allocation
+
+=for apidoc Ama|SV*|newSVpvs|const char* s
+Like C<newSVpvn>, but takes a literal string instead of a string/length pair.
+
+=for apidoc Ama|SV*|newSVpvs_share|const char* s
+Like C<newSVpvn_share>, but takes a literal string instead of a string/length
+pair and omits the hash parameter.
+
+=for apidoc Am|void|sv_catpvs|SV* sv|const char* s
+Like C<sv_catpvn>, but takes a literal string instead of a string/length pair.
+
+=for apidoc Am|void|sv_setpvs|SV* sv|const char* s
+Like C<sv_setpvn>, but takes a literal string instead of a string/length pair.
+
+=head1 Memory Management
+
+=for apidoc Ama|char*|savepvs|const char* s
+Like C<savepvn>, but takes a literal string instead of a string/length pair.
+
+=head1 GV Functions
+
+=for apidoc Am|HV*|gv_stashpvs|const char* name|I32 create
+Like C<gv_stashpvn>, but takes a literal string instead of a string/length pair.
+
+=head1 Hash Manipulation Functions
+
+=for apidoc Am|SV**|hv_fetchs|HV* tb|const char* key|I32 lval
+Like C<hv_fetch>, but takes a literal string instead of a string/length pair.
+
+=for apidoc Am|SV**|hv_stores|HV* tb|const char* key|NULLOK SV* val
+Like C<hv_store>, but takes a literal string instead of a string/length pair
+and omits the hash parameter.
+
+=cut
+*/
+
+/* concatenating with "" ensures that only literal strings are accepted as argument */
+#define STR_WITH_LEN(s)  (s ""), (sizeof(s)-1)
+
+/* note that STR_WITH_LEN() can't be used as argument to macros or functions that
+ * under some configurations might be macros, which means that it requires the full
+ * Perl_xxx(aTHX_ ...) form for any API calls where it's used.
+ */
+
+/* STR_WITH_LEN() shortcuts */
+#define newSVpvs(str) Perl_newSVpvn(aTHX_ STR_WITH_LEN(str))
+#define newSVpvs_share(str) Perl_newSVpvn_share(aTHX_ STR_WITH_LEN(str), 0)
+#define sv_catpvs(sv, str) Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), SV_GMAGIC)
+#define sv_setpvs(sv, str) Perl_sv_setpvn(aTHX_ sv, STR_WITH_LEN(str))
+#define savepvs(str) Perl_savepvn(aTHX_ STR_WITH_LEN(str))
+#define gv_stashpvs(str, create) Perl_gv_stashpvn(aTHX_ STR_WITH_LEN(str), create)
+#define gv_fetchpvs(namebeg, add, sv_type) Perl_gv_fetchpvn_flags(aTHX_ STR_WITH_LEN(namebeg), add, sv_type)
+#define hv_fetchs(hv,key,lval)						\
+  ((SV **)Perl_hv_common(aTHX_ (hv), NULL, STR_WITH_LEN(key), 0,	\
+			 (lval) ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)	\
+			 : HV_FETCH_JUST_SV, NULL, 0))
+
+#define hv_stores(hv,key,val)						\
+  ((SV **)Perl_hv_common(aTHX_ (hv), NULL, STR_WITH_LEN(key), 0,	\
+			 (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), (val), 0))
+
+
+/*
 =head1 Miscellaneous Functions
 
 =for apidoc Am|bool|strNE|char* s1|char* s2
@@ -291,6 +355,10 @@ C<strncmp>).
 #  define memNE(s1,s2,l) (bcmp(s1,s2,l))
 #  define memEQ(s1,s2,l) (!bcmp(s1,s2,l))
 #endif
+
+#define memEQs(s1, l, s2) \
+	(sizeof(s2)-1 == l && memEQ(s1, (s2 ""), (sizeof(s2)-1)))
+#define memNEs(s1, l, s2) !memEQs(s1, l, s2)
 
 /*
  * Character classes.
@@ -375,7 +443,7 @@ Converts the specified character to lowercase.
 #   define isASCII(c)	((c) <= 127)
 #   define isCNTRL(c)	((c) < ' ' || (c) == 127)
 #   define isGRAPH(c)	(isALNUM(c) || isPUNCT(c))
-#   define isPRINT(c)	(((c) > 32 && (c) < 127) || (c) == ' ')
+#   define isPRINT(c)	(((c) >= 32 && (c) < 127))
 #   define isPUNCT(c)	(((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <= 64)  || ((c) >= 91 && (c) <= 96) || ((c) >= 123 && (c) <= 126))
 #   define isXDIGIT(c)  (isDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #   define toUPPER(c)	(isLOWER(c) ? (c) - ('a' - 'A') : (c))
@@ -422,7 +490,7 @@ Converts the specified character to lowercase.
 
 #  else
 
-#    define isALNUM_LC(c) 	(isascii(c) && (isalnum(c) || (c) == '_'))
+#    define isALNUM_LC(c)	(isascii(c) && (isalnum(c) || (c) == '_'))
 #    define isIDFIRST_LC(c)	(isascii(c) && (isalpha(c) || (c) == '_'))
 #    define isALPHA_LC(c)	(isascii(c) && isalpha(c))
 #    define isSPACE_LC(c)	(isascii(c) && isspace(c))
@@ -538,32 +606,24 @@ typedef U32 line_t;
 
 
 /*
-=head1 SV Manipulation Functions
-
-=for apidoc Am|SV*|NEWSV|int id|STRLEN len
-Creates a new SV.  A non-zero C<len> parameter indicates the number of
-bytes of preallocated string space the SV should have.  An extra byte for a
-tailing NUL is also reserved.  (SvPOK is not set for the SV even if string
-space is allocated.)  The reference count for the new SV is set to 1.
-C<id> is an integer id between 0 and 1299 (used to identify leaks).
-
 =head1 Memory Management
 
 =for apidoc Am|void|Newx|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<malloc> function.
 
+In 5.9.3, Newx() and friends replace the older New() API, and drops
+the first parameter, I<x>, a debug aid which allowed callers to identify
+themselves.  This aid has been superseded by a new build option,
+PERL_MEM_LOG (see L<perlhack/PERL_MEM_LOG>).  The older API is still
+there for use in XS modules supporting older perls.
+
 =for apidoc Am|void|Newxc|void* ptr|int nitems|type|cast
 The XSUB-writer's interface to the C C<malloc> function, with
-cast.
+cast.  See also C<Newx>.
 
 =for apidoc Am|void|Newxz|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<malloc> function.  The allocated
-memory is zeroed with C<memzero>.
-
-In 5.9.3, we removed the 1st parameter, a debug aid, from the api.  It
-was used to uniquely identify each usage of these allocation
-functions, but was deemed unnecessary with the availability of better
-memory tracking tools, valgrind for example.
+memory is zeroed with C<memzero>.  See also C<Newx>.
 
 =for apidoc Am|void|Renew|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<realloc> function.
@@ -607,22 +667,42 @@ optimise.
 =for apidoc Am|void|StructCopy|type src|type dest|type
 This is an architecture-independent macro to copy one structure to another.
 
+=for apidoc Am|void|PoisonWith|void* dest|int nitems|type|U8 byte
+
+Fill up memory with a byte pattern (a byte repeated over and over
+again) that hopefully catches attempts to access uninitialized memory.
+
+=for apidoc Am|void|PoisonNew|void* dest|int nitems|type
+
+PoisonWith(0xAB) for catching access to allocated but uninitialized memory.
+
+=for apidoc Am|void|PoisonFree|void* dest|int nitems|type
+
+PoisonWith(0xEF) for catching access to freed memory.
+
 =for apidoc Am|void|Poison|void* dest|int nitems|type
 
-Fill up memory with a pattern (byte 0xAB over and over again) that
-hopefully catches attempts to access uninitialized memory.
+PoisonWith(0xEF) for catching access to freed memory.
 
 =cut */
 
+/* Maintained for backwards-compatibility only. Use newSV() instead. */
+#ifndef PERL_CORE
 #define NEWSV(x,len)	newSV(len)
+#endif
 
+#define MEM_SIZE_MAX ((MEM_SIZE)~0)
+
+/* The +0.0 in MEM_WRAP_CHECK_ is an attempt to foil
+ * overly eager compilers that will bleat about e.g.
+ * (U16)n > (size_t)~0/sizeof(U16) always being false. */
 #ifdef PERL_MALLOC_WRAP
 #define MEM_WRAP_CHECK(n,t) MEM_WRAP_CHECK_1(n,t,PL_memory_wrap)
 #define MEM_WRAP_CHECK_1(n,t,a) \
-	(void)(sizeof(t) > 1 && (n) > ((MEM_SIZE)~0)/sizeof(t) && (Perl_croak_nocontext(a),0))
+	(void)(sizeof(t) > 1 && ((MEM_SIZE)(n)+0.0) > MEM_SIZE_MAX/sizeof(t) && (Perl_croak_nocontext(a),0))
 #define MEM_WRAP_CHECK_(n,t) MEM_WRAP_CHECK(n,t),
 
-#define PERL_STRLEN_ROUNDUP(n) ((void)(((n) > (MEM_SIZE)~0 - 2 * PERL_STRLEN_ROUNDUP_QUANTUM) ? (Perl_croak_nocontext(PL_memory_wrap),0):0),((n-1+PERL_STRLEN_ROUNDUP_QUANTUM)&~((MEM_SIZE)PERL_STRLEN_ROUNDUP_QUANTUM-1)))
+#define PERL_STRLEN_ROUNDUP(n) ((void)(((n) > MEM_SIZE_MAX - 2 * PERL_STRLEN_ROUNDUP_QUANTUM) ? (Perl_croak_nocontext(PL_memory_wrap),0):0),((n-1+PERL_STRLEN_ROUNDUP_QUANTUM)&~((MEM_SIZE)PERL_STRLEN_ROUNDUP_QUANTUM-1)))
 
 #else
 
@@ -635,25 +715,82 @@ hopefully catches attempts to access uninitialized memory.
 
 #endif
 
-#define Newx(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
-#define Newxc(v,n,t,c)	(v = (MEM_WRAP_CHECK_(n,t) (c*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
-#define Newxz(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))), \
-			memzero((char*)(v), (n)*sizeof(t))
+#ifdef PERL_MEM_LOG
+/*
+ * If PERL_MEM_LOG is defined, all Newx()s, Renew()s, and Safefree()s
+ * go through functions, which are handy for debugging breakpoints, but
+ * which more importantly get the immediate calling environment (file and
+ * line number, and C function name if available) passed in.  This info can
+ * then be used for logging the calls, for which one gets a sample
+ * implementation if PERL_MEM_LOG_STDERR is defined.
+ *
+ * Known problems:
+ * - all memory allocs do not get logged, only those
+ *   that go through Newx() and derivatives (while all
+ *  Safefrees do get logged)
+ * - __FILE__ and __LINE__ do not work everywhere
+ * - __func__ or __FUNCTION__ even less so
+ * - I think more goes on after the perlio frees but
+ *   the thing is that STDERR gets closed (as do all
+ *   the file descriptors)
+ * - no deeper calling stack than the caller of the Newx()
+ *   or the kind, but do I look like a C reflection/introspection
+ *   utility to you?
+ * - the function prototypes for the logging functions
+ *   probably should maybe be somewhere else than handy.h
+ * - one could consider inlining (macrofying) the logging
+ *   for speed, but I am too lazy
+ * - one could imagine recording the allocations in a hash,
+ *   (keyed by the allocation address?), and maintain that
+ *   through reallocs and frees, but how to do that without
+ *   any News() happening...?
+ */
+
+Malloc_t Perl_mem_log_alloc(const UV n, const UV typesize, const char *typename, Malloc_t newalloc, const char *filename, const int linenumber, const char *funcname);
+
+Malloc_t Perl_mem_log_realloc(const UV n, const UV typesize, const char *typename, Malloc_t oldalloc, Malloc_t newalloc, const char *filename, const int linenumber, const char *funcname);
+
+Malloc_t Perl_mem_log_free(Malloc_t oldalloc, const char *filename, const int linenumber, const char *funcname);
+
+#endif
+
+#ifdef PERL_MEM_LOG
+#define MEM_LOG_ALLOC(n,t,a)     Perl_mem_log_alloc(n,sizeof(t),STRINGIFY(t),a,__FILE__,__LINE__,FUNCTION__)
+#define MEM_LOG_REALLOC(n,t,v,a) Perl_mem_log_realloc(n,sizeof(t),STRINGIFY(t),v,a,__FILE__,__LINE__,FUNCTION__)
+#define MEM_LOG_FREE(a)          Perl_mem_log_free(a,__FILE__,__LINE__,FUNCTION__)
+#endif
+
+#ifndef MEM_LOG_ALLOC
+#define MEM_LOG_ALLOC(n,t,a)     (a)
+#endif
+#ifndef MEM_LOG_REALLOC
+#define MEM_LOG_REALLOC(n,t,v,a) (a)
+#endif
+#ifndef MEM_LOG_FREE
+#define MEM_LOG_FREE(a)          (a)
+#endif
+
+#define Newx(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) MEM_LOG_ALLOC(n,t,(t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))))
+#define Newxc(v,n,t,c)	(v = (MEM_WRAP_CHECK_(n,t) MEM_LOG_ALLOC(n,t,(c*)safemalloc((MEM_SIZE)((n)*sizeof(t))))))
+#define Newxz(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) MEM_LOG_ALLOC(n,t,(t*)safecalloc((n),sizeof(t)))))
+
+#ifndef PERL_CORE
 /* pre 5.9.x compatibility */
 #define New(x,v,n,t)	Newx(v,n,t)
 #define Newc(x,v,n,t,c)	Newxc(v,n,t,c)
 #define Newz(x,v,n,t)	Newxz(v,n,t)
+#endif
 
 #define Renew(v,n,t) \
-	  (v = (MEM_WRAP_CHECK_(n,t) (t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
+	  (v = (MEM_WRAP_CHECK_(n,t) MEM_LOG_REALLOC(n,t,v,(t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))))
 #define Renewc(v,n,t,c) \
-	  (v = (MEM_WRAP_CHECK_(n,t) (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
+	  (v = (MEM_WRAP_CHECK_(n,t) MEM_LOG_REALLOC(n,t,v,(c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))))
 
 #ifdef PERL_POISON
 #define Safefree(d) \
-  (d ? (void)(safefree((Malloc_t)(d)), Poison(&(d), 1, Malloc_t)) : (void) 0)
+  ((d) ? (void)(safefree(MEM_LOG_FREE((Malloc_t)(d))), Poison(&(d), 1, Malloc_t)) : (void) 0)
 #else
-#define Safefree(d)	safefree((Malloc_t)(d))
+#define Safefree(d)	safefree(MEM_LOG_FREE((Malloc_t)(d)))
 #endif
 
 #define Move(s,d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memmove((char*)(d),(const char*)(s), (n) * sizeof(t)))
@@ -669,7 +806,10 @@ hopefully catches attempts to access uninitialized memory.
 #define ZeroD(d,n,t)	(MEM_WRAP_CHECK_(n,t) memzero((char*)(d), (n) * sizeof(t)),d)
 #endif
 
-#define Poison(d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memset((char*)(d), 0xAB, (n) * sizeof(t)))
+#define PoisonWith(d,n,t,b)	(MEM_WRAP_CHECK_(n,t) (void)memset((char*)(d), (U8)(b), (n) * sizeof(t)))
+#define PoisonNew(d,n,t)	PoisonWith(d,n,t,0xAB)
+#define PoisonFree(d,n,t)	PoisonWith(d,n,t,0xEF)
+#define Poison(d,n,t)		PoisonFree(d,n,t)
 
 #ifdef USE_STRUCT_COPY
 #define StructCopy(s,d,t) (*((t*)(d)) = *((t*)(s)))
@@ -700,10 +840,11 @@ hopefully catches attempts to access uninitialized memory.
 #define pTHX__VALUE_ ,(void *)my_perl,
 #define pTHX__VALUE  ,(void *)my_perl
 #else
-#define pTHX_FORMAT 
+#define pTHX_FORMAT
 #define pTHX__FORMAT
-#define pTHX_VALUE_ 
+#define pTHX_VALUE_
 #define pTHX_VALUE
-#define pTHX__VALUE_ 
+#define pTHX__VALUE_
 #define pTHX__VALUE
 #endif /* USE_ITHREADS */
+

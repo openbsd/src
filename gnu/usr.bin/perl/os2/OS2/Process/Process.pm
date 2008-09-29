@@ -60,6 +60,9 @@ our @EXPORT = qw(
 	T_VIRTDRV
 	T_PROTDLL
 	T_32BIT
+
+	os2constant
+
 	ppid
 	ppidOf
 	sidOf
@@ -137,16 +140,22 @@ our @EXPORT = qw(
         WindowPtr
         WindowULong
         WindowUShort
+	WindowStyle
         SetWindowBits
         SetWindowPtr
         SetWindowULong
         SetWindowUShort
+        WindowBits_set
+        WindowPtr_set
+        WindowULong_set
+        WindowUShort_set
 	TopLevel
 	FocusWindow_set_keep_Zorder
 
 	ActiveDesktopPathname
 	InvalidateRect
-	CreateFrameControl
+	CreateFrameControls
+
 	ClipbrdFmtInfo
 	ClipbrdOwner
 	ClipbrdViewer
@@ -158,6 +167,8 @@ our @EXPORT = qw(
 	ClipbrdViewer_set
 	EnumClipbrdFmts
 	EmptyClipbrd
+	ClipbrdFmtNames
+	ClipbrdFmtAtoms
 	AddAtom
 	FindAtom
 	DeleteAtom
@@ -171,11 +182,15 @@ our @EXPORT = qw(
 	_ClipbrdData_set
 	ClipbrdText
 	ClipbrdText_set
+	ClipbrdText_2byte
+	ClipbrdTextUCS2le
+	MemoryRegionSize
 
 	_MessageBox
 	MessageBox
 	_MessageBox2
 	MessageBox2
+	get_pointer
 	LoadPointer
 	SysPointer
 	Alarm
@@ -183,6 +198,7 @@ our @EXPORT = qw(
 
 	get_title
 	set_title
+	io_term
 );
 our @EXPORT_OK = qw(
 	ResetWinError
@@ -216,11 +232,18 @@ sub AUTOLOAD {
     goto &$AUTOLOAD;
 }
 
-sub const_import {
+sub os2constant {
   require OS2::Process::Const;
   my $sym = shift;
   my ($err, $val) = OS2::Process::Const::constant($sym);
   die $err if $err;
+  $val;
+}
+
+sub const_import {
+  require OS2::Process::Const;
+  my $sym = shift;
+  my $val = os2constant($sym);
   my $p = caller(1);
 
   # no strict;
@@ -412,21 +435,78 @@ sub FocusWindow_set_keep_Zorder ($) {
   EnableWindowUpdate($t, 1);
 }
 
-sub ClipbrdText (@) {
-  my $morph = OS2::localMorphPM->new(0);
-  OpenClipbrd();
-  my $txt = unpack 'p', pack 'L', ClipbrdData @_;
-  CloseClipbrd();
-  $txt;
+sub WindowStyle ($) {
+  WindowULong(shift,-2);	# QWL_STYLE
 }
 
-sub ClipbrdText_set ($;$) {
+sub OS2::localClipbrd::new {
+  my ($c) = shift;
+  my $morph = [];
+  push @$morph, OS2::localMorphPM->new(0) unless shift;
+  &OpenClipbrd;
+  # print STDERR ">>>>>\n";
+  bless $morph, $c
+}
+sub OS2::localClipbrd::DESTROY {
+  # print STDERR "<<<<<\n";
+  CloseClipbrd();
+}
+
+sub OS2::localFlashWindow::new ($$) {
+  my ($c, $w) = (shift, shift);
   my $morph = OS2::localMorphPM->new(0);
-  OpenClipbrd();
+  FlashWindow($w, 1);
+  # print STDERR ">>>>>\n";
+  bless [$w, $morph], $c
+}
+sub OS2::localFlashWindow::DESTROY {
+  # print STDERR "<<<<<\n";
+  FlashWindow(shift->[0], 0);
+}
+
+# Good for \0-terminated text (not "text/unicode" and other Firefox stuff)
+sub ClipbrdText (@) {
+  my $h = OS2::localClipbrd->new;
+  my $data = ClipbrdData @_;
+  return unless $data;
+  my $lim = MemoryRegionSize($data);
+  $lim = StrLen($data, $lim);			# Look for 1-byte 0
+  return unpack "P$lim", pack 'L', $data;
+}
+
+sub ClipbrdText_2byte (@) {
+  my $h = OS2::localClipbrd->new;
+  my $data = ClipbrdData @_;
+  return unless $data;
+  my $lim = MemoryRegionSize($data);
+  $lim = StrLen($data, $lim, 2);		# Look for 2-byte 0
+  return unpack "P$lim", pack 'L', $data;
+}
+
+sub ClipbrdTextUCS2le (@) {
+  my $txt = ClipbrdText_2byte @_;		# little-endian shorts
+  #require Unicode::String;
+  pack "U*", unpack "v*", $txt;
+}
+
+sub ClipbrdText_set ($;@) {
+  my $h = OS2::localClipbrd->new;
   EmptyClipbrd();				# It may contain other types
   my ($txt, $no_convert_nl) = (shift, shift);
   ClipbrdData_set($txt, !$no_convert_nl, @_);
-  CloseClipbrd();
+}
+
+sub ClipbrdFmtAtoms {
+  my $h = OS2::localClipbrd->new('nomorph');
+  my $fmt = 0;
+  my @formats;
+  push @formats, $fmt while eval {$fmt = EnumClipbrdFmts $fmt};
+  die $@ if $@ and $^E == 0x1001 and $fmt = 0;	# Croaks on empty list?
+  @formats;
+}
+
+sub ClipbrdFmtNames {
+  map AtomName($_), ClipbrdFmtAtoms(@_);
 }
 
 sub MessageBox ($;$$$$$) {
@@ -467,7 +547,7 @@ sub process_MB2_INFO ($;$$$) {
   my $buttons = shift;
   die "Buttons array should consist of pairs" if @$buttons % 2;
 
-  push @_, 0 unless @_;		# Icon id (pointer)
+  push @_, 0 unless @_;		# Icon id; non-0 ignored without MB_CUSTOMICON
   # Box flags (MB_MOVABLE and MB_INFORMATION or MB_CUSTOMICON)
   push @_, ($_[0] ? 0x4080 : 0x4030) unless @_ > 1;
   push @_, 0 unless @_ > 2;	# Notify window
@@ -492,19 +572,62 @@ sub process_MB2_INFO ($;$$$) {
 sub MessageBox2 ($;$$$$$) {
   my $morph = OS2::localMorphPM->new(0);
   die "MessageBox needs text" unless @_;
-  push @_ , [[Dismiss => 0x1000], # Name, retval (BS_PUSHBUTTON|BS_DEFAULT)
-	     #0,		# get_pointer(11),	# SPTR_ICONINFORMATION
-	     #0x4030,		# MB_MOVEABLE | MB_INFORMATION
+  push @_ , [[Dismiss => 0x1000], # Name, retval (style BS_PUSHBUTTON|BS_DEFAULT)
+	     #0,		# e.g., get_pointer(11),# SPTR_ICONINFORMATION
+	     #0x4030,		# = MB_MOVEABLE | MB_INFORMATION
 	     #0,		# Notify window; was 1==HWND_DESKTOP
 	    ] if @_ == 1;
-  push @_ , ($0 eq '-e' ? "Perl one-liner's message" : "$0's message") if @_ == 2;
+  push @_ , ($0 eq '-e' ? "Perl one-liner" : $0). "'s message" if @_ == 2;
   $_[1] = &process_MB2_INFO(@{$_[1]}) if ref($_[1]) eq 'ARRAY';
   &_MessageBox2;
+}
+
+my %mbH_default = (
+  text => 'Something happened',
+  title => ($0 eq '-e' ? "Perl one-liner" : $0). "'s message",
+  parent => 1,			# HWND_DESKTOP
+  owner => 0,
+  helpID => 0,
+  buttons => ['Dismiss' => 0x1000],
+  default_button => 1,
+#  icon => 0x30,		# MB_INFORMATION
+#  iconID => 0,			# XXX???
+  flags => 0,			# XXX???
+  notifyWindow => 0,		# XXX???
+);
+
+sub MessageBoxH {
+  die "MessageBoxH: even number of arguments expected" if @_ % 2;
+  my %a = (%mbH_default, @_);
+  die "MessageBoxH: even number of elts of button array expected"
+    if @{$a{buttons}} % 2;
+  if (defined $a{iconID}) {
+    $a{flags} |= 0x80;		# MB_CUSTOMICON
+  } else {
+    $a{icon} = 0x30 unless defined $a{icon};
+    $a{iconID} = 0;
+    $a{flags} |= $a{icon};
+  }
+  # Mark default_button as MessageBox2() expects it:
+  $a{buttons}[2*$a{default_button}] = [$a{buttons}[2*$a{default_button}]];
+
+  my $use_2 = 'ARRAY' eq ref $a{buttons};
+  return
+    MessageBox2 $a{text}, [@a{qw(buttons iconID flags notifyWindow)}],
+      $a{parent}, $a{owner}, $a{helpID}
+	if $use_2;
+  die "MessageBoxH: unexpected format of argument 'buttons'";
 }
 
 # backward compatibility
 *set_title = \&Title_set;
 *get_title = \&Title;
+
+# New (logical) names
+*WindowBits_set = \&SetWindowBits;
+*WindowPtr_set = \&SetWindowPtr;
+*WindowULong_set = \&SetWindowULong;
+*WindowUShort_set = \&SetWindowUShort;
 
 # adapter; display; cbMemory; Configuration; VDHVersion; Flags; HWBufferSize;
 # FullSaveSize; PartSaveSize; EMAdaptersOFF; EMDisplaysOFF;
@@ -573,6 +696,138 @@ sub kbdhStatus_set {
   _kbdStatus_set($o,$h);
 }
 
+#sub DeleteAtom		{ !WinDeleteAtom(@_) }
+sub DeleteAtom		{ !_DeleteAtom(@_) }
+sub DestroyAtomTable    { !_DestroyAtomTable(@_) }
+
+# XXXX This is a wrong order: we start keyreader, then screenwriter; so it is
+# the writer who gets signals.
+
+# XXXX Do we ever get a message "screenwriter killed"???  If reader HUPs us...
+# Large buffer works at least for read from pipes; should we binmode???
+sub __term_mirror_screen {   # Read from fd=$in and write to the console
+  local $SIG{TERM} = $SIG{HUP} = $SIG{BREAK} = $SIG{INT} = # die() can stop END
+    sub { my $s = shift; warn "screenwriter killed ($s)...\n";};
+  my $in = shift;
+  open IN, "<&=$in" or die "open <&=$in: $!";
+  # Attempt to redirect to STDERR/OUT is not very useful, but try this anyway...
+  open OUT, '>', '/dev/con' or open OUT, '>&STDERR' or open OUT, '>&STDOUT'
+	and select OUT or die "Can't open /dev/con or STDERR/STDOUT for write";
+  $| = 1; local $SIG{TERM} = sub { die "screenwriter exits...\n"};
+  binmode IN; binmode OUT;
+  eval { print $_ while sysread IN, $_, 1<<16; };	# print to OUT...
+  warn $@ if $@;
+  warn "Screenwriter can't read any more ($!, $^E), terminating...\n";
+}
+
+# Does not automatically ends when the parent exits if related => 0
+# copy from fd=$in to screen ; same for $out; or $in may be a named pipe
+sub __term_mirror {
+  my $pid;
+  ### If related => 1, we get TERM when our parent exits...
+  local $SIG{TERM} = sub { my $s = shift;
+			   die "keyreader exits in a few secs ($s)...\n" };
+  my ($in, $out) = (shift, shift);
+  if (defined $out and length $out) {	# Allow '' for ease of @ARGV
+    open OUT, ">&=$out" or die "Cannot open &=$out for write: $!";
+    fcntl(OUT, 4, 1);		# F_SETFD, NOINHERIT
+    open IN, "<&=$in" or die "Cannot open &=$in for read/ioctl: $!";
+    fcntl(IN,  4, 0);		# F_SETFD, INHERIT
+  } else {
+    warn "Unexpected i/o pipe name: `$in'" unless $in =~ m,^[\\/]pipe[\\/],i;
+    OS2::pipe $in, 'wait';
+    open OUT, '+<', $in or die "Can't open `$in' for r/w: $!";
+    fcntl(OUT,  4, 0);		# F_SETFD, INHERIT
+    $in = fileno OUT;
+    undef $out;
+  }
+  my %opt = @_;
+  Title_set $opt{title}				if exists $opt{title};
+  &scrsize_set(split /,/, $opt{scrsize})	if exists $opt{scrsize};
+
+  my @i = map +('-I', $_), @INC;	# Propagate @INC
+
+  # Careful unless PERL_SIGNALS=unsafe: SIGCHLD does not work...
+  $SIG{CHLD} = sub {wait; die "Keyreader follows screenwriter...\n"}
+	unless defined $out;
+
+  $pid = system 1, $^X, @i, '-MOS2::Process',
+	 '-we', 'END {sleep 2} OS2::Process::__term_mirror_screen shift', $in;
+  close IN if defined $out;
+  $pid > 0 or die "Cannot start a grandkid";
+
+  open STDIN, '</dev/con' or warn "reopen stdin: $!";
+  select OUT;    $| = 1;  binmode OUT;	# need binmode: sysread() may be bin
+  $SIG{PIPE} = sub { die "writing to a closed pipe" };
+  $SIG{HUP} = $SIG{BREAK} = $SIG{INT} = $SIG{TERM};
+  # Workaround: EMX v61 won't return pid on SESSION|UNRELATED after fork()...
+  syswrite OUT, pack 'L', $$ or die "syswrite failed: $!" if $opt{writepid};
+  # Turn Nodelay on kbd.  Pipe is automatically nodelay...
+  if ($opt{read_by_key}) {
+    if (eval {require Term::ReadKey; 1}) {
+      Term::ReadKey::ReadMode(4);
+    } else { warn "can't load Term::ReadKey; input by lines..." }
+  }
+  print while sysread STDIN, $_, 1<<($opt{smallbuffer} ? 0 : 16); # to OUT
+}
+
+my $c = 0;
+sub io_term {	# arguments as hash: read_by_key/title/scrsize/related/writepid
+  # read_by_key disables echo too...
+  local $\  = '';
+  my ($sysf, $in1, $out1, $in2, $out2, $f1, $f2, $fd) = 4;	# P_SESSION
+  my %opt = @_;
+
+  if ($opt{related}) {
+    pipe $in1, $out1 or die "pipe(): $!";
+    pipe $in2, $out2 or do { close($in1), close($out1), die "pipe(): $!" };
+    $f1 = fileno $in1; $f2 = fileno $out2;
+    fcntl($in2, 4, 1); fcntl($out1, 4, 1);		# F_SETFD, NOINHERIT
+    fcntl($in1, 4, 0); fcntl($out2, 4, 0);		# F_SETFD, INHERIT
+  } else {
+    $f1 = "/pipe/perlmodule/OS2/Process/$$-" . $c++;
+    $out1 = OS2::pipe $f1, 'rw' or die "OS2::pipe(): $^E";
+    #open $out1, "+<&=$fd" or die "dup($fd): $!, $^E";
+    fcntl($out1, 4, 1);		# F_SETFD, NOINHERIT
+    #$in2 = $out1;
+    $f2 = '';
+    $sysf |= 0x40000;		# P_UNRELATED
+    $opt{writepid} = 1, unless exists $opt{writepid};
+  }
+
+  # system P_SESSION will fail if there is another process
+  # in the same session with a "related" asynchronous child session.
+  my @i = map +('-I', $_), @INC;	# Propagate @INC
+  my $krun = <<'EOS';
+     END {sleep($sleep || 5)}
+     use OS2::Process; $sleep = 1;
+     OS2::Process::__term_mirror(@ARGV);
+EOS
+  my $kpid;
+  if ($opt{related}) {
+    $kpid = system $sysf, $^X, @i, '-we', $krun, $f1, $f2, %opt;
+  } else {
+    local $ENV{PERL_SIGNALS} = 'unsafe';
+    $kpid = system $sysf, $^X, @i, '-we', $krun, $f1, $f2, %opt;
+  }
+  close $in1 or warn if defined $in1;
+  close $out2 or warn if defined $out2;
+  # EMX BUG with $kpid == 0 after fork()
+  do { close($in2), ($out1 != $in2 and close($out1)),
+       die "system $sysf, $^X: kid=$kpid, \$!=`$!', \$^E=`$^E'" }
+     unless $kpid > 0 or $kpid == 0 and $opt{writepid};
+  # Can't read or write until the kid opens the pipes
+  OS2::pipeCntl $out1, 'connect', 'wait' unless length $f2;
+  # Without duping: write after read (via termio) on the same fd dups input
+  open $in2, '<&', $out1 or die "dup($out1): $^E" unless $opt{related};
+  if ($opt{writepid}) {
+    my $c = length pack 'L', 0;
+    my $c1 = sysread $in2, (my $pid), $c;
+    $c1 == $c or die "unexpected length read: $c1 vs $c";
+    $kpid = unpack 'L', $pid;
+  }
+  return ($in2, $out1, $kpid);
+}
 
 # Autoload methods go after __END__, and are processed by the autosplit program.
 
@@ -1059,6 +1314,28 @@ name returned is in the form "#nnnnn", where "nnnnn" is a group
 of up to five digits that corresponds to the value of the WC_* class name
 constant.
 
+=item WindowStyle($hwnd)
+
+Returns the "window style" flags for window handle $hwnd.
+
+=item WindowULong($hwnd, $id), WindowPtr($hwnd, $id), WindowUShort($hwnd, $id)
+
+Return data associated to window handle $hwnd.  $id should be one of
+C<QWL_*>, C<QWP_PFNWP>, C<QWS_*> constants, or a byte offset referencing
+a region (of length 4, 4, 2 correspondingly) fully inside C<0..cbWindowData-1>.
+Here C<cbWindowData> is the count of extra user-specified bytes reserved
+for the given class of windows.
+
+=item WindowULong_set($hwnd, $id, $value), WindowPtr_set, WindowUShort_set
+
+Similar to WindowULong(), WindowPtr(), WindowUShort(), but for assigning the
+value $value.
+
+=item WindowBits_set($hwnd, $id, $value, $mask)
+
+Similar to WindowULong_set(), but will change only the bits which are
+set in $mask.
+
 =item FocusWindow()
 
 returns the handle of the focus window.  Optional argument for specifying
@@ -1304,72 +1581,512 @@ This function is normally not needed.  Not exported by default.
 
 gets the path of the directory which corresponds to Desktop.
 
-=item ClipbrdText()
-
-gets the content of the clipboard.  An optional argument is the format
-of the data in the clipboard (defaults to C<CF_TEXT>).
-
-Note that the usual convention is to have clipboard data with
-C<"\r\n"> as line separators.
-
-=item ClipbrdText_set($txt)
-
-sets the text content of the clipboard.  Unless the optional argument
-is TRUE, will convert newlines to C<"\r\n">.  Another optional
-argument is the format of the data in the clipboard (defaults to
-C<CF_TEXT>).
-
 =item 	InvalidateRect
 
-=item	CreateFrameControl
-
-=item	ClipbrdFmtInfo
-
-=item	ClipbrdOwner
-
-=item	ClipbrdViewer
-
-=item	ClipbrdData
-
-=item	OpenClipbrd
-
-=item	CloseClipbrd
-
-=item	ClipbrdData_set
-
-=item	ClipbrdOwner_set
-
-=item	ClipbrdViewer_set
-
-=item	EnumClipbrdFmts
-
-=item	EmptyClipbrd
-
-=item	AddAtom
-
-=item	FindAtom
-
-=item	DeleteAtom
-
-=item	AtomUsage
-
-=item	AtomName
-
-=item	AtomLength
-
-=item	SystemAtomTable
-
-=item	CreateAtomTable
-
-=item	DestroyAtomTable
-
-Low-level methods to access clipboard and the atom table(s).
+=item	CreateFrameControls
 
 =back
 
-=head1 OS2::localMorphPM class
+=head2 Control of the PM clipboard
 
-This class morphs the process to PM for the duration of the given scope.
+=over
+
+=item ClipbrdText()
+
+gets the content of the clipboard.  An optional argument is the format
+of the data in the clipboard (defaults to C<CF_TEXT>).  May croak with error
+C<PMERR_INVALID_HWND> if no data of given $fmt is present.
+
+Note that the usual convention is to have clipboard data with
+C<"\r\n"> as line separators.  This function will only work with clipboard
+data types which are delimited by C<"\0"> byte (not included in the result).
+
+=item ClipbrdText_2byte
+
+Same as ClipbrdText(), but will only work with clipboard
+data types which are collection of C C<shorts> delimited by C<0> short
+(not included in the result).
+
+=item ClipbrdTextUCS2le
+
+Same as ClipbrdText_2byte(), but will assume that the shorts represent
+an Unicode string in I<UCS-2le> format (little-endian 2-byte representation
+of Unicode), and will provide the result in Perl internal C<utf8> format
+(one short of input represents one Perl character).
+
+Note that Firefox etc. export their selection in unicode types of this format.
+
+=item ClipbrdText_set($txt, [$no_convert_nl, [$fmt, [$fmtinfo, [$hab] ] ] ] )
+
+sets the text content of the clipboard after removing old contents.  Unless the
+optional argument  $no_convert_nl is TRUE, will convert newlines to C<"\r\n">.  Another optional
+argument $fmt is the format of the data in the clipboard (should be an
+atom, defaults to C<CF_TEXT>).  Other arguments are as for C<ClipbrdData_set>.
+Croaks on failure.
+
+=item	ClipbrdFmtInfo( [$fmt, [ $hab ] ])
+
+returns the $fmtInfo flags set by the application which filled the
+format $fmt of the clipboard.  $fmt defaults to C<CF_TEXT>.
+
+=item	ClipbrdOwner( [ $hab ] )
+
+Returns window handle of the current clipboard owner.
+
+=item	ClipbrdViewer( [ $hab ] )
+
+Returns window handle of the current clipboard viewer.
+
+=item	ClipbrdData( [$fmt, [ $hab ] ])
+
+Returns a handle to clipboard data of the given format as an integer.
+Format defaults to C<CF_TEXT> (in this case the handle is a memory address).
+
+Clipboard should be opened before calling this function.  May croak with error
+C<PMERR_INVALID_HWND> if no data of given $fmt is present.
+
+The result should not be used after clipboard is closed.  Hence a return handle 
+of type C<CLI_POINTER> may need to be converted to a string and stored for
+future usage.  Use MemoryRegionSize() to get a high estimate on the length
+of region addressed by this pointer; the actual length inside this region
+should be obtained by knowing particular format of data.  E.g., it may be
+0-byte terminated for string types, or 0-short terminated for wide-char string
+types.
+
+=item	OpenClipbrd( [ $hab ] )
+
+claim read access to the clipboard.  May need a message queue to operate.
+May block until other processes finish dealing with clipboard.
+
+=item	CloseClipbrd( [ $hab ] )
+
+Allow other processes access to clipboard.
+Clipboard should be opened before calling this function.
+
+=item	ClipbrdData_set($data, [$convert_nl, [$fmt, [$fmtInfo, [ $hab] ] ] ] )
+
+Sets the clipboard data of format given by atom $fmt.  Format defaults to
+CF_TEXT.
+
+$fmtInfo should declare what type of handle $data is; it should be either
+C<CFI_POINTER>, or C<CFI_HANDLE> (possibly qualified by C<CFI_OWNERFREE>
+and C<CFI_OWNERDRAW> flags).  It defaults to C<CFI_HANDLE> for $fmt being
+standard bitmap, metafile, and palette (undocumented???) formats;
+otherwise defaults to C<CFI_POINTER>.  If format is C<CFI_POINTER>, $data
+should contain the string to copy to clipboard; otherwise it should be an
+integer handle.
+
+If $convert_nl is TRUE (the default), C<"\n"> in $data are converted to
+C<"\r\n"> pairs if $fmt is C<CFI_POINTER> (as is the convention for text
+format of the clipboard) unless they are already in such a pair.
+
+=item	_ClipbrdData_set($data, [$fmt, [$fmtInfo, [ $hab] ] ] )
+
+Sets the clipboard data of format given by atom $fmt.  Format defaults to
+CF_TEXT.  $data should be an address (in givable unnamed shared memory which
+should not be accessed or manipulated after this call) or a handle in a form
+of an integer.
+
+$fmtInfo has the same semantic as for ClipbrdData_set().
+
+=item	ClipbrdOwner_set( $hwnd, [ $hab ] )
+
+Sets window handle of the current clipboard owner (window which gets messages
+when content of clipboard is retrieved).
+
+=item	ClipbrdViewer_set( $hwnd, [ $hab ] )
+
+Sets window handle of the current clipboard owner (window which gets messages
+when content of clipboard is changed).
+
+=item	ClipbrdFmtNames()
+
+Returns list of names of formats currently available in the clipboard.
+
+=item	ClipbrdFmtAtoms()
+
+Returns list of atoms of formats currently available in the clipboard.
+
+=item	EnumClipbrdFmts($fmt [, $hab])
+
+Low-level access to the list of formats currently available in the clipboard.
+Returns the atom for the format of clipboard after $fmt.  If $fmt is 0, returns
+the first format of clipboard.  Returns 0 if $fmt is the last format.  Example:
+
+  {
+    my $h = OS2::localClipbrd->new('nomorph');
+    my $fmt = 0;
+    push @formats, AtomName $fmt
+      while $fmt = EnumClipbrdFmts $fmt;
+  }
+
+Clipboard should be opened before calling this function.  May croak if
+no format is present.
+
+=item	EmptyClipbrd( [ $hab ] )
+
+Remove all the data handles in the clipboard.  croak()s on failure.
+Clipboard should be opened before calling this function.
+
+Recommended before assigning a value to clipboard to remove extraneous
+formats of data from clipboard.
+
+=item ($size, $flags) = MemoryRegionSize($addr, [$size_lim, [ $interrupt ]])
+
+$addr should be a memory address (encoded as integer).  This call finds
+the largest continuous region of memory belonging to the same memory object
+as $addr, and having the same memory flags as $addr. $flags is the value of
+the memory flag of $addr (see docs of DosQueryMem(3) for details).  If
+optional argumetn $size_lim is given, the search is restricted to the region
+this many bytes long (after $addr).
+
+($addr and $size are rounded so that all the memory pages containing
+the region are inspected.)  Optional argument $interrupt (defaults to 1)
+specifies whether region scan should be interruptable by signals.
+
+=back
+
+Use class C<OS2::localClipbrd> to ensure that clipboard is closed even if
+the code in the block made a non-local exit.
+
+See L<"OS2::localMorphPM and OS2::localClipbrd classes">.
+
+=head2 Control of the PM atom tables
+
+Low-level methods to access the atom table(s).  $atomtable defaults to 
+the SystemAtomTable().
+
+=over
+
+=item	AddAtom($name, [$atomtable])
+
+Returns the atom; increments the use count unless $name is a name of an
+integer atom.
+
+=item	FindAtom($name, [$atomtable])
+
+Returns the atom if it exists, 0 otherwise (actually, croaks).
+
+=item	DeleteAtom($name, [$atomtable])
+
+Decrements the use count unless $name is a name of an integer atom.
+When count goes to 0, association of the name to an integer is removed.
+(Version with prepended underscore returns 0 on success.)
+
+=item	AtomName($atom, [$atomtable])
+
+Returns the name of the atom.  Integer atoms have names of format C<"#ddddd">
+of variable length up to 7 chars.
+
+=item	AtomLength($atom, [$atomtable])
+
+Returns the length of the name of the atom.  Return of 0 means that no
+such atom exists (but usually croaks in such a case).
+
+Integer atoms always return length 6.
+
+=item	AtomUsage($name, [$atomtable])
+
+Returns the usage count of the atom.
+
+=item	SystemAtomTable()
+
+Returns central atom table accessible to any process.
+
+=item	CreateAtomTable( [ $initial, [ $buckets ] ] )
+
+Returns new per-process atom table.  See docs for WinCreateAtomTable(3).
+
+=item	DestroyAtomTable($atomtable)
+
+Dispose of the table. (Version with prepended underscore returns 0 on success.)
+
+
+=back
+
+=head2 Alerting the user
+
+=over
+
+=item Alarm([$type])
+
+Audible alarm of type $type (defaults to C<WA_ERROR=2>).  Other useful
+values are C<WA_WARNING=0>, C<WA_NOTE=1>.  (What is C<WA_CDEFALARMS=3>???)
+
+The duration and frequency of the alarms can be changed by the 
+OS2::SysValues_set(). The alarm frequency is defined to be in the range 0x0025
+through 0x7FFF. The alarm is not generated if system value SV_ALARM is set
+to FALSE. The alarms are dependent on the device capability.
+
+=item FlashWindow($hwnd, $doFlash)
+
+Starts/stops (depending on $doFlash being TRUE/FALSE) flashing the window
+$hwnd's borders and titlebar.  First 5 flashes are accompanied by alarm beeps.
+
+Example (for VIO applications):
+
+  { my $morph = OS2::localMorphPM->new(0);
+    print STDERR "Press ENTER!\n";
+    FlashWindow(process_hwnd, 1);
+    <>;
+    FlashWindow(process_hwnd, 0);
+  }
+
+Since flashing window persists even when application ends, it is very
+important to protect the switching off flashing from non-local exits.  Use
+the class C<OS2::localFlashWindow> for this.  Creating the object of this
+class starts flashing the window until the object is destroyed.  The above
+example becomes:
+
+  print STDERR "Press ENTER!\n";
+  { my $flash = OS2::localFlashWindow->new( process_hwnd );
+    <>;
+  }
+
+B<Notes from IBM docs:> Flashing a window brings the user's attention to a
+window that is not the active window, where some important message or dialog
+must be seen by the user. 
+
+Note:  It should be used only for important messages, for example, where some
+component of the system is failing and requires immediate attention to avoid
+damage. 
+
+=item MessageBox($text, [ $title, [$flags, ...] ])
+
+Shows a simple messagebox with (optional) icon, message $text, and one or
+more buttons to dismiss the box.  Returns the indicator of which action was
+taken by the user.  If optional argument $title is not given,
+the title is constructed from the application name.  The optional argument
+$flags describes the appearance of the box; the default is to have B<Cancel>
+button, I<INFO>-style icon, and a border for moving.  Flags should be
+a combination of
+
+ Buttons on the box: or Button Group
+     MB_OK                 OK
+     MB_OKCANCEL           both OK and CANCEL
+     MB_CANCEL             CANCEL
+     MB_ENTER              ENTER
+     MB_ENTERCANCEL        both ENTER and CANCEL
+     MB_RETRYCANCEL        both RETRY and CANCEL
+     MB_ABORTRETRYIGNORE   ABORT, RETRY, and IGNORE
+     MB_YESNO              both YES and NO
+     MB_YESNOCANCEL        YES, NO, and CANCEL
+
+ Color or Icon 
+     MB_ICONHAND           a small red circle with a red line across it. 
+     MB_ERROR              a small red circle with a red line across it. 
+     MB_ICONASTERISK       an information (i) icon. 
+     MB_INFORMATION        an information (i) icon. 
+     MB_ICONEXCLAMATION    an exclamation point (!) icon. 
+     MB_WARNING            an exclamation point (!) icon. 
+     MB_ICONQUESTION       a question mark (?) icon. 
+     MB_QUERY              a question mark (?) icon. 
+     MB_NOICON             No icon.
+
+ Default action (i.e., focussed button; default is MB_DEFBUTTON1)
+     MB_DEFBUTTON1         The first button is the default selection.
+     MB_DEFBUTTON2         The second button is the default selection. 
+     MB_DEFBUTTON3         The third button is the default selection. 
+
+ Modality indicator 
+     MB_APPLMODAL                  Message box is application modal (default).
+     MB_SYSTEMMODAL                Message box is system modal. 
+
+ Mobility indicator 
+     MB_MOVEABLE                   Message box is moveable. 
+
+With C<MB_MOVEABLE> the message box is displayed with a title bar and a
+system menu, which shows only the Move, Close, and Task Manager choices, 
+which can be selected either by use of the pointing device or by
+accelerator keys.  If the user selects Close, the message box is removed
+and the usResponse is set to C<MBID_CANCEL>, whether or not a cancel button 
+existed within the message box. 
+
+C<Esc> key dismisses the dialogue only if C<CANCEL> button is present; the
+return value is C<MBID_CANCEL>.
+
+With C<MB_APPLMODAL> the owner of the dialogue is disabled; therefore, do not
+specify the owner as the parent if this option is used.
+
+Additionally, the following flag is possible, but probably not very useful:
+  
+ Help button 
+     MB_HELP             a HELP button appears, which sends a WM_HELP
+				 message is sent to the window procedure of the
+				 message box. 
+
+Other optional arguments: $parent window, $owner_window, $helpID (used with
+C<WM_HELP> message if C<MB_HELP> style is given).
+
+The return value is one of
+
+  MBID_ENTER           ENTER was selected 
+  MBID_OK              OK was selected 
+  MBID_CANCEL          CANCEL was selected 
+  MBID_ABORT           ABORT was selected 
+  MBID_RETRY           RETRY was selected 
+  MBID_IGNORE          IGNORE was selected 
+  MBID_YES             YES was selected 
+  MBID_NO              NO was selected 
+
+  0		           Function not successful; an error occurred. 
+
+B<BUGS???> keyboard transversal by pressing C<TAB> key does not work.
+Do not appear in window list, so may be hard to find if covered by other
+windows.
+
+=item _MessageBox($text, [ $title, [$flags, ...] ])
+
+Similar to MessageBox(), but the default $title does not depend on the name
+of the script.
+
+=item MessageBox2($text, [ $buttons_Icon, [$title, ...] ])
+
+Similar to MessageBox(), but allows more flexible choice of button texts
+and the icon. $buttons_Icon is a reference to an array with information about
+buttons and the icon to use; the semantic of this array is the same as
+for argument list of process_MB2_INFO().  The default value will show
+one button B<Dismiss> which will return C<0x1000>.
+
+Other optional arguments are the same as for MessageBox().
+
+B<NOTE.> Remark about C<MBID_CANCEL> in presence of C<MB_MOVABLE> is
+equally applicable to MessageBox() and MessageBox2().
+
+Example:
+
+  print MessageBox2
+    'Foo prints 100, Bar 101, Baz 102',
+    [['~Foo' => 100, 'B~ar' => 101, ['Ba~z'] => 102]],
+    'Choose a number to print';
+
+will show a messagebox with
+
+=over 20
+
+=item Title
+
+B<Choose a number to print>,
+
+=item Text
+
+B<Foo prints 100, Bar 101, Baz 102>
+
+=item Icon
+
+INFORMATION ICON
+
+=item Buttons
+
+B<Foo>, B<Bar>, B<Baz>
+
+=item Default button
+
+B<Baz>
+
+=item accelerator keys
+
+B<F>, B<a>, and B<z>
+
+=item return values
+
+100, 101, and 102 correspondingly,
+
+=back
+
+Using
+
+  print MessageBox2
+    'Foo prints 100, Bar 101, Baz 102',
+    [['~Foo' => 100, 'B~ar' => 101, ['Ba~z'] => 102], 'SP#22'],
+    'Choose a number to print';
+
+will show the 22nd system icon as the dialog icon (small folder icon).
+
+=item _MessageBox2($text, $buttons_Icon_struct, [$title, ...])
+
+low-level workhorse to implement MessageBox2().  Differs by the dafault
+$title, and that $buttons_Icon_struct is required, and is a string with
+low-level C struct.
+
+=item process_MB2_INFO($buttons, [$iconID, [$flags, [$notifyWindow]]])
+
+low-level workhorse to implement MessageBox2(); calculates the second
+argument of _MessageBox2().  $buttons is a reference
+to array of button descriptions.  $iconID is either an ID of icon for
+the message box, or a string of the form C<"SP#number">; in the latter case
+the number's system icon is chosen; this field is ignored unless
+$flags contains C<MB_CUSTOMICON> flag.  $flags has the same meaning as mobility,
+modality, and icon flags for MessageBox() with addition of extra flags
+
+     MB_CUSTOMICON         Use a custom icon specified in hIcon. 
+     MB_NONMODAL           Message box is nonmodal
+
+$flags defaults to C<MB_INFORMATION> or C<MB_CUSTOMICON> (depending on whether
+$iconID is non-0), combined with MB_MOVABLE.
+
+Each button's description takes two elements of the description array,
+appearance description, and the return value of MessageBox2() if this
+button is selected.  The appearance description is either an array reference
+of the form C<[$button_Text, $button_Style]>, or the same without
+$button_Style (then style is C<BS_DEFAULT>, making this button the default)
+or just $button_Text (with "normal" style).  E.g., the list
+
+  Foo => 100, Bar => 101, [Baz] => 102
+
+will show three buttons B<Foo>, B<Bar>, B<Baz> with B<Baz> being the default
+button; pressing buttons return 100, 101, or 102 correspondingly.
+
+In particular, exactly one button should have C<BS_DEFAULT> style (e.g.,
+given as C<[$button_Name]>); otherwise the message box will not have keyboard
+focus!  (The only exception is the case of one button; then C<[$button_Name]>
+can be replaced (for convenience) with plain C<$button_Name>.)
+
+If text of the button contains character C<~>, the following character becomes
+the keyboard accelerator for this button.  One can also get the handle
+of system icons directly, so C<'SP#22'> can be replaced by
+C<OS2::Process::get_pointer(22)>; see also C<SPTR_*> constants.
+
+B<NOTE> With C<MB_NONMODAL> the program continues after displaying the
+nonmodal message box.  The message box remains visible until the owner window
+destroys it. Two notification messages, WM_MSGBOXINIT and WM_MSGBOXDISMISS,
+are used to support this non-modality. 
+
+=item LoadPointer($id, [$module, [$hwnd]])
+
+Loads a handle for the pointer $id from the resources of the module
+$module on desktop $hwnd.  If $module is 0 (default), loads from the main
+executable; otherwise from a DLL with the handle $module.
+
+The pointer is owned by the process, and is destroyed by
+DestroyPointer() call, or when the process terminates.
+
+=item SysPointer($id, [$copy, [$hwnd]])
+
+Gets a handle for (a copy of) the system pointer $id (the value should
+be one of C<SPTR_*> constants).  A copy is made if $copy is TRUE (the
+default).  $hwnd defaults to C<HWND_DESKTOP>.
+
+=item get_pointer($id, [$copy, [$hwnd]])
+
+Gets (and caches) a copy of the system pointer.
+
+=back
+
+=head2 Constants used by OS/2 APIs
+
+Function C<os2constant($name)> returns the value of the constant; to
+decrease the memory usage of this package, only the constants used by
+APIs called by Perl functions in this package are made available.
+
+For direct access, see also the L<"EXPORTS"> section; the latter way
+may also provide some performance advantages, since the value of the
+constant is cached.
+
+=head1 OS2::localMorphPM, OS2::localFlashWindow, and OS2::localClipbrd classes
+
+The class C<OS2::localMorphPM> morphs the process to PM for the duration of
+the given scope.
 
   {
     my $h = OS2::localMorphPM->new(0);
@@ -1378,6 +2095,23 @@ This class morphs the process to PM for the duration of the given scope.
 
 The argument has the same meaning as one to OS2::MorphPM().  Calls can
 nest with internal ones being NOPs.
+
+Likewise, C<OS2::localClipbrd> class opens the clipboard for the duration
+of the current scope; if TRUE optional argument is given, it would not
+morph the application into PM:
+
+  {
+    my $handle = OS2::localClipbrd->new(1);	# Do not morph into PM
+    # Do something with clipboard here...
+  }
+
+C<OS2::localFlashWindow> behaves similarly; see
+L<"FlashWindow($hwnd,$doFlash)">.
+
+=head1 EXAMPLES
+
+The test suite for this module contains an almost comprehensive collection
+of examples of using the API of this module.
 
 =head1 TODO
 
@@ -1397,7 +2131,6 @@ Add tests for:
 	QueryWindow
 	EnumDlgItem
         WindowPtr
-        WindowULong
         WindowUShort
         SetWindowBits
         SetWindowPtr
@@ -1408,12 +2141,18 @@ Add tests for:
 	scrsize
 	scrsize_set
 
-Document and test: Query/SetWindowULong/Short/Ptr, SetWindowBits.
-InvalidateRect, CreateFrameControl, ClipbrdFmtInfo ClipbrdOwner
-ClipbrdViewer ClipbrdData OpenClipbrd CloseClipbrd ClipbrdData_set
-ClipbrdOwner_set ClipbrdViewer_set EnumClipbrdFmts EmptyClipbrd
-AddAtom FindAtom DeleteAtom AtomUsage AtomName AtomLength
-SystemAtomTable CreateAtomTable DestroyAtomTable
+Document: InvalidateRect,
+CreateFrameControls, kbdChar, kbdhChar,
+kbdStatus, _kbdStatus_set, kbdhStatus, kbdhStatus_set,
+vioConfig, viohConfig, vioMode, viohMode, viohMode_set, _vioMode_set,
+_vioState, _vioState_set, vioFont, vioFont_set
+
+Test: SetWindowULong/Short/Ptr, SetWindowBits. InvalidateRect,
+CreateFrameControls, ClipbrdOwner_set, ClipbrdViewer_set, _ClipbrdData_set,
+Alarm, FlashWindow, _MessageBox, MessageBox, _MessageBox2, MessageBox2,
+LoadPointer, SysPointer, kbdChar, kbdhChar, kbdStatus, _kbdStatus_set,
+kbdhStatus,  kbdhStatus_set, vioConfig, viohConfig, vioMode, viohMode,
+viohMode_set, _vioMode_set, _vioState, _vioState_set, vioFont, vioFont_set
 
 Implement SOMETHINGFROMMR.
 

@@ -173,7 +173,7 @@ information you may find useful.
 
 In a sense, perl (the C program) is a good example of embedding Perl
 (the language), so I'll demonstrate embedding with I<miniperlmain.c>,
-included in the source distribution.  Here's a bastardized, nonportable
+included in the source distribution.  Here's a bastardized, non-portable
 version of I<miniperlmain.c> containing the essentials of embedding:
 
     #include <EXTERN.h>               /* from the Perl distribution     */
@@ -352,7 +352,7 @@ I<SvPV()> to create a string:
    a = Just Another Perl Hacker
 
 In the example above, we've created a global variable to temporarily
-store the computed value of our eval'd expression.  It is also
+store the computed value of our eval'ed expression.  It is also
 possible and in most cases a better strategy to fetch the return value
 from I<eval_pv()> instead.  Example:
 
@@ -430,7 +430,7 @@ been wrapped here):
 
  I32 match(SV *string, char *pattern)
  {
-     SV *command = NEWSV(1099, 0), *retval;
+     SV *command = newSV(0), *retval;
      STRLEN n_a;
 
      sv_setpvf(command, "my $string = '%s'; $string =~ %s",
@@ -452,7 +452,7 @@ been wrapped here):
 
  I32 substitute(SV **string, char *pattern)
  {
-     SV *command = NEWSV(1099, 0), *retval;
+     SV *command = newSV(0), *retval;
      STRLEN n_a;
 
      sv_setpvf(command, "$string = '%s'; ($string =~ %s)",
@@ -475,7 +475,7 @@ been wrapped here):
 
  I32 matches(SV *string, char *pattern, AV **match_list)
  {
-     SV *command = NEWSV(1099, 0);
+     SV *command = newSV(0);
      I32 num_matches;
      STRLEN n_a;
 
@@ -505,7 +505,7 @@ been wrapped here):
      perl_parse(my_perl, NULL, 3, embedding, NULL);
      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
-     text = NEWSV(1099,0);
+     text = newSV(0);
      sv_setpv(text, "When he is at a convenience store and the "
 	"bill comes to some amount like 76 cents, Maynard is "
 	"aware that there is something he *should* do, something "
@@ -793,6 +793,7 @@ with L<perlfunc/my> whenever possible.
      }
      perl_construct(my_perl);
 
+     PL_origalen = 1; /* don't let $0 assignment update the proctitle or embedding[0] */
      exitstatus = perl_parse(my_perl, NULL, 2, embedding, NULL);
      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
      if(!exitstatus) {
@@ -852,6 +853,21 @@ perl 5.7.2 you can specify C<PL_exit_flags |= PERL_EXIT_DESTRUCT_END>
 to get the new behaviour. This also enables the running of END blocks if
 the perl_parse fails and C<perl_destruct> will return the exit value.
 
+=head2 $0 assignments
+
+When a perl script assigns a value to $0 then the perl runtime will
+try to make this value show up as the program name reported by "ps" by
+updating the memory pointed to by the argv passed to perl_parse() and
+also calling API functions like setproctitle() where available.  This
+behaviour might not be appropriate when embedding perl and can be
+disabled by assigning the value C<1> to the variable C<PL_origalen>
+before perl_parse() is called.
+
+The F<persistent.c> example above is for instance likely to segfault
+when $0 is assigned to if the C<PL_origalen = 1;> assignment is
+removed.  This because perl will try to write to the read only memory
+of the C<embedding[]> strings.
+
 =head2 Maintaining multiple interpreter instances
 
 Some rare applications will need to create more than one interpreter
@@ -898,6 +914,8 @@ in the above example, it is recommended to build perl with the
 C<-Dusemultiplicity> option otherwise some interpreter variables may
 not be initialized correctly between consecutive runs and your
 application may crash.
+
+See also L<perlxs/Thread-aware system interfaces>.
 
 Using C<-Dusethreads -Duseithreads> rather than C<-Dusemultiplicity>
 is more appropriate if you intend to run multiple interpreters

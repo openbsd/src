@@ -26,9 +26,9 @@ understandable.
 Describe what you're doing and how you're doing it, using normal Perl
 comments.
 
-    # turn the line into the first word, a colon, and the
-    # number of characters on the rest of the line
-    s/^(\w+)(.*)/ lc($1) . ":" . length($2) /meg;
+	# turn the line into the first word, a colon, and the
+	# number of characters on the rest of the line
+	s/^(\w+)(.*)/ lc($1) . ":" . length($2) /meg;
 
 =item Comments Inside the Regex
 
@@ -39,20 +39,20 @@ a lot.
 
 C</x> lets you turn this:
 
-    s{<(?:[^>'"]*|".*?"|'.*?')+>}{}gs;
+	s{<(?:[^>'"]*|".*?"|'.*?')+>}{}gs;
 
 into this:
 
-    s{ <                    # opening angle bracket
-        (?:                 # Non-backreffing grouping paren
-             [^>'"] *       # 0 or more things that are neither > nor ' nor "
-                |           #    or else
-             ".*?"          # a section between double quotes (stingy match)
-                |           #    or else
-             '.*?'          # a section between single quotes (stingy match)
-        ) +                 #   all occurring one or more times
-       >                    # closing angle bracket
-    }{}gsx;                 # replace with nothing, i.e. delete
+	s{ <                    # opening angle bracket
+		(?:                 # Non-backreffing grouping paren
+			[^>'"] *        # 0 or more things that are neither > nor ' nor "
+				|           #    or else
+			".*?"           # a section between double quotes (stingy match)
+				|           #    or else
+			'.*?'           # a section between single quotes (stingy match)
+		) +                 #   all occurring one or more times
+		>                   # closing angle bracket
+	}{}gsx;                 # replace with nothing, i.e. delete
 
 It's still not quite so clear as prose, but it is very useful for
 describing the meaning of each part of the pattern.
@@ -65,8 +65,8 @@ describes this.  For example, the C<s///> above uses braces as
 delimiters.  Selecting another delimiter can avoid quoting the
 delimiter within the pattern:
 
-    s/\/usr\/local/\/usr\/share/g;	# bad delimiter choice
-    s#/usr/local#/usr/share#g;		# better
+	s/\/usr\/local/\/usr\/share/g;	# bad delimiter choice
+	s#/usr/local#/usr/share#g;		# better
 
 =back
 
@@ -97,31 +97,31 @@ to newlines.  But it's imperative that $/ be set to something other
 than the default, or else we won't actually ever have a multiline
 record read in.
 
-    $/ = '';  		# read in more whole paragraph, not just one line
-    while ( <> ) {
-	while ( /\b([\w'-]+)(\s+\1)+\b/gi ) {  	# word starts alpha
-	    print "Duplicate $1 at paragraph $.\n";
+	$/ = '';  		# read in more whole paragraph, not just one line
+	while ( <> ) {
+		while ( /\b([\w'-]+)(\s+\1)+\b/gi ) {  	# word starts alpha
+			print "Duplicate $1 at paragraph $.\n";
+		}
 	}
-    }
 
 Here's code that finds sentences that begin with "From " (which would
 be mangled by many mailers):
 
-    $/ = '';  		# read in more whole paragraph, not just one line
-    while ( <> ) {
-	while ( /^From /gm ) { # /m makes ^ match next to \n
-	    print "leading from in paragraph $.\n";
+	$/ = '';  		# read in more whole paragraph, not just one line
+	while ( <> ) {
+		while ( /^From /gm ) { # /m makes ^ match next to \n
+		print "leading from in paragraph $.\n";
+		}
 	}
-    }
 
 Here's code that finds everything between START and END in a paragraph:
 
-    undef $/;  		# read in whole file, not just one line or paragraph
-    while ( <> ) {
-	while ( /START(.*?)END/sgm ) { # /s makes . cross line boundaries
-	    print "$1\n";
+	undef $/;  		# read in whole file, not just one line or paragraph
+	while ( <> ) {
+		while ( /START(.*?)END/sgm ) { # /s makes . cross line boundaries
+		    print "$1\n";
+		}
 	}
-    }
 
 =head2 How can I pull out lines between two patterns that are themselves on different lines?
 X<..>
@@ -129,11 +129,11 @@ X<..>
 You can use Perl's somewhat exotic C<..> operator (documented in
 L<perlop>):
 
-    perl -ne 'print if /START/ .. /END/' file1 file2 ...
+	perl -ne 'print if /START/ .. /END/' file1 file2 ...
 
 If you wanted text and not lines, you would use
 
-    perl -0777 -ne 'print "$1\n" while /START(.*?)END/gs' file1 file2 ...
+	perl -0777 -ne 'print "$1\n" while /START(.*?)END/gs' file1 file2 ...
 
 But if you want nested occurrences of C<START> through C<END>, you'll
 run up against the problem described in the question in this section
@@ -141,31 +141,31 @@ on matching balanced text.
 
 Here's another example of using C<..>:
 
-    while (<>) {
-        $in_header =   1  .. /^$/;
-        $in_body   = /^$/ .. eof();
+	while (<>) {
+		$in_header =   1  .. /^$/;
+		$in_body   = /^$/ .. eof;
 	# now choose between them
-    } continue {
-	reset if eof();		# fix $.
-    }
+	} continue {
+		$. = 0 if eof;	# fix $.
+	}
 
 =head2 I put a regular expression into $/ but it didn't work. What's wrong?
 X<$/, regexes in> X<$INPUT_RECORD_SEPARATOR, regexes in>
 X<$RS, regexes in>
 
-Up to Perl 5.8.0, $/ has to be a string.  This may change in 5.10,
-but don't get your hopes up. Until then, you can use these examples
-if you really need to do this.
+$/ has to be a string.  You can use these examples if you really need to 
+do this.
 
 If you have File::Stream, this is easy.
 
-			 use File::Stream;
-             my $stream = File::Stream->new(
-                  $filehandle,
-                  separator => qr/\s*,\s*/,
-                  );
+	use File::Stream;
 
-			 print "$_\n" while <$stream>;
+	my $stream = File::Stream->new(
+		$filehandle,
+		separator => qr/\s*,\s*/,
+		);
+
+	print "$_\n" while <$stream>;
 
 If you don't have File::Stream, you have to do a little more work.
 
@@ -173,25 +173,25 @@ You can use the four argument form of sysread to continually add to
 a buffer.  After you add to the buffer, you check if you have a
 complete line (using your regular expression).
 
-       local $_ = "";
-       while( sysread FH, $_, 8192, length ) {
-          while( s/^((?s).*?)your_pattern/ ) {
-             my $record = $1;
-             # do stuff here.
-          }
-       }
+	local $_ = "";
+	while( sysread FH, $_, 8192, length ) {
+		while( s/^((?s).*?)your_pattern/ ) {
+			my $record = $1;
+			# do stuff here.
+		}
+	}
 
  You can do the same thing with foreach and a match using the
  c flag and the \G anchor, if you do not mind your entire file
  being in memory at the end.
 
-       local $_ = "";
-       while( sysread FH, $_, 8192, length ) {
-          foreach my $record ( m/\G((?s).*?)your_pattern/gc ) {
-             # do stuff here.
-          }
-          substr( $_, 0, pos ) = "" if pos;
-       }
+	local $_ = "";
+	while( sysread FH, $_, 8192, length ) {
+		foreach my $record ( m/\G((?s).*?)your_pattern/gc ) {
+			# do stuff here.
+		}
+	substr( $_, 0, pos ) = "" if pos;
+	}
 
 
 =head2 How do I substitute case insensitively on the LHS while preserving case on the RHS?
@@ -201,49 +201,49 @@ X<substitution, case preserving> X<s, case preserving>
 Here's a lovely Perlish solution by Larry Rosler.  It exploits
 properties of bitwise xor on ASCII strings.
 
-    $_= "this is a TEsT case";
+	$_= "this is a TEsT case";
 
-    $old = 'test';
-    $new = 'success';
+	$old = 'test';
+	$new = 'success';
 
-    s{(\Q$old\E)}
-     { uc $new | (uc $1 ^ $1) .
-	(uc(substr $1, -1) ^ substr $1, -1) x
-	    (length($new) - length $1)
-     }egi;
+	s{(\Q$old\E)}
+	{ uc $new | (uc $1 ^ $1) .
+		(uc(substr $1, -1) ^ substr $1, -1) x
+		(length($new) - length $1)
+	}egi;
 
-    print;
+	print;
 
 And here it is as a subroutine, modeled after the above:
 
-    sub preserve_case($$) {
-	my ($old, $new) = @_;
-	my $mask = uc $old ^ $old;
+	sub preserve_case($$) {
+		my ($old, $new) = @_;
+		my $mask = uc $old ^ $old;
 
-	uc $new | $mask .
-	    substr($mask, -1) x (length($new) - length($old))
+		uc $new | $mask .
+			substr($mask, -1) x (length($new) - length($old))
     }
 
-    $a = "this is a TEsT case";
-    $a =~ s/(test)/preserve_case($1, "success")/egi;
-    print "$a\n";
+	$a = "this is a TEsT case";
+	$a =~ s/(test)/preserve_case($1, "success")/egi;
+	print "$a\n";
 
 This prints:
 
-    this is a SUcCESS case
+	this is a SUcCESS case
 
 As an alternative, to keep the case of the replacement word if it is
 longer than the original, you can use this code, by Jeff Pinyan:
 
-  sub preserve_case {
-    my ($from, $to) = @_;
-    my ($lf, $lt) = map length, @_;
+	sub preserve_case {
+		my ($from, $to) = @_;
+		my ($lf, $lt) = map length, @_;
 
-    if ($lt < $lf) { $from = substr $from, 0, $lt }
-    else { $from .= substr $to, $lf }
+		if ($lt < $lf) { $from = substr $from, 0, $lt }
+		else { $from .= substr $to, $lf }
 
-    return uc $to | ($from ^ uc $from);
-  }
+		return uc $to | ($from ^ uc $from);
+		}
 
 This changes the sentence to "this is a SUcCess case."
 
@@ -254,36 +254,36 @@ substitution have the same case, letter by letter, as the original.
 If the substitution has more characters than the string being substituted,
 the case of the last character is used for the rest of the substitution.
 
-    # Original by Nathan Torkington, massaged by Jeffrey Friedl
-    #
-    sub preserve_case($$)
-    {
-        my ($old, $new) = @_;
-        my ($state) = 0; # 0 = no change; 1 = lc; 2 = uc
-        my ($i, $oldlen, $newlen, $c) = (0, length($old), length($new));
-        my ($len) = $oldlen < $newlen ? $oldlen : $newlen;
+	# Original by Nathan Torkington, massaged by Jeffrey Friedl
+	#
+	sub preserve_case($$)
+	{
+		my ($old, $new) = @_;
+		my ($state) = 0; # 0 = no change; 1 = lc; 2 = uc
+		my ($i, $oldlen, $newlen, $c) = (0, length($old), length($new));
+		my ($len) = $oldlen < $newlen ? $oldlen : $newlen;
 
-        for ($i = 0; $i < $len; $i++) {
-            if ($c = substr($old, $i, 1), $c =~ /[\W\d_]/) {
-                $state = 0;
-            } elsif (lc $c eq $c) {
-                substr($new, $i, 1) = lc(substr($new, $i, 1));
-                $state = 1;
-            } else {
-                substr($new, $i, 1) = uc(substr($new, $i, 1));
-                $state = 2;
-            }
-        }
-        # finish up with any remaining new (for when new is longer than old)
-        if ($newlen > $oldlen) {
-            if ($state == 1) {
-                substr($new, $oldlen) = lc(substr($new, $oldlen));
-            } elsif ($state == 2) {
-                substr($new, $oldlen) = uc(substr($new, $oldlen));
-            }
-        }
-        return $new;
-    }
+		for ($i = 0; $i < $len; $i++) {
+			if ($c = substr($old, $i, 1), $c =~ /[\W\d_]/) {
+				$state = 0;
+			} elsif (lc $c eq $c) {
+				substr($new, $i, 1) = lc(substr($new, $i, 1));
+				$state = 1;
+			} else {
+				substr($new, $i, 1) = uc(substr($new, $i, 1));
+				$state = 2;
+			}
+		}
+		# finish up with any remaining new (for when new is longer than old)
+		if ($newlen > $oldlen) {
+			if ($state == 1) {
+				substr($new, $oldlen) = lc(substr($new, $oldlen));
+			} elsif ($state == 2) {
+				substr($new, $oldlen) = uc(substr($new, $oldlen));
+			}
+		}
+		return $new;
+	}
 
 =head2 How can I make C<\w> match national character sets?
 X<\w>
@@ -315,11 +315,11 @@ a double-quoted string (see L<perlop> for more details).  Remember
 also that any regex special characters will be acted on unless you
 precede the substitution with \Q.  Here's an example:
 
-    $string = "Placido P. Octopus";
-    $regex  = "P.";
+	$string = "Placido P. Octopus";
+	$regex  = "P.";
 
-    $string =~ s/$regex/Polyp/;
-    # $string is now "Polypacido P. Octopus"
+	$string =~ s/$regex/Polyp/;
+	# $string is now "Polypacido P. Octopus"
 
 Because C<.> is special in regular expressions, and can match any
 single character, the regex C<P.> here has matched the <Pl> in the
@@ -327,59 +327,90 @@ original string.
 
 To escape the special meaning of C<.>, we use C<\Q>:
 
-    $string = "Placido P. Octopus";
-    $regex  = "P.";
+	$string = "Placido P. Octopus";
+	$regex  = "P.";
 
-    $string =~ s/\Q$regex/Polyp/;
-    # $string is now "Placido Polyp Octopus"
+	$string =~ s/\Q$regex/Polyp/;
+	# $string is now "Placido Polyp Octopus"
 
 The use of C<\Q> causes the <.> in the regex to be treated as a
 regular character, so that C<P.> matches a C<P> followed by a dot.
 
 =head2 What is C</o> really for?
-X</o>
+X</o, regular expressions> X<compile, regular expressions>
 
-Using a variable in a regular expression match forces a re-evaluation
-(and perhaps recompilation) each time the regular expression is
-encountered.  The C</o> modifier locks in the regex the first time
-it's used.  This always happens in a constant regular expression, and
-in fact, the pattern was compiled into the internal format at the same
-time your entire program was.
+(contributed by brian d foy)
 
-Use of C</o> is irrelevant unless variable interpolation is used in
-the pattern, and if so, the regex engine will neither know nor care
-whether the variables change after the pattern is evaluated the I<very
-first> time.
+The C</o> option for regular expressions (documented in L<perlop> and
+L<perlreref>) tells Perl to compile the regular expression only once.
+This is only useful when the pattern contains a variable. Perls 5.6
+and later handle this automatically if the pattern does not change.
 
-C</o> is often used to gain an extra measure of efficiency by not
-performing subsequent evaluations when you know it won't matter
-(because you know the variables won't change), or more rarely, when
-you don't want the regex to notice if they do.
+Since the match operator C<m//>, the substitution operator C<s///>,
+and the regular expression quoting operator C<qr//> are double-quotish
+constructs, you can interpolate variables into the pattern. See the
+answer to "How can I quote a variable to use in a regex?" for more
+details.
 
-For example, here's a "paragrep" program:
+This example takes a regular expression from the argument list and
+prints the lines of input that match it:
 
-    $/ = '';  # paragraph mode
-    $pat = shift;
-    while (<>) {
-        print if /$pat/o;
-    }
+	my $pattern = shift @ARGV;
+	
+	while( <> ) {
+		print if m/$pattern/;
+		}
+
+Versions of Perl prior to 5.6 would recompile the regular expression
+for each iteration, even if C<$pattern> had not changed. The C</o>
+would prevent this by telling Perl to compile the pattern the first
+time, then reuse that for subsequent iterations:
+
+	my $pattern = shift @ARGV;
+	
+	while( <> ) {
+		print if m/$pattern/o; # useful for Perl < 5.6
+		}
+
+In versions 5.6 and later, Perl won't recompile the regular expression
+if the variable hasn't changed, so you probably don't need the C</o>
+option. It doesn't hurt, but it doesn't help either. If you want any
+version of Perl to compile the regular expression only once even if
+the variable changes (thus, only using its initial value), you still
+need the C</o>.
+
+You can watch Perl's regular expression engine at work to verify for
+yourself if Perl is recompiling a regular expression. The C<use re
+'debug'> pragma (comes with Perl 5.005 and later) shows the details.
+With Perls before 5.6, you should see C<re> reporting that its
+compiling the regular expression on each iteration. With Perl 5.6 or
+later, you should only see C<re> report that for the first iteration.
+
+	use re 'debug';
+	
+	$regex = 'Perl';
+	foreach ( qw(Perl Java Ruby Python) ) {
+		print STDERR "-" x 73, "\n";
+		print STDERR "Trying $_...\n";
+		print STDERR "\t$_ is good!\n" if m/$regex/;
+		}
 
 =head2 How do I use a regular expression to strip C style comments from a file?
 
 While this actually can be done, it's much harder than you'd think.
 For example, this one-liner
 
-    perl -0777 -pe 's{/\*.*?\*/}{}gs' foo.c
+	perl -0777 -pe 's{/\*.*?\*/}{}gs' foo.c
 
 will work in many but not all cases.  You see, it's too simple-minded for
 certain kinds of C programs, in particular, those with what appear to be
 comments in quoted strings.  For that, you'd need something like this,
 created by Jeffrey Friedl and later modified by Fred Curtis.
 
-    $/ = undef;
-    $_ = <>;
-    s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
-    print;
+	$/ = undef;
+	$_ = <>;
+	s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
+	print;
 
 This could, of course, be more legibly written with the C</x> modifier, adding
 whitespace and comments.  Here it is expanded, courtesy of Fred Curtis.
@@ -421,9 +452,10 @@ whitespace and comments.  Here it is expanded, courtesy of Fred Curtis.
        )
      }{defined $2 ? $2 : ""}gxse;
 
-A slight modification also removes C++ comments:
+A slight modification also removes C++ comments, as long as they are not
+spread over multiple lines using a continuation character):
 
-    s#/\*[^*]*\*+([^/*][^*]*\*+)*/|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
+	s#/\*[^*]*\*+([^/*][^*]*\*+)*/|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
 
 =head2 Can I use Perl regular expressions to match balanced text?
 X<regex, matching balanced test> X<regexp, matching balanced test>
@@ -466,9 +498,9 @@ versions of the same quantifiers, use (C<??>, C<*?>, C<+?>, C<{}?>).
 
 An example:
 
-        $s1 = $s2 = "I am very very cold";
-        $s1 =~ s/ve.*y //;      # I am cold
-        $s2 =~ s/ve.*?y //;     # I am very cold
+	$s1 = $s2 = "I am very very cold";
+	$s1 =~ s/ve.*y //;      # I am cold
+	$s2 =~ s/ve.*?y //;     # I am very cold
 
 Notice how the second substitution stopped matching as soon as it
 encountered "y ".  The C<*?> quantifier effectively tells the regular
@@ -481,11 +513,11 @@ X<word>
 
 Use the split function:
 
-    while (<>) {
-	foreach $word ( split ) {
-	    # do something with $word here
+	while (<>) {
+		foreach $word ( split ) {
+			# do something with $word here
+		}
 	}
-    }
 
 Note that this isn't really a word in the English sense; it's just
 chunks of consecutive non-whitespace characters.
@@ -493,11 +525,11 @@ chunks of consecutive non-whitespace characters.
 To work with only alphanumeric sequences (including underscores), you
 might consider
 
-    while (<>) {
-	foreach $word (m/(\w+)/g) {
-	    # do something with $word here
+	while (<>) {
+		foreach $word (m/(\w+)/g) {
+			# do something with $word here
+		}
 	}
-    }
 
 =head2 How can I print out a word-frequency or line-frequency summary?
 
@@ -506,24 +538,26 @@ pretend that by word you mean chunk of alphabetics, hyphens, or
 apostrophes, rather than the non-whitespace chunk idea of a word given
 in the previous question:
 
-    while (<>) {
-	while ( /(\b[^\W_\d][\w'-]+\b)/g ) {   # misses "`sheep'"
-	    $seen{$1}++;
+	while (<>) {
+		while ( /(\b[^\W_\d][\w'-]+\b)/g ) {   # misses "`sheep'"
+			$seen{$1}++;
+		}
 	}
-    }
-    while ( ($word, $count) = each %seen ) {
-	print "$count $word\n";
-    }
+
+	while ( ($word, $count) = each %seen ) {
+		print "$count $word\n";
+		}
 
 If you wanted to do the same thing for lines, you wouldn't need a
 regular expression:
 
-    while (<>) {
-	$seen{$_}++;
-    }
-    while ( ($line, $count) = each %seen ) {
-	print "$count $line";
-    }
+	while (<>) {
+		$seen{$_}++;
+		}
+
+	while ( ($line, $count) = each %seen ) {
+		print "$count $line";
+	}
 
 If you want these output in a sorted order, see L<perlfaq4>: "How do I
 sort a hash (optionally by value instead of key)?".
@@ -544,15 +578,18 @@ you want to match it.  In this example, perl must recompile
 the regular expression for every iteration of the foreach()
 loop since it has no way to know what $pattern will be.
 
-    @patterns = qw( foo bar baz );
+	@patterns = qw( foo bar baz );
 
-    LINE: while( <> )
-    	{
+	LINE: while( <DATA> )
+		{
 		foreach $pattern ( @patterns )
 			{
-	    	print if /\b$pattern\b/i;
-	    	next LINE;
-	   		}
+			if( /\b$pattern\b/i )
+				{
+				print;
+				next LINE;
+				}
+			}
 		}
 
 The qr// operator showed up in perl 5.005.  It compiles a
@@ -562,15 +599,15 @@ this example, I inserted a map() to turn each pattern into
 its pre-compiled form.  The rest of the script is the same,
 but faster.
 
-    @patterns = map { qr/\b$_\b/i } qw( foo bar baz );
+	@patterns = map { qr/\b$_\b/i } qw( foo bar baz );
 
-    LINE: while( <> )
-    	{
+	LINE: while( <> )
+		{
 		foreach $pattern ( @patterns )
 			{
-	    	print if /\b$pattern\b/i;
-	    	next LINE;
-	   		}
+			print if /$pattern/i;
+			next LINE;
+			}
 		}
 
 In some cases, you may be able to make several patterns into
@@ -579,8 +616,8 @@ backtracking though.
 
 	$regex = join '|', qw( foo bar baz );
 
-    LINE: while( <> )
-    	{
+	LINE: while( <> )
+		{
 		print if /\b(?:$regex)\b/i;
 		}
 
@@ -677,14 +714,14 @@ string where the last match left off.  The regular
 expression engine cannot skip over any characters to find
 the next match with this anchor, so C<\G> is similar to the
 beginning of string anchor, C<^>.  The C<\G> anchor is typically
-used with the C<g> flag.  It uses the value of pos()
+used with the C<g> flag.  It uses the value of C<pos()>
 as the position to start the next match.  As the match
-operator makes successive matches, it updates pos() with the
+operator makes successive matches, it updates C<pos()> with the
 position of the next character past the last match (or the
 first character of the next match, depending on how you like
-to look at it). Each string has its own pos() value.
+to look at it). Each string has its own C<pos()> value.
 
-Suppose you want to match all of consective pairs of digits
+Suppose you want to match all of consecutive pairs of digits
 in a string like "1122a44" and stop matching when you
 encounter non-digits.  You want to match C<11> and C<22> but
 the letter <a> shows up between C<22> and C<44> and you want
@@ -694,7 +731,7 @@ the C<a> and still matches C<44>.
 	$_ = "1122a44";
 	my @pairs = m/(\d\d)/g;   # qw( 11 22 44 )
 
-If you use the \G anchor, you force the match after C<22> to
+If you use the C<\G> anchor, you force the match after C<22> to
 start with the C<a>.  The regular expression cannot match
 there since it does not find a digit, so the next match
 fails and the match operator returns the pairs it already
@@ -712,7 +749,7 @@ still need the C<g> flag.
 		print "Found $1\n";
 		}
 
-After the match fails at the letter C<a>, perl resets pos()
+After the match fails at the letter C<a>, perl resets C<pos()>
 and the next match on the same string starts at the beginning.
 
 	$_ = "1122a44";
@@ -723,13 +760,13 @@ and the next match on the same string starts at the beginning.
 
 	print "Found $1 after while" if m/(\d\d)/g; # finds "11"
 
-You can disable pos() resets on fail with the C<c> flag.
-Subsequent matches start where the last successful match
-ended (the value of pos()) even if a match on the same
-string as failed in the meantime. In this case, the match
-after the while() loop starts at the C<a> (where the last
-match stopped), and since it does not use any anchor it can
-skip over the C<a> to find "44".
+You can disable C<pos()> resets on fail with the C<c> flag, documented
+in L<perlop> and L<perlreref>. Subsequent matches start where the last
+successful match ended (the value of C<pos()>) even if a match on the
+same string has failed in the meantime. In this case, the match after
+the C<while()> loop starts at the C<a> (where the last match stopped),
+and since it does not use any anchor it can skip over the C<a> to find
+C<44>.
 
 	$_ = "1122a44";
 	while( m/\G(\d\d)/gc )
@@ -744,17 +781,17 @@ when you want to try a different match if one fails,
 such as in a tokenizer. Jeffrey Friedl offers this example
 which works in 5.004 or later.
 
-    while (<>) {
-      chomp;
-      PARSER: {
-           m/ \G( \d+\b    )/gcx   && do { print "number: $1\n";  redo; };
-           m/ \G( \w+      )/gcx   && do { print "word:   $1\n";  redo; };
-           m/ \G( \s+      )/gcx   && do { print "space:  $1\n";  redo; };
-           m/ \G( [^\w\d]+ )/gcx   && do { print "other:  $1\n";  redo; };
-      }
-    }
+	while (<>) {
+		chomp;
+		PARSER: {
+			m/ \G( \d+\b    )/gcx   && do { print "number: $1\n";  redo; };
+			m/ \G( \w+      )/gcx   && do { print "word:   $1\n";  redo; };
+			m/ \G( \s+      )/gcx   && do { print "space:  $1\n";  redo; };
+			m/ \G( [^\w\d]+ )/gcx   && do { print "other:  $1\n";  redo; };
+		}
+	}
 
-For each line, the PARSER loop first tries to match a series
+For each line, the C<PARSER> loop first tries to match a series
 of digits followed by a word boundary.  This match has to
 start at the place the last match left off (or the beginning
 of the string on the first match). Since C<m/ \G( \d+\b
@@ -792,7 +829,7 @@ context, no lists are constructed.
 
 =head2 How can I match strings with multibyte characters?
 X<regex, and multibyte characters> X<regexp, and multibyte characters>
-X<regular expression, and multibyte characters>
+X<regular expression, and multibyte characters> X<martian> X<encoding, Martian>
 
 Starting from Perl 5.6 Perl has had some level of multibyte character
 support.  Perl 5.8 or later is recommended.  Supported multibyte
@@ -826,32 +863,33 @@ looks like it is because "SG" is next to "XX", but there's no real
 
 Here are a few ways, all painful, to deal with it:
 
-   $martian =~ s/([A-Z][A-Z])/ $1 /g; # Make sure adjacent "martian"
-                                      # bytes are no longer adjacent.
-   print "found GX!\n" if $martian =~ /GX/;
+	# Make sure adjacent "martian" bytes are no longer adjacent.
+	$martian =~ s/([A-Z][A-Z])/ $1 /g;
+
+	print "found GX!\n" if $martian =~ /GX/;
 
 Or like this:
 
-   @chars = $martian =~ m/([A-Z][A-Z]|[^A-Z])/g;
-   # above is conceptually similar to:     @chars = $text =~ m/(.)/g;
-   #
-   foreach $char (@chars) {
-       print "found GX!\n", last if $char eq 'GX';
-   }
+	@chars = $martian =~ m/([A-Z][A-Z]|[^A-Z])/g;
+	# above is conceptually similar to:     @chars = $text =~ m/(.)/g;
+	#
+	foreach $char (@chars) {
+	print "found GX!\n", last if $char eq 'GX';
+	}
 
 Or like this:
 
-   while ($martian =~ m/\G([A-Z][A-Z]|.)/gs) {  # \G probably unneeded
-       print "found GX!\n", last if $1 eq 'GX';
-   }
+	while ($martian =~ m/\G([A-Z][A-Z]|.)/gs) {  # \G probably unneeded
+		print "found GX!\n", last if $1 eq 'GX';
+		}
 
 Here's another, slightly less painful, way to do it from Benjamin
 Goldberg, who uses a zero-width negative look-behind assertion.
 
 	print "found GX!\n" if	$martian =~ m/
-		   (?<![A-Z])
-		   (?:[A-Z][A-Z])*?
-		   GX
+		(?<![A-Z])
+		(?:[A-Z][A-Z])*?
+		GX
 		/x;
 
 This succeeds if the "martian" character GX is in the string, and fails
@@ -861,35 +899,99 @@ look-behind assertion, you can replace (?<![A-Z]) with (?:^|[^A-Z]).
 It does have the drawback of putting the wrong thing in $-[0] and $+[0],
 but this usually can be worked around.
 
-=head2 How do I match a pattern that is supplied by the user?
+=head2 How do I match a regular expression that's in a variable?
+X<regex, in variable> X<eval> X<regex> X<quotemeta> X<\Q, regex>
+X<\E, regex>, X<qr//>
 
-Well, if it's really a pattern, then just use
+(contributed by brian d foy)
 
-    chomp($pattern = <STDIN>);
-    if ($line =~ /$pattern/) { }
+We don't have to hard-code patterns into the match operator (or
+anything else that works with regular expressions). We can put the
+pattern in a variable for later use.
 
-Alternatively, since you have no guarantee that your user entered
-a valid regular expression, trap the exception this way:
+The match operator is a double quote context, so you can interpolate
+your variable just like a double quoted string. In this case, you
+read the regular expression as user input and store it in C<$regex>.
+Once you have the pattern in C<$regex>, you use that variable in the
+match operator.
 
-    if (eval { $line =~ /$pattern/ }) { }
+	chomp( my $regex = <STDIN> );
 
-If all you really want is to search for a string, not a pattern,
-then you should either use the index() function, which is made for
-string searching, or, if you can't be disabused of using a pattern
-match on a non-pattern, then be sure to use C<\Q>...C<\E>, documented
-in L<perlre>.
+	if( $string =~ m/$regex/ ) { ... }
 
-    $pattern = <STDIN>;
+Any regular expression special characters in C<$regex> are still
+special, and the pattern still has to be valid or Perl will complain.
+For instance, in this pattern there is an unpaired parenthesis.
 
-    open (FILE, $input) or die "Couldn't open input $input: $!; aborting";
-    while (<FILE>) {
-	print if /\Q$pattern\E/;
-    }
-    close FILE;
+	my $regex = "Unmatched ( paren";
+
+	"Two parens to bind them all" =~ m/$regex/;
+
+When Perl compiles the regular expression, it treats the parenthesis
+as the start of a memory match. When it doesn't find the closing
+parenthesis, it complains:
+
+	Unmatched ( in regex; marked by <-- HERE in m/Unmatched ( <-- HERE  paren/ at script line 3.
+
+You can get around this in several ways depending on our situation.
+First, if you don't want any of the characters in the string to be
+special, you can escape them with C<quotemeta> before you use the string.
+
+	chomp( my $regex = <STDIN> );
+	$regex = quotemeta( $regex );
+
+	if( $string =~ m/$regex/ ) { ... }
+
+You can also do this directly in the match operator using the C<\Q>
+and C<\E> sequences. The C<\Q> tells Perl where to start escaping
+special characters, and the C<\E> tells it where to stop (see L<perlop>
+for more details).
+
+	chomp( my $regex = <STDIN> );
+
+	if( $string =~ m/\Q$regex\E/ ) { ... }
+
+Alternately, you can use C<qr//>, the regular expression quote operator (see
+L<perlop> for more details).  It quotes and perhaps compiles the pattern,
+and you can apply regular expression flags to the pattern.
+
+	chomp( my $input = <STDIN> );
+
+	my $regex = qr/$input/is;
+
+	$string =~ m/$regex/  # same as m/$input/is;
+
+You might also want to trap any errors by wrapping an C<eval> block
+around the whole thing.
+
+	chomp( my $input = <STDIN> );
+
+	eval {
+		if( $string =~ m/\Q$input\E/ ) { ... }
+		};
+	warn $@ if $@;
+
+Or...
+
+	my $regex = eval { qr/$input/is };
+	if( defined $regex ) {
+		$string =~ m/$regex/;
+		}
+	else {
+		warn $@;
+		}
+
+=head1 REVISION
+
+Revision: $Revision: 10126 $
+
+Date: $Date: 2007-10-27 21:29:20 +0200 (Sat, 27 Oct 2007) $
+
+See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

@@ -63,15 +63,15 @@ the recipient has a color-aware display device.  If you
 know that they have an ANSI terminal that understands
 color, you can use the Term::ANSIColor module from CPAN:
 
-    use Term::ANSIColor;
-    print color("red"), "Stop!\n", color("reset");
-    print color("green"), "Go!\n", color("reset");
+	use Term::ANSIColor;
+	print color("red"), "Stop!\n", color("reset");
+	print color("green"), "Go!\n", color("reset");
 
 Or like this:
 
-    use Term::ANSIColor qw(:constants);
-    print RED, "Stop!\n", RESET;
-    print GREEN, "Go!\n", RESET;
+	use Term::ANSIColor qw(:constants);
+	print RED, "Stop!\n", RESET;
+	print GREEN, "Go!\n", RESET;
 
 =head2 How do I read just one key without waiting for a return key?
 
@@ -80,74 +80,74 @@ On many systems, you can just use the B<stty> command as shown in
 L<perlfunc/getc>, but as you see, that's already getting you into
 portability snags.
 
-    open(TTY, "+</dev/tty") or die "no tty: $!";
-    system "stty  cbreak </dev/tty >/dev/tty 2>&1";
-    $key = getc(TTY);		# perhaps this works
-    # OR ELSE
-    sysread(TTY, $key, 1);	# probably this does
-    system "stty -cbreak </dev/tty >/dev/tty 2>&1";
+	open(TTY, "+</dev/tty") or die "no tty: $!";
+	system "stty  cbreak </dev/tty >/dev/tty 2>&1";
+	$key = getc(TTY);		# perhaps this works
+	# OR ELSE
+	sysread(TTY, $key, 1);	# probably this does
+	system "stty -cbreak </dev/tty >/dev/tty 2>&1";
 
 The Term::ReadKey module from CPAN offers an easy-to-use interface that
 should be more efficient than shelling out to B<stty> for each key.
 It even includes limited support for Windows.
 
-    use Term::ReadKey;
-    ReadMode('cbreak');
-    $key = ReadKey(0);
-    ReadMode('normal');
+	use Term::ReadKey;
+	ReadMode('cbreak');
+	$key = ReadKey(0);
+	ReadMode('normal');
 
 However, using the code requires that you have a working C compiler
 and can use it to build and install a CPAN module.  Here's a solution
 using the standard POSIX module, which is already on your systems
 (assuming your system supports POSIX).
 
-    use HotKey;
-    $key = readkey();
+	use HotKey;
+	$key = readkey();
 
 And here's the HotKey module, which hides the somewhat mystifying calls
 to manipulate the POSIX termios structures.
 
-    # HotKey.pm
-    package HotKey;
+	# HotKey.pm
+	package HotKey;
 
-    @ISA = qw(Exporter);
-    @EXPORT = qw(cbreak cooked readkey);
+	@ISA = qw(Exporter);
+	@EXPORT = qw(cbreak cooked readkey);
 
-    use strict;
-    use POSIX qw(:termios_h);
-    my ($term, $oterm, $echo, $noecho, $fd_stdin);
+	use strict;
+	use POSIX qw(:termios_h);
+	my ($term, $oterm, $echo, $noecho, $fd_stdin);
 
-    $fd_stdin = fileno(STDIN);
-    $term     = POSIX::Termios->new();
-    $term->getattr($fd_stdin);
-    $oterm     = $term->getlflag();
+	$fd_stdin = fileno(STDIN);
+	$term     = POSIX::Termios->new();
+	$term->getattr($fd_stdin);
+	$oterm     = $term->getlflag();
 
-    $echo     = ECHO | ECHOK | ICANON;
-    $noecho   = $oterm & ~$echo;
+	$echo     = ECHO | ECHOK | ICANON;
+	$noecho   = $oterm & ~$echo;
 
-    sub cbreak {
-        $term->setlflag($noecho);  # ok, so i don't want echo either
-        $term->setcc(VTIME, 1);
-        $term->setattr($fd_stdin, TCSANOW);
-    }
+	sub cbreak {
+		$term->setlflag($noecho);  # ok, so i don't want echo either
+		$term->setcc(VTIME, 1);
+		$term->setattr($fd_stdin, TCSANOW);
+	}
 
-    sub cooked {
-        $term->setlflag($oterm);
-        $term->setcc(VTIME, 0);
-        $term->setattr($fd_stdin, TCSANOW);
-    }
+	sub cooked {
+		$term->setlflag($oterm);
+		$term->setcc(VTIME, 0);
+		$term->setattr($fd_stdin, TCSANOW);
+	}
 
-    sub readkey {
-        my $key = '';
-        cbreak();
-        sysread(STDIN, $key, 1);
-        cooked();
-        return $key;
-    }
+	sub readkey {
+		my $key = '';
+		cbreak();
+		sysread(STDIN, $key, 1);
+		cooked();
+		return $key;
+	}
 
-    END { cooked() }
+	END { cooked() }
 
-    1;
+	1;
 
 =head2 How do I check whether input is ready on the keyboard?
 
@@ -155,37 +155,37 @@ The easiest way to do this is to read a key in nonblocking mode with the
 Term::ReadKey module from CPAN, passing it an argument of -1 to indicate
 not to block:
 
-    use Term::ReadKey;
+	use Term::ReadKey;
 
-    ReadMode('cbreak');
+	ReadMode('cbreak');
 
-    if (defined ($char = ReadKey(-1)) ) {
-        # input was waiting and it was $char
-    } else {
-        # no input was waiting
-    }
+	if (defined ($char = ReadKey(-1)) ) {
+		# input was waiting and it was $char
+	} else {
+		# no input was waiting
+	}
 
-    ReadMode('normal');                  # restore normal tty settings
+	ReadMode('normal');                  # restore normal tty settings
 
 =head2 How do I clear the screen?
 
 If you only have do so infrequently, use C<system>:
 
-    system("clear");
+	system("clear");
 
 If you have to do this a lot, save the clear string
 so you can print it 100 times without calling a program
 100 times:
 
-    $clear_string = `clear`;
-    print $clear_string;
+	$clear_string = `clear`;
+	print $clear_string;
 
 If you're planning on doing other screen manipulations, like cursor
 positions, etc, you might wish to use Term::Cap module:
 
-    use Term::Cap;
-    $terminal = Term::Cap->Tgetent( {OSPEED => 9600} );
-    $clear_string = $terminal->Tputs('cl');
+	use Term::Cap;
+	$terminal = Term::Cap->Tgetent( {OSPEED => 9600} );
+	$clear_string = $terminal->Tputs('cl');
 
 =head2 How do I get the screen size?
 
@@ -193,22 +193,22 @@ If you have Term::ReadKey module installed from CPAN,
 you can use it to fetch the width and height in characters
 and in pixels:
 
-    use Term::ReadKey;
-    ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
+	use Term::ReadKey;
+	($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
 
 This is more portable than the raw C<ioctl>, but not as
 illustrative:
 
-    require 'sys/ioctl.ph';
-    die "no TIOCGWINSZ " unless defined &TIOCGWINSZ;
-    open(TTY, "+</dev/tty")                     or die "No tty: $!";
-    unless (ioctl(TTY, &TIOCGWINSZ, $winsize='')) {
-        die sprintf "$0: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
-    }
-    ($row, $col, $xpixel, $ypixel) = unpack('S4', $winsize);
-    print "(row,col) = ($row,$col)";
-    print "  (xpixel,ypixel) = ($xpixel,$ypixel)" if $xpixel || $ypixel;
-    print "\n";
+	require 'sys/ioctl.ph';
+	die "no TIOCGWINSZ " unless defined &TIOCGWINSZ;
+	open(TTY, "+</dev/tty")                     or die "No tty: $!";
+	unless (ioctl(TTY, &TIOCGWINSZ, $winsize='')) {
+		die sprintf "$0: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
+	}
+	($row, $col, $xpixel, $ypixel) = unpack('S4', $winsize);
+	print "(row,col) = ($row,$col)";
+	print "  (xpixel,ypixel) = ($xpixel,$ypixel)" if $xpixel || $ypixel;
+	print "\n";
 
 =head2 How do I ask the user for a password?
 
@@ -224,10 +224,10 @@ to the B<stty> program, with varying degrees of portability.
 You can also do this for most systems using the Term::ReadKey module
 from CPAN, which is easier to use and in theory more portable.
 
-    use Term::ReadKey;
+	use Term::ReadKey;
 
-    ReadMode('noecho');
-    $password = ReadLine(0);
+	ReadMode('noecho');
+	$password = ReadLine(0);
 
 =head2 How do I read and write the serial port?
 
@@ -262,8 +262,8 @@ their usual (Unix) ASCII values of "\012" and "\015".  You may have to
 give the numeric values you want directly, using octal ("\015"), hex
 ("0x0D"), or as a control-character specification ("\cM").
 
-    print DEV "atv1\012";	# wrong, for some devices
-    print DEV "atv1\015";	# right, for some devices
+	print DEV "atv1\012";	# wrong, for some devices
+	print DEV "atv1\015";	# right, for some devices
 
 Even though with normal text files a "\n" will do the trick, there is
 still no unified scheme for terminating a line that is portable
@@ -280,19 +280,19 @@ and the C<$|> variable to control autoflushing (see L<perlvar/$E<verbar>>
 and L<perlfunc/select>, or L<perlfaq5>, "How do I flush/unbuffer an
 output filehandle?  Why must I do this?"):
 
-    $oldh = select(DEV);
-    $| = 1;
-    select($oldh);
+	$oldh = select(DEV);
+	$| = 1;
+	select($oldh);
 
 You'll also see code that does this without a temporary variable, as in
 
-    select((select(DEV), $| = 1)[0]);
+	select((select(DEV), $| = 1)[0]);
 
 Or if you don't mind pulling in a few thousand lines
 of code just because you're afraid of a little $| variable:
 
-    use IO::Handle;
-    DEV->autoflush(1);
+	use IO::Handle;
+	DEV->autoflush(1);
 
 As mentioned in the previous item, this still doesn't work when using
 socket I/O between Unix and Macintosh.  You'll need to hard code your
@@ -310,23 +310,23 @@ L<perlfunc/"select">.
 =back
 
 While trying to read from his caller-id box, the notorious Jamie Zawinski
-<jwz@netscape.com>, after much gnashing of teeth and fighting with sysread,
+C<< <jwz@netscape.com> >>, after much gnashing of teeth and fighting with sysread,
 sysopen, POSIX's tcgetattr business, and various other functions that
 go bump in the night, finally came up with this:
 
-    sub open_modem {
-	use IPC::Open2;
-	my $stty = `/bin/stty -g`;
-	open2( \*MODEM_IN, \*MODEM_OUT, "cu -l$modem_device -s2400 2>&1");
-	# starting cu hoses /dev/tty's stty settings, even when it has
-	# been opened on a pipe...
-	system("/bin/stty $stty");
-	$_ = <MODEM_IN>;
-	chomp;
-	if ( !m/^Connected/ ) {
-	    print STDERR "$0: cu printed `$_' instead of `Connected'\n";
+	sub open_modem {
+		use IPC::Open2;
+		my $stty = `/bin/stty -g`;
+		open2( \*MODEM_IN, \*MODEM_OUT, "cu -l$modem_device -s2400 2>&1");
+		# starting cu hoses /dev/tty's stty settings, even when it has
+		# been opened on a pipe...
+		system("/bin/stty $stty");
+		$_ = <MODEM_IN>;
+		chomp;
+		if ( !m/^Connected/ ) {
+			print STDERR "$0: cu printed `$_' instead of `Connected'\n";
+		}
 	}
-    }
 
 =head2 How do I decode encrypted password files?
 
@@ -334,12 +334,11 @@ You spend lots and lots of money on dedicated hardware, but this is
 bound to get you talked about.
 
 Seriously, you can't if they are Unix password files--the Unix
-password system employs one-way encryption.  It's more like hashing than
-encryption.  The best you can check is whether something else hashes to
-the same string.  You can't turn a hash back into the original string.
-Programs like Crack
-can forcibly (and intelligently) try to guess passwords, but don't
-(can't) guarantee quick success.
+password system employs one-way encryption.  It's more like hashing
+than encryption.  The best you can do is check whether something else
+hashes to the same string.  You can't turn a hash back into the
+original string. Programs like Crack can forcibly (and intelligently)
+try to guess passwords, but don't (can't) guarantee quick success.
 
 If you're worried about users selecting bad passwords, you should
 proactively check when they try to change their password (by modifying
@@ -354,7 +353,7 @@ details.
 
 You could also use
 
-    system("cmd &")
+	system("cmd &")
 
 or you could use fork as documented in L<perlfunc/"fork">, with
 further examples in L<perlipc>.  Some things to be aware of, if you're
@@ -383,23 +382,22 @@ not an issue with C<system("cmd&")>.
 
 You have to be prepared to "reap" the child process when it finishes.
 
-    $SIG{CHLD} = sub { wait };
+	$SIG{CHLD} = sub { wait };
 
-    $SIG{CHLD} = 'IGNORE';
+	$SIG{CHLD} = 'IGNORE';
 
 You can also use a double fork. You immediately wait() for your
 first child, and the init daemon will wait() for your grandchild once
 it exits.
 
 	unless ($pid = fork) {
-		unless (fork) {
-            exec "what you really wanna do";
-            die "exec failed!";
-        	}
-        exit 0;
-    	}
-    waitpid($pid,0);
-
+	    unless (fork) {
+		exec "what you really wanna do";
+		die "exec failed!";
+	    }
+	    exit 0;
+	}
+	waitpid($pid, 0);
 
 See L<perlipc/"Signals"> for other examples of code to do this.
 Zombies are not an issue with C<system("prog &")>.
@@ -438,7 +436,6 @@ causing perl to dump core. Since version 5.8.0, perl looks at %SIG
 *after* the signal has been caught, rather than while it is being caught.
 Previous versions of this answer were incorrect.
 
-
 =head2 How do I modify the shadow password file on a Unix system?
 
 If perl was installed correctly and your shadow library was written
@@ -459,53 +456,30 @@ the VMS equivalent is C<set time>.
 However, if all you want to do is change your time zone, you can
 probably get away with setting an environment variable:
 
-    $ENV{TZ} = "MST7MDT";		   # unixish
-    $ENV{'SYS$TIMEZONE_DIFFERENTIAL'}="-5" # vms
-    system "trn comp.lang.perl.misc";
+	$ENV{TZ} = "MST7MDT";		   # unixish
+	$ENV{'SYS$TIMEZONE_DIFFERENTIAL'}="-5" # vms
+	system "trn comp.lang.perl.misc";
 
 =head2 How can I sleep() or alarm() for under a second?
+X<Time::HiRes> X<BSD::Itimer> X<sleep> X<select>
 
-If you want finer granularity than the 1 second that the sleep()
-function provides, the easiest way is to use the select() function as
-documented in L<perlfunc/"select">.  Try the Time::HiRes and
-the BSD::Itimer modules (available from CPAN, and starting from
-Perl 5.8 Time::HiRes is part of the standard distribution).
+If you want finer granularity than the 1 second that the C<sleep()>
+function provides, the easiest way is to use the C<select()> function as
+documented in L<perlfunc/"select">.  Try the C<Time::HiRes> and
+the C<BSD::Itimer> modules (available from CPAN, and starting from
+Perl 5.8 C<Time::HiRes> is part of the standard distribution).
 
 =head2 How can I measure time under a second?
+X<Time::HiRes> X<BSD::Itimer> X<sleep> X<select>
 
-In general, you may not be able to.  The Time::HiRes module (available
-from CPAN, and starting from Perl 5.8 part of the standard distribution)
-provides this functionality for some systems.
+(contributed by brian d foy)
 
-If your system supports both the syscall() function in Perl as well as
-a system call like gettimeofday(2), then you may be able to do
-something like this:
-
-    require 'sys/syscall.ph';
-
-    $TIMEVAL_T = "LL";
-
-    $done = $start = pack($TIMEVAL_T, ());
-
-    syscall(&SYS_gettimeofday, $start, 0) != -1
-               or die "gettimeofday: $!";
-
-       ##########################
-       # DO YOUR OPERATION HERE #
-       ##########################
-
-    syscall( &SYS_gettimeofday, $done, 0) != -1
-           or die "gettimeofday: $!";
-
-    @start = unpack($TIMEVAL_T, $start);
-    @done  = unpack($TIMEVAL_T, $done);
-
-    # fix microseconds
-    for ($done[1], $start[1]) { $_ /= 1_000_000 }
-
-    $delta_time = sprintf "%.4f", ($done[0]  + $done[1]  )
-                                            -
-                                 ($start[0] + $start[1] );
+The C<Time::HiRes> module (part of the standard distribution as of
+Perl 5.8) measures time with the C<gettimeofday()> system call, which
+returns the time in microseconds since the epoch. If you can't install
+C<Time::HiRes> for older Perls and you are on a Unixish system, you
+may be able to call C<gettimeofday(2)> directly. See
+L<perlfunc/syscall>.
 
 =head2 How can I do an atexit() or setjmp()/longjmp()? (Exception handling)
 
@@ -516,9 +490,9 @@ thread ends (see L<perlmod> manpage for more details).
 For example, you can use this to make sure your filter program
 managed to finish its output without filling up the disk:
 
-    END {
-	close(STDOUT) || die "stdout close failed: $!";
-    }
+	END {
+		close(STDOUT) || die "stdout close failed: $!";
+	}
 
 The END block isn't called when untrapped signals kill the program,
 though, so if you use END blocks you should also use
@@ -556,7 +530,7 @@ syscall(), you can use the syscall function (documented in
 L<perlfunc>).
 
 Remember to check the modules that came with your distribution, and
-CPAN as well---someone may already have written a module to do it. On
+CPAN as well--someone may already have written a module to do it. On
 Windows, try Win32::API.  On Macs, try Mac::Carbon.  If no module
 has an interface to the C function, you can inline a bit of C in your
 Perl source with Inline::C.
@@ -572,9 +546,9 @@ Simple files like F<errno.h>, F<syscall.h>, and F<socket.h> were fine,
 but the hard ones like F<ioctl.h> nearly always need to hand-edited.
 Here's how to install the *.ph files:
 
-    1.  become super-user
-    2.  cd /usr/include
-    3.  h2ph *.h */*.h
+	1.  become super-user
+	2.  cd /usr/include
+	3.  h2ph *.h */*.h
 
 If your system supports dynamic loading, for reasons of portability and
 sanity you probably ought to use h2xs (also part of the standard perl
@@ -613,16 +587,16 @@ the low 7 bits are the signal the process died from, if any, and
 the high 8 bits are the actual exit value).  Backticks (``) run a
 command and return what it sent to STDOUT.
 
-    $exit_status   = system("mail-users");
-    $output_string = `ls`;
+	$exit_status   = system("mail-users");
+	$output_string = `ls`;
 
 =head2 How can I capture STDERR from an external command?
 
 There are three basic ways of running external commands:
 
-    system $cmd;		# using system()
-    $output = `$cmd`;		# using backticks (``)
-    open (PIPE, "cmd |");	# using open()
+	system $cmd;		# using system()
+	$output = `$cmd`;		# using backticks (``)
+	open (PIPE, "cmd |");	# using open()
 
 With system(), both STDOUT and STDERR will go the same place as the
 script's STDOUT and STDERR, unless the system() command redirects them.
@@ -633,85 +607,85 @@ Goldberg provides some sample code:
 
 To capture a program's STDOUT, but discard its STDERR:
 
-    use IPC::Open3;
-    use File::Spec;
-    use Symbol qw(gensym);
-    open(NULL, ">", File::Spec->devnull);
-    my $pid = open3(gensym, \*PH, ">&NULL", "cmd");
-    while( <PH> ) { }
-    waitpid($pid, 0);
+	use IPC::Open3;
+	use File::Spec;
+	use Symbol qw(gensym);
+	open(NULL, ">", File::Spec->devnull);
+	my $pid = open3(gensym, \*PH, ">&NULL", "cmd");
+	while( <PH> ) { }
+	waitpid($pid, 0);
 
 To capture a program's STDERR, but discard its STDOUT:
 
-    use IPC::Open3;
-    use File::Spec;
-    use Symbol qw(gensym);
-    open(NULL, ">", File::Spec->devnull);
-    my $pid = open3(gensym, ">&NULL", \*PH, "cmd");
-    while( <PH> ) { }
-    waitpid($pid, 0);
+	use IPC::Open3;
+	use File::Spec;
+	use Symbol qw(gensym);
+	open(NULL, ">", File::Spec->devnull);
+	my $pid = open3(gensym, ">&NULL", \*PH, "cmd");
+	while( <PH> ) { }
+	waitpid($pid, 0);
 
 To capture a program's STDERR, and let its STDOUT go to our own STDERR:
 
-    use IPC::Open3;
-    use Symbol qw(gensym);
-    my $pid = open3(gensym, ">&STDERR", \*PH, "cmd");
-    while( <PH> ) { }
-    waitpid($pid, 0);
+	use IPC::Open3;
+	use Symbol qw(gensym);
+	my $pid = open3(gensym, ">&STDERR", \*PH, "cmd");
+	while( <PH> ) { }
+	waitpid($pid, 0);
 
 To read both a command's STDOUT and its STDERR separately, you can
 redirect them to temp files, let the command run, then read the temp
 files:
 
-    use IPC::Open3;
-    use Symbol qw(gensym);
-    use IO::File;
-    local *CATCHOUT = IO::File->new_tmpfile;
-    local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, ">&CATCHOUT", ">&CATCHERR", "cmd");
-    waitpid($pid, 0);
-    seek $_, 0, 0 for \*CATCHOUT, \*CATCHERR;
-    while( <CATCHOUT> ) {}
-    while( <CATCHERR> ) {}
+	use IPC::Open3;
+	use Symbol qw(gensym);
+	use IO::File;
+	local *CATCHOUT = IO::File->new_tmpfile;
+	local *CATCHERR = IO::File->new_tmpfile;
+	my $pid = open3(gensym, ">&CATCHOUT", ">&CATCHERR", "cmd");
+	waitpid($pid, 0);
+	seek $_, 0, 0 for \*CATCHOUT, \*CATCHERR;
+	while( <CATCHOUT> ) {}
+	while( <CATCHERR> ) {}
 
 But there's no real need for *both* to be tempfiles... the following
 should work just as well, without deadlocking:
 
-    use IPC::Open3;
-    use Symbol qw(gensym);
-    use IO::File;
-    local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", "cmd");
-    while( <CATCHOUT> ) {}
-    waitpid($pid, 0);
-    seek CATCHERR, 0, 0;
-    while( <CATCHERR> ) {}
+	use IPC::Open3;
+	use Symbol qw(gensym);
+	use IO::File;
+	local *CATCHERR = IO::File->new_tmpfile;
+	my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", "cmd");
+	while( <CATCHOUT> ) {}
+	waitpid($pid, 0);
+	seek CATCHERR, 0, 0;
+	while( <CATCHERR> ) {}
 
 And it'll be faster, too, since we can begin processing the program's
 stdout immediately, rather than waiting for the program to finish.
 
 With any of these, you can change file descriptors before the call:
 
-    open(STDOUT, ">logfile");
-    system("ls");
+	open(STDOUT, ">logfile");
+	system("ls");
 
 or you can use Bourne shell file-descriptor redirection:
 
-    $output = `$cmd 2>some_file`;
-    open (PIPE, "cmd 2>some_file |");
+	$output = `$cmd 2>some_file`;
+	open (PIPE, "cmd 2>some_file |");
 
 You can also use file-descriptor redirection to make STDERR a
 duplicate of STDOUT:
 
-    $output = `$cmd 2>&1`;
-    open (PIPE, "cmd 2>&1 |");
+	$output = `$cmd 2>&1`;
+	open (PIPE, "cmd 2>&1 |");
 
 Note that you I<cannot> simply open STDERR to be a dup of STDOUT
 in your Perl program and avoid calling the shell to do the redirection.
 This doesn't work:
 
-    open(STDERR, ">&STDOUT");
-    $alloutput = `cmd args`;  # stderr still escapes
+	open(STDERR, ">&STDOUT");
+	$alloutput = `cmd args`;  # stderr still escapes
 
 This fails because the open() makes STDERR go to where STDOUT was
 going at the time of the open().  The backticks then make STDOUT go to
@@ -725,40 +699,40 @@ F<versus/csh.whynot> article in the "Far More Than You Ever Wanted To
 Know" collection in http://www.cpan.org/misc/olddoc/FMTEYEWTK.tgz .  To
 capture a command's STDERR and STDOUT together:
 
-    $output = `cmd 2>&1`;                       # either with backticks
-    $pid = open(PH, "cmd 2>&1 |");              # or with an open pipe
-    while (<PH>) { }                            #    plus a read
+	$output = `cmd 2>&1`;                       # either with backticks
+	$pid = open(PH, "cmd 2>&1 |");              # or with an open pipe
+	while (<PH>) { }                            #    plus a read
 
 To capture a command's STDOUT but discard its STDERR:
 
-    $output = `cmd 2>/dev/null`;                # either with backticks
-    $pid = open(PH, "cmd 2>/dev/null |");       # or with an open pipe
-    while (<PH>) { }                            #    plus a read
+	$output = `cmd 2>/dev/null`;                # either with backticks
+	$pid = open(PH, "cmd 2>/dev/null |");       # or with an open pipe
+	while (<PH>) { }                            #    plus a read
 
 To capture a command's STDERR but discard its STDOUT:
 
-    $output = `cmd 2>&1 1>/dev/null`;           # either with backticks
-    $pid = open(PH, "cmd 2>&1 1>/dev/null |");  # or with an open pipe
-    while (<PH>) { }                            #    plus a read
+	$output = `cmd 2>&1 1>/dev/null`;           # either with backticks
+	$pid = open(PH, "cmd 2>&1 1>/dev/null |");  # or with an open pipe
+	while (<PH>) { }                            #    plus a read
 
 To exchange a command's STDOUT and STDERR in order to capture the STDERR
 but leave its STDOUT to come out our old STDERR:
 
-    $output = `cmd 3>&1 1>&2 2>&3 3>&-`;        # either with backticks
-    $pid = open(PH, "cmd 3>&1 1>&2 2>&3 3>&-|");# or with an open pipe
-    while (<PH>) { }                            #    plus a read
+	$output = `cmd 3>&1 1>&2 2>&3 3>&-`;        # either with backticks
+	$pid = open(PH, "cmd 3>&1 1>&2 2>&3 3>&-|");# or with an open pipe
+	while (<PH>) { }                            #    plus a read
 
 To read both a command's STDOUT and its STDERR separately, it's easiest
 to redirect them separately to files, and then read from those files
 when the program is done:
 
-    system("program args 1>program.stdout 2>program.stderr");
+	system("program args 1>program.stdout 2>program.stderr");
 
 Ordering is important in all these examples.  That's because the shell
 processes file descriptor redirections in strictly left to right order.
 
-    system("prog args 1>tmpfile 2>&1");
-    system("prog args 2>&1 1>tmpfile");
+	system("prog args 1>tmpfile 2>&1");
+	system("prog args 2>&1 1>tmpfile");
 
 The first command sends both standard out and standard error to the
 temporary file.  The second command sends only the old standard output
@@ -794,22 +768,23 @@ Why send a clear message that isn't true?
 
 Consider this line:
 
-    `cat /etc/termcap`;
+	`cat /etc/termcap`;
 
 You forgot to check C<$?> to see whether the program even ran
 correctly.  Even if you wrote
 
-    print `cat /etc/termcap`;
+	print `cat /etc/termcap`;
 
 this code could and probably should be written as
 
-    system("cat /etc/termcap") == 0
+	system("cat /etc/termcap") == 0
 	or die "cat program failed!";
 
-which will get the output quickly (as it is generated, instead of only
-at the end) and also check the return value.
+which will echo the cat command's output as it is generated, instead
+of waiting until the program has completed to print it out. It also
+checks the return value.
 
-system() also provides direct control over whether shell wildcard
+C<system> also provides direct control over whether shell wildcard
 processing may take place, whereas backticks do not.
 
 =head2 How can I call backticks without shell processing?
@@ -817,35 +792,36 @@ processing may take place, whereas backticks do not.
 This is a bit tricky.  You can't simply write the command
 like this:
 
-    @ok = `grep @opts '$search_string' @filenames`;
+	@ok = `grep @opts '$search_string' @filenames`;
 
-As of Perl 5.8.0, you can use open() with multiple arguments.
-Just like the list forms of system() and exec(), no shell
+As of Perl 5.8.0, you can use C<open()> with multiple arguments.
+Just like the list forms of C<system()> and C<exec()>, no shell
 escapes happen.
 
-   open( GREP, "-|", 'grep', @opts, $search_string, @filenames );
-   chomp(@ok = <GREP>);
-   close GREP;
+	open( GREP, "-|", 'grep', @opts, $search_string, @filenames );
+	chomp(@ok = <GREP>);
+	close GREP;
 
 You can also:
 
-    my @ok = ();
-    if (open(GREP, "-|")) {
-        while (<GREP>) {
-	    chomp;
-            push(@ok, $_);
-        }
-	close GREP;
-    } else {
-        exec 'grep', @opts, $search_string, @filenames;
-    }
+	my @ok = ();
+	if (open(GREP, "-|")) {
+		while (<GREP>) {
+			chomp;
+			push(@ok, $_);
+		}
+		close GREP;
+	} else {
+		exec 'grep', @opts, $search_string, @filenames;
+	}
 
-Just as with system(), no shell escapes happen when you exec() a list.
-Further examples of this can be found in L<perlipc/"Safe Pipe Opens">.
+Just as with C<system()>, no shell escapes happen when you C<exec()> a
+list. Further examples of this can be found in L<perlipc/"Safe Pipe
+Opens">.
 
-Note that if you're use Microsoft, no solution to this vexing issue
-is even possible.  Even if Perl were to emulate fork(), you'd still
-be stuck, because Microsoft does not have a argc/argv-style API.
+Note that if you're using Windows, no solution to this vexing issue is
+even possible.  Even if Perl were to emulate C<fork()>, you'd still be
+stuck, because Windows does not have an argc/argv-style API.
 
 =head2 Why can't my script read from STDIN after I gave it EOF (^D on Unix, ^Z on MS-DOS)?
 
@@ -860,8 +836,8 @@ workarounds:
 
 Try keeping around the seekpointer and go there, like this:
 
-    $where = tell(LOG);
-    seek(LOG, $where, 0);
+	$where = tell(LOG);
+	seek(LOG, $where, 0);
 
 =item 2
 
@@ -900,18 +876,18 @@ If all you want to do is pretend to be telnet but don't need
 the initial telnet handshaking, then the standard dual-process
 approach will suffice:
 
-    use IO::Socket; 	    	# new in 5.004
-    $handle = IO::Socket::INET->new('www.perl.com:80')
-	    || die "can't connect to port 80 on www.perl.com: $!";
-    $handle->autoflush(1);
-    if (fork()) { 	    	# XXX: undef means failure
-	select($handle);
-	print while <STDIN>;    # everything from stdin to socket
-    } else {
-	print while <$handle>;  # everything from socket to stdout
-    }
-    close $handle;
-    exit;
+	use IO::Socket;             # new in 5.004
+	$handle = IO::Socket::INET->new('www.perl.com:80')
+	    or die "can't connect to port 80 on www.perl.com: $!";
+	$handle->autoflush(1);
+	if (fork()) {               # XXX: undef means failure
+	    select($handle);
+	    print while <STDIN>;    # everything from stdin to socket
+	} else {
+	    print while <$handle>;  # everything from socket to stdout
+	}
+	close $handle;
+	exit;
 
 =head2 How can I write expect in Perl?
 
@@ -934,7 +910,7 @@ variable $0 as documented in L<perlvar>.  This won't work on all
 operating systems, though.  Daemon programs like sendmail place their
 state there, as in:
 
-    $0 = "orcus [accepting connections]";
+	$0 = "orcus [accepting connections]";
 
 =head2 I {changed directory, modified my environment} in a perl script.  How come the change disappeared when I exited the script?  How do I get my changes to be visible?
 
@@ -985,7 +961,7 @@ tty.
 
 Background yourself like this:
 
-    fork && exit;
+	fork && exit;
 
 =back
 
@@ -994,25 +970,31 @@ perform these actions for you.
 
 =head2 How do I find out if I'm running interactively or not?
 
-Good question.  Sometimes C<-t STDIN> and C<-t STDOUT> can give clues,
+Good question. Sometimes C<-t STDIN> and C<-t STDOUT> can give clues,
 sometimes not.
 
-    if (-t STDIN && -t STDOUT) {
-	print "Now what? ";
-    }
+	if (-t STDIN && -t STDOUT) {
+		print "Now what? ";
+		}
 
 On POSIX systems, you can test whether your own process group matches
 the current process group of your controlling terminal as follows:
 
-    use POSIX qw/getpgrp tcgetpgrp/;
-    open(TTY, "/dev/tty") or die $!;
-    $tpgrp = tcgetpgrp(fileno(*TTY));
-    $pgrp = getpgrp();
-    if ($tpgrp == $pgrp) {
-        print "foreground\n";
-    } else {
-        print "background\n";
-    }
+	use POSIX qw/getpgrp tcgetpgrp/;
+
+	# Some POSIX systems, such as Linux, can be
+	# without a /dev/tty at boot time.
+	if (!open(TTY, "/dev/tty")) {
+		print "no tty\n";
+	} else {
+		$tpgrp = tcgetpgrp(fileno(*TTY));
+		$pgrp = getpgrp();
+		if ($tpgrp == $pgrp) {
+			print "foreground\n";
+		} else {
+			print "background\n";
+		}
+	}
 
 =head2 How do I timeout a slow event?
 
@@ -1025,8 +1007,24 @@ The alarm() function is not implemented on all versions of Windows.
 Check the documentation for your specific version of Perl.
 
 =head2 How do I set CPU limits?
+X<BSD::Resource> X<limit> X<CPU>
 
-Use the BSD::Resource module from CPAN.
+(contributed by Xho)
+
+Use the C<BSD::Resource> module from CPAN. As an example:
+
+	use BSD::Resource;
+	setrlimit(RLIMIT_CPU,10,20) or die $!;
+
+This sets the soft and hard limits to 10 and 20 seconds, respectively.
+After 10 seconds of time spent running on the CPU (not "wall" time),
+the process will be sent a signal (XCPU on some systems) which, if not
+trapped, will cause the process to terminate.  If that signal is
+trapped, then after 10 more seconds (20 seconds in total) the process
+will be killed with a non-trappable signal.
+
+See the C<BSD::Resource> and your systems documentation for the gory
+details.
 
 =head2 How do I avoid zombies on a Unix system?
 
@@ -1052,8 +1050,8 @@ You can't.  You need to imitate the system() call (see L<perlipc> for
 sample code) and then have a signal handler for the INT signal that
 passes the signal on to the subprocess.  Or you can check for it:
 
-    $rc = system($cmd);
-    if ($rc & 127) { die "signal death" }
+	$rc = system($cmd);
+	if ($rc & 127) { die "signal death" }
 
 =head2 How do I open a file without blocking?
 
@@ -1062,13 +1060,13 @@ non-blocking reads (most Unixish systems do), you need only to use the
 O_NDELAY or O_NONBLOCK flag from the Fcntl module in conjunction with
 sysopen():
 
-    use Fcntl;
-    sysopen(FH, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
-        or die "can't open /foo/somefile: $!":
+	use Fcntl;
+	sysopen(FH, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
+		or die "can't open /foo/somefile: $!":
 
 =head2 How do I tell the difference between errors from the shell and perl?
 
-(answer contributed by brian d foy, C<< <bdfoy@cpan.org> >>
+(answer contributed by brian d foy)
 
 When you run a Perl script, something else is running the script for you,
 and that something else may output error messages.  The script might
@@ -1139,12 +1137,12 @@ might not be perl's message.
 The easiest way is to have a module also named CPAN do it for you.
 This module comes with perl version 5.004 and later.
 
-    $ perl -MCPAN -e shell
+	$ perl -MCPAN -e shell
 
-    cpan shell -- CPAN exploration and modules installation (v1.59_54)
-    ReadLine support enabled
+	cpan shell -- CPAN exploration and modules installation (v1.59_54)
+	ReadLine support enabled
 
-    cpan> install Some::Module
+	cpan> install Some::Module
 
 To manually install the CPAN module, or any well-behaved CPAN module
 for that matter, follow these steps:
@@ -1157,19 +1155,19 @@ Unpack the source into a temporary area.
 
 =item 2
 
-    perl Makefile.PL
+	perl Makefile.PL
 
 =item 3
 
-    make
+	make
 
 =item 4
 
-    make test
+	make test
 
 =item 5
 
-    make install
+	make install
 
 =back
 
@@ -1186,19 +1184,19 @@ and use?".
 Perl offers several different ways to include code from one file into
 another.  Here are the deltas between the various inclusion constructs:
 
-    1)  do $file is like eval `cat $file`, except the former
+	1)  do $file is like eval `cat $file`, except the former
 	1.1: searches @INC and updates %INC.
 	1.2: bequeaths an *unrelated* lexical scope on the eval'ed code.
 
-    2)  require $file is like do $file, except the former
+	2)  require $file is like do $file, except the former
 	2.1: checks for redundant loading, skipping already loaded files.
 	2.2: raises an exception on failure to find, compile, or execute $file.
 
-    3)  require Module is like require "Module.pm", except the former
+	3)  require Module is like require "Module.pm", except the former
 	3.1: translates each "::" into your system's directory separator.
 	3.2: primes the parser to disambiguate class Module as an indirect object.
 
-    4)  use Module is like require Module, except the former
+	4)  use Module is like require Module, except the former
 	4.1: loads the module at compile time, not run-time.
 	4.2: imports symbols and semantics from that package to the current one.
 
@@ -1206,54 +1204,121 @@ In general, you usually want C<use> and a proper Perl module.
 
 =head2 How do I keep my own module/library directory?
 
-When you build modules, use the PREFIX and LIB options when generating
-Makefiles:
+When you build modules, tell Perl where to install the modules.
 
-    perl Makefile.PL PREFIX=/mydir/perl LIB=/mydir/perl/lib
+For C<Makefile.PL>-based distributions, use the PREFIX and LIB options
+when generating Makefiles:
 
-then either set the PERL5LIB environment variable before you run
-scripts that use the modules/libraries (see L<perlrun>) or say
+	perl Makefile.PL PREFIX=/mydir/perl LIB=/mydir/perl/lib
 
-    use lib '/mydir/perl/lib';
+You can set this in your CPAN.pm configuration so modules automatically install
+in your private library directory when you use the CPAN.pm shell:
 
-This is almost the same as
+	% cpan
+	cpan> o conf makepl_arg PREFIX=/mydir/perl,LIB=/mydir/perl/lib
+	cpan> o conf commit
 
-    BEGIN {
-	unshift(@INC, '/mydir/perl/lib');
-    }
+For C<Build.PL>-based distributions, use the --install_base option:
 
-except that the lib module checks for machine-dependent subdirectories.
-See Perl's L<lib> for more information.
+	perl Build.PL --install_base /mydir/perl 
+
+You can configure CPAN.pm to automatically use this option too:
+
+	% cpan
+	cpan> o conf mbuild_arg --install_base /mydir/perl
+	cpan> o conf commit
 
 =head2 How do I add the directory my program lives in to the module/library search path?
 
-    use FindBin;
-    use lib "$FindBin::Bin";
-    use your_own_modules;
+(contributed by brian d foy)
+
+If you know the directory already, you can add it to C<@INC> as you would
+for any other directory. You might <use lib> if you know the directory
+at compile time:
+
+	use lib $directory;
+	
+The trick in this task is to find the directory. Before your script does
+anything else (such as a C<chdir>), you can get the current working
+directory with the C<Cwd> module, which comes with Perl:
+
+	BEGIN {
+		use Cwd;
+		our $directory = cwd;
+		}
+	
+	use lib $directory;
+	
+You can do a similar thing with the value of C<$0>, which holds the
+script name. That might hold a relative path, but C<rel2abs> can turn
+it into an absolute path. Once you have the 
+
+	BEGIN {	
+		use File::Spec::Functions qw(rel2abs);
+		use File::Basename qw(dirname);
+		
+		my $path   = rel2abs( $0 );
+		our $directory = dirname( $path );
+		}
+		
+	use lib $directory;
+
+The C<FindBin> module, which comes with Perl, might work. It searches
+through C<$ENV{PATH}> (so your script has to be in one of those
+directories). You can then use that directory (in C<$FindBin::Bin>)
+to locate nearby directories you want to add:
+
+	use FindBin;
+	use lib "$FindBin::Bin/../lib";
 
 =head2 How do I add a directory to my include path (@INC) at runtime?
 
-Here are the suggested ways of modifying your include path:
+Here are the suggested ways of modifying your include path, including
+environment variables, run-time switches, and in-code statements:
 
-    the PERLLIB environment variable
-    the PERL5LIB environment variable
-    the perl -Idir command line flag
-    the use lib pragma, as in
-        use lib "$ENV{HOME}/myown_perllib";
+=over 4
 
-The latter is particularly useful because it knows about machine
+=item the PERLLIB environment variable
+
+	$ export PERLLIB=/path/to/my/dir
+	$ perl program.pl
+
+=item the PERL5LIB environment variable
+
+	$ export PERL5LIB=/path/to/my/dir
+	$ perl program.pl
+
+=item the perl -Idir command line flag
+
+	$ perl -I/path/to/my/dir program.pl
+
+=item the use lib pragma:
+
+	use lib "$ENV{HOME}/myown_perllib";
+
+=back
+
+The last is particularly useful because it knows about machine
 dependent architectures.  The lib.pm pragmatic module was first
 included with the 5.002 release of Perl.
 
 =head2 What is socket.ph and where do I get it?
 
-It's a perl4-style file defining values for system networking
+It's a Perl 4 style file defining values for system networking
 constants.  Sometimes it is built using h2ph when Perl is installed,
 but other times it is not.  Modern programs C<use Socket;> instead.
 
+=head1 REVISION
+
+Revision: $Revision: 10183 $
+
+Date: $Date: 2007-11-07 09:35:12 +0100 (Wed, 07 Nov 2007) $
+
+See L<perlfaq> for source control details and availability.
+
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

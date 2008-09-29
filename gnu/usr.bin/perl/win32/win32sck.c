@@ -37,22 +37,11 @@
 #	define TO_SOCKET(x)	(x)
 #endif	/* USE_SOCKETS_AS_HANDLES */
 
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
 #define StartSockets() \
     STMT_START {					\
 	if (!wsock_started)				\
 	    start_sockets();				\
-	set_socktype();                                 \
     } STMT_END
-#else
-#define StartSockets() \
-    STMT_START {					\
-	if (!wsock_started) {				\
-	    start_sockets();				\
-	    set_socktype();				\
-	}						\
-    } STMT_END
-#endif
 
 #define SOCKET_TEST(x, y) \
     STMT_START {					\
@@ -97,20 +86,6 @@ start_sockets(void)
     /* atexit((void (*)(void)) EndSockets); */
     wsock_started = 1;
 }
-
-void
-set_socktype(void)
-{
-#ifdef USE_SOCKETS_AS_HANDLES
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
-    dTHX;
-    if (!w32_init_socktype) {
-	w32_init_socktype = 1;
-    }
-#endif
-#endif	/* USE_SOCKETS_AS_HANDLES */
-}
-
 
 #ifndef USE_SOCKETS_AS_HANDLES
 #undef fdopen
@@ -674,15 +649,19 @@ int
 win32_ioctl(int i, unsigned int u, char *data)
 {
     dTHX;
-    u_long argp = (u_long)data;
+    u_long u_long_arg; 
     int retval;
-
+    
     if (!wsock_started) {
 	Perl_croak_nocontext("ioctl implemented only on sockets");
 	/* NOTREACHED */
     }
 
-    retval = ioctlsocket(TO_SOCKET(i), (long)u, &argp);
+    /* mauke says using memcpy avoids alignment issues */
+    memcpy(&u_long_arg, data, sizeof u_long_arg); 
+    retval = ioctlsocket(TO_SOCKET(i), (long)u, &u_long_arg);
+    memcpy(data, &u_long_arg, sizeof u_long_arg);
+    
     if (retval == SOCKET_ERROR) {
 	if (WSAGetLastError() == WSAENOTSOCK) {
 	    Perl_croak_nocontext("ioctl implemented only on sockets");

@@ -37,7 +37,7 @@ print OUT <<'!NO!SUBS!';
 
 # pod2text -- Convert POD data to formatted ASCII text.
 #
-# Copyright 1999, 2000, 2001 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -67,7 +67,7 @@ for (my $i = 0; $i < @ARGV; $i++) {
 }
 
 # Insert -- into @ARGV before any single dash argument to hide it from
-# Getopt::Long; we want to interpret it as meaning stdin (which Pod::Parser
+# Getopt::Long; we want to interpret it as meaning stdin (which Pod::Simple
 # does correctly).
 my $stdin;
 @ARGV = map { $_ eq '-' && !$stdin++ ? ('--', $_) : $_ } @ARGV;
@@ -100,7 +100,10 @@ delete @options{'color', 'termcap', 'overstrike'};
 
 # Initialize and run the formatter.
 my $parser = $formatter->new (%options);
-$parser->parse_from_file (@ARGV);
+do {
+    my ($input, $output) = splice (@ARGV, 0, 2);
+    $parser->parse_from_file ($input, $output);
+} while (@ARGV);
 
 __END__
 
@@ -111,7 +114,7 @@ pod2text - Convert POD data to formatted ASCII text
 =head1 SYNOPSIS
 
 pod2text [B<-aclost>] [B<--code>] [B<-i> I<indent>] S<[B<-q> I<quotes>]>
-S<[B<-w> I<width>]> [I<input> [I<output>]]
+S<[B<-w> I<width>]> [I<input> [I<output> ...]]
 
 pod2text B<-h>
 
@@ -124,7 +127,10 @@ either termcap sequences or ANSI color escape sequences to format the text.
 I<input> is the file to read for POD source (the POD can be embedded in
 code).  If I<input> isn't given, it defaults to STDIN.  I<output>, if given,
 is the file to which to write the formatted output.  If I<output> isn't
-given, the formatted output is written to STDOUT.
+given, the formatted output is written to STDOUT.  Several POD files can be
+processed in the same B<pod2text> invocation (saving module load and compile
+times) by providing multiple pairs of I<input> and I<output> files on the
+command line.
 
 =head1 OPTIONS
 
@@ -213,7 +219,7 @@ your terminal device.
 
 =head1 DIAGNOSTICS
 
-If B<pod2text> fails with errors, see L<Pod::Text> and L<Pod::Parser> for
+If B<pod2text> fails with errors, see L<Pod::Text> and L<Pod::Simple> for
 information about what those errors might mean.  Internally, it can also
 produce the following diagnostics:
 
@@ -230,8 +236,8 @@ loaded.
 
 =back
 
-In addition, other L<Getopt::Long|Getopt::Long> error messages may result
-from invalid command-line options.
+In addition, other L<Getopt::Long> error messages may result from invalid
+command-line options.
 
 =head1 ENVIRONMENT
 
@@ -254,7 +260,7 @@ current terminal device.
 =head1 SEE ALSO
 
 L<Pod::Text>, L<Pod::Text::Color>, L<Pod::Text::Overstrike>,
-L<Pod::Text::Termcap>, L<Pod::Parser>
+L<Pod::Text::Termcap>, L<Pod::Simple>
 
 The current version of this script is always available from its web site at
 L<http://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
@@ -266,7 +272,7 @@ Russ Allbery <rra@stanford.edu>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

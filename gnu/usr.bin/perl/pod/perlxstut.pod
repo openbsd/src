@@ -91,70 +91,75 @@ extension, it will print out a well-known message and return.
 Run "C<h2xs -A -n Mytest>".  This creates a directory named Mytest,
 possibly under ext/ if that directory exists in the current working
 directory.  Several files will be created in the Mytest dir, including
-MANIFEST, Makefile.PL, Mytest.pm, Mytest.xs, test.pl, and Changes.
+MANIFEST, Makefile.PL, Mytest.pm, Mytest.xs, Mytest.t, and Changes.
 
 The MANIFEST file contains the names of all the files just created in the
 Mytest directory.
 
 The file Makefile.PL should look something like this:
 
-	use ExtUtils::MakeMaker;
-	# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-	# the contents of the Makefile that is written.
-	WriteMakefile(
-	    NAME         => 'Mytest',
-	    VERSION_FROM => 'Mytest.pm', # finds $VERSION
-	    LIBS         => [''],   # e.g., '-lm'
-	    DEFINE       => '',     # e.g., '-DHAVE_SOMETHING'
-	    INC          => '',     # e.g., '-I/usr/include/other'
-	);
+    use ExtUtils::MakeMaker;
+    # See lib/ExtUtils/MakeMaker.pm for details of how to influence
+    # the contents of the Makefile that is written.
+    WriteMakefile(
+	NAME         => 'Mytest',
+	VERSION_FROM => 'Mytest.pm', # finds $VERSION
+	LIBS         => [''],   # e.g., '-lm'
+	DEFINE       => '',     # e.g., '-DHAVE_SOMETHING'
+	INC          => '',     # e.g., '-I/usr/include/other'
+    );
 
 The file Mytest.pm should start with something like this:
 
-	package Mytest;
+    package Mytest;
 
-	use strict;
-        use warnings;
+    use 5.008008;
+    use strict;
+    use warnings;
 
-	require Exporter;
-	require DynaLoader;
+    require Exporter;
 
-	our @ISA = qw(Exporter DynaLoader);
-	# Items to export into callers namespace by default. Note: do not export
-	# names by default without a very good reason. Use EXPORT_OK instead.
-	# Do not simply export all your public functions/methods/constants.
-	our @EXPORT = qw(
+    our @ISA = qw(Exporter);
+    our %EXPORT_TAGS = ( 'all' => [ qw(
 
-	);
-	our $VERSION = '0.01';
+    ) ] );
 
-	bootstrap Mytest $VERSION;
+    our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-	# Preloaded methods go here.
+    our @EXPORT = qw(
 
-	# Autoload methods go after __END__, and are processed by the autosplit program.
+    );
 
-	1;
-	__END__
-	# Below is the stub of documentation for your module. You better edit it!
+    our $VERSION = '0.01';
+
+    require XSLoader;
+    XSLoader::load('Mytest', $VERSION);
+
+    # Preloaded methods go here.
+
+    1;
+    __END__
+    # Below is the stub of documentation for your module. You better edit it!
 
 The rest of the .pm file contains sample code for providing documentation for
 the extension.
 
 Finally, the Mytest.xs file should look something like this:
 
-	#include "EXTERN.h"
-	#include "perl.h"
-	#include "XSUB.h"
+    #include "EXTERN.h"
+    #include "perl.h"
+    #include "XSUB.h"
 
-	MODULE = Mytest		PACKAGE = Mytest
+    #include "ppport.h"
+
+    MODULE = Mytest		PACKAGE = Mytest
 
 Let's edit the .xs file by adding this to the end of the file:
 
-	void
-	hello()
-	    CODE:
-		printf("Hello, world!\n");
+    void
+    hello()
+	CODE:
+	    printf("Hello, world!\n");
 
 It is okay for the lines starting at the "CODE:" line to not be indented.
 However, for readability purposes, it is suggested that you indent CODE:
@@ -163,29 +168,32 @@ one level and the lines following one more level.
 Now we'll run "C<perl Makefile.PL>".  This will create a real Makefile,
 which make needs.  Its output looks something like:
 
-	% perl Makefile.PL
-	Checking if your kit is complete...
-	Looks good
-	Writing Makefile for Mytest
-	%
+    % perl Makefile.PL
+    Checking if your kit is complete...
+    Looks good
+    Writing Makefile for Mytest
+    %
 
 Now, running make will produce output that looks something like this (some
 long lines have been shortened for clarity and some extraneous lines have
 been deleted):
 
-	% make
-	umask 0 && cp Mytest.pm ./blib/Mytest.pm
-	perl xsubpp -typemap typemap Mytest.xs >Mytest.tc && mv Mytest.tc Mytest.c
-	Please specify prototyping behavior for Mytest.xs (see perlxs manual)
-	cc -c Mytest.c
-	Running Mkbootstrap for Mytest ()
-	chmod 644 Mytest.bs
-	LD_RUN_PATH="" ld -o ./blib/PA-RISC1.1/auto/Mytest/Mytest.sl -b Mytest.o
-	chmod 755 ./blib/PA-RISC1.1/auto/Mytest/Mytest.sl
-	cp Mytest.bs ./blib/PA-RISC1.1/auto/Mytest/Mytest.bs
-	chmod 644 ./blib/PA-RISC1.1/auto/Mytest/Mytest.bs
-	Manifying ./blib/man3/Mytest.3
-	%
+    % make
+    cp lib/Mytest.pm blib/lib/Mytest.pm
+    perl xsubpp  -typemap typemap  Mytest.xs > Mytest.xsc && mv Mytest.xsc Mytest.c
+    Please specify prototyping behavior for Mytest.xs (see perlxs manual)
+    cc -c     Mytest.c
+    Running Mkbootstrap for Mytest ()
+    chmod 644 Mytest.bs
+    rm -f blib/arch/auto/Mytest/Mytest.so
+    cc  -shared -L/usr/local/lib Mytest.o  -o blib/arch/auto/Mytest/Mytest.so   \
+                \
+
+    chmod 755 blib/arch/auto/Mytest/Mytest.so
+    cp Mytest.bs blib/arch/auto/Mytest/Mytest.bs
+    chmod 644 blib/arch/auto/Mytest/Mytest.bs
+    Manifying blib/man3/Mytest.3pm
+    %
 
 You can safely ignore the line about "prototyping behavior" - it is
 explained in the section "The PROTOTYPES: Keyword" in L<perlxs>.
@@ -202,20 +210,20 @@ Perl has its own special way of easily writing test scripts, but for this
 example only, we'll create our own test script.  Create a file called hello
 that looks like this:
 
-	#! /opt/perl5/bin/perl
+    #! /opt/perl5/bin/perl
 
-	use ExtUtils::testlib;
+    use ExtUtils::testlib;
 
-	use Mytest;
+    use Mytest;
 
-	Mytest::hello();
+    Mytest::hello();
 
 Now we make the script executable (C<chmod +x hello>), run the script
 and we should see the following output:
 
-	% ./hello
-	Hello, world!
-	%
+    % ./hello
+    Hello, world!
+    %
 
 =head2 EXAMPLE 2
 
@@ -225,13 +233,13 @@ is odd.
 
 Add the following to the end of Mytest.xs:
 
-	int
-	is_even(input)
-		int	input
-	    CODE:
-		RETVAL = (input % 2 == 0);
-	    OUTPUT:
-		RETVAL
+    int
+    is_even(input)
+	    int input
+	CODE:
+	    RETVAL = (input % 2 == 0);
+	OUTPUT:
+	    RETVAL
 
 There does not need to be whitespace at the start of the "C<int input>"
 line, but it is useful for improving readability.  Placing a semi-colon at
@@ -244,28 +252,32 @@ Now perform the same steps as before, generating a Makefile from the
 Makefile.PL file, and running make.
 
 In order to test that our extension works, we now need to look at the
-file t/MyTest.t.  This file is set up to imitate the same kind of testing
+file t/Mytest.t.  This file is set up to imitate the same kind of testing
 structure that Perl itself has.  Within the test script, you perform a
 number of tests to confirm the behavior of the extension, printing "ok"
-when the test is correct, "not ok" when it is not.  Change the plan
-statement for Test::More to read 
-use Test::More tests => 4;
-and add the following code
-to the end of the file:
+when the test is correct, "not ok" when it is not.
 
-	ok(&Mytest::is_even(0) == 1);
-	ok(&Mytest::is_even(1) == 0);
-	ok(&Mytest::is_even(2) == 1);
+    use Test::More tests => 4;
+    BEGIN { use_ok('Mytest') };
+
+    #########################
+
+    # Insert your test code below, the Test::More module is use()ed here so read
+    # its man page ( perldoc Test::More ) for help writing this test script.
+
+    is(&Mytest::is_even(0), 1);
+    is(&Mytest::is_even(1), 0);
+    is(&Mytest::is_even(2), 1);
 
 We will be calling the test script through the command "C<make test>".  You
 should see output that looks something like this:
 
-	% make test
-	PERL_DL_NONLAZY=1 /opt/perl5.004/bin/perl (lots of -I arguments) test.pl
-	t/MyTest....ok
-	All tests successful.
-	Files=1, Tests=4,  0 wallclock secs ( 0.07 cusr +  0.03 csys =  0.10 CPU)
-	%
+    %make test
+    PERL_DL_NONLAZY=1 /usr/bin/perl "-MExtUtils::Command::MM" "-e" "test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
+    t/Mytest....ok
+    All tests successful.
+    Files=1, Tests=4,  0 wallclock secs ( 0.03 cusr +  0.00 csys =  0.03 CPU)
+    %
 
 =head2 What has gone on?
 
@@ -293,7 +305,7 @@ while you are still testing extensions that you use "C<make test>".  If you
 try to run the test script all by itself, you will get a fatal error.
 Another reason it is important to use "C<make test>" to run your test
 script is that if you are testing an upgrade to an already-existing version,
-using "C<make test>" insures that you will test your new extension, not the
+using "C<make test>" ensures that you will test your new extension, not the
 already-existing version.
 
 When Perl sees a C<use extension;>, it searches for a file with the same name
@@ -333,16 +345,15 @@ the .pm or .xs files, you should increment the value of this variable.
 
 =head2 Writing good test scripts
 
-The importance of writing good test scripts cannot be overemphasized.  You
+The importance of writing good test scripts cannot be over-emphasized.  You
 should closely follow the "ok/not ok" style that Perl itself uses, so that
 it is very easy and unambiguous to determine the outcome of each test case.
 When you find and fix a bug, make sure you add a test case for it.
 
-By running "C<make test>", you ensure that your test.pl script runs and uses
-the correct version of your extension.  If you have many test cases, you
-might want to copy Perl's test style.  Create a directory named "t" in the
-extension's directory and append the suffix ".t" to the names of your test
-files.  When you run "C<make test>", all of these test files will be executed.
+By running "C<make test>", you ensure that your Mytest.t script runs and uses
+the correct version of your extension.  If you have many test cases,
+save your test files in the "t" directory and use the suffix ".t".
+When you run "C<make test>", all of these test files will be executed.
 
 =head2 EXAMPLE 3
 
@@ -369,20 +380,20 @@ Edit the Makefile.PL file so that the corresponding line looks like this:
 
 	'LIBS'      => ['-lm'],   # e.g., '-lm'
 
-Generate the Makefile and run make.  Change the BEGIN block to print
-"1..9" and add the following to test.pl:
+Generate the Makefile and run make.  Change the test number in Mytest.t to
+"9" and add the following tests:
 
-	$i = -1.5; &Mytest::round($i); print $i == -2.0 ? "ok 5" : "not ok 5", "\n";
-	$i = -1.1; &Mytest::round($i); print $i == -1.0 ? "ok 6" : "not ok 6", "\n";
-	$i = 0.0; &Mytest::round($i); print $i == 0.0 ? "ok 7" : "not ok 7", "\n";
-	$i = 0.5; &Mytest::round($i); print $i == 1.0 ? "ok 8" : "not ok 8", "\n";
-	$i = 1.2; &Mytest::round($i); print $i == 1.0 ? "ok 9" : "not ok 9", "\n";
+	$i = -1.5; &Mytest::round($i); is( $i, -2.0 );
+	$i = -1.1; &Mytest::round($i); is( $i, -1.0 );
+	$i = 0.0; &Mytest::round($i);  is( $i,  0.0 );
+	$i = 0.5; &Mytest::round($i);  is( $i,  1.0 );
+	$i = 1.2; &Mytest::round($i);  is( $i,  1.0 );
 
 Running "C<make test>" should now print out that all nine tests are okay.
 
 Notice that in these new test cases, the argument passed to round was a
 scalar variable.  You might be wondering if you can round a constant or
-literal.  To see what happens, temporarily add the following line to test.pl:
+literal.  To see what happens, temporarily add the following line to Mytest.t:
 
 	&Mytest::round(3);
 
@@ -447,7 +458,8 @@ The file name is Mytest.c:
 	{
 	    dXSARGS;
 	    if (items != 1)
-		croak("Usage: Mytest::round(arg)");
+		Perl_croak(aTHX_ "Usage: Mytest::round(arg)");
+        PERL_UNUSED_VAR(cv); /* -W */
 	    {
 		double  arg = (double)SvNV(ST(0));	/* XXXXX */
 		if (arg > 0.0) {
@@ -458,8 +470,9 @@ The file name is Mytest.c:
 			arg = 0.0;
 		}
 		sv_setnv(ST(0), (double)arg);	/* XXXXX */
+        SvSETMAGIC(ST(0));
 	    }
-	    XSRETURN(1);
+	    XSRETURN_EMPTY;
 	}
 
 Notice the two lines commented with "XXXXX".  If you check the first section
@@ -611,18 +624,19 @@ Now run perl on the top-level Makefile.PL.  Notice that it also created a
 Makefile in the mylib directory.  Run make and watch that it does cd into
 the mylib directory and run make in there as well.
 
-Now edit the test.pl script and change the BEGIN block to print "1..4",
+Now edit the Mytest2.t script and change the number of tests to "4",
 and add the following lines to the end of the script:
 
-	print &Mytest2::foo(1, 2, "Hello, world!") == 7 ? "ok 2\n" : "not ok 2\n";
-	print &Mytest2::foo(1, 2, "0.0") == 7 ? "ok 3\n" : "not ok 3\n";
-	print abs(&Mytest2::foo(0, 0, "-3.4") - 0.6) <= 0.01 ? "ok 4\n" : "not ok 4\n";
+	is( &Mytest2::foo(1, 2, "Hello, world!"), 7 );
+	is( &Mytest2::foo(1, 2, "0.0"), 7 );
+	ok( abs(&Mytest2::foo(0, 0, "-3.4") - 0.6) <= 0.01 );
 
 (When dealing with floating-point comparisons, it is best to not check for
 equality, but rather that the difference between the expected and actual
 result is below a certain amount (called epsilon) which is 0.01 in this case)
 
-Run "C<make test>" and all should be well.
+Run "C<make test>" and all should be well. There are some warnings on missing tests
+for the Mytest2::mylib extension, but you can ignore them.
 
 =head2 What has happened here?
 
@@ -678,7 +692,7 @@ commands to build it.
 The .xs file of L<"EXAMPLE 4"> contained some new elements.  To understand
 the meaning of these elements, pay attention to the line which reads
 
-	MODULE = Mytest2		PACKAGE = Mytest2		
+	MODULE = Mytest2		PACKAGE = Mytest2
 
 Anything before this line is plain C code which describes which headers
 to include, and defines some convenience functions.  No translations are
@@ -972,8 +986,6 @@ Mytest.xs:
 			XPUSHs(sv_2mortal(newSVnv(buf.f_ffree)));
 			XPUSHs(sv_2mortal(newSVnv(buf.f_files)));
 			XPUSHs(sv_2mortal(newSVnv(buf.f_type)));
-			XPUSHs(sv_2mortal(newSVnv(buf.f_fsid[0])));
-			XPUSHs(sv_2mortal(newSVnv(buf.f_fsid[1])));
 		} else {
 			XPUSHs(sv_2mortal(newSVnv(errno)));
 		}
@@ -983,13 +995,13 @@ after the include of "XSUB.h":
 
 	#include <sys/vfs.h>
 
-Also add the following code segment to test.pl while incrementing the "1..9"
-string in the BEGIN block to "1..11":
+Also add the following code segment to Mytest.t while incrementing the "9"
+tests to "11":
 
 	@a = &Mytest::statfs("/blech");
-	print ((scalar(@a) == 1 && $a[0] == 2) ? "ok 10\n" : "not ok 10\n");
+	ok( scalar(@a) == 1 && $a[0] == 2 );
 	@a = &Mytest::statfs("/");
-	print scalar(@a) == 9 ? "ok 11\n" : "not ok 11\n";
+	is( scalar(@a), 7 );
 
 =head2 New Things in this Example
 
@@ -1046,7 +1058,7 @@ If we were interested in performance, not in code compactness, in the success
 branch we would not use C<XPUSHs> macros, but C<PUSHs> macros, and would
 pre-extend the stack before pushing the return values:
 
-	EXTEND(SP, 9);
+	EXTEND(SP, 7);
 
 The tradeoff is that one needs to calculate the number of return values
 in advance (though overextending the stack will not typically hurt
@@ -1073,56 +1085,56 @@ filesystems.
 Return to the Mytest directory and add the following code to the end of
 Mytest.xs:
 
-	SV *
-	multi_statfs(paths)
-		SV * paths
-	    INIT:
-        	AV * results;
-        	I32 numpaths = 0;
-        	int i, n;
-        	struct statfs buf;
+    SV *
+    multi_statfs(paths)
+	    SV * paths
+	INIT:
+	    AV * results;
+	    I32 numpaths = 0;
+	    int i, n;
+	    struct statfs buf;
 
-        	if ((!SvROK(paths))
-		    || (SvTYPE(SvRV(paths)) != SVt_PVAV)
-		    || ((numpaths = av_len((AV *)SvRV(paths))) < 0))
-		{
-		    XSRETURN_UNDEF;
-        	}
-        	results = (AV *)sv_2mortal((SV *)newAV());
-	    CODE:
-        	for (n = 0; n <= numpaths; n++) {
-		    HV * rh;
-            	    STRLEN l;
-            	    char * fn = SvPV(*av_fetch((AV *)SvRV(paths), n, 0), l);
+	    if ((!SvROK(paths))
+		|| (SvTYPE(SvRV(paths)) != SVt_PVAV)
+		|| ((numpaths = av_len((AV *)SvRV(paths))) < 0))
+	    {
+		XSRETURN_UNDEF;
+	    }
+	    results = (AV *)sv_2mortal((SV *)newAV());
+	CODE:
+	    for (n = 0; n <= numpaths; n++) {
+		HV * rh;
+		STRLEN l;
+		char * fn = SvPV(*av_fetch((AV *)SvRV(paths), n, 0), l);
 
-            	    i = statfs(fn, &buf);
-            	    if (i != 0) {
-		        av_push(results, newSVnv(errno));
-		        continue;
-            	    }
+		i = statfs(fn, &buf);
+		if (i != 0) {
+		    av_push(results, newSVnv(errno));
+		    continue;
+		}
 
-            	    rh = (HV *)sv_2mortal((SV *)newHV());
+		rh = (HV *)sv_2mortal((SV *)newHV());
 
-            	    hv_store(rh, "f_bavail", 8, newSVnv(buf.f_bavail), 0);
-            	    hv_store(rh, "f_bfree",  7, newSVnv(buf.f_bfree),  0);
-            	    hv_store(rh, "f_blocks", 8, newSVnv(buf.f_blocks), 0);
-            	    hv_store(rh, "f_bsize",  7, newSVnv(buf.f_bsize),  0);
-            	    hv_store(rh, "f_ffree",  7, newSVnv(buf.f_ffree),  0);
-            	    hv_store(rh, "f_files",  7, newSVnv(buf.f_files),  0);
-            	    hv_store(rh, "f_type",   6, newSVnv(buf.f_type),   0);
+		hv_store(rh, "f_bavail", 8, newSVnv(buf.f_bavail), 0);
+		hv_store(rh, "f_bfree",  7, newSVnv(buf.f_bfree),  0);
+		hv_store(rh, "f_blocks", 8, newSVnv(buf.f_blocks), 0);
+		hv_store(rh, "f_bsize",  7, newSVnv(buf.f_bsize),  0);
+		hv_store(rh, "f_ffree",  7, newSVnv(buf.f_ffree),  0);
+		hv_store(rh, "f_files",  7, newSVnv(buf.f_files),  0);
+		hv_store(rh, "f_type",   6, newSVnv(buf.f_type),   0);
 
-            	    av_push(results, newRV((SV *)rh));
-        	}
-        	RETVAL = newRV((SV *)results);
-	    OUTPUT:
-        	RETVAL
+		av_push(results, newRV((SV *)rh));
+	    }
+	    RETVAL = newRV((SV *)results);
+	OUTPUT:
+	    RETVAL
 
-And add the following code to test.pl, while incrementing the "1..11"
-string in the BEGIN block to "1..13":
+And add the following code to Mytest.t, while incrementing the "11"
+tests to "13":
 
 	$results = Mytest::multi_statfs([ '/', '/blech' ]);
-	print ((ref $results->[0]) ? "ok 12\n" : "not ok 12\n");
-	print ((! ref $results->[1]) ? "ok 13\n" : "not ok 13\n");
+	ok( ref $results->[0]) );
+	ok( ! ref $results->[1] );
 
 =head2 New Things in this Example
 
@@ -1359,6 +1371,8 @@ and Tim Bunce.
 PerlIO material contributed by Lupe Christoph, with some clarification
 by Nick Ing-Simmons.
 
+Changes for h2xs as of Perl 5.8.x by Renee Baecker
+
 =head2 Last Changed
 
-2002/05/08
+2007/10/11

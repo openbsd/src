@@ -70,12 +70,17 @@ a.*c	axyzc	y	$&	axyzc
 a.*c	axyzd	n	-	-
 a[bc]d	abc	n	-	-
 a[bc]d	abd	y	$&	abd
+a[b]d	abd	y	$&	abd
+[a][b][d]	abd	y	$&	abd
+.[b].	abd	y	$&	abd
+.[b].	aBd	n	-	-
+(?i:.[b].)	abd	y	$&	abd
 a[b-d]e	abd	n	-	-
 a[b-d]e	ace	y	$&	ace
 a[b-d]	aac	y	$&	ac
 a[-b]	a-	y	$&	a-
 a[b-]	a-	y	$&	a-
-a[b-a]	-	c	-	Invalid [] range "b-a"
+a[b-a]	-	c	-	Invalid [] range \"b-a\"
 a[]b	-	c	-	Unmatched [
 a[	-	c	-	Unmatched [
 a]	a]	y	$&	a]
@@ -133,13 +138,14 @@ ab|cd	abcd	y	$&	ab
 ()ef	def	y	$-[1]	1
 ()ef	def	y	$+[1]	1
 *a	-	c	-	Quantifier follows nothing
-(*)b	-	c	-	Quantifier follows nothing
+(|*)b	-	c	-	Quantifier follows nothing
+(*)b	-	c	-	Unknown verb
 $b	b	n	-	-
 a\	-	c	-	Search pattern not terminated
 a\(b	a(b	y	$&-$1	a(b-
 a\(*b	ab	y	$&	ab
 a\(*b	a((b	y	$&	a((b
-a\\b	a\b	y	$&	a\b
+a\\b	a\\b	y	$&	a\\b
 abc)	-	c	-	Unmatched )
 (abc	-	c	-	Unmatched (
 ((a))	abc	y	$&-$1-$2	a-a-a
@@ -240,13 +246,21 @@ multiple words	multiple words, yeah	y	$&	multiple words
 (.*)c(.*)	abcde	y	$&-$1-$2	abcde-ab-de
 \((.*), (.*)\)	(a, b)	y	($2, $1)	(b, a)
 [k]	ab	n	-	-
-abcd	abcd	y	$&-\$&-\\$&	abcd-$&-\abcd
-a(bc)d	abcd	y	$1-\$1-\\$1	bc-$1-\bc
+abcd	abcd	y	$&-\$&-\\$&	abcd-\$&-\\abcd
+a(bc)d	abcd	y	$1-\$1-\\$1	bc-\$1-\\bc
 a[-]?c	ac	y	$&	ac
 (abc)\1	abcabc	y	$1	abc
 ([a-c]*)\1	abcabc	y	$1	abc
 \1	-	c	-	Reference to nonexistent group
 \2	-	c	-	Reference to nonexistent group
+\g1	-	c	-	Reference to nonexistent group
+\g-1	-	c	-	Reference to nonexistent or unclosed group
+\g{1}	-	c	-	Reference to nonexistent group
+\g{-1}	-	c	-	Reference to nonexistent or unclosed group
+\g0	-	c	-	Reference to invalid group 0
+\g-0	-	c	-	Reference to invalid group 0
+\g{0}	-	c	-	Reference to invalid group 0
+\g{-0}	-	c	-	Reference to invalid group 0
 (a)|\1	a	y	-	-
 (a)|\1	x	n	-	-
 (a)|\2	-	c	-	Reference to nonexistent group
@@ -255,6 +269,8 @@ a[-]?c	ac	y	$&	ac
 ((\3|b)\2(a)x)+	aaxabxbaxbbx	n	-	-
 ((\3|b)\2(a)x)+	aaaxabaxbaaxbbax	y	$&-$1-$2-$3	bbax-bbax-b-a
 ((\3|b)\2(a)){2,}	bbaababbabaaaaabbaaaabba	y	$&-$1-$2-$3	bbaaaabba-bba-b-a
+#Bug #3589 - up to perl-5.6.0 matches incorrectly, from 5.6.1 not anymore
+^((.)?a\2)+$	babadad	n	-	-
 (a)|(b)	b	y	$-[0]	0
 (a)|(b)	b	y	$+[0]	1
 (a)|(b)	b	y	x$-[1]	x
@@ -305,7 +321,7 @@ a[-]?c	ac	y	$&	ac
 'a[b-d]'i	AAC	y	$&	AC
 'a[-b]'i	A-	y	$&	A-
 'a[b-]'i	A-	y	$&	A-
-'a[b-a]'i	-	c	-	Invalid [] range "b-a"
+'a[b-a]'i	-	c	-	Invalid [] range \"b-a\"
 'a[]b'i	-	c	-	Unmatched [
 'a['i	-	c	-	Unmatched [
 'a]'i	A]	y	$&	A]
@@ -320,13 +336,14 @@ a[-]?c	ac	y	$&	ac
 'ab|cd'i	ABCD	y	$&	AB
 '()ef'i	DEF	y	$&-$1	EF-
 '*a'i	-	c	-	Quantifier follows nothing
-'(*)b'i	-	c	-	Quantifier follows nothing
+'(|*)b'i	-	c	-	Quantifier follows nothing
+'(*)b'i	-	c	-	Unknown verb
 '$b'i	B	n	-	-
 'a\'i	-	c	-	Search pattern not terminated
 'a\(b'i	A(B	y	$&-$1	A(B-
 'a\(*b'i	AB	y	$&	AB
 'a\(*b'i	A((B	y	$&	A((B
-'a\\b'i	A\B	y	$&	A\B
+'a\\b'i	A\\B	y	$&	A\\B
 'abc)'i	-	c	-	Unmatched )
 '(abc'i	-	c	-	Unmatched (
 '((a))'i	ABC	y	$&-$1-$2	A-A-A
@@ -388,8 +405,8 @@ a[-]?c	ac	y	$&	ac
 '(.*)c(.*)'i	ABCDE	y	$&-$1-$2	ABCDE-AB-DE
 '\((.*), (.*)\)'i	(A, B)	y	($2, $1)	(B, A)
 '[k]'i	AB	n	-	-
-'abcd'i	ABCD	y	$&-\$&-\\$&	ABCD-$&-\ABCD
-'a(bc)d'i	ABCD	y	$1-\$1-\\$1	BC-$1-\BC
+'abcd'i	ABCD	y	$&-\$&-\\$&	ABCD-\$&-\\ABCD
+'a(bc)d'i	ABCD	y	$1-\$1-\\$1	BC-\$1-\\BC
 'a[-]?c'i	AC	y	$&	AC
 '(abc)\1'i	ABCABC	y	$1	ABC
 '([a-c]*)\1'i	ABCABC	y	$1	ABC
@@ -490,7 +507,7 @@ a(?{}})b	-	c	-
 a(?{"{"})b	-	c	-	Sequence (?{...}) not terminated or not {}-balanced
 a(?{"\{"})b	cabd	y	$&	ab
 a(?{"{"}})b	-	c	-	Unmatched right curly bracket
-a(?{$bl="\{"}).b	caxbd	y	$bl	{
+a(?{$::bl="\{"}).b	caxbd	y	$::bl	{
 x(~~)*(?:(?:F)?)?	x~~	y	-	-
 ^a(?#xxx){3}c	aaac	y	$&	aaac
 '^a (?#xxx) (?#yyy) {3}c'x	aaac	y	$&	aaac
@@ -953,9 +970,371 @@ x(?#	x	c	-	Sequence (?#... not terminated
 (foo|fool|x.|money|parted)$	fools	n	-	-
 (x.|foo|fool|x.|money|parted|y.)$	fools	n	-	-
 (foo|fool|money|parted)$	fools	n	-	-
-(a|aa|aaa|aaaa|aaaaa|aaaaaa)(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
-(a|aa|aaa|aaaa|aaaaa|aaaaaa)(??{$1&&""})(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
+(a|aa|aaa||aaaa|aaaaa|aaaaaa)(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
+(a|aa|aaa||aaaa|aaaaa|aaaaaa)(??{$1&&""})(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
 (a|aa|aaa|aaaa|aaaaa|aaaaaa)(??{$1&&"foo"})(b|c)	aaaaaaaaaaaaaaab	n	-	-
 ^(a*?)(?!(aa|aaaa)*$)	aaaaaaaaaaaaaaaaaaaa	y	$1	a	# [perl #34195]
 ^(a*?)(?!(aa|aaaa)*$)(?=a\z)	aaaaaaaa	y	$1	aaaaaaa
 ^(.)\s+.$(?(1))	A B	y	$1	A	# [perl #37688]
+(?:r?)*?r|(.{2,4})	abcde	y	$1	abcd
+(?!)+?|(.{2,4})	abcde	y	$1	abcd
+^(a*?)(?!(a{6}|a{5})*$)	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	y	$+[1]	12	# super-linear cache bug may return 18
+^((?>(?:aa)?b)?)	aab	y	$1	aab
+^((?:aa)*)(?:X+((?:\d+|-)(?:X+(.+))?))?$	aaaaX5	y	$1	aaaa
+X(A|B||C|D)Y	XXXYYY	y	$&	XY	# Trie w/ NOTHING
+(?i:X([A]|[B]|y[Y]y|[D]|)Y)	XXXYYYB	y	$&	XY	# Trie w/ NOTHING
+^([a]{1})*$	aa	y	$1	a
+a(?!b(?!c))(..)	abababc	y	$1	bc	# test nested negatives
+a(?!b(?=a))(..)	abababc	y	$1	bc	# test nested lookaheads
+a(?!b(?!c(?!d(?!e))))...(.)	abxabcdxabcde	y	$1	e
+X(?!b+(?!(c+)*(?!(c+)*d))).*X	aXbbbbbbbcccccccccccccaaaX	y	-	-
+^(XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^(XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P):	ZEQQQX:	y	$1	ZEQQQX
+^([TUV]+|XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^([TUV]+|XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P):	ZEQQQX:	y	$1	ZEQQQX
+^([TUV]+|XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P|[MKJ]):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^([TUV]+|XXXXXXXXXX|YYYYYYYYYY|Z.Q*X|Z[TE]Q*P|[MKJ]):	ZEQQQX:	y	$1	ZEQQQX
+^(XXX|YYY|Z.Q*X|Z[TE]Q*P):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^(XXX|YYY|Z.Q*X|Z[TE]Q*P):	ZEQQQX:	y	$1	ZEQQQX
+^([TUV]+|XXX|YYY|Z.Q*X|Z[TE]Q*P):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^([TUV]+|XXX|YYY|Z.Q*X|Z[TE]Q*P):	ZEQQQX:	y	$1	ZEQQQX
+^([TUV]+|XXX|YYY|Z.Q*X|Z[TE]Q*P|[MKJ]):	ZEQQQQQQQQQQQQQQQQQQP:	y	$1	ZEQQQQQQQQQQQQQQQQQQP
+^([TUV]+|XXX|YYY|Z.Q*X|Z[TE]Q*P|[MKJ]):	ZEQQQX:	y	$1	ZEQQQX
+X(?:ABCF[cC]x*|ABCD|ABCF):(?:DIT|DID|DIM)	XABCFCxxxxxxxxxx:DIM	y	$&	XABCFCxxxxxxxxxx:DIM
+(((ABCD|ABCE|ABCF)))(A|B|C[xy]*):	ABCFCxxxxxxxxxx:DIM	y	$&	ABCFCxxxxxxxxxx:
+(?=foo)	foo	y	pos	0
+(?=foo)	XfooY	y	pos	1
+.*(?=foo)	XfooY	y	pos	1
+(?<=foo)	foo	y	pos	3
+(?<=foo)	XfooY	y	pos	4
+.*(?<=foo)	foo	y	pos	3
+.*(?<=foo)	XfooY	y	pos	4
+(?<=foo)Y	XfooY	y	pos	5
+o(?<=foo)Y	..XfooY..	y	pos	7
+X(?=foo)f	..XfooY..	y	pos	4
+X(?=foo)	..XfooY..	y	pos	3
+X(?<=foo.)[YZ]	..XfooXY..	y	pos	8
+(?=XY*foo)	Xfoo	y	pos	0
+^(?=XY*foo)	Xfoo	y	pos	0
+^(??{"a+"})a	aa	y	$&	aa
+^(?:(??{"a+"})|b)a	aa	y	$&	aa
+^(??{chr 0x100}).$	\x{100}\x{100}	y	$&	\x{100}\x{100}
+^(??{q(\x{100})}).	\x{100}\x{100}	y	$&	\x{100}\x{100}
+^(??{q(.+)})\x{100}	\x{100}\x{100}	y	$&	\x{100}\x{100}
+^(??{q(.)})\x{100}	\x{100}\x{100}	y	$&	\x{100}\x{100}
+^(??{chr 0x100})\xbb	\x{100}\x{bb}	y	$&	\x{100}\x{bb}
+^(.)(??{"(.)(.)"})(.)$	abcd	y	$1-$2	a-d
+^(.)(??{"(bz+|.)(.)"})(.)$	abcd	y	$1-$2	a-d
+^(.)((??{"(.)(cz+)"})|.)	abcd	y	$1-$2	a-b
+^a(?>(??{q(b)}))(??{q(c)})d	abcd	y	-	-
+^x(??{""})+$	x	y	$&	x
+^(<(?:[^<>]+|(?3)|(?1))*>)()(!>!>!>)$	<<!>!>!>><>>!>!>!>	y	$1	<<!>!>!>><>>
+^(<(?:[^<>]+|(?1))*>)$	<<><<<><>>>>	y	$1	<<><<<><>>>>
+((?2)*)([fF]o+)	fooFoFoo	y	$1-$2	fooFo-Foo
+(<(?:[^<>]+|(?R))*>)	<<><<<><>>>>	y	$1	<<><<<><>>>>
+(?<n>foo|bar|baz)	snofooewa	y	$1	foo
+(?<n>foo|bar|baz)	snofooewa	y	$+{n}	foo
+(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	y	$+{n}	foo
+(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	y	$+{m}	ew
+(?<n>foo)|(?<n>bar)|(?<n>baz)	snofooewa	y	$+{n}	foo
+(?<n>foo)(??{ $+{n} })	snofooefoofoowaa	y	$+{n}	foo
+(?P<n>foo|bar|baz)	snofooewa	y	$1	foo
+(?P<n>foo|bar|baz)	snofooewa	y	$+{n}	foo
+(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	y	$+{n}	foo
+(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	y	$+{m}	ew
+(?P<n>foo)|(?P<n>bar)|(?P<n>baz)	snofooewa	y	$+{n}	foo
+(?P<n>foo)(??{ $+{n} })	snofooefoofoowaa	y	$+{n}	foo
+(?P<=n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<=...) not recognized
+(?P<!n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<!...) not recognized
+(?PX<n>foo|bar|baz)	snofooewa	c	-	Sequence (?PX<...) not recognized
+/(?'n'foo|bar|baz)/	snofooewa	y	$1	foo
+/(?'n'foo|bar|baz)/	snofooewa	y	$+{n}	foo
+/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	y	$+{n}	foo
+/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	y	$+{m}	ew
+/(?'n'foo)|(?'n'bar)|(?<n>baz)/	snobazewa	y	$+{n}	baz
+/(?'n'foo)(??{ $+{n} })/	snofooefoofoowaa	y	$+{n}	foo
+/(?'n'foo)\k<n>/	..foofoo..	y	$1	foo
+/(?'n'foo)\k<n>/	..foofoo..	y	$+{n}	foo
+/(?<n>foo)\k'n'/	..foofoo..	y	$1	foo
+/(?<n>foo)\k'n'/	..foofoo..	y	$+{n}	foo
+/(?:(?<n>foo)|(?<n>bar))\k<n>/	..barbar..	y	$+{n}	bar
+/^(?'main'<(?:[^<>]+|(?&crap)|(?&main))*>)(?'empty')(?'crap'!>!>!>)$/	<<!>!>!>><>>!>!>!>	y	$+{main}	<<!>!>!>><>>
+/^(?'main'<(?:[^<>]+|(?&main))*>)$/	<<><<<><>>>>	y	$1	<<><<<><>>>>
+/(?'first'(?&second)*)(?'second'[fF]o+)/	fooFoFoo	y	$+{first}-$+{second}	fooFo-Foo
+(?<A>foo)?(?(<A>)bar|nada)	foobar	y	$+{A}	foo
+(?<A>foo)?(?(<A>)bar|nada)	foo-barnada	y	$&	nada
+(?<A>foo)?(?(1)bar|nada)	foo-barnada	y	$&	nada
+(?<A>foo(?(R)bar))?(?1)	foofoobar	y	$1	foo
+(?<A>foo(?(R)bar))?(?1)	foofoobar	y	$&	foofoobar
+(x)(?<A>foo(?(R&A)bar))?(?&A)	xfoofoobar	y	$2	foo
+(x)(?<A>foo(?(R&A)bar))?(?&A)	xfoofoobar	y	$&	xfoofoobar
+(x)(?<A>foo(?(R2)bar))?(?&A)	xfoofoobar	y	$2	foo
+(x)(?<A>foo(?(R2)bar))?(?&A)	xfoofoobar	y	$&	xfoofoobar
+(?1)(?(DEFINE)(blah))	blah	y	$&	blah
+/^(?<PAL>(?<CHAR>.)((?&PAL)|.?)\k<CHAR>)$/	madamimadam	y	$&	madamimadam
+/^(?<PAL>(?<CHAR>.)((?&PAL)|.?)\k<CHAR>)$/	madamiamadam	n	-	-
+/(a)?((?1))(fox)/	aafox	y	$1-$2-$3	a-a-fox
+/(a)*((?1))(fox)/	aafox	y	$1-$2-$3	a-a-fox
+/(a)+((?1))(fox)/	aafox	y	$1-$2-$3	a-a-fox
+/(a){1,100}((?1))(fox)/	aafox	y	$1-$2-$3	a-a-fox
+/(a){0,100}((?1))(fox)/	aafox	y	$1-$2-$3	a-a-fox
+/(ab)?((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+/(ab)*((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+/(ab)+((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+/(ab){1,100}((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+/(ab){0,100}((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+# possessive captures
+a++a	aaaaa	n	-	-
+a*+a	aaaaa	n	-	-
+a{1,5}+a	aaaaa	n	-	-
+a?+a	ab	n	-	-
+a++b	aaaaab	y	$&	aaaaab
+a*+b	aaaaab	y	$&	aaaaab
+a{1,5}+b	aaaaab	y	$&	aaaaab
+a?+b	ab	y	$&	ab
+fooa++a	fooaaaaa	n	-	-
+fooa*+a	fooaaaaa	n	-	-
+fooa{1,5}+a	fooaaaaa	n	-	-
+fooa?+a	fooab	n	-	-
+fooa++b	fooaaaaab	y	$&	fooaaaaab
+fooa*+b	fooaaaaab	y	$&	fooaaaaab
+fooa{1,5}+b	fooaaaaab	y	$&	fooaaaaab
+fooa?+b	fooab	y	$&	fooab
+(?:aA)++(?:aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA)++(aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA|bB)++(aA|bB)	aAaAbBaAbB	n	-	aAaAbBaAbB
+(?:aA|bB)++(?:aA|bB)	aAbBbBbBaA	n	-	aAbBbBbBaA
+(?:aA)*+(?:aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA)*+(aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA|bB)*+(aA|bB)	aAaAbBaAaA	n	-	aAaAbBaAaA
+(?:aA|bB)*+(?:aA|bB)	aAaAaAbBaA	n	-	aAaAaAbBaA
+(?:aA){1,5}+(?:aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA){1,5}+(aA)	aAaAaAaAaA	n	-	aAaAaAaAaA
+(aA|bB){1,5}+(aA|bB)	aAaAbBaAaA	n	-	aAaAbBaAaA
+(?:aA|bB){1,5}+(?:aA|bB)	bBbBbBbBbB	n	-	bBbBbBbBbB
+(?:aA)?+(?:aA)	aAb	n	-	aAb
+(aA)?+(aA)	aAb	n	-	aAb
+(aA|bB)?+(aA|bB)	bBb	n	-	bBb
+(?:aA|bB)?+(?:aA|bB)	aAb	n	-	aAb
+(?:aA)++b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA)++b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA|bB)++b	aAbBaAaAbBb	y	$&	aAbBaAaAbBb
+(?:aA|bB)++b	aAbBbBaAaAb	y	$&	aAbBbBaAaAb
+(?:aA)*+b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA)*+b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA|bB)*+b	bBbBbBbBbBb	y	$&	bBbBbBbBbBb
+(?:aA|bB)*+b	bBaAbBbBaAb	y	$&	bBaAbBbBaAb
+(?:aA){1,5}+b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA){1,5}+b	aAaAaAaAaAb	y	$&	aAaAaAaAaAb
+(aA|bB){1,5}+b	bBaAbBaAbBb	y	$&	bBaAbBaAbBb
+(?:aA|bB){1,5}+b	aAbBaAbBbBb	y	$&	aAbBaAbBbBb
+(?:aA)?+b	aAb	y	$&	aAb
+(aA)?+b	aAb	y	$&	aAb
+(aA|bB)?+b	bBb	y	$&	bBb
+(?:aA|bB)?+b	bBb	y	$&	bBb
+foo(?:aA)++(?:aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA)++(aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA|bB)++(aA|bB)	foobBbBbBaAaA	n	-	foobBbBbBaAaA
+foo(?:aA|bB)++(?:aA|bB)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(?:aA)*+(?:aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA)*+(aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA|bB)*+(aA|bB)	foobBaAbBaAaA	n	-	foobBaAbBaAaA
+foo(?:aA|bB)*+(?:aA|bB)	fooaAaAbBbBaA	n	-	fooaAaAbBbBaA
+foo(?:aA){1,5}+(?:aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA){1,5}+(aA)	fooaAaAaAaAaA	n	-	fooaAaAaAaAaA
+foo(aA|bB){1,5}+(aA|bB)	fooaAbBbBaAaA	n	-	fooaAbBbBaAaA
+foo(?:aA|bB){1,5}+(?:aA|bB)	fooaAbBbBaAbB	n	-	fooaAbBbBaAbB
+foo(?:aA)?+(?:aA)	fooaAb	n	-	fooaAb
+foo(aA)?+(aA)	fooaAb	n	-	fooaAb
+foo(aA|bB)?+(aA|bB)	foobBb	n	-	foobBb
+foo(?:aA|bB)?+(?:aA|bB)	fooaAb	n	-	fooaAb
+foo(?:aA)++b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA)++b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA|bB)++b	foobBaAbBaAbBb	y	$&	foobBaAbBaAbBb
+foo(?:aA|bB)++b	fooaAaAbBaAaAb	y	$&	fooaAaAbBaAaAb
+foo(?:aA)*+b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA)*+b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA|bB)*+b	foobBbBaAaAaAb	y	$&	foobBbBaAaAaAb
+foo(?:aA|bB)*+b	foobBaAaAbBaAb	y	$&	foobBaAaAbBaAb
+foo(?:aA){1,5}+b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA){1,5}+b	fooaAaAaAaAaAb	y	$&	fooaAaAaAaAaAb
+foo(aA|bB){1,5}+b	foobBaAaAaAaAb	y	$&	foobBaAaAaAaAb
+foo(?:aA|bB){1,5}+b	fooaAbBaAbBbBb	y	$&	fooaAbBaAbBbBb
+foo(?:aA)?+b	fooaAb	y	$&	fooaAb
+foo(aA)?+b	fooaAb	y	$&	fooaAb
+foo(aA|bB)?+b	foobBb	y	$&	foobBb
+foo(?:aA|bB)?+b	foobBb	y	$&	foobBb
+
+([^()]++|\([^()]*\))+	((abc(ade)ufh()()x	y	$&	abc(ade)ufh()()x
+round\(([^()]++)\)	_I(round(xs * sz),1)	y	$1	xs * sz
+
+(foo[1x]|bar[2x]|baz[3x])+y	foo1bar2baz3y	y	$1	baz3
+(foo[1x]|bar[2x]|baz[3x])+y	foo1bar2baz3y	y	$&	foo1bar2baz3y
+(foo[1x]|bar[2x]|baz[3x])*y	foo1bar2baz3y	y	$1	baz3
+(foo[1x]|bar[2x]|baz[3x])*y	foo1bar2baz3y	y	$&	foo1bar2baz3y
+
+([yX].|WORDS|[yX].|WORD)S	WORDS	y	$1	WORD
+(WORDS|WORLD|WORD)S	WORDS	y	$1	WORD
+([yX].|WORDS|WORD|[xY].)S	WORDS	y	$1	WORD
+(foo|fool|[zx].|money|parted)$	fool	y	$1	fool
+([zx].|foo|fool|[zq].|money|parted|[yx].)$	fool	y	$1	fool
+(foo|fool|[zx].|money|parted)$	fools	n	-	-
+([zx].|foo|fool|[qx].|money|parted|[py].)$	fools	n	-	-
+
+([yX].|WORDS|[yX].|WORD)+S	WORDS	y	$1	WORD
+(WORDS|WORLD|WORD)+S	WORDS	y	$1	WORD
+([yX].|WORDS|WORD|[xY].)+S	WORDS	y	$1	WORD
+(foo|fool|[zx].|money|parted)+$	fool	y	$1	fool
+([zx].|foo|fool|[zq].|money|parted|[yx].)+$	fool	y	$1	fool
+(foo|fool|[zx].|money|parted)+$	fools	n	-	-
+([zx].|foo|fool|[qx].|money|parted|[py].)+$	fools	n	-	-
+
+(x|y|z[QW])+(longish|loquatious|excessive|overblown[QW])+	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+(x|y|z[QW])*(longish|loquatious|excessive|overblown[QW])*	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+(x|y|z[QW]){1,5}(longish|loquatious|excessive|overblown[QW]){1,5}	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+
+(x|y|z[QW])++(longish|loquatious|excessive|overblown[QW])++	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+(x|y|z[QW])*+(longish|loquatious|excessive|overblown[QW])*+	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+(x|y|z[QW]){1,5}+(longish|loquatious|excessive|overblown[QW]){1,5}+	xyzQzWlongishoverblownW	y	$1-$2	zW-overblownW
+
+a*(?!)	aaaab	n	-	-
+a*(*FAIL)	aaaab	n	-	-
+a*(*F)	aaaab	n	-	-
+
+(A(A|B(*ACCEPT)|C)D)(E)	AB	y	$1	AB
+(A(A|B(*ACCEPT)|C)D)(E)	ACDE	y	$1$2$3	ACDCE
+
+(a)(?:(?-1)|(?+1))(b)	aab	y	$&-$1-$2	aab-a-b
+(a)(?:(?-1)|(?+1))(b)	abb	y	$1-$2	a-b
+(a)(?:(?-1)|(?+1))(b)	acb	n	-	-
+
+(foo)(\g-2)	foofoo	y	$1-$2	foo-foo
+(foo)(\g-2)(foo)(\g-2)	foofoofoofoo	y	$1-$2-$3-$4	foo-foo-foo-foo
+(([abc]+) \g-1)(([abc]+) \g{-1})	abc abccba cba	y	$2-$4	abc-cba
+(a)(b)(c)\g1\g2\g3	abcabc	y	$1$2$3	abc
+
+# \k<n> preceded by a literal
+/(?'n'foo) \k<n>/	..foo foo..	y	$1	foo
+/(?'n'foo) \k<n>/	..foo foo..	y	$+{n}	foo
+/(?<n>foo) \k'n'/	..foo foo..	y	$1	foo
+/(?<n>foo) \k'n'/	..foo foo..	y	$+{n}	foo
+/(?'a1'foo) \k'a1'/	..foo foo..	y	$+{a1}	foo
+/(?<a1>foo) \k<a1>/	..foo foo..	y	$+{a1}	foo
+/(?'_'foo) \k'_'/	..foo foo..	y	$+{_}	foo
+/(?<_>foo) \k<_>/	..foo foo..	y	$+{_}	foo
+/(?'_0_'foo) \k'_0_'/	..foo foo..	y	$+{_0_}	foo
+/(?<_0_>foo) \k<_0_>/	..foo foo..	y	$+{_0_}	foo
+/(?'0'foo) bar/	..foo bar..	c	-	Sequence (?'
+/(?<0>foo) bar/	..foo bar..	c	-	Sequence (?<
+/(?'12'foo) bar/	..foo bar..	c	-	Sequence (?'
+/(?<12>foo) bar/	..foo bar..	c	-	Sequence (?<
+/(?'1a'foo) bar/	..foo bar..	c	-	Sequence (?'
+/(?<1a>foo) bar/	..foo bar..	c	-	Sequence (?<
+/(?''foo) bar/	..foo bar..	c	-	Sequence (?''
+/(?<>foo) bar/	..foo bar..	c	-	Sequence (?<>
+/foo \k'n'/	foo foo	c	-	Reference to nonexistent named group
+/foo \k<n>/	foo foo	c	-	Reference to nonexistent named group
+/foo \k'a1'/	foo foo	c	-	Reference to nonexistent named group
+/foo \k<a1>/	foo foo	c	-	Reference to nonexistent named group
+/foo \k'_'/	foo foo	c	-	Reference to nonexistent named group
+/foo \k<_>/	foo foo	c	-	Reference to nonexistent named group
+/foo \k'_0_'/	foo foo	c	-	Reference to nonexistent named group
+/foo \k<_0_>/	foo foo	c	-	Reference to nonexistent named group
+/foo \k'0'/	foo foo	c	-	Sequence \\k'
+/foo \k<0>/	foo foo	c	-	Sequence \\k<
+/foo \k'12'/	foo foo	c	-	Sequence \\k'
+/foo \k<12>/	foo foo	c	-	Sequence \\k<
+/foo \k'1a'/	foo foo	c	-	Sequence \\k'
+/foo \k<1a>/	foo foo	c	-	Sequence \\k<
+/foo \k''/	foo foo	c	-	Sequence \\k'
+/foo \k<>/	foo foo	c	-	Sequence \\k<
+/(?<as>as) (\w+) \k<as> (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
+
+# \g{...} with a name as the argument 
+/(?'n'foo) \g{n}/	..foo foo..	y	$1	foo
+/(?'n'foo) \g{n}/	..foo foo..	y	$+{n}	foo
+/(?<n>foo) \g{n}/	..foo foo..	y	$1	foo
+/(?<n>foo) \g{n}/	..foo foo..	y	$+{n}	foo
+/(?<as>as) (\w+) \g{as} (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
+
+# Python style named capture buffer stuff
+/(?P<n>foo)(?P=n)/	..foofoo..	y	$1	foo
+/(?P<n>foo)(?P=n)/	..foofoo..	y	$+{n}	foo
+/(?:(?P<n>foo)|(?P<n>bar))(?P=n)/	..barbar..	y	$+{n}	bar
+/^(?P<PAL>(?P<CHAR>.)((?P>PAL)|.?)(?P=CHAR))$/	madamimadam	y	$&	madamimadam
+/^(?P<PAL>(?P<CHAR>.)((?P>PAL)|.?)(?P=CHAR))$/	madamiamadam	n	-	-
+/(?P<n>foo) (?P=n)/	..foo foo..	y	$1	foo
+/(?P<n>foo) (?P=n)/	..foo foo..	y	$+{n}	foo
+/(?P<as>as) (\w+) (?P=as) (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
+
+#check that non identifiers as names are treated as the appropriate lookaround
+(?<=bar>)foo	bar>foo	y	$&	foo
+(?<!bar>)foo	bar>foo	n	-	-
+(?<=bar>ABC)foo	bar>ABCfoo	y	$&	foo
+(?<!bar>ABC)foo	bar>ABCfoo	n	-	-
+(?<bar>)foo	bar>ABCfoo	y	$&	foo
+(?<bar>ABC)foo	bar>ABCfoo	y	$&	ABCfoo
+
+(?<=abcd(?<=(aaaabcd)))	..aaaabcd..	y	$1	aaaabcd
+(?=xy(?<=(aaxy)))	..aaxy..	y	$1	aaxy
+
+X(\w+)(?=\s)|X(\w+)	Xab	y	[$1-$2]	[-ab]
+
+#check that branch reset works ok.
+(?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	d!o!da	y	$1-$2-$3	!o!-o-a
+(?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	aabc	y	$1-$2-$3	a--c
+(?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	ixyjp	y	$1-$2-$3	x-y-p
+(?|(?|(a)|(b))|(?|(c)|(d)))	a	y	$1	a
+(?|(?|(a)|(b))|(?|(c)|(d)))	b	y	$1	b
+(?|(?|(a)|(b))|(?|(c)|(d)))	c	y	$1	c
+(?|(?|(a)|(b))|(?|(c)|(d)))	d	y	$1	d
+(.)(?|(.)(.)x|(.)d)(.)	abcde	y	$1-$2-$3-$4-$5-	b-c--e--
+#Bug #41492
+(?(DEFINE)(?<A>(?&B)+)(?<B>a))(?&A)	a	y	$&	a
+(?(DEFINE)(?<A>(?&B)+)(?<B>a))(?&A)	aa	y	$&	aa
+\x{100}?(??{""})xxx	xxx	y	$&	xxx
+
+foo(\R)bar	foo\r\nbar	y	$1	\r\n
+foo(\R)bar	foo\nbar	y	$1	\n
+foo(\R)bar	foo\rbar	y	$1	\r
+
+foo(\R+)bar	foo\r\n\x{85}\r\n\nbar	y	$1	\r\n\x{85}\r\n\n
+(\V+)(\R)	foo\r\n\x{85}\r\n\nbar	y	$1-$2	foo-\r\n
+(\R+)(\V)	foo\r\n\x{85}\r\n\nbar	y	$1-$2	\r\n\x{85}\r\n\n-b
+foo(\R)bar	foo\x{85}bar	y	$1	\x{85}
+(\V)(\R)	foo\x{85}bar	y	$1-$2	o-\x{85}
+(\R)(\V)	foo\x{85}bar	y	$1-$2	\x{85}-b
+foo(\R)bar	foo\r\nbar	y	$1	\r\n
+(\V)(\R)	foo\r\nbar	y	$1-$2	o-\r\n
+(\R)(\V)	foo\r\nbar	y	$1-$2	\r\n-b
+foo(\R)bar	foo\r\nbar	y	$1	\r\n
+(\V)(\R)	foo\r\nbar	y	$1-$2	o-\r\n
+(\R)(\V)	foo\r\nbar	y	$1-$2	\r\n-b
+foo(\R)bar	foo\rbar	y	$1	\r
+(\V)(\R)	foo\rbar	y	$1-$2	o-\r
+(\R)(\V)	foo\rbar	y	$1-$2	\r-b
+
+foo(\v+)bar	foo\r\n\x{85}\r\n\nbar	y	$1	\r\n\x{85}\r\n\n
+(\V+)(\v)	foo\r\n\x{85}\r\n\nbar	y	$1-$2	foo-\r
+(\v+)(\V)	foo\r\n\x{85}\r\n\nbar	y	$1-$2	\r\n\x{85}\r\n\n-b
+foo(\v)bar	foo\x{85}bar	y	$1	\x{85}
+(\V)(\v)	foo\x{85}bar	y	$1-$2	o-\x{85}
+(\v)(\V)	foo\x{85}bar	y	$1-$2	\x{85}-b
+foo(\v)bar	foo\rbar	y	$1	\r
+(\V)(\v)	foo\rbar	y	$1-$2	o-\r
+(\v)(\V)	foo\rbar	y	$1-$2	\r-b
+
+
+foo(\h+)bar	foo\t\x{A0}bar	y	$1	\t\x{A0}
+(\H+)(\h)	foo\t\x{A0}bar	y	$1-$2	foo-\t
+(\h+)(\H)	foo\t\x{A0}bar	y	$1-$2	\t\x{A0}-b
+foo(\h)bar	foo\x{A0}bar	y	$1	\x{A0}
+(\H)(\h)	foo\x{A0}bar	y	$1-$2	o-\x{A0}
+(\h)(\H)	foo\x{A0}bar	y	$1-$2	\x{A0}-b
+foo(\h)bar	foo\tbar	y	$1	\t
+(\H)(\h)	foo\tbar	y	$1-$2	o-\t
+(\h)(\H)	foo\tbar	y	$1-$2	\t-b
+
+.*\z	foo\n	y	-	-
+^(?:(\d)x)?\d$	1	y	${\(defined($1)?1:0)}	0	
+.*?(?:(\w)|(\w))x	abx	y	$1-$2	b-

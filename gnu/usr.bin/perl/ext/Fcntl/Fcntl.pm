@@ -55,12 +55,16 @@ See L<perlfunc/stat> about the S_I* constants.
 
 =cut
 
+use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $AUTOLOAD);
 
 require Exporter;
 use XSLoader ();
 @ISA = qw(Exporter);
-$VERSION = "1.05";
+BEGIN {
+  $VERSION = "1.06";
+}
+
 # Items to export into callers namespace by default
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT =
@@ -206,6 +210,11 @@ $VERSION = "1.05";
                   )],
 );
 
+# Force the constants to become inlined
+BEGIN {
+  XSLoader::load 'Fcntl', $VERSION;
+}
+
 sub S_IFMT  { @_ ? ( $_[0] & _S_IFMT() ) : _S_IFMT()  }
 sub S_IMODE { $_[0] & 07777 }
 
@@ -227,10 +236,9 @@ sub AUTOLOAD {
         my (undef,$file,$line) = caller;
         die "$error at $file line $line.\n";
     }
+    no strict 'refs';
     *$AUTOLOAD = sub { $val };
     goto &$AUTOLOAD;
 }
-
-XSLoader::load 'Fcntl', $VERSION;
 
 1;

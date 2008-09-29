@@ -15,7 +15,7 @@ BEGIN {
 			$tm_isdst
 		    );
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-    $VERSION     = 1.02;
+    $VERSION     = 1.03;
 }
 use vars      @EXPORT_OK;
 
@@ -45,11 +45,12 @@ Time::gmtime - by-name interface to Perl's built-in gmtime() function
  use Time::gmtime;
  $gm = gmtime();
  printf "The day in Greenwich is %s\n", 
-    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ gm->wday() ];
+    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ $gm->wday() ];
 
- use Time::gmtime w(:FIELDS;
+ use Time::gmtime qw(:FIELDS);
+ gmtime();
  printf "The day in Greenwich is %s\n", 
-    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ gm_wday() ];
+    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ $tm_wday ];
 
  $now = gmctime();
 

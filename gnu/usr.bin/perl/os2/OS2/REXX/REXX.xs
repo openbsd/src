@@ -138,7 +138,7 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
 	res = newSVpv(RXSTRPTR(result), RXSTRLEN(result));
 	DosFreeMem(RXSTRPTR(result));
     } else {
-	res = NEWSV(729,0);
+	res = newSV(0);
     }
     if (rc || SvTRUE(GvSV(PL_errgv))) {
 	if (SvTRUE(GvSV(PL_errgv))) {

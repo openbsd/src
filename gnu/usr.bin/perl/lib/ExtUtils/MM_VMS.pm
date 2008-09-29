@@ -18,7 +18,7 @@ use File::Basename;
 # $Revision can't be on the same line or SVN/K gets confused
 use vars qw($Revision
             $VERSION @ISA);
-$VERSION = '5.73';
+$VERSION = '6.42';
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -283,7 +283,7 @@ sub maybe_command {
 =item pasthru (override)
 
 VMS has $(MMSQUALIFIERS) which is a listing of all the original command line
-options.  This is used in every invokation of make in the VMS Makefile so
+options.  This is used in every invocation of make in the VMS Makefile so
 PASTHRU should not be necessary.  Using PASTHRU tends to blow commands past
 the 256 character limit.
 
@@ -447,10 +447,20 @@ sub init_others {
     $self->{NOOP}               = 'Continue';
     $self->{NOECHO}             ||= '@ ';
 
-    $self->{MAKEFILE}           ||= 'Descrip.MMS';
+    $self->{MAKEFILE}		||= $self->{FIRST_MAKEFILE} || 'Descrip.MMS';
     $self->{FIRST_MAKEFILE}     ||= $self->{MAKEFILE};
     $self->{MAKE_APERL_FILE}    ||= 'Makeaperl.MMS';
-    $self->{MAKEFILE_OLD}       ||= '$(FIRST_MAKEFILE)_old';
+    $self->{MAKEFILE_OLD}       ||= $self->eliminate_macros('$(FIRST_MAKEFILE)_old');
+#
+#   If an extension is not specified, then MMS/MMK assumes an
+#   an extension of .MMS.  If there really is no extension,
+#   then a trailing "." needs to be appended to specify a
+#   a null extension.
+#
+    $self->{MAKEFILE} .= '.' unless $self->{MAKEFILE} =~ m/\./;
+    $self->{FIRST_MAKEFILE} .= '.' unless $self->{FIRST_MAKEFILE} =~ m/\./;
+    $self->{MAKE_APERL_FILE} .= '.' unless $self->{MAKE_APERL_FILE} =~ m/\./;
+    $self->{MAKEFILE_OLD} .= '.' unless $self->{MAKEFILE_OLD} =~ m/\./;
 
     $self->{MACROSTART}         ||= '/Macro=(';
     $self->{MACROEND}           ||= ')';
@@ -1269,8 +1279,7 @@ $(OBJECT) : $(PERL_INC)perlsdio.h, $(PERL_INC)perlvars.h
 $(OBJECT) : $(PERL_INC)perly.h, $(PERL_INC)pp.h, $(PERL_INC)pp_proto.h
 $(OBJECT) : $(PERL_INC)proto.h, $(PERL_INC)regcomp.h, $(PERL_INC)regexp.h
 $(OBJECT) : $(PERL_INC)regnodes.h, $(PERL_INC)scope.h, $(PERL_INC)sv.h
-$(OBJECT) : $(PERL_INC)thrdvar.h, $(PERL_INC)thread.h
-$(OBJECT) : $(PERL_INC)util.h, $(PERL_INC)vmsish.h
+$(OBJECT) : $(PERL_INC)thread.h, $(PERL_INC)util.h, $(PERL_INC)vmsish.h
 
 ' if $self->{OBJECT}; 
 
@@ -1562,10 +1571,10 @@ map_clean :
 
     join '', @m;
 }
-  
+
 # --- Output postprocessing section ---
 
-=item nicetext (override)
+=item maketext_filter (override)
 
 Insure that colons marking targets are preceded by space, in order
 to distinguish the target delimiter from a colon appearing as
@@ -1573,11 +1582,11 @@ part of a filespec.
 
 =cut
 
-sub nicetext {
-    my($self,$text) = @_;
-    return $text if $text =~ m/^\w+\s*=/; # leave macro defs alone
-    $text =~ s/([^\s:])(:+\s)/$1 $2/gs;
-    $text;
+sub maketext_filter {
+    my($self, $text) = @_;
+
+    $text =~ s/^([^\s:=]+)(:+\s)/$1 $2/mg;
+    return $text;
 }
 
 =item prefixify (override)
@@ -1722,7 +1731,7 @@ sub oneliner {
     # Switches must be quoted else they will be lowercased.
     $switches = join ' ', map { qq{"$_"} } @$switches;
 
-    return qq{\$(ABSPERLRUN) $switches -e $cmd};
+    return qq{\$(ABSPERLRUN) $switches -e $cmd "--"};
 }
 
 

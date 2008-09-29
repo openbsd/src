@@ -29,8 +29,6 @@ our $show_elapsed_time = $ENV{HARNESS_TIMER} || 0;
 	$::torture = 1 if $1 eq 'torture';
 	$::with_utf8 = 1 if $1 eq 'utf8';
 	$::with_utf16 = 1 if $1 eq 'utf16';
-	$::bytecompile = 1 if $1 eq 'bytecompile';
-	$::compile = 1 if $1 eq 'compile';
 	$::taintwarn = 1 if $1 eq 'taintwarn';
 	$ENV{PERL_CORE_MINITEST} = 1 if $1 eq 'minitest';
 	if ($1 =~ /^deparse(,.+)?$/) {
@@ -106,7 +104,7 @@ sub _populate_hash {
 }
 
 unless (@ARGV) {
-    foreach my $dir (qw(base comp cmd run io op uni)) {
+    foreach my $dir (qw(base comp cmd run io op uni mro)) {
 	_find_tests($dir);
     }
     _find_tests("lib") unless $::core;
@@ -142,8 +140,9 @@ unless (@ARGV) {
     }
     my $mani = File::Spec->catfile($updir, "MANIFEST");
     if (open(MANI, $mani)) {
+	my $ext_pat = $^O eq 'MSWin32' ? '(?:win32/)?ext' : 'ext';
 	while (<MANI>) { # similar code in t/harness
-	    if (m!^(ext/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+	    if (m!^($ext_pat/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
 		my $t = $1;
 		my $extension = $2;
 		if (!$::core || $t =~ m!^lib/[a-z]!)
@@ -164,24 +163,15 @@ unless (@ARGV) {
 	warn "$0: cannot open $mani: $!\n";
     }
     unless ($::core) {
+	_find_tests('Module_Pluggable');
 	_find_tests('pod');
 	_find_tests('x2p');
 	_find_tests('japh') if $::torture;
     }
 }
 
-# Tests known to cause infinite loops for the perlcc tests.
-# %::infinite = ( 'comp/require.t', 1, 'op/bop.t', 1, 'lib/hostname.t', 1 );
-%::infinite = ();
-
 if ($::deparse) {
     _testprogs('deparse', '',   @ARGV);
-}
-elsif( $::compile ) {
-    _testprogs('compile', '',   @ARGV);
-}
-elsif( $::bytecompile ) {
-    _testprogs('bytecompile', '', @ARGV);
 }
 elsif ($::with_utf16) {
     for my $e (0, 1) {
@@ -210,33 +200,17 @@ elsif ($::with_utf16) {
     }
 }
 else {
-    _testprogs('compile', '',   @ARGV) if -e "../testcompile";
     _testprogs('perl',    '',   @ARGV);
 }
 
 sub _testprogs {
     my ($type, $args, @tests) = @_;
 
-    print <<'EOT' if ($type eq 'compile');
-------------------------------------------------------------------------------
-TESTING COMPILER
-------------------------------------------------------------------------------
-EOT
-
     print <<'EOT' if ($type eq 'deparse');
 ------------------------------------------------------------------------------
 TESTING DEPARSER
 ------------------------------------------------------------------------------
 EOT
-
-    print <<EOT if ($type eq 'bytecompile');
-------------------------------------------------------------------------------
-TESTING BYTECODE COMPILER
-------------------------------------------------------------------------------
-EOT
-
-    $ENV{PERLCC_TIMEOUT} = 120
-	  if ($type eq 'compile' && !$ENV{PERLCC_TIMEOUT});
 
     $::bad_files = 0;
 
@@ -261,14 +235,11 @@ EOT
     my $good_files = 0;
     my $tested_files  = 0;
     my $totmax = 0;
+    my %failed_tests;
 
     while (my $test = shift @tests) {
         my $test_start_time = $show_elapsed_time ? Time::HiRes::time() : 0;
 
-	if ( $::infinite{$test} && $type eq 'compile' ) {
-	    print STDERR "$test creates infinite loop! Skipping.\n";
-	    next;
-	}
 	if ($test =~ /^$/) {
 	    next;
 	}
@@ -313,7 +284,6 @@ EOT
 	    }
 	}
 
-	my $test_executable; # for 'compile' tests
 	my $file_opts = "";
 	if ($type eq 'deparse') {
 	    # Look for #line directives which change the filename
@@ -335,76 +305,27 @@ EOT
 	    open(RESULTS, $deparse_cmd)
 		or print "can't deparse '$deparse_cmd': $!.\n";
 	}
-	elsif ($type eq 'bytecompile') {
-	    my ($pwd, $null);
-	    if( $^O eq 'MSWin32') {
-		$pwd = `cd`;
-		$null = 'nul';
-	    } else {
-		$pwd = `pwd`;
-		$null = '/dev/null';
-	    }
-	    chomp $pwd;
-	    my $perl = $ENV{PERL} || "$pwd/perl";
-	    my $bswitch = "-MO=Bytecode,-H,-TI,-s$pwd/$test,";
-	    $bswitch .= "-TF$test.plc,"
-		if $test =~ m(chdir|pod/|CGI/t/carp|lib/DB);
-	    $bswitch .= "-k,"
-		if $test =~ m(deparse|terse|ext/Storable/t/code);
-	    $bswitch .= "-b,"
-		if $test =~ m(op/getpid);
-	    my $bytecompile_cmd =
-		"$perl $testswitch $switch -I../lib $bswitch".
-		"-o$test.plc $test 2>$null &&".
-		"$perl $testswitch $switch -I../lib $utf8 $test.plc |";
-	    open(RESULTS,$bytecompile_cmd)
-		or print "can't byte-compile '$bytecompile_cmd': $!.\n";
-	}
 	elsif ($type eq 'perl') {
 	    my $perl = $ENV{PERL} || './perl';
 	    my $redir = $^O eq 'VMS' ? '2>&1' : '';
 	    if ($ENV{PERL_VALGRIND}) {
-		$perl = "valgrind --suppressions=perl.supp --leak-check=yes "
-			       . "--leak-resolution=high --show-reachable=yes "
-			       . "--num-callers=50 --logfile-fd=3 $perl";
+		my $valgrind = $ENV{VALGRIND} // 'valgrind';
+		my $vg_opts = $ENV{VG_OPTS}
+		    //  "--suppressions=perl.supp --leak-check=yes "
+			. "--leak-resolution=high --show-reachable=yes "
+			. "--num-callers=50"; 
+		$perl = "$valgrind --log-fd=3 $vg_opts $perl";
 		$redir = "3>$valgrind_log";
 	    }
 	    my $run = "$perl" . _quote_args("$testswitch $switch $utf8")
 			      . " $test $redir|";
 	    open(RESULTS,$run) or print "can't run '$run': $!.\n";
 	}
-	else {
-	    my $compile_cmd;
-	    my $pl2c = "$testswitch -I../lib ../utils/perlcc --testsuite " .
-	      # -O9 for good measure, -fcog is broken ATM
-		       "$switch -Wb=-O9,-fno-cog -L .. " .
-		       "-I \".. ../lib/CORE\" $args $utf8 $test -o ";
-
-	    if( $^O eq 'MSWin32' ) {
-		$test_executable = "$test.exe";
-		# hopefully unused name...
-		open HACK, "> xweghyz.pl";
-		print HACK <<EOT;
-#!./perl
-
-open HACK, '.\\perl $pl2c $test_executable |';
-# cl.exe prints the name of the .c file on stdout (\%^\$^#)
-while(<HACK>) {m/^\\w+\\.[cC]\$/ && next;print}
-open HACK, '$test_executable |';
-while(<HACK>) {print}
-EOT
-		close HACK;
-		$compile_cmd = 'xweghyz.pl |';
-	    }
-	    else {
-		$test_executable = "$test.plc";
-		$compile_cmd
-		    = "./perl $pl2c $test_executable && $test_executable |";
-	    }
-	    unlink $test_executable if -f $test_executable;
-	    open(RESULTS, $compile_cmd)
-		or print "can't compile '$compile_cmd': $!.\n";
-	}
+	# Our environment may force us to use UTF-8, but we can't be sure that
+	# anything we're reading from will be generating (well formed) UTF-8
+	# This may not be the best way - possibly we should unset ${^OPEN} up
+	# top?
+	binmode RESULTS;
 
 	my $failure;
 	my $next = 0;
@@ -480,6 +401,9 @@ EOT
 			die "FAILED--Further testing stopped" . ($1 ? ": $1\n" : ".\n");
 		    }
 		    else {
+			# module tests are allowed extra output,
+			# because Test::Harness allows it
+			next if $test =~ /^\W*(ext|lib)\b/;
 			$failure = "FAILED--unexpected output at test $next";
 			last;
 		    }
@@ -502,7 +426,14 @@ EOT
 		    warn "$0: Failed to open '$valgrind_log': $!\n";
 		}
 	    }
-	    if (@valgrind) {
+	    if ($ENV{VG_OPTS} =~ /cachegrind/) {
+		if (rename $valgrind_log, "$test.valgrind") {
+		    $valgrind++;
+		} else {
+		    warn "$0: Failed to create '$test.valgrind': $!\n";
+		}
+	    }
+	    elsif (@valgrind) {
 		my $leaks = 0;
 		my $errors = 0;
 		for my $i (0..$#valgrind) {
@@ -544,21 +475,23 @@ EOT
 	    rename("perl.3log", $tpp) ||
 		die "rename: perl3.log to $tpp: $!\n";
 	}
-	# test if the compiler compiled something
-	if( $type eq 'compile' && !-e "$test_executable" ) {
-	    $failure = "Test did not compile";
-	}
 	if (not defined $failure and $next != $max) {
 	    $failure="FAILED--expected $max tests, saw $next";
+	}
+
+	if( !defined $failure  # don't mask a test failure
+	    and $? )
+	{
+	    $failure = "FAILED--non-zero wait status: $?";
 	}
 
 	if (defined $failure) {
 	    print "${te}$failure\n";
 	    $::bad_files++;
-	    $_ = $test;
-	    if (/^base/) {
-		die "Failed a basic test--cannot continue.\n";
+	    if ($test =~ /^base/) {
+		die "Failed a basic test ($test) -- cannot continue.\n";
 	    }
+	    ++$failed_tests{$test};
 	}
 	else {
 	    if ($max) {
@@ -573,7 +506,7 @@ EOT
 		$good_files++;
 	    }
 	    else {
-		print "${te}skipping test on this platform\n";
+		print "${te}skipped\n";
 		$tested_files -= 1;
 	    }
 	}
@@ -590,11 +523,10 @@ EOT
     }
     else {
 	my $pct = $tested_files ? sprintf("%.2f", ($tested_files - $::bad_files) / $tested_files * 100) : "0.00";
-	if ($::bad_files == 1) {
-	    warn "Failed 1 test script out of $tested_files, $pct% okay.\n";
-	}
-	else {
-	    warn "Failed $::bad_files test scripts out of $tested_files, $pct% okay.\n";
+	my $s = $::bad_files == 1 ? "" : "s";
+	warn "Failed $::bad_files test$s out of $tested_files, $pct% okay.\n";
+	for my $test ( sort keys %failed_tests ) {
+	    print "\t$test\n";
 	}
 	warn <<'SHRDLU_1';
 ### Since not all tests were successful, you may want to run some of
@@ -641,3 +573,5 @@ SHRDLU_5
     }
 }
 exit ($::bad_files != 0);
+
+# ex: set ts=8 sts=4 sw=4 noet:

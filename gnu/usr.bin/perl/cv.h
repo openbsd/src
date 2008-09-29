@@ -1,44 +1,97 @@
 /*    cv.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
- *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
  */
 
-/* This structure must match XPVCV in B/C.pm and the beginning of XPVFM
- * in sv.h  */
+/* This structure must the beginning of XPVFM in sv.h  */
 
 struct xpvcv {
-    char *	xpv_pv;		/* pointer to malloced string (for prototype) */
+    union {
+	NV	xnv_nv;		/* numeric value, if any */
+	HV *	xgv_stash;
+	struct {
+	    U32	xlow;
+	    U32	xhigh;
+	}	xpad_cop_seq;	/* used by pad.c for cop_sequence */
+	struct {
+	    U32 xbm_previous;	/* how many characters in string before rare? */
+	    U8	xbm_flags;
+	    U8	xbm_rare;	/* rarest character in string */
+	}	xbm_s;		/* fields from PVBM */
+    }		xnv_u;
     STRLEN	xpv_cur;	/* length of xp_pv as a C string */
     STRLEN	xpv_len;	/* allocated size */
-    IV		xof_off;	/* integer value */
-    NV		xnv_nv;		/* numeric value, if any */
-    MAGIC*	xmg_magic;	/* magic for scalar array */
+    union {
+	IV	xivu_iv;
+	UV	xivu_uv;
+	void *	xivu_p1;
+	I32	xivu_i32;	/* depth, >= 2 indicates recursive call */
+	HEK *	xivu_namehek;
+    }		xiv_u;
+    union {
+	MAGIC*	xmg_magic;	/* linked list of magicalness */
+	HV*	xmg_ourstash;	/* Stash for our (when SvPAD_OUR is true) */
+    } xmg_u;
     HV*		xmg_stash;	/* class package */
 
     HV *	xcv_stash;
-    OP *	xcv_start;
-    OP *	xcv_root;
-    void	(*xcv_xsub) (pTHX_ CV*);
-    ANY		xcv_xsubany;
+    union {
+	OP *	xcv_start;
+	ANY	xcv_xsubany;
+    }		xcv_start_u;
+    union {
+	OP *	xcv_root;
+	void	(*xcv_xsub) (pTHX_ CV*);
+    }		xcv_root_u;
     GV *	xcv_gv;
     char *	xcv_file;
-    long	xcv_depth;	/* >= 2 indicates recursive call */
     PADLIST *	xcv_padlist;
     CV *	xcv_outside;
-#ifdef USE_5005THREADS
-    perl_mutex *xcv_mutexp;
-    struct perl_thread *xcv_owner;	/* current owner thread */
-#endif /* USE_5005THREADS */
-    cv_flags_t	xcv_flags;
     U32		xcv_outside_seq; /* the COP sequence (at the point of our
 				  * compilation) in the lexically enclosing
 				  * sub */
+    cv_flags_t	xcv_flags;
 };
+
+typedef struct {
+    STRLEN	xpv_cur;	/* length of xp_pv as a C string */
+    STRLEN	xpv_len;	/* allocated size */
+    union {
+	IV	xivu_iv;
+	UV	xivu_uv;
+	void *	xivu_p1;
+	I32	xivu_i32;	/* depth, >= 2 indicates recursive call */
+	HEK *	xivu_namehek;
+    }		xiv_u;
+    union {
+	MAGIC*	xmg_magic;	/* linked list of magicalness */
+	HV*	xmg_ourstash;	/* Stash for our (when SvPAD_OUR is true) */
+    } xmg_u;
+    HV*		xmg_stash;	/* class package */
+
+    HV *	xcv_stash;
+    union {
+	OP *	xcv_start;
+	ANY	xcv_xsubany;
+    }		xcv_start_u;
+    union {
+	OP *	xcv_root;
+	void	(*xcv_xsub) (pTHX_ CV*);
+    }		xcv_root_u;
+    GV *	xcv_gv;
+    char *	xcv_file;
+    PADLIST *	xcv_padlist;
+    CV *	xcv_outside;
+    U32		xcv_outside_seq; /* the COP sequence (at the point of our
+				  * compilation) in the lexically enclosing
+				  * sub */
+    cv_flags_t	xcv_flags;
+} xpvcv_allocated;
 
 /*
 =head1 Handy Values
@@ -57,10 +110,10 @@ Returns the stash of the CV.
 #define Nullcv Null(CV*)
 
 #define CvSTASH(sv)	((XPVCV*)SvANY(sv))->xcv_stash
-#define CvSTART(sv)	((XPVCV*)SvANY(sv))->xcv_start
-#define CvROOT(sv)	((XPVCV*)SvANY(sv))->xcv_root
-#define CvXSUB(sv)	((XPVCV*)SvANY(sv))->xcv_xsub
-#define CvXSUBANY(sv)	((XPVCV*)SvANY(sv))->xcv_xsubany
+#define CvSTART(sv)	((XPVCV*)SvANY(sv))->xcv_start_u.xcv_start
+#define CvROOT(sv)	((XPVCV*)SvANY(sv))->xcv_root_u.xcv_root
+#define CvXSUB(sv)	((XPVCV*)SvANY(sv))->xcv_root_u.xcv_xsub
+#define CvXSUBANY(sv)	((XPVCV*)SvANY(sv))->xcv_start_u.xcv_xsubany
 #define CvGV(sv)	((XPVCV*)SvANY(sv))->xcv_gv
 #define CvFILE(sv)	((XPVCV*)SvANY(sv))->xcv_file
 #ifdef USE_ITHREADS
@@ -69,31 +122,34 @@ Returns the stash of the CV.
 #  define CvFILE_set_from_cop(sv, cop)	(CvFILE(sv) = CopFILE(cop))
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
-#define CvDEPTH(sv)	((XPVCV*)SvANY(sv))->xcv_depth
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define CvDEPTH(sv) (*({const CV *_cv = (CV *)sv; \
+			  assert(SvTYPE(_cv) == SVt_PVCV ||	 \
+				 SvTYPE(_cv) == SVt_PVFM);	 \
+			  &((XPVCV*)SvANY(_cv))->xiv_u.xivu_i32; \
+			}))
+#else
+#  define CvDEPTH(sv)	((XPVCV*)SvANY(sv))->xiv_u.xivu_i32
+#endif
 #define CvPADLIST(sv)	((XPVCV*)SvANY(sv))->xcv_padlist
 #define CvOUTSIDE(sv)	((XPVCV*)SvANY(sv))->xcv_outside
-#ifdef USE_5005THREADS
-#define CvMUTEXP(sv)	((XPVCV*)SvANY(sv))->xcv_mutexp
-#define CvOWNER(sv)	((XPVCV*)SvANY(sv))->xcv_owner
-#endif /* USE_5005THREADS */
 #define CvFLAGS(sv)	((XPVCV*)SvANY(sv))->xcv_flags
 #define CvOUTSIDE_SEQ(sv) ((XPVCV*)SvANY(sv))->xcv_outside_seq
 
-#define CVf_CLONE	0x0001	/* anon CV uses external lexicals */
-#define CVf_CLONED	0x0002	/* a clone of one of those */
-#define CVf_ANON	0x0004	/* CvGV() can't be trusted */
-#define CVf_OLDSTYLE	0x0008
-#define CVf_UNIQUE	0x0010	/* sub is only called once (eg PL_main_cv,
-				 * require, eval). Not to be confused
-				 * with the GVf_UNIQUE flag associated
-				 * with the :unique attribute */
-#define CVf_NODEBUG	0x0020	/* no DB::sub indirection for this CV
+#define CVf_METHOD	0x0001	/* CV is explicitly marked as a method */
+#define CVf_LOCKED	0x0002	/* CV locks itself or first arg on entry */
+#define CVf_LVALUE	0x0004  /* CV return value can be used as lvalue */
+
+#define CVf_WEAKOUTSIDE	0x0010  /* CvOUTSIDE isn't ref counted */
+#define CVf_CLONE	0x0020	/* anon CV uses external lexicals */
+#define CVf_CLONED	0x0040	/* a clone of one of those */
+#define CVf_ANON	0x0080	/* CvGV() can't be trusted */
+#define CVf_UNIQUE	0x0100	/* sub is only called once (eg PL_main_cv,
+				 * require, eval). */
+#define CVf_NODEBUG	0x0200	/* no DB::sub indirection for this CV
 				   (esp. useful for special XSUBs) */
-#define CVf_METHOD	0x0040	/* CV is explicitly marked as a method */
-#define CVf_LOCKED	0x0080	/* CV locks itself or first arg on entry */
-#define CVf_LVALUE	0x0100  /* CV return value can be used as lvalue */
-#define CVf_CONST	0x0200  /* inlinable sub */
-#define CVf_WEAKOUTSIDE	0x0400  /* CvOUTSIDE isn't ref counted */
+#define CVf_CONST	0x0400  /* inlinable sub */
+#define CVf_ISXSUB	0x0800	/* CV is an XSUB, not pure perl.  */
 
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LOCKED|CVf_LVALUE)
@@ -109,12 +165,6 @@ Returns the stash of the CV.
 #define CvANON(cv)		(CvFLAGS(cv) & CVf_ANON)
 #define CvANON_on(cv)		(CvFLAGS(cv) |= CVf_ANON)
 #define CvANON_off(cv)		(CvFLAGS(cv) &= ~CVf_ANON)
-
-#ifdef PERL_XSUB_OLDSTYLE
-#define CvOLDSTYLE(cv)		(CvFLAGS(cv) & CVf_OLDSTYLE)
-#define CvOLDSTYLE_on(cv)	(CvFLAGS(cv) |= CVf_OLDSTYLE)
-#define CvOLDSTYLE_off(cv)	(CvFLAGS(cv) &= ~CVf_OLDSTYLE)
-#endif
 
 #define CvUNIQUE(cv)		(CvFLAGS(cv) & CVf_UNIQUE)
 #define CvUNIQUE_on(cv)		(CvFLAGS(cv) |= CVf_UNIQUE)
@@ -140,7 +190,7 @@ Returns the stash of the CV.
 #define CvEVAL_on(cv)		(CvUNIQUE_on(cv),SvFAKE_off(cv))
 #define CvEVAL_off(cv)		CvUNIQUE_off(cv)
 
-/* BEGIN|CHECK|INIT|END */
+/* BEGIN|CHECK|INIT|UNITCHECK|END */
 #define CvSPECIAL(cv)		(CvUNIQUE(cv) && SvFAKE(cv))
 #define CvSPECIAL_on(cv)	(CvUNIQUE_on(cv),SvFAKE_on(cv))
 #define CvSPECIAL_off(cv)	(CvUNIQUE_off(cv),SvFAKE_off(cv))
@@ -153,6 +203,12 @@ Returns the stash of the CV.
 #define CvWEAKOUTSIDE_on(cv)	(CvFLAGS(cv) |= CVf_WEAKOUTSIDE)
 #define CvWEAKOUTSIDE_off(cv)	(CvFLAGS(cv) &= ~CVf_WEAKOUTSIDE)
 
+#define CvISXSUB(cv)		(CvFLAGS(cv) & CVf_ISXSUB)
+#define CvISXSUB_on(cv)		(CvFLAGS(cv) |= CVf_ISXSUB)
+#define CvISXSUB_off(cv)	(CvFLAGS(cv) &= ~CVf_ISXSUB)
+
+/* Flags for newXS_flags  */
+#define XS_DYNAMIC_FILENAME	0x01	/* The filename isn't static  */
 
 /*
 =head1 CV reference counts and CvOUTSIDE
@@ -208,3 +264,13 @@ should print 123:
 
 =cut
 */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

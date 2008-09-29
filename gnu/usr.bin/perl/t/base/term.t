@@ -1,7 +1,5 @@
 #!./perl
 
-# $RCSfile: term.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:07 $
-
 BEGIN {
     chdir 't' if -d 't';
 }

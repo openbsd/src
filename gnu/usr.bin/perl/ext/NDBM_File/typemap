@@ -25,18 +25,18 @@ T_DATUM_V
 	    $var.dsize = (int)PL_na;
 	}
 	else {
-	    $var.dptr = \"\";
+	    $var.dptr = (char *)\"\";
 	    $var.dsize = 0;
 	}
 T_GDATUM
 	UNIMPLEMENTED
 OUTPUT
 T_DATUM_K
-	sv_setpvn($arg, $var.dptr, $var.dsize);
-	DBM_ckFilter($arg, filter_fetch_key,\"filter_fetch_key\");
+	sv_setpvn($arg, (char *)$var.dptr, $var.dsize);
+	DBM_ckFilter($arg, filter_fetch_key, \"filter_fetch_key\");
 T_DATUM_V
-	sv_setpvn($arg, $var.dptr, $var.dsize);
-	DBM_ckFilter($arg, filter_fetch_value,\"filter_fetch_value\");
+	sv_setpvn($arg, (char *)$var.dptr, $var.dsize);
+	DBM_ckFilter($arg, filter_fetch_value, \"filter_fetch_value\");
 T_GDATUM
 	sv_usepvn($arg, $var.dptr, $var.dsize);
 T_PTROBJ

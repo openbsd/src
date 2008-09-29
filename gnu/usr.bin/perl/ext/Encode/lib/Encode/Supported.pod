@@ -12,7 +12,7 @@ Each encoding has one "canonical" name.  The "canonical"
 name is chosen from the names of the encoding by picking
 the first in the following sequence (with a few exceptions).
 
-=over 4
+=over 2
 
 =item *
 
@@ -103,7 +103,7 @@ Symbols and EBCDIC. The following encodings are based on single-byte
 encodings implemented as extended ASCII.  Most of them map
 \x80-\xff (upper half) to non-ASCII characters.
 
-=over 4
+=over 2
 
 =item ISO-8859 and corresponding vendor mappings
 
@@ -172,13 +172,24 @@ For gory details, see L<http://czyborra.com/charsets/cyrillic.html>
   koi8-u                                                 [RFC2319]
   ----------------------------------------------------------------
 
-=item gsm0338 - Hentai Latin 1
+=back
+
+=head2 gsm0338 - Hentai Latin 1
 
 GSM0338 is for GSM handsets. Though it shares alphanumerals with
 ASCII, control character ranges and other parts are mapped very
 differently, mainly to store Greek characters.  There are also escape
-sequences (starting with 0x1B) to cover e.g. the Euro sign.  Some
-special cases like a trailing 0x00 byte or a lone 0x1B byte are not
+sequences (starting with 0x1B) to cover e.g. the Euro sign.  
+
+This was once handled by L<Encode::Bytes> but because of all those
+unusual specifications, Encode 2.20 has relocated the support to
+L<Encode::GSM0338>. See L<Encode::GSM0338> for details.
+
+=over 2
+
+=item gsm0338 support before 2.19
+
+Some special cases like a trailing 0x00 byte or a lone 0x1B byte are not
 well-defined and decode() will return an empty string for them.
 One possible workaround is
 
@@ -204,7 +215,7 @@ countries, due to the size concerns (simplified Chinese is mapped
 to 'CN', continental China, while traditional Chinese is mapped to
 'TW', Taiwan).  Please refer to their respective documentation pages.
 
-=over 4
+=over 2
 
 =item Encode::CN -- Continental China
 
@@ -289,7 +300,7 @@ distributed separately on CPAN, under the name Encode::JIS2K.
 
 =head2 Miscellaneous encodings
 
-=over 4
+=over 2
 
 =item Encode::EBCDIC
 
@@ -342,7 +353,7 @@ The following encodings are not supported as yet; some because they
 are rarely used, some because of technical difficulties.  They may
 be supported by external modules via CPAN in the future, however.
 
-=over 4
+=over 2
 
 =item   ISO-2022-JP-2 [RFC1554]
 
@@ -435,7 +446,7 @@ needed, we need to differentiate I<encoding> and I<character set>.
 To understand that, here is a description of how we make computers
 grok our characters.
 
-=over 4
+=over 2
 
 =item *
 
@@ -474,7 +485,7 @@ Technically, or mathematically, speaking, a character set encoded in
 such a CES that maps character by character may form a CCS.  EUC is such
 an example.  The CES of EUC is as follows:
 
-=over 4
+=over 2
 
 =item *
 
@@ -511,7 +522,7 @@ applicability for information exchange over the Internet and to
 choose the most suitable aliases to name them in the context of 
 such communication.
 
-=over 4
+=over 2
 
 =item * 
 
@@ -559,7 +570,7 @@ are IANA-registered C<charset>s. See [RFC 2781] for details.
 Jungshik Shin reports that UTF-16 with a BOM is well accepted
 by MS IE 5/6 and NS 4/6. Beware however that
 
-=over 4
+=over 2
 
 =item *
 
@@ -608,7 +619,7 @@ is a proprietary name.
 
 Microsoft products misuse the following names:
 
-=over 4
+=over 2
 
 =item KS_C_5601-1987
 
@@ -673,7 +684,7 @@ Encode separately supports C<Shift_JIS> and C<cp932>.
 
 =head1 Glossary
 
-=over 4
+=over 2
 
 =item character repertoire
 
@@ -764,14 +775,14 @@ L<Encode::MIME::Header>, L<Encode::Guess>
 
 =head1 References
 
-=over 4
+=over 2
 
 =item ECMA
 
 European Computer Manufacturers Association
 L<http://www.ecma.ch>
 
-=over 4
+=over 2
 
 =item ECMA-035 (eq C<ISO-2022>)
 
@@ -786,7 +797,7 @@ The specification of ISO-2022 is available from the link above.
 Internet Assigned Numbers Authority
 L<http://www.iana.org/>
 
-=over 4
+=over 2
 
 =item Assigned Charset Names by IANA
 
@@ -814,7 +825,7 @@ L<http://www.faqs.org/rfcs/>
 Unicode Consortium
 L<http://www.unicode.org/>
 
-=over 4
+=over 2
 
 =item Unicode Glossary
 
@@ -828,7 +839,7 @@ The glossary of this document is based upon this site.
 
 =head2 Other Notable Sites
 
-=over 4
+=over 2
 
 =item czyborra.com
 
@@ -867,7 +878,7 @@ L<http://www.debian.org/doc/manuals/intro-i18n/ch-codes.en.html>
 
 =head2 Offline sources
 
-=over 4
+=over 2
 
 =item C<CJKV Information Processing> by Ken Lunde
 

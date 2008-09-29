@@ -1,7 +1,7 @@
 /*    dosish.h
  *
  *    Copyright (C) 1993, 1994, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, by Larry Wall and others
+ *    2000, 2001, 2002, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,9 +16,9 @@
 #ifdef DJGPP
 #  define BIT_BUCKET "nul"
 #  define OP_BINARY O_BINARY
-#  define PERL_SYS_INIT(c,v) MALLOC_CHECK_TAINT2(*c,*v) Perl_DJGPP_init(c,v)
+#  define PERL_SYS_INIT_BODY(c,v)					\
+	 MALLOC_CHECK_TAINT2(*c,*v) Perl_DJGPP_init(c,v); PERLIO_INIT
 #  define init_os_extras Perl_init_os_extras
-#  include <signal.h>
 #  define HAS_UTIME
 #  define HAS_KILL
    char *djgpp_pathexp (const char*);
@@ -26,28 +26,28 @@
 #  if (DJGPP==2 && DJGPP_MINOR < 2)
 #    define NO_LOCALECONV_MON_THOUSANDS_SEP
 #  endif
-#  ifdef USE_5005THREADS
-#    define OLD_PTHREADS_API
-#  endif
 #  define PERL_FS_VER_FMT	"%d_%d_%d"
 #else	/* DJGPP */
 #  ifdef WIN32
-#    define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v) Perl_win32_init(c,v)
-#    define PERL_SYS_TERM()	Perl_win32_term()
+#    define PERL_SYS_INIT_BODY(c,v)					\
+	MALLOC_CHECK_TAINT2(*c,*v) Perl_win32_init(c,v); PERLIO_INIT
+#    define PERL_SYS_TERM_BODY()   Perl_win32_term()
 #    define BIT_BUCKET "nul"
 #  else
 #	 ifdef NETWARE
-#      define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v) Perl_nw5_init(c,v)
+#      define PERL_SYS_INIT_BODY(c,v)					\
+	MALLOC_CHECK_TAINT2(*c,*v) Perl_nw5_init(c,v); PERLIO_INIT
 #      define BIT_BUCKET "nwnul"
 #    else
-#      define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v)
+#      define PERL_SYS_INIT_BODY(c,v)		\
+	MALLOC_CHECK_TAINT2(*c,*v); PERLIO_INIT
 #      define BIT_BUCKET "\\dev\\nul" /* "wanna be like, umm, Newlined, or somethin?" */
 #    endif /* NETWARE */
 #  endif
 #endif	/* DJGPP */
 
-#ifndef PERL_SYS_TERM
-#  define PERL_SYS_TERM() OP_REFCNT_TERM; MALLOC_TERM
+#ifndef PERL_SYS_TERM_BODY
+#  define PERL_SYS_TERM_BODY() HINTS_REFCNT_TERM; OP_REFCNT_TERM; PERLIO_TERM; MALLOC_TERM
 #endif
 #define dXSUB_SYS
 
@@ -122,6 +122,8 @@
  */
 /* #define ALTERNATE_SHEBANG "#!" / **/
 
+#include <signal.h>
+
 /*
  * fwrite1() should be a routine with the same calling sequence as fwrite(),
  * but which outputs all of the bytes requested as a single stream (unlike
@@ -192,3 +194,6 @@
 #define WUNTRACED             0
 
 #endif
+
+/* Don't go reading from /dev/urandom */
+#define PERL_NO_DEV_RANDOM

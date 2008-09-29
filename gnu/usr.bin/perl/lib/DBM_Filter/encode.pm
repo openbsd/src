@@ -25,11 +25,11 @@ sub Filter
         unless $encoding;
 
     return {
-        Store   => sub { 
-			 $_ = $encoding->encode($_) 
+        Store   => sub {
+			 $_ = $encoding->encode($_)
 			     if defined $_ ;
 		   },
-        Fetch   => sub { 
+        Fetch   => sub {
 			 $_ = $encoding->decode($_)
 			     if defined $_ ;
 			}
@@ -42,7 +42,7 @@ __END__
 
 =head1 NAME
 
-DBM_Filter::encode -- character encoding DBM Filter
+DBM_Filter::encode - filter for DBM_Filter
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ DBM_Filter::encode -- character encoding DBM Filter
 
     $db = tie %hash, ...
     $db->Filter_Push('encode' => 'iso-8859-16');
-    
+
 =head1 DESCRIPTION
 
 This DBM filter allows you to choose the character encoding will be

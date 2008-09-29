@@ -11,7 +11,7 @@ Tie::Scalar, Tie::StdScalar - base class definitions for tied scalars
     package NewScalar;
     require Tie::Scalar;
 
-    @ISA = (Tie::Scalar);
+    @ISA = qw(Tie::Scalar);
 
     sub FETCH { ... }		# Provide a needed method
     sub TIESCALAR { ... }	# Overrides inherited method
@@ -20,7 +20,7 @@ Tie::Scalar, Tie::StdScalar - base class definitions for tied scalars
     package NewStdScalar;
     require Tie::Scalar;
 
-    @ISA = (Tie::StdScalar);
+    @ISA = qw(Tie::StdScalar);
 
     # All methods provided by default, so define only what needs be overridden
     sub FETCH { ... }
@@ -117,7 +117,7 @@ sub STORE {
 # tweak a small bit.
 #
 package Tie::StdScalar;
-@ISA = (Tie::Scalar);
+@ISA = qw(Tie::Scalar);
 
 sub TIESCALAR {
     my $class = shift;

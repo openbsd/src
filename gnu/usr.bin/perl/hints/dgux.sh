@@ -54,14 +54,14 @@ libpth="/usr/lib"
 #####################################
 
 prefix=/usr/local
-perlpath="$prefix/bin/perl58"
-startperl="#! $prefix/bin/perl58"
-privlib="$prefix/lib/perl58"
+perlpath="$prefix/bin/perl510"
+startperl="#! $prefix/bin/perl510"
+privlib="$prefix/lib/perl510"
 man1dir="$prefix/man/man1"
 man3dir="$prefix/man/man3"
 
-sitearch="$prefix/lib/perl58/$archname"
-sitelib="$prefix/lib/perl58"
+sitearch="$prefix/lib/perl510/$archname"
+sitelib="$prefix/lib/perl510"
 
 #Do not overwrite by default /usr/bin/perl of DG/UX
 installusrbinperl="$undef"
@@ -140,7 +140,7 @@ unset sde_path default_sde sde
 # <takis@XFree86.Org>
 #####################################
 
-libperl="libperl58.so"
+libperl="libperl510.so"
 
 # Many functions (eg, gethostent(), killpg(), getpriority(), setruid()
 # dbm_*(), and plenty more) are defined in -ldgc.  Usually you don't
@@ -207,8 +207,8 @@ $define|true|[yY]*)
 	# DG/UX library!
 	libswanted="dbm posix resolv socket nsl dl m rte"
 	archname="ix86-dgux-thread"
-	sitearch="$prefix/lib/perl58/$archname"
-	sitelib="$prefix/lib/perl58"
+	sitearch="$prefix/lib/perl510/$archname"
+	sitelib="$prefix/lib/perl510"
   case "$cc" in
 	*gcc*)
 	   #### Use GCC -2.95.2/3 rev (DG/UX) and -pthread

@@ -23,6 +23,7 @@ PerlIO_rewind
 PerlIO_setpos
 PerlIO_sprintf
 PerlIO_stdoutf
+PerlIO_teardown
 PerlIO_tmpfile
 PerlIO_ungetc
 PerlIO_vprintf

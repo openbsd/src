@@ -7,7 +7,7 @@ require Tie::Hash;
 use XSLoader ();
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.06";
+our $VERSION = "1.07";
 
 XSLoader::load 'ODBM_File', $VERSION;
 

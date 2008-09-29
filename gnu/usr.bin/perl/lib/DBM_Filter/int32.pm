@@ -25,7 +25,7 @@ __END__
 
 =head1 NAME
 
-DBM_Filter::int32 -- 32 bit integer DBM Filter
+DBM_Filter::int32 - filter for DBM_Filter
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ DBM_Filter::int32 -- 32 bit integer DBM Filter
 
     $db = tie %hash, ...
     $db->Filter_Push('int32');
-    
+
 =head1 DESCRIPTION
 
 This DBM filter is used when interoperating with a C/C++ application

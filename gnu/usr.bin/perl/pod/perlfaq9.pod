@@ -186,11 +186,29 @@ method.
 See the section in the CGI.pm documentation on file uploads for code
 examples and details.
 
-=head2 How do I make a pop-up menu in HTML?
+=head2 How do I make an HTML pop-up menu with Perl?
 
-Use the B<< <SELECT> >> and B<< <OPTION> >> tags.  The CGI.pm
-module (available from CPAN) supports this widget, as well as many
-others, including some that it cleverly synthesizes on its own.
+(contributed by brian d foy)
+
+The CGI.pm module (which comes with Perl) has functions to create
+the HTML form widgets. See the CGI.pm documentation for more
+examples.
+
+	use CGI qw/:standard/;
+	print header,
+		start_html('Favorite Animals'),
+
+		start_form,
+			"What's your favorite animal? ",
+        popup_menu(
+        	-name   => 'animal',
+			-values => [ qw( Llama Alpaca Camel Ram ) ]
+			),
+        submit,
+
+ 		end_form,
+        end_html;
+
 
 =head2 How do I fetch an HTML file?
 
@@ -311,7 +329,7 @@ an absolute URLpath.
 
 To enable authentication for your web server, you need to configure
 your web server.  The configuration is different for different sorts
-of web servers---apache does it differently from iPlanet which does
+of web servers--apache does it differently from iPlanet which does
 it differently from IIS.  Check your web server documentation for
 the details for your particular server.
 
@@ -389,54 +407,52 @@ of the task.  It's much easier and less hassle to use CGI.pm.
 
 =head2 How do I check a valid mail address?
 
-You can't, at least, not in real time.  Bummer, eh?
+(partly contributed by Aaron Sherman)
+
+This isn't as simple a question as it sounds.  There are two parts:
+
+a) How do I verify that an email address is correctly formatted?
+
+b) How do I verify that an email address targets a valid recipient?
 
 Without sending mail to the address and seeing whether there's a human
-on the other end to answer you, you cannot determine whether a mail
-address is valid.  Even if you apply the mail header standard, you
-can have problems, because there are deliverable addresses that aren't
-RFC-822 (the mail header standard) compliant, and addresses that aren't
-deliverable which are compliant.
+on the other end to answer you, you cannot fully answer part I<b>, but
+either the C<Email::Valid> or the C<RFC::RFC822::Address> module will do
+both part I<a> and part I<b> as far as you can in real-time.
 
-You can use the Email::Valid or RFC::RFC822::Address which check
-the format of the address, although they cannot actually tell you
-if it is a deliverable address (i.e. that mail to the address
-will not bounce).  Modules like Mail::CheckUser and Mail::EXPN
-try to interact with the domain name system or particular
-mail servers to learn even more, but their methods do not
-work everywhere---especially for security conscious administrators.
+If you want to just check part I<a> to see that the address is valid
+according to the mail header standard with a simple regular expression,
+you can have problems, because there are deliverable addresses that
+aren't RFC-2822 (the latest mail header standard) compliant, and
+addresses that aren't deliverable which, are compliant.  However,  the
+following will match valid RFC-2822 addresses that do not have comments,
+folding whitespace, or any other obsolete or non-essential elements.
+This I<just> matches the address itself:
 
-Many are tempted to try to eliminate many frequently-invalid
-mail addresses with a simple regex, such as
-C</^[\w.-]+\@(?:[\w-]+\.)+\w+$/>.  It's a very bad idea.  However,
-this also throws out many valid ones, and says nothing about
-potential deliverability, so it is not suggested.  Instead, see
-http://www.cpan.org/authors/Tom_Christiansen/scripts/ckaddr.gz ,
-which actually checks against the full RFC spec (except for nested
-comments), looks for addresses you may not wish to accept mail to
-(say, Bill Clinton or your postmaster), and then makes sure that the
-hostname given can be looked up in the DNS MX records.  It's not fast,
-but it works for what it tries to do.
+    my $atom       = qr{[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+};
+    my $dot_atom   = qr{$atom(?:\.$atom)*};
+    my $quoted     = qr{"(?:\\[^\r\n]|[^\\"])*"};
+    my $local      = qr{(?:$dot_atom|$quoted)};
+    my $domain_lit = qr{\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\]};
+    my $domain     = qr{(?:$dot_atom|$domain_lit)};
+    my $addr_spec  = qr{$local\@$domain};
+
+Just match an address against C</^${addr_spec}$/> to see if it follows
+the RFC2822 specification.  However, because it is impossible to be
+sure that such a correctly formed address is actually the correct way
+to reach a particular person or even has a mailbox associated with it,
+you must be very careful about how you use this.
 
 Our best advice for verifying a person's mail address is to have them
-enter their address twice, just as you normally do to change a password.
-This usually weeds out typos.  If both versions match, send
-mail to that address with a personal message that looks somewhat like:
-
-    Dear someuser@host.com,
-
-    Please confirm the mail address you gave us Wed May  6 09:38:41
-    MDT 1998 by replying to this message.  Include the string
-    "Rumpelstiltskin" in that reply, but spelled in reverse; that is,
-    start with "Nik...".  Once this is done, your confirmed address will
-    be entered into our records.
-
-If you get the message back and they've followed your directions,
-you can be reasonably assured that it's real.
+enter their address twice, just as you normally do to change a
+password. This usually weeds out typos. If both versions match, send
+mail to that address with a personal message. If you get the message
+back and they've followed your directions, you can be reasonably
+assured that it's real.
 
 A related strategy that's less open to forgery is to give them a PIN
 (personal ID number).  Record the address and PIN (best that it be a
-random one) for later processing.  In the mail you send, ask them to
+random one) for later processing. In the mail you send, ask them to
 include the PIN in their reply.  But if it bounces, or the message is
 included via a "vacation" script, it'll be there anyway.  So it's
 best to ask them to mail back a slight alteration of the PIN, such as
@@ -647,9 +663,17 @@ available from CPAN) is more complex but can put as well as fetch.
 Use one of the RPC modules you can find on CPAN (
 http://search.cpan.org/search?query=RPC&mode=all ).
 
+=head1 REVISION
+
+Revision: $Revision: 8539 $
+
+Date: $Date: 2007-01-11 00:07:14 +0100 (Thu, 11 Jan 2007) $
+
+See L<perlfaq> for source control details and availability.
+
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

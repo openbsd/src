@@ -1,7 +1,7 @@
 /*    perlsdio.h
  *
- *    Copyright (C) 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, by Larry Wall and others
+ *    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001,
+ *    2002, 2003, 2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -87,7 +87,7 @@
 #ifdef HAS_SETLINEBUF
 #define PerlIO_setlinebuf(f)		PerlSIO_setlinebuf(f);
 #else
-#define PerlIO_setlinebuf(f)		PerlSIO_setvbuf(f, Nullch, _IOLBF, 0);
+#define PerlIO_setlinebuf(f)		PerlSIO_setvbuf(f, NULL, _IOLBF, 0);
 #endif
 
 /* Now our interface to Configure's FILE_xxx macros */

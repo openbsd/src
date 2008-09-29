@@ -46,7 +46,7 @@ the standard distribution.  It incorporates autoloading, namespace games,
 and dynamic loading of code that's in Perl, C, or both.  It's a great
 source of wisdom.
 
-=head1 CAVEATS 
+=head1 CAVEATS
 
 A few functions are not implemented because they are C specific.  If you
 attempt to call these, they will print a message telling you that they
@@ -125,8 +125,8 @@ and it is called thusly
 			   $wday, $yday, $isdst);
 
 The C<$mon> is zero-based: January equals C<0>.  The C<$year> is
-1900-based: 2001 equals C<101>.  The C<$wday>, C<$yday>, and C<$isdst>
-default to zero (and the first two are usually ignored anyway).
+1900-based: 2001 equals C<101>.  C<$wday> and C<$yday> default to zero
+(and are usually ignored anyway), and C<$isdst> defaults to -1.
 
 =item asin
 
@@ -770,7 +770,7 @@ You can also use
 
 or
 
-    sub log10 { log($_[0]) / 2.30258509299405 }  
+    sub log10 { log($_[0]) / 2.30258509299405 }
 
 or
 
@@ -798,21 +798,21 @@ malloc() is C-specific.  Perl does memory management transparently.
 
 This is identical to the C function C<mblen()>.
 Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather 
+characters of the C standards, so this might be a rather
 useless function.
 
 =item mbstowcs
 
 This is identical to the C function C<mbstowcs()>.
 Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather 
+characters of the C standards, so this might be a rather
 useless function.
 
 =item mbtowc
 
 This is identical to the C function C<mbtowc()>.
 Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather 
+characters of the C standards, so this might be a rather
 useless function.
 
 =item memchr
@@ -848,7 +848,8 @@ FIFO special files.
 	if (mkfifo($path, $mode)) { ....
 
 Returns C<undef> on failure.  The C<$mode> is similar to the
-mode of C<mkdir()>, see L<perlfunc/mkdir>.
+mode of C<mkdir()>, see L<perlfunc/mkdir>, though for C<mkfifo>
+you B<must> specify the C<$mode>.
 
 =item mktime
 
@@ -856,7 +857,7 @@ Convert date/time info to a calendar time.
 
 Synopsis:
 
-	mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
+	mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 
 The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero.
 I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
@@ -1054,7 +1055,7 @@ see L<perlre>.
 
 Sets the real group identifier and the effective group identifier for
 this process.  Similar to assigning a value to the Perl's builtin
-C<$)> variable, see L<perlvar/$GID>, except that the latter
+C<$)> variable, see L<perlvar/$EGID>, except that the latter
 will change only the real user identifier, and that the setgid()
 uses only a single numeric argument, as opposed to a space-separated
 list of numbers.
@@ -1117,9 +1118,10 @@ will change only the real user identifier.
 
 =item sigaction
 
-Detailed signal management.  This uses C<POSIX::SigAction> objects for the
-C<action> and C<oldaction> arguments.  Consult your system's C<sigaction>
-manpage for details.
+Detailed signal management.  This uses C<POSIX::SigAction> objects for
+the C<action> and C<oldaction> arguments (the oldaction can also be
+just a hash reference).  Consult your system's C<sigaction> manpage
+for details, see also C<POSIX::SigRt>.
 
 Synopsis:
 
@@ -1128,6 +1130,35 @@ Synopsis:
 Returns C<undef> on failure.  The C<signal> must be a number (like
 SIGHUP), not a string (like "SIGHUP"), though Perl does try hard
 to understand you.
+
+If you use the SA_SIGINFO flag, the signal handler will in addition to
+the first argument, the signal name, also receive a second argument, a
+hash reference, inside which are the following keys with the following
+semantics, as defined by POSIX/SUSv3:
+
+    signo       the signal number
+    errno       the error number
+    code        if this is zero or less, the signal was sent by
+                a user process and the uid and pid make sense,
+                otherwise the signal was sent by the kernel
+
+The following are also defined by POSIX/SUSv3, but unfortunately
+not very widely implemented:
+
+    pid         the process id generating the signal
+    uid         the uid of the process id generating the signal
+    status      exit value or signal for SIGCHLD
+    band        band event for SIGPOLL
+
+A third argument is also passed to the handler, which contains a copy
+of the raw binary contents of the siginfo structure: if a system has
+some non-POSIX fields, this third argument is where to unpack() them
+from.
+
+Note that not all siginfo values make sense simultaneously (some are
+valid only for certain signals, for example), and not all values make
+sense from Perl perspective, you should to consult your system's
+C<sigaction> and possibly also C<siginfo> documentation.
 
 =item siglongjmp
 
@@ -1190,7 +1221,7 @@ See also L<Math::Trig>.
 
 This is functionally identical to Perl's builtin C<sleep()> function
 for suspending the execution of the current for process for certain
-number of seconds, see L<perlfunc/sleep>.  There is one significant 
+number of seconds, see L<perlfunc/sleep>.  There is one significant
 difference, however: C<POSIX::sleep()> returns the number of
 B<unslept> seconds, while the C<CORE::sleep()> returns the
 number of slept seconds.
@@ -1600,14 +1631,14 @@ builtin C<waitpid()> function, see L<perlfunc/waitpid>.
 
 This is identical to the C function C<wcstombs()>.
 Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather 
+characters of the C standards, so this might be a rather
 useless function.
 
 =item wctomb
 
 This is identical to the C function C<wctomb()>.
 Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather 
+characters of the C standards, so this might be a rather
 useless function.
 
 =item write
@@ -1634,14 +1665,14 @@ See also L<perlfunc/syswrite>.
 =item new
 
 Creates a new C<POSIX::SigAction> object which corresponds to the C
-C<struct sigaction>.  This object will be destroyed automatically when it is
-no longer needed.  The first parameter is the fully-qualified name of a sub
-which is a signal-handler.  The second parameter is a C<POSIX::SigSet>
-object, it defaults to the empty set.  The third parameter contains the
+C<struct sigaction>.  This object will be destroyed automatically when
+it is no longer needed.  The first parameter is the handler, a sub
+reference.  The second parameter is a C<POSIX::SigSet> object, it
+defaults to the empty set.  The third parameter contains the
 C<sa_flags>, it defaults to 0.
 
 	$sigset = POSIX::SigSet->new(SIGINT, SIGQUIT);
-	$sigaction = POSIX::SigAction->new( \&main::handler, $sigset, &POSIX::SA_NOCLDSTOP );
+	$sigaction = POSIX::SigAction->new( \&handler, $sigset, &POSIX::SA_NOCLDSTOP );
 
 This C<POSIX::SigAction> object is intended for use with the C<POSIX::sigaction()>
 function.
@@ -1677,6 +1708,57 @@ filled in when given as the third parameter to C<POSIX::sigaction()>:
 	if ($old_action->safe) {
 	    # previous SIGINT handler used safe signals
 	}
+
+=back
+
+=head2 POSIX::SigRt
+
+=over 8
+
+=item %SIGRT
+
+A hash of the POSIX realtime signal handlers.  It is an extension of
+the standard %SIG, the $POSIX::SIGRT{SIGRTMIN} is roughly equivalent
+to $SIG{SIGRTMIN}, but the right POSIX moves (see below) are made with
+the POSIX::SigSet and POSIX::sigaction instead of accessing the %SIG.
+
+You can set the %POSIX::SIGRT elements to set the POSIX realtime
+signal handlers, use C<delete> and C<exists> on the elements, and use
+C<scalar> on the C<%POSIX::SIGRT> to find out how many POSIX realtime
+signals there are available (SIGRTMAX - SIGRTMIN + 1, the SIGRTMAX is
+a valid POSIX realtime signal).
+
+Setting the %SIGRT elements is equivalent to calling this:
+
+  sub new {
+    my ($rtsig, $handler, $flags) = @_;
+    my $sigset = POSIX:SigSet($rtsig);
+    my $sigact = POSIX::SigAction->new($handler, $sigset, $flags);
+    sigaction($rtsig, $sigact);
+  }
+
+The flags default to zero, if you want something different you can
+either use C<local> on $POSIX::RtSig::SIGACTION_FLAGS, or you can
+derive from POSIX::SigRt and define your own C<new()> (the tied hash
+STORE method of the %SIGRT calls C<new($rtsig, $handler, $SIGACTION_FLAGS)>,
+where the $rtsig ranges from zero to SIGRTMAX - SIGRTMIN + 1).
+
+Just as with any signal, you can use sigaction($rtsig, undef, $oa) to
+retrieve the installed signal handler (or, rather, the signal action).
+
+B<NOTE:> whether POSIX realtime signals really work in your system, or
+whether Perl has been compiled so that it works with them, is outside
+of this discussion.
+
+=item SIGRTMIN
+
+Return the minimum POSIX realtime signal number available, or C<undef>
+if no POSIX realtime signals are available.
+
+=item SIGRTMAX
+
+Return the maximum POSIX realtime signal number available, or C<undef>
+if no POSIX realtime signals are available.
 
 =back
 
@@ -1759,6 +1841,7 @@ Get terminal control attributes.
 
 Obtain the attributes for stdin.
 
+	$termios->getattr( 0 ) # Recommended for clarity.
 	$termios->getattr()
 
 Obtain the attributes for stdout.

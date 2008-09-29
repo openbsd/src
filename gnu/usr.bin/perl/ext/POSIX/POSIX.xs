@@ -51,7 +51,7 @@
 #include <unistd.h>
 #endif
 
-/* XXX This comment is just to make I_TERMIO and I_SGTTY visible to 
+/* XXX This comment is just to make I_TERMIO and I_SGTTY visible to
    metaconfig for future extension writers.  We don't use them in POSIX.
    (This is really sneaky :-)  --AD
 */
@@ -198,7 +198,7 @@ char *tzname[] = { "" , "" };
 #  ifndef HAS_MKFIFO
 #    if defined(OS2) || defined(MACOS_TRADITIONAL)
 #      define mkfifo(a,b) not_here("mkfifo")
-#    else	/* !( defined OS2 ) */ 
+#    else	/* !( defined OS2 ) */
 #      ifndef mkfifo
 #        define mkfifo(path, mode) (mknod((path), (mode) | S_IFIFO, 0))
 #      endif
@@ -209,7 +209,9 @@ char *tzname[] = { "" , "" };
 #    define ttyname(a) (char*)not_here("ttyname")
 #    define tzset() not_here("tzset")
 #  else
-#    include <grp.h>
+#    ifdef I_GRP
+#      include <grp.h>
+#    endif
 #    include <sys/times.h>
 #    ifdef HAS_UNAME
 #      include <sys/utsname.h>
@@ -263,7 +265,7 @@ unsigned long strtoul (const char *, char **, int);
 #endif
 #endif
 #ifndef HAS_FPATHCONF
-#define fpathconf(f,n) 	(SysRetLong) not_here("fpathconf")
+#define fpathconf(f,n)	(SysRetLong) not_here("fpathconf")
 #endif
 #ifndef HAS_MKTIME
 #define mktime(a) not_here("mktime")
@@ -272,10 +274,10 @@ unsigned long strtoul (const char *, char **, int);
 #define nice(a) not_here("nice")
 #endif
 #ifndef HAS_PATHCONF
-#define pathconf(f,n) 	(SysRetLong) not_here("pathconf")
+#define pathconf(f,n)	(SysRetLong) not_here("pathconf")
 #endif
 #ifndef HAS_SYSCONF
-#define sysconf(n) 	(SysRetLong) not_here("sysconf")
+#define sysconf(n)	(SysRetLong) not_here("sysconf")
 #endif
 #ifndef HAS_READLINK
 #define readlink(a,b,c) not_here("readlink")
@@ -621,7 +623,6 @@ sigismember(sigset, sig)
 	POSIX::SigSet	sigset
 	int		sig
 
-
 MODULE = Termios	PACKAGE = POSIX::Termios	PREFIX = cf
 
 POSIX::Termios
@@ -731,7 +732,7 @@ getlflag(termios_ref)
 cc_t
 getcc(termios_ref, ccix)
 	POSIX::Termios	termios_ref
-	int		ccix
+	unsigned int	ccix
     CODE:
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
 	if (ccix >= NCCS)
@@ -801,7 +802,7 @@ setlflag(termios_ref, lflag)
 void
 setcc(termios_ref, ccix, cc)
 	POSIX::Termios	termios_ref
-	int		ccix
+	unsigned int	ccix
 	cc_t		cc
     CODE:
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
@@ -1059,7 +1060,7 @@ localeconv()
 	    if (lcbuf->mon_thousands_sep && *lcbuf->mon_thousands_sep)
 		hv_store(RETVAL, "mon_thousands_sep", 17,
 		    newSVpv(lcbuf->mon_thousands_sep, 0), 0);
-#endif                    
+#endif
 #ifndef NO_LOCALECONV_MON_GROUPING
 	    if (lcbuf->mon_grouping && *lcbuf->mon_grouping)
 		hv_store(RETVAL, "mon_grouping", 12,
@@ -1107,9 +1108,14 @@ char *
 setlocale(category, locale = 0)
 	int		category
 	char *		locale
+    PREINIT:
+	char *		retval;
     CODE:
-	RETVAL = setlocale(category, locale);
-	if (RETVAL) {
+	retval = setlocale(category, locale);
+	if (retval) {
+	    /* Save retval since subsequent setlocale() calls
+	     * may overwrite it. */
+	    RETVAL = savepv(retval);
 #ifdef USE_LOCALE_CTYPE
 	    if (category == LC_CTYPE
 #ifdef LC_ALL
@@ -1162,9 +1168,13 @@ setlocale(category, locale = 0)
 	    }
 #endif /* USE_LOCALE_NUMERIC */
 	}
+	else
+	    RETVAL = NULL;
     OUTPUT:
 	RETVAL
-
+    CLEANUP:
+        if (RETVAL)
+	    Safefree(RETVAL);
 
 NV
 acos(x)
@@ -1247,6 +1257,7 @@ sigaction(sig, optaction, oldaction = 0)
 # interface look beautiful, which is hard.
 
 	{
+	    dVAR;
 	    POSIX__SigAction action;
 	    GV *siggv = gv_fetchpv("SIG", TRUE, SVt_PVHV);
 	    struct sigaction act;
@@ -1257,12 +1268,17 @@ sigaction(sig, optaction, oldaction = 0)
 	    POSIX__SigSet sigset;
 	    SV** svp;
 	    SV** sigsvp;
+
+            if (sig < 0) {
+                croak("Negative signals are not allowed");
+            }
+
 	    if (sig == 0 && SvPOK(ST(0))) {
 	        const char *s = SvPVX_const(ST(0));
-		int i = whichsig((char *)s);
+		int i = whichsig(s);
 
 	        if (i < 0 && memEQ(s, "SIG", 3))
-		    i = whichsig((char *)s + 3);
+		    i = whichsig(s + 3);
 	        if (i < 0) {
 	            if (ckWARN(WARN_SIGNAL))
 		        Perl_warner(aTHX_ packWARN(WARN_SIGNAL),
@@ -1272,6 +1288,13 @@ sigaction(sig, optaction, oldaction = 0)
 	        else
 		    sig = i;
             }
+#ifdef NSIG
+	    if (sig > NSIG) { /* NSIG - 1 is still okay. */
+	        Perl_warner(aTHX_ packWARN(WARN_SIGNAL),
+                            "No such signal: %d", sig);
+	        XSRETURN_UNDEF;
+	    }
+#endif
 	    sigsvp = hv_fetch(GvHVn(siggv),
 			      PL_sig_name[sig],
 			      strlen(PL_sig_name[sig]),
@@ -1307,7 +1330,7 @@ sigaction(sig, optaction, oldaction = 0)
 
 	    /* Remember old disposition if desired. */
 	    if (oldaction) {
-		svp = hv_fetch(oldaction, "HANDLER", 7, TRUE);
+		svp = hv_fetchs(oldaction, "HANDLER", TRUE);
 		if(!svp)
 		    croak("Can't supply an oldaction without a HANDLER");
 		if(SvTRUE(*sigsvp)) { /* TBD: what if "0"? */
@@ -1320,7 +1343,7 @@ sigaction(sig, optaction, oldaction = 0)
 		if(RETVAL == -1)
                    XSRETURN_UNDEF;
 		/* Get back the mask. */
-		svp = hv_fetch(oldaction, "MASK", 4, TRUE);
+		svp = hv_fetchs(oldaction, "MASK", TRUE);
 		if (sv_isa(*svp, "POSIX::SigSet")) {
 		    IV tmp = SvIV((SV*)SvRV(*svp));
 		    sigset = INT2PTR(sigset_t*, tmp);
@@ -1332,11 +1355,11 @@ sigaction(sig, optaction, oldaction = 0)
 		*sigset = oact.sa_mask;
 
 		/* Get back the flags. */
-		svp = hv_fetch(oldaction, "FLAGS", 5, TRUE);
+		svp = hv_fetchs(oldaction, "FLAGS", TRUE);
 		sv_setiv(*svp, oact.sa_flags);
 
 		/* Get back whether the old handler used safe signals. */
-		svp = hv_fetch(oldaction, "SAFE", 4, TRUE);
+		svp = hv_fetchs(oldaction, "SAFE", TRUE);
 		sv_setiv(*svp,
 		/* compare incompatible pointers by casting to integer */
 		    PTR2nat(oact.sa_handler) == PTR2nat(PL_csighandlerp));
@@ -1346,17 +1369,17 @@ sigaction(sig, optaction, oldaction = 0)
 		/* Safe signals use "csighandler", which vectors through the
 		   PL_sighandlerp pointer when it's safe to do so.
 		   (BTW, "csighandler" is very different from "sighandler".) */
-		svp = hv_fetch(action, "SAFE", 4, FALSE);
+		svp = hv_fetchs(action, "SAFE", FALSE);
 		act.sa_handler =
 			DPTR2FPTR(
-			    void (*)(),
+			    void (*)(int),
 			    (*svp && SvTRUE(*svp))
 				? PL_csighandlerp : PL_sighandlerp
 			);
 
 		/* Vector new Perl handler through %SIG.
 		   (The core signal handlers read %SIG to dispatch.) */
-		svp = hv_fetch(action, "HANDLER", 7, FALSE);
+		svp = hv_fetchs(action, "HANDLER", FALSE);
 		if (!svp)
 		    croak("Can't supply an action without a HANDLER");
 		sv_setsv(*sigsvp, *svp);
@@ -1379,7 +1402,7 @@ sigaction(sig, optaction, oldaction = 0)
 		}
 
 		/* Set up any desired mask. */
-		svp = hv_fetch(action, "MASK", 4, FALSE);
+		svp = hv_fetchs(action, "MASK", FALSE);
 		if (svp && sv_isa(*svp, "POSIX::SigSet")) {
 		    IV tmp = SvIV((SV*)SvRV(*svp));
 		    sigset = INT2PTR(sigset_t*, tmp);
@@ -1389,7 +1412,7 @@ sigaction(sig, optaction, oldaction = 0)
 		    sigemptyset(& act.sa_mask);
 
 		/* Set up any desired flags. */
-		svp = hv_fetch(action, "FLAGS", 5, FALSE);
+		svp = hv_fetchs(action, "FLAGS", FALSE);
 		act.sa_flags = svp ? SvIV(*svp) : 0;
 
 		/* Don't worry about cleaning up *sigsvp if this fails,
@@ -1669,7 +1692,7 @@ strxfrm(src)
           STRLEN dstlen;
           char *p = SvPV(src,srclen);
           srclen++;
-          ST(0) = sv_2mortal(NEWSV(800,srclen*4+1));
+          ST(0) = sv_2mortal(newSV(srclen*4+1));
           dstlen = strxfrm(SvPVX(ST(0)), p, (size_t)srclen);
           if (dstlen > srclen) {
               dstlen++;
@@ -1713,7 +1736,7 @@ tcsendbreak(fd, duration)
 	int		duration
 
 char *
-asctime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
+asctime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 	int		sec
 	int		min
 	int		hour
@@ -1767,7 +1790,7 @@ difftime(time1, time2)
 	Time_t		time2
 
 SysRetLong
-mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
+mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 	int		sec
 	int		min
 	int		hour
@@ -1790,7 +1813,7 @@ mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
 	    mytm.tm_wday = wday;
 	    mytm.tm_yday = yday;
 	    mytm.tm_isdst = isdst;
-	    RETVAL = mktime(&mytm);
+	    RETVAL = (SysRetLong) mktime(&mytm);
 	}
     OUTPUT:
 	RETVAL
@@ -1839,7 +1862,7 @@ ctermid(s = 0)
 	char *          s = 0;
     CODE:
 #ifdef HAS_CTERMID_R
-	s = safemalloc((size_t) L_ctermid);
+	s = (char *) safemalloc((size_t) L_ctermid);
 #endif
 	RETVAL = ctermid(s);
     OUTPUT:

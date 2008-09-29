@@ -43,7 +43,7 @@ Default is current directory.
 =item B<--podpath> POD search path
 
 The list of directories to search for .pod and .pm files to be converted.
-Default is `podroot/.'.
+Default is 'podroot/.'.
 
 =item B<--recurse> recurse on subdirectories
 
@@ -58,7 +58,7 @@ be a path relative to the filesystem, not the resulting URL.
 =item B<--htmlroot> URL base directory
 
 The base directory which all resulting HTML files will be visible at in
-a URL.  The default is `/'.
+a URL.  The default is '/'.
 
 =item B<--splithead> POD files to split on =head directive
 
@@ -75,7 +75,7 @@ split, rather it invokes I<splitpod> to do the dirty work.  As with
 
 =item B<--splitpod> Directory containing the splitpod program
 
-The directory containing the splitpod program. The default is `podroot/pod'.
+The directory containing the splitpod program. The default is 'podroot/pod'.
 
 =item B<--libpods> library PODs for LE<lt>E<gt> links
 
@@ -111,8 +111,6 @@ perl documentation:
 =head1 AUTHOR
 
 Chris Hall E<lt>hallc@cs.colorado.eduE<gt>
-
-=head1 TODO
 
 =cut
 
@@ -556,8 +554,8 @@ sub installdir {
 
 	# check if a .pm files exists too
 	if (grep($_ eq $pod, @pmlist)) {
-	    print  "$0: Warning both `$podroot/$pod.pod' and "
-		. "`$podroot/$pod.pm' exist, using pod\n";
+	    print  "$0: Warning both '$podroot/$pod.pod' and "
+		. "'$podroot/$pod.pm' exist, using pod\n";
 	    push(@ignore, "$pod.pm");
 	}
 	runpod2html("$pod.pod", $doindex);

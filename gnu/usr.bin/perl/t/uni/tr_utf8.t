@@ -31,7 +31,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 use encoding 'utf8';
 
@@ -67,4 +67,12 @@ is($str, $hiragana, "s/// # hiragana -> katakana");
   $line =~ tr/bcdeghijklmnprstvwxyz$02578/בצדעגהיײקלמנפּרסטװשכיזשױתײחא/;
   is($line, "aבצדעfגהיײקלמנoפqּרסuטװשכיזש1ױ34ת6ײח9", "[perl #16843]");
 }
+
+{
+  # [perl #40641]
+  my $str = qq/Gebääääääääääääääääääääude/;
+  my $reg = qr/Gebääääääääääääääääääääude/;
+  ok($str =~ /$reg/, "[perl #40641]");
+}
+
 __END__

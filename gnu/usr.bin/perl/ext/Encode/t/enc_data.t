@@ -1,4 +1,4 @@
-# $Id: enc_data.t,v 1.3 2004/08/09 18:09:10 millert Exp $
+# $Id: enc_data.t,v 1.4 2008/09/29 17:36:04 millert Exp $
 
 BEGIN {
     require Config; import Config;
@@ -7,16 +7,16 @@ BEGIN {
       exit 0;
     }
     unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: PerlIO was not built\n";
-	exit 0;
+    print "1..0 # Skip: PerlIO was not built\n";
+    exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # encoding pragma does not support EBCDIC platforms\n";
-	exit(0);
+    print "1..0 # encoding pragma does not support EBCDIC platforms\n";
+    exit(0);
     }
     if ($] <= 5.008 and !$Config{perl_patchlevel}){
-	print "1..0 # Skip: Perl 5.8.1 or later required\n";
-	exit 0;
+    print "1..0 # Skip: Perl 5.8.1 or later required\n";
+    exit 0;
     }
 }
 

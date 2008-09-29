@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: rt.pl,v 1.2 2003/12/03 03:02:29 millert Exp $
+# $Id: rt.pl,v 1.3 2008/09/29 17:36:04 millert Exp $
 #
 
 BEGIN {
@@ -16,25 +16,25 @@ BEGIN {
       exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
     use strict;
     require Test::More;
     our $DEBUG;
     our @ucm;
     unless(@ARGV){
-	use File::Spec;
-	Test::More->import(tests => 103);
-	opendir my $dh, $ucmdir or die "$ucmdir:$!";
-	@ucm = 
-	    map {File::Spec->catfile($ucmdir, $_) } 
-		sort grep {/\.ucm$/o} readdir($dh);
-	closedir $dh;
+    use File::Spec;
+    Test::More->import(tests => 103);
+    opendir my $dh, $ucmdir or die "$ucmdir:$!";
+    @ucm = 
+        map {File::Spec->catfile($ucmdir, $_) } 
+        sort grep {/\.ucm$/o} readdir($dh);
+    closedir $dh;
     }else{
-	Test::More->import("no_plan");
-	$DEBUG = 1;
-	@ucm = @ARGV;
+    Test::More->import("no_plan");
+    $DEBUG = 1;
+    @ucm = @ARGV;
     }
 }
 
@@ -55,20 +55,20 @@ sub rttest{
     open my $rfh, "<$ucm" or die "$ucm:$!";
     # <U0000> \x00 |0 # <control>
     while(<$rfh>){
-	s/#.*//o; /^$/ and next;
-	unless ($name){
-	    /^<code_set_name>\s+"([^\"]+)"/io or next;
-	    $name = $1 and next;
-	}else{
-	    /^<U([0-9a-f]+)>\s+(\S+)\s+\|(\d)/io or next;
-	    $nchar++;
-	    $3 == 0 or next;
-	    $nrt++;
-	    my $uni = chr(hex($1));
-	    my $enc = eval qq{ "$2" };
-	    decode($name, $enc) eq $uni or $nok++;
-	    encode($name, $uni) eq $enc or $nok++;
-	}
+    s/#.*//o; /^$/ and next;
+    unless ($name){
+        /^<code_set_name>\s+"([^\"]+)"/io or next;
+        $name = $1 and next;
+    }else{
+        /^<U([0-9a-f]+)>\s+(\S+)\s+\|(\d)/io or next;
+        $nchar++;
+        $3 == 0 or next;
+        $nrt++;
+        my $uni = chr(hex($1));
+        my $enc = eval qq{ "$2" };
+        decode($name, $enc) eq $uni or $nok++;
+        encode($name, $uni) eq $enc or $nok++;
+    }
     }
     return($name, $nchar, $nrt, $nok);
 }

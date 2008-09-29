@@ -117,7 +117,7 @@ DllExport  int		win32_open_osfhandle(intptr_t handle, int flags);
 DllExport  intptr_t	win32_get_osfhandle(int fd);
 DllExport  FILE*	win32_fdupopen(FILE *pf);
 
-DllExport  DIR*		win32_opendir(char *filename);
+DllExport  DIR*		win32_opendir(const char *filename);
 DllExport  struct direct*	win32_readdir(DIR *dirp);
 DllExport  long		win32_telldir(DIR *dirp);
 DllExport  void		win32_seekdir(DIR *dirp, long loc);
@@ -132,6 +132,7 @@ DllExport  int		win32_times(struct tms *timebuf);
 DllExport  unsigned 	win32_alarm(unsigned int sec);
 DllExport  int		win32_stat(const char *path, Stat_t *buf);
 DllExport  char*	win32_longpath(char *path);
+DllExport  char*	win32_ansipath(const WCHAR *path);
 DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
 DllExport  int          win32_link(const char *oldname, const char *newname);
 DllExport  int		win32_unlink(const char *f);
@@ -239,6 +240,7 @@ END_EXTERN_C
 #define fstat(fd,bufptr)   	win32_fstat(fd,bufptr)
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)
 #define longpath(pth)   	win32_longpath(pth)
+#define ansipath(pth)   	win32_ansipath(pth)
 #define rename(old,new)		win32_rename(old,new)
 #define setmode(fd,mode)	win32_setmode(fd,mode)
 #define chsize(fd,sz)		win32_chsize(fd,sz)

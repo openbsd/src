@@ -349,7 +349,11 @@ SKIP: {
     ok( utf8::is_utf8($c), "utf8::is_utf8 unicode");
 
     is(utf8::upgrade($a), 1, "utf8::upgrade basic");
-    is(utf8::upgrade($b), 2, "utf8::upgrade beyond");
+    if (ord('A') == 193) { # EBCDIC.
+	is(utf8::upgrade($b), 1, "utf8::upgrade beyond");
+    } else {
+	is(utf8::upgrade($b), 2, "utf8::upgrade beyond");
+    }
     is(utf8::upgrade($c), 2, "utf8::upgrade unicode");
 
     is($a, "A",       "basic");
@@ -381,7 +385,11 @@ SKIP: {
     utf8::encode($c);
 
     is($a, "A",       "basic");
-    is(length($b), 2, "beyond length");
+    if (ord('A') == 193) { # EBCDIC.
+	is(length($b), 1, "beyond length");
+    } else {
+	is(length($b), 2, "beyond length");
+    }
     is(length($c), 2, "unicode length");
 
     ok(utf8::valid($a), "utf8::valid basic");
@@ -406,7 +414,11 @@ SKIP: {
     ok(utf8::valid($c), " utf8::valid unicode");
 
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
-    ok( utf8::is_utf8($b), " utf8::is_utf8 beyond"); # $b stays in UTF-8.
+    if (ord('A') == 193) { # EBCDIC.
+	ok( utf8::is_utf8(pack('U',0x0ff)), " utf8::is_utf8 beyond");
+    } else {
+	ok( utf8::is_utf8($b), " utf8::is_utf8 beyond"); # $b stays in UTF-8.
+    }
     ok( utf8::is_utf8($c), " utf8::is_utf8 unicode");
 }
 

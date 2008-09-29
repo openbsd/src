@@ -21,7 +21,7 @@ foreach $test (@tests) {
   $expect = undef if $expect eq 'undef';
   $rslt = eval "$func('$arg')";
   is($@, '', "eval ${func}('$arg')");
-  is($rslt, $expect, "${func}('$arg'): '$rslt'");
+  is(lc($rslt), lc($expect), "${func}('$arg'): '$rslt'");
 }
 
 $defwarn = <<'EOW';
@@ -32,10 +32,10 @@ $defwarn = <<'EOW';
 EOW
 
 is(uc(rmsexpand('[]')),   "\U$ENV{DEFAULT}", 'rmsexpand()') || print $defwarn;
-is(rmsexpand('from.here'),"\L$ENV{DEFAULT}from.here") || print $defwarn;
-is(rmsexpand('from'),     "\L$ENV{DEFAULT}from")      || print $defwarn;
+is(lc(rmsexpand('from.here')),"\L$ENV{DEFAULT}from.here") || print $defwarn;
+is(lc(rmsexpand('from')),     "\L$ENV{DEFAULT}from")      || print $defwarn;
 
-is(rmsexpand('from.here','cant:[get.there];2'),
+is(lc(rmsexpand('from.here','cant:[get.there];2')),
    'cant:[get.there]from.here;2')                     || print $defwarn;
 
 
@@ -62,6 +62,7 @@ __some_:[__where_.__over_]__the_.__rainbow_    unixify /__some_/__where_/__over_
 [-]	unixify		../
 [--]	unixify		../../
 [...]	unixify		.../
+__lyrics_:[__are_.__very_^.__sappy_]__but_^.__rhymes_^.__are_.__true_    unixify /__lyrics_/__are_/__very_.__sappy_/__but_.__rhymes_.__are_.__true_
 
 # and back again
 /__some_/__where_/__over_/__the_.__rainbow_    vmsify  __some_:[__where_.__over_]__the_.__rainbow_

@@ -43,16 +43,16 @@ ok("$foo $bar $baz" eq "1 2 3");
 # error cases
 
 $x = eval { vec $foo, 0, 3 };
-like($@, /^Illegal number of bits in vec/);
+like($@, qr/^Illegal number of bits in vec/);
 $@ = undef;
 $x = eval { vec $foo, 0, 0 };
-like($@, /^Illegal number of bits in vec/);
+like($@, qr/^Illegal number of bits in vec/);
 $@ = undef;
 $x = eval { vec $foo, 0, -13 };
-like($@, /^Illegal number of bits in vec/);
+like($@, qr/^Illegal number of bits in vec/);
 $@ = undef;
 $x = eval { vec($foo, -1, 4) = 2 };
-like($@, /^Illegal number of bits in vec/);
+like($@, qr/^Negative offset to vec in lvalue context/);
 $@ = undef;
 ok(! vec('abcd', 7, 8));
 
