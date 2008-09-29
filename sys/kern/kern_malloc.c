@@ -1,7 +1,7 @@
-/*	$OpenBSD: kern_malloc.c,v 1.74 2008/02/21 10:40:48 kettenis Exp $	*/
-/*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.75 2008/09/29 12:34:18 art Exp $	*/
 
 /*
+ * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 1987, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/pool.h>
 #include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
@@ -74,6 +75,10 @@ u_int	nkmempages_min = 0;
 #endif
 u_int	nkmempages_max = 0;
 
+struct pool mallocpl[MINBUCKET + 16];
+char mallocplnames[MINBUCKET + 16][8];	/* wchan for pool */
+char mallocplwarn[MINBUCKET + 16][32];  /* warning message for hard limit */
+
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
@@ -87,16 +92,6 @@ struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER("sysctlklk");
 #endif
 
 #ifdef DIAGNOSTIC
-/*
- * This structure provides a set of masks to catch unaligned frees.
- */
-const long addrmask[] = { 0,
-	0x00000001, 0x00000003, 0x00000007, 0x0000000f,
-	0x0000001f, 0x0000003f, 0x0000007f, 0x000000ff,
-	0x000001ff, 0x000003ff, 0x000007ff, 0x00000fff,
-	0x00001fff, 0x00003fff, 0x00007fff, 0x0000ffff,
-};
-
 /*
  * The WEIRD_ADDR is used as known text to copy into free objects so
  * that modifications after frees can be detected.
@@ -133,6 +128,46 @@ struct timeval malloc_errintvl = { 5, 0 };
 struct timeval malloc_lasterr;
 #endif
 
+void	*malloc_page_alloc(struct pool *, int);
+void	malloc_page_free(struct pool *, void *);
+struct pool_allocator pool_allocator_malloc = {
+	malloc_page_alloc, malloc_page_free, 0,
+};
+
+void *
+malloc_page_alloc(struct pool *pp, int flags)
+{
+	void *v = uvm_km_getpage(flags & M_NOWAIT? 0 : 1);
+	struct vm_page *pg;
+	paddr_t pa;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)v, &pa))
+		panic("malloc_page_alloc: pmap_extract failed");
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg == NULL)
+		panic("malloc_page_alloc: no page");
+	pg->wire_count = BUCKETINDX(pp->pr_size);
+
+	return v;
+}
+
+void
+malloc_page_free(struct pool *pp, void *v)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)v, &pa))
+		panic("malloc_page_free: pmap_extract failed");
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg == NULL)
+		panic("malloc_page_free: no page");
+	pg->wire_count = 1;
+	uvm_km_putpage(v);
+}
+
 /*
  * Allocate a block of memory
  */
@@ -141,15 +176,9 @@ malloc(unsigned long size, int type, int flags)
 {
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
-	struct freelist *freep;
-	long indx, npg, allocsize;
+	vsize_t indx, allocsize;
 	int s;
-	caddr_t va, cp, savedlist;
-#ifdef DIAGNOSTIC
-	int32_t *end, *lp;
-	int copysize;
-	char *savedtype;
-#endif
+	void *va;
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 
@@ -158,7 +187,7 @@ malloc(unsigned long size, int type, int flags)
 #endif
 
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, type, flags, (void **)&va)) {
+	if (debug_malloc(size, type, flags, &va)) {
 		if ((flags & M_ZERO) && va != NULL)
 			memset(va, 0, size);
 		return (va);
@@ -190,19 +219,10 @@ malloc(unsigned long size, int type, int flags)
 			ksp->ks_limblocks++;
 		tsleep(ksp, PSWP+2, memname[type], 0);
 	}
-	ksp->ks_size |= 1 << indx;
 #endif
-#ifdef DIAGNOSTIC
-	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
-#endif
-	if (kbp->kb_next == NULL) {
-		if (size > MAXALLOCSAVE)
-			allocsize = round_page(size);
-		else
-			allocsize = 1 << indx;
-		npg = atop(round_page(allocsize));
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
-		    (vsize_t)ptoa(npg), 
+	if (size > MAXALLOCSAVE) {
+		allocsize = round_page(size);
+		va = (void *) uvm_km_kmemalloc(kmem_map, NULL, allocsize,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
 		if (va == NULL) {
@@ -220,120 +240,35 @@ malloc(unsigned long size, int type, int flags)
 			return (NULL);
 		}
 #ifdef KMEMSTATS
-		kbp->kb_total += kbp->kb_elmpercl;
+		kbp->kb_total++;
+		kbp->kb_calls++;
 #endif
 		kup = btokup(va);
 		kup->ku_indx = indx;
-		if (allocsize > MAXALLOCSAVE) {
-			kup->ku_pagecnt = npg;
-#ifdef KMEMSTATS
-			ksp->ks_memuse += allocsize;
-#endif
-			goto out;
-		}
-#ifdef KMEMSTATS
-		kup->ku_freecnt = kbp->kb_elmpercl;
-		kbp->kb_totalfree += kbp->kb_elmpercl;
-#endif
-		/*
-		 * Just in case we blocked while allocating memory,
-		 * and someone else also allocated memory for this
-		 * bucket, don't assume the list is still empty.
-		 */
-		savedlist = kbp->kb_next;
-		kbp->kb_next = cp = va + (npg * PAGE_SIZE) - allocsize;
-		for (;;) {
-			freep = (struct freelist *)cp;
-#ifdef DIAGNOSTIC
-			/*
-			 * Copy in known text to detect modification
-			 * after freeing.
-			 */
-			end = (int32_t *)&cp[copysize];
-			for (lp = (int32_t *)cp; lp < end; lp++)
-				*lp = WEIRD_ADDR;
-			freep->type = M_FREE;
-#endif /* DIAGNOSTIC */
-			if (cp <= va)
-				break;
-			cp -= allocsize;
-			freep->next = cp;
-		}
-		freep->next = savedlist;
-		if (savedlist == NULL)
-			kbp->kb_last = (caddr_t)freep;
-	}
-	va = kbp->kb_next;
-	kbp->kb_next = ((struct freelist *)va)->next;
-#ifdef DIAGNOSTIC
-	freep = (struct freelist *)va;
-	savedtype = (unsigned)freep->type < M_LAST ?
-		memname[freep->type] : "???";
-	if (kbp->kb_next) {
-		int rv;
-		vaddr_t addr = (vaddr_t)kbp->kb_next;
-
-		vm_map_lock(kmem_map);
-		rv = uvm_map_checkprot(kmem_map, addr,
-		    addr + sizeof(struct freelist), VM_PROT_WRITE);
-		vm_map_unlock(kmem_map);
-
-		if (!rv)  {
-		printf("%s %d of object %p size 0x%lx %s %s (invalid addr %p)\n",
-			"Data modified on freelist: word", 
-			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
-			"previous type", savedtype, kbp->kb_next);
-		kbp->kb_next = NULL;
-		}
+		kup->ku_pagecnt = atop(allocsize);
+	} else {
+		allocsize = mallocpl[indx].pr_size;
+		va = pool_get(&mallocpl[indx], PR_LIMITFAIL |
+		    (flags & M_NOWAIT ? 0 : PR_WAITOK));
+		if (!va && (flags & (M_NOWAIT|M_CANFAIL)) == 0)
+			panic("malloc: out of space in kmem pool");
 	}
 
-	/* Fill the fields that we've used with WEIRD_ADDR */
-#if BYTE_ORDER == BIG_ENDIAN
-	freep->type = WEIRD_ADDR >> 16;
-#endif
-#if BYTE_ORDER == LITTLE_ENDIAN
-	freep->type = (short)WEIRD_ADDR;
-#endif
-	end = (int32_t *)&freep->next +
-	    (sizeof(freep->next) / sizeof(int32_t));
-	for (lp = (int32_t *)&freep->next; lp < end; lp++)
-		*lp = WEIRD_ADDR;
-
-	/* and check that the data hasn't been modified. */
-	end = (int32_t *)&va[copysize];
-	for (lp = (int32_t *)va; lp < end; lp++) {
-		if (*lp == WEIRD_ADDR)
-			continue;
-		printf("%s %d of object %p size 0x%lx %s %s (0x%x != 0x%x)\n",
-			"Data modified on freelist: word", lp - (int32_t *)va,
-			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
-		break;
-	}
-
-	freep->spare0 = 0;
-#endif /* DIAGNOSTIC */
 #ifdef KMEMSTATS
-	kup = btokup(va);
-	if (kup->ku_indx != indx)
-		panic("malloc: wrong bucket");
-	if (kup->ku_freecnt == 0)
-		panic("malloc: lost data");
-	kup->ku_freecnt--;
-	kbp->kb_totalfree--;
-	ksp->ks_memuse += 1 << indx;
-out:
-	kbp->kb_calls++;
-	ksp->ks_inuse++;
-	ksp->ks_calls++;
-	if (ksp->ks_memuse > ksp->ks_maxused)
-		ksp->ks_maxused = ksp->ks_memuse;
-#else
-out:
+	if (va) {
+		ksp->ks_memuse += allocsize;
+		if (ksp->ks_memuse > ksp->ks_maxused)
+			ksp->ks_maxused = ksp->ks_memuse;
+		ksp->ks_size |= 1 << indx;
+		ksp->ks_inuse++;
+		ksp->ks_calls++;
+	}
 #endif
 	splx(s);
 
 	if ((flags & M_ZERO) && va != NULL)
 		memset(va, 0, size);
+
 	return (va);
 }
 
@@ -345,14 +280,10 @@ free(void *addr, int type)
 {
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
-	struct freelist *freep;
+	struct vm_page *pg;
+	paddr_t pa;
 	long size;
 	int s;
-#ifdef DIAGNOSTIC
-	caddr_t cp;
-	int32_t *end, *lp;
-	long alloc, copysize;
-#endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 #endif
@@ -362,93 +293,47 @@ free(void *addr, int type)
 		return;
 #endif
 
-#ifdef DIAGNOSTIC
-	if (addr < (void *)kmembase || addr >= (void *)kmemlimit)
-		panic("free: non-malloced addr %p type %s", addr,
-		    memname[type]);
-#endif
-
-	kup = btokup(addr);
-	size = 1 << kup->ku_indx;
-	kbp = &bucket[kup->ku_indx];
 	s = splvm();
+	if (addr >= (void *)kmembase && addr < (void *)kmemlimit) {
+		kup = btokup(addr);
+		kbp = &bucket[kup->ku_indx];
+		size = ptoa(kup->ku_pagecnt);
 #ifdef DIAGNOSTIC
-	/*
-	 * Check for returns of data that do not point to the
-	 * beginning of the allocation.
-	 */
-	if (size > PAGE_SIZE)
-		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
-	else
-		alloc = addrmask[kup->ku_indx];
-	if (((u_long)addr & alloc) != 0)
-		panic("free: unaligned addr %p, size %ld, type %s, mask %ld",
-			addr, size, memname[type], alloc);
+		if ((vaddr_t)addr != round_page((vaddr_t)addr))
+			panic("free: unaligned addr %p, size %ld, type %s",
+			    addr, size, memname[type]);
 #endif /* DIAGNOSTIC */
-	if (size > MAXALLOCSAVE) {
-		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(kup->ku_pagecnt));
+		uvm_km_free(kmem_map, (vaddr_t)addr, size);
 #ifdef KMEMSTATS
-		size = kup->ku_pagecnt << PGSHIFT;
-		ksp->ks_memuse -= size;
 		kup->ku_indx = 0;
 		kup->ku_pagecnt = 0;
-		if (ksp->ks_memuse + size >= ksp->ks_limit &&
-		    ksp->ks_memuse < ksp->ks_limit)
-			wakeup(ksp);
-		ksp->ks_inuse--;
-		kbp->kb_total -= 1;
+		kbp->kb_total--;
 #endif
-		splx(s);
-		return;
-	}
-	freep = (struct freelist *)addr;
+	} else {
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa))
+			panic("free: pmap_extract failed");
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg == NULL)
+			panic("free: no page");
 #ifdef DIAGNOSTIC
-	/*
-	 * Check for multiple frees. Use a quick check to see if
-	 * it looks free before laboriously searching the freelist.
-	 */
-	if (freep->spare0 == WEIRD_ADDR) {
-		for (cp = kbp->kb_next; cp;
-		    cp = ((struct freelist *)cp)->next) {
-			if (addr != cp)
-				continue;
-			printf("multiply freed item %p\n", addr);
-			panic("free: duplicated free");
-		}
+		if (pg->pg_flags & PQ_FREE)
+			panic("free: page %p is free", pg);
+		if (pg->wire_count < MINBUCKET ||
+		    (1 << pg->wire_count) > MAXALLOCSAVE)
+			panic("free: invalid page bucket %d", pg->wire_count);
+#endif
+		size = mallocpl[pg->wire_count].pr_size;
+		pool_put(&mallocpl[pg->wire_count], addr);
 	}
-	/*
-	 * Copy in known text to detect modification after freeing
-	 * and to make it look free. Also, save the type being freed
-	 * so we can list likely culprit if modification is detected
-	 * when the object is reallocated.
-	 */
-	copysize = size < MAX_COPY ? size : MAX_COPY;
-	end = (int32_t *)&((caddr_t)addr)[copysize];
-	for (lp = (int32_t *)addr; lp < end; lp++)
-		*lp = WEIRD_ADDR;
-	freep->type = type;
-#endif /* DIAGNOSTIC */
+
 #ifdef KMEMSTATS
-	kup->ku_freecnt++;
-	if (kup->ku_freecnt >= kbp->kb_elmpercl) {
-		if (kup->ku_freecnt > kbp->kb_elmpercl)
-			panic("free: multiple frees");
-		else if (kbp->kb_totalfree > kbp->kb_highwat)
-			kbp->kb_couldfree++;
-	}
-	kbp->kb_totalfree++;
+	ksp->ks_inuse--;
 	ksp->ks_memuse -= size;
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
 	    ksp->ks_memuse < ksp->ks_limit)
-		wakeup(ksp);
-	ksp->ks_inuse--;
+		wakeup(ksp);		/* unnecessary for pool, whatever */
 #endif
-	if (kbp->kb_next == NULL)
-		kbp->kb_next = addr;
-	else
-		((struct freelist *)kbp->kb_last)->next = addr;
-	freep->next = NULL;
-	kbp->kb_last = addr;
+
 	splx(s);
 }
 
@@ -507,9 +392,7 @@ void
 kmeminit(void)
 {
 	vaddr_t base, limit;
-#ifdef KMEMSTATS
-	long indx;
-#endif
+	int i;
 
 #ifdef DIAGNOSTIC
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
@@ -529,16 +412,27 @@ kmeminit(void)
 	kmemlimit = (char *)limit;
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
-#ifdef KMEMSTATS
-	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= PAGE_SIZE)
-			bucket[indx].kb_elmpercl = 1;
-		else
-			bucket[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
-		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
+
+	/*
+	 * init all the sub-page pools
+	 */
+	for (i = MINBUCKET; (1 << i) <= MAXALLOCSAVE; i++) {
+		snprintf(mallocplnames[i], sizeof(mallocplnames[i]),
+		    "kmem%d", i);
+		pool_init(&mallocpl[i], 1 << i, 1 << i, 0, PR_LIMITFAIL,
+		    mallocplnames[i], &pool_allocator_malloc);
 	}
-	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = nkmempages * PAGE_SIZE * 6 / 10;
+
+#ifdef KMEMSTATS
+	for (i = 0; i < MINBUCKET + 16; i++) {
+		if (1 << i >= PAGE_SIZE)
+			bucket[i].kb_elmpercl = 1;
+		else
+			bucket[i].kb_elmpercl = PAGE_SIZE / (1 << i);
+		bucket[i].kb_highwat = 5 * bucket[i].kb_elmpercl;
+	}
+	for (i = 0; i < M_LAST; i++)
+		kmemstats[i].ks_limit = nkmempages * PAGE_SIZE * 6 / 10;;
 #endif
 #ifdef MALLOC_DEBUG
 	debug_malloc_init();
@@ -579,7 +473,6 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	case KERN_MALLOC_BUCKET:
 		bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
-		kb.kb_next = kb.kb_last = 0;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb, sizeof(kb)));
 	case KERN_MALLOC_KMEMSTATS:
 #ifdef KMEMSTATS
@@ -607,8 +500,9 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			}
 			memall = malloc(totlen + M_LAST, M_SYSCTL,
 			    M_WAITOK|M_ZERO);
+			bzero(memall, totlen + M_LAST);
 			for (siz = 0, i = 0; i < M_LAST; i++) {
-				snprintf(memall + siz, 
+				snprintf(memall + siz,
 				    totlen + M_LAST - siz,
 				    "%s,", memname[i] ? memname[i] : "");
 				siz += strlen(memall + siz);
@@ -666,7 +560,7 @@ malloc_printit(int (*pr)(const char *, ...))
 
 		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d %8d\n",
 		    memname[i], km->ks_inuse, km->ks_memuse / 1024,
-		    km->ks_maxused / 1024, km->ks_limit / 1024, 
+		    km->ks_maxused / 1024, km->ks_limit / 1024,
 		    km->ks_calls, km->ks_limblocks, km->ks_mapblocks);
 	}
 #else

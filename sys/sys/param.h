@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.76 2008/09/19 05:41:29 djm Exp $	*/
+/*	$OpenBSD: param.h,v 1.77 2008/09/29 12:34:18 art Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -212,8 +212,8 @@
  * Constraints: PAGE_SIZE <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
  * MAXALLOCSIZE must be a power of two.
  */
-#define MINBUCKET	4		/* 4 => min allocation of 16 bytes */
-#define MAXALLOCSAVE	(2 * PAGE_SIZE)
+#define MINBUCKET	(sizeof(long) == 4? 4 : 5)
+#define MAXALLOCSAVE	(PAGE_SIZE)
 
 /*
  * Scale factor for scaled integers used to count %cpu time and load avgs.
