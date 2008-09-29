@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.32 2008/03/16 16:55:29 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.33 2008/09/29 18:41:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -147,8 +147,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		return 0;
 	}
 
-	close(lockfd);
 	if (!Debug) {
+		close(lockfd);
 		dup2(nullfd, STDIN_FILENO);
 		dup2(nullfd, STDOUT_FILENO);
 		dup2(nullfd, STDERR_FILENO);
