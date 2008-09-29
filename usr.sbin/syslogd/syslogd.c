@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.101 2008/04/21 22:09:51 mpf Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.102 2008/09/29 18:42:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.101 2008/04/21 22:09:51 mpf Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.102 2008/09/29 18:42:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 	socklen_t len;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
-	int lockpipe[2], nullfd;
+	int lockpipe[2] = { -1, -1}, nullfd;
 	struct addrinfo hints, *res, *res0;
 	FILE *fp;
 
