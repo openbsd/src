@@ -297,6 +297,7 @@ typedef struct drm_buf {
 	int		  total;       /* Buffer size			     */
 	int		  used;	       /* Amount of buffer in use (for DMA)  */
 	unsigned long	  offset;      /* Byte offset (used internally)	     */
+	void 		  *address;      /* Byte offset (used internally)	     */
 	unsigned long	  bus_address; /* Bus address of buffer		     */
 	__volatile__ int  pending;     /* On hardware DMA queue		     */
 	struct drm_file   *file_priv;  /* Unique identifier of holding process */

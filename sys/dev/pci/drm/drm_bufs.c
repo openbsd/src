@@ -623,6 +623,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			buf->total = alignment;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
+			buf->address = dmah->vaddr + offset;
 			buf->bus_address = dmah->busaddr + offset;
 			buf->pending = 0;
 			buf->file_priv = NULL;
