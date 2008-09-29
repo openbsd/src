@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.134 2007/05/15 17:40:31 mglocker Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.135 2008/09/29 18:46:03 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.131 2007/05/15 17:39:51 mglocker Exp 
+ *		OpenBSD: pcmciadevs,v 1.132 2008/09/29 18:45:58 deraadt Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -631,6 +631,8 @@
 #define	PCMCIA_PRODUCT_PLANEX_GWNS11H	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_IODATA_PCETTXR	{ "I-O DATA", "PCET/TX-R", NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA_PCETTXR	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_GREYCELL_DWL650H	{ "D-Link Corporation", "D-Link DWL-650H 11Mbps WLAN Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_GREYCELL_DWL650H	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_DLINK_DE660	{ "D-Link", "DE-660", NULL, NULL }
