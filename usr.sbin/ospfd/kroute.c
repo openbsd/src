@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.59 2008/07/24 18:46:59 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.60 2008/09/29 09:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -87,7 +87,7 @@ struct kroute_node	*kroute_match(in_addr_t);
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void		if_change(u_short, int, struct if_data *);
+void		if_change(u_short, int, struct if_data *, struct sockaddr_dl *);
 void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *,
 		    struct sockaddr_in *);
 void		if_announce(void *);
@@ -799,9 +799,14 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 {
 	struct kif_node		*kif;
 
-	if ((kif = kif_find(ifindex)) == NULL)
+	if ((kif = kif_find(ifindex)) == NULL) {
 		if ((kif = kif_insert(ifindex)) == NULL)
 			return (NULL);
+		kif->k.nh_reachable = (flags & IFF_UP) &&
+		    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
+		    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
+		    ifd->ifi_type != IFT_CARP));
+	}
 
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
@@ -928,13 +933,14 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 }
 
 void
-if_change(u_short ifindex, int flags, struct if_data *ifd)
+if_change(u_short ifindex, int flags, struct if_data *ifd,
+    struct sockaddr_dl *sdl)
 {
 	struct kroute_node	*kr, *tkr;
 	struct kif		*kif;
 	u_int8_t		 reachable;
 
-	if ((kif = kif_update(ifindex, flags, ifd, NULL)) == NULL) {
+	if ((kif = kif_update(ifindex, flags, ifd, sdl)) == NULL) {
 		log_warn("if_change:  kif_update(%u)", ifindex);
 		return;
 	}
@@ -1253,7 +1259,6 @@ fetchifs(u_short ifindex)
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
 	struct ifa_msghdr	*ifam;
-	struct kif		*kif = NULL;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 
 	mib[0] = CTL_NET;
@@ -1287,17 +1292,8 @@ fetchifs(u_short ifindex)
 			memcpy(&ifm, next, sizeof(ifm));
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
-
-			if ((kif = kif_update(ifm.ifm_index,
-			    ifm.ifm_flags, &ifm.ifm_data,
-			    (struct sockaddr_dl *)rti_info[RTAX_IFP])) == NULL)
-				fatal("fetchifs");
-
-			kif->nh_reachable = (kif->flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
-			    (ifm.ifm_data.ifi_link_state ==
-			    LINK_STATE_UNKNOWN &&
-			    ifm.ifm_data.ifi_type != IFT_CARP));
+			if_change(ifm.ifm_index, ifm.ifm_flags, &ifm.ifm_data,
+			    (struct sockaddr_dl *)rti_info[RTAX_IFP]);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
@@ -1525,8 +1521,10 @@ add:
 			break;
 		case RTM_IFINFO:
 			memcpy(&ifm, next, sizeof(ifm));
-			if_change(ifm.ifm_index, ifm.ifm_flags,
-			    &ifm.ifm_data);
+			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
+			if_change(ifm.ifm_index, ifm.ifm_flags, &ifm.ifm_data,
+			    (struct sockaddr_dl *)rti_info[RTAX_IFP]);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
