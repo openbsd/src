@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.106 2008/09/29 15:27:20 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.107 2008/09/29 15:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -86,6 +86,8 @@ int		 relay_resolve(struct ctl_relay_event *,
 int		 relay_handle_http(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *,
 		    struct protonode *, int);
+int		 relay_lognode(struct session *,
+		    struct protonode *, struct protonode *, char *, size_t);
 void		 relay_read_http(struct bufferevent *, void *);
 static int	_relay_lookup_url(struct ctl_relay_event *, char *, char *,
 		    char *, enum digest_type);
@@ -1021,13 +1023,32 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 }
 
 int
+relay_lognode(struct session *con, struct protonode *pn, struct protonode *pk,
+    char *buf, size_t len)
+{
+	const char		*label = NULL;
+
+	if ((pn->flags & PNFLAG_LOG) == 0)
+		return (0);
+	bzero(buf, len);
+	if (pn->label != 0)
+		label = pn_id2name(pn->label);
+	if (snprintf(buf, len, " [%s%s%s: %s]",
+	    label == NULL ? "" : label,
+	    label == NULL ? "" : ", ",
+	    pk->key, pk->value) == -1 ||
+	    evbuffer_add(con->se_log, buf, strlen(buf)) == -1)
+		return (-1);
+	return (0);
+}
+
+int
 relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
     struct protonode *pn, struct protonode *pk, int header)
 {
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
 	int			 ret = PN_DROP, mark = 0;
-	const char		*label = NULL;
 	struct protonode	*next;
 
 	/* Check if this action depends on a marked session */
@@ -1096,6 +1117,8 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 
 			/* Fail instantly */
 			if (pn->action == NODE_ACTION_FILTER) {
+				(void)relay_lognode(con, pn, pk,
+				    buf, sizeof(buf));
 				relay_close_http(con, 403,
 				    "rejecting request", pn->label);
 				return (PN_FAIL);
@@ -1126,17 +1149,8 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 	case NODE_ACTION_NONE:
 		return (PN_PASS);
 	}
-	if (mark != -1 && pn->flags & PNFLAG_LOG) {
-		bzero(buf, sizeof(buf));
-		if (pn->label != 0)
-			label = pn_id2name(pn->label);
-		if (snprintf(buf, sizeof(buf), " [%s%s%s: %s]",
-		    label == NULL ? "" : label,
-		    label == NULL ? "" : ", ",
-		    pk->key, pk->value) == -1 ||
-		    evbuffer_add(con->se_log, buf, strlen(buf)) == -1)
-			goto fail;
-	}
+	if (mark != -1 && relay_lognode(con, pn, pk, buf, sizeof(buf)) == -1)
+		goto fail;
 
 	return (ret);
  fail:
