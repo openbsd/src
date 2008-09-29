@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.69 2007/05/31 19:20:10 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.70 2008/09/29 18:16:29 kili Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 29 2008 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -376,7 +376,7 @@ mode sets or clears permissions without regard to the process's file mode
 creation mask.
 If the mode is octal, only bits 07777
 .Po
-.Dv S_ISUID \*(Ba S_ISGID \*(Ba S_ISTXT
+.Dv S_ISUID \*(Ba S_ISGID \*(Ba S_ISTXT \*(Ba
 .Dv S_IRWXU \*(Ba S_IRWXG \*(Ba S_IRWXO
 .Pc
 of the file's mode bits participate
