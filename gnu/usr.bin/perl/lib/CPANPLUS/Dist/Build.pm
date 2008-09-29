@@ -35,7 +35,7 @@ $VERSION = '0.06_02';
 
 =head1 NAME
 
-CPANPLUS::Dist::Build
+CPANPLUS::Dist::Build - distribution class for Module::Build
 
 =head1 SYNOPSIS
 

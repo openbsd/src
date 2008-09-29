@@ -201,15 +201,11 @@ MANSRCALL=
     CORE 3p			lib/CORE.pod \
     CPAN 3p			lib/CPAN.pm \
     CPAN::API::HOWTO 3p		lib/CPAN/API/HOWTO.pm \
-    CPAN::Debug 3p		lib/CPAN/Debug.pm \
     CPAN::FirstTime 3p		lib/CPAN/FirstTime.pm \
-    CPAN::HandleConfig 3p	lib/CPAN/HandleConfig.pm \
     CPAN::Kwalify 3p		lib/CPAN/Kwalify.pm \
     CPAN::Nox 3p		lib/CPAN/Nox.pm \
-    CPAN::Queue 3p		lib/CPAN/Queue.pm \
-    CPAN::Tarzip 3p		lib/CPAN/Tarzip.pm \
     CPAN::Version 3p		lib/CPAN/Version.pm \
-    CPANPLUS 3p	lib/CPANPLUS.pm \
+    CPANPLUS 3p			lib/CPANPLUS.pm \
     CPANPLUS::Backend 3p	lib/CPANPLUS/Backend.pm \
     CPANPLUS::Backend::RV 3p	lib/CPANPLUS/Backend/RV.pm \
     CPANPLUS::Config 3p		lib/CPANPLUS/Config.pm \
@@ -218,7 +214,6 @@ MANSRCALL=
     CPANPLUS::Dist::Base 3p	lib/CPANPLUS/Dist/Base.pm \
     CPANPLUS::Dist::Build 3p	lib/CPANPLUS/Dist/Build.pm \
     CPANPLUS::Dist::MM 3p	lib/CPANPLUS/Dist/MM.pm \
-    CPANPLUS::Dist::Sample 3p	lib/CPANPLUS/Dist/Sample.pm \
     CPANPLUS::Error 3p		lib/CPANPLUS/Error.pm \
     CPANPLUS::FAQ 3p		lib/CPANPLUS/FAQ.pod \
     CPANPLUS::Hacking 3p	lib/CPANPLUS/Hacking.pod \
@@ -242,7 +237,6 @@ MANSRCALL=
     CPANPLUS::Shell::Default::Plugins::HOWTO 3p	lib/CPANPLUS/Shell/Default/Plugins/HOWTO.pod \
     CPANPLUS::Shell::Default::Plugins::Remote 3p	lib/CPANPLUS/Shell/Default/Plugins/Remote.pm \
     CPANPLUS::Shell::Default::Plugins::Source 3p	lib/CPANPLUS/Shell/Default/Plugins/Source.pm \
-    CPANPLUS::inc 3p		lib/CPANPLUS/inc.pm \
     Carp 3p			lib/Carp.pm \
     Carp::Heavy 3p		lib/Carp/Heavy.pm \
     Class::ISA 3p		lib/Class/ISA.pm \

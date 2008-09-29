@@ -26,7 +26,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module
+CPANPLUS::Module - create objects based on their sources
 
 =head1 SYNOPSIS
 

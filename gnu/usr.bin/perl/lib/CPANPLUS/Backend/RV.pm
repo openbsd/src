@@ -19,7 +19,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Backend::RV
+CPANPLUS::Backend::RV - return value objects for CPANPLUS::Backend
 
 =head1 SYNOPSIS
 

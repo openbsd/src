@@ -20,7 +20,7 @@ $DEFAULT    = SHELL_DEFAULT;
 
 =head1 NAME
 
-CPANPLUS::Shell
+CPANPLUS::Shell - generic loading (and base class) for CPANPLUS shells
 
 =head1 SYNOPSIS
 

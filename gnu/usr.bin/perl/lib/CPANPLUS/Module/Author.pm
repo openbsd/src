@@ -12,7 +12,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Author
+CPANPLUS::Module::Author - author objects used by CPANPLUS
 
 =head1 SYNOPSIS
 

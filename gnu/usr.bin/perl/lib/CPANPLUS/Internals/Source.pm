@@ -24,7 +24,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Internals::Source
+CPANPLUS::Internals::Source - parse source files for CPANPLUS
 
 =head1 SYNOPSIS
 

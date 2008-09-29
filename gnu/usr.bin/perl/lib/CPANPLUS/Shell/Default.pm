@@ -73,7 +73,7 @@ my $Prompt  = $Brand . '> ';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default
+CPANPLUS::Shell::Default - default user interface to CPANPLUS
 
 =head1 SYNOPSIS
 

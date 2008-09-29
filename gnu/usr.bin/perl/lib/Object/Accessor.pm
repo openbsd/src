@@ -19,7 +19,7 @@ use constant ALLOW => 1;    # array index in the hash value
 
 =head1 NAME
 
-Object::Accessor
+Object::Accessor - create and use per-object accessors
 
 =head1 SYNOPSIS
 

@@ -19,7 +19,7 @@ require CPANPLUS::Internals;
 
 =head1 NAME
 
-CPANPLUS::Internals::Report
+CPANPLUS::Internals::Report - send test reports to CPANPLUS testers
 
 =head1 SYNOPSIS
 

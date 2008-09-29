@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CPANPLUS::Hacking
+CPANPLUS::Hacking - developing in the CPANPLUS environment
 
 =head1 DESCRIPTION
 

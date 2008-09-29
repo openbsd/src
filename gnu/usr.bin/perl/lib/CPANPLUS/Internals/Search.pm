@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Internals::Search
+CPANPLUS::Internals::Search - find module objects matching criteria
 
 =head1 SYNOPSIS
 
