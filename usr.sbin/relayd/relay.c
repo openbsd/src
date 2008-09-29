@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.104 2008/08/11 08:24:41 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.105 2008/09/29 15:12:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -410,7 +410,8 @@ relay_privinit(void)
 		ssl_init(env);
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		log_debug("relay_privinit: adding relay %s", rlay->rl_conf.name);
+		log_debug("relay_privinit: adding relay %s",
+		    rlay->rl_conf.name);
 
 		if (debug)
 			relay_protodebug(rlay);
@@ -1010,7 +1011,8 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 		}
 	}
 	if (strstr(val, "$TIMEOUT") != NULL) {
-		snprintf(ibuf, sizeof(ibuf), "%lu", rlay->rl_conf.timeout.tv_sec);
+		snprintf(ibuf, sizeof(ibuf), "%lu",
+		    rlay->rl_conf.timeout.tv_sec);
 		if (expand_string(buf, len, "$TIMEOUT", ibuf) != 0)
 			return (NULL);
 	}
@@ -2073,7 +2075,8 @@ relay_from_table(struct session *con)
 		/* FALLTHROUGH */
 	case RELAY_DSTMODE_HASH:
 		p = relay_hash_addr(&rlay->rl_conf.ss, p);
-		p = hash32_buf(&rlay->rl_conf.port, sizeof(rlay->rl_conf.port), p);
+		p = hash32_buf(&rlay->rl_conf.port,
+		    sizeof(rlay->rl_conf.port), p);
 		if ((idx = p % rlay->rl_dstnhosts) >= RELAY_MAXHOSTS)
 			return (-1);
 	}
@@ -2116,7 +2119,8 @@ relay_natlook(int fd, short event, void *arg)
 		fatalx("invalid NAT lookup");
 
 	if (con->se_out.ss.ss_family == AF_UNSPEC && cnl->in == -1 &&
-	    rlay->rl_conf.dstss.ss_family == AF_UNSPEC && rlay->rl_dsttable == NULL) {
+	    rlay->rl_conf.dstss.ss_family == AF_UNSPEC &&
+	    rlay->rl_dsttable == NULL) {
 		relay_close(con, "session NAT lookup failed");
 		return;
 	}
@@ -2586,7 +2590,8 @@ relay_ssl_ctx_create(struct relay *rlay)
 		goto err;
 
 	log_debug("relay_ssl_ctx_create: loading private key");
-	if (!ssl_ctx_use_private_key(ctx, rlay->rl_ssl_key, rlay->rl_ssl_key_len))
+	if (!ssl_ctx_use_private_key(ctx, rlay->rl_ssl_key,
+	    rlay->rl_ssl_key_len))
 		goto err;
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
@@ -2743,7 +2748,8 @@ relay_ssl_readcb(int fd, short event, void *arg)
 			if (ret == 0)
 				what |= EVBUFFER_EOF;
 			else {
-				ssl_error(rlay->rl_conf.name, "relay_ssl_readcb");
+				ssl_error(rlay->rl_conf.name,
+				    "relay_ssl_readcb");
 				what |= EVBUFFER_ERROR;
 			}
 			goto err;

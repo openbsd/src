@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.44 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: hce.c,v 1.45 2008/09/29 15:12:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,7 +337,7 @@ hce_notify_done(struct host *host, const char *msg)
 
 	/* Notify for all other hosts that inherit the state from this one */
 	SLIST_FOREACH(h, &host->children, child) {
-		h->up = hostup;		
+		h->up = hostup;
 		hce_notify_done(h, msg);
 	}
 }

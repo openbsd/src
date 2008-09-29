@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.33 2008/09/29 09:58:51 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.34 2008/09/29 15:12:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -284,7 +284,7 @@ transaction_init(struct relayd *env, const char *anchor)
 		env->sc_pf->pft[i].size = 1;
 		env->sc_pf->pft[i].esize = sizeof(env->sc_pf->pfte[i]);
 		env->sc_pf->pft[i].array = &env->sc_pf->pfte[i];
-	
+
 		bzero(&env->sc_pf->pfte[i], sizeof(env->sc_pf->pfte[i]));
 		(void)strlcpy(env->sc_pf->pfte[i].anchor,
 		    anchor, PF_ANCHOR_NAME_SIZE);

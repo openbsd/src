@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.17 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.18 2008/09/29 15:12:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -479,7 +479,8 @@ relay_dns_request(struct session *con)
 		if (relay_from_table(con) != 0)
 			return (-1);
 	} else if (con->se_out.ss.ss_family == AF_UNSPEC) {
-		bcopy(&rlay->rl_conf.dstss, &con->se_out.ss, sizeof(con->se_out.ss));
+		bcopy(&rlay->rl_conf.dstss, &con->se_out.ss,
+		    sizeof(con->se_out.ss));
 		con->se_out.port = rlay->rl_conf.dstport;
 	}
 

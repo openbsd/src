@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.82 2008/09/29 15:06:52 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.83 2008/09/29 15:12:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -370,8 +370,10 @@ merge_config(struct relayd *env, struct relayd *new_env)
 	env->sc_protocount = new_env->sc_protocount;
 	env->sc_relaycount = new_env->sc_relaycount;
 
-	memcpy(&env->sc_interval, &new_env->sc_interval, sizeof(env->sc_interval));
-	memcpy(&env->sc_timeout, &new_env->sc_timeout, sizeof(env->sc_timeout));
+	memcpy(&env->sc_interval, &new_env->sc_interval,
+	    sizeof(env->sc_interval));
+	memcpy(&env->sc_timeout, &new_env->sc_timeout,
+	    sizeof(env->sc_timeout));
 	memcpy(&env->sc_empty_table, &new_env->sc_empty_table,
 	    sizeof(env->sc_empty_table));
 	memcpy(&env->sc_proto_default, &new_env->sc_proto_default,
@@ -489,7 +491,8 @@ purge_config(struct relayd *env, u_int8_t what)
 	if (what & PURGE_RELAYS && env->sc_relays != NULL) {
 		while ((rlay = TAILQ_FIRST(env->sc_relays)) != NULL) {
 			TAILQ_REMOVE(env->sc_relays, rlay, rl_entry);
-			while ((sess = SPLAY_ROOT(&rlay->rl_sessions)) != NULL) {
+			while ((sess =
+			    SPLAY_ROOT(&rlay->rl_sessions)) != NULL) {
 				SPLAY_REMOVE(session_tree,
 				    &rlay->rl_sessions, sess);
 				free(sess);
