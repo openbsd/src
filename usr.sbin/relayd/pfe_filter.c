@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.32 2008/07/16 14:38:33 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.33 2008/09/29 09:58:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -385,8 +385,9 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		rio.rule.proto = IPPROTO_TCP;
 		rio.rule.src.addr.type = PF_ADDR_ADDRMASK;
 		rio.rule.dst.addr.type = PF_ADDR_ADDRMASK;
-		rio.rule.dst.port_op = PF_OP_EQ;
-		rio.rule.dst.port[0] = address->port;
+		rio.rule.dst.port_op = address->port.op;
+		rio.rule.dst.port[0] = address->port.val[0];
+		rio.rule.dst.port[1] = address->port.val[1];
 		rio.rule.rtableid = -1; /* stay in the main routing table */
 
 		if (strlen(rdr->conf.tag))
@@ -422,8 +423,12 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		if (ioctl(env->sc_pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
-		rio.rule.rpool.proxy_port[0] = ntohs(rdr->table->conf.port);
-		rio.rule.rpool.port_op = PF_OP_EQ;
+		if (address->port.op == PF_OP_EQ ||
+		    rdr->table->conf.flags & F_PORT) {
+			rio.rule.rpool.proxy_port[0] =
+			    ntohs(rdr->table->conf.port);
+			rio.rule.rpool.port_op = PF_OP_EQ;
+		}
 		rio.rule.rpool.opts = PF_POOL_ROUNDROBIN;
 		if (rdr->conf.flags & F_STICKY)
 			rio.rule.rpool.opts |= PF_POOL_STICKYADDR;

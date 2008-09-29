@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.122 2008/07/22 23:17:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.123 2008/09/29 09:58:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
+#include <net/pfvar.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -100,11 +101,12 @@ static in_port_t	 tableport = 0;
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
-		    int, in_port_t, const char *);
+		    int, struct portrange *, const char *);
 int		 host(const char *, struct addresslist *,
-		    int, in_port_t, const char *);
+		    int, struct portrange *, const char *);
 
 struct table	*table_inherit(struct table *);
+int		 getservice(char *);
 
 typedef struct {
 	union {
@@ -113,6 +115,7 @@ typedef struct {
 		struct host	*host;
 		struct timeval	 tv;
 		struct table	*table;
+		struct portrange port;
 		struct {
 			enum digest_type	 type;
 			char			*digest;
@@ -134,8 +137,9 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	interface hostname table
-%type	<v.number>	port http_type loglevel sslcache optssl mark parent
+%type	<v.number>	http_type loglevel sslcache optssl mark parent
 %type	<v.number>	proto_type dstmode retry log flag direction forwardmode
+%type	<v.port>	port
 %type	<v.host>	host
 %type	<v.tv>		timeout
 %type	<v.digest>	digest
@@ -231,15 +235,29 @@ eflags		: STYLE STRING
 		;
 
 port		: PORT STRING {
-			struct servent	*servent;
+			char		*a, *b;
+			int		 p[2];
 
-			servent = getservbyname($2, "tcp");
-			if (servent == NULL) {
-				yyerror("port %s is invalid", $2);
+			p[0] = p[1] = 0;
+
+			a = $2;
+			b = strchr($2, ':');
+			if (b == NULL)
+				$$.op = PF_OP_EQ;
+			else {
+				*b++ = '\0';
+				if ((p[1] = getservice(b)) == -1) {
+					free($2);
+					YYERROR;
+				}
+				$$.op = PF_OP_RRG;
+			}
+			if ((p[0] = getservice(a)) == -1) {
 				free($2);
 				YYERROR;
 			}
-			$$ = servent->s_port;
+			$$.val[0] = p[0];
+			$$.val[1] = p[1];
 			free($2);
 		}
 		| PORT NUMBER {
@@ -247,7 +265,8 @@ port		: PORT STRING {
 				yyerror("invalid port: %d", $2);
 				YYERROR;
 			}
-			$$ = htons($2);
+			$$.val[0] = htons($2);
+			$$.op = PF_OP_EQ;
 		}
 		;
 
@@ -424,7 +443,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 		}
 		| LISTEN ON STRING port interface {
 			if (host($3, &rdr->virts,
-				 SRV_MAX_VIRTS, $4, $5) <= 0) {
+				 SRV_MAX_VIRTS, &$4, $5) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
 				free($3);
 				free($5);
@@ -433,7 +452,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			free($3);
 			free($5);
 			if (rdr->conf.port == 0)
-				rdr->conf.port = $4;
+				rdr->conf.port = $4.val[0];
 			tableport = rdr->conf.port;
 		}
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
@@ -539,6 +558,8 @@ tablespec	: table 		{
 			struct table	*tb;
 			if (table->conf.port == 0)
 				table->conf.port = tableport;
+			else
+				table->conf.flags |= F_PORT;
 			if ((tb = table_inherit(table)) == NULL)
 				YYERROR;
 			$$ = tb;
@@ -550,7 +571,13 @@ tableopts_l	: tableopts tableopts_l
 		;
 
 tableopts	: CHECK tablecheck
-		| port			{ table->conf.port = $1; }
+		| port			{
+			if ($1.op != PF_OP_EQ) {
+				yyerror("invalid port");
+				YYERROR;
+			}
+			table->conf.port = $1.val[0];
+		}
 		| TIMEOUT timeout	{
 			bcopy(&$2, &table->conf.timeout,
 			    sizeof(struct timeval));
@@ -1117,11 +1144,17 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			if (rlay->rl_conf.ss.ss_family != AF_UNSPEC) {
 				yyerror("relay %s listener already specified",
 				    rlay->rl_conf.name);
+				free($3);
+				YYERROR;
+			}
+			if ($4.op != PF_OP_EQ) {
+				yyerror("invalid port");
+				free($3);
 				YYERROR;
 			}
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, $4, NULL) <= 0) {
+			if (host($3, &al, 1, &$4, NULL) <= 0) {
 				yyerror("invalid listen ip: %s", $3);
 				free($3);
 				YYERROR;
@@ -1129,12 +1162,12 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			free($3);
 			h = TAILQ_FIRST(&al);
 			bcopy(&h->ss, &rlay->rl_conf.ss, sizeof(rlay->rl_conf.ss));
-			rlay->rl_conf.port = h->port;
+			rlay->rl_conf.port = h->port.val[0];
 			if ($5) {
 				rlay->rl_conf.flags |= F_SSL;
 				conf->sc_flags |= F_SSL;
 			}
-			tableport = h->port;
+			tableport = h->port.val[0];
 		}
 		| forwardmode TO forwardspec interface dstaf	{
 			rlay->rl_conf.fwdmode = $1;
@@ -1207,9 +1240,14 @@ forwardspec	: tablespec	{
 				free($1);
 				YYERROR;
 			}
+			if ($2.op != PF_OP_EQ) {
+				yyerror("invalid port");
+				free($1);
+				YYERROR;
+			}
 
 			TAILQ_INIT(&al);
-			if (host($1, &al, 1, $2, NULL) <= 0) {
+			if (host($1, &al, 1, &$2, NULL) <= 0) {
 				yyerror("invalid listen ip: %s", $1);
 				free($1);
 				YYERROR;
@@ -1218,7 +1256,7 @@ forwardspec	: tablespec	{
 			h = TAILQ_FIRST(&al);
 			bcopy(&h->ss, &rlay->rl_conf.dstss,
 			    sizeof(rlay->rl_conf.dstss));
-			rlay->rl_conf.dstport = h->port;
+			rlay->rl_conf.dstport = h->port.val[0];
 			rlay->rl_conf.dstretry = $3;
 		}
 		| NAT LOOKUP retry		{
@@ -1268,7 +1306,7 @@ host		: STRING retry parent	{
 				fatal("out of memory");
 
 			TAILQ_INIT(&al);
-			if (host($1, &al, 1, 0, NULL) <= 0) {
+			if (host($1, &al, 1, NULL, NULL) <= 0) {
 				yyerror("invalid host %s", $2);
 				free($1);
 				free($$);
@@ -2041,7 +2079,7 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-	 in_port_t port, const char *ifname)
+    struct portrange *port, const char *ifname)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -2068,7 +2106,8 @@ host_dns(const char *s, struct addresslist *al, int max,
 		if ((h = calloc(1, sizeof(*h))) == NULL)
 			fatal(NULL);
 
-		h->port = port;
+		if (port != NULL)
+			bcopy(port, &h->port, sizeof(h->port));
 		if (ifname != NULL) {
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname))
@@ -2102,7 +2141,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 int
 host(const char *s, struct addresslist *al, int max,
-    in_port_t port, const char *ifname)
+    struct portrange *port, const char *ifname)
 {
 	struct address *h;
 
@@ -2113,7 +2152,8 @@ host(const char *s, struct addresslist *al, int max,
 		h = host_v6(s);
 
 	if (h != NULL) {
-		h->port = port;
+		if (port != NULL)
+			bcopy(port, &h->port, sizeof(h->port));
 		if (ifname != NULL) {
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname)) {
@@ -2199,4 +2239,26 @@ table_inherit(struct table *tb)
 	TAILQ_INSERT_TAIL(conf->sc_tables, tb, entry);
 
 	return (tb);
+}
+
+int
+getservice(char *n)
+{
+	struct servent	*s;
+	const char	*errstr;
+	long long	 llval;
+
+	llval = strtonum(n, 0, UINT16_MAX, &errstr);
+	if (errstr) {
+		s = getservbyname(n, "tcp");
+		if (s == NULL)
+			s = getservbyname(n, "udp");
+		if (s == NULL) {
+			yyerror("unknown port %s", n);
+			return (-1);
+		}
+		return (s->s_port);
+	}
+
+	return (htons((u_short)llval));
 }
