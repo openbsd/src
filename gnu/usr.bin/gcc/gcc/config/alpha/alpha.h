@@ -294,6 +294,8 @@ extern int alpha_tls_size;
      N_("Request IEEE-conformant math library routines (OSF/1)")},	\
     {"ieee", MASK_IEEE|MASK_IEEE_CONFORMANT,				\
      N_("Emit IEEE-conformant code, without inexact exceptions")},	\
+    {"no-ieee", - (MASK_IEEE|MASK_IEEE_WITH_INEXACT|MASK_IEEE_CONFORMANT), \
+     N_("Emit non-IEEE-conformant code")},				\
     {"ieee-with-inexact", MASK_IEEE_WITH_INEXACT|MASK_IEEE_CONFORMANT,	\
      N_("Emit IEEE-conformant code, with inexact exceptions")},		\
     {"build-constants", MASK_BUILD_CONSTANTS,				\
