@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.131 2007/05/15 17:39:51 mglocker Exp $
+	$OpenBSD: pcmciadevs,v 1.132 2008/09/29 18:45:58 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -454,6 +454,7 @@ product PLANEX FNW3600T		-1
 product PLANEX FNW3700T		-1
 product PLANEX GWNS11H		{ "PLANEX", "GW-NS11H&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL }
+product IODATA PCETTXR		{ "I-O&spDATA", "PCET/TX-R", NULL, NULL }
 product GREYCELL DWL650H	{ "D-Link&spCorporation", "D-Link&spDWL-650H&sp11Mbps&spWLAN&spAdapter", NULL, NULL }
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL }
 product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL }
