@@ -24,8 +24,9 @@ and other associated NLMs.
 The build requires CodeWarrior compiler and linker.  In addition,
 the "NetWare SDK", "NLM & NetWare Libraries for C" and
 "NetWare Server Protocol Libraries for C", all available at
-L<http://developer.novell.com/ndk/>, are also required.
-Microsoft Visual C++ version 4.2 or later is also required.
+L<http://developer.novell.com/wiki/index.php/Category:Novell_Developer_Kit>,
+are required. Microsoft Visual C++ version 4.2 or later is also
+required.
 
 =head2 Setup
 

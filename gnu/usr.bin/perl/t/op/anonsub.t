@@ -32,7 +32,7 @@ for (@prgs){
     print TEST "$prog\n";
     close TEST or die "Could not close: $!";
     my $results = $Is_VMS ?
-		`MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
+		`$^X "-I[-.lib]" $switch $tmpfile 2>&1` :
 		  $Is_MSWin32 ?
 		    `.\\perl -I../lib $switch $tmpfile 2>&1` :
 		      $Is_MacOS ?  
@@ -57,7 +57,7 @@ for (@prgs){
 
 sub test_invalid_decl {
     my ($code,$todo) = @_;
-    $todo = '' unless defined $todo;
+    $todo //= '';
     eval $code;
     if ($@ =~ /^Illegal declaration of anonymous subroutine at/) {
 	print "ok ", ++$i, " - '$code' is illegal$todo\n";
@@ -126,7 +126,6 @@ X();
 EXPECT
 ok 1
 ########
-package;
 print sub { return "ok 1\n" } -> ();
 EXPECT
 ok 1

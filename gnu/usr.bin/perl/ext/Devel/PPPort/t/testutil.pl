@@ -1,5 +1,21 @@
 {
   my $__ntest;
+  my $__total;
+
+  sub plan {
+    @_ == 2 or die "usage: plan(tests => count)";
+    my $what = shift;
+    $what eq 'tests' or die "cannot plan anything but tests";
+    $__total = shift;
+    defined $__total && $__total > 0 or die "need a positive number of tests";
+    print "1..$__total\n";
+  }
+
+  sub skip {
+    my $reason = shift;
+    ++$__ntest;
+    print "ok $__ntest # skip: $reason\n"
+  }
 
   sub ok ($;$$) {
     local($\,$,);
@@ -14,7 +30,7 @@
       } elsif (!defined $result) {
         $ok = 0;
       } elsif (ref($expected) eq 'Regexp') {
-        $ok = $result =~ /$expected/;
+        die "using regular expression objects is not backwards compatible";
       } else {
         $ok = $result eq $expected;
       }

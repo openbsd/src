@@ -52,7 +52,7 @@ my ($f,$z,$a,$exp,@a,$m,$e,$round_mode,$expected_class);
 
 while (<DATA>) 
   {
-  chomp;
+  $_ =~ s/[\n\r]//g;	# remove newlines
   next if /^#/;	# skip comments
   if (s/^&//) 
     {
@@ -114,7 +114,7 @@ while (<DATA>)
       }
     if ($f eq "bcmp")
       {
-      $try .= '$x <=> $y;';
+      $try .= '$x->bcmp($y);';
       } elsif ($f eq "bround") {
       $try .= "$round_mode; \$x->bround(\$y);";
       } elsif ($f eq "broot") {
@@ -485,7 +485,7 @@ E1:NaN
 E23:NaN
 1.23E1:12.3^
 1.23E-1:0.123^
-# bug with two E's in number beeing valid
+# bug with two E's in number being valid
 1e2e3:NaN
 1e2r:NaN
 1e2.0:NaN
@@ -1277,10 +1277,13 @@ abc:12:NaN
 2:2:4
 2:3:8
 3:3:27
-2:-1:NaN
--2:-1:NaN
-2:-2:NaN
--2:-2:NaN
+2:-1:0.5^
+-2:-1:-0.5^
+2:-2:0.25^
+# Y is even => result positive
+-2:-2:0.25^
+# Y is odd => result negative
+-2:-3:-0.125^
 +inf:1234500012:inf
 -inf:1234500012:inf
 -inf:1234500013:-inf

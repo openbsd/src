@@ -46,7 +46,7 @@ levels, optimization is turned off for the said source code files.
 Upgrading to at least 5.0.2.0 is recommended.
 
 If you decide to use gcc, make sure your installation is recent and
-complete, and be sure to read the Perl README file for more gcc-specific
+complete, and be sure to read the Perl INSTALL file for more gcc-specific
 details. Please report any hoops you had to jump through to the development
 team.
 

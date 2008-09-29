@@ -1,6 +1,6 @@
 # List::Util.pm
 #
-# Copyright (c) 1997-2005 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1997-2006 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -12,7 +12,7 @@ require Exporter;
 
 @ISA        = qw(Exporter);
 @EXPORT_OK  = qw(first min max minstr maxstr reduce sum shuffle);
-$VERSION    = "1.18";
+$VERSION    = "1.19";
 $XS_VERSION = $VERSION;
 $VERSION    = eval $VERSION;
 
@@ -197,11 +197,11 @@ This function could be implemented using C<reduce> like this
 
 =item reduce BLOCK LIST
 
-Reduces LIST by calling BLOCK multiple times, setting C<$a> and C<$b>
-each time. The first call will be with C<$a> and C<$b> set to the first
-two elements of the list, subsequent calls will be done by
-setting C<$a> to the result of the previous call and C<$b> to the next
-element in the list.
+Reduces LIST by calling BLOCK, in a scalar context, multiple times,
+setting C<$a> and C<$b> each time. The first call will be with C<$a>
+and C<$b> set to the first two elements of the list, subsequent
+calls will be done by setting C<$a> to the result of the previous
+call and C<$b> to the next element in the list.
 
 Returns the result of the last call to BLOCK. If LIST is empty then
 C<undef> is returned. If LIST only contains one element then that
@@ -268,9 +268,13 @@ to add due to them being very simple to implement in perl
 
   sub false { scalar grep { !$_ } @_ }
 
+=head1 SEE ALSO
+
+L<Scalar::Util>, L<List::MoreUtils>
+
 =head1 COPYRIGHT
 
-Copyright (c) 1997-2005 Graham Barr <gbarr@pobox.com>. All rights reserved.
+Copyright (c) 1997-2006 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

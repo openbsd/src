@@ -2,7 +2,7 @@
 Version 5.003
 -------------
 
-		  ***>  IMPORTANT NOTICE:  <***
+		  ***>	IMPORTANT NOTICE:  <***
 The main reason for this release was to fix a security bug affecting
 suidperl on some systems.  If you build suidperl on your system, it
 is strongly recommended that you replace any existing copies with
@@ -38,7 +38,7 @@ Version 5.002_01
 
 - The EMBED namespace changes are now used by default, in order to better
   segregate Perl's C global symbols from those belonging to embedding
-  applications or to libraries.  This makes it necessary to rebuild dynamic
+  applications or to libraries.	 This makes it necessary to rebuild dynamic
   extensions built under previous versions of Perl without the EMBED option.
   The default use of EMBED can be overridden by placing -DNO_EMBED on the
   cc command line.
@@ -62,9 +62,9 @@ Version 5.002_01
   production architecture-dependent libraries can coexist.
 
 - Two new magic variables, $^E and $^O, have been added.  $^E contains the
-  OS-specific equivalent of $!.  $^O contains the name of the operating
+  OS-specific equivalent of $!.	 $^O contains the name of the operating
   system, in order to make it easily available to Perl code whose behavior
-  differs according to its environment.  The standard library files have
+  differs according to its environment.	 The standard library files have
   been converted to use $^O in preference to $Config{'osname'}.
 
 - A mechanism was added to allow listing of locally applied patches

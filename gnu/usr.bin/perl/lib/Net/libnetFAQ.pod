@@ -84,7 +84,7 @@ An example taken from an article posted to comp.lang.perl.misc
 
     use Net::FTP;
 
-    # for debuging: $ftp = Net::FTP->new('site','Debug',10);
+    # for debugging: $ftp = Net::FTP->new('site','Debug',10);
     # open a connection and log in!
 
     $ftp = Net::FTP->new('target_site.somewhere.xxx');
@@ -300,8 +300,4 @@ being sent or response being received.
 
 Copyright (c) 1997 Graham Barr.
 All rights reserved.
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/libnetFAQ.pod#6 $>
 

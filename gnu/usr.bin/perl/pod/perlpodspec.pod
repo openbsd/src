@@ -65,7 +65,7 @@ directly formatting it).  A B<Pod formatter> (or B<Pod translator>)
 is a module or program that converts Pod to some other format (HTML,
 plaintext, TeX, PostScript, RTF).  A B<Pod processor> might be a
 formatter or translator, or might be a program that does something
-else with the Pod (like wordcounting it, scanning for index points,
+else with the Pod (like counting words, scanning for index points,
 etc.).
 
 Pod content is contained in B<Pod blocks>.  A Pod block starts with a
@@ -724,7 +724,7 @@ period-space-space or period-newline sequences).
 Pod parsers should not, by default, try to coerce apostrophe (') and
 quote (") into smart quotes (little 9's, 66's, 99's, etc), nor try to
 turn backtick (`) into anything else but a single backtick character
-(distinct from an openquote character!), nor "--" into anything but
+(distinct from an open quote character!), nor "--" into anything but
 two minus signs.  They I<must never> do any of those things to text
 in CE<lt>...> formatting codes, and never I<ever> to text in verbatim
 paragraphs.
@@ -959,7 +959,7 @@ for idiosyncratic mappings of Unicode-to-I<my_escapes>.
 
 =item *
 
-It is up to individual Pod formatter to display good judgment when
+It is up to individual Pod formatter to display good judgement when
 confronted with an unrenderable character (which is distinct from an
 unknown EE<lt>thing> sequence that the parser couldn't resolve to
 anything, renderable or not).  It is good practice to map Latin letters
@@ -1130,7 +1130,7 @@ is "perlfunc".  In "LE<lt>/CAVEATS>", the name is undef.)
 =item Fourth:
 
 The section (AKA "item" in older perlpods), or undef if none.  E.g.,
-in L<Getopt::Std/DESCRIPTION>, "DESCRIPTION" is the section.  (Note
+in "LE<lt>Getopt::Std/DESCRIPTIONE<gt>", "DESCRIPTION" is the section.  (Note
 that this is not the same as a manpage section like the "5" in "man 5
 crontab".  "Section Foo" in the Pod sense means the part of the text
 that's introduced by the heading or item whose text is "Foo".)
@@ -1333,7 +1333,7 @@ given C<LE<lt>fooE<gt>> code.
 =item *
 
 Previous versions of perlpod allowed for a C<LE<lt>sectionE<gt>> syntax
-(as in "C<LE<lt>Object AttributesE<gt>>"), which was not easily distinguishable
+(as in C<LE<lt>Object AttributesE<gt>>), which was not easily distinguishable
 from C<LE<lt>nameE<gt>> syntax.  This syntax is no longer in the
 specification, and has been replaced by the C<LE<lt>"section"E<gt>> syntax
 (where the quotes were formerly optional).  Pod parsers should tolerate
@@ -1541,7 +1541,7 @@ probably want to format it like so:
 
   Ut Enim
 
-But (for the forseeable future), Pod does not provide any way for Pod
+But (for the foreseeable future), Pod does not provide any way for Pod
 authors to distinguish which grouping is meant by the above
 "=item"-cluster structure.  So formatters should format it like so:
 

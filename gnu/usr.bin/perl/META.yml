@@ -1,87 +1,163 @@
 name: perl
-version: 5.008008
-abstract: Practical Extraction and Reporting Language
+version: 5.010000
+abstract: Practical Extraction and Report Language
 author: perl5-porters@perl.org
 license: perl
 distribution_type: core
 private:
   directory:
+    - ext/Compress/Raw
+    - ext/Compress/Zlib
     - ext/Cwd
     - ext/Data/Dumper
     - ext/DB_File
     - ext/Devel/PPPort
     - ext/Digest/MD5
+    - ext/Digest/SHA
     - ext/Encode
     - ext/Filter/Util/Call
     - ext/IO
+    - ext/IO_Compress_Base
+    - ext/IO_Compress_Zlib
     - ext/List/Util
+    - ext/Math/BigInt/FastCalc
     - ext/MIME/Base64
     - ext/Safe
     - ext/Storable
+    - ext/Sys/Syslog
+    - ext/Text/Soundex
+    - ext/threads/hints
+    - ext/threads/shared
+    - ext/threads/t
     - ext/Time/HiRes
+    - ext/Time/Piece
     - ext/Unicode/Normalize
+    - ext/Win32
+    - ext/Win32API/File
+    - lib/Archive/Extract
+    - lib/Archive/Tar
     - lib/Attribute/Handlers
     - lib/base
     - lib/bignum
     - lib/CGI
     - lib/Class/ISA
     - lib/CPAN
+    - lib/CPANPLUS/Backend
+    - lib/CPANPLUS/bin
+    - lib/CPANPLUS/Configure
+    - lib/CPANPLUS/Dist/Build
+    - lib/CPANPLUS/Internals
+    - lib/CPANPLUS/Module
+    - lib/CPANPLUS/Shell
+    - lib/CPANPLUS/t
     - lib/Digest
-    - lib/ExtUtils/t
+    - lib/encoding/warnings
+    - lib/ExtUtils/CBuilder
+    - lib/ExtUtils/Constant
+    - lib/ExtUtils/ParseXS
+    - lib/File/Fetch
     - lib/File/Spec
     - lib/File/Temp
     - lib/Filter/Simple
     - lib/Getopt/Long
     - lib/I18N/LangTags
-    - lib/Locale/Maketext
+    - lib/IO/Zlib
+    - lib/IPC/Cmd
+    - lib/Locale/Maketext/Simple
+    - lib/Locale/Maketext/t
+    - lib/Log/Message/Simple
+    - lib/Log/Message/t
     - lib/Math/BigFloat
     - lib/Math/BigInt
     - lib/Math/BigRat
     - lib/Memoize
+    - lib/Module/Build
+    - lib/Module/CoreList
+    - lib/Module/Load/Conditional
+    - lib/Module/Load/t
+    - lib/Module/Loaded
+    - lib/Module/Pluggable
     - lib/Net/FTP
     - lib/Net/Ping
     - lib/Net/t
     - lib/NEXT
+    - lib/Object/Accessor
+    - lib/Package/Constants
+    - lib/Params/Check
+    - lib/Pod/Escapes
     - lib/Pod/Perldoc
+    - lib/Pod/Simple
     - lib/Switch
     - lib/Term/ANSIColor
+    - lib/Term/UI
+    - lib/Test/Builder
     - lib/Test/Harness
     - lib/Test/Simple
     - lib/Test/t
     - lib/Text/Balanced
     - lib/Text/TabsWrap
     - lib/Tie/File
+    - lib/Tie/RefHash
     - lib/Unicode/Collate
     - t/lib/Filter/Simple
     - t/lib/MakeMaker
     - t/lib/Math
     - t/lib/sample-tests
     - t/lib/Test/Simple
+    - t/Module_Pluggable
 
   file:
-    - ext/Compress/Zlib
+    - ext/B/B/Lint.pm
+    - ext/B/t/lint.t
+    - ext/B/t/pluglib/B/Lint/Plugin/Test.pm
     - ext/DynaLoader/t/XSLoader.t
     - ext/DynaLoader/XSLoader_pm.PL
     - ext/Filter/t/call.t
-    - ext/Math/BigInt/FastCalc
-    - lib/Archive/Tar
+    - ext/Opcode/Safe.pm
+    - ext/threads/threads.pm
+    - ext/threads/threads.xs
+    - lib/Archive/Extract.pm
     - lib/Archive/Tar.pm
     - lib/Attribute/Handlers.pm
+    - lib/AutoLoader.pm
+    - lib/AutoLoader.t
     - lib/base.pm
     - lib/bigint.pm
     - lib/bignum.pm
     - lib/bigrat.pm
     - lib/CGI.pm
     - lib/Class/ISA.pm
+    - lib/constant.pm
+    - lib/constant.t
     - lib/CPAN.pm
+    - lib/CPANPLUS.pm
+    - lib/CPANPLUS/Backend.pm
+    - lib/CPANPLUS/Config.pm
+    - lib/CPANPLUS/Configure.pm
+    - lib/CPANPLUS/Dist.pm
+    - lib/CPANPLUS/Dist/Base.pm
+    - lib/CPANPLUS/Dist/Build.pm
+    - lib/CPANPLUS/Dist/MM.pm
+    - lib/CPANPLUS/Dist/Sample.pm
+    - lib/CPANPLUS/Error.pm
+    - lib/CPANPLUS/FAQ.pod
+    - lib/CPANPLUS/Hacking.pod
+    - lib/CPANPLUS/inc.pm
+    - lib/CPANPLUS/Internals.pm
+    - lib/CPANPLUS/Module.pm
+    - lib/CPANPLUS/Selfupdate.pm
+    - lib/CPANPLUS/Shell.pm
     - lib/Cwd.pm
+    - lib/Devel/InnerPackage.pm
     - lib/Digest.pm
-    - lib/encoding/warnings
     - lib/encoding/warnings.pm
-    - lib/ExtUtils/CBuilder
+    - lib/Exporter.pm
+    - lib/Exporter.t
+    - lib/Exporter/Heavy.pm
     - lib/ExtUtils/CBuilder.pm
     - lib/ExtUtils/Command
     - lib/ExtUtils/Command.pm
+    - lib/ExtUtils/Constant.pm
     - lib/ExtUtils/Install.pm
     - lib/ExtUtils/Installed.pm
     - lib/ExtUtils/Liblist
@@ -110,10 +186,64 @@ private:
     - lib/ExtUtils/MM_Win95.pm
     - lib/ExtUtils/MY.pm
     - lib/ExtUtils/Packlist.pm
-    - lib/ExtUtils/ParseXS
     - lib/ExtUtils/ParseXS.pm
+    - lib/ExtUtils/t/00compile.t
+    - lib/ExtUtils/t/backwards.t
+    - lib/ExtUtils/t/basic.t
+    - lib/ExtUtils/t/build_man.t
+    - lib/ExtUtils/t/bytes.t
+    - lib/ExtUtils/t/cd.t
+    - lib/ExtUtils/t/config.t
+    - lib/ExtUtils/t/Constant.t
+    - lib/ExtUtils/t/dir_target.t
+    - lib/ExtUtils/t/Embed.t
+    - lib/ExtUtils/t/eu_command.t
+    - lib/ExtUtils/t/FIRST_MAKEFILE.t
+    - lib/ExtUtils/t/fixin.t
+    - lib/ExtUtils/t/hints.t
+    - lib/ExtUtils/t/INST.t
+    - lib/ExtUtils/t/INST_PREFIX.t
+    - lib/ExtUtils/t/Install.t
+    - lib/ExtUtils/t/INSTALL_BASE.t
+    - lib/ExtUtils/t/Installed.t
+    - lib/ExtUtils/t/Liblist.t
+    - lib/ExtUtils/t/make.t
+    - lib/ExtUtils/t/maketext_filter.t
+    - lib/ExtUtils/t/Manifest.t
+    - lib/ExtUtils/t/Mkbootstrap.t
+    - lib/ExtUtils/t/MM_Any.t
+    - lib/ExtUtils/t/MM_BeOS.t
+    - lib/ExtUtils/t/MM_Cygwin.t
+    - lib/ExtUtils/t/MM_NW5.t
+    - lib/ExtUtils/t/MM_OS2.t
+    - lib/ExtUtils/t/MM_Unix.t
+    - lib/ExtUtils/t/MM_VMS.t
+    - lib/ExtUtils/t/MM_Win32.t
+    - lib/ExtUtils/t/oneliner.t
+    - lib/ExtUtils/t/Packlist.t
+    - lib/ExtUtils/t/parse_version.t
+    - lib/ExtUtils/t/PL_FILES.t
+    - lib/ExtUtils/t/pm.t
+    - lib/ExtUtils/t/postamble.t
+    - lib/ExtUtils/t/prefixify.t
+    - lib/ExtUtils/t/prereq.t
+    - lib/ExtUtils/t/prereq_print.t
+    - lib/ExtUtils/t/problems.t
+    - lib/ExtUtils/t/prompt.t
+    - lib/ExtUtils/t/recurs.t
+    - lib/ExtUtils/t/revision.t
+    - lib/ExtUtils/t/split_command.t
+    - lib/ExtUtils/t/testlib.t
+    - lib/ExtUtils/t/VERSION_FROM.t
+    - lib/ExtUtils/t/vmsish.t
+    - lib/ExtUtils/t/WriteEmptyMakefile.t
+    - lib/ExtUtils/t/writemakefile_args.t
+    - lib/ExtUtils/t/xs.t
     - lib/ExtUtils/testlib.pm
     - lib/fields.pm
+    - lib/File/Fetch.pm
+    - lib/File/Path.pm
+    - lib/File/Path.t
     - lib/File/Spec.pm
     - lib/File/Temp.pm
     - lib/Filter/Simple.pm
@@ -121,8 +251,8 @@ private:
     - lib/I18N/LangTags.pm
     - lib/if.pm
     - lib/if.t
-    - lib/IO/Zlib
     - lib/IO/Zlib.pm
+    - lib/IPC/Cmd.pm
     - lib/Locale/Codes
     - lib/Locale/Constants.pm
     - lib/Locale/Constants.pod
@@ -133,34 +263,54 @@ private:
     - lib/Locale/Language.pm
     - lib/Locale/Language.pod
     - lib/Locale/Maketext.pm
+    - lib/Locale/Maketext.pod
+    - lib/Locale/Maketext/ChangeLog
+    - lib/Locale/Maketext/Guts.pm
+    - lib/Locale/Maketext/GutsLoader.pm
+    - lib/Locale/Maketext/README
+    - lib/Locale/Maketext/Simple.pm
+    - lib/Locale/Maketext/TPJ13.pod
     - lib/Locale/Script.pm
     - lib/Locale/Script.pod
+    - lib/Log/Message.pm
+    - lib/Log/Message/Config.pm
+    - lib/Log/Message/Handlers.pm
+    - lib/Log/Message/Item.pm
+    - lib/Log/Message/Simple.pm
     - lib/Math/BigFloat.pm
     - lib/Math/BigInt.pm
     - lib/Math/BigRat.pm
+    - lib/Math/Complex.pm
+    - lib/Math/Trig.pm
     - lib/Memoize.pm
-    - lib/Module/CoreList
+    - lib/Module/Build.pm
     - lib/Module/CoreList.pm
-    - lib/Net/ChangeLog.libnet
+    - lib/Module/Load.pm
+    - lib/Module/Load/Conditional.pm
+    - lib/Module/Loaded.pm
+    - lib/Module/Pluggable.pm
+    - lib/Net/ChangeLog
     - lib/Net/Cmd.pm
     - lib/Net/Config.eg
     - lib/Net/Config.pm
     - lib/Net/Domain.pm
     - lib/Net/FTP.pm
-    - lib/Net/Hostname.eg
+    - lib/Net/Hostname.pm.eg
     - lib/Net/libnetFAQ.pod
     - lib/Net/Netrc.pm
     - lib/Net/NNTP.pm
     - lib/Net/Ping.pm
     - lib/Net/POP3.pm
-    - lib/Net/README.libnet
+    - lib/Net/README
     - lib/Net/SMTP.pm
     - lib/Net/Time.pm
     - lib/NEXT.pm
+    - lib/Object/Accessor.pm
+    - lib/Package/Constants.pm
+    - lib/Params/Check.pm
     - lib/PerlIO/via/QuotedPrint.pm
     - lib/PerlIO/via/t/QuotedPrint.t
     - lib/Pod/Checker.pm
-    - lib/Pod/Escapes
     - lib/Pod/Escapes.pm
     - lib/Pod/Find.pm
     - lib/Pod/InputObjects.pm
@@ -172,7 +322,6 @@ private:
     - lib/Pod/Perldoc.pm
     - lib/Pod/PlainText.pm
     - lib/Pod/Select.pm
-    - lib/Pod/Simple
     - lib/Pod/Simple.pm
     - lib/Pod/Simple.pod
     - lib/Pod/t/basic.cap
@@ -185,7 +334,6 @@ private:
     - lib/Pod/t/man.t
     - lib/Pod/t/parselink.t
     - lib/Pod/t/pod2latex.t
-    - lib/Pod/t/text-errors.t
     - lib/Pod/t/text-options.t
     - lib/Pod/t/text.t
     - lib/Pod/Text.pm
@@ -193,10 +341,13 @@ private:
     - lib/Pod/Text/Overstrike.pm
     - lib/Pod/Text/Termcap.pm
     - lib/Pod/Usage.pm
+    - lib/Shell.pm
+    - lib/Shell.t
     - lib/Switch.pm
     - lib/Term/ANSIColor.pm
     - lib/Term/Cap.pm
     - lib/Term/Cap.t
+    - lib/Term/UI.pm
     - lib/Test.pm
     - lib/Test/Builder.pm
     - lib/Test/Harness.pm
@@ -206,9 +357,13 @@ private:
     - lib/Text/Tabs.pm
     - lib/Text/Wrap.pm
     - lib/Tie/File.pm
+    - lib/Tie/RefHash.pm
     - lib/Time/Local.pm
     - lib/Time/Local.t
     - lib/Unicode/Collate.pm
+    - lib/version.pm
+    - lib/version.pod
+    - lib/version.t
     - pod/pod2man.PL
     - pod/pod2text.PL
     - pod/pod2usage.PL
@@ -217,7 +372,6 @@ private:
     - t/lib/filter-util.pl
     - t/lib/TieIn.pm
     - t/lib/TieOut.pm
-    - t/lib/ZlibTestUtils.pm
     - t/pod/emptycmd.t
     - t/pod/emptycmd.xr
     - t/pod/find.t

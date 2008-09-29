@@ -6,7 +6,7 @@ New things
 ----------
     The -w switch is much more informative.
 
-    References.  See t/op/ref.t for examples.  All entities in Perl 5 are
+    References.	 See t/op/ref.t for examples.  All entities in Perl 5 are
     reference counted so that it knows when each item should be destroyed.
 
     Objects.  See t/op/ref.t for examples.
@@ -24,7 +24,7 @@ New things
     execution yet).
 
     The interpreter is now flattened out.  Compare Perl 4's eval.c with
-    the perl 5's pp.c.  Compare Perl 4's 900 line interpreter loop in cmd.c
+    the perl 5's pp.c.	Compare Perl 4's 900 line interpreter loop in cmd.c
     with Perl 5's 1 line interpreter loop in run.c.  Eventually we'll make
     everything non-blocking so we can interface nicely with a scheduler.
 
@@ -35,11 +35,11 @@ New things
     a do {} block.
 
     You may now define BEGIN and END subroutines for each package.  The BEGIN
-    subroutine executes the moment it's parsed.  The END subroutine executes
+    subroutine executes the moment it's parsed.	 The END subroutine executes
     just before exiting.
 
     Flags on the #! line are interpreted even if the script wasn't
-    executed directly.  (And even if the script was located by "perl -x"!)
+    executed directly.	(And even if the script was located by "perl -x"!)
 
     The ?: operator is now legal as an lvalue.
 
@@ -48,7 +48,7 @@ New things
 
     The "defined" function can now take a general expression.
 
-    Lexical scoping available via "my".  eval can see the current lexical
+    Lexical scoping available via "my".	 eval can see the current lexical
     variables.
 
     The preferred package delimiter is now :: rather than '.
@@ -102,7 +102,7 @@ New things
     indicate that the pattern is supposed to match as little as possible.
 
     Pattern matches may now be followed by an m or s modifier to explicitly
-    request multiline or singleline semantics.  An s modifier makes . match
+    request multiline or singleline semantics.	An s modifier makes . match
     newline.
 
     Patterns may now contain \A to match only at the beginning of the string,
@@ -141,7 +141,7 @@ Incompatibilities
 
     Saying "shift @foo + 20" is now a semantic error because of precedence.
 
-    "open FOO || die" is now incorrect.  You need parens around the filehandle.
+    "open FOO || die" is now incorrect.	 You need parens around the filehandle.
 
     The elements of argument lists for formats are now evaluated in list
     context.  This means you can interpolate list values now.

@@ -39,14 +39,16 @@ foreach my $platform (@platforms) {
     my $v = $volumes{$platform} || '';
     my $other_v = $other_vols{$platform} || '';
     
-    # Fake out the rootdir on MacOS
+    # Fake out the environment on MacOS and Win32
     no strict 'refs';
     my $save_w = $^W;
     $^W = 0;
     local *{"File::Spec::Mac::rootdir"} = sub { "Macintosh HD:" };
+    local *{"File::Spec::Win32::_cwd"}  = sub { "C:\\foo" };
     $^W = $save_w;
     use strict 'refs';
-    
+
+
     my ($file, $base, $result);
 
     $base = $module->catpath($v, $module->catdir('', 'foo'), '');
@@ -71,15 +73,15 @@ foreach my $platform (@platforms) {
     $result = volumes_differ($module, $file, $base) ? $file : $module->catfile('bar', 'file');
     is $module->abs2rel($file, $base), $result, "$platform->abs2rel($file, $base)";
 
-    # abs2rel('/foo/bar', 'A:/foo')    ->  '/foo/bar'
+    # abs2rel('/foo/bar/file', 'A:/foo')    ->  '/foo/bar'
     $file = $module->catpath('', $module->catdir($module->rootdir, 'foo', 'bar'), 'file');
     $base = $module->catpath($v, $module->catdir($module->rootdir, 'foo'), '');
-    $result = volumes_differ($module, $file, $base) ? $file : $module->catfile('bar', 'file');
+    $result = volumes_differ($module, $file, $base) ? $module->rel2abs($file) : $module->catfile('bar', 'file');
     is $module->abs2rel($file, $base), $result, "$platform->abs2rel($file, $base)";
     
     # abs2rel('/foo/bar', 'B:/foo')    ->  '/foo/bar'
     $base = $module->catpath($other_v, $module->catdir($module->rootdir, 'foo'), '');
-    $result = volumes_differ($module, $file, $base) ? $file : $module->catfile('bar', 'file');
+    $result = volumes_differ($module, $file, $base) ? $module->rel2abs($file) : $module->catfile('bar', 'file');
     is $module->abs2rel($file, $base), $result, "$platform->abs2rel($file, $base)";
     
     # abs2rel('/foo/bar', '/foo')      ->  'bar'

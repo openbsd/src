@@ -1,10 +1,10 @@
-# NormalizationCorrections-4.1.0.txt
-# Date: 2005-03-17, 15:21:00 PST [KW]
+# NormalizationCorrections-5.0.0.txt
+# Date: 2006-07-14, 11:23:00 PDT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # The normalization stabilization policy of the Unicode
@@ -30,10 +30,10 @@
 # will be made to keep the entries limited to just those fixes.
 #
 # Interpretation of the fields:
-#   Field 1: Unicode code point
-#   Field 2: Original (erroneous) decomposition
-#   Field 3: Corrected decomposition
-#   Field 4: Version of Unicode for which the correction was
+#   Field 0: Unicode code point
+#   Field 1: Original (erroneous) decomposition
+#   Field 2: Corrected decomposition
+#   Field 3: Version of Unicode for which the correction was
 #            entered into UnicodeData.txt, in n.n.n format.
 #   Comment: Indicates the Unicode Corrigendum which documents 
 #            the correction

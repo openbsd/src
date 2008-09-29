@@ -49,7 +49,7 @@ print <<EOF;
  *
  *    reentr.h
  *
- *    Copyright (C) 2002, 2003, 2005, 2006 by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2005, 2006, 2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -61,17 +61,29 @@ print <<EOF;
 #ifndef REENTR_H
 #define REENTR_H
 
-#ifdef USE_REENTRANT_API
+/* If compiling for a threaded perl, we will macro-wrap the system/library
+ * interfaces (e.g. getpwent()) which have threaded versions
+ * (e.g. getpwent_r()), which will handle things correctly for
+ * the Perl interpreter, but otherwise (for XS) the wrapping does
+ * not take place.  See L<perlxs/Thread-aware system interfaces>.
+ */
 
-#ifdef PERL_CORE
-#   define PL_REENTRANT_RETINT PL_reentrant_retint
+#ifndef PERL_REENTR_API
+# if defined(PERL_CORE) || defined(PERL_EXT)
+#  define PERL_REENTR_API 1
+# else
+#  define PERL_REENTR_API 0
+# endif
 #endif
 
+#ifdef USE_REENTRANT_API
+ 
 /* Deprecations: some platforms have the said reentrant interfaces
  * but they are declared obsolete and are not to be used.  Often this
  * means that the platform has threadsafed the interfaces (hopefully).
  * All this is OS version dependent, so we are of course fooling ourselves.
- * If you know of more deprecations on some platforms, please add your own. */
+ * If you know of more deprecations on some platforms, please add your own
+ * (by editing reentr.pl, mind!) */
 
 #ifdef __hpux
 #   undef HAS_CRYPT_R
@@ -91,6 +103,17 @@ print <<EOF;
 #   undef HAS_STRERROR_R
 #   define NETDB_R_OBSOLETE
 #endif
+
+/*
+ * As of OpenBSD 3.7, reentrant functions are now working, they just are
+ * incompatible with everyone else.  To make OpenBSD happy, we have to
+ * memzero out certain structures before calling the functions.
+ */
+#if defined(__OpenBSD__)
+#    define REENTR_MEMZERO(a,b) memzero(a,b)
+#else
+#    define REENTR_MEMZERO(a,b) 0
+#endif 
 
 #ifdef NETDB_R_OBSOLETE
 #   undef HAS_ENDHOSTENT_R
@@ -149,19 +172,15 @@ my %seens; # the type of this function's "S"
 my %seend; # the type of this function's "D"
 my %seenm; # all the types
 my %seenu; # the length of the argument list of this function
-my %seenr; # the return type of this function
 
 while (<DATA>) { # Read in the protypes.
     next if /^\s+$/;
     chomp;
     my ($func, $hdr, $type, @p) = split(/\s*\|\s*/, $_, -1);
-    my ($r,$u);
+    my $u;
     # Split off the real function name and the argument list.
     ($func, $u) = split(' ', $func);
-    $u = "V_V" unless $u;
-    ($r, $u) = ($u =~ /^(.)_(.+)/);
-    $seenu{$func} = $u eq 'V' ? 0 : length $u;
-    $seenr{$func} = $r;
+    $seenu{$func} = defined $u ? length $u : 0;
     my $FUNC = uc $func; # for output.
     push @seenf, $func;
     my %m = %map;
@@ -471,7 +490,7 @@ EOF
 #if CRYPT_R_PROTO == REENTRANT_PROTO_B_CCD
 	$seend{$func} _${func}_data;
 #else
-	$seent{$func} _${func}_struct;
+	$seent{$func} *_${func}_struct_buffer;
 #endif
 EOF
     	    push @init, <<EOF;
@@ -486,7 +505,7 @@ EOF
 EOF
 	    pushssif $endif;
 	}
-        elsif ($func =~ /^(drand48|gmtime|localtime)$/) {
+        elsif ($func =~ /^(drand48|gmtime|localtime|random|srandom)$/) {
 	    pushssif $ifdef;
 	    push @struct, <<EOF;
 	$seent{$func} _${func}_struct;
@@ -495,16 +514,19 @@ EOF
 	        push @struct, <<EOF;
 	double	_${func}_double;
 EOF
-	    }
-	    pushssif $endif;
-	}
-        elsif ($func =~ /^random$/) {
-	    pushssif $ifdef;
+	    } elsif ($1 eq 'random') {
 	    push @struct, <<EOF;
-#   if RANDOM_R_PROTO != REENTRANT_PROTO_I_St
-	$seent{$func} _${func}_struct;
+#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_iS
+	int	_${func}_retval;
+#   endif
+#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_lS
+	long	_${func}_retval;
+#   endif
+#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_St
+	int32_t	_${func}_retval;
 #   endif
 EOF
+	    }
 	    pushssif $endif;
 	}
         elsif ($func =~ /^(getgrnam|getpwnam|getspnam)$/) {
@@ -541,7 +563,7 @@ EOF
 	    push @size, <<EOF;
 #   if defined(HAS_SYSCONF) && defined($sc) && !defined(__GLIBC__)
 	PL_reentrant_buffer->$sz = sysconf($sc);
-	if (PL_reentrant_buffer->$sz == -1)
+	if (PL_reentrant_buffer->$sz == (size_t) -1)
 		PL_reentrant_buffer->$sz = REENTRANTUSUALSIZE;
 #   else
 #       if defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
@@ -628,6 +650,7 @@ EOF
 	push @wrap, $ifdef;
 
 	push @wrap, <<EOF;
+#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
 #   undef $func
 EOF
 
@@ -692,13 +715,17 @@ EOF
 			 } split '', $b;
 		$w = ", $w" if length $v;
 	    }
+
 	    my $call = "${func}_r($v$w)";
+	    if ($func eq 'localtime') {
+		$call = "L_R_TZSET $call";
+	    }
 
             # Must make OpenBSD happy
             my $memzero = '';
             if($p =~ /D$/ &&
                 ($genfunc eq 'protoent' || $genfunc eq 'servent')) {
-                $memzero = 'REENTR_MEMZERO(&PL_reentrant_buffer->_' . $genfunc . '_data, sizeof(PL_reentrant_buffer->_' . $genfunc . '_data))';
+                $memzero = 'REENTR_MEMZERO(&PL_reentrant_buffer->_' . $genfunc . '_data, sizeof(PL_reentrant_buffer->_' . $genfunc . '_data)),';
             }
 	    push @wrap, <<EOF;
 #   if !defined($func) && ${FUNC}_R_PROTO == REENTRANT_PROTO_$p
@@ -711,26 +738,8 @@ EOF
 		if ($func =~ /^get/) {
 		    my $rv = $v ? ", $v" : "";
 		    if ($r eq 'I') {
-			$call = qq[((PL_REENTRANT_RETINT = $call)$test ? $true : (((PL_REENTRANT_RETINT == ERANGE) || (errno == ERANGE)) ? ($seenm{$func}{$seenr{$func}})Perl_reentrant_retry("$func"$rv) : 0))];
-			my $arg = join(", ", map { $seenm{$func}{substr($a,$_,1)}." ".$v[$_] } 0..$seenu{$func}-1);
-			my $ret = $seenr{$func} eq 'V' ? "" : "return ";
-			my $memzero_ = $memzero ? "$memzero, " : "";
 			push @wrap, <<EOF;
-#       ifdef PERL_CORE
-#           define $func($v) ($memzero_$call)
-#       else
-#           if defined(__GNUC__) && !defined(__STRICT_ANSI__) && !defined(PERL_GCC_PEDANTIC)
-#               define $func($v) ({int PL_REENTRANT_RETINT; $memzero; $call;})
-#           else
-#               define $func($v) Perl_reentr_$func($v)
-                static $seenm{$func}{$seenr{$func}} Perl_reentr_$func($arg) {
-                    dTHX;
-                    int PL_REENTRANT_RETINT;
-                    $memzero;
-		    $ret$call;
-                }
-#           endif
-#       endif
+#       define $func($v) ($memzero(PL_reentrant_retint = $call)$test ? $true : ((PL_reentrant_retint == ERANGE) ? ($seent{$func} *) Perl_reentrant_retry("$func"$rv) : 0))
 EOF
 		    } else {
 			push @wrap, <<EOF;
@@ -738,58 +747,23 @@ EOF
 EOF
                     }
 		} else {
-	        push @wrap, <<EOF;
+		    push @wrap, <<EOF;
 #       define $func($v) ($call$test ? $true : 0)
 EOF
 		}
 	    }
 	    push @wrap, <<EOF;
-#   endif
+#  endif /* if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1) */
 EOF
 	}
+
+	    push @wrap, <<EOF;
+#   endif /* HAS_\U$func */
+EOF
 
 	push @wrap, $endif, "\n";
     }
 }
-
-# New struct members added here to maintain binary compatibility with 5.8.0
-
-if (exists $seena{crypt}) {
-    push @struct, <<EOF;
-#ifdef HAS_CRYPT_R
-#if CRYPT_R_PROTO == REENTRANT_PROTO_B_CCD
-#else
-	struct crypt_data *_crypt_struct_buffer;
-#endif
-#endif /* HAS_CRYPT_R */
-EOF
-}
-
-if (exists $seena{random}) {
-    push @struct, <<EOF;
-#ifdef HAS_RANDOM_R
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_iS
-	int	_random_retval;
-#   endif
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_lS
-	long	_random_retval;
-#   endif
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_St
-	$seent{random} _random_struct;
-	int32_t	_random_retval;
-#   endif
-#endif /* HAS_RANDOM_R */
-EOF
-}
-
-if (exists $seena{srandom}) {
-    push @struct, <<EOF;
-#ifdef HAS_SRANDOM_R
-	$seent{srandom} _srandom_struct;
-#endif /* HAS_SRANDOM_R */
-EOF
-}
-
 
 local $" = '';
 
@@ -803,46 +777,7 @@ typedef struct {
     int dummy; /* cannot have empty structs */
 } REENTR;
 
-#endif /* USE_REENTRANT_API */
-
-#endif
-EOF
-
-close(H);
-
-die "reentr.inc: $!" unless open(H, ">reentr.inc");
-select H;
-
-local $" = '';
-
-print <<EOF;
-/*
- *    reentr.inc
- *
- *    You may distribute under the terms of either the GNU General Public
- *    License or the Artistic License, as specified in the README file.
- *
- *  !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
- *  This file is built by reentrl.pl from data in reentr.pl.
- */
-
-#ifndef REENTRINC
-#define REENTRINC
-
-#ifdef USE_REENTRANT_API
-
-/*
- * As of OpenBSD 3.7, reentrant functions are now working, they just are
- * incompatible with everyone else.  To make OpenBSD happy, we have to
- * memzero out certain structures before calling the functions.
- */
-#if defined(__OpenBSD__)
-#    define REENTR_MEMZERO(a,b) memzero(a,b)
-#else
-#    define REENTR_MEMZERO(a,b) 0
-#endif
-
-/* The reentrant wrappers. */
+/* The wrappers. */
 
 @wrap
 
@@ -866,7 +801,7 @@ print <<EOF;
  *
  *    reentr.c
  *
- *    Copyright (C) 2002, 2003, 2005, 2006 by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2005, 2006, 2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -921,6 +856,9 @@ Perl_reentrant_retry(const char *f, ...)
 {
     dTHX;
     void *retptr = NULL;
+    va_list ap;
+    va_start(ap, f);
+    {
 #ifdef USE_REENTRANT_API
 #  if defined(USE_HOSTENT_BUFFER) || defined(USE_GRENT_BUFFER) || defined(USE_NETENT_BUFFER) || defined(USE_PWENT_BUFFER) || defined(USE_PROTOENT_BUFFER) || defined(USE_SERVENT_BUFFER)
     void *p0;
@@ -934,9 +872,6 @@ Perl_reentrant_retry(const char *f, ...)
 #  if defined(USE_HOSTENT_BUFFER) || defined(USE_NETENT_BUFFER) || defined(USE_PROTOENT_BUFFER) || defined(USE_SERVENT_BUFFER)
     int anint;
 #  endif
-    va_list ap;
-
-    va_start(ap, f);
 
     switch (PL_op->op_type) {
 #ifdef USE_HOSTENT_BUFFER
@@ -1139,9 +1074,11 @@ Perl_reentrant_retry(const char *f, ...)
 	/* Not known how to retry, so just fail. */
 	break;
     }
-
-    va_end(ap);
+#else
+    PERL_UNUSED_ARG(f);
 #endif
+    }
+    va_end(ap);
     return retptr;
 }
 
@@ -1149,51 +1086,51 @@ Perl_reentrant_retry(const char *f, ...)
 EOF
 
 __DATA__
-asctime B_S	|time	|const struct tm|B_SB|B_SBI|I_SB|I_SBI
-crypt B_CC	|crypt	|struct crypt_data|B_CCS|B_CCD|D=CRYPTD*
-ctermid	B_B	|stdio	|		|B_B
-ctime B_S	|time	|const time_t	|B_SB|B_SBI|I_SB|I_SBI
-drand48	d_V	|stdlib	|struct drand48_data	|I_ST|T=double*|d=double
+asctime S	|time	|const struct tm|B_SB|B_SBI|I_SB|I_SBI
+crypt CC	|crypt	|struct crypt_data|B_CCS|B_CCD|D=CRYPTD*
+ctermid	B	|stdio	|		|B_B
+ctime S		|time	|const time_t	|B_SB|B_SBI|I_SB|I_SBI
+drand48		|stdlib	|struct drand48_data	|I_ST|T=double*
 endgrent	|grp	|		|I_H|V_H
 endhostent	|netdb	|		|I_D|V_D|D=struct hostent_data*
 endnetent	|netdb	|		|I_D|V_D|D=struct netent_data*
 endprotoent	|netdb	|		|I_D|V_D|D=struct protoent_data*
 endpwent	|pwd	|		|I_H|V_H
 endservent	|netdb	|		|I_D|V_D|D=struct servent_data*
-getgrent S_V	|grp	|struct group	|I_SBWR|I_SBIR|S_SBW|S_SBI|I_SBI|I_SBIH
-getgrgid S_T	|grp	|struct group	|I_TSBWR|I_TSBIR|I_TSBI|S_TSBI|T=gid_t
-getgrnam S_C	|grp	|struct group	|I_CSBWR|I_CSBIR|S_CBI|I_CSBI|S_CSBI
-gethostbyaddr S_CWI	|netdb	|struct hostent	|I_CWISBWRE|S_CWISBWIE|S_CWISBIE|S_TWISBIE|S_CIISBIE|S_CSBIE|S_TSBIE|I_CWISD|I_CIISD|I_CII|I_TsISBWRE|D=struct hostent_data*|T=const void*|s=socklen_t
-gethostbyname S_C	|netdb	|struct hostent	|I_CSBWRE|S_CSBIE|I_CSD|D=struct hostent_data*
-gethostent S_V	|netdb	|struct hostent	|I_SBWRE|I_SBIE|S_SBIE|S_SBI|I_SBI|I_SD|D=struct hostent_data*
-getlogin B_V	|unistd	|char		|I_BW|I_BI|B_BW|B_BI
-getnetbyaddr S_LI	|netdb	|struct netent	|I_UISBWRE|I_LISBI|S_TISBI|S_LISBI|I_TISD|I_LISD|I_IISD|I_uISBWRE|D=struct netent_data*|T=in_addr_t|U=unsigned long|u=uint32_t
-getnetbyname S_C	|netdb	|struct netent	|I_CSBWRE|I_CSBI|S_CSBI|I_CSD|D=struct netent_data*
-getnetent S_V	|netdb	|struct netent	|I_SBWRE|I_SBIE|S_SBIE|S_SBI|I_SBI|I_SD|D=struct netent_data*
-getprotobyname S_C	|netdb	|struct protoent|I_CSBWR|S_CSBI|I_CSD|D=struct protoent_data*
-getprotobynumber S_I	|netdb	|struct protoent|I_ISBWR|S_ISBI|I_ISD|D=struct protoent_data*
-getprotoent S_V	|netdb	|struct protoent|I_SBWR|I_SBI|S_SBI|I_SD|D=struct protoent_data*
-getpwent S_V	|pwd	|struct passwd	|I_SBWR|I_SBIR|S_SBW|S_SBI|I_SBI|I_SBIH
-getpwnam S_C	|pwd	|struct passwd	|I_CSBWR|I_CSBIR|S_CSBI|I_CSBI
-getpwuid S_T	|pwd	|struct passwd	|I_TSBWR|I_TSBIR|I_TSBI|S_TSBI|T=uid_t
-getservbyname S_CC	|netdb	|struct servent	|I_CCSBWR|S_CCSBI|I_CCSD|D=struct servent_data*
-getservbyport S_IC	|netdb	|struct servent	|I_ICSBWR|S_ICSBI|I_ICSD|D=struct servent_data*
-getservent S_V	|netdb	|struct servent	|I_SBWR|I_SBI|S_SBI|I_SD|D=struct servent_data*
-getspnam S_C	|shadow	|struct spwd	|I_CSBWR|S_CSBI
-gmtime S_T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
-localtime S_T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
-random L_V	|stdlib	|struct random_data|I_iS|I_lS|I_St|i=int*|l=long*|t=int32_t*
-readdir S_T	|dirent	|struct dirent	|I_TSR|I_TS|T=DIR*
-readdir64 S_T	|dirent	|struct dirent64|I_TSR|I_TS|T=DIR*
+getgrent	|grp	|struct group	|I_SBWR|I_SBIR|S_SBW|S_SBI|I_SBI|I_SBIH
+getgrgid T	|grp	|struct group	|I_TSBWR|I_TSBIR|I_TSBI|S_TSBI|T=gid_t
+getgrnam C	|grp	|struct group	|I_CSBWR|I_CSBIR|S_CBI|I_CSBI|S_CSBI
+gethostbyaddr CWI	|netdb	|struct hostent	|I_CWISBWRE|S_CWISBWIE|S_CWISBIE|S_TWISBIE|S_CIISBIE|S_CSBIE|S_TSBIE|I_CWISD|I_CIISD|I_CII|I_TsISBWRE|D=struct hostent_data*|T=const void*|s=socklen_t
+gethostbyname C	|netdb	|struct hostent	|I_CSBWRE|S_CSBIE|I_CSD|D=struct hostent_data*
+gethostent	|netdb	|struct hostent	|I_SBWRE|I_SBIE|S_SBIE|S_SBI|I_SBI|I_SD|D=struct hostent_data*
+getlogin	|unistd	|char		|I_BW|I_BI|B_BW|B_BI
+getnetbyaddr LI	|netdb	|struct netent	|I_UISBWRE|I_LISBI|S_TISBI|S_LISBI|I_TISD|I_LISD|I_IISD|I_uISBWRE|D=struct netent_data*|T=in_addr_t|U=unsigned long|u=uint32_t
+getnetbyname C	|netdb	|struct netent	|I_CSBWRE|I_CSBI|S_CSBI|I_CSD|D=struct netent_data*
+getnetent	|netdb	|struct netent	|I_SBWRE|I_SBIE|S_SBIE|S_SBI|I_SBI|I_SD|D=struct netent_data*
+getprotobyname C|netdb	|struct protoent|I_CSBWR|S_CSBI|I_CSD|D=struct protoent_data*
+getprotobynumber I	|netdb	|struct protoent|I_ISBWR|S_ISBI|I_ISD|D=struct protoent_data*
+getprotoent	|netdb	|struct protoent|I_SBWR|I_SBI|S_SBI|I_SD|D=struct protoent_data*
+getpwent	|pwd	|struct passwd	|I_SBWR|I_SBIR|S_SBW|S_SBI|I_SBI|I_SBIH
+getpwnam C	|pwd	|struct passwd	|I_CSBWR|I_CSBIR|S_CSBI|I_CSBI
+getpwuid T	|pwd	|struct passwd	|I_TSBWR|I_TSBIR|I_TSBI|S_TSBI|T=uid_t
+getservbyname CC|netdb	|struct servent	|I_CCSBWR|S_CCSBI|I_CCSD|D=struct servent_data*
+getservbyport IC|netdb	|struct servent	|I_ICSBWR|S_ICSBI|I_ICSD|D=struct servent_data*
+getservent	|netdb	|struct servent	|I_SBWR|I_SBI|S_SBI|I_SD|D=struct servent_data*
+getspnam C	|shadow	|struct spwd	|I_CSBWR|S_CSBI
+gmtime T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
+localtime T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
+random		|stdlib	|struct random_data|I_iS|I_lS|I_St|i=int*|l=long*|t=int32_t*
+readdir T	|dirent	|struct dirent	|I_TSR|I_TS|T=DIR*
+readdir64 T	|dirent	|struct dirent64|I_TSR|I_TS|T=DIR*
 setgrent	|grp	|		|I_H|V_H
-sethostent V_I	|netdb	|		|I_ID|V_ID|D=struct hostent_data*
-setlocale B_IC	|locale	|		|I_ICBI
-setnetent V_I	|netdb	|		|I_ID|V_ID|D=struct netent_data*
-setprotoent V_I	|netdb	|		|I_ID|V_ID|D=struct protoent_data*
+sethostent I	|netdb	|		|I_ID|V_ID|D=struct hostent_data*
+setlocale IC	|locale	|		|I_ICBI
+setnetent I	|netdb	|		|I_ID|V_ID|D=struct netent_data*
+setprotoent I	|netdb	|		|I_ID|V_ID|D=struct protoent_data*
 setpwent	|pwd	|		|I_H|V_H
-setservent V_I	|netdb	|		|I_ID|V_ID|D=struct servent_data*
-srand48 V_L	|stdlib	|struct drand48_data	|I_LS
-srandom	V_T	|stdlib	|struct random_data|I_TS|T=unsigned int
-strerror B_I	|string	|		|I_IBW|I_IBI|B_IBW
-tmpnam B_B	|stdio	|		|B_B
-ttyname	B_I	|unistd	|		|I_IBW|I_IBI|B_IBI
+setservent I	|netdb	|		|I_ID|V_ID|D=struct servent_data*
+srand48 L	|stdlib	|struct drand48_data	|I_LS
+srandom	T	|stdlib	|struct random_data|I_TS|T=unsigned int
+strerror I	|string	|		|I_IBW|I_IBI|B_IBW
+tmpnam B	|stdio	|		|B_B
+ttyname	I	|unistd	|		|I_IBW|I_IBI|B_IBI

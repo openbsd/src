@@ -32,7 +32,7 @@ sub get_package_details () {
 
 getopts('fhv');
 our $opt_h and usage;
-our $opt_f or !-f $packagefile and get_package_details;
+our $opt_f || !-f $packagefile and get_package_details;
 
 # Load the package details. All of them.
 my %cpanversions;

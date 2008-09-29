@@ -4,6 +4,10 @@
 #
 #            Edit mktests.PL and/or parts/inc/misc instead.
 #
+#  This file was automatically generated from the definition files in the
+#  parts/inc/ subdirectory by mktests.PL. To learn more about how all this
+#  works, please read the F<HACKERS> file that came with this distribution.
+#
 ################################################################################
 
 BEGIN {
@@ -21,19 +25,28 @@ BEGIN {
     unshift @INC, 't';
   }
 
-  eval "use Test";
-  if ($@) {
-    require 'testutil.pl';
-    print "1..32\n";
+  sub load {
+    eval "use Test";
+    require 'testutil.pl' if $@;
   }
-  else {
-    plan(tests => 32);
+
+  if (38) {
+    load();
+    plan(tests => 38);
   }
 }
 
 use Devel::PPPort;
 use strict;
 $^W = 1;
+
+package Devel::PPPort;
+use vars '@ISA';
+require DynaLoader;
+@ISA = qw(DynaLoader);
+bootstrap Devel::PPPort;
+
+package main;
 
 use vars qw($my_sv @my_av %my_hv);
 
@@ -45,17 +58,24 @@ ok($s[2], "");
 ok(!defined($s[3]));
 ok(!defined($s[4]));
 
-ok(!defined(&Devel::PPPort::PL_sv_undef()));
-ok(&Devel::PPPort::PL_sv_yes());
-ok(!&Devel::PPPort::PL_sv_no());
-ok(&Devel::PPPort::PL_na("abcd"), 4);
-
 ok(&Devel::PPPort::boolSV(1));
 ok(!&Devel::PPPort::boolSV(0));
 
 $_ = "Fred";
 ok(&Devel::PPPort::DEFSV(), "Fred");
 ok(&Devel::PPPort::UNDERBAR(), "Fred");
+
+if ($] >= 5.009002) {
+  eval q{
+    my $_ = "Tony";
+    ok(&Devel::PPPort::DEFSV(), "Fred");
+    ok(&Devel::PPPort::UNDERBAR(), "Tony");
+  };
+}
+else {
+  ok(1);
+  ok(1);
+}
 
 eval { 1 };
 ok(!&Devel::PPPort::ERRSV());
@@ -87,4 +107,16 @@ ok(!&Devel::PPPort::get_cv('not_my_cv', 0));
 ok(&Devel::PPPort::get_cv('not_my_cv', 1));
 
 ok(Devel::PPPort::dXSTARG(42), 43);
+ok(Devel::PPPort::dAXMARK(4711), 4710);
+
+ok(Devel::PPPort::prepush(), 42);
+
+ok(join(':', Devel::PPPort::xsreturn(0)), 'test1');
+ok(join(':', Devel::PPPort::xsreturn(1)), 'test1:test2');
+
+ok(Devel::PPPort::PERL_ABS(42), 42);
+ok(Devel::PPPort::PERL_ABS(-13), 13);
+
+ok(Devel::PPPort::SVf(42), $] >= 5.004 ? '[42]' : '42');
+ok(Devel::PPPort::SVf('abc'), $] >= 5.004 ? '[abc]' : 'abc');
 

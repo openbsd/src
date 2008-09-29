@@ -10,7 +10,7 @@ use 5.00503;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 1.30;
+$VERSION = 6.42;
 
 use Config;
 use Cwd 'cwd';
@@ -376,9 +376,7 @@ sub _vms_ext {
   $verbose ||= 0;
 
   my(@crtls,$crtlstr);
-  my($dbgqual) = $self->{OPTIMIZE} || $Config{'optimize'} ||
-                 $self->{CCFLAGS}   || $Config{'ccflags'};
-  @crtls = ( ($dbgqual =~ m-/Debug-i ? $Config{'dbgprefix'} : '')
+  @crtls = ( ($Config{'ldflags'} =~ m-/Debug-i ? $Config{'dbgprefix'} : '')
               . 'PerlShr/Share' );
   push(@crtls, grep { not /\(/ } split /\s+/, $Config{'perllibs'});
   push(@crtls, grep { not /\(/ } split /\s+/, $Config{'libc'});
@@ -390,7 +388,7 @@ sub _vms_ext {
   if ($self->{PERL_SRC}) {
     my($lib,$locspec,$type);
     foreach $lib (@crtls) { 
-      if (($locspec,$type) = $lib =~ m-^([\w$\-]+)(/\w+)?- and $locspec =~ /perl/i) {
+      if (($locspec,$type) = $lib =~ m{^([\w\$-]+)(/\w+)?} and $locspec =~ /perl/i) {
         if    (lc $type eq '/share')   { $locspec .= $Config{'exe_ext'}; }
         elsif (lc $type eq '/library') { $locspec .= $Config{'lib_ext'}; }
         else                           { $locspec .= $Config{'obj_ext'}; }

@@ -1,9 +1,7 @@
 package open;
 use warnings;
-use Carp;
-$open::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 require 5.008001; # for PerlIO::get_layers()
 
@@ -12,6 +10,10 @@ my $locale_encoding;
 sub _get_encname {
     return ($1, Encode::resolve_alias($1)) if $_[0] =~ /^:?encoding\((.+)\)$/;
     return;
+}
+
+sub croak {
+    require Carp; goto &Carp::croak;
 }
 
 sub _drop_oldenc {
@@ -39,13 +41,11 @@ sub _drop_oldenc {
     require Encode;
     my ($loname, $lcname) = _get_encname($old[-2]);
     unless (defined $lcname) { # Should we trust get_layers()?
-	require Carp;
-	Carp::croak("open: Unknown encoding '$loname'");
+	croak("open: Unknown encoding '$loname'");
     }
     my ($voname, $vcname) = _get_encname($new[-1]);
     unless (defined $vcname) {
-	require Carp;
-	Carp::croak("open: Unknown encoding '$voname'");
+	croak("open: Unknown encoding '$voname'");
     }
     if ($lcname eq $vcname) {
 	binmode($h, ":pop"); # utf8 is part of the encoding layer
@@ -56,7 +56,6 @@ sub import {
     my ($class,@args) = @_;
     croak("open: needs explicit list of PerlIO layers") unless @args;
     my $std;
-    $^H |= $open::hint_bits;
     my ($in,$out) = split(/\0/,(${^OPEN} || "\0"), -1);
     while (@args) {
 	my $type = shift(@args);
@@ -80,11 +79,7 @@ sub import {
 		    unless defined $locale_encoding;
 		(warnings::warnif("layer", "Cannot figure out an encoding to use"), last)
 		    unless defined $locale_encoding;
-		if ($locale_encoding =~ /^utf-?8$/i) {
-		    $layer = "utf8";
-		} else {
-		    $layer = "encoding($locale_encoding)";
-		}
+                $layer = "encoding($locale_encoding)";
 		$std = 1;
 	    } else {
 		my $target = $layer;		# the layer name itself
@@ -152,7 +147,7 @@ open - perl pragma to set default PerlIO layers for input and output
 
     use open IO  => ':locale';
 
-    use open ':utf8';
+    use open ':encoding(utf8)';
     use open ':locale';
     use open ':encoding(iso-8859-7)';
 
@@ -194,8 +189,8 @@ For example:
 
 These are equivalent
 
-    use open ':utf8';
-    use open IO => ':utf8';
+    use open ':encoding(utf8)';
+    use open IO => ':encoding(utf8)';
 
 as are these
 
@@ -211,9 +206,6 @@ The matching of encoding names is loose: case does not matter, and
 many encodings have several aliases.  See L<Encode::Supported> for
 details and the list of supported locales.
 
-Note that C<:utf8> PerlIO layer must always be specified exactly like
-that, it is not subject to the loose matching of encoding names.
-
 When open() is given an explicit list of layers (with the three-arg
 syntax), they override the list declared using this pragma.
 
@@ -221,10 +213,10 @@ The C<:std> subpragma on its own has no effect, but if combined with
 the C<:utf8> or C<:encoding> subpragmas, it converts the standard
 filehandles (STDIN, STDOUT, STDERR) to comply with encoding selected
 for input/output handles.  For example, if both input and out are
-chosen to be C<:utf8>, a C<:std> will mean that STDIN, STDOUT, and
-STDERR are also in C<:utf8>.  On the other hand, if only output is
-chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause only the
-STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
+chosen to be C<:encoding(utf8)>, a C<:std> will mean that STDIN, STDOUT,
+and STDERR are also in C<:encoding(utf8)>.  On the other hand, if only
+output is chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause
+only the STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
 implicitly turns on C<:std>.
 
 The logic of C<:locale> is described in full in L<encoding>,

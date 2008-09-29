@@ -158,19 +158,17 @@ for my $podfile (@ARGV) {
       warn "podchecker: Warning: Ignoring directory '$podfile'\n";
       next;
     }
-    my $errors = 
-      podchecker($podfile, undef, '-warnings' => $options{warnings});
+    my $errors = podchecker($podfile, undef, '-warnings' => $options{warnings});
     if($errors > 0) {
         # errors occurred
-        $status = 1;
         printf STDERR ("%s has %d pod syntax %s.\n",
-                       $podfile, $errors,
-                       ($errors == 1) ? "error" : "errors");
+          $podfile, $errors, ($errors == 1) ? "error" : "errors");
+        $status = 1;
     }
     elsif($errors < 0) {
+        print STDERR "$podfile does not contain any pod commands.\n";
         # no pod found
         $status = 2 unless($status);
-        print STDERR "$podfile does not contain any pod commands.\n";
     }
     else {
         print STDERR "$podfile pod syntax OK.\n";

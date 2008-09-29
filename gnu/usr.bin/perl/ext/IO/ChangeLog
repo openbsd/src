@@ -1,3 +1,15 @@
+IO 1.23 -- Sat Mar 25 19:28:28 CST 2006
+
+ * Adjust the regression tests to use t/test.pl when $ENV{PERL_CORE} is defined
+ * Reduce number of calls to getpeername
+ * Call qualify on format name passed to format_write. Bug reported by Johan Vromans
+ * Reduce calls to getprotobyname/number. Patch from Gisle Aas
+ * Remove references to file TEST used in core so appropriate tests are skipped
+   during an install from CPAN
+ * Add method say to IO::Handle
+ * Performance improvement for IO::File::open
+ * Don't warn about a directory being closed in the DESTROY
+
 IO 1.22 -- Mon Sep  5 10:29:35 CDT 2005
 
  * Update with changes made in perl core distribution

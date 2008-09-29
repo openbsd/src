@@ -12,7 +12,7 @@ BEGIN {
     $has_alarm = $Config{d_alarm};
 }
 	
-use Socket;
+use Socket qw(:all);
 
 print "1..17\n";
 
@@ -22,7 +22,7 @@ sub arm      { $alarmed = 0; alarm(shift) if $has_alarm }
 sub alarmed  { $alarmed = 1 }
 $SIG{ALRM} = 'alarmed'                    if $has_alarm;
 
-if (socket(T,PF_INET,SOCK_STREAM,6)) {
+if (socket(T, PF_INET, SOCK_STREAM, IPPROTO_TCP)) {
   print "ok 1\n";
   
   arm(5);
@@ -70,7 +70,7 @@ else {
 	print "not ok 1\n";
 }
 
-if( socket(S,PF_INET,SOCK_STREAM,6) ){
+if( socket(S, PF_INET,SOCK_STREAM, IPPROTO_TCP) ){
   print "ok 4\n";
 
   arm(5);

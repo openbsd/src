@@ -80,8 +80,7 @@ sub decomposeHangul {
        VBase + $VIndex,
       $TIndex ? (TBase + $TIndex) : (),
     );
-    wantarray ? @ret : pack('U*', @ret);
-     # any element in @ret greater than 0xFF, so no need of u2n conversion.
+    return @ret;
 }
 
 ########## getting full decomposion ##########
@@ -214,9 +213,20 @@ sub _pack_U {
     return pack('U*', @_);
 }
 
+sub split_into_char {
+    use bytes;
+    my $uni = shift;
+    my $len = length($uni);
+    my @ary;
+    for(my $i = 0; $i < $len; ++$i) {
+	push @ary, ord(substr($uni,$i,1));
+    }
+    return @ary;
+}
+
 sub _U_stringify {
     sprintf '"%s"', join '',
-	map sprintf("\\x%02x", $_), unpack 'C*', _pack_U(@_);
+	map sprintf("\\x%02x", $_), split_into_char(_pack_U(@_));
 }
 
 foreach my $hash (\%Canon, \%Compat) {
@@ -363,7 +373,7 @@ EOF
 	next if ! $val{ $p };
 	for (my $r = 0; $r < 256; $r++) {
 	    next if ! $val{ $p }{ $r };
-	    printf "$type ${head}_%02x_%02x [256] = {\n", $p, $r;
+	    printf "static $type ${head}_%02x_%02x [256] = {\n", $p, $r;
 	    for (my $c = 0; $c < 256; $c++) {
 		print "\t", defined $val{$p}{$r}{$c}
 		    ? "($type)".$val{$p}{$r}{$c}
@@ -376,7 +386,7 @@ EOF
     }
     foreach my $p (sort { $a <=> $b } keys %val) {
 	next if ! $val{ $p };
-	printf "$type* ${head}_%02x [256] = {\n", $p;
+	printf "static $type* ${head}_%02x [256] = {\n", $p;
 	for (my $r = 0; $r < 256; $r++) {
 	    print $val{ $p }{ $r }
 		? sprintf("${head}_%02x_%02x", $p, $r)
@@ -386,7 +396,7 @@ EOF
 	}
 	print "};\n\n";
     }
-    print "$type** $head [] = {\n";
+    print "static $type** $head [] = {\n";
     for (my $p = 0; $p <= 0x10; $p++) {
 	print $val{ $p } ? sprintf("${head}_%02x", $p) : "NULL";
 	print ','  if $p != 0x10;

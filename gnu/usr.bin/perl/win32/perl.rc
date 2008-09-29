@@ -1,0 +1,36 @@
+#include <windows.h>
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+1 ICON DISCARDABLE "perl.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 5,6,0,0
+ PRODUCTVERSION 5,6,0,0
+ FILEFLAGSMASK 0x3FL
+ FILEFLAGS 0x0L
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+	BLOCK "040904B0"
+	BEGIN
+	    VALUE "CompanyName", "Paranoyaxc Inc\0"
+	    VALUE "FileDescription", "Perl for WindowsCE\0"
+	    VALUE "FileVersion", "1, 0, 0, 0\0"
+	    VALUE "InternalName", "PerlCE\0"
+	    VALUE "LegalCopyright", "Copyright (C) Larry Wall\0"
+	    VALUE "OriginalFilename", "perl.exe"
+	    VALUE "ProductName", "Perl\0"
+	    VALUE "ProductVersion", "5, 7, 2, 0\0"
+	    VALUE "OLESelfRegister", "\0"
+	 END
+     END
+     BLOCK "VarFileInfo"
+     BEGIN
+         VALUE "Translation", 0x409, 1200
+     END
+END

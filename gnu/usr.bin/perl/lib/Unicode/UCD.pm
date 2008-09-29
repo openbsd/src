@@ -3,7 +3,7 @@ package Unicode::UCD;
 use strict;
 use warnings;
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 use Storable qw(dclone);
 
@@ -15,6 +15,7 @@ our @EXPORT_OK = qw(charinfo
 		    charblock charscript
 		    charblocks charscripts
 		    charinrange
+		    general_categories bidi_types
 		    compexcl
 		    casefold casespec
 		    namedseq);
@@ -40,11 +41,15 @@ Unicode::UCD - Unicode character database
     my $charblocks = charblocks();
 
     use Unicode::UCD 'charscripts';
-    my %charscripts = charscripts();
+    my $charscripts = charscripts();
 
     use Unicode::UCD qw(charscript charinrange);
     my $range = charscript($script);
     print "looks like $script\n" if charinrange($range, $codepoint);
+
+    use Unicode::UCD qw(general_categories bidi_types);
+    my $categories = general_categories();
+    my $types = bidi_types();
 
     use Unicode::UCD 'compexcl';
     my $compexcl = compexcl($codepoint);
@@ -102,7 +107,7 @@ as defined by the Unicode standard:
     name             name of the character IN UPPER CASE
     category         general category of the character
     combining        classes used in the Canonical Ordering Algorithm
-    bidi             bidirectional category
+    bidi             bidirectional type
     decomposition    character decomposition mapping
     decimal          if decimal digit this is the integer numeric value
     digit            if digit this is the numeric value
@@ -423,10 +428,11 @@ sub charblocks {
 
     use Unicode::UCD 'charscripts';
 
-    my %charscripts = charscripts();
+    my $charscripts = charscripts();
 
-charscripts() returns a hash with the known script names as the keys,
-and the code point ranges (see L</charscript>) as the values.
+charscripts() returns a reference to a hash with the known script
+names as the keys, and the code point ranges (see L</charscript>) as
+the values.
 
 See also L</Blocks versus Scripts>.
 
@@ -484,6 +490,112 @@ by L</charblocks> and L</charscripts> by using charinrange():
 
     $range = charscript('Hiragana');
     print "looks like hiragana\n" if charinrange($range, $codepoint);
+
+=cut
+
+my %GENERAL_CATEGORIES =
+ (
+    'L'  =>         'Letter',
+    'LC' =>         'CasedLetter',
+    'Lu' =>         'UppercaseLetter',
+    'Ll' =>         'LowercaseLetter',
+    'Lt' =>         'TitlecaseLetter',
+    'Lm' =>         'ModifierLetter',
+    'Lo' =>         'OtherLetter',
+    'M'  =>         'Mark',
+    'Mn' =>         'NonspacingMark',
+    'Mc' =>         'SpacingMark',
+    'Me' =>         'EnclosingMark',
+    'N'  =>         'Number',
+    'Nd' =>         'DecimalNumber',
+    'Nl' =>         'LetterNumber',
+    'No' =>         'OtherNumber',
+    'P'  =>         'Punctuation',
+    'Pc' =>         'ConnectorPunctuation',
+    'Pd' =>         'DashPunctuation',
+    'Ps' =>         'OpenPunctuation',
+    'Pe' =>         'ClosePunctuation',
+    'Pi' =>         'InitialPunctuation',
+    'Pf' =>         'FinalPunctuation',
+    'Po' =>         'OtherPunctuation',
+    'S'  =>         'Symbol',
+    'Sm' =>         'MathSymbol',
+    'Sc' =>         'CurrencySymbol',
+    'Sk' =>         'ModifierSymbol',
+    'So' =>         'OtherSymbol',
+    'Z'  =>         'Separator',
+    'Zs' =>         'SpaceSeparator',
+    'Zl' =>         'LineSeparator',
+    'Zp' =>         'ParagraphSeparator',
+    'C'  =>         'Other',
+    'Cc' =>         'Control',
+    'Cf' =>         'Format',
+    'Cs' =>         'Surrogate',
+    'Co' =>         'PrivateUse',
+    'Cn' =>         'Unassigned',
+ );
+
+sub general_categories {
+    return dclone \%GENERAL_CATEGORIES;
+}
+
+=head2 general_categories
+
+    use Unicode::UCD 'general_categories';
+
+    my $categories = general_categories();
+
+The general_categories() returns a reference to a hash which has short
+general category names (such as C<Lu>, C<Nd>, C<Zs>, C<S>) as keys and long
+names (such as C<UppercaseLetter>, C<DecimalNumber>, C<SpaceSeparator>,
+C<Symbol>) as values.  The hash is reversible in case you need to go
+from the long names to the short names.  The general category is the
+one returned from charinfo() under the C<category> key.
+
+=cut
+
+my %BIDI_TYPES =
+ (
+   'L'   => 'Left-to-Right',
+   'LRE' => 'Left-to-Right Embedding',
+   'LRO' => 'Left-to-Right Override',
+   'R'   => 'Right-to-Left',
+   'AL'  => 'Right-to-Left Arabic',
+   'RLE' => 'Right-to-Left Embedding',
+   'RLO' => 'Right-to-Left Override',
+   'PDF' => 'Pop Directional Format',
+   'EN'  => 'European Number',
+   'ES'  => 'European Number Separator',
+   'ET'  => 'European Number Terminator',
+   'AN'  => 'Arabic Number',
+   'CS'  => 'Common Number Separator',
+   'NSM' => 'Non-Spacing Mark',
+   'BN'  => 'Boundary Neutral',
+   'B'   => 'Paragraph Separator',
+   'S'   => 'Segment Separator',
+   'WS'  => 'Whitespace',
+   'ON'  => 'Other Neutrals',
+ ); 
+
+sub bidi_types {
+    return dclone \%BIDI_TYPES;
+}
+
+=head2 bidi_types
+
+    use Unicode::UCD 'bidi_types';
+
+    my $categories = bidi_types();
+
+The bidi_types() returns a reference to a hash which has the short
+bidi (bidirectional) type names (such as C<L>, C<R>) as keys and long
+names (such as C<Left-to-Right>, C<Right-to-Left>) as values.  The
+hash is reversible in case you need to go from the long names to the
+short names.  The bidi type is the one returned from charinfo()
+under the C<bidi> key.  For the exact meaning of the various bidi classes
+the Unicode TR9 is recommended reading:
+http://www.unicode.org/reports/tr9/tr9-17.html
+(as of Unicode 5.0.0)
 
 =cut
 

@@ -1,14 +1,13 @@
 package ExtUtils::Constant::Base;
 
 use strict;
-use vars qw($VERSION $is_perl56);
+use vars qw($VERSION);
 use Carp;
 use Text::Wrap;
 use ExtUtils::Constant::Utils qw(C_stringify perl_stringify);
+$VERSION = '0.04';
 
-$VERSION = '0.01';
-
-$is_perl56 = ($] < 5.007 && $] > 5.005_50);
+use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
 
 
 =head1 NAME
@@ -67,6 +66,33 @@ sub return_statement_for_notfound;
 # "#if 1" is true to a C pre-processor
 sub macro_from_name {
   1;
+}
+
+sub macro_from_item {
+  1;
+}
+
+sub macro_to_ifdef {
+    my ($self, $macro) = @_;
+    if (ref $macro) {
+	return $macro->[0];
+    }
+    if (defined $macro && $macro ne "" && $macro ne "1") {
+	return $macro ? "#ifdef $macro\n" : "#if 0\n";
+    }
+    return "";
+}
+
+sub macro_to_endif {
+    my ($self, $macro) = @_;
+
+    if (ref $macro) {
+	return $macro->[1];
+    }
+    if (defined $macro && $macro ne "" && $macro ne "1") {
+	return "#endif\n";
+    }
+    return "";
 }
 
 sub name_param {
@@ -211,7 +237,7 @@ sub dump_names {
         next if $_->{utf8} eq 'no';
         # Copy the hashref, as we don't want to mess with the caller's hashref.
         $_ = {%$_};
-        unless ($is_perl56) {
+        unless (is_perl56) {
           utf8::decode ($_->{name});
         } else {
           $_->{name} = pack 'U*', unpack 'U0U*', $_->{name};
@@ -349,26 +375,18 @@ sub return_clause {
   my ($self, $args, $item) = @_;
   my $indent = $args->{indent};
 
-  my ($name, $value, $macro, $default, $pre, $post, $def_pre, $def_post, $type)
-    = @$item{qw (name value macro default pre post def_pre def_post type)};
+  my ($name, $value, $default, $pre, $post, $def_pre, $def_post, $type)
+    = @$item{qw (name value default pre post def_pre def_post type)};
   $value = $name unless defined $value;
-  $macro = $self->macro_from_name($item) unless defined $macro;
-  # "#if 1" is true to a C pre-processor
-  $macro = 1 if !defined $macro or $macro eq '';
+  my $macro = $self->macro_from_item($item);
   $indent = ' ' x ($indent || 6);
   unless (defined $type) {
     # use Data::Dumper; print STDERR Dumper ($item);
     confess "undef \$type";
   }
 
-  my $clause;
-
   ##ifdef thingy
-  if (ref $macro) {
-    $clause = $macro->[0];
-  } elsif ($macro ne "1") {
-    $clause = "#ifdef $macro\n";
-  }
+  my $clause = $self->macro_to_ifdef($macro);
 
   #      *iv_return = thingy;
   #      return PERL_constant_ISIV;
@@ -376,7 +394,7 @@ sub return_clause {
     .= $self->assign ({indent=>$indent, type=>$type, pre=>$pre, post=>$post,
 		       item=>$item}, ref $value ? @$value : $value);
 
-  if (ref $macro or $macro ne "1") {
+  if (defined $macro && $macro ne "" && $macro ne "1") {
     ##else
     $clause .= "#else\n";
 
@@ -390,14 +408,10 @@ sub return_clause {
       $clause .= $self->assign ({indent=>$indent, type=>$type, pre=>$pre,
 				 post=>$post, item=>$item}, @default);
     }
-
-    ##endif
-    if (ref $macro) {
-      $clause .= $macro->[1];
-    } else {
-      $clause .= "#endif\n";
-    }
   }
+  ##endif
+  $clause .= $self->macro_to_endif($macro);
+
   return $clause;
 }
 
@@ -501,7 +515,7 @@ sub switch_clause {
   foreach my $i ($namelen - 1, 0 .. ($namelen - 2)) {
     my ($min, $max) = (~0, 0);
     my %spread;
-    if ($is_perl56) {
+    if (is_perl56) {
       # Need proper Unicode preserving hash keys for bytes in range 128-255
       # here too, for some reason. grr 5.6.1 yet again.
       tie %spread, 'ExtUtils::Constant::Aaargh56Hash';
@@ -643,6 +657,98 @@ sub dogfood {
   ''
 }
 
+=item normalise_items args, default_type, seen_types, seen_items, ITEM...
+
+Convert the items to a normalised form. For 8 bit and Unicode values converts
+the item to an array of 1 or 2 items, both 8 bit and UTF-8 encoded.
+
+=cut
+
+sub normalise_items
+{
+    my $self = shift;
+    my $args = shift;
+    my $default_type = shift;
+    my $what = shift;
+    my $items = shift;
+    my @new_items;
+    foreach my $orig (@_) {
+	my ($name, $item);
+      if (ref $orig) {
+        # Make a copy which is a normalised version of the ref passed in.
+        $name = $orig->{name};
+        my ($type, $macro, $value) = @$orig{qw (type macro value)};
+        $type ||= $default_type;
+        $what->{$type} = 1;
+        $item = {name=>$name, type=>$type};
+
+        undef $macro if defined $macro and $macro eq $name;
+        $item->{macro} = $macro if defined $macro;
+        undef $value if defined $value and $value eq $name;
+        $item->{value} = $value if defined $value;
+        foreach my $key (qw(default pre post def_pre def_post weight
+			    not_constant)) {
+          my $value = $orig->{$key};
+          $item->{$key} = $value if defined $value;
+          # warn "$key $value";
+        }
+      } else {
+        $name = $orig;
+        $item = {name=>$name, type=>$default_type};
+        $what->{$default_type} = 1;
+      }
+      warn +(ref ($self) || $self)
+	. "doesn't know how to handle values of type $_ used in macro $name"
+	  unless $self->valid_type ($item->{type});
+      # tr///c is broken on 5.6.1 for utf8, so my original tr/\0-\177//c
+      # doesn't work. Upgrade to 5.8
+      # if ($name !~ tr/\0-\177//c || $] < 5.005_50) {
+      if ($name =~ tr/\0-\177// == length $name || $] < 5.005_50
+	 || $args->{disable_utf8_duplication}) {
+        # No characters outside 7 bit ASCII.
+        if (exists $items->{$name}) {
+          die "Multiple definitions for macro $name";
+        }
+        $items->{$name} = $item;
+      } else {
+        # No characters outside 8 bit. This is hardest.
+        if (exists $items->{$name} and ref $items->{$name} ne 'ARRAY') {
+          confess "Unexpected ASCII definition for macro $name";
+        }
+        # Again, 5.6.1 tr broken, so s/5\.6.*/5\.8\.0/;
+        # if ($name !~ tr/\0-\377//c) {
+        if ($name =~ tr/\0-\377// == length $name) {
+#          if ($] < 5.007) {
+#            $name = pack "C*", unpack "U*", $name;
+#          }
+          $item->{utf8} = 'no';
+          $items->{$name}[1] = $item;
+          push @new_items, $item;
+          # Copy item, to create the utf8 variant.
+          $item = {%$item};
+        }
+        # Encode the name as utf8 bytes.
+        unless (is_perl56) {
+          utf8::encode($name);
+        } else {
+#          warn "Was >$name< " . length ${name};
+          $name = pack 'C*', unpack 'C*', $name . pack 'U*';
+#          warn "Now '${name}' " . length ${name};
+        }
+        if ($items->{$name}[0]) {
+          die "Multiple definitions for macro $name";
+        }
+        $item->{utf8} = 'yes';
+        $item->{name} = $name;
+        $items->{$name}[0] = $item;
+        # We have need for the utf8 flag.
+        $what->{''} = 1;
+      }
+      push @new_items, $item;
+    }
+    @new_items;
+}
+
 =item C_constant arg_hashref, ITEM...
 
 A function that returns a B<list> of C subroutine definitions that return
@@ -779,10 +885,10 @@ sub C_constant {
     # be a hashref, and pinch %$items from our parent to save recalculation.
     ($namelen, $items) = @$breakout;
   } else {
-    if ($is_perl56) {
+    $items = {};
+    if (is_perl56) {
       # Need proper Unicode preserving hash keys.
       require ExtUtils::Constant::Aaargh56Hash;
-      $items = {};
       tie %$items, 'ExtUtils::Constant::Aaargh56Hash';
     }
     $breakout ||= 3;
@@ -793,80 +899,7 @@ sub C_constant {
       # Figure out what types we're dealing with, and assign all unknowns to the
       # default type
     }
-    my @new_items;
-    foreach my $orig (@items) {
-      my ($name, $item);
-      if (ref $orig) {
-        # Make a copy which is a normalised version of the ref passed in.
-        $name = $orig->{name};
-        my ($type, $macro, $value) = @$orig{qw (type macro value)};
-        $type ||= $default_type;
-        $what->{$type} = 1;
-        $item = {name=>$name, type=>$type};
-
-        undef $macro if defined $macro and $macro eq $name;
-        $item->{macro} = $macro if defined $macro;
-        undef $value if defined $value and $value eq $name;
-        $item->{value} = $value if defined $value;
-        foreach my $key (qw(default pre post def_pre def_post weight)) {
-          my $value = $orig->{$key};
-          $item->{$key} = $value if defined $value;
-          # warn "$key $value";
-        }
-      } else {
-        $name = $orig;
-        $item = {name=>$name, type=>$default_type};
-        $what->{$default_type} = 1;
-      }
-      warn +(ref ($self) || $self)
-	. "doesn't know how to handle values of type $_ used in macro $name"
-	  unless $self->valid_type ($item->{type});
-      # tr///c is broken on 5.6.1 for utf8, so my original tr/\0-\177//c
-      # doesn't work. Upgrade to 5.8
-      # if ($name !~ tr/\0-\177//c || $] < 5.005_50) {
-      if ($name =~ tr/\0-\177// == length $name || $] < 5.005_50) {
-        # No characters outside 7 bit ASCII.
-        if (exists $items->{$name}) {
-          die "Multiple definitions for macro $name";
-        }
-        $items->{$name} = $item;
-      } else {
-        # No characters outside 8 bit. This is hardest.
-        if (exists $items->{$name} and ref $items->{$name} ne 'ARRAY') {
-          confess "Unexpected ASCII definition for macro $name";
-        }
-        # Again, 5.6.1 tr broken, so s/5\.6.*/5\.8\.0/;
-        # if ($name !~ tr/\0-\377//c) {
-        if ($name =~ tr/\0-\377// == length $name) {
-#          if ($] < 5.007) {
-#            $name = pack "C*", unpack "U*", $name;
-#          }
-          $item->{utf8} = 'no';
-          $items->{$name}[1] = $item;
-          push @new_items, $item;
-          # Copy item, to create the utf8 variant.
-          $item = {%$item};
-        }
-        # Encode the name as utf8 bytes.
-        unless ($is_perl56) {
-          utf8::encode($name);
-        } else {
-#          warn "Was >$name< " . length ${name};
-          $name = pack 'C*', unpack 'C*', $name . pack 'U*';
-#          warn "Now '${name}' " . length ${name};
-        }
-        if ($items->{$name}[0]) {
-          die "Multiple definitions for macro $name";
-        }
-        $item->{utf8} = 'yes';
-        $item->{name} = $name;
-        $items->{$name}[0] = $item;
-        # We have need for the utf8 flag.
-        $what->{''} = 1;
-      }
-      push @new_items, $item;
-    }
-    @items = @new_items;
+    @items = $self->normalise_items ({}, $default_type, $what, $items, @items);
     # use Data::Dumper; print Dumper @items;
   }
   my $params = $self->params ($what);

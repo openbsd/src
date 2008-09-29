@@ -41,19 +41,7 @@ Try out \fI\s-1LOTS\s0\fR of different ways of specifying references:
 .PP
 Reference the \*(L"section\*(R" in manpage
 .PP
-Reference the \*(L"section\*(R" in manpage
-.PP
-Reference the \*(L"section\*(R" in manpage
-.PP
-Reference the \*(L"section\*(R" in manpage
-.PP
-Reference the \*(L"manpage/section\*(R"
-.PP
 Reference the \*(L"section\*(R" in \*(L"manpage\*(R"
-.PP
-Reference the \*(L"section\*(R" in manpage
-.PP
-Reference the \*(L"section\*(R" in manpage
 .PP
 Reference the \*(L"section\*(R" in manpage
 .PP
@@ -69,13 +57,7 @@ Reference the thistext |
 .PP
 Reference the thistext|
 .PP
-Reference the thistext |
-.PP
 Reference the thistext|
-.PP
-Reference the thistext|
-.PP
-Reference the thistext |
 .PP
 And then throw in a few new ones of my own.
 .PP
@@ -95,25 +77,19 @@ foo
 .PP
 \&\*(L"baz boo\*(R" in foo bar
 .PP
-\&\*(L"baz boo\*(R" in foo bar
-.PP
-\&\*(L"boo\*(R" in foo bar baz
-.PP
 \&\*(L"boo var baz\*(R"
 .PP
 \&\*(L"bar baz\*(R"
 .PP
-\&\*(L"boo bar baz / baz boo\*(R"
-.PP
 \&\*(L"boo\*(R", \*(L"bar\*(R", and \*(L"baz\*(R"
 .PP
-foo\&bar
+foobar
 .PP
 Testing \fIitalics\fR
 .PP
 "\fIItalic\fR text" in foo
 .PP
-"Section \f(CW\*(C`with\*(C'\fR \fI\f(BIother\fI markup\fR" in foo|bar\&
+"Section \f(CW\*(C`with\*(C'\fR \fI\f(BIother\fI markup\fR" in foo|bar
 .PP
 Nested <http://www.perl.org/>
 .SH "OVER AND ITEMS"
@@ -127,8 +103,7 @@ There should be whitespace now before this line.
 .PP
 Taken from Pod::Parser tests, this is a test to ensure the nested =item
 paragraphs get indented appropriately.
-.IP "1" 2
-.IX Item "1"
+.IP "1." 2
 First section.
 .RS 2
 .IP "a" 2
@@ -140,8 +115,7 @@ this is item b
 .RE
 .RS 2
 .RE
-.IP "2" 2
-.IX Item "2"
+.IP "2." 2
 Second section.
 .RS 2
 .IP "a" 2
@@ -203,7 +177,7 @@ This paragraph should be doubly indented.
 .Sp
 This paragraph should only be singly indented.
 .IP "\(bu" 4
-This is an item in the middle of a block\-quote, which should be allowed.
+This is an item in the middle of a block-quote, which should be allowed.
 .IP "\(bu" 4
 We're also testing tagless item commands.
 .RE
@@ -253,15 +227,15 @@ So things like \f(CW\*(C`<$self\-\*(C'\fR\fImethod()\fR>> and \f(CW\*(C`<$self\-
 up doing what you might expect since the first > will still terminate
 the first < seen.
 .PP
-Lets make sure these work for empty ones too, like  and \f(CW\*(C`>>\*(C'\fR
+Lets make sure these work for empty ones too, like \f(CW\*(C`\*(C'\fR and \f(CW\*(C`>>\*(C'\fR
 (just to be obnoxious)
 .PP
-The statement: \f(CW\*(C`This is dog kind's \f(CIfinest\f(CW hour!\*(C'\fR is a parody of a
+The statement: \f(CW\*(C`This is dog kind\*(Aqs \f(CIfinest\f(CW hour!\*(C'\fR is a parody of a
 quotation from Winston Churchill.
 .PP
 The following tests are added to those:
 .PP
-Make sure that a few oth\&er odd \fI\&things\fR still work.  This should be
+Make sure that a few other odd \fIthings\fR still work.  This should be
 a vertical bar:  |.  Here's a test of a few more special escapes
 that have to be supported:
 .IP "&" 3
@@ -280,7 +254,7 @@ A forward slash.
 Try to get this bit of text over towards the edge so |that\ all\ of\ this\ text\ inside\ S<>\ won't| be wrapped.  Also test the
 |same\ thing\ with\ non-breaking\ spaces.|
 .PP
-There is a soft hyphen in hyphen at hy\-phen.
+There is a soft hy\%phen in hyphen at hy-phen.
 .PP
 This is a test of an index entry.
 .IX Xref "index entry"
@@ -290,18 +264,16 @@ Throw in a few verbatim paragraphs.
 .PP
 .Vb 8
 \&    use Term::ANSIColor;
-\&    print color 'bold blue';
+\&    print color \*(Aqbold blue\*(Aq;
 \&    print "This text is bold blue.\en";
-\&    print color 'reset';
+\&    print color \*(Aqreset\*(Aq;
 \&    print "This text is normal.\en";
-\&    print colored ("Yellow on magenta.\en", 'yellow on_magenta');
+\&    print colored ("Yellow on magenta.\en", \*(Aqyellow on_magenta\*(Aq);
 \&    print "This text is normal.\en";
-\&    print colored ['yellow on_magenta'], "Yellow on magenta.\en";
-.Ve
-.PP
-.Vb 2
+\&    print colored [\*(Aqyellow on_magenta\*(Aq], "Yellow on magenta.\en";
+\&
 \&    use Term::ANSIColor qw(uncolor);
-\&    print uncolor '01;31', "\en";
+\&    print uncolor \*(Aq01;31\*(Aq, "\en";
 .Ve
 .PP
 But this isn't verbatim (make sure it wraps properly), and the next
@@ -310,9 +282,7 @@ paragraph is again:
 .Vb 2
 \&    use Term::ANSIColor qw(:constants);
 \&    print BOLD, BLUE, "This text is in bold blue.\en", RESET;
-.Ve
-.PP
-.Vb 1
+\&
 \&    use Term::ANSIColor qw(:constants); $Term::ANSIColor::AUTORESET = 1; print BOLD BLUE "This text is in bold blue.\en"; print "This text is normal.\en";
 .Ve
 .PP
@@ -332,7 +302,7 @@ This isn't.
 .PP
 .Vb 2
 \& This is.  And this:    is an internal tab.  It should be:
-\&                    |--| <= lined up with that.
+\&                    |\-\-| <= lined up with that.
 .Ve
 .PP
 (Tricky, but tabs should be expanded before the translator starts in on

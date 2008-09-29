@@ -3,8 +3,8 @@
 
 # Rerun `sh Makefile.SH; make depend' after making any change.
 
-# Additional rules supported: libperls.a (for static linking),
-# ld2, perlld (dynamic linking tools)
+# Additional rules supported: libperl.a (for static linking),
+# ld2 and perlld removed
 #
 
 #! /bin/sh
@@ -22,73 +22,27 @@ case $PERL_CONFIG_SH in
 	;;
 esac
 
-addtopath=`pwd`
+addtopath=`pwd | sed -e 's/ /\\\ /g'`
 $spitshell >>Makefile <<!GROK!THIS!
 
 cygwin.c: cygwin/cygwin.c
 	\$(LNS) cygwin/cygwin.c
 
-# shell script feeding perlld to decent perl
-ld2: $& Makefile perlld ${src}/cygwin/ld2.in
-	@echo "extracting ld2 (with variable substitutions)"
-	@$sed s,@buildpath@,$addtopath,g <${src}/cygwin/ld2.in >ld2
-	@chmod a+x ld2
-	@echo "installing ld2 into $installbin"
-# install is included in Cygwin distributions, and we make a note of th
-# requirement in the README.cygwin file. However, let's give them
-# a warning.
-	@/usr/bin/install -c -m 755 ld2 ${installbin}/ld2
-	@if test ! -f  ${installbin}/ld2; then \
-		echo "*************************************************" ; \
-		echo "Make will probably fail in a few more steps." ; \
-		echo "When it does, copy \"ld2\" to a directory in" ; \
-		echo "your path, other than \".\"." ; \
-		echo "\"/usr/local/bin\" or something similar will do." ; \
-		echo "Then restart make." ; \
-		echo "*************************************************" ; \
-	fi
-
-!GROK!THIS!
-
-$spitshell >>Makefile <<!GROK!THIS!
-
-# perlld parameters
-#
-# these ones are mandatory
-DLLWRAP = 'dllwrap'
-VERSION = '$version'
-
-# following are optional.
-WRAPDRIVER = gcc
-DLLTOOL = dlltool
-EXPORT_ALL = 1
-
-# if some of extensions are empty,
-# no corresponding output will be done.
-# most probably, you'd like to have an export library
-DEF_EXT = .def
-EXP_EXT = .exp
-
-perlld: $& Makefile ${src}/cygwin/perlld.in
-	@echo "extracting perlld (with variable substitutions)"
-	@$sed -e s,@CC@,\${CC}, -e s,@DLLWRAP@,\${DLLWRAP},g \\
-	-e s,@WRAPDRIVER@,\${WRAPDRIVER},g -e s,@DLLTOOL@,\${DLLTOOL},g \\
-	-e s,@AS@,\${AS},g -e s,@EXPORT_ALL@,\${EXPORT_ALL},g \\
-	-e s,@DEF_EXT@,\${DEF_EXT},g -e s,@EXP_EXT@,\${EXP_EXT},g \\
-	-e s,@LIB_EXT@,\${LIB_EXT},g -e s,@VERSION@,\${VERSION},g \\
-	${src}/cygwin/perlld.in >perlld
-
 !GROK!THIS!
 
 # make sure that all library names are not malformed
 libperl=`echo $libperl|sed -e s,\\\..*,,`
-
 linklibperl=-l`echo $libperl|sed -e s,^lib,,`
+vers=`echo $version|tr '.' '_'`
+dllname=`echo $libperl|sed -e s,^lib,cyg,`$vers
 
 $spitshell >>Makefile <<!GROK!THIS!
 LIBPERL = $libperl
 LLIBPERL= $linklibperl
+DLLNAME= $dllname
 CLDFLAGS= -L$addtopath $ldflags
+LDDLFLAGS = --shared -L$addtopath $ldflags
+PLDLFLAGS = 
 CAT = $cat
 AWK = $awk
 !GROK!THIS!
@@ -104,13 +58,13 @@ perlmain$(OBJ_EXT): perlmain.c
 
 # library used to make statically linked executables
 # miniperl is linked against it to avoid libperl.dll locking
-$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
-	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
+$(LIBPERL)$(LIB_EXT): $& $(cwobj)
+	$(AR) rcu $@ $(cwobj)
 
 # dll and import library
-$(LIBPERL).dll$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
-	$(LDLIBPTH) ld2 $(SHRPLDFLAGS) -o $(LIBPERL)$(DLSUFFIX) \
-	perl$(OBJ_EXT) $(cwobj) $(libs)
+$(LIBPERL).dll$(LIB_EXT): $& $(cwobj)
+	$(LDLIBPTH) $(CC) $(SHRPLDFLAGS) -o $(DLLNAME)$(DLSUFFIX) -Wl,--out-implib=$@ \
+	$(cwobj) $(libs)
 
 # How to build executables.
 
@@ -122,7 +76,7 @@ $(LIBPERL).dll$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
 
 miniperl.exe \
 miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
-	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
+	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(libs)
 	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
 
 perl.exe \
@@ -145,8 +99,8 @@ $spitshell >>Makefile <<'!NO!SUBS!'
 cwobj = $(obj)
 
 # perl library
-$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
-	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
+$(LIBPERL)$(LIB_EXT): $& $(cwobj)
+	$(AR) rcu $@ $(cwobj)
 
 # How to build executables.
 
@@ -202,7 +156,9 @@ DIST_DIRECTORY = .dist
 
 distdir: miniperl
 	-mkdir $(DIST_DIRECTORY)
-	./miniperl '-MExtUtils::Manifest' \
+	./miniperl -Ilib '-MExtUtils::Manifest' \
 	-e "ExtUtils::Manifest::manicopy(ExtUtils::Manifest::maniread(),'$(DIST_DIRECTORY)')"
+
+test_prep: 
 
 !NO!SUBS!

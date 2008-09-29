@@ -156,7 +156,7 @@ altogether without further notice.
 =item Is the implementation generic enough to be portable?
 
 The worst patches make use of a system-specific features.  It's highly
-unlikely that nonportable additions to the Perl language will be
+unlikely that non-portable additions to the Perl language will be
 accepted.
 
 =item Is the implementation tested?
@@ -361,7 +361,7 @@ patch directory.
 
 It's then up to you to apply these patches, using something like
 
- # last=`ls -t *.gz | sed q`
+ # last="`cat ../perl-current/.patch`.gz"
  # rsync -avz rsync://public.activestate.com/perl-current-diffs/ .
  # find . -name '*.gz' -newer $last -exec gzcat {} \; >blead.patch
  # cd ../perl-current
@@ -450,7 +450,7 @@ When you keep in sync with bleadperl, the pumpking would love to
 I<see> that the community efforts really work. So after each of his
 sync points, you are to 'make test' to check if everything is still
 in working order. If it is, you do 'make ok', which will send an OK
-report to perlbug@perl.org. (If you do not have access to a mailer
+report to I<perlbug@perl.org>. (If you do not have access to a mailer
 from the system you just finished successfully 'make test', you can
 do 'make okfile', which creates the file C<perl.ok>, which you can
 than take to your favourite mailer and mail yourself).
@@ -528,18 +528,18 @@ Bourne shell script functions that can make your life easier:
     function edit {
 	if [ -L $1 ]; then
 	    mv $1 $1.orig
-		cp $1.orig $1
-		vi $1
+	    cp $1.orig $1
+	    vi $1
 	else
-	    /bin/vi $1
-		fi
+	    vi $1
+	fi
     }
 
     function unedit {
 	if [ -L $1.orig ]; then
 	    rm $1
-		mv $1.orig $1
-		fi
+	    mv $1.orig $1
+	fi
     }
 
 Replace "vi" with your favorite flavor of editor.
@@ -549,15 +549,15 @@ files which have been edited in your symlink tree:
 
     mkpatchorig() {
 	local diffopts
-	    for f in `find . -name '*.orig' | sed s,^\./,,`
-		do
-		    case `echo $f | sed 's,.orig$,,;s,.*\.,,'` in
-			c)   diffopts=-p ;;
+	for f in `find . -name '*.orig' | sed s,^\./,,`
+	do
+	    case `echo $f | sed 's,.orig$,,;s,.*\.,,'` in
+		c)   diffopts=-p ;;
 		pod) diffopts='-F^=' ;;
 		*)   diffopts= ;;
-		esac
-		    diff -du $diffopts $f `echo $f | sed 's,.orig$,,'`
-		    done
+	    esac
+	    diff -du $diffopts $f `echo $f | sed 's,.orig$,,'`
+	done
     }
 
 This function produces patches which include enough context to make
@@ -570,21 +570,16 @@ other diff variants.
 
 =head2 Perlbug administration
 
-There is a single remote administrative interface for modifying bug status, 
-category, open issues etc. using the B<RT> I<bugtracker> system, maintained
-by I<Robert Spier>.  Become an administrator, and close any bugs you can get 
+There is a single remote administrative interface for modifying bug status,
+category, open issues etc. using the B<RT> bugtracker system, maintained
+by Robert Spier.  Become an administrator, and close any bugs you can get
 your sticky mitts on:
 
-	http://rt.perl.org
-
-The bugtracker mechanism for B<perl5> bugs in particular is at:
-
-	http://bugs6.perl.org/perlbug
+	http://bugs.perl.org/
 
 To email the bug system administrators:
 
 	"perlbug-admin" <perlbug-admin@perl.org>
-
 
 =head2 Submitting patches
 
@@ -598,19 +593,31 @@ ftp://ftp.gnu.org/pub/gnu/ , or use Johan Vromans' I<makepatch>
 but context diffs are accepted.  Do not send RCS-style diffs or diffs
 without context lines.  More information is given in the
 I<Porting/patching.pod> file in the Perl source distribution.  Please
-patch against the latest B<development> version (e.g., if you're
-fixing a bug in the 5.005 track, patch against the latest 5.005_5x
-version).  Only patches that survive the heat of the development
+patch against the latest B<development> version. (e.g., even if you're
+fixing a bug in the 5.8 track, patch against the latest B<development>
+version rsynced from rsync://public.activestate.com/perl-current/ )
+
+If changes are accepted, they are applied to the development branch. Then
+the 5.8 pumpking decides which of those patches is to be backported to the
+maint branch.  Only patches that survive the heat of the development
 branch get applied to maintenance versions.
 
 Your patch should update the documentation and test suite.  See
-L<Writing a test>.
+L<Writing a test>.  If you have added or removed files in the distribution,
+edit the MANIFEST file accordingly, sort the MANIFEST file using
+C<make manisort>, and include those changes as part of your patch.
+
+Patching documentation also follows the same order: if accepted, a patch
+is first applied to B<development>, and if relevant then it's backported
+to B<maintenance>. (With an exception for some patches that document
+behaviour that only appears in the maintenance branch, but which has
+changed in the development version.)
 
 To report a bug in Perl, use the program I<perlbug> which comes with
 Perl (if you can't get Perl to work, send mail to the address
 I<perlbug@perl.org> or I<perlbug@perl.com>).  Reporting bugs through
 I<perlbug> feeds into the automated bug-tracking system, access to
-which is provided through the web at http://bugs.perl.org/ .  It
+which is provided through the web at http://rt.perl.org/rt3/ .  It
 often pays to check the archives of the perl5-porters mailing list to
 see whether the bug you're reporting has been reported before, and if
 so whether it was considered a bug.  See above for the location of
@@ -618,9 +625,15 @@ the searchable archives.
 
 The CPAN testers ( http://testers.cpan.org/ ) are a group of
 volunteers who test CPAN modules on a variety of platforms.  Perl
-Smokers ( http://archives.develooper.com/daily-build@perl.org/ )
-automatically tests Perl source releases on platforms with various
-configurations.  Both efforts welcome volunteers.
+Smokers ( http://www.nntp.perl.org/group/perl.daily-build and
+http://www.nntp.perl.org/group/perl.daily-build.reports/ )
+automatically test Perl source releases on platforms with various
+configurations.  Both efforts welcome volunteers. In order to get
+involved in smoke testing of the perl itself visit
+L<http://search.cpan.org/dist/Test-Smoke>. In order to start smoke
+testing CPAN modules visit L<http://search.cpan.org/dist/CPAN-YACSmoke/>
+or L<http://search.cpan.org/dist/POE-Component-CPAN-YACSmoke/> or
+L<http://search.cpan.org/dist/CPAN-Reporter/>.
 
 It's a good idea to read and lurk for a while before chipping in.
 That way you'll get to see the dynamic of the conversations, learn the
@@ -669,11 +682,9 @@ wanting to go about Perl development.
 
 =item The perl5-porters FAQ
 
-This should be available from http://simon-cozens.org/writings/p5p-faq ;
-alternatively, you can get the FAQ emailed to you by sending mail to
-C<perl5-porters-faq@perl.org>. It contains hints on reading perl5-porters,
-information on how perl5-porters works and how Perl development in general
-works.
+This should be available from http://dev.perl.org/perl5/docs/p5p-faq.html .
+It contains hints on reading perl5-porters, information on how
+perl5-porters works and how Perl development in general works.
 
 =back
 
@@ -877,7 +888,7 @@ retrieves the return op from it, and returns it.
 
 =item Exception handing
 
-Perl's exception handing (i.e. C<die> etc) is built on top of the low-level
+Perl's exception handing (i.e. C<die> etc.) is built on top of the low-level
 C<setjmp()>/C<longjmp()> C-library functions. These basically provide a
 way to capture the current PC and SP registers and later restore them; i.e.
 a C<longjmp()> continues at the point in code where a previous C<setjmp()>
@@ -1344,8 +1355,8 @@ stack usable by each function. For instance, when dealing with a tied
 variable, (internally, something with "P" magic) Perl has to call
 methods for accesses to the tied variables. However, we need to separate
 the arguments exposed to the method to the argument exposed to the
-original function - the store or fetch or whatever it may be. Here's how
-the tied C<push> is implemented; see C<av_push> in F<av.c>:
+original function - the store or fetch or whatever it may be. Here's
+roughly how the tied C<push> is implemented; see C<av_push> in F<av.c>:
 
      1	PUSHMARK(SP);
      2	EXTEND(SP,2);
@@ -1355,11 +1366,6 @@ the tied C<push> is implemented; see C<av_push> in F<av.c>:
      6	ENTER;
      7	call_method("PUSH", G_SCALAR|G_DISCARD);
      8	LEAVE;
-     9	POPSTACK;
-
-The lines which concern the mark stack are the first, fifth and last
-lines: they save away, restore and remove the current position of the
-argument stack. 
 
 Let's examine the whole implementation, for practice:
 
@@ -1380,8 +1386,8 @@ retrieved with C<SvTIED_obj>, and the value, the SV C<val>.
 
      5	PUTBACK;
 
-Next we tell Perl to make the change to the global stack pointer: C<dSP>
-only gave us a local copy, not a reference to the global.
+Next we tell Perl to update the global stack pointer from our internal
+variable: C<dSP> only gave us a local copy, not a reference to the global.
 
      6	ENTER;
      7	call_method("PUSH", G_SCALAR|G_DISCARD);
@@ -1395,12 +1401,9 @@ C<}> of a Perl block.
 To actually do the magic method call, we have to call a subroutine in
 Perl space: C<call_method> takes care of that, and it's described in
 L<perlcall>. We call the C<PUSH> method in scalar context, and we're
-going to discard its return value.
-
-     9	POPSTACK;
-
-Finally, we remove the value we placed on the mark stack, since we
-don't need it any more.
+going to discard its return value.  The call_method() function
+removes the top element of the mark stack, so there is nothing for
+the caller to clean up.
 
 =item Save stack
 
@@ -1463,6 +1466,140 @@ You can expand the macros in a F<foo.c> file by saying
 
 which will expand the macros using cpp.  Don't be scared by the results.
 
+=head1 SOURCE CODE STATIC ANALYSIS
+
+Various tools exist for analysing C source code B<statically>, as
+opposed to B<dynamically>, that is, without executing the code.
+It is possible to detect resource leaks, undefined behaviour, type
+mismatches, portability problems, code paths that would cause illegal
+memory accesses, and other similar problems by just parsing the C code
+and looking at the resulting graph, what does it tell about the
+execution and data flows.  As a matter of fact, this is exactly
+how C compilers know to give warnings about dubious code.
+
+=head2 lint, splint
+
+The good old C code quality inspector, C<lint>, is available in
+several platforms, but please be aware that there are several
+different implementations of it by different vendors, which means that
+the flags are not identical across different platforms.
+
+There is a lint variant called C<splint> (Secure Programming Lint)
+available from http://www.splint.org/ that should compile on any
+Unix-like platform.
+
+There are C<lint> and <splint> targets in Makefile, but you may have
+to diddle with the flags (see above).
+
+=head2 Coverity
+
+Coverity (http://www.coverity.com/) is a product similar to lint and
+as a testbed for their product they periodically check several open
+source projects, and they give out accounts to open source developers
+to the defect databases.
+
+=head2 cpd (cut-and-paste detector)
+
+The cpd tool detects cut-and-paste coding.  If one instance of the
+cut-and-pasted code changes, all the other spots should probably be
+changed, too.  Therefore such code should probably be turned into a
+subroutine or a macro.
+
+cpd (http://pmd.sourceforge.net/cpd.html) is part of the pmd project
+(http://pmd.sourceforge.net/).  pmd was originally written for static
+analysis of Java code, but later the cpd part of it was extended to
+parse also C and C++.
+
+Download the pmd-bin-X.Y.zip () from the SourceForge site, extract the
+pmd-X.Y.jar from it, and then run that on source code thusly:
+
+  java -cp pmd-X.Y.jar net.sourceforge.pmd.cpd.CPD --minimum-tokens 100 --files /some/where/src --language c > cpd.txt
+
+You may run into memory limits, in which case you should use the -Xmx option:
+
+  java -Xmx512M ...
+
+=head2 gcc warnings
+
+Though much can be written about the inconsistency and coverage
+problems of gcc warnings (like C<-Wall> not meaning "all the
+warnings", or some common portability problems not being covered by
+C<-Wall>, or C<-ansi> and C<-pedantic> both being a poorly defined
+collection of warnings, and so forth), gcc is still a useful tool in
+keeping our coding nose clean.
+
+The C<-Wall> is by default on.
+
+The C<-ansi> (and its sidekick, C<-pedantic>) would be nice to be on
+always, but unfortunately they are not safe on all platforms, they can
+for example cause fatal conflicts with the system headers (Solaris
+being a prime example).  If Configure C<-Dgccansipedantic> is used,
+the C<cflags> frontend selects C<-ansi -pedantic> for the platforms
+where they are known to be safe.
+
+Starting from Perl 5.9.4 the following extra flags are added:
+
+=over 4
+
+=item *
+
+C<-Wendif-labels>
+
+=item *
+
+C<-Wextra>
+
+=item *
+
+C<-Wdeclaration-after-statement>
+
+=back
+
+The following flags would be nice to have but they would first need
+their own Augean stablemaster:
+
+=over 4
+
+=item *
+
+C<-Wpointer-arith>
+
+=item *
+
+C<-Wshadow>
+
+=item *
+
+C<-Wstrict-prototypes>
+
+=back
+
+The C<-Wtraditional> is another example of the annoying tendency of
+gcc to bundle a lot of warnings under one switch -- it would be
+impossible to deploy in practice because it would complain a lot -- but
+it does contain some warnings that would be beneficial to have available
+on their own, such as the warning about string constants inside macros
+containing the macro arguments: this behaved differently pre-ANSI
+than it does in ANSI, and some C compilers are still in transition,
+AIX being an example.
+
+=head2 Warnings of other C compilers
+
+Other C compilers (yes, there B<are> other C compilers than gcc) often
+have their "strict ANSI" or "strict ANSI with some portability extensions"
+modes on, like for example the Sun Workshop has its C<-Xa> mode on
+(though implicitly), or the DEC (these days, HP...) has its C<-std1>
+mode on.
+
+=head2 DEBUGGING
+
+You can compile a special debugging version of Perl, which allows you
+to use the C<-D> option of Perl to tell more about what Perl is doing.
+But sometimes there is no alternative than to dive in with a debugger,
+either to see the stack trace of a core dump (very useful in a bug
+report), or trying to figure out what went wrong before the core dump
+happened, or how did we end up having wrong or unexpected results.
+
 =head2 Poking at Perl
 
 To really poke around with Perl, you'll probably want to build Perl for
@@ -1472,7 +1609,11 @@ debugging, like this:
     make
 
 C<-g> is a flag to the C compiler to have it produce debugging
-information which will allow us to step through a running program.
+information which will allow us to step through a running program,
+and to see in which C function we are at (without the debugging
+information we might see only the numerical addresses of the functions,
+which is not very helpful).
+
 F<Configure> will also turn on the C<DEBUGGING> compilation symbol which
 enables all the internal debugging code in Perl. There are a whole bunch
 of things you can debug with this: L<perlrun> lists them all, and the
@@ -1499,14 +1640,19 @@ through perl's execution with a source-level debugger.
 
 =item *
 
-We'll use C<gdb> for our examples here; the principles will apply to any
-debugger, but check the manual of the one you're using.
+We'll use C<gdb> for our examples here; the principles will apply to
+any debugger (many vendors call their debugger C<dbx>), but check the
+manual of the one you're using.
 
 =back
 
 To fire up the debugger, type
 
     gdb ./perl
+
+Or if you have a core dump:
+
+    gdb ./perl core
 
 You'll want to do that in your Perl source tree so the debugger can read
 the source code. You should see the copyright message, followed by the
@@ -1572,7 +1718,7 @@ but you have to say
 
 You may find it helpful to have a "macro dictionary", which you can
 produce by saying C<cpp -dM perl.c | sort>. Even then, F<cpp> won't
-recursively apply those macros for you. 
+recursively apply those macros for you.
 
 =head2 gdb macro support
 
@@ -1588,7 +1734,7 @@ One way to get around this macro hell is to use the dumping functions in
 F<dump.c>; these work a little like an internal
 L<Devel::Peek|Devel::Peek>, but they also cover OPs and other structures
 that you can't get at from Perl. Let's take an example. We'll use the
-C<$a = $b + $c> we used before, but give it a bit of context: 
+C<$a = $b + $c> we used before, but give it a bit of context:
 C<$b = "6XXXX"; $c = 2.3;>. Where's a good place to stop and poke around?
 
 What about C<pp_add>, the function we examined earlier to implement the
@@ -1623,7 +1769,7 @@ C<POPn> takes the SV from the top of the stack and obtains its NV either
 directly (if C<SvNOK> is set) or by calling the C<sv_2nv> function.
 C<TOPs> takes the next SV from the top of the stack - yes, C<POPn> uses
 C<TOPs> - but doesn't remove it. We then use C<SvNV> to get the NV from
-C<leftsv> in the same way as before - yes, C<POPn> uses C<SvNV>. 
+C<leftsv> in the same way as before - yes, C<POPn> uses C<SvNV>.
 
 Since we don't have an NV for C<$b>, we'll have to use C<sv_2nv> to
 convert it. If we step again, we'll find ourselves there:
@@ -1676,7 +1822,7 @@ similar output to L<B::Debug|B::Debug>.
 All right, we've now had a look at how to navigate the Perl sources and
 some things you'll need to know when fiddling with them. Let's now get
 on and create a simple patch. Here's something Larry suggested: if a
-C<U> is the first active format during a C<pack>, (for example, 
+C<U> is the first active format during a C<pack>, (for example,
 C<pack "U3C8", @stuff>) then the resulting string should be treated as
 UTF-8 encoded.
 
@@ -1762,7 +1908,7 @@ else along the line.
 The regression tests for each operator live in F<t/op/>, and so we
 make a copy of F<t/op/pack.t> to F<t/op/pack.t~>. Now we can add our
 tests to the end. First, we'll test that the C<U> does indeed create
-Unicode strings.  
+Unicode strings.
 
 t/op/pack.t has a sensible ok() function, but if it didn't we could
 use the one from t/test.pl.
@@ -1778,8 +1924,8 @@ so instead of this:
 we can write the more sensible (see L<Test::More> for a full
 explanation of is() and other testing functions).
 
- is( "1.20.300.4000", sprintf "%vd", pack("U*",1,20,300,4000), 
-                                       "U* produces unicode" );
+ is( "1.20.300.4000", sprintf "%vd", pack("U*",1,20,300,4000),
+                                       "U* produces Unicode" );
 
 Now we'll test that we got that space-at-the-beginning business right:
 
@@ -1790,7 +1936,7 @@ And finally we'll test that we don't make Unicode strings if C<U> is B<not>
 the first active format:
 
  isnt( v1.20.300.4000, sprintf "%vd", pack("C0U*",1,20,300,4000),
-                                       "U* not first isn't unicode" );
+                                       "U* not first isn't Unicode" );
 
 Mustn't forget to change the number of tests which appears at the top,
 or else the automated tester will get confused.  This will either look
@@ -1965,6 +2111,11 @@ The old home for the module tests, you shouldn't put anything new in
 here.  There are still some bits and pieces hanging around in here
 that need to be moved.  Perhaps you could move them?  Thanks!
 
+=item F<t/mro/>
+
+Tests for perl's method resolution order implementations
+(see L<mro>).
+
 =item F<t/op/>
 
 Tests for perl's built in functions that don't fit into any of the
@@ -2004,7 +2155,7 @@ decision of which to use depends on what part of the test suite you're
 working on.  This is a measure to prevent a high-level failure (such
 as Config.pm breaking) from causing basic functionality tests to fail.
 
-=over 4 
+=over 4
 
 =item t/base t/comp
 
@@ -2029,9 +2180,9 @@ also use the full suite of core modules in the tests.
 =back
 
 When you say "make test" Perl uses the F<t/TEST> program to run the
-test suite (except under Win32 where it uses F<t/harness> instead.)  
-All tests are run from the F<t/> directory, B<not> the directory 
-which contains the test.  This causes some problems with the tests 
+test suite (except under Win32 where it uses F<t/harness> instead.)
+All tests are run from the F<t/> directory, B<not> the directory
+which contains the test.  This causes some problems with the tests
 in F<lib/>, so here's some opportunity for some patching.
 
 You must be triply conscious of cross-platform concerns.  This usually
@@ -2070,7 +2221,7 @@ are expected to succeed (until they're specifically fixed, of course).
 =item minitest
 
 Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
-F<t/op>, and F<t/uni> tests.
+F<t/op>, F<t/uni> and F<t/mro> tests.
 
 =item test.valgrind check.valgrind utest.valgrind ucheck.valgrind
 
@@ -2156,14 +2307,14 @@ that they must appear if used together.
     harness -v -torture -re LIST OF PATTERNS TO MATCH
 
 If C<LIST OF FILES TO TEST> is omitted the file list is obtained from
-the manifest. The file list may include shell wildcards which will be 
+the manifest. The file list may include shell wildcards which will be
 expanded out.
 
 =over 4
 
 =item -v
 
-Run the tests under verbose mode so you can see what tests were run, 
+Run the tests under verbose mode so you can see what tests were run,
 and debug outbut.
 
 =item -torture
@@ -2178,7 +2329,7 @@ in that it allows the file list to be provided as well.
 
 =item -re LIST OF PATTERNS
 
-Filter the file list so that all the test files run match 
+Filter the file list so that all the test files run match
 /(LIST|OF|PATTERNS)/. Note that with this form the patterns
 are joined by '|' and you cannot supply a list of files, instead
 the test files are obtained from the MANIFEST.
@@ -2192,7 +2343,7 @@ You can run an individual test by a command similar to
 except that the harnesses set up some environment variables that may
 affect the execution of the test :
 
-=over 4 
+=over 4
 
 =item PERL_CORE=1
 
@@ -2213,6 +2364,566 @@ that should be used to run the tests (the default being F<./perl>).
 if set, tells to skip the tests that need a terminal. It's actually set
 automatically by the Makefile, but can also be forced artificially by
 running 'make test_notty'.
+
+=back
+
+=head3 Other environment variables that may influence tests
+
+=over 4
+
+=item PERL_TEST_Net_Ping
+
+Setting this variable runs all the Net::Ping modules tests,
+otherwise some tests that interact with the outside world are skipped.
+See L<perl58delta>.
+
+=item PERL_TEST_NOVREXX
+
+Setting this variable skips the vrexx.t tests for OS2::REXX.
+
+=item PERL_TEST_NUMCONVERTS
+
+This sets a variable in op/numconvert.t.
+
+=back
+
+See also the documentation for the Test and Test::Harness modules,
+for more environment variables that affect testing.
+
+=head2 Common problems when patching Perl source code
+
+Perl source plays by ANSI C89 rules: no C99 (or C++) extensions.  In
+some cases we have to take pre-ANSI requirements into consideration.
+You don't care about some particular platform having broken Perl?
+I hear there is still a strong demand for J2EE programmers.
+
+=head2 Perl environment problems
+
+=over 4
+
+=item *
+
+Not compiling with threading
+
+Compiling with threading (-Duseithreads) completely rewrites
+the function prototypes of Perl.  You better try your changes
+with that.  Related to this is the difference between "Perl_-less"
+and "Perl_-ly" APIs, for example:
+
+  Perl_sv_setiv(aTHX_ ...);
+  sv_setiv(...);
+
+The first one explicitly passes in the context, which is needed for e.g.
+threaded builds.  The second one does that implicitly; do not get them
+mixed.  If you are not passing in a aTHX_, you will need to do a dTHX
+(or a dVAR) as the first thing in the function.
+
+See L<perlguts/"How multiple interpreters and concurrency are supported">
+for further discussion about context.
+
+=item *
+
+Not compiling with -DDEBUGGING
+
+The DEBUGGING define exposes more code to the compiler,
+therefore more ways for things to go wrong.  You should try it.
+
+=item *
+
+Introducing (non-read-only) globals
+
+Do not introduce any modifiable globals, truly global or file static.
+They are bad form and complicate multithreading and other forms of
+concurrency.  The right way is to introduce them as new interpreter
+variables, see F<intrpvar.h> (at the very end for binary compatibility).
+
+Introducing read-only (const) globals is okay, as long as you verify
+with e.g. C<nm libperl.a|egrep -v ' [TURtr] '> (if your C<nm> has
+BSD-style output) that the data you added really is read-only.
+(If it is, it shouldn't show up in the output of that command.)
+
+If you want to have static strings, make them constant:
+
+  static const char etc[] = "...";
+
+If you want to have arrays of constant strings, note carefully
+the right combination of C<const>s:
+
+    static const char * const yippee[] =
+	{"hi", "ho", "silver"};
+
+There is a way to completely hide any modifiable globals (they are all
+moved to heap), the compilation setting C<-DPERL_GLOBAL_STRUCT_PRIVATE>.
+It is not normally used, but can be used for testing, read more
+about it in L<perlguts/"Background and PERL_IMPLICIT_CONTEXT">.
+
+=item *
+
+Not exporting your new function
+
+Some platforms (Win32, AIX, VMS, OS/2, to name a few) require any
+function that is part of the public API (the shared Perl library)
+to be explicitly marked as exported.  See the discussion about
+F<embed.pl> in L<perlguts>.
+
+=item *
+
+Exporting your new function
+
+The new shiny result of either genuine new functionality or your
+arduous refactoring is now ready and correctly exported.  So what
+could possibly go wrong?
+
+Maybe simply that your function did not need to be exported in the
+first place.  Perl has a long and not so glorious history of exporting
+functions that it should not have.
+
+If the function is used only inside one source code file, make it
+static.  See the discussion about F<embed.pl> in L<perlguts>.
+
+If the function is used across several files, but intended only for
+Perl's internal use (and this should be the common case), do not
+export it to the public API.  See the discussion about F<embed.pl>
+in L<perlguts>.
+
+=back
+
+=head2 Portability problems
+
+The following are common causes of compilation and/or execution
+failures, not common to Perl as such.  The C FAQ is good bedtime
+reading.  Please test your changes with as many C compilers and
+platforms as possible -- we will, anyway, and it's nice to save
+oneself from public embarrassment.
+
+If using gcc, you can add the C<-std=c89> option which will hopefully
+catch most of these unportabilities. (However it might also catch
+incompatibilities in your system's header files.)
+
+Use the Configure C<-Dgccansipedantic> flag to enable the gcc
+C<-ansi -pedantic> flags which enforce stricter ANSI rules.
+
+If using the C<gcc -Wall> note that not all the possible warnings
+(like C<-Wunitialized>) are given unless you also compile with C<-O>.
+
+Note that if using gcc, starting from Perl 5.9.5 the Perl core source
+code files (the ones at the top level of the source code distribution,
+but not e.g. the extensions under ext/) are automatically compiled
+with as many as possible of the C<-std=c89>, C<-ansi>, C<-pedantic>,
+and a selection of C<-W> flags (see cflags.SH).
+
+Also study L<perlport> carefully to avoid any bad assumptions
+about the operating system, filesystems, and so forth.
+
+You may once in a while try a "make microperl" to see whether we
+can still compile Perl with just the bare minimum of interfaces.
+(See README.micro.)
+
+Do not assume an operating system indicates a certain compiler.
+
+=over 4
+
+=item *
+
+Casting pointers to integers or casting integers to pointers
+
+    void castaway(U8* p)
+    {
+      IV i = p;
+
+or
+
+    void castaway(U8* p)
+    {
+      IV i = (IV)p;
+
+Both are bad, and broken, and unportable.  Use the PTR2IV()
+macro that does it right.  (Likewise, there are PTR2UV(), PTR2NV(),
+INT2PTR(), and NUM2PTR().)
+
+=item *
+
+Casting between data function pointers and data pointers
+
+Technically speaking casting between function pointers and data
+pointers is unportable and undefined, but practically speaking
+it seems to work, but you should use the FPTR2DPTR() and DPTR2FPTR()
+macros.  Sometimes you can also play games with unions.
+
+=item *
+
+Assuming sizeof(int) == sizeof(long)
+
+There are platforms where longs are 64 bits, and platforms where ints
+are 64 bits, and while we are out to shock you, even platforms where
+shorts are 64 bits.  This is all legal according to the C standard.
+(In other words, "long long" is not a portable way to specify 64 bits,
+and "long long" is not even guaranteed to be any wider than "long".)
+
+Instead, use the definitions IV, UV, IVSIZE, I32SIZE, and so forth.
+Avoid things like I32 because they are B<not> guaranteed to be
+I<exactly> 32 bits, they are I<at least> 32 bits, nor are they
+guaranteed to be B<int> or B<long>.  If you really explicitly need
+64-bit variables, use I64 and U64, but only if guarded by HAS_QUAD.
+
+=item *
+
+Assuming one can dereference any type of pointer for any type of data
+
+  char *p = ...;
+  long pony = *p;    /* BAD */
+
+Many platforms, quite rightly so, will give you a core dump instead
+of a pony if the p happens not be correctly aligned.
+
+=item *
+
+Lvalue casts
+
+  (int)*p = ...;    /* BAD */
+
+Simply not portable.  Get your lvalue to be of the right type,
+or maybe use temporary variables, or dirty tricks with unions.
+
+=item *
+
+Assume B<anything> about structs (especially the ones you
+don't control, like the ones coming from the system headers)
+
+=over 8
+
+=item *
+
+That a certain field exists in a struct
+
+=item *
+
+That no other fields exist besides the ones you know of
+
+=item *
+
+That a field is of certain signedness, sizeof, or type
+
+=item *
+
+That the fields are in a certain order
+
+=over 8
+
+=item *
+
+While C guarantees the ordering specified in the struct definition,
+between different platforms the definitions might differ
+
+=back
+
+=item *
+
+That the sizeof(struct) or the alignments are the same everywhere
+
+=over 8
+
+=item *
+
+There might be padding bytes between the fields to align the fields -
+the bytes can be anything
+
+=item *
+
+Structs are required to be aligned to the maximum alignment required
+by the fields - which for native types is for usually equivalent to
+sizeof() of the field
+
+=back
+
+=back
+
+=item *
+
+Mixing #define and #ifdef
+
+  #define BURGLE(x) ... \
+  #ifdef BURGLE_OLD_STYLE        /* BAD */
+  ... do it the old way ... \
+  #else
+  ... do it the new way ... \
+  #endif
+
+You cannot portably "stack" cpp directives.  For example in the above
+you need two separate BURGLE() #defines, one for each #ifdef branch.
+
+=item *
+
+Adding stuff after #endif or #else
+
+  #ifdef SNOSH
+  ...
+  #else !SNOSH    /* BAD */
+  ...
+  #endif SNOSH    /* BAD */
+
+The #endif and #else cannot portably have anything non-comment after
+them.  If you want to document what is going (which is a good idea
+especially if the branches are long), use (C) comments:
+
+  #ifdef SNOSH
+  ...
+  #else /* !SNOSH */
+  ...
+  #endif /* SNOSH */
+
+The gcc option C<-Wendif-labels> warns about the bad variant
+(by default on starting from Perl 5.9.4).
+
+=item *
+
+Having a comma after the last element of an enum list
+
+  enum color {
+    CERULEAN,
+    CHARTREUSE,
+    CINNABAR,     /* BAD */
+  };
+
+is not portable.  Leave out the last comma.
+
+Also note that whether enums are implicitly morphable to ints
+varies between compilers, you might need to (int).
+
+=item *
+
+Using //-comments
+
+  // This function bamfoodles the zorklator.    /* BAD */
+
+That is C99 or C++.  Perl is C89.  Using the //-comments is silently
+allowed by many C compilers but cranking up the ANSI C89 strictness
+(which we like to do) causes the compilation to fail.
+
+=item *
+
+Mixing declarations and code
+
+  void zorklator()
+  {
+    int n = 3;
+    set_zorkmids(n);    /* BAD */
+    int q = 4;
+
+That is C99 or C++.  Some C compilers allow that, but you shouldn't.
+
+The gcc option C<-Wdeclaration-after-statements> scans for such problems
+(by default on starting from Perl 5.9.4).
+
+=item *
+
+Introducing variables inside for()
+
+  for(int i = ...; ...; ...) {    /* BAD */
+
+That is C99 or C++.  While it would indeed be awfully nice to have that
+also in C89, to limit the scope of the loop variable, alas, we cannot.
+
+=item *
+
+Mixing signed char pointers with unsigned char pointers
+
+  int foo(char *s) { ... }
+  ...
+  unsigned char *t = ...; /* Or U8* t = ... */
+  foo(t);   /* BAD */
+
+While this is legal practice, it is certainly dubious, and downright
+fatal in at least one platform: for example VMS cc considers this a
+fatal error.  One cause for people often making this mistake is that a
+"naked char" and therefore dereferencing a "naked char pointer" have
+an undefined signedness: it depends on the compiler and the flags of
+the compiler and the underlying platform whether the result is signed
+or unsigned.  For this very same reason using a 'char' as an array
+index is bad.
+
+=item *
+
+Macros that have string constants and their arguments as substrings of
+the string constants
+
+  #define FOO(n) printf("number = %d\n", n)    /* BAD */
+  FOO(10);
+
+Pre-ANSI semantics for that was equivalent to
+
+  printf("10umber = %d\10");
+
+which is probably not what you were expecting.  Unfortunately at least
+one reasonably common and modern C compiler does "real backward
+compatibility" here, in AIX that is what still happens even though the
+rest of the AIX compiler is very happily C89.
+
+=item *
+
+Using printf formats for non-basic C types
+
+   IV i = ...;
+   printf("i = %d\n", i);    /* BAD */
+
+While this might by accident work in some platform (where IV happens
+to be an C<int>), in general it cannot.  IV might be something larger.
+Even worse the situation is with more specific types (defined by Perl's
+configuration step in F<config.h>):
+
+   Uid_t who = ...;
+   printf("who = %d\n", who);    /* BAD */
+
+The problem here is that Uid_t might be not only not C<int>-wide
+but it might also be unsigned, in which case large uids would be
+printed as negative values.
+
+There is no simple solution to this because of printf()'s limited
+intelligence, but for many types the right format is available as
+with either 'f' or '_f' suffix, for example:
+
+   IVdf /* IV in decimal */
+   UVxf /* UV is hexadecimal */
+
+   printf("i = %"IVdf"\n", i); /* The IVdf is a string constant. */
+
+   Uid_t_f /* Uid_t in decimal */
+
+   printf("who = %"Uid_t_f"\n", who);
+
+Or you can try casting to a "wide enough" type:
+
+   printf("i = %"IVdf"\n", (IV)something_very_small_and_signed);
+
+Also remember that the C<%p> format really does require a void pointer:
+
+   U8* p = ...;
+   printf("p = %p\n", (void*)p);
+
+The gcc option C<-Wformat> scans for such problems.
+
+=item *
+
+Blindly using variadic macros
+
+gcc has had them for a while with its own syntax, and C99 brought
+them with a standardized syntax.  Don't use the former, and use
+the latter only if the HAS_C99_VARIADIC_MACROS is defined.
+
+=item *
+
+Blindly passing va_list
+
+Not all platforms support passing va_list to further varargs (stdarg)
+functions.  The right thing to do is to copy the va_list using the
+Perl_va_copy() if the NEED_VA_COPY is defined.
+
+=item *
+
+Using gcc statement expressions
+
+   val = ({...;...;...});    /* BAD */
+
+While a nice extension, it's not portable.  The Perl code does
+admittedly use them if available to gain some extra speed
+(essentially as a funky form of inlining), but you shouldn't.
+
+=item *
+
+Binding together several statements
+
+Use the macros STMT_START and STMT_END.
+
+   STMT_START {
+      ...
+   } STMT_END
+
+=item *
+
+Testing for operating systems or versions when should be testing for features
+
+  #ifdef __FOONIX__    /* BAD */
+  foo = quux();
+  #endif
+
+Unless you know with 100% certainty that quux() is only ever available
+for the "Foonix" operating system B<and> that is available B<and>
+correctly working for B<all> past, present, B<and> future versions of
+"Foonix", the above is very wrong.  This is more correct (though still
+not perfect, because the below is a compile-time check):
+
+  #ifdef HAS_QUUX
+  foo = quux();
+  #endif
+
+How does the HAS_QUUX become defined where it needs to be?  Well, if
+Foonix happens to be UNIXy enough to be able to run the Configure
+script, and Configure has been taught about detecting and testing
+quux(), the HAS_QUUX will be correctly defined.  In other platforms,
+the corresponding configuration step will hopefully do the same.
+
+In a pinch, if you cannot wait for Configure to be educated,
+or if you have a good hunch of where quux() might be available,
+you can temporarily try the following:
+
+  #if (defined(__FOONIX__) || defined(__BARNIX__))
+  # define HAS_QUUX
+  #endif
+
+  ...
+
+  #ifdef HAS_QUUX
+  foo = quux();
+  #endif
+
+But in any case, try to keep the features and operating systems separate.
+
+=back
+
+=head2 Problematic System Interfaces
+
+=over 4
+
+=item *
+
+malloc(0), realloc(0), calloc(0, 0) are non-portable.  To be portable
+allocate at least one byte.  (In general you should rarely need to
+work at this low level, but instead use the various malloc wrappers.)
+
+=item *
+
+snprintf() - the return type is unportable.  Use my_snprintf() instead.
+
+=back
+
+=head2 Security problems
+
+Last but not least, here are various tips for safer coding.
+
+=over 4
+
+=item *
+
+Do not use gets()
+
+Or we will publicly ridicule you.  Seriously.
+
+=item *
+
+Do not use strcpy() or strcat() or strncpy() or strncat()
+
+Use my_strlcpy() and my_strlcat() instead: they either use the native
+implementation, or Perl's own implementation (borrowed from the public
+domain implementation of INN).
+
+=item *
+
+Do not use sprintf() or vsprintf()
+
+If you really want just plain byte strings, use my_snprintf()
+and my_vsnprintf() instead, which will try to use snprintf() and
+vsnprintf() if those safer APIs are available.  If you want something
+fancier than a plain byte string, use SVs and Perl_sv_catpvf().
 
 =back
 
@@ -2255,6 +2966,10 @@ B<NOTE 3>: There are known memory leaks when there are compile-time
 errors within eval or require, seeing C<S_doeval> in the call stack
 is a good sign of these.  Fixing these leaks is non-trivial,
 unfortunately, but they must be fixed eventually.
+
+B<NOTE 4>: L<DynaLoader> will not clean up after itself completely
+unless Perl is built with the Configure option
+C<-Accflags=-DDL_UNLOAD_ALL_AT_EXIT>.
 
 =head2 Rational Software's Purify
 
@@ -2306,7 +3021,7 @@ number of bogus leak reports from Purify.
 Once you've compiled a perl suitable for Purify'ing, then you
 can just:
 
-    make pureperl   
+    make pureperl
 
 which creates a binary named 'pureperl' that has been Purify'ed.
 This binary is used in place of the standard 'perl' binary
@@ -2318,7 +3033,7 @@ perl as:
 
     make pureperl
     cd t
-    ../pureperl -I../lib harness 
+    ../pureperl -I../lib harness
 
 which would run Perl on test.pl and report any memory problems.
 
@@ -2357,7 +3072,7 @@ should change to get the most use out of Purify:
 You should add -DPURIFY to the DEFINES line so the DEFINES
 line looks something like:
 
-    DEFINES = -DWIN32 -D_CONSOLE -DNO_STRICT $(CRYPT_FLAG) -DPURIFY=1 
+    DEFINES = -DWIN32 -D_CONSOLE -DNO_STRICT $(CRYPT_FLAG) -DPURIFY=1
 
 to disable Perl's arena memory allocation functions, as
 well as to force use of memory allocation functions derived
@@ -2389,7 +3104,7 @@ standard Perl testset you would create and run Purify as:
     cd win32
     make
     cd ../t
-    purify ../perl -I../lib harness 
+    purify ../perl -I../lib harness
 
 which would instrument Perl in memory, run Perl on test.pl,
 then finally report any memory problems.
@@ -2400,7 +3115,11 @@ The excellent valgrind tool can be used to find out both memory leaks
 and illegal memory accesses.  As of August 2003 it unfortunately works
 only on x86 (ELF) Linux.  The special "test.valgrind" target can be used
 to run the tests under valgrind.  Found errors and memory leaks are
-logged in files named F<test.valgrind>.
+logged in files named F<testfile.valgrind>.
+
+Valgrind also provides a cachegrind tool, invoked on perl as:
+
+    VG_OPTS=--tool=cachegrind make test.valgrind
 
 As system libraries (most notably glibc) are also triggering errors,
 valgrind allows to suppress such errors using suppression files. The
@@ -2463,10 +3182,26 @@ documentation for more information. Also, spawned threads do the
 equivalent of setting this variable to the value 1.)
 
 If, at the end of a run you get the message I<N scalars leaked>, you can
-recompile with C<-DDEBUG_LEAKING_SCALARS>, which will cause
-the addresses of all those leaked SVs to be dumped; it also converts
-C<new_SV()> from a macro into a real function, so you can use your
-favourite debugger to discover where those pesky SVs were allocated.
+recompile with C<-DDEBUG_LEAKING_SCALARS>, which will cause the addresses
+of all those leaked SVs to be dumped along with details as to where each
+SV was originally allocated. This information is also displayed by
+Devel::Peek. Note that the extra details recorded with each SV increases
+memory usage, so it shouldn't be used in production environments. It also
+converts C<new_SV()> from a macro into a real function, so you can use
+your favourite debugger to discover where those pesky SVs were allocated.
+
+=head2 PERL_MEM_LOG
+
+If compiled with C<-DPERL_MEM_LOG>, all Newx() and Renew() allocations
+and Safefree() in the Perl core go through logging functions, which is
+handy for breakpoint setting.  If also compiled with C<-DPERL_MEM_LOG_STDERR>,
+the allocations and frees are logged to STDERR (or more precisely, to the
+file descriptor 2) in these logging functions, with the calling source code
+file and line number (and C function name, if supported by the C compiler).
+
+This logging is somewhat similar to C<-Dm> but independent of C<-DDEBUGGING>,
+and at a higher level (the C<-Dm> is directly at the point of C<malloc()>,
+while the C<PERL_MEM_LOG> is at the level of C<New()>).
 
 =head2 Profiling
 
@@ -2545,6 +3280,13 @@ Display routines that have zero usage.
 For more detailed explanation of the available commands and output
 formats, see your own local documentation of gprof.
 
+quick hint:
+
+    $ sh Configure -des -Dusedevel -Doptimize='-g' -Accflags='-pg' -Aldflags='-pg' && make
+    $ ./perl someprog # creates gmon.out in current directory
+    $ gprof perl > out
+    $ view out
+
 =head2 GCC gcov Profiling
 
 Starting from GCC 3.0 I<basic block profiling> is officially available
@@ -2580,6 +3322,15 @@ with gcc, see the latest GNU CC manual, as of GCC 3.0 see
 and its section titled "8. gcov: a Test Coverage Program"
 
     http://gcc.gnu.org/onlinedocs/gcc-3.0/gcc_8.html#SEC132
+
+quick hint:
+
+    $ sh Configure -des  -Doptimize='-g' -Accflags='-fprofile-arcs -ftest-coverage' \
+        -Aldflags='-fprofile-arcs -ftest-coverage' && make perl.gcov
+    $ rm -f regexec.c.gcov regexec.gcda
+    $ ./perl.gcov
+    $ gcov regexec.c
+    $ view regexec.c.gcov
 
 =head2 Pixie Profiling
 
@@ -2696,23 +3447,65 @@ section.
 
 =item *
 
-If you see in a debugger a memory area mysteriously full of 0xabababab,
-you may be seeing the effect of the Poison() macro, see L<perlclib>.
+If you see in a debugger a memory area mysteriously full of 0xABABABAB
+or 0xEFEFEFEF, you may be seeing the effect of the Poison() macros,
+see L<perlclib>.
+
+=item *
+
+Under ithreads the optree is read only. If you want to enforce this, to check
+for write accesses from buggy code, compile with C<-DPL_OP_SLAB_ALLOC> to
+enable the OP slab allocator and C<-DPERL_DEBUG_READONLY_OPS> to enable code
+that allocates op memory via C<mmap>, and sets it read-only at run time.
+Any write access to an op results in a C<SIGBUS> and abort.
+
+This code is intended for development only, and may not be portable even to
+all Unix variants. Also, it is an 80% solution, in that it isn't able to make
+all ops read only. Specifically it
+
+=over
+
+=item 1
+
+Only sets read-only on all slabs of ops at C<CHECK> time, hence ops allocated
+later via C<require> or C<eval> will be re-write
+
+=item 2
+
+Turns an entire slab of ops read-write if the refcount of any op in the slab
+needs to be decreased.
+
+=item 3
+
+Turns an entire slab of ops read-write if any op from the slab is freed.
 
 =back
 
-=head2 CONCLUSION
+It's not possible to turn the slabs to read-only after an action requiring
+read-write access, as either can happen during op tree building time, so
+there may still be legitimate write access.
 
-We've had a brief look around the Perl source, an overview of the stages
-F<perl> goes through when it's running your code, and how to use a
-debugger to poke at the Perl guts. We took a very simple problem and
-demonstrated how to solve it fully - with documentation, regression
-tests, and finally a patch for submission to p5p.  Finally, we talked
-about how to use external tools to debug and test Perl.
+However, as an 80% solution it is still effective, as currently it catches
+a write access during the generation of F<Config.pm>, which means that we
+can't yet build F<perl> with this enabled.
+
+=back
+
+
+=head1 CONCLUSION
+
+We've had a brief look around the Perl source, how to maintain quality
+of the source code, an overview of the stages F<perl> goes through
+when it's running your code, how to use debuggers to poke at the Perl
+guts, and finally how to analyse the execution of Perl. We took a very
+simple problem and demonstrated how to solve it fully - with
+documentation, regression tests, and finally a patch for submission to
+p5p.  Finally, we talked about how to use external tools to debug and
+test Perl.
 
 I'd now suggest you read over those references again, and then, as soon
 as possible, get your hands dirty. The best way to learn is by doing,
-so: 
+so:
 
 =over 3
 
@@ -2750,11 +3543,10 @@ activity as well, and probably sooner than you'd think.
 
 =back
 
-If you can do these things, you've started on the long road to Perl porting. 
+If you can do these things, you've started on the long road to Perl porting.
 Thanks for wanting to help make Perl better - and happy hacking!
 
 =head1 AUTHOR
 
 This document was written by Nathan Torkington, and is maintained by
 the perl5-porters mailing list.
-

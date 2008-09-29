@@ -4,6 +4,8 @@ specially designed to be readable as is.
 
 The following documentation is written in euc-jp encoding.
 
+=encoding euc-jp
+
 =head1 NAME
 
 perljp - 日本語 Perl ガイド
@@ -160,7 +162,7 @@ O'Reilly 社のPerl関連書籍(簡体字中国語)
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.shtml#China>
+=item L<http://www.pm.org/groups/asia.html>
 
 中国（中華人民共和国）
 

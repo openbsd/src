@@ -27,6 +27,14 @@ WriteMakefile(
     VERSION => 1.00,
 );
 END
+
+             # Check if a test failure in a subdir causes make test to fail
+             'Recurs/prj2/t/fail.t'         => <<'END',
+#!/usr/bin/perl -w
+
+print "1..1\n";
+print "not ok 1\n";
+END
             );
 
 sub setup_recurs {

@@ -3,11 +3,12 @@
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';
-        @INC = '../lib';
+        @INC = qw(../lib lib);
     }
 }
 
-use Test::More tests => 51;
+use lib 't/lib';
+use Test::More tests => 52;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -15,7 +16,8 @@ my $Errno = 42;
 $@ = $Err;
 $! = $Errno;
 
-use_ok('Text::Soundex');
+use_ok('Dummy');
+is( $Dummy::VERSION, '5.562', 'use_ok() loads a module' );
 require_ok('Test::More');
 
 

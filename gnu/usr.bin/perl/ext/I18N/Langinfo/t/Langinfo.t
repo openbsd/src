@@ -1,24 +1,35 @@
-#!./perl
+#!perl -T
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-    require Config; import Config;
-    if ($Config{'extensions'} !~ m!\bI18N/Langinfo\b! ||
-	$Config{'extensions'} !~ m!\bPOSIX\b!)
-    {
-	print "1..0 # skip: I18N::Langinfo or POSIX unavailable\n";
-	exit 0;
+    if ($ENV{PERL_CORE}) {
+        chdir 't';
+        @INC = '../lib';
     }
 }
-    
-use I18N::Langinfo qw(langinfo);
-use POSIX qw(setlocale LC_ALL);
 
-setlocale(LC_ALL, $ENV{LC_ALL} = $ENV{LANG} = "C");
+use strict;
+use Config;
+use Test::More;
 
-print "1..1\n"; # We loaded okay.  That's about all we can hope for.
-print "ok 1\n";
+plan skip_all => "I18N::Langinfo or POSIX unavailable" 
+    if $Config{'extensions'} !~ m!\bI18N/Langinfo\b!;
+
+my @constants = qw(ABDAY_1 DAY_1 ABMON_1 MON_1 RADIXCHAR AM_STR THOUSEP D_T_FMT D_FMT T_FMT);
+
+plan tests => 1 + 3 * @constants;
+
+use_ok('I18N::Langinfo', 'langinfo', @constants);
+
+for my $constant (@constants) {
+    SKIP: {
+        my $string = eval { langinfo(eval "$constant()") };
+        is( $@, '', "calling langinfo() with $constant" );
+        skip "returned string was empty, skipping next two tests", 2 unless $string;
+        ok( defined $string, "checking if the returned string is defined" );
+        cmp_ok( length($string), '>=', 1, "checking if the returned string has a positive length" );
+    }
+}
+
 exit(0);
 
 # Background: the langinfo() (in C known as nl_langinfo()) interface

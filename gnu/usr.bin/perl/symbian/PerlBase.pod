@@ -1,0 +1,204 @@
+=head1 NAME
+
+CPerlBase - a C++ base class encapsulating a Perl interpreter in Symbian
+
+=head1 SYNOPSIS
+
+	// in your App.mmp
+	USERINCLUDE	\symbian\perl\x.y.z\include
+	LIBRARY		perlXYZ.lib
+
+	// in your App
+	#include "PerlBase.h" // includes also EXTERN.h and perl.h
+	CPerlBase* perl = CPerlBase::NewInterpreterLC();
+	...
+	delete perl;
+
+=head1 DESCRIPTION
+
+CPerlBase is a simple Symbian C++ class that wraps a Perl
+interpreter; its creation, use, and destroying.  To understand
+what this is doing, and how to use the interpreter, a fair knowledge
+of L<perlapi>, L<perlguts>, and L<perlembed> is recommended.
+
+One useful thing CPerlBase does compared with just using the raw
+Perl C API is that it redirects the "std streams" (STDOUT et alia)
+to a text console implementation which while being very basic
+is marginally more usable than the Symbian basic text console.
+
+=head2 The Basics
+
+=over 4
+
+=item *
+
+CPerlBase* NewInterpreterL();
+
+The constructor that does not keep the object in the Symbian "cleanup stack".
+perl_alloc() and perl_construct() are called behind the curtains.
+
+Accepts the same arguments as NewInterpreterLC().
+
+=item *
+
+CPerlBase* NewInterpreterLC();
+
+The constructor that keeps the object in the Symbian "cleanup stack".
+perl_alloc() and perl_construct() are called behind the curtains.
+
+Can have three arguments:
+
+=over 8
+
+=item *
+
+TBool aCloseStdlib = ETrue
+
+Should a CPerlBase close the Symbian POSIX STDLIB when closing down.
+Good for one-shot script execution, probably less good for longer term
+embedded interpreter.
+
+=item *
+
+void (*aStdioInitFunc)(void*) = NULL
+
+If set, called with aStdioInitCookie, and the default console is
+not created.  You may want to set the iReadFunc() and iWriteFunc().
+
+=item *
+
+void *aStdioInitCookie = NULL
+
+Used as the argument for aStdioInitFunc().
+
+=back
+
+=item *
+
+void Destroy();
+
+The destructor of the interpreter.  The class destructor calls
+first this and then the Symbian CloseSTDLIB().
+
+perl_destruct(), perl_free(), and PERL_SYS_TERM() are called
+behind the curtains.
+
+=back
+
+=head2 Utility functions
+
+=over 4
+
+=item *
+
+int Parse(int argc = 0, char *argv[] = 0, char *envp[] = 0);
+
+Prepare an interpreter for executing by parsing input as if a C main()
+had been called.  For example to parse a script, use argc of 2 and argv
+of { "perl", script_name }.
+
+All arguments are optional: in case either argc or argv are zero,
+argc of 3 and argv of { "perl", "-e", "0" } is assumed.
+
+PERL_SYS_INIT() and perl_parse() are called behind the curtains.
+
+Note that a call to Parse() is required before Run().
+
+Returns zero if parsing was successful, non-zero if not (and the stderr
+will get the error).
+
+=item *
+
+int Run()
+
+Start executing an interpreter.  A Parse() must have been called before
+a Run(): use 3 and { "", "-e", 0 } if you do not have an argv.
+
+Note that a call to Parse() is required before Run().
+
+perl_run() is called behind the curtains.
+
+Returns zero if execution was successful, non-zero if not (and the stderr
+will get the error).
+
+=item *
+
+int ParseAndRun(int argc, char *argv[], char *envp[]);
+
+Combined Parse() and Run().  The Run() is not run if the Parse() fails.
+
+Returns zero if parsing and execution were successful, non-zero if not.
+
+=item *
+
+TInt RunScriptL(TDesC& aFileName, int argc, char **argv, char *envp[])
+
+Like ParseAndRun() but works for Symbian filenames (UTF-16LE).
+The UTF-8 version of aFileName is always argv[argc-1], and argv[0]
+is always "perl".
+
+=back
+
+=head2 Macros
+
+=over 4
+
+=item *
+
+diTHX
+
+Set up my_perl from the current object (like dTHX).
+
+=item *
+
+diVAR
+
+Set up my_vars from the current object (like dVAR).
+
+=back
+
+=head2 Extending CPerlBase (subclassing, deriving from)
+
+Note that it probably isn't worth the trouble to try to wrap the
+whole, rather large, Perl C API into a C++ API.  Just use the C API.
+
+The protected members of the class are:
+
+=over 4
+
+=item *
+
+PerlInterpreter* iPerl
+
+The Perl interpreter.
+
+=item *
+
+struct perl_vars* iVars
+
+The global variables of the interpreter.
+
+=item *
+
+TPerlState iState
+
+The state of the Perl interpreter. TPerlState is one of EPerlNone,
+EPerlAllocated, EPerlConstructed, EPerlParsed, EPerlRunning,
+EPerlTerminated, EPerlPaused (these two are currently unused
+but in the future they might be used to indicate that the interpreter
+was stopped either non-resumably or resumably for some reason),
+EPerlSuccess (perl_run() succeeded), EPerlFailure (perl_run() failed),
+EPerlDestroying.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004-2005 Nokia.  All rights reserved.
+
+=head1 LICENSE
+
+The CPerlBase class is licensed under the same terms as Perl itself.
+
+=cut
+

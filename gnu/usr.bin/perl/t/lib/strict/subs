@@ -362,6 +362,11 @@ EXPECT
 Bareword "bad" not allowed while "strict subs" in use at - line 3.
 Execution of - aborted due to compilation errors.
 ########
+eval q{ use strict; no strict refs; };
+print $@;
+EXPECT
+Bareword "refs" not allowed while "strict subs" in use at (eval 1) line 1.
+########
 # [perl #25147] 
 use strict;
 print "" if BAREWORD;

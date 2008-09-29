@@ -154,10 +154,10 @@ IPC::Semaphore - SysV Semaphore IPC object class
 
 =head1 SYNOPSIS
 
-    use IPC::SysV qw(IPC_PRIVATE S_IRWXU IPC_CREAT);
+    use IPC::SysV qw(IPC_PRIVATE S_IRUSR S_IWUSR IPC_CREAT);
     use IPC::Semaphore;
 
-    $sem = new IPC::Semaphore(IPC_PRIVATE, 10, S_IRWXU | IPC_CREAT);
+    $sem = new IPC::Semaphore(IPC_PRIVATE, 10, S_IRUSR | S_IWUSR | IPC_CREAT);
 
     $sem->setall( (0) x 10);
 
@@ -198,7 +198,9 @@ associated with it, and C<I<FLAGS> & IPC_CREAT> is true.
 =back
 
 On creation of a new semaphore set C<FLAGS> is used to set the
-permissions.
+permissions.  Be careful not to set any flags that the Sys V
+IPC implementation does not allow: in some systems setting
+execute bits makes the operations fail.
 
 =item getall
 

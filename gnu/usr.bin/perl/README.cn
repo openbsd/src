@@ -8,6 +8,8 @@ The following documentation is written in EUC-CN encoding.
 这份文件是以 POD (简明文件格式) 写成; 这种格式是为了能让人直接阅读,
 而特别设计的. 关于此格式的进一步信息, 请参考 perlpod 线上文件.
 
+=encoding euc-cn
+
 =head1 NAME
 
 perlcn - 简体中文 Perl 指南
@@ -115,7 +117,7 @@ Perl 邮递论坛一览
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.shtml#China>
+=item L<http://www.pm.org/groups/asia.html>
 
 中国 Perl 推广组一览
 

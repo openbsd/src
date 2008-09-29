@@ -24,7 +24,7 @@ BEGIN {			# Remap I/O to the parent's window
 }
 
 use strict;
-use Test::More tests => 232;
+use Test::More tests => 235;
 use OS2::Process;
 
 sub SWP_flags ($) {
@@ -218,18 +218,28 @@ is($fhwnd, $ahwnd, 'the focus window = the active window');
 ok hWindowPos_set({behind => 3}, $k_hwnd),	# HWND_TOP
   'put kid to the front';
 
-is((hWindowPos $k_hwnd)->{behind}, 3, 'kis is at front');
+# After Alt-Tab a WS_TOPMOST, WS_DISABLED window of class 'AltTabWindow' exists
+my $top = (hWindowPos $k_hwnd)->{behind};
+ok(($top == 3 or WindowStyle($top) & 0x200000),	# HWND_TOP, WS_TOPMOST
+   'kid is at front');
+# is((hWindowPos $k_hwnd)->{behind}, 3, 'kid is at front');
 
-my ($enum_handle, $first_zorder);
+my ($enum_handle, $first_zorder, $first_non_TOPMOST);
 { my $force_PM = OS2::localMorphPM->new(0);
   ok $force_PM, 'morphed to PM locally again';
   $enum_handle = BeginEnumWindows 1;		# HWND_DESKTOP
   ok $enum_handle, 'start enumeration';
-  $first_zorder = GetNextWindow $enum_handle;
+  $first_non_TOPMOST = $first_zorder = GetNextWindow $enum_handle;
   ok $first_zorder, 'GetNextWindow works';
+  my $f = WindowStyle $first_non_TOPMOST;
+  ok $f, 'WindowStyle works';
+  $f = WindowStyle($first_non_TOPMOST = GetNextWindow $enum_handle)
+    while $f & 0x200000;				# WS_TOPMOST
+  ok($first_non_TOPMOST, 'There is non-TOPMOST window');
+  ok(!(WindowStyle($first_non_TOPMOST) & 0x200000), 'Indeed non-TOPMOST');
   ok EndEnumWindows($enum_handle), 'end enumeration';
 }
-is ($first_zorder, $k_hwnd, 'kid is the first in z-order enumeration');
+is ($first_non_TOPMOST, $k_hwnd, 'kid is the first in z-order enumeration');
 
 ok hWindowPos_set({behind => 4}, $k_hwnd),	# HWND_BOTTOM
   'put kid to the back';
@@ -262,7 +272,9 @@ is $list[-2], $k_hwnd, 'kid is the last but one in ChildWindows';
 ok hWindowPos_set({behind => 3}, $k_hwnd),	# HWND_TOP
   'put kid to the front again';
 
-is((hWindowPos $k_hwnd)->{behind}, 3, 'kis is at front again');
+$top = (hWindowPos $k_hwnd)->{behind};
+ok(($top == 3 or WindowStyle($top) & 0x200000),	# WS_TOPMOST
+   'kid is at front again');
 sleep 5 if $interactive_wait;
 
 ok IsWindow($k_hwnd), 'IsWindow works';

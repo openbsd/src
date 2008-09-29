@@ -152,13 +152,21 @@ print "ok 14\n";
 
 # Try decoding some bad stuff
 open(F,'>:raw',$threebyte) || die "Cannot open $threebyte:$!";
-print F "foo\xF0\x80\x80\x80bar\n\x80foo\n";
+if (ord('A') == 193) { # EBCDIC
+    print F "foo\x8c\x80\x80\x80bar\n\x80foo\n";
+} else {
+    print F "foo\xF0\x80\x80\x80bar\n\x80foo\n";
+}
 close(F);
 
 open(F,'<:encoding(utf-8)',$threebyte) || die "Cannot open $threebyte:$!";
 $dstr = join(":", <F>);
 close(F);
-print "not " unless $dstr eq "foo\\xF0\\x80\\x80\\x80bar\n:\\x80foo\n";
+if (ord('A') == 193) { # EBCDIC
+    print "not " unless $dstr eq "foo\\x8C\\x80\\x80\\x80bar\n:\\x80foo\n";
+} else {
+    print "not " unless $dstr eq "foo\\xF0\\x80\\x80\\x80bar\n:\\x80foo\n";
+}
 print "ok 15\n";
 
 END {

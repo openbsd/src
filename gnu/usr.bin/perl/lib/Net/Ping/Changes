@@ -1,6 +1,21 @@
 CHANGES
 -------
 
+2.33  Jul 31 20:15 2007
+	- add new method port_number() rather than asking users to
+          twiddle with the internals of Net::Ping to probe a specific
+          port.  This should resolve a few bugs where the documentation
+	  was lacking.
+	- apply patch from bergonz at labs.it.  This patch resolves
+	  several problems logged regarding using Net::Ping in a multi-
+	  threaded program.  Thanks so much!
+		<http://rt.cpan.org/Ticket/Display.html?id=17408>
+
+2.32  Jul 30 21:30 2007
+	- new co-maintainer Steve Peters
+	- integrate assorted bleadperl fixes from the past four years
+		<http://rt.cpan.org/Public/Bug/Display.html?id=28348>
+
 2.31  Jun 28 14:00 2003
 	- Win32 Compatibility fixes.
 	  Patch by mhx-perl@gmx.net (Marcus Holland-Moritz)

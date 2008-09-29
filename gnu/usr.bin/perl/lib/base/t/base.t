@@ -1,7 +1,14 @@
 #!/usr/bin/perl -w
 
+BEGIN {
+   if( $ENV{PERL_CORE} ) {
+        chdir 't' if -d 't';
+        @INC = qw(../lib);
+    }
+}
+
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 use_ok('base');
 
@@ -49,32 +56,35 @@ is( $Eval2::VERSION, 1.02 );
 
 
 eval q{use base 'reallyReAlLyNotexists'};
-like( $@, qr/^Base class package "reallyReAlLyNotexists" is empty./,
+like( $@, qr/^Base class package "reallyReAlLyNotexists" is empty\./,
                                           'base with empty package');
 
 eval q{use base 'reallyReAlLyNotexists'};
-like( $@, qr/^Base class package "reallyReAlLyNotexists" is empty./,
+like( $@, qr/^Base class package "reallyReAlLyNotexists" is empty\./,
                                           '  still empty on 2nd load');
+{
+    my $warning;
+    local $SIG{__WARN__} = sub { $warning = shift };
+    eval q{package HomoGenous; use base 'HomoGenous';};
+    like($warning, qr/^Class 'HomoGenous' tried to inherit from itself/,
+                                          '  self-inheriting');
+}
 
-BEGIN { $Has::Version_0::VERSION = 0 }
+{
+    BEGIN { $Has::Version_0::VERSION = 0 }
 
-package Test::Version3;
+    package Test::Version3;
 
-use base qw(Has::Version_0);
-::is( $Has::Version_0::VERSION, 0, '$VERSION==0 preserved' );
+    use base qw(Has::Version_0);
+    ::is( $Has::Version_0::VERSION, 0, '$VERSION==0 preserved' );
+}
 
 
-package Test::SIGDIE;
+{
+    package Schlozhauer;
+    use constant FIELDS => 6;
 
-{ 
-    local $SIG{__DIE__} = sub { 
-        ::fail('sigdie not caught, this test should not run') 
-    };
-    eval {
-      'base'->import(qw(Huh::Boo));
-    };
-
-    ::like($@, qr/^Base class package "Huh::Boo" is empty/, 
-         'Base class empty error message');
-
+    package Basilisco;
+    eval q{ use base 'Schlozhauer' };
+    ::is( $@, '', 'Can coexist with a FIELDS constant' );
 }

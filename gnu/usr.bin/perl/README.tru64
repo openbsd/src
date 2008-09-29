@@ -34,6 +34,19 @@ lowered that.  The configuration process of Perl checks for too low
 process limits, and lowers the optimization for the toke.c if
 necessary, and also gives advice on how to raise the process limits.
 
+Also, Configure might abort with
+
+    Build a threading Perl? [n]
+    Configure[2437]: Syntax error at line 1 : `config.sh' is not expected.
+
+This indicates that Configure is being run with a broken Korn shell
+(even though you think you are using a Bourne shell by using
+"sh Configure" or "./Configure").  The Korn shell bug has been reported
+to Compaq as of February 1999 but in the meanwhile, the reason ksh is
+being used is that you have the environment variable BIN_SH set to
+'xpg4'.  This causes /bin/sh to delegate its duties to /bin/posix/sh
+(a ksh).  Unset the environment variable and rerun Configure.
+
 =head2 Using Large Files with Perl on Tru64
 
 In Tru64 Perl is automatically able to use large files, that is,
@@ -43,16 +56,12 @@ is harmless).
 
 =head2 Threaded Perl on Tru64
 
-If you want to use threads, you should primarily use the new Perl
+If you want to use threads, you should primarily use the Perl
 5.8.0 threads model by running Configure with -Duseithreads.
 
-The old Perl 5.005 threads is obsolete, unmaintained, and its use is
-discouraged.  If you really want it, run Configure with the
--Dusethreads -Duse5005threads options as described in INSTALL.
-
-Either thread model is going to work only in Tru64 4.0 and newer
-releases, older operating releases like 3.2 aren't probably going
-to work properly with threads.
+Perl threading is going to work only in Tru64 4.0 and newer releases,
+older operating releases like 3.2 aren't probably going to work
+properly with threads.
 
 In Tru64 V5 (at least V5.1A, V5.1B) you cannot build threaded Perl with gcc
 because the system header <pthread.h> explicitly checks for supported

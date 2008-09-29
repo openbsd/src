@@ -1,3 +1,23 @@
+Thu Nov 22 13:24:18 IST 2007   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.18
+
+	Compile fixes for older Perls. (No functional changes.)
+
+Sat Nov 17 02:12:12 IST 2007   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.17
+
+	Various broken tests fixed. (No functional changes.)
+
+Sat Mar 31 06:11:06 IST 2007   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.16
+
+        1. Fixes to Storable::dclone, read_magic, retrieve_lscalar
+        2. Storable 0.1 compatibility
+        3. Miscellaneous compile/leak/test/portability fixes
+
 Mon May 23 22:48:49 IST 2005   Abhijit Menon-Sen <ams@wiw.org>
 
     Version 2.15

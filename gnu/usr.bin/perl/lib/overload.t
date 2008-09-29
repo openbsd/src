@@ -31,7 +31,7 @@ use overload (
 
 qw(
 ""	stringify
-0+	numify)			# Order of arguments unsignificant
+0+	numify)			# Order of arguments insignificant
 );
 
 sub new {
@@ -46,92 +46,64 @@ sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 
 package main;
 
-our $test = 0;
 $| = 1;
-print "1..",&last,"\n";
+use Test::More tests => 556;
 
-sub test {
-  $test++; 
-  if (@_ > 1) {
-    my $comment = "";
-    $comment = " # " . $_ [2] if @_ > 2;
-    if ($_[0] eq $_[1]) {
-      print "ok $test$comment\n";
-      return 1;
-    } else {
-      $comment .= ": '$_[0]' ne '$_[1]'";
-      print "not ok $test$comment\n";
-      return 0;
-    }
-  } else {
-    if (shift) {
-      print "ok $test\n";
-      return 1;
-    } else {
-      print "not ok $test\n";
-      return 0;
-    }
-  }
-}
 
 $a = new Oscalar "087";
 $b= "$a";
 
-# All test numbers in comments are off by 1.
-# So much for hard-wiring them in :-) To fix this:
-test(1);			# 1
-
-test ($b eq $a);		# 2
-test ($b eq "087");		# 3
-test (ref $a eq "Oscalar");	# 4
-test ($a eq $a);		# 5
-test ($a eq "087");		# 6
+is($b, $a);
+is($b, "087");
+is(ref $a, "Oscalar");
+is($a, $a);
+is($a, "087");
 
 $c = $a + 7;
 
-test (ref $c eq "Oscalar");	# 7
-test (!($c eq $a));		# 8
-test ($c eq "94");		# 9
+is(ref $c, "Oscalar");
+isnt($c, $a);
+is($c, "94");
 
 $b=$a;
 
-test (ref $a eq "Oscalar");	# 10
+is(ref $a, "Oscalar");
 
 $b++;
 
-test (ref $b eq "Oscalar");	# 11
-test ( $a eq "087");		# 12
-test ( $b eq "88");		# 13
-test (ref $a eq "Oscalar");	# 14
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
 
 $c=$b;
 $c-=$a;
 
-test (ref $c eq "Oscalar");	# 15
-test ( $a eq "087");		# 16
-test ( $c eq "1");		# 17
-test (ref $a eq "Oscalar");	# 18
+is(ref $c, "Oscalar");
+is($a, "087");
+is($c, "1");
+is(ref $a, "Oscalar");
 
 $b=1;
 $b+=$a;
 
-test (ref $b eq "Oscalar");	# 19
-test ( $a eq "087");		# 20
-test ( $b eq "88");		# 21
-test (ref $a eq "Oscalar");	# 22
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
 
 eval q[ package Oscalar; use overload ('++' => sub { $ {$_[0]}++;$_[0] } ) ];
 
 $b=$a;
 
-test (ref $a eq "Oscalar");	# 23
+is(ref $a, "Oscalar");
 
 $b++;
 
-test (ref $b eq "Oscalar");	# 24
-test ( $a eq "087");		# 25
-test ( $b eq "88");		# 26
-test (ref $a eq "Oscalar");	# 27
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
 
 package Oscalar;
 $dummy=bless \$dummy;		# Now cache of method should be reloaded
@@ -140,10 +112,10 @@ package main;
 $b=$a;
 $b++;				
 
-test (ref $b eq "Oscalar");	# 28
-test ( $a eq "087");		# 29
-test ( $b eq "88");		# 30
-test (ref $a eq "Oscalar");	# 31
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
 
 undef $b;			# Destroying updates tables too...
 
@@ -151,14 +123,14 @@ eval q[package Oscalar; use overload ('++' => sub { $ {$_[0]} += 2; $_[0] } ) ];
 
 $b=$a;
 
-test (ref $a eq "Oscalar");	# 32
+is(ref $a, "Oscalar");
 
 $b++;
 
-test (ref $b eq "Oscalar");	# 33
-test ( $a eq "087");		# 34
-test ( $b eq "88");		# 35
-test (ref $a eq "Oscalar");	# 36
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
 
 package Oscalar;
 $dummy=bless \$dummy;		# Now cache of method should be reloaded
@@ -166,21 +138,21 @@ package main;
 
 $b++;				
 
-test (ref $b eq "Oscalar");	# 37
-test ( $a eq "087");		# 38
-test ( $b eq "90");		# 39
-test (ref $a eq "Oscalar");	# 40
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "90");
+is(ref $a, "Oscalar");
 
 $b=$a;
 $b++;
 
-test (ref $b eq "Oscalar");	# 41
-test ( $a eq "087");		# 42
-test ( $b eq "89");		# 43
-test (ref $a eq "Oscalar");	# 44
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "89");
+is(ref $a, "Oscalar");
 
 
-test ($b? 1:0);			# 45
+ok($b? 1:0);
 
 eval q[ package Oscalar; use overload ('=' => sub {$main::copies++; 
 						   package Oscalar;
@@ -189,44 +161,44 @@ eval q[ package Oscalar; use overload ('=' => sub {$main::copies++;
 
 $b=new Oscalar "$a";
 
-test (ref $b eq "Oscalar");	# 46
-test ( $a eq "087");		# 47
-test ( $b eq "087");		# 48
-test (ref $a eq "Oscalar");	# 49
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "087");
+is(ref $a, "Oscalar");
 
 $b++;
 
-test (ref $b eq "Oscalar");	# 50
-test ( $a eq "087");		# 51
-test ( $b eq "89");		# 52
-test (ref $a eq "Oscalar");	# 53
-test ($copies == 0);		# 54
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "89");
+is(ref $a, "Oscalar");
+is($copies, undef);
 
 $b+=1;
 
-test (ref $b eq "Oscalar");	# 55
-test ( $a eq "087");		# 56
-test ( $b eq "90");		# 57
-test (ref $a eq "Oscalar");	# 58
-test ($copies == 0);		# 59
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "90");
+is(ref $a, "Oscalar");
+is($copies, undef);
 
 $b=$a;
 $b+=1;
 
-test (ref $b eq "Oscalar");	# 60
-test ( $a eq "087");		# 61
-test ( $b eq "88");		# 62
-test (ref $a eq "Oscalar");	# 63
-test ($copies == 0);		# 64
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "88");
+is(ref $a, "Oscalar");
+is($copies, undef);
 
 $b=$a;
 $b++;
 
-test (ref $b eq "Oscalar") || print ref $b,"=ref(b)\n";	# 65
-test ( $a eq "087");		# 66
-test ( $b eq "89");		# 67
-test (ref $a eq "Oscalar");	# 68
-test ($copies == 1);		# 69
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "89");
+is(ref $a, "Oscalar");
+is($copies, 1);
 
 eval q[package Oscalar; use overload ('+=' => sub {$ {$_[0]} += 3*$_[1];
 						   $_[0] } ) ];
@@ -235,34 +207,34 @@ $c=new Oscalar;			# Cause rehash
 $b=$a;
 $b+=1;
 
-test (ref $b eq "Oscalar");	# 70
-test ( $a eq "087");		# 71
-test ( $b eq "90");		# 72
-test (ref $a eq "Oscalar");	# 73
-test ($copies == 2);		# 74
+is(ref $b, "Oscalar");
+is($a, "087");
+is($b, "90");
+is(ref $a, "Oscalar");
+is($copies, 2);
 
 $b+=$b;
 
-test (ref $b eq "Oscalar");	# 75
-test ( $b eq "360");		# 76
-test ($copies == 2);		# 77
+is(ref $b, "Oscalar");
+is($b, "360");
+is($copies, 2);
 $b=-$b;
 
-test (ref $b eq "Oscalar");	# 78
-test ( $b eq "-360");		# 79
-test ($copies == 2);		# 80
+is(ref $b, "Oscalar");
+is($b, "-360");
+is($copies, 2);
 
 $b=abs($b);
 
-test (ref $b eq "Oscalar");	# 81
-test ( $b eq "360");		# 82
-test ($copies == 2);		# 83
+is(ref $b, "Oscalar");
+is($b, "360");
+is($copies, 2);
 
 $b=abs($b);
 
-test (ref $b eq "Oscalar");	# 84
-test ( $b eq "360");		# 85
-test ($copies == 2);		# 86
+is(ref $b, "Oscalar");
+is($b, "360");
+is($copies, 2);
 
 eval q[package Oscalar; 
        use overload ('x' => sub {new Oscalar ( $_[2] ? "_.$_[1]._" x $ {$_[0]}
@@ -270,7 +242,7 @@ eval q[package Oscalar;
 
 $a=new Oscalar "yy";
 $a x= 3;
-test ($a eq "_.yy.__.yy.__.yy._"); # 87
+is($a, "_.yy.__.yy.__.yy._");
 
 eval q[package Oscalar; 
        use overload ('.' => sub {new Oscalar ( $_[2] ? 
@@ -279,7 +251,7 @@ eval q[package Oscalar;
 
 $a=new Oscalar "xx";
 
-test ("b${a}c" eq "_._.b.__.xx._.__.c._"); # 88
+is("b${a}c", "_._.b.__.xx._.__.c._");
 
 # Check inheritance of overloading;
 {
@@ -288,26 +260,26 @@ test ("b${a}c" eq "_._.b.__.xx._.__.c._"); # 88
 }
 
 $aI = new OscalarI "$a";
-test (ref $aI eq "OscalarI");	# 89
-test ("$aI" eq "xx");		# 90
-test ($aI eq "xx");		# 91
-test ("b${aI}c" eq "_._.b.__.xx._.__.c._");		# 92
+is(ref $aI, "OscalarI");
+is("$aI", "xx");
+is($aI, "xx");
+is("b${aI}c", "_._.b.__.xx._.__.c._");
 
 # Here we test blessing to a package updates hash
 
 eval "package Oscalar; no overload '.'";
 
-test ("b${a}" eq "_.b.__.xx._"); # 93
+is("b${a}", "_.b.__.xx._");
 $x="1";
 bless \$x, Oscalar;
-test ("b${a}c" eq "bxxc");	# 94
+is("b${a}c", "bxxc");
 new Oscalar 1;
-test ("b${a}c" eq "bxxc");	# 95
+is("b${a}c", "bxxc");
 
 # Negative overloading:
 
 $na = eval { ~$a };
-test($@ =~ /no method found/);	# 96
+like($@, qr/no method found/);
 
 # Check AUTOLOADING:
 
@@ -318,32 +290,32 @@ test($@ =~ /no method found/);	# 96
 eval "package Oscalar; sub comple; use overload '~' => 'comple'";
 
 $na = eval { ~$a };		# Hash was not updated
-test($@ =~ /no method found/);	# 97
+like($@, qr/no method found/);
 
 bless \$x, Oscalar;
 
 $na = eval { ~$a };		# Hash updated
 warn "`$na', $@" if $@;
-test !$@;			# 98
-test($na eq '_!_xx_!_');	# 99
+ok !$@;
+is($na, '_!_xx_!_');
 
 $na = 0;
 
 $na = eval { ~$aI };		# Hash was not updated
-test($@ =~ /no method found/);	# 100
+like($@, qr/no method found/);
 
 bless \$x, OscalarI;
 
 $na = eval { ~$aI };
 print $@;
 
-test !$@;			# 101
-test($na eq '_!_xx_!_');	# 102
+ok(!$@);
+is($na, '_!_xx_!_');
 
 eval "package Oscalar; sub rshft; use overload '>>' => 'rshft'";
 
 $na = eval { $aI >> 1 };	# Hash was not updated
-test($@ =~ /no method found/);	# 103
+like($@, qr/no method found/);
 
 bless \$x, OscalarI;
 
@@ -352,20 +324,20 @@ $na = 0;
 $na = eval { $aI >> 1 };
 print $@;
 
-test !$@;			# 104
-test($na eq '_!_xx_!_');	# 105
+ok(!$@);
+is($na, '_!_xx_!_');
 
 # warn overload::Method($a, '0+'), "\n";
-test (overload::Method($a, '0+') eq \&Oscalar::numify); # 106
-test (overload::Method($aI,'0+') eq \&Oscalar::numify); # 107
-test (overload::Overloaded($aI)); # 108
-test (!overload::Overloaded('overload')); # 109
+is(overload::Method($a, '0+'), \&Oscalar::numify);
+is(overload::Method($aI,'0+'), \&Oscalar::numify);
+ok(overload::Overloaded($aI));
+ok(!overload::Overloaded('overload'));
 
-test (! defined overload::Method($aI, '<<')); # 110
-test (! defined overload::Method($a, '<')); # 111
+ok(! defined overload::Method($aI, '<<'));
+ok(! defined overload::Method($a, '<'));
 
-test (overload::StrVal($aI) =~ /^OscalarI=SCALAR\(0x[\da-fA-F]+\)$/); # 112
-test (overload::StrVal(\$aI) eq "@{[\$aI]}"); # 113
+like (overload::StrVal($aI), qr/^OscalarI=SCALAR\(0x[\da-fA-F]+\)$/);
+is(overload::StrVal(\$aI), "@{[\$aI]}");
 
 # Check overloading by methods (specified deep in the ISA tree).
 {
@@ -379,16 +351,16 @@ $aaII = "087";
 $aII = \$aaII;
 bless $aII, 'OscalarII';
 bless \$fake, 'OscalarI';		# update the hash
-test(($aI | 3) eq '_<<_xx_<<_');	# 114
+is(($aI | 3), '_<<_xx_<<_');
 # warn $aII << 3;
-test(($aII << 3) eq '_<<_087_<<_');	# 115
+is(($aII << 3), '_<<_087_<<_');
 
 {
   BEGIN { $int = 7; overload::constant 'integer' => sub {$int++; shift}; }
   $out = 2**10;
 }
-test($int, 9);		# 116
-test($out, 1024);		# 117
+is($int, 9);
+is($out, 1024);
 
 $foo = 'foo';
 $foo1 = 'f\'o\\o';
@@ -402,15 +374,15 @@ $foo1 = 'f\'o\\o';
   /b\b$foo.\./;
 }
 
-test($out, 'foo');		# 118
-test($out, $foo);		# 119
-test($out1, 'f\'o\\o');		# 120
-test($out1, $foo1);		# 121
-test($out2, "a\afoo,\,");	# 122
-test("@q", "foo q f'o\\\\o q a\\a qq ,\\, qq");	# 123
-test($q, 11);			# 124
-test("@qr", "b\\b qq .\\. qq");	# 125
-test($qr, 9);			# 126
+is($out, 'foo');
+is($out, $foo);
+is($out1, 'f\'o\\o');
+is($out1, $foo1);
+is($out2, "a\afoo,\,");
+is("@q", "foo q f'o\\\\o q a\\a qq ,\\, qq");
+is($q, 11);
+is("@qr", "b\\b qq .\\. qq");
+is($qr, 9);
 
 {
   $_ = '!<b>!foo!<-.>!';
@@ -433,19 +405,19 @@ EOF
   tr/A-Z/a-z/;
 }
 
-test($out, '_<foo>_');		# 117
-test($out1, '_<f\'o\\o>_');		# 128
-test($out2, "_<a\a>_foo_<,\,>_");	# 129
-test("@q1", "foo q f'o\\\\o q a\\a qq ,\\, qq oups
+is($out, '_<foo>_');
+is($out1, '_<f\'o\\o>_');
+is($out2, "_<a\a>_foo_<,\,>_");
+is("@q1", "foo q f'o\\\\o q a\\a qq ,\\, qq oups
  qq oups1
- q second part q tail here s A-Z tr a-z tr");	# 130
-test("@qr1", "b\\b qq .\\. qq try it q first part q yet another qq");	# 131
-test($res, 1);			# 132
-test($a, "_<oups
->_");	# 133
-test($b, "_<oups1
->_");	# 134
-test($c, "bareword");	# 135
+ q second part q tail here s A-Z tr a-z tr");
+is("@qr1", "b\\b qq .\\. qq try it q first part q yet another qq");
+is($res, 1);
+is($a, "_<oups
+>_");
+is($b, "_<oups1
+>_");
+is($c, "bareword");
 
 {
   package symbolic;		# Primitive symbolic calculator
@@ -513,24 +485,24 @@ test($c, "bareword");	# 135
 {
   my $foo = new symbolic 11;
   my $baz = $foo++;
-  test( (sprintf "%d", $foo), '12');
-  test( (sprintf "%d", $baz), '11');
+  is((sprintf "%d", $foo), '12');
+  is((sprintf "%d", $baz), '11');
   my $bar = $foo;
   $baz = ++$foo;
-  test( (sprintf "%d", $foo), '13');
-  test( (sprintf "%d", $bar), '12');
-  test( (sprintf "%d", $baz), '13');
+  is((sprintf "%d", $foo), '13');
+  is((sprintf "%d", $bar), '12');
+  is((sprintf "%d", $baz), '13');
   my $ban = $foo;
   $baz = ($foo += 1);
-  test( (sprintf "%d", $foo), '14');
-  test( (sprintf "%d", $bar), '12');
-  test( (sprintf "%d", $baz), '14');
-  test( (sprintf "%d", $ban), '13');
+  is((sprintf "%d", $foo), '14');
+  is((sprintf "%d", $bar), '12');
+  is((sprintf "%d", $baz), '14');
+  is((sprintf "%d", $ban), '13');
   $baz = 0;
   $baz = $foo++;
-  test( (sprintf "%d", $foo), '15');
-  test( (sprintf "%d", $baz), '14');
-  test( "$foo", '[++ [+= [++ [++ [n 11] 1] 1] 1] 1]');
+  is((sprintf "%d", $foo), '15');
+  is((sprintf "%d", $baz), '14');
+  is("$foo", '[++ [+= [++ [++ [n 11] 1] 1] 1] 1]');
 }
 
 {
@@ -543,8 +515,8 @@ test($c, "bareword");	# 135
     $side = (sqrt(1 + $side**2) - 1)/$side;
   }
   my $pi = $side*(2**($iter+2));
-  test "$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]';
-  test( (sprintf "%f", $pi), '3.182598');
+  is("$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]');
+  is((sprintf "%f", $pi), '3.182598');
 }
 
 {
@@ -556,8 +528,8 @@ test($c, "bareword");	# 135
     $side = (sqrt(1 + $side**2) - 1)/$side;
   }
   my $pi = $side*(2**($iter+2));
-  test "$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]';
-  test( (sprintf "%f", $pi), '3.182598');
+  is("$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]');
+  is((sprintf "%f", $pi), '3.182598');
 }
 
 {
@@ -565,9 +537,9 @@ test($c, "bareword");	# 135
   symbolic->vars($a, $b);
   my $c = sqrt($a**2 + $b**2);
   $a = 3; $b = 4;
-  test( (sprintf "%d", $c), '5');
+  is((sprintf "%d", $c), '5');
   $a = 12; $b = 5;
-  test( (sprintf "%d", $c), '13');
+  is((sprintf "%d", $c), '13');
 }
 
 {
@@ -634,24 +606,24 @@ test($c, "bareword");	# 135
 {
   my $foo = new symbolic1 11;
   my $baz = $foo++;
-  test( (sprintf "%d", $foo), '12');
-  test( (sprintf "%d", $baz), '11');
+  is((sprintf "%d", $foo), '12');
+  is((sprintf "%d", $baz), '11');
   my $bar = $foo;
   $baz = ++$foo;
-  test( (sprintf "%d", $foo), '13');
-  test( (sprintf "%d", $bar), '12');
-  test( (sprintf "%d", $baz), '13');
+  is((sprintf "%d", $foo), '13');
+  is((sprintf "%d", $bar), '12');
+  is((sprintf "%d", $baz), '13');
   my $ban = $foo;
   $baz = ($foo += 1);
-  test( (sprintf "%d", $foo), '14');
-  test( (sprintf "%d", $bar), '12');
-  test( (sprintf "%d", $baz), '14');
-  test( (sprintf "%d", $ban), '13');
+  is((sprintf "%d", $foo), '14');
+  is((sprintf "%d", $bar), '12');
+  is((sprintf "%d", $baz), '14');
+  is((sprintf "%d", $ban), '13');
   $baz = 0;
   $baz = $foo++;
-  test( (sprintf "%d", $foo), '15');
-  test( (sprintf "%d", $baz), '14');
-  test( "$foo", '[++ [+= [++ [++ [n 11] 1] 1] 1] 1]');
+  is((sprintf "%d", $foo), '15');
+  is((sprintf "%d", $baz), '14');
+  is("$foo", '[++ [+= [++ [++ [n 11] 1] 1] 1] 1]');
 }
 
 {
@@ -664,8 +636,8 @@ test($c, "bareword");	# 135
     $side = (sqrt(1 + $side**2) - 1)/$side;
   }
   my $pi = $side*(2**($iter+2));
-  test "$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]';
-  test( (sprintf "%f", $pi), '3.182598');
+  is("$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]');
+  is((sprintf "%f", $pi), '3.182598');
 }
 
 {
@@ -677,8 +649,8 @@ test($c, "bareword");	# 135
     $side = (sqrt(1 + $side**2) - 1)/$side;
   }
   my $pi = $side*(2**($iter+2));
-  test "$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]';
-  test( (sprintf "%f", $pi), '3.182598');
+  is("$side", '[/ [- [sqrt [+ 1 [** [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]] 2]]] 1] [/ [- [sqrt [+ 1 [** [n 1] 2]]] 1] [n 1]]]');
+  is((sprintf "%f", $pi), '3.182598');
 }
 
 {
@@ -686,9 +658,9 @@ test($c, "bareword");	# 135
   symbolic1->vars($a, $b);
   my $c = sqrt($a**2 + $b**2);
   $a = 3; $b = 4;
-  test( (sprintf "%d", $c), '5');
+  is((sprintf "%d", $c), '5');
   $a = 12; $b = 5;
-  test( (sprintf "%d", $c), '13');
+  is((sprintf "%d", $c), '13');
 }
 
 {
@@ -702,9 +674,9 @@ test($c, "bareword");	# 135
 
 {
   my $seven = new two_face ("vii", 7);
-  test( (sprintf "seven=$seven, seven=%d, eight=%d", $seven, $seven+1),
+  is((sprintf "seven=$seven, seven=%d, eight=%d", $seven, $seven+1),
 	'seven=vii, seven=7, eight=8');
-  test( scalar ($seven =~ /i/), '1')
+  is(scalar ($seven =~ /i/), '1');
 }
 
 {
@@ -717,7 +689,7 @@ test($c, "bareword");	# 135
   my @arr = map sorting->new($_), 0..12;
   my @sorted1 = sort @arr;
   my @sorted2 = map $$_, @sorted1;
-  test "@sorted2", '0 10 7 4 1 11 8 5 12 2 9 6 3';
+  is("@sorted2", '0 10 7 4 1 11 8 5 12 2 9 6 3');
 }
 {
   package iterator;
@@ -728,21 +700,21 @@ test($c, "bareword");	# 135
 
 # XXX iterator overload not intended to work with CORE::GLOBAL?
 if (defined &CORE::GLOBAL::glob) {
-  test '1', '1';	# 175
-  test '1', '1';	# 176
-  test '1', '1';	# 177
+  is('1', '1');
+  is('1', '1');
+  is('1', '1');
 }
 else {
   my $iter = iterator->new(5);
   my $acc = '';
   my $out;
   $acc .= " $out" while $out = <${iter}>;
-  test $acc, ' 5 4 3 2 1 0';	# 175
+  is($acc, ' 5 4 3 2 1 0');
   $iter = iterator->new(5);
-  test scalar <${iter}>, '5';	# 176
+  is(scalar <${iter}>, '5');
   $acc = '';
   $acc .= " $out" while $out = <$iter>;
-  test $acc, ' 4 3 2 1 0';	# 177
+  is($acc, ' 4 3 2 1 0');
 }
 {
   package deref;
@@ -772,54 +744,54 @@ else {
 		    }, 'deref';
   # Hash:
   my @cont = sort %$deref;
-  if ("\t" eq "\011") { # ascii
-      test "@cont", '23 5 fake foo';	# 178
+  if ("\t" eq "\011") { # ASCII
+      is("@cont", '23 5 fake foo');
   } 
-  else {                # ebcdic alpha-numeric sort order
-      test "@cont", 'fake foo 23 5';	# 178
+  else {                # EBCDIC alpha-numeric sort order
+      is("@cont", 'fake foo 23 5');
   }
   my @keys = sort keys %$deref;
-  test "@keys", 'fake foo';	# 179
+  is("@keys", 'fake foo');
   my @val = sort values %$deref;
-  test "@val", '23 5';		# 180
-  test $deref->{foo}, 5;	# 181
-  test defined $deref->{bar}, ''; # 182
+  is("@val", '23 5');
+  is($deref->{foo}, 5);
+  is(defined $deref->{bar}, '');
   my $key;
   @keys = ();
   push @keys, $key while $key = each %$deref;
   @keys = sort @keys;
-  test "@keys", 'fake foo';	# 183  
-  test exists $deref->{bar}, ''; # 184
-  test exists $deref->{foo}, 1; # 185
+  is("@keys", 'fake foo');
+  is(exists $deref->{bar}, '');
+  is(exists $deref->{foo}, 1);
   # Code:
-  test $deref->(5), 39;		# 186
-  test &$deref(6), 40;		# 187
+  is($deref->(5), 39);
+  is(&$deref(6), 40);
   sub xxx_goto { goto &$deref }
-  test xxx_goto(7), 41;		# 188
+  is(xxx_goto(7), 41);
   my $srt = bless { c => sub {$b <=> $a}
 		  }, 'deref';
   *srt = \&$srt;
   my @sorted = sort srt 11, 2, 5, 1, 22;
-  test "@sorted", '22 11 5 2 1'; # 189
+  is("@sorted", '22 11 5 2 1');
   # Scalar
-  test $$deref, 123;		# 190
+  is($$deref, 123);
   # Code
   @sorted = sort $srt 11, 2, 5, 1, 22;
-  test "@sorted", '22 11 5 2 1'; # 191
+  is("@sorted", '22 11 5 2 1');
   # Array
-  test "@$deref", '11 12 13';	# 192
-  test $#$deref, '2';		# 193
+  is("@$deref", '11 12 13');
+  is($#$deref, '2');
   my $l = @$deref;
-  test $l, 3;			# 194
-  test $deref->[2], '13';		# 195
+  is($l, 3);
+  is($deref->[2], '13');
   $l = pop @$deref;
-  test $l, 13;			# 196
+  is($l, 13);
   $l = 1;
-  test $deref->[$l], '12';	# 197
+  is($deref->[$l], '12');
   # Repeated dereference
   my $double = bless { h => $deref,
 		     }, 'deref';
-  test $double->{foo}, 5;	# 198
+  is($double->{foo}, 5);
 }
 
 {
@@ -856,9 +828,9 @@ else {
 
 my $bar = new two_refs 3,4,5,6;
 $bar->[2] = 11;
-test $bar->{two}, 11;		# 199
+is($bar->{two}, 11);
 $bar->{three} = 13;
-test $bar->[3], 13;		# 200
+is($bar->[3], 13);
 
 {
   package two_refs_o;
@@ -867,9 +839,9 @@ test $bar->[3], 13;		# 200
 
 $bar = new two_refs_o 3,4,5,6;
 $bar->[2] = 11;
-test $bar->{two}, 11;		# 201
+is($bar->{two}, 11);
 $bar->{three} = 13;
-test $bar->[3], 13;		# 202
+is($bar->[3], 13);
 
 {
   package two_refs1;
@@ -909,9 +881,9 @@ test $bar->[3], 13;		# 202
 
 $bar = new two_refs_o 3,4,5,6;
 $bar->[2] = 11;
-test $bar->{two}, 11;		# 203
+is($bar->{two}, 11);
 $bar->{three} = 13;
-test $bar->[3], 13;		# 204
+is($bar->[3], 13);
 
 {
   package two_refs1_o;
@@ -920,9 +892,9 @@ test $bar->[3], 13;		# 204
 
 $bar = new two_refs1_o 3,4,5,6;
 $bar->[2] = 11;
-test $bar->{two}, 11;		# 205
+is($bar->{two}, 11);
 $bar->{three} = 13;
-test $bar->[3], 13;		# 206
+is($bar->[3], 13);
 
 {
   package B;
@@ -932,12 +904,12 @@ test $bar->[3], 13;		# 206
 my $aaa;
 { my $bbbb = 0; $aaa = bless \$bbbb, B }
 
-test !$aaa, 1;			# 207
+is !$aaa, 1;
 
 unless ($aaa) {
-  test 'ok', 'ok';		# 208
+  pass();
 } else {
-  test 'is not', 'ok';		# 208
+  fail();
 }
 
 # check that overload isn't done twice by join
@@ -945,7 +917,7 @@ unless ($aaa) {
   package Join;
   use overload '""' => sub { $c++ };
   my $x = join '', bless([]), 'pq', bless([]);
-  main::test $x, '0pq1';		# 209
+  main::is $x, '0pq1';
 };
 
 # Test module-specific warning
@@ -954,10 +926,10 @@ unless ($aaa) {
     my $a = "" ;
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     $x = eval ' overload::constant "integer" ; ' ;
-    test($a eq "") ; # 210
+    is($a, "");
     use warnings 'overload' ;
     $x = eval ' overload::constant "integer" ; ' ;
-    test($a =~ /^Odd number of arguments for overload::constant at/) ; # 211
+    like($a, qr/^Odd number of arguments for overload::constant at/);
 }
 
 {
@@ -965,10 +937,10 @@ unless ($aaa) {
     my $a = "" ;
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     $x = eval ' overload::constant "fred" => sub {} ; ' ;
-    test($a eq "") ; # 212
+    is($a, "");
     use warnings 'overload' ;
     $x = eval ' overload::constant "fred" => sub {} ; ' ;
-    test($a =~ /^`fred' is not an overloadable type at/); # 213
+    like($a, qr/^`fred' is not an overloadable type at/);
 }
 
 {
@@ -976,10 +948,10 @@ unless ($aaa) {
     my $a = "" ;
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     $x = eval ' overload::constant "integer" => 1; ' ;
-    test($a eq "") ; # 214
+    is($a, "");
     use warnings 'overload' ;
     $x = eval ' overload::constant "integer" => 1; ' ;
-    test($a =~ /^`1' is not a code reference at/); # 215
+    like($a, qr/^`1' is not a code reference at/);
 }
 
 {
@@ -1005,16 +977,16 @@ unless ($aaa) {
 
   my $x = new noov_int 11;
   my $int_x = int $x;
-  main::test("$int_x" eq 20);			# 216
+  main::is("$int_x", 20);
   $x = new ov_int1 31;
   $int_x = int $x;
-  main::test("$int_x" eq 131);			# 217
+  main::is("$int_x", 131);
   $x = new ov_int2 51;
   $int_x = int $x;
-  main::test("$int_x" eq 1054);			# 218
+  main::is("$int_x", 1054);
 }
 
-# make sure that we don't inifinitely recurse
+# make sure that we don't infinitely recurse
 {
   my $c = 0;
   package Recurse;
@@ -1023,9 +995,10 @@ unless ($aaa) {
                'bool'  => sub { shift },
                fallback => 1;
   my $x = bless([]);
-  main::test("$x" =~ /Recurse=ARRAY/);		# 219
-  main::test($x);                               # 220
-  main::test($x+0 =~ /Recurse=ARRAY/);		# 221
+  # For some reason beyond me these have to be oks rather than likes.
+  main::ok("$x" =~ /Recurse=ARRAY/);
+  main::ok($x);
+  main::ok($x+0 =~ qr/Recurse=ARRAY/);
 }
 
 # BugID 20010422.003
@@ -1056,7 +1029,7 @@ use strict;
 my $r = Foo->new(8);
 $r = Foo->new(0);
 
-test(($r || 0) == 0); # 222
+is(($r || 0), 0);
 
 package utf8_o;
 
@@ -1076,8 +1049,8 @@ package main;
 
 
 my $utfvar = new utf8_o 200.2.1;
-test("$utfvar" eq 200.2.1); # 223 - stringify
-test("a$utfvar" eq "a".200.2.1); # 224 - overload via sv_2pv_flags
+is("$utfvar", 200.2.1); # 223 - stringify
+is("a$utfvar", "a".200.2.1); # 224 - overload via sv_2pv_flags
 
 # 225..227 -- more %{} tests.  Hangs in 5.6.0, okay in later releases.
 # Basically this example implements strong encapsulation: if Hderef::import()
@@ -1093,9 +1066,9 @@ sub xet { @_ == 2 ? $_[0]->{$_[1]} :
 package main;
 my $a = Foo->new;
 $a->xet('b', 42);
-test ($a->xet('b'), 42);
-test (!defined eval { $a->{b} });
-test ($@ =~ /zap/);
+is ($a->xet('b'), 42);
+ok (!defined eval { $a->{b} });
+like ($@, qr/zap/);
 
 {
    package t229;
@@ -1110,7 +1083,7 @@ test ($@ =~ /zap/);
       my $y = $x;
       eval { $y++ };
    }
-   main::test (!$warn);
+   main::ok (!$warn);
 }
 
 {
@@ -1120,9 +1093,9 @@ test ($@ =~ /zap/);
         $out1 = 0;
         $out2 = 1;
     }
-    test($int,  2,  "#24313");	# 230
-    test($out1, 17, "#24313");	# 231
-    test($out2, 17, "#24313");	# 232
+    is($int,  2,  "#24313");	# 230
+    is($out1, 17, "#24313");	# 231
+    is($out2, 17, "#24313");	# 232
 }
 
 {
@@ -1146,19 +1119,19 @@ test ($@ =~ /zap/);
     my $o  = bless [], 'perl31793';
     my $of = bless [], 'perl31793_fb';
     my $no = bless [], 'no_overload';
-    test (overload::StrVal(\"scalar") =~ /^SCALAR\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal([])        =~ /^ARRAY\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal({})        =~ /^HASH\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal(sub{1})    =~ /^CODE\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal(\*GLOB)    =~ /^GLOB\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal(\$o)       =~ /^REF\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal(qr/a/)     =~ /^Regexp=SCALAR\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal($o)        =~ /^perl31793=ARRAY\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal($of)       =~ /^perl31793_fb=ARRAY\(0x[0-9a-f]+\)$/);
-    test (overload::StrVal($no)       =~ /^no_overload=ARRAY\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal(\"scalar"), qr/^SCALAR\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal([]),        qr/^ARRAY\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal({}),        qr/^HASH\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal(sub{1}),    qr/^CODE\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal(\*GLOB),    qr/^GLOB\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal(\$o),       qr/^REF\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal(qr/a/),     qr/^Regexp=SCALAR\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal($o),        qr/^perl31793=ARRAY\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal($of),       qr/^perl31793_fb=ARRAY\(0x[0-9a-f]+\)$/);
+    like(overload::StrVal($no),       qr/^no_overload=ARRAY\(0x[0-9a-f]+\)$/);
 }
 
-# These are all check that overloaded values rather than reference addressess
+# These are all check that overloaded values rather than reference addresses
 # are what is getting tested.
 my ($two, $one, $un, $deux) = map {new Numify $_} 2, 1, 1, 2;
 my ($ein, $zwei) = (1, 2);
@@ -1174,9 +1147,284 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 	    die if $@;
 	    my $expect = eval $rcode;
 	    die if $@;
-	    test ($got, $expect, $ocode) or print "# $rcode\n";
+	    is ($got, $expect, $ocode) or print "# $rcode\n";
 	}
     }
 }
-# Last test is:
-sub last {493}
+{
+    # check that overloading works in regexes
+    {
+	package Foo493;
+	use overload
+	    '""' => sub { "^$_[0][0]\$" },
+	    '.'  => sub { 
+		    bless [
+			     $_[2]
+			    ? (ref $_[1] ? $_[1][0] : $_[1]) . ':' .$_[0][0] 
+			    : $_[0][0] . ':' . (ref $_[1] ? $_[1][0] : $_[1])
+		    ], 'Foo493'
+			};
+    }
+
+    my $a = bless [ "a" ], 'Foo493';
+    like('a', qr/$a/);
+    like('x:a', qr/x$a/);
+    like('x:a:=', qr/x$a=$/);
+    like('x:a:a:=', qr/x$a$a=$/);
+
+}
+
+{
+    my $twenty_three = 23;
+    # Check that constant overloading propagates into evals
+    BEGIN { overload::constant integer => sub { 23 } }
+    is(eval "17", $twenty_three);
+}
+
+{
+    package Sklorsh;
+    use overload
+	bool     => sub { shift->is_cool };
+
+    sub is_cool {
+	$_[0]->{name} eq 'cool';
+    }
+
+    sub delete {
+	undef %{$_[0]};
+	bless $_[0], 'Brap';
+	return 1;
+    }
+
+    sub delete_with_self {
+	my $self = shift;
+	undef %$self;
+	bless $self, 'Brap';
+	return 1;
+    }
+
+    package Brap;
+
+    1;
+
+    package main;
+
+    my $obj;
+    $obj = bless {name => 'cool'}, 'Sklorsh';
+    $obj->delete;
+    ok(eval {if ($obj) {1}; 1}, $@ || 'reblessed into nonexistent namespace');
+
+    $obj = bless {name => 'cool'}, 'Sklorsh';
+    $obj->delete_with_self;
+    ok (eval {if ($obj) {1}; 1}, $@);
+    
+    my $a = $b = {name => 'hot'};
+    bless $b, 'Sklorsh';
+    is(ref $a, 'Sklorsh');
+    is(ref $b, 'Sklorsh');
+    ok(!$b, "Expect overloaded boolean");
+    ok(!$a, "Expect overloaded boolean");
+}
+{
+    use Scalar::Util 'weaken';
+
+    package Shklitza;
+    use overload '""' => sub {"CLiK KLAK"};
+
+    package Ksshfwoom;
+
+    package main;
+
+    my ($obj, $ref);
+    $obj = bless do {my $a; \$a}, 'Shklitza';
+    $ref = $obj;
+
+    is ($obj, "CLiK KLAK");
+    is ($ref, "CLiK KLAK");
+
+    weaken $ref;
+    is ($ref, "CLiK KLAK");
+
+    bless $obj, 'Ksshfwoom';
+
+    like ($obj, qr/^Ksshfwoom=/);
+    like ($ref, qr/^Ksshfwoom=/);
+
+    undef $obj;
+    is ($ref, undef);
+}
+
+{
+    package bit;
+    # bit operations have overloadable assignment variants too
+
+    sub new { bless \$_[1], $_[0] }
+
+    use overload
+          "&=" => sub { bit->new($_[0]->val . ' & ' . $_[1]->val) }, 
+          "^=" => sub { bit->new($_[0]->val . ' ^ ' . $_[1]->val) },
+          "|"  => sub { bit->new($_[0]->val . ' | ' . $_[1]->val) }, # |= by fallback
+          ;
+
+    sub val { ${$_[0]} }
+
+    package main;
+
+    my $a = bit->new(my $va = 'a');
+    my $b = bit->new(my $vb = 'b');
+
+    $a &= $b;
+    is($a->val, 'a & b', "overloaded &= works");
+
+    my $c = bit->new(my $vc = 'c');
+
+    $b ^= $c;
+    is($b->val, 'b ^ c', "overloaded ^= works");
+
+    my $d = bit->new(my $vd = 'd');
+
+    $c |= $d;
+    is($c->val, 'c | d', "overloaded |= (by fallback) works");
+}
+
+{
+    # comparison operators with nomethod
+    my $warning = "";
+    my $method;
+
+    package nomethod_false;
+    use overload nomethod => sub { $method = 'nomethod'; 0 };
+
+    package nomethod_true;
+    use overload nomethod => sub { $method= 'nomethod'; 'true' };
+
+    package main;
+    local $^W = 1;
+    local $SIG{__WARN__} = sub { $warning = $_[0] };
+
+    my $f = bless [], 'nomethod_false';
+    ($warning, $method) = ("", "");
+    is($f eq 'whatever', 0, 'nomethod makes eq return 0');
+    is($method, 'nomethod');
+
+    my $t = bless [], 'nomethod_true';
+    ($warning, $method) = ("", "");
+    is($t eq 'whatever', 'true', 'nomethod makes eq return "true"');
+    is($method, 'nomethod');
+    is($warning, "", 'nomethod eq need not return number');
+
+    eval q{ 
+        package nomethod_false;
+        use overload cmp => sub { $method = 'cmp'; 0 };
+    };
+    $f = bless [], 'nomethod_false';
+    ($warning, $method) = ("", "");
+    ok($f eq 'whatever', 'eq falls back to cmp (nomethod not called)');
+    is($method, 'cmp');
+
+    eval q{
+        package nomethod_true;
+        use overload cmp => sub { $method = 'cmp'; 'true' };
+    };
+    $t = bless [], 'nomethod_true';
+    ($warning, $method) = ("", "");
+    ok($t eq 'whatever', 'eq falls back to cmp (nomethod not called)');
+    is($method, 'cmp');
+    like($warning, qr/isn't numeric/, 'cmp should return number');
+
+}
+
+{
+    # Subtle bug pre 5.10, as a side effect of the overloading flag being
+    # stored on the reference rather than the referent. Despite the fact that
+    # objects can only be accessed via references (even internally), the
+    # referent actually knows that it's blessed, not the references. So taking
+    # a new, unrelated, reference to it gives an object. However, the
+    # overloading-or-not flag was on the reference prior to 5.10, and taking
+    # a new reference didn't (use to) copy it.
+
+    package kayo;
+
+    use overload '""' => sub {${$_[0]}};
+
+    sub Pie {
+	return "$_[0], $_[1]";
+    }
+
+    package main;
+
+    my $class = 'kayo';
+    my $string = 'bam';
+    my $crunch_eth = bless \$string, $class;
+
+    is("$crunch_eth", $string);
+    is ($crunch_eth->Pie("Meat"), "$string, Meat");
+
+    my $wham_eth = \$string;
+
+    is("$wham_eth", $string,
+       'This reference did not have overloading in 5.8.8 and earlier');
+    is ($crunch_eth->Pie("Apple"), "$string, Apple");
+
+    my $class = ref $wham_eth;
+    $class =~ s/=.*//;
+
+    # Bless it back into its own class!
+    bless $wham_eth, $class;
+
+    is("$wham_eth", $string);
+    is ($crunch_eth->Pie("Blackbird"), "$string, Blackbird");
+}
+
+{
+    package numify_int;
+    use overload "0+" => sub { $_[0][0] += 1; 42 };
+    package numify_self;
+    use overload "0+" => sub { $_[0][0]++; $_[0] };
+    package numify_other;
+    use overload "0+" => sub { $_[0][0]++; $_[0][1] = bless [], 'numify_int' };
+    package numify_by_fallback;
+    use overload fallback => 1;
+
+    package main;
+    my $o = bless [], 'numify_int';
+    is(int($o), 42, 'numifies to integer');
+    is($o->[0], 1, 'int() numifies only once');
+
+    my $aref = [];
+    my $num_val = int($aref);
+    my $r = bless $aref, 'numify_self';
+    is(int($r), $num_val, 'numifies to self');
+    is($r->[0], 1, 'int() numifies once when returning self');
+
+    my $s = bless [], 'numify_other';
+    is(int($s), 42, 'numifies to numification of other object');
+    is($s->[0], 1, 'int() numifies once when returning other object');
+    is($s->[1][0], 1, 'returned object numifies too');
+
+    my $m = bless $aref, 'numify_by_fallback';
+    is(int($m), $num_val, 'numifies to usual reference value');
+    is(abs($m), $num_val, 'numifies to usual reference value');
+    is(-$m, -$num_val, 'numifies to usual reference value');
+    is(0+$m, $num_val, 'numifies to usual reference value');
+    is($m+0, $num_val, 'numifies to usual reference value');
+    is($m+$m, 2*$num_val, 'numifies to usual reference value');
+    is(0-$m, -$num_val, 'numifies to usual reference value');
+    is(1*$m, $num_val, 'numifies to usual reference value');
+    is($m/1, $num_val, 'numifies to usual reference value');
+    is($m%100, $num_val%100, 'numifies to usual reference value');
+    is($m**1, $num_val, 'numifies to usual reference value');
+
+    is(abs($aref), $num_val, 'abs() of ref');
+    is(-$aref, -$num_val, 'negative of ref');
+    is(0+$aref, $num_val, 'ref addition');
+    is($aref+0, $num_val, 'ref addition');
+    is($aref+$aref, 2*$num_val, 'ref addition');
+    is(0-$aref, -$num_val, 'subtraction of ref');
+    is(1*$aref, $num_val, 'multiplicaton of ref');
+    is($aref/1, $num_val, 'division of ref');
+    is($aref%100, $num_val%100, 'modulo of ref');
+    is($aref**1, $num_val, 'exponentiation of ref');
+}
+
+# EOF

@@ -18,7 +18,7 @@ use strict;
 use Unicode::UCD;
 use Test::More;
 
-BEGIN { plan tests => 188 };
+BEGIN { plan tests => 194 };
 
 use Unicode::UCD 'charinfo';
 
@@ -238,7 +238,23 @@ ok( charinrange($ranges, "13a0"));
 ok( charinrange($ranges, "13f4"));
 ok(!charinrange($ranges, "13f5"));
 
-is(Unicode::UCD::UnicodeVersion, '4.1.0', 'UnicodeVersion');
+use Unicode::UCD qw(general_categories);
+
+my $gc = general_categories();
+
+ok(exists $gc->{L}, 'has L');
+is($gc->{L}, 'Letter', 'L is Letter');
+is($gc->{Lu}, 'UppercaseLetter', 'Lu is UppercaseLetter');
+
+use Unicode::UCD qw(bidi_types);
+
+my $bt = bidi_types();
+
+ok(exists $bt->{L}, 'has L');
+is($bt->{L}, 'Left-to-Right', 'L is Left-to-Right');
+is($bt->{AL}, 'Right-to-Left Arabic', 'AL is Right-to-Left Arabic');
+
+is(Unicode::UCD::UnicodeVersion, '5.0.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -309,7 +325,7 @@ is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
 {
     my $r1 = charscript('Latin');
     my $n1 = @$r1;
-    is($n1, 29, "29 ranges in Latin script (Unicode 4.1.0)");
+    is($n1, 35, "number of ranges in Latin script (Unicode 5.0.0)");
     shift @$r1 while @$r1;
     my $r2 = charscript('Latin');
     is(@$r2, $n1, "modifying results should not mess up internal caches");

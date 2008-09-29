@@ -1,5 +1,5 @@
 package NEXT;
-$VERSION = '0.60';
+$VERSION = '0.60_01';
 use Carp;
 use strict;
 
@@ -32,7 +32,9 @@ sub NEXT::ELSEWHERE::ordered_ancestors
 sub AUTOLOAD
 {
 	my ($self) = @_;
-	my $caller = (caller(1))[3]; 
+	my $depth = 1;
+	until ((caller($depth))[3] !~ /^\(eval\)$/) { $depth++ }
+	my $caller = (caller($depth))[3];
 	my $wanted = $NEXT::AUTOLOAD || 'NEXT::AUTOLOAD';
 	undef $NEXT::AUTOLOAD;
 	my ($caller_class, $caller_method) = $caller =~ m{(.*)::(.*)}g;
@@ -94,7 +96,9 @@ package EVERY;			@ISA = 'NEXT';
 sub AUTOLOAD
 {
 	my ($self) = @_;
-	my $caller = (caller(1))[3]; 
+	my $depth = 1;
+	until ((caller($depth))[3] !~ /^\(eval\)$/) { $depth++ }
+	my $caller = (caller($depth))[3];
 	my $wanted = $EVERY::AUTOLOAD || 'EVERY::AUTOLOAD';
 	undef $EVERY::AUTOLOAD;
 	my ($wanted_class, $wanted_method) = $wanted =~ m{(.*)::(.*)}g;
@@ -229,7 +233,7 @@ do better.
 
 By default, if a redispatch attempt fails to find another method
 elsewhere in the objects class hierarchy, it quietly gives up and does
-nothing (but see L<"Enforcing redispatch">). This gracious acquiesence
+nothing (but see L<"Enforcing redispatch">). This gracious acquiescence
 is also unlike the (generally annoying) behaviour of C<SUPER>, which
 throws an exception if it cannot redispatch.
 
@@ -416,7 +420,7 @@ order. Instead, they are called "breadth-first-dependency-wise".
 That means that the inheritance tree of the object is traversed breadth-first
 and the resulting order of classes is used as the sequence in which methods
 are called. However, that sequence is modified by imposing a rule that the
-appropritae method of a derived class must be called before the same method of
+appropriate method of a derived class must be called before the same method of
 any ancestral class. That's why, in the above example, C<X::foo> is called
 before C<D::foo>, even though C<D> comes before C<X> in C<@B::ISA>.
 

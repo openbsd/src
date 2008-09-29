@@ -1,10 +1,24 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#ifdef USE_PPPORT_H
+#  include "ppport.h"
+#endif
 
-#ifdef I_SYSLOG
+#ifndef HAVE_SYSLOG
+#define HAVE_SYSLOG 1
+#endif
+
+#if defined(I_SYSLOG) || PATCHLEVEL < 6
 #include <syslog.h>
 #endif
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#undef HAVE_SYSLOG
+#include "fallback/syslog.h"
+#endif
+
+static SV *ident_svptr;
 
 #include "const-c.inc"
 
@@ -82,3 +96,43 @@ LOG_UPTO(pri)
 #endif
     OUTPUT:
 	RETVAL
+
+#ifdef HAVE_SYSLOG
+
+void
+openlog_xs(ident, option, facility)
+    INPUT:
+        SV*   ident
+        int   option
+        int   facility
+    PREINIT:
+        STRLEN len;
+        char*  ident_pv;
+    CODE:
+        ident_svptr = newSVsv(ident);
+        ident_pv    = SvPV(ident_svptr, len);
+        openlog(ident_pv, option, facility);
+
+void
+syslog_xs(priority, message)
+    INPUT:
+        int   priority
+        const char * message
+    CODE:
+        syslog(priority, "%s", message);
+
+int
+setlogmask_xs(mask)
+    INPUT:
+        int mask
+    CODE:
+        setlogmask(mask);
+
+void
+closelog_xs()
+    CODE:
+        closelog();
+        if (SvREFCNT(ident_svptr))
+            SvREFCNT_dec(ident_svptr);
+
+#endif /* HAVE_SYSLOG */

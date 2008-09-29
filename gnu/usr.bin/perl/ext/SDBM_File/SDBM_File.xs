@@ -53,16 +53,18 @@ void
 sdbm_DESTROY(db)
 	SDBM_File	db
 	CODE:
-	  sdbm_close(db->dbp);
-	  if (db->filter_fetch_key)
-	    SvREFCNT_dec(db->filter_fetch_key) ;
-	  if (db->filter_store_key)
-	    SvREFCNT_dec(db->filter_store_key) ;
-	  if (db->filter_fetch_value)
-	    SvREFCNT_dec(db->filter_fetch_value) ;
-	  if (db->filter_store_value)
-	    SvREFCNT_dec(db->filter_store_value) ;
-	  safefree(db) ;
+	if (db) {
+	    sdbm_close(db->dbp);
+	    if (db->filter_fetch_key)
+		SvREFCNT_dec(db->filter_fetch_key) ;
+	    if (db->filter_store_key)
+		SvREFCNT_dec(db->filter_store_key) ;
+	    if (db->filter_fetch_value)
+		SvREFCNT_dec(db->filter_fetch_value) ;
+	    if (db->filter_store_value)
+		SvREFCNT_dec(db->filter_store_value) ;
+	    safefree(db) ;
+	}
 
 datum_value
 sdbm_FETCH(db, key)

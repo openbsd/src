@@ -54,7 +54,11 @@ sub C_stringify {
   s/\t/\\t/g;
   s/\f/\\f/g;
   s/\a/\\a/g;
-  s/([^\0-\177])/sprintf "\\%03o", ord $1/ge;
+  if (ord('A') == 193) { # EBCDIC has no ^\0-\177 workalike.
+      s/([[:^print:]])/sprintf "\\%03o", ord $1/ge;
+  } else {
+      s/([^\0-\177])/sprintf "\\%03o", ord $1/ge;
+  }
   unless ($] < 5.006) {
     # This will elicit a warning on 5.005_03 about [: :] being reserved unless
     # I cheat
@@ -87,7 +91,11 @@ sub perl_stringify {
   s/\a/\\a/g;
   unless ($] < 5.006) {
     if ($] > 5.007) {
-      s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
+	if (ord('A') == 193) { # EBCDIC has no ^\0-\177 workalike.
+	    s/([[:^print:]])/sprintf "\\x{%X}", ord $1/ge;
+	} else {
+	    s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
+	}
     } else {
       # Grr 5.6.1. And I don't think I can use utf8; to force the regexp
       # because 5.005_03 will fail.

@@ -191,9 +191,8 @@ Some functions are provided to simplify customization.
 
 =item *
 
-See L<perldebug/"Options"> for description of options parsed by
-C<DB::parse_options(string)> parses debugger options; see
-L<pperldebug/Options> for a description of options recognized.
+See L<perldebug/"Configurable Options"> for a description of options parsed by
+C<DB::parse_options(string)>.
 
 =item *
 
@@ -301,7 +300,7 @@ is not a complete listing, but only excerpts.
    exited Config::FETCH
    entering Config::FETCH
 
-=item 4
+=item 3
 
   in  $=main::BEGIN() from /dev/null:0
    in  $=Config::BEGIN() from lib/Config.pm:2
@@ -319,7 +318,7 @@ is not a complete listing, but only excerpts.
    in  $=Config::FETCH(ref(Config), 'osname') from lib/Config.pm:574
    in  $=Config::FETCH(ref(Config), 'osvers') from lib/Config.pm:574
 
-=item 6
+=item 4
 
   in  $=main::BEGIN() from /dev/null:0
    in  $=Config::BEGIN() from lib/Config.pm:2
@@ -343,7 +342,7 @@ is not a complete listing, but only excerpts.
    out $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
    in  $=Config::FETCH(ref(Config), 'PERL_SUBVERSION') from lib/Config.pm:574
 
-=item 14
+=item 5
 
   in  $=main::BEGIN() from /dev/null:0
    in  $=Config::BEGIN() from lib/Config.pm:2
@@ -364,7 +363,7 @@ is not a complete listing, but only excerpts.
    in  $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
    out $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
 
-=item 30
+=item 6
 
   in  $=CODE(0x15eca4)() from /dev/null:0
    in  $=CODE(0x182528)() from lib/Config.pm:2
@@ -753,7 +752,8 @@ The B<-DL> command-line switch is obsolete since circa Perl 5.6.0
 (it was available only if Perl was built with C<-DDEBUGGING>).
 The switch was used to track Perl's memory allocations and possible
 memory leaks.  These days the use of malloc debugging tools like
-F<Purify> or F<valgrind> is suggested instead.
+F<Purify> or F<valgrind> is suggested instead.  See also
+L<perlhack/PERL_MEM_LOG>.
 
 One way to find out how much memory is being used by Perl data
 structures is to install the Devel::Size module from CPAN: it gives

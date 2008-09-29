@@ -1,9 +1,4 @@
-#!./perl -w
-
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-}
+#!/usr/old/bin/perl5.004_01 -w
 
 @tests = (split(/\nEND\n/s, <<DONE));
 TEST 1 u
@@ -91,9 +86,8 @@ DONE
 
 $| = 1;
 
-my $testcount = "1..";
-$testcount .= @tests/2;
-print "$testcount\n";
+my $numtests = scalar(@tests) / 2;
+print "1..$numtests\n";
 
 use Text::Tabs;
 

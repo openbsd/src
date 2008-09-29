@@ -4,6 +4,8 @@ my $file = "tf$$.txt";
 
 print "1..59\n";
 
+use Fcntl 'O_RDONLY';
+
 my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;
@@ -148,7 +150,7 @@ if (setup_badly_terminated_file(2)) {
 # termination.
 $badrec = "world${RECSEP}hello";
 if (setup_badly_terminated_file(1)) {
-  tie(@a, "Tie::File", $file, mode => 0, recsep => $RECSEP)
+  tie(@a, "Tie::File", $file, mode => O_RDONLY, recsep => $RECSEP)
       or die "Couldn't tie file: $!";
   my $z = $#a;
   $z = $a[1];

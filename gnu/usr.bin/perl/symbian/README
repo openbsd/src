@@ -1,0 +1,20 @@
+The PerlApp* files are a demonstration application for the CPerlBase
+class, which is defined and implemented by the PerlBase* files. 
+The rest of the files are part of the Symbian base port.
+
+All files are Copyright (c) Nokia, 2004-2005, all rights reserved,
+and licensed under the same terms as Perl itself.
+
+Once the 'sdkinstall' make target has been run in the top level,
+the PerlApp can be built using the standard Symbian way:
+
+	bldmake bldfiles
+	abld build wins udeb
+	abld build thumb urel
+
+and then packaged into a SIS by:
+
+	makesis PerlApp.pkg
+
+-- 
+

@@ -13,7 +13,7 @@ use Carp;
 
 no warnings 'utf8';
 
-our $VERSION = '0.32';
+our $VERSION = '1.02';
 our $PACKAGE = __PACKAGE__;
 
 require Exporter;
@@ -43,12 +43,16 @@ bootstrap Unicode::Normalize $VERSION;
 
 ######
 
+##
+## utilites for tests
+##
+
 sub pack_U {
     return pack('U*', @_);
 }
 
 sub unpack_U {
-    return unpack('U*', pack('U*').shift);
+    return unpack('U*', shift(@_).pack('U*'));
 }
 
 
@@ -56,18 +60,10 @@ sub unpack_U {
 ## normalization forms
 ##
 
-use constant COMPAT => 1;
-
-sub NFD  ($) { reorder(decompose($_[0])) }
-sub NFKD ($) { reorder(decompose($_[0], COMPAT)) }
-sub NFC  ($) { compose(reorder(decompose($_[0]))) }
-sub NFKC ($) { compose(reorder(decompose($_[0], COMPAT))) }
-
 sub FCD ($) {
     my $str = shift;
     return checkFCD($str) ? $str : NFD($str);
 }
-sub FCC ($) { composeContiguous(reorder(decompose($_[0]))) }
 
 our %formNorm = (
     NFC  => \&NFC,	C  => \&NFC,
@@ -81,9 +77,10 @@ sub normalize($$)
 {
     my $form = shift;
     my $str = shift;
-    return exists $formNorm{$form}
-	? $formNorm{$form}->($str)
-	: croak $PACKAGE."::normalize: invalid form name: $form";
+    if (exists $formNorm{$form}) {
+	return $formNorm{$form}->($str);
+    }
+    croak($PACKAGE."::normalize: invalid form name: $form");
 }
 
 
@@ -103,9 +100,10 @@ sub check($$)
 {
     my $form = shift;
     my $str = shift;
-    return exists $formCheck{$form}
-	? $formCheck{$form}->($str)
-	: croak $PACKAGE."::check: invalid form name: $form";
+    if (exists $formCheck{$form}) {
+	return $formCheck{$form}->($str);
+    }
+    croak($PACKAGE."::check: invalid form name: $form");
 }
 
 1;
@@ -139,16 +137,14 @@ Unicode::Normalize - Unicode Normalization Forms
 
 Parameters:
 
-C<$string> is used as a string under character semantics
-(see F<perlunicode>).
+C<$string> is used as a string under character semantics (see F<perlunicode>).
 
-C<$codepoint> should be an unsigned integer
-representing a Unicode code point.
+C<$code_point> should be an unsigned integer representing a Unicode code point.
 
 Note: Between XSUB and pure Perl, there is an incompatibility
-about the interpretation of C<$codepoint> as a decimal number.
-XSUB converts C<$codepoint> to an unsigned integer, but pure Perl does not.
-Do not use a floating point nor a negative sign in C<$codepoint>.
+about the interpretation of C<$code_point> as a decimal number.
+XSUB converts C<$code_point> to an unsigned integer, but pure Perl does not.
+Do not use a floating point nor a negative sign in C<$code_point>.
 
 =head2 Normalization Forms
 
@@ -156,37 +152,39 @@ Do not use a floating point nor a negative sign in C<$codepoint>.
 
 =item C<$NFD_string = NFD($string)>
 
-returns the Normalization Form D (formed by canonical decomposition).
+It returns the Normalization Form D (formed by canonical decomposition).
 
 =item C<$NFC_string = NFC($string)>
 
-returns the Normalization Form C (formed by canonical decomposition
+It returns the Normalization Form C (formed by canonical decomposition
 followed by canonical composition).
 
 =item C<$NFKD_string = NFKD($string)>
 
-returns the Normalization Form KD (formed by compatibility decomposition).
+It returns the Normalization Form KD (formed by compatibility decomposition).
 
 =item C<$NFKC_string = NFKC($string)>
 
-returns the Normalization Form KC (formed by compatibility decomposition
+It returns the Normalization Form KC (formed by compatibility decomposition
 followed by B<canonical> composition).
 
 =item C<$FCD_string = FCD($string)>
 
 If the given string is in FCD ("Fast C or D" form; cf. UTN #5),
-returns it without modification; otherwise returns an FCD string.
+it returns the string without modification; otherwise it returns an FCD string.
 
 Note: FCD is not always unique, then plural forms may be equivalent
 each other. C<FCD()> will return one of these equivalent forms.
 
 =item C<$FCC_string = FCC($string)>
 
-returns the FCC form ("Fast C Contiguous"; cf. UTN #5).
+It returns the FCC form ("Fast C Contiguous"; cf. UTN #5).
 
 Note: FCC is unique, as well as four normalization forms (NF*).
 
 =item C<$normalized_string = normalize($form_name, $string)>
+
+It returns the normalization form of C<$form_name>.
 
 As C<$form_name>, one of the following names must be given.
 
@@ -204,39 +202,39 @@ As C<$form_name>, one of the following names must be given.
 
 =over 4
 
-=item C<$decomposed_string = decompose($string)>
+=item C<$decomposed_string = decompose($string [, $useCompatMapping])>
 
-=item C<$decomposed_string = decompose($string, $useCompatMapping)>
+It returns the concatenation of the decomposition of each character
+in the string.
 
-Decomposes the specified string and returns the result.
+If the second parameter (a boolean) is omitted or false,
+the decomposition is canonical decomposition;
+if the second parameter (a boolean) is true,
+the decomposition is compatibility decomposition.
 
-If the second parameter (a boolean) is omitted or false, decomposes it
-using the Canonical Decomposition Mapping.
-If true, decomposes it using the Compatibility Decomposition Mapping.
-
-The string returned is not always in NFD/NFKD.
-Reordering may be required.
+The string returned is not always in NFD/NFKD. Reordering may be required.
 
     $NFD_string  = reorder(decompose($string));       # eq. to NFD()
     $NFKD_string = reorder(decompose($string, TRUE)); # eq. to NFKD()
 
-=item C<$reordered_string  = reorder($string)>
+=item C<$reordered_string = reorder($string)>
 
-Reorders the combining characters and the like in the canonical ordering
-and returns the result.
+It returns the result of reordering the combining characters
+according to Canonical Ordering Behavior.
 
-E.g., when you have a list of NFD/NFKD strings,
-you can get the concatenated NFD/NFKD string from them, saying
+For example, when you have a list of NFD/NFKD strings,
+you can get the concatenated NFD/NFKD string from them, by saying
 
     $concat_NFD  = reorder(join '', @NFD_strings);
     $concat_NFKD = reorder(join '', @NFKD_strings);
 
-=item C<$composed_string   = compose($string)>
+=item C<$composed_string = compose($string)>
 
-Returns the string where composable pairs are composed.
+It returns the result of canonical composition
+without applying any decomposition.
 
-E.g., when you have a NFD/NFKD string,
-you can get its NFC/NFKC string, saying
+For example, when you have a NFD/NFKD string,
+you can get its NFC/NFKC string, by saying
 
     $NFC_string  = compose($NFD_string);
     $NFKC_string = compose($NFKD_string);
@@ -249,7 +247,7 @@ you can get its NFC/NFKC string, saying
 
 The following functions check whether the string is in that normalization form.
 
-The result returned will be:
+The result returned will be one of the following:
 
     YES     The string is in that normalization form.
     NO      The string is not in that normalization form.
@@ -259,37 +257,37 @@ The result returned will be:
 
 =item C<$result = checkNFD($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
 
 =item C<$result = checkNFC($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
 C<undef> if C<MAYBE>.
 
 =item C<$result = checkNFKD($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
 
 =item C<$result = checkNFKC($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
 C<undef> if C<MAYBE>.
 
 =item C<$result = checkFCD($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>.
 
 =item C<$result = checkFCC($string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
 C<undef> if C<MAYBE>.
 
-If a string is not in FCD, it must not be in FCC.
+Note: If a string is not in FCD, it must not be in FCC.
 So C<checkFCC($not_FCD_string)> should return C<NO>.
 
 =item C<$result = check($form_name, $string)>
 
-returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
+It returns true (C<1>) if C<YES>; false (C<empty string>) if C<NO>;
 C<undef> if C<MAYBE>.
 
 As C<$form_name>, one of the following names must be given.
@@ -342,56 +340,92 @@ call them yourself.
 
 =over 4
 
-=item C<$canonical_decomposed = getCanon($codepoint)>
+=item C<$canonical_decomposition = getCanon($code_point)>
 
-If the character of the specified codepoint is canonically
-decomposable (including Hangul Syllables),
-returns the B<completely decomposed> string canonically equivalent to it.
+If the character is canonically decomposable (including Hangul Syllables),
+it returns the (full) canonical decomposition as a string.
+Otherwise it returns C<undef>.
 
-If it is not decomposable, returns C<undef>.
+B<Note:> According to the Unicode standard, the canonical decomposition
+of the character that is not canonically decomposable is same as
+the character itself.
 
-=item C<$compatibility_decomposed = getCompat($codepoint)>
+=item C<$compatibility_decomposition = getCompat($code_point)>
 
-If the character of the specified codepoint is compatibility
-decomposable (including Hangul Syllables),
-returns the B<completely decomposed> string compatibility equivalent to it.
+If the character is compatibility decomposable (including Hangul Syllables),
+it returns the (full) compatibility decomposition as a string.
+Otherwise it returns C<undef>.
 
-If it is not decomposable, returns C<undef>.
+B<Note:> According to the Unicode standard, the compatibility decomposition
+of the character that is not compatibility decomposable is same as
+the character itself.
 
-=item C<$codepoint_composite = getComposite($codepoint_here, $codepoint_next)>
+=item C<$code_point_composite = getComposite($code_point_here, $code_point_next)>
 
-If two characters here and next (as codepoints) are composable
+If two characters here and next (as code points) are composable
 (including Hangul Jamo/Syllables and Composition Exclusions),
-returns the codepoint of the composite.
+it returns the code point of the composite.
 
-If they are not composable, returns C<undef>.
+If they are not composable, it returns C<undef>.
 
-=item C<$combining_class = getCombinClass($codepoint)>
+=item C<$combining_class = getCombinClass($code_point)>
 
-Returns the combining class of the character as an integer.
+It returns the combining class (as an integer) of the character.
 
-=item C<$is_exclusion = isExclusion($codepoint)>
+=item C<$may_be_composed_with_prev_char = isComp2nd($code_point)>
 
-Returns a boolean whether the character of the specified codepoint
-is a composition exclusion.
-
-=item C<$is_singleton = isSingleton($codepoint)>
-
-Returns a boolean whether the character of the specified codepoint is
-a singleton.
-
-=item C<$is_non_starter_decomposition = isNonStDecomp($codepoint)>
-
-Returns a boolean whether the canonical decomposition
-of the character of the specified codepoint
-is a Non-Starter Decomposition.
-
-=item C<$may_be_composed_with_prev_char = isComp2nd($codepoint)>
-
-Returns a boolean whether the character of the specified codepoint
+It returns a boolean whether the character of the specified codepoint
 may be composed with the previous one in a certain composition
 (including Hangul Compositions, but excluding
 Composition Exclusions and Non-Starter Decompositions).
+
+=item C<$is_exclusion = isExclusion($code_point)>
+
+It returns a boolean whether the code point is a composition exclusion.
+
+=item C<$is_singleton = isSingleton($code_point)>
+
+It returns a boolean whether the code point is a singleton
+
+=item C<$is_non_starter_decomposition = isNonStDecomp($code_point)>
+
+It returns a boolean whether the code point has Non-Starter Decomposition.
+
+=item C<$is_Full_Composition_Exclusion = isComp_Ex($code_point)>
+
+It returns a boolean of the derived property Comp_Ex
+(Full_Composition_Exclusion). This property is generated from
+Composition Exclusions + Singletons + Non-Starter Decompositions.
+
+=item C<$NFD_is_NO = isNFD_NO($code_point)>
+
+It returns a boolean of the derived property NFD_NO
+(NFD_Quick_Check=No).
+
+=item C<$NFC_is_NO = isNFC_NO($code_point)>
+
+It returns a boolean of the derived property NFC_NO
+(NFC_Quick_Check=No).
+
+=item C<$NFC_is_MAYBE = isNFC_MAYBE($code_point)>
+
+It returns a boolean of the derived property NFC_MAYBE
+(NFC_Quick_Check=Maybe).
+
+=item C<$NFKD_is_NO = isNFKD_NO($code_point)>
+
+It returns a boolean of the derived property NFKD_NO
+(NFKD_Quick_Check=No).
+
+=item C<$NFKC_is_NO = isNFKC_NO($code_point)>
+
+It returns a boolean of the derived property NFKC_NO
+(NFKC_Quick_Check=No).
+
+=item C<$NFKC_is_MAYBE = isNFKC_MAYBE($code_point)>
+
+It returns a boolean of the derived property NFKC_MAYBE
+(NFKC_Quick_Check=Maybe).
 
 =back
 
@@ -411,13 +445,14 @@ Since this module refers to perl core's Unicode database in the directory
 F</lib/unicore> (or formerly F</lib/unicode>), the Unicode version of
 normalization implemented by this module depends on your perl's version.
 
-    perl's version         implemented Unicode version
-       5.6.1                  3.0.1
-       5.7.2                  3.1.0
-       5.7.3                  3.1.1 (same normalized form as that of 3.1.0)
-       5.8.0                  3.2.0
-     5.8.1-5.8.3              4.0.0
-     5.8.4-5.8.6 (latest)     4.0.1 (same normalized form as that of 4.0.0)
+    perl's version     implemented Unicode version
+       5.6.1              3.0.1
+       5.7.2              3.1.0
+       5.7.3              3.1.1 (normalization is same as 3.1.0)
+       5.8.0              3.2.0
+     5.8.1-5.8.3          4.0.0
+     5.8.4-5.8.6          4.0.1 (normalization is same as 4.0.0)
+     5.8.7-5.8.8          4.1.0
 
 =item Correction of decomposition mapping
 
@@ -435,7 +470,7 @@ In Unicode 4.1.0, the definition D2 of canonical composition (which
 affects NFC and NFKC) has been changed (see Public Review Issue #29
 and recent UAX #15). This module has used the newer definition
 since the version 0.07 (Oct 31, 2001).
-This module does not support normalization according to the older
+This module will not support the normalization according to the older
 definition, even if the Unicode version implemented by perl is
 lower than 4.1.0.
 
@@ -445,7 +480,7 @@ lower than 4.1.0.
 
 SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-Copyright(C) 2001-2005, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2007, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
@@ -457,6 +492,10 @@ and/or modify it under the same terms as Perl itself.
 =item http://www.unicode.org/reports/tr15/
 
 Unicode Normalization Forms - UAX #15
+
+=item http://www.unicode.org/Public/UNIDATA/CompositionExclusions.txt
+
+Composition Exclusion Table
 
 =item http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt
 

@@ -1,7 +1,7 @@
 #!./perl
 # Test $!
 
-print "1..16\n";
+print "1..17\n";
 
 $teststring = "1\n12\n123\n1234\n1234\n12345\n\n123456\n1234567\n";
 
@@ -86,6 +86,11 @@ $/ = \$foo;
 $bar = <TESTFILE>;
 if ($bar eq "78") {print "ok 10\n";} else {print "not ok 10\n";}
 
+# Naughty straight number - should get the rest of the file
+$/ = \0;
+$bar = <TESTFILE>;
+if ($bar eq "90123456789012345678901234567890") {print "ok 11\n";} else {print "not ok 11\n";}
+
 close TESTFILE;
 
 # Now for the tricky bit--full record reading
@@ -110,23 +115,23 @@ if ($^O eq 'VMS') {
   open TESTFILE, "<./foo.bar";
   $/ = \10;
   $bar = <TESTFILE>;
-  if ($bar eq "foo\n") {print "ok 11\n";} else {print "not ok 11\n";}
+  if ($bar eq "foo\n") {print "ok 12\n";} else {print "not ok 12\n";}
   $bar = <TESTFILE>;
-  if ($bar eq "foobar\n") {print "ok 12\n";} else {print "not ok 12\n";}
+  if ($bar eq "foobar\n") {print "ok 13\n";} else {print "not ok 13\n";}
   # can we do a short read?
   $/ = \2;
   $bar = <TESTFILE>;
-  if ($bar eq "ba") {print "ok 13\n";} else {print "not ok 13\n";}
+  if ($bar eq "ba") {print "ok 14\n";} else {print "not ok 14\n";}
   # do we get the rest of the record?
   $bar = <TESTFILE>;
-  if ($bar eq "z\n") {print "ok 14\n";} else {print "not ok 14\n";}
+  if ($bar eq "z\n") {print "ok 15\n";} else {print "not ok 15\n";}
 
   close TESTFILE;
   1 while unlink qw(foo.bar foo.com foo.fdl);
 } else {
   # Nobody else does this at the moment (well, maybe OS/390, but they can
   # put their own tests in) so we just punt
-  foreach $test (11..14) {print "ok $test # skipped on non-VMS system\n"};
+  foreach $test (12..15) {print "ok $test # skipped on non-VMS system\n"};
 }
 
 $/ = "\n";
@@ -142,7 +147,7 @@ $/ = "\n";
     else {
 	print "not ";
     }
-    print "ok 15\n";
+    print "ok 16\n";
 }
 
 {
@@ -155,7 +160,7 @@ $/ = "\n";
     else {
 	print "not ";
     }
-    print "ok 16\n";
+    print "ok 17\n";
 }
 
 # Get rid of the temp file

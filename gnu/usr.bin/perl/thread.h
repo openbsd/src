@@ -1,6 +1,6 @@
 /*    thread.h
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -8,7 +8,7 @@
  *
  */
 
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+#if defined(USE_ITHREADS)
 
 #if defined(VMS)
 #include <builtins.h>
@@ -95,6 +95,11 @@
 #endif
 
 #ifdef DGUX
+#  define THREAD_CREATE_NEEDS_STACK (32*1024)
+#endif
+
+#ifdef __VMS
+  /* Default is 1024 on VAX, 8192 otherwise */
 #  define THREAD_CREATE_NEEDS_STACK (32*1024)
 #endif
 
@@ -333,9 +338,8 @@
 #ifndef ALLOC_THREAD_KEY
 #  define ALLOC_THREAD_KEY \
     STMT_START {						\
-	int _eC_;						\
-	if ((_eC_ = pthread_key_create(&PL_thr_key, 0))) {	\
-            write(2, "panic: pthread_key_create failed\n", 33); \
+	if (pthread_key_create(&PL_thr_key, 0)) {		\
+            write(2, STR_WITH_LEN("panic: pthread_key_create failed\n")); \
 	    exit(1);						\
 	}							\
     } STMT_END
@@ -363,66 +367,10 @@
 #  define THREAD_RET_CAST(p)	((void *)(p))
 #endif /* THREAD_RET */
 
-#if defined(USE_5005THREADS)
-
-/* Accessor for per-thread SVs */
-#  define THREADSV(i) (thr->threadsvp[i])
-
-/*
- * LOCK_SV_MUTEX and UNLOCK_SV_MUTEX are performance-critical. Here, we
- * try only locking them if there may be more than one thread in existence.
- * Systems with very fast mutexes (and/or slow conditionals) may wish to
- * remove the "if (threadnum) ..." test.
- * XXX do NOT use C<if (PL_threadnum) ...> -- it sets up race conditions!
- */
-#  define LOCK_SV_MUTEX		MUTEX_LOCK(&PL_sv_mutex)
-#  define UNLOCK_SV_MUTEX	MUTEX_UNLOCK(&PL_sv_mutex)
-#  define LOCK_STRTAB_MUTEX	MUTEX_LOCK(&PL_strtab_mutex)
-#  define UNLOCK_STRTAB_MUTEX	MUTEX_UNLOCK(&PL_strtab_mutex)
-#  define LOCK_CRED_MUTEX	MUTEX_LOCK(&PL_cred_mutex)
-#  define UNLOCK_CRED_MUTEX	MUTEX_UNLOCK(&PL_cred_mutex)
-#  define LOCK_FDPID_MUTEX	MUTEX_LOCK(&PL_fdpid_mutex)
-#  define UNLOCK_FDPID_MUTEX	MUTEX_UNLOCK(&PL_fdpid_mutex)
-#  define LOCK_SV_LOCK_MUTEX	MUTEX_LOCK(&PL_sv_lock_mutex)
-#  define UNLOCK_SV_LOCK_MUTEX	MUTEX_UNLOCK(&PL_sv_lock_mutex)
-
-/* Values and macros for thr->flags */
-#define THRf_STATE_MASK	7
-#define THRf_R_JOINABLE	0
-#define THRf_R_JOINED	1
-#define THRf_R_DETACHED	2
-#define THRf_ZOMBIE	3
-#define THRf_DEAD	4
-
-#define THRf_DID_DIE	8
-
-/* ThrSTATE(t) and ThrSETSTATE(t) must only be called while holding t->mutex */
-#define ThrSTATE(t) ((t)->flags & THRf_STATE_MASK)
-#define ThrSETSTATE(t, s) STMT_START {		\
-	(t)->flags &= ~THRf_STATE_MASK;		\
-	(t)->flags |= (s);			\
-	DEBUG_S(PerlIO_printf(Perl_debug_log,	\
-			      "thread %p set to state %d\n", (t), (s))); \
-    } STMT_END
-
-typedef struct condpair {
-    perl_mutex	mutex;		/* Protects all other fields */
-    perl_cond	owner_cond;	/* For when owner changes at all */
-    perl_cond	cond;		/* For cond_signal and cond_broadcast */
-    Thread	owner;		/* Currently owning thread */
-} condpair_t;
-
-#define MgMUTEXP(mg) (&((condpair_t *)(mg->mg_ptr))->mutex)
-#define MgOWNERCONDP(mg) (&((condpair_t *)(mg->mg_ptr))->owner_cond)
-#define MgCONDP(mg) (&((condpair_t *)(mg->mg_ptr))->cond)
-#define MgOWNER(mg) ((condpair_t *)(mg->mg_ptr))->owner
-
-#endif /* USE_5005THREADS */
-
 #  define LOCK_DOLLARZERO_MUTEX		MUTEX_LOCK(&PL_dollarzero_mutex)
 #  define UNLOCK_DOLLARZERO_MUTEX	MUTEX_UNLOCK(&PL_dollarzero_mutex)
 
-#endif /* USE_5005THREADS || USE_ITHREADS */
+#endif /* USE_ITHREADS */
 
 #ifndef MUTEX_LOCK
 #  define MUTEX_LOCK(m)

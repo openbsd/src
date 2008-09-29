@@ -251,7 +251,7 @@ would expect to see on a screen.
 sub run {
     my $cmd = shift;
 
-    require ExtUtils::MM;
+    use ExtUtils::MM;
 
     # Unix can handle 2>&1 and OS/2 from 5.005_54 up.
     # This makes our failure diagnostics nicer to read.
@@ -304,7 +304,7 @@ sub have_compiler {
 
     # ExtUtils::CBuilder prints its compilation lines to the screen.
     # Shut it up.
-    require TieOut;
+    use TieOut;
     local *STDOUT = *STDOUT;
     local *STDERR = *STDERR;
 

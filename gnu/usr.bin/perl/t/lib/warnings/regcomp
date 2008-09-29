@@ -2,10 +2,6 @@
 
   Quantifier unexpected on zero-length expression [S_study_chunk] 
 
-  (?p{}) is deprecated - use (??{})  [S_reg]
-    $a =~ /(?p{'x'})/ ;
-    
-
   Useless (%s%c) - %suse /%c modifier [S_reg] 
   Useless (%sc) - %suse /gc modifier [S_reg] 
 
@@ -55,6 +51,17 @@ no warnings 'regexp' ;
 $a =~ /a$x/ ;
 EXPECT
 Unrecognized escape \m passed through in regex; marked by <-- HERE in m/a\m <-- HERE / at - line 4.
+########
+# regcomp.c [S_regatom]
+# The \q should warn, the \_ should NOT warn.
+use warnings 'regexp';
+"foo" =~ /\q/;
+"bar" =~ /\_/;
+no warnings 'regexp';
+"foo" =~ /\q/;
+"bar" =~ /\_/;
+EXPECT
+Unrecognized escape \q passed through in regex; marked by <-- HERE in m/\q <-- HERE / at - line 4.
 ########
 # regcomp.c [S_regpposixcc S_checkposixcc]
 #
@@ -159,22 +166,6 @@ $a =~ /[a\zb]/ ;
 EXPECT
 Unrecognized escape \z in character class passed through in regex; marked by <-- HERE in m/[a\z <-- HERE b]/ at - line 3.
 
-########
-# regcomp.c [S_study_chunk]
-use warnings 'deprecated' ;
-$a = "xx" ;
-$a =~ /(?p{'x'})/ ;
-no warnings ;
-use warnings 'regexp' ;
-$a =~ /(?p{'x'})/ ;
-use warnings;
-no warnings 'deprecated' ;
-no warnings 'regexp' ;
-no warnings 'syntax' ;
-$a =~ /(?p{'x'})/ ;
-EXPECT
-(?p{}) is deprecated - use (??{}) in regex; marked by <-- HERE in m/(?p <-- HERE {'x'})/ at - line 4.
-(?p{}) is deprecated - use (??{}) in regex; marked by <-- HERE in m/(?p <-- HERE {'x'})/ at - line 7.
 ########
 # regcomp.c [S_reg]
 use warnings 'regexp' ;

@@ -4,7 +4,7 @@ BEGIN {
     require "test.pl";
 }
 
-plan tests => 4670;
+plan tests => 4784;
 
 sub MyUniClass {
   <<END;
@@ -50,7 +50,13 @@ sub test_regexp ($$) {
 
 use strict;
 
-my $str = join "", map chr($_), 0x20 .. 0x6F;
+my $str;
+
+if (ord('A') == 193) {
+    $str = join "", map chr($_), 0x40, 0x5A, 0x7F, 0x7B, 0x5B, 0x6C, 0x50, 0x7D, 0x4D, 0x5D, 0x5C, 0x4E, 0x6B, 0x60, 0x4B, 0x61, 0xF0 .. 0xF9, 0x7A, 0x5E, 0x4C, 0x7E, 0x6E, 0x6F, 0x7C, 0xC1 .. 0xC9, 0xD1 .. 0xD9, 0xE2 .. 0xE9, 0xAD, 0xE0, 0xBD, 0x5F, 0x6D, 0x79, 0x81 .. 0x89, 0x91 .. 0x96; # IBM-1047
+} else {
+    $str = join "", map chr($_), 0x20 .. 0x6F;
+}
 
 # make sure it finds built-in class
 is(($str =~ /(\p{Letter}+)/)[0], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
@@ -91,6 +97,27 @@ my $updir = File::Spec->updir;
 
 no warnings 'utf8'; # we do not want warnings about surrogates etc
 
+sub char_range {
+    my ($h1, $h2) = @_;
+
+    my $str;
+
+    if (ord('A') == 193 && $h1 < 256) {
+	my $h3 = ($h2 || $h1) + 1;
+	if ($h3 - $h1 == 1) {
+	    $str = join "", pack 'U*', $h1 .. $h3; # Using pack since chr doesn't generate Unicode chars for value < 256.
+	} elsif ($h3 - $h1 > 1) {
+	    for (my $i = $h1; $i <= $h3; $i++) {
+		$str = join "", $str, pack 'U*', $i;
+	    }
+	}
+    } else {
+	$str = join "", map chr, $h1 .. (($h2 || $h1) + 1);
+    }
+
+    return $str;
+}
+
 # non-General Category and non-Script
 while (my ($abbrev, $files) = each %utf8::PVA_abbr_map) {
   my $prop_name = $utf8::PropertyAlias{$abbrev};
@@ -104,7 +131,8 @@ while (my ($abbrev, $files) = each %utf8::PVA_abbr_map) {
 
     next unless -e $filename;
     my ($h1, $h2) = map hex, (split(/\t/, (do $filename), 3))[0,1];
-    my $str = join "", map chr, $h1 .. (($h2 || $h1) + 1);
+
+    my $str = char_range($h1, $h2);
 
     for my $p ($prop_name, $abbrev) {
       for my $c ($files->{$_}, $_) {
@@ -124,13 +152,17 @@ for my $p ('gc', 'sc') {
 
     next unless -e $filename;
     my ($h1, $h2) = map hex, (split(/\t/, (do $filename), 3))[0,1];
-    my $str = join "", map chr, $h1 .. (($h2 || $h1) + 1);
+
+    my $str = char_range($h1, $h2);
 
     for my $x ($p, { gc => 'General Category', sc => 'Script' }->{$p}) {
       for my $y ($abbr, $utf8::PropValueAlias{$p}{$abbr}, $utf8::PVA_abbr_map{gc_sc}{$abbr}) {
         is($str =~ /(\p{$x: $y}+)/ && $1, substr($str, 0, -1));
         is($str =~ /(\P{$x= $y}+)/ && $1, substr($str, -1));
-	test_regexp ($str, $y);
+        SKIP: {
+	  skip("surrogate", 1) if $abbr eq 'cs';
+ 	  test_regexp ($str, $y);
+        }
       }
     }
   }
@@ -139,7 +171,7 @@ for my $p ('gc', 'sc') {
 # test extra properties (ASCII_Hex_Digit, Bidi_Control, etc.)
 SKIP:
 {
-  skip "Can't reliably derive class names from file names", 592 if $^O eq 'VMS';
+  skip "Can't reliably derive class names from file names", 576 if $^O eq 'VMS';
 
   # On case tolerant filesystems, Cf.pl will cause a -e test for cf.pl to
   # return true. Try to work around this by reading the filenames explicitly
@@ -162,7 +194,8 @@ SKIP:
     my $filename = File::Spec->catfile($dirname, $leafname);
 
     my ($h1, $h2) = map hex, (split(/\t/, (do $filename), 3))[0,1];
-    my $str = join "", map chr, $h1 .. (($h2 || $h1) + 1);
+
+    my $str = char_range($h1, $h2);
 
     for my $x ('gc', 'General Category') {
       print "# $filename $x $_, $utf8::PA_reverse{$_}\n";
@@ -186,12 +219,16 @@ for (grep $utf8::Canonical{$_} =~ /^In/, keys %utf8::Canonical) {
   print "# In$_ $filename\n";
 
   my ($h1, $h2) = map hex, (split(/\t/, (do $filename), 3))[0,1];
-  my $str = join "", map chr, $h1 .. (($h2 || $h1) + 1);
+
+  my $str = char_range($h1, $h2);
 
   my $blk = $_;
 
-  test_regexp ($str, $blk);
-  $blk =~ s/^In/Block:/;
-  test_regexp ($str, $blk);
+  SKIP: {
+    skip($blk, 2) if $blk =~ /surrogates/i;
+    test_regexp ($str, $blk);
+    $blk =~ s/^In/Block:/;
+    test_regexp ($str, $blk);
+  }
 }
 

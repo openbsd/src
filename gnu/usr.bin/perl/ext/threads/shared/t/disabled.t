@@ -1,24 +1,26 @@
-#!./perl -Tw
-
-# Tests of threads::shared's behavior when threads are disabled.
+use strict;
+use warnings;
 
 BEGIN {
-    chdir 't';
-    @INC = '../lib';
-    require Config;
-    if (($Config::Config{'extensions'} !~ m!\bthreads/shared\b!) ){
-        print "1..0 # Skip -- Perl configured without threads::shared module\n";
-        exit 0;
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
+    }
+    use Config;
+    if (! $Config{'useithreads'}) {
+        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        exit(0);
     }
 }
 
-# Can't use Test::More, it turns threads on.
 use Test;
 plan tests => 31;
 
 use threads::shared;
 
-# Make sure threads are really off.
+### Start of Testing ###
+
+# Make sure threads are really off
 ok( !$INC{"threads.pm"} );
 
 # Check each faked function.
@@ -56,3 +58,5 @@ foreach my $func (qw(cond_wait cond_signal cond_broadcast)) {
     lock(@array);
     ok( "@array", "1 2 3 4" );
 }
+
+# EOF

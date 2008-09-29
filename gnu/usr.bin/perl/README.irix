@@ -74,14 +74,10 @@ errors (especially with -Duse64bitall).
 =head2 Building with threads in Irix
 
 Run Configure with -Duseithreads which will configure Perl with
-the new Perl 5.8.0 "interpreter threads", see L<threads>.
+the Perl 5.8.0 "interpreter threads", see L<threads>.
 
-The old Perl 5.005 threads is obsolete, unmaintained, and its use is
-discouraged.  If you really want it, run Configure with the
--Dusethreads -Duse5005threads options as described in INSTALL.
-
-For either thread model and for Irix 6.2, you have to have the
-following patches installed:
+For Irix 6.2 with perl threads, you have to have the following
+patches installed:
 
         1404 Irix 6.2 Posix 1003.1b man pages
         1645 Irix 6.2 & 6.3 POSIX header file updates

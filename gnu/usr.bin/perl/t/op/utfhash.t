@@ -175,6 +175,17 @@ foreach ("\x7f","\xff")
 }
 
 {
+    local $/; # Slurp.
+    my $utf8      = <DATA>;
+    my $utfebcdic = <DATA>;
+    if (ord('A') == 65) {
+	eval $utf8;
+    } elsif (ord('A') == 193) {
+	eval $utfebcdic;
+    }
+}
+__END__
+{
   # See if utf8 barewords work [perl #22969]
   use utf8;
   my %hash = (—Ç–µ—Å—Ç => 123);
@@ -185,4 +196,17 @@ foreach ("\x7f","\xff")
   is($hash{—Ç–µ—Å—Ç}, $hash{'—Ç–µ—Å—Ç'});
   is($hash{—Ç–µ—Å—Ç}, 123);
   is($hash{'—Ç–µ—Å—Ç'}, 123);
+}
+__END__
+{
+  # See if utf8 barewords work [perl #22969]
+  use utf8; # UTF-EBCDIC, really.
+  my %hash = (Ω‰‰Ω‚¿Ω‰‚Ω‰‰ => 123);
+  is($hash{Ω‰‰Ω‚¿Ω‰‚Ω‰‰}, $hash{'Ω‰‰Ω‚¿Ω‰‚Ω‰‰'});
+  is($hash{Ω‰‰Ω‚¿Ω‰‚Ω‰‰}, 123);
+  is($hash{'Ω‰‰Ω‚¿Ω‰‚Ω‰‰'}, 123);
+  %hash = (Ω‰‰Ω‚¿Ω‰‚Ω‰‰ => 123);
+  is($hash{Ω‰‰Ω‚¿Ω‰‚Ω‰‰}, $hash{'Ω‰‰Ω‚¿Ω‰‚Ω‰‰'});
+  is($hash{Ω‰‰Ω‚¿Ω‰‚Ω‰‰}, 123);
+  is($hash{'Ω‰‰Ω‚¿Ω‰‚Ω‰‰'}, 123);
 }

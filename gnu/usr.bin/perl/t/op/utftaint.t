@@ -2,10 +2,6 @@
 # tests whether tainting works with UTF-8
 
 BEGIN {
-    if ($ENV{PERL_CORE_MINITEST}) {
-        print "1..0 # Skip: no dynamic loading on miniperl, no threads\n";
-        exit 0;
-    }
     chdir 't' if -d 't';
     @INC = qw(../lib);
 }
@@ -13,26 +9,21 @@ BEGIN {
 use strict;
 use Config;
 
-BEGIN {
-    if ($Config{extensions} !~ m(\bList/Util\b)) {
-        print "1..0 # Skip: no Scalar::Util module\n";
-        exit 0;
-    }
+# How to identify taint when you see it
+sub any_tainted (@) {
+    not eval { join("",@_), kill 0; 1 };
+}
+sub tainted ($) {
+    any_tainted @_;
 }
 
-use Scalar::Util qw(tainted);
-
-use Test;
-plan tests => 3*10 + 3*8 + 2*16;
-my $cnt = 0;
+require './test.pl';
+plan(tests => 3*10 + 3*8 + 2*16 + 2);
 
 my $arg = $ENV{PATH}; # a tainted value
 use constant UTF8 => "\x{1234}";
 
-sub is_utf8 {
-    my $s = shift;
-    return 0xB6 != ord pack('a*', chr(0xB6).$s);
-}
+*is_utf8 = \&utf8::is_utf8;
 
 for my $ary ([ascii => 'perl'], [latin1 => "\xB6"], [utf8 => "\x{100}"]) {
     my $encode = $ary->[0];
@@ -40,41 +31,31 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"], [utf8 => "\x{100}"]) {
 
     my $taint = $arg; substr($taint, 0) = $ary->[1];
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, before test\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, before test");
 
     my $lconcat = $taint;
        $lconcat .= UTF8;
-    print $lconcat eq $string.UTF8
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, concat left\n";
+    is($lconcat, $string.UTF8, "compare: $encode, concat left");
 
-    print tainted($lconcat) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, concat left\n";
+    is(tainted($lconcat), tainted($arg), "tainted: $encode, concat left");
 
     my $rconcat = UTF8;
        $rconcat .= $taint;
-    print $rconcat eq UTF8.$string
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, concat right\n";
+    is($rconcat, UTF8.$string, "compare: $encode, concat right");
 
-    print tainted($rconcat) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, concat right\n";
+    is(tainted($rconcat), tainted($arg), "tainted: $encode, concat right");
 
     my $ljoin = join('!', $taint, UTF8);
-    print $ljoin eq join('!', $string, UTF8)
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, join left\n";
+    is($ljoin, join('!', $string, UTF8), "compare: $encode, join left");
 
-    print tainted($ljoin) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, join left\n";
+    is(tainted($ljoin), tainted($arg), "tainted: $encode, join left");
 
     my $rjoin = join('!', UTF8, $taint);
-    print $rjoin eq join('!', UTF8, $string)
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, join right\n";
+    is($rjoin, join('!', UTF8, $string), "compare: $encode, join right");
 
-    print tainted($rjoin) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, join right\n";
+    is(tainted($rjoin), tainted($arg), "tainted: $encode, join right");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, after test\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, after test");
 }
 
 
@@ -82,37 +63,29 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"], [utf8 => "\x{100}"]) {
     my $encode = $ary->[0];
 
     my $utf8 = pack('U*') . $ary->[1];
-    my $byte = pack('C0a*', $utf8);
+    my $byte = unpack('U0a*', $utf8);
 
     my $taint = $arg; substr($taint, 0) = $utf8;
     utf8::encode($taint);
 
-    print $taint eq $byte
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, encode utf8\n";
+    is($taint, $byte, "compare: $encode, encode utf8");
 
-    print pack('a*',$taint) eq pack('a*',$byte)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, encode utf8\n";
+    is(pack('a*',$taint), pack('a*',$byte), "bytecmp: $encode, encode utf8");
 
-    print !is_utf8($taint)
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, encode utf8\n";
+    ok(!is_utf8($taint), "is_utf8: $encode, encode utf8");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, encode utf8\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, encode utf8");
 
     my $taint = $arg; substr($taint, 0) = $byte;
     utf8::decode($taint);
 
-    print $taint eq $utf8
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, decode byte\n";
+    is($taint, $utf8, "compare: $encode, decode byte");
 
-    print pack('a*',$taint) eq pack('a*',$utf8)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, decode byte\n";
+    is(pack('a*',$taint), pack('a*',$utf8), "bytecmp: $encode, decode byte");
 
-    print is_utf8($taint) eq ($encode ne 'ascii')
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, decode byte\n";
+    is(is_utf8($taint), ($encode ne 'ascii'), "is_utf8: $encode, decode byte");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, decode byte\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, decode byte");
 }
 
 
@@ -120,67 +93,59 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"]) {
     my $encode = $ary->[0];
 
     my $up   = pack('U*') . $ary->[1];
-    my $down = pack('C0a*', $ary->[1]);
+    my $down = pack("a*", $ary->[1]);
 
     my $taint = $arg; substr($taint, 0) = $up;
     utf8::upgrade($taint);
 
-    print $taint eq $up
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, upgrade up\n";
+    is($taint, $up, "compare: $encode, upgrade up");
 
-    print pack('a*',$taint) eq pack('a*',$up)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, upgrade up\n";
+    is(pack('a*',$taint), pack('a*',$up), "bytecmp: $encode, upgrade up");
 
-    print is_utf8($taint)
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, upgrade up\n";
+    ok(is_utf8($taint), "is_utf8: $encode, upgrade up");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, upgrade up\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, upgrade up");
 
     my $taint = $arg; substr($taint, 0) = $down;
     utf8::upgrade($taint);
 
-    print $taint eq $up
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, upgrade down\n";
+    is($taint, $up, "compare: $encode, upgrade down");
 
-    print pack('a*',$taint) eq pack('a*',$up)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, upgrade down\n";
+    is(pack('a*',$taint), pack('a*',$up), "bytecmp: $encode, upgrade down");
 
-    print is_utf8($taint)
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, upgrade down\n";
+    ok(is_utf8($taint), "is_utf8: $encode, upgrade down");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, upgrade down\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, upgrade down");
 
     my $taint = $arg; substr($taint, 0) = $up;
     utf8::downgrade($taint);
 
-    print $taint eq $down
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, downgrade up\n";
+    is($taint, $down, "compare: $encode, downgrade up");
 
-    print pack('a*',$taint) eq pack('a*',$down)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, downgrade up\n";
+    is(pack('a*',$taint), pack('a*',$down), "bytecmp: $encode, downgrade up");
 
-    print !is_utf8($taint)
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, downgrade up\n";
+    ok(!is_utf8($taint), "is_utf8: $encode, downgrade up");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, downgrade up\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, downgrade up");
 
     my $taint = $arg; substr($taint, 0) = $down;
     utf8::downgrade($taint);
 
-    print $taint eq $down
-	? "ok " : "not ok ", ++$cnt, " # compare: $encode, downgrade down\n";
+    is($taint, $down, "compare: $encode, downgrade down");
 
-    print pack('a*',$taint) eq pack('a*',$down)
-	? "ok " : "not ok ", ++$cnt, " # bytecmp: $encode, downgrade down\n";
+    is(pack('a*',$taint), pack('a*',$down), "bytecmp: $encode, downgrade down");
 
-    print !is_utf8($taint)
-	? "ok " : "not ok ", ++$cnt, " # is_utf8: $encode, downgrade down\n";
+    ok(!is_utf8($taint), "is_utf8: $encode, downgrade down");
 
-    print tainted($taint) == tainted($arg)
-	? "ok " : "not ok ", ++$cnt, " # tainted: $encode, downgrade down\n";
+    is(tainted($taint), tainted($arg), "tainted: $encode, downgrade down");
 }
 
+{
+    fresh_perl_is('$a = substr $^X, 0, 0; /\x{100}/i; /$a\x{100}/i || print q,ok,',
+		  'ok', {switches => ["-T", "-l"]},
+		  "matching a regexp is taint agnostic");
 
+    fresh_perl_is('$a = substr $^X, 0, 0; /$a\x{100}/i || print q,ok,',
+		  'ok', {switches => ["-T", "-l"]},
+		  "therefore swash_init should be taint agnostic");
+}

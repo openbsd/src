@@ -56,7 +56,7 @@ use XSLoader ();
     ) ],
 );
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 
 sub import {
     require Exporter;

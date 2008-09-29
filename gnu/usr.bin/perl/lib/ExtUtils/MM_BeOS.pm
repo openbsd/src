@@ -1,5 +1,7 @@
 package ExtUtils::MM_BeOS;
 
+use strict;
+
 =head1 NAME
 
 ExtUtils::MM_BeOS - methods to override UN*X behaviour in ExtUtils::MakeMaker
@@ -16,7 +18,7 @@ the semantics.
 
 =over 4
 
-=cut 
+=cut
 
 use ExtUtils::MakeMaker::Config;
 use File::Spec;
@@ -25,7 +27,7 @@ require ExtUtils::MM_Unix;
 
 use vars qw(@ISA $VERSION);
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-$VERSION = '1.05';
+$VERSION = '6.42';
 
 
 =item os_flavor

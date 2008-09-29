@@ -1,10 +1,9 @@
 package B::Terse;
 
-our $VERSION = '1.03_01';
+our $VERSION = '1.05';
 
 use strict;
-use B qw(class);
-use B::Asmdata qw(@specialsv_name);
+use B qw(class @specialsv_name);
 use B::Concise qw(concise_subref set_style_standard);
 use Carp;
 

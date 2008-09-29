@@ -7,7 +7,7 @@ BEGIN {
 	require Config; import Config;
 }
 
-use Test::More tests => 16;
+use Test::More tests => 22;
 
 # open::import expects 'open' as its first argument, but it clashes with open()
 sub import {
@@ -21,10 +21,6 @@ ok( require 'open.pm', 'requiring open' );
 eval { import() };
 like( $@, qr/needs explicit list of PerlIO layers/,
 	'import should fail without args' );
-
-# the hint bits shouldn't be set yet
-is( $^H & $open::hint_bits, 0,
-	'hint bits should not be set in $^H before open import' );
 
 # prevent it from loading I18N::Langinfo, so we can test encoding failures
 my $warn;
@@ -48,8 +44,6 @@ like( $warn, qr/Unknown PerlIO layer/,
 
 # see if it sets the magic variables appropriately
 import( 'IN', ':crlf' );
-ok( $^H & $open::hint_bits,
-	'hint bits should be set in $^H after open import' );
 is( $^H{'open_IN'}, 'crlf', 'should have set crlf layer' );
 
 # it should reset them appropriately, too
@@ -67,7 +61,7 @@ is( ${^OPEN}, ":raw :crlf\0:raw :crlf",
 is( $^H{'open_IO'}, 'crlf', 'should record last layer set in %^H' );
 
 SKIP: {
-    skip("no perlio, no :utf8", 4) unless (find PerlIO::Layer 'perlio');
+    skip("no perlio, no :utf8", 12) unless (find PerlIO::Layer 'perlio');
 
     eval <<EOE;
     use open ':utf8';
@@ -118,51 +112,73 @@ EOE
     ok($ok == @a,
        "on :utf8 streams sysread() should work on characters, not bytes");
 
-    # syswrite() on should work on characters, not bytes
-    open G, ">:utf8", "b";
-    $ok = $a = 0;
-    for (@a) {
-	unless (
-		($c = syswrite(G, $_, 1)) == 1 &&
-		systell(G)                == ($a += bytes::length($_))
-		) {
-	    print '# ord($_)           == ', ord($_), "\n";
-	    print '# bytes::length($_) == ', bytes::length($_), "\n";
-	    print '# systell(G)        == ', systell(G), "\n";
-	    print '# $a                == ', $a, "\n";
-	    print '# $c                == ', $c, "\n";
-	    print "not ";
-	    last;
-	}
-	$ok++;
+    sub diagnostics {
+	print '# ord($_)           == ', ord($_), "\n";
+	print '# bytes::length($_) == ', bytes::length($_), "\n";
+	print '# systell(G)        == ', systell(G), "\n";
+	print '# $a                == ', $a, "\n";
+	print '# $c                == ', $c, "\n";
     }
-    close G;
-    ok($ok == @a,
-       "on :utf8 streams syswrite() should work on characters, not bytes");
 
-    open G, "<:utf8", "b";
-    $ok = $a = 0;
-    for (@a) {
-	unless (
-		($c = sysread(G, $b, 1)) == 1 &&
-		length($b)               == 1 &&
-		ord($b)                  == ord($_) &&
-		systell(G)               == ($a += bytes::length($_))
-		) {
-	    print '# ord($_)           == ', ord($_), "\n";
-	    print '# ord($b)           == ', ord($b), "\n";
-	    print '# length($b)        == ', length($b), "\n";
-	    print '# bytes::length($b) == ', bytes::length($b), "\n";
-	    print '# systell(G)        == ', systell(G), "\n";
-	    print '# $a                == ', $a, "\n";
-	    print '# $c                == ', $c, "\n";
-	    last;
+
+    my %actions = (
+		   syswrite => sub { syswrite G, shift; },
+		   'syswrite len' => sub { syswrite G, shift, 1; },
+		   'syswrite len pad' => sub {
+		       my $temp = shift() . "\243";
+		       syswrite G, $temp, 1; },
+		   'syswrite off' => sub { 
+		       my $temp = "\351" . shift();
+		       syswrite G, $temp, 1, 1; },
+		   'syswrite off pad' => sub { 
+		       my $temp = "\351" . shift() . "\243";
+		       syswrite G, $temp, 1, 1; },
+		  );
+
+    foreach my $key (sort keys %actions) {
+	# syswrite() on should work on characters, not bytes
+	open G, ">:utf8", "b";
+
+	print "# $key\n";
+	$ok = $a = 0;
+	for (@a) {
+	    unless (
+		    ($c = $actions{$key}($_)) == 1 &&
+		    systell(G)                == ($a += bytes::length($_))
+		   ) {
+		diagnostics();
+		last;
+	    }
+	    $ok++;
 	}
-	$ok++;
+	close G;
+	ok($ok == @a,
+	   "on :utf8 streams syswrite() should work on characters, not bytes");
+
+	open G, "<:utf8", "b";
+	$ok = $a = 0;
+	for (@a) {
+	    unless (
+		    ($c = sysread(G, $b, 1)) == 1 &&
+		    length($b)               == 1 &&
+		    ord($b)                  == ord($_) &&
+		    systell(G)               == ($a += bytes::length($_))
+		   ) {
+		print '# ord($_)           == ', ord($_), "\n";
+		print '# ord($b)           == ', ord($b), "\n";
+		print '# length($b)        == ', length($b), "\n";
+		print '# bytes::length($b) == ', bytes::length($b), "\n";
+		print '# systell(G)        == ', systell(G), "\n";
+		print '# $a                == ', $a, "\n";
+		print '# $c                == ', $c, "\n";
+		last;
+	    }
+	    $ok++;
+	}
+	close G;
+	ok($ok == @a,
+	   "checking syswrite() output on :utf8 streams by reading it back in");
     }
-    close G;
-    ok($ok == @a,
-       "checking syswrite() output on :utf8 streams by reading it back in");
 }
 
 SKIP: {

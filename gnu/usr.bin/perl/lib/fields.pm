@@ -3,7 +3,7 @@ package fields;
 require 5.005;
 use strict;
 no strict 'refs';
-unless( eval q{require warnings::register; warnings::register->import} ) {
+unless( eval q{require warnings::register; warnings::register->import; 1} ) {
     *warnings::warnif = sub { 
         require Carp;
         Carp::carp(@_);
@@ -11,7 +11,7 @@ unless( eval q{require warnings::register; warnings::register->import} ) {
 }
 use vars qw(%attr $VERSION);
 
-$VERSION = '2.03';
+$VERSION = '2.13';
 
 # constant.pm is slow
 sub PUBLIC     () { 2**0  }
@@ -42,19 +42,19 @@ sub import {
     bless \%{"$package\::FIELDS"}, 'pseudohash';
 
     if ($next > $fattr->[0]
-	and ($fields->{$_[0]} || 0) >= $fattr->[0])
+        and ($fields->{$_[0]} || 0) >= $fattr->[0])
     {
-	# There are already fields not belonging to base classes.
-	# Looks like a possible module reload...
-	$next = $fattr->[0];
+        # There are already fields not belonging to base classes.
+        # Looks like a possible module reload...
+        $next = $fattr->[0];
     }
     foreach my $f (@_) {
-	my $fno = $fields->{$f};
+        my $fno = $fields->{$f};
 
-	# Allow the module to be reloaded so long as field positions
-	# have not changed.
-	if ($fno and $fno != $next) {
-	    require Carp;
+        # Allow the module to be reloaded so long as field positions
+        # have not changed.
+        if ($fno and $fno != $next) {
+            require Carp;
             if ($fno < $fattr->[0]) {
               if ($] < 5.006001) {
                 warn("Hides field '$f' in base class") if $^W;
@@ -64,19 +64,19 @@ sub import {
             } else {
                 Carp::croak("Field name '$f' already in use");
             }
-	}
-	$fields->{$f} = $next;
+        }
+        $fields->{$f} = $next;
         $fattr->[$next] = ($f =~ /^_/) ? PRIVATE : PUBLIC;
-	$next += 1;
+        $next += 1;
     }
     if (@$fattr > $next) {
-	# Well, we gave them the benefit of the doubt by guessing the
-	# module was reloaded, but they appear to be declaring fields
-	# in more than one place.  We can't be sure (without some extra
-	# bookkeeping) that the rest of the fields will be declared or
-	# have the same positions, so punt.
-	require Carp;
-	Carp::croak ("Reloaded module must declare all fields at once");
+        # Well, we gave them the benefit of the doubt by guessing the
+        # module was reloaded, but they appear to be declaring fields
+        # in more than one place.  We can't be sure (without some extra
+        # bookkeeping) that the rest of the fields will be declared or
+        # have the same positions, so punt.
+        require Carp;
+        Carp::croak ("Reloaded module must declare all fields at once");
     }
 }
 
@@ -88,25 +88,25 @@ sub inherit {
 sub _dump  # sometimes useful for debugging
 {
     for my $pkg (sort keys %attr) {
-	print "\n$pkg";
-	if (@{"$pkg\::ISA"}) {
-	    print " (", join(", ", @{"$pkg\::ISA"}), ")";
-	}
-	print "\n";
-	my $fields = \%{"$pkg\::FIELDS"};
-	for my $f (sort {$fields->{$a} <=> $fields->{$b}} keys %$fields) {
-	    my $no = $fields->{$f};
-	    print "   $no: $f";
-	    my $fattr = $attr{$pkg}[$no];
-	    if (defined $fattr) {
-		my @a;
-		push(@a, "public")    if $fattr & PUBLIC;
-		push(@a, "private")   if $fattr & PRIVATE;
-		push(@a, "inherited") if $fattr & INHERITED;
-		print "\t(", join(", ", @a), ")";
-	    }
-	    print "\n";
-	}
+        print "\n$pkg";
+        if (@{"$pkg\::ISA"}) {
+            print " (", join(", ", @{"$pkg\::ISA"}), ")";
+        }
+        print "\n";
+        my $fields = \%{"$pkg\::FIELDS"};
+        for my $f (sort {$fields->{$a} <=> $fields->{$b}} keys %$fields) {
+            my $no = $fields->{$f};
+            print "   $no: $f";
+            my $fattr = $attr{$pkg}[$no];
+            if (defined $fattr) {
+                my @a;
+                push(@a, "public")    if $fattr & PUBLIC;
+                push(@a, "private")   if $fattr & PRIVATE;
+                push(@a, "inherited") if $fattr & INHERITED;
+                print "\t(", join(", ", @a), ")";
+            }
+            print "\n";
+        }
     }
 }
 
@@ -124,9 +124,17 @@ if ($] < 5.009) {
     my $self = bless {}, $class;
 
     # The lock_keys() prototype won't work since we require Hash::Util :(
-    &Hash::Util::lock_keys(\%$self, keys %{$class.'::FIELDS'});
+    &Hash::Util::lock_keys(\%$self, _accessible_keys($class));
     return $self;
   }
+}
+
+sub _accessible_keys {
+    my ($class) = @_;
+    return (
+        keys %{$class.'::FIELDS'},
+        map(_accessible_keys($_), @{$class.'::ISA'}),
+    );
 }
 
 sub phash {
@@ -177,16 +185,16 @@ fields - compile-time class fields
     {
         package Foo;
         use fields qw(foo bar _Foo_private);
-	sub new {
-	    my Foo $self = shift;
-	    unless (ref $self) {
-		$self = fields::new($self);
-		$self->{_Foo_private} = "this is Foo's secret";
-	    }
-	    $self->{foo} = 10;
-	    $self->{bar} = 20;
-	    return $self;
-	}
+        sub new {
+            my Foo $self = shift;
+            unless (ref $self) {
+                $self = fields::new($self);
+                $self->{_Foo_private} = "this is Foo's secret";
+            }
+            $self->{foo} = 10;
+            $self->{bar} = 20;
+            return $self;
+        }
     }
 
     my $var = Foo->new;
@@ -199,15 +207,15 @@ fields - compile-time class fields
     {
         package Bar;
         use base 'Foo';
-        use fields qw(baz _Bar_private);	# not shared with Foo
-	sub new {
-	    my $class = shift;
-	    my $self = fields::new($class);
-	    $self->SUPER::new();		# init base fields
-	    $self->{baz} = 10;			# init own fields
-	    $self->{_Bar_private} = "this is Bar's secret";
-	    return $self;
-	}
+        use fields qw(baz _Bar_private);        # not shared with Foo
+        sub new {
+            my $class = shift;
+            my $self = fields::new($class);
+            $self->SUPER::new();                # init base fields
+            $self->{baz} = 10;                  # init own fields
+            $self->{_Bar_private} = "this is Bar's secret";
+            return $self;
+        }
     }
 
 =head1 DESCRIPTION
@@ -268,11 +276,11 @@ This makes it possible to write a constructor like this:
     use fields qw(cat dog bird);
 
     sub new {
-	my $self = shift;
-	$self = fields::new($self) unless ref $self;
-	$self->{cat} = 'meow';				# scalar element
-	@$self{'dog','bird'} = ('bark','tweet');	# slice
-	return $self;
+        my $self = shift;
+        $self = fields::new($self) unless ref $self;
+        $self->{cat} = 'meow';                          # scalar element
+        @$self{'dog','bird'} = ('bark','tweet');        # slice
+        return $self;
     }
 
 =item phash

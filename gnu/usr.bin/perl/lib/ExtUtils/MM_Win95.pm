@@ -1,7 +1,9 @@
 package ExtUtils::MM_Win95;
 
+use strict;
+
 use vars qw($VERSION @ISA);
-$VERSION = '0.04';
+$VERSION = '6.42';
 
 require ExtUtils::MM_Win32;
 @ISA = qw(ExtUtils::MM_Win32);
@@ -22,7 +24,7 @@ ExtUtils::MM_Win95 - method to customize MakeMaker for Win9X
 This is a subclass of ExtUtils::MM_Win32 containing changes necessary
 to get MakeMaker playing nice with command.com and other Win9Xisms.
 
-=head2 Overriden methods
+=head2 Overridden methods
 
 Most of these make up for limitations in the Win9x/nmake command shell.
 Mostly its lack of &&.

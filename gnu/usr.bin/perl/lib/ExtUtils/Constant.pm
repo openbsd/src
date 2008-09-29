@@ -1,6 +1,6 @@
 package ExtUtils::Constant;
 use vars qw (@ISA $VERSION @EXPORT_OK %EXPORT_TAGS);
-$VERSION = 0.17;
+$VERSION = 0.20;
 
 =head1 NAME
 
@@ -243,17 +243,23 @@ EOT
   $xs .= ', &sv' if $params->{SV};
   $xs .= ");\n";
 
+  # If anyone is insane enough to suggest a package name containing %
+  my $package_sprintf_safe = $package;
+  $package_sprintf_safe =~ s/%/%%/g;
+
   $xs .= << "EOT";
       /* Return 1 or 2 items. First is error message, or undef if no error.
            Second, if present, is found value */
         switch (type) {
         case PERL_constant_NOTFOUND:
-          sv = sv_2mortal(newSVpvf("%s is not a valid $package macro", s));
+          sv =
+	    sv_2mortal(newSVpvf("%s is not a valid $package_sprintf_safe macro", s));
           PUSHs(sv);
           break;
         case PERL_constant_NOTDEF:
           sv = sv_2mortal(newSVpvf(
-	    "Your vendor has not defined $package macro %s, used", s));
+	    "Your vendor has not defined $package_sprintf_safe macro %s, used",
+				   s));
           PUSHs(sv);
           break;
 EOT
@@ -283,7 +289,7 @@ EOT
   $xs .= << "EOT";
         default:
           sv = sv_2mortal(newSVpvf(
-	    "Unexpected return type %d while processing $package macro %s, used",
+	    "Unexpected return type %d while processing $package_sprintf_safe macro %s, used",
                type, s));
           PUSHs(sv);
         }
@@ -432,6 +438,11 @@ for each group with this number or more names in.
 An array of constants' names, either scalars containing names, or hashrefs
 as detailed in L<"C_constant">.
 
+=item C_FH
+
+A filehandle to write the C code to.  If not given, then I<C_FILE> is opened
+for writing.
+
 =item C_FILE
 
 The name of the file to write containing the C code.  The default is
@@ -439,6 +450,11 @@ C<const-c.inc>.  The C<-> in the name ensures that the file can't be
 mistaken for anything related to a legitimate perl package name, and
 not naming the file C<.c> avoids having to override Makefile.PL's
 C<.xs> to C<.c> rules.
+
+=item XS_FH
+
+A filehandle to write the XS code to.  If not given, then I<XS_FILE> is opened
+for writing.
 
 =item XS_FILE
 
@@ -474,42 +490,62 @@ sub WriteConstants {
 
   croak "Module name not specified" unless length $ARGS{NAME};
 
-  my ($c_fh, $xs_fh);
-  if ($] <= 5.008) {
-      # We need these little games, rather than doing things unconditionally,
-      # because we're used in core Makefile.PLs before IO is available (needed
-      # by filehandle), but also we want to work on older perls where undefined
-      # scalars do not automatically turn into anonymous file handles.
-      require FileHandle;
-      $c_fh = FileHandle->new();
-      $xs_fh = FileHandle->new();
+  my $c_fh = $ARGS{C_FH};
+  if (!$c_fh) {
+      if ($] <= 5.008) {
+	  # We need these little games, rather than doing things
+	  # unconditionally, because we're used in core Makefile.PLs before
+	  # IO is available (needed by filehandle), but also we want to work on
+	  # older perls where undefined scalars do not automatically turn into
+	  # anonymous file handles.
+	  require FileHandle;
+	  $c_fh = FileHandle->new();
+      }
+      open $c_fh, ">$ARGS{C_FILE}" or die "Can't open $ARGS{C_FILE}: $!";
   }
-  open $c_fh, ">$ARGS{C_FILE}" or die "Can't open $ARGS{C_FILE}: $!";
-  open $xs_fh, ">$ARGS{XS_FILE}" or die "Can't open $ARGS{XS_FILE}: $!";
+
+  my $xs_fh = $ARGS{XS_FH};
+  if (!$xs_fh) {
+      if ($] <= 5.008) {
+	  require FileHandle;
+	  $xs_fh = FileHandle->new();
+      }
+      open $xs_fh, ">$ARGS{XS_FILE}" or die "Can't open $ARGS{XS_FILE}: $!";
+  }
 
   # As this subroutine is intended to make code that isn't edited, there's no
   # need for the user to specify any types that aren't found in the list of
   # names.
-  my $types = {};
+  
+  if ($ARGS{PROXYSUBS}) {
+      require ExtUtils::Constant::ProxySubs;
+      $ARGS{C_FH} = $c_fh;
+      $ARGS{XS_FH} = $xs_fh;
+      ExtUtils::Constant::ProxySubs->WriteConstants(%ARGS);
+  } else {
+      my $types = {};
 
-  print $c_fh constant_types(); # macro defs
-  print $c_fh "\n";
+      print $c_fh constant_types(); # macro defs
+      print $c_fh "\n";
 
-  # indent is still undef. Until anyone implements indent style rules with it.
-  foreach (ExtUtils::Constant::XS->C_constant({package => $ARGS{NAME},
-					       subname => $ARGS{C_SUBNAME},
-					       default_type =>
-					       $ARGS{DEFAULT_TYPE},
-					       types => $types,
-					       breakout => $ARGS{BREAKOUT_AT}},
-					       @{$ARGS{NAMES}})) {
-    print $c_fh $_, "\n"; # C constant subs
+      # indent is still undef. Until anyone implements indent style rules with
+      # it.
+      foreach (ExtUtils::Constant::XS->C_constant({package => $ARGS{NAME},
+						   subname => $ARGS{C_SUBNAME},
+						   default_type =>
+						       $ARGS{DEFAULT_TYPE},
+						       types => $types,
+						       breakout =>
+						       $ARGS{BREAKOUT_AT}},
+						  @{$ARGS{NAMES}})) {
+	  print $c_fh $_, "\n"; # C constant subs
+      }
+      print $xs_fh XS_constant ($ARGS{NAME}, $types, $ARGS{XS_SUBNAME},
+				$ARGS{C_SUBNAME});
   }
-  print $xs_fh XS_constant ($ARGS{NAME}, $types, $ARGS{XS_SUBNAME},
-                            $ARGS{C_SUBNAME});
 
-  close $c_fh or warn "Error closing $ARGS{C_FILE}: $!";
-  close $xs_fh or warn "Error closing $ARGS{XS_FILE}: $!";
+  close $c_fh or warn "Error closing $ARGS{C_FILE}: $!" unless $ARGS{C_FH};
+  close $xs_fh or warn "Error closing $ARGS{XS_FILE}: $!" unless $ARGS{XS_FH};
 }
 
 1;

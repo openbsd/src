@@ -40,7 +40,7 @@ open my $fh, ">$file" or die "Can't open $file: $!";
 print $fh <<"EOI";
 name: perl
 version: $]
-abstract: Practical Extraction and Reporting Language
+abstract: Practical Extraction and Report Language
 author: perl5-porters\@perl.org
 license: perl
 distribution_type: core

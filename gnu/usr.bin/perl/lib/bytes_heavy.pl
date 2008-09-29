@@ -1,6 +1,6 @@
 package bytes;
 
-sub length ($) {
+sub length (_) {
     BEGIN { bytes::import() }
     return CORE::length($_[0]);
 }
@@ -13,12 +13,12 @@ sub substr ($$;$$) {
 	          CORE::substr($_[0], $_[1], $_[2], $_[3]) ;
 }
 
-sub ord ($) {
+sub ord (_) {
     BEGIN { bytes::import() }
     return CORE::ord($_[0]);
 }
 
-sub chr ($) {
+sub chr (_) {
     BEGIN { bytes::import() }
     return CORE::chr($_[0]);
 }

@@ -13,7 +13,7 @@ BEGIN {
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..85\n"; }
+BEGIN { $| = 1; print "1..86\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( :ALL );
 $loaded = 1;
@@ -316,3 +316,11 @@ expect	[ scalar extract_multiple(undef, [ q/([a-z]),?/ ]) ],
 
 expect [ pos ], [ 0 ];
 expect [ $_ ], [ substr($stdtext3,2) ];
+
+
+# TEST 86
+
+# Fails in Text-Balanced-1.95 with result ['1 ', '""', '1234']
+$_ = q{ ""1234};
+expect	[ extract_multiple(undef, [\&extract_quotelike]) ],
+	[ ' ', '""', '1234' ];

@@ -1,6 +1,16 @@
 This file documents the changes made to port Perl to the Stratus
 VOS operating system.
 
+For 5.10.0:
+     Added support for the syslog family of functions to vos.c.
+     This allows the source code to be built on versions of VOS
+     that do not support the syslog functions.
+
+For 5.9.0:
+     Removed support for building (mini) perl on VOS using
+     custom VOS command macros.  Henceforth, perl must be built
+     using the native Configure script.
+
 For 5.8.4:
      Updated "config.alpha.def", "config.ga.def", "build.cm" and
      "perl.bind" to build this version of perl.

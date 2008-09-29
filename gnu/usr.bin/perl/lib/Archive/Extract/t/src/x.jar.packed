@@ -1,0 +1,18 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u lib/Archive/Extract/t/src/x.jar.packed lib/Archive/Extract/t/src/x.jar
+
+To recreate it use the following command:
+
+     uupacktool.pl -p lib/Archive/Extract/t/src/x.jar lib/Archive/Extract/t/src/x.jar.packed
+
+Created at Thu Sep 20 15:38:01 2007
+#########################################################################
+__UU__
+M4$L#!`H```````MAQ3`````````````````!`!``8558#`!)`B%!EIO!0/4!
+M%`!02P$"%0,*```````+8<4P`````````````````0`,``````````!`I($`
+F````8558"`!)`B%!EIO!0%!+!08``````0`!`#L````O````````

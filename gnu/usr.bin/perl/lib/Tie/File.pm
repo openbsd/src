@@ -7,7 +7,7 @@ use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
 
-$VERSION = "0.97";
+$VERSION = "0.97_02";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -93,7 +93,7 @@ sub TIEARRAY {
     unless (seek $file, 1, SEEK_SET) {
       croak "$pack: your filehandle does not appear to be seekable";
     }
-    seek $file, 0, SEEK_SET     # put it back
+    seek $file, 0, SEEK_SET;    # put it back
     $fh = $file;                # setting binmode is the user's problem
   } elsif (ref $file) {
     croak "usage: tie \@array, $pack, filename, [option => value]...";
@@ -656,7 +656,7 @@ sub _mtwrite {
       if (@_) {
         $unwritten = $self->_downcopy($data, $end, $_[1] - $end);
       } else {
-        # Make the file longer to accomodate the last segment that doesn'
+        # Make the file longer to accommodate the last segment that doesn'
         $unwritten = $self->_downcopy($data, $end);
       }
     }
@@ -2549,8 +2549,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this library program; it should be in the file C<COPYING>.
-If not, write to the Free Software Foundation, Inc., 59 Temple Place,
-Suite 330, Boston, MA 02111 USA
+If not, write to the Free Software Foundation, Inc., 51 Franklin Street,
+Fifth Floor, Boston, MA  02110-1301, USA
 
 For licensing inquiries, contact the author at:
 

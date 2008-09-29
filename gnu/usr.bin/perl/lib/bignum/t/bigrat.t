@@ -10,10 +10,10 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib';
-  plan tests => 25;
+  plan tests => 40;
   }
 
-use bigrat;
+use bigrat qw/oct hex/;
 
 ###############################################################################
 # general tests
@@ -61,6 +61,29 @@ ok (bigrat->precision(),12);
 ok (bigrat->round_mode(),'even');
 ok (bigrat->round_mode('odd'),'odd');
 ok (bigrat->round_mode(),'odd');
+
+###############################################################################
+# hex() and oct()
+
+my $c = 'Math::BigInt';
+
+ok (ref(hex(1)), $c);
+ok (ref(hex(0x1)), $c);
+ok (ref(hex("af")), $c);
+ok (hex("af"), Math::BigInt->new(0xaf));
+ok (ref(hex("0x1")), $c);
+
+ok (ref(oct("0x1")), $c);
+ok (ref(oct("01")), $c);
+ok (ref(oct("0b01")), $c);
+ok (ref(oct("1")), $c);
+ok (ref(oct(" 1")), $c);
+ok (ref(oct(" 0x1")), $c);
+
+ok (ref(oct(0x1)), $c);
+ok (ref(oct(01)), $c);
+ok (ref(oct(0b01)), $c);
+ok (ref(oct(1)), $c);
 
 ###############################################################################
 ###############################################################################

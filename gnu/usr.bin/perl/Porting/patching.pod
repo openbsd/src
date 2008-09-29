@@ -2,17 +2,10 @@
 
 patching.pod - Appropriate format for patches to the perl source tree
 
-=head2 Where to get this document
-
-The latest version of this document is available from
-     http://perrin.dimensional.com/perl/perlpatch.html
-
 =head2 How to contribute to this document
 
-You may mail corrections, additions, and suggestions to me
-at dgris@dimensional.com but the preferred method would be
-to follow the instructions set forth in this document and 
-submit a patch 8-).
+You may mail corrections, additions, and suggestions by following the
+instructions set forth in this document and submitting a patch :).
 
 =head1 Description
 
@@ -85,16 +78,16 @@ diffs.  Some examples using GNU diff:
 
     # generate a patch for a newly added file
     % diff -u /dev/null new/file
-    
+
     # generate a patch to remove a file (patch > v2.4 will remove it cleanly)
     % diff -u old/goner /dev/null
-    
+
     # get additions, deletions along with everything else, recursively
     % diff -ruN olddir newdir
-    
+
     # ignore whitespace
     % diff -bu a/file b/file
-    
+
     # show function name in every hunk (safer, more informative)
     % diff -u -p old/file new/file
     % diff -u -F '^[_a-zA-Z0-9]+ *(' old/file new/file
@@ -150,6 +143,25 @@ you have your changes, you would run makepatch as follows:
               -newman perl-5.7.1@8685-withfoo/MANIFEST \
               -diff "diff -u" \
               perl-5.7.1@8685 perl-5.7.1@8685-withfoo
+
+=item Binary Files
+
+Since the patch(1) utility cannot deal with binary files, it's important
+that you either avoid the use of binary files in your patch, generate the
+files dynamically, or that you encode any binary files using the
+F<uupacktool.pl> utility.
+
+Assuming you needed to include a gzip-encoded file for a module's test
+suite, you might do this as follows using the F<uupacktool.pl> utility:
+
+    $ perl uupacktool.pl -v -p -D lib/Some/Module/t/src/t.gz
+    Writing lib/Some/Module/t/src/t.gz into lib/Some/Module/t/src/t.gz.packed
+
+This will replace the C<t.gz> file with an encoded counterpart. During
+C<make test>, before any tests are run, perl's Makefile will restore all
+the C<.packed> files mentioned in the MANIFEST to their original name.
+This means that the test suite does not need to be aware of this packing
+scheme and will not need to be altered.
 
 =item Try it yourself
 
@@ -379,7 +391,7 @@ numbers and offsets in the patch, making it useless.
 If you follow these guidelines it will make everybody's life a little
 easier.  You'll have the satisfaction of having contributed to perl,
 others will have an easy time using your work, and it should be easier
-for the maintainers to coordinate the occasionally large numbers of 
+for the maintainers to coordinate the occasionally large numbers of
 patches received.
 
 Also, just because you're not a brilliant coder doesn't mean that you
@@ -396,13 +408,6 @@ Mostly, when contributing patches, imagine that it is B<you> receiving
 hundreds of patches and that it is B<your> responsibility to integrate
 them into the source.  Obviously you'd want the patches to be as easy
 to apply as possible.  Keep that in mind.  8-)
-
-=head1 Last Modified
-
-Last modified 22 August 2002
-H.Merijn Brand <h.m.brand@xs4all.nl>
-Prev modified 21 January 1999 
-Daniel Grisinger <dgris@dimensional.com>
 
 =head1 Author and Copyright Information
 

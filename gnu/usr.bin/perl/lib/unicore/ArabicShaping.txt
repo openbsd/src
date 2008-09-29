@@ -1,10 +1,10 @@
-# ArabicShaping-4.1.0.txt
-# Date: 2005-03-17, 15:21:00 PST [KW]
+# ArabicShaping-5.0.0.txt
+# Date: 2006-07-14, 11:23:00 PST [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the shaping classes for Arabic and Syriac
@@ -293,7 +293,46 @@
 076C; REH WITH HAMZA ABOVE; R; REH
 076D; SEEN WITH 2 DOTS VERTICALLY ABOVE; D; SEEN
 
+# N'Ko Characters
+
+07CA; NKO A; D; No_Joining_Group
+07CB; NKO EE; D; No_Joining_Group
+07CC; NKO I; D; No_Joining_Group
+07CD; NKO E; D; No_Joining_Group
+07CE; NKO U; D; No_Joining_Group
+07CF; NKO OO; D; No_Joining_Group
+07D0; NKO O; D; No_Joining_Group
+07D1; NKO DAGBASINNA; D; No_Joining_Group
+07D2; NKO N; D; No_Joining_Group
+07D3; NKO BA; D; No_Joining_Group
+07D4; NKO PA; D; No_Joining_Group
+07D5; NKO TA; D; No_Joining_Group
+07D6; NKO JA; D; No_Joining_Group
+07D7; NKO CHA; D; No_Joining_Group
+07D8; NKO DA; D; No_Joining_Group
+07D9; NKO RA; D; No_Joining_Group
+07DA; NKO RRA; D; No_Joining_Group
+07DB; NKO SA; D; No_Joining_Group
+07DC; NKO GBA; D; No_Joining_Group
+07DD; NKO FA; D; No_Joining_Group
+07DE; NKO KA; D; No_Joining_Group
+07DF; NKO LA; D; No_Joining_Group
+07E0; NKO NA WOLOSO; D; No_Joining_Group
+07E1; NKO MA; D; No_Joining_Group
+07E2; NKO NYA; D; No_Joining_Group
+07E3; NKO NA; D; No_Joining_Group
+07E4; NKO HA; D; No_Joining_Group
+07E5; NKO WA; D; No_Joining_Group
+07E6; NKO YA; D; No_Joining_Group
+07E7; NKO NYA WOLOSO; D; No_Joining_Group
+07E8; NKO JONA JA; D; No_Joining_Group
+07E9; NKO JONA CHA; D; No_Joining_Group
+07EA; NKO JONA RA; D; No_Joining_Group
+07FA; NKO LAJANYALAN; C; No_Joining_Group
+
 # Other
 
 200D; ZERO WIDTH JOINER; C; No_Joining_Group
 200C; ZERO WIDTH NON-JOINER; U; No_Joining_Group
+
+# EOF

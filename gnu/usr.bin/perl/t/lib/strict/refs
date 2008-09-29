@@ -301,3 +301,24 @@ use strict 'refs';
 /(?{${"foo"}++})/;
 EXPECT
 Can't use string ("foo") as a SCALAR ref while "strict refs" in use at (re_eval 1) line 1.
+########
+# [perl #37886] strict 'refs' doesn't apply inside defined
+use strict 'refs';
+my $x = "foo";
+defined $$x;
+EXPECT
+Can't use string ("foo") as a SCALAR ref while "strict refs" in use at - line 4.
+########
+# [perl #37886] strict 'refs' doesn't apply inside defined
+use strict 'refs';
+my $x = "foo";
+defined @$x;
+EXPECT
+Can't use string ("foo") as an ARRAY ref while "strict refs" in use at - line 4.
+########
+# [perl #37886] strict 'refs' doesn't apply inside defined
+use strict 'refs';
+my $x = "foo";
+defined %$x;
+EXPECT
+Can't use string ("foo") as a HASH ref while "strict refs" in use at - line 4.

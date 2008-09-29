@@ -31,11 +31,14 @@ my $libperl_copied;
 my $testlib;
 my @cmd;
 my (@cmd2) if $^O eq 'VMS';
-
+# Don't use ccopts() here as we may want to overwrite an existing
+# perl with a new one with inconsistent header files, meaning
+# the usual value for perl_inc(), which is used by ccopts(),
+# will be wrong.
 if ($^O eq 'VMS') {
     push(@cmd,$cc,"/Obj=$obj");
     my (@incs) = ($inc);
-    my $crazy = ccopts();
+    my $crazy = ccflags();
     if ($crazy =~ s#/inc[^=/]*=([\w\$\_\-\.\[\]\:]+)##i) {
         push(@incs,$1);
     }
@@ -60,7 +63,14 @@ if ($^O eq 'VMS') {
    else {
     push(@cmd,$cc,'-o' => $exe);
    }
-   push(@cmd,"-I$inc",ccopts(),'embed_test.c');
+   if ($^O eq 'dec_osf' && !defined $Config{usedl}) {
+       # The -non_shared is needed in case of -Uusedl or otherwise
+       # the test application will try to use libperl.so
+       # instead of libperl.a.
+       push @cmd, "-non_shared";
+   }
+
+   push(@cmd,"-I$inc",ccflags(),'embed_test.c');
    if ($^O eq 'MSWin32') {
     $inc = File::Spec->catdir($inc,'win32');
     push(@cmd,"-I$inc");
@@ -73,7 +83,9 @@ if ($^O eq 'VMS') {
 	push(@cmd,"-L$lib",File::Spec->catfile($lib,$Config{'libperl'}),$Config{'libc'});
     }
    }
-   else { # Not MSWin32.
+   elsif ($^O eq 'os390' && $Config{usedl}) {
+    # Nothing for OS/390 (z/OS) dynamic.
+   } else { # Not MSWin32 or OS/390 (z/OS) dynamic.
     push(@cmd,"-L$lib",'-lperl');
     local $SIG{__WARN__} = sub {
 	warn $_[0] unless $_[0] =~ /No library found for .*perl/
@@ -135,13 +147,13 @@ print "# embed_test = $embed_test\n";
 $status = system($embed_test);
 print (($status? 'not ':'')."ok 9 # system returned $status\n");
 unlink($exe,"embed_test.c",$obj);
+unlink("$exe.manifest") if $cl and $Config{'ccversion'} =~ /^(\d+)/ and $1 >= 14;
 unlink("$exe$Config{exe_ext}") if $skip_exe;
 unlink("embed_test.map","embed_test.lis") if $^O eq 'VMS';
 unlink(glob("./*.dll")) if $^O eq 'cygwin';
 unlink($testlib)	       if $libperl_copied;
 
-# gcc -g -I.. -L../ -o perl_test perl_test.c -lperl `../perl -I../lib -MExtUtils::Embed -I../ -e ccopts -e ldopts`
-
+# gcc -g -I.. -L../ -o perl_test perl_test.c -lperl `../perl -I../lib -MExtUtils::Embed -I../ -e ccflags -e ldopts`
 __END__
 
 /* perl_test.c */
@@ -158,7 +170,12 @@ static struct perl_vars *my_plvarsp;
 struct perl_vars* Perl_GetVarsPrivate(void) { return my_plvarsp; }
 #endif
 
+#ifdef NO_ENV_ARRAY_IN_MAIN
+extern char **environ;
+int main(int argc, char **argv)
+#else
 int main(int argc, char **argv, char **env)
+#endif
 {
     PerlInterpreter *my_perl;
 #ifdef PERL_GLOBAL_STRUCT
@@ -171,7 +188,11 @@ int main(int argc, char **argv, char **env)
 
     (void)argc; /* PERL_SYS_INIT3 may #define away their use */
     (void)argv;
+#ifdef NO_ENV_ARRAY_IN_MAIN
+    PERL_SYS_INIT3(&argc,&argv,&environ);
+#else
     PERL_SYS_INIT3(&argc,&argv,&env);
+#endif
 
     my_perl = perl_alloc();
 
@@ -181,7 +202,11 @@ int main(int argc, char **argv, char **env)
 
     my_puts("ok 3");
 
+#ifdef NO_ENV_ARRAY_IN_MAIN
+    perl_parse(my_perl, NULL, (sizeof(cmds)/sizeof(char *))-1, cmds, environ);
+#else
     perl_parse(my_perl, NULL, (sizeof(cmds)/sizeof(char *))-1, cmds, env);
+#endif
 
     my_puts("ok 4");
 

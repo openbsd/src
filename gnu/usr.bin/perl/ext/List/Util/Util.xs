@@ -312,7 +312,7 @@ CODE:
 {
     dVAR;
     int index;
-#if (PERL_VERSION < 8) || (PERL_VERSION == 8 && PERL_SUBVERSION <1)
+#if (PERL_VERSION < 9)
     struct op dmy_op;
     struct op *old_op = PL_op;
 
@@ -390,7 +390,7 @@ CODE:
     if(!sv_isobject(sv)) {
 	XSRETURN_UNDEF;
     }
-    RETVAL = sv_reftype(SvRV(sv),TRUE);
+    RETVAL = (char*)sv_reftype(SvRV(sv),TRUE);
 }
 OUTPUT:
     RETVAL
@@ -406,7 +406,7 @@ CODE:
     if(!SvROK(sv)) {
 	XSRETURN_UNDEF;
     }
-    RETVAL = sv_reftype(SvRV(sv),FALSE);
+    RETVAL = (char*)sv_reftype(SvRV(sv),FALSE);
 }
 OUTPUT:
     RETVAL

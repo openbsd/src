@@ -4,6 +4,10 @@
 #
 #            Edit mktests.PL and/or parts/inc/ppphtest instead.
 #
+#  This file was automatically generated from the definition files in the
+#  parts/inc/ subdirectory by mktests.PL. To learn more about how all this
+#  works, please read the F<HACKERS> file that came with this distribution.
+#
 ################################################################################
 
 BEGIN {
@@ -21,13 +25,14 @@ BEGIN {
     unshift @INC, 't';
   }
 
-  eval "use Test";
-  if ($@) {
-    require 'testutil.pl';
-    print "1..197\n";
+  sub load {
+    eval "use Test";
+    require 'testutil.pl' if $@;
   }
-  else {
-    plan(tests => 197);
+
+  if (229) {
+    load();
+    plan(tests => 229);
   }
 }
 
@@ -35,14 +40,31 @@ use Devel::PPPort;
 use strict;
 $^W = 1;
 
+package Devel::PPPort;
+use vars '@ISA';
+require DynaLoader;
+@ISA = qw(DynaLoader);
+bootstrap Devel::PPPort;
+
+package main;
+
+BEGIN {
+  if ($ENV{'SKIP_SLOW_TESTS'}) {
+    for (1 .. 229) {
+      skip("skip: SKIP_SLOW_TESTS", 0);
+    }
+    exit 0;
+  }
+}
+
 use File::Path qw/rmtree mkpath/;
 use Config;
 
 my $tmp = 'ppptmp';
 my $inc = '';
-my $perl = find_perl();
 my $isVMS = $^O eq 'VMS';
 my $isMAC = $^O eq 'MacOS';
+my $perl = find_perl();
 
 rmtree($tmp) if -d $tmp;
 mkpath($tmp) or die "mkpath $tmp: $!\n";
@@ -141,6 +163,7 @@ for (split /\s*={70,}\s*/, do { local $/; <DATA> }) {
 
 my $t;
 for $t (@tests) {
+  print "#\n", ('# ', '-'x70, "\n")x3, "#\n";
   my $f;
   for $f (keys %{$t->{files}}) {
     my @f = split /\//, $f;
@@ -157,6 +180,11 @@ for $t (@tests) {
     $txt =~ s/^/# | /mg;
     print "# *** writing $f ***\n$txt\n";
   }
+
+  my $code = $t->{code};
+  $code =~ s/^/# | /mg;
+
+  print "# *** evaluating test code ***\n$code\n";
 
   eval $t->{code};
   if ($@) {
@@ -203,6 +231,9 @@ __DATA__
 my $o = ppport(qw(--help));
 ok($o =~ /^Usage:.*ppport\.h/m);
 ok($o =~ /--help/m);
+
+$o = ppport(qw(--version));
+ok($o =~ /^This is.*ppport.*\d+\.\d+(?:_?\d+)?\.$/);
 
 $o = ppport(qw(--nochanges));
 ok($o =~ /^Scanning.*test\.xs/mi);
@@ -276,9 +307,9 @@ ok($o =~ /^Scanning.*file1\.xs/mi);
 ok($o =~ /Analyzing.*file1\.xs/mi);
 ok($o !~ /^Scanning.*file2\.xs/mi);
 ok($o =~ /^Uses newCONSTSUB/m);
-ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_nolen/m);
+ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_flags/m);
+ok($o =~ /WARNING: PL_expect/m);
 ok($o =~ /hint for newCONSTSUB/m);
-ok($o !~ /hint for sv_2pv_nolen/m);
 ok($o =~ /^Looks good/m);
 
 $o = ppport(qw(--nochanges --nohints file1.xs));
@@ -286,9 +317,9 @@ ok($o =~ /^Scanning.*file1\.xs/mi);
 ok($o =~ /Analyzing.*file1\.xs/mi);
 ok($o !~ /^Scanning.*file2\.xs/mi);
 ok($o =~ /^Uses newCONSTSUB/m);
-ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_nolen/m);
+ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_flags/m);
+ok($o =~ /WARNING: PL_expect/m);
 ok($o !~ /hint for newCONSTSUB/m);
-ok($o !~ /hint for sv_2pv_nolen/m);
 ok($o =~ /^Looks good/m);
 
 $o = ppport(qw(--nochanges --nohints --nodiag file1.xs));
@@ -297,8 +328,8 @@ ok($o =~ /Analyzing.*file1\.xs/mi);
 ok($o !~ /^Scanning.*file2\.xs/mi);
 ok($o !~ /^Uses newCONSTSUB/m);
 ok($o !~ /^Uses SvPV_nolen/m);
+ok($o =~ /WARNING: PL_expect/m);
 ok($o !~ /hint for newCONSTSUB/m);
-ok($o !~ /hint for sv_2pv_nolen/m);
 ok($o =~ /^Looks good/m);
 
 $o = ppport(qw(--nochanges --quiet file1.xs));
@@ -337,11 +368,12 @@ ok($o =~ /^\s*$/);
 ---------------------------- file1.xs -----------------------------------------
 
 #define NEED_newCONSTSUB
-#define NEED_sv_2pv_nolen
+#define NEED_sv_2pv_flags
 #include "ppport.h"
 
 newCONSTSUB();
 SvPV_nolen();
+PL_expect = 0;
 
 ---------------------------- file2.xs -----------------------------------------
 
@@ -679,12 +711,14 @@ ok(not ref $p{call_sv});
 
 ok(exists $p{grok_bin});
 ok(ref $p{grok_bin}, 'HASH');
-ok(scalar keys %{$p{grok_bin}}, 1);
+ok(scalar keys %{$p{grok_bin}}, 2);
 ok($p{grok_bin}{explicit});
+ok($p{grok_bin}{depend});
 
 ok(exists $p{gv_stashpvn});
 ok(ref $p{gv_stashpvn}, 'HASH');
-ok(scalar keys %{$p{gv_stashpvn}}, 1);
+ok(scalar keys %{$p{gv_stashpvn}}, 2);
+ok($p{gv_stashpvn}{depend});
 ok($p{gv_stashpvn}{hint});
 
 ok(exists $p{sv_catpvf_mg});
@@ -692,6 +726,11 @@ ok(ref $p{sv_catpvf_mg}, 'HASH');
 ok(scalar keys %{$p{sv_catpvf_mg}}, 2);
 ok($p{sv_catpvf_mg}{explicit});
 ok($p{sv_catpvf_mg}{depend});
+
+ok(exists $p{PL_signals});
+ok(ref $p{PL_signals}, 'HASH');
+ok(scalar keys %{$p{PL_signals}}, 1);
+ok($p{PL_signals}{explicit});
 
 ===============================================================================
 
@@ -754,4 +793,132 @@ newSViv();
 ---------------------------- Makefile.PL --------------------------------------
 
 newSViv();
+
+===============================================================================
+
+# check if explicit variables are handled propery
+
+my $o = ppport(qw(--copy=a));
+ok($o =~ /^Needs to include.*ppport\.h/m);
+ok($o =~ /^Uses PL_signals/m);
+ok($o =~ /^File needs PL_signals, adding static request/m);
+ok(eq_files('MyExt.xsa', 'MyExt.ra'));
+
+unlink qw(MyExt.xsa);
+
+---------------------------- MyExt.xs -----------------------------------------
+
+PL_signals = 123;
+if (PL_signals == 42)
+  foo();
+
+---------------------------- MyExt.ra -----------------------------------------
+
+#define NEED_PL_signals
+#include "ppport.h"
+PL_signals = 123;
+if (PL_signals == 42)
+  foo();
+
+===============================================================================
+
+my $o = ppport(qw(--nochanges file.xs));
+ok($o =~ /^Uses PL_copline/m);
+ok($o =~ /WARNING: PL_copline/m);
+ok($o =~ /^Uses SvUOK/m);
+ok($o =~ /WARNING: Uses SvUOK, which may not be portable/m);
+ok($o =~ /^Analysis completed \(2 warnings\)/m);
+ok($o =~ /^Looks good/m);
+
+$o = ppport(qw(--nochanges --compat-version=5.8.0 file.xs));
+ok($o =~ /^Uses PL_copline/m);
+ok($o =~ /WARNING: PL_copline/m);
+ok($o !~ /WARNING: Uses SvUOK, which may not be portable/m);
+ok($o =~ /^Analysis completed \(1 warning\)/m);
+ok($o =~ /^Looks good/m);
+
+---------------------------- file.xs -----------------------------------------
+
+#include "ppport.h"
+SvUOK
+PL_copline
+
+===============================================================================
+
+my $o = ppport(qw(--copy=f));
+
+for (qw(file.xs)) {
+  ok($o =~ /^Writing copy of.*\Q$_\E.*with changes/mi);
+  ok(-e "${_}f");
+  ok(eq_files("${_}f", "${_}r"));
+  unlink "${_}f";
+}
+
+---------------------------- file.xs -----------------------------------------
+
+a_string = "sv_undef"
+a_char = 'sv_yes'
+#define SOMETHING defgv
+/* C-comment: sv_tainted */
+#
+# This is just a big XS comment using sv_no
+#
+/* The following, is NOT an XS comment! */
+#  define SOMETHING_ELSE defgv + \
+                         sv_undef
+
+---------------------------- file.xsr -----------------------------------------
+
+#include "ppport.h"
+a_string = "sv_undef"
+a_char = 'sv_yes'
+#define SOMETHING PL_defgv
+/* C-comment: sv_tainted */
+#
+# This is just a big XS comment using sv_no
+#
+/* The following, is NOT an XS comment! */
+#  define SOMETHING_ELSE PL_defgv + \
+                         PL_sv_undef
+
+===============================================================================
+
+my $o = ppport(qw(--copy=f));
+
+for (qw(file.xs)) {
+  ok($o =~ /^Writing copy of.*\Q$_\E.*with changes/mi);
+  ok(-e "${_}f");
+  ok(eq_files("${_}f", "${_}r"));
+  unlink "${_}f";
+}
+
+---------------------------- file.xs -----------------------------------------
+
+#define NEED_sv_2pv_flags
+#define NEED_vnewSVpvf
+#define NEED_warner
+#include "ppport.h"
+Perl_croak_nocontext("foo");
+Perl_croak("bar");
+croak("foo");
+croak_nocontext("foo");
+Perl_warner_nocontext("foo");
+Perl_warner("foo");
+warner_nocontext("foo");
+warner("foo");
+
+---------------------------- file.xsr -----------------------------------------
+
+#define NEED_sv_2pv_flags
+#define NEED_vnewSVpvf
+#define NEED_warner
+#include "ppport.h"
+Perl_croak_nocontext("foo");
+Perl_croak(aTHX_ "bar");
+croak("foo");
+croak_nocontext("foo");
+Perl_warner_nocontext("foo");
+Perl_warner(aTHX_ "foo");
+warner_nocontext("foo");
+warner("foo");
 

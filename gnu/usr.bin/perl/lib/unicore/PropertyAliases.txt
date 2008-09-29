@@ -1,10 +1,11 @@
-# PropertyAliases-4.1.0.txt
-# Date: 2005-02-26, 11:13:41 GMT [MD]
+# PropertyAliases-5.0.0.txt
+# Date: 2006-03-03, 08:23:34 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
+#
 # This file contains aliases for properties used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
 # property tests, and other programmatic textual descriptions of Unicode data.
@@ -161,3 +162,4 @@ XO_NFKD   ; Expands_On_NFKD
 # ================================================
 # Total:    88
 
+# EOF

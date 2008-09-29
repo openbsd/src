@@ -1,7 +1,7 @@
 BEGIN {
     if ($ENV{'PERL_CORE'}){
         chdir 't';
-	unshift @INC, '../lib';
+    unshift @INC, '../lib';
     }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bEncode\b/) {
@@ -9,8 +9,8 @@ BEGIN {
       exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
     $| = 1;
 }
@@ -128,18 +128,18 @@ sub run_tests {
 
     # $enc = encoding, $str = content
     foreach my $enc (sort keys %{$tests}) {
-	my $str = $tests->{$enc};
+    my $str = $tests->{$enc};
 
-	is(Encode::decode($enc, $str), $utf, "[$enc] decode - $title");
-	is(Encode::encode($enc, $utf), $str, "[$enc] encode - $title");
+    is(Encode::decode($enc, $str), $utf, "[$enc] decode - $title");
+    is(Encode::encode($enc, $utf), $str, "[$enc] encode - $title");
 
-	my $str2 = $str;
-	my $utf8 = Encode::encode('utf-8', $utf);
+    my $str2 = $str;
+    my $utf8 = Encode::encode('utf-8', $utf);
 
-	Encode::from_to($str2, $enc, 'utf-8');
-	is($str2, $utf8, "[$enc] from_to => utf8 - $title");
+    Encode::from_to($str2, $enc, 'utf-8');
+    is($str2, $utf8, "[$enc] from_to => utf8 - $title");
 
-	Encode::from_to($utf8, 'utf-8', $enc); # convert $utf8 as $enc
-	is($utf8, $str,  "[$enc] utf8 => from_to - $title");
+    Encode::from_to($utf8, 'utf-8', $enc); # convert $utf8 as $enc
+    is($utf8, $str,  "[$enc] utf8 => from_to - $title");
     }
 }

@@ -10,6 +10,7 @@ This file is in Korean encoded in EUC-KR.
 없는 POD 형식으로 짜여 있습니다.  더 자세한 것은 perlpod
 매뉴얼을 참고하십시오. 
 
+=encoding euc-kr
 
 =head1 NAME
 

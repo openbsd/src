@@ -8,6 +8,8 @@ The following documentation is written in Big5 encoding.
 這份文件是以 POD (簡明文件格式) 寫成; 這種格式是為了能讓人直接讀取,
 而特別設計的. 關於此格式的進一步資訊, 請參考 perlpod 線上文件.
 
+=encoding big5
+
 =head1 NAME
 
 perltw - 正體中文 Perl 指南
@@ -119,7 +121,7 @@ Perl 郵遞論壇一覽
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.shtml#Taiwan>
+=item L<http://www.pm.org/groups/asia.html>
 
 臺灣 Perl 推廣組一覽
 

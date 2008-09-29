@@ -37,7 +37,7 @@ my $Test = Test::Builder->new();
 my $result;
 my $tmpfile = 'foo.tmp';
 my $out = $Test->output($tmpfile);
-END { unlink($tmpfile) }
+END { 1 while unlink($tmpfile) }
 
 ok( defined $out );
 

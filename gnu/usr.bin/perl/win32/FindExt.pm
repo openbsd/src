@@ -1,6 +1,6 @@
 package FindExt;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 use strict;
 use warnings;
@@ -14,17 +14,24 @@ my $ext;
 my %static;
 
 sub getcwd {
-    $ENV{'PWD'} = Win32::GetCwd();
-    $ENV{'PWD'} =~ s:\\:/:g ;
-    return $ENV{'PWD'};
+    $_ = `cd`;
+    chomp;
+    s:\\:/:g ;
+    return $ENV{'PWD'} = $_;
 }
 
-sub set_static_extensions
-{
+sub set_static_extensions {
     # adjust results of scan_ext, and also save
     # statics in case scan_ext hasn't been called yet.
+    # if '*' is passed then all XS extensions are static
+    # (with possible exclusions)
     %static = ();
-    for (@_) {
+    my @list = @_;
+    if ($_[0] eq '*') {
+	my %excl = map {$_=>1} map {m/^!(.*)$/} @_[1 .. $#_];
+	@list = grep {!exists $excl{$_}} keys %ext;
+    }
+    for (@list) {
         $static{$_} = 1;
         $ext{$_} = 'static' if $ext{$_} && $ext{$_} eq 'dynamic';
     }
@@ -81,7 +88,7 @@ sub find_ext
     closedir $dh;
     for my $xxx (@items) {
         if ($xxx ne "DynaLoader") {
-            if (-f "$xxx/$xxx.xs") {
+            if (-f "$xxx/$xxx.xs" || -f "$xxx/$xxx.c" ) {
                 $ext{"$_[0]$xxx"} = $static{"$_[0]$xxx"} ? 'static' : 'dynamic';
             } elsif (-f "$xxx/Makefile.PL") {
                 $ext{"$_[0]$xxx"} = 'nonxs';
@@ -96,12 +103,17 @@ sub find_ext
         }
     }
 
-# Special case:  Add in threads/shared since it is not picked up by the
-# recursive find above (and adding in general recursive finding breaks
-# SDBM_File/sdbm).  A.D.  10/25/2001.
+# Special case:  Add in modules that nest beyond the first level.
+# Currently threads/shared and Hash/Util/FieldHash, since they are
+# not picked up by the recursive find above (and adding in general
+# recursive finding breaks SDBM_File/sdbm).
+# A.D. 20011025 (SDBM), ajgough 20071008 (FieldHash)
 
     if (!$_[0] && -d "threads/shared") {
         $ext{"threads/shared"} = 'dynamic';
+    }
+    if (!$_[0] && -d "Hash/Util/FieldHash") {
+        $ext{"Hash/Util/FieldHash"} = 'dynamic';
     }
 }
 

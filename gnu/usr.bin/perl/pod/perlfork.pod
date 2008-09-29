@@ -95,12 +95,15 @@ manipulation functions applied to the ID returned by fork() will affect the
 waiting pseudo-process that called exec(), not the real process it is
 waiting for after the exec().
 
+When exec() is called inside a pseudo-process then DESTROY methods and
+END blocks will still be called after the external process returns.
+
 =item exit()
 
 exit() always exits just the executing pseudo-process, after automatically
 wait()-ing for any outstanding child pseudo-processes.  Note that this means
 that the process as a whole will not exit unless all running pseudo-processes
-have exited.
+have exited.  See below for some limitations with open filehandles.
 
 =item Open handles to files, directories and network sockets
 
@@ -176,6 +179,13 @@ that the dup()-ed handles will still share the same seek pointer.  Changing
 the seek position in the parent will change it in the child and vice-versa.
 One can avoid this by opening files that need distinct seek pointers
 separately in the child.
+
+On some operating systems, notably Solaris and Unixware, calling C<exit()>
+from a child process will flush and close open filehandles in the parent,
+thereby corrupting the filehandles.  On these systems, calling C<_exit()>
+is suggested instead.  C<_exit()> is available in Perl through the 
+C<POSIX> module.  Please consult your systems manpages for more information
+on this.
 
 =item Forking pipe open() not yet implemented
 

@@ -1,23 +1,30 @@
 #!./perl
 
-print "1..4\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 6;
 
 $x='banana';
 $x=~/.a/g;
-if (pos($x)==2) {print "ok 1\n"} else {print "not ok 1\n";}
+is(pos($x), 2);
 
 $x=~/.z/gc;
-if (pos($x)==2) {print "ok 2\n"} else {print "not ok 2\n";}
+is(pos($x), 2);
 
 sub f { my $p=$_[0]; return $p }
 
 $x=~/.a/g;
-if (f(pos($x))==4) {print "ok 3\n"} else {print "not ok 3\n";}
+is(f(pos($x)), 4);
 
 # Is pos() set inside //g? (bug id 19990615.008)
 $x = "test string?"; $x =~ s/\w/pos($x)/eg;
-print "not " unless $x eq "0123 5678910?";
-print "ok 4\n";
+is($x, "0123 5678910?");
 
-
-
+$x = "123 56"; $x =~ / /g;
+is(pos($x), 4);
+{ local $x }
+is(pos($x), 4);

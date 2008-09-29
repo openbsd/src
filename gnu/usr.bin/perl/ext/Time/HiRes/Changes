@@ -1,4 +1,184 @@
-Revision history for Perl extension Time::HiRes.
+Revision history for the Perl extension Time::HiRes.
+
+1.9711	[2007-11-29]
+	- lost VMS test skippage from Craig Berry
+	- reformat the test code a little
+
+1.9710	[2007-11-29]
+	- I got the sense of the QNX test the wrong way in an attempt
+	  to generalize it for future
+
+1.9709	[2007-11-28]
+	- casting fixes from Robin Barker for g++ and 64bitint
+	- in QNX skip the itimer tests because though the API
+	  is there, the implementation isn't, from Matt Kraai
+	- raise the dead man timer to 180 seconds for really
+	  slow/busy systems
+	- elaborate the UTF-8 locale warning from Makefile.PL
+
+1.9708	[2007-10-05]
+	- [rt.cpan.org #29747]: Build failure with perl 5.005_05
+	  Fixed by regenerating the ppport.h using Devel::PPPort 3.13.
+
+1.9707	[2007-02-27]
+	- t/HiRes.t failed in Perl 5.6.2,
+	  "action is not of type POSIX::SigAction at t/HiRes.t line 318",
+	  reported and fixed by Anton Berezin, the reason was faulty
+	  use of sigaction() when restoring the old action.
+
+1.9706	[2007-02-25]
+	- with bleadperl in VMS the HiRes.t overrun the maximum number
+	  of deferred signals because the libc SIGALRM was not strong
+	  enough to interrupt select(), and select() got restarted every
+	  time, solution is to use POSIX::SigAction if available.
+	  A fix from Craig Berry (not 100% there, but helps).
+	- allow for more measuring noise for ualarm() tests 35..37
+
+1.9705	[2007-02-06]
+	- nanosleep() and clock_nanosleep() detection and use were
+	  quite broken; in Linux -lrt needed; fixes from Zefram
+	- [internal] slightly cleaner building of $DEFINE in Makefile.PL,
+	  should avoid double/conflicting -D flags
+
+1.9704	[2007-01-01]
+	- allow 10% of slop in test #14 (testing difference between
+	  CORE::time() and Time::HiRes::time()), there seem to be often
+	  transient failures from Perl smoke builds on this test
+	- small pod tweaks
+
+1.9703	[2006-12-08]
+	- use int main(int argc, char **argv) consistently in Makefile.PL,
+	  should help with
+	  [rt.cpan.org #23868] nanosleep not detected under Mac OS 10.3.9 starting with Time::HiRes 1.96
+	- if someone still has the locale-broken Perl 5.8.0,
+	  suggest that they upgrade their Perl
+
+1.9702	[2006-12-06]
+	- restore the -DATLEASTFIVEOHOHFIVE, Win32 needed it still
+
+1.9701	[2006-12-04]
+	- upgrade to ppport.h 3.10_02
+	- remove the -DATLEASTFIVEOHOHFIVE
+	- use the ppport.h PL_ppaddr, PL_statcache, PL_laststatval
+	- use the ppport.h aTHXR for calling Perl stat()
+	- switch into four-digit version since 2.0 is coming up
+	  awfully fast but not feeling like a major rewrite
+
+1.97	[2006-11-30]
+	- 1.95 broke building in Win32 (since pp_stat is not exported),
+	  figured out how to call an op directly in 5.005 (use Perl_ppaddr
+	  instead of PL_ppaddr)
+	- backport to Perl 5.004_05  (requires using statcache
+	  and laststatval instead of PL_statcache and PL_laststatval)
+	  (also checked to work in 5.005_04, 5.6.1, and 5.8.8 with threads)
+
+1.96	[2006-11-30]
+	- 1.95 broke builds for threaded Perls, rt.cpan.org tickets:
+	  [rt.cpan.org #23694] Time::HiRes fails tests on Solaris and Perl 5.6.1
+	  [rt.cpan.org #23712] Time-HiRes 1.95 Fails make on AIX 5.2 with Perl 5.8.8
+	  [rt.cpan.org #23730] Time::HiRes 1.95 fails make on MacOS X 10.3.9/perl 5.8.8
+	- use main() prototype consistently in Makefile.PL
+
+1.95	[2006-11-29]
+	- integrate core change #29180: Silence VC++ compiler warnings
+	  from Steve Hay
+	- do not use PL_ppaddr in stat() because that is not available
+	  in Perl 5.005_04
+	- regenerate fallback/*.inc for older Perls without
+          ExtUtils::Constant because of d_hires_stat, resolves
+	  [rt.cpan.org #23694] Time::HiRes fails tests on Solaris and Perl 5.6.1
+	- Make Makefile.PL more defensive against false PERL_CORE
+
+1.94	[2006-10-16]
+	- file timestamps oddities seen: the atime and mtime
+	  can be out of sync (modify first and read second can leave
+	  atime < mtime) and mtime can be subsecond while atime is not.
+	  So make the test more forgiving.
+
+1.93	[2006-10-15]
+	- the ualarm() tests (34-37) assumed that ualarm(N)
+	  could never alarm in less than N seconds, widened
+	  the acceptable relative range to 0.9..1.5.  Addresses
+	  [rt.cpan.org #22090] and [rt.cpan.org #22091].
+
+	- skip the stat() tests in cygwin and win32, because
+	  if run on FAT the timestamp granularity is only 2 seconds.
+	  Any good way to detect (cygwin or win32) whether we are
+	  being run on NTFS or anywhere with better timestamps?
+	  Addresses [rt.cpan.org #22089] and [rt.cpan.org #22098].
+
+1.92	[2006-10-13]
+	- scan for subsecond resolution timestamps in struct stat,
+	  some known possibilities:
+
+	  (1)  struct  timespec st_atimespec;
+                                st_atimespec.tv_nsec;
+	  (2)  time_t  st_atime;
+	       long    st_atimensec;
+          (3)  time_t  st_atime;
+               int     st_atime_n;
+	  (4)  timestruc_t st_atim;
+                           st_atim.tv_nsec
+	  (5)  time_t  st_atime;
+               int     st_uatime;
+
+          If something like this is found, one can do
+
+	    use Time::HiRes;
+	    my @stat = Time::HiRes::stat();
+
+	  or even override the standard stat():
+      
+	    use Time::HiRes qw(stat);
+
+          to get the stat() timestamps
+
+	    my ($atime, $mtime, $ctime) = @stat[8, 9, 10];
+
+	  with subsecond resolution (assuming both the operating
+	  system and the filesystem support that kind of thing).
+
+	  Contributions for more systems (especially non-UNIX,
+	  e.g. but not limited to: Win32, VMS, OS/2) gladly accepted.
+	  (also more UNIX variants welcome: HP-UX? IRIX?)
+
+	  Thanks to H.Merijn Brand, John Peacock, and Craig
+	  Berry for brave beta testing.
+
+1.91	[2006-09-29]
+	- ualarm() in SuSE 10.1 was overflowing after ~4.2 seconds,
+	  possibly due to a glibc bug/feature (suspected overflow at
+	  2**32 microseconds?), workaround by using the setitimer()
+	  implementation of ualarm() if either useconds or
+	  interval > 999_999 (this case seems to vary between systems:
+	  are useconds more than 999_999 for ualarm() defined or not)
+	  Added more ualarm() tests to catch various overflow points,
+	  hopefully no problems in various platforms.
+	  (The problem report by Mark Seger and Jon Paul Sullivan of HP.)
+
+1.90	[2006-08-22]
+	- tweak still needed for Const64(), from Jerry Hedden
+	- get a freshly generated ppport.h
+	- update Copyright years
+
+1.89	[2006-08-22]
+	- Const64() already appends an 'LL' (or i64), so provide LL and i64
+	  forms for the IV_1E[679] (effects Win32 and Cygwin), reported by
+	  Jerry Hedden.
+	- the Changes entry for 1.88 talked about [IN]V_1[679],
+	  missing the 'E'.
+
+1.88	[2006-08-21]
+	- clean up the g++ warnings in HiRes.xs, all of them
+	  about mixing integer and floating point, introduce
+	  constants IV_1E[679] and NV_1E[679]
+
+1.87	[2006-02-13]
+	- [rt.cpan.org #17442] 'make test' frequently fails under
+	  Cygwin Perl v5.8.8, reported and patched by J. R. Hedden
+	  (two race condition bugs in the END block in the case the
+	   main process dies before the timer process, unearthed
+	   by a bug in Cygwin ualarm)
 
 1.86	[2005-12-17]
 	- HiRes.t:s/ok 32/ok 33/, from Dominic Dunlop

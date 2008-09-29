@@ -82,7 +82,7 @@ Various socket problems were fixed in mpeix.c.
 Mark Klein provided a fixed sigsetjmp (that works with dynamic
 libraries) in mpeix_setjmp.c
 
-=item *
+=back
 
 June 1, 2000
 

@@ -474,7 +474,7 @@ The Perl debugger (F<lib/perl5db.pl>) has now been extensively
 documented and bugs found while documenting have been fixed.
 
 C<perldoc> has been rewritten from scratch to be more robust and
-featureful.
+feature rich.
 
 C<perlcc -B> works now at least somewhat better, while C<perlcc -c>
 is rather more broken.  (The Perl compiler suite as a whole continues
@@ -812,7 +812,7 @@ know about or hack Perl internals (using Devel::Peek or any of the
 C<B::> modules counts), or like to run Perl with the C<-D> option.
 
 The embedding examples of L<perlembed> have been reviewed to be
-uptodate and consistent: for example, the correct use of
+up to date and consistent: for example, the correct use of
 PERL_SYS_INIT3() and PERL_SYS_TERM().
 
 Extensive reworking of the pad code (the code responsible

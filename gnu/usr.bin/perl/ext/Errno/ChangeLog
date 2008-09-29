@@ -1,3 +1,8 @@
+Errno 1.10 -- Wed Dec 27 08:20:29 CST 2006
+
+ * Update with all changes made to core perl repository
+
+
 Change 171 on 2000-09-12 by <calle@lysator.liu.se> (Calle Dybedahl)
 
 	- Fixed filename-extracting regexp to allow whitespace between

@@ -13,7 +13,7 @@ BEGIN {
         print "1..0\n";
         exit 0;
     }
-    print "1..12\n";
+    print "1..13\n";
 }
 END {
     print "not ok 1\n" unless $loaded;
@@ -187,3 +187,27 @@ rmdir "pteerslo";
 # this can panic if PL_glob_index gets passed as flags to bsd_glob
 <*>; <*>;
 print "ok 12\n";
+
+{
+    use File::Temp qw(tempdir);
+    use File::Spec qw();
+
+    my($dir) = tempdir(CLEANUP => 1)
+	or die "Could not create temporary directory";
+    for my $file (qw(a_dej a_ghj a_qej)) {
+	open my $fh, ">", File::Spec->catfile($dir, $file)
+	    or die "Could not create file $dir/$file: $!";
+	close $fh;
+    }
+    my $cwd = Cwd::cwd();
+    chdir $dir
+	or die "Could not chdir to $dir: $!";
+    my(@glob_files) = glob("a*{d[e]}j");
+    if (!(@glob_files == 1 && "@glob_files" eq "a_dej")) {
+	print "not ";
+    }
+    my $todo = $^O ne 'VMS' ? '' : " # TODO home-made glob doesn't do regexes";
+    print "ok 13$todo\n";
+    chdir $cwd
+	or die "Could not chdir back to $cwd: $!";
+}

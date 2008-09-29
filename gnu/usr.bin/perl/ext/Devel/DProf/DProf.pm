@@ -111,14 +111,39 @@ New C<$over_*> values show the measured overhead of making $over_tests
 calls to the profiler These values are used by the profiler to
 subtract the overhead from the runtimes.
 
-The lines starting with C<@> mark time passed from the previous C<@>
-line.  The lines starting with C<&> introduce new subroutine I<id> and
-show the package and the subroutine name of this id.  Lines starting
-with C<+>, C<-> and C<*> mark entering and exit of subroutines by
-I<id>s, and C<goto &subr>.
+Lines starting with C<@> mark the amount of time passed since the
+previous C<@> line.  The numbers following the C<@> are integer tick
+counts representing user, system, and real time.  Divide these numbers
+by the $hz value in the header to get seconds.
 
-The I<old-style> C<+>- and C<->-lines are used to mark the overhead
-related to writing to profiler-output file.
+Lines starting with C<&> map subroutine identifiers (an integer) to
+subroutine packages and names.  These should only occur once per
+subroutine.
+
+Lines starting with C<+> or C<-> mark normal entering and exit of
+subroutines.  The number following is a reference to a subroutine
+identifier.
+
+Lines starting with C<*> mark where subroutines are entered by C<goto
+&subr>, but note that the return will still be marked as coming from
+the original sub.  The sequence might look like this:
+
+	+ 5
+	* 6
+	- 5
+
+Lines starting with C</> is like C<-> but mark where subroutines are
+exited by dying.  Example:
+
+	+ 5
+	+ 6
+	/ 6
+	/ 5
+
+Finally you might find C<@> time stamp marks surrounded by C<+ &
+Devel::DProf::write> and C<- & Devel::DProf::write> lines.  These 3
+lines are outputted when printing of the mark above actually consumed
+measurable time.
 
 =head1 AUTOLOAD
 

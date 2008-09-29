@@ -1,13 +1,24 @@
 package OptreeCheck;
 use base 'Exporter';
+use strict;
+use warnings;
+use vars qw($TODO $Level $using_open);
 require "test.pl";
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # now export checkOptree, and those test.pl functions used by tests
 our @EXPORT = qw( checkOptree plan skip skip_all pass is like unlike
-		  require_ok runperl );
+		  require_ok runperl);
 
+
+# The hints flags will differ if ${^OPEN} is set.
+# The approach taken is to put the hints-with-open in the golden results, and
+# flag that they need to be taken out if ${^OPEN} is set.
+
+if (((caller 0)[10]||{})->{'open<'}) {
+    $using_open = 1;
+}
 
 =head1 NAME
 
@@ -428,8 +439,9 @@ sub checkOptree {
 	$tc->getRendering();	# get the actual output
 	$tc->checkErrs();
 
+	local $Level = $Level + 2;
       TODO:
-	foreach $want (@{$modes{$gOpts{testmode}}}) {
+	foreach my $want (@{$modes{$gOpts{testmode}}}) {
 	    local $TODO = $tc->{todo} if $tc->{todo};
 
 	    $tc->{cross} = $msgs{"$want-$thrstat"};
@@ -438,7 +450,7 @@ sub checkOptree {
 	    $tc->mylike();
 	}
     }
-    $res;
+    return;
 }
 
 sub newTestCases {
@@ -449,7 +461,7 @@ sub newTestCases {
     $tc->label();
 
     # cpy globals into each test
-    foreach $k (keys %gOpts) {
+    foreach my $k (keys %gOpts) {
 	if ($gOpts{$k}) {
 	    $tc->{$k} = $gOpts{$k} unless defined $tc->{$k};
 	}
@@ -508,16 +520,17 @@ sub getRendering {
 	    # treat as source, and wrap into subref 
 	    #  in caller's package ( to test arg-fixup, comment next line)
 	    my $pkg = '{ package '.caller(1) .';';
-	    $code = eval "$pkg sub { $code } }";
+	    {
+		no strict;
+		no warnings;
+		$code = eval "$pkg sub { $code } }";
+	    }
 	    # return errors
 	    if ($@) { chomp $@; push @errs, $@ }
 	}
 	# set walk-output b4 compiling, which writes 'announce' line
 	walk_output(\$rendering);
-	if ($tc->{fail}) {
-	    fail("forced failure: stdout follows");
-	    walk_output(\*STDOUT);
-	}
+
 	my $opwalker = B::Concise::compile(@opts, $code);
 	die "bad BC::compile retval" unless ref $opwalker eq 'CODE';
 
@@ -562,6 +575,7 @@ sub checkErrs {
 
     # check for agreement, by hash (order less important)
     my (%goterrs, @got);
+    $tc->{goterrs} ||= [];
     @goterrs{@{$tc->{goterrs}}} = (1) x scalar @{$tc->{goterrs}};
     
     foreach my $k (keys %{$tc->{errs}}) {
@@ -576,7 +590,7 @@ sub checkErrs {
     if (%{$tc->{errs}} or %{$tc->{goterrs}}) {
 	$tc->diag_or_fail();
     }
-    fail("FORCED: $tc->{name}:\n$rendering") if $gOpts{fail}; # silly ?
+    fail("FORCED: $tc->{name}:\n") if $gOpts{fail}; # silly ?
 }
 
 sub diag_or_fail {
@@ -662,42 +676,81 @@ sub mkCheckRex {
     }
     $tc->{wantstr} = $str;
 
-    # convert all (args) and [args] to temp forms wo bracing
-    $str =~ s/\[(.*?)\]/__CAPSQR$1__/msg;
-    $str =~ s/\((.*?)\)/__CAPRND$1__/msg;
-    $str =~ s/\((.*?)\)/__CAPRND$1__/msg; # nested () in nextstate
-    
+    # make targ args wild
+    $str =~ s/\[t\d+\]/[t\\d+]/msg;
+
     # escape bracing, etc.. manual \Q (doesnt escape '+')
     $str =~ s/([\[\]()*.\$\@\#\|{}])/\\$1/msg;
+    # $str =~ s/(?<!\\)([\[\]\(\)*.\$\@\#\|{}])/\\$1/msg;
 
-    # now replace temp forms with original, preserving reference bracing 
-    $str =~ s/__CAPSQR(.*?)__\b/\\[$1\\]/msg; # \b is important
-    $str =~ s/__CAPRND(.*?)__\b/\\($1\\)/msg;
-    $str =~ s/__CAPRND(.*?)__\b/\\($1\\)/msg; # nested () in nextstate
-    
     # treat dbstate like nextstate (no in-debugger false reports)
-    $str =~ s/(?:next|db)state(\\\(.*?\\\))/(?:next|db)state(.*?)/msg;
+    # Note also that there may be 1 level of () nexting, if there's an eval
+    # Seems easiest to explicitly match the eval, rather than trying to parse
+    # for full balancing and then substitute .*?
+    # In which case, we can continue to match for the eval in the rexexp built
+    # from the golden result.
+
+    $str =~ s!(?:next|db)state
+	      \\\(			# opening literal ( (backslash escaped)
+	      [^()]*?			# not ()
+	      (\\\(eval\ \d+\\\)	# maybe /eval \d+/ in ()
+	       [^()]*?			# which might be followed by something
+	      )?
+	      \\\)			# closing literal )
+	     !'(?:next|db)state\\([^()]*?' .
+	      ($1 && '\\(eval \\d+\\)[^()]*')	# Match the eval if present
+	      . '\\)'!msgxe;
     # widened for -terse mode
     $str =~ s/(?:next|db)state/(?:next|db)state/msg;
+    if (!$using_open && $tc->{strip_open_hints}) {
+      $str =~ s[(			# capture
+		 \(\?:next\|db\)state	# the regexp matching next/db state
+		 .*			# all sorts of things follow it
+		 v			# The opening v
+		)
+		(?:(:>,<,%,\\{)		# hints when open.pm is in force
+		   |(:>,<,%))		# (two variations)
+		(\ ->[0-9a-z]+)?
+		$
+	       ]
+	[$1 . ($2 && ':{') . $4]xegm;	# change to the hints without open.pm
+    }
+
+    if ($] < 5.009) {
+	# 5.8.x doesn't provide the hints in the OP, which means that
+	# B::Concise doesn't show the symbolic hints. So strip all the
+	# symbolic hints from the golden results.
+	$str =~ s[(			# capture
+		   \(\?:next\|db\)state	# the regexp matching next/db state
+		   .*			# all sorts of things follow it
+		  v			# The opening v
+		  )
+		  :(?:\\[{*]		# \{ or \*
+		      |[^,\\])		# or other symbols on their own
+		    (?:,
+		     (?:\\[{*]
+			|[^,\\])
+		      )*		# maybe some more joined with commas
+		(\ ->[0-9a-z]+)?
+		$
+	       ]
+	[$1$2]xgm;			# change to the hints without flags
+    }
 
     # don't care about:
     $str =~ s/:-?\d+,-?\d+/:-?\\d+,-?\\d+/msg;		# FAKE line numbers
     $str =~ s/match\\\(.*?\\\)/match\(.*?\)/msg;	# match args
     $str =~ s/(0x[0-9A-Fa-f]+)/0x[0-9A-Fa-f]+/msg;	# hexnum values
     $str =~ s/".*?"/".*?"/msg;				# quoted strings
+    $str =~ s/FAKE:(\w):\d+/FAKE:$1:\\d+/msg;		# parent pad index
 
     $str =~ s/(\d refs?)/\\d+ refs?/msg;		# 1 ref, 2+ refs (plural)
     $str =~ s/leavesub \[\d\]/leavesub [\\d]/msg;	# for -terse
     #$str =~ s/(\s*)\n/\n/msg;				# trailing spaces
     
-    # these fix up pad-slot assignment args
-    if ($] < 5.009 or $tc->{cross}) {
-	$str =~ s/\[t\d+\\]/\[t\\d+\\]/msg;	# pad slot assignments
-    }
-
     croak "no reftext found for $want: $tc->{name}"
 	unless $str =~ /\w+/; # fail unless a real test
-
+    
     # $str = '.*'	if 1;	# sanity test
     # $str .= 'FAIL'	if 1;	# sanity test
 
@@ -705,9 +758,7 @@ sub mkCheckRex {
     $str = "(-e .*?)?(B::Concise::compile.*?)?\n" . $str
 	unless $tc->{noanchors} or $tc->{rxnoorder};
     
-    eval "use re 'debug'" if $debug;
     my $qr = ($tc->{noanchors})	? qr/$str/ms : qr/^$str$/ms ;
-    no re 'debug';
 
     $tc->{rex}		= $qr;
     $tc->{rexstr}	= $str;
@@ -893,7 +944,7 @@ sub mydumper {
 	or do{
 	    print "Sorry, Data::Dumper is not available\n";
 	    print "half hearted attempt:\n";
-	    foreach $it (@_) {
+	    foreach my $it (@_) {
 		if (ref $it eq 'HASH') {
 		    print " $_ => $it->{$_}\n" foreach sort keys %$it;
 		}
@@ -977,13 +1028,6 @@ sub OptreeCheck::gentest {
 	my $af = q{expect => <<'EOT_EOT', expect_nt => <<'EONT_EONT'};
 	$testcode =~ s/$b4/$af/;
 	
-	my $got;
-	if ($internal_retest) {
-	    $got = runperl( prog => "$preamble $testcode", stderr => 1,
-			    #switches => ["-I../ext/B/t", "-MOptreeCheck"], 
-			    verbose => 1);
-	    print "got: $got\n";
-	}
 	return $testcode;
     }
     return '';
@@ -1001,7 +1045,7 @@ sub OptreeCheck::processExamples {
 	$/ = "";
 	my @chunks = <$fh>;
 	print preamble (scalar @chunks);
-	foreach $t (@chunks) {
+	foreach my $t (@chunks) {
 	    print "\n\n=for gentest\n\n# chunk: $t=cut\n\n";
 	    print OptreeCheck::gentest ($t);
 	}

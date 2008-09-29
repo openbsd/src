@@ -7,24 +7,3 @@
   Attempt to clear deleted array	[av_clear]
   
 __END__
-# av.c
-$struct = [{foo => 1, bar => 2}, "FOO", "BAR"];
-use warnings 'deprecated';
-$a = $struct->{foo}; # This should warn.
-no warnings 'deprecated';
-$b = $struct->{bar}; # This should not warn.
-bless $struct, 'HlagHlag';
-use warnings 'deprecated';
-$a = $struct->{foo}; # This should warn.
-no warnings 'deprecated';
-$b = $struct->{bar}; # This should not warn.
-EXPECT
-Pseudo-hashes are deprecated at - line 4.
-Pseudo-hashes are deprecated at - line 9.
-########
-package Foo;
-use warnings 'deprecated';
-use fields qw(foo bar);
-my $foo = fields::new('Foo');
-$foo->{foo} = 42;
-EXPECT

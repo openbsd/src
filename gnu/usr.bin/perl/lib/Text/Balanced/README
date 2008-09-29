@@ -1,14 +1,8 @@
-==============================================================================
-                  Release of version 1.95 of Text::Balanced
-==============================================================================
-
-
-NAME
+Text::Balanced version 2.0.0
 
     Text::Balanced - Extract delimited text sequences from strings.
 
-
-SUMMARY (see Balanced.pod for full details)
+SUMMARY
 
     Text::Balanced::extract_delimited
     
@@ -42,42 +36,36 @@ SUMMARY (see Balanced.pod for full details)
     
         `extract_tagged' attempts to recognize and extract a
         substring between two arbitrary "tag" patterns (a start tag
-	and an end tag).
+      	and an end tag).
 
-    
+
 INSTALLATION
 
-    It's all pure Perl, so just put the .pm file in its appropriate
-    local Perl subdirectory.
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
 
 
-AUTHOR
+Alternatively, to install with Module::Build, you can use the following commands:
 
-    Damian Conway (damian@cs.monash.edu.au)
-
-
-COPYRIGHT
-
-     Copyright (c) 1997-2001, Damian Conway. All Rights Reserved.
-     This module is free software. It may be used, redistributed
-	  and/or modified under the same terms as Perl itself.
+    perl Build.PL
+    ./Build
+    ./Build test
+    ./Build install
 
 
 
-==============================================================================
+DEPENDENCIES
 
-CHANGES IN VERSION 1.95
-
-
-	- Constrainted _match_quote to only match at word boundaries
-	  (so "exemplum(hic)" doesn't match "m(hic)")
-	  (thanks Craig)
+None.
 
 
-==============================================================================
+COPYRIGHT AND LICENCE
 
-AVAILABILITY
+Copyright (C) 2006, Damian Conway
 
-Text::Balanced has been uploaded to the CPAN
-
-==============================================================================
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.

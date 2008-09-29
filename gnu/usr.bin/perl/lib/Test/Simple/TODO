@@ -9,8 +9,6 @@ a few more I haven't put in RT yet.
 
     Document that everything goes through Test::Builder->ok()
 
-    Add test name to diagnostic output
-
     Add diag() to details().
 
     Add at_end() callback?

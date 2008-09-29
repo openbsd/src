@@ -15,7 +15,7 @@ BEGIN {
 # lots of threading bugs.
 use Config;
 BEGIN {
-    if( $] >= 5.008 && $Config{useithreads} ) {
+    if( $] >= 5.008001 && $Config{useithreads} ) {
         require threads;
         'threads'->import;
     }

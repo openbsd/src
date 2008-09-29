@@ -22,7 +22,7 @@ maintain (source) compatibility.
 
 The aim of the implementation is to provide the PerlIO API in a flexible
 and platform neutral manner. It is also a trial of an "Object Oriented
-C, with vtables" approach which may be applied to perl6.
+C, with vtables" approach which may be applied to Perl 6.
 
 =head2 Basic Structure
 
@@ -246,7 +246,7 @@ representing open (allocated) handles. For example the first three slots
 in the table correspond to C<stdin>,C<stdout> and C<stderr>. The table
 in turn points to the current "top" layer for the handle - in this case
 an instance of the generic buffering layer "perlio". That layer in turn
-points to the next layer down - in this case the lowlevel "unix" layer.
+points to the next layer down - in this case the low-level "unix" layer.
 
 The above is roughly equivalent to a "stdio" buffered stream, but with
 much more flexibility:

@@ -8,8 +8,8 @@
 	@ISA = qw(Other) ;
 	fred() ;
 
-     Use of $# is deprecated
-     Use of $* is deprecated
+     $# is no longer supported
+     $* is no longer supported
 
 	$a = ${"#"} ;
  	$a = ${"*"} ;
@@ -22,14 +22,14 @@
     
 __END__
 # gv.c
-use warnings 'misc' ;
+use warnings 'syntax' ;
 @ISA = qw(Fred); joe()
 EXPECT
 Can't locate package Fred for @main::ISA at - line 3.
 Undefined subroutine &main::joe called at - line 3.
 ########
 # gv.c
-no warnings 'misc' ;
+no warnings 'syntax' ;
 @ISA = qw(Fred); joe()
 EXPECT
 Undefined subroutine &main::joe called at - line 3.
@@ -43,12 +43,11 @@ EXPECT
 Use of inherited AUTOLOAD for non-method main::fred() is deprecated at - line 5.
 ########
 # gv.c
-use warnings 'deprecated' ;
 $a = ${"#"};
 $a = ${"*"};
 no warnings 'deprecated' ;
 $a = ${"#"};
 $a = ${"*"};
 EXPECT
-Use of $# is deprecated at - line 3.
-Use of $* is deprecated at - line 4.
+$# is no longer supported at - line 2.
+$* is no longer supported at - line 3.

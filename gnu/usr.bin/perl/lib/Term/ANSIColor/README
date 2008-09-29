@@ -1,7 +1,7 @@
-                       Term::ANSIColor version 1.10
+                       Term::ANSIColor version 1.12
               (A simple ANSI text attribute control module)
 
-  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005 Russ Allbery
+  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006 Russ Allbery
   <rra@stanford.edu> and Zenin.  This program is free software; you may
   redistribute it and/or modify it under the same terms as Perl itself.
 
@@ -97,5 +97,11 @@ THANKS
 
   To James Bowlin for catching a bug in colored when $EACHLINE is set that
   caused it to not color lines consisting solely of 0.
+
+  To Helge Kreutzmann for pointing out the need for warnings in the
+  documentation about background colors that span newlines.
+
+  To Baron Schwartz for pointing out that cyan and white were missing from
+  the documentation.
 
   To Larry Wall, as always, for Perl.

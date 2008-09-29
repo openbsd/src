@@ -7,6 +7,7 @@
 
 Perl_ck_anoncode
 Perl_ck_bitop
+Perl_ck_chdir
 Perl_ck_concat
 Perl_ck_defined
 Perl_ck_delete
@@ -29,6 +30,7 @@ Perl_ck_match
 Perl_ck_method
 Perl_ck_null
 Perl_ck_open
+Perl_ck_readline
 Perl_ck_repeat
 Perl_ck_require
 Perl_ck_return
@@ -37,6 +39,7 @@ Perl_ck_rvconst
 Perl_ck_sassign
 Perl_ck_select
 Perl_ck_shift
+Perl_ck_smartmatch
 Perl_ck_sort
 Perl_ck_spair
 Perl_ck_split
@@ -44,6 +47,7 @@ Perl_ck_subr
 Perl_ck_substr
 Perl_ck_svconst
 Perl_ck_trunc
+Perl_ck_unpack
 Perl_pp_null
 Perl_pp_stub
 Perl_pp_scalar
@@ -138,6 +142,7 @@ Perl_pp_negate
 Perl_pp_i_negate
 Perl_pp_not
 Perl_pp_complement
+Perl_pp_smartmatch
 Perl_pp_atan2
 Perl_pp_sin
 Perl_pp_cos
@@ -202,9 +207,11 @@ Perl_pp_flop
 Perl_pp_and
 Perl_pp_or
 Perl_pp_xor
+Perl_pp_dor
 Perl_pp_cond_expr
 Perl_pp_andassign
 Perl_pp_orassign
+Perl_pp_dorassign
 Perl_pp_method
 Perl_pp_entersub
 Perl_pp_leavesub
@@ -231,6 +238,14 @@ Perl_pp_redo
 Perl_pp_dump
 Perl_pp_goto
 Perl_pp_exit
+Perl_pp_setstate
+Perl_pp_method_named
+Perl_pp_entergiven
+Perl_pp_leavegiven
+Perl_pp_enterwhen
+Perl_pp_leavewhen
+Perl_pp_break
+Perl_pp_continue
 Perl_pp_open
 Perl_pp_close
 Perl_pp_pipe_op
@@ -250,6 +265,7 @@ Perl_pp_enterwrite
 Perl_pp_leavewrite
 Perl_pp_prtf
 Perl_pp_print
+Perl_pp_say
 Perl_pp_sysopen
 Perl_pp_sysseek
 Perl_pp_sysread
@@ -283,23 +299,23 @@ Perl_pp_fteread
 Perl_pp_ftewrite
 Perl_pp_fteexec
 Perl_pp_ftis
-Perl_pp_fteowned
-Perl_pp_ftrowned
-Perl_pp_ftzero
 Perl_pp_ftsize
 Perl_pp_ftmtime
 Perl_pp_ftatime
 Perl_pp_ftctime
+Perl_pp_ftrowned
+Perl_pp_fteowned
+Perl_pp_ftzero
 Perl_pp_ftsock
 Perl_pp_ftchr
 Perl_pp_ftblk
 Perl_pp_ftfile
 Perl_pp_ftdir
 Perl_pp_ftpipe
-Perl_pp_ftlink
 Perl_pp_ftsuid
 Perl_pp_ftsgid
 Perl_pp_ftsvtx
+Perl_pp_ftlink
 Perl_pp_fttty
 Perl_pp_fttext
 Perl_pp_ftbinary
@@ -346,9 +362,9 @@ Perl_pp_msgget
 Perl_pp_msgctl
 Perl_pp_msgsnd
 Perl_pp_msgrcv
+Perl_pp_semop
 Perl_pp_semget
 Perl_pp_semctl
-Perl_pp_semop
 Perl_pp_require
 Perl_pp_dofile
 Perl_pp_entereval
@@ -388,8 +404,6 @@ Perl_pp_egrent
 Perl_pp_getlogin
 Perl_pp_syscall
 Perl_pp_lock
-Perl_pp_threadsv
-Perl_pp_setstate
-Perl_pp_method_named
+Perl_pp_once
 
 # ex: set ro:

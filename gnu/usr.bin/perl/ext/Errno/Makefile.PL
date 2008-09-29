@@ -1,6 +1,25 @@
 use ExtUtils::MakeMaker;
+use Config;
 
 @VMS = ($^O eq 'VMS') ? (MAN3PODS => {}) : ();
+
+my $arch = "$Config{'archname'}-$Config{'osvers'}";
+my $got = "";
+if (-e 'arch.txt') {
+    open my $in, "<", "arch.txt" or die "Can't read 'arch.txt': $!";
+    $got = <$in>;
+    close $in;
+}
+if ($got ne $arch) {
+    if (-e "Errno.pm") {
+        print "Removing old 'Errno.pm'\n";
+        unlink "Errno.pm" 
+            or die "Failed to remove out of date 'Errno.pm': $!";
+    }
+    open my $out, ">", "arch.txt" or die "Can't write 'arch.txt': $!";
+    print $out $arch;
+    close $out;
+}
 
 WriteMakefile(
     NAME	 => 'Errno',
@@ -8,7 +27,7 @@ WriteMakefile(
     MAN3PODS     => {}, 	# Pods will be built by installman.
     PL_FILES	 => {'Errno_pm.PL'=>'Errno.pm'},
     PM		 => {'Errno.pm' => '$(INST_LIBDIR)/Errno.pm'},
-    'clean'	 => {FILES => 'Errno.pm'},
+    'clean'	 => {FILES => 'Errno.pm arch.txt'},
     'dist'	 => {
 	COMPRESS => 'gzip -9f',
 	SUFFIX   => '.gz', 

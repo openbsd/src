@@ -1,5 +1,129 @@
 Revision history for Perl extension Test::Harness
 
+NEXT
+    [FIXES]
+    * prove's --perl=/path/to/file wasn't taking a value.
+    * prove's version number was not getting incremented.  From now on,
+      prove's $VERSION will match Test::Harness's $VERSION, and I added
+      a test to make sure this is the case.
+
+    [ENHANCEMENTS]
+    * Added test straps overload via HARNESS_STRAP_OVERLOAD environment
+      variable.  prove now takes a --strap=class parameter.  Thanks,
+      Adam Kennedy.
+
+2.63_01 Fri Jun 30 16:59:50 CDT 2006
+    [ENHANCEMENTS]
+    * Failed tests used to say "NOK x", and now say "NOK x/y".
+      Thanks to Will Coleda.
+
+    * Added the Test::Harness::Results object, so we have a well-defined
+      object, and not just a hash that we pass around.  Thanks to YAPC::NA
+      2006 Hackathon!
+
+2.62 Thu Jun  8 14:11:57 CDT 2006
+    [FIXES]
+    * Restored the behavior of dying if any subtests failed.  This is a
+      pretty crucial bug that I should have fixed long ago.  Not having this
+      means that CPANPLUS will install modules even if their tests fail. :-(
+
+2.60 Wed May 24 14:48:44 CDT 2006
+    [FIXES]
+    * Fixed the headers in the summary failure table.
+
+2.58 Sat May 13 22:53:53 CDT 2006
+    No changes.  Released to the world with a non-beta number.
+
+2.57_06 Sun Apr 23 00:55:43 CDT 2006
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    * Anything that displays a percentage of tests passed has been
+      removed.  Output at the end of failing runs is now different.
+
+    [FIXES]
+    * Fixed the TODO-passing patch from 2.57_05.
+
+    [ENHANCEMENTS]
+    * The unnecessary display of percentages of tests passing and failing
+      have been removed.  Tests are not a percentage game.
+
+    * Caches the results of _default_inc(), which is expensive because
+      of shelling out to get the pathnames.  Benchmarking was showing that
+      15% of Test::Harness's time was spent in this function.  For test
+      suites with many test files, this can be significant.  With this
+      speedup, the "make test" for the Perl core speeds up 2.5%.
+      Thanks to Nicholas Clark for finding this.
+
+    [DOCUMENTATION]
+    * Fixed HARNESS_PERL_SWITCHES typo.  Thanks, Andreas Koenig.
+
+    * Added docs on HARNESS_TIMER and --timer.  Thanks, Mike O'Regan.
+
+2.57_05 Wed Apr 19 00:31:10 CDT 2006
+    [ENHANCEMENTS]
+    * Now shows details of the tests that unexpectedly pass, instead of
+      just giving a number.  Thanks, demerphq!
+
+    [INTERNALS]
+    * Fixed globbing to work under Perls before 5.6.0.  Before Perl 5.6.0,
+      prove just uses the internal glob() function.
+
+2.57_04 Mon Apr 17 13:35:10 CDT 2006
+    [ENHANCEMENTS]
+    * prove's globbing is now done with File::Glob::bsd_glob().
+      Otherwise, "prove c:\program files\svk\t\*" fails because glob()
+      considers it to be two patterns, splitting on whitespace.  Thanks to
+      Audrey Tang.
+
+    [DOCUMENTATION]
+    * Added information about other TAP implementations in other languages.
+
+2.57_03 Dec 31 2005
+
+    [THINGS THAT MAY BREAK YOUR CODE]
+    * Internal functions _run_all_tests() and _show_results() no longer
+      exist.  You shouldn't have been using them anyway since they're
+      prepended with underscores.
+
+    [INTERNALS]
+    * Added the ability to send test output to a filehandle of
+      one's choosing.  Two internal functions are now exposed:
+      execute_tests() and get_results() (formerly _run_all_tests() and
+      _show_results()).  This should allow CPANPLUS to work properly
+      with Module::Build.  Thanks to Ken Williams.
+
+    [DOCUMENTATION]
+    * Hid the documentation for the private methods in Test::Harness::Straps.
+
+2.57_02 Fri Dec 30 23:51:17 CST 2005
+    [THINGS THAT MAY BREAK YOUR CODE]
+    * prove's --ext option has been removed.  I'm betting that nobody used it.
+
+    [ENHANCEMENTS]
+    * prove can now take -w and -W switches, analogous to those in perl.
+      This means that "prove -wlb t/*.t" is exactly the same as "make test".
+      Thanks to Rob Kinyon.
+    * Started a Test::Harness::Util module for code that may be reused
+      by other Harness-using modules.
+
+    [INTERNALS]
+    * The t/prove*.t tests now use $^X to call prove.  Thanks to Yves Orton.
+    * Test::Harness::Straps no longer uses Win32::GetShortPathName().
+      Thanks to Gisle Aas.
+
+2.57_01 Mon Dec 26 01:39:07 CST 2005
+    [FIXES]
+    * Removed code and docs mentioning HARNESS_IGNORE_EXITCODE, which
+      is not used anywhere.
+
+    [ENHANCEMENTS]
+    * If we have hi-res timings, then they're shown in integer
+      milliseconds, rather than fractional seconds.
+
+    * Added the --perl switch to prove.
+
+    [DOCUMENTATION]
+    * Added links to CPAN support sites.
+
 2.56 Wed Sep 28 16:04:00 CDT 2005
     [FIXES]
     * Incorporate bleadperl patch to fix Test::Harness on VMS.

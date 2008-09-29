@@ -40,7 +40,7 @@ while (defined($str = <DATA>))
 	my @res;
 	$var = eval "\@res = $cmd";
 	debug "\t   Failed: $@ at " . $@+0 .")" if $@;
-	debug "\t list got: [" . join("|",@res) . "]\n";
+	debug "\t list got: [" . join("|", map {defined $_ ? $_ : '<undef>'} @res) . "]\n";
 	debug "\t list left: [$str]\n";
 	print "not " if (substr($str,pos($str)||0,1) eq ';')==$neg;
 	print "ok ", $count++;

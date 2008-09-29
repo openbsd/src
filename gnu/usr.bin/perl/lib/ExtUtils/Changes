@@ -1,3 +1,226 @@
+6.42  Fri Dec  7 17:00:14 PST 2007
+    Bug Fixes
+    - 6.33 moved PREREQ_FATAL to happen after CONFIGURE.  This meant if
+      your CONFIGURE use a prereq it would fail and no PREREQ_FATAL
+      message would be displayed.
+    - Put the "nicetext" functionality back, VMS needs it to deal with
+      other people's custom make.  But rename it to the more
+      accurate maketext_filter(), test it and fix a bug where it would
+      stop processing if it saw a macro declaration.
+
+6.40  Thu Dec  6 03:00:47 PST 2007
+    Bug Fixes
+    - Remove the dubious nicetext() Makefile formatting hack to account for
+      a lack of space between the target and colon needed on VMS.  This
+      interfered with META.yml creation on VMS and possibly other output.
+    - Fix the remaining targets which don't have a space between the target
+      and the colon.
+
+6.38  Wed Nov 28 16:01:12 PST 2007
+    Releasing 6.37_03 as 6.38.
+
+6.37_03  Mon Nov 26 14:15:34 PST 2007
+    Tests
+    - parse_version.t had wrong test count when version.pm isn't installed.
+    - Fixed some warnings in the XS module we're using for testing.
+    - "our $VERSION" test in parse_version.t was never running
+    - Quoting uses of 1.2.3 style versions in parse_version.t to protect
+      older perls.
+
+    Portability
+    - Moved the minimum required version up to 5.6.0.
+
+6.37_02  Sun Nov 25 23:33:14 PST 2007
+    Test Improvements
+    - Added a test for a basic XS build.
+
+    Bug Fixes
+    - A refactoring in 6.37_01 broke XS compilation.
+
+6.37_01  Sun Nov 25 17:05:53 PST 2007
+    Improvements
+    - Upgraded the META.yml to version 1.3 of the spec (which really
+      doesn't change anything).  Thanks bdfoy.
+    - MakeMaker now always includes the required 'author' field in 
+      the META.yml even if it's undef to comply with the META.yml spec.
+    - Updated ExtUtils-Install to latest version (1.44)
+    - Unified the version numbers of all modules.
+
+    Test Fixes
+    - cd() test on VMS used non-native paths. [bleadperl 31534]
+    - Removed uses of "no_plan" in tests to remain compatible with
+      old versions of Test::Harness.
+    - writemakefile_args.t had the wrong test count if version.pm isn't
+      installed.
+
+    Bug Fixes
+    - $VERSION detection code would be confused by "sub version"
+      [rt.cpan.org 30747]
+    - LINKTYPE=static will now be propagated to child builds.
+      [bleadperl 31761]
+
+    Portability Fixes
+    - Add "dragonfly" to the list of BSDish operating systems
+    - BSD detection code would not pick up bsdos or internix
+    - Fix detection of shared libperl on NetBSD [bleadperl 31526]
+
+
+6.36  Tue Jul  3 01:06:40 PDT 2007
+    Test Fixes
+    - version.pm prior to 0.7203 caused Foo->VERSION to reformat
+      $Foo::VERSION.  This caused prereq.t to fail.
+
+6.35  Sun Jul  1 20:53:38 PDT 2007
+    New Features
+    * MakeMaker will now try to "use version" before parsing $VERSION.
+      This allows "$VERSION = qv(1.2.3)" to work.
+
+    Test Fixes
+    - writemakefile_args.t now works with older versions of version.pm
+
+6.34  Sat Jun 30 11:06:54 CDT 2007
+    Test Fixes
+    - Accidentally hard coded the version of strict.pm [rt.cpan.org 27838]
+
+6.33  Fri Jun 29 17:15:34 CDT 2007
+    New Features
+    * VERSION now accepts version objects without warning.
+      [rt.cpan.org 26075]
+
+    Bug Fixes
+    - Properly not installing MANIFEST.SKIP when ExtUtils::Manifest is not
+      being installed. [rt.cpan.org 21318]
+    - fixin() no longer clobbers $/ [rt.cpan.org 26234]
+    - Fixed bug finding cross-compiled perls [bleadperl 31404]
+    - Looking up to 8 levels up to find uninstalled perls
+      [bleadperl 30932]
+    * A test failure in a sub-project would not cause "make test" to
+      fail. [rt.cpan.org 27804]
+
+    Windows
+    - Embed manifest files in EXEs and DLLs when building with VC++ 8.x
+      [bleadperl #29266] [rt.cpan.org 26208]
+    - Improved the subdir command code so DIR can do more than one level
+      down. [rt.cpan.org 25180]
+    - Fix static builds on Win32 by using -DPERLDLL [bleadperl 31229]
+
+    VMS
+    - Use linker flags rather than compiler flags to determine if the
+      perl sharable image was linked debug.  This keeps OPTIMIZE from
+      confusing things. [rt.cpan.org 25268]
+    - Accidental use of $\ in a regex. [bleadperl 30521]
+
+    BSD
+    - If calling perl causes MakeMaker to emit warnings, then it
+      cannot find the location of its binary. [rt.cpan.org 23178]
+
+    Doc Improvements
+    - Typo fixes.  $(TOUNIX) -> $(TO_UNIX).  [rt.cpan.org 23495]
+    - The example for setting $VERSION from $Revision$ in SVN was
+      incorrect. (Thanks to ROBERTMAY@cpan.org) [rt.cpan.org 26995]
+    - Document what's wrong with PREFIX and what to use instead.
+      [rt.cpan.org 12919]
+    - Improve the PREREQ_FATAL docs to make it really clear that you
+      do NOT want to use this!
+
+    Misc
+    - Provide information during the install about whether we're using the
+      installed or provided dependency (ie. ExtUtils::Command).
+    - Updated included versions of ExtUtils::Manifest and Command.
+    - Add .bak and .old to veryclean [rt.cpan.org 21284]
+    - Improved the PREREQ_FATAL message.
+
+6.32  Wed Feb 21 07:59:57 PST 2007
+    New Features
+    - WriteEmptyMakefile() is now exportable upon request.
+    
+    Bug Fixes
+    - Set binmode() when writing to files in Command.t for operating
+      systems which need that sort of thing.  [bleadperl #29578]
+    - Fixed a minor duplication in manifypod_target().  [rt.cpan.org 22149]
+
+    Test Fixes
+    - The build_man.t test would fail if your Perl is configured to not
+      generate man pages ($Config{installman3dir} is set to none).
+
+    Doc Improvements
+    - Made the home dir install examples a little more friendly to non-Unix
+      folks.
+
+    Misc
+    - miniperl no longer has the Win32 functions.
+    - Turn on "use strict" where it was missing.
+
+6.31  Mon Oct  9 16:54:47 PDT 2006
+    - Update our META.yml to version 1.2 of the spec.
+    * Update the SEE ALSO to mention Module::Build, Module::Install,
+      ExtUtils::ModuleMaker and Module::Starter.
+    - Fix ARCHITECTURE tag in PPD generation for 5.8 (patch taken from
+      ActiveState 819). [rt.cpan.org 20566]
+    * Bring ExtUtils::Manifest up to 1.48
+
+6.30_04  Mon Sep 11 16:14:06 EDT 2006
+    - EXTRA_META has been undocumented as I don't like the way the
+      interface works but I don't want to hold up 6.31.  It will be
+      replaced with something better next version.
+    - Added explaination of distclean behavior and instructions on how to
+      blow away anything not in the MANIFEST to the FAQ.
+    * 6.30_01 broke overrides of PM.  MakeMaker would add to a user
+      suplied PM rather than simply accepting it.
+    * Document INSTALL_BASE.
+    * Added "How do I install a module into my home directory?" to the FAQ
+    * Added "How do I get MakeMaker and Module::Build to install to the
+      same place?"
+    - Moving ExtUtils::Mksymlists and ExtUtils::Mkbootstrap back into
+      lib/ because no independent distribution has taken them over.
+
+6.30_03  Fri Sep  1 17:03:11 EDT 2006
+    - Minor fix to Command.t for Win32.
+
+6.30_02  Fri Sep  1 15:03:55 EDT 2006
+    - Updated to ExtUtils::Install 1.41
+    * Won't scan for and build man pages when MAN3PODS is deliberately set
+      empty.
+    - Minor VMS fixes. [bleadperl@26813]
+    - VMS->one_liner must quote "--" argument. [bleadperl@27613]
+    * Split INSTALLSCRIPT into INSTALLSCRIPT, INSTALLSITESCRIPT and
+      INSTALLVENDORSCRIPT so it now honors INSTALLDIRS. [bleadperl@26536]
+    - Minor fix to work with Pod::man 2.04. [bleadperl@26457]
+    - $Revision was broken.
+    - Updated our internal version of Test::More to catch a few warnings.
+    - ExtUtils::Command::test_f() test was broken.
+    - Clarified that test_f() exits.
+
+6.30_01  Tue Aug 16 23:53:27 PDT 2005
+    * Fixed compiling modules using an uninstalled Perl on Win32 by using
+      the proper perl header location for Windows (which is different from
+      Unix).  Looks like a very old bug.  [bugs.perl.org 36128]
+    - $ExtUtils::MakeMaker::Revision accidentally left in a stray "Revision".
+      [thanks pdx.pm for noticing this]
+    - Fixed the $VERSION = $Revision$ example in the MakeMaker docs and the
+      FAQ. [thanks again, pdx.pm]
+    - Elaborated on the differences between CVS, SVN and others when using
+      $Revision$ based $VERSIONs.
+    * ExtUtils::Command, ExtUtils::Install, ExtUtils::Manifest,
+      ExtUtils::Mkbootstrap, ExtUtils::Mksymlists and ExtUtils::Packlist
+      are all now considered to be separate distributions.  To avoid a 
+      circular dependency, MakeMaker distributes its own versions but CPAN 
+      should not index them and they will not overwrite a newer, installed 
+      version.
+    * Added EXTRA_META option to allow module authors to append extra
+      text to the generated META.yml.
+    * Added a LICENSE field mirroring Module::Build's license.
+    * META.yml support updated to version 1.1.  All required fields
+      now generated.  (NOTE: 1.1 isn't yet complete but we're going with
+      it anyway.  MakeMaker uses "author" instead of "authored_by" as its
+      expected the former will be used in 1.1 final).
+    * Non-conforming version_from and installdirs META.yml fields removed.
+    * META.yml distribution_type field now intelligent enough to guess at
+      the type rather than hard code 'module'.
+    * INSTALLBASE changed to INSTALL_BASE to match Module::Build.
+    * Added a MAKE parameter for Windows users to say if they're using
+      dmake or nmake.
+
 6.30  Fri May 20 16:05:38 PDT 2005
     * PL_FILES behavior tweak again to restore old behavior.  Sometimes its 
       supposed to run before pm_to_blib, sometimes after.

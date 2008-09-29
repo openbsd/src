@@ -5,7 +5,7 @@ use Carp;
 use strict;
 our($AUTOLOAD, $Debug, $VERSION);
 
-$VERSION = 1.03;
+$VERSION = 1.05;
 
 $Debug = 0 unless defined $Debug;
 
@@ -38,7 +38,7 @@ sub fill_protos {
     $n++;
     push(@out1,[$n,@out]) if $seen_semi;
     push(@out, $1 . "{\$_[$n]}"), next if $proto =~ s/^\s*\\([\@%\$\&])//;
-    push(@out, "\$_[$n]"), next if $proto =~ s/^\s*([*\$&])//;
+    push(@out, "\$_[$n]"), next if $proto =~ s/^\s*([_*\$&])//;
     push(@out, "\@_[$n..\$#_]"), last if $proto =~ s/^\s*(;\s*)?\@//;
     $seen_semi = 1, $n--, next if $proto =~ s/^\s*;//; # XXXX ????
     die "Unknown prototype letters: \"$proto\"";
@@ -99,7 +99,8 @@ sub _make_fatal {
 	$sref = \&$sub;
 	$proto = prototype $sref;
 	$call = '&$sref';
-    } elsif ($sub eq $ini) {	# Stray user subroutine
+    } elsif ($sub eq $ini && $sub !~ /^CORE::GLOBAL::/) {
+	# Stray user subroutine
 	die "$sub is not a Perl subroutine" 
     } else {			# CORE subroutine
         $proto = eval { prototype "CORE::$name" };
@@ -177,10 +178,16 @@ values are ignored.  For example
 	# not checked, so error raises an exception
 	close FH;
 
+=head1 BUGS
+
+You should not fatalize functions that are called in list context, because this
+module tests whether a function has failed by testing the boolean truth of its
+return value in scalar context.
+
 =head1 AUTHOR
 
-Lionel.Cons@cern.ch
+Lionel Cons (CERN).
 
-prototype updates by Ilya Zakharevich ilya@math.ohio-state.edu
+Prototype updates by Ilya Zakharevich <ilya@math.ohio-state.edu>.
 
 =cut

@@ -1,6 +1,6 @@
 package OS2::DLL;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use Carp;
 use XSLoader;
@@ -64,10 +64,11 @@ sub libPath_find {
   push @path, split /;/, OS2::extLibpath	if $flags & 0x1;	# BEGIN
   push @path, split /;/, OS2::libPath		if $flags & 0x2;
   push @path, split /;/, OS2::extLibpath(1)	if $flags & 0x4;	# END
-  s,(?![/\\])$,/, for @path;
-  s,\\,/,g for @path;
+  s,(?![/\\])$,/,  for @path;
+  s,\\,/,g	   for @path;
   $name .= ".dll" unless $name =~ /\.[^\\\/]*$/;
   $_ .= $name for @path;
+  return grep -f $_, @path if $flags & 0x8;
   -f $_ and return $_ for @path;
   return;
 }

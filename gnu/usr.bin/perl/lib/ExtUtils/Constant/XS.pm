@@ -10,7 +10,7 @@ require ExtUtils::Constant::Base;
 @ISA = qw(ExtUtils::Constant::Base Exporter);
 @EXPORT_OK = qw(%XS_Constant %XS_TypeSet);
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 $is_perl56 = ($] < 5.007 && $] > 5.005_50);
 
@@ -143,6 +143,13 @@ sub macro_from_name {
   $macro;
 }
 
+sub macro_from_item {
+  my ($self, $item) = @_;
+  my $macro = $item->{macro};
+  $macro = $self->macro_from_name($item) unless defined $macro;
+  $macro;
+}
+
 # Keep to the traditional perl source macro
 sub memEQ {
   "memEQ";
@@ -221,7 +228,7 @@ EOT
 				@items);
   $result .= <<'EOT';
 
-print constant_types(); # macro defs
+print constant_types(), "\n"; # macro defs
 EOT
   $package = perl_stringify($package);
   $result .=
@@ -239,7 +246,7 @@ EOT
   $result .= ", $breakout" . ', @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "#### XS Section:\n";
+print "\n#### XS Section:\n";
 print XS_constant ("' . $package . '", $types);
 __END__
    */

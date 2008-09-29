@@ -299,3 +299,44 @@ Revision history for Perl extension Text::Balanced.
 	- Constrainted _match_quote to only match at word boundaries
 	  (so "exemplum(hic)" doesn't match "m(hic)")
 	  (thanks Craig)
+
+
+
+1.96.0  Mon May  1 21:52:37 2006
+
+	- Fixed major bug in extract_multiple handling of unknowns
+
+	- Fixed return value on failure (thanks Eric)
+
+    - Fixed bug differentiating heredocs and left-shift operators
+      (thanks Anthony)
+
+1.97   Mon May  1 21:58:04 2006
+
+    - Removed three-part version number and dependency on version.pm
+
+
+1.98  Fri May  5 14:58:49 2006
+
+    - Reinstated full test suite (thanks Steve!)
+
+
+
+1.99.0  Thu Nov 16 07:32:06 2006
+
+    - Removed reliance on expensive $& variable (thanks John)
+
+    - Made Makefile.PL play nice with core versions (thanks Schwern!)
+
+
+1.99.1  Thu Nov 16 09:29:14 2006
+
+    - Included dependency on version.pm (thanks Andy)
+
+
+
+2.0.0  Wed Dec 20 10:50:24 2006
+
+    - Added patches from bleadperl version (thanks Rafael!)
+
+    - Fixed bug in second bracketed delimiters (thanks David)

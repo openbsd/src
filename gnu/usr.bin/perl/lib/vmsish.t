@@ -5,9 +5,12 @@ BEGIN {
     @INC = '../lib'; 
 }
 
-my $Invoke_Perl = qq(MCR $^X "-I[-.lib]");
+my $perl = $^X;
+$perl = VMS::Filespec::vmsify($perl) if $^O eq 'VMS';
 
-require "./test.pl";
+my $Invoke_Perl = qq(MCR $perl "-I[-.lib]");
+
+BEGIN { require "./test.pl"; }
 plan(tests => 25);
 
 SKIP: {

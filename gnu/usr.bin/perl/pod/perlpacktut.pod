@@ -400,7 +400,7 @@ containing a stack frame as it happens on an Intel 8086:
 
 First, we note that this time-honored 16-bit CPU uses little-endian order,
 and that's why the low order byte is stored at the lower address. To
-unpack such a (signed) short we'll have to use code C<v>. A repeat
+unpack such a (unsigned) short we'll have to use code C<v>. A repeat
 count unpacks all 12 shorts:
 
    my( $ip, $cs, $flags, $ax, $bx, $cd, $dx, $si, $di, $bp, $ds, $es ) =
@@ -459,16 +459,47 @@ to the data length. (But make sure to read L<"Lengths and Widths"> before
 you really code this!)
 
 
+=head2 Byte-order modifiers
+
+In the previous sections we've learned how to use C<n>, C<N>, C<v> and
+C<V> to pack and unpack integers with big- or little-endian byte-order.
+While this is nice, it's still rather limited because it leaves out all
+kinds of signed integers as well as 64-bit integers. For example, if you
+wanted to unpack a sequence of signed big-endian 16-bit integers in a
+platform-independent way, you would have to write:
+
+   my @data = unpack 's*', pack 'S*', unpack 'n*', $buf;
+
+This is ugly. As of Perl 5.9.2, there's a much nicer way to express your
+desire for a certain byte-order: the C<E<gt>> and C<E<lt>> modifiers.
+C<E<gt>> is the big-endian modifier, while C<E<lt>> is the little-endian
+modifier. Using them, we could rewrite the above code as:
+
+   my @data = unpack 's>*', $buf;
+
+As you can see, the "big end" of the arrow touches the C<s>, which is a
+nice way to remember that C<E<gt>> is the big-endian modifier. The same
+obviously works for C<E<lt>>, where the "little end" touches the code.
+
+You will probably find these modifiers even more useful if you have
+to deal with big- or little-endian C structures. Be sure to read
+L<"Packing and Unpacking C Structures"> for more on that.
+
 
 =head2 Floating point Numbers
 
 For packing floating point numbers you have the choice between the
-pack codes C<f> and C<d> which pack into (or unpack from) single-precision or
-double-precision representation as it is provided by your system. (There
+pack codes C<f>, C<d>, C<F> and C<D>. C<f> and C<d> pack into (or unpack
+from) single-precision or double-precision representation as it is provided
+by your system. If your systems supports it, C<D> can be used to pack and
+unpack extended-precision floating point values (C<long double>), which
+can offer even more resolution than C<f> or C<d>. C<F> packs an C<NV>,
+which is the floating point type used by Perl internally. (There
 is no such thing as a network representation for reals, so if you want
 to send your real numbers across computer boundaries, you'd better stick
 to ASCII representation, unless you're absolutely sure what's on the other
-end of the line.)
+end of the line. For the even more adventuresome, you can use the byte-order
+modifiers from the previous section also on floating point codes.)
 
 
 
@@ -592,7 +623,7 @@ characters that are used in several European languages is in the next
 range, up to 255. After some more Latin extensions we find the character
 sets from languages using non-Roman alphabets, interspersed with a
 variety of symbol sets such as currency symbols, Zapf Dingbats or Braille.
-(You might want to visit L<www.unicode.org> for a look at some of
+(You might want to visit L<http://www.unicode.org/> for a look at some of
 them - my personal favourites are Telugu and Kannada.)
 
 The Unicode character sets associates characters with integers. Encoding
@@ -602,17 +633,24 @@ The UTF-8 encoding avoids this by storing the most common (from a western
 point of view) characters in a single byte while encoding the rarer
 ones in three or more bytes.
 
-So what has this got to do with C<pack>? Well, if you want to convert
-between a Unicode number and its UTF-8 representation you can do so by
-using template code C<U>. As an example, let's produce the UTF-8
-representation of the Euro currency symbol (code number 0x20AC):
+Perl uses UTF-8, internally, for most Unicode strings.
+
+So what has this got to do with C<pack>? Well, if you want to compose a
+Unicode string (that is internally encoded as UTF-8), you can do so by
+using template code C<U>. As an example, let's produce the Euro currency
+symbol (code number 0x20AC):
 
    $UTF8{Euro} = pack( 'U', 0x20AC );
+   # Equivalent to: $UTF8{Euro} = "\x{20ac}";
 
-Inspecting C<$UTF8{Euro}> shows that it contains 3 bytes: "\xe2\x82\xac". The
-round trip can be completed with C<unpack>:
+Inspecting C<$UTF8{Euro}> shows that it contains 3 bytes:
+"\xe2\x82\xac". However, it contains only 1 character, number 0x20AC.
+The round trip can be completed with C<unpack>:
 
    $Unicode{Euro} = unpack( 'U', $UTF8{Euro} );
+
+Unpacking using the C<U> template code also works on UTF-8 encoded byte
+strings.
 
 Usually you'll want to pack or unpack UTF-8 strings:
 
@@ -620,12 +658,17 @@ Usually you'll want to pack or unpack UTF-8 strings:
    my $alefbet = pack( 'U*', 0x05d0..0x05ea );
    my @hebrew = unpack( 'U*', $utf );
 
+Please note: in the general case, you're better off using
+Encode::decode_utf8 to decode a UTF-8 encoded byte string to a Perl
+Unicode string, and Encode::encode_utf8 to encode a Perl Unicode string
+to UTF-8 bytes. These functions provide means of handling invalid byte
+sequences and generally have a friendlier interface.
 
 =head2 Another Portable Binary Encoding
 
 The pack code C<w> has been added to support a portable binary data
 encoding scheme that goes way beyond simple integers. (Details can
-be found at L<Casbah.org>, the Scarab project.)  A BER (Binary Encoded
+be found at L<http://Casbah.org/>, the Scarab project.)  A BER (Binary Encoded
 Representation) compressed unsigned integer stores base 128
 digits, most significant digit first, with as few digits as possible.
 Bit eight (the high bit) is set on each byte except the last. There
@@ -818,6 +861,12 @@ section right away with the terse remark that C structures don't
 contain anything else, and therefore you already know all there is to it.
 Sorry, no: read on, please.
 
+If you have to deal with a lot of C structures, and don't want to
+hack all your template strings manually, you'll probably want to have
+a look at the CPAN module C<Convert::Binary::C>. Not only can it parse
+your C source directly, but it also has built-in support for all the
+odds and ends described further on in this section.
+
 =head2 The Alignment Pit
 
 In the consideration of speed against memory requirements the balance
@@ -939,6 +988,32 @@ done by enclosing the appropriate pack code in brackets: C<[s]>. So, here's
 the very best we can do:
 
   my $gappy = pack( 'c x![s] s c x![l!] l!', $c1, $s, $c2, $l );
+
+
+=head2 Dealing with Endian-ness
+
+Now, imagine that we want to pack the data for a machine with a
+different byte-order. First, we'll have to figure out how big the data
+types on the target machine really are. Let's assume that the longs are
+32 bits wide and the shorts are 16 bits wide. You can then rewrite the
+template as:
+
+  my $gappy = pack( 'c x![s] s c x![l] l', $c1, $s, $c2, $l );
+
+If the target machine is little-endian, we could write:
+
+  my $gappy = pack( 'c x![s] s< c x![l] l<', $c1, $s, $c2, $l );
+
+This forces the short and the long members to be little-endian, and is
+just fine if you don't have too many struct members. But we could also
+use the byte-order modifier on a group and write the following:
+
+  my $gappy = pack( '( c x![s] s c x![l] l )<', $c1, $s, $c2, $l );
+
+This is not as short as before, but it makes it more obvious that we
+intend to have little-endian byte-order for a whole group, not only
+for individual template codes. It can also be more readable and easier
+to maintain.
 
 
 =head2 Alignment, Take 2

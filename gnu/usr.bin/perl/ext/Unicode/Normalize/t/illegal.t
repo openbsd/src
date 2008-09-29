@@ -24,10 +24,6 @@ BEGIN {
 
 #########################
 
-use Test;
-use strict;
-use warnings;
-
 BEGIN {
     use Unicode::Normalize qw(:all);
 
@@ -38,6 +34,10 @@ BEGIN {
 	exit;
     }
 }
+
+use Test;
+use strict;
+use warnings;
 
 BEGIN { plan tests => 112 };
 

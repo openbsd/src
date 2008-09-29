@@ -16,7 +16,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /NetWare/i) {
-		plan tests => 40;
+		plan tests => 39;
 	} else {
 		plan skip_all => 'This is not NW5';
 	}
@@ -254,21 +254,6 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
           'tool_autosplit()' );
 }
 
-# tools_other()
-{
-    ( my $mm_w32 = bless { }, 'MM' )->init_others();
-        
-    my $bin_sh = ( $Config{make} =~ /^dmake/i 
-               ? "" : ($Config{sh} || 'cmd /c') . "\n" );
-    $bin_sh = "SHELL = $bin_sh" if $bin_sh;
-
-    my $tools = join "\n", map "$_ = $mm_w32->{ $_ }"
-    	=> qw(CHMOD CP LD MV NOOP RM_F RM_RF TEST_F TOUCH UMASK_NULL DEV_NULL);
-
-    like( $mm_w32->tools_other(),
-          qr/^\Q$bin_sh$tools/m,
-          'tools_other()' );
-};
 
 # xs_o() should look into that
 # top_targets() should look into that

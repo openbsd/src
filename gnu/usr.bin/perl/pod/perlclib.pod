@@ -138,9 +138,12 @@ pattern into it that should be illegal as pointers (and floating point
 numbers), and also hopefully surprising enough as integers, so that
 any code attempting to use the data without forethought will break
 sooner rather than later.  Poisoning can be done using the Poison()
-macro, which has similar arguments as Zero():
+macros, which have similar arguments as Zero():
 
-    Poison(dst, n, t)
+    PoisonWith(dst, n, t, b)    scribble memory with byte b
+    PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
+    PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
+    Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
 
 =head2 Character Class Tests
 

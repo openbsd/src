@@ -32,7 +32,7 @@ typedef long perl_key;
 // Ananth, 3 Sept 2001
 typedef struct nw_cond { long waiters; unsigned int sem; } perl_cond;
 
-#if (defined (USE_ITHREADS) || defined (USE_5005THREADS)) && defined(MPK_ON)
+#if defined (USE_ITHREADS) && defined(MPK_ON)
 #ifdef __cplusplus
 extern "C"
 {

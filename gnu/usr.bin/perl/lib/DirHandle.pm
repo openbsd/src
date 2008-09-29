@@ -1,6 +1,6 @@
 package DirHandle;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME 
 
@@ -58,6 +58,9 @@ sub new {
 
 sub DESTROY {
     my ($dh) = @_;
+    # Don't warn about already being closed as it may have been closed 
+    # correctly, or maybe never opened at all.
+    no warnings 'io';
     closedir($dh);
 }
 

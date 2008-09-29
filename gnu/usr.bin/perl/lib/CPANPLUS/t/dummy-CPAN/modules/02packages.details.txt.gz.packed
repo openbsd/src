@@ -1,0 +1,25 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u lib/CPANPLUS/t/dummy-CPAN/modules/02packages.details.txt.gz.packed lib/CPANPLUS/t/dummy-CPAN/modules/02packages.details.txt.gz
+
+To recreate it use the following command:
+
+     uupacktool.pl -p lib/CPANPLUS/t/dummy-CPAN/modules/02packages.details.txt.gz lib/CPANPLUS/t/dummy-CPAN/modules/02packages.details.txt.gz.packed
+
+Created at Fri Dec 14 13:43:16 2007
+#########################################################################
+__UU__
+M'XL("$TN$T<``S`R<&%C:V%G97,N9&5T86EL<RYT>'0`G=-1;],P$`#@=_^*
+M>^`!I,;Q4D63_$136@2T8Z)$VQORXEMKD=B1?5DHOQY[9=JH*#!.EB+9Y\]W
+M5KPT+4IX"%'TJOFJMABX1E*F#9R^$:L_K1YS8$?4RSP?QY'WZ%O>N"Z?7\XN
+M\L[IH<60GU#>8&B\Z<DX&[7+0PI8U6&`6S=8#<:"-AX;<GX/+^Y--=#.^9`;
+MG;.Y:X?.AI^E]$^`"=RA#Q&>Q&G:L7>6T&K4V=)Y";.!7*<(-=PB-3OP;B!C
+M,4P.AT<(0;MFZ-"22N5Q=N4-12*K]NFTKM4FT*C2YI=W4/"I*%[!S1YF5GM4
+M@7]P:,WVM;*F4[%GMHI\-H\]4=I^)L[+DJU4H*SN=2I$PA7J"4P%O%<6"B$*
+M$*4LXCB'M^O/C"V=D[)27LI%+>7U!HY"<'&6OHOZ>I/'Y"SF9FF2D_)\^_T)
+ML*[^!*RK?P(N/AX3CT!:^PN1FCA-+.IG$%)NAIO_(8YOX!E$%7_.^$SD*>J(
+B.*1GOY/FHSY5QWT4OTKI?95<B/*+F#X0[`?@'LWVLP,`````

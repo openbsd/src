@@ -1,32 +1,33 @@
-#!./perl
+#!perl
+
 BEGIN {
      chdir 't' if -d 't';
      @INC = '../lib';
-     require './test.pl';	# for which_perl() etc
+     require './test.pl';
      $| = 1;
-}
 
-use strict;
-use Config;
-
-BEGIN {
-     if (!$Config{useithreads}) {
-	print "1..0 # Skip: no ithreads\n";
-	exit 0;
+     require Config;
+     if (!$Config::Config{useithreads}) {
+        print "1..0 # Skip: no ithreads\n";
+        exit 0;
      }
      if ($ENV{PERL_CORE_MINITEST}) {
        print "1..0 # Skip: no dynamic loading on miniperl, no threads\n";
        exit 0;
      }
-     plan(3);
+
+     plan(10);
 }
+
+use strict;
+use warnings;
 use threads;
 
 # test that we don't get:
 # Attempt to free unreferenced scalar: SV 0x40173f3c
 fresh_perl_is(<<'EOI', 'ok', { }, 'delete() under threads');
 use threads;
-threads->new(sub { my %h=(1,2); delete $h{1}})->join for 1..2;
+threads->create(sub { my %h=(1,2); delete $h{1}})->join for 1..2;
 print "ok";
 EOI
 
@@ -40,7 +41,7 @@ my $data = "a";
 my $obj = \$data;
 my $copy = $obj;
 Scalar::Util::weaken($copy);
-threads->new(sub { 1 })->join for (1..1);
+threads->create(sub { 1 })->join for (1..1);
 print "ok";
 EOI
 
@@ -57,6 +58,105 @@ use Scalar::Util qw(weaken);
 my $object = Foo->new;
 my $ref = $object;
 weaken $ref;
-threads->new(sub { $ref = $object } )->join; # $ref = $object causes problems
+threads->create(sub { $ref = $object } )->join; # $ref = $object causes problems
 print "ok";
 EOI
+
+#PR30333 - sort() crash with threads
+sub mycmp { length($b) <=> length($a) }
+
+sub do_sort_one_thread {
+   my $kid = shift;
+   print "# kid $kid before sort\n";
+   my @list = ( 'x', 'yy', 'zzz', 'a', 'bb', 'ccc', 'aaaaa', 'z',
+                'hello', 's', 'thisisalongname', '1', '2', '3',
+                'abc', 'xyz', '1234567890', 'm', 'n', 'p' );
+
+   for my $j (1..99999) {
+      for my $k (sort mycmp @list) {}
+   }
+   print "# kid $kid after sort, sleeping 1\n";
+   sleep(1);
+   print "# kid $kid exit\n";
+}
+
+sub do_sort_threads {
+   my $nthreads = shift;
+   my @kids = ();
+   for my $i (1..$nthreads) {
+      my $t = threads->create(\&do_sort_one_thread, $i);
+      print "# parent $$: continue\n";
+      push(@kids, $t);
+   }
+   for my $t (@kids) {
+      print "# parent $$: waiting for join\n";
+      $t->join();
+      print "# parent $$: thread exited\n";
+   }
+}
+
+do_sort_threads(2);        # crashes
+ok(1);
+
+# Change 24643 made the mistake of assuming that CvCONST can only be true on
+# XSUBs. Somehow it can also end up on perl subs.
+fresh_perl_is(<<'EOI', 'ok', { }, 'cloning constant subs');
+use constant x=>1;
+use threads;
+$SIG{__WARN__} = sub{};
+async sub {};
+print "ok";
+EOI
+
+# From a test case by Tim Bunce in
+# http://www.nntp.perl.org/group/perl.perl5.porters/63123
+fresh_perl_is(<<'EOI', 'ok', { }, 'Ensure PL_linestr can be cloned');
+use threads;
+print do 'op/threads_create.pl' || die $@;
+EOI
+
+
+TODO: {
+    no strict 'vars';   # Accessing $TODO from test.pl
+    local $TODO = 'refcount issues with threads';
+
+# Scalars leaked: 1
+foreach my $BLOCK (qw(CHECK INIT)) {
+    fresh_perl_is(<<EOI, 'ok', { }, "threads in $BLOCK block");
+        use threads;
+        $BLOCK { threads->create(sub {})->join; }
+        print 'ok';
+EOI
+}
+
+# Scalars leaked: 1
+fresh_perl_is(<<'EOI', 'ok', { }, 'Bug #41138');
+    use threads;
+    leak($x);
+    sub leak
+    {
+        local $x;
+        threads->create(sub {})->join();
+    }
+    print 'ok';
+EOI
+
+} # TODO
+
+# [perl #45053] Memory corruption with heavy module loading in threads
+#
+# run-time usage of newCONSTSUB (as done by the IO boot code) wasn't
+# thread-safe - got occasional coredumps or malloc corruption
+{
+    local $SIG{__WARN__} = sub {};   # Ignore any thread creation failure warnings
+    my @t;
+    for (1..100) {
+        my $thr = threads->create( sub { require IO });
+        last if !defined($thr);      # Probably ran out of memory
+        push(@t, $thr);
+    }
+    $_->join for @t;
+    ok(1, '[perl #45053]');
+}
+
+# EOF

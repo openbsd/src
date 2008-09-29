@@ -8,7 +8,7 @@ BEGIN {
 $| = 1;
 umask 0;
 $xref = \ "";
-$runme = ($^O eq 'VMS' ? 'MCR ' : '') . $^X;
+$runme = $^X;
 @a = (1..5);
 %h = (1..6);
 $aref = \@a;
@@ -24,7 +24,7 @@ sub subb {"in s"}
 
 @INPUT = <DATA>;
 @simple_input = grep /^\s*\w+\s*\$\w+\s*[#\n]/, @INPUT;
-print "1..", (10 + @INPUT + @simple_input), "\n";
+print "1..", (11 + @INPUT + @simple_input), "\n";
 $ord = 0;
 
 sub wrn {"@_"}
@@ -170,6 +170,25 @@ EOE
     }
   }
 }
+
+$ord++;
+eval {
+    sub PVBM () { 'foo' }
+    index 'foo', PVBM;
+    my $x = PVBM;
+
+    my $str = 'foo';
+    my $pvlv = \substr $str, 0, 1;
+    $x = $pvlv;
+
+    1;
+};
+if ($@) {
+    warn "# $@";
+    print 'not ';
+}
+print "ok $ord\n";
+
 __END__
 ref $xref			# ref
 ref $cstr			# ref nonref

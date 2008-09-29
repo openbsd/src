@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan( tests => 31 );
+    plan( tests => 78 );
 }
 
 my @c;
@@ -65,25 +65,47 @@ ok( $c[4], "hasargs true with unknown sub" );
 
 # See if caller() returns the correct warning mask
 
+sub show_bits
+{
+    my $in = shift;
+    my $out = '';
+    foreach (unpack('W*', $in)) {
+        $out .= sprintf('\x%02x', $_);
+    }
+    return $out;
+}
+
+sub check_bits
+{
+    my ($got, $exp, $desc) = @_;
+    if (! ok($got eq $exp, $desc)) {
+        diag('     got: ' . show_bits($got));
+        diag('expected: ' . show_bits($exp));
+    }
+}
+
 sub testwarn {
     my $w = shift;
-    is( (caller(0))[9], $w, "warnings");
+    my $id = shift;
+    check_bits( (caller(0))[9], $w, "warnings match caller ($id)");
 }
 
 # NB : extend the warning mask values below when new warnings are added
 {
     no warnings;
-    BEGIN { is( ${^WARNING_BITS}, "\0" x 12, 'warning bits' ) }
-    testwarn("\0" x 12);
+    BEGIN { check_bits( ${^WARNING_BITS}, "\0" x 12, 'all bits off via "no warnings"' ) }
+    testwarn("\0" x 12, 'no bits');
+
     use warnings;
-    BEGIN { is( ${^WARNING_BITS}, "UUUUUUUUUUU\25", 'warning bits' ) }
-    BEGIN { testwarn("UUUUUUUUUUU\25"); }
+    BEGIN { check_bits( ${^WARNING_BITS}, "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x05", 'default bits on via "use warnings"' ); }
+    BEGIN { testwarn("\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x05", 'all'); }
     # run-time :
     # the warning mask has been extended by warnings::register
-    testwarn("UUUUUUUUUUUU");
+    testwarn("\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x15", 'ahead of w::r');
+
     use warnings::register;
-    BEGIN { is( ${^WARNING_BITS}, "UUUUUUUUUUUU", 'warning bits' ) }
-    testwarn("UUUUUUUUUUUU");
+    BEGIN { check_bits( ${^WARNING_BITS}, "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x15", 'warning bits on via "use warnings::register"' ) }
+    testwarn("\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x15", 'following w::r');
 }
 
 
@@ -102,7 +124,7 @@ my $debugger_test =  q<
 sub pb { return (caller(0))[3] }
 
 my $i = eval $debugger_test;
-is( $i, 10, "do not skip over eval (and caller returns 10 elements)" );
+is( $i, 11, "do not skip over eval (and caller returns 10 elements)" );
 
 is( eval 'pb()', 'main::pb', "actually return the right function name" );
 
@@ -111,6 +133,25 @@ $^P = 16;
 $^P = $saved_perldb;
 
 $i = eval $debugger_test;
-is( $i, 10, 'do not skip over eval even if $^P had been on at some point' );
+is( $i, 11, 'do not skip over eval even if $^P had been on at some point' );
 is( eval 'pb()', 'main::pb', 'actually return the right function name even if $^P had been on at some point' );
 
+print "# caller can now return the compile time state of %^H\n";
+
+sub hint_exists {
+    my $key = shift;
+    my $level = shift;
+    my @results = caller($level||0);
+    exists $results[10]->{$key};
+}
+
+sub hint_fetch {
+    my $key = shift;
+    my $level = shift;
+    my @results = caller($level||0);
+    $results[10]->{$key};
+}
+
+$::testing_caller = 1;
+
+do './op/caller.pl' or die $@;

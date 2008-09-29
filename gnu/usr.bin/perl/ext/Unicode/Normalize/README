@@ -1,9 +1,11 @@
-Unicode/Normalize version 0.28
+Unicode/Normalize version 1.02
 ===================================
 
 Unicode::Normalize - Unicode Normalization Forms
 
 SYNOPSIS
+
+(1) using function names exported by default:
 
   use Unicode::Normalize;
 
@@ -12,7 +14,7 @@ SYNOPSIS
   $NFKD_string = NFKD($string); # Normalization Form KD
   $NFKC_string = NFKC($string); # Normalization Form KC
 
-  or
+(2) using function names exported on request:
 
   use Unicode::Normalize 'normalize';
 
@@ -21,11 +23,10 @@ SYNOPSIS
   $NFKD_string = normalize('KD', $string);  # Normalization Form KD
   $NFKC_string = normalize('KC', $string);  # Normalization Form KC
 
-
 INSTALLATION
 
-Perl 5.6.1 or later.
-(Perl 5.8.0 or later is recommended.)
+Perl 5.6.1 or later is required.
+Perl 5.8.1 or later is recommended.
 
 To install this module (XSUB: needs a C compiler), type the following:
 
@@ -55,42 +56,34 @@ type the following (!! "enableXS" must run before "Makefile.PL" !!):
 
 DEPENDENCIES
 
-This module requires other modules and libraries following:
+This module requires some core modules and pragmas,
+and the following files from Unicode Character Database,
+which are included in recent perl core distributions.
 
-Carp
-Exporter
-File::Copy
-File::Spec
+- unicore/CombiningClass.pl (or unicode/CombiningClass.pl)
+- unicore/Decomposition.pl (or unicode/Decomposition.pl)
+- unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
 
-unicore/CombiningClass.pl         (or unicode/CombiningClass.pl)
-unicore/Decomposition.pl          (or unicode/Decomposition.pl)
-unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
+NOTES
 
-CAVEAT
+(1) After these unicore/*.* files are updated:
 
-(1) In the perl-current, unicore/CompExcl.txt
-  is renamed unicore/CompositionExclusions.txt.
-
-(2) After these unicore/*.* files are updated.
-
-  In the case of an XS edition:
+In the case of XSUB:
     You must rebuild the module,
     as the data will be compiled on building.
 
-  In the case of a pure Perl edition:
+In the case of pure perl:
     Rebuilding is not necessary,
     as the data will be read on requirement.
 
-(3) Pure Perl edition, Normalize.pmN, may work without any other file
-    in this distribution (it must be renamed Normalize.pm, though)
+(2) Normalize.pmN (a pure perl module) may work without any other file
+    in this distribution.  It must be renamed Normalize.pm, though.
 
-COPYRIGHT AND LICENCE
+COPYRIGHT AND LICENSE
 
-  SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
+SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-  http://homepage1.nifty.com/nomenclator/perl/
+Copyright(C) 2001-2007, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
-  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
-
-  This module is free software; you can redistribute it
-  and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.

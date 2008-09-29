@@ -1,0 +1,49 @@
+NOTE: this is just a sample of how building Symbian specific
+extensions COULD work.  This is most probably far from the best
+or final way of doing things.
+
+The Moped::Msg currently defines just a single static method,
+get_gsm_network_info(), which returns the GSM network and cell id.
+
+The extension code is in Msg.xs (which gets translated by xsubpp into
+Msg.cpp), the Perl glue code is in Msg.pm.  To understand the .xs
+syntax studying perlxstut and perlxs is recommended.
+
+The prerequisites for compiling this extension are:
+
+(1) The Perl for Symbian SDK installed (either done "make sdkinstall",
+    or separately installed the perlXYZsdk.zip).
+
+(2) The etelbgsm.h header, which is available for example from
+    the Symbian 6.1 SDK (the Communicator SDK). This must be
+    copied to ...\epoc32\include.
+
+(3) The etel.lib and the gsmbas.lib, they should come both
+    with the 6.1 and 7.0s SDK.  The WINS udeb and THUMB urel
+    versions of these must be copied to the directories
+    ...\epoc32\release\wins\udeb and ...\epoc32\release\thumb\urel,
+    respectively.
+
+To compile (assuming Perl 5.9.3 and Series 60 SDK 2.6 for Visual C):
+
+  perl \symbian\perl\5.9.3\bin\xsbuild.pl --cpp --extversion=0.1 ext\symbian\Moped\Msg
+
+The --symbian indicates the Symbian and SDK version, the --cplusplus
+indicates that one should generate a .cpp file instead of a .c file.
+
+The xsbuild.pl both configures and builds the extension.
+To clean do "make clean" or "make distclean".
+
+The location.pl demonstrates using the extension.
+
+To create a SIS:
+
+  makesis -d%EPOCROOT% ext\Moped\Msg\Msg.pkg
+
+TODO: automate the determination of the EXTVERSION (from .pkg?)
+and of creation of .pkg (the location of the .dll in the build
+and in the target).
+
+
+
+

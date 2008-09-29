@@ -1,20 +1,26 @@
-# CompositionExclusions-4.1.0.txt
-# Date: 2005-03-17, 15:21:00 PST [KW]
+# CompositionExclusions-5.0.0.txt
+# Date: 2006-05-23, 12:42:00 PST [KW]
 #
-# This file lists the characters from the UAX #15 Composition Exclusion Table.
+# This file lists the characters for the Composition Exclusion Table
+# defined in UAX #15, Unicode Normalization Forms.
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # For more information, see
 # http://www.unicode.org/unicode/reports/tr15/#Primary Exclusion List Table
-# ================================================
+#
+# For a full derivation of composition exclusions, see the derived property
+# Full_Composition_Exclusion in DerivedNormalizationProps.txt
+#
 
+# ================================================
 # (1) Script Specifics
-# This list of characters cannot be derived from the UnicodeData file.
+#
+# This list of characters cannot be derived from the UnicodeData.txt file.
 # ================================================
 
 0958    #  DEVANAGARI LETTER QA
@@ -89,8 +95,14 @@ FB4E    #  HEBREW LETTER PE WITH RAFE
 
 # ================================================
 # (2) Post Composition Version precomposed characters
+#
 # These characters cannot be derived solely from the UnicodeData.txt file
 # in this version of Unicode.
+#
+# Note that characters added to the standard after the
+# Composition Version and which have canonical decomposition mappings
+# are not automatically added to this list of Post Composition
+# Version precomposed characters.
 # ================================================
 
 2ADC    #  FORKING
@@ -112,10 +124,13 @@ FB4E    #  HEBREW LETTER PE WITH RAFE
 
 # ================================================
 # (3) Singleton Decompositions
-# These characters can be derived from the UnicodeData file
+#
+# These characters can be derived from the UnicodeData.txt file
 # by including all characters whose canonical decomposition
 # consists of a single character.
+#
 # These characters are simply quoted here for reference.
+# See also Full_Composition_Exclusion in DerivedNormalizationProps.txt
 # ================================================
 
 # 0340..0341       [2] COMBINING GRAVE TONE MARK..COMBINING ACUTE TONE MARK
@@ -163,11 +178,14 @@ FB4E    #  HEBREW LETTER PE WITH RAFE
 
 # ================================================
 # (4) Non-Starter Decompositions
+#
 # These characters can be derived from the UnicodeData file
 # by including all characters whose canonical decomposition consists
 # of a sequence of characters, the first of which has a non-zero
 # combining class.
+#
 # These characters are simply quoted here for reference.
+# See also Full_Composition_Exclusion in DerivedNormalizationProps.txt
 # ================================================
 
 # 0344                 COMBINING GREEK DIALYTIKA TONOS

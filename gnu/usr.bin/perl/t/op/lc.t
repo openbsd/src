@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 59;
+plan tests => 88;
 
 $a = "HELLO.* world";
 $b = "hello.* WORLD";
@@ -162,4 +162,53 @@ for my $a (0,1) {
 	$a =~ s/^(\s*)(\w*)/$1\u$2/;
 	is($a, v10, "[perl #18857]");
     } 
+}
+
+
+# [perl #38619] Bug in lc and uc (interaction between UTF-8, substr, and lc/uc)
+
+for ("a\x{100}", "xyz\x{100}") {
+    is(substr(uc($_), 0), uc($_), "[perl #38619] uc");
+}
+for ("A\x{100}", "XYZ\x{100}") {
+    is(substr(lc($_), 0), lc($_), "[perl #38619] lc");
+}
+for ("a\x{100}", "ßyz\x{100}") { # ß to Ss (different length)
+    is(substr(ucfirst($_), 0), ucfirst($_), "[perl #38619] ucfirst");
+}
+
+# Related to [perl #38619]
+# the original report concerns PERL_MAGIC_utf8.
+# these cases concern PERL_MAGIC_regex_global.
+
+for (map { $_ } "a\x{100}", "abc\x{100}", "\x{100}") {
+    chop; # get ("a", "abc", "") in utf8
+    my $return =  uc($_) =~ /\G(.?)/g;
+    my $result = $return ? $1 : "not";
+    my $expect = (uc($_) =~ /(.?)/g)[0];
+    is($return, 1,       "[perl #38619]");
+    is($result, $expect, "[perl #38619]");
+}
+
+for (map { $_ } "A\x{100}", "ABC\x{100}", "\x{100}") {
+    chop; # get ("A", "ABC", "") in utf8
+    my $return =  lc($_) =~ /\G(.?)/g;
+    my $result = $return ? $1 : "not";
+    my $expect = (lc($_) =~ /(.?)/g)[0];
+    is($return, 1,       "[perl #38619]");
+    is($result, $expect, "[perl #38619]");
+}
+
+for (1, 4, 9, 16, 25) {
+    is(uc "\x{03B0}" x $_, "\x{3a5}\x{308}\x{301}" x $_,
+       'uc U+03B0 grows threefold');
+
+    is(lc "\x{0130}" x $_, "i\x{307}" x $_, 'lc U+0130 grows');
+}
+
+# bug #43207
+my $temp = "Hello";
+for ("$temp") {
+    lc $_;
+    is($_, "Hello");
 }

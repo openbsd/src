@@ -30,15 +30,6 @@ sub new {
     return $self;
 }
 
-my $test_line_regex = qr/
-    ^
-    (not\ )?               # failure?
-    ok\b
-    (?:\s+(\d+))?         # optional test number
-    \s*
-    (.*)                  # and the rest
-/ox;
-
 =head1 from_test_line( $line )
 
 Constructor from a TAP test line, or empty return if the test line
@@ -51,7 +42,7 @@ sub from_test_line  {
     my $line = shift or return;
 
     # We pulverize the line down into pieces in three parts.
-    my ($not, $number, $extra) = ($line =~ $test_line_regex ) or return;
+    my ($not, $number, $extra) = ($line =~ /^(not )?ok\b(?:\s+(\d+))?\s*(.*)/) or return;
 
     my $point = $class->new;
     $point->set_number( $number );

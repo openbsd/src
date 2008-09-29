@@ -217,16 +217,21 @@ EOM
 
 
 *** Perl 64-bit addressing support is experimental for Mac OS X
-*** 10.4 ("Tiger") and Darwin version 8. Expect a number of test
-*** failures:
-***    ext/IO/io_*   ext/IPC/sysV/t/*   lib/Net/Ping/t/450_service
-***    Any test that uses sdbm
+*** 10.4 ("Tiger") and Darwin version 8. System V IPC is disabled
+*** due to problems with the 64-bit versions of msgctl, semctl,
+*** and shmctl. You should also expect the following test failures:
+***
+***    ext/threads/shared/t/wait (threaded builds only)
 
 EOM
     for var in ccflags cppflags ld ldflags
     do
        eval $var="\$${var}\ -arch\ ppc64"
     done
+
+    [ "$d_msgctl" ] || d_msgctl='undef'
+    [ "$d_semctl" ] || d_semctl='undef'
+    [ "$d_shmctl" ] || d_shmctl='undef'
     ;;
 esac
 fi
@@ -260,7 +265,7 @@ LANG=C; export LANG;
 #
 # Fix when Apple fixes libc.
 #
-case "$usethreads$useithreads$use5005threads" in
+case "$usethreads$useithreads" in
   *define*)
   case "$osvers" in
     [12345].*)     cat <<EOM >&4

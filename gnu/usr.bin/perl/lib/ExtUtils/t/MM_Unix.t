@@ -18,7 +18,7 @@ BEGIN {
         plan skip_all => 'Non-Unix platform';
     }
     else {
-        plan tests => 110;
+        plan tests => 109;
     }
 }
 
@@ -175,11 +175,6 @@ ok (!$t->maybe_command('command') ,"non executable file isn't a command");
 chmod 0755, "command";
 ok ($t->maybe_command('command'),        "executable file is a command");
 unlink "command";
-
-###############################################################################
-# nicetext (dummy method)
-
-is ($t->nicetext('LOTR'),'LOTR','nicetext');
 
 
 ###############################################################################

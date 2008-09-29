@@ -1,0 +1,144 @@
+/* Copyright (c) 2004-2005 Nokia. All rights reserved. */ 
+
+/* The PerlUi class is licensed under the same terms as Perl itself. */
+
+/* The S60 definitions. */
+
+NAME PERL
+
+#include <eikon.rh>
+#include <avkon.rh>
+#include <avkon.rsg>
+
+#include "PerlUi.hrh"
+#include "PerlApp.hrh"
+
+RESOURCE RSS_SIGNATURE
+{
+}
+
+RESOURCE TBUF r_default_document_name
+{
+    buf = "";
+}
+
+RESOURCE EIK_APP_INFO
+{
+    menubar = r_Perl_menubar;
+    cba = R_AVKON_SOFTKEYS_OPTIONS_EXIT;
+}
+
+
+RESOURCE MENU_BAR r_Perl_menubar
+{
+    titles = {
+        MENU_TITLE
+            {
+            menu_pane = r_Perl_menu;
+            }
+    };
+}
+
+
+RESOURCE MENU_PANE r_Perl_menu
+{
+    items = {
+        MENU_ITEM {
+            command = EPerlAppCommandAbout;
+            txt = "About";
+        },
+        MENU_ITEM {
+            command = EPerlAppCommandTime;
+            txt = "Time";
+        },
+        MENU_ITEM {
+            command = EPerlAppCommandRunFile;
+            txt = "Run";
+        },
+        MENU_ITEM {
+            command = EPerlAppCommandOneLiner;
+            txt = "Oneliner";
+        },
+        MENU_ITEM {
+            command = EPerlAppCommandCopyright;
+            txt = "Copyright";
+            }
+        };
+}
+
+RESOURCE DIALOG r_perlui_ok_cancel_dialog
+{
+    flags = EEikDialogFlagWait | EEikDialogFlagCbaButtons;
+    buttons = R_AVKON_SOFTKEYS_OK_CANCEL;
+    items = {
+        DLG_LINE
+        {
+            type = EAknCtNote;
+            id = EGeneralNote;
+            control = AVKON_NOTE
+            {
+                layout = EGeneralLayout;
+            };
+        }
+    };
+}
+
+RESOURCE DIALOG r_perlui_yes_no_dialog
+{
+    flags = EEikDialogFlagWait | EEikDialogFlagCbaButtons;
+    buttons = R_AVKON_SOFTKEYS_YES_NO;
+    items = {
+        DLG_LINE
+        {
+            type = EAknCtNote;
+            id = EGeneralNote;
+            control = AVKON_NOTE
+            {
+                layout = EGeneralLayout;
+            };
+        }
+    };
+}
+
+RESOURCE DIALOG r_perlui_text_query_dialog
+{
+    flags = EGeneralQueryFlags;
+    buttons = R_AVKON_SOFTKEYS_OK_CANCEL;
+    items = {
+        DLG_LINE
+        {
+            type = EAknCtQuery;
+            id = EGeneralQuery;
+            control = AVKON_DATA_QUERY
+            {
+                layout = EDataLayout;
+                control = EDWIN {};
+            };
+        }
+    }; 
+}
+
+RESOURCE AVKON_LIST_QUERY r_perlui_list_query_dialog
+{
+    flags = EGeneralQueryFlags;
+    softkeys = R_AVKON_SOFTKEYS_OK_CANCEL;
+    items = {
+        DLG_LINE
+        {
+            type = EAknCtListQueryControl;
+            id = EListQueryControl;
+            control = AVKON_LIST_QUERY_CONTROL
+            {
+                listtype = EAknCtSinglePopupMenuListBox;
+            };
+        }
+    };
+}
+
+#include <CommonDialogs.hrh>
+#include <CommonDialogs.rh>
+
+RESOURCE MEMORYSELECTIONDIALOG r_perlui_file_selection_dialog
+{
+}
+

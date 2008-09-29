@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Tie::Handle;
+use Tie::StdHandle;
 tie *tst,Tie::StdHandle;
 
 $f = 'tst';

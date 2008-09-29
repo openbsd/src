@@ -30,11 +30,21 @@ This is a tést for quoted-printable text that has hàrdly any speçial characters
 in it.
 EOD
 
-my $encoded = <<EOD;
+my $encoded;
+
+if (ord('A') == 193) { # EBCDIC.
+    $encoded = <<EOD;
+This is a t=51st for quoted-printable text that has h=44rdly any spe=48ial =
+characters
+in it.
+EOD
+} else {
+    $encoded = <<EOD;
 This is a t=E9st for quoted-printable text that has h=E0rdly any spe=E7ial =
 characters
 in it.
 EOD
+}
 
 # Create the encoded test-file
 

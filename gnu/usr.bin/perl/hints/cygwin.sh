@@ -31,14 +31,15 @@ libswanted=`echo " $libswanted " | sed -e 's/ util / /g'`
 #   (with cygwin 1.5.7, cygipc is deprecated in favor of the builtin cygserver)
 libswanted="$libswanted gdbm_compat"
 test -z "$optimize" && optimize='-O2'
-ccflags="$ccflags -DPERL_USE_SAFE_PUTENV"
+ccflags="$ccflags -DPERL_USE_SAFE_PUTENV -U__STRICT_ANSI__"
 # - otherwise i686-cygwin
 archname='cygwin'
 
 # dynamic loading
 # - otherwise -fpic
 cccdlflags=' '
-ld='ld2'
+lddlflags=' --shared'
+ld='g++'
 
 case "$osvers" in
 
@@ -50,10 +51,17 @@ case "$osvers" in
         ;;
 esac;
 
+# compile Win32CORE "module" as static
+static_ext="$static_ext Win32CORE"
+
 # Win9x problem with non-blocking read from a closed pipe
 d_eofnblk='define'
 
+# suppress auto-import warnings
+ldflags="$ldflags -Wl,--enable-auto-import -Wl,--export-all-symbols -Wl,--stack,8388608 -Wl,--enable-auto-image-base -Wl,--enable-auto-import"
+lddlflags="$lddlflags $ldflags"
+
 # strip exe's and dll's
 #ldflags="$ldflags -s"
-#ccdlflags="$ccdlflags -s"
+ccdlflags="$ccdlflags -s"
 #lddlflags="$lddlflags -s"

@@ -36,7 +36,7 @@ case "$1" in
     echo "Building TAGS with relative paths"
 esac
 
-emacs=`(which emacs || which xemacs) 2>/dev/null`
+emacs=`(which emacs || which xemacs || echo emacs) 2>/dev/null`
 [ -x "$emacs" ] || { echo "can't find emacs or xemacs in PATH"; exit 1; }
 
 # Insure proper order (.h after .c, .xs before .c in subdirs):

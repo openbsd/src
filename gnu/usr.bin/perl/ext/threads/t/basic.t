@@ -1,144 +1,168 @@
-
-
-#
-# The reason this does not use a Test module is that
-# they mess up test numbers between threads
-#
-# And even when that will be fixed, this is a basic
-# test and should not rely on shared variables
-#
-# This will test the basic API, it will not use any coderefs
-# as they are more advanced
-#
-#########################
-
+use strict;
+use warnings;
 
 BEGIN {
-    chdir 't' if -d 't';
-    push @INC, '../lib';
-    require Config; import Config;
-    unless ($Config{'useithreads'}) {
-	print "1..0 # Skip: no useithreads\n";
- 	exit 0;	
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
+    }
+    use Config;
+    if (! $Config{'useithreads'}) {
+        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        exit(0);
     }
 }
 
 use ExtUtils::testlib;
-use strict;
-BEGIN { $| = 1; print "1..19\n" };
-use threads;
 
-
-
-print "ok 1\n";
-
-
-#########################
-
-
-
-
-sub ok {	
+sub ok {
     my ($id, $ok, $name) = @_;
 
     # You have to do it this way or VMS will get confused.
-    print $ok ? "ok $id - $name\n" : "not ok $id - $name\n";
+    if ($ok) {
+        print("ok $id - $name\n");
+    } else {
+        print("not ok $id - $name\n");
+        printf("# Failed test at line %d\n", (caller)[2]);
+    }
 
-    printf "# Failed test at line %d\n", (caller)[2] unless $ok;
-
-    return $ok;
+    return ($ok);
 }
 
+BEGIN {
+    $| = 1;
+    print("1..33\n");   ### Number of tests that will be run ###
+};
 
+use threads;
+
+if ($threads::VERSION && ! exists($ENV{'PERL_CORE'})) {
+    print(STDERR "# Testing threads $threads::VERSION\n");
+}
+
+ok(1, 1, 'Loaded');
+
+### Start of Testing ###
+
+ok(2, 1 == $threads::threads, "Check that threads::threads is true");
 
 sub test1 {
-	ok(2,'bar' eq $_[0],"Test that argument passing works");
+    ok(3,'bar' eq $_[0], "Test that argument passing works");
 }
-threads->create('test1','bar')->join();
+threads->create('test1', 'bar')->join();
 
 sub test2 {
-	ok(3,'bar' eq $_[0]->[0]->{foo},"Test that passing arguments as references work");
+    ok(4,'bar' eq $_[0]->[0]->{'foo'}, "Test that passing arguments as references work");
 }
+threads->create(\&test2, [{'foo' => 'bar'}])->join();
 
-threads->create('test2',[{foo => 'bar'}])->join();
+sub test3 {
+    ok(5, shift() == 1, "Test a normal sub");
+}
+threads->create(\&test3, 1)->join();
 
 
-#test execuion of normal sub
-sub test3 { ok(4,shift() == 1,"Test a normal sub") }
-threads->create('test3',1)->join();
-
-
-#check Config
-ok(5, 1 == $threads::threads,"Check that threads::threads is true");
-
-#test trying to detach thread
-
-sub test4 { ok(6,1,"Detach test") }
-
-my $thread1 = threads->create('test4');
-
-$thread1->detach();
-threads->yield; # help out non-preemptive thread implementations
-sleep 2;
-ok(7,1,"Detach test");
-
+sub test4 {
+    ok(6, 1, "Detach test");
+}
+{
+    my $thread1 = threads->create('test4');
+    $thread1->detach();
+    while ($thread1->is_running()) {
+        threads->yield();
+        sleep 1;
+    }
+}
+ok(7, 1, "Detach test");
 
 
 sub test5 {
-	threads->create('test6')->join();
-	ok(9,1,"Nested thread test");
+    threads->create('test6')->join();
+    ok(9, 1, "Nested thread test");
 }
 
 sub test6 {
-	ok(8,1,"Nested thread test");
+    ok(8, 1, "Nested thread test");
 }
 
 threads->create('test5')->join();
 
-sub test7 {
-	my $self = threads->self();
-	ok(10, $self->tid == 7, "Wanted 7, got ".$self->tid);
-	ok(11, threads->tid() == 7, "Wanted 7, got ".threads->tid());
-}
 
+sub test7 {
+    my $self = threads->self();
+    ok(10, $self->tid == 7, "Wanted 7, got ".$self->tid);
+    ok(11, threads->tid() == 7, "Wanted 7, got ".threads->tid());
+}
 threads->create('test7')->join;
 
 sub test8 {
-	my $self = threads->self();
-	ok(12, $self->tid == 8, "Wanted 8, got ".$self->tid);
-	ok(13, threads->tid() == 8, "Wanted 8, got ".threads->tid());
+    my $self = threads->self();
+    ok(12, $self->tid == 8, "Wanted 8, got ".$self->tid);
+    ok(13, threads->tid() == 8, "Wanted 8, got ".threads->tid());
 }
-
 threads->create('test8')->join;
 
 
-#check support for threads->self() in main thread
-ok(14, 0 == threads->self->tid(),"Check so that tid for threads work for main thread");
-ok(15, 0 == threads->tid(),"Check so that tid for threads work for main thread");
+ok(14, 0 == threads->self->tid(), "Check so that tid for threads work for main thread");
+ok(15, 0 == threads->tid(), "Check so that tid for threads work for main thread");
 
 {
-	no warnings;
-    local *CLONE = sub { ok(16, threads->tid() == 9, "Tid should be correct in the clone")};
-    threads->create(sub { ok(17, threads->tid() == 9, "And tid be 9 here too") })->join();
+    no warnings;
+    local *CLONE = sub {
+        ok(16, threads->tid() == 9, "Tid should be correct in the clone");
+    };
+    threads->create(sub {
+        ok(17, threads->tid() == 9, "And tid be 9 here too");
+    })->join();
 }
 
-{ 
-
-    sub Foo::DESTROY { 
-	ok(19, threads->tid() == 10, "In destroy it should be correct too" )
-	}
+{
+    sub Foo::DESTROY {
+        ok(19, threads->tid() == 10, "In destroy it should be correct too" )
+    }
     my $foo;
-    threads->create(sub { ok(18, threads->tid() == 10, "And tid be 10 here");
-			  $foo = bless {}, 'Foo';			  
-			  return undef;
-		      })->join();
-
+    threads->create(sub {
+        ok(18, threads->tid() == 10, "And tid be 10 here");
+        $foo = bless {}, 'Foo';
+        return undef;
+    })->join();
 }
-1;
 
 
+my $thr1 = threads->create(sub {});
+my $thr2 = threads->create(sub {});
+my $thr3 = threads->object($thr1->tid());
 
+# Make sure both overloaded '==' and '!=' are working correctly
+ok(20,   $thr1 != $thr2,  'Treads not equal');
+ok(21, !($thr1 == $thr2), 'Treads not equal');
+ok(22,   $thr1 == $thr3,  'Threads equal');
+ok(23, !($thr1 != $thr3), 'Threads equal');
 
+ok(24, $thr1->_handle(), 'Handle method');
+ok(25, $thr2->_handle(), 'Handle method');
 
+ok(26, threads->object($thr1->tid())->tid() == 11, 'Object method');
+ok(27, threads->object($thr2->tid())->tid() == 12, 'Object method');
 
+$thr1->join();
+$thr2->join();
 
+my $sub = sub { ok(28, shift() == 1, "Test code ref"); };
+threads->create($sub, 1)->join();
+
+my $thrx = threads->object(99);
+ok(29, ! defined($thrx), 'No object');
+$thrx = threads->object();
+ok(30, ! defined($thrx), 'No object');
+$thrx = threads->object(undef);
+ok(31, ! defined($thrx), 'No object');
+$thrx = threads->object(0);
+ok(32, ! defined($thrx), 'No object');
+
+threads->import('stringify');
+$thr1 = threads->create(sub {});
+ok(33, "$thr1" eq $thr1->tid(), 'Stringify');
+$thr1->join();
+
+# EOF

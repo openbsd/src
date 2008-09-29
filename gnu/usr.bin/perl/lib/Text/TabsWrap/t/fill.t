@@ -1,11 +1,4 @@
-#!./perl -w
-
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-}
-
-use Text::Wrap qw(&fill);
+#!/usr/bin/perl -w -I.
 
 @tests = (split(/\nEND\n/s, <<DONE));
 TEST1
@@ -56,7 +49,8 @@ DONE
 
 $| = 1;
 
-print "1..", @tests/2, "\n";
+my $numtests = scalar(@tests) / 2;
+print "1..$numtests\n";
 
 use Text::Wrap;
 
@@ -75,8 +69,8 @@ while (@tests) {
 		print "ok $tn\n";
 	} elsif ($rerun) {
 		my $oi = $in;
- 		write_file("#o", $back);
- 		write_file("#e", $out);
+		write_file("#o", $back);
+		write_file("#e", $out);
 		foreach ($in, $back, $out) {
 			s/\t/^I\t/gs;
 			s/\n/\$\n/gs;

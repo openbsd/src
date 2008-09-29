@@ -5,10 +5,12 @@ perllexwarn - Perl Lexical Warnings
 
 =head1 DESCRIPTION
 
-The C<use warnings> pragma is a replacement for both the command line
-flag B<-w> and the equivalent Perl variable, C<$^W>.
+The C<use warnings> pragma enables to control precisely what warnings are
+to be enabled in which parts of a Perl program. It's a more flexible
+alternative for both the command line flag B<-w> and the equivalent Perl
+variable, C<$^W>.
 
-The pragma works just like the existing "strict" pragma.
+This pragma works just like the C<strict> pragma.
 This means that the scope of the warning pragma is limited to the
 enclosing block. It also means that the pragma setting will not
 leak across files (via C<use>, C<require> or C<do>). This allows
@@ -301,8 +303,6 @@ The current hierarchy is:
        +- utf8
        |
        +- void
-       |
-       +- y2k
 
 Just like the "strict" pragma any of these categories can be combined
 
@@ -503,9 +503,9 @@ C<Derived>.
     use Original;
     use Derived;
     use warnings 'Derived';
-    my $a = new Original;
+    my $a = Original->new();
     $a->doit(1);
-    my $b = new Derived;
+    my $b = Derived->new();
     $a->doit(1);
 
 When this code is run only the C<Derived> object, C<$b>, will generate
@@ -515,21 +515,6 @@ a warning.
 
 Notice also that the warning is reported at the line where the object is first
 used.
-
-=head1 TODO
-
-  perl5db.pl
-    The debugger saves and restores C<$^W> at runtime. I haven't checked
-    whether the debugger will still work with the lexical warnings
-    patch applied.
-
-  diagnostics.pm
-    I *think* I've got diagnostics to work with the lexical warnings
-    patch, but there were design decisions made in diagnostics to work
-    around the limitations of C<$^W>. Now that those limitations are gone,
-    the module should be revisited.
-
-  document calling the warnings::* functions from XS
 
 =head1 SEE ALSO
 

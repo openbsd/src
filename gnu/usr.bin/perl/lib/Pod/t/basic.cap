@@ -30,19 +30,7 @@
 
     Reference the "section" in manpage
 
-    Reference the "section" in manpage
-
-    Reference the "section" in manpage
-
-    Reference the "section" in manpage
-
-    Reference the "manpage/section"
-
     Reference the "section" in "manpage"
-
-    Reference the "section" in manpage
-
-    Reference the "section" in manpage
 
     Reference the "section" in manpage
 
@@ -58,13 +46,7 @@
 
     Reference the thistext|
 
-    Reference the thistext |
-
     Reference the thistext|
-
-    Reference the thistext|
-
-    Reference the thistext |
 
     And then throw in a few new ones of my own.
 
@@ -84,15 +66,9 @@
 
     "baz boo" in foo bar
 
-    "baz boo" in foo bar
-
-    "boo" in foo bar baz
-
     "boo var baz"
 
     "bar baz"
-
-    "boo bar baz / baz boo"
 
     "boo", "bar", and "baz"
 
@@ -207,7 +183,7 @@
     doing what you might expect since the first > will still terminate the
     first < seen.
 
-    Lets make sure these work for empty ones too, like and ">>" (just to be
+    Lets make sure these work for empty ones too, like "" and ">>" (just to be
     obnoxious)
 
     The statement: "This is dog kind's [4mfinest[m hour!" is a parody of a

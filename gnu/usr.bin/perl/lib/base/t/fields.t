@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w
 
+BEGIN {
+   if( $ENV{PERL_CORE} ) {
+        chdir 't' if -d 't';
+        @INC = qw(../lib);
+    }
+}
+
 my $Has_PH;
 BEGIN {
     $Has_PH = $] < 5.009;
@@ -41,10 +48,7 @@ is_deeply( [sort &show_fields('Foo', fields::PRIVATE)],
 # We should get compile time failures field name typos
 eval q(my Foo $obj = Foo->new; $obj->{notthere} = "");
 
-my $error = $Has_PH ? 'No such(?: [\w-]+)? field "notthere"'
-                    : q[Attempt to access disallowed key 'notthere' in a ].
-                      q[restricted hash at ];
-ok( $@ && $@ =~ /^$error/i );
+like $@, qr/^No such .*field "notthere"/i;
 
 
 foreach (Foo->new) {
@@ -58,7 +62,7 @@ foreach (Foo->new) {
     @{$obj}{qw(what who _up_yours)} = ('Ahh', 'Moo', 'Yip');
 
     while(my($k,$v) = each %test) {
-        ok($obj->{$k} eq $v);
+        is($obj->{$k}, $v);
     }
 }
 

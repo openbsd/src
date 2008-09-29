@@ -1,0 +1,9 @@
+#
+# List of directories into which a ppport.h should be installed.
+# Please try to keep the list sorted.
+#
+# This file is read by mkppport at build time.
+#
+
+ext/Time/HiRes
+ext/Win32API/File

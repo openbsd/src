@@ -1,1 +1,1 @@
-do './hints/linux.pl';
+do './hints/linux.pl' or die $@;

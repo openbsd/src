@@ -151,7 +151,7 @@ the language tag is syntactically valid and is for general use (like
 syntactically invalid and for tags, like "aus", that are listed in
 brackets below.  This function is not exported.
 
-The map of tags-to-names that it uses is accessable as
+The map of tags-to-names that it uses is accessible as
 %I18N::LangTags::List::Name, and it's the same as the list
 that follows in this documentation, which should be useful
 to you even if you don't use this module.

@@ -2,15 +2,28 @@
 
 # Tests for the coderef-in-@INC feature
 
+use Config;
+
+my $can_fork   = 0;
+my $minitest   = $ENV{PERL_CORE_MINITEST};
+my $has_perlio = $Config{useperlio};
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
 }
 
+if (!$minitest) {
+    if ($Config{d_fork} && eval 'require POSIX; 1') {
+	$can_fork = 1;
+    }
+}
+
+use strict;
 use File::Spec;
 
 require "test.pl";
-plan(tests => 45);
+plan(tests => 45 + !$minitest * (3 + 14 * $can_fork));
 
 my @tempfiles = ();
 
@@ -184,16 +197,98 @@ push @INC, sub {
     }
 };
 
-$ret = "";
+my $ret = "";
 $ret ||= do 'abc.pl';
 is( $ret, 'abc', 'do "abc.pl" sees return value' );
 
-pop @INC;
-
-my $filename = $^O eq 'MacOS' ? ':Foo:Foo.pm' : './Foo.pm';
 {
-    local @INC;
+    my $filename = $^O eq 'MacOS' ? ':Foo:Foo.pm' : './Foo.pm';
+    #local @INC; # local fails on tied @INC
+    my @old_INC = @INC; # because local doesn't work on tied arrays
     @INC = sub { $filename = 'seen'; return undef; };
     eval { require $filename; };
     is( $filename, 'seen', 'the coderef sees fully-qualified pathnames' );
+    @INC = @old_INC;
+}
+
+exit if $minitest;
+
+SKIP: {
+    skip( "No PerlIO available", 3 ) unless $has_perlio;
+    pop @INC;
+
+    push @INC, sub {
+        my ($cr, $filename) = @_;
+        my $module = $filename; $module =~ s,/,::,g; $module =~ s/\.pm$//;
+        open my $fh, '<',
+             \"package $module; sub complain { warn q() }; \$::file = __FILE__;"
+	    or die $!;
+        $INC{$filename} = "/custom/path/to/$filename";
+        return $fh;
+    };
+
+    require Publius::Vergilius::Maro;
+    is( $INC{'Publius/Vergilius/Maro.pm'},
+        '/custom/path/to/Publius/Vergilius/Maro.pm', '%INC set correctly');
+    is( our $file, '/custom/path/to/Publius/Vergilius/Maro.pm',
+        '__FILE__ set correctly' );
+    {
+        my $warning;
+        local $SIG{__WARN__} = sub { $warning = shift };
+        Publius::Vergilius::Maro::complain();
+        like( $warning, qr{something's wrong at /custom/path/to/Publius/Vergilius/Maro.pm}, 'warn() reports correct file source' );
+    }
+}
+pop @INC;
+
+if ($can_fork) {
+    require PerlIO::scalar;
+    # This little bundle of joy generates n more recursive use statements,
+    # with each module chaining the next one down to 0. If it works, then we
+    # can safely nest subprocesses
+    my $use_filter_too;
+    push @INC, sub {
+	return unless $_[1] =~ /^BBBLPLAST(\d+)\.pm/;
+	my $pid = open my $fh, "-|";
+	if ($pid) {
+	    # Parent
+	    return $fh unless $use_filter_too;
+	    # Try filters and state in addition.
+	    return ($fh, sub {s/$_[1]/pass/; return}, "die")
+	}
+	die "Can't fork self: $!" unless defined $pid;
+
+	# Child
+	my $count = $1;
+	# Lets force some fun with odd sized reads.
+	$| = 1;
+	print 'push @main::bbblplast, ';
+	print "$count;\n";
+	if ($count--) {
+	    print "use BBBLPLAST$count;\n";
+	}
+	if ($use_filter_too) {
+	    print "die('In $_[1]');";
+	} else {
+	    print "pass('In $_[1]');";
+	}
+	print '"Truth"';
+	POSIX::_exit(0);
+	die "Can't get here: $!";
+    };
+
+    @::bbblplast = ();
+    require BBBLPLAST5;
+    is ("@::bbblplast", "0 1 2 3 4 5", "All ran");
+
+    foreach (keys %INC) {
+	delete $INC{$_} if /^BBBLPLAST/;
+    }
+
+    @::bbblplast = ();
+    $use_filter_too = 1;
+
+    require BBBLPLAST5;
+
+    is ("@::bbblplast", "0 1 2 3 4 5", "All ran with a filter");
 }

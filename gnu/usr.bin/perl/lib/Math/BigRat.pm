@@ -13,7 +13,8 @@
 
 package Math::BigRat;
 
-require 5.005_03;
+# anythig older is untested, and unlikely to work
+use 5.006;
 use strict;
 
 use Math::BigFloat;
@@ -22,7 +23,7 @@ use vars qw($VERSION @ISA $upgrade $downgrade
 
 @ISA = qw(Math::BigFloat);
 
-$VERSION = '0.15';
+$VERSION = '0.21';
 
 use overload;			# inherit overload from Math::BigFloat
 
@@ -208,8 +209,7 @@ sub new
       $self->{_d} = $MBI->_copy( $f->{_m} );
 
       # calculate the difference between nE and dE
-      # XXX TODO: check that exponent() makes a copy to avoid copy()
-      my $diff_e = $nf->exponent()->copy()->bsub( $f->exponent);
+      my $diff_e = $nf->exponent()->bsub( $f->exponent);
       if ($diff_e->is_negative())
 	{
         # < 0: mul d with it
@@ -228,13 +228,13 @@ sub new
       $self->{sign} = '+';					# no sign => '+'
       $self->{_n} = undef;
       $self->{_d} = undef;
-      if ($n =~ /^([+-]?)0*(\d+)\z/)				# first part ok?
+      if ($n =~ /^([+-]?)0*([0-9]+)\z/)				# first part ok?
 	{
 	$self->{sign} = $1 || '+';				# no sign => '+'
 	$self->{_n} = $MBI->_new($2 || 0);
         }
 
-      if ($d =~ /^([+-]?)0*(\d+)\z/)				# second part ok?
+      if ($d =~ /^([+-]?)0*([0-9]+)\z/)				# second part ok?
 	{
 	$self->{sign} =~ tr/+-/-+/ if ($1 || '') eq '-';	# negate if second part neg.
 	$self->{_d} = $MBI->_new($2 || 0);
@@ -290,7 +290,7 @@ sub new
   else
     {
     # for simple forms, use $MBI directly
-    if ($n =~ /^([+-]?)0*(\d+)\z/)
+    if ($n =~ /^([+-]?)0*([0-9]+)\z/)
       {
       $self->{sign} = $1 || '+';
       $self->{_n} = $MBI->_new($2 || 0);
@@ -338,6 +338,12 @@ sub config
   # return (later set?) configuration data as hash ref
   my $class = shift || 'Math::BigRat';
 
+  if (@_ == 1 && ref($_[0]) ne 'HASH')
+    {
+    my $cfg = $class->SUPER::config();
+    return $cfg->{$_[0]};
+    }
+
   my $cfg = $class->SUPER::config(@_);
 
   # now we need only to override the ones that are different from our parent
@@ -384,14 +390,13 @@ sub bnorm
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   # Both parts must be objects of whatever we are using today.
-  # Second check because Calc.pm has ARRAY res as unblessed objects.
-  if (ref($x->{_n}) ne $MBI && ref($x->{_n}) ne 'ARRAY')
+  if ( my $c = $MBI->_check($x->{_n}) )
     {
-    require Carp; Carp::croak ("n is not $MBI but (".ref($x->{_n}).') in bnorm()');
+    require Carp; Carp::croak ("n did not pass the self-check ($c) in bnorm()");
     }
-  if (ref($x->{_d}) ne $MBI && ref($x->{_d}) ne 'ARRAY')
+  if ( my $c = $MBI->_check($x->{_d}) )
     {
-    require Carp; Carp::croak ("d is not $MBI but (".ref($x->{_d}).') in bnorm()');
+    require Carp; Carp::croak ("d did not pass the self-check ($c) in bnorm()");
     }
 
   # no normalize for NaN, inf etc.
@@ -1012,6 +1017,130 @@ sub blog
   $x->_new_from_float( $x->_as_float()->blog(Math::BigFloat->new("$y"),@r) );
   }
 
+sub bexp
+  {
+  # set up parameters
+  my ($self,$x,$y,$a,$p,$r) = (ref($_[0]),@_);
+
+  # objectify is costly, so avoid it
+  if ((!ref($_[0])) || (ref($_[0]) ne ref($_[1])))
+    {
+    ($self,$x,$y,$a,$p,$r) = objectify(2,$class,@_);
+    }
+
+  return $x->binf() if $x->{sign} eq '+inf';
+  return $x->bzero() if $x->{sign} eq '-inf';
+
+  # we need to limit the accuracy to protect against overflow
+  my $fallback = 0;
+  my ($scale,@params);
+  ($x,@params) = $x->_find_round_parameters($a,$p,$r);
+
+  # also takes care of the "error in _find_round_parameters?" case
+  return $x if $x->{sign} eq 'NaN';
+
+  # no rounding at all, so must use fallback
+  if (scalar @params == 0)
+    {
+    # simulate old behaviour
+    $params[0] = $self->div_scale();    # and round to it as accuracy
+    $params[1] = undef;                 # P = undef
+    $scale = $params[0]+4;              # at least four more for proper round
+    $params[2] = $r;                    # round mode by caller or undef
+    $fallback = 1;                      # to clear a/p afterwards
+    }
+  else
+    {
+    # the 4 below is empirical, and there might be cases where it's not enough...
+    $scale = abs($params[0] || $params[1]) + 4; # take whatever is defined
+    }
+
+  return $x->bone(@params) if $x->is_zero();
+
+  # See the comments in Math::BigFloat on how this algorithm works.
+  # Basically we calculate A and B (where B is faculty(N)) so that A/B = e
+
+  my $x_org = $x->copy();
+  if ($scale <= 75)
+    {
+    # set $x directly from a cached string form
+    $x->{_n} = $MBI->_new("90933395208605785401971970164779391644753259799242");
+    $x->{_d} = $MBI->_new("33452526613163807108170062053440751665152000000000");
+    $x->{sign} = '+';
+    }
+  else
+    {
+    # compute A and B so that e = A / B.
+
+    # After some terms we end up with this, so we use it as a starting point:
+    my $A = $MBI->_new("90933395208605785401971970164779391644753259799242");
+    my $F = $MBI->_new(42); my $step = 42;
+
+    # Compute how many steps we need to take to get $A and $B sufficiently big
+    my $steps = Math::BigFloat::_len_to_steps($scale - 4);
+#    print STDERR "# Doing $steps steps for ", $scale-4, " digits\n";
+    while ($step++ <= $steps)
+      {
+      # calculate $a * $f + 1
+      $A = $MBI->_mul($A, $F);
+      $A = $MBI->_inc($A);
+      # increment f
+      $F = $MBI->_inc($F);
+      }
+    # compute $B as factorial of $steps (this is faster than doing it manually)
+    my $B = $MBI->_fac($MBI->_new($steps));
+
+#  print "A ", $MBI->_str($A), "\nB ", $MBI->_str($B), "\n";
+
+    $x->{_n} = $A;
+    $x->{_d} = $B;
+    $x->{sign} = '+';
+    }
+
+  # $x contains now an estimate of e, with some surplus digits, so we can round
+  if (!$x_org->is_one())
+    {
+    # raise $x to the wanted power and round it in one step:
+    $x->bpow($x_org, @params);
+    }
+  else
+    {
+    # else just round the already computed result
+    delete $x->{_a}; delete $x->{_p};
+    # shortcut to not run through _find_round_parameters again
+    if (defined $params[0])
+      {
+      $x->bround($params[0],$params[2]);                # then round accordingly
+      }
+    else
+      {
+      $x->bfround($params[1],$params[2]);               # then round accordingly
+      }
+    }
+  if ($fallback)
+    {
+    # clear a/p after round, since user did not request it
+    delete $x->{_a}; delete $x->{_p};
+    }
+
+  $x;
+  }
+
+sub bnok
+  {
+  # set up parameters
+  my ($self,$x,$y,@r) = (ref($_[0]),@_);
+
+  # objectify is costly, so avoid it
+  if ((!ref($_[0])) || (ref($_[0]) ne ref($_[1])))
+    {
+    ($self,$x,$y,@r) = objectify(2,$class,@_);
+    }
+
+  # do it with floats
+  $x->_new_from_float( $x->_as_float()->bnok(Math::BigFloat->new("$y"),@r) );
+  }
+
 sub _float_from_part
   {
   my $x = shift;
@@ -1280,7 +1409,8 @@ sub as_number
   {
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
-  return Math::BigInt->new($x) if $x->{sign} !~ /^[+-]$/;	# NaN, inf etc
+  # NaN, inf etc
+  return Math::BigInt->new($x->{sign}) if $x->{sign} !~ /^[+-]$/;
  
   my $u = Math::BigInt->bzero();
   $u->{sign} = $x->{sign};
@@ -1308,6 +1438,44 @@ sub as_hex
   $s . $MBI->_as_hex($x->{_n});
   }
 
+sub as_oct
+  {
+  my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
+
+  return $x unless $x->is_int();
+
+  my $s = $x->{sign}; $s = '' if $s eq '+';
+  $s . $MBI->_as_oct($x->{_n});
+  }
+
+##############################################################################
+
+sub from_hex
+  {
+  my $class = shift;
+
+  $class->new(@_);
+  }
+
+sub from_bin
+  {
+  my $class = shift;
+
+  $class->new(@_);
+  }
+
+sub from_oct
+  {
+  my $class = shift;
+
+  my @parts;
+  for my $c (@_)
+    {
+    push @parts, Math::BigInt->from_oct($c);
+    }
+  $class->new ( @parts );
+  }
+
 ##############################################################################
 # import
 
@@ -1316,6 +1484,7 @@ sub import
   my $self = shift;
   my $l = scalar @_;
   my $lib = ''; my @a;
+  my $try = 'try';
 
   for ( my $i = 0; $i < $l ; $i++)
     {
@@ -1336,9 +1505,10 @@ sub import
       $downgrade = $_[$i+1];		# or undef to disable
       $i++;
       }
-    elsif ($_[$i] eq 'lib')
+    elsif ($_[$i] =~ /^(lib|try|only)\z/)
       {
       $lib = $_[$i+1] || '';		# default Calc
+      $try = $1;			# lib, try or only
       $i++;
       }
     elsif ($_[$i] eq 'with')
@@ -1365,7 +1535,7 @@ sub import
     $lib = join(",", @c);
     }
   my @import = ('objectify');
-  push @import, lib => $lib if $lib ne '';
+  push @import, $try => $lib if $lib ne '';
 
   # MBI already loaded, so feed it our lib arguments
   Math::BigInt->import( @import );
@@ -1410,37 +1580,31 @@ for arbitrary big rational numbers.
 
 =head2 MATH LIBRARY
 
-Math with the numbers is done (by default) by a module called
-Math::BigInt::Calc. This is equivalent to saying:
+You can change the underlying module that does the low-level
+math operations by using:
 
-	use Math::BigRat lib => 'Calc';
+	use Math::BigRat try => 'GMP';
 
-You can change this by using:
-
-	use Math::BigRat lib => 'BitVect';
+Note: This needs Math::BigInt::GMP installed.
 
 The following would first try to find Math::BigInt::Foo, then
 Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
 
+	use Math::BigRat try => 'Foo,Math::BigInt::Bar';
+
+If you want to get warned when the fallback occurs, replace "try" with
+"lib":
+
 	use Math::BigRat lib => 'Foo,Math::BigInt::Bar';
 
-Calc.pm uses as internal format an array of elements of some decimal base
-(usually 1e7, but this might be different for some systems) with the least
-significant digit first, while BitVect.pm uses a bit vector of base 2, most
-significant bit first. Other modules might use even different means of
-representing the numbers. See the respective module documentation for further
-details.
+If you want the code to die instead, replace "try" with
+"only":
 
-Currently the following replacement libraries exist, search for them at CPAN:
-
-	Math::BigInt::BitVect
-	Math::BigInt::GMP
-	Math::BigInt::Pari
-	Math::BigInt::FastCalc
+	use Math::BigRat only => 'Foo,Math::BigInt::Bar';
 
 =head1 METHODS
 
-Any methods not listed here are dervied from Math::BigFloat (or
+Any methods not listed here are derived from Math::BigFloat (or
 Math::BigInt), so make sure you check these two modules for further
 information.
 
@@ -1485,7 +1649,21 @@ Returns a copy of the denominator (the part under the line) as positive BigInt.
 Return a list consisting of (signed) numerator and (unsigned) denominator as
 BigInts.
 
-=head2 as_int()
+=head2 numify()
+
+	my $y = $x->numify();
+
+Returns the object as a scalar. This will lose some data if the object
+cannot be represented by a normal Perl scalar (integer or float), so
+use as_int() instead.
+
+This routine is automatically used whenever a scalar is required:
+
+	my $x = Math::BigRat->new('3/1');
+	@array = (1,2,3);
+	$y = $array[$x];		# set $y to 3
+
+=head2 as_int()/as_number()
 
 	$x = Math::BigRat->new('13/7');
 	print $x->as_int(),"\n";		# '1'
@@ -1508,6 +1686,42 @@ Returns the BigRat as hexadecimal string. Works only for integers.
 
 Returns the BigRat as binary string. Works only for integers. 
 
+=head2 as_oct()
+
+	$x = Math::BigRat->new('13');
+	print $x->as_oct(),"\n";		# '015'
+
+Returns the BigRat as octal string. Works only for integers. 
+
+=head2 from_hex()/from_bin()/from_oct()
+
+	my $h = Math::BigRat->from_hex('0x10');
+	my $b = Math::BigRat->from_bin('0b10000000');
+	my $o = Math::BigRat->from_oct('020');
+
+Create a BigRat from an hexadecimal, binary or octal number
+in string form.
+
+=head2 length()
+
+	$len = $x->length();
+
+Return the length of $x in digitis for integer values.
+
+=head2 digit()
+
+	print Math::BigRat->new('123/1')->digit(1);	# 1
+	print Math::BigRat->new('123/1')->digit(-1);	# 3
+
+Return the N'ths digit from X when X is an integer value.
+
+=head2 bnorm()
+
+	$x->bnorm();
+
+Reduce the number to the shortest form. This routine is called
+automatically whenever it is needed.
+
 =head2 bfac()
 
 	$x->bfac();
@@ -1518,10 +1732,6 @@ Calculates the factorial of $x. For instance:
 	print Math::BigRat->new('5/1')->bfac(),"\n";	# 1*2*3*4*5
 
 Works currently only for integers.
-
-=head2 blog()
-
-Is not yet implemented.
 
 =head2 bround()/round()/bfround()
 
@@ -1536,6 +1746,12 @@ Are not yet implemented.
 
 Set $x to the remainder of the division of $x by $y.
 
+=head2 bneg()
+
+	$x->bneg();
+
+Used to negate the object in-place.
+
 =head2 is_one()
 
 	print "$x is 1\n" if $x->is_one();
@@ -1548,7 +1764,7 @@ Return true if $x is exactly one, otherwise false.
 
 Return true if $x is exactly zero, otherwise false.
 
-=head2 is_pos()
+=head2 is_pos()/is_positive()
 
 	print "$x is >= 0\n" if $x->is_positive();
 
@@ -1557,7 +1773,7 @@ false. Please note that '+inf' is also positive, while 'NaN' and '-inf' aren't.
 
 C<is_positive()> is an alias for C<is_pos()>.
 
-=head2 is_neg()
+=head2 is_neg()/is_negative()
 
 	print "$x is < 0\n" if $x->is_negative();
 
@@ -1604,7 +1820,77 @@ Truncate $x to an integer value.
 
 Calculate the square root of $x.
 
-=head2 config
+=head2 broot()
+	
+	$x->broot($n);
+
+Calculate the N'th root of $x.
+
+=head2 badd()/bmul()/bsub()/bdiv()/bdec()/binc()
+
+Please see the documentation in L<Math::BigInt>.
+
+=head2 copy()
+
+	my $z = $x->copy();
+
+Makes a deep copy of the object.
+
+Please see the documentation in L<Math::BigInt> for further details.
+
+=head2 bstr()/bsstr()
+
+	my $x = Math::BigInt->new('8/4');
+	print $x->bstr(),"\n";			# prints 1/2
+	print $x->bsstr(),"\n";			# prints 1/2
+
+Return a string representating this object.
+
+=head2 bacmp()/bcmp()
+
+Used to compare numbers.
+
+Please see the documentation in L<Math::BigInt> for further details.
+
+=head2 blsft()/brsft()
+
+Used to shift numbers left/right.
+
+Please see the documentation in L<Math::BigInt> for further details.
+
+=head2 bpow()
+
+	$x->bpow($y);
+
+Compute $x ** $y.
+
+Please see the documentation in L<Math::BigInt> for further details.
+
+=head2 bexp()
+
+	$x->bexp($accuracy);		# calculate e ** X
+
+Calculates two integers A and B so that A/B is equal to C<e ** $x>, where C<e> is
+Euler's number.
+
+This method was added in v0.20 of Math::BigRat (May 2007).
+
+See also L<blog()>.
+
+=head2 bnok()
+
+	$x->bnok($y);		   # x over y (binomial coefficient n over k)
+
+Calculates the binomial coefficient n over k, also called the "choose"
+function. The result is equivalent to:
+
+	( n )      n!
+	| - |  = -------
+	( k )    k!(n-k)!
+
+This method was added in v0.20 of Math::BigRat (May 2007).
+
+=head2 config()
 
         use Data::Dumper;
 
@@ -1636,7 +1922,7 @@ appropriate information.
                                 undef
         round_mode      RW      Global round mode
                                 even
-        div_scale       RW      Fallback acccuracy for div
+        div_scale       RW      Fallback accuracy for div
                                 40
         trap_nan        RW      Trap creation of NaN (undef = no)
                                 undef
@@ -1683,6 +1969,6 @@ may contain more documentation and examples as well as testcases.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> 2001 - 2005.
+(C) by Tels L<http://bloodgate.com/> 2001 - 2007.
 
 =cut

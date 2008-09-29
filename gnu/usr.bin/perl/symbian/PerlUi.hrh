@@ -1,0 +1,14 @@
+/* Copyright (c) 2005 Nokia.  All rights reserved. */
+
+/* The PerlUi class is licensed under the same terms as Perl itself. */
+
+#ifndef __PerlUi_HRH__
+#define __PerlUi_HRH__
+
+enum TPerlUiIds
+{
+    EPerlUiTextQueryInputField        = 2048,
+    EPerlUiLast                       = 2099  // no comma here
+};
+
+#endif // __PerlUi_HRH__

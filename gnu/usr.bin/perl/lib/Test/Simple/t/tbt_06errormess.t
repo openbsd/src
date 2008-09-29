@@ -1,12 +1,5 @@
 #!/usr/bin/perl -w
 
-BEGIN {
-    if( $ENV{PERL_CORE} ) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use Test::More tests => 8;
 use Symbol;
 use Test::Builder;
@@ -25,8 +18,8 @@ my $output_handle = gensym;
 my $error_handle  = gensym;
 
 # and tie them to this package
-my $out = tie *$output_handle, "Test::Tester::Tie", "STDOUT";
-my $err = tie *$error_handle,  "Test::Tester::Tie", "STDERR";
+my $out = tie *$output_handle, "Test::Builder::Tester::Tie", "STDOUT";
+my $err = tie *$error_handle,  "Test::Builder::Tester::Tie", "STDERR";
 
 # ooooh, use the test suite
 my $t = Test::Builder->new;

@@ -9,15 +9,15 @@ BEGIN {
       exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
     $| = 1;
 }
 
 use strict;
 #use Test::More qw(no_plan);
-use Test::More tests => 44;
+use Test::More tests => 48;
 use Encode q(:all);
 
 my $uo = '';
@@ -163,3 +163,15 @@ $src = $ao;
 $dst = $ascii->decode($src, sub{ sprintf "[%02X]", shift });
 is($dst, $uc, "coderef decode");
 is($src, $ao, "coderef residue decode");
+
+$src = "\x{3000}";
+$dst = $ascii->encode($src, sub{ $_[0] });
+is $dst, 0x3000."", qq{$ascii->encode(\$src, sub{ \$_[0] } )};
+$dst = encode("ascii", "\x{3000}", sub{ $_[0] });
+is $dst, 0x3000."", qq{encode("ascii", "\\x{3000}", sub{ \$_[0] })};
+
+$src = pack "C*", 0xFF;
+$dst = $ascii->decode($src, sub{ $_[0] });
+is $dst, 0xFF."", qq{$ascii->encode(\$src, sub{ \$_[0] } )};
+$dst = decode("ascii", (pack "C*", 0xFF), sub{ $_[0] });
+is $dst, 0xFF."", qq{decode("ascii", (pack "C*", 0xFF), sub{ \$_[0] })};

@@ -1,35 +1,45 @@
+use strict;
 use warnings;
 
 BEGIN {
-#    chdir 't' if -d 't';
-#    push @INC ,'../lib';
-    require Config; import Config;
-    unless ($Config{'useithreads'}) {
-        print "1..0 # Skip: no useithreads\n";
-        exit 0;
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
+    }
+    use Config;
+    if (! $Config{'useithreads'}) {
+        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        exit(0);
     }
 }
 
+use ExtUtils::testlib;
 
 sub ok {
     my ($id, $ok, $name) = @_;
 
-    $name = '' unless defined $name;
     # You have to do it this way or VMS will get confused.
-    print $ok ? "ok $id - $name\n" : "not ok $id - $name\n";
+    if ($ok) {
+        print("ok $id - $name\n");
+    } else {
+        print("not ok $id - $name\n");
+        printf("# Failed test at line %d\n", (caller)[2]);
+    }
 
-    printf "# Failed test at line %d\n", (caller)[2] unless $ok;
-
-    return $ok;
+    return ($ok);
 }
 
+BEGIN {
+    $| = 1;
+    print("1..11\n");   ### Number of tests that will be run ###
+};
 
-use ExtUtils::testlib;
-use strict;
-BEGIN { print "1..10\n" };
 use threads;
 use threads::shared;
-ok(1,1,"loaded");
+ok(1, 1, 'Loaded');
+
+### Start of Testing ###
+
 my $test = "bar";
 share($test);
 ok(2,$test eq "bar","Test magic share fetch");
@@ -37,11 +47,11 @@ $test = "foo";
 ok(3,$test eq "foo","Test magic share assign");
 my $c = threads::shared::_refcnt($test);
 threads->create(
-		sub {
-		    ok(4, $test eq "foo","Test magic share fetch after thread");
-		    $test = "baz";
+                sub {
+                    ok(4, $test eq "foo","Test magic share fetch after thread");
+                    $test = "baz";
                     ok(5,threads::shared::_refcnt($test) > $c, "Check that threadcount is correct");
-		    })->join();
+                    })->join();
 ok(6,$test eq "baz","Test that value has changed in another thread");
 ok(7,threads::shared::_refcnt($test) == $c,"Check thrcnt is down properly");
 $test = "barbar";
@@ -51,9 +61,6 @@ ok(9, length($test) == 9, "Check length code after different thread modified it"
 threads->create(sub { undef($test)})->join();
 ok(10, !defined($test), "Check undef value");
 
+ok(11, is_shared($test), "Check for sharing");
 
-
-
-
-
-
+# EOF

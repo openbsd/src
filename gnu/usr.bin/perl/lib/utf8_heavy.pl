@@ -25,10 +25,27 @@ sub SWASHNEW {
 
     ##
     ## Get the list of codepoints for the type.
-    ## Called from utf8.c
+    ## Called from swash_init (see utf8.c) or SWASHNEW itself.
+    ##
+    ## Callers of swash_init:
+    ##     op.c:pmtrans             -- for tr/// and y///
+    ##     regexec.c:regclass_swash -- for /[]/, \p, and \P
+    ##     utf8.c:is_utf8_common    -- for common Unicode properties
+    ##     utf8.c:to_utf8_case      -- for lc, uc, ucfirst, etc. and //i
     ##
     ## Given a $type, our goal is to fill $list with the set of codepoint
-    ## ranges.
+    ## ranges. If $type is false, $list passed is used.
+    ##
+    ## $minbits:
+    ##     For binary properties, $minbits must be 1.
+    ##     For character mappings (case and transliteration), $minbits must
+    ##     be a number except 1.
+    ##
+    ## $list (or that filled according to $type):
+    ##     Refer to perlunicode.pod, "User-Defined Character Properties."
+    ##     
+    ##     For binary properties, only characters with the property value
+    ##     of True should be listed. The 3rd column, if any, will be ignored.
     ##
     ## To make the parsing of $type clear, this code takes the a rather
     ## unorthodox approach of last'ing out of the block once we have the
@@ -43,7 +60,7 @@ sub SWASHNEW {
         $type =~ s/^\s+//;
         $type =~ s/\s+$//;
 
-        print "type = $type\n" if DEBUG;
+        print STDERR "type = $type\n" if DEBUG;
 
       GETFILE:
         {
@@ -117,7 +134,7 @@ sub SWASHNEW {
             ##
             my $canonical = lc $type;
             $canonical =~ s/(?<=[a-z\d])(?:\s+|[-_])(?=[a-z\d])//g;
-            print "canonical = $canonical\n" if DEBUG;
+            print STDERR "canonical = $canonical\n" if DEBUG;
 
             require "unicore/Canonical.pl";
             if (my $base = ($utf8::Canonical{$canonical} || $utf8::Canonical{ lc $utf8::PropertyAlias{$canonical} })) {
@@ -148,8 +165,7 @@ sub SWASHNEW {
 	    ## The user-level way to access ToDigit() and ToFold()
 	    ## is to use Unicode::UCD.
             ##
-            if ($type =~ /^To(Digit|Fold|Lower|Title|Upper)$/)
-            {
+            if ($type =~ /^To(Digit|Fold|Lower|Title|Upper)$/) {
                 $file = "unicore/To/$1.pl";
                 ## would like to test to see if $file actually exists....
                 last GETFILE;
@@ -164,29 +180,29 @@ sub SWASHNEW {
         }
 
 	if (defined $file) {
-	    print "found it (file='$file')\n" if DEBUG;
+	    print STDERR "found it (file='$file')\n" if DEBUG;
 
 	    ##
 	    ## If we reach here, it was due to a 'last GETFILE' above
 	    ## (exception: user-defined properties and mappings), so we
 	    ## have a filename, so now we load it if we haven't already.
 	    ## If we have, return the cached results. The cache key is the
-	    ## file to load.
+	    ## class and file to load.
 	    ##
-	    if ($Cache{$file} and ref($Cache{$file}) eq $class)
-	    {
-		print "Returning cached '$file' for \\p{$type}\n" if DEBUG;
-		return $Cache{$class, $file};
+	    my $found = $Cache{$class, $file};
+	    if ($found and ref($found) eq $class) {
+		print STDERR "Returning cached '$file' for \\p{$type}\n" if DEBUG;
+		return $found;
 	    }
 
-	    $list = do $file;
+	    $list = do $file; die $@ if $@;
 	}
 
         $ListSorted = 1; ## we know that these lists are sorted
     }
 
     my $extras;
-    my $bits = 0;
+    my $bits = $minbits;
 
     my $ORIG = $list;
     if ($list) {
@@ -197,7 +213,7 @@ sub SWASHNEW {
 	$list = join '',
 	    map  { $_->[1] }
 	    sort { $a->[0] <=> $b->[0] }
-	    map  { /^([0-9a-fA-F]+)/; [ hex($1), $_ ] }
+	    map  { /^([0-9a-fA-F]+)/; [ CORE::hex($1), $_ ] }
 	    grep { /^([0-9a-fA-F]+)/ and not $seen{$1}++ } @tmp; # XXX doesn't do ranges right
     }
 
@@ -206,21 +222,20 @@ sub SWASHNEW {
 	$list =~ s/\tXXXX$/\t$hextra/mg;
     }
 
-    if ($minbits < 32) {
+    if ($minbits != 1 && $minbits < 32) { # not binary property
 	my $top = 0;
 	while ($list =~ /^([0-9a-fA-F]+)(?:[\t]([0-9a-fA-F]+)?)(?:[ \t]([0-9a-fA-F]+))?/mg) {
-	    my $min = hex $1;
-	    my $max = defined $2 ? hex $2 : $min;
-	    my $val = defined $3 ? hex $3 : 0;
+	    my $min = CORE::hex $1;
+	    my $max = defined $2 ? CORE::hex $2 : $min;
+	    my $val = defined $3 ? CORE::hex $3 : 0;
 	    $val += $max - $min if defined $3;
 	    $top = $val if $val > $top;
 	}
-	$bits =
+	my $topbits =
 	    $top > 0xffff ? 32 :
-	    $top > 0xff ? 16 :
-	    $top > 1 ? 8 : 1
+	    $top > 0xff ? 16 : 8;
+	$bits = $topbits if $bits < $topbits;
     }
-    $bits = $minbits if $bits < $minbits;
 
     my @extras;
     for my $x ($extras) {
@@ -233,13 +248,13 @@ sub SWASHNEW {
 		my ($c,$t) = split(/::/, $name, 2);	# bogus use of ::, really
 		my $subobj;
 		if ($c eq 'utf8') {
-		    $subobj = utf8->SWASHNEW($t, "", 0, 0, 0);
+		    $subobj = utf8->SWASHNEW($t, "", $minbits, 0);
 		}
 		elsif (exists &$name) {
-		    $subobj = utf8->SWASHNEW($name, "", 0, 0, 0);
+		    $subobj = utf8->SWASHNEW($name, "", $minbits, 0);
 		}
 		elsif ($c =~ /^([0-9a-fA-F]+)/) {
-		    $subobj = utf8->SWASHNEW("", $c, 0, 0, 0);
+		    $subobj = utf8->SWASHNEW("", $c, $minbits, 0);
 		}
 		return $subobj unless ref $subobj;
 		push @extras, $name => $subobj;
@@ -266,147 +281,6 @@ sub SWASHNEW {
     return $SWASH;
 }
 
-# NOTE: utf8.c:swash_init() assumes entries are never modified once generated.
-
-sub SWASHGET {
-    # See utf8.c:Perl_swash_fetch for problems with this interface.
-    my ($self, $start, $len) = @_;
-    local $^D = 0 if $^D;
-    my $type = $self->{TYPE};
-    my $bits = $self->{BITS};
-    my $none = $self->{NONE};
-    print STDERR "SWASHGET @_ [$type/$bits/$none]\n" if DEBUG;
-    my $end = $start + $len;
-    my $swatch = "";
-    my $key;
-    vec($swatch, $len - 1, $bits) = 0;	# Extend to correct length.
-    if ($none) {
-	for $key (0 .. $len - 1) { vec($swatch, $key, $bits) = $none }
-    }
-
-    for ($self->{LIST}) {
-	pos $_ = 0;
-	if ($bits > 1) {
-	  LINE:
-	    while (/^([0-9a-fA-F]+)(?:[ \t]([0-9a-fA-F]+)?)?(?:[ \t]([0-9a-fA-F]+))?/mg) {
-		chomp;
-		my ($a, $b, $c) = ($1, $2, $3);
-		croak "$type: illegal mapping '$_'"
-		    if $type =~ /^To/ &&
-		       !(defined $a && defined $c);
-		my $min = hex $a;
-		my $max = defined $b ? hex $b : $min;
-		my $val = defined $c ? hex $c : 0;
-		next if $max < $start;
-		print "$min $max $val\n" if DEBUG;
-		if ($none) {
-		    if ($min < $start) {
-			$val += $start - $min if $val < $none;
-			$min = $start;
-		    }
-		    for ($key = $min; $key <= $max; $key++) {
-			last LINE if $key >= $end;
-			print STDERR "$key => $val\n" if DEBUG;
-			vec($swatch, $key - $start, $bits) = $val;
-			++$val if $val < $none;
-		    }
-		}
-		else {
-		    if ($min < $start) {
-			$val += $start - $min;
-			$min = $start;
-		    }
-		    for ($key = $min; $key <= $max; $key++, $val++) {
-			last LINE if $key >= $end;
-			print STDERR "$key => $val\n" if DEBUG;
-			vec($swatch, $key - $start, $bits) = $val;
-		    }
-		}
-	    }
-	}
-	else {
-	  LINE:
-	    while (/^([0-9a-fA-F]+)(?:[ \t]+([0-9a-fA-F]+))?/mg) {
-		chomp;
-		my $min = hex $1;
-		my $max = defined $2 ? hex $2 : $min;
-		next if $max < $start;
-		if ($min < $start) {
-		    $min = $start;
-		}
-		for ($key = $min; $key <= $max; $key++) {
-		    last LINE if $key >= $end;
-		    print STDERR "$key => 1\n" if DEBUG;
-		    vec($swatch, $key - $start, 1) = 1;
-		}
-	    }
-	}
-    }
-    for my $x ($self->{EXTRAS}) {
-	pos $x = 0;
-	while ($x =~ /^([-+!&])(.*)/mg) {
-	    my $char = $1;
-	    my $name = $2;
-	    print STDERR "INDIRECT $1 $2\n" if DEBUG;
-	    my $otherbits = $self->{$name}->{BITS};
-	    croak("SWASHGET size mismatch") if $bits < $otherbits;
-	    my $other = $self->{$name}->SWASHGET($start, $len);
-	    if ($char eq '+') {
-		if ($bits == 1 and $otherbits == 1) {
-		    $swatch |= $other;
-		}
-		else {
-		    for ($key = 0; $key < $len; $key++) {
-			vec($swatch, $key, $bits) = vec($other, $key, $otherbits);
-		    }
-		}
-	    }
-	    elsif ($char eq '!') {
-		if ($bits == 1 and $otherbits == 1) {
-		    $swatch |= ~$other;
-		}
-		else {
-		    for ($key = 0; $key < $len; $key++) {
-			if (!vec($other, $key, $otherbits)) {
-			    vec($swatch, $key, $bits) = 1;
-			}
-		    }
-		}
-	    }
-	    elsif ($char eq '-') {
-		if ($bits == 1 and $otherbits == 1) {
-		    $swatch &= ~$other;
-		}
-		else {
-		    for ($key = 0; $key < $len; $key++) {
-			if (vec($other, $key, $otherbits)) {
-			    vec($swatch, $key, $bits) = 0;
-			}
-		    }
-		}
-	    }
-	    elsif ($char eq '&') {
-		if ($bits == 1 and $otherbits == 1) {
-		    $swatch &= $other;
-		}
-		else {
-		    for ($key = 0; $key < $len; $key++) {
-			if (!vec($other, $key, $otherbits)) {
-			    vec($swatch, $key, $bits) = 0;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    if (DEBUG) {
-	print STDERR "CELLS ";
-	for ($key = 0; $key < $len; $key++) {
-	    print STDERR vec($swatch, $key, $bits), " ";
-	}
-	print STDERR "\n";
-    }
-    $swatch;
-}
+# Now SWASHGET is recasted into a C function S_swash_get (see utf8.c).
 
 1;

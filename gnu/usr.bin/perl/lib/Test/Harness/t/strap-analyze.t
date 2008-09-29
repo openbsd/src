@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More;
+use Test::More tests => 247;
 use File::Spec;
 
 my $Curdir = File::Spec->curdir;
@@ -544,7 +544,6 @@ my %samples = (
         'wait' => 0
     },
 );
-plan tests => (keys(%samples) * 5) + 3;
 
 use Test::Harness::Straps;
 my @_INC = map { qq{"-I$_"} } @INC;
@@ -568,34 +567,33 @@ for my $test ( sort keys %samples ) {
     my $test_path = File::Spec->catfile($SAMPLE_TESTS, $test);
     my $strap = Test::Harness::Straps->new;
     isa_ok( $strap, 'Test::Harness::Straps' );
-    my %results = $strap->analyze_file($test_path);
+    my $results = $strap->analyze_file($test_path);
 
-    is_deeply($results{details}, $expect->{details}, qq{details of "$test"} );
+    is_deeply($results->details, $expect->{details}, qq{details of "$test"} );
 
     delete $expect->{details};
-    delete $results{details};
 
     SKIP: {
         skip '$? unreliable in MacPerl', 2 if $IsMacPerl;
 
         # We can only check if it's zero or non-zero.
-        is( !!$results{'wait'}, !!$expect->{'wait'}, 'wait status' );
-        delete $results{'wait'};
+        is( !$results->wait, !$expect->{'wait'}, 'wait status' );
         delete $expect->{'wait'};
 
         # Have to check the exit status seperately so we can skip it
         # in MacPerl.
-        is( $results{'exit'}, $expect->{'exit'} );
-        delete $results{'exit'};
+        is( $results->exit, $expect->{'exit'}, 'exit matches' );
         delete $expect->{'exit'};
     }
 
-    is_deeply(\%results, $expect, qq{ the rest of "$test"} );
+    for my $field ( sort keys %$expect ) {
+        is( $results->$field(), $expect->{$field}, "Field $field" );
+    }
 } # for %samples
 
 NON_EXISTENT_FILE: {
     my $strap = Test::Harness::Straps->new;
     isa_ok( $strap, 'Test::Harness::Straps' );
-    ok( !$strap->analyze_file('I_dont_exist') );
-    is( $strap->{error}, "I_dont_exist does not exist" );
+    ok( !$strap->analyze_file('I_dont_exist'), "Can't analyze a non-existant file" );
+    is( $strap->{error}, "I_dont_exist does not exist", "And there should be one error" );
 }

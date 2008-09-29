@@ -22,7 +22,7 @@ BEGIN {
 $|  = 1;
 use warnings;
 use strict;
-use Test::More tests => 41;
+use Test::More tests => 57;
 
 BEGIN { use_ok( 'B' ); }
 
@@ -74,6 +74,8 @@ ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
 	'$. has no more magic' );
 }
 
+ok(B::svref_2object(qr/foo/)->MAGIC->precomp() eq 'foo', 'Get string from qr//');
+like(B::svref_2object(qr/foo/)->MAGIC->REGEX(), qr/\d+/, "REGEX() returns numeric value");
 my $iv = 1;
 my $iv_ref = B::svref_2object(\$iv);
 is(ref $iv_ref, "B::IV", "Test B:IV return from svref_2object");
@@ -147,3 +149,37 @@ ok(! $gv_ref->is_empty(), "Test is_empty()");
 is($gv_ref->NAME(), "gv", "Test NAME()");
 is($gv_ref->SAFENAME(), "gv", "Test SAFENAME()");
 like($gv_ref->FILE(), qr/b\.t$/, "Testing FILE()");
+
+# The following return B::SPECIALs.
+is(ref B::sv_yes(), "B::SPECIAL", "B::sv_yes()");
+is(ref B::sv_no(), "B::SPECIAL", "B::sv_no()");
+is(ref B::sv_undef(), "B::SPECIAL", "B::sv_undef()");
+
+# More utility functions
+is(B::ppname(0), "pp_null", "Testing ppname (this might break if opnames.h is changed)");
+is(B::opnumber("null"), 0, "Testing opnumber with opname (null)");
+is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
+like(B::hash("wibble"), qr/0x[0-9a-f]*/, "Testing B::hash()");
+is(B::cstring("wibble"), '"wibble"', "Testing B::cstring()");
+is(B::perlstring("wibble"), '"wibble"', "Testing B::perlstring()");
+is(B::class(bless {}, "Wibble::Bibble"), "Bibble", "Testing B::class()");
+is(B::cast_I32(3.14), 3, "Testing B::cast_I32()");
+is(B::opnumber("chop"), 38, "Testing opnumber with opname (chop)");
+
+{
+    no warnings 'once';
+    my $sg = B::sub_generation();
+    *UNIVERSAL::hand_waving = sub { };
+    ok( $sg < B::sub_generation, "sub_generation increments" );
+}
+
+{
+    my $ag = B::amagic_generation();
+    {
+
+        package Whatever;
+        require overload;
+        overload->import( '""' => sub {"What? You want more?!"} );
+    }
+    ok( $ag < B::amagic_generation, "amagic_generation increments" );
+}

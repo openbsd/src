@@ -47,7 +47,7 @@ ok2
 --FILE-- abc
 no warnings ;
 print "ok1\n" if !warnings::enabled('all') ;
-print "ok2\n" if warnings::enabled("syntax") ;
+print "ok2\n" if !warnings::enabled("syntax") ;
 1;
 --FILE-- 
 use warnings 'syntax' ;
@@ -61,7 +61,7 @@ ok2
 use warnings 'syntax' ;
 print "ok1\n" if ! warnings::enabled('all') ;
 print "ok2\n" if ! warnings::enabled("syntax") ;
-print "ok3\n" if   warnings::enabled("io") ;
+print "ok3\n" if ! warnings::enabled("io") ;
 1;
 --FILE-- 
 use warnings 'io' ;
@@ -173,7 +173,7 @@ print "ok3\n" if !warnings::enabled("io") ;
 --FILE-- def.pm
 use warnings 'syntax' ;
 print "ok4\n" if !warnings::enabled('all') ;
-print "ok5\n" if warnings::enabled("io") ;
+print "ok5\n" if !warnings::enabled("io") ;
 use abc ;
 1;
 --FILE--
@@ -1179,3 +1179,51 @@ ok5
 my message 1 at - line 8
 my message 2 at - line 8
 my message 4 at - line 8
+########
+
+--FILE--
+# test for bug [perl #15395]
+my ( $warn_cat, # warning category we'll try to control
+     $warn_msg, # the error message to catch
+);
+
+package SomeModule;
+use warnings::register;
+
+BEGIN {
+    $warn_cat = __PACKAGE__;
+    $warn_msg = 'from ' . __PACKAGE__;
+}
+
+# a sub that generates a random warning
+sub gen_warning {
+    warnings::warnif( $warn_msg );
+}
+
+package ClientModule;
+# use SomeModule; (would go here)
+our @CARP_NOT = ( $warn_cat ); # deliver warnings to *our* client
+
+# call_warner provokes a warning.  It is delivered to its caller,
+# who should also be able to control it
+sub call_warner {
+    SomeModule::gen_warning();
+}
+
+# user
+
+package main;
+my $warn_line = __LINE__ + 3; # this line should be in the error message
+eval {
+    use warnings FATAL => $warn_cat; # we want to know if this works
+    ClientModule::call_warner();
+};
+
+# have we caught an error, and is it the one we generated?
+print "ok1\n" if $@ =~ /$warn_msg/;
+
+# does it indicate the right line?
+print "ok2\n" if $@ =~ /line $warn_line/; 
+EXPECT
+ok1
+ok2

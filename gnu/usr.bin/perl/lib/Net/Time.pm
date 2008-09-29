@@ -14,81 +14,85 @@ require Exporter;
 use Net::Config;
 use IO::Select;
 
-@ISA = qw(Exporter);
+@ISA       = qw(Exporter);
 @EXPORT_OK = qw(inet_time inet_daytime);
 
 $VERSION = "2.10";
 
 $TIMEOUT = 120;
 
-sub _socket
-{
- my($pname,$pnum,$host,$proto,$timeout) = @_;
 
- $proto ||= 'udp';
+sub _socket {
+  my ($pname, $pnum, $host, $proto, $timeout) = @_;
 
- my $port = (getservbyname($pname, $proto))[2] || $pnum;
+  $proto ||= 'udp';
 
- my $hosts = defined $host ? [ $host ] : $NetConfig{$pname . '_hosts'};
+  my $port = (getservbyname($pname, $proto))[2] || $pnum;
 
- my $me;
+  my $hosts = defined $host ? [$host] : $NetConfig{$pname . '_hosts'};
 
- foreach $host (@$hosts)
-  {
-   $me = IO::Socket::INET->new(PeerAddr => $host,
-    	    	    	       PeerPort => $port,
-    	    	    	       Proto    => $proto
-    	    	    	      ) and last;
+  my $me;
+
+  foreach $host (@$hosts) {
+    $me = IO::Socket::INET->new(
+      PeerAddr => $host,
+      PeerPort => $port,
+      Proto    => $proto
+      )
+      and last;
   }
 
- return unless $me;
+  return unless $me;
 
- $me->send("\n")
-	if $proto eq 'udp';
+  $me->send("\n")
+    if $proto eq 'udp';
 
- $timeout = $TIMEOUT
-	unless defined $timeout;
+  $timeout = $TIMEOUT
+    unless defined $timeout;
 
- IO::Select->new($me)->can_read($timeout)
-	? $me
-	: undef;
+  IO::Select->new($me)->can_read($timeout)
+    ? $me
+    : undef;
 }
 
-sub inet_time
-{
- my $s = _socket('time',37,@_) || return undef;
- my $buf = '';
- my $offset = 0 | 0;
 
- return undef
-	unless defined $s->recv($buf, length(pack("N",0)));
+sub inet_time {
+  my $s      = _socket('time', 37, @_) || return undef;
+  my $buf    = '';
+  my $offset = 0 | 0;
 
- # unpack, we | 0 to ensure we have an unsigned
- my $time = (unpack("N",$buf))[0] | 0;
+  return undef
+    unless defined $s->recv($buf, length(pack("N", 0)));
 
- # the time protocol return time in seconds since 1900, convert
- # it to a the required format
+  # unpack, we | 0 to ensure we have an unsigned
+  my $time = (unpack("N", $buf))[0] | 0;
 
- if($^O eq "MacOS") {
-   # MacOS return seconds since 1904, 1900 was not a leap year.
-   $offset = (4 * 31536000) | 0;
- }
- else {
-   # otherwise return seconds since 1972, there were 17 leap years between
-   # 1900 and 1972
-   $offset =  (70 * 31536000 + 17 * 86400) | 0;
- }
+  # the time protocol return time in seconds since 1900, convert
+  # it to a the required format
 
- $time - $offset;
+  if ($^O eq "MacOS") {
+
+    # MacOS return seconds since 1904, 1900 was not a leap year.
+    $offset = (4 * 31536000) | 0;
+  }
+  else {
+
+    # otherwise return seconds since 1972, there were 17 leap years between
+    # 1900 and 1972
+    $offset = (70 * 31536000 + 17 * 86400) | 0;
+  }
+
+  $time - $offset;
 }
 
-sub inet_daytime
-{
- my $s = _socket('daytime',13,@_) || return undef;
- my $buf = '';
 
- defined($s->recv($buf, 1024)) ? $buf
-    	              : undef;
+sub inet_daytime {
+  my $s   = _socket('daytime', 13, @_) || return undef;
+  my $buf = '';
+
+  defined($s->recv($buf, 1024))
+    ? $buf
+    : undef;
 }
 
 1;

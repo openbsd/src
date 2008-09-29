@@ -11,7 +11,7 @@ $DOWARN = 1; # enable run-time warnings now
 use Config;
 
 require "test.pl";
-plan( tests => 53 );
+plan( tests => 54 );
 
 eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
@@ -203,7 +203,10 @@ is(v200, eval( "v200"), 'v200 eq "v200"'        );
 is(v200, eval("+v200"), 'v200 eq eval("+v200")' );
 
 # Tests for string/numeric value of $] itself
-my ($revision,$version,$subversion) = split '\.', sprintf("%vd",$^V);
+my ($revision,$version,$subversion) = split /\./, sprintf("%vd",$^V);
+
+# $^V always displays the leading 'v' but we don't want that here
+$revision =~ s/^v//;
 
 print "# revision   = '$revision'\n";
 print "# version    = '$version'\n";
@@ -214,15 +217,11 @@ my $v = sprintf("%d.%.3d%.3d",$revision,$version,$subversion);
 print "# v = '$v'\n";
 print "# ] = '$]'\n";
 
-$v =~ s/000$// if $subversion == 0;
-
-print "# v = '$v'\n";
-
-ok( $v eq "$]", qq{\$^V eq "\$]"});
+is( $v, "$]", qq{\$^V eq "\$]"});
 
 $v = $revision + $version/1000 + $subversion/1000000;
 
-ok( $v == $], "\$^V == \$] (numeric)" );
+ok( abs($v - $]) < 10**-8 , "\$^V == \$] (numeric)" );
 
 SKIP: {
   skip("In EBCDIC the v-string components cannot exceed 2147483647", 6)
@@ -246,13 +245,13 @@ SKIP: {
   }
 }
 
-# Tests for magic v-strings
+# Tests for magic v-strings 
 
 $v = 1.2.3;
-is( ref(\$v), 'SCALAR', 'v-strings are just scalars' );
+is( ref(\$v), 'VSTRING', 'v-string objects' );
 
 $v = v1.2_3;
-is( ref(\$v), 'SCALAR', 'v-strings with v are just scalars' );
+is( ref(\$v), 'VSTRING', 'v-string objects with v' );
 is( sprintf("%vd", $v), '1.23', 'v-string ignores underscores' );
 
 # [perl #16010]
@@ -264,3 +263,13 @@ ok( exists $h{chr(65).chr(66)}, "v-stringness is engaged for vX.Y" );
 ok( exists $h{chr(65).chr(66).chr(67)}, "v-stringness is engaged for X.Y.Z" );
 
 
+# The following tests whether v-strings are correctly
+# interpreted by the tokeniser when it's in a XTERMORDORDOR
+# state (fittingly, the only tokeniser state to contain the
+# word MORDOR).
+
+*{"\3"} = *DATA;
+is( (readline v3), "This is what we expect to see!\n", "v-strings even work in Mordor" );
+
+__DATA__
+This is what we expect to see!

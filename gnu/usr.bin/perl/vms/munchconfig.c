@@ -4,11 +4,12 @@
    non-unix systems.
 
    usage:
-   munchconfig config.sh config_h.sh [foo=bar [baz=xyzzy [...]]] >config.h
+   munchconfig config.sh config_h.sh [-f file] [foo=bar [baz=xyzzy [...]]] >config.h
 
-   which is to say, it takes as its firt parameter a config.sh (or
-   equivalent), as its second a config_h.sh (or equvalent), and a list of
-   optional tag=value pairs.
+   which is to say, it takes as its first parameter a config.sh (or
+   equivalent), as its second a config_h.sh (or equivalent), an optional file
+   containing tag=value pairs (one on each line), and an optional list of
+   tag=value pairs on the command line.
 
    It spits the processed config.h out to STDOUT.
 
@@ -19,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 /* The failure code to exit with */
 #ifndef EXIT_FAILURE
@@ -45,7 +47,10 @@ void tilde_sub(char [], Translate [], int);
 int
 main(int argc, char *argv[])
 {
-  FILE *ConfigSH, *Config_H;
+  int c, i;
+  char *ifile = NULL;
+  char WorkString[LINEBUFFERSIZE]; 
+  FILE *ConfigSH, *Config_H, *Extra_Subs;
   char LineBuffer[LINEBUFFERSIZE], *TempValue, *StartTilde, *EndTilde;
   char SecondaryLineBuffer[LINEBUFFERSIZE], OutBuf[LINEBUFFERSIZE];
   char TokenBuffer[TOKENBUFFERSIZE];
@@ -59,11 +64,24 @@ main(int argc, char *argv[])
                                              /* and config substitutions, */
                                              /* respectively */
   if (argc < 3) {
-    printf("Usage: munchconfig config.sh config_h.sh [foo=bar [baz=xyzzy [...]]]\n");
+    printf("Usage: munchconfig config.sh config_h.sh [-f file] [foo=bar [baz=xyzzy [...]]]\n");
     exit(EXIT_FAILURE);
   }
 
-  
+  optind = 3;    /* skip config.sh and config_h.sh */
+  while ((c = getopt(argc, argv, "f:")) != -1) {
+      switch (c) {
+        case 'f':
+            ifile = optarg;
+            break;
+        case ':':
+            fprintf(stderr, "Option -%c requires an operand\n", optopt);
+            break;
+        case '?':
+            fprintf(stderr,"Unrecognised option: -%c\n", optopt);
+      }
+  }
+
   /* First, open the input files */
   if (NULL == (ConfigSH = fopen(argv[1], "r"))) {
     printf("Error %i trying to open config.sh file %s\n", errno, argv[1]);
@@ -75,12 +93,14 @@ main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
+  if (ifile != NULL && NULL == (Extra_Subs = fopen(ifile, "r"))) {
+    printf("Error %i trying to open extra substitutions file %s\n", errno, ifile);
+    exit(EXIT_FAILURE);
+  }
+
   /* Any tag/value pairs on the command line? */
-  if (argc > 3) {
-    int i;
-    char WorkString[LINEBUFFERSIZE]; 
-    for (i=3; i < argc && argv[i]; i++) {
-      
+  if (argc > optind) {
+    for (i=optind; i < argc && argv[i]; i++) {
       /* Local copy */
       strcpy(WorkString, argv[i]);
       /* Stick a NULL over the = */
@@ -93,6 +113,35 @@ main(int argc, char *argv[])
       TildeSubCount++;
     }
   }
+
+  /* Now read in the tag/value pairs from the extra substitutions file, if any */
+  while(ifile && fgets(LineBuffer, LINEBUFFERSIZE - 1, Extra_Subs)) {
+    /* Force a trailing null, just in case */
+    LineBuffer[LINEBUFFERSIZE - 1] = '\0';
+    LineBufferLength = strlen(LineBuffer);
+
+    /* Chop trailing control characters */
+    while((LineBufferLength > 0) && (LineBuffer[LineBufferLength-1] < ' ')) {
+      LineBuffer[LineBufferLength - 1] = '\0';
+      LineBufferLength--;
+    }
+
+    /* If it's empty, then try again */
+    if (!*LineBuffer)
+      continue;
+
+    /* Local copy */
+    strcpy(WorkString, LineBuffer);
+    /* Stick a NULL over the = */
+    TempValue = strchr(WorkString, '=');
+    *TempValue++ = '\0';
+
+    /* Copy the tag and value into the holding array */
+    strcpy(TildeSub[TildeSubCount].Tag, WorkString);
+    strcpy(TildeSub[TildeSubCount].Value, TempValue);
+    TildeSubCount++;
+  }
+
 
   /* Now read in the config.sh file. */
   while(fgets(LineBuffer, LINEBUFFERSIZE - 1, ConfigSH)) {
@@ -297,6 +346,7 @@ main(int argc, char *argv[])
   /* Close the files */
   fclose(ConfigSH);
   fclose(Config_H);
+  if (ifile) fclose(Extra_Subs);
 }
 
 void

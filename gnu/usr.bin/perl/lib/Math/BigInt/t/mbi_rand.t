@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use Test;
+use Test::More;
 use strict;
 
 my $count;
@@ -57,7 +57,7 @@ for (my $i = 0; $i < $count; $i++)
   print "# A $A\n# B $B\n";
   if ($A->is_zero() || $B->is_zero())
     {
-    for (1..4) { ok (1,1); } next;
+    for (1..4) { is (1,1, 'skipped this test'); } next;
     }
 
   # check that int(A/B)*B + A % B == A holds for all inputs
@@ -69,8 +69,8 @@ for (my $i = 0; $i < $count; $i++)
 
   print "# seed $seed, ". join(' ',Math::BigInt::Calc->_base_len()),"\n".
         "# tried $ADB * $B + $two*$AMB - $AMB\n"
-   unless ok ($ADB*$B+$two*$AMB-$AMB,$As);
-  if (ok ($ADB*$B/$B,$ADB))
+   unless is ($ADB*$B+$two*$AMB-$AMB,$As, "ADB * B + 2 * AMB - AMB == A");
+  if (is ($ADB*$B/$B,$ADB, "ADB * B / B == ADB"))
     {
     print "# seed: $seed, \$ADB * \$B / \$B = ", $ADB * $B / $B, " != $ADB (\$B=$B)\n";
     if (Math::BigInt->config()->{lib} =~ /::Calc/)
@@ -84,10 +84,10 @@ for (my $i = 0; $i < $count; $i++)
   # print "check: $ADB $AMB";
   print "# seed $seed, ". join(' ',Math::BigInt::Calc->_base_len()),"\n".
         "# tried $ADB * $A + $two*$AMB - $AMB\n"
-   unless ok ($ADB*$A+$two*$AMB-$AMB,$Bs);
+   unless is ($ADB*$A+$two*$AMB-$AMB,$Bs, "ADB * A + 2 * AMB - AMB == B");
   print "# +$two * $AMB = ",$ADB * $A + $two * $AMB,"\n";
   print "# -$AMB = ",$ADB * $A + $two * $AMB - $AMB,"\n";
   print "# seed $seed, \$ADB * \$A / \$A = ", $ADB * $A / $A, " != $ADB (\$A=$A)\n"
-   unless ok ($ADB*$A/$A,$ADB);
+   unless is ($ADB*$A/$A,$ADB, "ADB * A/A == ADB");
   }
 

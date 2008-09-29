@@ -33,14 +33,7 @@ if ($@) {
 
 print "1..4\n";
 
-
-if (eval {require File::Spec::Functions}) {
- File::Spec::Functions->import();
-} else {
-  *catfile = sub { join '/', @_ };
-}
-$tmpdir = $ENV{TMP} || $ENV{TMPDIR} ||  '/tmp';  
-$file = catfile($tmpdir, "storable$$");
+$file = "storable$$";
 1 while unlink $file;
 tryout('Memoize::Storable', $file, 1);  # Test 1..4
 1 while unlink $file;

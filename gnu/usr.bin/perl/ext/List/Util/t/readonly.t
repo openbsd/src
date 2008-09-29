@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use Scalar::Util qw(readonly);
-use Test::More tests => 9;
+use Test::More tests => 11;
 
 ok( readonly(1),	'number constant');
 
@@ -36,3 +36,16 @@ ok( !readonly($var),	'reference to constant');
 ok( readonly($$var),	'de-reference to constant');
 
 ok( !readonly(*STDOUT),	'glob');
+
+sub try
+{
+    my $v = \$_[0];
+    return readonly $$v;
+}
+
+$var = 123;
+{
+    local $TODO = $Config::Config{useithreads} ? "doesn't work with threads" : undef;
+    ok( try ("abc"), 'reference a constant in a sub');
+}
+ok( !try ($var), 'reference a non-constant in a sub');

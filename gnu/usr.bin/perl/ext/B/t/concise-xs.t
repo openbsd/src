@@ -4,17 +4,41 @@
 
 =head1 SYNOPSIS
 
-To verify that B::Concise properly reports whether functions are XS or
-perl, we test against 2 (currently) core packages which have lots of
-XS functions: B and Digest::MD5.  They're listed in %$testpkgs, along
-with a list of functions that are (or are not) XS.  For brevity, you
-can specify the shorter list; if they're non-xs routines, start list
-with a '!'.  Data::Dumper is also tested, partly to prove the non-!
-usage.
+To verify that B::Concise properly reports whether functions are XS,
+perl, or optimized constant subs, we test against a few core packages
+which have a stable API, and which have functions of all 3 types.
 
-We demand-load each package, scan its stash for function names, and
-mark them as XS/not-XS according to the list given for each package.
-Then we test B::Concise's report on each.
+=head1 WHAT IS TESTED
+
+5 core packages are tested; Digest::MD5, B, B::Deparse, Data::Dumper,
+and POSIX.  These have a mix of the 3 expected implementation types;
+perl, XS, and constant (optimized constant subs).
+
+%$testpkgs specifies what packages are tested; each package is loaded,
+and the stash is scanned for the function-names in that package.
+
+Each value in %$testpkgs is a hash-of-lists (HoL) whose keys are
+implementation-types and values are lists of function-names of that type.
+
+To keep these HoLs smaller and more managable, they may carry an
+additional 'dflt' => $impl_Type, which means that unnamed functions
+are expected to be of that default implementation type.  Those unnamed
+functions are known from the scan of the package stash.
+
+=head1 HOW THEY'RE TESTED
+
+Each function is 'rendered' by B::Concise, and result is matched
+against regexs for each possible implementation-type.  For some
+packages, some functions may be unimplemented on some platforms.
+
+To slay this maintenance dragon, the regexs used in like() match
+against renderings which indicate that there is no implementation.
+
+If a function is implemented differently on different platforms, the
+test for that function will fail on one of those platforms.  These
+specific functions can be skipped by a 'skip' => [ @list ] to the HoL
+mentioned previously.  See usage for skip in B's HoL, which avoids
+testing a function which doesnt exist on non-threaded builds.
 
 =head1 OPTIONS AND ARGUMENTS
 
@@ -24,8 +48,9 @@ C<-a> uses Module::CoreList to run all core packages through the test, which
 gives some interesting results.
 
 C<-c> causes the expected XS/non-XS results to be marked with
-corrections, which are then reported at program END, in a
-Data::Dumper statement
+corrections, which are then reported at program END, in a form that's
+readily cut-and-pastable into this file.
+
 
 C<< -r <file> >> reads a file, as written by C<-c>, and adjusts the expected
 results accordingly.  The file is 'required', so @INC settings apply.
@@ -35,8 +60,6 @@ test harness; this is handy for collecting further items to test, and
 may be useful otherwise (ie just to see).
 
 =head1 EXAMPLES
-
-All following examples avoid using PERL_CORE=1, since that changes @INC
 
 =over 4
 
@@ -92,40 +115,106 @@ BEGIN {
 
 use Getopt::Std;
 use Carp;
-# One 5.009-only test to go when no 6; is integrated (25344)
-use Test::More tests => ( 1 * !!$Config::Config{useithreads}
-			  + 1 * ($] > 5.009)
-			  + 778);
+use Test::More 'no_plan';
 
 require_ok("B::Concise");
 
+my %matchers = 
+    ( constant	=> qr{ (?-x: is a constant sub, optimized to a \w+)
+		      |(?-x: exists in stash, but has no START) }x,
+      XS	=> qr/ is XS code/,
+      perl	=> qr/ (next|db)state/,
+      noSTART	=> qr/ exists in stash, but has no START/,
+);
+
 my $testpkgs = {
+    # packages to test, with expected types for named funcs
 
-    Digest::MD5 => [qw/ ! import /],
+    Digest::MD5 => { perl => [qw/ import /],
+		     dflt => 'XS' },
 
-    B => [qw/ ! class clearsym compile_stats debug objsym parents
-	      peekop savesym timing_info walkoptree_exec
-	      walkoptree_slow walksymtable /],
+    Data::Dumper => { XS => [qw/ bootstrap Dumpxs /],
+		      dflt => 'perl' },
+    B => { 
+	dflt => 'constant',		# all but 47/297
+	skip => [ 'regex_padav' ],	# threaded only
+	perl => [qw(
+		    walksymtable walkoptree_slow walkoptree_exec
+		    timing_info savesym peekop parents objsym debug
+		    compile_stats clearsym class
+		    )],
+	XS => [qw(
+		  warnhook walkoptree_debug walkoptree threadsv_names
+		  svref_2object sv_yes sv_undef sv_no save_BEGINs
+		  regex_padav ppname perlstring opnumber minus_c
+		  main_start main_root main_cv init_av inc_gv hash
+		  formfeed end_av dowarn diehook defstash curstash
+		  cstring comppadlist check_av cchar cast_I32 bootstrap
+		  begin_av amagic_generation sub_generation address
+		  ), $] > 5.009 ? ('unitcheck_av') : ()],
+    },
 
-    Data::Dumper => [qw/ bootstrap Dumpxs /],
+    B::Deparse => { dflt => 'perl',	# 235 functions
 
-    B::Deparse => [qw/ ASSIGN CVf_ASSERTION CVf_LOCKED CVf_LVALUE
-		   CVf_METHOD LIST_CONTEXT OP_CONST OP_LIST OP_RV2SV
-		   OP_STRINGIFY OPf_KIDS OPf_MOD OPf_REF OPf_SPECIAL
-		   OPf_STACKED OPf_WANT OPf_WANT_LIST OPf_WANT_SCALAR
-		   OPf_WANT_VOID OPpCONST_ARYBASE OPpCONST_BARE
-		   OPpENTERSUB_AMPER OPpEXISTS_SUB OPpITER_REVERSED
-		   OPpLVAL_INTRO OPpOUR_INTRO OPpSLICE OPpSORT_DESCEND
-		   OPpSORT_INPLACE OPpSORT_INTEGER OPpSORT_NUMERIC
-		   OPpSORT_REVERSE OPpTARGET_MY OPpTRANS_COMPLEMENT
-		   OPpTRANS_DELETE OPpTRANS_SQUASH PMf_CONTINUE
-		   PMf_EVAL PMf_EXTENDED PMf_FOLD PMf_GLOBAL PMf_KEEP
-		   PMf_MULTILINE PMf_ONCE PMf_SINGLELINE PMf_SKIPWHITE
-		   POSTFIX SVf_FAKE SVf_IOK SVf_NOK SVf_POK SVf_ROK
-		   SVpad_OUR SVs_RMG SVs_SMG SWAP_CHILDREN main_cv
-		   main_root main_start opnumber perlstring
-		   svref_2object /],
+	XS => [qw( svref_2object perlstring opnumber main_start
+		   main_root main_cv )],
 
+	constant => [qw/ ASSIGN CVf_LOCKED CVf_LVALUE
+		     CVf_METHOD LIST_CONTEXT OP_CONST OP_LIST OP_RV2SV
+		     OP_STRINGIFY OPf_KIDS OPf_MOD OPf_REF OPf_SPECIAL
+		     OPf_STACKED OPf_WANT OPf_WANT_LIST OPf_WANT_SCALAR
+		     OPf_WANT_VOID OPpCONST_ARYBASE OPpCONST_BARE
+		     OPpENTERSUB_AMPER OPpEXISTS_SUB OPpITER_REVERSED
+		     OPpLVAL_INTRO OPpOUR_INTRO OPpSLICE OPpSORT_DESCEND
+		     OPpSORT_INPLACE OPpSORT_INTEGER OPpSORT_NUMERIC
+		     OPpSORT_REVERSE OPpTARGET_MY OPpTRANS_COMPLEMENT
+		     OPpTRANS_DELETE OPpTRANS_SQUASH PMf_CONTINUE
+		     PMf_EVAL PMf_EXTENDED PMf_FOLD PMf_GLOBAL PMf_KEEP
+		     PMf_MULTILINE PMf_ONCE PMf_SINGLELINE
+		     POSTFIX SVf_FAKE SVf_IOK SVf_NOK SVf_POK SVf_ROK
+		     SVpad_OUR SVs_RMG SVs_SMG SWAP_CHILDREN OPpPAD_STATE
+		     /, $] > 5.009 ? ('RXf_SKIPWHITE') : ('PMf_SKIPWHITE')],
+		 },
+
+    POSIX => { dflt => 'constant',			# all but 252/589
+	       skip => [qw/ _POSIX_JOB_CONTROL /],	# platform varying
+	       perl => [qw/ import croak AUTOLOAD /],
+
+	       XS => [qw/ write wctomb wcstombs uname tzset tzname
+		      ttyname tmpnam times tcsetpgrp tcsendbreak
+		      tcgetpgrp tcflush tcflow tcdrain tanh tan
+		      sysconf strxfrm strtoul strtol strtod
+		      strftime strcoll sinh sigsuspend sigprocmask
+		      sigpending sigaction setuid setsid setpgid
+		      setlocale setgid read pipe pause pathconf
+		      open nice modf mktime mkfifo mbtowc mbstowcs
+		      mblen lseek log10 localeconv ldexp lchown
+		      isxdigit isupper isspace ispunct isprint
+		      islower isgraph isdigit iscntrl isalpha
+		      isalnum int_macro_int getcwd frexp fpathconf
+		      fmod floor dup2 dup difftime cuserid ctime
+		      ctermid cosh constant close clock ceil
+		      bootstrap atan asin asctime acos access abort
+		      _exit
+		      /],
+	       },
+
+    IO::Socket => { dflt => 'constant',		# 157/190
+
+		    perl => [qw/ timeout socktype sockopt sockname
+			     socketpair socket sockdomain sockaddr_un
+			     sockaddr_in shutdown setsockopt send
+			     register_domain recv protocol peername
+			     new listen import getsockopt croak
+			     connected connect configure confess close
+			     carp bind atmark accept
+			     /, $] > 5.009 ? ('blocking') : () ],
+
+		    XS => [qw/ unpack_sockaddr_un unpack_sockaddr_in
+			   sockatmark sockaddr_family pack_sockaddr_un
+			   pack_sockaddr_in inet_ntoa inet_aton
+			   /],
+		},
 };
 
 ############
@@ -142,7 +231,7 @@ usage: PERL_CORE=1 ./perl ext/B/t/concise-xs.t [-av] [module-list]
     -c  : writes test corrections as a Data::Dumper expression
     -r <file>	: reads file of tests, as written by -c
     <args>	: additional modules are loaded and tested
-    	(will report failures, since no XS funcs are known aprior)
+    	(will report failures, since no XS funcs are known apriori)
 
 EODIE
     ;
@@ -176,59 +265,60 @@ unless ($opts{a}) {
 ############
 
 sub test_pkg {
-    my ($pkg_name, $xslist) = @_;
-    require_ok($pkg_name);
+    my ($pkg, $fntypes) = @_;
+    require_ok($pkg);
 
-    unless (ref $xslist eq 'ARRAY') {
-	warn "no XS/non-XS function list given, assuming empty XS list";
-	$xslist = [''];
-    }
-
-    my $assumeXS = 0;	# assume list enumerates XS funcs, not perl ones
-    $assumeXS = 1	if $xslist->[0] and $xslist->[0] eq '!';
-
-    # build %stash: keys are func-names, vals: 1 if XS, 0 if not
+    # build %stash: keys are func-names, vals filled in below
     my (%stash) = map
-	( ($_ => $assumeXS)
-	  => ( grep exists &{"$pkg_name\::$_"}	# grab CODE symbols
+	( ($_ => 0)
+	  => ( grep exists &{"$pkg\::$_"}	# grab CODE symbols
 	       => grep !/__ANON__/		# but not anon subs
-	       => keys %{$pkg_name.'::'}	# from symbol table
+	       => keys %{$pkg.'::'}		# from symbol table
 	       ));
 
-    # now invert according to supplied list
-    $stash{$_} = int ! $assumeXS foreach @$xslist;
-
-    # and cleanup cruft (easier than preventing)
-    delete @stash{'!',''};
-
-    if ($opts{v}) {
-	diag("xslist: " => Dumper($xslist));
-	diag("$pkg_name stash: " => Dumper(\%stash));
-    }
-    my $err;
-    foreach $func_name (reverse sort keys %stash) {
-	my $res = checkXS("${pkg_name}::$func_name", $stash{$func_name});
-	if (!$res) {
-	    $stash{$func_name} ^= 1;
-	    print "$func_name ";
-	    $err++;
+    for my $type (keys %matchers) {
+	foreach my $fn (@{$fntypes->{$type}}) {
+	    carp "$fn can only be one of $type, $stash{$fn}\n"
+		if $stash{$fn};
+	    $stash{$fn} = $type;
 	}
     }
-    $report{$pkg_name} = \%stash if $opts{c} and $err || $opts{v};
+    # set default type for un-named functions
+    my $dflt = $fntypes->{dflt} || 'perl';
+    for my $k (keys %stash) {
+	$stash{$k} = $dflt unless $stash{$k};
+    }
+    $stash{$_} = 'skip' foreach @{$fntypes->{skip}};
+
+    if ($opts{v}) {
+	diag("fntypes: " => Dumper($fntypes));
+	diag("$pkg stash: " => Dumper(\%stash));
+    }
+    foreach my $fn (reverse sort keys %stash) {
+	next if $stash{$fn} eq 'skip';
+	my $res = checkXS("${pkg}::$fn", $stash{$fn});
+	if ($res ne '1') {
+	    push @{$report{$pkg}{$res}}, $fn;
+	}
+    }
 }
 
 sub checkXS {
-    my ($func_name, $wantXS) = @_;
+    my ($func_name, $want) = @_;
+
+    croak "unknown type $want: $func_name\n"
+	unless defined $matchers{$want};
 
     my ($buf, $err) = render($func_name);
-    if ($wantXS) {
-	like($buf, qr/\Q$func_name is XS code/,
-	     "XS code:\t $func_name");
-    } else {
-	unlike($buf, qr/\Q$func_name is XS code/,
-	       "perl code:\t $func_name");
+    my $res = like($buf, $matchers{$want}, "$want sub:\t $func_name");
+
+    unless ($res) {
+	# test failed. return type that would give success
+	for my $m (keys %matchers) {
+	    return $m if $buf =~ $matchers{$m};
+	}
     }
-    #returns like or unlike, whichever was called
+    $res;
 }
 
 sub render {
@@ -246,7 +336,6 @@ sub render {
 }
 
 sub corecheck {
-
     eval { require Module::CoreList };
     if ($@) {
 	warn "Module::CoreList not available on $]\n";
@@ -263,21 +352,15 @@ sub corecheck {
 
 END {
     if ($opts{c}) {
-	# print "Corrections: ", Dumper(\%report);
-	print "# Tested Package Subroutines, 1's are XS, 0's are perl\n";
-	print "\$VAR1 = {\n";
+	$Data::Dumper::Indent = 1;
+	print "Corrections: ", Dumper(\%report);
 
 	foreach my $pkg (sort keys %report) {
-	    my (@xs, @perl);
-	    my $stash = $report{$pkg};
-
-	    @xs   = sort grep $stash->{$_} == 1, keys %$stash;
-	    @perl = sort grep $stash->{$_} == 0, keys %$stash;
-
-	    my @list = (@xs > @perl) ? ( '!', @perl) : @xs;
-	    print "\t$pkg => [qw/ @list /],\n";
+	    for my $type (keys %matchers) {
+		print "$pkg: $type: @{$report{$pkg}{$type}}\n"
+		    if @{$report{$pkg}{$type}};
+	    }
 	}
-	print "};\n";
     }
 }
 

@@ -793,6 +793,17 @@ textual object, not to be confused with a L</separator> or
 L</terminator>.  "To delimit" really just means "to surround" or "to
 enclose" (like these parentheses are doing).
 
+=item deprecated modules and features
+
+Deprecated modules and features are those which were part of a stable
+release, but later found to be subtly flawed, and which should be avoided.
+They are subject to removal and/or bug-incompatible reimplementation in
+the next major release (but they will be preserved through maintenance
+releases).  Deprecation warnings are issued under B<-w> or C<use
+diagnostics>, and notices are found in L<perldelta>s, as well as various
+other PODs. Coding practices that misuse features, such as C<my $foo if
+0>, can also be deprecated.
+
 =item dereference
 
 A fancy computer science term meaning "to follow a L</reference> to
@@ -861,6 +872,17 @@ most specific definition for the method.
 A standard, bundled release of a system of software.  The default
 usage implies source code is included.  If that is not the case, it
 will be called a "binary-only" distribution.
+
+=item (to be) dropped modules
+
+When Perl 5 was first released (see L<perlhistory>), several modules were
+included, which have now fallen out of common use.  It has been suggested
+that these modules should be removed, since the distribution became rather
+large, and the common criterion for new module additions is now limited to
+modules that help to build, test, and extend perl itself.  Furthermore,
+the CPAN (which didn't exist at the time of Perl 5.0) can become the new
+home of dropped modules. Dropping modules is currently not an option, but
+further developments may clear the last barriers.
 
 =item dweomer
 
@@ -1570,7 +1592,7 @@ hold, not to be confused with an L</NV>.
 
 "Just Another Perl Hacker," a clever but cryptic bit of Perl code that
 when executed, evaluates to that string.  Often used to illustrate a
-particular Perl feature, and something of an ungoing Obfuscated Perl
+particular Perl feature, and something of an ongoing Obfuscated Perl
 Contest seen in Usenix signatures.
 
 =back

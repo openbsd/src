@@ -1,5 +1,5 @@
 #
-# $Id: jperl.t,v 2.0 2004/05/16 20:55:18 dankogai Exp $
+# $Id: jperl.t,v 2.1 2006/05/03 18:24:10 dankogai Exp $
 #
 # This script is written in euc-jp
 
@@ -10,12 +10,12 @@ BEGIN {
       exit 0;
     }
     unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: PerlIO was not built\n";
-	exit 0;
+    print "1..0 # Skip: PerlIO was not built\n";
+    exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
     $| = 1;
 }

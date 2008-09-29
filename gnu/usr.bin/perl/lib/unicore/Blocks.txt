@@ -1,8 +1,8 @@
-# Blocks-4.1.0.txt
-# Date: 2005-1-31, 16:50 [KW]
+# Blocks-5.0.0.txt
+# Date: 2006-02-15, 15:40:00 [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
@@ -24,6 +24,8 @@
 #  have the value No_Block.
 
 # Property:	Block
+#
+# @missing: 0000..10FFFF; No_Block
 
 0000..007F; Basic Latin
 0080..00FF; Latin-1 Supplement
@@ -41,6 +43,7 @@
 0700..074F; Syriac
 0750..077F; Arabic Supplement
 0780..07BF; Thaana
+07C0..07FF; NKo
 0900..097F; Devanagari
 0980..09FF; Bengali
 0A00..0A7F; Gurmukhi
@@ -74,6 +77,7 @@
 1980..19DF; New Tai Lue
 19E0..19FF; Khmer Symbols
 1A00..1A1F; Buginese
+1B00..1B7F; Balinese
 1D00..1D7F; Phonetic Extensions
 1D80..1DBF; Phonetic Extensions Supplement
 1DC0..1DFF; Combining Diacritical Marks Supplement
@@ -104,6 +108,7 @@
 2A00..2AFF; Supplemental Mathematical Operators
 2B00..2BFF; Miscellaneous Symbols and Arrows
 2C00..2C5F; Glagolitic
+2C60..2C7F; Latin Extended-C
 2C80..2CFF; Coptic
 2D00..2D2F; Georgian Supplement
 2D30..2D7F; Tifinagh
@@ -129,7 +134,9 @@
 A000..A48F; Yi Syllables
 A490..A4CF; Yi Radicals
 A700..A71F; Modifier Tone Letters
+A720..A7FF; Latin Extended-D
 A800..A82F; Syloti Nagri
+A840..A87F; Phags-pa
 AC00..D7AF; Hangul Syllables
 D800..DB7F; High Surrogates
 DB80..DBFF; High Private Use Surrogates
@@ -158,11 +165,15 @@ FFF0..FFFF; Specials
 10450..1047F; Shavian
 10480..104AF; Osmanya
 10800..1083F; Cypriot Syllabary
+10900..1091F; Phoenician
 10A00..10A5F; Kharoshthi
+12000..123FF; Cuneiform
+12400..1247F; Cuneiform Numbers and Punctuation
 1D000..1D0FF; Byzantine Musical Symbols
 1D100..1D1FF; Musical Symbols
 1D200..1D24F; Ancient Greek Musical Notation
 1D300..1D35F; Tai Xuan Jing Symbols
+1D360..1D37F; Counting Rod Numerals
 1D400..1D7FF; Mathematical Alphanumeric Symbols
 20000..2A6DF; CJK Unified Ideographs Extension B
 2F800..2FA1F; CJK Compatibility Ideographs Supplement
@@ -170,3 +181,5 @@ E0000..E007F; Tags
 E0100..E01EF; Variation Selectors Supplement
 F0000..FFFFF; Supplementary Private Use Area-A
 100000..10FFFF; Supplementary Private Use Area-B
+
+# EOF

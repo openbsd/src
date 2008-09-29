@@ -26,7 +26,7 @@ use strict;
 use warnings;
 
 use Test::More tests => @TestSizes * 2	# sort() tests
-			* 4		# number of pragmas to test
+			* 6		# number of pragmas to test
 			+ 1 		# extra test for qsort instability
 			+ 3		# tests for sort::current
 			+ 3;		# tests for "defaults" and "no sort"
@@ -99,7 +99,7 @@ sub checkequal {
 # Test sort on arrays of various sizes (set up in @TestSizes)
 
 sub main {
-    my ($expect_unstable) = @_;
+    my ($dothesort, $expect_unstable) = @_;
     my ($ts, $unsorted, @sorted, $status);
     my $unstable_num = 0;
 
@@ -108,9 +108,9 @@ sub main {
 	# Sort only on item portion of each element.
 	# There will typically be many repeated items,
 	# and their order had better be preserved.
-	@sorted = sort { substr($a, 0, $RootWidth)
+	@sorted = $dothesort->(sub { substr($a, 0, $RootWidth)
 				    cmp
-	                 substr($b, 0, $RootWidth) } @$unsorted;
+	                 substr($b, 0, $RootWidth) }, $unsorted);
 	$status = checkorder(\@sorted);
 	# Put the items back into the original order.
 	# The contents of the arrays had better be identical.
@@ -119,9 +119,9 @@ sub main {
 	    ++$unstable_num;
 	}
 	is($status, '', "order ok for size $ts");
-	@sorted = sort { substr($a, $RootWidth)
+	@sorted = $dothesort->(sub { substr($a, $RootWidth)
 				    cmp
-	                 substr($b, $RootWidth) } @sorted;
+			    substr($b, $RootWidth) }, \@sorted);
 	$status = checkequal(\@sorted, $unsorted);
 	is($status, '', "contents ok for size $ts");
     }
@@ -133,51 +133,49 @@ sub main {
 }
 
 # Test with no pragma still loaded -- stability expected (this is a mergesort)
-main(0);
+main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 
-# XXX We're using this eval "..." trick to force recompilation,
-# to ensure that the correct pragma is enabled when main() is run.
-# Currently 'use sort' modifies $sort::hints at compile-time, but
-# pp_sort() fetches its value at run-time.
-# The order of those evals is important.
-
-eval q{
+{
     use sort qw(_qsort);
-    is(sort::current(), 'quicksort', 'sort::current for _qsort');
-    main(1);
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'quicksort', 'sort::current for _qsort');
+    main(sub { sort {&{$_[0]}} @{$_[1]} }, 1);
+}
 
-eval q{
+{
     use sort qw(_mergesort);
-    is(sort::current(), 'mergesort', 'sort::current for _mergesort');
-    main(0);
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'mergesort', 'sort::current for _mergesort');
+    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
+}
 
-eval q{
+{
     use sort qw(_qsort stable);
-    is(sort::current(), 'quicksort stable', 'sort::current for _qsort stable');
-    main(0);
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'quicksort stable', 'sort::current for _qsort stable');
+    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
+}
 
 # Tests added to check "defaults" subpragma, and "no sort"
 
-eval q{
+{
+    use sort qw(_qsort stable);
     no sort qw(_qsort);
-    is(sort::current(), 'stable', 'sort::current after no _qsort');
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'stable', 'sort::current after no _qsort');
+    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
+}
 
-eval q{
+{
     use sort qw(defaults _qsort);
-    is(sort::current(), 'quicksort', 'sort::current after defaults _qsort');
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'quicksort', 'sort::current after defaults _qsort');
+    # Not expected to be stable, so don't test for stability here
+}
 
-eval q{
+{
     use sort qw(defaults stable);
-    is(sort::current(), 'stable', 'sort::current after defaults stable');
-};
-die $@ if $@;
+    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    is($sort_current, 'stable', 'sort::current after defaults stable');
+    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
+}

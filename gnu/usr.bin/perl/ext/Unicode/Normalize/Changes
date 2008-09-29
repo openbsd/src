@@ -1,5 +1,26 @@
 Revision history for Perl extension Unicode::Normalize.
 
+1.02  Tue Jun  5 22:46:45 2007
+    - XSUB: mkheader, _U_stringify() - avoid unpack('C*') on unicode.
+    - test: short.t removed - pure perl is not inapprotiate for test of
+            unicode edge cases.
+
+1.01  Tue Jun 13 22:01:53 2006
+    - XSUB: sv_setpvn() needs cast to (char*).
+    - XSUB: avoid double FETCH for tied scalar variables.
+    - added tie.t.
+
+1.00  Thu May 25 20:35:06 2006
+    - Pure Perl: compose($not_canonically_reordered) works like that in XSUB,
+      where an intervening character with higher combining class blocks
+      the composition. (This change doesn't affect any normalization forms.)
+    - XSUB: NFD(), NFC(), NFKD(), NFC(), and FCC() are now in XSUB, then
+      internal subroutine calls are avoided.
+    - The functions isComp_Ex(), isNFD_NO(), isNFC_NO(), isNFC_MAYBE(),
+      isNFKD_NO(), isNFKC_NO(), and isNFKC_MAYBE() are documented.
+    - Tests are more amplified and documentations are more clarified.
+    - Makefile.PL: Change 26295 is incorporated.
+
 0.32  Tue Apr  5 22:47:09 2005
     - Some literal and grammatical errors in POD are fixed.
 
@@ -62,13 +83,13 @@ Revision history for Perl extension Unicode::Normalize.
 
 0.18  ... unreleased
     - synchronization with bleadperl.
-    - Change 16262: by me
+    - Change 16262: by sadahiro
 
 0.17  Sun Apr 28 23:13:32 2002
     - now normalize('NFC',$1) should work.
     - Some croak()'s are added in mkheader.
     - synchronization with bleadperl.
-    - Change 15596: by me
+    - Change 15596: by sadahiro
     - Change 16136: by pudge
 
 0.16  Thu Mar 21 13:36:14 2002
@@ -85,7 +106,7 @@ Revision history for Perl extension Unicode::Normalize.
     - synchronization with bleadperl.
     - Change 14128: by Arthur
     - Change 14129: by jhi
-    - Change 14156: 
+    - Change 14156: by sadahiro
     - Change 14199: by Nikola Knezevic
     - Change 14308: by Benjamin Goldberg
     - Change 14370: by jhi

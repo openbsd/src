@@ -1,6 +1,6 @@
 /*    xsutils.c
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -23,7 +23,6 @@
  */
 
 /* package attributes; */
-PERL_XS_EXPORT_C void XS_attributes__warn_reserved(pTHX_ CV *cv);
 PERL_XS_EXPORT_C void XS_attributes_reftype(pTHX_ CV *cv);
 PERL_XS_EXPORT_C void XS_attributes__modify_attrs(pTHX_ CV *cv);
 PERL_XS_EXPORT_C void XS_attributes__guess_stash(pTHX_ CV *cv);
@@ -43,12 +42,12 @@ PERL_XS_EXPORT_C void XS_attributes_bootstrap(pTHX_ CV *cv);
  * version checks in these bootstrap calls are optional.
  */
 
+static const char file[] = __FILE__;
+
 void
 Perl_boot_core_xsutils(pTHX)
 {
-    const char file[] = __FILE__;
-
-    newXS("attributes::bootstrap", XS_attributes_bootstrap, (char *)file);
+    newXS("attributes::bootstrap",	XS_attributes_bootstrap,	file);
 }
 
 #include "XSUB.h"
@@ -56,6 +55,7 @@ Perl_boot_core_xsutils(pTHX)
 static int
 modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 {
+    dVAR;
     SV *attr;
     int nret;
 
@@ -71,21 +71,10 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 	switch (SvTYPE(sv)) {
 	case SVt_PVCV:
 	    switch ((int)len) {
-#ifdef CVf_ASSERTION
-	    case 9:
-		if (memEQ(name, "assertion", 9)) {
-		    if (negated)
-			CvFLAGS((CV*)sv) &= ~CVf_ASSERTION;
-		    else
-			CvFLAGS((CV*)sv) |= CVf_ASSERTION;
-		    continue;
-		}
-		break;
-#endif
 	    case 6:
 		switch (name[3]) {
-		case 'l':
 #ifdef CVf_LVALUE
+		case 'l':
 		    if (memEQ(name, "lvalue", 6)) {
 			if (negated)
 			    CvFLAGS((CV*)sv) &= ~CVf_LVALUE;
@@ -94,8 +83,8 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 			continue;
 		    }
 		    break;
+#endif
 		case 'k':
-#endif /* defined CVf_LVALUE */
 		    if (memEQ(name, "locked", 6)) {
 			if (negated)
 			    CvFLAGS((CV*)sv) &= ~CVf_LOCKED;
@@ -159,25 +148,27 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 
 XS(XS_attributes_bootstrap)
 {
+    dVAR;
     dXSARGS;
-    const char file[] = __FILE__;
+    PERL_UNUSED_ARG(cv);
 
     if( items > 1 )
         Perl_croak(aTHX_ "Usage: attributes::bootstrap $module");
 
-    newXSproto("attributes::_warn_reserved", XS_attributes__warn_reserved, (char *)file, "");
-    newXS("attributes::_modify_attrs",	XS_attributes__modify_attrs,	(char *)file);
-    newXSproto("attributes::_guess_stash", XS_attributes__guess_stash, (char *)file, "$");
-    newXSproto("attributes::_fetch_attrs", XS_attributes__fetch_attrs, (char *)file, "$");
-    newXSproto("attributes::reftype",	XS_attributes_reftype,	(char *)file, "$");
+    newXS("attributes::_modify_attrs",	XS_attributes__modify_attrs,	file);
+    newXSproto("attributes::_guess_stash", XS_attributes__guess_stash, file, "$");
+    newXSproto("attributes::_fetch_attrs", XS_attributes__fetch_attrs, file, "$");
+    newXSproto("attributes::reftype",	XS_attributes_reftype,	file, "$");
 
     XSRETURN(0);
 }
 
 XS(XS_attributes__modify_attrs)
 {
+    dVAR;
     dXSARGS;
     SV *rv, *sv;
+    PERL_UNUSED_ARG(cv);
 
     if (items < 1) {
 usage:
@@ -197,9 +188,11 @@ usage:
 
 XS(XS_attributes__fetch_attrs)
 {
+    dVAR;
     dXSARGS;
     SV *rv, *sv;
     cv_flags_t cvflags;
+    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
@@ -217,19 +210,19 @@ usage:
     case SVt_PVCV:
 	cvflags = CvFLAGS((CV*)sv);
 	if (cvflags & CVf_LOCKED)
-	    XPUSHs(sv_2mortal(newSVpvn("locked", 6)));
+	    XPUSHs(sv_2mortal(newSVpvs("locked")));
 #ifdef CVf_LVALUE
 	if (cvflags & CVf_LVALUE)
-	    XPUSHs(sv_2mortal(newSVpvn("lvalue", 6)));
+	    XPUSHs(sv_2mortal(newSVpvs("lvalue")));
 #endif
 	if (cvflags & CVf_METHOD)
-	    XPUSHs(sv_2mortal(newSVpvn("method", 6)));
+	    XPUSHs(sv_2mortal(newSVpvs("method")));
         if (GvUNIQUE(CvGV((CV*)sv)))
-	    XPUSHs(sv_2mortal(newSVpvn("unique", 6)));
+	    XPUSHs(sv_2mortal(newSVpvs("unique")));
 	break;
     case SVt_PVGV:
 	if (GvUNIQUE(sv))
-	    XPUSHs(sv_2mortal(newSVpvn("unique", 6)));
+	    XPUSHs(sv_2mortal(newSVpvs("unique")));
 	break;
     default:
 	break;
@@ -240,9 +233,11 @@ usage:
 
 XS(XS_attributes__guess_stash)
 {
+    dVAR;
     dXSARGS;
     SV *rv, *sv;
     dXSTARG;
+    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
@@ -257,13 +252,13 @@ usage:
     sv = SvRV(rv);
 
     if (SvOBJECT(sv))
-	sv_setpv(TARG, HvNAME_get(SvSTASH(sv)));
+	sv_setpvn(TARG, HvNAME_get(SvSTASH(sv)), HvNAMELEN_get(SvSTASH(sv)));
 #if 0	/* this was probably a bad idea */
     else if (SvPADMY(sv))
 	sv_setsv(TARG, &PL_sv_no);	/* unblessed lexical */
 #endif
     else {
-	const HV *stash = Nullhv;
+	const HV *stash = NULL;
 	switch (SvTYPE(sv)) {
 	case SVt_PVCV:
 	    if (CvGV(sv) && isGV(CvGV(sv)) && GvSTASH(CvGV(sv)))
@@ -271,10 +266,6 @@ usage:
 	    else if (/* !CvANON(sv) && */ CvSTASH(sv))
 		stash = CvSTASH(sv);
 	    break;
-	case SVt_PVMG:
-	    if (!(SvFAKE(sv) && SvTIED_mg(sv, PERL_MAGIC_glob)))
-		break;
-	    /*FALLTHROUGH*/
 	case SVt_PVGV:
 	    if (GvGP(sv) && GvESTASH((GV*)sv))
 		stash = GvESTASH((GV*)sv);
@@ -283,7 +274,7 @@ usage:
 	    break;
 	}
 	if (stash)
-	    sv_setpv(TARG, HvNAME_get(stash));
+	    sv_setpvn(TARG, HvNAME_get(stash), HvNAMELEN_get(stash));
     }
 
     SvSETMAGIC(TARG);
@@ -292,9 +283,11 @@ usage:
 
 XS(XS_attributes_reftype)
 {
+    dVAR;
     dXSARGS;
     SV *rv, *sv;
     dXSTARG;
+    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
@@ -304,28 +297,12 @@ usage:
 
     rv = ST(0);
     ST(0) = TARG;
-    if (SvGMAGICAL(rv))
-	mg_get(rv);
+    SvGETMAGIC(rv);
     if (!(SvOK(rv) && SvROK(rv)))
 	goto usage;
     sv = SvRV(rv);
     sv_setpv(TARG, sv_reftype(sv, 0));
     SvSETMAGIC(TARG);
-
-    XSRETURN(1);
-}
-
-XS(XS_attributes__warn_reserved)
-{
-    dXSARGS;
-
-    if (items != 0) {
-	Perl_croak(aTHX_
-		   "Usage: attributes::_warn_reserved ()");
-    }
-
-    EXTEND(SP,1);
-    ST(0) = boolSV(ckWARN(WARN_RESERVED));
 
     XSRETURN(1);
 }

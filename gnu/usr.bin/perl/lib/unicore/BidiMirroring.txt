@@ -1,18 +1,18 @@
-# BidiMirroring-4.1.0.txt
-# Date: 2005-03-17, 15:21:00 PST [KW]
+# BidiMirroring-5.0.0.txt
+# Date: 2006-02-16, 16:11:00 PST [KW]
 #
 # Bidi_Mirroring_Glyph Property
 # 
 # This file is an informative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This data file lists characters that have the mirrored property
 # where there is another Unicode character that typically has a glyph
 # that is the mirror image of the original character's glyph.
-# The repertoire covered by the file is Unicode 4.1.0.
+# The repertoire covered by the file is Unicode 5.0.0.
 # 
 # The file contains a list of lines with mappings from one code point
 # to another one for character-based mirroring.
@@ -32,7 +32,7 @@
 # at http://www.unicode.org/unicode/reports/tr9/
 # 
 # This file was originally created by Markus Scherer.
-# Extended for Unicode 3.2, 4.0, and 4.1 by Ken Whistler.
+# Extended for Unicode 3.2, 4.0, 4.1, and 5.0 by Ken Whistler.
 # 
 # ############################################################
 
@@ -46,6 +46,12 @@
 007D; 007B # RIGHT CURLY BRACKET
 00AB; 00BB # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
 00BB; 00AB # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+0F3A; 0F3B # TIBETAN MARK GUG RTAGS GYON
+0F3B; 0F3A # TIBETAN MARK GUG RTAGS GYAS
+0F3C; 0F3D # TIBETAN MARK ANG KHANG GYON
+0F3D; 0F3C # TIBETAN MARK ANG KHANG GYAS
+169B; 169C # OGHAM FEATHER MARK
+169C; 169B # OGHAM REVERSED FEATHER MARK
 2039; 203A # SINGLE LEFT-POINTING ANGLE QUOTATION MARK
 203A; 2039 # SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
 2045; 2046 # LEFT SQUARE BRACKET WITH QUILL
@@ -356,6 +362,14 @@
 3019; 3018 # RIGHT WHITE TORTOISE SHELL BRACKET
 301A; 301B # LEFT WHITE SQUARE BRACKET
 301B; 301A # RIGHT WHITE SQUARE BRACKET
+FE59; FE5A # SMALL LEFT PARENTHESIS
+FE5A; FE59 # SMALL RIGHT PARENTHESIS
+FE5B; FE5C # SMALL LEFT CURLY BRACKET
+FE5C; FE5B # SMALL RIGHT CURLY BRACKET
+FE5D; FE5E # SMALL LEFT TORTOISE SHELL BRACKET
+FE5E; FE5D # SMALL RIGHT TORTOISE SHELL BRACKET
+FE64; FE65 # SMALL LESS-THAN SIGN
+FE65; FE64 # SMALL GREATER-THAN SIGN
 FF08; FF09 # FULLWIDTH LEFT PARENTHESIS
 FF09; FF08 # FULLWIDTH RIGHT PARENTHESIS
 FF1C; FF1E # FULLWIDTH LESS-THAN SIGN
@@ -548,3 +562,11 @@ FF63; FF62 # [BEST FIT] HALFWIDTH RIGHT CORNER BRACKET
 # 2AF3; PARALLEL WITH TILDE OPERATOR
 # 2AFB; TRIPLE SOLIDUS BINARY RELATION
 # 2AFD; DOUBLE SOLIDUS OPERATOR
+# 301F; LOW DOUBLE PRIME QUOTATION MARK
+# 1D6DB; MATHEMATICAL BOLD PARTIAL DIFFERENTIAL
+# 1D715; MATHEMATICAL ITALIC PARTIAL DIFFERENTIAL
+# 1D74F; MATHEMATICAL BOLD ITALIC PARTIAL DIFFERENTIAL
+# 1D789; MATHEMATICAL SANS-SERIF BOLD PARTIAL DIFFERENTIAL
+# 1D7C3; MATHEMATICAL SANS-SERIF BOLD ITALIC PARTIAL DIFFERENTIAL
+
+# EOF

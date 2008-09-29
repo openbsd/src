@@ -13,7 +13,7 @@ BEGIN
   if ($ENV{PERL_CORE})
     {
     # testing with the core distribution
-    @INC = qw(../lib);
+    @INC = qw(../lib lib);
     }
   else
     {
@@ -55,7 +55,7 @@ use overload;
 
 package main;
 
-use Math::BigInt lib => 'Calc';
+use Math::BigInt try => 'Calc';
 use Math::BigFloat;
 
 my ($x,$y,$z,$u);
@@ -69,7 +69,7 @@ my $version = '1.76';	# adjust manually to match latest release
 my ($func,@args,$ans,$rc,$class,$try);
 while (<DATA>)
   {
-  chomp;
+  $_ =~ s/[\n\r]//g;	# remove newlines
   next if /^#/; # skip comments
   if (s/^&//)
     {
@@ -103,7 +103,7 @@ $class = 'Math::BigInt';
 #ok_undef ( $x );               # should result in error!
 
 # test whether fallback to calc works
-$try = "use $class ($version,'lib','foo, bar , ');";
+$try = "use $class ($version,'try','foo, bar , ');";
 $try .= "$class\->config()->{lib};";
 $ans = eval $try;
 ok ( $ans =~ /^Math::BigInt::(Fast)?Calc\z/, 1);
@@ -119,7 +119,7 @@ ok ( $ans, "1427247692705959881058285969449495136382746624");
 $try = "use $class ($version,'lib','Scalar');";
 $try .= ' $x = 2**10; $x = "$x";';
 $ans = eval $try; ok ( $ans, "1024");
-$try = "use $class ($version,'LiB','$class\::Scalar');";
+$try = "use $class ($version,'lib','$class\::Scalar');";
 $try .= ' $x = 2**10; $x = "$x";';
 $ans = eval $try; ok ( $ans, "1024");
 

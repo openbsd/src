@@ -512,7 +512,7 @@ else {
   if ($x == 0) { print "" } else { print $x }
 }
 EXPECT
-Use of uninitialized value in numeric eq (==) at - line 3.
+Use of uninitialized value $x in numeric eq (==) at - line 3.
 ########
 $x = sub {};
 foo();
@@ -828,6 +828,12 @@ foo at - line 1.
 ######## glob() bug Mon, 01 Sep 2003 02:25:41 -0700 <200309010925.h819Pf0X011457@smtp3.ActiveState.com>
 -lw
 BEGIN {
+  if ($^O eq 'os390') {
+    require File::Glob;
+    import File::Glob ':glob';
+  }
+}
+BEGIN {
   eval 'require Fcntl';
   if ($@) { print qq[./"TEST"\n./"TEST"\n]; exit 0 } # running minitest?
 }
@@ -843,6 +849,12 @@ EXPECT
 ./"TEST"
 ######## glob() bug Mon, 01 Sep 2003 02:25:41 -0700 <200309010925.h819Pf0X011457@smtp3.ActiveState.com>
 -lw
+BEGIN {
+  if ($^O eq 'os390') {
+    require File::Glob;
+    import File::Glob ':glob';
+  }
+}
 BEGIN {
   eval 'require Fcntl';
   if ($@) { print qq[./"TEST"\n./"TEST"\n]; exit 0 } # running minitest?
@@ -868,7 +880,7 @@ BEGIN {
 # Test case cut down by jhi
 $SIG{__WARN__} = sub { $@ = shift };
 use Encode;
-my $t = "\xE9";
+my $t = ord('A') == 193 ? "\xEA" : "\xE9";
 Encode::_utf8_on($t);
 $t =~ s/([^a])//ge;
 $@ =~ s/ at .*/ at/;

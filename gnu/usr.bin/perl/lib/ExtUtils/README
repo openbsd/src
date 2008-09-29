@@ -32,8 +32,8 @@ Every stable MakeMaker release is tested at least on:
 
 MacOS X
 Linux/x86
-ActivePerl on Windows 98
-Cygwin on Windows 98
+ActivePerl on Windows
+Cygwin
 OpenVMS
 
 Covering the major portability flavors MakeMaker has to cover.
@@ -44,13 +44,14 @@ Known Problems:
 
 (See http://rt.cpan.org for a full list of open problems.)
 
-ActivePerl likely broken if installed in C:\Program Files or other
-prefix with a space in the name.
+Windows will likely be broken if Perl is installed in C:\Program Files or 
+other prefix with a space in the name.
 
 Using the MMS utility on VMS causes lots of extra newlines.  Unknown
 why this is so, might be a bug in MMS.  Problem not seen with MMK.
 
+GNU make does not work with MakeMaker on Windows.
 
-See TODO for details.
 
-Please report any bugs via http://rt.cpan.org or to makemaker@perl.org.
+Please report any bugs via http://rt.cpan.org.
+Send questions and discussion to makemaker@perl.org

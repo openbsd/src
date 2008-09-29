@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+
+while (@ARGV and $ARGV[0] =~ /^-/) {
+    my $switch = shift;
+    if ($switch eq '-Y') {
+        $YAML = '-Y ';
+    }
+    else {
+        die "Unrecognized switch: -$switch";
+    }
+}
+
+my $file = shift;
+my $infile = $file;
+
+unlink "$file.msg";
+my $top = "/home/larry/src/p55";
+
+my $text;
+open(FILE, $file) or die "Can't open $file: $!\n";
+{
+    local $/;
+    $text = <FILE>;
+}
+close FILE;
+my $T;
+$switches = $1 if $text =~ /^#!.*?\s(-.*)/;
+$switches =~ s/\s+-[-*].*//;
+$switches =~ s/\s+#.*//;
+
+#if ($text =~ s/\bexit\b/DUMMYEXIT/g) {
+#    $infile = "$file.tmp";
+#    open FILE, ">$infile";
+#    print FILE $text;
+#    close FILE;
+#}
+
+unlink "$file.xml", "$file.msg", "$file.err", "$file.diff", "$file.p5";
+print "PERL_XMLDUMP='$file.xml' $top/perl $switches -I lib $infile 2>$file.err\n";
+system "PERL_XMLDUMP='$file.xml' $top/perl $switches -I lib $infile 2>$file.err";
+
+if ($?) {
+    print "Exit status $?\n";
+    system "cat $file.err";
+    exit 1;
+}
+
+if (not -s "$file.xml") {
+    die "Didn't produce an xml file!?!\n"
+}
+
+if ($YAML) {
+    system "$top/nomad -Y $file.xml";
+    exit;
+}
+
+system "$top/nomad $file.xml >$file.p5 2>$file.msg";
+
+if ($?) {
+    print "Oops!\n" unless -s "$file.msg";
+    system "cat $file.msg";
+    exit 1;
+}
+
+system "diff -u $file $file.p5 >$file.diff";
+if (-s "$file.diff") {
+    system "cat $file.diff";
+    exit 1;
+}

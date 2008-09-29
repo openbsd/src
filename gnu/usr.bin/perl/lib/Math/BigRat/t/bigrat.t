@@ -8,7 +8,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 185;
+  plan tests => 193;
   }
 
 # basic testing of Math::BigRat
@@ -250,12 +250,12 @@ $x = $cr->new('NaN'); ok ($x->numify(), 'NaN');
 $x = $cr->new('4/3'); ok ($x->numify(), 4/3);
 
 ##############################################################################
-# as_hex(), as_bin()
+# as_hex(), as_bin(), as_oct()
 
 $x = $cr->new('8/8');
-ok ($x->as_hex(), '0x1'); ok ($x->as_bin(), '0b1');
+ok ($x->as_hex(), '0x1'); ok ($x->as_bin(), '0b1'); ok ($x->as_oct(), '01');
 $x = $cr->new('80/8');
-ok ($x->as_hex(), '0xa'); ok ($x->as_bin(), '0b1010');
+ok ($x->as_hex(), '0xa'); ok ($x->as_bin(), '0b1010'); ok ($x->as_oct(), '012');
 
 ##############################################################################
 # broot(), blog(), bmodpow() and bmodinv()
@@ -292,6 +292,24 @@ ok ($x->copy()->broot('2'), 12, 'v/144 = 12');
 
 $x = $cr->new(12*12*12);
 ok ($x->copy()->broot('3'), 12, '(12*12*12) ** 1/3 = 12');
+
+##############################################################################
+# from_hex(), from_bin(), from_oct()
+
+$x = Math::BigRat->from_hex('0x100');
+ok ($x, '256', 'from_hex');
+$x = $cr->from_hex('0x100');
+ok ($x, '256', 'from_hex');
+
+$x = Math::BigRat->from_bin('0b100');
+ok ($x, '4', 'from_bin');
+$x = $cr->from_bin('0b100');
+ok ($x, '4', 'from_bin');
+
+$x = Math::BigRat->from_oct('0100');
+ok ($x, '64', 'from_oct');
+$x = $cr->from_oct('0100');
+ok ($x, '64', 'from_oct');
 
 ##############################################################################
 # done

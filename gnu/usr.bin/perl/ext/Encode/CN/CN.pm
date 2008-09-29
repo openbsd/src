@@ -1,18 +1,20 @@
 package Encode::CN;
 BEGIN {
-    if (ord("A") == 193) {
-	die "Encode::CN not supported on EBCDIC\n";
+    if ( ord("A") == 193 ) {
+        die "Encode::CN not supported on EBCDIC\n";
     }
 }
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-
+use strict;
+use warnings;
 use Encode;
+our $VERSION = do { my @r = ( q$Revision: 2.2 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 use XSLoader;
-XSLoader::load(__PACKAGE__,$VERSION);
+XSLoader::load( __PACKAGE__, $VERSION );
 
 # Relocated from Encode.pm
 
 use Encode::CN::HZ;
+
 # use Encode::CN::2022_CN;
 
 1;
@@ -36,15 +38,15 @@ Encodings supported are as follows.
   Canonical   Alias		Description
   --------------------------------------------------------------------
   euc-cn      /\beuc.*cn$/i	EUC (Extended Unix Character)
-	      /\bcn.*euc$/i
+          /\bcn.*euc$/i
               /\bGB[-_ ]?2312(?:\D.*$|$)/i (see below)
   gb2312-raw			The raw (low-bit) GB2312 character map
   gb12345-raw			Traditional chinese counterpart to 
-				GB2312 (raw)
+                GB2312 (raw)
   iso-ir-165			GB2312 + GB6345 + GB8565 + additions
   MacChineseSimp                GB2312 + Apple Additions
   cp936				Code Page 936, also known as GBK 
-				(Extended GuoBiao)
+                (Extended GuoBiao)
   hz				7-bit escaped GB2312 encoding
   --------------------------------------------------------------------
 

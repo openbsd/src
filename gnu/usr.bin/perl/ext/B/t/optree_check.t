@@ -64,9 +64,8 @@ checkOptree ( name	=> 'test skip itself',
 # no good way to expect a successful todo, and inducing a failure
 # causes the harness to print verbose errors, which is NOT helpful.
 
-checkOptree ( name	=> 'test todo itself. suppressed, remove skip to test',
-	      todo	=> "suppress todo test for now",
-	      skip	=> 1,
+checkOptree ( name	=> 'test todo itself',
+	      todo	=> "your excuse here ;-)",
 	      bcopts	=> '-exec',
 	      code	=> sub {print 1},
 	      noanchors	=> 1, # unanchored match
@@ -151,12 +150,13 @@ pass ("REFTEXT FIXUP TESTS");
 checkOptree ( name	=> 'fixup nextstate (in reftext)',
 	      bcopts	=> '-exec',
 	      code	=> sub {my $a},
+	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <;> nextstate( NOTE THAT THIS CAN BE ANYTHING ) v
+# 1  <;> nextstate( NOTE THAT THIS CAN BE ANYTHING ) v:>,<,%
 # 2  <0> padsv[$a:54,55] M/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
-# 1  <;> nextstate(main 54 optree_concise.t:84) v
+# 1  <;> nextstate(main 54 optree_concise.t:84) v:>,<,%
 # 2  <0> padsv[$a:54,55] M/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -165,12 +165,13 @@ checkOptree ( name	=> 'fixup opcode args',
 	      bcopts	=> '-exec',
 	      #fail	=> 1, # uncomment to see real padsv args: [$a:491,492] 
 	      code	=> sub {my $a},
+	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <;> nextstate(main 56 optree_concise.t:96) v
+# 1  <;> nextstate(main 56 optree_concise.t:96) v:>,<,%
 # 2  <0> padsv[$a:56,57] M/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
-# 1  <;> nextstate(main 56 optree_concise.t:96) v
+# 1  <;> nextstate(main 56 optree_concise.t:96) v:>,<,%
 # 2  <0> padsv[$a:56,57] M/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -183,10 +184,11 @@ checkOptree ( name	=> 'canonical example w -basic',
 	      code	=>  sub{$a=$b+42},
 	      crossfail => 1,
 	      debug	=> 1,
+	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 7  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->7
-# 1        <;> nextstate(main 380 optree_selftest.t:139) v ->2
+# 1        <;> nextstate(main 380 optree_selftest.t:139) v:>,<,%,{ ->2
 # 6        <2> sassign sKS/2 ->7
 # 4           <2> add[t3] sK/2 ->5
 # -              <1> ex-rv2sv sK/1 ->3
@@ -197,7 +199,7 @@ checkOptree ( name	=> 'canonical example w -basic',
 EOT_EOT
 # 7  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->7
-# 1        <;> nextstate(main 60 optree_concise.t:122) v ->2
+# 1        <;> nextstate(main 60 optree_concise.t:122) v:>,<,%,{ ->2
 # 6        <2> sassign sKS/2 ->7
 # 4           <2> add[t1] sK/2 ->5
 # -              <1> ex-rv2sv sK/1 ->3
@@ -210,7 +212,7 @@ EONT_EONT
 checkOptree ( code	=> '$a=$b+42',
 	      bcopts	=> '-exec',
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <;> nextstate(main 61 optree_concise.t:139) v
+# 1  <;> nextstate(main 837 (eval 24):1) v:{
 # 2  <#> gvsv[*b] s
 # 3  <$> const[IV 42] s
 # 4  <2> add[t3] sK/2
@@ -218,7 +220,7 @@ checkOptree ( code	=> '$a=$b+42',
 # 6  <2> sassign sKS/2
 # 7  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
-# 1  <;> nextstate(main 61 optree_concise.t:139) v
+# 1  <;> nextstate(main 837 (eval 24):1) v:{
 # 2  <$> gvsv(*b) s
 # 3  <$> const(IV 42) s
 # 4  <2> add[t1] sK/2

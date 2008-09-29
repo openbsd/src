@@ -1,23 +1,96 @@
+# Module makefile for threads::shared (using ExtUtils::MakeMaker)
+
+require 5.008;
+
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
 
+
+# Used to check for a 'C' compiler
+sub check_cc
+{
+    require File::Spec;
+
+    my $cmd = $_[0];
+    if (-x $cmd or MM->maybe_command($cmd)) {
+        return (1);       # CC command found
+    }
+    for my $dir (File::Spec->path(), '.') {
+        my $abs = File::Spec->catfile($dir, $cmd);
+        if (-x $abs or MM->maybe_command($abs)) {
+            return (1);   # CC command found
+        }
+    }
+    return;
+}
+
+sub have_cc
+{
+    eval { require Config_m; };     # ExtUtils::FakeConfig (+ ActivePerl)
+    if ($@) {
+        eval { require Config; };   # Everyone else
+    }
+    my @chunks = split(/ /, $Config::Config{cc});
+    # $Config{cc} may contain args; try to find out the program part
+    while (@chunks) {
+        if (check_cc("@chunks")) {
+            return (1);   # CC command found
+        }
+        pop(@chunks);
+    }
+    return;
+}
+
+
+# Build options for different environments
+my @conditional_params;
+if (grep { $_ eq 'PERL_CORE=1' } @ARGV) {
+    # Core
+    push(@conditional_params, 'MAN3PODS' => {});
+
+} else {
+    # CPAN
+
+    # Verify that a 'C' compiler is available
+    if (! have_cc()) {
+        die("No 'C' compiler found to build 'threads'\n");
+    }
+
+    push(@conditional_params, 'DEFINE' => '-DHAS_PPPORT_H',
+                              'PREREQ_PM' => {
+                                    'strict'            => 0,
+                                    'warnings'          => 0,
+                                    'threads'           => 0,
+                                    'Config'            => 0,
+                                    'Carp'              => 0,
+                                    'XSLoader'          => 0,
+
+                                    'Test'              => 0,
+                                    'Test::More'        => 0,
+                                    'ExtUtils::testlib' => 0,
+                              });
+}
+
+
+# Create Makefile
 WriteMakefile(
-    'NAME'		=> 'threads::shared',
-    'VERSION_FROM'	=> 'shared.pm', # finds $VERSION
-	      'PM' => {
-		  'shared.pm'    => '$(INST_LIBDIR)/shared.pm',
-	      },
-    'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
-    ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM => 'shared.pm', # retrieve abstract from module
-       AUTHOR     => 'Arthur Bergman <arthur@contiller.se>') : ()),
-    'MAN3PODS'		=> {},  # Pods will be built by installman
-    'LIBS'		=> [''], # e.g., '-lm'
-    'DEFINE'		=> '', # e.g., '-DHAVE_SOMETHING'
-	# Insert -I. if you add *.h files later:
-    'INC'		=> '', # e.g., '-I/usr/include/other'
-	# Un-comment this if you add C files to link with later:
-    # 'OBJECT'		=> '$(O_FILES)', # link all the C files too
+    'NAME'              => 'threads::shared',
+    'AUTHOR'            => 'Artur Bergman, Jerry D. Hedden <jdhedden AT cpan DOT org>',
+    'VERSION_FROM'      => 'shared.pm',
+    'ABSTRACT_FROM'     => 'shared.pm',
+    'PM' => {
+        'shared.pm'     => '$(INST_LIBDIR)/shared.pm',
+    },
+    'INSTALLDIRS'       => 'perl',
 
+    ((ExtUtils::MakeMaker->VERSION() lt '6.25') ?
+        ('PL_FILES' => { })            : ()),
+    ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
+        ('LICENSE'  => 'perl')         : ()),
+
+    @conditional_params
 );
+
+# EOF

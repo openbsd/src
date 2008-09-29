@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include <process.h>
 #include <sys/cygwin.h>
+#include <mntent.h>
+#include <alloca.h>
+#include <dlfcn.h>
 
 /*
  * pp_system() implemented via spawn()
@@ -23,8 +26,8 @@ do_spawnvp (const char *path, const char * const *argv)
     Sigsave_t ihand,qhand;
     int childpid, result, status;
 
-    rsignal_save(SIGINT, SIG_IGN, &ihand);
-    rsignal_save(SIGQUIT, SIG_IGN, &qhand);
+    rsignal_save(SIGINT, (Sighandler_t) SIG_IGN, &ihand);
+    rsignal_save(SIGQUIT, (Sighandler_t) SIG_IGN, &qhand);
     childpid = spawnvp(_P_NOWAIT,path,argv);
     if (childpid < 0) {
 	status = -1;
@@ -57,7 +60,7 @@ do_aspawn (SV *really, void **mark, void **sp)
 
     while (++mark <= sp)
         if (*mark)
-            *a++ = SvPVx(*mark, n_a);
+            *a++ = SvPVx((SV *)*mark, n_a);
         else
             *a++ = "";
     *a = Nullch;
@@ -137,13 +140,15 @@ do_spawn (char *cmd)
 }
 
 /* see also Cwd.pm */
-static
 XS(Cygwin_cwd)
 {
     dXSARGS;
     char *cwd;
 
-    if(items != 0)
+    /* See http://rt.perl.org/rt3/Ticket/Display.html?id=38628 
+       There is Cwd->cwd() usage in the wild, and previous versions didn't die.
+     */
+    if(items > 1)
 	Perl_croak(aTHX_ "Usage: Cwd::cwd()");
     if((cwd = getcwd(NULL, -1))) {
 	ST(0) = sv_2mortal(newSVpv(cwd, 0));
@@ -156,7 +161,6 @@ XS(Cygwin_cwd)
     XSRETURN_UNDEF;
 }
 
-static
 XS(XS_Cygwin_pid_to_winpid)
 {
     dXSARGS;
@@ -175,7 +179,6 @@ XS(XS_Cygwin_pid_to_winpid)
     XSRETURN_UNDEF;
 }
 
-static
 XS(XS_Cygwin_winpid_to_pid)
 {
     dXSARGS;
@@ -194,14 +197,182 @@ XS(XS_Cygwin_winpid_to_pid)
     XSRETURN_UNDEF;
 }
 
+XS(XS_Cygwin_win_to_posix_path)
+{
+    dXSARGS;
+    int absolute_flag = 0;
+    STRLEN len;
+    int err;
+    char *pathname, *buf;
+
+    if (items < 1 || items > 2)
+        Perl_croak(aTHX_ "Usage: Cygwin::win_to_posix_path(pathname, [absolute])");
+
+    pathname = SvPV(ST(0), len);
+    if (items == 2)
+	absolute_flag = SvTRUE(ST(1));
+
+    if (!len)
+	Perl_croak(aTHX_ "can't convert empty path");
+    buf = (char *) safemalloc (len + 260 + 1001);
+
+    if (absolute_flag)
+	err = cygwin_conv_to_full_posix_path(pathname, buf);
+    else
+	err = cygwin_conv_to_posix_path(pathname, buf);
+    if (!err) {
+	ST(0) = sv_2mortal(newSVpv(buf, 0));
+	safefree(buf);
+       XSRETURN(1);
+    } else {
+	safefree(buf);
+	XSRETURN_UNDEF;
+    }
+}
+
+XS(XS_Cygwin_posix_to_win_path)
+{
+    dXSARGS;
+    int absolute_flag = 0;
+    STRLEN len;
+    int err;
+    char *pathname, *buf;
+
+    if (items < 1 || items > 2)
+        Perl_croak(aTHX_ "Usage: Cygwin::posix_to_win_path(pathname, [absolute])");
+
+    pathname = SvPV(ST(0), len);
+    if (items == 2)
+	absolute_flag = SvTRUE(ST(1));
+
+    if (!len)
+	Perl_croak(aTHX_ "can't convert empty path");
+    buf = (char *) safemalloc(len + 260 + 1001);
+
+    if (absolute_flag)
+	err = cygwin_conv_to_full_win32_path(pathname, buf);
+    else
+	err = cygwin_conv_to_win32_path(pathname, buf);
+    if (!err) {
+	ST(0) = sv_2mortal(newSVpv(buf, 0));
+	safefree(buf);
+       XSRETURN(1);
+    } else {
+	safefree(buf);
+	XSRETURN_UNDEF;
+    }
+}
+
+XS(XS_Cygwin_mount_table)
+{
+    dXSARGS;
+    struct mntent *mnt;
+
+    if (items != 0)
+        Perl_croak(aTHX_ "Usage: Cygwin::mount_table");
+    /* => array of [mnt_dir mnt_fsname mnt_type mnt_opts] */
+
+    setmntent (0, 0);
+    while ((mnt = getmntent (0))) {
+	AV* av = newAV();
+	av_push(av, newSVpvn(mnt->mnt_dir, strlen(mnt->mnt_dir)));
+	av_push(av, newSVpvn(mnt->mnt_fsname, strlen(mnt->mnt_fsname)));
+	av_push(av, newSVpvn(mnt->mnt_type, strlen(mnt->mnt_type)));
+	av_push(av, newSVpvn(mnt->mnt_opts, strlen(mnt->mnt_opts)));
+	XPUSHs(sv_2mortal(newRV_noinc((SV*)av)));
+    }
+    endmntent (0);
+    PUTBACK;
+}
+
+XS(XS_Cygwin_mount_flags)
+{
+    dXSARGS;
+    char *pathname;
+    char flags[260];
+
+    if (items != 1)
+        Perl_croak(aTHX_ "Usage: Cygwin::mount_flags(mnt_dir|'/cygwin')");
+
+    pathname = SvPV_nolen(ST(0));
+
+    /* TODO: Check for cygdrive registry setting,
+     *       and then use CW_GET_CYGDRIVE_INFO
+     */
+    if (!strcmp(pathname, "/cygdrive")) {
+	char user[260];
+	char system[260];
+	char user_flags[260];
+	char system_flags[260];
+
+	cygwin_internal (CW_GET_CYGDRIVE_INFO, user, system, user_flags,
+			 system_flags);
+
+        if (strlen(user) > 0) {
+            sprintf(flags, "%s,cygdrive,%s", user_flags, user);
+        } else {
+            sprintf(flags, "%s,cygdrive,%s", system_flags, system);
+        }
+
+	ST(0) = sv_2mortal(newSVpv(flags, 0));
+	XSRETURN(1);
+
+    } else {
+	struct mntent *mnt;
+	setmntent (0, 0);
+	while ((mnt = getmntent (0))) {
+	    if (!strcmp(pathname, mnt->mnt_dir)) {
+		strcpy(flags, mnt->mnt_type);
+		if (strlen(mnt->mnt_opts) > 0) {
+		    strcat(flags, ",");
+		    strcat(flags, mnt->mnt_opts);
+		}
+		break;
+	    }
+	}
+	endmntent (0);
+	ST(0) = sv_2mortal(newSVpv(flags, 0));
+	XSRETURN(1);
+    }
+}
+
+XS(XS_Cygwin_is_binmount)
+{
+    dXSARGS;
+    char *pathname;
+
+    if (items != 1)
+        Perl_croak(aTHX_ "Usage: Cygwin::is_binmount(pathname)");
+
+    pathname = SvPV_nolen(ST(0));
+
+    ST(0) = boolSV(cygwin_internal(CW_GET_BINMODE, pathname));
+    XSRETURN(1);
+}
 
 void
 init_os_extras(void)
 {
-    char *file = __FILE__;
     dTHX;
+    char *file = __FILE__;
+    void *handle;
 
     newXS("Cwd::cwd", Cygwin_cwd, file);
-    newXS("Cygwin::winpid_to_pid", XS_Cygwin_winpid_to_pid, file);
-    newXS("Cygwin::pid_to_winpid", XS_Cygwin_pid_to_winpid, file);
+    newXSproto("Cygwin::winpid_to_pid", XS_Cygwin_winpid_to_pid, file, "$");
+    newXSproto("Cygwin::pid_to_winpid", XS_Cygwin_pid_to_winpid, file, "$");
+    newXSproto("Cygwin::win_to_posix_path", XS_Cygwin_win_to_posix_path, file, "$;$");
+    newXSproto("Cygwin::posix_to_win_path", XS_Cygwin_posix_to_win_path, file, "$;$");
+    newXSproto("Cygwin::mount_table", XS_Cygwin_mount_table, file, "");
+    newXSproto("Cygwin::mount_flags", XS_Cygwin_mount_flags, file, "$");
+    newXSproto("Cygwin::is_binmount", XS_Cygwin_is_binmount, file, "$");
+
+    /* Initialize Win32CORE if it has been statically linked. */
+    handle = dlopen(NULL, RTLD_LAZY);
+    if (handle) {
+        void (*pfn_init)(pTHX);
+        pfn_init = (void (*)(pTHX))dlsym(handle, "init_Win32CORE");
+        if (pfn_init)
+            pfn_init(aTHX);
+        dlclose(handle);
+    }
 }

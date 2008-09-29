@@ -45,7 +45,10 @@ $cmd4 = qq/$perl -e "print scalar <>;"/;
 # start the processes
 ok( $pid1 = open(FH1, "$cmd1 |"), 'first process started');
 ok( $pid2 = open(FH2, "$cmd2 |"), '    second' );
-ok( $pid3 = open(FH3, "| $cmd3"), '    third'  );
+{
+    no warnings 'once';
+    ok( $pid3 = open(FH3, "| $cmd3"), '    third'  );
+}
 ok( $pid4 = open(FH4, "| $cmd4"), '    fourth' );
 
 print "# pids were $pid1, $pid2, $pid3, $pid4\n";

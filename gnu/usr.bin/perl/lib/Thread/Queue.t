@@ -27,7 +27,7 @@ sub ok {
 }
 
 sub reader {
-    my $tid = threads->self->tid;
+    my $tid = threads->tid;
     my $i = 0;
     while (1) {
 	$i++;
@@ -49,7 +49,7 @@ my $nthreads = 5;
 my @threads;
 
 for (my $i = 0; $i < $nthreads; $i++) {
-    push @threads, threads->new(\&reader, $i);
+    push @threads, threads->create(\&reader, $i);
 }
 
 for (my $i = 1; $i <= 20; $i++) {

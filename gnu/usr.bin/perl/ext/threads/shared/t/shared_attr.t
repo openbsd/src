@@ -1,35 +1,47 @@
+use strict;
 use warnings;
 
 BEGIN {
-#    chdir 't' if -d 't';
-#    push @INC ,'../lib';
-    require Config; import Config;
-    unless ($Config{'useithreads'}) {
-        print "1..0 # Skip: no useithreads\n";
-        exit 0;
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
+    }
+    use Config;
+    if (! $Config{'useithreads'}) {
+        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        exit(0);
     }
 }
 
+use ExtUtils::testlib;
 
 sub ok {
     my ($id, $ok, $name) = @_;
+    if (! defined($name)) {
+        $name = '';
+    }
 
-    $name = '' unless defined $name;
     # You have to do it this way or VMS will get confused.
-    print $ok ? "ok $id - $name\n" : "not ok $id - $name\n";
+    if ($ok) {
+        print("ok $id - $name\n");
+    } else {
+        print("not ok $id - $name\n");
+        printf("# Failed test at line %d\n", (caller)[2]);
+    }
 
-    printf "# Failed test at line %d\n", (caller)[2] unless $ok;
-
-    return $ok;
+    return ($ok);
 }
 
+BEGIN {
+    $| = 1;
+    print("1..101\n");   ### Number of tests that will be run ###
+};
 
-use ExtUtils::testlib;
-use strict;
-BEGIN { print "1..81\n" };
 use threads;
 use threads::shared;
-ok(1,1,"loaded");
+ok(1, 1, 'Loaded');
+
+### Start of Testing ###
 
 my $test_count;
 share($test_count);
@@ -48,8 +60,22 @@ for(1..10) {
     ok($test_count++, $foo{foo} eq "bar");
     threads->create(sub { $foo{bar} = "foo" })->join();
     ok($test_count++, $foo{bar} eq "foo");
-    
+
     threads->create(sub { $foo{array} = \@foo})->join();
     threads->create(sub { push @{$foo{array}}, "baz"})->join();
     ok($test_count++, $foo[-1] eq "baz");
 }
+
+my $shared :shared = &share({});
+$$shared{'foo'} = 'bar';
+
+for(1..10) {
+  my $str1 = "$shared";
+  my $str2 = "$shared";
+  ok($test_count++, $str1 eq $str2, 'stringify');
+  $str1 = $$shared{'foo'};
+  $str2 = $$shared{'foo'};
+  ok($test_count++, $str1 eq $str2, 'contents');
+}
+
+# EOF

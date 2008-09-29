@@ -48,6 +48,7 @@ typedef struct {
     SV *enc;			/* the encoding object */
     SV *chk;                    /* CHECK in Encode methods */
     int flags;			/* Flags currently just needs lines */
+    int inEncodeCall;		/* trap recursive encode calls */
 } PerlIOEncode;
 
 #define NEEDS_LINES	1
@@ -147,6 +148,7 @@ PerlIOEncode_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg, PerlIO_funcs *
     }
 
     e->chk = newSVsv(get_sv("PerlIO::encoding::fallback", 0));
+    e->inEncodeCall = 0;
 
     FREETMPS;
     LEAVE;
@@ -255,7 +257,7 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	STDCHAR *ptr = PerlIO_get_ptr(n);
 	SSize_t use  = (avail >= 0) ? avail : 0;
 	SV *uni;
-	char *s;
+	char *s = Nullch;
 	STRLEN len = 0;
 	e->base.ptr = e->base.end = (STDCHAR *) Nullch;
 	(void) PerlIOEncode_get_base(aTHX_ f);
@@ -404,6 +406,7 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 	STRLEN len;
 	SSize_t count = 0;
 	if ((PerlIOBase(f)->flags & PERLIO_F_WRBUF) && (e->base.ptr > e->base.buf)) {
+	    if (e->inEncodeCall) return 0;
 	    /* Write case - encode the buffer and write() to layer below */
 	    PUSHSTACKi(PERLSI_MAGIC);
 	    SPAGAIN;
@@ -416,9 +419,12 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 	    XPUSHs(e->bufsv);
 	    XPUSHs(e->chk);
 	    PUTBACK;
+	    e->inEncodeCall = 1;
 	    if (call_method("encode", G_SCALAR) != 1) {
+		e->inEncodeCall = 0;
 		Perl_die(aTHX_ "panic: encode did not return a value");
 	    }
+	    e->inEncodeCall = 0;
 	    SPAGAIN;
 	    str = POPs;
 	    PUTBACK;
@@ -453,6 +459,7 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 	    }
 	    /* See if there is anything left in the buffer */
 	    if (e->base.ptr < e->base.end) {
+		if (e->inEncodeCall) return 0;
 		/* Bother - have unread data.
 		   re-encode and unread() to layer below
 		 */
@@ -472,9 +479,12 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 		XPUSHs(str);
 		XPUSHs(e->chk);
 		PUTBACK;
+		e->inEncodeCall = 1;
 		if (call_method("encode", G_SCALAR) != 1) {
-		     Perl_die(aTHX_ "panic: encode did not return a value");
+		    e->inEncodeCall = 0;
+		    Perl_die(aTHX_ "panic: encode did not return a value");
 		}
+		e->inEncodeCall = 0;
 		SPAGAIN;
 		str = POPs;
 		PUTBACK;

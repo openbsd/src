@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.06;
+our $VERSION = 0.08;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -23,7 +23,6 @@ sub carp {
 #sub _fetch_attrs ($) ;
 #sub _guess_stash ($) ;
 #sub _modify_attrs ;
-#sub _warn_reserved () ;
 #
 # The extra trips through newATTRSUB in the interpreter wipe out any savings
 # from avoiding the BEGIN block.  Just do the bootstrap now.
@@ -43,9 +42,10 @@ sub import {
     my @badattrs;
     if ($pkgmeth) {
 	my @pkgattrs = _modify_attrs($svref, @attrs);
-	@badattrs = $pkgmeth->($home_stash, $svref, @attrs);
+	@badattrs = $pkgmeth->($home_stash, $svref, @pkgattrs);
 	if (!@badattrs && @pkgattrs) {
-	    return unless _warn_reserved;
+            require warnings;
+	    return unless warnings::enabled('reserved');
 	    @pkgattrs = grep { m/\A[[:lower:]]+(?:\z|\()/ } @pkgattrs;
 	    if (@pkgattrs) {
 		for my $attr (@pkgattrs) {
@@ -255,10 +255,10 @@ The class methods invoked for modifying and fetching are these:
 
 =item FETCH_I<type>_ATTRIBUTES
 
-This method receives a single argument, which is a reference to the
-variable or subroutine for which package-defined attributes are desired.
-The expected return value is a list of associated attributes.
-This list may be empty.
+This method is called with two arguments:  the relevant package name,
+and a reference to a variable or subroutine for which package-defined
+attributes are desired.  The expected return value is a list of
+associated attributes.  This list may be empty.
 
 =item MODIFY_I<type>_ATTRIBUTES
 

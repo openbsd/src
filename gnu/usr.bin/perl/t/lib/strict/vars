@@ -379,7 +379,7 @@ our $foo;
 ${foo} = 10;
 our $foo;
 EXPECT
-"our" variable $foo masks earlier declaration in same scope at - line 7.
+"our" variable $foo redeclared at - line 7.
 ########
 
 # multiple our declarations in same scope, same package, warning
@@ -390,12 +390,14 @@ use warnings;
 our $foo;
 {
     our $foo;
+    our $foo;
     package Foo;
     our $foo;
 }
 EXPECT
 "our" variable $foo redeclared at - line 9.
 	(Did you mean "local" instead of "our"?)
+"our" variable $foo redeclared at - line 10.
 ########
 
 --FILE-- abc
@@ -420,6 +422,15 @@ no warnings;
 "@i_like_crackers";
 EXPECT
 Global symbol "@i_like_crackers" requires explicit package name at - line 7.
+Execution of - aborted due to compilation errors.
+########
+
+# [perl #21914] New bug > 5.8.0. Used to dump core.
+use strict 'vars';
+@k = <$k>;
+EXPECT
+Global symbol "@k" requires explicit package name at - line 4.
+Global symbol "$k" requires explicit package name at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 # [perl #26910] hints not propagated into (?{...})

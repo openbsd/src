@@ -17,7 +17,7 @@ libs='-lsocket -lnsl -ldl -lm'
 libswanted='m'
 prefix='/usr/local'
 toke_cflags='optimize=""' 
-useshrplib='define'
+useshrplib='true'
 
 #################################
 # Some less routine stuff:

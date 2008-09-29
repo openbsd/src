@@ -1,5 +1,132 @@
+0.72  Wed Sep 19 20:08:07 PDT 2007
+    Bug unfixes
+    * The BEGIN { use_ok } fix for [rt.cpan.org 28345] revealed a small pile of 
+      mistakes in CPAN module test suites.  Rolling the fix back to give the authors
+      a bit of time to fix their tests.
+
+0.71  Thu Sep 13 20:42:36 PDT 2007
+    Bug fixes
+    - Fixed a problem with BEGIN { use_ok } silently failing when there's no
+      plan set.  [rt.cpan.org 28345]  Thanks Adriano Ferreira and Yitzchak.
+    - Fixed an obscure problem with is_deeply() and overloading ==
+      [rt.cpan.org 20768].  Thanks Sisyphus.
+
+    Test fixes
+    - Removed dependency on Text::Soundex [rt.cpan.org 25022]
+    - Fixed a 5.5.x failure in fail-more.t
+    * Got rid of the annoying sort_bug.t test that revealed problems with some
+      threaded perls.  It was testing the deprecated eq_* functions and not worth the
+      bother.  Now it tests is_deeply().  [rt.cpan.org 17791]
+
+    Doc fixes
+    - Minor POD mistake in Test::Builder [rt.cpan.org 28869]
+    * Test::FAQ has been updated with some more answers.
+
+    Install fixes
+    - Fixed the "LICENSE is not a known MakeMaker parameter name" warning
+      on older MakeMakers for real this time.
+
+0.70  Thu Mar 15 15:53:05 PDT 2007
+    Bug Fixes
+    * The change to is_fh() in 0.68 broke the case where a reference to
+      a tied filehandle is used for perl 5.6 and back.  This made the tests
+      puke their guts out.
+
+0.69  Wed Mar 14 06:43:35 PDT 2007
+    Test fixes
+    - Minor filename compatibility fix to t/fail-more.t [rt.cpan.org 25428]
+
+0.68  Tue Mar 13 17:27:26 PDT 2007
+    Bug fixes
+    * If your code has a $SIG{__DIE__} handler in some cases functions like
+      use_ok(), require_ok(), can_ok() and isa_ok() could trigger that
+      handler. [rt.cpan.org 23509]
+    - Minor improvement to TB's filehandle detection in the case of overridden
+      isa(). [rt.cpan.org 20890]
+    - Will now install as a core module in 5.6.2 which ships with Test::More.
+      [rt.cpan.org 25163]
+
+    New Features
+    - Test::Builder->is_fh() provides a way to determine if a thing
+      can be used as a filehandle.
+
+    Documentation improvements
+    - Improved the docs for $Test::Builder::Level showing the encouraged
+      use (increment, don't set)
+    - Documented the return value of Test::Builder's test methods
+    - Split out TB's method documentation to differenciate between test
+      methods (ok, is_eq...), methods useful in testing (skip, BAILOUT...)
+      and methods useful for building your own tests (maybe_regex...).
+
+    Test fixes
+    - We required too old a version of Test::Pod::Coverage.  Need 1.08 and not
+      1.00. [rt.cpan.org 25351]
+
+0.67  Mon Jan 22 13:27:40 PST 2007
+    Test fixes
+    - t/pod_coverage.t would fail if Test::Pod::Coverage between 1.07 and
+      1.00 were installed as it depended on all_modules being exported.
+      [rt.cpan.org 24483]
+
+0.66  Sun Dec  3 15:25:45 PST 2006
+    - Restore 5.4.5 compatibility (unobe@cpan.org) [rt.cpan.org 20513]
+
+0.65  Fri Nov 10 10:26:51 CST 2006
+
+0.64_03  Sun Nov  5 13:09:55 EST 2006
+    - Tests will no longer warn when run against an alpha version of
+      Test::Harness [rt.cpan.org #20501]
+    - Now testing our POD and POD coverage.
+    - Added a LICENSE field.
+    - Removed warning from the docs about mixing numbered and unnumbered
+      tests.  There's nothing wrong with that. [rt.cpan.org 21358]
+    - Change doc examples to talk about $got and $expected rather than
+      $this and $that to correspond better to the diagnostic output
+      [rt.cpan.org 2655]
+
+0.64_02  Sat Sep  9 12:16:56 EDT 2006
+    - Last release broke Perls earlier than 5.8.
+
+0.64_01  Mon Sep  4 04:40:42 EDT 2006
+    - Small improvement to the docs to avoid user confusion over
+      "use Test::More tests => $num_tests" (Thanks Eric Wilhelm)
+    - Minor fix for a test failure in is_deeply_fail for some Windows
+      users.  Not a real bug.  [rt.cpan.org 21310]
+    - _print_diag() accidentally leaked into the public documentation.
+      It is a private method.
+    * Added Test::Builder->carp() and croak()
+    * Made most of the error messages report in the caller's context.
+      [rt.cpan.org #20639]
+    * Made the failure diagnostic message file and line reporting portion
+      match Perl's for easier integration with Perl aware editors.
+      (so its "at $file line $line_num." now)
+      [rt.cpan.org #20639]
+    * 5.8.0 threads are no longer supported.  There's too many bugs.
+
+0.64  Sun Jul 16 02:47:29 PDT 2006
+    * 0.63's change to test_fail() broke backwards compatibility.  They
+      have been removed for the time being.  test_pass() went with it.
+      This is [rt.cpan.org 11317] and [rt.cpan.org 11319].
+    - skip() will now warn if you get the args backwards.
+
+0.63  Sun Jul  9 02:36:36 PDT 2006
+    * Fixed can_ok() to gracefully handle no class name.
+      Submitted by "Pete Krawczyk" <perl@bsod.net>
+      Implemented by "Richard Foley" <richard.foley@rfi.net>
+      [rt.cpan.org 15654]
+    * Added test_pass() to Test::Builder::Tester rather than having to
+      call test_out("ok 1 - foo"). <chromatic@wgz.org> [rt.cpan.org 11317]
+    * test_fail() now accepts a test diagnostic rather than having to
+      call test_out() separately. <chromatic@wgz.org> [rt.cpan.org 11319]
+    - Changed Test::Builder::Tester docs to show best practice using
+      test_fail() and test_pass().
+    - isnt_num() doc example wrongly showed is_num(). <chromatic@wgz.org>
+    - Fixed a minor typo in the BAIL_OUT() docs. <Jeff Deifik>
+    - Removed the LICENSE field from the Makefile.PL as the release of
+      MakeMaker with that feature has been delayed.
+
 0.62  Sat Oct  8 01:25:03 PDT 2005
-    * Aborbed Test::Builder::Tester.  The last release broke it because its
+    * Absorbed Test::Builder::Tester.  The last release broke it because its
       screen scraping Test::More and the failure output changed.  By
       distributing them together we ensure TBT won't break again.
     * Test::Builder->BAILOUT() was missing.

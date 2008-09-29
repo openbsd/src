@@ -8,4 +8,13 @@ BEGIN {
 require './test.pl';
 use File::Spec::Functions;
 
-print runperl( switches => ['-x'], progfile => catfile(curdir(), 'run', 'switchx.aux') );
+# Test '-x'
+print runperl( switches => ['-x'],
+               progfile => catfile(curdir(), 'run', 'switchx.aux') );
+
+# Test '-xdir'
+print runperl( switches => ['-x' . catfile(curdir(), 'run')],
+               progfile => catfile(curdir(), 'run', 'switchx2.aux'),
+               args     => [ 3 ] );
+
+# EOF

@@ -195,7 +195,7 @@ whether it only works on existing files or always clobbers existing ones.
     open(SCREEN, "+> lkscreen")
         || die "can't open lkscreen: $!";
 
-    open(LOGFILE, "+>> /var/log/applog"
+    open(LOGFILE, "+>> /var/log/applog")
         || die "can't open /var/log/applog: $!";
 
 The first one won't create a new file, and the second one will always
@@ -230,7 +230,7 @@ on each file in @ARGV.  Thus a program called like this:
 
     $ myprogram file1 file2 file3
 
-Can have all its files opened and processed one at a time
+can have all its files opened and processed one at a time
 using a construct no more complex than:
 
     while (<>) {
@@ -487,7 +487,7 @@ If the filehandle or descriptor number is preceded not just with a simple
 "&" but rather with a "&=" combination, then Perl will not create a
 completely new descriptor opened to the same place using the dup(2)
 system call.  Instead, it will just make something of an alias to the
-existing one using the fdopen(3S) library call  This is slightly more
+existing one using the fdopen(3S) library call.  This is slightly more
 parsimonious of systems resources, although this is less a concern
 these days.  Here's an example of that:
 
@@ -917,7 +917,7 @@ second argument contains something else in addition to the usual
 C<< '<' >>, C<< '>' >>, C<< '>>' >>, C<< '|' >> and their variants,
 for example:
 
-    open(my $fh, "<:utf8", $fn);
+    open(my $fh, "<:crlf", $fn);
 
 =item *
 

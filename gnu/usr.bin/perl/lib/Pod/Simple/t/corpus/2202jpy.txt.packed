@@ -1,0 +1,52 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u 2202jpy.txt.packed 2202jpy.txt
+
+To recreate it use the following command:
+
+     uupacktool.pl -p 2202jpy.txt 2202jpy.txt.packed
+
+Created at Thu Mar 22 13:32:29 2007
+#########################################################################
+__UU__
+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
+'"@T*#0H-"@``

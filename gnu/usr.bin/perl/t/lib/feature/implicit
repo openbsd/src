@@ -1,0 +1,62 @@
+Check implicit loading of features with use VERSION.
+
+__END__
+# Standard feature bundle
+use feature ":5.10";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# VERSION requirement, dotted notation
+use 5.9.5;
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# VERSION requirement, v-dotted notation
+use v5.9.5;
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# VERSION requirement, decimal notation
+use 5.009005;
+say defined $INC{"feature.pm"} ? "Helloworld" : "Good bye";
+EXPECT
+Helloworld
+########
+# VERSION requirement, doesn't load anything for < 5.9.5
+use 5.8.8;
+print "<".$INC{"feature.pm"}.">\n";
+EXPECT
+<>
+########
+# VERSION requirement, doesn't load anything with require
+require 5.9.5;
+print "<".$INC{"feature.pm"}.">\n";
+EXPECT
+<>
+########
+# VERSION requirement in eval {}
+eval {
+    use 5.9.5;
+    say "Hello", "world";
+}
+EXPECT
+Helloworld
+########
+# VERSION requirement in eval ""
+eval q{
+    use 5.9.5;
+    say "Hello", "world";
+}
+EXPECT
+Helloworld
+########
+# VERSION requirement in BEGIN
+BEGIN {
+    use 5.9.5;
+    say "Hello", "world";
+}
+EXPECT
+Helloworld

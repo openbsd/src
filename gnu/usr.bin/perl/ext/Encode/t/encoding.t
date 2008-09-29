@@ -5,12 +5,12 @@ BEGIN {
       exit 0;
     }
     unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: PerlIO was not built\n";
-	exit 0;
+    print "1..0 # Skip: PerlIO was not built\n";
+    exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # encoding pragma does not support EBCDIC platforms\n";
-	exit(0);
+    print "1..0 # encoding pragma does not support EBCDIC platforms\n";
+    exit(0);
     }
 }
 
@@ -57,7 +57,7 @@ print "not " unless unpack("C", pack("C", 0xdf)) == 0xdf;
 print "ok 8\n";
 
 # the first octet of UTF-8 encoded 0x3af 
-print "not " unless unpack("C", chr(0xdf)) == 0xce;
+print "not " unless unpack("U0 C", chr(0xdf)) == 0xce;
 print "ok 9\n";
 
 print "not " unless unpack("U", pack("U", 0xdf)) == 0xdf;
@@ -183,7 +183,7 @@ print "ok 27\n";
 print "not " unless ((pack("U*", 0x3B0)       cmp $byte) ==  1) &&
                     ((pack("U*", 0x3AE)       cmp $byte) == -1) &&
                     ((pack("U*", 0x3AF, 0x20) cmp $byte) ==  1) &&
-	            ((pack("U*", 0x3AF) cmp pack("C*",0xDF,0x20))==-1);
+                ((pack("U*", 0x3AF) cmp pack("C*",0xDF,0x20))==-1);
 print "ok 28\n";
 
 
@@ -194,10 +194,10 @@ print "ok 28\n";
 }
 
 {
-	my %h1;
-	my %h2;
-	$h1{"\xdf"}    = 41;
-	$h2{"\x{3af}"} = 42;
-	print $h1{"\x{3af}"} == 41 ? "ok 30\n" : "not ok 30\n";
-	print $h2{"\xdf"}    == 42 ? "ok 31\n" : "not ok 31\n";
+    my %h1;
+    my %h2;
+    $h1{"\xdf"}    = 41;
+    $h2{"\x{3af}"} = 42;
+    print $h1{"\x{3af}"} == 41 ? "ok 30\n" : "not ok 30\n";
+    print $h2{"\xdf"}    == 42 ? "ok 31\n" : "not ok 31\n";
 }

@@ -2,7 +2,7 @@
  * 
  * Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.
  * 
- * Copyright (c) 2002,2003,2004,2005 Jarkko Hietaniemi.  All rights reserved.
+ * Copyright (c) 2002,2003,2004,2005,2006,2007 Jarkko Hietaniemi.  All rights reserved.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the same terms as Perl itself.
@@ -37,6 +37,14 @@ extern "C" {
 }
 #endif
 
+#define IV_1E6 1000000
+#define IV_1E7 10000000
+#define IV_1E9 1000000000
+
+#define NV_1E6 1000000.0
+#define NV_1E7 10000000.0
+#define NV_1E9 1000000000.0
+
 #ifndef PerlProc_pause
 #   define PerlProc_pause() Pause()
 #endif
@@ -56,13 +64,6 @@ extern "C" {
 #   undef ITIMER_VIRTUAL
 #   undef ITIMER_PROF
 #   undef ITIMER_REALPROF
-#endif
-
-/* 5.004 doesn't define PL_sv_undef */
-#ifndef ATLEASTFIVEOHOHFIVE
-# ifndef PL_sv_undef
-#  define PL_sv_undef sv_undef
-# endif
 #endif
 
 #if defined(TIME_HIRES_CLOCK_GETTIME) && defined(_STRUCT_ITIMERSPEC)
@@ -115,6 +116,18 @@ START_MY_CXT
 #endif
 #define EPOCH_BIAS  Const64(116444736000000000)
 
+#ifdef Const64
+# ifdef __GNUC__
+#  define IV_1E6LL  1000000LL /* Needed because of Const64() ##-appends LL (or i64). */
+#  define IV_1E7LL  10000000LL
+#  define IV_1E9LL  1000000000LL
+# else
+#  define IV_1E6i64 1000000i64
+#  define IV_1E7i64 10000000i64
+#  define IV_1E9i64 1000000000i64
+# endif
+#endif
+
 /* NOTE: This does not compute the timezone info (doing so can be expensive,
  * and appears to be unsupported even by glibc) */
 
@@ -154,8 +167,8 @@ _gettimeofday(pTHX_ struct timeval *tp, void *not_used)
         QueryPerformanceCounter((LARGE_INTEGER*)&ticks);
         ticks -= MY_CXT.base_ticks;
         ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64
-                    + Const64(10000000) * (ticks / MY_CXT.tick_frequency)
-                    +(Const64(10000000) * (ticks % MY_CXT.tick_frequency)) / MY_CXT.tick_frequency;
+                    + Const64(IV_1E7) * (ticks / MY_CXT.tick_frequency)
+                    +(Const64(IV_1E7) * (ticks % MY_CXT.tick_frequency)) / MY_CXT.tick_frequency;
 	diff = ft.ft_i64 - MY_CXT.base_systime_as_filetime.ft_i64;
 	if (diff < -MAX_PERF_COUNTER_SKEW || diff > MAX_PERF_COUNTER_SKEW) {
 	    MY_CXT.base_ticks += ticks;
@@ -165,10 +178,10 @@ _gettimeofday(pTHX_ struct timeval *tp, void *not_used)
     }
 
     /* seconds since epoch */
-    tp->tv_sec = (long)((ft.ft_i64 - EPOCH_BIAS) / Const64(10000000));
+    tp->tv_sec = (long)((ft.ft_i64 - EPOCH_BIAS) / Const64(IV_1E7));
 
     /* microseconds remaining */
-    tp->tv_usec = (long)((ft.ft_i64 / Const64(10)) % Const64(1000000));
+    tp->tv_usec = (long)((ft.ft_i64 / Const64(10)) % Const64(IV_1E6));
 
     return 0;
 }
@@ -383,8 +396,8 @@ void
 hrt_nanosleep(unsigned long usec) /* This is used to emulate usleep. */
 {
     struct timespec res;
-    res.tv_sec = usec/1000/1000;
-    res.tv_nsec = ( usec - res.tv_sec*1000*1000 ) * 1000;
+    res.tv_sec = usec / IV_1E6;
+    res.tv_nsec = ( usec - res.tv_sec * IV_1E6 ) * 1000;
     nanosleep(&res, NULL);
 }
 
@@ -448,21 +461,30 @@ hrt_usleep(unsigned long usec)
 
 #endif /* #if !defined(HAS_USLEEP) && defined(HAS_POLL) */
 
-#if !defined(HAS_UALARM) && defined(HAS_SETITIMER)
-#define HAS_UALARM
-#define ualarm hrt_ualarm  /* could conflict with ncurses for static build */
-
+#if defined(HAS_SETITIMER) && defined(ITIMER_REAL)
 int
-hrt_ualarm(int usec, int interval)
+hrt_ualarm_itimer(int usec, int interval)
 {
    struct itimerval itv;
-   itv.it_value.tv_sec = usec / 1000000;
-   itv.it_value.tv_usec = usec % 1000000;
-   itv.it_interval.tv_sec = interval / 1000000;
-   itv.it_interval.tv_usec = interval % 1000000;
+   itv.it_value.tv_sec = usec / IV_1E6;
+   itv.it_value.tv_usec = usec % IV_1E6;
+   itv.it_interval.tv_sec = interval / IV_1E6;
+   itv.it_interval.tv_usec = interval % IV_1E6;
    return setitimer(ITIMER_REAL, &itv, 0);
 }
+#ifdef HAS_UALARM
+int
+hrt_ualarm(int usec, int interval) /* for binary compat before 1.91 */
+{
+   return hrt_ualarm_itimer(usec, interval);
+}
+#endif /* #ifdef HAS_UALARM */
 #endif /* #if !defined(HAS_UALARM) && defined(HAS_SETITIMER) */
+
+#if !defined(HAS_UALARM) && defined(HAS_SETITIMER)
+#define HAS_UALARM
+#define ualarm hrt_ualarm_itimer  /* could conflict with ncurses for static build */
+#endif
 
 #if !defined(HAS_UALARM) && defined(VMS)
 #define HAS_UALARM
@@ -683,10 +705,46 @@ myNVtime()
   struct timeval Tp;
   int status;
   status = gettimeofday (&Tp, NULL);
-  return status == 0 ? Tp.tv_sec + (Tp.tv_usec / 1000000.) : -1.0;
+  return status == 0 ? Tp.tv_sec + (Tp.tv_usec / NV_1E6) : -1.0;
 }
 
 #endif /* #ifdef HAS_GETTIMEOFDAY */
+
+static void
+hrstatns(UV atime, UV mtime, UV ctime, UV *atime_nsec, UV *mtime_nsec, UV *ctime_nsec)
+{
+  dTHXR;
+  *atime_nsec = 0;
+  *mtime_nsec = 0;
+  *ctime_nsec = 0;
+#ifdef TIME_HIRES_STAT
+#if TIME_HIRES_STAT == 1
+  *atime_nsec = PL_statcache.st_atimespec.tv_nsec;
+  *mtime_nsec = PL_statcache.st_mtimespec.tv_nsec;
+  *ctime_nsec = PL_statcache.st_ctimespec.tv_nsec;
+#endif
+#if TIME_HIRES_STAT == 2
+  *atime_nsec = PL_statcache.st_atimensec;
+  *mtime_nsec = PL_statcache.st_mtimensec;
+  *ctime_nsec = PL_statcache.st_ctimensec;
+#endif
+#if TIME_HIRES_STAT == 3
+  *atime_nsec = PL_statcache.st_atime_n;
+  *mtime_nsec = PL_statcache.st_mtime_n;
+  *ctime_nsec = PL_statcache.st_ctime_n;
+#endif
+#if TIME_HIRES_STAT == 4
+  *atime_nsec = PL_statcache.st_atim.tv_nsec;
+  *mtime_nsec = PL_statcache.st_mtim.tv_nsec;
+  *ctime_nsec = PL_statcache.st_ctim.tv_nsec;
+#endif
+#if TIME_HIRES_STAT == 5
+  *atime_nsec = PL_statcache.st_uatime * 1000;
+  *mtime_nsec = PL_statcache.st_umtime * 1000;
+  *ctime_nsec = PL_statcache.st_uctime * 1000;
+#endif
+#endif
+}
 
 #include "const-c.inc"
 
@@ -700,12 +758,12 @@ BOOT:
   MY_CXT_INIT;
 #endif
 #ifdef ATLEASTFIVEOHOHFIVE
-#ifdef HAS_GETTIMEOFDAY
+#   ifdef HAS_GETTIMEOFDAY
   {
     hv_store(PL_modglobal, "Time::NVtime", 12, newSViv(PTR2IV(myNVtime)), 0);
     hv_store(PL_modglobal, "Time::U2time", 12, newSViv(PTR2IV(myU2time)), 0);
   }
-#endif
+#   endif
 #endif
 }
 
@@ -759,31 +817,24 @@ NV
 nanosleep(nsec)
         NV nsec
 	PREINIT:
-	int status = -1;
-	struct timeval Ta, Tb;
+	struct timespec sleepfor, unslept;
 	CODE:
-	gettimeofday(&Ta, NULL);
-	if (items > 0) {
-	    struct timespec ts1;
-	    if (nsec > 1E9) {
-		IV sec = (IV) (nsec / 1E9);
-		if (sec) {
-		    sleep(sec);
-		    nsec -= 1E9 * sec;
-		}
-	    } else if (nsec < 0.0)
-	        croak("Time::HiRes::nanosleep(%"NVgf"): negative time not invented yet", nsec);
-	    ts1.tv_sec  = (IV) (nsec / 1E9);
-	    ts1.tv_nsec = (IV) nsec - ts1.tv_sec * 1E9;
-	    status = nanosleep(&ts1, NULL);
+	if (nsec < 0.0)
+	    croak("Time::HiRes::nanosleep(%"NVgf"): negative time not invented yet", nsec);
+	sleepfor.tv_sec = (Time_t)(nsec / 1e9);
+	sleepfor.tv_nsec = (long)(nsec - ((NV)sleepfor.tv_sec) * 1e9);
+	if (!nanosleep(&sleepfor, &unslept)) {
+	    RETVAL = nsec;
 	} else {
-	    PerlProc_pause();
-	    status = 0;
+	    sleepfor.tv_sec -= unslept.tv_sec;
+	    sleepfor.tv_nsec -= unslept.tv_nsec;
+	    if (sleepfor.tv_nsec < 0) {
+		sleepfor.tv_sec--;
+		sleepfor.tv_nsec += 1000000000;
+	    }
+	    RETVAL = ((NV)sleepfor.tv_sec) * 1e9 + ((NV)sleepfor.tv_nsec);
 	}
-	gettimeofday(&Tb, NULL);
-	RETVAL = status == 0 ? 1E3*(1E6*(Tb.tv_sec-Ta.tv_sec)+(NV)((IV)Tb.tv_usec-(IV)Ta.tv_usec)) : -1;
-
-	OUTPUT:
+    OUTPUT:
 	RETVAL
 
 #else  /* #if defined(TIME_HIRES_NANOSLEEP) */
@@ -854,7 +905,14 @@ ualarm(useconds,interval=0)
 	CODE:
 	if (useconds < 0 || interval < 0)
 	    croak("Time::HiRes::ualarm(%d, %d): negative time not invented yet", useconds, interval);
-	RETVAL = ualarm(useconds, interval);
+	if (useconds >= IV_1E6 || interval >= IV_1E6)
+#if defined(HAS_SETITIMER) && defined(ITIMER_REAL)
+		RETVAL = hrt_ualarm_itimer(useconds, interval);
+#else
+		croak("Time::HiRes::ualarm(%d, %d): useconds or interval equal or more than %"IVdf, useconds, interval, IV_1E6);
+#endif
+	else
+		RETVAL = ualarm(useconds, interval);
 
 	OUTPUT:
 	RETVAL
@@ -866,8 +924,8 @@ alarm(seconds,interval=0)
 	CODE:
 	if (seconds < 0.0 || interval < 0.0)
 	    croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): negative time not invented yet", seconds, interval);
-	RETVAL = (NV)ualarm(seconds  * 1000000,
-			    interval * 1000000) / 1E6;
+	RETVAL = (NV)ualarm((IV)(seconds  * IV_1E6),
+			    (IV)(interval * IV_1E6)) / NV_1E6;
 
 	OUTPUT:
 	RETVAL
@@ -912,7 +970,7 @@ gettimeofday()
                  PUSHs(sv_2mortal(newSViv(Tp.tv_usec)));
              } else {
                  EXTEND(sp, 1);
-                 PUSHs(sv_2mortal(newSVnv(Tp.tv_sec + (Tp.tv_usec / 1000000.0))));
+                 PUSHs(sv_2mortal(newSVnv(Tp.tv_sec + (Tp.tv_usec / NV_1E6))));
 	     }
         }
 
@@ -926,7 +984,7 @@ time()
         status = gettimeofday (&Tp, &Tz);
 	if (status == 0) {
             Tp.tv_sec += Tz.tz_minuteswest * 60;	/* adjust for TZ */
-	    RETVAL = Tp.tv_sec + (Tp.tv_usec / 1000000.0);
+	    RETVAL = Tp.tv_sec + (Tp.tv_usec / NV_1E6);
         } else {
 	    RETVAL = -1.0;
 	}
@@ -948,7 +1006,7 @@ gettimeofday()
                  PUSHs(sv_2mortal(newSViv(Tp.tv_usec)));
              } else {
                  EXTEND(sp, 1);
-                 PUSHs(sv_2mortal(newSVnv(Tp.tv_sec + (Tp.tv_usec / 1000000.0))));
+                 PUSHs(sv_2mortal(newSVnv(Tp.tv_sec + (Tp.tv_usec / NV_1E6))));
              }
         }
 
@@ -960,7 +1018,7 @@ time()
 	int status;
         status = gettimeofday (&Tp, NULL);
 	if (status == 0) {
-            RETVAL = Tp.tv_sec + (Tp.tv_usec / 1000000.);
+            RETVAL = Tp.tv_sec + (Tp.tv_usec / NV_1E6);
 	} else {
 	    RETVAL = -1.0;
 	}
@@ -985,12 +1043,12 @@ setitimer(which, seconds, interval = 0)
     PPCODE:
 	if (seconds < 0.0 || interval < 0.0)
 	    croak("Time::HiRes::setitimer(%"IVdf", %"NVgf", %"NVgf"): negative time not invented yet", (IV)which, seconds, interval);
-	newit.it_value.tv_sec  = seconds;
+	newit.it_value.tv_sec  = (IV)seconds;
 	newit.it_value.tv_usec =
-	  (seconds  - (NV)newit.it_value.tv_sec)    * 1000000.0;
-	newit.it_interval.tv_sec  = interval;
+	  (IV)((seconds  - (NV)newit.it_value.tv_sec)    * NV_1E6);
+	newit.it_interval.tv_sec  = (IV)interval;
 	newit.it_interval.tv_usec =
-	  (interval - (NV)newit.it_interval.tv_sec) * 1000000.0;
+	  (IV)((interval - (NV)newit.it_interval.tv_sec) * NV_1E6);
 	if (setitimer(which, &newit, &oldit) == 0) {
 	  EXTEND(sp, 1);
 	  PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_value))));
@@ -1080,27 +1138,28 @@ clock_getres(clock_id = 0)
 #if defined(TIME_HIRES_CLOCK_NANOSLEEP) && defined(TIMER_ABSTIME)
 
 NV
-clock_nanosleep(clock_id = CLOCK_REALTIME, sec = 0.0, flags = 0)
+clock_nanosleep(clock_id, nsec, flags = 0)
 	int clock_id
-	NV  sec
+	NV  nsec
 	int flags
     PREINIT:
-	int status = -1;
-	struct timespec ts;
-	struct timeval Ta, Tb;
+	struct timespec sleepfor, unslept;
     CODE:
-	gettimeofday(&Ta, NULL);
-	if (items > 1) {
-	    ts.tv_sec  = (IV) sec;
-	    ts.tv_nsec = (sec - (NV) ts.tv_sec) * (NV) 1E9;
-	    status = clock_nanosleep(clock_id, flags, &ts, NULL);
+	if (nsec < 0.0)
+	    croak("Time::HiRes::clock_nanosleep(..., %"NVgf"): negative time not invented yet", nsec);
+	sleepfor.tv_sec = (Time_t)(nsec / 1e9);
+	sleepfor.tv_nsec = (long)(nsec - ((NV)sleepfor.tv_sec) * 1e9);
+	if (!clock_nanosleep(clock_id, flags, &sleepfor, &unslept)) {
+	    RETVAL = nsec;
 	} else {
-	    PerlProc_pause();
-	    status = 0;
+	    sleepfor.tv_sec -= unslept.tv_sec;
+	    sleepfor.tv_nsec -= unslept.tv_nsec;
+	    if (sleepfor.tv_nsec < 0) {
+		sleepfor.tv_sec--;
+		sleepfor.tv_nsec += 1000000000;
+	    }
+	    RETVAL = ((NV)sleepfor.tv_sec) * 1e9 + ((NV)sleepfor.tv_nsec);
 	}
-	gettimeofday(&Tb, NULL);
-	RETVAL = status == 0 ? 1E3*(1E6*(Tb.tv_sec-Ta.tv_sec)+(NV)((IV)Tb.tv_usec-(IV)Ta.tv_usec)) : -1;
-
     OUTPUT:
 	RETVAL
 
@@ -1137,3 +1196,35 @@ clock()
 
 #endif /*  #if defined(TIME_HIRES_CLOCK) && defined(CLOCKS_PER_SEC) */
 
+void
+stat(...)
+PROTOTYPE: ;$
+    PPCODE:
+	PUSHMARK(SP);
+	XPUSHs(sv_2mortal(newSVsv(items == 1 ? ST(0) : DEFSV)));
+	PUTBACK;
+	ENTER;
+	PL_laststatval = -1;
+	(void)*(PL_ppaddr[OP_STAT])(aTHXR);
+	SPAGAIN;
+	LEAVE;
+	if (PL_laststatval == 0) {
+	  /* We assume that pp_stat() left us with 13 valid stack items,
+	   * and that the timestamps are at offsets 8, 9, and 10. */
+	  UV atime = SvUV(ST( 8));
+	  UV mtime = SvUV(ST( 9));
+	  UV ctime = SvUV(ST(10));
+	  UV atime_nsec;
+	  UV mtime_nsec;
+	  UV ctime_nsec;
+	  hrstatns(atime, mtime, ctime,
+		   &atime_nsec, &mtime_nsec, &ctime_nsec);
+	  if (atime_nsec)
+	    ST( 8) = sv_2mortal(newSVnv(atime + 1e-9 * (NV) atime_nsec));
+	  if (mtime_nsec)
+	    ST( 9) = sv_2mortal(newSVnv(mtime + 1e-9 * (NV) mtime_nsec));
+	  if (ctime_nsec)
+	    ST(10) = sv_2mortal(newSVnv(ctime + 1e-9 * (NV) ctime_nsec));
+	  XSRETURN(13);
+	}
+	XSRETURN(0);

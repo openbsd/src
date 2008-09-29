@@ -32,14 +32,18 @@ following modules were installed:
   Font::AFM-1.18              Storable-1.011      libxml-perl-0.07
   HTML-Tree-3.11              URI-1.11            perl-ldap-0.23
 
-The build was a portable hppa-1.1 multithread build that supports large
-files compiled with gcc-2.9-hppa-991112
+That build was a portable hppa-1.1 multithread build that supports large
+files compiled with gcc-2.9-hppa-991112.
 
-If you perform a new installation, then Perl will be installed
-automatically.
+If you perform a new installation, then (a newer) Perl will be installed
+automatically.  Preinstalled HP-UX systems now slao have more recent versions
+of Perl and the updated modules.
 
-More recent (preinstalled) HP-UX systems have more recent versions of
-Perl and the updated modules.
+The official (threaded) builds from HP, as they are shipped on the
+Application DVD/CD's are available on
+http://www.software.hp.com/cgi-bin/swdepot_parser.cgi/cgi/displayProductInfo.pl?productNumber=PERL
+for both PA-RISC and IPF (Itanium Processor Family). They are built
+with the HP ANSI-C compiler.
 
 =head2 Using perl from HP's porting centre
 
@@ -77,7 +81,7 @@ details.
 
 =head2 PA-RISC
 
-HP's current Unix systems run on its own Precision Architecture
+HP's HP9000 Unix systems run on HP's own Precision Architecture
 (PA-RISC) chip.  HP-UX used to run on the Motorola MC68000 family of
 chips, but any machine with this chip in it is quite obsolete and this
 document will not attempt to address issues for compiling Perl on the
@@ -85,7 +89,30 @@ Motorola chipset.
 
 The most recent version of PA-RISC at the time of this document's last
 update is 2.0. HP PA-RISC systems are usually refered to with model
-description "HP 9000".
+description "HP 9000". The last CPU in this series is the PA-8900.
+Support for PA-RISC architectured machines officially ends as shown
+in the following table:
+
+   PA-RISC End-of-Life Roadmap
+ +--------+----------------+----------------+-----------------+
+ | HP9000 | Superdome      | PA-8700        | Spring 2011     |
+ | 4-128  |                | PA-8800/sx1000 | Summer 2012     |
+ | cores  |                | PA-8900/sx1000 | 2014            |
+ |        |                | PA-8900/sx2000 | 2015            |
+ +--------+----------------+----------------+-----------------+
+ | HP9000 | rp7410, rp8400 | PA-8700        | Spring 2011     |
+ | 2-32   | rp7420, rp8420 | PA-8800/sx1000 | 2012            |
+ | cores  | rp7440, rp8440 | PA-8900/sx1000 | Autumn 2013     |
+ |        |                | PA-8900/sx2000 | 2015            |
+ +--------+----------------+----------------+-----------------+
+ | HP9000 | rp44x0         | PA-8700        | Spring 2011     |
+ | 1-8    |                | PA-8800/rp44x0 | 2012            |
+ | cores  |                | PA-8900/rp44x0 | 2014            |
+ +--------+----------------+----------------+-----------------+
+ | HP9000 | rp34x0         | PA-8700        | Spring 2011     |
+ | 1-4    |                | PA-8800/rp34x0 | 2012            |
+ | cores  |                | PA-8900/rp34x0 | 2014            |
+ +--------+----------------+----------------+-----------------+
 
 A complete list of models at the time the OS was built is in the file
 /usr/sam/lib/mo/sched.models. The first column corresponds to the last
@@ -164,7 +191,7 @@ that contained the explanation is dead, so here's a short summary:
 
   rp2400, rp2405, rp2430, rp2450, rp2470, rp3410, rp3440, rp4410,
   rp4440, rp5400, rp5405, rp5430, rp5450, rp5470, rp7400, rp7405,
-  rp7410, rp7420, rp8400, rp8420, Superdome
+  rp7410, rp7420, rp7440, rp8400, rp8420, rp8440, Superdome
 
 The current naming convention is:
 
@@ -185,7 +212,7 @@ The current naming convention is:
           b = blade
           sa = appliance
 
-=head2 Itanium Processor Family and HP-UX
+=head2 Itanium Processor Family (IPF) and HP-UX
 
 HP-UX also runs on the new Itanium processor.  This requires the use
 of a different version of HP-UX (currently 11.23 or 11i v2), and with
@@ -200,14 +227,16 @@ while running a PA-RISC executable.
 HP Itanium 2 systems are usually refered to with model description
 "HP Integrity".
 
-=head2 Itanium & Itanium 2
+=head2 Itanium, Itanium 2 & Madison 6
 
-HP also ships servers with the 128-bit Itanium processor(s). As of the
-date of this document's last update, the following systems contain
-Itanium or Itanium 2 chips (this is very likely to be out of date):
+HP also ships servers with the 128-bit Itanium processor(s). The cx26x0
+is told to have Madison 6. As of the date of this document's last update,
+the following systems contain Itanium or Itanium 2 chips (this is likely
+to be out of date):
 
-  BL60p, rx1600, rx1620, rx2600, rx2600hptc, rx2620, rx4610, rx4640,
-  rx5670, rx7620, rx8620, rx9610
+  BL60p, BL860c, cx2600, cx2620, rx1600, rx1620, rx2600, rx2600hptc,
+  rx2620, rx2660, rx3600, rx4610, rx4640, rx5670, rx6600, rx7420,
+  rx7620, rx7640, rx8420, rx8620, rx8640, rx9610, sx1000, sx2000
 
 To see all about your machine, type
 
@@ -285,9 +314,9 @@ the DB_File module, which requires SleepyCat's libdb.sl:
   # vi Makefile
   ... add +Z to all cflags to create shared objects
   CFLAGS=         -c $(CPPFLAGS) +Z -Ae +O2 +Onolimit \
-		  -I/usr/local/include -I/usr/include/X11R6
+                  -I/usr/local/include -I/usr/include/X11R6
   CXXFLAGS=       -c $(CPPFLAGS) +Z -Ae +O2 +Onolimit \
-		  -I/usr/local/include -I/usr/include/X11R6
+                  -I/usr/local/include -I/usr/include/X11R6
 
   # make clean
   # make
@@ -312,7 +341,7 @@ As of db-4.2.x it is no longer needed to do this by hand. Sleepycat
 has changed the configuration process to add +z on HP-UX automatically.
 
   # cd .../db-4.2.25/build_unix
-  # env CFLAGS=+DA2.0w LDFLAGS=+DA2.0w ../dist/configure
+  # env CFLAGS=+DD64 LDFLAGS=+DD64 ../dist/configure
 
 should work to generate 64bit shared libraries for HP-UX 11.00 and 11i.
 
@@ -330,6 +359,14 @@ When using this compiler to build Perl, you should make sure that the
 flag -Aa is added to the cpprun and cppstdin variables in the config.sh
 file (though see the section on 64-bit perl below). If you are using a
 recent version of the Perl distribution, these flags are set automatically.
+
+Even though HP-UX 10.20 and 11.00 are not actively maintained by HP
+anymore, updates for the HP ANSI C compiler are still available from
+time to time, and it might be advisable to see if updates are applicable.
+At the moment of writing, the latests available patches for 11.00 that
+should be applied are PHSS_35098, PHSS_35175, PHSS_35100, PHSS_33036,
+and PHSS_33902). If you have a SUM account, you can use it to search
+for updates/patches. Enter "ANSI" as keyword.
 
 =head2 The GNU C Compiler
 
@@ -379,14 +416,14 @@ which calls any file-manipulating C function will need to be recompiled
 procedure).
 
 The list of functions that will need to recompiled is:
-creat,		fgetpos,	fopen,
-freopen,	fsetpos,	fstat,
-fstatvfs,	fstatvfsdev,	ftruncate,
-ftw,		lockf,		lseek,
-lstat,		mmap,		nftw,
-open,		prealloc,	stat,
-statvfs,	statvfsdev,	tmpfile,
-truncate,	getrlimit,	setrlimit
+  creat,          fgetpos,        fopen,
+  freopen,        fsetpos,        fstat,
+  fstatvfs,       fstatvfsdev,    ftruncate,
+  ftw,            lockf,          lseek,
+  lstat,          mmap,           nftw,
+  open,           prealloc,       stat,
+  statvfs,        statvfsdev,     tmpfile,
+  truncate,       getrlimit,      setrlimit
 
 Another drawback is only valid for Perl versions before 5.6.0.  This
 drawback is that the seek and tell functions (both the builtin version
@@ -503,10 +540,18 @@ it is known to fail with 64-bit versions of GCC.
 
 =head2 GDBM and Threads on HP-UX
 
-If you attempt to compile Perl with threads on an 11.X system and also
-link in the GDBM library, then Perl will immediately core dump when it
-starts up.  The only workaround at this point is to relink the GDBM
-library under 11.X, then relink it into Perl.
+If you attempt to compile Perl with (POSIX) threads on an 11.X system
+and also link in the GDBM library, then Perl will immediately core dump
+when it starts up.  The only workaround at this point is to relink the
+GDBM library under 11.X, then relink it into Perl.
+
+the error might show something like:
+
+Pthread internal error: message: __libc_reinit() failed, file: ../pthreads/pthread.c, line: 1096
+Return Pointer is 0xc082bf33
+sh: 5345 Quit(coredump)
+
+and Configure will give up.
 
 =head2 NFS filesystems and utime(2) on HP-UX
 
@@ -577,15 +622,24 @@ bug seems to be to create add to the file F</etc/nsswitch.conf>
 Whether you are using NIS does not matter.  Amazingly enough,
 the same bug also affects Solaris.
 
+=head1 Miscellaneous
+
+HP-UX 11 Y2K patch "Y2K-1100 B.11.00.B0125 HP-UX Core OS Year 2000
+Patch Bundle" has been reported to break the io/fs test #18 which
+tests whether utime() can change timestamps.  The Y2K patch seems to
+break utime() so that over NFS the timestamps do not get changed
+(on local filesystems utime() still works). This has probably been
+fixed on your system by now.
+
 =head1 AUTHOR
 
-Jeff Okamoto <okamoto@corp.hp.com>
 H.Merijn Brand <h.m.brand@xs4all.nl>
+Jeff Okamoto <okamoto@corp.hp.com>
 
 With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.7.6: 2005-12-20
+Version 0.8.0: 2007-09-09
 
 =cut

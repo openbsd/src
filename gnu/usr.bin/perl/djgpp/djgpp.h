@@ -34,7 +34,7 @@ int
 do_spawn (pTHX_ char *cmd);
 
 bool
-Perl_do_exec (pTHX_ char *cmd);
+Perl_do_exec (pTHX_ const char *cmd);
 
 void
 Perl_init_os_extras(pTHX);

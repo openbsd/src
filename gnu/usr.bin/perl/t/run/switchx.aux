@@ -17,5 +17,14 @@ still not perl
 
 #!/some/path/that/leads/to/perl -l
 
-print "1..1";
-print "ok 1";
+print "1..4";
+if (-f 'run/switchx.aux') {
+    print "ok 1";
+}
+print "ok 2";
+# other tests are in switchx2.aux
+
+__END__
+
+# This is ignored
+print "not ok 2";

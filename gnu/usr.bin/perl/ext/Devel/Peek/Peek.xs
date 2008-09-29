@@ -39,7 +39,7 @@ DeadCode(pTHX)
 		int levels, tots = 0, levela, tota = 0, levelas, totas = 0;
 		int dumpit = 0;
 
-		if (CvXSUB(sv)) {
+		if (CvISXSUB(sv)) {
 		    continue;		/* XSUB */
 		}
 		if (!CvGV(sv)) {
@@ -226,9 +226,8 @@ _mstats_to_hv(HV *hv, const struct mstats_buffer *b, int level)
 	warn("FIXME: internal mstats buffer too short");
     
     for (type = 0; type < (level ? 4 : 2); type++) {
-	UV *p = 0, *p1 = 0;
+	UV *p = 0, *p1 = 0, i;
 	AV *av;
-	int i;
 	static const char *types[4] = { 
 	    "free", "used", "mem_size", "available_size"    
 	};
@@ -344,7 +343,7 @@ PPCODE:
     SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
     const STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
     SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", FALSE);
-    const I32 save_dumpindent = PL_dumpindent;
+    const U16 save_dumpindent = PL_dumpindent;
     PL_dumpindent = 2;
     do_sv_dump(0, Perl_debug_log, sv, 0, lim,
 	       (bool)(dumpop && SvTRUE(dumpop)), pv_lim);
@@ -360,7 +359,7 @@ PPCODE:
     SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
     const STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
     SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", FALSE);
-    const I32 save_dumpindent = PL_dumpindent;
+    const U16 save_dumpindent = PL_dumpindent;
     PL_dumpindent = 2;
 
     for (i=1; i<items; i++) {

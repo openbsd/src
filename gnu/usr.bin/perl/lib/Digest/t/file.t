@@ -37,8 +37,14 @@ print F "foo\0\n";
 close(F) || die "Can't write '$file': $!";
 
 ok(digest_file($file, "Foo"), "0005");
-ok(digest_file_hex($file, "Foo"), "30303035");
-ok(digest_file_base64($file, "Foo"), "MDAwNQ");
+
+if (ord('A') == 193) { # EBCDIC.
+    ok(digest_file_hex($file, "Foo"), "f0f0f0f5");
+    ok(digest_file_base64($file, "Foo"), "8PDw9Q");
+} else {
+    ok(digest_file_hex($file, "Foo"), "30303035");
+    ok(digest_file_base64($file, "Foo"), "MDAwNQ");
+}
 
 unlink($file) || warn "Can't unlink '$file': $!";
 

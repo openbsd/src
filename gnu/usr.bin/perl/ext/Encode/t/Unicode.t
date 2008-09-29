@@ -1,5 +1,5 @@
 #
-# $Id: Unicode.t,v 2.0 2004/05/16 20:55:17 dankogai Exp $
+# $Id: Unicode.t,v 2.1 2006/05/03 18:24:10 dankogai Exp $
 #
 # This script is written entirely in ASCII, even though quoted literals
 # do include non-BMP unicode characters -- Are you happy, jhi?
@@ -13,7 +13,7 @@ BEGIN {
     }
     if (ord("A") == 193) {
         print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    exit 0;
     }
     $| = 1;
 }
@@ -45,10 +45,10 @@ my $f_16le =
     pack("C*", map {hex($_)} qw<0f 5c fc 98 00 30 3e 5f  fd ff>);
 my $n_32be =
     pack("C*", map {hex($_)} 
-	 qw<00 00 5c 0f 00 00 98 fc 00 00 30 00 00 00 5f 3e  00 01 ab cd>);
+     qw<00 00 5c 0f 00 00 98 fc 00 00 30 00 00 00 5f 3e  00 01 ab cd>);
 my $n_32le = 
     pack("C*", map {hex($_)} 
-	 qw<0f 5c 00 00 fc 98 00 00 00 30 00 00 3e 5f 00 00  cd ab 01 00>);
+     qw<0f 5c 00 00 fc 98 00 00 00 30 00 00 3e 5f 00 00  cd ab 01 00>);
 
 my $n_16bb = pack('n', 0xFeFF) . $n_16be;
 my $n_16lb = pack('v', 0xFeFF) . $n_16le;
@@ -91,16 +91,16 @@ is(index($@, 'UCS-2LE'), 0, "encode UCS-2LE: exception");
 SKIP: {
     my $utf8 = '';
     for my $j (0,0x10){
-	for my $i (0..0xffff){
-	    $j == 0 and (0xD800 <= $i && $i <= 0xDFFF) and next;
-	    $utf8 .= ord($j+$i);
-	}
-	for my $major ('UTF-16', 'UTF-32'){
-	    for my $minor ('BE', 'LE'){
-		my $enc = $major.$minor;
-		is(decode($enc, encode($enc, $utf8)), $utf8, "$enc RT");
-	    }
-	}
+    for my $i (0..0xffff){
+        $j == 0 and (0xD800 <= $i && $i <= 0xDFFF) and next;
+        $utf8 .= ord($j+$i);
+    }
+    for my $major ('UTF-16', 'UTF-32'){
+        for my $minor ('BE', 'LE'){
+        my $enc = $major.$minor;
+        is(decode($enc, encode($enc, $utf8)), $utf8, "$enc RT");
+        }
+    }
     }
 };
 
@@ -120,12 +120,12 @@ for my $file (@file){
     open my $fh, '<', $path or die "$path:$!";
     my $content;
     if (PerlIO::Layer->find('perlio')){
-	binmode $fh => ':utf8';
-	$content = join('' => <$fh>);
+    binmode $fh => ':utf8';
+    $content = join('' => <$fh>);
     }else{ # ugh!
-	binmode $fh;
-	$content = join('' => <$fh>);
-	Encode::_utf8_on($content)
+    binmode $fh;
+    $content = join('' => <$fh>);
+    Encode::_utf8_on($content)
     }
     close $fh;
     is(decode("UTF-7", encode("UTF-7", $content)), $content, 

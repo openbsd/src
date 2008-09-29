@@ -1,3 +1,94 @@
+  Version 3.29
+  1. The position of file handles is now reset to zero when CGI->new is called.
+    (Mark Stosberg)
+  2. uploadInfo() now works across multiple object instances. Also, the first
+     tests for uploadInfo() were added as part of the fix. (CPAN bug 11895, with
+     contributions from drfrench and Mark Stosberg).
+
+  Version 3.28
+  1. Applied patch from Allen Day that makes Cookie parsing RFC2109 compliant
+	(attribute/values can be separated by commas as well as semicolons).
+  2. Applied patch from Stephan Struckmann that allows script_name() to be set correctly.
+  3. Fixed problem with url(-full) in which port number appears twice.
+
+  Version 3.27
+  1. Applied patch from Steve Taylor that allows checkbox_groups to be
+  disabled with a new -disabled=> option.
+
+  Version 3.26
+  1. Fixed alternate stylesheet behavior so that it is insensitive to order of declarations.
+  2. Patch from John Binns to allow users to provide a callback to CGI::Carp.
+  3. Added "~" as an unreserved character in escape().
+  4. Patch from Chris Fedde to prevent HTTP_HOST from inhibiting SERVER_PORT in url() generation.
+  5. Fixed outdated documentation (and behavior) of -language in start_html -script option.
+  6. Fixed bug in seconds calculation in CGI::Util::expire_calc.
+
+  Version 3.25
+  1. Fixed the link to the Netscape frames page.
+  2. Added ability to specify an alternate stylesheet.
+  3. Add support for XForms POST submssion both as application/xml or as multipart/related
+
+  Version 3.24
+  1. In startform(), if request_uri() returns undef, then falls back
+  to self_url(). This should rarely happen except when run outside of
+  the CGI environment.
+  2. image button alignment options were mistakenly being capitalized, causing xhtml validation to fail.
+
+  Version 3.23
+  1. Typo in upload() persisted, now fixed for real. Thanks to
+  Emanuele Zeppieri for correct patch and regression test.
+
+  Version 3.22
+  1. Typo in upload() function broke uploads. Now fixed (CPAN bug 21126).
+
+  Version 3.21
+  1. Don't try to read data at all when POST > $POST_MAX.
+  2. Fixed bug that caused $cgi->param('name',undef,'value') to unset param('name') entirely.
+  3. Fixed bug in which upload() sometimes returns empty. (CPAN bug #12694).
+  4. Incorporated patch from BURAK@cpan.org to support HTTPcookies (CPAN bug 21019).
+
+  Version 3.20
+  1. Patch from David Wheeler for CGI::Cookie->bake(). Uses mod_perl headers_out->add()
+	rather than headers_out->set().
+  2. Fixed problem identified by Andrei Voronkov in which start_form() output was screwed
+	up when initial argument begins with a dash and subsequent arguments do not.
+  3. Quashed uninitialized variable warnings coming from script_name(), url() and other
+        functions that require access to the PATH_INFO environment variable.
+
+  Version 3.19
+  1. Added patch from Stephen Frost that allows one to suppress use of the temp file that is
+	created during uploads.
+  2. Fixed problem noted by Martin Foster in which regular expression meta-character terms
+	in the path information were not quoted, causing URL parsing
+	to fail on URLs that contained metacharacters (such as +).
+  3. More fixes to the url() method.
+  4. Removed "hack to fix broken PATH_INFO in MSII".
+
+  Version 3.18
+  1.  Doc typo fixes.
+  2.  Patch from Steve Peters to default the document type to match the charset.
+  3.  Fixed param() so that param(-name=>'foo',-values=>[]) sets the parameter to empty list.
+
+  Version 3.17 Fri Feb 24 14:01:27 EST 2006
+   1. Added patch from Mike Hanafey which caused 0 arguments to CGI::Cookie->new() to
+	be treated as empty.
+   2. Patch to CGI::Carp from Peter Whaite to fix the unfixable problem of CGI::Carp
+     not behaving correctly in an eval() context.
+   3. CGI::Fast->new() calls CGI->_reset_globals to avoid contamination of one session
+	with another's variables.
+   4. Fixed upload failure on files that contain semicolons in their names.
+
+  Version 3.16 Wed Feb  8 13:29:11 EST 2006
+   1. header() -charset option now works even when the MIME type is not "text".
+   2. Fixed documentation for cookie() function and fastCGI.
+   3. Upload filehandles now only closed automatically on Windows systems.
+   4. Apache::Cookie compatibility fix from David Wheeler
+   5. CGI::Carp->fatalsToBrowser() does not work correctly with
+	mod_perl 2. No workaround is known.
+   6. Fixed text status code associated with 302 redirects. Should be "Found"
+	but was "Moved".
+   7. Fixed charset in start_html() and header() to be in synch.
+
   Version 3.15 Wed Dec  7 15:13:22 EST 2005
    1. Remove extraneous "?" from self_url() when URI contains a ? but no query string.
 

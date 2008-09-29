@@ -1,5 +1,5 @@
 # StandardizedVariants-4.1.0.txt
-# Date: 2005-03-17, 15:21:00 PST [KW]
+# Date: 2006-01-16, 13:03:00 PST [KW]
 #
 # Specification of the variant sequences that are defined in the
 # Unicode Standard.
@@ -7,7 +7,7 @@
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Warning: Only the variation sequences specifically defined in this file
@@ -15,8 +15,8 @@
 # cannot change the visual appearance of the preceding base character from 
 # what it would have had in the absence of the variation selector.
 #
-# For more information, see Section 15.6, Variation Selectors, 
-# in The Unicode Standard, Version 4.0.
+# For more information, see Section 16.4, Variation Selectors, 
+# in The Unicode Standard, Version 5.0.
 #
 # Format:
 #   Field 0: the variation sequence
@@ -31,7 +31,7 @@
 2229 FE00; with serifs; # INTERSECTION 
 222A FE00; with serifs; # UNION
 2268 FE00; with vertical stroke; # LESS-THAN BUT NOT EQUAL TO
-2269 FE00; with vertical stroke; # GREATER-THAN AND NOT DOUBLE EQUAL
+2269 FE00; with vertical stroke; # GREATER-THAN BUT NOT EQUAL TO
 2272 FE00; following the slant of the lower leg; # LESS-THAN OR EQUIVALENT TO
 2273 FE00; following the slant of the lower leg; # GREATER-THAN OR EQUIVALENT TO
 #2278 FE00; with vertical stroke; # NEITHER LESS-THAN NOR GREATER-THAN
@@ -54,7 +54,16 @@
 2ACB FE00; with stroke through bottom members; # SUBSET OF ABOVE NOT EQUAL TO
 2ACC FE00; with stroke through bottom members; # SUPERSET OF ABOVE NOT EQUAL TO
 
-#Mongolian
+# Phags-pa
+
+A856 FE00; phags-pa letter reversed shaping small a; # PHAGS-PA LETTER SMALL A
+A85C FE00; phags-pa letter reversed shaping ha; # PHAGS-PA LETTER HA
+A85E FE00; phags-pa letter reversed shaping i; # PHAGS-PA LETTER I
+A85F FE00; phags-pa letter reversed shaping u; # PHAGS-PA LETTER U
+A860 FE00; phags-pa letter reversed shaping e; # PHAGS-PA LETTER E
+A868 FE00; phags-pa letter reversed shaping subjoined ya; # PHAGS-PA SUBJOINED LETTER YA
+
+# Mongolian
 
 1820 180B; second form; isolate medial final # MONGOLIAN LETTER A
 1820 180C; third form; medial # MONGOLIAN LETTER A 

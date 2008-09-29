@@ -28,7 +28,7 @@ my $Test = Test::Builder->create;
 $Test->level(0);
 
 if( $] >= 5.005 ) {
-    $Test->plan(tests => 2);
+    $Test->plan(tests => 3);
 }
 else {
     $Test->plan(skip_all => 
@@ -47,3 +47,5 @@ Bail out!  ROCKS FALL! EVERYONE DIES!
 OUT
 
 $Test->is_eq( $Exit_Code, 255 );
+
+$Test->ok( $Test->can("BAILOUT"), "Backwards compat" );

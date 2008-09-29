@@ -3,7 +3,7 @@ package File::Spec;
 use strict;
 use vars qw(@ISA $VERSION);
 
-$VERSION = '3.12';
+$VERSION = '3.2501';
 $VERSION = eval $VERSION;
 
 my %module = (MacOS   => 'Mac',
@@ -83,6 +83,7 @@ forms of these methods.
 =over 2
 
 =item canonpath
+X<canonpath>
 
 No physical check on the filesystem, but a logical cleanup of a
 path.
@@ -97,6 +98,7 @@ processing, you probably want C<Cwd>'s C<realpath()> function to
 actually traverse the filesystem cleaning up paths like this.
 
 =item catdir
+X<catdir>
 
 Concatenate two or more directory names to form a complete path ending
 with a directory. But remove the trailing slash from the resulting
@@ -107,6 +109,7 @@ trailing slash :-)
     $path = File::Spec->catdir( @directories );
 
 =item catfile
+X<catfile>
 
 Concatenate one or more directory names and a filename to form a
 complete path ending with a filename
@@ -114,24 +117,28 @@ complete path ending with a filename
     $path = File::Spec->catfile( @directories, $filename );
 
 =item curdir
+X<curdir>
 
 Returns a string representation of the current directory.
 
     $curdir = File::Spec->curdir();
 
 =item devnull
+X<devnull>
 
 Returns a string representation of the null device.
 
     $devnull = File::Spec->devnull();
 
 =item rootdir
+X<rootdir>
 
 Returns a string representation of the root directory.
 
     $rootdir = File::Spec->rootdir();
 
 =item tmpdir
+X<tmpdir>
 
 Returns a string representation of the first writable directory from a
 list of possible temporary directories.  Returns the current directory
@@ -142,6 +149,7 @@ checked depends on the platform; e.g. File::Spec::Unix checks C<$ENV{TMPDIR}>
     $tmpdir = File::Spec->tmpdir();
 
 =item updir
+X<updir>
 
 Returns a string representation of the parent directory.
 
@@ -172,6 +180,7 @@ Mac OS (Classic).  It does consult the working environment for VMS
 (see L<File::Spec::VMS/file_name_is_absolute>).
 
 =item path
+X<path>
 
 Takes no argument.  Returns the environment variable C<PATH> (or the local
 platform's equivalent) as a list.
@@ -179,10 +188,12 @@ platform's equivalent) as a list.
     @PATH = File::Spec->path();
 
 =item join
+X<join, path>
 
 join is the same as catfile.
 
 =item splitpath
+X<splitpath> X<split, path>
 
 Splits a path in to volume, directory, and filename portions. On systems
 with no concept of volume, returns '' for volume. 
@@ -201,6 +212,7 @@ The results can be passed to L</catpath()> to get back a path equivalent to
 (usually identical to) the original path.
 
 =item splitdir
+X<splitdir> X<split, dir>
 
 The opposite of L</catdir()>.
 
@@ -223,6 +235,7 @@ inserted if need be.  On other OSes, C<$volume> is significant.
     $full_path = File::Spec->catpath( $volume, $directory, $file );
 
 =item abs2rel
+X<abs2rel> X<absolute, path> X<relative, path>
 
 Takes a destination path and an optional base path returns a relative path
 from the base path to the destination path:
@@ -230,10 +243,10 @@ from the base path to the destination path:
     $rel_path = File::Spec->abs2rel( $path ) ;
     $rel_path = File::Spec->abs2rel( $path, $base ) ;
 
-If C<$base> is not present or '', then L<cwd()|Cwd> is used. If C<$base> is
+If C<$base> is not present or '', then L<Cwd::cwd()|Cwd> is used. If C<$base> is
 relative, then it is converted to absolute form using
 L</rel2abs()>. This means that it is taken to be relative to
-L<cwd()|Cwd>.
+L<Cwd::cwd()|Cwd>.
 
 On systems with the concept of volume, if C<$path> and C<$base> appear to be
 on two different volumes, we will not attempt to resolve the two
@@ -246,7 +259,7 @@ C<$base> filename as well. Otherwise all path components are assumed to be
 directories.
 
 If C<$path> is relative, it is converted to absolute form using L</rel2abs()>.
-This means that it is taken to be relative to L<cwd()|Cwd>.
+This means that it is taken to be relative to L<Cwd::cwd()|Cwd>.
 
 No checks against the filesystem are made.  On VMS, there is
 interaction with the working environment, as logicals and
@@ -255,15 +268,16 @@ macros are expanded.
 Based on code written by Shigio Yamaguchi.
 
 =item rel2abs()
+X<rel2abs> X<absolute, path> X<relative, path>
 
 Converts a relative path to an absolute path. 
 
     $abs_path = File::Spec->rel2abs( $path ) ;
     $abs_path = File::Spec->rel2abs( $path, $base ) ;
 
-If C<$base> is not present or '', then L<cwd()|Cwd> is used. If C<$base> is relative,
+If C<$base> is not present or '', then L<Cwd::cwd()|Cwd> is used. If C<$base> is relative,
 then it is converted to absolute form using L</rel2abs()>. This means that it
-is taken to be relative to L<cwd()|Cwd>.
+is taken to be relative to L<Cwd::cwd()|Cwd>.
 
 On systems with the concept of volume, if C<$path> and C<$base> appear to be
 on two different volumes, we will not attempt to resolve the two

@@ -70,7 +70,10 @@ will be the file F<~/.ssh/identity> which is suitable unless you
 particularly want to keep separate ssh identities for some reason.
 If so, you could save the perl repository private key in the file
 F<~/.ssh/perl>, for example, but I will use the standard filename
-in the remainder of the examples of this document.
+in the remainder of the examples of this document.  (Some ssh
+implementations will default to creating a F<~/.ssh/id_rsa*>
+ssh prototcol 2 RSA key pair instead - see below.  Use the -t rsa1
+option if you really want a protocol 1 key pair.)
 
 After typing in the filename, it will prompt you to type in a
 passphrase. The private key will itself be encrypted so that it is
@@ -233,7 +236,9 @@ above.  If you see a prompt that looks like:
 
 Then you either don't have a F<~/.ssh/identity> or F<~/.ssh/id_rsa>
 file corresponding to your public key, or that file is not readable.
-Fix the problem and try again.
+Fix the problem and try again.  Alternatively, some ssh implementations
+will fail to verify your RSA key if the key if readable by others.
+Just lower the permissions to make the key readable to yourself.
 
 If you only had the public key file for one protocol installed at the
 server end then make sure your client is using the corresponding
@@ -493,8 +498,8 @@ Integrate patches 12347-12350 from the perlio branch to the mainline:
 The mail alias E<lt>perl-repository-keepers@perl.orgE<gt> can be used to reach
 all current users of the repository.
 
-The repository keeper is currently Gurusamy Sarathy
-E<lt>gsar@activestate.comE<gt>.
+The repository keeper is currently Philippe M. Chiasson
+E<lt>gozer@ActiveState.comE<gt>.
 
 =head1 AUTHORS
 

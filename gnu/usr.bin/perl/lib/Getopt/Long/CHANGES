@@ -1,3 +1,47 @@
+Changes in version 2.36
+-----------------------
+
+**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
+
+* Parsing options from an arbitrary array
+
+  The entry point GetOptionsFromArray (exported on demand) can be used
+  to parse command line options that are not passed in via @ARGV, but
+  using an arbitrary array.
+
+    use Getopt::Long qw(GetOptionsFromArray);
+    $ret = GetOptionsFromArray(\@myopts, ...);
+
+* Parsing options from an arbitrary string
+
+  The entry point GetOptionsFromString (exported on demand) can be
+  used to parse command line options that are not passed in via @ARGV,
+  but using an arbitrary string.
+
+    use Getopt::Long qw(GetOptionsFromString);
+    $ret = GetOptionsFromString($optstring, ...);
+
+  Note that upon completion, no arguments may remain in the string.
+  If arguments may remain, call it in list context:
+
+    ($ret, $args) = GetOptionsFromString($optstring, ...);
+
+  @$args will have the remaining arguments.
+
+**************** END EXPERIMENTAL CODE ****************
+
+* Number values for options may include underscores for readability
+  (just like Perls numbers).
+
+* Bugfix for Ticket #19432 (found and fixed by khali).
+
+* Bugfix to make it cooperate with the bignum pragma. Thanks to Merijn
+  and Yves.
+
+* Various small fixes to make the test suite run under 5.004_05.
+
+* More examples (skeletons).
+
 Changes in version 2.35
 -----------------------
 
@@ -19,9 +63,7 @@ Changes in version 2.35
 * Bugfix for Ticket #11377 (bug found and fixed by Ryan).
 * Bugfix for Ticket #12380.
 
-**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
-
-* [Experimental] Options can take multiple values at once. E.g.,
+* Options can take multiple values at once. E.g.,
 
     --coordinates 52.2 16.4 --rgbcolor 255 255 149
 
@@ -33,8 +75,6 @@ Changes in version 2.35
   You can specify the minimum and maximum number of values desired.
   The syntax for this is similar to that of regular expression
   patterns: { min , max }. 
-
-**************** END EXPERIMENTAL CODE ****************
 
 Changes in version 2.34
 -----------------------

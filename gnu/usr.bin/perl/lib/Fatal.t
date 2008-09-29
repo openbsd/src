@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-use Fatal qw(open close :void opendir);
+use Fatal qw(open close :void opendir sin);
 
 my $i = 1;
 eval { open FOO, '<lkjqweriuapofukndajsdlfjnvcvn' };

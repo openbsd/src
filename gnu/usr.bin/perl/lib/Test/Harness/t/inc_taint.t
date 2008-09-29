@@ -18,10 +18,8 @@ push @INC, 'we_added_this_lib';
 
 tie *NULL, 'Dev::Null' or die $!;
 select NULL;
-my($tot, $failed) = Test::Harness::_run_all_tests(
-    $ENV{PERL_CORE}
-    ? 'lib/sample-tests/inc_taint'
-    : 't/sample-tests/inc_taint'
+my($tot, $failed) = Test::Harness::execute_tests(
+    tests => [ $ENV{PERL_CORE} ? 'lib/sample-tests/inc_taint' : 't/sample-tests/inc_taint' ]
 );
 select STDOUT;
 

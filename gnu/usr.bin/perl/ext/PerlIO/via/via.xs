@@ -135,13 +135,13 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	    STRLEN pkglen = 0;
 	    const char *pkg = SvPV(arg, pkglen);
 	    s->obj = SvREFCNT_inc(arg);
-	    s->stash = gv_stashpvn(pkg, pkglen, FALSE);
+	    s->stash = gv_stashpvn(pkg, pkglen, 0);
 	    if (!s->stash) {
+		SvREFCNT_dec(s->obj);
 		s->obj =
 		    newSVpvn(Perl_form(aTHX_ "PerlIO::via::%s", pkg),
 			     pkglen + 13);
-		SvREFCNT_dec(arg);
-		s->stash = gv_stashpvn(SvPVX_const(s->obj), pkglen + 13, FALSE);
+		s->stash = gv_stashpvn(SvPVX_const(s->obj), pkglen + 13, 0);
 	    }
 	    if (s->stash) {
 		char lmode[8];
@@ -156,8 +156,8 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 				     modesv, Nullsv);
 		if (result) {
 		    if (sv_isobject(result)) {
+			SvREFCNT_dec(s->obj);
 			s->obj = SvREFCNT_inc(result);
-			SvREFCNT_dec(arg);
 		    }
 		    else if (SvIV(result) != 0)
 			return SvIV(result);
@@ -590,7 +590,7 @@ PerlIOVia_dup(pTHX_ PerlIO * f, PerlIO * o, CLONE_PARAMS * param,
 
 
 
-PerlIO_funcs PerlIO_object = {
+PERLIO_FUNCS_DECL(PerlIO_object) = {
  sizeof(PerlIO_funcs),
  "via",
  sizeof(PerlIOVia),
@@ -630,7 +630,7 @@ PROTOTYPES: ENABLE;
 BOOT:
 {
 #ifdef PERLIO_LAYERS
- PerlIO_define_layer(aTHX_ &PerlIO_object);
+ PerlIO_define_layer(aTHX_ PERLIO_FUNCS_CAST(&PerlIO_object));
 #endif
 }
 

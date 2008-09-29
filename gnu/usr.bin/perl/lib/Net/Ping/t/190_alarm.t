@@ -4,6 +4,12 @@
 # Based on code written by radu@netsoft.ro (Radu Greab).
 
 BEGIN {
+  if ($ENV{PERL_CORE}) {
+    unless ($ENV{PERL_TEST_Net_Ping}) {
+      print "1..0 \# Skip: network dependent test\n";
+        exit;
+    }
+  }
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
     exit;

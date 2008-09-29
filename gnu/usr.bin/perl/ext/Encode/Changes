@@ -1,8 +1,172 @@
 # Revision history for Perl extension Encode.
 #
-# $Id: Changes,v 2.12 2005/09/08 14:17:17 dankogai Exp dankogai $
+# $Id: Changes,v 2.23 2007/05/29 18:15:32 dankogai Exp dankogai $
 #
-$Revision: 2.12 $ $Date: 2005/09/08 14:17:17 $
+$Revision: 2.23 $ $Date: 2007/05/29 18:15:32 $
+! Encode.xs
+  got rid of global fallback_cb; encode_method() now takes one more
+  argument which is a coderef to fallback.  This should make
+  encode_method() thread-safe.
+! Encode.pm
+  Added perluniintro, perlunifaq, and perlunitut to POD
+! Encode.xs
+  Plug a memory leak in Encode -- by rgs
+  Message-Id: <b77c1dce0705290858v2be239c3o2d726e3d59091493@mail.gmail.com>
+! Unicode/Unicode.pm
+  POD fixes on UTF-16LE
+  http://aspn.activestate.com/ASPN/Mail/Message/perl5-porters/3486118
+! Makefile.PL
+  man page generation is now conditional; yes by default but no if $PERL_CORE
+  Message-Id: <b77c1dce0705290237h5c4667cdlf79a48b839170add@mail.gmail.com>
+
+2.22 2007/05/29 07:35:27
+! Encode.pm
+  from_to() does not honor the check while decoding.  That's a feature.
+  To make sure it is a feature it is mentioned in the POD.
+  http://rt.cpan.org/NoAuth/Bug.html?id=27277
+! Makefile.pl
+  Encode used to suppress man page generation.  Now it does.
+  http://rt.cpan.org/NoAuth/Bug.html?id=27200
+! Encode.pm Encode.xs t/fallback.t
+  Addressed: (de|en)code("ascii", "\x{3000}", sub{ $_[0] }) segfaults
+  Reported by MIYAGAWA
+
+2.21 2007/05/12 06:42:19
++ lib/Encode/MIME/Name.pm t/mime-name.t
+! Encode.pm Encode.xs lib/Encode/Encoding.pm
+  new method: mime_name()
+  inspired by: MIYAGAWA
+! t/encoding.t
+  Subject: Re: Compress::Zlib, pack "C" and utf-8 [PATCH]
+  From: Marc Lehmann <schmorp@schmorp.de>
+  Date: Thu, 12 Apr 2007 08:41:53 +0200
+  Message-ID: <20070412064153.GA22475@schmorp.de>
+  http://public.activestate.com/cgi-bin/perlbrowse/p/31194
+! Unicode/Unicode.pm
+  POD fix.
+  Message-Id: <20070417220547.GA11999@zetta.zet>
+
+2.20  2007/04/22 14:56:12
+! Encode.pm
+  Pod fixes.  Now find_encoding() is explained more in details.
++ lib/Encode/GSM0338.pm
+- ucm/gsm0338.ucm 
+! lib/Encode/Supported.pod lib/Encode/Config.pm Bytes/Makefile.PL t/gsm0338.t
+  ESTI GSM 03.38 support is relocated from Encode::Byte to Encode::GSM0338.
+  This encoding is so kaputt it is unfit for Encode::XS!
+  Though it was okay for general cases and escape sequences,
+  '\0' => '@' IFF '\0\0' => '\0' had gliches.
+  So kaputt even t/gsm0338 wrongly interpreted that.
+  ref. http://www.csoft.co.uk/sms/character_sets/gsm.htm
+! encoding.pm t/Aliases.t
+  Imported from bleedperl #31015
+
+2.19 2007/04/06 12:53:41
+! lib/Encode/JP/JIS7.pm
++ t/jis7-fallback.t
+  encode('iso-2022-jp') fallback support added by MIYAGAWA++
+  decode()'s fallback remains unchanged (FB_PERLQQ) since UTF-8
+  contains all characters in iso-2022-jp so there's no need for fancy stuff.
+  Message-Id: <693254b90704060526s6d850320h71cdda50dfbf7eba@mail.gmail.com>
+! Encode.pm
+  #25216 ([PATCH] Encode.pm: postpone the load of Encode::Encoding)
+  http://rt.cpan.org/NoAuth/Bug.html?id=25216
+! lib/Encode/MIME/Header.pm t/mime-header.t
+  #24418 (Encode::MIME::Header: wrong encoding with latin1 characters)
+  http://rt.cpan.org/NoAuth/Bug.html?id=24418
+! Encode.pm
+  #23876 (Add documentation for LEAVE_SRC)
+  http://rt.cpan.org/NoAuth/Bug.html?id=23876
+! lib/Encode/Alias.pm t/Aliases.t
+  #20781: Thai encoding needs alias for tis-620
+  http://rt.cpan.org/NoAuth/Bug.html?id=20781
+! bin/piconv AUTHORS
+  #20344: piconv: wrong conversion of utf-16le encoded files (with PATCH)
+  http://rt.cpan.org/NoAuth/Bug.html?id=20344
+! Encode.pm Encode.xs bin/enc2xs encoding.pm t/Aliases.t t/utf8strict.t
+  Imported from bleedperl's 2.18_01
+
+2.18 2006/06/03 20:28:48
+! bin/enc2xs
+  overhauled the -C option
+  - added ascii-ctrl', 'null', 'utf-8-strict' to core
+  - auto-generated Encode::ConfigLocal no longer use v-string for version
+  - now searches modules via File::Find so Encode/JP/Mobile is happy
+! Byte/Byte.pm CN/CN.pm EBCDIC/EBCDIC.pm JP/JP.pm KR/KR.pm Symbol/Symbol.pm
+  use strict added; though all they do is load XS, it's
+  still better a practice
+! *.pm
+  use warnings added to all of them for better practices' sake.
+
+2.17 2006/05/09 17:10:09
+! encode.pm
+  'chin' =~ /^zh_CN|chin(?:a|ese)?$/i is true
+  but chin is not china or chinese.
+  http://d.hatena.ne.jp/jankogai/20060508/1147090316
+! Encode.xs
+  Integrated maintperl change (27824|27824) which I overlooked
+  -- sorry, Nicholas and Coverity Scan.
+  Message-Id: <200604152115.k3FLF1Ar014538@smtp3.ActiveState.com>
+  Message-Id: <200605091615.k49GF1gJ016777@smtp3.ActiveState.com>
+
+2.16 2006/05/03 18:24:10
+! bin/piconv
+  --xmlcref and --htmlcref added.
+! Encode.pm
+  Copyright Notice Added.
+  http://rt.cpan.org/NoAuth/Bug.html?id=19056  
+! *
+  Replaced remaining ^\t with q( ) x 4. -- Perl Best Practice pp. 20
+  And all .pm's are now perltidy-ed.
+
+2.15 2006/04/06 15:44:11
+! Unicode/Unicode.xs
+  Addressed: UTF-16, UTF-32, UCS, UTF-7 decoders mishandle illegal characters
+  http://rt.cpan.org/NoAuth/Bug.html?id=18556
+! Encode.pm
+  added str2bytes() as an alias to encode() and  bytes2str() as an alias 
+  to decode()
+  http://rt.cpan.org/NoAuth/Bug.html?id=17103
+! Encode.xs
+  Change 26922: Avoid warning with MS Visual C compiler.
+  Message-Id: <200601231245.k0NCj2dw009484@smtp3.ActiveState.com>
+! t/perlio.t
+  Change 26067: As using -C to turn on utf8 IO is equivalent to the open pragma
+  Message-Id: <200511092227.jA9MRcYD009025@smtp3.ActiveState.com>
+
+2.14 2006/01/15 15:43:36
+! Makefile.PL 
+  Change 26295: Don't build manpages for Encode and Unicode::Normalize
+  Message-Id: <200512071540.jB7Fe4Gt017960@smtp3.ActiveState.com>
+! Encode.pm
+  Change 26081: Pod nit in Encode.pm, found by Marc Lehmann in RT #36949. 
+  Message-Id: <200511110357.jAB3vZcP023647@smtp3.ActiveState.com>
+! Encode.xs Encode/encode.h bin/enc2xs encengine.c
+  Change 25821: Mark more static Encode data structures as const.
+  Change 25823: use more 'const' in the Encode data structures.
+  Message-Id: <200510221243.j9MChTSu027711@smtp3.ActiveState.com>
+  Message-Id: <200510221343.j9MDhTk9001245@smtp3.ActiveState.com>
+
+2.13 2006/01/15 15:06:36
+! AUTHORS
+  Miyagawa's mail address updated
+  Message-Id: <693254b90601150535o767e10bai4f4732c275b4ebe0@mail.gmail.com>
+! lib/Encode/MIME/Header.pm
+  #16413: Encode::MIME::Headers patch to solve what is probably someone else's bug
+  http://rt.cpan.org/NoAuth/Bug.html?id=16413
+! lib/Encode/MIME/Header.pm t/mime-header.t
+  Applied: RT #16258: Support for RFC 2184 language tag
+  http://rt.cpan.org/NoAuth/Bug.html?id=16258
+! Encode.pm
+  Fixed RT #14559: fix for #8872 introduces new "bug"
+  http://rt.cpan.org/NoAuth/Bug.html?id=14559  
+! Encode.pm
++ t/from_to.t
+  from_to() now makes use of $check more naturally.
+  Message-Id: <693254b90601150535o767e10bai4f4732c275b4ebe0@mail.gmail.com>
+  <B10B4DE2-9BAF-4344-B3BE-2119977D817A@dan.co.jp>
+
+2.12 2005/09/08 14:17:17
 ! Encode.xs Encode.pm t/fallback.t
   Now accepts coderef for CHECK!
 ! ucm/8859-7.ucm

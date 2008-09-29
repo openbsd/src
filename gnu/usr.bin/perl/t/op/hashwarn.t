@@ -2,8 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw(. ../lib);
 }
+
+require 'test.pl';
+plan( tests => 16 );
 
 use strict;
 use warnings;
@@ -13,71 +16,58 @@ use vars qw{ @warnings };
 BEGIN {
     $SIG{'__WARN__'} = sub { push @warnings, @_ };
     $| = 1;
-    print "1..9\n";
 }
 
-END { print "not ok\n# Uncaught warnings:\n@warnings\n" if @warnings }
-
-sub test ($$;$) {
-    my($num, $bool, $diag) = @_;
-    if ($bool) {
-	print "ok $num\n";
-	return;
-    }
-    print "not ok $num\n";
-    return unless defined $diag;
-    $diag =~ s/\Z\n?/\n/;			# unchomp
-    print map "# $num : $_", split m/^/m, $diag;
-}
-
-sub test_warning ($$$) {
-    my($num, $got, $expected) = @_;
-    my($pattern, $ok);
-    if (($pattern) = ($expected =~ m#^/(.+)/$#s) or
-	(undef, $pattern) = ($expected =~ m#^m([^\w\s])(.+)\1$#s)) {
-	    # it's a regexp
-	    $ok = ($got =~ /$pattern/);
-	    test $num, $ok, "Expected pattern /$pattern/, got '$got'\n";
-    } else {
-	$ok = ($got eq $expected);
-	test $num, $ok, "Expected string '$expected', got '$got'\n";
-    }
-#   print "# $num: $got\n";
-}
-
-my $odd_msg = '/^Odd number of elements in hash assignment/';
-my $odd_msg2 = '/^Odd number of elements in anonymous hash/';
-my $ref_msg = '/^Reference found where even-sized list expected/';
+my $fail_odd      = 'Odd number of elements in hash assignment at ';
+my $fail_odd_anon = 'Odd number of elements in anonymous hash at ';
+my $fail_ref      = 'Reference found where even-sized list expected at ';
+my $fail_not_hr   = 'Not a HASH reference at ';
 
 {
+    @warnings = ();
     my %hash = (1..3);
-    test_warning 1, shift @warnings, $odd_msg;
+    cmp_ok(scalar(@warnings),'==',1,'odd count');
+    cmp_ok(substr($warnings[0],0,length($fail_odd)),'eq',$fail_odd,'odd msg');
 
+    @warnings = ();
     %hash = 1;
-    test_warning 2, shift @warnings, $odd_msg;
+    cmp_ok(scalar(@warnings),'==',1,'scalar count');
+    cmp_ok(substr($warnings[0],0,length($fail_odd)),'eq',$fail_odd,'scalar msg');
 
+    @warnings = ();
     %hash = { 1..3 };
-    test_warning 3, shift @warnings, $odd_msg2;
-    test_warning 4, shift @warnings, $ref_msg;
+    cmp_ok(scalar(@warnings),'==',2,'odd hashref count');
+    cmp_ok(substr($warnings[0],0,length($fail_odd_anon)),'eq',$fail_odd_anon,'odd hashref msg 1');
+    cmp_ok(substr($warnings[1],0,length($fail_ref)),'eq',$fail_ref,'odd hashref msg 2');
 
+    @warnings = ();
     %hash = [ 1..3 ];
-    test_warning 5, shift @warnings, $ref_msg;
+    cmp_ok(scalar(@warnings),'==',1,'arrayref count');
+    cmp_ok(substr($warnings[0],0,length($fail_ref)),'eq',$fail_ref,'arrayref msg');
 
-    %hash = sub { print "ok" };
-    test_warning 6, shift @warnings, $odd_msg;
+    @warnings = ();
+    %hash = sub { print "fenice" };
+    cmp_ok(scalar(@warnings),'==',1,'coderef count');
+    cmp_ok(substr($warnings[0],0,length($fail_odd)),'eq',$fail_odd,'coderef msg');
 
-    {
-	# "Pseudo-hashes are deprecated" warnings tested in warnings/av
-	no warnings 'deprecated';
+    @warnings = ();
+    $_ = { 1..10 };
+    cmp_ok(scalar(@warnings),'==',0,'hashref assign');
 
-	my $avhv = [{x=>1,y=>2}];
-	%$avhv = (x=>13,'y');
-	test_warning 7, shift @warnings, $odd_msg;
+    # Old pseudo-hash syntax, now removed.
 
-	%$avhv = 'x';
-	test_warning 8, shift @warnings, $odd_msg;
+    @warnings = ();
+    my $avhv = [{x=>1,y=>2}];
+    eval {
+        %$avhv = (x=>13,'y');
+    };
+    cmp_ok(scalar(@warnings),'==',0,'pseudo-hash 1 count');
+    cmp_ok(substr($@,0,length($fail_not_hr)),'eq',$fail_not_hr,'pseudo-hash 1 msg');
 
-	$_ = { 1..10 };
-	test 9, ! @warnings, "Unexpected warning";
-    }
+    @warnings = ();
+    eval {
+        %$avhv = 'x';
+    };
+    cmp_ok(scalar(@warnings),'==',0,'pseudo-hash 2 count');
+    cmp_ok(substr($@,0,length($fail_not_hr)),'eq',$fail_not_hr,'pseudo-hash 2 msg');
 }

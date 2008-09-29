@@ -1,5 +1,7 @@
 #!/usr/bin/perl -Tw
 
+use strict;
+
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';
@@ -9,8 +11,6 @@ BEGIN {
         unshift @INC, 't/lib';
     }
 }
-
-use strict;
 
 use Test::More tests => 89;
 

@@ -1,15 +1,23 @@
 package bignum;
-require 5.005;
+use 5.006002;
 
-$VERSION = '0.17';
+$VERSION = '0.22';
 use Exporter;
-@EXPORT_OK 	= qw( ); 
+@ISA 		= qw( bigint );
+@EXPORT_OK	= qw( PI e bexp bpi ); 
 @EXPORT 	= qw( inf NaN ); 
-@ISA 		= qw( Exporter );
 
 use strict;
+use overload;
+require bigint;		# no "use" to avoid import being called
 
 ############################################################################## 
+
+BEGIN 
+  {
+  *inf = \&bigint::inf;
+  *NaN = \&bigint::NaN;
+  }
 
 # These are all alike, and thus faked by AUTOLOAD
 
@@ -46,24 +54,55 @@ sub AUTOLOAD
   Carp::croak ("Can't call bignum\-\>$name, not a valid method");
   }
 
-sub upgrade
+sub unimport
   {
-  my $self = shift;
-  no strict 'refs';
-#  if (defined $_[0])
-#    {
-#    $Math::BigInt::upgrade = $_[0];
-#    $Math::BigFloat::upgrade = $_[0];
-#    }
-  return $Math::BigInt::upgrade;
+  $^H{bignum} = undef;					# no longer in effect
+  overload::remove_constant('binary','','float','','integer');
+  }
+
+sub in_effect
+  {
+  my $level = shift || 0;
+  my $hinthash = (caller($level))[10];
+  $hinthash->{bignum};
+  }
+
+#############################################################################
+# the following two routines are for Perl 5.9.4 or later and are lexical
+
+sub _hex
+  {
+  return CORE::hex($_[0]) unless in_effect(1);
+  my $i = $_[0];
+  $i = '0x'.$i unless $i =~ /^0x/;
+  Math::BigInt->new($i);
+  }
+
+sub _oct
+  {
+  return CORE::oct($_[0]) unless in_effect(1);
+  my $i = $_[0];
+  return Math::BigInt->from_oct($i) if $i =~ /^0[0-7]/;
+  Math::BigInt->new($i);
   }
 
 sub import 
   {
   my $self = shift;
 
+  $^H{bignum} = 1;					# we are in effect
+
+  my ($hex,$oct);
+
+  # for newer Perls override hex() and oct() with a lexical version:
+  if ($] > 5.009003)
+    {
+    $hex = \&_hex;
+    $oct = \&_oct;
+    }
+
   # some defaults
-  my $lib = '';
+  my $lib = ''; my $lib_kind = 'try';
   my $upgrade = 'Math::BigFloat';
   my $downgrade = 'Math::BigInt';
 
@@ -87,9 +126,10 @@ sub import
       my $s = 2; $s = 1 if @a-$j < 2;	# avoid "can not modify non-existant..."
       splice @a, $j, $s; $j -= $s; $i++;
       }
-    elsif ($_[$i] =~ /^(l|lib)$/)
+    elsif ($_[$i] =~ /^(l|lib|try|only)$/)
       {
       # this causes a different low lib to take care...
+      $lib_kind = $1; $lib_kind = 'lib' if $lib_kind eq 'l';
       $lib = $_[$i+1] || '';
       my $s = 2; $s = 1 if @a-$j < 2;	# avoid "can not modify non-existant..."
       splice @a, $j, $s; $j -= $s; $i++;
@@ -116,7 +156,20 @@ sub import
       $trace = 1;
       splice @a, $j, 1; $j --;
       }
-    else { die "unknown option $_[$i]"; }
+    elsif ($_[$i] eq 'hex')
+      {
+      splice @a, $j, 1; $j --;
+      $hex = \&bigint::_hex_global;
+      }
+    elsif ($_[$i] eq 'oct')
+      {
+      splice @a, $j, 1; $j --;
+      $oct = \&bigint::_oct_global;
+      }
+    elsif ($_[$i] !~ /^(PI|e|bexp|bpi)\z/)
+      {
+      die ("unknown option $_[$i]");
+      }
     }
   my $class;
   $_lite = 0;					# using M::BI::L ?
@@ -141,7 +194,7 @@ sub import
     require Math::BigInt if $_lite == 0;	# not already loaded?
     $class = 'Math::BigInt';			# regardless of MBIL or not
     }
-  push @import, 'lib' => $lib if $lib ne ''; 
+  push @import, $lib_kind => $lib if $lib ne ''; 
   # Math::BigInt::Trace or plain Math::BigInt
   $class->import(@import, upgrade => $upgrade);
 
@@ -168,11 +221,29 @@ sub import
     print "Math::BigFloat\t\t v$Math::BigFloat::VERSION\n";
     exit;
     }
-  $self->export_to_level(1,$self,@a);		# export inf and NaN
+
+  # Take care of octal/hexadecimal constants
+  overload::constant binary => sub { bigint::_binary_constant(shift) };
+
+  # if another big* was already loaded:
+  my ($package) = caller();
+
+  no strict 'refs';
+  if (!defined *{"${package}::inf"})
+    {
+    $self->export_to_level(1,$self,@a);           # export inf and NaN
+    }
+  {
+    no warnings 'redefine';
+    *CORE::GLOBAL::oct = $oct if $oct;
+    *CORE::GLOBAL::hex = $hex if $hex;
+  }
   }
 
-sub inf () { Math::BigInt->binf(); }
-sub NaN () { Math::BigInt->bnan(); }
+sub PI () { Math::BigFloat->new('3.141592653589793238462643383279502884197'); }
+sub e () { Math::BigFloat->new('2.718281828459045235360287471352662497757'); }
+sub bpi ($) { Math::BigFloat::bpi(@_); }
+sub bexp ($$) { my $x = Math::BigFloat->new($_[0]); $x->bexp($_[1]); }
 
 1;
 
@@ -190,6 +261,16 @@ bignum - Transparent BigNumber support for Perl
   print 2 ** 512 * 0.1,"\n";		# really is what you think it is
   print inf * inf,"\n";			# prints inf
   print NaN * 3,"\n";			# prints NaN
+
+  {
+    no bignum;
+    print 2 ** 256,"\n";		# a normal Perl scalar now
+  }
+
+  # for older Perls, note that this will be global:
+  use bignum qw/hex oct/;
+  print hex("0x1234567890123490"),"\n";
+  print oct("01234567890123490"),"\n";
 
 =head1 DESCRIPTION
 
@@ -218,13 +299,13 @@ You can see this with the following:
 
 Don't worry if it says Math::BigInt::Lite, bignum and friends will use Lite
 if it is installed since it is faster for some operations. It will be
-automatically upgraded to BigInt whenever neccessary:
+automatically upgraded to BigInt whenever necessary:
 
         perl -Mbignum -le 'print ref(2**255)'
 
 This also means it is a bad idea to check for some specific package, since
 the actual contents of $x might be something unexpected. Due to the
-transparent way of bignum C<ref()> should not be neccessary, anyway.
+transparent way of bignum C<ref()> should not be necessary, anyway.
 
 Since Math::BigInt and BigFloat also overload the normal math operations,
 the following line will still work:
@@ -235,16 +316,16 @@ Since numbers are actually objects, you can call all the usual methods from
 BigInt/BigFloat on them. This even works to some extent on expressions:
 
         perl -Mbignum -le '$x = 1234; print $x->bdec()'
-        perl -Mbignum -le 'print 1234->binc();'
-        perl -Mbignum -le 'print 1234->binc->badd(6);'
-        perl -Mbignum -le 'print +(1234)->binc()'
+        perl -Mbignum -le 'print 1234->copy()->binc();'
+        perl -Mbignum -le 'print 1234->copy()->binc->badd(6);'
+        perl -Mbignum -le 'print +(1234)->copy()->binc()'
 
 (Note that print doesn't do what you expect if the expression starts with
 '(' hence the C<+>)
 
 You can even chain the operations together as usual:
 
-        perl -Mbignum -le 'print 1234->binc->badd(6);'
+        perl -Mbignum -le 'print 1234->copy()->binc->badd(6);'
         1241
 
 Under bignum (or bigint or bigrat), Perl will "upgrade" the numbers
@@ -269,9 +350,7 @@ There is also C<use bigrat;> which gives you big rationals:
         12381/10
 
 The entire upgrading/downgrading is still experimental and might not work
-as you expect or may even have bugs.
-
-You might get errors like this:
+as you expect or may even have bugs. You might get errors like this:
 
         Can't use an undefined value as an ARRAY reference at
         /usr/local/lib/perl5/5.8.0/Math/BigInt/Calc.pm line 864
@@ -307,6 +386,8 @@ than or equal to zero. See Math::BigInt's bround() function for details.
 
 	perl -Mbignum=a,50 -le 'print sqrt(20)'
 
+Note that setting precision and accurary at the same time is not possible.
+
 =item p or precision
 
 This sets the precision for all math operations. The argument can be any
@@ -315,6 +396,8 @@ a positive value rounds to this digit left from the dot. 0 or 1 mean round to
 integer. See Math::BigInt's bfround() function for details.
 
 	perl -Mbignum=p,-50 -le 'print sqrt(20)'
+
+Note that setting precision and accurary at the same time is not possible.
 
 =item t or trace
 
@@ -328,13 +411,31 @@ Load a different math lib, see L<MATH LIBRARY>.
 	perl -Mbignum=l,GMP -e 'print 2 ** 512'
 
 Currently there is no way to specify more than one library on the command
-line. This will be hopefully fixed soon ;)
+line. This means the following does not work:
+
+	perl -Mbignum=l,GMP,Pari -e 'print 2 ** 512'
+
+This will be hopefully fixed soon ;)
+
+=item hex
+
+Override the built-in hex() method with a version that can handle big
+integers. Note that under Perl older than v5.9.4, this will be global
+and cannot be disabled with "no bigint;".
+
+=item oct
+
+Override the built-in oct() method with a version that can handle big
+integers. Note that under Perl older than v5.9.4, this will be global
+and cannot be disabled with "no bigint;".
 
 =item v or version
 
 This prints out the name and version of all modules used and then exits.
 
 	perl -Mbignum=v
+
+=back
 
 =head2 Methods
 
@@ -345,7 +446,7 @@ the BigInt or BigFloat API. It is wise to use only the bxxx() notation, and not
 the fxxx() notation, though. This makes it possible that the underlying object
 might morph into a different class than BigFloat.
 
-=head2 Caveat
+=head2 Caveats
 
 But a warning is in order. When using the following to make a copy of a number,
 only a shallow copy will be made.
@@ -364,7 +465,7 @@ following work:
         print $x + 1, " ", $y,"\n";     # prints 10 9
 
 but calling any method that modifies the number directly will result in
-B<both> the original and the copy beeing destroyed:
+B<both> the original and the copy being destroyed:
 
         $x = 9; $y = $x;
         print $x->badd(1), " ", $y,"\n";        # prints 10 10
@@ -375,7 +476,7 @@ B<both> the original and the copy beeing destroyed:
         $x = 9; $y = $x;
         print $x->bmul(2), " ", $y,"\n";        # prints 18 18
 
-Using methods that do not modify, but testthe contents works:
+Using methods that do not modify, but test the contents works:
 
         $x = 9; $y = $x;
         $z = 9 if $x->is_zero();                # works fine
@@ -387,22 +488,69 @@ well as the documentation in BigInt for further details.
 
 =item inf()
 
-A shortcut to return Math::BigInt->binf(). Usefull because Perl does not always
+A shortcut to return Math::BigInt->binf(). Useful because Perl does not always
 handle bareword C<inf> properly.
 
 =item NaN()
 
-A shortcut to return Math::BigInt->bnan(). Usefull because Perl does not always
+A shortcut to return Math::BigInt->bnan(). Useful because Perl does not always
 handle bareword C<NaN> properly.
+
+=item e
+
+	# perl -Mbignum=e -wle 'print e'
+
+Returns Euler's number C<e>, aka exp(1).
+
+=item PI()
+
+	# perl -Mbignum=PI -wle 'print PI'
+
+Returns PI.
+
+=item bexp()
+
+	bexp($power,$accuracy);
+
+Returns Euler's number C<e> raised to the appropriate power, to
+the wanted accuracy.
+
+Example:
+
+	# perl -Mbignum=bexp -wle 'print bexp(1,80)'
+
+=item bpi()
+
+	bpi($accuracy);
+
+Returns PI to the wanted accuracy.
+
+Example:
+
+	# perl -Mbignum=bpi -wle 'print bpi(80)'
 
 =item upgrade()
 
 Return the class that numbers are upgraded to, is in fact returning
 C<$Math::BigInt::upgrade>.
 
+=item in_effect()
+
+	use bignum;
+
+	print "in effect\n" if bignum::in_effect;	# true
+	{
+	  no bignum;
+	  print "in effect\n" if bignum::in_effect;	# false
+	}
+
+Returns true or false if C<bignum> is in effect in the current scope.
+
+This method only works on Perl v5.9.4 or later.
+
 =back
 
-=head2 MATH LIBRARY
+=head2 Math Library
 
 Math with the numbers is done (by default) by a module called
 Math::BigInt::Calc. This is equivalent to saying:
@@ -411,7 +559,7 @@ Math::BigInt::Calc. This is equivalent to saying:
 
 You can change this by using:
 
-	use bignum lib => 'BitVect';
+	use bignum lib => 'GMP';
 
 The following would first try to find Math::BigInt::Foo, then
 Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
@@ -419,6 +567,16 @@ Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
 	use bignum lib => 'Foo,Math::BigInt::Bar';
 
 Please see respective module documentation for further details.
+
+Using C<lib> warns if none of the specified libraries can be found and
+L<Math::BigInt> did fall back to one of the default libraries.
+To supress this warning, use C<try> instead:
+
+	use bignum try => 'GMP';
+
+If you want the code to die instead of falling back, use C<only> instead:
+
+	use bignum only => 'GMP';
 
 =head2 INTERNAL FORMAT
 
@@ -442,6 +600,41 @@ numbers or as a result of 0/0. '+inf' and '-inf' represent plus respectively
 minus infinity. You will get '+inf' when dividing a positive number by 0, and
 '-inf' when dividing any negative number by 0.
 
+=head1 CAVAETS
+
+=over 2
+
+=item in_effect()
+
+This method only works on Perl v5.9.4 or later.
+
+=item hex()/oct()
+
+C<bigint> overrides these routines with versions that can also handle
+big integer values. Under Perl prior to version v5.9.4, however, this
+will not happen unless you specifically ask for it with the two
+import tags "hex" and "oct" - and then it will be global and cannot be
+disabled inside a scope with "no bigint":
+
+	use bigint qw/hex oct/;
+
+	print hex("0x1234567890123456");
+	{
+		no bigint;
+		print hex("0x1234567890123456");
+	}
+
+The second call to hex() will warn about a non-portable constant.
+
+Compare this to:
+
+	use bigint;
+
+	# will warn only under older than v5.9.4
+	print hex("0x1234567890123456");
+
+=back
+
 =head1 MODULES USED
 
 C<bignum> is just a thin wrapper around various modules of the Math::BigInt
@@ -464,8 +657,10 @@ Some cool command line examples to impress the Python crowd ;)
 	perl -Mbignum -le 'print 3/7 + 5/7 + 8/3'
 	perl -Mbignum -le 'print 123->is_odd()'
 	perl -Mbignum -le 'print log(2)'
+	perl -Mbignum -le 'print exp(1)'
 	perl -Mbignum -le 'print 2 ** 0.5'
 	perl -Mbignum=a,65 -le 'print 2 ** 0.2'
+	perl -Mbignum=a,65,l,GMP -le 'print 7 ** 7777'
 
 =head1 LICENSE
 
@@ -481,6 +676,6 @@ as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> in early 2002, 2003.
+(C) by Tels L<http://bloodgate.com/> in early 2002 - 2007.
 
 =cut

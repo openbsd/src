@@ -1,31 +1,42 @@
 #!./perl
 
+# This test was originally for pseudo-hashes.  It now exists to ensure
+# they were properly removed in 5.9.
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require './test.pl';
 }
-
-use warnings;
-no warnings 'deprecated';
-use strict;
-use vars qw(@fake %fake);
 
 require Tie::Array;
 
 package Tie::BasicArray;
-@Tie::BasicArray::ISA = 'Tie::Array';
+@ISA = 'Tie::Array';
 sub TIEARRAY  { bless [], $_[0] }
 sub STORE     { $_[0]->[$_[1]] = $_[2] }
 sub FETCH     { $_[0]->[$_[1]] }
 sub FETCHSIZE { scalar(@{$_[0]})} 
-sub STORESIZE { $#{$_[0]} = $_[1]+1 } 
+sub STORESIZE { $#{$_[0]} = $_[1]+1 }
 
 package main;
 
-plan tests => 36;
+require './test.pl';
+plan(tests => 40);
 
-my $sch = {
+# Helper function to check the typical error message.
+sub not_hash {
+    my($err) = shift;
+    like( $err, qr/^Not a HASH reference / ) ||
+      printf STDERR "# at %s line %d.\n", (caller)[1,2];
+}
+
+# Something to place inside if blocks and while loops that won't get
+# compiled out.
+my $foo = 42;
+sub no_op { $foo++ }
+
+
+$sch = {
     'abc' => 1,
     'def' => 2,
     'jkl' => 3,
@@ -35,142 +46,239 @@ my $sch = {
 $a = [];
 $a->[0] = $sch;
 
-$a->{'abc'} = 'ABC';
-$a->{'def'} = 'DEF';
-$a->{'jkl'} = 'JKL';
+eval {
+    $a->{'abc'} = 'ABC';
+};
+not_hash($@);
 
-my @keys = keys %$a;
-my @values = values %$a;
+eval {
+    $a->{'def'} = 'DEF';
+};
+not_hash($@);
 
-is ($#keys, 2);
-is ($#values, 2);
+eval {
+    $a->{'jkl'} = 'JKL';
+};
+not_hash($@);
 
-my $i = 0;	# stop -w complaints
+eval {
+    @keys = keys %$a;
+};
+not_hash($@);
 
-while (my ($key,$value) = each %$a) {
-    if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
-	$key =~ y/a-z/A-Z/;
-	$i++ if $key eq $value;
+eval {
+    @values = values %$a;
+};
+not_hash($@);
+
+eval {
+    while( my($k,$v) = each %$a ) {
+        no_op;
     }
-}
+};
+not_hash($@);
 
-is ($i, 3);
 
 # quick check with tied array
 tie @fake, 'Tie::StdArray';
 $a = \@fake;
 $a->[0] = $sch;
 
-$a->{'abc'} = 'ABC';
-is ($a->{'abc'}, 'ABC');
+eval {
+    $a->{'abc'} = 'ABC';
+};
+not_hash($@);
+
+eval {
+    if ($a->{'abc'} eq 'ABC') { no_op(23) } else { no_op(42) }
+};
+not_hash($@);
 
 # quick check with tied array
 tie @fake, 'Tie::BasicArray';
 $a = \@fake;
 $a->[0] = $sch;
 
-$a->{'abc'} = 'ABC';
-is ($a->{'abc'}, 'ABC');
+eval {
+    $a->{'abc'} = 'ABC';
+};
+not_hash($@);
+
+eval {
+    if ($a->{'abc'} eq 'ABC') { no_op(23) } else { no_op(42) }
+};
+not_hash($@);
 
 # quick check with tied array & tied hash
 require Tie::Hash;
-tie %fake, 'Tie::StdHash';
+tie %fake, Tie::StdHash;
 %fake = %$sch;
 $a->[0] = \%fake;
 
-$a->{'abc'} = 'ABC';
-is ($a->{'abc'}, 'ABC');
+eval {
+    $a->{'abc'} = 'ABC';
+};
+not_hash($@);
+
+eval {
+    if ($a->{'abc'} eq 'ABC') { no_op(23) } else { no_op(42) }
+};
+not_hash($@);
+
 
 # hash slice
-{
-  no warnings 'uninitialized';
-  my $slice = join('', 'x',@$a{'abc','def'},'x');
-  is ($slice, 'xABCx');
-}
+eval {
+    my $slice = join('', 'x',@$a{'abc','def'},'x');
+};
+not_hash($@);
+
 
 # evaluation in scalar context
 my $avhv = [{}];
-ok (!%$avhv);
+
+eval {
+    () = %$avhv;
+};
+not_hash($@);
 
 push @$avhv, "a";
-ok (!%$avhv);
+eval {
+    () = %$avhv;
+};
+not_hash($@);
 
 $avhv = [];
 eval { $a = %$avhv };
-like ($@, qr/^Can't coerce array into hash/);
+not_hash($@);
 
 $avhv = [{foo=>1, bar=>2}];
-like (%$avhv, qr,^\d+/\d+,);
+eval {
+    %$avhv =~ m,^\d+/\d+,;
+};
+not_hash($@);
 
 # check if defelem magic works
 sub f {
-    is ($_[0], 'a');
+    print "not " unless $_[0] eq 'a';
     $_[0] = 'b';
+    print "ok 11\n";
 }
 $a = [{key => 1}, 'a'];
-f($a->{key});
-is ($a->[1], 'b');
+eval {
+    f($a->{key});
+};
+not_hash($@);
 
 # check if exists() is behaving properly
 $avhv = [{foo=>1,bar=>2,pants=>3}];
-ok (!exists $avhv->{bar});
+eval {
+    no_op if exists $avhv->{bar};
+};
+not_hash($@);
 
-$avhv->{pants} = undef;
-ok (exists $avhv->{pants});
-ok (!exists $avhv->{bar});
+eval {
+    $avhv->{pants} = undef;
+};
+not_hash($@);
 
-$avhv->{bar} = 10;
-ok (exists $avhv->{bar});
-is ($avhv->{bar}, 10);
+eval {
+    no_op if exists $avhv->{pants};
+};
+not_hash($@);
 
-my $v = delete $avhv->{bar};
-is ($v, 10);
+eval {
+    no_op if exists $avhv->{bar};
+};
+not_hash($@);
 
-ok (!exists $avhv->{bar});
+eval {
+    $avhv->{bar} = 10;
+};
+not_hash($@);
 
-$avhv->{foo} = 'xxx';
-$avhv->{bar} = 'yyy';
-$avhv->{pants} = 'zzz';
-my @x = delete @{$avhv}{'foo','pants'};
-is ("@x", "xxx zzz");
+eval {
+    no_op unless exists $avhv->{bar} and $avhv->{bar} == 10;
+};
+not_hash($@);
 
-is ("$avhv->{bar}", "yyy");
+eval {
+    $v = delete $avhv->{bar};
+};
+not_hash($@);
+
+eval {
+    no_op if exists $avhv->{bar};
+};
+not_hash($@);
+
+eval {
+    $avhv->{foo} = 'xxx';
+};
+not_hash($@);
+eval {
+    $avhv->{bar} = 'yyy';
+};
+not_hash($@);
+eval {
+    $avhv->{pants} = 'zzz';
+};
+not_hash($@);
+eval {
+    @x = delete @{$avhv}{'foo','pants'};
+};
+not_hash($@);
+eval {
+    no_op unless "$avhv->{bar}" eq "yyy";
+};
+not_hash($@);
 
 # hash assignment
-%$avhv = ();
-is (ref($avhv->[0]), 'HASH');
+eval {
+    %$avhv = ();
+};
+not_hash($@);
 
-my %hv = %$avhv;
-ok (!grep defined, values %hv);
-ok (!grep ref, keys %hv);
+eval {
+    %hv = %$avhv;
+};
+not_hash($@);
 
-%$avhv = (foo => 29, pants => 2, bar => 0);
-is ("@$avhv[1..3]", '29 0 2');
+eval {
+    %$avhv = (foo => 29, pants => 2, bar => 0);
+};
+not_hash($@);
 
 my $extra;
 my @extra;
-($extra, %$avhv) = ("moo", foo => 42, pants => 53, bar => "HIKE!");
-is ("@$avhv[1..3]", '42 HIKE! 53');
-is ($extra, 'moo');
+eval {
+    ($extra, %$avhv) = ("moo", foo => 42, pants => 53, bar => "HIKE!");
+};
+not_hash($@);
 
-%$avhv = ();
-(%$avhv, $extra) = (foo => 42, pants => 53, bar => "HIKE!");
-is ("@$avhv[1..3]", '42 HIKE! 53');
-ok (!defined $extra);
+eval {
+    %$avhv = ();
+    (%$avhv, $extra) = (foo => 42, pants => 53, bar => "HIKE!");
+};
+not_hash($@);
 
-@extra = qw(whatever and stuff);
-%$avhv = ();
-(%$avhv, @extra) = (foo => 42, pants => 53, bar => "HIKE!");
-is ("@$avhv[1..3]", '42 HIKE! 53');
-is (@extra, 0);
+eval {
+    @extra = qw(whatever and stuff);
+    %$avhv = ();
+};
+not_hash($@);
+eval {
+    (%$avhv, @extra) = (foo => 42, pants => 53, bar => "HIKE!");
+};
+not_hash($@);
 
-%$avhv = ();
-(@extra, %$avhv) = (foo => 42, pants => 53, bar => "HIKE!");
-is (ref $avhv->[0], 'HASH');
-is (@extra, 6);
+eval {
+    (@extra, %$avhv) = (foo => 42, pants => 53, bar => "HIKE!");
+};
+not_hash($@);
 
 # Check hash slices (BUG ID 20010423.002)
 $avhv = [{foo=>1, bar=>2}];
-@$avhv{"foo", "bar"} = (42, 53);
-is ($avhv->{foo}, 42);
-is ($avhv->{bar}, 53);
+eval {
+    @$avhv{"foo", "bar"} = (42, 53);
+};
+not_hash($@);

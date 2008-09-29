@@ -1,8 +1,8 @@
-# PropertyValueAliases-4.1.0.txt
-# Date: 2005-03-28, 17:21:48 GMT [MD]
+# PropertyValueAliases-5.0.0.txt
+# Date: 2006-03-03, 08:23:34 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
@@ -65,6 +65,7 @@ age; n/a       ; 3.1
 age; n/a       ; 3.2
 age; n/a       ; 4.0
 age; n/a       ; 4.1
+age; n/a       ; 5.0
 age; n/a       ; unassigned
 
 # Bidi_Class (bc)
@@ -101,6 +102,7 @@ blk; n/a       ; Arabic_Presentation_Forms-B
 blk; n/a       ; Arabic_Supplement
 blk; n/a       ; Armenian
 blk; n/a       ; Arrows
+blk; n/a       ; Balinese
 blk; n/a       ; Basic_Latin
 blk; n/a       ; Bengali
 blk; n/a       ; Block_Elements
@@ -128,6 +130,9 @@ blk; n/a       ; Combining_Diacritical_Marks_Supplement
 blk; n/a       ; Combining_Half_Marks
 blk; n/a       ; Control_Pictures
 blk; n/a       ; Coptic
+blk; n/a       ; Counting_Rod_Numerals
+blk; n/a       ; Cuneiform
+blk; n/a       ; Cuneiform_Numbers_and_Punctuation
 blk; n/a       ; Currency_Symbols
 blk; n/a       ; Cypriot_Syllabary
 blk; n/a       ; Cyrillic
@@ -173,6 +178,8 @@ blk; n/a       ; Lao
 blk; n/a       ; Latin-1_Supplement
 blk; n/a       ; Latin_Extended-A
 blk; n/a       ; Latin_Extended-B
+blk; n/a       ; Latin_Extended-C
+blk; n/a       ; Latin_Extended-D
 blk; n/a       ; Latin_Extended_Additional
 blk; n/a       ; Letterlike_Symbols
 blk; n/a       ; Limbu
@@ -192,6 +199,7 @@ blk; n/a       ; Mongolian
 blk; n/a       ; Musical_Symbols
 blk; n/a       ; Myanmar
 blk; n/a       ; New_Tai_Lue
+blk; n/a       ; NKo
 blk; n/a       ; No_Block
 blk; n/a       ; Number_Forms
 blk; n/a       ; Ogham
@@ -200,6 +208,8 @@ blk; n/a       ; Old_Persian
 blk; n/a       ; Optical_Character_Recognition
 blk; n/a       ; Oriya
 blk; n/a       ; Osmanya
+blk; n/a       ; Phags-pa
+blk; n/a       ; Phoenician
 blk; n/a       ; Phonetic_Extensions
 blk; n/a       ; Phonetic_Extensions_Supplement
 blk; n/a       ; Private_Use_Area
@@ -491,6 +501,7 @@ nt ; Nu        ; Numeric
 
 sc ; Arab      ; Arabic
 sc ; Armn      ; Armenian
+sc ; Bali      ; Balinese
 sc ; Beng      ; Bengali
 sc ; Bopo      ; Bopomofo
 sc ; Brai      ; Braille
@@ -528,9 +539,12 @@ sc ; Linb      ; Linear_B
 sc ; Mlym      ; Malayalam
 sc ; Mong      ; Mongolian
 sc ; Mymr      ; Myanmar
+sc ; Nkoo      ; Nko
 sc ; Ogam      ; Ogham
 sc ; Orya      ; Oriya
 sc ; Osma      ; Osmanya
+sc ; Phag      ; Phags_Pa
+sc ; Phnx      ; Phoenician
 sc ; Qaai      ; Inherited
 sc ; Runr      ; Runic
 sc ; Shaw      ; Shavian
@@ -549,8 +563,10 @@ sc ; Thai      ; Thai
 sc ; Tibt      ; Tibetan
 sc ; Ugar      ; Ugaritic
 sc ; Xpeo      ; Old_Persian
+sc ; Xsux      ; Cuneiform
 sc ; Yiii      ; Yi
 sc ; Zyyy      ; Common
+sc ; Zzzz      ; Unknown
 
 # Sentence_Break (SB)
 
@@ -576,3 +592,5 @@ WB ; ML        ; MidLetter
 WB ; MN        ; MidNum
 WB ; NU        ; Numeric
 WB ; XX        ; Other
+
+# EOF

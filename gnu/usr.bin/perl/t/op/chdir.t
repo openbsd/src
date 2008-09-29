@@ -9,10 +9,13 @@ BEGIN {
 
 use Config;
 require "test.pl";
-plan(tests => 38);
+plan(tests => 48);
 
 my $IsVMS   = $^O eq 'VMS';
 my $IsMacOS = $^O eq 'MacOS';
+
+# For an op regression test, I don't want to rely on "use constant" working.
+my $has_fchdir = ($Config{d_fchdir} || "") eq "define";
 
 # Might be a little early in the testing process to start using these,
 # but I can't think of a way to write this test without them.
@@ -43,24 +46,64 @@ SKIP: {
 $Cwd = abs_path;
 
 SKIP: {
-    skip("no fchdir", 6) unless ($Config{d_fchdir} || "") eq "define";
+    skip("no fchdir", 16) unless $has_fchdir;
+    my $has_dirfd = ($Config{d_dirfd} || $Config{d_dir_dd_fd} || "") eq "define";
     ok(opendir(my $dh, "."), "opendir .");
     ok(open(my $fh, "<", "op"), "open op");
     ok(chdir($fh), "fchdir op");
     ok(-f "chdir.t", "verify that we are in op");
-    if (($Config{d_dirfd} || "") eq "define") {
+    if ($has_dirfd) {
        ok(chdir($dh), "fchdir back");
     }
     else {
        eval { chdir($dh); };
        like($@, qr/^The dirfd function is unimplemented at/, "dirfd is unimplemented");
-       chdir "..";
+       chdir ".." or die $!;
+    }
+
+    # same with bareword file handles
+    no warnings 'once';
+    *DH = $dh;
+    *FH = $fh;
+    ok(chdir FH, "fchdir op bareword");
+    ok(-f "chdir.t", "verify that we are in op");
+    if ($has_dirfd) {
+       ok(chdir DH, "fchdir back bareword");
+    }
+    else {
+       eval { chdir(DH); };
+       like($@, qr/^The dirfd function is unimplemented at/, "dirfd is unimplemented");
+       chdir ".." or die $!;
     }
     ok(-d "op", "verify that we are back");
+
+    # And now the ambiguous case
+    {
+	no warnings qw<io deprecated>;
+	ok(opendir(H, "op"), "opendir op") or diag $!;
+	ok(open(H, "<", "base"), "open base") or diag $!;
+    }
+    if ($has_dirfd) {
+	ok(chdir(H), "fchdir to op");
+	ok(-f "chdir.t", "verify that we are in 'op'");
+	chdir ".." or die $!;
+    }
+    else {
+	eval { chdir(H); };
+	like($@, qr/^The dirfd function is unimplemented at/,
+	     "dirfd is unimplemented");
+	SKIP: {
+	    skip("dirfd is unimplemented");
+	}
+    }
+    ok(closedir(H), "closedir");
+    ok(chdir(H), "fchdir to base");
+    ok(-f "cond.t", "verify that we are in 'base'");
+    chdir ".." or die $!;
 }
 
 SKIP: {
-    skip("has fchdir", 1) if ($Config{d_fchdir} || "") eq "define";
+    skip("has fchdir", 1) if $has_fchdir;
     opendir(my $dh, "op");
     eval { chdir($dh); };
     like($@, qr/^The fchdir function is unimplemented at/, "fchdir is unimplemented");
@@ -138,6 +181,10 @@ END {
 
     # Restore the environment for VMS (and doesn't hurt for anyone else)
     @ENV{@magic_envs} = @Saved_Env{@magic_envs};
+
+    # On VMS this must be deleted or process table is wrong on exit
+    # when this script is run interactively.
+    delete $ENV{'SYS$LOGIN'} if $IsVMS;
 }
 
 

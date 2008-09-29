@@ -66,8 +66,8 @@ From: "Jason Shirk"
 Files patched: scope.c
  Did
  
-                 I32 delta = SSPOPINT;
-                 savestack_ix -= delta;  /* regexp must have croaked */
+		 I32 delta = SSPOPINT;
+		 savestack_ix -= delta;	 /* regexp must have croaked */
  
  instead.
 
@@ -76,10 +76,10 @@ From: oneill@cs.sfu.ca
 Files patched: op.c
  The pad_findmy routine was only checking previous statements for previous
  mention of external lexicals, so the fact that the current statement
- already mentioned @list was not noted.  It therefore allocated another
+ already mentioned @list was not noted.	 It therefore allocated another
  reference to the outside lexical, and this didn't compare equal when
  the assigment parsing code was trying to determine whether there was a
- common variable on either side of the equals.  Since it didn't see the
+ common variable on either side of the equals.	Since it didn't see the
  same variable, it thought it could avoid making copies of the values on
  the stack during list assignment.  Unfortunately, before using those
  values, the list assignment has to zero out the target array, which
@@ -105,7 +105,7 @@ Files patched: op.c pp.c
 NETaa13739: XSUB interface caches gimme in case XSUB clobbers it
 From: Dean Roehrich
 Files patched: pp_hot.c
- Applied suggest patch.  Also deleted second gimme declaration as redundant.
+ Applied suggest patch.	 Also deleted second gimme declaration as redundant.
 
 NETaa13760: comppad reference counts were inconsistent
 From: Larry Wall
@@ -119,10 +119,10 @@ Files patched: sv.c
  Okay, I understand how this one happened.  This is a case where a
  beneficial fix uncovered a bug elsewhere.  I changed the constant
  folder to prefer integer results over double if the numbers are the
- same.  In this case, they aren't, but it leaves the integer value there
+ same.	In this case, they aren't, but it leaves the integer value there
  anyway because the storage is already allocated for it, and it *might*
- be used in an integer context.  And since it's producing a constant, it
- sets READONLY.  Unfortunately, sv_2pv() bogusly preferred the integer
+ be used in an integer context.	 And since it's producing a constant, it
+ sets READONLY.	 Unfortunately, sv_2pv() bogusly preferred the integer
  value to the double when READONLY was set.  This never showed up if you
  just said
  
@@ -143,7 +143,7 @@ Files patched: pod/perlvar.pod
      <1.array-element-read-only>
      % perl -le '$,=", "; $#w=5; for (@w) { $_=1; } print @w' 
      Modification of a read-only value attempted at -e line 1.
-     % perl4 -le '$,=", "; $#w=5; for (@w) { $_=1; } print @w'   
+     % perl4 -le '$,=", "; $#w=5; for (@w) { $_=1; } print @w'	 
      1, 1, 1, 1, 1, 1
  
  This one may stay the way it is for performance reasons.
@@ -307,7 +307,7 @@ Files patched: op.c
 NETaa13778: -w coredumps on <$>
 From: Hans Mulder
 Files patched: pp_hot.c toke.c
- Now produces suggested error message.  Also installed guard in warning code
+ Now produces suggested error message.	Also installed guard in warning code
  that coredumped.
 
 NETaa13779: foreach didn't use savestack mechanism
@@ -352,7 +352,7 @@ Files patched: pod/perlop.pod
  Added the following to perlop:
  
  A glob only evaluates its (embedded) argument when it is starting a new
- list.  All values must be read before it will start over.  In a list
+ list.	All values must be read before it will start over.  In a list
  context this isn't important, because you automatically get them all
  anyway.  In a scalar context, however, the operator returns the next value
  each time it is called, or a FALSE value if you've just run out.  Again,
@@ -562,7 +562,7 @@ Files patched: hv.c perl.h
 NETaa14353: upgraded SV arena allocation
 Files patched: proto.h
 
-NETaa14353: upgraded SV arena allocation            
+NETaa14353: upgraded SV arena allocation	    
 Files patched: perl.c sv.c
 
 NETaa14422: added rudimentary prototypes
@@ -575,7 +575,7 @@ Files patched: Makefile.SH op.c op.c perly.c perly.c.diff perly.h perly.y proto.
  Date: Thu, 28 Sep 95 17:18:54 -0700
  From: lwall@scalpel.netlabs.com (Larry Wall)
  
- : No.  Larry's currently got the patch pumpkin for all such core perl topics.
+ : No.	Larry's currently got the patch pumpkin for all such core perl topics.
  
  I dunno whether you should let me have the patch pumpkin or not.  To fix
  a Sev 2 I just hacked in rudimentary prototypes.  :-)
@@ -588,7 +588,7 @@ Files patched: Makefile.SH op.c op.c perly.c perly.c.diff perly.h perly.y proto.
      sub foo ($@) { print "@_\n" }	# Must have at least one argument
      foo bar baz / 2 || "oops", "is the answer";
  
- This prints "42 is the answer" on my machine.  That is, it's the same as
+ This prints "42 is the answer" on my machine.	That is, it's the same as
  
      foo( bar( baz() / 2) || "oops", "is the answer");
  
@@ -622,7 +622,7 @@ Files patched: Makefile.SH op.c op.c perly.c perly.c.diff perly.h perly.y proto.
  
  and the user can say AAA + BBB and get 3.
  
- I'm not quite sure how this interacts with autoloading though.  I fear
+ I'm not quite sure how this interacts with autoloading though.	 I fear
  POSIX.pm will need to say
  
      sub E2BIG ();
@@ -709,7 +709,7 @@ Files patched: regexec.c
  A partial match on a subpattern could fool the infinite regress detector
  into thinking progress had been made.
  The previous workaround prevented another bug (NETaa14529) from being fixed,
- so I've backed it out.  I'll need to think more about how to detect failure
+ so I've backed it out.	 I'll need to think more about how to detect failure
  to progress.  I'm still hopeful it's not equivalent to the halting problem.
 
 NETaa14535: patches from Gurusamy Sarathy
@@ -897,7 +897,7 @@ NETaa14704: closure got wrong outer scope if outer sub was predeclared
 From: Marc Paquette
 Files patched: op.c
  The outer scope of the anonymous sub was set to the stub rather than to
- the actual subroutine.  I kludged it by making the outer scope of the
+ the actual subroutine.	 I kludged it by making the outer scope of the
  stub be the actual subroutine, if anything is depending on the stub.
 
 NETaa14705: $foo .= $foo did free memory read
@@ -992,7 +992,7 @@ NETaa14887: couldn't negate magical scalars
 From: ian
 Also: Gurusamy Sarathy
 Files patched: pp.c
- Applied suggested patch, more or less.  (It's not necessary to test both
+ Applied suggested patch, more or less.	 (It's not necessary to test both
  SvNIOK and SvNIOKp, since the private bits are always set if the public
  bits are set.)
 
@@ -1036,7 +1036,7 @@ NETaa14998: sv_add_arena() no longer leaks memory
 From: Andreas Koenig
 Files patched: av.c hv.c perl.h sv.c
  Now keeps one potential arena "on tap", but doesn't use it unless there's
- demand for SV headers.  When an AV or HV is extended, its old memory
+ demand for SV headers.	 When an AV or HV is extended, its old memory
  becomes the next potential arena unless there already is one, in which
  case it is simply freed.  This will have the desired property of not
  stranding medium-sized chunks of memory when extending a single array
@@ -1190,7 +1190,7 @@ NETaa15193: & now always bypasses prototype checking
 From: Larry Wall
 Files patched: dump.c op.c op.h perly.c perly.c.diff perly.y pod/perlsub.pod pp_hot.c proto.h toke.c vms/perly_c.vms vms/perly_h.vms
  Turned out to be a big hairy deal because the lexer turns foo() into &foo().
- But it works consistently now.  Also fixed pod.
+ But it works consistently now.	 Also fixed pod.
 
 NETaa15197: 5.002b2 is 'appending' to $@
 From: Gurusamy Sarathy
@@ -1260,7 +1260,7 @@ Files patched: op.c op.c
  The program
  
      for ($i = 0; $i < 100000; $i++) {
- 	push @foo, $i;
+	push @foo, $i;
      }
  
  takes about one quarter the memory if the optimizer decides that it can
@@ -1311,7 +1311,7 @@ From: Clark Cooper
 Files patched: op.c
  Applied patch suggested by Chip, with liberalization to >= and <=.
 
-NETaa15299: couldn't eval string containing pod or __DATA__     
+NETaa15299: couldn't eval string containing pod or __DATA__	
 From: Andreas Koenig
 Also: Gisle Aas
 Files patched: toke.c
@@ -1339,7 +1339,7 @@ From: Andreas Koenig
 Files patched: lib/File/Path.pm
  Added suggested patch, except I did
  
-        if (not -l $root and -d _) {
+	if (not -l $root and -d _) {
  
  for efficiency, since if -d is true, the -l already called lstat on it.
 
@@ -1403,14 +1403,14 @@ Summary of user-visible Configure and build changes since 5.001:
 ----------------------------------------------------------------
 
 Yet more enhancements and fixes have been made to the Configure and
-build process for perl.  Most of these will not be visible to the
+build process for perl.	 Most of these will not be visible to the
 ordinary user--they just make the process more robust and likely to
 work on a wider range of platforms.
 
-This is a brief summary of the most important changes.  A more
+This is a brief summary of the most important changes.	A more
 detailed description is given below.
 
-    Slightly changed installation directories.  See INSTALL.
+    Slightly changed installation directories.	See INSTALL.
 
     Include 5.000 - 5.001 upgrage notes :-) (see below).  You might
     want to read through them as well as these notes.
@@ -1433,14 +1433,14 @@ Upgrade Traps and Pitfalls:
 Since a lot has changed in the build process, you are probably best off
 starting with a fresh copy of the perl5.002 sources.  In particular,
 your 5.000 or 5.001 config.sh will contain several variables that are no
-longer needed.  Further, improvements in the Configure tests may mean
+longer needed.	Further, improvements in the Configure tests may mean
 that some of the answers will be different than they were in previous
 versions, and which answer to keep can be difficult to sort out. 
 Therefore, you are probably better off ignoring your old config.sh, as
 in the following:
 
-	make -k distclean 	# (if you've built perl before)
-	rm -f config.sh 	# (in case distclean mysteriously fails)
+	make -k distclean	# (if you've built perl before)
+	rm -f config.sh		# (in case distclean mysteriously fails)
 	sh Configure [whatever options you like]
 	make depend
 	make
@@ -1471,8 +1471,8 @@ Index: Configure
     Use nm -D on Linux with shared libraries, if the system
     supports nm -D.
 
-Prereq:  3.0.1.8 
-*** perl5.002b1h/Configure	Thu Jan  4 11:14:37 1996
+Prereq:	 3.0.1.8 
+*** perl5.002b1h/Configure	Thu Jan	 4 11:14:37 1996
 --- perl5.002b2/Configure	Thu Jan 11 17:09:13 1996
 
 Index: MANIFEST
@@ -1481,12 +1481,12 @@ Index: MANIFEST
     
     Include hints file dec_osf for ODBM_File extension.
 
-*** perl5.002b1h/MANIFEST	Wed Jan  3 14:37:54 1996
+*** perl5.002b1h/MANIFEST	Wed Jan	 3 14:37:54 1996
 --- perl5.002b2/MANIFEST	Sat Jan 13 16:30:43 1996
 
 Index: configpm
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
 *** perl5.002b1h/configpm	Tue Oct 31 11:51:52 1995
 --- perl5.002b2/configpm	Fri Jan 12 10:53:34 1996
@@ -1496,15 +1496,15 @@ Index: doop.c
     Chip's patch to use STDCHAR and U8 nearly everywhere instead of
     assuming 8-bit chars or ~(char) 0 == 0xff.
 
-*** perl5.002b1h/doop.c	Wed Nov 15 15:08:01 1995
+*** perl5.002b1h/doop.c Wed Nov 15 15:08:01 1995
 --- perl5.002b2/doop.c	Fri Jan 12 15:05:04 1996
 
 Index: embed.h
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
-*** perl5.002b1h/embed.h	Thu Jan  4 13:28:08 1996
---- perl5.002b2/embed.h	Fri Jan 12 15:09:11 1996
+*** perl5.002b1h/embed.h	Thu Jan	 4 13:28:08 1996
+--- perl5.002b2/embed.h Fri Jan 12 15:09:11 1996
 
 Index: ext/DB_File/Makefile.PL
 
@@ -1512,17 +1512,17 @@ Index: ext/DB_File/Makefile.PL
     Disable pod2man.
 
 *** perl5.002b1h/ext/DB_File/Makefile.PL	Tue Nov 14 14:14:17 1995
---- perl5.002b2/ext/DB_File/Makefile.PL	Tue Jan  9 16:54:17 1996
+--- perl5.002b2/ext/DB_File/Makefile.PL Tue Jan	 9 16:54:17 1996
 
 *** perl5.002b1h/ext/DB_File/Makefile.PL	Tue Nov 14 14:14:17 1995
---- perl5.002b2/ext/DB_File/Makefile.PL	Sat Jan 13 17:07:11 1996
+--- perl5.002b2/ext/DB_File/Makefile.PL Sat Jan 13 17:07:11 1996
 
 Index: ext/DynaLoader/Makefile.PL
 
     Disable prototypes.
     Disable pod2man.
 
-*** perl5.002b1h/ext/DynaLoader/Makefile.PL	Tue Jun  6 12:24:37 1995
+*** perl5.002b1h/ext/DynaLoader/Makefile.PL	Tue Jun	 6 12:24:37 1995
 --- perl5.002b2/ext/DynaLoader/Makefile.PL	Sat Jan 13 17:16:34 1996
 
 Index: ext/Fcntl/Makefile.PL
@@ -1561,7 +1561,7 @@ Index: ext/ODBM_File/Makefile.PL
     Disable prototypes.
     Disable pod2man.
 
-*** perl5.002b1h/ext/ODBM_File/Makefile.PL	Mon Jun  5 15:03:44 1995
+*** perl5.002b1h/ext/ODBM_File/Makefile.PL	Mon Jun	 5 15:03:44 1995
 --- perl5.002b2/ext/ODBM_File/Makefile.PL	Sat Jan 13 17:08:22 1996
 
 Index: ext/ODBM_File/hints/dec_osf.pl
@@ -1591,7 +1591,7 @@ Index: ext/SDBM_File/sdbm/sdbm.c
 
     Give correct prototype for free.
 
-Prereq:  1.16 
+Prereq:	 1.16 
 *** perl5.002b1h/ext/SDBM_File/sdbm/sdbm.c	Mon Nov 13 23:01:41 1995
 --- perl5.002b2/ext/SDBM_File/sdbm/sdbm.c	Fri Jan 12 10:33:32 1996
 
@@ -1600,50 +1600,50 @@ Index: ext/Safe/Makefile.PL
     Disable prototypes.
     Disable pod2man.
 
-*** perl5.002b1h/ext/Safe/Makefile.PL	Tue Jan  2 15:43:53 1996
+*** perl5.002b1h/ext/Safe/Makefile.PL	Tue Jan	 2 15:43:53 1996
 --- perl5.002b2/ext/Safe/Makefile.PL	Sat Jan 13 17:08:45 1996
 
 Index: ext/Safe/Safe.pm
 
     Patch from Andreas.
 
-*** perl5.002b1h/ext/Safe/Safe.pm	Tue Jan  2 15:45:27 1996
+*** perl5.002b1h/ext/Safe/Safe.pm	Tue Jan	 2 15:45:27 1996
 --- perl5.002b2/ext/Safe/Safe.pm	Fri Jan 12 10:52:33 1996
 
 Index: ext/Safe/Safe.xs
 
     Patch for older compilers which had namespace confusion.
 
-*** perl5.002b1h/ext/Safe/Safe.xs	Tue Jan  2 15:45:27 1996
---- perl5.002b2/ext/Safe/Safe.xs	Fri Jan  5 14:27:47 1996
+*** perl5.002b1h/ext/Safe/Safe.xs	Tue Jan	 2 15:45:27 1996
+--- perl5.002b2/ext/Safe/Safe.xs	Fri Jan	 5 14:27:47 1996
 
 Index: ext/Socket/Makefile.PL
 
     Disable prototypes.
     Disable pod2man.
 
-*** perl5.002b1h/ext/Socket/Makefile.PL	Sat Dec  2 16:23:52 1995
+*** perl5.002b1h/ext/Socket/Makefile.PL Sat Dec	 2 16:23:52 1995
 --- perl5.002b2/ext/Socket/Makefile.PL	Sat Jan 13 17:08:52 1996
 
 Index: ext/Socket/Socket.xs
 
     Use unsigned shorts for ports.
 
-*** perl5.002b1h/ext/Socket/Socket.xs	Sat Dec  2 15:46:20 1995
---- perl5.002b2/ext/Socket/Socket.xs	Mon Jan  8 21:59:52 1996
+*** perl5.002b1h/ext/Socket/Socket.xs	Sat Dec	 2 15:46:20 1995
+--- perl5.002b2/ext/Socket/Socket.xs	Mon Jan	 8 21:59:52 1996
 
 Index: global.sym
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
-*** perl5.002b1h/global.sym	Wed Jan  3 12:01:59 1996
+*** perl5.002b1h/global.sym	Wed Jan	 3 12:01:59 1996
 --- perl5.002b2/global.sym	Fri Jan 12 10:53:34 1996
 
 Index: gv.c
 
     Avoid VMS sprintf bug with buffers >1024.
 
-*** perl5.002b1h/gv.c	Fri Dec  8 10:37:22 1995
+*** perl5.002b1h/gv.c	Fri Dec	 8 10:37:22 1995
 --- perl5.002b2/gv.c	Fri Jan 12 15:27:27 1996
 
 Index: hints/aix.sh
@@ -1657,14 +1657,14 @@ Index: hints/irix_5.sh
 
     Updated
 
-*** perl5.002b1h/hints/irix_5.sh	Tue Jan  2 14:53:52 1996
---- perl5.002b2/hints/irix_5.sh	Tue Jan  9 16:05:11 1996
+*** perl5.002b1h/hints/irix_5.sh	Tue Jan	 2 14:53:52 1996
+--- perl5.002b2/hints/irix_5.sh Tue Jan	 9 16:05:11 1996
 
 Index: hints/linux.sh
 
     Updated
 
-*** perl5.002b1h/hints/linux.sh	Fri Jun  2 10:20:55 1995
+*** perl5.002b1h/hints/linux.sh Fri Jun	 2 10:20:55 1995
 --- perl5.002b2/hints/linux.sh	Fri Jan 12 11:43:52 1996
 
 Index: hints/machten.sh
@@ -1687,12 +1687,12 @@ Index: installperl
     
     Use File::Path::mkpath instead of our own makedir().
 
-*** perl5.002b1h/installperl	Wed Jan  3 14:33:57 1996
+*** perl5.002b1h/installperl	Wed Jan	 3 14:33:57 1996
 --- perl5.002b2/installperl	Thu Jan 11 16:12:16 1996
 
 Index: interp.sym
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
 *** perl5.002b1h/interp.sym	Fri Nov 10 17:17:32 1995
 --- perl5.002b2/interp.sym	Fri Jan 12 15:05:04 1996
@@ -1701,26 +1701,26 @@ Index: lib/AutoLoader.pm
 
     Undo Tim's tainting patch from beta1h.
 
-*** perl5.002b1h/lib/AutoLoader.pm	Tue Jan  2 16:10:36 1996
---- perl5.002b2/lib/AutoLoader.pm	Fri Jan  5 16:02:28 1996
+*** perl5.002b1h/lib/AutoLoader.pm	Tue Jan	 2 16:10:36 1996
+--- perl5.002b2/lib/AutoLoader.pm	Fri Jan	 5 16:02:28 1996
 
 Index: lib/Carp.pm
-*** perl5.002b1h/lib/Carp.pm	Tue Jan  2 12:10:38 1996
+*** perl5.002b1h/lib/Carp.pm	Tue Jan	 2 12:10:38 1996
 --- perl5.002b2/lib/Carp.pm	Fri Jan 12 11:23:31 1996
 
 Index: lib/ExtUtils/MM_VMS.pm
 
     Updated to MakeMaker-5.16.
 
-*** perl5.002b1h/lib/ExtUtils/MM_VMS.pm	Tue Jan  2 14:07:10 1996
---- perl5.002b2/lib/ExtUtils/MM_VMS.pm	Thu Jan  4 21:00:46 1996
+*** perl5.002b1h/lib/ExtUtils/MM_VMS.pm Tue Jan	 2 14:07:10 1996
+--- perl5.002b2/lib/ExtUtils/MM_VMS.pm	Thu Jan	 4 21:00:46 1996
 
 Index: lib/ExtUtils/MakeMaker.pm
 
     Updated to MakeMaker-5.16.
 
-Prereq:  1.129 
-*** perl5.002b1h/lib/ExtUtils/MakeMaker.pm	Tue Jan  2 14:07:10 1996
+Prereq:	 1.129 
+*** perl5.002b1h/lib/ExtUtils/MakeMaker.pm	Tue Jan	 2 14:07:10 1996
 --- perl5.002b2/lib/ExtUtils/MakeMaker.pm	Wed Jan 10 16:13:05 1996
 
 Index: lib/File/Find.pm
@@ -1734,8 +1734,8 @@ Index: lib/I18N/Collate.pm
 
     Updated documentation to match program.
 
-*** perl5.002b1h/lib/I18N/Collate.pm	Fri Jun  2 11:30:49 1995
---- perl5.002b2/lib/I18N/Collate.pm	Fri Jan  5 16:05:26 1996
+*** perl5.002b1h/lib/I18N/Collate.pm	Fri Jun	 2 11:30:49 1995
+--- perl5.002b2/lib/I18N/Collate.pm	Fri Jan	 5 16:05:26 1996
 
 Index: lib/Term/ReadLine.pm
 
@@ -1749,42 +1749,42 @@ Index: lib/dumpvar.pl
 
     Ilya's new debugger.
 
-*** perl5.002b1h/lib/dumpvar.pl	Tue Oct 18 12:36:00 1994
+*** perl5.002b1h/lib/dumpvar.pl Tue Oct 18 12:36:00 1994
 --- perl5.002b2/lib/dumpvar.pl	Fri Jan 12 11:23:31 1996
 
 Index: lib/perl5db.pl
 
     Ilya's new debugger.
 
-*** perl5.002b1h/lib/perl5db.pl	Tue Jan  2 16:30:33 1996
+*** perl5.002b1h/lib/perl5db.pl Tue Jan	 2 16:30:33 1996
 --- perl5.002b2/lib/perl5db.pl	Fri Jan 12 11:23:31 1996
 
 Index: lib/sigtrap.pm
 
     Ilya's new debugger.
 
-*** perl5.002b1h/lib/sigtrap.pm	Thu May 25 11:20:13 1995
+*** perl5.002b1h/lib/sigtrap.pm Thu May 25 11:20:13 1995
 --- perl5.002b2/lib/sigtrap.pm	Fri Jan 12 11:23:31 1996
 
 Index: miniperlmain.c
 
     More robust i18nl14n() function from jhi.
 
-*** perl5.002b1h/miniperlmain.c	Thu Jan  4 12:03:37 1996
---- perl5.002b2/miniperlmain.c	Mon Jan  8 22:00:19 1996
+*** perl5.002b1h/miniperlmain.c Thu Jan	 4 12:03:37 1996
+--- perl5.002b2/miniperlmain.c	Mon Jan	 8 22:00:19 1996
 
 Index: myconfig
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
-*** perl5.002b1h/myconfig	Tue Apr  4 12:13:21 1995
+*** perl5.002b1h/myconfig	Tue Apr	 4 12:13:21 1995
 --- perl5.002b2/myconfig	Fri Jan 12 10:53:35 1996
 
 Index: op.c
 
     Chip's U8/STDCHAR patch.
 
-*** perl5.002b1h/op.c	Wed Jan  3 14:17:01 1996
+*** perl5.002b1h/op.c	Wed Jan	 3 14:17:01 1996
 --- perl5.002b2/op.c	Fri Jan 12 15:05:05 1996
 
 Index: perl.c
@@ -1793,22 +1793,22 @@ Index: perl.c
 
     Presumptively call this beta2.
 
-*** perl5.002b1h/perl.c	Thu Jan  4 15:13:53 1996
+*** perl5.002b1h/perl.c Thu Jan	 4 15:13:53 1996
 --- perl5.002b2/perl.c	Fri Jan 12 15:05:05 1996
 
 Index: perl.h
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
-*** perl5.002b1h/perl.h	Wed Jan  3 12:21:55 1996
+*** perl5.002b1h/perl.h Wed Jan	 3 12:21:55 1996
 --- perl5.002b2/perl.h	Fri Jan 12 15:05:04 1996
 
 Index: pod/Makefile
 
     Use PERL=../miniperl
 
-*** perl5.002b1h/pod/Makefile	Wed Jan  3 15:06:41 1996
---- perl5.002b2/pod/Makefile	Fri Jan  5 14:14:30 1996
+*** perl5.002b1h/pod/Makefile	Wed Jan	 3 15:06:41 1996
+--- perl5.002b2/pod/Makefile	Fri Jan	 5 14:14:30 1996
 
 Index: pod/perlembed.pod
 
@@ -1816,16 +1816,16 @@ Index: pod/perlembed.pod
     env).
 
 *** perl5.002b1h/pod/perlembed.pod	Thu Dec 28 16:34:07 1995
---- perl5.002b2/pod/perlembed.pod	Tue Jan  9 16:02:51 1996
+--- perl5.002b2/pod/perlembed.pod	Tue Jan	 9 16:02:51 1996
 
 Index: pod/perlfunc.pod
 
     Work around a pod2man complaint about the -X function.
 
-*** perl5.002b1h/pod/perlfunc.pod	Tue Jan  2 15:39:26 1996
+*** perl5.002b1h/pod/perlfunc.pod	Tue Jan	 2 15:39:26 1996
 --- perl5.002b2/pod/perlfunc.pod	Fri Jan 12 11:04:15 1996
 
-*** perl5.002b1h/pod/perlfunc.pod	Tue Jan  2 15:39:26 1996
+*** perl5.002b1h/pod/perlfunc.pod	Tue Jan	 2 15:39:26 1996
 --- perl5.002b2/pod/perlfunc.pod	Fri Jan 12 11:04:15 1996
 
 Index: pod/perlovl.pod
@@ -1833,20 +1833,20 @@ Index: pod/perlovl.pod
     Add DESCRIPTION to head1 line.
 
 *** perl5.002b1h/pod/perlovl.pod	Thu Dec 28 16:34:13 1995
---- perl5.002b2/pod/perlovl.pod	Thu Jan 11 17:11:16 1996
+--- perl5.002b2/pod/perlovl.pod Thu Jan 11 17:11:16 1996
 
 Index: pod/perlrun.pod
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
 *** perl5.002b1h/pod/perlrun.pod	Thu Dec 28 16:34:15 1995
---- perl5.002b2/pod/perlrun.pod	Fri Jan 12 10:53:35 1996
+--- perl5.002b2/pod/perlrun.pod Fri Jan 12 10:53:35 1996
 
 Index: pp_ctl.c
 
     Debugger patch.
 
-*** perl5.002b1h/pp_ctl.c	Wed Jan  3 12:23:13 1996
+*** perl5.002b1h/pp_ctl.c	Wed Jan	 3 12:23:13 1996
 --- perl5.002b2/pp_ctl.c	Fri Jan 12 15:05:05 1996
 
 Index: t/lib/posix.t
@@ -1854,21 +1854,21 @@ Index: t/lib/posix.t
     Not having POSIX shouldn't result in test failing TEST harness.
 
 *** perl5.002b1h/t/lib/posix.t	Mon Jan 16 22:27:33 1995
---- perl5.002b2/t/lib/posix.t	Tue Jan  9 15:33:14 1996
+--- perl5.002b2/t/lib/posix.t	Tue Jan	 9 15:33:14 1996
 
 Index: t/lib/safe.t
 
     Not having Safe shouldn't result in test failing TEST harness.
 
-*** perl5.002b1h/t/lib/safe.t	Tue Jan  2 15:43:53 1996
---- perl5.002b2/t/lib/safe.t	Tue Jan  9 15:35:43 1996
+*** perl5.002b1h/t/lib/safe.t	Tue Jan	 2 15:43:53 1996
+--- perl5.002b2/t/lib/safe.t	Tue Jan	 9 15:35:43 1996
 
 Index: t/lib/socket.t
 
     Not having Socket shouldn't result in test failing TEST harness.
 
-*** perl5.002b1h/t/lib/socket.t	Fri Dec  8 11:16:01 1995
---- perl5.002b2/t/lib/socket.t	Tue Jan  9 15:35:51 1996
+*** perl5.002b1h/t/lib/socket.t Fri Dec	 8 11:16:01 1995
+--- perl5.002b2/t/lib/socket.t	Tue Jan	 9 15:35:51 1996
 
 Index: t/op/time.t
 
@@ -1883,19 +1883,19 @@ Index: toke.c
 
     Tim's "add a ; after PERL5DB" patch.
 
-*** perl5.002b1h/toke.c	Wed Dec  6 13:24:19 1995
+*** perl5.002b1h/toke.c Wed Dec	 6 13:24:19 1995
 --- perl5.002b2/toke.c	Fri Jan 12 15:05:06 1996
 
 Index: utils/h2xs.PL
 
    Updated to 1.13.  Include Changes template file.
 
-*** perl5.002b1h/utils/h2xs.PL	Tue Jan  2 13:50:55 1996
+*** perl5.002b1h/utils/h2xs.PL	Tue Jan	 2 13:50:55 1996
 --- perl5.002b2/utils/h2xs.PL	Thu Jan 11 16:59:48 1996
 
 Index: writemain.SH
 
-    Updates from Tim's  -m/-M/-V patch.
+    Updates from Tim's	-m/-M/-V patch.
 
 *** perl5.002b1h/writemain.SH	Sat Nov 18 15:51:55 1995
 --- perl5.002b2/writemain.SH	Fri Jan 12 10:53:35 1996
@@ -1905,7 +1905,7 @@ Version 5.002b1h
 -------------
 
 This is patch.2b1h to perl5.002beta1.  This is mainly a clean-up
-patch.  No progress is made dealing with memory leaks or
+patch.	No progress is made dealing with memory leaks or
 optimizations, though I have used #define STRANGE_MALLOC to
 work around at least some problems.
 
@@ -1936,16 +1936,16 @@ Index: Configure
     This might be because I ran metaconfig on a different
     architecture.
 
-    libc searching now honors $libpth.  Previously, it (almost)
+    libc searching now honors $libpth.	Previously, it (almost)
     always looked in /usr/lib before checking /lib.
 
     Only prompt user if voidflags is not 15.  If voidflags is 15, then
     we presume all is well.
 
 
-Prereq:  3.0.1.8 
-*** perl5.002b1g/Configure	Fri Dec  8 11:23:56 1995
---- perl5.002b1h/Configure	Thu Jan  4 11:14:37 1996
+Prereq:	 3.0.1.8 
+*** perl5.002b1g/Configure	Fri Dec	 8 11:23:56 1995
+--- perl5.002b1h/Configure	Thu Jan	 4 11:14:37 1996
 
 Index: INSTALL
 
@@ -1958,7 +1958,7 @@ Index: INSTALL
 
 
 *** perl5.002b1g/INSTALL	Tue Nov 21 22:54:28 1995
---- perl5.002b1h/INSTALL	Thu Jan  4 11:06:28 1996
+--- perl5.002b1h/INSTALL	Thu Jan	 4 11:06:28 1996
 
 Index: MANIFEST
 
@@ -1969,29 +1969,29 @@ Index: MANIFEST
 
     Add the Safe extension.
 
-*** perl5.002b1g/MANIFEST	Fri Jan  5 11:41:50 1996
---- perl5.002b1h/MANIFEST	Wed Jan  3 14:37:54 1996
+*** perl5.002b1g/MANIFEST	Fri Jan	 5 11:41:50 1996
+--- perl5.002b1h/MANIFEST	Wed Jan	 3 14:37:54 1996
 
 Index: Makefile.SH
 
     Now builds .PL utilities in the utils/ subdirectory.
     
-*** perl5.002b1g/Makefile.SH	Fri Dec  8 10:36:33 1995
---- perl5.002b1h/Makefile.SH	Wed Jan  3 14:28:30 1996
+*** perl5.002b1g/Makefile.SH	Fri Dec	 8 10:36:33 1995
+--- perl5.002b1h/Makefile.SH	Wed Jan	 3 14:28:30 1996
 
 Index: README.vms
 
     Updated.
 
 *** perl5.002b1g/README.vms	Wed Nov 15 14:23:10 1995
---- perl5.002b1h/README.vms	Tue Jan  2 16:33:02 1996
+--- perl5.002b1h/README.vms	Tue Jan	 2 16:33:02 1996
 
 Index: XSUB.h
 
     Updated to match xsubpp-1.929.
 
-*** perl5.002b1g/XSUB.h	Wed Dec  6 13:25:26 1995
---- perl5.002b1h/XSUB.h	Tue Jan  2 11:57:57 1996
+*** perl5.002b1g/XSUB.h Wed Dec	 6 13:25:26 1995
+--- perl5.002b1h/XSUB.h Tue Jan	 2 11:57:57 1996
 
 Index: config_h.SH
 
@@ -1999,58 +1999,58 @@ Index: config_h.SH
 
     Add STARTPERL define for C code (specifically, a2p).
 
-Prereq:  3.0.1.4 
-*** perl5.002b1g/config_h.SH	Fri Dec  8 11:23:56 1995
---- perl5.002b1h/config_h.SH	Thu Jan  4 11:14:37 1996
+Prereq:	 3.0.1.4 
+*** perl5.002b1g/config_h.SH	Fri Dec	 8 11:23:56 1995
+--- perl5.002b1h/config_h.SH	Thu Jan	 4 11:14:37 1996
 
 Index: doio.c
 
     VMS changes for kill.
 
-*** perl5.002b1g/doio.c	Wed Nov 15 14:36:12 1995
---- perl5.002b1h/doio.c	Tue Jan  2 16:27:07 1996
+*** perl5.002b1g/doio.c Wed Nov 15 14:36:12 1995
+--- perl5.002b1h/doio.c Tue Jan	 2 16:27:07 1996
 
 Index: embed.h
 
     Auto-generated from global.sym and interp.sym.
 
 *** perl5.002b1g/embed.h	Wed Nov 15 14:48:47 1995
---- perl5.002b1h/embed.h	Thu Jan  4 13:28:08 1996
+--- perl5.002b1h/embed.h	Thu Jan	 4 13:28:08 1996
 
 Index: ext/DynaLoader/DynaLoader.pm
 
     VMS-specific updates.
 
 *** perl5.002b1g/ext/DynaLoader/DynaLoader.pm	Fri Nov 10 11:49:00 1995
---- perl5.002b1h/ext/DynaLoader/DynaLoader.pm	Tue Jan  2 16:28:02 1996
+--- perl5.002b1h/ext/DynaLoader/DynaLoader.pm	Tue Jan	 2 16:28:02 1996
 
 Index: ext/DynaLoader/dl_vms.xs
 
     Updated to Oct 31, 1995 version.
 
 *** perl5.002b1g/ext/DynaLoader/dl_vms.xs	Tue Oct 31 11:06:06 1995
---- perl5.002b1h/ext/DynaLoader/dl_vms.xs	Tue Jan  2 16:27:32 1996
+--- perl5.002b1h/ext/DynaLoader/dl_vms.xs	Tue Jan	 2 16:27:32 1996
 
 Index: global.sym
 
     Added maxo and save_pptr items.
 
 *** perl5.002b1g/global.sym	Wed Nov 15 14:58:14 1995
---- perl5.002b1h/global.sym	Wed Jan  3 12:01:59 1996
+--- perl5.002b1h/global.sym	Wed Jan	 3 12:01:59 1996
 
 Index: hints/README.hints
 
     List of tested systems updated a little.
 
-*** perl5.002b1g/hints/README.hints	Fri May  5 14:12:06 1995
+*** perl5.002b1g/hints/README.hints	Fri May	 5 14:12:06 1995
 --- perl5.002b1h/hints/README.hints	Tue Dec 12 20:03:36 1995
 
 Index: hints/irix_5.sh
 
     Note SGI stdio/malloc related problem.
 
-*** perl5.002b1g/hints/irix_5.sh	Fri May  5 14:07:52 1995
---- perl5.002b1h/hints/irix_5.sh	Tue Jan  2 14:53:52 1996
+*** perl5.002b1g/hints/irix_5.sh	Fri May	 5 14:07:52 1995
+--- perl5.002b1h/hints/irix_5.sh	Tue Jan	 2 14:53:52 1996
 
 Index: hints/irix_6.sh
 
@@ -2058,15 +2058,15 @@ Index: hints/irix_6.sh
     
     Note SGI stdio/malloc related problem.
 
-*** perl5.002b1g/hints/irix_6.sh	Fri May  5 14:08:41 1995
---- perl5.002b1h/hints/irix_6.sh	Tue Jan  2 14:54:04 1996
+*** perl5.002b1g/hints/irix_6.sh	Fri May	 5 14:08:41 1995
+--- perl5.002b1h/hints/irix_6.sh	Tue Jan	 2 14:54:04 1996
 
 Index: hints/irix_6_2.sh
     
     Address change.
 
 *** perl5.002b1g/hints/irix_6_2.sh	Mon Nov 20 11:16:55 1995
---- perl5.002b1h/hints/irix_6_2.sh	Tue Jan  2 14:49:45 1996
+--- perl5.002b1h/hints/irix_6_2.sh	Tue Jan	 2 14:49:45 1996
 
 Index: hints/os2.sh
 
@@ -2079,7 +2079,7 @@ Index: installman
 
     Use fork if available.
 
-*** perl5.002b1g/installman	Fri Jan  5 11:41:52 1996
+*** perl5.002b1g/installman	Fri Jan	 5 11:41:52 1996
 --- perl5.002b1h/installman	Thu Dec 28 16:06:11 1995
 
 Index: installperl
@@ -2089,79 +2089,79 @@ Index: installperl
     Eliminate double '//' and extra "".
 
 *** perl5.002b1g/installperl	Mon Nov 20 12:55:03 1995
---- perl5.002b1h/installperl	Wed Jan  3 14:33:57 1996
+--- perl5.002b1h/installperl	Wed Jan	 3 14:33:57 1996
 
 Index: lib/AutoLoader.pm
 
     Avoid tainting problems.
 
 *** perl5.002b1g/lib/AutoLoader.pm	Wed Nov 15 15:04:59 1995
---- perl5.002b1h/lib/AutoLoader.pm	Tue Jan  2 16:10:36 1996
+--- perl5.002b1h/lib/AutoLoader.pm	Tue Jan	 2 16:10:36 1996
 
 Index: lib/Carp.pm
 
     Honor trailing \n in messages, as is done for warn().
     
 *** perl5.002b1g/lib/Carp.pm	Thu May 25 11:16:07 1995
---- perl5.002b1h/lib/Carp.pm	Tue Jan  2 12:10:38 1996
+--- perl5.002b1h/lib/Carp.pm	Tue Jan	 2 12:10:38 1996
 
 Index: lib/Cwd.pm
 
     VMS patches.
 
-*** perl5.002b1g/lib/Cwd.pm	Fri Jan  5 11:41:52 1996
---- perl5.002b1h/lib/Cwd.pm	Tue Jan  2 16:28:57 1996
+*** perl5.002b1g/lib/Cwd.pm	Fri Jan	 5 11:41:52 1996
+--- perl5.002b1h/lib/Cwd.pm	Tue Jan	 2 16:28:57 1996
 
 Index: lib/Exporter.pm
 
     Include Tim Bunce's enhanced Exporter.  I also tried to
     resolve the two copies of documentation that I had.
 
-*** perl5.002b1g/lib/Exporter.pm	Fri Jan  5 11:41:52 1996
---- perl5.002b1h/lib/Exporter.pm	Thu Jan  4 14:02:08 1996
+*** perl5.002b1g/lib/Exporter.pm	Fri Jan	 5 11:41:52 1996
+--- perl5.002b1h/lib/Exporter.pm	Thu Jan	 4 14:02:08 1996
 
 Index: lib/ExtUtils/MM_VMS.pm
 
     New file.  Incorporates VMS-specific items into MakeMaker.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/lib/ExtUtils/MM_VMS.pm	Tue Jan  2 14:07:10 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/lib/ExtUtils/MM_VMS.pm Tue Jan	 2 14:07:10 1996
 
 Index: lib/ExtUtils/MakeMaker.pm
-Prereq:  1.116 
+Prereq:	 1.116 
 
     Updated from 5.12 to 5.16.
 
-*** perl5.002b1g/lib/ExtUtils/MakeMaker.pm	Fri Jan  5 11:41:53 1996
---- perl5.002b1h/lib/ExtUtils/MakeMaker.pm	Tue Jan  2 14:07:10 1996
+*** perl5.002b1g/lib/ExtUtils/MakeMaker.pm	Fri Jan	 5 11:41:53 1996
+--- perl5.002b1h/lib/ExtUtils/MakeMaker.pm	Tue Jan	 2 14:07:10 1996
 
 Index: lib/ExtUtils/Manifest.pm
 
     Updated from MakeMaker 5.12 to 5.16.
 
-*** perl5.002b1g/lib/ExtUtils/Manifest.pm	Fri Jan  5 11:41:54 1996
---- perl5.002b1h/lib/ExtUtils/Manifest.pm	Tue Jan  2 14:07:10 1996
+*** perl5.002b1g/lib/ExtUtils/Manifest.pm	Fri Jan	 5 11:41:54 1996
+--- perl5.002b1h/lib/ExtUtils/Manifest.pm	Tue Jan	 2 14:07:10 1996
 
 Index: lib/ExtUtils/Mkbootstrap.pm
 
     Updated from MakeMaker 5.12 to 5.16.
 
-*** perl5.002b1g/lib/ExtUtils/Mkbootstrap.pm	Fri Jan  5 11:41:54 1996
---- perl5.002b1h/lib/ExtUtils/Mkbootstrap.pm	Tue Jan  2 14:07:10 1996
+*** perl5.002b1g/lib/ExtUtils/Mkbootstrap.pm	Fri Jan	 5 11:41:54 1996
+--- perl5.002b1h/lib/ExtUtils/Mkbootstrap.pm	Tue Jan	 2 14:07:10 1996
 
 Index: lib/ExtUtils/xsubpp
 
     Updated from xsubpp-1.924 to 1.929.
 
 *** perl5.002b1g/lib/ExtUtils/xsubpp	Sun Nov 26 16:04:50 1995
---- perl5.002b1h/lib/ExtUtils/xsubpp	Tue Jan  2 16:29:59 1996
+--- perl5.002b1h/lib/ExtUtils/xsubpp	Tue Jan	 2 16:29:59 1996
 
 Index: lib/File/Path.pm
 
     VMS-specific changes.
 
 *** perl5.002b1g/lib/File/Path.pm	Wed Nov 15 15:20:31 1995
---- perl5.002b1h/lib/File/Path.pm	Tue Jan  2 16:30:21 1996
+--- perl5.002b1h/lib/File/Path.pm	Tue Jan	 2 16:30:21 1996
 
 Index: lib/Pod/Text.pm
 
@@ -2172,62 +2172,62 @@ Index: lib/Pod/Text.pm
 
     Equally unfortunately, we've all left Tom as the AUTHOR, even
     though we can't hold him responsible for errors he didn't
-    introduce.  Oh well.
+    introduce.	Oh well.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/lib/Pod/Text.pm	Thu Jan  4 14:16:50 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/lib/Pod/Text.pm	Thu Jan	 4 14:16:50 1996
 
 Index: lib/Sys/Hostname.pm
 
     VMS-specific changes.
 
-*** perl5.002b1g/lib/Sys/Hostname.pm	Fri Jan  5 11:41:55 1996
---- perl5.002b1h/lib/Sys/Hostname.pm	Tue Jan  2 16:30:49 1996
+*** perl5.002b1g/lib/Sys/Hostname.pm	Fri Jan	 5 11:41:55 1996
+--- perl5.002b1h/lib/Sys/Hostname.pm	Tue Jan	 2 16:30:49 1996
 
 Index: lib/diagnostics.pm
 
     A patch from Tim Bunce (?)
 
-*** perl5.002b1g/lib/diagnostics.pm	Wed Dec  6 13:58:42 1995
---- perl5.002b1h/lib/diagnostics.pm	Tue Jan  2 12:10:37 1996
+*** perl5.002b1g/lib/diagnostics.pm	Wed Dec	 6 13:58:42 1995
+--- perl5.002b1h/lib/diagnostics.pm	Tue Jan	 2 12:10:37 1996
 
 Index: lib/perl5db.pl
 
     VMS-specific changes.
 
-*** perl5.002b1g/lib/perl5db.pl	Wed Nov 15 22:37:45 1995
---- perl5.002b1h/lib/perl5db.pl	Tue Jan  2 16:30:33 1996
+*** perl5.002b1g/lib/perl5db.pl Wed Nov 15 22:37:45 1995
+--- perl5.002b1h/lib/perl5db.pl Tue Jan	 2 16:30:33 1996
 
 Index: lib/splain
 
     Fix some old typos.
 
 *** perl5.002b1g/lib/splain	Tue Nov 14 16:16:36 1995
---- perl5.002b1h/lib/splain	Tue Jan  2 12:10:37 1996
+--- perl5.002b1h/lib/splain	Tue Jan	 2 12:10:37 1996
 
 Index: makeaperl.SH
 
     Use the 'new' startperl variable.
 
-*** perl5.002b1g/makeaperl.SH	Thu Jun  1 11:20:52 1995
---- perl5.002b1h/makeaperl.SH	Tue Jan  2 12:11:28 1996
+*** perl5.002b1g/makeaperl.SH	Thu Jun	 1 11:20:52 1995
+--- perl5.002b1h/makeaperl.SH	Tue Jan	 2 12:11:28 1996
 
 Index: mg.c
 
     Set up a reliable signal handler, courtesy of Kenneth Albanowski.
-    This needs to be documented still.  The idea is that even on
+    This needs to be documented still.	The idea is that even on
     System V systems, you won't have to reset the signal handler as
     the first action inside your signal handler.
 
 *** perl5.002b1g/mg.c	Wed Nov 15 15:44:10 1995
---- perl5.002b1h/mg.c	Thu Jan  4 13:49:12 1996
+--- perl5.002b1h/mg.c	Thu Jan	 4 13:49:12 1996
 
 Index: minimod.pl
 
     Give a proper NAME description.
 
 *** perl5.002b1g/minimod.pl	Sun Nov 26 16:19:55 1995
---- perl5.002b1h/minimod.pl	Tue Jan  2 14:30:24 1996
+--- perl5.002b1h/minimod.pl	Tue Jan	 2 14:30:24 1996
 
 Index: miniperlmain.c
 
@@ -2235,8 +2235,8 @@ Index: miniperlmain.c
 
     Include a proper cast of NULL for non-prototyping compilers.
 
-*** perl5.002b1g/miniperlmain.c	Sat Nov 18 15:48:10 1995
---- perl5.002b1h/miniperlmain.c	Thu Jan  4 12:03:37 1996
+*** perl5.002b1g/miniperlmain.c Sat Nov 18 15:48:10 1995
+--- perl5.002b1h/miniperlmain.c Thu Jan	 4 12:03:37 1996
 
 Index: op.c
 
@@ -2244,13 +2244,13 @@ Index: op.c
    interested in benchmark results with this on and off.
 
 *** perl5.002b1g/op.c	Wed Nov 15 22:10:36 1995
---- perl5.002b1h/op.c	Wed Jan  3 14:17:01 1996
+--- perl5.002b1h/op.c	Wed Jan	 3 14:17:01 1996
 
 Index: os2/Makefile.SHs
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/Makefile.SHs	Sun Dec 24 13:55:22 1995
 
 Index: os2/README
@@ -2264,7 +2264,7 @@ Index: os2/diff.MANIFEST
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/diff.MANIFEST	Tue Dec 26 19:54:12 1995
 
 Index: os2/diff.Makefile
@@ -2272,14 +2272,14 @@ Index: os2/diff.Makefile
     Updated
 
 *** perl5.002b1g/os2/diff.Makefile	Tue Nov 14 11:09:29 1995
---- perl5.002b1h/os2/diff.Makefile	Fri Dec  8 00:09:56 1995
+--- perl5.002b1h/os2/diff.Makefile	Fri Dec	 8 00:09:56 1995
 
 Index: os2/diff.c2ph
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/os2/diff.c2ph	Thu Dec  7 15:25:52 1995
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/os2/diff.c2ph	Thu Dec	 7 15:25:52 1995
 
 Index: os2/diff.configure
 
@@ -2292,21 +2292,21 @@ Index: os2/diff.db_file
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/diff.db_file	Tue Dec 19 02:14:54 1995
 
 Index: os2/diff.init
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/diff.init	Sun Nov 26 15:05:48 1995
 
 Index: os2/diff.installman
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/diff.installman	Wed Nov 22 03:50:26 1995
 
 Index: os2/diff.installperl
@@ -2320,15 +2320,15 @@ Index: os2/diff.mkdep
 
     Updated.
 
-*** perl5.002b1g/os2/diff.mkdep	Tue Nov 14 11:09:28 1995
---- perl5.002b1h/os2/diff.mkdep	Sun Nov 26 15:00:24 1995
+*** perl5.002b1g/os2/diff.mkdep Tue Nov 14 11:09:28 1995
+--- perl5.002b1h/os2/diff.mkdep Sun Nov 26 15:00:24 1995
 
 Index: os2/diff.rest
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/os2/diff.rest	Thu Dec  7 16:03:26 1995
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/os2/diff.rest	Thu Dec	 7 16:03:26 1995
 
 Index: os2/diff.x2pMakefile
 
@@ -2341,7 +2341,7 @@ Index: os2/notes
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/notes	Tue Dec 26 19:55:30 1995
 
 Index: os2/os2.c
@@ -2362,7 +2362,7 @@ Index: os2/perl2cmd.pl
 
     New file.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/os2/perl2cmd.pl	Tue Dec 19 11:20:42 1995
 
 Index: perl.c
@@ -2371,22 +2371,22 @@ Index: perl.c
 
     Move VMS env code.
 
-*** perl5.002b1g/perl.c	Fri Jan  5 11:41:56 1996
---- perl5.002b1h/perl.c	Thu Jan  4 15:13:53 1996
+*** perl5.002b1g/perl.c Fri Jan	 5 11:41:56 1996
+--- perl5.002b1h/perl.c Thu Jan	 4 15:13:53 1996
 
 Index: perl.h
 
     5.002beta1 attempted some memory optimizations, but unfortunately
     they can result in a memory leak problem.  This can be
-    avoided by #define STRANGE_MALLOC.  I do that here until
+    avoided by #define STRANGE_MALLOC.	I do that here until
     consensus is reached on a better strategy for handling the
     memory optimizations.
 
     Include maxo for the maximum number of operations (needed
     for the Safe extension).
 
-*** perl5.002b1g/perl.h	Wed Nov 15 17:13:16 1995
---- perl5.002b1h/perl.h	Wed Jan  3 12:21:55 1996
+*** perl5.002b1g/perl.h Wed Nov 15 17:13:16 1995
+--- perl5.002b1h/perl.h Wed Jan	 3 12:21:55 1996
 
 Index: pod/Makefile
 
@@ -2400,47 +2400,47 @@ Index: pod/Makefile
     a system without miniperl avaialable, so my script fell back on
     the perl default.
 
-*** perl5.002b1g/pod/Makefile	Fri Jan  5 11:41:56 1996
---- perl5.002b1h/pod/Makefile	Wed Jan  3 15:06:41 1996
+*** perl5.002b1g/pod/Makefile	Fri Jan	 5 11:41:56 1996
+--- perl5.002b1h/pod/Makefile	Wed Jan	 3 15:06:41 1996
 
 Index: pod/perlmod.pod
 
     Mention the Safe extension.
 
-*** perl5.002b1g/pod/perlmod.pod	Fri Jan  5 11:41:59 1996
---- perl5.002b1h/pod/perlmod.pod	Thu Jan  4 13:52:14 1996
+*** perl5.002b1g/pod/perlmod.pod	Fri Jan	 5 11:41:59 1996
+--- perl5.002b1h/pod/perlmod.pod	Thu Jan	 4 13:52:14 1996
 
 Index: pod/perltoc.pod
 
     Rebuilt using  pod/buildtoc and fmt.
 
-*** perl5.002b1g/pod/perltoc.pod	Fri Jan  5 11:42:00 1996
---- perl5.002b1h/pod/perltoc.pod	Thu Jan  4 14:04:20 1996
+*** perl5.002b1g/pod/perltoc.pod	Fri Jan	 5 11:42:00 1996
+--- perl5.002b1h/pod/perltoc.pod	Thu Jan	 4 14:04:20 1996
 
 Index: pod/pod2text.PL
-*** perl5.002b1g/pod/pod2text.PL	Fri Jan  5 11:42:01 1996
---- perl5.002b1h/pod/pod2text.PL	Tue Jan  2 14:28:24 1996
+*** perl5.002b1g/pod/pod2text.PL	Fri Jan	 5 11:42:01 1996
+--- perl5.002b1h/pod/pod2text.PL	Tue Jan	 2 14:28:24 1996
 
 Index: pp_sys.c
 
     VMS changes ?  
 
 *** perl5.002b1g/pp_sys.c	Wed Nov 15 21:51:33 1995
---- perl5.002b1h/pp_sys.c	Tue Jan  2 16:32:50 1996
+--- perl5.002b1h/pp_sys.c	Tue Jan	 2 16:32:50 1996
 
 Index: t/lib/safe.t
 
     New test.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/t/lib/safe.t	Tue Jan  2 15:43:53 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/t/lib/safe.t	Tue Jan	 2 15:43:53 1996
 
 Index: utils/Makefile
 
     New file to build the utilities.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
---- perl5.002b1h/utils/Makefile	Wed Jan  3 14:06:18 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
+--- perl5.002b1h/utils/Makefile Wed Jan	 3 14:06:18 1996
 
 Index: utils/c2ph.PL
 
@@ -2448,9 +2448,9 @@ Index: utils/c2ph.PL
     
     Delete lots of trailing spaces and tabs that have crept in.
     
-Prereq:  1.7 
+Prereq:	 1.7 
 *** perl5.002b1g/utils/c2ph.PL	Mon Nov 20 12:36:17 1995
---- perl5.002b1h/utils/c2ph.PL	Wed Jan  3 14:05:41 1996
+--- perl5.002b1h/utils/c2ph.PL	Wed Jan	 3 14:05:41 1996
 
 Index: utils/h2ph.PL
 
@@ -2458,7 +2458,7 @@ Index: utils/h2ph.PL
     i.e., no spaces after the word 'include'.
 
 *** perl5.002b1g/utils/h2ph.PL	Mon Nov 27 10:14:50 1995
---- perl5.002b1h/utils/h2ph.PL	Tue Jan  2 16:13:31 1996
+--- perl5.002b1h/utils/h2ph.PL	Tue Jan	 2 16:13:31 1996
 
 Index: utils/h2xs.PL
 
@@ -2467,13 +2467,13 @@ Index: utils/h2xs.PL
     The old version didn't have a number.  This one's called 1.12.
 
 *** perl5.002b1g/utils/h2xs.PL	Sun Nov 19 22:37:58 1995
---- perl5.002b1h/utils/h2xs.PL	Tue Jan  2 13:50:55 1996
+--- perl5.002b1h/utils/h2xs.PL	Tue Jan	 2 13:50:55 1996
 
 Index: utils/perlbug.PL
 
     New utility.
 
-*** /dev/null	Fri Jan  5 12:48:01 1996
+*** /dev/null	Fri Jan	 5 12:48:01 1996
 --- perl5.002b1h/utils/perlbug.PL	Sat Nov 18 16:15:13 1995
 
 Index: utils/perldoc.PL
@@ -2487,7 +2487,7 @@ Index: utils/perldoc.PL
     New -u option .
 
 *** perl5.002b1g/utils/perldoc.PL	Tue Nov 14 14:57:57 1995
---- perl5.002b1h/utils/perldoc.PL	Tue Jan  2 14:28:08 1996
+--- perl5.002b1h/utils/perldoc.PL	Tue Jan	 2 14:28:08 1996
 
 Index: utils/pl2pm.PL
 
@@ -2496,36 +2496,36 @@ Index: utils/pl2pm.PL
 
     Add _minimal_ pod documentation.
 
-*** perl5.002b1g/utils/pl2pm.PL	Mon Jan 16 23:45:07 1995
---- perl5.002b1h/utils/pl2pm.PL	Wed Jan  3 14:14:57 1996
+*** perl5.002b1g/utils/pl2pm.PL Mon Jan 16 23:45:07 1995
+--- perl5.002b1h/utils/pl2pm.PL Wed Jan	 3 14:14:57 1996
 
 Index: vms/Makefile
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/Makefile	Wed Nov 15 22:05:15 1995
---- perl5.002b1h/vms/Makefile	Tue Jan  2 16:33:53 1996
+--- perl5.002b1h/vms/Makefile	Tue Jan	 2 16:33:53 1996
 
 Index: vms/config.vms
 
     Updated for VMS.
 
-*** perl5.002b1g/vms/config.vms	Wed Nov 15 22:05:26 1995
---- perl5.002b1h/vms/config.vms	Tue Jan  2 16:33:09 1996
+*** perl5.002b1g/vms/config.vms Wed Nov 15 22:05:26 1995
+--- perl5.002b1h/vms/config.vms Tue Jan	 2 16:33:09 1996
 
 Index: vms/descrip.mms
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/descrip.mms	Wed Nov 15 22:05:38 1995
---- perl5.002b1h/vms/descrip.mms	Tue Jan  2 16:33:18 1996
+--- perl5.002b1h/vms/descrip.mms	Tue Jan	 2 16:33:18 1996
 
 Index: vms/ext/Filespec.pm
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/ext/Filespec.pm	Sun Mar 12 03:14:26 1995
---- perl5.002b1h/vms/ext/Filespec.pm	Tue Jan  2 16:33:25 1996
+--- perl5.002b1h/vms/ext/Filespec.pm	Tue Jan	 2 16:33:25 1996
 
 Index: vms/ext/MM_VMS.pm
 
@@ -2533,78 +2533,78 @@ Index: vms/ext/MM_VMS.pm
     lib/ExtUtils/MM_VMS.pm.
 
 *** perl5.002b1g/vms/ext/MM_VMS.pm	Wed Nov 15 22:05:48 1995
---- perl5.002b1h/vms/ext/MM_VMS.pm	Tue Jan  2 16:33:32 1996
+--- perl5.002b1h/vms/ext/MM_VMS.pm	Tue Jan	 2 16:33:32 1996
 
 Index: vms/gen_shrfls.pl
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/gen_shrfls.pl	Wed Nov 15 22:06:27 1995
---- perl5.002b1h/vms/gen_shrfls.pl	Tue Jan  2 16:33:47 1996
+--- perl5.002b1h/vms/gen_shrfls.pl	Tue Jan	 2 16:33:47 1996
 
 Index: vms/genconfig.pl
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/genconfig.pl	Sun Mar 12 03:14:36 1995
---- perl5.002b1h/vms/genconfig.pl	Tue Jan  2 16:33:39 1996
+--- perl5.002b1h/vms/genconfig.pl	Tue Jan	 2 16:33:39 1996
 
 Index: vms/perlvms.pod
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/perlvms.pod	Wed Nov 15 22:06:32 1995
---- perl5.002b1h/vms/perlvms.pod	Tue Jan  2 16:33:59 1996
+--- perl5.002b1h/vms/perlvms.pod	Tue Jan	 2 16:33:59 1996
 
 Index: vms/test.com
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/test.com	Wed Nov 15 22:06:59 1995
---- perl5.002b1h/vms/test.com	Tue Jan  2 16:34:07 1996
+--- perl5.002b1h/vms/test.com	Tue Jan	 2 16:34:07 1996
 
 Index: vms/vms.c
 
     Updated for VMS.
 
-Prereq:  2.2 
+Prereq:	 2.2 
 *** perl5.002b1g/vms/vms.c	Wed Nov 15 22:07:10 1995
---- perl5.002b1h/vms/vms.c	Tue Jan  2 16:34:13 1996
+--- perl5.002b1h/vms/vms.c	Tue Jan	 2 16:34:13 1996
 
 Index: vms/vmsish.h
 
     Updated for VMS.
 
 *** perl5.002b1g/vms/vmsish.h	Wed Nov 15 22:07:24 1995
---- perl5.002b1h/vms/vmsish.h	Tue Jan  2 16:34:20 1996
+--- perl5.002b1h/vms/vmsish.h	Tue Jan	 2 16:34:20 1996
 
 Index: vms/writemain.pl
 
     Updated for VMS.
 
-*** perl5.002b1g/vms/writemain.pl	Mon Mar  6 20:00:18 1995
---- perl5.002b1h/vms/writemain.pl	Tue Jan  2 16:34:26 1996
+*** perl5.002b1g/vms/writemain.pl	Mon Mar	 6 20:00:18 1995
+--- perl5.002b1h/vms/writemain.pl	Tue Jan	 2 16:34:26 1996
 
 Index: x2p/a2py.c
 
     Use new config_h.SH STARTPERL #define.
 
-*** perl5.002b1g/x2p/a2py.c	Tue Mar  7 11:53:10 1995
---- perl5.002b1h/x2p/a2py.c	Tue Jan  2 12:11:28 1996
+*** perl5.002b1g/x2p/a2py.c	Tue Mar	 7 11:53:10 1995
+--- perl5.002b1h/x2p/a2py.c	Tue Jan	 2 12:11:28 1996
 
 Index: x2p/find2perl.PL
 
     Add missing "" around $Config{startperl}.
 
 *** perl5.002b1g/x2p/find2perl.PL	Sun Nov 19 23:11:58 1995
---- perl5.002b1h/x2p/find2perl.PL	Tue Jan  2 12:11:27 1996
+--- perl5.002b1h/x2p/find2perl.PL	Tue Jan	 2 12:11:27 1996
 
 Index: x2p/s2p.PL
 
     Add missing "" around $Config{startperl}.
 
 *** perl5.002b1g/x2p/s2p.PL	Sun Nov 19 23:14:59 1995
---- perl5.002b1h/x2p/s2p.PL	Tue Jan  2 12:11:27 1996
+--- perl5.002b1h/x2p/s2p.PL	Tue Jan	 2 12:11:27 1996
 
 
 -------------
@@ -2617,39 +2617,39 @@ This patch is just my packaging of Tom's documentation patches
 he released as patch.2b1g.
 
 Index: MANIFEST
-*** perl5.002b1f/MANIFEST	Fri Dec  8 13:34:53 1995
+*** perl5.002b1f/MANIFEST	Fri Dec	 8 13:34:53 1995
 --- perl5.002b1g/MANIFEST	Thu Dec 21 13:00:58 1995
 
 Index: ext/DB_File/DB_File.pm
-*** perl5.002b1f/ext/DB_File/DB_File.pm	Tue Nov 14 14:14:25 1995
---- perl5.002b1g/ext/DB_File/DB_File.pm	Thu Dec 21 13:00:58 1995
+*** perl5.002b1f/ext/DB_File/DB_File.pm Tue Nov 14 14:14:25 1995
+--- perl5.002b1g/ext/DB_File/DB_File.pm Thu Dec 21 13:00:58 1995
 
 Index: ext/POSIX/POSIX.pm
-*** perl5.002b1f/ext/POSIX/POSIX.pm	Fri Dec  8 10:23:54 1995
+*** perl5.002b1f/ext/POSIX/POSIX.pm	Fri Dec	 8 10:23:54 1995
 --- perl5.002b1g/ext/POSIX/POSIX.pm	Thu Dec 21 13:00:58 1995
 
 Index: ext/POSIX/POSIX.pod
-*** perl5.002b1f/ext/POSIX/POSIX.pod	Fri Dec  8 10:30:40 1995
+*** perl5.002b1f/ext/POSIX/POSIX.pod	Fri Dec	 8 10:30:40 1995
 --- perl5.002b1g/ext/POSIX/POSIX.pod	Thu Dec 21 13:00:59 1995
 
 Index: ext/Safe/Makefile.PL
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/ext/Safe/Makefile.PL	Thu Dec 21 13:01:00 1995
 
 Index: ext/Safe/Safe.pm
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/ext/Safe/Safe.pm	Thu Dec 21 13:01:00 1995
 
 Index: ext/Safe/Safe.xs
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/ext/Safe/Safe.xs	Thu Dec 21 13:01:00 1995
 
 Index: ext/Socket/Socket.pm
-*** perl5.002b1f/ext/Socket/Socket.pm	Wed Dec  6 13:58:41 1995
+*** perl5.002b1f/ext/Socket/Socket.pm	Wed Dec	 6 13:58:41 1995
 --- perl5.002b1g/ext/Socket/Socket.pm	Thu Dec 21 13:01:00 1995
 
 Index: installman
-*** perl5.002b1f/installman	Mon Nov  6 11:16:43 1995
+*** perl5.002b1f/installman	Mon Nov	 6 11:16:43 1995
 --- perl5.002b1g/installman	Thu Dec 21 13:01:00 1995
 
 Index: lib/AutoSplit.pm
@@ -2657,7 +2657,7 @@ Index: lib/AutoSplit.pm
 --- perl5.002b1g/lib/AutoSplit.pm	Thu Dec 21 13:01:01 1995
 
 Index: lib/Cwd.pm
-*** perl5.002b1f/lib/Cwd.pm	Fri Dec  8 10:42:46 1995
+*** perl5.002b1f/lib/Cwd.pm	Fri Dec	 8 10:42:46 1995
 --- perl5.002b1g/lib/Cwd.pm	Thu Dec 21 13:01:01 1995
 
 Index: lib/Devel/SelfStubber.pm
@@ -2673,16 +2673,16 @@ Index: lib/Exporter.pm
 --- perl5.002b1g/lib/Exporter.pm	Thu Dec 21 13:01:01 1995
 
 Index: lib/ExtUtils/Liblist.pm
-*** perl5.002b1f/lib/ExtUtils/Liblist.pm	Tue Dec  5 07:56:53 1995
+*** perl5.002b1f/lib/ExtUtils/Liblist.pm	Tue Dec	 5 07:56:53 1995
 --- perl5.002b1g/lib/ExtUtils/Liblist.pm	Thu Dec 21 13:01:01 1995
 
 Index: lib/ExtUtils/MakeMaker.pm
-Prereq:  1.115 
-*** perl5.002b1f/lib/ExtUtils/MakeMaker.pm	Tue Dec  5 13:20:56 1995
+Prereq:	 1.115 
+*** perl5.002b1f/lib/ExtUtils/MakeMaker.pm	Tue Dec	 5 13:20:56 1995
 --- perl5.002b1g/lib/ExtUtils/MakeMaker.pm	Thu Dec 21 13:01:02 1995
 
 Index: lib/ExtUtils/Manifest.pm
-*** perl5.002b1f/lib/ExtUtils/Manifest.pm	Tue Dec  5 13:21:00 1995
+*** perl5.002b1f/lib/ExtUtils/Manifest.pm	Tue Dec	 5 13:21:00 1995
 --- perl5.002b1g/lib/ExtUtils/Manifest.pm	Thu Dec 21 13:01:02 1995
 
 Index: lib/ExtUtils/Mkbootstrap.pm
@@ -2698,7 +2698,7 @@ Index: lib/IPC/Open2.pm
 --- perl5.002b1g/lib/IPC/Open2.pm	Thu Dec 21 13:01:03 1995
 
 Index: lib/IPC/Open3.pm
-Prereq:  1.1 
+Prereq:	 1.1 
 *** perl5.002b1f/lib/IPC/Open3.pm	Wed Nov 15 15:21:11 1995
 --- perl5.002b1g/lib/IPC/Open3.pm	Thu Dec 21 13:01:03 1995
 
@@ -2711,7 +2711,7 @@ Index: lib/Sys/Hostname.pm
 --- perl5.002b1g/lib/Sys/Hostname.pm	Thu Dec 21 13:01:03 1995
 
 Index: lib/Sys/Syslog.pm
-*** perl5.002b1f/lib/Sys/Syslog.pm	Wed Dec  6 14:07:54 1995
+*** perl5.002b1f/lib/Sys/Syslog.pm	Wed Dec	 6 14:07:54 1995
 --- perl5.002b1g/lib/Sys/Syslog.pm	Thu Dec 21 13:01:04 1995
 
 Index: lib/Term/Cap.pm
@@ -2727,7 +2727,7 @@ Index: lib/Test/Harness.pm
 --- perl5.002b1g/lib/Test/Harness.pm	Thu Dec 21 13:01:04 1995
 
 Index: lib/Text/Soundex.pm
-Prereq:  1.2 
+Prereq:	 1.2 
 *** perl5.002b1f/lib/Text/Soundex.pm	Tue Oct 18 12:38:42 1994
 --- perl5.002b1g/lib/Text/Soundex.pm	Thu Dec 21 13:01:04 1995
 
@@ -2740,8 +2740,8 @@ Index: lib/Text/Wrap.pm
 --- perl5.002b1g/lib/Text/Wrap.pm	Thu Dec 21 13:01:05 1995
 
 Index: lib/TieHash.pm
-*** perl5.002b1f/lib/TieHash.pm	Wed Nov 15 15:27:47 1995
---- perl5.002b1g/lib/TieHash.pm	Thu Dec 21 13:01:05 1995
+*** perl5.002b1f/lib/TieHash.pm Wed Nov 15 15:27:47 1995
+--- perl5.002b1g/lib/TieHash.pm Thu Dec 21 13:01:05 1995
 
 Index: lib/Time/Local.pm
 *** perl5.002b1f/lib/Time/Local.pm	Tue Oct 18 12:38:47 1994
@@ -2764,23 +2764,23 @@ Index: lib/syslog.pl
 --- perl5.002b1g/lib/syslog.pl	Thu Dec 21 13:01:05 1995
 
 Index: perl.c
-*** perl5.002b1f/perl.c	Sun Nov 19 16:11:29 1995
---- perl5.002b1g/perl.c	Thu Dec 21 13:01:06 1995
+*** perl5.002b1f/perl.c Sun Nov 19 16:11:29 1995
+--- perl5.002b1g/perl.c Thu Dec 21 13:01:06 1995
 
 Index: pod/Makefile
 *** perl5.002b1f/pod/Makefile	Mon Nov 20 13:00:50 1995
 --- perl5.002b1g/pod/Makefile	Thu Dec 21 13:01:06 1995
 
 Index: pod/PerlDoc/Functions.pm
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/PerlDoc/Functions.pm	Thu Dec 21 13:01:07 1995
 
 Index: pod/PerlDoc/Functions.pm.POSIX
-*** /dev/null	Wed Jan  3 14:35:56 1996
---- perl5.002b1g/pod/PerlDoc/Functions.pm.POSIX	Thu Dec 21 13:01:07 1995
+*** /dev/null	Wed Jan	 3 14:35:56 1996
+--- perl5.002b1g/pod/PerlDoc/Functions.pm.POSIX Thu Dec 21 13:01:07 1995
 
 Index: pod/buildtoc
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/buildtoc	Thu Dec 21 13:01:07 1995
 
 Index: pod/perl.pod
@@ -2836,8 +2836,8 @@ Index: pod/perlobj.pod
 --- perl5.002b1g/pod/perlobj.pod	Thu Dec 21 13:01:11 1995
 
 Index: pod/perlop.pod
-*** perl5.002b1f/pod/perlop.pod	Sat Nov 18 17:24:03 1995
---- perl5.002b1g/pod/perlop.pod	Thu Dec 21 13:01:12 1995
+*** perl5.002b1f/pod/perlop.pod Sat Nov 18 17:24:03 1995
+--- perl5.002b1g/pod/perlop.pod Thu Dec 21 13:01:12 1995
 
 Index: pod/perlovl.pod
 *** perl5.002b1f/pod/perlovl.pod	Mon Jan 23 13:25:35 1995
@@ -2848,8 +2848,8 @@ Index: pod/perlpod.pod
 --- perl5.002b1g/pod/perlpod.pod	Thu Dec 21 13:01:12 1995
 
 Index: pod/perlre.pod
-*** perl5.002b1f/pod/perlre.pod	Sun Nov 26 16:57:20 1995
---- perl5.002b1g/pod/perlre.pod	Thu Dec 21 13:01:12 1995
+*** perl5.002b1f/pod/perlre.pod Sun Nov 26 16:57:20 1995
+--- perl5.002b1g/pod/perlre.pod Thu Dec 21 13:01:12 1995
 
 Index: pod/perlref.pod
 *** perl5.002b1f/pod/perlref.pod	Sat Nov 18 17:24:04 1995
@@ -2876,11 +2876,11 @@ Index: pod/perlsyn.pod
 --- perl5.002b1g/pod/perlsyn.pod	Thu Dec 21 13:01:14 1995
 
 Index: pod/perltie.pod
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/perltie.pod	Thu Dec 21 13:01:14 1995
 
 Index: pod/perltoc.pod
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/perltoc.pod	Thu Dec 21 13:01:14 1995
 
 Index: pod/perltrap.pod
@@ -2892,28 +2892,28 @@ Index: pod/perlvar.pod
 --- perl5.002b1g/pod/perlvar.pod	Thu Dec 21 13:01:15 1995
 
 Index: pod/perlxs.pod
-*** perl5.002b1f/pod/perlxs.pod	Sun Nov 19 22:12:44 1995
---- perl5.002b1g/pod/perlxs.pod	Thu Dec 21 13:01:15 1995
+*** perl5.002b1f/pod/perlxs.pod Sun Nov 19 22:12:44 1995
+--- perl5.002b1g/pod/perlxs.pod Thu Dec 21 13:01:15 1995
 
 Index: pod/perlxstut.pod
 *** perl5.002b1f/pod/perlxstut.pod	Mon Nov 20 13:02:12 1995
 --- perl5.002b1g/pod/perlxstut.pod	Thu Dec 21 13:01:15 1995
 
 Index: pod/pod2man.PL
-Prereq:  1.5 
-*** perl5.002b1f/pod/pod2man.PL	Wed Nov 15 22:32:51 1995
---- perl5.002b1g/pod/pod2man.PL	Thu Dec 21 13:01:15 1995
+Prereq:	 1.5 
+*** perl5.002b1f/pod/pod2man.PL Wed Nov 15 22:32:51 1995
+--- perl5.002b1g/pod/pod2man.PL Thu Dec 21 13:01:15 1995
 
 Index: pod/pod2text
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/pod2text	Thu Dec 21 13:01:16 1995
 
 Index: pod/roffitall
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/roffitall	Thu Dec 21 13:01:16 1995
 
 Index: pod/splitpod
-*** /dev/null	Wed Jan  3 14:35:56 1996
+*** /dev/null	Wed Jan	 3 14:35:56 1996
 --- perl5.002b1g/pod/splitpod	Thu Dec 21 13:01:16 1995
 
 -------------
@@ -2927,7 +2927,7 @@ Index: Changes.Conf
 Include 5.001m -> 5.002beta1 changes.
 
 *** perl5.002b1e/Changes.Conf	Mon Nov 20 10:08:05 1995
---- perl5.002b1f/Changes.Conf	Wed Dec  6 15:29:48 1995
+--- perl5.002b1f/Changes.Conf	Wed Dec	 6 15:29:48 1995
 
 Index: Configure
 
@@ -2940,71 +2940,71 @@ Index: Configure
     emacs used to do it :-).
     
 
-Prereq:  3.0.1.8 
-*** perl5.002b1e/Configure	Fri Dec  8 14:55:26 1995
---- perl5.002b1f/Configure	Fri Dec  8 11:23:56 1995
+Prereq:	 3.0.1.8 
+*** perl5.002b1e/Configure	Fri Dec	 8 14:55:26 1995
+--- perl5.002b1f/Configure	Fri Dec	 8 11:23:56 1995
 
 Index: MANIFEST
     Add in POSIX.pod.  I didn't include Dean's mkposixman tool because
     it seemed to confuse MakeMaker, and I didn't want to manually fix
     the POSIX/Makefile.PL file today.
 
-    Renamed minimod.PL.  The idea is as follows:  I'd like to reserve
+    Renamed minimod.PL.	 The idea is as follows:  I'd like to reserve
     the .PL suffix for files that are extracted during build time, and
     then can be deleted after installation.  That is, it will be
     analogous to the .SH suffix.  For example, h2xs.PL creates
-    h2xs, and a 'make realclean' will remove the h2xs.  Minimod.PL
+    h2xs, and a 'make realclean' will remove the h2xs.	Minimod.PL
     was an exception to this pattern.  Eventually, the .PL dependencies
     will be generated automatically, just as the .SH dependencies are
     now.
 
     Add in socket test.
 
-*** perl5.002b1e/MANIFEST	Fri Dec  8 14:55:27 1995
---- perl5.002b1f/MANIFEST	Fri Dec  8 13:34:53 1995
+*** perl5.002b1e/MANIFEST	Fri Dec	 8 14:55:27 1995
+--- perl5.002b1f/MANIFEST	Fri Dec	 8 13:34:53 1995
 
 Index: Makefile.SH
 
     Renamed minimod.PL to minimod.pl
 
 *** perl5.002b1e/Makefile.SH	Mon Nov 20 15:56:12 1995
---- perl5.002b1f/Makefile.SH	Fri Dec  8 10:36:33 1995
+--- perl5.002b1f/Makefile.SH	Fri Dec	 8 10:36:33 1995
 
 Index: XSUB.h
 
     Include (SV*) cast in the newXSproto #define.
 
-*** perl5.002b1e/XSUB.h	Fri Dec  8 14:55:14 1995
---- perl5.002b1f/XSUB.h	Wed Dec  6 13:25:26 1995
+*** perl5.002b1e/XSUB.h Fri Dec	 8 14:55:14 1995
+--- perl5.002b1f/XSUB.h Wed Dec	 6 13:25:26 1995
 
 Index: ext/POSIX/POSIX.pm
 
     I have included Dean's patch and the .pod generated by mkposixman.
 
 *** perl5.002b1e/ext/POSIX/POSIX.pm	Wed Nov 15 14:54:09 1995
---- perl5.002b1f/ext/POSIX/POSIX.pm	Fri Dec  8 10:23:54 1995
+--- perl5.002b1f/ext/POSIX/POSIX.pm	Fri Dec	 8 10:23:54 1995
 
 Index: ext/POSIX/POSIX.pod
 
     I have included Dean's patch and the .pod generated by mkposixman.
 
-*** /dev/null	Fri Dec  8 13:36:14 1995
---- perl5.002b1f/ext/POSIX/POSIX.pod	Fri Dec  8 10:30:40 1995
+*** /dev/null	Fri Dec	 8 13:36:14 1995
+--- perl5.002b1f/ext/POSIX/POSIX.pod	Fri Dec	 8 10:30:40 1995
 
 Index: ext/POSIX/POSIX.xs
 
     I have included Dean's patch and the .pod generated by mkposixman.
 
 *** perl5.002b1e/ext/POSIX/POSIX.xs	Wed Nov 15 14:56:22 1995
---- perl5.002b1f/ext/POSIX/POSIX.xs	Fri Dec  8 10:23:54 1995
+--- perl5.002b1f/ext/POSIX/POSIX.xs	Fri Dec	 8 10:23:54 1995
 
 Index: ext/Socket/Socket.pm
 
     Replace errant sockaddr_in by correct sockaddr_un.
     Remove an extra ')'.  -- from Tom C.
 
-*** perl5.002b1e/ext/Socket/Socket.pm	Fri Dec  8 14:55:28 1995
---- perl5.002b1f/ext/Socket/Socket.pm	Wed Dec  6 13:58:41 1995
+*** perl5.002b1e/ext/Socket/Socket.pm	Fri Dec	 8 14:55:28 1995
+--- perl5.002b1f/ext/Socket/Socket.pm	Wed Dec	 6 13:58:41 1995
 
 Index: gv.c
 
@@ -3012,7 +3012,7 @@ Index: gv.c
     package.
 
 *** perl5.002b1e/gv.c	Wed Nov 15 14:58:39 1995
---- perl5.002b1f/gv.c	Fri Dec  8 10:37:22 1995
+--- perl5.002b1f/gv.c	Fri Dec	 8 10:37:22 1995
 
 Index: lib/Cwd.pm
 
@@ -3021,7 +3021,7 @@ Index: lib/Cwd.pm
     up on AFS.
 
 *** perl5.002b1e/lib/Cwd.pm	Mon Nov 13 23:01:38 1995
---- perl5.002b1f/lib/Cwd.pm	Fri Dec  8 10:42:46 1995
+--- perl5.002b1f/lib/Cwd.pm	Fri Dec	 8 10:42:46 1995
 
 Index: lib/Sys/Syslog.pm
 
@@ -3029,30 +3029,30 @@ Index: lib/Sys/Syslog.pm
     Alas, I've lost the attribution for this patch.  Sorry about
     that.
 
-*** perl5.002b1e/lib/Sys/Syslog.pm	Thu Feb  9 20:05:36 1995
---- perl5.002b1f/lib/Sys/Syslog.pm	Wed Dec  6 14:07:54 1995
+*** perl5.002b1e/lib/Sys/Syslog.pm	Thu Feb	 9 20:05:36 1995
+--- perl5.002b1f/lib/Sys/Syslog.pm	Wed Dec	 6 14:07:54 1995
 
 Index: lib/diagnostics.pm
 
     Fixes from Tom.
 
 *** perl5.002b1e/lib/diagnostics.pm	Tue Nov 14 16:16:36 1995
---- perl5.002b1f/lib/diagnostics.pm	Wed Dec  6 13:58:42 1995
+--- perl5.002b1f/lib/diagnostics.pm	Wed Dec	 6 13:58:42 1995
 
 Index: t/lib/socket.t
 
-    New test from Tom.  I've allowed it to fail if the echo service is
+    New test from Tom.	I've allowed it to fail if the echo service is
     disabled, as is apparently the case on some systems.
 
-*** /dev/null	Fri Dec  8 13:36:14 1995
---- perl5.002b1f/t/lib/socket.t	Fri Dec  8 11:16:01 1995
+*** /dev/null	Fri Dec	 8 13:36:14 1995
+--- perl5.002b1f/t/lib/socket.t Fri Dec	 8 11:16:01 1995
 
 Index: toke.c
     
     A patch from Paul Marquess "purely for source filters".
 
-*** perl5.002b1e/toke.c	Wed Nov 15 22:08:23 1995
---- perl5.002b1f/toke.c	Wed Dec  6 13:24:19 1995
+*** perl5.002b1e/toke.c Wed Nov 15 22:08:23 1995
+--- perl5.002b1f/toke.c Wed Dec	 6 13:24:19 1995
 
 -------------
 Version 5.002b1e
@@ -3063,17 +3063,17 @@ an upgrade from MakeMaker-5.10 to MakeMaker-5.11.
 
 
 Index: lib/ExtUtils/Liblist.pm
-*** perl5.002b1d/lib/ExtUtils/Liblist.pm	Sat Dec  2 16:50:47 1995
---- perl5.002b1e/lib/ExtUtils/Liblist.pm	Wed Dec  6 11:52:22 1995
+*** perl5.002b1d/lib/ExtUtils/Liblist.pm	Sat Dec	 2 16:50:47 1995
+--- perl5.002b1e/lib/ExtUtils/Liblist.pm	Wed Dec	 6 11:52:22 1995
 
 Index: lib/ExtUtils/MakeMaker.pm
-Prereq:  1.114 
-*** perl5.002b1d/lib/ExtUtils/MakeMaker.pm	Sat Dec  2 16:50:48 1995
---- perl5.002b1e/lib/ExtUtils/MakeMaker.pm	Wed Dec  6 11:52:22 1995
+Prereq:	 1.114 
+*** perl5.002b1d/lib/ExtUtils/MakeMaker.pm	Sat Dec	 2 16:50:48 1995
+--- perl5.002b1e/lib/ExtUtils/MakeMaker.pm	Wed Dec	 6 11:52:22 1995
 
 Index: lib/ExtUtils/Manifest.pm
-*** perl5.002b1d/lib/ExtUtils/Manifest.pm	Sat Dec  2 16:50:48 1995
---- perl5.002b1e/lib/ExtUtils/Manifest.pm	Wed Dec  6 11:52:22 1995
+*** perl5.002b1d/lib/ExtUtils/Manifest.pm	Sat Dec	 2 16:50:48 1995
+--- perl5.002b1e/lib/ExtUtils/Manifest.pm	Wed Dec	 6 11:52:22 1995
 
 -------------
 Version 5.002b1d
@@ -3083,7 +3083,7 @@ This is patch.2b1d to perl5.002beta1.
 
 This patch includes patches for the following items:
 
-    NETaa14710:	Included bsdi_bsdos.sh hint file.
+    NETaa14710: Included bsdi_bsdos.sh hint file.
 
     pod/perlre.pod:  Mention 32bit limit.
 
@@ -3123,9 +3123,9 @@ Index: Configure
     Include sitelib (architecture-independent directory).
 
 
-Prereq:  3.0.1.8 
+Prereq:	 3.0.1.8 
 *** perl5.002b1c/Configure	Mon Nov 20 10:00:33 1995
---- perl5.002b1d/Configure	Sat Dec  2 15:35:13 1995
+--- perl5.002b1d/Configure	Sat Dec	 2 15:35:13 1995
 
 Index: INSTALL
 
@@ -3140,7 +3140,7 @@ Index: MANIFEST
     
     Include renamed hint file.
 
-*** perl5.002b1c/MANIFEST	Sat Dec  2 16:20:21 1995
+*** perl5.002b1c/MANIFEST	Sat Dec	 2 16:20:21 1995
 --- perl5.002b1d/MANIFEST	Sun Nov 26 17:03:31 1995
 
 Index: config_h.SH
@@ -3151,23 +3151,23 @@ Index: config_h.SH
     site-specific modules.  Usually, this will be
     /usr/local/lib/site_perl.
 
-Prereq:  3.0.1.4 
+Prereq:	 3.0.1.4 
 *** perl5.002b1c/config_h.SH	Mon Nov 20 10:00:33 1995
---- perl5.002b1d/config_h.SH	Sat Dec  2 15:35:13 1995
+--- perl5.002b1d/config_h.SH	Sat Dec	 2 15:35:13 1995
 
 Index: ext/Socket/Makefile.PL
 
     Update version number to 1.5.
 
-*** perl5.002b1c/ext/Socket/Makefile.PL	Sat Nov 18 15:36:56 1995
---- perl5.002b1d/ext/Socket/Makefile.PL	Sat Dec  2 16:23:52 1995
+*** perl5.002b1c/ext/Socket/Makefile.PL Sat Nov 18 15:36:56 1995
+--- perl5.002b1d/ext/Socket/Makefile.PL Sat Dec	 2 16:23:52 1995
 
 Index: ext/Socket/Socket.pm
 
     Update to version 1.5.
 
 *** perl5.002b1c/ext/Socket/Socket.pm	Sat Nov 18 15:37:03 1995
---- perl5.002b1d/ext/Socket/Socket.pm	Sat Dec  2 16:25:17 1995
+--- perl5.002b1d/ext/Socket/Socket.pm	Sat Dec	 2 16:25:17 1995
 
 Index: ext/Socket/Socket.xs
 
@@ -3176,7 +3176,7 @@ Index: ext/Socket/Socket.xs
     system has <sys/un.h>.  SVR3 systems generally don't.
 
 *** perl5.002b1c/ext/Socket/Socket.xs	Sat Nov 18 15:36:57 1995
---- perl5.002b1d/ext/Socket/Socket.xs	Sat Dec  2 15:46:20 1995
+--- perl5.002b1d/ext/Socket/Socket.xs	Sat Dec	 2 15:46:20 1995
 
 Index: h2ph.PL
 
@@ -3196,8 +3196,8 @@ Index: pod/perlre.pod
 
     Mention 65536 limit explicitly.
 
-*** perl5.002b1c/pod/perlre.pod	Wed Nov 15 21:35:31 1995
---- perl5.002b1d/pod/perlre.pod	Sun Nov 26 16:57:20 1995
+*** perl5.002b1c/pod/perlre.pod Wed Nov 15 21:35:31 1995
+--- perl5.002b1d/pod/perlre.pod Sun Nov 26 16:57:20 1995
 
 -------------
 Version 5.002b1c
@@ -3213,15 +3213,15 @@ I have also updated MANIFEST to include them.
 
 
 Index: MANIFEST
-*** perl5.002b1b/MANIFEST	Sat Dec  2 16:13:24 1995
---- perl5.002b1c/MANIFEST	Sat Dec  2 16:12:54 1995
+*** perl5.002b1b/MANIFEST	Sat Dec	 2 16:13:24 1995
+--- perl5.002b1c/MANIFEST	Sat Dec	 2 16:12:54 1995
 
 Index: lib/Devel/SelfStubber.pm
-*** /dev/null	Fri Dec  1 16:03:22 1995
+*** /dev/null	Fri Dec	 1 16:03:22 1995
 --- perl5.002b1c/lib/Devel/SelfStubber.pm	Sun Nov 26 16:14:19 1995
 
 Index: lib/SelfLoader.pm
-*** /dev/null	Fri Dec  1 16:03:22 1995
+*** /dev/null	Fri Dec	 1 16:03:22 1995
 --- perl5.002b1c/lib/SelfLoader.pm	Sun Nov 26 16:14:50 1995
 
 -------------
@@ -3229,7 +3229,7 @@ Version 5.002b1b
 -------------
 
 This is patch.2b1b to perl5.002beta1.  This is simply
-MakeMaker-5.10.  Nothing else is included.
+MakeMaker-5.10.	 Nothing else is included.
 
 It contains:
 
@@ -3238,19 +3238,19 @@ and a revised minimod.PL that now writes a pod section into ExtUtils::Miniperl.
 
 Index: lib/ExtUtils/Liblist.pm
 *** perl5.002b1a/lib/ExtUtils/Liblist.pm	Mon Nov 13 22:03:29 1995
---- perl5.002b1b/lib/ExtUtils/Liblist.pm	Sat Dec  2 15:58:00 1995
+--- perl5.002b1b/lib/ExtUtils/Liblist.pm	Sat Dec	 2 15:58:00 1995
 
 Index: lib/ExtUtils/MakeMaker.pm
 *** perl5.002b1a/lib/ExtUtils/MakeMaker.pm	Sat Nov 18 16:01:05 1995
---- perl5.002b1b/lib/ExtUtils/MakeMaker.pm	Sat Dec  2 15:58:01 1995
+--- perl5.002b1b/lib/ExtUtils/MakeMaker.pm	Sat Dec	 2 15:58:01 1995
 
 Index: lib/ExtUtils/Manifest.pm
 *** perl5.002b1a/lib/ExtUtils/Manifest.pm	Mon Nov 13 22:03:30 1995
---- perl5.002b1b/lib/ExtUtils/Manifest.pm	Sat Dec  2 15:58:02 1995
+--- perl5.002b1b/lib/ExtUtils/Manifest.pm	Sat Dec	 2 15:58:02 1995
 
 Index: minimod.PL
 *** perl5.002b1a/minimod.PL	Sun Nov 19 23:01:02 1995
---- perl5.002b1b/minimod.PL	Sat Dec  2 15:58:02 1995
+--- perl5.002b1b/minimod.PL	Sat Dec	 2 15:58:02 1995
 
 -------------
 Version 5.002b1a
@@ -3261,17 +3261,17 @@ xsubpp-1.944.  It includes perl prototype support.
 
 Index: XSUB.h
 
-Updated to match xsubpp-1.944.  Includes perl prototype support.
+Updated to match xsubpp-1.944.	Includes perl prototype support.
 
 *** perl5.002beta1/XSUB.h	Fri Nov 10 13:11:02 1995
---- perl5.002b1a/XSUB.h	Sat Dec  2 15:43:54 1995
+--- perl5.002b1a/XSUB.h Sat Dec	 2 15:43:54 1995
 
 Index: lib/ExtUtils/xsubpp
 
 Updated to xsubpp-1.944.  Includes perl prototype support.
 
 *** perl5.002beta1/lib/ExtUtils/xsubpp	Mon Nov 20 11:03:49 1995
---- perl5.002b1a/lib/ExtUtils/xsubpp	Sat Dec  2 15:43:55 1995
+--- perl5.002b1a/lib/ExtUtils/xsubpp	Sat Dec	 2 15:43:55 1995
 
 
 
@@ -3301,7 +3301,7 @@ Here are the detailed changes from 5.001m to 5.002beta1:
 Index: patchlevel.h
 Incremented to 2!
 *** perl5.001.lwall/patchlevel.h	Sun Mar 12 22:29:12 1995
---- perl5.002beta1/patchlevel.h	Sat Nov 18 15:41:15 1995
+--- perl5.002beta1/patchlevel.h Sat Nov 18 15:41:15 1995
 
 Index: Changes
 This includes the Changes file Larry sent me.  I added the first
@@ -3312,7 +3312,7 @@ paragraph.
 Index: Changes.Conf
 An all too brief summary.
 *** perl5.001.lwall/Changes.Conf	Thu Oct 19 21:00:06 1995
---- perl5.002beta1/Changes.Conf	Mon Nov 20 10:08:05 1995
+--- perl5.002beta1/Changes.Conf Mon Nov 20 10:08:05 1995
 
 Index: Configure
 
@@ -3323,7 +3323,7 @@ Define things such as  .o vs. .obj,  '' vs. .exe, .a vs. .lib, etc.
 
 Include I_LOCALE testing.
 
-Include checks for new library set-up.  I don't want to ever have to
+Include checks for new library set-up.	I don't want to ever have to
 change this again.  It's documented more clearly in INSTALL.
 
 Figure out correct string for $startperl (usually
@@ -3335,7 +3335,7 @@ numbers (e.g. on Solaris) are allowed and are filled with
 innocuous names such as NUM37 NUM38, etc., where the 37 or 38
 represents the actual signal number.
 
-Prereq:  3.0.1.8 
+Prereq:	 3.0.1.8 
 *** perl5.001.lwall/Configure	Mon Oct 23 14:08:59 1995
 --- perl5.002beta1/Configure	Mon Nov 20 10:00:33 1995
 
@@ -3375,14 +3375,14 @@ Add variables for non unix systems.
 
 Add .PL file extraction logic.
 
-*** perl5.001.lwall/Makefile.SH	Tue Nov 14 20:25:48 1995
+*** perl5.001.lwall/Makefile.SH Tue Nov 14 20:25:48 1995
 --- perl5.002beta1/Makefile.SH	Mon Nov 20 15:56:12 1995
 
 Index: XSUB.h
 
 Protect arguments of macros with ().
 
-*** perl5.001.lwall/XSUB.h	Tue Mar  7 14:10:00 1995
+*** perl5.001.lwall/XSUB.h	Tue Mar	 7 14:10:00 1995
 --- perl5.002beta1/XSUB.h	Fri Nov 10 13:11:02 1995
 
 Index: c2ph.PL
@@ -3397,26 +3397,26 @@ Allow for .o or .obj in file names.
 
 Index: config_H
 Updated.
-Prereq:  3.0.1.3 
+Prereq:	 3.0.1.3 
 *** perl5.001.lwall/config_H	Thu Oct 19 21:01:14 1995
 --- perl5.002beta1/config_H	Mon Nov 20 15:41:49 1995
 
 Index: config_h.SH
 Updated to match new Configure.
-Prereq:  3.0.1.3 
-*** perl5.001.lwall/config_h.SH	Mon Oct 23 14:10:38 1995
+Prereq:	 3.0.1.3 
+*** perl5.001.lwall/config_h.SH Mon Oct 23 14:10:38 1995
 --- perl5.002beta1/config_h.SH	Mon Nov 20 10:00:33 1995
 
 Index: configpm
 Add in routine to print out full config.sh file.
-*** perl5.001.lwall/configpm	Wed Jun  7 19:46:01 1995
+*** perl5.001.lwall/configpm	Wed Jun	 7 19:46:01 1995
 --- perl5.002beta1/configpm	Tue Oct 31 11:51:52 1995
 
 Index: doop.c
 Check for sprintf memory overflow that can arise from things
 like %999999s.
 
-*** perl5.001.lwall/doop.c	Sun Jul  2 23:33:44 1995
+*** perl5.001.lwall/doop.c	Sun Jul	 2 23:33:44 1995
 --- perl5.002beta1/doop.c	Wed Nov 15 15:08:01 1995
 
 Index: emacs/cperl-mode.el
@@ -3431,12 +3431,12 @@ Remove unnecessary whichsigname introduced in patch.1n.
 
 Index: ext/DB_File/DB_File.pm
 Updated to version 1.01.
-*** perl5.001.lwall/ext/DB_File/DB_File.pm	Wed Jun  7 19:46:14 1995
+*** perl5.001.lwall/ext/DB_File/DB_File.pm	Wed Jun	 7 19:46:14 1995
 --- perl5.002beta1/ext/DB_File/DB_File.pm	Tue Nov 14 14:14:25 1995
 
 Index: ext/DB_File/DB_File.xs
 Updated to version 1.01.
-*** perl5.001.lwall/ext/DB_File/DB_File.xs	Wed Jun  7 19:46:17 1995
+*** perl5.001.lwall/ext/DB_File/DB_File.xs	Wed Jun	 7 19:46:17 1995
 --- perl5.002beta1/ext/DB_File/DB_File.xs	Tue Nov 14 14:14:37 1995
 
 Index: ext/DB_File/Makefile.PL
@@ -3446,13 +3446,13 @@ Updated to version 1.01.
 
 Index: ext/DB_File/typemap
 Fix typemap to avoid core dump.
-*** perl5.001.lwall/ext/DB_File/typemap	Tue Oct 18 12:27:52 1994
+*** perl5.001.lwall/ext/DB_File/typemap Tue Oct 18 12:27:52 1994
 --- perl5.002beta1/ext/DB_File/typemap	Tue Oct 31 11:53:28 1995
 
 Index: ext/DynaLoader/DynaLoader.pm
 Add parentheses to Carp::confess call.
 *** perl5.001.lwall/ext/DynaLoader/DynaLoader.pm	Thu Oct 19 20:13:25 1995
---- perl5.002beta1/ext/DynaLoader/DynaLoader.pm	Fri Nov 10 11:49:00 1995
+--- perl5.002beta1/ext/DynaLoader/DynaLoader.pm Fri Nov 10 11:49:00 1995
 
 Index: ext/DynaLoader/dl_os2.xs
 New file.
@@ -3467,32 +3467,32 @@ Add O_BINARY define for OS/2.
 Index: ext/GDBM_File/GDBM_File.pm
 Added a tiny bit of documentation, including how to get gdbm.
 Shamelessly stolen from the DB_File.pm documentation.
-*** perl5.001.lwall/ext/GDBM_File/GDBM_File.pm	Wed Jun  7 19:46:34 1995
+*** perl5.001.lwall/ext/GDBM_File/GDBM_File.pm	Wed Jun	 7 19:46:34 1995
 --- perl5.002beta1/ext/GDBM_File/GDBM_File.pm	Mon Nov 20 10:22:26 1995
 
 Index: ext/GDBM_File/GDBM_File.xs
 Add gdbm_EXISTS #define.
-*** perl5.001.lwall/ext/GDBM_File/GDBM_File.xs	Sat Jul  1 18:44:02 1995
+*** perl5.001.lwall/ext/GDBM_File/GDBM_File.xs	Sat Jul	 1 18:44:02 1995
 --- perl5.002beta1/ext/GDBM_File/GDBM_File.xs	Sat Nov 11 14:25:50 1995
 
 Index: ext/NDBM_File/hints/solaris.pl
 Updated for MakeMaker 5.0x.
-*** perl5.001.lwall/ext/NDBM_File/hints/solaris.pl	Wed Jun  7 19:46:39 1995
+*** perl5.001.lwall/ext/NDBM_File/hints/solaris.pl	Wed Jun	 7 19:46:39 1995
 --- perl5.002beta1/ext/NDBM_File/hints/solaris.pl	Fri Nov 10 10:39:23 1995
 
 Index: ext/ODBM_File/hints/sco.pl
 Updated for MakeMaker 5.0x.
-*** perl5.001.lwall/ext/ODBM_File/hints/sco.pl	Wed Jun  7 19:46:44 1995
+*** perl5.001.lwall/ext/ODBM_File/hints/sco.pl	Wed Jun	 7 19:46:44 1995
 --- perl5.002beta1/ext/ODBM_File/hints/sco.pl	Fri Nov 10 10:39:32 1995
 
 Index: ext/ODBM_File/hints/solaris.pl
 Updated for MakeMaker 5.0x.
-*** perl5.001.lwall/ext/ODBM_File/hints/solaris.pl	Wed Jun  7 19:46:46 1995
+*** perl5.001.lwall/ext/ODBM_File/hints/solaris.pl	Wed Jun	 7 19:46:46 1995
 --- perl5.002beta1/ext/ODBM_File/hints/solaris.pl	Fri Nov 10 10:39:44 1995
 
 Index: ext/ODBM_File/hints/svr4.pl
 Updated for MakeMaker 5.0x.
-*** perl5.001.lwall/ext/ODBM_File/hints/svr4.pl	Wed Jun  7 19:46:48 1995
+*** perl5.001.lwall/ext/ODBM_File/hints/svr4.pl Wed Jun	 7 19:46:48 1995
 --- perl5.002beta1/ext/ODBM_File/hints/svr4.pl	Fri Nov 10 10:39:54 1995
 
 Index: ext/POSIX/POSIX.pm
@@ -3517,33 +3517,33 @@ Updated for MakeMaker 5.0x to allow compilation on non-unix systems.
 
 Index: ext/SDBM_File/sdbm/sdbm.c
 Include OS/2 O_BINARY flag.
-Prereq:  1.16 
-*** perl5.001.lwall/ext/SDBM_File/sdbm/sdbm.c	Wed Jun  7 19:46:57 1995
+Prereq:	 1.16 
+*** perl5.001.lwall/ext/SDBM_File/sdbm/sdbm.c	Wed Jun	 7 19:46:57 1995
 --- perl5.002beta1/ext/SDBM_File/sdbm/sdbm.c	Mon Nov 13 23:01:41 1995
 
 Index: ext/Socket/Makefile.PL
-Updated to 1.3.  Actually we're up to 1.4, but I forgot to update
+Updated to 1.3.	 Actually we're up to 1.4, but I forgot to update
 the Makefile.PL.
 *** perl5.001.lwall/ext/Socket/Makefile.PL	Thu Jan 19 18:59:06 1995
 --- perl5.002beta1/ext/Socket/Makefile.PL	Sat Nov 18 15:36:56 1995
 
 Index: ext/Socket/Socket.pm
-Updated to 1.3.  Actually we're up to 1.4, but I forgot to update
+Updated to 1.3.	 Actually we're up to 1.4, but I forgot to update
 the version number.  This adds some non-portable stuff to manipulate
 structures in <sys/un.h>.  I'll have to #ifdef it out in the next
 patch.
 
-*** perl5.001.lwall/ext/Socket/Socket.pm	Sat Jul  1 15:51:54 1995
---- perl5.002beta1/ext/Socket/Socket.pm	Sat Nov 18 15:37:03 1995
+*** perl5.001.lwall/ext/Socket/Socket.pm	Sat Jul	 1 15:51:54 1995
+--- perl5.002beta1/ext/Socket/Socket.pm Sat Nov 18 15:37:03 1995
 
 Index: ext/Socket/Socket.xs
-Updated to 1.3.  Actually we're up to 1.4, but I forgot to update
+Updated to 1.3.	 Actually we're up to 1.4, but I forgot to update
 the version number.  This adds some non-portable stuff to manipulate
 structures in <sys/un.h>.  I'll have to #ifdef it out in the next
 patch.
 
-*** perl5.001.lwall/ext/Socket/Socket.xs	Sat Jul  1 15:51:56 1995
---- perl5.002beta1/ext/Socket/Socket.xs	Sat Nov 18 15:36:57 1995
+*** perl5.001.lwall/ext/Socket/Socket.xs	Sat Jul	 1 15:51:56 1995
+--- perl5.002beta1/ext/Socket/Socket.xs Sat Nov 18 15:36:57 1995
 
 Index: global.sym
 Remove unnecessary whichsigname that was added in patch.1n.
@@ -3563,11 +3563,11 @@ Converted from h2xs.SH.
 Index: hints/aix.sh
 Add gcc-specific -Xlinker, if you're using gcc.
 *** perl5.001.lwall/hints/aix.sh	Thu Oct 19 21:02:08 1995
---- perl5.002beta1/hints/aix.sh	Mon Nov 13 23:03:33 1995
+--- perl5.002beta1/hints/aix.sh Mon Nov 13 23:03:33 1995
 
 Index: hints/freebsd.sh
 Warn about possible here-document problem.
-*** perl5.001.lwall/hints/freebsd.sh	Sat Jul  1 18:44:07 1995
+*** perl5.001.lwall/hints/freebsd.sh	Sat Jul	 1 18:44:07 1995
 --- perl5.002beta1/hints/freebsd.sh	Sat Nov 18 16:21:20 1995
 
 Index: hints/hpux.sh
@@ -3576,7 +3576,7 @@ Replace old hpux_9.sh, since this works for 9 and 10.
 --- perl5.002beta1/hints/hpux.sh	Mon Nov 20 09:53:28 1995
 
 Index: hints/irix_6_2.sh
-New hint file.  This should be merged with irix_6.sh, since it's
+New hint file.	This should be merged with irix_6.sh, since it's
 almost identical.
 *** /dev/null	Mon Nov 20 17:28:51 1995
 --- perl5.002beta1/hints/irix_6_2.sh	Mon Nov 20 11:16:55 1995
@@ -3588,17 +3588,17 @@ Give pointers about directory functions.
 
 Index: hints/netbsd.sh
 Updated.
-*** perl5.001.lwall/hints/netbsd.sh	Wed Jun  7 19:47:45 1995
+*** perl5.001.lwall/hints/netbsd.sh	Wed Jun	 7 19:47:45 1995
 --- perl5.002beta1/hints/netbsd.sh	Mon Nov 13 23:04:17 1995
 
 Index: hints/os2.sh
 *** /dev/null	Mon Nov 20 17:28:51 1995
---- perl5.002beta1/hints/os2.sh	Tue Nov 14 11:07:33 1995
+--- perl5.002beta1/hints/os2.sh Tue Nov 14 11:07:33 1995
 
 Index: hints/sco.sh
 Renamed from sco_3, since it should apply to most recent versions.
 *** /dev/null	Mon Nov 20 17:28:51 1995
---- perl5.002beta1/hints/sco.sh	Mon Jun  5 11:50:11 1995
+--- perl5.002beta1/hints/sco.sh Mon Jun	 5 11:50:11 1995
 
 Index: hints/solaris_2.sh
 Remove temporary file try.c.
@@ -3612,8 +3612,8 @@ Note that you can substitute sh5 for sh to get a big speed up.
 
 Index: installman
 Quit if they just asked for help with -h.
-*** perl5.001.lwall/installman	Sat Jul  1 18:44:09 1995
---- perl5.002beta1/installman	Mon Nov  6 11:16:43 1995
+*** perl5.001.lwall/installman	Sat Jul	 1 18:44:09 1995
+--- perl5.002beta1/installman	Mon Nov	 6 11:16:43 1995
 
 Index: installperl
 Updated to use Config rather than hand-reading config.sh again.
@@ -3622,7 +3622,7 @@ Install h2ph.
 
 Create site_perl and site_perl/archname directories.
 
-*** perl5.001.lwall/installperl	Sat Jul  1 18:44:12 1995
+*** perl5.001.lwall/installperl Sat Jul	 1 18:44:12 1995
 --- perl5.002beta1/installperl	Mon Nov 20 12:55:08 1995
 
 Index: lib/AutoSplit.pm
@@ -3632,58 +3632,58 @@ Tim's prototype patch.
 
 Less enthusiastic checking of autoloader_seen.
 
-*** perl5.001.lwall/lib/AutoSplit.pm	Sat Jul  1 15:52:03 1995
+*** perl5.001.lwall/lib/AutoSplit.pm	Sat Jul	 1 15:52:03 1995
 --- perl5.002beta1/lib/AutoSplit.pm	Wed Nov 15 15:06:19 1995
 
 Index: lib/Cwd.pm
 Updated for Unix, NT, and OS/2.
-*** perl5.001.lwall/lib/Cwd.pm	Wed Jun  7 19:48:18 1995
+*** perl5.001.lwall/lib/Cwd.pm	Wed Jun	 7 19:48:18 1995
 --- perl5.002beta1/lib/Cwd.pm	Mon Nov 13 23:01:38 1995
 
 Index: lib/ExtUtils/Liblist.pm
 Updated to MakeMaker 5.06.
-*** perl5.001.lwall/lib/ExtUtils/Liblist.pm	Wed Jun  7 19:48:27 1995
+*** perl5.001.lwall/lib/ExtUtils/Liblist.pm	Wed Jun	 7 19:48:27 1995
 --- perl5.002beta1/lib/ExtUtils/Liblist.pm	Mon Nov 13 22:03:29 1995
 
 Index: lib/ExtUtils/MakeMaker.pm
 Updated to MakeMaker 5.06.
-Prereq:  1.21 
+Prereq:	 1.21 
 *** perl5.001.lwall/lib/ExtUtils/MakeMaker.pm	Thu Oct 19 21:02:57 1995
 --- perl5.002beta1/lib/ExtUtils/MakeMaker.pm	Sat Nov 18 16:01:05 1995
 
 Index: lib/ExtUtils/Manifest.pm
 Updated to MakeMaker 5.06.
-*** perl5.001.lwall/lib/ExtUtils/Manifest.pm	Sat Jul  1 15:52:11 1995
+*** perl5.001.lwall/lib/ExtUtils/Manifest.pm	Sat Jul	 1 15:52:11 1995
 --- perl5.002beta1/lib/ExtUtils/Manifest.pm	Mon Nov 13 22:03:30 1995
 
 Index: lib/ExtUtils/xsubpp
 Updated to xsubpp-1.923.
-*** perl5.001.lwall/lib/ExtUtils/xsubpp	Sat Jul  1 20:08:00 1995
+*** perl5.001.lwall/lib/ExtUtils/xsubpp Sat Jul	 1 20:08:00 1995
 --- perl5.002beta1/lib/ExtUtils/xsubpp	Mon Nov 20 11:03:49 1995
 
 Index: lib/File/Find.pm
 OS/2 patch for nlink.
-*** perl5.001.lwall/lib/File/Find.pm	Sat Jul  1 15:52:13 1995
+*** perl5.001.lwall/lib/File/Find.pm	Sat Jul	 1 15:52:13 1995
 --- perl5.002beta1/lib/File/Find.pm	Wed Nov 15 15:20:03 1995
 
 Index: lib/Net/Ping.pm
 Updated to Net::Ping 1.00.
-*** perl5.001.lwall/lib/Net/Ping.pm	Wed Jun  7 19:49:13 1995
+*** perl5.001.lwall/lib/Net/Ping.pm	Wed Jun	 7 19:49:13 1995
 --- perl5.002beta1/lib/Net/Ping.pm	Tue Oct 31 11:15:55 1995
 
 Index: lib/Shell.pm
 Updated for OS/2 or Unix.
 *** perl5.001.lwall/lib/Shell.pm	Tue Oct 18 12:34:59 1994
---- perl5.002beta1/lib/Shell.pm	Mon Nov 13 23:01:40 1995
+--- perl5.002beta1/lib/Shell.pm Mon Nov 13 23:01:40 1995
 
 Index: lib/Test/Harness.pm
 Updated for OS/2 or Unix.
-*** perl5.001.lwall/lib/Test/Harness.pm	Tue Oct 18 12:38:35 1994
+*** perl5.001.lwall/lib/Test/Harness.pm Tue Oct 18 12:38:35 1994
 --- perl5.002beta1/lib/Test/Harness.pm	Mon Nov 13 23:01:40 1995
 
 Index: lib/Text/Tabs.pm
 Updated.
-*** perl5.001.lwall/lib/Text/Tabs.pm	Wed Jun  7 19:49:20 1995
+*** perl5.001.lwall/lib/Text/Tabs.pm	Wed Jun	 7 19:49:20 1995
 --- perl5.002beta1/lib/Text/Tabs.pm	Sat Nov 18 16:08:55 1995
 
 Index: lib/Text/Wrap.pm
@@ -3698,7 +3698,7 @@ New module.
 
 Index: lib/lib.pm
 Automatically try to load an architecture-dependent library too.
-*** perl5.001.lwall/lib/lib.pm	Sat Jul  1 15:51:37 1995
+*** perl5.001.lwall/lib/lib.pm	Sat Jul	 1 15:51:37 1995
 --- perl5.002beta1/lib/lib.pm	Fri Nov 10 16:50:43 1995
 
 Index: lib/overload.pm
@@ -3719,7 +3719,7 @@ New file -- same as diagnostics.pm.
 Index: mg.c
 Remove unnecessary whichsigname introduced in 5.001n.
 *** perl5.001.lwall/mg.c	Tue Nov 14 15:31:03 1995
---- perl5.002beta1/mg.c	Wed Nov 15 15:44:10 1995
+--- perl5.002beta1/mg.c Wed Nov 15 15:44:10 1995
 
 Index: minimod.PL
 Made c++ friendly.
@@ -3734,7 +3734,7 @@ Made c++ friendly.
 Index: op.c
 Larry's post 5.001mx prototype patch.
 *** perl5.001.lwall/op.c	Tue Nov 14 20:36:08 1995
---- perl5.002beta1/op.c	Wed Nov 15 22:10:36 1995
+--- perl5.002beta1/op.c Wed Nov 15 22:10:36 1995
 
 Index: os2/Makefile.SH
 New file.
@@ -3764,7 +3764,7 @@ New file.
 Index: os2/diff.installperl
 New file.
 *** /dev/null	Mon Nov 20 17:28:51 1995
---- perl5.002beta1/os2/diff.installperl	Tue Nov 14 11:09:28 1995
+--- perl5.002beta1/os2/diff.installperl Tue Nov 14 11:09:28 1995
 
 Index: os2/diff.mkdep
 New file.
@@ -3774,7 +3774,7 @@ New file.
 Index: os2/diff.x2pMakefile
 New file.
 *** /dev/null	Mon Nov 20 17:28:51 1995
---- perl5.002beta1/os2/diff.x2pMakefile	Tue Nov 14 11:09:29 1995
+--- perl5.002beta1/os2/diff.x2pMakefile Tue Nov 14 11:09:29 1995
 
 Index: os2/os2.c
 New file.
@@ -3784,7 +3784,7 @@ New file.
 Index: os2/os2ish.h
 New file.
 *** /dev/null	Mon Nov 20 17:28:51 1995
---- perl5.002beta1/os2/os2ish.h	Tue Nov 14 11:07:33 1995
+--- perl5.002beta1/os2/os2ish.h Tue Nov 14 11:07:33 1995
 
 Index: perl.c
 Add -h option to print out usage.
@@ -3802,24 +3802,24 @@ Move around some includes for OS/2.
 
 Check for <locale.h>
 
-*** perl5.001.lwall/perl.h	Thu Nov  9 19:50:43 1995
+*** perl5.001.lwall/perl.h	Thu Nov	 9 19:50:43 1995
 --- perl5.002beta1/perl.h	Wed Nov 15 17:13:16 1995
 
 Index: perldoc.PL
 
-Moved from perldoc.SH.  Updated to handle no nroff.
+Moved from perldoc.SH.	Updated to handle no nroff.
 *** /dev/null	Mon Nov 20 17:28:51 1995
 --- perl5.002beta1/perldoc.PL	Tue Nov 14 14:57:57 1995
 
 Index: pod/Makefile
 Updated for new pods and for new .PL format.
-*** perl5.001.lwall/pod/Makefile	Wed Jun  7 19:50:02 1995
---- perl5.002beta1/pod/Makefile	Mon Nov 20 13:00:50 1995
+*** perl5.001.lwall/pod/Makefile	Wed Jun	 7 19:50:02 1995
+--- perl5.002beta1/pod/Makefile Mon Nov 20 13:00:50 1995
 
 Index: pod/perl.pod
 Updated to refer to new pods.
-*** perl5.001.lwall/pod/perl.pod	Thu Oct  5 19:54:43 1995
---- perl5.002beta1/pod/perl.pod	Sat Nov 18 17:23:58 1995
+*** perl5.001.lwall/pod/perl.pod	Thu Oct	 5 19:54:43 1995
+--- perl5.002beta1/pod/perl.pod Sat Nov 18 17:23:58 1995
 
 Index: pod/perlbook.pod
 Updated info.
@@ -3828,12 +3828,12 @@ Updated info.
 
 Index: pod/perlbot.pod
 Include SUPER stuff.
-*** perl5.001.lwall/pod/perlbot.pod	Wed Jun  7 19:50:14 1995
+*** perl5.001.lwall/pod/perlbot.pod	Wed Jun	 7 19:50:14 1995
 --- perl5.002beta1/pod/perlbot.pod	Fri Nov 10 17:27:33 1995
 
 Index: pod/perlcall.pod
 Change perlapi to perlxs.
-*** perl5.001.lwall/pod/perlcall.pod	Wed Jun  7 19:50:17 1995
+*** perl5.001.lwall/pod/perlcall.pod	Wed Jun	 7 19:50:17 1995
 --- perl5.002beta1/pod/perlcall.pod	Tue Oct 31 15:37:57 1995
 
 Index: pod/perldata.pod
@@ -3863,7 +3863,7 @@ Tom's updates.
 
 Index: pod/perlguts.pod
 Change perlapi to perlxs.
-*** perl5.001.lwall/pod/perlguts.pod	Wed Jun  7 19:50:25 1995
+*** perl5.001.lwall/pod/perlguts.pod	Wed Jun	 7 19:50:25 1995
 --- perl5.002beta1/pod/perlguts.pod	Tue Oct 31 15:38:18 1995
 
 Index: pod/perlipc.pod
@@ -3893,7 +3893,7 @@ Add note about =cut operator.
 
 Index: pod/perlref.pod
 Updates from Tom.
-*** perl5.001.lwall/pod/perlref.pod	Tue Mar  7 00:56:46 1995
+*** perl5.001.lwall/pod/perlref.pod	Tue Mar	 7 00:56:46 1995
 --- perl5.002beta1/pod/perlref.pod	Sat Nov 18 17:24:04 1995
 
 Index: pod/perlsyn.pod
@@ -3959,7 +3959,7 @@ Updated.
 
 Index: t/op/stat.t
 Add note about tmpfs failures.
-*** perl5.001.lwall/t/op/stat.t	Tue Oct 18 12:46:23 1994
+*** perl5.001.lwall/t/op/stat.t Tue Oct 18 12:46:23 1994
 --- perl5.002beta1/t/op/stat.t	Wed Nov 15 22:00:50 1995
 
 Index: toke.c
@@ -3969,17 +3969,17 @@ Patch from Paul M. for source filters.
 
 Index: util.c
 Varargs fixes.
-*** perl5.001.lwall/util.c	Wed Jun  7 19:51:19 1995
+*** perl5.001.lwall/util.c	Wed Jun	 7 19:51:19 1995
 --- perl5.002beta1/util.c	Tue Nov 14 10:46:37 1995
 
 Index: writemain.SH
 Make c++ friendly.
-*** perl5.001.lwall/writemain.SH	Wed Feb  8 19:44:20 1995
---- perl5.002beta1/writemain.SH	Sat Nov 18 15:51:55 1995
+*** perl5.001.lwall/writemain.SH	Wed Feb	 8 19:44:20 1995
+--- perl5.002beta1/writemain.SH Sat Nov 18 15:51:55 1995
 
 Index: x2p/Makefile.SH
 Updated for .PL extraction.
-*** perl5.001.lwall/x2p/Makefile.SH	Wed Jun  7 19:51:37 1995
+*** perl5.001.lwall/x2p/Makefile.SH	Wed Jun	 7 19:51:37 1995
 --- perl5.002beta1/x2p/Makefile.SH	Sun Nov 19 23:17:39 1995
 
 Index: x2p/a2p.h

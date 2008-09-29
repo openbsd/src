@@ -11,7 +11,7 @@ BEGIN {
 
 use Getopt::Long;
 
-print "1..32\n";
+print "1..33\n";
 
 @ARGV = qw(-Foo -baR --foo bar);
 Getopt::Long::Configure ("no_ignore_case");
@@ -76,4 +76,18 @@ print (!(exists $lnk{bar})   ? "" : "not ", "ok 28\n");
     print (($errors eq '') ? "" : "not ", "ok 30\n");
     print ((defined $lnk{Foo})   ? "" : "not ", "ok 31\n");
     print (($lnk{Foo} eq "-baR") ? "" : "not ", "ok 32\n");
+}
+
+{
+    # Allow hashes to overload "".
+    # This used to fail up to 2.34.
+    # Thanks to Yves Orton.
+    my $blessed = bless(\%lnk, "OverLoad::Test");
+
+    @ARGV = qw(--foo bar);
+    Getopt::Long::Configure("default");
+    print "not" unless GetOptions (\%lnk, "foo=s" => \$foo);
+    print "ok 33\n";
+    package Overload::Test;
+    use overload '""' => sub{ die "Bad mojo!" };
 }

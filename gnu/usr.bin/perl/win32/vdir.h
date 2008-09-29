@@ -34,47 +34,48 @@ public:
     inline char* GetCurrentDirectoryA(int dwBufSize, char *lpBuffer)
     {
 	char* ptr = dirTableA[nDefault];
-	while (dwBufSize--)
+	while (--dwBufSize)
 	{
 	    if ((*lpBuffer++ = *ptr++) == '\0')
 		break;
 	}
-	return lpBuffer;
+        *lpBuffer = '\0';
+	return /* unused */ NULL;
     };
     inline WCHAR* GetCurrentDirectoryW(int dwBufSize, WCHAR *lpBuffer)
     {
 	WCHAR* ptr = dirTableW[nDefault];
-	while (dwBufSize--)
+	while (--dwBufSize)
 	{
 	    if ((*lpBuffer++ = *ptr++) == '\0')
 		break;
 	}
-	return lpBuffer;
+        *lpBuffer = '\0';
+	return /* unused */ NULL;
     };
-
 
     DWORD CalculateEnvironmentSpace(void);
     LPSTR BuildEnvironmentSpace(LPSTR lpStr);
 
 protected:
     int SetDirA(char const *pPath, int index);
+    int SetDirW(WCHAR const *pPath, int index);
     void FromEnvA(char *pEnv, int index);
+    void FromEnvW(WCHAR *pEnv, int index);
+
     inline const char *GetDefaultDirA(void)
     {
 	return dirTableA[nDefault];
     };
-
     inline void SetDefaultDirA(char const *pPath, int index)
     {
 	SetDirA(pPath, index);
 	nDefault = index;
     };
-    int SetDirW(WCHAR const *pPath, int index);
     inline const WCHAR *GetDefaultDirW(void)
     {
 	return dirTableW[nDefault];
     };
-
     inline void SetDefaultDirW(WCHAR const *pPath, int index)
     {
 	SetDirW(pPath, index);
@@ -134,9 +135,6 @@ VDir::VDir(int bManageDir /* = 1 */)
 void VDir::Init(VDir* pDir, VMem *p)
 {
     int index;
-    DWORD driveBits;
-    int nSave;
-    char szBuffer[MAX_PATH*driveCount];
 
     pMem = p;
     if (pDir) {
@@ -146,23 +144,47 @@ void VDir::Init(VDir* pDir, VMem *p)
 	nDefault = pDir->GetDefault();
     }
     else {
-	nSave = bManageDirectory;
+	int bSave = bManageDirectory;
+	DWORD driveBits = GetLogicalDrives();
+        OSVERSIONINFO osver;
+
+        memset(&osver, 0, sizeof(osver));
+        osver.dwOSVersionInfoSize = sizeof(osver);
+        GetVersionEx(&osver);
+
 	bManageDirectory = 0;
-	driveBits = GetLogicalDrives();
-	if (GetLogicalDriveStrings(sizeof(szBuffer), szBuffer)) {
-	    char* pEnv = GetEnvironmentStrings();
-	    char* ptr = szBuffer;
-	    for (index = 0; index < driveCount; ++index) {
-		if (driveBits & (1<<index)) {
-		    ptr += SetDirA(ptr, index) + 1;
-		    FromEnvA(pEnv, index);
-		}
-	    }
-	    FreeEnvironmentStrings(pEnv);
-	}
-	SetDefaultA(".");
-	bManageDirectory = nSave;
-    }
+        if (osver.dwMajorVersion < 5) {
+            char szBuffer[MAX_PATH*driveCount];
+            if (GetLogicalDriveStringsA(sizeof(szBuffer), szBuffer)) {
+                char* pEnv = (char*)GetEnvironmentStringsA();
+                char* ptr = szBuffer;
+                for (index = 0; index < driveCount; ++index) {
+                    if (driveBits & (1<<index)) {
+                        ptr += SetDirA(ptr, index) + 1;
+                        FromEnvA(pEnv, index);
+                    }
+                }
+                FreeEnvironmentStringsA(pEnv);
+            }
+            SetDefaultA(".");
+        }
+        else { /* Windows 2000 or later */
+            WCHAR szBuffer[MAX_PATH*driveCount];
+            if (GetLogicalDriveStringsW(sizeof(szBuffer), szBuffer)) {
+                WCHAR* pEnv = GetEnvironmentStringsW();
+                WCHAR* ptr = szBuffer;
+                for (index = 0; index < driveCount; ++index) {
+                    if (driveBits & (1<<index)) {
+                        ptr += SetDirW(ptr, index) + 1;
+                        FromEnvW(pEnv, index);
+                    }
+                }
+                FreeEnvironmentStringsW(pEnv);
+            }
+            SetDefaultW(L".");
+        }
+	bManageDirectory = bSave;
+  }
 }
 
 int VDir::SetDirA(char const *pPath, int index)
@@ -211,6 +233,18 @@ void VDir::FromEnvA(char *pEnv, int index)
     }
 }
 
+void VDir::FromEnvW(WCHAR *pEnv, int index)
+{   /* gets the directory for index from the environment variable. */
+    while (*pEnv != '\0') {
+	if ((pEnv[0] == '=') && (DriveIndex((char)pEnv[1]) == index)) {
+	    SetDirW(&pEnv[4], index);
+	    break;
+	}
+	else
+	    pEnv += wcslen(pEnv)+1;
+    }
+}
+
 void VDir::SetDefaultA(char const *pDefault)
 {
     char szBuffer[MAX_PATH+1];
@@ -227,13 +261,13 @@ void VDir::SetDefaultA(char const *pDefault)
 int VDir::SetDirW(WCHAR const *pPath, int index)
 {
     WCHAR chr, *ptr;
-    char szBuffer[MAX_PATH+1];
     int length = 0;
     if (index < driveCount && pPath != NULL) {
 	length = wcslen(pPath);
 	pMem->Free(dirTableW[index]);
 	ptr = dirTableW[index] = (WCHAR*)pMem->Malloc((length+2)*2);
 	if (ptr != NULL) {
+            char *ansi;
 	    wcscpy(ptr, pPath);
 	    ptr += length-1;
 	    chr = *ptr++;
@@ -241,13 +275,14 @@ int VDir::SetDirW(WCHAR const *pPath, int index)
 		*ptr++ = '\\';
 		*ptr = '\0';
 	    }
-	    WideCharToMultiByte(CP_ACP, 0, dirTableW[index], -1, szBuffer, sizeof(szBuffer), NULL, NULL);
-	    length = strlen(szBuffer);
+            ansi = win32_ansipath(dirTableW[index]);
+	    length = strlen(ansi);
 	    pMem->Free(dirTableA[index]);
 	    dirTableA[index] = (char*)pMem->Malloc(length+1);
 	    if (dirTableA[index] != NULL) {
-		strcpy(dirTableA[index], szBuffer);
+		strcpy(dirTableA[index], ansi);
 	    }
+            win32_free(ansi);
 	}
     }
 

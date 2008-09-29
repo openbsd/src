@@ -102,6 +102,16 @@ sub try_compile_and_link {
 	    $COREincdir = File::Spec->catdir($Config{'archlibexp'}, 'CORE');
 	}
 
+	if ($ENV{PERL_CORE}) {
+	    unless (-f File::Spec->catfile($COREincdir, "EXTERN.h")) {
+		die <<__EOD__;
+Your environment variable PERL_CORE is '$ENV{PERL_CORE}' but there
+is no EXTERN.h in $COREincdir.
+Cannot continue, aborting.
+__EOD__
+            }
+        }
+
 	my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir";
 
 	if ($^O eq 'VMS') {
@@ -169,30 +179,32 @@ EOF
     return $ok;
 }
 
-sub has_gettimeofday {
-    # confusing but true (if condition true ==> -DHAS_GETTIMEOFDAY already)
-    return 0 if $Config{d_gettimeod};
-    return 1 if try_compile_and_link(<<EOM);
+my $TIME_HEADERS = <<EOH;
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 #ifdef I_SYS_TYPES
 #   include <sys/types.h>
 #endif
-
 #ifdef I_SYS_TIME
 #   include <sys/time.h>
 #endif
-
 #ifdef I_SYS_SELECT
 #   include <sys/select.h>	/* struct timeval might be hidden in here */
 #endif
+EOH
+
+sub has_gettimeofday {
+    # confusing but true (if condition true ==> -DHAS_GETTIMEOFDAY already)
+    return 0 if $Config{d_gettimeod};
+    return 1 if try_compile_and_link(<<EOM);
+$TIME_HEADERS
 static int foo()
 {
     struct timeval tv;
     gettimeofday(&tv, 0);
 }
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
     foo();
 }
@@ -221,7 +233,7 @@ sub has_x {
 #   include <sys/time.h>
 #endif
 
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
 	$x;
 }
@@ -241,7 +253,7 @@ sub has_nanosleep {
 
 /* int nanosleep(const struct timespec *rqtp, struct timespec *rmtp); */
 
-int main() {
+int main(int argc, char** argv) {
     struct timespec ts1, ts2;
     int ret;
     ts1.tv_sec  = 0;
@@ -264,7 +276,7 @@ sub has_include {
 #include "XSUB.h"
 
 #include <$inc>
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
 	return 0;
 }
@@ -281,7 +293,7 @@ sub has_clock_xxx_syscall {
 #include "perl.h"
 #include "XSUB.h"
 #include <$SYSCALL_H>
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
     struct timespec ts;
     /* Many Linuxes get ENOSYS even though the syscall exists. */
@@ -299,7 +311,7 @@ sub has_clock_xxx {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
     struct timespec ts;
     int ret = clock_$xxx(CLOCK_REALTIME, &ts); /* Many Linuxes get ENOSYS. */
@@ -315,7 +327,7 @@ sub has_clock {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-int main _((int argc, char** argv, char** env))
+int main(int argc, char** argv)
 {
     clock_t tictoc;
     clock_t ret = clock();
@@ -330,17 +342,26 @@ sub has_clock_nanosleep {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-int main _((int argc, char** argv, char** env))
+#include <time.h>
+int main(int argc, char** argv)
 {
     int ret;
-    struct timerspec ts1;
-    struct timerspec ts2;
+    struct timespec ts1;
+    struct timespec ts2;
     ts1.tv_sec  = 0;
     ts1.tv_nsec = 750000000;;
     ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts1, &ts2);
     ret == 0 ? exit(0) : exit(errno ? errno : -1);
 }
 EOM
+}
+
+sub DEFINE {
+    my ($def, $val) = @_;
+    my $define = defined $val ? "$def=$val" : $def ;
+    unless ($DEFINE =~ /(?:^| )-D\Q$define\E(?: |$)/) {
+	$DEFINE .= " -D$define";
+    }
 }
 
 sub init {
@@ -589,13 +610,122 @@ EOD
 	print "NOT found.\n";
     }
 
+    print "Looking for stat() subsecond timestamps...\n";
+
+    print "Trying struct stat st_atimespec.tv_nsec...";
+    my $has_stat_st_xtimespec;
+    if (try_compile_and_link(<<EOM)) {
+$TIME_HEADERS
+#include <sys/stat.h>
+int main(int argc, char** argv) {
+    struct stat st;
+    st.st_atimespec.tv_nsec = 0;
+}
+EOM
+      $has_stat_st_xtimespec++;
+      DEFINE('TIME_HIRES_STAT', 1);
+    }
+
+    if ($has_stat_st_xtimespec) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Trying struct stat st_atimensec...";
+    my $has_stat_st_xtimensec;
+    if (try_compile_and_link(<<EOM)) {
+$TIME_HEADERS
+#include <sys/stat.h>
+int main(int argc, char** argv) {
+    struct stat st;
+    st.st_atimensec = 0;
+}
+EOM
+      $has_stat_st_xtimensec++;
+      DEFINE('TIME_HIRES_STAT', 2);
+    }
+
+    if ($has_stat_st_xtimensec) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Trying struct stat st_atime_n...";
+    my $has_stat_st_xtime_n;
+    if (try_compile_and_link(<<EOM)) {
+$TIME_HEADERS
+#include <sys/stat.h>
+int main(int argc, char** argv) {
+    struct stat st;
+    st.st_atime_n = 0;
+}
+EOM
+      $has_stat_st_xtime_n++;
+      DEFINE('TIME_HIRES_STAT', 3);
+    }
+
+    if ($has_stat_st_xtime_n) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Trying struct stat st_atim.tv_nsec...";
+    my $has_stat_st_xtim;
+    if (try_compile_and_link(<<EOM)) {
+$TIME_HEADERS
+#include <sys/stat.h>
+int main(int argc, char** argv) {
+    struct stat st;
+    st.st_atim.tv_nsec = 0;
+}
+EOM
+      $has_stat_st_xtim++;
+      DEFINE('TIME_HIRES_STAT', 4);
+    }
+
+    if ($has_stat_st_xtim) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Trying struct stat st_uatime...";
+    my $has_stat_st_uxtime;
+    if (try_compile_and_link(<<EOM)) {
+$TIME_HEADERS
+#include <sys/stat.h>
+int main(int argc, char** argv) {
+    struct stat st;
+    st.st_uatime = 0;
+}
+EOM
+      $has_stat_st_uxtime++;
+      DEFINE('TIME_HIRES_STAT', 5);
+    }
+
+    if ($has_stat_st_uxtime) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+   if ($DEFINE =~ /-DTIME_HIRES_STAT=\d+/) {
+    print "You seem to have stat() subsecond timestamps.\n";
+    print "(Your struct stat has them, but the filesystems must help.)\n";
+   } else {
+    print "You do not seem to have stat subsecond timestamps.\n";
+   }
+
     my $has_w32api_windows_h;
 
     if ($^O eq 'cygwin') {
         print "Looking for <w32api/windows.h>... ";
         if (has_include('w32api/windows.h')) {
 	    $has_w32api_windows_h++;
-	    $DEFINE .= ' -DHAS_W32API_WINDOWS_H';
+	    DEFINE('HAS_W32API_WINDOWS_H');
 	}
         if ($has_w32api_windows_h) {
 	    print "found.\n";
@@ -621,7 +751,7 @@ sub doMakefile {
 	    'AUTHOR'    => 'Jarkko Hietaniemi <jhi@iki.fi>',
 	    'ABSTRACT_FROM' => 'HiRes.pm',
 	);
-	$DEFINE .= " -DATLEASTFIVEOHOHFIVE";
+	DEFINE('ATLEASTFIVEOHOHFIVE');
     }
 
     push (@makefileopts,
@@ -652,22 +782,28 @@ sub doMakefile {
 
 sub doConstants {
     if (eval {require ExtUtils::Constant; 1}) {
-	my @names = (qw(CLOCK_HIGHRES CLOCK_MONOTONIC
-			CLOCK_PROCESS_CPUTIME_ID
-			CLOCK_REALTIME
-			CLOCK_SOFTTIME
-			CLOCK_THREAD_CPUTIME_ID
-			CLOCK_TIMEOFDAY
-			CLOCKS_PER_SEC
-			ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
-			ITIMER_REALPROF
-			TIMER_ABSTIME));
+	my @names = qw(CLOCK_HIGHRES CLOCK_MONOTONIC
+		       CLOCK_PROCESS_CPUTIME_ID
+		       CLOCK_REALTIME
+		       CLOCK_SOFTTIME
+		       CLOCK_THREAD_CPUTIME_ID
+		       CLOCK_TIMEOFDAY
+		       CLOCKS_PER_SEC
+		       ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
+		       ITIMER_REALPROF
+		       TIMER_ABSTIME);
 	foreach (qw (d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
 		     d_nanosleep d_clock_gettime d_clock_getres
-		     d_clock d_clock_nanosleep)) {
+		     d_clock d_clock_nanosleep d_hires_stat)) {
 	    my $macro = $_;
 	    if ($macro =~ /^(d_nanosleep|d_clock_gettime|d_clock_getres|d_clock|d_clock_nanosleep)$/) {
 		$macro =~ s/^d_(.+)/TIME_HIRES_\U$1/;
+	    } elsif ($macro =~ /^(d_hires_stat)$/) {
+		my $d_hires_stat = 0;
+		$d_hires_stat = $1 if ($DEFINE =~ /-DTIME_HIRES_STAT=(\d+)/);
+		push @names, {name => $_, macro => "TIME_HIRES_STAT", value => $d_hires_stat,
+			      default => ["IV", "0"]};
+		next;
 	    } else {
 		$macro =~ s/^d_(.+)/HAS_\U$1/;
 	    }
@@ -699,7 +835,7 @@ sub main {
     }
 
     if ($^O =~ /Win32/i) {
-      $DEFINE = '-DSELECT_IS_BROKEN';
+      DEFINE('SELECT_IS_BROKEN');
       $LIBS = [];
       print "System is $^O, skipping full configure...\n";
     } else {
@@ -715,11 +851,16 @@ EOM
        if ((exists $ENV{LC_ALL}   && $ENV{LC_ALL}   =~ /utf-?8/i) ||
            (exists $ENV{LC_CTYPE} && $ENV{LC_CTYPE} =~ /utf-?8/i) ||
            (exists $ENV{LANG}     && $ENV{LANG}     =~ /utf-?8/i)) {
-            print  <<EOM;
+            print <<EOM;
+
 NOTE: if you get an error like this (the Makefile line number may vary):
 Makefile:91: *** missing separator
 then set the environment variable LC_ALL to "C" and retry
 from scratch (re-run perl "Makefile.PL").
+(And consider upgrading your Perl.)
+(You got this message because you seem to have
+ an UTF-8 locale active in your shell environment, this used
+ to cause broken Makefiles to be created from Makefile.PLs.)
 EOM
         }
     }

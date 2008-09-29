@@ -1,8 +1,5 @@
-
 # This document contains text in Perl "POD" format.
 # Use a POD viewer like perldoc or perlman to render it.
-
-# This corrects some typoes in the previous release.
 
 =head1 NAME
 
@@ -15,8 +12,8 @@ Locale::Maketext::TPJ13 -- article about software localization
 =head1 DESCRIPTION
 
 The following article by Sean M. Burke and Jordan Lachler
-first appeared in I<The Perl
-Journal> #13 and is copyright 1999 The Perl Journal. It appears
+first appeared in I<The Perl Journal> #13
+and is copyright 1999 The Perl Journal. It appears
 courtesy of Jon Orwant and The Perl Journal.  This document may be
 distributed under the same terms as Perl itself.
 
@@ -208,7 +205,7 @@ number that noun is, and therefore the endings you have to put on it.
 
 He elaborates:  In "I scanned %g directories", you'd I<expect>
 "directories" to be in the accusative case (since it is the direct
-object in the sentnce) and the plural number,
+object in the sentence) and the plural number,
 except where $directory_count is 1, then you'd expect the singular, of
 course.  Just like Latin or German.  I<But!>  Where $directory_count %
 10 is 1 ("%" for modulo, remember), assuming $directory count is an

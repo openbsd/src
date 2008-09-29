@@ -1,40 +1,25 @@
 #!./perl
+use strict;
+require './test.pl';
 
 $^I = 'bak*';
 
 # Modified from the original inplace.t to test adding prefixes
 
-print "1..2\n";
+plan( tests => 2 );
 
-@ARGV = ('.a','.b','.c');
-if ($^O eq 'MSWin32') {
-  $CAT = '.\perl -e "print<>"';
-  `.\\perl -le "print 'foo'" > .a`;
-  `.\\perl -le "print 'foo'" > .b`;
-  `.\\perl -le "print 'foo'" > .c`;
+my @tfiles     = ('.a','.b','.c');
+my @tfiles_bak = ('bak.a', 'bak.b', 'bak.c');
+
+END { unlink_all('.a','.b','.c', 'bak.a', 'bak.b', 'bak.c'); }
+
+for my $file (@tfiles) {
+    runperl( prog => 'print qq(foo\n);', 
+             args => ['>', $file] );
 }
-elsif ($^O eq 'NetWare') {
-  $CAT = 'perl -e "print<>"';
-  `perl -le "print 'foo'" > .a`;
-  `perl -le "print 'foo'" > .b`;
-  `perl -le "print 'foo'" > .c`;
-}
-elsif ($^O eq 'VMS') {
-  $CAT = 'MCR []perl. -e "print<>"';
-  `MCR []perl. -le "print 'foo'" > ./.a`;
-  `MCR []perl. -le "print 'foo'" > ./.b`;
-  `MCR []perl. -le "print 'foo'" > ./.c`;
-}
-elsif ($^O eq 'MacOS') {
-  $CAT = "$^X -e \"print<>\"";
-  `$^X -le "print 'foo'" > .a`;
-  `$^X -le "print 'foo'" > .b`;
-  `$^X -le "print 'foo'" > .c`;
-}
-else {
-  $CAT = 'cat';
-  `echo foo | tee .a .b .c`;
-}
+
+@ARGV = @tfiles;
+
 while (<>) {
     s/foo/bar/;
 }
@@ -42,7 +27,11 @@ continue {
     print;
 }
 
-if (`$CAT .a .b .c` eq "bar\nbar\nbar\n") {print "ok 1\n";} else {print "not ok 1\n";}
-if (`$CAT bak.a bak.b bak.c` eq "foo\nfoo\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
+is ( runperl( prog => 'print<>;', args => \@tfiles ),
+     "bar\nbar\nbar\n", 
+     "file contents properly replaced" );
 
-unlink '.a', '.b', '.c', 'bak.a', 'bak.b', 'bak.c';
+is ( runperl( prog => 'print<>;', args => \@tfiles_bak ), 
+     "foo\nfoo\nfoo\n", 
+     "backup file contents stay the same" );
+

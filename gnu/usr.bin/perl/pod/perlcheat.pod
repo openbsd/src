@@ -5,7 +5,7 @@ perlcheat - Perl 5 Cheat Sheet
 =head1 DESCRIPTION
 
 This 'cheat sheet' is a handy reference, meant for beginning Perl
-programmers. Not everything is mentioned, but 194 features may
+programmers. Not everything is mentioned, but 195 features may
 already be overwhelming.
 
 =head2 The sheet
@@ -43,20 +43,20 @@ already be overwhelming.
   .. ...           +     one or more          /s . includes \n
   ?:               *     zero or more         /x ign. wh.space
   = += -= *= etc.  ?     zero or one          /g global
-  , =>             {3,7} repeat in range
-  list ops         ()    capture          REGEX CHARCLASSES
-  not              (?:)  no capture       .  == [^\n]
-  and              []    character class  \s == [\x20\f\t\r\n]
-  or xor           |     alternation      \w == [A-Za-z0-9_]
-                   \b    word boundary    \d == [0-9]
-                   \z    string end       \S, \W and \D negate
-  DO
-  use strict;        DON'T            LINKS
-  use warnings;      "$foo"           perl.com
-  my $var;           $$variable_name  perlmonks.org
+  , =>             {3,7} repeat in range      /o cmpl pat. once
+  list ops         ()    capture
+  not              (?:)  no capture       REGEX CHARCLASSES
+  and              []    character class  .  == [^\n]
+  or xor           |     alternation      \s == whitespace
+                   \b    word boundary    \w == word characters
+                   \z    string end       \d == digits
+  DO                                      \S, \W and \D negate
+  use strict;        DON'T
+  use warnings;      "$foo"           LINKS
+  my $var;           $$variable_name  perl.com
   open() or die $!;  `$userinput`     use.perl.org
   use Modules;       /$userinput/     perl.apache.org
-                                      parrotcode.org
+
   FUNCTION RETURN LISTS
   stat      localtime    caller         SPECIAL VARIABLES
    0 dev    0 second     0 package      $_    default variable
@@ -84,7 +84,7 @@ Perl 6 version to show that Perl will stay Perl.
 
 =head1 AUTHOR
 
-Juerd Waalboer <juerd@cpan.org>, with the help of many Perl Monks.
+Juerd Waalboer <#####@juerd.nl>, with the help of many Perl Monks.
 
 =head1 SEE ALSO
 

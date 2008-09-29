@@ -23,7 +23,7 @@ Files patched: README
 NETaa13033: goto pushed a bogus scope on the context stack.
 From: Steve Vinoski
 Files patched: pp_ctl.c
- The goto operator pushed an extra bogus scope onto the context stack.  (This
+ The goto operator pushed an extra bogus scope onto the context stack.	(This
  often didn't matter, since many things pop extra unrecognized scopes off.)
 
 NETaa13034: tried to get valid pointer from undef.
@@ -146,7 +146,7 @@ Files patched: op.c
  outside the eval only partially took into consideration that there
  might be extra debugger subroutine frames that shouldn't be used, and
  ended up comparing the wrong statement sequence number to the range of
- valid sequence numbers for the scope of the lexical variable.  (There
+ valid sequence numbers for the scope of the lexical variable.	(There
  was also a bug fixed in passing that caused the scope of lexical to go
  clear to the end of the subroutine even if it was within an inner block.)
 
@@ -180,7 +180,7 @@ Files patched: pod/perlsyn.pod
 NETaa13164: the dot detector for the end of formats was over-rambunctious.
 From: John Stoffel
 Files patched: toke.c
- The dot detector for the end of formats was over-rambunctious.  It would
+ The dot detector for the end of formats was over-rambunctious.	 It would
  pick up any dot that didn't have a space in front of it.
 
 NETaa13165: do {} while 1 never linked outer block into next chain.
@@ -188,7 +188,7 @@ From: Gisle Aas
 Files patched: op.c
  When the conditional of do {} while 1; was optimized away, it confused the
  postfix order construction so that the block that ordinarily sits around the
- whole loop was never executed.  So when the loop tried to unstack between
+ whole loop was never executed.	 So when the loop tried to unstack between
  iterations, it got the wrong context, and blew away the lexical variables
  of the outer scope.  Fixed it by introducing a NULL opcode that will be
  optimized away later.
@@ -315,7 +315,7 @@ NETaa13181: m//g didn't keep track of whether previous match matched null.
 From: "philippe.verdret"
 Files patched: mg.h pp_hot.c
  A pattern isn't allowed to match a null string in the same place twice in
- a row.  m//g wasn't keeping track of whether the previous match matched
+ a row.	 m//g wasn't keeping track of whether the previous match matched
  the null string.
 
 NETaa13182: now includes whitespace as a regexp metacharacter.
@@ -374,7 +374,7 @@ From: lusol@Dillon.CC.Lehigh.EDU
 Files patched: mg.c
  Since there was no regexp prior to the "use", it was returning whatever the
  last successful match was within the "use", because there was no current
- regexp, so it treated it as a normal variable.  It now returns undef.
+ regexp, so it treated it as a normal variable.	 It now returns undef.
 
 NETaa13195: semop had one S too many.
 From: Joachim Huober
@@ -389,7 +389,7 @@ Files patched: toke.c
 NETaa13197: changed implicit -> message to be more understandable.
 From: Bruce Barnett
 Files patched: op.c pod/perldiag.pod
- I changed the error message to be more understandable.  It now says
+ I changed the error message to be more understandable.	 It now says
  
      Can't use subscript on sort...
  
@@ -513,7 +513,7 @@ NETaa13342: grep and map with block would enter block but never leave it.
 From: Ian Phillipps
 Files patched: op.c
  The compiler use some sort-checking code to handle the arguments of
- grep and map.  Unfortunately, this wiped out the block exit opcode while
+ grep and map.	Unfortunately, this wiped out the block exit opcode while
  leaving the block entry opcode.  This doesn't matter to sort, but did
  matter to grep and map.  It now leave the block entry intact.
  
@@ -536,8 +536,8 @@ Files patched: gv.c
  
      use strict;
      sub foo {
-         local(*IN);
-         open(IN,"file");
+	 local(*IN);
+	 open(IN,"file");
      }
  
 
@@ -554,7 +554,7 @@ Files patched: av.c
 NETaa13349: sort sub accumulated save stack entries
 From: David Filo
 Files patched: pp_ctl.c
- COMMON only gets set if assigning to @_, which is reasonable.  Most of the
+ COMMON only gets set if assigning to @_, which is reasonable.	Most of the
  problem was a memory leak.
 
 NETaa13351: didn't treat indirect filehandles as references.
@@ -621,7 +621,7 @@ Files patched: toke.c
  untainted.  Unfortunately, the scope removal optimization for very
  short blocks removed the statementhood of statements that were
  attempting to read $1 as an untainted value, with the effect that $1
- appeared to be tainted anyway.  The optimization is now disabled when
+ appeared to be tainted anyway.	 The optimization is now disabled when
  tainting and the block contains $1 (or equivalent).
 
 NETaa13366: fixed this a better way in toke.c.
@@ -666,7 +666,7 @@ NETaa13370: some code assumed SvCUR was of type int.
 From: Spider Boardman
 Files patched: pp_sys.c
  Did something similar to the proposed patch.  I also fixed the problem that
- it assumed the type of SvCUR was int.  And fixed get{peer,sock}name the
+ it assumed the type of SvCUR was int.	And fixed get{peer,sock}name the
  same way.
 
 NETaa13375: sometimes dontbother wasn't added back into strend.
@@ -994,7 +994,7 @@ Files patched: op.c pod/perlop.pod
 NETaa13500: needed DESTROY in FileHandle
 From: Tim Bunce
 Files patched: ext/POSIX/POSIX.pm
- Added DESTROY method.  Also fixed ungensym to use POSIX:: instead of _POSIX.
+ Added DESTROY method.	Also fixed ungensym to use POSIX:: instead of _POSIX.
  Removed ungensym from close method, since DESTROY should do that now.
 
 NETaa13502: now complains if you use local on a lexical variable
@@ -1013,7 +1013,7 @@ From: William Setzer
 Files patched: op.c
  When a lexical variable is declared, introduction is delayed until
  the start of the next statement, so that any initialization code runs
- outside the scope of the new variable.  Thus,
+ outside the scope of the new variable.	 Thus,
  
      my $y = 3;
      my $y = $y;
@@ -1054,7 +1054,7 @@ Files patched: embed.h
 NETaa13525: random cleanup
 Files patched: MANIFEST Todo cop.h lib/TieHash.pm lib/perl5db.pl opcode.h patchlevel.h pod/perldata.pod pod/perlsub.pod t/op/ref.t toke.c
 
-NETaa13525: random cleanup                  
+NETaa13525: random cleanup		    
 Files patched: pp_ctl.c util.c
 
 NETaa13527: File::Find needed to export $name and $dir
@@ -1149,7 +1149,7 @@ NETaa13589: return was enforcing list context on its arguments
 From: Tim Freeman
 Files patched: opcode.pl
  A return was being treated like a normal list operator, in that it was
- setting list context on its arguments.  This was bogus.
+ setting list context on its arguments.	 This was bogus.
 
 NETaa13591: POSIX::creat used wrong argument
 From: Paul Marquess
@@ -1232,7 +1232,7 @@ Files patched: lib/Exporter.pm
  like an adjunct.  Also added an export_tags routine.  The keys in the
  %EXPORT_TAGS hash no longer use colons, to make the initializers prettier.
 
-NETaa13687: new Exporter.pm      
+NETaa13687: new Exporter.pm	 
 Files patched: ext/POSIX/POSIX.pm
  (same)
 

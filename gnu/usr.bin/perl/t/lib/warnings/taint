@@ -24,12 +24,20 @@ def
 open(FH, "<abc") ;
 $a = <FH> ;
 close FH ;
+chdir $a;
+no warnings 'taint' ;
 chdir $a ;
 print "xxx\n" ;
+use warnings 'taint' ;
+chdir $a ;
+print "yyy\n" ;
 EXPECT
+Insecure dependency in chdir while running with -T switch at - line 5.
+Insecure dependency in chdir while running with -T switch at - line 10.
 xxx
+yyy
 ########
--TU
+-t
 --FILE-- abc
 def
 --FILE--
@@ -37,13 +45,15 @@ def
 open(FH, "<abc") ;
 $a = <FH> ;
 close FH ;
-use warnings 'taint' ;
+chdir $a;
+no warnings 'taint' ;
 chdir $a ;
 print "xxx\n" ;
-no warnings 'taint' ;
+use warnings 'taint' ;
 chdir $a ;
 print "yyy\n" ;
 EXPECT
-Insecure dependency in chdir while running with -T switch at - line 6.
+Insecure dependency in chdir while running with -t switch at - line 5.
+Insecure dependency in chdir while running with -t switch at - line 10.
 xxx
 yyy

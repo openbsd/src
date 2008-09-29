@@ -43,10 +43,9 @@ For more details (FAQ), check out the home of DJGPP at:
 If you have questions about DJGPP, try posting to the DJGPP newsgroup:
 comp.os.msdos.djgpp, or use the email gateway djgpp@delorie.com.
 
-You can find the full DJGPP distribution on any SimTel.Net mirror all over
-the world. Like:
+You can find the full DJGPP distribution on any of the mirrors listed here:
 
-        ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2*
+        http://www.delorie.com/djgpp/getting.html
 
 You need the following files to build perl (or add new modules):
 

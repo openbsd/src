@@ -75,6 +75,37 @@ libraries it links to must also be universal binaries. The system libraries that
 Apple includes with the 10.4u SDK are all universal, but user-installed libraries
 may need to be re-installed as universal binaries.
 
+=head2 64-bit PPC support
+
+Follow the instructions in F<INSTALL> to build perl with support for 64-bit 
+integers (C<use64bitint>) or both 64-bit integers and 64-bit addressing
+(C<use64bitall>). In the latter case, the resulting binary will run only
+on G5-based hosts.
+
+Support for 64-bit addressing is experimental: some aspects of Perl may be
+omitted or buggy. Note the messages output by F<Configure> for further 
+information. Please use C<perlbug> to submit a problem report in the
+event that you encounter difficulties.
+
+When building 64-bit modules, it is your responsiblity to ensure that linked
+external libraries and frameworks provide 64-bit support: if they do not,
+module building may appear to succeed, but attempts to use the module will
+result in run-time dynamic linking errors, and subsequent test failures.
+You can use C<file> to discover the architectures supported by a library:
+
+    $ file libgdbm.3.0.0.dylib 
+    libgdbm.3.0.0.dylib: Mach-O fat file with 2 architectures
+    libgdbm.3.0.0.dylib (for architecture ppc):      Mach-O dynamically linked shared library ppc
+    libgdbm.3.0.0.dylib (for architecture ppc64):    Mach-O 64-bit dynamically linked shared library ppc64
+
+Note that this issue precludes the building of many Macintosh-specific CPAN
+modules (C<Mac::*>), as the required Apple frameworks do not provide PPC64
+support. Similarly, downloads from Fink or Darwinports are unlikely to provide
+64-bit support; the libraries must be rebuilt from source with the appropriate
+compiler and linker flags. For further information, see Apple's
+I<64-Bit Transition Guide> at 
+L<http://developer.apple.com/documentation/Darwin/Conceptual/64bitPorting/index.html>.
+
 =head2 libperl and Prebinding
 
 Mac OS X ships with a dynamically-loaded libperl, but the default for
@@ -230,4 +261,4 @@ E<lt>montbriand@apple.comE<gt>.
 
 =head1 DATE
 
-Last modified 2005-11-07.
+Last modified 2006-02-24.

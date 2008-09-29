@@ -1,8 +1,19 @@
 #!./perl -T
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
 use warnings;
 use strict;
 $|++;
+
+require "./test.pl";
+
+plan(tests => 36);
+
+use vars qw($TODO);
 
 =pod
 
@@ -11,8 +22,6 @@ C<q()> operator.  Calling C<&q()> or C<main::q()> gets you the function.
 This test verifies this behavior for nine different operators.
 
 =cut
-
-use Test::More tests => 36;
 
 sub m  { return "m-".shift }
 sub q  { return "q-".shift }
@@ -59,10 +68,14 @@ is( &qw('amper'), "qw-amper", "&qw() is func" );
 
 # qx operator
 can_ok( 'main', "qx" );
-eval "qx('unqualified')";
-TODO: {
-    local $TODO = $^O eq 'MSWin32' ? "Tainting of PATH not working of Windows" : $TODO;
-    like( $@, qr/^Insecure/, "qx('unqualified') doesn't work" );
+eval "qx('unqualified'".
+     ($^O eq 'MSWin32' ? " 2>&1)" : ")");
+SKIP: {
+    skip("external command not portable on VMS", 1) if $^O eq 'VMS';
+    TODO: {
+	local $TODO = $^O eq 'MSWin32' ? "Tainting of PATH not working of Windows" : $TODO;
+	like( $@, qr/^Insecure/, "qx('unqualified') doesn't work" );
+    }
 }
 is( main::qx('main'), "qx-main", "main::qx() is func" );
 is( &qx('amper'), "qx-amper", "&qx() is func" );

@@ -10,7 +10,7 @@
 package Pod::Usage;
 
 use vars qw($VERSION);
-$VERSION = 1.33;  ## Current version of this package
+$VERSION = "1.35";  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -96,11 +96,11 @@ is 1, then the "SYNOPSIS" section, along with any section entitled
 "OPTIONS", "ARGUMENTS", or "OPTIONS AND ARGUMENTS" is printed.  If the
 corresponding value is 2 or more then the entire manpage is printed.
 
-The special verbosity level 99 requires to also specify the -section
+The special verbosity level 99 requires to also specify the -sections
 parameter; then these sections are extracted (see L<Pod::Select>)
 and printed.
 
-=item C<-section>
+=item C<-sections>
 
 A string representing a selection list for sections to be printed
 when -verbose is set to 99, e.g. C<"NAME|SYNOPSIS|DESCRIPTION|VERSION">.
@@ -212,8 +212,8 @@ to C<STDOUT>, just in case the user wants to pipe the output to a pager
 =item *
 
 If program usage has been explicitly requested by the user, it is often
-desireable to exit with a status of 1 (as opposed to 0) after issuing
-the user-requested usage message.  It is also desireable to give a
+desirable to exit with a status of 1 (as opposed to 0) after issuing
+the user-requested usage message.  It is also desirable to give a
 more verbose description of program usage in this case.
 
 =back
@@ -413,7 +413,7 @@ Brad Appleton E<lt>bradapp@enteract.comE<gt>
 Based on code for B<Pod::Text::pod2text()> written by
 Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>
 
-=head1 ACKNOWLEDGEMENTS
+=head1 ACKNOWLEDGMENTS
 
 Steven McDougall E<lt>swmcd@world.std.comE<gt> for his help and patience
 with re-writing this manpage.
@@ -531,6 +531,9 @@ sub pod2usage {
                      '(?:\s*(?:AND|\/)\s*(?:OPTIONS|ARGUMENTS))?';
         $parser->select( 'SYNOPSIS', $opt_re, "DESCRIPTION/$opt_re" );
     }
+    elsif ($opts{"-verbose"} >= 2 && $opts{"-verbose"} != 99) {
+        $parser->select('.*');
+    }
     elsif ($opts{"-verbose"} == 99) {
         $parser->select( $opts{"-sections"} );
         $opts{"-verbose"} = 1;
@@ -545,6 +548,10 @@ sub pod2usage {
        ## spit out the entire PODs. Might as well invoke perldoc
        my $progpath = File::Spec->catfile($Config{scriptdir}, "perldoc");
        system($progpath, $opts{"-input"});
+       if($?) {
+         # RT16091: fall back to more if perldoc failed
+         system($ENV{PAGER} || 'more', $opts{"-input"});
+       }
     }
     else {
        $parser->parse_from_file($opts{"-input"}, $opts{"-output"});
@@ -593,7 +600,9 @@ sub _handle_element_end {
     my ($self, $element) = @_;
     if ($element eq 'head1') {
         $$self{USAGE_HEAD1} = $$self{PENDING}[-1][1];
-        $$self{PENDING}[-1][1] =~ s/^\s*SYNOPSIS\s*$/USAGE/;
+        if ($self->{USAGE_OPTIONS}->{-verbose} < 2) {
+            $$self{PENDING}[-1][1] =~ s/^\s*SYNOPSIS\s*$/USAGE/;
+        }
     } elsif ($element eq 'head2') {
         $$self{USAGE_HEAD2} = $$self{PENDING}[-1][1];
     }
@@ -601,20 +610,26 @@ sub _handle_element_end {
         $$self{USAGE_SKIPPING} = 1;
         my $heading = $$self{USAGE_HEAD1};
         $heading .= '/' . $$self{USAGE_HEAD2} if defined $$self{USAGE_HEAD2};
-        for (@{ $$self{USAGE_SELECT} }) {
-            if ($heading =~ /^$_\s*$/) {
-                $$self{USAGE_SKIPPING} = 0;
-                last;
-            }
+        if (!$$self{USAGE_SELECT} || !@{ $$self{USAGE_SELECT} }) {
+           $$self{USAGE_SKIPPING} = 0;
+        } else {
+          for (@{ $$self{USAGE_SELECT} }) {
+              if ($heading =~ /^$_\s*$/) {
+                  $$self{USAGE_SKIPPING} = 0;
+                  last;
+              }
+          }
         }
 
         # Try to do some lowercasing instead of all-caps in headings, and use
         # a colon to end all headings.
-        local $_ = $$self{PENDING}[-1][1];
-        s{([A-Z])([A-Z]+)}{((length($2) > 2) ? $1 : lc($1)) . lc($2)}ge;
-        s/\s*$/:/  unless (/:\s*$/);
-        $_ .= "\n";
-        $$self{PENDING}[-1][1] = $_;
+        if($self->{USAGE_OPTIONS}->{-verbose} < 2) {
+            local $_ = $$self{PENDING}[-1][1];
+            s{([A-Z])([A-Z]+)}{((length($2) > 2) ? $1 : lc($1)) . lc($2)}ge;
+            s/\s*$/:/  unless (/:\s*$/);
+            $_ .= "\n";
+            $$self{PENDING}[-1][1] = $_;
+        }
     }
     if ($$self{USAGE_SKIPPING}) {
         pop @{ $$self{PENDING} };

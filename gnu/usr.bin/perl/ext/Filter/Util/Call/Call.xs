@@ -25,6 +25,9 @@
 #define FILTER_ACTIVE(s)	IoLINES(s)
 #define BUF_OFFSET(sv)  	IoPAGE_LEN(sv)
 #define CODE_REF(sv)  		IoPAGE(sv)
+#ifndef PERL_FILTER_EXISTS
+#  define PERL_FILTER_EXISTS(i) (PL_rsfp_filters && (i) <= av_len(PL_rsfp_filters))
+#endif
 
 #define SET_LEN(sv,len) \
         do { SvPVX(sv)[len] = '\0'; SvCUR_set(sv, len); } while (0)
@@ -85,7 +88,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 	    }
 	    else {
 		/* want lines */
-                if ((p = ninstr(out_ptr, out_ptr + n - 1, nl, nl))) {
+                if ((p = ninstr(out_ptr, out_ptr + n, nl, nl + 1))) {
 
 	            sv_catpvn(buf_sv, out_ptr, p - out_ptr + 1);
 
@@ -235,7 +238,7 @@ void
 filter_del()
     CODE:
         dMY_CXT;
-	if (PL_rsfp_filters && IDX <= av_len(PL_rsfp_filters) && FILTER_DATA(IDX) && FILTER_ACTIVE(FILTER_DATA(IDX)))
+	if (PERL_FILTER_EXISTS(IDX) && FILTER_DATA(IDX) && FILTER_ACTIVE(FILTER_DATA(IDX)))
 	    FILTER_ACTIVE(FILTER_DATA(IDX)) = FALSE ;
 
 

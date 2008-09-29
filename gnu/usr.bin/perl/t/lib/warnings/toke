@@ -279,9 +279,14 @@ Possible attempt to put comments in qw() list at - line 3.
 ########
 # toke.c
 use warnings 'syntax' ;
-print ("")
+print ("");
+print ("") and $x = 1;
+print ("") or die;
+print ("") // die;
+print (1+2) * 3 if 0; # only this one should warn
+print (1+2) if 0;
 EXPECT
-print (...) interpreted as function at - line 3.
+print (...) interpreted as function at - line 7.
 ########
 # toke.c
 no warnings 'syntax' ;
@@ -291,9 +296,10 @@ EXPECT
 ########
 # toke.c
 use warnings 'syntax' ;
-printf ("")
+printf ("");
+printf ("") . '';
 EXPECT
-printf (...) interpreted as function at - line 3.
+printf (...) interpreted as function at - line 4.
 ########
 # toke.c
 no warnings 'syntax' ;
@@ -303,9 +309,10 @@ EXPECT
 ########
 # toke.c
 use warnings 'syntax' ;
-sort ("")
+sort ("");
+sort ("") . '';
 EXPECT
-sort (...) interpreted as function at - line 3.
+sort (...) interpreted as function at - line 4.
 ########
 # toke.c
 no warnings 'syntax' ;
@@ -588,6 +595,11 @@ Warning: Use of "rand" without parentheses is ambiguous at - line 8.
 Warning: Use of "rand" without parentheses is ambiguous at - line 10.
 ########
 # toke.c
+use warnings "ambiguous";
+print for keys %+; # should not warn
+EXPECT
+########
+# toke.c
 sub fred {};
 -fred ;
 EXPECT
@@ -737,17 +749,6 @@ EXPECT
 Possible unintended interpolation of @mjd_previously_unused_array in string at - line 3.
 ########
 # toke.c
-# The \q should warn, the \_ should NOT warn.
-use warnings 'misc';
-"foo" =~ /\q/;
-"bar" =~ /\_/;
-no warnings 'misc';
-"foo" =~ /\q/;
-"bar" =~ /\_/;
-EXPECT
-Unrecognized escape \q passed through at - line 4.
-########
-# toke.c
 # 20020328 mjd-perl-patch+@plover.com at behest of jfriedl@yahoo.com
 use warnings 'regexp';
 "foo" =~ /foo/c;
@@ -816,4 +817,38 @@ eval q/5 6/;
 EXPECT
 Number found where operator expected at (eval 1) line 1, near "5 6"
 	(Missing operator before  6?)
-
+########
+# toke.c
+use warnings "syntax";
+$_ = $a = 1;
+$a !=~  /1/;
+$a !=~ m#1#;
+$a !=~/1/;
+$a !=~ ?/?;
+$a !=~ y/1//;
+$a !=~ tr/1//;
+$a !=~ s/1//;
+$a != ~/1/;
+no warnings "syntax";
+$a !=~  /1/;
+$a !=~ m#1#;
+$a !=~/1/;
+$a !=~ ?/?;
+$a !=~ y/1//;
+$a !=~ tr/1//;
+$a !=~ s/1//;
+EXPECT
+!=~ should be !~ at - line 4.
+!=~ should be !~ at - line 5.
+!=~ should be !~ at - line 6.
+!=~ should be !~ at - line 7.
+!=~ should be !~ at - line 8.
+!=~ should be !~ at - line 9.
+!=~ should be !~ at - line 10.
+########
+# toke.c
+our $foo :unique;
+use warnings 'deprecated';
+our $bar :unique;
+EXPECT
+Use of :unique is deprecated at - line 4.

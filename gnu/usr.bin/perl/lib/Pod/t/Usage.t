@@ -36,7 +36,7 @@ SKIP: {
         pod2usage({ -verbose => 0, -exit => 'noexit', 
                     -output => \*FAKEOUT, -input => $file });
     };
-    like( $@, qr/^Can't open $file for reading:/, 
+    like( $@, qr/^Can't open $file/, 
           'File not found without -pathlist' );
 
     eval {

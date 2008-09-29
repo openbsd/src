@@ -2,7 +2,7 @@
  *
  *    reentr.c
  *
- *    Copyright (C) 2002, 2003, 2005 by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2005, 2006, 2007 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -44,7 +44,7 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_GETGRNAM_R
 #   if defined(HAS_SYSCONF) && defined(_SC_GETGR_R_SIZE_MAX) && !defined(__GLIBC__)
 	PL_reentrant_buffer->_grent_size = sysconf(_SC_GETGR_R_SIZE_MAX);
-	if (PL_reentrant_buffer->_grent_size == -1)
+	if (PL_reentrant_buffer->_grent_size == (size_t) -1)
 		PL_reentrant_buffer->_grent_size = REENTRANTUSUALSIZE;
 #   else
 #       if defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
@@ -79,7 +79,7 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_GETPWNAM_R
 #   if defined(HAS_SYSCONF) && defined(_SC_GETPW_R_SIZE_MAX) && !defined(__GLIBC__)
 	PL_reentrant_buffer->_pwent_size = sysconf(_SC_GETPW_R_SIZE_MAX);
-	if (PL_reentrant_buffer->_pwent_size == -1)
+	if (PL_reentrant_buffer->_pwent_size == (size_t) -1)
 		PL_reentrant_buffer->_pwent_size = REENTRANTUSUALSIZE;
 #   else
 #       if defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
@@ -101,7 +101,7 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_GETSPNAM_R
 #   if defined(HAS_SYSCONF) && defined(_SC_GETPW_R_SIZE_MAX) && !defined(__GLIBC__)
 	PL_reentrant_buffer->_spent_size = sysconf(_SC_GETPW_R_SIZE_MAX);
-	if (PL_reentrant_buffer->_spent_size == -1)
+	if (PL_reentrant_buffer->_spent_size == (size_t) -1)
 		PL_reentrant_buffer->_spent_size = REENTRANTUSUALSIZE;
 #   else
 #       if defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
@@ -134,6 +134,8 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	PL_reentrant_buffer->_setlocale_size = REENTRANTSMALLSIZE;
 #endif /* HAS_SETLOCALE_R */
+#ifdef HAS_SRANDOM_R
+#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	PL_reentrant_buffer->_strerror_size = REENTRANTSMALLSIZE;
 #endif /* HAS_STRERROR_R */
@@ -218,6 +220,8 @@ Perl_reentrant_init(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	Newx(PL_reentrant_buffer->_setlocale_buffer, PL_reentrant_buffer->_setlocale_size, char);
 #endif /* HAS_SETLOCALE_R */
+#ifdef HAS_SRANDOM_R
+#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	Newx(PL_reentrant_buffer->_strerror_buffer, PL_reentrant_buffer->_strerror_size, char);
 #endif /* HAS_STRERROR_R */
@@ -291,6 +295,8 @@ Perl_reentrant_free(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	Safefree(PL_reentrant_buffer->_setlocale_buffer);
 #endif /* HAS_SETLOCALE_R */
+#ifdef HAS_SRANDOM_R
+#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	Safefree(PL_reentrant_buffer->_strerror_buffer);
 #endif /* HAS_STRERROR_R */
@@ -307,6 +313,9 @@ Perl_reentrant_retry(const char *f, ...)
 {
     dTHX;
     void *retptr = NULL;
+    va_list ap;
+    va_start(ap, f);
+    {
 #ifdef USE_REENTRANT_API
 #  if defined(USE_HOSTENT_BUFFER) || defined(USE_GRENT_BUFFER) || defined(USE_NETENT_BUFFER) || defined(USE_PWENT_BUFFER) || defined(USE_PROTOENT_BUFFER) || defined(USE_SERVENT_BUFFER)
     void *p0;
@@ -320,9 +329,6 @@ Perl_reentrant_retry(const char *f, ...)
 #  if defined(USE_HOSTENT_BUFFER) || defined(USE_NETENT_BUFFER) || defined(USE_PROTOENT_BUFFER) || defined(USE_SERVENT_BUFFER)
     int anint;
 #  endif
-    va_list ap;
-
-    va_start(ap, f);
 
     switch (PL_op->op_type) {
 #ifdef USE_HOSTENT_BUFFER
@@ -525,9 +531,11 @@ Perl_reentrant_retry(const char *f, ...)
 	/* Not known how to retry, so just fail. */
 	break;
     }
-
-    va_end(ap);
+#else
+    PERL_UNUSED_ARG(f);
 #endif
+    }
+    va_end(ap);
     return retptr;
 }
 

@@ -49,6 +49,11 @@ sub blcm
   Math::BigInt::blcm(@_);
   }
 
+sub as_int
+  {
+  Math::BigInt->new($_[0]);
+  }
+
 BEGIN
   {
   *objectify = \&Math::BigInt::objectify;

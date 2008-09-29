@@ -1,8 +1,8 @@
-# SpecialCasing-4.1.0.txt
-# Date: 2005-03-26, 00:35:45 GMT [MD]
+# SpecialCasing-5.0.0.txt
+# Date: 2006-03-03, 08:23:36 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
@@ -38,9 +38,10 @@
 # A locale ID is defined by taking any language tag as defined by
 # RFC 3066 (or its successor), and replacing '-' by '_'.
 #
-# A context for a character C is defined by Section 3.13 Default Case Operations,
-# on p. 89-90 of The Unicode Standard, Version 4.0, as amended by Unicode 4.1.0,
-# as specified in http://www.unicode.org/versions/Unicode4.1.0/
+# A context for a character C is defined by Section 3.13 Default Case 
+# Operations, of The Unicode Standard, Version 5.0.
+# (This is identical to the context defined by Unicode 4.1.0,
+#  as specified in http://www.unicode.org/versions/Unicode4.1.0/)
 #
 # Parsers of this file must be prepared to deal with future additions to this format:
 #  * Additional contexts
@@ -258,3 +259,6 @@ FB17; FB17; 0544 056D; 0544 053D; # ARMENIAN SMALL LIGATURE MEN XEH
 # Note: the following case is already in the UnicodeData file.
 
 # 0131; 0131; 0049; 0049; tr; # LATIN SMALL LETTER DOTLESS I
+
+# EOF
+

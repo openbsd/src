@@ -183,6 +183,9 @@ SKIP: {
     # Doesn't work for older perls, see bug [perl #24506]
     skip("Test does not work with perl < 5.8.3", 5) if $] < 5.008003;
 
+    # in a MAD build, constants have refcnt 2, not 1
+    skip("Test does not work with MAD", 5) if exists $Config{mad};
+
     $a = eval '\"hello"';
     ok(ref($a)) or print "# didn't get a ref from eval\n";
     $b = $a;

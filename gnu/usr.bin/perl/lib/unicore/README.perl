@@ -1,20 +1,25 @@
 The *.txt files were copied from
 
-	http://www.unicode.org/Public/4.1.0/ucd
+	http://www.unicode.org/Public/5.0.0/ucd
 
-as of Unicode 4.1.0 (April 2005).
+as of Unicode 5.0.0 (July 2006).
 
-The two big files, NormalizationTest.txt (2.1 MB) and Unihan.txt
-(26.7 MB) were not included due to space considerations.  Also NOT
+The two big files, NormalizationTest.txt (2 MB) and Unihan.txt (28 MB,
+5.8 MB zip) were not included due to space considerations.  Also NOT
 included were any *.html files and the Derived*.txt files
 
     DerivedAge.txt
     DerivedCoreProperties.txt
     DerivedNormalizationProps.txt
 
+or any files from subdirectories.
+
 To be 8.3-friendly, the lib/unicore/PropertyValueAliases.txt was
-renamed to be lib/unicore/PropValueAliases.txt, since otherwise
-it would have conflicted with lib/unicore/PropertyAliases.txt.
+renamed to be lib/unicore/PropValueAliases.txt and the
+lib/unicore/NamedSequencesProv.txt was renamed to be
+lib/unicore/NamedSqProv.txt, since otherwise they would have
+conflicted with lib/unicore/PropertyAliases.txt and
+lib/unicore/NamedSequences.txt.
 
 NOTE: If you modify the input file set you should also run
  

@@ -18,15 +18,15 @@ I<strongly> advised to follow this introduction with more information
 from the full Perl manual, the table of contents to which can be found
 in L<perltoc>.
 
-Throughout this document you'll see references to other parts of the 
+Throughout this document you'll see references to other parts of the
 Perl documentation.  You can read that documentation using the C<perldoc>
 command or whatever method you're using to read this document.
 
 =head2 What is Perl?
 
-Perl is a general-purpose programming language originally developed for 
-text manipulation and now used for a wide range of tasks including 
-system administration, web development, network programming, GUI 
+Perl is a general-purpose programming language originally developed for
+text manipulation and now used for a wide range of tasks including
+system administration, web development, network programming, GUI
 development, and more.
 
 The language is intended to be practical (easy to use, efficient,
@@ -36,8 +36,8 @@ object-oriented (OO) programming, has powerful built-in support for text
 processing, and has one of the world's most impressive collections of
 third-party modules.
 
-Different definitions of Perl are given in L<perl>, L<perlfaq1> and 
-no doubt other places.  From this we can determine that Perl is different 
+Different definitions of Perl are given in L<perl>, L<perlfaq1> and
+no doubt other places.  From this we can determine that Perl is different
 things to different people, but that lots of people think it's at least
 worth writing about.
 
@@ -54,8 +54,28 @@ Alternatively, put this as the first line of your script:
 ... and run the script as C</path/to/script.pl>.  Of course, it'll need
 to be executable first, so C<chmod 755 script.pl> (under Unix).
 
+(This start line assumes you have the B<env> program. You can also put
+directly the path to your perl executable, like in C<#!/usr/bin/perl>).
+
 For more information, including instructions for other platforms such as
 Windows and Mac OS, read L<perlrun>.
+
+=head2 Safety net
+
+Perl by default is very forgiving. In order to make it more robust
+it is recommended to start every program with the following lines:
+
+    #!/usr/bin/perl
+    use strict;
+    use warnings;
+
+The two additional lines request from perl to catch various common
+problems in your code. They check different things so you need both. A
+potential problem caught by C<use strict;> will cause your code to stop
+immediately when it is encountered, while C<use warnings;> will merely
+give a warning (like the command-line switch B<-w>) and let your code run.
+To read more about them check their respective manual pages at L<strict>
+and L<warnings>.
 
 =head2 Basic syntax overview
 
@@ -74,7 +94,7 @@ Comments start with a hash symbol and run to the end of the line
 
 Whitespace is irrelevant:
 
-    print 
+    print
         "Hello, world"
         ;
 
@@ -100,7 +120,7 @@ Numbers don't need quotes around them:
     print 42;
 
 You can use parentheses for functions' arguments or omit them
-according to your personal taste.  They are only required 
+according to your personal taste.  They are only required
 occasionally to clarify issues of precedence.
 
     print("Hello, world\n");
@@ -121,9 +141,11 @@ A scalar represents a single value:
     my $animal = "camel";
     my $answer = 42;
 
-Scalar values can be strings, integers or floating point numbers, and Perl 
-will automatically convert between them as required.  There is no need 
-to pre-declare your variable types.
+Scalar values can be strings, integers or floating point numbers, and Perl
+will automatically convert between them as required.  There is no need
+to pre-declare your variable types, but you have to declare them using
+the C<my> keyword the first time you use them. (This is one of the
+requirements of C<use strict;>.)
 
 Scalar values can be used in various ways:
 
@@ -136,7 +158,7 @@ punctuation or line noise.  These special variables are used for all
 kinds of purposes, and are documented in L<perlvar>.  The only one you
 need to know about for now is C<$_> which is the "default variable".
 It's used as the default argument to a number of functions in Perl, and
-it's set implicitly by certain looping constructs.  
+it's set implicitly by certain looping constructs.
 
     print;          # prints contents of $_ by default
 
@@ -153,20 +175,20 @@ Arrays are zero-indexed.  Here's how you get at elements in an array:
     print $animals[0];              # prints "camel"
     print $animals[1];              # prints "llama"
 
-The special variable C<$#array> tells you the index of the last element 
+The special variable C<$#array> tells you the index of the last element
 of an array:
 
     print $mixed[$#mixed];       # last element, prints 1.23
 
-You might be tempted to use C<$#array + 1> to tell you how many items there 
+You might be tempted to use C<$#array + 1> to tell you how many items there
 are in an array.  Don't bother.  As it happens, using C<@array> where Perl
 expects to find a scalar value ("in scalar context") will give you the number
 of elements in the array:
 
     if (@animals < 5) { ... }
 
-The elements we're getting from the array start with a C<$> because 
-we're getting just a single value out of the array -- you ask for a scalar, 
+The elements we're getting from the array start with a C<$> because
+we're getting just a single value out of the array -- you ask for a scalar,
 you get a scalar.
 
 To get multiple values from an array:
@@ -213,7 +235,7 @@ C<values()>.
 Hashes have no particular internal order, though you can sort the keys
 and loop through them.
 
-Just like special scalars and arrays, there are also special hashes.  
+Just like special scalars and arrays, there are also special hashes.
 The most well known of these is C<%ENV> which contains environment
 variables.  Read all about it (and other special variables) in
 L<perlvar>.
@@ -227,12 +249,12 @@ you to build lists and hashes within lists and hashes.
 
 A reference is a scalar value and can refer to any other Perl data
 type. So by storing a reference as the value of an array or hash
-element, you can easily create lists and hashes within lists and    
+element, you can easily create lists and hashes within lists and
 hashes. The following example shows a 2 level hash of hash
 structure using anonymous hash references.
 
     my $variables = {
-        scalar  =>  { 
+        scalar  =>  {
                      description => "single item",
                      sigil => '$',
                     },
@@ -267,17 +289,18 @@ scoped variables instead.  The variables are scoped to the block
 (i.e. a bunch of statements surrounded by curly-braces) in which they
 are defined.
 
-    my $a = "foo";
+    my $x = "foo";
+    my $some_condition = 1;
     if ($some_condition) {
-        my $b = "bar";
-        print $a;           # prints "foo"
-        print $b;           # prints "bar"
+        my $y = "bar";
+        print $x;           # prints "foo"
+        print $y;           # prints "bar"
     }
-    print $a;               # prints "foo"
-    print $b;               # prints nothing; $b has fallen out of scope
+    print $x;               # prints "foo"
+    print $y;               # prints nothing; $y has fallen out of scope
 
 Using C<my> in combination with a C<use strict;> at the top of
-your Perl scripts means that the interpreter will pick up certain common 
+your Perl scripts means that the interpreter will pick up certain common
 programming errors.  For instance, in the example above, the final
 C<print $b> would cause a compile-time error and prevent you from
 running the program.  Using C<strict> is highly recommended.
@@ -290,7 +313,7 @@ case/switch (but if you really want it, there is a Switch module in Perl
 information about modules and CPAN).
 
 The conditions can be any Perl expression.  See the list of operators in
-the next section for information on comparison and boolean logic operators, 
+the next section for information on comparison and boolean logic operators,
 which are commonly used in conditional statements.
 
 =over 4
@@ -346,7 +369,7 @@ You can also use C<while> in a post-condition:
 
 Exactly like C:
 
-    for ($i=0; $i <= $max; $i++) {
+    for ($i = 0; $i <= $max; $i++) {
         ...
     }
 
@@ -358,6 +381,8 @@ the more friendly list scanning C<foreach> loop.
     foreach (@array) {
         print "This element is $_\n";
     }
+
+    print $list[$_] foreach 0 .. $max;
 
     # you don't have to use the default $_ either...
     foreach my $key (keys %hash) {
@@ -373,7 +398,7 @@ this overview) see L<perlsyn>.
 
 Perl comes with a wide selection of builtin functions.  Some of the ones
 we've already seen include C<print>, C<sort> and C<reverse>.  A list of
-them is given at the start of L<perlfunc> and you can easily read 
+them is given at the start of L<perlfunc> and you can easily read
 about any given function by using C<perldoc -f I<functionname>>.
 
 Perl operators are documented in full in L<perlop>, but here are a few
@@ -406,8 +431,8 @@ of the most common ones:
     le  less than or equal
     ge  greater than or equal
 
-(Why do we have separate numeric and string comparisons?  Because we don't 
-have special variable types, and Perl needs to know whether to sort 
+(Why do we have separate numeric and string comparisons?  Because we don't
+have special variable types, and Perl needs to know whether to sort
 numerically (where 99 is less than 100) or alphabetically (where 100 comes
 before 99).
 
@@ -417,10 +442,10 @@ before 99).
     ||  or
     !   not
 
-(C<and>, C<or> and C<not> aren't just in the above table as descriptions 
+(C<and>, C<or> and C<not> aren't just in the above table as descriptions
 of the operators -- they're also supported as operators in their own
-right.  They're more readable than the C-style operators, but have 
-different precedence to C<&&> and friends.  Check L<perlop> for more 
+right.  They're more readable than the C-style operators, but have
+different precedence to C<&&> and friends.  Check L<perlop> for more
 detail.)
 
 =item Miscellaneous
@@ -441,20 +466,20 @@ Many operators can be combined with a C<=> as follows:
 =head2 Files and I/O
 
 You can open a file for input or output using the C<open()> function.
-It's documented in extravagant detail in L<perlfunc> and L<perlopentut>, 
+It's documented in extravagant detail in L<perlfunc> and L<perlopentut>,
 but in short:
 
-    open(INFILE,  "input.txt")   or die "Can't open input.txt: $!";
-    open(OUTFILE, ">output.txt") or die "Can't open output.txt: $!";
-    open(LOGFILE, ">>my.log")    or die "Can't open logfile: $!";
+    open(my $in,  "<",  "input.txt")  or die "Can't open input.txt: $!";
+    open(my $out, ">",  "output.txt") or die "Can't open output.txt: $!";
+    open(my $log, ">>", "my.log")     or die "Can't open my.log: $!";
 
 You can read from an open filehandle using the C<< <> >> operator.  In
 scalar context it reads a single line from the filehandle, and in list
 context it reads the whole file in, assigning each line to an element of
 the list:
 
-    my $line  = <INFILE>;
-    my @lines = <INFILE>;
+    my $line  = <$in>;
+    my @lines = <$in>;
 
 Reading in the whole file at one time is called slurping. It can
 be useful but it may be a memory hog. Most text file processing
@@ -462,7 +487,7 @@ can be done a line at a time with Perl's looping constructs.
 
 The C<< <> >> operator is most often seen in a C<while> loop:
 
-    while (<INFILE>) {     # assigns each line in turn to $_ 
+    while (<$in>) {     # assigns each line in turn to $_
         print "Just read in this line: $_";
     }
 
@@ -471,13 +496,13 @@ However, C<print()> can also take an optional first argument specifying
 which filehandle to print to:
 
     print STDERR "This is your final warning.\n";
-    print OUTFILE $record;
-    print LOGFILE $logmessage;
+    print $out $record;
+    print $log $logmessage;
 
 When you're done with your filehandles, you should C<close()> them
 (though to be honest, Perl will clean up after you if you forget):
 
-    close INFILE;
+    close $in or die "$in: $!";
 
 =head2 Regular expressions
 
@@ -512,7 +537,7 @@ expressions.  These are documented at great length in L<perlre>, but for
 the meantime, here's a quick cheat sheet:
 
     .                   a single character
-    \s                  a whitespace character (space, tab, newline)
+    \s                  a whitespace character (space, tab, newline, ...)
     \S                  non-whitespace character
     \d                  a digit (0-9)
     \D                  a non-digit
@@ -525,9 +550,9 @@ the meantime, here's a quick cheat sheet:
     ^                   start of string
     $                   end of string
 
-Quantifiers can be used to specify how many of the previous thing you 
-want to match on, where "thing" means either a literal character, one 
-of the metacharacters listed above, or a group of characters or 
+Quantifiers can be used to specify how many of the previous thing you
+want to match on, where "thing" means either a literal character, one
+of the metacharacters listed above, or a group of characters or
 metacharacters in parentheses.
 
     *                   zero or more of the previous thing
@@ -541,9 +566,9 @@ Some brief examples:
 
     /^\d+/              string starts with one or more digits
     /^$/                nothing in the string (start and end are adjacent)
-    /(\d\s){3}/         a three digits, each followed by a whitespace 
+    /(\d\s){3}/         a three digits, each followed by a whitespace
                         character (eg "3 4 5 ")
-    /(a.)+/             matches a string in which every odd-numbered letter 
+    /(a.)+/             matches a string in which every odd-numbered letter
                         is a (eg "abacadaf")
 
     # This loop reads from STDIN, and prints non-blank lines:
@@ -554,7 +579,7 @@ Some brief examples:
 
 =item Parentheses for capturing
 
-As well as grouping, parentheses serve a second purpose.  They can be 
+As well as grouping, parentheses serve a second purpose.  They can be
 used to capture the results of parts of the regexp match for later use.
 The results end up in C<$1>, C<$2> and so on.
 
@@ -577,16 +602,21 @@ L<perlretut>, and L<perlre>.
 
 Writing subroutines is easy:
 
-    sub log {
+    sub logger {
         my $logmessage = shift;
-        print LOGFILE $logmessage;
+        open my $logfile, ">>", "my.log" or die "Could not open my.log: $!";
+        print $logfile $logmessage;
     }
+
+Now we can use the subroutine just as any other built-in function:
+
+    logger("We have a logger subroutine!");
 
 What's that C<shift>?  Well, the arguments to a subroutine are available
 to us as a special array called C<@_> (see L<perlvar> for more on that).
 The default argument to the C<shift> function just happens to be C<@_>.
 So C<my $logmessage = shift;> shifts the first item off the list of
-arguments and assigns it to C<$logmessage>. 
+arguments and assigns it to C<$logmessage>.
 
 We can manipulate C<@_> in other ways too:
 
@@ -601,13 +631,17 @@ Subroutines can also return values:
         return $result;
     }
 
+Then use it like:
+
+    $sq = square(8);
+
 For more information on writing subroutines, see L<perlsub>.
 
 =head2 OO Perl
 
 OO Perl is relatively simple and is implemented using references which
 know what sort of object they are based on Perl's concept of packages.
-However, OO Perl is largely beyond the scope of this document.  
+However, OO Perl is largely beyond the scope of this document.
 Read L<perlboot>, L<perltoot>, L<perltooc> and L<perlobj>.
 
 As a beginning Perl programmer, your most common use of OO Perl will be

@@ -4,6 +4,10 @@
 #
 #            Edit mktests.PL and/or parts/inc/magic instead.
 #
+#  This file was automatically generated from the definition files in the
+#  parts/inc/ subdirectory by mktests.PL. To learn more about how all this
+#  works, please read the F<HACKERS> file that came with this distribution.
+#
 ################################################################################
 
 BEGIN {
@@ -21,19 +25,28 @@ BEGIN {
     unshift @INC, 't';
   }
 
-  eval "use Test";
-  if ($@) {
-    require 'testutil.pl';
-    print "1..10\n";
+  sub load {
+    eval "use Test";
+    require 'testutil.pl' if $@;
   }
-  else {
-    plan(tests => 10);
+
+  if (15) {
+    load();
+    plan(tests => 15);
   }
 }
 
 use Devel::PPPort;
 use strict;
 $^W = 1;
+
+package Devel::PPPort;
+use vars '@ISA';
+require DynaLoader;
+@ISA = qw(DynaLoader);
+bootstrap Devel::PPPort;
+
+package main;
 
 use Tie::Hash;
 my %h;
@@ -70,4 +83,13 @@ ok($h{sv}, 4711);
 
 &Devel::PPPort::sv_usepvn_mg($h{sv}, 'Perl');
 ok($h{sv}, 'Perl');
+
+my $ver = eval qq[qv("v1.2.0")];
+ok($[ < 5.009 || $@ eq '');
+ok($@ || Devel::PPPort::SvVSTRING_mg($ver));
+ok(!Devel::PPPort::SvVSTRING_mg(4711));
+
+my $foo = 'bar';
+ok(Devel::PPPort::sv_magic_portable($foo));
+ok($foo eq 'bar');
 

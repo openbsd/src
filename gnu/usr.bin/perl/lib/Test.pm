@@ -708,7 +708,7 @@ sub skip ($;$$$) {
         ++ $ntest;
         return 1;
     } else {
-        # backwards compatiblity (I think).  skip() used to be
+        # backwards compatibility (I think).  skip() used to be
         # called like ok(), which is weird.  I haven't decided what to do with
         # this yet.
 #        warn <<WARN if $^W;
@@ -919,7 +919,7 @@ that there are already more ambitious modules out there, such as
 L<Test::More> and L<Test::Unit>.
 
 Some earlier versions of this module had docs with some confusing
-typoes in the description of C<skip(...)>.
+typos in the description of C<skip(...)>.
 
 
 =head1 SEE ALSO

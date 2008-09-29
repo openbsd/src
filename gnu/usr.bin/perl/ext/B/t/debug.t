@@ -23,13 +23,7 @@ $|  = 1;
 use warnings;
 use strict;
 use Config;
-
-print "1..3\n";
-
-my $test = 1;
-
-sub ok { print "ok $test\n"; $test++ }
-
+use Test::More tests=>3;
 
 my $a;
 my $Is_VMS = $^O eq 'VMS';
@@ -39,15 +33,11 @@ my $path = join " ", map { qq["-I$_"] } @INC;
 my $redir = $Is_MacOS ? "" : "2>&1";
 
 $a = `$^X $path "-MO=Debug" -e 1 $redir`;
-print "not " unless $a =~
-/\bLISTOP\b.*\bOP\b.*\bCOP\b.*\bOP\b/s;
-ok;
+like($a, qr/\bLISTOP\b.*\bOP\b.*\bCOP\b.*\bOP\b/s);
 
 
 $a = `$^X $path "-MO=Terse" -e 1 $redir`;
-print "not " unless $a =~
-/\bLISTOP\b.*leave.*\n    OP\b.*enter.*\n    COP\b.*nextstate.*\n    OP\b.*null/s;
-ok;
+like($a, qr/\bLISTOP\b.*leave.*\n    OP\b.*enter.*\n    COP\b.*nextstate.*\n    OP\b.*null/s);
 
 $a = `$^X $path "-MO=Terse" -ane "s/foo/bar/" $redir`;
 $a =~ s/\(0x[^)]+\)//g;
@@ -74,6 +64,5 @@ EOF
 }
 $b=~s/\n/ /g;$b=~s/\s+/ /g;
 $b =~ s/\s+$//;
-print "# [$a]\n# vs\n# [$b]\nnot " if $a ne $b;
-ok;
+is($a, $b);
 

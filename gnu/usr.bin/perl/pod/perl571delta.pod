@@ -901,7 +901,7 @@ is made, a warning is given.
 =item *
 
 C<push @a;> and C<unshift @a;> (with no values to push or unshift)
-now give a warning.  This may be a problem for generated and evaled
+now give a warning.  This may be a problem for generated and eval'ed
 code.
 
 =back

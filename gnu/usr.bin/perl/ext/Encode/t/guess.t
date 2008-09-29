@@ -9,8 +9,8 @@ BEGIN {
       exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
     $| = 1;
 }
@@ -90,8 +90,8 @@ my $ambiguous =  "\x{5c0f}\x{98fc}\x{5f3e}";
 my $english   = "The quick brown fox jumps over the black lazy dog.";
 for my $utf (qw/UTF-16 UTF-32/){
     for my $bl (qw/BE LE/){
-	my $test = encode("$utf$bl" => $english);
-	is(guess_encoding($test)->name, "$utf$bl", "$utf$bl");
+    my $test = encode("$utf$bl" => $english);
+    is(guess_encoding($test)->name, "$utf$bl", "$utf$bl");
     }
 }
 for my $bl (qw/BE LE/){

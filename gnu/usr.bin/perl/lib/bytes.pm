@@ -1,6 +1,6 @@
 package bytes;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 $bytes::hint_bits = 0x00000008;
 
@@ -19,9 +19,9 @@ sub AUTOLOAD {
     Carp::croak("Undefined subroutine $AUTOLOAD called");
 }
 
-sub length ($);
-sub chr ($);
-sub ord ($);
+sub length (_);
+sub chr (_);
+sub ord (_);
 sub substr ($$;$$);
 sub index ($$;$);
 sub rindex ($$;$);

@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use Config;
-plan(tests => 10);
+plan(tests => 24);
 
 ok( -d 'op' );
 ok( -f 'TEST' );
@@ -63,3 +63,25 @@ SKIP: {
 ok( -x 'op' ); # Hohum.  Are directories -x everywhere?
 
 is( "@{[grep -r, qw(foo io noo op zoo)]}", "io op" );
+
+# Test stackability of filetest operators
+
+ok( defined( -f -d 'TEST' ) && ! -f -d _ );
+ok( !defined( -e 'zoo' ) );
+ok( !defined( -e -d 'zoo' ) );
+ok( !defined( -f -e 'zoo' ) );
+ok( -f -e 'TEST' );
+ok( -e -f 'TEST' );
+ok( defined(-d -e 'TEST') );
+ok( defined(-e -d 'TEST') );
+ok( ! -f -d 'op' );
+ok( -x -d -x 'op' );
+ok( (-s -f 'TEST' > 1), "-s returns real size" );
+ok( -f -s 'TEST' == 1 );
+
+# test that _ is a bareword after filetest operators
+
+-f 'TEST';
+ok( -f _ );
+sub _ { "this is not a file name" }
+ok( -f _ );

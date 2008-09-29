@@ -4,6 +4,20 @@ PL_sv_no                       # E
 PL_sv_undef                    # E
 PL_sv_yes                      # E
 SvGETMAGIC                     # U
+do_binmode                     # E
+newCONSTSUB                    # E
+newSVpvn                       # E
+save_aelem                     # E
+save_helem                     # E
+sv_catpv_mg                    # E
+sv_catpvn_mg                   # U
+sv_catsv_mg                    # U
+sv_setiv_mg                    # E
+sv_setpv_mg                    # E
+sv_setpvn_mg                   # E
+sv_setsv_mg                    # E
+sv_setuv_mg                    # E
+sv_usepvn_mg                   # U
 AvFILLp                        # added by devel/scanprov
 DEFSV                          # added by devel/scanprov
 ERRSV                          # added by devel/scanprov

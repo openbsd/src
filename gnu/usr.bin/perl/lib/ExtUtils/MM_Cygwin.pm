@@ -10,7 +10,7 @@ require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
 
-$VERSION = '1.08';
+$VERSION = '6.42';
 
 
 =head1 NAME

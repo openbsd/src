@@ -1,6 +1,20 @@
 #
 # t/test.pl - most of Test::More functionality without the fuss
+
+
+# NOTE:
 #
+# Increment ($x++) has a certain amount of cleverness for things like
+#
+#   $x = 'zz';
+#   $x++; # $x eq 'aaa';
+#
+# stands more chance of breaking than just a simple
+#
+#   $x = $x + 1
+#
+# In this file, we use the latter "Baby Perl" approach, and increment
+# will be worked over by t/op/inc.t
 
 $Level = 1;
 my $test = 1;
@@ -20,7 +34,7 @@ sub plan {
 	}
     } else {
 	my %plan = @_;
-	$n = $plan{tests}; 
+	$n = $plan{tests};
     }
     print STDOUT "1..$n\n" unless $noplan;
     $planned = $n;
@@ -38,15 +52,19 @@ END {
     }
 }
 
-# Use this instead of "print STDERR" when outputing failure diagnostic 
+# Use this instead of "print STDERR" when outputing failure diagnostic
 # messages
 sub _diag {
     return unless @_;
-    my @mess = map { /^#/ ? "$_\n" : "# $_\n" } 
+    my @mess = map { /^#/ ? "$_\n" : "# $_\n" }
                map { split /\n/ } @_;
     my $fh = $TODO ? *STDOUT : *STDERR;
     print $fh @mess;
 
+}
+
+sub diag {
+    _diag(@_);
 }
 
 sub skip_all {
@@ -81,7 +99,7 @@ sub _ok {
     # Ensure that the message is properly escaped.
     _diag @mess;
 
-    $test++;
+    $test = $test + 1; # don't use ++
 
     return $pass;
 }
@@ -256,9 +274,10 @@ sub like_yn ($$$@) {
     $pass = $got !~ /$expected/ if $flip;
     unless ($pass) {
 	unshift(@mess, "#      got '$got'\n",
-		"# expected /$expected/\n");
+		$flip
+		? "# expected !~ /$expected/\n" : "# expected /$expected/\n");
     }
-    local $Level = 2;
+    local $Level = $Level + 1;
     _ok($pass, _where(), $name, @mess);
 }
 
@@ -276,7 +295,9 @@ sub curr_test {
 }
 
 sub next_test {
-  $test++;
+  my $retval = $test;
+  $test = $test + 1; # don't use ++
+  $retval;
 }
 
 # Note: can't pass multipart messages since we try to
@@ -286,7 +307,7 @@ sub skip {
     my $n    = @_ ? shift : 1;
     for (1..$n) {
         print STDOUT "ok $test # skip: $why\n";
-        $test++;
+        $test = $test + 1;
     }
     local $^W = 0;
     last SKIP;
@@ -298,7 +319,7 @@ sub todo_skip {
 
     for (1..$n) {
         print STDOUT "not ok $test # TODO & SKIP: $why\n";
-        $test++;
+        $test = $test + 1;
     }
     local $^W = 0;
     last TODO;
@@ -308,7 +329,7 @@ sub eq_array {
     my ($ra, $rb) = @_;
     return 0 unless $#$ra == $#$rb;
     for my $i (0..$#$ra) {
-	next     if !defined $ra->[$i] && !defined $rb->[$i]; 
+	next     if !defined $ra->[$i] && !defined $rb->[$i];
 	return 0 if !defined $ra->[$i];
 	return 0 if !defined $rb->[$i];
 	return 0 unless $ra->[$i] eq $rb->[$i];
@@ -329,7 +350,7 @@ sub eq_hash {
         $fail = 1;
       }
     } else {
-      print STDOUT "# key ", _qq($key), " is ", _qq($value), 
+      print STDOUT "# key ", _qq($key), " is ", _qq($value),
                    ", not in original.\n";
       $fail = 1;
     }
@@ -376,6 +397,7 @@ my $is_mswin    = $^O eq 'MSWin32';
 my $is_netware  = $^O eq 'NetWare';
 my $is_macos    = $^O eq 'MacOS';
 my $is_vms      = $^O eq 'VMS';
+my $is_cygwin   = $^O eq 'cygwin';
 
 sub _quote_args {
     my ($runperl, $args) = @_;
@@ -481,7 +503,43 @@ sub runperl {
     die "test.pl:runperl() does not take a hashref"
 	if ref $_[0] and ref $_[0] eq 'HASH';
     my $runperl = &_create_runperl;
-    my $result = `$runperl`;
+    my $result;
+
+    my $tainted = ${^TAINT};
+    my %args = @_;
+    exists $args{switches} && grep m/^-T$/, @{$args{switches}} and $tainted = $tainted + 1;
+
+    if ($tainted) {
+	# We will assume that if you're running under -T, you really mean to
+	# run a fresh perl, so we'll brute force launder everything for you
+	my $sep;
+
+	eval "require Config; Config->import";
+	if ($@) {
+	    warn "test.pl had problems loading Config: $@";
+	    $sep = ':';
+	} else {
+	    $sep = $Config{path_sep};
+	}
+
+	my @keys = grep {exists $ENV{$_}} qw(CDPATH IFS ENV BASH_ENV);
+	local @ENV{@keys} = ();
+	# Untaint, plus take out . and empty string:
+	local $ENV{'DCL$PATH'} = $1 if $is_vms && ($ENV{'DCL$PATH'} =~ /(.*)/s);
+	$ENV{PATH} =~ /(.*)/s;
+	local $ENV{PATH} =
+	    join $sep, grep { $_ ne "" and $_ ne "." and -d $_ and
+		($is_mswin or $is_vms or !(stat && (stat _)[2]&0022)) }
+		    split quotemeta ($sep), $1;
+	$ENV{PATH} .= "$sep/bin" if $is_cygwin;  # Must have /bin under Cygwin
+
+	$runperl =~ /(.*)/s;
+	$runperl = $1;
+
+	$result = `$runperl`;
+    } else {
+	$result = `$runperl`;
+    }
     $result =~ s/\n\n/\n/ if $is_vms; # XXX pipes sometimes double these
     return $result;
 }
@@ -498,7 +556,7 @@ my $Perl;
 sub which_perl {
     unless (defined $Perl) {
 	$Perl = $^X;
-	
+
 	# VMS should have 'perl' aliased properly
 	return $Perl if $^O eq 'VMS';
 
@@ -511,11 +569,11 @@ sub which_perl {
 	    $exe = $Config{_exe};
 	}
        $exe = '' unless defined $exe;
-	
+
 	# This doesn't absolutize the path: beware of future chdirs().
 	# We could do File::Spec->abs2rel() but that does getcwd()s,
 	# which is a bit heavyweight to do here.
-	
+
 	if ($Perl =~ /^perl\Q$exe\E$/i) {
 	    my $perl = "perl$exe";
 	    eval "require File::Spec";
@@ -535,7 +593,7 @@ sub which_perl {
 	}
 
 	warn "which_perl: cannot find $Perl from $^X" unless -f $Perl;
-	
+
 	# For subcommands to use.
 	$ENV{PERLEXE} = $Perl;
     }
@@ -575,7 +633,7 @@ sub _fresh_perl {
     if( $^O eq 'VMS' ) {
         $prog =~ s#/dev/null#NL:#;
 
-        # VMS file locking 
+        # VMS file locking
         $prog =~ s{if \(-e _ and -f _ and -r _\)}
                   {if (-e _ and -f _)}
     }
@@ -666,9 +724,9 @@ sub can_ok ($@) {
     }
 
     my $name;
-    $name = @methods == 1 ? "$class->can('$methods[0]')" 
+    $name = @methods == 1 ? "$class->can('$methods[0]')"
                           : "$class->can(...)";
-    
+
     _ok( !@nok, _where(), $name );
 }
 

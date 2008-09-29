@@ -5,7 +5,7 @@ BEGIN {
     }
 }
 
-BEGIN { print "1..25\n"; }
+BEGIN { print "1..26\n"; }
 
 use NEXT;
 
@@ -14,6 +14,7 @@ print "ok 1\n";
 package A;
 sub A::method   { return ( 3, $_[0]->NEXT::method() ) }
 sub A::DESTROY  { $_[0]->NEXT::DESTROY() }
+sub A::evaled   { eval { $_[0]->NEXT::evaled(); return 'evaled' } }
 
 package B;
 use base qw( A );
@@ -22,13 +23,13 @@ sub B::AUTOLOAD { return ( 9, $_[0]->NEXT::AUTOLOAD() )
 sub B::DESTROY  { $_[0]->NEXT::DESTROY() }
 
 package C;
-sub C::DESTROY  { print "ok 23\n"; $_[0]->NEXT::DESTROY() }
+sub C::DESTROY  { print "ok 24\n"; $_[0]->NEXT::DESTROY() }
 
 package D;
 @D::ISA = qw( B C E );
 sub D::method   { return ( 2, $_[0]->NEXT::method() ) }
 sub D::AUTOLOAD { return ( 8, $_[0]->NEXT::AUTOLOAD() ) }
-sub D::DESTROY  { print "ok 22\n"; $_[0]->NEXT::DESTROY() }
+sub D::DESTROY  { print "ok 23\n"; $_[0]->NEXT::DESTROY() }
 sub D::oops     { $_[0]->NEXT::method() }
 sub D::secondary { return ( 17, 18, map { $_+10 } $_[0]->NEXT::secondary() ) }
 
@@ -37,17 +38,17 @@ package E;
 sub E::method   { return ( 4,  $_[0]->NEXT::method(), $_[0]->NEXT::method() ) }
 sub E::AUTOLOAD { return ( 10, $_[0]->NEXT::AUTOLOAD() ) 
 			if $AUTOLOAD =~ /.*(missing_method|secondary)/ }
-sub E::DESTROY  { print "ok 24\n"; $_[0]->NEXT::DESTROY() }
+sub E::DESTROY  { print "ok 25\n"; $_[0]->NEXT::DESTROY() }
 
 package F;
 sub F::method   { return ( 5  ) }
 sub F::AUTOLOAD { return ( 11 ) if $AUTOLOAD =~ /.*(missing_method|secondary)/ }
-sub F::DESTROY  { print "ok 25\n" }
+sub F::DESTROY  { print "ok 26\n" }
 
 package G;
 sub G::method   { return ( 6 ) }
 sub G::AUTOLOAD { print "not "; return }
-sub G::DESTROY  { print "not ok 21"; return }
+sub G::DESTROY  { print "not ok 22"; return }
 
 package main;
 
@@ -103,4 +104,11 @@ print "ok 16\n";
 @vals = $obj->secondary();
 print map "ok $_\n", @vals;
 
-# CAN REDISPATCH DESTRUCTORS (ok 22..25)
+# TEST HANDLING OF NEXT:: INSIDE EVAL (22)
+eval {
+	$obj->evaled;
+	$@ && print "not ";
+};
+print "ok 22\n";
+
+# CAN REDISPATCH DESTRUCTORS (ok 23..26)

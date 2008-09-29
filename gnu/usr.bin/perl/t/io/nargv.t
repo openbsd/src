@@ -44,6 +44,7 @@ sub show {
 }
 
 sub other {
+    no warnings 'once';
     print STDOUT "# Calling other\n";
     local *ARGV;
     local *ARGVOUT;

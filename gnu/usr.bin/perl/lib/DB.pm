@@ -555,8 +555,7 @@ __END__
 
 =head1 NAME
 
-DB - programmatic interface to the Perl debugging API (draft, subject to
-change)
+DB - programmatic interface to the Perl debugging API
 
 =head1 SYNOPSIS
 

@@ -49,7 +49,6 @@ my $tree = {
        	'misc'		=> [ 5.008, DEFAULT_OFF],
        	'regexp'	=> [ 5.008, DEFAULT_OFF],
        	'glob'		=> [ 5.008, DEFAULT_OFF],
-       	'y2k'		=> [ 5.008, DEFAULT_OFF],
        	'untie'		=> [ 5.008, DEFAULT_OFF],
 	'substr'	=> [ 5.008, DEFAULT_OFF],
 	'taint'		=> [ 5.008, DEFAULT_OFF],
@@ -62,6 +61,7 @@ my $tree = {
        	'pack'		=> [ 5.008, DEFAULT_OFF],
        	'unpack'	=> [ 5.008, DEFAULT_OFF],
        	'threads'	=> [ 5.008, DEFAULT_OFF],
+
        	 #'default'	=> [ 5.008, DEFAULT_ON ],
   	}],
 } ;
@@ -275,12 +275,15 @@ print WARN <<'EOM' ;
 #define G_WARN_ONCE		8	/* set if 'once' ever enabled */
 #define G_WARN_ALL_MASK		(G_WARN_ALL_ON|G_WARN_ALL_OFF)
 
-#define pWARN_STD		Nullsv
-#define pWARN_ALL		(Nullsv+1)	/* use warnings 'all' */
-#define pWARN_NONE		(Nullsv+2)	/* no  warnings 'all' */
+#define pWARN_STD		NULL
+#define pWARN_ALL		(((STRLEN*)0)+1)    /* use warnings 'all' */
+#define pWARN_NONE		(((STRLEN*)0)+2)    /* no  warnings 'all' */
 
 #define specialWARN(x)		((x) == pWARN_STD || (x) == pWARN_ALL ||	\
 				 (x) == pWARN_NONE)
+
+/* if PL_warnhook is set to this value, then warnings die */
+#define PERL_WARNHOOK_FATAL	(&PL_sv_placeholder)
 EOM
 
 my $offset = 0 ;
@@ -315,17 +318,19 @@ print WARN tab(5, '#define WARNsize'),	"$warn_size\n" ;
 #print WARN tab(5, '#define WARN_ALLstring'), '"', ('\377' x $warn_size) , "\"\n" ;
 print WARN tab(5, '#define WARN_ALLstring'), '"', ('\125' x $warn_size) , "\"\n" ;
 print WARN tab(5, '#define WARN_NONEstring'), '"', ('\0' x $warn_size) , "\"\n" ;
-my $WARN_TAINTstring = mkOct($warn_size, map $_ * 2, @{ $list{'taint'} });
-
-print WARN tab(5, '#define WARN_TAINTstring'), qq["$WARN_TAINTstring"\n] ;
 
 print WARN <<'EOM';
 
 #define isLEXWARN_on 	(PL_curcop->cop_warnings != pWARN_STD)
 #define isLEXWARN_off	(PL_curcop->cop_warnings == pWARN_STD)
 #define isWARN_ONCE	(PL_dowarn & (G_WARN_ON|G_WARN_ONCE))
-#define isWARN_on(c,x)	(IsSet(SvPVX_const(c), 2*(x)))
-#define isWARNf_on(c,x)	(IsSet(SvPVX_const(c), 2*(x)+1))
+#define isWARN_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)))
+#define isWARNf_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)+1))
+
+#define DUP_WARNINGS(p)		\
+    (specialWARN(p) ? (STRLEN*)(p)	\
+    : (STRLEN*)CopyD(p, PerlMemShared_malloc(sizeof(*p)+*p), sizeof(*p)+*p, \
+		     			     char))
 
 #define ckWARN(w)		Perl_ckwarn(aTHX_ packWARN(w))
 #define ckWARN2(w1,w2)		Perl_ckwarn(aTHX_ packWARN2(w1,w2))
@@ -431,7 +436,14 @@ __END__
 
 package warnings;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
+
+# Verify that we're called correctly so that warnings will work.
+# see also strict.pm.
+unless ( __FILE__ =~ /(^|[\/\\])\Q${\__PACKAGE__}\E\.pmc?$/ ) {
+    my (undef, $f, $l) = caller;
+    die("Incorrect use of pragma '${\__PACKAGE__}' at $f line $l.\n");
+}
 
 =head1 NAME
 
@@ -556,14 +568,13 @@ See L<perlmodlib/Pragmatic Modules> and L<perllexwarn>.
 
 =cut
 
-use Carp ();
-
 KEYWORDS
 
 $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
 
 sub Croaker
 {
+    require Carp::Heavy; # this initializes %CarpInternal
     local $Carp::CarpInternal{'warnings'};
     delete $Carp::CarpInternal{'warnings'};
     Carp::croak(@_);
@@ -706,16 +717,17 @@ sub __chk
 	$i -= 2 ;
     }
     else {
-        for ($i = 2 ; $pkg = (caller($i))[0] ; ++ $i) {
-            last if $pkg ne $this_pkg ;
-        }
-        $i = 2
-            if !$pkg || $pkg eq $this_pkg ;
+        $i = _error_loc(); # see where Carp will allocate the error
     }
 
     my $callers_bitmask = (caller($i))[9] ;
     return ($callers_bitmask, $offset, $i) ;
 }
+
+sub _error_loc {
+    require Carp::Heavy;
+    goto &Carp::short_error_loc; # don't introduce another stack frame
+}                                                             
 
 sub enabled
 {
@@ -737,6 +749,7 @@ sub warn
 
     my $message = pop ;
     my ($callers_bitmask, $offset, $i) = __chk(@_) ;
+    require Carp;
     Carp::croak($message)
 	if vec($callers_bitmask, $offset+1, 1) ||
 	   vec($callers_bitmask, $Offsets{'all'}+1, 1) ;
@@ -756,6 +769,7 @@ sub warnif
             	(vec($callers_bitmask, $offset, 1) ||
             	vec($callers_bitmask, $Offsets{'all'}, 1)) ;
 
+    require Carp;
     Carp::croak($message)
 	if vec($callers_bitmask, $offset+1, 1) ||
 	   vec($callers_bitmask, $Offsets{'all'}+1, 1) ;

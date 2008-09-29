@@ -3,7 +3,7 @@ package ExtUtils::MM;
 use strict;
 use ExtUtils::MakeMaker::Config;
 use vars qw(@ISA $VERSION);
-$VERSION = '0.05';
+$VERSION = '6.42';
 
 require ExtUtils::Liblist;
 require ExtUtils::MakeMaker;
@@ -43,12 +43,19 @@ away.
     sub DESTROY {}
 }
 
+sub _is_win95 {
+    # miniperl might not have the Win32 functions available and we need
+    # to run in miniperl.
+    return defined &Win32::IsWin95 ? Win32::IsWin95() 
+                                   : ! defined $ENV{SYSTEMROOT}; 
+}
+
 my %Is = ();
 $Is{VMS}    = $^O eq 'VMS';
 $Is{OS2}    = $^O eq 'os2';
 $Is{MacOS}  = $^O eq 'MacOS';
 if( $^O eq 'MSWin32' ) {
-    Win32::IsWin95() ? $Is{Win95} = 1 : $Is{Win32} = 1;
+    _is_win95() ? $Is{Win95} = 1 : $Is{Win32} = 1;
 }
 $Is{UWIN}   = $^O =~ /^uwin(-nt)?$/;
 $Is{Cygwin} = $^O eq 'cygwin';

@@ -52,13 +52,13 @@ Test::More->builder->no_ending(1);
     fail( "this fails" );
     err_ok( <<ERR );
 #   Failed test 'this fails'
-#   in $0 at line 62.
+#   at $0 line 62.
 ERR
 
 #line 72
     is( 1, 0 );
     err_ok( <<ERR );
-#   Failed test in $0 at line 72.
+#   Failed test at $0 line 72.
 #          got: '1'
 #     expected: '0'
 ERR
@@ -72,7 +72,7 @@ ERR
     err_ok( <<ERR );
 
 #   Failed test 'this fails'
-#   in $0 at line 71.
+#   at $0 line 71.
 ERR
 
 
@@ -80,7 +80,7 @@ ERR
     is( 1, 0 );
     err_ok( <<ERR );
 
-#   Failed test in $0 at line 84.
+#   Failed test at $0 line 84.
 #          got: '1'
 #     expected: '0'
 ERR

@@ -1,12 +1,14 @@
-#!./perl
+#!perl -w
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
+   if( $ENV{PERL_CORE} ) {
+        chdir 't' if -d 't';
+        @INC = '../lib';
+    }
 }
 
 # Can't use Test::Simple/More, they depend on Exporter.
-my $test = 1;
+my $test;
 sub ok ($;$) {
     my($ok, $name) = @_;
 
@@ -21,9 +23,12 @@ sub ok ($;$) {
 }
 
 
-print "1..28\n";
-require Exporter;
-ok( 1, 'Exporter compiled' );
+BEGIN {
+    $test = 1;
+    print "1..28\n";
+    require Exporter;
+    ok( 1, 'Exporter compiled' );
+}
 
 
 BEGIN {
@@ -75,7 +80,7 @@ $seat     = 'seat';
 BEGIN {*is = \&Is};
 sub Is { 'Is' };
 
-Exporter::export_ok_tags;
+Exporter::export_ok_tags();
 
 my %tags     = map { $_ => 1 } map { @$_ } values %EXPORT_TAGS;
 my %exportok = map { $_ => 1 } @EXPORT_OK;
@@ -102,7 +107,7 @@ my $got = eval {&lifejacket};
 # Testing->import is called.
 ::ok( eval "defined &is",
       "Import a subroutine where exporter must create the typeglob" );
-my $got = eval "&is";
+$got = eval "&is";
 ::ok ( $@ eq "", 'check we can call the imported autoloaded subroutine')
   or chomp ($@), print STDERR "# \$\@ is $@\n";
 ::ok ( $got eq 'Is', 'and that it gave the correct result')
@@ -166,7 +171,7 @@ eval { Yet::More::Testing->require_version(10); 1 };
 
 my $warnings;
 BEGIN {
-    $SIG{__WARN__} = sub { $warnings = join '', @_ };
+    local $SIG{__WARN__} = sub { $warnings = join '', @_ };
     package Testing::Unused::Vars;
     @ISA = qw(Exporter);
     @EXPORT = qw(this $TODO that);
@@ -182,26 +187,25 @@ package Moving::Target;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw (foo);
 
-sub foo {"foo"};
-sub bar {"bar"};
+sub foo {"This is foo"};
+sub bar {"This is bar"};
 
 package Moving::Target::Test;
 
-Moving::Target->import (foo);
+Moving::Target->import ('foo');
 
-::ok (foo eq "foo", "imported foo before EXPORT_OK changed");
+::ok (foo() eq "This is foo", "imported foo before EXPORT_OK changed");
 
 push @Moving::Target::EXPORT_OK, 'bar';
 
-Moving::Target->import (bar);
+Moving::Target->import ('bar');
 
-::ok (bar eq "bar", "imported bar after EXPORT_OK changed");
+::ok (bar() eq "This is bar", "imported bar after EXPORT_OK changed");
 
 package The::Import;
 
 use Exporter 'import';
 
-eval { import() };
 ::ok(\&import == \&Exporter::import, "imported the import routine");
 
 @EXPORT = qw( wibble );

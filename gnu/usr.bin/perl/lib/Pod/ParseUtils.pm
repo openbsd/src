@@ -10,7 +10,7 @@
 package Pod::ParseUtils;
 
 use vars qw($VERSION);
-$VERSION = 1.33;   ## Current version of this package
+$VERSION = 1.35;   ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -356,6 +356,13 @@ sub parse {
         $node = $1;
         $type = 'item';
     }
+
+    # non-standard: Hyperlink with alt-text - doesn't remove protocol prefix, maybe it should?
+    elsif(m!^ \s* (.*?) \s* [|] \s* (\w+:[^:\s] [^\s|]*?) \s* $!ix) {
+      ($alttext,$node) = ($1,$2);
+      $type = 'hyperlink';
+    }
+
     # non-standard: Hyperlink
     elsif(m!^(\w+:[^:\s]\S*)$!i) {
         $node = $1;
@@ -369,11 +376,6 @@ sub parse {
     # alttext and item
     elsif(m!^(.*?)\s*[|]\s*/(.+)$!) {
         ($alttext, $node) = ($1,$2);
-    }
-    # nonstandard: alttext and hyperlink
-    elsif(m!^(.*?)\s*[|]\s*(\w+:[^:\s]\S*)$!) {
-        ($alttext, $node) = ($1,$2);
-        $type = 'hyperlink';
     }
     # must be an item or a "malformed" section (without "")
     else {
@@ -792,7 +794,7 @@ sub nodes {
 
 Look for a node or index entry named C<$name> in the object.
 Returns the unique id of the node (i.e. the second element of the array
-stored in the node arry) or undef if not found.
+stored in the node array) or undef if not found.
 
 =cut
 

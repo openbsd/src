@@ -16,7 +16,7 @@ sub _carp {
 
 
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS $TODO);
-$VERSION = '0.62';
+$VERSION = '0.72';
 $VERSION = eval $VERSION;    # make the alpha version come out as a number
 
 use Test::Builder::Module;
@@ -41,7 +41,7 @@ Test::More - yet another framework for writing test scripts
 
 =head1 SYNOPSIS
 
-  use Test::More tests => $Num_Tests;
+  use Test::More tests => 23;
   # or
   use Test::More qw(no_plan);
   # or
@@ -51,20 +51,20 @@ Test::More - yet another framework for writing test scripts
   require_ok( 'Some::Module' );
 
   # Various ways to say "ok"
-  ok($this eq $that, $test_name);
+  ok($got eq $expected, $test_name);
 
-  is  ($this, $that,    $test_name);
-  isnt($this, $that,    $test_name);
+  is  ($got, $expected, $test_name);
+  isnt($got, $expected, $test_name);
 
   # Rather than print STDERR "# here's what went wrong\n"
   diag("here's what went wrong");
 
-  like  ($this, qr/that/, $test_name);
-  unlike($this, qr/that/, $test_name);
+  like  ($got, qr/expected/, $test_name);
+  unlike($got, qr/expected/, $test_name);
 
-  cmp_ok($this, '==', $that, $test_name);
+  cmp_ok($got, '==', $expected, $test_name);
 
-  is_deeply($complex_structure1, $complex_structure2, $test_name);
+  is_deeply($got_complex_structure, $expected_complex_structure, $test_name);
 
   SKIP: {
       skip $why, $how_many unless $have_some_feature;
@@ -113,7 +113,7 @@ failure.
 
 The preferred way to do this is to declare a plan when you C<use Test::More>.
 
-  use Test::More tests => $Num_Tests;
+  use Test::More tests => 23;
 
 There are rare cases when you will not know beforehand how many tests
 your script is going to run.  In this case, you can declare that you
@@ -226,9 +226,9 @@ respectively.
 
 =item B<ok>
 
-  ok($this eq $that, $test_name);
+  ok($got eq $expected, $test_name);
 
-This simply evaluates any expression (C<$this eq $that> is just a
+This simply evaluates any expression (C<$got eq $expected> is just a
 simple example) and uses that to determine if the test succeeded or
 failed.  A true expression passes, a false one fails.  Very simple.
 
@@ -252,7 +252,7 @@ Should an ok() fail, it will produce some diagnostics:
     #   Failed test 'sufficient mucus'
     #   in foo.t at line 42.
 
-This is actually Test::Simple's ok() routine.
+This is the same as Test::Simple's ok() routine.
 
 =cut
 
@@ -267,8 +267,8 @@ sub ok ($;$) {
 
 =item B<isnt>
 
-  is  ( $this, $that, $test_name );
-  isnt( $this, $that, $test_name );
+  is  ( $got, $expected, $test_name );
+  isnt( $got, $expected, $test_name );
 
 Similar to ok(), is() and isnt() compare their two arguments
 with C<eq> and C<ne> respectively and use the result of that to
@@ -340,17 +340,17 @@ sub isnt ($$;$) {
 
 =item B<like>
 
-  like( $this, qr/that/, $test_name );
+  like( $got, qr/expected/, $test_name );
 
-Similar to ok(), like() matches $this against the regex C<qr/that/>.
+Similar to ok(), like() matches $got against the regex C<qr/expected/>.
 
 So this:
 
-    like($this, qr/that/, 'this is like that');
+    like($got, qr/expected/, 'this is like that');
 
 is similar to:
 
-    ok( $this =~ /that/, 'this is like that');
+    ok( $got =~ /expected/, 'this is like that');
 
 (Mnemonic "This is like that".)
 
@@ -359,9 +359,9 @@ regex reference (i.e. C<qr//>) or (for better compatibility with older
 perls) as a string that looks like a regex (alternative delimiters are
 currently not supported):
 
-    like( $this, '/that/', 'this is like that' );
+    like( $got, '/expected/', 'this is like that' );
 
-Regex options may be placed on the end (C<'/that/i'>).
+Regex options may be placed on the end (C<'/expected/i'>).
 
 Its advantages over ok() are similar to that of is() and isnt().  Better
 diagnostics on failure.
@@ -377,9 +377,9 @@ sub like ($$;$) {
 
 =item B<unlike>
 
-  unlike( $this, qr/that/, $test_name );
+  unlike( $got, qr/expected/, $test_name );
 
-Works exactly as like(), only it checks if $this B<does not> match the
+Works exactly as like(), only it checks if $got B<does not> match the
 given pattern.
 
 =cut
@@ -393,23 +393,23 @@ sub unlike ($$;$) {
 
 =item B<cmp_ok>
 
-  cmp_ok( $this, $op, $that, $test_name );
+  cmp_ok( $got, $op, $expected, $test_name );
 
 Halfway between ok() and is() lies cmp_ok().  This allows you to
 compare two arguments using any binary perl operator.
 
-    # ok( $this eq $that );
-    cmp_ok( $this, 'eq', $that, 'this eq that' );
+    # ok( $got eq $expected );
+    cmp_ok( $got, 'eq', $expected, 'this eq that' );
 
-    # ok( $this == $that );
-    cmp_ok( $this, '==', $that, 'this == that' );
+    # ok( $got == $expected );
+    cmp_ok( $got, '==', $expected, 'this == that' );
 
-    # ok( $this && $that );
-    cmp_ok( $this, '&&', $that, 'this && that' );
+    # ok( $got && $expected );
+    cmp_ok( $got, '&&', $expected, 'this && that' );
     ...etc...
 
-Its advantage over ok() is when the test fails you'll know what $this
-and $that were:
+Its advantage over ok() is when the test fails you'll know what $got
+and $expected were:
 
     not ok 1
     #   Failed test in foo.t at line 12.
@@ -465,6 +465,12 @@ sub can_ok ($@) {
     my $class = ref $proto || $proto;
     my $tb = Test::More->builder;
 
+    unless( $class ) {
+        my $ok = $tb->ok( 0, "->can(...)" );
+        $tb->diag('    can_ok() called with empty class or reference');
+        return $ok;
+    }
+
     unless( @methods ) {
         my $ok = $tb->ok( 0, "$class->can(...)" );
         $tb->diag('    can_ok() called with no methods');
@@ -473,15 +479,13 @@ sub can_ok ($@) {
 
     my @nok = ();
     foreach my $method (@methods) {
-        local($!, $@);  # don't interfere with caller's $@
-                        # eval sometimes resets $!
-        eval { $proto->can($method) } || push @nok, $method;
+        $tb->_try(sub { $proto->can($method) }) or push @nok, $method;
     }
 
     my $name;
     $name = @methods == 1 ? "$class->can('$methods[0]')" 
                           : "$class->can(...)";
-    
+
     my $ok = $tb->ok( !@nok, $name );
 
     $tb->diag(map "    $class->can('$_') failed\n", @nok);
@@ -533,10 +537,10 @@ sub isa_ok ($$;$) {
     }
     else {
         # We can't use UNIVERSAL::isa because we want to honor isa() overrides
-        local($@, $!);  # eval sometimes resets $!
-        my $rslt = eval { $object->isa($class) };
-        if( $@ ) {
-            if( $@ =~ /^Can't call method "isa" on unblessed reference/ ) {
+        my($rslt, $error) = $tb->_try(sub { $object->isa($class) });
+        if( $error ) {
+            if( $error =~ /^Can't call method "isa" on unblessed reference/ ) {
+                # Its an unblessed reference
                 if( !UNIVERSAL::isa($object, $class) ) {
                     my $ref = ref $object;
                     $diag = "$obj_name isn't a '$class' it's a '$ref'";
@@ -544,9 +548,8 @@ sub isa_ok ($$;$) {
             } else {
                 die <<WHOA;
 WHOA! I tried to call ->isa on your object and got some weird error.
-This should never happen.  Please contact the author immediately.
 Here's the error.
-$@
+$error
 WHOA
             }
         }
@@ -656,7 +659,7 @@ sub use_ok ($;@) {
 
     my($pack,$filename,$line) = caller;
 
-    local($@,$!);   # eval sometimes interferes with $!
+    local($@,$!,$SIG{__DIE__});   # isolate eval
 
     if( @imports == 1 and $imports[0] =~ /^\d+(?:\.\d+)?$/ ) {
         # probably a version check.  Perl needs to see the bare number
@@ -708,7 +711,8 @@ sub require_ok ($) {
     # Module names must be barewords, files not.
     $module = qq['$module'] unless _is_module_name($module);
 
-    local($!, $@); # eval sometimes interferes with $!
+    local($!, $@, $SIG{__DIE__}); # isolate eval
+    local $SIG{__DIE__};
     eval <<REQUIRE;
 package $pack;
 require $module;
@@ -754,9 +758,9 @@ B<NOTE> I'm not quite sure what will happen with filehandles.
 
 =item B<is_deeply>
 
-  is_deeply( $this, $that, $test_name );
+  is_deeply( $got, $expected, $test_name );
 
-Similar to is(), except that if $this and $that are references, it
+Similar to is(), except that if $got and $expected are references, it
 does a deep comparison walking each data structure to see if they are
 equivalent.  If the two structures are different, it will display the
 place where they start differing.
@@ -776,6 +780,12 @@ along these lines.
 
 use vars qw(@Data_Stack %Refs_Seen);
 my $DNE = bless [], 'Does::Not::Exist';
+
+sub _dne {
+    ref $_[0] eq ref $DNE;
+}
+
+
 sub is_deeply {
     my $tb = Test::More->builder;
 
@@ -792,21 +802,21 @@ WARNING
 	return $tb->ok(0);
     }
 
-    my($this, $that, $name) = @_;
+    my($got, $expected, $name) = @_;
 
-    $tb->_unoverload_str(\$that, \$this);
+    $tb->_unoverload_str(\$expected, \$got);
 
     my $ok;
-    if( !ref $this and !ref $that ) {  		# neither is a reference
-        $ok = $tb->is_eq($this, $that, $name);
+    if( !ref $got and !ref $expected ) {  		# neither is a reference
+        $ok = $tb->is_eq($got, $expected, $name);
     }
-    elsif( !ref $this xor !ref $that ) {  	# one's a reference, one isn't
+    elsif( !ref $got xor !ref $expected ) {  	# one's a reference, one isn't
         $ok = $tb->ok(0, $name);
-	$tb->diag( _format_stack({ vals => [ $this, $that ] }) );
+	$tb->diag( _format_stack({ vals => [ $got, $expected ] }) );
     }
     else {			       		# both references
         local @Data_Stack = ();
-        if( _deep_check($this, $that) ) {
+        if( _deep_check($got, $expected) ) {
             $ok = $tb->ok(1, $name);
         }
         else {
@@ -848,8 +858,8 @@ sub _format_stack {
     foreach my $idx (0..$#vals) {
         my $val = $vals[$idx];
         $vals[$idx] = !defined $val ? 'undef'          :
-                      $val eq $DNE  ? "Does not exist" :
-	              ref $val      ? "$val"           :
+                      _dne($val)    ? "Does not exist" :
+                      ref $val      ? "$val"           :
                                       "'$val'";
     }
 
@@ -995,6 +1005,11 @@ sub skip {
         $how_many = 1;
     }
 
+    if( defined $how_many and $how_many =~ /\D/ ) {
+        _carp "skip() was passed a non-numeric number of tests.  Did you get the arguments backwards?";
+        $how_many = 1;
+    }
+
     for( 1..$how_many ) {
         $tb->skip($why);
     }
@@ -1107,7 +1122,7 @@ but want to put tests in your testing script (always a good idea).
 
     BAIL_OUT($reason);
 
-Incidates to the harness that things are going so badly all testing
+Indicates to the harness that things are going so badly all testing
 should terminate.  This includes the running any additional test scripts.
 
 This is typically used when testing cannot continue such as a critical
@@ -1138,11 +1153,11 @@ arbitrary data structures.
 
 These functions are usually used inside an ok().
 
-    ok( eq_array(\@this, \@that) );
+    ok( eq_array(\@got, \@expected) );
 
 C<is_deeply()> can do that better and with diagnostics.  
 
-    is_deeply( \@this, \@that );
+    is_deeply( \@got, \@expected );
 
 They may be deprecated in future versions.
 
@@ -1150,7 +1165,7 @@ They may be deprecated in future versions.
 
 =item B<eq_array>
 
-  my $is_eq = eq_array(\@this, \@that);
+  my $is_eq = eq_array(\@got, \@expected);
 
 Checks if two arrays are equivalent.  This is a deep check, so
 multi-level structures are handled correctly.
@@ -1213,7 +1228,7 @@ sub _deep_check {
         if( defined $e1 xor defined $e2 ) {
             $ok = 0;
         }
-        elsif ( $e1 == $DNE xor $e2 == $DNE ) {
+        elsif ( _dne($e1) xor _dne($e2) ) {
             $ok = 0;
         }
         elsif ( $same_ref and ($e1 eq $e2) ) {
@@ -1281,7 +1296,7 @@ WHOA
 
 =item B<eq_hash>
 
-  my $is_eq = eq_hash(\%this, \%that);
+  my $is_eq = eq_hash(\%got, \%expected);
 
 Determines if the two hashes contain the same keys and values.  This
 is a deep check.
@@ -1321,17 +1336,17 @@ sub _eq_hash {
 
 =item B<eq_set>
 
-  my $is_eq = eq_set(\@this, \@that);
+  my $is_eq = eq_set(\@got, \@expected);
 
 Similar to eq_array(), except the order of the elements is B<not>
 important.  This is a deep check, but the irrelevancy of order only
 applies to the top level.
 
-    ok( eq_set(\@this, \@that) );
+    ok( eq_set(\@got, \@expected) );
 
 Is better written:
 
-    is_deeply( [sort @this], [sort @that] );
+    is_deeply( [sort @got], [sort @expected] );
 
 B<NOTE> By historical accident, this is not a true set comparison.
 While the order of elements does not matter, duplicate elements do.
@@ -1454,6 +1469,8 @@ This may cause problems:
     use Test::More
     use threads;
 
+5.8.1 and above are supported.  Anything below that has too many bugs.
+
 
 =item Test::Harness upgrade
 
@@ -1524,9 +1541,9 @@ See F<http://rt.cpan.org> to report and view bugs.
 
 =head1 COPYRIGHT
 
-Copyright 2001, 2002, 2004 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
+Copyright 2001-2002, 2004-2006 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
 
-This program is free software; you can redistribute it and/or 
+This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 See F<http://www.perl.com/perl/misc/Artistic.html>

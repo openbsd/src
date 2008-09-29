@@ -1,60 +1,54 @@
+use strict;
+use warnings;
 
 BEGIN {
-    chdir 't' if -d 't';
-    push @INC, '../lib';
-    require Config; import Config;
-    unless ($Config{'useithreads'}) {
-        print "1..0 # Skip: no useithreads\n";
-        exit 0;
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
     }
+
+    require($ENV{PERL_CORE} ? "./test.pl" : "./t/test.pl");
+
+    use Config;
+    if (! $Config{'useithreads'}) {
+        skip_all(q/Perl not compiled with 'useithreads'/);
+    }
+
+    plan(11);
 }
 
 use ExtUtils::testlib;
-use strict;
-BEGIN { $| = 1; print "1..11\n"};
 
-use threads;
-use threads::shared;
+use_ok('threads');
+
+### Start of Testing ###
+
 my $i = 10;
 my $y = 20000;
+
 my %localtime;
-for(0..$i) {
-	$localtime{$_} = localtime($_);
+for (1..$i) {
+    $localtime{$_} = localtime($_);
 };
-my $mutex = 1;
-share($mutex);
-sub localtime_r {
-#  print "Waiting for lock\n";
-  lock($mutex);
-#  print "foo\n";
-  my $retval = localtime(shift());
-#  unlock($mutex);
-  return $retval;
-}
+
 my @threads;
-for(0..$i) {
-  my $thread = threads->create(sub {
-				 my $arg = $_;
-		    my $localtime = $localtime{$arg};
-		    my $error = 0;
-		    for(0..$y) {
-		      my $lt = localtime($arg);
-		      if($localtime ne $lt) {
-			$error++;
-		      }	
-		    }
-				 lock($mutex);
-				 if($error) {
-				   print "not ok $mutex # not a safe localtime\n";
-				 } else {
-				   print "ok $mutex\n";
-				 }
-				 $mutex++;
-		  });	
-  push @threads, $thread;
+for (1..$i) {
+    $threads[$_] = threads->create(sub {
+                        my $arg = shift;
+                        my $localtime = $localtime{$arg};
+                        my $error = 0;
+                        for (1..$y) {
+                            my $lt = localtime($arg);
+                            if ($localtime ne $lt) {
+                                $error++;
+                            }
+                        }
+                        return $error;
+                    }, $_);
 }
 
-for(@threads) {
-  $_->join();
+for (1..$i) {
+    is($threads[$_]->join(), 0, 'localtime() thread-safe');
 }
 
+# EOF

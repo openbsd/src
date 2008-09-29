@@ -16,6 +16,20 @@ typedef NDBM_File_type * NDBM_File ;
 typedef datum datum_key ;
 typedef datum datum_value ;
 
+
+#if defined(__cplusplus) && defined(HAS_GDBM)
+/* gdbm's header file used for compatibility with gdbm */
+/* isn't compatible to C++ syntax, so we need these */
+/* declarations to make everyone happy. */
+EXTERN_C DBM *dbm_open(const char *, int, mode_t);
+EXTERN_C void dbm_close(DBM *);
+EXTERN_C datum dbm_fetch(DBM *, datum);
+EXTERN_C int dbm_store(DBM *, datum, datum, int);
+EXTERN_C int dbm_delete(DBM *, datum);
+EXTERN_C datum dbm_firstkey(DBM *);
+EXTERN_C datum dbm_nextkey(DBM *);
+#endif
+
 MODULE = NDBM_File	PACKAGE = NDBM_File	PREFIX = ndbm_
 
 NDBM_File

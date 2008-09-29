@@ -1,5 +1,20 @@
 
 
+1.816 28 October 2007
+
+   * Clarified the warning about building with a different version of
+     Berkeley DB that is used at runtime.
+   * Also made the boot version check less strict.
+     [rt.cpan.org #30013]
+
+1.815 4 February 2007
+
+   * A few casting cleanups for building with C++ from Steve Peters.
+
+   * Fixed problem with recno which happened if you changed directory after
+     opening the database. Problem reported by Andrew Pam.
+
+
 1.814 11 November 2005
 
    * Fix from Dominic Dunlop to tidy up an OS-X specific warning in

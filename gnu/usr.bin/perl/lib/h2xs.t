@@ -56,6 +56,7 @@ if ($^O eq 'MacOS') {
 my $name = 'h2xst';
 my $header = "$name.h";
 my $thisversion = sprintf "%vd", $^V;
+$thisversion =~ s/^v//;
 
 # If this test has failed previously a copy may be left.
 rmtree($name);

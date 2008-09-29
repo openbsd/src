@@ -8,57 +8,27 @@ BEGIN {
 }
 
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
+use Test::More tests => 10;
+use Test::Builder;
+my $tb = Test::Builder->create;
+$tb->level(0);
 
-print "1..7\n";
-
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-
-    return $test;
-}
-
-
-sub is ($$;$) {
-    my($this, $that, $name) = @_;
-    my $test = $this eq $that;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-
-    unless( $test ) {
-        print "# got      \n$this";
-        print "# expected \n$that";
-    }
-    $test_num++;
-
-    return $test;
-}
-
-
-use Test::More import => ['plan'];
-
-ok !eval { plan tests => 'no_plan'; };
-is $@, "Number of tests must be a postive integer.  You gave it 'no_plan'.\n";
+ok !eval { $tb->plan( tests => 'no_plan' ); };
+is $@, sprintf "Number of tests must be a positive integer.  You gave it 'no_plan' at %s line %d.\n", $0, __LINE__ - 1;
 
 my $foo = [];
 my @foo = ($foo, 2, 3);
-ok !eval { plan tests => @foo };
-is $@, "Number of tests must be a postive integer.  You gave it '$foo'.\n";
+ok !eval { $tb->plan( tests => @foo ) };
+is $@, sprintf "Number of tests must be a positive integer.  You gave it '$foo' at %s line %d.\n", $0, __LINE__ - 1;
 
-ok !eval { plan tests => 0 };
-ok !eval { plan tests => -1 };
-ok !eval { plan tests => '' };
+#line 25
+ok !eval { $tb->plan( tests => -1 ) };
+is $@, "Number of tests must be a positive integer.  You gave it '-1' at $0 line 25.\n";
+
+#line 29
+ok !eval { $tb->plan( tests => '' ) };
+is $@, "You said to run 0 tests at $0 line 29.\n";
+
+#line 33
+ok !eval { $tb->plan( 'wibble' ) };
+is $@, "plan() doesn't understand wibble at $0 line 33.\n";

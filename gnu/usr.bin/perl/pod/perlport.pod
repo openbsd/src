@@ -94,21 +94,9 @@ from) C<\015\012>, depending on whether you're reading or writing.
 Unix does the same thing on ttys in canonical mode.  C<\015\012>
 is commonly referred to as CRLF.
 
-A common cause of unportable programs is the misuse of chop() to trim
-newlines:
-
-    # XXX UNPORTABLE!
-    while(<FILE>) {
-        chop;
-        @array = split(/:/);
-        #...
-    }
-
-You can get away with this on Unix and Mac OS (they have a single
-character end-of-line), but the same program will break under DOSish
-perls because you're only chop()ing half the end-of-line.  Instead,
-chomp() should be used to trim newlines.  The L<Dunce::Files> module 
-can help audit your code for misuses of chop().
+To trim trailing newlines from text lines use chomp().  With default 
+settings that function looks for a trailing C<\n> character and thus 
+trims in a portable way.
 
 When dealing with binary files (or text files in binary mode) be sure
 to explicitly set $/ to the appropriate value for your file format
@@ -224,7 +212,7 @@ them in big-endian mode.  To avoid this problem in network (socket)
 connections use the C<pack> and C<unpack> formats C<n> and C<N>, the
 "network" orders.  These are guaranteed to be portable.
 
-As of perl 5.8.5, you can also use the C<E<gt>> and C<E<lt>> modifiers
+As of perl 5.9.2, you can also use the C<E<gt>> and C<E<lt>> modifiers
 to force big- or little-endian byte-order.  This is useful if you want
 to store signed integers or 64-bit integers, for example.
 
@@ -360,7 +348,8 @@ Whitespace in filenames is tolerated on most systems, but not all,
 and even on systems where it might be tolerated, some utilities
 might become confused by such whitespace.
 
-Many systems (DOS, VMS) cannot have more than one C<.> in their filenames.
+Many systems (DOS, VMS ODS-2) cannot have more than one C<.> in their
+filenames.
 
 Don't assume C<< > >> won't be the first character of a filename.
 Always use C<< < >> explicitly to open a file for reading, or even
@@ -443,6 +432,16 @@ case-preserving.  Don't try to clear %ENV by saying C<%ENV = ();>, or,
 if you really have to, make it conditional on C<$^O ne 'VMS'> since in
 VMS the C<%ENV> table is much more than a per-process key-value string
 table.
+
+On VMS, some entries in the %ENV hash are dynamically created when
+their key is used on a read if they did not previously exist.  The
+values for C<$ENV{HOME}>, C<$ENV{TERM}>, C<$ENV{HOME}>, and C<$ENV{USER}>,
+are known to be dynamically generated.  The specific names that are
+dynamically generated may vary with the version of the C library on VMS,
+and more may exist than is documented.
+
+On VMS by default, changes to the %ENV hash are persistent after the process
+exits.  This can cause unintended issues.
 
 Don't count on signals or C<%SIG> for anything.
 
@@ -683,12 +682,9 @@ ISO 8859-1 bytes beyond 0x7f into your strings might cause trouble
 later.  If the bytes are native 8-bit bytes, you can use the C<bytes>
 pragma.  If the bytes are in a string (regular expression being a
 curious string), you can often also use the C<\xHH> notation instead
-of embedding the bytes as-is.  If they are in some particular legacy
-encoding (ether single-byte or something more complicated), you can
-use the C<encoding> pragma.  (If you want to write your code in UTF-8,
-you can use either the C<utf8> pragma, or the C<encoding> pragma.)
-The C<bytes> and C<utf8> pragmata are available since Perl 5.6.0, and
-the C<encoding> pragma since Perl 5.8.0.
+of embedding the bytes as-is.  (If you want to write your code in UTF-8,
+you can use the C<utf8>.) The C<bytes> and C<utf8> pragmata are
+available since Perl 5.6.0.
 
 =head2 System Resources
 
@@ -1057,6 +1053,9 @@ MPW, ftp://ftp.apple.com/developer/Tool_Chest/Core_Mac_OS_Tools/
 =head2 VMS
 
 Perl on VMS is discussed in L<perlvms> in the perl distribution.
+
+The official name of VMS as of this writing is OpenVMS.
+
 Perl on VMS can accept either VMS- or Unix-style file
 specifications as in either of the following:
 
@@ -1093,29 +1092,98 @@ you are so inclined.  For example:
 Do take care with C<$ ASSIGN/nolog/user SYS$COMMAND: SYS$INPUT> if your
 perl-in-DCL script expects to do things like C<< $read = <STDIN>; >>.
 
-Filenames are in the format "name.extension;version".  The maximum
-length for filenames is 39 characters, and the maximum length for
+The VMS operating system has two filesystems, known as ODS-2 and ODS-5.
+
+For ODS-2, filenames are in the format "name.extension;version".  The
+maximum length for filenames is 39 characters, and the maximum length for
 extensions is also 39 characters.  Version is a number from 1 to
 32767.  Valid characters are C</[A-Z0-9$_-]/>.
 
-VMS's RMS filesystem is case-insensitive and does not preserve case.
-C<readdir> returns lowercased filenames, but specifying a file for
-opening remains case-insensitive.  Files without extensions have a
-trailing period on them, so doing a C<readdir> with a file named F<A.;5>
-will return F<a.> (though that file could be opened with
+The ODS-2 filesystem is case-insensitive and does not preserve case.
+Perl simulates this by converting all filenames to lowercase internally.
+
+For ODS-5, filenames may have almost any character in them and can include
+Unicode characters.  Characters that could be misinterpreted by the DCL
+shell or file parsing utilities need to be prefixed with the C<^>
+character, or replaced with hexadecimal characters prefixed with the
+C<^> character.  Such prefixing is only needed with the pathnames are
+in VMS format in applications.  Programs that can accept the UNIX format
+of pathnames do not need the escape characters.  The maximum length for
+filenames is 255 characters.  The ODS-5 file system can handle both
+a case preserved and a case sensitive mode.
+
+ODS-5 is only available on the OpenVMS for 64 bit platforms.
+
+Support for the extended file specifications is being done as optional
+settings to preserve backward compatibility with Perl scripts that
+assume the previous VMS limitations.
+
+In general routines on VMS that get a UNIX format file specification
+should return it in a UNIX format, and when they get a VMS format
+specification they should return a VMS format unless they are documented
+to do a conversion.
+
+For routines that generate return a file specification, VMS allows setting
+if the C library which Perl is built on if it will be returned in VMS
+format or in UNIX format.
+
+With the ODS-2 file system, there is not much difference in syntax of
+filenames without paths for VMS or UNIX.  With the extended character
+set available with ODS-5 there can be a significant difference.
+
+Because of this, existing Perl scripts written for VMS were sometimes
+treating VMS and UNIX filenames interchangeably.  Without the extended
+character set enabled, this behavior will mostly be maintained for
+backwards compatibility.
+
+When extended characters are enabled with ODS-5, the handling of
+UNIX formatted file specifications is to that of a UNIX system.
+
+VMS file specifications without extensions have a trailing dot.  An
+equivalent UNIX file specification should not show the trailing dot.
+
+The result of all of this, is that for VMS, for portable scripts, you
+can not depend on Perl to present the filenames in lowercase, to be
+case sensitive, and that the filenames could be returned in either
+UNIX or VMS format.
+
+And if a routine returns a file specification, unless it is intended to
+convert it, it should return it in the same format as it found it.
+
+C<readdir> by default has traditionally returned lowercased filenames.
+When the ODS-5 support is enabled, it will return the exact case of the
+filename on the disk.
+
+Files without extensions have a trailing period on them, so doing a
+C<readdir> in the default mode with a file named F<A.;5> will
+return F<a.> when VMS is (though that file could be opened with
 C<open(FH, 'A')>).
 
+With support for extended file specifications and if C<opendir> was
+given a UNIX format directory, a file named F<A.;5> will return F<a>
+and optionally in the exact case on the disk.  When C<opendir> is given
+a VMS format directory, then C<readdir> should return F<a.>, and
+again with the optionally the exact case.
+
 RMS had an eight level limit on directory depths from any rooted logical
-(allowing 16 levels overall) prior to VMS 7.2.  Hence
-C<PERL_ROOT:[LIB.2.3.4.5.6.7.8]> is a valid directory specification but
-C<PERL_ROOT:[LIB.2.3.4.5.6.7.8.9]> is not.  F<Makefile.PL> authors might
-have to take this into account, but at least they can refer to the former
-as C</PERL_ROOT/lib/2/3/4/5/6/7/8/>.
+(allowing 16 levels overall) prior to VMS 7.2, and even with versions of
+VMS on VAX up through 7.3.  Hence C<PERL_ROOT:[LIB.2.3.4.5.6.7.8]> is a
+valid directory specification but C<PERL_ROOT:[LIB.2.3.4.5.6.7.8.9]> is
+not.  F<Makefile.PL> authors might have to take this into account, but at
+least they can refer to the former as C</PERL_ROOT/lib/2/3/4/5/6/7/8/>.
+
+Pumpkings and module integrators can easily see whether files with too many
+directory levels have snuck into the core by running the following in the
+top-level source directory:
+
+   $ perl -ne "$_=~s/\s+.*//; print if scalar(split /\//) > 8;" < MANIFEST
+
 
 The VMS::Filespec module, which gets installed as part of the build
 process on VMS, is a pure Perl module that can easily be installed on
 non-VMS platforms and can be helpful for conversions to and from RMS
-native formats.
+native formats.  It is also now the only way that you should check to
+see if VMS is in a case sensitive mode.
 
 What C<\n> represents depends on the type of file opened.  It usually
 represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>, 
@@ -1125,6 +1193,10 @@ special fopen() requirements of files with unusual attributes on VMS.
 
 TCP/IP stacks are optional on VMS, so socket routines might not be
 implemented.  UDP sockets may not be supported.
+
+The TCP/IP library support for all current versions of VMS is dynamically
+loaded if present, so even if the routines are configured, they may
+return a status indicating that they are not implemented.
 
 The value of C<$^O> on OpenVMS is "VMS".  To determine the architecture
 that you are running on without resorting to loading all of C<%Config>
@@ -1136,9 +1208,15 @@ you can examine the content of the C<@INC> array like so:
     } elsif (grep(/VMS_VAX/, @INC)) {
         print "I'm on VAX!\n";
 
+    } elsif (grep(/VMS_IA64/, @INC)) {
+        print "I'm on IA64!\n";
+
     } else {
         print "I'm not so sure about where $^O is...\n";
     }
+
+In general, the significant differences should only be if Perl is running
+on VMS_VAX or one of the 64 bit OpenVMS platforms.
 
 On VMS, perl determines the UTC offset from the C<SYS$TIMEZONE_DIFFERENTIAL>
 logical name.  Although the VMS epoch began at 17-NOV-1858 00:00:00.00,
@@ -1155,9 +1233,7 @@ F<README.vms> (installed as L<README_vms>), L<perlvms>
 
 =item *
 
-vmsperl list, majordomo@perl.org
-
-(Put the words C<subscribe vmsperl> in message body.)
+vmsperl list, vmsperl-subscribe@perl.org
 
 =item *
 
@@ -1185,13 +1261,6 @@ contain a slash character cannot be processed.  Such files must be
 renamed before they can be processed by Perl.  Note that VOS limits
 file names to 32 or fewer characters.
 
-Perl on VOS can be built using two different compilers and two different
-versions of the POSIX runtime.  The recommended method for building full
-Perl is with the GNU C compiler and the generally-available version of
-VOS POSIX support.  See F<README.vos> (installed as L<perlvos>) for
-restrictions that apply when Perl is built using the VOS Standard C
-compiler or the alpha version of VOS POSIX support.
-
 The value of C<$^O> on VOS is "VOS".  To determine the architecture that
 you are running on without resorting to loading all of C<%Config> you
 can examine the content of the @INC array like so:
@@ -1201,19 +1270,6 @@ can examine the content of the @INC array like so:
     } else {
         print "I'm not on a Stratus box!\n";
         die;
-    }
-
-    if (grep(/860/, @INC)) {
-        print "This box is a Stratus XA/R!\n";
-
-    } elsif (grep(/7100/, @INC)) {
-        print "This box is a Stratus HP 7100 or 8xxx!\n";
-
-    } elsif (grep(/8000/, @INC)) {
-        print "This box is a Stratus HP 8xxx!\n";
-
-    } else {
-        print "This box is a Stratus 68K!\n";
     }
 
 Also see:
@@ -1556,17 +1612,6 @@ suffixes.  C<-S> is meaningless.  (Win32)
 C<-x> (or C<-X>) determine if a file has an executable file type.
 (S<RISC OS>)
 
-=item atan2 Y,X
-
-Due to issues with various CPUs, math libraries, compilers, and standards,
-results for C<atan2()> may vary depending on any combination of the above.
-Perl attempts to conform to the Open Group/IEEE standards for the results
-returned from C<atan2()>, but cannot force the issue if the system Perl is
-run on does not allow it.  (Tru64, HP-UX 10.20) 
-
-The current version of the standards for C<atan2()> is available at 
-L<http://www.opengroup.org/onlinepubs/009695399/functions/atan2.html>.
-
 =item atan2
 
 Due to issues with various CPUs, math libraries, compilers, and standards,
@@ -1606,9 +1651,11 @@ in the SYSTEM environment settings.  (Cygwin)
 
 =item chown
 
-Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>, VOS)
+Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>)
 
 Does nothing, but won't fail. (Win32)
+
+A little funky, because VOS's notion of ownership is a little funky (VOS).
 
 =item chroot
 
@@ -1618,8 +1665,6 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS, VM/ESA)
 
 May not be available if library or source was not provided when building
 perl. (Win32)
-
-Not implemented. (VOS)
 
 =item dbmclose
 
@@ -1633,7 +1678,7 @@ Not implemented. (VMS, S<Plan 9>, VOS)
 
 Not useful. (S<Mac OS>, S<RISC OS>)
 
-Not implemented. (Win32)
+Not supported. (Cygwin, Win32)
 
 Invokes VMS debugger. (VMS)
 
@@ -1653,11 +1698,17 @@ mapping the C<1> to SS$_ABORT (C<44>).  This behavior may be overridden
 with the pragma C<use vmsish 'exit'>.  As with the CRTL's exit()
 function, C<exit 0> is also mapped to an exit status of SS$_NORMAL
 (C<1>); this mapping cannot be overridden.  Any other argument to exit()
-is used directly as Perl's exit status. (VMS)
+is used directly as Perl's exit status.  On VMS, unless the future
+POSIX_EXIT mode is enabled, the exit code should always be a valid
+VMS exit code and not a generic number.  When the POSIX_EXIT mode is
+enabled, a generic number will be encoded in a method compatible with
+the C library _POSIX_EXIT macro so that it can be decoded by other
+programs, particularly ones written in C, like the GNV package.  (VMS)
 
 =item fcntl
 
-Not implemented. (Win32, VMS)
+Not implemented. (Win32)
+Some functions available based on the version of VMS. (VMS)
 
 =item flock
 
@@ -1667,7 +1718,7 @@ Available only on Windows NT (not on Windows 95). (Win32)
 
 =item fork
 
-Not implemented. (S<Mac OS>, AmigaOS, S<RISC OS>, VOS, VM/ESA, VMS)
+Not implemented. (S<Mac OS>, AmigaOS, S<RISC OS>, VM/ESA, VMS)
 
 Emulated using multiple interpreters.  See L<perlfork>.  (Win32)
 
@@ -1680,7 +1731,7 @@ Not implemented. (S<Mac OS>, S<RISC OS>)
 
 =item getpgrp
 
-Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
+Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>)
 
 =item getppid
 
@@ -1831,15 +1882,29 @@ and makes it exit immediately with exit status $sig.  As in Unix, if
 $sig is 0 and the specified process exists, it returns true without
 actually terminating it. (Win32)
 
+C<kill(-9, $pid)> will terminate the process specified by $pid and
+recursively all child processes owned by it.  This is different from
+the Unix semantics, where the signal will be delivered to all
+processes in the same process group as the process specified by
+$pid. (Win32)
+
+Is not supported for process identification number of 0 or negative
+numbers. (VMS)
+
 =item link
 
-Not implemented. (S<Mac OS>, MPE/iX, VMS, S<RISC OS>)
+Not implemented. (S<Mac OS>, MPE/iX, S<RISC OS>)
 
 Link count not updated because hard links are not quite that hard
 (They are sort of half-way between hard and soft links). (AmigaOS)
 
-Hard links are implemented on Win32 (Windows NT and Windows 2000)
-under NTFS only.
+Hard links are implemented on Win32 under NTFS only. They are
+natively supported on Windows 2000 and later.  On Windows NT they
+are implemented using the Windows POSIX subsystem support and the
+Perl process will need Administrator or Backup Operator privileges
+to create hard links.
+
+Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 
 =item localtime
 
@@ -1850,7 +1915,7 @@ operating system's implementation of localtime().
 
 =item lstat
 
-Not implemented. (VMS, S<RISC OS>)
+Not implemented. (S<RISC OS>)
 
 Return values (especially for device and inode) may be bogus. (Win32)
 
@@ -1904,7 +1969,7 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
 =item setgrent
 
-Not implemented. (S<Mac OS>, MPE/iX, VMS, Win32, S<RISC OS>)
+Not implemented. (S<Mac OS>, MPE/iX, VMS, Win32, S<RISC OS>, VOS)
 
 =item setpgrp
 
@@ -1916,7 +1981,7 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
 =item setpwent
 
-Not implemented. (S<Mac OS>, MPE/iX, Win32, S<RISC OS>)
+Not implemented. (S<Mac OS>, MPE/iX, Win32, S<RISC OS>, VOS)
 
 =item setsockopt
 
@@ -1939,7 +2004,9 @@ be implemented even in UNIX platforms.
 
 =item socketpair
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS, VM/ESA)
+Not implemented. (Win32, S<RISC OS>, VOS, VM/ESA)
+
+Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 
 =item stat
 
@@ -1967,9 +2034,17 @@ meaningful and will differ between stat calls on the same file.  (os2)
 some versions of cygwin when doing a stat("foo") and if not finding it
 may then attempt to stat("foo.exe") (Cygwin)
 
+On Win32 stat() needs to open the file to determine the link count
+and update attributes that may have been changed through hard links.
+Setting ${^WIN32_SLOPPY_STAT} to a true value speeds up stat() by
+not performing this operation. (Win32)
+
 =item symlink
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+Not implemented. (Win32, S<RISC OS>)
+
+Implemented on 64 bit VMS 8.3.  VMS requires the symbolic link to be in Unix
+syntax if it is intended to resolve to a valid path.
 
 =item syscall
 
@@ -1983,16 +2058,6 @@ numeric values on some systems.  The flags exported by C<Fcntl>
 OS>, OS/390, VM/ESA)
 
 =item system
-
-In general, do not assume the UNIX/POSIX semantics that you can shift
-C<$?> right by eight to get the exit value, or that C<$? & 127>
-would give you the number of the signal that terminated the program,
-or that C<$? & 128> would test true if the program was terminated by a
-coredump.  Instead, use the POSIX W*() interfaces: for example, use
-WIFEXITED($?) and WEXITVALUE($?) to test for a normal exit and the exit
-value, WIFSIGNALED($?) and WTERMSIG($?) for a signal exit and the
-signal.  Core dumping is not a portable concept, so there's no portable
-way to test for that.
 
 Only implemented if ToolServer is installed. (S<Mac OS>)
 
@@ -2026,6 +2091,8 @@ Does not automatically flush output handles on some platforms.
 The return value is POSIX-like (shifted up by 8 bits), which only allows
 room for a made-up value derived from the severity bits of the native
 32-bit condition code (unless overridden by C<use vmsish 'status'>). 
+If the native condition code is one that has a POSIX value encoded, the
+POSIX value will be decoded to extract the expected exit value.
 For more details see L<perlvms/$?>. (VMS)
 
 =item times
@@ -2043,7 +2110,7 @@ Not useful. (S<RISC OS>)
 
 Not implemented. (Older versions of VMS)
 
-Truncation to zero-length only. (VOS)
+Truncation to same-or-shorter lengths only. (VOS)
 
 If a FILEHANDLE is supplied, it must be writable and opened in append
 mode (i.e., use C<<< open(FH, '>>filename') >>>
@@ -2071,7 +2138,7 @@ two seconds. (Win32)
 
 =item waitpid
 
-Not implemented. (S<Mac OS>, VOS)
+Not implemented. (S<Mac OS>)
 
 Can only be applied to process handles returned for processes spawned
 using C<system(1, ...)> or pseudo processes created with C<fork()>. (Win32)
@@ -2083,8 +2150,8 @@ Not useful. (S<RISC OS>)
 
 =head1 Supported Platforms
 
-As of September 2003 (the Perl release 5.8.1), the following platforms
-are able to build Perl from the standard source code distribution
+As of July 2002 (the Perl release 5.8.0), the following platforms are
+able to build Perl from the standard source code distribution
 available at http://www.cpan.org/src/index.html
 
         AIX
@@ -2100,7 +2167,6 @@ available at http://www.cpan.org/src/index.html
         HP-UX
         IRIX
         Linux
-        LynxOS
         Mac OS Classic
         Mac OS X        (Darwin)
         MPE/iX
@@ -2119,7 +2185,6 @@ available at http://www.cpan.org/src/index.html
         Solaris
         SunOS 4
         SUPER-UX        (NEC)
-        SVR4
         Tru64 UNIX      (formerly DEC OSF/1, Digital UNIX)
         UNICOS
         UNICOS/mk
@@ -2135,18 +2200,21 @@ available at http://www.cpan.org/src/index.html
 
 The following platforms worked with the previous releases (5.6 and
 5.7), but we did not manage either to fix or to test these in time
-for the 5.8.1 release.  There is a very good chance that many of these
-will work fine with the 5.8.1.
+for the 5.8.0 release.  There is a very good chance that many of these
+will work fine with the 5.8.0.
 
+        BSD/OS
         DomainOS
         Hurd
+        LynxOS
         MachTen
         PowerMAX
         SCO SV
+        SVR4
         Unixware
         Windows 3.1
 
-Known to be broken for 5.8.0 and 5.8.1 (but 5.6.1 and 5.7.2 can be used):
+Known to be broken for 5.8.0 (but 5.6.1 and 5.7.2 can be used):
 
 	AmigaOS
 
@@ -2234,7 +2302,7 @@ Andy Dougherty <doughera@lafayette.edu>,
 Dominic Dunlop <domo@computer.org>,
 Neale Ferguson <neale@vma.tabnsw.com.au>,
 David J. Fiander <davidf@mks.com>,
-Paul Green <Paul_Green@stratus.com>,
+Paul Green <Paul.Green@stratus.com>,
 M.J.T. Guy <mjtg@cam.ac.uk>,
 Jarkko Hietaniemi <jhi@iki.fi>,
 Luther Huffman <lutherh@stratcom.com>,
@@ -2257,4 +2325,4 @@ Paul J. Schinder <schinder@pobox.com>,
 Michael G Schwern <schwern@pobox.com>,
 Dan Sugalski <dan@sidhe.org>,
 Nathan Torkington <gnat@frii.com>.
-
+John Malmberg <wb8tyw@qsl.net>

@@ -11,9 +11,11 @@ use Test::More;
 
 plan tests => 4;
 eval { plan tests => 4 };
-like( $@, '/^You tried to plan twice!/',    'disallow double plan' );
+is( $@, sprintf("You tried to plan twice at %s line %d.\n", $0, __LINE__ - 1),
+    'disallow double plan' );
 eval { plan 'no_plan'  };
-like( $@, '/^You tried to plan twice!/',    'disallow chaning plan' );
+is( $@, sprintf("You tried to plan twice at %s line %d.\n", $0, __LINE__ -1),
+    'disallow changing plan' );
 
 pass('Just testing plan()');
 pass('Testing it some more');

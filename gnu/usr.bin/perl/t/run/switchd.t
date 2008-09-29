@@ -5,9 +5,11 @@ BEGIN {
     @INC = qw(../lib lib);
 }
 
-require "./test.pl";
+BEGIN { require "./test.pl"; }
 
-plan(tests => 1);
+# This test depends on t/lib/Devel/switchd.pm.
+
+plan(tests => 2);
 
 my $r;
 my @tmpfiles = ();
@@ -32,9 +34,16 @@ __SWDTEST__
     push @tmpfiles, $filename;
     $| = 1; # Unbufferize.
     $r = runperl(
-		 switches => [ '-Ilib', '-d:switchd' ],
+		 switches => [ '-Ilib', '-f', '-d:switchd' ],
 		 progfile => $filename,
+		 args => ['3'],
 		);
-    like($r, qr/^main,swdtest.tmp,9;Foo,swdtest.tmp,5;Foo,swdtest.tmp,6;Foo,swdtest.tmp,6;Bar,swdtest.tmp,2;Bar,swdtest.tmp,2;Bar,swdtest.tmp,2;$/i);
+    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd>;DB<main,swdtest.tmp,9>;sub<Foo::foo>;DB<Foo,swdtest.tmp,5>;DB<Foo,swdtest.tmp,6>;DB<Foo,swdtest.tmp,6>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;$/);
+    $r = runperl(
+		 switches => [ '-Ilib', '-f', '-d:switchd=a,42' ],
+		 progfile => $filename,
+		 args => ['4'],
+		);
+    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd a 42>;DB<main,swdtest.tmp,9>;sub<Foo::foo>;DB<Foo,swdtest.tmp,5>;DB<Foo,swdtest.tmp,6>;DB<Foo,swdtest.tmp,6>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;$/);
 }
 

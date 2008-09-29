@@ -1,5 +1,5 @@
 package PerlIO::scalar;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 use XSLoader ();
 XSLoader::load 'PerlIO::scalar';
 1;
@@ -30,7 +30,7 @@ or
 A filehandle is opened but the file operations are performed "in-memory"
 on a scalar variable.  All the normal file operations can be performed
 on the handle. The scalar is considered a stream of bytes.  Currently
-fileno($fh) returns C<undef>.
+fileno($fh) returns -1.
 
 =head1 IMPLEMENTATION NOTE
 

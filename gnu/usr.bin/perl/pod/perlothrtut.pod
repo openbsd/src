@@ -6,8 +6,8 @@ perlothrtut - old tutorial on threads in Perl
 
 B<WARNING>:
 This tutorial describes the old-style thread model that was introduced in
-release 5.005. This model is now deprecated, and will be removed, probably
-in version 5.10. The interfaces described here were considered
+release 5.005. This model is deprecated, and has been removed
+for version 5.10. The interfaces described here were considered
 experimental, and are likely to be buggy.
 
 For information about the new interpreter threads ("ithreads") model, see
@@ -260,7 +260,7 @@ The simplest, straightforward way to create a thread is with new():
 
     use Thread; 
 
-    $thr = new Thread \&sub1;
+    $thr = Thread->new( \&sub1 );
 
     sub sub1 { 
         print "In the thread\n"; 
@@ -276,9 +276,9 @@ part of the C<Thread::new> call, like this:
 
     use Thread; 
     $Param3 = "foo"; 
-    $thr = new Thread \&sub1, "Param 1", "Param 2", $Param3; 
-    $thr = new Thread \&sub1, @ParamList; 
-    $thr = new Thread \&sub1, qw(Param1 Param2 $Param3);
+    $thr = Thread->new( \&sub1, "Param 1", "Param 2", $Param3 );
+    $thr = Thread->new( \&sub1, @ParamList );
+    $thr = Thread->new( \&sub1, qw(Param1 Param2 $Param3) );
 
     sub sub1 { 
         my @InboundParameters = @_; 
@@ -358,7 +358,7 @@ for a thread to exit and extract any scalars it might return, you can
 use the join() method.
 
     use Thread; 
-    $thr = new Thread \&sub1;
+    $thr = Thread->new( \&sub1 );
 
     @ReturnData = $thr->join; 
     print "Thread returned @ReturnData"; 
@@ -409,7 +409,7 @@ it'll run until it's finished, then Perl will clean up after it
 automatically.
 
     use Thread; 
-    $thr = new Thread \&sub1; # Spawn the thread
+    $thr = Thread->new( \&sub1 ); # Spawn the thread
 
     $thr->detach; # Now we officially don't care any more
 
@@ -595,7 +595,7 @@ this:
     use Thread qw(async); 
     use Thread::Queue;
 
-    my $DataQueue = new Thread::Queue; 
+    my $DataQueue = Thread::Queue->new();
     $thr = async { 
         while ($DataElement = $DataQueue->dequeue) { 
             print "Popped $DataElement off the queue\n";
@@ -604,7 +604,6 @@ this:
 
     $DataQueue->enqueue(12); 
     $DataQueue->enqueue("A", "B", "C"); 
-    $DataQueue->enqueue(\$thr); 
     sleep 10; 
     $DataQueue->enqueue(undef);
 
@@ -644,12 +643,12 @@ gives a quick demonstration:
 
     use Thread qw(yield); 
     use Thread::Semaphore; 
-    my $semaphore = new Thread::Semaphore; 
+    my $semaphore = Thread::Semaphore->new();
     $GlobalVariable = 0;
 
-    $thr1 = new Thread \&sample_sub, 1; 
-    $thr2 = new Thread \&sample_sub, 2; 
-    $thr3 = new Thread \&sample_sub, 3;
+    $thr1 = Thread->new( \&sample_sub, 1 );
+    $thr2 = Thread->new( \&sample_sub, 2 );
+    $thr3 = Thread->new( \&sample_sub, 3 );
 
     sub sample_sub { 
         my $SubNumber = shift @_; 
@@ -777,7 +776,7 @@ method attribute indicates whether the subroutine is really a method.
 
     sub tester { 
         my $thrnum = shift @_; 
-        my $bar = new Foo; 
+        my $bar = Foo->new();
         foreach (1..10) { 	
             print "$thrnum calling per_object\n"; 
             $bar->per_object($thrnum); 	
@@ -914,8 +913,8 @@ things we've covered.  This program finds prime numbers using threads.
     6  use Thread;
     7  use Thread::Queue;
     8
-    9  my $stream = new Thread::Queue;
-    10 my $kid    = new Thread(\&check_num, $stream, 2);
+    9  my $stream = Thread::Queue->new();
+    10 my $kid    = Thread->new(\&check_num, $stream, 2);
     11
     12 for my $i ( 3 .. 1000 ) {
     13     $stream->enqueue($i);
@@ -927,14 +926,14 @@ things we've covered.  This program finds prime numbers using threads.
     19 sub check_num {
     20     my ($upstream, $cur_prime) = @_;
     21     my $kid;
-    22     my $downstream = new Thread::Queue;
+    22     my $downstream = Thread::Queue->new();
     23     while (my $num = $upstream->dequeue) {
     24         next unless $num % $cur_prime;
     25         if ($kid) {
     26            $downstream->enqueue($num);
     27          	} else {
     28            print "Found prime $num\n";
-    29	              $kid = new Thread(\&check_num, $downstream, $num);
+    29	              $kid = Thread->new(\&check_num, $downstream, $num);
     30         }
     31     } 
     32     $downstream->enqueue(undef) if $kid;

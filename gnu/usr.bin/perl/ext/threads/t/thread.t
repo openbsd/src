@@ -1,38 +1,57 @@
+use strict;
+use warnings;
 
 BEGIN {
-    chdir 't' if -d 't';
-    push @INC, '../lib','.';
-    require Config; import Config;
-    unless ($Config{'useithreads'}) {
-        print "1..0 # Skip: no useithreads\n";
-        exit 0;
+    if ($ENV{'PERL_CORE'}){
+        chdir 't';
+        unshift @INC, '../lib';
     }
-    require "test.pl";
+    use Config;
+    if (! $Config{'useithreads'}) {
+        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        exit(0);
+    }
+
+    require($ENV{PERL_CORE} ? "./test.pl" : "./t/test.pl");
 }
 
 use ExtUtils::testlib;
-use strict;
-BEGIN { $| = 1; print "1..31\n" };
-use threads;
-use threads::shared;
 
-print "ok 1\n";
+use threads;
+
+BEGIN {
+    eval {
+        require threads::shared;
+        threads::shared->import();
+    };
+    if ($@ || ! $threads::shared::threads_shared) {
+        print("1..0 # Skip: threads::shared not available\n");
+        exit(0);
+    }
+
+    $| = 1;
+    print("1..34\n");   ### Number of tests that will be run ###
+};
+
+print("ok 1 - Loaded\n");
+
+### Start of Testing ###
 
 sub content {
     print shift;
     return shift;
 }
 {
-    my $t = threads->new(\&content, "ok 2\n", "ok 3\n", 1..1000);
+    my $t = threads->create(\&content, "ok 2\n", "ok 3\n", 1..1000);
     print $t->join();
 }
 {
     my $lock : shared;
     my $t;
     {
-	lock($lock);
-	$t = threads->new(sub { lock($lock); print "ok 5\n"});
-	print "ok 4\n";
+        lock($lock);
+        $t = threads->create(sub { lock($lock); print "ok 5\n"});
+        print "ok 4\n";
     }
     $t->join();
 }
@@ -42,18 +61,18 @@ sub dorecurse {
     my $ret;
     print $val;
     if(@_) {
-	$ret = threads->new(\&dorecurse, @_);
-	$ret->join;
+        $ret = threads->create(\&dorecurse, @_);
+        $ret->join;
     }
 }
 {
-    my $t = threads->new(\&dorecurse, map { "ok $_\n" } 6..10);
+    my $t = threads->create(\&dorecurse, map { "ok $_\n" } 6..10);
     $t->join();
 }
 
 {
     # test that sleep lets other thread run
-    my $t = threads->new(\&dorecurse, "ok 11\n");
+    my $t = threads->create(\&dorecurse, "ok 11\n");
     threads->yield; # help out non-preemptive thread implementations
     sleep 1;
     print "ok 12\n";
@@ -62,16 +81,16 @@ sub dorecurse {
 {
     my $lock : shared;
     sub islocked {
-	lock($lock);
-	my $val = shift;
-	my $ret;
-	print $val;
-	if (@_) {
-	    $ret = threads->new(\&islocked, shift);
-	}
-	return $ret;
+        lock($lock);
+        my $val = shift;
+        my $ret;
+        print $val;
+        if (@_) {
+            $ret = threads->create(\&islocked, shift);
+        }
+        return $ret;
     }
-my $t = threads->new(\&islocked, "ok 13\n", "ok 14\n");
+my $t = threads->create(\&islocked, "ok 13\n", "ok 14\n");
 $t->join->join;
 }
 
@@ -98,8 +117,8 @@ sub threaded {
 { 
     curr_test(15);
 
-    my $thr1 = threads->new(\&testsprintf, 15);
-    my $thr2 = threads->new(\&testsprintf, 16);
+    my $thr1 = threads->create(\&testsprintf, 15);
+    my $thr2 = threads->create(\&testsprintf, 16);
     
     my $short = "This is a long string that goes on and on.";
     my $shorte = " a long string that goes on and on.";
@@ -141,27 +160,52 @@ package main;
     ok($th->join());
 }
 {
-    # there is a little chance this test case will falsly fail
-    # since it tests rand	
+    # There is a miniscule chance this test case may falsely fail
+    # since it tests using rand()
     my %rand : shared;
     rand(10);
-    threads->new( sub { $rand{int(rand(10000000000))}++ } ) foreach 1..25;
+    threads->create( sub { $rand{int(rand(10000000000))}++ } ) foreach 1..25;
     $_->join foreach threads->list;
-#    use Data::Dumper qw(Dumper);
-#    print Dumper(\%rand);
-    #$val = rand();
-    ok((keys %rand == 25), "Check that rand works after a new thread");
+    ok((keys %rand >= 23), "Check that rand() is randomized in new threads");
 }
 
 # bugid #24165
 
-run_perl(prog =>
-    'use threads; sub a{threads->new(shift)} $t = a sub{}; $t->tid; $t->join; $t->tid');
+run_perl(prog => 'use threads 1.67;' .
+                 'sub a{threads->create(shift)} $t = a sub{};' .
+                 '$t->tid; $t->join; $t->tid',
+         nolib => ($ENV{PERL_CORE}) ? 0 : 1,
+         switches => ($ENV{PERL_CORE}) ? [] : [ '-Mblib' ]);
 is($?, 0, 'coredump in global destruction');
 
-# test CLONE_SKIP() functionality
+# Attempt to free unreferenced scalar...
+fresh_perl_is(<<'EOI', 'ok', { }, 'thread sub via scalar');
+    use threads;
+    my $test = sub {};
+    threads->create($test)->join();
+    print 'ok';
+EOI
 
-{
+# Attempt to free unreferenced scalar...
+fresh_perl_is(<<'EOI', 'ok', { }, 'thread sub via $_[0]');
+    use threads;
+    sub thr { threads->new($_[0]); }
+    thr(sub { })->join;
+    print 'ok';
+EOI
+
+# [perl #45053]  Memory corruption from eval return in void context
+fresh_perl_is(<<'EOI', 'ok', { }, 'void eval return');
+    use threads;
+    threads->create(sub { eval '1' });
+    $_->join() for threads->list;
+    print 'ok';
+EOI
+
+# test CLONE_SKIP() functionality
+SKIP: {
+    skip('CLONE_SKIP not implemented in Perl < 5.8.7', 5) if ($] < 5.008007);
+
     my %c : shared;
     my %d : shared;
 
@@ -218,55 +262,56 @@ is($?, 0, 'coredump in global destruction');
     package main;
 
     {
-	my @objs;
-	for my $class (qw(A A1 A2 B B1 B2 C C1 C2 D D1)) {
-	    push @objs, bless [], $class;
-	}
+        my @objs;
+        for my $class (qw(A A1 A2 B B1 B2 C C1 C2 D D1)) {
+            push @objs, bless [], $class;
+        }
 
-	sub f {
-	    my $depth = shift;
-	    my $cloned = ""; # XXX due to recursion, doesn't get initialized
-	    $cloned .= "$_" =~ /ARRAY/ ? '1' : '0' for @objs;
-	    is($cloned, ($depth ? '00010001111' : '11111111111'),
-		"objs clone skip at depth $depth");
-	    threads->new( \&f, $depth+1)->join if $depth < 2;
-	    @objs = ();
-	}
-	f(0);
+        sub f {
+            my $depth = shift;
+            my $cloned = ""; # XXX due to recursion, doesn't get initialized
+            $cloned .= "$_" =~ /ARRAY/ ? '1' : '0' for @objs;
+            is($cloned, ($depth ? '00010001111' : '11111111111'),
+                "objs clone skip at depth $depth");
+            threads->create( \&f, $depth+1)->join if $depth < 2;
+            @objs = ();
+        }
+        f(0);
     }
 
     curr_test(curr_test()+2);
     ok(eq_hash(\%c,
-	{
-	    qw(
-		A-A	2
-		A1-A1	2
-		A1-A2	2
-		B-B	2
-		B1-B1	2
-		B1-B2	2
-		C-C	2
-		C1-C1	2
-		C1-C2	2
-	    )
-	}),
-	"counts of calls to CLONE_SKIP");
+        {
+            qw(
+                A-A     2
+                A1-A1   2
+                A1-A2   2
+                B-B     2
+                B1-B1   2
+                B1-B2   2
+                C-C     2
+                C1-C1   2
+                C1-C2   2
+            )
+        }),
+        "counts of calls to CLONE_SKIP");
     ok(eq_hash(\%d,
-	{
-	    qw(
-		A-A	1
-		A1-A1	1
-		A1-A2	1
-		B-B	3
-		B1-B1	1
-		B1-B2	1
-		C-C	1
-		C1-C1	3
-		C1-C2	3
-		D-D	3
-		D-D1	3
-	    )
-	}),
-	"counts of calls to DESTROY");
+        {
+            qw(
+                A-A     1
+                A1-A1   1
+                A1-A2   1
+                B-B     3
+                B1-B1   1
+                B1-B2   1
+                C-C     1
+                C1-C1   3
+                C1-C2   3
+                D-D     3
+                D-D1    3
+            )
+        }),
+        "counts of calls to DESTROY");
 }
 
+# EOF

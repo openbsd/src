@@ -115,7 +115,7 @@ if ($x) {
 }
 EXPECT
 Name "main::y" used only once: possible typo at - line 5.
-Use of uninitialized value in print at - line 5.
+Use of uninitialized value $y in print at - line 5.
 ########
 # util.c
 use warnings;
@@ -126,7 +126,7 @@ if ($x) {
 }
 EXPECT
 Name "main::y" used only once: possible typo at - line 6.
-Use of uninitialized value in print at - line 6.
+Use of uninitialized value $y in print at - line 6.
 ########
 # util.c
 use warnings;
@@ -140,7 +140,7 @@ if ($x) {
 }
 EXPECT
 Name "main::y" used only once: possible typo at - line 7.
-Use of uninitialized value in print at - line 7.
+Use of uninitialized value $y in print at - line 7.
 ########
 # util.c
 use warnings;
@@ -155,4 +155,4 @@ if ($x) {
 }
 EXPECT
 Name "main::y" used only once: possible typo at - line 8.
-Use of uninitialized value in print at - line 8.
+Use of uninitialized value $y in print at - line 8.

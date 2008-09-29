@@ -9,6 +9,10 @@
  * eay@psych.psy.uq.oz.au
  */
 
+#if defined(__BORLANDC__)
+#pragma warn -8004	/* "'foo' is assigned a value that is never used" */
+#endif
+
 typedef unsigned char des_cblock[8];
 
 typedef struct des_ks_struct

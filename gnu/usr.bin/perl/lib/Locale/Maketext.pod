@@ -118,7 +118,7 @@ This tries loading classes based on the language-tags you give (like
 C<("en-US", "sk", "kon", "es-MX", "ja", "i-klingon")>, and for the first class
 that succeeds, returns YourProjClass::I<language>->new().
 
-It runs thru the entire given list of language-tags, and finds no classes
+If it runs thru the entire given list of language-tags, and finds no classes
 for those exact terms, it then tries "superordinate" language classes.
 So if no "en-US" class (i.e., YourProjClass::en_us)
 was found, nor classes for anything else in that list, we then try
@@ -162,9 +162,9 @@ file, you might consider something like this in your project class:
 
   sub get_handle_via_config {
     my $class = $_[0];
-    my $preferred_language = $Config_settings{'language'};
+    my $chosen_language = $Config_settings{'language'};
     my $lh;
-    if($preferred_language) {
+    if($chosen_language) {
       $lh = $class->get_handle($chosen_language)
        || die "No language handle for \"$chosen_language\" or the like";
     } else {
@@ -231,7 +231,7 @@ handle.
 
 This is the most important method in Locale::Maketext:
 
-$text = $lh->maketext(I<key>, ...parameters for this phrase...);
+    $text = $lh->maketext(I<key>, ...parameters for this phrase...);
 
 This looks in the %Lexicon of the language handle
 $lh and all its superclasses, looking
@@ -241,9 +241,12 @@ value found:
 
 If the value is a scalarref, the scalar is dereferenced and returned
 (and any parameters are ignored).
+
 If the value is a coderef, we return &$value($lh, ...parameters...).
+
 If the value is a string that I<doesn't> look like it's in Bracket Notation,
 we return it (after replacing it with a scalarref, in its %Lexicon).
+
 If the value I<does> look like it's in Bracket Notation, then we compile
 it into a sub, replace the string in the %Lexicon with the new coderef,
 and then we return &$new_sub($lh, ...parameters...).
@@ -448,7 +451,7 @@ You must have a project base class, which you load, and
 which you then use as the first argument in
 the call to YourProjClass->get_handle(...).  It should derive
 (whether directly or indirectly) from Locale::Maketext.
-It B<doesn't matter> how you name this class, altho assuming this
+It B<doesn't matter> how you name this class, although assuming this
 is the localization component of your Super Mega Program,
 good names for your project class might be
 SuperMegaProgram::Localization, SuperMegaProgram::L10N,
@@ -460,7 +463,7 @@ or even SuperMegaProgram::Languages or SuperMegaProgram::Messages.
 Language classes are what YourProjClass->get_handle will try to load.
 It will look for them by taking each language-tag (B<skipping> it
 if it doesn't look like a language-tag or locale-tag!), turning it to
-all lowercase, turning and dashes to underscores, and appending it
+all lowercase, turning dashes to underscores, and appending it
 to YourProjClass . "::".  So this:
 
   $lh = YourProjClass->get_handle(
@@ -483,7 +486,7 @@ do not hold.
 
 =item *
 
-Language classes may derive from other language classes (altho they
+Language classes may derive from other language classes (although they
 should have "use I<Thatclassname>" or "use base qw(I<...classes...>)").
 They may derive from the project
 class.  They may derive from some other class altogether.  Or via
@@ -566,8 +569,8 @@ section.
 I almost always use keys that are themselves
 valid lexicon values.  One notable exception is when the value is
 quite long.  For example, to get the screenful of data that
-a command-line program might returns when given an unknown switch,
-I often just use a key "_USAGE_MESSAGE".  At that point I then go
+a command-line program might return when given an unknown switch,
+I often just use a brief, self-explanatory key such as "_USAGE_MESSAGE".  At that point I then go
 and immediately to define that lexicon entry in the
 ProjectClass::L10N::en lexicon (since English is always my "project
 language"):
@@ -585,7 +588,7 @@ note that each class's C<%Lexicon> inherits-and-extends
 the lexicons in its superclasses.  This is not because these are
 special hashes I<per se>, but because you access them via the
 C<maketext> method, which looks for entries across all the
-C<%Lexicon>'s in a language class I<and> all its ancestor classes.
+C<%Lexicon> hashes in a language class I<and> all its ancestor classes.
 (This is because the idea of "class data" isn't directly implemented
 in Perl, but is instead left to individual class-systems to implement
 as they see fit..)
@@ -593,7 +596,7 @@ as they see fit..)
 Note that you may have things stored in a lexicon
 besides just phrases for output:  for example, if your program
 takes input from the keyboard, asking a "(Y/N)" question,
-you probably need to know what equivalent of "Y[es]/N[o]" is
+you probably need to know what the equivalent of "Y[es]/N[o]" is
 in whatever language.  You probably also need to know what
 the equivalents of the answers "y" and "n" are.  You can
 store that information in the lexicon (say, under the keys
@@ -604,7 +607,7 @@ these are not phrases for output).
 
 Or instead of storing this in the language class's lexicon,
 you can (and, in some cases, really should) represent the same bit
-of knowledge as code is a method in the language class.  (That
+of knowledge as code in a method in the language class.  (That
 leaves a tidy distinction between the lexicon as the things we
 know how to I<say>, and the rest of the things in the lexicon class
 as things that we know how to I<do>.)  Consider
@@ -657,15 +660,15 @@ happens to associate "q" with "quit"!)
 =head1 BRACKET NOTATION
 
 Bracket Notation is a crucial feature of Locale::Maketext.  I mean
-Bracket Notation to provide a replacement for sprintf formatting.
+Bracket Notation to provide a replacement for the use of sprintf formatting.
 Everything you do with Bracket Notation could be done with a sub block,
 but bracket notation is meant to be much more concise.
 
 Bracket Notation is a like a miniature "template" system (in the sense
 of L<Text::Template|Text::Template>, not in the sense of C++ templates),
-where normal text is passed thru basically as is, but text is special
-regions is specially interpreted.  In Bracket Notation, you use brackets
-("[...]" -- not "{...}"!) to note sections that are specially interpreted.
+where normal text is passed thru basically as is, but text in special
+regions is specially interpreted.  In Bracket Notation, you use square brackets ("[...]"),
+not curly braces ("{...}") to note sections that are specially interpreted.
 
 For example, here all the areas that are taken literally are underlined with
 a "^", and all the in-bracket special regions are underlined with an X:
@@ -706,7 +709,7 @@ and each item is interpreted as follows:
 =item *
 
 An item that is "_I<digits>" or "_-I<digits>" is interpreted as
-$_[I<value>].  I.e., "_1" is becomes with $_[1], and "_-3" is interpreted
+$_[I<value>].  I.e., "_1" becomes with $_[1], and "_-3" is interpreted
 as $_[-3] (in which case @_ should have at least three elements in it).
 Note that $_[0] is the language handle, and is typically not named
 directly.
@@ -746,7 +749,7 @@ item in a bracket group is "#", it's taken to be shorthand for
 
 =item *
 
-If the first item in a bracket group is empty-string, or "_*"
+If the first item in a bracket group is the empty-string, or "_*"
 or "_I<digits>" or "_-I<digits>", then that group is interpreted
 as just the interpolation of all its items:
 
@@ -761,7 +764,7 @@ C<join "", "ID-(", $_[4], "-", $_[2], ")">.
 =item *
 
 Otherwise this bracket group is invalid.  For example, in the group
-"[!@#,whatever]", the first item C<"!@#"> is neither empty-string,
+"[!@#,whatever]", the first item C<"!@#"> is neither the empty-string,
 "_I<number>", "_-I<number>", "_*", nor a valid method name; and so
 Locale::Maketext will throw an exception of you try compiling an
 expression containing this bracket group.
@@ -790,7 +793,7 @@ But it actually compiles as this:
     my $lh = $_[0];
     return join '',
       "Hoohah ",
-      $lh->foo(" _1 ", " bar ", "baz"),  #!!!
+      $lh->foo(" _1 ", " bar ", "baz"),  # note the <space> in " bar "
       "!",
   }
 
@@ -868,7 +871,7 @@ like the L<AutoLoader|AutoLoader> module.)
 
 I can picture all sorts of circumstances where you just
 do not want lookup to be able to fail (since failing
-normally means that maketext throws a C<die>, altho
+normally means that maketext throws a C<die>, although
 see the next section for greater control over that).  But
 here's one circumstance where _AUTO lexicons are meant to
 be I<especially> useful:
@@ -879,7 +882,7 @@ you need to emit.  Normally you'd go to write this:
   if(-e $filename) {
     go_process_file($filename)
   } else {
-    print "Couldn't find file \"$filename\"!\n";
+    print qq{Couldn't find file "$filename"!\n};
   }
 
 but since you anticipate localizing this, you write:
@@ -894,7 +897,7 @@ but since you anticipate localizing this, you write:
     go_process_file($filename)
   } else {
     print $lh->maketext(
-      "Couldn't find file \"[_1]\"!\n", $filename
+      qq{Couldn't find file "[_1]"!\n}, $filename
     );
   }
 
@@ -942,7 +945,7 @@ in the superclass %Lexicon hash, I<and> if we can't auto-make
 I<key> (because either it starts with a "_", or because none
 of its lexicons have C<_AUTO =E<gt> 1,>), then we have
 failed to find a normal way to maketext I<key>.  What then
-happens in these failure conditions, depends on the $lh object
+happens in these failure conditions, depends on the $lh object's
 "fail" attribute.
 
 If the language handle has no "fail" attribute, maketext
@@ -953,7 +956,7 @@ the calling $lh->maketext(I<key>,...) was.
 If the language handle has a "fail" attribute whose value is a
 coderef, then $lh->maketext(I<key>,...params...) gives up and calls:
 
-  return &{$that_subref}($lh, $key, @params);
+  return $that_subref->($lh, $key, @params);
 
 Otherwise, the "fail" attribute's value should be a string denoting
 a method name, so that $lh->maketext(I<key>,...params...) can
@@ -972,7 +975,7 @@ The "fail" attribute can be accessed with the C<fail_with> method:
   # Set to nothing (i.e., so failure throws a plain exception)
   $lh->fail_with( undef );
   
-  # Simply read:
+  # Get the current value
   $handler = $lh->fail_with();
 
 Now, as to what you may want to do with these handlers:  Maybe you'd
@@ -984,7 +987,7 @@ Or maybe you don't want to C<die> at all!  Maybe you could use a
 handler like this:
 
   # Make all lookups fall back onto an English value,
-  #  but after we log it for later fingerpointing.
+  #  but only after we log it for later fingerpointing.
   my $lh_backup = ThisProject->get_handle('en');
   open(LEX_FAIL_LOG, ">>wherever/lex.log") || die "GNAARGH $!";
   sub lex_fail {
@@ -1007,7 +1010,7 @@ an exception of the same level of severity as a config file being
 unreadable, or some essential resource being inaccessible.
 
 One possibly useful value for the "fail" attribute is the method name
-"failure_handler_auto".  This is a method defined in class
+"failure_handler_auto".  This is a method defined in the class
 Locale::Maketext itself.  You set it with:
 
   $lh->fail_with('failure_handler_auto');
@@ -1018,7 +1021,10 @@ there's no I<key> in any of those lexicons, maketext gives up with
   return $lh->failure_handler_auto($key, @params);
 
 But failure_handler_auto, instead of dying or anything, compiles
-$key, caching it in $lh->{'failure_lex'}{$key} = $complied,
+$key, caching it in
+
+    $lh->{'failure_lex'}{$key} = $complied
+
 and then calls the compiled value, and returns that.  (I.e., if
 $key looks like bracket notation, $compiled is a sub, and we return
 &{$compiled}(@params); but if $key is just a plain string, we just
@@ -1075,7 +1081,7 @@ the name of the class that you'll use in the idiom:
   use Projname::L10N;
   my $lh = Projname::L10N->get_handle(...) || die "Language?";
 
-Assuming your call your class Projname::L10N, create a class
+Assuming you call your class Projname::L10N, create a class
 consisting minimally of:
 
   package Projname::L10N;
@@ -1152,9 +1158,9 @@ following phrase.
 
 =item *
 
-You may at this point want to consider whether the your base class 
-(Projname::L10N) that all lexicons inherit from (Projname::L10N::en,
-Projname::L10N::es, etc.) should be an _AUTO lexicon.  It may be true
+You may at this point want to consider whether your base class 
+(Projname::L10N), from which all lexicons inherit from (Projname::L10N::en,
+Projname::L10N::es, etc.), should be an _AUTO lexicon.  It may be true
 that in theory, all needed messages will be in each language class;
 but in the presumably unlikely or "impossible" case of lookup failure,
 you should consider whether your program should throw an exception,
@@ -1167,7 +1173,7 @@ or some more complex solution as described in the section
 Submit all messages/phrases/etc. to translators.
 
 (You may, in fact, want to start with localizing to I<one> other language
-at first, if you're not sure that you've property abstracted the
+at first, if you're not sure that you've properly abstracted the
 language-dependent parts of your code.)
 
 Translators may request clarification of the situation in which a
@@ -1271,7 +1277,7 @@ I recommend reading all of these:
 L<Locale::Maketext::TPJ13|Locale::Maketext::TPJ13> -- my I<The Perl
 Journal> article about Maketext.  It explains many important concepts
 underlying Locale::Maketext's design, and some insight into why
-Maketext is better than the plain old approach of just having 
+Maketext is better than the plain old approach of having 
 message catalogs that are just databases of sprintf formats.
 
 L<File::Findgrep|File::Findgrep> is a sample application/module

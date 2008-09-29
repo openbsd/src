@@ -164,7 +164,7 @@ print $a eq "123.456" ? "ok 44\n" : "not ok 44 # $a\n";
 
 $a = 1e34; "$a";
 unless ($^O eq 'posix-bc')
-{ print $a eq "1e+34" || $a eq "1e+034" ? "ok 45\n" : "not ok 45 $a\n"; }
+{ print $a eq "1e+34" || $a eq "1e+034" ? "ok 45\n" : "not ok 45 # $a\n"; }
 else
 { print "ok 45 # skipped on $^O\n"; }
 

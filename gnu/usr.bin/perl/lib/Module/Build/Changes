@@ -1,0 +1,1808 @@
+Revision history for Perl extension Module::Build.
+
+ - All .pm files in the Module-Build distribution (except for
+   M::B::Version.pm, which is kind of tied to version.pm) now have the
+   same $VERSION number explicitly specified.
+
+ - When checking prerequisites, the required version of perl is now
+   checked before we start finding the $VERSION declaration of the
+   distribution, which results in much more intuitive error messages
+   e.g. if the author is using 5.6-isms in their declaration but the
+   user doesn't have 5.6. [Slaven Rezic]
+
+ - Added 'artistic_2' license, corrected 'lgpl' license url (bug #29783)
+   [David Thomas]
+
+ - VMS find_perl_interpreter() is just $^X (bug #29810) [Craig A. Berry]
+
+ - Some large VMS fixes, mostly having to do with the non-case-
+   preserving nature of most VMS filesystems, but also correcting for
+   illegal characters in VMS file specs. [John E. Malmberg and Craig
+   A. Berry]
+
+ - Fixed the _detildefy() method on VMS. [John E. Malmberg and Craig
+   A. Berry]
+
+ - We now use a much more reliable method when Data::Dumper-ing saved
+   state data. [Yves]
+
+ - When a module had 0.000 as its version, a few places in the code
+   thought the module had no version at all.  This is now
+   fixed. [Andrew "Zefram" Main]
+
+ - When finding the default set of script_files, we now compute them
+   as relative paths, not absolute. [Spotted by Curtis "Ovid" Poe]
+
+ - Got rid of a call to eliminate_macros, which isn't needed in
+   Module::Build since there is no external make utility involved.
+   Override expand_test_dir to make up for the fact that the
+   home-grown glob() returns absolute, not relative, paths. [Craig
+   A. Berry]
+
+ - Fixed a catdir() that needed to be catfile() in the .packlist
+   creation code. [John E. Malmberg]
+
+ - If a *.PL file ended abnormally during the build, processing should
+   have stopped, but it didn't.  Fixed. [Matthew Cast and David
+   Golden]
+
+ - Module::Build::Compat adds "require 5.XXXXX" to Makefile.PL when 
+   'perl' is specified as a 'requires' prerequisite [David Golden]
+
+ - Refactored t/compat.t for modularity and transparency; added 
+   labels for all tests; supressed subprocess output to 
+   STDOUT and STDERR [David Golden]
+
+ - Fixed bug in perl_version_to_float when version is already a float
+   [David Golden]
+
+ - Removed a mention of $build->{config} from the documentation, the
+   official interface to Config.pm settings is now via the
+   $build->config() and has been for some time. [Suggested by Michael
+   Schwern]
+
+ - Tweaked some text in the Cookbook to bring it into the modern age,
+   and added a recipe for accessing Config.pm settings. [Ibid]
+
+ - Lots of POD link/readability improvements to the Module::Build::API
+   documentation [Salve J. Nilsen]
+
+ - Added configure_requires as a new type of prereq.  [Suggested by Adam
+   Kennedy]
+
+ - Patch 31156 from bleadperl: some filename dot and extension help
+   for Module::Build on VMS. [Craig Berry]
+
+ - Reworked the _detildefy() method so it doesn't depend on glob()
+   anymore.  This gets rid of a problem with spaces or other special
+   shell characters in things like 'prefix' or 'install_path'
+   entries. [Prodding by Eric Wilhelm]
+
+ - Added midnightbsd to the list of Unix-like OSes we know about
+   [Rafael Garcia-Suarez]
+
+0.2808 - Sat Apr 28 12:59:43 2007
+
+ - Added is_vmsish(), is_windowsish(), and is_unixish() boolean
+   convenience functions.  Fixes some test failures on platforms where
+   $^O is set to a value we don't know about (like 'gnu').
+
+ - Upgraded to version.pm 0.7203. [John Peacock]
+
+ - Support get_action_docs() =head2 style. [ewilhelm]
+
+ - Workaround Test::Pod::Coverage @INC bug. [Eric Wilhelm]
+
+ - Fixed the command-line args --extra_compiler_flags and
+   --extra_linker_flags so they properly shell-split their arguments.
+
+0.2807 - Sat Mar 24 22:19:02 2007
+
+ - Upgraded to version.pm 0.71. [John Peacock]
+
+ - Removed a couple small constructs in the tests ("use warnings;" and
+   "qw$foo bar$[1]") that caused test failures under perl 5.005.
+
+ - Added support for an explicit default value of undef in prompt().
+   [Eric Wilhelm]
+
+ - Improved our prompt() method, which could sometimes hang before the
+   user got a chance to see a prompt. [Andreas Koenig]
+
+ - Added a note about --allow_mb_mismatch to the error message that
+   happens right before someone might want to use that parameter.
+
+ - Added DragonflyBSD to the list of known Unix OSes.
+
+ - get_action_docs() dies on error rather than twiddling $@
+
+ - Made ModuleInfo's _evaluate_version_line() compatible with 'use
+   version ...$VERSION' lines.  [Eric Wilhelm]
+
+ - Added some verbiage in Module::Build::API that officially blesses
+   the _build/prereqs file for external consumption. [Suggested by Andreas Koenig]
+
+ - Added test profiles support via the test_types property and "testall"
+   target. [Eric Wilhelm, Jeff Lavallee]
+
+ - Use syscopy() on OS/2 in copy_if_modified() so we make sure to
+   overwrite any existing target file. [Ilya Zakharevich]
+
+ - Removed seemingly silly '~~' test in t/tilde.t.
+
+ - In our test-time utility library t/lib/MBTest.pm, we need to know
+   about a few .exe-like extensions on OS/2. [Ilya Zakharevich]
+
+ - In t/ppm.t, use DynaLoader::mod2fname() (if available) to determine
+   the correct translation of our test module's name into a DLL
+   name. [Ilya Zakharevich]
+
+ - Avoid an unlink() error on OS/2 when fixing shebang lines. [Ilya
+   Zakharevich]
+
+ - When we're protecting the world from the evils of long RedHat
+   $ENV{PERL5LIB} variables, don't assume $ENV{PERL5LIB} is already
+   defined.  This gets rid of a huge number of warnings for some
+   people. [Dave Rolsky]
+
+0.2806 - Fri Dec 15 22:20:14 2006
+
+ - On some systems (haven't identified the actual problem yet)
+   $ENV{PERL5LIB} can grow to enormous enough sizes that we can't
+   launch any more subprocesses because the environment table is full.
+   This is the now-infamous "Couldn't run Build.PL: Argument list too
+   long" error.  Now we detect such situations and trim the directory
+   list to only include directories that actually exist, listed only
+   once each.  Not the ideal solution, but it should work.
+
+ - Silence a warning in M::B::ModuleInfo that happens when the author
+   is using the "$VERSION = eval $VERSION" idiom.
+
+ - When running the 'testcover' action, do "cover --delete" if any of
+   the test files have changed (we already did so if any of the code
+   under test has changed). [Suggested by Chris Dolan, RT #23584]
+
+ - Fixed a broken link in the documentation about PREFIX. [Spotted by
+   David Steinbrunner]
+
+ - Changes to do_system() & friends on VMS to get system calls working
+   much better there. [Craig Berry]
+
+ - Added the "pardist" target which creates a PAR binary distribution
+   akin to a PPM distribution. [Steffen Mueller]
+
+ - Added the Interix platform as a Unix variant. [Stephen Hartland]
+
+ - Improved the error message we emit when a distribution contains XS
+   files but the user has no C compiler. [Suggested by Andreas Koenig]
+
+0.2805_01  Thu Sep  7 21:57:29 CDT 2006
+
+ - Because of a weird behavior of YAML::Node, any distribution that
+   used version.pm objects to define their versions was generating the
+   wrong syntax for the versions in their META.yml file.  They will
+   now appear as strings like v3.42.1 or similar, including the
+   leading v.
+
+ - Upgraded to version 0.67 of version.pm. [John Peacock]
+
+ - Added a contrib/ directory with a bash completion function for M::B
+   actions and switches. [Julian Mehnle]
+
+ - When we eval() the embedded version.pm code we will now die() if
+   the eval() was unsuccessful, rather than continuing blindly on and
+   dying mysteriously later.
+
+ - Added a 'retest' action that lets users run the current regression
+   tests on a previously-installed version of a distribution.
+
+ * Instead of storing an entire dump of the Config.pm hash in the
+   _build/ directory upon startup, we now just store any overrides the
+   user or author has specified.  Note that if you were doing anything
+   you weren't supposed to be doing, like poking around in the
+   internals of $buld->{config}, your code might break, so I've put
+   the asterisk of incompatibility on this one just to cover my
+   tuchus.  [Idea originally by Randy Sims]
+
+ - Made copying files via copy_if_modified() a little less chatty.
+
+0.2805  Sat Jul 29 22:01:24 CDT 2006
+
+ - We now embed a copy of version.pm right in the
+   Module::Build::Version source code, with John Peacock's blessing,
+   in case the user has a rough time installing version.pm.  This
+   helps alleviate troubles people were still having with working out
+   a seemingly circular dependency (even though version.pm now ships
+   with a standard Makefile.PL too).  A version.pm >= 0.661 installed
+   on the system will take precedence over our bundled one. [John
+   Peacock]
+
+ - Fix some test warnings (or failures?) related to version.pm
+   numification. [John Peacock]
+
+ - The top-level 'version' entry in META.yml files we'd generated was
+   in the wrong format (it was being treated as a version.pm object
+   rather than a serialized copy) due to a weird YAML::Node issue.
+   Fixed.
+
+ - Don't 'use base qw(version)' anymore in our M::B::Version wrapper,
+   just set @ISA directly, because some people have reported that the
+   'use base' line is croaking.
+
+ - Added an 'allow_mb_mismatch' parameter to suppress the startup
+   check that ensures the version of M::B currently running is the
+   same as the one initially used to run the Build.PL.  Use with
+   caution.
+
+ - Module::Build::ModuleInfo will no longer detect things that look
+   like $VERSION assignments after an __END__ or __DATA__ token.
+
+ - Updated documentation to mention the new mailing list on perl.org
+   rather than the old one on sourceforge.
+
+0.2804  Sun Jul 16 16:41:25 CDT 2006
+
+ - Added 'use version;' in Module::Build::Version, because some
+   versions of base.pm won't automatically load version.pm when we do
+   'use base qw/version/;'. [Spotted by Erik Tank]
+
+0.2803  Sat Jul 15 08:26:34 CDT 2006
+
+ - The META.yml file in the last release was all screwed up, so the
+   distribution wasn't indexed properly.  Fixed in this release.
+
+0.2802  Fri Jul 14 22:40:34 CDT 2006
+
+ - Added reliance on version.pm, which means we should deal much
+   better with the wide range of version specifications one finds on
+   CPAN.  This is made possible by recent releases of version.pm that
+   give the user a pure-perl option, so installing version.pm
+   shouldn't be too onerous for most users.  [John Peacock]
+
+ - We should be accepting the default when we're in unattended mode,
+   not acting dumb and ignoring both the default and the [empty]
+   answer from the user.  Fixed.  [Spotted by Nik Clayton]
+
+0.2801  Sun May 21 00:07:40 CDT 2006
+
+ - Module::Build::Compat's emulation of INC is incorrectly prepending
+   a -I to the value of INC. This is incorrect because there should
+   already be a -I on the value. I.E. it's "perl Makefile.PL INC=-Ifoo"
+   not "perl Makefile.PL INC=foo" so Compat should not prefix a -I.
+   [Michael Schwern]
+
+ - Native batch scripts under Windows should not be converted by
+   pl2bat. [Spotted by Ron Savage]
+
+ - Tweaked the way we determine whether a file is executable on Unix.
+   We use this determination to decide whether to make it executable
+   during installation. [Julian Mehnle]
+
+ - Replaced a vestigial 'next' with 'return' now that the code is in a
+   subroutine (htmlify_pods()), not a loop. [Ron Savage]
+
+ - Fixed a guaranteed failure in t/signature.t when TEST_SIGNATURE was
+   set. [Eric R. Meyers]
+
+ - Fixed a test failure that occurred when testing or installing in
+   unattended mode - the code to test whether unattended mode and
+   attended mode are working properly was assuming that we started out
+   in attended mode. [Steve Peters]
+
+ - Improved our stand-in YAML generator that we use to generate
+   META.yaml when authors don't have a copy of YAML.pm installed on
+   their machine.  It was unable to handle things like embedded
+   newlines in the data, now it has a much more extensive escaping
+   mechanism. [Stephen Adkins]
+
+ - Revised the docs for --prefix and PREFIX. [Michael Schwern]
+
+0.28  Thu Apr 27 22:25:00 CDT 2006
+
+ - When y_n() or prompt() are called without a default value and the
+   build seems to be unattended (e.g. in automatic CPAN testing), we
+   now die() with an error message rather than silently returning
+   undef for prompt(), or looping indefinitely for y_n().
+
+ - When searching for '.modulebuildrc', return the first HOME-like
+   directory that actually contains the file instead of the first
+   existing directory. Document the search locations and the order
+   searched. [Spotted by David Golden]
+
+ - Split the API documentation out of Module::Build::Authoring into
+   its own document: Module::Build::API.
+
+ - We should not emit a warning if a Module::Build subclass is
+   required in a Makefile.PL that is not bundled in the current
+   distribution; it may be installed on the user's system. [Spotted by
+   Tyler MacDonald]
+
+ - copy_if_modified() now preserves the executable bit of the source
+   file. [Spotted by Julian Mehnle]
+
+ - Fixed compatibility of our screen-scraping the Test::Harness output
+   so we can recognize the most recent Test::Harness version. [Steve
+   Hay]
+
+ - Backing out a requirement added in 0.27_06 on the method y_n()
+   to always include a default. This behavior would cause existing
+   build scripts to start failing. We now fail with a missing default
+   only when $ENV{PERL_MM_USE_DEFAULT} is set because there is no
+   reasonable default.
+
+ - Make install_types() method smarter with respect to custom install
+   types.
+
+ - Add documentation for the install_base_relpaths() and
+   prefix_relpaths() methods. Improved their usage for a public API,
+   and added tests.
+
+0.27_10  Tue Mar 28 22:50:50 CST 2006
+
+ - Added the create_packlist property, default true, which controls
+   whether packlist files will be written during installation.  This
+   was already part of Module::Build 0.2609, but for some reason we've
+   forgotten it in the 0.27_xx series.  [Spotted by Steve Kirkup]
+
+ - Document the versions of Module::Build where each feature, action,
+   constructor argument, and method was first publicly documented.
+
+ - More fixes for find_perl_interpreter() to work with BSD flavored
+   UNIX: Ensure we always return absolute paths; throw an exception
+   upon failure to find correct interperter; document everything.
+
+ - We now include our own YAML.pm work-alike that we can use when the
+   real YAML isn't installed.  We might soon even start using it when
+   YAML is installed, because the YAML API and dependency chain have
+   been changing in unfavorable ways lately. [Stephen Adkins]
+
+ - Fixed some shell-argument-quoting issues on VMS.  In the process,
+   we have added some support for avoiding tripping over
+   shell-argument-quoting issues on other platforms too. [Initial
+   patch by Craig A. Berry]
+
+0.27_09  Sat Mar 11 22:48:54 EST 2006
+
+ - Fixed find_perl_interpreter() so we can find the perl executable
+   when running from uninstalled perl even when $^X contains a
+   relative path. [Yitzchak Scott-Thoennes]
+
+ - Fixed warning message where we were printing the wrong field names.
+   [Chris Dolan]
+
+ - Added a 'testpodcoverage' action that runs a POD coverage check for
+   all modules in the distribution. [Yanick Champoux]
+
+ - Added a Cookbook example of subclassing to modify an action. [Dylan
+   Martin and David Golden]
+
+ - When building HTML documentation, we were opening the POD file and
+   not checking whether the open succeeded, which of course caused
+   problems down the line if it failed.  Now we do "or die(...)" like
+   everywhere else. [Spotted by Joerg Braun]
+
+0.27_08  Fri Mar  3 21:22:41 CST 2006
+
+ - Due to shell quoting issues and differences in syntax between
+   various flavors of Windows, the code for the 'pl2bat' utility
+   distributed with Perl has been incorporated into M::B::P::Windows.
+   [Thanks to Dr Bean and Ron Savage for help testing and isolating
+   the problem.]
+
+ - Modify add_build_element() so that it only adds elements if they
+   don't already exist. [David Wheeler]
+
+ - Fixed a bug in the 'pass-through' Makefile.PL in which we would die
+   if CPAN::Shell->install returned false, but apparently this return
+   value is unreliable.  Now we only die if the module is actually
+   unavailable after installation.
+
+ - Fixed testing problems on VMS related to non-case-preserving
+   filesystems.  We now bundle Tie::CPHash in the distribution (just
+   for testing purposes, it doesn't get installed) to help with
+   this. [Craig Berry and Yitzchak Scott-Thoennes]
+
+ - We incorrectly documented the 'dynamic_config' flag in the META.yml
+   file as having a default value of false, but according to the
+   META.yml spec (which, for heaven's sake, we wrote) its default
+   value is true.  Fixed. [Spotted by Adam Kennedy]
+
+ - The have_c_compiler() method was dying if the ExtUtils::CBuilder
+   module wasn't around, which is obviously an unhelpful thing to do.
+   Now it just returns false. [Spotted by John Peacock]
+
+ - Fix detection of $VERSION expressions that are not
+   assignments. [Spotted by Chris Dolan]
+
+ - Obfuscate one of our constructs that uses a $VERSION variable,
+   because it was getting picked up by ExtUtils::MakeMaker's
+   version-finder. [Spotted by Randal Schwartz]
+
+ - The config_data script for querying and/or setting a module's
+   config data was forgetting to call write() after setting config
+   values (though setting feature values was working fine).
+   Fixed. [Brian Duggan]
+
+ - On Windows, remove the pl2bat generated 'Build.bat' script without
+   the annoying "The batch file cannot be found." error.  [Solution
+   provided by RazTK and foxidrive on newsgroup alt.msdos.batch]
+
+ - Our version comparisons should now work correctly with modules that
+   use version.pm to delcare their versions (e.g. "our $VERSION =
+   version->new('1.0.0')"). [John Peacock and Ron Savage]
+
+ - We now create a Build.bat script on versions of Windows where it
+   makes sense. [Yves]
+
+ - Fixed the verbiage around choosing the correct make-alike on
+   different platforms to suggest using 'perl -V:make'. [Suggested by
+   anonymous user]
+
+0.27_07  Wed Feb  1 20:07:45 CST 2006
+
+ - The notes() method now returns the new value when called with two
+   arguments, just like when it's called with one argument. [Tyler
+   MacDonald]
+
+ - The notes() method now distinguishes among the values undef, 0, and
+   the empty string, where previously it didn't. [Tyler MacDonald]
+
+ - We now unshift(@INC) rather than push(@INC) for the directory where
+   a build subclass lives, so that we're sure to pick up the right
+   version and not some already-installed version. [perlmonkey]
+
+ - The SIGNATURE file for version 0.27_06 (and I'm sure for lots of
+   versions before that too!) was messed up, since we were modifying
+   some files after signing.  This has been band-aided for the time
+   being by signing twice. [Reported by Chris Dolan]
+
+0.27_06  Mon Jan 23 21:44:54 CST 2006
+
+ - Fixed an undefined-variable warning when building the META.yml file
+   and the author hasn't used the 'module_name' mechanism. [Chris Dolan]
+
+ - We should now work with recent (> 0.49) versions of YAML.pm when
+   creating the META.yml file. [Yitzchak Scott-Thoennes]
+
+ - The y_n() method now requires the default parameter, and the
+   prompt() and y_n() methods have been improved with respect to
+   how they behave/detect when there is no user to ask.  We're now
+   more consistent with MakeMaker, including respecting the
+   PERL_MM_USE_DEFAULT environment variable. [Tyler MacDonald and
+   Yitzchak Scott-Thoennes]
+
+ - When building a README file using Pod::Text, work around a bug in
+   Pod::Text 3.01, which expects Pod::Simple::parse_file to take input
+   and output filehandles when it actually only takes an input
+   filehandle. [Yitzchak Scott-Thoennes]
+
+0.27_05  Thu Jan 12 17:39:21 CST 2006
+
+ - In t/common.pl, we were attempting to let the user's installed
+   Test::More take precedence over ours, but getting thwarted by all
+   the test scripts' loading Test::More beforehand.  Fixed. [Spotted
+   by Yitzchak Scott-Thoennes]
+
+ - In various test scripts, we were outputting some strings that
+   weren't strictly conformant with Test::Harness's expected input,
+   though it didn't actually cause problems.  Now we're more
+   conformant, though not yet strict. [Spotted by Yitzchak
+   Scott-Thoennes]
+
+0.27_04  Fri Dec 23 10:43:34 CST 2005
+
+ - Removed experimental feature that extended the prerequisite system
+   to apply ('requires', 'recommends', and 'conflicts') prereqs to all
+   actions. Most of the internal extensiblity has been retained so
+   that prereq types can easily be added, more selectively.
+
+ - Added a 'prereq_report' action that shows the user a well-formatted
+   list of all prerequisites, the versions required, and the versions
+   actually installed. [David Wheeler]
+
+ - Clarified the directory name that's created during the 'distdir'
+   action. [Suggested by Tyler MacDonald]
+
+ - Fixed a bug when creating the META.yml file without the help of
+   YAML.pm - some common strings weren't quoted & escaped properly.
+   Now only some uncommon ones are. [Spotted by Joshua ben Jore]
+
+ - Fixed a bug in which an "UNINST=1" argument specified to a
+   passthrough Makefile's "make install" wasn't actually seen by
+   Module::Build.
+
+ - Rather than dying when the Build script is run from the wrong
+   directory, it now simply chdir()s into the right directory and
+   keeps going. [Suggested by Dominique Quatravaux]
+
+ - Added an "Examples on CPAN" section to the cookbook, with an
+   initial entry pointing to John Peacock's SVN-Notify-Mirror
+   distribution.
+
+ - Add an invoked_action() method to return the name of the original
+   action invoked by the user.
+
+ - Add 'meta-spec' field to the generated META.yml file, including the
+   version of the specification followed by the current Module::Build
+   and the url where the specification can be found.
+
+ - Introduced two actions, 'html' & 'manpages', that generate
+   documentation for POD when the respective feature is enabled.  The
+   actions will generate the documents even if there is no set place
+   to install to.  However, if the actions are invoked as a dependency
+   of another action (e.g. build), the documentation will only be
+   built when there is a default or user-specified place to install to.
+
+ - Added support for environment variable, 'MODULEBUILDRC', which can
+   be used to specify the full path to an option file to use instead
+   of the default location of ~/.modulebuildrc. A special undocumented
+   setting of 'NONE' tells Module::Build not to load any user settings,
+   so tests can be run without tainting from user options.
+
+ - Documented and improved preliminary support for more Getopt::Long
+   style options are supported, including boolean options (--verbose,
+   --no-verbose), and use of hyphens in option names in addition to
+   underscores.
+
+ - The option to disable/enable reading of the ~/.modulebuildrc file
+   is changed from 'skip_rcfile' to 'use_rcfile'
+
+ - Allow the 'distmeta' action to continue when 'MANIFEST' is missing,
+   omitting the generation of the 'provieds' field. [Steven Schubiger]
+
+ - Fixed some failing regex from generated MANIFEST.SKIP file.
+
+ - Fixed an edge case in $VERSION parsing where we thought a package()
+   declaration was happening but it wasn't. [David Golden]
+
+ - Added docs for the install_destination() and install_types() methods.
+
+0.27_03 (Beta for 0.28)  Mon Oct 10 11:19:23 EDT 2005
+
+ - We now use ExtUtils::CBuilder to do all compiling of C code (for
+   example, when compiling XS modules).  (This change actually
+   occurred in 0.27_01, but it was mistakenly omitted from the Changes
+   file.)
+
+ - Fixed an issue on Win32 (and other case-tolerant
+   non-case-preserving systems, possibly like VMS?) in which the
+   current working directory would sometimes be reported with
+   different case, fooling us into thinking that we were in the wrong
+   directory. [David Golden]
+
+ - The extra_compiler_flags setting was not actually being passed
+   along to ExtUtils::CBuilder so it could pass it along to the
+   compiler.  Now it is.
+
+ - The synonyms 'scripts' and 'prereq' for 'script_files' and
+   'requires' were broken in a previous version (0.27_01, probably),
+   but now they're fixed. [David Golden]
+ 
+ - Previously, we assumed that any custom subclass of Module::Build
+   was located in _build/lib/.  This is only true if the author used
+   the subclass() method, though.  We now use %INC to find where the
+   custom subclass really is, so that we can "use lib" it.  We also
+   issue a warning if it seems to be outside the build directory.
+   [Spotted by Peter Tandler]
+
+ - Added a URL for each license type that we know about, which will
+   appear as resources=>license: in the generated META.yml file.
+
+ - If the user passes a no_index parameter to our constructor, we now
+   pass that through when building the META.yml file. [Richard
+   Soderberg, RT #9603]
+
+ - A few more status messages can now be suppressed by using 'quiet'
+   mode.  [Dave Rolsky]
+
+ - Added some more entries to the default MANIFEST.SKIP file. [Chris
+   Dolan]
+
+ - Our POD parser will now accept "AUTHORS" as well as "AUTHOR" when
+   looking for the author list in a module. [David Wheeler]
+
+ - When looking for the POD to auto-generate a README file, or for the
+   AUTHOR or ABSTRACT for the distribution, we now also look for a
+   *.pod with the same name as the *.pm file specified by
+   'version_from'. [David Golden]
+
+ - The recommended dependency on ExtUtils::ParseXS has been moved into
+   the "C_support" auto_feature.
+
+ - When building XS files, we now pass the -DVERSION and -DXS_VERSION
+   flags to the compiler. [Spotted by Jerry Hedden]
+
+ - If a distribution has XS files and Module::Build has not been
+   configured with the "C_support" feature, we now issue a
+   warning. [Suggested by Jerry Hedden]
+
+ - Added a dir_contains() method.
+
+ - Some versions of MakeMaker, CPANPLUS, and/or PAUSE thought that a
+   certain line of our code was declaring a $VERSION when we didn't
+   intend to.  The line has been obscurified so they won't think that
+   anymore. [Jos Boumans, RT #14226]
+
+ - Added the Apache, MIT, and Mozilla licenses to the list of licenses
+   that this module knows about. [Bob Ippolito]
+
+ - Fixed a pretty significant typo in the documentation for
+   auto_features. [Spotted by Jonas B. Nielsen]
+
+ - In order to aid people who want to do customization of the META.yml
+   file, we've added a "metafile" property that can then be easily
+   overridden in subclasses, changed do_create_meta_yml() to
+   do_create_metafile(), and split out the code that actually
+   generates the YAML into a new method, write_metafile(). [David
+   Wheeler]
+
+ - Fixed a couple of non-helpful behaviors with extra_compiler_flags
+   and extra_linker_flags.  These will automatically be run through
+   split_like_shell() when given to new() as strings.
+
+ - When the user doesn't have ExtUtils::ParseXS installed and we use
+   the old 'xsubpp', the displayed command line for creating the .c
+   file from the .xs file was missing its newline.  Now it's got it.
+
+0.27_02 (Beta for 0.28)  Fri Jul 15 07:34:58 CDT 2005
+
+ - Provided initial support for the --prefix installation parameter,
+   which acts like MakeMaker's PREFIX.  It is still highly recommended
+   NOT to use it when you could reasonably use --install_base or
+   --install_path or --install_dest, but that's just because the way
+   --prefix is designed is weird and unpredictable.  Ultimately the
+   choice rests with the installing user. [Patches by Michael Schwern
+   and Rob Kinyon]
+
+ - Fixed a bug in subclass() which prevented people from using it to
+   subclass subclasses of Module::Build. [Chris Dolan]
+
+ - Added a 'pure_install' action, which for the time being is
+   identical to the 'install' action. [Jos Boumans]
+
+ - Fixed a POD error in an L<http://...> tag. [Offer Kaye]
+
+ - Note several options for automatically creating a new module dev
+   tree. [Suggested by Eric Wilhelm]
+
+ - Removed some hard-coded references to File::Spec::Unix in the
+   creation of HTML docs, which should help that code work in more
+   places, and help people not to panic when they look at it. [Spotted
+   by Yves]
+
+ - We now use Pod::Readme by default (instead of Pod::Text) to
+   generate the README file when the 'create_readme' option is used.
+   If Pod::Readme is not installed, we will still fall back to using
+   Pod::Text.  [Robert Rothenberg]
+
+ - The values of the "prefix", "install_base", "install_path", and
+   "install_dest" parameters can now begin with "~" or "~user", and
+   we'll de-tilde-ify them by using glob().
+
+ - The (optional) auto-creation of the README and Makefile.PL files
+   have been moved from the 'distdir' action to the 'distmeta'
+   action. [David Golden]
+
+ - When looking for a .modulebuildrc file, we now use a fancier method
+   of trying to find the home directory, because $ENV{HOME} isn't a
+   very cross-platform variable. [Robert Rothenberg]
+
+ - We now memoize the output of the internal _default_INC() method,
+   since it uses backticks and might be kind of slow.
+
+ - When processing XS files, we now look for a typemap in lib/ as well
+   as using the system's default typemap. [John Peacock]
+
+ - The DESTDIR, PREFIX, and INSTALL_BASE arguments to "make install"
+   are now supported for pass-through Makefiles (they've been
+   supported for quite a while as arguments to "perl
+   Makefile.PL"). [Requested by Guillaume Rousse]
+
+ - Test::Harness has changed its output format in recent versions,
+   which threw off one of our tests.  We now allow for this different
+   format. [Reported by Scott Godin]
+
+ - Fixed an issue that prevented Module::Build from upgrading itself
+   using its own API (which is how CPANPLUS uses it).  There are still
+   some issues with this solution, however.  See ticket #13169 in
+   rt.cpan.org. [Reported by Jos Boumans]
+
+ - Fixed a fatal error that occurred when a distribution's author
+   could not be determined from its POD nor from the call to
+   Module::Build->new() in its Build.PL.  See ticket #12318 in
+   rt.cpan.org. [Reported by Jos Boumans]
+
+ - Apparently on Windows and cygwin it's not possible to use the "-pi"
+   switch to perl without a backup extension, so now we use ".bak" and
+   remove the backup file when we're done.  Thus the "dist" action for
+   Module::Build itself can now be run on those platforms. [Yitzchak
+   Scott-Thoennes]
+
+ - Improved the handling of auto_features in the config_data access
+   script. [Yitzchak Scott-Thoennes]
+
+0.27_01 (Beta for 0.28)  Fri Apr 15 21:12:57 CDT 2005
+
+ Backward-incompatible (but better) changes:
+
+ * When using the 'install_base' option to choose a directory for
+   installing everything, perl modules now go into lib/perl5/ instead
+   of just lib/.  It seems this is more consistent with people's
+   expectations, and the way I had it before was a bit peculiar to the
+   way I like things in my own home directory. [Michael Schwern]
+
+ * When the user is using the 'install_base' option, scripts will now
+   be installed by default in $install_base/bin/ rather than
+   $install_base/script/ . [Jan Hudec and Michael Schwern]
+
+ Major changes:
+
+ - The auto_features mechanism will now re-evaluate dependencies every
+   time feature() is called for an auto-feature, rather than freezing
+   the success/failure value during 'perl Build.PL' and using that
+   value for all eternity (or module update, whichever comes first).
+   This applies to both $build->feature() and
+   FooModule::ConfigData->feature() calls. [Requested by many]
+
+ - Added the meta_add and meta_merge mechanisms, which let the module
+   author add/merge arbitrary entries into the META.yml file.
+
+ - Now reads per-action default options from '$ENV{HOME}/.modulebuildrc'
+   if it exists. Command line options override anything set in the rc file.
+
+ - We now use ExtUtils::CBuilder to do all compiling of C code (for
+   example, when compiling XS modules).
+
+ - The creation of Unix man pages is no longer a strict necessity - it
+   has now been turned into an 'auto-feature' contingent on the
+   presence of Pod::Man and a location specified for man pages to go.
+
+ - A user-specified 'install_path' setting will now take precedence
+   over an 'install_base' setting.  This allows the user to use
+   'install_base' to set the base for all elements in one go, and then
+   use 'install_path' to override specific paths or add paths for
+   additional kinds of targets.
+
+ - Split the main documentation from 'Module/Build.pm' into two
+   sections. The user level documentation and overview remains in
+   'Module/Build.pm', while a new document,
+   'Module/Build/Authoring.pod', has been created for module authors.
+
+ Minor changes:
+
+ - new_from_context() was losing its arguments in some cases (and not
+   because of inadequate training in forensic debate) - we now pass its
+   arguments directly to the Build.PL script rather than merging them
+   in afterwards.
+
+ - Let resume() return an object blessed into the appropriate class
+   if the user has provided a subclass, as specified by the
+   'build_class' property. This allows current() and new_from_context()
+   to behave more like factory methods returning objects of the correct
+   class based on context. [Ray Zimmerman]
+
+ - Refactored methods relating to parsing perl module files for
+   package, version, and pod data into a new class:
+   Module::Build::ModuleInfo.  It should not be considered part of
+   Module::Build's API, because we may split it out entirely as a
+   separate CPAN module that we depend on.
+
+ - Added new method Module::Build::prepare_metadata() for authors to
+   override in order to add custom fields to META.yml.
+
+ - We now use Test::More for our regression tests.  If the user
+   doesn't have it installed, we include a copy in t/lib/ that we can
+   use during testing.
+
+ - When copying files in the 'distdir' action, set permissions to match
+   the original files. [Julian Mehnle]
+
+ - When adding files like META.yml to the MANIFEST, we now tell the
+   user we're doing so by printing one of the "Added to MANIFEST: ..."
+   lines.  [Ron Savage]
+
+ - Added a runtime_params() method, which lets a module author see
+   which parameters were overridden by the user on the command line
+   (or in whatever paradigm the user originally invoked Module::Build
+   from). [David Wheeler]
+
+ - Added the current_action() method, which, surprisingly, returns the
+   name of the currently running action. [David Wheeler]
+
+ - Added docs for run_perl_script().
+
+ - Added some stuff to the docs about why PREFIX is unsupported, and
+   what to use instead. [Steve Purkis]
+
+ - The simple get/set accessor methods for all the 'parameters' like
+   verbose(), license(), etc. now have auto-generated documentation in
+   Module/Build.pm.
+
+ - Created a Cookbook entry for 'Adding new elements to the install
+   process'
+
+ - We now add META.yml to the MANIFEST when META.yml is created, not
+   when MANIFEST is created. [Spotted by Ron Savage]
+
+ - Added some additional patterns to the suggested MANIFEST.SKIP
+   contents, and changed the docs so that we encourage the user to use
+   the MANIFEST.SKIP.  [Ron Savage]
+
+ - Eliminated a redundant recipe from the Cookbook, now that there are
+   some more extensive recipes on how to add stuff to the
+   build/install sequences.
+
+ - Eliminated an undefined-variable warning when testing under perl 5.005
+
+ - When building HTML documentation, 'html_backlink' and 'html_css'
+   properties are now first-class properties, so they can be set from
+   the command line. [Suggested by Sagar R. Shah]
+
+ - Have script_files default to everything in bin.  I believe this is
+   the least surprising behavior. [Suggested by Michael Schwern]
+
+ - If script_files is given a directory, consider each file in that
+   directory tree as a script to be installed.  This avoids having to
+   remember to add to the script_files list every time you add a
+   program. [Suggested by Michael Schwern]
+
+ - We now only load Pod::Man when we actually need to build man pages.
+
+ - We now make Test::Harness use our carefully-selected path to a perl
+   executable regardless of Test::Harness's version.  Previously we
+   let it figure stuff out for itself if it was a reasonably modern
+   version, but it's safer to make sure we're using the same perl
+   everywhere.
+
+0.2610  Fri Apr 15 08:25:01 CDT 2005
+
+ - new_from_context() was losing its arguments in some cases (and not
+   because of inadequate training in debate) - we now pass its
+   arguments directly to the Build.PL script rather than merging them
+   in afterwards. [Ray Zimmerman]
+
+ - Fixed a bug in which config_data and feature data were being
+   forgotten and no ConfigData.pm module would get written. [Ray
+   Zimmerman]
+
+ - Added a recipe to the cookbook showing how to run a single test
+   file from the command line. [William McKee]
+
+ - For command-line arguments, we now accept the syntax "--foo=bar" in
+   addition to "--foo bar" and "foo=bar".  This seems to fit well with
+   what GNU getopt and Getopt::Long do, and with people's
+   expectations. [Adam Spiers]
+
+0.2609  Wed Mar 16 22:18:35 CST 2005
+
+ - The html docs that were created during the first invokation of
+   './Build' were being found and treated as pod that needed to be
+   converted to html during subsequent invokations. We now are more
+   specific about the directories we scan for pod that needs to be
+   converted, effectively avoiding blib/html. [Ray Zimmerman]
+
+ - If Pod::Man is not available, we now skip building man pages
+   (rather than dying) and tell the user why.
+
+ - We now write a .packlist file upon installation, in the same place
+   that ExtUtils::MakeMaker does. [Johnny Lam]
+
+ - On some Unix platforms (BSD derivatives, mostly) perl's $^X
+   variable isn't set to the full path of the perl executable, just
+   'perl', when the 'Build' script is run as './Build' and not 'perl
+   ./Build'.  This can lead to some other modules (maybe
+   Test::Harness, maybe IO::File, I dunno...) getting very confused
+   about where they are, and they try to load stuff from the wrong
+   perl lib, and big trouble ensues.  To fix this, we now set $^X to
+   the value of Module::Build->find_perl_interpreter().
+
+ - The 'distcheck' action will now die() if it finds an error in the
+   MANIFEST, rather than just printing on STDOUT. [David Golden]
+
+ - When the README and/or Makefile.PL are autogenerated using
+   create_readme or create_makefile_pl, we now automatically make sure
+   they're also listed in the MANIFEST file. [Suggested by Michael
+   Schwern]
+
+ - Got rid of the t/MANIFEST file - it's superfluous, and it had
+   zero-length, which some versions of Tar don't like. [William
+   Underwood]
+
+ - Added a mention in the documentation that each property that new()
+   accepts also has a corresponding get/set accessor.  (In the version
+   0.27_0x series each accessor method is mentioned explicitly in the
+   docs.) [Omission spotted by Ian Langworth]
+
+0.2608  Wed Jan 26 19:46:09 CST 2005
+
+ - Add workaround for test files because Devel::Cover causes
+   require to fail when the argument to require is an expression
+   involving File::Spec. We now assign the result of the File::Spec
+   call to a variable and then call require with that variable.
+
+ - Tilde-expansion is now performed on arguments passed to a
+   compatibility-Makefile.PL [Spotted by Sam Vilain]
+
+ - We now run the 'gzip' and 'tar' values through split_like_shell()
+   when running the 'dist' action, so that e.g. the 'gzip' value can
+   be set to something like "gzip -f --best" and it'll work
+   correctly. [Spotted by Chris Dolan]
+
+ - Work around some bad mojo between Fedora Core [with its very long
+   @INC] and old versions of Test::Harness [with its propensity to
+   compound the number of @INC entries] that produced an "argument
+   list too long" error during testing.  [assisted by Ville Skytta,
+   David Golden, & Randy Sims]
+
+ - Killed an infinite loop that would happen in y_n() in interactive
+   mode if the author provided no default value. [Max Maischein]
+
+0.2607 (Bug fix release in 0.26 series)  Sat Dec 18 14:14:09 CST 2004
+
+ - Instead of freezing @INC in the 'Build' script to the value it had
+   when Build.PL was run, we now just add those additional values that
+   aren't part of the default compiled-in @INC. [Michael Schwern]
+
+ - The run_perl_script() method will now propagate any extra entries
+   in @INC (such as those added by "use lib" or the -I command-line
+   switch) to the subprocess.  This helps situations in which you want
+   to tell the subprocess where to find a certain module, for
+   instance.  [Michael Schwern]
+
+0.2606 (Bug fix release in 0.26 series)   Tue Dec  7 22:33:11 CST 2004
+
+ - Fixed a linking bug on Win32, in which compiled C code object files
+   never got linked in with the modules being built. [Dominic
+   Mitchell]
+
+ - Fixed a bug in the new_from_context() method in which any arguments
+   passed made us die. [Spotted by Jos Boumans]
+
+0.2605 (Bug fix release in 0.26 series)   Tue Nov 30 07:16:13 CST 2004
+
+ - Fixed a bug in which zero-length arguments for hash-valued
+   parameters (e.g. " --config foo= ") weren't being allowed.
+
+ - The tests now play better with environments in which version.pm is
+   pre-loaded, like in bleadperl. [John Peacock & Michael Schwern]
+
+ - Fixed a syntax error in one of the tests under perl 5.005.
+
+0.2604 (Bug fix release in 0.26 series)   Wed Nov 17 14:32:42 CST 2004
+
+ - Fixed a split_like_shell() bug introduced in 0.2603 for Windows, in
+   which an array reference passed as an argument was returned as an
+   array reference, rather than as a list. [Spotted by Steve Hay]
+
+ - module_name() will now return '' instead of undef when module_name
+   is not set.  This eliminates a couple uninitialized-value
+   warnings. [Suggested by Michael Schwern]
+
+ - The expand_test_dir() method will now skip dotfiles (like ._foo.t,
+   which sometimes gets automatically created on Mac systems) when
+   'recursive_test_files' is in effect. [Tom Insam]
+
+0.2603 (Bug fix release in 0.26 series)   Mon Nov 15 10:28:00 CST 2004
+
+ - Added documentation for the new_from_context() method.
+
+ - Completely rewrote the split_like_shell() method for the Windows
+   platform so it works like the command.com shell. [Randy Sims]
+
+0.2602 (Bug fix release in 0.26 series)   Thu Nov  4 11:19:29 CST 2004
+
+ - The two bug fixes in 0.2601 gnashed against each other incorrectly,
+   resulting in a Win32 bug in split_like_shell().  Fixed.  [Spotted
+   by Steve Hay & Randy Sims]
+
+ - Removed a couple of 'use warnings' statements from the code - they
+   were causing compile failures on 5.005_04, where warnings.pm isn't
+   available. [Blair Zajac]
+
+0.2601 (Bug fix release in 0.26 series)   Wed Nov  3 20:09:27 CST 2004
+
+ - Fixed some backslash problems with split_like_shell() on
+   Win32. [Steve Hay]
+
+ - Fixed a bug in split_like_shell() in which leading whitespace was
+   creating an empty word, manifesting as something like "gcc - no
+   such file or directory" during tests. [Spotted by Warren L. Dodge]
+
+0.26  Sat Oct  9 17:51:01 CDT 2004
+
+ - Removed some language from the Module::Build::Compat documentation
+   that encouraged people to include a Build.PL without a Makefile.PL.
+   Also changed "a replacement for MakeMaker" to "an alternative to
+   MakeMaker" in the main documentation, which is basically what I
+   meant all along (i.e. a replacement for MakeMaker in your
+   particular build process - MakeMaker is never going to be fully
+   replaced in the perl world at large, of course), but some people
+   got the impression I was a little more truculent toward MakeMaker
+   than I really am.
+
+ - Added the formal concepts of "features" and "config data" for
+   distributions.  This allows the module author to define a certain
+   set of features that the user can switch on and off (usually
+   according to whether they have the proper prerequisites for them),
+   and to save build-time configuration information in a standardized
+   format.  See the main documentation of Module::Build for more
+   details.  (Note that the name of this system was called
+   "BuildConfig" for a while in beta, but now it's called
+   "ConfigData".)
+
+ - Added an 'auto_features' capability, which simplifies the process
+   of defining features that depend on a set of prerequisites.
+
+ - Added the 'get_options' parameter, which lets module authors
+   declare certain command-line arguments their Build.PL can accept
+   [David Wheeler]
+
+ - Changed the split_like_shell() method to use the shellwords()
+   function from Text::ParseWords (a core module since 5.0), which
+   does a much better job than the split() we were using.
+
+ - Added a 'testpod' action, which checks the syntactic validity of
+   all POD files in the distribution using Test::Pod.  This eliminates
+   the need for doing so in a regression test. [Initial patch by Mark
+   Stosberg]
+
+ - Added a process_files_by_extension() method, which generalizes the
+   kind of processing (essentially just copying) that happens for .pm
+   and .pod files, and makes it available to other user-defined types
+   of files.  See the new cookbook entry.
+
+ - Improved compatibility with version.pm when authors are using
+   version objects as their $VERSION variables.  Now
+   version_from_file() can deal with these objects.  Currently we
+   stringify them right away, but perhaps in the future we will
+   preserve them as objects for a while.
+
+ - During 'distdir' and 'distmeta' actions, die a bit more gracefully
+   if there's no MANIFEST (i.e. explicitly say that a MANIFEST is
+   required). [Spotted by Adrian Howard]
+
+ - Eliminated a recursive dependency between creating the MANIFEST
+   file and creating the META.yml file.  [Spotted by Dave Rolsky]
+
+ - On Win32, where a single directory might be known variously as
+   "Module-Build-0.25_03" or "MODULE~1.25_", we now use
+   Win32::GetShortPathName($cwd) to verify that the 'Build' script is
+   being run from the correct directory, rather than just a string
+   comparison.
+
+ - The add_to_cleanup() method will now accept glob()-style patterns
+   in addition to explicit filenames.  Also documented the fact that
+   they can be specified in either Unix-style or native-style
+   notation.
+
+ - Passing a PREFIX value to a pass-through Makefile 'make install'
+   now has the same effect as passing it to 'perl Makefile.PL' (it
+   dies with a helpful message).
+
+ - Added the 'testcover' action, which runs a test suite using
+   Devel::Cover.  [Dave Rolsky]
+
+ - Added the 'lib' and 'arch' installation directories to the search
+   path for the 'diff' action, since they won't necessarily (though
+   they usually will) be in @INC at installation time. [Suggested by
+   Kevin Baker]
+
+ - The "=head3" POD directive isn't supported in older podlators
+   (particularly Pod::Man), so we don't use it anymore.
+
+ - Fixed a typo & improved the docs in the SUBCLASSING section. [Ron
+   Savage]
+
+ - Added the '.tmp' suffix to the default MANIFEST.SKIP file, which
+   should avoid adding things like pod2htmi.tmp to the MANIFEST [Ron
+   Savage]
+
+ - Backup files from Emacs, containing the string '.#' in their names,
+   should no longer find their way into the blib/ directory (and from
+   there into installation directories).
+
+ - Worked around an unpleasant interaction between version.pm and the
+   version-checking code that makes sure Module::Build's version
+   hasn't changed during the lifetime of the 'Build' script. [Reported
+   by Trevor Schellhorn]
+
+ - Fixed a problem in htmlify_pods() that would produce test failures
+   on Cygwin (and probably elsewhere).  [Yitzchak Scott-Thoennes]
+
+ - Fixed a test failure on Cygwin (and probably elsewhere) in
+   t/compat.t, resulting from empty environment variables being set to
+   the empty string (as opposed to simply being unset) by their mere
+   presence in the "EXPORT:" list.
+
+ - Fixed a fatal error that occurred when the author specified
+   'dist_author' manually in their Build.PL script. [Spotted by Ron
+   Savage]
+
+ - The 'provides' section of the META.yml file wasn't being built
+   properly on Win32, because of a mismatch between URL-format and
+   native-format pathnames.  Fixed.  [Reported by Robert Rothenberg]
+
+ - The progress message "lib/Foo.xs -> lib/Foo.c" was previously being
+   output even when the Foo.c file wasn't being rebuilt.  It's now
+   fixed.
+
+ - Fixed a couple of places in Compat.pm where it could have forgotten
+   which perl interpreter it had been run with ($^X isn't very
+   trustworthy).
+
+ - On some systems, the way we updated the timestamp on the
+   "lib/Foo.bs" file (one of the output files for XS-based modules)
+   was failing.  It's been replaced by a simple call to utime().
+
+ - Fixed a problem in t/compat.t that prevented it from being run
+   individually using 'make test TEST_FILES=t/compat.t'.  The problem
+   was that a couple environment variables (TEST_FILES, MAKEFLAGS)
+   were being passed through to subprocesses, and confused them.
+
+ - Fixed an important typo in the documentation for the 'install_base'
+   parameter ('libdoc' and 'bindoc' were switched). [Ray Zimmerman]
+
+ - The pass-through Makefiles (type 'small' or 'passthrough') now
+   support the TEST_FILES parameter to 'make test'.
+
+ - Fixed a fatal error that would occur on perl 5.005 when building
+   HTML documentation, because its version of Pod::Html was old and
+   didn't like some of the parameters we fed it. [Spotted by Blair
+   Zajac]
+
+ - The final line of the generated pass-through Makefile was missing
+   its trailing newline, which is now fixed. [Chip Salzenberg]
+
+ - We now depend on YAML version at least 0.35 and at most version
+   0.49, so that we don't pick up a new (and backward-incompatible) beta
+   version from CPAN.
+
+ - Squashed a warning in t/basic.t about '"Foo::Module::VERSION" used
+   only once', and one in PPMMaker about $^V being undefined. [Blair
+   Zajac]
+
+ - Added a couple temporary output files from HTML documentation
+   generation to the cleanup list.  [Toby Ovod-Everett]
+
+ - The PodParser module will now only extract paragraphs in the
+   'AUTHOR' section of the pod if they contain an '@' character.  This
+   tends to do a better job, heuristically speaking, of returning
+   relevant stuff.
+
+ - Added regression tests and a helper method ( add_build_elements() )
+   for adding new elements to the build process.  Also some
+   documentation.
+
+ - Wrote a recipe in the Cookbook for adding new elements to the build
+   process, and a recipe for changing the order in which the steps in
+   the build process will occur.
+
+0.25  Sun Apr 25 11:12:36 CDT 2004
+
+ - During the 'distdir' action, if no MANIFEST.SKIP file exists, we
+   will now create a reasonable default one. [Randy Sims]
+
+ - In Makefile compatibility mode, some arguments (like UNINST,
+   TEST_VERBOSE, etc.) given to 'make' are now recognized and passed
+   through to Module::Build. [Randy Sims]
+
+ - The regression tests now make sure that several pass-through
+   Makefile.PL parameters are dealt with correctly.
+
+ - Added support for the 'LIB' parameter to passthrough
+   Makefile.PLs. [Spotted by Jesse Erlbaum]
+
+ - Passing a 'PREFIX' parameter to a passthrough Makefile.PL was
+   supposed to make it die with a helpful error message, but instead
+   it just ignored it and blindly tried to install to the wrong place.
+   This is now fixed.  [Spotted by Jesse Erlbaum]
+
+ - Added an extra_compiler_flags() accessor method.
+
+ - If the 'recursive_test_files' option was turned on, the test files
+   weren't sorted, but returned in an apparently random order.  Now
+   they're sorted.  [Martyn Peck]
+
+ - Documented the 'tar' and 'gzip' parameters to the 'dist' and
+   'ppmdist' actions.
+
+ - The generation of HTML documentation now works (it was accidentally
+   partially implemented with an itchy patch-application finger in
+   0.24).  [Randy Kobes]
+
+ - Fixed a fatal bug when building META.yml with YAML.pm and
+   'dynamic_config' is set. [Reported by Jaap Karssenberg]
+
+ - Fixed some incorrect error messages that occurred when
+   compiling/linking C sources went awry.
+
+ - If the author uses a custom builder subclass, that subclass will
+   now be loaded correctly in the passthrough Makefile.PL if the
+   author uses the 'small' or 'passthrough' Makefile.PL options in
+   Module::Build::Compat. [Martyn Peck and Jaap Karssenberg]
+
+ - If the author uses a custom builder subclass created dynamically
+   through the subclass() method, passthrough Makefile.PLs (of type
+   'passthrough' or 'small') didn't work properly, because the custom
+   builder module wouldn't be loaded at the right time.  This has been
+   fixed.  [Reported by Toby Ovod-Everett]
+
+ - In M::B-generated 'traditional' Makefile.PLs, the entries in
+   'PREREQ_PM' are now sorted ASCIIbetically rather than randomly.
+
+ - The install_types() method will now return any additional types
+   given as 'install_path' arguments, as well as all elements of the
+   current 'install_sets' entry.  This makes it easier to add new
+   types of installable objects to the mix.
+
+ - As a consequence of the previous change, there is no longer any
+   need to have an explicit 'install_types' data member, so it has
+   been removed.
+
+ - In the second example code for the Module::Build->subclass()
+   method, the Module::Build module needed to be loaded before calling
+   its methods. [John Peacock]
+
+ - Fixed minor error in the POD structure of Module::Build and
+   Module::Build::Platform::VMS docs.
+
+
+0.24  Wed Feb 25 15:57:00 CST 2004
+
+ - Fixed a problem with incude_dirs not being propagated to the 'ccs'
+   file when compiling XS files on Win32. [Randy Sims and Steve Hay]
+
+ - In 0.23, Module::Build::Compat->fake_makefile() started choking
+   when no 'build_class' parameter was supplied in the Makefile.PL.
+   Since these Makefile.PLs still exist on CPAN, we now default
+   'build_class' to 'Module::Build', which was the old 0.22 behavior
+   anyway.  [Reported by Martin Titz and Jeremy Seitz]
+
+ - Added documentation for the 'include_dirs' parameter to
+   new(). [Steve Hay]
+
+ - Changed the no-op command on Win32 from 'rem' to 'rem>nul' inside
+   pass-through Makefiles. [Randy Sims]
+
+ - The 'autosplit' parameter now accepts an array reference if
+   multiple files should be split. [Jaap Karssenberg]
+
+ - find_perl_interpreter() will now use $^X (if absolute), $ENV{PATH}
+   (if $^X isn't absolute), and $Config{perlpath}, in that order.
+   Also, we now make darn sure the result is the same version of perl,
+   by checking Config::myconfig() for a match against the current
+   perl.  [Reported by Edward Sabol]
+
+ - Fixed a fatal error on Win32 (and any other platform that doesn't
+   define an installation location for Unix-style man pages) during
+   installation.
+
+0.23  Sun Feb  8 22:01:18 CST 2004
+
+ - Fixed a compatibility problem in pass-through Makefiles (created by
+   Module::Build::Compat).  Some 'make' utilities (for example, BSD
+   make) didn't like a '@' by itself on a line, so we stole some
+   'NOOP' code from MakeMaker to fix it. [Reported by Mathieu Arnold]
+
+ - Added a 'ppm_dist' action, which just makes the PPD file and then
+   makes a tarball out of the blib/ directory. [Randy Sims]
+
+ - The @INC of the parent process is now propagated to child processes
+   when processing *.PL files. [Reported by Jaap Karssenberg]
+
+ - We now only attempt to fix the shebang line on a script if the
+   shebang line matches the regex /perl/i .  This fixes some instances
+   where people put shell scripts in their distributions. [Jaap
+   Karssenberg]
+
+ - We no longer generate a 'requires', 'recommends', 'conflicts',
+   etc. entry in the META.yml file if there's no data to go in it.
+
+ - Added a documentation reference to Michael Schwern's wiki for tips
+   on conversion from MakeMaker to M::B. [Randy Sims]
+
+ - If there are script_files, we now add EXE_FILES to the
+   'traditional' Makefile.PL generated by M::B::Compat. [Suggested by
+   Yuval Kogman]
+
+ - Documented the 'test_files' parameter to new(). [Reported by Tony
+   Bowden]
+
+ - Fixed a problem in "Build help <action>", which didn't find the
+   correct help chunk if <action> was the final element in a POD
+   list. [Jaap Karssenberg]
+
+ - Fixed a problem in the get_action_docs() method which gave
+   incorrect results if the method was called more than once in the
+   same program.
+
+ - Fixed a problem in which actions defined by user subclasses
+   wouldn't be available via the pass-through Makefiles created by
+   Module::Build::Compat. [Reported by Jaap Karssenberg]
+
+ - We now use Data::Dumper instead of our own ad-hoc serialization
+   routines to create the 'traditional' Makefile.PL
+   arguments. [Suggested by Yuval Kojman]
+
+0.22  Sat Jan 10 22:05:39 CST 2004
+
+ - On Unixish platforms, the syntax "FOO=BAR /bin/baz arg arg" now
+   works when present in $Config{ld}.  This solves a problem on Mac OS
+   X 10.3. [Reported by Adam Foxson]
+
+ - The have_c_compiler() now also tests whether the linker seems to
+   work too.
+
+ - Fixed a problem with creating the distribution tarball in which
+   permissions would usually be all read-only.  We now use our own
+   file-copying routines rather than those in ExtUtils::Manifest,
+   because those do some annoying extra permissions-setting stuff for
+   no apparent reason.  It makes me happy that this was a very very
+   easy patch to make.  [Reported by Thomas Klausner]
+
+ - The compile_c() method now includes $Config{cccdlflags} in its
+   command invocation.  It's usually empty, but not always, so we
+   didn't notice for a while. [Richard Clamp]
+
+ - On some platforms it's common to have a $Config{make} defined, but
+   no 'make' utility actually available.  We now detect this and skip
+   some 'make' compatibility tests. [Randy Sims]
+
+ - Fixed a spurious testing failure on non-Unix platforms that
+   happened because we accidentally call localize_file_path() on empty
+   strings in the test suite. [Spotted by Randy Sims on Windows]
+
+ - Made the 'name', 'abstract', 'author', and 'version' properties
+   required when building a PPD file. [Spotted by Randy Sims, Dave
+   Rolsky, & Glenn Linderman]
+
+ - When building a 'traditional' Makefile.PL with
+   Module::Build::Compat, we now use 'VERSION_FROM' when possible,
+   rather than always using 'VERSION'.  This way the Makefile.PL
+   doesn't have to get modified every release.
+
+ - Made some fixups to the 'PPM' info-file, improving compatibility
+   with ActiveState's PPM tools. [Randy Sims, Glenn Linderman]
+
+ - The 'dist_author' property can now accept multiple authors, see the
+   docs for more info. [Randy Sims]
+
+ - If the user doesn't have YAML.pm installed during ACTION_dist, we
+   now create a minimal YAML.pm anyway, without any dependency
+   information.
+
+ - The 'distribution_type' field is no longer created in META.yml
+   files, in accordance with the finding made at the London CLPAN
+   meeting that it's essentially meaningless and ill-defined.
+
+ - The 'dist' action now accepts an optional 'tar' parameter to use a
+   system utility for building the tarball, and a 'gzip' parameter for
+   compressing it.  If these are used, Archive::Tar won't be invoked.
+   This was added because Archive::Tar is producing some very
+   non-cross-platform tarballs that many tar utilities can't handle.
+
+ - During testing, if YAML.pm isn't installed, then we won't try
+   making a tarball either, since this would invoke YAML to create the
+   META.yml file.
+
+ - Fixed a problem with chmod() being called incorrectly on MacOS
+   (i.e. MacPerl, not Mac OS X).  [Spotted by Paul Sanford Toney]
+
+ - Fixed a problem with the --config flag not being treated properly
+   (essentially ignored) on the command line for 'perl Build.PL' or
+   'Build <action>'. [Spotted by Jakub Bogusz]
+
+ - Added a new config() method to get at the Build object's notion of
+   the %Config hash.
+
+ - Test::Harness is starting to contend for the Most Crotchety Module
+   Award.  Work around a few of its nits when setting harness
+   switches. [Spotted by Diab Jerius]
+
+ - Now the Build script will die() if we're run from the wrong
+   directory, rather than trying to chdir() to what it thinks is the
+   right directory and do its work there.  See
+   https://rt.cpan.org/Ticket/Display.html?id=4039 . [Chris Dolan]
+
+ - Changed the manpage separator on OS/2 to '.'. [Ilya Zakharevich]
+
+ - On OS/2, disable C compilation, since apparently it isn't working
+   there. [Reported by Ilya Zakharevich]
+
+ - Inserted a comment into auto-generated Makefile.PLs saying it was
+   auto-generated. [Randy Sims]
+
+ - Fixed some annoying behavior in generated passthrough Makefile.PLs
+   when the user chose not to install Module::Build, or if
+   installation failed. [Reported by Ilya Zakharevich and Richard
+   Clamp]
+
+ - Moved the documentation for 'codebase' to the section where it's
+   relevant. [Randy Sims, Glenn Linderman]
+
+ - Fixed a have_c_compiler() failure on some platforms, we now define
+   a boot_compilet() function (since we're compiling a library, not an
+   executable). [Randy Sims]
+
+ - Added a recipe to the Module::Build::Cookbook describing how to
+   maintain compatibility with older versions of CPAN.pm [Jim Cromie]
+
+ - Removed caveat about "looking for alternatives" in how hashes are
+   specified on the command line, since an alternative has been found.
+
+ - Previously most warnings about optional prerequisites looked like
+   they were actually error messages about required prerequisites.
+   This has been corrected. [Reported again by Sagar Shah]
+
+ - Added support for building XS (and C in general) stuff on AIX.
+   This was done by a small reorganization of prelink_c() method from
+   Windows.pm to Build.pm, and it is only invoked for the platforms
+   that need it invoked.  AIX also massages some very naughty bits
+   (MakeMaker macro variables) in $Config{lddlflags} that should never
+   have been put there, but alas, they're there, so we find & resolve
+   them.
+
+ - Added OS/2 ($^O = 'os2') to the list of Unix-like platforms.  This
+   basically means that most platform-specific operations will be done
+   in a Unix-like manner.
+
+ - Pass-through Makefiles will now die() when they're given a PREFIX
+   parameter, and suggest using 'destdir' or 'install_base' instead.
+   Previously they just ignored the parameter and tried to install to
+   the default location, which is clearly not what the user wanted.
+
+ - Updated my email address in the documentation to a more recent
+   variant.
+
+ - Add NetBSD to the list of Unix-like systems. [Adrian Bunk]
+
+ - Add SVR5 to the list of Unix-like systems. [Rafael Garcia-Suarez]
+
+ - We now use Pod::Parser to find the ABSTRACT and AUTHOR when it's
+   available on the system. [initial patch by Randy Sims]
+
+ - Fixed a little scalar/list buglet in a documentation example.
+
+0.21  Wed Oct 15 20:47:05 CDT 2003
+
+ - Added a have_c_compiler() method.
+
+ - Added documentation for the requires(), recommends(),
+   build_requires(), and conflicts() methods.
+
+ - On Unix platforms, we now create the "Build" script with a #! line
+   matching the perl interpreter that was used to invoke the Build.PL
+   script, rather than whatever is in $Config{startperl}.  This avoids
+   a potential warning about the interpreters not matching. [Spotted
+   by Ken Y. Clark]
+
+ - The Unix version now uses the safer multi-argument form of system()
+   when building distribution tarballs.
+
+ - Added a regression test for the 'dist' action to the t/runthrough.t
+   test.
+
+ - Fixed a problem with File::Spec usage when creating the names of
+   'libdoc' manual pages - the code wasn't dealing with the volume or
+   file portions correctly on certain platforms.
+
+ - When creating the names of the 'libdoc' manual pages, we no longer
+   assume that pods are under the hard-coded paths 'blib/lib' or
+   'blib/arch'.
+
+ - Fixed a crashing bug that could sometimes occur when the
+   distribution contained no 'lib' directory. [Chris Dolan]
+
+ - Fixed a crashing bug that happened when the user had .PL files in
+   the lib/ directory and didn't explicitly name them in a hash
+   reference to the new() constructor. [Chris Reinhardt, bug #4036]
+
+ - .PL files are now passed the names of their target file(s) on the
+   command line when they run.
+
+ - When YAML.pm wasn't installed, t/runthrough.t wasn't properly
+   skipping some tests that required YAML.  This is now fixed.
+   [Stephen J. Smith]
+
+ - Added documentation for the dist_version() and dist_name()
+   methods. [Spotted by Johan Vromans]
+
+ - Existing values in $ENV{HARNESS_PERL_SWITCHES} are now respected
+   and not squashed when we run the 'test' action. [Paul Johnson]
+
+ - On cygwin, the separator string for manual page names has been set
+   to '.'.  Previously it was '::', inherited from Unix. [Yitzchak
+   Scott-Thoennes]
+
+ - Avoid a warning when Build.PL is run (i.e. when the new() method is
+   called) and no MANIFEST file exists. [Michael Schwern and Kevin
+   Ruscoe]
+
+ - Added documentation for the 'code' and 'docs' actions. [Steve
+   Purkis and Mark Stosberg]
+
+ - The internal method compile_support_files() has been renamed to
+   process_support_files() in order to make it consistent with other
+   processing methods.  Note that it was never documented using the
+   old name.  It's still not documented, actually.  Maybe later.
+
+ - Skip the 'write' pseudo-entry in the 'diff' action's installation
+   map. [Chris Dolan]
+
+ - Fixed a bug in which notes() set in the Build.PL before
+   create_build_script() was called would get lost unless more notes()
+   were also set afterwards. [Spotted by Dave Rolsky]
+
+ - The process of building elements of the distribution is now driven
+   by a list of build elements, paving the way for letting people add
+   their own types of build elements in future versions of
+   Module::Build (or in the current version with some difficulty).
+
+ - Fixed some linking errors on Cygwin. [Randy Sims, Terrence Brannon]
+
+ - Fixed a line-ending problem with detecting the dist_abstract
+   properly on Cygwin. [Randy Sims]
+
+ - Fixed a problem with signatures that occurred if 'distsign' was
+   called before 'distdir' - the signature would be generated twice.
+
+ - Added a 'create_readme' parameter to new(), which will use
+   Pod::Text to generate a README from the main (dist_version_from)
+   module file during the 'distdir' action.
+
+ - We now refuse to run the 'Build' script if it was created using a
+   different version of Module::Build.  This has caused a couple of
+   nasty bugs in the past, I don't want to know what it would cause in
+   the future.
+
+ - Documentation for do_system() has been added. [Dave Rolsky]
+
+ - run_perl_script() is now available as a class method, though it
+   will need to (re-)find the perl interpreter in this case.
+
+ - Added a new_from_context() method that authors of automated tools
+   like CPANPLUS and CPAN can use instead of running all tasks as
+   sub-processes.  We also use it in the regression tests for
+   Module::Build itself.  ** Note that this method is currently
+   undocumented because its name may change in the future. **
+
+ - When signing distributions with Module::Signature, we now
+   automatically add the SIGNATURE file to the MANIFEST, avoiding an
+   unpleasant chicken/egg problem for the module author.
+   [unpleasantness spotted by sungo]
+
+ - In Module::Build::Compat, added support for the 'verbose' parameter
+   to Makefile.PL [spotted by Soren Andersen, fixed by Michael
+   Schwern]
+
+ - The Module::Build distribution now has a cryptographic 'SIGNATURE'
+   file created by Module::Signature.
+
+ - Added proper documentation for the subclass() method. [spotted by
+   Jonathan Steinert]
+
+ - Worked around a Config.pm bug in Red Hat 9 which prevented man
+   pages from being installed in the correct places. [spotted by Ville
+   Skytta]
+
+ - Fixed a Module::Build::Compat bug in which setting INSTALLDIRS
+   caused a crash. [spotted by Ilya Martynov]
+
+0.20  Tue Aug 26 14:34:07 CDT 2003
+
+ - Separated the 'build' action into two separate actions, 'code' and
+   'docs'.  This is similar to MakeMaker's separation of the 'all'
+   target into 'pure_all' and 'manifypods'.  This fixes a permissions
+   hassle in which doing 'sudo Build install' would often create local
+   doc files that needed superuser permissions to delete.
+
+ - Enhanced the 'help' action - 'Build help foo' will now show the POD
+   documentation for the 'foo' action.
+
+ - Added a notes() feature, which helps share data transparently
+   between the Build.PL and t/*.t scripts.
+
+ - The installation process will now create man(1) and man(3) pages
+   from POD in modules & scripts, and install them.  We don't build
+   man pages when there's nowhere to install them, such as on some
+   Win32 or most Mac systems.  [large patch by Steve Purkis, 5.005 fix
+   by Mathieu Arnold]
+
+ - The 'distdir' action now copies files to the distribution
+   directory, rather than making them hard links to the original
+   files.  This allows authors to do last-minute alterations of the
+   files without affecting the originals. [Dave Rolsky]
+
+ - If the author uses XS files in nonstandard locations, the copied
+   versions of those files will now be cleaned up properly.
+
+ - In invoking the 'test' action or invoking 'xsubpp', we now use the
+   same perl executable as we use everywhere else, rather than blindly
+   using $^X or $Config{perlpath} (neither of which are very
+   reliable).
+
+ - Fixed a problem with the 'install_path' parameter given to
+   'Build.PL' being lost in subsequent actions. [Reported by Mathieu
+   Arnold]
+
+ - Fixed yet another bug with installation directories, in which the
+   'install_base' parameter wasn't being respected on the command
+   line.  [Spotted by Jonathan Swartz]
+
+ - Changed the way the depends_on() method works inside action
+   subroutines - now each action will only run once per dispatch()
+   invocation (similar to how perl's require() function works).  This
+   helps avoid some difficult problems with dependency loops.
+
+ - Changed the documentation for the 'autosplit' parameter to give
+   reasons why it may not be a good idea to use, but no longer
+   threaten to remove it.  [Suggested by Martyn J. Pearce]
+
+ - Improved the formatting of the 'traditional' Makefile.PL generated
+   by Module::Build::Compat->create_makefile_pl. [Michael Schwern]
+
+ - The 'traditional' Makefile.PL will now use the 'module_name'
+   parameter (as NAME) if it's available, otherwise it will continue
+   to use the 'dist_name' (as DISTNAME). [Michael Schwern]
+
+ - Created read/write accessor methods for all our 'properties'.
+   [Michael Schwern]
+
+ - The 'test_files' parameter can now be specified using glob() syntax
+   (i.e. 't/*.t'), and the corresponding test_files() method is now a
+   read/write accessor.
+
+ - The location of the 'blib' directory is now a property of the Build
+   object - nobody is likely to notice this change, with any luck, but
+   it makes the design and code cleaner.
+
+ - The 'disttest' and 'distsign' methods now chdir() back to the
+   directory where they started, rather than to the base_dir of the
+   build.
+
+ - Improved comparisons of version strings containing underscore
+   characters (indicating "beta" status). [Steve Purkis]
+
+ - Added documentation for the 'dist_author', 'dist_abstract', and
+   'codebase' parameters to new(), and for the 'ppd' action. [Dave
+   Rolsky]
+
+ - Added documentation for the up_to_date() and contains_pod()
+   methods. [Dave Rolsky]
+
+ - 'traditional' pass-through Makefile.PLs will now contain an
+   INSTALLDIRS parameter matching the Build.PL's 'installdirs'
+   setting.
+
+ - version_from_file() now ignores $VERSION variables that are defined
+   in POD or comments.  It can still be tricked by $VERSIONs in string
+   literals, though.  [Steve Purkis]
+
+ - The code to find packages in module files now uses Steve's scanning
+   method (above) to skip package-declaration-lookalikes in POD or
+   comments.
+
+ - The 'disttest' action will now propagate its @INC settings to its
+   subprocesses.
+
+0.19  Wed Jul  9 22:34:02 CDT 2003
+
+ - Added support for the 'install_path' parameter, which allows custom
+   specification of where things should be installed.  This is a major
+   improvement to Module::Build's functionality.
+
+ - Added the 'install_base' parameter.  Provides an easy way to
+   install to local or alternative directory trees.
+
+ - We now install scripts by default to $Config{installsitebin}
+   instead of $Config{installscript}.  Neither is a great choice, but
+   the former is likely to be [analogous to] /usr/local/bin, and the
+   latter is likely to be [something like] /usr/bin .  If/when there's
+   a $Config{installsitescript}, we'll start using that automatically.
+
+ - Fixed a problem on Win32 in which C and XS files wouldn't be
+   compiled properly, and the user would see an error about 'Can't
+   locate object method "format_compiler_cmd"'.
+   (http://rt.cpan.org/Ticket/Display.html?id=2391)
+
+ - We now use the correct perl interpreter (via
+   Module::Build->find_perl_interpreter) in pass-through makefiles.
+
+ - The t/compat.t test now uses $Config{make} instead of just 'make'
+   to test makefile compatibility.  This fixes some failures on Win32.
+   We also skip this test entirely if no make utility is available.
+
+ - Alternative distribution layouts are now supported via the
+   'pm_files', 'pod_files', 'xs_files', 'PL_files', and 'script_files'
+   parameters to new().  This should help people transition from
+   MakeMaker, and might even help us write an automatic transition
+   tool.
+
+ - Added tests to t/runthrough.t that check to see installation is
+   happening correctly.
+
+ - Added experimental code to build a .ppd file, in support of
+   ActiveState's "Perl Package Manager". [original patch by Dave
+   Rolsky]
+ 
+ - For authors who use Module::Signature to sign their distributions,
+   we now create the SIGNATURE file right in the distribution
+   directory, rather than creating it in the top-level directory and
+   copying it into place.  This solves problems related to having
+   files get out of date with respect to their signatures.
+ 
+ - We now don't depend on Module::Info to scan for packages during the
+   'dist' action anymore, because it's way too aggressive about
+   loading other modules that you may not want loaded.  We now just
+   (ick, yuck) scan the .pm files with a regular expression to find
+   "package Foo::Bar;" statements.
+
+ - Silenced some annoying copyright/logo output from Microsoft 'nmake'
+   during Makefile compatibility testing. [Randy W. Sims]
+
+ - Command-line arguments may now either be specified using the syntax
+   '--foo foovalue' as well as the traditional syntax 'foo=foovalue'.
+   The former is often more convenient for shell tab-completion when
+   the value is a filename (as in 'Build test --test_files t/basic.t').
+
+ - Command-line arguments may now include non-named parameters, which
+   make some actions more natural.  For instance, the 'diff' action
+   may now be invoked as 'Build diff -u' rather than as
+   'Build diff flags=-u'.
+
+ - Pass-through Makefile.PLs now convert unknown Makefile.PL
+   parameters to lower-case and hand them to Build.PL, rather than
+   ignoring them.  This means we only have to account for the
+   differences in the interface, not the entire interface, in
+   translating parameters.
+
+ - We now issue a warning & don't proceed if asked to make a distdir
+   and there's no MANIFEST or it's empty.
+
+ - Moved INSTALL to INSTALL.txt to increase compatibility with various
+   odd versions of 'make' during 'make install' on case-insensitive
+   filesystems (like nmake on Win32, often).  Only affects the
+   Makefile compatibility layer.  [reported by Andrew Savige]
+
+ - Module::Build->known_actions() now works as a class method.
+
+ - Pass-through makefiles now list each action individually rather
+   than using a ".DEFAULT" catch-all.  This improves compatibility
+   with 'nmake' on Win32, and probably some other less common 'make'
+   dialects.  [Andrew Savige]
+
+ - We're now more aggressive about testing the pass-through makefiles,
+   e.g. making sure they can run 'all' and 'test' targets, and making
+   sure the Makefile itself actually exists.
+
+ - Fixed a problem with check_installed_status() when installed
+   version contains non-numeric characters like underscores.
+
+ - Fixed a problem with a bareword 'File::Spec' in one of the test
+   scripts that caused it not to compile under 5.8.0 (but is fine
+   under 5.6).
+
+ - Fixed a problem with the 'destdir' installation parameter on
+   platforms that have volume identifiers in path names (like "C:" on
+   Win32).  The identifier is now stripped from installation
+   directories before prepending the destdir path.  The destdir path
+   may still have a volume identifier on it.
+
+ - Added an 'add_to_cleanup' parameter to new() that calls
+   add_to_cleanup() immediately for the given files.
+
+ - The distribution directory (e.g. Sample-Module-0.13/ ) will now be
+   deleted during the 'clean' or 'realclean' actions.
+ 
+ - During testing of modules, blib/lib and blib/arch are now added as
+   absolute paths, not relative.  This helps tests that load the
+   modules at runtime and may change the current working directory
+   (like Module::Build itself does during testing).
+ 
+ - The $Config{cc} entry on some people's systems is something like
+   'ccache gcc', so we now split that string using split_like_shell().
+   [Richard Clamp]
+
+ - Added documentation for 'extra_linker_flags' parameter, and added a
+   corresponding 'extra_compiler_flags' parameter. [original patch by
+   Richard Clamp]

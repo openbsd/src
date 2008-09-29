@@ -8,7 +8,7 @@ BEGIN {
 
 # use strict;
 
-plan tests => 213;
+plan tests => 215;
 
 my @comma = ("key", "value");
 
@@ -288,4 +288,21 @@ foreach my $chr (60, 200, 600, 6000, 60000) {
     $ar = [ ($x,%h) = (0,1,2,1,3,1,4,1,5) ];
     is( $#$ar, 2, 'scalar + hash assignment in list context' );
     is( "@$ar", "0 1 5", '...gets the last values' );
+}
+
+# test stringification of keys
+{
+    no warnings 'once';
+    my @types = qw( SCALAR         ARRAY HASH CODE    GLOB);
+    my @refs =    ( \ do { my $x }, [],   {},  sub {}, \ *x);
+    my(%h, %expect);
+    @h{@refs} = @types;
+    @expect{map "$_", @refs} = @types;
+    ok (eq_hash(\%h, \%expect), 'unblessed ref stringification');
+
+    bless $_ for @refs;
+    %h = (); %expect = ();
+    @h{@refs} = @types;
+    @expect{map "$_", @refs} = @types;
+    ok (eq_hash(\%h, \%expect), 'blessed ref stringification');
 }

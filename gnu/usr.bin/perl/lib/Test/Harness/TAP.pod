@@ -335,6 +335,132 @@ diagnostic form. Finally, the test count is reported at the end.
     ok - board has 7 tiles + starter tile
     1..9
 
+=head1 Non-Perl TAP
+
+In Perl, we use Test::Simple and Test::More to generate TAP output.
+Other languages have solutions that generate TAP, so that they can take
+advantage of Test::Harness.
+
+The following sections are provided by their maintainers, and may not
+be up-to-date.
+
+=head2 C/C++
+
+libtap makes it easy to write test programs in C that produce
+TAP-compatible output.  Modeled on the Test::More API, libtap contains
+all the functions you need to:
+
+=over 4
+
+=item * Specify a test plan
+
+=item * Run tests
+
+=item * Skip tests in certain situations
+
+=item * Have TODO tests
+
+=item * Produce TAP compatible diagnostics
+
+=back
+
+More information about libtap, including download links, checksums,
+anonymous access to the Subersion repository, and a bug tracking
+system, can be found at:
+
+    http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap
+
+(Nik Clayton, April 17, 2006)
+
+=head2 Python
+
+PyTap will, when it's done, provide a simple, assertive (Test::More-like)
+interface for writing tests in Python.  It will output TAP and will
+include the functionality found in Test::Builder and Test::More.  It will
+try to make it easy to add more test code (so you can write your own
+C<TAP.StringDiff>, for example.
+
+Right now, it's got a fair bit of the basics needed to emulate Test::More,
+and I think it's easy to add more stuff -- just like Test::Builder,
+there's a singleton that you can get at easily.
+
+I need to better identify and finish implementing the most basic tests.
+I am not a Python guru, I just use it from time to time, so my aim may
+not be true.  I need to write tests for it, which means either relying
+on Perl for the tester tester, or writing one in Python.
+
+Here's a sample test, as found in my Subversion:
+
+    from TAP.Simple import *
+
+    plan(15)
+
+    ok(1)
+    ok(1, "everything is OK!")
+    ok(0, "always fails")
+
+    is_ok(10, 10, "is ten ten?")
+    is_ok(ok, ok, "even ok is ok!")
+    ok(id(ok),    "ok is not the null pointer")
+    ok(True,      "the Truth will set you ok")
+    ok(not False, "and nothing but the truth")
+    ok(False,     "and we'll know if you lie to us")
+
+    isa_ok(10, int, "10")
+    isa_ok('ok', str, "some string")
+
+    ok(0,    "zero is true", todo="be more like Ruby!")
+    ok(None, "none is true", skip="not possible in this universe")
+
+    eq_ok("not", "equal", "two strings are not equal");
+
+(Ricardo Signes, April 17, 2006)
+
+=head2 JavaScript
+
+Test.Simple looks and acts just like TAP, although in reality it's
+tracking test results in an object rather than scraping them from a
+print buffer.
+
+    http://openjsan.org/doc/t/th/theory/Test/Simple/
+
+(David Wheeler, April 17, 2006)
+
+=head2 PHP
+
+All the big PHP players now produce TAP
+
+=over
+
+=item * phpt
+
+Outputs TAP by default as of the yet-to-be-released PEAR 1.5.0
+
+    http://pear.php.net/PEAR
+
+=item * PHPUnit
+
+Has a TAP logger (since 2.3.4)
+
+    http://www.phpunit.de/wiki/Main_Page
+
+=item * SimpleTest
+
+There's a third-party TAP reporting extension for SimpleTest
+
+    http://www.digitalsandwich.com/archives/51-Updated-Simpletest+Apache-Test.html
+
+=item * Apache-Test
+
+Apache-Test's PHP writes TAP by default and includes the standalone
+test-more.php
+
+    http://search.cpan.org/dist/Apache-Test/
+
+=back
+
+(Geoffrey Young, April 17, 2006)
+
 =head1 AUTHORS
 
 Andy Lester, based on the original Test::Harness documentation by Michael Schwern.

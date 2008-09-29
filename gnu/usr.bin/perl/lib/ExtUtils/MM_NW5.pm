@@ -23,7 +23,7 @@ use ExtUtils::MakeMaker::Config;
 use File::Basename;
 
 use vars qw(@ISA $VERSION);
-$VERSION = '2.08';
+$VERSION = '6.42';
 
 require ExtUtils::MM_Win32;
 @ISA = qw(ExtUtils::MM_Win32);
@@ -34,7 +34,6 @@ $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
 my $BORLAND  = $Config{'cc'} =~ /^bcc/i;
 my $GCC      = $Config{'cc'} =~ /^gcc/i;
-my $DMAKE    = $Config{'make'} =~ /^dmake/i;
 
 
 =item os_flavor

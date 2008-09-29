@@ -1,22 +1,27 @@
 #!./perl
-
+use strict;
+use Cwd;
 
 my %Expect_File = (); # what we expect for $_ 
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname
 my %Expect_Dir  = (); # what we expect for $File::Find::dir
 my $symlink_exists = eval { symlink("",""); 1 };
-my $warn_msg;
+my ($warn_msg, @files, $file);
 
 
 BEGIN {
+    require File::Spec;
     chdir 't' if -d 't';
-    unshift @INC => '../lib';
+    # May be doing dynamic loading while @INC is all relative
+    unshift @INC => File::Spec->rel2abs('../lib');
 
     $SIG{'__WARN__'} = sub { $warn_msg = $_[0]; warn "# $_[0]"; }
 }
 
 if ( $symlink_exists ) { print "1..199\n"; }
 else                   { print "1..85\n";  }
+
+my $orig_dir = cwd();
 
 # Uncomment this to see where File::Find is chdir'ing to.  Helpful for
 # debugging its little jaunts around the filesystem.
@@ -73,8 +78,10 @@ my $case = 2;
 my $FastFileTests_OK = 0;
 
 sub cleanup {
+    chdir($orig_dir);
+    my $need_updir = 0;
     if (-d dir_path('for_find')) {
-        chdir(dir_path('for_find'));
+        $need_updir = 1 if chdir(dir_path('for_find'));
     }
     if (-d dir_path('fa')) {
 	unlink file_path('fa', 'fa_ord'),
@@ -91,7 +98,10 @@ sub cleanup {
 	rmdir dir_path('fb', 'fba');
 	rmdir dir_path('fb');
     }
-    chdir(File::Spec->updir);
+    if ($need_updir) {
+        my $updir = $^O eq 'VMS' ? File::Spec::VMS->updir() : File::Spec->updir;
+        chdir($updir);
+    }
     if (-d dir_path('for_find')) {
 	rmdir dir_path('for_find') or print "# Can't rmdir for_find: $!\n";
     }
@@ -124,6 +134,7 @@ sub MkDir($$) {
 sub wanted_File_Dir {
     printf "# \$File::Find::dir => '$File::Find::dir'\t\$_ => '$_'\n";
     s#\.$## if ($^O eq 'VMS' && $_ ne '.');
+    s/(.dir)?$//i if ($^O eq 'VMS' && -d _);
     Check( $Expect_File{$_} );
     if ( $FastFileTests_OK ) {
         delete $Expect_File{ $_} 
@@ -701,7 +712,7 @@ if ( $symlink_exists ) {
     undef $@;
     eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
                              no_chdir => 1}, topdir('fa') ); };
-    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]faa_sl is a recursive symbolic link| );  
+    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]faa_sl is a recursive symbolic link|i );  
     unlink file_path('fa', 'faa', 'faa_sl'); 
 
 
@@ -718,7 +729,7 @@ if ( $symlink_exists ) {
                                   follow_skip => 0, no_chdir => 1},
                                   topdir('fa') );};
 
-    Check( $@ =~ m|for_find[:/]fa[:/]fa_ord encountered a second time| );
+    Check( $@ =~ m|for_find[:/]fa[:/]fa_ord encountered a second time|i );
 
 
     # no_chdir is in effect, hence we use file_path_name to specify
@@ -767,7 +778,7 @@ if ( $symlink_exists ) {
                             follow_skip => 0, no_chdir => 1},
                             topdir('fa') );};
 
-    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time| );
+    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time|i );
 
   
     undef $@;
@@ -776,7 +787,7 @@ if ( $symlink_exists ) {
                             follow_skip => 1, no_chdir => 1},
                             topdir('fa') );};
 
-    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time| );  
+    Check( $@ =~ m|for_find[:/]fa[:/]faa[:/]? encountered a second time|i );  
 
     # no_chdir is in effect, hence we use file_path_name to specify
     # the expected paths for %Expect_File

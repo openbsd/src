@@ -3,9 +3,13 @@ package Tie::Handle;
 use 5.006_001;
 our $VERSION = '4.1';
 
+# Tie::StdHandle used to be inside Tie::Handle.  For backwards compatibility
+# loading Tie::Handle has to make Tie::StdHandle available.
+use Tie::StdHandle;
+
 =head1 NAME
 
-Tie::Handle, Tie::StdHandle  - base class definitions for tied handles
+Tie::Handle - base class definitions for tied handles
 
 =head1 SYNOPSIS
 
@@ -193,42 +197,5 @@ sub CLOSE {
     my $pkg = ref $_[0];
     croak "$pkg doesn't define a CLOSE method";
 }
-
-package Tie::StdHandle; 
-our @ISA = 'Tie::Handle';
-use Carp;
-
-sub TIEHANDLE 
-{
- my $class = shift;
- my $fh    = \do { local *HANDLE};
- bless $fh,$class;
- $fh->OPEN(@_) if (@_);
- return $fh;
-}
-
-sub EOF     { eof($_[0]) }
-sub TELL    { tell($_[0]) }
-sub FILENO  { fileno($_[0]) }
-sub SEEK    { seek($_[0],$_[1],$_[2]) }
-sub CLOSE   { close($_[0]) }
-sub BINMODE { binmode($_[0]) }
-
-sub OPEN
-{
- $_[0]->CLOSE if defined($_[0]->FILENO);
- @_ == 2 ? open($_[0], $_[1]) : open($_[0], $_[1], $_[2]);
-}
-
-sub READ     { read($_[0],$_[1],$_[2]) }
-sub READLINE { my $fh = $_[0]; <$fh> }
-sub GETC     { getc($_[0]) }
-
-sub WRITE
-{
- my $fh = $_[0];
- print $fh substr($_[1],0,$_[2])
-}
-
 
 1;

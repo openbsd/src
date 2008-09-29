@@ -1,0 +1,16 @@
+; MoDev::Msg installation script
+;
+; The supported languages
+&EN;
+;
+; The installation name and header data
+;
+#{"MoDev::Msg"},(0x0FFFFFFF),0,1,0
+;
+; Platform supported is Series 60
+;
+(0x101F6F88), 0, 0, 0, {"Series60ProductID"}
+; The files to install
+;
+"Msg.pm"-"!:\System\Libs\Perl\5.9.3\MoDev\Msg.pm"
+"\epoc32\release\thumb\urel\Msg.dll"-"!:\System\Libs\Perl\5.9.3\thumb-symbian\Msg.dll"

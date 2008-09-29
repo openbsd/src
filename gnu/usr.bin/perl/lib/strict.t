@@ -74,7 +74,7 @@ for (@prgs){
 		      `perl -I../lib $switch $tmpfile 2>&1` :
                   $^O eq 'MacOS' ?
 		      `$^X -I::lib -MMac::err=unix $switch $tmpfile` :
-                  `./perl $switch $tmpfile 2>&1`;
+                  `$^X $switch $tmpfile 2>&1`;
     my $status = $?;
     $results =~ s/\n+$//;
     # allow expected output to be written as if $prog is on STDIN

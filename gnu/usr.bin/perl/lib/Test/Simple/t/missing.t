@@ -43,7 +43,7 @@ OUT
 
     My::Test::is($$err, <<ERR);
 #   Failed test 'Bar'
-#   in $0 at line 31.
+#   at $0 line 31.
 # Looks like you planned 5 tests but only ran 2.
 # Looks like you failed 1 test of 2 run.
 ERR

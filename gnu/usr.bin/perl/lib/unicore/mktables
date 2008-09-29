@@ -45,6 +45,13 @@ while (@ARGV)
     } elsif ($arg eq '-w') {
         $AlwaysWrite = 1;	# update the files even if they havent changed
         $FileList = "";
+    } elsif ($arg eq '-check') {
+        my $this = shift @ARGV;
+        my $ok = shift @ARGV;
+        if ($this ne $ok) {
+            print "Skipping as check params are not the same.\n";
+            exit(0);
+        }
     } elsif ($arg eq '-maketest') {
         $MakeTestScript = 1;
     } elsif ($arg eq '-makelist') {
@@ -61,7 +68,8 @@ while (@ARGV)
             "  -maketest   : Make test script\n",
             "  -makelist   : Rewrite the file list based on current setup\n",
             "  -L filelist : Use this file list, (defaults to $0)\n",
-            "  -C dir      : Change to this directory before proceding\n";   
+            "  -C dir      : Change to this directory before proceeding\n",
+            "  -check A B  : Executes only if A and B are the same\n";   
     }
 }
 
@@ -821,7 +829,10 @@ sub UnicodeData_Txt()
 	Table->New(Is => 'Word',   Desc => "[[:Word:]]",   Fuzzy => 0);
     $Cat{SpacePerl} =
 	Table->New(Is => 'SpacePerl', Desc => '\s', Fuzzy => 0);
-
+    $Cat{VertSpace} =
+	Table->New(Is => 'VertSpace', Desc => '\v', Fuzzy => 0);
+    $Cat{HorizSpace} =
+	Table->New(Is => 'HorizSpace', Desc => '\h', Fuzzy => 0);
     my %To;
     $To{Upper} = Table->New();
     $To{Lower} = Table->New();
@@ -877,6 +888,15 @@ sub UnicodeData_Txt()
 
         $Cat{SpacePerl}->$op($code) if $isspace
 	                               && $code != 0x000B; # Backward compat.
+
+        $Cat{VertSpace}->$op($code) if grep {$code == $_} 
+            ( 0x0A..0x0D,0x85,0x2028,0x2029 );
+
+        $Cat{HorizSpace}->$op($code) if grep {$code == $_} (
+            0x09,   0x20,   0xa0,   0x1680, 0x180e, 0x2000, 0x2001, 0x2002,
+            0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200a,
+            0x202f, 0x205f, 0x3000
+        ); 
 
         $Cat{Blank}->$op($code) if $isspace
                                 && !($code == 0x000A ||
@@ -1492,41 +1512,63 @@ sub PropList_txt()
 	);
     }
 
-    # Alphabetic is L and Other_Alphabetic.
+    # Alphabetic is L, Nl, and Other_Alphabetic.
     New_Prop(Is    => 'Alphabetic',
-             Table->Merge($Cat{L}, $Prop{Other_Alphabetic}),
-             Desc  => '[\p{L}\p{OtherAlphabetic}]', # use canonical names here
+             Table->Merge($Cat{L}, $Cat{Nl}, $Prop{Other_Alphabetic}),
+             Desc  => '[\p{L}\p{Nl}\p{OtherAlphabetic}]', # canonical names
              Fuzzy => 1);
 
     # Lowercase is Ll and Other_Lowercase.
     New_Prop(Is    => 'Lowercase',
              Table->Merge($Cat{Ll}, $Prop{Other_Lowercase}),
-             Desc  => '[\p{Ll}\p{OtherLowercase}]', # use canonical names here
+             Desc  => '[\p{Ll}\p{OtherLowercase}]', # canonical names
              Fuzzy => 1);
 
     # Uppercase is Lu and Other_Uppercase.
     New_Prop(Is => 'Uppercase',
              Table->Merge($Cat{Lu}, $Prop{Other_Uppercase}),
-             Desc  => '[\p{Lu}\p{Other_Uppercase}]', # use canonical names here
+             Desc  => '[\p{Lu}\p{OtherUppercase}]', # canonical names
              Fuzzy => 1);
 
     # Math is Sm and Other_Math.
     New_Prop(Is => 'Math',
              Table->Merge($Cat{Sm}, $Prop{Other_Math}),
-             Desc  => '[\p{Sm}\p{OtherMath}]', # use canonical names here
+             Desc  => '[\p{Sm}\p{OtherMath}]', # canonical names
              Fuzzy => 1);
 
-    # ID_Start is Ll, Lu, Lt, Lm, Lo, and Nl.
+    # ID_Start is Ll, Lu, Lt, Lm, Lo, Nl, and Other_ID_Start.
     New_Prop(Is => 'ID_Start',
-             Table->Merge(@Cat{qw[Ll Lu Lt Lm Lo Nl]}),
-             Desc  => '[\p{Ll}\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]',
+             Table->Merge(@Cat{qw[Ll Lu Lt Lm Lo Nl]}, $Prop{Other_ID_Start}),
+             Desc  => '[\p{Ll}\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\p{OtherIDStart}]',
              Fuzzy => 1);
 
-    # ID_Continue is ID_Start, Mn, Mc, Nd, and Pc.
+    # ID_Continue is ID_Start, Mn, Mc, Nd, Pc, and Other_ID_Continue.
     New_Prop(Is => 'ID_Continue',
-             Table->Merge(@Cat{qw[Ll Lu Lt Lm Lo Nl Mn Mc Nd Pc ]}),
-             Desc  => '[\p{ID_Start}\p{Mn}\p{Mc}\p{Nd}\p{Pc}]',
+             Table->Merge(@Cat{qw[Ll Lu Lt Lm Lo Nl Mn Mc Nd Pc ]},
+                          @Prop{qw[Other_ID_Start Other_ID_Continue]}),
+             Desc  => '[\p{ID_Start}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{OtherIDContinue}]',
              Fuzzy => 1);
+
+    # Default_Ignorable_Code_Point = Other_Default_Ignorable_Code_Point
+    #                     + Cf + Cc + Cs + Noncharacter + Variation_Selector
+    #                     - WhiteSpace - FFF9..FFFB (Annotation Characters)
+
+    my $Annotation = Table->New();
+    $Annotation->RawAppendRange(0xFFF9, 0xFFFB);
+
+    New_Prop(Is => 'Default_Ignorable_Code_Point',
+             Table->Merge(@Cat{qw[Cf Cc Cs]},
+                          $Prop{Noncharacter_Code_Point},
+                          $Prop{Variation_Selector},
+                          $Prop{Other_Default_Ignorable_Code_Point})
+                  ->Invert
+                  ->Merge($Prop{White_Space}, $Annotation)
+                  ->Invert,
+             Desc  => '(?![\p{WhiteSpace}\x{FFF9}-\x{FFFB}])[\p{Cf}\p{Cc}'.
+                      '\p{Cs}\p{NoncharacterCodePoint}\p{VariationSelector}'.
+                      '\p{OtherDefaultIgnorableCodePoint}]',
+             Fuzzy => 1);
+
 }
 
 

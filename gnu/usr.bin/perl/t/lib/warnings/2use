@@ -42,7 +42,7 @@ use warnings 'uninitialized' ;
 }
 my $b ; chop $b ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check runtime scope of pragma
@@ -53,7 +53,7 @@ no warnings ;
 }
 my $b ; chop $b ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 6.
+Use of uninitialized value $b in scalar chop at - line 6.
 ########
 
 # Check runtime scope of pragma
@@ -64,7 +64,7 @@ no warnings ;
 }
 &$a ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 6.
+Use of uninitialized value $b in scalar chop at - line 6.
 ########
 
 use warnings 'syntax' ;
@@ -109,7 +109,7 @@ require "./abc";
 my $a ; chop $a ;
 EXPECT
 Reversed += operator at ./abc line 2.
-Use of uninitialized value in scalar chop at - line 3.
+Use of uninitialized value $a in scalar chop at - line 3.
 ########
 
 --FILE-- abc.pm
@@ -122,7 +122,7 @@ use abc;
 my $a ; chop $a ;
 EXPECT
 Reversed += operator at abc.pm line 2.
-Use of uninitialized value in scalar chop at - line 3.
+Use of uninitialized value $a in scalar chop at - line 3.
 ########
 
 # Check scope of pragma with eval
@@ -149,7 +149,7 @@ use warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check scope of pragma with eval
@@ -162,8 +162,8 @@ no warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at - line 7.
-Use of uninitialized value in scalar chop at - line 9.
+Use of uninitialized value $b in scalar chop at - line 7.
+Use of uninitialized value $b in scalar chop at - line 9.
 ########
 
 # Check scope of pragma with eval
@@ -177,7 +177,7 @@ no warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at - line 10.
+Use of uninitialized value $b in scalar chop at - line 10.
 ########
 
 # Check scope of pragma with eval
@@ -259,7 +259,7 @@ use warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at (eval 1) line 3.
+Use of uninitialized value $b in scalar chop at (eval 1) line 3.
 ########
 
 # Check scope of pragma with eval
@@ -272,8 +272,8 @@ no warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at (eval 1) line 2.
-Use of uninitialized value in scalar chop at - line 9.
+Use of uninitialized value $b in scalar chop at (eval 1) line 2.
+Use of uninitialized value $b in scalar chop at - line 9.
 ########
 
 # Check scope of pragma with eval
@@ -287,7 +287,7 @@ no warnings;
     my $b ; chop $b ;
 }
 EXPECT
-Use of uninitialized value in scalar chop at - line 10.
+Use of uninitialized value $b in scalar chop at - line 10.
 ########
 
 # Check scope of pragma with eval
@@ -357,4 +357,4 @@ no warnings 'syntax' ;
 $a =+ 1 ;
 EXPECT
 Reversed += operator at - line 6.
-Use of uninitialized value in scalar chop at - line 9.
+Use of uninitialized value $c in scalar chop at - line 9.

@@ -1,3 +1,12 @@
+#!perl
+
+BEGIN {
+    if ($ENV{PERL_CORE}) {
+	chdir 't' if -d 't';
+	@INC = '../lib';
+    }
+}
+
 END {print "not ok 1\n" unless $loaded;}
 use v5.6.0;
 use Attribute::Handlers;

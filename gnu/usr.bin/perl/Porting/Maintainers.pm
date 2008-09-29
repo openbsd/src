@@ -7,6 +7,7 @@ package Maintainers;
 use strict;
 
 use lib "Porting";
+use 5.010;
 
 require "Maintainers.pl";
 use vars qw(%Modules %Maintainers);
@@ -67,11 +68,14 @@ sub get_maintainer_modules {
 
 sub usage {
     print <<__EOF__;
-$0: Usage: $0 [[--maintainer M --module M --files --check]|file ...]
+$0: Usage: $0 [[--maintainer M --module M --files]|[--check] file ...]
 --maintainer M	list all maintainers matching M
 --module M	list all modules matching M
 --files		list all files
 --check		check consistency of Maintainers.pl
+			with a file	checks if it has a maintainer
+			with a dir	checks all files have a maintainer
+			otherwise	checks for multiple maintainers
 --opened	list all modules of files opened by perforce
 Matching is case-ignoring regexp, author matching is both by
 the short id and by the full name and email.  A "module" may
@@ -160,6 +164,13 @@ sub show_results {
 		}
 	    }
 	}
+    } elsif ($Check) {
+        if( @Files ) {
+	    missing_maintainers( qr{\.(?:[chty]|p[lm]|xs)\z}msx, @Files)
+	}
+	else { 
+	    duplicated_maintainers();
+	}
     } elsif (@Files) {
 	my %ModuleByFile;
 
@@ -233,26 +244,44 @@ sub show_results {
 	    }
 	}
     }
-    elsif ($Check) {
-	duplicated_maintainers();
-    }
     else {
 	usage();
     }
 }
 
-sub duplicated_maintainers {
-    my %files;
+sub warn_maintainer(_);
+my %files;
+
+sub maintainers_files {
+    %files = ();
     for my $k (keys %Modules) {
 	for my $f (get_module_files($k)) {
 	    ++$files{$f};
 	}
     }
+}
+
+sub duplicated_maintainers {
+    maintainers_files();
     for my $f (keys %files) {
 	if ($files{$f} > 1) {
 	    warn "File $f appears $files{$f} times in Maintainers.pl\n";
 	}
     }
+}
+
+sub missing_maintainers {
+    my($check, @path) = @_;
+    maintainers_files();
+    my @dir;
+    for (@path) { if( -d ) { push @dir, $_ } else { warn_maintainer() } }
+    find sub { warn_maintainer($File::Find::name) if /$check/; }, @dir
+	if @dir;
+}
+
+sub warn_maintainer(_) {
+    my $name = shift;
+    warn "File $name has no maintainer\n" if not $files{$name};
 }
 
 1;

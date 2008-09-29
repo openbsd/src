@@ -10,7 +10,7 @@
 package Pod::Checker;
 
 use vars qw($VERSION);
-$VERSION = 1.43;  ## Current version of this package
+$VERSION = "1.43_01";  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 use Pod::ParseUtils; ## for hyperlinks and lists
@@ -82,7 +82,7 @@ C<LE<lt>...LE<lt>...E<gt>...E<gt>>).
 
 =item *
 
-Check for malformed or nonexisting entities C<EE<lt>...E<gt>>.
+Check for malformed or non-existing entities C<EE<lt>...E<gt>>.
 
 =item *
 
@@ -142,7 +142,7 @@ There is no specification of the formatter after the C<=for> command.
 =item * unresolved internal link I<NAME>
 
 The given link to I<NAME> does not have a matching node in the current
-POD. This also happend when a single word node name is not enclosed in
+POD. This also happened when a single word node name is not enclosed in
 C<"">.
 
 =item * Unknown command "I<CMD>"
@@ -234,7 +234,7 @@ C<=over>/C<=back> block.
 
 =item * =item type mismatch (I<one> vs. I<two>)
 
-A list started with e.g. a bulletted C<=item> and continued with a
+A list started with e.g. a bullet-like C<=item> and continued with a
 numbered one. This is obviously inconsistent. For most translators the
 type of the I<first> C<=item> determines the type of the list.
 
@@ -282,7 +282,7 @@ C<=head1>.
 
 =head2 Hyperlinks
 
-There are some warnings wrt. malformed hyperlinks.
+There are some warnings with respect to malformed hyperlinks:
 
 =over 4
 
@@ -332,8 +332,8 @@ Since PodParser-1.24 the B<Pod::Checker> module uses only the B<poderror>
 method to print errors and warnings. The summary output (e.g. 
 "Pod syntax OK") has been dropped from the module and has been included in
 B<podchecker> (the script). This allows users of B<Pod::Checker> to
-control completely the output behaviour. Users of B<podchecker> (the script)
-get the well-known behaviour.
+control completely the output behavior. Users of B<podchecker> (the script)
+get the well-known behavior.
 
 =cut
 
@@ -364,6 +364,7 @@ my %VALID_COMMANDS = (
     'for'    =>  1,
     'begin'  =>  1,
     'end'    =>  1,
+    'encoding' => '1',
 );
 
 my %VALID_SEQUENCES = (

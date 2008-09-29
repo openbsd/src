@@ -650,7 +650,7 @@ backtranslations are altered in C<@components>, they will be similarly
 changed when the placeholders are removed from C<$_> after the filter
 is complete.
 
-For example, the following filter detects concatentated pairs of
+For example, the following filter detects concatenated pairs of
 strings/quotelikes and reverses the order in which they are
 concatenated:
 

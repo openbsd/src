@@ -43,7 +43,12 @@ eval {
 
 # Visual C's CRT goes silly on strings of the form "en_US.ISO8859-1"
 # and mingw32 uses said silly CRT
-$have_setlocale = 0 if (($^O eq 'MSWin32' || $^O eq 'NetWare') && $Config{cc} =~ /^(cl|gcc)/i);
+# This doesn't seem to be an issue any more, at least on Windows XP,
+# so re-enable the tests for Windows XP onwards.
+my $winxp = ($^O eq 'MSWin32' && defined &Win32::GetOSVersion &&
+		join('.', (Win32::GetOSVersion())[1..2]) >= 5.1);
+$have_setlocale = 0 if ((($^O eq 'MSWin32' && !$winxp) || $^O eq 'NetWare') &&
+		$Config{cc} =~ /^(cl|gcc)/i);
 
 # UWIN seems to loop after test 98, just skip for now
 $have_setlocale = 0 if ($^O =~ /^uwin/);
@@ -52,7 +57,7 @@ my $last = $have_setlocale ? &last : &last_without_setlocale;
 
 print "1..$last\n";
 
-use vars qw(&LC_ALL);
+sub LC_ALL ();
 
 $a = 'abc %';
 
@@ -399,6 +404,17 @@ if (-x "/usr/bin/locale" && open(LOCALES, "/usr/bin/locale -a 2>/dev/null|")) {
         trylocale($_);
     }
     close(LOCALES);
+} elsif ($^O eq 'openbsd' && -e '/usr/share/locale') {
+
+   # OpenBSD doesn't have a locale executable, so reading /usr/share/locale
+   # is much easier and faster than the last resort method.
+
+    opendir(LOCALES, '/usr/share/locale');
+    while ($_ = readdir(LOCALES)) {
+        chomp;
+        trylocale($_);
+    }
+    close(LOCALES);
 } else {
 
     # This is going to be slow.
@@ -438,9 +454,10 @@ if (-x "/usr/bin/locale" && open(LOCALES, "/usr/bin/locale -a 2>/dev/null|")) {
 setlocale(LC_ALL, "C");
 
 if ($^O eq 'darwin') {
-    # Darwin 8/Mac OS X 10.4 has bad Basque locales: perl bug #35895,
+    # Darwin 8/Mac OS X 10.4 and 10.5 have bad Basque locales: perl bug #35895,
     # Apple bug ID# 4139653. It also has a problem in Byelorussian.
-    if ($Config{osvers} ge '8' and $Config{osvers} lt '9') {
+    (my $v) = $Config{osvers} =~ /^(\d+)/;
+    if ($v >= 8 and $v < 10) {
 	debug "# Skipping eu_ES, be_BY locales -- buggy in Darwin\n";
 	@Locale = grep ! m/^(eu_ES|be_BY.CP1131$)/, @Locale;
     }

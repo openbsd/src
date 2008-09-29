@@ -56,7 +56,6 @@ BEGIN {
                    test_via_harness
                    test_via_script
                    makeaperl
-                   nicetext
                   ));
 }
 

@@ -7,16 +7,12 @@ BEGIN {
 
 use warnings;
 use Text::ParseWords;
-
-print "1..22\n";
+use Test::More tests => 27;
 
 @words = shellwords(qq(foo "bar quiz" zoo));
-print "not " if $words[0] ne 'foo';
-print "ok 1\n";
-print "not " if $words[1] ne 'bar quiz';
-print "ok 2\n";
-print "not " if $words[2] ne 'zoo';
-print "ok 3\n";
+is($words[0], 'foo');
+is($words[1], 'bar quiz');
+is($words[2], 'zoo');
 
 {
   # Gonna get some undefined things back
@@ -24,76 +20,66 @@ print "ok 3\n";
 
   # Test quotewords() with other parameters and null last field
   @words = quotewords(':+', 1, 'foo:::"bar:foo":zoo zoo:');
-  print "not " unless join(";", @words) eq qq(foo;"bar:foo";zoo zoo;);
-  print "ok 4\n";
+  is(join(";", @words), qq(foo;"bar:foo";zoo zoo;));
 }
 
 # Test $keep eq 'delimiters' and last field zero
 @words = quotewords('\s+', 'delimiters', '4 3 2 1 0');
-print "not " unless join(";", @words) eq qq(4; ;3; ;2; ;1; ;0);
-print "ok 5\n";
+is(join(";", @words), qq(4; ;3; ;2; ;1; ;0));
 
 # Big ol' nasty test (thanks, Joerk!)
 $string = 'aaaa"bbbbb" cc\\ cc \\\\\\"dddd" eee\\\\\\"ffff" "gg"';
 
 # First with $keep == 1
 $result = join('|', parse_line('\s+', 1, $string));
-print "not " unless $result eq 'aaaa"bbbbb"|cc\\ cc|\\\\\\"dddd" eee\\\\\\"ffff"|"gg"';
-print "ok 6\n";
+is($result, 'aaaa"bbbbb"|cc\\ cc|\\\\\\"dddd" eee\\\\\\"ffff"|"gg"');
 
 # Now, $keep == 0
 $result = join('|', parse_line('\s+', 0, $string));
-print "not " unless $result eq 'aaaabbbbb|cc cc|\\"dddd eee\\"ffff|gg';
-print "ok 7\n";
+is($result, 'aaaabbbbb|cc cc|\\"dddd eee\\"ffff|gg');
 
 # Now test single quote behavior
 $string = 'aaaa"bbbbb" cc\\ cc \\\\\\"dddd\' eee\\\\\\"ffff\' gg';
 $result = join('|', parse_line('\s+', 0, $string));
-print "not " unless $result eq 'aaaabbbbb|cc cc|\\"dddd eee\\\\\\"ffff|gg';
-print "ok 8\n";
+is($result, 'aaaabbbbb|cc cc|\\"dddd eee\\\\\\"ffff|gg');
 
 # Make sure @nested_quotewords does the right thing
 @lists = nested_quotewords('\s+', 0, 'a b c', '1 2 3', 'x y z');
-print "not " unless (@lists == 3 && @{$lists[0]} == 3 && @{$lists[1]} == 3 && @{$lists[2]} == 3);
-print "ok 9\n";
+is (@lists, 3);
+is (@{$lists[0]}, 3);
+is (@{$lists[1]}, 3);
+is (@{$lists[2]}, 3);
 
 # Now test error return
 $string = 'foo bar baz"bach blech boop';
 
 @words = shellwords($string);
-print "not " if (@words);
-print "ok 10\n";
+is(@words, 0);
 
 @words = parse_line('s+', 0, $string);
-print "not " if (@words);
-print "ok 11\n";
+is(@words, 0);
 
 @words = quotewords('s+', 0, $string);
-print "not " if (@words);
-print "ok 12\n";
+is(@words, 0);
 
 {
   # Gonna get some more undefined things back
   no warnings 'uninitialized' ;
 
   @words = nested_quotewords('s+', 0, $string);
-  print "not " if (@words);
-  print "ok 13\n";
+  is(@words, 0);
 
   # Now test empty fields
   $result = join('|', parse_line(':', 0, 'foo::0:"":::'));
-  print "not " unless ($result eq 'foo||0||||');
-  print "ok 14\n";
+  is($result, 'foo||0||||');
 
   # Test for 0 in quotes without $keep
   $result = join('|', parse_line(':', 0, ':"0":'));
-  print "not " unless ($result eq '|0|');
-  print "ok 15\n";
+  is($result, '|0|');
 
   # Test for \001 in quoted string
   $result = join('|', parse_line(':', 0, ':"' . "\001" . '":'));
-  print "not " unless ($result eq "|\1|");
-  print "ok 16\n";
+  is($result, "|\1|");
 
 }
 
@@ -101,34 +87,39 @@ print "ok 12\n";
 $Text::ParseWords::PERL_SINGLE_QUOTE = 1;
 $string = 'aaaa"bbbbb" cc\ cc \\\\\"dddd\' eee\\\\\"\\\'ffff\' gg';
 $result = join('|', parse_line('\s+', 0, $string));
-print "not " unless $result eq 'aaaabbbbb|cc cc|\"dddd eee\\\\"\'ffff|gg';
-print "ok 17\n";
+is($result, 'aaaabbbbb|cc cc|\"dddd eee\\\\"\'ffff|gg');
 
 # test whitespace in the delimiters
 @words = quotewords(' ', 1, '4 3 2 1 0');
-print "not " unless join(";", @words) eq qq(4;3;2;1;0);
-print "ok 18\n";
+is(join(";", @words), qq(4;3;2;1;0));
 
 # [perl #30442] Text::ParseWords does not handle backslashed newline inside quoted text
 $string = qq{"field1"	"field2\\\nstill field2"	"field3"};
 
 $result = join('|', parse_line("\t", 1, $string));
-print "not " unless $result eq qq{"field1"|"field2\\\nstill field2"|"field3"};
-print "ok 19\n";
+is($result, qq{"field1"|"field2\\\nstill field2"|"field3"});
 
 $result = join('|', parse_line("\t", 0, $string));
-print "not " unless $result eq "field1|field2\nstill field2|field3";
-print "ok 20\n";
+is($result, "field1|field2\nstill field2|field3");
 
 # unicode
 $string = qq{"field1"\x{1234}"field2\\\x{1234}still field2"\x{1234}"field3"};
 $result = join('|', parse_line("\x{1234}", 0, $string));
-print "not " unless $result eq "field1|field2\x{1234}still field2|field3";
-print "ok 21\n";
+is($result, "field1|field2\x{1234}still field2|field3");
 
 # missing quote after matching regex used to hang after change #22997
 "1234" =~ /(1)(2)(3)(4)/;
 $string = qq{"missing quote};
 $result = join('|', shellwords($string));
-print "not " unless $result eq "";
-print "ok 22\n";
+is($result, "");
+
+# make sure shellwords strips out leading whitespace and trailng undefs
+# from parse_line, so it's behavior is more like /bin/sh
+$result = join('|', shellwords(" aa \\  \\ bb ", " \\  ", "cc dd ee\\ "));
+is($result, "aa| | bb| |cc|dd|ee ");
+
+$SIG{ALRM} = sub {die "Timeout!"};
+alarm(3);
+@words = Text::ParseWords::old_shellwords("foo\\");
+is(@words, 1);
+alarm(0);

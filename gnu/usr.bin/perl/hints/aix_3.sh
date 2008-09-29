@@ -91,7 +91,7 @@ case "$cc" in
         ccdlflags='-Xlinker'
         if [ "X$gccversion" = "X" ]; then
 	    # Done too late in Configure if hinted
-	    gccversion=`$cc --version | sed 's/.*(GCC) *//'`
+	    gccversion=`$cc -dumpversion`
 	    fi
         ;;
 

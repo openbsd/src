@@ -24,11 +24,11 @@ my $files = join '',
 	( $ENV{HOME} . '/.termcap', # we assume pretty UNIXy system anyway
 	  '/etc/termcap', 
 	  '/usr/share/misc/termcap' );
-unless( $files || $^O eq 'VMS') {
+unless( $files || $^O eq 'VMS' ) {
     plan skip_all => 'no termcap available to test';
 }
 else {
-    plan tests => 44;
+    plan tests => 45;
 }
 
 use_ok( 'Term::Cap' );
@@ -158,6 +158,21 @@ SKIP: {
 	is( $t->{_bc}, "\b", 'should set _bc field correctly' );
 }
 
+# Windows hack
+SKIP:
+{
+   skip("QNX's termcap database does not contain an entry for dumb terminals",
+        1) if $^O eq 'nto';
+
+   local *^O;
+   local *ENV;
+   delete $ENV{TERM};
+   $^O = 'Win32';
+
+   my $foo = Term::Cap->Tgetent();
+   is($foo->{TERM} ,'dumb','Windows gets "dumb" by default');
+}
+
 # Tgoto has comments on the expected formats
 $t->{_test} = "a%d";
 is( $t->Tgoto('test', '', 1, *OUT), 'a1', 'Tgoto() should handle %d code' );
@@ -166,12 +181,12 @@ is( $out->read(), 'a1', 'Tgoto() should print to filehandle if passed' );
 $t->{_test} = "a%.";
 like( $t->Tgoto('test', '', 1), qr/^a\x01/, 'Tgoto() should handle %.' );
 if (ord('A') == 193) {  # EBCDIC platform
-like( $t->Tgoto('test', '', 0), qr/\x81\x01\x16/, 
-	'Tgoto() should handle %. and magic' );
-} else { # ASCII platform
-like( $t->Tgoto('test', '', 0), qr/\x61\x01\x08/, 
-	'Tgoto() should handle %. and magic' );
-}
+   like( $t->Tgoto('test', '', 0), qr/\x81\x01\x16/,
+         'Tgoto() should handle %. and magic' );
+   } else { # ASCII platform
+      like( $t->Tgoto('test', '', 0), qr/\x61\x01\x08/,
+            'Tgoto() should handle %. and magic' );
+      }
 
 $t->{_test} = 'a%+';
 like( $t->Tgoto('test', '', 1), qr/a\x01/, 'Tgoto() should handle %+' );

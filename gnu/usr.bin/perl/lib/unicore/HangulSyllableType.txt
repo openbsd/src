@@ -1,8 +1,8 @@
-# HangulSyllableType-4.1.0.txt
-# Date: 2004-12-11, 05:44:43 GMT [MD]
+# HangulSyllableType-5.0.0.txt
+# Date: 2006-03-09, 23:14:14 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2005 Unicode, Inc.
+# Copyright (c) 1991-2006 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 
@@ -12,6 +12,8 @@
 
 #  All code points not explicitly listed for Hangul_Syllable_Type
 #  have the value Not_Applicable (NA).
+
+# @missing: 0000..10FFFF; Not_Applicable
 
 # ================================================
 
@@ -849,3 +851,5 @@ D76D..D787    ; LVT # Lo  [27] HANGUL SYLLABLE HYIG..HANGUL SYLLABLE HYIH
 D789..D7A3    ; LVT # Lo  [27] HANGUL SYLLABLE HIG..HANGUL SYLLABLE HIH
 
 # Total code points: 10773
+
+# EOF

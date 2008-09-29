@@ -65,7 +65,6 @@
 #else
 #define printf PerlIO_stdoutf
 #endif
-#endif
 
 #define fprintf			PerlIO_printf
 #define stdin			PerlIO_stdin()

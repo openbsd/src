@@ -10,7 +10,7 @@
 package Pod::Parser;
 
 use vars qw($VERSION);
-$VERSION = 1.32;  ## Current version of this package
+$VERSION = 1.35;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -140,7 +140,7 @@ to avoid name collisions.
 
 For the most part, the B<Pod::Parser> base class should be able to
 do most of the input parsing for you and leave you free to worry about
-how to intepret the commands and translate the result.
+how to interpret the commands and translate the result.
 
 Note that all we have described here in this quick overview is the
 simplest most straightforward use of B<Pod::Parser> to do stream-based
@@ -651,7 +651,7 @@ them in simple bottom-up order.
 
 The parameter C<$text> is a string or block of text to be parsed
 for interior sequences; and the parameter C<$line_num> is the
-line number curresponding to the beginning of C<$text>.
+line number corresponding to the beginning of C<$text>.
 
 B<parse_text()> will parse the given text into a parse-tree of "nodes."
 and interior-sequences.  Each "node" in the parse tree is either a
@@ -844,7 +844,7 @@ sub parse_text {
             $seq->append($expand_text ? &$xtext_sub($self,$_,$seq) : $_);
         }
         ## Keep track of line count
-        $line += tr/\n//;
+        $line += s/\r*\n//;
         ## Remember the "current" sequence
         $seq = $seq_stack[-1];
     }
@@ -1156,7 +1156,10 @@ sub parse_from_file {
     my $self = shift;
     my %opts = (ref $_[0] eq 'HASH') ? %{ shift() } : ();
     my ($infile, $outfile) = @_;
-    my ($in_fh,  $out_fh) = (gensym(), gensym())  if ($] < 5.006);
+    my ($in_fh,  $out_fh);
+    if ($] < 5.006) {
+      ($in_fh,  $out_fh) = (gensym(), gensym());
+    }
     my ($close_input, $close_output) = (0, 0);
     local *myData = $self;
     local *_;
@@ -1760,6 +1763,14 @@ need to do is recursively walk the tree in the desired order, processing
 the children (most likely from left to right) by formatting them if
 they are text-strings, or by calling their B<emit()> method if they
 are objects/references.
+
+=head1 CAVEATS
+
+Please note that POD has the notion of "paragraphs": this is something
+starting I<after> a blank (read: empty) line, with the single exception
+of the file start, which is also starting a paragraph. That means that
+especially a command (e.g. C<=head1>) I<must> be preceded with a blank
+line; C<__END__> is I<not> a blank line.
 
 =head1 SEE ALSO
 

@@ -2,7 +2,7 @@ use strict;
 package Tie::Memoize;
 use Tie::Hash;
 our @ISA = 'Tie::ExtraHash';
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 our $exists_token = \undef;
 
@@ -30,11 +30,11 @@ sub EXISTS   {
   my $cache = $a->[1]{$key};
   return $cache if defined $cache; # Existence cache
   my @res = $a->[3]($key,$a->[4]);
-  $_[0][1]{$key} = 0, return unless @res; # Cache non-existence
+  $a->[1]{$key} = 0, return unless @res; # Cache non-existence
   # Now we know it exists
-  return ($_[0][1]{$key} = 1) if $a->[5]; # Only existence reported
+  return ($a->[1]{$key} = 1) if $a->[5]; # Only existence reported
   # Now know the value
-  $_[0][0]{$key} = $res[0];	# Store data
+  $a->[0]{$key} = $res[0];    # Store data
   return 1
 }
 

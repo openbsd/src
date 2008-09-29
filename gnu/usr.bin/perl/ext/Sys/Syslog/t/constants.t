@@ -1,8 +1,9 @@
-#!/usr/bin/perl -T
+#!perl -wT
 use strict;
 use File::Spec;
 use Test::More;
 
+# NB. For PERL_CORE to be set, taint mode must not be enabled
 my $macrosall = $ENV{PERL_CORE} ? File::Spec->catfile(qw(.. ext Sys Syslog macros.all))
                                 : 'macros.all';
 open(MACROS, $macrosall) or plan skip_all => "can't read '$macrosall': $!";
@@ -27,7 +28,7 @@ if(@names) {
             $name = $1;
             my $v = eval "${callpack}::$name()";
 
-            if(defined($v) && $v =~ /^\d+$/) {
+            if(defined $v and $v =~ /^\d+$/) {
                 is( $@, '', "calling the constant $name as a function" );
                 like( $v, '/^\d+$/', "checking that $name is a number ($v)" );
 

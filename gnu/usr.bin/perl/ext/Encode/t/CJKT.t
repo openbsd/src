@@ -9,8 +9,8 @@ BEGIN {
       exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
-	exit 0;
+    print "1..0 # Skip: EBCDIC\n";
+    exit 0;
     }
 # should work w/o PerlIO now!
 #    unless (PerlIO::Layer->find('perlio')){
@@ -55,7 +55,7 @@ for my $charset (sort keys %Charset){
     open $src, "<$src_enc" or die "$src_enc : $!";
     
     if (PerlIO::Layer->find('perlio')){
-	binmode($src, ":bytes"); # needed when :utf8 in default open layer
+    binmode($src, ":bytes"); # needed when :utf8 in default open layer
     }
 
     $txt = join('',<$src>);
@@ -68,27 +68,27 @@ for my $charset (sort keys %Charset){
     
     open $dst, ">$dst_utf" or die "$dst_utf : $!";
     if (PerlIO::Layer->find('perlio')){
-	binmode($dst, ":utf8");
-	print $dst $uni;
+    binmode($dst, ":utf8");
+    print $dst $uni;
     }else{ # ugh!
-	binmode($dst);
-	my $raw = $uni; Encode::_utf8_off($raw);
-	print $dst $raw;
+    binmode($dst);
+    my $raw = $uni; Encode::_utf8_off($raw);
+    print $dst $raw;
     }
 
     close($dst); 
     is(compare_text($dst_utf, $src_utf), 0, "$dst_utf eq $src_utf")
-	or ($DEBUG and rename $dst_utf, "$dst_utf.$seq");
+    or ($DEBUG and rename $dst_utf, "$dst_utf.$seq");
     $seq++;
     
     open $src, "<$src_utf" or die "$src_utf : $!";
     if (PerlIO::Layer->find('perlio')){
-	binmode($src, ":utf8");
-	$uni = join('', <$src>);
+    binmode($src, ":utf8");
+    $uni = join('', <$src>);
     }else{ # ugh!
-	binmode($src);
-	$uni = join('', <$src>);
-	Encode::_utf8_on($uni);
+    binmode($src);
+    $uni = join('', <$src>);
+    Encode::_utf8_on($uni);
     }
     close $src;
 
@@ -104,13 +104,13 @@ for my $charset (sort keys %Charset){
     print $dst $txt;
     close($dst); 
     is(compare_text($src_enc, $dst_enc), 0 => "$dst_enc eq $src_enc")
-	or ($DEBUG and rename $dst_enc, "$dst_enc.$seq");
+    or ($DEBUG and rename $dst_enc, "$dst_enc.$seq");
     $seq++;
     
     unlink($dst_utf, $dst_enc);
 
     for my $encoding (@{$Charset{$charset}}){
-	my $rt = decode($encoding, encode($encoding, $uni));
-	is ($rt, $uni, "RT $encoding");
+    my $rt = decode($encoding, encode($encoding, $uni));
+    is ($rt, $uni, "RT $encoding");
     }
 }

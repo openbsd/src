@@ -12,10 +12,11 @@ BEGIN {
     }
 }
 
-BEGIN { $| = 1; print "1..33\n"; }
+BEGIN { $| = 1; print "1..38\n"; }
 
 END { print "not ok 1\n" unless $loaded }
 
+use Time::HiRes 1.9704; # Remember to bump this once in a while.
 use Time::HiRes qw(tv_interval);
 
 $loaded = 1;
@@ -32,6 +33,7 @@ my $have_clock_gettime	 = &Time::HiRes::d_clock_gettime;
 my $have_clock_getres	 = &Time::HiRes::d_clock_getres;
 my $have_clock_nanosleep = &Time::HiRes::d_clock_nanosleep;
 my $have_clock           = &Time::HiRes::d_clock;
+my $have_hires_stat      = &Time::HiRes::d_hires_stat;
 
 sub has_symbol {
     my $symbol = shift;
@@ -49,6 +51,7 @@ printf "# have_clock_gettime   = %d\n", $have_clock_gettime;
 printf "# have_clock_getres    = %d\n", $have_clock_getres;
 printf "# have_clock_nanosleep = %d\n", $have_clock_nanosleep;
 printf "# have_clock           = %d\n", $have_clock;
+printf "# have_hires_stat      = %d\n", $have_hires_stat;
 
 import Time::HiRes 'gettimeofday'	if $have_gettimeofday;
 import Time::HiRes 'usleep'		if $have_usleep;
@@ -65,7 +68,7 @@ use Time::HiRes qw(gettimeofday);
 
 my $have_alarm = $Config{d_alarm};
 my $have_fork  = $Config{d_fork};
-my $waitfor = 60; # 10-20 seconds is normal (load affects this).
+my $waitfor = 180; # 30-45 seconds is normal (load affects this).
 my $timer_pid;
 my $TheEnd;
 
@@ -74,11 +77,12 @@ if ($have_fork) {
     $timer_pid = fork();
     if (defined $timer_pid) {
 	if ($timer_pid == 0) { # We are the kid, set up the timer.
+	    my $ppid = getppid();
 	    print "# I am the timer process $$, sleeping for $waitfor seconds...\n";
 	    sleep($waitfor);
 	    warn "\n$0: overall time allowed for tests (${waitfor}s) exceeded!\n";
-	    print "# Terminating the main process...\n";
-	    kill('TERM', getppid());
+	    print "# Terminating main process $ppid...\n";
+	    kill('TERM', $ppid);
 	    print "# This is the timer process $$, over and out.\n";
 	    exit(0);
 	} else {
@@ -103,13 +107,13 @@ if (open(XDEFINE, "xdefine")) {
 # However, if the system is busy, there are no guarantees on how
 # quickly we will return.  This limit used to be 10%, but that
 # was occasionally triggered falsely.  
-# Try 20%.  
+# So let's try 25%.
 # Another possibility might be to print "ok" if the test completes fine
 # with (say) 10% slosh, "skip - system may have been busy?" if the test
 # completes fine with (say) 30% slosh, and fail otherwise.  If you do that,
 # consider changing over to test.pl at the same time.
 # --A.D., Nov 27, 2001
-my $limit = 0.20; # 20% is acceptable slosh for testing timers
+my $limit = 0.25; # 25% is acceptable slosh for testing timers
 
 sub skip {
     map { print "ok $_ # skipped\n" } @_;
@@ -224,9 +228,10 @@ unless ($have_gettimeofday) {
      $n++;
  }
  # $s should be, at worst, equal to $n
- # (time() may be rounding down, up, or closest)
- ok 14, abs($s) / $n <= 1.0, "Time::HiRes::time() not close to time()";
- print "# s = $s, n = $n, s/n = ", $s/$n, "\n";
+ # (time() may be rounding down, up, or closest),
+ # but allow 10% of slop.
+ ok 14, abs($s) / $n <= 1.10, "Time::HiRes::time() not close to time()";
+ print "# s = $s, n = $n, s/n = ", abs($s)/$n, "\n";
 }
 
 my $has_ualarm = $Config{d_ualarm};
@@ -242,6 +247,9 @@ unless (   defined &Time::HiRes::gettimeofday
     }
 } else {
     use Time::HiRes qw(time alarm sleep);
+    eval { require POSIX };
+    my $use_sigaction =
+	!$@ && defined &POSIX::sigaction && &POSIX::SIGALRM > 0;
 
     my ($f, $r, $i, $not, $ok);
 
@@ -255,49 +263,72 @@ unless (   defined &Time::HiRes::gettimeofday
 
     $r = [Time::HiRes::gettimeofday()];
     $i = 5;
-    $SIG{ALRM} = "tick";
-    while ($i > 0)
-    {
-	alarm(0.3);
-	select (undef, undef, undef, 3);
-	my $ival = Time::HiRes::tv_interval ($r);
-	print "# Select returned! $i $ival\n";
-	print "# ", abs($ival/3 - 1), "\n";
-	# Whether select() gets restarted after signals is
-	# implementation dependent.  If it is restarted, we
-	# will get about 3.3 seconds: 3 from the select, 0.3
-	# from the alarm.  If this happens, let's just skip
-	# this particular test.  --jhi
-	if (abs($ival/3.3 - 1) < $limit) {
-	    $ok = "Skip: your select() may get restarted by your SIGALRM (or just retry test)";
-	    undef $not;
-	    last;
+    my $oldaction;
+    if ($use_sigaction) {
+	$oldaction = new POSIX::SigAction;
+	printf "# sigaction tick, ALRM = %d\n", &POSIX::SIGALRM;
+
+	# Perl's deferred signals may be too wimpy to break through
+	# a restartable select(), so use POSIX::sigaction if available.
+
+	sub tick {
+	    $i--;
+	    my $ival = Time::HiRes::tv_interval ($r);
+	    print "# Tick! $i $ival\n";
+	    my $exp = 0.3 * (5 - $i);
+	    # This test is more sensitive, so impose a softer limit.
+	    if (abs($ival/$exp - 1) > 4*$limit) {
+		my $ratio = abs($ival/$exp);
+		$not = "tick: $exp sleep took $ival ratio $ratio";
+		$i = 0;
+	    }
 	}
-	my $exp = 0.3 * (5 - $i);
-	# This test is more sensitive, so impose a softer limit.
-	if (abs($ival/$exp - 1) > 3*$limit) {
-	    my $ratio = abs($ival/$exp);
-	    $not = "while: $exp sleep took $ival ratio $ratio";
-	    last;
-	}
-	$ok = $i;
+
+	POSIX::sigaction(&POSIX::SIGALRM,
+			 POSIX::SigAction->new("tick"),
+			 $oldaction)
+	    or die "Error setting SIGALRM handler with sigaction: $!\n";
+    } else {
+	print "# SIG tick\n";
+	$SIG{ALRM} = "tick";
     }
 
-    sub tick
-    {
-	$i--;
-	my $ival = Time::HiRes::tv_interval ($r);
-	print "# Tick! $i $ival\n";
-	my $exp = 0.3 * (5 - $i);
-	# This test is more sensitive, so impose a softer limit.
-	if (abs($ival/$exp - 1) > 3*$limit) {
-	    my $ratio = abs($ival/$exp);
-	    $not = "tick: $exp sleep took $ival ratio $ratio";
-	    $i = 0;
+    # On VMS timers can not interrupt select.
+    if ($^O eq 'VMS') {
+	$ok = "Skip: VMS select() does not get interrupted.";
+    } else {
+	while ($i > 0) {
+	    alarm(0.3);
+	    select (undef, undef, undef, 3);
+	    my $ival = Time::HiRes::tv_interval ($r);
+	    print "# Select returned! $i $ival\n";
+	    print "# ", abs($ival/3 - 1), "\n";
+	    # Whether select() gets restarted after signals is
+	    # implementation dependent.  If it is restarted, we
+	    # will get about 3.3 seconds: 3 from the select, 0.3
+	    # from the alarm.  If this happens, let's just skip
+	    # this particular test.  --jhi
+	    if (abs($ival/3.3 - 1) < $limit) {
+		$ok = "Skip: your select() may get restarted by your SIGALRM (or just retry test)";
+		undef $not;
+		last;
+	    }
+	    my $exp = 0.3 * (5 - $i);
+	    # This test is more sensitive, so impose a softer limit.
+	    if (abs($ival/$exp - 1) > 3*$limit) {
+		my $ratio = abs($ival/$exp);
+		$not = "while: $exp sleep took $ival ratio $ratio";
+		last;
+	    }
+	    $ok = $i;
 	}
     }
 
-    alarm(0); # can't cancel usig %SIG
+    if ($use_sigaction) {
+	POSIX::sigaction(&POSIX::SIGALRM, $oldaction);
+    } else {
+	alarm(0); # can't cancel usig %SIG
+    }
 
     print $not ? "not ok 17 # $not\n" : "ok 17 # $ok\n";
 }
@@ -305,7 +336,8 @@ unless (   defined &Time::HiRes::gettimeofday
 unless (   defined &Time::HiRes::setitimer
 	&& defined &Time::HiRes::getitimer
 	&& has_symbol('ITIMER_VIRTUAL')
-	&& $Config{sig_name} =~ m/\bVTALRM\b/) {
+	&& $Config{sig_name} =~ m/\bVTALRM\b/
+        && $^O !~ /^(nto)$/) { # nto: QNX 6 has the API but no implementation
     for (18..19) {
 	print "ok $_ # Skip: no virtual interval timers\n";
     }
@@ -436,38 +468,40 @@ if ($have_nanosleep) {
     skip 28;
 }
 
+# Find the loop size N (a for() loop 0..N-1)
+# that will take more than T seconds.
+
 if ($have_ualarm && $] >= 5.008001) {
     # http://groups.google.com/group/perl.perl5.porters/browse_thread/thread/adaffaaf939b042e/20dafc298df737f0%2320dafc298df737f0?sa=X&oi=groupsr&start=0&num=3
     # Perl changes [18765] and [18770], perl bug [perl #20920]
 
-    # First we will find the loop size N (a for() loop 0..N-1)
-    # that will take more than T seconds.
+    print "# Finding delay loop...\n";
 
     my $T = 0.01;
     use Time::HiRes qw(time);
-    my $N = 1024;
+    my $DelayN = 1024;
     my $i;
-    N: {
-	do {
-	    my $t0 = time();
-	    for ($i = 0; $i < $N; $i++) { }
-	    my $t1 = time();
-	    my $dt = $t1 - $t0;
-	    print "# N = $N, t1 = $t1, t0 = $t0, dt = $dt\n";
-	    last N if $dt > $T;
-	    $N *= 2;
-	} while (1);
-    }
+ N: {
+     do {
+	 my $t0 = time();
+	 for ($i = 0; $i < $DelayN; $i++) { }
+	 my $t1 = time();
+	 my $dt = $t1 - $t0;
+	 print "# N = $DelayN, t1 = $t1, t0 = $t0, dt = $dt\n";
+	 last N if $dt > $T;
+	 $DelayN *= 2;
+     } while (1);
+ }
 
-    # The time-burner which takes at least T seconds.
-    my $F = sub {
+    # The time-burner which takes at least T (default 1) seconds.
+    my $Delay = sub {
 	my $c = @_ ? shift : 1;
-	my $n = $c * $N;
+	my $n = $c * $DelayN;
 	my $i;
 	for ($i = 0; $i < $n; $i++) { }
     };
 
-    # Then we will setup a periodic timer (the two-argument alarm() of
+    # Next setup a periodic timer (the two-argument alarm() of
     # Time::HiRes, behind the curtains the libc ualarm()) which has
     # a signal handler that takes so much time (on the first initial
     # invocation) that the first periodic invocation (second invocation)
@@ -486,13 +520,13 @@ if ($have_ualarm && $] >= 5.008001) {
 	$a++;
 	print "# Alarm $a - ", time(), "\n";
 	alarm(0) if $a >= $A; # Disarm the alarm.
-	$F->(2); # Try burning CPU at least for 2T seconds.
+	$Delay->(2); # Try burning CPU at least for 2T seconds.
     }; 
 
     use Time::HiRes qw(alarm); 
     alarm($T, $T);  # Arm the alarm.
 
-    $F->(10); # Try burning CPU at least for 10T seconds.
+    $Delay->(10); # Try burning CPU at least for 10T seconds.
 
     print "ok 29\n"; # Not core dumping by now is considered to be the success.
 } else {
@@ -553,7 +587,7 @@ if ($have_clock_getres) {
 
 if ($have_clock_nanosleep &&
     has_symbol('CLOCK_REALTIME')) {
-    my $s = 1.5;
+    my $s = 1.5e9;
     my $t = clock_nanosleep(&CLOCK_REALTIME, $s);
     my $r = abs(1 - $t / $s);
     if ($r < 2 * $limit) {
@@ -575,7 +609,7 @@ if ($have_clock) {
 	print "# clock = @clock\n";
     }
     if ($clock[0] >= 0 &&
-        $clock[1] > $clock[0] &&
+	$clock[1] > $clock[0] &&
 	$clock[2] > $clock[1] &&
 	$clock[3] > $clock[2]) {
 	print "ok 33\n";
@@ -583,15 +617,105 @@ if ($have_clock) {
 	print "not ok 33\n";
     }
 } else {
-    print "# No clock\n";
     skip 33;
 }
 
+if ($have_ualarm) {
+    # 1_100_000 sligthly over 1_000_000,
+    # 2_200_000 slightly over 2**31/1000,
+    # 4_300_000 slightly over 2**32/1000.
+    for my $t ([34, 100_000],
+	       [35, 1_100_000],
+	       [36, 2_200_000],
+	       [37, 4_300_000]) {
+	my ($i, $n) = @$t;
+	my $alarmed = 0;
+	local $SIG{ ALRM } = sub { $alarmed++ };
+	my $t0 = Time::HiRes::time();
+	print "# t0 = $t0\n";
+	print "# ualarm($n)\n";
+	ualarm($n); 1 while $alarmed == 0;
+	my $t1 = Time::HiRes::time();
+	print "# t1 = $t1\n";
+	my $dt = $t1 - $t0;
+	print "# dt = $dt\n";
+	my $r = $dt / ($n/1e6);
+	print "# r = $r\n";
+	ok $i,
+	($n < 1_000_000 || # Too much noise.
+	 $r >= 0.8 && $r <= 1.6), "ualarm($n) close enough";
+    }
+} else {
+    print "# No ualarm\n";
+    skip 34..37;
+}
+
+if ($^O =~ /^(cygwin|MSWin)/) {
+    print "# $^O: timestamps may not be good enough\n";
+    skip 38;
+} elsif (&Time::HiRes::d_hires_stat) {
+    my @stat;
+    my @atime;
+    my @mtime;
+    for (1..5) {
+	Time::HiRes::sleep(rand(0.1) + 0.1);
+	open(X, ">$$");
+	print X $$;
+	close(X);
+	@stat = Time::HiRes::stat($$);
+	push @mtime, $stat[9];
+	Time::HiRes::sleep(rand(0.1) + 0.1);
+	open(X, "<$$");
+	<X>;
+	close(X);
+	@stat = Time::HiRes::stat($$);
+	push @atime, $stat[8];
+    }
+    1 while unlink $$;
+    print "# mtime = @mtime\n";
+    print "# atime = @atime\n";
+    my $ai = 0;
+    my $mi = 0;
+    my $ss = 0;
+    for (my $i = 1; $i < @atime; $i++) {
+	if ($atime[$i] >= $atime[$i-1]) {
+	    $ai++;
+	}
+	if ($atime[$i] > int($atime[$i])) {
+	    $ss++;
+	}
+    }
+    for (my $i = 1; $i < @mtime; $i++) {
+	if ($mtime[$i] >= $mtime[$i-1]) {
+	    $mi++;
+	}
+	if ($mtime[$i] > int($mtime[$i])) {
+	    $ss++;
+	}
+    }
+    print "# ai = $ai, mi = $mi, ss = $ss\n";
+    # Need at least 75% of monotonical increase and
+    # 20% of subsecond results. Yes, this is guessing.
+    if ($ss == 0) {
+	print "# No subsecond timestamps detected\n";
+	skip 38;
+    } elsif ($mi/(@mtime-1) >= 0.75 && $ai/(@atime-1) >= 0.75 &&
+	     $ss/(@mtime+@atime) >= 0.2) {
+	print "ok 38\n";
+    } else {
+	print "not ok 38\n";
+    }
+} else {
+    print "# No effectual d_hires_stat\n";
+    skip 38;
+}
+
 END {
-    if (defined $timer_pid) {
+    if ($timer_pid) { # Only in the main process.
 	my $left = $TheEnd - time();
 	printf "# I am the main process $$, terminating the timer process $timer_pid\n# before it terminates me in %d seconds (testing took %d seconds).\n", $left, $waitfor - $left;
-	kill('TERM', $timer_pid); # We are done, the timer can go.
+	my $kill = kill('TERM', $timer_pid); # We are done, the timer can go.
+	printf "# kill TERM $timer_pid = %d\n", $kill;
 	unlink("ktrace.out"); # Used in BSD system call tracing.
 	print "# All done.\n";
     }

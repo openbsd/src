@@ -11,10 +11,10 @@ instead of single letters, and are introduced with a double dash `--'.
 Optionally, Getopt::Long can support the traditional bundling of
 single-letter command line options.
 
-Getopt::Long::GetOptions() is part of the Perl 5 distribution. It is
-the successor of newgetopt.pl that came with Perl 4. It is fully
-upward compatible. In fact, the Perl 5 version of newgetopt.pl is just
-a wrapper around the module.
+Getopt::Long is part of the Perl 5 distribution. It is the successor
+of newgetopt.pl that came with Perl 4. It is fully upward compatible.
+In fact, the Perl 5 version of newgetopt.pl is just a wrapper around
+the module.
 
 For complete documentation, see the Getopt::Long POD document or use
 the command
@@ -200,7 +200,7 @@ Or use the CPAN search engine:
 COPYRIGHT AND DISCLAIMER
 ========================
 
-Module Getopt::Long is Copyright 2005,1990 by Johan Vromans.
+Module Getopt::Long is Copyright 2006,1990 by Johan Vromans.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Perl Artistic License or the
 GNU General Public License as published by the Free Software

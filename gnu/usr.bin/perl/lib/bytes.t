@@ -1,3 +1,4 @@
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
@@ -42,9 +43,19 @@ my $c = chr(0x100);
     } else {
 	is(bytes::ord($c), 0xc4, "bytes::ord under use bytes looks at the 1st byte");
     }
-    is(bytes::substr($c, 0, 1), "\xc4", "bytes::substr under use bytes looks at bytes");
-    is(bytes::index($c, "\x80"), 1, "bytes::index under use bytes looks at bytes");
-    is(bytes::rindex($c, "\xc4"), 0, "bytes::rindex under use bytes looks at bytes");
+    # In z/OS \x41,\x8c are the codepoints corresponding to \x80,\xc4 respectively under ASCII platform
+    if (ord('A') == 193) { # EBCDIC?
+        is(bytes::substr($c, 0, 1), "\x8c", "bytes::substr under use bytes looks at bytes");
+        is(bytes::index($c, "\x41"), 1, "bytes::index under use bytes looks at bytes");
+        is(bytes::rindex($c, "\x8c"), 0, "bytes::rindex under use bytes looks at bytes");
+
+    }
+    else{
+        is(bytes::substr($c, 0, 1), "\xc4", "bytes::substr under use bytes looks at bytes");
+        is(bytes::index($c, "\x80"), 1, "bytes::index under use bytes looks at bytes");
+        is(bytes::rindex($c, "\xc4"), 0, "bytes::rindex under use bytes looks at bytes");
+    }
+    
 }
 
 {

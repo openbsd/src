@@ -10,10 +10,10 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib';
-  plan tests => 20;
+  plan tests => 35;
   }
 
-use bignum;
+use bignum qw/oct hex/;
 
 ###############################################################################
 # general tests
@@ -57,6 +57,29 @@ ok (bignum->precision(),12);
 ok (bignum->round_mode(),'even');
 ok (bignum->round_mode('odd'),'odd');
 ok (bignum->round_mode(),'odd');
+
+###############################################################################
+# hex() and oct()
+
+my $c = 'Math::BigInt';
+
+ok (ref(hex(1)), $c);
+ok (ref(hex(0x1)), $c);
+ok (ref(hex("af")), $c);
+ok (hex("af"), Math::BigInt->new(0xaf));
+ok (ref(hex("0x1")), $c);
+
+ok (ref(oct("0x1")), $c);
+ok (ref(oct("01")), $c);
+ok (ref(oct("0b01")), $c);
+ok (ref(oct("1")), $c);
+ok (ref(oct(" 1")), $c);
+ok (ref(oct(" 0x1")), $c);
+
+ok (ref(oct(0x1)), $c);
+ok (ref(oct(01)), $c);
+ok (ref(oct(0b01)), $c);
+ok (ref(oct(1)), $c);
 
 ###############################################################################
 ###############################################################################

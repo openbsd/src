@@ -197,6 +197,14 @@ EXPECT
 Filehandle STDIN opened only for input at - line 3.
 ########
 # pp_sys.c [pp_send]
+use warnings 'io' ;
+syswrite STDIN, "fred";
+no warnings 'io' ;
+syswrite STDIN, "fred";
+EXPECT
+Filehandle STDIN opened only for input at - line 3.
+########
+# pp_sys.c [pp_send]
 use warnings 'closed' ;
 close STDIN; 
 syswrite STDIN, "fred", 1;
@@ -452,8 +460,63 @@ getc() on closed filehandle FH2 at - line 12.
 # pp_sys.c [pp_sselect]
 use warnings 'misc';
 $x = 1;
-select $x, undef, undef, undef;
+select $x, undef, undef, 1;
 no warnings 'misc';
-select $x, undef, undef, undef;
+select $x, undef, undef, 1;
 EXPECT
 Non-string passed as bitmask at - line 4.
+########
+use Config;
+BEGIN {
+    if (!$Config{d_fchdir}) {
+	print <<EOM;
+SKIPPED
+# fchdir not present
+EOM
+	exit;
+    }
+}
+opendir FOO, '.'; closedir FOO;
+open BAR, '.'; close BAR;
+opendir $dh, '.'; closedir $dh;
+open $fh, '.'; close $fh;
+chdir FOO;
+chdir BAR;
+chdir $dh;
+chdir $fh;
+use warnings qw(unopened closed) ;
+chdir FOO;
+chdir BAR;
+chdir $dh;
+chdir $fh;
+EXPECT
+chdir() on unopened filehandle FOO at - line 20.
+chdir() on closed filehandle BAR at - line 21.
+chdir() on unopened filehandle $dh at - line 22.
+chdir() on closed filehandle $fh at - line 23.
+########
+# pp_sys.c [pp_open]
+use warnings;
+opendir FOO, ".";
+opendir my $foo, ".";
+open FOO, "TEST";
+open $foo, "TEST";
+no warnings qw(io deprecated);
+open FOO, "TEST";
+open $foo, "TEST";
+EXPECT
+Opening dirhandle FOO also as a file at - line 5.
+Opening dirhandle $foo also as a file at - line 6.
+########
+# pp_sys.c [pp_open_dir]
+use warnings;
+open FOO, "TEST";
+open my $foo, "TEST";
+opendir FOO, ".";
+opendir $foo, ".";
+no warnings qw(io deprecated);
+opendir FOO, ".";
+opendir $foo, ".";
+EXPECT
+Opening filehandle FOO also as a directory at - line 5.
+Opening filehandle $foo also as a directory at - line 6.

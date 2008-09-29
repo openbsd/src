@@ -1,0 +1,16 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u lib/Archive/Extract/t/src/x.bz2.packed lib/Archive/Extract/t/src/x.bz2
+
+To recreate it use the following command:
+
+     uupacktool.pl -p lib/Archive/Extract/t/src/x.bz2 lib/Archive/Extract/t/src/x.bz2.packed
+
+Created at Thu Sep 20 15:38:01 2007
+#########################################################################
+__UU__
+.0EIH.1=R13A0D```````

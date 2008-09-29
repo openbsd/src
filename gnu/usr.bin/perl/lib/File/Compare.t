@@ -14,7 +14,7 @@ BEGIN {
   }
 }
 
-print "1..12\n";
+print "1..13\n";
 
 use File::Compare qw(compare compare_text);
 
@@ -78,6 +78,10 @@ eval {
 
   my $template = File::Spec->catfile(File::Spec->tmpdir, 'fcmpXXXX');
   my($tfh,$filename) = mkstemp($template);
+  # NB. The trailing space is intentional (see [perl #37716])
+  open my $tfhSP, ">", "$filename "
+      or die "Could not open '$filename ' for writing: $!";
+  binmode($tfhSP);
   {
     local $/; #slurp
     my $fh;
@@ -86,29 +90,28 @@ eval {
     my $data = <$fh>;
     print $tfh $data;
     close($fh);
+    print $tfhSP $data;
+    close($tfhSP);
   }
   seek($tfh,0,0);
   $donetests[0] = compare($tfh, 'README');
   $donetests[1] = compare($filename, 'README');
   unlink0($tfh,$filename);
+  $donetests[2] = compare('README', "$filename ");
+  unlink "$filename ";
 };
-print "# problems when testing with a tempory file\n" if $@;
+print "# problem '$@' when testing with a temporary file\n" if $@;
 
-if (@donetests == 2) {
+if (@donetests == 3) {
   print "not " unless $donetests[0] == 0;
-  print "ok 11\n";
-  if ($^O eq 'VMS') {
-    # The open attempt on FROM in File::Compare::compare should fail
-    # on this OS since files are not shared by default.
-    print "not " unless $donetests[1] == -1;
-    print "ok 12\n";
-  }
-  else {
-    print "not " unless $donetests[1] == 0;
-    print "ok 12\n";
-  }
+  print "ok 11 # fh/file [$donetests[0]]\n";
+  print "not " unless $donetests[1] == 0;
+  print "ok 12 # file/file [$donetests[1]]\n";
+  print "not " unless $donetests[2] == 0;
+  print "ok 13 # ";
+  print "TODO" if $^O eq "cygwin"; # spaces after filename silently trunc'd
+  print " file/fileCR [$donetests[2]]\n";
 }
 else {
-  print "ok 11# Skip\nok 12 # Skip Likely due to File::Temp\n";
+  print "ok 11# Skip\nok 12 # Skip\nok 13 # Skip Likely due to File::Temp\n";
 }
-

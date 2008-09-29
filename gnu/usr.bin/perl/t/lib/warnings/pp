@@ -59,7 +59,7 @@ $x = undef; $y = $$x;
 no warnings 'uninitialized' ;
 $u = undef; $v = $$u;
 EXPECT
-Use of uninitialized value in scalar dereference at - line 3.
+Use of uninitialized value $x in scalar dereference at - line 3.
 ########
 # pp.c
 use warnings 'misc' ;

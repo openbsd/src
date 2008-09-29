@@ -1,0 +1,19 @@
+/* Copyright (c) 2004-2005 Nokia.  All rights reserved. */
+
+/* The PerlApp application is licensed under the same terms as Perl itself. */
+
+#ifndef __PerlApp_HRH__
+#define __PerlApp_HRH__
+
+enum TPerlAppIds
+{
+    EPerlAppCommandAbout              = 1024,  // start value must not be 0
+    EPerlAppCommandTime               = 1025,
+    EPerlAppCommandRunFile            = 1026,
+    EPerlAppCommandOneLiner           = 1027,
+    EPerlAppCommandCopyright          = 1028,
+    EPerlAppCommandAboutCopyright     = 1029,
+    EPerlAppLast                      = 1099   // no comma here
+};
+
+#endif // __PerlApp_HRH__

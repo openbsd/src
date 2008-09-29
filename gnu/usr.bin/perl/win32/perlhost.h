@@ -7,15 +7,23 @@
  *    License or the Artistic License, as specified in the README file.
  */
 
+#ifndef UNDER_CE
 #define CHECK_HOST_INTERP
+#endif
 
 #ifndef ___PerlHost_H___
 #define ___PerlHost_H___
 
+#ifndef UNDER_CE
 #include <signal.h>
+#endif
 #include "iperlsys.h"
 #include "vmem.h"
 #include "vdir.h"
+
+#ifndef WC_NO_BEST_FIT_CHARS
+#  define WC_NO_BEST_FIT_CHARS 0x00000400
+#endif
 
 START_EXTERN_C
 extern char *		g_win32_get_privlib(const char *pl);
@@ -823,6 +831,7 @@ PerlStdIOGetOSfhandle(struct IPerlStdIO* piPerl, int filenum)
 FILE*
 PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 {
+#ifndef UNDER_CE
     FILE* pfdup;
     fpos_t pos;
     char mode[3];
@@ -870,6 +879,9 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 	fsetpos(pfdup, &pos);
     }
     return pfdup;
+#else
+    return 0;
+#endif
 }
 
 struct IPerlStdIO perlStdIO =
@@ -977,7 +989,14 @@ PerlLIOFileStat(struct IPerlLIO* piPerl, int handle, Stat_t *buffer)
 int
 PerlLIOIOCtl(struct IPerlLIO* piPerl, int i, unsigned int u, char *data)
 {
-    return win32_ioctlsocket((SOCKET)i, (long)u, (u_long*)data);
+    u_long u_long_arg;
+    int retval;
+
+    /* mauke says using memcpy avoids alignment issues */
+    memcpy(&u_long_arg, data, sizeof u_long_arg); 
+    retval = win32_ioctlsocket((SOCKET)i, (long)u, &u_long_arg);
+    memcpy(data, &u_long_arg, sizeof u_long_arg);
+    return retval;
 }
 
 int
@@ -1065,7 +1084,7 @@ PerlLIOUnlink(struct IPerlLIO* piPerl, const char *filename)
 }
 
 int
-PerlLIOUtime(struct IPerlLIO* piPerl, char *filename, struct utimbuf *times)
+PerlLIOUtime(struct IPerlLIO* piPerl, const char *filename, struct utimbuf *times)
 {
     return win32_utime(filename, times);
 }
@@ -1136,7 +1155,7 @@ PerlDirClose(struct IPerlDir* piPerl, DIR *dirp)
 }
 
 DIR*
-PerlDirOpen(struct IPerlDir* piPerl, char *filename)
+PerlDirOpen(struct IPerlDir* piPerl, const char *filename)
 {
     return win32_opendir(filename);
 }
@@ -1599,9 +1618,7 @@ PerlProcKill(struct IPerlProc* piPerl, int pid, int sig)
 int
 PerlProcKillpg(struct IPerlProc* piPerl, int pid, int sig)
 {
-    dTHX;
-    Perl_croak(aTHX_ "killpg not implemented!\n");
-    return 0;
+    return win32_kill(pid, -sig);
 }
 
 int
@@ -1693,6 +1710,7 @@ win32_start_child(LPVOID arg)
     PerlInterpreter *my_perl = (PerlInterpreter*)arg;
     GV *tmpgv;
     int status;
+    HWND parent_message_hwnd;
 #ifdef PERL_SYNC_FORK
     static long sync_fork_id = 0;
     long id = ++sync_fork_id;
@@ -1719,7 +1737,15 @@ win32_start_child(LPVOID arg)
 	sv_setiv(sv, -(IV)w32_pseudo_id);
 	SvREADONLY_on(sv);
     }
+#ifdef PERL_USES_PL_PIDSTATUS    
     hv_clear(PL_pidstatus);
+#endif    
+
+    /* create message window and tell parent about it */
+    parent_message_hwnd = w32_message_hwnd;
+    w32_message_hwnd = win32_create_message_window();
+    if (parent_message_hwnd != NULL)
+        PostMessage(parent_message_hwnd, WM_USER_MESSAGE, w32_pseudo_id, (LONG)w32_message_hwnd);
 
     /* push a zero on the stack (we are the child) */
     {
@@ -1750,7 +1776,7 @@ restart:
 	    PL_curstash = PL_defstash;
 	    if (PL_endav && !PL_minus_c)
 		call_list(oldscope, PL_endav);
-	    status = STATUS_NATIVE_EXPORT;
+	    status = STATUS_EXIT;
 	    break;
 	case 3:
 	    if (PL_restartop) {
@@ -1824,6 +1850,11 @@ PerlProcFork(struct IPerlProc* piPerl)
     id = win32_start_child((LPVOID)new_perl);
     PERL_SET_THX(aTHX);
 #  else
+    if (w32_message_hwnd == INVALID_HANDLE_VALUE)
+        w32_message_hwnd = win32_create_message_window();
+    new_perl->Isys_intern.message_hwnd = w32_message_hwnd;
+    w32_pseudo_child_message_hwnds[w32_num_pseudo_children] =
+        (w32_message_hwnd == NULL) ? (HWND)NULL : (HWND)INVALID_HANDLE_VALUE;
 #    ifdef USE_RTL_THREAD_API
     handle = (HANDLE)_beginthreadex((void*)NULL, 0, win32_start_child,
 				    (void*)new_perl, 0, (unsigned*)&id);
@@ -2118,6 +2149,10 @@ lookup(const void *arg1, const void *arg2)
 LPSTR*
 CPerlHost::Lookup(LPCSTR lpStr)
 {
+#ifdef UNDER_CE
+    if (!m_lppEnvList || !m_dwEnvCount)
+	return NULL;
+#endif
     if (!lpStr)
 	return NULL;
     return (LPSTR*)bsearch(&lpStr, m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), lookup);
@@ -2214,16 +2249,15 @@ char*
 CPerlHost::GetChildDir(void)
 {
     dTHX;
-    int length;
     char* ptr;
+    size_t length;
+
     Newx(ptr, MAX_PATH+1, char);
-    if(ptr) {
-	m_pvDir->GetCurrentDirectoryA(MAX_PATH+1, ptr);
-	length = strlen(ptr);
-	if (length > 3) {
-	    if ((ptr[length-1] == '\\') || (ptr[length-1] == '/'))
-		ptr[length-1] = 0;
-	}
+    m_pvDir->GetCurrentDirectoryA(MAX_PATH+1, ptr);
+    length = strlen(ptr);
+    if (length > 3) {
+        if ((ptr[length-1] == '\\') || (ptr[length-1] == '/'))
+            ptr[length-1] = 0;
     }
     return ptr;
 }
@@ -2412,13 +2446,7 @@ CPerlHost::Chdir(const char *dirname)
 	errno = ENOENT;
 	return -1;
     }
-    if (USING_WIDE()) {
-	WCHAR wBuffer[MAX_PATH];
-	A2WHELPER(dirname, wBuffer, sizeof(wBuffer));
-	ret = m_pvDir->SetCurrentDirectoryW(wBuffer);
-    }
-    else
-	ret = m_pvDir->SetCurrentDirectoryA((char*)dirname);
+    ret = m_pvDir->SetCurrentDirectoryA((char*)dirname);
     if(ret < 0) {
 	errno = ENOENT;
     }

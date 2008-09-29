@@ -1,7 +1,7 @@
 #!./perl -w
 
 # Tests for the command-line switches:
-# -0, -c, -l, -s, -m, -M, -V, -v, -h, -z, -i
+# -0, -c, -l, -s, -m, -M, -V, -v, -h, -i, -E and all unknown
 # Some switches have their own tests, see MANIFEST.
 
 BEGIN {
@@ -9,9 +9,9 @@ BEGIN {
     @INC = '../lib';
 }
 
-require "./test.pl";
+BEGIN { require "./test.pl"; }
 
-plan(tests => 26);
+plan(tests => 61);
 
 use Config;
 
@@ -125,8 +125,24 @@ $r = runperl(
 );
 is( $r, '21-', '-s switch parsing' );
 
-# Bug ID 20011106.084
 $filename = 'swstest.tmp';
+SKIP: {
+    open my $f, ">$filename" or skip( "Can't write temp file $filename: $!" );
+    print $f <<'SWTEST';
+#!perl -s
+BEGIN { print $x,$y; exit }
+SWTEST
+    close $f or die "Could not close: $!";
+    $r = runperl(
+	progfile    => $filename,
+	args	    => [ '-x=foo -y' ],
+    );
+    is( $r, 'foo1', '-s on the shebang line' );
+    push @tmpfiles, $filename;
+}
+
+# Bug ID 20011106.084
+$filename = 'swsntest.tmp';
 SKIP: {
     open my $f, ">$filename" or skip( "Can't write temp file $filename: $!" );
     print $f <<'SWTEST';
@@ -138,7 +154,7 @@ SWTEST
 	progfile    => $filename,
 	args	    => [ '-x=foo' ],
     );
-    is( $r, 'foo', '-s on the shebang line' );
+    is( $r, 'foo', '-sn on the shebang line' );
     push @tmpfiles, $filename;
 }
 
@@ -221,7 +237,7 @@ SWTESTPM
 
     my $v = sprintf "%vd", $^V;
     like( runperl( switches => ['-v'] ),
-	  qr/This is perl, v$v built for $Config{archname}.+Copyright.+Larry Wall.+Artistic License.+GNU General Public License/s,
+	  qr/This is perl, v$v (?:DEVEL\d+ )?built for \Q$Config{archname}\E.+Copyright.+Larry Wall.+Artistic License.+GNU General Public License/s,
           '-v looks okay' );
 
 }
@@ -237,14 +253,16 @@ SWTESTPM
 
 }
 
-# Tests for -z (which does not exist)
+# Tests for switches which do not exist
 
+foreach my $switch (split //, "ABbGgHJjKkLNOoQqRrYyZz123456789_")
 {
     local $TODO = '';   # these ones should work on VMS
 
-    like( runperl( switches => ['-z'], stderr => 1 ),
-	  qr/\QUnrecognized switch: -z  (-h will show valid options)./,
-          '-z correctly unknown' );
+    like( runperl( switches => ["-$switch"], stderr => 1,
+		   prog => 'die "oops"' ),
+	  qr/\QUnrecognized switch: -$switch  (-h will show valid options)./,
+          "-$switch correctly unknown" );
 
 }
 
@@ -282,3 +300,21 @@ __EOF__
        "foo yada dada:bada foo bing:king kong foo",
        "-i backup file");
 }
+
+# Tests for -E
+
+$r = runperl(
+    switches	=> [ '-E', '"say q(Hello, world!)"']
+);
+is( $r, "Hello, world!\n", "-E say" );
+
+
+$r = runperl(
+    switches	=> [ '-E', '"undef ~~ undef and say q(Hello, world!)"']
+);
+is( $r, "Hello, world!\n", "-E ~~" );
+
+$r = runperl(
+    switches	=> [ '-E', '"given(undef) {when(undef) { say q(Hello, world!)"}}']
+);
+is( $r, "Hello, world!\n", "-E given" );

@@ -567,7 +567,7 @@ nw_rmdir(const char *dir)
 }
 
 DIR *
-nw_opendir(char *filename)
+nw_opendir(const char *filename)
 {
 	char	*buff = NULL;
 	int		len = 0;

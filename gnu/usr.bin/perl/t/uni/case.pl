@@ -9,7 +9,7 @@ sub unidump {
 sub casetest {
     my ($base, $spec, @funcs) = @_;
     # For each provided function run it, and run a version with some extra
-    # characters afterwards. Use a recylcing symbol, as it doesn't change case.
+    # characters afterwards. Use a recycling symbol, as it doesn't change case.
     my $ballast = chr (0x2672) x 3;
     @funcs = map {my $f = $_;
 		  ($f,
@@ -23,7 +23,7 @@ sub casetest {
     my $file = File::Spec->catfile(File::Spec->catdir(File::Spec->updir,
 						      "lib", "unicore", "To"),
 				   "$base.pl");
-    my $simple = do $file;
+    my $simple = do $file or die $@;
     my %simple;
     for my $i (split(/\n/, $simple)) {
 	my ($k, $v) = split(' ', $i);
@@ -78,7 +78,10 @@ sub casetest {
 
     for my $i (sort keys %$spec) {
 	my $w = unidump($spec->{$i});
-	my $u = unpack "U0U", $i;
+	if (ord('A') == 193 && $i eq "\x8A\x73") {
+	    $w = '0178'; # It's a Latin small Y with diaeresis and not a Latin small letter sharp 's'.
+	}
+	my $u = unpack "C0U", $i;
 	my $h = sprintf "%04X", $u;
 	my $c = chr($u); $c .= chr(0x100); chop $c;
 	foreach my $func (@funcs) {
@@ -118,7 +121,7 @@ sub casetest {
 		#
 		# 0130 -> 0069 0307 (00D1 0307)
 		#
-		if ($i =~ /^(0130|0149|01F0|1E96|1E97|1E98|1E99|1E9A)$/) {
+		if ($h =~ /^(0130|0149|01F0|1E96|1E97|1E98|1E99|1E9A)$/) {
 		    $e =~ s/004E/002B/; # N
 		    $e =~ s/004A/00A2/; # J
 		    $e =~ s/0048/00E7/; # H

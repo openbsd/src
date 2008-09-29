@@ -258,7 +258,11 @@ decode_base64(sv)
 
 MODULE = MIME::Base64		PACKAGE = MIME::QuotedPrint
 
+#ifdef EBCDIC
+#define qp_isplain(c) ((c) == '\t' || ((!isprint(c) && (c) != '=')))
+#else
 #define qp_isplain(c) ((c) == '\t' || (((c) >= ' ' && (c) <= '~') && (c) != '='))
+#endif
 
 SV*
 encode_qp(sv,...)

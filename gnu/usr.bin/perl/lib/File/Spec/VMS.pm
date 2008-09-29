@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.4';
+$VERSION = '3.2501';
 
 @ISA = qw(File::Spec::Unix);
 
@@ -35,6 +35,8 @@ Removes redundant portions of file specifications according to VMS syntax.
 
 sub canonpath {
     my($self,$path) = @_;
+
+    return undef unless defined $path;
 
     if ($path =~ m|/|) { # Fake Unix
       my $pathify = $path =~ m|/\Z(?!\n)|;
@@ -71,7 +73,7 @@ sub canonpath {
 	$path =~ s/\[[^\]\.]+\.-\./\[/g;	# [foo.-.	==> [
 	$path =~ s/\.[^\]\.]+\.-\]/\]/g;	# .foo.-]	==> ]
 	$path =~ s/\[[^\]\.]+\.-\]/\[000000\]/g;# [foo.-]       ==> [000000]
-	$path =~ s/\[\]//;			# []		==>
+	$path =~ s/\[\]// unless $path eq '[]';	# []		==>
 	return $path;
     }
 }
@@ -85,9 +87,10 @@ cases (e.g. elements other than the first being absolute filespecs).
 =cut
 
 sub catdir {
-    my ($self,@dirs) = @_;
-    my $dir = pop @dirs;
-    @dirs = grep($_,@dirs);
+    my $self = shift;
+    my $dir = pop;
+    my @dirs = grep {defined() && length()} @_;
+
     my $rslt;
     if (@dirs) {
 	my $path = (@dirs == 1 ? $dirs[0] : $self->catdir(@dirs));
@@ -118,9 +121,10 @@ VMS-syntax file specification.
 =cut
 
 sub catfile {
-    my ($self,@files) = @_;
-    my $file = $self->canonpath(pop @files);
-    @files = grep($_,@files);
+    my $self = shift;
+    my $file = $self->canonpath(pop());
+    my @files = grep {defined() && length()} @_;
+
     my $rslt;
     if (@files) {
 	my $path = (@files == 1 ? $files[0] : $self->catdir(@files));
@@ -131,7 +135,7 @@ sub catfile {
 	}
 	else {
 	    $rslt = $self->eliminate_macros($spath);
-	    $rslt = vmsify($rslt.($rslt ? '/' : '').unixify($file));
+	    $rslt = vmsify($rslt.((defined $rslt) && ($rslt ne '') ? '/' : '').unixify($file));
 	}
     }
     else { $rslt = (defined($file) && length($file)) ? vmsify($file) : ''; }
@@ -258,6 +262,8 @@ Split dirspec using VMS syntax.
 
 sub splitdir {
     my($self,$dirspec) = @_;
+    my @dirs = ();
+    return @dirs if ( (!defined $dirspec) || ('' eq $dirspec) );
     $dirspec =~ tr/<>/[]/;			# < and >	==> [ and ]
     $dirspec =~ s/\]\[\./\.\]\[/g;		# ][.		==> .][
     $dirspec =~ s/\[000000\.\]\[/\[/g;		# [000000.][	==> [
@@ -272,7 +278,8 @@ sub splitdir {
 						# .--]		==> .-.-]
 						# [--]		==> [-.-]
     $dirspec = "[$dirspec]" unless $dirspec =~ /[\[<]/; # make legal
-    my(@dirs) = split('\.', vmspath($dirspec));
+    $dirspec =~ s/^(\[|<)\./$1/;
+    @dirs = split /(?<!\^)\./, vmspath($dirspec);
     $dirs[0] =~ s/^[\[<]//s;  $dirs[-1] =~ s/[\]>]\Z(?!\n)//s;
     @dirs;
 }
@@ -335,8 +342,10 @@ sub abs2rel {
 
     # Now, remove all leading components that are the same
     my @pathchunks = $self->splitdir( $path_directories );
+    my $pathchunks = @pathchunks;
     unshift(@pathchunks,'000000') unless $pathchunks[0] eq '000000';
     my @basechunks = $self->splitdir( $base_directories );
+    my $basechunks = @basechunks;
     unshift(@basechunks,'000000') unless $basechunks[0] eq '000000';
 
     while ( @pathchunks && 
@@ -349,7 +358,13 @@ sub abs2rel {
 
     # @basechunks now contains the directories to climb out of,
     # @pathchunks now has the directories to descend in to.
-    $path_directories = join '.', ('-' x @basechunks, @pathchunks) ;
+    if ((@basechunks > 0) || ($basechunks != $pathchunks)) {
+      $path_directories = join '.', ('-' x @basechunks, @pathchunks) ;
+    }
+    else {
+      $path_directories = join '.', @pathchunks;
+    }
+    $path_directories = '['.$path_directories.']';
     return $self->canonpath( $self->catpath( '', $path_directories, $path_file ) ) ;
 }
 
@@ -417,7 +432,7 @@ sub rel2abs {
 # patch the ones in ExtUtils::MM_VMS instead.
 sub eliminate_macros {
     my($self,$path) = @_;
-    return '' unless $path;
+    return '' unless (defined $path) && ($path ne '');
     $self = {} unless ref $self;
 
     if ($path =~ /\s/) {

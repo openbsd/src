@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 100;
+plan tests => 117;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -162,10 +162,6 @@ is($_, '...d.f...j.l...p');
 eval "tr/m-d/ /";
 like($@, qr/^Invalid range "m-d" in transliteration operator/,
               'reversed range check');
-
-eval '$1 =~ tr/x/y/';
-like($@, qr/^Modification of a read-only value attempted/,
-              'cannot update read-only var');
 
 'abcdef' =~ /(bcd)/;
 is(eval '$1 =~ tr/abcd//', 3,  'explicit read-only count');
@@ -384,3 +380,84 @@ is( ref $x, 'SCALAR', "    doesn't stringify its argument" );
 # rt.perl.org 36622.  Perl didn't like a y/// at end of file.  No trailing
 # newline allowed.
 fresh_perl_is(q[$_ = "foo"; y/A-Z/a-z/], '');
+
+
+{ # [perl #38293] chr(65535) should be allowed in regexes
+no warnings 'utf8'; # to allow non-characters
+
+$s = "\x{d800}\x{ffff}";
+$s =~ tr/\0/A/;
+is($s, "\x{d800}\x{ffff}", "do_trans_simple");
+
+$s = "\x{d800}\x{ffff}";
+$i = $s =~ tr/\0//;
+is($i, 0, "do_trans_count");
+
+$s = "\x{d800}\x{ffff}";
+$s =~ tr/\0/A/s;
+is($s, "\x{d800}\x{ffff}", "do_trans_complex, SQUASH");
+
+$s = "\x{d800}\x{ffff}";
+$s =~ tr/\0/A/c;
+is($s, "AA", "do_trans_complex, COMPLEMENT");
+
+$s = "A\x{ffff}B";
+$s =~ tr/\x{ffff}/\x{1ffff}/;
+is($s, "A\x{1ffff}B", "utf8, SEARCHLIST");
+
+$s = "\x{fffd}\x{fffe}\x{ffff}";
+$s =~ tr/\x{fffd}-\x{ffff}/ABC/;
+is($s, "ABC", "utf8, SEARCHLIST range");
+
+$s = "ABC";
+$s =~ tr/ABC/\x{ffff}/;
+is($s, "\x{ffff}"x3, "utf8, REPLACEMENTLIST");
+
+$s = "ABC";
+$s =~ tr/ABC/\x{fffd}-\x{ffff}/;
+is($s, "\x{fffd}\x{fffe}\x{ffff}", "utf8, REPLACEMENTLIST range");
+
+$s = "A\x{ffff}B\x{100}\0\x{fffe}\x{ffff}";
+$i = $s =~ tr/\x{ffff}//;
+is($i, 2, "utf8, count");
+
+$s = "A\x{ffff}\x{ffff}C";
+$s =~ tr/\x{ffff}/\x{100}/s;
+is($s, "A\x{100}C", "utf8, SQUASH");
+
+$s = "A\x{ffff}\x{ffff}\x{fffe}\x{fffe}\x{fffe}C";
+$s =~ tr/\x{fffe}\x{ffff}//s;
+is($s, "A\x{ffff}\x{fffe}C", "utf8, SQUASH");
+
+$s = "xAABBBy";
+$s =~ tr/AB/\x{ffff}/s;
+is($s, "x\x{ffff}y", "utf8, SQUASH");
+
+$s = "xAABBBy";
+$s =~ tr/AB/\x{fffe}\x{ffff}/s;
+is($s, "x\x{fffe}\x{ffff}y", "utf8, SQUASH");
+
+$s = "A\x{ffff}B\x{fffe}C";
+$s =~ tr/\x{fffe}\x{ffff}/x/c;
+is($s, "x\x{ffff}x\x{fffe}x", "utf8, COMPLEMENT");
+
+$s = "A\x{10000}B\x{2abcd}C";
+$s =~ tr/\0-\x{ffff}/x/c;
+is($s, "AxBxC", "utf8, COMPLEMENT range");
+
+$s = "A\x{fffe}B\x{ffff}C";
+$s =~ tr/\x{fffe}\x{ffff}/x/d;
+is($s, "AxBC", "utf8, DELETE");
+
+} # non-characters end
+
+{ # related to [perl #27940]
+    my $c;
+
+    ($c = "\x20\c@\x30\cA\x40\cZ\x50\c_\x60") =~ tr/\c@-\c_//d;
+    is($c, "\x20\x30\x40\x50\x60", "tr/\\c\@-\\c_//d");
+
+    ($c = "\x20\x00\x30\x01\x40\x1A\x50\x1F\x60") =~ tr/\x00-\x1f//d;
+    is($c, "\x20\x30\x40\x50\x60", "tr/\\x00-\\x1f//d");
+}
+

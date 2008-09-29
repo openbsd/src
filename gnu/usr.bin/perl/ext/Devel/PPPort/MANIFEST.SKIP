@@ -14,4 +14,5 @@
 ^parts/base-
 ^ppport\.h$
 ^PPPort\.c$
+^testing
 Devel-PPPort.*\.tar\.gz$

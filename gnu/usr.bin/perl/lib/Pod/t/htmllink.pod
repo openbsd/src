@@ -92,15 +92,17 @@ This is section three.
 
 =over 4
 
-=item item1
+=item item1 X<item> X<one>
 
 This is item one.
 
 =item item 2
+X<item> X<two>
 
 This is item two.
 
-=item item three
+=item item three X<item>
+X<three>
 
 This is item three.
 

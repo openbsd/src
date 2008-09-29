@@ -97,7 +97,7 @@ sub try {
 
 try({PERL5OPT => '-w'}, ['-e', 'print $::x'],
     "", 
-    qq{Name "main::x" used only once: possible typo at -e line 1.\nUse of uninitialized value in print at -e line 1.\n});
+    qq{Name "main::x" used only once: possible typo at -e line 1.\nUse of uninitialized value \$x in print at -e line 1.\n});
 
 try({PERL5OPT => '-Mstrict'}, ['-e', 'print $::x'],
     "", "");
@@ -116,7 +116,7 @@ try({PERL5OPT => '-w -Mstrict'}, ['-e', 'print $::x'],
     "", 
     <<ERROR
 Name "main::x" used only once: possible typo at -e line 1.
-Use of uninitialized value in print at -e line 1.
+Use of uninitialized value \$x in print at -e line 1.
 ERROR
     );
 
@@ -125,7 +125,7 @@ try({PERL5OPT => '-w -Mstrict'}, ['-e', 'print $::x'],
     "", 
     <<ERROR
 Name "main::x" used only once: possible typo at -e line 1.
-Use of uninitialized value in print at -e line 1.
+Use of uninitialized value \$x in print at -e line 1.
 ERROR
     );
 

@@ -20,7 +20,7 @@ print "1..9\n";
 @ARGV = qw(-Foo -baR --foo bar);
 undef $opt_baR;
 undef $opt_bar;
-print "ok 1\n" if GetOptions ("foo", "Foo=s");
+print (GetOptions("foo", "Foo=s") ? "" : "not ", "ok 1\n");
 print ((defined $opt_foo)   ? "" : "not ", "ok 2\n");
 print (($opt_foo == 1)      ? "" : "not ", "ok 3\n");
 print ((defined $opt_Foo)   ? "" : "not ", "ok 4\n");

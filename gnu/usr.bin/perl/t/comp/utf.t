@@ -18,7 +18,7 @@ BEGIN {
     }
 }
 
-require "./test.pl";
+BEGIN { require "./test.pl"; }
 
 plan(tests => 15);
 

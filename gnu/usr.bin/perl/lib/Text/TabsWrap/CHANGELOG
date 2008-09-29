@@ -1,3 +1,34 @@
+
+Use warnings::warnif instead of just warn for columns < 2.  Appled per
+request of Rafael Garcia-Suarez <rgarciasuarez at gmail.com>.
+
+= 2006/11/17
+
+Text::Tabs can handle newlines now so the BUGS section has been removed
+per request from Aristotle Pagaltzis.
+
+= 2006/07/11
+
+Further bomb-proofing to pass more tests: Dan Jacobson <jidanni at 
+jidanni dot org> found another way to generate a "this shouldn't happen".
+
+= 2006/07/05 
+
+Made documentation and code changes to address perlbug:
+https://rt.perl.org/rt3/Ticket/Display.html?id=30229
+
+Added in changes from the distributed-with-perl version.  This took 
+care of perlbug: https://rt.perl.org/rt3/Ticket/Display.html?id=34902
+It also took care of suggestion from Matthijs Bomhoff <matthijs
+at bomhoff dot nl>.
+
+Made documentation changes (added EXAMPLES) as per a suggestion
+from Gabor Blasko <gblasko at cs dot columbia dot edu>
+
+belg4mit at MIT dot EDU reported that $columns==1 die'd.  No longer.
+
+Added tests for each bug report.
+
 = 2005/08/24
 
 Added $separator2 and tests for $separator and $separator2

@@ -1,9 +1,12 @@
 # Do not remove the following line; MakeMaker relies on it to identify
 # this file as a template for defsubs.h
 # Extracting defsubs.h (with variable substitutions)
-#!perl
+#!perl -w
+use File::Spec;
+my (undef, $headerpath) = @ARGV;
 my ($out) = __FILE__ =~ /(^.*)\.PL/i;
 $out =~ s/_h$/.h/;
+unlink $out if -l $out;
 open(OUT,">$out") || die "Cannot open $file:$!";
 print "Extracting $out...\n";
 print OUT <<"END";
@@ -13,9 +16,7 @@ print OUT <<"END";
 END
 
 foreach my $const (qw(
-		      AVf_REAL
 		      CVf_ANON
-		      CVf_ASSERTION
 		      CVf_CLONE
 		      CVf_CLONED
 		      CVf_CONST
@@ -23,7 +24,6 @@ foreach my $const (qw(
 		      CVf_LVALUE
 		      CVf_METHOD
 		      CVf_NODEBUG
-		      CVf_OLDSTYLE
 		      CVf_UNIQUE
 		      CVf_WEAKOUTSIDE
 		      GVf_IMPORTED_AV
@@ -47,17 +47,36 @@ foreach my $const (qw(
 		      SVs_SMG
 		      SVt_PVGV
 		      SVt_PVHV
+		      PAD_FAKELEX_ANON
+		      PAD_FAKELEX_MULTI
 		      ))
  {
   doconst($const);
  }
-foreach my $file (qw(op.h cop.h))
+
+if ($] < 5.009) {
+    # This is only present in 5.10, but it's useful to B::Deparse to be able
+    # to import a dummy value from B
+    doconst(OPpPAD_STATE);
+}
+
+if ($] >= 5.009) {
+    # Constant not present in 5.8.x
+    doconst(CVf_ISXSUB);
+} else {
+    # Constant not present after 5.8.x
+    doconst(AVf_REAL);
+}  
+
+foreach my $tuple (['op.h'],['cop.h'],['regexp.h','RXf_'])
  {
-  my $path = $^O eq 'MacOS' ? ":::$file" : "../../$file";
+  my $file = $tuple->[0];
+  my $pfx = $tuple->[1] || '';
+  my $path = File::Spec->catfile($headerpath, $file);
   open(OPH,"$path") || die "Cannot open $path:$!";
   while (<OPH>)
    {  
-    doconst($1) if (/#define\s+(\w+)\s+([\(\)\|\dx]+)\s*(?:$|\/\*)/);
+    doconst($1) if (/#define\s+($pfx\w+)\s+([\(\)\|\dx]+)\s*(?:$|\/\*)/);
    }  
   close(OPH);
  }

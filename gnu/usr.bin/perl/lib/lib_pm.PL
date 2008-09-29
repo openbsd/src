@@ -196,6 +196,10 @@ checks to see if a directory called $dir/$archname/auto exists.
 If so the $dir/$archname directory is assumed to be a corresponding
 architecture specific directory and is added to @INC in front of $dir.
 
+The current value of C<$archname> can be found with this command:
+
+    perl -V:archname
+
 To avoid memory leaks, all trailing duplicate entries in @INC are
 removed.
 

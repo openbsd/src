@@ -16,8 +16,8 @@ BEGIN {
 use strict;
 use Test;
 use Encode qw(from_to encode decode
-	      encode_utf8 decode_utf8
-	      find_encoding is_utf8);
+          encode_utf8 decode_utf8
+          find_encoding is_utf8);
 use charnames qw(greek);
 my @encodings = grep(/iso-?8859/,Encode::encodings());
 my $n = 2;

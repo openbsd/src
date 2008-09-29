@@ -8,4 +8,9 @@ WriteMakefile(
 	      		     DIST_DEFAULT => 'all tardist',
 			   },
 	MAN3PODS	=> {},
+        (
+            (grep { $_ eq 'PERL_CORE=1' } @ARGV)
+                ? ()
+                : ('DEFINE' => '-DUSE_PPPORT_H')
+        ),
 );

@@ -1,3 +1,6 @@
+This TODO list is out of date.  See http://rt.cpan.org for the real list.
+
+
 Rethink MM_Win32 tests.
 
 Investigate one method per make target.

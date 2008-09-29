@@ -18,7 +18,7 @@ use lib File::Spec->catdir('t', 'lib');
 use Test::More;
 require VMS::Filespec if $^O eq 'VMS';
 
-my $tests = 29;
+my $tests = 30;
 # _perl_abs_path() currently only works when the directory separator
 # is '/', so don't test it when it won't work.
 my $EXTRA_ABSPATH_TESTS = ($Config{prefix} =~ m/\//) && $^O ne 'cygwin';
@@ -125,6 +125,13 @@ foreach my $func (qw(cwd getcwd fastcwd fastgetcwd)) {
   dir_ends_with( $result, $Test_Dir, "$func()" );
 }
 
+{
+  # Some versions of File::Path (e.g. that shipped with perl 5.8.5)
+  # call getcwd() with an argument (perhaps by calling it as a
+  # method?), so make sure that doesn't die.
+  is getcwd(), getcwd('foo'), "Call getcwd() with an argument";
+}
+
 # Cwd::chdir should also update $ENV{PWD}
 dir_ends_with( $ENV{PWD}, $Test_Dir, 'Cwd::chdir() updates $ENV{PWD}' );
 my $updir = File::Spec->updir;
@@ -166,14 +173,18 @@ SKIP: {
 
     my $abs_path      =  Cwd::abs_path("linktest");
     my $fast_abs_path =  Cwd::fast_abs_path("linktest");
-    my $want          =  File::Spec->catdir("t", $Test_Dir);
+    my $want          =  quotemeta(
+                             File::Spec->rel2abs(
+			         $ENV{PERL_CORE} ? $Test_Dir : File::Spec->catdir('t', $Test_Dir)
+                                                )
+                                  );
 
-    like($abs_path,      qr|$want$|);
-    like($fast_abs_path, qr|$want$|);
-    like(Cwd::_perl_abs_path("linktest"), qr|$want$|) if $EXTRA_ABSPATH_TESTS;
+    like($abs_path,      qr|$want$|i);
+    like($fast_abs_path, qr|$want$|i);
+    like(Cwd::_perl_abs_path("linktest"), qr|$want$|i) if $EXTRA_ABSPATH_TESTS;
 
     rmtree($test_dirs[0], 0, 0);
-    unlink "linktest";
+    1 while unlink "linktest";
 }
 
 if ($ENV{PERL_CORE}) {

@@ -1,12 +1,10 @@
 package charnames;
 use strict;
 use warnings;
-use Carp;
 use File::Spec;
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 use bytes ();		# for $bytes::hint_bits
-$charnames::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
 my %alias1 = (
 		# Icky 3.2 names with parentheses.
@@ -43,6 +41,16 @@ my %alias3 = (
 		# User defined aliasses. Even more convenient :)
 	    );
 my $txt;
+
+sub croak
+{
+  require Carp; goto &Carp::croak;
+} # croak
+
+sub carp
+{
+  require Carp; goto &Carp::carp;
+} # carp
 
 sub alias (@)
 {
@@ -159,7 +167,7 @@ sub charnames
 
     ## we know where it starts, so turn into number -
     ## the ordinal for the char.
-    $ord = hex substr($txt, $hexstart, $off[0] - $hexstart);
+    $ord = CORE::hex substr($txt, $hexstart, $off[0] - $hexstart);
   }
 
   if ($^H & $bytes::hint_bits) {	# "use bytes" in effect?
@@ -183,7 +191,6 @@ sub import
   if (not @_) {
     carp("`use charnames' needs explicit imports list");
   }
-  $^H |= $charnames::hint_bits;
   $^H{charnames} = \&charnames ;
 
   ##
@@ -263,7 +270,7 @@ sub viacode
 
   # checking the length first is slightly faster
   if (length($hex) > 5 && hex($hex) > 0x10FFFF) {
-    carp sprintf "Unicode characters only allocated up to U+10FFFF (you asked for U+%X)", $hex;
+    carp "Unicode characters only allocated up to U+10FFFF (you asked for U+$hex)";
     return;
   }
 
@@ -287,7 +294,7 @@ sub vianame
 
   my $arg = shift;
 
-  return chr hex $1 if $arg =~ /^U\+([0-9a-fA-F]+)$/;
+  return chr CORE::hex $1 if $arg =~ /^U\+([0-9a-fA-F]+)$/;
 
   return $vianame{$arg} if exists $vianame{$arg};
 
@@ -297,7 +304,7 @@ sub vianame
   if ($[ <= $pos) {
     my $posLF = rindex $txt, "\n", $pos;
     (my $code = substr $txt, $posLF + 1, 6) =~ tr/\t//d;
-    return $vianame{$arg} = hex $code;
+    return $vianame{$arg} = CORE::hex $code;
 
     # If $pos is at the 1st line, $posLF must be $[ - 1 (not found);
     # then $posLF + 1 equals to $[ (at the beginning of $txt).
@@ -377,35 +384,55 @@ U+0084, and U+0099 do not have names even in ISO 6429.
 Since the Unicode standard uses "U+HHHH", so can you: "\N{U+263a}"
 is the Unicode smiley face, or "\N{WHITE SMILING FACE}".
 
-=head1 CUSTOM TRANSLATORS
+=head1 ALIASES
 
-The mechanism of translation of C<\N{...}> escapes is general and not
-hardwired into F<charnames.pm>.  A module can install custom
-translations (inside the scope which C<use>s the module) with the
-following magic incantation:
+A few aliases have been defined for convenience: instead of having
+to use the official names
 
-    use charnames ();		# for $charnames::hint_bits
-    sub import {
-	shift;
-	$^H |= $charnames::hint_bits;
-	$^H{charnames} = \&translator;
-    }
+    LINE FEED (LF)
+    FORM FEED (FF)
+    CARRIAGE RETURN (CR)
+    NEXT LINE (NEL)
 
-Here translator() is a subroutine which takes C<CHARNAME> as an
-argument, and returns text to insert into the string instead of the
-C<\N{CHARNAME}> escape.  Since the text to insert should be different
-in C<bytes> mode and out of it, the function should check the current
-state of C<bytes>-flag as in:
+(yes, with parentheses) one can use
 
-    use bytes ();			# for $bytes::hint_bits
-    sub translator {
-	if ($^H & $bytes::hint_bits) {
-	    return bytes_translator(@_);
-	}
-	else {
-	    return utf8_translator(@_);
-	}
-    }
+    LINE FEED
+    FORM FEED
+    CARRIAGE RETURN
+    NEXT LINE
+    LF
+    FF
+    CR
+    NEL
+
+One can also use
+
+    BYTE ORDER MARK
+    BOM
+
+and
+
+    ZWNJ
+    ZWJ
+
+for ZERO WIDTH NON-JOINER and ZERO WIDTH JOINER.
+
+For backward compatibility one can use the old names for
+certain C0 and C1 controls
+
+    old                         new
+
+    HORIZONTAL TABULATION       CHARACTER TABULATION
+    VERTICAL TABULATION         LINE TABULATION
+    FILE SEPARATOR              INFORMATION SEPARATOR FOUR
+    GROUP SEPARATOR             INFORMATION SEPARATOR THREE
+    RECORD SEPARATOR            INFORMATION SEPARATOR TWO
+    UNIT SEPARATOR              INFORMATION SEPARATOR ONE
+    PARTIAL LINE DOWN           PARTIAL LINE FORWARD
+    PARTIAL LINE UP             PARTIAL LINE BACKWARD
+
+but the old names in addition to giving the character
+will also give a warning about being deprecated.
 
 =head1 CUSTOM ALIASES
 
@@ -475,55 +502,33 @@ Returns undef if the name is unknown.
 This works only for the standard names, and does not yet apply
 to custom translators.
 
-=head1 ALIASES
+=head1 CUSTOM TRANSLATORS
 
-A few aliases have been defined for convenience: instead of having
-to use the official names
+The mechanism of translation of C<\N{...}> escapes is general and not
+hardwired into F<charnames.pm>.  A module can install custom
+translations (inside the scope which C<use>s the module) with the
+following magic incantation:
 
-    LINE FEED (LF)
-    FORM FEED (FF)
-    CARRIAGE RETURN (CR)
-    NEXT LINE (NEL)
+    sub import {
+	shift;
+	$^H{charnames} = \&translator;
+    }
 
-(yes, with parentheses) one can use
+Here translator() is a subroutine which takes C<CHARNAME> as an
+argument, and returns text to insert into the string instead of the
+C<\N{CHARNAME}> escape.  Since the text to insert should be different
+in C<bytes> mode and out of it, the function should check the current
+state of C<bytes>-flag as in:
 
-    LINE FEED
-    FORM FEED
-    CARRIAGE RETURN
-    NEXT LINE
-    LF
-    FF
-    CR
-    NEL
-
-One can also use
-
-    BYTE ORDER MARK
-    BOM
-
-and
-
-    ZWNJ
-    ZWJ
-
-for ZERO WIDTH NON-JOINER and ZERO WIDTH JOINER.
-
-For backward compatibility one can use the old names for
-certain C0 and C1 controls
-
-    old                         new
-
-    HORIZONTAL TABULATION       CHARACTER TABULATION
-    VERTICAL TABULATION         LINE TABULATION
-    FILE SEPARATOR              INFORMATION SEPARATOR FOUR
-    GROUP SEPARATOR             INFORMATION SEPARATOR THREE
-    RECORD SEPARATOR            INFORMATION SEPARATOR TWO
-    UNIT SEPARATOR              INFORMATION SEPARATOR ONE
-    PARTIAL LINE DOWN           PARTIAL LINE FORWARD
-    PARTIAL LINE UP             PARTIAL LINE BACKWARD
-
-but the old names in addition to giving the character
-will also give a warning about being deprecated.
+    use bytes ();			# for $bytes::hint_bits
+    sub translator {
+	if ($^H & $bytes::hint_bits) {
+	    return bytes_translator(@_);
+	}
+	else {
+	    return utf8_translator(@_);
+	}
+    }
 
 =head1 ILLEGAL CHARACTERS
 

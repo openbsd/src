@@ -26,7 +26,7 @@ Let's let the animals talk for a moment:
       print "a Horse goes neigh!\n";
     }
     sub Sheep::speak {
-      print "a Sheep goes baaaah!\n"
+      print "a Sheep goes baaaah!\n";
     }
 
     Cow::speak;
@@ -106,7 +106,7 @@ example:
       print "a Horse goes neigh!\n";
     }
     sub Sheep::speak {
-      print "a Sheep goes baaaah!\n"
+      print "a Sheep goes baaaah!\n";
     }
 
     @pasture = qw(Cow Cow Horse Sheep Sheep);
@@ -172,7 +172,7 @@ This method provides the constant text for the sound itself.
       sub sound { "moooo" }
       sub speak {
 	my $class = shift;
-	print "a $class goes ", $class->sound, "!\n"
+	print "a $class goes ", $class->sound, "!\n";
       }
     }
 
@@ -184,7 +184,7 @@ returns C<moooo>.  But how different would this be for the C<Horse>?
       sub sound { "neigh" }
       sub speak {
 	my $class = shift;
-	print "a $class goes ", $class->sound, "!\n"
+	print "a $class goes ", $class->sound, "!\n";
       }
     }
 
@@ -200,7 +200,7 @@ definition for C<speak>:
     { package Animal;
       sub speak {
 	my $class = shift;
-	print "a $class goes ", $class->sound, "!\n"
+	print "a $class goes ", $class->sound, "!\n";
       }
     }
 
@@ -238,10 +238,10 @@ not a simple single value, because on rare occasions, it makes sense
 to have more than one parent class searched for the missing methods.
 
 If C<Animal> also had an C<@ISA>, then we'd check there too.  The
-search is recursive, depth-first, left-to-right in each C<@ISA>.
-Typically, each C<@ISA> has only one element (multiple elements means
-multiple inheritance and multiple headaches), so we get a nice tree of
-inheritance.
+search is recursive, depth-first, left-to-right in each C<@ISA> by
+default (see L<mro> for alternatives).  Typically, each C<@ISA> has
+only one element (multiple elements means multiple inheritance and
+multiple headaches), so we get a nice tree of inheritance.
 
 When we turn on C<use strict>, we'll get complaints on C<@ISA>, since
 it's not a variable containing an explicit package name, nor is it a
@@ -336,7 +336,7 @@ subroutine.
 
 Also note that the C<Animal> classname is now hardwired into the
 subroutine selection.  This is a mess if someone maintains the code,
-changing C<@ISA> for <Mouse> and didn't notice C<Animal> there in
+changing C<@ISA> for C<Mouse> and didn't notice C<Animal> there in
 C<speak>.  So, this is probably not the right way to go.
 
 =head2 Starting the search from a different place
@@ -423,7 +423,7 @@ and the C<Horse> class:
   { package Animal;
     sub speak {
       my $class = shift;
-      print "a $class goes ", $class->sound, "!\n"
+      print "a $class goes ", $class->sound, "!\n";
     }
   }
   { package Horse;
@@ -574,7 +574,7 @@ C<Animal>, so let's put it there:
   { package Animal;
     sub speak {
       my $class = shift;
-      print "a $class goes ", $class->sound, "!\n"
+      print "a $class goes ", $class->sound, "!\n";
     }
     sub name {
       my $self = shift;
@@ -610,7 +610,7 @@ shows up as we saw it just now.
 All we need is for a method to detect if it is being called on a class
 or called on an instance.  The most straightforward way is with the
 C<ref> operator.  This returns a string (the classname) when used on a
-blessed reference, and C<undef> when used on a string (like a
+blessed reference, and an empty string when used on a string (like a
 classname).  Let's modify the C<name> method first to notice the change:
 
   sub name {

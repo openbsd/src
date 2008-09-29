@@ -14,15 +14,16 @@ BEGIN {
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..89\n"; }
+BEGIN { $| = 1; print "1..95\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_quotelike );
 $loaded = 1;
 print "ok 1\n";
 $count=2;
 use vars qw( $DEBUG );
-# $DEBUG=1;
-sub debug { print "\t>>>",@_ if $DEBUG }
+#$DEBUG=1;
+sub debug { print "\t>>>",@_ if $ENV{DEBUG} }
+sub esc   { my $x = shift||'<undef>'; $x =~ s/\n/\\n/gs; $x }
 
 ######################### End of black magic.
 
@@ -32,36 +33,52 @@ $neg = 0;
 while (defined($str = <DATA>))
 {
 	chomp $str;
-	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
+	if ($str =~ s/\A# USING://)                 { $neg = 0; $cmd = $str; next; }
 	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
-	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
-	debug "\tUsing: $cmd\n";
-	debug "\t   on: [$str]\n";
+	elsif (!$str || $str =~ /\A#/)              { $neg = 0; next }
+	my $setup_cmd = ($str =~ s/\A\{(.*)\}//) ? $1 : '';
+	my $tests = 'sl';
 	$str =~ s/\\n/\n/g;
 	my $orig = $str;
 
-	 my @res;
-	eval qq{\@res = $cmd; };
-	debug "\t  got:\n" . join "", map { $res[$_]=~s/\n/\\n/g; "\t\t\t$_: [$res[$_]]\n"} (0..$#res);
-	debug "\t left: " . (map { s/\n/\\n/g; "[$_]\n" } my $cpy1 = $str)[0];
-	debug "\t  pos: " . (map { s/\n/\\n/g; "[$_]\n" } my $cpy2 = substr($str,pos($str)))[0] . "...]\n";
-	print "not " if (substr($str,pos($str),1) eq ';')==$neg;
-	print "ok ", $count++;
-	print "\n";
+	eval $setup_cmd if $setup_cmd ne ''; 
+	if($tests =~ /l/) {
+		debug "\tUsing: $cmd\n";
+		debug "\t   on: [" . esc($setup_cmd) . "][" . esc($str) . "]\n";
+		my @res;
+		eval qq{\@res = $cmd; };
+		debug "\t  got:\n" . join "", map { "\t\t\t$_: [" . esc($res[$_]) . "]\n"} (0..$#res);
+		debug "\t left: [" . esc($str) . "]\n";
+		debug "\t  pos: [" . esc(substr($str,pos($str))) . "...]\n";
+		print "not " if (substr($str,pos($str),1) eq ';')==$neg;
+		print "ok ", $count++;
+		print "\n";
+	}
 
-	$str = $orig;
-	debug "\tUsing: scalar $cmd\n";
-	debug "\t   on: [$str]\n";
-	$var = eval $cmd;
-	print " ($@)" if $@ && $DEBUG;
-	$var = "<undef>" unless defined $var;
-	debug "\t scalar got: " . (map { s/\n/\\n/g; "[$_]\n" } $var)[0];
-	debug "\t scalar left: " . (map { s/\n/\\n/g; "[$_]\n" } $str)[0];
-	print "not " if ($str =~ '\A;')==$neg;
-	print "ok ", $count++;
-	print "\n";
+	eval $setup_cmd if $setup_cmd ne '';
+	if($tests =~ /s/) {
+		$str = $orig;
+		debug "\tUsing: scalar $cmd\n";
+		debug "\t   on: [" . esc($str) . "]\n";
+		$var = eval $cmd;
+		print " ($@)" if $@ && $DEBUG;
+		$var = "<undef>" unless defined $var;
+		debug "\t scalar got: [" . esc($var) . "]\n";
+		debug "\t scalar left: [" . esc($str) . "]\n";
+		print "not " if ($str =~ '\A;')==$neg;
+		print "ok ", $count++;
+		print "\n";
+	}
 }
 
+# fails in Text::Balanced 1.95
+$_ = qq(s{}{});
+my @z = extract_quotelike();
+print "not " if $z[0] eq '';
+print "ok ", $count++;
+print "\n";
+
+ 
 __DATA__
 
 # USING: extract_quotelike($str);
@@ -81,7 +98,10 @@ __DATA__
 <<"   EOHERE"; done() \nline1\nline2\n   EOHERE\nand next
 <<""; done()\nline1\nline2\n\n and next
 <<; done()\nline1\nline2\n\n and next
-
+# fails in Text::Balanced 1.95
+<<EOHERE;\nEOHERE\n; 
+# fails in Text::Balanced 1.95
+<<"*";\n\n*\n; 
 
 "this is a nested $var[$x] {";
 /a/gci;
@@ -110,6 +130,9 @@ s(a)/b/;
 s/'/\\'/g;
 tr/x/y/;
 y/x/y/;
+
+# fails on Text-Balanced-1.95
+{ $tests = 'l'; pos($str)=6 }012345<<E;\n\nE\n
 
 # THESE SHOULD FAIL
 s<$self->{pat}>{$self->{sub}};		# CAN'T HANDLE '>' in '->'

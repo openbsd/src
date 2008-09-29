@@ -15,7 +15,7 @@ print OUT <<'EOT';
 
 package XSLoader;
 
-$VERSION = "0.06";
+$VERSION = "0.08";
 
 #use strict;
 
@@ -62,6 +62,13 @@ print OUT <<'EOT' if defined &DynaLoader::mod2fname;
 
 EOT
 
+print OUT <<'EOT' if $^O eq 'os2';
+
+    # os2 static build can dynaload, but cannot dynaload Perl modules...
+    die 'Dynaloaded Perl modules are not available in this build of Perl' if $OS2::is_static;
+
+EOT
+
 print OUT <<'EOT';
     my $modpname = join('/',@modparts);
     my $modlibname = (caller())[1];
@@ -82,12 +89,17 @@ print OUT <<'EOT';
 
     my $boot_symbol_ref;
 
+EOT
+
     if ($^O eq 'darwin') {
+print OUT <<'EOT';
         if ($boot_symbol_ref = dl_find_symbol(0, $bootname)) {
             goto boot; #extension library has already been loaded, e.g. darwin
         }
+EOT
     }
 
+print OUT <<'EOT';
     # Many dynamic extension loading problems will appear to come from
     # this section of code: XYZ failed at line 123 of DynaLoader.pm.
     # Often these errors are actually occurring in the initialisation
@@ -150,7 +162,7 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.06
+Version 0.08
 
 =head1 SYNOPSIS
 
@@ -318,24 +330,24 @@ this:
 
 =head1 DIAGNOSTICS
 
-=over 4
+=over
 
-=item Can't find '%s' symbol in %s
+=item C<Can't find '%s' symbol in %s>
 
 B<(F)> The bootstrap symbol could not be found in the extension module.
 
-=item Can't load '%s' for module %s: %s
+=item C<Can't load '%s' for module %s: %s>
 
 B<(F)> The loading or initialisation of the extension module failed.
 The detailed error follows.
 
-=item Undefined symbols present after loading %s: %s
+=item C<Undefined symbols present after loading %s: %s>
 
 B<(W)> As the message says, some symbols stay undefined although the
 extension module was correctly loaded and initialised. The list of undefined
 symbols follows.
 
-=item XSLoader::load('Your::Module', $Your::Module::VERSION)
+=item C<XSLoader::load('Your::Module', $Your::Module::VERSION)>
 
 B<(F)> You tried to invoke C<load()> without any argument. You must supply
 a module name, and optionally its version.
@@ -371,9 +383,9 @@ L<DynaLoader>
 Ilya Zakharevich originally extracted C<XSLoader> from C<DynaLoader>.
 
 CPAN version is currently maintained by SE<eacute>bastien Aperghis-Tramoni
-E<lt>sebastien@aperghis.netE<gt>
+E<lt>sebastien@aperghis.netE<gt>.
 
-Previous maintainer was Michael G Schwern <schwern@pobox.com>
+Previous maintainer was Michael G Schwern <schwern@pobox.com>.
 
 
 =head1 COPYRIGHT

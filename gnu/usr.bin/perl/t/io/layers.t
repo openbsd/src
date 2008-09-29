@@ -31,20 +31,20 @@ my $DOSISH    = $^O =~ /^(?:MSWin32|os2|dos|NetWare|mint)$/ ? 1 : 0;
    $DOSISH    = 1 if !$DOSISH and $^O =~ /^uwin/;
 my $NONSTDIO  = exists $ENV{PERLIO} && $ENV{PERLIO} ne 'stdio'     ? 1 : 0;
 my $FASTSTDIO = $Config{d_faststdio} && $Config{usefaststdio}      ? 1 : 0;
-my $UNICODE_STDIN;
+my $UTF8_STDIN;
 if (${^UNICODE} & 1) {
     if (${^UNICODE} & 64) {
 	# Conditional on the locale
-	$UNICODE_STDIN = ${^UTF8LOCALE};
+	$UTF8_STDIN = ${^UTF8LOCALE};
     } else {
 	# Unconditional
-	$UNICODE_STDIN = 1;
+	$UTF8_STDIN = 1;
     }
 } else {
-    $UNICODE_STDIN = 0;
+    $UTF8_STDIN = 0;
 }
 my $NTEST = 44 - (($DOSISH || !$FASTSTDIO) ? 7 : 0) - ($DOSISH ? 5 : 0)
-    + $UNICODE_STDIN;
+    + $UTF8_STDIN;
 
 sub PerlIO::F_UTF8 () { 0x00008000 } # from perliol.h
 
@@ -57,7 +57,7 @@ print <<__EOH__;
 # FASTSTDIO     = $FASTSTDIO
 # UNICODE       = ${^UNICODE}
 # UTF8LOCALE    = ${^UTF8LOCALE}
-# UNICODE_STDIN = $UNICODE_STDIN
+# UTF8_STDIN = $UTF8_STDIN
 __EOH__
 
 SKIP: {
@@ -122,7 +122,7 @@ SKIP: {
     }
 
     check([ PerlIO::get_layers(STDIN) ],
-	  $UNICODE_STDIN ? [ "stdio", "utf8" ] : [ "stdio" ],
+	  $UTF8_STDIN ? [ "stdio", "utf8" ] : [ "stdio" ],
 	  "STDIN");
 
     open(F, ">:crlf", "afile");
@@ -131,11 +131,11 @@ SKIP: {
 	  [ qw(stdio crlf) ],
 	  "open :crlf");
 
-    binmode(F, ":encoding(sjis)"); # "sjis" will be canonized to "shiftjis"
+    binmode(F, ":encoding(cp1047)"); 
 
     check([ PerlIO::get_layers(F) ],
-	  [ qw[stdio crlf encoding(shiftjis) utf8] ],
-	  ":encoding(sjis)");
+	  [ qw[stdio crlf encoding(cp1047) utf8] ],
+	  ":encoding(cp1047)");
     
     binmode(F, ":pop");
 

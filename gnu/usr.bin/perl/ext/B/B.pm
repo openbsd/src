@@ -7,7 +7,7 @@
 #
 package B;
 
-our $VERSION = '1.09_01';
+our $VERSION = '1.17';
 
 use XSLoader ();
 require Exporter;
@@ -18,12 +18,13 @@ require Exporter;
 @EXPORT_OK = qw(minus_c ppname save_BEGINs
 		class peekop cast_I32 cstring cchar hash threadsv_names
 		main_root main_start main_cv svref_2object opnumber
-		amagic_generation perlstring
+		sub_generation amagic_generation perlstring
 		walkoptree_slow walkoptree walkoptree_exec walksymtable
 		parents comppadlist sv_undef compile_stats timing_info
-		begin_av init_av check_av end_av regex_padav dowarn
-		defstash curstash warnhook diehook inc_gv
+		begin_av init_av check_av end_av regex_padav dowarn defstash
+		curstash warnhook diehook inc_gv @optype @specialsv_name
 		);
+push @EXPORT_OK, qw(unitcheck_av) if $] > 5.009;
 
 sub OPf_KIDS ();
 use strict;
@@ -38,7 +39,8 @@ use strict;
 @B::PVMG::ISA = 'B::PVNV';
 # Change in the inheritance hierarchy post 5.9.0
 @B::PVLV::ISA = $] > 5.009 ? 'B::GV' : 'B::PVMG';
-@B::BM::ISA = 'B::PVMG';
+# BM is eliminated post 5.9.5, but effectively is a specialisation of GV now.
+@B::BM::ISA = $] > 5.009005 ? 'B::GV' : 'B::PVMG';
 @B::AV::ISA = 'B::PVMG';
 @B::GV::ISA = 'B::PVMG';
 @B::HV::ISA = 'B::PVMG';
@@ -59,6 +61,13 @@ use strict;
 @B::COP::ISA = 'B::OP';
 
 @B::SPECIAL::ISA = 'B::OBJECT';
+
+@B::optype = qw(OP UNOP BINOP LOGOP LISTOP PMOP SVOP PADOP PVOP LOOP COP);
+# bytecode.pl contained the following comment:
+# Nullsv *must* come first in the following so that the condition
+# ($$sv == 0) can continue to be used to test (sv == Nullsv).
+@B::specialsv_name = qw(Nullsv &PL_sv_undef &PL_sv_yes &PL_sv_no
+			(SV*)pWARN_ALL (SV*)pWARN_NONE (SV*)pWARN_STD);
 
 {
     # Stop "-w" from complaining about the lack of a real B::OBJECT class
@@ -119,7 +128,7 @@ sub walkoptree_slow {
     $op_count++; # just for statistics
     $level ||= 0;
     warn(sprintf("walkoptree: %d. %s\n", $level, peekop($op))) if $debug;
-    $op->$method($level);
+    $op->$method($level) if $op->can($method);
     if ($$op && ($op->flags & OPf_KIDS)) {
 	my $kid;
 	unshift(@parents, $op);
@@ -128,7 +137,11 @@ sub walkoptree_slow {
 	}
 	shift @parents;
     }
-    if (class($op) eq 'PMOP' && ref($op->pmreplroot) && ${$op->pmreplroot}) {
+    if (class($op) eq 'PMOP'
+	&& ref($op->pmreplroot)
+	&& ${$op->pmreplroot}
+	&& $op->pmreplroot->isa( 'B::OP' ))
+    {
 	unshift(@parents, $op);
 	walkoptree_slow($op->pmreplroot, $method, $level + 1);
 	shift @parents;
@@ -384,6 +397,10 @@ Returns the AV object (i.e. in class B::AV) representing INIT blocks.
 
 Returns the AV object (i.e. in class B::AV) representing CHECK blocks.
 
+=item unitcheck_av
+
+Returns the AV object (i.e. in class B::AV) representing UNITCHECK blocks.
+
 =item begin_av
 
 Returns the AV object (i.e. in class B::AV) representing BEGIN blocks.
@@ -511,7 +528,26 @@ per-thread threadsv variables.
 
 =back
 
+=head2 Exported utility variabiles
 
+=over 4
+
+=item @optype
+
+  my $op_type = $optype[$op_type_num];
+
+A simple mapping of the op type number to its type (like 'COP' or 'BINOP').
+
+=item @specialsv_name
+
+  my $sv_name = $specialsv_name[$sv_index];
+
+Certain SV types are considered 'special'.  They're represented by
+B::SPECIAL and are referred to by a number from the specialsv_list.
+This array maps that number back to the name of the SV (like 'Nullsv'
+or '&PL_sv_undef').
+
+=back
 
 
 =head1 OVERVIEW OF CLASSES
@@ -535,20 +571,20 @@ give incomprehensible results, or worse.
 
 =head2 SV-RELATED CLASSES
 
-B::IV, B::NV, B::RV, B::PV, B::PVIV, B::PVNV, B::PVMG, B::BM, B::PVLV,
-B::AV, B::HV, B::CV, B::GV, B::FM, B::IO. These classes correspond in
-the obvious way to the underlying C structures of similar names. The
-inheritance hierarchy mimics the underlying C "inheritance". For 5.9.1
+B::IV, B::NV, B::RV, B::PV, B::PVIV, B::PVNV, B::PVMG, B::BM (5.9.5 and
+earlier), B::PVLV, B::AV, B::HV, B::CV, B::GV, B::FM, B::IO. These classes
+correspond in the obvious way to the underlying C structures of similar names.
+The inheritance hierarchy mimics the underlying C "inheritance". For 5.9.5
 and later this is:
 
-                             B::SV
-                               |
-                +--------------+----------+------------+
-                |              |          |            |
-              B::PV          B::IV      B::NV        B::RV
-                   \         /          /
-                    \       /          /
-                     B::PVIV          /
+                           B::SV
+                             |
+                +------------+------------+------------+
+                |            |            |            |
+              B::PV        B::IV        B::NV        B::RV
+                  \         /           /
+                   \       /           /
+                    B::PVIV           /
                          \           /
                           \         /
                            \       /
@@ -557,26 +593,28 @@ and later this is:
                                |
                             B::PVMG
                                |
-                    +-----+----+------+-----+-----+
-                    |     |    |      |     |     |
-                  B::BM B::AV B::GV B::HV B::CV B::IO
-                               |            |
-                            B::PVLV         |
-                                          B::FM
+                   +-----+-----+-----+-----+
+                   |     |     |     |     |
+                 B::AV B::GV B::HV B::CV B::IO
+                         |           |
+                         |           |
+                      B::PVLV      B::FM
 
 
-For 5.9.0 and earlier, PVLV is a direct subclass of PVMG, so the base
-of this diagram is
+For 5.9.0 and earlier, PVLV is a direct subclass of PVMG, and BM is still
+present as a distinct type, so the base of this diagram is
 
-                           |
-                        B::PVMG
-                           |
-         +------+-----+----+------+-----+-----+
-         |      |     |    |      |     |     |
-      B::PVLV B::BM B::AV B::GV B::HV B::CV B::IO
-                                        |
-                                        |
-                                      B::FM
+
+                               |
+                               |
+                            B::PVMG
+                               |
+            +------+-----+-----+-----+-----+-----+
+            |      |     |     |     |     |     |
+         B::PVLV B::BM B::AV B::GV B::HV B::CV B::IO
+                                           |
+                                           |
+                                         B::FM
 
 
 Access methods correspond to the underlying C macros for field access,
@@ -848,8 +886,6 @@ IoIFP($io) == PerlIO_stdin() ).
 
 =item MAX
 
-=item OFF
-
 =item ARRAY
 
 =item ARRAYelt
@@ -857,7 +893,15 @@ IoIFP($io) == PerlIO_stdin() ).
 Like C<ARRAY>, but takes an index as an argument to get only one element,
 rather than a list of all of them.
 
+=item OFF
+
+This method is deprecated if running under Perl 5.8, and is no longer present
+if running under Perl 5.9
+
 =item AvFLAGS
+
+This method returns the AV specific flags. In Perl 5.9 these are now stored
+in with the main SV flags, so this method is no longer present.
 
 =back
 
@@ -909,9 +953,12 @@ For constant subroutines, returns the constant SV returned by the subroutine.
 
 =item NAME
 
+=item ARRAY
+
 =item PMROOT
 
-=item ARRAY
+This method is not present if running under Perl 5.9, as the PMROOT
+information is no longer stored directly in the hash.
 
 =back
 
@@ -926,9 +973,9 @@ underlying C "inheritance":
 
                                  B::OP
                                    |
-                   +---------------+--------+--------+
-                   |               |        |        |
-                B::UNOP          B::SVOP B::PADOP  B::COP
+                   +---------------+--------+--------+-------+
+                   |               |        |        |       |
+                B::UNOP          B::SVOP B::PADOP  B::COP  B::PVOP
                  ,'  `-.
                 /       `--.
            B::BINOP     B::LOGOP
@@ -972,8 +1019,6 @@ This returns the op description from the global C PL_op_desc array
 =item type
 
 =item opt
-
-=item static
 
 =item flags
 
@@ -1029,9 +1074,7 @@ This returns the op description from the global C PL_op_desc array
 
 =item pmflags
 
-=item pmdynflags
-
-=item pmpermflags
+=item extflags
 
 =item precomp
 
@@ -1100,6 +1143,10 @@ Only when perl was compiled with ithreads.
 =item warnings
 
 =item io
+
+=item hints
+
+=item hints_hash
 
 =back
 

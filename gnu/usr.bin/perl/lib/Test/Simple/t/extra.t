@@ -48,9 +48,9 @@ OUT
 
     $TB->is_eq($$err, <<ERR);
 #   Failed test 'Bar'
-#   in $0 at line 31.
+#   at $0 line 31.
 #   Failed test 'Sar'
-#   in $0 at line 34.
+#   at $0 line 34.
 # Looks like you planned 3 tests but ran 2 extra.
 # Looks like you failed 2 tests of 5 run.
 ERR

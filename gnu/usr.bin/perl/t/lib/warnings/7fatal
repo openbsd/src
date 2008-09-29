@@ -35,7 +35,7 @@ use warnings FATAL => 'uninitialized' ;
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check runtime scope of pragma
@@ -47,7 +47,7 @@ use warnings FATAL => 'all' ;
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check runtime scope of pragma
@@ -59,7 +59,7 @@ no warnings ;
 &$a ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 6.
+Use of uninitialized value $b in scalar chop at - line 6.
 ########
 
 # Check runtime scope of pragma
@@ -71,7 +71,7 @@ no warnings ;
 &$a ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 6.
+Use of uninitialized value $b in scalar chop at - line 6.
 ########
 
 --FILE-- abc
@@ -105,7 +105,7 @@ my $a ; chop $a ;
 print STDERR "The End.\n" ;
 EXPECT
 Reversed += operator at ./abc line 2.
-Use of uninitialized value in scalar chop at - line 3.
+Use of uninitialized value $a in scalar chop at - line 3.
 ########
 
 --FILE-- abc.pm
@@ -119,7 +119,7 @@ my $a ; chop $a ;
 print STDERR "The End.\n" ;
 EXPECT
 Reversed += operator at abc.pm line 2.
-Use of uninitialized value in scalar chop at - line 3.
+Use of uninitialized value $a in scalar chop at - line 3.
 ########
 
 # Check scope of pragma with eval
@@ -131,7 +131,7 @@ eval {
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
--- Use of uninitialized value in scalar chop at - line 6.
+-- Use of uninitialized value $b in scalar chop at - line 6.
 The End.
 ########
 
@@ -143,8 +143,8 @@ eval {
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
--- Use of uninitialized value in scalar chop at - line 5.
-Use of uninitialized value in scalar chop at - line 7.
+-- Use of uninitialized value $b in scalar chop at - line 5.
+Use of uninitialized value $b in scalar chop at - line 7.
 ########
 
 # Check scope of pragma with eval
@@ -156,7 +156,7 @@ eval {
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check scope of pragma with eval
@@ -214,7 +214,7 @@ eval q[
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
--- Use of uninitialized value in scalar chop at (eval 1) line 3.
+-- Use of uninitialized value $b in scalar chop at (eval 1) line 3.
 The End.
 ########
 
@@ -226,8 +226,8 @@ eval '
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
--- Use of uninitialized value in scalar chop at (eval 1) line 2.
-Use of uninitialized value in scalar chop at - line 7.
+-- Use of uninitialized value $b in scalar chop at (eval 1) line 2.
+Use of uninitialized value $b in scalar chop at - line 7.
 ########
 
 # Check scope of pragma with eval
@@ -239,7 +239,7 @@ eval '
 my $b ; chop $b ;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 8.
 ########
 
 # Check scope of pragma with eval
@@ -277,6 +277,7 @@ print STDERR "The End.\n" ;
 EXPECT
 Reversed += operator at - line 8.
 ########
+# TODO ? !$Config{usethreads} && $::UTF8 && ($ENV{PERL_DESTRUCT_LEVEL} || 0) > 1 ? "Parser leaks OPs, which leak shared hash keys" : ''
 
 use warnings 'void' ;
 
@@ -294,6 +295,7 @@ EXPECT
 Useless use of time in void context at - line 4.
 Useless use of length in void context at - line 8.
 ########
+# TODO ? !$Config{usethreads} && $::UTF8 && ($ENV{PERL_DESTRUCT_LEVEL} || 0) > 1 ? "Parser leaks OPs, which leak shared hash keys" : ''
 
 use warnings ;
 
@@ -324,8 +326,8 @@ use warnings FATAL => 'all';
 my $b ; chop $b;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
-Use of uninitialized value in scalar chop at - line 11.
+Use of uninitialized value $b in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 11.
 ########
 
 use warnings FATAL => 'all';
@@ -340,8 +342,8 @@ use warnings FATAL => 'all';
 my $b ; chop $b;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 8.
-Use of uninitialized value in scalar chop at - line 11.
+Use of uninitialized value $b in scalar chop at - line 8.
+Use of uninitialized value $b in scalar chop at - line 11.
 ########
 
 use warnings FATAL => 'all';
@@ -355,7 +357,7 @@ use warnings FATAL => 'all';
 my $b ; chop $b;
 print STDERR "The End.\n" ;
 EXPECT
-Use of uninitialized value in scalar chop at - line 7.
+Use of uninitialized value $b in scalar chop at - line 7.
 ########
 
 use warnings FATAL => 'syntax', NONFATAL => 'void' ;
@@ -383,7 +385,7 @@ length "abc";
 print STDERR "The End.\n" ;
 EXPECT
 Useless use of length in void context at - line 5.
-Use of uninitialized value in scalar chomp at - line 4.
+Use of uninitialized value $a in scalar chomp at - line 4.
 ########
 
 use warnings FATAL => 'void', NONFATAL => 'void' ;
@@ -394,6 +396,7 @@ EXPECT
 Useless use of length in void context at - line 4.
 The End.
 ########
+# TODO ? !$Config{usethreads} && $::UTF8 && ($ENV{PERL_DESTRUCT_LEVEL} || 0) > 1 ? "Parser leaks OPs, which leak shared hash keys" : ''
 
 use warnings NONFATAL => 'void', FATAL => 'void' ;
 

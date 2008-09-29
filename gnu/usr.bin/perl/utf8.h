@@ -1,6 +1,6 @@
 /*    utf8.h
  *
- *    Copyright (C) 2000, 2001, 2002, 2005 by Larry Wall and others
+ *    Copyright (C) 2000, 2001, 2002, 2005, 2006, 2007, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,12 +16,17 @@
 #    define USE_UTF8_IN_NAMES (PL_hints & HINT_UTF8)
 #endif
 
+/* Source backward compatibility. */
+#define uvuni_to_utf8(d, uv)		uvuni_to_utf8_flags(d, uv, 0)
+#define is_utf8_string_loc(s, len, ep)	is_utf8_string_loclen(s, len, ep, 0)
+
 #ifdef EBCDIC
 /* The equivalent of these macros but implementing UTF-EBCDIC
    are in the following header file:
  */
 
 #include "utfebcdic.h"
+
 #else
 START_EXTERN_C
 
@@ -42,7 +47,7 @@ EXTCONST unsigned char PL_utf8skip[];
 #endif
 
 END_EXTERN_C
-#define UTF8SKIP(s) PL_utf8skip[*(const U8*)s]
+#define UTF8SKIP(s) PL_utf8skip[*(const U8*)(s)]
 
 /* Native character to iso-8859-1 */
 #define NATIVE_TO_ASCII(ch)      (ch)
@@ -58,8 +63,8 @@ END_EXTERN_C
 #define ASCII_TO_NEED(enc,ch)    (ch)
 
 /* As there are no translations avoid the function wrapper */
-#define Perl_utf8n_to_uvchr Perl_utf8n_to_uvuni
-#define Perl_uvchr_to_utf8  Perl_uvuni_to_utf8
+#define utf8n_to_uvchr utf8n_to_uvuni
+#define uvchr_to_utf8  uvuni_to_utf8
 
 /*
 
@@ -145,14 +150,14 @@ encoded character.
  * Note: we try to be careful never to call the isXXX_utf8() functions
  * unless we're pretty sure we've seen the beginning of a UTF-8 character
  * (that is, the two high bits are set).  Otherwise we risk loading in the
- * heavy-duty SWASHINIT and SWASHGET routines unnecessarily.
+ * heavy-duty swash_init and swash_fetch routines unnecessarily.
  */
 #define isIDFIRST_lazy_if(p,c) ((IN_BYTES || (!c || (*((const U8*)p) < 0xc0))) \
 				? isIDFIRST(*(p)) \
-				: isIDFIRST_utf8((U8*)p))
+				: isIDFIRST_utf8((const U8*)p))
 #define isALNUM_lazy_if(p,c)   ((IN_BYTES || (!c || (*((const U8*)p) < 0xc0))) \
 				? isALNUM(*(p)) \
-				: isALNUM_utf8((U8*)p))
+				: isALNUM_utf8((const U8*)p))
 
 
 #endif /* EBCDIC vs ASCII */
@@ -183,21 +188,23 @@ encoded character.
  * SpecialCasing.txt. */
 #define UTF8_MAXBYTES_CASE	6
 
-#define IN_BYTES (PL_curcop->op_private & HINT_BYTES)
+#define IN_BYTES (CopHINTS_get(PL_curcop) & HINT_BYTES)
 #define DO_UTF8(sv) (SvUTF8(sv) && !IN_BYTES)
 
 #define UTF8_ALLOW_EMPTY		0x0001
 #define UTF8_ALLOW_CONTINUATION		0x0002
 #define UTF8_ALLOW_NON_CONTINUATION	0x0004
-#define UTF8_ALLOW_FE_FF		0x0008
+#define UTF8_ALLOW_FE_FF		0x0008 /* Allow above 0x7fffFFFF */
 #define UTF8_ALLOW_SHORT		0x0010
 #define UTF8_ALLOW_SURROGATE		0x0020
-#define UTF8_ALLOW_FFFF			0x0040 /* Allows also FFFE. */
+#define UTF8_ALLOW_FFFF			0x0040 /* Allow UNICODE_ILLEGAL */
 #define UTF8_ALLOW_LONG			0x0080
 #define UTF8_ALLOW_ANYUV		(UTF8_ALLOW_EMPTY|UTF8_ALLOW_FE_FF|\
 					 UTF8_ALLOW_SURROGATE|UTF8_ALLOW_FFFF)
 #define UTF8_ALLOW_ANY			0x00FF
 #define UTF8_CHECK_ONLY			0x0200
+#define UTF8_ALLOW_DEFAULT		(ckWARN(WARN_UTF8) ? 0 : \
+					 UTF8_ALLOW_ANYUV)
 
 #define UNICODE_SURROGATE_FIRST		0xD800
 #define UNICODE_SURROGATE_LAST		0xDFFF
@@ -211,8 +218,8 @@ encoded character.
 
 #define UNICODE_ALLOW_SURROGATE 0x0001	/* Allow UTF-16 surrogates (EVIL) */
 #define UNICODE_ALLOW_FDD0	0x0002	/* Allow the U+FDD0...U+FDEF */
-#define UNICODE_ALLOW_FFFF	0x0004	/* Allow 0xFFF[EF], 0x1FFF[EF], ... */
-#define UNICODE_ALLOW_SUPER	0x0008	/* Allow past 10xFFFF */
+#define UNICODE_ALLOW_FFFF	0x0004	/* Allow U+FFF[EF], U+1FFF[EF], ... */
+#define UNICODE_ALLOW_SUPER	0x0008	/* Allow past 0x10FFFF */
 #define UNICODE_ALLOW_ANY	0x000F
 
 #define UNICODE_IS_SURROGATE(c)		((c) >= UNICODE_SURROGATE_FIRST && \

@@ -3,7 +3,7 @@ package Digest;
 use strict;
 use vars qw($VERSION %MMAP $AUTOLOAD);
 
-$VERSION = "1.14";
+$VERSION = "1.15";
 
 %MMAP = (
   "SHA-1"      => ["Digest::SHA1", ["Digest::SHA", 1], ["Digest::SHA2", 1]],
@@ -167,10 +167,26 @@ a reference to the copy.
 
 This is just an alias for $ctx->new.
 
-=item $ctx->add( $data, ... )
+=item $ctx->add( $data )
 
-The $data provided as argument are appended to the message we
-calculate the digest for.  The return value is the $ctx object itself.
+=item $ctx->add( $chunk1, $chunk2, ... )
+
+The string value of the $data provided as argument is appended to the
+message we calculate the digest for.  The return value is the $ctx
+object itself.
+
+If more arguments are provided then they are all appended to the
+message, thus all these lines will have the same effect on the state
+of the $ctx object:
+
+  $ctx->add("a"); $ctx->add("b"); $ctx->add("c");
+  $ctx->add("a")->add("b")->add("c");
+  $ctx->add("a", "b", "c");
+  $ctx->add("abc");
+
+Most algorithms are only defined for strings of bytes and this method
+might therefore croak if the provided arguments contain chars with
+ordinal number above 255.
 
 =item $ctx->addfile( $io_handle )
 
@@ -178,29 +194,42 @@ The $io_handle is read until EOF and the content is appended to the
 message we calculate the digest for.  The return value is the $ctx
 object itself.
 
+The addfile() method will croak() if it fails reading data for some
+reason.  If it croaks it is unpredictable what the state of the $ctx
+object will be in. The addfile() method might have been able to read
+the file partially before it failed.  It is probably wise to discard
+or reset the $ctx object if this occurs.
+
+In most cases you want to make sure that the $io_handle is in
+"binmode" before you pass it as argument to the addfile() method.
+
 =item $ctx->add_bits( $data, $nbits )
 
 =item $ctx->add_bits( $bitstring )
 
-The bits provided are appended to the message we calculate the digest
-for.  The return value is the $ctx object itself.
+The add_bits() method is an alternative to add() that allow partial
+bytes to be appended to the message.  Most users should just ignore
+this method as partial bytes is very unlikely to be of any practical
+use.
 
 The two argument form of add_bits() will add the first $nbits bits
-from data.  For the last potentially partial byte only the high order
+from $data.  For the last potentially partial byte only the high order
 C<< $nbits % 8 >> bits are used.  If $nbits is greater than C<<
 length($data) * 8 >>, then this method would do the same as C<<
-$ctx->add($data) >>, that is $nbits is silently ignored.
+$ctx->add($data) >>.
 
 The one argument form of add_bits() takes a $bitstring of "1" and "0"
 chars as argument.  It's a shorthand for C<< $ctx->add_bits(pack("B*",
 $bitstring), length($bitstring)) >>.
+
+The return value is the $ctx object itself.
 
 This example shows two calls that should have the same effect:
 
    $ctx->add_bits("111100001010");
    $ctx->add_bits("\xF0\xA0", 12);
 
-Most digest algorithms are byte based.  For those it is not possible
+Most digest algorithms are byte based and for these it is not possible
 to add bits that are not a multiple of 8, and the add_bits() method
 will croak if you try.
 
@@ -212,7 +241,7 @@ Note that the C<digest> operation is effectively a destructive,
 read-once operation. Once it has been performed, the $ctx object is
 automatically C<reset> and can be used to calculate another digest
 value.  Call $ctx->clone->digest if you want to calculate the digest
-without reseting the digest state.
+without resetting the digest state.
 
 =item $ctx->hexdigest
 
@@ -268,6 +297,8 @@ New digest implementations should consider subclassing from L<Digest::base>.
 
 L<MIME::Base64>
 
+http://en.wikipedia.org/wiki/Cryptographic_hash_function
+
 =head1 AUTHOR
 
 Gisle Aas <gisle@aas.no>
@@ -278,7 +309,7 @@ developed by Neil Winton for his C<MD5> module.
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-    Copyright 1998-2001,2003-2004 Gisle Aas.
-    Copyright 1995-1996 Neil Winton.
+    Copyright 1998-2006 Gisle Aas.
+    Copyright 1995,1996 Neil Winton.
 
 =cut

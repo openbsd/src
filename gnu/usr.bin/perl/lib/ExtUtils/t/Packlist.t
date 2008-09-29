@@ -39,7 +39,7 @@ is( ExtUtils::Packlist::FETCH($pl, 'foo'), 'bar', 'check FETCH()' );
 # test FIRSTKEY and NEXTKEY
 SKIP: {
 	$pl->{data}{bar} = 'baz';
-	skip('not enough keys to test FIRSTKEY', 2) 
+	skip('not enough keys to test FIRSTKEY', 2)
       unless keys %{ $pl->{data} } > 2;
 
 	# get the first and second key
@@ -50,9 +50,9 @@ SKIP: {
 	for (keys %{ $pl->{data} } ) {
 		last if $i++;
 	}
-	
+
 	# finally, see if it really can get the first key again
-	is( ExtUtils::Packlist::FIRSTKEY($pl), $first, 
+	is( ExtUtils::Packlist::FIRSTKEY($pl), $first,
 		'FIRSTKEY() should be consistent' );
 
 	is( ExtUtils::Packlist::NEXTKEY($pl), $second,
@@ -155,9 +155,9 @@ SKIP: {
 	is( ExtUtils::Packlist::validate($pl), 1,
 		'validate() should find missing files' );
 	ExtUtils::Packlist::validate($pl, 1);
-	ok( !exists $pl->{data}{fake}, 
+	ok( !exists $pl->{data}{fake},
 		'validate() should remove missing files when prompted' );
-	
+
 	# one more new() test, to see if it calls read() successfully
 	$pl = ExtUtils::Packlist->new('eplist');
 }

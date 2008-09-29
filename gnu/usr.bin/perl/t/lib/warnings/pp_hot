@@ -44,9 +44,6 @@
   Deep recursion on anonymous subroutine 	[Perl_sub_crush_depth]
     $a = sub { &$a if $a++ < 200} &$a
 
-  Possible Y2K bug: about to append an integer to '19' [pp_concat]
-    $x     = "19$yy\n";
-
   Use of reference "%s" as array index [pp_aelem]
     $x[\1]
 
@@ -145,7 +142,7 @@ my @b = @$a;
 no warnings 'uninitialized' ;
 my @c = @$a;
 EXPECT
-Use of uninitialized value in array dereference at - line 4.
+Use of uninitialized value $a in array dereference at - line 4.
 ########
 # pp_hot.c [pp_rv2hv]
 use warnings 'uninitialized' ;
@@ -154,7 +151,7 @@ my %b = %$a;
 no warnings 'uninitialized' ;
 my %c = %$a;
 EXPECT
-Use of uninitialized value in hash dereference at - line 4.
+Use of uninitialized value $a in hash dereference at - line 4.
 ########
 # pp_hot.c [pp_aassign]
 use warnings 'misc' ;
@@ -269,37 +266,11 @@ a($x . $y);	# should warn twice
 $x .= $y;	# should warn once
 $y .= $y;	# should warn once
 EXPECT
-Use of uninitialized value in concatenation (.) or string at - line 5.
-Use of uninitialized value in concatenation (.) or string at - line 6.
-Use of uninitialized value in concatenation (.) or string at - line 6.
-Use of uninitialized value in concatenation (.) or string at - line 7.
-Use of uninitialized value in concatenation (.) or string at - line 8.
-########
-# pp_hot.c [pp_concat]
-use warnings 'y2k';
-use Config;
-BEGIN {
-    unless ($Config{ccflags} =~ /Y2KWARN/) {
-	print "SKIPPED\n# perl not built with -DPERL_Y2KWARN";
-	exit 0;
-    }
-}
-my $x;
-my $yy = 78;
-$x     = "19$yy\n";
-$x     = "19" . $yy . "\n";
-$x     = "319$yy\n";
-$x     = "319" . $yy . "\n";
-$yy = 19;
-$x     = "ok $yy\n";
-$yy = 9;
-$x     = 1 . $yy;
-no warnings 'y2k';
-$x     = "19$yy\n";
-$x     = "19" . $yy . "\n";
-EXPECT
-Possible Y2K bug: about to append an integer to '19' at - line 12.
-Possible Y2K bug: about to append an integer to '19' at - line 13.
+Use of uninitialized value $x in concatenation (.) or string at - line 5.
+Use of uninitialized value $x in concatenation (.) or string at - line 6.
+Use of uninitialized value $y in concatenation (.) or string at - line 6.
+Use of uninitialized value $y in concatenation (.) or string at - line 7.
+Use of uninitialized value $y in concatenation (.) or string at - line 8.
 ########
 # pp_hot.c [pp_aelem]
 {

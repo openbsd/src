@@ -51,7 +51,7 @@ use Test::More;
 # present in files, but not in things store()ed to memory
 $fancy = ($] > 5.007 ? 2 : 0);
 
-plan tests => 368 + length ($byteorder) * 4 + $fancy * 8 + 1;
+plan tests => 372 + length ($byteorder) * 4 + $fancy * 8;
 
 use Storable qw (store retrieve freeze thaw nstore nfreeze);
 require 'testlib.pl';
@@ -306,3 +306,9 @@ test_things($stored, \&freeze_and_thaw, 'string', 1);
     # us, which will probably alert the user that something went wrong.
     ok(1);
 }
+
+# Unusual in that the empty string is stored with an SX_LSCALAR marker
+my $hash = store_and_retrieve("pst0\5\6\3\0\0\0\1\1\0\0\0\0\0\0\0\5empty");
+ok(!$@, "no exception");
+is(ref($hash), "HASH", "got a hash");
+is($hash->{empty}, "", "got empty element");

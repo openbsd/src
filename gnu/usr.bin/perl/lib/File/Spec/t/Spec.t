@@ -90,6 +90,7 @@ if ($^O eq 'MacOS') {
 [ "Unix->catdir('d1','d2','d3','')",    'd1/d2/d3'  ],
 [ "Unix->catdir('','d1','d2','d3')",    '/d1/d2/d3' ],
 [ "Unix->catdir('d1','d2','d3')",       'd1/d2/d3'  ],
+[ "Unix->catdir('/','d2/d3')",          '/d2/d3'    ],
 
 [ "Unix->canonpath('///../../..//./././a//b/.././c/././')",   '/a/b/../c' ],
 [ "Unix->canonpath('')",                       ''               ],
@@ -102,7 +103,7 @@ if ($^O eq 'MacOS') {
 [ "Unix->canonpath('/../../')",                '/'              ],
 [ "Unix->canonpath('/../..')",                 '/'              ],
 
-[  "Unix->abs2rel('/t1/t2/t3','/t1/t2/t3')",          ''                   ],
+[  "Unix->abs2rel('/t1/t2/t3','/t1/t2/t3')",          '.'                  ],
 [  "Unix->abs2rel('/t1/t2/t4','/t1/t2/t3')",          '../t4'              ],
 [  "Unix->abs2rel('/t1/t2','/t1/t2/t3')",             '..'                 ],
 [  "Unix->abs2rel('/t1/t2/t3/t4','/t1/t2/t3')",       't4'                 ],
@@ -113,6 +114,10 @@ if ($^O eq 'MacOS') {
 [  "Unix->abs2rel('/.','/t1/t2/t3')",                 '../../..'           ],
 [  "Unix->abs2rel('/./','/t1/t2/t3')",                '../../..'           ],
 #[ "Unix->abs2rel('../t4','/t1/t2/t3')",              '../t4'              ],
+[  "Unix->abs2rel('/t1/t2/t3', '/')",                 't1/t2/t3'           ],
+[  "Unix->abs2rel('/t1/t2/t3', '/t1')",               't2/t3'              ],
+[  "Unix->abs2rel('t1/t2/t3', 't1')",                 't2/t3'              ],
+[  "Unix->abs2rel('t1/t2/t3', 't4')",                 '../t1/t2/t3'        ],
 
 [ "Unix->rel2abs('t4','/t1/t2/t3')",             '/t1/t2/t3/t4'    ],
 [ "Unix->rel2abs('t4/t5','/t1/t2/t3')",          '/t1/t2/t3/t4/t5' ],
@@ -202,6 +207,7 @@ if ($^O eq 'MacOS') {
 [ "Win32->catdir('A:/')",                   'A:\\'               ],
 [ "Win32->catdir('\\', 'foo')",             '\\foo'              ],
 
+
 [ "Win32->catfile('a','b','c')",        'a\\b\\c' ],
 [ "Win32->catfile('a','b','.\\c')",      'a\\b\\c'  ],
 [ "Win32->catfile('.\\a','b','c')",      'a\\b\\c'  ],
@@ -232,11 +238,13 @@ if ($^O eq 'MacOS') {
 [ "Win32->canonpath('\\..\\')",         '\\'                  ],
 [ "Win32->canonpath('/../')",           '\\'                  ],
 [ "Win32->canonpath('/..\\')",          '\\'                  ],
+[ "Win32->canonpath('d1/../foo')",      'foo'                 ],
+
 [ "Win32->can('_cwd')",                 '/CODE/'              ],
 
 # FakeWin32 subclass (see below) just sets CWD to C:\one\two and getdcwd('D') to D:\alpha\beta
 
-[ "FakeWin32->abs2rel('/t1/t2/t3','/t1/t2/t3')",     ''                       ],
+[ "FakeWin32->abs2rel('/t1/t2/t3','/t1/t2/t3')",     '.'                      ],
 [ "FakeWin32->abs2rel('/t1/t2/t4','/t1/t2/t3')",     '..\\t4'                 ],
 [ "FakeWin32->abs2rel('/t1/t2','/t1/t2/t3')",        '..'                     ],
 [ "FakeWin32->abs2rel('/t1/t2/t3/t4','/t1/t2/t3')",  't4'                     ],
@@ -248,23 +256,29 @@ if ($^O eq 'MacOS') {
 [ "FakeWin32->abs2rel('/./','/t1/t2/t3')",           '..\\..\\..'             ],
 [ "FakeWin32->abs2rel('\\\\a/t1/t2/t4','/t2/t3')",   '\\\\a\\t1\\t2\\t4'      ],
 [ "FakeWin32->abs2rel('//a/t1/t2/t4','/t2/t3')",     '\\\\a\\t1\\t2\\t4'      ],
-[ "FakeWin32->abs2rel('A:/t1/t2/t3','A:/t1/t2/t3')",     ''                   ],
+[ "FakeWin32->abs2rel('A:/t1/t2/t3','A:/t1/t2/t3')",     '.'                  ],
 [ "FakeWin32->abs2rel('A:/t1/t2/t3/t4','A:/t1/t2/t3')",  't4'                 ],
 [ "FakeWin32->abs2rel('A:/t1/t2/t3','A:/t1/t2/t3/t4')",  '..'                 ],
 [ "FakeWin32->abs2rel('A:/t1/t2/t3','B:/t1/t2/t3')",     'A:\\t1\\t2\\t3'     ],
 [ "FakeWin32->abs2rel('A:/t1/t2/t3/t4','B:/t1/t2/t3')",  'A:\\t1\\t2\\t3\\t4' ],
 [ "FakeWin32->abs2rel('E:/foo/bar/baz')",            'E:\\foo\\bar\\baz'      ],
 [ "FakeWin32->abs2rel('C:/one/two/three')",          'three'                  ],
+[ "FakeWin32->abs2rel('C:\\Windows\\System32', 'C:\\')",  'Windows\System32'  ],
+[ "FakeWin32->abs2rel('\\\\computer2\\share3\\foo.txt', '\\\\computer2\\share3')",  'foo.txt' ],
+[ "FakeWin32->abs2rel('C:\\one\\two\\t\\asd1\\', 't\\asd\\')", '..\\asd1'     ],
+[ "FakeWin32->abs2rel('\\one\\two', 'A:\\foo')",     'C:\\one\\two'           ],
 
 [ "FakeWin32->rel2abs('temp','C:/')",                       'C:\\temp'                        ],
 [ "FakeWin32->rel2abs('temp','C:/a')",                      'C:\\a\\temp'                     ],
 [ "FakeWin32->rel2abs('temp','C:/a/')",                     'C:\\a\\temp'                     ],
 [ "FakeWin32->rel2abs('../','C:/')",                        'C:\\'                            ],
 [ "FakeWin32->rel2abs('../','C:/a')",                       'C:\\'                            ],
+[ "FakeWin32->rel2abs('\\foo','C:/a')",                     'C:\\foo'                         ],
 [ "FakeWin32->rel2abs('temp','//prague_main/work/')",       '\\\\prague_main\\work\\temp'     ],
 [ "FakeWin32->rel2abs('../temp','//prague_main/work/')",    '\\\\prague_main\\work\\temp'     ],
 [ "FakeWin32->rel2abs('temp','//prague_main/work')",        '\\\\prague_main\\work\\temp'     ],
 [ "FakeWin32->rel2abs('../','//prague_main/work')",         '\\\\prague_main\\work'           ],
+[ "FakeWin32->rel2abs('D:foo.txt')",                        'D:\\alpha\\beta\\foo.txt'        ],
 
 [ "VMS->case_tolerant()",         '1'  ],
 
@@ -273,6 +287,15 @@ if ($^O eq 'MacOS') {
 [ "VMS->catfile('[.a]','b','c')",       '[.a.b]c'  ],
 [ "VMS->catfile('c')",                 'c' ],
 [ "VMS->catfile('[]c')",               'c' ],
+
+[ "VMS->catfile('0','b','c')",     '[.0.b]c' ],
+[ "VMS->catfile('a','0','c')",     '[.a.0]c' ],
+[ "VMS->catfile('a','b','0')",     '[.a.b]0' ],
+[ "VMS->catfile('0','0','c')",     '[.0.0]c' ],
+[ "VMS->catfile('a','0','0')",     '[.a.0]0' ],
+[ "VMS->catfile('0','b','0')",     '[.0.b]0' ],
+[ "VMS->catfile('0','0','0')",     '[.0.0]0' ],
+
 
 [ "VMS->splitpath('file')",                                       ',,file'                                   ],
 [ "VMS->splitpath('[d1.d2.d3]')",                                 ',[d1.d2.d3],'                               ],
@@ -335,16 +358,17 @@ if ($^O eq 'MacOS') {
 [ "VMS->splitdir('[]')",          ''          ],
 [ "VMS->splitdir('d1.d2.d3')",    'd1,d2,d3'  ],
 [ "VMS->splitdir('[d1.d2.d3]')",  'd1,d2,d3'  ],
-[ "VMS->splitdir('.d1.d2.d3')",   ',d1,d2,d3' ],
-[ "VMS->splitdir('[.d1.d2.d3]')", ',d1,d2,d3' ],
-[ "VMS->splitdir('.-.d2.d3')",    ',-,d2,d3'  ],
-[ "VMS->splitdir('[.-.d2.d3]')",  ',-,d2,d3'  ],
+[ "VMS->splitdir('.d1.d2.d3')",   'd1,d2,d3' ],
+[ "VMS->splitdir('[.d1.d2.d3]')", 'd1,d2,d3' ],
+[ "VMS->splitdir('.-.d2.d3')",    '-,d2,d3'  ],
+[ "VMS->splitdir('[.-.d2.d3]')",  '-,d2,d3'  ],
 [ "VMS->splitdir('[d1.d2]')",  		'd1,d2'  ],
 [ "VMS->splitdir('[d1-.--d2]')",  	'd1-,--d2'  ],
 [ "VMS->splitdir('[d1---.-.d2]')",  	'd1---,-,d2'  ],
 [ "VMS->splitdir('[d1.---.d2]')",  	'd1,-,-,-,d2'  ],
 [ "VMS->splitdir('[d1---d2]')",  	'd1---d2'  ],
 [ "VMS->splitdir('[d1.][000000.d2]')",  'd1,d2'  ],
+[ "VMS->splitdir('[.d1.d2^.d3]')", 'd1,d2^.d3' ],
 
 [ "VMS->catdir('')",                                                      ''                 ],
 [ "VMS->catdir('d1','d2','d3')",                                          '[.d1.d2.d3]'         ],
@@ -356,11 +380,11 @@ if ($^O eq 'MacOS') {
 [ "VMS->catdir('[.name]')",                                               '[.name]'            ],
 [ "VMS->catdir('[.name]','[.name]')",                                     '[.name.name]'],
 
-[  "VMS->abs2rel('node::volume:[t1.t2.t3]','node::volume:[t1.t2.t3]')", ''                 ],
+[  "VMS->abs2rel('node::volume:[t1.t2.t3]','node::volume:[t1.t2.t3]')", '[]'                 ],
 [  "VMS->abs2rel('node::volume:[t1.t2.t3]','[t1.t2.t3]')", 'node::volume:[t1.t2.t3]'                 ],
 [  "VMS->abs2rel('node::volume:[t1.t2.t4]','node::volume:[t1.t2.t3]')", '[-.t4]'           ],
 [  "VMS->abs2rel('node::volume:[t1.t2.t4]','[t1.t2.t3]')", 'node::volume:[t1.t2.t4]'           ],
-[  "VMS->abs2rel('[t1.t2.t3]','[t1.t2.t3]')",              ''                 ],
+[  "VMS->abs2rel('[t1.t2.t3]','[t1.t2.t3]')",              '[]'               ],
 [  "VMS->abs2rel('[t1.t2.t3]file','[t1.t2.t3]')",          'file'             ],
 [  "VMS->abs2rel('[t1.t2.t3]file','[t1.t2]')",             '[.t3]file'        ],
 [  "VMS->abs2rel('v:[t1.t2.t3]file','v:[t1.t2]')",         '[.t3]file'        ],
@@ -369,7 +393,7 @@ if ($^O eq 'MacOS') {
 [  "VMS->abs2rel('[t1.t2.t3.t4]','[t1.t2.t3]')",           '[.t4]'            ],
 [  "VMS->abs2rel('[t4.t5.t6]','[t1.t2.t3]')",              '[---.t4.t5.t6]'   ],
 [ "VMS->abs2rel('[000000]','[t1.t2.t3]')",                 '[---]'            ],
-[ "VMS->abs2rel('a:[t1.t2.t4]','a:[t1.t2.t3]')",             '[-.t4]'           ],
+[ "VMS->abs2rel('a:[t1.t2.t4]','a:[t1.t2.t3]')",           '[-.t4]'           ],
 [ "VMS->abs2rel('a:[t1.t2.t4]','[t1.t2.t3]')",             'a:[t1.t2.t4]'           ],
 [ "VMS->abs2rel('[a.-.b.c.-]','[t1.t2.t3]')",              '[---.b]'          ],
 
@@ -595,13 +619,84 @@ if ($^O eq 'MacOS') {
 #[ "Epoc->canonpath('/a/.')",                                  '/a'        ],
 #[ "Epoc->canonpath('/.')",                                    '/'         ],
 
-[ "Cygwin->case_tolerant()",         '0'  ],
+[ "Cygwin->case_tolerant()",         '1'  ],
+[ "Cygwin->catfile('a','b','c')",         'a/b/c'  ],
+[ "Cygwin->catfile('a','b','./c')",       'a/b/c'  ],
+[ "Cygwin->catfile('./a','b','c')",       'a/b/c'  ],
+[ "Cygwin->catfile('c')",                 'c' ],
+[ "Cygwin->catfile('./c')",               'c' ],
+
+[ "Cygwin->splitpath('file')",            ',,file'            ],
+[ "Cygwin->splitpath('/d1/d2/d3/')",      ',/d1/d2/d3/,'      ],
+[ "Cygwin->splitpath('d1/d2/d3/')",       ',d1/d2/d3/,'       ],
+[ "Cygwin->splitpath('/d1/d2/d3/.')",     ',/d1/d2/d3/.,'     ],
+[ "Cygwin->splitpath('/d1/d2/d3/..')",    ',/d1/d2/d3/..,'    ],
+[ "Cygwin->splitpath('/d1/d2/d3/.file')", ',/d1/d2/d3/,.file' ],
+[ "Cygwin->splitpath('d1/d2/d3/file')",   ',d1/d2/d3/,file'   ],
+[ "Cygwin->splitpath('/../../d1/')",      ',/../../d1/,'      ],
+[ "Cygwin->splitpath('/././d1/')",        ',/././d1/,'        ],
+
+[ "Cygwin->catpath('','','file')",            'file'            ],
+[ "Cygwin->catpath('','/d1/d2/d3/','')",      '/d1/d2/d3/'      ],
+[ "Cygwin->catpath('','d1/d2/d3/','')",       'd1/d2/d3/'       ],
+[ "Cygwin->catpath('','/d1/d2/d3/.','')",     '/d1/d2/d3/.'     ],
+[ "Cygwin->catpath('','/d1/d2/d3/..','')",    '/d1/d2/d3/..'    ],
+[ "Cygwin->catpath('','/d1/d2/d3/','.file')", '/d1/d2/d3/.file' ],
+[ "Cygwin->catpath('','d1/d2/d3/','file')",   'd1/d2/d3/file'   ],
+[ "Cygwin->catpath('','/../../d1/','')",      '/../../d1/'      ],
+[ "Cygwin->catpath('','/././d1/','')",        '/././d1/'        ],
+[ "Cygwin->catpath('d1','d2/d3/','')",        'd2/d3/'          ],
+[ "Cygwin->catpath('d1','d2','d3/')",         'd2/d3/'          ],
+
+[ "Cygwin->splitdir('')",           ''           ],
+[ "Cygwin->splitdir('/d1/d2/d3/')", ',d1,d2,d3,' ],
+[ "Cygwin->splitdir('d1/d2/d3/')",  'd1,d2,d3,'  ],
+[ "Cygwin->splitdir('/d1/d2/d3')",  ',d1,d2,d3'  ],
+[ "Cygwin->splitdir('d1/d2/d3')",   'd1,d2,d3'   ],
+
+[ "Cygwin->catdir()",                     ''          ],
+[ "Cygwin->catdir('/')",                  '/'         ],
+[ "Cygwin->catdir('','d1','d2','d3','')", '/d1/d2/d3' ],
+[ "Cygwin->catdir('d1','d2','d3','')",    'd1/d2/d3'  ],
+[ "Cygwin->catdir('','d1','d2','d3')",    '/d1/d2/d3' ],
+[ "Cygwin->catdir('d1','d2','d3')",       'd1/d2/d3'  ],
+[ "Cygwin->catdir('/','d2/d3')",     '/d2/d3'  ],
+
+[ "Cygwin->canonpath('///../../..//./././a//b/.././c/././')",   '/a/b/../c' ],
+[ "Cygwin->canonpath('')",                       ''               ],
+[ "Cygwin->canonpath('a/../../b/c')",            'a/../../b/c'    ],
+[ "Cygwin->canonpath('/.')",                     '/'              ],
+[ "Cygwin->canonpath('/./')",                    '/'              ],
+[ "Cygwin->canonpath('/a/./')",                  '/a'             ],
+[ "Cygwin->canonpath('/a/.')",                   '/a'             ],
+[ "Cygwin->canonpath('/../../')",                '/'              ],
+[ "Cygwin->canonpath('/../..')",                 '/'              ],
+
+[  "Cygwin->abs2rel('/t1/t2/t3','/t1/t2/t3')",          '.'                  ],
+[  "Cygwin->abs2rel('/t1/t2/t4','/t1/t2/t3')",          '../t4'              ],
+[  "Cygwin->abs2rel('/t1/t2','/t1/t2/t3')",             '..'                 ],
+[  "Cygwin->abs2rel('/t1/t2/t3/t4','/t1/t2/t3')",       't4'                 ],
+[  "Cygwin->abs2rel('/t4/t5/t6','/t1/t2/t3')",          '../../../t4/t5/t6'  ],
+#[ "Cygwin->abs2rel('../t4','/t1/t2/t3')",              '../t4'              ],
+[  "Cygwin->abs2rel('/','/t1/t2/t3')",                  '../../..'           ],
+[  "Cygwin->abs2rel('///','/t1/t2/t3')",                '../../..'           ],
+[  "Cygwin->abs2rel('/.','/t1/t2/t3')",                 '../../..'           ],
+[  "Cygwin->abs2rel('/./','/t1/t2/t3')",                '../../..'           ],
+#[ "Cygwin->abs2rel('../t4','/t1/t2/t3')",              '../t4'              ],
+[  "Cygwin->abs2rel('/t1/t2/t3', '/')",                 't1/t2/t3'           ],
+[  "Cygwin->abs2rel('/t1/t2/t3', '/t1')",               't2/t3'              ],
+[  "Cygwin->abs2rel('t1/t2/t3', 't1')",                 't2/t3'              ],
+[  "Cygwin->abs2rel('t1/t2/t3', 't4')",                 '../t1/t2/t3'        ],
+
+[ "Cygwin->rel2abs('t4','/t1/t2/t3')",             '/t1/t2/t3/t4'    ],
+[ "Cygwin->rel2abs('t4/t5','/t1/t2/t3')",          '/t1/t2/t3/t4/t5' ],
+[ "Cygwin->rel2abs('.','/t1/t2/t3')",              '/t1/t2/t3'       ],
+[ "Cygwin->rel2abs('..','/t1/t2/t3')",             '/t1/t2/t3/..'    ],
+[ "Cygwin->rel2abs('../t4','/t1/t2/t3')",          '/t1/t2/t3/../t4' ],
+[ "Cygwin->rel2abs('/t1','/t1/t2/t3')",            '/t1'             ],
 
 ) ;
 
-if ($^O eq 'MSWin32') {
-  push @tests, [ "FakeWin32->rel2abs('D:foo.txt')", 'D:\\alpha\\beta\\foo.txt' ];
-}
 
 
 plan tests => scalar @tests;

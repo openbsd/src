@@ -105,7 +105,7 @@ encodings such as ISO-2022-JP.
 Now let's see what happens when you try to decode from ISO-2022-JP and
 the buffer ends in the middle of a character.
 
-			  JIS208-ESC   \x{5f3e}
+              JIS208-ESC   \x{5f3e}
    A   B   C   ....   ~   \e   $   B  |DAN | ....
   41  42  43   ....  7E   1b  24  41  43  46 ....
   <- buffer --------------------------->

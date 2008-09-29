@@ -3,7 +3,7 @@
 # This script reorders config_h.SH after metaconfig
 # Changing metaconfig is too complicated
 #
-# Copyright (C) 2005-2005 by H.Merijn Brand (m)'05 [25-05-2005]
+# Copyright (C) 2005-2007 by H.Merijn Brand (m)'07 [18-04-2007]
 #
 # You may distribute under the terms of either the GNU General Public
 # License or the Artistic License, as specified in the README file.
@@ -55,6 +55,25 @@ do {
 	}
     } while ($changed);
 
+# 30327
+for (grep m{echo .Extracting \$CONFIG_H} => @ch) {
+    my $case = join "\n",
+	qq{case "\$CONFIG_H" in},
+	qq{already-done) echo "Not re-extracting config.h" ;;},
+	qq{*)}, "";
+    s{^(?=echo .Extracting)}{$case}m;
+    }
+push @ch, ";;\nesac\n";
+
+
 open  $ch, "> $cSH" or die "Cannot write $cSH: $!\n";
+print $ch <<EOW;
+# THIS IS A GENERATED FILE
+# DO NOT HAND-EDIT
+#
+# See Porting/config_h.pl
+
+EOW
+
 print $ch @ch;
 close $ch;

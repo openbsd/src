@@ -3,9 +3,6 @@
 #include "XSUB.h"
 
 #include <sys/types.h>
-#ifdef __linux__
-#   include <asm/page.h>
-#endif
 #if defined(HAS_MSG) || defined(HAS_SEM) || defined(HAS_SHM)
 #ifndef HAS_SEM
 #   include <sys/ipc.h>
@@ -21,9 +18,14 @@
 #      ifndef HAS_SHMAT_PROTOTYPE
            extern Shmat_t shmat (int, char *, int);
 #      endif
-#      if defined(__sparc__) && (defined(__NetBSD__) || defined(__OpenBSD__))
+#      if defined(HAS_SYSCONF) && defined(_SC_PAGESIZE)
+#          undef  SHMLBA /* not static: determined at boot time */
+#          define SHMLBA sysconf(_SC_PAGESIZE)
+#      elif defined(HAS_GETPAGESIZE)
 #          undef  SHMLBA /* not static: determined at boot time */
 #          define SHMLBA getpagesize()
+#      elif defined(__linux__)
+#          include <asm/page.h>          
 #      endif
 #   endif
 #endif
@@ -42,9 +44,9 @@
 
 #ifndef S_IRWXU
 #   ifdef S_IRUSR
-#       define S_IRWXU (S_IRUSR|S_IWUSR|S_IWUSR)
-#       define S_IRWXG (S_IRGRP|S_IWGRP|S_IWGRP)
-#       define S_IRWXO (S_IROTH|S_IWOTH|S_IWOTH)
+#       define S_IRWXU (S_IRUSR|S_IWUSR|S_IXUSR)
+#       define S_IRWXG (S_IRGRP|S_IWGRP|S_IXGRP)
+#       define S_IRWXO (S_IROTH|S_IWOTH|S_IXOTH)
 #   else
 #       define S_IRWXU 0700
 #       define S_IRWXG 0070
@@ -216,7 +218,7 @@ SHMLBA()
 
 BOOT:
 {
-    HV *stash = gv_stashpvn("IPC::SysV", 9, TRUE);
+    HV *stash = gv_stashpvn("IPC::SysV", 9, GV_ADD);
     /*
      * constant subs for IPC::SysV
      */
@@ -246,7 +248,7 @@ BOOT:
         {"IPC_EXCL", IPC_EXCL},
 #endif
 #ifdef IPC_GETACL
-        {"IPC_GETACL", IPC_EXCL},
+        {"IPC_GETACL", IPC_GETACL},
 #endif
 #ifdef IPC_LOCKED
         {"IPC_LOCKED", IPC_LOCKED},

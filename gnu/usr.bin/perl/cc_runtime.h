@@ -54,8 +54,7 @@
 	switch (ret) {				\
 	case 0:					\
 	    PL_op = ppaddr(aTHX);		\
-	    PL_retstack[PL_retstack_ix - 1] = Nullop;	\
-	    if (PL_op != nxt) CALLRUNOPS();		\
+	    if (PL_op != nxt) CALLRUNOPS();	\
 	    JMPENV_POP;				\
 	    break;				\
 	case 1: JMPENV_POP; JMPENV_JUMP(1);	\

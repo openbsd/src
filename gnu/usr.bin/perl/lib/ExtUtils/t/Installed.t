@@ -21,7 +21,7 @@ use File::Path;
 use File::Basename;
 use File::Spec;
 
-use Test::More tests => 46;
+use Test::More tests => 63;
 
 BEGIN { use_ok( 'ExtUtils::Installed' ) }
 
@@ -29,6 +29,10 @@ my $mandirs =  !!$Config{man1direxp} + !!$Config{man3direxp};
 
 # saves having to qualify package name for class methods
 my $ei = bless( {}, 'ExtUtils::Installed' );
+
+# Make sure meta info is available
+$ei->{':private:'}{Config} = \%Config;
+$ei->{':private:'}{INC} = \@INC;
 
 # _is_prefix
 ok( $ei->_is_prefix('foo/bar', 'foo'),
@@ -53,7 +57,7 @@ foreach my $path (qw( man1dir man3dir )) {
 # VMS 5.6.1 doesn't seem to have $Config{prefixexp}
 my $prefix = $Config{prefix} || $Config{prefixexp};
 
-# You can concatenate /foo but not foo:, which defaults in the current 
+# You can concatenate /foo but not foo:, which defaults in the current
 # directory
 $prefix = VMS::Filespec::unixify($prefix) if $Is_VMS;
 
@@ -65,7 +69,7 @@ ok( $ei->_is_type( File::Spec->catfile($prefix, 'bar'), 'prog'),
 
 SKIP: {
     skip('no man directories on this system', 1) unless $mandirs;
-    is( $ei->_is_type('bar', 'doc'), 0, 
+    is( $ei->_is_type('bar', 'doc'), 0,
 	'... should not find doc file outside path' );
 }
 
@@ -100,10 +104,10 @@ FAKE
 
 close FAKEMOD;
 
+my $fake_mod_dir = File::Spec->catdir(cwd(), 'auto', 'FakeMod');
 {
     # avoid warning and death by localizing glob
     local *ExtUtils::Installed::Config;
-    my $fake_mod_dir = File::Spec->catdir(cwd(), 'auto', 'FakeMod');
     %ExtUtils::Installed::Config = (
         %Config,
         archlibexp         => cwd(),
@@ -116,31 +120,98 @@ close FAKEMOD;
     my $realei = ExtUtils::Installed->new();
     isa_ok( $realei, 'ExtUtils::Installed' );
     isa_ok( $realei->{Perl}{packlist}, 'ExtUtils::Packlist' );
-    is( $realei->{Perl}{version}, $Config{version}, 
+    is( $realei->{Perl}{version}, $Config{version},
         'new() should set Perl version from %Config' );
 
     ok( exists $realei->{FakeMod}, 'new() should find modules with .packlists');
     isa_ok( $realei->{FakeMod}{packlist}, 'ExtUtils::Packlist' );
-    is( $realei->{FakeMod}{version}, '1.1.1', 
+    is( $realei->{FakeMod}{version}, '1.1.1',
+	'... should find version in modules' );
+}
+
+# Now try this using PERL5LIB
+{
+    local $ENV{PERL5LIB} = join $Config{path_sep}, $fake_mod_dir;
+    local *ExtUtils::Installed::Config;
+    %ExtUtils::Installed::Config = (
+        %Config,
+        archlibexp         => cwd(),
+        sitearchexp        => cwd(),
+    );
+
+    my $realei = ExtUtils::Installed->new();
+    isa_ok( $realei, 'ExtUtils::Installed' );
+    isa_ok( $realei->{Perl}{packlist}, 'ExtUtils::Packlist' );
+    is( $realei->{Perl}{version}, $Config{version},
+        'new() should set Perl version from %Config' );
+
+    ok( exists $realei->{FakeMod},
+        'new() should find modules with .packlists using PERL5LIB'
+    );
+    isa_ok( $realei->{FakeMod}{packlist}, 'ExtUtils::Packlist' );
+    is( $realei->{FakeMod}{version}, '1.1.1',
+	'... should find version in modules' );
+}
+
+# Do the same thing as the last block, but with overrides for
+# %Config and @INC.
+{
+    my $config_override = { %Config::Config };
+    $config_override->{archlibexp} = cwd();
+    $config_override->{sitearchexp} = $fake_mod_dir;
+    $config_override->{version} = 'fake_test_version';
+
+    my @inc_override = (@INC, $fake_mod_dir);
+
+    my $realei = ExtUtils::Installed->new(
+        'config_override' => $config_override,
+        'inc_override' => \@inc_override,
+    );
+    isa_ok( $realei, 'ExtUtils::Installed' );
+    isa_ok( $realei->{Perl}{packlist}, 'ExtUtils::Packlist' );
+    is( $realei->{Perl}{version}, 'fake_test_version',
+        'new(config_override => HASH) overrides %Config' );
+
+    ok( exists $realei->{FakeMod}, 'new() with overrides should find modules with .packlists');
+    isa_ok( $realei->{FakeMod}{packlist}, 'ExtUtils::Packlist' );
+    is( $realei->{FakeMod}{version}, '1.1.1',
+	'... should find version in modules' );
+}
+
+# Check if extra_libs works.
+{
+    my $realei = ExtUtils::Installed->new(
+        'extra_libs' => [ cwd() ],
+    );
+    isa_ok( $realei, 'ExtUtils::Installed' );
+    isa_ok( $realei->{Perl}{packlist}, 'ExtUtils::Packlist' );
+    ok( exists $realei->{FakeMod}, 
+        'new() with extra_libs should find modules with .packlists');
+    
+    #{ use Data::Dumper; local $realei->{':private:'}{Config};
+    #  warn Dumper($realei); }
+    
+    isa_ok( $realei->{FakeMod}{packlist}, 'ExtUtils::Packlist' );
+    is( $realei->{FakeMod}{version}, '1.1.1',
 	'... should find version in modules' );
 }
 
 # modules
 $ei->{$_} = 1 for qw( abc def ghi );
-is( join(' ', $ei->modules()), 'abc def ghi', 
+is( join(' ', $ei->modules()), 'abc def ghi',
     'modules() should return sorted keys' );
 
 # This didn't work for a long time due to a sort in scalar context oddity.
 is( $ei->modules, 3,    'modules() in scalar context' );
 
 # files
-$ei->{goodmod} = { 
-        packlist => { 
-                ($Config{man1direxp} ? 
-                    (File::Spec->catdir($Config{man1direxp}, 'foo') => 1) : 
+$ei->{goodmod} = {
+        packlist => {
+                ($Config{man1direxp} ?
+                    (File::Spec->catdir($Config{man1direxp}, 'foo') => 1) :
                         ()),
-                ($Config{man3direxp} ? 
-                    (File::Spec->catdir($Config{man3direxp}, 'bar') => 1) : 
+                ($Config{man3direxp} ?
+                    (File::Spec->catdir($Config{man3direxp}, 'bar') => 1) :
                         ()),
                 File::Spec->catdir($prefix, 'foobar') => 1,
                 foobaz  => 1,
@@ -154,8 +225,8 @@ like( $@, qr/type must be/,'files() should croak given bad type' );
 
 my @files;
 SKIP: {
-    skip('no man directory man1dir on this system', 2) 
-      unless $Config{man1direxp}; 
+    skip('no man directory man1dir on this system', 2)
+      unless $Config{man1direxp};
     @files = $ei->files('goodmod', 'doc', $Config{man1direxp});
     is( scalar @files, 1, '... should find doc file under given dir' );
     is( (grep { /foo$/ } @files), 1, '... checking file name' );
@@ -190,22 +261,22 @@ is( scalar @dirs, 2 + $mandirs, '... should find all files files() would, again'
 is( join(' ', @files), join(' ', @dirs), '... should sort output' );
 
 # directory_tree
-my $expectdirs = 
-       ($mandirs == 2) && 
+my $expectdirs =
+       ($mandirs == 2) &&
        (dirname($Config{man1direxp}) eq dirname($Config{man3direxp}))
        ? 3 : 2;
- 
+
 SKIP: {
     skip('no man directories on this system', 1) unless $mandirs;
     @dirs = $ei->directory_tree('goodmod', 'doc', $Config{man1direxp} ?
        dirname($Config{man1direxp}) : dirname($Config{man3direxp}));
-    is( scalar @dirs, $expectdirs, 
+    is( scalar @dirs, $expectdirs,
         'directory_tree() should report intermediate dirs to those requested' );
 }
 
 my $fakepak = Fakepak->new(102);
 
-$ei->{yesmod} = { 
+$ei->{yesmod} = {
         version         => 101,
         packlist        => $fakepak,
 };
@@ -213,20 +284,20 @@ $ei->{yesmod} = {
 # these should all croak
 foreach my $sub (qw( validate packlist version )) {
     eval { $ei->$sub('nomod') };
-    like( $@, qr/nomod is not installed/, 
+    like( $@, qr/nomod is not installed/,
 	  "$sub() should croak when asked about uninstalled module" );
 }
 
 # validate
-is( $ei->validate('yesmod'), 'validated', 
+is( $ei->validate('yesmod'), 'validated',
         'validate() should return results of packlist validate() call' );
 
 # packlist
-is( ${ $ei->packlist('yesmod') }, 102, 
+is( ${ $ei->packlist('yesmod') }, 102,
         'packlist() should report installed mod packlist' );
 
 # version
-is( $ei->version('yesmod'), 101, 
+is( $ei->version('yesmod'), 101,
         'version() should report installed mod version' );
 
 

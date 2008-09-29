@@ -107,16 +107,15 @@ the Perl code
 
     use O ("Backend", OPTIONS);
 
-The C<import> function which that calls loads in the appropriate
-C<B::Backend> module and calls the C<compile> function in that
-package, passing it OPTIONS. That function is expected to return
-a sub reference which we'll call CALLBACK. Next, the "compile-only"
-flag is switched on (equivalent to the command-line option C<-c>)
-and a CHECK block is registered which calls CALLBACK. Thus the main
-Perl program mentioned on the command-line is read in, parsed and
-compiled into internal syntax tree form. Since the C<-c> flag is
-set, the program does not start running (excepting BEGIN blocks of
-course) but the CALLBACK function registered by the compiler
+The C<O::import> function loads the appropriate C<B::Backend> module
+and calls its C<compile> function, passing it OPTIONS. That function
+is expected to return a sub reference which we'll call CALLBACK. Next,
+the "compile-only" flag is switched on (equivalent to the command-line
+option C<-c>) and a CHECK block is registered which calls
+CALLBACK. Thus the main Perl program mentioned on the command-line is
+read in, parsed and compiled into internal syntax tree form. Since the
+C<-c> flag is set, the program does not start running (excepting BEGIN
+blocks of course) but the CALLBACK function registered by the compiler
 backend is called.
 
 In summary, a compiler backend module should be called "B::Foo"

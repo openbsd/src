@@ -1,6 +1,7 @@
 /*    utfebcdic.h
  *
- *    Copyright (C) 2001, 2002, by Larry Wall, Nick Ing-Simmons, and others
+ *    Copyright (C) 2001, 2002, 2003, 2005, 2006, 2007, by Larry Wall, Nick
+ *    Ing-Simmons, and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -337,7 +338,7 @@ EXTCONST unsigned char PL_a2e[];
 
 END_EXTERN_C
 
-#define UTF8SKIP(s) PL_utf8skip[*(const U8*)s]
+#define UTF8SKIP(s) PL_utf8skip[*(const U8*)(s)]
 
 /* EBCDIC-happy ways of converting native code to UTF-8 */
 
@@ -357,8 +358,8 @@ END_EXTERN_C
 /*
  * Note: we should try and be careful never to call the isXXX_utf8() functions
  * unless we're pretty sure we've seen the beginning of a UTF-EBCDIC character
- * Otherwise we risk loading in the heavy-duty SWASHINIT and SWASHGET routines
- * unnecessarily.
+ * Otherwise we risk loading in the heavy-duty swash_init and swash_fetch
+ * routines unnecessarily.
  */
 
 #define isIDFIRST_lazy_if(p,c) ((IN_BYTES || (!c || UTF8_IS_INVARIANT(*p))) \

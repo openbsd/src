@@ -10,7 +10,7 @@
 package Pod::Select;
 
 use vars qw($VERSION);
-$VERSION = 1.30;  ## Current version of this package
+$VERSION = 1.35;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -505,7 +505,7 @@ sub is_selected {
 
     ## Keep track of current sections levels and headings
     $_ = $paragraph;
-    if (/^=((?:sub)*)(?:head(?:ing)?|sec(?:tion)?)(\d*)\s+(.*)\s*$/)
+    if (/^=((?:sub)*)(?:head(?:ing)?|sec(?:tion)?)(\d*)\s+(.*?)\s*$/)
     {
         ## This is a section heading command
         my ($level, $heading) = ($2, $3);
@@ -575,7 +575,7 @@ are used.
 
 All other arguments should correspond to the names of input files
 containing POD sections. A file name of "-" or "<&STDIN" will
-be interpeted to mean standard input (which is the default if no
+be interpreted to mean standard input (which is the default if no
 filenames are given).
 
 =cut 

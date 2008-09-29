@@ -54,7 +54,7 @@ OUT
 
     my $err_re = <<ERR;
 #   Failed test 'is foo like that'
-#   in .* at line 1\.
+#   at .* line 1\.
 #                   'foo'
 #     doesn't match '\\(\\?-xism:that\\)'
 # Looks like you failed 1 test of 1\\.

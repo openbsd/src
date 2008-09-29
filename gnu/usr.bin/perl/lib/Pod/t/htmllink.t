@@ -10,23 +10,24 @@ BEGIN {
 use strict;
 use Test::More tests => 1;
 
-TODO: {
-    local $TODO = "item 2 doesn't work as expected";
-    convert_n_test("htmllink", "html links");
-}
+convert_n_test("htmllink", "html links");
 
 __DATA__
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>htmllink - Test HTML links</title>
-<link rev="made" href="mailto:" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:[PERLADMIN]" />
 </head>
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
 <ul>
 
@@ -41,9 +42,11 @@ __DATA__
 	</ul>
 
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -55,39 +58,39 @@ __DATA__
 <p><a href="#section1">section1</a></p>
 <p><a href="#section_2">section 2</a></p>
 <p><a href="#section_three">section three</a></p>
-<p><a href="#item_item1">item1</a></p>
-<p><a href="#item_item_2">item 2</a></p>
-<p><a href="#item_item_three">item three</a></p>
+<p><a href="#item1">item1</a></p>
+<p><a href="#item_2">item 2</a></p>
+<p><a href="#item_three">item three</a></p>
 <p><a href="#section1">section1</a></p>
 <p><a href="#section_2">section 2</a></p>
 <p><a href="#section_three">section three</a></p>
-<p><a href="#item_item1">item1</a></p>
-<p><a href="#item_item_2">item 2</a></p>
-<p><a href="#item_item_three">item three</a></p>
+<p><a href="#item1">item1</a></p>
+<p><a href="#item_2">item 2</a></p>
+<p><a href="#item_three">item three</a></p>
 <p><a href="#section1">section1</a></p>
 <p><a href="#section_2">section 2</a></p>
 <p><a href="#section_three">section three</a></p>
-<p><a href="#item_item1">item1</a></p>
-<p><a href="#item_item_2">item 2</a></p>
-<p><a href="#item_item_three">item three</a></p>
+<p><a href="#item1">item1</a></p>
+<p><a href="#item_2">item 2</a></p>
+<p><a href="#item_three">item three</a></p>
 <p><a href="#section1">text</a></p>
 <p><a href="#section_2">text</a></p>
 <p><a href="#section_three">text</a></p>
-<p><a href="#item_item1">text</a></p>
-<p><a href="#item_item_2">text</a></p>
-<p><a href="#item_item_three">text</a></p>
+<p><a href="#item1">text</a></p>
+<p><a href="#item_2">text</a></p>
+<p><a href="#item_three">text</a></p>
 <p><a href="#section1">text</a></p>
 <p><a href="#section_2">text</a></p>
 <p><a href="#section_three">text</a></p>
-<p><a href="#item_item1">text</a></p>
-<p><a href="#item_item_2">text</a></p>
-<p><a href="#item_item_three">text</a></p>
+<p><a href="#item1">text</a></p>
+<p><a href="#item_2">text</a></p>
+<p><a href="#item_three">text</a></p>
 <p><a href="#section1">text</a></p>
 <p><a href="#section_2">text</a></p>
 <p><a href="#section_three">text</a></p>
-<p><a href="#item_item1">text</a></p>
-<p><a href="#item_item_2">text</a></p>
-<p><a href="#item_item_three">text</a></p>
+<p><a href="#item1">text</a></p>
+<p><a href="#item_2">text</a></p>
+<p><a href="#item_three">text</a></p>
 <p>
 </p>
 <hr />
@@ -105,24 +108,25 @@ __DATA__
 <h2><a name="section_three">section three</a></h2>
 <p>This is section three.</p>
 <dl>
-<dt><strong><a name="item_item1">item1</a></strong><br />
-</dt>
+<dt><strong><a name="item1" class="item">item1</a></strong>
+
 <dd>
-This is item one.
+<p>This is item one.</p>
 </dd>
-<p></p>
-<dt><strong><a name="item_item_2">item 2</a></strong><br />
-</dt>
+</li>
+<dt><strong><a name="item_2" class="item">item 2</a></strong>
+
 <dd>
-This is item two.
+<p>This is item two.</p>
 </dd>
-<p></p>
-<dt><strong><a name="item_item_three">item three</a></strong><br />
-</dt>
+</li>
+<dt><strong><a name="item_three" class="item">item three</a></strong>
+
 <dd>
-This is item three.
+<p>This is item three.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 
 </body>
 

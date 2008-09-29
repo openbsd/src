@@ -1,13 +1,28 @@
-# Format:
+# regcomp.sym
+#
+# File has two sections, divided by a line of dashes '-'. 
+#
+# Empty rows after #-comment are removed from input are ignored
+#
+# First section is for regops, second sectionis for regmatch-states
+#
+# Note that the order in this file is important.
+#
+# Format for first section: 
 # NAME \t TYPE, arg-description [num-args] [longjump-len] \t DESCRIPTION
+#
+#
+# run perl regen.pl after editing this file
 
-# Empty rows and #-comment rows are ignored.
 
-# Exit points
+
+#* Exit points (0,1)
+
 END		END,    no	End of program.
 SUCCEED		END,    no	Return from a subroutine, basically.
 
-# Anchors:
+#* Anchors: (2..13)
+
 BOL		BOL,    no	Match "" at beginning of line.
 MBOL		BOL,    no	Same, assuming multiline.
 SBOL		BOL,    no	Same, assuming singleline.
@@ -21,7 +36,8 @@ NBOUND		NBOUND, no	Match "" at any word non-boundary
 NBOUNDL		NBOUND, no	Match "" at any word non-boundary
 GPOS		GPOS,   no	Matches where last m//g left off.
 
-# [Special] alternatives
+#* [Special] alternatives: (14..30)
+
 REG_ANY		REG_ANY,    no	Match any one character (except newline).
 SANY		REG_ANY,    no	Match any one character.
 CANY		REG_ANY,    no	Match any one byte.
@@ -40,7 +56,9 @@ NDIGIT		NDIGIT, no	Match any non-numeric character
 NDIGITL		NDIGIT, no	Match any non-numeric character in locale
 CLUMP		CLUMP,  no	Match any combining character sequence
 
-# BRANCH	The set of branches constituting a single choice are hooked
+#* Alternation (31)
+
+# BRANCH  	The set of branches constituting a single choice are hooked
 #		together with their "next" pointers, since precedence prevents
 #		anything being concatenated to any individual branch.  The
 #		"next" pointer of the last BRANCH in a choice points to the
@@ -50,20 +68,26 @@ CLUMP		CLUMP,  no	Match any combining character sequence
 #
 BRANCH		BRANCH, node	Match this alternative, or the next...
 
+#*Back pointer (32)
+
 # BACK		Normal "next" pointers all implicitly point forward; BACK
 #		exists to make loop structures possible.
 # not used
 BACK		BACK,   no	Match "", "next" ptr points backward.
 
-# Literals
-EXACT		EXACT,  sv	Match this string (preceded by length).
-EXACTF		EXACT,  sv	Match this string, folded (prec. by length).
-EXACTFL		EXACT,  sv	Match this string, folded in locale (w/len).
+#*Literals (33..35)
 
-# Do nothing
+EXACT		EXACT,  str	Match this string (preceded by length).
+EXACTF		EXACT,  str	Match this string, folded (prec. by length).
+EXACTFL		EXACT,  str	Match this string, folded in locale (w/len).
+
+#*Do nothing types (36..37)
+
 NOTHING		NOTHING,no	Match empty string.
 # A variant of above which delimits a group, thus stops optimizations
 TAIL		NOTHING,no	Match empty string. Can jump here from outside.
+
+#*Loops (38..44)
 
 # STAR,PLUS	'?', and complex '*' and '+', are implemented as circular
 #		BRANCH structures using BACK.  Simple cases (one character
@@ -74,13 +98,14 @@ STAR		STAR,   node	Match this (simple) thing 0 or more times.
 PLUS		PLUS,   node	Match this (simple) thing 1 or more times.
 
 CURLY		CURLY,  sv 2	Match this simple thing {n,m} times.
-CURLYN		CURLY,  no 2	Match next-after-this simple thing 
-#				{n,m} times, set parenths.
-CURLYM		CURLY,  no 2	Match this medium-complex thing {n,m} times.
+CURLYN		CURLY,  no 2	Capture next-after-this simple thing 
+CURLYM		CURLY,  no 2	Capture this medium-complex thing {n,m} times. 
 CURLYX		CURLY,  sv 2	Match this complex thing {n,m} times.
 
 # This terminator creates a loop structure for CURLYX
 WHILEM		WHILEM, no	Do curly processing and see if rest matches.
+
+#*Buffer related (45..49)
 
 # OPEN,CLOSE,GROUPP	...are numbered at compile time.
 OPEN		OPEN,   num 1	Mark this point in input as start of #n.
@@ -90,27 +115,122 @@ REF		REF,    num 1	Match some already matched string
 REFF		REF,    num 1	Match already matched string, folded
 REFFL		REF,    num 1	Match already matched string, folded in loc.
 
-# grouping assertions
+#*Grouping assertions (50..54)
+
 IFMATCH		BRANCHJ,off 1 2	Succeeds if the following matches.
 UNLESSM		BRANCHJ,off 1 2	Fails if the following matches.
 SUSPEND		BRANCHJ,off 1 1	"Independent" sub-RE.
 IFTHEN		BRANCHJ,off 1 1	Switch, should be preceeded by switcher .
 GROUPP		GROUPP, num 1	Whether the group matched.
 
-# Support for long RE
+#*Support for long RE (55..56)
+
 LONGJMP		LONGJMP,off 1 1	Jump far away.
 BRANCHJ		BRANCHJ,off 1 1	BRANCH with long offset.
 
-# The heavy worker
+#*The heavy worker (57..58)
+
 EVAL		EVAL,   evl 1	Execute some Perl code.
 
-# Modifiers
+#*Modifiers (59..60)
+
 MINMOD		MINMOD, no	Next operator is not greedy.
 LOGICAL		LOGICAL,no	Next opcode should set the flag only.
 
-# This is not used yet
+# This is not used yet (61)
 RENUM		BRANCHJ,off 1 1	Group with independently numbered parens.
+
+#*Trie Related (62..64)
+
+# Behave the same as A|LIST|OF|WORDS would. The '..C' variants have  
+# inline charclass data (ascii only), the 'C' store it in the structure.
+# NOTE: the relative order of the TRIE-like regops  is signifigant
+
+TRIE		TRIE,     trie 1	Match many EXACT(FL?)? at once. flags==type
+TRIEC		TRIE,trie charclass	Same as TRIE, but with embedded charclass data
+
+# For start classes, contains an added fail table.
+AHOCORASICK	TRIE,        trie 1	Aho Corasick stclass. flags==type
+AHOCORASICKC	TRIE,trie charclass	Same as AHOCORASICK, but with embedded charclass data
+
+#*Regex Subroutines (65..66) 
+GOSUB		GOSUB,     num/ofs 2L	recurse to paren arg1 at (signed) ofs arg2
+GOSTART		GOSTART,   no   	recurse to start of pattern
+
+#*Named references (67..69)
+NREF		REF,       no-sv 1	Match some already matched string
+NREFF		REF,       no-sv 1	Match already matched string, folded
+NREFFL		REF,       no-sv 1	Match already matched string, folded in loc.
+
+
+#*Special conditionals  (70..72)
+NGROUPP		NGROUPP,   no-sv 1	Whether the group matched.            
+INSUBP		INSUBP,    num 1 	Whether we are in a specific recurse.  
+DEFINEP		DEFINEP,   none 1 	Never execute directly.               
+
+#*Bactracking Verbs
+ENDLIKE		ENDLIKE,   none		Used only for the type field of verbs
+OPFAIL		ENDLIKE,   none 	Same as (?!)
+ACCEPT		ENDLIKE,   parno 1 	Accepts the current matched string.
+
+
+#*Verbs With Arguments
+VERB		VERB,	   no-sv 1	Used only for the type field of verbs
+PRUNE		VERB,      no-sv 1 	Pattern fails at this startpoint if no-backtracking through this 
+MARKPOINT	VERB,      no-sv 1	Push the current location for rollback by cut.
+SKIP		VERB,      no-sv 1	On failure skip forward (to the mark) before retrying
+COMMIT		VERB,      no-sv 1	Pattern fails outright if backtracking through this
+CUTGROUP	VERB,      no-sv 1	On failure go to the next alternation in the group
+
+#*Control what to keep in $&.
+KEEPS		KEEPS,  no	$& begins here.
+
+#*New charclass like patterns
+LNBREAK		LNBREAK,   none		generic newline pattern
+VERTWS		VERTWS,    none		vertical whitespace         (Perl 6)
+NVERTWS		NVERTWS,   none		not vertical whitespace     (Perl 6)
+HORIZWS		HORIZWS,   none		horizontal whitespace       (Perl 6)
+NHORIZWS	NHORIZWS,  none		not horizontal whitespace   (Perl 6)
+
+FOLDCHAR	FOLDCHAR,  codepoint 1	codepoint with tricky case folding properties.
+
+# NEW STUFF ABOVE THIS LINE  
+
+################################################################################
+
+#*SPECIAL  REGOPS
 
 # This is not really a node, but an optimized away piece of a "long" node.
 # To simplify debugging output, we mark it as if it were a node
 OPTIMIZED	NOTHING,off	Placeholder for dump.
+
+# Special opcode with the property that no opcode in a compiled program
+# will ever be of this type. Thus it can be used as a flag value that
+# no other opcode has been seen. END is used similarly, in that an END
+# node cant be optimized. So END implies "unoptimizable" and PSEUDO mean
+# "not seen anything to optimize yet".
+PSEUDO		PSEUDO,off	Pseudo opcode for internal use.
+
+-------------------------------------------------------------------------------
+# Format for second section:
+# REGOP \t typelist [ \t typelist] [# Comment]
+# typelist= namelist
+#         = namelist:FAIL
+#         = name:count
+
+# Anything below is a state
+#
+#
+TRIE    	next:FAIL	
+EVAL    	AB:FAIL	
+CURLYX  	end:FAIL	
+WHILEM  	A_pre,A_min,A_max,B_min,B_max:FAIL
+BRANCH  	next:FAIL	
+CURLYM  	A,B:FAIL	
+IFMATCH 	A:FAIL	
+CURLY   	B_min_known,B_min,B_max:FAIL	
+COMMIT		next:FAIL
+MARKPOINT	next:FAIL
+SKIP		next:FAIL
+CUTGROUP	next:FAIL
+KEEPS		next:FAIL

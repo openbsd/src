@@ -1,0 +1,7 @@
+        Time-stamp: "2003-09-01 23:10:23 ADT"
+
+This is a late-beta release of Pod::Simple, the module-suite for
+parsing Pod.
+
+There are still some gaps in the documentation, and Pod::Simple::HTML
+isn't yet all that it should be.

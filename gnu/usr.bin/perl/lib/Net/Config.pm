@@ -13,24 +13,24 @@ use strict;
 
 @EXPORT  = qw(%NetConfig);
 @ISA     = qw(Net::LocalCfg Exporter);
-$VERSION = "1.10"; # $Id: //depot/libnet/Net/Config.pm#17 $
+$VERSION = "1.11";
 
 eval { local $SIG{__DIE__}; require Net::LocalCfg };
 
 %NetConfig = (
-    nntp_hosts => [],
-    snpp_hosts => [],
-    pop3_hosts => [],
-    smtp_hosts => [],
-    ph_hosts => [],
-    daytime_hosts => [],
-    time_hosts => [],
-    inet_domain => undef,
-    ftp_firewall => undef,
-    ftp_ext_passive => 0,
-    ftp_int_passive => 0,
-    test_hosts => 1,
-    test_exist => 1,
+  nntp_hosts      => [],
+  snpp_hosts      => [],
+  pop3_hosts      => [],
+  smtp_hosts      => [],
+  ph_hosts        => [],
+  daytime_hosts   => [],
+  time_hosts      => [],
+  inet_domain     => undef,
+  ftp_firewall    => undef,
+  ftp_ext_passive => 1,
+  ftp_int_passive => 1,
+  test_hosts      => 1,
+  test_exist      => 1,
 );
 
 #
@@ -60,55 +60,56 @@ TRY_INTERNET_CONFIG
 my $file = __FILE__;
 my $ref;
 $file =~ s/Config.pm/libnet.cfg/;
-if ( -f $file ) {
-    $ref = eval { local $SIG{__DIE__}; do $file };
-    if (ref($ref) eq 'HASH') {
-	%NetConfig = (%NetConfig, %{ $ref });
-	$LIBNET_CFG = $file;
-    }
+if (-f $file) {
+  $ref = eval { local $SIG{__DIE__}; do $file };
+  if (ref($ref) eq 'HASH') {
+    %NetConfig = (%NetConfig, %{$ref});
+    $LIBNET_CFG = $file;
+  }
 }
-if ($< == $> and !$CONFIGURE)  {
-    my $home = eval { local $SIG{__DIE__}; (getpwuid($>))[7] } || $ENV{HOME};
-    $home ||= $ENV{HOMEDRIVE} . ($ENV{HOMEPATH}||'') if defined $ENV{HOMEDRIVE};
-    if (defined $home) {
-	$file = $home . "/.libnetrc";
-	$ref = eval { local $SIG{__DIE__}; do $file } if -f $file;
-	%NetConfig = (%NetConfig, %{ $ref })
-	    if ref($ref) eq 'HASH';	
-    }
+if ($< == $> and !$CONFIGURE) {
+  my $home = eval { local $SIG{__DIE__}; (getpwuid($>))[7] } || $ENV{HOME};
+  $home ||= $ENV{HOMEDRIVE} . ($ENV{HOMEPATH} || '') if defined $ENV{HOMEDRIVE};
+  if (defined $home) {
+    $file      = $home . "/.libnetrc";
+    $ref       = eval { local $SIG{__DIE__}; do $file } if -f $file;
+    %NetConfig = (%NetConfig, %{$ref})
+      if ref($ref) eq 'HASH';
+  }
 }
-my ($k,$v);
-while(($k,$v) = each %NetConfig) {
-	$NetConfig{$k} = [ $v ]
-		if($k =~ /_hosts$/ and $k ne "test_hosts" and defined($v) and !ref($v));
+my ($k, $v);
+while (($k, $v) = each %NetConfig) {
+  $NetConfig{$k} = [$v]
+    if ($k =~ /_hosts$/ and $k ne "test_hosts" and defined($v) and !ref($v));
 }
 
 # Take a hostname and determine if it is inside the firewall
 
+
 sub requires_firewall {
-    shift; # ignore package
-    my $host = shift;
+  shift;    # ignore package
+  my $host = shift;
 
-    return 0 unless defined $NetConfig{'ftp_firewall'};
+  return 0 unless defined $NetConfig{'ftp_firewall'};
 
-    $host = inet_aton($host) or return -1;
-    $host = inet_ntoa($host);
+  $host = inet_aton($host) or return -1;
+  $host = inet_ntoa($host);
 
-    if(exists $NetConfig{'local_netmask'}) {
-	my $quad = unpack("N",pack("C*",split(/\./,$host)));
-	my $list = $NetConfig{'local_netmask'};
-	$list = [$list] unless ref($list);
-	foreach (@$list) {
-	    my($net,$bits) = (m#^(\d+\.\d+\.\d+\.\d+)/(\d+)$#) or next;
-	    my $mask = ~0 << (32 - $bits);
-	    my $addr = unpack("N",pack("C*",split(/\./,$net)));
+  if (exists $NetConfig{'local_netmask'}) {
+    my $quad = unpack("N", pack("C*", split(/\./, $host)));
+    my $list = $NetConfig{'local_netmask'};
+    $list = [$list] unless ref($list);
+    foreach (@$list) {
+      my ($net, $bits) = (m#^(\d+\.\d+\.\d+\.\d+)/(\d+)$#) or next;
+      my $mask = ~0 << (32 - $bits);
+      my $addr = unpack("N", pack("C*", split(/\./, $net)));
 
-	    return 0 if (($addr & $mask) == ($quad & $mask));
-	}
-	return 1;
+      return 0 if (($addr & $mask) == ($quad & $mask));
     }
+    return 1;
+  }
 
-    return 0;
+  return 0;
 }
 
 use vars qw(*is_external);
@@ -129,7 +130,7 @@ Net::Config - Local configuration data for libnet
 =head1 DESCRIPTION
 
 C<Net::Config> holds configuration data for the modules in the libnet
-distribuion. During installation you will be asked for these values.
+distribution. During installation you will be asked for these values.
 
 The configuration data is held globally in a file in the perl installation
 tree, but a user may override any of these values by providing their own. This
@@ -139,7 +140,7 @@ For example
 
     # .libnetrc
     {
-        nntp_hosts => [ "my_prefered_host" ],
+        nntp_hosts => [ "my_preferred_host" ],
 	ph_hosts   => [ "my_ph_server" ],
     }
     __END__
@@ -267,13 +268,14 @@ There is no firewall
 
 =item ftp_ext_passive
 
-=item ftp_int_pasive
+=item ftp_int_passive
 
-FTP servers normally work on a non-passive mode. That is when you want to
-transfer data you have to tell the server the address and port to
-connect to.
-
-With some firewalls this does not work as the server cannot
+FTP servers can work in passive or active mode. Active mode is when
+you want to transfer data you have to tell the server the address and
+port to connect to.  Passive mode is when the server provide the
+address and port and you establish the connection.
+ 
+With some firewalls active mode does not work as the server cannot
 connect to your machine (because you are behind a firewall) and the firewall
 does not re-write the command. In this case you should set C<ftp_ext_passive>
 to a I<true> value.
@@ -306,9 +308,5 @@ configuration.
 If true then C<Configure> will check each hostname given that it exists
 
 =back
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/Config.pm#17 $>
 
 =cut

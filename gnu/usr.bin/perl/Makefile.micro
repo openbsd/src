@@ -1,42 +1,52 @@
 LD = $(CC)
+CCFLAGS = -c
 DEFINES = -DPERL_CORE -DPERL_MICRO -DSTANDARD_C -DPERL_USE_SAFE_PUTENV
 OPTIMIZE = 
 CFLAGS = $(DEFINES) $(OPTIMIZE)
+LDFLAGS = 
 LIBS = -lm
 _O = .o
 ENV = env
+PERL = perl
+_X = 
+RUN = 
 
 all:	microperl
 
 O = uav$(_O) udeb$(_O) udoio$(_O) udoop$(_O) udump$(_O) \
-	uglobals$(_O) ugv$(_O) uhv$(_O) \
+	uglobals$(_O) ugv$(_O) uhv$(_O) umro$(_O)\
 	umg$(_O) uperlmain$(_O) uop$(_O) ureentr$(_O) \
 	upad$(_O) uperl$(_O) uperlio$(_O) uperly$(_O) upp$(_O) \
 	upp_ctl$(_O) upp_hot$(_O) upp_sys$(_O) upp_pack$(_O) upp_sort$(_O) \
 	uregcomp$(_O) uregexec$(_O) urun$(_O) \
 	uscope$(_O) usv$(_O) utaint$(_O) utoke$(_O) \
-	unumeric$(_O) ulocale$(_O) \
+	unumeric$(_O) ulocale$(_O) umathoms$(_O) \
 	uuniversal$(_O) uutf8$(_O) uutil$(_O) uperlapi$(_O) uxsutils$(_O)
 
 microperl:	$(O)
-	$(LD) -o $@ $(O) $(LIBS)
+	$(LD) -o $@ $(O) $(LDFLAGS) $(LIBS)
 
 H = av.h uconfig.h cop.h cv.h embed.h embedvar.h form.h gv.h handy.h \
 	hv.h intrpvar.h iperlsys.h mg.h op.h opcode.h opnames.h pad.h \
 	patchlevel.h perl.h perlsdio.h perlvars.h perly.h pp.h \
-	pp_proto.h proto.h reentr.h regexp.h scope.h sv.h thrdvar.h \
-	thread.h unixish.h utf8.h util.h warnings.h
+	pp_proto.h proto.h reentr.h regexp.h scope.h sv.h \
+	thread.h unixish.h utf8.h util.h uudmap.h warnings.h
 
 HE = $(H) EXTERN.h
 
 clean:
-	-rm -f $(O) microperl
+	-rm -f $(O) microperl generate_uudmap$(_X) uudmap.h
 
 distclean:	clean
 
 # The microconfiguration.
 
-regen_uconfig:
+# Cannot use $$ in the command line itself, so using var expansion instead.
+Config = '$$Config{$$1}'
+patch_uconfig:
+	$(PERL) -MConfig -pi -e "s/^((?:short|int|long(?:dbl|long)?|ptr|double|[iun]v|u?quad|[iu]\d+|fpos|lseek)(?:size|type)|byteorder|d_quad|quadkind|use64.+)=.*/\\1='"$(Config)"'/g" uconfig.shx
+
+regen_uconfig uconfig.h: uconfig.sh
 	$(ENV) CONFIG_SH=uconfig.sh CONFIG_H=uconfig.h sh ./config_h.SH
 
 # Do not regenerate perly.c and perly.h.
@@ -50,111 +60,126 @@ perly.h: perly.y
 # The microperl objects.
 
 uav$(_O):	$(HE) av.c
-	$(CC) -c -o $@ $(CFLAGS) av.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) av.c
 
 udeb$(_O):	$(HE) deb.c
-	$(CC) -c -o $@ $(CFLAGS) deb.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) deb.c
 
 udoio$(_O):	$(HE) doio.c
-	$(CC) -c -o $@ $(CFLAGS) doio.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) doio.c
 
 udoop$(_O):	$(HE) doop.c
-	$(CC) -c -o $@ $(CFLAGS) doop.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) doop.c
 
 udump$(_O):	$(HE) dump.c regcomp.h regnodes.h
-	$(CC) -c -o $@ $(CFLAGS) dump.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) dump.c
 
 uglobals$(_O):	$(H) globals.c INTERN.h perlapi.h
-	$(CC) -c -o $@ $(CFLAGS) globals.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) globals.c
 
 ugv$(_O):	$(HE) gv.c
-	$(CC) -c -o $@ $(CFLAGS) gv.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) gv.c
+
+umro$(_O):	$(HE) mro.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) mro.c
 
 uhv$(_O):	$(HE) hv.c
-	$(CC) -c -o $@ $(CFLAGS) hv.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) hv.c
 
 umg$(_O):	$(HE) mg.c
-	$(CC) -c -o $@ $(CFLAGS) mg.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) mg.c
 
 uperlmain$(_O):	$(HE) miniperlmain.c
-	$(CC) -c -o $@ $(CFLAGS) miniperlmain.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) miniperlmain.c
 
 uop$(_O):	$(HE) op.c keywords.h
-	$(CC) -c -o $@ $(CFLAGS) -DPERL_EXTERNAL_GLOB op.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) -DPERL_EXTERNAL_GLOB op.c
 
 ureentr$(_O):	$(HE) reentr.c
-	$(CC) -c -o $@ $(CFLAGS) reentr.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) reentr.c
 
 upad$(_O):	$(HE) pad.c
-	$(CC) -c -o $@ $(CFLAGS) pad.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pad.c
 
 uperl$(_O):	$(HE) perl.c
-	$(CC) -c -o $@ $(CFLAGS) perl.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perl.c
 
 uperlio$(_O):	$(HE) perlio.c
-	$(CC) -c -o $@ $(CFLAGS) perlio.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perlio.c
 
 uperly$(_O):	$(HE) perly.c
-	$(CC) -c -o $@ $(CFLAGS) perly.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perly.c
 
 upp$(_O):	$(HE) pp.c
-	$(CC) -c -o $@ $(CFLAGS) pp.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp.c
 
 upp_ctl$(_O):	$(HE) pp_ctl.c
-	$(CC) -c -o $@ $(CFLAGS) pp_ctl.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_ctl.c
 
 upp_hot$(_O):	$(HE) pp_hot.c
-	$(CC) -c -o $@ $(CFLAGS) pp_hot.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_hot.c
 
 upp_sys$(_O):	$(HE) pp_sys.c
-	$(CC) -c -o $@ $(CFLAGS) pp_sys.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_sys.c
 
 upp_pack$(_O):	$(HE) pp_pack.c
-	$(CC) -c -o $@ $(CFLAGS) pp_pack.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_pack.c
 
 upp_sort$(_O):	$(HE) pp_sort.c
-	$(CC) -c -o $@ $(CFLAGS) pp_sort.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_sort.c
 
 uregcomp$(_O):	$(HE) regcomp.c regcomp.h regnodes.h INTERN.h
-	$(CC) -c -o $@ $(CFLAGS) regcomp.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
 
 uregexec$(_O):	$(HE) regexec.c regcomp.h regnodes.h
-	$(CC) -c -o $@ $(CFLAGS) regexec.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regexec.c
 
 urun$(_O):	$(HE) run.c
-	$(CC) -c -o $@ $(CFLAGS) run.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) run.c
 
 uscope$(_O):	$(HE) scope.c
-	$(CC) -c -o $@ $(CFLAGS) scope.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) scope.c
 
 usv$(_O):	$(HE) sv.c
-	$(CC) -c -o $@ $(CFLAGS) sv.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) sv.c
 
 utaint$(_O):	$(HE) taint.c
-	$(CC) -c -o $@ $(CFLAGS) taint.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) taint.c
 
 utoke$(_O):	$(HE) toke.c keywords.h
-	$(CC) -c -o $@ $(CFLAGS) toke.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) toke.c
 
 ulocale$(_O):	$(HE) locale.c
-	$(CC) -c -o $@ $(CFLAGS) locale.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) locale.c
 
 unumeric$(_O):	$(HE) numeric.c
-	$(CC) -c -o $@ $(CFLAGS) numeric.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) numeric.c
+
+umathoms$(_O):	$(HE) mathoms.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) mathoms.c
 
 uuniversal$(_O):	$(HE) universal.c XSUB.h
-	$(CC) -c -o $@ $(CFLAGS) universal.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) universal.c
 
 uutf8$(_O):	$(HE) utf8.c
-	$(CC) -c -o $@ $(CFLAGS) utf8.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) utf8.c
 
 uutil$(_O):	$(HE) util.c
-	$(CC) -c -o $@ $(CFLAGS) util.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) util.c
 
 uperlapi$(_O):	$(HE) perlapi.c perlapi.h
-	$(CC) -c -o $@ $(CFLAGS) perlapi.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perlapi.c
 
 uxsutils$(_O):	$(HE) xsutils.c
-	$(CC) -c -o $@ $(CFLAGS) xsutils.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) xsutils.c
+
+uudmap.h: generate_uudmap$(_X)
+	$(RUN) ./generate_uudmap$(_X) >uudmap.h
+
+generate_uudmap$(_O): generate_uudmap.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) generate_uudmap.c
+
+generate_uudmap$(_X): generate_uudmap$(_O)
+	$(LD) -o generate_uudmap $(LDFLAGS) generate_uudmap$(_O) $(LIBS)
 
 # That's it, folks!

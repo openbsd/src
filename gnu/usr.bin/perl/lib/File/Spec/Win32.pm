@@ -5,9 +5,15 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.6';
+$VERSION = '3.2501';
 
 @ISA = qw(File::Spec::Unix);
+
+# Some regexes we use for path splitting
+my $DRIVE_RX = '[a-zA-Z]:';
+my $UNC_RX = '(?:\\\\\\\\|//)[^\\\\/]+[\\\\/][^\\\\/]+';
+my $VOL_RX = "(?:$DRIVE_RX|$UNC_RX)";
+
 
 =head1 NAME
 
@@ -63,7 +69,7 @@ variables are tainted, they are not used.
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    $tmpdir = $_[0]->_tmpdir( @ENV{qw(TMPDIR TEMP TMP)},
+    $tmpdir = $_[0]->_tmpdir( map( $ENV{$_}, qw(TMPDIR TEMP TMP) ),
 			      'SYS:/temp',
 			      'C:\system\temp',
 			      'C:/temp',
@@ -71,13 +77,45 @@ sub tmpdir {
 			      '/'  );
 }
 
-sub case_tolerant {
-    return 1;
+=item case_tolerant
+
+MSWin32 case-tolerance depends on GetVolumeInformation() $ouFsFlags == FS_CASE_SENSITIVE,
+indicating the case significance when comparing file specifications.
+Since XP FS_CASE_SENSITIVE is effectively disabled for the NT subsubsystem.
+See http://cygwin.com/ml/cygwin/2007-07/msg00891.html
+Default: 1
+
+=cut
+
+sub case_tolerant () {
+  eval { require Win32API::File; } or return 1;
+  my $drive = shift || "C:";
+  my $osFsType = "\0"x256;
+  my $osVolName = "\0"x256;
+  my $ouFsFlags = 0;
+  Win32API::File::GetVolumeInformation($drive, $osVolName, 256, [], [], $ouFsFlags, $osFsType, 256 );
+  if ($ouFsFlags & Win32API::File::FS_CASE_SENSITIVE()) { return 0; }
+  else { return 1; }
 }
 
+=item file_name_is_absolute
+
+As of right now, this returns 2 if the path is absolute with a
+volume, 1 if it's absolute with no volume, 0 otherwise.
+
+=cut
+
 sub file_name_is_absolute {
+
     my ($self,$file) = @_;
-    return scalar($file =~ m{^([a-z]:)?[\\/]}is);
+
+    if ($file =~ m{^($VOL_RX)}o) {
+      my $vol = $1;
+      return ($vol =~ m{^$UNC_RX}o ? 2
+	      : $file =~ m{^$DRIVE_RX[\\/]}o ? 2
+	      : 0);
+    }
+    return $file =~  m{^[\\/]} ? 1 : 0;
 }
 
 =item catfile
@@ -172,21 +210,16 @@ sub splitpath {
     my ($volume,$directory,$file) = ('','','');
     if ( $nofile ) {
         $path =~ 
-            m{^( (?:[a-zA-Z]:|(?:\\\\|//)[^\\/]+[\\/][^\\/]+)? ) 
-                 (.*)
-             }xs;
+            m{^ ( $VOL_RX ? ) (.*) }sox;
         $volume    = $1;
         $directory = $2;
     }
     else {
         $path =~ 
-            m{^ ( (?: [a-zA-Z]: |
-                      (?:\\\\|//)[^\\/]+[\\/][^\\/]+
-                  )?
-                )
+            m{^ ( $VOL_RX ? )
                 ( (?:.*[\\/](?:\.\.?\Z(?!\n))?)? )
                 (.*)
-             }xs;
+             }sox;
         $volume    = $1;
         $directory = $2;
         $file      = $3;
@@ -277,71 +310,47 @@ sub catpath {
     return $volume ;
 }
 
-
-sub abs2rel {
-    my($self,$path,$base) = @_;
-    $base = $self->_cwd() unless defined $base and length $base;
-
-    for ($path, $base) { $_ = $self->canonpath($_) }
-
-    my ($path_volume) = $self->splitpath($path, 1);
-    my ($base_volume) = $self->splitpath($base, 1);
-
-    # Can't relativize across volumes
-    return $path unless $path_volume eq $base_volume;
-
-    for ($path, $base) { $_ = $self->rel2abs($_) }
-
-    my $path_directories = ($self->splitpath($path, 1))[1];
-    my $base_directories = ($self->splitpath($base, 1))[1];
-
-    # Now, remove all leading components that are the same
-    my @pathchunks = $self->splitdir( $path_directories );
-    my @basechunks = $self->splitdir( $base_directories );
-
-    while ( @pathchunks && 
-            @basechunks && 
-            lc( $pathchunks[0] ) eq lc( $basechunks[0] ) 
-          ) {
-        shift @pathchunks ;
-        shift @basechunks ;
-    }
-
-    my $result_dirs = $self->catdir( ($self->updir) x @basechunks, @pathchunks );
-
-    return $self->canonpath( $self->catpath('', $result_dirs, '') );
+sub _same {
+  lc($_[1]) eq lc($_[2]);
 }
-
 
 sub rel2abs {
     my ($self,$path,$base ) = @_;
 
-    if ( ! $self->file_name_is_absolute( $path ) ) {
+    my $is_abs = $self->file_name_is_absolute($path);
 
-        if ( !defined( $base ) || $base eq '' ) {
-	    require Cwd ;
-	    $base = Cwd::getdcwd( ($self->splitpath( $path ))[0] ) if defined &Cwd::getdcwd ;
-	    $base = $self->_cwd() unless defined $base ;
-        }
-        elsif ( ! $self->file_name_is_absolute( $base ) ) {
-            $base = $self->rel2abs( $base ) ;
-        }
-        else {
-            $base = $self->canonpath( $base ) ;
-        }
+    # Check for volume (should probably document the '2' thing...)
+    return $self->canonpath( $path ) if $is_abs == 2;
 
-        my ( $path_directories, $path_file ) =
-            ($self->splitpath( $path, 1 ))[1,2] ;
-
-        my ( $base_volume, $base_directories ) =
-            $self->splitpath( $base, 1 ) ;
-
-        $path = $self->catpath( 
-            $base_volume, 
-            $self->catdir( $base_directories, $path_directories ), 
-            $path_file
-        ) ;
+    if ($is_abs) {
+      # It's missing a volume, add one
+      my $vol = ($self->splitpath( $self->_cwd() ))[0];
+      return $self->canonpath( $vol . $path );
     }
+
+    if ( !defined( $base ) || $base eq '' ) {
+      require Cwd ;
+      $base = Cwd::getdcwd( ($self->splitpath( $path ))[0] ) if defined &Cwd::getdcwd ;
+      $base = $self->_cwd() unless defined $base ;
+    }
+    elsif ( ! $self->file_name_is_absolute( $base ) ) {
+      $base = $self->rel2abs( $base ) ;
+    }
+    else {
+      $base = $self->canonpath( $base ) ;
+    }
+
+    my ( $path_directories, $path_file ) =
+      ($self->splitpath( $path, 1 ))[1,2] ;
+
+    my ( $base_volume, $base_directories ) =
+      $self->splitpath( $base, 1 ) ;
+
+    $path = $self->catpath( 
+			   $base_volume, 
+			   $self->catdir( $base_directories, $path_directories ), 
+			   $path_file
+			  ) ;
 
     return $self->canonpath( $path ) ;
 }
@@ -354,7 +363,7 @@ Novell NetWare inherits its File::Spec behaviour from File::Spec::Win32.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+Copyright (c) 2004,2007 by the Perl 5 Porters.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

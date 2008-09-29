@@ -1,3 +1,18 @@
+1.19 -- Sun Dec 10 09:58:03 CST 2006
+
+Bug Fixes
+  * Fix invalid conversion from `const char*' to `char*' warnings
+  * Avoid Makefile error when building on Win32
+  * Fix undefined symbol error for perl < 5.9.0
+  * Fix hardcoded "/" in a filepath that causes p_tainted.t to fail on VMS
+
+Documentation
+  * Document that reduce calls BLOCK in a scalar context
+  * Add SEE ALSO sections to docs
+
+Enhancements
+  * A new regression test for readonly, taking a reference to a constant passed to a sub
+
 1.18 -- Fri Nov 25 09:30:29 CST 2005
 
 Bug Fixes

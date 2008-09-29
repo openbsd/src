@@ -10,8 +10,8 @@ BEGIN {
     }
 }
 
-require "./test.pl";
-plan(tests => 65);
+BEGIN { require "./test.pl"; }
+plan(tests => 66);
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno);
@@ -82,7 +82,7 @@ SKIP: {
 	# finish the test.
 	# For others (darwin & freebsd), let the test fail without crashing.
 	my $todo = $^O eq 'netbsd' && $Config{osvers}=~/^1\.6/;
-	my $why_todo = "# TODO $^O $Config{osvers} seems to loose blocked signals";
+	my $why_todo = "# TODO $^O $Config{osvers} seems to lose blocked signals";
 	if (!$todo) { 
 	  kill 'HUP', $$; 
 	} else {
@@ -173,7 +173,7 @@ ok( &POSIX::acos(1.0) == 0.0,   'dynamic loading' );
 # didn't detect it.  If this fails, try adding
 # -DSTRUCT_TM_HASZONE to your cflags when compiling ext/POSIX/POSIX.c.
 # See ext/POSIX/hints/sunos_4.pl and ext/POSIX/hints/linux.pl 
-print POSIX::strftime("ok 21 # %H:%M, on %D\n", localtime());
+print POSIX::strftime("ok 21 # %H:%M, on %m/%d/%y\n", localtime());
 next_test();
 
 # If that worked, validate the mini_mktime() routine's normalisation of
@@ -186,7 +186,14 @@ sub try_strftime {
 
 $lc = &POSIX::setlocale(&POSIX::LC_TIME, 'C') if $Config{d_setlocale};
 try_strftime("Wed Feb 28 00:00:00 1996 059", 0,0,0, 28,1,96);
-try_strftime("Thu Feb 29 00:00:60 1996 060", 60,0,-24, 30,1,96);
+SKIP: {
+    skip("VC++ 8 and Vista's CRTs regard 60 seconds as an invalid parameter", 1)
+	if ($Is_W32 and (($Config{cc} eq 'cl' and
+	                 $Config{ccversion} =~ /^(\d+)/ and $1 >= 14) or
+	                 (Win32::GetOSVersion())[1] >= 6));
+
+    try_strftime("Thu Feb 29 00:00:60 1996 060", 60,0,-24, 30,1,96);
+}
 try_strftime("Fri Mar 01 00:00:00 1996 061", 0,0,-24, 31,1,96);
 try_strftime("Sun Feb 28 00:00:00 1999 059", 0,0,0, 28,1,99);
 try_strftime("Mon Mar 01 00:00:00 1999 060", 0,0,24, 28,1,99);
@@ -266,6 +273,9 @@ ok( POSIX::isalnum(undef),'isalnum undef' );
 # those functions should stringify their arguments
 ok(!POSIX::isalpha([]),   'isalpha []' );
 ok( POSIX::isprint([]),   'isprint []' );
+
+eval { use strict; POSIX->import("S_ISBLK"); my $x = S_ISBLK };
+unlike( $@, qr/Can't use string .* as a symbol ref/, "Can import autoloaded constants" );
  
 # Check that output is not flushed by _exit. This test should be last
 # in the file, and is not counted in the total number of tests.

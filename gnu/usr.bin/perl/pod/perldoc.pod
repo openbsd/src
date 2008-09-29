@@ -13,11 +13,16 @@ B<perldoc> [B<-h>] [B<-v>] [B<-t>] [B<-u>] [B<-m>] [B<-l>] [B<-F>]
 [B<-wI<formatteroption:value>>]
 [B<-n>I<nroff-replacement>]
 [B<-X>]
+[B<-L> I<language_code>]
 PageName|ModuleName|ProgramName
 
 B<perldoc> B<-f> BuiltinFunction
 
+B<perldoc> B<-L> it B<-f> BuiltinFunction
+
 B<perldoc> B<-q> FAQ Keyword
+
+B<perldoc> B<-L> fr B<-q> FAQ Keyword
 
 See below for more description of the switches.
 
@@ -144,6 +149,16 @@ Use an index if it is present -- the B<-X> option looks for an entry
 whose basename matches the name given on the command line in the file
 C<$Config{archlib}/pod.idx>. The F<pod.idx> file should contain fully
 qualified filenames, one per line.
+
+=item B<-L> I<language_code>
+
+This allows to specify the I<language code> for desired language translation.
+If C<POD2::E<lt>language_codeE<gt>> package doesn't exist (or isn't installed
+in your system), the switch will be ignored. 
+All available translation packages should be found under the C<POD2::>
+namespace. See L<POD2::IT> (or L<POD2::FR>) in order to see how to create and
+integrate new localized C<POD2::*> pod documentation packages in
+L<Pod::Perldoc>.
 
 =item B<PageName|ModuleName|ProgramName>
 

@@ -89,10 +89,10 @@ toc perltoc.pod:	buildtoc
 .SUFFIXES: .man
 
 .pm.man:     pod2man
-	$(PERL) -I../lib pod2man $*.pm >$*.man
+	$(REALPERL) -I../lib pod2man $*.pm >$*.man
 
 .pod.man:     pod2man
-	$(PERL) -I../lib pod2man $*.pod >$*.man
+	$(REALPERL) -I../lib pod2man $*.pod >$*.man
 
 .SUFFIXES: .html
 
@@ -157,11 +157,5 @@ podselect:	podselect.PL ../lib/Config.pm
 perlmodlib.pod:	$(PERL) perlmodlib.PL ../MANIFEST
 	rm -f perlmodlib.pod
 	$(PERL) -I ../lib perlmodlib.PL
-
-compile: all
-	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2latex.exe pod2latex -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2man.exe pod2man -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2text.exe pod2text -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o checkpods.exe checkpods -log ../compilelog
 
 !NO!SUBS!
