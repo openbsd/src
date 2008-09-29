@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.94 2008/09/29 09:58:51 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.95 2008/09/29 14:53:35 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -823,6 +823,15 @@ To compute the digest, use this simple command:
 .Bd -literal -offset indent
 $ echo -n "example.com/path/?args" | sha1
 .Ed
+.It Ic expect file Ar path
+Like the directive above, but load the non-digest keys from an
+external file with the specified
+.Ar path
+containing one key per line.
+Empty lines will be ingnored and lines will be stripped at any
+whitespaces, newline characters, or hash marks
+.Pq Sq #
+indicating a comment.
 .It Ic filter Ar value Ic from Ar key
 Like the
 .Ic expect Ar .. Ic from
@@ -842,6 +851,12 @@ directive above, but drop any connections with the specified entity
 and any possible value.
 This is the short form of
 .Ic filter Ar * Ic from Ar key .
+.It Ic filter file Ar path
+Like the directive above, but load the non-digest keys from
+.Ar path .
+See
+.Ic expect file Ar path
+for more information.
 .It Ic hash Ar key
 Feed the value of the selected entity into the load balancing hash to
 select the target host.
@@ -852,6 +867,12 @@ keyword in the
 section above.
 .It Ic log Ar key
 Log the name and the value of the entity.
+.It Ic log file Ar path
+Like the directive above, but load the keys from
+.Ar path .
+See
+.Ic expect file Ar path
+for more information.
 .It Xo
 .Ic mark
 .Op Ar value Ic from
@@ -880,6 +901,12 @@ no label
 Do not set a label for subsequently added actions; this is the default.
 .It Ic remove Ar key
 Remove the entity with the selected name.
+.It Ic remove file Ar path
+Like the directive above, but load the keys from
+.Ar path .
+See
+.Ic expect file Ar path
+for more information.
 .It Ic return error Op Ar option
 Return an error reponse to the client if an internal operation or the
 forward connection to the client failed.

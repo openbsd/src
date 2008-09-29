@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.80 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.81 2008/09/29 14:53:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1169,6 +1169,47 @@ protonode_add(enum direction dir, struct protocol *proto,
 	}
 
 	return (0);
+}
+
+int
+protonode_load(enum direction dir, struct protocol *proto,
+    struct protonode *node, const char *name)
+{
+	FILE			*fp;
+	char			 buf[BUFSIZ];
+	int			 ret = -1;
+	struct protonode	 pn;
+
+	bcopy(node, &pn, sizeof(pn));
+	pn.key = pn.value = NULL;
+
+	if ((fp = fopen(name, "r")) == NULL)
+		return (-1);
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		/* strip comment, whitespace, and newline characters */
+		buf[strcspn(buf, "\r\n\t #")] = '\0';
+		if (!strlen(buf))
+			continue;
+		pn.key = strdup(buf);
+		if (node->value != NULL)
+			pn.value = strdup(node->value);
+		if (pn.key == NULL ||
+		    (node->value != NULL && pn.value == NULL))
+			goto fail;
+		if (protonode_add(dir, proto, &pn) == -1)
+			goto fail;
+		pn.key = pn.value = NULL;
+	}
+
+	ret = 0;
+ fail:
+	if (pn.key != NULL)
+		free(pn.key);
+	if (pn.value != NULL)
+		free(pn.value);
+	fclose(fp);
+	return (ret);
 }
 
 int

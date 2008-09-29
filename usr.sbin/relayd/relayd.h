@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.111 2008/09/29 09:58:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.112 2008/09/29 14:53:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -871,6 +871,8 @@ struct protonode *protonode_header(enum direction, struct protocol *,
 		    struct protonode *);
 int		 protonode_add(enum direction, struct protocol *,
 		    struct protonode *);
+int		 protonode_load(enum direction, struct protocol *,
+		    struct protonode *, const char *);
 int		 map6to4(struct sockaddr_storage *);
 int		 map4to6(struct sockaddr_storage *, struct sockaddr_storage *);
 

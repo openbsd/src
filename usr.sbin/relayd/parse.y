@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.124 2008/09/29 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.125 2008/09/29 14:53:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -97,6 +97,7 @@ static struct protocol	*proto = NULL;
 static struct protonode	 node;
 static u_int16_t	 label = 0;
 static in_port_t	 tableport = 0;
+static int		 nodedirection;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -128,7 +129,7 @@ typedef struct {
 
 %token	ALL APPEND BACKLOG BACKUP BUFFER CACHE CHANGE CHECK
 %token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT
-%token	EXTERNAL FILTER FORWARD FROM HASH HEADER HOST ICMP
+%token	EXTERNAL FILENAME FILTER FORWARD FROM HASH HEADER HOST ICMP
 %token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
 %token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO
 %token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
@@ -140,7 +141,7 @@ typedef struct {
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
 %type	<v.number>	http_type loglevel mark optssl parent sslcache
-%type	<v.number>	direction dstmode flag forwardmode log proto_type retry
+%type	<v.number>	direction dstmode flag forwardmode proto_type retry
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -801,11 +802,12 @@ protoptsl	: SSL sslflags
 		| NO LABEL			{
 			label = 0;
 		}
-		| direction protonode log	{
-			if ($3)
-				node.flags |= PNFLAG_LOG;
+		| direction			{
 			node.label = label;
-			if (protonode_add($1, proto, &node) == -1) {
+			nodedirection = $1;
+		} protonode {
+			if (nodedirection != -1 &&
+			    protonode_add(nodedirection, proto, &node) == -1) {
 				yyerror("failed to add protocol node");
 				YYERROR;
 			}
@@ -897,7 +899,7 @@ flag		: STRING			{
 		}
 		;
 
-protonode	: nodetype APPEND STRING TO STRING marked	{
+protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 			node.action = NODE_ACTION_APPEND;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -908,7 +910,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($5);
 			free($3);
 		}
-		| nodetype CHANGE STRING TO STRING marked {
+		| nodetype CHANGE STRING TO STRING nodeopts		{
 			node.action = NODE_ACTION_CHANGE;
 			node.key = strdup($3);
 			node.value = strdup($5);
@@ -919,7 +921,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($5);
 			free($3);
 		}
-		| nodetype REMOVE STRING marked			{
+		| nodetype REMOVE STRING nodeopts			{
 			node.action = NODE_ACTION_REMOVE;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -927,7 +929,12 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 				fatal("out of memory");
 			free($3);
 		}
-		| nodetype EXPECT STRING FROM STRING marked	{
+		| nodetype REMOVE					{
+			node.action = NODE_ACTION_REMOVE;
+			node.key = NULL;
+			node.value = NULL;
+		} nodefile
+		| nodetype EXPECT STRING FROM STRING nodeopts		{
 			node.action = NODE_ACTION_EXPECT;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -937,7 +944,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype EXPECT STRING marked			{
+		| nodetype EXPECT STRING nodeopts			{
 			node.action = NODE_ACTION_EXPECT;
 			node.key = strdup($3);
 			node.value = strdup("*");
@@ -946,7 +953,13 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype EXPECT digest marked			{
+		| nodetype EXPECT					{
+			node.action = NODE_ACTION_EXPECT;
+			node.key = NULL;
+			node.value = "*";
+			proto->lateconnect++;
+		} nodefile
+		| nodetype EXPECT digest nodeopts			{
 			if (node.type != NODE_TYPE_URL) {
 				yyerror("digest not supported for this type");
 				free($3.digest);
@@ -961,7 +974,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3.digest);
 			proto->lateconnect++;
 		}
-		| nodetype FILTER STRING FROM STRING marked	{
+		| nodetype FILTER STRING FROM STRING nodeopts		{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -971,7 +984,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype FILTER STRING marked			{
+		| nodetype FILTER STRING nodeopts			{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($3);
 			node.value = strdup("*");
@@ -979,8 +992,14 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 				fatal("out of memory");
 			free($3);
 			proto->lateconnect++;
-		}
-		| nodetype FILTER digest marked			{
+		}		
+		| nodetype FILTER					{
+			node.action = NODE_ACTION_FILTER;
+			node.key = NULL;
+			node.value = "*";
+			proto->lateconnect++;
+		} nodefile
+		| nodetype FILTER digest nodeopts			{
 			if (node.type != NODE_TYPE_URL) {
 				yyerror("digest not supported for this type");
 				free($3.digest);
@@ -995,7 +1014,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3.digest);
 			proto->lateconnect++;
 		}
-		| nodetype HASH STRING marked			{
+		| nodetype HASH STRING nodeopts				{
 			node.action = NODE_ACTION_HASH;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -1004,7 +1023,7 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| nodetype LOG STRING marked			{
+		| nodetype LOG STRING nodeopts				{
 			node.action = NODE_ACTION_LOG;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -1013,7 +1032,13 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 				fatal("out of memory");
 			free($3);
 		}
-		| nodetype MARK STRING FROM STRING WITH mark	{
+		| nodetype LOG						{
+			node.action = NODE_ACTION_LOG;
+			node.key = NULL;
+			node.value = NULL;
+			node.flags |= PNFLAG_LOG;
+		} nodefile
+		| nodetype MARK STRING FROM STRING WITH mark log	{
 			node.action = NODE_ACTION_MARK;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -1023,19 +1048,38 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			free($3);
 			free($5);
 		}
-		| nodetype MARK STRING WITH mark		{
+		| nodetype MARK STRING WITH mark nodeopts		{
 			node.action = NODE_ACTION_MARK;
 			node.key = strdup($3);
 			node.value = strdup("*");
-			node.mark = $5;
+			node.mark = $5;	/* overwrite */
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			free($3);
 		}
 		;
 
+nodefile	: FILENAME STRING nodeopts			{
+			if (protonode_load(nodedirection,
+			    proto, &node, $2) == -1) {
+				yyerror("failed to load from file: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			nodedirection = -1;	/* don't add template node */
+		}
+		;
+
+nodeopts	: marked log
+		;
+
 marked		: /* empty */
 		| MARKED mark			{ node.mark = $2; }
+		;
+
+log		: /* empty */
+		| LOG				{ node.flags |= PNFLAG_LOG; }
 		;
 
 mark		: NUMBER					{
@@ -1362,10 +1406,6 @@ timeout		: NUMBER
 		}
 		;
 
-log		: /* empty */		{ $$ = 0; }
-		| LOG			{ $$ = 1; }
-		;
-
 comma		: ','
 		| nl
 		| /* empty */
@@ -1427,6 +1467,7 @@ lookup(char *s)
 		{ "error",		ERROR },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
+		{ "file",		FILENAME },
 		{ "filter",		FILTER },
 		{ "forward",		FORWARD },
 		{ "from",		FROM },
