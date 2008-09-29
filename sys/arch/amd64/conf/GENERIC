@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.240 2008/08/02 16:09:29 oga Exp $
+#	$OpenBSD: GENERIC,v 1.241 2008/09/29 13:13:35 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -427,6 +427,7 @@ gem*	at pci?				# Sun 'gem' ethernet
 bce*	at pci?				# Broadcom BCM4401
 et*	at pci?				# Agere/LSI ET1310
 lii*	at pci?				# Attansic L2 Ethernet
+jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
@@ -483,6 +484,7 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
 etphy*	at mii?				# Agere/LSI ET1011 TruePHY
+jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
 ukphy*	at mii?				# "unknown" PHYs
 
 eap*	at pci?				# Ensoniq AudioPCI S5016
