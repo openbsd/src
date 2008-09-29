@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.95 2008/09/29 14:53:35 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.96 2008/09/29 15:06:52 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -828,10 +828,10 @@ Like the directive above, but load the non-digest keys from an
 external file with the specified
 .Ar path
 containing one key per line.
-Empty lines will be ingnored and lines will be stripped at any
-whitespaces, newline characters, or hash marks
+Lines will be stripped at the first whitespace or newline character.
+Any empty lines or lines beginning with a hash mark
 .Pq Sq #
-indicating a comment.
+will be ignored.
 .It Ic filter Ar value Ic from Ar key
 Like the
 .Ic expect Ar .. Ic from

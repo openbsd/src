@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.81 2008/09/29 14:53:35 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.82 2008/09/29 15:06:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1187,9 +1187,9 @@ protonode_load(enum direction dir, struct protocol *proto,
 		return (-1);
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		/* strip comment, whitespace, and newline characters */
-		buf[strcspn(buf, "\r\n\t #")] = '\0';
-		if (!strlen(buf))
+		/* strip whitespace and newline characters */
+		buf[strcspn(buf, "\r\n\t ")] = '\0';
+		if (!strlen(buf) || buf[0] == '#')
 			continue;
 		pn.key = strdup(buf);
 		if (node->value != NULL)
