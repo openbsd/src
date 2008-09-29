@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.54 2008/06/15 10:19:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.55 2008/09/29 14:03:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -283,8 +283,11 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (0);
 	}
 
-	if (f->match.prefix.addr.af != 0 &&
-	    f->match.prefix.addr.af == prefix->af) {
+	if (f->match.prefix.addr.af != 0) {
+		if (f->match.prefix.addr.af != prefix->af)
+			/* don't use IPv4 rules for IPv6 and vice versa */
+			return (0);
+
 		if (prefix_compare(prefix, &f->match.prefix.addr,
 		    f->match.prefix.len))
 			return (0);
