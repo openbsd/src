@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.105 2008/09/29 15:12:22 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.106 2008/09/29 15:27:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1027,6 +1027,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
 	int			 ret = PN_DROP, mark = 0;
+	const char		*label = NULL;
 	struct protonode	*next;
 
 	/* Check if this action depends on a marked session */
@@ -1127,7 +1128,11 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 	}
 	if (mark != -1 && pn->flags & PNFLAG_LOG) {
 		bzero(buf, sizeof(buf));
-		if (snprintf(buf, sizeof(buf), " [%s: %s]",
+		if (pn->label != 0)
+			label = pn_id2name(pn->label);
+		if (snprintf(buf, sizeof(buf), " [%s%s%s: %s]",
+		    label == NULL ? "" : label,
+		    label == NULL ? "" : ", ",
 		    pk->key, pk->value) == -1 ||
 		    evbuffer_add(con->se_log, buf, strlen(buf)) == -1)
 			goto fail;
