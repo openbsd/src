@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.123 2008/09/29 09:58:51 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.124 2008/09/29 12:07:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -126,19 +126,21 @@ typedef struct {
 
 %}
 
-%token	ALL APPEND BACKLOG BACKUP BUFFER CACHE CHANGE CHECK CIPHERS
-%token	CODE COOKIE DEMOTE DIGEST DISABLE EXPECT EXTERNAL FILTER FORWARD
-%token	FROM HASH HEADER HOST ICMP INCLUDE INTERFACE INTERVAL IP LABEL
-%token	LISTEN LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO NODELAY NOTHING
-%token	ON PATH PORT PREFORK PROTO QUERYSTR REAL REDIRECT RELAY REMOVE TRAP
-%token	REQUEST RESPONSE RETRY RETURN ROUNDROBIN SACK SCRIPT SEND SESSION
-%token	SOCKET SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO UPDATES URL
-%token	VIRTUAL WITH ERROR ROUTE TRANSPARENT PARENT INET INET6
+%token	ALL APPEND BACKLOG BACKUP BUFFER CACHE CHANGE CHECK
+%token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT
+%token	EXTERNAL FILTER FORWARD FROM HASH HEADER HOST ICMP
+%token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
+%token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO
+%token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
+%token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
+%token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
+%token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO
+%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH 
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	interface hostname table
-%type	<v.number>	http_type loglevel sslcache optssl mark parent
-%type	<v.number>	proto_type dstmode retry log flag direction forwardmode
+%type	<v.string>	hostname interface table
+%type	<v.number>	http_type loglevel mark optssl parent sslcache
+%type	<v.number>	direction dstmode flag forwardmode log proto_type retry
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.tv>		timeout
