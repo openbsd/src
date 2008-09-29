@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.133 2008/09/25 19:12:28 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.134 2008/09/29 18:29:43 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -371,6 +371,16 @@ aml_mnem(int opcode, uint8_t *pos)
 }
 #endif /* SMALL_KERNEL */
 
+const char *
+aml_args(int opcode)
+{
+	struct aml_opcode *tab;
+
+	if ((tab = aml_findopcode(opcode)) != NULL)
+		return tab->args;
+	return ("");
+}
+
 struct aml_notify_data {
 	struct aml_node		*node;
 	char			pnpid[20];
@@ -393,18 +403,7 @@ long acpi_nalloc;
 
 struct acpi_memblock {
 	size_t size;
-#ifdef ACPI_MEMDEBUG
-	const char *fn;
-	int         line;
-	int         sig;
-	LIST_ENTRY(acpi_memblock) link;
-#endif
 };
-#ifdef ACPI_MEMDEBUG
-LIST_HEAD(, acpi_memblock) acpi_memhead;
-#endif
-
-int acpi_memsig;
 
 void *
 _acpi_os_malloc(size_t size, const char *fn, int line)
@@ -415,14 +414,6 @@ _acpi_os_malloc(size_t size, const char *fn, int line)
 	dnprintf(99, "alloc: %x %s:%d\n", sptr, fn, line);
 	acpi_nalloc += size;
 	sptr->size = size;
-#ifdef ACPI_MEMDEBUG
-	sptr->line = line;
-	sptr->fn = fn;
-	sptr->sig = ++acpi_memsig;
-
-	LIST_INSERT_HEAD(&acpi_memhead, sptr, link);
-#endif
-
 	return &sptr[1];
 }
 
@@ -435,30 +426,9 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 		sptr = &(((struct acpi_memblock *)ptr)[-1]);
 		acpi_nalloc -= sptr->size;
 
-#ifdef ACPI_MEMDEBUG	
-		LIST_REMOVE(sptr, link);
-#endif
-
 		dnprintf(99, "free: %x %s:%d\n", sptr, fn, line);
 		free(sptr, M_ACPI);
 	}
-}
-
-int
-acpi_walkmem(int sig, const char *lbl)
-{
-#ifdef ACPI_MEMDEBUG
-	struct acpi_memblock *sptr;
-
-	printf("--- walkmem:%s %x --- %x bytes alloced\n", lbl, sig, acpi_nalloc);
-	LIST_FOREACH(sptr, &acpi_memhead, link) {
-		if (sptr->sig < sig)
-			break;
-		printf("%.4x Alloc %.8lx bytes @ %s:%d\n",
-			sptr->sig, sptr->size, sptr->fn, sptr->line);
-	}
-#endif
-	return acpi_memsig;
 }
 
 void
@@ -710,6 +680,60 @@ aml_delchildren(struct aml_node *node)
 /*
  * @@@: Value functions
  */
+
+struct aml_scope	*aml_pushscope(struct aml_scope *, uint8_t *,
+			    uint8_t *, struct aml_node *);
+struct aml_scope	*aml_popscope(struct aml_scope *);
+
+#define AML_LHS		0
+#define AML_RHS		1
+#define AML_DST		2
+#define AML_DST2	3
+
+/* Allocate+push parser scope */
+struct aml_scope *
+aml_pushscope(struct aml_scope *parent, uint8_t *start, uint8_t  *end,
+    struct aml_node *node)
+{
+	struct aml_scope *scope;
+
+	scope = acpi_os_malloc(sizeof(struct aml_scope));
+	scope->pos = start;
+	scope->end = end;
+	scope->node = node;
+	scope->parent = parent;
+	scope->sc = dsdt_softc;
+
+	aml_lastscope = scope;
+
+	return scope;
+}
+
+struct aml_scope *
+aml_popscope(struct aml_scope *scope)
+{
+	struct aml_scope *nscope;
+	struct aml_vallist *ol;
+	int idx;
+
+	if (scope == NULL)
+		return NULL;
+	nscope = scope->parent;
+
+	/* Free temporary values */
+	while ((ol = scope->tmpvals) != NULL) {
+		scope->tmpvals = ol->next;
+		for (idx = 0; idx < ol->nobj; idx++) {
+			aml_freevalue(&ol->obj[idx]);
+		}
+		acpi_os_free(ol);
+	}
+	acpi_os_free(scope);
+
+	aml_lastscope = nscope;
+
+	return nscope;
+}
 
 /*
  * Field I/O code
@@ -1548,10 +1572,6 @@ aml_create_defaultobjects()
 	struct aml_value *tmp;
 	struct aml_defval *def;
 
-#ifdef ACPI_MEMDEBUG
-	LIST_INIT(&acpi_memhead);
-#endif
-
 	osstring[1] = 'i';
 	osstring[6] = 'o';
 	osstring[15] = 'w';
@@ -1870,21 +1890,8 @@ struct aml_scope *
 aml_xfindscope(struct aml_scope *scope, int type, int endscope)
 {
 	while (scope) { 
-		switch (endscope) {
-		case AMLOP_RETURN:
-			scope->pos = scope->end;
-			break;
-		case AMLOP_CONTINUE:
-			scope->pos = scope->end;
-			if (scope->type == type)
-			  	scope->pos = scope->start;
-			break;
-		case AMLOP_BREAK:
-			scope->pos = scope->end;
-			if (scope->type == type)
+		if (endscope)
 			scope->pos = NULL;
-			break;
-		}
 		if (scope->type == type)
 			break;
 		scope = scope->parent;
@@ -2367,6 +2374,7 @@ void aml_xcreatefield(struct aml_value *, int, struct aml_value *, int, int,
     struct aml_value *, int, int);
 void aml_xparsefieldlist(struct aml_scope *, int, int,
     struct aml_value *, struct aml_value *, int);
+int aml_evalhid(struct aml_node *, struct aml_value *);
 
 #define GAS_PCI_CFG_SPACE_UNEVAL  0xCC
 
@@ -2721,7 +2729,6 @@ aml_xparsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 		}
 		bpos += blen;
 	}
-	aml_xpopscope(mscope);
 }
 
 /*
@@ -4178,14 +4185,18 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_BREAK:
 		/* Break: Find While Scope parent, mark type as null */
-		aml_xfindscope(scope, AMLOP_WHILE, AMLOP_BREAK);
+		mscope = aml_xfindscope(scope, AMLOP_WHILE, 1);
+		mscope->pos = NULL;
+		mscope = NULL;
 		break;
 	case AMLOP_CONTINUE:
 		/* Find Scope.. mark all objects as invalid on way to root */
-		aml_xfindscope(scope, AMLOP_WHILE, AMLOP_CONTINUE);
+		mscope = aml_xfindscope(scope, AMLOP_WHILE, 1);
+		mscope->pos = mscope->start;
+		mscope = NULL;
 		break;
 	case AMLOP_RETURN:
-		mscope = aml_xfindscope(scope, AMLOP_METHOD, AMLOP_RETURN);
+		mscope = aml_xfindscope(scope, AMLOP_METHOD, 1);
 		if (mscope->retv) {
 			aml_die("already allocated\n");
 		}
@@ -4277,9 +4288,6 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
     int argc, struct aml_value *argv, struct aml_value *res)
 {
 	struct aml_value *xres;
-#ifdef ACPI_MEMDEBUG
-	static int wmstate;
-#endif
 	
 	if (node == NULL || node->value == NULL)
 		return (ACPI_E_BADVALUE);
@@ -4301,9 +4309,6 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_METHOD:
 		aml_busy++;
-#ifdef ACPI_MEMDEBUG
-		wmstate = acpi_walkmem(wmstate, aml_nodename(node));	
-#endif
 		xres = aml_xeval(NULL, node->value, 't', argc, argv);
 		aml_busy--;
 		if (res && xres)
