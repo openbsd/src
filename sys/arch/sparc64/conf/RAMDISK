@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.77 2008/08/24 20:13:21 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.78 2008/09/29 22:43:58 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -110,6 +110,7 @@ rl*	at pci?			# RealTek 81[23]9 ethernet
 vr*	at pci?			# VIA Rhine ethernet
 re*	at pci?			# RealTek 8169/8169S/8110S
 re*	at cardbus?		# RealTek 8169/8169S/8110S
+jme*	at pci?			# JMicron JMC250/JMC260 Ethernet
 
 auxio*	at ebus?
 auxio*	at sbus?
@@ -207,6 +208,7 @@ urlphy*	at mii?			# Realtek RTL8150L internal PHY
 rgephy*	at mii?			# Realtek 8169S/8110S PHY
 gentbi*	at mii?			# Generic 1000BASE-X ten-bit PHY
 nsgphy*	at mii?			# NS gigabit PHYs
+jmphy*	at mii?			# JMicron JMP202/JMP211 PHYs
 ukphy*	at mii?			# Unknown PHYs
 
 # PCI USB Controllers

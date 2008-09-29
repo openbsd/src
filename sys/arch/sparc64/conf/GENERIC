@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.220 2008/08/28 10:21:22 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.221 2008/09/29 22:43:58 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -90,6 +90,7 @@ musycc* at pci?			# Conexant HDLC controller
 art*	at musycc?		# Accoom Artery E1/T1 cards
 thtc*	at pci?			# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
+jme*	at pci?			# JMicron JMC250/JMC260 Ethernet
 
 ath*	at pci?			# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
@@ -423,6 +424,7 @@ rgephy*	at mii?				# Realtek 8169S/8110S PHY
 gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
 nsgphy*	at mii?				# NS gigabit PHYs
 tqphy*	at mii?				# TDK 78Q212x PHYs
+jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
 ukphy*	at mii?				# Unknown PHYs
 
 # sensors
