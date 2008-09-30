@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2008/06/26 15:10:01 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2008/09/30 16:24:16 aschrijver Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -96,7 +96,7 @@ typedef struct {
 
 %}
 
-%token	SERVER FILTER ATTRIBUTE BINDDN MAPS CHANGE DOMAIN PROVIDE
+%token	SERVER FILTER ATTRIBUTE BASEDN BINDDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
 %token	PASSWD NAME FIXED GROUPNAME GROUPPASSWD GROUPGID MAP
 %token	INCLUDE DIRECTORY CLASS PORT SSL ERROR GROUPMEMBERS
@@ -179,6 +179,28 @@ diropt		: BINDDN STRING				{
 			    sizeof(idm->idm_binddn)) >=
 			    sizeof(idm->idm_binddn)) {
 				yyerror("directory binddn truncated");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| BINDCRED STRING			{
+			idm->idm_flags |= F_NEEDAUTH;
+			if (strlcpy(idm->idm_bindcred, $2,
+			    sizeof(idm->idm_bindcred)) >=
+			    sizeof(idm->idm_bindcred)) {
+				yyerror("directory bindcred truncated");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| BASEDN STRING			{
+			idm->idm_flags |= F_NEEDAUTH;
+			if (strlcpy(idm->idm_basedn, $2,
+			    sizeof(idm->idm_basedn)) >=
+			    sizeof(idm->idm_basedn)) {
+				yyerror("directory bindcred truncated");
 				free($2);
 				YYERROR;
 			}
@@ -326,6 +348,8 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "attribute",		ATTRIBUTE },
+		{ "basedn",		BASEDN },
+		{ "bindcred",		BINDCRED },
 		{ "binddn",		BINDDN },
 		{ "change",		CHANGE },
 		{ "class",		CLASS },

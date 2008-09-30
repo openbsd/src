@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.5 2008/09/03 11:04:03 jsg Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.6 2008/09/30 16:24:16 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -248,7 +248,7 @@ main_dispatch_client(int fd, short event, void *p)
 				env->sc_group_names = env->sc_group_names_t;
 				env->sc_group_lines = NULL;
 				env->sc_group_names_t = NULL;
-	
+
 				flatten_entries(env);
 				goto make_uids;
 			}
@@ -279,7 +279,7 @@ main_dispatch_client(int fd, short event, void *p)
 			env->sc_group_names = env->sc_group_names_t;
 			env->sc_group_lines = NULL;
 			env->sc_group_names_t = NULL;
-			
+
 
 			flatten_entries(env);
 
@@ -395,7 +395,7 @@ main(int argc, char *argv[])
 
 	if (argc)
 		usage();
-	
+
 	RB_INIT(&env.sc_user_uids);
 	RB_INIT(&env.sc_group_gids);
 
@@ -410,7 +410,7 @@ main(int argc, char *argv[])
 		errx(1, "need root privileges");
 
 	log_init(debug);
-	
+
 	if (!debug) {
 		if (daemon(1, 0) == -1)
 			err(1, "failed to daemonize");
@@ -467,7 +467,7 @@ main(int argc, char *argv[])
 	bzero(&tv, sizeof(tv));
 	evtimer_set(&ev_timer, main_init_timer, &env);
 	evtimer_add(&ev_timer, &tv);
-	
+
 	yp_enable_events();
 	event_dispatch();
 	main_shutdown();
@@ -483,7 +483,7 @@ imsg_event_add(struct imsgbuf *ibuf)
 	ibuf->events = EV_READ;
 	if (ibuf->w.queued)
 		ibuf->events |= EV_WRITE;
-	
+
 	event_del(&ibuf->ev);
 	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, env);
 	event_add(&ibuf->ev, NULL);
@@ -493,12 +493,12 @@ void
 set_nonblock(int fd)
 {
 	int	flags;
- 
+
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
 		fatal("fcntl F_GETFL");
-        
+
 	flags |= O_NONBLOCK;
-         
+
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		fatal("fcntl F_SETFL");
 }

@@ -121,6 +121,7 @@ struct idm {
 	in_port_t			 idm_port;
 	char				 idm_binddn[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
+	char				 idm_basedn[LINE_WIDTH];
 #define FILTER_USER			 1
 #define FILTER_GROUP			 0
 	char				 idm_filters[2][FILTER_WIDTH];
