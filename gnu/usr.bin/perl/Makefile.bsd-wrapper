@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.76 2008/09/29 17:35:56 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.77 2008/09/30 13:41:16 millert Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
@@ -42,7 +42,10 @@ SRCS1=	gv.c toke.c perly.c pad.c regcomp.c dump.c util.c mg.c reentr.c \
 	pp_sys.c doop.c doio.c regexec.c utf8.c taint.c deb.c universal.c \
 	xsutils.c globals.c perlio.c perlapi.c numeric.c mathoms.c locale.c \
 	pp_pack.c pp_sort.c
-SRCS=	${SRCS1} DynaLoader.c op.c
+SRCS=	${SRCS1} op.c
+
+# We must not try to mkdep DynaLoader.c as it requires miniperl
+OBJS+=	DynaLoader.o
 
 # For generating DynaLoader.c
 .if defined(NOPIC)
