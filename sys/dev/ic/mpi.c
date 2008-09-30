@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.95 2008/09/30 23:36:19 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.96 2008/09/30 23:40:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -58,13 +58,14 @@ struct cfdriver mpi_cd = {
 int			mpi_scsi_cmd(struct scsi_xfer *);
 void			mpi_scsi_cmd_done(struct mpi_ccb *);
 void			mpi_minphys(struct buf *bp);
+int			mpi_scsi_probe(struct scsi_link *);
 int			mpi_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
 			    int, struct proc *);
 
 struct scsi_adapter mpi_switch = {
 	mpi_scsi_cmd,
 	mpi_minphys,
-	NULL,
+	mpi_scsi_probe,
 	NULL,
 	mpi_scsi_ioctl
 };
@@ -1385,6 +1386,56 @@ mpi_minphys(struct buf *bp)
 	if (bp->b_bcount > MAXPHYS)
 		bp->b_bcount = MAXPHYS;
 	minphys(bp);
+}
+
+int
+mpi_scsi_probe(struct scsi_link *link)
+{
+	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_ecfg_hdr		ehdr;
+	struct mpi_cfg_sas_dev_pg0	pg0;
+	u_int32_t			address;
+
+	if (sc->sc_porttype != MPI_PORTFACTS_PORTTYPE_SAS || link->lun != 0)
+		return (0);
+
+	address = MPI_CFG_SAS_DEV_ADDR_BUS | link->target;
+
+	if (mpi_ecfg_header(sc, MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_DEVICE, 0,
+	    address, &ehdr) != 0)
+		return (EIO);
+
+	if (mpi_ecfg_page(sc, address, &ehdr, 1, &pg0, sizeof(pg0)) != 0) {
+		/* the device probably doesnt exist if the page fetch fails */
+		return (ENXIO);
+	}
+
+	DPRINTF(MPI_D_MISC, "%s: mpi_scsi_probe sas dev pg 0 for target %d:\n",
+	    DEVNAME(sc), link->target);
+	DPRINTF(MPI_D_MISC, "%s:  slot: 0x%04x enc_handle: 0x%04x\n",
+	    DEVNAME(sc), letoh16(pg0.slot), letoh16(pg0.enc_handle));
+	DPRINTF(MPI_D_MISC, "%s:  sas_addr: 0x%016llx\n", DEVNAME(sc),
+	    letoh64(pg0.sas_addr));
+	DPRINTF(MPI_D_MISC, "%s:  parent_dev_handle: 0x%04x phy_num: 0x%02x "
+	    "access_status: 0x%02x\n", DEVNAME(sc),
+	    letoh16(pg0.parent_dev_handle), pg0.phy_num, pg0.access_status);
+	DPRINTF(MPI_D_MISC, "%s:  dev_handle: 0x%04x "
+	    "bus: 0x%02x target: 0x%02x\n", DEVNAME(sc),
+	    letoh16(pg0.dev_handle), pg0.bus, pg0.target);
+	DPRINTF(MPI_D_MISC, "%s:  device_info: 0x%08x\n", DEVNAME(sc),
+	    letoh32(pg0.device_info));
+	DPRINTF(MPI_D_MISC, "%s:  flags: 0x%04x physical_port: 0x%02x\n",
+	    DEVNAME(sc), letoh16(pg0.flags), pg0.physical_port);
+
+	if (ISSET(letoh32(pg0.device_info),
+	    MPI_CFG_SAS_DEV_0_DEVINFO_ATAPI_DEVICE)) {
+		DPRINTF(MPI_D_MISC, "%s: target %d is an ATAPI device\n",
+		    DEVNAME(sc), link->target);
+		link->flags |= SDEV_ATAPI;
+		link->quirks |= SDEV_ONLYBIG;
+	}
+
+	return (0);
 }
 
 int
