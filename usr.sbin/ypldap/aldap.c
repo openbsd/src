@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.1 2008/09/30 16:24:16 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.1 2008/09/30 16:24:16 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.2 2008/09/30 17:31:04 pyr Exp $ */
+/*	$OpenBSD: aldap.c,v 1.2 2008/09/30 17:31:04 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -24,7 +24,9 @@
 
 #include "aldap.h"
 
-//#define DEBUG
+#if 0
+#define DEBUG
+#endif
 #define VERSION 3
 
 static struct ber_element	*ldap_parse_search_filter(struct ber_element*, char *);
@@ -39,7 +41,6 @@ void			 ldap_debug_elements(struct ber_element *);
 #ifdef DEBUG
 #define DPRINTF(x...)	printf(x)
 #define LDAP_DEBUG(x, y)	do { fprintf(stderr, "*** " x "\n"); ldap_debug_elements(y); } while (0)
-//#define LDAP_DEBUG(x, y)	do { printf("*** " x "\n"); } while (0)
 #else
 #define DPRINTF(x...)	do { } while (0)
 #define LDAP_DEBUG(x, y)	do { } while (0)
