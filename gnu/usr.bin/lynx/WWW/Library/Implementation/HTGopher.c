@@ -248,6 +248,7 @@ PRIVATE void parse_menu ARGS2(
     END(HTML_H1);
     PUTC('\n');
     START(HTML_PRE);
+    PUTC('\n');			/* newline after HTML_PRE forces split-line */
     while ((ich=NEXT_CHAR) != EOF) {
 
 	if (interrupted_in_htgetcharacter) {
