@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.45 2005/07/20 04:19:08 jaredy Exp $	*/
+/*	$OpenBSD: w.c,v 1.46 2008/09/30 21:29:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.45 2005/07/20 04:19:08 jaredy Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.46 2008/09/30 21:29:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -357,10 +357,14 @@ pr_args(struct kinfo_proc2 *kp)
 		fmt_putc(')', &left);
 	}
 	while (*argv) {
-		/* ftp is a special case... */
+		/*
+		 * ftp argv[0] is in the following format:
+		 * ftpd: HOSTNAME: [USER/PASS: ]CMD args (ftpd)
+		 */
 		if (strncmp(*argv, "ftpd:", 5) == 0) {
-			str = strrchr(*argv, ':');
-			if (str != (char *)NULL) {
+			if ((str = strchr(*argv + 5, ':')) != NULL)
+				str = strchr(str + 1, ':');
+			if (str != NULL) {
 				if ((str[0] == ':') && isspace(str[1]))
 					str += 2;
 				fmt_puts(str, &left);
