@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.35 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.36 2008/09/30 15:29:15 millert Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -224,15 +224,10 @@ mfs_close(void *v)
 		return (error);
 #ifdef DIAGNOSTIC
 	/*
-	 * There should be no way to have any more uses of this
-	 * vnode, so if we find any other uses, it is a panic.
+	 * There should be no way to have any more buffers on this vnode.
 	 */
-	if (vp->v_usecount > 1)
-		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
 	if (mfsp->mfs_buflist)
 		printf("mfs_close: dirty buffers\n");
-	if (vp->v_usecount > 1 || mfsp->mfs_buflist)
-		panic("mfs_close");
 #endif
 	/*
 	 * Send a request to the filesystem server to exit.
