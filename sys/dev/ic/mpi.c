@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.94 2008/09/30 01:50:48 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.95 2008/09/30 23:36:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -132,10 +132,10 @@ void			mpi_eventack(struct mpi_softc *,
 void			mpi_eventack_done(struct mpi_ccb *);
 void			mpi_evt_sas(void *, void *);
 
-int			mpi_cfg_header(struct mpi_softc *, u_int8_t, u_int8_t,
-			    u_int32_t, struct mpi_cfg_hdr *);
-int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
-			    struct mpi_cfg_hdr *, int, void *, size_t);
+int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
+			    u_int8_t, u_int32_t, int, void *);
+int			mpi_req_cfg_page(struct mpi_softc *, u_int32_t, int,
+			    void *, int, void *, size_t);
 
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
@@ -153,6 +153,16 @@ int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
 				    MPI_INTR_STATUS_DOORBELL, 0)
 #define mpi_wait_db_ack(s)	mpi_wait_eq((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_IOCDOORBELL, 0)
+
+#define mpi_cfg_header(_s, _t, _n, _a, _h) \
+	mpi_req_cfg_header((_s), (_t), (_n), (_a), 0, (_h))
+#define mpi_ecfg_header(_s, _t, _n, _a, _h) \
+	mpi_req_cfg_header((_s), (_t), (_n), (_a), 1, (_h))
+
+#define mpi_cfg_page(_s, _a, _h, _r, _p, _l) \
+	mpi_req_cfg_page((_s), (_a), 0, (_h), (_r), (_p), (_l))
+#define mpi_ecfg_page(_s, _a, _h, _r, _p, _l) \
+	mpi_req_cfg_page((_s), (_a), 1, (_h), (_r), (_p), (_l))
 
 int
 mpi_attach(struct mpi_softc *sc)
@@ -2264,17 +2274,21 @@ out:
 }
 
 int
-mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
-    u_int32_t address, struct mpi_cfg_hdr *hdr)
+mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
+    u_int32_t address, int extended, void *p)
 {
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
 	struct mpi_msg_config_reply		*cp;
+	struct mpi_cfg_hdr			*hdr = p;
+	struct mpi_ecfg_hdr			*ehdr = p;
+	int					etype = 0;
 	int					rv = 0;
 	int					s;
 
-	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header type: %#x number: %x "
-	    "address: %d\n", DEVNAME(sc), type, number, address);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_req_cfg_header type: %#x number: %x "
+	    "address: 0x%08x extended: %d\n", DEVNAME(sc), type, number,
+	    address, extended);
 
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
@@ -2283,6 +2297,11 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header ccb_get\n",
 		    DEVNAME(sc));
 		return (1);
+	}
+
+	if (extended) {
+		etype = type;
+		type = MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED;
 	}
 
 	ccb->ccb_done = mpi_empty_done;
@@ -2295,6 +2314,7 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 
 	cq->config_header.page_number = number;
 	cq->config_header.page_type = type;
+	cq->ext_page_type = etype;
 	cq->page_address = htole32(address);
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
@@ -2329,7 +2349,14 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
-	else
+	else if (extended) {
+		bzero(ehdr, sizeof(*ehdr));
+		ehdr->page_version = cp->config_header.page_version;
+		ehdr->page_number = cp->config_header.page_number;
+		ehdr->page_type = cp->config_header.page_type;
+		ehdr->ext_page_length = cp->ext_page_length;
+		ehdr->ext_page_type = cp->ext_page_type;
+	} else
 		*hdr = cp->config_header;
 
 	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
@@ -2339,22 +2366,28 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 }
 
 int
-mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
-    int read, void *page, size_t len)
+mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
+    void *p, int read, void *page, size_t len)
 {
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
 	struct mpi_msg_config_reply		*cp;
+	struct mpi_cfg_hdr			*hdr = p;
+	struct mpi_ecfg_hdr			*ehdr = p;
 	u_int64_t				dva;
 	char					*kva;
+	int					page_length;
 	int					rv = 0;
 	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page address: %d read: %d type: %x\n",
 	    DEVNAME(sc), address, read, hdr->page_type);
 
+	page_length = extended ?
+	    letoh16(ehdr->ext_page_length) : hdr->page_length;
+
 	if (len > MPI_REQUEST_SIZE - sizeof(struct mpi_msg_config_request) ||
-	    len < hdr->page_length * 4)
+	    len < page_length * 4)
 		return (1);
 
 	s = splbio();
@@ -2374,12 +2407,19 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	cq->action = (read ? MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT :
 	    MPI_CONFIG_REQ_ACTION_PAGE_WRITE_CURRENT);
 
-	cq->config_header = *hdr;
+	if (extended) {
+		cq->config_header.page_version = ehdr->page_version;
+		cq->config_header.page_number = ehdr->page_number;
+		cq->config_header.page_type = ehdr->page_type;
+		cq->ext_page_len = ehdr->ext_page_length;
+		cq->ext_page_type = ehdr->ext_page_type;
+	} else
+		cq->config_header = *hdr;
 	cq->config_header.page_type &= MPI_CONFIG_REQ_PAGE_TYPE_MASK;
 	cq->page_address = htole32(address);
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
-	    (hdr->page_length * 4) |
+	    (page_length * 4) |
 	    (read ? MPI_SGE_FL_DIR_IN : MPI_SGE_FL_DIR_OUT));
 
 	/* bounce the page via the request space to avoid more bus_dma games */
