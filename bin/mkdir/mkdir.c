@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.22 2008/09/30 16:01:56 millert Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.23 2008/09/30 23:25:31 millert Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.22 2008/09/30 16:01:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.23 2008/09/30 23:25:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,10 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			continue;
 		}
 
-		if (mkdir(path, done ? mode : dir_mode) < 0) {
+		if (mkdir(path, done ? mode : dir_mode) == 0) {
+			if (mode > 0777 && chmod(path, mode) < 0)
+				return (-1);
+		} else {
 			if (!exists) {
 				/* Not there */
 				return (-1);
@@ -168,11 +171,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 				errno = ENOTDIR;
 				return (-1);
 			}
-			if (mode != (sb.st_mode & ALLPERMS))
-				/* Is there, but mode is wrong */
-				if (chmod(path, mode) < 0)
-					return (-1);
-			}
+		}
 
 		if (done)
 			break;
