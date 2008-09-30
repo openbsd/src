@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.3 2007/06/01 08:29:30 gwk Exp $ */
+/* $OpenBSD: xlights.c,v 1.4 2008/09/30 04:54:00 drahn Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -55,7 +55,6 @@ void xlights_startdma(struct xlights_softc *);
 void xlights_deferred(void *);
 void xlights_theosDOT(void *);
 void xlights_timeout(void *);
-void xlights_pwm(struct xlights_softc *, u_char *, int);
 extern void keylargo_fcr_enable(int, u_int32_t);
 extern void keylargo_fcr_disable(int, u_int32_t);
 
@@ -111,6 +110,7 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	int nseg, error, intr[6];
 	u_int32_t reg[4];
+	int type;
 
 	sc->sc_node = OF_child(ca->ca_node);
 
@@ -161,10 +161,13 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	}
 	/* XXX: Should probably extract this from the clock data
 	 * property of the soundchip node */
-	sc->sc_freq = 44100;
+	sc->sc_freq = 16384;
 
 	OF_getprop(sc->sc_node, "interrupts", intr, sizeof(intr));
+	/* output interrupt */
 	sc->sc_intr = intr[2];
+	type = intr[3] ? IST_LEVEL : IST_EDGE;
+
 	printf(": irq %d\n", sc->sc_intr);
 
 	keylargo_fcr_enable(I2SClockOffset, I2S0EN);
@@ -183,7 +186,7 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
-	    IST_EDGE, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
+	    type, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
 
 	out32rb(sc->sc_reg + I2S_FORMAT, CLKSRC_VS);
 	keylargo_fcr_enable(I2SClockOffset, I2S0CLKEN);
@@ -211,74 +214,64 @@ xlights_deferred(void *v)
 	kthread_create(xlights_theosDOT, v, NULL, "xlights");
 }
 
+/*
+ * xserv has two rows of leds laid out as follows
+ *	25 26 27 28 29 30 31 00
+ *	17 18 19 20 21 22 23 24
+ */
+
+char ledfollow_0[16] = {	25, 26, 27, 28, 29, 30, 31, 00,
+				24, 23, 22, 21, 20, 19, 18, 17 };
+char ledfollow_1[16] = {	17, 25, 26, 27, 28, 29, 30, 31,
+				00, 24, 23, 22, 21, 20, 19, 18 };
+char ledfollow_2[16] = {	18, 17, 25, 26, 27, 28, 29, 30,
+				31, 00, 24, 23, 22, 21, 20, 19 };
 void
 xlights_theosDOT(void *v)
 {
 	struct xlights_softc *sc = (struct xlights_softc *)v;
-	u_char leds[16];
-	int offset, i, s, speed;
+	uint32_t *p;
+	int k, nsamp;
+	int ledpos, ledpos_high, ledpos_med, ledpos_dim;
+	uint32_t val;
 
 	while (1) {
-		speed = (averunnable.ldavg[0] / 100) / 2;
-		for (offset = 8; offset < 16; offset++) {
-			s = offset - 2;
-			if (s < 8) {
-				for (i = 1; i <= (8 - s); i++)
-					leds[i - 1] = 0x7f / i;
-				s += 8 - s;
-			}
-			for (i = offset; i >= s; i--)
-				leds[i] = 0xff / (offset + 1 - s);
+		/*
+		 * ldavg 0  - .5 sec ->  (8192 / 16)
+		 * ldavg 1  - 1 sec ->   (16384 / 16)
+		 * ldavg 2  - 1.5 sec -> (24576 / 16)
+		 */
+		nsamp = sc->sc_freq +
+		    sc->sc_freq / FSCALE * averunnable.ldavg[0];
+		nsamp /= 16; /* scale, per led */
+		nsamp /= 4; /* scale, why?, sizeof(uint32_t)? */
+		for (ledpos = 0; ledpos < 16; ledpos++) {
+			ledpos_high	= ledfollow_0[ledpos];
+			ledpos_med	= ledfollow_1[ledpos];
+			ledpos_dim	= ledfollow_2[ledpos];
+			p = sc->sc_bufpos;
 
-			xlights_pwm(sc, leds, speed);
-			bzero(leds, sizeof(leds));
-		}
-		for (offset = 7; offset >= 0; offset--) {
-			s = offset + 2;
-			if (s > 7) {
-				for (i = 1; i <= (s - 7); i++)
-					leds[15 - (i - 1)] = (0xff / (s - 7)) / i;
-				s-= s - 7;
-			}
-			for (i = offset; i <= s; i++)
-				leds[i] = 0xff  / (offset + 1) - s;
-			xlights_pwm(sc, leds, speed);
-			bzero(leds, sizeof(leds));
-		}
-	}
-}
+			for (k = 0; k < nsamp;) {
+				if (p - sc->sc_buf <
+				    BL_BUFSZ / sizeof(uint32_t)) {
+					val =  (1 << ledpos_high);
+					if ((k % 4) == 0)
+						val |=  (1 << ledpos_med);
+					if ((k % 16) == 0)
+						val |=  (1 << ledpos_dim);
+					*p = val;
 
-void
-xlights_pwm(struct xlights_softc *sc, u_char *leds, int msecs)
-{
-	uint32_t *p;
-	int s, l, k, nsamp;
-	uint32_t freq[16] = {0};
-
-	p = sc->sc_bufpos;
-
-	nsamp = sc->sc_freq / 1000 * msecs;
-
-	for (k = 1; k < nsamp;) {
-		if (p - sc->sc_buf < BL_BUFSZ / sizeof(uint32_t)) {
-			s = 0;
-			for (l = 0; l < 16; l++) {
-				s >>= 1;
-				if (leds[l] &&
-				    ((k - freq[l]) == (0xff / leds[l]))) {
-					s |= 1 << 15;
-					freq[l] = k;
+					p++;
+					k++;
+				} else {
+					xlights_startdma(sc);
+					while (sc->sc_dmasts)
+						tsleep(sc->sc_buf, PWAIT,
+						    "blinken", 0);
+					p = sc->sc_buf;
 				}
 			}
-			*p = (s << 17) | (s >> 15);
-			p++;
-			k++;
-			sc->sc_bufpos++;
-		} else {
-			xlights_startdma(sc);
-			while (sc->sc_dmasts)
-				tsleep(sc->sc_buf, PWAIT, "blinken", 0);
-			sc->sc_bufpos = p = sc->sc_buf;
+			sc->sc_bufpos = p;
 		}
 	}
 }
