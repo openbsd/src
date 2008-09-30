@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 2008/04/20 17:11:24 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 2008/09/30 18:54:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -212,13 +212,7 @@ vmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
 
-	/*
-	 * We do it on our own here to be able to specify an offset to uvm_map
-	 * so that we can get all benefits of PMAP_PREFER.
-	 * - art@
-	 */
 	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
-	fdcache(pm->pm_space, uva, size);
 	bp->b_data = (caddr_t)(kva + off);
 	while (size > 0) {
 		paddr_t pa;

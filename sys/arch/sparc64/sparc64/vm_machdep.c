@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2008/07/14 14:00:01 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2008/09/30 18:54:29 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -98,13 +98,6 @@ vmapbuf(bp, len)
 	len = round_page(off + len);
 	kva = uvm_km_valloc_prefer_wait(kernel_map, len, uva);
 	bp->b_data = (caddr_t)(kva + off);
-
-	/*
-	 * We have to flush any write-back cache on the
-	 * user-space mappings so our new mappings will
-	 * have the correct contents.
-	 */
-	cache_flush(uva, len);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
