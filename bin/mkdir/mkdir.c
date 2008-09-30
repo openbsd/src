@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.21 2008/02/13 14:50:51 millert Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.22 2008/09/30 16:01:56 millert Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.21 2008/02/13 14:50:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.22 2008/09/30 16:01:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, exitval, pflag;
+	int ch, rv, exitval, pflag;
 	void *set;
 	mode_t mode, dir_mode;
 
@@ -108,25 +108,22 @@ main(int argc, char *argv[])
 			*slash = '\0';
 
 		if (pflag) {
-			if (mkpath(*argv, mode, dir_mode) < 0)
-				exitval = 1;
+			rv = mkpath(*argv, mode, dir_mode);
 		} else {
-			if (mkdir(*argv, mode) < 0) {
-				warn("%s", *argv);
-				exitval = 1;
-			} else {
-				/*
-				 * The mkdir() and umask() calls both honor only the low
-				 * nine bits, so if you try to set a mode including the
-				 * sticky, setuid, setgid bits you lose them.  Don't do
-				 * this unless the user has specifically requested a mode
-				 * as chmod will (obviously) ignore the umask.
-				 */
-				if (mode > 0777 && chmod(*argv, mode) == -1) {
-					warn("%s", *argv);
-					exitval = 1;
-				}
-			}
+			rv = mkdir(*argv, mode);
+			/*
+			 * The mkdir() and umask() calls both honor only the
+			 * low nine bits, so if you try to set a mode including
+			 * the sticky, setuid, setgid bits you lose them. Don't
+			 * do this unless the user has specifically requested
+			 * a mode as chmod will (obviously) ignore the umask.
+			 */
+			if (rv == 0 && mode > 0777)
+				rv = chmod(*argv, mode);
+		}
+		if (rv < 0) {
+			warn("%s", *argv);
+			exitval = 1;
 		}
 	}
 	exit(exitval);
@@ -164,16 +161,18 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		if (mkdir(path, done ? mode : dir_mode) < 0) {
 			if (!exists) {
 				/* Not there */
-				warn("%s", path);
 				return (-1);
 			}
 			if (!S_ISDIR(sb.st_mode)) {
 				/* Is there, but isn't a directory */
 				errno = ENOTDIR;
-				warn("%s", path);
 				return (-1);
 			}
-		}
+			if (mode != (sb.st_mode & ALLPERMS))
+				/* Is there, but mode is wrong */
+				if (chmod(path, mode) < 0)
+					return (-1);
+			}
 
 		if (done)
 			break;
