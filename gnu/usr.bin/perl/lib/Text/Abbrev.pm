@@ -6,7 +6,7 @@ our $VERSION = '1.01';
 
 =head1 NAME
 
-abbrev - create an abbreviation table from a list
+Text::Abbrev - create an abbreviation table from a list
 
 =head1 SYNOPSIS
 

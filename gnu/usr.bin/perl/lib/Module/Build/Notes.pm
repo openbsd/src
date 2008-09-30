@@ -198,8 +198,7 @@ EOF
 
 =head1 NAME
 
-$notes_name - Configuration for $module_name
-
+Module::Build::Notes - Configuration for $module_name
 
 =head1 SYNOPSIS
 

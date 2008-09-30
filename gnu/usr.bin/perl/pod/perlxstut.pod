@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlXStut - Tutorial for writing XSUBs
+perlxstut - Tutorial for writing XSUBs
 
 =head1 DESCRIPTION
 

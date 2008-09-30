@@ -359,7 +359,7 @@ __END__
 
 =head1 NAME
 
-ModuleInfo - Gather package and POD information from a perl module files
+Module::Build::ModuleInfo - Gather package and POD information from a perl module files
 
 
 =head1 DESCRIPTION
