@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.96 2008/09/30 23:40:16 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.97 2008/09/30 23:58:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1396,7 +1396,7 @@ mpi_scsi_probe(struct scsi_link *link)
 	struct mpi_cfg_sas_dev_pg0	pg0;
 	u_int32_t			address;
 
-	if (sc->sc_porttype != MPI_PORTFACTS_PORTTYPE_SAS || link->lun != 0)
+	if (sc->sc_porttype != MPI_PORTFACTS_PORTTYPE_SAS)
 		return (0);
 
 	address = MPI_CFG_SAS_DEV_ADDR_BUS | link->target;
