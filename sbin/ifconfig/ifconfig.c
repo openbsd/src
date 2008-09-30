@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.205 2008/09/09 20:45:23 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.206 2008/09/30 13:11:48 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ void	setifwpapsk(const char *, int);
 void	setifchan(const char *, int);
 void	setiftxpower(const char *, int);
 void	setifpowersave(const char *, int);
-void	setifpowersavesleep(const char *, int);
 void	setifnwflag(const char *, int);
 void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
@@ -313,9 +312,8 @@ const struct	cmd {
 	{ "-wpapsk",	-1,		0,		setifwpapsk },
 	{ "chan",	NEXTARG0,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
-	{ "powersave",	1,		0,		setifpowersave },
+	{ "powersave",	NEXTARG0,	0,		setifpowersave },
 	{ "-powersave",	0,		0,		setifpowersave },
-	{ "powersavesleep", NEXTARG,	0,		setifpowersavesleep },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -1714,23 +1712,6 @@ void
 setifpowersave(const char *val, int d)
 {
 	struct ieee80211_power power;
-
-	(void)strlcpy(power.i_name, name, sizeof(power.i_name));
-	if (ioctl(s, SIOCG80211POWER, (caddr_t)&power) == -1) {
-		warn("SIOCG80211POWER");
-		return;
-	}
-
-	power.i_enabled = d;
-	if (ioctl(s, SIOCS80211POWER, (caddr_t)&power) == -1)
-		warn("SIOCS80211POWER");
-}
-
-/* ARGSUSED */
-void
-setifpowersavesleep(const char *val, int d)
-{
-	struct ieee80211_power power;
 	const char *errmsg = NULL;
 
 	(void)strlcpy(power.i_name, name, sizeof(power.i_name));
@@ -1739,10 +1720,13 @@ setifpowersavesleep(const char *val, int d)
 		return;
 	}
 
-	power.i_maxsleep = strtonum(val, 0, INT_MAX, &errmsg);
-	if (errmsg)
-		errx(1, "powersavesleep %s: %s", val, errmsg);
+	if (val) {
+		power.i_maxsleep = strtonum(val, 0, INT_MAX, &errmsg);
+		if (errmsg)
+			errx(1, "powersave %s: %s", val, errmsg);
+	}
 
+	power.i_enabled = d;
 	if (ioctl(s, SIOCS80211POWER, (caddr_t)&power) == -1)
 		warn("SIOCS80211POWER");
 }
