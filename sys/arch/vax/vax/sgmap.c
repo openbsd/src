@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgmap.c,v 1.9 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: sgmap.c,v 1.10 2008/09/30 20:00:29 miod Exp $	*/
 /* $NetBSD: sgmap.c,v 1.8 2000/06/29 07:14:34 mrg Exp $ */
 
 /*-
@@ -184,6 +184,12 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	bus_size_t dmalen;
 	long *pte, *page_table = (long *)sgmap->aps_pt;
 	int pteidx, error;
+	struct pmap *pmap;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -223,7 +229,6 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	map->dm_segs[0].ds_addr = map->_dm_sgva + dmaoffset;
 	map->dm_segs[0].ds_len = dmalen;
 
-
 	map->_dm_pteidx = pteidx;
 	map->_dm_ptecnt = 0;
 
@@ -235,10 +240,7 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
-		else
-			pa = kvtophys(va);
+		(void)pmap_extract(pmap, va, &pa);
 
 		/*
 		 * Load the current PTE with this page.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2008/08/30 20:45:31 martin Exp $ */
+/*	$OpenBSD: pmap.c,v 1.50 2008/09/30 20:00:29 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -67,6 +67,7 @@ vaddr_t	istack;
 struct pmap kernel_pmap_store;
 
 pt_entry_t *Sysmap;		/* System page table */
+unsigned int sysptsize;
 vaddr_t scratch;
 vaddr_t	iospace;
 
@@ -120,7 +121,7 @@ vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 void
 pmap_bootstrap()
 {
-	unsigned int sysptsize, i;
+	unsigned int i;
 	extern	unsigned int etext, proc0paddr;
 	struct pcb *pcb = (struct pcb *)proc0paddr;
 	pmap_t pmap = pmap_kernel();
@@ -853,21 +854,19 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	paddr_t pa = 0;
 	int	*pte, sva;
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 #endif
 
-	if (va & KERNBASE) {
-		pa = kvtophys(va); /* Is 0 if not mapped */
-		*pap = pa;
-		return (TRUE);
-	}
-
 	sva = PG_PFNUM(va);
-	if (va < 0x40000000) {
+
+	if (va & KERNBASE) {
+		if (sva >= sysptsize)
+			return (FALSE);
+		pte = Sysmap;
+	} else if (va < 0x40000000) {
 		if (sva > (pmap->pm_p0lr & ~AST_MASK))
 			return (FALSE);
 		pte = (int *)pmap->pm_p0br;
@@ -876,8 +875,10 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 			return (FALSE);
 		pte = (int *)pmap->pm_p1br;
 	}
+
 	if ((*kvtopte(&pte[sva]) & PG_FRAME) != 0) {
-		*pap = ((pte[sva] & PG_FRAME) << VAX_PGSHIFT);
+		*pap = ((pte[sva] & PG_FRAME) << VAX_PGSHIFT) |
+		    (va & VAX_PGOFSET);
 		return (TRUE);
 	}
 	
