@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.33 2008/09/23 20:45:26 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.34 2008/09/30 22:42:55 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -93,16 +93,35 @@ void
 ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle;
+	int nreg, navail;
+	int i, j;
 
 	/*
 	 * Get memory.
 	 */
-	if ((phandle = OF_finddevice("/memory")) == -1
-	    || OF_getprop(phandle, "reg",
-	    OFmem, sizeof OFmem[0] * OFMEM_REGIONS) <= 0
-	    || OF_getprop(phandle, "available",
-	    OFavail, sizeof OFavail[0] * OFMEM_REGIONS) <= 0)
+	phandle = OF_finddevice("/memory");
+	if (phandle == -1)
 		panic("no memory?");
+
+	nreg = OF_getprop(phandle, "reg", OFmem,
+	    sizeof(OFmem[0]) * OFMEM_REGIONS) / sizeof(OFmem[0]);
+	navail = OF_getprop(phandle, "available", OFavail,
+	    sizeof(OFavail[0]) * OFMEM_REGIONS) / sizeof(OFavail[0]);
+	if (nreg <= 0 || navail <= 0)
+		panic("no memory?");
+
+	/* Eliminate empty regions. */
+	for (i = 0, j = 0; i < nreg; i++) {
+		if (OFmem[i].size == 0)
+			continue;
+		if (i != j) {
+			OFmem[j].start = OFmem[i].start;
+			OFmem[j].size = OFmem[i].size;
+			OFmem[i].start = 0;
+			OFmem[i].size = 0;
+		}
+		j++;
+	}
 
 	*memp = OFmem;
 
