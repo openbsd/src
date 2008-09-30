@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.46 2008/09/24 19:12:59 chl Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.47 2008/09/30 17:59:22 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1116,9 +1116,7 @@ ixgb_dma_malloc(struct ixgb_softc *sc, bus_size_t size,
 	}
 
 	r = bus_dmamap_load(sc->osdep.ixgb_pa.pa_dmat, dma->dma_map,
-			    dma->dma_vaddr,
-			    size,
-			    NULL,
+			    dma->dma_vaddr, size, NULL,
 			    mapflags | BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: ixgb_dma_malloc: bus_dmamap_load failed; "

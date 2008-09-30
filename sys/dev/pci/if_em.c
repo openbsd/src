@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.188 2008/09/24 19:12:59 chl Exp $ */
+/* $OpenBSD: if_em.c,v 1.189 2008/09/30 17:59:22 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1857,9 +1857,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	}
 
 	r = bus_dmamap_load(sc->osdep.em_pa.pa_dmat, dma->dma_map,
-			    dma->dma_vaddr,
-			    size,
-			    NULL,
+			    dma->dma_vaddr, size, NULL,
 			    mapflags | BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmamap_load failed; "
