@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.32 2007/09/13 01:16:43 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.33 2008/09/30 23:32:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -923,6 +923,17 @@ struct mpi_cfg_hdr {
 #define MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0F)
 } __packed;
 
+struct mpi_ecfg_hdr {
+	u_int8_t		page_version;
+	u_int8_t		reserved1;
+	u_int8_t		page_number;
+	u_int8_t		page_type;
+
+	u_int16_t		ext_page_length;
+	u_int8_t		ext_page_type;
+	u_int8_t		reserved2;
+} __packed;
+
 struct mpi_msg_config_request {
 	u_int8_t		action;
 #define MPI_CONFIG_REQ_ACTION_PAGE_HEADER		(0x00)
@@ -1458,4 +1469,58 @@ struct mpi_cfg_raid_physdisk_path {
 	u_int16_t		flags;
 #define MPI_CFG_RAID_PHYDISK_PATH_INVALID		(1<<0)
 #define MPI_CFG_RAID_PHYDISK_PATH_BROKEN		(1<<1)
+} __packed;
+
+#define MPI_CFG_SAS_DEV_ADDR_NEXT		(0<<28)
+#define MPI_CFG_SAS_DEV_ADDR_BUS		(1<<28)
+#define MPI_CFG_SAS_DEV_ADDR_HANDLE		(2<<28)
+
+struct mpi_cfg_sas_dev_pg0 {
+	struct mpi_ecfg_hdr	config_header;
+
+	u_int16_t		slot;
+	u_int16_t		enc_handle;
+
+	u_int64_t		sas_addr;
+
+	u_int16_t		parent_dev_handle;
+	u_int8_t		phy_num;
+	u_int8_t		access_status;
+
+	u_int16_t		dev_handle;
+	u_int8_t		target;
+	u_int8_t		bus;
+
+	u_int32_t		device_info;
+#define MPI_CFG_SAS_DEV_0_DEVINFO_TYPE			(0x7)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_TYPE_NONE		(0x0)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_TYPE_END		(0x1)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_TYPE_EDGE_EXPANDER	(0x2)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_TYPE_FANOUT_EXPANDER	(0x3)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SATA_HOST		(1<<3)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SMP_INITIATOR		(1<<4)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_STP_INITIATOR		(1<<5)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SSP_INITIATOR		(1<<6)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SATA_DEVICE		(1<<7)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SMP_TARGET		(1<<8)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_STP_TARGET		(1<<9)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SSP_TARGET		(1<<10)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_DIRECT_ATTACHED	(1<<11)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_LSI_DEVICE		(1<<12)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_ATAPI_DEVICE		(1<<13)
+#define MPI_CFG_SAS_DEV_0_DEVINFO_SEP_DEVICE		(1<<14)
+
+	u_int16_t		flags;
+#define MPI_CFG_SAS_DEV_0_FLAGS_DEV_PRESENT		(1<<0)
+#define MPI_CFG_SAS_DEV_0_FLAGS_DEV_MAPPED		(1<<1)
+#define MPI_CFG_SAS_DEV_0_FLAGS_DEV_MAPPED_PERSISTENT	(1<<2)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_PORT_SELECTOR	(1<<3)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_FUA		(1<<4)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_NCQ		(1<<5)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_SMART		(1<<6)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_LBA48		(1<<7)
+#define MPI_CFG_SAS_DEV_0_FLAGS_UNSUPPORTED		(1<<8)
+#define MPI_CFG_SAS_DEV_0_FLAGS_SATA_SETTINGS		(1<<9)
+	u_int8_t		physical_port;
+	u_int8_t		reserved;
 } __packed;
