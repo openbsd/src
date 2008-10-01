@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.133 2008/09/14 10:09:42 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.134 2008/10/01 19:13:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -565,6 +565,7 @@ pmap_bootstrap(vstart)
 			va = HPPA_IOBEGIN;
 		/* now map the pde for the physmem */
 		bzero((void *)addr, PAGE_SIZE);
+		fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
 		DPRINTF(PDB_INIT|PDB_VP, ("pde premap 0x%x 0x%x\n", va, addr));
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++; /* count PTP as resident */
@@ -1148,11 +1149,14 @@ pmap_flush_page(struct vm_page *pg, int purge)
 
 	/* purge cache for all possible mappings for the pa */
 	simple_lock(&pg->mdpage.pvh_lock);
-	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next)
+	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		if (purge)
 			pdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		else
 			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
+		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
+		pitlb(pve->pv_pmap->pm_space, pve->pv_va);
+	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 }
 
@@ -1166,6 +1170,9 @@ pmap_zero_page(struct vm_page *pg)
 	pmap_flush_page(pg, 1);
 	bzero((void *)pa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
+	ficache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, pa);
 }
 
 void
@@ -1180,6 +1187,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	bcopy((void *)spa, (void *)dpa, PAGE_SIZE);
 	pdcache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, spa);
+	pdtlb(HPPA_SID_KERNEL, dpa);
+	ficache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
+	ficache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, spa);
+	pitlb(HPPA_SID_KERNEL, dpa);
 }
 
 void
