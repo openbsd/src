@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.51 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.52 2008/10/01 09:03:27 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 1 2008 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -384,6 +384,8 @@ command-list is executed.
 At the end of the
 .Ic g
 command, the current address is set to the last line affected by command-list.
+If no lines were matched,
+the current line number remains unchanged.
 .Pp
 Each command in
 .Ar command-list
@@ -412,6 +414,8 @@ At the end of the
 command, the current address is set to the last line affected by
 .Pq the last
 command-list.
+If no lines were matched,
+the current line number remains unchanged.
 .Pp
 The format of
 .Ar command-list
