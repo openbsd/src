@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_buf.c,v 1.17 2008/10/01 19:56:57 millert Exp $	*/
+/*	$OpenBSD: hash_buf.c,v 1.18 2008/10/01 20:22:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -170,17 +170,14 @@ newbuf(HTAB *hashp, u_int32_t addr, BUFHEAD *prev_bp)
         }
 
 	/* If prev_bp is part of bp overflow, create a new buffer. */
-	if (hashp->nbufs == 0 && (prev_bp && bp->ovfl)) {
-		BUFHEAD *ovfl_head, *ovfl_next;
+	if (hashp->nbufs == 0 && prev_bp && bp->ovfl) {
+		BUFHEAD *ovfl;
 
-		ovfl_head = bp->ovfl; 
-		ovfl_next = ovfl_head;
-		while (ovfl_next) {
-			if (ovfl_next == prev_bp) {
+		for (ovfl = bp->ovfl; ovfl ; ovfl = ovfl->ovfl) {
+			if (ovfl == prev_bp) {
 				hashp->nbufs++;
 				break;
 			}
-			ovfl_next = ovfl_next->ovfl;
 		}
 	}
 
