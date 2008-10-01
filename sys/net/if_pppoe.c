@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.26 2008/08/28 13:19:38 brad Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.27 2008/10/01 16:51:48 mk Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -678,7 +678,6 @@ breakbreak:
 		}
 		
 		memcpy(&sc->sc_dest, eh->ether_shost, sizeof(sc->sc_dest));
-		timeout_del(&sc->sc_timeout);
 		sc->sc_padr_retried = 0;
 		sc->sc_state = PPPOE_STATE_PADR_SENT;
 		if ((err = pppoe_send_padr(sc)) != 0) {
