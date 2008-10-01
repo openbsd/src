@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.6 2008/06/14 17:17:33 jsing Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.7 2008/10/01 19:13:57 robert Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -59,18 +59,24 @@ struct acpiasus_softc {
 	void 			*sc_powerhook;
 };
 
-#define ASUS_NOTIFY_WirelessSwitchOn	0x10
-#define ASUS_NOTIFY_WirelessSwitchOff	0x11
-#define ASUS_NOTIFY_BrightnessLow	0x20
-#define ASUS_NOTIFY_BrightnessHigh	0x2f
-#define ASUS_NOTIFY_DisplayCycle	0x30
-#define ASUS_NOTIFY_TaskSwitch		0x12
-#define ASUS_NOTIFY_VolumeMute		0x13
-#define ASUS_NOTIFY_VolumeDown		0x14
-#define ASUS_NOTIFY_VolumeUp		0x15
+#define ASUS_NOTIFY_WIRELESSON		0x10
+#define ASUS_NOTIFY_WIRELESSOFF		0x11
+#define ASUS_NOTIFY_TASKSWITCH		0x12
+#define ASUS_NOTIFY_VOLUMEMUTE		0x13
+#define ASUS_NOTIFY_VOLUMEDOWN		0x14
+#define ASUS_NOTIFY_VOLUMEUP		0x15
+#define ASUS_NOTIFY_LCDSWITCHOFF0	0x16
+#define ASUS_NOTIFY_LCDSWITCHOFF1	0x1a
+#define ASUS_NOTIFY_LCDCHANGERES	0x1b
+#define ASUS_NOTIFY_USERDEF0		0x1c
+#define ASUS_NOTIFY_USERDEF1		0x1d
+#define ASUS_NOTIFY_BRIGHTNESSLOW	0x20
+#define ASUS_NOTIFY_BRIGHTNESSHIGH	0x2f
+#define ASUS_NOTIFY_DISPLAYCYCLEDOWN	0x30
+#define ASUS_NOTIFY_DISPLAYCYCLEUP	0x32
 
-#define ASUS_NOTIFY_PowerConnect	0x50
-#define ASUS_NOTIFY_PowerDisconnect	0x51
+#define ASUS_NOTIFY_POWERCONNECT	0x50
+#define ASUS_NOTIFY_POWERDISCONNECT	0x51
 
 #define	ASUS_SDSP_LCD			0x01
 #define	ASUS_SDSP_CRT			0x02
@@ -152,9 +158,9 @@ acpiasus_notify(struct aml_node *node, int notify, void *arg)
 {
 	struct acpiasus_softc *sc = arg;
 
-	if (notify >= ASUS_NOTIFY_BrightnessLow &&
-	    notify <= ASUS_NOTIFY_BrightnessHigh) {
-#if ACPIASUS_DEBUG
+	if (notify >= ASUS_NOTIFY_BRIGHTNESSLOW &&
+	    notify <= ASUS_NOTIFY_BRIGHTNESSHIGH) {
+#ifdef ACPIASUS_DEBUG
 		printf("%s: brightness %d percent\n", DEVNAME(sc),
 		    (notify & 0xf) * 100 / 0xf);
 #endif
@@ -162,34 +168,46 @@ acpiasus_notify(struct aml_node *node, int notify, void *arg)
 	}
 
 	switch (notify) {
-	case ASUS_NOTIFY_WirelessSwitchOn:	/* Handled by AML. */
-	case ASUS_NOTIFY_WirelessSwitchOff:	/* Handled by AML. */
+	case ASUS_NOTIFY_WIRELESSON:	/* Handled by AML. */
+	case ASUS_NOTIFY_WIRELESSOFF:	/* Handled by AML. */
 		break;
-	case ASUS_NOTIFY_TaskSwitch:
+	case ASUS_NOTIFY_TASKSWITCH:
 		break;
-	case ASUS_NOTIFY_DisplayCycle:
+	case ASUS_NOTIFY_DISPLAYCYCLEDOWN:
+	case ASUS_NOTIFY_DISPLAYCYCLEUP:
 		break;
 #if NAUDIO > 0 && NWSKBD > 0
-	case ASUS_NOTIFY_VolumeMute:
+	case ASUS_NOTIFY_VOLUMEMUTE:
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
 		    (void *)(long)0, NULL);
 		break;
-	case ASUS_NOTIFY_VolumeDown:
+	case ASUS_NOTIFY_VOLUMEDOWN:
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
 		    (void *)(long)-1, NULL);
 		break;
-	case ASUS_NOTIFY_VolumeUp:
+	case ASUS_NOTIFY_VOLUMEUP:
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
 		    (void *)(long)1, NULL);
 		break;
 #else
-	case ASUS_NOTIFY_VolumeMute:
-	case ASUS_NOTIFY_VolumeDown:
-	case ASUS_NOTIFY_VolumeUp:
+	case ASUS_NOTIFY_VOLUMEMUTE:
+	case ASUS_NOTIFY_VOLUMEDOWN:
+	case ASUS_NOTIFY_VOLUMEUP:
 		break;
 #endif
-	case ASUS_NOTIFY_PowerConnect:
-	case ASUS_NOTIFY_PowerDisconnect:
+	case ASUS_NOTIFY_POWERCONNECT:
+	case ASUS_NOTIFY_POWERDISCONNECT:
+		break;
+
+	case ASUS_NOTIFY_LCDSWITCHOFF0:
+	case ASUS_NOTIFY_LCDSWITCHOFF1:
+		break;
+
+	case ASUS_NOTIFY_LCDCHANGERES:
+		break;
+
+	case ASUS_NOTIFY_USERDEF0:
+	case ASUS_NOTIFY_USERDEF1:
 		break;
 
 	default:
