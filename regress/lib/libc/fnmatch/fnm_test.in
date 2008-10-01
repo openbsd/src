@@ -1,0 +1,5 @@
+/bin/[[:alpha:][:alnum:]]* /bin/ls 0x2 0
+/bin/[[:upper:]][[:alnum:]] /bin/ls 0x10 0
+/bin/[[:opper:][:alnum:]]* /bin/ls 0x0 1
+[[:alpha:][:alnum:]]*.c foo1.c 0x4 0
+[[:upper:]]* FOO 0x0 0
