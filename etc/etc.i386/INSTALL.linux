@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.12 2004/08/18 08:57:33 espie Exp $
+$OpenBSD: INSTALL.linux,v 1.13 2008/10/01 03:14:30 deraadt Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -233,7 +233,7 @@ Trust it on that). In my case, sectors/cylinder=1008 and bytes/sector=512,
 so the granularity of disklabel partitions is 504 Kb.
 - units for size and offset can be given as sectors (default) or cylinders.
 
-After edition, this is what my disklabel looks like:
+After editing, this is what my disklabel looks like:
 # editing
 
 # using MBR partition 2: type A6 off 2201472 (0x219780) size 5798016 (0x587880)
