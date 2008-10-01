@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.13 2006/03/31 05:34:14 deraadt Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.14 2008/10/01 23:04:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,6 +42,8 @@
 #include <string.h>
 #include <fnmatch.h>
 
+#include "charclass.h"
+
 #define	EOS	'\0'
 
 #define	RANGE_MATCH	1
@@ -49,6 +51,7 @@
 #define	RANGE_ERROR	(-1)
 
 static int rangematch(const char *, char, int, char **);
+static int classmatch(const char *, char, int, const char **);
 
 int
 fnmatch(const char *pattern, const char *string, int flags)
@@ -153,7 +156,7 @@ fnmatch(const char *pattern, const char *string, int flags)
 static int
 rangematch(const char *pattern, char test, int flags, char **newp)
 {
-	int negate, ok;
+	int negate, ok, rv;
 	char c, c2;
 
 	/*
@@ -177,6 +180,17 @@ rangematch(const char *pattern, char test, int flags, char **newp)
 	ok = 0;
 	c = *pattern++;
 	do {
+		if (c == '[' && *pattern == ':') {
+			do {
+				rv = classmatch(pattern + 1, test,
+				    (flags & FNM_CASEFOLD), &pattern);
+				if (rv == RANGE_MATCH)
+					ok = 1;
+				c = *pattern++;
+			} while (rv != RANGE_ERROR && c == '[' && *pattern == ':');
+			if (c == ']')
+				break;
+		}
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;
 		if (c == EOS)
@@ -202,4 +216,36 @@ rangematch(const char *pattern, char test, int flags, char **newp)
 
 	*newp = (char *)pattern;
 	return (ok == negate ? RANGE_NOMATCH : RANGE_MATCH);
+}
+
+static int
+classmatch(const char *pattern, char test, int foldcase, const char **ep)
+{
+	struct cclass *cc;
+	const char *colon;
+	size_t len;
+	int rval = RANGE_NOMATCH;
+
+	if ((colon = strchr(pattern, ':')) == NULL || colon[1] != ']') {
+		*ep = pattern - 2;
+		return(RANGE_ERROR);
+	}
+	*ep = colon + 2;
+	len = (size_t)(colon - pattern);
+
+	if (foldcase && strncmp(pattern, "upper:]", 7) == 0)
+		pattern = "lower:]";
+	for (cc = cclasses; cc->name != NULL; cc++) {
+		if (!strncmp(pattern, cc->name, len) && cc->name[len] == '\0') {
+			if (cc->isctype((unsigned char)test))
+				rval = RANGE_MATCH;
+			break;
+		}
+	}
+	if (cc->name == NULL) {
+		/* invalid character class, return EOS */
+		*ep = colon + strlen(colon);
+		rval = RANGE_ERROR;
+	}
+	return(rval);
 }

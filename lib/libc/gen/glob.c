@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.26 2005/11/28 17:50:12 deraadt Exp $ */
+/*	$OpenBSD: glob.c,v 1.27 2008/10/01 23:04:13 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,6 +69,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "charclass.h"
+
 #define	DOLLAR		'$'
 #define	DOT		'.'
 #define	EOS		'\0'
@@ -116,6 +118,7 @@ typedef char Char;
 #define	M_ONE		META('?')
 #define	M_RNG		META('-')
 #define	M_SET		META('[')
+#define	M_CLASS		META(':')
 #define	ismeta(c)	(((c)&M_QUOTE) != 0)
 
 
@@ -123,7 +126,8 @@ static int	 compare(const void *, const void *);
 static int	 g_Ctoc(const Char *, char *, u_int);
 static int	 g_lstat(Char *, struct stat *, glob_t *);
 static DIR	*g_opendir(Char *, glob_t *);
-static Char	*g_strchr(Char *, int);
+static Char	*g_strchr(const Char *, int);
+static int	 g_strncmp(const Char *, const char *, size_t);
 static int	 g_stat(Char *, struct stat *, glob_t *);
 static int	 glob0(const Char *, glob_t *);
 static int	 glob1(Char *, Char *, glob_t *, size_t *);
@@ -200,7 +204,7 @@ globexp1(const Char *pattern, glob_t *pglob)
 	if (pattern[0] == LBRACE && pattern[1] == RBRACE && pattern[2] == EOS)
 		return glob0(pattern, pglob);
 
-	while ((ptr = (const Char *) g_strchr((Char *) ptr, LBRACE)) != NULL)
+	while ((ptr = (const Char *) g_strchr(ptr, LBRACE)) != NULL)
 		if (!globexp2(ptr, pattern, pglob, &rv))
 			return rv;
 
@@ -375,6 +379,47 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 	return patbuf;
 }
 
+static int
+g_strncmp(const Char *s1, const char *s2, size_t n)
+{
+	int rv = 0;
+
+	while (n--) {
+		rv = *(Char *)s1 - *(const unsigned char *)s2++;
+		if (rv)
+			break;
+		if (*s1++ == '\0')
+			break;
+	}
+	return rv;
+}
+
+static int
+g_charclass(const Char **patternp, Char **bufnextp)
+{
+	const Char *pattern = *patternp + 1;
+	Char *bufnext = *bufnextp;
+	const Char *colon;
+	struct cclass *cc;
+	size_t len;
+
+	if ((colon = g_strchr(pattern, ':')) == NULL || colon[1] != ']')
+		return 1;	/* not a character class */
+
+	len = (size_t)(colon - pattern);
+	for (cc = cclasses; cc->name != NULL; cc++) {
+		if (!g_strncmp(pattern, cc->name, len) && cc->name[len] == '\0')
+			break;
+	}
+	if (cc->name == NULL)
+		return -1;	/* invalid character class */
+	*bufnext++ = M_CLASS;
+	*bufnext++ = (Char)(cc - &cclasses[0]);
+	*bufnextp = bufnext;
+	*patternp += len + 3;
+
+	return 0;
+}
 
 /*
  * The main glob() routine: compiles the pattern (optionally processing
@@ -403,7 +448,7 @@ glob0(const Char *pattern, glob_t *pglob)
 			if (c == NOT)
 				++qpatnext;
 			if (*qpatnext == EOS ||
-			    g_strchr((Char *) qpatnext+1, RBRACKET) == NULL) {
+			    g_strchr(qpatnext+1, RBRACKET) == NULL) {
 				*bufnext++ = LBRACKET;
 				if (c == NOT)
 					--qpatnext;
@@ -414,6 +459,20 @@ glob0(const Char *pattern, glob_t *pglob)
 				*bufnext++ = M_NOT;
 			c = *qpatnext++;
 			do {
+				if (c == LBRACKET && *qpatnext == ':') {
+					do {
+						err = g_charclass(&qpatnext,
+						    &bufnext);
+						if (err)
+							break;
+						c = *qpatnext++;
+					} while (c == LBRACKET && *qpatnext == ':');
+					if (err == -1 &&
+					    !(pglob->gl_flags & GLOB_NOCHECK))
+						return GLOB_NOMATCH;
+					if (c == RBRACKET)
+						break;
+				}
 				*bufnext++ = CHAR(c);
 				if (*qpatnext == RANGE &&
 				    (c = qpatnext[1]) != RBRACKET) {
@@ -728,6 +787,13 @@ match(Char *name, Char *pat, Char *patend)
 			if ((negate_range = ((*pat & M_MASK) == M_NOT)) != EOS)
 				++pat;
 			while (((c = *pat++) & M_MASK) != M_END)
+				if ((c & M_MASK) == M_CLASS) {
+					int idx = *pat & M_MASK;
+					if (idx < NCCLASSES &&
+					    cclasses[idx].isctype(k))
+						ok = 1;
+					++pat;
+				}
 				if ((*pat & M_MASK) == M_RNG) {
 					if (c <= k && k <= pat[1])
 						ok = 1;
@@ -806,11 +872,11 @@ g_stat(Char *fn, struct stat *sb, glob_t *pglob)
 }
 
 static Char *
-g_strchr(Char *str, int ch)
+g_strchr(const Char *str, int ch)
 {
 	do {
 		if (*str == ch)
-			return (str);
+			return ((Char *)str);
 	} while (*str++);
 	return (NULL);
 }
