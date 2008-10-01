@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.45 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.46 2008/10/01 19:43:35 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -216,7 +216,7 @@ re*	at pci?			# Realtek 8169/8169S/8110S
 #tl*	at pci?			# Compaq Thunderlan ethernet
 #vr*	at pci?			# VIA Rhine ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
-sis*	at pci?			# SiS 900/7016 ethernet
+#sis*	at pci?			# SiS 900/7016 ethernet
 #wb*	at pci?			# Winbond W89C840F ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
