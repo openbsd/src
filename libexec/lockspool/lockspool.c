@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.14 2008/10/01 20:26:28 millert Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.15 2008/10/01 20:32:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.14 2008/10/01 20:26:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.15 2008/10/01 20:32:44 millert Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -37,6 +37,7 @@ static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.14 2008/10/01 20:26:28 mi
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <poll.h>
 #include "mail.local.h"
 
 void unhold(int);
@@ -48,6 +49,8 @@ int
 main(int argc, char *argv[])
 {
 	struct passwd *pw;
+	struct pollfd pfd;
+	ssize_t nread;
 	char *from, c;
 	int holdfd;
 
@@ -78,8 +81,18 @@ main(int argc, char *argv[])
 	}
 	write(STDOUT_FILENO, "1\n", 2);
 
-	while (read(STDIN_FILENO, &c, 1) == -1 && errno == EINTR)
-		;
+	/* wait for the other end of the pipe to close, then release the lock */
+	pfd.fd = STDIN_FILENO;
+	pfd.events = POLLIN;
+	do {
+		if (poll(&pfd, 1, INFTIM) == -1) {
+			if (errno != EINTR)
+				break;
+		}
+		do {
+			nread = read(STDIN_FILENO, &c, 1);
+		} while (nread == 1 || (nread == -1 && errno == EINTR));
+	} while (nread == -1 && errno == EAGAIN);
 	rellock();
 	exit (0);
 }
