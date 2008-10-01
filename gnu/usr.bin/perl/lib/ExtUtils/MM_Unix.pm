@@ -1323,7 +1323,10 @@ sub init_MANPODS {
     # Set up names of manual pages to generate from pods
     foreach my $man (qw(MAN1 MAN3)) {
 	if ( $self->{"${man}PODS"}
-             or $self->{"INSTALL${man}DIR"} =~ /^(none|\s*)$/
+	     # Cannot check INSTALL${man}DIR on OpenBSD since we
+	     # have that set to "none" to prevent installation of
+	     # the main perl man pages.  Use INST_${man}DIR instead
+             or $self->{"INST_${man}DIR"} =~ /^(none|\s*)$/
         ) {
             $self->{"${man}PODS"} ||= {};
         }
