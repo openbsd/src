@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.29 2008/06/11 06:30:36 mcbride Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.30 2008/10/01 21:17:06 claudio Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -588,6 +588,8 @@ void	in6_createmkludge(struct ifnet *);
 void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
+struct in6_ifaddr *in6ifa_ifplocaladdr(const struct ifnet *,
+	    const struct in6_addr *);
 char	*ip6_sprintf(struct in6_addr *);
 int	in6_addr2scopeid(struct ifnet *, struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);

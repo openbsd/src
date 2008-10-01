@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.78 2008/07/13 20:41:39 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.79 2008/10/01 21:17:06 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1941,6 +1941,31 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
 	}
 
 	return ((struct in6_ifaddr *)ifa);
+}
+
+/*
+ * find the internet address on a given interface corresponding to a neighbor's
+ * address.
+ */
+struct in6_ifaddr *
+in6ifa_ifplocaladdr(const struct ifnet *ifp, const struct in6_addr *addr)
+{
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia;
+
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr == NULL)
+			continue;	/* just for safety */
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		ia = (struct in6_ifaddr *)ifa;
+		if (IN6_ARE_MASKED_ADDR_EQUAL(addr,
+				&ia->ia_addr.sin6_addr,
+				&ia->ia_prefixmask.sin6_addr))
+			return ia;
+	}
+
+	return NULL;
 }
 
 /*
