@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockspool.1,v 1.9 2007/05/31 19:19:40 jmc Exp $
+.\"	$OpenBSD: lockspool.1,v 1.10 2008/10/01 20:33:07 millert Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 1 2008 $
 .Dt LOCKSPOOL 1
 .Os
 .Sh NAME
@@ -48,6 +48,15 @@ is written and an error message is written to stderr.
 .Nm
 will try up to 10 times to get the lock (sleeping
 for a short period in between tries).
+.Pp
+Typical usage is for a user mail agent (such as
+.Xr mail 1 )
+to open a pipe to
+.Nm
+when it needs to lock the user's mail spool.
+Closing the pipe will cause
+.Nm
+to release the lock.
 .Pp
 The
 .Nm
