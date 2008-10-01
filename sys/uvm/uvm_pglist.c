@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.23 2008/06/27 17:25:47 miod Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.24 2008/10/01 20:00:32 miod Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -301,6 +301,12 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 			}
 		}
 	}
+
+	/*
+	 * We could not allocate a contiguous range.  This is where
+	 * we should try harder if nsegs > 1...
+	 */
+	goto out;
 
 #if PGFL_NQUEUES != 2
 #error uvm_pglistalloc needs to be updated
