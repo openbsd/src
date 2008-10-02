@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.552 2008/09/10 00:32:03 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.553 2008/10/02 12:31:18 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -294,7 +294,8 @@ struct pool_opts {
 } pool_opts;
 
 
-struct node_hfsc_opts	hfsc_opts;
+struct node_hfsc_opts	 hfsc_opts;
+struct node_state_opt	*keep_state_defaults = NULL;
 
 int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
@@ -444,7 +445,7 @@ int	parseport(char *, struct range *r, int);
 %token	LOAD RULESET_OPTIMIZATION
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
-%token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE SETTOS
+%token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
 %token	DIVERTTO DIVERTREPLY
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -670,6 +671,13 @@ option		: SET OPTIMIZATION STRING		{
 				yyerror("error setting skip interface(s)");
 				YYERROR;
 			}
+		}
+		| SET STATEDEFAULTS state_opt_list {
+			if (keep_state_defaults != NULL) {
+				yyerror("cannot redefine state-defaults");
+				YYERROR;
+			}
+			keep_state_defaults = $3;
 		}
 		;
 
@@ -1833,6 +1841,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			int			 srctrack = 0;
 			int			 statelock = 0;
 			int			 adaptive = 0;
+			int			 defaults = 0;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -1915,13 +1924,16 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			r.tos = $9.tos;
 			r.keep_state = $9.keep.action;
+			o = $9.keep.options;
 
 			/* 'keep state' by default on pass rules. */
 			if (!r.keep_state && !r.action &&
-			    !($9.marker & FOM_KEEP))
+			    !($9.marker & FOM_KEEP)) {
 				r.keep_state = PF_STATE_NORMAL;
+				o = keep_state_defaults;
+				defaults = 1;
+			}
 
-			o = $9.keep.options;
 			while (o) {
 				struct node_state_opt	*p = o;
 
@@ -2088,7 +2100,8 @@ pfrule		: action dir logquick interface route af proto fromto
 					    o->data.timeout.seconds;
 				}
 				o = o->next;
-				free(p);
+				if (!defaults)
+					free(p);
 			}
 
 			/* 'flags S/SA' by default on stateful rules */
@@ -5309,6 +5322,7 @@ lookup(char *s)
 		{ "source-hash",	SOURCEHASH},
 		{ "source-track",	SOURCETRACK},
 		{ "state",		STATE},
+		{ "state-defaults",	STATEDEFAULTS},
 		{ "state-policy",	STATEPOLICY},
 		{ "static-port",	STATICPORT},
 		{ "sticky-address",	STICKYADDRESS},
