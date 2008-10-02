@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.17 2007/04/02 14:55:16 jmc Exp $	*/
+/*	$OpenBSD: driver.c,v 1.18 2008/10/02 16:44:43 millert Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -63,7 +63,7 @@ in_addr_t Server_addr = INADDR_ANY;	/* address to bind to */
 
 static	void	clear_scores(void);
 static	int	havechar(PLAYER *);
-static	void	init(void);
+static	void	init(int);
 	int	main(int, char *[]);
 static	void	makeboots(void);
 static	void	send_stats(void);
@@ -96,13 +96,19 @@ main(ac, av)
 	int		ret;
 	int		nready;
 	int		fd;
+	int		background = 0;
 
 	First_arg = av[0];
 
 	config();
 
-	while ((c = getopt(ac, av, "sp:a:D:")) != -1) {
+	while ((c = getopt(ac, av, "bsp:a:D:")) != -1) {
 		switch (c) {
+		  case 'b':
+			background = 1;
+			conf_syslog = 1;
+			conf_logerr = 0;
+			break;
 		  case 's':
 			server = TRUE;
 			break;
@@ -120,7 +126,7 @@ main(ac, av)
 		  default:
 erred:
 			fprintf(stderr,
-			    "usage: %s [-s] [-a addr] [-Dvar=value ...] "
+			    "usage: %s [-bs] [-a addr] [-Dvar=value ...] "
 			    "[-p port]\n",
 			    av[0]);
 			exit(2);
@@ -134,7 +140,7 @@ erred:
 		LOG_DAEMON);
 
 	/* Initialise game parameters: */
-	init();
+	init(background);
 
 again:
 	do {
@@ -320,7 +326,7 @@ again:
  *	Initialize the global parameters.
  */
 static void
-init()
+init(int background)
 {
 	int	i;
 	struct sockaddr_in	test_port;
@@ -329,10 +335,6 @@ init()
 	struct sockaddr_in	addr;
 	struct sigaction	sact;
 	struct servent *se;
-
-	(void) setsid();
-	if (setpgid(getpid(), getpid()) == -1)
-		err(1, "setpgid");
 
 	sact.sa_flags = SA_RESTART;
 	sigemptyset(&sact.sa_mask);
@@ -451,6 +453,10 @@ init()
 			logit(LOG_ERR, "bind port %d", Server_port);
 			cleanup(1);
 		}
+
+		/* Become a daemon if asked to do so. */
+		if (background)
+			daemon(0, 0);
 
 		/* Datagram sockets do not need a listen() call. */
 	}
