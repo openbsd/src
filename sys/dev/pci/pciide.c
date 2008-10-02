@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.289 2008/09/25 19:06:57 chl Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.290 2008/10/02 16:00:41 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -130,11 +130,6 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_svwsata_reg.h>
 #include <dev/pci/pciide_jmicron_reg.h>
 #include <dev/pci/cy82c693var.h>
-
-#ifdef __sparc64__
-#include <machine/autoconf.h>
-#include <machine/openfirm.h>
-#endif
 
 /* functions for reading/writing 8-bit PCI registers */
 
@@ -5345,26 +5340,11 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t cr, interface;
 	bus_size_t cmdsize, ctlsize;
 	int rev = sc->sc_rev;
-#ifdef __sparc64__
-	char buf[32];
-#endif
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
-
-#ifdef __sparc64__
-	/*
-	 * XXX The Tadpole SPARCLE doesn't want to do DMA.  PIO works
-	 * fine, so we have this ugly hack to make the machine work.
-	 * It is likely the real cause is still lurking somewhere in
-	 * the code.
-	 */
-	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "TAD,SPARCLE") == 0)
-		sc->sc_dma_ok = 0;
-#endif
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
