@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.56 2008/08/22 01:09:08 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.57 2008/10/02 15:28:07 mbalmer Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -133,7 +133,18 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x38, COM_FREQ },
 	    },
 	},
-
+	/* IBM SurePOS 300 Series (481033H) serial ports */
+	{   /* "IBM SurePOS 300 Series (481033H) serial ports", */
+	    {	PCI_VENDOR_IBM, PCI_PRODUCT_IBM_4810_SCC,	0, 0	},
+	    {	0xffff, 0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ }, /* Port C */
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ }, /* Port D */
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ }, /* Port E */
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ }, /* Port F */
+	    },
+	},
+	
 	/*
 	 * SIIG Boards.
 	 *
