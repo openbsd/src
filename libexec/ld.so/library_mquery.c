@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.35 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.36 2008/10/02 20:12:08 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -47,7 +47,7 @@ void
 _dl_load_list_free(struct load_list *load_list)
 {
 	struct load_list *next;
-	int align = _dl_pagesz - 1;
+	Elf_Addr align = _dl_pagesz - 1;
 
 	while (load_list != NULL) {
 		if (load_list->start != NULL)
@@ -83,13 +83,14 @@ _dl_unload_shlib(elf_object_t *object)
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags)
 {
-	int libfile, i, align = _dl_pagesz - 1, off, size;
+	int libfile, i;
 	struct load_list *ld, *lowld = NULL;
 	elf_object_t *object;
 	Elf_Dyn *dynp = 0;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
 	Elf_Addr load_end = 0;
+	Elf_Addr align = _dl_pagesz - 1, off, size;
 	struct stat sb;
 	void *prebind_data;
 	char hbuf[4096];
@@ -232,11 +233,11 @@ retry:
 		 */
 		ld->start = _dl_mquery(ld->start, ROUND_PG(ld->size), ld->prot,
 		    flags, fd, foff);
-		if (_dl_check_error(ld->start)) {
+		if (_dl_mmap_error(ld->start)) {
 			ld->start = (void *)(LOFF + ld->moff);
 			ld->start = _dl_mquery(ld->start, ROUND_PG(ld->size),
 			    ld->prot, flags & ~MAP_FIXED, fd, foff);
-			if (_dl_check_error(ld->start))
+			if (_dl_mmap_error(ld->start))
 				goto fail;
 		}
 
@@ -266,7 +267,7 @@ retry:
 		}
 		res = _dl_mmap(ld->start, ROUND_PG(ld->size), ld->prot, flags,
 		    fd, foff);
-		if (_dl_check_error((long)res))
+		if (_dl_mmap_error(res))
 			goto fail;
 		/* Zero out everything past the EOF */
 		if ((ld->prot & PROT_WRITE) != 0 && (ld->size & align) != 0)

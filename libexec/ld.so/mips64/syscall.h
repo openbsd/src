@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.4 2006/05/03 16:10:52 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.5 2008/10/02 20:12:08 kurt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -35,10 +35,10 @@
 extern long _dl__syscall(quad_t val, ...);
 
 #ifndef _dl_MAX_ERRNO
-#define _dl_MAX_ERRNO 4096
+#define _dl_MAX_ERRNO 512L
 #endif
-#define _dl_check_error(__res)	\
-	((int) __res < 0 && (int) __res >= -_dl_MAX_ERRNO)
+#define _dl_mmap_error(__res) \
+    ((long)__res < 0 && (long)__res >= -_dl_MAX_ERRNO)
 
 /*
  *  Inlined system call functions that can be used before

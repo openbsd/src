@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2007/02/09 14:51:13 drahn Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2008/10/02 20:12:08 kurt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -104,7 +104,7 @@ _dl_malloc(size_t need)
 		_dl_malloc_pool = (void *)_dl_mmap((void *)0,
 		    _dl_round_page(need), PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
-		if (_dl_malloc_pool == 0 || _dl_malloc_pool == MAP_FAILED ) {
+		if (_dl_malloc_pool == 0 || _dl_mmap_error(_dl_malloc_pool)) {
 			_dl_printf("Dynamic loader failure: malloc.\n");
 			_dl_exit(7);
 		}

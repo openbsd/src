@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.57 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.58 2008/10/02 20:12:08 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -77,10 +77,10 @@ _dl_unload_shlib(elf_object_t *object)
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags)
 {
-	int	libfile, i, align = _dl_pagesz - 1;
+	int	libfile, i;
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Addr maxva = 0, minva = ELFDEFNNAME(NO_ADDR);
-	Elf_Addr libaddr, loff;
+	Elf_Addr libaddr, loff, align = _dl_pagesz - 1;
 	elf_object_t *object;
 	char	hbuf[4096];
 	Elf_Dyn *dynp = 0;
@@ -174,7 +174,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	 */
 	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
 	    MAP_PRIVATE|MAP_FILE, libfile, 0);
-	if (_dl_check_error(libaddr)) {
+	if (_dl_mmap_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
 		    _dl_progname, libname);
 		_dl_close(libfile);
@@ -188,8 +188,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_LOAD) {
 			char *start = (char *)(TRUNC_PG(phdp->p_vaddr)) + loff;
-			int off = (phdp->p_vaddr & align);
-			int size = off + phdp->p_filesz;
+			Elf_Addr off = (phdp->p_vaddr & align);
+			Elf_Addr size = off + phdp->p_filesz;
 			void *res;
 
 			res = _dl_mmap(start, ROUND_PG(size),
@@ -202,7 +202,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			next_load->start = start;
 			next_load->size = size;
 			next_load->prot = PFLAGS(phdp->p_flags);
-			if (_dl_check_error((long)res)) {
+			if (_dl_mmap_error(res)) {
 				_dl_printf("%s: rtld mmap failed mapping %s.\n",
 				    _dl_progname, libname);
 				_dl_close(libfile);
@@ -225,7 +225,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				res = _dl_mmap(start, size,
 				    PFLAGS(phdp->p_flags),
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
-				if (_dl_check_error((long)res)) {
+				if (_dl_mmap_error(res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",
 					    _dl_progname, libname);
 					_dl_close(libfile);
