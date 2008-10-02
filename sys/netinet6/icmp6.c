@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.101 2008/09/17 05:43:14 chl Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.102 2008/10/02 14:11:06 jsing Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2113,6 +2113,9 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * Note that only echo and node information replies are affected,
 	 * since the length of ICMP6 errors is limited to the minimum MTU.
 	 */
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, &outif, NULL) != 0 &&
 	    outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
