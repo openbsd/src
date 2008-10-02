@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.2 2008/09/30 17:31:04 pyr Exp $ */
-/*	$OpenBSD: aldap.c,v 1.2 2008/09/30 17:31:04 pyr Exp $ */
+/*	$Id: aldap.c,v 1.3 2008/10/02 15:24:14 deraadt Exp $ */
+/*	$OpenBSD: aldap.c,v 1.3 2008/10/02 15:24:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -51,9 +51,8 @@ aldap_init(int fd)
 {
 	struct aldap *a;
 
-	if((a = malloc(sizeof(*a))) == NULL)
+	if((a = calloc(1, sizeof(*a))) == NULL)
 		return NULL;
-	bzero(a, sizeof(*a));
 	a->ber.fd = fd;
 
 	return a;
@@ -130,9 +129,8 @@ aldap_parse(struct aldap *ldap)
 	struct aldap_message	*m;
 	struct ber_element	*a = NULL;
 
-	if((m = malloc(sizeof(struct aldap_message))) == NULL)
+	if((m = calloc(1, sizeof(struct aldap_message))) == NULL)
 		return NULL;
-	bzero(m, sizeof(struct aldap_message));
 
 	if((m->msg = ber_read_elements(&ldap->ber, NULL)) == NULL)
 		return NULL;
