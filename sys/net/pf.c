@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.622 2008/09/28 14:39:55 jsing Exp $ */
+/*	$OpenBSD: pf.c,v 1.623 2008/10/02 15:12:45 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2969,6 +2969,7 @@ void
 pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 {
 	struct pf_rule *r = s->rule.ptr;
+	struct pf_src_node *sn = NULL;
 
 	s->rt_kif = NULL;
 	if (!r->rt || r->rt == PF_FASTROUTE)
@@ -2976,15 +2977,13 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	switch (s->key[PF_SK_WIRE]->af) {
 #ifdef INET
 	case AF_INET:
-		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL,
-		    &s->nat_src_node);
+		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn);
 		s->rt_kif = r->rpool.cur->kif;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL,
-		    &s->nat_src_node);
+		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn);
 		s->rt_kif = r->rpool.cur->kif;
 		break;
 #endif /* INET6 */
