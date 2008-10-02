@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.41 2008/09/24 19:09:05 chl Exp $ */
+/*	$OpenBSD: auvia.c,v 1.42 2008/10/02 18:29:40 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -91,6 +91,7 @@ int	auvia_get_port(void *, mixer_ctrl_t *);
 int	auvia_query_devinfo(void *, mixer_devinfo_t *);
 void *	auvia_malloc(void *, int, size_t, int, int);
 void	auvia_free(void *, void *, int);
+size_t	auvia_round_buffersize(void *, int, size_t);
 paddr_t	auvia_mappage(void *, void *, off_t, int);
 int	auvia_get_props(void *);
 int	auvia_build_dma_ops(struct auvia_softc *, struct auvia_softc_chan *,
@@ -202,7 +203,7 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_query_devinfo,
 	auvia_malloc,
 	auvia_free,
-	NULL, /* auvia_round_buffersize */
+	auvia_round_buffersize,
 	auvia_mappage,
 	auvia_get_props,
 	auvia_trigger_output,
@@ -705,6 +706,10 @@ auvia_set_params(void *addr, int setmode, int usemode,
 int
 auvia_round_blocksize(void *addr, int blk)
 {
+	struct auvia_softc *sc = addr;
+
+	if (sc->bufsize / blk > AUVIA_DMALIST_MAX)
+		blk = sc->bufsize / AUVIA_DMALIST_MAX + 1;
 	return ((blk + 31) & -32);
 }
 
@@ -857,6 +862,15 @@ auvia_free(void *addr, void *ptr, int pool)
 	panic("auvia_free: trying to free unallocated memory");
 }
 
+size_t
+auvia_round_buffersize(void *addr, int direction, size_t bufsize)
+{
+	struct auvia_softc *sc = addr;
+
+	sc->bufsize = bufsize;
+	return bufsize;
+}
+
 paddr_t
 auvia_mappage(void *addr, void *mem, off_t off, int prot)
 {
@@ -901,6 +915,10 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	s = p->map->dm_segs[0].ds_addr;
 	l = (vaddr_t)end - (vaddr_t)start;
 	segs = howmany(l, blksize);
+	if (segs > AUVIA_DMALIST_MAX) {
+		panic("%s: build_dma_ops: too many DMA segments",
+			    sc->sc_dev.dv_xname);
+	}
 
 	if (segs > ch->sc_dma_op_count) {
 		/* if old list was too small, free it */
