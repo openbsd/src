@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.88 2008/03/22 08:38:38 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.89 2008/10/02 12:39:25 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2008 $
+.Dd $Mdocdate: October 2 2008 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -611,7 +611,7 @@ is responsible for managing the session keys.
 With
 .Xr isakmpd 8 ,
 it is sufficient to copy the peer's public key, found in
-.Pa /etc/isakmpd/private/local.pub ,
+.Pa /etc/isakmpd/local.pub ,
 to the local machine.
 It must be stored in a file
 named after the peer's IP address and must be stored in
