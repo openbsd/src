@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.107 2008/09/12 10:46:09 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.108 2008/10/02 14:00:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -674,17 +674,8 @@ offset_compare(const void *aa, const void *bb)
 void
 priv_settime(double offset)
 {
-	struct ntp_peer *p;
-
 	imsg_compose(ibuf_main, IMSG_SETTIME, 0, 0, &offset, sizeof(offset));
 	conf->settime = 0;
-
-	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		if (p->next)
-			p->next -= offset;
-		if (p->deadline)
-			p->deadline -= offset;
-	}
 }
 
 void
