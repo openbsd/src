@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1417 2008/09/22 20:56:39 brad Exp $
+$OpenBSD: pcidevs,v 1.1418 2008/10/02 15:16:43 mbalmer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1846,6 +1846,8 @@ product IBM I82557B		0x0057	i82557B 10/100
 product IBM FIREGL2		0x0170	FireGL2
 product IBM 133PCIX		0x01a7	133 PCIX-PCIX
 product IBM SERVERAID2		0x01bd	ServeRAID
+product IBM 4810_BSP		0x0295	4810 BSP
+product IBM 4810_SCC		0x0297	4810 SCC
 product IBM CALGARY_IOMMU	0x02a1	Calgary IOMMU
 
 /* IC Ensemble */
