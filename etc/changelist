@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.58 2008/06/13 00:46:57 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.59 2008/10/02 07:27:57 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -152,6 +152,10 @@
 /var/cron/tabs/root
 /var/named/etc/named.conf
 +/var/named/etc/rndc.key
+/var/named/etc/root.hint
+/var/named/standard/localhost
+/var/named/standard/loopback
+/var/named/standard/loopback6.arpa
 /var/www/conf/access.conf
 /var/www/conf/httpd.conf
 /var/www/conf/mime.types
