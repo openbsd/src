@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmt2local.h,v 1.2 2007/10/07 15:46:17 deraadt Exp $	*/
+/*	$OpenBSD: gmt2local.h,v 1.3 2008/10/02 23:55:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -20,7 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: gmt2local.h,v 1.2 2007/10/07 15:46:17 deraadt Exp $ (LBL)
  */
 #ifndef gmt2local_h
 #define gmt2local_h
