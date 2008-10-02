@@ -1,4 +1,6 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.6 2002/10/11 19:08:41 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.7 2008/10/02 23:27:23 deraadt Exp $	*/
+/* David Leonard, <d@csee.uq.edu.au>. Public domain. */
+
 /*
  * Atomic lock for m68k
  */

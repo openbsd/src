@@ -1,4 +1,6 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:24 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2008/10/02 23:29:26 deraadt Exp $	*/
+/* David Leonard, <d@csee.uq.edu.au>. Public domain. */
+
 /*
  * Atomic lock for sparc64
  */
