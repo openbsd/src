@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.404 2008/09/11 17:57:45 brad Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.405 2008/10/02 12:36:32 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2008 $
+.Dd $Mdocdate: October 2 2008 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -516,6 +516,16 @@ States can match packets on any interfaces (the default).
 For example:
 .Bd -literal -offset indent
 set state-policy if-bound
+.Ed
+.It Ar set state-defaults
+The
+.Ar state-defaults
+option sets the state options for states created from rules
+without an explicit
+.Ar keep state .
+For example:
+.Bd -literal -offset indent
+set state-defaults pflow, no-sync
 .Ed
 .It Ar set hostid
 The 32-bit
@@ -2825,6 +2835,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
                  [ "state-policy" ( "if-bound" | "floating" ) ]
+                 [ "state-defaults" state-opts ]
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
                  [ "skip on" ifspec ] |
