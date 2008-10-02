@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.30 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.31 2008/10/02 23:27:24 deraadt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -106,6 +106,7 @@ _thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
 	struct fs_flags *old_status_flags;
 	struct stat sb;
 	int flags;
+	int saved_errno;
 
 	if (entry->status_flags != new_status_flags) {
 		if (entry->status_flags != NULL) {
@@ -140,6 +141,7 @@ _thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
 				 * Also don't reset fd to blocking if we are replacing
 				 * the status flags with a shared version.
 				 */
+				saved_errno = errno;
 				if (new_status_flags == NULL &&
 				    (old_status_flags->flags & O_NONBLOCK) == 0 &&
 				    (fd < 3 || (_thread_sys_fstat(fd, &sb) == 0 &&
@@ -151,6 +153,7 @@ _thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
 					_thread_sys_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 				}
 				free(old_status_flags);
+				errno = saved_errno;
 			} else
 				_SPINUNLOCK(&old_status_flags->lock);
 		}
