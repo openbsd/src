@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.99 2008/03/04 19:43:18 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.100 2008/10/02 20:21:14 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4152,11 +4152,6 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 
     s = splnet();
 
-    if ((error = ether_ioctl(ifp, &sc->tulip_ac, cmd, data)) > 0) {
-	    splx(s);
-	    return (error);
-    }
-
     switch (cmd) {
     case SIOCSIFADDR: {
 	ifp->if_flags |= IFF_UP;
@@ -4218,8 +4213,7 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 	break;
 
     default:
-	error = ENOTTY;
-	break;
+	error = ether_ioctl(ifp, &sc->tulip_ac, cmd, data);
     }
 
     splx(s);

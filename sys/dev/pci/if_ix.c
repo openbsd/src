@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.8 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.9 2008/10/02 20:21:14 brad Exp $	*/
 
 /******************************************************************************
 
@@ -434,11 +434,6 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch (command) {
 	case SIOCSIFADDR:
 		IOCTL_DEBUGOUT("ioctl: SIOCxIFADDR (Get/Set Interface Addr)");
@@ -499,9 +494,7 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
 	default:
-		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)\n", (int)command);
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
 
 	splx(s);

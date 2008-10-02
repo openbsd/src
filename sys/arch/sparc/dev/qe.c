@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.30 2006/05/27 23:59:07 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.31 2008/10/02 20:21:13 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -655,13 +655,9 @@ qeioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
 		break;
 	default:
-		if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-			splx(s);
-			return (error);
-		}
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
+
 	splx(s);
 	return (error);
 }

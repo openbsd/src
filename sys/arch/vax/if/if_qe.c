@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.21 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.22 2008/10/02 20:21:13 brad Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -636,7 +636,6 @@ qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch(ifa->ifa_addr->sa_family) {
@@ -695,9 +694,9 @@ qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
-
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
+
 	splx(s);
 	return (error);
 }

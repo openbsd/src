@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.33 2006/04/16 00:46:32 pascoe Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.34 2008/10/02 20:21:13 brad Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -2126,13 +2126,7 @@ ieioctl(ifp, cmd, data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
-
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
@@ -2200,8 +2194,9 @@ ieioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
+
 	splx(s);
 	return error;
 }

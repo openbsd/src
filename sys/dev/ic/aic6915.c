@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.6 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.7 2008/10/02 20:21:13 brad Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -543,11 +543,6 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -603,7 +598,7 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
 
 	/* Try to get more packets going. */

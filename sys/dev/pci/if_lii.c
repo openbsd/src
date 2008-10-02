@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.18 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.19 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -1049,13 +1049,9 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct lii_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)addr;
 	struct ifaddr *ifa;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
-
-	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
-	if (error > 0)
-		goto err;
 
 	switch(cmd) {
 	case SIOCSIFADDR:
@@ -1090,18 +1086,16 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 	}
 
-err:
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
 			lii_iff(sc);
 		error = 0;
 	}
-	splx(s);
 
+	splx(s);
 	return error;
 }
 

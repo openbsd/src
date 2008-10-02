@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.245 2008/09/23 00:27:18 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.246 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3274,11 +3274,6 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -3351,12 +3346,10 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
 
 	splx(s);
-
 	return (error);
 }
 

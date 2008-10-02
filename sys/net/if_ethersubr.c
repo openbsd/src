@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.124 2008/08/28 13:10:54 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.125 2008/10/02 20:21:14 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -172,7 +172,6 @@ ether_ioctl(ifp, arp, cmd, data)
 	int	error = 0;
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef NETATALK
@@ -183,7 +182,7 @@ ether_ioctl(ifp, arp, cmd, data)
 		}
 		break;
 	default:
-		break;
+		error = ENOTTY;
 	}
 
 	return error;

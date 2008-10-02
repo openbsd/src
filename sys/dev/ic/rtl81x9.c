@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.59 2008/09/10 14:01:22 blambert Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.60 2008/10/02 20:21:13 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1093,11 +1093,6 @@ int rl_ioctl(ifp, command, data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
-		splx(s);
-		return error;
-	}
-
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1150,12 +1145,10 @@ int rl_ioctl(ifp, command, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	splx(s);
-
 	return(error);
 }
 

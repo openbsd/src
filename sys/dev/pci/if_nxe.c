@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.55 2008/09/10 14:01:22 blambert Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.56 2008/10/02 20:21:14 brad Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1020,15 +1020,11 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct nxe_softc		*sc = ifp->if_softc;
 	struct ifreq			*ifr = (struct ifreq *)addr;
 	struct ifaddr			*ifa;
-	int				error;
+	int				error = 0;
 	int				s;
 
 	rw_enter_write(&sc->sc_lock);
 	s = splnet();
-
-	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
-	if (error > 0)
-		goto err;
 
 	timeout_del(&sc->sc_tick);
 
@@ -1066,8 +1062,7 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 	}
 
 	if (error == ENETRESET) {
@@ -1081,7 +1076,6 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	nxe_tick(sc);
 
-err:
 	splx(s);
 	rw_exit_write(&sc->sc_lock);
 	return (error);

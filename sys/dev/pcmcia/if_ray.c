@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.34 2006/08/18 08:17:07 jsg Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.35 2008/10/02 20:21:14 brad Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -943,10 +943,9 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ray_softc *sc;
 	struct ifreq *ifr;
 	struct ifaddr *ifa;
-	int error, error2, s, i;
+	int error = 0, error2, s, i;
 
 	sc = ifp->if_softc;
-	error = 0;
 
 	ifr = (struct ifreq *)data;
 
@@ -954,11 +953,6 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	RAY_DPRINTF(("%s: ioctl: cmd 0x%lx data 0x%lx\n", ifp->if_xname,
 	    cmd, (long)data));
-
-	if ((error = ether_ioctl(ifp, &sc->sc_ec, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1076,15 +1070,12 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 #endif
 	default:
-		RAY_DPRINTF(("%s: ioctl: unknown\n", ifp->if_xname));
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_ec, cmd, data);
 	}
 
 	RAY_DPRINTF(("%s: ioctl: returns %d\n", ifp->if_xname, error));
 
 	splx(s);
-
 	return (error);
 }
 

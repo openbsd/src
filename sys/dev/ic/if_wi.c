@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.140 2008/04/18 09:16:14 djm Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.141 2008/10/02 20:21:13 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.140 2008/04/18 09:16:14 djm Exp $";
+	"$OpenBSD: if_wi.c,v 1.141 2008/10/02 20:21:13 brad Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1574,11 +1574,6 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
 	    command, data));
 
-	if ((error = ether_ioctl(ifp, &sc->sc_ic.ic_ac, command, data)) > 0) {
-		splx(s);
-		return error;
-	}
-
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -2053,14 +2048,14 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = wihap_ioctl(sc, command, data);
 		break;
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_ic.ic_ac, command, data);
 	}
 
 	if (wreq)
 		free(wreq, M_DEVBUF);
 	if (nwidp)
 		free(nwidp, M_DEVBUF);
+
 	splx(s);
 	return(error);
 }

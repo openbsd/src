@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.118 2008/09/10 14:01:22 blambert Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.119 2008/10/02 20:21:14 brad Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -866,15 +866,11 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct tht_softc		*sc = ifp->if_softc;
 	struct ifreq			*ifr = (struct ifreq *)addr;
 	struct ifaddr			*ifa;
-	int				error;
+	int				error = 0;
 	int				s;
 
 	rw_enter_write(&sc->sc_lock);
 	s = splnet();
-
-	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
-	if (error > 0)
-		goto err;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -919,8 +915,7 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 
 	default:
-		error = ENOTTY;
-		break;
+		error =  ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 	}
 
 	if (error == ENETRESET) {
@@ -929,7 +924,6 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		error = 0;
 	}
 
-err:
 	splx(s);
 	rw_exit_write(&sc->sc_lock);
 

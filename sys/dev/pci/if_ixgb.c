@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.47 2008/09/30 17:59:22 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.48 2008/10/02 20:21:14 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -370,11 +370,6 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->interface_data, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch (command) {
 	case SIOCSIFADDR:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFADDR (Set Interface "
@@ -438,8 +433,7 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
 	default:
-		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%X)\n", (int)command);
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->interface_data, command, data);
 	}
 
 	splx(s);

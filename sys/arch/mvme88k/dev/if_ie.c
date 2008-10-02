@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.41 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.42 2008/10/02 20:21:13 brad Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1794,13 +1794,7 @@ ieioctl(ifp, cmd, data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
-
 	switch(cmd) {
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
@@ -1868,8 +1862,9 @@ ieioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
+
 	splx(s);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.19 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.20 2008/10/02 20:21:14 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1088,14 +1088,6 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		/* Try to get more packets going. */
-		pcn_start(ifp);
-
-		splx(s);
-		return (error);
-	}
-
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1157,7 +1149,7 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
 
 	/* Try to get more packets going. */

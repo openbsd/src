@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.58 2008/05/23 08:49:27 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.59 2008/10/02 20:21:14 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -2046,11 +2046,6 @@ nge_ioctl(ifp, command, data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch(command) {
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
@@ -2123,12 +2118,10 @@ nge_ioctl(ifp, command, data)
 		}
 		break;
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
 
 	splx(s);
-
 	return(error);
 }
 

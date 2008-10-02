@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.41 2008/03/14 21:54:23 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.42 2008/10/02 20:21:14 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -579,12 +579,11 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, &sc->cdce_arpcom, command, data);
 		break;
 	}
 
 	splx(s);
-
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.8 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.9 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -822,10 +822,6 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int			 s, error = 0;
 
 	s = splnet();
-	if ((error = ether_ioctl(ifp, &sc->sc_ac, cmd, data)) > 0) {
-		splx(s);
-		return (error);
-	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -868,7 +864,7 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
 
 	if (error == ENETRESET) {
@@ -879,7 +875,6 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
-
 	return (error);
 }
 

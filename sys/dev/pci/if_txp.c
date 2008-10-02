@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.94 2008/09/18 15:16:30 naddy Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.95 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1213,11 +1213,6 @@ txp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
-		splx(s);
-		return error;
-	}
-
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1262,12 +1257,10 @@ txp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, command);
 		break;
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	splx(s);
-
 	return(error);
 }
 

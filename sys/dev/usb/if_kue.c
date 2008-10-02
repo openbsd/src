@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.56 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.57 2008/10/02 20:21:14 brad Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1130,12 +1130,10 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
 
 	splx(s);
-
 	return (error);
 }
 

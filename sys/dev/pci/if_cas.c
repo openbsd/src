@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.21 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.22 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  *
@@ -1689,13 +1689,7 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -1758,8 +1752,7 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ENOTTY;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.87 2008/09/21 23:59:20 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.88 2008/10/02 20:21:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1408,8 +1408,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->arpcom, cmd, data);
 	}
 
 	splx(s);

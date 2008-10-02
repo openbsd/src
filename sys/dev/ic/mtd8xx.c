@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.13 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.14 2008/10/02 20:21:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -580,13 +580,9 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct mtd_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -637,8 +633,7 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	splx(s);

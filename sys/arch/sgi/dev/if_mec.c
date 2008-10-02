@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.15 2008/02/20 18:46:20 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.16 2008/10/02 20:21:13 brad Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1040,14 +1040,9 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct mec_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
-
-	if ((error = ether_ioctl(ifp, &sc->sc_ac, cmd, data)) > 0) {
-		splx(s);
-		return (error);
-	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1108,8 +1103,7 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ENXIO;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.103 2008/09/12 05:44:52 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.104 2008/10/02 20:21:13 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2973,11 +2973,6 @@ dc_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
-		splx(s);
-		return (error);
-	}
-
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -3039,12 +3034,10 @@ dc_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif
 		break;
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	splx(s);
-
 	return (error);
 }
 

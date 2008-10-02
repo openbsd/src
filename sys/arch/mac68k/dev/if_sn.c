@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.47 2007/09/04 17:55:15 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.48 2008/10/02 20:21:13 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -257,7 +257,6 @@ snioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int	s = splnet(), err = 0;
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
@@ -319,8 +318,9 @@ snioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	default:
-		err = EINVAL;
+		err = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
+
 	splx(s);
 	return (err);
 }
