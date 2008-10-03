@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.5 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: crc.c,v 1.6 2008/10/03 08:18:44 sthen Exp $	*/
 /*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-static char rcsid[] = "$OpenBSD: crc.c,v 1.5 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crc.c,v 1.6 2008/10/03 08:18:44 sthen Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ crc(const char *ptr, int nr)
 				if (step >= sizeof(crctab) / sizeof(crctab[0]))
 					step = 0;
 			}
-			crcval = (crcval << 8) ^ crctab[i];
+			crcval = ((crcval << 8) ^ crctab[i]) & 0xffffffff;
 		}
-	return crcval & 0xffffffff;	/* Mask to 32 bits. */
+	return crcval;
 }
