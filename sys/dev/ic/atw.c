@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.62 2008/08/29 09:30:23 damien Exp $	*/
+/*	$OpenBSD: atw.c,v 1.63 2008/10/03 00:58:39 brad Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -306,27 +306,6 @@ const char *atw_rx_state[] = {
 	"RUNNING - fifo drain"
 };
 
-#endif
-
-#ifndef __OpenBSD__
-int
-atw_activate(struct device *self, enum devact act)
-{
-	struct atw_softc *sc = (struct atw_softc *)self;
-	int rv = 0, s;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_ic.ic_if);
-		break;
-	}
-	splx(s);
-	return rv;
-}
 #endif
 
 /*
@@ -806,10 +785,6 @@ atw_attach(struct atw_softc *sc)
 	ifp->if_ioctl = atw_ioctl;
 	ifp->if_start = atw_start;
 	ifp->if_watchdog = atw_watchdog;
-#if !defined(__OpenBSD__)
-	ifp->if_init = atw_init;
-	ifp->if_stop = atw_stop;
-#endif
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -2058,11 +2033,7 @@ void
 atw_filter_setup(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-#if defined(__OpenBSD__)
 	struct arpcom *ec = &ic->ic_ac;
-#else
-	struct ethercom *ec = &ic->ic_ec;
-#endif
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int hash;
 	u_int32_t hashes[2];
@@ -3129,11 +3100,7 @@ atw_rxintr(struct atw_softc *sc)
 		 */
 
 		if ((rxstat & ATW_RXSTAT_ES) != 0 &&
-#if defined(__OpenBSD__)
 		    ((sc->sc_ic.ic_if.if_capabilities & IFCAP_VLAN_MTU) == 0 ||
-#else
-		    ((sc->sc_ic.ic_ec.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-#endif
 		     (rxstat & (ATW_RXSTAT_DE | ATW_RXSTAT_SFDE |
 		                ATW_RXSTAT_SIGE | ATW_RXSTAT_CRC16E |
 				ATW_RXSTAT_RXTOE | ATW_RXSTAT_CRC32E |
@@ -3320,18 +3287,9 @@ atw_txintr(struct atw_softc *sc)
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    (txstat & TXSTAT_ERRMASK) != 0) {
-#if defined(__OpenBSD__)
 			printf("%s: txstat %b %d\n", sc->sc_dev.dv_xname,
 			    txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
 			    MASK_AND_RSHIFT(txstat, ATW_TXSTAT_ARC_MASK));
-#else
-			static char txstat_buf[sizeof("ffffffff<>" TXSTAT_FMT)];
-			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
-			    txstat_buf, sizeof(txstat_buf));
-			printf("%s: txstat %s %d\n", sc->sc_dev.dv_xname,
-			    txstat_buf,
-			    MASK_AND_RSHIFT(txstat, ATW_TXSTAT_ARC_MASK));
-#endif
 		}
 
 		/*
@@ -4058,12 +4016,6 @@ atw_power(int why, void *arg)
 			atw_init(ifp);
 		}
 		break;
-#if !defined(__OpenBSD__)
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-#endif
 	}
 	splx(s);
 }
@@ -4121,13 +4073,8 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-#if defined(__OpenBSD__)
 		    ether_addmulti(ifr, &sc->sc_ic.ic_ac) :
 		    ether_delmulti(ifr, &sc->sc_ic.ic_ac);
-#else
-		    ether_addmulti(ifr, &sc->sc_ic.ic_ec) :
-		    ether_delmulti(ifr, &sc->sc_ic.ic_ec);
-#endif
 
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
