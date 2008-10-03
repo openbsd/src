@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2008/06/09 15:40:21 pyr Exp $
+#	$OpenBSD: Makefile,v 1.24 2008/10/03 16:29:05 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -29,7 +29,7 @@ RM=	rm -f
 	$(SED) -e 's/^/# /' ${.CURDIR}/$*.mc >>$@
 	$(CHMOD) $(ROMODE) $@
 
-ALL=	submit.cf clientproto.cf tcpproto.cf openbsd-localhost.cf \
+ALL=	openbsd-submit.cf clientproto.cf tcpproto.cf openbsd-localhost.cf \
 	openbsd-proto.cf courtesan.cf courtesan-nonet.cf openbsd-lists.cf \
 	openbsd-bulk.cf lucifier.cf corpse.cf knecht.cf
 
@@ -57,12 +57,12 @@ install:
 		fi; \
 	fi
 
-distribution: openbsd-proto.cf openbsd-localhost.cf submit.cf
+distribution: openbsd-proto.cf openbsd-localhost.cf openbsd-submit.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-proto.cf \
 	    ${DESTDIR}/etc/mail/sendmail.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-localhost.cf \
 	    ${DESTDIR}/etc/mail/localhost.cf
-	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 submit.cf \
+	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-submit.cf \
 	    ${DESTDIR}/etc/mail/submit.cf
 
 # this is overkill, but....

@@ -15,12 +15,16 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: submit.mc,v 8.14 2006/04/05 05:54:41 ca Exp $')
+VERSIONID(`$OpenBSD: openbsd-submit.mc,v 1.1 2008/10/03 16:29:05 millert Exp $')
 define(`confCF_VERSION', `Submit')dnl
-define(`__OSTYPE__',`')dnl dirty hack to keep proto.m4 from complaining
+OSTYPE(openbsd)dnl
 define(`_USE_DECNET_SYNTAX_', `1')dnl support DECnet
 define(`confTIME_ZONE', `USE_TZ')dnl
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 define(`confDONT_INIT_GROUPS', `True')dnl
+define(`confCT_FILE', `-o MAIL_SETTINGS_DIR`'trusted-users')dnl
+FEATURE(`use_ct_file')dnl
+FEATURE(`accept_unresolvable_domains')dnl
 dnl
 dnl If you use IPv6 only, change [127.0.0.1] to [IPv6:::1]
 FEATURE(`msp', `[127.0.0.1]')dnl
