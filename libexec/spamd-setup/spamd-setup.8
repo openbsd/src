@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.16 2008/10/03 14:25:10 deraadt Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.17 2008/10/03 18:58:52 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
-.Op Fl bdDn
+.Op Fl bDdn
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,10 +72,10 @@ Use this flag if
 is running with the
 .Fl b
 flag too.
-.It Fl d
-Debug mode reports a few pieces of information.
 .It Fl D
 Daemonize.
+.It Fl d
+Debug mode reports a few pieces of information.
 .It Fl n
 Dry-run mode.
 No data is shipped.
