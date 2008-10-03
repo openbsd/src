@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.28 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.29 2008/10/03 20:25:29 brad Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1116,8 +1116,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
 
 	splx(s);

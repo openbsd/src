@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.39 2007/05/07 18:53:04 deraadt Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.40 2008/10/03 20:25:29 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -821,7 +821,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		if ((error = dp8390_enable(sc)) != 0)
 			break;
@@ -908,8 +907,7 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
 
 	splx(s);
