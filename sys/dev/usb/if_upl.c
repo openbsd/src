@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.41 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.42 2008/10/03 03:13:09 brad Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -869,12 +869,11 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = 0;
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 
 	splx(s);
-
 	return (error);
 }
 
