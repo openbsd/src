@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.99 2008/10/03 18:42:45 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.100 2008/10/03 18:44:29 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -76,6 +76,9 @@
 #define SOME_FREEJUNK		0xdf
 
 #define MMAP(sz)	mmap(NULL, (size_t)(sz), PROT_READ | PROT_WRITE, \
+    MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
+
+#define MMAPA(a,sz)	mmap((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
 
 struct region_info {
@@ -438,6 +441,27 @@ unmap(struct dir_info *d, void *p, size_t sz)
 		wrtwarning("malloc free slot lost");
 	if (d->free_regions_size > malloc_cache)
 		wrtwarning("malloc cache overflow");
+}
+
+static void
+zapcacheregion(struct dir_info *d, void *p)
+{
+	u_int i;
+	struct region_info *r;
+	size_t rsz;
+
+	for (i = 0; i < malloc_cache; i++) {
+		r = &d->free_regions[i];
+		if (r->p == p) {
+			rsz = r->size << MALLOC_PAGESHIFT;
+			if (munmap(r->p, rsz))
+				wrterror("munmap");
+			r->p = NULL;
+			d->free_regions_size -= r->size;
+			r->size = 0;
+			malloc_used -= rsz;
+		}
+	}
 }
 
 static void *
@@ -1277,7 +1301,21 @@ orealloc(void *p, size_t newsz)
 		size_t roldsz = PAGEROUND(goldsz);
 		size_t rnewsz = PAGEROUND(gnewsz);
 
-		if (rnewsz < roldsz) {
+		if (rnewsz > roldsz) {
+			if (!malloc_guard) {
+				zapcacheregion(&g_pool, p + roldsz);
+				q = MMAPA(p + roldsz, rnewsz - roldsz);
+				if (q == p + roldsz) {
+					malloc_used += rnewsz - roldsz;
+					if (malloc_junk)
+						memset(q, SOME_JUNK,
+						    rnewsz - roldsz);
+					r->size = newsz;
+					return p;
+				} else if (q != MAP_FAILED)
+					munmap(q, rnewsz - roldsz);
+			}
+		} else if (rnewsz < roldsz) {
 			if (malloc_guard) {
 				if (mprotect((char *)p + roldsz - malloc_guard,
 				    malloc_guard, PROT_READ | PROT_WRITE))
@@ -1289,7 +1327,7 @@ orealloc(void *p, size_t newsz)
 			unmap(&g_pool, (char *)p + rnewsz, roldsz - rnewsz);
 			r->size = gnewsz;
 			return p;
-		} else if (rnewsz == roldsz) {
+		} else {
 			if (newsz > oldsz && malloc_junk)
 				memset((char *)p + newsz, SOME_JUNK,
 				    rnewsz - malloc_guard - newsz);
