@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.14 2008/10/03 19:45:34 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.14 2008/10/03 19:45:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ vis_str(Char *cp)
 
     for (dp = cp; *dp++;)
 	continue;
-    n = ((dp - cp) << 2) + 1; /* 4 times + NULL */
+    n = ((dp - cp) << 2) + 1; /* 4 times + NUL */
     if (dstsize < n) {
 	sdst = (char *) (dstsize ?
 			    xrealloc(sdst, (size_t) n * sizeof(char)) :
