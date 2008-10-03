@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.98 2008/08/25 17:56:17 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.99 2008/10/03 18:42:45 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -402,28 +402,21 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	rsz = malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
-	d->free_regions_size -= tounmap;
 	offset = getrbyte();
 	for (i = 0; tounmap > 0 && i < malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (malloc_cache - 1)];
 		if (r->p != NULL) {
-			if (r->size <= tounmap) {
-				rsz = r->size << MALLOC_PAGESHIFT;
-				if (munmap(r->p, rsz))
-					wrterror("munmap");
+			rsz = r->size << MALLOC_PAGESHIFT;
+			if (munmap(r->p, rsz))
+				wrterror("munmap");
+			r->p = NULL;
+			if (tounmap > r->size)
 				tounmap -= r->size;
-				r->p = NULL;
-				r->size = 0;
-				malloc_used -= rsz;
-			} else {
-				rsz = tounmap << MALLOC_PAGESHIFT;
-				if (munmap((char *)r->p + ((r->size - tounmap)
-				    << MALLOC_PAGESHIFT), rsz))
-					wrterror("munmap");
-				r->size -= tounmap ;
+			else
 				tounmap = 0;
-				malloc_used -= rsz;
-			}
+			d->free_regions_size -= r->size;
+			r->size = 0;
+			malloc_used -= rsz;
 		}
 	}
 	if (tounmap > 0)
