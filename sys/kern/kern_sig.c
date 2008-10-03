@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.99 2008/06/10 20:41:52 hshoexer Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.100 2008/10/03 04:22:37 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -784,12 +784,13 @@ psignal(struct proc *p, int signum)
 	if (p->p_flag & P_WEXIT)
 		return;
 
+	mask = sigmask(signum);
+
 #ifdef RTHREADS
 	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
 		if (q == p)
 			continue;
-		if (q->p_sigdivert & (1 << signum)) {
-			q->p_sigdivert = 0;
+		if (q->p_sigdivert & mask) {
 			psignal(q, signum);
 			return;
 		}
@@ -798,7 +799,6 @@ psignal(struct proc *p, int signum)
 
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
-	mask = sigmask(signum);
 	prop = sigprop[signum];
 
 	/*
@@ -806,6 +806,14 @@ psignal(struct proc *p, int signum)
 	 */
 	if (p->p_flag & P_TRACED)
 		action = SIG_DFL;
+#ifdef RTHREADS
+	else if (p->p_sigdivert & mask) {
+		p->p_sigwait = signum;
+		atomic_clearbits_int(&p->p_sigdivert, ~0);
+		action = SIG_CATCH;
+		wakeup(&p->p_sigdivert);
+	}
+#endif
 	else {
 		/*
 		 * If the signal is being ignored,
@@ -1459,10 +1467,43 @@ sys_nosys(struct proc *p, void *v, register_t *retval)
 int
 sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_thrsigdivert_args *uap = v;
+	struct sys_thrsigdivert_args /* {
+		syscallarg(sigset_t) sigmask;
+	} */ *uap = v;
+	sigset_t mask;
+	sigset_t *m;
+	int error;
 
-	p->p_sigdivert = SCARG(uap, sigmask);
+	m = NULL;
+	mask = SCARG(uap, sigmask) &~ sigcantmask;
 
+	/* pending signal for this thread? */
+	if (p->p_siglist & mask)
+		m = &p->p_siglist;
+	else if (p->p_p->ps_mainproc->p_siglist & mask)
+		m = &p->p_p->ps_mainproc->p_siglist;
+	if (m != NULL) {
+		int sig = ffs((long)(*m & mask));
+		atomic_clearbits_int(m, sigmask(sig));
+		*retval = sig;
+		return (0);
+	}
+
+	p->p_sigwait = 0;
+	atomic_setbits_int(&p->p_sigdivert, mask);
+	error = tsleep(&p->p_sigdivert, PPAUSE|PCATCH, "sigwait", 0);
+	if (p->p_sigdivert) {
+		/* interrupted */
+		KASSERT(error != 0);
+		atomic_clearbits_int(&p->p_sigdivert, ~0);
+		if (error == ERESTART)
+			error = EINTR;
+		return (error);
+
+	}
+	KASSERT(error == 0);
+	KASSERT(p->p_sigwait != 0);
+	*retval = p->p_sigwait;
 	return (0);
 }
 #endif

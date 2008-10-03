@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.5 2008/04/24 11:44:26 kurt Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.6 2008/10/03 04:22:37 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -42,45 +42,14 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	return (sigprocmask(how, set, oset) ? errno : 0);
 }
 
-/* 
- * implementation of sigwait:
- * 1.  we install a handler for each masked signal.
- * 2.  we inform the kernel we are interested in this signal set.
- * 3.  sleep.  the handler will wake us up.
- *
- * this is atomic because the kernel will only divert one signal
- * to a thread until it asks for more.
- */
-static void
-sigwait_handler(int sig)
-{
-	pthread_t self = pthread_self();
-	self->sigpend = sig;
-	thrwakeup(&self->sigpend, 0);
-}
-
-typedef void (*sigfn)(int);
-
 int
 sigwait(const sigset_t *set, int *sig)
 {
-	int i;
-	sigset_t mask = *set;
-	pthread_t self = pthread_self();
-	sigfn oldhandlers[NSIG];
+	int ret;
 
-	for (i = 0; i < NSIG; i++) {
-		if (mask & (1 << i))
-			oldhandlers[i] = signal(i, sigwait_handler);
-	}
-
-	thrsigdivert(set);
-	thrsleep(&self->sigpend, 0, NULL);
-
-	for (i = 0; i < NSIG; i++) {
-		if (mask & (1 << i))
-			signal(i, oldhandlers[i]);
-	}
-	*sig = self->sigpend;
-	return (0);
+	ret = thrsigdivert(set);
+	if (ret == -1)
+		return errno;
+	*sig = ret;
+	return 0;
 }
