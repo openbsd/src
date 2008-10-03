@@ -363,7 +363,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
     {
 	int rc = DECLINED;
 	ap_hook_use("ap::mod_proxy::http::handler::write_host_header", 
-		    AP_HOOK_SIG6(ptr,ptr,ptr,ptr,ptr,ptr), 
+		    AP_HOOK_SIG6(int,ptr,ptr,ptr,ptr,ptr), 
 		    AP_HOOK_DECLINE(DECLINED),
 		    &rc, r, f, desthost, destportstr, destportstr);
         if (rc == DECLINED) {

@@ -740,6 +740,16 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 		*((int *)v_rc) = ((int(*)(void *, void *, void *, void *, int))(hf->hf_ptr))(v1, v2, v3, v4, v5);
 		rc = (*((int *)v_rc) != he->he_modeval.v_int);
 	}
+	else if (he->he_sig == AP_HOOK_SIG6(int, ptr, ptr, ptr, ptr, ptr)) {
+		/* Call: int func(ptr,ptr,ptr,ptr,ptr) */
+		void *v1 = va_arg(ap, va_type(ptr));
+		void *v2 = va_arg(ap, va_type(ptr));
+		void *v3 = va_arg(ap, va_type(ptr));
+		void *v4 = va_arg(ap, va_type(ptr));
+		void *v5 = va_arg(ap, va_type(ptr));
+		*((int *)v_rc) = ((int(*)(void *, void *, void *, void *, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5);
+		rc = (*((int *)v_rc) != he->he_modeval.v_int);
+	}
 	else if (he->he_sig == AP_HOOK_SIG7(int, ptr, ptr, ptr, ptr, int, ptr)) {
 		/* Call: int func(ptr,ptr,ptr,ptr,int,ptr) */
 		void *v1 = va_arg(ap, va_type(ptr));
