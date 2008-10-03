@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.14 2008/10/03 17:07:53 weingart Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.15 2008/10/03 21:57:25 weingart Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ db_enter_ddb(void)
 		/* Busy wait without locking, we'll confirm with lock later */
 		while (ddb_active_cpu != cpu_number() &&
 		    curcpu()->ci_ddb_paused != CI_DDB_RUNNING)
-			__asm __volatile ("hlt");	/* Do nothing */
+			;	/* Do nothing */
 
 		mtx_enter(&ddb_mp_mutex);
 	}
