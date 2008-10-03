@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.15 2007/05/31 19:19:40 jmc Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.16 2008/10/03 14:25:10 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 3 2008 $
 .Dt SPAMD-SETUP 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
-.Op Fl bdn
+.Op Fl bdDn
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,6 +74,8 @@ is running with the
 flag too.
 .It Fl d
 Debug mode reports a few pieces of information.
+.It Fl D
+Daemonize.
 .It Fl n
 Dry-run mode.
 No data is shipped.

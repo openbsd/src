@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.33 2007/09/02 15:19:20 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.34 2008/10/03 14:25:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -780,7 +780,7 @@ __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-bdn]\n", __progname);
+	fprintf(stderr, "usage: %s [-bdDn]\n", __progname);
 	exit(1);
 }
 
@@ -791,9 +791,9 @@ main(int argc, char *argv[])
 	char **db_array, *buf, *name;
 	struct blacklist *blists;
 	struct servent *ent;
-	int i, ch;
+	int daemonize = 0, i, ch;
 
-	while ((ch = getopt(argc, argv, "bdn")) != -1) {
+	while ((ch = getopt(argc, argv, "bdDn")) != -1) {
 		switch (ch) {
 		case 'n':
 			dryrun = 1;
@@ -804,6 +804,9 @@ main(int argc, char *argv[])
 		case 'b':
 			greyonly = 0;
 			break;
+		case 'D':
+			daemonize = 1;
+			break;
 		default:
 			usage();
 			break;
@@ -813,6 +816,9 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc != 0)
 		usage();
+
+	if (daemonize)
+		daemon(0, 0);
 
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
 		errx(1, "cannot find service \"spamd-cfg\" in /etc/services");
