@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.30 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.31 2008/10/03 00:19:55 brad Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1937,10 +1937,10 @@ i82596_ioctl(ifp, cmd, data)
 		}
 		break;
 
-        case SIOCGIFMEDIA:
-        case SIOCSIFMEDIA:
-                error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-                break;
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
