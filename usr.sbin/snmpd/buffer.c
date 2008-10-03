@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2008/05/22 08:40:03 gilles Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.6 2008/10/03 15:20:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -155,13 +155,13 @@ msgbuf_write(struct msgbuf *msgbuf)
 {
 	struct iovec	 iov[IOV_MAX];
 	struct buf	*buf, *next;
-	int		 i = 0;
+	unsigned int	 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
 	struct cmsghdr	*cmsg;
 	union {
-		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int))];
+		struct cmsghdr	hdr;
+		char		buf[CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
@@ -202,6 +202,10 @@ msgbuf_write(struct msgbuf *msgbuf)
 		return (-2);
 	}
 
+	/*
+	 * assumption: fd got sent if sendmsg sent anything
+	 * this works because fds are passed one at a time
+	 */
 	if (buf != NULL && buf->fd != -1) {
 		close(buf->fd);
 		buf->fd = -1;

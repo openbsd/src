@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: buffer.c,v 1.2 2008/10/03 15:20:29 eric Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,7 +157,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 {
 	struct iovec	 iov[IOV_MAX];
 	struct buf	*buf, *next;
-	int		 i = 0;
+	unsigned int	 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
 
