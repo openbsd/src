@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2007/03/20 19:42:14 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2008/10/03 13:01:26 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ removeoption(const char *name)
 	(void)ht_remove(opttab, name);
 
 	low = emalloc(strlen(name) + 1);
-	/* make lowercase, then add to select table */
+	/* make lowercase, then remove from select table */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
 	*p = 0;
