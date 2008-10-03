@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.19 2008/06/04 00:50:23 djm Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.20 2008/10/03 18:46:04 otto Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -133,19 +133,6 @@ arc4_getbyte(void)
 	rs.s[rs.i] = sj;
 	rs.s[rs.j] = si;
 	return (rs.s[(si + sj) & 0xff]);
-}
-
-u_int8_t
-__arc4_getbyte(void)
-{
-	u_int8_t val;
-
-	_ARC4_LOCK();
-	if (--arc4_count == 0 || !rs_initialized)
-		arc4_stir();
-	val = arc4_getbyte();
-	_ARC4_UNLOCK();
-	return val;
 }
 
 static inline u_int32_t
