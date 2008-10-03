@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.35 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.36 2008/10/03 01:31:24 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -165,7 +165,6 @@ struct cfattach xe_pcmcia_ca = {
 };
 
 void	xe_cycle_power(struct xe_softc *);
-int	xe_ether_ioctl(struct ifnet *, u_long cmd, caddr_t);
 void	xe_full_reset(struct xe_softc *);
 void	xe_init(struct xe_softc *);
 int	xe_intr(void *);
@@ -1164,46 +1163,13 @@ xe_start(ifp)
 }
 
 int
-xe_ether_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
-{
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct xe_softc *sc = ifp->if_softc;
-
-	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			xe_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-#endif	/* INET */
-
-		default:
-			xe_init(sc);
-			break;
-		}
-		break;
-
-	default:
-		return (EINVAL);
-	}
-
-	return (0);
-}
-
-int
 xe_ioctl(ifp, command, data)
 	struct ifnet *ifp;
 	u_long command;
 	caddr_t data;
 {
 	struct xe_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1211,7 +1177,12 @@ xe_ioctl(ifp, command, data)
 
 	switch (command) {
 	case SIOCSIFADDR:
-		error = xe_ether_ioctl(ifp, command, data);
+		ifp->if_flags |= IFF_UP;
+		xe_init(sc);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_arpcom, ifa);
+#endif  /* INET */
 		break;
 
 	case SIOCSIFFLAGS:
@@ -1274,8 +1245,9 @@ xe_ioctl(ifp, command, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
+
 	splx(s);
 	return (error);
 }
