@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.37 2006/03/25 22:41:43 djm Exp $	*/
+/*	$OpenBSD: midway.c,v 1.38 2008/10/03 19:56:24 brad Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1166,7 +1166,7 @@ caddr_t data;
 	    break;
 
 	default: 
-	    error = EINVAL;
+	    error = ENOTTY;
 	    break;
     }
     splx(s);
