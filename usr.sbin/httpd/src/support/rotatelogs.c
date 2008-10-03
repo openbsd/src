@@ -1,4 +1,4 @@
-/*	$OpenBSD: rotatelogs.c,v 1.8 2008/05/23 12:12:01 mbalmer Exp $ */
+/*	$OpenBSD: rotatelogs.c,v 1.9 2008/10/03 19:37:44 mbalmer Exp $ */
 
 /*
  * Simple program to rotate Apache logs without having to kill the server.
@@ -21,7 +21,7 @@
 #endif
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	char buf[BUFSIZE], buf2[MAX_PATH], errbuf[ERRMSGSZ];
 	time_t tLogEnd = 0, tRotation;
@@ -30,7 +30,6 @@ main(int argc, char **argv)
 	int use_strftime = 0;
 	time_t now;
 	char *szLogRoot;
-
 
 	if (argc < 3) {
 		fprintf(stderr, "usage: %s logfile rotationtime [offset]\n\n",
@@ -120,6 +119,7 @@ main(int argc, char **argv)
 		} else
 			nMessCount++; 
 	}
+
 	/* We never get here, but suppress the compile warning */
-	return (0);
+	return 0;
 }
