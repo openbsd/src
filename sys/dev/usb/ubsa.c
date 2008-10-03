@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.36 2008/07/20 14:24:49 yuo Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.37 2008/10/03 15:07:31 deraadt Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -225,6 +225,8 @@ const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUAD },
 	/* Option GlobeTrotter 3G QUAD PLUS */
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUADPLUS },
+	/* Option GlobeTrotter HSDPA */
+	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_SCORPION },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
 	/* Qualcomm Inc. ZTE CMDMA MSM modem */
