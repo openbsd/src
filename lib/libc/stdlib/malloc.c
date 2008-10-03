@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.100 2008/10/03 18:44:29 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.101 2008/10/03 19:01:12 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -547,7 +547,7 @@ static int
 omalloc_init(struct dir_info *d)
 {
 	char *p, b[64];
-	int i, j, save_errno = errno;
+	int i, j;
 	size_t regioninfo_size;
 
 	rbytes_init();
@@ -674,8 +674,6 @@ omalloc_init(struct dir_info *d)
 		wrtwarning("atexit(2) failed."
 		    "  Will not be able to dump malloc stats on exit");
 #endif /* MALLOC_STATS */
-
-	errno = save_errno;
 
 	d->regions_bits = 9;
 	d->regions_free = d->regions_total = 1 << d->regions_bits;
@@ -1157,6 +1155,7 @@ void *
 malloc(size_t size)
 {
 	void *r;
+	int saved_errno = errno;
 
 	_MALLOC_LOCK();
 	malloc_func = " in malloc():";
@@ -1180,6 +1179,8 @@ malloc(size_t size)
 		wrterror("out of memory");
 		errno = ENOMEM;
 	}
+	if (r != NULL)
+		saved_errno = errno;
 	return r;
 }
 
@@ -1248,6 +1249,8 @@ ofree(void *p)
 void
 free(void *ptr)
 {
+	int saved_errno = errno;
+
 	/* This is legal. */
 	if (ptr == NULL)
 		return;
@@ -1261,6 +1264,7 @@ free(void *ptr)
 	ofree(ptr);
 	malloc_active--;
 	_MALLOC_UNLOCK();
+	errno = saved_errno;
 }
 
 
@@ -1355,6 +1359,7 @@ void *
 realloc(void *ptr, size_t size)
 {
 	void *r;
+	int saved_errno = errno;
   
 	_MALLOC_LOCK();
 	malloc_func = " in realloc():";  
@@ -1380,6 +1385,8 @@ realloc(void *ptr, size_t size)
 		wrterror("out of memory");
 		errno = ENOMEM;
 	}
+	if (r != NULL)
+		errno = saved_errno;
 	return r;
 }
 
@@ -1390,6 +1397,7 @@ void *
 calloc(size_t nmemb, size_t size)
 {
 	void *r;
+	int saved_errno = errno;
 
 	_MALLOC_LOCK();
 	malloc_func = " in calloc():";  
@@ -1425,5 +1433,7 @@ calloc(size_t nmemb, size_t size)
 		wrterror("out of memory");
 		errno = ENOMEM;
 	}
+	if (r != NULL)
+		errno = saved_errno;
 	return r;
 }
