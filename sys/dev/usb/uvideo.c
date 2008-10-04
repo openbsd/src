@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.85 2008/08/24 19:46:45 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.86 2008/10/04 11:54:43 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1466,14 +1466,14 @@ uvideo_vs_open(struct uvideo_softc *sc)
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
-	/* switch back to default interface (turns off cam LED) */
-	(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
-
 	if (sc->sc_vs_cur->pipeh) {
 		usbd_abort_pipe(sc->sc_vs_cur->pipeh);
 		usbd_close_pipe(sc->sc_vs_cur->pipeh);
 		sc->sc_vs_cur->pipeh = NULL;
 	}
+
+	/* switch back to default interface (turns off cam LED) */
+	(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
 }
 
 usbd_status
