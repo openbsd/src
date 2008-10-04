@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1418 2008/10/02 15:16:43 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1419 2008/10/04 21:41:04 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -719,6 +719,12 @@
 #define	PCI_PRODUCT_AMD_8111_SMB	0x746a		/* 8111 SMBus */
 #define	PCI_PRODUCT_AMD_8111_PMC	0x746b		/* 8111 Power */
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 */
+#define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host */
+#define	PCI_PRODUCT_AMD_RS780_PCIE_1	0x9602		/* RS780 PCIE */
+#define	PCI_PRODUCT_AMD_RS780_PCIE_2	0x9603		/* RS780 PCIE */
+#define	PCI_PRODUCT_AMD_RS780_PCIE_3	0x9604		/* RS780 PCIE */
+#define	PCI_PRODUCT_AMD_RS780_PCIE_4	0x9605		/* RS780 PCIE */
+#define	PCI_PRODUCT_AMD_RS780_PCIE_5	0x9606		/* RS780 PCIE */
 
 /* AMI */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
