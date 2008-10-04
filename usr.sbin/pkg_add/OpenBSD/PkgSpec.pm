@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.16 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.17 2008/10/04 09:39:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,7 @@
 use strict;
 use warnings;
 package OpenBSD::PkgSpec;
+use OpenBSD::PackageName;
 
 # all the shit that does handle package specifications
 sub compare_pseudo_numbers
@@ -151,40 +152,26 @@ sub subpattern_match
 	my ($p, $list) = @_;
 	local $_;
 
-	my ($stemspec, $vspec, $flavorspec);
-
-
-	# then, guess at where the version number is if any,
-	
-	# this finds patterns like -<=2.3,>=3.4.p1-
-	# the only constraint is that the actual number 
-	# - must start with a digit, 
-	# - not contain - or ,
-	if ($p =~ m/^(.*?)\-((?:\>|\>\=|\<|\<\=)?\d[^-]*)(.*)$/o) {
-		($stemspec, $vspec, $flavorspec) = ($1, $2, $3);
-	# `any version' matcher
-	} elsif ($p =~ m/^(.*?)\-\*(.*)$/o) {
-		($stemspec, $vspec, $flavorspec) = ($1, '*', $2);
-	# okay, so no version marker. Assume no flavor spec.
-	} else {
-		($stemspec, $vspec, $flavorspec) = ($p, '', '');
+	# let's try really hard to find the stem and the flavors
+	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<|\<\=|\=)?\d|\*)[^-]*)(.*)$/) {
+		die "Invalid spec $p";
 	}
+
+	my ($stemspec, $vspec, $flavorspec) = ($1, $2, $3);
 
 	$stemspec =~ s/\./\\\./go;
 	$stemspec =~ s/\+/\\\+/go;
 	$stemspec =~ s/\*/\.\*/go;
 	$stemspec =~ s/\?/\./go;
 	$stemspec =~ s/^(\\\.libs)\-/$1\\d*\-/go;
+
+	# First trim down the list
+	my @l = grep {/^$stemspec-.*$/} @$list;
+
 	$vspec =~ s/\./\\\./go;
 	$vspec =~ s/\+/\\\+/go;
 	$vspec =~ s/\*/\.\*/go;
 	$vspec =~ s/\?/\./go;
-
-	$p = $stemspec;
-	$p.="-.*" if $vspec ne '';
-
-	# First trim down the list
-	my @l = grep {/^$p$/} @$list;
 
 	my @result = ();
 	# Now, have to extract the version number, and the flavor...
