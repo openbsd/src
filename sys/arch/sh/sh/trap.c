@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2008/06/24 21:24:03 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2008/10/04 19:21:50 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -571,7 +571,7 @@ syscall(struct proc *p, struct trapframe *tf)
 #ifdef DIAGNOSTIC
 	if (argsize > sizeof args) {
 		callp += p->p_emul->e_nosys - code;
-		goto bad;
+		argsize = callp->sy_argsize;
 	}
 #endif
 
@@ -620,9 +620,6 @@ syscall(struct proc *p, struct trapframe *tf)
 		break;
 	}
 
-	if (error)
-		goto bad;
-
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -630,6 +627,9 @@ syscall(struct proc *p, struct trapframe *tf)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
+
+	if (error != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
@@ -640,6 +640,7 @@ syscall(struct proc *p, struct trapframe *tf)
 #endif
 		error = (*callp->sy_call)(p, args, rval);
 
+bad:
 	switch (oerror = error) {
 	case 0:
 		tf->tf_r0 = rval[0];
@@ -654,7 +655,6 @@ syscall(struct proc *p, struct trapframe *tf)
 		/* nothing to do */
 		break;
 	default:
-bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r0 = error;
