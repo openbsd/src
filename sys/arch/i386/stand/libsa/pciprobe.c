@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.8 2004/03/09 19:12:13 tom Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.9 2008/10/04 23:08:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,7 +48,7 @@ pciprobe(void)
 		: "0" (0xB101), "4" (0x0)
 		: "cc");
 
-	if (rc & 0xff00 || hw_chars & 0xff00)
+	if (rc & 0xff || hw_chars & 0xff00)
 		return;
 	if (sig != PCI_SIG)
 		return;
