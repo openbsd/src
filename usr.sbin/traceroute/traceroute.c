@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.65 2006/03/31 03:05:57 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.66 2008/10/04 02:21:49 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.65 2006/03/31 03:05:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.66 2008/10/04 02:21:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,9 +251,10 @@ static char rcsid[] = "$OpenBSD: traceroute.c,v 1.65 2006/03/31 03:05:57 deraadt
 struct packetdata {
 	u_char seq;		/* sequence number of this packet */
 	u_int8_t ttl;		/* ttl packet left with */
+	u_char pad[2];
 	u_int32_t sec;		/* time packet left */
 	u_int32_t usec;
-};
+} __packed;
 
 struct in_addr gateway[MAX_LSRR + 1];
 int lsrrlen = 0;
