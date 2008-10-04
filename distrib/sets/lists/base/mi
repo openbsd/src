@@ -2692,6 +2692,7 @@
 ./usr/share/sendmail/cf/openbsd-lists.mc
 ./usr/share/sendmail/cf/openbsd-localhost.mc
 ./usr/share/sendmail/cf/openbsd-proto.mc
+./usr/share/sendmail/cf/openbsd-submit.mc
 ./usr/share/sendmail/cf/python.cs.mc
 ./usr/share/sendmail/cf/s2k-osf1.mc
 ./usr/share/sendmail/cf/s2k-ultrix4.mc
