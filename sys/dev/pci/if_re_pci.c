@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.21 2008/04/20 00:34:39 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.22 2008/10/05 22:32:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -186,6 +186,13 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	/*
+	 * PCI Express check.
+	 */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    NULL, NULL))
+		sc->rl_flags |= RL_FLAG_PCIE;
 
 	/* Call bus-independent attach routine */
 	re_attach(sc, intrstr);
