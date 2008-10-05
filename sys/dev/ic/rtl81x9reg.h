@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.53 2008/10/05 22:32:11 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.54 2008/10/05 22:43:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -806,13 +806,14 @@ struct rl_softc {
 	int			rl_txstart;
 	u_int32_t		rl_flags;
 #define	RL_FLAG_MSI		0x0001
-#define	RL_FLAG_PCIE		0x0002
-#define	RL_FLAG_INVMAR		0x0004
-#define	RL_FLAG_PHYWAKE		0x0008
-#define	RL_FLAG_NOJUMBO		0x0010
-#define	RL_FLAG_PAR		0x0020
-#define	RL_FLAG_DESCV2		0x0040
-#define	RL_FLAG_MACSTAT		0x0080
+#define	RL_FLAG_PCI64		0x0002
+#define	RL_FLAG_PCIE		0x0004
+#define	RL_FLAG_INVMAR		0x0008
+#define	RL_FLAG_PHYWAKE		0x0010
+#define	RL_FLAG_NOJUMBO		0x0020
+#define	RL_FLAG_PAR		0x0040
+#define	RL_FLAG_DESCV2		0x0080
+#define	RL_FLAG_MACSTAT		0x0100
 #define	RL_FLAG_LINK		0x8000
 };
 
