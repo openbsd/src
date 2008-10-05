@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.16 2008/10/05 13:24:40 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.17 2008/10/05 20:36:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -214,16 +214,14 @@ clients or kinds of clients.
 .Sh OPTION MODIFIERS
 Options in the lease can be modified before being passed to the client
 configuration script,
-.Xr dhclient-script 5 .
+.Xr dhclient-script 8 .
 .Pp
-The default
-.Xr dhclient-script 5
+The default client configuration script
 processes only options 1 (subnet
 mask), 3 (routers), 6 (domain name servers), 15 (domain-name), and 33
 (static routes).
 Use of option modifiers on other options will have no effect unless
-.Xr dhclient-script 5
-is modified.
+the client configuration script is modified.
 .Pp
 Several option modifiers are available.
 .Bl -tag -width Ds
@@ -359,7 +357,7 @@ The
 statement can be used on systems where network interfaces cannot
 automatically determine the type of network to which they are connected.
 The media setup string is a system-dependent parameter which is passed
-to the DHCP client configuration script when initializing the interface.
+to the client configuration script when initializing the interface.
 On
 .Ux
 and UNIX-like systems, the argument is passed on the ifconfig command line
@@ -483,7 +481,7 @@ types.
 .It Ic script Ar \&"script-name\&" ;
 The
 .Ic script
-statement is used to specify the pathname of the DHCP client configuration
+statement is used to specify the pathname of the client configuration
 script.
 This script is used by the DHCP client to set each interface's initial
 configuration prior to requesting an address, to test the address once it
@@ -538,10 +536,10 @@ In many cases, it's sufficient to just create an empty
 file \- the defaults are usually fine.
 .Sh SEE ALSO
 .Xr dhclient.leases 5 ,
-.Xr dhclient-script 5 ,
 .Xr dhcp-options 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhclient 8 ,
+.Xr dhclient-script 8 ,
 .Xr dhcpd 8
 .Pp
 RFC 2132, RFC 2131.
