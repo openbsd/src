@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcstod.c,v 1.1 2005/07/01 08:59:27 espie Exp $	*/
+/*	$OpenBSD: wcstod.c,v 1.2 2008/10/05 19:52:34 kettenis Exp $	*/
 /* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
 
 /*-
@@ -55,7 +55,7 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 
 	/* get length of string */
 	start = src;	
-	if (wcschr(L"+-", *src))
+	if (*src && wcschr(L"+-", *src))
 		src++;
 	size = wcsspn(src, L"0123456789");
 	src += size;
@@ -64,9 +64,9 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 		size = wcsspn(src, L"0123456789");
 		src += size;
 	}
-	if (wcschr(L"Ee", *src)) {
+	if (*src && wcschr(L"Ee", *src)) {
 		src++;
-		if (wcschr(L"+-", *src))
+		if (*src && wcschr(L"+-", *src))
 			src++;
 		size = wcsspn(src, L"0123456789");
 		src += size;
