@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.31 2008/10/05 16:57:36 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -297,10 +297,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		panic("unknown processor type??");
 	}
-
-	/* Mark this ID as taken if it's in the I/O APIC ID area */
-	if (ci->ci_apicid < IOAPIC_ID_MAX)
-		ioapic_id_map &= ~(1 << ci->ci_apicid);
 
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",

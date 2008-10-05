@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.6 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.7 2008/10/05 16:57:36 kettenis Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -79,15 +79,6 @@ struct ioapic_softc {
 
 #define APIC_IRQ_APIC(x) ((x & APIC_INT_APIC_MASK) >> APIC_INT_APIC_SHIFT)
 #define APIC_IRQ_PIN(x) ((x & APIC_INT_PIN_MASK) >> APIC_INT_PIN_SHIFT)
-
-/* I/O APIC ID remapping helper macros. */
-#define IOAPIC_REMAP_MASK	(IOAPIC_ID_MASK >> IOAPIC_ID_SHIFT)
-#define IOAPIC_REMAP_FLAG	((IOAPIC_REMAP_MASK + 1) << 1)
-#define IOAPIC_REMAP(old_id, new_id) \
-    (ioapic_id_remap[(old_id)] = IOAPIC_REMAP_FLAG | (new_id))
-#define IOAPIC_REMAPPED(id)	(ioapic_id_remap[(id)] & IOAPIC_REMAP_FLAG)
-#define IOAPIC_REMAPPED_ID(id)	\
-    (IOAPIC_REMAPPED(id) ? ioapic_id_remap[(id)] & IOAPIC_REMAP_MASK : (id))
 
 void   *apic_intr_establish(int, int, int, int (*)(void *), void *, char *); 
 void	apic_intr_disestablish(void *);
