@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbbc.c,v 1.4 2008/07/12 23:12:52 kettenis Exp $	*/
+/*	$OpenBSD: sbbc.c,v 1.5 2008/10/05 10:51:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -229,7 +229,7 @@ sbbc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY,
 	    sbbc_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n");
+		printf("%s: unable to establish interrupt\n", sc->sc_dv.dv_xname);
 		goto unmap_sram;
 	}
 
