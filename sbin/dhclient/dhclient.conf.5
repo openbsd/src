@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.14 2007/10/16 05:03:23 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.15 2008/10/05 13:21:08 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 16 2007 $
+.Dd $Mdocdate: October 5 2008 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -212,12 +212,20 @@ that will allow it to differentiate between this client and other
 clients or kinds of clients.
 .El
 .Sh OPTION MODIFIERS
-In some cases, a client may receive option data from the server which
-is not really appropriate for that client, or may not receive
-information that it needs, and for which a useful default value exists.
-It may also receive information which is useful, but which needs to be
-supplemented with local information.
-To handle these needs, several option modifiers are available.
+Options in the lease can be modified before being passed to the client
+configuration script,
+.Xr dhclient-script 5 .
+.Pp
+The default
+.Xr dhclient-script 5
+processes only options 1 (subnet
+mask), 3 (routers), 6 (domain name servers), 15 (domain-name), and 33
+(static routes).
+Use of option modifiers on other options will have no effect unless
+.Xr dhclient-script 5
+is modified,
+.Pp
+Several option modifiers are available.
 .Bl -tag -width Ds
 .It Xo
 .Ic default No { Op Ar option declaration
@@ -530,6 +538,7 @@ In many cases, it's sufficient to just create an empty
 file \- the defaults are usually fine.
 .Sh SEE ALSO
 .Xr dhclient.leases 5 ,
+.Xr dhclient-script 5 ,
 .Xr dhcp-options 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhclient 8 ,
