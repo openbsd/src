@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1420 2008/10/06 15:14:28 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1421 2008/10/06 23:03:26 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1373,6 +1373,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_5,
+	    "RS780 PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_6,
 	    "RS780 PCIE",
 	},
 	{
@@ -2806,6 +2810,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690M_HDA,
 	    "RS690M HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3600_HDA,
+	    "Radeon HD 3600 HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD34xx_HDA,
@@ -7716,6 +7724,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GM965 Video",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_KT,
+	    "GM965 KT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GME965_HB,
 	    "GME965 Host",
 	},
@@ -11640,6 +11652,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP77 HD Audio",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HB_2,
+	    "MCP73 Host",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HB_1,
 	    "MCP73 Host",
 	},
@@ -12808,6 +12824,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8185",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8187SE,
+	    "8187SE",
+	},
+	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
 	    "5C465 CardBus",
 	},
@@ -13308,6 +13328,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "662 PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_671,
+	    "671 PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    "730 PCI",
 	},
@@ -13394,6 +13418,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_966,
 	    "966 ISA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_968,
+	    "968 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5315,
