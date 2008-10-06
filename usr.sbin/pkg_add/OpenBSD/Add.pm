@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.83 2008/06/11 09:43:25 espie Exp $
+# $OpenBSD: Add.pm,v 1.84 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -75,14 +75,14 @@ sub record_partial_installation
 	
 	# last file may have not copied correctly
 	my $last = $n->{state}->{lastfile};
-	if (defined $last && defined($last->{md5})) {
+	if (defined $last && defined($last->{d})) {
 
-	    my $old = $last->{md5};
+	    my $old = $last->{d};
 	    my $lastname = $last->realname($state);
-	    $last->{md5} = $last->compute_md5($lastname);
-	    if ($old ne $last->{md5}) {
-		print "Adjusting md5 for $lastname from ",
-		    unpack('H*', $old), " to ", unpack('H*', $last->{md5}), "\n";
+	    $last->{d} = $last->compute_digest($lastname, $old);
+	    if (!$old->equals($last->{d})) {
+		print "Adjusting ", $old->keyword, " for $lastname from ",
+		    $old->stringize, " to ", $last->{d}->stringize, "\n";
 	    }
 	}
 	register_installation($n);
@@ -508,11 +508,11 @@ sub install
 	if (-e $filename) {
 		if ($state->{verbose}) {
 		    print "The existing file $filename has NOT been changed\n";
-		    if (defined $orig->{md5}) {
+		    if (defined $orig->{d}) {
 
 			# XXX assume this would be the same type of file
-			my $md5 = $self->compute_md5($filename);
-			if ($md5 eq $orig->{md5}) {
+			my $d = $self->compute_digest($filename, $orig->{d});
+			if ($d->equals($orig->{d})) {
 			    print "(but it seems to match the sample file $origname)\n";
 			} else {
 			    print "It does NOT match the sample file $origname\n";

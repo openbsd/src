@@ -221,7 +221,7 @@ while(1) {
 		my @todo = ();
 		my @merged = ();
 		for my $cmp (@mergeable) {
-		    if (defined $ref->{md5} && $cmp->{tocopy}->[0]->{md5} eq $ref->{md5}) {
+		    if (defined $ref->{d} && $cmp->{tocopy}->[0]->{d}->equals($ref->{d})) {
 		    	push(@merged, $cmp);
 			$currentprefix .= $cmp->{prefix};
 			$copies++;

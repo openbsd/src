@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.76 2008/06/11 09:43:25 espie Exp $
+# $OpenBSD: Delete.pm,v 1.77 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -243,12 +243,13 @@ sub do_not_delete
 
 	delete $self->{symlink};
 	delete $self->{link};
-	delete $self->{md5};
+	my $algo = $self->{d};
+	delete $self->{d};
 
 	if (-l $realname) {
 		$self->{symlink} = readlink $realname;
 	} elsif (-f _) {
-		$self->{md5} = $self->compute_md5($realname);
+		$self->{d} = $self->compute_digest($realname, $algo);
 	} elsif (-d _) {
 		# what should we do ?
 	}
@@ -393,15 +394,16 @@ sub delete
 				return;
 			}
 			unless (defined($self->{link}) or $self->{nochecksum} or $state->{quick}) {
-				if (!defined $self->{md5}) {
+				if (!defined $self->{d}) {
 					print "Problem: ", $self->fullname,
 					    " does not have a checksum\n";
 					print "NOT deleting: $realname\n";
 					$state->print("Couldn't delete $realname (no checksum)\n");
 					return;
 				}
-				my $md5 = $self->compute_md5($realname);
-				if ($md5 ne $self->{md5}) {
+				my $d = $self->compute_digest($realname, 
+				    $self->{d});
+				if (!$d->equals($self->{d})) {
 					print "Problem: checksum doesn't match for ",
 						$self->fullname, "\n";
 					print "NOT deleting: $realname\n";
@@ -502,7 +504,7 @@ sub delete
 		return;
 	}
 
-	if (!defined $orig->{md5}) {
+	if (!defined $orig->{d}) {
 		$state->print("Couldn't delete $realname (no checksum)\n");
 		return;
 	}
@@ -514,8 +516,8 @@ sub delete
 			return;
 		}
 	} else {
-		my $md5 = $self->compute_md5($realname);
-		if ($md5 eq $orig->{md5}) {
+		my $d = $self->compute_digest($realname, $orig->{d});
+		if ($d->equals($orig->{d})) {
 			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
 		} else {
 			unless ($state->{extra}) {

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.117 2008/06/11 09:43:25 espie Exp $
+# $OpenBSD: pkg_create,v 1.118 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use warnings;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Getopt;
-use OpenBSD::md5;
 use OpenBSD::Temp;
 use OpenBSD::Error;
 use OpenBSD::Ustar;
@@ -94,7 +93,7 @@ sub compute_checksum
 			$result->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $name;
-			$result->add_md5($self->compute_md5($fname));
+			$result->add_digest($self->compute_digest($fname, 'OpenBSD::md5'));
 			$result->add_size($size);
 		}
 	} else {
@@ -116,7 +115,7 @@ sub verify_checksum_with_base
 	my $check = ref($self)->new($self->{name});
 	$self->compute_checksum($check, $base, $stash);
 
-	for my $field (qw(symlink link md5 size)) {
+	for my $field (qw(symlink link size)) {  # md5
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
@@ -124,6 +123,13 @@ sub verify_checksum_with_base
 			    $self->fullname, "\n";
 			$main::errors++;
 		}
+	}
+	if ((defined $check->{d} && defined $self->{d} &&
+	    !$check->{d}->equals($self->{d})) ||
+	    (defined $check->{d} xor defined $self->{d})) {
+		print STDERR "Error: checksum inconsistency for ", 
+		    $self->fullname, "\n";
+		$main::errors++;
 	}
 }
 

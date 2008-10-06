@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.148 2008/06/11 12:21:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.149 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -250,11 +250,11 @@ sub realname
 	return $state->{destdir}.$name;
 }
 
-sub compute_md5
+sub compute_digest
 {
-	my ($self, $filename) = @_;
+	my ($self, $filename, $class) = @_;
 	require OpenBSD::md5;
-	return OpenBSD::md5::fromfile($filename);
+	return $class->new($filename);
 }
 
 sub write
@@ -319,8 +319,8 @@ sub write
 	my ($self, $fh) = @_;
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
 	$self->SUPER::write($fh);
-	if (defined $self->{md5}) {
-		print $fh "\@md5 ", unpack('H*', $self->{md5}), "\n";
+	if (defined $self->{d}) {
+		$self->{d}->write($fh);
 	}
 	if (defined $self->{size}) {
 		print $fh "\@size ", $self->{size}, "\n";
@@ -349,12 +349,11 @@ sub destate
 	}
 }
 
-sub add_md5
+sub add_digest
 {
-	my ($self, $md5) = @_;
-	$self->{md5} = $md5;
+	my ($self, $d) = @_;
+	$self->{d} = $d;
 }
-
 sub add_size
 {
 	my ($self, $sz) = @_;
@@ -595,8 +594,25 @@ __PACKAGE__->register_with_factory('md5');
 sub add
 {
 	my ($class, $plist, $args) = @_;
+	
+	require OpenBSD::md5;
 
-	$plist->{state}->{lastchecksummable}->add_md5(pack('H*', $args));
+	$plist->{state}->{lastchecksummable}->add_digest(OpenBSD::md5->fromstring($args));
+	return;
+}
+
+package OpenBSD::PackingElement::sha;
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
+
+__PACKAGE__->register_with_factory('sha');
+
+sub add
+{
+	my ($class, $plist, $args) = @_;
+	
+	require OpenBSD::md5;
+
+	$plist->{state}->{lastchecksummable}->add_digest(OpenBSD::sha->fromstring($args));
 	return;
 }
 
@@ -852,14 +868,14 @@ sub write
 {
 	my ($self, $fh) = @_;
 	$self->SUPER::write($fh);
-	if (defined $self->{md5}) {
-		print $fh "\@md5 ", unpack('H*', $self->{md5}), "\n";
+	if (defined $self->{d}) {
+		$self->{d}->write($fh);
 	}
 }
 
-sub add_md5
+sub add_digest
 {
-	&OpenBSD::PackingElement::FileBase::add_md5;
+	&OpenBSD::PackingElement::FileBase::add_digest;
 }
 
 package OpenBSD::PackingElement::PkgPath;
@@ -1348,9 +1364,9 @@ our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub exec_on_add { 0 }
 sub exec_on_delete { 0 }
 
-sub add_md5
+sub add_digest
 {
-	&OpenBSD::PackingElement::FileBase::add_md5;
+	&OpenBSD::PackingElement::FileBase::add_digest;
 }
 
 sub add_size
@@ -1358,9 +1374,9 @@ sub add_size
 	&OpenBSD::PackingElement::FileBase::add_size;
 }
 
-sub compute_md5
+sub compute_digest
 {
-	&OpenBSD::PackingElement::FileObject::compute_md5;
+	&OpenBSD::PackingElement::FileObject::compute_digest;
 }
 
 sub write

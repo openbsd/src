@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.6 2008/06/11 09:42:40 espie Exp $
+# $OpenBSD: md5.pm,v 1.7 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,26 +18,126 @@
 use strict;
 use warnings;
 
+package OpenBSD::digest;
+
+sub new
+{
+	my ($class, $filename) = @_;
+	$class = ref($class) || $class;
+	my $digest = $class->digest_file($filename);
+	bless \$digest, $class;
+}
+
+sub write
+{
+	my ($self, $fh) = @_;
+	print $fh "\@", $self->keyword, " ", $self->stringize, "\n";
+}
+
+sub digest_file
+{
+	my ($self, $fname) = @_;
+	open(my $file, '<', $fname) or die "can't open $fname: $!";
+	my $digest = $self->digest_fh($file);
+	close($file) or die "problem closing $fname: $!";
+	return $digest;
+}
+
+
+sub digest_fh
+{
+	my ($self, $file) = @_;
+
+	my $d = $self->algo;
+
+	$d->addfile($file);
+	return $d->digest;
+}
+
+sub fromstring
+{
+	my ($class, $arg) = @_;
+	$class = ref($class) || $class;
+	my $d = $class->unstringize($arg);
+	bless \$d, $class;
+}
+
+sub equals
+{
+	my ($a, $b) = @_;
+	return ref($a) eq ref($b) && $$a eq $$b;
+}
+
 package OpenBSD::md5;
-use Digest::MD5;
+our @ISA=(qw(OpenBSD::digest));
 
 sub fromfile
 {
 	my $fname = shift;
-	open(my $file, '<', $fname) or die "can't open $fname: $!";
-	my $digest = fromfh($file);
-	close($file) or die "problem closing $fname: $!";
-	return $digest;
+	return OpenBSD::md5->digest_file($fname);
 }
 
 sub fromfh
 {
 	my $file = shift;
+	return OpenBSD::md5->digest_fh($file);
+}
 
-	my $md5 = new Digest::MD5;
+sub algo
+{
+	my $self = shift;
+	require Digest::MD5;
 
-	$md5->addfile($file);
-	return $md5->digest;
+	return Digest::MD5->new;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return unpack('H*', $$self);
+}
+
+sub unstringize
+{
+	my ($class, $arg) = @_;
+	return pack('H*', $arg);
+}
+
+sub keyword
+{
+	return "md5";
+}
+
+package OpenBSD::sha;
+our @ISA=(qw(OpenBSD::digest));
+
+sub algo
+{
+	my $self = shift;
+	require Digest::SHA;
+
+	return Digest::SHA->new(256);
+}
+
+sub stringize
+{
+	my $self = shift;
+	require MIME::Base64;
+
+	return MIME::Base64::encode_base64($$self, '');
+}
+
+sub unstringize
+{
+	my ($class, $arg) = @_;
+	require MIME::Base64;
+
+	return MIME::Base64::decode_base64($arg);
+}
+
+sub keyword
+{
+	return "sha";
 }
 
 1;

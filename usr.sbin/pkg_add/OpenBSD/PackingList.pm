@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.83 2008/06/06 15:02:57 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.84 2008/10/06 09:36:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -275,7 +275,7 @@ MAINLOOP:
 		if (m/^\@shared\b/o) {
 			&$cont($_);
 			while(<$fh>) {
-				redo MAINLOOP unless m/^\@(?:md5|size|symlink|link)\b/o;
+				redo MAINLOOP unless m/^\@(?:sha|md5|size|symlink|link)\b/o;
 				    m/^\@size\b/o || m/^\@symlink\b/o || 
 				    m/^\@link\b/o;
 				&$cont($_);
