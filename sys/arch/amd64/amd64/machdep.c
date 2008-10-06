@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2008/08/12 18:27:22 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2008/10/06 21:05:56 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1739,7 +1739,6 @@ need_resched(struct cpu_info *ci)
 /*
  * Allocate an IDT vector slot within the given range.
  * XXX needs locking to avoid MP allocation races.
- * XXXfvdl share idt code
  */
 
 int
