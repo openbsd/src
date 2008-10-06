@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.3 2008/09/30 16:24:16 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.4 2008/10/06 11:20:20 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -419,7 +419,6 @@ client_try_idm(struct env *env, struct idm *idm)
 
 	return (0);
 bad:
-	printf("dusss\n");
 	log_debug("directory %s errored out in %s", idm->idm_name, where);
 	return (-1);
 }

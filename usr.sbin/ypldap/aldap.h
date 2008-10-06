@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.2 2008/09/30 17:28:52 pyr Exp $ */
-/*	$OpenBSD: aldap.h,v 1.2 2008/09/30 17:28:52 pyr Exp $ */
+/*	$Id: aldap.h,v 1.3 2008/10/06 11:20:20 aschrijver Exp $ */
+/*	$OpenBSD: aldap.h,v 1.3 2008/10/06 11:20:20 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -59,14 +59,14 @@ enum aldap_protocol {
 };
 
 struct aldap_url {
-	int	protocol;
-	char	*host;
-	int	 port;
-	char	*dn;
+	int		 protocol;
+	char		*host;
+	in_port_t	 port;
+	char		*dn;
 #define MAXATTR 1024
-	char	*attributes[MAXATTR];
-	int	 scope;
-	char	*filter;
+	char		*attributes[MAXATTR];
+	int		 scope;
+	char		*filter;
 };
 
 enum protocol_op {
