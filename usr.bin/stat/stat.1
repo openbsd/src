@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.15 2008/06/26 05:42:21 ray Exp $
+.\"	$OpenBSD: stat.1,v 1.16 2008/10/06 13:41:33 todd Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: October 6 2008 $
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -315,7 +315,7 @@ The time
 .Ar file
 was last accessed or modified, or when the inode was last changed, or
 the birth time of the inode
-.Pq Fa st_atimespec , st_mtimespec , st_ctimespec .
+.Pq Fa st_atime , st_mtime , st_ctime .
 If the file system does not support birth time, the value is undefined.
 .It Cm z
 The size of
@@ -399,12 +399,12 @@ flag as follows:
 .Bd -literal -offset indent
 \*(Gt csh
 % eval set `stat -s .cshrc`
-% echo $st_size $st_mtimespec
+% echo $st_size $st_mtime
 1148 1015432481
 
 \*(Gt sh
 $ eval $(stat -s .profile)
-$ echo $st_size $st_mtimespec
+$ echo $st_size $st_mtime
 1148 1015432481
 .Ed
 .Pp
