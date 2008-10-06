@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.3 2008/10/02 15:24:14 deraadt Exp $ */
-/*	$OpenBSD: aldap.c,v 1.3 2008/10/02 15:24:14 deraadt Exp $ */
+/*	$Id: aldap.c,v 1.4 2008/10/06 08:01:28 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.4 2008/10/06 08:01:28 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -18,9 +18,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "aldap.h"
 
@@ -366,8 +367,9 @@ aldap_free_url(struct aldap_url *lu)
 int
 aldap_parse_url(char *url, struct aldap_url *lu)
 {
-	char	*dup, *p, *forward, *forward2;
-	int	 i;
+	char		*dup, *p, *forward, *forward2;
+	const char	*errstr = NULL;
+	int		 i;
 
 	p = dup = strdup(url);
 
@@ -384,8 +386,11 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	if((forward2 = strchr(p, ':')) != NULL) {
 		*forward2 = '\0';
 		/* if a port is given */
-		if(*(forward2+1) != '\0')
-			lu->port = atoi(++forward2);
+		if(*(forward2+1) != '\0') {
+			lu->port = strtonum(++forward2, 0, sizeof(lu->port), &errstr);
+			if(errstr)
+				goto fail;
+		}
 	}
 	/* fail if no host is given */
 	if(strlen(p) == 0)
@@ -942,7 +947,6 @@ utoa(char *u)
 	}
 
 	str = calloc(len + 1, sizeof(char));
-	bzero(str, (len + 1) * sizeof(char));
 
 	/* copy the ASCII characters to the newly allocated string */
 	for(i = 0, j = 0; u[i] != NULL; j++) {
