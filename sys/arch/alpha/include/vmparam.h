@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.17 2008/07/25 21:24:49 miod Exp $ */
+/* $OpenBSD: vmparam.h,v 1.18 2008/10/06 23:09:37 brad Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -64,19 +64,19 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(1<<30)			/* max text size (1G) */
+#define	MAXTSIZ		(1*1024*1024*1024)	/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(1<<27)			/* initial data size (128M) */
+#define	DFLDSIZ		(128*1024*1024)		/* initial data size */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1<<30)			/* max data size (1G) */
+#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(1<<21)			/* initial stack size (2M) */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(1<<25)			/* max stack size (32M) */
+#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
 #define STACKGAP_RANDOM	256*1024
