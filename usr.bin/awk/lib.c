@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.17 2007/09/02 15:19:31 deraadt Exp $	*/
+/*	$OpenBSD: lib.c,v 1.18 2008/10/06 20:38:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -44,7 +44,7 @@ int	fieldssize = RECSIZE;
 Cell	**fldtab;	/* pointers to Cells */
 char	inputFS[100] = " ";
 
-#define	MAXFLD	200
+#define	MAXFLD	2
 int	nfields	= MAXFLD;	/* last allocated slot for $i */
 
 int	donefld;	/* 1 = implies rec broken into fields */
@@ -59,15 +59,11 @@ static Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
 
 void recinit(unsigned int n)
 {
-	record = (char *) malloc(n);
-	fields = (char *) malloc(n);
-	fldtab = (Cell **) calloc((nfields+1), sizeof(Cell *));
-	if (record == NULL || fields == NULL || fldtab == NULL)
+	if ( (record = (char *) malloc(n)) == NULL
+	  || (fields = (char *) malloc(n+1)) == NULL
+	  || (fldtab = (Cell **) calloc(nfields+1, sizeof(Cell *))) == NULL
+	  || (fldtab[0] = (Cell *) malloc(sizeof(Cell))) == NULL )
 		FATAL("out of space for $0 and fields");
-
-	fldtab[0] = (Cell *) malloc(sizeof (Cell));
-	if (fldtab[0] == NULL)
-		FATAL("out of space for fields");
 	*fldtab[0] = dollar0;
 	fldtab[0]->sval = record;
 	fldtab[0]->nval = tostring("0");
@@ -111,7 +107,8 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 {			/* note: cares whether buf == record */
 	int c;
 	char *buf = *pbuf;
-	int bufsize = *pbufsize;
+	uschar saveb0;
+	int bufsize = *pbufsize, savebufsize = bufsize;
 
 	if (firsttime) {
 		firsttime = 0;
@@ -123,6 +120,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 		donefld = 0;
 		donerec = 1;
 	}
+	saveb0 = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
 		   dprintf( ("argno=%d, file=|%s|\n", argno, file) );
@@ -169,14 +167,15 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 		infile = NULL;
 		argno++;
 	}
+	buf[0] = saveb0;
 	*pbuf = buf;
-	*pbufsize = bufsize;
+	*pbufsize = savebufsize;
 	return 0;	/* true end of file */
 }
 
 void nextfile(void)
 {
-	if (infile != stdin && infile != NULL)
+	if (infile != NULL && infile != stdin)
 		fclose(infile);
 	infile = NULL;
 	argno++;

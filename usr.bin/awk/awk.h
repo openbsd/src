@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.12 2008/06/04 14:04:42 pyr Exp $	*/
+/*	$OpenBSD: awk.h,v 1.13 2008/10/06 20:38:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -31,7 +31,7 @@ typedef double	Awkfloat;
 
 typedef	unsigned char uschar;
 
-#define	xfree(a)	{ if ((a) != NULL) { free((char *) a); a = NULL; } }
+#define	xfree(a)	{ if ((a) != NULL) { free((void *) (a)); (a) = NULL; } }
 
 #define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for dprintf 
 */

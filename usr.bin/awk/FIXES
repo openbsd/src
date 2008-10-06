@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.13 2004/12/30 01:52:48 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.14 2008/10/06 20:38:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,73 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Oct 23, 2007:
+	minor fix in lib.c: increase inputFS to 100, change malloc
+	for fields to n+1.  
+
+	fixed memory fault caused by out of order test in setsval.
+
+	thanks to david o'brien, freebsd, for both fixes.
+
+May 1, 2007:
+	fiddle in makefile to fix for BSD make; thanks to igor sobrado.
+
+Mar 31, 2007:
+	fixed some null pointer refs calling adjbuf.
+
+Feb 21, 2007:
+	fixed a bug in matching the null RE in sub and gsub.  thanks to al aho
+	who actually did the fix (in b.c), and to wolfgang seeberg for finding
+	it and providing a very compact test case.
+
+	fixed quotation in b.c; thanks to Hal Pratt and the Princeton Dante
+	Project.
+
+	removed some no-effect asserts in run.c.
+
+	fiddled maketab.c to not complain about bison-generated values.
+
+	removed the obsolete -V argument; fixed --version to print the
+	version and exit.
+
+	fixed wording and an outright error in the usage message; thanks to igor
+	sobrado and jason mcintyre.
+
+	fixed a bug in -d that caused core dump if no program followed.
+
+Jan 1, 2007:
+	dropped mac.code from makefile; there are few non-MacOSX
+	mac's these days.
+
+Jan 17, 2006:
+	system() not flagged as unsafe in the unadvertised -safe option.
+	found it while enhancing tests before shipping the ;login: article.
+	practice what you preach.
+
+	removed the 9-years-obsolete -mr and -mf flags.
+
+	added -version and --version options.
+
+	core dump on linux with BEGIN {nextfile}, now fixed.
+
+	removed some #ifdef's in run.c and lex.c that appear to no 
+	longer be necessary.
+
+Apr 24, 2005:
+	modified lib.c so that values of $0 et al are preserved in the END
+	block, apparently as required by posix.  thanks to havard eidnes
+	for the report and code.
+
+Jan 14, 2005:
+	fixed infinite loop in parsing, originally found by brian tsang.
+	thanks to arnold robbins for a suggestion that started me
+	rethinking it.
+
+Dec 31, 2004:
+	prevent overflow of -f array in main, head off potential error in 
+	call of SYNTAX(), test malloc return in lib.c, all with thanks to 
+	todd miller.
 
 Dec 22, 2004:
 	cranked up size of NCHARS; coverity thinks it can be overrun with

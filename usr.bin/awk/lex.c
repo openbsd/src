@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.10 2008/06/04 14:04:42 pyr Exp $	*/
+/*	$OpenBSD: lex.c,v 1.11 2008/10/06 20:38:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -96,12 +96,7 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "xor",	FXOR,		BLTIN },
 };
 
-#define DEBUG
-#ifdef	DEBUG
 #define	RET(x)	{ if(dbg)printf("lex %s\n", tokname(x)); return(x); }
-#else
-#define	RET(x)	return(x)
-#endif
 
 int peek(void);
 int gettok(char **, int *);
@@ -133,7 +128,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 	if (isalpha(c) || c == '_') {	/* it's a varname */
 		for ( ; (c = input()) != 0; ) {
 			if (bp-buf >= sz)
-				if (!adjbuf(&buf, &sz, bp-buf+2, 100, &bp, 0))
+				if (!adjbuf(&buf, &sz, bp-buf+2, 100, &bp, "gettok"))
 					FATAL( "out of space for name %.10s...", buf );
 			if (isalnum(c) || c == '_')
 				*bp++ = c;
@@ -145,12 +140,12 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		}
 		*bp = 0;
 		retc = 'a';	/* alphanumeric */
-	} else {	/* it's a number */
+	} else {	/* maybe it's a number, but could be . */
 		char *rem;
 		/* read input until can't be a number */
 		for ( ; (c = input()) != 0; ) {
 			if (bp-buf >= sz)
-				if (!adjbuf(&buf, &sz, bp-buf+2, 100, &bp, 0))
+				if (!adjbuf(&buf, &sz, bp-buf+2, 100, &bp, "gettok"))
 					FATAL( "out of space for number %.10s...", buf );
 			if (isdigit(c) || c == 'e' || c == 'E' 
 			  || c == '.' || c == '+' || c == '-')
@@ -162,14 +157,14 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		}
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
-		unputstr(rem);		/* put rest back for later */
-/* printf("unputstr [%s], buf [%s]\n", rem, buf); */
 		if (rem == buf) {	/* it wasn't a valid number at all */
-			buf[1] = 0;	/* so return one character as token */
+			buf[1] = 0;	/* return one character as token */
 			retc = buf[0];	/* character is its own type */
+			unputstr(rem+1); /* put rest back for later */
 		} else {	/* some prefix was a number */
-			rem[0] = 0;	/* so truncate where failure started */
-			retc = '0';	/* number */
+			unputstr(rem);	/* put rest back for later */
+			rem[0] = 0;	/* truncate buf after number part */
+			retc = '0';	/* type is number */
 		}
 	}
 	*pbuf = buf;
@@ -187,7 +182,7 @@ int yylex(void)
 {
 	int c;
 	static char *buf = 0;
-	static int bufsize = 500;
+	static int bufsize = 5; /* BUG: setting this small causes core dump! */
 
 	if (buf == 0 && (buf = (char *) malloc(bufsize)) == NULL)
 		FATAL( "out of space in yylex" );
@@ -199,10 +194,8 @@ int yylex(void)
 		reg = 0;
 		return regexpr();
 	}
-/* printf("top\n"); */
 	for (;;) {
 		c = gettok(&buf, &bufsize);
-/* printf("gettok [%s]\n", buf); */
 		if (c == 0)
 			return 0;
 		if (isalpha(c) || c == '_')
@@ -382,7 +375,7 @@ int string(void)
 	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
 	for (bp = buf; (c = input()) != '"'; ) {
-		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, 0))
+		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, "string"))
 			FATAL("out of space for string %.10s...", buf);
 		switch (c) {
 		case '\n':
@@ -476,12 +469,13 @@ int word(char *w)
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
+/* BUG: this ought to be inside the if; in theory could fault (daniel barrett) */
 	kp = keywords + n;
 	if (n != -1) {	/* found in table */
 		yylval.i = kp->sub;
 		switch (kp->type) {	/* special handling */
-		case FSYSTEM:
-			if (safe)
+		case BLTIN:
+			if (kp->sub == FSYSTEM && safe)
 				SYNTAX( "system is unsafe" );
 			RET(kp->type);
 		case FUNC:
@@ -529,7 +523,7 @@ int regexpr(void)
 		FATAL("out of space for rex expr");
 	bp = buf;
 	for ( ; ((c = input()) != '/' || openclass == 1) && c != 0; ) {
-		if (!adjbuf(&buf, &bufsz, bp-buf+3, 500, &bp, 0))
+		if (!adjbuf(&buf, &bufsz, bp-buf+3, 500, &bp, "regexpr"))
 			FATAL("out of space for reg expr %.10s...", buf);
 		if (c == '\n') {
 			SYNTAX( "newline in regular expression %.10s...", buf ); 
