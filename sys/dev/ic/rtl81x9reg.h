@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.54 2008/10/05 22:43:40 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.55 2008/10/06 00:34:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -393,9 +393,10 @@
 /*
  * Config 2 register
  */
-#define RL_CFG2_PCI33MHZ	0x00
-#define RL_CFG2_PCI66MHZ	0x01
-#define RL_CFG2_PCI64BIT	0x08
+#define RL_CFG2_PCI_MASK	0x07
+#define RL_CFG2_PCI_33MHZ	0x00
+#define RL_CFG2_PCI_66MHZ	0x01
+#define RL_CFG2_PCI_64BIT	0x08
 #define RL_CFG2_AUXPWR		0x10
 
 /*
@@ -789,6 +790,7 @@ struct rl_softc {
 	u_int32_t		sc_hwrev;
 	int			rl_eecmd_read;
 	int			rl_eewidth;
+	int			rl_bus_speed;
 	void			*sc_sdhook;	/* shutdownhook */
 	void			*sc_pwrhook;
 	int			rl_txthresh;

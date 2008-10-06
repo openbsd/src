@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.91 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.92 2008/10/06 00:34:09 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -922,6 +922,32 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS) {
+		sc->rl_bus_speed = 33; /* XXX */
+	} else if (sc->rl_flags & RL_FLAG_PCIE) {
+		sc->rl_bus_speed = 125;
+	} else {
+		u_int8_t cfg2;
+
+		cfg2 = CSR_READ_1(sc, RL_CFG2);
+		switch (cfg2 & RL_CFG2_PCI_MASK) {
+		case RL_CFG2_PCI_33MHZ:
+			sc->rl_bus_speed = 33;
+			break;
+		case RL_CFG2_PCI_66MHZ:
+			sc->rl_bus_speed = 66;
+			break;
+		default:
+			printf("%s: unknown bus speed, assume 33MHz\n",
+			    sc->sc_dev.dv_xname);
+			sc->rl_bus_speed = 33;
+			break;
+		}
+
+		if (cfg2 & RL_CFG2_PCI_64BIT)
+			sc->rl_flags |= RL_FLAG_PCI64;
+	}
 
 	if (sc->rl_ldata.rl_tx_desc_cnt >
 	    PAGE_SIZE / sizeof(struct rl_desc)) {
