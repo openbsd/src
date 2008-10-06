@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.435 2008/07/11 03:03:07 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.436 2008/10/06 19:46:21 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3255,7 +3255,6 @@ need_resched(struct cpu_info *ci)
 		aston(p);
 }
 
-#ifdef MULTIPROCESSOR
 /* Allocate an IDT vector slot within the given range.
  * XXX needs locking to avoid MP allocation races.
  */
@@ -3282,7 +3281,6 @@ idt_vec_free(int vec)
 {
 	unsetgate(&idt[vec]);
 }
-#endif	/* MULTIPROCESSOR */
 
 /*
  * machine dependent system variables.
