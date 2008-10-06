@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2007/11/05 19:23:24 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2008/10/06 20:42:02 chl Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1089,7 +1089,6 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	len;
 	int	rex = 0;
 	int	segovr_grp;
-	int	rep_grp;
 	int	repe, repne;
 	struct i_addr	address;
 	db_addr_t	loc_orig = loc;
@@ -1100,7 +1099,6 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	size = LONG;
 	seg = 0;
 	segovr_grp = 0;
-	rep_grp = 0;
 	repe = 0;
 	repne = 0;
 
