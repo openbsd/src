@@ -11,8 +11,6 @@ ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
 CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 
-PICFLAG?=-fpic
-
 all: ${OBJS}
 
 crt0.o: crt0.c

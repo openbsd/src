@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2008/07/28 14:17:00 kurt Exp $
+#	$OpenBSD: Makefile,v 1.6 2008/10/06 14:17:49 kurt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 CFLAGS+=	-DLIBC_SCCS -DELFSIZE=64
@@ -10,8 +10,6 @@ SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
 CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
-
-PICFLAG?=-fpic
 
 all: ${OBJS}
 
