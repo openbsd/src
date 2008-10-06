@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.57 2008/06/14 20:45:45 pvalchev Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.58 2008/10/06 04:58:37 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -58,7 +58,7 @@ const char *comment[] = {
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
 char *fullname, *tmppath;
-int Dflag, wantcleanup;
+int Dflag, Pflag, wantcleanup;
 
 __dead void
 usage(void)
@@ -97,9 +97,8 @@ main(int argc, char *argv[])
 			printf("%s\n\n", categories);
 			exit(0);
 		case 'P':
-			init();
-			template(stdout);
-			exit(0);
+			Pflag = 1;
+			break;
 		case 'V':
 			printf("%s\n", version);
 			exit(0);
@@ -111,6 +110,12 @@ main(int argc, char *argv[])
 
 	if (argc > 0)
 		usage();
+
+	if (Pflag) {
+		init();
+		template(stdout);
+		exit(0);
+	}
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
