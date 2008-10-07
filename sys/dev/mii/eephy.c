@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.45 2008/09/09 00:25:55 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.46 2008/10/07 20:41:05 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -150,6 +150,9 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX No loopback support yet, although the hardware can do it. */
 	sc->mii_flags |= MIIF_NOLOOP;
+
+	/* Make sure page 0 is selected. */
+        PHY_WRITE(sc, E1000_EADR, 0);
 
 	/* Switch to copper-only mode if necessary. */
 	if (sc->mii_model == MII_MODEL_MARVELL_E1111 &&
