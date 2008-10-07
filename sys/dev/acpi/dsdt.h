@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.41 2008/10/04 18:48:04 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.42 2008/10/07 18:02:20 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -253,6 +253,8 @@ void aml_disasm(struct aml_scope *scope, int lvl,
         void (*dbprintf)(void *, const char *, ...), 
     	void *arg);
 int aml_xgetpci(struct aml_node *, int64_t *);
+
+int acpi_walkmem(int, const char *);
 
 #define aml_get8(p)    *(uint8_t *)(p)
 #define aml_get16(p)   *(uint16_t *)(p)

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.135 2008/10/04 18:48:04 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.136 2008/10/07 18:02:20 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -393,7 +393,18 @@ long acpi_nalloc;
 
 struct acpi_memblock {
 	size_t size;
+#ifdef ACPI_MEMDEBUG
+	const char *fn;
+	int         line;
+	int         sig;
+	LIST_ENTRY(acpi_memblock) link;
+#endif
 };
+#ifdef ACPI_MEMDEBUG
+LIST_HEAD(, acpi_memblock) acpi_memhead;
+#endif
+
+int acpi_memsig;
 
 void *
 _acpi_os_malloc(size_t size, const char *fn, int line)
@@ -404,6 +415,14 @@ _acpi_os_malloc(size_t size, const char *fn, int line)
 	dnprintf(99, "alloc: %x %s:%d\n", sptr, fn, line);
 	acpi_nalloc += size;
 	sptr->size = size;
+#ifdef ACPI_MEMDEBUG
+	sptr->line = line;
+	sptr->fn = fn;
+	sptr->sig = ++acpi_memsig;
+
+	LIST_INSERT_HEAD(&acpi_memhead, sptr, link);
+#endif
+
 	return &sptr[1];
 }
 
@@ -416,9 +435,30 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 		sptr = &(((struct acpi_memblock *)ptr)[-1]);
 		acpi_nalloc -= sptr->size;
 
+#ifdef ACPI_MEMDEBUG	
+		LIST_REMOVE(sptr, link);
+#endif
+
 		dnprintf(99, "free: %x %s:%d\n", sptr, fn, line);
 		free(sptr, M_ACPI);
 	}
+}
+
+int
+acpi_walkmem(int sig, const char *lbl)
+{
+#ifdef ACPI_MEMDEBUG
+	struct acpi_memblock *sptr;
+
+	printf("--- walkmem:%s %x --- %x bytes alloced\n", lbl, sig, acpi_nalloc);
+	LIST_FOREACH(sptr, &acpi_memhead, link) {
+		if (sptr->sig < sig)
+			break;
+		printf("%.4x Alloc %.8lx bytes @ %s:%d\n",
+			sptr->sig, sptr->size, sptr->fn, sptr->line);
+	}
+#endif
+	return acpi_memsig;
 }
 
 void
@@ -1508,6 +1548,10 @@ aml_create_defaultobjects()
 	struct aml_value *tmp;
 	struct aml_defval *def;
 
+#ifdef ACPI_MEMDEBUG
+	LIST_INIT(&acpi_memhead);
+#endif
+
 	osstring[1] = 'i';
 	osstring[6] = 'o';
 	osstring[15] = 'w';
@@ -1826,8 +1870,23 @@ struct aml_scope *
 aml_xfindscope(struct aml_scope *scope, int type, int endscope)
 {
 	while (scope) { 
-		if (endscope)
-			scope->pos = NULL;
+		switch (endscope) {
+		case AMLOP_RETURN:
+			scope->pos = scope->end;
+			if (scope->type == AMLOP_WHILE)
+				scope->pos = NULL;
+			break;
+		case AMLOP_CONTINUE:
+			scope->pos = scope->end;
+			if (scope->type == type)
+			  	scope->pos = scope->start;
+			break;
+		case AMLOP_BREAK:
+			scope->pos = scope->end;
+			if (scope->type == type)
+				scope->pos = NULL;
+			break;
+		}
 		if (scope->type == type)
 			break;
 		scope = scope->parent;
@@ -2665,6 +2724,7 @@ aml_xparsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 		}
 		bpos += blen;
 	}
+	aml_xpopscope(mscope);
 }
 
 /*
@@ -4121,18 +4181,14 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_BREAK:
 		/* Break: Find While Scope parent, mark type as null */
-		mscope = aml_xfindscope(scope, AMLOP_WHILE, 1);
-		mscope->pos = NULL;
-		mscope = NULL;
+		aml_xfindscope(scope, AMLOP_WHILE, AMLOP_BREAK);
 		break;
 	case AMLOP_CONTINUE:
 		/* Find Scope.. mark all objects as invalid on way to root */
-		mscope = aml_xfindscope(scope, AMLOP_WHILE, 1);
-		mscope->pos = mscope->start;
-		mscope = NULL;
+		aml_xfindscope(scope, AMLOP_WHILE, AMLOP_CONTINUE);
 		break;
 	case AMLOP_RETURN:
-		mscope = aml_xfindscope(scope, AMLOP_METHOD, 1);
+		mscope = aml_xfindscope(scope, AMLOP_METHOD, AMLOP_RETURN);
 		if (mscope->retv) {
 			aml_die("already allocated\n");
 		}
@@ -4224,6 +4280,9 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
     int argc, struct aml_value *argv, struct aml_value *res)
 {
 	struct aml_value *xres;
+#ifdef ACPI_MEMDEBUG
+	static int wmstate;
+#endif
 	
 	if (node == NULL || node->value == NULL)
 		return (ACPI_E_BADVALUE);
@@ -4245,6 +4304,9 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_METHOD:
 		aml_busy++;
+#ifdef ACPI_MEMDEBUG
+		wmstate = acpi_walkmem(wmstate, aml_nodename(node));	
+#endif
 		xres = aml_xeval(NULL, node->value, 't', argc, argv);
 		aml_busy--;
 		if (res && xres)
