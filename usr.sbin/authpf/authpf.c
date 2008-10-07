@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.108 2008/10/05 21:10:14 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.109 2008/10/07 17:27:17 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -58,6 +58,7 @@ char	tablename[PF_TABLE_NAME_SIZE] = "authpf_users";
 int	user_ip = 1;	/* controls whether $user_ip is set */
 
 FILE	*pidfp;
+int	pidfd = -1;
 char	 luser[MAXLOGNAME];	/* username */
 char	 ipsrc[256];		/* ip as a string */
 char	 pidfile[MAXPATHLEN];	/* we save pid in this file. */
@@ -78,7 +79,7 @@ extern char *__progname;	/* program name */
 int
 main(int argc, char *argv[])
 {
-	int		 lockcnt = 0, n, pidfd;
+	int		 lockcnt = 0, n;
 	FILE		*config;
 	struct in6_addr	 ina;
 	struct passwd	*pw;
@@ -186,6 +187,14 @@ main(int argc, char *argv[])
 		goto die;
 	}
 
+	signal(SIGTERM, need_death);
+	signal(SIGINT, need_death);
+	signal(SIGALRM, need_death);
+	signal(SIGPIPE, need_death);
+	signal(SIGHUP, need_death);
+	signal(SIGQUIT, need_death);
+	signal(SIGTSTP, need_death);
+
 	/*
 	 * If someone else is already using this ip, then this person
 	 * wants to switch users - so kill the old process and exit
@@ -239,15 +248,17 @@ main(int argc, char *argv[])
 		}
 
 		/*
-		 * we try to kill the previous process and acquire the lock
+		 * We try to kill the previous process and acquire the lock
 		 * for 10 seconds, trying once a second. if we can't after
-		 * 10 attempts we log an error and give up
+		 * 10 attempts we log an error and give up.
 		 */
-		if (++lockcnt > 10) {
-			syslog(LOG_ERR, "cannot kill previous authpf (pid %d)",
-			    otherpid);
+		if (want_death || ++lockcnt > 10) {
+			if (!want_death)
+				syslog(LOG_ERR, "cannot kill previous authpf (pid %d)",
+				    otherpid);
 			fclose(pidfp);
 			pidfp = NULL;
+			pidfd = -1;
 			goto dogdeath;
 		}
 		sleep(1);
@@ -258,6 +269,7 @@ main(int argc, char *argv[])
 		 */
 		fclose(pidfp);
 		pidfp = NULL;
+		pidfd = -1;
 	} while (1);
 	
 	/* whack the group list */
@@ -306,13 +318,6 @@ main(int argc, char *argv[])
 		do_death(0);
 	}
 
-	signal(SIGTERM, need_death);
-	signal(SIGINT, need_death);
-	signal(SIGALRM, need_death);
-	signal(SIGPIPE, need_death);
-	signal(SIGHUP, need_death);
-	signal(SIGQUIT, need_death);
-	signal(SIGTSTP, need_death);
 	while (1) {
 		printf("\r\nHello %s. ", luser);
 		printf("You are authenticated from host \"%s\"\r\n", ipsrc);
@@ -878,7 +883,7 @@ do_death(int active)
 			authpf_kill_states();
 		}
 	}
-	if (pidfile[0] && (pidfp != NULL))
+	if (pidfile[0] && pidfd != -1)
 		if (unlink(pidfile) == -1)
 			syslog(LOG_ERR, "cannot unlink %s (%m)", pidfile);
 	exit(ret);
