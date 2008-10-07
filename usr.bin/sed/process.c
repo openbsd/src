@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.13 2006/10/09 00:23:57 tedu Exp $	*/
+/*	$OpenBSD: process.c,v 1.14 2008/10/07 21:51:37 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static const char rcsid[] = "$OpenBSD: process.c,v 1.13 2006/10/09 00:23:57 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: process.c,v 1.14 2008/10/07 21:51:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -481,11 +481,11 @@ lputs(char *s)
 		if (isascii(*s) && isprint(*s) && *s != '\\') {
 			(void)putchar(*s);
 			count++;
-		} else {
-			escapes = "\\\a\b\f\n\r\t\v";
+		} else if (*s != '\n') {
+			escapes = "\\\a\b\f\r\t\v";
 			(void)putchar('\\');
 			if ((p = strchr(escapes, *s))) {
-				(void)putchar("\\abfnrtv"[p - escapes]);
+				(void)putchar("\\abfrtv"[p - escapes]);
 				count += 2;
 			} else {
 				(void)printf("%03o", *(u_char *)s);
