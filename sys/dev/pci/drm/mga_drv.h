@@ -260,7 +260,7 @@ do {									\
 			    dev_priv->prim.high_mark ) {		\
 			if ( MGA_DMA_DEBUG )				\
 				DRM_INFO( "wrap...\n");		\
-			return -EBUSY;			\
+			return EBUSY;			\
 		}							\
 	}								\
 } while (0)
@@ -271,7 +271,7 @@ do {									\
 		if ( mga_do_wait_for_idle( dev_priv ) < 0 ) {		\
 			if ( MGA_DMA_DEBUG )				\
 				DRM_INFO( "wrap...\n");		\
-			return -EBUSY;			\
+			return EBUSY;			\
 		}							\
 		mga_do_dma_wrap_end( dev_priv );			\
 	}								\

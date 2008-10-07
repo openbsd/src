@@ -83,7 +83,7 @@ static int savage_verify_texaddr(drm_savage_private_t *dev_priv, int unit,
 {
 	if ((addr & 6) != 2) { /* reserved bits */
 		DRM_ERROR("bad texAddr%d %08x (reserved bits)\n", unit, addr);
-		return -EINVAL;
+		return EINVAL;
 	}
 	if (!(addr & 1)) { /* local */
 		addr &= ~7;
@@ -92,13 +92,13 @@ static int savage_verify_texaddr(drm_savage_private_t *dev_priv, int unit,
 			DRM_ERROR
 			    ("bad texAddr%d %08x (local addr out of range)\n",
 			     unit, addr);
-			return -EINVAL;
+			return EINVAL;
 		}
 	} else { /* AGP */
 		if (!dev_priv->agp_textures) {
 			DRM_ERROR("bad texAddr%d %08x (AGP not available)\n",
 				  unit, addr);
-			return -EINVAL;
+			return EINVAL;
 		}
 		addr &= ~7;
 		if (addr < dev_priv->agp_textures->offset ||
@@ -107,7 +107,7 @@ static int savage_verify_texaddr(drm_savage_private_t *dev_priv, int unit,
 			DRM_ERROR
 			    ("bad texAddr%d %08x (AGP addr out of range)\n",
 			     unit, addr);
-			return -EINVAL;
+			return EINVAL;
 		}
 	}
 	return 0;
@@ -132,7 +132,7 @@ static int savage_verify_state_s3d(drm_savage_private_t *dev_priv,
 	    start + count - 1 > SAVAGE_DESTTEXRWWATERMARK_S3D) {
 		DRM_ERROR("invalid register range (0x%04x-0x%04x)\n",
 			  start, start + count - 1);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	SAVE_STATE_MASK(SAVAGE_SCSTART_S3D, s3d.new_scstart,
@@ -164,7 +164,7 @@ static int savage_verify_state_s4(drm_savage_private_t *dev_priv,
 	    start + count - 1 > SAVAGE_TEXBLENDCOLOR_S4) {
 		DRM_ERROR("invalid register range (0x%04x-0x%04x)\n",
 			  start, start + count - 1);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	SAVE_STATE_MASK(SAVAGE_DRAWCTRL0_S4, s4.new_drawctrl0,
@@ -287,7 +287,7 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 
 	if (!dmabuf) {
 		DRM_ERROR("called without dma buffers!\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (!n)
@@ -301,7 +301,7 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of vertices %u in TRILIST\n",
 				  n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	case SAVAGE_PRIM_TRISTRIP:
@@ -310,18 +310,18 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 			DRM_ERROR
 			   ("wrong number of vertices %u in TRIFAN/STRIP\n",
 			    n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	default:
 		DRM_ERROR("invalid primitive type %u\n", prim);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 		if (skip != 0) {
 			DRM_ERROR("invalid skip flags 0x%04x for DMA\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 	} else {
 		unsigned int size = 10 - (skip & 1) - (skip >> 1 & 1) -
@@ -329,18 +329,18 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 			(skip >> 5 & 1) - (skip >> 6 & 1) - (skip >> 7 & 1);
 		if (skip > SAVAGE_SKIP_ALL_S4 || size != 8) {
 			DRM_ERROR("invalid skip flags 0x%04x for DMA\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		if (reorder) {
 			DRM_ERROR("TRILIST_201 used on Savage4 hardware\n");
-			return -EINVAL;
+			return EINVAL;
 		}
 	}
 
 	if (start + n > dmabuf->total / 32) {
 		DRM_ERROR("vertex indices (%u-%u) out of range (0-%u)\n",
 			  start, start + n - 1, dmabuf->total / 32);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	/* Vertex DMA doesn't work with command DMA at the same time,
@@ -438,7 +438,7 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of vertices %u in TRILIST\n",
 				  n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	case SAVAGE_PRIM_TRISTRIP:
@@ -447,24 +447,24 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 			DRM_ERROR
 			    ("wrong number of vertices %u in TRIFAN/STRIP\n",
 			     n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	default:
 		DRM_ERROR("invalid primitive type %u\n", prim);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 		if (skip > SAVAGE_SKIP_ALL_S3D) {
 			DRM_ERROR("invalid skip flags 0x%04x\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		vtx_size = 8; /* full vertex */
 	} else {
 		if (skip > SAVAGE_SKIP_ALL_S4) {
 			DRM_ERROR("invalid skip flags 0x%04x\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		vtx_size = 10; /* full vertex */
 	}
@@ -476,13 +476,13 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 	if (vtx_size > vb_stride) {
 		DRM_ERROR("vertex size greater than vb stride (%u > %u)\n",
 			  vtx_size, vb_stride);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (start + n > vb_size / (vb_stride * 4)) {
 		DRM_ERROR("vertex indices (%u-%u) out of range (0-%u)\n",
 			  start, start + n - 1, vb_size / (vb_stride * 4));
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	prim <<= 25;
@@ -545,7 +545,7 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 
 	if (!dmabuf) {
 		DRM_ERROR("called without dma buffers!\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (!n)
@@ -558,7 +558,7 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of indices %u in TRILIST\n", n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	case SAVAGE_PRIM_TRISTRIP:
@@ -566,18 +566,18 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 		if (n < 3) {
 			DRM_ERROR
 			    ("wrong number of indices %u in TRIFAN/STRIP\n", n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	default:
 		DRM_ERROR("invalid primitive type %u\n", prim);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 		if (skip != 0) {
 			DRM_ERROR("invalid skip flags 0x%04x for DMA\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 	} else {
 		unsigned int size = 10 - (skip & 1) - (skip >> 1 & 1) -
@@ -585,11 +585,11 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 			(skip >> 5 & 1) - (skip >> 6 & 1) - (skip >> 7 & 1);
 		if (skip > SAVAGE_SKIP_ALL_S4 || size != 8) {
 			DRM_ERROR("invalid skip flags 0x%04x for DMA\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		if (reorder) {
 			DRM_ERROR("TRILIST_201 used on Savage4 hardware\n");
-			return -EINVAL;
+			return EINVAL;
 		}
 	}
 
@@ -626,7 +626,7 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 			if (idx[i] > dmabuf->total / 32) {
 				DRM_ERROR("idx[%u]=%u out of range (0-%u)\n",
 					  i, idx[i], dmabuf->total / 32);
-				return -EINVAL;
+				return EINVAL;
 			}
 		}
 
@@ -696,7 +696,7 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of indices %u in TRILIST\n", n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	case SAVAGE_PRIM_TRISTRIP:
@@ -704,24 +704,24 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 		if (n < 3) {
 			DRM_ERROR
 			    ("wrong number of indices %u in TRIFAN/STRIP\n", n);
-			return -EINVAL;
+			return EINVAL;
 		}
 		break;
 	default:
 		DRM_ERROR("invalid primitive type %u\n", prim);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 		if (skip > SAVAGE_SKIP_ALL_S3D) {
 			DRM_ERROR("invalid skip flags 0x%04x\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		vtx_size = 8; /* full vertex */
 	} else {
 		if (skip > SAVAGE_SKIP_ALL_S4) {
 			DRM_ERROR("invalid skip flags 0x%04x\n", skip);
-			return -EINVAL;
+			return EINVAL;
 		}
 		vtx_size = 10; /* full vertex */
 	}
@@ -733,7 +733,7 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 	if (vtx_size > vb_stride) {
 		DRM_ERROR("vertex size greater than vb stride (%u > %u)\n",
 			  vtx_size, vb_stride);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	prim <<= 25;
@@ -746,7 +746,7 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 			if (idx[i] > vb_size / (vb_stride * 4)) {
 				DRM_ERROR("idx[%u]=%u out of range (0-%u)\n",
 					  i, idx[i],  vb_size / (vb_stride * 4));
-				return -EINVAL;
+				return EINVAL;
 			}
 		}
 
@@ -941,7 +941,7 @@ static int savage_dispatch_draw(drm_savage_private_t *dev_priv,
 				DRM_ERROR("IMPLEMENTATION ERROR: "
 					  "non-drawing-command %d\n",
 					  cmd_header.cmd.cmd);
-				return -EINVAL;
+				return EINVAL;
 			}
 
 			if (ret != 0)
@@ -974,7 +974,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 			DRM_ERROR
 			    ("vertex buffer index %u out of range (0-%u)\n",
 			     cmdbuf->dma_idx, dma->buf_count - 1);
-			return -EINVAL;
+			return EINVAL;
 		}
 		dmabuf = dma->buflist[cmdbuf->dma_idx];
 	} else {
@@ -989,26 +989,26 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 	if (cmdbuf->size) {
 		kcmd_addr = drm_calloc(cmdbuf->size, 8, DRM_MEM_DRIVER);
 		if (kcmd_addr == NULL)
-			return -ENOMEM;
+			return ENOMEM;
 
 		if (DRM_COPY_FROM_USER(kcmd_addr, cmdbuf->cmd_addr,
 				       cmdbuf->size * 8))
 		{
 			drm_free(kcmd_addr, cmdbuf->size * 8, DRM_MEM_DRIVER);
-			return -EFAULT;
+			return EFAULT;
 		}
 		cmdbuf->cmd_addr = kcmd_addr;
 	}
 	if (cmdbuf->vb_size) {
 		kvb_addr = drm_alloc(cmdbuf->vb_size, DRM_MEM_DRIVER);
 		if (kvb_addr == NULL) {
-			ret = -ENOMEM;
+			ret = ENOMEM;
 			goto done;
 		}
 
 		if (DRM_COPY_FROM_USER(kvb_addr, cmdbuf->vb_addr,
 				       cmdbuf->vb_size)) {
-			ret = -EFAULT;
+			ret = EFAULT;
 			goto done;
 		}
 		cmdbuf->vb_addr = kvb_addr;
@@ -1017,14 +1017,14 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 		kbox_addr = drm_calloc(cmdbuf->nbox, 
 		    sizeof(struct drm_clip_rect), DRM_MEM_DRIVER);
 		if (kbox_addr == NULL) {
-			ret = -ENOMEM;
+			ret = ENOMEM;
 			goto done;
 		}
 
 		if (DRM_COPY_FROM_USER(kbox_addr, cmdbuf->box_addr,
 				       cmdbuf->nbox *
 				       sizeof(struct drm_clip_rect))) {
-			ret = -EFAULT;
+			ret = EFAULT;
 			goto done;
 		}
 		cmdbuf->box_addr = kbox_addr;
@@ -1057,7 +1057,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 				DRM_ERROR("indexed drawing command extends "
 					  "beyond end of command buffer\n");
 				DMA_FLUSH();
-				return -EINVAL;
+				return EINVAL;
 			}
 			/* fall through */
 		case SAVAGE_CMD_DMA_PRIM:
@@ -1091,7 +1091,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 				DRM_ERROR("command SAVAGE_CMD_STATE extends "
 					  "beyond end of command buffer\n");
 				DMA_FLUSH();
-				ret = -EINVAL;
+				ret = EINVAL;
 				goto done;
 			}
 			ret = savage_dispatch_state(dev_priv, &cmd_header,
@@ -1104,7 +1104,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 				DRM_ERROR("command SAVAGE_CMD_CLEAR extends "
 					  "beyond end of command buffer\n");
 				DMA_FLUSH();
-				ret = -EINVAL;
+				ret = EINVAL;
 				goto done;
 			}
 			ret = savage_dispatch_clear(dev_priv, &cmd_header,
@@ -1122,7 +1122,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 			DRM_ERROR("invalid command 0x%x\n",
 				  cmd_header.cmd.cmd);
 			DMA_FLUSH();
-			ret = -EINVAL;
+			ret = EINVAL;
 			goto done;
 		}
 

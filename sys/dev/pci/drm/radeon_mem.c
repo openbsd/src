@@ -137,12 +137,12 @@ static int init_heap(struct mem_block **heap, int start, int size)
 	struct mem_block *blocks = drm_alloc(sizeof(*blocks), DRM_MEM_BUFS);
 
 	if (!blocks)
-		return -ENOMEM;
+		return ENOMEM;
 
 	*heap = drm_calloc(1, sizeof(**heap), DRM_MEM_BUFS);
 	if (!*heap) {
 		drm_free(blocks, sizeof(*blocks), DRM_MEM_BUFS);
-		return -ENOMEM;
+		return ENOMEM;
 	}
 
 	blocks->start = start;
@@ -224,12 +224,12 @@ int radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_p
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, alloc->region);
 	if (!heap || !*heap)
-		return -EFAULT;
+		return EFAULT;
 
 	/* Make things easier on ourselves: all allocations at least
 	 * 4k aligned.
@@ -240,12 +240,12 @@ int radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_p
 	block = alloc_block(*heap, alloc->size, alloc->alignment, file_priv);
 
 	if (!block)
-		return -ENOMEM;
+		return ENOMEM;
 
 	if (DRM_COPY_TO_USER(alloc->region_offset, &block->start,
 			     sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -259,19 +259,19 @@ int radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_pr
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, memfree->region);
 	if (!heap || !*heap)
-		return -EFAULT;
+		return EFAULT;
 
 	block = find_block(*heap, memfree->region_offset);
 	if (!block)
-		return -EFAULT;
+		return EFAULT;
 
 	if (block->file_priv != file_priv)
-		return -EPERM;
+		return EPERM;
 
 	free_block(block);
 	return 0;
@@ -285,16 +285,16 @@ int radeon_mem_init_heap(struct drm_device *dev, void *data, struct drm_file *fi
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, initheap->region);
 	if (!heap)
-		return -EFAULT;
+		return EFAULT;
 
 	if (*heap) {
 		DRM_ERROR("heap already initialized?");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return init_heap(heap, initheap->start, initheap->size);

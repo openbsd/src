@@ -187,12 +187,12 @@ static int init_heap(struct mem_block **heap, int start, int size)
 	struct mem_block *blocks = drm_alloc(sizeof(*blocks), DRM_MEM_BUFLISTS);
 
 	if (!blocks)
-		return -ENOMEM;
+		return ENOMEM;
 
 	*heap = drm_alloc(sizeof(**heap), DRM_MEM_BUFLISTS);
 	if (!*heap) {
 		drm_free(blocks, sizeof(*blocks), DRM_MEM_BUFLISTS);
-		return -ENOMEM;
+		return ENOMEM;
 	}
 
 	blocks->start = start;
@@ -277,12 +277,12 @@ int i915_mem_alloc(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, alloc->region);
 	if (!heap || !*heap)
-		return -EFAULT;
+		return EFAULT;
 
 	/* Make things easier on ourselves: all allocations at least
 	 * 4k aligned.
@@ -293,14 +293,14 @@ int i915_mem_alloc(struct drm_device *dev, void *data,
 	block = alloc_block(*heap, alloc->size, alloc->alignment, file_priv);
 
 	if (!block)
-		return -ENOMEM;
+		return ENOMEM;
 
 	mark_block(dev, block, 1);
 
 	if (DRM_COPY_TO_USER(alloc->region_offset, &block->start,
 			     sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -315,19 +315,19 @@ int i915_mem_free(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, memfree->region);
 	if (!heap || !*heap)
-		return -EFAULT;
+		return EFAULT;
 
 	block = find_block(*heap, memfree->region_offset);
 	if (!block)
-		return -EFAULT;
+		return EFAULT;
 
 	if (block->file_priv != file_priv)
-		return -EPERM;
+		return EPERM;
 
 	mark_block(dev, block, 0);
 	free_block(block);
@@ -343,16 +343,16 @@ int i915_mem_init_heap(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap(dev_priv, initheap->region);
 	if (!heap)
-		return -EFAULT;
+		return EFAULT;
 
 	if (*heap) {
 		DRM_ERROR("heap already initialized?");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return init_heap(heap, initheap->start, initheap->size);
@@ -367,18 +367,18 @@ int i915_mem_destroy_heap( struct drm_device *dev, void *data,
 
 	if ( !dev_priv ) {
 		DRM_ERROR( "called with no initialization\n" );
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	heap = get_heap( dev_priv, destroyheap->region );
 	if (!heap) {
 		DRM_ERROR("get_heap failed");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	if (!*heap) {
 		DRM_ERROR("heap not initialized?");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	i915_mem_takedown( heap );

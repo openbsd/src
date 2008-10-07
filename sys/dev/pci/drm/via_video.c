@@ -76,7 +76,7 @@ int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_
 	DRM_DEBUG("\n");
 
 	if (fx->lock > VIA_NR_XVMC_LOCKS)
-		return -EFAULT;
+		return EFAULT;
 
 	lock = (volatile int *)XVMCLOCKPTR(sAPriv, fx->lock);
 

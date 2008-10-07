@@ -185,7 +185,7 @@ int via_enable_vblank(struct drm_device *dev, int crtc)
 
 	if (crtc != 0) {
 		DRM_ERROR("%s:  bad crtc %d\n", __FUNCTION__, crtc);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	status = VIA_READ(VIA_REG_INTERRUPT);
@@ -223,12 +223,12 @@ via_driver_irq_wait(struct drm_device * dev, unsigned int irq, int force_sequenc
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (irq >= drm_via_irq_num) {
 		DRM_ERROR("Trying to wait on unknown irq %d\n", irq);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	real_irq = dev_priv->irq_map[irq];
@@ -236,7 +236,7 @@ via_driver_irq_wait(struct drm_device * dev, unsigned int irq, int force_sequenc
 	if (real_irq < 0) {
 		DRM_ERROR("Video IRQ %d not available on this hardware.\n",
 			  irq);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	masks = dev_priv->irq_masks;
@@ -318,7 +318,7 @@ int via_driver_irq_postinstall(struct drm_device * dev)
 
 	DRM_DEBUG("via_driver_irq_postinstall\n");
 	if (!dev_priv)
-		return -EINVAL;
+		return EINVAL;
 
 	drm_vblank_init(dev, 1);
 	status = VIA_READ(VIA_REG_INTERRUPT);
@@ -361,12 +361,12 @@ int via_wait_irq(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	int force_sequence;
 
 	if (!dev->irq)
-		return -EINVAL;
+		return EINVAL;
 
 	if (irqwait->request.irq >= dev_priv->num_irqs) {
 		DRM_ERROR("Trying to wait on unknown irq %d\n",
 			  irqwait->request.irq);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	cur_irq += irqwait->request.irq;
@@ -379,12 +379,12 @@ int via_wait_irq(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	case VIA_IRQ_ABSOLUTE:
 		break;
 	default:
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (irqwait->request.type & VIA_IRQ_SIGNAL) {
 		DRM_ERROR("Signals on Via IRQs not implemented yet.\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	force_sequence = (irqwait->request.type & VIA_IRQ_FORCE_SEQUENCE);

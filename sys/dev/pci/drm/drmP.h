@@ -237,13 +237,12 @@ do {									\
 	}								\
 } while (0)
 
-/* Returns -errno to shared code */
 #define DRM_WAIT_ON( ret, queue, timeout, condition )	\
 DRM_SPINLOCK(&dev->irq_lock);				\
 while ( ret == 0 ) {					\
 	if (condition)					\
 		break;					\
-	ret = -msleep(&(queue), &dev->irq_lock,	 	\
+	ret = msleep(&(queue), &dev->irq_lock,	 	\
 	     PZERO | PCATCH, "drmwtq", (timeout));	\
 }							\
 DRM_SPINUNLOCK(&dev->irq_lock)

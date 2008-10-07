@@ -101,7 +101,7 @@ int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		if (!add_alloc_set(fb->context, VIDEO_TYPE, fb->free)) {
 			DRM_DEBUG("adding to allocation set fails\n");
 			sis_free(req.offset);
-			retval = -EINVAL;
+			retval = EINVAL;
 		}
 	} else {
 		fb->offset = 0;
@@ -120,10 +120,10 @@ int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	int retval = 0;
 
 	if (!fb->free)
-		return -EINVAL;
+		return EINVAL;
 
 	if (!del_alloc_set(fb->context, VIDEO_TYPE, fb->free))
-		retval = -EINVAL;
+		retval = EINVAL;
 	sis_free(fb->free);
 
 	DRM_DEBUG("free fb, offset = 0x%lx\n", fb->free);
@@ -157,7 +157,7 @@ int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 
 	if (dev_priv->FBHeap != NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	dev_priv->FBHeap = mmInit(fb->offset, fb->size);
 
@@ -174,7 +174,7 @@ int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	int retval = 0;
 
 	if (dev_priv == NULL || dev_priv->FBHeap == NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	block = mmAllocMem(dev_priv->FBHeap, fb->size, 0, 0);
 	if (block) {
@@ -184,7 +184,7 @@ int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		if (!add_alloc_set(fb->context, VIDEO_TYPE, fb->free)) {
 			DRM_DEBUG("adding to allocation set fails\n");
 			mmFreeMem((PMemBlock) fb->free);
-			retval = -EINVAL;
+			retval = EINVAL;
 		}
 	} else {
 		fb->offset = 0;
@@ -203,13 +203,13 @@ int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_sis_mem_t *fb = data;
 
 	if (dev_priv == NULL || dev_priv->FBHeap == NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	if (!mmBlockInHeap(dev_priv->FBHeap, (PMemBlock) fb->free))
-		return -EINVAL;
+		return EINVAL;
 
 	if (!del_alloc_set(fb->context, VIDEO_TYPE, fb->free))
-		return -EINVAL;
+		return EINVAL;
 	mmFreeMem((PMemBlock) fb->free);
 
 	DRM_DEBUG("free fb, free = 0x%lx\n", fb->free);
@@ -235,7 +235,7 @@ int sis_ioctl_agp_init(struct drm_device *dev, void *data, struct drm_file *file
 	}
 
 	if (dev_priv->AGPHeap != NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	dev_priv->AGPHeap = mmInit(agp->offset, agp->size);
 
@@ -252,7 +252,7 @@ int sis_ioctl_agp_alloc(struct drm_device *dev, void *data, struct drm_file *fil
 	int retval = 0;
 
 	if (dev_priv == NULL || dev_priv->AGPHeap == NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	block = mmAllocMem(dev_priv->AGPHeap, agp->size, 0, 0);
 	if (block) {
@@ -282,14 +282,14 @@ int sis_ioctl_agp_free(struct drm_device *dev, void *data, struct drm_file *file
 	drm_sis_mem_t *agp = data;
 
 	if (dev_priv == NULL || dev_priv->AGPHeap == NULL)
-		return -EINVAL;
+		return EINVAL;
 
 	if (!mmBlockInHeap(dev_priv->AGPHeap, (PMemBlock) agp->free))
-		return -EINVAL;
+		return EINVAL;
 
 	mmFreeMem((PMemBlock) agp->free);
 	if (!del_alloc_set(agp->context, AGP_TYPE, agp->free))
-		return -EINVAL;
+		return EINVAL;
 
 	DRM_DEBUG("free agp, free = 0x%lx\n", agp->free);
 

@@ -69,7 +69,7 @@ int i915_wait_ring(struct drm_device * dev, int n, const char *caller)
 		    hz / 100);
 	}
 
-	return -EBUSY;
+	return EBUSY;
 }
 
 /**
@@ -85,7 +85,7 @@ int i915_init_phys_hws(struct drm_device *dev)
 
 	if (!dev_priv->status_page_dmah) {
 		DRM_ERROR("Can not allocate hardware status page\n");
-		return -ENOMEM;
+		return ENOMEM;
 	}
 	dev_priv->hw_status_page = dev_priv->status_page_dmah->vaddr;
 	dev_priv->dma_status_page = dev_priv->status_page_dmah->busaddr;
@@ -164,7 +164,7 @@ static int i915_initialize(struct drm_device * dev,
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
 		i915_dma_cleanup(dev);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (init->sarea_priv_offset)
@@ -193,7 +193,7 @@ static int i915_initialize(struct drm_device * dev,
 		i915_dma_cleanup(dev);
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
-		return -ENOMEM;
+		return ENOMEM;
 	}
 
 	dev_priv->ring.virtual_start = dev_priv->ring.map.handle;
@@ -222,19 +222,19 @@ static int i915_dma_resume(struct drm_device * dev)
 
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (dev_priv->ring.map.handle == NULL) {
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
-		return -ENOMEM;
+		return ENOMEM;
 	}
 
 	/* Program Hardware Status Page */
 	if (!dev_priv->hw_status_page) {
 		DRM_ERROR("Can not find hardware status page\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 	DRM_DEBUG("hw status page @ %p\n", dev_priv->hw_status_page);
 
@@ -265,7 +265,7 @@ int i915_dma_init(struct drm_device *dev, void *data,
 		retcode = i915_dma_resume(dev);
 		break;
 	default:
-		retcode = -EINVAL;
+		retcode = EINVAL;
 		break;
 	}
 
@@ -356,7 +356,7 @@ static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 	RING_LOCALS;
 
 	if ((dwords+1) * sizeof(int) >= dev_priv->ring.Size - 8)
-		return -EINVAL;
+		return EINVAL;
 
 	BEGIN_LP_RING((dwords+1)&~1);
 
@@ -364,17 +364,17 @@ static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 		int cmd, sz;
 
 		if (DRM_COPY_FROM_USER_UNCHECKED(&cmd, &buffer[i], sizeof(cmd)))
-			return -EINVAL;
+			return EINVAL;
 
 		if ((sz = validate_cmd(cmd)) == 0 || i + sz > dwords)
-			return -EINVAL;
+			return EINVAL;
 
 		OUT_RING(cmd);
 
 		while (++i, --sz) {
 			if (DRM_COPY_FROM_USER_UNCHECKED(&cmd, &buffer[i],
 							 sizeof(cmd))) {
-				return -EINVAL;
+				return EINVAL;
 			}
 			OUT_RING(cmd);
 		}
@@ -397,13 +397,13 @@ static int i915_emit_box(struct drm_device * dev,
 	RING_LOCALS;
 
 	if (DRM_COPY_FROM_USER_UNCHECKED(&box, &boxes[i], sizeof(box))) {
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	if (box.y2 <= box.y1 || box.x2 <= box.x1 || box.y2 <= 0 || box.x2 <= 0) {
 		DRM_ERROR("Bad box %d,%d..%d,%d\n",
 			  box.x1, box.y1, box.x2, box.y2);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (IS_I965G(dev)) {
@@ -482,7 +482,7 @@ static int i915_dispatch_cmdbuffer(struct drm_device * dev,
 
 	if (cmd->sz <= 0 || (cmd->sz & 0x3) != 0) {
 		DRM_ERROR("negative value or incorrect alignment\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	i915_kernel_lost_context(dev);
@@ -517,7 +517,7 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 
 	if ((batch->start | batch->used) & 0x7) {
 		DRM_ERROR("alignment\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	i915_kernel_lost_context(dev);
@@ -654,21 +654,21 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 
 	if (!dev_priv->allow_batchbuffer) {
 		DRM_ERROR("Batchbuffer ioctl disabled\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("i915 batchbuffer, start %x used %d cliprects %d\n",
 		  batch->start, batch->used, batch->num_cliprects);
 
 	if (batch->num_cliprects < 0)
-		return -EINVAL;
+		return EINVAL;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (batch->num_cliprects && DRM_VERIFYAREA_READ(batch->cliprects,
 							batch->num_cliprects *
 							sizeof(struct drm_clip_rect)))
-		return -EFAULT;
+		return EFAULT;
 
 	ret = i915_dispatch_batchbuffer(dev, batch);
 
@@ -689,7 +689,7 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 		  cmdbuf->buf, cmdbuf->sz, cmdbuf->num_cliprects);
 
 	if (cmdbuf->num_cliprects < 0)
-		return -EINVAL;
+		return EINVAL;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -698,7 +698,7 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 				cmdbuf->num_cliprects *
 				sizeof(struct drm_clip_rect))) {
 		DRM_ERROR("Fault accessing cliprects\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	ret = i915_dispatch_cmdbuffer(dev, cmdbuf);
@@ -751,7 +751,7 @@ int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *file_pri
 	if (param->pipes & ~0x3) {
 		DRM_ERROR("Invalid planes 0x%x, only <= 0x3 is valid\n",
 			  param->pipes);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	i915_dispatch_flip(dev, param->pipes, 0);
@@ -769,7 +769,7 @@ int i915_getparam(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	switch (param->param) {
@@ -787,12 +787,12 @@ int i915_getparam(struct drm_device *dev, void *data,
 		break;
 	default:
 		DRM_ERROR("Unknown parameter %d\n", param->param);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (DRM_COPY_TO_USER(param->value, &value, sizeof(int))) {
 		DRM_ERROR("DRM_COPY_TO_USER failed\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -806,7 +806,7 @@ int i915_setparam(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	switch (param->param) {
@@ -820,7 +820,7 @@ int i915_setparam(struct drm_device *dev, void *data,
 		break;
 	default:
 		DRM_ERROR("unknown parameter %d\n", param->param);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -848,11 +848,11 @@ int i915_mmio(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (mmio->reg >= mmio_table_size)
-		return -EINVAL;
+		return EINVAL;
 
 	e = &mmio_table[mmio->reg];
 	base = (u8 *) dev_priv->mmio_map->handle + e->offset;
@@ -860,21 +860,21 @@ int i915_mmio(struct drm_device *dev, void *data,
 	switch (mmio->read_write) {
 	case I915_MMIO_READ:
 		if (!(e->flag & I915_MMIO_MAY_READ))
-			return -EINVAL;
+			return EINVAL;
 		for (i = 0; i < e->size / 4; i++)
 			buf[i] = I915_READ(e->offset + i * 4);
 		if (DRM_COPY_TO_USER(mmio->data, buf, e->size)) {
 			DRM_ERROR("DRM_COPY_TO_USER failed\n");
-			return -EFAULT;
+			return EFAULT;
 		}
 		break;
 		
 	case I915_MMIO_WRITE:
 		if (!(e->flag & I915_MMIO_MAY_WRITE))
-			return -EINVAL;
+			return EINVAL;
 		if (DRM_COPY_FROM_USER(buf, mmio->data, e->size)) {
 			DRM_ERROR("DRM_COPY_TO_USER failed\n");
-			return -EFAULT;
+			return EFAULT;
 		}
 		for (i = 0; i < e->size / 4; i++)
 			I915_WRITE(e->offset + i * 4, buf[i]);
@@ -890,11 +890,11 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 	drm_i915_hws_addr_t *hws = data;
 
 	if (!I915_NEED_GFX_HWS(dev))
-		return -EINVAL;
+		return EINVAL;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 	DRM_DEBUG("set status page addr 0x%08x\n", (u32)hws->addr);
 
@@ -912,7 +912,7 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 		dev_priv->status_gfx_addr = 0;
 		DRM_ERROR("can not ioremap virtual address for"
 				" G33 hw status page\n");
-		return -ENOMEM;
+		return ENOMEM;
 	}
 	dev_priv->hw_status_page = dev_priv->hws_map.handle;
 
@@ -932,7 +932,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 
 	dev_priv = drm_calloc(1, sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	dev->dev_private = (void *)dev_priv;
 

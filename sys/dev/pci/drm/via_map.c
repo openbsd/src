@@ -37,7 +37,7 @@ static int via_do_init_map(struct drm_device * dev, drm_via_init_t * init)
 		DRM_ERROR("could not find sarea!\n");
 		dev->dev_private = (void *)dev_priv;
 		via_do_cleanup_map(dev);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	dev_priv->fb = drm_core_findmap(dev, init->fb_offset);
@@ -45,14 +45,14 @@ static int via_do_init_map(struct drm_device * dev, drm_via_init_t * init)
 		DRM_ERROR("could not find framebuffer!\n");
 		dev->dev_private = (void *)dev_priv;
 		via_do_cleanup_map(dev);
-		return -EINVAL;
+		return EINVAL;
 	}
 	dev_priv->mmio = drm_core_findmap(dev, init->mmio_offset);
 	if (!dev_priv->mmio) {
 		DRM_ERROR("could not find mmio region!\n");
 		dev->dev_private = (void *)dev_priv;
 		via_do_cleanup_map(dev);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	dev_priv->sarea_priv =
@@ -101,7 +101,7 @@ int via_map_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		return via_do_cleanup_map(dev);
 	}
 
-	return -EINVAL;
+	return EINVAL;
 }
 
 int via_driver_load(struct drm_device *dev, unsigned long chipset)
@@ -111,7 +111,7 @@ int via_driver_load(struct drm_device *dev, unsigned long chipset)
 
 	dev_priv = drm_calloc(1, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	dev->dev_private = (void *)dev_priv;
 

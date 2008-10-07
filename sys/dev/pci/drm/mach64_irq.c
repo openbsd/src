@@ -86,7 +86,7 @@ int mach64_enable_vblank(struct drm_device * dev, int crtc)
 	if (crtc != 0) {
 		DRM_ERROR("tried to enable vblank on non-existent crtc %d\n",
 			  crtc);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("before enable vblank CRTC_INT_CTNL: 0x%08x\n", status);

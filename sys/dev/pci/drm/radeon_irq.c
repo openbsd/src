@@ -257,12 +257,12 @@ u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (crtc < 0 || crtc > 1) {
 		DRM_ERROR("Invalid crtc %d\n", crtc);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690) {
@@ -290,14 +290,14 @@ int radeon_irq_emit(struct drm_device *dev, void *data, struct drm_file *file_pr
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	result = radeon_emit_irq(dev);
 
 	if (DRM_COPY_TO_USER(emit->irq_seq, &result, sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -312,7 +312,7 @@ int radeon_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_pr
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return radeon_wait_irq(dev, irqwait->irq_seq);
@@ -383,7 +383,7 @@ int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value)
 	drm_radeon_private_t *dev_priv = (drm_radeon_private_t *) dev->dev_private;
 	if (value & ~(DRM_RADEON_VBLANK_CRTC1 | DRM_RADEON_VBLANK_CRTC2)) {
 		DRM_ERROR("called with invalid crtc 0x%x\n", (unsigned int)value);
-		return -EINVAL;
+		return EINVAL;
 	}
 	dev_priv->vblank_crtc = (unsigned int)value;
 	return 0;

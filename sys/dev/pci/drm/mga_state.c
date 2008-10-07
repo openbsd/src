@@ -412,7 +412,7 @@ static int mga_verify_context(drm_mga_private_t * dev_priv)
 			  ctx->dstorg, dev_priv->front_offset,
 			  dev_priv->back_offset);
 		ctx->dstorg = 0;
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -431,7 +431,7 @@ static int mga_verify_tex(drm_mga_private_t * dev_priv, int unit)
 	if (org == (MGA_TEXORGMAP_SYSMEM | MGA_TEXORGACC_PCI)) {
 		DRM_ERROR("*** bad TEXORG: 0x%x, unit %d\n", tex->texorg, unit);
 		tex->texorg = 0;
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -473,13 +473,13 @@ static int mga_verify_iload(drm_mga_private_t * dev_priv,
 	    dstorg + length > (dev_priv->texture_offset +
 			       dev_priv->texture_size)) {
 		DRM_ERROR("*** bad iload DSTORG: 0x%x\n", dstorg);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (length & MGA_ILOAD_MASK) {
 		DRM_ERROR("*** bad iload length: 0x%x\n",
 			  length & MGA_ILOAD_MASK);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -491,7 +491,7 @@ static int mga_verify_blit(drm_mga_private_t * dev_priv,
 	if ((srcorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM) ||
 	    (dstorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM)) {
 		DRM_ERROR("*** bad blit: src=0x%x dst=0x%x\n", srcorg, dstorg);
-		return -EINVAL;
+		return EINVAL;
 	}
 	return 0;
 }
@@ -915,7 +915,7 @@ int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_pri
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (vertex->idx < 0 || vertex->idx > dma->buf_count)
-		return -EINVAL;
+		return EINVAL;
 	buf = dma->buflist[vertex->idx];
 	buf_priv = buf->dev_private;
 
@@ -929,7 +929,7 @@ int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_pri
 			buf_priv->dispatched = 0;
 			mga_freelist_put(dev, buf);
 		}
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
@@ -950,7 +950,7 @@ int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_pr
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (indices->idx < 0 || indices->idx > dma->buf_count)
-		return -EINVAL;
+		return EINVAL;
 
 	buf = dma->buflist[indices->idx];
 	buf_priv = buf->dev_private;
@@ -964,7 +964,7 @@ int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_pr
 			buf_priv->dispatched = 0;
 			mga_freelist_put(dev, buf);
 		}
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
@@ -988,19 +988,19 @@ int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv
 #if 0
 	if (mga_do_wait_for_idle(dev_priv) < 0) {
 		if (MGA_DMA_DEBUG)
-			DRM_INFO("-EBUSY\n");
-		return -EBUSY;
+			DRM_INFO("EBUSY\n");
+		return EBUSY;
 	}
 #endif
 	if (iload->idx < 0 || iload->idx > dma->buf_count)
-		return -EINVAL;
+		return EINVAL;
 
 	buf = dma->buflist[iload->idx];
 	buf_priv = buf->dev_private;
 
 	if (mga_verify_iload(dev_priv, iload->dstorg, iload->length)) {
 		mga_freelist_put(dev, buf);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
@@ -1027,7 +1027,7 @@ int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		sarea_priv->nbox = MGA_NR_SAREA_CLIPRECTS;
 
 	if (mga_verify_blit(dev_priv, blit->srcorg, blit->dstorg))
-		return -EINVAL;
+		return EINVAL;
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
@@ -1048,7 +1048,7 @@ int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
@@ -1061,12 +1061,12 @@ int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		value = dev_priv->chipset;
 		break;
 	default:
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (DRM_COPY_TO_USER(param->value, &value, sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -1080,7 +1080,7 @@ int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *file_priv
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
@@ -1109,7 +1109,7 @@ int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *file_pri
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);

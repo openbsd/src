@@ -545,7 +545,7 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_DEBUG("irq_nr=%d breadcrumb=%d\n", irq_nr,
@@ -563,7 +563,7 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
 	i915_user_irq_off(dev_priv);
 
-	if (ret == -EBUSY) {
+	if (ret == EBUSY) {
 		DRM_ERROR("EBUSY -- rec: %d emitted: %d\n",
 			  READ_BREADCRUMB(dev_priv), (int)dev_priv->counter);
 	}
@@ -587,14 +587,14 @@ int i915_irq_emit(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	result = i915_emit_irq(dev);
 
 	if (DRM_COPY_TO_USER(emit->irq_seq, &result, sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
+		return EFAULT;
 	}
 
 	return 0;
@@ -610,7 +610,7 @@ int i915_irq_wait(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return i915_wait_irq(dev, irqwait->irq_seq);
@@ -731,7 +731,7 @@ int i915_vblank_pipe_set(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -745,7 +745,7 @@ int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	pipe->pipe = DRM_I915_VBLANK_PIPE_A | DRM_I915_VBLANK_PIPE_B;
@@ -769,19 +769,19 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 
 	if (!dev_priv) {
 		DRM_ERROR("%s called with no initialization\n", __func__);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (!dev_priv->sarea_priv || dev_priv->sarea_priv->rotation) {
 		DRM_DEBUG("Rotation not supported\n");
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	if (swap->seqtype & ~(_DRM_VBLANK_RELATIVE | _DRM_VBLANK_ABSOLUTE |
 			     _DRM_VBLANK_SECONDARY | _DRM_VBLANK_NEXTONMISS |
 			     _DRM_VBLANK_FLIP)) {
 		DRM_ERROR("Invalid sequence type 0x%x\n", swap->seqtype);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	plane = (swap->seqtype & _DRM_VBLANK_SECONDARY) ? 1 : 0;
@@ -791,7 +791,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 
 	if (!(dev_priv->vblank_pipe & (1 << pipe))) {
 		DRM_ERROR("Invalid pipe %d\n", pipe);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_SPINLOCK_IRQSAVE(&dev->drw_lock, irqflags);
@@ -804,7 +804,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 	if (!drm_get_drawable_info(dev, swap->drawable)) {
 		DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock, irqflags);
 		DRM_DEBUG("Invalid drawable ID %d\n", swap->drawable);
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock, irqflags);
@@ -827,7 +827,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 		} else {
 			DRM_DEBUG("Missed target sequence\n");
 			drm_vblank_put(dev, pipe);
-			return -EINVAL;
+			return EINVAL;
 		}
 	}
 
@@ -849,7 +849,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 				DRM_DEBUG("Invalid drawable ID %d\n",
 					  swap->drawable);
 				drm_vblank_put(dev, pipe);
-				return -EINVAL;
+				return EINVAL;
 			}
 
 			i915_dispatch_vsync_flip(dev, drw, plane);
@@ -881,7 +881,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 	if (dev_priv->swaps_pending >= 100) {
 		DRM_DEBUG("Too many swaps queued\n");
 		drm_vblank_put(dev, pipe);
-		return -EBUSY;
+		return EBUSY;
 	}
 
 	vbl_swap = drm_calloc(1, sizeof(*vbl_swap), DRM_MEM_DRIVER);
@@ -889,7 +889,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 	if (!vbl_swap) {
 		DRM_ERROR("Failed to allocate memory to queue swap\n");
 		drm_vblank_put(dev, pipe);
-		return -ENOMEM;
+		return ENOMEM;
 	}
 
 	DRM_DEBUG("\n");

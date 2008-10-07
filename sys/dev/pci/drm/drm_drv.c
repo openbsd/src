@@ -230,9 +230,7 @@ drm_attach(struct device *parent, struct device *kdev,
 	if (dev->driver->load != NULL) {
 		int retcode;
 
-		/* Shared code returns -errno. */
-		retcode = -dev->driver->load(dev,
-		    dev->id_entry->driver_private);
+		retcode = dev->driver->load(dev, dev->id_entry->driver_private);
 		if (retcode != 0)
 			goto error;
 	}
@@ -481,8 +479,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	priv->authenticated = DRM_SUSER(p);
 
 	if (dev->driver->open) {
-		/* shared code returns -errno */
-		ret = -dev->driver->open(dev, priv);
+		ret = dev->driver->open(dev, priv);
 		if (ret != 0) {
 			goto free_priv;
 		}
@@ -676,13 +673,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
 		return EACCES;
 
-	if (is_driver_ioctl) {
-		/* shared code returns -errno */
-		retcode = -func(dev, data, file_priv);
-	} else {
-		retcode = func(dev, data, file_priv);
-	}
-
+	retcode = func(dev, data, file_priv);
 	if (retcode != 0)
 		DRM_DEBUG("    returning %d\n", retcode);
 

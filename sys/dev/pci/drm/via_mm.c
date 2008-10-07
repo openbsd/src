@@ -193,15 +193,15 @@ int via_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv
 	switch (mem.type) {
 	case VIA_MEM_VIDEO:
 		if (via_fb_alloc(mem) < 0)
-			return -EFAULT;
+			return EFAULT;
 		return 0;
 	case VIA_MEM_AGP:
 		if (via_agp_alloc(mem) < 0)
-			return -EFAULT;
+			return EFAULT;
 		return 0;
 	}
 
-	return -EFAULT;
+	return EFAULT;
 }
 
 static int via_fb_alloc(drm_via_mem_t * mem)
@@ -292,7 +292,7 @@ int via_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		break;
 	}
 
-	return -EFAULT;
+	return EFAULT;
 }
 
 static int via_fb_free(drm_via_mem_t * mem)
