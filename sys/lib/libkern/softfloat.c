@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.c,v 1.2 2007/12/29 16:59:16 miod Exp $	*/
+/*	$OpenBSD: softfloat.c,v 1.3 2008/10/07 22:06:29 martynas Exp $	*/
 /*	$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /*
@@ -213,6 +213,53 @@ static int64 roundAndPackInt64( flag zSign, bits64 absZ0, bits64 absZ1 )
     return z;
 
 }
+
+#ifdef __alpha__
+/*
+-------------------------------------------------------------------------------
+Takes the 128-bit fixed-point value formed by concatenating `absZ0' and
+`absZ1', with binary point between bits 63 and 64 (between the input words),
+and returns the properly rounded 64-bit integer corresponding to the input.
+If `zSign' is 1, the input is negated before being converted to an integer.
+Ordinarily, the fixed-point input is simply rounded to an integer, with
+the inexact exception raised if the input cannot be represented exactly as
+an integer.
+-------------------------------------------------------------------------------
+*/
+static int64 roundAndPackInt64NoOverflow( flag zSign, bits64 absZ0,
+    bits64 absZ1 )
+{
+    int8 roundingMode;
+    flag roundNearestEven, increment;
+    int64 z;
+
+    roundingMode = float_rounding_mode();
+    roundNearestEven = ( roundingMode == float_round_nearest_even );
+    increment = ( (sbits64) absZ1 < 0 );
+    if ( ! roundNearestEven ) {
+        if ( roundingMode == float_round_to_zero ) {
+            increment = 0;
+        }
+        else {
+            if ( zSign ) {
+                increment = ( roundingMode == float_round_down ) && absZ1;
+            }
+            else {
+                increment = ( roundingMode == float_round_up ) && absZ1;
+            }
+        }
+    }
+    if ( increment ) {
+        ++absZ0;
+        absZ0 &= ~ ( ( (bits64) ( absZ1<<1 ) == 0 ) & roundNearestEven );
+    }
+    z = absZ0;
+    if ( zSign ) z = - z;
+    if ( absZ1 ) float_set_inexact();
+    return z;
+
+}
+#endif /* __alpha__ */
 #endif
 
 /*
@@ -2400,6 +2447,44 @@ int64 float64_to_int64( float64 a )
     return roundAndPackInt64( aSign, aSig, aSigExtra );
 
 }
+
+#ifdef __alpha__
+/*
+-------------------------------------------------------------------------------
+Returns the result of converting the double-precision floating-point value
+`a' to the 64-bit two's complement integer format.  The conversion is
+performed according to the IEC/IEEE Standard for Binary Floating-Point
+Arithmetic---which means in particular that the conversion is rounded
+according to the current rounding mode.  If `a' is a NaN, the invalid
+exception is raised and zero is returned.
+-------------------------------------------------------------------------------
+*/
+int64 float64_to_int64_no_overflow( float64 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits64 aSig, aSigExtra;
+
+    aSig = extractFloat64Frac( a );
+    aExp = extractFloat64Exp( a );
+    aSign = extractFloat64Sign( a );
+    if ( aExp ) aSig |= LIT64( 0x0010000000000000 );
+    shiftCount = 0x433 - aExp;
+    if ( shiftCount <= 0 ) {
+        if ( 0x43E < aExp ) {
+            float_raise( float_flag_invalid );
+            return 0;
+        }
+        aSigExtra = 0;
+        aSig <<= - shiftCount;
+    }
+    else {
+        shift64ExtraRightJamming( aSig, 0, shiftCount, &aSig, &aSigExtra );
+    }
+    return roundAndPackInt64NoOverflow( aSign, aSig, aSigExtra );
+
+}
+#endif /* __alpha__ */
 
 /*
 -------------------------------------------------------------------------------

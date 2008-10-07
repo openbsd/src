@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.h,v 1.3 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: softfloat.h,v 1.4 2008/10/07 22:06:29 martynas Exp $	*/
 /*	$NetBSD: softfloat.h,v 1.1 2001/04/26 03:10:48 ross Exp $	*/
 
 /* This is a derivative work. */
@@ -232,6 +232,9 @@ int float64_to_int32( float64 );
 int float64_to_int32_round_to_zero( float64 );
 #ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
 int64_t float64_to_int64( float64 );
+#ifdef __alpha__
+int64_t float64_to_int64_no_overflow( float64 );
+#endif /* __alpha__ */
 int64_t float64_to_int64_round_to_zero( float64 );
 #endif
 float32 float64_to_float32( float64 );

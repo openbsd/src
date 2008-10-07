@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.7 2006/02/25 03:58:56 deraadt Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.8 2008/10/07 22:06:29 martynas Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -310,6 +310,10 @@ cvt_qt_dg_qg(u_int32_t inst_bits, struct proc *p)
  *      unfortunate habit of always returning the nontrapping result.
  * XXX: there are several apparent AARM/AAH disagreements, as well as
  *      the issue of trap handler pc and trapping results.
+ * XXX: this function will work for signed and unsigned 64-bit integers.
+ *      rounding will happen per IEEE 754.  invalid exception will be
+ *      raised if argument is infinity, not-a-number or if it
+ *      overflows/underflows.  zero will be returned, in this case.
  */
 static void
 cvt_tq_gq(u_int32_t inst_bits, struct proc *p)
@@ -319,7 +323,7 @@ cvt_tq_gq(u_int32_t inst_bits, struct proc *p)
 
 	inst.bits = inst_bits;
 	stt(inst.float_detail.fb, &tfb, p);
-	tfc.i = float64_to_int64(tfb.i);
+	tfc.i = float64_to_int64_no_overflow(tfb.i);
 	alpha_ldt(inst.float_detail.fc, &tfc);	/* yes, ldt */
 }
 
