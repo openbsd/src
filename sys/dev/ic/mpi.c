@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.97 2008/09/30 23:58:40 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.98 2008/10/07 12:34:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1405,10 +1405,8 @@ mpi_scsi_probe(struct scsi_link *link)
 	    address, &ehdr) != 0)
 		return (EIO);
 
-	if (mpi_ecfg_page(sc, address, &ehdr, 1, &pg0, sizeof(pg0)) != 0) {
-		/* the device probably doesnt exist if the page fetch fails */
-		return (ENXIO);
-	}
+	if (mpi_ecfg_page(sc, address, &ehdr, 1, &pg0, sizeof(pg0)) != 0)
+		return (0);
 
 	DPRINTF(MPI_D_MISC, "%s: mpi_scsi_probe sas dev pg 0 for target %d:\n",
 	    DEVNAME(sc), link->target);
