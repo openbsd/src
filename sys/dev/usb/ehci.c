@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.93 2008/10/06 20:18:56 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.94 2008/10/07 11:31:09 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2675,7 +2675,7 @@ ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd)
 	int s;
 
 	s = splusb();
-	LIST_INSERT_AFTER(LIST_FIRST(&sc->sc_freeitds), itd, u.free_list);
+	LIST_INSERT_HEAD(&sc->sc_freeitds, itd, u.free_list);
 	splx(s);
 }
 
