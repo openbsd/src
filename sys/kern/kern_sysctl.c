@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.161 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.162 2008/10/07 02:20:11 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		     p));
 #endif
 	case KERN_FILE:
-		return (sysctl_file(oldp, oldlenp));
+		return (sysctl_file(oldp, oldlenp, p));
 	case KERN_MBSTAT:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &mbstat,
 		    sizeof(mbstat)));
@@ -923,11 +923,12 @@ sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
  * Get file structures.
  */
 int
-sysctl_file(char *where, size_t *sizep)
+sysctl_file(char *where, size_t *sizep, struct proc *p)
 {
 	int buflen, error;
-	struct file *fp;
+	struct file *fp, cfile;
 	char *start = where;
+	struct ucred *cred = p->p_ucred;
 
 	buflen = *sizep;
 	if (where == NULL) {
@@ -959,7 +960,17 @@ sysctl_file(char *where, size_t *sizep)
 			*sizep = where - start;
 			return (ENOMEM);
 		}
-		error = copyout((caddr_t)fp, where, sizeof (struct file));
+
+		/* Only let the superuser or the owner see some information */
+		bcopy(fp, &cfile, sizeof (struct file));
+		if (suser(p, 0) != 0 && cred->cr_uid != fp->f_cred->cr_uid) {
+			cfile.f_offset = (off_t)-1;
+			cfile.f_rxfer = 0;
+			cfile.f_wxfer = 0;
+			cfile.f_rbytes = 0;
+			cfile.f_wbytes = 0;
+		}
+		error = copyout(&cfile, where, sizeof (struct file));
 		if (error)
 			return (error);
 		buflen -= sizeof(struct file);

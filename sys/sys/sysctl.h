@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.93 2008/09/16 15:48:12 gollo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.94 2008/10/07 02:20:11 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ int sysctl__string(void *, size_t *, void *, size_t, char *, int, int);
 int sysctl_rdstring(void *, size_t *, void *, const char *);
 int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
-int sysctl_file(char *, size_t *);
+int sysctl_file(char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
 struct radix_node;
 struct walkarg;

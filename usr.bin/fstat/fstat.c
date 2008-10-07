@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.61 2008/04/08 14:46:45 thib Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.62 2008/10/07 02:20:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.61 2008/04/08 14:46:45 thib Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.62 2008/10/07 02:20:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,6 +146,7 @@ int maxfiles;
 	(kvm_read(kd, (u_long)(kaddr), (void *)(paddr), (len)) == (len))
 
 kvm_t *kd;
+uid_t uid;
 
 int ufs_filestat(struct vnode *, struct filestat *);
 int ext2fs_filestat(struct vnode *, struct filestat *);
@@ -232,6 +233,12 @@ main(int argc, char *argv[])
 		}
 
 	/*
+	 * get the uid, for oflg and sflg
+	 */
+
+	uid = getuid();
+
+	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
@@ -290,6 +297,7 @@ main(int argc, char *argv[])
 }
 
 char	*Uname, *Comm;
+uid_t	*procuid;
 pid_t	Pid;
 
 #define PREFIX(i) do { \
@@ -325,6 +333,7 @@ dofiles(struct kinfo_proc2 *kp)
 #define	filed	filed0.fd_fd
 
 	Uname = user_from_uid(kp->p_uid, 0);
+	procuid = &kp->p_uid;
 	Pid = kp->p_pid;
 	Comm = kp->p_comm;
 
@@ -522,13 +531,22 @@ vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 	}
 	default:
 		printf(" %8lld", (long long)fst.size);
-		if (oflg)
-			printf(":%-8lld", (long long)(fp? fp->f_offset : 0));
+		if (oflg) {
+			if (uid == 0 || uid == *procuid)
+				printf(":%-8lld", (long long)(fp? fp->f_offset : 0));
+			else 
+				printf(":%-8s", "*");
+		}
 	}
-	if (sflg)
-		printf(" %8lld %8lld",
-		    (long long)(fp? fp->f_rxfer + fp->f_wxfer : 0),
-		    (long long)(fp? fp->f_rbytes + fp->f_wbytes : 0) / 1024);
+	if (sflg) {
+		if (uid == 0 || uid == *procuid) {
+			printf(" %8lld %8lld",
+		    	(long long)(fp? fp->f_rxfer + fp->f_wxfer : 0),
+		    	(long long)(fp? fp->f_rbytes + fp->f_wbytes : 0) / 1024);
+		} else {
+			printf(" %8s %8s", "*", "*");
+		}
+	}
 	if (filename && !fsflg)
 		printf(" %s", filename);
 	putchar('\n');

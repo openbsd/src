@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.38 2007/10/01 22:06:02 sobrado Exp $
+.\"	$OpenBSD: fstat.1,v 1.39 2008/10/07 02:20:12 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: October 1 2007 $
+.Dd $Mdocdate: October 7 2008 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -83,6 +83,7 @@ Also, print the mode of the file in octal instead of symbolic form.
 Output file offset.
 Follow the size field with the descriptor's offset.
 Useful for checking progress as a process works through a large file.
+This information is only visible to the user or superuser.
 .It Fl p Ar pid
 Report all files open by the specified process.
 .It Fl s
@@ -90,6 +91,7 @@ Report per file io statistics in two additional columns
 .Sq XFERS
 and
 .Sq KBYTES .
+This information is only visible to the user or superuser.
 .It Fl u Ar user
 Report all files open by the specified user.
 .It Fl v
