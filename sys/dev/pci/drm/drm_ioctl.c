@@ -208,8 +208,8 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	ver = *sv;
 	sv->drm_di_major = DRM_IF_MAJOR;
 	sv->drm_di_minor = DRM_IF_MINOR;
-	sv->drm_dd_major = dev->driver.major;
-	sv->drm_dd_minor = dev->driver.minor;
+	sv->drm_dd_major = dev->driver->major;
+	sv->drm_dd_minor = dev->driver->minor;
 
 	if (ver.drm_di_major != -1) {
 		if (ver.drm_di_major != DRM_IF_MAJOR || ver.drm_di_minor < 0 ||
@@ -227,9 +227,9 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 
 	if (ver.drm_dd_major != -1) {
-		if (ver.drm_dd_major != dev->driver.major ||
+		if (ver.drm_dd_major != dev->driver->major ||
 		    ver.drm_dd_minor < 0 ||
-		    ver.drm_dd_minor > dev->driver.minor)
+		    ver.drm_dd_minor > dev->driver->minor)
 		{
 			return EINVAL;
 		}

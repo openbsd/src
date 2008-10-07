@@ -297,7 +297,7 @@ typedef struct drm_buf {
 	int		  total;       /* Buffer size			     */
 	int		  used;	       /* Amount of buffer in use (for DMA)  */
 	unsigned long	  offset;      /* Byte offset (used internally)	     */
-	void 		  *address;      /* Byte offset (used internally)	     */
+	void 		  *address;    /* KVA of buffer			     */
 	unsigned long	  bus_address; /* Bus address of buffer		     */
 	__volatile__ int  pending;     /* On hardware DMA queue		     */
 	struct drm_file   *file_priv;  /* Unique identifier of holding process */
@@ -471,8 +471,6 @@ struct drm_driver_info {
 	int	(*enable_vblank)(struct drm_device *, int);
 	void	(*disable_vblank)(struct drm_device *, int);
 
-	drm_pci_id_list_t *id_entry;	/* PCI ID, name, and chipset private */
-
 	/**
 	 * Called by \c drm_device_is_agp.  Typically used to determine if a
 	 * card is really attached to AGP or not.
@@ -518,7 +516,7 @@ struct drm_driver_info {
 struct drm_device {
 	struct device	  device; /* softc is an extension of struct device */
 
-	struct drm_driver_info driver;
+	const struct drm_driver_info *driver;
 	drm_pci_id_list_t *id_entry;	/* PCI ID, name, and chipset private */
 
 	u_int16_t pci_device;		/* PCI device id */

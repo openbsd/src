@@ -36,29 +36,25 @@
 #include "drmP.h"
 #include "drm_pciids.h"
 
-void	tdfx_configure(struct drm_device *);
-
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
 	tdfx_PCI_IDS
 };
 
-void
-tdfx_configure(struct drm_device *dev)
-{
-	dev->driver.buf_priv_size	= 1; /* No dev_priv */
+static const struct drm_driver_info tdfx_driver = {
+	.buf_priv_size	= 1, /* No dev_priv */
 
-	dev->driver.max_ioctl		= 0;
+	.max_ioctl	= 0,
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	.name		= DRIVER_NAME,
+	.desc		= DRIVER_DESC,
+	.date		= DRIVER_DATE,
+	.major		= DRIVER_MAJOR,
+	.minor		= DRIVER_MINOR,
+	.patchlevel	= DRIVER_PATCHLEVEL,
 
-	dev->driver.use_mtrr		= 1;
-}
+	.use_mtrr	= 1,
+};
 
 #ifdef __FreeBSD__
 static int
@@ -121,7 +117,7 @@ tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	tdfx_configure(dev);
+	dev->driver = &tdfx_driver;
 	return drm_attach(parent, self, pa, tdfx_pciidlist);
 }
 

@@ -37,46 +37,62 @@
 #include "r128_drv.h"
 #include "drm_pciids.h"
 
-void r128_configure(struct drm_device *);
-
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t r128_pciidlist[] = {
 	r128_PCI_IDS
 };
 
-void
-r128_configure(struct drm_device *dev)
-{
-	dev->driver.buf_priv_size	= sizeof(drm_r128_buf_priv_t);
-	dev->driver.preclose		= r128_driver_preclose;
-	dev->driver.lastclose		= r128_driver_lastclose;
-	dev->driver.get_vblank_counter	= r128_get_vblank_counter;
-	dev->driver.enable_vblank 	= r128_enable_vblank;
-	dev->driver.disable_vblank	= r128_disable_vblank;
-	dev->driver.irq_preinstall	= r128_driver_irq_preinstall;
-	dev->driver.irq_postinstall	= r128_driver_irq_postinstall;
-	dev->driver.irq_uninstall	= r128_driver_irq_uninstall;
-	dev->driver.irq_handler		= r128_driver_irq_handler;
-	dev->driver.dma_ioctl		= r128_cce_buffers;
+struct drm_ioctl_desc r128_ioctls[] = {
+	DRM_IOCTL_DEF(DRM_R128_INIT, r128_cce_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_R128_CCE_START, r128_cce_start, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_R128_CCE_STOP, r128_cce_stop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_R128_CCE_RESET, r128_cce_reset, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_R128_CCE_IDLE, r128_cce_idle, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_RESET, r128_engine_reset, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_FULLSCREEN, r128_fullscreen, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_SWAP, r128_cce_swap, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_FLIP, r128_cce_flip, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_CLEAR, r128_cce_clear, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_VERTEX, r128_cce_vertex, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_INDICES, r128_cce_indices, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_BLIT, r128_cce_blit, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_DEPTH, r128_cce_depth, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_STIPPLE, r128_cce_stipple, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_R128_INDIRECT, r128_cce_indirect, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_R128_GETPARAM, r128_getparam, DRM_AUTH),
+};
 
-	dev->driver.ioctls		= r128_ioctls;
-	dev->driver.max_ioctl		= r128_max_ioctl;
+static const struct drm_driver_info r128_driver = {
+	.buf_priv_size		= sizeof(drm_r128_buf_priv_t),
+	.preclose		= r128_driver_preclose,
+	.lastclose		= r128_driver_lastclose,
+	.get_vblank_counter	= r128_get_vblank_counter,
+	.enable_vblank 		= r128_enable_vblank,
+	.disable_vblank		= r128_disable_vblank,
+	.irq_preinstall		= r128_driver_irq_preinstall,
+	.irq_postinstall	= r128_driver_irq_postinstall,
+	.irq_uninstall		= r128_driver_irq_uninstall,
+	.irq_handler		= r128_driver_irq_handler,
+	.dma_ioctl		= r128_cce_buffers,
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	.ioctls			= r128_ioctls,
+	.max_ioctl		= DRM_ARRAY_SIZE(r128_ioctls),
 
-	dev->driver.use_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-	dev->driver.use_pci_dma		= 1;
-	dev->driver.use_sg		= 1;
-	dev->driver.use_dma		= 1;
-	dev->driver.use_irq		= 1;
-	dev->driver.use_vbl_irq		= 1;
-}
+	.name			= DRIVER_NAME,
+	.desc			= DRIVER_DESC,
+	.date			= DRIVER_DATE,
+	.major			= DRIVER_MAJOR,
+	.minor			= DRIVER_MINOR,
+	.patchlevel		= DRIVER_PATCHLEVEL,
+
+	.use_agp		= 1,
+	.use_mtrr		= 1,
+	.use_pci_dma		= 1,
+	.use_sg			= 1,
+	.use_dma		= 1,
+	.use_irq		= 1,
+	.use_vbl_irq		= 1,
+};
 
 #ifdef __FreeBSD__
 static int
@@ -139,7 +155,7 @@ r128drm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	r128_configure(dev);
+	dev->driver = &r128_driver;
 	return drm_attach(parent, self, pa, r128_pciidlist);
 }
 

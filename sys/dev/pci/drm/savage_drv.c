@@ -32,39 +32,44 @@
 #include "savage_drv.h"
 #include "drm_pciids.h"
 
-void	savage_configure(struct drm_device *);
-
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {
 	savage_PCI_IDS
 };
 
-void
-savage_configure(struct drm_device *dev)
-{
-	dev->driver.buf_priv_size	= sizeof(drm_savage_buf_priv_t);
-	dev->driver.load		= savage_driver_load;
-	dev->driver.firstopen		= savage_driver_firstopen;
-	dev->driver.lastclose		= savage_driver_lastclose;
-	dev->driver.unload		= savage_driver_unload;
-	dev->driver.reclaim_buffers_locked = savage_reclaim_buffers;
-	dev->driver.dma_ioctl		= savage_bci_buffers;
+struct drm_ioctl_desc savage_ioctls[] = {
+	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_INIT, savage_bci_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_CMDBUF, savage_bci_cmdbuf, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_EMIT, savage_bci_event_emit, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_WAIT, savage_bci_event_wait, DRM_AUTH),
+};
 
-	dev->driver.ioctls		= savage_ioctls;
-	dev->driver.max_ioctl		= savage_max_ioctl;
+int savage_max_ioctl = DRM_ARRAY_SIZE(savage_ioctls);
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+static const struct drm_driver_info savage_driver = {
+	.buf_priv_size		= sizeof(drm_savage_buf_priv_t),
+	.load			= savage_driver_load,
+	.firstopen		= savage_driver_firstopen,
+	.lastclose		= savage_driver_lastclose,
+	.unload			= savage_driver_unload,
+	.reclaim_buffers_locked = savage_reclaim_buffers,
+	.dma_ioctl		= savage_bci_buffers,
 
-	dev->driver.use_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-	dev->driver.use_pci_dma		= 1;
-	dev->driver.use_dma		= 1;
-}
+	.ioctls			= savage_ioctls,
+	.max_ioctl		= DRM_ARRAY_SIZE(savage_ioctls),
+
+	.name			= DRIVER_NAME,
+	.desc			= DRIVER_DESC,
+	.date			= DRIVER_DATE,
+	.major			= DRIVER_MAJOR,
+	.minor			= DRIVER_MINOR,
+	.patchlevel		= DRIVER_PATCHLEVEL,
+
+	.use_agp		= 1,
+	.use_mtrr		= 1,
+	.use_pci_dma		= 1,
+	.use_dma		= 1,
+};
 
 #ifdef __FreeBSD__
 static int
@@ -127,7 +132,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	savage_configure(dev);
+	dev->driver = &savage_driver;
 	return drm_attach(parent, self, pa, savage_pciidlist);
 }
 

@@ -483,7 +483,7 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 		buf->pending = 0;
 		buf->file_priv = NULL;
 
-		buf->dev_private = drm_calloc(1, dev->driver.buf_priv_size,
+		buf->dev_private = drm_calloc(1, dev->driver->buf_priv_size,
 		    DRM_MEM_BUFS);
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
@@ -629,7 +629,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			buf->file_priv = NULL;
 
 			buf->dev_private = drm_calloc(1,
-			    dev->driver.buf_priv_size, DRM_MEM_BUFS);
+			    dev->driver->buf_priv_size, DRM_MEM_BUFS);
 			if (buf->dev_private == NULL) {
 				/* Set count so we free the proper amount. */
 				entry->buf_count = count;
@@ -744,7 +744,7 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 		buf->pending = 0;
 		buf->file_priv = NULL;
 
-		buf->dev_private = drm_calloc(1, dev->driver.buf_priv_size,
+		buf->dev_private = drm_calloc(1, dev->driver->buf_priv_size,
 		    DRM_MEM_BUFS);
 		if (buf->dev_private == NULL) {
 			/* Set count correctly so we free the proper amount. */
@@ -968,8 +968,8 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (request->count < dma->buf_count)
 		goto done;
 
-	if ((dev->driver.use_agp && (dma->flags & _DRM_DMA_USE_AGP)) ||
-	    (dev->driver.use_sg && (dma->flags & _DRM_DMA_USE_SG))) {
+	if ((dev->driver->use_agp && (dma->flags & _DRM_DMA_USE_AGP)) ||
+	    (dev->driver->use_sg && (dma->flags & _DRM_DMA_USE_SG))) {
 		drm_local_map_t *map = dev->agp_buffer_map;
 
 		if (map == NULL) {

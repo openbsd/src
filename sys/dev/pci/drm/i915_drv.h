@@ -245,9 +245,6 @@ enum intel_chip_family {
 	CHIP_I965 = 0x08,
 };
 
-extern struct drm_ioctl_desc i915_ioctls[];
-extern int i915_max_ioctl;
-
 				/* i915_dma.c */
 extern void i915_kernel_lost_context(struct drm_device * dev);
 extern int i915_driver_load(struct drm_device *, unsigned long flags);
@@ -322,6 +319,17 @@ extern void intel_init_chipset_flush_compat(struct drm_device *dev);
 extern void intel_fini_chipset_flush_compat(struct drm_device *dev);
 #endif
 #endif
+
+/* ioctls */
+extern int i915_dma_init(struct drm_device *, void *, struct drm_file *);
+extern int i915_flush_ioctl(struct drm_device *, void *, struct drm_file *);
+extern int i915_batchbuffer(struct drm_device *, void *, struct drm_file *);
+extern int i915_flip_bufs(struct drm_device *, void *, struct drm_file *);
+extern int i915_getparam(struct drm_device *, void *, struct drm_file *);
+extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
+extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);
+extern int i915_mmio(struct drm_device *, void *, struct drm_file *);
+extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
 #define I915_READ(reg)          DRM_READ32(dev_priv->mmio_map, (reg))
 #define I915_WRITE(reg,val)     DRM_WRITE32(dev_priv->mmio_map, (reg), (val))

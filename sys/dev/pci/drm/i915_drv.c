@@ -35,45 +35,62 @@
 #include "i915_drv.h"
 #include "drm_pciids.h"
 
-void	i915_configure(struct drm_device *);
-
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t i915_pciidlist[] = {
 	i915_PCI_IDS
 };
 
-void
-i915_configure(struct drm_device *dev)
-{
-	dev->driver.buf_priv_size	= 1;	/* No dev_priv */
-	dev->driver.load		= i915_driver_load;
-	dev->driver.preclose		= i915_driver_preclose;
-	dev->driver.lastclose		= i915_driver_lastclose;
-	dev->driver.device_is_agp	= i915_driver_device_is_agp;
-	dev->driver.get_vblank_counter	= i915_get_vblank_counter;
-	dev->driver.enable_vblank	= i915_enable_vblank;
-	dev->driver.disable_vblank	= i915_disable_vblank;
-	dev->driver.irq_preinstall	= i915_driver_irq_preinstall;
-	dev->driver.irq_postinstall	= i915_driver_irq_postinstall;
-	dev->driver.irq_uninstall	= i915_driver_irq_uninstall;
-	dev->driver.irq_handler		= i915_driver_irq_handler;
+struct drm_ioctl_desc i915_ioctls[] = {
+	DRM_IOCTL_DEF(DRM_I915_INIT, i915_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_I915_FLUSH, i915_flush_ioctl, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_FLIP, i915_flip_bufs, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_BATCHBUFFER, i915_batchbuffer, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_IRQ_EMIT, i915_irq_emit, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_IRQ_WAIT, i915_irq_wait, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_GETPARAM, i915_getparam, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_SETPARAM, i915_setparam, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_I915_ALLOC, i915_mem_alloc, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_FREE, i915_mem_free, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_INIT_HEAP, i915_mem_init_heap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_I915_CMDBUFFER, i915_cmdbuffer, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_DESTROY_HEAP,  i915_mem_destroy_heap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY ),
+	DRM_IOCTL_DEF(DRM_I915_SET_VBLANK_PIPE,  i915_vblank_pipe_set, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY ),
+	DRM_IOCTL_DEF(DRM_I915_GET_VBLANK_PIPE,  i915_vblank_pipe_get, DRM_AUTH ),
+	DRM_IOCTL_DEF(DRM_I915_VBLANK_SWAP, i915_vblank_swap, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_MMIO, i915_mmio, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_I915_HWS_ADDR, i915_set_status_page, DRM_AUTH),
+};
 
-	dev->driver.ioctls		= i915_ioctls;
-	dev->driver.max_ioctl		= i915_max_ioctl;
+static const struct drm_driver_info i915_driver = {
+	.buf_priv_size		= 1,	/* No dev_priv */
+	.load			= i915_driver_load,
+	.preclose		= i915_driver_preclose,
+	.lastclose		= i915_driver_lastclose,
+	.device_is_agp		= i915_driver_device_is_agp,
+	.get_vblank_counter	= i915_get_vblank_counter,
+	.enable_vblank		= i915_enable_vblank,
+	.disable_vblank		= i915_disable_vblank,
+	.irq_preinstall		= i915_driver_irq_preinstall,
+	.irq_postinstall	= i915_driver_irq_postinstall,
+	.irq_uninstall		= i915_driver_irq_uninstall,
+	.irq_handler		= i915_driver_irq_handler,
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	.ioctls			= i915_ioctls,
+	.max_ioctl		= DRM_ARRAY_SIZE(i915_ioctls),
 
-	dev->driver.use_agp		= 1;
-	dev->driver.require_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-	dev->driver.use_irq		= 1;
-	dev->driver.use_vbl_irq		= 1;
-}
+	.name			= DRIVER_NAME,
+	.desc			= DRIVER_DESC,
+	.date			= DRIVER_DATE,
+	.major			= DRIVER_MAJOR,
+	.minor			= DRIVER_MINOR,
+	.patchlevel		= DRIVER_PATCHLEVEL,
+
+	.use_agp		= 1,
+	.require_agp		= 1,
+	.use_mtrr		= 1,
+	.use_irq		= 1,
+	.use_vbl_irq		= 1,
+};
 
 #ifdef __FreeBSD__
 static int
@@ -140,7 +157,7 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	i915_configure(dev);
+	dev->driver = &i915_driver;
 
 	drm_attach(parent, self, pa, i915_pciidlist);
 }

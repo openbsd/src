@@ -81,12 +81,12 @@ static int del_alloc_set(int context, int type, unsigned int val)
 /* fb management via fb device */
 #if defined(__linux__) && defined(CONFIG_FB_SIS)
 
-static int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	return 0;
 }
 
-static int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_mem_t *fb = data;
 	struct sis_memreq req;
@@ -114,7 +114,7 @@ static int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *fil
 	return retval;
 }
 
-static int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_mem_t fb;
 	int retval = 0;
@@ -143,7 +143,7 @@ static int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file
  *    X driver/sisfb                                  HW-   Command-
  *  framebuffer memory           DRI heap           Cursor   queue
  */
-static int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_fb_t *fb = data;
@@ -166,7 +166,7 @@ static int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file
 	return 0;
 }
 
-static int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_mem_t *fb = data;
@@ -197,7 +197,7 @@ static int sis_fb_alloc(struct drm_device *dev, void *data, struct drm_file *fil
 	return retval;
 }
 
-static int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_mem_t *fb = data;
@@ -221,7 +221,7 @@ static int sis_fb_free(struct drm_device *dev, void *data, struct drm_file *file
 
 /* agp memory management */
 
-static int sis_ioctl_agp_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_ioctl_agp_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_agp_t *agp = data;
@@ -244,7 +244,7 @@ static int sis_ioctl_agp_init(struct drm_device *dev, void *data, struct drm_fil
 	return 0;
 }
 
-static int sis_ioctl_agp_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_ioctl_agp_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_mem_t *agp = data;
@@ -276,7 +276,7 @@ static int sis_ioctl_agp_alloc(struct drm_device *dev, void *data, struct drm_fi
 	return retval;
 }
 
-static int sis_ioctl_agp_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int sis_ioctl_agp_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_mem_t *agp = data;
@@ -373,14 +373,3 @@ int sis_final_context(struct drm_device *dev, int context)
 
 	return 1;
 }
-
-drm_ioctl_desc_t sis_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_SIS_FB_ALLOC, sis_fb_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_FB_FREE, sis_fb_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_INIT, sis_ioctl_agp_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_ALLOC, sis_ioctl_agp_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_FREE, sis_ioctl_agp_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_FB_INIT, sis_fb_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY)
-};
-
-int sis_max_ioctl = DRM_ARRAY_SIZE(sis_ioctls);

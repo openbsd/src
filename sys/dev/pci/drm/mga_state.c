@@ -861,7 +861,7 @@ static void mga_dma_dispatch_blit(struct drm_device * dev, drm_mga_blit_t * blit
  *
  */
 
-static int mga_dma_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -883,7 +883,7 @@ static int mga_dma_clear(struct drm_device *dev, void *data, struct drm_file *fi
 	return 0;
 }
 
-static int mga_dma_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -904,7 +904,7 @@ static int mga_dma_swap(struct drm_device *dev, void *data, struct drm_file *fil
 	return 0;
 }
 
-static int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -939,7 +939,7 @@ static int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *f
 	return 0;
 }
 
-static int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -974,7 +974,7 @@ static int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *
 	return 0;
 }
 
-static int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_device_dma *dma = dev->dma;
 	drm_mga_private_t *dev_priv = dev->dev_private;
@@ -1014,7 +1014,7 @@ static int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *fi
 	return 0;
 }
 
-static int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -1040,7 +1040,7 @@ static int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *fil
 	return 0;
 }
 
-static int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	drm_mga_getparam_t *param = data;
@@ -1072,7 +1072,7 @@ static int mga_getparam(struct drm_device *dev, void *data, struct drm_file *fil
 	return 0;
 }
 
-static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	u32 *fence = data;
@@ -1102,7 +1102,7 @@ static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *fi
 	return 0;
 }
 
-static int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	u32 *fence = data;
@@ -1118,22 +1118,3 @@ static int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *f
 
 	return 0;
 }
-
-struct drm_ioctl_desc mga_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_MGA_INIT, mga_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_MGA_FLUSH, mga_dma_flush, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_RESET, mga_dma_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_SWAP, mga_dma_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_CLEAR, mga_dma_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_VERTEX, mga_dma_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_INDICES, mga_dma_indices, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_ILOAD, mga_dma_iload, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_BLIT, mga_dma_blit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_GETPARAM, mga_getparam, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_SET_FENCE, mga_set_fence, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_WAIT_FENCE, mga_wait_fence, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_DMA_BOOTSTRAP, mga_dma_bootstrap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-};
-
-int mga_max_ioctl = DRM_ARRAY_SIZE(mga_ioctls);

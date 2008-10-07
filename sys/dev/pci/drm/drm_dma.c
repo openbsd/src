@@ -70,7 +70,7 @@ drm_cleanup_buf(struct drm_device *dev, drm_buf_entry_t *entry)
    	if (entry->buf_count) {
 	   	for (i = 0; i < entry->buf_count; i++) {
 			drm_free(entry->buflist[i].dev_private,
-			    dev->driver.buf_priv_size, DRM_MEM_BUFS);
+			    dev->driver->buf_priv_size, DRM_MEM_BUFS);
 		}
 		drm_free(entry->buflist, entry->buf_count *
 		    sizeof(*entry->buflist), DRM_MEM_BUFS);
@@ -132,9 +132,9 @@ int
 drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 
-	if (dev->driver.dma_ioctl) {
+	if (dev->driver->dma_ioctl) {
 		/* shared code returns -errno */
-		return -dev->driver.dma_ioctl(dev, data, file_priv);
+		return -dev->driver->dma_ioctl(dev, data, file_priv);
 	} else {
 		DRM_DEBUG("DMA ioctl on driver with no dma handler\n");
 		return EINVAL;

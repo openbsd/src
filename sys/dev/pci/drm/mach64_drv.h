@@ -110,9 +110,6 @@ typedef struct drm_mach64_private {
 	drm_local_map_t *agp_textures;
 } drm_mach64_private_t;
 
-extern struct drm_ioctl_desc mach64_ioctls[];
-extern int mach64_max_ioctl;
-
 				/* mach64_dma.c */
 extern int mach64_dma_init(struct drm_device *dev, void *data,
 			   struct drm_file *file_priv);

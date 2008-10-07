@@ -131,9 +131,6 @@ typedef struct drm_r128_buf_priv {
 	drm_r128_freelist_t *list_entry;
 } drm_r128_buf_priv_t;
 
-extern struct drm_ioctl_desc r128_ioctls[];
-extern int r128_max_ioctl;
-
 				/* r128_cce.c */
 extern int r128_cce_init(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_cce_start(struct drm_device *dev, void *data, struct drm_file *file_priv);
@@ -143,6 +140,16 @@ extern int r128_cce_idle(struct drm_device *dev, void *data, struct drm_file *fi
 extern int r128_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_cce_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_clear(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_blit(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
 extern void r128_freelist_reset(struct drm_device * dev);
 

@@ -926,7 +926,7 @@ static int savage_do_cleanup_bci(struct drm_device *dev)
 	return 0;
 }
 
-static int savage_bci_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int savage_bci_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_savage_init_t *init = data;
 
@@ -942,7 +942,7 @@ static int savage_bci_init(struct drm_device *dev, void *data, struct drm_file *
 	return -EINVAL;
 }
 
-static int savage_bci_event_emit(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int savage_bci_event_emit(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_savage_private_t *dev_priv = dev->dev_private;
 	drm_savage_event_emit_t *event = data;
@@ -957,7 +957,7 @@ static int savage_bci_event_emit(struct drm_device *dev, void *data, struct drm_
 	return 0;
 }
 
-static int savage_bci_event_wait(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int savage_bci_event_wait(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_savage_private_t *dev_priv = dev->dev_private;
 	drm_savage_event_wait_t *event = data;
@@ -1080,12 +1080,3 @@ void savage_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 
 	drm_core_reclaim_buffers(dev, file_priv);
 }
-
-struct drm_ioctl_desc savage_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_INIT, savage_bci_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_CMDBUF, savage_bci_cmdbuf, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_EMIT, savage_bci_event_emit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_WAIT, savage_bci_event_wait, DRM_AUTH),
-};
-
-int savage_max_ioctl = DRM_ARRAY_SIZE(savage_ioctls);

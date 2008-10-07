@@ -1241,7 +1241,7 @@ static void r128_cce_dispatch_stipple(struct drm_device * dev, u32 * stipple)
  * IOCTL functions
  */
 
-static int r128_cce_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -1305,7 +1305,7 @@ static int r128_do_cleanup_pageflip(struct drm_device * dev)
  * They can & should be intermixed to support multiple 3d windows.
  */
 
-static int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
@@ -1323,7 +1323,7 @@ static int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *fi
 	return 0;
 }
 
-static int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -1344,7 +1344,7 @@ static int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *fi
 	return 0;
 }
 
-static int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -1399,7 +1399,7 @@ static int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *
 	return 0;
 }
 
-static int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -1467,7 +1467,7 @@ static int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file 
 	return 0;
 }
 
-static int r128_cce_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_device_dma *dma = dev->dma;
 	drm_r128_private_t *dev_priv = dev->dev_private;
@@ -1493,7 +1493,7 @@ static int r128_cce_blit(struct drm_device *dev, void *data, struct drm_file *fi
 	return ret;
 }
 
-static int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_depth_t *depth = data;
@@ -1523,7 +1523,7 @@ static int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *f
 	return ret;
 }
 
-static int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_stipple_t *stipple = data;
@@ -1542,7 +1542,7 @@ static int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file 
 	return 0;
 }
 
-static int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -1614,7 +1614,7 @@ static int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file
 	return 0;
 }
 
-static int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_getparam_t *param = data;
@@ -1657,25 +1657,3 @@ void r128_driver_lastclose(struct drm_device * dev)
 {
 	r128_do_cleanup_cce(dev);
 }
-
-struct drm_ioctl_desc r128_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_R128_INIT, r128_cce_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_R128_CCE_START, r128_cce_start, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_R128_CCE_STOP, r128_cce_stop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_R128_CCE_RESET, r128_cce_reset, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_R128_CCE_IDLE, r128_cce_idle, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_RESET, r128_engine_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_FULLSCREEN, r128_fullscreen, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_SWAP, r128_cce_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_FLIP, r128_cce_flip, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_CLEAR, r128_cce_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_VERTEX, r128_cce_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_INDICES, r128_cce_indices, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_BLIT, r128_cce_blit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_DEPTH, r128_cce_depth, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_STIPPLE, r128_cce_stipple, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_R128_INDIRECT, r128_cce_indirect, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_R128_GETPARAM, r128_getparam, DRM_AUTH),
-};
-
-int r128_max_ioctl = DRM_ARRAY_SIZE(r128_ioctls);

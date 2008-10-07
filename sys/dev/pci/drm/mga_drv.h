@@ -149,9 +149,6 @@ typedef struct drm_mga_private {
 	unsigned int agp_size;
 } drm_mga_private_t;
 
-extern struct drm_ioctl_desc mga_ioctls[];
-extern int mga_max_ioctl;
-
 				/* mga_dma.c */
 extern int mga_dma_bootstrap(struct drm_device *dev, void *data,
 			     struct drm_file *file_priv);
@@ -167,6 +164,15 @@ extern int mga_driver_load(struct drm_device *dev, unsigned long flags);
 extern int mga_driver_unload(struct drm_device * dev);
 extern void mga_driver_lastclose(struct drm_device * dev);
 extern int mga_driver_dma_quiescent(struct drm_device * dev);
+extern int mga_dma_swap(struct drm_device *, void *, struct drm_file *);
+extern int mga_dma_clear(struct drm_device *, void *, struct drm_file *);
+extern int mga_dma_vertex(struct drm_device *, void *, struct drm_file *);
+extern int mga_dma_indices(struct drm_device *, void *, struct drm_file *);
+extern int mga_dma_iload(struct drm_device *, void *, struct drm_file *);
+extern int mga_dma_blit(struct drm_device *, void *, struct drm_file *);
+extern int mga_getparam(struct drm_device *, void *, struct drm_file *);
+extern int mga_set_fence(struct drm_device *, void *, struct drm_file *);
+extern int mga_wait_fence(struct drm_device *, void *, struct drm_file *);
 
 extern int mga_do_wait_for_idle(drm_mga_private_t * dev_priv);
 

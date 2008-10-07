@@ -81,10 +81,14 @@ typedef struct drm_sis_private {
 
 extern int sis_init_context(struct drm_device * dev, int context);
 extern int sis_final_context(struct drm_device * dev, int context);
+extern int sis_fb_alloc(struct drm_device *, void *, struct drm_file *);
+extern int sis_fb_free(struct drm_device *, void *, struct drm_file *);
+extern int sis_ioctl_agp_init(struct drm_device *, void *, struct drm_file *);
+extern int sis_ioctl_agp_alloc(struct drm_device *, void *, struct drm_file *);
+extern int sis_ioctl_agp_free(struct drm_device *, void *, struct drm_file *);
+extern int sis_fb_init(struct drm_device *, void *, struct drm_file *);
+
 
 #endif
-
-extern struct drm_ioctl_desc sis_ioctls[];
-extern int sis_max_ioctl;
 
 #endif

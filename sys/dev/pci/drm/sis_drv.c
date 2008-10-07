@@ -31,33 +31,40 @@
 #include "sis_drv.h"
 #include "drm_pciids.h"
 
-void	sis_configure(struct drm_device *);
-
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t sis_pciidlist[] = {
 	sis_PCI_IDS
 };
 
-void
-sis_configure(struct drm_device *dev)
-{
-	dev->driver.buf_priv_size	= 1; /* No dev_priv */
-	dev->driver.context_ctor	= sis_init_context;
-	dev->driver.context_dtor	= sis_final_context;
+drm_ioctl_desc_t sis_ioctls[] = {
+	DRM_IOCTL_DEF(DRM_SIS_FB_ALLOC, sis_fb_alloc, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SIS_FB_FREE, sis_fb_free, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SIS_AGP_INIT, sis_ioctl_agp_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_SIS_AGP_ALLOC, sis_ioctl_agp_alloc, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SIS_AGP_FREE, sis_ioctl_agp_free, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_SIS_FB_INIT, sis_fb_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY)
+};
 
-	dev->driver.ioctls		= sis_ioctls;
-	dev->driver.max_ioctl		= sis_max_ioctl;
+int sis_max_ioctl = DRM_ARRAY_SIZE(sis_ioctls);
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+static const struct drm_driver_info sis_driver = {
+	.buf_priv_size		= 1, /* No dev_priv */
+	.context_ctor		= sis_init_context,
+	.context_dtor		= sis_final_context,
 
-	dev->driver.use_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-}
+	.ioctls			= sis_ioctls,
+	.max_ioctl		= DRM_ARRAY_SIZE(sis_ioctls),
+
+	.name			= DRIVER_NAME,
+	.desc			= DRIVER_DESC,
+	.date			= DRIVER_DATE,
+	.major			= DRIVER_MAJOR,
+	.minor			= DRIVER_MINOR,
+	.patchlevel		= DRIVER_PATCHLEVEL,
+
+	.use_agp		= 1,
+	.use_mtrr		= 1,
+};
 
 #ifdef __FreeBSD__
 static int
@@ -120,7 +127,7 @@ sisdrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	sis_configure(dev);
+	dev->driver = &sis_driver;
 	return drm_attach(parent, self, pa, sis_pciidlist);
 }
 

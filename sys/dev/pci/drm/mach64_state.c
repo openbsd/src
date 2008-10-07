@@ -35,25 +35,6 @@
 #include "mach64_drm.h"
 #include "mach64_drv.h"
 
-/* Interface history:
- *
- * 1.0 - Initial mach64 DRM
- *
- */
-struct drm_ioctl_desc mach64_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_MACH64_INIT, mach64_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_MACH64_CLEAR, mach64_dma_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_SWAP, mach64_dma_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_IDLE, mach64_dma_idle, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_RESET, mach64_engine_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_VERTEX, mach64_dma_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_BLIT, mach64_dma_blit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_FLUSH, mach64_dma_flush, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_GETPARAM, mach64_get_param, DRM_AUTH),
-};
-
-int mach64_max_ioctl = DRM_ARRAY_SIZE(mach64_ioctls);
-
 /* ================================================================
  * DMA hardware state programming functions
  */
