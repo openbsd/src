@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcidump.8,v 1.6 2008/03/02 17:59:10 kettenis Exp $
+.\"	$OpenBSD: pcidump.8,v 1.7 2008/10/07 09:23:32 dlg Exp $
 .\"
 .\" Copyright (c) 2007 Paul de Weerd <weerd@weirdnet.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2008 $
+.Dd $Mdocdate: October 7 2008 $
 .Dt PCIDUMP 8
 .Os
 .Sh NAME
@@ -34,26 +34,40 @@ utility displays the device address, vendor, and product name
 of PCI devices.
 When no arguments are given,
 information on all PCI devices in the system is shown;
-otherwise a single device may be specified by bus, device, and function:
-.Sm off
-.Ar bus : dev : func .
-.Sm on
+otherwise a single PCI domain or device may be specified.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d Ar pcidev
-Specify another file to use for PCI lookups.
+Specify a file to use for PCI lookups.
+If specified without
+.Sm off
+.Ar bus : dev : func ,
+.Sm on
+all PCI devices in the domain will be shown.
 .It Fl v
 Shows detailed information about PCI devices.
 .It Fl x
 Shows a hexadecimal dump of the first 64 bytes of PCI config space.
 .It Fl xx
 Shows a hexadecimal dump of the full PCI config space.
+.It Xo
+.Sm off
+.Ar bus : dev : func
+.Sm on
+.Xc
+Show information about the PCI device specified by the tuple given on
+the command line.
+If the
+.Fl d
+option is not given,
+.Pa /dev/pci
+is used.
 .El
 .Sh FILES
-.Bl -tag -width /dev/pci -compact
-.It Pa /dev/pci
-Default file for PCI lookups.
+.Bl -tag -width /dev/pci* -compact
+.It Pa /dev/pci*
+Device files for accessing PCI domains.
 .El
 .Sh SEE ALSO
 .Xr pci 4
@@ -69,3 +83,7 @@ The
 utility was written by
 .An David Gwynne
 .Aq dlg@openbsd.org .
+.Sh BUGS
+The default behaviour of scanning all PCI domains is limited to those
+domains that have an entry in
+.Pa /dev .

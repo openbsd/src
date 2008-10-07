@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.15 2008/07/23 15:39:52 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.16 2008/10/07 09:23:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -25,6 +25,7 @@
 #include <err.h>
 
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/pciio.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
@@ -33,6 +34,7 @@
 #define PCIDEV	"/dev/pci"
 
 __dead void usage(void);
+void scanpcidomain(void);
 int probe(int, int, int);
 void dump(int, int, int);
 void hexdump(int, int, int, int);
@@ -82,14 +84,15 @@ main(int argc, char *argv[])
 {
 	int nfuncs;
 	int bus, dev, func;
-	char *pcidev = PCIDEV;
+	char pcidev[MAXPATHLEN] = PCIDEV;
 	const char *errstr;
-	int c, error = 0;
+	int c, error = 0, dumpall = 1, domid = 0;
 
 	while ((c = getopt(argc, argv, "d:vx")) != -1) {
 		switch (c) {
 		case 'd':
-			pcidev = optarg;
+			strlcpy(pcidev, optarg, sizeof(pcidev));
+			dumpall = 0;
 			break;
 		case 'v':
 			verbose = 1;
@@ -107,9 +110,30 @@ main(int argc, char *argv[])
 	if (argc > 1 || (verbose && hex))
 		usage();
 
-	pcifd = open(pcidev, O_RDONLY, 0777);
-	if (pcifd == -1)
-		err(1, "%s", pcidev);
+	if (argc == 1)
+		dumpall = 0;
+
+	if (dumpall == 0) {
+		pcifd = open(pcidev, O_RDONLY, 0777);
+		if (pcifd == -1)
+			err(1, "%s", pcidev);
+		printf("Domain %s:\n", pcidev);
+	} else {
+		for (;;) {
+			snprintf(pcidev, 16, "/dev/pci%d", domid++);
+			pcifd = open(pcidev, O_RDONLY, 0777);
+			if (pcifd == -1) {
+				if (errno == ENXIO || errno == ENOENT) {
+					return 0;
+				} else {
+					err(1, "%s", pcidev);
+				}
+			}
+			printf("Domain %s:\n", pcidev);
+			scanpcidomain();
+			close(pcifd);
+		}
+	}
 
 	if (argc == 1) {
 		errstr = str2busdevfunc(argv[0], &bus, &dev, &func);
@@ -125,17 +149,26 @@ main(int argc, char *argv[])
 		if (error != 0)
 			errx(1, "\"%s\": %s", argv[0], strerror(error));
 	} else {
-		for (bus = 0; bus < 256; bus++) {
-			for (dev = 0; dev < 32; dev++) {
-				nfuncs = pci_nfuncs(bus, dev);
-				for (func = 0; func < nfuncs; func++) {
-					probe(bus, dev, func);
-				}
-			}
-		}
+		scanpcidomain();
 	}
 
 	return (0);
+}
+
+void
+scanpcidomain(void)
+{
+	int nfuncs;
+	int bus, dev, func;
+
+	for (bus = 0; bus < 256; bus++) {
+		for (dev = 0; dev < 32; dev++) {
+			nfuncs = pci_nfuncs(bus, dev);
+			for (func = 0; func < nfuncs; func++) {
+				probe(bus, dev, func);
+			}
+		}
+	}
 }
 
 const char *
@@ -200,7 +233,7 @@ probe(int bus, int dev, int func)
 		}
 	}
 
-	printf("%d:%d:%d: %s %s\n", bus, dev, func,
+	printf(" %d:%d:%d: %s %s\n", bus, dev, func,
 	    (vendor == NULL) ? "unknown" : vendor,
 	    (product == NULL) ? "unknown" : product);
 
