@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sed.test,v 1.3 2003/06/03 02:56:16 millert Exp $
+#	$OpenBSD: sed.test,v 1.4 2008/10/07 15:02:45 millert Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 
 main()
 {
-	BASE=/usr/old/bin/sed
+	BASE=/usr/bin/sed
 	BASELOG=sed.out
 	TEST=../obj/sed
 	TESTLOG=nsed.out
@@ -54,7 +54,7 @@ main()
 	exec 4>&1 5>&2
 
 	# Set these flags to get messages about known problems
-	BSD=1
+	BSD=0
 	GNU=0
 	SUN=0
 	tests $BASE $BASELOG
