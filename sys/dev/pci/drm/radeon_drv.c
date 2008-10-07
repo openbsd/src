@@ -109,57 +109,11 @@ static const struct drm_driver_info radeon_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-radeon_probe(device_t dev)
-{
-	return drm_probe(dev, radeon_pciidlist);
-}
-
-static int
-radeon_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	radeon_configure(dev);
-	return drm_attach(nbdev, radeon_pciidlist);
-}
-
-static device_method_t radeon_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		radeon_probe),
-	DEVMETHOD(device_attach,	radeon_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t radeon_driver = {
-	"drm",
-	radeon_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(radeon, vgapci, radeon_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(radeon, pci, radeon_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(radeon, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	radeondrm_probe(struct device *, void *, void *);
 void	radeondrm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 radeondrm_probe(struct device *parent, void *match, void *aux)
-#else
-radeondrm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, radeon_pciidlist);
 }
@@ -174,7 +128,6 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	return drm_attach(parent, self, pa, radeon_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach radeondrm_ca = {
         sizeof (struct drm_device), radeondrm_probe, radeondrm_attach, 
 	drm_detach, drm_activate
@@ -183,13 +136,3 @@ struct cfattach radeondrm_ca = {
 struct cfdriver radeondrm_cd = {
 	NULL, "radeondrm", DV_DULL
 }; 
-#else
-#ifdef _LKM
-CFDRIVER_DECL(radeondrm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(radeondrm, sizeof(struct drm_device), radeondrm_probe,
-    radeondrm_attach, drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

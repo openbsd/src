@@ -87,53 +87,11 @@ static const struct drm_driver_info via_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-via_probe(device_t dev)
-{
-	return drm_probe(dev, via_pciidlist);
-}
-
-static int
-via_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	via_configure(dev);
-	return drm_attach(nbdev, via_pciidlist);
-}
-
-static device_method_t via_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		via_probe),
-	DEVMETHOD(device_attach,	via_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t via_driver = {
-	"drm",
-	via_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-DRIVER_MODULE(via, pci, via_driver, drm_devclass, 0, 0);
-MODULE_DEPEND(via, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	viadrm_probe(struct device *, void *, void *);
 void	viadrm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 viadrm_probe(struct device *parent, void *match, void *aux)
-#else
-viadrm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, via_pciidlist);
 }
@@ -148,7 +106,6 @@ viadrm_attach(struct device *parent, struct device *self, void *opaque)
 	drm_attach(parent, self, pa, via_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach viadrm_ca = {
 	sizeof(struct drm_device), viadrm_probe, viadrm_attach,
 	drm_detach, drm_activate
@@ -157,13 +114,3 @@ struct cfattach viadrm_ca = {
 struct cfdriver viadrm_cd = {
 	0, "viadrm", DV_DULL
 };
-#else
-#ifdef _LKM
-CFDRIVER_DECL(viadrm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(viadrm, sizeof(struct drm_device), viadrm_probe, viadrm_attach,
-	drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

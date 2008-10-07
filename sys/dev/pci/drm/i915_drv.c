@@ -92,61 +92,11 @@ static const struct drm_driver_info i915_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-i915_probe(device_t dev)
-{
-	return drm_probe(dev, i915_pciidlist);
-}
-
-static int
-i915_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	i915_configure(dev);
-	return drm_attach(nbdev, i915_pciidlist);
-}
-
-static device_method_t i915_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		i915_probe),
-	DEVMETHOD(device_attach,	i915_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t i915_driver = {
-#if __FreeBSD_version >= 700010
-	"drm",
-#else
-	"drmsub",
-#endif
-	i915_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(i915, vgapci, i915_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(i915, agp, i915_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(i915, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	i915drm_probe(struct device *, void *, void *);
 void	i915drm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 i915drm_probe(struct device *parent, void *match, void *aux)
-#else
-i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, i915_pciidlist);
 }
@@ -162,7 +112,6 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 	drm_attach(parent, self, pa, i915_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach inteldrm_ca = {
 	sizeof(struct drm_device), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate
@@ -171,14 +120,3 @@ struct cfattach inteldrm_ca = {
 struct cfdriver inteldrm_cd = {
 	0, "inteldrm", DV_DULL
 };
-
-#else
-#ifdef _LKM
-CFDRIVER_DECL(i915drm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(i915drm, sizeof(struct drm_device), i915drm_probe, i915drm_attach,
-	drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

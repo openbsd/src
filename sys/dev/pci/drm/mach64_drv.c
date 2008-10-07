@@ -92,57 +92,11 @@ static const struct drm_driver_info mach64_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-mach64_probe(device_t dev)
-{
-	return drm_probe(dev, mach64_pciidlist);
-}
-
-static int
-mach64_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	mach64_configure(dev);
-	return drm_attach(nbdev, mach64_pciidlist);
-}
-
-static device_method_t mach64_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		mach64_probe),
-	DEVMETHOD(device_attach,	mach64_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t mach64_driver = {
-	"drm",
-	mach64_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(mach64, vgapci, mach64_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(mach64, pci, mach64_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(mach64, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	mach64drm_probe(struct device *, void *, void *);
 void	mach64drm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 mach64drm_probe(struct device *parent, void *match, void *aux)
-#else
-mach64drm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, mach64_pciidlist);
 }
@@ -158,7 +112,6 @@ mach64drm_attach(struct device *parent, struct device *self, void *aux)
 	return drm_attach(parent, self, pa, mach64_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach machdrm_ca = {
 	sizeof(struct drm_device), mach64drm_probe, mach64drm_attach,
 	drm_detach, drm_activate
@@ -167,13 +120,3 @@ struct cfattach machdrm_ca = {
 struct cfdriver machdrm_cd = {
 	0, "machdrm", DV_DULL
 };
-#else
-#ifdef _LKM
-CFDRIVER_DECL(mach64drm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(mach64drm, sizeof(struct drm_device), mach64drm_probe,
-    mach64drm_attach, drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

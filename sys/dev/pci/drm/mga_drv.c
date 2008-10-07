@@ -141,56 +141,10 @@ static const struct drm_driver_info mga_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-mga_probe(device_t dev)
-{
-	return drm_probe(dev, mga_pciidlist);
-}
-
-static int
-mga_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	mga_configure(dev);
-	return drm_attach(nbdev, mga_pciidlist);
-}
-
-static device_method_t mga_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		mga_probe),
-	DEVMETHOD(device_attach,	mga_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t mga_driver = {
-	"drm",
-	mga_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(mga, vgapci, mga_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(mga, pci, mga_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(mga, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	mgadrm_probe(struct device *, void *, void *);
 void	mgadrm_attach(struct device *, struct device *, void *);
 int
-#if defined(__OpenBSD__)
 mgadrm_probe(struct device *parent, void *match, void *aux)
-#else
-mgadrm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, mga_pciidlist);
 }
@@ -205,7 +159,6 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	return drm_attach(parent, self, pa, mga_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach mgadrm_ca = {
 	sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
 	drm_detach, drm_activate
@@ -214,13 +167,3 @@ struct cfattach mgadrm_ca = {
 struct cfdriver mgadrm_cd = {
 	0, "mgadrm", DV_DULL
 };
-#else
-#ifdef _LKM
-CFDRIVER_DECL(mgadrm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(mgadrm, sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
-    drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

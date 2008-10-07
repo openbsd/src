@@ -71,57 +71,11 @@ static const struct drm_driver_info savage_driver = {
 	.use_dma		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-savage_probe(device_t dev)
-{
-	return drm_probe(dev, savage_pciidlist);
-}
-
-static int
-savage_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	savage_configure(dev);
-	return drm_attach(nbdev, savage_pciidlist);
-}
-
-static device_method_t savage_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		savage_probe),
-	DEVMETHOD(device_attach,	savage_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t savage_driver = {
-	"drm",
-	savage_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(savage, vgapci, savage_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(savage, pci, savage_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(savage, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	savagedrm_probe(struct device *, void *, void *);
 void	savagedrm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 savagedrm_probe(struct device *parent, void *match, void *aux)
-#else
-savagedrm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, savage_pciidlist);
 }
@@ -136,7 +90,6 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	return drm_attach(parent, self, pa, savage_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach savagedrm_ca = {
 	sizeof(struct drm_device), savagedrm_probe, savagedrm_attach,
 	drm_detach, drm_activate
@@ -145,13 +98,3 @@ struct cfattach savagedrm_ca = {
 struct cfdriver savagedrm_cd = {
 	0, "savagedrm", DV_DULL
 };
-#else
-#ifdef _LKM
-CFDRIVER_DECL(savagedrm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(savagedrm, sizeof(struct drm_device), savagedrm_probe,
-    savagedrm_attach, drm_detach, drm_activate);
-#endif
-#endif
-
-#endif

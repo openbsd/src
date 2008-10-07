@@ -94,57 +94,11 @@ static const struct drm_driver_info r128_driver = {
 	.use_vbl_irq		= 1,
 };
 
-#ifdef __FreeBSD__
-static int
-r128_probe(device_t dev)
-{
-	return drm_probe(dev, r128_pciidlist);
-}
-
-static int
-r128_attach(device_t nbdev)
-{
-	struct drm_device *dev = device_get_softc(nbdev);
-
-	bzero(dev, sizeof(struct drm_device));
-	r128_configure(dev);
-	return drm_attach(nbdev, r128_pciidlist);
-}
-
-static device_method_t r128_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		r128_probe),
-	DEVMETHOD(device_attach,	r128_attach),
-	DEVMETHOD(device_detach,	drm_detach),
-
-	{ 0, 0 }
-};
-
-static driver_t r128_driver = {
-	"drm",
-	r128_methods,
-	sizeof(struct drm_device)
-};
-
-extern devclass_t drm_devclass;
-#if __FreeBSD_version >= 700010
-DRIVER_MODULE(r128, vgapci, r128_driver, drm_devclass, 0, 0);
-#else
-DRIVER_MODULE(r128, pci, r128_driver, drm_devclass, 0, 0);
-#endif
-MODULE_DEPEND(r128, drm, 1, 1, 1);
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 int	r128drm_probe(struct device *, void *, void *);
 void	r128drm_attach(struct device *, struct device *, void *);
 
 int
-#if defined(__OpenBSD__)
 r128drm_probe(struct device *parent, void *match, void *aux)
-#else
-r128drm_probe(struct device *parent, struct cfdata *match, void *aux)
-#endif
 {
 	return drm_probe((struct pci_attach_args *)aux, r128_pciidlist);
 }
@@ -159,7 +113,6 @@ r128drm_attach(struct device *parent, struct device *self, void *aux)
 	return drm_attach(parent, self, pa, r128_pciidlist);
 }
 
-#if defined(__OpenBSD__)
 struct cfattach ragedrm_ca = {
 	sizeof(struct drm_device), r128drm_probe, r128drm_attach,
 	drm_detach, drm_activate
@@ -168,13 +121,3 @@ struct cfattach ragedrm_ca = {
 struct cfdriver ragedrm_cd = {
 	0, "ragedrm", DV_DULL
 };
-#else
-#ifdef _LKM
-CFDRIVER_DECL(r128drm, DV_TTY, NULL);
-#else
-CFATTACH_DECL(r128drm, sizeof(struct drm_device), r128drm_probe, r128drm_attach,
-	drm_detach, drm_activate);
-#endif
-#endif
-
-#endif
