@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.57 2008/09/16 22:06:24 martynas Exp $
+#  $OpenBSD: Makefile,v 1.58 2008/10/07 22:25:53 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -54,8 +54,8 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
 	    s_ceil.c s_ceilf.c s_floor.c s_floorf.c s_rint.c s_rintf.c
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
-NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
-ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S 
+NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
+ARCH_SRCS = n_atan2.S n_cbrt.S n_hypot.S n_sincos.S n_support.S n_tan.S
 .endif
 
 .PATH:	${.CURDIR}/man
@@ -100,14 +100,17 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	w_gammaf_r.c w_lgamma.c w_lgammaf.c
 
 # math routines for non-IEEE architectures.
-NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
-	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c n_fmax.c \
-	n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_tgamma.c \
-	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
-	n_log__L.c n_pow.c n_sinh.c n_tanh.c n_atan2.c n_cabs.c n_cbrt.c \
-	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c \
-	n_round.c
-
+NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
+	n_atan2.c n_atanh.c n_cabs.c n_cacos.c n_cacosh.c n_carg.c \
+	n_casin.c n_casinh.c n_catan.c n_catanh.c n_cbrt.c n_ccos.c \
+	n_ccosh.c n_cexp.c n_cimag.c n_cimagf.c n_clog.c n_conj.c \
+	n_conjf.c n_cosh.c n_cpow.c n_cproj.c n_cprojf.c n_creal.c \
+	n_crealf.c n_csin.c n_csinh.c n_csqrt.c n_ctan.c n_ctanh.c \
+	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c \
+	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_hypot.c \
+	n_infnan.c n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
+	n_log1p.c n_log__L.c n_pow.c n_round.c n_sincos.c n_sinh.c \
+	n_sqrt.c n_support.c n_tan.c n_tanh.c n_tgamma.c
 
 # OpenBSD's C library supplies these functions:
 #COMMON_SRCS+=	s_fabs.c s_frexp.c s_ldexp.c s_modf.c

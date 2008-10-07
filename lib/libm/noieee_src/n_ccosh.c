@@ -1,6 +1,6 @@
-/*	$OpenBSD: n_cabs.c,v 1.12 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_ccosh.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,44 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*							ccosh
+ *
+ *	Complex hyperbolic cosine
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * double complex ccosh();
+ * double complex z, w;
+ *
+ * w = ccosh (z);
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * ccosh(z) = cosh x  cos y + i sinh x sin y .
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -10,+10     30000       2.9e-16     8.1e-17
+ *
+ */
+
 #include <complex.h>
 #include <math.h>
 
-double
-cabs(double complex z)
+double complex
+ccosh(double complex z)
 {
-	return hypot(__real__ z, __imag__ z);
+	double complex w;
+	double x, y;
+
+	x = creal(z);
+	y = cimag(z);
+	w = cosh (x) * cos (y)  +  (sinh (x) * sin (y)) * I;
+	return (w);
 }

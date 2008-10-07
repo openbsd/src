@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.12 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_cimagf.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -18,8 +18,8 @@
 #include <complex.h>
 #include <math.h>
 
-double
-cabs(double complex z)
+float
+cimagf(float complex z)
 {
-	return hypot(__real__ z, __imag__ z);
+	return __imag__ z;
 }

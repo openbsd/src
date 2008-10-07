@@ -1,6 +1,6 @@
-/*	$OpenBSD: n_cabs.c,v 1.12 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_casinh.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,41 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*							casinh
+ *
+ *	Complex inverse hyperbolic sine
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * double complex casinh();
+ * double complex z, w;
+ *
+ * w = casinh (z);
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * casinh z = -i casin iz .
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -10,+10     30000       1.8e-14     2.6e-15
+ *
+ */
+
 #include <complex.h>
 #include <math.h>
 
-double
-cabs(double complex z)
+double complex
+casinh(double complex z)
 {
-	return hypot(__real__ z, __imag__ z);
+	double complex w;
+
+	w = -1.0 * I * casin (z * I);
+	return (w);
 }

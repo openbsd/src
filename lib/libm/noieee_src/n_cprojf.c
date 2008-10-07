@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cabs.c,v 1.12 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_cprojf.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -18,8 +18,15 @@
 #include <complex.h>
 #include <math.h>
 
-double
-cabs(double complex z)
+float complex
+cprojf(float complex z)
 {
-	return hypot(__real__ z, __imag__ z);
+	float complex res;
+
+	if (isinf(__real__ z) || isinf(__imag__ z)) {
+		__real__ res = INFINITY;
+		__imag__ res = copysign(0.0, __imag__ z);
+	}
+
+	return res;
 }

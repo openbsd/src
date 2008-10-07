@@ -1,6 +1,6 @@
-/*	$OpenBSD: n_cabs.c,v 1.12 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_csinh.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,43 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*							csinh
+ *
+ *	Complex hyperbolic sine
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * double complex csinh();
+ * double complex z, w;
+ *
+ * w = csinh (z);
+ *
+ * DESCRIPTION:
+ *
+ * csinh z = (cexp(z) - cexp(-z))/2
+ *         = sinh x * cos y  +  i cosh x * sin y .
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -10,+10     30000       3.1e-16     8.2e-17
+ *
+ */
+
 #include <complex.h>
 #include <math.h>
 
-double
-cabs(double complex z)
+double complex
+csinh(double complex z)
 {
-	return hypot(__real__ z, __imag__ z);
+	double complex w;
+	double x, y;
+
+	x = creal(z);
+	y = cimag(z);
+	w = sinh (x) * cos (y)  +  (cosh (x) * sin (y)) * I;
+	return (w);
 }
