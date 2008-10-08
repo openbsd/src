@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1421 2008/10/06 23:03:26 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1422 2008/10/08 18:30:12 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8149,6 +8149,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1,
+	    "WiFi Link 5350AGN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2,
 	    "WiFi Link 5350AGN",
 	},
 	{

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1421 2008/10/06 23:03:26 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1422 2008/10/08 18:30:12 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2606,6 +2606,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2	0x4236		/* WiFi Link 5300AGN */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2	0x4237		/* WiFi Link 5100AGN */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1	0x423a		/* WiFi Link 5350AGN */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2	0x423b		/* WiFi Link 5350AGN */
 #define	PCI_PRODUCT_INTEL_TURBO_MEMORY	0x444e		/* Turbo Memory */
 #define	PCI_PRODUCT_INTEL_80960RD	0x5200		/* i960 RD PCI-PCI */
 #define	PCI_PRODUCT_INTEL_PRO_100_SERVER	0x5201		/* PRO 100 Server */
