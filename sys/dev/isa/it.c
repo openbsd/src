@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.34 2008/10/08 17:17:39 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.35 2008/10/08 17:32:47 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -210,7 +210,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ec_iobase = it_readreg(sc->sc_iot, sc->sc_ioh, IT_EC_MSB) << 8;
 	sc->sc_ec_iobase |= it_readreg(sc->sc_iot, sc->sc_ioh, IT_EC_LSB);
 
-	/* initialize watchdog */
+	/* initialize watchdog timer */
 	if (sc->sc_chipid != IT_ID_8705) {
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_CSR, 0x00);
@@ -248,7 +248,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 			    sizeof(sc->sc_sensors[i].desc));
 	}
 
-	/* register update task */
+	/* register sensor update task */
 	if (sensor_task_register(sc, it_ec_refresh, IT_EC_INTERVAL) == NULL) {
 		printf(": unable to register update task\n",
 		    sc->sc_dev.dv_xname);
@@ -424,7 +424,7 @@ it_wdog_cb(void *arg, int period)
 	if (period > 0) {
 		/*
 		 * Older IT8712F chips have 8-bit timeout counter.
-		 * Use minutes for 16-bit values.
+		 * Use minutes for 16-bit values for these chips.
 		 */
 		if (sc->sc_chipid == IT_ID_8712 && sc->sc_chiprev < 0x8 &&
 		    period > 0xff) {
