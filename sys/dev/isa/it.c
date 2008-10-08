@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.33 2008/10/08 15:06:49 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.34 2008/10/08 17:17:39 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -214,8 +214,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_chipid != IT_ID_8705) {
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_CSR, 0x00);
-		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
-		    IT_WDT_TCR_SECS);
+		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0x00);
 		wdog_register(sc, it_wdog_cb);
 	}
 
@@ -407,13 +406,14 @@ int
 it_wdog_cb(void *arg, int period)
 {
 	struct it_softc *sc = arg;
+	int minutes = 0;
 
 	/* enter MB PnP mode and select WDT device */
 	it_enter(sc->sc_iot, sc->sc_ioh, sc->sc_iobase);
 	it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 
-	/* disable watchdog timeout */
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, IT_WDT_TCR_SECS);
+	/* disable watchdog timer */
+	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0x00);
 
 	/* 1000s should be enough for everyone */
 	if (period > 1000)
@@ -421,14 +421,38 @@ it_wdog_cb(void *arg, int period)
 	else if (period < 0)
 		period = 0;
 
-	/* set watchdog timeout */
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_MSB, period >> 8);
-	it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_LSB, period & 0xff);
+	if (period > 0) {
+		/*
+		 * Older IT8712F chips have 8-bit timeout counter.
+		 * Use minutes for 16-bit values.
+		 */
+		if (sc->sc_chipid == IT_ID_8712 && sc->sc_chiprev < 0x8 &&
+		    period > 0xff) {
+			period /= 60;
+			minutes++;
+		}
 
-	if (period > 0)
-		/* enable watchdog timeout */
-		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
-		    IT_WDT_TCR_SECS | IT_WDT_TCR_KRST);
+		/* set watchdog timeout (low byte) */
+		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_LSB,
+		    period & 0xff);
+
+		if (minutes) {
+			/* enable watchdog timer */
+			it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
+			    IT_WDT_TCR_KRST | IT_WDT_TCR_PWROK);
+
+			period *= 60;
+		} else {
+			/* set watchdog timeout (high byte) */
+			it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TMO_MSB,
+			    period >> 8);
+
+			/* enable watchdog timer */
+			it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR,
+			    IT_WDT_TCR_SECS | IT_WDT_TCR_KRST |
+			    IT_WDT_TCR_PWROK);
+		}
+	}
 
 	/* exit MB PnP mode */
 	it_exit(sc->sc_iot, sc->sc_ioh);
