@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.110 2008/09/08 09:06:25 otto Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.111 2008/10/08 17:47:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.110 2008/09/08 09:06:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.111 2008/10/08 17:47:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -406,7 +406,7 @@ dovmstat(u_int interval, int reps)
 		}
 		(void)printf("%2u%2u%2u",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
+#define	rate(x)	((((unsigned)x) + halfuptime) / uptime)	/* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
 		(void)printf("%7u %7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
