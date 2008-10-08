@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2007/10/16 20:19:27 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2008/10/08 17:26:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static const char rcsid[] = "$OpenBSD: main.c,v 1.12 2007/10/16 20:19:27 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.13 2008/10/08 17:26:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,12 +159,13 @@ main(int argc, char *argv[])
  * together.  Empty strings and files are ignored.
  */
 char *
-cu_fgets(char *buf, int n)
+cu_fgets(char **outbuf, size_t *outlen)
 {
 	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
 	static char *s;		/* Current pointer inside string */
 	static char string_ident[30];
+	size_t len;
 	char *p;
 
 again:
@@ -193,11 +194,22 @@ again:
 			goto again;
 		}
 	case ST_FILE:
-		if ((p = fgets(buf, n, f)) != NULL) {
+		if ((p = fgetln(f, &len)) != NULL) {
 			linenum++;
-			if (linenum == 1 && buf[0] == '#' && buf[1] == 'n')
+			if (len > 0 && p[len-1] == '\n')
+				len--;
+			if (len >= *outlen) {
+				do {
+					*outlen *= 2;
+				} while (len >= *outlen);
+				free(*outbuf);
+				*outbuf = xmalloc(*outlen);
+			}
+			memcpy(*outbuf, p, len);
+			(*outbuf)[len] = '\0';
+			if (linenum == 1 && p[0] == '#' && p[1] == 'n')
 				nflag = 1;
-			return (p);
+			return (*outbuf);
 		}
 		script = script->next;
 		(void)fclose(f);
@@ -206,12 +218,14 @@ again:
 	case ST_STRING:
 		if (linenum == 0 && s[0] == '#' && s[1] == 'n')
 			nflag = 1;
-		p = buf;
+		p = *outbuf;
+		len = *outlen;
 		for (;;) {
-			if (n-- <= 1) {
-				*p = '\0';
-				linenum++;
-				return (buf);
+			if (len-- <= 1) {
+				*outbuf = xrealloc(*outbuf, *outlen * 2);
+				p = *outbuf + *outlen - len - 1;
+				len += *outlen;
+				*outlen *= 2;
 			}
 			switch (*s) {
 			case '\0':
@@ -223,14 +237,14 @@ again:
 					script = script->next;
 					*p = '\0';
 					linenum++;
-					return (buf);
+					return (*outbuf);
 				}
 			case '\n':
 				*p++ = '\n';
 				*p = '\0';
 				s++;
 				linenum++;
-				return (buf);
+				return (*outbuf);
 			default:
 				*p++ = *s++;
 			}

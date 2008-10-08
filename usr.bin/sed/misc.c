@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2006/10/09 00:23:57 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2008/10/08 17:26:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93"; */
-static const char rcsid[] = "$OpenBSD: misc.c,v 1.7 2006/10/09 00:23:57 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: misc.c,v 1.8 2008/10/08 17:26:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static const char rcsid[] = "$OpenBSD: misc.c,v 1.7 2006/10/09 00:23:57 tedu Exp
  * malloc with result test
  */
 void *
-xmalloc(u_int size)
+xmalloc(size_t size)
 {
 	void *p;
 
@@ -67,7 +67,7 @@ xmalloc(u_int size)
  * realloc with result test
  */
 void *
-xrealloc(void *p, u_int size)
+xrealloc(void *p, size_t size)
 {
 
 	if ((p = realloc(p, size)) == NULL)
