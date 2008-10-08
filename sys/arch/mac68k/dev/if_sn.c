@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.48 2008/10/02 20:21:13 brad Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.49 2008/10/08 23:53:08 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -254,7 +254,9 @@ snioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	struct sn_softc *sc = ifp->if_softc;
-	int	s = splnet(), err = 0;
+	int s, err = 0;
+
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.17 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.18 2008/10/08 23:53:08 brad Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -178,8 +178,9 @@ mcioctl(ifp, cmd, data)
 	struct mc_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
+	int s, err = 0;
 
-	int	s = splnet(), err = 0;
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
