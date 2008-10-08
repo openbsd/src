@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.78 2008/06/14 03:50:14 art Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.79 2008/10/08 06:24:50 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -126,7 +126,6 @@ struct pfr_walktree {
 
 struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
-struct pool		 pfr_kentry_pl2;
 struct pool		 pfr_kcounters_pl;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
@@ -194,8 +193,6 @@ pfr_initialize(void)
 	    "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry", NULL);
-	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry2", NULL);
 	pool_init(&pfr_kcounters_pl, sizeof(struct pfr_kcounters), 0, 0, 0,
 	    "pfrkcounters", NULL);
 
@@ -811,7 +808,7 @@ pfr_create_kentry(struct pfr_addr *ad, int intr)
 	struct pfr_kentry	*ke;
 
 	if (intr)
-		ke = pool_get(&pfr_kentry_pl2, PR_NOWAIT | PR_ZERO);
+		ke = pool_get(&pfr_kentry_pl, PR_NOWAIT | PR_ZERO);
 	else
 		ke = pool_get(&pfr_kentry_pl, PR_WAITOK|PR_ZERO|PR_LIMITFAIL);
 	if (ke == NULL)
@@ -824,7 +821,6 @@ pfr_create_kentry(struct pfr_addr *ad, int intr)
 	ke->pfrke_af = ad->pfra_af;
 	ke->pfrke_net = ad->pfra_net;
 	ke->pfrke_not = ad->pfra_not;
-	ke->pfrke_intrpool = intr;
 	return (ke);
 }
 
@@ -844,10 +840,7 @@ pfr_destroy_kentry(struct pfr_kentry *ke)
 {
 	if (ke->pfrke_counters)
 		pool_put(&pfr_kcounters_pl, ke->pfrke_counters);
-	if (ke->pfrke_intrpool)
-		pool_put(&pfr_kentry_pl2, ke);
-	else
-		pool_put(&pfr_kentry_pl, ke);
+	pool_put(&pfr_kentry_pl, ke);
 }
 
 void

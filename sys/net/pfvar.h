@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.279 2008/09/22 10:22:19 mpf Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.280 2008/10/08 06:24:50 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1005,7 +1005,6 @@ struct pfr_kentry {
 	u_int8_t		 pfrke_net;
 	u_int8_t		 pfrke_not;
 	u_int8_t		 pfrke_mark;
-	u_int8_t		 pfrke_intrpool;
 };
 #define pfrke_counters	u.pfrke_counters
 #define pfrke_route	u.pfrke_route
