@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.38 2008/10/03 15:10:02 deraadt Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.39 2008/10/08 17:17:15 yuo Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -225,8 +225,6 @@ const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUAD },
 	/* Option GlobeTrotter 3G QUAD PLUS */
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUADPLUS },
-	/* Option GlobeTrotter HSDPA */
-	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_SCORPION },
 	/* Option GlobeTrotter MAX 3.6/7.2 */
 	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GTMAX36 },
 	/* Peracom */
