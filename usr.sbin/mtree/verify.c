@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.16 2004/11/21 19:36:04 otto Exp $	*/
+/*	$OpenBSD: verify.c,v 1.17 2008/10/08 12:17:02 kili Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.16 2004/11/21 19:36:04 otto Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.17 2008/10/08 12:17:02 kili Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,11 @@ extra:
 				    ? rmdir : unlink)(p->fts_accpath)) {
 					(void)printf(", not removed: %s",
 					    strerror(errno));
+					rval = ERROREXIT;
 				} else
 					(void)printf(", removed");
-			}
+			} else
+				rval = MISMATCHEXIT;
 			(void)putchar('\n');
 		}
 		(void)fts_set(t, p, FTS_SKIP);

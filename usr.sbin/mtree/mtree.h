@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.11 2005/08/10 00:42:09 millert Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.12 2008/10/08 12:17:02 kili Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #define	KEYDEFAULT \
 	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID)
 
+#define	ERROREXIT	1
 #define	MISMATCHEXIT	2
 
 typedef struct _node {
