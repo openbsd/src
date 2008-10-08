@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.42 2008/09/12 08:55:41 otto Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.43 2008/10/08 08:41:18 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -360,6 +360,9 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	 *
 	 * XXXCDC: could we take advantage of a kernel realloc()?  
 	 */
+
+	if (slotneed >= UVM_AMAP_LARGE)
+		return E2BIG;
 
 	slotalloc = malloc_roundup(slotneed * MALLOC_SLOT_UNIT) /
 	    MALLOC_SLOT_UNIT;

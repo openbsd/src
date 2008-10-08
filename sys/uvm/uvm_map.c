@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.104 2008/09/23 13:25:46 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.105 2008/10/08 08:41:19 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -847,10 +847,8 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 
 		if (prev_entry->aref.ar_amap) {
 			error = amap_extend(prev_entry, size);
-			if (error) {
-				vm_map_unlock(map);
-				return (error);
-			}
+			if (error)
+				goto step3;
 		}
 
 		UVMCNT_INCR(map_backmerge);
