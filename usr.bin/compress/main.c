@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2008/07/27 13:15:31 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2008/10/08 17:06:30 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.73 2008/07/27 13:15:31 sobrado Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.74 2008/10/08 17:06:30 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -633,7 +633,12 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 		return (FAILURE);
 	}
 	if (storename && oldname[0] != '\0') {
-		strlcpy(out, oldname, MAXPATHLEN);
+		char *cp = strrchr(out, '/');
+		if (cp != NULL) {
+			*(cp + 1) = '\0';
+			strlcat(out, oldname, MAXPATHLEN);
+		} else
+			strlcpy(out, oldname, MAXPATHLEN);
 		cat = 0;			/* XXX should -c override? */
 	}
 
