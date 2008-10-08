@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.24 2007/06/04 14:59:45 henning Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.25 2008/10/08 18:42:21 claudio Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,7 +78,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.24 2007/06/04 14:59:45 henning Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.25 2008/10/08 18:42:21 claudio Exp $";
 #endif
 #endif
 
@@ -1027,6 +1027,7 @@ sifaddr(u, o, h, m)
 {
     struct ifaliasreq ifra;
     struct ifreq ifr;
+    char s1[64], s2[64];
 
     strlcpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name));
     SET_SA_FAMILY(ifra.ifra_addr, AF_INET);
@@ -1049,9 +1050,11 @@ sifaddr(u, o, h, m)
 	    syslog(LOG_ERR, "Couldn't set interface address: %m");
 	    return 0;
 	}
+	strlcpy(s1, ip_ntoa(o), sizeof(s1));
+	strlcpy(s2, ip_ntoa(h), sizeof(s2));
 	syslog(LOG_WARNING,
-	       "Couldn't set interface address: Address %s already exists",
-	       ip_ntoa(o));
+	       "Couldn't set interface address: "
+	       "Address %s or destination %s already exists", s1, s2);
     }
     ifaddrs[0] = o;
     ifaddrs[1] = h;
