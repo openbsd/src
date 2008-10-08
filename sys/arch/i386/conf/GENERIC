@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.634 2008/09/29 13:13:35 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.635 2008/10/08 00:19:34 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -193,6 +193,7 @@ cardslot*	at cbb?
 ehci*	at pci?				# Enhanced Host Controller
 ehci*	at cardbus?			# Enhanced Host Controller
 uhci*	at pci?				# Universal Host Controller (Intel)
+uhci*	at cardbus?			# Universal Host Controller (Intel)
 ohci*	at pci?				# Open Host Controller
 ohci*	at cardbus?			# Open Host Controller
 
