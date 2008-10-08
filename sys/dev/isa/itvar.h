@@ -1,4 +1,4 @@
-/*	$OpenBSD: itvar.h,v 1.9 2008/04/07 09:43:54 form Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.10 2008/10/08 15:06:49 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -66,6 +66,10 @@
 #define IT_EC_FANEXTBASE	0x18
 #define IT_EC_VOLTBASE		0x20
 #define IT_EC_TEMPBASE		0x29
+
+#define IT_EC_CFG_START		0x01
+#define IT_EC_INT_CLEAR		0x08
+#define IT_EC_CFG_UPDVBAT	0x40
 
 #define IT_WDT_LDN		0x07
 

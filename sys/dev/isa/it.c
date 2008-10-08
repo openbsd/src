@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.32 2008/04/07 17:50:37 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.33 2008/10/08 15:06:49 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -189,7 +189,6 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	struct it_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int i;
-	u_int8_t cr;
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ipa_io[0].base;
@@ -204,7 +203,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	/* get chip id and rev */
 	sc->sc_chipid = it_readreg(sc->sc_iot, sc->sc_ioh, IT_CHIPID1) << 8;
 	sc->sc_chipid |= it_readreg(sc->sc_iot, sc->sc_ioh, IT_CHIPID2);
-	sc->sc_chiprev = it_readreg(sc->sc_iot, sc->sc_ioh, IT_CHIPREV);
+	sc->sc_chiprev = it_readreg(sc->sc_iot, sc->sc_ioh, IT_CHIPREV) & 0x0f;
 
 	/* get environment controller base address */
 	it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_EC_LDN);
@@ -224,8 +223,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	it_exit(sc->sc_iot, sc->sc_ioh);
 
 	LIST_INSERT_HEAD(&it_softc_list, sc, sc_list);
-
-	printf(": IT%xF rev 0x%02x", sc->sc_chipid, sc->sc_chiprev);
+	printf(": IT%xF rev 0x%x", sc->sc_chipid, sc->sc_chiprev);
 
 	if (sc->sc_ec_iobase == 0) {
 		printf(", EC disabled\n");
@@ -260,8 +258,8 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* activate monitoring */
-	cr = it_ec_readreg(sc, IT_EC_CFG);
-	it_ec_writereg(sc, IT_EC_CFG, cr | 0x09);
+	it_ec_writereg(sc, IT_EC_CFG,
+	    it_ec_readreg(sc, IT_EC_CFG) | IT_EC_CFG_START | IT_EC_INT_CLEAR);
 
 	/* initialize sensors */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
