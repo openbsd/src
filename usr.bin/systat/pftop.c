@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.5 2008/09/01 23:30:08 sthen Exp $	 */
+/* $Id: pftop.c,v 1.6 2008/10/08 15:11:13 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#include "systat.h"
 #include "engine.h"
 #include "cache.h"
 
@@ -1516,12 +1517,19 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 			prev->next = node;
 		}
 	}
-	if (*root != node) {
-		struct pf_altq_node	*prev_flat = *root;
-		while (prev_flat->next_flat != NULL) {
-			prev_flat = prev_flat->next_flat;
-		}
-		prev_flat->next_flat = node;
+}
+
+void
+pfctl_set_next_flat(struct pf_altq_node *node, struct pf_altq_node *up)
+{
+	while (node) {
+		struct pf_altq_node *next = node->next ? node->next : up;
+		if (node->children) {
+			node->next_flat = node->children;
+			pfctl_set_next_flat(node->children, next);
+		} else
+			node->next_flat = next;
+		node = node->next;
 	}
 }
 
@@ -1534,6 +1542,7 @@ pfctl_update_qstats(struct pf_altq_node **root, int *inserts)
 	u_int32_t		 nr;
 	struct queue_stats	 qstats;
 	u_int32_t		 nr_queues;
+	int			 ret = 0;
 
 	*inserts = 0;
 	memset(&pa, 0, sizeof(pa));
@@ -1547,12 +1556,14 @@ pfctl_update_qstats(struct pf_altq_node **root, int *inserts)
 		error("DIOCGETALTQS: %s", strerror(errno));
 		return (-1);
 	}
+
 	num_queues = nr_queues = pa.nr;
 	for (nr = 0; nr < nr_queues; ++nr) {
 		pa.nr = nr;
 		if (ioctl(pf_dev, DIOCGETALTQ, &pa)) {
 			error("DIOCGETALTQ: %s", strerror(errno));
-			return (-1);
+			ret = -1;
+			break;
 		}
 		if (pa.altq.qid > 0) {
 			pq.nr = nr;
@@ -1561,7 +1572,8 @@ pfctl_update_qstats(struct pf_altq_node **root, int *inserts)
 			pq.nbytes = sizeof(qstats);
 			if (ioctl(pf_dev, DIOCGETQSTATS, &pq)) {
 				error("DIOCGETQSTATS: %s", strerror(errno));
-				return (-1);
+				ret = -1;
+				break;
 			}
 			qstats.valid = 1;
 			gettimeofday(&qstats.timestamp, NULL);
@@ -1582,7 +1594,10 @@ pfctl_update_qstats(struct pf_altq_node **root, int *inserts)
 		else
 			--num_queues;
 	}
-	return (0);
+
+	pfctl_set_next_flat(*root, NULL);
+
+	return (ret);
 }
 
 void
