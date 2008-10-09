@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.26 2008/10/09 16:40:56 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.27 2008/10/09 21:14:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static const char rcsid[] = "$OpenBSD: compile.c,v 1.26 2008/10/09 16:40:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: compile.c,v 1.27 2008/10/09 21:14:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -463,9 +463,6 @@ compile_subst(char *p, struct s_subst *s)
 	char c, *text, *op, *sp;
 	int sawesc = 0;
 
-	if (!lbuf)
-		lbuf = xmalloc(len);
-
 	c = *p++;			/* Terminator character */
 	if (c == '\0')
 		return (NULL);
@@ -473,6 +470,9 @@ compile_subst(char *p, struct s_subst *s)
 	len = strlen(p);
 	if (len < _POSIX2_LINE_MAX)
 		len = _POSIX2_LINE_MAX;
+	if (!lbuf)
+		lbuf = xmalloc(len);
+
 	s->maxbref = 0;
 	s->linenum = linenum;
 	asize = 2 * len + 1;
