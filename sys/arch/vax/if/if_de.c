@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.20 2008/08/14 11:41:30 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.21 2008/10/09 00:17:54 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -575,10 +575,11 @@ deioctl(ifp, cmd, data)
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct de_softc *ds = ifp->if_softc;
-	int s = splnet(), error = 0;
+	int s, error = 0;
+
+	s = splnet();
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		deinit(ds);
