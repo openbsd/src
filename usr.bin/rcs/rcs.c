@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.48 2008/09/17 06:47:57 reyk Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.49 2008/10/09 21:45:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -175,6 +175,7 @@ struct rcs_kw rcs_expkw[] =  {
 	{ "Date",	RCS_KW_DATE     },
 	{ "Header",	RCS_KW_HEADER   },
 	{ "Id",		RCS_KW_ID       },
+	{ "OpenBSD",	RCS_KW_ID       },
 	{ "Log",	RCS_KW_LOG      },
 	{ "Name",	RCS_KW_NAME     },
 	{ "RCSfile",	RCS_KW_RCSFILE  },
