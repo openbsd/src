@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.125 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.126 2008/10/09 03:31:07 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -162,14 +162,11 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
 
 
 int
-ether_ioctl(ifp, arp, cmd, data)
-	struct ifnet *ifp;
-	struct arpcom *arp;
-	u_long cmd;
-	caddr_t data;
+ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int	error = 0;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -181,11 +178,29 @@ ether_ioctl(ifp, arp, cmd, data)
 #endif /* NETATALK */
 		}
 		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if (ifp->if_flags & IFF_MULTICAST) {
+			error = (cmd == SIOCADDMULTI) ?
+			    ether_addmulti(ifr, arp) :
+			    ether_delmulti(ifr, arp);
+		} else
+			error = ENOTTY;
+		break;
+
 	default:
 		error = ENOTTY;
 	}
 
-	return error;
+	return (error);
 }
 
 /*
