@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.162 2008/10/07 02:20:11 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.163 2008/10/09 07:48:55 kevlo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1328,7 +1328,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
 		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
 
-		calcru(p, &ut, &st, 0);
+		calcru(p, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_usec;
 		ki->p_ustime_sec = st.tv_sec;
