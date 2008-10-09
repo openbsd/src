@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.34 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.35 2008/10/09 01:07:02 deraadt Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -425,7 +425,7 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
 	usbd_status err;
-	int spin, error;
+	int error;
 
 	if (ULPTUNIT(dev) >= ulpt_cd.cd_ndevs)
 		return (ENXIO);
@@ -446,24 +446,8 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 	error = 0;
 	sc->sc_refcnt++;
 
-	if ((flags & ULPT_NOPRIME) == 0)
+	if ((flags & ULPT_NOPRIME) == 0) {
 		ulpt_reset(sc);
-
-	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
-		DPRINTF(("ulpt_open: waiting a while\n"));
-		if (spin >= TIMEOUT) {
-			error = EBUSY;
-			sc->sc_state = 0;
-			goto done;
-		}
-
-		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
-		if (error != EWOULDBLOCK) {
-			sc->sc_state = 0;
-			goto done;
-		}
-
 		if (sc->sc_dying) {
 			error = ENXIO;
 			sc->sc_state = 0;
