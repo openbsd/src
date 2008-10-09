@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2008/10/06 21:05:56 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 2008/10/09 19:04:18 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1304,6 +1304,17 @@ init_x86_64(paddr_t first_avail)
 		s1 = round_page(bmp->addr);
 		e1 = trunc_page(bmp->addr + bmp->size);
 		s2 = e2 = 0; s3 = e3 = 0; s4 = e4 = 0;
+
+		/*
+		 * XXX Some buggy ACPI BIOSes use memory that they
+		 * declare as free.  Typically the affected memory
+		 * areas are small blocks between areas reserved for
+		 * ACPI and other BIOS goo.  So skip areas smaller
+		 * than 1 MB above the 16 MB boundary (to avoid
+		 * affecting legacy stuff).
+		 */
+		if (s1 > 16*1024*1024 && (e1 - s1) < 1*1024*1024)
+			continue;
 
 		/* Check and adjust our segment(s) */
 		/* Nuke page zero */

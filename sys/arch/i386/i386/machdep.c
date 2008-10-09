@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.436 2008/10/06 19:46:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.437 2008/10/09 19:04:18 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3005,8 +3005,8 @@ init386(paddr_t first_avail)
 			if (a < 8 * NBPG)
 				a = 8 * NBPG;
 
-			/* skip regions which are zero or negative in size */
-			if (a >= e) {
+			/* skip shorter than page regions */
+			if (a >= e || (e - a) < NBPG) {
 #ifdef DEBUG
 				printf("-S");
 #endif
@@ -3014,12 +3014,15 @@ init386(paddr_t first_avail)
 			}
 
 			/*
-			 * XXX - This is a hack to work around BIOS bugs and
-			 * a bug in the  msgbuf allocation.  We skip regions
-			 * smaller than the message buffer or 16-bit segment
-			 * limit in size.
+			 * XXX Some buggy ACPI BIOSes use memory that
+			 * they declare as free.  Typically the
+			 * affected memory areas are small blocks
+			 * between areas reserved for ACPI and other
+			 * BIOS goo.  So skip areas smaller than 1 MB
+			 * above the 16 MB boundary (to avoid
+			 * affecting legacy stuff).
 			 */
-			if ((e - a) < max((MSGBUFSIZE / NBPG), (64 * 1024))) {
+			if (a > 16*1024*1024 && (e - a) < 1*1024*1024) {
 #ifdef DEBUG
 				printf("-X");
 #endif
