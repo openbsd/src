@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.17 2008/04/28 18:09:00 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.18 2008/10/09 18:35:38 chl Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 #endif
 
-	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
 	isp->is_recurse = Xsoftclock;
@@ -574,7 +574,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_softclock_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_CLOCK] = isp;
-	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
 	isp->is_recurse = Xsoftnet;
@@ -583,7 +583,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_softnet_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_NET] = isp;
-	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
 	isp->is_recurse = Xsofttty;
@@ -593,7 +593,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_TTY] = isp;
 #if NLAPIC > 0
-	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
 	isp->is_recurse = Xrecurse_lapic_ltimer;
@@ -603,7 +603,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
 #ifdef MULTIPROCESSOR
-	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
 	isp->is_recurse = Xrecurse_lapic_ipi;
