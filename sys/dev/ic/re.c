@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.92 2008/10/06 00:34:09 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.93 2008/10/09 23:02:07 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2009,8 +2009,14 @@ re_init(struct ifnet *ifp)
 	 */
 	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		CSR_WRITE_4(sc, RL_TIMERINT, 0x400);
-	else
-		CSR_WRITE_4(sc, RL_TIMERINT_8169, 0x800);
+	else {
+		/*
+		 * Set hardware timer to 125us
+		 * XXX measurement showed me the actual value is ~76us,
+		 * which is ~2/3 of the desired value
+		 */
+		CSR_WRITE_4(sc, RL_TIMERINT_8169, 125 * sc->rl_bus_speed);
+	}
 
 	/*
 	 * For 8169 gigE NICs, set the max allowed RX packet
