@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.4 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.5 2008/10/09 10:10:49 chl Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -169,8 +169,6 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	extern char etext;
 	char *dst;
-
-	dst = (char *)addr;
 
 	/* If any part is in kernel text, use db_write_text() */
 	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
