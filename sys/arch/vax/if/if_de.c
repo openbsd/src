@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.21 2008/10/09 00:17:54 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.22 2008/10/09 00:43:48 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -607,8 +607,9 @@ deioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, &ds->ds_ac, cmd, data);
 	}
+
 	splx(s);
 	return (error);
 }
