@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2008/10/08 17:26:47 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2008/10/09 10:58:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static const char rcsid[] = "$OpenBSD: main.c,v 1.13 2008/10/08 17:26:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2008/10/09 10:58:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -196,8 +196,6 @@ again:
 	case ST_FILE:
 		if ((p = fgetln(f, &len)) != NULL) {
 			linenum++;
-			if (len > 0 && p[len-1] == '\n')
-				len--;
 			if (len >= *outlen) {
 				do {
 					*outlen *= 2;
