@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2008/08/10 14:13:05 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.67 2008/10/09 08:43:43 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -192,6 +192,7 @@ void	smp_signotify(struct proc *);
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+#define CPU_INFO_UNIT(ci)	0
 
 #endif
 
