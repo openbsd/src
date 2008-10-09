@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.41 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.42 2008/10/09 16:00:07 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ struct socket {
 					      socket buffer */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
-		short	sb_timeo;	/* timeout for read/write */
+		u_short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
 #define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
 #define	SB_LOCK		0x01		/* lock on data queue */
