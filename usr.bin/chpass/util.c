@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2008/06/19 19:16:04 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2008/10/09 18:33:15 chl Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.8 2008/06/19 19:16:04 tobias Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.9 2008/10/09 18:33:15 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ int
 atot(char *p, time_t *store)
 {
 	struct tm tm;
-	time_t tval;
 	char *t;
 
 	if (!*p) {
