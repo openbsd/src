@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.72 2007/08/02 16:18:05 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.73 2008/10/09 21:10:08 miod Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -985,9 +985,14 @@ adduser(char *login_name, user_t *up)
 	}
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		cc = strlen(buf);
+		/*
+		 * Stop copying the file at the yp entry; we want to
+		 * put the new user before it, and preserve entries
+		 * after the yp entry.
+		 */
 		if (cc > 1 && buf[0] == '+' && buf[1] == ':') {
 			yp = 1;
-			continue;
+			break;
 		}
 		if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
 			(void) fclose(fp);
@@ -1129,6 +1134,7 @@ adduser(char *login_name, user_t *up)
 		err(EXIT_FAILURE, "can't add `%s'", buf);
 	}
 	if (yp) {
+		/* put back the + line */
 		cc = snprintf(buf, sizeof(buf), "+:*::::::::\n");
 		if (cc == -1 || cc >= sizeof(buf)) {
 			(void) close(ptmpfd);
@@ -1139,6 +1145,22 @@ adduser(char *login_name, user_t *up)
 			(void) close(ptmpfd);
 			pw_abort();
 			err(EXIT_FAILURE, "can't add `%s'", buf);
+		}
+		/* copy the entries following it, if any */
+		while (fgets(buf, sizeof(buf), fp) != NULL) {
+			cc = strlen(buf);
+			if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
+				(void) fclose(fp);
+				(void) close(ptmpfd);
+				pw_abort();
+				err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
+			}
+		}
+		if (ferror(fp)) {
+			(void) fclose(fp);
+			(void) close(ptmpfd);
+			pw_abort();
+			err(EXIT_FAILURE, "read error on %s", _PATH_MASTERPASSWD);
 		}
 	}
 	if (up->u_flags & F_MKDIR) {
