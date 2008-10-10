@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.19 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.20 2008/10/10 15:24:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-ppp.c,v 1.19 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: print-ppp.c,v 1.20 2008/10/10 15:24:24 claudio Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -678,9 +678,7 @@ ppp_ether_if_print(user, h, p)
 		printf("\n\t%04x: ", proto);
 
 	if (xflag)
-	    default_print((const u_char *)
-		(p + sizeof(struct pppoe_header)),
-		 caplen - sizeof(struct pppoe_header));
+	    default_print(p + 2, caplen - 2);
 	putchar('\n');
 }
 
