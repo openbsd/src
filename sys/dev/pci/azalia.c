@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.55 2008/09/24 19:09:05 chl Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.56 2008/10/10 14:00:46 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1473,12 +1473,16 @@ int
 azalia_codec_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 		     uint32_t param, uint32_t* result)
 {
-	int err;
+	int err, s;
 
+	s = splaudio();
 	err = azalia_set_command(codec->az, codec->address, nid, control, param);
 	if (err)
-		return err;
-	return azalia_get_response(codec->az, result);
+		goto exit;
+	err = azalia_get_response(codec->az, result);
+exit:
+	splx(s);
+	return err;
 }
 
 int
