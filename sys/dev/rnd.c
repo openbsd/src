@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.93 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.94 2008/10/10 20:13:11 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -966,7 +966,7 @@ arc4random_uniform(u_int32_t upper_bound)
 }
 
 /*
- * random, srandom, urandom, prandom, arandom char devices
+ * random, srandom, urandom, arandom char devices
  * -------------------------------------------------------
  */
 
@@ -1000,7 +1000,6 @@ int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
 	int		ret = 0;
-	int		i;
 	u_int32_t 	*buf;
 
 	if (uio->uio_resid == 0)
@@ -1051,11 +1050,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 				printf("rnd: %u bytes for output\n", n);
 #endif
 			break;
-		case RND_PRND:
-			i = (n + 3) / 4;
-			while (i--)
-				buf[i] = random() << 16 | (random() & 0xFFFF);
-			break;
+		case RND_ARND_OLD:
 		case RND_ARND:
 			arc4random_buf(buf, n);
 			break;
@@ -1149,7 +1144,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	int		ret = 0;
 	u_int32_t	*buf;
 
-	if (minor(dev) == RND_RND || minor(dev) == RND_PRND)
+	if (minor(dev) == RND_RND)
 		return ENXIO;
 
 	if (uio->uio_resid == 0)
@@ -1168,7 +1163,8 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 		}
 	}
 
-	if (minor(dev) == RND_ARND && !ret)
+	if ((minor(dev) == RND_ARND || minor(dev) == RND_ARND_OLD) &&
+	    !ret)
 		arc4random_initialized = 0;
 
 	free(buf, M_TEMP);
