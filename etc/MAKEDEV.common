@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.39 2008/07/14 16:22:23 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.40 2008/10/10 20:15:23 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -510,7 +510,7 @@ _cdev(lkm, lkm, {-major_lkm_c-}, 0, 640, _lkm)dnl
 __devitem(tun, tun*, Network tunnel driver)dnl
 __devitem(rnd, *random, In-kernel random data source,random)dnl
 _mkdev(rnd, *random, {-n=0
-	for pre in " " s u p a
+	for pre in " " s u a
 	do
 		M ${pre}random c major_rnd_c $n 644
 		n=Add($n, 1)
