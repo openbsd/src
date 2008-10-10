@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.32 2008/07/14 16:21:52 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.39 2008/07/14 16:22:23 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.40 2008/10/10 20:15:23 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -288,7 +288,7 @@ speaker)
 
 *random)
 	n=0
-	for pre in " " s u p a
+	for pre in " " s u a
 	do
 		M ${pre}random c 45 $n 644
 		n=$(($n+1))
