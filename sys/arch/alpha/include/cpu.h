@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.33 2008/07/18 23:43:31 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.34 2008/10/10 08:05:45 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -217,6 +217,8 @@ void	fpusave_proc(struct proc *, int);
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = curcpu(); \
 					    ci != NULL; ci = ci->ci_next)
+
+#define MAXCPUS	ALPHA_MAXPROCS
 
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2008/10/09 08:43:43 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2008/10/10 08:05:45 art Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -82,7 +82,7 @@ extern struct cpu_info cpu_info_primary;
 #define CPU_INFO_FOREACH(cii, ci)	\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 #define CPU_INFO_UNIT(ci)	0
-
+#define MAXCPUS	1
 #define cpu_number()	0
 
 /* types */

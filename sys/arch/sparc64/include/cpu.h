@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.67 2008/10/09 08:43:43 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.68 2008/10/10 08:05:45 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -175,6 +175,7 @@ curcpu(void)
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = cpus; ci != NULL; ci = ci->ci_next)
 #define CPU_INFO_UNIT(ci)	((ci)->ci_number)
+#define MAXCPUS	256
 
 void	cpu_boot_secondary_processors(void);
 
@@ -193,6 +194,7 @@ void	smp_signotify(struct proc *);
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 #define CPU_INFO_UNIT(ci)	0
+#define MAXCPUS 1
 
 #endif
 

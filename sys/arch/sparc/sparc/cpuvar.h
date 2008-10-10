@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.13 2008/10/09 08:43:43 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.14 2008/10/10 08:05:45 art Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -88,6 +88,7 @@ struct cpu_info {
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = ci->ci_next)
 #define CPU_INFO_UNIT(ci)	((ci)->ci_softc->dv.dv_unit)
+#define MAXCPUS	1
 
 /*
  * The cpu_softc structure. This structure maintains information about one
