@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.96 2008/10/09 06:31:53 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.97 2008/10/10 14:35:06 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -161,7 +161,6 @@ process_new(struct proc *newproc, struct proc *parent)
 	pr->ps_mainproc = newproc;
 	TAILQ_INIT(&pr->ps_threads);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
-	pr->ps_refcnt = 1;
 	newproc->p_p = pr;
 }
 
@@ -232,7 +231,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		atomic_setbits_int(&p2->p_flag, P_THREAD);
 		p2->p_p = p1->p_p;
 		TAILQ_INSERT_TAIL(&p2->p_p->ps_threads, p2, p_thr_link);
-		p2->p_p->ps_refcnt++;
 	} else {
 		process_new(p2, p1);
 	}

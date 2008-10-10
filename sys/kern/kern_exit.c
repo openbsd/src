@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.74 2008/10/09 06:31:53 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.75 2008/10/10 14:35:06 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ proc_zap(struct proc *p)
 	 * Remove us from our process list, possibly killing the process
 	 * in the process (pun intended).
 	 */
-	if (--p->p_p->ps_refcnt == 0) {
+	if ((p->p_flag & P_THREAD) == 0) {
 		KASSERT(TAILQ_EMPTY(&p->p_p->ps_threads));
 		limfree(p->p_p->ps_limit);
 		if (--p->p_p->ps_cred->p_refcnt == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.32 2008/10/09 06:34:10 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.33 2008/10/10 14:35:06 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -377,8 +377,8 @@ sys_setresuid(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Transfer proc count to new user.
 		 */
-		(void)chgproccnt(pc->p_ruid, -p->p_p->ps_refcnt);
-		(void)chgproccnt(ruid, p->p_p->ps_refcnt);
+		(void)chgproccnt(pc->p_ruid, -1);
+		(void)chgproccnt(ruid, 1);
 		pc->p_ruid = ruid;
 	}
 	if (euid != (uid_t)-1 && euid != pc->pc_ucred->cr_uid) {
@@ -582,8 +582,8 @@ sys_setuid(struct proc *p, void *v, register_t *retval)
 		 * Transfer proc count to new user.
 		 */
 		if (uid != pc->p_ruid) {
-			(void)chgproccnt(pc->p_ruid, -p->p_p->ps_refcnt);
-			(void)chgproccnt(uid, p->p_p->ps_refcnt);
+			(void)chgproccnt(pc->p_ruid, -1);
+			(void)chgproccnt(uid, 1);
 		}
 		pc->p_ruid = uid;
 		pc->p_svuid = uid;
