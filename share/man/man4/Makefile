@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.464 2008/09/26 21:39:34 brad Exp $
+#	$OpenBSD: Makefile,v 1.465 2008/10/10 20:13:29 deraadt Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -72,7 +72,7 @@ MLINKS+=pcmcia.4 pcic.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=pty.4 ptm.4
 MLINKS+=random.4 arandom.4
-MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
+MLINKS+=random.4 srandom.4 random.4 urandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=sequencer.4 music.4
 MLINKS+=sk.4 skc.4 msk.4 mskc.4

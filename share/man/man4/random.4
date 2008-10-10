@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.21 2008/05/18 06:53:56 jmc Exp $
+.\"	$OpenBSD: random.4,v 1.22 2008/10/10 20:13:29 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -23,14 +23,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2008 $
+.Dd $Mdocdate: October 10 2008 $
 .Dt RANDOM 4
 .Os
 .Sh NAME
 .Nm random ,
 .Nm srandom ,
 .Nm urandom ,
-.Nm prandom ,
 .Nm arandom
 .Nd random data source devices
 .Sh SYNOPSIS
@@ -60,8 +59,6 @@ Same as above, but does not guarantee the data to be strong.
 The entropy pool data is converted into output data using MD5.
 When the entropy pool quality runs low, the driver will continue
 to output data.
-.It Pa /dev/prandom
-Simple pseudo-random generator.
 .It Pa /dev/arandom
 As required, entropy pool data re-seeds an ARC4 generator,
 which then generates high-quality pseudo-random output data.
@@ -76,7 +73,6 @@ providing a second level of ARC4 hashed data.
 .It Pa /dev/random
 .It Pa /dev/srandom
 .It Pa /dev/urandom
-.It Pa /dev/prandom
 .It Pa /dev/arandom
 .El
 .Sh SEE ALSO
