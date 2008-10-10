@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2008/10/10 08:05:45 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2008/10/10 08:36:28 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ extern struct cpu_info cpu_info_store;
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 #define CPU_INFO_UNIT(ci)	0
 #define MAXCPUS	1
+#define cpu_unidle(ci)
 #endif
 
 #ifdef __PROG32
