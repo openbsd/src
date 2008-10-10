@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.442 2008/09/09 13:56:39 henning Exp $
+#	$OpenBSD: files,v 1.443 2008/10/10 20:21:40 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1032,8 +1032,8 @@ file compat/common/vm_43.c		!small_kernel
 # libkern MI components
 file lib/libkern/mcount.c		gprof
 file lib/libkern/getsn.c
-file lib/libkern/arch/${MACHINE_ARCH}/random.S | lib/libkern/random.c
-file lib/libkern/arch/${MACHINE_ARCH}/srandom.S | lib/libkern/srandom.c
+file lib/libkern/random.c
+file lib/libkern/srandom.c
 file lib/libkern/arch/${MACHINE_ARCH}/strchr.S | lib/libkern/strchr.c
 file lib/libkern/arch/${MACHINE_ARCH}/strrchr.S | lib/libkern/strrchr.c
 file lib/libkern/arch/${MACHINE_ARCH}/__main.S | lib/libkern/__main.c

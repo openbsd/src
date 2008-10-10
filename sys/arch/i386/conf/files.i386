@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.182 2008/07/08 05:22:00 dlg Exp $
+#	$OpenBSD: files.i386,v 1.183 2008/10/10 20:21:38 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -35,7 +35,6 @@ file	arch/i386/i386/powernow-k7.c	!small_kernel
 file	arch/i386/i386/powernow-k8.c	!small_kernel
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c

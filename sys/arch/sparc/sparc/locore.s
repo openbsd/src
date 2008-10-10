@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.81 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.82 2008/10/10 20:21:39 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -5918,58 +5918,6 @@ Lumul_shortway:
 	or	%o5, %o0, %o0
 	retl
 	 addcc	%g0, %g0, %o1	! %o1 = zero, and set Z
-
-/*
- * Here is a very good random number generator.  This implementation is
- * based on ``Two Fast Implementations of the "Minimal Standard" Random
- * Number Generator", David G. Carta, Communications of the ACM, Jan 1990,
- * Vol 33 No 1.
- */
-	.data
-	.globl	_C_LABEL(_randseed)
-_C_LABEL(_randseed):
-	.word	1
-	.text
-ENTRY(random)
-	sethi	%hi(16807), %o1
-	wr	%o1, %lo(16807), %y
-	 sethi	%hi(_C_LABEL(_randseed)), %g1
-	 ld	[%g1 + %lo(_C_LABEL(_randseed))], %o0
-	 andcc	%g0, 0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %g0, %o2
-	rd	%y, %o3
-	srl	%o2, 16, %o1
-	set	0xffff, %o4
-	and	%o4, %o2, %o0
-	sll	%o0, 15, %o0
-	srl	%o3, 17, %o3
-	or	%o3, %o0, %o0
-	addcc	%o0, %o1, %o0
-	bneg	1f
-	 sethi	%hi(0x7fffffff), %o1
-	retl
-	 st	%o0, [%g1 + %lo(_C_LABEL(_randseed))]
-1:
-	or	%o1, %lo(0x7fffffff), %o1
-	add	%o0, 1, %o0
-	and	%o1, %o0, %o0
-	retl
-	 st	%o0, [%g1 + %lo(_C_LABEL(_randseed))]
 
 /*
  * void lo_microtime(struct timeval *tv)
