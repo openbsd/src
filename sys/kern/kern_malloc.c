@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.76 2008/10/05 11:12:19 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.77 2008/10/11 16:49:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Michael Shalayeff
@@ -137,10 +137,11 @@ struct pool_allocator pool_allocator_malloc = {
 void *
 malloc_page_alloc(struct pool *pp, int flags)
 {
-	void *v = uvm_km_getpage(flags & M_NOWAIT? 0 : 1);
+	void *v;
 	struct vm_page *pg;
 	paddr_t pa;
 
+	v = uvm_km_getpage((flags & PR_WAITOK) ? TRUE : FALSE);
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)v, &pa))
 		panic("malloc_page_alloc: pmap_extract failed");
 
