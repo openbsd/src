@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.35 2008/10/08 17:32:47 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.36 2008/10/11 20:31:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -250,7 +250,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 
 	/* register sensor update task */
 	if (sensor_task_register(sc, it_ec_refresh, IT_EC_INTERVAL) == NULL) {
-		printf(": unable to register update task\n",
+		printf("%s: unable to register update task\n",
 		    sc->sc_dev.dv_xname);
 		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
 		return;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.120 2008/09/22 19:44:00 miod Exp $ */
+/* $OpenBSD: softraid.c,v 1.121 2008/10/11 20:31:48 miod Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -330,7 +330,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t sz,
 	    DEVNAME(sc), dev, md, sz, ofs, flags);
 
 	if (md == NULL) {
-		printf("%s: read invalid metadata pointer\n", sc);
+		printf("%s: read invalid metadata pointer\n", DEVNAME(sc));
 		goto done;
 	}
 
@@ -352,7 +352,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t sz,
 
 	if (b.b_flags & B_ERROR) {
 		printf("%s: 0x%x i/o error on block %lld while reading "
-		    "metadata %d\n", sc, dev, b.b_blkno, b.b_error);
+		    "metadata %d\n", DEVNAME(sc), dev, b.b_blkno, b.b_error);
 		goto done;
 	}
 	rv = 0;
@@ -2514,12 +2514,12 @@ sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
 
 	if (sd->sd_vol_status == BIOC_SVOFFLINE) {
 		DNPRINTF(SR_D_DIS, "%s: %s device offline\n",
-		    DEVNAME(sd->sd_sc));
+		    DEVNAME(sd->sd_sc), func);
 		goto bad;
 	}
 
 	if (xs->datalen == 0) {
-		printf("%s: %s: illegal block count\n",
+		printf("%s: %s: illegal block count for %s\n",
 		    DEVNAME(sd->sd_sc), func, sd->sd_meta->ssd_devname);
 		goto bad;
 	}
@@ -2531,8 +2531,8 @@ sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
 	else if (xs->cmdlen == 6)
 		*blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 	else {
-		printf("%s: %s: illegal cmdlen\n", DEVNAME(sd->sd_sc), func,
-		    sd->sd_meta->ssd_devname);
+		printf("%s: %s: illegal cmdlen for %s\n",
+		    DEVNAME(sd->sd_sc), func, sd->sd_meta->ssd_devname);
 		goto bad;
 	}
 

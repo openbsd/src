@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.9 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.10 2008/10/11 20:31:50 miod Exp $	*/
 
 /******************************************************************************
 
@@ -1361,7 +1361,7 @@ ixgbe_hardware_init(struct ix_softc *sc)
 	sc->hw.fc.send_xon = TRUE;
 
 	if (ixgbe_hw(&sc->hw, init_hw) != 0) {
-		printf("%s: Hardware Initialization Failed");
+		printf("%s: Hardware Initialization Failed", ifp->if_xname);
 		return (EIO);
 	}
 	bcopy(sc->hw.mac.addr, sc->arpcom.ac_enaddr,

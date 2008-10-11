@@ -473,7 +473,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	priv->kdev = kdev;
 	priv->flags = flags;
 	priv->minor = minor(kdev);
-	DRM_DEBUG("minor = %d\n", DRM_CURRENTPID, priv->minor);
+	DRM_DEBUG("minor = %d\n", priv->minor);
 
 	/* for compatibility root is always authenticated */
 	priv->authenticated = DRM_SUSER(p);
