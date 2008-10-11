@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.55 2008/10/06 00:34:10 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.56 2008/10/11 23:49:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -234,9 +234,13 @@
 
 #define RL_INTRS_CPLUS	\
 	(RL_ISR_RX_OK|RL_ISR_RX_ERR|RL_ISR_TX_ERR|			\
-	RL_ISR_RX_OVERRUN|RL_ISR_PKT_UNDERRUN|RL_ISR_FIFO_OFLOW|	\
-	RL_ISR_PCS_TIMEOUT|RL_ISR_SYSTEM_ERR|RL_ISR_TIMEOUT_EXPIRED)
+	RL_ISR_RX_OVERRUN|RL_ISR_FIFO_OFLOW|RL_ISR_LINKCHG|		\
+	RL_ISR_SYSTEM_ERR|RL_ISR_TX_OK)
 
+#define RL_INTRS_TIMER							\
+	(RL_ISR_RX_ERR|RL_ISR_TX_ERR|					\
+	RL_ISR_LINKCHG|RL_ISR_SYSTEM_ERR|				\
+	RL_ISR_TIMEOUT_EXPIRED)
 
 /*
  * Media status register. (8139 only)
@@ -518,6 +522,10 @@
 
 #define RL_RXCFG_CONFIG		(RL_RX_FIFOTHRESH|RL_RX_MAXDMA|RL_RX_BUF_SZ)
 #define RL_TXCFG_CONFIG		(RL_TXCFG_IFG|RL_TX_MAXDMA)
+
+#define RL_IM_MAGIC		0x5050
+#define RL_IM_RXTIME(t)		((t) & 0xf)
+#define RL_IM_TXTIME(t)		(((t) & 0xf) << 8)
 
 struct rl_chain_data {
 	u_int16_t		cur_rx;
@@ -816,7 +824,20 @@ struct rl_softc {
 #define	RL_FLAG_PAR		0x0040
 #define	RL_FLAG_DESCV2		0x0080
 #define	RL_FLAG_MACSTAT		0x0100
+#define	RL_FLAG_HWIM		0x0200
+#define	RL_FLAG_TIMERINTR	0x0400
 #define	RL_FLAG_LINK		0x8000
+
+	u_int16_t		rl_intrs;
+	u_int16_t		rl_tx_ack;
+	u_int16_t		rl_rx_ack;
+	int			rl_tx_time;
+	int			rl_rx_time;
+	int			rl_sim_time;
+	int			rl_imtype;
+#define	RL_IMTYPE_NONE		0
+#define	RL_IMTYPE_SIM		1	/* simulated */
+#define	RL_IMTYPE_HW		2	/* hardware based */
 };
 
 /*
