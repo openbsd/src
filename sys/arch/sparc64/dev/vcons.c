@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.3 2008/09/23 22:44:19 miod Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.4 2008/10/12 09:18:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -20,7 +20,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/tty.h>
 
 #ifdef DDB
@@ -36,9 +35,10 @@
 #include <sparc64/dev/vbusvar.h>
 
 struct vcons_softc {
-	struct device	sc_dev;
+	struct device	sc_dv;
+	void		*sc_ih;
 	struct tty	*sc_tty;
-	struct timeout	sc_to;
+	void		*sc_si;
 };
 
 int	vcons_match(struct device *, void *, void *);
@@ -52,13 +52,15 @@ struct cfdriver vcons_cd = {
 	NULL, "vcons", DV_DULL
 };
 
+int	vcons_intr(void *);
+
 int	vcons_cnlookc(dev_t, int *);
 int	vcons_cngetc(dev_t);
 void	vcons_cnputc(dev_t, int);
 
 void	vconsstart(struct tty *);
 int	vconsparam(struct tty *, struct termios *);
-void	vconstimeout(void *);
+void	vcons_softintr(void *);
 
 int
 vcons_match(struct device *parent, void *match, void *aux)
@@ -75,11 +77,23 @@ void
 vcons_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vcons_softc *sc = (struct vcons_softc *)self;
+	struct vbus_attach_args *va = aux;
+	uint64_t sysino;
 	int maj;
 
-	printf("\n");
+	sc->sc_si = softintr_establish(IPL_TTY, vcons_softintr, sc);
+	if (sc->sc_si == NULL)
+		panic(": can't establish soft interrupt");
 
-	timeout_set(&sc->sc_to, vconstimeout, sc);
+	if (vbus_intr_map(va->va_node, va->va_intr[0], &sysino))
+		printf(": can't map interrupt\n");
+	printf(": ivec 0x%lx\n", sysino);
+
+	sc->sc_ih = bus_intr_establish(va->va_bustag, sysino, IPL_TTY, 0, vcons_intr, sc, sc->sc_dv.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("%s: can't establish interrupt\n", sc->sc_dv.dv_xname);
+		return;
+	}
 
 	cn_tab->cn_pollc = nullcnpollc;
 	cn_tab->cn_getc = vcons_cngetc;
@@ -90,6 +104,15 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 		if (cdevsw[maj].d_open == vconsopen)
 			break;
 	cn_tab->cn_dev = makedev(maj, self->dv_unit);
+}
+
+int
+vcons_intr(void *arg)
+{
+	struct vcons_softc *sc = arg;
+
+	softintr_schedule(sc->sc_si);
+	return (1);
 }
 
 int
@@ -132,7 +155,6 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct vcons_softc *sc;
 	struct tty *tp;
 	int unit = minor(dev);
-	int error, setuptimeout = 0;
 
 	if (unit > vcons_cd.cd_ndevs)
 		return (ENXIO);
@@ -156,17 +178,11 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);
-
-		setuptimeout = 1;
 	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0))
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
-	if (error == 0 && setuptimeout)
-		vconstimeout(sc);
-
-	return (error);
+	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 int
@@ -183,7 +199,6 @@ vconsclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 
 	tp = sc->sc_tty;
-	timeout_del(&sc->sc_to);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	return (0);
@@ -310,9 +325,9 @@ vconsparam(struct tty *tp, struct termios *t)
 }
 
 void
-vconstimeout(void *v)
+vcons_softintr(void *arg)
 {
-	struct vcons_softc *sc = v;
+	struct vcons_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
 	int c;
 
@@ -320,5 +335,4 @@ vconstimeout(void *v)
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-	timeout_add(&sc->sc_to, 1);
 }
