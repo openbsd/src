@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.2 2008/06/15 19:00:57 mpf Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.3 2008/10/12 19:03:12 mpf Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -30,11 +30,8 @@
  */
 
 /*
- * IEEE802.3ad LACP
- *
- * implementation details.
+ * IEEE802.3ad LACP implementation details.
  */
-
 #define	LACP_TIMER_CURRENT_WHILE	0
 #define	LACP_TIMER_PERIODIC		1
 #define	LACP_TIMER_WAIT_WHILE		2
@@ -48,11 +45,8 @@
 	((port)->lp_timer[(timer)] > 0)
 
 /*
- * IEEE802.3ad LACP
- *
- * protocol definitions.
+ * IEEE802.3ad LACP protocol definitions.
  */
-
 #define	LACP_STATE_ACTIVITY	(1<<0)
 #define	LACP_STATE_TIMEOUT	(1<<1)
 #define	LACP_STATE_AGGREGATION	(1<<2)
@@ -77,13 +71,9 @@
 	"\010EXPIRED"
 
 /*
- * IEEE802.3 slow protocols
- *
- * protocol (on-wire) definitions.
- *
+ * IEEE802.3 slow protocols (on-wire) definitions.
  * XXX should be elsewhere.
  */
-
 #define	SLOWPROTOCOLS_SUBTYPE_LACP	1
 #define	SLOWPROTOCOLS_SUBTYPE_MARKER	2
 
@@ -92,20 +82,14 @@ struct slowprothdr {
 	u_int8_t		sph_version;
 } __packed;
 
-/*
- * TLV on-wire structure.
- */
-
+/* TLV on-wire structure. */
 struct tlvhdr {
 	u_int8_t		tlv_type;
 	u_int8_t		tlv_length;
 	/* u_int8_t tlv_value[]; */
 } __packed;
 
-/*
- * ... and our implementation.
- */
-
+/* ... and our implementation. */
 #define	TLV_SET(tlv, type, length) \
 	do { \
 		(tlv)->tlv_type = (type); \
@@ -155,13 +139,11 @@ struct lacpdu {
 } __packed;
 
 /*
- * IEEE802.3ad marker protocol
- *
- * protocol (on-wire) definitions.
+ * IEEE802.3ad marker protocol (on-wire) definitions.
  */
 struct lacp_markerinfo {
 	u_int16_t		mi_rq_port;
-	u_int8_t			mi_rq_system[ETHER_ADDR_LEN];
+	u_int8_t		mi_rq_system[ETHER_ADDR_LEN];
 	u_int32_t		mi_rq_xid;
 	u_int8_t		mi_pad[2];
 } __packed;

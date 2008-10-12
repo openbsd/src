@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.4 2008/08/28 11:10:25 reyk Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.5 2008/10/12 19:03:12 mpf Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -35,8 +35,8 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h> /* hz */
-#include <sys/socket.h> /* for net/if.h */
+#include <sys/kernel.h>
+#include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
@@ -60,7 +60,6 @@
  * actor system priority and port priority.
  * XXX should be configurable.
  */
-
 #define	LACP_SYSTEM_PRIO	0x8000
 #define	LACP_PORT_PRIO		0x8000
 
@@ -175,7 +174,7 @@ int		lacp_xmit_marker(struct lacp_port *);
 
 #if defined(LACP_DEBUG)
 void		lacp_dump_lacpdu(const struct lacpdu *);
-const char 	*lacp_format_partner(const struct lacp_peerinfo *, char *,
+const char	*lacp_format_partner(const struct lacp_peerinfo *, char *,
 		    size_t);
 const char	*lacp_format_lagid(const struct lacp_peerinfo *,
 		    const struct lacp_peerinfo *, char *, size_t);
@@ -413,7 +412,6 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	 * XXX should use higher priority queue.
 	 * otherwise network congestion can break aggregation.
 	 */
-
 	error = trunk_enqueue(lp->lp_ifp, m);
 	return (error);
 }
@@ -471,7 +469,6 @@ lacp_linkstate(struct trunk_port *tp)
 	 * If the port is not an active full duplex Ethernet link then it can
 	 * not be aggregated.
 	 */
-
 	if (tp->tp_link_state == LINK_STATE_UNKNOWN ||
 	    tp->tp_link_state == LINK_STATE_FULL_DUPLEX)
 		lacp_port_enable(lp);
@@ -595,8 +592,10 @@ lacp_req(struct trunk_softc *sc, caddr_t data)
 		memcpy(&req->partner_mac, &la->la_partner.lip_systemid.lsi_mac,
 		    ETHER_ADDR_LEN);
 		req->partner_key = ntohs(la->la_partner.lip_key);
-		req->partner_portprio = ntohs(la->la_partner.lip_portid.lpi_prio);
-		req->partner_portno = ntohs(la->la_partner.lip_portid.lpi_portno);
+		req->partner_portprio =
+		    ntohs(la->la_partner.lip_portid.lpi_prio);
+		req->partner_portno =
+		    ntohs(la->la_partner.lip_portid.lpi_portno);
 		req->partner_state = la->la_partner.lip_state;
 	}
 }
@@ -802,11 +801,11 @@ lacp_select_tx_port(struct trunk_softc *sc, struct mbuf *m)
 
 	return (lp->lp_trunk);
 }
+
 /*
  * lacp_suppress_distributing: drop transmit packets for a while
  * to preserve packet ordering.
  */
-
 void
 lacp_suppress_distributing(struct lacp_softc *lsc, struct lacp_aggregator *la)
 {
@@ -877,7 +876,6 @@ lacp_aggregator_bandwidth(struct lacp_aggregator *la)
  * lacp_select_active_aggregator: select an aggregator to be used to transmit
  * packets from trunk(4) interface.
  */
-
 void
 lacp_select_active_aggregator(struct lacp_softc *lsc)
 {
@@ -902,7 +900,8 @@ lacp_select_active_aggregator(struct lacp_softc *lsc)
 		    lacp_format_lagid_aggregator(la, buf, sizeof(buf)),
 		    speed, la->la_nports));
 
-		/* This aggregator is chosen if
+		/*
+		 * This aggregator is chosen if
 		 *      the partner has a better system priority
 		 *  or, the total aggregated speed is higher
 		 *  or, it is already the chosen aggregator
@@ -1072,7 +1071,6 @@ lacp_aggregator_delref(struct lacp_softc *lsc, struct lacp_aggregator *la)
 /*
  * lacp_aggregator_get: allocate an aggregator.
  */
-
 struct lacp_aggregator *
 lacp_aggregator_get(struct lacp_softc *lsc, struct lacp_port *lp)
 {
@@ -1093,7 +1091,6 @@ lacp_aggregator_get(struct lacp_softc *lsc, struct lacp_port *lp)
 /*
  * lacp_fill_aggregator_id: setup a newly allocated aggregator from a port.
  */
-
 void
 lacp_fill_aggregator_id(struct lacp_aggregator *la, const struct lacp_port *lp)
 {
@@ -1115,7 +1112,6 @@ lacp_fill_aggregator_id_peer(struct lacp_peerinfo *lpi_aggr,
 /*
  * lacp_aggregator_is_compatible: check if a port can join to an aggregator.
  */
-
 int
 lacp_aggregator_is_compatible(const struct lacp_aggregator *la,
     const struct lacp_port *lp)
@@ -1233,7 +1229,6 @@ lacp_select(struct lacp_port *lp)
 /*
  * lacp_unselect: finish unselect/detach process.
  */
-
 void
 lacp_unselect(struct lacp_port *lp)
 {
@@ -1251,7 +1246,6 @@ lacp_unselect(struct lacp_port *lp)
 }
 
 /* mux machine */
-
 void
 lacp_sm_mux(struct lacp_port *lp)
 {
@@ -1384,7 +1378,6 @@ lacp_sm_mux_timer(struct lacp_port *lp)
 }
 
 /* periodic transmit machine */
-
 void
 lacp_sm_ptx_update_timeout(struct lacp_port *lp, u_int8_t oldpstate)
 {
@@ -1405,10 +1398,7 @@ lacp_sm_ptx_update_timeout(struct lacp_port *lp, u_int8_t oldpstate)
 
 	LACP_TIMER_DISARM(lp, LACP_TIMER_PERIODIC);
 
-	/*
-	 * if timeout has been shortened, assert NTT.
-	 */
-
+	/* if timeout has been shortened, assert NTT. */
 	if ((lp->lp_partner.lip_state & LACP_STATE_TIMEOUT)) {
 		lacp_sm_assert_ntt(lp);
 	}
@@ -1422,10 +1412,7 @@ lacp_sm_ptx_tx_schedule(struct lacp_port *lp)
 	if (!(lp->lp_state & LACP_STATE_ACTIVITY) &&
 	    !(lp->lp_partner.lip_state & LACP_STATE_ACTIVITY)) {
 
-		/*
-		 * NO_PERIODIC
-		 */
-
+		/* NO_PERIODIC */
 		LACP_TIMER_DISARM(lp, LACP_TIMER_PERIODIC);
 		return;
 	}
@@ -1451,18 +1438,12 @@ lacp_sm_rx(struct lacp_port *lp, const struct lacpdu *du)
 {
 	int timeout;
 
-	/*
-	 * check LACP_DISABLED first
-	 */
-
+	/* check LACP_DISABLED first */
 	if (!(lp->lp_state & LACP_STATE_AGGREGATION)) {
 		return;
 	}
 
-	/*
-	 * check loopback condition.
-	 */
-
+	/* check loopback condition. */
 	if (!lacp_compare_systemid(&du->ldu_actor.lip_systemid,
 	    &lp->lp_actor.lip_systemid)) {
 		return;
@@ -1471,7 +1452,6 @@ lacp_sm_rx(struct lacp_port *lp, const struct lacpdu *du)
 	/*
 	 * EXPIRED, DEFAULTED, CURRENT -> CURRENT
 	 */
-
 	lacp_sm_rx_update_selected(lp, du);
 	lacp_sm_rx_update_ntt(lp, du);
 	lacp_sm_rx_record_pdu(lp, du);
@@ -1482,10 +1462,7 @@ lacp_sm_rx(struct lacp_port *lp, const struct lacpdu *du)
 
 	lp->lp_state &= ~LACP_STATE_EXPIRED;
 
-	/*
-	 * kick transmit machine without waiting the next tick.
-	 */
-
+	/* kick transmit machine without waiting the next tick. */
 	lacp_sm_tx(lp);
 }
 
@@ -1651,7 +1628,6 @@ lacp_sm_tx(struct lacp_port *lp)
 void
 lacp_sm_assert_ntt(struct lacp_port *lp)
 {
-
 	lp->lp_flags |= LACP_PORT_NTT;
 }
 
@@ -1855,7 +1831,6 @@ lacp_format_lagid(const struct lacp_peerinfo *a,
 	 * there's a convention to display small numbered peer
 	 * in the left.
 	 */
-
 	if (lacp_compare_peerinfo(a, b) > 0) {
 		const struct lacp_peerinfo *t;
 
