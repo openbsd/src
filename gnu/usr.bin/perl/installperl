@@ -211,7 +211,7 @@ my $installprivlib = "$destdir$Config{installprivlib}";
 my $installarchlib = "$destdir$Config{installarchlib}";
 my $installsitelib = "$destdir$Config{installsitelib}";
 my $installsitearch = "$destdir$Config{installsitearch}";
-my $installman1dir = "$destdir$Config{installman1dir}";
+my $installman1dir = "none";
 my $man1ext = $Config{man1ext};
 my $libperl = $Config{libperl};
 # Shared library and dynamic loading suffixes.

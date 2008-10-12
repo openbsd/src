@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.13 2005/02/18 17:46:02 millert Exp $
+# $OpenBSD: config.over,v 1.14 2008/10/12 19:15:31 millert Exp $
 #
 
 # We use a different architecture name than the default
@@ -38,13 +38,13 @@ sitelib="${installsitelib}:/usr/libdata/perl5/site_perl"
 sitelibexp="${sitelib}"
 
 # We install the man pages ourselves until installman gets smarter
-man1dir=''
-man1direxp=''
-installman1dir=''
+man1dir='/usr/share/man/man1'
+man1direxp='/usr/share/man/man1'
+installman1dir='/usr/share/man/man1'
 man1ext='1'
-man3dir=''
-man3direxp=''
-installman3dir=''
+man3dir='/usr/share/man/man3p'
+man3direxp='/usr/share/man/man3p'
+installman3dir='/usr/share/man/man3p'
 man3ext='3p'
 siteman1dir='/usr/local/man/man1'
 siteman1direxp='/usr/local/man/man1'
