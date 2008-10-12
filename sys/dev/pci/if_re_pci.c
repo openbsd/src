@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.22 2008/10/05 22:32:11 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.23 2008/10/12 00:54:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -195,5 +195,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->rl_flags |= RL_FLAG_PCIE;
 
 	/* Call bus-independent attach routine */
-	re_attach(sc, intrstr);
+	if (re_attach(sc, intrstr)) {
+		pci_intr_disestablish(pc, psc->sc_ih);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, iosize);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.13 2008/04/20 00:34:39 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.14 2008/10/12 00:54:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -163,7 +163,15 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pwrhook = powerhook_establish(re_cardbus_powerhook, sc);
 
 	/* Call bus-independent (common) attach routine */
-	re_attach(sc, intrstr);
+	if (re_attach(sc, intrstr)) {
+		if (sc->sc_sdhook != NULL)
+			shutdownhook_disestablish(sc->sc_sdhook);
+		if (sc->sc_pwrhook != NULL)
+			powerhook_disestablish(sc->sc_pwrhook);
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->rl_btag,
+		    sc->rl_bhandle, csc->sc_mapsize);
+	}
 }
 
 /*
