@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.1 2008/03/08 19:18:27 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.2 2008/10/12 09:17:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -17,9 +17,11 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
+#include <machine/hypervisor.h>
 #include <machine/openfirm.h>
 
 #include <sparc64/dev/vbusvar.h>
@@ -27,6 +29,12 @@
 #include <dev/clock_subr.h>
 extern todr_chip_handle_t todr_handle;
 
+struct vbus_softc {
+	struct device		sc_dv;
+	bus_space_tag_t		sc_bustag;
+};
+
+int	vbus_cmp_cells(int *, int *, int *, int);
 int	vbus_match(struct device *, void *, void *);
 void	vbus_attach(struct device *, struct device *, void *);
 int	vbus_print(void *, const char *);
@@ -38,6 +46,11 @@ struct cfattach vbus_ca = {
 struct cfdriver vbus_cd = {
 	NULL, "vbus", DV_DULL
 };
+
+void	*vbus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
+    int (*)(void *), void *, const char *);
+void	vbus_intr_ack(struct intrhand *);
+bus_space_tag_t vbus_alloc_bus_tag(struct vbus_softc *, bus_space_tag_t);
 
 int
 vbus_match(struct device *parent, void *match, void *aux)
@@ -53,9 +66,11 @@ vbus_match(struct device *parent, void *match, void *aux)
 void
 vbus_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct vbus_softc *sc = (struct vbus_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int node;
 
+	sc->sc_bustag = vbus_alloc_bus_tag(sc, ma->ma_bustag);
 	printf("\n");
 
 	for (node = OF_child(ma->ma_node); node; node = OF_peer(node)) {
@@ -67,6 +82,7 @@ vbus_attach(struct device *parent, struct device *self, void *aux)
 		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
 			continue;
 		va.va_name = buf;
+		va.va_bustag = sc->sc_bustag;
 		getprop(node, "reg", sizeof(*va.va_reg),
 		    &va.va_nreg, (void **)&va.va_reg);
 		getprop(node, "interrupts", sizeof(*va.va_intr),
@@ -91,4 +107,138 @@ vbus_print(void *aux, const char *name)
 	if (name)
 		printf("\"%s\" at %s", va->va_name, name);
 	return (UNCONF);
+}
+
+/*
+ * Compare a sequence of cells with a mask, return 1 if they match and
+ * 0 if they don't.
+ */
+int
+vbus_cmp_cells(int *cell1, int *cell2, int *mask, int ncells)
+{
+	int i;
+
+	for (i = 0; i < ncells; i++) {
+		if (((cell1[i] ^ cell2[i]) & mask[i]) != 0)
+			return (0);
+	}
+	return (1);
+}
+
+int
+vbus_intr_map(int node, int ino, uint64_t *sysino)
+{
+	int *imap = NULL, nimap;
+	int *reg = NULL, nreg;
+	int *imap_mask;
+	int parent;
+	int address_cells, interrupt_cells;
+	uint64_t devhandle;
+	uint64_t devino;
+	int len;
+	int err;
+
+	parent = OF_parent(node);
+
+	address_cells = getpropint(parent, "#address-cells", 2);
+	interrupt_cells = getpropint(parent, "#interrupt-cells", 1);
+	KASSERT(interrupt_cells == 1);
+
+	len = OF_getproplen(parent, "interrupt-map-mask");
+	if (len < (address_cells + interrupt_cells) * sizeof(int))
+		return (-1);
+	imap_mask = malloc(len, M_DEVBUF, M_NOWAIT);
+	if (imap_mask == NULL)
+		return (-1);
+	if (OF_getprop(parent, "interrupt-map-mask", imap_mask, len) != len)
+		return (-1);
+
+	getprop(parent, "interrupt-map", sizeof(int), &nimap, (void **)&imap);
+	getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg);
+	if (nreg < address_cells)
+		return (-1);
+
+	while (nimap >= address_cells + interrupt_cells + 2) {
+		if (vbus_cmp_cells(imap, reg, imap_mask, address_cells) &&
+		    vbus_cmp_cells(&imap[address_cells], &ino,
+		    &imap_mask[address_cells], interrupt_cells)) {
+			node = imap[address_cells + interrupt_cells];
+			devino = imap[address_cells + interrupt_cells + 1];
+
+			free(reg, M_DEVBUF);
+			reg = NULL;
+
+			getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg);
+			devhandle = reg[0] & 0x0fffffff;
+
+			err = hv_intr_devino_to_sysino(devhandle, devino, sysino);
+			if (err != H_EOK)
+				return (-1);
+
+			KASSERT(*sysino == INTVEC(*sysino));
+			return (0);
+		}
+		imap += address_cells + interrupt_cells + 2;
+		nimap -= address_cells + interrupt_cells + 2;
+	}
+
+	return (-1);
+}
+
+void *
+vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+    int level, int flags, int (*handler)(void *), void *arg, const char *what)
+{
+	uint64_t sysino = INTVEC(ihandle);
+	struct intrhand *ih;
+	int err;
+
+	ih = bus_intr_allocate(t0, handler, arg, ihandle, level,
+	    NULL, NULL, what);
+	if (ih == NULL)
+		return (NULL);
+
+	intr_establish(ih->ih_pil, ih);
+	ih->ih_ack = vbus_intr_ack;
+
+	err = hv_intr_settarget(sysino, cpus->ci_upaid);
+	if (err != H_EOK)
+		return (NULL);
+
+	/* Clear pending interrupts. */
+	err = hv_intr_setstate(sysino, INTR_IDLE);
+	if (err != H_EOK)
+		return (NULL);
+
+	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	if (err != H_EOK)
+		return (NULL);
+
+	return (ih);
+}
+
+void
+vbus_intr_ack(struct intrhand *ih)
+{
+	hv_intr_setstate(ih->ih_number, INTR_IDLE);
+}
+
+bus_space_tag_t
+vbus_alloc_bus_tag(struct vbus_softc *sc, bus_space_tag_t parent)
+{
+	struct sparc_bus_space_tag *bt;
+
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bt == NULL)
+		panic("could not allocate vbus bus tag");
+
+	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
+	bt->cookie = sc;
+	bt->parent = parent;
+	bt->asi = parent->asi;
+	bt->sasi = parent->sasi;
+	bt->sparc_bus_map = parent->sparc_bus_map;
+	bt->sparc_intr_establish = vbus_intr_establish;
+
+	return (bt);
 }
