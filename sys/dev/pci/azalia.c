@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.57 2008/10/10 22:40:22 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.58 2008/10/12 10:34:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -234,6 +234,7 @@ void	azalia_codec_add_format(codec_t *, int, int, int, uint32_t,
 int	azalia_codec_comresp(const codec_t *, nid_t, uint32_t,
 	uint32_t, uint32_t *);
 int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
+int	azalia_codec_disconnect_stream(codec_t *, int);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -725,6 +726,7 @@ azalia_attach_intr(struct device *self)
 	}
 	printf("\n");
 
+	/* Use stream#1 and #2.  Don't use stream#0. */
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
 	    1, AUMODE_PLAY))
 		goto err_exit;
@@ -1553,6 +1555,25 @@ exit:
 	return err;
 }
 
+int
+azalia_codec_disconnect_stream(codec_t *this, int dir)
+{
+	const convgroup_t *group;
+	int i;
+	nid_t nid;
+
+	if (dir == AUMODE_RECORD)
+		group = &this->adcs.groups[this->adcs.cur];
+	else
+		group = &this->dacs.groups[this->dacs.cur];
+	for (i = 0; i < group->nconv; i++) {
+		nid = group->conv[i];
+		this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
+		    0, NULL);	/* stream#0 */
+	}
+	return 0;
+}
+
 /* ================================================================
  * HDA widget functions
  * ================================================================ */
@@ -2060,6 +2081,8 @@ azalia_stream_halt(stream_t *this)
 	STR_WRITE_2(this, CTL, ctl);
 	AZ_WRITE_4(this->az, INTCTL,
 	    AZ_READ_4(this->az, INTCTL) & ~this->intr_bit);
+	azalia_codec_disconnect_stream
+	    (&this->az->codecs[this->az->codecno], this->dir);
 	return (0);
 }
 
