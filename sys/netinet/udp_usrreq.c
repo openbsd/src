@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.125 2008/09/03 12:51:39 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.126 2008/10/13 14:02:20 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -534,7 +534,7 @@ udp_input(struct mbuf *m, ...)
 	/*
 	 * Locate pcb for datagram.
 	 */
-#if NPF > 0
+#if 0
 	if (m->m_pkthdr.pf.statekey)
 		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
 #endif
