@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.8 2006/01/05 08:15:16 otto Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.9 2008/10/13 05:42:46 kevlo Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -60,10 +60,9 @@ pthread_attr_init(pthread_attr_t *attrp)
 {
 	pthread_attr_t attr;
 
-	attr = malloc(sizeof(*attr));
+	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
-	memset(attr, 0, sizeof(*attr));
 	attr->stack_size = RTHREAD_STACK_SIZE_DEF;
 	attr->guard_size = sysconf(_SC_PAGESIZE);
 	attr->stack_size -= attr->guard_size;

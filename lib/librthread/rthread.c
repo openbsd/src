@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.38 2008/08/14 05:57:06 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.39 2008/10/13 05:42:46 kevlo Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -285,10 +285,9 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 		if ((rc = _rthread_init()))
 		    return (rc);
 
-	thread = malloc(sizeof(*thread));
+	thread = calloc(1, sizeof(*thread));
 	if (!thread)
 		return (errno);
-	memset(thread, 0, sizeof(*thread));
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
@@ -423,10 +422,9 @@ pthread_cleanup_push(void (*fn)(void *), void *arg)
 	struct rthread_cleanup_fn *clfn;
 	pthread_t self = pthread_self();
 
-	clfn = malloc(sizeof(*clfn));
+	clfn = calloc(1, sizeof(*clfn));
 	if (!clfn)
 		return;
-	memset(clfn, 0, sizeof(*clfn));
 	clfn->fn = fn;
 	clfn->arg = arg;
 	clfn->next = self->cleanup_fns;

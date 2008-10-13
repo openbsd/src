@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.19 2008/02/22 09:18:28 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.20 2008/10/13 05:42:46 kevlo Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -140,10 +140,9 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		return (-1);
 	}
 
-	sem = malloc(sizeof(*sem));
+	sem = calloc(1, sizeof(*sem));
 	if (!sem)
 		return (-1);
-	memset(sem, 0, sizeof(*sem));
 	sem->value = value;
 	*semp = sem;
 
@@ -223,10 +222,9 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 {
 	pthread_mutex_t mutex;
 
-	mutex = malloc(sizeof(*mutex));
+	mutex = calloc(1, sizeof(*mutex));
 	if (!mutex)
 		return (errno);
-	memset((void *)mutex, 0, sizeof(*mutex));
 	mutex->sem.lock = _SPINLOCK_UNLOCKED;
 	mutex->sem.value = 1;	/* unlocked */
 	mutex->type = attr ? (*attr)->type : PTHREAD_MUTEX_ERRORCHECK;
@@ -325,10 +323,9 @@ pthread_mutexattr_init(pthread_mutexattr_t *attrp)
 {
 	pthread_mutexattr_t attr;
 
-	attr = malloc(sizeof(*attr));
+	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
-	memset(attr, 0, sizeof(*attr));
 	attr->type = PTHREAD_MUTEX_ERRORCHECK;
 	*attrp = attr;
 
@@ -368,10 +365,9 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attrp)
 {
 	pthread_cond_t cond;
 
-	cond = malloc(sizeof(*cond));
+	cond = calloc(1, sizeof(*cond));
 	if (!cond)
 		return (errno);
-	memset(cond, 0, sizeof(*cond));
 	cond->sem.lock = _SPINLOCK_UNLOCKED;
 
 	*condp = cond;
@@ -462,10 +458,9 @@ pthread_condattr_init(pthread_condattr_t *attrp)
 {
 	pthread_condattr_t attr;
 
-	attr = malloc(sizeof(*attr));
+	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
-	memset(attr, 0, sizeof(*attr));
 	*attrp = attr;
 
 	return (0);
@@ -488,10 +483,9 @@ pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
 {
 	pthread_rwlock_t lock;
 
-	lock = malloc(sizeof(*lock));
+	lock = calloc(1, sizeof(*lock));
 	if (!lock)
 		return (errno);
-	memset(lock, 0, sizeof(*lock));
 	lock->lock = _SPINLOCK_UNLOCKED;
 	lock->sem.lock = _SPINLOCK_UNLOCKED;
 	*lockp = lock;
@@ -658,10 +652,9 @@ pthread_rwlockattr_init(pthread_rwlockattr_t *attrp)
 {
 	pthread_rwlockattr_t attr;
 
-	attr = malloc(sizeof(*attr));
+	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
-	memset(attr, 0, sizeof(*attr));
 	*attrp = attr;
 
 	return (0);

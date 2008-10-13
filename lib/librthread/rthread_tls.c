@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.10 2005/12/22 20:48:57 brad Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.11 2008/10/13 05:42:46 kevlo Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -96,10 +96,9 @@ _rthread_findstorage(pthread_key_t key)
 			break;
 	}
 	if (!rs) {
-		rs = malloc(sizeof(*rs));
+		rs = calloc(1, sizeof(*rs));
 		if (!rs)
 			return (NULL);
-		memset(rs, 0, sizeof(*rs));
 		rs->keyid = key;
 		rs->data = NULL;
 		rs->next = self->local_storage;
