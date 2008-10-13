@@ -1,6 +1,6 @@
-.\" $OpenBSD: iwn.4,v 1.8 2008/07/29 16:44:19 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.9 2008/10/13 16:37:52 damien Exp $
 .\"
-.\" Copyright (c) 2007
+.\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: October 13 2008 $
 .Os
 .Dt IWN 4
 .Sh NAME
 .Nm iwn
-.Nd "Intel Wireless WiFi Link 4965AGN IEEE 802.11a/b/g/Draft-N wireless network device"
+.Nd "Intel Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series IEEE 802.11a/b/g/Draft-N wireless network devices"
 .Sh SYNOPSIS
 .Cd "iwn* at pci?"
 .Sh DESCRIPTION
@@ -28,7 +28,18 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965AGN Mini PCI Express network adapters.
+Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series Mini PCI Express network adapters.
+.Pp
+The Intel Wireless WiFi Link 4965AGN product is a PCIe Mini Card network adapter that operates in both the 2.4GHz and 5GHZ spectrum.
+The 4965AGN adapters have 2 transmit paths and 3 receiver paths (2T3R).
+.Pp
+The Intel WiFi Link 5000 is a family of wireless network adapters that operate in both the 2.4GHz and 5GHz spectrum.
+These adapters are available in both PCIe Mini Card (model code ending by MMW) and PCIe Half Mini Card (model code ending by HMW) form factor.
+The
+.Nm
+driver provides support for the 5100, 5150, 5300 and 5350 adapters.
+The 5100 and 5150 adapters have 1 transmit path and 2 receiver paths (1T2R).
+The 5300 and 5350 adapters have 3 transmit paths and 3 receiver paths (3T3R).
 .Pp
 These are the modes the
 .Nm
@@ -73,11 +84,12 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 4.44.1.20 of the following firmware file,
-which is loaded when an interface is brought up:
+The driver needs at least version 5.0 of the following firmware files,
+which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/iwn-4965agn
+.It Pa /etc/firmware/iwn-4965
+.It Pa /etc/firmware/iwn-5000
 .El
 .Pp
 This firmware file is not free because Intel refuses to grant
@@ -86,14 +98,12 @@ As a result, even though
 .Ox
 includes the driver, the firmware file cannot be included and
 users have to download this file on their own.
-The official person to state your views to about this issue is
-majid.awad@intel.com.
 .Pp
 A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal
-http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-4.44.1.20.tgz
+http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.0.tgz
 .Ed
 .Sh EXAMPLES
 The following
