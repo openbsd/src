@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.4 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.5 2008/10/14 11:41:47 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -64,8 +64,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <dev/rndvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -474,25 +472,13 @@ jme_reg_macaddr(struct jme_softc *sc, uint8_t eaddr[])
 	par0 = CSR_READ_4(sc, JME_PAR0);
 	par1 = CSR_READ_4(sc, JME_PAR1);
 	par1 &= 0xFFFF;
-	if ((par0 == 0 && par1 == 0) || (par0 & 0x1)) {
-		printf("%s: generating fake ethernet address.\n",
-		    sc->sc_dev.dv_xname);
-		par0 = arc4random();
-		/* Set OUI to JMicron. */
-		eaddr[0] = 0x00;
-		eaddr[1] = 0x1B;
-		eaddr[2] = 0x8C;
-		eaddr[3] = (par0 >> 16) & 0xff;
-		eaddr[4] = (par0 >> 8) & 0xff;
-		eaddr[5] = par0 & 0xff;
-	} else {
-		eaddr[0] = (par0 >> 0) & 0xFF;
-		eaddr[1] = (par0 >> 8) & 0xFF;
-		eaddr[2] = (par0 >> 16) & 0xFF;
-		eaddr[3] = (par0 >> 24) & 0xFF;
-		eaddr[4] = (par1 >> 0) & 0xFF;
-		eaddr[5] = (par1 >> 8) & 0xFF;
-	}
+
+	eaddr[0] = (par0 >> 0) & 0xFF;
+	eaddr[1] = (par0 >> 8) & 0xFF;
+	eaddr[2] = (par0 >> 16) & 0xFF;
+	eaddr[3] = (par0 >> 24) & 0xFF;
+	eaddr[4] = (par1 >> 0) & 0xFF;
+	eaddr[5] = (par1 >> 8) & 0xFF;
 }
 
 void
