@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.9 2008/05/08 09:52:36 pyr Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.10 2008/10/14 20:43:33 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -153,8 +153,8 @@ mpestart(struct ifnet *ifp)
 			return;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
+		if (ifp->if_bpf)
+			bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
 #endif
 		ifm = ifp->if_softc;
 		shim.shim_label = ifm->sc_shim.shim_label;
@@ -284,7 +284,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	/* label -> AF lookup */
 	
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
+	if (ifp && ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	s = splnet();
@@ -293,5 +293,27 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	 */
 	IF_ENQUEUE(&ipintrq, m);
 	schednetisr(NETISR_IP);
+	splx(s);
+}
+
+void
+mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
+    u_int32_t ttl)
+{
+	int		 s;
+
+	/* fixup ttl */
+	/* label -> AF lookup */
+	
+#if NBPFILTER > 0
+	if (ifp && ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+	s = splnet();
+	/*
+	 * assume we only get fed ipv4 packets for now.
+	 */
+	IF_ENQUEUE(&ip6intrq, m);
+	schednetisr(NETISR_IPV6);
 	splx(s);
 }

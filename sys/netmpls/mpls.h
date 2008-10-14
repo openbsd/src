@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.11 2008/05/23 16:03:03 thib Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.12 2008/10/14 20:43:33 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -151,6 +151,8 @@ struct mpe_softc {
 #define MPE_MTU_MAX	8192
 
 void	mpe_input(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
+	    u_int32_t);
+void	mpe_input6(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
 	    u_int32_t);
 
 extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
