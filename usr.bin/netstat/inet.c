@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.107 2008/09/16 15:48:12 gollo Exp $	*/
+/*	$OpenBSD: inet.c,v 1.108 2008/10/14 21:36:27 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ static void protopr0(u_long, char *, int);
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, char *, int);
 char	*inet6name(struct in6_addr *);
-void	inet6print(struct in6_addr *, int, char *, int);
+void	inet6print(struct in6_addr *, int, char *);
 
 /*
  * Print a summary of connections related to an Internet
@@ -199,9 +199,9 @@ protopr0(u_long off, char *name, int af)
 		    sockb.so_snd.sb_cc);
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
-			    name, 1);
+			    name);
 			inet6print(&inpcb.inp_faddr6, (int)inpcb.inp_fport,
-			    name, 0);
+			    name);
 		} else {
 			inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport,
 			    name, 1);
