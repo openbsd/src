@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gem.4,v 1.17 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: gem.4,v 1.18 2008/10/14 17:14:49 brad Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 14 2008 $
 .Dt GEM 4
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Cd "brgphy* at mii?"
 .Cd "eephy* at mii?"
 .Cd "gentbi* at mii?"
+.Cd "luphy* at mii?"
 .Cd "lxtphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -92,6 +93,7 @@ Use 10baseT, half duplex
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
+.Xr luphy 4 ,
 .Xr lxtphy 4 ,
 .Xr netintro 4 ,
 .Xr hostname.if 5 ,
