@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.9 2008/10/13 16:37:52 damien Exp $
+.\" $OpenBSD: iwn.4,v 1.10 2008/10/14 09:43:07 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2008 $
+.Dd $Mdocdate: October 14 2008 $
 .Os
 .Dt IWN 4
 .Sh NAME
 .Nm iwn
-.Nd "Intel Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series IEEE 802.11a/b/g/Draft-N wireless network devices"
+.Nd "Intel WiFi Link 4965/5100/5300 IEEE 802.11a/b/g/Draft-N wireless network devices"
 .Sh SYNOPSIS
 .Cd "iwn* at pci?"
 .Sh DESCRIPTION
@@ -28,13 +28,17 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series Mini PCI Express network adapters.
+Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series
+Mini PCI Express network adapters.
 .Pp
-The Intel Wireless WiFi Link 4965AGN product is a PCIe Mini Card network adapter that operates in both the 2.4GHz and 5GHZ spectrum.
+The Intel Wireless WiFi Link 4965AGN product is a PCIe Mini Card
+network adapter that operates in both the 2.4GHz and 5GHZ spectrum.
 The 4965AGN adapters have 2 transmit paths and 3 receiver paths (2T3R).
 .Pp
-The Intel WiFi Link 5000 is a family of wireless network adapters that operate in both the 2.4GHz and 5GHz spectrum.
-These adapters are available in both PCIe Mini Card (model code ending by MMW) and PCIe Half Mini Card (model code ending by HMW) form factor.
+The Intel WiFi Link 5000 is a family of wireless network adapters
+that operate in both the 2.4GHz and 5GHz spectrum.
+These adapters are available in both PCIe Mini Card (model code ending by MMW)
+and PCIe Half Mini Card (model code ending by HMW) form factor.
 The
 .Nm
 driver provides support for the 5100, 5150, 5300 and 5350 adapters.
