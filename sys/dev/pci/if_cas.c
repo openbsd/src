@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.22 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.23 2008/10/14 18:01:53 naddy Exp $	*/
 
 /*
  *
@@ -1205,14 +1205,13 @@ cas_rint(struct cas_softc *sc)
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-			cp = rxs->rxs_kva + off * 256;
-			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
+			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
+			m = m_devget(cp, len, ETHER_ALIGN, ifp, NULL);
 			
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-				m_adj(m, ETHER_ALIGN);
 
 #if NBPFILTER > 0
 				/*
@@ -1242,15 +1241,13 @@ cas_rint(struct cas_softc *sc)
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/* XXX We should not be copying the packet here. */
-			cp = rxs->rxs_kva + off;
-			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
+			cp = rxs->rxs_kva + off + ETHER_ALIGN;
+			m = m_devget(cp, len, ETHER_ALIGN, ifp, NULL);
 
 			if (word[0] & CAS_RC0_RELEASE_DATA)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-				m_adj(m, ETHER_ALIGN);
-
 #if NBPFILTER > 0
 				/*
 				 * Pass this up to any BPF listeners, but only

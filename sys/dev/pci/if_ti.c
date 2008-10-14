@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.88 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.89 2008/10/14 18:01:53 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1787,14 +1787,13 @@ ti_rxeof(struct ti_softc *sc)
 			if (ti_newbuf_jumbo(sc, sc->ti_jumbo, NULL)
 			    == ENOBUFS) {
 				struct mbuf             *m0;
-				m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-				    cur_rx->ti_len + ETHER_ALIGN, 0, ifp, NULL);
+				m0 = m_devget(mtod(m, char *), cur_rx->ti_len,
+				    ETHER_ALIGN, ifp, NULL);
 				ti_newbuf_jumbo(sc, sc->ti_jumbo, m);
 				if (m0 == NULL) {
 					ifp->if_ierrors++;
 					continue;
 				}
-				m_adj(m0, ETHER_ALIGN);
 				m = m0;
 			}
 		} else if (cur_rx->ti_flags & TI_BDFLAG_MINI_RING) {

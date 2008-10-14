@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.148 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.149 2008/10/14 18:01:53 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1777,14 +1777,13 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		 */
 		if (sk_newbuf(sc_if, cur, NULL, dmamap) == ENOBUFS) {
 			struct mbuf		*m0;
-			m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
+			    ifp, NULL);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
-			m_adj(m0, ETHER_ALIGN);
 			m = m0;
 		} else {
 			m->m_pkthdr.rcvif = ifp;

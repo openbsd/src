@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.93 2008/09/28 14:08:51 naddy Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.94 2008/10/14 18:01:53 naddy Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -922,28 +922,24 @@ struct mbuf *
 m_devget(char *buf, int totlen, int off, struct ifnet *ifp,
     void (*copy)(const void *, void *, size_t))
 {
-	struct mbuf *m;
-	struct mbuf *top = NULL, **mp = &top;
-	int len;
-	char *cp;
-	char *epkt;
+	struct mbuf	*m;
+	struct mbuf	*top, **mp;
+	int		 len;
 
-	cp = buf;
-	epkt = cp + totlen;
-	if (off) {
-		/*
-		 * If 'off' is non-zero, packet is trailer-encapsulated,
-		 * so we have to skip the type and length fields.
-		 */
-		cp += off + 2 * sizeof(u_int16_t);
-		totlen -= 2 * sizeof(u_int16_t);
-	}
+	top = NULL;
+	mp = &top;
+
+	if (off < 0 || off > MHLEN)
+		return (NULL);
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
+
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
-	m->m_len = MHLEN;
+
+	len = MHLEN;
 
 	while (totlen > 0) {
 		if (top != NULL) {
@@ -952,37 +948,38 @@ m_devget(char *buf, int totlen, int off, struct ifnet *ifp,
 				m_freem(top);
 				return (NULL);
 			}
-			m->m_len = MLEN;
+			len = MLEN;
 		}
-		len = min(totlen, epkt - cp);
-		if (len >= MINCLSIZE) {
+
+		if (totlen + off >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
-				m->m_len = len = min(len, MCLBYTES);
-			else
-				len = m->m_len;
+				len = MCLBYTES;
 		} else {
-			/*
-			 * Place initial small packet/header at end of mbuf.
-			 */
-			if (len < m->m_len) {
-				if (top == NULL &&
-				    len + max_linkhdr <= m->m_len)
-					m->m_data += max_linkhdr;
-				m->m_len = len;
-			} else
-				len = m->m_len;
+			/* Place initial small packet/header at end of mbuf. */
+			if (top == NULL && totlen + off + max_linkhdr <= len) {
+				m->m_data += max_linkhdr;
+				len -= max_linkhdr;
+			}
 		}
+
+		if (off) {
+			m->m_data += off;
+			len -= off;
+			off = 0;
+		}
+
+		m->m_len = len = min(totlen, len);
+
 		if (copy)
-			copy(cp, mtod(m, caddr_t), (size_t)len);
+			copy(buf, mtod(m, caddr_t), (size_t)len);
 		else
-			bcopy(cp, mtod(m, caddr_t), (size_t)len);
-		cp += len;
+			bcopy(buf, mtod(m, caddr_t), (size_t)len);
+
+		buf += len;
 		*mp = m;
 		mp = &m->m_next;
 		totlen -= len;
-		if (cp == epkt)
-			cp = buf;
 	}
 	return (top);
 }

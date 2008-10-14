@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.82 2008/10/02 20:21:14 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.83 2008/10/14 18:01:53 naddy Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1344,14 +1344,13 @@ sis_rxeof(struct sis_softc *sc)
 #endif
 		{
 			struct mbuf *m0;
-			m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
+			    ifp, NULL);
 			sis_newbuf(sc, cur_rx, m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
-			m_adj(m0, ETHER_ALIGN);
 			m = m0;
 		}
 

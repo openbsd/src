@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.246 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.247 2008/10/14 18:01:53 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2468,15 +2468,14 @@ bge_rxeof(struct bge_softc *sc)
 			if (bge_newbuf_jumbo(sc, sc->bge_jumbo, NULL)
 			    == ENOBUFS) {
 				struct mbuf             *m0;
-				m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-				    cur_rx->bge_len - ETHER_CRC_LEN +
-				    ETHER_ALIGN, 0, ifp, NULL);
+				m0 = m_devget(mtod(m, char *),
+				    cur_rx->bge_len - ETHER_CRC_LEN,
+				    ETHER_ALIGN, ifp, NULL);
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
 				if (m0 == NULL) {
 					ifp->if_ierrors++;
 					continue;
 				}
-				m_adj(m0, ETHER_ALIGN);
 				m = m0;
 			}
 		} else {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.63 2008/07/29 10:05:38 thib Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.64 2008/10/14 18:01:53 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -927,14 +927,13 @@ cmalo_rx(struct malo_softc *sc)
 	rxdesc->pkglen -= sizeof(struct llc);
 
 	/* prepare mbuf */
-	m = m_devget(sc->sc_data + rxdesc->pkgoffset - ETHER_ALIGN,
-	    rxdesc->pkglen + ETHER_ALIGN, 0, ifp, NULL);
+	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
+	    rxdesc->pkglen, ETHER_ALIGN, ifp, NULL);
 	if (m == NULL) {
 		DPRINTF(1, "RX m_devget failed!\n");
 		ifp->if_ierrors++;
 		return;
 	}
-	m_adj(m, ETHER_ALIGN);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
