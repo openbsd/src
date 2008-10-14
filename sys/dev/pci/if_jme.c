@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.5 2008/10/14 11:41:47 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.6 2008/10/14 11:45:40 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -78,8 +78,6 @@
 
 /* Define the following to disable printing Rx errors. */
 #undef	JME_SHOW_ERRORS
-
-//#define	JME_CSUM_FEATURES	(CSUM_IP | CSUM_TCP | CSUM_UDP)
 
 int	jme_match(struct device *, void *, void *);
 void	jme_attach(struct device *, struct device *, void *);
@@ -493,9 +491,7 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 
 	struct ifnet *ifp;
 	uint32_t reg;
-//	uint8_t pcie_ptr;
 	int error = 0;
-//	uint8_t eaddr[ETHER_ADDR_LEN];
 
 	/*
 	 * Allocate IO memory
@@ -1235,7 +1231,6 @@ jme_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				break;
 			}
-//			ifq_prepend(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -2294,7 +2289,7 @@ jme_newbuf(struct jme_softc *sc, struct jme_rxdesc *rxd, int init)
 void
 jme_set_vlan(struct jme_softc *sc)
 {
-//	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+/*	struct ifnet *ifp = &sc->sc_arpcom.ac_if; */
 	uint32_t reg;
 
 	reg = CSR_READ_4(sc, JME_RXMAC);
