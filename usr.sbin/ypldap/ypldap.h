@@ -117,7 +117,9 @@ struct idm {
 #define F_CONFIGURING			 0x00200000
 #define F_NEEDAUTH			 0x00400000
 #define F_FIXED_ATTR(n)			 (1<<n)
+#define F_LIST(n)                        (1<<n)
 	u_int32_t			 idm_flags; /* lower 20 reserved */
+	u_int32_t			 idm_list;
 	in_port_t			 idm_port;
 	char				 idm_binddn[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
@@ -148,7 +150,6 @@ struct idm {
 #ifdef SSL
 	struct ssl			*idm_ssl;
 #endif
-	
 };
 
 struct idm_req {

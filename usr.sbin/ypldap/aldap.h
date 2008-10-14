@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.3 2008/10/06 11:20:20 aschrijver Exp $ */
-/*	$OpenBSD: aldap.h,v 1.3 2008/10/06 11:20:20 aschrijver Exp $ */
+/*	$Id: aldap.h,v 1.4 2008/10/14 21:41:03 aschrijver Exp $ */
+/*	$OpenBSD: aldap.h,v 1.4 2008/10/14 21:41:03 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -49,8 +49,8 @@ struct aldap_message {
 			struct ber_element	*iter;
 			struct ber_element	*entries;
 		}			 search;
-		struct ber_element	*references;
 	} body;
+	struct ber_element	*references;
 };
 
 enum aldap_protocol {

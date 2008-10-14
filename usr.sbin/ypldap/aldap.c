@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.4 2008/10/06 08:01:28 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.4 2008/10/06 08:01:28 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -156,7 +156,7 @@ aldap_parse(struct aldap *ldap)
 			    &m->body.res.rescode, &m->dn, &m->body.res.diagmsg, &a) != 0)
 			goto parsefail;
 		if(m->body.res.rescode == LDAP_REFERRAL)
-			if(ber_scanf_elements(a, "{e", &m->body.references) != 0)
+			if(ber_scanf_elements(a, "{e", &m->references) != 0)
 				goto parsefail;
 		break;
 	case LDAP_RES_SEARCH_ENTRY:
@@ -165,7 +165,7 @@ aldap_parse(struct aldap *ldap)
 			goto parsefail;
 		break;
 	case LDAP_RES_SEARCH_REFERENCE:
-		if(ber_scanf_elements(m->protocol_op, "{e", &m->body.references) != 0)
+		if(ber_scanf_elements(m->protocol_op, "{e", &m->references) != 0)
 			goto parsefail;
 		break;
 	}
@@ -205,7 +205,9 @@ aldap_get_dn(struct aldap_message *msg)
 char **
 aldap_get_references(struct aldap_message *msg)
 {
-	 return aldap_get_stringset(msg->body.references);
+	if(msg->references == NULL)
+		return NULL;
+	return aldap_get_stringset(msg->references);
 }
 
 void
@@ -387,7 +389,8 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 		*forward2 = '\0';
 		/* if a port is given */
 		if(*(forward2+1) != '\0') {
-			lu->port = strtonum(++forward2, 0, sizeof(lu->port), &errstr);
+#define PORT_MAX UINT16_MAX
+			lu->port = strtonum(++forward2, 0, PORT_MAX, &errstr);
 			if(errstr)
 				goto fail;
 		}
@@ -478,9 +481,11 @@ aldap_get_stringset(struct ber_element *elm)
 	if(elm->be_type != BER_TYPE_OCTETSTRING)
 		return NULL;
 
-	for(a = elm, i = 1; i > 0 && a->be_type == BER_TYPE_OCTETSTRING;
-	    a = a->be_next, i++)
+	for(a = elm, i = 1; i > 0 && a != NULL && a->be_type ==
+	    BER_TYPE_OCTETSTRING; a = a->be_next, i++)
 		;
+	if(i == 1)
+		return NULL;
 
 	if((ret = calloc(i + 1, sizeof(char *))) == NULL)
 		return NULL;

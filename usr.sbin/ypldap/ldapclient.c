@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.4 2008/10/06 11:20:20 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -37,9 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LDAP_DEPRECATED 1
 #include "aldap.h"
-
 #include "ypldap.h"
 
 void    client_sig_handler(int, short, void *);
@@ -52,35 +50,69 @@ int	client_try_idm(struct env *, struct idm *);
 void	client_try_idm_wrapper(int, short, void *);
 void	client_try_server_wrapper(int, short, void *);
 
-static int	remote_connect(const char *, const char *, struct addrinfo);
+int	do_build_group(struct env *, struct idm *, struct aldap *, char *, enum
+    scope, char *);
+int	do_build_passwd(struct env *, struct idm *, struct aldap *, char *, enum
+    scope, char *);
 
-static int
-remote_connect(const char *host, const char *port, struct addrinfo hints)
+struct aldap	*aldap_open(char *, char *);
+int		 aldap_close(struct aldap *);
+struct aldap	*connect_to_referral(struct aldap_message *, struct aldap_url *);
+
+int
+aldap_close(struct aldap *al)
 {
+	if(close(al->ber.fd) == -1)
+		return (-1);
+
+	free(al);
+
+	return (0);
+}
+
+struct aldap *
+aldap_open(char *host, char *port)
+{
+	struct addrinfo		 hints;
+	struct aldap		*al;
+	int			 fd;
+
 	struct addrinfo *res, *res0;
-	int s, error;
+	int error;
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	log_debug("trying directory: %s", host);
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
 
 	res0 = res;
 	do {
-		if ((s = socket(res0->ai_family, res0->ai_socktype,
+		if ((fd = socket(res0->ai_family, res0->ai_socktype,
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
+		if (connect(fd, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
-		else
+		else {
 			warn("connect to %s port %s (%s) failed", host, port, "tcp");
+			return NULL;
+		}
 
-		close(s);
-		s = -1;
+		close(fd);
+		fd = -1;
 	} while ((res0 = res0->ai_next) != NULL);
 
 	freeaddrinfo(res);
 
-	return (s);
+	if((al = aldap_init(fd)) == NULL)
+		return NULL;
+
+	return al;
 }
 
 void
@@ -263,107 +295,47 @@ client_configure_wrapper(int fd, short event, void *p)
 	client_configure(env);
 }
 
-int
-client_try_idm(struct env *env, struct idm *idm)
+struct aldap *
+connect_to_referral(struct aldap_message *m, struct aldap_url *lu)
 {
-	int			i, j, fd;
+	int			 i;
+	char			**refs, *port;
+	struct aldap		*al = NULL;
+
+	if((refs = aldap_get_references(m)) == NULL)
+		return NULL;
+
+	for(i = 0; i >= 0 && refs[i] != NULL; i++) {
+		aldap_parse_url(refs[i], lu);
+		asprintf(&port, "%d", lu->port ? lu->port : 389);
+
+		if((al = aldap_open(lu->host, port)) != NULL) {
+			free(port);
+			break;
+		}
+
+		free(port);
+	}
+
+	aldap_free_references(refs);
+
+	return al;
+}
+
+#define MAX_REFERRALS 10
+int
+do_build_group(struct env *env, struct idm *idm, struct aldap *al, char
+    *basedn, enum scope scope, char *filter)
+{
 	char			*attrs[ATTR_MAX+1];
 	char			**ldap_attrs;
-	const char		*where;
 	struct idm_req		 ir;
-	struct addrinfo		 hints;
 	struct aldap_message	*m;
-	struct aldap		*al;
-
-	log_debug("trying directory: %s", idm->idm_name);
-
-	bzero(&ir, sizeof(ir));
-	imsg_compose(env->sc_ibuf, IMSG_START_UPDATE, 0, 0, &ir, sizeof(ir));
-
-	/* connect to LDAP server */
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	where = "connect";
-	fd = remote_connect(idm->idm_name, "389", hints);
-	if(fd == -1)
-		goto bad;
-
-	al = aldap_init(fd);
-	if(al == NULL)
-		goto bad;
-
-	/* do a bind request */
-	if(aldap_bind(al, idm->idm_binddn, idm->idm_bindcred) == -1)
-		goto bad;
-	where = "parsing";
-	if((m = aldap_parse(al)) == NULL)
-		goto bad;
-	if(al->msgid != m->msgid)
-		goto bad; /* XXX: error reporting */
-	aldap_freemsg(m);
-
-	bzero(attrs, sizeof(attrs));
-	for (i = 0, j = 0; i < ATTR_MAX; i++) {
-		if (idm->idm_flags & F_FIXED_ATTR(i))
-			continue;
-		attrs[j++] = idm->idm_attrs[i];
-	}
-	attrs[j] = NULL;
-
-	/* do a search request */
-	aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-	    idm->idm_filters[FILTER_USER], attrs, 0, 0, 0);
-
-	/*
-	 * build password line.
-	 */
-	while((m = aldap_parse(al)) != NULL) {
-		if(al->msgid != m->msgid)
-			goto bad; /* XXX: error reporting */
-		if (m->message_type == LDAP_RES_SEARCH_RESULT)
-			break;
-		bzero(&ir, sizeof(ir));
-		for (i = 0, j = 0; i < ATTR_MAX; i++) {
-			if (idm->idm_flags & F_FIXED_ATTR(i)) {
-				if (strlcat(ir.ir_line, idm->idm_attrs[i],
-				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
-					/*
-					 * entry yields a line > 1024, trash it.
-					 */
-					continue;
-				if (i == ATTR_UID) {
-					ir.ir_key.ik_uid = strtonum(
-					    idm->idm_attrs[i], 0,
-					    UID_MAX, NULL);
-				}
-			} else {
-				aldap_match_entry(m, attrs[j++], &ldap_attrs);
-				if (ldap_attrs == NULL || ldap_attrs[0] == NULL)
-					continue;
-				if (strlcat(ir.ir_line, ldap_attrs[0],
-				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
-					continue;
-				if (i == ATTR_UID) {
-					ir.ir_key.ik_uid = strtonum(
-					    ldap_attrs[0], 0, UID_MAX, NULL);
-				}
-				aldap_free_entry(ldap_attrs);
-			}
-			if (i != ATTR_SHELL)
-				if (strlcat(ir.ir_line, ":",
-				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
-					continue;
-		}
-		imsg_compose(env->sc_ibuf, IMSG_PW_ENTRY, 0, 0,
-		    &ir, sizeof(ir));
-	}
-
-	/*
-	 * exact same code but for groups.
-	 */
+	struct aldap_url	 lu;
+	struct aldap		*al_ref;
+	int			i, j, k;
+	const char		*where;
+	static int		 refcnt = 0;
 
 	bzero(attrs, sizeof(attrs));
 	for (i = ATTR_GR_MIN, j = 0; i < ATTR_GR_MAX; i++) {
@@ -373,14 +345,58 @@ client_try_idm(struct env *env, struct idm *idm)
 	}
 	attrs[j] = NULL;
 
-	aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-	    idm->idm_filters[FILTER_GROUP], attrs, 0, 0, 0);
+	where = "search";
+	if(aldap_search(al, basedn, scope, filter, attrs, 0, 0, 0) == -1)
+		goto bad;
 
+	/*
+	 * build group line.
+	 */
 	while((m = aldap_parse(al)) != NULL) {
-		if(al->msgid != m->msgid)
-			goto bad; /* XXX: error reporting */
-		if (m->message_type == LDAP_RES_SEARCH_RESULT)
+		where = "verifying msgid";
+		if(al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		/* continuation referral */
+		if (m->message_type == LDAP_RES_SEARCH_REFERENCE) {
+			if(refcnt++ >= MAX_REFERRALS)
+				goto next_entry;
+
+			if((al_ref = connect_to_referral(m, &lu)) == NULL)
+				goto next_entry;
+			do_build_group(env, idm, al_ref, lu.dn,
+			    lu.scope, idm->idm_filters[FILTER_GROUP]);
+			aldap_close(al_ref);
+			goto next_entry;
+		}
+		/* normal referral */
+		if(m->message_type == LDAP_RES_SEARCH_RESULT &&
+		    aldap_get_resultcode(m) == LDAP_REFERRAL) {
+			if(refcnt++ == MAX_REFERRALS) {
+				aldap_freemsg(m);
+				break;
+			}
+
+			if((al_ref = connect_to_referral(m, &lu)) == NULL) {
+				aldap_freemsg(m);
+				break;
+			}
+			do_build_group(env, idm, al_ref, lu.dn,
+			    lu.scope, idm->idm_filters[FILTER_GROUP]);
+			aldap_close(al_ref);
+		}
+		/* end of the search result chain */
+		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
+			aldap_freemsg(m);
 			break;
+		}
+		/* search entry; the rest we won't handle */
+		if(m->message_type != LDAP_RES_SEARCH_ENTRY) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		/* search entry */
 		bzero(&ir, sizeof(ir));
 		for (i = ATTR_GR_MIN, j = 0; i < ATTR_GR_MAX; i++) {
 			if (idm->idm_flags & F_FIXED_ATTR(i)) {
@@ -389,19 +405,40 @@ client_try_idm(struct env *env, struct idm *idm)
 					/*
 					 * entry yields a line > 1024, trash it.
 					 */
-					continue;
+					goto next_entry;
 				if (i == ATTR_GR_GID) {
 					ir.ir_key.ik_gid = strtonum(
 					    idm->idm_attrs[i], 0,
 					    GID_MAX, NULL);
 				}
-			} else {
-				aldap_match_entry(m, attrs[j++], &ldap_attrs);
+			} else if (idm->idm_list & F_LIST(i)) {
+				if (aldap_match_entry(m, attrs[j++], &ldap_attrs) == -1)
+					goto next_entry;
 				if (ldap_attrs == NULL || ldap_attrs[0] == NULL)
-					continue;
+					goto next_entry;
+				for(k = 0; k >= 0 && ldap_attrs[k] != NULL; k++) {
+					if (strlcat(ir.ir_line, ldap_attrs[k],
+					    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
+						continue;
+					if(ldap_attrs[k+1] != NULL)
+						if (strlcat(ir.ir_line, ",",
+							    sizeof(ir.ir_line))
+						    >= sizeof(ir.ir_line)) {
+							aldap_free_entry(ldap_attrs);
+							goto next_entry;
+						}
+				}
+				aldap_free_entry(ldap_attrs);
+			} else {
+				if(aldap_match_entry(m, attrs[j++], &ldap_attrs) == -1)
+					goto next_entry;
+				if (ldap_attrs == NULL || ldap_attrs[0] == NULL)
+					goto next_entry;
 				if (strlcat(ir.ir_line, ldap_attrs[0],
-				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
-					continue;
+				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line)) {
+					aldap_free_entry(ldap_attrs);
+					goto next_entry;
+				}
 				if (i == ATTR_GR_GID) {
 					ir.ir_key.ik_uid = strtonum(
 					    ldap_attrs[0], 0, GID_MAX, NULL);
@@ -411,11 +448,197 @@ client_try_idm(struct env *env, struct idm *idm)
 			if (i != ATTR_GR_MEMBERS)
 				if (strlcat(ir.ir_line, ":",
 				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
-					continue;
+					goto next_entry;
 		}
 		imsg_compose(env->sc_ibuf, IMSG_GRP_ENTRY, 0, 0,
 		    &ir, sizeof(ir));
+next_entry:
+		aldap_freemsg(m);
 	}
+
+	return (0);
+bad:
+	log_debug("directory %s errored out in %s", idm->idm_name, where);
+	return (-1);
+}
+
+int
+do_build_passwd(struct env *env, struct idm *idm, struct aldap *al, char
+    *basedn, enum scope scope, char *filter)
+{
+	char			*attrs[ATTR_MAX+1];
+	char			**ldap_attrs;
+	struct idm_req		 ir;
+	struct aldap_message	*m;
+	struct aldap_url	 lu;
+	struct aldap		*al_ref;
+	int			 i, j, k;
+	const char		*where;
+	static int		 refcnt = 0;
+
+	bzero(attrs, sizeof(attrs));
+	for (i = 0, j = 0; i < ATTR_MAX; i++) {
+		if (idm->idm_flags & F_FIXED_ATTR(i))
+			continue;
+		attrs[j++] = idm->idm_attrs[i];
+	}
+	attrs[j] = NULL;
+
+	where = "search";
+	if(aldap_search(al, basedn, scope, filter, attrs, 0, 0, 0) == -1)
+		goto bad;
+
+	/*
+	 * build password line.
+	 */
+	while((m = aldap_parse(al)) != NULL) {
+		where = "verifying msgid";
+		if(al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		/* continuation referral */
+		if (m->message_type == LDAP_RES_SEARCH_REFERENCE) {
+			if(refcnt++ >= MAX_REFERRALS)
+				goto next_entry;
+
+			if((al_ref = connect_to_referral(m, &lu)) == NULL)
+				goto next_entry;
+			do_build_passwd(env, idm, al_ref, lu.dn,
+			    lu.scope, idm->idm_filters[FILTER_USER]);
+			aldap_close(al_ref);
+			goto next_entry;
+		}
+		/* normal referral */
+		if(m->message_type == LDAP_RES_SEARCH_RESULT &&
+		    aldap_get_resultcode(m) == LDAP_REFERRAL) {
+			if(refcnt++ == MAX_REFERRALS) {
+				aldap_freemsg(m);
+				break;
+			}
+
+			if((al_ref = connect_to_referral(m, &lu)) == NULL) {
+				aldap_freemsg(m);
+				break;
+			}
+			do_build_passwd(env, idm, al_ref, lu.dn,
+			    lu.scope, idm->idm_filters[FILTER_USER]);
+			aldap_close(al_ref);
+		}
+		/* end of the search result chain */
+		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
+			aldap_freemsg(m);
+			break;
+		}
+		/* search entry; the rest we won't handle */
+		if(m->message_type != LDAP_RES_SEARCH_ENTRY) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		/* search entry */
+		bzero(&ir, sizeof(ir));
+		for (i = 0, j = 0; i < ATTR_MAX; i++) {
+			if (idm->idm_flags & F_FIXED_ATTR(i)) {
+				if (strlcat(ir.ir_line, idm->idm_attrs[i],
+				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
+					/*
+					 * entry yields a line > 1024, trash it.
+					 */
+					goto next_entry;
+				if (i == ATTR_UID) {
+					ir.ir_key.ik_uid = strtonum(
+					    idm->idm_attrs[i], 0,
+					    UID_MAX, NULL);
+				}
+			} else if (idm->idm_list & F_LIST(i)) {
+				if (aldap_match_entry(m, attrs[j++], &ldap_attrs) == -1)
+					goto next_entry;
+				if (ldap_attrs == NULL || ldap_attrs[0] == NULL)
+					goto next_entry;
+				for(k = 0; k >= 0 && ldap_attrs[k] != NULL; k++) {
+					if (strlcat(ir.ir_line, ldap_attrs[k],
+					    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
+						continue;
+					if(ldap_attrs[k+1] != NULL)
+						if (strlcat(ir.ir_line, ",",
+							    sizeof(ir.ir_line))
+						    >= sizeof(ir.ir_line)) {
+							aldap_free_entry(ldap_attrs);
+							goto next_entry;
+						}
+				}
+				aldap_free_entry(ldap_attrs);
+			} else {
+				if (aldap_match_entry(m, attrs[j++], &ldap_attrs) == -1)
+					goto next_entry;
+				if (ldap_attrs == NULL || ldap_attrs[0] == NULL)
+					goto next_entry;
+				if (strlcat(ir.ir_line, ldap_attrs[0],
+				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line)) {
+					aldap_free_entry(ldap_attrs);
+					goto next_entry;
+				}
+				if (i == ATTR_UID) {
+					ir.ir_key.ik_uid = strtonum(
+					    ldap_attrs[0], 0, UID_MAX, NULL);
+				}
+				aldap_free_entry(ldap_attrs);
+			}
+			if (i != ATTR_SHELL)
+				if (strlcat(ir.ir_line, ":",
+				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
+					goto next_entry;
+		}
+		imsg_compose(env->sc_ibuf, IMSG_PW_ENTRY, 0, 0,
+		    &ir, sizeof(ir));
+next_entry:
+		aldap_freemsg(m);
+	}
+
+	return (0);
+bad:
+	log_debug("directory %s errored out in %s", idm->idm_name, where);
+	return (-1);
+}
+
+
+int
+client_try_idm(struct env *env, struct idm *idm)
+{
+	const char		*where;
+	struct idm_req		 ir;
+	struct aldap_message	*m;
+	struct aldap		*al;
+
+	bzero(&ir, sizeof(ir));
+	imsg_compose(env->sc_ibuf, IMSG_START_UPDATE, 0, 0, &ir, sizeof(ir));
+
+	where = "connect";
+	if((al = aldap_open(idm->idm_name, "389")) == NULL)
+		goto bad;
+
+	if (idm->idm_flags & F_NEEDAUTH) {
+		where = "binding";
+		if(aldap_bind(al, idm->idm_binddn, idm->idm_bindcred) == -1)
+			goto bad;
+
+		where = "parsing";
+		if((m = aldap_parse(al)) == NULL)
+			goto bad;
+		where = "verifying msgid";
+		if(al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		aldap_freemsg(m);
+	}
+
+	do_build_passwd(env, idm, al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
+	    idm->idm_filters[FILTER_USER]);
+	do_build_group(env, idm, al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
+	    idm->idm_filters[FILTER_GROUP]);
+
+	aldap_close(al);
 
 	return (0);
 bad:

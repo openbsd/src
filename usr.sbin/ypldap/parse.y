@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2008/09/30 16:24:16 aschrijver Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2008/10/14 21:41:03 aschrijver Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -98,7 +98,7 @@ typedef struct {
 
 %token	SERVER FILTER ATTRIBUTE BASEDN BINDDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
-%token	PASSWD NAME FIXED GROUPNAME GROUPPASSWD GROUPGID MAP
+%token	PASSWD NAME FIXED LIST GROUPNAME GROUPPASSWD GROUPGID MAP
 %token	INCLUDE DIRECTORY CLASS PORT SSL ERROR GROUPMEMBERS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -196,11 +196,10 @@ diropt		: BINDDN STRING				{
 			free($2);
 		}
 		| BASEDN STRING			{
-			idm->idm_flags |= F_NEEDAUTH;
 			if (strlcpy(idm->idm_basedn, $2,
 			    sizeof(idm->idm_basedn)) >=
 			    sizeof(idm->idm_basedn)) {
-				yyerror("directory bindcred truncated");
+				yyerror("directory basedn truncated");
 				free($2);
 				YYERROR;
 			}
@@ -236,6 +235,17 @@ diropt		: BINDDN STRING				{
 			}
 			idm->idm_flags |= F_FIXED_ATTR($3);
 			free($4);
+		}
+		| LIST attribute MAPS TO STRING	{
+			if (strlcpy(idm->idm_attrs[$2], $5,
+			    sizeof(idm->idm_attrs[$2])) >=
+			    sizeof(idm->idm_attrs[$2])) {
+				yyerror("attribute truncated");
+				free($5);
+				YYERROR;
+			}
+			idm->idm_list |= F_LIST($2);
+			free($5);
 		}
 		;
 
@@ -368,6 +378,7 @@ lookup(char *s)
 		{ "home",		HOME },
 		{ "include",		INCLUDE },
 		{ "interval",		INTERVAL },
+		{ "list",		LIST },
 		{ "map",		MAP },
 		{ "maps",		MAPS },
 		{ "name",		NAME },
