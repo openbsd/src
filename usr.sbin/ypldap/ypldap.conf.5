@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.6 2008/09/19 08:06:16 pyr Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.7 2008/10/14 22:29:51 aschrijver Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 19 2008 $
+.Dd $Mdocdate: October 14 2008 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -101,6 +101,18 @@ Map the
 or
 .Xr group 5
 attribute to the LDAP attribute name supplied.
+.Pp
+.It Xo
+.Ic list Ar name Ic maps to Ar string
+.Xc
+Map the
+.Xr passwd 5 ,
+.Xr master.passwd 5 ,
+or
+.Xr group 5
+attribute to the LDAP attribute name supplied.
+A list creates a comma separated list of all the LDAP attributes found.
+.Pp
 Valid attributes are:
 .Pp
 .Bl -tag -width groupmembers -offset indent -compact
@@ -130,6 +142,53 @@ Use the supplied LDAP filter to retrieve group entries.
 .It Ic passwd filter Ar string
 Use the supplied LDAP filter to retrieve password entries.
 .El
+
+.Sh Example configuration
+.Bd -literal -offset indent
+# how many seconds between retries
+interval 300
+
+# only one domain for now
+domain "openbsd.org"
+
+# what do we provide
+provide map "passwd.byname"
+provide map "passwd.byuid"
+provide map "group.byname"
+provide map "group.bygid"
+
+directory "127.0.0.1" {
+        # directory options
+
+        binddn "cn=Manager,dc=openbsd,dc=org"
+        bindcred "secret"
+        basedn "ou=Users,dc=openbsd,dc=org"
+
+        # passwd maps configuration
+        passwd filter "(objectClass=posixAccount)
+
+        attribute name maps to "uid"
+        fixed attribute passwd "*"
+        attribute uid maps to "uidNumber"
+        attribute gid maps to "gidNumber"
+        attribute gecos maps to "cn"
+        attribute home maps to "homeDirectory"
+        fixed attribute home "/bin/ksh"
+        fixed attribute shell "/bin/ksh"
+        fixed attribute change "0"
+        fixed attribute expire "0"
+        fixed attribute class "ldap"
+
+        # group maps configuration
+        group filter "(objectClass=posixGroup)"
+
+        attribute groupname maps to "cn"
+        fixed attribute grouppasswd "*"
+        attribute groupgid maps to "gidNumber"
+        list groupmembers maps to "memberUid"
+}
+.Ed
+
 .Sh FILES
 .Bl -tag -width "/etc/ypldap.conf" -compact
 .It Pa /etc/ypldap.conf
