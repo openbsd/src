@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.7 2008/10/14 22:29:51 aschrijver Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.8 2008/10/14 23:05:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -142,14 +142,10 @@ Use the supplied LDAP filter to retrieve group entries.
 .It Ic passwd filter Ar string
 Use the supplied LDAP filter to retrieve password entries.
 .El
-
-.Sh Example configuration
+.Sh EXAMPLE CONFIGURATION
 .Bd -literal -offset indent
-# how many seconds between retries
-interval 300
-
-# only one domain for now
-domain "openbsd.org"
+interval 300          # how many seconds between retries
+domain "openbsd.org"  # only one domain for now
 
 # what do we provide
 provide map "passwd.byname"
@@ -188,7 +184,6 @@ directory "127.0.0.1" {
         list groupmembers maps to "memberUid"
 }
 .Ed
-
 .Sh FILES
 .Bl -tag -width "/etc/ypldap.conf" -compact
 .It Pa /etc/ypldap.conf
