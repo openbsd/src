@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.152 2008/10/10 14:35:06 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.153 2008/10/14 18:27:29 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -256,6 +256,7 @@ main(void *framep)
 	process0.ps_mainproc = p;
 	TAILQ_INIT(&process0.ps_threads);
 	TAILQ_INSERT_TAIL(&process0.ps_threads, p, p_thr_link);
+	process0.ps_refcnt = 1;
 	p->p_p = &process0;
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);

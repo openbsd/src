@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.107 2008/10/10 14:35:06 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.108 2008/10/14 18:27:29 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -143,6 +143,7 @@ struct process {
 	struct	plimit *ps_limit;	/* Process limits. */
 
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
+	int	ps_refcnt;		/* Number of references. */
 };
 #else
 struct process;
