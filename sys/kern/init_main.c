@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.153 2008/10/14 18:27:29 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.154 2008/10/15 23:23:51 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ main(void *framep)
 #endif /* CRYPTO */
 
 	microtime(&rtv);
-	srandom((u_long)(rtv.tv_sec ^ rtv.tv_usec));
+	srandom((u_int32_t)(rtv.tv_sec ^ rtv.tv_usec) ^ arc4random());
 
 	randompid = 1;
 

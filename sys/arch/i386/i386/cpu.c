@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2008/10/05 16:57:36 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2008/10/15 23:23:47 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -355,6 +355,7 @@ cpu_boot_secondary_processors()
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
+		ci->ci_randseed = random();
 		if (ci->ci_idle_pcb == NULL)
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)

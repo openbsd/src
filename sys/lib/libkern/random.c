@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.7 2004/08/07 00:38:33 deraadt Exp $	*/
+/*	$OpenBSD: random.c,v 1.8 2008/10/15 23:23:51 deraadt Exp $	*/
 /*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
  *	@(#)random.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <lib/libkern/libkern.h>
@@ -41,12 +42,23 @@
  * and whatever else we might use it for.  The result is uniform on
  * [0, 2^31 - 1].
  */
-u_long _randseed = 1;
 
-u_long
+void
+srandom(u_int32_t seed)
+{
+	struct cpu_info *ci = curcpu();
+
+	seed &= 0x7fffffff;
+	if (seed == 0)
+		seed = 1;
+	ci->ci_randseed = seed;
+}
+
+u_int32_t
 random(void)
 {
-	long x, hi, lo, t;
+	struct cpu_info *ci = curcpu();
+	int32_t x, hi, lo, t;
 
 	/*
 	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).
@@ -54,12 +66,12 @@ random(void)
 	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
 	 * October 1988, p. 1195.
 	 */
-	x = _randseed;
+	x = ci->ci_randseed;
 	hi = x / 127773;
 	lo = x % 127773;
 	t = 16807 * lo - 2836 * hi;
 	if (t <= 0)
 		t += 0x7fffffff;
-	_randseed = t;
+	ci->ci_randseed = t;
 	return (t);
 }

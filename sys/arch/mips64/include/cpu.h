@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2008/10/10 08:36:28 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2008/10/15 23:23:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -374,6 +374,7 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate;
 
 	struct proc *ci_curproc;
+	u_int32_t ci_randseed;
 };
 
 extern struct cpu_info cpu_info_primary;
