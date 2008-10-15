@@ -2121,6 +2121,7 @@
 ./usr/sbin/watchdogd
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
+./usr/sbin/ypldap
 ./usr/sbin/yppoll
 ./usr/sbin/yppush
 ./usr/sbin/ypserv

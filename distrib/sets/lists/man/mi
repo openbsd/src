@@ -2177,6 +2177,7 @@
 ./usr/share/man/cat5/vgrindefs.0
 ./usr/share/man/cat5/wsconsctl.conf.0
 ./usr/share/man/cat5/wtmp.0
+./usr/share/man/cat5/ypldap.conf.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat5/zaurus
 ./usr/share/man/cat5/zaurus/boot.conf.0
@@ -2713,6 +2714,7 @@
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
+./usr/share/man/cat8/ypldap.0
 ./usr/share/man/cat8/yppasswdd.0
 ./usr/share/man/cat8/yppoll.0
 ./usr/share/man/cat8/yppush.0

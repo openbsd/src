@@ -452,8 +452,8 @@
 ./usr/include/dev/mii/inphyreg.h
 ./usr/include/dev/mii/iophyreg.h
 ./usr/include/dev/mii/ipgphyreg.h
-./usr/include/dev/mii/lxtphyreg.h
 ./usr/include/dev/mii/jmphyreg.h
+./usr/include/dev/mii/lxtphyreg.h
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/mii_bitbang.h
 ./usr/include/dev/mii/miidevs.h
@@ -5383,10 +5383,10 @@
 ./usr/share/man/cat3/strtof.0
 ./usr/share/man/cat3/strtofflags.0
 ./usr/share/man/cat3/strtoimax.0
-./usr/share/man/cat3/strtold.0
 ./usr/share/man/cat3/strtok.0
 ./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/strtol.0
+./usr/share/man/cat3/strtold.0
 ./usr/share/man/cat3/strtoll.0
 ./usr/share/man/cat3/strtonum.0
 ./usr/share/man/cat3/strtoq.0
