@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.94 2008/10/10 20:13:11 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.95 2008/10/15 03:30:57 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -1057,8 +1057,11 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 		default:
 			ret = ENXIO;
 		}
-		if (n != 0 && ret == 0)
+		if (n != 0 && ret == 0) {
 			ret = uiomove((caddr_t)buf, n, uio);
+			if (!ret && uio->uio_resid > 0)
+				yield();
+		}
 	}
 
 	free(buf, M_TEMP);
