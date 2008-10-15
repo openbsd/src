@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.5 2008/10/12 19:03:12 mpf Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.6 2008/10/15 19:12:18 blambert Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -500,7 +500,7 @@ lacp_tick(void *arg)
 		lacp_sm_tx(lp);
 		lacp_sm_ptx_tx_schedule(lp);
 	}
-	timeout_add(&lsc->lsc_callout, hz);
+	timeout_add_sec(&lsc->lsc_callout, 1);
 }
 
 int
@@ -762,7 +762,7 @@ lacp_init(struct trunk_softc *sc)
 {
 	struct lacp_softc *lsc = LACP_SOFTC(sc);
 
-	timeout_add(&lsc->lsc_callout, hz);
+	timeout_add_sec(&lsc->lsc_callout, 1);
 }
 
 void

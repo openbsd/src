@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.81 2008/08/27 10:03:47 damien Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.82 2008/10/15 19:12:19 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7453,7 +7453,7 @@ back:
 		timeout_add(&sc->sc_scan_ch, (sc->sc_dwell_time * hz) / 1000);
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
-		timeout_add(&sc->sc_calib_ch, hz);
+		timeout_add_sec(&sc->sc_calib_ch, 1);
 	}
 
 	return (error);
@@ -9394,7 +9394,7 @@ bwi_calibrate(void *xsc)
 		}
 
 		/* XXX 15 seconds */
-		timeout_add(&sc->sc_calib_ch, hz * 15);
+		timeout_add_sec(&sc->sc_calib_ch, 15);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.23 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.24 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -982,5 +982,5 @@ bmac_mii_tick(void *v)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 }

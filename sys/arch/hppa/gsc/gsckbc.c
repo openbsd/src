@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.11 2008/07/16 16:32:08 miod Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.12 2008/10/15 19:12:19 blambert Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -953,7 +953,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 		} else
 			res = nc->status;
 	} else
-		timeout_add(&t->t_cleanup, hz);
+		timeout_add_sec(&t->t_cleanup, 1);
 
 	if (sync) {
 		if (respbuf)

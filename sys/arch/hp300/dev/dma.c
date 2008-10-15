@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.19 2008/07/18 21:39:52 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.20 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ dmainit()
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
 	timeout_set(&sc->sc_timeout, dmatimeout, sc);
-	timeout_add(&sc->sc_timeout, 30 * hz);
+	timeout_add_sec(&sc->sc_timeout, 30);
 #endif
 
 	printf("98620%c, 2 channels, %d bit DMA\n",
@@ -567,6 +567,6 @@ dmatimeout(void *arg)
 		}
 		splx(s);
 	}
-	timeout_add(&sc->sc_timeout, 30 * hz);
+	timeout_add_sec(&sc->sc_timeout, 30);
 }
 #endif

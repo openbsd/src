@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.80 2008/09/17 05:43:14 chl Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.81 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ nd6_init()
 
 	/* start timer */
 	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
-	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
+	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 }
 
 struct nd_ifinfo *
@@ -513,7 +513,7 @@ nd6_timer(void *ignored_arg)
 
 	s = splsoftnet();
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
-	timeout_add(&nd6_timer_ch, nd6_prune * hz);
+	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
@@ -1716,7 +1716,7 @@ nd6_slowtimo(void *ignored_arg)
 	struct ifnet *ifp;
 
 	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
-	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
+	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 	{
 		nd6if = ND_IFINFO(ifp);

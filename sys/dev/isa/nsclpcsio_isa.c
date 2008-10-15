@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.12 2007/06/01 21:30:31 cnst Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.13 2008/10/15 19:12:18 blambert Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -337,7 +337,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sensordev);
 	if (sc->sc_ld_en[SIO_LDN_TMS] || sc->sc_ld_en[SIO_LDN_VLM]) {
 		timeout_set(&nsclpcsio_timeout, nsclpcsio_refresh, sc);
-		timeout_add(&nsclpcsio_timeout, (20 * hz) / 10);
+		timeout_add_sec(&nsclpcsio_timeout, 2);
 	}
 
 	/* Attach GPIO framework */
@@ -359,7 +359,7 @@ nsclpcsio_refresh(void *arg)
 		nsclpcsio_tms_update(sc);
 	if (sc->sc_ld_en[SIO_LDN_VLM])
 		nsclpcsio_vlm_update(sc);
-	timeout_add(&nsclpcsio_timeout, (20 * hz) / 10);
+	timeout_add_sec(&nsclpcsio_timeout, 2);
 }
 
 void

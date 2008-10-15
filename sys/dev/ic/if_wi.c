@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.141 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.142 2008/10/15 19:12:19 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.141 2008/10/02 20:21:13 brad Exp $";
+	"$OpenBSD: if_wi.c,v 1.142 2008/10/15 19:12:19 blambert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -873,7 +873,7 @@ wi_inquire(void *xsc)
 	sc = xsc;
 	ifp = &sc->sc_ic.ic_if;
 
-	timeout_add(&sc->sc_timo, hz * 60);
+	timeout_add_sec(&sc->sc_timo, 60);
 
 	/* Don't do this while we're transmitting */
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -2248,7 +2248,7 @@ wi_init_io(struct wi_softc *sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout_add(&sc->sc_timo, hz * 60);
+	timeout_add_sec(&sc->sc_timo, 60);
 
 	return;
 }

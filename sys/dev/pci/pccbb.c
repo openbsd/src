@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.62 2008/09/25 17:54:01 chl Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.63 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -2626,7 +2626,7 @@ pccbb_pcmcia_poll(arg)
 	u_int32_t spsr;		       /* socket present-state reg */
 
 	timeout_set(&pccbb_poll_timeout, pccbb_pcmcia_poll, arg);
-	timeout_add(&pccbb_poll_timeout, hz * 2);
+	timeout_add_sec(&pccbb_poll_timeout, 2);
 	switch (poll->level) {
 	case IPL_NET:
 		s = splnet();

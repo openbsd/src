@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.87 2008/09/17 05:43:14 chl Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.88 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ ip6_init2(void *dummy)
 	/* nd6_timer_init */
 	bzero(&nd6_timer_ch, sizeof(nd6_timer_ch));
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
-	timeout_add(&nd6_timer_ch, hz);
+	timeout_add_sec(&nd6_timer_ch, 1);
 }
 
 /*

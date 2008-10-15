@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.108 2008/08/27 10:34:24 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.109 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2145,7 +2145,7 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	timeout_add(&sc->amrr_to, hz);
+	timeout_add_sec(&sc->amrr_to, 1);
 }
 
 void
@@ -2201,7 +2201,7 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	timeout_add(&sc->amrr_to, hz);
+	timeout_add_sec(&sc->amrr_to, 1);
 }
 
 int

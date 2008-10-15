@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.31 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: gus.c,v 1.32 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -1324,7 +1324,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	/*
 	 * XXX If we don't finish in one second, give up...
 	 */
-	timeout_add(&sc->sc_dma_tmo, hz);
+	timeout_add_sec(&sc->sc_dma_tmo, 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.c,v 1.2 2008/02/24 21:46:19 uwe Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.3 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $	*/
 
 /*-
@@ -658,7 +658,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 		 * Give them a second to do the right thing or let the
 		 * callout handle it.
 		 */
-		timeout_add(&sc->sc_reconnect, hz);
+		timeout_add_sec(&sc->sc_reconnect, 1);
 	}
 }
 
@@ -688,7 +688,7 @@ bthidev_int_disconnected(void *arg, int err)
 		 * The control channel should be closing also, allow
 		 * them a chance to do that before we force it.
 		 */
-		timeout_add(&sc->sc_reconnect, hz);
+		timeout_add_sec(&sc->sc_reconnect, 1);
 	}
 }
 

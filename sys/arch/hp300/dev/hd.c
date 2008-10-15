@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.53 2007/06/21 20:23:07 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.54 2008/10/15 19:12:20 blambert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1036,7 +1036,7 @@ hderror(unit)
 		rs->sc_stats.hdtimeouts++;
 #endif
 		hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-		timeout_add(&rs->sc_timeout, hdtimo * hz);
+		timeout_add_sec(&rs->sc_timeout, hdtimo);
 		return(0);
 	}
 	/*

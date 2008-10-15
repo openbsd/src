@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.14 2008/01/18 21:35:54 kettenis Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.15 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -1424,7 +1424,7 @@ zstty_rxsoft(zst, tp)
 	if (cc == zstty_rbuf_size) {
 		zst->zst_floods++;
 		if (zst->zst_errors++ == 0)
-			timeout_add(&zst->zst_diag_ch, 60 * hz);
+			timeout_add_sec(&zst->zst_diag_ch, 60);
 	}
 
 	/* If not yet open, drop the entire buffer content here */
@@ -1441,7 +1441,7 @@ zstty_rxsoft(zst, tp)
 			if (ISSET(rr1, ZSRR1_DO)) {
 				zst->zst_overflows++;
 				if (zst->zst_errors++ == 0)
-					timeout_add(&zst->zst_diag_ch, 60 * hz);
+					timeout_add_sec(&zst->zst_diag_ch, 60);
 			}
 			if (ISSET(rr1, ZSRR1_FE))
 				SET(code, TTY_FE);

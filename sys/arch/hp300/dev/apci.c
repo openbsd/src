@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.32 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: apci.c,v 1.33 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -373,7 +373,7 @@ apciopen(dev, flag, mode, p)
 	if (error == 0) {
 		/* clear errors, start timeout */
 		sc->sc_ferr = sc->sc_perr = sc->sc_oflow = sc->sc_toterr = 0;
-		timeout_add(&sc->sc_timeout, hz);
+		timeout_add_sec(&sc->sc_timeout, 1);
 	}
 
 	return (error);
@@ -860,7 +860,7 @@ apcitimeout(arg)
 		    sc->sc_dev.dv_xname, ferr, perr, oflow, sc->sc_toterr);
 	}
 
-	timeout_add(&sc->sc_timeout, hz);
+	timeout_add_sec(&sc->sc_timeout, 1);
 }
 
 /*

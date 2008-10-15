@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkbc.c,v 1.7 2008/06/14 18:29:52 miod Exp $  */
+/*	$OpenBSD: mkbc.c,v 1.8 2008/10/15 19:12:19 blambert Exp $  */
 
 /*
  * Copyright (c) 2006, 2007, Joel Sing
@@ -323,7 +323,7 @@ mkbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 
 	/* Reschedule timeout further into the idle times. */
 	if (timeout_pending(&t->t_poll))
-		timeout_add(&t->t_poll, hz);
+		timeout_add_sec(&t->t_poll, 1);
 
 	/*
 	 * Need to check both "slots" since interrupt could be from
@@ -754,7 +754,7 @@ pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
 		} else
 			res = nc->status;
 	} else
-		timeout_add(&t->t_cleanup, hz);
+		timeout_add_sec(&t->t_cleanup, 1);
 
 	if (sync) {
 		if (respbuf)
@@ -799,7 +799,7 @@ pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
 	sc->subname[slot] = name;
 
 	if (mkbc_console && slot == PCKBC_KBD_SLOT)
-		timeout_add(&t->t_poll, hz);
+		timeout_add_sec(&t->t_poll, 1);
 }
 
 void
@@ -831,7 +831,7 @@ pckbc_slot_enable(pckbc_tag_t self, pckbc_slot_t slot, int on)
 
 	if (slot == PCKBC_KBD_SLOT) {
 		if (on)
-			timeout_add(&t->t_poll, hz);
+			timeout_add_sec(&t->t_poll, 1);
 		else
 			timeout_del(&t->t_poll);
 	}
@@ -924,6 +924,6 @@ mkbc_poll(void *self)
 
 	s = spltty();
 	(void)mkbcintr_internal(t, t->t_sc);
-	timeout_add(&t->t_poll, hz);
+	timeout_add_sec(&t->t_poll, 1);
 	splx(s);
 }

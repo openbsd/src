@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.71 2008/08/27 09:49:32 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.72 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -731,7 +731,7 @@ zyd_task(void *arg)
 
 		/* start automatic rate control timer */
 		if (ic->ic_fixed_rate == -1)
-			timeout_add(&sc->amrr_to, hz);
+			timeout_add_sec(&sc->amrr_to, 1);
 
 		break;
 	}
@@ -2587,7 +2587,7 @@ zyd_amrr_timeout(void *arg)
 		ieee80211_iterate_nodes(ic, zyd_iter_func, sc);
 	splx(s);
 
-	timeout_add(&sc->amrr_to, hz);
+	timeout_add_sec(&sc->amrr_to, 1);
 }
 
 void

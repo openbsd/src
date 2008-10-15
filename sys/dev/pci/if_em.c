@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.191 2008/10/05 11:57:48 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.192 2008/10/15 19:12:18 blambert Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -768,7 +768,7 @@ em_init(void *arg)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 	em_clear_hw_cntrs(&sc->hw);
 	em_enable_intr(sc);
 
@@ -813,7 +813,7 @@ em_intr(void *arg)
 			sc->hw.get_link_status = 1;
 			em_check_for_link(&sc->hw);
 			em_update_link_status(sc);
-			timeout_add(&sc->timer_handle, hz); 
+			timeout_add_sec(&sc->timer_handle, 1); 
 		}
 
 		if (reg_icr & E1000_ICR_RXO)
@@ -1379,7 +1379,7 @@ em_local_timer(void *arg)
 #endif
 	em_smartspeed(sc);
 
-	timeout_add(&sc->timer_handle, hz);
+	timeout_add_sec(&sc->timer_handle, 1);
 
 	splx(s);
 }

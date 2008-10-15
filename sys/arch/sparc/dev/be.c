@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.41 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: be.c,v 1.42 2008/10/15 19:12:19 blambert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -557,7 +557,7 @@ betick(vsc)
 	br->lt_ctr = 0;
 	bestart(ifp);
 	splx(s);
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int
@@ -749,7 +749,7 @@ beinit(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 	bestart(ifp);
 }
 

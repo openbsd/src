@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.74 2008/06/12 06:58:39 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.75 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -496,7 +496,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout_add(&fd->fd_motor_off_to, 5 * hz);
+	timeout_add_sec(&fd->fd_motor_off_to, 5);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -760,7 +760,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 		disk_busy(&fd->sc_dk);
 
-		timeout_add(&fd->fdtimeout_to, 4 * hz);
+		timeout_add_sec(&fd->fdtimeout_to, 4);
 		return 1;
 
 	case DOIO:
@@ -827,7 +827,7 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		/* allow 2 seconds for operation */
-		timeout_add(&fd->fdtimeout_to, 2 * hz);
+		timeout_add_sec(&fd->fdtimeout_to, 2);
 		return 1;				/* will return later */
 
 	case SEEKWAIT:
@@ -918,7 +918,7 @@ loop:
 		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recal function */
 		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout_add(&fd->fdtimeout_to, 5 * hz);
+		timeout_add_sec(&fd->fdtimeout_to, 5);
 		return 1;			/* will return later */
 
 	case RECALWAIT:

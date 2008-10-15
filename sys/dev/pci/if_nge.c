@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.59 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.60 2008/10/15 19:12:18 blambert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -950,7 +950,7 @@ nge_attach(parent, self, aux)
 	ether_ifattach(ifp);
 	DPRINTFN(5, ("%s: timeout_set\n", sc->sc_dv.dv_xname));
 	timeout_set(&sc->nge_timeout, nge_tick, sc);
-	timeout_add(&sc->nge_timeout, hz);
+	timeout_add_sec(&sc->nge_timeout, 1);
 	return;
 
 fail_5:
@@ -1430,7 +1430,7 @@ nge_tick(xsc)
 	DPRINTFN(10, ("%s: nge_tick: link=%d\n", sc->sc_dv.dv_xname,
 		      sc->nge_link));
 
-	timeout_add(&sc->nge_timeout, hz);
+	timeout_add_sec(&sc->nge_timeout, 1);
 	if (sc->nge_link) {
 		splx(s);
 		return;

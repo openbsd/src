@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.105 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: dc.c,v 1.106 2008/10/15 19:12:19 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2897,7 +2897,7 @@ dc_init(void *xsc)
 		if (sc->dc_flags & DC_21143_NWAY)
 			timeout_add(&sc->dc_tick_tmo, hz / 10);
 		else
-			timeout_add(&sc->dc_tick_tmo, hz);
+			timeout_add_sec(&sc->dc_tick_tmo, 1);
 	}
 
 #ifdef SRM_MEDIA

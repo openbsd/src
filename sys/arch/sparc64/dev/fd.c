@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.25 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: fd.c,v 1.26 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -811,7 +811,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout_add(&fd->sc_motoroff_to, 5 * hz);
+	timeout_add_sec(&fd->sc_motoroff_to, 5);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -1373,7 +1373,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 
 		disk_busy(&fd->sc_dk);
-		timeout_add(&fdc->fdctimeout_to, 4 * hz);
+		timeout_add_sec(&fdc->fdctimeout_to, 4);
 
 		/* specify command */
 		FDC_WRFIFO(fdc, NE7CMD_SPECIFY);
@@ -1395,7 +1395,7 @@ loop:
 		 * followed by a recalibrate.
 		 */
 		disk_busy(&fd->sc_dk);
-		timeout_add(&fdc->fdctimeout_to, 4 * hz);
+		timeout_add_sec(&fdc->fdctimeout_to, 4);
 		fd->sc_cylin = -1;
 		fdc->sc_nstat = 0;
 		fdc->sc_state = DSKCHGWAIT;
@@ -1476,7 +1476,7 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		/* allow 3 seconds for operation */
-		timeout_add(&fdc->fdctimeout_to, 3 * hz);
+		timeout_add_sec(&fdc->fdctimeout_to, 3);
 
 		if (finfo != NULL) {
 			/* formatting */
@@ -1661,7 +1661,7 @@ loop:
 		fdc->sc_state = RECALWAIT;
 		fdc->sc_itask = FDC_ITASK_SENSEI;
 		fdc->sc_nstat = 0;
-		timeout_add(&fdc->fdctimeout_to, 5 * hz);
+		timeout_add_sec(&fdc->fdctimeout_to, 5);
 		/* recalibrate function */
 		FDC_WRFIFO(fdc, NE7CMD_RECAL);
 		FDC_WRFIFO(fdc, fd->sc_drive);

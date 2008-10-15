@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.16 2008/08/24 14:51:22 miod Exp $	*/
+/*	$OpenBSD: dz.c,v 1.17 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -134,7 +134,7 @@ dzattach(struct dz_softc *sc)
 	if (dz_timer == 0) {
 		dz_timer = 1;
 		timeout_set(&dz_timeout, dzscan, NULL);
-		timeout_add(&dz_timeout, hz);
+		timeout_add_sec(&dz_timeout, 1);
 	}
 	printf("\n");
 }
@@ -695,7 +695,7 @@ dzscan(void *arg)
 		sc->sc_rxint = 0;
 	}
 	splx(s);
-	timeout_add(&dz_timeout, hz);
+	timeout_add_sec(&dz_timeout, 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.78 2008/09/01 09:02:59 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.79 2008/10/15 19:12:19 blambert Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2894,7 +2894,7 @@ ath_calibrate(void *arg)
 		    __func__, c->ic_freq));
 		sc->sc_stats.ast_per_calfail++;
 	}
-	timeout_add(&sc->sc_cal_to, hz * ath_calinterval);
+	timeout_add_sec(&sc->sc_cal_to, ath_calinterval);
 	splx(s);
 }
 
@@ -3024,7 +3024,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (nstate == IEEE80211_S_RUN) {
 		/* start periodic recalibration timer */
-		timeout_add(&sc->sc_cal_to, hz * ath_calinterval);
+		timeout_add_sec(&sc->sc_cal_to, ath_calinterval);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			timeout_add(&sc->sc_rssadapt_to, hz / 10);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.36 2008/09/23 10:47:14 canacar Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.37 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -911,7 +911,7 @@ uath_task(void *arg)
 		    0);
 
 		/* start statistics timer */
-		timeout_add(&sc->stat_to, hz);
+		timeout_add_sec(&sc->stat_to, 1);
 		break;
 	}
 	}
@@ -1163,7 +1163,7 @@ uath_cmd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	case UATH_NOTIF_STATS:
 		DPRINTFN(2, ("received device statistics\n"));
-		timeout_add(&sc->stat_to, hz);
+		timeout_add_sec(&sc->stat_to, 1);
 		break;
 	}
 

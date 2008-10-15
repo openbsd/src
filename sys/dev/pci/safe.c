@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.23 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: safe.c,v 1.24 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -302,7 +302,7 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 		safe_rng_init(sc);
 
 		timeout_set(&sc->sc_rngto, safe_rng, sc);
-		timeout_add(&sc->sc_rngto, hz * safe_rnginterval);
+		timeout_add_sec(&sc->sc_rngto, safe_rnginterval);
 	}
 	return;
 
@@ -1257,7 +1257,7 @@ retry:
 	for (i = 0; i < maxwords; i++)
 		add_true_randomness(buf[i]);
 
-	timeout_add(&sc->sc_rngto, hz * safe_rnginterval);
+	timeout_add_sec(&sc->sc_rngto, safe_rnginterval);
 }
 
 /*

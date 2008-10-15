@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.19 2008/07/30 18:08:03 miod Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.20 2008/10/15 19:12:19 blambert Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -617,7 +617,7 @@ mesh_select(struct mesh_softc *sc, struct mesh_scb *scb)
 	sc->sc_prevphase = MESH_SELECTING;
 	sc->sc_nextstate = MESH_IDENTIFY;
 
-	timeout_add(&sc->sc_tmo, 10*hz);
+	timeout_add_sec(&sc->sc_tmo, 10);
 }
 
 void

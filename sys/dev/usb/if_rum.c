@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.78 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.79 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -2218,7 +2218,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	timeout_add(&sc->amrr_to, hz);
+	timeout_add_sec(&sc->amrr_to, 1);
 }
 
 void
@@ -2269,7 +2269,7 @@ rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	timeout_add(&sc->amrr_to, hz);
+	timeout_add_sec(&sc->amrr_to, 1);
 }
 
 int

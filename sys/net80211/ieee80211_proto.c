@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.36 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.37 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -509,7 +509,7 @@ ieee80211_gtk_rekey_timeout(void *arg)
 	splx(s);
 
 	/* re-schedule a GTK rekeying after 3600s */
-	timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
+	timeout_add_sec(&ic->ic_rsn_timeout, 3600);
 }
 #endif	/* IEEE80211_STA_ONLY */
 

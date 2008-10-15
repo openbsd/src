@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.7 2006/04/25 05:52:43 tedu Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.8 2008/10/15 19:12:18 blambert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -144,7 +144,7 @@ aarptimer(v)
     struct aarptab	*aat;
     int			i, s;
 
-    timeout_add(&aarptimer_timeout, AARPT_AGE * hz);
+    timeout_add_sec(&aarptimer_timeout, AARPT_AGE);
     aat = aarptab;
     for ( i = 0; i < AARPTAB_SIZE; i++, aat++ ) {
 	if ( aat->aat_flags == 0 || ( aat->aat_flags & ATF_PERM ))
@@ -575,7 +575,7 @@ aarptnew( addr )
     if ( first ) {
 	first = 0;
 	timeout_set(&aarptimer_timeout, aarptimer, NULL);
-	timeout_add(&aarptimer_timeout, hz);
+	timeout_add_sec(&aarptimer_timeout, 1);
     }
     aat = &aarptab[ AARPTAB_HASH( *addr ) * AARPTAB_BSIZ ];
     for ( n = 0; n < AARPTAB_BSIZ; n++, aat++ ) {

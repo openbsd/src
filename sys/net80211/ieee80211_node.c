@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.46 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.47 2008/10/15 19:12:18 blambert Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		ni->ni_flags |= IEEE80211_NODE_TXPROT;
 
 		/* schedule a GTK/IGTK rekeying after 3600s */
-		timeout_add(&ic->ic_rsn_timeout, 3600 * hz);
+		timeout_add_sec(&ic->ic_rsn_timeout, 3600);
 	}
 	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 }

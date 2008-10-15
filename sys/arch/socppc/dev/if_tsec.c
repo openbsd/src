@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.12 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.13 2008/10/15 19:12:19 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -627,7 +627,7 @@ tsec_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int
@@ -928,7 +928,7 @@ tsec_up(struct tsec_softc *sc)
 	    TSEC_IMASK_TXBEN | TSEC_IMASK_TXFEN |
 	    TSEC_IMASK_RXBEN | TSEC_IMASK_RXFEN);
 
-	timeout_add(&sc->sc_tick, hz);
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 void
