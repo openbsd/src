@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.74 2008/09/02 17:35:16 chl Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.75 2008/10/16 14:23:35 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -315,6 +315,21 @@ vlan_input(eh, m)
 		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN,
 		    m, BPF_DIRECTION_IN);
 #endif
+
+	/*
+	 * Drop promiscuously received packets if we are not in
+	 * promiscuous mode.
+	 */
+	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC) &&
+	    (ifv->ifv_if.if_flags & IFF_PROMISC) == 0) {
+		struct arpcom *ac = &ifv->ifv_ac;
+		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
+			m_freem(m);
+			return (0);
+		}
+	}
+
 	ifv->ifv_if.if_ipackets++;
 	ether_input(&ifv->ifv_if, eh, m);
 
