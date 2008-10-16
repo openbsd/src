@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.43 2008/08/09 10:14:02 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.44 2008/10/16 07:57:06 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -126,10 +126,6 @@ int nfsfifo_close(void *);
 int nfsfifo_reclaim(void *);
 
 #define	nfs_ioctl	((int (*)(void *))enoioctl)
-#define	nfs_revoke	vop_generic_revoke
-#define	nfs_lock	vop_generic_lock
-#define	nfs_unlock	vop_generic_unlock
-#define	nfs_islocked	vop_generic_islocked
 
 /* nfs_serv.c */
 int nfsrv3_access(struct nfsrv_descript *, struct nfssvc_sock *,

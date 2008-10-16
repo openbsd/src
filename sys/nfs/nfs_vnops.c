@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.103 2008/09/12 16:17:57 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.104 2008/10/16 07:57:06 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, nfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, nfs_poll },		/* poll */
 	{ &vop_kqfilter_desc, nfs_kqfilter },	/* kqfilter */
-	{ &vop_revoke_desc, nfs_revoke },	/* revoke */
+	{ &vop_revoke_desc, vop_generic_revoke },	/* revoke */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
 	{ &vop_remove_desc, nfs_remove },	/* remove */
 	{ &vop_link_desc, nfs_link },		/* link */
@@ -117,12 +117,12 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
+	{ &vop_lock_desc, vop_generic_lock },	/* lock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
 	{ &vop_bmap_desc, nfs_bmap },		/* bmap */
 	{ &vop_strategy_desc, nfs_strategy },	/* strategy */
 	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
 	{ &vop_bwrite_desc, nfs_bwrite },
@@ -146,10 +146,10 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
 	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
+	{ &vop_lock_desc, vop_generic_lock },	/* lock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
 	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
 	{ NULL, NULL }
 };
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -168,10 +168,10 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
 	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, nfsfifo_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
+	{ &vop_lock_desc, vop_generic_lock },	/* lock */
+	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
 	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ NULL, NULL }
 };
