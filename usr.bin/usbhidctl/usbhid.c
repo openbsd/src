@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.8 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.9 2008/10/16 18:37:19 jakemsr Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -752,7 +752,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s -f device [-t table] [-lv] -a\n",
+	fprintf(stderr, "usage: %s -f device [-t table] [-alv]\n",
 	    __progname);
 	fprintf(stderr, "       %s -f device [-t table] [-v] -r\n",
 	    __progname);
@@ -822,6 +822,9 @@ main(int argc, char **argv)
 		usage();
 		/* NOTREACHED */
 	}
+
+	if (argc == 0 && rflag == 0)
+		aflag = 1;
 
 	for (varnum = 0; varnum < (size_t)argc; varnum++) {
 		char const *name, *valuesep;
