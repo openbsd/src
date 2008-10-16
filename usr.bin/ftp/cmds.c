@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.66 2008/09/18 14:45:36 todd Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.67 2008/10/16 23:15:53 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.66 2008/09/18 14:45:36 todd Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.67 2008/10/16 23:15:53 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -524,7 +524,7 @@ void
 reget(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 1, "r+w");
+	(void)getit(argc, argv, 1, "a+w");
 }
 #endif /* !SMALL */
 
@@ -532,7 +532,7 @@ void
 get(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 0, restart_point ? "r+w" : "w" );
+	(void)getit(argc, argv, 0, restart_point ? "a+w" : "w" );
 }
 
 /*
@@ -596,11 +596,7 @@ usage:
 
 		ret = stat(argv[2], &stbuf);
 		if (restartit == 1) {
-			if (ret < 0) {
-				warn("local: %s", argv[2]);
-				goto freegetit;
-			}
-			restart_point = stbuf.st_size;
+			restart_point = (ret < 0) ? 0 : stbuf.st_size;
 		} else {
 			if (ret == 0) {
 				time_t mtime;
@@ -784,7 +780,7 @@ out:
 #endif /* !SMALL */
 			xargv[1] = cp;
 			(void)getit(xargc, xargv, restartit,
-			    (restartit == 1 || restart_point) ? "r+w" : "w");
+			    (restartit == 1 || restart_point) ? "a+w" : "w");
 			if (!mflag && fromatty) {
 				if (confirm(argv[0], NULL))
 					mflag = 1;
