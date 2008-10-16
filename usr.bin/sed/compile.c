@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.27 2008/10/09 21:14:58 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.28 2008/10/16 16:34:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static const char rcsid[] = "$OpenBSD: compile.c,v 1.27 2008/10/09 21:14:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: compile.c,v 1.28 2008/10/16 16:34:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,16 +148,14 @@ compile_stream(struct s_command **link)
 {
 	char *p;
 	static char *lbuf;	/* To avoid excessive malloc calls */
-	static size_t len = _POSIX2_LINE_MAX;
+	static size_t bufsize;
 	struct s_command *cmd, *cmd2, *stack;
 	struct s_format *fp;
 	int naddr;				/* Number of addresses */
 
 	stack = 0;
-	if (!lbuf)
-		lbuf = xmalloc(len);
 	for (;;) {
-		if ((p = cu_fgets(&lbuf, &len)) == NULL) {
+		if ((p = cu_fgets(&lbuf, &bufsize)) == NULL) {
 			if (stack != 0)
 				err(COMPILE, "unexpected EOF (pending }'s)");
 			return (link);
@@ -458,7 +456,7 @@ static char *
 compile_subst(char *p, struct s_subst *s)
 {
 	static char *lbuf;
-	static size_t len;
+	static size_t bufsize;
 	int asize, ref, size;
 	char c, *text, *op, *sp;
 	int sawesc = 0;
@@ -467,22 +465,16 @@ compile_subst(char *p, struct s_subst *s)
 	if (c == '\0')
 		return (NULL);
 
-	len = strlen(p);
-	if (len < _POSIX2_LINE_MAX)
-		len = _POSIX2_LINE_MAX;
-	if (!lbuf)
-		lbuf = xmalloc(len);
-
 	s->maxbref = 0;
 	s->linenum = linenum;
-	asize = 2 * len + 1;
-	text = xmalloc(asize);
-	size = 0;
+	text = NULL;
+	asize = size = 0;
 	do {
-		if (asize - size < len + 1) {
+		size_t len = ROUNDLEN(strlen(p) + 1);
+		if (asize - size < len) {
 			do {
-				asize *= 2;
-			} while (asize - size < len + 1);
+				asize += len;
+			} while (asize - size < len);
 			text = xrealloc(text, asize);
 		}
 		op = sp = text + size;
@@ -534,7 +526,7 @@ compile_subst(char *p, struct s_subst *s)
 			*sp++ = *p;
 		}
 		size += sp - op;
-	} while ((p = cu_fgets(&lbuf, &len)));
+	} while ((p = cu_fgets(&lbuf, &bufsize)));
 	err(COMPILE, "unterminated substitute in regular expression");
 	/* NOTREACHED */
 }
@@ -670,21 +662,19 @@ compile_text(void)
 {
 	int asize, esc_nl, size;
 	char *lbuf, *text, *p, *op, *s;
-	size_t len = _POSIX2_LINE_MAX;
+	size_t bufsize;
 
-	lbuf = xmalloc(len);
-	asize = 2 * len + 1;
-	text = xmalloc(asize);
-	size = 0;
-	while (cu_fgets(&lbuf, &len)) {
-		if (asize - size < len + 1) {
+	lbuf = text = NULL;
+	asize = size = 0;
+	while ((p = cu_fgets(&lbuf, &bufsize))) {
+		size_t len = ROUNDLEN(strlen(p) + 1);
+		if (asize - size < len) {
 			do {
-				asize *= 2;
-			} while (asize - size < len + 1);
+				asize += len;
+			} while (asize - size < len);
 			text = xrealloc(text, asize);
 		}
 		op = s = text + size;
-		p = lbuf;
 		EATSPACE();
 		for (esc_nl = 0; *p != '\0'; p++) {
 			if (*p == '\\' && p[1] != '\0' && *++p == '\n')

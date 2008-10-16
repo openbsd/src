@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2008/10/09 10:58:32 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2008/10/16 16:34:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2008/10/09 10:58:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2008/10/16 16:34:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2008/10/09 10:58:32 millert
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -159,7 +160,7 @@ main(int argc, char *argv[])
  * together.  Empty strings and files are ignored.
  */
 char *
-cu_fgets(char **outbuf, size_t *outlen)
+cu_fgets(char **outbuf, size_t *outsize)
 {
 	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
@@ -167,6 +168,9 @@ cu_fgets(char **outbuf, size_t *outlen)
 	static char string_ident[30];
 	size_t len;
 	char *p;
+
+	if (*outbuf == NULL)
+		*outsize = 0;
 
 again:
 	switch (state) {
@@ -196,12 +200,10 @@ again:
 	case ST_FILE:
 		if ((p = fgetln(f, &len)) != NULL) {
 			linenum++;
-			if (len >= *outlen) {
-				do {
-					*outlen *= 2;
-				} while (len >= *outlen);
+			if (len >= *outsize) {
 				free(*outbuf);
-				*outbuf = xmalloc(*outlen);
+				*outsize = ROUNDLEN(len + 1);
+				*outbuf = xmalloc(*outsize);
 			}
 			memcpy(*outbuf, p, len);
 			(*outbuf)[len] = '\0';
@@ -217,13 +219,14 @@ again:
 		if (linenum == 0 && s[0] == '#' && s[1] == 'n')
 			nflag = 1;
 		p = *outbuf;
-		len = *outlen;
+		len = *outsize;
 		for (;;) {
-			if (len-- <= 1) {
-				*outbuf = xrealloc(*outbuf, *outlen * 2);
-				p = *outbuf + *outlen - len - 1;
-				len += *outlen;
-				*outlen *= 2;
+			if (len <= 1) {
+				*outbuf = xrealloc(*outbuf,
+				    *outsize + _POSIX2_LINE_MAX);
+				p = *outbuf + *outsize - len;
+				len += _POSIX2_LINE_MAX;
+				*outsize += _POSIX2_LINE_MAX;
 			}
 			switch (*s) {
 			case '\0':
@@ -245,6 +248,7 @@ again:
 				return (*outbuf);
 			default:
 				*p++ = *s++;
+				len--;
 			}
 		}
 	}
