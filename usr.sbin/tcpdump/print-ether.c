@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.23 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.24 2008/10/16 12:57:01 mpf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-ether.c,v 1.23 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: print-ether.c,v 1.24 2008/10/16 12:57:01 mpf Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -248,6 +248,10 @@ recurse:
 
 	case ETHERTYPE_LLDP:
 		lldp_print(p, length);
+		return (1);
+
+	case ETHERTYPE_SLOW:
+		slow_print(p, length);
 		return (1);
 
 	case ETHERTYPE_LAT:

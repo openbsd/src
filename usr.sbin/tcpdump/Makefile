@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2006/05/23 14:20:19 stevesk Exp $
+#	$OpenBSD: Makefile,v 1.52 2008/10/16 12:57:01 mpf Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-etherip.c print-lwres.c print-lldp.c print-cdp.c print-pflog.c \
 	print-pfsync.c pf_print_state.c \
 	print-udpencap.c print-carp.c \
-	print-802_11.c print-iapp.c print-mpls.c \
+	print-802_11.c print-iapp.c print-mpls.c print-slow.c \
 	gmt2local.c savestr.c setsignal.c
 
 # TCP OS Fingerprinting
