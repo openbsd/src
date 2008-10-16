@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.49 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.50 2008/10/16 02:13:12 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -428,8 +428,17 @@ azalia_generic_mixer_init(codec_t *this)
 
 		w = &this->w[i];
 
+		/* skip unconnected pins */
+		if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+			uint8_t conn =
+			    (w->d.pin.config & CORB_CD_PORT_MASK) >> 30;
+			if (conn == 1)	/* no physical connection */
+				continue;
+		}
+
 		/* selector */
-		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
+		if (w->type != COP_AWTYPE_AUDIO_MIXER &&
+		    w->type != COP_AWTYPE_POWER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.source", w->name);
@@ -442,7 +451,14 @@ azalia_generic_mixer_init(codec_t *this)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
+				uint8_t conn;
+
 				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
+				/* skip unconnected pins */
+				PIN_STATUS(&this->w[w->connections[j]],
+				    conn);
+				if (conn == 1)
 					continue;
 				d->un.e.member[k].ord = j;
 				strlcpy(d->un.e.member[k].label.name,
@@ -531,9 +547,16 @@ azalia_generic_mixer_init(codec_t *this)
 				    AudioNon, MAX_AUDIO_DEV_LEN);
 				this->nmixers++;
 			} else {
+				uint8_t conn;
+
 				for (j = 0; j < w->nconnections; j++) {
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
+						continue;
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s.%s.mute", w->name,
@@ -582,9 +605,16 @@ azalia_generic_mixer_init(codec_t *this)
 				    MIXER_DELTA(COP_AMPCAP_NUMSTEPS(w->inamp_cap));
 				this->nmixers++;
 			} else {
+				uint8_t conn;
+
 				for (j = 0; j < w->nconnections; j++) {
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
+						continue;
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s.%s", w->name,
