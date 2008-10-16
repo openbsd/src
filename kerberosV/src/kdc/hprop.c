@@ -749,7 +749,7 @@ main(int argc, char **argv)
     HDB *db = NULL;
     int optind = 0;
 
-    int type;
+    int type = 0;
 
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
