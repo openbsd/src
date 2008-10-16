@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.59 2008/10/12 10:42:38 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.60 2008/10/16 19:16:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
  *
  *
  * TO DO:
- *  - S/PDIF
  *  - power hook
  *  - multiple codecs (needed?)
  *  - multiple streams (needed?)
@@ -1513,6 +1512,7 @@ int
 azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 {
 	const convgroup_t *group;
+	uint32_t v;
 	int i, err, startchan, nchan;
 	nid_t nid;
 	boolean_t flag222;
@@ -1550,6 +1550,14 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 				    stream_chan, NULL);
 		if (err)
 			goto exit;
+		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
+			/* enable S/PDIF */
+			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+			    0, &v);
+			v = (v & 0xff) | CORB_DCC_DIGEN;
+			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
+			    v, NULL);
+		}
 		startchan += WIDGET_CHANNELS(&this->w[nid]);
 	}
 
@@ -1562,6 +1570,7 @@ int
 azalia_codec_disconnect_stream(codec_t *this, int dir)
 {
 	const convgroup_t *group;
+	uint32_t v;
 	int i;
 	nid_t nid;
 
@@ -1573,6 +1582,12 @@ azalia_codec_disconnect_stream(codec_t *this, int dir)
 		nid = group->conv[i];
 		this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
 		    0, NULL);	/* stream#0 */
+		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
+			/* disable S/PDIF */
+			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL, 0, &v);
+			v = (v & ~CORB_DCC_DIGEN) & 0xff;
+			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L, v, NULL);
+		}
 	}
 	return 0;
 }

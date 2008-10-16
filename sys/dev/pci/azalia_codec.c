@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.50 2008/10/16 02:13:12 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.51 2008/10/16 19:16:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 int	azalia_generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
-int 	azalia_generic_mixer_pinctrl(codec_t *, nid_t, uint32_t);
+int	azalia_generic_mixer_pinctrl(codec_t *, nid_t, uint32_t);
 u_char	azalia_generic_mixer_from_device_value
 	(const codec_t *, nid_t, int, uint32_t );
 uint32_t azalia_generic_mixer_to_device_value
@@ -1013,6 +1013,22 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_
 		mc->un.value.num_channels = 1;
 	}
 
+	/* S/PDIF */
+	else if (target == MI_TARGET_SPDIF) {
+		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		    0, &result);
+		if (err)
+			return err;
+		mc->un.mask = result & 0xff & ~(CORB_DCC_DIGEN | CORB_DCC_NAUDIO);
+	} else if (target == MI_TARGET_SPDIF_CC) {
+		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		    0, &result);
+		if (err)
+			return err;
+		mc->un.value.num_channels = 1;
+		mc->un.value.level[0] = CORB_DCC_CC(result);
+	}
+
 	/* EAPD */
 	else if (target == MI_TARGET_EAPD) {
 		err = this->comresp(this, nid,
@@ -1277,6 +1293,27 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 			return err;
 	}
 
+	/* S/PDIF */
+	else if (target == MI_TARGET_SPDIF) {
+		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		    0, &result);
+		result &= CORB_DCC_DIGEN | CORB_DCC_NAUDIO;
+		result |= mc->un.mask & 0xff & ~CORB_DCC_DIGEN;
+		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
+		    result, NULL);
+		if (err)
+			return err;
+	} else if (target == MI_TARGET_SPDIF_CC) {
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		if (mc->un.value.level[0] > 127)
+			return EINVAL;
+		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_H,
+		    mc->un.value.level[0], NULL);
+		if (err)
+			return err;
+	}
+
 	/* EAPD */
 	else if (target == MI_TARGET_EAPD) {
 		if (mc->un.ord >= 2)
@@ -1295,7 +1332,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
 		if (err)
 			return err;
-	} 
+	}
 
 	else {
 		printf("%s: internal error in %s: target=%x\n",

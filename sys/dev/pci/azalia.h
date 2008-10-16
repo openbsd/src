@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.16 2008/10/16 02:13:12 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.17 2008/10/16 19:16:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -312,9 +312,18 @@
 #define		CORB_AGM_OUTPUT		0x8000
 #define CORB_GET_CONVERTER_FORMAT	0xa00
 #define CORB_SET_CONVERTER_FORMAT	0x200
-#define CORB_GET_DIGITAL_CONVERTER_CONTROL	0xf0d
-#define CORB_SET_DIGITAL_CONVERTER_CONTROL_L	0x70d
-#define CORB_SET_DIGITAL_CONVERTER_CONTROL_H	0x70e
+#define CORB_GET_DIGITAL_CONTROL	0xf0d
+#define CORB_SET_DIGITAL_CONTROL_L	0x70d
+#define CORB_SET_DIGITAL_CONTROL_H	0x70e
+#define		CORB_DCC_DIGEN		0x01
+#define		CORB_DCC_V		0x02
+#define		CORB_DCC_VCFG		0x04
+#define		CORB_DCC_PRE		0x08
+#define		CORB_DCC_COPY		0x10
+#define		CORB_DCC_NAUDIO		0x20
+#define		CORB_DCC_PRO		0x40
+#define		CORB_DCC_L		0x80
+#define		CORB_DCC_CC(x)		((x >> 8) & 0x7f)
 #define CORB_GET_POWER_STATE		0xf05
 #define CORB_SET_POWER_STATE		0x705
 #define		CORB_PS_D0		0x0
@@ -546,7 +555,9 @@ typedef struct {
 #define MI_TARGET_DAC		0x104
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
-#define MI_TARGET_EAPD		0x107
+#define MI_TARGET_SPDIF		0x107
+#define MI_TARGET_SPDIF_CC	0x108
+#define MI_TARGET_EAPD		0x109
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
