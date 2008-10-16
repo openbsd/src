@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.10 2008/10/11 20:31:50 miod Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.11 2008/10/16 19:16:21 naddy Exp $	*/
 
 /******************************************************************************
 
@@ -2791,22 +2791,9 @@ ixgbe_rxeof(struct rx_ring *rxr, int count)
 
 #if NVLAN > 0 && defined(IX_CSUM_OFFLOAD)
 				if (staterr & IXGBE_RXD_STAT_VP) {
-					struct ether_vlan_header vh;
-
-					if (m->m_pkthdr.len < ETHER_HDR_LEN)
-						goto discard;
-					m_copydata(m, 0,
-					    ETHER_HDR_LEN, (caddr_t)&vh);
-					vh.evl_proto = vh.evl_encap_proto;
-					vh.evl_tag =
+					m->m_pkthdr.ether_vtag =
 					    letoh16(cur->wb.upper.vlan);
-					vh.evl_encap_proto =
-					    htons(ETHERTYPE_VLAN);
-					m_adj(m, ETHER_HDR_LEN);
-					M_PREPEND(m, sizeof(vh), M_DONTWAIT);
-					if (m == NULL)
-						goto discard;
-					m_copyback(m, 0, sizeof(vh), &vh);
+					m->m_flags |= M_VLANTAG;
 				}
 #endif
 				rxr->fmp = NULL;
