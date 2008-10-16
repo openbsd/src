@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.42 2008/08/06 18:20:55 miod Exp $
+dnl	$OpenBSD: install,v 1.43 2008/10/16 00:05:09 krw Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -72,13 +72,6 @@ OpenBSDInstallPart3
 OpenBSDInstallPart4({:- If you have DOS or Linux partitions
 	defined on the disk, these will usually show up as partition
 	'i', 'j' and so on.-:})
-
-	Note that all OpenBSD partitions in the disk label must have an
-	offset that makes it start within the OpenBSD part of the disk,
-	and a size that keeps it inside of that portion of the disk.  This
-	is within the bounds of the 'c' partition if the disk is not being
-	shared with other operating systems, and within the OpenBSD fdisk
-	partition if the disk is being shared.
 
 OpenBSDInstallPart5(wd0)
 

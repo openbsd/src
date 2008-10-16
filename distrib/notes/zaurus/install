@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2008/10/16 00:05:09 krw Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -119,13 +119,6 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	After shrinking the MS-DOS partition, you will need to
 	reformat it from Linux or OpenBSD once OpenBSD is installed.
 	(You will be reminded of this later in this document)
-
-	Note that all OpenBSD partitions in the disk label must have an
-	offset that makes it start within the OpenBSD part of the disk,
-	and a size that keeps it inside of that portion of the disk.  This
-	is within the bounds of the 'c' partition if the disk is not being
-	shared with other operating systems, and within the OpenBSD fdisk
-	partition if the disk is being shared.
 
 OpenBSDInstallPart5(wd0)
 

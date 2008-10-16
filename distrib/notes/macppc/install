@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2008/08/06 18:20:55 miod Exp $
+dnl	$OpenBSD: install,v 1.28 2008/10/16 00:05:09 krw Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -125,12 +125,7 @@ OpenBSDInstallPart4({:- If you have DOS or Linux
 	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA
 	knowledgeable it may be necessary to run the 'b' command in
-	disklabel to allow OpenBSD to use the entire disk.
-
-	Note that all OpenBSD partitions in the disk label must have an
-	offset that makes it start within the OpenBSD part of the disk,
-	and a size that keeps it inside of that portion of the disk.  This
-	is within the bounds of the 'c' partition.-:})
+	disklabel to allow OpenBSD to use the entire disk.-:})
 
 OpenBSDInstallPart5(wd0)
 
