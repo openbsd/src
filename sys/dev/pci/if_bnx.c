@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.67 2008/10/16 19:16:21 naddy Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.68 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4388,11 +4388,9 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 
 #if NVLAN > 0
 	/* Transfer any VLAN tags to the bd. */
-	if ((m0->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m0->m_pkthdr.rcvif != NULL) {
-		struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
+	if (m0->m_flags & M_VLANTAG) {
 		flags |= TX_BD_FLAGS_VLAN_TAG;
-		vlan_tag = ifv->ifv_tag;
+		vlan_tag = m0->m_pkthdr.ether_vtag;
 	}
 #endif
 

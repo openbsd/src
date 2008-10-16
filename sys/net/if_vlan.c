@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.76 2008/10/16 19:12:51 naddy Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.77 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -206,23 +206,11 @@ vlan_start(struct ifnet *ifp)
 		 * If the IFCAP_VLAN_HWTAGGING capability is set on the parent,
 		 * it can do VLAN tag insertion itself and doesn't require us
 	 	 * to create a special header for it. In this case, we just pass
-		 * the packet along. However, we need some way to tell the
-		 * interface where the packet came from so that it knows how
-		 * to find the VLAN tag to use, so we set the rcvif in the
-		 * mbuf header to our ifnet.
-		 *
-		 * Note: we also set the M_PROTO1 flag in the mbuf to let
-		 * the parent driver know that the rcvif pointer is really
-		 * valid. We need to do this because sometimes mbufs will
-		 * be allocated by other parts of the system that contain
-		 * garbage in the rcvif pointer. Using the M_PROTO1 flag
-		 * lets the driver perform a proper sanity check and avoid
-		 * following potentially bogus rcvif pointers off into
-		 * never-never land.
+		 * the packet along.
 		 */
 		if (p->if_capabilities & IFCAP_VLAN_HWTAGGING) {
-			m->m_pkthdr.rcvif = ifp;
-			m->m_flags |= M_PROTO1;
+			m->m_pkthdr.ether_vtag = ifv->ifv_tag;
+			m->m_flags |= M_VLANTAG;
 		} else {
 			struct ether_vlan_header evh;
 

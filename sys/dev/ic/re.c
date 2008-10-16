@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.95 2008/10/16 19:16:21 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.96 2008/10/16 19:18:03 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1649,13 +1649,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	struct rl_desc	*d;
 	u_int32_t	cmdstat, vlanctl = 0, csum_flags = 0;
 	struct rl_txq	*txq;
-#if NVLAN > 0
-	struct ifvlan	*ifv = NULL;
-
-	if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m->m_pkthdr.rcvif != NULL)
-		ifv = m->m_pkthdr.rcvif->if_softc;
-#endif
 
 	if (sc->rl_ldata.rl_tx_free <= RL_NTXDESC_RSVD)
 		return (EFBIG);
@@ -1728,8 +1721,9 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	 * transmission attempt.
 	 */
 #if NVLAN > 0
-	if (ifv != NULL)
-		vlanctl |= swap16(ifv->ifv_tag) | RL_TDESC_VLANCTL_TAG;
+	if (m->m_flags & M_VLANTAG)
+		vlanctl |= swap16(m->m_pkthdr.ether_vtag) |
+		    RL_TDESC_VLANCTL_TAG;
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.60 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.61 2008/10/16 19:18:03 naddy Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1593,13 +1593,6 @@ nge_encap(sc, m_head, txidx)
 	struct nge_desc		*f = NULL;
 	struct mbuf		*m;
 	int			frag, cur, cnt = 0;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	/*
 	 * Start packing the mbufs in this chain into
@@ -1633,9 +1626,9 @@ nge_encap(sc, m_head, txidx)
 	sc->nge_ldata->nge_tx_list[*txidx].nge_extsts = 0;
 
 #if NVLAN > 0
-	if (ifv != NULL) {
+	if (m_head->m_flags & M_VLANTAG) {
 		sc->nge_ldata->nge_tx_list[cur].nge_extsts |=
-			(NGE_TXEXTSTS_VLANPKT|ifv->ifv_tag);
+		    (NGE_TXEXTSTS_VLANPKT|m_head->m_pkthdr.ether_vtag);
 	}
 #endif
 

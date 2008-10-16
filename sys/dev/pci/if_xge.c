@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.45 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.46 2008/10/16 19:18:03 naddy Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1099,9 +1099,6 @@ xge_start(struct ifnet *ifp)
 	struct	mbuf *m;
 	uint64_t par, lcr;
 	int nexttx = 0, ntxd, error, i;
-#if NVLAN > 0
-	struct ifvlan *ifv = NULL;
-#endif
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1145,12 +1142,10 @@ xge_start(struct ifnet *ifp)
 		txd->txd_control2 = TXD_CTL2_UTIL;
 
 #if NVLAN > 0
-		if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-		    m->m_pkthdr.rcvif != NULL) {
-			ifv = m->m_pkthdr.rcvif->if_softc;
-
+		if (m->m_flags & M_VLANTAG) {
 			txd->txd_control2 |= TXD_CTL2_VLANE;
-			txd->txd_control2 |= TXD_CTL2_VLANT(ifv->ifv_tag);
+			txd->txd_control2 |=
+			    TXD_CTL2_VLANT(m->m_pkthdr.ether_vtag);
 		}
 #endif
 

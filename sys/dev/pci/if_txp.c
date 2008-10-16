@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.96 2008/10/16 19:16:21 naddy Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.97 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1328,9 +1328,6 @@ txp_start(struct ifnet *ifp)
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
 	u_int32_t firstprod, firstcnt, prod, cnt, i;
-#if NVLAN > 0
-	struct ifvlan		*ifv;
-#endif
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1392,11 +1389,9 @@ txp_start(struct ifnet *ifp)
 			goto oactive;
 
 #if NVLAN > 0
-		if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-		    m->m_pkthdr.rcvif != NULL) {
-			ifv = m->m_pkthdr.rcvif->if_softc;
+		if (m->m_flags & M_VLANTAG) {
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			    (htons(ifv->ifv_tag) << TX_PFLAGS_VLANTAG_S);
+			    (htons(m->m_pkthdr.ether_vtag) << TX_PFLAGS_VLANTAG_S);
 		}
 #endif
 

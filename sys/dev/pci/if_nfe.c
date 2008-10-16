@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.82 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.83 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -933,11 +933,8 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 #if NVLAN > 0
 	/* setup h/w VLAN tagging */
-	if ((m0->m_flags & (M_PROTO1 | M_PKTHDR)) == (M_PROTO1 | M_PKTHDR) &&
-	    m0->m_pkthdr.rcvif != NULL) {
-		struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
-		vtag = NFE_TX_VTAG | htons(ifv->ifv_tag);
-	}
+	if (m0->m_flags & M_VLANTAG)
+		vtag = NFE_TX_VTAG | htons(m0->m_pkthdr.ether_vtag);
 #endif
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		flags |= NFE_TX_IP_CSUM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.89 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.90 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2027,13 +2027,6 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	bus_dmamap_t		txmap;
 	struct ti_tx_desc	txdesc;
 	int			i = 0;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	entry = SLIST_FIRST(&sc->ti_tx_map_listhead);
 	if (entry == NULL)
@@ -2062,9 +2055,9 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 
 		txdesc.ti_flags = 0;
 #if NVLAN > 0
-		if (ifv != NULL) {
+		if (m_head->m_flags & M_VLANTAG) {
 			txdesc.ti_flags |= TI_BDFLAG_VLAN_TAG;
-			txdesc.ti_vlan_tag = ifv->ifv_tag;
+			txdesc.ti_vlan_tag = m_head->m_pkthdr.ether_vtag;
 		}
 #endif
 
@@ -2114,13 +2107,6 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct ti_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
 	int			i = 0;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	entry = SLIST_FIRST(&sc->ti_tx_map_listhead);
 	if (entry == NULL)
@@ -2148,9 +2134,9 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		f->ti_len = txmap->dm_segs[i].ds_len & 0xffff;
 		f->ti_flags = 0;
 #if NVLAN > 0
-		if (ifv != NULL) {
+		if (m_head->m_flags & M_VLANTAG) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = ifv->ifv_tag;
+			f->ti_vlan_tag = m_head->m_pkthdr.ether_vtag;
 		} else {
 			f->ti_vlan_tag = 0;
 		}

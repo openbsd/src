@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.247 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.248 2008/10/16 19:18:03 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2870,13 +2870,6 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int			i = 0;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	cur = frag = *txidx;
 
@@ -2936,9 +2929,9 @@ doit:
 		f->bge_len = dmamap->dm_segs[i].ds_len;
 		f->bge_flags = csum_flags;
 #if NVLAN > 0
-		if (ifv != NULL) {
+		if (m_head->m_flags & M_VLANTAG) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = ifv->ifv_tag;
+			f->bge_vlan_tag = m_head->m_pkthdr.ether_vtag;
 		} else {
 			f->bge_vlan_tag = 0;
 		}

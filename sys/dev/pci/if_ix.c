@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.11 2008/10/16 19:16:21 naddy Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.12 2008/10/16 19:18:03 naddy Exp $	*/
 
 /******************************************************************************
 
@@ -841,9 +841,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
         cmd_type_len |= IXGBE_ADVTXD_DCMD_IFCS | IXGBE_ADVTXD_DCMD_DEXT;
 
 #if NVLAN > 0
-	/* VLAN tagging? */
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
+	if (m_head->m_flags & M_VLANTAG)
         	cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
 #endif
 
@@ -1888,11 +1886,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	int ctxd = txr->next_avail_tx_desc;
 #if NVLAN > 0
 	struct ether_vlan_header *eh;
-	struct ifvlan		*ifv = NULL;
-
-	if ((mp->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    mp->m_pkthdr.rcvif != NULL)
-		ifv = mp->m_pkthdr.rcvif->if_softc;
 #else
 	struct ether_header *eh;
 #endif
@@ -1908,9 +1901,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	 * be placed into the descriptor itself.
 	 */
 #if NVLAN > 0
-	if (ifv != NULL) {
+	if (mp->m_flags & M_VLANTAG) {
 		vlan_macip_lens |=
-		    htole16(ifv->ifv_tag) << IXGBE_ADVTXD_VLAN_SHIFT;
+		    htole16(mp->m_pkthdr.ether_vtag) << IXGBE_ADVTXD_VLAN_SHIFT;
 	} else
 #endif
 	if (offload == FALSE)
@@ -2021,12 +2014,6 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, uint32_t *paylen)
 #if NVLAN > 0
 	uint16_t vtag = 0;
 	struct ether_vlan_header *eh;
-
-	struct ifvlan		*ifv = NULL;
-
-	if ((mp->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    mp->m_pkthdr.rcvif != NULL)
-		ifv = mp->m_pkthdr.rcvif->if_softc;
 #else
 	struct ether_header *eh;
 #endif
@@ -2076,9 +2063,9 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, uint32_t *paylen)
 
 #if NVLAN > 0
 	/* VLAN MACLEN IPLEN */
-	if (ifv != NULL) {
+	if (mp->m_flags & M_VLANTAG) {
 		vtag = htole16(mp->m_pkthdr.ether_vtag);
-                vlan_macip_lens |= (ifv->ifv_tag << IXGBE_ADVTXD_VLAN_SHIFT);
+		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
 	}
 #endif
 
