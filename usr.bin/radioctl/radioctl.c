@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.15 2008/10/16 02:21:26 jakemsr Exp $ */
+/* $OpenBSD: radioctl.c,v 1.16 2008/10/16 14:32:57 jmc Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -217,7 +217,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-nv] [-f file] -a\n"
+	    "usage: %s [-anv] [-f file]\n"
 	    "       %s [-nv] [-f file] name\n"
 	    "       %s [-n] [-f file] name=value\n",
 	    __progname, __progname, __progname);
