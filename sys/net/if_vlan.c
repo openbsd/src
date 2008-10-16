@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.75 2008/10/16 14:23:35 naddy Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.76 2008/10/16 19:12:51 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -276,13 +276,17 @@ vlan_input(eh, m)
 	u_int tag;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 
-	if (m->m_len < EVL_ENCAPLEN &&
-	    (m = m_pullup(m, EVL_ENCAPLEN)) == NULL) {
-		ifp->if_ierrors++;
-		return (0);
-	}
+	if (m->m_flags & M_VLANTAG) {
+		tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
+	} else {
+		if (m->m_len < EVL_ENCAPLEN &&
+		    (m = m_pullup(m, EVL_ENCAPLEN)) == NULL) {
+			ifp->if_ierrors++;
+			return (0);
+		}
 
-	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
+		tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
+	}
 
 	LIST_FOREACH(ifv, &vlan_tagh[TAG_HASH(tag)], ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
@@ -305,10 +309,14 @@ vlan_input(eh, m)
 	 * reentrant!).
 	 */
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
-	eh->ether_type = mtod(m, u_int16_t *)[1];
-	m->m_len -= EVL_ENCAPLEN;
-	m->m_data += EVL_ENCAPLEN;
-	m->m_pkthdr.len -= EVL_ENCAPLEN;
+	if (m->m_flags & M_VLANTAG) {
+		m->m_flags &= ~M_VLANTAG;
+	} else {
+		eh->ether_type = mtod(m, u_int16_t *)[1];
+		m->m_len -= EVL_ENCAPLEN;
+		m->m_data += EVL_ENCAPLEN;
+		m->m_pkthdr.len -= EVL_ENCAPLEN;
+	}
 
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf)
