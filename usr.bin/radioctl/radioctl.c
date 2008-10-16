@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.14 2007/09/27 21:55:54 sobrado Exp $ */
+/* $OpenBSD: radioctl.c,v 1.15 2008/10/16 02:21:26 jakemsr Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -138,9 +138,6 @@ main(int argc, char **argv)
 	int silent = 0;
 	int mode = O_RDONLY;
 
-	if (argc < 2)
-		usage();
-
 	radiodev = getenv(RADIO_ENV);
 	if (radiodev == NULL)
 		radiodev = RADIODEVICE;
@@ -170,6 +167,9 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	if (argc == 0)
+		show_vars = 1;
 
 	/*
 	 * Scan the options for `name=value` so the
