@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.35 2008/06/09 20:30:22 miod Exp $
+.\"	$OpenBSD: uvm.9,v 1.36 2008/10/16 16:22:10 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: October 16 2008 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ UVM's external interface includes functions that:
 .Pp
 .Bl -hyphen -compact
 .It
-initialise UVM sub-systems
+initialise UVM subsystems
 .It
 manage virtual address spaces
 .It
@@ -92,7 +92,7 @@ function sets up the UVM system at system boot time, after the
 copyright has been printed.
 It initialises global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
-pager and anonymous memory sub-systems, and then enables
+pager and anonymous memory subsystems, and then enables
 paging of kernel objects.
 .Fn uvm_init
 must be called after machine-dependent code has registered some free RAM
@@ -116,7 +116,7 @@ call.
 .Pp
 The
 .Fn uvm_swap_init
-function initialises the swap sub-system.
+function initialises the swap subsystem.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
 .nr nS 1
 .Ft int
