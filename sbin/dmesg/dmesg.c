@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.20 2006/12/24 00:47:27 djm Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.21 2008/10/17 18:49:50 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	int ch, newl, skip, i;
 	char *p;
 	struct msgbuf cur;
-	char *memf, *nlistf, *bufdata;
+	char *memf, *nlistf, *bufdata = NULL;
 	char buf[5];
 
 	memf = nlistf = NULL;
