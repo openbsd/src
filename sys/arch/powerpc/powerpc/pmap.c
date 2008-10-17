@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.106 2008/09/13 18:18:25 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.107 2008/10/17 14:04:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -323,6 +323,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 		s = splvm();
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		splx(s);
+		if (vp1 == NULL)
+			panic("pmap_vp_enter: failed to allocate vp1");
 		pm->pm_vp[VP_SR(va)] = vp1;
 	}
 
@@ -331,6 +333,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 		s = splvm();
 		vp2 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		splx(s);
+		if (vp2 == NULL)
+			panic("pmap_vp_enter: failed to allocate vp2");
 		vp1->vp[VP_IDX1(va)] = vp2;
 	}
 
@@ -515,6 +519,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);	
+		if (pted == NULL)
+			panic("pmap_enter: failed to allocate pted");
 		pmap_vp_enter(pm, va, pted);
 	}
 
