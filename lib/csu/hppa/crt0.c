@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.11 2005/08/04 16:33:05 espie Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.12 2008/10/17 01:10:47 kurt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -75,10 +75,13 @@ __asm(
 	".proc\n\t"
 	".callinfo frame=0, calls\n\t"
 	".entry\n\t"
-	"ldil	L%$global$, %r27\n\t"
+	"bl L$lpc, %r27\n\t"
+	"depi 0, 31, 2, %r27\n\t"
+"L$lpc:  addil L'$global$ - ($PIC_pcrel$0 - 8), %r27\n\t"
+	"ldo R'$global$ - ($PIC_pcrel$0 - 12)(%r1),%r27\n\t"
 	".call\n\t"
 	"b	___start\n\t"
-	"ldo	R%$global$(%r27), %r27\n\t"
+	"copy    %r27, %r19\n\t"
 	".exit\n\t"
 	".procend\n\t");
 
