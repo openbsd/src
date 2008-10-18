@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.10 2008/10/14 20:43:33 michele Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.11 2008/10/18 12:30:40 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -247,7 +247,8 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifm = ifp->if_softc;
 		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
 			break;
-		if (shim.shim_label > MPLS_LABEL_MAX) {
+		if (shim.shim_label > MPLS_LABEL_MAX ||
+		    shim.shim_label <= MPLS_LABEL_RESERVED_MAX) {
 			error = EINVAL;
 			break;
 		}
