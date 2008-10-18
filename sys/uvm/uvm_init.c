@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.17 2008/09/29 12:34:18 art Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.18 2008/10/18 12:11:30 kettenis Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -126,7 +126,6 @@ uvm_init()
 	 */
 
 	kmeminit();
-	uvm_km_page_init();
 
 	/*
 	 * step 7: init all pagers and the pager_map.
@@ -149,6 +148,8 @@ uvm_init()
 	uvm_page_rehash();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);
+
+	uvm_km_page_init();
 
 	/*
 	 * reserve some unmapped space for malloc/pool use after free usage
