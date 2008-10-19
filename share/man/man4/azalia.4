@@ -1,4 +1,4 @@
-.\"	$OpenBSD: azalia.4,v 1.17 2008/10/18 23:47:05 brad Exp $
+.\"	$OpenBSD: azalia.4,v 1.18 2008/10/19 03:14:55 brad Exp $
 .\"	$NetBSD: azalia.4,v 1.2 2005/06/22 04:19:09 kent Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 18 2008 $
+.Dd $Mdocdate: October 19 2008 $
 .Dt AZALIA 4
 .Os
 .Sh NAME
@@ -42,10 +42,23 @@ The
 .Nm
 device driver is expected to support any PCI device which is
 compliant with the High Definition Audio Specification 1.0.
-Known supported devices are Intel 82801FB/GB/H/I/JI I/O controller hub
-(ICH6, ICH7, ICH8, ICH9, ICH10), ALI M5461, ATI SB450/SB600/SB700,
-NVIDIA MCP51/55/61/65/67/73/77/79/7B, SiS 966/966L and
-VIA Technologies VT8237A/VT8251 chips.
+.Pp
+Supported chipsets:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+Acer Labs M5461
+.It
+ATI SB450, SB600, SB700
+.It
+Intel 82801FB/GB/H/I/JI (ICH6, ICH7, ICH8, ICH9, ICH10)
+.It
+NVIDIA MCP51/MCP55/MCP61/MCP65/MCP67/MCP73/MCP77/MCP79/MCP7B
+.It
+Silicon Integrated System 966/966L
+.It
+VIA Technologies VT8237A, VT8251
+.El
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr pci 4
@@ -60,8 +73,6 @@ device driver first appeared in
 support first appeared in
 .Ox 4.0 .
 .Sh BUGS
-S/PDIF support is not implemented.
-.Pp
 Non-PCM encodings such as Float32 and AC-3 are not supported.
 .Pp
 There is no way to use 20-bit or 24-bit precision because of a
