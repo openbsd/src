@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.6 2008/10/19 12:00:54 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -55,9 +55,12 @@ int	do_build_group(struct env *, struct idm *, struct aldap *, char *, enum
 int	do_build_passwd(struct env *, struct idm *, struct aldap *, char *, enum
     scope, char *);
 
-struct aldap	*aldap_open(char *, char *);
+struct aldap	*aldap_openidm(struct idm *idm);
 int		 aldap_close(struct aldap *);
+#ifdef REFERRALS
 struct aldap	*connect_to_referral(struct aldap_message *, struct aldap_url *);
+struct aldap	*aldap_openhost(char *, char *);
+#endif
 
 int
 aldap_close(struct aldap *al)
@@ -71,27 +74,19 @@ aldap_close(struct aldap *al)
 }
 
 struct aldap *
-aldap_open(char *host, char *port)
+aldap_openidm(struct idm *idm)
 {
-	struct addrinfo		 hints;
-	struct aldap		*al;
 	int			 fd;
+	struct addrinfo		*res0;
 
-	struct addrinfo *res, *res0;
-	int error;
-
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	log_debug("trying directory: %s", host);
-
-	if ((error = getaddrinfo(host, port, &hints, &res)))
-		errx(1, "getaddrinfo: %s", gai_strerror(error));
-
-	res0 = res;
+	res0 = idm->idm_addrinfo;
 	do {
+		char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+		if (getnameinfo(res0->ai_addr, res0->ai_addrlen, hbuf, sizeof(hbuf), sbuf,
+			sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV))
+				errx(1, "could not get numeric hostname");
+
 		if ((fd = socket(res0->ai_family, res0->ai_socktype,
 		    res0->ai_protocol)) < 0)
 			continue;
@@ -99,7 +94,7 @@ aldap_open(char *host, char *port)
 		if (connect(fd, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
 		else {
-			warn("connect to %s port %s (%s) failed", host, port, "tcp");
+			warn("connect to %s port %s (%s) failed", hbuf, sbuf, "tcp");
 			return NULL;
 		}
 
@@ -107,13 +102,9 @@ aldap_open(char *host, char *port)
 		fd = -1;
 	} while ((res0 = res0->ai_next) != NULL);
 
-	freeaddrinfo(res);
-
-	if((al = aldap_init(fd)) == NULL)
-		return NULL;
-
-	return al;
+	return aldap_init(fd);
 }
+
 
 void
 client_sig_handler(int sig, short event, void *p)
@@ -295,6 +286,52 @@ client_configure_wrapper(int fd, short event, void *p)
 	client_configure(env);
 }
 
+#ifdef REFERRALS
+struct aldap *
+aldap_openhost(char *host, char *port)
+{
+	struct addrinfo		 hints;
+	struct aldap		*al;
+	int			 fd;
+
+	struct addrinfo *res, *res0;
+	int error;
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	log_debug("trying directory: %s", host);
+
+	if ((error = getaddrinfo(host, port, &hints, &res)))
+		errx(1, "getaddrinfo: %s", gai_strerror(error));
+
+	res0 = res;
+	do {
+		if ((fd = socket(res0->ai_family, res0->ai_socktype,
+		    res0->ai_protocol)) < 0)
+			continue;
+
+		if (connect(fd, res0->ai_addr, res0->ai_addrlen) == 0)
+			break;
+		else {
+			warn("connect to %s port %s (%s) failed", host, port, "tcp");
+			return NULL;
+		}
+
+		close(fd);
+		fd = -1;
+	} while ((res0 = res0->ai_next) != NULL);
+
+	freeaddrinfo(res);
+
+	if((al = aldap_init(fd)) == NULL)
+		return NULL;
+
+	return al;
+}
+
 struct aldap *
 connect_to_referral(struct aldap_message *m, struct aldap_url *lu)
 {
@@ -309,7 +346,7 @@ connect_to_referral(struct aldap_message *m, struct aldap_url *lu)
 		aldap_parse_url(refs[i], lu);
 		asprintf(&port, "%d", lu->port ? lu->port : 389);
 
-		if((al = aldap_open(lu->host, port)) != NULL) {
+		if((al = aldap_openhost(lu->host, port)) != NULL) {
 			free(port);
 			break;
 		}
@@ -321,6 +358,7 @@ connect_to_referral(struct aldap_message *m, struct aldap_url *lu)
 
 	return al;
 }
+#endif
 
 #define MAX_REFERRALS 10
 int
@@ -331,11 +369,13 @@ do_build_group(struct env *env, struct idm *idm, struct aldap *al, char
 	char			**ldap_attrs;
 	struct idm_req		 ir;
 	struct aldap_message	*m;
-	struct aldap_url	 lu;
-	struct aldap		*al_ref;
 	int			i, j, k;
 	const char		*where;
+#ifdef REFERRALS
 	static int		 refcnt = 0;
+	struct aldap_url	 lu;
+	struct aldap		*al_ref;
+#endif
 
 	bzero(attrs, sizeof(attrs));
 	for (i = ATTR_GR_MIN, j = 0; i < ATTR_GR_MAX; i++) {
@@ -358,6 +398,7 @@ do_build_group(struct env *env, struct idm *idm, struct aldap *al, char
 			aldap_freemsg(m);
 			goto bad;
 		}
+#ifdef REFERRALS
 		/* continuation referral */
 		if (m->message_type == LDAP_RES_SEARCH_REFERENCE) {
 			if(refcnt++ >= MAX_REFERRALS)
@@ -386,12 +427,14 @@ do_build_group(struct env *env, struct idm *idm, struct aldap *al, char
 			    lu.scope, idm->idm_filters[FILTER_GROUP]);
 			aldap_close(al_ref);
 		}
+#endif
 		/* end of the search result chain */
 		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
 			aldap_freemsg(m);
 			break;
 		}
 		/* search entry; the rest we won't handle */
+		where = "verifying message_type";
 		if(m->message_type != LDAP_RES_SEARCH_ENTRY) {
 			aldap_freemsg(m);
 			goto bad;
@@ -470,11 +513,13 @@ do_build_passwd(struct env *env, struct idm *idm, struct aldap *al, char
 	char			**ldap_attrs;
 	struct idm_req		 ir;
 	struct aldap_message	*m;
-	struct aldap_url	 lu;
-	struct aldap		*al_ref;
 	int			 i, j, k;
 	const char		*where;
+#ifdef REFERRALS
 	static int		 refcnt = 0;
+	struct aldap_url	 lu;
+	struct aldap		*al_ref;
+#endif
 
 	bzero(attrs, sizeof(attrs));
 	for (i = 0, j = 0; i < ATTR_MAX; i++) {
@@ -497,6 +542,7 @@ do_build_passwd(struct env *env, struct idm *idm, struct aldap *al, char
 			aldap_freemsg(m);
 			goto bad;
 		}
+#ifdef REFERRALS
 		/* continuation referral */
 		if (m->message_type == LDAP_RES_SEARCH_REFERENCE) {
 			if(refcnt++ >= MAX_REFERRALS)
@@ -525,12 +571,14 @@ do_build_passwd(struct env *env, struct idm *idm, struct aldap *al, char
 			    lu.scope, idm->idm_filters[FILTER_USER]);
 			aldap_close(al_ref);
 		}
+#endif
 		/* end of the search result chain */
 		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
 			aldap_freemsg(m);
 			break;
 		}
 		/* search entry; the rest we won't handle */
+		where = "verifying message_type";
 		if(m->message_type != LDAP_RES_SEARCH_ENTRY) {
 			aldap_freemsg(m);
 			goto bad;
@@ -614,7 +662,7 @@ client_try_idm(struct env *env, struct idm *idm)
 	imsg_compose(env->sc_ibuf, IMSG_START_UPDATE, 0, 0, &ir, sizeof(ir));
 
 	where = "connect";
-	if((al = aldap_open(idm->idm_name, "389")) == NULL)
+	if((al = aldap_openidm(idm)) == NULL)
 		goto bad;
 
 	if (idm->idm_flags & F_NEEDAUTH) {

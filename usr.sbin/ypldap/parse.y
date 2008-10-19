@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2008/10/17 13:02:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2008/10/19 12:00:54 aschrijver Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,6 +71,8 @@ int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
 
+struct addrinfo	*host(const char *, const char *);
+
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
 	TAILQ_ENTRY(sym)	 entry;
@@ -99,10 +101,11 @@ typedef struct {
 %token	SERVER FILTER ATTRIBUTE BASEDN BINDDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
 %token	PASSWD NAME FIXED LIST GROUPNAME GROUPPASSWD GROUPGID MAP
-%token	INCLUDE DIRECTORY CLASS PORT SSL ERROR GROUPMEMBERS
+%token	INCLUDE DIRECTORY CLASS PORT ERROR GROUPMEMBERS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.number>	opcode attribute port ssl
+%type	<v.number>	opcode attribute
+%type	<v.string>	port
 
 %%
 
@@ -121,6 +124,7 @@ nl		: '\n' optnl
 optnl		: '\n' optnl
 		| /* empty */
 		;
+
 
 include		: INCLUDE STRING			{
 			struct file	*nfile;
@@ -145,17 +149,14 @@ varset		: STRING '=' STRING			{
 		}
 		;
 
-ssl		: SSL					{ $$ = 1; }
-		| /*empty*/				{ $$ = 0; }
-		;
-
-port		: PORT NUMBER				{ $$ = $2; }
-		| /*empty*/				{ $$ = 0; }
+port		: /* empty */	{ $$ = NULL; }
+		| PORT STRING	{ $$ = $2; }
 		;
 
 opcode		: GROUP					{ $$ = 0; }
 		| PASSWD				{ $$ = 1; }
 		;
+
 
 attribute	: NAME					{ $$ = 0; }
 		| PASSWD				{ $$ = 1; }
@@ -249,36 +250,24 @@ diropt		: BINDDN STRING				{
 		}
 		;
 
-directory	: DIRECTORY STRING port ssl 		{
-			const char	*service;
-			struct servent	*srv;
-
+directory	: DIRECTORY STRING port {
 			if ((idm = calloc(1, sizeof(*idm))) == NULL)
 				fatal(NULL);
 
-			if (strlcpy(idm->idm_name, $2, sizeof(idm->idm_name)) >=
-			    sizeof(idm->idm_name)) {
-				yyerror("directory name truncated");
-				free(idm);
-				free($2);
-				YYERROR;
+			if($3 != NULL) {
+				if((idm->idm_addrinfo = host($2, $3)) == NULL) {
+					yyerror("domain not found");
+					free($2);
+					YYERROR;
+				}
+			} else {
+				if((idm->idm_addrinfo = host($2, "389")) == NULL) {
+					yyerror("domain not found");
+					free($2);
+					YYERROR;
+				}
 			}
 
-			if ($4) {
-				service = "ldaps";
-			} else
-				service = "ldap";
-			srv = getservbyname(service, "tcp");
-
-			if ($3)
-				idm->idm_port = $3;
-			else if (srv == NULL) {
-				if ($4)
-					idm->idm_port = 389;
-				else
-					idm->idm_port = 686;
-			} else
-				idm->idm_port = ntohs(srv->s_port);
 			free($2);
 		} '{' optnl diropts '}'			{
 			TAILQ_INSERT_TAIL(&conf->sc_idms, idm, idm_entry);
@@ -325,6 +314,7 @@ main		: INTERVAL NUMBER			{
 diropts		: diropts diropt nl
 		| diropt optnl
 		;
+
 %%
 
 struct keywords {
@@ -387,7 +377,6 @@ lookup(char *s)
 		{ "provide",		PROVIDE },
 		{ "server",		SERVER },
 		{ "shell",		SHELL },
-		{ "ssl",		SSL },
 		{ "to",			TO },
 		{ "uid",		UID },
 		{ "user",		USER },
@@ -826,4 +815,29 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
+}
+
+struct addrinfo *
+host(const char *s, const char *port)
+{
+        int		 error;
+	struct addrinfo	*res, hints;
+
+	if (s == NULL)
+		return NULL;
+
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+
+        if ((error = getaddrinfo(s, port, &hints, &res)) != 0) {
+                errx(1, "getaddrinfo: %s", gai_strerror(error));
+
+		freeaddrinfo(res);
+
+		return NULL;
+	}
+
+	return res;
 }

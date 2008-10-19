@@ -120,6 +120,7 @@ struct idm {
 #define F_LIST(n)                        (1<<n)
 	u_int32_t			 idm_flags; /* lower 20 reserved */
 	u_int32_t			 idm_list;
+	struct addrinfo			 *idm_addrinfo;
 	in_port_t			 idm_port;
 	char				 idm_binddn[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
