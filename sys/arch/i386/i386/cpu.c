@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2008/10/15 23:23:47 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.33 2008/10/19 20:48:10 brad Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -184,27 +184,25 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	int cpunum = caa->cpu_number;
 	vaddr_t kstack;
 	struct pcb *pcb;
+#endif
 
-	if (caa->cpu_role != CPU_ROLE_AP) {
+	if (caa->cpu_role == CPU_ROLE_AP) {
+#ifdef MULTIPROCESSOR
+		if (cpu_info[cpunum] != NULL)
+			panic("cpu at apic id %d already attached?", cpunum);
+		cpu_info[cpunum] = ci;
+#endif
+	} else {
+		ci = &cpu_info_primary;
+#ifdef MULTIPROCESSOR
 		if (cpunum != lapic_cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d",
 			    self->dv_xname, lapic_cpu_number(), cpunum);
 		}
-
-		ci = &cpu_info_primary;
-		bcopy(self, &ci->ci_dev, sizeof *self);
-
-		/* special-case boot CPU */			    /* XXX */
-		if (cpu_info[cpunum] == &cpu_info_primary) {	    /* XXX */
-			cpu_info[cpunum] = NULL; 		    /* XXX */
-		}				 		    /* XXX */
-	}
-	if (cpu_info[cpunum] != NULL)
-		panic("cpu at apic id %d already attached?", cpunum);
-
-	cpu_info[cpunum] = ci;
 #endif
+		bcopy(self, &ci->ci_dev, sizeof *self);
+	}
 
 	ci->ci_self = ci;
 	ci->ci_apicid = caa->cpu_number;
@@ -249,8 +247,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* further PCB init done later. */
 
-/* XXXSMP: must be shared with UP */
-#ifdef MULTIPROCESSOR
 	printf(": ");
 
 	switch (caa->cpu_role) {
@@ -284,6 +280,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		 * report on an AP
 		 */
 		printf("apid %d (application processor)\n", caa->cpu_number);
+
+#ifdef MULTIPROCESSOR
 		gdt_alloc_cpu(ci);
 		cpu_alloc_ldt(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
@@ -292,28 +290,27 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ncpus++;
+#endif
 		break;
 
 	default:
 		panic("unknown processor type??");
 	}
 
+#ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
 		    ci->ci_dev.dv_xname, kstack, USPACE);
 		printf("%s: idle pcb at %p, idle sp at 0x%x\n",
 		    ci->ci_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
-#else	/* MULTIPROCESSOR */
-	printf("\n");
-#endif	/* !MULTIPROCESSOR */
+#endif
 }
 
 /*
  * Initialize the processor appropriately.
  */
 
-#ifdef MULTIPROCESSOR
 void
 cpu_init(struct cpu_info *ci)
 {
@@ -345,6 +342,7 @@ cpu_init(struct cpu_info *ci)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors()
 {
