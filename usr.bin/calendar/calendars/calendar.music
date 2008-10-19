@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.23 2007/12/01 15:49:35 jasper Exp $
+ * $OpenBSD: calendar.music,v 1.24 2008/10/19 13:35:34 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -407,7 +407,7 @@
 10/16	Bob Weir (Grateful Dead) is born in San Francisco, 1947
 10/17	"Hair" opens at New York's Public Theater, 1967
 10/17	Frederic Chopin dies in Paris, France, 1849
-10/18	Chuck Berry is born in San Jose, California, 1926
+10/18	Chuck Berry is born in St. Louis, Missouri, 1926
 10/20	Three members of Lynyrd Skynyrd die in a plane crash, 1977
 10/20	Charles Edward Ives dies in New York City, 1954
 10/20	Max Bruch dies, 1920
