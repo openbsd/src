@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.23 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: fts.3,v 1.24 2008/10/19 13:23:16 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 19 2008 $
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -491,6 +491,14 @@ the directory traversal order is in the order listed in
 .Fa path_argv
 for the root paths, and in the order listed in the directory for
 everything else.
+.Pp
+If an error occurs,
+.Fn fts_open
+returns
+.Dv NULL
+and sets
+.Va errno
+appropriately.
 .Ss FTS_READ
 The
 .Fn fts_read
