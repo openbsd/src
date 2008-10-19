@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mixerctl.conf.5,v 1.2 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: mixerctl.conf.5,v 1.3 2008/10/19 06:11:03 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 19 2008 $
 .Dt MIXERCTL.CONF 5
 .Os
 .Sh NAME
@@ -35,8 +35,10 @@ variable assignments
 with comments designated by a hash mark
 .Pq Sq # .
 .Sh FILES
-.Bl -tag -width /etc/mixerctl.conf -compact
-.It Pa /etc/mixerctl.conf
+.Bl -tag -width "/etc/mixerctl.confXXX" -compact
+.It /etc/mixerctl.conf
+.Xr mixerctl 1
+configuration file.
 .El
 .Sh EXAMPLES
 To turn on the line in input, use the following line:
