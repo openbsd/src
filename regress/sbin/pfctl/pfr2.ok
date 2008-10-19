@@ -55,7 +55,7 @@ A  ::2
 # pass list 
 regress
 # pass list -v
--pa---	regress	regress
+-pa----	regress	regress
 # kill
 1 tables deleted.
 rules cleared
