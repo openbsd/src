@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.248 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.249 2008/10/19 08:13:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2514,6 +2514,13 @@ bge_rxeof(struct bge_softc *sc)
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN; 
 		m->m_pkthdr.rcvif = ifp;
 
+#if NVLAN > 0
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
+			m->m_pkthdr.ether_vtag = cur_rx->bge_vlan_tag;
+			m->m_flags |= M_VLANTAG;
+		}
+#endif
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
@@ -2928,12 +2935,11 @@ doit:
 		BGE_HOSTADDR(f->bge_addr, dmamap->dm_segs[i].ds_addr);
 		f->bge_len = dmamap->dm_segs[i].ds_len;
 		f->bge_flags = csum_flags;
+		f->bge_vlan_tag = 0;
 #if NVLAN > 0
 		if (m_head->m_flags & M_VLANTAG) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
 			f->bge_vlan_tag = m_head->m_pkthdr.ether_vtag;
-		} else {
-			f->bge_vlan_tag = 0;
 		}
 #endif
 		cur = frag;
@@ -3074,8 +3080,10 @@ bge_init(void *xsc)
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
-	/* Disable hardware decapsulation of vlan frames. */
-	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
+	if (!(ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)) {
+		/* Disable hardware decapsulation of VLAN frames. */
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
+	}
 
 	/* Program promiscuous mode and multicast filters. */
 	bge_iff(sc);
