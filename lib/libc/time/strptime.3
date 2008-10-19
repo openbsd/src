@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.11 2008/06/26 05:42:05 ray Exp $
+.\"	$OpenBSD: strptime.3,v 1.12 2008/10/19 11:50:35 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: October 19 2008 $
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -167,6 +167,18 @@ the year, including the century (i.e., 1998).
 A `%' is written.
 No argument is converted.
 .El
+.Pp
+There is no way to specify whether Daylight Saving Time is in effect when
+calling
+.Nm .
+To use the resulting
+.Fa tm
+structure with functions that check the
+.Fa tm_isdst
+field, either set it to a negative value, which will cause
+.Xr mktime 3
+to attempt to divine whether Daylight Saving Time would be in effect
+for the given time, or compute the value manually.
 .Ss Modified conversion specifications
 For compatibility, certain conversion specifications can be modified
 by the
@@ -191,6 +203,7 @@ function returns a pointer to the character following the last character
 parsed.
 Otherwise, a null pointer is returned.
 .Sh SEE ALSO
+.Xr mktime 3 ,
 .Xr strftime 3
 .Sh STANDARDS
 The
