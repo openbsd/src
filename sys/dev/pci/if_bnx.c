@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.68 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.69 2008/10/19 23:16:38 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4836,7 +4836,8 @@ bnx_set_rx_mode(struct bnx_softc *sc)
 	 * ASF/IPMI/UMP firmware requires that VLAN tag stripping
 	 * be enbled.
 	 */
-	if (!(sc->bnx_flags & BNX_MFW_ENABLE_FLAG))
+	if (!(ifp->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+	    (!(sc->bnx_flags & BNX_MFW_ENABLE_FLAG)))
 		rx_mode |= BNX_EMAC_RX_MODE_KEEP_VLAN_TAG;
 
 	/*
