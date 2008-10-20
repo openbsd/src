@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.6 2008/10/19 12:00:54 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.7 2008/10/20 18:19:25 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -93,14 +93,18 @@ aldap_openidm(struct idm *idm)
 
 		if (connect(fd, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
-		else {
+		else
 			warn("connect to %s port %s (%s) failed", hbuf, sbuf, "tcp");
-			return NULL;
-		}
 
 		close(fd);
 		fd = -1;
 	} while ((res0 = res0->ai_next) != NULL);
+
+	freeaddrinfo(idm->idm_addrinfo);
+	idm->idm_addrinfo = NULL;
+
+	if(fd == -1)
+		return NULL;
 
 	return aldap_init(fd);
 }
@@ -315,10 +319,8 @@ aldap_openhost(char *host, char *port)
 
 		if (connect(fd, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
-		else {
+		else
 			warn("connect to %s port %s (%s) failed", host, port, "tcp");
-			return NULL;
-		}
 
 		close(fd);
 		fd = -1;
@@ -326,10 +328,10 @@ aldap_openhost(char *host, char *port)
 
 	freeaddrinfo(res);
 
-	if((al = aldap_init(fd)) == NULL)
+	if(fd == -1)
 		return NULL;
 
-	return al;
+	return aldap_init(fd);
 }
 
 struct aldap *
