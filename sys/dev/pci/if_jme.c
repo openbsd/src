@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.6 2008/10/14 11:45:40 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.7 2008/10/20 19:36:54 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1295,8 +1295,8 @@ jme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct jme_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int error = 0, s;
 
 	s = splnet();
@@ -1311,52 +1311,17 @@ jme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 #endif
 		break;
-	case SIOCSIFMTU:
-#if 0
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > JME_JUMBO_MTU ||
-		    (!(sc->jme_caps & JME_CAP_JUMBO) &&
-		     ifr->ifr_mtu > JME_MAX_MTU)) {
-			error = EINVAL;
-			break;
-		}
-
-		if (ifp->if_mtu != ifr->ifr_mtu) {
-			/*
-			 * No special configuration is required when interface
-			 * MTU is changed but availability of Tx checksum
-			 * offload should be chcked against new MTU size as
-			 * FIFO size is just 2K.
-			 */
-			if (ifr->ifr_mtu >= JME_TX_FIFO_SIZE) {
-				ifp->if_capenable &= ~IFCAP_TXCSUM;
-				ifp->if_hwassist &= ~JME_CSUM_FEATURES;
-			}
-			ifp->if_mtu = ifr->ifr_mtu;
-			if (ifp->if_flags & IFF_RUNNING)
-				jme_init(ifp);
-		}
-#endif
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				if ((ifp->if_flags ^ sc->jme_if_flags) &
-				    (IFF_PROMISC | IFF_ALLMULTI))
-					jme_set_filter(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					jme_init(ifp);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				jme_set_filter(sc);
+			else
+				jme_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				jme_stop(sc);
 		}
-		sc->jme_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCADDMULTI:
@@ -1376,8 +1341,15 @@ jme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			jme_set_filter(sc);
+		error = 0;
 	}
 
 	splx(s);

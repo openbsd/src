@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmevar.h,v 1.1 2008/09/26 10:35:15 jsg Exp $	*/
+/*	$OpenBSD: if_jmevar.h,v 1.2 2008/10/20 19:36:54 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -203,7 +203,6 @@ struct jme_softc {
 	struct timeout		jme_tick_ch;
 	struct jme_chain_data	jme_cdata;
 	struct jme_ring_data	jme_rdata;
-	int			jme_if_flags;
 	uint32_t		jme_txcsr;
 	uint32_t		jme_rxcsr;
 
