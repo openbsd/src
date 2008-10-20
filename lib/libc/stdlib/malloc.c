@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.102 2008/10/03 19:31:49 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.103 2008/10/20 06:19:02 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1180,7 +1180,7 @@ malloc(size_t size)
 		errno = ENOMEM;
 	}
 	if (r != NULL)
-		saved_errno = errno;
+		errno = saved_errno;
 	return r;
 }
 
