@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.9 2008/10/15 07:50:43 jmc Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.10 2008/10/20 16:13:37 aschrijver Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2008 $
+.Dd $Mdocdate: October 20 2008 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -101,8 +101,12 @@ Map the
 or
 .Xr group 5
 attribute to the LDAP attribute name supplied.
+.It Ic basedn Ar string
+Use the supplied search base as starting point for the directory search.
+.It Ic bindcred Ar string
+Use the supplied credentials for simple authentication against the directory.
 .It Ic binddn Ar string
-Use the supplied credentials to bind to the directory.
+Use the supplied Distinguished Name to bind to the directory.
 .It Ic fixed attribute Ar attribute string
 Do not retrieve the specified attribute from LDAP but
 instead set it unconditionally to the supplied value for
@@ -168,7 +172,6 @@ directory "127.0.0.1" {
         attribute gid maps to "gidNumber"
         attribute gecos maps to "cn"
         attribute home maps to "homeDirectory"
-        fixed attribute home "/bin/ksh"
         fixed attribute shell "/bin/ksh"
         fixed attribute change "0"
         fixed attribute expire "0"
