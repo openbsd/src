@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.49 2008/06/10 21:45:41 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.50 2008/10/20 03:54:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1017,7 +1017,7 @@
 #define SK_RBCTL_STORENFWD_OFF	0x00000010
 #define SK_RBCTL_STORENFWD_ON	0x00000020
 
-/* Block 24 -- RX MAC FIFO 1 regisrers and LINK_SYNC counter */
+/* Block 24 -- RX MAC FIFO 1 registers and LINK_SYNC counter */
 #define SK_RXF1_END		0x0C00
 #define SK_RXF1_WPTR		0x0C04
 #define SK_RXF1_RPTR		0x0C0C
@@ -1066,7 +1066,7 @@
 
 #define SK_RFCTL_FIFO_THRESHOLD	0x0a	/* flush threshold (default) */
 
-/* Block 25 -- RX MAC FIFO 2 regisrers and LINK_SYNC counter */
+/* Block 25 -- RX MAC FIFO 2 registers and LINK_SYNC counter */
 #define SK_RXF2_END		0x0C80
 #define SK_RXF2_WPTR		0x0C84
 #define SK_RXF2_RPTR		0x0C8C
@@ -1112,7 +1112,7 @@
 #define SK_LINKLED_BLINK_OFF		0x0010
 #define SK_LINKLED_BLINK_ON		0x0020
 
-/* Block 26 -- TX MAC FIFO 1 regisrers  */
+/* Block 26 -- TX MAC FIFO 1 registers  */
 #define SK_TXF1_END		0x0D00
 #define SK_TXF1_WPTR		0x0D04
 #define SK_TXF1_RPTR		0x0D0C
@@ -1151,7 +1151,7 @@
 #define SK_TFCTL_RESET_CLEAR	0x00000002	/* MAC FIFO Reset Clear */
 #define SK_TFCTL_RESET_SET	0x00000001	/* MAC FIFO Reset Set */
 
-/* Block 27 -- TX MAC FIFO 2 regisrers  */
+/* Block 27 -- TX MAC FIFO 2 registers  */
 #define SK_TXF2_END		0x0D80
 #define SK_TXF2_WPTR		0x0D84
 #define SK_TXF2_RPTR		0x0D8C
