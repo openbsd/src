@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmphy.c,v 1.1 2008/09/26 10:35:15 jsg Exp $	*/
+/*	$OpenBSD: jmphy.c,v 1.2 2008/10/20 00:05:38 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -257,13 +257,13 @@ jmphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
+
 	/* XXX Flow-control. */
-#ifdef notyet
+
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
 		if ((PHY_READ(sc, MII_100T2SR) & GTSR_MS_RES) != 0)
 			mii->mii_media_active |= IFM_ETH_MASTER;
 	}
-#endif
 }
 
 void
