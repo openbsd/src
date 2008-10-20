@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.149 2008/10/06 09:36:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.150 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1104,7 +1104,7 @@ our @ISA=qw(OpenBSD::PackingElement::Action);
 sub expand
 {
 	my ($self, $state) = @_;
-	local $_ = $self->{name};
+	my $_ = $self->{name};
 	if (m/\%F/o) {
 		die "Bad expand" unless defined $state->{lastfile};
 		s/\%F/$state->{lastfile}->{name}/g;

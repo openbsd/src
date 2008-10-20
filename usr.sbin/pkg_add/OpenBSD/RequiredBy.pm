@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.16 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.17 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,7 @@ sub fill_entries
 			open(my $fh, '<', $self->{filename}) or 
 			    die "Problem opening required list: ",
 				$self->{filename}, ": $!";
-			local $_;
+			my $_;
 			while(<$fh>) {
 				s/\s+$//o;
 				next if /^$/o;

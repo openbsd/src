@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.14 2008/09/29 17:46:59 simon Exp $
+# $OpenBSD: Error.pm,v 1.15 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -199,7 +199,7 @@ sub system
 {
 	my $state = shift;
 	if (open(my $grab, "-|", @_)) {
-		local $_;
+		my $_;
 		while (<$grab>) {
 			$state->print($_);
 		}
@@ -240,7 +240,7 @@ sub dienow
 	my ($error, $handler) = @_;
 	if ($error) {
 		if ($error =~ m/^(Expected:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
-			local $_ = $2;
+			my $_ = $2;
 			$FileName = $3;
 			$Line = $4;
 			$FullMessage = $error;

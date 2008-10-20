@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.6 2008/06/09 12:00:48 espie Exp $
+# $OpenBSD: Subst.pm,v 1.7 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -61,7 +61,7 @@ sub parse_option
 sub do
 {
 	my $self = shift;
-	local $_ = shift;
+	my $_ = shift;
 	return $_ unless m/\$/o;	# optimization
 	while (my ($k, $v) = each %{$self->hash}) {
 		s/\$\{\Q$k\E\}/$v/g;
@@ -73,7 +73,7 @@ sub do
 sub copy_fh2
 {
 	my ($self, $src, $dest) = @_;
-	local $_;
+	my $_;
 	while (<$src>) {
 		print $dest $self->do($_);
 	}

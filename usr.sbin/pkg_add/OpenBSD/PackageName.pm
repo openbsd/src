@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.31 2007/08/23 09:09:16 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.32 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,7 @@ sub url2pkgname($)
 # see packages-specs(7)
 sub splitname
 {
-	local $_ = shift;
+	my $_ = shift;
 	if (/^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
@@ -44,8 +44,7 @@ sub splitname
 
 sub from_string
 {
-	my $class = shift;
-	local $_ = shift;
+	my ($class, $_) = @_;
 	if (/^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
@@ -66,7 +65,7 @@ sub from_string
 
 sub splitstem
 {
-	local $_ = shift;
+	my $_ = shift;
 	if (/^(.*?)\-\d/o) {
 		return $1;
 	} else {
@@ -76,7 +75,7 @@ sub splitstem
 
 sub is_stem
 {
-	local $_ = shift;
+	my $_ = shift;
 	if (m/\-\d/o || $_ eq '-') {
 		return 0;
 	} else {
@@ -86,7 +85,7 @@ sub is_stem
 
 sub splitp
 {
-	local $_ = shift;
+	my $_ = shift;
 
 	if (/^(.*\-\d[^-]*)p(\d+)(.*)$/o) {
 		return ($1.$3, $2);

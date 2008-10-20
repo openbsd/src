@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.84 2008/10/06 09:36:17 espie Exp $
+# $OpenBSD: Add.pm,v 1.85 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -585,7 +585,7 @@ sub install
 	my $destdir = $state->{destdir};
 	# go append to /etc/shells if needed
 	open(my $shells, '<', $destdir.OpenBSD::Paths->shells) or return;
-	local $_;
+	my $_;
 	while(<$shells>) {
 		s/^\#.*//o;
 		return if $_ =~ m/^\Q$fullname\E\s*$/;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.75 2008/06/18 12:24:58 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.76 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,13 +40,16 @@ if (defined $ENV{PKG_PATH}) {
 	$pkgpath->add(OpenBSD::PackageRepository->new("./"));
 }
 
+# rebuild PKG_PATH
+#$ENV{PKG_PATH} = $pkgpath->print_without_src;
+
 sub path_parse
 {
 	use File::Basename;
 	use OpenBSD::Paths;
 	my $pkg_db = $ENV{"PKG_DBDIR"} || OpenBSD::Paths->pkgdb;
 
-	my ($pkgname, $path) = fileparse($_);
+	my ($pkgname, $path) = fileparse(shift);
 	my $repo;
 
 	if ($path eq $pkg_db.'/') {
@@ -60,9 +63,7 @@ sub path_parse
 
 sub find
 {
-	my $class = shift;
-	local $_ = shift;
-	my $arch = shift;
+	my ($class, $_, $arch) = @_;
 
 	if ($_ eq '-') {
 		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
@@ -88,10 +89,7 @@ sub find
 
 sub grabPlist
 {
-	my $class = shift;
-	local $_ = shift;
-	my $arch = shift;
-	my $code = shift;
+	my ($class, $_, $arch, $code) = @_;
 
 	if ($_ eq '-') {
 		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');

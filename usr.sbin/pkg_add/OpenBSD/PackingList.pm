@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.84 2008/10/06 09:36:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.85 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -114,7 +114,7 @@ sub read
 sub defaultCode
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		&$cont($_);
 	}
@@ -123,7 +123,7 @@ sub defaultCode
 sub SharedItemsOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
 		&$cont($_);
@@ -138,7 +138,7 @@ sub DirrmOnly
 sub LibraryOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|lib|name)\b/o ||
 			m/^\@comment\s+subdir\=/o;
@@ -149,7 +149,7 @@ sub LibraryOnly
 sub FilesOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell|sample|bin)\b/o || !m/^\@/o;
 		&$cont($_);
@@ -159,7 +159,7 @@ sub FilesOnly
 sub PrelinkStuffOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|bin|lib|name|depend|wantlib)\b/o ||
 			m/^\@comment\s+subdir\=/o;
@@ -170,7 +170,7 @@ sub PrelinkStuffOnly
 sub DependOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
@@ -191,7 +191,7 @@ sub DependOnly
 sub ExtraInfoOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
@@ -212,7 +212,7 @@ sub ExtraInfoOnly
 sub UpdateInfoOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
@@ -233,7 +233,7 @@ sub UpdateInfoOnly
 sub FatOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
@@ -248,7 +248,7 @@ sub FatOnly
 sub ConflictOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
@@ -269,7 +269,7 @@ sub ConflictOnly
 sub SharedStuffOnly
 {
 	my ($fh, $cont) = @_;
-	local $_;
+	my $_;
 MAINLOOP:
 	while (<$fh>) {
 		if (m/^\@shared\b/o) {

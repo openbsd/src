@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.17 2008/10/04 09:39:00 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.18 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -82,13 +82,12 @@ sub dewey_compare
 sub check_version
 {
 	my ($v, $spec) = @_;
-	local $_;
 
 	# any version spec
 	return 1 if $spec eq '.*';
 
 	my @specs = split(/\,/o, $spec);
-	for (grep /^\d/o, @specs) { 		# exact number: check match
+	for my $_ (grep /^\d/o, @specs) { 	# exact number: check match
 		return 1 if $v =~ /^$_$/;
 		return 1 if $v =~ /^${_}p\d+$/; # allows for recent patches
 	}
@@ -113,9 +112,8 @@ sub check_version
 sub check_1flavor
 {
 	my ($f, $spec) = @_;
-	local $_;
 
-	for (split /\-/o, $spec) {
+	for my $_ (split /\-/o, $spec) {
 		# must not be here
 		if (m/^\!(.*)$/o) {
 			return 0 if $f->{$1};
@@ -130,7 +128,6 @@ sub check_1flavor
 sub check_flavor
 {
 	my ($f, $spec) = @_;
-	local $_;
 	# no flavor constraints
 	return 1 if $spec eq '';
 
@@ -139,7 +136,7 @@ sub check_flavor
 	my %f = map +($_, 1), split /\-/o, $f;
 
 	# check each flavor constraint
-	for (split /\,/o, $spec) {
+	for my $_ (split /\,/o, $spec) {
 		if (check_1flavor(\%f, $_)) {
 			return 1;
 		}
@@ -150,7 +147,6 @@ sub check_flavor
 sub subpattern_match
 {
 	my ($p, $list) = @_;
-	local $_;
 
 	# let's try really hard to find the stem and the flavors
 	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<|\<\=|\=)?\d|\*)[^-]*)(.*)$/) {
@@ -175,7 +171,7 @@ sub subpattern_match
 
 	my @result = ();
 	# Now, have to extract the version number, and the flavor...
-	for (@l) {
+	for my $_ (@l) {
 		my ($stem, $v, $flavor);
 		if (m/^(.*?)\-(\d[^-]*)(.*)$/o) {
 			($stem, $v, $flavor) = ($1, $2, $3);

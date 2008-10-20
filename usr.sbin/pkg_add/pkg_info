@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.68 2008/06/18 12:05:00 espie Exp $
+# $OpenBSD: pkg_info,v 1.69 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -119,7 +119,7 @@ sub find_pkg
 sub printfile
 {
 	my $filename = shift;
-	local $_;
+	my $_;
 
 	open my $fh, '<', $filename or return;
 	while(<$fh>) {
@@ -131,7 +131,7 @@ sub printfile
 sub print_description
 {
 	my $dir = shift;
-	local $_;
+	my $_;
 
 	open my $fh, '<', $dir.DESC or return;
 	$_ = <$fh> unless -f $dir.COMMENT;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.11 2007/11/17 18:31:31 steven Exp $
+# $OpenBSD: PkgConfig.pm,v 1.12 2008/10/20 10:25:16 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -85,7 +85,7 @@ sub read_fh
 {
 	my ($class, $fh, $name) = @_;
 	my $cfg = $class->new;
-	local $_;
+	my $_;
 
 	$name = '' if !defined $name;
 	while (<$fh>) {
