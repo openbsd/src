@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.1 2008/08/28 10:21:23 mikeb Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.2 2008/10/20 19:43:39 brad Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -39,9 +39,6 @@
  * the ALSA intel8x0.c driver (which handles M5455 as well).
  */
 
-
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -74,6 +71,10 @@ struct auacer_dma {
 
 #define	DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
 #define	KERNADDR(p)	((void *)((p)->addr))
+
+const struct pci_matchid auacer_pci_devices[] = {
+	{ PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5455 }
+};
 
 struct auacer_cdata {
 	struct auacer_dmalist ic_dmalist_pcmo[ALI_DMALIST_MAX];
@@ -229,12 +230,8 @@ void	auacer_reset_codec(void *);
 int
 auacer_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M5455)
-		return 1;
-	return 0;
+	return (pci_matchbyid((struct pci_attach_args *)aux, auacer_pci_devices,
+	    sizeof(auacer_pci_devices)/sizeof(auacer_pci_devices[0])));
 }
 
 void
@@ -247,8 +244,8 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->iot,
-		&sc->aud_ioh, NULL, &aud_size, 0)) {
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
+		&sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -258,11 +255,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	sc->dmat = pa->pa_dmat;
 
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;	/* XXX remove */
-
-	/* enable bus mastering */
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    v | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
