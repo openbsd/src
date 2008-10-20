@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.19 2008/07/05 12:45:06 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.20 2008/10/20 13:40:19 blambert Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -291,6 +291,10 @@ nfsrv_cleancache(void)
 		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
+		if (rp->rc_flag & RC_REPMBUF)
+			m_freem(rp->rc_reply);
+		if (rp->rc_flag & RC_NAM)
+			m_freem(rp->rc_nam);
 		free(rp, M_NFSD);
 	}
 	numnfsrvcache = 0;
