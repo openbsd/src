@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.7 2008/10/20 19:36:54 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.8 2008/10/20 19:39:37 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -609,15 +609,16 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	/* JMC250 supports Tx/Rx checksum offload and hardware vlan tagging. */
-#if 0
-	ifp->if_capabilities = IFCAP_HWCSUM |
-			       IFCAP_VLAN_MTU |
-			       IFCAP_VLAN_HWTAGGING;
-	ifp->if_hwassist = JME_CSUM_FEATURES;
-	ifp->if_capenable = ifp->if_capabilities;
-#endif
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef JME_CHECKSUM
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+				IFCAP_CSUM_UDPv4;
+#endif
+
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 
 	/* Set up MII bus. */
 	sc->sc_miibus.mii_ifp = ifp;
@@ -1128,19 +1129,20 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	m = *m_head;
 	cflags = 0;
 
-#if 0
 	/* Configure checksum offload. */
-	if (m->m_pkthdr.csum_flags & CSUM_IP)
+	if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		cflags |= JME_TD_IPCSUM;
-	if (m->m_pkthdr.csum_flags & CSUM_TCP)
+	if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 		cflags |= JME_TD_TCPCSUM;
-	if (m->m_pkthdr.csum_flags & CSUM_UDP)
+	if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 		cflags |= JME_TD_UDPCSUM;
 
+#if NVLAN > 0
 	/* Configure VLAN. */
 	if (m->m_flags & M_VLANTAG) {
-		cflags |= (m->m_pkthdr.ether_vlantag & JME_TD_VLAN_MASK);
+		cflags |= (m->m_pkthdr.ether_vtag & JME_TD_VLAN_MASK);
 		cflags |= JME_TD_VLAN_TAG;
+		printf("%s: VLAN tag\n", sc->sc_dev.dv_xname);
 	}
 #endif
 
@@ -1677,29 +1679,24 @@ jme_rxpkt(struct jme_softc *sc)
 			 */
 			m->m_data += JME_RX_PAD_BYTES;
 
-#if 0
 			/* Set checksum information. */
-			if ((ifp->if_capenable & IFCAP_RXCSUM) &&
-			    (flags & JME_RD_IPV4)) {
-				m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
+			if (flags & JME_RD_IPV4) {
 				if (flags & JME_RD_IPCSUM)
-					m->m_pkthdr.csum_flags |= CSUM_IP_VALID;
+					m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 				if ((flags & JME_RD_MORE_FRAG) == 0 &&
 				    ((flags & (JME_RD_TCP | JME_RD_TCPCSUM)) ==
 				     (JME_RD_TCP | JME_RD_TCPCSUM) ||
 				     (flags & (JME_RD_UDP | JME_RD_UDPCSUM)) ==
 				     (JME_RD_UDP | JME_RD_UDPCSUM))) {
 					m->m_pkthdr.csum_flags |=
-					    CSUM_DATA_VALID | CSUM_PSEUDO_HDR;
-					m->m_pkthdr.csum_data = 0xffff;
+					    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 				}
 			}
 
+#if NVLAN > 0
 			/* Check for VLAN tagged packets. */
-			if ((ifp->if_capenable & IFCAP_VLAN_HWTAGGING) &&
-			    (flags & JME_RD_VLAN_TAG)) {
-				m->m_pkthdr.ether_vlantag =
-				    flags & JME_RD_VLAN_MASK;
+			if (flags & JME_RD_VLAN_TAG) {
+				m->m_pkthdr.ether_vtag = flags & JME_RD_VLAN_MASK;
 				m->m_flags |= M_VLANTAG;
 			}
 #endif
@@ -1885,7 +1882,7 @@ jme_init(struct ifnet *ifp)
 	 * For best performance of standard MTU sized frames use
 	 * maximum allowable FIFO threshold, 128QW.
 	 */
-	if ((ifp->if_mtu + ETHER_HDR_LEN + EVL_ENCAPLEN + ETHER_CRC_LEN) >
+	if ((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN) >
 	    JME_RX_FIFO_SIZE)
 		sc->jme_rxcsr |= RXCSR_FIFO_THRESH_16QW;
 	else
@@ -1926,11 +1923,7 @@ jme_init(struct ifnet *ifp)
 	 */
 	reg = CSR_READ_4(sc, JME_RXMAC);
 	reg |= RXMAC_PAD_10BYTES;
-
-#if 0
-	if (ifp->if_capenable & IFCAP_RXCSUM)
-		reg |= RXMAC_CSUM_ENB;
-#endif
+	reg |= RXMAC_CSUM_ENB;
 	CSR_WRITE_4(sc, JME_RXMAC, reg);
 
 	/* Configure general purpose reg0 */
@@ -2261,15 +2254,13 @@ jme_newbuf(struct jme_softc *sc, struct jme_rxdesc *rxd, int init)
 void
 jme_set_vlan(struct jme_softc *sc)
 {
-/*	struct ifnet *ifp = &sc->sc_arpcom.ac_if; */
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint32_t reg;
 
 	reg = CSR_READ_4(sc, JME_RXMAC);
 	reg &= ~RXMAC_VLAN_ENB;
-#if 0
-	if (ifp->if_capenable & IFCAP_VLAN_HWTAGGING)
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		reg |= RXMAC_VLAN_ENB;
-#endif
 	CSR_WRITE_4(sc, JME_RXMAC, reg);
 }
 
