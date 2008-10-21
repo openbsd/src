@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.46 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.47 2008/10/21 00:26:40 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -749,10 +749,12 @@ xge_init(struct ifnet *ifp)
 		return (1);
 	}
 
-	/* disable VLAN tag stripping */
-	val = PIF_RCSR(RX_PA_CFG);
-	val &= ~STRIP_VLAN_TAG;
-	PIF_WCSR(RX_PA_CFG, val);
+	if (!(ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)) {
+		/* disable VLAN tag stripping */
+		val = PIF_RCSR(RX_PA_CFG);
+		val &= ~STRIP_VLAN_TAG;
+		PIF_WCSR(RX_PA_CFG, val);
+	}
 
 	/* set MRU */
 #ifdef XGE_JUMBO
@@ -939,6 +941,14 @@ xge_intr(void *pv)
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_UDP)
 			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+
+#if NVLAN > 0
+		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_VLAN) {
+			m->m_pkthdr.ether_vtag =
+			    RXD_CTL2_VLANTAG(rxd->rxd_control2);
+			m->m_flags |= M_VLANTAG;
+		}
+#endif
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
