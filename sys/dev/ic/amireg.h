@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.28 2008/10/21 03:16:21 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.29 2008/10/21 06:22:24 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -514,7 +514,7 @@ struct ami_fc_einquiry {
 	u_int8_t	ain_ldstat[AMI_BIG_MAX_LDRIVES];
 
 	u_int8_t	ain_pdstat[AMI_BIG_MAX_PDRIVES];
-	u_int16_t	ain_pdfmtinp[AMI_BIG_MAX_PDRIVES];
+	u_int16_t	ain_pdfmtinp[AMI_BIG_MAX_PDRIVES / 16];
 	u_int8_t	ain_pdrates[80];	/* pdrv xfer rates */
 	u_int8_t	ain_pad[263];		/* pad to 1k */
 } __packed;
