@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.5 2008/09/17 22:18:00 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.6 2008/10/21 11:01:29 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -134,6 +134,10 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	timeout_set(&pflowif->sc_tmo, pflow_timeout, pflowif);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
+
+#if NBPFILTER > 0
+	bpfattach(&pflowif->sc_if.if_bpf, ifp, DLT_RAW, 0);
+#endif
 
 	return (0);
 }
@@ -519,9 +523,7 @@ pflow_sendout(struct pflow_softc *sc)
 {
 	struct mbuf		*m = sc->sc_mbuf;
 	struct pflow_header	*h;
-#if NBPFILTER > 0
 	struct ifnet		*ifp = &sc->sc_if;
-#endif
 
 	timeout_del(&sc->sc_tmo);
 
@@ -544,11 +546,6 @@ pflow_sendout(struct pflow_softc *sc)
 	h->time_sec = htonl(time_second);
 	h->time_nanosec = htonl(ticks);
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
 	return (pflow_sendout_mbuf(sc, m));
 }
 
@@ -556,7 +553,9 @@ int
 pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 {
 	struct udpiphdr	*ui;
-	int		 len = m->m_pkthdr.len;
+	u_int16_t	 len = m->m_pkthdr.len;
+	struct ifnet	*ifp = &sc->sc_if;
+	struct ip	*ip;
 
 	/* UDP Header*/
 	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
@@ -567,20 +566,20 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 
 	ui = mtod(m, struct udpiphdr *);
 	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_len = htons((u_int16_t) len + sizeof (struct udphdr));
 	ui->ui_src = sc->sc_sender_ip;
 	ui->ui_sport = sc->sc_sender_port;
 	ui->ui_dst = sc->sc_receiver_ip;
 	ui->ui_dport = sc->sc_receiver_port;
-	ui->ui_ulen = ui->ui_len;
+	ui->ui_ulen = htons(sizeof (struct udphdr) + len);
 
-	((struct ip *)ui)->ip_v = IPVERSION;
-	((struct ip *)ui)->ip_hl = sizeof(struct ip) >> 2;
-	((struct ip *)ui)->ip_id = htons(ip_randomid());
-	((struct ip *)ui)->ip_off = htons(IP_DF);
-	((struct ip *)ui)->ip_tos = IPTOS_LOWDELAY;
-	((struct ip *)ui)->ip_ttl = IPDEFTTL;
-	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
+	ip = (struct ip *)ui;
+	ip->ip_v = IPVERSION;
+	ip->ip_hl = sizeof(struct ip) >> 2;
+	ip->ip_id = htons(ip_randomid());
+	ip->ip_off = htons(IP_DF);
+	ip->ip_tos = IPTOS_LOWDELAY;
+	ip->ip_ttl = IPDEFTTL;
+	ip->ip_len = htons(sizeof (struct udpiphdr) + len);
 
 	/*
 	 * Compute the pseudo-header checksum; defer further checksumming
@@ -588,8 +587,15 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	 */
 	m->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
 	ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
-	    ui->ui_dst.s_addr, htons((u_int16_t)len +
-	    sizeof(struct udphdr) + IPPROTO_UDP));
+	    ui->ui_dst.s_addr, htons(len + sizeof(struct udphdr) +
+	    IPPROTO_UDP));
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))
 		pflowstats.pflow_oerrors++;
