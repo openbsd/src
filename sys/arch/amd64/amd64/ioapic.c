@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.14 2008/09/15 19:19:45 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.15 2008/10/21 21:31:10 brad Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -350,7 +350,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
 
-	for (i=0; i<sc->sc_apic_sz; i++) {
+	for (i = 0; i < sc->sc_apic_sz; i++) {
 		sc->sc_pins[i].ip_next = NULL;
 		sc->sc_pins[i].ip_map = NULL;
 		sc->sc_pins[i].ip_vector = 0;
@@ -493,9 +493,8 @@ ioapic_hwunmask(struct pic *pic, int pin)
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	u_long flags;
 
-	if (ioapic_cold) {
+	if (ioapic_cold)
 		return;
-	}
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo &= ~IOAPIC_REDLO_MASK;
