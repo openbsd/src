@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.9 2008/10/20 19:40:54 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.10 2008/10/21 19:39:43 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1217,11 +1217,6 @@ jme_start(struct ifnet *ifp)
 		if (m_head == NULL)
 			break;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
-#endif
-
 		/*
 		 * Pack the data into the transmit ring. If we
 		 * don't have room, set the OACTIVE flag and wait
@@ -1237,11 +1232,11 @@ jme_start(struct ifnet *ifp)
 		}
 		enq++;
 
+#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
