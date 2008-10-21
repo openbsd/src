@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.2 2008/10/20 19:43:39 brad Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.3 2008/10/21 05:36:46 fkr Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -241,7 +241,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	bus_size_t aud_size;
-	pcireg_t v;
 	const char *intrstr;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
