@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.52 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.53 2008/10/21 17:51:17 martynas Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -879,13 +879,13 @@ number:			if ((dprec = prec) >= 0)
 					PRINTANDPAD(cp, dtoaend, lead, zeroes);
 					cp += lead;
 					if (prec || flags & ALT)
-						PRINT(".", 1);
+						PRINT(decimal_point, 1);
 				}
 				PRINTANDPAD(cp, dtoaend, prec, zeroes);
 			} else {	/* %[eE] or sufficiently long %[gG] */
 				if (prec > 1 || flags & ALT) {
 					buf[0] = *cp++;
-					buf[1] = '.';
+					buf[1] = *decimal_point;
 					PRINT(buf, 2);
 					PRINT(cp, ndig-1);
 					PAD(prec - ndig, zeroes);
