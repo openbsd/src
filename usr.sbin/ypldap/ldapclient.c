@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.7 2008/10/20 18:19:25 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.8 2008/10/21 11:33:36 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -99,9 +99,6 @@ aldap_openidm(struct idm *idm)
 		close(fd);
 		fd = -1;
 	} while ((res0 = res0->ai_next) != NULL);
-
-	freeaddrinfo(idm->idm_addrinfo);
-	idm->idm_addrinfo = NULL;
 
 	if(fd == -1)
 		return NULL;
