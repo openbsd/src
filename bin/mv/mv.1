@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.23 2008/05/26 21:12:48 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.24 2008/10/21 06:42:45 jmc Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: May 26 2008 $
+.Dd $Mdocdate: October 21 2008 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@
 .Sh DESCRIPTION
 In its first form, the
 .Nm
-utility renames the file named by the
+utility moves the file named by the
 .Ar source
 operand to the destination path named by the
 .Ar target
@@ -96,17 +96,21 @@ options is the one which affects
 .Nm mv Ns 's
 behavior.
 .Pp
+The
+.Nm
+utility moves symbolic links, not the files referenced by the links.
+.Pp
 If the destination path does not have a mode which permits writing,
 .Nm
 prompts the user for confirmation as specified for the
 .Fl i
 option.
 .Pp
-As the
+Should the
 .Xr rename 2
-call does not work across file systems,
+call fail because the source and destination are on different file systems,
 .Nm
-uses
+will use
 .Xr cp 1
 and
 .Xr rm 1
@@ -143,6 +147,8 @@ $ mv -i ./-f bar
 .Ed
 .Sh SEE ALSO
 .Xr cp 1 ,
+.Xr rm 1 ,
+.Xr rename 2 ,
 .Xr symlink 7
 .Sh STANDARDS
 The
