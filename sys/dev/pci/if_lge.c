@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.48 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.49 2008/10/22 00:01:59 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -640,7 +640,7 @@ lge_list_tx_init(struct lge_softc *sc)
 
 /*
  * Initialize the RX descriptors and allocate mbufs for them. Note that
- * we arralge the descriptors in a closed ring, so that the last descriptor
+ * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
 int
@@ -671,7 +671,7 @@ lge_list_rx_init(struct lge_softc *sc)
 }
 
 /*
- * Initialize an RX descriptor and attach an MBUF cluster.
+ * Initialize a RX descriptor and attach a MBUF cluster.
  */
 int
 lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
