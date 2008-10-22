@@ -1,4 +1,4 @@
-.\"	$OpenBSD: it.4,v 1.16 2008/04/03 20:28:05 form Exp $
+.\"	$OpenBSD: it.4,v 1.17 2008/10/22 05:43:26 form Exp $
 .\"
 .\" Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
 .\" Copyright (c) 2003 Julien Bordet <zejames@greygats.org>
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2008 $
+.Dd $Mdocdate: October 22 2008 $
 .Dt IT 4
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ timer to be used with the
 .Xr sysctl 8
 interface.
 .Pp
-Most supported devices possess 15 sensors:
+Most supported devices possess 17 sensors:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "temp0" Ta "uK" Ta "CPU Temperature"
@@ -55,6 +55,8 @@ Most supported devices possess 15 sensors:
 .It Li "fan0" Ta "RPM" Ta "CPU Fan"
 .It Li "fan1" Ta "RPM" Ta "Chassis Fan"
 .It Li "fan2" Ta "RPM" Ta "Power Fan"
+.It Li "fan3" Ta "RPM" Ta "Unused"
+.It Li "fan4" Ta "RPM" Ta "Unused"
 .It Li "volt0" Ta "uV DC" Ta "Core voltage"
 .It Li "volt1" Ta "uV DC" Ta "Core voltage"
 .It Li "volt2" Ta "uV DC" Ta "+3.3V"
