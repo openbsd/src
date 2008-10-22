@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.11 2008/10/13 16:37:10 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.12 2008/10/22 06:25:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -138,30 +138,30 @@
 #define IWN_BSM_DRAM_DATA_SIZE	0x349c
 #define IWN_BSM_SRAM_BASE	0x3800
 
-/* possible values for IWN_APMG_CLK_DIS */
+/* Possible values for IWN_APMG_CLK_DIS. */
 #define IWN_APMG_CLK_DMA_RQT	(1 << 9)
 
-/* possible flags for register IWN_HW_IF_CONFIG */
+/* Possible flags for register IWN_HW_IF_CONFIG. */
 #define IWN_HW_IF_CONFIG_4965_R		(1 <<  4)
 #define IWN_HW_IF_CONFIG_MAC_SI		(1 <<  8)
 #define IWN_HW_IF_CONFIG_RADIO_SI	(1 <<  9)
 #define IWN_HW_IF_CONFIG_EEPROM_LOCKED	(1 << 21)
 #define IWN_HW_IF_CONFIG_HAP_WAKE_L1A	(1 << 23)
 
-/* possible flags for registers IWN_PRPH_RADDR/IWN_PRPH_WADDR */
+/* Possible flags for registers IWN_PRPH_RADDR/IWN_PRPH_WADDR. */
 #define IWN_PRPH_DWORD	((sizeof (uint32_t) - 1) << 24)
 
-/* possible values for IWN_BSM_WR_MEM_DST */
+/* Possible values for IWN_BSM_WR_MEM_DST. */
 #define IWN_FW_TEXT_BASE	0x00000000
 #define IWN_FW_DATA_BASE	0x00800000
 
-/* possible flags for register IWN_RESET */
+/* Possible flags for register IWN_RESET. */
 #define IWN_RESET_NEVO			(1 << 0)
 #define IWN_RESET_SW			(1 << 7)
 #define IWN_RESET_MASTER_DISABLED	(1 << 8)
 #define IWN_RESET_STOP_MASTER		(1 << 9)
 
-/* possible flags for register IWN_GP_CNTRL */
+/* Possible flags for register IWN_GP_CNTRL. */
 #define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
 #define IWN_GP_CNTRL_MAC_CLOCK_READY	(1 << 0)
 #define IWN_GP_CNTRL_INIT_DONE		(1 << 2)
@@ -169,7 +169,7 @@
 #define IWN_GP_CNTRL_SLEEP		(1 << 4)
 #define IWN_GP_CNTRL_RFKILL		(1 << 27)
 
-/* possibles flags for register IWN_HW_REV */
+/* Possible flags for register IWN_HW_REV. */
 #define IWN_HW_REV_TYPE_SHIFT	4
 #define IWN_HW_REV_TYPE_MASK	0x000000f0
 #define IWN_HW_REV_TYPE_4965	0
@@ -178,32 +178,34 @@
 #define IWN_HW_REV_TYPE_5150	4
 #define IWN_HW_REV_TYPE_5100	5
 
-/* possible flags for register IWN_GIO_CHICKEN */
+/* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
 #define IWN_GIO_CHICKEN_DIS_L0S_TIMER	(1 << 29)
 
-/* possible flags for register IWN_GIO */
+/* Possible flags for register IWN_GIO. */
 #define IWN_GIO_L0S_ENA		(1 << 1)
 
-/* possible flags for register IWN_UCODE_GP1_CLR */
+/* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
 #define IWN_UCODE_GP1_CMD_BLOCKED	(1 << 2)
 #define IWN_UCODE_GP1_CTEMP_STOP_RF	(1 << 3)
 
-/* possible flags for register IWN_LED */
+/* Possible flags/values for register IWN_LED. */
 #define IWN_LED_BSM_CTRL	(1 << 5)
+#define IWN_LED_OFF		0x00000038
+#define IWN_LED_ON		0x00000078
 
-/* possible values for register IWN_ANA_PLL */
+/* Possible values for register IWN_ANA_PLL. */
 #define IWN_ANA_PLL_INIT	0x00880300
 
-/* possible flags for register IWN_FH_RX_STATUS */
+/* Possible flags for register IWN_FH_RX_STATUS. */
 #define	IWN_FH_RX_STATUS_IDLE	(1 << 24)
 
-/* possible flags for register IWN_BSM_WR_CTRL */
+/* Possible flags for register IWN_BSM_WR_CTRL. */
 #define IWN_BSM_WR_CTRL_START_EN	(1 << 30)
 #define IWN_BSM_WR_CTRL_START		(1 << 31)
 
-/* possible flags for register IWN_INT */
+/* Possible flags for register IWN_INT. */
 #define IWN_INT_ALIVE		(1 <<  0)
 #define IWN_INT_WAKEUP		(1 <<  1)
 #define IWN_INT_SW_RX		(1 <<  3)
@@ -214,36 +216,37 @@
 #define IWN_INT_HW_ERR		(1 << 29)
 #define IWN_INT_FH_RX		(1 << 31)
 
+/* Shortcut. */
 #define IWN_INT_MASK							\
 	(IWN_INT_SW_ERR | IWN_INT_HW_ERR | IWN_INT_FH_TX |		\
 	 IWN_INT_FH_RX | IWN_INT_ALIVE | IWN_INT_WAKEUP |		\
 	 IWN_INT_SW_RX | IWN_INT_CT_REACHED | IWN_INT_RF_TOGGLED)
 
-/* possible flags for register IWN_FH_INT */
+/* Possible flags for register IWN_FH_INT. */
 #define IWN_FH_INT_TX_CHNL(x)	(1 << (x))
 #define IWN_FH_INT_RX_CHNL(x)	(1 << ((x) + 16))
 #define IWN_FH_INT_HI_PRIOR	(1 << 30)
-/* shortcuts for the above */
+/* Shortcuts for the above. */
 #define IWN_FH_INT_TX							\
 	(IWN_FH_INT_TX_CHNL(0) | IWN_FH_INT_TX_CHNL(1))
 #define IWN_FH_INT_RX							\
 	(IWN_FH_INT_RX_CHNL(0) | IWN_FH_INT_RX_CHNL(1) | IWN_FH_INT_HI_PRIOR)
 
-/* possible flags/values for register IWN_FH_TX_CONFIG */
+/* Possible flags/values for register IWN_FH_TX_CONFIG. */
 #define IWN_FH_TX_CONFIG_DMA_PAUSE		0
 #define IWN_FH_TX_CONFIG_DMA_ENA		(1 << 31)
 #define IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD	(1 << 20)
 
-/* possible values for register IWN_FH_TXBUF_STATUS */
+/* Possible flags/values for register IWN_FH_TXBUF_STATUS. */
 #define IWN_FH_TXBUF_STATUS_TBNUM(x)	((x) << 20)
 #define IWN_FH_TXBUF_STATUS_TBIDX(x)	((x) << 12)
 #define IWN_FH_TXBUF_STATUS_TFBD_VALID	3
 
-/* possible flags for register IWN_FH_TX_STATUS */
+/* Possible flags for register IWN_FH_TX_STATUS. */
 #define IWN_FH_TX_STATUS_IDLE(chnl)					\
 	(1 << ((chnl) + 24) | 1 << ((chnl) + 16))
 
-/* possible flags for register IWN_FH_RX_CONFIG */
+/* Possible flags for register IWN_FH_RX_CONFIG. */
 #define IWN_FH_RX_CONFIG_ENA		(1 << 31)
 #define IWN_FH_RX_CONFIG_NRBD(x)	((x) << 20)
 #define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1 << 16)
@@ -251,15 +254,15 @@
 #define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4)
 #define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1 <<  2)
 
-/* possible flags for register IWN_FH_TX_CONFIG */
+/* Possible flags for register IWN_FH_TX_CONFIG. */
 #define IWN_FH_TX_CONFIG_DMA_ENA	(1 << 31)
 #define IWN_FH_TX_CONFIG_DMA_CREDIT_ENA	(1 <<  3)
 
-/* possible flags for register IWN_EEPROM */
+/* Possible flags for register IWN_EEPROM. */
 #define IWN_EEPROM_READ_VALID	(1 << 0)
 #define IWN_EEPROM_CMD		(1 << 1)
 
-/* possible flags for register IWN5000_SCHED_QUEUE_STATUS */
+/* Possible flags for register IWN_SCHED_QUEUE_STATUS. */
 #define IWN4965_TXQ_STATUS_ACTIVE	0x0007fc01
 #define IWN4965_TXQ_STATUS_INACTIVE	0x0007fc00
 #define IWN4965_TXQ_STATUS_AGGR_ENA	(1 << 5 | 1 << 8)
@@ -268,20 +271,20 @@
 #define IWN5000_TXQ_STATUS_INACTIVE	0x00ff0010
 #define IWN5000_TXQ_STATUS_CHGACT	(1 << 19)
 
-/* possible flags for register IWN_APMG_CLK_CTRL */
+/* Possible flags for register IWN_APMG_CLK_CTRL. */
 #define IWN_APMG_CLK_CTRL_DMA_CLK_RQT	(1 <<  9)
 #define IWN_APMG_CLK_CTRL_BSM_CLK_RQT	(1 << 11)
 
-/* possible flags for register IWN_APMG_PS */
+/* Possible flags for register IWN_APMG_PS. */
 #define IWN_APMG_PS_EARLY_PWROFF_DIS	(1 << 22)
 #define IWN_APMG_PS_PWR_SRC_MASK	(3 << 24)
 #define IWN_APMG_PS_PWR_SRC(x)		((x) << 24)
 #define IWN_APMG_PS_PWR_SRC_VMAIN	0
 
-/* possible flags for IWN_APMG_PCI_STT */
+/* Possible flags for IWN_APMG_PCI_STT. */
 #define IWN_APMG_PCI_STT_L1A_DIS	(1 << 11)
 
-/* possible flags for register IWN_BSM_DRAM_TEXT_SIZE */
+/* Possible flags for register IWN_BSM_DRAM_TEXT_SIZE. */
 #define IWN_FW_UPDATED	(1 << 31)
 
 #define IWN_SCHED_WINSZ		64
@@ -292,20 +295,21 @@
 #define IWN5000_SCHEDSZ		(IWN5000_NTXQUEUES * IWN5000_SCHED_COUNT * 2)
 
 struct iwn_tx_desc {
-	uint32_t	flags;
+	uint8_t		reserved1[3];
+	uint8_t		nsegs;
 	struct {
 		uint32_t	w1;
 		uint32_t	w2;
 		uint32_t	w3;
 	} __packed	segs[IWN_MAX_SCATTER / 2];
-	/* pad to 128 bytes */
-	uint32_t	reserved;
+	/* Pad to 128 bytes. */
+	uint32_t	reserved2;
 } __packed;
 
 #define IWN_SET_DESC_NSEGS(d, x)					\
-	(d)->flags = htole32(((x) & 0x1f) << 24)
+	(d)->nsegs = (x)
 
-/* set a segment physical address and length in a Tx descriptor */
+/* Set a segment physical address and length in a TX descriptor. */
 #define IWN_SET_DESC_SEG(d, n, addr, size) do {				\
 	if ((n) & 1) {							\
 		(d)->segs[(n) / 2].w2 |=				\
@@ -340,8 +344,8 @@ struct iwn_rx_desc {
 #define IWN_BEACON_STATISTICS		157
 #define IWN_STATE_CHANGED		161
 #define IWN_BEACON_MISSED		162
-#define IWN_AMPDU_RX_START		192
-#define IWN_AMPDU_RX_DONE		193
+#define IWN_RX_PHY			192
+#define IWN_MPDU_RX_DONE		193
 #define IWN_RX_DONE			195
 
 	uint8_t		flags;
@@ -349,10 +353,10 @@ struct iwn_rx_desc {
 	uint8_t		qid;
 } __packed;
 
-/* possible Rx status flags */
+/* Possible RX status flags. */
 #define IWN_RX_NO_CRC_ERR	(1 << 0)
 #define IWN_RX_NO_OVFL_ERR	(1 << 1)
-/* shortcut for the above */
+/* Shortcut for the above. */
 #define IWN_RX_NOERROR	(IWN_RX_NO_CRC_ERR | IWN_RX_NO_OVFL_ERR)
 
 struct iwn_tx_cmd {
@@ -363,7 +367,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_TIMING			 20
 #define IWN_CMD_ADD_NODE		 24
 #define IWN_CMD_TX_DATA			 28
-#define IWN_CMD_NODE_MRR_SETUP		 78
+#define IWN_CMD_LINK_QUALITY		 78
 #define IWN_CMD_SET_LED			 72
 #define IWN5000_CMD_WIMAX_COEX		 90
 #define IWN5000_CMD_CALIB_CONFIG	101
@@ -374,8 +378,8 @@ struct iwn_tx_cmd {
 #define IWN_CMD_BT_COEX			155
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
-#define IWN_SENSITIVITY			168
-#define IWN_PHY_CALIB			176
+#define IWN_CMD_SET_SENSITIVITY		168
+#define IWN_CMD_PHY_CALIB		176
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -383,7 +387,14 @@ struct iwn_tx_cmd {
 	uint8_t	data[136];
 } __packed;
 
-/* structure for command IWN_CMD_CONFIGURE */
+/* Antenna flags, used in various commands. */
+#define IWN_ANT_A	(1 << 0)
+#define IWN_ANT_B	(1 << 1)
+#define IWN_ANT_C	(1 << 2)
+/* Shortcut. */
+#define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
+
+/* Structure for command IWN_CMD_CONFIGURE. */
 struct iwn_rxon {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved1;
@@ -399,12 +410,6 @@ struct iwn_rxon {
 
 	uint8_t		air;
 	uint16_t	rxchain;
-#define IWN_ANT_A	(1 << 0)
-#define IWN_ANT_B	(1 << 1)
-#define IWN_ANT_C	(1 << 2)
-/* Shortcut. */
-#define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
-
 #define IWN_RXCHAIN_FORCE		(1 << 0)
 #define IWN_RXCHAIN_VALID(x)		((x) <<  1)
 #define IWN_RXCHAIN_SEL(x)		((x) <<  4)
@@ -412,7 +417,6 @@ struct iwn_rxon {
 #define IWN_RXCHAIN_IDLE_COUNT(x)	((x) << 10)
 #define IWN_RXCHAIN_MIMO_COUNT(x)	((x) << 12)
 #define IWN_RXCHAIN_MIMO_FORCE		(1 << 14)
-
 
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
@@ -441,7 +445,7 @@ struct iwn_rxon {
 	uint8_t		reserved4;
 	uint8_t		ht_single_mask;
 	uint8_t		ht_dual_mask;
-	/* the following fields are for 5000 Series only */
+	/* The following fields are for 5000 Series only. */
 	uint8_t		ht_triple_mask;
 	uint8_t		reserved5;
 	uint16_t	acquisition;
@@ -451,7 +455,7 @@ struct iwn_rxon {
 #define IWN4965_RXONSZ	(sizeof (struct iwn_rxon) - 6)
 #define IWN5000_RXONSZ	(sizeof (struct iwn_rxon))
 
-/* structure for command IWN_CMD_ASSOCIATE */
+/* Structure for command IWN_CMD_ASSOCIATE. */
 struct iwn_assoc {
 	uint32_t	flags;
 	uint32_t	filter;
@@ -460,7 +464,7 @@ struct iwn_assoc {
 	uint16_t	reserved;
 } __packed;
 
-/* structure for command IWN_CMD_EDCA_PARAMS */
+/* Structure for command IWN_CMD_EDCA_PARAMS. */
 struct iwn_edca_params {
 	uint32_t	flags;
 #define IWN_EDCA_UPDATE	(1 << 0)
@@ -475,7 +479,7 @@ struct iwn_edca_params {
 	} __packed	ac[EDCA_NUM_AC];
 } __packed;
 
-/* structure for command IWN_CMD_TIMING */
+/* Structure for command IWN_CMD_TIMING. */
 struct iwn_cmd_timing {
 	uint64_t	tstamp;
 	uint16_t	bintval;
@@ -485,7 +489,7 @@ struct iwn_cmd_timing {
 	uint16_t	reserved;
 } __packed;
 
-/* structure for command IWN_CMD_ADD_NODE */
+/* Structure for command IWN_CMD_ADD_NODE. */
 struct iwn_node_info {
 	uint8_t		control;
 #define IWN_NODE_UPDATE		(1 << 0)
@@ -502,16 +506,25 @@ struct iwn_node_info {
 	uint8_t		flags;
 #define IWN_FLAG_SET_KEY		(1 << 0)
 #define IWN_FLAG_SET_DISABLE_TID	(1 << 1)
+#define IWN_FLAG_SET_TXRATE		(1 << 2)
+#define IWN_FLAG_SET_ADDBA		(1 << 3)
+#define IWN_FLAG_SET_DELBA		(1 << 4)
 
 	uint16_t	reserved3;
+	uint16_t	kflags;
+#define IWN_KFLAG_CCMP		(1 <<  1)
+#define IWN_KFLAG_MAP		(1 <<  3)
+#define IWN_KFLAG_KID(kid)	((kid) << 8)
+#define IWN_KFLAG_INVALID	(1 << 11)
+#define IWN_KFLAG_GROUP		(1 << 14)
 
-	uint16_t	keyflags;
 	uint8_t		tsc2;	/* TKIP TSC2 */
 	uint8_t		reserved4;
 	uint16_t	ttak[5];
 	uint8_t		kid;
 	uint8_t		reserved5;
 	uint8_t		key[16];
+	/* The following 3 fields are for 5000 Series only. */
 	uint64_t	tsc;
 	uint8_t		rxmic[IEEE80211_TKIP_MICLEN];
 	uint8_t		txmic[IEEE80211_TKIP_MICLEN];
@@ -523,9 +536,8 @@ struct iwn_node_info {
 	uint32_t	mask;
 	uint16_t	disable_tid;
 	uint16_t	reserved6;
-
-	uint8_t		addba;
-	uint8_t		delba;
+	uint8_t		addba_tid;
+	uint8_t		delba_tid;
 	uint16_t	addba_ssn;
 	uint32_t	reserved7;
 } __packed;
@@ -538,7 +550,7 @@ struct iwn4965_node_info {
 	uint8_t		id;
 	uint8_t		flags;
 	uint16_t	reserved3;
-	uint16_t	keyflags;
+	uint16_t	kflags;
 	uint8_t		tsc2;	/* TKIP TSC2 */
 	uint8_t		reserved4;
 	uint16_t	ttak[5];
@@ -549,22 +561,21 @@ struct iwn4965_node_info {
 	uint32_t	mask;
 	uint16_t	disable_tid;
 	uint16_t	reserved6;
-	uint8_t		addba;
-	uint8_t		delba;
+	uint8_t		addba_tid;
+	uint8_t		delba_tid;
 	uint16_t	addba_ssn;
 	uint32_t	reserved7;
 } __packed;
 
-#define IWN_RFLAG_CCK	(1 << 1)
-#define IWN_RFLAG_ANT_A	(1 << 6)
-#define IWN_RFLAG_ANT_B	(1 << 7)
+#define IWN_RFLAG_CCK		(1 << 1)
+#define IWN_RFLAG_ANT(x)	((x) << 6)
 
-/* structure for command IWN_CMD_TX_DATA */
+/* Structure for command IWN_CMD_TX_DATA. */
 struct iwn_cmd_data {
 	uint16_t	len;
 	uint16_t	lnext;
 	uint32_t	flags;
-#define IWN5000_TX_NEED_RTS_CTS	(1 <<  0)	/* 5000 only */
+#define IWN_TX_NEED_PROTECTION	(1 <<  0)	/* 5000 only */
 #define IWN_TX_NEED_RTS		(1 <<  1)
 #define IWN_TX_NEED_CTS		(1 <<  2)
 #define IWN_TX_NEED_ACK		(1 <<  3)
@@ -577,10 +588,7 @@ struct iwn_cmd_data {
 #define IWN_TX_INSERT_TSTAMP	(1 << 16)
 #define IWN_TX_NEED_PADDING	(1 << 20)
 
-	uint8_t		ntries;
-	uint8_t		bluetooth;
-	uint16_t	reserved1;
-
+	uint32_t	scratch;
 	uint8_t		rate;
 	uint8_t		rflags;
 	uint16_t	xrflags;
@@ -609,19 +617,19 @@ struct iwn_cmd_data {
 	uint16_t	txop;
 } __packed;
 
-/* structure for command IWN_CMD_MRR_NODE_SETUP */
+/* Structure for command IWN_CMD_LINK_QUALITY. */
 #define IWN_MAX_TX_RETRIES	16
-struct iwn_cmd_mrr {
+struct iwn_cmd_link_quality {
 	uint8_t		id;
 	uint8_t		reserved1;
 	uint16_t	ctl;
 	uint8_t		flags;
 	uint8_t		mimo;
-	uint8_t		ssmask;
-	uint8_t		dsmask;
+	uint8_t		antmsk_1stream;
+	uint8_t		antmsk_2stream;
 	uint8_t		ridx[EDCA_NUM_AC];
 	uint16_t	ampdu_limit;
-	uint8_t		ampdu_disable;
+	uint8_t		ampdu_threshold;
 	uint8_t		ampdu_max;
 	uint32_t	reserved2;
 	struct {
@@ -632,11 +640,11 @@ struct iwn_cmd_mrr {
 #define IWN_CCK11	 3
 #define IWN_OFDM6	 4
 #define IWN_OFDM54	11
-	} __packed	table[IWN_MAX_TX_RETRIES];
+	} __packed	retry[IWN_MAX_TX_RETRIES];
 	uint32_t	reserved3;
 } __packed;
 
-/* structure for command IWN_CMD_SET_LED */
+/* Structure for command IWN_CMD_SET_LED. */
 struct iwn_cmd_led {
 	uint32_t	unit;	/* multiplier (in usecs) */
 	uint8_t		which;
@@ -648,7 +656,7 @@ struct iwn_cmd_led {
 	uint8_t		reserved;
 } __packed;
 
-/* structure for command IWN5000_CMD_WIMAX_COEX */
+/* Structure for command IWN5000_CMD_WIMAX_COEX. */
 struct iwn5000_wimax_coex {
 	uint32_t	flags;
 	struct {
@@ -659,7 +667,7 @@ struct iwn5000_wimax_coex {
 	} __packed	events[16];
 } __packed;
 
-/* structures for command IWN5000_CMD_CALIB_CONFIG */
+/* Structures for command IWN5000_CMD_CALIB_CONFIG. */
 struct iwn5000_calib_elem {
 	uint32_t	enable;
 	uint32_t	start;
@@ -680,7 +688,7 @@ struct iwn5000_calib_config {
 	uint32_t			reserved;
 } __packed;
 
-/* structure for command IWN_CMD_SET_POWER_MODE */
+/* Structure for command IWN_CMD_SET_POWER_MODE. */
 struct iwn_pmgt_cmd {
 	uint16_t	flags;
 #define IWN_PS_ALLOW_SLEEP	(1 << 0)
@@ -697,7 +705,7 @@ struct iwn_pmgt_cmd {
 	uint32_t	beacons;
 } __packed;
 
-/* structures for command IWN_CMD_SCAN */
+/* Structures for command IWN_CMD_SCAN. */
 struct iwn_scan_essid {
 	uint8_t	id;
 	uint8_t	len;
@@ -717,16 +725,16 @@ struct iwn_scan_hdr {
 	uint32_t	flags;
 	uint32_t	filter;
 
-	/* followed by a struct iwn_cmd_data */
-	/* followed by an array of 20 struct iwn_scan_essid */
-	/* followed by probe request body */
-	/* followed by nchan x struct iwn_scan_chan */
+	/* Followed by a struct iwn_cmd_data. */
+	/* Followed by an array of 20 structs iwn_scan_essid. */
+	/* Followed by probe request body. */
+	/* Followed by an array of ``nchan'' structs iwn_scan_chan. */
 } __packed;
 
 struct iwn_scan_chan {
-	uint32_t	type;
-#define IWN_CHAN_ACTIVE	(1 << 0)
-#define IWN_CHAN_DIRECT	(1 << 1)
+	uint32_t	flags;
+#define IWN_CHAN_ACTIVE		(1 << 0)
+#define IWN_CHAN_NPBREQS(x)	(((1 << (x)) - 1) << 1)
 
 	uint16_t	chan;
 	uint8_t		rf_gain;
@@ -735,7 +743,10 @@ struct iwn_scan_chan {
 	uint16_t	passive;	/* msecs */
 } __packed;
 
-/* structure for command IWN_CMD_TXPOWER */
+/* Maximum size of a scan command. */
+#define IWN_SCAN_MAXSZ	(MCLBYTES - 4)
+
+/* Structure for command IWN_CMD_TXPOWER (4965AGN only.) */
 #define IWN_RIDX_MAX	32
 struct iwn4965_cmd_txpower {
 	uint8_t		band;
@@ -748,20 +759,20 @@ struct iwn4965_cmd_txpower {
 	} __packed	power[IWN_RIDX_MAX + 1];
 } __packed;
 
-/* structure for command IWN_CMD_TXPOWER_DBM */
+/* Structure for command IWN_CMD_TXPOWER_DBM (5000 Series only.) */
 struct iwn5000_cmd_txpower {
 	int8_t	global_limit;	/* in half-dBm */
-#define IWN5000_TX_POWER_AUTO		0x7f
-#define IWN5000_TX_POWER_MAX_DBM	16
+#define IWN5000_TXPOWER_AUTO		0x7f
+#define IWN5000_TXPOWER_MAX_DBM		16
 
 	uint8_t	flags;
-#define IWN5000_TX_POWER_NO_CLOSED	(1 << 6)
+#define IWN5000_TXPOWER_NO_CLOSED	(1 << 6)
 
 	int8_t	srv_limit;	/* in half-dBm */
 	uint8_t	reserved;
 } __packed;
 
-/* structure for command IWN_CMD_BLUETOOTH */
+/* Structure for command IWN_CMD_BLUETOOTH. */
 struct iwn_bluetooth {
 	uint8_t		flags;
 	uint8_t		lead;
@@ -771,18 +782,18 @@ struct iwn_bluetooth {
 	uint32_t	cts;
 } __packed;
 
-/* structure for command IWN_CMD_SET_CRITICAL_TEMP */
+/* Structure for command IWN_CMD_SET_CRITICAL_TEMP. */
 struct iwn_critical_temp {
 	uint32_t	reserved;
 	uint32_t	tempM;
 	uint32_t	tempR;
-/* degK <-> degC conversion macros */
+/* degK <-> degC conversion macros. */
 #define IWN_CTOK(c)	((c) + 273)
 #define IWN_KTOC(k)	((k) - 273)
 #define IWN_CTOMUK(c)	(((c) * 1000000) + 273150000)
 } __packed;
 
-/* structure for command IWN_SENSITIVITY */
+/* Structure for command IWN_CMD_SET_SENSITIVITY. */
 struct iwn_sensitivity_cmd {
 	uint16_t	which;
 #define IWN_SENSITIVITY_DEFAULTTBL	0
@@ -801,19 +812,10 @@ struct iwn_sensitivity_cmd {
 	uint16_t	energy_ofdm_th;
 } __packed;
 
-/* structure for command IWN_PHY_CALIB */
-struct iwn_phy_calib_cmd {
-	uint8_t		code;
-
-	uint8_t		flags;
-	uint16_t	reserved1;
-	int8_t		gain[3];
-	uint8_t		reserved2;
-} __packed;
-
-struct iwn5000_calib {
+/* Structures for command IWN_CMD_PHY_CALIB. */
+struct iwn_phy_calib {
 	uint8_t	code;
-#define IWN4965_SET_DIFF_GAIN			 7
+#define IWN4965_PHY_CALIB_DIFF_GAIN		 7
 #define IWN5000_PHY_CALIB_LO			 9
 #define IWN5000_PHY_CALIB_LO_TX_IQ		11
 #define IWN5000_PHY_CALIB_CRYSTAL		15
@@ -826,18 +828,55 @@ struct iwn5000_calib {
 	uint8_t	valid;
 } __packed;
 
-/* structure for command IWN_PHY_CALIB */
-struct iwn5000_phy_calib {
+struct iwn5000_phy_calib_crystal {
 	uint8_t	code;
-
 	uint8_t	group;
 	uint8_t	ngroups;
 	uint8_t	valid;
+
 	uint8_t	data[2];
 } __packed;
 
+struct iwn_phy_calib_gain {
+	uint8_t	code;
+	uint8_t	group;
+	uint8_t	ngroups;
+	uint8_t	valid;
 
-/* structure for IWN_UC_READY notification */
+	int8_t	gain[3];
+	uint8_t	reserved2;
+} __packed;
+
+/* Structure for command IWN_CMD_SPECTRUM_MEASUREMENT. */
+struct iwn_spectrum_cmd {
+	uint16_t	len;
+	uint8_t		token;
+	uint8_t		id;
+	uint8_t		origin;
+	uint8_t		periodic;
+	uint16_t	timeout;
+	uint32_t	start;
+	uint32_t	reserved1;
+	uint32_t	flags;
+	uint32_t	filter;
+	uint16_t	nchan;
+	uint16_t	reserved2;
+	struct {
+		uint32_t	duration;
+		uint8_t		chan;
+		uint8_t		type;
+#define IWN_MEASUREMENT_BASIC		(1 << 0)
+#define IWN_MEASUREMENT_CCA		(1 << 1)
+#define IWN_MEASUREMENT_RPI_HISTOGRAM	(1 << 2)
+#define IWN_MEASUREMENT_NOISE_HISTOGRAM	(1 << 3)
+#define IWN_MEASUREMENT_FRAME		(1 << 4)
+#define IWN_MEASUREMENT_IDLE		(1 << 7)
+
+		uint16_t	reserved;
+	} __packed	chan[10];
+} __packed;
+
+/* Structure for IWN_UC_READY notification. */
 #define IWN_NATTEN_GROUPS	5
 struct iwn_ucode_info {
 	uint8_t		minor;
@@ -851,11 +890,11 @@ struct iwn_ucode_info {
 
 	uint16_t	reserved2;
 	uint32_t	logptr;
-	uint32_t	errorptr;
+	uint32_t	errptr;
 	uint32_t	tstamp;
 	uint32_t	valid;
 
-	/* the following fields are for UCODE_INIT only */
+	/* The following fields are for UCODE_INIT only. */
 	int32_t		volt;
 	struct {
 		int32_t	chan20MHz;
@@ -864,7 +903,7 @@ struct iwn_ucode_info {
 	int32_t		atten[IWN_NATTEN_GROUPS][2];
 } __packed;
 
-/* structure for IWN_TX_DONE notification */
+/* Structures for IWN_TX_DONE notification. */
 struct iwn4965_tx_stat {
 	uint8_t		nframes;
 	uint8_t		killcnt;
@@ -898,7 +937,7 @@ struct iwn5000_tx_stat {
 	uint16_t	sequence;
 } __packed;
 
-/* structure for IWN_BEACON_MISSED notification */
+/* Structure for IWN_BEACON_MISSED notification. */
 struct iwn_beacon_missed {
 	uint32_t	consecutive;
 	uint32_t	total;
@@ -906,14 +945,13 @@ struct iwn_beacon_missed {
 	uint32_t	received;
 } __packed;
 
-/* structure for IWN_AMPDU_RX_DONE notification */
-struct iwn_rx_ampdu {
+/* Structure for IWN_MPDU_RX_DONE notification. */
+struct iwn_rx_mpdu {
 	uint16_t	len;
 	uint16_t	reserved;
 } __packed;
 
-/* structures for IWN_RX_DONE and IWN_AMPDU_RX_START notifications */
-
+/* Structures for IWN_RX_DONE and IWN_MPDU_RX_DONE notifications. */
 struct iwn4965_rx_phystat {
 	uint16_t	antenna;
 	uint16_t	agc;
@@ -936,6 +974,8 @@ struct iwn_rx_stat {
 	uint64_t	tstamp;
 	uint32_t	beacon;
 	uint16_t	flags;
+#define IWN_STAT_FLAG_SHPREAMBLE	(1 << 2)
+
 	uint16_t	chan;
 	uint8_t		phybuf[32];
 	uint8_t		rate;
@@ -947,7 +987,7 @@ struct iwn_rx_stat {
 
 #define IWN_RSSI_TO_DBM	44
 
-/* structure for IWN_START_SCAN notification */
+/* Structure for IWN_START_SCAN notification. */
 struct iwn_start_scan {
 	uint64_t	tstamp;
 	uint32_t	tbeacon;
@@ -957,7 +997,7 @@ struct iwn_start_scan {
 	uint32_t	status;
 } __packed;
 
-/* structure for IWN_STOP_SCAN notification */
+/* Structure for IWN_STOP_SCAN notification. */
 struct iwn_stop_scan {
 	uint8_t		nchan;
 	uint8_t		status;
@@ -966,7 +1006,39 @@ struct iwn_stop_scan {
 	uint64_t	tsf;
 } __packed;
 
-/* structure for IWN_{RX,BEACON}_STATISTICS notification */
+/* Structure for IWN_SPECTRUM_MEASUREMENT notification. */
+struct iwn_spectrum_notif {
+	uint8_t		id;
+	uint8_t		token;
+	uint8_t		idx;
+	uint8_t		state;
+#define IWN_MEASUREMENT_START	0
+#define IWN_MEASUREMENT_STOP	1
+
+	uint32_t	start;
+	uint8_t		band;
+	uint8_t		chan;
+	uint8_t		type;
+	uint8_t		reserved1;
+	uint32_t	cca_ofdm;
+	uint32_t	cca_cck;
+	uint32_t	cca_time;
+	uint8_t		basic;
+	uint8_t		reserved2[3];
+	uint32_t	ofdm[8];
+	uint32_t	cck[8];
+	uint32_t	stop;
+	uint32_t	status;
+#define IWN_MEASUREMENT_OK		0
+#define IWN_MEASUREMENT_CONCURRENT	1
+#define IWN_MEASUREMENT_CSA_CONFLICT	2
+#define IWN_MEASUREMENT_TGH_CONFLICT	3
+#define IWN_MEASUREMENT_STOPPED		6
+#define IWN_MEASUREMENT_TIMEOUT		7
+#define IWN_MEASUREMENT_FAILED		8
+} __packed;
+
+/* Structure for IWN_{RX,BEACON}_STATISTICS notification. */
 struct iwn_rx_phy_stats {
 	uint32_t	ina;
 	uint32_t	fina;
@@ -1083,7 +1155,20 @@ struct iwn_stats {
 } __packed;
 
 
-/* firmware image header */
+/* Firmware error dump. */
+struct iwn_fw_dump {
+	uint32_t	valid;
+	uint32_t	id;
+	uint32_t	pc;
+	uint32_t	branch_link[2];
+	uint32_t	interrupt_link[2];
+	uint32_t	error_data[2];
+	uint32_t	src_line;
+	uint32_t	tsf;
+	uint32_t	time[2];
+} __packed;
+
+/* Firmware image file header. */
 struct iwn_firmware_hdr {
 	uint32_t	version;
 	uint32_t	main_textsz;
@@ -1130,10 +1215,12 @@ struct iwn_firmware_hdr {
 #define IWN5000_EEPROM_BAND7	0x049
 #define IWN5000_EEPROM_CRYSTAL	0x094
 
-/* possible flags for IWN_EEPROM_RFCFG */
-#define IWN_RFCFG_TYPE(x)	(((x) >> 0) & 3)
-#define IWN_RFCFG_STEP(x)	(((x) >> 2) & 3)
-#define IWN_RFCFG_DASH(x)	(((x) >> 4) & 3)
+/* Possible flags for IWN_EEPROM_RFCFG. */
+#define IWN_RFCFG_TYPE(x)	(((x) >>  0) & 0x3)
+#define IWN_RFCFG_STEP(x)	(((x) >>  2) & 0x3)
+#define IWN_RFCFG_DASH(x)	(((x) >>  4) & 0x3)
+#define IWN_RFCFG_TXANTMSK(x)	(((x) >>  8) & 0xf)
+#define IWN_RFCFG_RXANTMSK(x)	(((x) >> 12) & 0xf)
 
 struct iwn_eeprom_chan {
 	uint8_t	flags;
@@ -1357,6 +1444,42 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 static const uint8_t iwn_tid2fifo[] = {
 	1, 0, 0, 1, 2, 2, 3, 3, 7, 7, 7, 7, 7, 7, 7, 7, 3
 };
+
+/* Firmware errors. */
+static const char * const iwn_fw_errmsg[] = {
+	"OK",
+	"FAIL",
+	"BAD_PARAM",
+	"BAD_CHECKSUM",
+	"NMI_INTERRUPT_WDG",
+	"SYSASSERT",
+	"FATAL_ERROR",
+	"BAD_COMMAND",
+	"HW_ERROR_TUNE_LOCK",
+	"HW_ERROR_TEMPERATURE",
+	"ILLEGAL_CHAN_FREQ",
+	"VCC_NOT_STABLE",
+	"FH_ERROR",
+	"NMI_INTERRUPT_HOST",
+	"NMI_INTERRUPT_ACTION_PT",
+	"NMI_INTERRUPT_UNKNOWN",
+	"UCODE_VERSION_MISMATCH",
+	"HW_ERROR_ABS_LOCK",
+	"HW_ERROR_CAL_LOCK_FAIL",
+	"NMI_INTERRUPT_INST_ACTION_PT",
+	"NMI_INTERRUPT_DATA_ACTION_PT",
+	"NMI_TRM_HW_ER",
+	"NMI_INTERRUPT_TRM",
+	"NMI_INTERRUPT_BREAKPOINT"
+	"DEBUG_0",
+	"DEBUG_1",
+	"DEBUG_2",
+	"DEBUG_3",
+	"UNKNOWN"
+};
+
+/* Find least significant bit that is set. */
+#define IWN_LSB(x)	((((x) - 1) & (x)) ^ (x))
 
 #define IWN_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))

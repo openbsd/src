@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.3 2008/10/13 16:37:10 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.4 2008/10/22 06:25:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -181,6 +181,10 @@ struct iwn_hal {
 	int		(*add_node)(struct iwn_softc *, struct iwn_node_info *,
 			    int);
 	void		(*tx_done)(struct iwn_softc *, struct iwn_rx_desc *);
+	void		(*ampdu_tx_start)(struct iwn_softc *,
+			    struct ieee80211_node *, uint8_t, uint16_t);
+	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
+			    uint16_t);
 	const char	*fwname;
 	const struct	iwn_sensitivity_limits *limits;
 	int		ntxqs;
@@ -242,6 +246,7 @@ struct iwn_softc {
 
 	struct iwn_fw_info	fw;
 	struct iwn_calib_info	calibcmd[3];
+	uint32_t		errptr;
 
 	struct iwn_rx_stat	last_rx_stat;
 	int			last_rx_valid;
@@ -250,7 +255,6 @@ struct iwn_softc {
 	uint32_t		rawtemp;
 	int			temp;
 	int			noise;
-	uint8_t			antmsk;
 	uint32_t		qfullmsk;
 
 	struct iwn4965_eeprom_band
@@ -266,6 +270,9 @@ struct iwn_softc {
 	uint32_t		critical_temp;
 	uint8_t			ntxchains;
 	uint8_t			nrxchains;
+	uint8_t			txantmsk;
+	uint8_t			rxantmsk;
+	uint8_t			antmsk;
 
 	int			sc_tx_timer;
 	void			*powerhook;
