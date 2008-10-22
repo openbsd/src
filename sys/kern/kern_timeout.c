@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.28 2008/07/14 15:17:08 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.29 2008/10/22 08:38:06 blambert Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -226,6 +226,18 @@ timeout_add_sec(struct timeout *to, int secs)
 	long long to_ticks;
 
 	to_ticks = (long long)hz * secs;
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	timeout_add(to, (int)to_ticks);
+}
+
+void
+timeout_add_msec(struct timeout *to, int msecs)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)msecs * 1000 / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
