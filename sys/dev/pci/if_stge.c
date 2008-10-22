@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.42 2008/10/22 03:03:48 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.43 2008/10/22 22:57:12 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1335,7 +1335,7 @@ stge_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, STGE_MACCtrl, sc->sc_MACCtrl);
 
 	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
-		sc->sc_MACCtrl = MC_AutoVLANuntagging;
+		sc->sc_MACCtrl |= MC_AutoVLANuntagging;
 
 	sc->sc_MACCtrl |= MC_StatisticsEnable | MC_TxEnable | MC_RxEnable;
 
