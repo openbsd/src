@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.40 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.41 2008/10/22 14:36:08 markus Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_enc.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -327,6 +328,19 @@ ip6_forward(struct mbuf *m, int srcrt)
 	if (sproto != 0) {
 		s = splnet();
 
+#if NPF > 0
+		if (pf_test6(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
+			splx(s);
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto senderr;
+		}
+		if (m == NULL) {
+			splx(s);
+			goto senderr;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+#endif
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			splx(s);

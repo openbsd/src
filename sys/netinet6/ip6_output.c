@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.105 2008/09/03 08:41:57 mpf Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.106 2008/10/22 14:36:08 markus Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/proc.h>
 
 #include <net/if.h>
+#include <net/if_enc.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -496,6 +497,19 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	if (sproto != 0) {
 	        s = splnet();
 
+#if NPF > 0
+		if (pf_test6(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
+			splx(s);
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto done;
+		}
+		if (m == NULL) {
+			splx(s);
+			goto done;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+#endif
 		/*
 		 * XXX what should we do if ip6_hlim == 0 and the
 		 * packet gets tunneled?
