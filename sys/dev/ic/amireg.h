@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.29 2008/10/21 06:22:24 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.30 2008/10/22 18:42:29 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -661,24 +661,6 @@ struct ami_drivehistory {
 
 #define	AMI_FAILHISTORY		10
 	} __packed adh_fail[AMI_FAILHISTORY];
-} __packed;
-
-struct ami_inq_data {
-	u_int8_t	aid_peri;
-	u_int8_t	aid_scsitype;
-	u_int8_t	aid_ver;
-	u_int8_t	aid_datatrans;
-	u_int8_t	aid_addlen;
-	u_int8_t	aid_resv[2];
-	u_int8_t	aid_scsival;
-	u_int8_t	aid_vendor[8];
-	u_int8_t	aid_prod[16];
-	u_int8_t	aid_prodver[4];
-	u_int8_t	aid_mederr;
-	u_int8_t	aid_otherr;
-	u_int8_t	aid_proctype;
-
-	u_int8_t	resv2[20];
 } __packed;
 
 struct ami_progress {
