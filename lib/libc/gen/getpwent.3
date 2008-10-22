@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.22 2008/06/24 14:27:24 deraadt Exp $
+.\"	$OpenBSD: getpwent.3,v 1.23 2008/10/22 20:31:20 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2008 $
+.Dd $Mdocdate: October 22 2008 $
 .Dt GETPWENT 3
 .Os
 .Sh NAME
@@ -141,6 +141,28 @@ If the process which calls them has an effective UID of 0 or has the
 group in its group vector, the encrypted password will be returned, otherwise,
 the password field of the returned structure will point to the string
 .Ql * .
+.Sh YP SUPPORT
+If YP is active, the functions
+.Fn getpwent ,
+.Fn getpwnam ,
+and
+.Fn getpwnam_r
+also use the
+.Pa master.passwd.byname
+YP map (if available) or the
+.Pa passwd.byname
+YP map; and the functions
+.Fn getpwuid
+and
+.Fn getpwuid_r
+also use the
+.Pa master.passwd.byuid
+YP map (if available) or the
+.Pa passwd.byuid
+YP map.
+This is in addition to the passwd file,
+and respects the order of both normal and YP
+entries in the passwd file.
 .Sh RETURN VALUES
 The functions
 .Fn getpwent ,
@@ -185,8 +207,10 @@ a Version 7 format password file
 .Xr getgrouplist 3 ,
 .Xr pw_dup 3 ,
 .Xr passwd 5 ,
+.Xr Makefile.yp 8 ,
 .Xr pwd_mkdb 8 ,
-.Xr vipw 8
+.Xr vipw 8 ,
+.Xr yp 8
 .Sh HISTORY
 The
 .Fn getpwent ,

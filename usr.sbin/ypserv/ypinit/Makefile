@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.14 1997/04/29 11:27:12 niklas Exp $
+#	$OpenBSD: Makefile,v 1.15 2008/10/22 20:31:20 jmc Exp $
 
-MAN=	ypinit.8
+MAN=	Makefile.yp.8 ypinit.8
 
 DISTFILES= Makefile.main Makefile.yp
 SHFILES= ypinit.sh
