@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.18 2008/10/09 18:35:38 chl Exp $	*/
+/*	$OpenBSD: intr.c,v 1.19 2008/10/22 19:53:31 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -515,8 +515,10 @@ intr_disestablish(struct intrhand *ih)
 	*p = q->ih_next;
 
 	intr_calculatemasks(ci);
-	pic->pic_delroute(pic, ci, ih->ih_pin, idtvec, source->is_type);
-	pic->pic_hwunmask(pic, ih->ih_pin);
+	if (source->is_handlers == NULL)
+		pic->pic_delroute(pic, ci, ih->ih_pin, idtvec, source->is_type);
+	else
+		pic->pic_hwunmask(pic, ih->ih_pin);
 
 #ifdef INTRDEBUG
 	printf("cpu%u: remove slot %d (pic %s pin %d vec %d)\n",
