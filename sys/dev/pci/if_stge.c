@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.41 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.42 2008/10/22 03:03:48 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -390,6 +390,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+
 	/*
 	 * The manual recommends disabling early transmit, so we
 	 * do.  It's disabled anyway, if using IP checksumming,
@@ -501,7 +505,7 @@ stge_start(struct ifnet *ifp)
 	struct stge_tfd *tfd;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, opending, seg, totlen;
-	uint64_t csum_flags = 0;
+	uint64_t csum_flags = 0, tfc;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -602,11 +606,19 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Initialize the descriptor and give it to the chip.
 		 */
-		tfd->tfd_control = htole64(TFD_FrameId(nexttx) |
-		    TFD_WordAlign(/*totlen & */3) |
-		    TFD_FragCount(seg) | csum_flags |
-		    (((nexttx & STGE_TXINTR_SPACING_MASK) == 0) ?
-		     TFD_TxDMAIndicate : 0));
+		tfc = TFD_FrameId(nexttx) | TFD_WordAlign(/*totlen & */3) |
+		    TFD_FragCount(seg) | csum_flags;
+		if ((nexttx & STGE_TXINTR_SPACING_MASK) == 0)
+			tfc |= TFD_TxDMAIndicate;
+
+#if NVLAN > 0
+		/* Check if we have a VLAN tag to insert. */
+		if (m0->m_flags & M_VLANTAG)
+			tfc |= (TFD_VLANTagInsert |
+			    TFD_VID(m0->m_pkthdr.ether_vtag));
+#endif
+
+		tfd->tfd_control = htole64(tfc);
 
 		/* Sync the descriptor. */
 		STGE_CDTXSYNC(sc, nexttx,
@@ -1029,16 +1041,23 @@ stge_rxintr(struct stge_softc *sc)
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */
-		if (status & RFD_IPDetected) {
-			if (!(status & RFD_IPError))
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-			if ((status & RFD_TCPDetected) &&
-			   (!(status & RFD_TCPError)))
-				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
-			else if ((status & RFD_UDPDetected) &&
-				(!(status & RFD_UDPError)))
-				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+		if ((status & RFD_IPDetected) &&
+		    (!(status & RFD_IPError)))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+		if ((status & RFD_TCPDetected) &&
+		    (!(status & RFD_TCPError)))
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+		else if ((status & RFD_UDPDetected) &&
+		    (!(status & RFD_UDPError)))
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+
+#if NVLAN > 0
+		/* Check for VLAN tagged packets. */
+		if (status & RFD_VLANDetected) {
+			m->m_pkthdr.ether_vtag = RFD_TCI(status);
+			m->m_flags |= M_VLANTAG;
 		}
+#endif
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
@@ -1314,6 +1333,10 @@ stge_init(struct ifnet *ifp)
 	 */
 	sc->sc_MACCtrl = MC_IFSSelect(0);
 	CSR_WRITE_4(sc, STGE_MACCtrl, sc->sc_MACCtrl);
+
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		sc->sc_MACCtrl = MC_AutoVLANuntagging;
+
 	sc->sc_MACCtrl |= MC_StatisticsEnable | MC_TxEnable | MC_RxEnable;
 
 	if (sc->sc_rev >= 6) {		/* >= B.2 */
