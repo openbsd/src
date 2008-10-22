@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.51 2008/09/17 20:10:37 chl Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.52 2008/10/22 23:04:45 mpf Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 #include <net/route.h>
 #include <net/bpf.h>
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_fwio.c,v 1.1 2008/08/18 23:19:25 miod Exp $	*/
+/*	$OpenBSD: if_le_fwio.c,v 1.2 2008/10/22 23:04:45 mpf Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -93,7 +93,7 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #endif
 #include <netinet/if_ether.h>

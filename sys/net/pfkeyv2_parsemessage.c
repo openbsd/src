@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.42 2007/07/30 11:43:59 hshoexer Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.43 2008/10/22 23:04:45 mpf Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -557,7 +557,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					}
 				}
 				break;
-#if INET6
+#ifdef INET6
 			case AF_INET6:
 				if (i != sizeof(struct sadb_address) +
 				    PADUP(sizeof(struct sockaddr_in6))) {

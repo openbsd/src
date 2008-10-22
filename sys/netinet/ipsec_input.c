@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.90 2008/10/22 14:36:08 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.91 2008/10/22 23:04:45 mpf Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -362,7 +362,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			}
 		}
 
-#if INET6
+#ifdef INET6
 		/* IPv6-in-IP encapsulation. */
 		if (prot == IPPROTO_IPV6) {
 			if (m->m_pkthdr.len - skip < sizeof(struct ip6_hdr)) {

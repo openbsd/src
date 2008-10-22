@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.15 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.16 2008/10/22 23:04:45 mpf Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #endif
 #include <netinet/if_ether.h>
