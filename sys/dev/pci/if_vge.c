@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.40 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.41 2008/10/22 05:31:29 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -82,6 +82,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -104,6 +105,11 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -774,6 +780,10 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 				IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+
 	/* Set interface name */
 	strlcpy(ifp->if_xname, sc->vge_dev.dv_xname, IFNAMSIZ);
 
@@ -1090,6 +1100,13 @@ vge_rxeof(struct vge_softc *sc)
 		    (rxctl & VGE_RDCTL_PROTOCSUMOK))
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
+#if NVLAN > 0
+		if (rxstat & VGE_RDSTS_VTAG) {
+			m->m_pkthdr.ether_vtag = swap16(rxctl & VGE_RDCTL_VLANID);
+			m->m_flags |= M_VLANTAG;
+		}
+#endif
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
@@ -1365,6 +1382,14 @@ repack:
 	if (m_head->m_pkthdr.len > ETHERMTU + ETHER_HDR_LEN)
 		d->vge_ctl |= htole32(VGE_TDCTL_JUMBO);
 
+#if NVLAN > 0
+	/* Set up hardware VLAN tagging. */
+	if (m_head->m_flags & M_VLANTAG) {
+		d->vge_ctl |= htole32(m_head->m_pkthdr.ether_vtag |
+		    VGE_TDCTL_VTAG);
+	}
+#endif
+
 	sc->vge_ldata.vge_tx_dmamap[idx] = txmap;
 	sc->vge_ldata.vge_tx_mbuf[idx] = m_head;
 	sc->vge_ldata.vge_tx_free--;
@@ -1495,6 +1520,15 @@ vge_init(struct ifnet *ifp)
 	/* Set receive FIFO threshold */
 	CSR_CLRBIT_1(sc, VGE_RXCFG, VGE_RXCFG_FIFO_THR);
 	CSR_SETBIT_1(sc, VGE_RXCFG, VGE_RXFIFOTHR_128BYTES);
+
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING) {
+		/*
+		 * Allow transmission and reception of VLAN tagged
+		 * frames.
+		 */
+		CSR_CLRBIT_1(sc, VGE_RXCFG, VGE_RXCFG_VTAGOPT);
+		CSR_SETBIT_1(sc, VGE_RXCFG, VGE_VTAG_OPT2);
+	}
 
 	/* Set DMA burst length */
 	CSR_CLRBIT_1(sc, VGE_DMACFG0, VGE_DMACFG0_BURSTLEN);
