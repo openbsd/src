@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.81 2008/09/25 11:23:54 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.82 2008/10/23 00:30:04 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1475,7 +1475,8 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	bd->bd_target = ar[arr].pd[disk].mar_enc_slot;
 	switch (ar[arr].pd[disk].mar_pd_state){
 	case MFI_PD_UNCONFIG_GOOD:
-		bd->bd_status = BIOC_SDUNUSED;
+	case MFI_PD_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
 		break;
 
 	case MFI_PD_HOTSPARE: /* XXX dedicated hotspare part of array? */
@@ -1484,10 +1485,6 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	case MFI_PD_OFFLINE:
 		bd->bd_status = BIOC_SDOFFLINE;
-		break;
-
-	case MFI_PD_FAILED:
-		bd->bd_status = BIOC_SDFAILED;
 		break;
 
 	case MFI_PD_REBUILD:
@@ -1508,8 +1505,11 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	/* get the remaining fields */
 	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *pd, pd, mbox))
+	    sizeof *pd, pd, mbox)) {
+		/* disk is missing but succeed command */
+		rv = 0;
 		goto freeme;
+	}
 
 	bd->bd_size = pd->mpd_size * 512; /* bytes per block */
 
