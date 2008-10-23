@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.57 2008/09/12 12:27:26 blambert Exp $ */
+/* $OpenBSD: pmap.c,v 1.58 2008/10/23 23:54:02 tedu Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -451,7 +451,7 @@ void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *, cpuid_t,
 void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *, cpuid_t);
 void	pmap_l1pt_delref(pmap_t, pt_entry_t *, cpuid_t);
 
-void	*pmap_l1pt_alloc(struct pool *, int);
+void	*pmap_l1pt_alloc(struct pool *, int, int *);
 void	pmap_l1pt_free(struct pool *, void *);
 
 struct pool_allocator pmap_l1pt_allocator = {
@@ -468,7 +468,7 @@ void	pmap_pv_remove(pmap_t, paddr_t, vaddr_t, boolean_t,
 	    struct pv_entry **);
 struct	pv_entry *pmap_pv_alloc(void);
 void	pmap_pv_free(struct pv_entry *);
-void	*pmap_pv_page_alloc(struct pool *, int);
+void	*pmap_pv_page_alloc(struct pool *, int, int *);
 void	pmap_pv_page_free(struct pool *, void *);
 struct pool_allocator pmap_pv_allocator = {
 	pmap_pv_page_alloc, pmap_pv_page_free, 0,
@@ -3159,10 +3159,11 @@ pmap_pv_free(struct pv_entry *pv)
  *	Allocate a page for the pv_entry pool.
  */
 void *
-pmap_pv_page_alloc(struct pool *pp, int flags)
+pmap_pv_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	paddr_t pg;
 
+	*slowdown = 0;
 	if (pmap_physpage_alloc(PGU_PVENT, &pg))
 		return ((void *)ALPHA_PHYS_TO_K0SEG(pg));
 	return (NULL);
@@ -3558,13 +3559,14 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
  *	Page allocator for L1 PT pages.
  */
 void *
-pmap_l1pt_alloc(struct pool *pp, int flags)
+pmap_l1pt_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	paddr_t ptpa;
 
 	/*
 	 * Attempt to allocate a free page.
 	 */
+	*slowdown = 0;
 	if (pmap_physpage_alloc(PGU_L1PT, &ptpa) == FALSE)
 		return (NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2008/09/12 12:27:27 blambert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2008/10/23 23:54:02 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ struct pv_entry {
 #define	__pmap_pv_free(pv)	pool_put(&__pmap_pv_pool, (pv))
 STATIC void __pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, vm_prot_t);
 STATIC void __pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t);
-STATIC void *__pmap_pv_page_alloc(struct pool *, int);
+STATIC void *__pmap_pv_page_alloc(struct pool *, int, int *);
 STATIC void __pmap_pv_page_free(struct pool *, void *);
 STATIC struct pool __pmap_pv_pool;
 STATIC struct pool_allocator pmap_pv_page_allocator = {
@@ -899,14 +899,15 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
 
 /*
  * pv_entry pool allocator:
- *	void *__pmap_pv_page_alloc(struct pool *pool, int flags):
+ *	void *__pmap_pv_page_alloc(struct pool *pool, int flags, int *slowdown):
  *	void __pmap_pv_page_free(struct pool *pool, void *v):
  */
 void *
-__pmap_pv_page_alloc(struct pool *pool, int flags)
+__pmap_pv_page_alloc(struct pool *pool, int flags, int *slowdown)
 {
 	struct vm_page *pg;
 
+	*slowdown = 0;
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL)
 		return (NULL);

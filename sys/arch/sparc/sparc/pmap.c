@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.149 2008/06/09 20:31:47 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.150 2008/10/23 23:54:02 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -193,7 +193,7 @@ struct pool pvpool;
  */
 static struct pool L1_pool;
 static struct pool L23_pool;
-void *pgt_page_alloc(struct pool *, int);
+void *pgt_page_alloc(struct pool *, int, int *);
 void  pgt_page_free(struct pool *, void *);
 
 struct pool_allocator pgt_allocator = {
@@ -216,10 +216,11 @@ pcache_flush(va, pa, n)
  * Page table pool back-end.
  */
 void *
-pgt_page_alloc(struct pool *pp, int flags)
+pgt_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
         caddr_t p;
 
+	*slowdown = 0;
         p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
                                       PAGE_SIZE, UVM_KMF_NOWAIT);
         if (p != NULL && ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)) {

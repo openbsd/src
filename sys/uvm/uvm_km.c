@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.67 2008/06/14 03:48:32 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.68 2008/10/23 23:54:02 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -760,9 +760,10 @@ uvm_km_page_init(void)
 }
 
 void *
-uvm_km_getpage(boolean_t waitok)
+uvm_km_getpage(boolean_t waitok, int *slowdown)
 {
 
+	*slowdown = 0;
 	return ((void *)uvm_km_alloc_poolpage1(NULL, NULL, waitok));
 }
 
@@ -790,6 +791,8 @@ int uvm_km_pages_lowat; /* allocate more when reserve drops below this */
 struct km_page {
 	struct km_page *next;
 } *uvm_km_pages_head;
+
+struct proc *uvm_km_proc;
 
 void uvm_km_createthread(void *);
 void uvm_km_thread(void *);
@@ -833,7 +836,7 @@ uvm_km_page_init(void)
 void
 uvm_km_createthread(void *arg)
 {
-	kthread_create(uvm_km_thread, NULL, NULL, "kmthread");
+	kthread_create(uvm_km_thread, NULL, &uvm_km_proc, "kmthread");
 }
 
 /*
@@ -878,10 +881,11 @@ uvm_km_thread(void *arg)
  * permits it.  Wake up the thread if we've dropped below lowat.
  */
 void *
-uvm_km_getpage(boolean_t waitok)
+uvm_km_getpage(boolean_t waitok, int *slowdown)
 {
 	struct km_page *page = NULL;
 
+	*slowdown = 0;
 	mtx_enter(&uvm_km_mtx);
 	for (;;) {
 		page = uvm_km_pages_head;
@@ -894,22 +898,12 @@ uvm_km_getpage(boolean_t waitok)
 			break;
 		msleep(&uvm_km_pages_free, &uvm_km_mtx, PVM, "getpage", 0);
 	}
-	if (uvm_km_pages_free < uvm_km_pages_lowat) {
-		wakeup(&uvm_km_pages_head);
-
-		/*
-		 * If we're below the low watermark and are allowed to
-		 * sleep, we should slow down our allocations a bit
-		 * to not exhaust the reserve of pages for nosleep
-		 * allocators.
-		 *
-		 * Just sleep once.
-		 */
-		if (waitok)
-			msleep(&uvm_km_pages_free, &uvm_km_mtx, PPAUSE,
-			    "getpg2", 0);
-	}
 	mtx_leave(&uvm_km_mtx);
+	if (uvm_km_pages_free < uvm_km_pages_lowat) {
+		if (curproc != uvm_km_proc)
+			*slowdown = 1;
+		wakeup(&uvm_km_pages_head);
+	}
 	return (page);
 }
 
