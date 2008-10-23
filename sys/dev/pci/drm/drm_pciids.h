@@ -410,7 +410,7 @@
 	{0x8086, 0x29C2, CHIP_I9XX|CHIP_I915, "Intel G33"}, \
 	{0x8086, 0x29B2, CHIP_I9XX|CHIP_I915, "Intel Q35"}, \
 	{0x8086, 0x29D2, CHIP_I9XX|CHIP_I915, "Intel Q33"}, \
-	{0x8086, 0x2A42, CHIP_I9XX|CHIP_I965, "Mobile Intel® GM45 Express Chipset"}, \
+	{0x8086, 0x2A42, CHIP_I9XX|CHIP_I965, "Mobile Intel GM45 Express Chipset"}, \
 	{0x8086, 0x2E02, CHIP_I9XX|CHIP_I965, "Intel Integrated Graphics Device"}, \
 	{0x8086, 0x2E12, CHIP_I9XX|CHIP_I965, "Intel Q45/Q43"}, \
 	{0x8086, 0x2E22, CHIP_I9XX|CHIP_I965, "Intel G45/G43"}, \
