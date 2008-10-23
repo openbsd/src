@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.60 2008/10/16 19:16:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.61 2008/10/23 02:06:53 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1210,11 +1210,15 @@ azalia_codec_init(codec_t *this)
 	if (this->audiofunc < 0) {
 		DPRINTF(("%s: codec[%d]: No audio function groups\n",
 		    XNAME(this->az), addr));
+		this->comresp(this, this->audiofunc, CORB_SET_POWER_STATE,
+		    CORB_PS_D3, &result);
+		DELAY(100);
 		return -1;
 	}
 
 	/* power the audio function */
-	this->comresp(this, this->audiofunc, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
+	this->comresp(this, this->audiofunc, CORB_SET_POWER_STATE,
+	    CORB_PS_D0, &result);
 	DELAY(100);
 
 	/* check widgets in the audio function */
