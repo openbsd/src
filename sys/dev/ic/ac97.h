@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.22 2008/05/25 23:52:30 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.23 2008/10/23 21:50:01 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -48,6 +48,7 @@ struct ac97_host_if {
 	void (*reset)(void *arg);
 
 	enum ac97_host_flags (*flags)(void *arg);
+	void (*spdif_event)(void *arg, int);
 };
 
 /*
@@ -73,6 +74,8 @@ struct ac97_codec_if_vtbl {
 	    u_long *rate);
 	void (*set_clock)(struct ac97_codec_if *codec_if,
 	    unsigned int clock);
+	void (*lock)(struct ac97_codec_if *codec_if);
+	void (*unlock)(struct ac97_codec_if *codec_if);
 };
 
 struct ac97_codec_if {
@@ -134,12 +137,21 @@ void ac97_get_default_params(struct audio_params *);
 #define	AC97_EXT_AUDIO_DRA		0x0002
 #define	AC97_EXT_AUDIO_SPDIF		0x0004
 #define	AC97_EXT_AUDIO_VRM		0x0008
-#define	AC97_EXT_AUDIO_DSA0		0x0010
-#define	AC97_EXT_AUDIO_DSA1		0x0020
+#define	AC97_EXT_AUDIO_DSA_MASK		0x0030
+#define	AC97_EXT_AUDIO_DSA00		0x0000
+#define	AC97_EXT_AUDIO_DSA01		0x0010
+#define	AC97_EXT_AUDIO_DSA10		0x0020
+#define	AC97_EXT_AUDIO_DSA11		0x0030
+#define	AC97_EXT_AUDIO_SPSA_MASK	0x0030
+#define	AC97_EXT_AUDIO_SPSA34		0x0000
+#define	AC97_EXT_AUDIO_SPSA78		0x0010
+#define	AC97_EXT_AUDIO_SPSA69		0x0020
+#define	AC97_EXT_AUDIO_SPSAAB		0x0030
 #define	AC97_EXT_AUDIO_CDAC		0x0040
 #define	AC97_EXT_AUDIO_SDAC		0x0080
 #define	AC97_EXT_AUDIO_LDAC		0x0100
 #define	AC97_EXT_AUDIO_AMAP		0x0200
+#define AC97_EXT_AUDIO_SPCV		0x0400
 #define	AC97_EXT_AUDIO_REV_11		0x0000
 #define	AC97_EXT_AUDIO_REV_22		0x0400
 #define	AC97_EXT_AUDIO_REV_23		0x0800
@@ -156,6 +168,18 @@ void ac97_get_default_params(struct audio_params *);
 #define AC97_REG_SURR_MASTER		0x38
 #define	AC97_REG_SPDIF_CTRL		0x3a
 #define	AC97_REG_SPDIF_CTRL_BITS	"\02\01pro\02/audio\03copy\04pre\014l\017drs\020valid"
+#define	AC97_SPDIF_V			0x8000
+#define	AC97_SPDIF_DRS			0x4000
+#define	AC97_SPDIF_SPSR_MASK		0x3000
+#define	AC97_SPDIF_SPSR_44K		0x0000
+#define	AC97_SPDIF_SPSR_48K		0x2000
+#define	AC97_SPDIF_SPSR_32K		0x1000
+#define	AC97_SPDIF_L			0x0800
+#define	AC97_SPDIF_CC_MASK		0x07f0
+#define	AC97_SPDIF_PRE			0x0008
+#define	AC97_SPDIF_COPY			0x0004
+#define	AC97_SPDIF_NOAUDIO		0x0002
+#define	AC97_SPDIF_PRO			0x0001
 
 #define	AC97_REG_VENDOR_ID1		0x7c
 #define	AC97_REG_VENDOR_ID2		0x7e

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.42 2008/10/02 18:29:40 jakemsr Exp $ */
+/*	$OpenBSD: auvia.c,v 1.43 2008/10/23 21:50:01 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -217,6 +217,7 @@ int	auvia_read_codec(void *, u_int8_t, u_int16_t *);
 void	auvia_reset_codec(void *);
 int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
+void	auvia_spdif_event(void *, int);
 
 const struct pci_matchid auvia_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97 },
@@ -301,6 +302,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.read = auvia_read_codec;
 	sc->host_if.write = auvia_write_codec;
 	sc->host_if.reset = auvia_reset_codec;
+	sc->host_if.spdif_event = auvia_spdif_event;
 
 	if ((r = ac97_attach(&sc->host_if)) != 0) {
 		printf("%s: can't attach codec (error 0x%X)\n",
@@ -341,6 +343,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	auvia_set_port(sc, &ctl);
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
+	sc->codec_if->vtbl->unlock(sc->codec_if);
 }
 
 
@@ -458,9 +461,18 @@ auvia_read_codec(void *addr, u_int8_t reg, u_int16_t *val)
 }
 
 
+void
+auvia_spdif_event(void *addr, int flag)
+{
+	struct auvia_softc *sc = addr;
+	sc->sc_spdif = flag;
+}
+
 int
 auvia_open(void *addr, int flags)
 {
+	struct auvia_softc *sc = addr;
+	sc->codec_if->vtbl->lock(sc->codec_if);
 	return 0;
 }
 
@@ -469,6 +481,7 @@ void
 auvia_close(void *addr)
 {
 	struct auvia_softc *sc = addr;
+	sc->codec_if->vtbl->unlock(sc->codec_if);
 
 	auvia_halt_output(sc);
 	auvia_halt_input(sc);
@@ -481,60 +494,74 @@ auvia_close(void *addr)
 int
 auvia_query_encoding(void *addr, struct audio_encoding *fp)
 {
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return (0);
-	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 4:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return (0);
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	default:
-		return (EINVAL);
+	struct auvia_softc *sc = addr;
+
+	if (sc->sc_spdif) {
+		switch (fp->index) {
+		case 0:
+			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fp->precision = 16;
+			fp->flags = 0;
+			return (0);
+		default:
+			return (EINVAL);
+		}
+	} else {
+		switch (fp->index) {
+		case 0:
+			strlcpy(fp->name, AudioEulinear, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_ULINEAR;
+			fp->precision = 8;
+			fp->flags = 0;
+			return (0);
+		case 1:
+			strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_ULAW;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 2:
+			strlcpy(fp->name, AudioEalaw, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_ALAW;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 3:
+			strlcpy(fp->name, AudioEslinear, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_SLINEAR;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 4:
+			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fp->precision = 16;
+			fp->flags = 0;
+			return (0);
+		case 5:
+			strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 6:
+			strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 7:
+			strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		default:
+			return (EINVAL);
+		}
 	}
 }
-
 void
 auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		     struct audio_params *p)
@@ -630,6 +657,12 @@ auvia_set_params(void *addr, int setmode, int usemode,
 
 		if ((p->sample_rate < 4000 || p->sample_rate > 48000) ||
 		    (p->precision != 8 && p->precision != 16))
+			return (EINVAL);
+
+		/* XXX only 16-bit 48kHz slinear_le if s/pdif enabled ? */
+		if (sc->sc_spdif &&
+		    ((p->sample_rate != 48000) || (p->precision != 16) ||
+		    (p->encoding != AUDIO_ENCODING_SLINEAR_LE)))
 			return (EINVAL);
 
 		if (AC97_IS_FIXED_RATE(codec)) {

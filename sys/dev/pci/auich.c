@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.75 2008/10/23 21:28:31 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.76 2008/10/23 21:50:01 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -184,6 +184,7 @@ struct auich_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
+	int sc_spdif;
 
 	/* dma scatter-gather buffer lists */
 
@@ -344,6 +345,7 @@ int  auich_write_codec(void *, u_int8_t, u_int16_t);
 void auich_reset_codec(void *);
 enum ac97_host_flags auich_flags_codec(void *);
 unsigned int auich_calibrate(struct auich_softc *);
+void auich_spdif_event(void *, int);
 
 int
 auich_match(parent, match, aux)
@@ -508,6 +510,7 @@ auich_attach(parent, self, aux)
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
 	sc->host_if.flags = auich_flags_codec;
+	sc->host_if.spdif_event = auich_spdif_event;
 	if (sc->sc_dev.dv_cfdata->cf_flags & 0x0001)
 		sc->flags = AC97_HOST_SWAPPED_CHANNELS;
 
@@ -517,6 +520,7 @@ auich_attach(parent, self, aux)
 		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 		return;
 	}
+	sc->codec_if->vtbl->unlock(sc->codec_if);
 
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 
@@ -618,6 +622,13 @@ auich_flags_codec(void *v)
 	return (sc->flags);
 }
 
+void
+auich_spdif_event(void *v, int flag)
+{
+	struct auich_softc *sc = v;
+	sc->sc_spdif = flag;
+}
+
 int
 auich_open(v, flags)
 	void *v;
@@ -627,6 +638,9 @@ auich_open(v, flags)
 
 	if (sc->sc_ac97rate == -1)
 		sc->sc_ac97rate = auich_calibrate(sc);
+
+	sc->codec_if->vtbl->lock(sc->codec_if);
+
 	return 0;
 }
 
@@ -634,6 +648,9 @@ void
 auich_close(v)
 	void *v;
 {
+	struct auich_softc *sc = v;
+
+	sc->codec_if->vtbl->unlock(sc->codec_if);
 }
 
 void
@@ -647,57 +664,71 @@ auich_query_encoding(v, aep)
 	void *v;
 	struct audio_encoding *aep;
 {
-	switch (aep->index) {
-	case 0:
-		strlcpy(aep->name, AudioEulinear, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 1:
-		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 2:
-		strlcpy(aep->name, AudioEalaw, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ALAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 3:
-		strlcpy(aep->name, AudioEslinear, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 4:
-		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		return (0);
-	case 5:
-		strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 6:
-		strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 7:
-		strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	default:
-		return (EINVAL);
+	struct auich_softc *sc = v;
+	if (sc->sc_spdif) {
+		switch (aep->index) {
+		case 0:
+			strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			aep->precision = 16;
+			aep->flags = 0;
+			return (0);
+		default:
+			return (EINVAL);
+		}
+	} else {
+		switch (aep->index) {
+		case 0:
+			strlcpy(aep->name, AudioEulinear, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_ULINEAR;
+			aep->precision = 8;
+			aep->flags = 0;
+			return (0);
+		case 1:
+			strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_ULAW;
+			aep->precision = 8;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 2:
+			strlcpy(aep->name, AudioEalaw, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_ALAW;
+			aep->precision = 8;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 3:
+			strlcpy(aep->name, AudioEslinear, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_SLINEAR;
+			aep->precision = 8;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 4:
+			strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			aep->precision = 16;
+			aep->flags = 0;
+			return (0);
+		case 5:
+			strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
+			aep->precision = 16;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 6:
+			strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
+			aep->precision = 16;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		case 7:
+			strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
+			aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
+			aep->precision = 16;
+			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			return (0);
+		default:
+			return (EINVAL);
+		}
 	}
 }
 
@@ -715,6 +746,13 @@ auich_set_params(v, setmode, usemode, play, rec)
 	u_int32_t control;
 	u_int16_t ext_id;
 
+	if (setmode & AUMODE_PLAY) {
+		/* only 16-bit 48kHz slinear_le if s/pdif enabled */
+		if (sc->sc_spdif &&
+		    ((play->sample_rate != 48000) || (play->precision != 16) ||
+		    (play->encoding != AUDIO_ENCODING_SLINEAR_LE)))
+			return (EINVAL);
+	}
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
 		play->sw_code = NULL;
