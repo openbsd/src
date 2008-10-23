@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.68 2008/05/25 23:52:30 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.69 2008/10/23 20:52:50 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1103,10 +1103,6 @@ ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate)
 	case AC97_REG_PCM_SURR_DAC_RATE:
 	case AC97_REG_PCM_LFE_DAC_RATE:
 		power_bit = AC97_POWER_OUT;
-		if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
-			*rate = AC97_SINGLE_RATE;
-			return 0;
-		}
 		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
 			ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &ext_stat);
 			if (value > 0x1ffff) {
@@ -1128,19 +1124,11 @@ ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate)
 		break;
 	case AC97_REG_PCM_LR_ADC_RATE:
 		power_bit = AC97_POWER_IN;
-		if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
-			*rate = AC97_SINGLE_RATE;
-			return 0;
-		}
 		if (value > 0xffff)
 			return EINVAL;
 		break;
 	case AC97_REG_PCM_MIC_ADC_RATE:
 		power_bit = AC97_POWER_IN;
-		if (!(as->ext_id & AC97_EXT_AUDIO_VRM)) {
-			*rate = AC97_SINGLE_RATE;
-			return 0;
-		}
 		if (value > 0xffff)
 			return EINVAL;
 		break;
