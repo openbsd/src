@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.51 2008/10/16 19:16:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.52 2008/10/23 02:23:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -53,8 +53,24 @@
 #define AzaliaNside	"side"
 
 #define ALC260_FUJITSU_ID	0x132610cf
+#define REALTEK_ALC660		0x10ec0660
+#define ALC660_ASUS_G2K		0x13391043
+#define REALTEK_ALC880		0x10ec0880
+#define	ALC880_ASUS_M5200	0x19931043
+#define	ALC880_ASUS_A7M		0x13231043
+#define ALC880_MEDION_MD95257	0x203d161f
+#define REALTEK_ALC882		0x10ec0882
+#define ALC882_ASUS_A7T		0x13c21043
+#define ALC882_ASUS_W2J		0x19711043
+#define REALTEK_ALC883		0x10ec0883
 #define ALC883_ACER_ID		0x00981025
+#define REALTEK_ALC885		0x10ec0885
+#define ALC885_APPLE_MB3	0x00a1106b
+#define	SIGMATEL_STAC9221	0x83847680
 #define STAC9221_APPLE_ID	0x76808384
+#define SIGMATEL_STAC9205	0x838476a0
+#define STAC9205_DELL_D630	0x01f91028
+#define STAC9205_DELL_V1500	0x02281028
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_add_dacgroup(codec_t *, int, uint32_t);
@@ -62,8 +78,12 @@ int	azalia_generic_codec_find_pin(const codec_t *, int, int, uint32_t);
 int	azalia_generic_codec_find_dac(const codec_t *, int, int);
 
 int	azalia_generic_mixer_init(codec_t *);
+int	azalia_generic_mixer_autoinit(codec_t *);
+
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
+int	azalia_generic_mixer_pin_sense(codec_t *);
+int	azalia_generic_mixer_create_virtual(codec_t *);
 int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
@@ -82,6 +102,8 @@ int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc260_init_dacgroup(codec_t *);
 int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc260_set_port(codec_t *, mixer_ctrl_t *);
+int	azalia_alc662_init_dacgroup(codec_t *);
+int	azalia_alc861_init_dacgroup(codec_t *);
 int	azalia_alc880_init_dacgroup(codec_t *);
 int	azalia_alc882_init_dacgroup(codec_t *);
 int	azalia_alc882_mixer_init(codec_t *);
@@ -89,10 +111,13 @@ int	azalia_alc882_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc882_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc883_init_dacgroup(codec_t *);
 int	azalia_alc883_mixer_init(codec_t *);
+int	azalia_alc885_init_dacgroup(codec_t *);
+int	azalia_alc888_init_dacgroup(codec_t *);
 int	azalia_ad1984_init_dacgroup(codec_t *);
 int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_ad1984_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_ad1984_get_port(codec_t *, mixer_ctrl_t *);
+int	azalia_ad1988_init_dacgroup(codec_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9200_mixer_init(codec_t *);
@@ -116,16 +141,31 @@ azalia_codec_init_vtbl(codec_t *this)
 	 */
 	this->name = NULL;
 	this->init_dacgroup = azalia_generic_codec_init_dacgroup;
-	this->mixer_init = azalia_generic_mixer_init;
+	this->mixer_init = azalia_generic_mixer_autoinit;
 	this->mixer_delete = azalia_generic_mixer_delete;
 	this->set_port = azalia_generic_set_port;
 	this->get_port = azalia_generic_get_port;
+	this->unsol_event = NULL;
 	switch (this->vid) {
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
 		this->mixer_init = azalia_alc260_mixer_init;
 		this->init_dacgroup = azalia_alc260_init_dacgroup;
 		this->set_port = azalia_alc260_set_port;
+		break;
+	case 0x10ec0268:
+		this->name = "Realtek ALC268";
+		break;
+	case 0x10ec0269:
+		this->name = "Realtek ALC269";
+		break;
+	case 0x10ec0662:
+		this->name = "Realtek ALC662-GR";
+		this->init_dacgroup = azalia_alc662_init_dacgroup;
+		break;
+	case 0x10ec0861:
+		this->name = "Realtek ALC861";
+		this->init_dacgroup = azalia_alc861_init_dacgroup;
 		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
@@ -146,6 +186,14 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->get_port = azalia_alc882_get_port;
 		this->set_port = azalia_alc882_set_port;
 		break;
+	case 0x10ec0885:
+		this->name = "Realtek ALC885";
+		this->init_dacgroup = azalia_alc885_init_dacgroup;
+		break;
+	case 0x10ec0888:
+		this->name = "Realtek ALC888";
+		this->init_dacgroup = azalia_alc888_init_dacgroup;
+		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
@@ -157,6 +205,16 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = azalia_ad1984_mixer_init;
 		this->get_port = azalia_ad1984_get_port;
 		this->set_port = azalia_ad1984_set_port;
+		break;
+	case 0x11d41988:
+		/* http://www.analog.com/en/prod/0,2877,AD1988A,00.html */
+		this->name = "Analog Devices AD1988A";
+		this->init_dacgroup = azalia_ad1988_init_dacgroup;
+		break;
+	case 0x11d4198b:
+		/* http://www.analog.com/en/prod/0,2877,AD1988B,00.html */
+		this->name = "Analog Devices AD1988B";
+		this->init_dacgroup = azalia_ad1988_init_dacgroup;
 		break;
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
@@ -187,7 +245,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847661:
 	case 0x83847662:
-		this->name = "Sigmatel 83847661";
+		this->name = "Sigmatel STAC9872AK";
 		this->init_dacgroup = azalia_stac7661_init_dacgroup;
 		this->mixer_init = azalia_stac7661_mixer_init;
 		this->get_port = azalia_stac7661_get_port;
@@ -863,6 +921,187 @@ azalia_generic_mixer_default(codec_t *this)
 		}
 		azalia_generic_mixer_set(this, m->nid, m->target, &mc);
 	}
+
+	return 0;
+}
+
+int
+azalia_generic_mixer_pin_sense(codec_t *this)
+{
+	typedef enum {
+		PIN_DIR_IN,
+		PIN_DIR_OUT,
+		PIN_DIR_MIC
+	} pintype_t;
+	const widget_t *w;
+	int i;
+
+	FOR_EACH_WIDGET(this, i) {
+		pintype_t pintype = PIN_DIR_IN;
+
+		w = &this->w[i];
+		if (w->type != COP_AWTYPE_PIN_COMPLEX)
+			continue;
+		if (!(w->d.pin.cap & COP_PINCAP_INPUT))
+			pintype = PIN_DIR_OUT;
+		if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
+			pintype = PIN_DIR_IN;
+
+		switch (w->d.pin.device) {
+		case CORB_CD_LINEOUT:
+		case CORB_CD_SPEAKER:
+		case CORB_CD_HEADPHONE:
+		case CORB_CD_SPDIFOUT:
+		case CORB_CD_DIGITALOUT:
+			pintype = PIN_DIR_OUT;
+			break;
+		case CORB_CD_CD:
+		case CORB_CD_LINEIN:
+			pintype = PIN_DIR_IN;
+			break;
+		case CORB_CD_MICIN:
+			pintype = PIN_DIR_MIC;
+			break;
+		}
+
+		switch (pintype) {
+		case PIN_DIR_IN:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_INPUT, NULL);
+			break;
+		case PIN_DIR_OUT:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_OUTPUT, NULL);
+			break;
+		case PIN_DIR_MIC:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_INPUT|CORB_PWC_VREF_80, NULL);
+			break;
+		}
+
+		if (w->d.pin.cap & COP_PINCAP_EAPD) {
+			uint32_t result;
+			int err;
+
+			err = this->comresp(this, w->nid,
+			    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+			if (err)
+				continue;
+			result &= 0xff;
+			result |= CORB_EAPD_EAPD;
+			err = this->comresp(this, w->nid,
+			    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+			if (err)
+				continue;
+		}
+	}
+
+	/* GPIO quirks */
+
+	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
+		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
+	}
+	if (this->vid == REALTEK_ALC883 && this->subid == ALC883_ACER_ID) {
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
+	}
+	if ((this->vid == REALTEK_ALC660 && this->subid == ALC660_ASUS_G2K) ||
+	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_M5200) ||
+	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_A7M) ||
+	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_A7T) ||
+	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_W2J) ||
+	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
+	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
+	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
+		azalia_gpio_unmute(this, 0);
+	}
+
+	if (this->vid == REALTEK_ALC880 && this->subid == ALC880_MEDION_MD95257) {
+		azalia_gpio_unmute(this, 1);
+	}
+
+	return 0;
+}
+
+int
+azalia_generic_mixer_create_virtual(codec_t *this)
+{
+	mixer_item_t *m;
+	mixer_devinfo_t *d;
+	convgroup_t *cgdac = &this->dacs.groups[0];
+	convgroup_t *cgadc = &this->adcs.groups[0];
+	int i, err, mdac, madc, mmaster;
+
+	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
+	for (i = 0; i < this->nmixers; i++) {
+		d = &this->mixers[i].devinfo;
+		d->index = d->prev = d->next = 0;
+	}
+
+	mdac = madc = mmaster = -1;
+	for (i = 0; i < this->nmixers; i++) {
+		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
+			continue;
+		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
+			if (this->mixers[i].nid == cgdac->conv[0])
+				mdac = mmaster = i;
+		}
+		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
+			if (this->mixers[i].nid == cgadc->conv[0])
+				madc = i;
+		}
+	}
+
+	if (mdac >= 0) {
+		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[mmaster], sizeof(*m));
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
+		this->nmixers++;
+
+		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[mdac], sizeof(*m));
+		d->mixer_class = AZ_CLASS_INPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
+		this->nmixers++;
+	}
+
+	if (madc >= 0) {
+		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[madc], sizeof(*m));
+		d->mixer_class = AZ_CLASS_RECORD;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNvolume);
+		this->nmixers++;
+	}
+
+	azalia_generic_mixer_fix_indexes(this);
+
+	return 0;
+}
+
+int
+azalia_generic_mixer_autoinit(codec_t *this)
+{
+	azalia_generic_mixer_init(this);
+	azalia_generic_mixer_create_virtual(this);
+	azalia_generic_mixer_pin_sense(this);
 
 	return 0;
 }
@@ -1637,16 +1876,10 @@ azalia_alc260_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;		/* no need for generic_mixer_set() */
 	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* lineout */
-	azalia_generic_mixer_set(this, 0x10, MI_TARGET_PINDIR, &mc); /* headphones */
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x12, MI_TARGET_PINDIR, &mc); /* mic1 */
-	azalia_generic_mixer_set(this, 0x13, MI_TARGET_PINDIR, &mc); /* mic2 */
-	azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* line1 */
-	azalia_generic_mixer_set(this, 0x15, MI_TARGET_PINDIR, &mc); /* line2 */
 	mc.un.ord = 0;		/* mute: off */
 	azalia_generic_mixer_set(this, 0x08, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x08, MI_TARGET_INAMP(1), &mc);
@@ -1655,8 +1888,6 @@ azalia_alc260_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_INAMP(1), &mc);
 	if (this->subid == ALC260_FUJITSU_ID) {
-		mc.un.ord = 1;	/* pindir: output */
-		azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* line1 */
 		mc.un.ord = 4;	/* connlist: cd */
 		azalia_generic_mixer_set(this, 0x05, MI_TARGET_CONNLIST, &mc);
 	}
@@ -1727,6 +1958,45 @@ azalia_alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 			return EINVAL;
 	}
 	return azalia_generic_mixer_set(this, m->nid, m->target, mc);
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC662-GR
+ * ---------------------------------------------------------------- */
+
+int
+azalia_alc662_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{3, {0x02, 0x03, 0x04}}}}; /* analog 6ch */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{2, {0x09, 0x08}}}};	/* analog 4ch */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC861
+ * ---------------------------------------------------------------- */
+
+int
+azalia_alc861_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x03, 0x04, 0x05, 0x06}}, /* analog 8ch */
+		 {1, {0x07}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{1, {0x08}}}};	/* analog 2ch */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
 }
 
 /* ----------------------------------------------------------------
@@ -1888,14 +2158,10 @@ azalia_alc882_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x1b, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x15, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x16, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x17, MI_TARGET_PINDIR, &mc);
 	mc.un.ord = 0;		/* [0] 0x0c */
 	azalia_generic_mixer_set(this, 0x14, MI_TARGET_CONNLIST, &mc);
 	azalia_generic_mixer_set(this, 0x1b, MI_TARGET_CONNLIST, &mc);
@@ -1905,13 +2171,6 @@ azalia_alc882_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x16, MI_TARGET_CONNLIST, &mc);
 	mc.un.ord = 2;		/* [3] 0x0fb */
 	azalia_generic_mixer_set(this, 0x17, MI_TARGET_CONNLIST, &mc);
-
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x18, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x19, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x1a, MI_TARGET_PINDIR, &mc);
-	/* XXX: inamp for 18/19/1a */
-
 	mc.un.ord = 0;		/* unmute */
 	azalia_generic_mixer_set(this, 0x24, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x23, MI_TARGET_INAMP(1), &mc);
@@ -2153,18 +2412,10 @@ azalia_alc883_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
-	if (this->subid == ALC883_ACER_ID) {
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
-	}
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x1b, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x15, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x16, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x17, MI_TARGET_PINDIR, &mc);
 	mc.un.ord = 0;		/* [0] 0x0c */
 	azalia_generic_mixer_set(this, 0x14, MI_TARGET_CONNLIST, &mc);
 	azalia_generic_mixer_set(this, 0x1b, MI_TARGET_CONNLIST, &mc);
@@ -2174,16 +2425,54 @@ azalia_alc883_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x16, MI_TARGET_CONNLIST, &mc);
 	mc.un.ord = 2;		/* [3] 0x0fb */
 	azalia_generic_mixer_set(this, 0x17, MI_TARGET_CONNLIST, &mc);
-
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x18, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x19, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x1a, MI_TARGET_PINDIR, &mc);
-	/* XXX: inamp for 18/19/1a */
-
 	mc.un.ord = 0;		/* unmute */
 	azalia_generic_mixer_set(this, 0x23, MI_TARGET_INAMP(1), &mc);
 	azalia_generic_mixer_set(this, 0x22, MI_TARGET_INAMP(2), &mc);
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC885
+ * ---------------------------------------------------------------- */
+
+int
+azalia_alc885_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+		/* don't support for 0x25 dac */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{3, {0x07, 0x08, 0x09}},	/* analog 6ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC888
+ * ---------------------------------------------------------------- */
+
+int
+azalia_alc888_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+		/* don't support for 0x25 dac */
+		/* ALC888S has another SPDIF-out 0x10 */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}},	/* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
@@ -2266,14 +2555,11 @@ azalia_ad1984_mixer_init(codec_t *this)
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
+
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x1c, MI_TARGET_PINDIR, &mc); /* mic */
-	mc.un.ord = 1;		/* enable */
-	azalia_generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
-	azalia_generic_mixer_set(this, 0x13, MI_TARGET_EAPD, &mc);
-
 	mc.un.ord = 0;          /* unmute */
 	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(1), &mc);
@@ -2285,7 +2571,6 @@ azalia_ad1984_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x1e, MI_TARGET_INAMP(1), &mc);
 	azalia_generic_mixer_set(this, 0x24, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x24, MI_TARGET_INAMP(1), &mc);
-
 	return 0;
 }
 
@@ -2334,6 +2619,28 @@ azalia_ad1984_get_port(codec_t *this, mixer_ctrl_t *mc)
 		return azalia_generic_mixer_get(this, m->nid,
 		    MI_TARGET_OUTAMP, mc);
 	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
+}
+
+/* ----------------------------------------------------------------
+ * Analog Devices AD1988A/AD1988B
+ * ---------------------------------------------------------------- */
+
+int
+azalia_ad1988_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 3,
+		{{4, {0x04, 0x05, 0x06, 0x0a}},	/* analog 8ch */
+		 {1, {0x02}},	/* digital */
+		 {1, {0x03}}}};	/* another analog */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09, 0x0f}}, /* analog 6ch */
+		 {1, {0x07}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
 }
 
 /* ----------------------------------------------------------------
@@ -2396,25 +2703,16 @@ azalia_cmi9880_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
 	mc.un.ord = 5;		/* record.front.source=mic */
 	azalia_generic_mixer_set(this, 0x08, MI_TARGET_CONNLIST, &mc);
 	mc.un.ord = 7;		/* record.surround.source=line1 */
 	azalia_generic_mixer_set(this, 0x09, MI_TARGET_CONNLIST, &mc);
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x0e, MI_TARGET_PINDIR, &mc);
-	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc);
 	mc.un.ord = 0;		/* front DAC -> headphones */
 	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_CONNLIST, &mc);
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x10, MI_TARGET_PINDIR, &mc);	/* mic */
-	azalia_generic_mixer_set(this, 0x13, MI_TARGET_PINDIR, &mc);	/* SPDIF-in */
-	azalia_generic_mixer_set(this, 0x1f, MI_TARGET_PINDIR, &mc);	/* line1 */
-	azalia_generic_mixer_set(this, 0x20, MI_TARGET_PINDIR, &mc);	/* line2 */
 	return 0;
 }
 
@@ -2504,14 +2802,9 @@ azalia_stac9200_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;		/* no need for generic_mixer_set() */
-	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* headphones */
-	azalia_generic_mixer_set(this, 0x0e, MI_TARGET_PINDIR, &mc); /* speaker */
-	mc.un.ord = 0;		/* pindir: input */
-	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* mic2 */
-	azalia_generic_mixer_set(this, 0x10, MI_TARGET_PINDIR, &mc); /* mic1 */
 	mc.type = AUDIO_MIXER_VALUE;
 	mc.un.value.num_channels = 2;
 	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x0c, MI_TARGET_OUTAMP);
@@ -2610,8 +2903,6 @@ static const mixer_item_t stac9221_mixer_items[] = {
 int
 azalia_stac9221_mixer_init(codec_t *this)
 {
-	mixer_ctrl_t mc;
-
 	this->nmixers = sizeof(stac9221_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -2624,18 +2915,9 @@ azalia_stac9221_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;		/* pindir: output */
-	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_PINDIR, &mc); /* headphones */
-	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_PINDIR, &mc); /* mic, set to output */
-	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_PINDIR, &mc); /* speaker */
-	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* line out */
-	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* another line out */
+	azalia_generic_mixer_pin_sense(this);
 
 	if (this->subid == STAC9221_APPLE_ID) {
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
 #define APPLE_EVENT_HP         1
 #define APPLE_NID_HP           0x0a
 #define APPLE_NID_SPEAKER      0x0c
@@ -2739,9 +3021,6 @@ azalia_gpio_unmute(codec_t *this, int pin)
 	mask |= 1 << pin;
 	dir |= 1 << pin;
 
-	if (this->subid == STAC9221_APPLE_ID)
-		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
-
 	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
 	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
 	DELAY(1000);
@@ -2820,16 +3099,15 @@ azalia_stac7661_mixer_init(codec_t *this)
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
+
+	azalia_generic_mixer_pin_sense(this);
+
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
 	mc.un.ord = 1;
 	azalia_generic_mixer_set(this, 0x09, MI_TARGET_INAMP(0), &mc); /* mute input */
-	mc.un.ord = 0;
-	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* mic */
-	azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* internal mic */
 	mc.un.ord = 2;          /* select internal mic for recording */
 	azalia_generic_mixer_set(this, 0x15, MI_TARGET_CONNLIST, &mc);
-
 	return 0;
 }
 
