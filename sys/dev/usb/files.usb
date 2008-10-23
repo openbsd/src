@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.76 2008/04/09 19:49:55 robert Exp $
+#	$OpenBSD: files.usb,v 1.77 2008/10/23 17:21:22 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -168,6 +168,11 @@ file	dev/usb/if_kue.c		kue
 device	cdce: ether, ifnet, ifmedia
 attach	cdce at uhub
 file	dev/usb/if_cdce.c		cdce
+
+# Moschip MCS7x30 Ethernet
+device	mos: ether, ifnet, mii, ifmedia
+attach	mos at uhub
+file	dev/usb/if_mos.c		mos
 
 # Davicom DM9601
 device	udav: ether, ifnet, mii, ifmedia
