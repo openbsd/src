@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.74 2008/09/15 22:40:50 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.75 2008/10/23 21:28:31 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -708,9 +708,12 @@ auich_set_params(v, setmode, usemode, play, rec)
 	struct audio_params *play, *rec;
 {
 	struct auich_softc *sc = v;
+	struct ac97_codec_if *codec = sc->codec_if;
 	int error;
 	u_int orate;
 	u_int adj_rate;
+	u_int32_t control;
+	u_int16_t ext_id;
 
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
@@ -753,6 +756,17 @@ auich_set_params(v, setmode, usemode, play, rec)
 					play->sw_code = noswap_bytes_mts;
 					break;
 				case 2:
+					break;
+				case 4:
+					ext_id = codec->vtbl->get_caps(codec);
+					if (!(ext_id & AC97_EXT_AUDIO_SDAC))
+						return (EINVAL);
+					break;
+				case 6:
+					ext_id = codec->vtbl->get_caps(codec);
+					if ((ext_id & AC97_BITS_6CH) !=
+					    AC97_BITS_6CH)
+						return (EINVAL);
 					break;
 				default:
 					return (EINVAL);
@@ -903,6 +917,14 @@ auich_set_params(v, setmode, usemode, play, rec)
 
 		if (play->sample_rate == adj_rate)
 			play->sample_rate = orate;
+
+		control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
+		control &= ~AUICH_PCM246_MASK;
+		if (play->channels == 4)
+			control |= AUICH_PCM4;
+		else if (play->channels == 6)
+			control |= AUICH_PCM6;
+		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
 	}
 
 	if (setmode & AUMODE_RECORD) {
