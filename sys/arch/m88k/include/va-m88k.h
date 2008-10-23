@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.9 2006/04/09 03:07:53 deraadt Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.10 2008/10/23 21:25:07 kettenis Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -94,9 +94,5 @@ __extension__ ({ \
 	   (struct __va_list_tag *)__builtin_alloca(sizeof(__gnuc_va_list)); \
 	*(dest) = *(src);\
   })
-
-#if __ISO_C_VISIBLE >= 1999
-#define va_copy(dest, src) __va_copy(dest, src)
-#endif
 
 #endif /* defined (_STDARG_H) || defined (_VARARGS_H) */

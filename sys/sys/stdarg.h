@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.4 2006/01/06 18:53:06 millert Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.5 2008/10/23 21:25:08 kettenis Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #ifndef _STDARG_H_
 #define _STDARG_H_
 
+#include <sys/cdefs.h>
+
 #if defined(__GNUC__) && __GNUC__ >= 3
 
 /* Define __gnuc_va_list.  */
@@ -31,17 +33,19 @@ typedef __builtin_va_list __gnuc_va_list;
    actual type **after default promotions**.
    Thus, va_arg (..., short) is not valid.  */
 
-#define va_start(v,l)	__builtin_stdarg_start((v),l)
-#define va_end		__builtin_va_end
-#define va_arg		__builtin_va_arg
-#define va_copy(d,s)	__builtin_va_copy((d),(s))
-#define __va_copy(d,s)	__builtin_va_copy((d),(s))
-
+#define va_start(ap, last)	__builtin_stdarg_start((ap), last)
+#define va_end			__builtin_va_end
+#define va_arg			__builtin_va_arg
+#define __va_copy(dst, src)	__builtin_va_copy((dst),(src))
 
 typedef __gnuc_va_list va_list;
 
 #else
 #include <machine/stdarg.h>
+#endif
+
+#if __ISO_C_VISIBLE >= 1999
+#define	va_copy(dst, src)	__va_copy((dst), (src))
 #endif
 
 #endif /* not _STDARG_H_ */

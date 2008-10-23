@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.8 2006/04/09 03:07:52 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.9 2008/10/23 21:25:07 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,11 +52,6 @@ typedef __va_list va_list;
 	    ((ap = (va_list) ((long)((char *)ap - sizeof (type)) &	\
 	                             (sizeof(type) > 4 ? ~0x7 : ~0x3))),\
 	     (*((type *) (void *) ((char *)ap + ((8 - sizeof(type)) % 4))))))
-
-#if __ISO_C_VISIBLE >= 1999
-#define va_copy(dest, src) \
-	((dest) = (src))
-#endif
 
 #define	va_end(ap)	
 

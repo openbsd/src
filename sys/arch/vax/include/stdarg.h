@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.9 2006/04/09 03:07:53 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.10 2008/10/23 21:25:08 kettenis Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.11 1999/05/03 16:30:34 christos Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ typedef __va_list	va_list;
 	(*(type *)(void *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
 #if __BSD_VISIBLE
-#define va_copy(dest, src) \
+#define __va_copy(dest, src) \
 	((dest) = (src))
 #endif
 

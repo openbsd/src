@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.10 2006/04/09 03:07:52 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.11 2008/10/23 21:25:07 kettenis Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
@@ -58,11 +58,6 @@ typedef __va_list	va_list;
 #define	va_arg(ap, type)						\
 	(*(type *)((ap).offset += __va_size(type),			\
 		   (ap).base + (ap).offset + __va_arg_offset(ap, type)))
-
-#if __ISO_C_VISIBLE >= 1999
-#define va_copy(dest, src) \
-	((dest) = (src))
-#endif
 
 #define	va_end(ap)	
 
