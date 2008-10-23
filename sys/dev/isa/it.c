@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.37 2008/10/22 05:38:17 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.38 2008/10/23 08:08:44 form Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -483,6 +483,8 @@ it_wdog_cb(void *arg, int period)
 		 */
 		if (sc->sc_chipid == IT_ID_8712 && sc->sc_chiprev < 0x8 &&
 		    period > 0xff) {
+			if (period % 60 >= 30)
+				period += 60;
 			period /= 60;
 			minutes++;
 		}
