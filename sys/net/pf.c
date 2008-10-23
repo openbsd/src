@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.623 2008/10/02 15:12:45 jsing Exp $ */
+/*	$OpenBSD: pf.c,v 1.624 2008/10/23 22:22:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -841,7 +841,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
-#if NPFSYNC
+#if NPFSYNC > 0
 	pfsync_insert_state(s);
 #endif
 	return (0);
@@ -1092,11 +1092,11 @@ pf_unlink_state(struct pf_state *cur)
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL);
 	}
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
-#if NPFLOW
+#if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW)
 		export_pflow(cur);
 #endif
-#if NPFSYNC
+#if NPFSYNC > 0
 	if (cur->creatorid == pf_status.hostid)
 		pfsync_delete_state(cur);
 #endif
@@ -1110,7 +1110,7 @@ pf_unlink_state(struct pf_state *cur)
 void
 pf_free_state(struct pf_state *cur)
 {
-#if NPFSYNC
+#if NPFSYNC > 0
 	if (pfsyncif != NULL &&
 	    (pfsyncif->sc_bulk_send_next == cur ||
 	    pfsyncif->sc_bulk_terminator == cur))
@@ -5733,7 +5733,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		action = pf_test_state_tcp(&s, dir, kif, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -5763,7 +5763,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -5787,7 +5787,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		action = pf_test_state_icmp(&s, dir, kif, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -5802,7 +5802,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	default:
 		action = pf_test_state_other(&s, dir, kif, m, &pd);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -6106,7 +6106,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		action = pf_test_state_tcp(&s, dir, kif, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -6136,7 +6136,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -6160,7 +6160,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		action = pf_test_state_icmp(&s, dir, kif,
 		    m, off, h, &pd, &reason);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
@@ -6175,7 +6175,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	default:
 		action = pf_test_state_other(&s, dir, kif, m, &pd);
 		if (action == PF_PASS) {
-#if NPFSYNC
+#if NPFSYNC > 0
 			pfsync_update_state(s);
 #endif /* NPFSYNC */
 			r = s->rule.ptr;

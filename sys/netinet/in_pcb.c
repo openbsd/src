@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.102 2008/07/29 21:46:27 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.103 2008/10/23 22:22:44 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1015,7 +1015,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
-#if NPF
+#if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
@@ -1085,7 +1085,7 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
-#if NPF
+#if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 

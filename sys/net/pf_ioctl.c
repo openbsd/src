@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.209 2008/06/29 08:42:15 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.210 2008/10/23 22:22:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1489,7 +1489,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    s->kif->pfik_name)) {
-#if NPFSYNC
+#if NPFSYNC > 0
 				/* don't send out individual delete messages */
 				s->sync_flags = PFSTATE_NOSYNC;
 #endif
@@ -1498,7 +1498,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 		psk->psk_killed = killed;
-#if NPFSYNC
+#if NPFSYNC > 0
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
 #endif
 		break;
