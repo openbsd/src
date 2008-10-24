@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.28 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.29 2008/10/24 00:22:57 tedu Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -162,9 +162,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		goto remove;
 	}
 
-	/* remove from lru now to prevent races */
-	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-
 	vp = ncp->nc_vp;
 	vpid = vp->v_id;
 	if (vp == dvp) {	/* lookup on "." */
@@ -181,8 +178,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
 			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0) {
 				vput(vp);
-				/* parent has permanent issues; recycle */
-				TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 				return (error);
 			}
 			cnp->cn_flags &= ~PDIRUNLOCK;
@@ -209,8 +204,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			nchstats.ncs_falsehits++;
 		} else
 			nchstats.ncs_badhits++;
-		/* cache entry is stale; recycle */
-		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 		/*
 		 * The parent needs to be locked when we return to VOP_LOOKUP().
 		 * The `.' case here should be extremely rare (if it can happen
@@ -226,8 +219,13 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 
 	nchstats.ncs_goodhits++;
-	/* cache entry is valid; keep it */
-	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	/*
+	 * Move this slot to end of LRU chain, if not already there.
+	 */
+	if (TAILQ_NEXT(ncp, nc_lru) != NULL) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	}
 	*vpp = vp;
 	return (0);
 
