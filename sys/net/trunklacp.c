@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.6 2008/10/15 19:12:18 blambert Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.7 2008/10/24 04:44:52 brad Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -1889,7 +1889,7 @@ lacp_dprintf(const struct lacp_port *lp, const char *fmt, ...)
 	va_list va;
 
 	if (lp) {
-		printf("%s: ", lp->tp_if->if_xname);
+		printf("%s: ", lp->lp_ifp->if_xname);
 	}
 
 	va_start(va, fmt);
