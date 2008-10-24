@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.150 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.151 2008/10/24 16:50:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -254,6 +254,7 @@ sub compute_digest
 {
 	my ($self, $filename, $class) = @_;
 	require OpenBSD::md5;
+	$class = 'OpenBSD::sha' if !defined $class;
 	return $class->new($filename);
 }
 
