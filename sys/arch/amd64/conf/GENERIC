@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.244 2008/10/23 17:26:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.245 2008/10/24 06:10:25 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -495,6 +495,7 @@ envy*	at pci?				# VIA Envy24 (aka ICE1712)
 #sv*	at pci?				# S3 SonicVibes (S3 617)
 #neo*	at pci?				# NeoMagic 256AV/ZX
 cmpci*	at pci?				# C-Media CMI8338/8738
+auacer*	at pci?				# Acer Labs M5455
 auich*	at pci? flags 0x0000		# i82801 ICH AC'97 audio
 auixp*	at pci?				# ATI IXP AC'97 Audio
 #autri*	at pci? flags 0x0000		# Trident 4D WAVE
@@ -532,6 +533,7 @@ audio*	at envy?
 audio*	at cmpci?
 audio*	at clcs?
 #audio*	at clct?
+audio*	at auacer?
 audio*	at auich?
 audio*	at auixp?
 #audio*	at autri?
