@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2008/06/14 18:09:47 hshoexer Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2008/10/24 06:34:55 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1547,6 +1547,7 @@ pmap_release(struct pmap *pmap)
 	 * APTE space because we do that in pmap_unmap_ptes().
 	 */
 	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, NBPG);
+	pmap->pm_pdir = NULL;
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
