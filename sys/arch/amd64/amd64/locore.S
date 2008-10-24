@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2008/08/13 16:01:08 weingart Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2008/10/24 06:32:17 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -752,7 +752,6 @@ ENTRY(cpu_switchto)
 	movq	%rdi, %r13
 	movq	%rsi, %r12
 
-switch_resume:
 #ifdef DIAGNOSTIC
 	xorq	%rax,%rax
 	cmpq	%rax,P_WCHAN(%r12)
