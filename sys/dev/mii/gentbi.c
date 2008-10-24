@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.6 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.7 2008/10/24 17:11:37 brad Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -271,7 +271,7 @@ gentbi_status(struct mii_softc *sc)
 		if ((sc->mii_extcapabilities & EXTSR_1000XFDX) != 0 &&
 		    (anlpar & ANLPAR_X_FD) != 0)
 			mii->mii_media_active |=
-			    IFM_FDX;
+			    mii_phy_flowstatus(sc) | IFM_FDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

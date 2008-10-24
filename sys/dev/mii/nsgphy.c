@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.20 2008/05/30 05:08:29 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.21 2008/10/24 17:11:37 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -268,7 +268,7 @@ nsgphy_status(struct mii_softc *sc)
 		}
 
 		if (physup & PHY_SUP_DUPLEX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
 	} else
