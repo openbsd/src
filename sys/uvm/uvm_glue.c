@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.47 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.48 2008/10/24 06:32:46 deraadt Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -282,6 +282,7 @@ void
 uvm_exit(struct proc *p)
 {
 	uvmspace_free(p->p_vmspace);
+	p->p_vmspace = NULL;
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 	p->p_addr = NULL;
 }
