@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmdir.2,v 1.9 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: rmdir.2,v 1.10 2008/10/24 14:34:39 jmc Exp $
 .\"	$NetBSD: rmdir.2,v 1.7 1995/02/27 12:36:30 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rmdir.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 24 2008 $
 .Dt RMDIR 2
 .Os
 .Sh NAME
@@ -97,6 +97,7 @@ The directory entry to be removed resides on a read-only file system.
 points outside the process's allocated address space.
 .El
 .Sh SEE ALSO
+.Xr rmdir 1 ,
 .Xr mkdir 2 ,
 .Xr unlink 2
 .Sh HISTORY
