@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.63 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.64 2008/10/24 00:08:43 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ struct pool_item {
 #endif
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
-	int pi_fillstart;
 };
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
@@ -518,19 +517,6 @@ startover:
 		       " item addr %p",
 			pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
 	}
-	{
-		int i, *ip = v;
-
-		for (i = 0; i < pp->pr_size / sizeof(int); i++) {
-			if (++ip < &pi->pi_fillstart)
-				continue;
-			if (*ip != PI_MAGIC) {
-				panic("pool_do_get(%s): free list modified: magic=%x; page %p;"
-	       			" item addr %p",
-					pp->pr_wchan, *ip, ph->ph_page, pi);
-			}
-		}
-	}
 #endif
 
 	/*
@@ -636,6 +622,9 @@ pool_do_put(struct pool *pp, void *v)
 	 * Return to item list.
 	 */
 #ifdef DIAGNOSTIC
+	pi->pi_magic = PI_MAGIC;
+#endif
+#ifdef DEBUG
 	{
 		int i, *ip = v;
 
@@ -643,10 +632,9 @@ pool_do_put(struct pool *pp, void *v)
 			*ip++ = PI_MAGIC;
 		}
 	}
-	pi->pi_magic = PI_MAGIC;
 #endif
 
-	TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
+	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
 	pp->pr_nitems++;
 	pp->pr_nout--;
@@ -792,13 +780,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 #ifdef DIAGNOSTIC
-		{
-			int i, *ip = (int *)pi;
-	
-			for (i = 0; i < pp->pr_size / sizeof(int); i++) {
-				*ip++ = PI_MAGIC;
-			}
-		}
 		pi->pi_magic = PI_MAGIC;
 #endif
 		cp = (caddr_t)(cp + pp->pr_size);
