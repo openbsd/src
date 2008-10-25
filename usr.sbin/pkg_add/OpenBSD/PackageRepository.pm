@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.59 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.60 2008/10/25 22:28:42 bernd Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -265,6 +265,7 @@ sub relative_url
 
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
+use OpenBSD::Error;
 
 sub urlscheme
 {
@@ -282,6 +283,9 @@ sub parse_fullurl
 sub open_pipe
 {
 	my ($self, $object) = @_;
+	if (defined $ENV{'PKG_CACHE'}) {
+		Copy($self->relative_url($object->{name}), $ENV{'PKG_CACHE'});
+	}
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
