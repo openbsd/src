@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.5 2007/06/01 21:30:31 cnst Exp $	*/
+/*	$OpenBSD: owid.c,v 1.6 2008/10/25 00:27:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -85,6 +85,8 @@ owid_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_INTEGER;
 	sc->sc_sensor.value = ONEWIRE_ROM_SN(sc->sc_rom);
+	snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc), "sn %012llx",
+	    ONEWIRE_ROM_SN(oa->oa_rom));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
 

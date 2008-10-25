@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.9 2007/11/28 18:26:11 todd Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.10 2008/10/25 00:27:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -100,6 +100,8 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_TEMP;
+	snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc), "sn %012llx",
+	    ONEWIRE_ROM_SN(oa->oa_rom));
 
 	sc->sc_sensortask = sensor_task_register(sc, owtemp_update, 5);
 	if (sc->sc_sensortask == NULL) {
