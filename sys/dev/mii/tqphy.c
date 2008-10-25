@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.13 2008/09/08 07:50:15 brad Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.14 2008/10/25 00:10:21 brad Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -102,8 +102,8 @@ const struct mii_phy_funcs tqphy_funcs = {
 };
 
 static const struct mii_phydesc tqphys[] = {
-	{ MII_OUI_TSC,		MII_MODEL_TSC_78Q2120,
-	  MII_STR_TSC_78Q2120 },
+	{ MII_OUI_TDK,		MII_MODEL_TDK_78Q2120,
+	  MII_STR_TDK_78Q2120 },
 
 	{ 0,			0,
 	  NULL },

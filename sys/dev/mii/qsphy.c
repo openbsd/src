@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.16 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.17 2008/10/25 00:10:21 brad Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -101,8 +101,8 @@ const struct mii_phy_funcs qsphy_funcs = {
 };
 
 static const struct mii_phydesc qsphys[] = {
-	{ MII_OUI_QUALSEMI,		MII_MODEL_QUALSEMI_QS6612,
-	  MII_STR_QUALSEMI_QS6612 },
+	{ MII_OUI_QUALITYSEMI,		MII_MODEL_QUALITYSEMI_QS6612,
+	  MII_STR_QUALITYSEMI_QS6612 },
 
 	{ 0,			0,
 	  NULL },
