@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.30 2008/05/29 02:10:01 jakemsr Exp $	*/
+/*	$OpenBSD: yds.c,v 1.31 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1211,10 +1211,14 @@ yds_set_params(addr, setmode, usemode, play, rec)
 
 		p = mode == AUMODE_PLAY ? play : rec;
 
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
+		if (p->sample_rate < 4000)
+			p->sample_rate = 4000;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 
 		p->factor = 1;
 		p->sw_code = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.13 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: ess.c,v 1.14 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -1229,11 +1229,14 @@ ess_set_params(addr, setmode, usemode, play, rec)
 
 		p = mode == AUMODE_PLAY ? play : rec;
 
-		if (p->sample_rate < ESS_MINRATE ||
-		    p->sample_rate > ESS_MAXRATE ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
+		if (p->sample_rate < ESS_MINRATE)
+			p->sample_rate = ESS_MINRATE;
+		if (p->sample_rate > ESS_MAXRATE)
+			p->sample_rate = ESS_MAXRATE;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 
 		p->factor = 1;
 		p->sw_code = 0;

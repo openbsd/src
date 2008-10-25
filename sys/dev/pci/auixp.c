@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.21 2008/09/24 19:09:05 chl Exp $ */
+/* $OpenBSD: auixp.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -377,6 +377,10 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
 		play->sw_code = NULL;
+		if (play->channels > 2)
+			play->channels = 2;
+		if (play->precision > 16)
+			play->precision = 16;
 		switch(play->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			switch (play->channels) {
@@ -561,9 +565,13 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 
 	}
 
-	if (setmode & AUMODE_RECORD) {
+	if (setmode & AUMODE_RECORD) {		
 		rec->factor = 1;
 		rec->sw_code = 0;
+		if (rec->channels > 2)
+			rec->channels = 2;
+		if (rec->precision > 16)
+			rec->precision = 16;
 		switch(rec->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			rec->sw_code = ulinear8_to_mulaw;

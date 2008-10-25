@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.98 2008/09/29 02:27:38 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.99 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2257,6 +2257,12 @@ audio_rint(void *v)
 int
 audio_check_params(struct audio_params *p)
 {
+	if (p->channels < 1 || p->channels > 12)
+		return (EINVAL);
+
+	if (p->precision < 8 || p->precision > 32)
+		return (EINVAL);
+
 	if (p->encoding == AUDIO_ENCODING_PCM16) {
 		if (p->precision == 8)
 			p->encoding = AUDIO_ENCODING_ULINEAR;
@@ -2287,15 +2293,13 @@ audio_check_params(struct audio_params *p)
 	case AUDIO_ENCODING_ALAW:
 	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
-			return (EINVAL);
+			p->precision = 8;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision != 8 && p->precision != 16 && 
-		    p->precision != 32)
-			return (EINVAL);
+		p->precision = (p->precision + 7) & ~7;
 		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:
 	case AUDIO_ENCODING_MPEG_L1_PACKETS:
@@ -2307,10 +2311,6 @@ audio_check_params(struct audio_params *p)
 	default:
 		return (EINVAL);
 	}
-
-	/* sanity check # of channels */
-	if (p->channels < 1 || p->channels > 12)
-		return (EINVAL);
 
 	return (0);
 }

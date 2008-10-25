@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.9 2008/04/30 17:31:26 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.10 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -688,7 +688,7 @@ envy_set_params(void *self, int setmode, int usemode,
 	if (setmode == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    p->sample_rate != r->sample_rate) {
 		DPRINTF("%s: play/rec rates mismatch\n", DEVNAME(sc));
-		return EINVAL;
+		r->sample_rate = p->sample_rate;
 	}
 	rate = (setmode & AUMODE_PLAY) ? p->sample_rate : r->sample_rate;
 	for (i = 0; envy_rates[i].rate < rate; i++) {

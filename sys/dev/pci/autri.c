@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.21 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: autri.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -1012,12 +1012,14 @@ autri_set_params(addr, setmode, usemode, play, rec)
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
+		if (p->sample_rate < 4000)
+			p->sample_rate = 4000;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 		p->factor = 1;
 		p->sw_code = 0;
 		switch (p->encoding) {

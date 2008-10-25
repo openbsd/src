@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.24 2008/04/21 00:32:43 jakemsr Exp $ */
+/*      $OpenBSD: sv.c,v 1.25 2008/10/25 22:30:43 jakemsr Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -709,12 +709,14 @@ sv_set_params(addr, setmode, usemode, p, r)
 		mode = SV_DMAA_FORMAT16 | SV_DMAC_FORMAT16;
 	else
 		mode = 0;
+	if (p->channels > 2)
+		p->channels = 2;
         if (p->channels == 2)
         	mode |= SV_DMAA_STEREO | SV_DMAC_STEREO;
-	else if (p->channels != 1)
-		return (EINVAL);
-        if (p->sample_rate < 2000 || p->sample_rate > 48000)
-        	return (EINVAL);
+        if (p->sample_rate < 2000)
+		p->sample_rate = 2000;
+	if (p->sample_rate > 48000)
+		p->sample_rate = 48000;
 
         p->sw_code = pswcode;
         r->sw_code = rswcode;

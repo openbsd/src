@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.61 2008/10/23 02:06:53 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.62 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -276,6 +276,10 @@ int	azalia_trigger_input(void *, void *, void *, int,
 int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 int azalia_create_encodings(struct audio_format *, int,
     struct audio_encoding_set **);
+
+int	azalia_match_format(codec_t *, audio_params_t *);
+int	azalia_set_params_sub(codec_t *, int, audio_params_t *);
+
 
 /* variables */
 struct cfattach azalia_ca = {
@@ -2209,99 +2213,151 @@ azalia_get_default_params(void *addr, int mode, struct audio_params *params)
 }
 
 int
+azalia_match_format(codec_t *codec, audio_params_t *par)
+{
+	int i;
+
+	for (i = 0; i < codec->nformats; i++) {
+		if (par->encoding != codec->formats[i].encoding)
+			continue;
+		if (par->precision != codec->formats[i].precision)
+			continue;
+		if (par->channels != codec->formats[i].channels)
+			continue;
+		break;
+	}
+
+	return (i);
+}
+
+int
+azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
+{
+	void (*swcode)(void *, u_char *, int) = NULL;
+	char *cmode;
+	int i, j;
+	uint ochan, oenc, opre;
+
+	if (mode == AUMODE_PLAY)
+		cmode = "play";
+	else
+		cmode = "record";
+
+	ochan = par->channels;
+	oenc = par->encoding;
+	opre = par->precision;
+
+	i = azalia_match_format(codec, par);
+	if (i == codec->nformats && par->channels == 1) {
+		/* find a 2 channel format and emulate mono */
+		par->channels = 2;
+		i = azalia_match_format(codec, par);
+		if (i != codec->nformats) {
+			par->factor = 2;
+			if (mode == AUMODE_RECORD)
+				swcode = linear16_decimator;
+			else
+				swcode = noswap_bytes_mts;
+			par->channels = 1;
+		}
+	}
+	par->channels = ochan;
+	if (i == codec->nformats && (par->precision != 16 || par->encoding !=
+	    AUDIO_ENCODING_SLINEAR_LE)) {
+		/* try with default encoding/precision */
+		par->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		par->precision = 16;
+		i = azalia_match_format(codec, par);
+	}
+	if (i == codec->nformats && par->channels == 1) {
+		/* find a 2 channel format and emulate mono */
+		par->channels = 2;
+		i = azalia_match_format(codec, par);
+		if (i != codec->nformats) {
+			par->factor = 2;
+			if (mode == AUMODE_RECORD)
+				swcode = linear16_decimator;
+			else
+				swcode = noswap_bytes_mts;
+			par->channels = 1;
+		}
+	}
+	par->channels = ochan;
+	if (i == codec->nformats && par->channels != 2) {
+		/* try with default channels */
+		par->encoding = oenc;
+		par->precision = opre;
+		par->channels = 2;
+		i = azalia_match_format(codec, par);
+	}
+	/* try with default everything */
+	if (i == codec->nformats) {
+		par->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		par->precision = 16;
+		par->channels = 2;
+		i = azalia_match_format(codec, par);
+		if (i == codec->nformats) {
+			DPRINTF(("%s: can't find %s format %u/%u/%u\n",
+			    __func__, cmode, par->encoding,
+			    par->precision, par->channels));
+			return EINVAL;
+		}
+	}
+	if (codec->formats[i].frequency_type == 0) {
+		DPRINTF(("%s: matched %s format %d has 0 frequencies\n",
+		    __func__, cmode, i));
+		return EINVAL;
+	}
+
+	for (j = 0; j < codec->formats[i].frequency_type; j++) {
+		if (par->sample_rate != codec->formats[i].frequency[j])
+			continue;
+		break;
+	}
+	if (j == codec->formats[i].frequency_type) {
+		/* try again with default */
+		par->sample_rate = 48000;
+		for (j = 0; j < codec->formats[i].frequency_type; j++) {
+			if (par->sample_rate != codec->formats[i].frequency[j])
+				continue;
+			break;
+		}
+		if (j == codec->formats[i].frequency_type) {
+			DPRINTF(("%s: can't find %s rate %u\n",
+			    __func__, cmode, par->sample_rate));
+			return EINVAL;
+		}
+	}
+	par->sw_code = swcode;
+
+	return (0);
+}
+
+int
 azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
     audio_params_t *r)
 {
 	azalia_t *az;
 	codec_t *codec;
-	void (*pswcode)(void *, u_char *, int) = NULL;
-	void (*rswcode)(void *, u_char *, int) = NULL;
-	int i, j;
+	int ret;
 
 	az = v;
 	codec = &az->codecs[az->codecno];
-	if (smode & AUMODE_RECORD && r != NULL) {
-		for (i = 0; i < codec->nformats; i++) {
-			if (r->encoding != codec->formats[i].encoding)
-				continue;
-			if (r->precision != codec->formats[i].precision)
-				continue;
-			if (r->channels != codec->formats[i].channels)
-				continue;
-			break;
-		}
-		/* find a 2 channel format and emulate mono */
-		if (i == codec->nformats && r->channels == 1) {
-			r->factor = 2;
-			rswcode = linear16_decimator;
-			for (i = 0; i < codec->nformats; i++) {
-				if (r->encoding != codec->formats[i].encoding)
-					continue;
-				if (r->precision != codec->formats[i].precision)
-					continue;
-				if (codec->formats[i].channels != 2)
-					continue;
-				break;
-			}
-		}
-
-		if (i == codec->nformats) {
-			DPRINTF(("%s: can't find record format %u/%u/%u\n",
-			    __func__, r->encoding, r->precision, r->channels));
-			return (EINVAL);
-		}
-		for (j = 0; j < codec->formats[i].frequency_type; j++) {
-			if (r->sample_rate != codec->formats[i].frequency[j])
-				continue;
-			break;
-		}
-		if (j == codec->formats[i].frequency_type) {
-			DPRINTF(("%s: can't find record rate %u\n",
-			    __func__, r->sample_rate));
-			return (EINVAL);
-		}
-		r->sw_code = rswcode;
+	if (codec->nformats == 0) {
+		DPRINTF(("%s: codec has no formats\n", __func__));
+		return EINVAL;
 	}
+
+	if (smode & AUMODE_RECORD && r != NULL) {
+		ret = azalia_set_params_sub(codec, AUMODE_RECORD, r);
+		if (ret)
+			return (ret);
+	}
+
 	if (smode & AUMODE_PLAY && p != NULL) {
-		for (i = 0; i < codec->nformats; i++) {
-			if (p->encoding != codec->formats[i].encoding)
-				continue;
-			if (p->precision != codec->formats[i].precision)
-				continue;
-			if (p->channels != codec->formats[i].channels)
-				continue;
-			break;
-		}
-		/* find a 2 channel format and emulate mono */
-		if (i == codec->nformats && p->channels == 1) {
-			p->factor = 2;
-			pswcode = noswap_bytes_mts;
-			for (i = 0; i < codec->nformats; i++) {
-				if (p->encoding != codec->formats[i].encoding)
-					continue;
-				if (p->precision != codec->formats[i].precision)
-					continue;
-				if (codec->formats[i].channels != 2)
-					continue;
-				break;
-			}
-		}
-		if (i == codec->nformats) {
-			DPRINTF(("%s: can't find playback format %u/%u/%u\n",
-			    __func__, p->encoding, p->precision, p->channels));
-			return (EINVAL);
-		}
-		for (j = 0; j < codec->formats[i].frequency_type; j++) {
-			if (p->sample_rate != codec->formats[i].frequency[j])
-				continue;
-			break;
-		}
-		if (j == codec->formats[i].frequency_type) {
-			DPRINTF(("%s: can't find playback rate %u\n",
-			    __func__, p->sample_rate));
-			return (EINVAL);
-		}
-		p->sw_code = pswcode;
+		ret = azalia_set_params_sub(codec, AUMODE_PLAY, p);
+		if (ret)
+			return (ret);
 	}
 
 	return (0);

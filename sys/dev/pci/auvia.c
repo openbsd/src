@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.43 2008/10/23 21:50:01 jakemsr Exp $ */
+/*	$OpenBSD: auvia.c,v 1.44 2008/10/25 22:30:43 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -648,16 +648,26 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				&& (ext_id & AC97_BITS_6CH) == AC97_BITS_6CH) {
 				/* ok */
 			} else {
-				return (EINVAL);
+				p->channels = 2;
 			}
 		} else {
-			if (p->channels != 1 && p->channels != 2)
-				return (EINVAL);
+			if (p->channels > 2)
+				p->channels = 2;
 		}
 
-		if ((p->sample_rate < 4000 || p->sample_rate > 48000) ||
-		    (p->precision != 8 && p->precision != 16))
-			return (EINVAL);
+		if (p->sample_rate < 4000)
+			p->sample_rate = 4000;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+
+		/* XXX only 16-bit 48kHz slinear_le if s/pdif enabled ? */
+		if (sc->sc_spdif) {
+			p->sample_rate = 48000;
+			p->precision = 16;
+			p->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		}
 
 		/* XXX only 16-bit 48kHz slinear_le if s/pdif enabled ? */
 		if (sc->sc_spdif &&

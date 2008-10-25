@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.3 2008/10/21 05:36:46 fkr Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.4 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -578,8 +578,8 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		p->sw_code = NULL;
 
 		if (mode == AUMODE_RECORD) {
-			if (p->channels < 1 || p->channels > 2)
-				return EINVAL;
+			if (p->channels > 2)
+				p->channels = 2;
 		}
 
 		switch (p->encoding) {

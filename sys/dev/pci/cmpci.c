@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.20 2008/05/29 07:20:15 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.21 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -676,7 +676,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 
 		if (setmode & AUMODE_RECORD) {
 			if (p->channels > 2)
-				return (EINVAL);
+				p->channels = 2;
 			sc->sc_play_channel = 0;
 			cmpci_reg_clear_reg_misc(sc, CMPCI_REG_ENDBDAC);
 			cmpci_reg_clear_reg_misc(sc, CMPCI_REG_XCHGDAC);
@@ -703,6 +703,8 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 			    CMPCI_REG_CHB3D8C);
 
 		/* format */
+		if (p->precision > 16)
+			p->precision = 16;
 		p->sw_code = NULL;
 		switch (p->channels) {
 		case 1:
@@ -723,7 +725,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 					    CMPCI_REG_LEGACY_CTRL,
 					    CMPCI_REG_NXCHG);
 				} else
-						return (EINVAL);
+					p->channels = 2;
 			}
 			md_format = CMPCI_REG_FORMAT_STEREO;
 			break;
@@ -744,7 +746,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 					    CMPCI_REG_LEGACY_CTRL,
 					    CMPCI_REG_NXCHG);
 				} else
-					return (EINVAL);
+					p->channels = 2;
 			}
 			md_format = CMPCI_REG_FORMAT_STEREO;
 			break;
@@ -768,7 +770,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 					    CMPCI_REG_LEGACY_CTRL,
 					    CMPCI_REG_NXCHG);
 				} else
-					return (EINVAL);
+					p->channels = 2;
 			}
 			md_format = CMPCI_REG_FORMAT_STEREO;
 			break;
@@ -777,8 +779,6 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		}
 		switch (p->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			if (p->precision != 8)
-				return (EINVAL);
 			if (mode & AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = mulaw_to_slinear16_le;
@@ -789,8 +789,6 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 			}
 			break;
 		case AUDIO_ENCODING_ALAW:
-			if (p->precision != 8)
-				return (EINVAL);
 			if (mode & AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_le;

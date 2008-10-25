@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.29 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.30 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1573,16 +1573,20 @@ int
 emuxki_voice_set_srate(struct emuxki_voice *voice, u_int32_t srate)
 {
 	if (voice->use & EMU_VOICE_USE_PLAY) {
-		if ((srate < 4000) || (srate > 48000))
-			return (EINVAL);
+		if (srate < 4000)
+			srate = 4000;
+		if (srate > 48000)
+			srate = 48000;
 		voice->sample_rate = srate;
 		emuxki_channel_set_srate(voice->dataloc.chan[0], srate);
 		if (voice->stereo)
 			emuxki_channel_set_srate(voice->dataloc.chan[1],
 						  srate);
 	} else {
-		if ((srate < 8000) || (srate > 48000))
-			return (EINVAL);
+		if (srate < 8000)
+			srate = 8000;
+		if (srate > 48000)
+			srate = 48000;
 		voice->sample_rate = srate;
 		if (emuxki_voice_adc_rate(voice) < 0) {
 			voice->sample_rate = 0;
@@ -2117,8 +2121,11 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 		AUMODE_PLAY : AUMODE_RECORD;
 	p->factor = 1;
 	p->sw_code = NULL;
-	if (p->channels != 1 && p->channels != 2)
-		return (EINVAL);/* Will change when streams come in use */
+	if (p->channels > 2)
+		p->channels = 2;
+	if (p->precision > 16)
+		p->precision = 16;
+	/* Will change when streams come in use */
 
 	/*
 	 * Always use slinear_le for recording, as how to set otherwise

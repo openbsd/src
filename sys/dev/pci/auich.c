@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.76 2008/10/23 21:50:01 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.77 2008/10/25 22:30:43 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -748,16 +748,21 @@ auich_set_params(v, setmode, usemode, play, rec)
 
 	if (setmode & AUMODE_PLAY) {
 		/* only 16-bit 48kHz slinear_le if s/pdif enabled */
-		if (sc->sc_spdif &&
-		    ((play->sample_rate != 48000) || (play->precision != 16) ||
-		    (play->encoding != AUDIO_ENCODING_SLINEAR_LE)))
-			return (EINVAL);
+		if (sc->sc_spdif) {
+			play->sample_rate = 48000;
+			play->precision = 16;
+			play->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		}
 	}
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
 		play->sw_code = NULL;
+		if (play->precision > 16)
+			play->precision = 16;
 		switch(play->encoding) {
 		case AUDIO_ENCODING_ULAW:
+			if (play->channels > 2)
+				play->channels = 2;
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
@@ -774,6 +779,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_SLINEAR_LE:
 			switch (play->precision) {
 			case 8:
+				if (play->channels > 2)
+					play->channels = 2;
 				switch (play->channels) {
 				case 1:
 					play->factor = 4;
@@ -788,6 +795,10 @@ auich_set_params(v, setmode, usemode, play, rec)
 				}
 				break;
 			case 16:
+				if (play->channels > 6)
+					play->channels = 6;
+				if (play->channels > 1)
+					play->channels &= ~1;
 				switch (play->channels) {
 				case 1:
 					play->factor = 2;
@@ -798,23 +809,23 @@ auich_set_params(v, setmode, usemode, play, rec)
 				case 4:
 					ext_id = codec->vtbl->get_caps(codec);
 					if (!(ext_id & AC97_EXT_AUDIO_SDAC))
-						return (EINVAL);
+						play->channels = 2;
 					break;
 				case 6:
 					ext_id = codec->vtbl->get_caps(codec);
 					if ((ext_id & AC97_BITS_6CH) !=
 					    AC97_BITS_6CH)
-						return (EINVAL);
+						play->channels = 2;
 					break;
 				default:
 					return (EINVAL);
 				}
 				break;
-			default:
-				return (EINVAL);
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
+			if (play->channels > 2)
+				play->channels = 2;
 			switch (play->precision) {
 			case 8:
 				switch (play->channels) {
@@ -848,6 +859,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 			}
 			break;
 		case AUDIO_ENCODING_ALAW:
+			if (play->channels > 2)
+				play->channels = 2;
 			switch (play->channels) {
 			case 1:
 				play->factor = 4;
@@ -862,6 +875,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
+			if (play->channels > 2)
+				play->channels = 2;
 			switch (play->precision) {
 			case 8:
 				switch (play->channels) {
@@ -895,6 +910,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
+			if (play->channels > 2)
+				play->channels = 2;
 			switch (play->precision) {
 			case 8:
 				switch (play->channels) {
@@ -968,6 +985,10 @@ auich_set_params(v, setmode, usemode, play, rec)
 	if (setmode & AUMODE_RECORD) {
 		rec->factor = 1;
 		rec->sw_code = 0;
+		if (rec->channels > 2)
+			rec->channels = 2;
+		if (rec->precision > 16)
+			rec->precision = 16;
 		switch(rec->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			switch (rec->channels) {

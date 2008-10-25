@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.2 2008/07/09 02:47:03 brad Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.3 2008/10/25 22:30:43 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -575,6 +575,10 @@ auglx_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
 		play->sw_code = NULL;
+		if (play->precision > 16)
+			play->precision = 16;
+		if (play->channels > 2)
+			play->channels = 2;
 		switch(play->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			switch (play->channels) {
@@ -766,6 +770,10 @@ auglx_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	if (setmode & AUMODE_RECORD) {
 		rec->factor = 1;
 		rec->sw_code = 0;
+		if (rec->precision > 16)
+			rec->precision = 16;
+		if (rec->channels > 2)
+			rec->channels = 2;
 		switch(rec->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			switch (rec->channels) {

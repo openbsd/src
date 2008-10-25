@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.26 2008/05/29 07:20:15 jakemsr Exp $	*/
+/*	$OpenBSD: eso.c,v 1.27 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -708,11 +708,14 @@ eso_set_params(void *hdl, int setmode, int usemode,
 
 		p = (mode == AUMODE_PLAY) ? play : rec;
 
-		if (p->sample_rate < ESO_MINRATE ||
-		    p->sample_rate > ESO_MAXRATE ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
+		if (p->sample_rate < ESO_MINRATE)
+			p->sample_rate = ESO_MINRATE;
+		if (p->sample_rate > ESO_MAXRATE)
+			p->sample_rate = ESO_MAXRATE;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 
 		p->factor = 1;
 		p->sw_code = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.25 2008/05/29 02:10:01 jakemsr Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.26 2008/10/25 22:30:43 jakemsr Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1090,9 +1090,8 @@ maestro_set_params(hdl, setmode, usemode, play, rec)
 
 	play->factor = 1;
 	play->sw_code = NULL;
-	if (play->channels != 1 && play->channels != 2)
-		return (EINVAL);
-
+	if (play->channels > 2)
+		play->channels = 2;
 
 	sc->play.mode = MAESTRO_PLAY;
 	if (play->channels == 2)

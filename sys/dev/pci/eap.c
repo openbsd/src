@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.34 2008/06/26 05:42:17 ray Exp $ */
+/*      $OpenBSD: eap.c,v 1.35 2008/10/25 22:30:43 jakemsr Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -944,11 +944,14 @@ eap_set_params(void *addr, int setmode, int usemode,
 
 		p = mode == AUMODE_PLAY ? play : rec;
 
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
+		if (p->sample_rate < 4000)
+			p->sample_rate = 4000;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 		p->factor = 1;
 		p->sw_code = 0;
 		switch (p->encoding) {

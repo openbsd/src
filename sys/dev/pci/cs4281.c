@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.21 2008/04/21 00:32:43 jakemsr Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -517,20 +517,18 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 		if (p == play) {
 			DPRINTFN(5,("play: samp=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
-			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1  && p->channels != 2)) {
-				return (EINVAL);
-			}
 		} else {
 			DPRINTFN(5,("rec: samp=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
-			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1 && p->channels != 2)) {
-				return (EINVAL);
-			}
 		}
+		if (p->sample_rate < 6023)
+			p->sample_rate = 6023;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 		p->factor = 1;
 		p->sw_code = 0;
 

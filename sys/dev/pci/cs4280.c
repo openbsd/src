@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.31 2008/05/29 02:10:01 jakemsr Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.32 2008/10/25 22:30:43 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1117,37 +1117,33 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		if ((setmode & mode) == 0)
 			continue;
 		
-		p = mode == AUMODE_PLAY ? play : rec;
-		
+		p = mode == AUMODE_PLAY ? play : rec;		
 		if (p == play) {
 			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
-			/* play back data format may be 8- or 16-bit and
-			 * either stereo or mono.
-			 * playback rate may range from 8000Hz to 48000Hz 
-			 */
-			if (p->sample_rate < 8000 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1  && p->channels != 2) ) {
-				return (EINVAL);
-			}
 		} else {
 			DPRINTFN(5,("rec: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
-			/* capture data format must be 16bit stereo
-			 * and sample rate range from 11025Hz to 48000Hz.
-			 *
-			 * XXX: it looks like to work with 8000Hz,
-			 *	although data sheets say lower limit is
-			 *	11025 Hz.
-			 */
-
-			if (p->sample_rate < 8000 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels  != 1 && p->channels  != 2) ) {
-				return (EINVAL);
-			}
 		}
+		/* play back data format may be 8- or 16-bit and
+		 * either stereo or mono.
+		 * playback rate may range from 8000Hz to 48000Hz 
+		 *
+	         * capture data format must be 16bit stereo
+		 * and sample rate range from 11025Hz to 48000Hz.
+		 *
+		 * XXX: it looks like to work with 8000Hz,
+		 *	although data sheets say lower limit is
+		 *	11025 Hz.
+		 */
+		if (p->sample_rate < 8000)
+			p->sample_rate = 8000;
+		if (p->sample_rate > 48000)
+			p->sample_rate = 48000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
 		p->factor  = 1;
 		p->sw_code = 0;
 
