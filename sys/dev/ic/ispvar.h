@@ -1,31 +1,33 @@
-/*     $OpenBSD: ispvar.h,v 1.24 2008/01/21 20:00:33 sobrado Exp $ */
+/*     $OpenBSD: ispvar.h,v 1.25 2008/10/25 22:18:10 krw Exp $ */
+/* $FreeBSD: src/sys/dev/isp/ispvar.h,v 1.85 2007/07/02 20:08:20 mjacob Exp $ */
+/*-
+ *  Copyright (c) 1997-2007 by Matthew Jacob
+ *  All rights reserved.
+ * 
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *  SUCH DAMAGE.
+ */
 /*
- * Soft Definitions for for QLogic ISP SCSI adapters.
- *
- * Copyright (c) 1997, 1998, 1999, 2000 by Matthew Jacob
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * Soft Definitions for for Qlogic ISP SCSI adapters.
  */
 
 #ifndef	_ISPVAR_H
@@ -114,8 +116,8 @@ typedef	u_int32_t	isp_dma_addr_t;
 #define	ISP_DMASETUP(isp, xs, req, iptrp, optr)	\
 	(*(isp)->isp_mdvec->dv_dmaset)((isp), (xs), (req), (iptrp), (optr))
 
-#define	ISP_DMAFREE(isp, xs, hndl)	\
-	if ((isp)->isp_mdvec->dv_dmaclr) \
+#define	ISP_DMAFREE(isp, xs, hndl)		\
+	if ((isp)->isp_mdvec->dv_dmaclr)	\
 	    (*(isp)->isp_mdvec->dv_dmaclr)((isp), (xs), (hndl))
 
 #define	ISP_RESET0(isp)	\
@@ -142,6 +144,7 @@ typedef	u_int32_t	isp_dma_addr_t;
 #define	SYNC_SFORDEV	2	/* scratch, sync for ISP */
 #define	SYNC_SFORCPU	3	/* scratch, sync for CPU */
 #define	SYNC_REG	4	/* for registers */
+#define	SYNC_ATIOQ	5	/* atio result queue (24xx) */
 
 /*
  * Request/Response Queue defines and macros.
@@ -230,7 +233,6 @@ typedef struct {
 #define	DPARM_DEFAULT	(0xFF00 & ~DPARM_QFRZ)
 #define	DPARM_SAFE_DFLT	(DPARM_DEFAULT & ~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING))
 
-
 /* technically, not really correct, as they need to be rated based upon clock */
 #define	ISP_80M_SYNCPARMS	0x0c09
 #define	ISP_40M_SYNCPARMS	0x0c0a
@@ -253,6 +255,80 @@ typedef struct {
 #define	GA_NXT_MAX	256
 #endif
 
+/* These are for 2K Login Firmware cards */
+#define	NPH_RESERVED		0x7F0	/* begin of reserved N-port handles */
+#define	NPH_MGT_ID		0x7FA	/* Management Server Special ID */
+#define	NPH_SNS_ID		0x7FC	/* SNS Server Special ID */
+#define	NPH_FL_ID		0x7FE	/* FL Port Special ID */
+#define	NPH_MAX_2K		0x800
+
+/*
+ * "Unassigned" handle to be used internally
+ */
+#define	NIL_HANDLE		0xffff
+
+/*
+ * Limit for devices on an arbitrated loop.
+ */
+#define	LOCAL_LOOP_LIM		126
+
+/*
+ * Special Port IDs
+ */
+#define	MANAGEMENT_PORT_ID	0xFFFFFA
+#define	SNS_PORT_ID		0xFFFFFC
+#define	FABRIC_PORT_ID		0xFFFFFE
+
+
+/*
+ * FC Port Database entry.
+ *
+ * It has a handle that the f/w uses to address commands to a device.
+ * This handle's value may be assigned by the firmware (e.g., for local loop
+ * devices) or by the driver (e.g., for fabric devices).
+ *
+ * It has a state. If the state if VALID, that means that we've logged into
+ * the device. We also *may* have a initiator map index entry. This is a value
+ * from 0..MAX_FC_TARG that is used to index into the isp_ini_map array. If
+ * the value therein is non-zero, then that value minus one is used to index
+ * into the Port Database to find the handle for forming commands. There is
+ * back-index minus one value within to Port Database entry that tells us 
+ * which entry in isp_ini_map points to us (to avoid searching).
+ *
+ * Local loop devices the firmware automatically performs PLOGI on for us
+ * (which is why that handle is imposed upon us). Fabric devices we assign
+ * a handle to and perform the PLOGI on.
+ *
+ * When a PORT DATABASE CHANGED asynchronous event occurs, we mark all VALID
+ * entries as PROBATIONAL. This allows us, if policy says to, just keep track
+ * of devices whose handles change but are otherwise the same device (and
+ * thus keep 'target' constant).
+ *
+ * In any case, we search all possible local loop handles. For each one that
+ * has a port database entity returned, we search for any PROBATIONAL entry
+ * that matches it and update as appropriate. Otherwise, as a new entry, we
+ * find room for it in the Port Database. We *try* and use the handle as the
+ * index to put it into the Database, but that's just an optimization. We mark
+ * the entry VALID and make sure that the target index is updated and correct.
+ *
+ * When we get done searching the local loop, we then search similarily for
+ * a list of devices we've gotten from the fabric name controller (if we're
+ * on a fabric). VALID marking is also done similarily.
+ *
+ * When all of this is done, we can march through the database and clean up
+ * any entry that is still PROBATIONAL (these represent devices which have
+ * departed). Then we're done and can resume normal operations.
+ *
+ * Negative invariants that we try and test for are:
+ *
+ *  + There can never be two non-NIL entries with the same { Port, Node } WWN
+ *    duples.
+ *
+ *  + There can never be two non-NIL entries with the same handle.
+ *
+ *  + There can never be two non-NIL entries which have the same ini_map_idx
+ *    value.
+ */
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
 				isp_gbspeed	: 2,
@@ -369,7 +445,7 @@ typedef struct ispsoftc {
 
 	u_int32_t		isp_clock	: 8,	/* input clock */
 						: 4,
-				isp_port	: 1,	/* 23XX only */
+				isp_port	: 1,	/* 23XX/24XX only */
 				isp_failed	: 1,	/* board failed */
 				isp_open	: 1,	/* opened (ioctl) */
 				isp_touched	: 1,	/* board ever seen? */
@@ -464,6 +540,7 @@ typedef struct ispsoftc {
 #define	ISP_CFG_OWNFSZ		0x400	/* override NVRAM frame size */
 #define	ISP_CFG_OWNLOOPID	0x800	/* override NVRAM loopid */
 #define	ISP_CFG_OWNEXCTHROTTLE	0x1000	/* override NVRAM execution throttle */
+#define	ISP_CFG_FOURGB		0x2000	/* force 4GB connection (24XX only) */
 
 /*
  * Prior to calling isp_reset for the first time, the outer layer
@@ -501,6 +578,7 @@ typedef struct ispsoftc {
  */
 #define	ISP_CODE_ORG			0x1000	/* default f/w code start */
 #define	ISP_CODE_ORG_2300		0x0800	/* ..except for 2300s */
+#define	ISP_CODE_ORG_2400		0x100000 /* ..and 2400s */
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
 #define	ISP_FW_MAJOR(code)		((code >> 24) & 0xff)
 #define	ISP_FW_MINOR(code)		((code >> 16) & 0xff)
@@ -511,6 +589,8 @@ typedef struct ispsoftc {
 #define	ISP_FW_MICROX(xp)		(xp[2])
 #define	ISP_FW_NEWER_THAN(i, major, minor, micro)		\
  (ISP_FW_REVX((i)->isp_fwrev) > ISP_FW_REV(major, minor, micro))
+#define	ISP_FW_OLDER_THAN(i, major, minor, micro)		\
+ (ISP_FW_REVX((i)->isp_fwrev) < ISP_FW_REV(major, minor, micro))
 
 /*
  * Bus (implementation) types
@@ -547,6 +627,8 @@ typedef struct ispsoftc {
 #define	ISP_HA_FC_2200		0x20
 #define	ISP_HA_FC_2300		0x30
 #define	ISP_HA_FC_2312		0x40
+#define	ISP_HA_FC_2322		0x50
+#define	ISP_HA_FC_2400		0x60
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
@@ -567,9 +649,11 @@ typedef struct ispsoftc {
 #define	IS_23XX(isp)	((isp)->isp_type >= ISP_HA_FC_2300)
 #define	IS_2300(isp)	((isp)->isp_type == ISP_HA_FC_2300)
 #define	IS_2312(isp)	((isp)->isp_type == ISP_HA_FC_2312)
+#define	IS_2322(isp)	((isp)->isp_type == ISP_HA_FC_2322)
+#define	IS_24XX(isp)	((isp)->isp_type >= ISP_HA_FC_2400)
 
 /*
- * DMA cookie macros
+ * DMA related macros
  */
 #ifdef	ISP_DAC_SUPPORTRED
 #define	DMA_WD3(x)	(((x) >> 48) & 0xffff)
@@ -580,6 +664,9 @@ typedef struct ispsoftc {
 #endif
 #define	DMA_WD1(x)	(((x) >> 16) & 0xffff)
 #define	DMA_WD0(x)	(((x) & 0xffff))
+
+#define	DMA_LO32(x)	((u_int32_t) (x))
+#define	DMA_HI32(x)	((u_int32_t)(((u_int64_t)x) >> 32))
 
 /*
  * Core System Function Prototypes
@@ -622,6 +709,7 @@ void isp_intr(struct ispsoftc *, u_int16_t, u_int16_t, u_int16_t);
  * Command Entry Point- Platform Dependent layers call into this
  */
 int isp_start(XS_T *);
+
 /* these values are what isp_start returns */
 #define	CMD_COMPLETE	101	/* command completed */
 #define	CMD_EAGAIN	102	/* busy- maybe retry later */
@@ -653,7 +741,7 @@ void isp_done(XS_T *);
  * below).
  *
  * ISPCTL_SCAN_LOOP does a local loop scan. This is only done if the connection
- * topology is NL or FL port (private or public loop). Since the QLogic f/w
+ * topology is NL or FL port (private or public loop). Since the Qlogic f/w
  * 'automatically' manages local loop connections, this function essentially
  * notes the arrival, departure, and possible shuffling around of local loop
  * entities. Thus for each arrival and departure this generates an isp_async
@@ -751,6 +839,13 @@ int isp_async(struct ispsoftc *, ispasync_t, void *);
 
 /*
  * Platform Dependent Error and Debug Printout
+ *
+ * Generally this is:
+ *
+ *    void isp_prt(struct ispsoftc *, int level, const char *, ...)
+ *
+ * but due to compiler differences on different platforms this won't be
+ * formally done here. Instead, it goes in each platform definition file.
  */
 #ifdef	__GNUC__
 void isp_prt(struct ispsoftc *, int level, const char *, ...)
@@ -774,18 +869,11 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
 #define	ISP_LOGTDEBUG2	0x800	/* log all debug messages (target) */
 
 /*
- * Each Platform provides its own isposinfo substructure of the ispsoftc
+ * Each Platform provides it's own isposinfo substructure of the ispsoftc
  * defined above.
  *
  * Each platform must also provide the following macros/defines:
  *
- *
- *	INLINE		-	platform specific define for 'inline' functions
- *
- *	ISP_DAC_SUPPORTED -	Is DAC (Dual Address Cycle) is supported?
- *				Basically means whether or not DMA for PCI
- *				PCI cards (Ultra2 or better or FC) works
- *				above 4GB.
  *
  *	ISP2100_SCRLEN	-	length for the Fibre Channel scratch DMA area
  *
@@ -875,16 +963,16 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  * 		These must be available independent of card NVRAM and are
  *		to be used should NVRAM not be readable.
  *
- *	ISP_NODEWWN(struct ispsoftc *)	FC Node WWN to use
- *	ISP_PORTWWN(struct ispsoftc *)	FC Port WWN to use
+ *	ISP_NODEWWN(struct ispsoftc *)		FC Node WWN to use
+ *	ISP_PORTWWN(struct ispsoftc *)		FC Port WWN to use
  *
  *		These are to be used after NVRAM is read. The tags
  *		in fcparam.isp_{node,port}wwn reflect the values
  *		read from NVRAM (possibly corrected for card botches).
  *		Each platform can take that information and override
  *		it or ignore and return the Node and Port WWNs to be
- * 		used when sending the QLogic f/w the Initialization Control
- *		Block.
+ * 		used when sending the Qlogic f/w the Initialization
+ *		Control Block.
  *
  *	(XXX these do endian specific transformations- in transition XXX)
  *
@@ -897,6 +985,9 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	ISP_IOXGET_32(struct ispsoftc *, u_int32_t *srcptr, u_int32_t dstrval)
  *
  *	ISP_SWIZZLE_NVRAM_WORD(struct ispsoftc *, u_int16_t *)
+ *	ISP_SWIZZLE_NVRAM_LONG(struct ispsoftc *, u_int32_t *)
+ *	ISP_SWAP16(struct ispsoftc *, u_int16_t srcval)
+ *	ISP_SWAP32(struct ispsoftc *, u_int32_t srcval)
  */
 
 #endif	/* _ISPVAR_H */
