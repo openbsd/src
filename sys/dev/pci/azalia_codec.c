@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.52 2008/10/23 02:23:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.53 2008/10/25 02:19:02 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ boolean_t azalia_generic_mixer_validate_value
 	(const codec_t *, nid_t, int, u_char);
 int	azalia_generic_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
+int	azalia_gpio_unmute(codec_t *, int);
 
 int	azalia_alc260_init_dacgroup(codec_t *);
 int	azalia_alc260_mixer_init(codec_t *);
@@ -127,7 +128,6 @@ int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9221_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_apple_unsol_event(codec_t *, int);
-int	azalia_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
 int	azalia_stac7661_set_port(codec_t *, mixer_ctrl_t *);
@@ -1708,6 +1708,26 @@ azalia_generic_get_port(codec_t *this, mixer_ctrl_t *mc)
 	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
 }
 
+int
+azalia_gpio_unmute(codec_t *this, int pin)
+{
+	uint32_t data, mask, dir;
+
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
+
+	data |= 1 << pin;
+	mask |= 1 << pin;
+	dir |= 1 << pin;
+
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
+	DELAY(1000);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
+
+	return 0;
+}
 
 /* ----------------------------------------------------------------
  * Realtek ALC260
@@ -2181,18 +2201,11 @@ azalia_alc882_mixer_init(codec_t *this)
 int
 azalia_alc882_init_dacgroup(codec_t *this)
 {
-#if 0
-	static const convgroupset_t dacs = {
-		-1, 3,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
-		 {1, {0x06}},	/* digital */
-		 {1, {0x25}}}};	/* another analog */
-#else
 	static const convgroupset_t dacs = {
 		-1, 2,
 		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
 		 {1, {0x06}}}};	/* digital */
-#endif
+		/* don't support for 0x25 dac */
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{3, {0x07, 0x08, 0x09}}, /* analog 6ch */
@@ -2484,13 +2497,14 @@ int
 azalia_ad1984_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
-		-1, 1,
-		{{2, {0x03, 0x04}}}};
-
+		-1, 2,
+		{{2, {0x04, 0x03}},	/* analog 4ch */
+		 {1, {0x02}}}};		/* digital */
 	static const convgroupset_t adcs = {
-		-1, 1,
-		{{1, {0x08}}}};
-
+		-1, 3,
+		{{2, {0x08, 0x09}},	/* analog 4ch */
+		 {1, {0x06}},		/* digital */
+		 {1, {0x05}}}}; 	/* digital */
 	this->dacs = dacs;
 	this->adcs = adcs;
 	return 0;
@@ -3006,27 +3020,6 @@ azalia_stac9221_apple_unsol_event(codec_t *this, int tag)
 		DPRINTF(("%s: unknown tag: %d\n", __func__, tag));
 	}
         return 0;
-}
-
-int
-azalia_gpio_unmute(codec_t *this, int pin)
-{
-	uint32_t data, mask, dir;
-
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
-
-	data |= 1 << pin;
-	mask |= 1 << pin;
-	dir |= 1 << pin;
-
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
-	DELAY(1000);
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
-
-	return 0;
 }
 
 /* ----------------------------------------------------------------
