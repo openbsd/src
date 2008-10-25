@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.107 2008/10/25 00:14:55 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.108 2008/10/25 00:23:24 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.104 2008/10/25 00:14:38 brad Exp 
+ *	OpenBSD: miidevs,v 1.105 2008/10/25 00:23:11 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
