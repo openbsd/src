@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.13 2007/06/04 17:03:04 miod Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.14 2008/10/26 22:23:10 deraadt Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -87,6 +87,10 @@ db_trap(int type, int code)
 				db_printf("\n");
 			db_printf("RUN AT LEAST 'trace' AND 'ps' AND INCLUDE "
 			    "OUTPUT WHEN REPORTING THIS PANIC!\n");
+#ifdef MULTIPROCESSOR
+			db_printf("IF RUNNING SMP, USE 'mach ddbcpu <#>' AND "
+			    "'trace' ON OTHER PROCESSORS, TOO.\n");
+#endif
 			db_printf("DO NOT EVEN BOTHER REPORTING THIS WITHOUT "
 			    "INCLUDING THAT INFORMATION!\n");
 		}
