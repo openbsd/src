@@ -1,4 +1,4 @@
-.\" $OpenBSD: libsa.3,v 1.2 2008/10/26 12:09:17 espie Exp $
+.\" $OpenBSD: sa_open.3,v 1.1 2008/10/26 13:55:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -15,10 +15,24 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: October 26 2008 $
-.Dt LIBSA 3
+.Dt SA_OPEN 3
 .Os
 .Sh NAME
-.Nm libsa
+.Nm sa_open ,
+.Nm sa_close ,
+.Nm sa_setpar ,
+.Nm sa_getpar ,
+.Nm sa_getcap ,
+.Nm sa_start ,
+.Nm sa_stop ,
+.Nm sa_read ,
+.Nm sa_write ,
+.Nm sa_onmove ,
+.Nm sa_nfds ,
+.Nm sa_pollfd ,
+.Nm sa_revents ,
+.Nm sa_eof ,
+.Nm sa_initpar
 .Nd interface to bidirectional audio streams
 .Sh SYNOPSIS
 .Fd #include <libsa.h>
@@ -56,7 +70,7 @@
 .\"Fd #define SA_LE_NATIVE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm libsa
 library allows user processes to access
 .Xr audio 4
 hardware and the
@@ -123,7 +137,7 @@ The
 .Fn sa_close
 routine closes the stream and frees all allocated resources
 associated with the
-.Nm
+.Nm libsa
 handle.
 .Ss Negotiating audio parameters
 Audio streams always use linear interleaved encoding.
@@ -232,7 +246,7 @@ accepted.
 .El
 .Pp
 If
-.Nm
+.Nm libsa
 is used to connect to the
 .Xr aucat 1
 server, a transparent emulation layer will
@@ -488,7 +502,7 @@ The
 routine can be used to register the
 .Va cb
 call-back function that will be called by the
-.Nm
+.Nm libsa
 library at regular time intervals to notify the application
 the position in the stream changed.
 The
@@ -676,7 +690,7 @@ device to use.
 The
 .Xr audio 4
 driver cannot drain playback buffers in the background, thus if
-.Nm
+.Nm libsa
 is used to directly access an
 .Xr audio 4
 device,
