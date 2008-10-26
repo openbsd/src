@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.22 2008/09/06 10:49:28 simon Exp $
+# $OpenBSD: pkg-config,v 1.23 2008/10/26 23:56:37 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -39,7 +39,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = 0.19; # pretend to be this version of pkgconfig
+my $version = 0.21; # pretend to be this version of pkgconfig
 
 my %configs = ();
 my %mode = ();
@@ -78,6 +78,7 @@ GetOptions(	'debug' => \$D,
 		'errors-to-stdout' => sub { $mode{estdout} = 1},
 		'print-errors' => sub { $mode{printerr} = 1},
 		'silence-errors' => sub { $mode{printerr} = 0},
+		'short-errors' => sub { $mode{printerr} = 0},
 		'atleast-pkgconfig-version=s' => \$mode{myminvers},
 
 		'cflags' => sub { $mode{cflags} = 3},
