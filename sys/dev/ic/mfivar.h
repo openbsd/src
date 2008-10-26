@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.31 2008/02/11 01:07:02 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.32 2008/10/26 18:56:24 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -158,8 +158,10 @@ struct mfi_softc {
 
 	struct mfi_ccb_list	sc_ccb_freeq;
 
+#ifndef SMALL_KERNEL
 	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
+#endif
 };
 
 int	mfi_attach(struct mfi_softc *sc, enum mfi_iop);
