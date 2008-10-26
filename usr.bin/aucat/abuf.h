@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.8 2008/08/14 15:25:16 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.9 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,7 +41,7 @@ struct abuf {
 	unsigned xrun;		/* common to mix and sub */
 	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
 	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
-
+	
 	/*
 	 * fifo parameters
 	 */
@@ -54,6 +54,8 @@ struct abuf {
 	unsigned drop;		/* bytes to drop on next read */
 	struct aproc *rproc;	/* reader */
 	struct aproc *wproc;	/* writer */
+	struct abuf *duplex;	/* link to buffer of the other direction */
+	unsigned inuse;		/* in abuf_{flush,fill,run}() */
 	unsigned char *data;	/* actual data (immediately following) */
 };
 
@@ -74,6 +76,11 @@ struct abuf {
 #define ABUF_EOF(b) (!ABUF_ROK(b) && (b)->wproc == NULL)
 
 /*
+ * the buffer is empty and has no more writer
+ */
+#define ABUF_HUP(b) (!ABUF_WOK(b) && (b)->rproc == NULL)
+
+/*
  * similar to !ABUF_WOK, but is used for file i/o, where
  * operation may not involve an integer number of frames
  */
@@ -91,10 +98,12 @@ unsigned char *abuf_rgetblk(struct abuf *, unsigned *, unsigned);
 unsigned char *abuf_wgetblk(struct abuf *, unsigned *, unsigned);
 void abuf_rdiscard(struct abuf *, unsigned);
 void abuf_wcommit(struct abuf *, unsigned);
-void abuf_fill(struct abuf *);
-void abuf_flush(struct abuf *);
+int abuf_fill(struct abuf *);
+int abuf_flush(struct abuf *);
 void abuf_eof(struct abuf *);
 void abuf_hup(struct abuf *);
 void abuf_run(struct abuf *);
+void abuf_ipos(struct abuf *, int);
+void abuf_opos(struct abuf *, int);
 
 #endif /* !defined(ABUF_H) */

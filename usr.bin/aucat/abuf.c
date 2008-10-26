@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.6 2008/08/14 10:02:10 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.7 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,24 +23,44 @@
  * (2) space available to the writer, which is not necessarily unused. It works
  * as follows: the write starts filling at offset (start + used), once the data
  * is ready, the writer adds to used the count of bytes available.
+ */
+/*
+ * TODO
  *
- * TODO:
- *
- *	(hard) make abuf_fill() a boolean depending on whether
- *	eof is reached. So the caller can do:
- *
- *		if (!abuf_fill(buf)) {
- *			...
- *		}
+ *	use blocks instead of frames for WOK and ROK macros. If necessary
+ *	(unlikely) define reader block size and writer blocks size to
+ *	ease pipe/socket implementation
  */
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "conf.h"
 #include "aproc.h"
 #include "abuf.h"
+
+#ifdef DEBUG
+void
+abuf_dprn(int n, struct abuf *buf, char *fmt, ...)
+{
+	va_list ap;
+
+	if (debug_level < n)
+		return;
+	fprintf(stderr, "%s->%s: ", 
+	    buf->wproc ? buf->wproc->name : "none",
+	    buf->rproc ? buf->rproc->name : "none");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+}
+#define ABUF_DPRN(n, buf, ...) abuf_dprn((n), (buf), __VA_ARGS__)
+#define ABUF_DPR(buf, ...) abuf_dprn(1, (buf), __VA_ARGS__)
+#else
+#define ABUF_DPRN(n, buf, ...) do {} while (0)
+#define ABUF_DPR(buf, ...) do {} while (0)
+#endif
 
 struct abuf *
 abuf_new(unsigned nfr, unsigned bpf)
@@ -51,9 +71,11 @@ abuf_new(unsigned nfr, unsigned bpf)
 	len = nfr * bpf;
 	buf = malloc(sizeof(struct abuf) + len);
 	if (buf == NULL) {
-		err(1, "abuf_new: malloc");
+		fprintf(stderr, "abuf_new: out of mem: %u * %u\n", nfr, bpf);
+		abort();
 	}
 	buf->bpf = bpf;
+	buf->inuse = 0;
 
 	/*
 	 * fill fifo pointers
@@ -66,6 +88,7 @@ abuf_new(unsigned nfr, unsigned bpf)
 	buf->drop = 0;
 	buf->rproc = NULL;
 	buf->wproc = NULL;
+	buf->duplex = NULL;
 	buf->data = (unsigned char *)buf + sizeof(*buf);
 	return buf;
 }
@@ -73,17 +96,14 @@ abuf_new(unsigned nfr, unsigned bpf)
 void
 abuf_del(struct abuf *buf)
 {
-	DPRINTF("abuf_del:\n");
-	if (buf->rproc) {
-		fprintf(stderr, "abuf_del: has rproc: %s\n", buf->rproc->name);
+	if (buf->duplex)
+		buf->duplex->duplex = NULL;
+#ifdef DEBUG
+	if (buf->rproc || buf->wproc || ABUF_ROK(buf)) {
+		ABUF_DPRN(0, buf, "abuf_del: used = %u\n", buf->used);
 		abort();
 	}
-	if (buf->wproc) {
-		fprintf(stderr, "abuf_del: has wproc: %s\n", buf->wproc->name);
-		abort();
-	}
-	if (buf->used > 0)
-		fprintf(stderr, "abuf_del: used = %u\n", buf->used);
+#endif
 	free(buf);
 }
 
@@ -99,6 +119,14 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 	used = buf->used - ofs;
 	if (start >= buf->len)
 		start -= buf->len;
+#ifdef DEBUG
+	if (start >= buf->len || used > buf->used) {
+		ABUF_DPRN(0, buf, "abuf_rgetblk: "
+		    "bad ofs: start = %u used = %u/%u, ofs = %u\n",
+		    buf->start, buf->used, buf->len, ofs);
+		abort();
+	}
+#endif
 	count = buf->len - start;
 	if (count > used)
 		count = used;
@@ -112,6 +140,12 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 void
 abuf_rdiscard(struct abuf *buf, unsigned count)
 {
+#ifdef DEBUG
+	if (count > buf->used) {
+		ABUF_DPRN(0, buf, "abuf_rdiscard: bad count %u\n", count);
+		abort();
+	}
+#endif
 	buf->used -= count;
 	buf->start += count;
 	if (buf->start >= buf->len)
@@ -125,6 +159,12 @@ abuf_rdiscard(struct abuf *buf, unsigned count)
 void
 abuf_wcommit(struct abuf *buf, unsigned count)
 {
+#ifdef DEBUG
+	if (count > (buf->len - buf->used)) {
+		ABUF_DPR(buf, "abuf_wcommit: bad count\n");
+		abort();
+	}
+#endif
 	buf->used += count;
 }
 
@@ -142,7 +182,7 @@ abuf_wgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 		end -= buf->len;
 #ifdef DEBUG
 	if (end >= buf->len) {
-		fprintf(stderr, "abuf_wgetblk: %s -> %s: bad ofs, "
+		ABUF_DPR(buf, "abuf_wgetblk: %s -> %s: bad ofs, "
 		    "start = %u, used = %u, len = %u, ofs = %u\n",
 		    buf->wproc->name, buf->rproc->name,
 		    buf->start, buf->used, buf->len, ofs);
@@ -171,30 +211,21 @@ abuf_flush_do(struct abuf *buf)
 		count = buf->drop;
 		if (count > buf->used)
 			count = buf->used;
+		if (count == 0) {
+			ABUF_DPR(buf, "abuf_flush_do: no data to drop\n");
+			return 0;
+		}
 		abuf_rdiscard(buf, count);
 		buf->drop -= count;
-		DPRINTF("abuf_flush_do: drop = %u\n", buf->drop);
-	} else {
+		ABUF_DPR(buf, "abuf_flush_do: drop = %u\n", buf->drop);
 		p = buf->rproc;
-		if (p == NULL || !p->ops->in(p, buf))
+	} else {
+		ABUF_DPRN(4, buf, "abuf_flush_do: in ready\n");
+		p = buf->rproc;
+		if (!p || !p->ops->in(p, buf))
 			return 0;
 	}
 	return 1;
-}
-
-/*
- * Notify the read end of the buffer that there is input available
- * and that data can be processed again.
- */
-void
-abuf_flush(struct abuf *buf)
-{
-	for (;;) {
-		if (!ABUF_ROK(buf))
-			break;
-		if (!abuf_flush_do(buf))
-			break;
-	}
 }
 
 /*
@@ -212,14 +243,93 @@ abuf_fill_do(struct abuf *buf)
 		data = abuf_wgetblk(buf, &count, 0);
 		if (count >= buf->silence)
 			count = buf->silence;
+		if (count == 0) {
+			ABUF_DPR(buf, "abuf_fill_do: no space for silence\n");
+			return 0;
+		}
 		memset(data, 0, count);
 		abuf_wcommit(buf, count);
 		buf->silence -= count;
-		DPRINTF("abuf_fill_do: silence = %u\n", buf->silence);
-	} else {
+		ABUF_DPR(buf, "abuf_fill_do: silence = %u\n", buf->silence);
 		p = buf->wproc;
-		if (p == NULL || !p->ops->out(p, buf))
+	} else {
+		ABUF_DPRN(4, buf, "abuf_fill_do: out avail\n");
+		p = buf->wproc;
+		if (p == NULL || !p->ops->out(p, buf)) {
 			return 0;
+		}
+	}
+	return 1;
+}
+
+/*
+ * Notify the reader that there will be no more input (producer
+ * disappeared) and destroy the buffer
+ */
+void
+abuf_eof_do(struct abuf *buf)
+{
+	struct aproc *p;
+
+	p = buf->rproc;
+	if (p) {
+		ABUF_DPRN(2, buf, "abuf_eof_do: signaling reader\n");
+		buf->rproc = NULL;
+		LIST_REMOVE(buf, ient);
+		buf->inuse++;
+		p->ops->eof(p, buf);
+		buf->inuse--;
+	} else
+		ABUF_DPR(buf, "abuf_eof_do: no reader, freeng buf\n");
+	abuf_del(buf);
+}
+
+/*
+ * Notify the writer that the buffer has no more consumer,
+ * and destroy the buffer
+ */
+void
+abuf_hup_do(struct abuf *buf)
+{
+	struct aproc *p;
+
+	if (ABUF_ROK(buf)) {
+		ABUF_DPR(buf, "abuf_hup_do: lost %u bytes\n", buf->used);
+		buf->used = 0;
+	}
+	p = buf->wproc;
+	if (p != NULL) {
+		ABUF_DPRN(2, buf, "abuf_hup_do: signaling writer\n");
+		buf->wproc = NULL;
+		LIST_REMOVE(buf, oent);
+		buf->inuse++;
+		p->ops->hup(p, buf);
+		buf->inuse--;
+	} else
+		ABUF_DPR(buf, "abuf_hup_do: no writer, freeng buf\n");
+	abuf_del(buf);
+}
+
+/*
+ * Notify the read end of the buffer that there is input available
+ * and that data can be processed again.
+ */
+int
+abuf_flush(struct abuf *buf)
+{	
+	if (buf->inuse) {
+		ABUF_DPRN(4, buf, "abuf_flush: blocked\n");
+	} else {
+		buf->inuse++;
+		for (;;) {
+			if (!abuf_flush_do(buf))
+				break;
+		}
+		buf->inuse--;
+		if (ABUF_HUP(buf)) {
+			abuf_hup_do(buf);
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -229,18 +339,28 @@ abuf_fill_do(struct abuf *buf)
  * written again. This routine can only be called from the out()
  * call-back of the reader.
  *
- * NOTE: The abuf writer may reach eof condition and disappear, dont keep
- * references to abuf->wproc.
+ * Return 1 if the buffer was filled, and 0 if eof condition occured. The
+ * reader must detach the buffer on EOF condition, since it's aproc->eof()
+ * call-back will never be called.
  */
-void
+int
 abuf_fill(struct abuf *buf)
 {
-	for (;;) {
-		if (!ABUF_WOK(buf))
-			break;
-		if (!abuf_fill_do(buf))
-			break;
+	if (buf->inuse) {
+		ABUF_DPRN(4, buf, "abuf_fill: blocked\n");
+	} else {
+		buf->inuse++;
+		for (;;) {
+			if (!abuf_fill_do(buf))
+				break;
+		}
+		buf->inuse--;
+		if (ABUF_EOF(buf)) {
+			abuf_eof_do(buf);
+			return 0;
+		}
 	}
+	return 1;
 }
 
 /*
@@ -254,24 +374,35 @@ abuf_fill(struct abuf *buf)
 void
 abuf_run(struct abuf *buf)
 {
-	struct aproc *p;
 	int canfill = 1, canflush = 1;
 
+	if (buf->inuse) {
+		ABUF_DPRN(4, buf, "abuf_run: blocked\n");
+		return;
+	}
+	buf->inuse++;
 	for (;;) {
-		if (ABUF_EOF(buf)) {
-			p = buf->rproc;
-			DPRINTFN(2, "abuf_run: %s: got eof\n", p->name);
-			p->ops->eof(p, buf);
-			buf->rproc = NULL;
-			abuf_del(buf);
-			return;
-		}
-		if (ABUF_WOK(buf) && canfill) {
-			canfill = abuf_fill_do(buf);
-		} else if (ABUF_ROK(buf) && canflush) {
-			canflush = abuf_flush_do(buf);
+		if (canfill) {
+			if (!abuf_fill_do(buf))
+				canfill = 0;
+			else
+				canflush = 1;
+		} else if (canflush) {
+			if (!abuf_flush_do(buf))
+				canflush = 0;
+			else
+				canfill = 1;
 		} else
-			break; /* can neither read nor write */
+			break;
+	}
+	buf->inuse--;
+	if (ABUF_EOF(buf)) {
+		abuf_eof_do(buf);
+		return;
+	}
+	if (ABUF_HUP(buf)) {
+		abuf_hup_do(buf);
+		return;
 	}
 }
 
@@ -285,30 +416,31 @@ abuf_eof(struct abuf *buf)
 {
 #ifdef DEBUG
 	if (buf->wproc == NULL) {
-		fprintf(stderr, "abuf_eof: no writer\n");
+		ABUF_DPR(buf, "abuf_eof: no writer\n");
 		abort();
 	}
 #endif
-	DPRINTFN(2, "abuf_eof: requested by %s\n", buf->wproc->name);
+	ABUF_DPRN(2, buf, "abuf_eof: requested\n");
+	LIST_REMOVE(buf, oent);
 	buf->wproc = NULL;
 	if (buf->rproc != NULL) {
-		abuf_flush(buf);
+		if (!abuf_flush(buf))
+			return;			
 		if (ABUF_ROK(buf)) {
 			/*
 			 * Could not flush everything, the reader will
 			 * have a chance to delete the abuf later.
 			 */
-			DPRINTFN(2, "abuf_eof: %s will drain the buf later\n",
-			    buf->rproc->name);
+			ABUF_DPRN(2, buf, "abuf_eof: will drain later\n");
 			return;
 		}
-		DPRINTFN(2, "abuf_eof: signaling %s\n", buf->rproc->name);
-		buf->rproc->ops->eof(buf->rproc, buf);
-		buf->rproc = NULL;
 	}
-	abuf_del(buf);
+	if (buf->inuse) {
+		ABUF_DPRN(2, buf, "abuf_eof: signal blocked\n");
+		return;
+	}
+	abuf_eof_do(buf);
 }
-
 
 /*
  * Notify the writer that the buffer has no more consumer,
@@ -319,21 +451,54 @@ abuf_hup(struct abuf *buf)
 {
 #ifdef DEBUG
 	if (buf->rproc == NULL) {
-		fprintf(stderr, "abuf_hup: no reader\n");
+		ABUF_DPR(buf, "abuf_hup: no reader\n");
 		abort();
 	}
 #endif
-	DPRINTFN(2, "abuf_hup: initiated by %s\n", buf->rproc->name);
+	ABUF_DPRN(2, buf, "abuf_hup: initiated\n");
+
 	buf->rproc = NULL;
+	LIST_REMOVE(buf, ient);
 	if (buf->wproc != NULL) {
-		if (ABUF_ROK(buf)) {
-			warnx("abuf_hup: %s: lost %u bytes",
-			    buf->wproc->name, buf->used);
-			buf->used = 0;
+		if (buf->inuse) {
+			ABUF_DPRN(2, buf, "abuf_hup: signal blocked\n");
+			return;
 		}
-		DPRINTFN(2, "abuf_hup: signaling %s\n", buf->wproc->name);
-		buf->wproc->ops->hup(buf->wproc, buf);
-		buf->wproc = NULL;
 	}
-	abuf_del(buf);
+	abuf_hup_do(buf);
+}
+
+/*
+ * Notify the reader of the change of its real-time position
+ */
+void
+abuf_ipos(struct abuf *buf, int delta)
+{
+	struct aproc *p = buf->rproc;
+
+	if (p && p->ops->ipos) {
+		buf->inuse++;
+		p->ops->ipos(p, buf, delta);		
+		buf->inuse--;
+	}
+	if (ABUF_HUP(buf))
+		abuf_hup_do(buf);
+}
+
+/*
+ * Notify the writer of the change of its real-time position
+ */
+void
+abuf_opos(struct abuf *buf, int delta)
+{
+	struct aproc *p = buf->wproc;
+
+	
+	if (p && p->ops->opos) {
+		buf->inuse++;
+		p->ops->opos(p, buf, delta);
+		buf->inuse--;
+	}
+	if (ABUF_HUP(buf))
+		abuf_hup_do(buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2008/08/14 09:39:16 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,8 +47,20 @@ extern int debug_level;
 #define MIDI_MAXCTL		127
 #define MIDI_TO_ADATA(m)	((ADATA_UNIT * (m) + 64) / 127)
 
-#define DEFAULT_NFR	0x400		/* buf size in frames */
-#define DEFAULT_NBLK	0x2		/* blocks per buffer */
+/*
+ * number of blocks in the device play/record buffers.  because Sun API
+ * cannot notify apps of the current positions, we have to use all N
+ * buffers devices blocks plus one extra block, to make write() block,
+ * so that poll() can return the exact postition.
+ */
+#define DEV_NBLK 2
+
+/*
+ * number of blocks in the wav-file i/o buffers
+ */
+#define WAV_NBLK 6
+
 #define DEFAULT_DEVICE	"/dev/audio"	/* defaul device */
+#define DEFAULT_SOCKET	"/tmp/aucat.sock"
 
 #endif /* !defined(CONF_H) */

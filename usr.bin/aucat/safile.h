@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.3 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: safile.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,30 +14,24 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef DEV_H
-#define DEV_H
+#ifndef SAFILE_H
+#define SAFILE_H
 
-struct aproc;
-struct aparams;
 struct file;
-struct abuf;
+struct fileops;
+struct safile;
+struct aparams;
 
-extern unsigned dev_bufsz, dev_round, dev_rate;
-extern unsigned dev_rate_div, dev_round_div;
-extern struct aparams dev_ipar, dev_opar;
-extern struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
+struct safile *safile_new(struct fileops *, char *,
+    struct aparams *, struct aparams *, unsigned *, unsigned *);
 
-void dev_roundrate(unsigned *, unsigned *);
-void dev_init(char *, struct aparams *, struct aparams *, unsigned);
-void dev_start(void);
-void dev_stop(void);
-void dev_run(int);
-void dev_done(void);
-void dev_sync(struct abuf *, struct abuf *);
-void dev_attach(char *,
-    struct abuf *, struct aparams *, unsigned,
-    struct abuf *, struct aparams *, unsigned);
+extern struct fileops safile_ops;
 
-extern struct devops *devops, devops_sun, devops_aucat;
+/*
+ * Sun API specific functions
+ */
+struct audio_prinfo;
+int sun_infotopar(struct audio_prinfo *, struct aparams *);
+void sun_partoinfo(struct audio_prinfo *, struct aparams *);
 
-#endif /* !define(DEV_H) */
+#endif /* !defined(SUN_H) */

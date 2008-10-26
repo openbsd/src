@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.1 2008/05/23 07:15:46 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.2 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,10 +19,17 @@
 
 #include <sys/param.h>
 
-#define CHAN_MAX	16		/* max number of channels */
-#define RATE_MIN	1		/* min sample rate */
-#define RATE_MAX	(1 << 30)	/* max sample rate */
+#define NCHAN_MAX	16		/* max channel in a stream */
+#define RATE_MIN	4000		/* min sample rate */
+#define RATE_MAX	192000		/* max sample rate */
+#define BITS_MIN	1		/* min bits per sample */
 #define BITS_MAX	32		/* max bits per sample */
+
+/*
+ * maximum size of the encording string (the longest possible
+ * encoding is ``s24le3msb'')
+ */
+#define ENCMAX	10
 
 #if BYTE_ORDER ==  LITTLE_ENDIAN
 #define NATIVE_LE 1
@@ -31,6 +38,11 @@
 #else
 /* not defined */
 #endif
+
+/*
+ * default bytes per sample for the given bits per sample
+ */
+#define APARAMS_BPS(bits) (((bits) <= 8) ? 1 : (((bits) <= 16) ? 2 : 4))
 
 /*
  * encoding specification
@@ -62,5 +74,8 @@ void aparams_print(struct aparams *);
 void aparams_print2(struct aparams *, struct aparams *);
 int aparams_eq(struct aparams *, struct aparams *);
 unsigned aparams_bpf(struct aparams *);
+int aparams_strtoenc(struct aparams *, char *);
+int aparams_enctostr(struct aparams *, char *);
+void aparams_copyenc(struct aparams *, struct aparams *);
 
 #endif /* !defined(APARAMS_H) */

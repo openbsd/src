@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.5 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.6 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -93,6 +93,18 @@ struct aproc_ops {
 	void (*newout)(struct aproc *, struct abuf *);
 
 	/*
+	 * Real-time record position changed (for input buffer),
+	 * by the given amount of _frames_
+	 */
+	void (*ipos)(struct aproc *, struct abuf *, int);
+
+	/*
+	 * Real-time play position changed (for output buffer),
+	 * by the given amount of _frames_
+	 */
+	void (*opos)(struct aproc *, struct abuf *, int);
+
+	/*
 	 * destroy the aproc, called just before to free the
 	 * aproc structure
 	 */
@@ -115,7 +127,7 @@ struct aconv {
 	int snext;		/* bytes to skip to reach the next sample */
 	unsigned cmin;		/* provided/consumed channels */
 	unsigned bpf;		/* bytes per frame: bpf = nch * bps */
-	int ctx[CHAN_MAX];	/* current frame (for resampling) */
+	int ctx[NCHAN_MAX];	/* current frame (for resampling) */
 };
 
 /*
@@ -134,16 +146,21 @@ struct aproc {
 		} io;
 		struct {
 			struct aconv ist, ost;
+			int idelta, odelta;	/* reminder of conv_[io]pos */
 		} conv;
 		struct {
 #define MIX_DROP	1
 #define MIX_AUTOQUIT	2
-			unsigned flags;
+			unsigned flags;		/* bit mask of above */
+			int lat;		/* current latency */
+			int maxlat;		/* max latency allowed*/
 		} mix;
 		struct {
 #define SUB_DROP	1
 #define SUB_AUTOQUIT	2
-			unsigned flags;
+			unsigned flags;		/* bit mask of above */
+			int lat;		/* current latency */
+			int maxlat;		/* max latency allowed*/
 		} sub;
 	} u;
 };
@@ -167,8 +184,8 @@ int wpipe_out(struct aproc *, struct abuf *);
 void wpipe_eof(struct aproc *, struct abuf *);
 void wpipe_hup(struct aproc *, struct abuf *);
 
-struct aproc *mix_new(void);
-struct aproc *sub_new(void);
+struct aproc *mix_new(char *, int);
+struct aproc *sub_new(char *, int);
 struct aproc *conv_new(char *, struct aparams *, struct aparams *);
 
 void mix_pushzero(struct aproc *);

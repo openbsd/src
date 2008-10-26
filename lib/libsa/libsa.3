@@ -1,0 +1,706 @@
+.\" $OpenBSD: libsa.3,v 1.1 2008/10/26 08:49:44 ratchov Exp $
+.\"
+.\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 26 2008 $
+.Dt LIBSA 3
+.Os
+.Sh NAME
+.Nm libsa
+.Nd interface to bidirectional audio streams
+.Sh SYNOPSIS
+.Fd #include <libsa.h>
+.Ft "struct sa_hdl *"
+.Fn "sa_open" "char *name" "unsigned mode" "int nbio_flag"
+.Ft "int"
+.Fn "sa_close" "struct sa_hdl *hdl"
+.Ft "int"
+.Fn "sa_setpar" "struct sa_hdl *hdl" "struct sa_par *par"
+.Ft "int"
+.Fn "sa_getpar" "struct sa_hdl *hdl" "struct sa_par *par"
+.Ft "int"
+.Fn "sa_getcap" "struct sa_hdl *hdl" "struct sa_cap *cap"
+.Ft "int"
+.Fn "sa_start" "struct sa_hdl *hdl"
+.Ft "int"
+.Fn "sa_stop" "struct sa_hdl *hdl"
+.Ft "size_t"
+.Fn "sa_read" "struct sa_hdl *hdl" "void *addr" "size_t nbytes"
+.Ft "size_t"
+.Fn "sa_write" "struct sa_hdl *hdl" "void *addr" "size_t nbytes"
+.Ft "void"
+.Fn "sa_onmove" "struct sa_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
+.Ft "int"
+.Fn "sa_nfds" "struct sa_hdl *hdl"
+.Ft "int"
+.Fn "sa_pollfd" "struct sa_hdl *hdl" "struct pollfd *pfd" "int events"
+.Ft "int"
+.Fn "sa_revents" "struct sa_hdl *hdl" "struct pollfd *pfd"
+.Ft "int"
+.Fn "sa_eof" "struct sa_hdl *hdl"
+.Ft "void"
+.Fn "sa_initpar" "struct sa_par *par"
+.\"Fd #define SA_BPS(bits)
+.\"Fd #define SA_LE_NATIVE
+.Sh DESCRIPTION
+The
+.Nm
+library allows user processes to access
+.Xr audio 4
+hardware and the
+.Xr aucat 1
+audio server in a uniform way.
+It supports full-duplex operation, and when
+used with the
+.Xr aucat 1
+server it supports resampling and format
+conversions on the fly.
+.Ss Opening and closing an audio stream
+First the application must call the
+.Fn sa_open
+routine to obtain a handle representing the newly created stream;
+later it will be passed as the
+.Ar hdl
+argument of most other functions.
+The
+.Fn sa_open
+routine first tries to connect to the
+.Xr aucat 1
+audio server.
+If that fails, it then tries to use the
+.Xr audio 4
+hardware device.
+The
+.Ar name
+parameter gives the path of the
+.Xr aucat 1
+socket or the
+.Xr audio 4
+device.
+In most cases it should be left to NULL to allow
+the user to select it using the
+.Ev AUDIODEVICE
+environment variable.
+.Pp
+The
+.Ar mode
+parameter gives the direction of the stream.
+The following are supported:
+.Bl -tag -width "SA_PLAY | SA_REC"
+.It SA_PLAY
+The stream is play-only; data written to the stream will be played
+by the hardware.
+.It SA_REC
+The stream is record-only; recorded samples by the hardware
+must be read from the stream.
+.It SA_PLAY | SA_REC
+The stream plays and records synchronously; this means that
+the n-th recorded sample was physically sampled exactly when
+the n-th played sample was actually played.
+.El
+.Pp
+If the
+.Ar nbio_flag
+argument is true (i.e. non-zero), then the
+.Fn sa_read
+and
+.Fn sa_write
+routines (see below) will be non-blocking.
+.Pp
+The
+.Fn sa_close
+routine closes the stream and frees all allocated resources
+associated with the
+.Nm
+handle.
+.Ss Negotiating audio parameters
+Audio streams always use linear interleaved encoding.
+The set of parameters of the stream that can be controlled
+is given by the following structure:
+.Bd -literal -offset -indent
+struct sa_par {
+	unsigned bits;	/* bits per sample */
+	unsigned bps;	/* bytes per sample */
+	unsigned sig;	/* 1 = signed, 0 = unsigned */
+	unsigned le;	/* 1 = LE, 0 = BE byte order */
+	unsigned msb;	/* 1 = MSB, 0 = LSB aligned */
+	unsigned rchan;	/* number channels for recording */
+	unsigned pchan;	/* number channels for playback */
+	unsigned rate;	/* frames per second */
+	unsigned bufsz;	/* frames in the stream buffer */
+	unsigned round;	/* optimal buffer size divisor */
+#define SA_IGNORE	0	/* pause during xrun */
+#define SA_SYNC		1	/* resync after xrun */
+#define SA_ERROR	2	/* terminate on xrun */
+	unsigned xrun;	/* what to do on overrun/underrun */
+};
+.Ed
+.Pp
+The parameters are as follows:
+.Bl -tag -width "round"
+.It Va bits
+Number of bits per sample: must be between 1 and 32.
+.It Va bps
+Bytes per samples; if specified, it must be large enough to hold all bits.
+By default it's set to the smallest power of two large enough to hold
+.Va bits .
+.It Va sig
+If set (i.e. non-zero) then the samples are signed, else unsigned.
+.It Va le
+If set, then the byte order is little endian, else big endian;
+it's meaningful only if
+.Va bps \*(Gt 1 .
+.It Va msb
+If set, then the
+.Va bits
+bits are aligned in the packet to the most significant bit
+(i.e. lower bits are padded),
+else to the least significant bit
+(i.e. higher bits are padded);
+it's meaningful only if
+.Va bits \*(Lt bps * 8 .
+.It Va rchan
+The number of recorded channels; meaningful only if
+.Va SA_REC
+mode was selected.
+.It Va pchan
+The number of played channels; meaningful only if
+.Va SA_PLAY
+mode was selected.
+.It Va rate
+The sampling frequency in Hz.
+.It Va bufsz
+The number of frames that will be buffered for both
+play and record directions.
+.It Va round
+Optimal number of frames that the application buffers
+should be a multiple of, to get best performance;
+it is read-only.
+.It Va xrun
+The action when the client doesn't accept
+recored data or doesn't provide data to play fast enough;
+it can be set to one of the
+.Va SA_IGNORE ,
+.Va SA_SYNC
+or
+.Va SA_ERROR
+constants.
+.El
+.Pp
+There are two approaches to negotiate parameters of the stream:
+.Bl -bullet
+.It
+Advanced applications may use native parameters of
+the audio subsystem.
+This is the best approach from a performance point of view
+since it involves no extra format conversions.
+The
+.Fn sa_getcap ,
+described below,
+can be used to get the list of native parameter sets and then
+.Fn sa_initpar
+and
+.Fn sa_setpar
+can be used to select a working set.
+.It
+Simpler applications that do not have performance constraints may set up
+the audio subsystem to use their own parameters.
+The
+.Va sa_par
+structure must be initialized using the
+.Fn sa_initpar
+routine, filled with the desired parameters and
+the
+.Fn sa_setpar
+routine must be called.
+Finally, the
+.Fn sa_getpar
+routine can be used to ensure that parameters were actually
+accepted.
+.El
+.Pp
+If
+.Nm
+is used to connect to the
+.Xr aucat 1
+server, a transparent emulation layer will
+automatically be set up, and in this case any
+parameters are supported.
+.Pp
+To ease filling the
+.Va sa_par
+structure, the
+following macros can be used:
+.Bl -tag -width "SA_BPS(bits)"
+.It "SA_BPS(bits)"
+Return the smallest value for
+.Va bps
+that is a power of two and that is large enough to
+hold
+.Va bits .
+.It "SA_LE_NATIVE"
+Can be used to set the
+.Va le
+parameter when native byte order is required.
+.El
+.Pp
+Note that (once initialized with the
+.Fn sa_initpar
+routine), not all fields of the
+.Va sa_par
+structure must be filled; it is recommended to fill only
+the required parameters, as other ones will default to
+reasonable values.
+This approach also ensures that if, in the future, newer parameters
+are added, then older unaware applications will continue to
+behave correctly.
+.Ss Getting stream capabilities
+Advanced applications can fetch the native
+parameters of the audio subsystem and then choose parameters
+optimal for both the application and the audio subsystem.
+In this case applications must be able to do
+the necessary format conversions.
+The
+.Va sa_cap
+structure, filled by the
+.Fn sa_getcap
+routine, contains the list of parameter configurations.
+Each configuration contains multiple parameter sets.
+The application must examine all configurations, and
+choose its parameter set from
+.Em one
+of the configurations.
+Parameters of different configurations
+.Em are not
+usable together.
+.Bd -literal
+struct sa_cap {
+	struct sa_enc {			/* allowed encodings */
+		unsigned bits;
+		unsigned bps;
+		unsigned sig;
+		unsigned le;
+		unsigned msb;
+	} enc[SA_NENC];
+	unsigned rchan[SA_NCHAN];	/* allowed rchans */
+	unsigned pchan[SA_NCHAN];	/* allowed pchans */
+	unsigned rate[SA_NRATE];	/* allowed rates */
+	unsigned nconf;			/* num. of confs[] */
+	struct sa_conf {
+		unsigned enc;		/* bitmask of enc[] indexes */
+		unsigned rchan;		/* bitmask of rchan[] indexes */
+		unsigned pchan;		/* bitmask of pchan[] indexes */
+		unsigned rate;		/* bitmask of rate[] indexes */
+	} confs[SA_NCONF];
+};
+.Ed
+.Pp
+The parameters are as follows:
+.Bl -tag -width "rchan[SA_NCHAN]"
+.It Va enc[SA_NENC]
+Array of supported encodings.
+The tuple of
+.Va bits ,
+.Va bps ,
+.Va sig ,
+.Va le
+and
+.Va msb
+parameters are usable in the corresponding parameters
+of the
+.Va sa_par
+structure.
+.It Va rchan[SA_NENC]
+Array of supported channel numbers for recording usable
+in the
+.Va sa_par
+structure.
+.It Va pchan[SA_NENC]
+Array of supported channel numbers for playback usable
+in the
+.Va sa_par
+structure.
+.It Va rate[SA_NRATE]
+Array of supported sample rates usable
+in the
+.Va sa_par
+structure.
+.It Va nconf
+Number of different configurations available, i.e. number
+of filled elements of the
+.Va confs[]
+array.
+.It Va confs[SA_NCONF]
+Array of available configurations.
+Each configuration contains bitmasks indicating which
+elements of the above parameter arrays are valid for the
+given configuration.
+For instance, if the second bit of
+.Va rate
+is set, in the
+.Va sa_conf
+structure, then the second element of the
+.Va rate[SA_NRATE]
+array of the
+.Va sa_cap
+structure is valid for this configuration.
+.El
+.Ss Starting and stopping the stream
+The
+.Fn sa_start
+routine puts the stream in a waiting state:
+the stream will wait for playback data to be provided
+(using the
+.Fn sa_write
+routine).
+Once enough data is queued to ensure that play buffers
+will not underrun, actual playback is started automatically.
+If record mode only is selected, then recording starts
+immediately.
+In full-duplex mode, playback and recording will start
+synchronously as soon as enough data to play is available.
+.Pp
+The
+.Fn sa_stop
+routine stops playback and recording and puts the audio subsystem
+in the same state as after
+.Fn sa_open
+is called.
+Samples in the play buffers are not discarded, and will continue to
+be played after
+.Fn sa_stop
+returns.
+.Ss Playing and recording
+When record mode is selected, the
+.Fn sa_read
+routine must be called to retrieve recorded data; it must be called
+often enough to ensure that internal buffers will not overrun.
+It will store at most
+.Ar nbytes
+bytes at the
+.Ar addr
+location and return the number of bytes stored.
+Unless the
+.Ar nbio_flag
+flag is set, it will block until data becomes available and
+will return zero only on error.
+.Pp
+Similarly, when play mode is selected, the
+.Fn sa_write
+routine must be called to provide data to play.
+Unless the
+.Ar nbio_flag
+is set,
+.Fn sa_write
+will block until the requested amount of data is written.
+.Ss Non-blocking mode operation
+If the
+.Ar nbio_flag
+is set on
+.Fn sa_open ,
+then the
+.Fn sa_read
+and
+.Fn sa_write
+routines will never block; if no data is available, they will
+return zero immediately.
+.Pp
+Note that non-blocking mode must be used on bidirectional streams.
+For instance, if recording is blocked in
+.Fn sa_read
+then, even if samples can be played,
+.Fn sa_write
+cannot be called and the play buffers may underrun.
+.Pp
+To avoid busy loops when non-blocking mode is used, the
+.Xr poll 2
+system call can be used to check if data can be
+read from or written to the stream.
+The
+.Fn sa_pollfd
+routine fills the array
+.Ar pfd
+of
+.Va pollfd
+structures, used by
+.Xr poll 2 ,
+with
+.Ar events ;
+the latter is a bit-mask of
+.Va POLLIN
+and
+.Va POLLOUT
+constants; refer to
+.Xr poll 2
+for more details.
+.Fn sa_pollfd
+returns the number of
+.Va pollfd
+structures filled.
+The
+.Fn sa_revents
+routine returns the bit-mask set by
+.Xr poll 2
+in the
+.Va pfd
+array of
+.Va pollfd
+structures.
+If
+.Va POLLIN
+is set,
+.Fn sa_read
+can be called without blocking.
+If
+.Va POLLOUT
+is set,
+.Fn sa_write
+can be called without blocking.
+.Pp
+The
+.Fn sa_nfds
+routine returns the number of
+.Va pollfd
+structures the caller must preallocate in order to be sure
+that
+.Fn sa_pollfd
+will never overrun.
+.Ss Synchronizing non-audio events to the stream in real-time
+In order to perform actions at precise positions of the stream,
+such as displaying video in sync with the audio stream,
+the application must be notified in real-time of the exact
+position in the stream the hardware is processing.
+.Pp
+The
+.Fn sa_onmove
+routine can be used to register the
+.Va cb
+call-back function that will be called by the
+.Nm
+library at regular time intervals to notify the application
+the position in the stream changed.
+The
+.Va delta
+argument contains the number of frames the hardware moved in the stream
+since the last call of
+.Va cb .
+The value of the
+.Va arg
+pointer is passed to the call-back and can contain anything.
+.Pp
+If desired, the application can maintain the current position by
+starting from zero (when
+.Fn sa_start
+is called) and adding to the current position
+.Va delta
+every time
+.Fn cb
+is called.
+Note that at the beginning the current position might be
+negative indicating that the stream is being buffered,
+but has not reached the hardware yet.
+.Ss Measuring the latency and buffers usage
+The playback latency is the delay it will take for the
+frame just written to become audible, expressed in number of frames.
+The exact playback
+latency can be obtained by subtracting the current position
+from the number of frames written.
+Once playback is actually started (first sample audible)
+the latency will never exceed the
+.Va bufsz
+parameter (see the sections above).
+There's a phase during which
+.Fn sa_write
+only queues data;
+once there's enough data, actual playback starts.
+During this phase the current position is negative and
+the latency might be longer than
+.Va bufsz .
+.Pp
+In any cases, at most
+.Va bufsz
+frames are buffered.
+This value takes into account all buffers,
+including device, kernel and socket buffers.
+During the buffering phase, the number of frames stored
+is equal to the number of frames written.
+Once playback is started, it is equal to the number of frames
+written minus the current position.
+.Pp
+The recording latency is obtained similarly, by subtracting
+the number of frames read from the current position.
+.Pp
+It is strongly discouraged to use the latency and/or the buffer
+usage for anything but monitoring.
+Especially, note that
+.Fn sa_write
+might block even if there is buffer space left;
+using the buffer usage to guess if
+.Fn sa_write
+would block is false and leads to unreliable programs \(en consider using
+.Xr poll 2
+for this.
+.Ss Handling buffer overruns and underruns
+When the application cannot accept recorded data fast enough,
+the record buffer (of size
+.Va bufsz )
+might overrun; in this case recorded data is lost.
+Similarly if the application cannot provide data to play
+fast enough, the play buffer underruns and silence is played
+instead.
+Depending on the
+.Va xrun
+parameter of the
+.Va sa_par
+structure, the audio subsystem will behave as follows:
+.Bl -tag -width "SA_IGNORE"
+.It SA_IGNORE
+The stream is paused during overruns and underruns,
+thus the current position (obtained through
+.Va sa_onmove )
+stops being incremented.
+Once the overrun and/or underrun condition is gone, the stream is unpaused;
+play and record are always kept in sync.
+With this mode, the application cannot notice
+underruns and/or overruns and shouldn't care about them.
+.Pp
+This mode is the default.
+It's suitable for applications,
+like audio players and telephony, where time
+is not important and overruns or underruns are not short.
+.It SA_SYNC
+If the play buffer underruns, then silence is played,
+but in order to reach the right position in time,
+the same amount of written samples will be
+discarded once the application is unblocked.
+Similarly, if the record buffer overruns, then
+samples are discarded, but the same amount of silence will be
+returned later.
+The current position (obtained through
+.Va sa_onmove )
+is still incremented.
+When the play buffer underruns the play latency might become negative;
+when the record buffer overruns, the record latency might become
+larger than
+.Va bufsz .
+.Pp
+This mode is suitable for applications, like music production,
+where time is important and where underruns or overruns are
+short and rare.
+.It SA_ERROR
+With this mode, on the first play buffer underrun or
+record buffer overrun, the stream is terminated and
+no other function than
+.Fn sa_close
+will succeed.
+.Pp
+This mode is mostly useful for testing; portable
+applications shouldn't depend on it, since it's not available
+on other systems.
+.El
+.Ss Error handling
+Errors related to the audio subsystem
+(like hardware errors, dropped connections) and
+programming errors (e.g. call to
+.Fn sa_read
+on a play-only stream) are considered fatal.
+Once an error occurs, all functions taking a
+.Va sa_hdl
+argument, except
+.Fn sa_close
+and
+.Fn sa_eof ,
+stop working (i.e. always return 0).
+.Pp
+The
+.Fn sa_eof
+routine can be used at any stage;
+it returns 0 if there's no pending error, and a non-zero
+value if there's an error.
+.Sh RETURN VALUES
+The
+.Fn sa_open
+function returns the newly created handle on success or NULL
+on failure.
+The
+.Fn sa_setpar ,
+.Fn sa_getpar ,
+.Fn sa_start ,
+and
+.Fn sa_stop ,
+functions return 1 on success and 0 on failure.
+The
+.Fn sa_read
+and
+.Fn sa_write
+functions return the number of bytes transfered.
+.Sh ENVIRONMENT
+.Bl -tag -width "AUDIODEVICEXXX" -compact
+.It Ev AUDIODEVICE
+Path to the
+.Xr aucat 1
+socket to connect to, or the
+.Xr audio 4
+device to use.
+.El
+.Sh FILES
+.Bl -tag -width "/tmp/aucat.sockXXX" -compact
+.It Pa /tmp/aucat.sock
+Default path to
+.Xr aucat 1
+socket to connect to.
+.It Pa /dev/audio
+Default
+.Xr audio 4
+device to use.
+.El
+.\".Sh EXAMPLES
+.\".Bd -literal -offset indent
+.\".Ed
+.Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr audio 4
+.Sh BUGS
+The
+.Xr audio 4
+driver cannot drain playback buffers in the background, thus if
+.Nm
+is used to directly access an
+.Xr audio 4
+device,
+the
+.Fn sa_stop
+routine will stop playback immediately.
+.Pp
+The
+.Xr aucat 1
+server doesn't implement flow control (for performance reasons).
+If the application doesn't consume recorded data fast enough then
+.Dq "control messages"
+are delayed (or lost) and consequently
+overruns and underruns stay unnoticed by the application in the
+.Va SA_SYNC
+mode (overruns and underruns are handled on the server side, so
+synchronization is never lost).
+.Pp
+The
+.Fn sa_open ,
+.Fn sa_setpar ,
+.Fn sa_getpar ,
+.Fn sa_start
+and
+.Fn sa_stop
+routines may block for a very short period of time, thus they should
+not be abused during performance.

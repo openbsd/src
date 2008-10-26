@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.3 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.4 2008/10/26 08:49:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,64 +19,57 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <poll.h>
-#include "aparams.h"
 
+struct file;
 struct aparams;
 struct aproc;
 struct abuf;
+struct pollfd;
+
+struct fileops {
+	char *name;
+	size_t size;
+	void (*close)(struct file *);
+	unsigned (*read)(struct file *, unsigned char *, unsigned);
+	unsigned (*write)(struct file *, unsigned char *, unsigned);	
+	void (*start)(struct file *);
+	void (*stop)(struct file *);
+	int (*nfds)(struct file *);
+	int (*pollfd)(struct file *, struct pollfd *, int);
+	int (*revents)(struct file *, struct pollfd *);
+};
 
 struct file {
-	int fd;				/* file descriptor */
+	struct fileops *ops;
 	struct pollfd *pfd;		/* arg to poll(2) syscall */
-	off_t rbytes;			/* bytes to read, -1 if no limit */
-	off_t wbytes;			/* bytes to write, -1 if no limit */
-	int events;			/* events for poll(2) */
 #define FILE_ROK	0x1		/* file readable */
 #define FILE_WOK	0x2		/* file writable */
 #define FILE_EOF	0x4		/* eof on the read end */
-#define FILE_HUP	0x8		/* eof on the write end */
-	int state;			/* one of above */
+#define FILE_HUP	0x8		/* hang-up on the write end */
+#define FILE_ZOMB	0x10		/* closed, but struct not freed */
+	unsigned state;			/* one of above */
+	unsigned refs;			/* reference counter */
 	char *name;			/* for debug purposes */
 	struct aproc *rproc, *wproc;	/* reader and/or writer */
 	LIST_ENTRY(file) entry;
-
-	/*
-	 * disk-file specific stuff
-	 */
-#define HDR_AUTO	0	/* guess by looking at the file name */
-#define HDR_RAW		1	/* no headers, ie openbsd native ;-) */
-#define HDR_WAV		2	/* microsoft riff wave */
-	unsigned hdr;		/* HDR_RAW or HDR_WAV */
-	struct aparams hpar;	/* parameters to write on the header */
 };
 
 LIST_HEAD(filelist,file);
 
 extern struct filelist file_list;
 
-void file_start(void);
-void file_stop(void);
-struct file *file_new(int, char *);
+void filelist_init(void);
+void filelist_done(void);
+void filelist_unlisten(void);
+
+struct file *file_new(struct fileops *, char *, unsigned);
 void file_del(struct file *);
+
 void file_attach(struct file *, struct aproc *, struct aproc *);
 unsigned file_read(struct file *, unsigned char *, unsigned);
 unsigned file_write(struct file *, unsigned char *, unsigned);
 int file_poll(void);
 void file_eof(struct file *);
 void file_hup(struct file *);
-
-/*
- * max data of a .wav file. The total file size must be smaller than
- * 2^31, and we also have to leave some space for the headers (around 40
- * bytes)
- */ 
-#define WAV_DATAMAX	(0x7fff0000)
-
-int wav_readhdr(int, struct aparams *, off_t *);
-int wav_writehdr(int, struct aparams *);
-
-/* legacy */
-int legacy_play(char *, char *);
 
 #endif /* !defined(FILE_H) */

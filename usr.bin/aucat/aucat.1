@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.25 2008/06/03 19:27:42 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.26 2008/10/26 08:49:43 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2008 $
+.Dd $Mdocdate: October 26 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -23,19 +23,16 @@
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl qu
+.Op Fl lqu
+.Op Fl b Ar nsamples
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
-.Op Fl E Ar enc
 .Op Fl e Ar enc
 .Op Fl f Ar device
-.Op Fl H Ar fmt
 .Op Fl h Ar fmt
 .Op Fl i Ar file
 .Op Fl o Ar file
-.Op Fl R Ar rate
 .Op Fl r Ar rate
-.Op Fl X Ar policy
 .Op Fl x Ar policy
 .Ek
 .Sh DESCRIPTION
@@ -51,15 +48,19 @@ also has a legacy mode that works like previous versions of
 which does not convert on the fly and supports playback of .au files.
 .Pp
 The options are as follows:
-.Bl -tag -width "-m mmmmmmmm "
+.Bl -tag -width Ds
+.It Fl b Ar nsamples
+The buffer size in frames.
+This is the number of samples that will be buffered before being played
+and controls the playback latency.
 .It Xo
 .Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
 .Xc
-The range of channel numbers on the output or input stream, respectively.
+The range of channel numbers on the record or playback stream, respectively.
 The default is 0:1, i.e. stereo.
-.It Fl E Ar enc , Fl e Ar enc
-Encoding of the output or input stream, respectively (see below).
+.It Fl e Ar enc
+Encoding of the playback or recording stream (see below).
 The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
 The
@@ -67,23 +68,34 @@ The
 device to use for playing and/or recording.
 The default is
 .Pa /dev/audio .
-.It Fl H Ar fmt , Fl h Ar fmt
-File format of the output or input stream, respectively (see below).
+.It Fl h Ar fmt
+File format of the playback or record stream (see below).
 The default is auto.
 .It Fl i Ar file
 Add this file to the list of files to play.
 If the option argument is
 .Sq -
 then standard input will be used.
+.It Fl l
+Listen for incoming connections on a Unix domain socket.
+A client might use
+.Nm
+instead of the regular
+.Xr audio 4
+device for audio input and output
+in order to share the physical device with other clients.
+The default socket path is
+.Pa /tmp/aucat.sock
+but it can be changed with the
+.Ev AUCAT_SOCKET
+environment variable.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is
 .Sq -
 then standard output will be used.
-.It Fl q
-Do not print progress information; run quietly.
-.It Fl R Ar rate , Fl r Ar rate
-Sample rate in Hertz of the output or input stream, respectively.
+.It Fl r Ar rate
+Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
 .It Fl u
 Normally
@@ -91,32 +103,23 @@ Normally
 tries to automatically determine the optimal parameters for the audio device;
 if this option is specified,
 it will instead use the parameters specified by the
-.Fl CcEeRr
+.Fl Ccer
 options.
-.It Fl X Ar policy
+.It Fl x Ar policy
 Action when the output stream cannot accept
-recorded data fast enough.
+recorded data fast enough or the input stream
+cannot provide data to play fast enough.
 If the policy
 is
 .Dq ignore
-(the default) then samples that cannot be written are discarded.
+(the default) then samples that cannot be written are discarded
+and samples that cannot be read are replaced by silence.
 If the policy is
 .Dq sync
-then samples are discarded, but the same amount of silence will be written
+then recorded samples are discarded, but the same amount of silence will be written
 once the stream is unblocked, in order to reach the right position in time.
-If the policy is
-.Dq error
-then the stream is closed permanently.
-.It Fl x Ar policy
-Action when the input stream cannot provide
-data to play fast enough.
-If the policy is
-.Dq ignore
-(the default) then silence is played.
-If the policy is
-.Dq sync
-then silence is played, but the same amount of samples will be discarded
-once the stream is unblocked, in order to reach the right position in time.
+Similarly silence is played, but the same amount of samples will be discarded
+once the stream is unblocked.
 If the policy is
 .Dq error
 then the stream is closed permanently.
@@ -127,10 +130,10 @@ Settings for input
 and output
 .Pq Fl o
 files can be changed using the
-.Fl CcEeHhRrXx
+.Fl Ccehrx
 options.
 The last
-.Fl CcEeHhRrXx
+.Fl Ccehrx
 options specified before an
 .Fl i
 or
@@ -140,13 +143,13 @@ are applied to
 .Pp
 Settings for the audio device
 can be changed using the
-.Fl CcEeRr
+.Fl Ccer
 options.
 They apply to the audio device only if the
 .Fl u
 option is given as well.
 The last
-.Fl CcEeRr
+.Fl Ccer
 option specified before an
 .Fl f
 is applied to
@@ -158,7 +161,7 @@ is specified but
 .Fl u
 is given anyway,
 any
-.Fl CcEeRr
+.Fl Ccer
 options specified before
 .Fl io
 options are applied both to
@@ -170,10 +173,8 @@ options,
 they will be applied only to the default audio device.
 .Pp
 File formats are specified using the
-.Fl H
-and
 .Fl h
-options.
+option.
 The following file formats are supported:
 .Bl -tag -width s32lexxx -offset -indent
 .It raw
@@ -192,10 +193,8 @@ Try to guess, depending on the file name.
 .El
 .Pp
 Encodings are specified using the
-.Fl E
-and
 .Fl e
-options.
+option.
 The following encodings are supported:
 .Pp
 .Bl -tag -width s32lexxx -offset -indent -compact
@@ -282,12 +281,21 @@ If the device does not support the encoding,
 .Nm
 will exit with an error.
 .Sh ENVIRONMENT
-.Bl -tag -width "AUDIODEVICEXXX" -compact
+.Bl -tag -width "AUCAT_SOCKETXXX" -compact
 .It Ev AUCAT_DEBUG
 The debug level:
 may be a value between 0 and 4.
+.It Ev AUCAT_SOCKET
+Path to the Unix domain socket to use.
 .It Ev AUDIODEVICE
 The audio device to use.
+.El
+.Sh SIGNALS
+.Bl -tag -width "SIGUSR1, SIGUSR2X" -compact
+.It Va SIGINT
+Terminate saving recorded files.
+.It Va SIGUSR1 , Va SIGUSR2
+Increase or decrease debug level respectively.
 .El
 .Sh EXAMPLES
 The following command will record a stereo s16le stream at
@@ -314,7 +322,7 @@ The following will record channels 2 and 3 into one stereo file and
 channels 6 and 7 into another stereo file using a 96kHz sampling rate for
 both:
 .Bd -literal -offset indent
-$ aucat -R 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
+$ aucat -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
 .Ed
 .Pp
 The following will play two s18le mono files, one on each channel:

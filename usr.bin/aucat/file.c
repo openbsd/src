@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 2008/10/26 08:49:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,62 +31,55 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "conf.h"
 #include "file.h"
 #include "aproc.h"
 #include "abuf.h"
-#include "dev.h"
 
 #define MAXFDS 100
 
+extern struct fileops listen_ops, pipe_ops;
 struct filelist file_list;
 
 void
 file_dprint(int n, struct file *f)
 {
-	if (debug_level >= n) {
-		fprintf(stderr, "%s <", f->name);
-		if (f->state & FILE_ROK)
-			fprintf(stderr, "ROK");
-		if (f->state & FILE_WOK)
-			fprintf(stderr, "WOK");
-		if (f->state & FILE_EOF)
-			fprintf(stderr, "EOF");
-		if (f->state & FILE_HUP)
-			fprintf(stderr, "HUP");
-		fprintf(stderr, ">");
-	}
+	if (debug_level < n)
+		return;
+	fprintf(stderr, "%s:%s <", f->ops->name, f->name);
+	if (f->state & FILE_ROK)
+		fprintf(stderr, "ROK");
+	if (f->state & FILE_WOK)
+		fprintf(stderr, "WOK");
+	if (f->state & FILE_EOF)
+		fprintf(stderr, "EOF");
+	if (f->state & FILE_HUP)
+		fprintf(stderr, "HUP");
+	fprintf(stderr, ">");
 }
 
 struct file *
-file_new(int fd, char *name)
+file_new(struct fileops *ops, char *name, unsigned nfds)
 {
-	unsigned i;
 	struct file *f;
 
-	i = 0;
 	LIST_FOREACH(f, &file_list, entry)
-		i++;		
-	if (i >= MAXFDS)
+		nfds += f->ops->nfds(f);
+	if (nfds > MAXFDS)
 		err(1, "%s: too many polled files", name);
 
-	f = malloc(sizeof(struct file));
+	f = malloc(ops->size);
 	if (f == NULL)
-		err(1, "%s", name);
-
-	f->fd = fd;
-	f->events = 0;
-	f->rbytes = -1;
-	f->wbytes = -1;
+		err(1, "file_new: %s", ops->name);
+	f->ops = ops;
 	f->name = name;
 	f->state = 0;
 	f->rproc = NULL;
 	f->wproc = NULL;
+	f->refs = 0;
 	LIST_INSERT_HEAD(&file_list, f, entry);
-	DPRINTF("file_new: %s\n", f->name);
+	DPRINTF("file_new: %s:%s\n", ops->name, f->name);
 	return f;
 }
 
@@ -95,54 +88,52 @@ file_del(struct file *f)
 {
 	DPRINTF("file_del: ");
 	file_dprint(1, f);
-	DPRINTF("\n");
-
-	if (f->hdr == HDR_WAV)
-		wav_writehdr(f->fd, &f->hpar);
-	close(f->fd);
-	free(f);
+	if (f->refs > 0) {
+		DPRINTF(": delayed\n");
+		f->state |= FILE_ZOMB;
+		return;
+	} else {
+		DPRINTF(": immediate\n");
+		LIST_REMOVE(f, entry);
+		f->ops->close(f);
+		free(f);
+	}
 }
 
 int
 file_poll(void)
 {
-#ifdef DEBUG
-	int ndead;
-#endif
-	nfds_t nfds;
+	nfds_t nfds, n;
+	short events, revents;
 	struct pollfd pfds[MAXFDS];
-	struct pollfd *pfd;
 	struct file *f, *fnext;
 	struct aproc *p;
 
+	/*
+	 * fill the pfds[] array with files that are blocked on reading
+	 * and/or writing, skipping those that're just waiting
+	 */
+	DPRINTFN(4, "file_poll:");
 	nfds = 0;
-#ifdef DEBUG
-	ndead = 0;
-#endif
 	LIST_FOREACH(f, &file_list, entry) {
-		if (!f->events) {
-#ifdef DEBUG
-			if (f->state & (FILE_EOF | FILE_HUP))
-				ndead++;
-#endif
+		events = 0;
+		if (f->rproc && !(f->state & FILE_ROK))
+			events |= POLLIN;
+		if (f->wproc && !(f->state & FILE_WOK))
+			events |= POLLOUT;
+		DPRINTFN(4, " %s(%x)", f->name, events);
+		n = f->ops->pollfd(f, pfds + nfds, events);
+		if (n == 0) {
 			f->pfd = NULL;
 			continue;
 		}
-		pfd = &pfds[nfds++];
-		f->pfd = pfd;
-		pfd->fd = f->fd;
-		pfd->events = f->events;
+		f->pfd = pfds + nfds;
+		nfds += n;
 	}
+	DPRINTFN(4, "\n");
 
 #ifdef DEBUG
-	if (debug_level >= 4) {
-		fprintf(stderr, "file_poll:");
-		LIST_FOREACH(f, &file_list, entry) {
-			fprintf(stderr, " %s(%x)", f->name, f->events);
-		}
-		fprintf(stderr, "\n");
-	}
-	if (nfds == 0 && ndead == 0 && !LIST_EMPTY(&file_list)) {
+	if (nfds == 0 && !LIST_EMPTY(&file_list)) {
 		fprintf(stderr, "file_poll: deadlock\n");
 		abort();
 	}
@@ -151,60 +142,58 @@ file_poll(void)
 		DPRINTF("file_poll: nothing to do...\n");
 		return 0;
 	}
-	if (nfds) {
-		while (poll(pfds, nfds, -1) < 0) {
-			if (errno != EINTR)
-				err(1, "file_poll: poll failed");
-		}
+	if (poll(pfds, nfds, -1) < 0) {
+		if (errno == EINTR)
+			return 1;
+		err(1, "file_poll: poll failed");
 	}
-	LIST_FOREACH(f, &file_list, entry) {
-		pfd = f->pfd;
-		if (pfd == NULL)
+	f = LIST_FIRST(&file_list);
+	while (f != LIST_END(&file_list)) {
+		if (f->pfd == NULL) {
+			f = LIST_NEXT(f, entry);
 			continue;
-		if ((f->events & POLLIN) && (pfd->revents & POLLIN)) {
-			f->events &= ~POLLIN;
+		}
+		f->refs++;
+		revents = f->ops->revents(f, f->pfd);
+		if (!(f->state & FILE_ZOMB) && (revents & POLLIN)) {
+			revents &= ~POLLIN;
 			f->state |= FILE_ROK;
 			DPRINTFN(3, "file_poll: %s rok\n", f->name);
-			while (f->state & FILE_ROK) {
+			for (;;) {
 				p = f->rproc;
 				if (!p || !p->ops->in(p, NULL))
 					break;
 			}
 		}
-		if ((f->events & POLLOUT) && (pfd->revents & POLLOUT)) {
-			f->events &= ~POLLOUT;
+		if (!(f->state & FILE_ZOMB) && (revents & POLLOUT)) {
+			revents &= ~POLLOUT;
 			f->state |= FILE_WOK;
 			DPRINTFN(3, "file_poll: %s wok\n", f->name);
-			while (f->state & FILE_WOK) {
+			for (;;) {
 				p = f->wproc;
 				if (!p || !p->ops->out(p, NULL))
 					break;
 			}
 		}
-	}
-	LIST_FOREACH(f, &file_list, entry) {
-		if (f->state & FILE_EOF) {
+		if (!(f->state & FILE_ZOMB) && (f->state & FILE_EOF)) {
 			DPRINTFN(2, "file_poll: %s: eof\n", f->name);
 			p = f->rproc;
 			if (p)
 				p->ops->eof(p, NULL);
 			f->state &= ~FILE_EOF;
 		}
-		if (f->state & FILE_HUP) {
+		if (!(f->state & FILE_ZOMB) && (f->state & FILE_HUP)) {
 			DPRINTFN(2, "file_poll: %s hup\n", f->name);
 			p = f->wproc;
 			if (p)
 				p->ops->hup(p, NULL);
 			f->state &= ~FILE_HUP;
 		}
-	}
-	for (f = LIST_FIRST(&file_list); f != NULL; f = fnext) {
+		f->refs--;
 		fnext = LIST_NEXT(f, entry);
-		if (f->rproc == NULL && f->wproc == NULL) {
-			LIST_REMOVE(f, entry);
-			DPRINTF("file_poll: %s: removed\n", f->name);
+		if (f->state & FILE_ZOMB)
 			file_del(f);
-		}
+		f = fnext;
 	}
 	if (LIST_EMPTY(&file_list)) {
 		DPRINTFN(2, "file_poll: terminated\n");
@@ -214,7 +203,7 @@ file_poll(void)
 }
 
 void
-file_start(void)
+filelist_init(void)
 {
 	sigset_t set;
 
@@ -227,109 +216,88 @@ file_start(void)
 }
 
 void
-file_stop(void)
+filelist_done(void)
 {
 	struct file *f;
 
 	if (!LIST_EMPTY(&file_list)) {
-		fprintf(stderr, "file_stop:");
+		fprintf(stderr, "filelist_done: list not empty:\n");
 		LIST_FOREACH(f, &file_list, entry) {
-			fprintf(stderr, " %s(%x)", f->name, f->events);
+			fprintf(stderr, "\t");
+			file_dprint(0, f);
+			fprintf(stderr, "\n");
 		}
-		fprintf(stderr, "\nfile_stop: list not empty\n");
-		exit(1);
+		abort();
+	}
+}
+
+/*
+ * close all listening sockets
+ *
+ * XXX: remove this
+ */
+void
+filelist_unlisten(void)
+{
+	struct file *f, *fnext;
+	
+	for (f = LIST_FIRST(&file_list); f != NULL; f = fnext) {
+		fnext = LIST_NEXT(f, entry);
+		if (f->ops == &listen_ops)
+			file_del(f);
 	}
 }
 
 unsigned
 file_read(struct file *file, unsigned char *data, unsigned count)
 {
-	int n;
-	
-	if (file->rbytes >= 0 && count > file->rbytes) {
-		count = file->rbytes; /* file->rbytes fits in count */
-		if (count == 0) {
-			DPRINTFN(2, "file_read: %s: complete\n", file->name);
-			file->state &= ~FILE_ROK;
-			file->state |= FILE_EOF;
-			return 0;
-		}
-	}
-	while ((n = read(file->fd, data, count)) < 0) {
-		if (errno == EINTR)
-			continue;
-		file->state &= ~FILE_ROK;
-		if (errno == EAGAIN) {
-			DPRINTFN(3, "file_read: %s: blocking...\n",
-			    file->name);
-			file->events |= POLLIN;
-		} else {
-			warn("%s", file->name);
-			file->state |= FILE_EOF;
-		}
-		return 0;
-	}
-	if (n == 0) {
-		DPRINTFN(2, "file_read: %s: eof\n", file->name);
-		file->state &= ~FILE_ROK;
-		file->state |= FILE_EOF;
-		return 0;
-	}
-	if (file->rbytes >= 0)
-		file->rbytes -= n;
-	DPRINTFN(4, "file_read: %s: got %d bytes\n", file->name, n);
-	return n;
+	return file->ops->read(file, data, count);
 }
-
 
 unsigned
 file_write(struct file *file, unsigned char *data, unsigned count)
 {
-	int n;
-	
-	if (file->wbytes >= 0 && count > file->wbytes) {
-		count = file->wbytes; /* file->wbytes fits in count */
-		if (count == 0) {
-			DPRINTFN(2, "file_write: %s: complete\n", file->name);
-			file->state &= ~FILE_WOK;
-			file->state |= FILE_HUP;
-			return 0;
-		}
-	}
-	while ((n = write(file->fd, data, count)) < 0) {
-		if (errno == EINTR)
-			continue;
-		file->state &= ~FILE_WOK;
-		if (errno == EAGAIN) {
-			DPRINTFN(3, "file_write: %s: blocking...\n",
-			    file->name);
-			file->events |= POLLOUT;
-		} else {
-			warn("%s", file->name);
-			file->state |= FILE_HUP;
-		}
-		return 0;
-	}
-	if (file->wbytes >= 0)
-		file->wbytes -= n;
-	DPRINTFN(4, "file_write: %s: wrote %d bytes\n", file->name, n);
-	return n;
+	return file->ops->write(file, data, count);
 }
 
 void
 file_eof(struct file *f)
 {
-	DPRINTFN(2, "file_eof: %s: scheduled for eof\n", f->name);
-	f->events &= ~POLLIN;
-	f->state &= ~FILE_ROK;
-	f->state |= FILE_EOF;
+	struct aproc *p;
+
+	if (f->refs == 0) {
+		DPRINTFN(2, "file_eof: %s: immediate\n", f->name);
+		f->refs++;
+		p = f->rproc;
+		if (p)
+			p->ops->eof(p, NULL);
+		f->refs--;
+		if (f->state & FILE_ZOMB)
+			file_del(f);
+	} else {
+		DPRINTFN(2, "file_eof: %s: delayed\n", f->name);
+		f->state &= ~FILE_ROK;
+		f->state |= FILE_EOF;
+	}
 }
 
 void
 file_hup(struct file *f)
 {
-	DPRINTFN(2, "file_hup: %s: scheduled for hup\n", f->name);
-	f->events &= ~POLLOUT;
-	f->state &= ~FILE_WOK;
-	f->state |= FILE_HUP;
+	struct aproc *p;
+
+	if (f->refs == 0) {
+		DPRINTFN(2, "file_hup: %s immediate\n", f->name);
+		f->refs++;
+		p = f->wproc;
+		if (p)
+			p->ops->hup(p, NULL);
+		f->refs--;
+		if (f->state & FILE_ZOMB)
+			file_del(f);
+	} else {
+		DPRINTFN(2, "file_hup: %s: delayed\n", f->name);
+		f->state &= ~FILE_WOK;
+		f->state |= FILE_HUP;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.2 2008/08/14 15:25:16 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.3 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,155 +17,75 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
-#include <err.h>
 
 #include "dev.h"
 #include "abuf.h"
 #include "aproc.h"
-#include "file.h"
+#include "pipe.h"
 #include "conf.h"
+#include "safile.h"
 
-int quit_flag, pause_flag;
-unsigned dev_infr, dev_onfr;
+unsigned dev_bufsz, dev_round, dev_rate;
+unsigned dev_rate_div, dev_round_div;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
-struct file  *dev_file;
-struct devops *devops = &devops_sun;
+struct file *dev_file;
 
 /*
- * SIGINT handler, it raises the quit flag. If the flag is already set,
- * that means that the last SIGINT was not handled, because the process
- * is blocked somewhere, so exit
+ * supported rates
  */
-void
-sigint(int s)
-{
-	if (quit_flag)
-		_exit(1);
-	quit_flag = 1;
-}
+#define NRATES (sizeof(dev_rates) / sizeof(dev_rates[0]))
+unsigned dev_rates[] = {
+	  6400,   7200,   8000,   9600,  11025,  12000,
+	 12800,  14400,  16000,  19200,  22050,  24000,
+	 25600,  28800,  32000,  38400,  44100,  48000,
+	 51200,  57600,  64000,  76800,  88200,  96000,
+	102400, 115200, 128000, 153600, 176400, 192000
+};
 
 /*
- * called when the user hits ctrl-z
+ * factors of supported rates
  */
-void
-sigtstp(int s)
-{
-	pause_flag = 1;
-}
+#define NPRIMES (sizeof(dev_primes) / sizeof(dev_primes[0]))
+unsigned dev_primes[] = {2, 3, 5, 7};
 
-/*
- * SIGCONT is send when resumed after SIGTSTP or SIGSTOP. If the pause
- * flag is not set, that means that the process was not suspended by
- * dev_suspend(), which means that we lost the sync; since we cannot
- * resync, just exit
- */
-void
-sigcont(int s)
+int
+dev_setrate(unsigned rate)
 {
-	static char msg[] = "can't resume afer SIGSTOP, terminating...\n";
-	
-	if (!pause_flag) {
-		write(STDERR_FILENO, msg, sizeof(msg) - 1);
-		_exit(1);
+	unsigned i, r, p;
+
+	r = 1000 * rate;
+	for (i = 0; i < NRATES; i++) {
+		if (i == NRATES) {
+			fprintf(stderr, "dev_setrate: %u, unsupported\n", rate);
+			return 0;
+		}
+		if (r > 996 * dev_rates[i] &&
+		    r < 1004 * dev_rates[i]) {
+			dev_rate = dev_rates[i];
+			break;
+		}
 	}
-}
 
-/*
- * suicide with SIGTSTP (tty stop) as if the user had hit ctrl-z
- */
-void
-dev_suspend(void)
-{
-	struct sigaction sa;
-
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = SIG_DFL;
-	if (sigaction(SIGTSTP, &sa, NULL) < 0)
-		err(1, "sigaction");
-	DPRINTF("suspended by tty\n");
-	kill(getpid(), SIGTSTP);
-	pause_flag = 0;
-	sa.sa_handler = sigtstp;
-	if (sigaction(SIGTSTP, &sa, NULL) < 0)
-		err(1, "sigaction");
-	DPRINTF("resumed after suspend\n");
-}
-
-/*
- * fill playback buffer, so when device is started there
- * are samples to play
- */
-void
-dev_fill(void)
-{
-	struct abuf *buf;
-
-
-	/*
-	 * if there are no inputs, zero fill the mixer
-	 */
-	if (dev_mix && LIST_EMPTY(&dev_mix->ibuflist))
-		mix_pushzero(dev_mix);
-	DPRINTF("filling play buffers...\n");	
-	for (;;) {
-		if (!dev_file->wproc) {
-			DPRINTF("fill: no writer\n");
-			break;
+	dev_rate_div = dev_rate;
+	dev_round_div = dev_round;
+	for (i = 0; i < NPRIMES; i++) {
+		p = dev_primes[i];
+		while (dev_rate_div % p == 0 && dev_round_div % p == 0) {
+			dev_rate_div /= p;
+			dev_round_div /= p;
 		}
-		if (dev_file->events & POLLOUT) {
-			/*
-			 * kernel buffers are full, but continue
-			 * until the play buffer is full too.
-			 */
-			buf = LIST_FIRST(&dev_file->wproc->ibuflist);
-			if (!ABUF_WOK(buf))
-				break;		/* buffer full */
-			if (!buf->wproc)
-				break;		/* will never be filled */
-		}
-		if (!file_poll())
-			break;
-		if (pause_flag)
-			dev_suspend();
 	}
+	return 1;
 }
 
-/*
- * flush recorded samples once the device is stopped so
- * they aren't lost
- */
 void
-dev_flush(void)
+dev_roundrate(unsigned *newrate, unsigned *newround)
 {
-	struct abuf *buf;
-
-	DPRINTF("flushing record buffers...\n");
-	for (;;) {
-		if (!dev_file->rproc) {
-			DPRINTF("flush: no more reader\n");
-			break;
-		}
-		if (dev_file->events & POLLIN) {
-			/*
-			 * we drained kernel buffers, but continue
-			 * until the record buffer is empty.
-			 */
-			buf = LIST_FIRST(&dev_file->rproc->obuflist);
-			if (!ABUF_ROK(buf))
-				break;		/* buffer empty */
-			if (!buf->rproc)
-				break;		/* will never be drained */
-		}
-		if (!file_poll())
-			break;
-		if (pause_flag)
-			dev_suspend();
-	}
+	*newrate += dev_rate_div - 1;
+	*newrate -= *newrate % dev_rate_div;
+	*newround = *newrate * dev_round_div / dev_rate_div;
 }
-
 
 /*
  * open the device with the given hardware parameters and create a mixer
@@ -173,48 +93,54 @@ dev_flush(void)
  * setup
  */
 void
-dev_init(char *devpath, struct aparams *dipar, struct aparams *dopar)
+dev_init(char *devpath,
+    struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 {
-	int fd;
-	struct sigaction sa;
-	unsigned infr, onfr;
 	struct aparams ipar, opar;
 	struct aproc *conv;
 	struct abuf *buf;
-
-	quit_flag = 0;
-	pause_flag = 0;
-
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = sigint;
-	if (sigaction(SIGINT, &sa, NULL) < 0)
-		err(1, "sigaction");
-	sa.sa_handler = sigtstp;
-	if (sigaction(SIGTSTP, &sa, NULL) < 0)
-		err(1, "sigaction");
-	sa.sa_handler = sigcont;
-	if (sigaction(SIGCONT, &sa, NULL) < 0)
-		err(1, "sigaction");
-
-	fd = devops->open(devpath, dipar, dopar, &infr, &onfr);
-	if (fd < 0)
-		exit(1);
-	dev_file = file_new(fd, devpath);
+	unsigned nfr, ibufsz, obufsz;
 
 	/*
-	 * create record chain
+	 * use 1/4 of the total buffer for the device
+	 */
+	dev_bufsz = (bufsz + 3) / 4;
+	dev_file = (struct file *)safile_new(&safile_ops, devpath,
+	    dipar, dopar, &dev_bufsz, &dev_round);
+	if (!dev_file)
+		exit(1);
+	if (!dev_setrate(dipar ? dipar->rate : dopar->rate))
+		exit(1);
+	if (dipar) {
+		dipar->rate = dev_rate;
+		if (debug_level > 0) {
+			DPRINTF("dev_init: dipar: ");
+			aparams_print(dipar);
+			DPRINTF("\n");
+		}
+	}
+	if (dopar) {
+		dopar->rate = dev_rate;
+		if (debug_level > 0) {
+			DPRINTF("dev_init: dopar: ");
+			aparams_print(dopar);
+			DPRINTF("\n");
+		}
+	}
+	nfr = ibufsz = obufsz = dev_bufsz;
+
+	/*
+	 * create record chain: use 1/4 for the file i/o buffers
 	 */
 	if (dipar) {
 		aparams_init(&ipar, dipar->cmin, dipar->cmax, dipar->rate);
-		infr *= DEFAULT_NBLK;
-
 		/*
 		 * create the read end
 		 */
 		dev_rec = rpipe_new(dev_file);
-		buf = abuf_new(infr, aparams_bpf(dipar));
+		buf = abuf_new(nfr, aparams_bpf(dipar));
 		aproc_setout(dev_rec, buf);
+		ibufsz += nfr;
 
 		/*
 		 * append a converter, if needed
@@ -227,16 +153,16 @@ dev_init(char *devpath, struct aparams *dipar, struct aparams *dopar)
 			}
 			conv = conv_new("subconv", dipar, &ipar);
 			aproc_setin(conv, buf);
-			buf = abuf_new(infr, aparams_bpf(&ipar));
+			buf = abuf_new(nfr, aparams_bpf(&ipar));
 			aproc_setout(conv, buf);
+			ibufsz += nfr;
 		}
 		dev_ipar = ipar;
-		dev_infr = infr;
 
 		/*
 		 * append a "sub" to which clients will connect
 		 */
-		dev_sub = sub_new();
+		dev_sub = sub_new("sub", nfr);
 		aproc_setin(dev_sub, buf);
 	} else {
 		dev_rec = NULL;
@@ -248,15 +174,14 @@ dev_init(char *devpath, struct aparams *dipar, struct aparams *dopar)
 	 */
 	if (dopar) {
 		aparams_init(&opar, dopar->cmin, dopar->cmax, dopar->rate);
-		onfr *= DEFAULT_NBLK;	
-
 		/*
 		 * create the write end
 		 */
 		dev_play = wpipe_new(dev_file);
-		buf = abuf_new(onfr, aparams_bpf(dopar));
+		buf = abuf_new(nfr, aparams_bpf(dopar));
 		aproc_setin(dev_play, buf);
-
+		obufsz += nfr;
+		
 		/*
 		 * append a converter, if needed
 		 */
@@ -268,22 +193,24 @@ dev_init(char *devpath, struct aparams *dipar, struct aparams *dopar)
 			}
 			conv = conv_new("mixconv", &opar, dopar);
 			aproc_setout(conv, buf);
-			buf = abuf_new(onfr, aparams_bpf(&opar));
+			buf = abuf_new(nfr, aparams_bpf(&opar));
 			aproc_setin(conv, buf);
-			*dopar = opar;
+			obufsz += nfr;
 		}
 		dev_opar = opar;
-		dev_onfr = onfr;
 
 		/*
 		 * append a "mix" to which clients will connect
 		 */
-		dev_mix = mix_new();
+		dev_mix = mix_new("mix", nfr);
 		aproc_setout(dev_mix, buf);
 	} else {
 		dev_play = NULL;
 		dev_mix = NULL;
 	}
+	dev_bufsz = (dopar) ? obufsz : ibufsz;
+	DPRINTF("dev_init: using %u fpb\n", dev_bufsz);
+	dev_start();
 }
 
 /*
@@ -293,43 +220,56 @@ dev_init(char *devpath, struct aparams *dipar, struct aparams *dopar)
 void
 dev_done(void)
 {
-	struct sigaction sa;
 	struct file *f;
 
-	/*
-	 * generate EOF on all inputs (including device), so once
-	 * buffers are drained, everything will be cleaned
-	 */
-	LIST_FOREACH(f, &file_list, entry) {
-		if (f->rproc)
-			file_eof(f);
-	}
-	/*
-	 * destroy automatically mixe instead
-	 * of generating silence
-	 */
-	if (dev_mix)
-		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
-	if (dev_sub)
-		dev_sub->u.sub.flags |= SUB_AUTOQUIT;
-	/*
-	 * drain buffers of terminated inputs.
-	 */
-	for (;;) {
-		if (!file_poll())
-			break;
-	}
-	devops->close(dev_file->fd);
+	if (dev_mix) {
+		/*
+		 * generate EOF on all inputs (but not the device), and
+		 * put the mixer in ``autoquit'' state, so once buffers
+		 * are drained the mixer will terminate and shutdown the
+		 * write-end of the device
+		 *
+		 * NOTE: since file_eof() can destroy the file and
+		 * reorder the file_list, we have to restart the loop
+		 * after each call to file_eof()
+		 */
+	restart:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f != dev_file && f->rproc) {
+				file_eof(f);
+				goto restart;
+			}
+		}
+		if (dev_mix)
+			dev_mix->u.mix.flags |= MIX_AUTOQUIT;
 
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = SIG_DFL;
-	if (sigaction(SIGINT, &sa, NULL) < 0)
-		err(1, "sigaction");
-	if (sigaction(SIGTSTP, &sa, NULL) < 0)
-		err(1, "sigaction");
-	if (sigaction(SIGCONT, &sa, NULL) < 0)
-		err(1, "sigaction");
+		/*
+		 * wait play chain to terminate
+		 */
+		while (dev_file->wproc != NULL) {
+			if (!file_poll())
+				break;
+		}
+		dev_mix = 0;
+	}
+	if (dev_sub) {
+		/*
+		 * same as above, but for the record chain: generate eof
+		 * on the read-end of the device and wait record buffers
+		 * to desappear.  We must stop the device first, because
+		 * play-end will underrun (and xrun correction code will
+		 * insert silence on the record-end of the device)
+		 */
+		dev_stop();
+		file_eof(dev_file);
+		if (dev_sub)
+			dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+		for (;;) {
+			if (!file_poll())
+				break;
+		}
+		dev_sub = NULL;
+	}
 }
 
 /*
@@ -338,12 +278,11 @@ dev_done(void)
 void
 dev_start(void)
 {
-	dev_fill();
 	if (dev_mix)
 		dev_mix->u.mix.flags |= MIX_DROP;
 	if (dev_sub)
 		dev_sub->u.sub.flags |= SUB_DROP;
-	devops->start(dev_file->fd);
+	dev_file->ops->start(dev_file);
 }
 
 /*
@@ -352,34 +291,78 @@ dev_start(void)
 void
 dev_stop(void)
 {
-	devops->stop(dev_file->fd);
+	dev_file->ops->stop(dev_file);
 	if (dev_mix)
 		dev_mix->u.mix.flags &= ~MIX_DROP;
 	if (dev_sub)
 		dev_sub->u.sub.flags &= ~SUB_DROP;
-	dev_flush();
 }
 
 /*
- * loop until there's either input or output to process
+ * sync play buffer to rec buffer (for instance when one of
+ * them underruns/overruns)
  */
 void
-dev_run(int autoquit)
+dev_sync(struct abuf *ibuf, struct abuf *obuf)
 {
-	while (!quit_flag) {
-		if ((!dev_mix || LIST_EMPTY(&dev_mix->ibuflist)) &&
-		    (!dev_sub || LIST_EMPTY(&dev_sub->obuflist)) && autoquit)
-			break;
-		if (!file_poll())
-			break;
-		if (pause_flag) {
-			devops->stop(dev_file->fd);
-			dev_flush();
-			dev_suspend();
-			dev_fill();
-			devops->start(dev_file->fd);
+	struct abuf *pbuf, *rbuf;
+	int delta;
+
+	if (!dev_mix || !dev_sub)
+		return;
+	pbuf = LIST_FIRST(&dev_mix->obuflist);
+	if (!pbuf)
+		return;
+	rbuf = LIST_FIRST(&dev_sub->ibuflist);
+	if (!rbuf)
+		return;
+	for (;;) {
+		if (!ibuf || !ibuf->rproc) {
+			DPRINTF("dev_sync: reader desappeared\n");
+			return;
 		}
+		if (ibuf->rproc == dev_mix)
+			break;
+		ibuf = LIST_FIRST(&ibuf->rproc->obuflist);
 	}
+	for (;;) {
+		if (!obuf || !obuf->wproc) {
+			DPRINTF("dev_sync: writer desappeared\n");
+			return;
+		}
+		if (obuf->wproc == dev_sub)
+			break;
+		obuf = LIST_FIRST(&obuf->wproc->ibuflist);
+	}
+
+	/*
+	 * calculate delta, the number of frames the play chain is ahead
+	 * of the record chain. It's necessary to schedule silences (or
+	 * drops) in order to start playback and record in sync.
+	 */
+	delta = 
+	    rbuf->bpf * (pbuf->abspos + pbuf->used) - 
+	    pbuf->bpf *  rbuf->abspos;
+	delta /= pbuf->bpf * rbuf->bpf;
+	DPRINTF("dev_sync: delta = %d, ppos = %u, pused = %u, rpos = %u\n",
+	    delta, pbuf->abspos, pbuf->used, rbuf->abspos);
+
+	if (delta > 0) {
+		/*
+		 * if the play chain is ahead (most cases) drop some of
+		 * the recorded input, to get both in sync
+		 */
+		obuf->drop += delta * obuf->bpf;
+		abuf_ipos(obuf, -delta);
+	} else if (delta < 0) {
+		/*
+		 * if record chain is ahead (should never happen,
+		 * right?) then insert silence to play
+		 */
+		ibuf->silence += -delta * ibuf->bpf;
+		abuf_opos(ibuf, delta);
+	} else
+		DPRINTF("dev_sync: nothing to do\n");
 }
 
 /*
@@ -393,9 +376,9 @@ dev_attach(char *name,
     struct abuf *ibuf, struct aparams *ipar, unsigned underrun, 
     struct abuf *obuf, struct aparams *opar, unsigned overrun)
 {
-	int delta;
 	struct abuf *pbuf = NULL, *rbuf = NULL;
 	struct aproc *conv;
+	unsigned nfr;
 	
 	if (ibuf) {
 		pbuf = LIST_FIRST(&dev_mix->obuflist);		
@@ -405,14 +388,17 @@ dev_attach(char *name,
 				aparams_print2(ipar, &dev_opar);
 				fprintf(stderr, "\n");
 			}
+			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
+			nfr -= nfr % dev_round;
 			conv = conv_new(name, ipar, &dev_opar);
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(dev_onfr, aparams_bpf(&dev_opar));
+			ibuf = abuf_new(nfr, aparams_bpf(&dev_opar));
 			aproc_setout(conv, ibuf);
+			/* XXX: call abuf_fill() here ? */
 		}
 		aproc_setin(dev_mix, ibuf);
+		abuf_opos(ibuf, -dev_mix->u.mix.lat);
 		ibuf->xrun = underrun;
-		mix_setmaster(dev_mix);
 	}
 	if (obuf) {
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
@@ -422,63 +408,24 @@ dev_attach(char *name,
 				aparams_print2(&dev_ipar, opar);
 				fprintf(stderr, "\n");
 			}
+			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
+			nfr -= nfr % dev_round;
 			conv = conv_new(name, &dev_ipar, opar);
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(dev_infr, aparams_bpf(&dev_ipar));
+			obuf = abuf_new(nfr, aparams_bpf(&dev_ipar));
 			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);
+		abuf_ipos(obuf, -dev_sub->u.sub.lat);
 		obuf->xrun = overrun;
 	}
 
 	/*
-	 * calculate delta, the number of frames the play chain is ahead
-	 * of the record chain. It's necessary to schedule silences (or
-	 * drops) in order to start playback and record in sync.
+	 * sync play to record
 	 */
 	if (ibuf && obuf) {
-		delta = 
-		    rbuf->bpf * (pbuf->abspos + pbuf->used) - 
-		    pbuf->bpf *  rbuf->abspos;
-		delta /= pbuf->bpf * rbuf->bpf;
-		DPRINTF("dev_attach: ppos = %u, pused = %u, rpos = %u\n",
-		    pbuf->abspos, pbuf->used, rbuf->abspos);
-	} else
-		delta = 0;
-	DPRINTF("dev_attach: delta = %u\n", delta);
-
-	if (delta > 0) {
-		/*
-		 * if the play chain is ahead (most cases) drop some of
-		 * the recorded input, to get both in sync
-		 */
-		obuf->drop += delta * obuf->bpf;
-	} else if (delta < 0) {
-		/*
-		 * if record chain is ahead (should never happen,
-		 * right?) then insert silence to play
-		 */
-		ibuf->silence += -delta * ibuf->bpf;
-	}
-	if (ibuf && (dev_mix->u.mix.flags & MIX_DROP)) {
-		/*
-		 * fill the play buffer with silence to avoid underruns,
-		 * drop samples on the input to keep play/record in sync
-		 * after the silence insertion
-		 */
-		ibuf->silence += dev_onfr * ibuf->bpf;
-		if (obuf)
-			obuf->drop += dev_onfr * obuf->bpf;
-		/*
-		 * force data to propagate
-		 */
-		abuf_run(ibuf);
-		DPRINTF("dev_attach: ibuf: used = %u, silence = %u\n", 
-		    ibuf->used, ibuf->silence);
-	}
-	if (obuf && (dev_sub->u.mix.flags & SUB_DROP)) {
-		abuf_run(obuf);	
-		DPRINTF("dev_attach: ibuf: used = %u, drop = %u\n",
-		    obuf->used, obuf->drop);
+		ibuf->duplex = obuf;
+		obuf->duplex = ibuf;
+		dev_sync(ibuf, obuf);
 	}
 }

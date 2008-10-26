@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.27 2008/08/25 11:56:12 sobrado Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.28 2008/10/26 08:49:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,6 +48,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <signal.h>
 #include <err.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -61,73 +62,44 @@
 #include "aparams.h"
 #include "aproc.h"
 #include "abuf.h"
-#include "file.h"
+#include "wav.h"
+#include "listen.h"
 #include "dev.h"
 
-int debug_level = 0, quiet_flag = 0;
-volatile int quit_flag = 0, pause_flag = 0;
-
-void suspend(struct file *);
-void fill(struct file *);
-void flush(struct file *);
+int debug_level = 0;
+volatile int quit_flag = 0;
 
 /*
- * List of allowed encodings and their names.
+ * SIGINT handler, it raises the quit flag. If the flag is already set,
+ * that means that the last SIGINT was not handled, because the process
+ * is blocked somewhere, so exit
  */
-struct enc {
-	char *name;
-	struct aparams par;
-} enc_list[] = {
-	/* name		bps,	bits,	le,	sign,	msb,	unused  */
-	{ "s8",		{ 1, 	8,	1,	1,	1,	0, 0, 0 } },
-	{ "u8",		{ 1,	8,	1,	0,	1,	0, 0, 0 } },
-	{ "s16le",	{ 2,	16,	1,	1,	1,	0, 0, 0 } },
-	{ "u16le",	{ 2,	16,	1,	0,	1,	0, 0, 0 } },
-	{ "s16be",	{ 2,	16,	0,	1,	1,	0, 0, 0 } },
-	{ "u16be",	{ 2,	16,	0,	0,	1,	0, 0, 0 } },
-	{ "s24le",	{ 4,	24,	1,	1,	1,	0, 0, 0 } },
-	{ "u24le",	{ 4,	24,	1,	0,	1,	0, 0, 0 } },
-	{ "s24be",	{ 4,	24,	0,	1,	1,	0, 0, 0 } },
-	{ "u24be",	{ 4,	24,	0,	0,	1,	0, 0, 0 } },
-	{ "s32le",	{ 4,	32,	1,	1,	1,	0, 0, 0 } },
-	{ "u32le",	{ 4,	32,	1,	0,	1,	0, 0, 0 } },
-	{ "s32be",	{ 4,	32,	0,	1,	1,	0, 0, 0 } },
-	{ "u32be",	{ 4,	32,	0,	0,	1,	0, 0, 0 } },
-	{ "s24le3",	{ 3,	24,	1,	1,	1,	0, 0, 0 } },
-	{ "u24le3",	{ 3,	24,	1,	0,	1,	0, 0, 0 } },
-	{ "s24be3",	{ 3,	24,	0,	1,	1,	0, 0, 0 } },
-	{ "u24be3",	{ 3,	24,	0,	0,	1,	0, 0, 0 } },
-	{ "s20le3",	{ 3,	20,	1,	1,	1,	0, 0, 0 } },
-	{ "u20le3",	{ 3,	20,	1,	0,	1,	0, 0, 0 } },
-	{ "s20be3",	{ 3,	20,	0,	1,	1,	0, 0, 0 } },
-	{ "u20be3",	{ 3,	20,	0,	0,	1,	0, 0, 0 } },
-	{ "s18le3",	{ 3,	18,	1,	1,	1,	0, 0, 0 } },
-	{ "u18le3",	{ 3,	18,	1,	0,	1,	0, 0, 0 } },
-	{ "s18be3",	{ 3,	18,	0,	1,	1,	0, 0, 0 } },
-	{ "u18be3",	{ 3,	18,	0,	0,	1,	0, 0, 0 } },
-	{ NULL,		{ 0,	0,	0,	0,	0,	0, 0, 0 } }
-};
-
-/*
- * Search an encoding in the above table. On success fill encoding
- * part of "par" and return 1, otherwise return 0.
- */
-unsigned
-enc_lookup(char *name, struct aparams *par)
+void
+sigint(int s)
 {
-	struct enc *e;
+	if (quit_flag)
+		_exit(1);
+	quit_flag = 1;
+}
 
-	for (e = enc_list; e->name != NULL; e++) {
-		if (strcmp(e->name, name) == 0) {
-			par->bps = e->par.bps;
-			par->bits = e->par.bits;
-			par->sig = e->par.sig;
-			par->le = e->par.le;
-			par->msb = e->par.msb;
-			return 1;
-		}
-	}
-	return 0;
+/*
+ * increase debug level on SIGUSR1
+ */
+void
+sigusr1(int s)
+{
+	if (debug_level < 4)
+		debug_level++;
+}
+
+/*
+ * decrease debug level on SIGUSR2
+ */
+void
+sigusr2(int s)
+{
+	if (debug_level > 0)
+		debug_level--;
 }
 
 void
@@ -136,10 +108,10 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-qu] [-C min:max] [-c min:max] [-E enc] [-e enc] "
-	    "[-f device]\n"
-	    "\t[-H fmt] [-h fmt] [-i file] [-o file] [-R rate] [-r rate]\n"
-	    "\t[-X policy] [-x policy]\n",
+	    "usage: %s [-lu] [-C min:max] [-c min:max] [-d level] "
+	    "[-e enc]\n"
+	    "\t[-f device] [-h fmt] [-i file] [-o file] "
+	    "[-r rate] [-x policy]\n",
 	    __progname);
 }
 
@@ -147,8 +119,7 @@ void
 opt_ch(struct aparams *par)
 {
 	if (sscanf(optarg, "%u:%u", &par->cmin, &par->cmax) != 2 ||
-	    par->cmin > CHAN_MAX || par->cmax > CHAN_MAX ||
-	    par->cmin > par->cmax)
+	    par->cmax < par->cmin || par->cmax > NCHAN_MAX - 1)
 		err(1, "%s: bad channel range", optarg);
 }
 
@@ -163,8 +134,11 @@ opt_rate(struct aparams *par)
 void
 opt_enc(struct aparams *par)
 {
-	if (!enc_lookup(optarg, par))
-		err(1, "%s: bad encoding", optarg);
+	int len;
+
+	len = aparams_strtoenc(par, optarg);
+	if (len == 0 || optarg[len] != '\0')
+		errx(1, "%s: bad encoding", optarg);
 }
 
 int
@@ -246,7 +220,7 @@ void
 newinput(struct farg *fa)
 {
 	int fd;
-	struct file *f;
+	struct wav *f;
 	struct aproc *proc;
 	struct abuf *buf;
 	unsigned nfr;
@@ -261,18 +235,16 @@ newinput(struct farg *fa)
 		if (fd < 0)
 			err(1, "%s", fa->name);
 	}
-	f = file_new(fd, fa->name);
-	f->hdr = 0;
-	f->hpar = fa->par;
-	if (fa->hdr == HDR_WAV) {
-		if (!wav_readhdr(fd, &f->hpar, &f->rbytes))
-			exit(1);
-	}
-	nfr = dev_onfr * f->hpar.rate / dev_opar.rate;
-	buf = abuf_new(nfr, aparams_bpf(&f->hpar));
-	proc = rpipe_new(f);
+	/*
+	 * XXX : we should round rate, right ?
+	 */
+	f = wav_new_in(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
+	nfr = dev_bufsz * fa->par.rate / dev_rate;
+	buf = abuf_new(nfr, aparams_bpf(&fa->par));
+	proc = rpipe_new((struct file *)f);
 	aproc_setout(proc, buf);
-	dev_attach(fa->name, buf, &f->hpar, fa->xrun, NULL, NULL, 0);
+	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
+	dev_attach(fa->name, buf, &fa->par, fa->xrun, NULL, NULL, 0);
 }
 
 /*
@@ -282,7 +254,7 @@ void
 newoutput(struct farg *fa)
 {
 	int fd;
-	struct file *f;
+	struct wav *f;
 	struct aproc *proc;
 	struct abuf *buf;
 	unsigned nfr;
@@ -298,31 +270,31 @@ newoutput(struct farg *fa)
 		if (fd < 0)
 			err(1, "%s", fa->name);
 	}
-	f = file_new(fd, fa->name);
-	f->hdr = fa->hdr;
-	f->hpar = fa->par;
-	if (f->hdr == HDR_WAV) {
-		f->wbytes = WAV_DATAMAX;
-		if (!wav_writehdr(fd, &f->hpar))
-			exit(1);
-	}
-	nfr = dev_infr * f->hpar.rate / dev_ipar.rate;
-	proc = wpipe_new(f);
-	buf = abuf_new(nfr, aparams_bpf(&f->hpar));
+	/*
+	 * XXX : we should round rate, right ?
+	 */
+	f = wav_new_out(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
+	nfr = dev_bufsz * fa->par.rate / dev_rate;
+	proc = wpipe_new((struct file *)f);
+	buf = abuf_new(nfr, aparams_bpf(&fa->par));
 	aproc_setin(proc, buf);
-	dev_attach(fa->name, NULL, NULL, 0, buf, &f->hpar, fa->xrun);
+	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->par, fa->xrun);
 }
 
 int
 main(int argc, char **argv)
 {
-	int c, u_flag, ohdr, ihdr, ixrun, oxrun;
+	int c, u_flag, l_flag, hdr, xrun;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar;
-	unsigned ivol, ovol;
-	char *devpath, *dbgenv;
+	struct sigaction sa;
+	unsigned ivol, ovol, bufsz = 0;
+	char *devpath, *dbgenv, *listenpath;
 	const char *errstr;
+	extern char *malloc_options;
+
+	malloc_options = "FGJ";
 
 	dbgenv = getenv("AUCAT_DEBUG");
 	if (dbgenv) {
@@ -335,27 +307,22 @@ main(int argc, char **argv)
 	aparams_init(&opar, 0, 1, 44100);
 
 	u_flag = 0;
+	l_flag = 0;
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
-	ihdr = ohdr = HDR_AUTO;
-	ixrun = oxrun = XRUN_IGNORE;
+	hdr = HDR_AUTO;
+	xrun = XRUN_IGNORE;
 	ivol = ovol = MIDI_TO_ADATA(127);
 
-	while ((c = getopt(argc, argv, "c:C:e:E:r:R:h:H:x:X:i:o:f:qu"))
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lqu"))
 	    != -1) {
 		switch (c) {
 		case 'h':
-			ihdr = opt_hdr();
-			break;
-		case 'H':
-			ohdr = opt_hdr();
+			hdr = opt_hdr();
 			break;
 		case 'x':
-			ixrun = opt_xrun();
-			break;
-		case 'X':
-			oxrun = opt_xrun();
+			xrun = opt_xrun();
 			break;
 		case 'c':
 			opt_ch(&ipar);
@@ -365,34 +332,36 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			opt_enc(&ipar);
-			break;
-		case 'E':
-			opt_enc(&opar);
+			aparams_copyenc(&opar, &ipar);
 			break;
 		case 'r':
 			opt_rate(&ipar);
-			break;
-		case 'R':
-			opt_rate(&opar);
+			opar.rate = ipar.rate;
 			break;
 		case 'i':
-			opt_file(&ifiles, &ipar, 127, ihdr, ixrun, optarg);
+			opt_file(&ifiles, &ipar, 127, hdr, xrun, optarg);
 			break;
 		case 'o':
-			opt_file(&ofiles, &opar, 127, ohdr, oxrun, optarg);
+			opt_file(&ofiles, &opar, 127, hdr, xrun, optarg);
 			break;
 		case 'f':
 			if (devpath)
 				err(1, "only one -f allowed");
 			devpath = optarg;
-			dipar = ipar;
-			dopar = opar;
+			dipar = opar;
+			dopar = ipar;
 			break;
-		case 'q':
-			quiet_flag = 1;
+		case 'l':
+			l_flag = 1;
 			break;
 		case 'u':
 			u_flag = 1;
+			break;
+		case 'b':
+			if (sscanf(optarg, "%u", &bufsz) != 1) {
+				fprintf(stderr, "%s: bad buf size\n", optarg);
+				exit(1);
+			}
 			break;
 		default:
 			usage();
@@ -403,14 +372,12 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (!devpath) {
-		devpath = getenv("AUDIODEVICE");
-		if (devpath == NULL)
-			devpath = DEFAULT_DEVICE;
 		dipar = ipar;
 		dopar = opar;
 	}
 
-	if (SLIST_EMPTY(&ifiles) && SLIST_EMPTY(&ofiles) && argc > 0) {
+	if (!l_flag && SLIST_EMPTY(&ifiles) &&
+	    SLIST_EMPTY(&ofiles) && argc > 0) {
 		/*
 		 * Legacy mode: if no -i or -o options are provided, and
 		 * there are arguments then assume the arguments are files
@@ -426,15 +393,17 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (l_flag && (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
+		errx(1, "can't use -l with -o or -i");
 
-	if (!u_flag) {
+	if (!u_flag && !l_flag) {
 		/*
 		 * Calculate "best" device parameters. Iterate over all
 		 * inputs and outputs and find the maximum sample rate
 		 * and channel number.
 		 */
-		aparams_init(&dipar, CHAN_MAX, 0, RATE_MAX);
-		aparams_init(&dopar, CHAN_MAX, 0, RATE_MIN);
+		aparams_init(&dipar, NCHAN_MAX - 1, 0, RATE_MAX);
+		aparams_init(&dopar, NCHAN_MAX - 1, 0, RATE_MIN);
 		SLIST_FOREACH(fa, &ifiles, entry) {
 			if (dopar.cmin > fa->par.cmin)
 				dopar.cmin = fa->par.cmin;
@@ -452,15 +421,37 @@ main(int argc, char **argv)
 				dipar.rate = fa->par.rate;
 		}
 	}
-	file_start();
+
+	quit_flag = 0;
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sigint;
+	if (sigaction(SIGINT, &sa, NULL) < 0)
+		DPRINTF("sigaction(int) failed\n");
+#ifdef DEBUG
+	sa.sa_handler = sigusr1;
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+		DPRINTF("sigaction(usr1) failed\n");
+	sa.sa_handler = sigusr2;
+	if (sigaction(SIGUSR2, &sa, NULL) < 0)
+		DPRINTF("sigaction(usr2) failed1n");
+#endif
+	filelist_init();
 
 	/*
-	 * Open the device, dev_init() will return new parameters
-	 * that must be used by all inputs and outputs.
+	 * Open the device.
 	 */
 	dev_init(devpath, 
-	    (!SLIST_EMPTY(&ofiles)) ? &dipar : NULL,
-	    (!SLIST_EMPTY(&ifiles)) ? &dopar : NULL);
+	    (l_flag || !SLIST_EMPTY(&ofiles)) ? &dipar : NULL,
+	    (l_flag || !SLIST_EMPTY(&ifiles)) ? &dopar : NULL,
+	    bufsz);
+
+	if (l_flag) {
+		listenpath = getenv("AUCAT_SOCKET");
+		if (!listenpath)
+			listenpath = DEFAULT_SOCKET;
+		(void)listen_new(&listen_ops, listenpath);
+	}
 
 	/*
 	 * Create buffers for all input and output pipes.
@@ -479,24 +470,35 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Normalize input levels
+	 * automatically terminate when there no are streams
 	 */
-	if (dev_mix)
-		mix_setmaster(dev_mix);
+	if (!l_flag) {
+		if (dev_mix)
+			dev_mix->u.mix.flags |= MIX_AUTOQUIT;
+		if (dev_sub)
+			dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+	}
 
 	/*
-	 * start audio
+	 * loop, start audio
 	 */
-	if (!quiet_flag)
-		fprintf(stderr, "starting device...\n");
-	dev_start();
-	if (!quiet_flag)
-		fprintf(stderr, "process started...\n");
-	dev_run(1);
-	if (!quiet_flag)
-		fprintf(stderr, "stopping device...\n");
-	dev_done();
+	for (;;) {
+		if (quit_flag) {
+			if (l_flag)
+				filelist_unlisten();
+			break;
+		}
+		if (!file_poll())
+			break;
+	}
 
-	file_stop();
+	dev_done();
+	filelist_done();
+
+       	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = SIG_DFL;
+	if (sigaction(SIGINT, &sa, NULL) < 0)
+		DPRINTF("dev_done: sigaction failed\n");
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.2 2008/08/14 09:58:55 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.3 2008/10/26 08:49:44 ratchov Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -37,9 +37,7 @@
 #include <unistd.h>
 #include <err.h>
 
-#include "file.h"
-#include "aparams.h"
-#include "dev.h"
+#include "wav.h"
 
 
 /* headerless data files.  played at /dev/audio's defaults.
@@ -57,6 +55,74 @@
  */
 #define FMT_WAV	2
 
+
+/*
+ * Convert sun device parameters to struct aparams
+ */
+int
+sun_infotopar(struct audio_prinfo *ai, struct aparams *par)
+{
+	par->rate = ai->sample_rate;
+	par->bps = ai->precision / 8;
+	par->bits = ai->precision;
+	par->cmax = par->cmin + ai->channels - 1;
+	if (par->cmax > NCHAN_MAX - 1) {
+		warnx("%u:%u: channel range out of bounds",
+		    par->cmin, par->cmax);
+		return 0;
+	}
+	par->msb = 1;
+	switch (ai->encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		par->le = 1;
+		par->sig = 1;
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		par->le = 0;
+		par->sig = 1;
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		par->le = 1;
+		par->sig = 0;
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		par->le = 0;
+		par->sig = 0;
+		break;
+	case AUDIO_ENCODING_SLINEAR:
+		par->le = NATIVE_LE;
+		par->sig = 1;
+		break;
+	case AUDIO_ENCODING_ULINEAR:
+		par->le = NATIVE_LE;
+		par->sig = 0;
+		break;
+	default:
+		warnx("only linear encodings are supported for audio devices");
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * Convert struct aparams to sun device parameters.
+ */
+void
+sun_partoinfo(struct audio_prinfo *ai, struct aparams *par)
+{
+	ai->sample_rate = par->rate;
+	ai->precision = par->bps * 8;
+	ai->channels = par->cmax - par->cmin + 1;
+	if (par->le && par->sig) {
+		ai->encoding = AUDIO_ENCODING_SLINEAR_LE;
+	} else if (!par->le && par->sig) {
+		ai->encoding = AUDIO_ENCODING_SLINEAR_BE;
+	} else if (par->le && !par->sig) {
+		ai->encoding = AUDIO_ENCODING_ULINEAR_LE;
+	} else {
+		ai->encoding = AUDIO_ENCODING_ULINEAR_BE;
+	}
+}
 
 int
 legacy_play(char *dev, char *aufile)

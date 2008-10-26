@@ -1,0 +1,58 @@
+/*	$OpenBSD: sock.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*
+ * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#ifndef SOCK_H
+#define SOCK_H
+
+#include "pipe.h"
+#include "aparams.h"
+#include "amsg.h"
+
+struct sock {
+	struct pipe pipe;
+	/*
+	 * socket and protocol specific stuff, mainly used
+	 * to decode/encode messages in the stream.
+	 */
+	struct amsg rmsg, wmsg;		/* messages being sent/received */
+	unsigned rtodo;			/* input bytes not read yet */
+	unsigned wtodo;			/* output bytes not written yet */
+#define SOCK_RDATA	0		/* data chunk being read */
+#define SOCK_RMSG	1		/* amsg query being processed */
+#define SOCK_RRET	2		/* amsg reply being returned */
+	unsigned rstate;		/* state of the read-end FSM */
+#define SOCK_WIDLE	0		/* nothing to do */
+#define SOCK_WMSG	1		/* amsg being written */
+#define SOCK_WDATA	2		/* data chunk being written */
+	unsigned wstate;		/* state of the write-end FSM */
+#define SOCK_INIT	0		/* parameter negotiation */
+#define SOCK_START	1		/* filling play buffers */
+#define SOCK_RUN	2		/* attached to the mix / sub */
+	unsigned pstate;		/* one of the above */
+	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
+	struct aparams rpar;		/* read (ie play) parameters */
+	struct aparams wpar;		/* write (ie rec) parameters */
+	int idelta;			/* input (rec) pos. change to send */
+	int odelta;			/* output (play) pos. change to send */
+	unsigned bufsz;			/* total buffer size */
+	unsigned round;			/* block size */
+	unsigned xrun;			/* one of AMSG_IGNORE, ... */
+};
+
+struct sock *sock_new(struct fileops *, int fd, char *);
+extern struct fileops sock_ops;
+
+#endif /* !defined(SOCK_H) */

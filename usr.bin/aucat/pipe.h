@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.3 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,30 +14,26 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef DEV_H
-#define DEV_H
+#ifndef PIPE_H
+#define PIPE_H
 
-struct aproc;
+#include "file.h"
+
 struct aparams;
-struct file;
-struct abuf;
 
-extern unsigned dev_bufsz, dev_round, dev_rate;
-extern unsigned dev_rate_div, dev_round_div;
-extern struct aparams dev_ipar, dev_opar;
-extern struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
+struct pipe {
+	struct file file;
+	int fd;			/* file descriptor */
+};
 
-void dev_roundrate(unsigned *, unsigned *);
-void dev_init(char *, struct aparams *, struct aparams *, unsigned);
-void dev_start(void);
-void dev_stop(void);
-void dev_run(int);
-void dev_done(void);
-void dev_sync(struct abuf *, struct abuf *);
-void dev_attach(char *,
-    struct abuf *, struct aparams *, unsigned,
-    struct abuf *, struct aparams *, unsigned);
+extern struct fileops pipe_ops;
 
-extern struct devops *devops, devops_sun, devops_aucat;
+struct pipe *pipe_new(struct fileops *, int, char *);
+void pipe_close(struct file *);
+unsigned pipe_read(struct file *, unsigned char *, unsigned);
+unsigned pipe_write(struct file *, unsigned char *, unsigned);
+int pipe_nfds(struct file *);
+int pipe_pollfd(struct file *, struct pollfd *, int);
+int pipe_revents(struct file *, struct pollfd *);
 
-#endif /* !define(DEV_H) */
+#endif /* !defined(FILE_H) */
