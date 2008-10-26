@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.86 2008/10/04 11:54:43 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.87 2008/10/26 21:11:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1471,6 +1471,13 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		usbd_close_pipe(sc->sc_vs_cur->pipeh);
 		sc->sc_vs_cur->pipeh = NULL;
 	}
+
+	/*
+	 * Some devices need time to shutdown before we switch back to
+	 * the default interface (0).  Not doing so can leave the device
+	 * back in a undefined condition.
+	 */
+	usbd_delay_ms(sc->sc_udev, 100);
 
 	/* switch back to default interface (turns off cam LED) */
 	(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
