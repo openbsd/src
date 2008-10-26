@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.29 2008/10/26 11:55:22 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.30 2008/10/26 12:38:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 	xrun = XRUN_IGNORE;
 	ivol = ovol = MIDI_TO_ADATA(127);
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lqu"))
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lu"))
 	    != -1) {
 		switch (c) {
 		case 'h':
