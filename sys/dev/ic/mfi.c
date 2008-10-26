@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.82 2008/10/23 00:30:04 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.83 2008/10/26 18:56:00 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1231,7 +1231,6 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 
 	wakeup(ccb);
 }
-
 
 int
 mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
