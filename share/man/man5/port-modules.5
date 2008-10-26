@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.21 2008/10/26 12:36:58 landry Exp $
+.\"	$OpenBSD: port-modules.5,v 1.22 2008/10/26 15:10:03 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -349,8 +349,9 @@ of regress tests to CPAN.
 .It devel/scons
 .It devel/waf
 Adds devel/waf to BUILD_DEPENDS, lang/python to MODULES, and provides
-do-configure, do-build, do-install and post-install targets. do-build,
-do-install and post-install can be overridden in the port Makefile.
+do-configure, do-build, do-install and post-install targets.
+do-build, do-install and post-install can be overridden in the port
+Makefile.
 .It gcc3
 If USE_GCC3=Yes, and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
 compilers will be put at the front of the path.
