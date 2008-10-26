@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.29 2007/10/31 14:45:06 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.30 2008/10/26 16:16:37 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 31 2007 $
+.Dd $Mdocdate: October 26 2008 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl AacDdfIiKkLMPpqRrSstUv
+.Op Fl AacDdfIiKkLMPqRrSstUv
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
@@ -141,8 +141,6 @@ Show the install-message file (if any) for each package.
 .It Fl P
 Show the pkgpath for each package.
 You can easily build a subdirlist with this.
-.It Fl p
-Show the installation prefix for each package.
 .It Fl Q Ar query
 Show all packages in $PKG_PATH which match the given
 .Ar query .
