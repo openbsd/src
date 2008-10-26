@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.33 2008/09/30 23:32:34 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.34 2008/10/26 19:51:20 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1189,7 +1189,7 @@ struct mpi_cfg_ioc_pg2 {
 	u_int8_t		active_physdisks;
 	u_int8_t		max_physdisks;
 
-	/* followed by a list of mpi_cf_raid_vol structs */
+	/* followed by a list of mpi_cfg_raid_vol structs */
 } __packed;
 
 struct mpi_cfg_raid_vol {
@@ -1202,6 +1202,10 @@ struct mpi_cfg_raid_vol {
 #define MPI_CFG_RAID_TYPE_RAID_IS			(0x00)
 #define MPI_CFG_RAID_TYPE_RAID_IME			(0x01)
 #define MPI_CFG_RAID_TYPE_RAID_IM			(0x02)
+#define MPI_CFG_RAID_TYPE_RAID_5			(0x03)
+#define MPI_CFG_RAID_TYPE_RAID_6			(0x04)
+#define MPI_CFG_RAID_TYPE_RAID_10			(0x05)
+#define MPI_CFG_RAID_TYPE_RAID_50			(0x06)
 	u_int8_t		flags;
 #define MPI_CFG_RAID_VOL_INACTIVE	(1<<3)
 	u_int16_t		reserved;
@@ -1213,7 +1217,7 @@ struct mpi_cfg_ioc_pg3 {
 	u_int8_t		no_phys_disks;
 	u_int8_t		reserved[3];
 
-	/* followed by a list of mpi_cf_raid_physdisk structs */
+	/* followed by a list of mpi_cfg_raid_physdisk structs */
 } __packed;
 
 struct mpi_cfg_raid_physdisk {
