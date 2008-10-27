@@ -817,7 +817,7 @@ $(srcdir)/configure: $(srcdir)/configure.in
 # "echo timestamp" is used instead of touch to be consistent with other
 # packages that use autoconf (??? perhaps also to avoid problems with patch?).
 # ??? Newer versions have a maintainer mode that may be useful here.
-$(srcdir)/config.in: $(srcdir)/cstamp-h.in
+#$(srcdir)/config.in: $(srcdir)/cstamp-h.in
 $(srcdir)/cstamp-h.in: $(srcdir)/configure.in $(srcdir)/acconfig.h
 	cd $(srcdir) && autoheader
 	@rm -f $(srcdir)/cstamp-h.in
