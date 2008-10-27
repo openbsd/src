@@ -60,6 +60,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
+./usr/lib/libsndio.so.1.0
 ./usr/lib/libssl.so.12.0
 ./usr/lib/libstdc++.so.43.0
 ./usr/lib/libtermcap.so.10.0
@@ -2110,6 +2111,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ssl

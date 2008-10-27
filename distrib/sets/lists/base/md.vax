@@ -1417,6 +1417,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ssl
