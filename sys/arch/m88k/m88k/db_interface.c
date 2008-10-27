@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.13 2008/07/28 17:57:25 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.14 2008/10/27 18:03:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -643,7 +643,7 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 struct db_command db_machine_cmds[] = {
 #ifdef MULTIPROCESSOR
-	{ "cpu",	m88k_db_cpu_cmd,	0,	NULL },
+	{ "ddbcpu",	m88k_db_cpu_cmd,	0,	NULL },
 #endif
 	{ "frame",	m88k_db_print_frame,	0,	NULL },
 	{ "regs",	m88k_db_registers,	0,	NULL },
