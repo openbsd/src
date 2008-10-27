@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.83 2008/10/26 18:56:00 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.84 2008/10/27 03:11:58 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -26,6 +26,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
@@ -33,13 +34,9 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/biovar.h>
 #include <dev/ic/mfireg.h>
 #include <dev/ic/mfivar.h>
-
-#if NBIO > 0
-#include <dev/biovar.h>
-#include <sys/sensors.h>
-#endif /* NBIO > 0 */
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0

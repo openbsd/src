@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.16 2008/02/11 03:52:50 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.17 2008/10/27 03:11:58 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "bio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
