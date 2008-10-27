@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.1 2008/10/27 00:26:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,15 +25,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "libsa_priv.h"
+#include "sndio_priv.h"
 
-#define SA_PAR_MAGIC	0x83b905a4
+#define SIO_PAR_MAGIC	0x83b905a4
 
 int
-sa_initpar(struct sa_par *par)
+sio_initpar(struct sio_par *par)
 {
-	memset(par, 0xff, sizeof(struct sa_par));
-	par->__magic = SA_PAR_MAGIC;	   
+	memset(par, 0xff, sizeof(struct sio_par));
+	par->__magic = SIO_PAR_MAGIC;	   
 	return 1;
 }
 
@@ -42,7 +42,7 @@ sa_initpar(struct sa_par *par)
  * return the length of the resulting string
  */
 int
-sa_enctostr(struct sa_par *par, char *ostr)
+sio_enctostr(struct sio_par *par, char *ostr)
 {
 	char *p = ostr;
 
@@ -53,7 +53,7 @@ sa_enctostr(struct sa_par *par, char *ostr)
 	if (par->bps > 1) {
 		*p++ = par->le ? 'l' : 'b';
 		*p++ = 'e';
-		if (par->bps != SA_BPS(par->bits) ||
+		if (par->bps != SIO_BPS(par->bits) ||
 		    par->bits < par->bps * 8) {
 			*p++ = par->bps + '0';
 			if (par->bits < par->bps * 8) {
@@ -72,7 +72,7 @@ sa_enctostr(struct sa_par *par, char *ostr)
  * Retrun the number of bytes consumed
  */
 int
-sa_strtoenc(struct sa_par *par, char *istr)
+sio_strtoenc(struct sio_par *par, char *istr)
 {
 	char *p = istr;
 	int i, sig, bits, le, bps, msb;
@@ -105,8 +105,8 @@ sa_strtoenc(struct sa_par *par, char *istr)
 	}
 	if (bits < 1 || bits > 32)
 		return 0;
-	bps = SA_BPS(bits);
-	le = SA_LE_NATIVE;
+	bps = SIO_BPS(bits);
+	le = SIO_LE_NATIVE;
 	msb = 1;
 
 	/*
@@ -158,29 +158,29 @@ done:
 }
 
 
-struct sa_hdl *
-sa_open(char *str, unsigned mode, int nbio)
+struct sio_hdl *
+sio_open(char *str, unsigned mode, int nbio)
 {
-	struct sa_hdl *hdl;
+	struct sio_hdl *hdl;
 
-	if ((mode & (SA_PLAY | SA_REC)) == 0)
+	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
-	hdl = sa_open_aucat(str, mode, nbio);
+	hdl = sio_open_aucat(str, mode, nbio);
 	if (hdl != NULL)
 		return hdl;
-	hdl = sa_open_sun(str, mode, nbio);
+	hdl = sio_open_sun(str, mode, nbio);
 	if (hdl != NULL)
 		return hdl;
 	return NULL;
 }
 
 void
-sa_create(struct sa_hdl *hdl, struct sa_ops *ops, unsigned mode, int nbio)
+sio_create(struct sio_hdl *hdl, struct sio_ops *ops, unsigned mode, int nbio)
 {
 #ifdef DEBUG
 	char *dbg;
 
-	dbg = getenv("LIBSA_DEBUG");
+	dbg = getenv("LIBSIO_DEBUG");
 	if (!dbg || sscanf(dbg, "%u", &hdl->debug) != 1)
 		hdl->debug = 0;
 #endif	
@@ -193,25 +193,25 @@ sa_create(struct sa_hdl *hdl, struct sa_ops *ops, unsigned mode, int nbio)
 }
 
 void
-sa_close(struct sa_hdl *hdl)
+sio_close(struct sio_hdl *hdl)
 {
 	return hdl->ops->close(hdl);
 }
 
 int
-sa_start(struct sa_hdl *hdl)
+sio_start(struct sio_hdl *hdl)
 {
 	if (hdl->eof) {
-		fprintf(stderr, "sa_start: eof\n");
+		fprintf(stderr, "sio_start: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		fprintf(stderr, "sa_start: already started\n");
+		fprintf(stderr, "sio_start: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 #ifdef DEBUG
-	if (!sa_getpar(hdl, &hdl->par))
+	if (!sio_getpar(hdl, &hdl->par))
 		return 0;
 	hdl->pollcnt = hdl->wcnt = hdl->rcnt = hdl->realpos = 0;
 	gettimeofday(&hdl->tv, NULL);
@@ -223,14 +223,14 @@ sa_start(struct sa_hdl *hdl)
 }
 
 int
-sa_stop(struct sa_hdl *hdl)
+sio_stop(struct sio_hdl *hdl)
 {
 	if (hdl->eof) {
-		fprintf(stderr, "sa_stop: eof\n");
+		fprintf(stderr, "sio_stop: eof\n");
 		return 0;
 	}
 	if (!hdl->started) {
-		fprintf(stderr, "sa_stop: not started\n");
+		fprintf(stderr, "sio_stop: not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -239,7 +239,7 @@ sa_stop(struct sa_hdl *hdl)
 #ifdef DEBUG
 	if (hdl->debug)
 		fprintf(stderr,
-		    "libsa: polls: %llu, written = %llu, read: %llu\n",
+		    "libsio: polls: %llu, written = %llu, read: %llu\n",
 		    hdl->pollcnt, hdl->wcnt, hdl->rcnt);
 #endif
 	hdl->started = 0;
@@ -247,20 +247,20 @@ sa_stop(struct sa_hdl *hdl)
 }
 
 int
-sa_setpar(struct sa_hdl *hdl, struct sa_par *par)
+sio_setpar(struct sio_hdl *hdl, struct sio_par *par)
 {
 	if (hdl->eof) {
-		fprintf(stderr, "sa_setpar: eof\n");
+		fprintf(stderr, "sio_setpar: eof\n");
 		return 0;
 	}
-	if (par->__magic != SA_PAR_MAGIC) {
+	if (par->__magic != SIO_PAR_MAGIC) {
 		fprintf(stderr, 
-		    "sa_setpar: use of uninitialized sa_par structure\n");
+		    "sio_setpar: use of uninitialized sio_par structure\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (hdl->started) {
-		fprintf(stderr, "sa_setpar: already started\n");
+		fprintf(stderr, "sio_setpar: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -270,14 +270,14 @@ sa_setpar(struct sa_hdl *hdl, struct sa_par *par)
 }
 
 int
-sa_getpar(struct sa_hdl *hdl, struct sa_par *par)
+sio_getpar(struct sio_hdl *hdl, struct sio_par *par)
 {
 	if (hdl->eof) {
-		fprintf(stderr, "sa_getpar: eof\n");
+		fprintf(stderr, "sio_getpar: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		fprintf(stderr, "sa_getpar: already started\n");
+		fprintf(stderr, "sio_getpar: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -290,14 +290,14 @@ sa_getpar(struct sa_hdl *hdl, struct sa_par *par)
 }
 
 int
-sa_getcap(struct sa_hdl *hdl, struct sa_cap *cap)
+sio_getcap(struct sio_hdl *hdl, struct sio_cap *cap)
 {
 	if (hdl->eof) {
-		fprintf(stderr, "sa_getcap: eof\n");
+		fprintf(stderr, "sio_getcap: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		fprintf(stderr, "sa_getcap: already started\n");
+		fprintf(stderr, "sio_getcap: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -305,23 +305,23 @@ sa_getcap(struct sa_hdl *hdl, struct sa_cap *cap)
 }
 
 int
-sa_psleep(struct sa_hdl *hdl, int event)
+sio_psleep(struct sio_hdl *hdl, int event)
 {
 	struct pollfd pfd;
 	int revents;
 
 	for (;;) {
-		sa_pollfd(hdl, &pfd, event);
+		sio_pollfd(hdl, &pfd, event);
 		while (poll(&pfd, 1, -1) < 0) {
 			if (errno == EINTR)
 				continue;
-			perror("sa_psleep: poll");
+			perror("sio_psleep: poll");
 			hdl->eof = 1;
 			return 0;
 		}
-		revents = sa_revents(hdl, &pfd);
+		revents = sio_revents(hdl, &pfd);
 		if (revents & POLLHUP) {
-			fprintf(stderr, "sa_psleep: hang-up\n");
+			fprintf(stderr, "sio_psleep: hang-up\n");
 			return 0;
 		}
 		if (revents & event)
@@ -331,23 +331,23 @@ sa_psleep(struct sa_hdl *hdl, int event)
 }
 
 size_t
-sa_read(struct sa_hdl *hdl, void *buf, size_t len)
+sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 {
 	unsigned n;
 	char *data = buf;
 	size_t todo = len;
 
 	if (hdl->eof) {
-		fprintf(stderr, "sa_read: eof\n");
+		fprintf(stderr, "sio_read: eof\n");
 		return 0;
 	}
-	if (!hdl->started || !(hdl->mode & SA_REC)) {
-		fprintf(stderr, "sa_read: recording not stared\n");
+	if (!hdl->started || !(hdl->mode & SIO_REC)) {
+		fprintf(stderr, "sio_read: recording not stared\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (todo == 0) {
-		fprintf(stderr, "sa_read: zero length read ignored\n");
+		fprintf(stderr, "sio_read: zero length read ignored\n");
 		return 0;
 	}
 	while (todo > 0) {
@@ -355,7 +355,7 @@ sa_read(struct sa_hdl *hdl, void *buf, size_t len)
 		if (n == 0) {
 			if (hdl->nbio || hdl->eof || todo < len)
 				break;
-			if (!sa_psleep(hdl, POLLIN))
+			if (!sio_psleep(hdl, POLLIN))
 				break;
 			continue;
 		}
@@ -367,7 +367,7 @@ sa_read(struct sa_hdl *hdl, void *buf, size_t len)
 }
 
 size_t
-sa_write(struct sa_hdl *hdl, void *buf, size_t len)
+sio_write(struct sio_hdl *hdl, void *buf, size_t len)
 {
 	unsigned n;
 	unsigned char *data = buf;
@@ -381,16 +381,16 @@ sa_write(struct sa_hdl *hdl, void *buf, size_t len)
 #endif
 
 	if (hdl->eof) {
-		fprintf(stderr, "sa_write: eof\n");
+		fprintf(stderr, "sio_write: eof\n");
 		return 0;
 	}
-	if (!hdl->started || !(hdl->mode & SA_PLAY)) {
-		fprintf(stderr, "sa_write: playback not started\n");
+	if (!hdl->started || !(hdl->mode & SIO_PLAY)) {
+		fprintf(stderr, "sio_write: playback not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (todo == 0) {
-		fprintf(stderr, "sa_write: zero length write ignored\n");
+		fprintf(stderr, "sio_write: zero length write ignored\n");
 		return 0;
 	}
 	while (todo > 0) {
@@ -398,7 +398,7 @@ sa_write(struct sa_hdl *hdl, void *buf, size_t len)
 		if (n == 0) {
 			if (hdl->nbio || hdl->eof)
 				break;
-			if (!sa_psleep(hdl, POLLOUT))
+			if (!sio_psleep(hdl, POLLOUT))
 				break;
 			continue;
 		}
@@ -415,7 +415,7 @@ sa_write(struct sa_hdl *hdl, void *buf, size_t len)
 		timersub(&tv1, &tv0, &dtv);
 		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
 		fprintf(stderr, 
-		    "sa_write: wrote %d bytes of %d in %uus\n",
+		    "sio_write: wrote %d bytes of %d in %uus\n",
 		    (int)(len - todo), (int)len, us);
 	}
 #endif
@@ -423,7 +423,7 @@ sa_write(struct sa_hdl *hdl, void *buf, size_t len)
 }
 
 int
-sa_nfds(struct sa_hdl *hdl)
+sio_nfds(struct sio_hdl *hdl)
 {
 	/*
 	 * in the futur we might use larger values
@@ -432,7 +432,7 @@ sa_nfds(struct sa_hdl *hdl)
 }
 
 int
-sa_pollfd(struct sa_hdl *hdl, struct pollfd *pfd, int events)
+sio_pollfd(struct sio_hdl *hdl, struct pollfd *pfd, int events)
 {
 	if (hdl->eof)
 		return 0;
@@ -440,7 +440,7 @@ sa_pollfd(struct sa_hdl *hdl, struct pollfd *pfd, int events)
 }
 
 int
-sa_revents(struct sa_hdl *hdl, struct pollfd *pfd)
+sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 {	
 	int revents;
 #ifdef DEBUG
@@ -463,7 +463,7 @@ sa_revents(struct sa_hdl *hdl, struct pollfd *pfd)
 		timersub(&tv1, &tv0, &dtv);
 		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
 		fprintf(stderr, 
-		    "sa_revents: revents = 0x%x, complete in %uus\n",
+		    "sio_revents: revents = 0x%x, complete in %uus\n",
 		    revents, us);
 	}
 #endif
@@ -471,16 +471,16 @@ sa_revents(struct sa_hdl *hdl, struct pollfd *pfd)
 }
 
 int
-sa_eof(struct sa_hdl *hdl)
+sio_eof(struct sio_hdl *hdl)
 {
 	return hdl->eof;
 }
 
 void
-sa_onmove(struct sa_hdl *hdl, void (*cb)(void *, int), void *addr)
+sio_onmove(struct sio_hdl *hdl, void (*cb)(void *, int), void *addr)
 {
 	if (hdl->started) {
-		fprintf(stderr, "sa_onmove: already started\n");
+		fprintf(stderr, "sio_onmove: already started\n");
 		hdl->eof = 1;
 		return;
 	}
@@ -489,7 +489,7 @@ sa_onmove(struct sa_hdl *hdl, void (*cb)(void *, int), void *addr)
 }
 
 void
-sa_onmove_cb(struct sa_hdl *hdl, int delta)
+sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
 #ifdef DEBUG
 	struct timeval tv0, dtv;
@@ -502,7 +502,7 @@ sa_onmove_cb(struct sa_hdl *hdl, int delta)
 		hdl->realpos += delta;
 		playpos = hdl->wcnt / (hdl->par.bps * hdl->par.pchan);
 		fprintf(stderr,
-		    "sa_onmove_cb: delta = %+7d, "
+		    "sio_onmove_cb: delta = %+7d, "
 		    "plat = %+7lld, "
 		    "realpos = %+7lld, "
 		    "bufused = %+7lld\n",

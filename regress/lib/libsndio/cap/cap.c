@@ -5,47 +5,47 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libsa.h"
+#include <sndio.h>
 
-struct sa_par par;
-struct sa_cap cap;
+struct sio_par par;
+struct sio_cap cap;
 
 void
-pr_enc(struct sa_enc *enc)
+pr_enc(struct sio_enc *enc)
 {
 	fprintf(stderr, "%s%d", enc->sig ? "s" : "u", enc->bits);
 	if (enc->bps > 1)
 		fprintf(stderr, "%s", enc->le ? "le" : "be");
-	if (enc->bps != SA_BPS(enc->bits))
+	if (enc->bps != SIO_BPS(enc->bits))
 		fprintf(stderr, "%d%s", enc->bps, enc->msb ? "msb" : "lsb");
 }
 
 void
-cap_pr(struct sa_cap *cap)
+cap_pr(struct sio_cap *cap)
 {
 	unsigned n, i;
 
 	for (n = 0; n < cap->nconf; n++) {
 		fprintf(stderr, "config %d\n", n);
 		fprintf(stderr, "\tenc:");
-		for (i = 0; i < SA_NENC; i++) {
+		for (i = 0; i < SIO_NENC; i++) {
 			if (cap->confs[n].enc & (1 << i)) {
 				fprintf(stderr, " ");
 				pr_enc(&cap->enc[i]);
 			}
 		}
 		fprintf(stderr, "\n\tpchan:");
-		for (i = 0; i < SA_NCHAN; i++) {
+		for (i = 0; i < SIO_NCHAN; i++) {
 			if (cap->confs[n].pchan & (1 << i))
 				fprintf(stderr, " %d", cap->pchan[i]);
 		}
 		fprintf(stderr, "\n\trchan:");
-		for (i = 0; i < SA_NCHAN; i++) {
+		for (i = 0; i < SIO_NCHAN; i++) {
 			if (cap->confs[n].rchan & (1 << i))
 				fprintf(stderr, " %d", cap->rchan[i]);
 		}
 		fprintf(stderr, "\n\trate:");
-		for (i = 0; i < SA_NRATE; i++) {
+		for (i = 0; i < SIO_NRATE; i++) {
 			if (cap->confs[n].rate & (1 << i))
 				fprintf(stderr, " %d", cap->rate[i]);
 		}
@@ -55,22 +55,22 @@ cap_pr(struct sa_cap *cap)
 
 void
 usage(void) {
-	fprintf(stderr, "usage: sacap [-pr]\n");
+	fprintf(stderr, "usage: cap [-pr]\n");
 }
  
 int
 main(int argc, char **argv) {
 	int ch;
-	unsigned mode = SA_PLAY | SA_REC;
-	struct sa_hdl *hdl;
+	unsigned mode = SIO_PLAY | SIO_REC;
+	struct sio_hdl *hdl;
 	
 	while ((ch = getopt(argc, argv, "pr")) != -1) {
 		switch(ch) {
 		case 'p':
-			mode &= ~SA_REC;
+			mode &= ~SIO_REC;
 			break;
 		case 'r':
-			mode &= ~SA_PLAY;
+			mode &= ~SIO_PLAY;
 			break;
 		default:
 			usage();
@@ -82,16 +82,16 @@ main(int argc, char **argv) {
 		fprintf(stderr, "-p and -r flags are mutualy exclusive\n");
 		exit(1);
 	}
-	hdl = sa_open(NULL, mode, 0);
+	hdl = sio_open(NULL, mode, 0);
 	if (hdl == NULL) {
-		fprintf(stderr, "sa_open() failed\n");
+		fprintf(stderr, "sio_open() failed\n");
 		exit(1);
 	}
-	if (!sa_getcap(hdl, &cap)) {
-		fprintf(stderr, "sa_setcap() failed\n");
+	if (!sio_getcap(hdl, &cap)) {
+		fprintf(stderr, "sio_setcap() failed\n");
 		exit(1);
 	}
 	cap_pr(&cap);
-	sa_close(hdl);
+	sio_close(hdl);
 	return 0;
 }

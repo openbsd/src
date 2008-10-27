@@ -1,4 +1,4 @@
-.\" $OpenBSD: sa_open.3,v 1.2 2008/10/26 15:07:25 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.1 2008/10/27 00:26:33 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,63 +14,63 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2008 $
-.Dt SA_OPEN 3
+.Dd $Mdocdate: October 27 2008 $
+.Dt SIO_OPEN 3
 .Os
 .Sh NAME
-.Nm sa_open ,
-.Nm sa_close ,
-.Nm sa_setpar ,
-.Nm sa_getpar ,
-.Nm sa_getcap ,
-.Nm sa_start ,
-.Nm sa_stop ,
-.Nm sa_read ,
-.Nm sa_write ,
-.Nm sa_onmove ,
-.Nm sa_nfds ,
-.Nm sa_pollfd ,
-.Nm sa_revents ,
-.Nm sa_eof ,
-.Nm sa_initpar
+.Nm sio_open ,
+.Nm sio_close ,
+.Nm sio_setpar ,
+.Nm sio_getpar ,
+.Nm sio_getcap ,
+.Nm sio_start ,
+.Nm sio_stop ,
+.Nm sio_read ,
+.Nm sio_write ,
+.Nm sio_onmove ,
+.Nm sio_nfds ,
+.Nm sio_pollfd ,
+.Nm sio_revents ,
+.Nm sio_eof ,
+.Nm sio_initpar
 .Nd interface to bidirectional audio streams
 .Sh SYNOPSIS
-.Fd #include <libsa.h>
-.Ft "struct sa_hdl *"
-.Fn "sa_open" "char *name" "unsigned mode" "int nbio_flag"
+.Fd #include <sndio.h>
+.Ft "struct sio_hdl *"
+.Fn "sio_open" "char *name" "unsigned mode" "int nbio_flag"
 .Ft "int"
-.Fn "sa_close" "struct sa_hdl *hdl"
+.Fn "sio_close" "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sa_setpar" "struct sa_hdl *hdl" "struct sa_par *par"
+.Fn "sio_setpar" "struct sio_hdl *hdl" "struct sio_par *par"
 .Ft "int"
-.Fn "sa_getpar" "struct sa_hdl *hdl" "struct sa_par *par"
+.Fn "sio_getpar" "struct sio_hdl *hdl" "struct sio_par *par"
 .Ft "int"
-.Fn "sa_getcap" "struct sa_hdl *hdl" "struct sa_cap *cap"
+.Fn "sio_getcap" "struct sio_hdl *hdl" "struct sio_cap *cap"
 .Ft "int"
-.Fn "sa_start" "struct sa_hdl *hdl"
+.Fn "sio_start" "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sa_stop" "struct sa_hdl *hdl"
+.Fn "sio_stop" "struct sio_hdl *hdl"
 .Ft "size_t"
-.Fn "sa_read" "struct sa_hdl *hdl" "void *addr" "size_t nbytes"
+.Fn "sio_read" "struct sio_hdl *hdl" "void *addr" "size_t nbytes"
 .Ft "size_t"
-.Fn "sa_write" "struct sa_hdl *hdl" "void *addr" "size_t nbytes"
+.Fn "sio_write" "struct sio_hdl *hdl" "void *addr" "size_t nbytes"
 .Ft "void"
-.Fn "sa_onmove" "struct sa_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
+.Fn "sio_onmove" "struct sio_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
 .Ft "int"
-.Fn "sa_nfds" "struct sa_hdl *hdl"
+.Fn "sio_nfds" "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sa_pollfd" "struct sa_hdl *hdl" "struct pollfd *pfd" "int events"
+.Fn "sio_pollfd" "struct sio_hdl *hdl" "struct pollfd *pfd" "int events"
 .Ft "int"
-.Fn "sa_revents" "struct sa_hdl *hdl" "struct pollfd *pfd"
+.Fn "sio_revents" "struct sio_hdl *hdl" "struct pollfd *pfd"
 .Ft "int"
-.Fn "sa_eof" "struct sa_hdl *hdl"
+.Fn "sio_eof" "struct sio_hdl *hdl"
 .Ft "void"
-.Fn "sa_initpar" "struct sa_par *par"
-.\"Fd #define SA_BPS(bits)
-.\"Fd #define SA_LE_NATIVE
+.Fn "sio_initpar" "struct sio_par *par"
+.\"Fd #define SIO_BPS(bits)
+.\"Fd #define SIO_LE_NATIVE
 .Sh DESCRIPTION
 The
-.Nm libsa
+.Nm libsndio
 library allows user processes to access
 .Xr audio 4
 hardware and the
@@ -83,13 +83,13 @@ server it supports resampling and format
 conversions on the fly.
 .Ss Opening and closing an audio stream
 First the application must call the
-.Fn sa_open
+.Fn sio_open
 routine to obtain a handle representing the newly created stream;
 later it will be passed as the
 .Ar hdl
 argument of most other functions.
 The
-.Fn sa_open
+.Fn sio_open
 routine first tries to connect to the
 .Xr aucat 1
 audio server.
@@ -112,14 +112,14 @@ The
 .Ar mode
 parameter gives the direction of the stream.
 The following are supported:
-.Bl -tag -width "SA_PLAY | SA_REC"
-.It SA_PLAY
+.Bl -tag -width "SIO_PLAY | SIO_REC"
+.It SIO_PLAY
 The stream is play-only; data written to the stream will be played
 by the hardware.
-.It SA_REC
+.It SIO_REC
 The stream is record-only; recorded samples by the hardware
 must be read from the stream.
-.It SA_PLAY | SA_REC
+.It SIO_PLAY | SIO_REC
 The stream plays and records synchronously; this means that
 the n-th recorded sample was physically sampled exactly when
 the n-th played sample was actually played.
@@ -128,23 +128,23 @@ the n-th played sample was actually played.
 If the
 .Ar nbio_flag
 argument is true (i.e. non-zero), then the
-.Fn sa_read
+.Fn sio_read
 and
-.Fn sa_write
+.Fn sio_write
 routines (see below) will be non-blocking.
 .Pp
 The
-.Fn sa_close
+.Fn sio_close
 routine closes the stream and frees all allocated resources
 associated with the
-.Nm libsa
+.Nm libsndio
 handle.
 .Ss Negotiating audio parameters
 Audio streams always use linear interleaved encoding.
 The set of parameters of the stream that can be controlled
 is given by the following structure:
 .Bd -literal -offset -indent
-struct sa_par {
+struct sio_par {
 	unsigned bits;	/* bits per sample */
 	unsigned bps;	/* bytes per sample */
 	unsigned sig;	/* 1 = signed, 0 = unsigned */
@@ -155,9 +155,9 @@ struct sa_par {
 	unsigned rate;	/* frames per second */
 	unsigned bufsz;	/* frames in the stream buffer */
 	unsigned round;	/* optimal buffer size divisor */
-#define SA_IGNORE	0	/* pause during xrun */
-#define SA_SYNC		1	/* resync after xrun */
-#define SA_ERROR	2	/* terminate on xrun */
+#define SIO_IGNORE	0	/* pause during xrun */
+#define SIO_SYNC		1	/* resync after xrun */
+#define SIO_ERROR	2	/* terminate on xrun */
 	unsigned xrun;	/* what to do on overrun/underrun */
 };
 .Ed
@@ -187,11 +187,11 @@ it's meaningful only if
 .Va bits \*(Lt bps * 8 .
 .It Va rchan
 The number of recorded channels; meaningful only if
-.Va SA_REC
+.Va SIO_REC
 mode was selected.
 .It Va pchan
 The number of played channels; meaningful only if
-.Va SA_PLAY
+.Va SIO_PLAY
 mode was selected.
 .It Va rate
 The sampling frequency in Hz.
@@ -206,10 +206,10 @@ it is read-only.
 The action when the client doesn't accept
 recorded data or doesn't provide data to play fast enough;
 it can be set to one of the
-.Va SA_IGNORE ,
-.Va SA_SYNC
+.Va SIO_IGNORE ,
+.Va SIO_SYNC
 or
-.Va SA_ERROR
+.Va SIO_ERROR
 constants.
 .El
 .Pp
@@ -221,32 +221,32 @@ the audio subsystem.
 This is the best approach from a performance point of view
 since it involves no extra format conversions.
 The
-.Fn sa_getcap ,
+.Fn sio_getcap ,
 described below,
 can be used to get the list of native parameter sets and then
-.Fn sa_initpar
+.Fn sio_initpar
 and
-.Fn sa_setpar
+.Fn sio_setpar
 can be used to select a working set.
 .It
 Simpler applications that do not have performance constraints may set up
 the audio subsystem to use their own parameters.
 The
-.Va sa_par
+.Va sio_par
 structure must be initialized using the
-.Fn sa_initpar
+.Fn sio_initpar
 routine, filled with the desired parameters and
 the
-.Fn sa_setpar
+.Fn sio_setpar
 routine must be called.
 Finally, the
-.Fn sa_getpar
+.Fn sio_getpar
 routine can be used to ensure that parameters were actually
 accepted.
 .El
 .Pp
 If
-.Nm libsa
+.Nm libsndio
 is used to connect to the
 .Xr aucat 1
 server, a transparent emulation layer will
@@ -254,26 +254,26 @@ automatically be set up, and in this case any
 parameters are supported.
 .Pp
 To ease filling the
-.Va sa_par
+.Va sio_par
 structure, the
 following macros can be used:
-.Bl -tag -width "SA_BPS(bits)"
-.It "SA_BPS(bits)"
+.Bl -tag -width "SIO_BPS(bits)"
+.It "SIO_BPS(bits)"
 Return the smallest value for
 .Va bps
 that is a power of two and that is large enough to
 hold
 .Va bits .
-.It "SA_LE_NATIVE"
+.It "SIO_LE_NATIVE"
 Can be used to set the
 .Va le
 parameter when native byte order is required.
 .El
 .Pp
 Note that (once initialized with the
-.Fn sa_initpar
+.Fn sio_initpar
 routine), not all fields of the
-.Va sa_par
+.Va sio_par
 structure must be filled; it is recommended to fill only
 the required parameters, as other ones will default to
 reasonable values.
@@ -287,9 +287,9 @@ optimal for both the application and the audio subsystem.
 In this case applications must be able to do
 the necessary format conversions.
 The
-.Va sa_cap
+.Va sio_cap
 structure, filled by the
-.Fn sa_getcap
+.Fn sio_getcap
 routine, contains the list of parameter configurations.
 Each configuration contains multiple parameter sets.
 The application must examine all configurations, and
@@ -300,30 +300,30 @@ Parameters of different configurations
 .Em are not
 usable together.
 .Bd -literal
-struct sa_cap {
-	struct sa_enc {			/* allowed encodings */
+struct sio_cap {
+	struct sio_enc {			/* allowed encodings */
 		unsigned bits;
 		unsigned bps;
 		unsigned sig;
 		unsigned le;
 		unsigned msb;
-	} enc[SA_NENC];
-	unsigned rchan[SA_NCHAN];	/* allowed rchans */
-	unsigned pchan[SA_NCHAN];	/* allowed pchans */
-	unsigned rate[SA_NRATE];	/* allowed rates */
+	} enc[SIO_NENC];
+	unsigned rchan[SIO_NCHAN];	/* allowed rchans */
+	unsigned pchan[SIO_NCHAN];	/* allowed pchans */
+	unsigned rate[SIO_NRATE];	/* allowed rates */
 	unsigned nconf;			/* num. of confs[] */
-	struct sa_conf {
+	struct sio_conf {
 		unsigned enc;		/* bitmask of enc[] indexes */
 		unsigned rchan;		/* bitmask of rchan[] indexes */
 		unsigned pchan;		/* bitmask of pchan[] indexes */
 		unsigned rate;		/* bitmask of rate[] indexes */
-	} confs[SA_NCONF];
+	} confs[SIO_NCONF];
 };
 .Ed
 .Pp
 The parameters are as follows:
-.Bl -tag -width "rchan[SA_NCHAN]"
-.It Va enc[SA_NENC]
+.Bl -tag -width "rchan[SIO_NCHAN]"
+.It Va enc[SIO_NENC]
 Array of supported encodings.
 The tuple of
 .Va bits ,
@@ -334,29 +334,29 @@ and
 .Va msb
 parameters are usable in the corresponding parameters
 of the
-.Va sa_par
+.Va sio_par
 structure.
-.It Va rchan[SA_NENC]
+.It Va rchan[SIO_NENC]
 Array of supported channel numbers for recording usable
 in the
-.Va sa_par
+.Va sio_par
 structure.
-.It Va pchan[SA_NENC]
+.It Va pchan[SIO_NENC]
 Array of supported channel numbers for playback usable
 in the
-.Va sa_par
+.Va sio_par
 structure.
-.It Va rate[SA_NRATE]
+.It Va rate[SIO_NRATE]
 Array of supported sample rates usable
 in the
-.Va sa_par
+.Va sio_par
 structure.
 .It Va nconf
 Number of different configurations available, i.e. number
 of filled elements of the
 .Va confs[]
 array.
-.It Va confs[SA_NCONF]
+.It Va confs[SIO_NCONF]
 Array of available configurations.
 Each configuration contains bitmasks indicating which
 elements of the above parameter arrays are valid for the
@@ -364,20 +364,20 @@ given configuration.
 For instance, if the second bit of
 .Va rate
 is set, in the
-.Va sa_conf
+.Va sio_conf
 structure, then the second element of the
-.Va rate[SA_NRATE]
+.Va rate[SIO_NRATE]
 array of the
-.Va sa_cap
+.Va sio_cap
 structure is valid for this configuration.
 .El
 .Ss Starting and stopping the stream
 The
-.Fn sa_start
+.Fn sio_start
 routine puts the stream in a waiting state:
 the stream will wait for playback data to be provided
 (using the
-.Fn sa_write
+.Fn sio_write
 routine).
 Once enough data is queued to ensure that play buffers
 will not underrun, actual playback is started automatically.
@@ -387,18 +387,18 @@ In full-duplex mode, playback and recording will start
 synchronously as soon as enough data to play is available.
 .Pp
 The
-.Fn sa_stop
+.Fn sio_stop
 routine stops playback and recording and puts the audio subsystem
 in the same state as after
-.Fn sa_open
+.Fn sio_open
 is called.
 Samples in the play buffers are not discarded, and will continue to
 be played after
-.Fn sa_stop
+.Fn sio_stop
 returns.
 .Ss Playing and recording
 When record mode is selected, the
-.Fn sa_read
+.Fn sio_read
 routine must be called to retrieve recorded data; it must be called
 often enough to ensure that internal buffers will not overrun.
 It will store at most
@@ -412,30 +412,30 @@ flag is set, it will block until data becomes available and
 will return zero only on error.
 .Pp
 Similarly, when play mode is selected, the
-.Fn sa_write
+.Fn sio_write
 routine must be called to provide data to play.
 Unless the
 .Ar nbio_flag
 is set,
-.Fn sa_write
+.Fn sio_write
 will block until the requested amount of data is written.
 .Ss Non-blocking mode operation
 If the
 .Ar nbio_flag
 is set on
-.Fn sa_open ,
+.Fn sio_open ,
 then the
-.Fn sa_read
+.Fn sio_read
 and
-.Fn sa_write
+.Fn sio_write
 routines will never block; if no data is available, they will
 return zero immediately.
 .Pp
 Note that non-blocking mode must be used on bidirectional streams.
 For instance, if recording is blocked in
-.Fn sa_read
+.Fn sio_read
 then, even if samples can be played,
-.Fn sa_write
+.Fn sio_write
 cannot be called and the play buffers may underrun.
 .Pp
 To avoid busy loops when non-blocking mode is used, the
@@ -443,7 +443,7 @@ To avoid busy loops when non-blocking mode is used, the
 system call can be used to check if data can be
 read from or written to the stream.
 The
-.Fn sa_pollfd
+.Fn sio_pollfd
 routine fills the array
 .Ar pfd
 of
@@ -459,12 +459,12 @@ and
 constants; refer to
 .Xr poll 2
 for more details.
-.Fn sa_pollfd
+.Fn sio_pollfd
 returns the number of
 .Va pollfd
 structures filled.
 The
-.Fn sa_revents
+.Fn sio_revents
 routine returns the bit-mask set by
 .Xr poll 2
 in the
@@ -475,21 +475,21 @@ structures.
 If
 .Va POLLIN
 is set,
-.Fn sa_read
+.Fn sio_read
 can be called without blocking.
 If
 .Va POLLOUT
 is set,
-.Fn sa_write
+.Fn sio_write
 can be called without blocking.
 .Pp
 The
-.Fn sa_nfds
+.Fn sio_nfds
 routine returns the number of
 .Va pollfd
 structures the caller must preallocate in order to be sure
 that
-.Fn sa_pollfd
+.Fn sio_pollfd
 will never overrun.
 .Ss Synchronizing non-audio events to the stream in real-time
 In order to perform actions at precise positions of the stream,
@@ -498,11 +498,11 @@ the application must be notified in real-time of the exact
 position in the stream the hardware is processing.
 .Pp
 The
-.Fn sa_onmove
+.Fn sio_onmove
 routine can be used to register the
 .Va cb
 call-back function that will be called by the
-.Nm libsa
+.Nm libsndio
 library at regular time intervals to notify the application
 the position in the stream changed.
 The
@@ -516,7 +516,7 @@ pointer is passed to the call-back and can contain anything.
 .Pp
 If desired, the application can maintain the current position by
 starting from zero (when
-.Fn sa_start
+.Fn sio_start
 is called) and adding to the current position
 .Va delta
 every time
@@ -536,7 +536,7 @@ the latency will never exceed the
 .Va bufsz
 parameter (see the sections above).
 There's a phase during which
-.Fn sa_write
+.Fn sio_write
 only queues data;
 once there's enough data, actual playback starts.
 During this phase the current position is negative and
@@ -559,10 +559,10 @@ the number of frames read from the current position.
 It is strongly discouraged to use the latency and/or the buffer
 usage for anything but monitoring.
 Especially, note that
-.Fn sa_write
+.Fn sio_write
 might block even if there is buffer space left;
 using the buffer usage to guess if
-.Fn sa_write
+.Fn sio_write
 would block is false and leads to unreliable programs \(en consider using
 .Xr poll 2
 for this.
@@ -577,13 +577,13 @@ instead.
 Depending on the
 .Va xrun
 parameter of the
-.Va sa_par
+.Va sio_par
 structure, the audio subsystem will behave as follows:
-.Bl -tag -width "SA_IGNORE"
-.It SA_IGNORE
+.Bl -tag -width "SIO_IGNORE"
+.It SIO_IGNORE
 The stream is paused during overruns and underruns,
 thus the current position (obtained through
-.Va sa_onmove )
+.Va sio_onmove )
 stops being incremented.
 Once the overrun and/or underrun condition is gone, the stream is unpaused;
 play and record are always kept in sync.
@@ -594,7 +594,7 @@ This mode is the default.
 It's suitable for applications,
 like audio players and telephony, where time
 is not important and overruns or underruns are not short.
-.It SA_SYNC
+.It SIO_SYNC
 If the play buffer underruns, then silence is played,
 but in order to reach the right position in time,
 the same amount of written samples will be
@@ -603,7 +603,7 @@ Similarly, if the record buffer overruns, then
 samples are discarded, but the same amount of silence will be
 returned later.
 The current position (obtained through
-.Va sa_onmove )
+.Va sio_onmove )
 is still incremented.
 When the play buffer underruns the play latency might become negative;
 when the record buffer overruns, the record latency might become
@@ -613,11 +613,11 @@ larger than
 This mode is suitable for applications, like music production,
 where time is important and where underruns or overruns are
 short and rare.
-.It SA_ERROR
+.It SIO_ERROR
 With this mode, on the first play buffer underrun or
 record buffer overrun, the stream is terminated and
 no other function than
-.Fn sa_close
+.Fn sio_close
 will succeed.
 .Pp
 This mode is mostly useful for testing; portable
@@ -628,37 +628,37 @@ on other systems.
 Errors related to the audio subsystem
 (like hardware errors, dropped connections) and
 programming errors (e.g. call to
-.Fn sa_read
+.Fn sio_read
 on a play-only stream) are considered fatal.
 Once an error occurs, all functions taking a
-.Va sa_hdl
+.Va sio_hdl
 argument, except
-.Fn sa_close
+.Fn sio_close
 and
-.Fn sa_eof ,
+.Fn sio_eof ,
 stop working (i.e. always return 0).
 .Pp
 The
-.Fn sa_eof
+.Fn sio_eof
 routine can be used at any stage;
 it returns 0 if there's no pending error, and a non-zero
 value if there's an error.
 .Sh RETURN VALUES
 The
-.Fn sa_open
+.Fn sio_open
 function returns the newly created handle on success or NULL
 on failure.
 The
-.Fn sa_setpar ,
-.Fn sa_getpar ,
-.Fn sa_start ,
+.Fn sio_setpar ,
+.Fn sio_getpar ,
+.Fn sio_start ,
 and
-.Fn sa_stop ,
+.Fn sio_stop ,
 functions return 1 on success and 0 on failure.
 The
-.Fn sa_read
+.Fn sio_read
 and
-.Fn sa_write
+.Fn sio_write
 functions return the number of bytes transfered.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
@@ -691,12 +691,12 @@ device to use.
 The
 .Xr audio 4
 driver cannot drain playback buffers in the background, thus if
-.Nm libsa
+.Nm libsndio
 is used to directly access an
 .Xr audio 4
 device,
 the
-.Fn sa_stop
+.Fn sio_stop
 routine will stop playback immediately.
 .Pp
 The
@@ -706,16 +706,16 @@ If the application doesn't consume recorded data fast enough then
 .Dq "control messages"
 are delayed (or lost) and consequently
 overruns and underruns stay unnoticed by the application in the
-.Va SA_SYNC
+.Va SIO_SYNC
 mode (overruns and underruns are handled on the server side, so
 synchronization is never lost).
 .Pp
 The
-.Fn sa_open ,
-.Fn sa_setpar ,
-.Fn sa_getpar ,
-.Fn sa_start
+.Fn sio_open ,
+.Fn sio_setpar ,
+.Fn sio_getpar ,
+.Fn sio_start
 and
-.Fn sa_stop
+.Fn sio_stop
 routines may block for a very short period of time, thus they should
 not be abused during performance.

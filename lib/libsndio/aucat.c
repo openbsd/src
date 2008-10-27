@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.1 2008/10/27 00:26:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,10 +26,10 @@
 #include <unistd.h>
 
 #include "amsg.h"
-#include "libsa_priv.h"
+#include "sndio_priv.h"
 
 struct aucat_hdl {
-	struct sa_hdl sa;
+	struct sio_hdl sa;
 	int fd;				/* socket */
 	struct amsg rmsg, wmsg;		/* temporary messages */
 	size_t wtodo, rtodo;		/* bytes to complete the packet */
@@ -42,18 +42,18 @@ struct aucat_hdl {
 	int events;			/* events the user requested */
 };
 
-void aucat_close(struct sa_hdl *);
-int aucat_start(struct sa_hdl *);
-int aucat_stop(struct sa_hdl *);
-int aucat_setpar(struct sa_hdl *, struct sa_par *);
-int aucat_getpar(struct sa_hdl *, struct sa_par *);
-int aucat_getcap(struct sa_hdl *, struct sa_cap *);
-size_t aucat_read(struct sa_hdl *, void *, size_t);
-size_t aucat_write(struct sa_hdl *, void *, size_t);
-int aucat_pollfd(struct sa_hdl *, struct pollfd *, int);
-int aucat_revents(struct sa_hdl *, struct pollfd *);
+void aucat_close(struct sio_hdl *);
+int aucat_start(struct sio_hdl *);
+int aucat_stop(struct sio_hdl *);
+int aucat_setpar(struct sio_hdl *, struct sio_par *);
+int aucat_getpar(struct sio_hdl *, struct sio_par *);
+int aucat_getcap(struct sio_hdl *, struct sio_cap *);
+size_t aucat_read(struct sio_hdl *, void *, size_t);
+size_t aucat_write(struct sio_hdl *, void *, size_t);
+int aucat_pollfd(struct sio_hdl *, struct pollfd *, int);
+int aucat_revents(struct sio_hdl *, struct pollfd *);
 
-struct sa_ops aucat_ops = {
+struct sio_ops aucat_ops = {
 	aucat_close,
 	aucat_setpar,
 	aucat_getpar,
@@ -66,8 +66,8 @@ struct sa_ops aucat_ops = {
 	aucat_revents
 };
 
-struct sa_hdl *
-sa_open_aucat(char *path, unsigned mode, int nbio)
+struct sio_hdl *
+sio_open_aucat(char *path, unsigned mode, int nbio)
 {
 	int s;
 	struct aucat_hdl *hdl;
@@ -75,11 +75,11 @@ sa_open_aucat(char *path, unsigned mode, int nbio)
 	socklen_t len = sizeof(struct sockaddr_un);
 
 	if (path == NULL)
-		path = SA_AUCAT_PATH;
+		path = SIO_AUCAT_PATH;
 	hdl = malloc(sizeof(struct aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
-	sa_create(&hdl->sa, &aucat_ops, mode, nbio);	
+	sio_create(&hdl->sa, &aucat_ops, mode, nbio);	
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0) {
@@ -101,7 +101,7 @@ sa_open_aucat(char *path, unsigned mode, int nbio)
 	hdl->rtodo = 0xdeadbeef;
 	hdl->wstate = STATE_IDLE;
 	hdl->wtodo = 0xdeadbeef;
-	return (struct sa_hdl *)hdl;
+	return (struct sio_hdl *)hdl;
 }
 
 /*
@@ -182,7 +182,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		break;
 	case AMSG_MOVE:
 		hdl->maxwrite += hdl->rmsg.u.ts.delta * (int)hdl->wbpf;
-		sa_onmove_cb(&hdl->sa, hdl->rmsg.u.ts.delta);
+		sio_onmove_cb(&hdl->sa, hdl->rmsg.u.ts.delta);
 		hdl->rstate = STATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 		break;
@@ -200,7 +200,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 }
 
 void
-aucat_close(struct sa_hdl *sh)
+aucat_close(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
@@ -210,15 +210,15 @@ aucat_close(struct sa_hdl *sh)
 }
 
 int
-aucat_start(struct sa_hdl *sh)
+aucat_start(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
-	struct sa_par par;
+	struct sio_par par;
 
 	/*
 	 * save bpf
 	 */
-	if (!sa_getpar(&hdl->sa, &par))
+	if (!sio_getpar(&hdl->sa, &par))
 		return 0;
 	hdl->wbpf = par.bps * par.pchan;
 	hdl->rbpf = par.bps * par.rchan;
@@ -240,7 +240,7 @@ aucat_start(struct sa_hdl *sh)
 }
 
 int
-aucat_stop(struct sa_hdl *sh)
+aucat_stop(struct sio_hdl *sh)
 {
 #define ZERO_MAX 0x400
 	static unsigned char zero[ZERO_MAX];
@@ -300,7 +300,7 @@ aucat_stop(struct sa_hdl *sh)
 }
 
 int
-aucat_setpar(struct sa_hdl *sh, struct sa_par *par)
+aucat_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
@@ -315,9 +315,9 @@ aucat_setpar(struct sa_hdl *sh, struct sa_par *par)
 	hdl->wmsg.u.par.bufsz = par->bufsz;
 	hdl->wmsg.u.par.xrun = par->xrun;
 	hdl->wmsg.u.par.mode = hdl->sa.mode;
-	if (hdl->sa.mode & SA_REC)
+	if (hdl->sa.mode & SIO_REC)
 		hdl->wmsg.u.par.rchan = par->rchan;
-	if (hdl->sa.mode & SA_PLAY)
+	if (hdl->sa.mode & SIO_PLAY)
 		hdl->wmsg.u.par.pchan = par->pchan;
 	hdl->wtodo = sizeof(struct amsg);
 	if (!aucat_wmsg(hdl))
@@ -326,7 +326,7 @@ aucat_setpar(struct sa_hdl *sh, struct sa_par *par)
 }
 
 int
-aucat_getpar(struct sa_hdl *sh, struct sa_par *par)
+aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
@@ -352,15 +352,15 @@ aucat_getpar(struct sa_hdl *sh, struct sa_par *par)
 	par->bufsz = hdl->rmsg.u.par.bufsz;
 	par->xrun = hdl->rmsg.u.par.xrun;
 	par->round = hdl->rmsg.u.par.round;
-	if (hdl->sa.mode & SA_PLAY)
+	if (hdl->sa.mode & SIO_PLAY)
 		par->pchan = hdl->rmsg.u.par.pchan;
-	if (hdl->sa.mode & SA_REC)
+	if (hdl->sa.mode & SIO_REC)
 		par->rchan = hdl->rmsg.u.par.rchan;
 	return 1;
 }
 
 int
-aucat_getcap(struct sa_hdl *sh, struct sa_cap *cap)
+aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
@@ -378,23 +378,23 @@ aucat_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 		return 0;
 	}
 	cap->enc[0].bits = hdl->rmsg.u.cap.bits;
-	cap->enc[0].bps = SA_BPS(hdl->rmsg.u.cap.bits);
+	cap->enc[0].bps = SIO_BPS(hdl->rmsg.u.cap.bits);
 	cap->enc[0].sig = 1;
-	cap->enc[0].le = SA_LE_NATIVE;
+	cap->enc[0].le = SIO_LE_NATIVE;
 	cap->enc[0].msb = 1;
 	cap->rchan[0] = hdl->rmsg.u.cap.rchan;
 	cap->pchan[0] = hdl->rmsg.u.cap.pchan;
 	cap->rate[0] = hdl->rmsg.u.cap.rate;
 	cap->confs[0].enc = 1;
-	cap->confs[0].pchan = (hdl->sa.mode & SA_PLAY) ? 1 : 0;
-	cap->confs[0].rchan = (hdl->sa.mode & SA_REC) ? 1 : 0;
+	cap->confs[0].pchan = (hdl->sa.mode & SIO_PLAY) ? 1 : 0;
+	cap->confs[0].rchan = (hdl->sa.mode & SIO_REC) ? 1 : 0;
 	cap->confs[0].rate = 1;
 	cap->nconf = 1;
 	return 1;
 }
 
 size_t
-aucat_read(struct sa_hdl *sh, void *buf, size_t len)
+aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	ssize_t n;
@@ -435,7 +435,7 @@ aucat_read(struct sa_hdl *sh, void *buf, size_t len)
 }
 
 size_t
-aucat_write(struct sa_hdl *sh, void *buf, size_t len)
+aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	unsigned sz;
@@ -492,7 +492,7 @@ aucat_write(struct sa_hdl *sh, void *buf, size_t len)
 }
 
 int
-aucat_pollfd(struct sa_hdl *sh, struct pollfd *pfd, int events)
+aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
@@ -507,7 +507,7 @@ aucat_pollfd(struct sa_hdl *sh, struct pollfd *pfd, int events)
 }
 
 int
-aucat_revents(struct sa_hdl *sh, struct pollfd *pfd)
+aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	int revents = pfd->revents;

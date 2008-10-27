@@ -5,12 +5,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libsa.h"
+#include "sndio.h"
 
 #define BUFSZ 0x1000
 unsigned char buf[BUFSZ];
-struct sa_par par;
-char *xstr[] = SA_XSTRINGS;
+struct sio_par par;
+char *xstr[] = SIO_XSTRINGS;
 
 long long pos = 0;
 int rlat = 0;
@@ -27,19 +27,19 @@ cb(void *addr, int delta)
 
 void
 usage(void) {
-	fprintf(stderr, "usage: sarec [-r rate] [-c nchan] [-e enc]\n");
+	fprintf(stderr, "usage: rec [-r rate] [-c nchan] [-e enc]\n");
 }
  
 int
 main(int argc, char **argv) {
 	int ch;
-	struct sa_hdl *hdl;
+	struct sio_hdl *hdl;
 	ssize_t n;
 	
 	/*
 	 * defaults parameters
 	 */
-	sa_initpar(&par);
+	sio_initpar(&par);
 	par.sig = 1;
 	par.bits = 16;
 	par.rchan = 2;
@@ -61,7 +61,7 @@ main(int argc, char **argv) {
 			}
 			break;
 		case 'e':
-			if (!sa_strtoenc(&par, optarg)) {
+			if (!sio_strtoenc(&par, optarg)) {
 				fprintf(stderr, "%s: unknown encoding\n", optarg);
 				exit(1);
 			}
@@ -84,28 +84,28 @@ main(int argc, char **argv) {
 		}
 	}
 
-	hdl = sa_open(NULL, SA_REC, 0);
+	hdl = sio_open(NULL, SIO_REC, 0);
 	if (hdl == NULL) {
-		fprintf(stderr, "sa_open() failed\n");
+		fprintf(stderr, "sio_open() failed\n");
 		exit(1);
 	}
-	sa_onmove(hdl, cb, NULL);
-	if (!sa_setpar(hdl, &par)) {
-		fprintf(stderr, "sa_setpar() failed\n");
+	sio_onmove(hdl, cb, NULL);
+	if (!sio_setpar(hdl, &par)) {
+		fprintf(stderr, "sio_setpar() failed\n");
 		exit(1);
 	}
-	if (!sa_getpar(hdl, &par)) {
-		fprintf(stderr, "sa_getpar() failed\n");
+	if (!sio_getpar(hdl, &par)) {
+		fprintf(stderr, "sio_getpar() failed\n");
 		exit(1);
 	}
-	if (!sa_start(hdl)) {
-		fprintf(stderr, "sa_start() failed\n");
+	if (!sio_start(hdl)) {
+		fprintf(stderr, "sio_start() failed\n");
 		exit(1);
 	}
 	for (;;) {
-		n = sa_read(hdl, buf, BUFSZ);
+		n = sio_read(hdl, buf, BUFSZ);
 		if (n == 0) {
-			fprintf(stderr, "sa_write: failed\n");
+			fprintf(stderr, "sio_write: failed\n");
 			exit(1);
 		}
 		rlat -= n / (int)(par.bps * par.rchan);
@@ -114,6 +114,6 @@ main(int argc, char **argv) {
 			exit(1);
 		}
 	}
-	sa_close(hdl);
+	sio_close(hdl);
 	return 0;
 }

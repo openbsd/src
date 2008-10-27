@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.1 2008/10/27 00:26:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,8 +22,8 @@
  * allow block size to be set
  *
  * call hdl->cb_pos() from sun_read() and sun_write(), or better:
- * implement generic blocking sa_read() and sa_write() with poll(2)
- * and use non-blocking sa_ops only
+ * implement generic blocking sio_read() and sio_write() with poll(2)
+ * and use non-blocking sio_ops only
  */
 
 #include <sys/types.h>
@@ -37,10 +37,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "libsa_priv.h"
+#include "sndio_priv.h"
 
 struct sun_hdl {
-	struct sa_hdl sa;
+	struct sio_hdl sa;
 	int fd;
 	int filling;
 	unsigned ibpf, obpf;		/* bytes per frame */
@@ -50,18 +50,18 @@ struct sun_hdl {
 	int idelta, odelta;		/* position reported to client */
 };
 
-void sun_close(struct sa_hdl *);
-int sun_start(struct sa_hdl *);
-int sun_stop(struct sa_hdl *);
-int sun_setpar(struct sa_hdl *, struct sa_par *);
-int sun_getpar(struct sa_hdl *, struct sa_par *);
-int sun_getcap(struct sa_hdl *, struct sa_cap *);
-size_t sun_read(struct sa_hdl *, void *, size_t);
-size_t sun_write(struct sa_hdl *, void *, size_t);
-int sun_pollfd(struct sa_hdl *, struct pollfd *, int);
-int sun_revents(struct sa_hdl *, struct pollfd *);
+void sun_close(struct sio_hdl *);
+int sun_start(struct sio_hdl *);
+int sun_stop(struct sio_hdl *);
+int sun_setpar(struct sio_hdl *, struct sio_par *);
+int sun_getpar(struct sio_hdl *, struct sio_par *);
+int sun_getcap(struct sio_hdl *, struct sio_cap *);
+size_t sun_read(struct sio_hdl *, void *, size_t);
+size_t sun_write(struct sio_hdl *, void *, size_t);
+int sun_pollfd(struct sio_hdl *, struct pollfd *, int);
+int sun_revents(struct sio_hdl *, struct pollfd *);
 
-struct sa_ops sun_ops = {
+struct sio_ops sun_ops = {
 	sun_close,
 	sun_setpar,
 	sun_getpar,
@@ -75,14 +75,14 @@ struct sa_ops sun_ops = {
 };
 
 /*
- * convert sun encoding to sa_par encoding
+ * convert sun encoding to sio_par encoding
  */
 void
-sun_infotoenc(struct audio_prinfo *ai, struct sa_par *par)
+sun_infotoenc(struct audio_prinfo *ai, struct sio_par *par)
 {
 	par->msb = 1;
 	par->bits = ai->precision;
-	par->bps = SA_BPS(par->bits);
+	par->bps = SIO_BPS(par->bits);
 	switch (ai->encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		par->le = 1;
@@ -101,11 +101,11 @@ sun_infotoenc(struct audio_prinfo *ai, struct sa_par *par)
 		par->sig = 0;
 		break;
 	case AUDIO_ENCODING_SLINEAR:
-		par->le = SA_LE_NATIVE;
+		par->le = SIO_LE_NATIVE;
 		par->sig = 1;
 		break;
 	case AUDIO_ENCODING_ULINEAR:
-		par->le = SA_LE_NATIVE;
+		par->le = SIO_LE_NATIVE;
 		par->sig = 0;
 		break;
 	default:
@@ -115,10 +115,10 @@ sun_infotoenc(struct audio_prinfo *ai, struct sa_par *par)
 }
 
 /*
- * convert sa_par encoding to sun encoding
+ * convert sio_par encoding to sun encoding
  */
 void
-sun_enctoinfo(struct audio_prinfo *ai, struct sa_par *par)
+sun_enctoinfo(struct audio_prinfo *ai, struct sio_par *par)
 {
 	if (par->le && par->sig) {
 		ai->encoding = AUDIO_ENCODING_SLINEAR_LE;
@@ -166,15 +166,15 @@ int
 sun_setnfr(struct sun_hdl *hdl, unsigned bufsz)
 {
 	struct audio_info aui;	
-	struct sa_par np;
+	struct sio_par np;
 	unsigned nfr, infr = 0, onfr = 0, ibpf, obpf;
 	unsigned round;
 	int i;
 
-	if (!sa_getpar(&hdl->sa, &np))
+	if (!sio_getpar(&hdl->sa, &np))
 		return 0;
-	ibpf = (hdl->sa.mode & SA_REC) ? np.rchan * np.bps : 1;
-	obpf = (hdl->sa.mode & SA_PLAY) ? np.pchan * np.bps : 1;
+	ibpf = (hdl->sa.mode & SIO_REC) ? np.rchan * np.bps : 1;
+	obpf = (hdl->sa.mode & SIO_PLAY) ? np.pchan * np.bps : 1;
 	round = sun_round(ibpf, obpf);
 
 	/*
@@ -202,9 +202,9 @@ sun_setnfr(struct sun_hdl *hdl, unsigned bufsz)
 		AUDIO_INITINFO(&aui);
 		aui.hiwat = (bufsz + nfr - 1) / nfr;
 		aui.lowat = aui.hiwat;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			aui.record.block_size = (nfr - nfr % round) * ibpf;
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			aui.play.block_size = (nfr - nfr % round) * obpf;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 			perror("sun_setnfr: SETINFO");
@@ -222,15 +222,15 @@ sun_setnfr(struct sun_hdl *hdl, unsigned bufsz)
 		/*
 		 * if half-duplex or both block sizes match, it's ok
 		 */
-		if (hdl->sa.mode != (SA_REC | SA_PLAY) || infr == onfr)
-			return (hdl->sa.mode & SA_REC) ? infr : onfr;
+		if (hdl->sa.mode != (SIO_REC | SIO_PLAY) || infr == onfr)
+			return (hdl->sa.mode & SIO_REC) ? infr : onfr;
 
 		/*
 		 * retry with the smaller returned value
 		 */
-		if ((hdl->sa.mode & SA_REC) && nfr > infr)
+		if ((hdl->sa.mode & SIO_REC) && nfr > infr)
 			nfr = infr;
-		if ((hdl->sa.mode & SA_PLAY) && nfr > onfr)
+		if ((hdl->sa.mode & SIO_PLAY) && nfr > onfr)
 			nfr = onfr;
 	}
 	fprintf(stderr, "sun_setnfr: couldn't find a working blocksize\n");
@@ -243,7 +243,7 @@ sun_setnfr(struct sun_hdl *hdl, unsigned bufsz)
  * device can use them; retrun 1 on success, 0 on failure or error
  */
 int
-sun_tryinfo(struct sun_hdl *hdl, struct sa_enc *enc, 
+sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc, 
     unsigned pchan, unsigned rchan, unsigned rate)
 {
 	struct audio_info aui;	
@@ -270,9 +270,9 @@ sun_tryinfo(struct sun_hdl *hdl, struct sa_enc *enc,
 	if (rchan)
 		aui.record.channels = rchan;
 	if (rate) {
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			aui.play.sample_rate = rate;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			aui.record.sample_rate = rate;
 	}
 	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
@@ -292,10 +292,10 @@ sun_tryinfo(struct sun_hdl *hdl, struct sa_enc *enc,
 	if (rchan && aui.record.channels != rchan)
 		return 0;
 	if (rate) {
-		if ((hdl->sa.mode & SA_PLAY) &&
+		if ((hdl->sa.mode & SIO_PLAY) &&
 		    (aui.play.sample_rate != rate))
 			return 0;
-		if ((hdl->sa.mode & SA_REC) &&
+		if ((hdl->sa.mode & SIO_REC) &&
 		    (aui.record.sample_rate != rate))
 			return 0;
 	}
@@ -306,7 +306,7 @@ sun_tryinfo(struct sun_hdl *hdl, struct sa_enc *enc,
  * guess device capabilities
  */
 int
-sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
+sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 #define NCHANS (sizeof(chans) / sizeof(chans[0]))
 #define NRATES (sizeof(rates) / sizeof(rates[0]))
@@ -318,7 +318,7 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 		32000, 44100, 48000, 64000, 88200, 96000
 	};
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct sa_par savepar;
+	struct sio_par savepar;
 	struct audio_encoding ae;
 	unsigned nenc = 0, nconf = 0;
 	unsigned enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map = 0;
@@ -330,7 +330,7 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 	/*
 	 * fill encoding list
 	 */
-	for (ae.index = 0; nenc < SA_NENC; ae.index++) {
+	for (ae.index = 0; nenc < SIO_NENC; ae.index++) {
 		if (ioctl(hdl->fd, AUDIO_GETENC, &ae) < 0) {
 			if (errno == EINVAL)
 				break;
@@ -353,10 +353,10 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 			cap->enc[nenc].le = 0;
 			cap->enc[nenc].sig = 0;
 		} else if (ae.encoding == AUDIO_ENCODING_SLINEAR) {
-			cap->enc[nenc].le = SA_LE_NATIVE;
+			cap->enc[nenc].le = SIO_LE_NATIVE;
 			cap->enc[nenc].sig = 1;
 		} else if (ae.encoding == AUDIO_ENCODING_ULINEAR) {
-			cap->enc[nenc].le = SA_LE_NATIVE;
+			cap->enc[nenc].le = SIO_LE_NATIVE;
 			cap->enc[nenc].sig = 0;
 		} else {
 			/* unsipported encoding */
@@ -376,14 +376,14 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 	 * number of channels and the encoding are independent so we can
 	 * use the current encoding and try various channels.
 	 */
-	if (hdl->sa.mode & SA_PLAY) {
+	if (hdl->sa.mode & SIO_PLAY) {
 		memcpy(&cap->pchan, chans, NCHANS * sizeof(unsigned));
 		for (i = 0; i < NCHANS; i++) {
 			if (sun_tryinfo(hdl, NULL, chans[i], 0, 0))
 				pchan_map |= (1 << i);
 		}
 	}
-	if (hdl->sa.mode & SA_REC) {
+	if (hdl->sa.mode & SIO_REC) {
 		memcpy(&cap->rchan, chans, NCHANS * sizeof(unsigned));
 		for (i = 0; i < NCHANS; i++) {
 			if (sun_tryinfo(hdl, NULL, 0, chans[i], 0))
@@ -400,7 +400,7 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 	 */
 	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned));
 	for (j = 0; j < nenc; j++) {
-		if (nconf == SA_NCONF)
+		if (nconf == SIO_NCONF)
 			break;
 		map = 0;
 		for (i = 0; i < NRATES; i++) {
@@ -424,8 +424,8 @@ sun_getcap(struct sa_hdl *sh, struct sa_cap *cap)
 #undef NRATES
 }
 
-struct sa_hdl *
-sa_open_sun(char *path, unsigned mode, int nbio)
+struct sio_hdl *
+sio_open_sun(char *path, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct sun_hdl *hdl;
@@ -434,17 +434,17 @@ sa_open_sun(char *path, unsigned mode, int nbio)
 	hdl = malloc(sizeof(struct sun_hdl));
 	if (hdl == NULL)
 		return NULL;
-	sa_create(&hdl->sa, &sun_ops, mode, nbio);
+	sio_create(&hdl->sa, &sun_ops, mode, nbio);
 
 	if (path == NULL) {
 		path = getenv("AUDIODEVICE");
 		if (path == NULL)
-			path = SA_SUN_PATH;
+			path = SIO_SUN_PATH;
 	}
-	if (mode == (SA_PLAY | SA_REC))
+	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else 
-		flags = (mode & SA_PLAY) ? O_WRONLY : O_RDONLY;
+		flags = (mode & SIO_PLAY) ? O_WRONLY : O_RDONLY;
 
 	while ((fd = open(path, flags | O_NONBLOCK)) < 0) {
 		if (errno == EINTR)
@@ -458,7 +458,7 @@ sa_open_sun(char *path, unsigned mode, int nbio)
 	 * If both play and record are requested then
 	 * set full duplex mode.
 	 */
-	if (mode == (SA_PLAY | SA_REC)) {
+	if (mode == (SIO_PLAY | SIO_REC)) {
 		fullduplex = 1;
 		if (ioctl(fd, AUDIO_SETFD, &fullduplex) < 0) {
 			fprintf(stderr, "%s: can't set full-duplex", path);
@@ -467,17 +467,17 @@ sa_open_sun(char *path, unsigned mode, int nbio)
 	}
 	hdl->fd = fd;
 	AUDIO_INITINFO(&aui);
-	if (hdl->sa.mode & SA_PLAY)
+	if (hdl->sa.mode & SIO_PLAY)
 		aui.play.encoding = AUDIO_ENCODING_SLINEAR;
-	if (hdl->sa.mode & SA_REC)
+	if (hdl->sa.mode & SIO_REC)
 		aui.record.encoding = AUDIO_ENCODING_SLINEAR;
 	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-		perror("sa_open_sun: setinfo");
+		perror("sio_open_sun: setinfo");
 		goto bad_close;
 	}
 	if (!sun_setnfr(hdl, 0))
 		goto bad_close;
-	return (struct sa_hdl *)hdl;
+	return (struct sio_hdl *)hdl;
  bad_close:
 	while (close(hdl->fd) < 0 && errno == EINTR)
 		; /* retry */
@@ -487,7 +487,7 @@ sa_open_sun(char *path, unsigned mode, int nbio)
 }
 
 void
-sun_close(struct sa_hdl *sh)
+sun_close(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	int rc;
@@ -498,13 +498,13 @@ sun_close(struct sa_hdl *sh)
 }
 
 int
-sun_start(struct sa_hdl *sh)
+sun_start(struct sio_hdl *sh)
 {
-	struct sa_par par;
+	struct sio_par par;
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_info aui;	
 
-	if (!sa_getpar(&hdl->sa, &par))
+	if (!sio_getpar(&hdl->sa, &par))
 		return 0;
 	hdl->obpf = par.pchan * par.bps;
 	hdl->ibpf = par.rchan * par.bps;
@@ -516,15 +516,15 @@ sun_start(struct sa_hdl *sh)
 	hdl->idelta = 0;
 	hdl->odelta = 0;
 
-	if (hdl->sa.mode & SA_PLAY) {
+	if (hdl->sa.mode & SIO_PLAY) {
 		/* 
 		 * pause the device and let sun_write() trigger the
 		 * start later, to avoid buffer underruns
 		 */
 		AUDIO_INITINFO(&aui);
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			aui.play.pause = 1;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			aui.record.pause = 1;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 			perror("sun_start: setinfo2");
@@ -537,22 +537,22 @@ sun_start(struct sa_hdl *sh)
 		 * no play buffers to fill, start now!
 		 */
 		AUDIO_INITINFO(&aui);
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			aui.play.pause = 0;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			aui.record.pause = 0;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 			perror("sun_start: setinfo");
 			hdl->sa.eof = 1;
 			return 0;
 		}
-		sa_onmove_cb(&hdl->sa, 0);
+		sio_onmove_cb(&hdl->sa, 0);
 	}
 	return 1;
 }
 
 int
-sun_stop(struct sa_hdl *sh)
+sun_stop(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_info aui;	
@@ -587,7 +587,7 @@ sun_stop(struct sa_hdl *sh)
 }
 
 int
-sun_setpar(struct sa_hdl *sh, struct sa_par *par)
+sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_info aui;	
@@ -595,17 +595,17 @@ sun_setpar(struct sa_hdl *sh, struct sa_par *par)
 	/*
 	 * the only ones supported by Sun API
 	 */
-	par->bps = SA_BPS(par->bits);
+	par->bps = SIO_BPS(par->bits);
 	par->msb = 1;
-	par->xrun = SA_IGNORE;
+	par->xrun = SIO_IGNORE;
 
 	AUDIO_INITINFO(&aui);
-	if (hdl->sa.mode & SA_PLAY) {
+	if (hdl->sa.mode & SIO_PLAY) {
 		aui.play.sample_rate = par->rate;
 		aui.play.channels = par->pchan;
 		sun_enctoinfo(&aui.play, par);
 	}
-	if (hdl->sa.mode & SA_REC) {
+	if (hdl->sa.mode & SIO_REC) {
 		aui.record.sample_rate = par->rate;
 		aui.record.channels = par->rchan;
 		sun_enctoinfo(&aui.record, par);
@@ -624,7 +624,7 @@ sun_setpar(struct sa_hdl *sh, struct sa_par *par)
 }
 
 int
-sun_getpar(struct sa_hdl *sh, struct sa_par *par)
+sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_info aui;	
@@ -634,19 +634,19 @@ sun_getpar(struct sa_hdl *sh, struct sa_par *par)
 		hdl->sa.eof = 1;
 		return 0;
 	}
-	if (hdl->sa.mode & SA_PLAY) {
+	if (hdl->sa.mode & SIO_PLAY) {
 		par->rate = aui.play.sample_rate;
 		sun_infotoenc(&aui.play, par);
-	} else if (hdl->sa.mode & SA_REC) {
+	} else if (hdl->sa.mode & SIO_REC) {
 		par->rate = aui.record.sample_rate;
 		sun_infotoenc(&aui.record, par);
 	} else
 		return 0;
-	par->pchan = (hdl->sa.mode & SA_PLAY) ?
+	par->pchan = (hdl->sa.mode & SIO_PLAY) ?
 	    aui.play.channels : 0;
-	par->rchan = (hdl->sa.mode & SA_REC) ?
+	par->rchan = (hdl->sa.mode & SIO_REC) ?
 	    aui.record.channels : 0;
-	par->round = (hdl->sa.mode & SA_REC) ?
+	par->round = (hdl->sa.mode & SIO_REC) ?
 	    aui.record.block_size / (par->bps * par->rchan) :
 	    aui.play.block_size / (par->bps * par->pchan);
 	par->bufsz = aui.hiwat * par->round;
@@ -654,7 +654,7 @@ sun_getpar(struct sa_hdl *sh, struct sa_par *par)
 }
 
 size_t
-sun_read(struct sa_hdl *sh, void *buf, size_t len)
+sun_read(struct sio_hdl *sh, void *buf, size_t len)
 {
 #define DROP_NMAX 0x1000
 	static char dropbuf[DROP_NMAX];
@@ -722,22 +722,22 @@ sun_autostart(struct sun_hdl *hdl)
 	if (!(pfd.revents & POLLOUT)) {
 		hdl->filling = 0;
 		AUDIO_INITINFO(&aui);
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			aui.play.pause = 0;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			aui.record.pause = 0;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 			perror("sun_start: setinfo");
 			hdl->sa.eof = 1;
 			return 0;
 		}
-		sa_onmove_cb(&hdl->sa, 0);
+		sio_onmove_cb(&hdl->sa, 0);
 	}
 	return 1;
 }
 
 size_t
-sun_write(struct sa_hdl *sh, void *buf, size_t len)
+sun_write(struct sio_hdl *sh, void *buf, size_t len)
 {
 #define ZERO_NMAX 0x1000
 	static char zero[ZERO_NMAX];
@@ -786,7 +786,7 @@ sun_write(struct sa_hdl *sh, void *buf, size_t len)
 }
 
 int
-sun_pollfd(struct sa_hdl *sh, struct pollfd *pfd, int events)
+sun_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 
@@ -796,31 +796,31 @@ sun_pollfd(struct sa_hdl *sh, struct pollfd *pfd, int events)
 }
 
 int
-sun_revents(struct sa_hdl *sh, struct pollfd *pfd)
+sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_offset ao;
 	int xrun, dmove, dierr = 0, doerr = 0, doffset = 0;
 	int revents = pfd->revents;
 
-	if (hdl->sa.mode & SA_PLAY) {
+	if (hdl->sa.mode & SIO_PLAY) {
 		if (ioctl(hdl->fd, AUDIO_PERROR, &xrun) < 0) {
 			perror("sun_revents: PERROR");
 			exit(1);
 		}
 		doerr = xrun - hdl->oerr;
 		hdl->oerr = xrun;
-		if (hdl->sa.mode & SA_REC)
+		if (hdl->sa.mode & SIO_REC)
 			doffset += doerr;
 	}
-	if (hdl->sa.mode & SA_REC) {
+	if (hdl->sa.mode & SIO_REC) {
 		if (ioctl(hdl->fd, AUDIO_RERROR, &xrun) < 0) {
 			perror("sun_revents: RERROR");
 			exit(1);
 		}
 		dierr = xrun - hdl->ierr;
 		hdl->ierr = xrun;
-		if (hdl->sa.mode & SA_PLAY)
+		if (hdl->sa.mode & SIO_PLAY)
 			doffset -= dierr;
 	}
 	hdl->offset += doffset;
@@ -828,7 +828,7 @@ sun_revents(struct sa_hdl *sh, struct pollfd *pfd)
 	hdl->idelta -= dmove;
 	hdl->odelta -= dmove;
 
-	if ((revents & POLLOUT) && !(hdl->sa.mode & SA_REC)) {
+	if ((revents & POLLOUT) && !(hdl->sa.mode & SIO_REC)) {
 		if (ioctl(hdl->fd, AUDIO_GETOOFFS, &ao) < 0) {
 			perror("sun_revents: GETOOFFS");
 			exit(1);
@@ -836,11 +836,11 @@ sun_revents(struct sa_hdl *sh, struct pollfd *pfd)
 		hdl->odelta += (ao.samples - hdl->obytes) / hdl->obpf;
 		hdl->obytes = ao.samples;
 		if (hdl->odelta != 0) {
-			sa_onmove_cb(&hdl->sa, hdl->odelta);
+			sio_onmove_cb(&hdl->sa, hdl->odelta);
 			hdl->odelta = 0;
 		}
 	}
-	if ((revents & POLLIN) && (hdl->sa.mode & SA_REC)) {
+	if ((revents & POLLIN) && (hdl->sa.mode & SIO_REC)) {
 		if (ioctl(hdl->fd, AUDIO_GETIOFFS, &ao) < 0) {
 			perror("sun_revents: GETIOFFS");
 			exit(1);
@@ -848,7 +848,7 @@ sun_revents(struct sa_hdl *sh, struct pollfd *pfd)
 		hdl->idelta += (ao.samples - hdl->ibytes) / hdl->ibpf;
 		hdl->ibytes = ao.samples;
 		if (hdl->idelta != 0) {
-			sa_onmove_cb(&hdl->sa, hdl->idelta);
+			sio_onmove_cb(&hdl->sa, hdl->idelta);
 			hdl->idelta = 0;
 		}
 	}

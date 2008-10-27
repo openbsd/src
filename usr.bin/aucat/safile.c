@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.2 2008/10/27 00:26:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libsa.h>
+#include <sndio.h>
 
 #include "conf.h"
 #include "file.h"
@@ -33,7 +33,7 @@
 
 struct safile {
 	struct file file;
-	struct sa_hdl *hdl;
+	struct sio_hdl *hdl;
 #ifdef DEBUG	
 	struct timeval itv, otv;
 #endif
@@ -49,7 +49,7 @@ int safile_pollfd(struct file *, struct pollfd *, int);
 int safile_revents(struct file *, struct pollfd *);
 
 struct fileops safile_ops = {
-	"libsa",
+	"libsndsio",
 	sizeof(struct safile),
 	safile_close,
 	safile_read,
@@ -87,24 +87,24 @@ safile_new(struct fileops *ops, char *path,
     struct aparams *ipar, struct aparams *opar,
     unsigned *bufsz, unsigned *round)
 {
-	struct sa_par par;
-	struct sa_hdl *hdl;
+	struct sio_par par;
+	struct sio_hdl *hdl;
 	struct safile *f;
 	int mode;
 
 	mode = 0;
 	if (ipar)
-		mode |= SA_REC;
+		mode |= SIO_REC;
 	if (opar)
-		mode |= SA_PLAY;
+		mode |= SIO_PLAY;
 	if (!mode)
 		fprintf(stderr, "%s: must at least play or record", path);
-	hdl = sa_open(path, mode, 1);
+	hdl = sio_open(path, mode, 1);
 	if (hdl == NULL) {
 		fprintf(stderr, "safile_new: can't open device\n");
 		return NULL;
 	}
-	sa_initpar(&par);
+	sio_initpar(&par);
 	if (ipar) {
 		par.bits = ipar->bits;
 		par.bps = ipar->bps;
@@ -125,12 +125,12 @@ safile_new(struct fileops *ops, char *path,
 		par.pchan = opar->cmax - opar->cmin + 1;
 	if (*bufsz)
 		par.bufsz = *bufsz;
-	if (!sa_setpar(hdl, &par)) {
-		fprintf(stderr, "safile_new: sa_setpar failed\n");
+	if (!sio_setpar(hdl, &par)) {
+		fprintf(stderr, "safile_new: sio_setpar failed\n");
 		exit(1);
 	}
-	if (!sa_getpar(hdl, &par)) {
-		fprintf(stderr, "safile_new: sa_getpar failed\n");
+	if (!sio_getpar(hdl, &par)) {
+		fprintf(stderr, "safile_new: sio_getpar failed\n");
 		exit(1);
 	}
 	if (ipar) {
@@ -156,9 +156,9 @@ safile_new(struct fileops *ops, char *path,
 	*bufsz = par.bufsz;
 	*round = par.round;
 	DPRINTF("safile_open: using %u(%u) fpb\n", *bufsz, *round);
-	f = (struct safile *)file_new(ops, "hdl", sa_nfds(hdl));
+	f = (struct safile *)file_new(ops, "hdl", sio_nfds(hdl));
 	f->hdl = hdl;
-	sa_onmove(f->hdl, safile_cb, f);
+	sio_onmove(f->hdl, safile_cb, f);
 	return f;
 }
 
@@ -167,8 +167,8 @@ safile_start(struct file *file)
 {	
 	struct safile *f = (struct safile *)file;
 
-	if (!sa_start(f->hdl)) {
-		fprintf(stderr, "safile_start: sa_start() failed\n");
+	if (!sio_start(f->hdl)) {
+		fprintf(stderr, "safile_start: sio_start() failed\n");
 		exit(1);
 	}
 	DPRINTF("safile_start: play/rec started\n");
@@ -179,8 +179,8 @@ safile_stop(struct file *file)
 {
 	struct safile *f = (struct safile *)file;
 
-	if (!sa_stop(f->hdl)) {
-		fprintf(stderr, "safile_stop: sa_start() filed\n");
+	if (!sio_stop(f->hdl)) {
+		fprintf(stderr, "safile_stop: sio_start() filed\n");
 		exit(1);
 	}
 	DPRINTF("safile_stop: play/rec stopped\n");
@@ -201,10 +201,10 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 	}
 	gettimeofday(&tv0, NULL);
 #endif
-	n = sa_read(f->hdl, data, count);
+	n = sio_read(f->hdl, data, count);
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
-		if (sa_eof(f->hdl)) {
+		if (sio_eof(f->hdl)) {
 			fprintf(stderr, "safile_read: eof\n");
 			file_eof(&f->file);
 		} else {
@@ -240,10 +240,10 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 	}
 	gettimeofday(&tv0, NULL);
 #endif
-	n = sa_write(f->hdl, data, count);
+	n = sio_write(f->hdl, data, count);
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
-		if (sa_eof(f->hdl)) {
+		if (sio_eof(f->hdl)) {
 			fprintf(stderr, "safile_write: %s: hup\n", f->file.name);
 			file_hup(&f->file);
 		} else {
@@ -266,23 +266,23 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 int
 safile_nfds(struct file *file)
 {
-	return sa_nfds(((struct safile *)file)->hdl);
+	return sio_nfds(((struct safile *)file)->hdl);
 }
 
 int
 safile_pollfd(struct file *file, struct pollfd *pfd, int events)
 {
-	return sa_pollfd(((struct safile *)file)->hdl, pfd, events);
+	return sio_pollfd(((struct safile *)file)->hdl, pfd, events);
 }
 
 int
 safile_revents(struct file *file, struct pollfd *pfd)
 {
-	return sa_revents(((struct safile *)file)->hdl, pfd);
+	return sio_revents(((struct safile *)file)->hdl, pfd);
 }
 
 void
 safile_close(struct file *file)
 {
-	return sa_close(((struct safile *)file)->hdl);
+	return sio_close(((struct safile *)file)->hdl);
 }

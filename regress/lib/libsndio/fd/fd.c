@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libsa.h"
+#include <sndio.h>
 
 struct buf {				/* simple circular fifo */
 	unsigned start;			/* first used byte */
@@ -15,8 +15,8 @@ struct buf {				/* simple circular fifo */
 	unsigned char data[BUF_LEN];
 };
 
-char *xstr[] = SA_XSTRINGS;
-struct sa_par par;
+char *xstr[] = SIO_XSTRINGS;
+struct sio_par par;
 struct buf playbuf, recbuf;
 
 long long pos = 0;
@@ -93,7 +93,7 @@ buf_write(struct buf *buf, int fd)
  * read buffer contents from a file without blocking
  */
 unsigned
-buf_rec(struct buf *buf, struct sa_hdl *hdl)
+buf_rec(struct buf *buf, struct sio_hdl *hdl)
 {
 	unsigned count, end, avail, done = 0;
 	int bpf = par.rchan * par.bps;
@@ -109,10 +109,10 @@ buf_rec(struct buf *buf, struct sa_hdl *hdl)
 		count = BUF_LEN - end;
 		if (count > avail)
 			count = avail;
-		n = sa_read(hdl, buf->data + end, count);
+		n = sio_read(hdl, buf->data + end, count);
 		if (n == 0) {
-			if (sa_eof(hdl)) {
-				fprintf(stderr, "sa_read() failed\n");
+			if (sio_eof(hdl)) {
+				fprintf(stderr, "sio_read() failed\n");
 				exit(1);
 			}
 			break;
@@ -132,7 +132,7 @@ buf_rec(struct buf *buf, struct sa_hdl *hdl)
  * write buffer contents to file, without blocking
  */
 unsigned
-buf_play(struct buf *buf, struct sa_hdl *hdl)
+buf_play(struct buf *buf, struct sio_hdl *hdl)
 {
 	unsigned count, done = 0;
 	int bpf = par.pchan * par.bps;
@@ -144,10 +144,10 @@ buf_play(struct buf *buf, struct sa_hdl *hdl)
 			count = buf->used;
 		/* try to confuse the server */
 		//count = 1 + (rand() % count);
-		n = sa_write(hdl, buf->data + buf->start, count);
+		n = sio_write(hdl, buf->data + buf->start, count);
 		if (n == 0) {
-			if (sa_eof(hdl)) {
-				fprintf(stderr, "sa_write() failed\n");
+			if (sio_eof(hdl)) {
+				fprintf(stderr, "sio_write() failed\n");
 				exit(1);
 			}
 			break;
@@ -170,7 +170,7 @@ buf_play(struct buf *buf, struct sa_hdl *hdl)
 void
 usage(void) {
 	fprintf(stderr,
-	    "usage: safd [-v] [-r rate] [-c ichan] [-C ochan] [-e enc] "
+	    "usage: fd [-v] [-r rate] [-c ichan] [-C ochan] [-e enc] "
 	    "[-i file] [-o file]\n");
 }
  
@@ -178,7 +178,7 @@ int
 main(int argc, char **argv) {
 	int ch, recfd, playfd, events, revents;
 	char *recpath, *playpath;
-	struct sa_hdl *hdl;
+	struct sio_hdl *hdl;
 	struct pollfd pfd;
 	struct timeval tv, otv, ntv;
 	unsigned mode, done;
@@ -189,7 +189,7 @@ main(int argc, char **argv) {
 	/*
 	 * defaults parameters
 	 */
-	sa_initpar(&par);
+	sio_initpar(&par);
 	par.sig = 1;
 	par.bits = 16;
 	par.pchan = par.rchan = 2;
@@ -216,7 +216,7 @@ main(int argc, char **argv) {
 			}
 			break;
 		case 'e':
-			if (!sa_strtoenc(&par, optarg)) {
+			if (!sio_strtoenc(&par, optarg)) {
 				fprintf(stderr, "%s: unknown encoding\n", optarg);
 				exit(1);
 			}
@@ -252,30 +252,30 @@ main(int argc, char **argv) {
 	}
 	mode = 0;
 	if (recpath)
-		mode |= SA_REC;
+		mode |= SIO_REC;
 	if (playpath)
-		mode |= SA_PLAY;
+		mode |= SIO_PLAY;
 	if (mode == 0) {
 		fprintf(stderr, "-i or -o option required\n");
 		exit(0);
 	}
-	hdl = sa_open(NULL, mode, 1);
+	hdl = sio_open(NULL, mode, 1);
 	if (hdl == NULL) {
-		fprintf(stderr, "sa_open() failed\n");
+		fprintf(stderr, "sio_open() failed\n");
 		exit(1);
 	}
-	sa_onmove(hdl, cb, NULL);
-	if (!sa_setpar(hdl, &par)) {
-		fprintf(stderr, "sa_setpar() failed\n");
+	sio_onmove(hdl, cb, NULL);
+	if (!sio_setpar(hdl, &par)) {
+		fprintf(stderr, "sio_setpar() failed\n");
 		exit(1);
 	}
-	if (!sa_getpar(hdl, &par)) {
-		fprintf(stderr, "sa_setpar() failed\n");
+	if (!sio_getpar(hdl, &par)) {
+		fprintf(stderr, "sio_setpar() failed\n");
 		exit(1);
 	}
 	fprintf(stderr, "using %u%%%u frame buffer\n", par.bufsz, par.round);
-	if (!sa_start(hdl)) {
-		fprintf(stderr, "sa_start() failed\n");
+	if (!sio_start(hdl)) {
+		fprintf(stderr, "sio_start() failed\n");
 		exit(1);
 	}
 
@@ -316,14 +316,14 @@ main(int argc, char **argv) {
 #endif
 		//fprintf(stderr, "%ld.%06ld: polling for %d\n",
 		//    tv.tv_sec, tv.tv_usec, events);
-		sa_pollfd(hdl, &pfd, events);
+		sio_pollfd(hdl, &pfd, events);
 		while (poll(&pfd, 1, 1000) < 0) {
 			if (errno == EINTR)
 				continue;
 			perror("poll");
 			exit(1);
 		}
-		revents = sa_revents(hdl, &pfd);
+		revents = sio_revents(hdl, &pfd);
 		gettimeofday(&ntv, NULL);
 		timersub(&ntv, &otv, &tv);
 		//fprintf(stderr, "%ld.%06ld: got %d\n",
@@ -344,20 +344,20 @@ main(int argc, char **argv) {
 		}
 #if 0
 		if (pos / par.rate > 2) {
-			if (!sa_stop(hdl)) {
-				fprintf(stderr, "sa_stop failed\n");
+			if (!sio_stop(hdl)) {
+				fprintf(stderr, "sio_stop failed\n");
 				exit(1);
 			}
 			pos = plat = rlat = 0;
 			fprintf(stderr, "pausing...\n");
 			sleep(1);
-			if (!sa_start(hdl)) {
-				fprintf(stderr, "sa_start failed\n");
+			if (!sio_start(hdl)) {
+				fprintf(stderr, "sio_start failed\n");
 				exit(1);
 			}
 		}
 #endif
 	}
-	sa_close(hdl);
+	sio_close(hdl);
 	return 0;
 }

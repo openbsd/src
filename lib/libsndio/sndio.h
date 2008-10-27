@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.1 2008/10/27 00:26:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,20 +14,20 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef LIBSA_H
-#define LIBSA_H
+#ifndef SNDIO_H
+#define SNDIO_H
 
 #include <sys/param.h>
 
 /*
  * private ``handle'' structure
  */
-struct sa_hdl;
+struct sio_hdl;
 
 /*
  * parameters of a full-duplex stream
  */
-struct sa_par {
+struct sio_par {
 	unsigned bits;	/* bits per sample */
 	unsigned bps;	/* bytes per sample */
 	unsigned sig;	/* 1 = signed, 0 = unsigned */
@@ -37,9 +37,9 @@ struct sa_par {
 	unsigned pchan;	/* number channels for playback direction */
 	unsigned rate;	/* frames per second */
 	unsigned bufsz;	/* minimum buffer size */
-#define SA_IGNORE	0	/* pause during xrun */
-#define SA_SYNC		1	/* resync after xrun */
-#define SA_ERROR	2	/* terminate on xrun */
+#define SIO_IGNORE	0	/* pause during xrun */
+#define SIO_SYNC		1	/* resync after xrun */
+#define SIO_ERROR	2	/* terminate on xrun */
 	unsigned xrun;	/* what to do on overruns/underruns */
 	unsigned round;	/* optimal bufsz divisor */
 	int __pad[4];	/* for future use */
@@ -49,91 +49,91 @@ struct sa_par {
 /*
  * capabilities of a stream
  */
-struct sa_cap {
-#define SA_NENC		8
-#define SA_NCHAN	8
-#define SA_NRATE	16
-#define SA_NCONF	4
-	struct sa_enc {			/* allowed sample encodings */
+struct sio_cap {
+#define SIO_NENC		8
+#define SIO_NCHAN	8
+#define SIO_NRATE	16
+#define SIO_NCONF	4
+	struct sio_enc {			/* allowed sample encodings */
 		unsigned bits;
 		unsigned bps;
 		unsigned sig;
 		unsigned le;
 		unsigned msb;
-	} enc[SA_NENC];
-	unsigned rchan[SA_NCHAN];	/* allowed values for rchan */
-	unsigned pchan[SA_NCHAN];	/* allowed values for pchan */
-	unsigned rate[SA_NRATE];	/* allowed rates */
+	} enc[SIO_NENC];
+	unsigned rchan[SIO_NCHAN];	/* allowed values for rchan */
+	unsigned pchan[SIO_NCHAN];	/* allowed values for pchan */
+	unsigned rate[SIO_NRATE];	/* allowed rates */
 	int __pad[7];			/* for future use */
 	unsigned nconf;			/* number of elements in confs[] */
-	struct sa_conf {
+	struct sio_conf {
 		unsigned enc;		/* mask of enc[] indexes */
 		unsigned rchan;		/* mask of chan[] indexes (rec) */
 		unsigned pchan;		/* mask of chan[] indexes (play) */
 		unsigned rate;		/* mask of rate[] indexes */
-	} confs[SA_NCONF];
+	} confs[SIO_NCONF];
 };
 
-#define SA_XSTRINGS { "ignore", "sync", "error" }
+#define SIO_XSTRINGS { "ignore", "sync", "error" }
 
 /*
  * mode bitmap
  */
-#define SA_PLAY 1
-#define SA_REC	2
+#define SIO_PLAY 1
+#define SIO_REC	2
 
 /*
  * maximum size of the encording string (the longest possible
  * encoding is ``s24le3msb'')
  */
-#define SA_ENCMAX	10
+#define SIO_ENCMAX	10
 
 /*
  * default bytes per sample for the given bits per sample
  */
-#define SA_BPS(bits) (((bits) <= 8) ? 1 : (((bits) <= 16) ? 2 : 4))
+#define SIO_BPS(bits) (((bits) <= 8) ? 1 : (((bits) <= 16) ? 2 : 4))
 
 /*
- * default value of "sa_par->le" flag
+ * default value of "sio_par->le" flag
  */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define SA_LE_NATIVE 1
+#define SIO_LE_NATIVE 1
 #else
-#define SA_LE_NATIVE 0
+#define SIO_LE_NATIVE 0
 #endif
 
 /*
  * default device for the sun audio(4) back-end
  */
-#define SA_SUN_PATH	"/dev/audio"
+#define SIO_SUN_PATH	"/dev/audio"
 
 /*
  * default socket for the aucat(1) back-end
  */
-#define SA_AUCAT_PATH	"/tmp/aucat.sock"
+#define SIO_AUCAT_PATH	"/tmp/aucat.sock"
 
-int sa_strtoenc(struct sa_par *, char *);
-int sa_enctostr(struct sa_par *, char *);
-int sa_initpar(struct sa_par *);
+int sio_strtoenc(struct sio_par *, char *);
+int sio_enctostr(struct sio_par *, char *);
+int sio_initpar(struct sio_par *);
 
-struct sa_hdl *sa_open_aucat(char *, unsigned, int);
-struct sa_hdl *sa_open_sun(char *, unsigned, int);
-struct sa_hdl *sa_open_wav(char *, unsigned, int);
-struct sa_hdl *sa_open_raw(char *, unsigned, int);
-struct sa_hdl *sa_open(char *, unsigned, int);
+struct sio_hdl *sio_open_aucat(char *, unsigned, int);
+struct sio_hdl *sio_open_sun(char *, unsigned, int);
+struct sio_hdl *sio_open_wav(char *, unsigned, int);
+struct sio_hdl *sio_open_raw(char *, unsigned, int);
+struct sio_hdl *sio_open(char *, unsigned, int);
 
-void sa_close(struct sa_hdl *);
-int sa_setpar(struct sa_hdl *, struct sa_par *);
-int sa_getpar(struct sa_hdl *, struct sa_par *);
-int sa_getcap(struct sa_hdl *, struct sa_cap *);
-void sa_onmove(struct sa_hdl *, void (*)(void *, int), void *);
-size_t sa_write(struct sa_hdl *, void *, size_t);
-size_t sa_read(struct sa_hdl *, void *, size_t);
-int sa_start(struct sa_hdl *);
-int sa_stop(struct sa_hdl *);
-int sa_nfds(struct sa_hdl *);
-int sa_pollfd(struct sa_hdl *, struct pollfd *, int);
-int sa_revents(struct sa_hdl *, struct pollfd *);
-int sa_eof(struct sa_hdl *);
+void sio_close(struct sio_hdl *);
+int sio_setpar(struct sio_hdl *, struct sio_par *);
+int sio_getpar(struct sio_hdl *, struct sio_par *);
+int sio_getcap(struct sio_hdl *, struct sio_cap *);
+void sio_onmove(struct sio_hdl *, void (*)(void *, int), void *);
+size_t sio_write(struct sio_hdl *, void *, size_t);
+size_t sio_read(struct sio_hdl *, void *, size_t);
+int sio_start(struct sio_hdl *);
+int sio_stop(struct sio_hdl *);
+int sio_nfds(struct sio_hdl *);
+int sio_pollfd(struct sio_hdl *, struct pollfd *, int);
+int sio_revents(struct sio_hdl *, struct pollfd *);
+int sio_eof(struct sio_hdl *);
 
-#endif /* !defined(LIBSA_H) */
+#endif /* !defined(LIBSIO_H) */
