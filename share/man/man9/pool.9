@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.36 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: pool.9,v 1.37 2008/10/27 08:56:49 dlg Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: October 27 2008 $
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm pool_get ,
 .Nm pool_put ,
 .Nm pool_prime ,
+.Nm pool_setipl ,
 .Nm pool_sethiwat ,
 .Nm pool_setlowat ,
 .Nm pool_sethardlimit ,
@@ -70,6 +71,8 @@
 .Fn pool_put "struct pool *pp" "void *item"
 .Ft int
 .Fn pool_prime "struct pool *pp" "int nitems"
+.Ft void
+.Fn pool_setipl "struct pool *pp" "int ipl"
 .Ft void
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
@@ -292,6 +295,22 @@ Unlike
 .Fn pool_prime ,
 this function does not allocate the necessary memory up-front.
 .El
+.Ss SETTING THE PROTECTION LEVEL
+The
+.Fn pool_setipl
+function is used to specify the interrupt protection level at which the pool
+can be safely used.
+.Pp
+.Fn pool_setipl
+.Bl -tag -offset indent -width "flags"
+.It Fa pp
+The handle identifying the pool resource instance.
+.It Fa ipl
+The interrupt protection level used to protect the pool's internals.
+See
+.Xr spl 9
+for a list of the IPLs.
+.El
 .Ss SETTING HARD LIMITS
 The function
 .Fn pool_sethardlimit
@@ -372,6 +391,7 @@ The pool manager is implemented in the file
 .Sh SEE ALSO
 .Xr free 9 ,
 .Xr malloc 9 ,
+.Xr spl 9 ,
 .Xr uvm 9
 .Sh HISTORY
 The pool manager first appeared in

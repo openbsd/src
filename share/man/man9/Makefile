@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.144 2008/09/02 21:42:05 chl Exp $
+#	$OpenBSD: Makefile,v 1.145 2008/10/27 08:56:49 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -237,7 +237,7 @@ MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
 	pmap.9 pmap_copy.9 pmap.9 pmap_kenter_pa.9 pmap.9 pmap_kremove.9
 MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 \
 	pool.9 pool_get.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
-	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9 \
+	pool.9 pool_sethiwat.9 pool.9 pool_setipl.9 pool.9 pool_setlowat.9 \
 	pool.9 pool_sethardlimit.9 pool.9 pool_cache_init.9 \
 	pool.9 pool_cache_destroy.9 pool.9 pool_cache_get.9 \
 	pool.9 pool_cache_put.9 pool.9 pool_cache_destruct_object.9 \
