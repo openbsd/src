@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.53 2008/10/25 02:19:02 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.54 2008/10/27 02:55:09 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2574,6 +2574,8 @@ azalia_ad1984_mixer_init(codec_t *this)
 
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 1;		/* front DAC -> headphones */
+	azalia_generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc);
 	mc.un.ord = 0;          /* unmute */
 	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(0), &mc);
 	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(1), &mc);
