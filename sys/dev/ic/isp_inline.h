@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_inline.h,v 1.14 2008/01/21 20:00:33 sobrado Exp $ */
+/*	$OpenBSD: isp_inline.h,v 1.15 2008/10/27 00:46:09 krw Exp $ */
 /*
  * QLogic Host Adapter Inline Functions
  *
@@ -454,7 +454,7 @@ isp_put_request_t2(struct ispsoftc *isp, ispreqt2_t *tqsrc, ispreqt2_t *tqdst)
 	ISP_IOXPUT_8(isp, tqsrc->req_target, &tqdst->req_target);
 	ISP_IOXPUT_16(isp, tqsrc->req_scclun, &tqdst->req_scclun);
 	ISP_IOXPUT_16(isp, tqsrc->req_flags,  &tqdst->req_flags);
-	ISP_IOXPUT_16(isp, tqsrc->_res2, &tqdst->_res2);
+	ISP_IOXPUT_16(isp, tqsrc->req_reserved, &tqdst->req_reserved);
 	ISP_IOXPUT_16(isp, tqsrc->req_time, &tqdst->req_time);
 	ISP_IOXPUT_16(isp, tqsrc->req_seg_count, &tqdst->req_seg_count);
 	for (i = 0; i < 16; i++) {
@@ -479,7 +479,7 @@ isp_put_request_t3(struct ispsoftc *isp, ispreqt3_t *tqsrc, ispreqt3_t *tqdst)
 	ISP_IOXPUT_8(isp, tqsrc->req_target, &tqdst->req_target);
 	ISP_IOXPUT_16(isp, tqsrc->req_scclun, &tqdst->req_scclun);
 	ISP_IOXPUT_16(isp, tqsrc->req_flags,  &tqdst->req_flags);
-	ISP_IOXPUT_16(isp, tqsrc->_res2, &tqdst->_res2);
+	ISP_IOXPUT_16(isp, tqsrc->req_reserved, &tqdst->req_reserved);
 	ISP_IOXPUT_16(isp, tqsrc->req_time, &tqdst->req_time);
 	ISP_IOXPUT_16(isp, tqsrc->req_seg_count, &tqdst->req_seg_count);
 	for (i = 0; i < 16; i++) {
@@ -605,9 +605,9 @@ static INLINE void
 isp_put_icb(struct ispsoftc *isp, isp_icb_t *Is, isp_icb_t *Id)
 {
 	int i;
-	ISP_SWAP8(Is->icb_version, Is->_reserved0);
+	ISP_SWAP8(Is->icb_version, Is->icb_reserved0);
 	ISP_IOXPUT_8(isp, Is->icb_version, &Id->icb_version);
-	ISP_IOXPUT_8(isp, Is->_reserved0, &Id->_reserved0);
+	ISP_IOXPUT_8(isp, Is->icb_reserved0, &Id->icb_reserved0);
 	ISP_IOXPUT_16(isp, Is->icb_fwoptions, &Id->icb_fwoptions);
 	ISP_IOXPUT_16(isp, Is->icb_maxfrmlen, &Id->icb_maxfrmlen);
 	ISP_IOXPUT_16(isp, Is->icb_maxalloc, &Id->icb_maxalloc);
@@ -752,16 +752,16 @@ isp_put_gid_ft_request(struct ispsoftc *isp, sns_gid_ft_req_t *src,
     sns_gid_ft_req_t *dst)
 {
 	ISP_IOXPUT_16(isp, src->snscb_rblen, &dst->snscb_rblen);
-	ISP_IOXPUT_16(isp, src->snscb_res0, &dst->snscb_res0);
+	ISP_IOXPUT_16(isp, src->snscb_reserved0, &dst->snscb_reserved0);
 	ISP_IOXPUT_16(isp, src->snscb_addr[0], &dst->snscb_addr[0]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[1], &dst->snscb_addr[1]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[2], &dst->snscb_addr[2]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[3], &dst->snscb_addr[3]);
 	ISP_IOXPUT_16(isp, src->snscb_sblen, &dst->snscb_sblen);
-	ISP_IOXPUT_16(isp, src->snscb_res1, &dst->snscb_res1);
+	ISP_IOXPUT_16(isp, src->snscb_reserved1, &dst->snscb_reserved1);
 	ISP_IOXPUT_16(isp, src->snscb_cmd, &dst->snscb_cmd);
 	ISP_IOXPUT_16(isp, src->snscb_mword_div_2, &dst->snscb_mword_div_2);
-	ISP_IOXPUT_32(isp, src->snscb_res3, &dst->snscb_res3);
+	ISP_IOXPUT_32(isp, src->snscb_reserved3, &dst->snscb_reserved3);
 	ISP_IOXPUT_32(isp, src->snscb_fc4_type, &dst->snscb_fc4_type);
 }
 
@@ -771,16 +771,16 @@ isp_put_gxn_id_request(struct ispsoftc *isp, sns_gxn_id_req_t *src,
     sns_gxn_id_req_t *dst)
 {
 	ISP_IOXPUT_16(isp, src->snscb_rblen, &dst->snscb_rblen);
-	ISP_IOXPUT_16(isp, src->snscb_res0, &dst->snscb_res0);
+	ISP_IOXPUT_16(isp, src->snscb_reserved0, &dst->snscb_reserved0);
 	ISP_IOXPUT_16(isp, src->snscb_addr[0], &dst->snscb_addr[0]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[1], &dst->snscb_addr[1]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[2], &dst->snscb_addr[2]);
 	ISP_IOXPUT_16(isp, src->snscb_addr[3], &dst->snscb_addr[3]);
 	ISP_IOXPUT_16(isp, src->snscb_sblen, &dst->snscb_sblen);
-	ISP_IOXPUT_16(isp, src->snscb_res1, &dst->snscb_res1);
+	ISP_IOXPUT_16(isp, src->snscb_reserved1, &dst->snscb_reserved1);
 	ISP_IOXPUT_16(isp, src->snscb_cmd, &dst->snscb_cmd);
-	ISP_IOXPUT_16(isp, src->snscb_res2, &dst->snscb_res2);
-	ISP_IOXPUT_32(isp, src->snscb_res3, &dst->snscb_res3);
+	ISP_IOXPUT_16(isp, src->snscb_reserved2, &dst->snscb_reserved2);
+	ISP_IOXPUT_32(isp, src->snscb_reserved3, &dst->snscb_reserved3);
 	ISP_IOXPUT_32(isp, src->snscb_portid, &dst->snscb_portid);
 }
 #endif
