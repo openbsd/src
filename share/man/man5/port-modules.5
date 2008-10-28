@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.23 2008/10/28 12:27:09 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.24 2008/10/28 13:29:55 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -353,11 +353,12 @@ do-configure, do-build, do-install and post-install targets.
 do-build, do-install and post-install can be overridden in the port
 Makefile.
 .It gcc3
-If USE_GCC3=Yes (which the module sets by default), and architecture is in
-MODGCC3_ARCHES, then the gcc 3.3.6 compilers will be put at the front of
-the path.
+If USE_GCC3=No (defined by
+.Pa /usr/share/mk/bsd.own.mk )
+, and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
+compilers will be put at the front of the path.
 .It gcc4
-If USE_GCC4=Yes (which the module sets by default), and architecture is in
+If USE_GCC4=No (undefined by default), and architecture is in
 MODGCC4_ARCHES, then the gcc 4.2 compilers will be put at the front of
 the path.
 .It gnu
