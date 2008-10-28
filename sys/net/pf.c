@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.624 2008/10/23 22:22:43 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.625 2008/10/28 22:57:01 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5107,6 +5107,12 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 		break;
 #ifdef INET6
 	case AF_INET6:
+		/*
+		 * Skip check for addresses with embedded interface scope,
+		 * as they would always match anyway.
+		 */
+		if (IN6_IS_SCOPE_EMBED(&addr->v6))
+			goto out;
 		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
