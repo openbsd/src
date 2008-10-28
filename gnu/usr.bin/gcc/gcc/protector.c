@@ -426,16 +426,29 @@ search_string_def (type)
     case UNION_TYPE:
     case QUAL_UNION_TYPE:
     case RECORD_TYPE:
-      /* Output the name, type, position (in bits), size (in bits) of each
-	 field.  */
-      for (tem = TYPE_FIELDS (type); tem; tem = TREE_CHAIN (tem))
+      if (! TREE_VISITED (type))
 	{
-	  /* Omit here local type decls until we know how to support them. */
-	  if ((TREE_CODE (tem) == TYPE_DECL)
-	      || (TREE_CODE (tem) == VAR_DECL && TREE_STATIC (tem)))
-	    continue;
+	  /* mark the type as having been visited already */
+	  TREE_VISITED (type) = 1;
 
-	  if (search_string_def(TREE_TYPE(tem))) return TRUE;
+	  /* Output the name, type, position (in bits), size (in bits) of each
+	     field.  */
+	  for (tem = TYPE_FIELDS (type); tem; tem = TREE_CHAIN (tem))
+	    {
+	      /* Omit here local type decls until we know how to support
+		 them. */
+	      if ((TREE_CODE (tem) == TYPE_DECL)
+		  || (TREE_CODE (tem) == VAR_DECL && TREE_STATIC (tem)))
+	        continue;
+
+	      if (search_string_def(TREE_TYPE(tem)))
+		{
+		  TREE_VISITED (type) = 0;
+		  return TRUE;
+		}
+	    }
+
+	  TREE_VISITED (type) = 0;
 	}
       break;
 	
@@ -518,16 +531,29 @@ search_pointer_def (type)
     case UNION_TYPE:
     case QUAL_UNION_TYPE:
     case RECORD_TYPE:
-      /* Output the name, type, position (in bits), size (in bits) of each
-	 field.  */
-      for (tem = TYPE_FIELDS (type); tem; tem = TREE_CHAIN (tem))
+      if (! TREE_VISITED (type))
 	{
-	  /* Omit here local type decls until we know how to support them. */
-	  if ((TREE_CODE (tem) == TYPE_DECL)
-	      || (TREE_CODE (tem) == VAR_DECL && TREE_STATIC (tem)))
-	    continue;
+	  /* mark the type as having been visited already */
+	  TREE_VISITED (type) = 1;
 
-	  if (search_pointer_def (TREE_TYPE(tem))) return TRUE;
+	  /* Output the name, type, position (in bits), size (in bits) of each
+	     field.  */
+	  for (tem = TYPE_FIELDS (type); tem; tem = TREE_CHAIN (tem))
+	    {
+	      /* Omit here local type decls until we know how to support
+		 them. */
+	      if ((TREE_CODE (tem) == TYPE_DECL)
+		  || (TREE_CODE (tem) == VAR_DECL && TREE_STATIC (tem)))
+	        continue;
+
+	      if (search_pointer_def(TREE_TYPE(tem)))
+		{
+		  TREE_VISITED (type) = 0;
+		  return TRUE;
+		}
+	    }
+
+	  TREE_VISITED (type) = 0;
 	}
       break;
 
