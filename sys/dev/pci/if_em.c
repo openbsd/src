@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.193 2008/10/19 19:53:09 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.194 2008/10/28 05:43:11 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1108,6 +1108,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	else
 		sc->num_tx_desc_avail -= map->dm_nsegs;
 
+#if NVLAN > 0
 	/* Find out if we are in VLAN mode */
 	if (m_head->m_flags & M_VLANTAG) {
 		/* Set the VLAN id */
@@ -1117,6 +1118,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		/* Tell hardware to add tag */
 		current_tx_desc->lower.data |= htole32(E1000_TXD_CMD_VLE);
 	}
+#endif
 
 	tx_buffer->m_head = m_head;
 	tx_buffer_mapped->map = tx_buffer->map;
@@ -2716,14 +2718,17 @@ em_rxeof(struct em_softc *sc, int count)
 			if (eop) {
 				sc->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
-				em_receive_checksum(sc, current_desc,
-					    sc->fmp);
+				em_receive_checksum(sc, current_desc, sc->fmp);
+
+#if NVLAN > 0
 				if (current_desc->status & E1000_RXD_STAT_VP) {
 					sc->fmp->m_pkthdr.ether_vtag =
 					    (current_desc->special &
 					     E1000_RXD_SPC_VLAN_MASK);
 					sc->fmp->m_flags |= M_VLANTAG;
 				}
+#endif
+
 				m = sc->fmp;
 				sc->fmp = NULL;
 				sc->lmp = NULL;

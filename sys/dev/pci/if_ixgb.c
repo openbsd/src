@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.49 2008/10/21 00:26:04 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.50 2008/10/28 05:43:11 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1815,11 +1815,14 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 				sc->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
 				ixgb_receive_checksum(sc, current_desc, sc->fmp);
+
+#if NVLAN > 0
 				if (current_desc->status & IXGB_RX_DESC_STATUS_VP) {
 					sc->fmp->m_pkthdr.ether_vtag =
 					    current_desc->special;
 					sc->fmp->m_flags |= M_VLANTAG;
 				}
+#endif
 
 #if NBPFILTER > 0
 				/*
