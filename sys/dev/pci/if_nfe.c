@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.84 2008/10/28 05:09:43 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.85 2008/10/28 05:53:20 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1106,10 +1106,10 @@ nfe_init(struct ifnet *ifp)
 	DELAY(10);
 	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
 
-#if NVLAN
-	if (sc->sc_flags & NFE_HW_VLAN)
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		NFE_WRITE(sc, NFE_VTAG_CTL, NFE_VTAG_ENABLE);
-#endif
+	else
+		NFE_WRITE(sc, NFE_VTAG_CTL, 0);
 
 	NFE_WRITE(sc, NFE_SETUP_R6, 0);
 
