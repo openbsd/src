@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.54 2008/10/28 07:13:01 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.55 2008/10/28 07:14:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1150,9 +1150,10 @@ trunk_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 
-	tp = tr->tr_primary;
-	if (tp != NULL && tp->tp_if->if_flags & IFF_UP)
-		imr->ifm_status |= IFM_ACTIVE;
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+		if (TRUNK_PORTACTIVE(tp))
+			imr->ifm_status |= IFM_ACTIVE;
+	}
 }
 
 void
