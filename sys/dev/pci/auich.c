@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.77 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.78 2008/10/28 03:57:42 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -100,6 +100,10 @@
 #define		AUICH_PCM2	0x000000	/* 2ch output */
 #define		AUICH_PCM4	0x100000	/* 4ch output */
 #define		AUICH_PCM6	0x200000	/* 6ch output */
+#define		AUICH_SIS_PCM246_MASK 0x0000c0	/* SiS 7012 */
+#define		AUICH_SIS_PCM2	0x000000	/* SiS 7012 2ch output */
+#define		AUICH_SIS_PCM4	0x000040	/* SiS 7012 4ch output */
+#define		AUICH_SIS_PCM6	0x000080	/* SiS 7012 6ch output */
 #define		AUICH_S2RIE	0x40	/* int when tertiary codec resume */
 #define		AUICH_SRIE	0x20	/* int when 2ndary codec resume */
 #define		AUICH_PRIE	0x10	/* int when primary codec resume */
@@ -222,6 +226,12 @@ struct auich_softc {
 	int sc_ignore_codecready;
 	int flags;
 	int sc_ac97rate;
+
+	/* multi-channel control bits */
+	int sc_pcm246_mask;
+	int sc_pcm2;
+	int sc_pcm4;
+	int sc_pcm6;
 };
 
 #ifdef AUICH_DEBUG
@@ -463,6 +473,10 @@ auich_attach(parent, self, aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_7012_ACA) {
 		sc->sc_sts_reg = AUICH_PICB;
 		sc->sc_sample_size = 1;
+		sc->sc_pcm246_mask = AUICH_SIS_PCM246_MASK;
+		sc->sc_pcm2 = AUICH_SIS_PCM2;
+		sc->sc_pcm4 = AUICH_SIS_PCM4;
+		sc->sc_pcm6 = AUICH_SIS_PCM6;
 		/* un-mute output */
 		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL,
 		    bus_space_read_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL) |
@@ -470,6 +484,10 @@ auich_attach(parent, self, aux)
 	} else {
 		sc->sc_sts_reg = AUICH_STS;
 		sc->sc_sample_size = 2;
+		sc->sc_pcm246_mask = AUICH_PCM246_MASK;
+		sc->sc_pcm2 = AUICH_PCM2;
+		sc->sc_pcm4 = AUICH_PCM4;
+		sc->sc_pcm6 = AUICH_PCM6;
 	}
 
 	/* Workaround for a 440MX B-stepping erratum */
@@ -601,7 +619,7 @@ auich_reset_codec(v)
 	int i;
 
 	control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
-	control &= ~(AUICH_ACLSO | AUICH_PCM246_MASK);
+	control &= ~(AUICH_ACLSO | sc->sc_pcm246_mask);
 	control |= (control & AUICH_CRESET) ? AUICH_WRESET : AUICH_CRESET;
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
 
@@ -974,11 +992,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 			play->sample_rate = orate;
 
 		control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
-		control &= ~AUICH_PCM246_MASK;
+		control &= ~(sc->sc_pcm246_mask);
 		if (play->channels == 4)
-			control |= AUICH_PCM4;
+			control |= sc->sc_pcm4;
 		else if (play->channels == 6)
-			control |= AUICH_PCM6;
+			control |= sc->sc_pcm6;
 		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
 	}
 
