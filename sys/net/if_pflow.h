@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.2 2008/09/16 15:48:12 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.3 2008/10/28 15:51:27 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ struct pflow_softc {
 	u_int16_t		 sc_receiver_port;
 	union sc_flowp		 sc_flowp;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
+	SLIST_ENTRY(pflow_softc) sc_next;
 };
 
 extern struct pflow_softc	*pflowif;
