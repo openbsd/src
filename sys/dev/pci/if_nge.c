@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.62 2008/10/28 04:32:23 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.63 2008/10/28 05:04:32 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1804,7 +1804,6 @@ nge_init(xsc)
 	 */
 	CSR_WRITE_4(sc, NGE_VLAN_IP_RXCTL, NGE_VIPRXCTL_IPCSUM_ENB);
 
-#if NVLAN > 0
 	/*
 	 * If VLAN support is enabled, tell the chip to detect
 	 * and strip VLAN tag info from received frames. The tag
@@ -1813,12 +1812,10 @@ nge_init(xsc)
 	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		NGE_SETBIT(sc, NGE_VLAN_IP_RXCTL,
 		    NGE_VIPRXCTL_TAG_DETECT_ENB | NGE_VIPRXCTL_TAG_STRIP_ENB);
-#endif
 
 	/* Set TX configuration */
 	CSR_WRITE_4(sc, NGE_TX_CFG, NGE_TXCFG);
 
-#if NVLAN > 0
 	/*
 	 * If VLAN support is enabled, tell the chip to insert
 	 * VLAN tags on a per-packet basis as dictated by the
@@ -1826,7 +1823,6 @@ nge_init(xsc)
 	 */
 	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		NGE_SETBIT(sc, NGE_VLAN_IP_TXCTL, NGE_VIPTXCTL_TAG_PER_PKT);
-#endif
 
 	/* Set full/half duplex mode. */
 	if (sc->nge_tbi)
