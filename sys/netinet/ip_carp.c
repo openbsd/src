@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.168 2008/09/03 08:37:51 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.169 2008/10/28 23:07:12 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1088,12 +1088,12 @@ carp_send_ad(void *v)
 	struct ifaddr *ifa;
 	struct sockaddr sa;
 
-	s = splsoftnet();
-
 	if (sc->sc_carpdev == NULL) {
 		sc->sc_if.if_oerrors++;
-		goto retry_later;
+		return;
 	}
+
+	s = splsoftnet();
 
 	/* bow out if we've gone to backup (the carp interface is going down) */
 	if (sc->sc_bow_out) {
