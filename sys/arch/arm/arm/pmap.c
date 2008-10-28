@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2008/10/28 20:16:58 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ struct pmap     kernel_pmap_store;
  * XXXSCW: Fix for SMP ...
  */
 union pmap_cache_state *pmap_cache_state;
+union pmap_cache_state pmap_deadproc_cache_state;
 
 /*
  * Pool and cache that pmap structures are allocated from.
@@ -3203,6 +3204,9 @@ pmap_destroy(pmap_t pm)
 	}
 
 	LIST_REMOVE(pm, pm_list);
+
+	if (pmap_cache_state == &pm->pm_cstate)
+		pmap_cache_state = &pmap_deadproc_cache_state;
 
 	pmap_free_l1(pm);
 
