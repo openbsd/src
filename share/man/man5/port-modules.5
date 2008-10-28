@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.24 2008/10/28 13:29:55 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.25 2008/10/28 14:10:46 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -357,10 +357,16 @@ If USE_GCC3=No (defined by
 .Pa /usr/share/mk/bsd.own.mk )
 , and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
 compilers will be put at the front of the path.
+By default, only C language support is included by this module.
+If other languages are needed, they must be listed in MODGCC3_LANGS
+(e.g. c++, g77).
 .It gcc4
-If USE_GCC4=No (undefined by default), and architecture is in
+If USE_GCC4=No (the default), and architecture is in
 MODGCC4_ARCHES, then the gcc 4.2 compilers will be put at the front of
 the path.
+By default, only C language support is included by this module.
+If other languages are needed, they must be listed in MODGCC4_LANGS
+(e.g. c++, g77).
 .It gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
