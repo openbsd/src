@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.64 2008/10/28 07:01:56 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.65 2008/10/28 22:45:20 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1272,7 +1272,7 @@ nge_rxeof(sc)
 	ifp = &sc->arpcom.ac_if;
 	i = sc->nge_cdata.nge_rx_prod;
 
-	while(NGE_OWNDESC(&sc->nge_ldata->nge_rx_list[i])) {
+	while (NGE_OWNDESC(&sc->nge_ldata->nge_rx_list[i])) {
 		struct mbuf		*m0 = NULL;
 		u_int32_t		extsts;
 
@@ -1344,11 +1344,13 @@ nge_rxeof(sc)
 
 		ifp->if_ipackets++;
 
+#if NVLAN > 0
 		if (extsts & NGE_RXEXTSTS_VLANPKT) {
 			m->m_pkthdr.ether_vtag =
 			    ntohs(extsts & NGE_RXEXTSTS_VTCI);
 			m->m_flags |= M_VLANTAG;
 		}
+#endif
 
 #if NBPFILTER > 0
 		/*
