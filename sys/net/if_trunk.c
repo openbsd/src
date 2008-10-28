@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.53 2008/10/28 07:11:03 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.54 2008/10/28 07:13:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1466,7 +1466,6 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
 	struct trunk_port *tp = NULL;
 	u_int32_t p = 0;
-	int idx;
 
 	if (tr->tr_count == 0) {
 		m_freem(m);
@@ -1474,11 +1473,8 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	}
 
 	p = trunk_hashmbuf(m, lb->lb_key);
-	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS) {
-		m_freem(m);
-		return (EINVAL);
-	}
-	tp = lb->lb_ports[idx];
+	p %= tr->tr_count;
+	tp = lb->lb_ports[p];
 
 	/*
 	 * Check the port's link state. This will return the next active
