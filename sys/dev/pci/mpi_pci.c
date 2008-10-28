@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.21 2008/10/28 11:00:40 marco Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.22 2008/10/28 13:44:33 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/sensors.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
