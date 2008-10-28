@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.34 2008/10/26 19:51:20 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.35 2008/10/28 11:00:40 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1321,10 +1321,12 @@ struct mpi_cfg_raid_vol_pg0 {
 #define MPI_CFG_RAID_VOL_0_STATUS_QUIESCED		(1<<1)
 #define MPI_CFG_RAID_VOL_0_STATUS_RESYNCING		(1<<2)
 #define MPI_CFG_RAID_VOL_0_STATUS_ACTIVE		(1<<3)
+#define MPI_CFG_RAID_VOL_0_STATUS_BADBLOCK_FULL		(1<<4)
 	u_int8_t		volume_state;
 #define MPI_CFG_RAID_VOL_0_STATE_OPTIMAL		(0x00)
 #define MPI_CFG_RAID_VOL_0_STATE_DEGRADED		(0x01)
 #define MPI_CFG_RAID_VOL_0_STATE_FAILED			(0x02)
+#define MPI_CFG_RAID_VOL_0_STATE_MISSING		(0x03)
 	u_int16_t		reserved1;
 
 	u_int16_t		volume_settings;
