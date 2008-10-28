@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.7 2008/10/10 13:55:25 sobrado Exp $
+.\" $OpenBSD: pflow.4,v 1.8 2008/10/28 16:55:37 gollo Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISINGOUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2008 $
+.Dd $Mdocdate: October 28 2008 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -36,6 +36,14 @@ is compatible with netflow v5.
 The data is extracted from the
 .Xr pf 4
 state table.
+.Pp
+Multiple
+.Nm
+interfaces can be created at runtime using the
+.Ic ifconfig pflow Ns Ar N Ic create
+command.
+Each interface must be configured with a flow receiver IP address and
+port number.
 .Pp
 Only states created by a rule marked with the
 .Ar pflow
@@ -61,6 +69,15 @@ flows in the packet, a unique sequence number, system time, and an engine
 ID and type.
 Header and flow structs are defined in
 .Aq Pa net/if_pflow.h .
+.Pp
+There is a one-to-one correspondence between packets seen by
+.Xr bpf 4
+on the
+.Nm
+interface, and packets sent out to the flow receiver, i.e.\&
+a packet with 30 flows on
+.Nm
+means that the same 30 flows were sent out to the receiver.
 .Pp
 The
 .Nm
