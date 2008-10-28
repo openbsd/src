@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2008/10/19 12:00:54 aschrijver Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2008/10/28 13:47:22 aschrijver Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -70,8 +70,6 @@ int		 lookup(char *);
 int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
-
-struct addrinfo	*host(const char *, const char *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -253,19 +251,14 @@ diropt		: BINDDN STRING				{
 directory	: DIRECTORY STRING port {
 			if ((idm = calloc(1, sizeof(*idm))) == NULL)
 				fatal(NULL);
+			idm->idm_id = conf->sc_maxid++;
 
-			if($3 != NULL) {
-				if((idm->idm_addrinfo = host($2, $3)) == NULL) {
-					yyerror("domain not found");
-					free($2);
-					YYERROR;
-				}
-			} else {
-				if((idm->idm_addrinfo = host($2, "389")) == NULL) {
-					yyerror("domain not found");
-					free($2);
-					YYERROR;
-				}
+			if (strlcpy(idm->idm_name, $2,
+			    sizeof(idm->idm_name)) >=
+			    sizeof(idm->idm_name)) {
+				yyerror("attribute truncated");
+				free($2);
+				YYERROR;
 			}
 
 			free($2);
@@ -815,29 +808,4 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-struct addrinfo *
-host(const char *s, const char *port)
-{
-        int		 error;
-	struct addrinfo	*res, hints;
-
-	if (s == NULL)
-		return NULL;
-
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
-
-        if ((error = getaddrinfo(s, port, &hints, &res)) != 0) {
-                errx(1, "getaddrinfo: %s", gai_strerror(error));
-
-		freeaddrinfo(res);
-
-		return NULL;
-	}
-
-	return res;
 }

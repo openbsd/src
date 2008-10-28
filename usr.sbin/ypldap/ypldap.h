@@ -21,6 +21,8 @@
 #define FILTER_WIDTH		128
 #define ATTR_WIDTH		32
 
+#define        MAX_SERVERS_DNS                 8
+
 /* buffer */
 struct buf {
 	TAILQ_ENTRY(buf)	 entry;
@@ -73,7 +75,13 @@ enum imsg_type {
 	IMSG_END_UPDATE,
 	IMSG_TRASH_UPDATE,
 	IMSG_PW_ENTRY,
-	IMSG_GRP_ENTRY
+	IMSG_GRP_ENTRY,
+	IMSG_HOST_DNS
+};
+
+struct ypldap_addr {
+	struct ypldap_addr              *next;
+	struct sockaddr_storage          ss;
 };
 
 struct imsg_hdr {
@@ -107,20 +115,31 @@ struct groupent {
 	char				*ge_line;
 };
 
+enum client_state {
+        STATE_NONE,
+        STATE_DNS_INPROGRESS,
+        STATE_DNS_TEMPFAIL,
+        STATE_DNS_DONE,
+	STATE_LDAP_FAIL,
+	STATE_LDAP_DONE
+};
+
 /*
  * beck, djm, dlg: pay attention to the struct name
  */
 struct idm {
 	TAILQ_ENTRY(idm)		 idm_entry;
+	u_int32_t                        idm_id;
 	char				 idm_name[MAXHOSTNAMELEN];
 #define F_SSL				 0x00100000
 #define F_CONFIGURING			 0x00200000
 #define F_NEEDAUTH			 0x00400000
 #define F_FIXED_ATTR(n)			 (1<<n)
 #define F_LIST(n)                        (1<<n)
+	enum client_state		 idm_state;
 	u_int32_t			 idm_flags; /* lower 20 reserved */
 	u_int32_t			 idm_list;
-	struct addrinfo			 *idm_addrinfo;
+	struct ypldap_addr		*idm_addr;
 	in_port_t			 idm_port;
 	char				 idm_binddn[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
@@ -173,11 +192,14 @@ struct env {
 #define YPMAP_GROUP_BYGID		 0x00000020
 	u_int32_t			 sc_flags;
 
+	u_int32_t			 sc_maxid;
+
 	char				 sc_domainname[MAXHOSTNAMELEN];
 	struct timeval			 sc_conf_tv;
 	struct event			 sc_conf_ev;
 	TAILQ_HEAD(idm_list, idm)	 sc_idms;
 	struct imsgbuf			*sc_ibuf;
+	struct imsgbuf			*sc_ibuf_dns;
 
 	RB_HEAD(user_name_tree,userent)	 *sc_user_names;
 	RB_HEAD(user_uid_tree,userent)	 sc_user_uids;
@@ -255,3 +277,6 @@ RB_PROTOTYPE(	 group_gid_tree, groupent, ge_gid_node, groupent_gid_cmp);
 /* yp.c */
 void		 yp_init(struct env *);
 void		 yp_enable_events(void);
+
+/* ypldap_dns.c */
+pid_t		 ypldap_dns(int[2], struct passwd *);

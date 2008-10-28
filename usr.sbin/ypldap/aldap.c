@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.5 2008/10/14 21:41:03 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.6 2008/10/28 13:47:22 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.6 2008/10/28 13:47:22 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -259,20 +259,28 @@ aldap_first_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 {
 	struct ber_element *b, *c;
 	char *key;
+	char **ret;
 
 	if(msg->body.search.entries == NULL)
-		return (-1);
+		goto fail;
 
 	if(ber_scanf_elements(msg->body.search.entries, "{s(e)}e", &key, &b,
 		    &c) != 0)
-		return (-1);
+		goto fail;
 
 	msg->body.search.iter = msg->body.search.entries->be_next;
 
-	(*outvalues) = aldap_get_stringset(b);
+	if((ret = aldap_get_stringset(b)) == NULL)
+		goto fail;
+
+	(*outvalues) = ret;
 	(*outkey) = utoa(key);
 
 	return (1);
+fail:
+	(*outkey) = NULL;
+	(*outvalues) = NULL;
+	return (-1);
 }
 
 int
@@ -280,6 +288,7 @@ aldap_next_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 {
 	struct ber_element *a, *b;
 	char *key;
+	char **ret;
 
 	LDAP_DEBUG("entry", msg->body.search.iter);
 
@@ -294,7 +303,10 @@ aldap_next_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 
 	msg->body.search.iter = msg->body.search.iter->be_next;
 
-	(*outvalues) = aldap_get_stringset(a);
+	if((ret = aldap_get_stringset(a)) == NULL)
+		goto fail;
+
+	(*outvalues) = ret;
 	(*outkey) = utoa(key);
 
 	return (1);
@@ -310,6 +322,7 @@ aldap_match_entry(struct aldap_message *msg, char *inkey, char ***outvalues)
 {
 	struct ber_element *a, *b;
 	char *descr = NULL;
+	char **ret;
 
 	LDAP_DEBUG("entry", msg->search_entries);
 
@@ -329,7 +342,10 @@ aldap_match_entry(struct aldap_message *msg, char *inkey, char ***outvalues)
 	}
 
 attrfound:
-	(*outvalues) = aldap_get_stringset(b);
+	if((ret = aldap_get_stringset(b)) == NULL)
+		goto fail;
+
+	(*outvalues) = ret;
 
 	return (1);
 fail:
