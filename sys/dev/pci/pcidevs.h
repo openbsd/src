@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1424 2008/10/28 01:34:31 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1425 2008/10/28 01:45:30 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3617,8 +3617,11 @@
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_2	0x0775		/* MCP77 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_3	0x0776		/* MCP77 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_4	0x0777		/* MCP77 HD Audio */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HB_1	0x07c0		/* MCP73 Host */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HB_2	0x07c1		/* MCP73 Host */
-#define	PCI_PRODUCT_NVIDIA_MCP73_HB_1	0x07c3		/* MCP73 Host */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HB_3	0x07c2		/* MCP73 Host */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HB_4	0x07c3		/* MCP73 Host */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HB_5	0x07c5		/* MCP73 Host */
 #define	PCI_PRODUCT_NVIDIA_MCP73_MEM11	0x07c8		/* MCP73 Memory */
 #define	PCI_PRODUCT_NVIDIA_MCP73_MEM1	0x07cb		/* MCP73 Memory */
 #define	PCI_PRODUCT_NVIDIA_MCP73_MEM2	0x07cd		/* MCP73 Memory */
