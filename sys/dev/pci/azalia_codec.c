@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.54 2008/10/27 02:55:09 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.55 2008/10/28 21:14:19 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@
 #define REALTEK_ALC660		0x10ec0660
 #define ALC660_ASUS_G2K		0x13391043
 #define REALTEK_ALC880		0x10ec0880
-#define	ALC880_ASUS_M5200	0x19931043
-#define	ALC880_ASUS_A7M		0x13231043
+#define ALC880_ASUS_M5200	0x19931043
+#define ALC880_ASUS_A7M		0x13231043
 #define ALC880_MEDION_MD95257	0x203d161f
 #define REALTEK_ALC882		0x10ec0882
 #define ALC882_ASUS_A7T		0x13c21043
@@ -66,7 +66,8 @@
 #define ALC883_ACER_ID		0x00981025
 #define REALTEK_ALC885		0x10ec0885
 #define ALC885_APPLE_MB3	0x00a1106b
-#define	SIGMATEL_STAC9221	0x83847680
+#define ALC885_APPLE_MB4	0x00a3106b
+#define SIGMATEL_STAC9221	0x83847680
 #define STAC9221_APPLE_ID	0x76808384
 #define SIGMATEL_STAC9205	0x838476a0
 #define STAC9205_DELL_D630	0x01f91028
@@ -1016,6 +1017,7 @@ azalia_generic_mixer_pin_sense(codec_t *this)
 	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_A7T) ||
 	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_W2J) ||
 	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
+	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB4) ||
 	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
 	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
 		azalia_gpio_unmute(this, 0);
