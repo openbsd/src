@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.7 2007/05/31 11:05:41 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.8 2008/10/28 18:10:04 espie Exp $
 
 =head1 NAME
 
@@ -336,6 +336,10 @@ stuff that performs some action during addition/removal of package.
 
 =over 4
 
+=item ::NewAuth
+
+=over 4
+
 =item ::NewUser
 
 user that needs to be created for the package to work.
@@ -343,6 +347,8 @@ user that needs to be created for the package to work.
 =item ::NewGroup
 
 group that needs to be created for the package to work.
+
+=back
 
 =item ::Sysctl
 
