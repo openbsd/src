@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.16 2008/04/21 08:30:26 brad Exp $
+.\"	$OpenBSD: nfe.4,v 1.17 2008/10/28 06:27:28 brad Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2008 $
+.Dd $Mdocdate: October 28 2008 $
 .Dt NFE 4
 .Os
 .Sh NAME
@@ -38,9 +38,9 @@ controller chips.
 .Pp
 The
 .Nm
-driver supports VLAN tag insertion with the MCP55 chipset and
-IPv4 transmit/receive IP/TCP/UDP checksum offload with the
-nForce 3, CK804, MCP55, MCP77 and MCP79 chipsets.
+driver supports IPv4 transmit/receive IP/TCP/UDP checksum offload
+with the nForce 3, CK804, MCP55, MCP77 and MCP79 chipsets and VLAN
+tag insertion and stripping with the MCP55 chipset.
 .Pp
 The
 .Nm

@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.37 2008/08/21 05:04:02 jmc Exp $
+.\" $OpenBSD: re.4,v 1.38 2008/10/28 06:27:28 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: August 21 2008 $
+.Dd $Mdocdate: October 28 2008 $
 .Dt RE 4
 .Os
 .Sh NAME
@@ -93,9 +93,8 @@ NICs based on the 8169, 816xS, 811xS and 8168 are capable of 10, 100 and
 All
 .Nm
 NICs support
-IPv4 transmit/receive IP/TCP/UDP checksum offload
-and VLAN tag insertion,
-and use a descriptor-based DMA mechanism.
+IPv4 transmit/receive IP/TCP/UDP checksum offload, VLAN tag insertion and
+stripping, and use a descriptor-based DMA mechanism.
 .Pp
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
