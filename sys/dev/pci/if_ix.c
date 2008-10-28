@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.12 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.13 2008/10/28 05:39:18 brad Exp $	*/
 
 /******************************************************************************
 
@@ -112,9 +112,7 @@ void	ixgbe_print_hw_stats(struct ix_softc *);
 void	ixgbe_update_link_status(struct ix_softc *);
 int	ixgbe_get_buf(struct rx_ring *, int, struct mbuf *);
 int	ixgbe_encap(struct tx_ring *, struct mbuf *);
-#if NVLAN > 0
 void	ixgbe_enable_hw_vlans(struct ix_softc * sc);
-#endif
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
 		    struct ixgbe_dma_alloc *, int);
 void	ixgbe_dma_free(struct ix_softc *, struct ixgbe_dma_alloc *);
@@ -603,10 +601,8 @@ ixgbe_init(void *arg)
 		return;
 	}
 
-#if NVLAN > 0
 	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		ixgbe_enable_hw_vlans(sc);
-#endif
 
 	/* Prepare transmit descriptors and buffers */
 	if (ixgbe_setup_transmit_structures(sc)) {
@@ -842,7 +838,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 
 #if NVLAN > 0
 	if (m_head->m_flags & M_VLANTAG)
-        	cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
+		cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
 #endif
 
 	/*
@@ -1393,11 +1389,15 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#ifdef IX_CSUM_OFFLOAD
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef IX_VLAN_HWTAGGING
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+#endif
+
+#ifdef IX_CSUM_OFFLOAD
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+				IFCAP_CSUM_UDPv4;
 #endif
 
 	sc->max_frame_size =
@@ -2772,17 +2772,17 @@ ixgbe_rxeof(struct rx_ring *rxr, int count)
 				ifp->if_ipackets++;
 				rxr->packet_count++;
 				rxr->byte_count += rxr->fmp->m_pkthdr.len;
-				m = rxr->fmp;
-
 				ixgbe_rx_checksum(sc, staterr, rxr->fmp);
 
-#if NVLAN > 0 && defined(IX_CSUM_OFFLOAD)
+#if NVLAN > 0
 				if (staterr & IXGBE_RXD_STAT_VP) {
-					m->m_pkthdr.ether_vtag =
+					rxr->fmp->m_pkthdr.ether_vtag =
 					    letoh16(cur->wb.upper.vlan);
-					m->m_flags |= M_VLANTAG;
+					rxr->fmp->m_flags |= M_VLANTAG;
 				}
 #endif
+
+				m = rxr->fmp;
 				rxr->fmp = NULL;
 				rxr->lmp = NULL;
 			}
@@ -2844,37 +2844,27 @@ void
 ixgbe_rx_checksum(struct ix_softc *sc,
     uint32_t staterr, struct mbuf * mp)
 {
-	struct ifnet   	*ifp = &sc->arpcom.ac_if;
 	uint16_t status = (uint16_t) staterr;
 	uint8_t  errors = (uint8_t) (staterr >> 24);
 
-	/* Not offloading */
-	if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) == 0) {
-		mp->m_pkthdr.csum_flags = 0;
-		return;
-	}
-
-	// XXX
-	printf("%s: status 0x%04x errors 0x%02x\n", ifp->if_xname,
-	    status, errors);
-
-	mp->m_pkthdr.csum_flags = 0;
 	if (status & IXGBE_RXD_STAT_IPCS) {
 		/* Did it pass? */
-		if (!(errors & IXGBE_RXD_ERR_IPE))
+		if (!(errors & IXGBE_RXD_ERR_IPE)) {
 			/* IP Checksum Good */
 			mp->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
+		} else
+			mp->m_pkthdr.csum_flags = 0;
 	}
-	/* Did it pass? */
-	if (errors & IXGBE_RXD_ERR_TCPE)
-		return;
-	if (status & IXGBE_RXD_STAT_L4CS)
-		mp->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
-	if (status & IXGBE_RXD_STAT_UDPCS)
-		mp->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+
+	if (status & IXGBE_RXD_STAT_L4CS) {
+		/* Did it pass? */
+		if (!(errors & IXGBE_RXD_ERR_TCPE))
+			mp->m_pkthdr.csum_flags |=
+				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+	}
+
 }
 
-#if NVLAN > 0
 void
 ixgbe_enable_hw_vlans(struct ix_softc *sc)
 {
@@ -2887,7 +2877,6 @@ ixgbe_enable_hw_vlans(struct ix_softc *sc)
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_VLNCTRL, ctrl);
 	ixgbe_enable_intr(sc);
 }
-#endif
 
 void
 ixgbe_enable_intr(struct ix_softc *sc)
