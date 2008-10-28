@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.55 2008/10/28 07:14:45 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.56 2008/10/28 07:18:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -956,8 +956,6 @@ trunk_start(struct ifnet *ifp)
 		else
 			ifp->if_oerrors++;
 	}
-
-	return;
 }
 
 int
