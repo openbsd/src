@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.189 2008/10/28 11:49:28 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.190 2008/10/28 11:53:18 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -188,7 +188,7 @@ ami_remove_runq(struct ami_ccb *ccb)
 	TAILQ_REMOVE(&ccb->ccb_sc->sc_ccb_runq, ccb, ccb_link);
 	if (TAILQ_EMPTY(&ccb->ccb_sc->sc_ccb_runq)) {
 		ccb->ccb_sc->sc_drained = 1;
-		if (sc->sc_drainio)
+		if (ccb->ccb_sc->sc_drainio)
 			wakeup(ccb->ccb_sc);
 	}
 }
@@ -328,7 +328,7 @@ ami_alloc_ccbs(struct ami_softc *sc, int nccbs)
 {
 	struct ami_ccb *ccb;
 	struct ami_ccbmem *ccbmem, *mem;
-	int i, error;
+	int i, s, error;
 
 	sc->sc_ccbs = malloc(sizeof(struct ami_ccb) * nccbs,
 	    M_DEVBUF, M_NOWAIT);
@@ -378,8 +378,11 @@ ami_alloc_ccbs(struct ami_softc *sc, int nccbs)
 		if (i == nccbs - 1) {
 			ccb->ccb_cmd.acc_id = 0xfe;
 			sc->sc_mgmtccb = ccb;
-		} else
+		} else {
+			s = splbio();
 			ami_put_ccb(ccb);
+			splx(s);
+		}
 	}
 
 	return (0);
