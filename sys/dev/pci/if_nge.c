@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.63 2008/10/28 05:04:32 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.64 2008/10/28 07:01:56 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1291,9 +1291,23 @@ nge_rxeof(sc)
 		 * comes up in the ring.
 		 */
 		if (!(rxstat & NGE_CMDSTS_PKT_OK)) {
-			ifp->if_ierrors++;
-			nge_newbuf(sc, cur_rx, m);
-			continue;
+#if NVLAN > 0
+			if ((rxstat & NGE_RXSTAT_RUNT) &&
+			    total_len >= (ETHER_MIN_LEN - ETHER_CRC_LEN -
+			    ETHER_VLAN_ENCAP_LEN)) {
+				/*
+				 * Workaround a hardware bug. Accept runt
+				 * frames if its length is larger than or
+				 * equal to 56.
+				 */
+			} else {
+#endif
+				ifp->if_ierrors++;
+				nge_newbuf(sc, cur_rx, m);
+				continue;
+#if NVLAN > 0
+			}
+#endif
 		}
 
 		/*
