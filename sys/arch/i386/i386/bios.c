@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.82 2008/08/16 00:26:26 krw Exp $	*/
+/*	$OpenBSD: bios.c,v 1.83 2008/10/28 00:05:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -156,10 +156,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	struct smbtable bios;
 	volatile u_int8_t *va;
 	char scratch[64], *str;
-	int flags, havesmbios = 0;
-#if NAPM > 0 || defined(MULTIPROCESSOR)
-	int ncpu = 0;
-#endif
+	int flags, smbiosrev = 0, ncpu = 0;
 
 	/* remember flags */
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
@@ -275,9 +272,15 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			for (; pa < end; pa+= NBPG, eva+= NBPG)
 				pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
-			havesmbios = 1;
 			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 			    sh->majrev, sh->minrev, sh->addr, sh->count);
+			/*
+			 * Unbelievably the SMBIOS version number
+			 * sequence is like 2.3 ... 2.33 ... 2.4 ... 2.5
+			 */
+			smbiosrev = sh->majrev * 100 + sh->minrev;
+			if (sh->minrev < 10)
+				smbiosrev = sh->majrev * 100 + sh->minrev * 10;
 
 			bios.cookie = 0;
 			if (smbios_find_table(SMBIOS_TYPE_BIOS, &bios)) {
@@ -298,18 +301,14 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			}
 			smbios_info(sc->sc_dev.dv_xname);
 
-#ifdef MULTIPROCESSOR
 			/* count cpus so that we can disable apm when cpu > 1 */
 			bzero(&bios, sizeof(bios));
 			while (smbios_find_table(SMBIOS_TYPE_PROCESSOR,&bios)) {
 				struct smbios_cpu *cpu = bios.tblhdr;
 
 				if (cpu->cpu_status & SMBIOS_CPUST_POPULATED) {
-					/*
-					 * smbios 2.5 added multi code support
-					 */
-					if (sh->majrev * 100 +
-					    sh->minrev >= 250 &&
+					/* SMBIOS 2.5 added multicore support */
+					if (smbiosrev >= 250 &&
 					    cpu->cpu_core_enabled)
 						ncpu += cpu->cpu_core_enabled;
 					else {
@@ -319,8 +318,6 @@ biosattach(struct device *parent, struct device *self, void *aux)
 					}
 				}
 			}
-#endif /* MULTIPROCESSOR */
-
 			break;
 		}
 	}
@@ -328,7 +325,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NAPM > 0
-	if (apm && ncpu < 2) {
+	if (apm && ncpu < 2 && smbiosrev < 240) {
 		struct bios_attach_args ba;
 
 #if defined(DEBUG) || defined(APMDEBUG)
@@ -349,7 +346,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 #if NACPI > 0
 #if NPCI > 0
-	if (havesmbios && pci_mode_detect() != 0)
+	if (smbiosrev && pci_mode_detect() != 0)
 #endif
 	{
 		struct bios_attach_args ba;
