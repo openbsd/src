@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.11 2008/10/18 12:30:40 michele Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.12 2008/10/28 01:16:14 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -165,7 +165,7 @@ mpestart(struct ifnet *ifp)
 			continue;
 		}
 		m->m_pkthdr.rcvif = ifp;
-		mpls_input(m);
+		mpls_output(m);
 	}
 }
 
@@ -289,9 +289,6 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	s = splnet();
-	/*
-	 * assume we only get fed ipv4 packets for now.
-	 */
 	IF_ENQUEUE(&ipintrq, m);
 	schednetisr(NETISR_IP);
 	splx(s);
@@ -311,9 +308,6 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	s = splnet();
-	/*
-	 * assume we only get fed ipv4 packets for now.
-	 */
 	IF_ENQUEUE(&ip6intrq, m);
 	schednetisr(NETISR_IPV6);
 	splx(s);
