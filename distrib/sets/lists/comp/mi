@@ -6201,6 +6201,7 @@
 ./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_sethardlimit.0
 ./usr/share/man/cat9/pool_sethiwat.0
+./usr/share/man/cat9/pool_setipl.0
 ./usr/share/man/cat9/pool_setlowat.0
 ./usr/share/man/cat9/powerhook_disestablish.0
 ./usr/share/man/cat9/powerhook_establish.0
