@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.188 2008/10/28 11:43:10 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.189 2008/10/28 11:49:28 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -188,7 +188,8 @@ ami_remove_runq(struct ami_ccb *ccb)
 	TAILQ_REMOVE(&ccb->ccb_sc->sc_ccb_runq, ccb, ccb_link);
 	if (TAILQ_EMPTY(&ccb->ccb_sc->sc_ccb_runq)) {
 		ccb->ccb_sc->sc_drained = 1;
-		wakeup(ccb->ccb_sc);
+		if (sc->sc_drainio)
+			wakeup(ccb->ccb_sc);
 	}
 }
 
