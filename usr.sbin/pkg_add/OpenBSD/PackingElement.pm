@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.151 2008/10/24 16:50:27 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.152 2008/10/28 09:51:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -563,6 +563,12 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 sub keyword() { "comment" }
 __PACKAGE__->register_with_factory;
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->{cwd} = $state->{cwd};
+}
 
 sub add
 {
