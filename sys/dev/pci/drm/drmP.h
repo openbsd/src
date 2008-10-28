@@ -251,7 +251,7 @@ DRM_SPINUNLOCK(&dev->irq_lock)
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
 	    DRM_CURRENTPID, __func__ , ## arg)
 
-#define DRM_INFO(fmt, arg...)  printf("info: [" DRM_NAME "] " fmt , ## arg)
+#define DRM_INFO(fmt, arg...)  printf("%s: " fmt, drm_units[0]->device.dv_xname, ## arg)
 
 #undef DRM_DEBUG
 #define DRM_DEBUG(fmt, arg...) do {					\
