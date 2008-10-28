@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.61 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.62 2008/10/28 04:32:23 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -887,7 +887,7 @@ nge_attach(parent, self, aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-#ifdef NGE_VLAN
+#if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
@@ -1330,6 +1330,12 @@ nge_rxeof(sc)
 
 		ifp->if_ipackets++;
 
+		if (extsts & NGE_RXEXTSTS_VLANPKT) {
+			m->m_pkthdr.ether_vtag =
+			    ntohs(extsts & NGE_RXEXTSTS_VTCI);
+			m->m_flags |= M_VLANTAG;
+		}
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
@@ -1628,7 +1634,7 @@ nge_encap(sc, m_head, txidx)
 #if NVLAN > 0
 	if (m_head->m_flags & M_VLANTAG) {
 		sc->nge_ldata->nge_tx_list[cur].nge_extsts |=
-		    (NGE_TXEXTSTS_VLANPKT|m_head->m_pkthdr.ether_vtag);
+		    (NGE_TXEXTSTS_VLANPKT|htons(m_head->m_pkthdr.ether_vtag));
 	}
 #endif
 
@@ -1797,6 +1803,17 @@ nge_init(xsc)
 	 * packets, do not reject packets with bad checksums.
 	 */
 	CSR_WRITE_4(sc, NGE_VLAN_IP_RXCTL, NGE_VIPRXCTL_IPCSUM_ENB);
+
+#if NVLAN > 0
+	/*
+	 * If VLAN support is enabled, tell the chip to detect
+	 * and strip VLAN tag info from received frames. The tag
+	 * will be provided in the extsts field in the RX descriptors.
+	 */
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		NGE_SETBIT(sc, NGE_VLAN_IP_RXCTL,
+		    NGE_VIPRXCTL_TAG_DETECT_ENB | NGE_VIPRXCTL_TAG_STRIP_ENB);
+#endif
 
 	/* Set TX configuration */
 	CSR_WRITE_4(sc, NGE_TX_CFG, NGE_TXCFG);
