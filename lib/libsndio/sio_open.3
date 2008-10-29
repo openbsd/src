@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.1 2008/10/27 00:26:33 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.2 2008/10/29 02:47:47 todd Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2008 $
+.Dd $Mdocdate: October 29 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -668,6 +668,9 @@ Path to the
 socket to connect to, or the
 .Xr audio 4
 device to use.
+.It Ev LIBSIO_DEBUG
+The debug level:
+may be a value between 0 and 2.
 .El
 .Sh FILES
 .Bl -tag -width "/tmp/aucat.sockXXX" -compact
