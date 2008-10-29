@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.55 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.56 2008/10/29 01:14:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -561,14 +561,14 @@ vic_alloc_data(struct vic_softc *sc)
 	int				i;
 
 	sc->sc_rxbuf = malloc(sizeof(struct vic_rxbuf) * sc->sc_nrxbuf,
-	    M_NOWAIT, M_DEVBUF);
+	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_rxbuf == NULL) {
 		printf(": unable to allocate rxbuf\n");
 		goto err;
 	}
 
 	sc->sc_txbuf = malloc(sizeof(struct vic_txbuf) * sc->sc_ntxbuf,
-	    M_NOWAIT, M_DEVBUF);
+	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_txbuf == NULL) {
 		printf(": unable to allocate txbuf\n");
 		goto freerx;

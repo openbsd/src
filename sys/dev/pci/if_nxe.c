@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.56 2008/10/02 20:21:14 brad Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.57 2008/10/29 01:14:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1624,7 +1624,7 @@ nxe_board_info(struct nxe_softc *sc)
 	int				rv = 1;
 	int				i;
 
-	ni = malloc(sizeof(struct nxe_info), M_NOWAIT, M_TEMP);
+	ni = malloc(sizeof(struct nxe_info), M_TEMP, M_NOWAIT);
 	if (ni == NULL) {
 		printf(": unable to allocate temporary memory\n");
 		return (1);
@@ -1671,7 +1671,7 @@ nxe_user_info(struct nxe_softc *sc)
 	struct nxe_lladdr		*la;
 	int				rv = 1;
 
-	nu = malloc(sizeof(struct nxe_userinfo), M_NOWAIT, M_TEMP);
+	nu = malloc(sizeof(struct nxe_userinfo), M_TEMP, M_NOWAIT);
 	if (nu == NULL) {
 		printf(": unable to allocate temp memory\n");
 		return (1);
