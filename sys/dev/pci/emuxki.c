@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.30 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.31 2008/10/29 22:37:29 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -391,9 +391,15 @@ emuxki_scinit(struct emuxki_softc *sc)
 		EMU_INTE_MUTEENABLE);
 
 	if (sc->sc_type & EMUXKI_AUDIGY2) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG,
-			EMU_A_IOCFG_GPOUT0 |
-			bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG));
+		if (sc->sc_details & EMUXKI_CA0108_CHIP) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG,
+			    0x0060 | bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    EMU_A_IOCFG));
+		} else {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG,
+			    EMU_A_IOCFG_GPOUT0 | bus_space_read_4(sc->sc_iot,
+			    sc->sc_ioh, EMU_A_IOCFG));
+		}
 	}
 
 	/* No multiple voice support for now */
@@ -457,6 +463,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
+	sc->sc_details = 0;
 	/* XXX it's unknown whether APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
 		sc->sc_type = EMUXKI_AUDIGY;
@@ -466,6 +473,15 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
 		} else {
 			strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
+		}
+	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY2) {
+		sc->sc_type = EMUXKI_AUDIGY | EMUXKI_AUDIGY2;
+		if (pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_SUBSYS_ID_REG) == 0x10011102) {
+			sc->sc_details = EMUXKI_CA0108_CHIP;
+			strlcpy(sc->sc_audv.name, "Audigy2Value", sizeof sc->sc_audv.name);
+		} else {
+			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
 		}
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
@@ -832,7 +848,30 @@ emuxki_init(struct emuxki_softc *sc)
 	emuxki_write(sc, 0, EMU_SPCS1, spcs);
 	emuxki_write(sc, 0, EMU_SPCS2, spcs);
 
-        if(sc->sc_type & EMUXKI_AUDIGY2) {
+	if (sc->sc_details & EMUXKI_CA0108_CHIP) {
+		u_int32_t tmp;
+
+		/* Setup SRCMulti_I2S SamplingRate */
+		tmp = emuxki_read(sc, 0, EMU_A_SPDIF_SAMPLERATE) & 0xfffff1ff;
+		emuxki_write(sc, 0, EMU_A_SPDIF_SAMPLERATE, tmp | 0x400);
+
+		/* Setup SRCSel (Enable SPDIF, I2S SRCMulti) */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, EMU_A2_SRCSEL);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_DATA,
+		EMU_A2_SRCSEL_ENABLE_SPDIF | EMU_A2_SRCSEL_ENABLE_SRCMULTI);
+
+		/* Setup SRCMulti Input Audio Enable */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, 0x7b0000);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_DATA, 0xff000000);
+
+		/* Setup SPDIF Out Audio Enable
+		 * The Audigy 2 Value has a separate SPDIF out,
+		 * so no need for a mixer switch */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, 0x7a0000);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_DATA, 0xff000000);
+		tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG) & ~0x8; /* Clear bit 3 */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A_IOCFG, tmp);
+	} else if(sc->sc_type & EMUXKI_AUDIGY2) {
                 emuxki_write(sc, 0, EMU_A2_SPDIF_SAMPLERATE, EMU_A2_SPDIF_UNKNOWN);
 
                 bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, EMU_A2_SRCSEL);
