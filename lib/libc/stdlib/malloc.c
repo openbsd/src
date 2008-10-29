@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.103 2008/10/20 06:19:02 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.104 2008/10/29 14:05:15 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -108,6 +108,8 @@ struct dir_info {
 	size_t find_collisions;
 	size_t deletes;
 	size_t delete_moves;
+	size_t cheap_realloc_tries;
+	size_t cheap_reallocs;
 #define STATS_INC(x) ((x)++)
 #define STATS_ZERO(x) ((x) = 0)
 #else
@@ -270,6 +272,9 @@ malloc_dump1(int fd, struct dir_info *d)
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
 	     d->delete_moves);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
+	    d->cheap_reallocs, d->cheap_realloc_tries);
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Regions slots free %zu\n", d->regions_free);
 	write(fd, buf, strlen(buf));
@@ -1307,6 +1312,7 @@ orealloc(void *p, size_t newsz)
 
 		if (rnewsz > roldsz) {
 			if (!malloc_guard) {
+				STATS_INC(g_pool.cheap_realloc_tries);
 				zapcacheregion(&g_pool, p + roldsz);
 				q = MMAPA(p + roldsz, rnewsz - roldsz);
 				if (q == p + roldsz) {
@@ -1315,6 +1321,7 @@ orealloc(void *p, size_t newsz)
 						memset(q, SOME_JUNK,
 						    rnewsz - roldsz);
 					r->size = newsz;
+					STATS_INC(g_pool.cheap_reallocs);
 					return p;
 				} else if (q != MAP_FAILED)
 					munmap(q, rnewsz - roldsz);
