@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.13 2008/10/29 00:04:14 jakemsr Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.14 2008/10/29 03:00:19 deraadt Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 # define DPRINTF(x)
 #endif
 
-struct i2s_audio_default {
+struct audio_params i2s_audio_default = {
 	44100,		/* sample_rate */
 	AUDIO_ENCODING_SLINEAR_BE, /* encoding */
 	16,		/* precision */
