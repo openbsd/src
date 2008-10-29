@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.12 2008/08/24 23:44:44 todd Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.13 2008/10/29 00:04:14 jakemsr Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -52,6 +52,15 @@
 #else
 # define DPRINTF(x)
 #endif
+
+struct i2s_audio_default {
+	44100,		/* sample_rate */
+	AUDIO_ENCODING_SLINEAR_BE, /* encoding */
+	16,		/* precision */
+	2,		/* channels */
+	NULL,		/* sw_code */
+	1		/* factor */
+};
 
 struct i2s_mode *i2s_find_mode(u_int, u_int, u_int);
 
@@ -445,6 +454,12 @@ i2s_set_params(h, setmode, usemode, play, rec)
 	p->sample_rate = sc->sc_rate;
 
 	return 0;
+}
+
+void
+i2s_get_default_params(struct audio_params *params)
+{
+	*params = i2s_audio_default;
 }
 
 int

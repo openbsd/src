@@ -1,5 +1,5 @@
-/*	$OpenBSD: daca.c,v 1.5 2008/04/21 00:32:42 jakemsr Exp $	*/
-/*	$Id: daca.c,v 1.5 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: daca.c,v 1.6 2008/10/29 00:04:14 jakemsr Exp $	*/
+/*	$Id: daca.c,v 1.6 2008/10/29 00:04:14 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -64,6 +64,7 @@ void daca_attach(struct device *, struct device *, void *);
 void daca_defer(struct device *);
 void daca_init(struct daca_softc *);
 void daca_set_volume(struct daca_softc *, int, int);
+void daca_get_default_params(void *, int, struct audio_params *);
 
 struct cfattach daca_ca = {
 	sizeof(struct daca_softc), daca_match, daca_attach
@@ -100,7 +101,7 @@ struct audio_hw_if daca_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
-	NULL
+	daca_get_default_params
 };
 
 struct audio_device daca_device = {
@@ -198,4 +199,10 @@ daca_set_volume(struct daca_softc *sc, int left, int right)
 	right >>= 2;
 	data = left << 8 | right;
 	kiic_write(sc->sc_i2c, DEQaddr, DEQ_AVOL, &data, 2);
+}
+
+void
+daca_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	i2s_get_default_params(params);
 }

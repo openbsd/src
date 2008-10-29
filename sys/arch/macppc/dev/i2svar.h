@@ -1,5 +1,5 @@
-/*	$OpenBSD: i2svar.h,v 1.4 2008/08/24 23:44:44 todd Exp $	*/
-/*	$Id: i2svar.h,v 1.4 2008/08/24 23:44:44 todd Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.5 2008/10/29 00:04:14 jakemsr Exp $	*/
+/*	$Id: i2svar.h,v 1.5 2008/10/29 00:04:14 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -88,6 +88,7 @@ int i2s_open(void *, int);
 void i2s_close(void *);
 int i2s_query_encoding(void *, struct audio_encoding *);
 int i2s_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+void i2s_get_default_params(struct audio_params *);
 int i2s_round_blocksize(void *, int);
 int i2s_halt_output(void *);
 int i2s_halt_input(void *);

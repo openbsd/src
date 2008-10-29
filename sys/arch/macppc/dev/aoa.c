@@ -1,5 +1,5 @@
-/*	$OpenBSD: aoa.c,v 1.4 2008/04/21 00:32:42 jakemsr Exp $	*/
-/*	$Id: aoa.c,v 1.4 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.5 2008/10/29 00:04:14 jakemsr Exp $	*/
+/*	$Id: aoa.c,v 1.5 2008/10/29 00:04:14 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -57,6 +57,7 @@ int aoa_getdev(void *, struct audio_device *);
 int aoa_match(struct device *, void *, void *);
 void aoa_attach(struct device *, struct device *, void *);
 void aoa_set_volume(struct aoa_softc *, int, int);
+void aoa_get_default_params(void *, int, struct audio_params *);
 
 struct cfattach aoa_ca = {
 	sizeof(struct aoa_softc), aoa_match, aoa_attach
@@ -93,7 +94,7 @@ struct audio_hw_if aoa_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input,
-	NULL
+	aoa_get_default_params
 };
 
 struct audio_device aoa_device = {
@@ -149,4 +150,10 @@ void
 aoa_set_volume(struct aoa_softc *sc, int left, int right)
 {
 	printf("aoa_set_volume() not supported yet\n");
+}
+
+void
+aoa_get_default_params(void *addr, int mode, struct audio_params *params)
+{
+	i2s_get_default_params(params);
 }
