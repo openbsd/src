@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.8 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.9 2008/10/29 22:39:44 jakemsr Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -224,6 +224,9 @@ struct emuxki_softc {
 		EMUXKI_SBLIVE = 0x00, EMUXKI_AUDIGY = 0x01, EMUXKI_AUDIGY2 = 0x02,
 		EMUXKI_LIVE_5_1 = 0x04, EMUXKI_APS = 0x08
 	} sc_type;
+	enum {
+		EMUXKI_CA0108_CHIP = 0x01, EMUXKI_CA0151_CHIP = 0x02
+	} sc_details;
 
 	/* Autoconfig parameters */
 	bus_space_tag_t 	sc_iot;
