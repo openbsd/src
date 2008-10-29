@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.67 2008/08/30 10:41:38 fgsch Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.68 2008/10/29 00:07:07 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -265,8 +265,10 @@ main(int argc, char **argv)
 
 	if (!cdname) {
 		cdname = DEFAULT_CD_DRIVE;
-		fprintf(stderr,
-		    "No CD device name specified. Defaulting to %s.\n", cdname);
+		if (verbose == 2)
+			fprintf(stderr,
+			    "No CD device name specified. Defaulting to %s.\n",
+			    cdname);
 	}
 
 	if (argc > 0 && !strcasecmp(*argv, "tao")) {
