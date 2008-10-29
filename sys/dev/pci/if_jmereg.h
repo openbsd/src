@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmereg.h,v 1.1 2008/09/26 10:35:15 jsg Exp $	*/
+/*	$OpenBSD: if_jmereg.h,v 1.2 2008/10/29 01:55:53 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -555,8 +555,10 @@
 #define	GPREG0_PHY_ADDR_SHIFT	0
 #define	GPREG0_PHY_ADDR		1
 
-/* General purpose register 1. reserved for future use. */
+/* General purpose register 1. */
 #define	JME_GPREG1		0x080C
+#define GPREG1_HALF_PATCH	0x00000020 /* 250A2 only, for 10/100 mode */
+#define GPREG1_RSS_PATCH	0x00000040 /* 250A2 only, for 10/100 mode */
 
 /* MSIX entry number of interrupt source. */
 #define	JME_MSINUM_BASE		0x0810
