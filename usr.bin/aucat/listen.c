@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.2 2008/10/29 22:40:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 
 #include <err.h>
@@ -66,6 +67,10 @@ listen_new(struct fileops *ops, char *path)
 	        sizeof(struct sockaddr_un)) < 0) {
 		perror("bind");
 		exit(1);
+	}
+	if (chmod(sockname.sun_path, 0777) < 0) {
+		/* not fatal, just print error */
+		perror(sockname.sun_path);
 	}
 	if (listen(sock, 1) < 0) {
 		perror("listen");
