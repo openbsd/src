@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.25 2008/02/11 01:07:02 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.26 2008/10/29 16:35:01 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -241,6 +241,7 @@ typedef enum {
 #define MFI_MAX_LD				64
 #define MFI_MAX_SPAN				8
 #define MFI_MAX_ARRAY_DEDICATED			16
+#define MFI_MAX_PHYSDISK			256
 
 /* sense buffer */
 struct mfi_sense {
@@ -812,7 +813,7 @@ struct mfi_pd_list {
 	uint32_t		mpl_no_pd;
 	struct mfi_pd_address	mpl_address[1];
 } __packed;
-#define MFI_PD_LIST_SIZE	(256 * sizeof(struct mfi_pd_address) + 8)
+#define MFI_PD_LIST_SIZE (MFI_MAX_PHYSDISK * sizeof(struct mfi_pd_address) + 8)
 
 struct mfi_pd {
 	uint16_t		mfp_id;
@@ -835,7 +836,7 @@ struct mfi_pd_details {
 	uint8_t			mpd_inq_data[96];
 	uint8_t			mpd_inq_page83[64];
 	uint8_t			mpd_no_support;
-	uint8_t			mpd_scsy_type;
+	uint8_t			mpd_scsi_type;
 	uint8_t			mpd_port;
 	uint8_t			mpd_speed;
 	uint32_t		mpd_mediaerr_cnt;
@@ -860,8 +861,10 @@ struct mfi_pd_details {
 	struct {
 		uint8_t		mpp_cnt;
 		uint8_t		mpp_severed;
-		uint8_t		mpp_res[6];
-		u_quad_t	mpp_sas_addr[4];
+		uint8_t		mpp_connector_idx[2];
+		uint8_t		mpp_res[4];
+		u_quad_t	mpp_sas_addr[2];
+		uint8_t		mpp_res2[16];
 	} __packed mpd_path;
 	u_quad_t		mpd_size;
 	u_quad_t		mpd_no_coerce_size;
@@ -872,7 +875,44 @@ struct mfi_pd_details {
 	struct mfi_pd_progress	mpd_progress;
 	uint8_t			mpd_bblock_full;
 	uint8_t			mpd_unusable;
-	uint8_t			mpd_res[218]; /* size is 512 */
+	uint8_t			mpd_inq_page83_ext[64];
+	uint8_t			mpd_power_state; /* XXX */
+	uint8_t			mpd_enc_pos;
+	uint32_t		mpd_allowed_ops;
+#define MFI_PD_A_ONLINE			(1<<0)
+#define MFI_PD_A_OFFLINE		(1<<1)
+#define MFI_PD_A_FAILED			(1<<2)
+#define MFI_PD_A_BAD			(1<<3)
+#define MFI_PD_A_UNCONFIG		(1<<4)
+#define MFI_PD_A_HOTSPARE		(1<<5)
+#define MFI_PD_A_REMOVEHOTSPARE		(1<<6)
+#define MFI_PD_A_REPLACEMISSING		(1<<7)
+#define MFI_PD_A_MARKMISSING		(1<<8)
+#define MFI_PD_A_STARTREBUILD		(1<<9)
+#define MFI_PD_A_STOPREBUILD		(1<<10)
+#define MFI_PD_A_BLINK			(1<<11)
+#define MFI_PD_A_CLEAR			(1<<12)
+#define MFI_PD_A_FOREIGNIMPORNOTALLOWED	(1<<13)
+#define MFI_PD_A_STARTCOPYBACK		(1<<14)
+#define MFI_PD_A_STOPCOPYBACK		(1<<15)
+#define MFI_PD_A_FWDOWNLOADDNOTALLOWED	(1<<16)
+#define MFI_PD_A_REPROVISION		(1<<17)
+	uint16_t		mpd_copyback_partner_id;
+	uint16_t		mpd_enc_partner_devid;
+	uint16_t		mpd_security;
+#define MFI_PD_FDE_CAPABLE		(1<<0)
+#define MFI_PD_FDE_ENABLED		(1<<1)
+#define MFI_PD_FDE_SECURED		(1<<2)
+#define MFI_PD_FDE_LOCKED		(1<<3)
+#define MFI_PD_FDE_FOREIGNLOCK		(1<<4)
+	uint8_t			mpd_media;
+	uint8_t			mpd_res[141]; /* size is 512 */
+} __packed;
+
+struct mfi_pd_allowedops_list {
+	uint32_t		mpo_no_entries;
+	uint32_t		mpo_res;
+	uint32_t		mpo_allowedops_list[MFI_MAX_PHYSDISK];
 } __packed;
 
 /* array configuration from MD_DCMD_CONF_GET */
