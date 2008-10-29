@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacvar.h,v 1.4 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: cacvar.h,v 1.5 2008/10/29 21:17:15 brad Exp $	*/
 /*	$NetBSD: cacvar.h,v 1.7 2000/10/19 14:28:47 ad Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 	(((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8))
 #define	CAC_GET4(x)							\
 	((((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8)) |		\
-	(((u_char *)&(x))[0] << 16 | (((u_char *)&(x))[1] << 24)))
+	(((u_char *)&(x))[2] << 16 | (((u_char *)&(x))[3] << 24)))
 
 struct cac_ccb {
 	/* Data the controller will touch - 276 bytes */
@@ -107,7 +107,15 @@ struct cac_softc {
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;	
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;
 	struct cac_drive_info	*sc_dinfos;
+	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
+	struct ksensor		*sc_sensors;
+	struct ksensordev	sc_sensordev;
 };
+
+/* XXX These have to become spinlocks in case of fine SMP */
+#define	CAC_LOCK(sc) splbio()
+#define	CAC_UNLOCK(sc, lock) splx(lock)
+typedef	int cac_lock_t;
 
 int	cac_init(struct cac_softc *, int);
 int	cac_intr(void *);
