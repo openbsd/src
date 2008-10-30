@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.23 2008/10/30 06:12:47 todd Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.24 2008/10/30 06:22:38 todd Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -598,7 +598,7 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 		switch (p->encoding) {
 
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->percision != 16)
+			if (p->precision != 16)
 				p->precision = 16;
 			if (p->channels == 2)
 				p->sw_code = swap_bytes;
