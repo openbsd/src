@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.61 2007/12/22 17:14:39 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.62 2008/10/30 22:06:59 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -350,6 +350,7 @@ ASLOCAL(dummy_cpu)
 	word	0				/* ci_curproc */
 	word	0				/* ci_curpcb */
 	word	0				/* ci_cpuid */
+	space	CPU_INFO_SIZEOF - 4 * 4
 #endif	/* MULTIPROCESSOR */
 
 #if defined(DDB) || NKSYMS > 0
