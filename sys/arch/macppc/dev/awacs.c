@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.22 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.23 2008/10/30 06:12:47 todd Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -582,11 +582,15 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 
 		p = mode == AUMODE_PLAY ? play : rec;
 
-		if (p->sample_rate < 4000 || p->sample_rate > 50000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return EINVAL;
-
+		if (p->sample_rate < 4000)
+			p->sample_rate = 4000;
+		if (p->sample_rate > 50000)
+			p->sample_rate = 50000;
+		if (p->precision > 16)
+			p->precision = 16;
+		if (p->channels > 2)
+			p->channels = 2;
+		
 		p->factor = 1;
 		p->sw_code = NULL;
 		awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
@@ -594,47 +598,43 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 		switch (p->encoding) {
 
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
+			if (p->percision != 16)
+				p->precision = 16;
+			if (p->channels == 2)
 				p->sw_code = swap_bytes;
-				break;
-			}
-			if (p->channels == 1 && p->precision == 16) {
+			else {
 				p->factor = 2;
 				p->sw_code = swap_bytes_mts;
-				break;
 			}
-			return (EINVAL);
+			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->channels == 2 && p->precision == 16)
-				break;
-			if (p->channels == 1 && p->precision == 16) {
+			if (p->precision != 16)
+				p->precision = 16;
+			if (p->channels == 1) {
 				p->factor = 2;
 				p->sw_code = noswap_bytes_mts;
-				break;
 			}
-			return (EINVAL);
+			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
+			if (p->precision != 16)
+				p->precision = 16;
+			if (p->channels == 2)
 				p->sw_code = swap_bytes_change_sign16_be;
-				break;
-			}
-			if (p->channels == 1 && p->precision == 16) {
+			else {
 				p->factor = 2;
 				p->sw_code = swap_bytes_change_sign16_be_mts;
-				break;
 			}
-			return (EINVAL);
+			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->channels == 2 && p->precision == 16) {
+			if (p->precision != 16)
+				p->precision = 16;
+			if (p->channels == 2)
 				p->sw_code = change_sign16_be;
-				break;
-			}
-			if (p->channels == 1 && p->precision == 16) {
+			else {
 				p->factor = 2;
 				p->sw_code = change_sign16_be_mts;
-				break;
 			}
-			return (EINVAL);
+			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
