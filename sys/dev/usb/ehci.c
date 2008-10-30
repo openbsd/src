@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.94 2008/10/07 11:31:09 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.95 2008/10/30 08:11:13 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -242,13 +242,13 @@ void		ehci_dump_exfer(struct ehci_xfer *);
 #define EHCI_INTR_ENDPT 1
 
 #define ehci_add_intr_list(sc, ex) \
-	LIST_INSERT_HEAD(&(sc)->sc_intrhead, (ex), inext);
-#define ehci_del_intr_list(ex) \
+	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ex), inext);
+#define ehci_del_intr_list(sc, ex) \
 	do { \
-		LIST_REMOVE((ex), inext); \
-		(ex)->inext.le_prev = NULL; \
+		TAILQ_REMOVE(&sc->sc_intrhead, (ex), inext); \
+		(ex)->inext.tqe_prev = NULL; \
 	} while (0)
-#define ehci_active_intr_list(ex) ((ex)->inext.le_prev != NULL)
+#define ehci_active_intr_list(ex) ((ex)->inext.tqe_prev != NULL)
 
 struct usbd_bus_methods ehci_bus_methods = {
 	ehci_open,
@@ -413,6 +413,7 @@ ehci_init(ehci_softc_t *sc)
 	if (sc->sc_softitds == NULL)
 		return (ENOMEM);
 	LIST_INIT(&sc->sc_freeitds);
+	TAILQ_INIT(&sc->sc_intrhead);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
@@ -659,14 +660,14 @@ ehci_softintr(void *v)
 	 * An interrupt just tells us that something is done, we have no
 	 * clue what, so we need to scan through all active transfers. :-(
 	 */
-	for (ex = LIST_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
-		nextex = LIST_NEXT(ex, inext);
+	for (ex = TAILQ_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
+		nextex = TAILQ_NEXT(ex, inext);
 		ehci_check_intr(sc, ex);
 	}
 
 	/* Schedule a callout to catch any dropped transactions. */
 	if ((sc->sc_flags & EHCIF_DROPPED_INTR_WORKAROUND) &&
-	    !LIST_EMPTY(&sc->sc_intrhead)) {
+	    !TAILQ_EMPTY(&sc->sc_intrhead)) {
 		timeout_add_sec(&sc->sc_tmo_intrlist, 1);
 	}
 
@@ -750,6 +751,9 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 	ehci_soft_itd_t *itd;
 	int i;
 
+	if (&ex->xfer != SIMPLEQ_FIRST(&ex->xfer.pipe->queue))
+		return;
+
 	if (ex->itdstart == NULL) {
 		printf("ehci_check_itd_intr: not valid itd\n");
 		return;
@@ -765,6 +769,7 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 
 	/*
 	 * Step 1, check no active transfers in last itd, meaning we're finished
+	 * check no active transfers in last itd, meaning we're finished
 	 */
 	for (i = 0; i < 8; i++) {
 		if (letoh32(itd->itd.itd_ctl[i]) & EHCI_ITD_ACTIVE)
@@ -775,27 +780,9 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 		goto done; /* All 8 descriptors inactive, it's done */
 	}
 
-	/*
-	 * Step 2, check for errors in status bits, throughout chain...
-	 */
-
-	DPRINTFN(12, ("ehci_check_itd_intr: active ex=%p\n", ex));
-
-	for (itd = ex->itdstart; itd != ex->itdend; itd = itd->xfer_next) {
-		for (i = 0; i < 8; i++) {
-			if (letoh32(itd->itd.itd_ctl[i]) & (EHCI_ITD_BUF_ERR |
-			    EHCI_ITD_BABBLE | EHCI_ITD_ERROR))
-				break;
-		}
-		if (i != 8) { /* Error in one of the itds */
-			goto done;
-		}
-	} /* itd search loop */
-
 	DPRINTFN(12, ("ehci_check_itd_intr: ex %p itd %p still active\n", ex,
 	    ex->itdstart));
 	return;
-
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
 	timeout_del(&ex->xfer.timeout_handle);
@@ -3100,7 +3087,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 #endif
 
 	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(ex);	/* remove from active list */
+		ehci_del_intr_list(sc, ex);	/* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
 	}
 
@@ -3414,7 +3401,7 @@ ehci_device_bulk_done(usbd_xfer_handle xfer)
 	    xfer, xfer->actlen));
 
 	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(ex);	/* remove from active list */
+		ehci_del_intr_list(sc, ex);	/* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
 	}
 
@@ -3636,7 +3623,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 
 		xfer->status = USBD_IN_PROGRESS;
 	} else if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(ex); /* remove from active list */
+		ehci_del_intr_list(sc, ex); /* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
 	}
 #undef exfer
@@ -3951,7 +3938,7 @@ ehci_device_isoc_done(usbd_xfer_handle xfer)
 	s = splusb();
 	epipe->u.isoc.cur_xfers--;
 	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
-		ehci_del_intr_list(exfer);
+		ehci_del_intr_list(sc, exfer);
 		ehci_rem_free_itd_chain(sc, exfer);
 	}
 	splx(s);
