@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.21 2007/11/06 21:44:39 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.22 2008/10/30 22:06:02 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -40,6 +40,8 @@
  *
  * Switch context from oldproc to newproc. oldproc may be NULL if there is
  * no need to save the current context.
+ *
+ * Note that this code assumes that oldproc == curproc if not NULL.
  */
 ENTRY(cpu_switchto)
 	/*
@@ -53,11 +55,9 @@ ENTRY(cpu_switchto)
 	bsr	_ASM_LABEL(__savectx)
 	/* note that we don't need to recover r1 at this point */
 
-#ifdef MULTIPROCESSOR
 	ldcr	r11, CPU
 	bsr.n	_C_LABEL(pmap_deactivate)	/* pmap_deactivate(oldproc) */
 	 ld	r2,  r11, CI_CURPROC
-#endif
 
 1:
 	ldcr	r2, PSR
