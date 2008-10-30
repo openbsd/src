@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.213 2008/06/27 17:22:14 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.214 2008/10/30 22:07:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -158,10 +158,6 @@ int bufcachepercent = BUFCACHEPERCENT;
  */
 char  machine[] = MACHINE;	 /* cpu "architecture" */
 char  cpu_model[120];
-
-#if defined(DDB) || NKSYMS > 0
-extern char *esym;
-#endif
 
 int boothowto;					/* set in locore.S */
 int bootdev;					/* set in locore.S */
@@ -738,6 +734,7 @@ secondary_main()
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
+	ci->ci_randseed = random();
 	SET(ci->ci_flags, CIF_ALIVE);
 
 	set_psr(get_psr() & ~PSR_IND);
