@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.8 2008/10/27 02:13:34 dlg Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.9 2008/10/30 23:55:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #include <sys/kthread.h>
 #include <sys/workq.h>
 
@@ -38,10 +39,10 @@ struct workq {
 	int		wq_flags;
 #define WQ_F_RUNNING		(1<<0)
 	int		wq_running;
-	int		wq_busy;
 	int		wq_max;
 	const char	*wq_name;
 
+	struct mutex	wq_mtx;
 	SIMPLEQ_HEAD(, workq_task) wq_tasklist;
 };
 
@@ -49,22 +50,24 @@ struct pool	workq_task_pool;
 struct workq	workq_syswq = {
 	WQ_F_RUNNING,
 	0,
-	0,
 	1,
 	"syswq"
 };
 
-void		workq_init(void); /* called in init_main.c */
-void		workq_init_syswq(void *);
-void		workq_create_thread(void *);
-void		workq_thread(void *);
+void			workq_init(void); /* called in init_main.c */
+void			workq_init_syswq(void *);
+void			workq_create_thread(void *);
+struct workq_task *	workq_next_task(struct workq *);
+void			workq_thread(void *);
 
 void
 workq_init(void)
 {
 	pool_init(&workq_task_pool, sizeof(struct workq_task), 0, 0,
 	    0, "wqtasks", NULL);
+	pool_setipl(&workq_task_pool, IPL_HIGH);
 
+	mtx_init(&workq_syswq.wq_mtx, IPL_HIGH);
 	SIMPLEQ_INIT(&workq_syswq.wq_tasklist);
 	kthread_create_deferred(workq_init_syswq, NULL);
 }
@@ -72,15 +75,17 @@ workq_init(void)
 void
 workq_init_syswq(void *arg)
 {
+	mtx_enter(&workq_syswq.wq_mtx);
 	if (kthread_create(workq_thread, &workq_syswq, NULL, "%s",
 	    workq_syswq.wq_name) != 0)
 		panic("unable to create system work queue thread");
 
 	workq_syswq.wq_running++;
+	mtx_leave(&workq_syswq.wq_mtx);
 }
 
 struct workq *
-workq_create(const char *name, int maxqs)
+workq_create(const char *name, int maxqs, int ipl)
 {
 	struct workq *wq;
 
@@ -90,9 +95,10 @@ workq_create(const char *name, int maxqs)
 
 	wq->wq_flags = WQ_F_RUNNING;
 	wq->wq_running = 0;
-	wq->wq_busy = 0;
 	wq->wq_max = maxqs;
 	wq->wq_name = name;
+
+	mtx_init(&wq->wq_mtx, ipl);
 	SIMPLEQ_INIT(&wq->wq_tasklist);
 
 	/* try to create a thread to guarantee that tasks will be serviced */
@@ -104,17 +110,15 @@ workq_create(const char *name, int maxqs)
 void
 workq_destroy(struct workq *wq)
 {
-	int s;
-
-	s = splhigh();
+	mtx_enter(&wq->wq_mtx);
 
 	wq->wq_flags &= ~WQ_F_RUNNING;
 	while (wq->wq_running != 0) {
 		wakeup(wq);
-		tsleep(&wq->wq_running, PWAIT, "wqdestroy", 0);
+		msleep(&wq->wq_running, &wq->wq_mtx, PWAIT, "wqdestroy", 0);
 	}
 
-	splx(s);
+	mtx_leave(&wq->wq_mtx);
 
 	free(wq, M_DEVBUF);
 }
@@ -123,16 +127,12 @@ int
 workq_add_task(struct workq *wq, int flags, workq_fn func, void *a1, void *a2)
 {
 	struct workq_task	*wqt;
-	int			s;
 
-	if (wq == NULL) {
+	if (wq == NULL)
 		wq = &workq_syswq;
-	}
 	
-	s = splhigh();
 	wqt = pool_get(&workq_task_pool, (flags & WQ_WAITOK) ?
 	    PR_WAITOK : PR_NOWAIT);
-	splx(s);
 	if (!wqt)
 		return (ENOMEM);
 
@@ -141,9 +141,9 @@ workq_add_task(struct workq *wq, int flags, workq_fn func, void *a1, void *a2)
 	wqt->wqt_arg1 = a1;
 	wqt->wqt_arg2 = a2;
 
-	s = splhigh();
+	mtx_enter(&wq->wq_mtx);
 	SIMPLEQ_INSERT_TAIL(&wq->wq_tasklist, wqt, wqt_entry);
-	splx(s);
+	mtx_leave(&wq->wq_mtx);
 
 	wakeup_one(wq);
 
@@ -154,15 +154,47 @@ void
 workq_create_thread(void *arg)
 {
 	struct workq		*wq = arg;
+	int			i;
 	int			rv;
 
-	rv = kthread_create(workq_thread, wq, NULL, "%s", wq->wq_name);
-	if (rv != 0) {
-		printf("unable to create \"%s\" workq thread\n", wq->wq_name);
-		return;
+	mtx_enter(&wq->wq_mtx);
+	for (i = wq->wq_running; i < wq->wq_max; i++) {
+		rv = kthread_create(workq_thread, wq, NULL, "%s", wq->wq_name);
+		if (rv != 0) {
+			printf("unable to create thread for \"%s\" workq\n",
+			    wq->wq_name);
+			break;
+		}
+		wq->wq_running++;
+	}
+	mtx_leave(&wq->wq_mtx);
+}
+
+
+struct workq_task *
+workq_next_task(struct workq *wq)
+{
+	struct workq_task	*wqt;
+
+	mtx_enter(&wq->wq_mtx);
+
+	for (;;) {
+		wqt = SIMPLEQ_FIRST(&wq->wq_tasklist);
+		if (wqt != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&wq->wq_tasklist, wqt_entry);
+			break;
+		} else if (wq->wq_flags & WQ_F_RUNNING)
+			msleep(wq, &wq->wq_mtx, PWAIT, "bored", 0);
+		else {
+			if (--wq->wq_running == 0);
+				wakeup_one(&wq->wq_running);
+			break;
+		}
 	}
 
-	wq->wq_running++;
+	mtx_leave(&wq->wq_mtx);
+
+	return (wqt);
 }
 
 void
@@ -170,27 +202,11 @@ workq_thread(void *arg)
 {
 	struct workq		*wq = arg;
 	struct workq_task	*wqt;
-	int			s;
 
-	s = splhigh();
-	while (wq->wq_flags & WQ_F_RUNNING) {
-		while ((wqt = SIMPLEQ_FIRST(&wq->wq_tasklist)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&wq->wq_tasklist, wqt_entry);
-			wq->wq_busy++;
-			splx(s);
-
-			wqt->wqt_func(wqt->wqt_arg1, wqt->wqt_arg2);
-
-			s = splhigh();
-			pool_put(&workq_task_pool, wqt);
-
-			wq->wq_busy--;
-		}
-		tsleep(wq, PWAIT, "bored", 0);
+	while ((wqt = workq_next_task(wq)) != NULL) {
+		wqt->wqt_func(wqt->wqt_arg1, wqt->wqt_arg2);
+		pool_put(&workq_task_pool, wqt);
 	}
-	wq->wq_running--;
-	splx(s);
-	wakeup(&wq->wq_running);
 
 	kthread_exit(0);
 }

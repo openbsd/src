@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.51 2007/11/28 13:52:23 tedu Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.52 2008/10/30 23:55:22 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -630,7 +630,7 @@ crypto_getreq(int num)
 void
 init_crypto()
 {
-	crypto_workq = workq_create("crypto", 1);
+	crypto_workq = workq_create("crypto", 1, IPL_HIGH);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: workq.h,v 1.4 2007/11/28 13:54:07 tedu Exp $ */
+/*	$OpenBSD: workq.h,v 1.5 2008/10/30 23:55:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -26,7 +26,7 @@ struct workq;
 #define WQ_MPSAFE	(1<<1)
 
 typedef void (*workq_fn)(void *, void *);
-struct workq	*workq_create(const char * /* name */, int /* nthreads */);
+struct workq	*workq_create(const char *, int, int);
 int		workq_add_task(struct workq *, int /* flags */, workq_fn,
 		    void *, void *);
 void		workq_destroy(struct workq *);
