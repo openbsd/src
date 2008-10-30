@@ -142,21 +142,19 @@ static int i915_dma_cleanup(struct drm_device * dev)
 
 	if (dev_priv->ring.virtual_start) {
 		drm_core_ioremapfree(&dev_priv->ring.map, dev);
-		dev_priv->ring.virtual_start = 0;
-		dev_priv->ring.map.handle = 0;
+		dev_priv->ring.virtual_start = NULL;
+		dev_priv->ring.map.handle = NULL;
 		dev_priv->ring.map.size = 0;
 	}
 
-	/* Clear the HWS virtual address as teardown */
+	/* Clear the HWS virtual address at teardown */
 	if (I915_NEED_GFX_HWS(dev))
 		i915_free_hws(dev);
 
 	return 0;
 }
 
-static int i915_initialize(struct drm_device * dev,
-			   struct drm_file *file_priv,
-			   drm_i915_init_t * init)
+static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -176,8 +174,6 @@ static int i915_initialize(struct drm_device * dev,
 		dev_priv->sarea_priv = NULL;
 	}
 
-	dev_priv->ring.Start = init->ring_start;
-	dev_priv->ring.End = init->ring_end;
 	dev_priv->ring.Size = init->ring_size;
 	dev_priv->ring.tail_mask = dev_priv->ring.Size - 1;
 
@@ -239,9 +235,9 @@ static int i915_dma_resume(struct drm_device * dev)
 	DRM_DEBUG("hw status page @ %p\n", dev_priv->hw_status_page);
 
 	if (dev_priv->status_gfx_addr != 0)
-		I915_WRITE(0x02080, dev_priv->status_gfx_addr);
+		I915_WRITE(HWS_PGA, dev_priv->status_gfx_addr);
 	else
-		I915_WRITE(0x02080, dev_priv->dma_status_page);
+		I915_WRITE(HWS_PGA, dev_priv->dma_status_page);
 	DRM_DEBUG("Enabled hardware status page\n");
 
 	return 0;
@@ -255,8 +251,7 @@ int i915_dma_init(struct drm_device *dev, void *data,
 
 	switch (init->func) {
 	case I915_INIT_DMA:
-	case I915_INIT_DMA2:
-		retcode = i915_initialize(dev, file_priv, init);
+		retcode = i915_initialize(dev, init);
 		break;
 	case I915_CLEANUP_DMA:
 		retcode = i915_dma_cleanup(dev);
@@ -446,7 +441,7 @@ void i915_emit_breadcrumb(struct drm_device *dev)
 
 	BEGIN_LP_RING(4);
 	OUT_RING(MI_STORE_DWORD_INDEX);
-	OUT_RING(20);
+	OUT_RING(5 << MI_STORE_DWORD_INDEX_SHIFT);
 	OUT_RING(dev_priv->counter);
 	OUT_RING(0);
 	ADVANCE_LP_RING();
@@ -542,7 +537,6 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 				OUT_RING(batch->start | MI_BATCH_NON_SECURE);
 			}
 			ADVANCE_LP_RING();
-
 		} else {
 			BEGIN_LP_RING(4);
 			OUT_RING(MI_BATCH_BUFFER);
@@ -554,6 +548,7 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 	}
 
 	i915_emit_breadcrumb(dev);
+
 	return 0;
 }
 
@@ -631,7 +626,7 @@ int i915_quiescent(struct drm_device *dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
 	i915_kernel_lost_context(dev);
-	return i915_wait_ring(dev, dev_priv->ring.Size - 8, __FUNCTION__);
+	return i915_wait_ring(dev, dev_priv->ring.Size - 8, __func__);
 }
 
 int i915_flush_ioctl(struct drm_device *dev, void *data,
@@ -679,9 +674,8 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 int i915_cmdbuffer(struct drm_device *dev, void *data,
 			  struct drm_file *file_priv)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	drm_i915_sarea_t *sarea_priv = (drm_i915_sarea_t *)
-	    dev_priv->sarea_priv;
+	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
+	drm_i915_sarea_t *sarea_priv = (drm_i915_sarea_t *)dev_priv->sarea_priv;
 	drm_i915_cmdbuffer_t *cmdbuf = data;
 	int ret;
 
@@ -710,12 +704,6 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 	sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return 0;
 }
-
-#if defined(DRM_DEBUG_CODE)
-#define DRM_DEBUG_RELOCATION	(drm_debug != 0)
-#else
-#define DRM_DEBUG_RELOCATION	0
-#endif
 
 static int i915_do_cleanup_pageflip(struct drm_device * dev)
 {
@@ -918,7 +906,7 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 
 	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
 	I915_WRITE(HWS_PGA, dev_priv->status_gfx_addr);
-	DRM_DEBUG("load hws 0x2080 with gfx mem 0x%x\n",
+	DRM_DEBUG("load hws HWS_PGA with gfx mem 0x%x\n",
 			dev_priv->status_gfx_addr);
 	DRM_DEBUG("load hws at %p\n", dev_priv->hw_status_page);
 	return 0;
@@ -953,13 +941,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	mtx_init(&dev_priv->swaps_lock, IPL_BIO);
 	DRM_SPININIT(&dev_priv->user_irq_lock, "I915 irq lock");
 
-#ifdef __linux__
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
-	intel_init_chipset_flush_compat(dev);
-#endif
-	intel_opregion_init(dev);
-#endif
-
 	return ret;
 }
 
@@ -975,17 +956,8 @@ int i915_driver_unload(struct drm_device *dev)
 	DRM_SPINUNINIT(&dev_priv->swaps_lock);
 	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
 
-#ifdef __linux__
-	intel_opregion_free(dev);
-#endif
+	drm_free(dev->dev_private, sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
 
-	drm_free(dev->dev_private, sizeof(drm_i915_private_t),
-		 DRM_MEM_DRIVER);
-#ifdef __linux__
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
-	intel_fini_chipset_flush_compat(dev);
-#endif
-#endif
 	return 0;
 }
 
@@ -1003,6 +975,7 @@ void i915_driver_lastclose(struct drm_device * dev)
 
 	if (dev_priv->agp_heap)
 		i915_mem_takedown(&(dev_priv->agp_heap));
+
 	i915_dma_cleanup(dev);
 }
 
@@ -1027,9 +1000,4 @@ void i915_driver_preclose(struct drm_device * dev, struct drm_file *file_priv)
 int i915_driver_device_is_agp(struct drm_device * dev)
 {
 	return 1;
-}
-
-int i915_driver_firstopen(struct drm_device *dev)
-{
-	return 0;
 }

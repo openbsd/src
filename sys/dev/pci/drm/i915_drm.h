@@ -43,12 +43,7 @@ typedef struct _drm_i915_init {
 	enum {
 		I915_INIT_DMA = 0x01,
 		I915_CLEANUP_DMA = 0x02,
-		I915_RESUME_DMA = 0x03,
-
-		/* Since this struct isn't versioned, just used a new
-		 * 'func' code to indicate the presence of dri2 sarea
-		 * info. */
-		I915_INIT_DMA2 = 0x04
+		I915_RESUME_DMA = 0x03
 	} func;
 	unsigned int mmio_offset;
 	int sarea_priv_offset;
@@ -66,7 +61,6 @@ typedef struct _drm_i915_init {
 	unsigned int depth_pitch;
 	unsigned int cpp;
 	unsigned int chipset;
-	unsigned int sarea_handle;
 } drm_i915_init_t;
 
 typedef struct drm_i915_sarea {
@@ -175,7 +169,6 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_VBLANK_SWAP	0x0f
 #define DRM_I915_MMIO		0x10
 #define DRM_I915_HWS_ADDR	0x11
-#define DRM_I915_EXECBUFFER	0x12
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -194,7 +187,6 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_GET_VBLANK_PIPE	DRM_IOR( DRM_COMMAND_BASE + DRM_I915_GET_VBLANK_PIPE, drm_i915_vblank_pipe_t)
 #define DRM_IOCTL_I915_VBLANK_SWAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_VBLANK_SWAP, drm_i915_vblank_swap_t)
 #define DRM_IOCTL_I915_MMIO             DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_MMIO, drm_i915_mmio)
-#define DRM_IOCTL_I915_EXECBUFFER	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_EXECBUFFER, struct drm_i915_execbuffer)
 
 /* Asynchronous page flipping:
  */
@@ -386,13 +378,4 @@ struct drm_i915_op_arg {
 	} d;
 
 };
-
-struct drm_i915_execbuffer {
-	uint64_t ops_list;
-	uint32_t num_buffers;
-	struct drm_i915_batchbuffer batch;
-	drm_context_t context; /* for lockless use in the future */
-	struct drm_fence_arg fence_arg;
-};
-
 #endif				/* _I915_DRM_H_ */
