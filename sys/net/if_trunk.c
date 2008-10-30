@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.56 2008/10/28 07:18:45 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.57 2008/10/30 20:44:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -983,7 +983,7 @@ u_int32_t
 trunk_hashmbuf(struct mbuf *m, u_int32_t key)
 {
 	u_int16_t etype;
-	u_int32_t flow, p = 0;
+	u_int32_t p = 0;
 	u_int16_t *vlan, vlanbuf[2];
 	int off;
 	struct ether_header *eh;
@@ -991,6 +991,7 @@ trunk_hashmbuf(struct mbuf *m, u_int32_t key)
 	struct ip *ip, ipbuf;
 #endif
 #ifdef INET6
+	u_int32_t flow;
 	struct ip6_hdr *ip6, ip6buf;
 #endif
 
