@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.41 2008/10/16 18:23:53 claudio Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.42 2008/10/30 09:39:05 gollo Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -162,10 +162,14 @@ struct	arpcom {
 struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp) la_list;
 	struct	rtentry *la_rt;
-	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
+	struct	mbuf *la_hold_head;	/* packet hold queue */
+	struct	mbuf *la_hold_tail;
+	int	la_hold_count;		/* number of packets queued */
 	long	la_asked;		/* last time we QUERIED for this addr */
 #define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
 };
+#define MAX_HOLD_QUEUE 10
+#define MAX_HOLD_TOTAL NMBCLUSTERS / 10
 
 struct sockaddr_inarp {
 	u_int8_t  sin_len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.76 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.77 2008/10/30 09:39:05 gollo Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
+int	la_hold_total = 0;
 
 /* revarp state */
 struct in_addr myip, srv_ip;
@@ -146,6 +147,7 @@ arp_rtrequest(req, rt, info)
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
+	struct mbuf *m;
 
 	if (!arpinit_done) {
 		static struct timeout arptimer_to;
@@ -306,8 +308,11 @@ arp_rtrequest(req, rt, info)
 		LIST_REMOVE(la, la_list);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		if (la->la_hold)
-			m_freem(la->la_hold);
+		while ((m = la->la_hold_head) != NULL) {
+			la->la_hold_head = la->la_hold_head->m_nextpkt;
+			la_hold_total--;
+			m_freem(m);
+		}
 		Free((caddr_t)la);
 	}
 }
@@ -375,6 +380,7 @@ arpresolve(ac, rt, m, dst, desten)
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
+	struct mbuf *mh;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		bcopy((caddr_t)etherbroadcastaddr, (caddr_t)desten,
@@ -417,12 +423,25 @@ arpresolve(ac, rt, m, dst, desten)
 
 	/*
 	 * There is an arptab entry, but no ethernet address
-	 * response yet.  Replace the held mbuf with this
-	 * latest one.
+	 * response yet. Insert mbuf in hold queue.
 	 */
-	if (la->la_hold)
-		m_freem(la->la_hold);
-	la->la_hold = m;
+	if (la->la_hold_count >= MAX_HOLD_QUEUE) {
+		mh = la->la_hold_head;
+		la->la_hold_head = la->la_hold_head->m_nextpkt;
+		la->la_hold_count--;
+		la_hold_total--;
+		m_freem(mh);
+	}
+	if (la_hold_total < MAX_HOLD_TOTAL) {
+		if (la->la_hold_tail == NULL)
+			la->la_hold_head = m;
+		else
+			la->la_hold_tail->m_nextpkt = m;
+		la->la_hold_tail = m;
+		la->la_hold_count++;
+		la_hold_total++;
+	}
+
 	/*
 	 * Re-send the ARP request when appropriate.
 	 */
@@ -452,6 +471,14 @@ arpresolve(ac, rt, m, dst, desten)
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
+				while ((mh = la->la_hold_head) != NULL) {
+					la->la_hold_head =
+					    la->la_hold_head->m_nextpkt;
+					la_hold_total--;
+					m_freem(mh);
+				}
+				la->la_hold_tail = NULL;
+				la->la_hold_count = 0;
 			}
 		}
 	}
@@ -534,6 +561,7 @@ in_arpinput(m)
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
+	struct mbuf *mh, *mt;
 	u_int8_t *enaddr = NULL;
 #if NCARP > 0
 	u_int8_t *ether_shost = NULL;
@@ -695,14 +723,25 @@ in_arpinput(m)
 			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
-		if (la->la_hold) {
-			struct mbuf *n = la->la_hold;
-			la->la_hold = NULL;
-			(*ac->ac_if.if_output)(&ac->ac_if, n, rt_key(rt), rt);
-			if (la->la_hold == n) {
-				/* n is back in la_hold. Discard. */
-				m_freem(la->la_hold);
-				la->la_hold = NULL;
+		while ((mh = la->la_hold_head) != NULL) {
+			if ((la->la_hold_head = mh->m_nextpkt) == NULL)
+				la->la_hold_tail = NULL;
+			la->la_hold_count--;
+			la_hold_total--;
+			mt = la->la_hold_tail;
+
+			(*ac->ac_if.if_output)(&ac->ac_if, mh, rt_key(rt), rt);
+
+			if (la->la_hold_tail && la->la_hold_tail == mh) {
+				/* mbuf is back in queue. Discard. */
+				la->la_hold_tail = mt;
+				if (la->la_hold_tail)
+					la->la_hold_tail->m_nextpkt = NULL;
+				else
+					la->la_hold_head = NULL;
+				la->la_hold_count--;
+				la_hold_total--;
+				m_freem(mh);
 			}
 		}
 	}
@@ -1065,8 +1104,8 @@ db_print_llinfo(li)
 	if (li == 0)
 		return;
 	la = (struct llinfo_arp *)li;
-	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
-	    la->la_rt, la->la_hold, la->la_asked);
+	db_printf("  la_rt=%p la_hold_head=%p, la_asked=0x%lx\n",
+	    la->la_rt, la->la_hold_head, la->la_asked);
 }
 
 /*
