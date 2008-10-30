@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.85 2008/10/28 21:44:25 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.86 2008/10/30 19:20:13 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1337,6 +1337,12 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
 		goto done;
 
+	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
+		/* go do hotspares */
+		rv = mfi_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
+		goto done;
+	}
+
 	i = bv->bv_volid;
 	mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol target %#x\n",
@@ -1345,12 +1351,6 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
 	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
 		goto done;
-
-	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
-		/* go do hotspares */
-		rv = mfi_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
-		goto done;
-	}
 
 	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
 
@@ -1744,8 +1744,10 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	if (volid < cfg->mfc_no_ld)
 		goto freeme; /* not a hotspare */
 
-	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs))
+	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs)) {
+		/* deal with unused disks */
 		goto freeme; /* not a hotspare */
+	}
 
 	/* offset into hotspare structure */
 	i = volid - cfg->mfc_no_ld;
