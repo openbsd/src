@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.27 2008/10/26 11:55:22 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.28 2008/10/30 18:14:51 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2008 $
+.Dd $Mdocdate: October 30 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -356,3 +356,14 @@ It should be smaller for simpler ones.
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
 16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
+.Pp
+In server mode
+.Nm
+will continue playing and recording even if there are no clients.
+This consumes system resources unnecessarily, thus starting
+.Nm
+at system or session startup is not recommended.
+.Pp
+In server mode, a full-duplex
+.Xr audio 4
+device is required.
