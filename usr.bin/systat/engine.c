@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.4 2008/07/22 03:00:23 canacar Exp $	 */
+/* $Id: engine.c,v 1.5 2008/10/31 06:50:09 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -517,7 +517,7 @@ add_view(field_view *fv)
 }
 
 int
-set_view(char *opt)
+set_view(const char *opt)
 {
 	struct view_ent *ve, *vm = NULL;
 	field_view *v;
@@ -815,7 +815,7 @@ print_fld_uint(field_def *fld, unsigned int size)
 /* ordering */
 
 void
-set_order(char *opt)
+set_order(const char *opt)
 {
 	order_type *o;
 
@@ -1083,7 +1083,7 @@ cmd_keyboard(int ch)
 	case 0x0d:
 	{
 		struct command * c = command_set(NULL, NULL);
-		c->exec();
+		c->exec(cmdbuf);
 		break;
 	}
 	case KEY_BACKSPACE:

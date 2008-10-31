@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.45 2008/10/31 06:06:46 canacar Exp $	 */
+/* $Id: main.c,v 1.46 2008/10/31 06:50:09 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -71,9 +71,9 @@ int	CMDLINE;
 
 /* command prompt */
 
-void cmd_delay(void);
-void cmd_count(void);
-void cmd_compat(void);
+void cmd_delay(const char *);
+void cmd_count(const char *);
+void cmd_compat(const char *);
 
 struct command cm_compat = {"Command", cmd_compat};
 struct command cm_delay = {"Seconds to delay", cmd_delay};
@@ -291,34 +291,45 @@ show_help(void)
 }
 
 void
-cmd_compat(void)
+cmd_compat(const char *buf)
 {
-	char *s;
+	const char *s;
 
-	if (strcasecmp(cmdbuf, "help") == 0) {
+	if (strcasecmp(buf, "help") == 0) {
 		show_help();
 		need_update = 1;
 		return;
 	}
-	if (strcasecmp(cmdbuf, "quit") == 0 || strcasecmp(cmdbuf, "q") == 0) {
+	if (strcasecmp(buf, "quit") == 0 || strcasecmp(buf, "q") == 0) {
 		gotsig_close = 1;
 		return;
 	}
+	if (strcasecmp(buf, "stop") == 0) {
+		paused = 1;
+		gotsig_alarm = 1;
+		return;
+	}
+	if (strncasecmp(buf, "start", 5) == 0) {
+		paused = 0;
+		gotsig_alarm = 1;
+		cmd_delay(buf + 6);
+		return;
+	}
 
-	for (s = cmdbuf; *s && strchr("0123456789+-.eE", *s) != NULL; s++)
+	for (s = buf; *s && strchr("0123456789+-.eE", *s) != NULL; s++)
 		;
 	if (*s) {
-		if (set_view(cmdbuf))
-			error("Invalid/ambigious view: %s", cmdbuf);
+		if (set_view(buf))
+			error("Invalid/ambigious view: %s", buf);
 	} else
-		cmd_delay();
+		cmd_delay(buf);
 }
 
 void
-cmd_delay(void)
+cmd_delay(const char *buf)
 {
 	double del;
-	del = atof(cmdbuf);
+	del = atof(buf);
 
 	if (del > 0) {
 		udelay = (useconds_t)(del * 1000000);
@@ -328,10 +339,10 @@ cmd_delay(void)
 }
 
 void
-cmd_count(void)
+cmd_count(const char *buf)
 {
 	int ms;
-	ms = atoi(cmdbuf);
+	ms = atoi(buf);
 
 	if (ms <= 0 || ms > lines - HEADER_LINES)
 		maxprint = lines - HEADER_LINES;

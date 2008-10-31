@@ -1,4 +1,4 @@
-/* $Id: engine.h,v 1.2 2008/07/22 03:00:23 canacar Exp $	 */
+/* $Id: engine.h,v 1.3 2008/10/31 06:50:09 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -92,7 +92,7 @@ typedef struct {
 
 struct command {
 	char *prompt;
-	void ( *exec)(void);
+	void ( *exec)(const char *);
 };
 
 
@@ -124,11 +124,11 @@ void show_field(field_def *fld);
 void field_setup(void);
 
 void add_view(field_view *fv);
-int set_view(char *opt);
+int set_view(const char *opt);
 void next_view(void);
 void prev_view(void);
 
-void set_order(char *opt);
+void set_order(const char *opt);
 void next_order(void);
 
 void setup_term(int maxpr);
@@ -162,7 +162,6 @@ extern field_view *curr_view;
 extern struct view_manager *curr_mgr;
 
 extern char tmp_buf[MAX_LINE_BUF];
-extern char cmdbuf[MAX_LINE_BUF];
 
 extern int curr_line; /* XXX temp */
 extern u_int32_t num_disp;
