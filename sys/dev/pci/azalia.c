@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.65 2008/10/31 06:52:15 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.66 2008/10/31 21:39:50 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -721,7 +721,7 @@ azalia_attach_intr(struct device *self)
 	/* Use the first audio codec */
 	az->codecno = c;
 
-	printf("%s: codec[s]: ", XNAME(az));
+	printf("%s: codecs: ", XNAME(az));
 	for (i = 0; i < az->ncodecs; i++) {
 		azalia_print_codec(&az->codecs[i]);
 		if (i < az->ncodecs - 1)
@@ -1455,8 +1455,8 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	if (bits_rates & COP_PCM_B32)
 		nbits++;
 	if (nbits == 0) {
-		printf("%s: %s/%d invalid PCM format: 0x%8.8x\n",
-		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
+		printf("%s: invalid DAC PCM format: 0x%8.8x\n",
+		    XNAME(this->az), bits_rates);
 		return -1;
 	}
 	variation = group->nconv * nbits;
@@ -1476,8 +1476,8 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	if (bits_rates & COP_PCM_B32)
 		nbits++;
 	if (nbits == 0) {
-		printf("%s: %s/%d invalid PCM format: 0x%8.8x\n",
-		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
+		printf("%s: invalid ADC PCM format: 0x%8.8x\n",
+		    XNAME(this->az), bits_rates);
 		return -1;
 	}
 	variation += group->nconv * nbits;
