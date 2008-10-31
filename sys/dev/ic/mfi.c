@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.86 2008/10/30 19:20:13 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.87 2008/10/31 21:39:04 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -93,6 +93,7 @@ void		mfi_mgmt_done(struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
+int		mfi_bio_getitall(struct mfi_softc *);
 int		mfi_ioctl_inq(struct mfi_softc *, struct bioc_inq *);
 int		mfi_ioctl_vol(struct mfi_softc *, struct bioc_vol *);
 int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
@@ -441,7 +442,6 @@ mfi_get_info(struct mfi_softc *sc)
 		return (1);
 
 #ifdef MFI_DEBUG
-
 	for (i = 0; i < sc->sc_info.mci_image_component_count; i++) {
 		printf("%s: active FW %s Version %s date %s time %s\n",
 		    DEVNAME(sc),
@@ -1296,31 +1296,108 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 }
 
 int
+mfi_bio_getitall(struct mfi_softc *sc)
+{
+	int			i, d, size, rv = EINVAL;
+	uint8_t			mbox[MFI_MBOX_SIZE];
+	struct mfi_conf		*cfg = NULL;
+	struct mfi_ld_details	*ld_det = NULL;
+
+	/* get info */
+	if (mfi_get_info(sc)) {
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_get_info failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		goto done;
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+		goto done;
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		goto done;
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+		goto done;
+
+	/* replace current pointer with enw one */
+	if (sc->sc_cfg)
+		free(sc->sc_cfg, M_DEVBUF);
+	sc->sc_cfg = cfg;
+
+	/* get all ld info */
+	if (mfi_mgmt(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
+		goto done;
+
+	/* get memory for all ld structures */
+	size = cfg->mfc_no_ld * sizeof(struct mfi_ld_details);
+	if (sc->sc_ld_sz != size) {
+		if (sc->sc_ld_details)
+			free(sc->sc_ld_details, M_DEVBUF);
+
+		ld_det = malloc( size, M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (ld_det == NULL)
+			goto done;
+		sc->sc_ld_sz = size;
+		sc->sc_ld_details = ld_det;
+	}
+
+	/* find used physical disks */
+	size = sizeof(struct mfi_ld_details);
+	for (i = 0, d = 0; i < cfg->mfc_no_ld; i++) {
+		mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN, size,
+		    &sc->sc_ld_details[i], mbox))
+			goto done;
+
+		d += sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
+		    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
+	}
+	sc->sc_no_pd = d;
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
 mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 {
-	struct mfi_conf		*cfg;
 	int			rv = EINVAL;
+	struct mfi_conf		*cfg = NULL;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_inq\n", DEVNAME(sc));
 
-	if (mfi_get_info(sc)) {
-		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_inq failed\n",
+	if (mfi_bio_getitall(sc)) {
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_bio_getitall failed\n",
 		    DEVNAME(sc));
-		return (EIO);
+		goto done;
 	}
 
-	/* get figures */
-	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
-		goto freeme;
+	/* count unused disks as volumes */
+	if (sc->sc_cfg == NULL)
+		goto done;
+	cfg = sc->sc_cfg;
 
-	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
-	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs;
 	bi->bi_nodisk = sc->sc_info.mci_pd_disks_present;
+	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs;
+#if notyet
+	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs +
+	    (bi->bi_nodisk - sc->sc_no_pd);
+#endif
+	/* tell bio who we are */
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
 
 	rv = 0;
-freeme:
-	free(cfg, M_DEVBUF);
+done:
 	return (rv);
 }
 
@@ -1328,30 +1405,24 @@ int
 mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 {
 	int			i, per, rv = EINVAL;
-	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
 	    DEVNAME(sc), bv->bv_volid);
 
-	if (mfi_mgmt(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
+	/* we really could skip and expect that inq took care of it */
+	if (mfi_bio_getitall(sc)) {
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_bio_getitall failed\n",
+		    DEVNAME(sc));
 		goto done;
+	}
 
 	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
-		/* go do hotspares */
+		/* go do hotspares & unused disks */
 		rv = mfi_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
 		goto done;
 	}
 
 	i = bv->bv_volid;
-	mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
-	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol target %#x\n",
-	    DEVNAME(sc), mbox[0]);
-
-	if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
-		goto done;
-
 	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
 
 	switch(sc->sc_ld_list.mll_list[i].mll_state) {
@@ -1376,14 +1447,14 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	}
 
 	/* additional status can modify MFI status */
-	switch (sc->sc_ld_details.mld_progress.mlp_in_prog) {
+	switch (sc->sc_ld_details[i].mld_progress.mlp_in_prog) {
 	case MFI_LD_PROG_CC:
 	case MFI_LD_PROG_BGI:
 		bv->bv_status = BIOC_SVSCRUB;
-		per = (int)sc->sc_ld_details.mld_progress.mlp_cc.mp_progress;
+		per = (int)sc->sc_ld_details[i].mld_progress.mlp_cc.mp_progress;
 		bv->bv_percent = (per * 100) / 0xffff;
 		bv->bv_seconds =
-		    sc->sc_ld_details.mld_progress.mlp_cc.mp_elapsed_seconds;
+		    sc->sc_ld_details[i].mld_progress.mlp_cc.mp_elapsed_seconds;
 		break;
 
 	case MFI_LD_PROG_FGI:
@@ -1396,15 +1467,15 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	 * The RAID levels are determined per the SNIA DDF spec, this is only
 	 * a subset that is valid for the MFI contrller.
 	 */
-	bv->bv_level = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_pri_raid;
-	if (sc->sc_ld_details.mld_cfg.mlc_parm.mpa_sec_raid ==
+	bv->bv_level = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_pri_raid;
+	if (sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_sec_raid ==
 	    MFI_DDF_SRL_SPANNED)
 		bv->bv_level *= 10;
 
-	bv->bv_nodisk = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span *
-	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
+	bv->bv_nodisk = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
+	    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
 
-	bv->bv_size = sc->sc_ld_details.mld_size * 512; /* bytes per block */
+	bv->bv_size = sc->sc_ld_details[i].mld_size * 512; /* bytes per block */
 
 	rv = 0;
 done:
@@ -1422,26 +1493,20 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	char			vend[8+16+4+1];
 	int			rv = EINVAL;
 	int			arr, vol, disk, span;
-	uint32_t		size;
 	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
 	    DEVNAME(sc), bd->bd_diskid);
 
+	/* we really could skip and expect that inq took care of it */
+	if (mfi_bio_getitall(sc)) {
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_bio_getitall failed\n",
+		    DEVNAME(sc));
+		return (rv);
+	}
+	cfg = sc->sc_cfg;
+
 	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
-
-	/* send single element command to retrieve size for full structure */
-	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
-		goto freeme;
-
-	size = cfg->mfc_size;
-	free(cfg, M_DEVBUF);
-
-	/* memory for read config */
-	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
-		goto freeme;
 
 	ar = cfg->mfc_array;
 	vol = bd->bd_volid;
@@ -1494,7 +1559,6 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	default:
 		bd->bd_status = BIOC_SDINVALID;
 		break;
-
 	}
 
 	/* get the remaining fields */
@@ -1522,7 +1586,6 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	rv = 0;
 freeme:
 	free(pd, M_DEVBUF);
-	free(cfg, M_DEVBUF);
 
 	return (rv);
 }
@@ -1744,10 +1807,8 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	if (volid < cfg->mfc_no_ld)
 		goto freeme; /* not a hotspare */
 
-	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs)) {
-		/* deal with unused disks */
+	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs))
 		goto freeme; /* not a hotspare */
-	}
 
 	/* offset into hotspare structure */
 	i = volid - cfg->mfc_no_ld;
@@ -1770,7 +1831,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_VD:
 		vdhs = bio_hs;
 		vdhs->bv_status = BIOC_SVONLINE;
-		vdhs->bv_size = pd->mpd_size / 2; /* XXX why? / 2 */
+		vdhs->bv_size = pd->mpd_size / 2 * 1024; /* XXX why? */
 		vdhs->bv_level = -1; /* hotspare */
 		vdhs->bv_nodisk = 1;
 		break;
@@ -1778,7 +1839,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_SD:
 		sdhs = bio_hs;
 		sdhs->bd_status = BIOC_SDHOTSPARE;
-		sdhs->bd_size = pd->mpd_size / 2; /* XXX why? / 2 */
+		sdhs->bd_size = pd->mpd_size / 2 * 1024; /* XXX why? */
 		sdhs->bd_channel = pd->mpd_enc_idx;
 		sdhs->bd_target = pd->mpd_enc_slot;
 		inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;

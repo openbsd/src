@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.33 2008/10/27 03:11:58 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.34 2008/10/31 21:39:04 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -133,10 +133,14 @@ struct mfi_softc {
 	uint32_t		sc_max_sgl;
 	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
-	/* XXX these struct should be local to mgmt function */
+
+	/* bio */
+	struct mfi_conf		*sc_cfg;
 	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
-	struct mfi_ld_details	sc_ld_details;
+	struct mfi_ld_details	*sc_ld_details; /* array to all logical disks */
+	int			sc_no_pd; /* used physical disks */
+	int			sc_ld_sz; /* sizeof sc_ld_details */
 
 	/* all commands */
 	struct mfi_ccb		*sc_ccb;
