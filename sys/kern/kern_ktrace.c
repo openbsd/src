@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.43 2008/05/22 17:04:59 thib Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.44 2008/10/31 17:15:30 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -53,22 +53,23 @@
 #include <uvm/uvm_extern.h>
 
 void ktrinitheader(struct ktr_header *, struct proc *, int);
-int ktrops(struct proc *, struct proc *, int, int, struct vnode *);
+int ktrops(struct proc *, struct proc *, int, int, struct vnode *, int *);
 int ktrsetchildren(struct proc *, struct proc *, int, int,
-			struct vnode *);
+			struct vnode *, int *);
 int ktrwrite(struct proc *, struct ktr_header *);
 int ktrcanset(struct proc *, struct proc *);
 
 /*
  * Change the trace vnode in a correct way (to avoid races).
+ * Returns 1 if a vrele() should be done later.
  */
-void
+int
 ktrsettracevnode(struct proc *p, struct vnode *newvp)
 {
 	struct vnode *vp;
 
 	if (p->p_tracep == newvp)	/* avoid work */
-		return;
+		return (0);
 
 	if (newvp != NULL)
 		VREF(newvp);
@@ -77,7 +78,8 @@ ktrsettracevnode(struct proc *p, struct vnode *newvp)
 	p->p_tracep = newvp;
 
 	if (vp != NULL)
-		vrele(vp);
+		return (1);	/* caller must do a vrele() after */
+	return (0);
 }
 
 void
@@ -294,7 +296,7 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	int facs = SCARG(uap, facs) & ~((unsigned) KTRFAC_ROOT);
 	int ops = KTROP(SCARG(uap, ops));
 	int descend = SCARG(uap, ops) & KTRFLAG_DESCEND;
-	int ret = 0;
+	int ret = 0, nvrele = 0;
 	int error = 0;
 	struct nameidata nd;
 
@@ -326,7 +328,7 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 			if (p->p_tracep == vp) {
 				if (ktrcanset(curp, p)) {
 					p->p_traceflag = 0;
-					ktrsettracevnode(p, NULL);
+					nvrele += ktrsettracevnode(p, NULL);
 				} else
 					error = EPERM;
 			}
@@ -354,10 +356,10 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		}
 		LIST_FOREACH(p, &pg->pg_members, p_pglist)
 			if (descend)
-				ret |= ktrsetchildren(curp, p, ops, facs, vp);
+				ret |= ktrsetchildren(curp, p, ops, facs, vp,
+				    &nvrele);
 			else 
-				ret |= ktrops(curp, p, ops, facs, vp);
-					
+				ret |= ktrops(curp, p, ops, facs, vp, &nvrele);
 	} else {
 		/*
 		 * by pid
@@ -368,27 +370,30 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 			goto done;
 		}
 		if (descend)
-			ret |= ktrsetchildren(curp, p, ops, facs, vp);
+			ret |= ktrsetchildren(curp, p, ops, facs, vp, &nvrele);
 		else
-			ret |= ktrops(curp, p, ops, facs, vp);
+			ret |= ktrops(curp, p, ops, facs, vp, &nvrele);
 	}
 	if (!ret)
 		error = EPERM;
 done:
-	if (vp != NULL)
+	if (vp != NULL) {
+		while (nvrele--)
+			vrele(vp);
 		(void) vn_close(vp, FWRITE, curp->p_ucred, curp);
+	}
 	curp->p_traceflag &= ~KTRFAC_ACTIVE;
 	return (error);
 }
 
 int
-ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp)
+ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp,
+    int *vrelep)
 {
-
 	if (!ktrcanset(curp, p))
 		return (0);
 	if (ops == KTROP_SET) {
-		ktrsettracevnode(p, vp);
+		*vrelep += ktrsettracevnode(p, vp);
 		p->p_traceflag |= facs;
 		if (curp->p_ucred->cr_uid == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
@@ -397,7 +402,7 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp)
 		if (((p->p_traceflag &= ~facs) & KTRFAC_MASK) == 0) {
 			/* no more tracing */
 			p->p_traceflag = 0;
-			ktrsettracevnode(p, NULL);
+			*vrelep += ktrsettracevnode(p, NULL);
 		}
 	}
 
@@ -413,14 +418,14 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp)
 
 int
 ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
-    struct vnode *vp)
+    struct vnode *vp, int *vrelep)
 {
 	struct proc *p;
 	int ret = 0;
 
 	p = top;
 	for (;;) {
-		ret |= ktrops(curp, p, ops, facs, vp);
+		ret |= ktrops(curp, p, ops, facs, vp, vrelep);
 		/*
 		 * If this process has children, descend to them next,
 		 * otherwise do any siblings, and if done with this level,
@@ -446,7 +451,7 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 {
 	struct uio auio;
 	struct iovec aiov[2];
-	int error;
+	int error, nvrele = 0;
 	struct vnode *vp = p->p_tracep;
 
 	if (vp == NULL)
@@ -479,9 +484,11 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_tracep == vp) {
 			p->p_traceflag = 0;
-			ktrsettracevnode(p, NULL);
+			nvrele += ktrsettracevnode(p, NULL);
 		}
 	}
+	while (nvrele--)
+		vrele(vp);
 
 	return error;
 }

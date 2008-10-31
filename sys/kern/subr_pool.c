@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.64 2008/10/24 00:08:43 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.65 2008/10/31 17:15:30 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ pr_find_pagehead(struct pool *pp, caddr_t page)
  */
 void
 pr_rmpage(struct pool *pp, struct pool_item_header *ph,
-     struct pool_pagelist *pq)
+    struct pool_pagelist *pq)
 {
 
 	/*
@@ -226,7 +226,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
 		panic("pool_init: pool item size (%lu) too large",
-		      (u_long)size);
+		    (u_long)size);
 #endif
 
 	/*
@@ -314,7 +314,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/* Insert this into the list of all pools. */
-	TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
+	TAILQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
 }
 
 void
@@ -393,6 +393,9 @@ pool_do_get(struct pool *pp, int flags)
 	struct pool_item_header *ph;
 	void *v;
 	int slowdown = 0;
+#ifdef DIAGNOSTIC
+	int i, *ip;
+#endif
 
 #ifdef DIAGNOSTIC
 	if ((flags & PR_WAITOK) != 0)
@@ -438,7 +441,7 @@ startover:
 		 */
 		if (pp->pr_hardlimit_warning != NULL &&
 		    ratecheck(&pp->pr_hardlimit_warning_last,
-			      &pp->pr_hardlimit_ratecap))
+		    &pp->pr_hardlimit_ratecap))
 			log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
 
 		pp->pr_nfail++;
@@ -512,10 +515,18 @@ startover:
 #endif
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
-		panic("pool_do_get(%s): free list modified: magic=%x; page %p;"
-		       " item addr %p",
-			pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
+	if (__predict_false(pi->pi_magic != PI_MAGIC))
+		panic("pool_do_get(%s): free list modified: "
+		    "page %p; item addr %p; offset 0x%x=0x%x",
+		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
+	for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
+	    i < pp->pr_size / sizeof(int); i++) {
+		if (ip[i] != PI_MAGIC) {
+			panic("pool_do_get(%s): free list modified: "
+			    "page %p; item addr %p; offset 0x%x=0x%x",
+			    pp->pr_wchan, ph->ph_page, pi,
+			    i * sizeof(int), ip[i]);
+		}
 	}
 #endif
 
@@ -593,6 +604,12 @@ pool_do_put(struct pool *pp, void *v)
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
 	caddr_t page;
+#ifdef DIAGNOSTIC
+	int i, *ip;
+#endif
+
+	if (v == NULL)
+		panic("pool_put of NULL");
 
 #ifdef MALLOC_DEBUG
 	if (pp->pr_roflags & PR_DEBUG) {
@@ -623,15 +640,8 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 #ifdef DIAGNOSTIC
 	pi->pi_magic = PI_MAGIC;
-#endif
-#ifdef DEBUG
-	{
-		int i, *ip = v;
-
-		for (i = 0; i < pp->pr_size / sizeof(int); i++) {
-			*ip++ = PI_MAGIC;
-		}
-	}
+	for (ip = v, i = 0; i < pp->pr_size / sizeof(int); i++)
+		ip[i] = PI_MAGIC;
 #endif
 
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
@@ -781,6 +791,14 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 #ifdef DIAGNOSTIC
 		pi->pi_magic = PI_MAGIC;
+		{
+			int i, *ip = (int *)pi;
+	
+			for (i = sizeof(*pi)/sizeof(int);
+			    i < pp->pr_size / sizeof(int); i++) {
+				ip[i] = PI_MAGIC;
+			}
+		}
 #endif
 		cp = (caddr_t)(cp + pp->pr_size);
 	}
@@ -1103,6 +1121,8 @@ db_show_all_pools(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 		PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
 		PRWORD(ovflw, " %*s", 6, 1, maxp);
 		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
+
+		pool_chk(pp, pp->pr_wchan);
 	}
 }
 
@@ -1112,16 +1132,19 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	struct pool_item *pi;
 	caddr_t page;
 	int n;
+#ifdef DIAGNOSTIC
+	int i, *ip;
+#endif
 
 	page = (caddr_t)((u_long)ph & pp->pr_alloc->pa_pagemask);
+	printf("checking page %x\n", page);
 	if (page != ph->ph_page &&
 	    (pp->pr_roflags & PR_PHINPAGE) != 0) {
 		if (label != NULL)
 			printf("%s: ", label);
-		printf("pool(%p:%s): page inconsistency: page %p;"
-		       " at page head addr %p (p %p)\n", pp,
-			pp->pr_wchan, ph->ph_page,
-			ph, page);
+		printf("pool(%p:%s): page inconsistency: page %p; "
+		    "at page head addr %p (p %p)\n",
+		    pp, pp->pr_wchan, ph->ph_page, ph, page);
 		return 1;
 	}
 
@@ -1133,13 +1156,24 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 		if (pi->pi_magic != PI_MAGIC) {
 			if (label != NULL)
 				printf("%s: ", label);
-			printf("pool(%s): free list modified: magic=%x;"
-			       " page %p; item ordinal %d;"
-			       " addr %p (p %p)\n",
-				pp->pr_wchan, pi->pi_magic, ph->ph_page,
-				n, pi, page);
-			panic("pool");
+			printf("pool(%s): free list modified: "
+			    "page %p; item ordinal %d; addr %p "
+			    "(p %p); offset 0x%x=0x%x\n",
+			    pp->pr_wchan, ph->ph_page, n, pi, page,
+			    0, pi->pi_magic);
 		}
+		for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
+		    i < pp->pr_size / sizeof(int); i++) {
+			if (ip[i] != PI_MAGIC) {
+				printf("pool(%s): free list modified: "
+				    "page %p; item ordinal %d; addr %p "
+				    "(p %p); offset 0x%x=0x%x\n",
+				    pp->pr_wchan, ph->ph_page, n, pi,
+				    page,
+				    i * sizeof(int), ip[i]);
+			}
+		}
+
 #endif
 		page =
 		    (caddr_t)((u_long)pi & pp->pr_alloc->pa_pagemask);
@@ -1149,9 +1183,8 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 		if (label != NULL)
 			printf("%s: ", label);
 		printf("pool(%p:%s): page inconsistency: page %p;"
-		       " item ordinal %d; addr %p (p %p)\n", pp,
-			pp->pr_wchan, ph->ph_page,
-			n, pi, page);
+		    " item ordinal %d; addr %p (p %p)\n", pp,
+		    pp->pr_wchan, ph->ph_page, n, pi, page);
 		return 1;
 	}
 	return 0;
@@ -1163,26 +1196,13 @@ pool_chk(struct pool *pp, const char *label)
 	struct pool_item_header *ph;
 	int r = 0;
 
-	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
-		r = pool_chk_page(pp, label, ph);
-		if (r) {
-			goto out;
-		}
-	}
-	LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
-		r = pool_chk_page(pp, label, ph);
-		if (r) {
-			goto out;
-		}
-	}
-	LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
-		r = pool_chk_page(pp, label, ph);
-		if (r) {
-			goto out;
-		}
-	}
+	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist)
+		r += pool_chk_page(pp, label, ph);
+	LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist)
+		r += pool_chk_page(pp, label, ph);
+	LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist)
+		r += pool_chk_page(pp, label, ph);
 
-out:
 	return (r);
 }
 #endif
