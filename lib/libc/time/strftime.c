@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.18 2007/12/29 22:26:51 millert Exp $ */
+/*	$OpenBSD: strftime.c,v 1.19 2008/10/31 14:12:17 millert Exp $ */
 #include "private.h"
 
 /*
@@ -227,7 +227,7 @@ label:
 				{
 				int warn2 = IN_SOME;
 
-				pt = _fmt(Locale->c_fmt, t, pt, ptlim, warnp);
+				pt = _fmt(Locale->c_fmt, t, pt, ptlim, &warn2);
 				if (warn2 == IN_ALL)
 					warn2 = IN_THIS;
 				if (warn2 > *warnp)
