@@ -203,10 +203,6 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	 */
 	dev_priv->allow_batchbuffer = 1;
 
-	/* Enable vblank on pipe A for older X servers
-	 */
-	dev_priv->vblank_pipe = DRM_I915_VBLANK_PIPE_A;
-
 	return 0;
 }
 

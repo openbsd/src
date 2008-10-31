@@ -686,21 +686,6 @@ void i915_disable_vblank(struct drm_device *dev, int plane)
 	(void)I915_READ(pipestat_reg);
 }
 
-/* Set the vblank monitor pipe
- */
-int i915_vblank_pipe_set(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-
-	if (!dev_priv) {
-		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
-	}
-
-	return 0;
-}
-
 int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv)
 {
@@ -753,7 +738,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 
 	seqtype = swap->seqtype & (_DRM_VBLANK_RELATIVE | _DRM_VBLANK_ABSOLUTE);
 
-	if (!(dev_priv->vblank_pipe & (1 << pipe))) {
+	if ((1 << pipe && DRM_I915_VBLANK_PIPE_A|DRM_I915_VBLANK_PIPE_B) == 0) {
 		DRM_ERROR("Invalid pipe %d\n", pipe);
 		return EINVAL;
 	}
@@ -901,7 +886,6 @@ int i915_driver_irq_postinstall(struct drm_device * dev)
 	if (ret)
 		return ret;
 
-	dev_priv->vblank_pipe = DRM_I915_VBLANK_PIPE_A | DRM_I915_VBLANK_PIPE_B;
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */
 
 	I915_WRITE(IMR, dev_priv->irq_mask_reg);
@@ -925,8 +909,6 @@ void i915_driver_irq_uninstall(struct drm_device * dev)
 
 	if (!dev_priv)
 		return;
-
-	dev_priv->vblank_pipe = 0;
 
 	I915_WRITE(HWSTAM, 0xffffffff);
 	I915_WRITE(IMR, 0xffffffff);
