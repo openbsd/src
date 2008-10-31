@@ -1,0 +1,414 @@
+#!/usr/bin/perl
+#
+# $OpenBSD: mdoclint,v 1.1 2008/10/31 14:11:04 jmc Exp $
+# $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
+#
+# Copyright (c) 2001-2008 Thomas Klausner
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR, THOMAS KLAUSNER,
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+use strict;
+use warnings;
+
+use Getopt::Std;
+
+$| = 1;
+
+use vars qw(
+	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_m
+	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v
+	$opt_X $opt_x
+);
+	
+my $fn;
+my $file;
+my $line;
+my $arch=`uname -m`;
+my $options="aDdeFfHhmnoPprSsvXx";
+
+my $usage = "mdoclint: verify man page correctness\n".
+    "usage:\tmdoclint [-$options] file ...\n\n".
+    "  -a\twarn about SEE ALSO section problems\n".
+    "  -D\twarn about bad casing and archs in .Dt\n".
+    "  -d\twarn about bad date strings (in .Dd only)\n".
+    "  -e\twarn about unsorted errors (for functions)\n".
+    "  -F\tfix whitespace problems (asks before overwriting)\n".
+    "  -f\twarn about possible incorrect .Fn syntax\n".
+    "  -H\twarn about characters that produce problems in HTML output\n".
+    "  -h\tdisplay this help text\n".
+    "  -m\twarn about man pages that are not in mdoc(7) format\n".
+    "  -n\twarn about .Nd's ending in '.'\n".
+    "  -o\twarn about non-empty .Os strings\n".
+    "  -P\twarn about paragraph problems\n".
+    "  -p\twarn about punctuation problems\n".
+    "  -r\twarn about missing RCS Id\n".
+    "  -S\twarn about any .Sh weirdness\n".
+    "  -s\twarn about whitespace problems\n".
+    "  -v\tverbose output\n".
+    "  -X\twarn about explicit mentions of FreeBSD, NetBSD, or OpenBSD\n".
+    "  -x\twarn about cross-references with missing targets\n\n".
+    "Default is -aDdefHmnoPprSsXx if no flag is specified.\n";
+
+my %short = (
+    "Free" => ".Fx",
+    "Net" => ".Nx",
+    "Open" => ".Ox"
+);
+
+my %sections = (
+		"NAME" => 1,
+		"SYNOPSIS" => 2,
+		"DESCRIPTION" => 3,
+		"RETURN VALUES" => 4,
+		"ENVIRONMENT" => 5,
+		"FILES" => 6,
+		"EXAMPLES" => 7,
+		"DIAGNOSTICS" => 8,
+		"ERRORS" => 9,
+		"SEE ALSO" => 10,
+		"STANDARDS" => 11,
+		"HISTORY" => 12,
+		"AUTHORS" => 13,
+		"CAVEATS" => 14,
+		"BUGS" => 15
+		);
+
+sub debug {
+    print STDOUT "debug: $fn:$line: $_[0]\n" if $opt_v;
+}
+
+sub warning {
+    print STDOUT "$fn:$line: $_[0]\n";
+}
+
+sub handle_options {
+    getopts($options);
+
+    if ($opt_h) {
+	print $usage;
+	exit 0;
+    };
+
+    # default to all warnings
+    if (not $opt_a and not $opt_D and not $opt_d and not $opt_e and
+	not $opt_f and
+	not $opt_H and not $opt_m and not $opt_n and not $opt_o and
+	not $opt_P and not $opt_p and not $opt_r and not $opt_S and
+	not $opt_s and not $opt_X and not $opt_x) {
+	$opt_a = $opt_D = $opt_d = $opt_e = $opt_f =
+	    $opt_H = $opt_m = $opt_n = $opt_o = $opt_P =
+	    $opt_p = $opt_r = $opt_S = $opt_s =
+	    $opt_X = $opt_x = 1;
+    }
+}
+
+sub verify_xref {
+    # try to find corresponding man page
+    my $xreftarget = "/usr/share/man/cat$_[2]/$_[1].0";
+    my $xreftarget2 = "/usr/share/man/cat$_[2]/$arch/$_[1].0";
+    my $xreftarget3 = "./$_[1].$_[2]";
+    if ("$_[1].$_[2]" eq $fn) {
+	warning("Xref to itself (use .Nm instead)");
+    }
+    if (not -f $xreftarget and not -f $xreftarget2
+	and not -f $xreftarget3) {
+	warning("$_[0]trailing Xref to $_[1]($_[2])$_[3]");
+	return 0;
+    }
+    return 1;
+}
+
+sub handle_file {
+    my $mandoc_p = 1;
+    my $destruct;
+    my $all = "";
+    my $last = "";
+    my $changes = 0;
+    my $rcsidseen = 0;
+#    my $section = 0;
+    my $lastsh = 0;
+    my $saname = "";
+    my $sasection = 0;
+    my $sarest = ",";
+    my $insa = 0;
+    my $inliteral = 0;
+    my %shseen = ();
+    my $last_error_name = "";
+    my $current_section = "";
+
+    $line = 0;
+    $fn = $_[0];
+    open INPUT, $_[0] or die "can't open input file $_[0]";
+
+    while (<INPUT>) {
+	$line++;
+	chomp();
+	if (/\$OpenBSD.*\$/) {
+	    $rcsidseen = 1;
+	}
+	if (/^\.TH/) {
+	    warning("not mandoc") if $opt_m;
+	    $mandoc_p = 0;
+#	    /^.TH\s*[\w-_".]+\s*([1-9])/;
+#	    $section = $1;
+	}
+#	if (/^.Dt\s*[\w-_".]+\s*([1-9])/) {
+#	    $section = $1;
+#	}
+	if ($opt_D and /^.Dt/) {
+	    if (! /^.Dt\s+([A-Z0-9._-]+)\s+[1-9](\s+(alpha|amd64|arm|armish|aviion|cats|hp300|hppa|hppa64|i386|landisk|luna88k|mac68k|macppc|mvme68k|mvme88k|sgi|socppc|sparc|sparc64|vax|zaurus)|)$/)  {
+		warning("bad .Dt: `$_'");
+	    }
+	}
+
+	if ($opt_a) {
+	    if ($insa eq 0) {
+		if (/^.Sh\s+SEE ALSO$/) {
+		    $insa = 1;
+		}
+	    } elsif ($insa eq 1) {
+		if (/^.Sh\s+/) {
+		    if (not $sarest eq "") {
+			warning("unneeded characters at end of SEE ".
+				"ALSO: `$sarest'");
+			# to avoid a second warning at EOF
+			$sarest = "";
+		    }
+		    # finished SEE ALSO section
+		    $insa = 2;
+		}
+		if (/^.Xr\s+(\S+)\s+([1-9]+)\s?(.*)?$/) {
+		    my $newsaname = $1;
+		    my $newsasection = $2;
+		    my $newsarest = $3;
+		    $newsaname =~ s/^\\&//;
+		    if ($sasection > $newsasection
+			or ($sasection eq $newsasection and
+			    ($saname cmp $newsaname) > 0)) {
+			warning("SEE ALSO: `.Xr $saname $sasection' ".
+				"should be after `.Xr $newsaname $newsasection'");
+		    }
+		    if (not $sarest eq ",") {
+			warning("SEE ALSO: .Xr not separated by ".
+				"comma, but `$sarest'");
+		    }
+		    $saname = $newsaname;
+		    $sasection = $newsasection;
+		    $sarest = $newsarest;
+		}
+		if (/^.Rs(\s+|$)/) {
+		    if (not $sarest eq "") {
+			warning("SEE ALSO: Not necessary to separate".
+				" .Xr from .Rs by `$sarest'");
+		    }
+		    $sarest = "";
+		}
+	    }
+	}
+
+	if ($opt_f and /^\.Fn.*,.+/) {
+	    warning("possible .Fn misuse: `$_'");
+	}
+	if ($opt_H and not /^\.\\\"/ and (/^([<>])/ or /[^\\][<>]/)) {
+	    warning("use \*(Lt \*(Gt (or .Aq) instead of < >: `$_'");
+	}
+	if ($opt_S) {
+	    if (/^\.Sh\s+(.*)\s*$/) {
+		if (not $sections{$1}) {
+		    warning("unknown section header: `$1'");
+		} else {
+		    if ($lastsh >= $sections{$1}) {
+			warning("section header `$1' in wrong order");
+		    }
+		    $shseen{$1} = 1;
+		    $lastsh = $sections{$1};
+		}
+	    }
+	}
+	
+	if ($opt_s) {
+	    if (/\s+$/) {
+		warning("trailing space: `$_'");
+		if ($opt_F) {
+		    s/\s+$//;
+		    $changes = 1;
+		}
+	    }
+# this check only bought us something for phantasia.6
+#	    # we don't want to match at BOF
+#	    if (/.\.\t/) {
+#		warning("tab after dot (`.') -- probably malformatting: $_");
+#	    }
+	}
+	if ($opt_X) {
+	    if (not /^.\\\"/ and /(Free|Net|Open)BSD/
+		and not /(www|ftp).(Free|Net|Open)BSD\.org/
+		and not /@(Free|Net|Open)BSD\.[oO][rR][gG]/) {
+		warning("verbose mention of `$1BSD' instead of `$short{$1}': `$_'");
+	    }
+	    if (/^./ and (/Bx (Open)/ or /Bx (Free)/ or /Bx (Net)/)) {
+		warning("`.Bx $1' found -- use $short{$1} instead");
+	    }
+	}
+	if ($opt_o) {
+	    if (/^.Os/ && !/^.Os\s*$/) {
+		/^.Os(.*)/;
+		warning(".Os used with argument `$1'");
+	    }
+	}
+
+	if ($opt_n) {
+	    if (/^.Nd/ and /\.\s*$/) {
+		warning(".Nd ends with a dot: `$_'");
+	    }
+	}
+	if ($opt_p) {
+	    if (not /^.\\\"/ and /^\... .*[^\s][\.();,\[\]\{\}:]$/
+		and not /\s\.\.\.$/ and not /\\&.$/) {
+		warning("punctuation in format string without space: `$_'");
+	    }
+	    if (not /^.\\\"/ and /^\./ and /Ns [\.();,\[\]\{\}:]/) {
+		warning("possible Ns abuse: `$_'");
+	    }
+	    if (/(\w+)\(\)/) {
+		warning("use .Fn or .Xr for functions: `$1()'");
+	    }
+	}
+	if ($opt_x) {
+	    if ($mandoc_p) {
+		$destruct = $_;
+		$destruct =~ s/\\\&([\w\.])/$1/;
+		if ($destruct =~ /^\.Xr\s+([\w\.\-\+\/]+)\s+([0-9])(.*)/) {
+		    debug("Xref to $1($2) found: `$_'");
+		    verify_xref("", $1, $2, "");
+		    if ($3 =~ /^\S/) {
+			warning("No space after section number in Xref: `$_'");
+		    }
+		} elsif ($destruct =~ /^\.Xr/) {
+		    warning("Weird Xref found: `$_'");
+		}
+	    } else {
+		$destruct = $_;
+		$destruct =~ s/\\f.//g;
+		if (not $destruct =~ /^\.\\\"/) {
+		    while ($destruct =~ s/([-\w.]+)\s*\(([0-9])\)//) {
+			debug("possible Xref to $1($2) found: `$_'");
+			verify_xref("possible ", $1, $2, ": `$_'");
+			# so that we have a chance to find more than one
+			# per line
+			$destruct =~ s/(\w+)\s*\(([0-9])\)//;
+		    }
+		}
+	    }
+	}
+	if ($opt_d) {
+	    if (/^.Dd/ and not /^.Dd\s*\$Mdocdate: October 31 2008 $$/) {
+		warning("Invalid date found: `$_'");
+	    }
+	}
+
+	if ($opt_P) {
+	    if (/^\.Bd.*-literal/) {
+		$inliteral = 1;
+	    }
+	    if ($inliteral eq 1) {
+		if (/^\.Ed/) {
+		    $inliteral = 0;
+		}
+	    } elsif (/^$/) {
+		warning("Paragraph problem: empty line -- use .Pp for".
+			" paragraphs");
+	    }
+	    if ($last =~ /^.Pp/ and (/^(\.S[sh])/ or /^(\.Pp)/)) {
+		warning("Paragraph problem: $1 after .Pp");
+	    }
+	    if (/^.Pp/ and $last =~ /^(\.S[sh])/) {
+		warning("Paragraph problem: .Pp after $1");
+	    }
+	}
+
+	# Check whether the list of possible errors for a function is
+	# sorted alphabetically.
+	#
+	if ($opt_e) {
+		/^\.Sh\s+(.*)$/ and $current_section = $1;
+
+		# Error names should not be sorted across different lists.
+		# (see bind(2) for an example.)
+		#
+		/^\.Bl\s+/ and $last_error_name = "";
+
+		if ($current_section eq "ERRORS" && /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/) {
+			my $current_error_name = $1;
+
+			if ($last_error_name eq $current_error_name) {
+				warning("Duplicate item for $current_error_name.");
+			} elsif ($current_error_name lt $last_error_name) {
+				warning("$last_error_name and $current_error_name are not in alphabetical order.");
+			}
+			$last_error_name = $current_error_name;
+		}
+	}
+		
+	$last = $_;
+	$all .= "$_\n";
+    }
+
+    if ($opt_r and not $rcsidseen) {
+	warning("Missing RCS Id");
+    }
+
+    if ($opt_P and $last =~ /^.Pp/) {
+	warning("Paragraph problem: .Pp at EOF");
+    }
+
+    if ($opt_a and $insa > 0 and not $sarest eq "") {
+	warning("unneeded characters at end of SEE ALSO: `$sarest'");
+    }
+	
+#    if (not ($fn =~ /$section$/)) {
+#	warning("section doesn't match (internal value: $section)");
+#    }
+    close INPUT;
+    if ($opt_F and $changes) {
+	open OUT, ">$_[0].new" or die "can't open output file `$_[0].new'";
+	print OUT $all;
+	close OUT;
+	system("mv -i $_[0].new $_[0]");
+    }
+
+    if ($mandoc_p and $opt_S) {
+	foreach my $i (qw (NAME SYNOPSIS DESCRIPTION)) {
+	    if (not ($shseen{$i})) {
+		warning("missing $i section");
+	    }
+	}
+    }
+}
+
+chomp($arch);
+handle_options();
+foreach $file (@ARGV) {
+    handle_file($file);
+}

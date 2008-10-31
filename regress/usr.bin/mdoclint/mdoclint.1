@@ -1,0 +1,156 @@
+.\"	$OpenBSD: mdoclint.1,v 1.1 2008/10/31 14:11:04 jmc Exp $
+.\" $NetBSD: mdoclint.1,v 1.3 2003/05/09 09:22:05 wiz Exp $
+.\"
+.\" Copyright (c) 2001, 2002, 2003 Thomas Klausner
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR, THOMAS KLAUSNER,
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: October 31 2008 $
+.Os
+.Dt MDOCLINT 1
+.Sh NAME
+.Nm mdoclint
+.Nd man page verifier
+.Sh SYNOPSIS
+.Nm
+.Op Fl aDdeFfHhmnoPprSsvXx
+.Ar
+.Sh DESCRIPTION
+.Nm
+is a man page verifier.
+It tries to automatically find as many common
+errors that occur when writing man pages as possible.
+If no flags are given,
+.Fl aDdefHmnoPprSsXx
+is assumed (that is, everything except
+.Fl Fhv ) .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Warn about some possible problems in the
+.Sx SEE ALSO
+section, like incorrect order (correct order: first by section
+numbers, then by name), or incorrect or superfluous punctuation
+between or after the cross-references.
+.It Fl D
+Warn about bad casing and architectures in the .Dt macro.
+.It Fl d
+Warn about bad date strings (in the .Dd macro).
+.It Fl e
+Warn about unsorted errors (for functions).
+.It Fl F
+Fix whitespace problems (see also
+.Fl s ) .
+.It Fl f
+Warn about possible .Fn abuse; its arguments should be put in
+.Sq \&"
+separately, not together and separated by commas.
+Those will be automatically added by mdoc.
+.It Fl H
+Show warnings for characters that might generate problems in
+HTML output:
+.Sq \*(Lt
+and
+.Sq \*(Gt .
+Replace a pair of angle quotes with the .Aq macro.
+Otherwise, the replacements are
+.Dq \e*(Lt
+and
+.Dq \e*(Gt .
+.It Fl h
+Display usage.
+.It Fl m
+Warn if man page is not in
+.Xr mdoc 7
+format.
+.It Fl n
+Warn when the .Nd macro's argument ends in a dot, that is
+.Sq \&. .
+.It Fl o
+Warn when the .Os macro has an argument (it shouldn't have one at
+least in the base system, because on
+.Ox
+the current version is default).
+.It Fl P
+Warn about paragraph problems, like empty lines or .Pp macros before
+section macros like .Ss and .Sh.
+.It Fl p
+Warn about possible punctuation problems at the end of macro
+arguments.
+Also warns about abuse of .Ns to get punctuation directly next to a
+word \(en this should not be needed.
+.It Fl r
+Warn about missing RCS Id.
+.It Fl S
+Warn about any unknown sections or about a section that comes in the
+wrong order (see
+.Xr mdoc 7 ) .
+.It Fl s
+Warn about superfluous whitespace at the end of line.
+.It Fl v
+Verbose output.
+.It Fl X
+Warn about explicit mentions of the words
+.Dq FreeBSD ,
+.Dq NetBSD ,
+and
+.Dq OpenBSD ,
+which should be replaced by .Fx, .Nx, and .Ox respectively.
+Also notices occurrences of
+.Dq \&.Bx Free ,
+.Dq \&.Bx Net ,
+and
+.Dq \&.Bx Open ,
+for which the same applies.
+.It Fl x
+Warn about cross-references whose target is missing, cross-references
+to itself, or plain bogus cross-references.
+.Pp
+For
+.Dq .Xr name X ,
+the following files are checked:
+.Pa /usr/share/man/catX/name.0 ,
+.Pa /usr/share/man/catX/`uname -m`/name.0 ,
+and
+.Pa ./name.X .
+.El
+.Sh SEE ALSO
+.Xr mdoc 7 ,
+.Xr mdoc.samples 7
+.Sh AUTHORS
+.An Thomas Klausner
+.Aq wiz@netbsd.org
+.Sh BUGS
+The
+.Fl o
+and
+.Fl p
+flags currently produce too many bogus warnings.
+.Pp
+The
+.Fl x
+flag sometimes erroneously warns about xrefs to man pages for
+machine-dependent drivers that are not for the architecture
+.Nm
+is running on.
