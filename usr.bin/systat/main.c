@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.44 2008/08/13 06:20:48 jmc Exp $	 */
+/* $Id: main.c,v 1.45 2008/10/31 06:06:46 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -213,6 +213,17 @@ usage()
 	exit(1);
 }
 
+void
+show_view(void)
+{
+	if (rawmode)
+		return;
+
+	tb_start();
+	tbprintf("%s %g", curr_view->name, naptime);
+	tb_end();
+	message_set(tmp_buf);
+}
 
 void
 add_view_tb(field_view *v)
@@ -337,6 +348,10 @@ keyboard_callback(int ch)
 		/* FALLTHROUGH */
 	case 'h':
 		show_help();
+		need_update = 1;
+		break;
+	case CTRL_G:
+		show_view();
 		need_update = 1;
 		break;
 	case 'l':
