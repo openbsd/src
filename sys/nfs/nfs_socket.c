@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.69 2008/10/26 15:53:16 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.70 2008/10/31 17:28:47 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1860,10 +1860,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	nd->nd_dpos = mtod(m, caddr_t);
 	error = nfs_getreq(nd, nfsd, TRUE);
 	if (error) {
-		if (nd->nd_nam2)
-			m_freem(nd->nd_nam2);
-		if (nd->nd_mrep)
-			m_freem(nd->nd_mrep);
+		m_freem(nam);
 		free(nd, M_NFSRVDESC);
 		return (error);
 	}
