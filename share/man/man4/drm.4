@@ -1,0 +1,57 @@
+.\" $OpenBSD: drm.4,v 1.1 2008/10/31 15:55:43 jmc Exp $
+.\"
+.\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: October 31 2008 $
+.Dt DRM 4
+.Os
+.Sh NAME
+.Nm drm
+.Nd Direct Rendering Manager device
+.Sh SYNOPSIS
+.Cd "inteldrm* at vga?"
+.Cd "radeondrm* at vga?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for hardware accelerated video
+using the Direct Rendering Infrastructure (DRI).
+.Nm
+provides kernel support for DRI,
+and is used in conjunction with the
+.Xr X 7
+DRI module.
+.Pp
+Support is currently available for the following graphics cards:
+.Pp
+.Bl -tag -width "radeon(4)XXX" -offset indent -compact
+.It Xr intel 4
+Intel integrated graphics chipsets
+.It Xr radeon 4
+ATI RADEON video driver
+.El
+.Sh FILES
+.Bl -tag -width "/usr/X11R6/lib/modules/extensions/libdri.soXXX" -compact
+.It /dev/drm0
+DRM device special file.
+.It /usr/X11R6/lib/modules/extensions/libdri.so
+X DRI module.
+.El
+.Sh SEE ALSO
+.Xr vga 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.3 .
