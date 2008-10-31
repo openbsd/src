@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.26 2008/10/29 16:35:01 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.27 2008/10/31 21:37:20 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -105,6 +105,7 @@
 #define MD_DCMD_PD_REBUILD			0x02040100
 #define MR_DCMD_PD_BLINK			0x02070100
 #define MR_DCMD_PD_UNBLINK			0x02070200
+#define MR_DCMD_PD_GET_ALLOWED_OPS_LIST		0x020a0100
 #define MR_DCMD_LD_GET_LIST			0x03010000
 #define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
