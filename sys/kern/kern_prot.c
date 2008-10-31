@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.35 2008/10/31 17:15:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.36 2008/10/31 17:17:04 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -234,18 +234,10 @@ int
 sys_setsid(struct proc *p, void *v, register_t *retval)
 {
 
-	struct session *nsess;
-	struct pgrp *npgrp;
-
-	nsess = pool_get(&session_pool, PR_WAITOK);
-	npgrp = pool_get(&pgrp_pool, PR_WAITOK);
-
 	if (p->p_pgid == p->p_pid || pgfind(p->p_pid)) {
-		pool_put(&pgrp_pool, npgrp);
-		pool_put(&session_pool, nsess);
 		return (EPERM);
 	} else {
-		(void) enterpgrp(p, p->p_pid, npgrp, nsess);
+		(void)enterpgrp(p, p->p_pid, 1);
 		*retval = p->p_pid;
 		return (0);
 	}
@@ -273,9 +265,9 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 		syscallarg(int) pgid;
 	} */ *uap = v;
 	struct proc *targp;		/* target process */
-	struct pgrp *pgrp, *npgrp;	/* target pgrp */
+	struct pgrp *pgrp;		/* target pgrp */
 	pid_t pid;
-	int pgid, error;
+	int pgid;
 
 	pid = SCARG(uap, pid);
 	pgid = SCARG(uap, pgid);
@@ -283,40 +275,24 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 	if (pgid < 0)
 		return (EINVAL);
 
-	npgrp = pool_get(&pgrp_pool, PR_WAITOK);
-
 	if (pid != 0 && pid != curp->p_pid) {
-		if ((targp = pfind(pid)) == 0 || !inferior(targp)) {
-			error = ESRCH;
-			goto out;
-		}
-		if (targp->p_session != curp->p_session) {
-			error = EPERM;
-			goto out;
-		}
-		if (targp->p_flag & P_EXEC) {
-			error = EACCES;
-			goto out;
-		}
+		if ((targp = pfind(pid)) == 0 || !inferior(targp))
+			return (ESRCH);
+		if (targp->p_session != curp->p_session)
+			return (EPERM);
+		if (targp->p_flag & P_EXEC)
+			return (EACCES);
 	} else
 		targp = curp;
-	if (SESS_LEADER(targp)) {
-		error = EPERM;
-		goto out;
-	}
+	if (SESS_LEADER(targp))
+		return (EPERM);
 	if (pgid == 0)
 		pgid = targp->p_pid;
 	else if (pgid != targp->p_pid)
 		if ((pgrp = pgfind(pgid)) == 0 ||
-		    pgrp->pg_session != curp->p_session) {
-			error = EPERM;
-			goto out;
-		}
-	return (enterpgrp(targp, pgid, npgrp, NULL));
-out:
-	if (npgrp)
-		pool_put(&pgrp_pool, npgrp);
-	return (error);
+		    pgrp->pg_session != curp->p_session)
+			return (EPERM);
+	return (enterpgrp(targp, pgid, 0));
 }
 
 /* ARGSUSED */

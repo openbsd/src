@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.164 2008/10/31 17:15:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.166 2008/10/31 17:17:08 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1367,14 +1367,16 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	struct proc *vp;
 	pid_t pid;
+	int op;
 	struct ps_strings pss;
 	struct iovec iov;
 	struct uio uio;
-	int error, cnt, op;
+	int error;
 	size_t limit;
+	int cnt;
 	char **rargv, **vargv;		/* reader vs. victim */
-	char *rarg, *varg, *buf;
-	struct vmspace *vm;
+	char *rarg, *varg;
+	char *buf;
 
 	if (namelen > 2)
 		return (ENOTDIR);
@@ -1416,10 +1418,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if ((vp->p_flag & P_INEXEC))
 		return (EBUSY);
 
-	vm = vp->p_vmspace;
-	vm->vm_refcnt++;
-	vp = NULL;
-
+	vp->p_vmspace->vm_refcnt++;	/* XXX */
 	buf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	iov.iov_base = &pss;
@@ -1432,7 +1431,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = cp;
 
-	if ((error = uvm_io(&vm->vm_map, &uio, 0)) != 0)
+	if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 		goto out;
 
 	if (op == KERN_PROC_NARGV) {
@@ -1489,7 +1488,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = cp;
-		if ((error = uvm_io(&vm->vm_map, &uio, 0)) != 0)
+		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 			goto out;
 
 		if (varg == NULL)
@@ -1511,7 +1510,7 @@ more:
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = cp;
-		if ((error = uvm_io(&vm->vm_map, &uio, 0)) != 0)
+		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 			goto out;
 
 		for (vstrlen = 0; vstrlen < len; vstrlen++) {
@@ -1559,7 +1558,7 @@ more:
 	error = copyout(&rarg, rargv, sizeof(rarg));
 
 out:
-	uvmspace_free(vm);
+	uvmspace_free(vp->p_vmspace);
 	free(buf, M_TEMP);
 	return (error);
 }

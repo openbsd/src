@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.78 2008/10/31 17:15:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.79 2008/10/31 17:17:01 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -225,12 +225,8 @@ exit1(struct proc *p, int rv, int flags)
 	 * release trace file
 	 */
 	p->p_traceflag = 0;	/* don't trace the vrele() */
-	if (p->p_tracep) {
-		struct vnode *vp = p->p_tracep;
-		if (ktrsettracevnode(p, NULL) == 1)
-			vrele(vp);
-	}
-		
+	if (p->p_tracep)
+		ktrsettracevnode(p, NULL);
 #endif
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))

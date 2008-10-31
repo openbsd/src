@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.37 2008/10/31 17:15:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.38 2008/10/31 17:17:03 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -193,16 +193,14 @@ pgfind(pid_t pgid)
 
 /*
  * Move p to a new or existing process group (and session)
- * Caller provides a pre-allocated pgrp and session that should
- * be freed if they are not used.
  */
 int
-enterpgrp(struct proc *p, pid_t pgid, struct pgrp *npgrp, struct session *nsess)
+enterpgrp(struct proc *p, pid_t pgid, int mksess)
 {
 	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
-	if (pgrp != NULL && nsess)	/* firewalls */
+	if (pgrp != NULL && mksess)	/* firewalls */
 		panic("enterpgrp: setsid into non-empty pgrp");
 	if (SESS_LEADER(p))
 		panic("enterpgrp: session leader attempted setpgrp");
@@ -217,27 +215,24 @@ enterpgrp(struct proc *p, pid_t pgid, struct pgrp *npgrp, struct session *nsess)
 		if (p->p_pid != pgid)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
-
-		if ((np = pfind(savepid)) == NULL || np != p) {
-			pool_put(&pgrp_pool, npgrp);
-			if (nsess)
-				pool_put(&session_pool, nsess);
+		if ((np = pfind(savepid)) == NULL || np != p)
 			return (ESRCH);
-		}
+		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
+		if (mksess) {
+			struct session *sess;
 
-		pgrp = npgrp;
-		if (nsess) {
 			/*
 			 * new session
 			 */
-			nsess->s_leader = p;
-			nsess->s_count = 1;
-			nsess->s_ttyvp = NULL;
-			nsess->s_ttyp = NULL;
-			bcopy(p->p_session->s_login, nsess->s_login,
-			    sizeof(nsess->s_login));
+			sess = pool_get(&session_pool, PR_WAITOK);
+			sess->s_leader = p;
+			sess->s_count = 1;
+			sess->s_ttyvp = NULL;
+			sess->s_ttyp = NULL;
+			bcopy(p->p_session->s_login, sess->s_login,
+			    sizeof(sess->s_login));
 			atomic_clearbits_int(&p->p_flag, P_CONTROLT);
-			pgrp->pg_session = nsess;
+			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
 			if (p != curproc)
 				panic("enterpgrp: mksession and p != curproc");
@@ -250,16 +245,8 @@ enterpgrp(struct proc *p, pid_t pgid, struct pgrp *npgrp, struct session *nsess)
 		LIST_INIT(&pgrp->pg_members);
 		LIST_INSERT_HEAD(PGRPHASH(pgid), pgrp, pg_hash);
 		pgrp->pg_jobc = 0;
-	} else if (pgrp == p->p_pgrp) {
-		if (nsess)
-			pool_put(&session_pool, nsess);
-		pool_put(&pgrp_pool, npgrp);
+	} else if (pgrp == p->p_pgrp)
 		return (0);
-	} else {
-		if (nsess)
-			pool_put(&session_pool, nsess);
-		pool_put(&pgrp_pool, npgrp);
-	}
 
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
@@ -448,16 +435,9 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		pp = p->p_pptr;
 		if (p->p_stat) {
 
-#ifdef MULTIPROCESSOR
-			if (p == curproc) {
-				if (p->p_cpu == curcpu())
-					db_printf("%2d", curcpu()->ci_cpuid);
-				else
-					db_printf(" *");
-			} else
-#endif
-				db_printf(" %c", p == curproc ? '*' : ' ');
-			db_printf("%5d  ",p->p_pid);
+			db_printf("%c%5d  ", p == curproc ? '*' : ' ',
+				p->p_pid);
+
 			switch (*mode) {
 
 			case 'a':

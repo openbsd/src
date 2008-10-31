@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.107 2008/10/31 17:15:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.108 2008/10/31 17:17:00 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -500,11 +500,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		 * root set it.
 		 */
 		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT)) {
-			struct vnode *vp = p->p_tracep;
-
 			p->p_traceflag = 0;
-			if (ktrsettracevnode(p, NULL) == 1)
-				vrele(vp);
+			ktrsettracevnode(p, NULL);
 		}
 #endif
 		p->p_ucred = crcopy(cred);

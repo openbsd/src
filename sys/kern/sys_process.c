@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.41 2008/10/31 17:15:30 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.42 2008/10/31 17:17:07 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -589,7 +589,6 @@ process_checkioperm(struct proc *p, struct proc *t)
 int
 process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 {
-	struct vmspace *vm;
 	int error;
 	vaddr_t addr;
 	vsize_t len;
@@ -605,14 +604,10 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
 	addr = uio->uio_offset;
-
-	vm = p->p_vmspace;
-	vm->vm_refcnt++;
-
-	error = uvm_io(&vm->vm_map, uio,
+	p->p_vmspace->vm_refcnt++;  /* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, uio,
 	    (req == PT_WRITE_I) ? UVM_IO_FIXPROT : 0);
-
-	uvmspace_free(vm);
+	uvmspace_free(p->p_vmspace);
 
 	if (error == 0 && req == PT_WRITE_I)
 		pmap_proc_iflush(p, addr, len);
