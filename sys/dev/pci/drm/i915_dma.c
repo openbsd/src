@@ -814,63 +814,6 @@ int i915_setparam(struct drm_device *dev, void *data,
 	return 0;
 }
 
-drm_i915_mmio_entry_t mmio_table[] = {
-	[MMIO_REGS_PS_DEPTH_COUNT] = {
-		I915_MMIO_MAY_READ|I915_MMIO_MAY_WRITE,
-		0x2350,
-		8
-	}
-};
-
-static int mmio_table_size = sizeof(mmio_table)/sizeof(drm_i915_mmio_entry_t);
-
-int i915_mmio(struct drm_device *dev, void *data,
-		     struct drm_file *file_priv)
-{
-	uint32_t buf[8];
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	drm_i915_mmio_entry_t *e;
-	drm_i915_mmio_t *mmio = data;
-	void __iomem *base;
-	int i;
-
-	if (!dev_priv) {
-		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
-	}
-
-	if (mmio->reg >= mmio_table_size)
-		return EINVAL;
-
-	e = &mmio_table[mmio->reg];
-	base = (u8 *) dev_priv->mmio_map->handle + e->offset;
-
-	switch (mmio->read_write) {
-	case I915_MMIO_READ:
-		if (!(e->flag & I915_MMIO_MAY_READ))
-			return EINVAL;
-		for (i = 0; i < e->size / 4; i++)
-			buf[i] = I915_READ(e->offset + i * 4);
-		if (DRM_COPY_TO_USER(mmio->data, buf, e->size)) {
-			DRM_ERROR("DRM_COPY_TO_USER failed\n");
-			return EFAULT;
-		}
-		break;
-		
-	case I915_MMIO_WRITE:
-		if (!(e->flag & I915_MMIO_MAY_WRITE))
-			return EINVAL;
-		if (DRM_COPY_FROM_USER(buf, mmio->data, e->size)) {
-			DRM_ERROR("DRM_COPY_TO_USER failed\n");
-			return EFAULT;
-		}
-		for (i = 0; i < e->size / 4; i++)
-			I915_WRITE(e->offset + i * 4, buf[i]);
-		break;
-	}
-	return 0;
-}
-
 int i915_set_status_page(struct drm_device *dev, void *data,
 				struct drm_file *file_priv)
 {

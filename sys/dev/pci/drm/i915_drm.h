@@ -167,7 +167,6 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_SET_VBLANK_PIPE	0x0d
 #define DRM_I915_GET_VBLANK_PIPE	0x0e
 #define DRM_I915_VBLANK_SWAP	0x0f
-#define DRM_I915_MMIO		0x10
 #define DRM_I915_HWS_ADDR	0x11
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
@@ -186,7 +185,6 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_SET_VBLANK_PIPE	DRM_IOW( DRM_COMMAND_BASE + DRM_I915_SET_VBLANK_PIPE, drm_i915_vblank_pipe_t)
 #define DRM_IOCTL_I915_GET_VBLANK_PIPE	DRM_IOR( DRM_COMMAND_BASE + DRM_I915_GET_VBLANK_PIPE, drm_i915_vblank_pipe_t)
 #define DRM_IOCTL_I915_VBLANK_SWAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_VBLANK_SWAP, drm_i915_vblank_swap_t)
-#define DRM_IOCTL_I915_MMIO             DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_MMIO, drm_i915_mmio)
 
 /* Asynchronous page flipping:
  */
@@ -303,79 +301,8 @@ typedef struct drm_i915_vblank_swap {
 	unsigned int sequence;
 } drm_i915_vblank_swap_t;
 
-#define I915_MMIO_READ	0
-#define I915_MMIO_WRITE 1
-
-#define I915_MMIO_MAY_READ	0x1
-#define I915_MMIO_MAY_WRITE	0x2
-
-#define MMIO_REGS_IA_PRIMATIVES_COUNT		0
-#define MMIO_REGS_IA_VERTICES_COUNT		1
-#define MMIO_REGS_VS_INVOCATION_COUNT		2
-#define MMIO_REGS_GS_PRIMITIVES_COUNT		3
-#define MMIO_REGS_GS_INVOCATION_COUNT		4
-#define MMIO_REGS_CL_PRIMITIVES_COUNT		5
-#define MMIO_REGS_CL_INVOCATION_COUNT		6
-#define MMIO_REGS_PS_INVOCATION_COUNT		7
-#define MMIO_REGS_PS_DEPTH_COUNT		8
-
-typedef struct drm_i915_mmio_entry {
-	unsigned int flag;
-	unsigned int offset;
-	unsigned int size;
-} drm_i915_mmio_entry_t;
-
-typedef struct drm_i915_mmio {
-	unsigned int read_write:1;
-	unsigned int reg:31;
-	void __user *data;
-} drm_i915_mmio_t;
-
 typedef struct drm_i915_hws_addr {
 	uint64_t addr;
 } drm_i915_hws_addr_t;
 
-/*
- * Relocation header is 4 uint32_ts
- * 0 - 32 bit reloc count
- * 1 - 32-bit relocation type
- * 2-3 - 64-bit user buffer handle ptr for another list of relocs.
- */
-#define I915_RELOC_HEADER 4
-
-/*
- * type 0 relocation has 4-uint32_t stride
- * 0 - offset into buffer
- * 1 - delta to add in
- * 2 - buffer handle
- * 3 - reserved (for optimisations later).
- */
-/*
- * type 1 relocation has 4-uint32_t stride.
- * Hangs off the first item in the op list.
- * Performed after all valiations are done.
- * Try to group relocs into the same relocatee together for
- * performance reasons.
- * 0 - offset into buffer
- * 1 - delta to add in
- * 2 - buffer index in op list.
- * 3 - relocatee index in op list.
- */
-#define I915_RELOC_TYPE_0 0
-#define I915_RELOC0_STRIDE 4
-#define I915_RELOC_TYPE_1 1
-#define I915_RELOC1_STRIDE 4
-
-
-struct drm_i915_op_arg {
-	uint64_t next;
-	uint64_t reloc_ptr;
-	int handled;
-	unsigned int pad64;
-	union {
-		struct drm_bo_op_req req;
-		struct drm_bo_arg_rep rep;
-	} d;
-
-};
 #endif				/* _I915_DRM_H_ */

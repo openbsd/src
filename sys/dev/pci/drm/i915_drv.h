@@ -283,7 +283,6 @@ extern int i915_flip_bufs(struct drm_device *, void *, struct drm_file *);
 extern int i915_getparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);
-extern int i915_mmio(struct drm_device *, void *, struct drm_file *);
 extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
 #define I915_READ(reg)          DRM_READ32(dev_priv->mmio_map, (reg))
