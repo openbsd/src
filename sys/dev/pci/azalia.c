@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.64 2008/10/31 06:44:20 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.65 2008/10/31 06:52:15 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <uvm/uvm_param.h>
@@ -176,6 +177,7 @@ typedef struct azalia_t {
 	codec_t codecs[15];
 	int ncodecs;		/* number of codecs */
 	int codecno;		/* index of the using codec */
+	struct timeout timeo;
 
 	azalia_dma_t corb_dma;
 	int corb_size;
@@ -227,6 +229,8 @@ int	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
 
 int	azalia_codec_init(codec_t *);
 int	azalia_codec_delete(codec_t *);
+void	azalia_codec_jack_intr(void *);
+void	azalia_codec_jack_handler(codec_t *);
 void	azalia_codec_add_bits(codec_t *, int, uint32_t, int);
 void	azalia_codec_add_format(codec_t *, int, int, int, uint32_t,
 	int32_t);
@@ -737,10 +741,112 @@ azalia_attach_intr(struct device *self)
 		goto err_exit;
 
 	az->audiodev = audio_attach_mi(&azalia_hw_if, az, &az->dev);
+
+	/* Setup jack_intr if only there is no unsol_event handler. */
+	if (az->codecs[az->codecno].unsol_event == NULL) {
+		timeout_set(&az->timeo, azalia_codec_jack_intr, az);
+		timeout_add_sec(&az->timeo, 2);
+	}
+
 	return;
 err_exit:
 	azalia_pci_detach(self, 0);
 	return;
+}
+
+void
+azalia_codec_jack_intr(void *addr)
+{
+	struct azalia_t *az = (struct azalia_t *)addr;
+	int s;
+
+	s = splaudio();
+	azalia_codec_jack_handler(&az->codecs[az->codecno]);
+	timeout_add_sec(&az->timeo, 2);
+	splx(s);
+}
+
+void
+azalia_codec_jack_handler(codec_t *this)
+{
+	int i, j, err, dev;
+	uint32_t sense, ctl, val, dir;
+
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+
+		dev = 0;
+		w = &this->w[i];
+
+		/* Find pin with conn=jack and presence capability. */
+		if (w == NULL || w->type != COP_AWTYPE_PIN_COMPLEX ||
+		    (CORB_CD_PORT(w->d.pin.config)) != CORB_CD_JACK ||
+		    (!(w->d.pin.cap & COP_PINCAP_PRESENCE)))
+			continue;
+
+		/* Headphones. */
+		if (w->d.pin.device == CORB_CD_HEADPHONE &&
+		    (w->d.pin.cap & COP_PINCAP_HEADPHONE)) {
+			dev = CORB_CD_SPEAKER;	/* (un)mute speakers */
+			dir = CORB_PWC_OUTPUT;
+		}
+
+		if (!dev)
+			continue;
+
+		err = this->comresp(this, w->nid, CORB_GET_PIN_SENSE,
+		    0, &sense);
+		if (err)
+			break;
+
+		err = this->comresp(this, w->nid, CORB_GET_PIN_WIDGET_CONTROL,
+		    0, &ctl);
+		if (err)
+			break;
+
+		if (sense & CORB_PS_PRESENCE)
+			val = ctl | dir;
+		else
+			val = ctl & ~dir;
+
+		if (val != ctl) {
+			ctl = val;
+			err = this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, ctl, NULL);
+			if (err)
+				break;
+		}
+
+		FOR_EACH_WIDGET(this, j) {
+			const widget_t *w;
+
+			w = &this->w[j];
+
+			/* Find suitable and connected pin for (un)mute. */
+			if (w == NULL || w->type != COP_AWTYPE_PIN_COMPLEX ||
+			    (CORB_CD_PORT(w->d.pin.config)) == CORB_CD_NONE ||
+			    j == i || w->d.pin.device != dev)
+				continue;
+
+			err = this->comresp(this, w->nid,
+			    CORB_GET_PIN_WIDGET_CONTROL, 0, &ctl);
+			if (err)
+				break;
+
+			if (sense & CORB_PS_PRESENCE)
+				val = ctl & ~dir;
+			else
+				val = ctl | dir;
+
+			if (val != ctl) {
+				ctl = val;
+				err = this->comresp(this, w->nid,
+				    CORB_SET_PIN_WIDGET_CONTROL, ctl, NULL);
+				if (err)
+					break;
+			}
+		}
+	}
 }
 
 int
