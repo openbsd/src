@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.1 2008/10/31 14:11:04 jmc Exp $
+# $OpenBSD: mdoclint,v 1.2 2008/10/31 14:26:56 jmc Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -116,7 +116,7 @@ sub handle_options {
 	not $opt_H and not $opt_m and not $opt_n and not $opt_o and
 	not $opt_P and not $opt_p and not $opt_r and not $opt_S and
 	not $opt_s and not $opt_X and not $opt_x) {
-	$opt_a = $opt_D = $opt_d = $opt_e = $opt_f =
+	$opt_a = $opt_D = $opt_d = $opt_f =
 	    $opt_H = $opt_m = $opt_n = $opt_o = $opt_P =
 	    $opt_p = $opt_r = $opt_S = $opt_s =
 	    $opt_X = $opt_x = 1;
