@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.62 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.63 2008/10/31 06:40:12 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1376,15 +1376,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 	rvariation = group->nconv * nbits;
 
-	if (bits_rates & COP_PCM_R441)
-		this->rate = 44100;
-	else if (bits_rates & COP_PCM_R480)
-		this->rate = 48000;
-	else {
-		printf("%s: %s/%d invalid PCM format: 0x%8.8x\n",
-		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
-		return -1;
-	}
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
