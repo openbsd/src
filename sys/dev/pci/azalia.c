@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.63 2008/10/31 06:40:12 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.64 2008/10/31 06:44:20 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1330,7 +1330,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 	const convgroup_t *group;
 	uint32_t bits_rates;
-	int pvariation, rvariation;
+	int variation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
 
@@ -1353,7 +1353,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
 		return -1;
 	}
-	pvariation = group->nconv * nbits;
+	variation = group->nconv * nbits;
 
 	this->adcs.cur = newadc;
 	group = &this->adcs.groups[this->adcs.cur];
@@ -1374,13 +1374,13 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
 		return -1;
 	}
-	rvariation = group->nconv * nbits;
+	variation += group->nconv * nbits;
 
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
-	this->formats = malloc(sizeof(struct audio_format) *
-	    (pvariation + rvariation), M_DEVBUF, M_NOWAIT | M_ZERO);
+	this->formats = malloc(sizeof(struct audio_format) * variation,
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->formats == NULL) {
 		printf("%s: out of memory in %s\n",
 		    XNAME(this->az), __func__);
@@ -1389,23 +1389,27 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 
 	/* register formats for playback */
 	group = &this->dacs.groups[this->dacs.cur];
-	nid = group->conv[0];
-	chan = 0;
-	bits_rates = this->w[nid].d.audio.bits_rates;
 	for (c = 0; c < group->nconv; c++) {
-		for (chan = 0, i = 0; i <= c; i++)
-			chan += WIDGET_CHANNELS(&this->w[group->conv[c]]);
+		chan = 0;
+		bits_rates = ~0;
+		for (i = 0; i <= c; i++) {
+			nid = group->conv[i];
+			chan += WIDGET_CHANNELS(&this->w[nid]);
+			bits_rates &= this->w[nid].d.audio.bits_rates;
+		}
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
 
 	/* register formats for recording */
 	group = &this->adcs.groups[this->adcs.cur];
-	nid = group->conv[0];
-	chan = 0;
-	bits_rates = this->w[nid].d.audio.bits_rates;
 	for (c = 0; c < group->nconv; c++) {
-		for (chan = 0, i = 0; i <= c; i++)
-			chan += WIDGET_CHANNELS(&this->w[group->conv[c]]);
+		chan = 0;
+		bits_rates = ~0;
+		for (i = 0; i <= c; i++) {
+			nid = group->conv[i];
+			chan += WIDGET_CHANNELS(&this->w[nid]);
+			bits_rates &= this->w[nid].d.audio.bits_rates;
+		}
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	}
 
@@ -1465,6 +1469,7 @@ azalia_codec_add_format(codec_t *this, int chan, int valid, int prec,
 	default:
 		f->channel_mask = 0;
 	}
+	f->frequency_type = 0;
 	if (rates & COP_PCM_R80)
 		f->frequency[f->frequency_type++] = 8000;
 	if (rates & COP_PCM_R110)
@@ -1743,7 +1748,7 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 			return err;
 		this->d.audio.encodings = result;
 		if (result == 0) { /* quirk for CMI9880.
-				    * This must not occuur usually... */
+				    * This must not occur usually... */
 			this->d.audio.encodings =
 			    codec->w[codec->audiofunc].d.audio.encodings;
 			this->d.audio.bits_rates =
