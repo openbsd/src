@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.42 2008/10/30 09:39:05 gollo Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.43 2008/10/31 21:08:33 claudio Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ struct llinfo_arp {
 #define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
 };
 #define MAX_HOLD_QUEUE 10
-#define MAX_HOLD_TOTAL NMBCLUSTERS / 10
+#define MAX_HOLD_TOTAL 100
 
 struct sockaddr_inarp {
 	u_int8_t  sin_len;

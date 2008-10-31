@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.77 2008/10/30 09:39:05 gollo Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.78 2008/10/31 21:08:33 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -90,14 +90,14 @@ struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
-int	arpinit_done = 0;
-int	la_hold_total = 0;
+int	arpinit_done;
+int	la_hold_total;
 
 /* revarp state */
 struct in_addr myip, srv_ip;
-int myip_initialized = 0;
-int revarp_in_progress = 0;
-struct ifnet *myip_ifp = NULL;
+int myip_initialized;
+int revarp_in_progress;
+struct ifnet *myip_ifp;
 
 #ifdef DDB
 #include <uvm/uvm_extern.h>
@@ -423,16 +423,19 @@ arpresolve(ac, rt, m, dst, desten)
 
 	/*
 	 * There is an arptab entry, but no ethernet address
-	 * response yet. Insert mbuf in hold queue.
+	 * response yet. Insert mbuf in hold queue if below limit
+	 * if above the limit free the queue without queuing the new packet.
 	 */
-	if (la->la_hold_count >= MAX_HOLD_QUEUE) {
-		mh = la->la_hold_head;
-		la->la_hold_head = la->la_hold_head->m_nextpkt;
-		la->la_hold_count--;
-		la_hold_total--;
-		m_freem(mh);
-	}
-	if (la_hold_total < MAX_HOLD_TOTAL) {
+	if (la_hold_total < MAX_HOLD_TOTAL && la_hold_total < nmbclust / 64) {
+		if (la->la_hold_count >= MAX_HOLD_QUEUE) {
+			mh = la->la_hold_head;
+			la->la_hold_head = la->la_hold_head->m_nextpkt;
+			if (mh == la->la_hold_tail)
+				la->la_hold_tail = NULL;
+			la->la_hold_count--;
+			la_hold_total--;
+			m_freem(mh);
+		}
 		if (la->la_hold_tail == NULL)
 			la->la_hold_head = m;
 		else
@@ -440,6 +443,15 @@ arpresolve(ac, rt, m, dst, desten)
 		la->la_hold_tail = m;
 		la->la_hold_count++;
 		la_hold_total++;
+	} else {
+		while ((mh = la->la_hold_head) != NULL) {
+			la->la_hold_head =
+			    la->la_hold_head->m_nextpkt;
+			la_hold_total--;
+			m_freem(mh);
+		}
+		la->la_hold_tail = NULL;
+		la->la_hold_count = 0;
 	}
 
 	/*
@@ -732,7 +744,7 @@ in_arpinput(m)
 
 			(*ac->ac_if.if_output)(&ac->ac_if, mh, rt_key(rt), rt);
 
-			if (la->la_hold_tail && la->la_hold_tail == mh) {
+			if (la->la_hold_tail == mh) {
 				/* mbuf is back in queue. Discard. */
 				la->la_hold_tail = mt;
 				if (la->la_hold_tail)
