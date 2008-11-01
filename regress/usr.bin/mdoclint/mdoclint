@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.5 2008/11/01 15:01:49 grunk Exp $
+# $OpenBSD: mdoclint,v 1.6 2008/11/01 16:17:30 grunk Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -47,28 +47,33 @@ my $line;
 my $arch=`uname -m`;
 my $options="aDdeFfHhmnoPprSsvXx";
 
-my $usage = "mdoclint: verify man page correctness\n".
-    "usage:\tmdoclint [-$options] file ...\n\n".
-    "  -a\twarn about SEE ALSO section problems\n".
-    "  -D\twarn about bad casing and archs in .Dt\n".
-    "  -d\twarn about bad date strings (in .Dd only)\n".
-    "  -e\twarn about unsorted errors (for functions)\n".
-    "  -F\tfix whitespace problems (asks before overwriting)\n".
-    "  -f\twarn about possible incorrect .Fn syntax\n".
-    "  -H\twarn about characters that produce problems in HTML output\n".
-    "  -h\tdisplay this help text\n".
-    "  -m\twarn about man pages that are not in mdoc(7) format\n".
-    "  -n\twarn about .Nd's ending in '.'\n".
-    "  -o\twarn about non-empty .Os strings\n".
-    "  -P\twarn about paragraph problems\n".
-    "  -p\twarn about punctuation problems\n".
-    "  -r\twarn about missing RCS Id\n".
-    "  -S\twarn about any .Sh weirdness\n".
-    "  -s\twarn about whitespace problems\n".
-    "  -v\tverbose output\n".
-    "  -X\twarn about explicit mentions of FreeBSD, NetBSD, or OpenBSD\n".
-    "  -x\twarn about cross-references with missing targets\n\n".
-    "Default is -aDdfHmnoPprSsXx if no flag is specified.\n";
+sub usage {
+	print STDERR <<"EOF";
+mdoclint: verify man page correctness
+usage:	mdoclint [-$options] file ...
+	-a	warn about SEE ALSO section problems
+	-D	warn about bad casing and archs in .Dt
+	-d	warn about bad date strings (in .Dd only)
+	-e	warn about unsorted errors (for functions)
+	-F	fix whitespace problems (asks before overwriting)
+	-f	warn about possible incorrect .Fn syntax
+	-H	warn about characters that produce problems in HTML output
+	-h	display this help text
+	-m	warn about man pages that are not in mdoc(7) format
+	-n	warn about .Nd's ending in '.'
+	-o	warn about non-empty .Os strings
+	-P	warn about paragraph problems
+	-p	warn about punctuation problems
+	-r	warn about missing RCS Id
+	-S	warn about any .Sh weirdness
+	-s	warn about whitespace problems
+	-v	verbose output
+	-X	warn about explicit mentions of FreeBSD, NetBSD, or OpenBSD
+	-x	warn about cross-references with missing targets
+Default is -aDdfHmnoPprSsXx if no flag is specified.
+EOF
+    exit(0);
+}
 
 my %short = (
     "Free" => ".Fx",
@@ -104,11 +109,7 @@ sub warning {
 
 sub handle_options {
     getopts($options);
-
-    if ($opt_h) {
-	print $usage;
-	exit 0;
-    };
+    $opt_h and usage();
 
     # default to all warnings
     if (not $opt_a and not $opt_D and not $opt_d and not $opt_e and
