@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.66 2008/10/31 21:39:50 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.67 2008/11/01 07:21:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2281,6 +2281,7 @@ azalia_query_encoding(void *v, audio_encoding_t *enc)
 		if (i == enc->index) {
 			enc->encoding = codec->formats[j].encoding;
 			enc->precision = codec->formats[j].precision;
+			enc->flags = 0;
 			switch (enc->encoding) {
 			case AUDIO_ENCODING_SLINEAR_LE:
 				strlcpy(enc->name, enc->precision == 8 ?
