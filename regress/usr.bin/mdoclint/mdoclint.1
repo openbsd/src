@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoclint.1,v 1.2 2008/10/31 14:26:56 jmc Exp $
+.\"	$OpenBSD: mdoclint.1,v 1.3 2008/11/01 07:49:54 jmc Exp $
 .\" $NetBSD: mdoclint.1,v 1.3 2003/05/09 09:22:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 Thomas Klausner
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 31 2008 $
+.Dd $Mdocdate: November 1 2008 $
 .Os
 .Dt MDOCLINT 1
 .Sh NAME
@@ -56,7 +56,9 @@ between or after the cross-references.
 .It Fl D
 Warn about bad casing and architectures in the .Dt macro.
 .It Fl d
-Warn about bad date strings (in the .Dd macro).
+Warn about .Dd strings
+that don't start
+.Dq .Dd $\&Mdocdate .
 .It Fl e
 Warn about unsorted errors (for functions).
 .It Fl F
@@ -138,6 +140,11 @@ and
 .Sh SEE ALSO
 .Xr mdoc 7 ,
 .Xr mdoc.samples 7
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 4.5 .
 .Sh AUTHORS
 .An Thomas Klausner
 .Aq wiz@netbsd.org

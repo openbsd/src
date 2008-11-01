@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.3 2008/10/31 14:42:44 millert Exp $
+# $OpenBSD: mdoclint,v 1.4 2008/11/01 07:49:54 jmc Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -68,7 +68,7 @@ my $usage = "mdoclint: verify man page correctness\n".
     "  -v\tverbose output\n".
     "  -X\twarn about explicit mentions of FreeBSD, NetBSD, or OpenBSD\n".
     "  -x\twarn about cross-references with missing targets\n\n".
-    "Default is -aDdefHmnoPprSsXx if no flag is specified.\n";
+    "Default is -aDdfHmnoPprSsXx if no flag is specified.\n";
 
 my %short = (
     "Free" => ".Fx",
@@ -323,7 +323,7 @@ sub handle_file {
 	    }
 	}
 	if ($opt_d) {
-	    if (/^.Dd/ and not /^.Dd\s*.Mdocdate:\s*(January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*\s*(198[0-9]|199[0-9]|200[012345678])\s*\$$/) {
+	    if (/^.Dd/ and not /^.Dd [\$]Mdocdate/) {
 		warning("Invalid date found: `$_'");
 	    }
 	}
