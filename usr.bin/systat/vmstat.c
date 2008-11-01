@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.65 2008/06/13 10:06:14 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.66 2008/11/01 00:56:25 canacar Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.65 2008/06/13 10:06:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.66 2008/11/01 00:56:25 canacar Exp $";
 #endif /* not lint */
 
 /*
@@ -459,9 +459,9 @@ showkre(void)
 	putint(nchtotal.ncs_pass2, NAMEIROW + 2, NAMEICOL + 24, 7);
 	putfloat(nchtotal.ncs_pass2 * 100.0 / nz(s.nchcount),
 	    NAMEIROW + 2, NAMEICOL + 33, 4, 0, 1);
-	putint(nchtotal.ncs_miss - nchtotal.ncs_pass2,
+	putint(nchtotal.ncs_miss + nchtotal.ncs_long - nchtotal.ncs_pass2,
 	   NAMEIROW + 2, NAMEICOL + 38, 7);
-	putfloat((nchtotal.ncs_miss - nchtotal.ncs_pass2) *
+	putfloat((nchtotal.ncs_miss + nchtotal.ncs_long - nchtotal.ncs_pass2) *
 	    100.0 / nz(s.nchcount), NAMEIROW + 2, NAMEICOL + 45, 4, 0, 1);
 #undef nz
 }
