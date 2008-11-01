@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.11 2008/02/25 12:20:25 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.12 2008/11/01 09:24:35 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -183,7 +183,7 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Create a work thread to transmit deferred packets. */
-	sc->sc_workq = workq_create(DEVNAME(sc), 1);
+	sc->sc_workq = workq_create(DEVNAME(sc), 1, IPL_SDMMC);
 	if (sc->sc_workq == NULL) {
 		printf("%s: can't allocate workq\n", DEVNAME(sc));
 		return;
