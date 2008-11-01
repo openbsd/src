@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.23 2008/10/28 11:00:40 marco Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.24 2008/11/01 18:42:26 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -138,6 +138,7 @@ struct mpi_softc {
 	struct mpi_cfg_hdr	sc_cfg_hdr;
 	struct mpi_cfg_ioc_pg2	*sc_vol_page;
 	struct mpi_cfg_raid_vol	*sc_vol_list;
+	struct mpi_cfg_raid_vol_pg0 *sc_rpg0;
 
 	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
