@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.37 2008/08/26 08:59:49 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.38 2008/11/01 09:53:48 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 26 2008 $
+.Dd $Mdocdate: November 1 2008 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -360,6 +360,15 @@ authentication toolkit.
 See
 .Xr skey 3 .
 .Pp
+.It libsndio Pq Fl lsndio
+Library for
+.Xr audio 4
+hardware and the
+.Xr aucat 1
+audio server.
+See
+.Xr sio_open 3 .
+.Pp
 .It libssl Pq Fl lssl
 The OpenSSL ssl library implements the Secure Sockets Layer
 .Pq SSL v2/v3
@@ -620,6 +629,7 @@ for more details.
 .It Pa /usr/lib/librpcsvc.a
 .It Pa /usr/lib/libsectok.a
 .It Pa /usr/lib/libskey.a
+.It Pa /usr/lib/libsndio.a
 .It Pa /usr/lib/libssl.a
 .It Pa /usr/lib/libstdc++.a
 .It Pa /usr/lib/libsupc++.a
@@ -638,46 +648,12 @@ for more details.
 .El
 .Sh SEE ALSO
 .Xr ar 1 ,
-.Xr c++ 1 ,
 .Xr cc 1 ,
-.Xr g77 1 ,
 .Xr gcc-local 1 ,
 .Xr gprof 1 ,
-.Xr ld 1 ,
 .Xr ld.so 1 ,
-.Xr lex 1 ,
 .Xr nm 1 ,
-.Xr perl 1 ,
 .Xr ranlib 1 ,
-.Xr yacc 1 ,
-.Xr intro 2 ,
-.Xr compress 3 ,
-.Xr crypto 3 ,
-.Xr curses 3 ,
-.Xr des_crypt 3 ,
-.Xr editline 3 ,
-.Xr event 3 ,
-.Xr form 3 ,
-.Xr hosts_access 3 ,
-.Xr keynote 3 ,
-.Xr kvm 3 ,
-.Xr math 3 ,
-.Xr menu 3 ,
-.Xr ocurses 3 ,
-.Xr ossaudio 3 ,
-.Xr panel 3 ,
-.Xr pcap 3 ,
-.Xr pthreads 3 ,
-.Xr readline 3 ,
-.Xr rfc1413 3 ,
-.Xr rpc 3 ,
-.Xr sectok 3 ,
-.Xr skey 3 ,
-.Xr ssl 3 ,
-.Xr stdio 3 ,
-.Xr termcap 3 ,
-.Xr usbhid 3 ,
-.Xr keynote 4 ,
 .Xr mk.conf 5
 .Sh HISTORY
 An
