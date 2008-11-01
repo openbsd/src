@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.4 2008/11/01 07:49:54 jmc Exp $
+# $OpenBSD: mdoclint,v 1.5 2008/11/01 15:01:49 grunk Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -40,7 +40,7 @@ use vars qw(
 	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v
 	$opt_X $opt_x
 );
-	
+
 my $fn;
 my $file;
 my $line;
@@ -206,8 +206,8 @@ sub handle_file {
 		    if ($sasection > $newsasection
 			or ($sasection eq $newsasection and
 			    ($saname cmp $newsaname) > 0)) {
-			warning("SEE ALSO: `.Xr $saname $sasection' ".
-				"should be after `.Xr $newsaname $newsasection'");
+			warning("SEE ALSO: `.Xr $saname $sasection' should "
+				. "be after `.Xr $newsaname $newsasection'");
 		    }
 		    if (not $sarest eq ",") {
 			warning("SEE ALSO: .Xr not separated by ".
@@ -246,7 +246,7 @@ sub handle_file {
 		}
 	    }
 	}
-	
+
 	if ($opt_s) {
 	    if (/\s+$/) {
 		warning("trailing space: `$_'");
@@ -265,7 +265,8 @@ sub handle_file {
 	    if (not /^.\\\"/ and /(Free|Net|Open)BSD/
 		and not /(www|ftp).(Free|Net|Open)BSD\.org/
 		and not /@(Free|Net|Open)BSD\.[oO][rR][gG]/) {
-		warning("verbose mention of `$1BSD' instead of `$short{$1}': `$_'");
+		warning("verbose mention of `$1BSD' instead of "
+			. "`$short{$1}': `$_'");
 	    }
 	    if (/^./ and (/Bx (Open)/ or /Bx (Free)/ or /Bx (Net)/)) {
 		warning("`.Bx $1' found -- use $short{$1} instead");
@@ -359,18 +360,22 @@ sub handle_file {
 		#
 		/^\.Bl\s+/ and $last_error_name = "";
 
-		if ($current_section eq "ERRORS" && /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/) {
+		if ($current_section eq "ERRORS" and
+		    /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/) {
 			my $current_error_name = $1;
 
 			if ($last_error_name eq $current_error_name) {
-				warning("Duplicate item for $current_error_name.");
+				warning("Duplicate item for "
+					. "$current_error_name.");
 			} elsif ($current_error_name lt $last_error_name) {
-				warning("$last_error_name and $current_error_name are not in alphabetical order.");
+				warning("$last_error_name and "
+					. "$current_error_name are not in "
+					. "alphabetical order.");
 			}
 			$last_error_name = $current_error_name;
 		}
 	}
-		
+
 	$last = $_;
 	$all .= "$_\n";
     }
@@ -386,7 +391,7 @@ sub handle_file {
     if ($opt_a and $insa > 0 and not $sarest eq "") {
 	warning("unneeded characters at end of SEE ALSO: `$sarest'");
     }
-	
+
 #    if (not ($fn =~ /$section$/)) {
 #	warning("section doesn't match (internal value: $section)");
 #    }
