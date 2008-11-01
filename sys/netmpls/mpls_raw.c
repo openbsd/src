@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.3 2008/05/23 16:03:03 thib Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.4 2008/11/01 16:37:55 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -129,7 +129,7 @@ mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
 	if (name[0] >= MPLSCTL_MAXID)
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != MPLSCTL_IFQUEUE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.13 2008/10/28 01:16:14 michele Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.14 2008/11/01 16:37:55 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -116,7 +116,9 @@ struct sockaddr_mpls {
 #define	MPLSCTL_DEFTTL			2
 #define MPLSCTL_IFQUEUE			3
 #define	MPLSCTL_MAXINKLOOP		4
-#define MPLSCTL_MAXID			5
+#define MPLSCTL_MAPTTL_IP		5
+#define MPLSCTL_MAPTTL_IP6		6
+#define MPLSCTL_MAXID			7	
 
 #define MPLSCTL_NAMES { \
 	{ 0, 0 }, \
@@ -124,6 +126,8 @@ struct sockaddr_mpls {
 	{ "ttl", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE },\
 	{ "maxloop_inkernel", CTLTYPE_INT }, \
+	{ "mapttl_ip", CTLTYPE_INT }, \
+	{ "mapttl_ip6", CTLTYPE_INT }, \
 }
 
 #define MPLSCTL_VARS { \
@@ -132,6 +136,8 @@ struct sockaddr_mpls {
 	&mpls_defttl, \
 	0, \
 	&mpls_inkloop, \
+	&mpls_mapttl_ip, \
+	&mpls_mapttl_ip6, \
 }
 
 #endif
@@ -151,9 +157,9 @@ struct mpe_softc {
 #define MPE_MTU_MAX	8192
 
 void	mpe_input(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
-	    u_int32_t);
+	    u_int8_t);
 void	mpe_input6(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
-	    u_int32_t);
+	    u_int8_t);
 
 extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 			struct mbuf *, struct mbuf *, struct proc *);
