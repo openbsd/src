@@ -1,5 +1,10 @@
 /*
+ * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
+ * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
+ * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
