@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.65 2008/08/13 06:20:48 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.66 2008/11/01 00:38:43 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: August 13 2008 $
+.Dd $Mdocdate: November 1 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -148,24 +148,43 @@ Certain characters cause immediate action by
 .Nm .
 These are:
 .Bl -tag -width Fl
-.It Ic \&^L
-Refresh the screen.
-.It Ic \&^G
-Print the name of the current
-.Dq display
-being shown in
-the lower window and the refresh interval.
-.It Ic \&^Z
-Suspend
-.Nm .
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.
 While entering a command the
 current character erase, word erase, and line kill characters
 may be used.
+.It Ic p
+Pause
+.Nm .
 .It Ic q
 Exit
+.Nm .
+.It Ic ^A \*(Ba Aq Ic Home
+Jump to the beginning of the current view.
+.It Ic ^B \*(Ba Aq Ic right arrow
+Select previous view.
+.It Ic ^E \*(Ba Aq Ic End
+Jump to the end of the current view.
+.It Ic ^F \*(Ba Aq Ic left arrow
+Select the next view.
+.It Ic ^G
+Print the name of the current
+.Dq display
+being shown in
+the lower window and the refresh interval.
+.It Ic ^L
+Refresh the screen.
+.It Ic ^N \*(Ba Aq Ic down arrow
+Scroll current view down by one line.
+.It Ic ^P \*(Ba Aq Ic up arrow
+Scroll current view up by one line.
+.It Ic ^V \*(Ba Aq Ic Page Down
+Scroll current view down by one page.
+.It Ic Alt-V \*(Ba Aq Ic Page Up
+Scroll current view up by one page.
+.It Ic ^Z
+Suspend
 .Nm .
 .El
 .Pp
