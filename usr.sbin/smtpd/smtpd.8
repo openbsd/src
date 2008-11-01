@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.1 2008/11/01 21:35:28 gilles Exp $
+.\"	$OpenBSD: smtpd.8,v 1.2 2008/11/01 23:42:44 sobrado Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,15 +33,14 @@ is a Simple Mail Transfer Protocol
 .Pq SMTP
 daemon which can be used as a machine's primary mail system.
 .Nm
-can listen on a network interface and handle
-.Pq SMTP
+can listen on a network interface and handle SMTP
 transactions, it can also be fed messages through the standard
 .Xr sendmail 8
 interface.
 .Nm
 can relay messages through remote mail transfer agents or store them
 locally using either the mbox or maildir format.
-This implementation supports SMTP as defined by RFC5321 as well as several
+This implementation supports SMTP as defined by RFC 5321 as well as several
 extensions.
 A running
 .Nm
@@ -89,8 +88,8 @@ Unix-domain socket used for communication with
 .Xr smtpdb 8
 .Rs
 .%R RFC 5321
-.%T "SMTP"
-.%D April 2001
+.%T "Simple Mail Transfer Protocol"
+.%D October 2008
 .Re
 .Sh HISTORY
 The
