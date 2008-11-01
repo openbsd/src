@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.102 2008/11/01 21:25:34 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.103 2008/11/01 23:09:29 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -153,6 +153,7 @@ int		mpi_ioctl_disk(struct mpi_softc *, struct bioc_disk *);
 int		mpi_ioctl_setstate(struct mpi_softc *, struct bioc_setstate *);
 #ifndef SMALL_KERNEL
 int		mpi_create_sensors(struct mpi_softc *);
+void		mpi_refresh_sensors(void *);
 void		mpi_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
@@ -2889,7 +2890,114 @@ mpi_ioctl_setstate(struct mpi_softc *sc, struct bioc_setstate *bs)
 int
 mpi_create_sensors(struct mpi_softc *sc)
 {
+	struct device		*dev;
+	struct scsi_link	*link;
+	int			i, vol;
+
+	/* count volumes */
+	for (i = 0, vol = 0; i < sc->sc_buswidth; i++) {
+		link = sc->sc_scsibus->sc_link[i][0];
+		if (link == NULL)
+			continue;
+		/* skip if not a virtual disk */
+		if (!(link->flags & SDEV_VIRTUAL))
+			continue;
+		
+		vol++;
+	}
+
+	sc->sc_sensors = malloc(sizeof(struct ksensor) * vol,
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	if (sc->sc_sensors == NULL)
+		return (1);
+
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
+	for (i = 0, vol= 0; i < sc->sc_buswidth; i++) {
+		link = sc->sc_scsibus->sc_link[i][0];
+		if (link == NULL)
+			continue;
+		/* skip if not a virtual disk */
+		if (!(link->flags & SDEV_VIRTUAL))
+			continue;
+
+		dev = link->device_softc;
+		strlcpy(sc->sc_sensors[vol].desc, dev->dv_xname,
+		    sizeof(sc->sc_sensors[vol].desc));
+		sc->sc_sensors[vol].type = SENSOR_DRIVE;
+		sc->sc_sensors[vol].status = SENSOR_S_UNKNOWN;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[vol]);
+
+		vol++;
+	}
+
+	if (sensor_task_register(sc, mpi_refresh_sensors, 10) == NULL)
+		goto bad;
+
+	sensordev_install(&sc->sc_sensordev);
+
+	return (0);
+
+bad:
+	free(sc->sc_sensors, M_DEVBUF);
 	return (1);
+}
+
+void
+mpi_refresh_sensors(void *arg)
+{
+	int			i, vol;
+	struct scsi_link	*link;
+	struct mpi_softc	*sc = arg;
+	struct mpi_cfg_raid_vol_pg0 *rpg0;
+
+	rw_enter_write(&sc->sc_lock);
+
+	for (i = 0, vol = 0; i < sc->sc_buswidth; i++) {
+		link = sc->sc_scsibus->sc_link[i][0];
+		if (link == NULL)
+			continue;
+		/* skip if not a virtual disk */
+		if (!(link->flags & SDEV_VIRTUAL))
+			continue;
+
+		if (mpi_bio_get_pg0_raid(sc, vol))
+			continue;
+
+		rpg0 = sc->sc_rpg0;
+		if (rpg0 == NULL)
+			goto done;
+
+		/* determine status */
+		switch (rpg0->volume_state) {
+		case MPI_CFG_RAID_VOL_0_STATE_OPTIMAL:
+			sc->sc_sensors[vol].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[vol].status = SENSOR_S_OK;
+			break;
+		case MPI_CFG_RAID_VOL_0_STATE_DEGRADED:
+			sc->sc_sensors[vol].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[vol].status = SENSOR_S_WARN;
+			break;
+		case MPI_CFG_RAID_VOL_0_STATE_FAILED:
+		case MPI_CFG_RAID_VOL_0_STATE_MISSING:
+			sc->sc_sensors[vol].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[vol].status = SENSOR_S_CRIT;
+			break;
+		default:
+			sc->sc_sensors[vol].value = 0; /* unknown */
+			sc->sc_sensors[vol].status = SENSOR_S_UNKNOWN;
+		}
+
+		/* override status if scrubbing or something */
+		if (rpg0->volume_status & MPI_CFG_RAID_VOL_0_STATUS_RESYNCING)
+			sc->sc_sensors[vol].value = SENSOR_DRIVE_REBUILD;
+			sc->sc_sensors[vol].status = SENSOR_S_WARN;
+
+		vol++;
+	}
+done:
+	rw_exit_write(&sc->sc_lock);
 }
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
