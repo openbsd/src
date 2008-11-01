@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.101 2008/11/01 18:18:16 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.102 2008/11/01 21:25:34 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2834,7 +2834,7 @@ mpi_ioctl_disk(struct mpi_softc *sc, struct bioc_disk *bd)
 	physdisk += pdid;
 
 	/* get raid phys disk page 0 */
-	address = physdisk->phys_disk_num << 24;
+	address = physdisk->phys_disk_num;
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD, 0, address,
 	    &hdr) != 0)
 		goto done;
