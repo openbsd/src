@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.38 2008/10/31 17:17:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.39 2008/11/01 05:59:21 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -193,20 +193,22 @@ pgfind(pid_t pgid)
 
 /*
  * Move p to a new or existing process group (and session)
+ * Caller provides a pre-allocated pgrp and session that should
+ * be freed if they are not used.
  */
 int
-enterpgrp(struct proc *p, pid_t pgid, int mksess)
+enterpgrp(struct proc *p, pid_t pgid, struct pgrp *newpgrp,
+    struct session *newsess)
 {
 	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
-	if (pgrp != NULL && mksess)	/* firewalls */
+	if (pgrp != NULL && newsess)	/* firewalls */
 		panic("enterpgrp: setsid into non-empty pgrp");
 	if (SESS_LEADER(p))
 		panic("enterpgrp: session leader attempted setpgrp");
 #endif
 	if (pgrp == NULL) {
-		pid_t savepid = p->p_pid;
 		struct proc *np;
 		/*
 		 * new process group
@@ -215,24 +217,27 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		if (p->p_pid != pgid)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
-		if ((np = pfind(savepid)) == NULL || np != p)
-			return (ESRCH);
-		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
-		if (mksess) {
-			struct session *sess;
 
+		if ((np = pfind(p->p_pid)) == NULL || np != p) {
+			pool_put(&pgrp_pool, newpgrp);
+			if (newsess)
+				pool_put(&session_pool, newsess);
+			return (ESRCH);
+		}
+
+		pgrp = newpgrp;
+		if (newsess) {
 			/*
 			 * new session
 			 */
-			sess = pool_get(&session_pool, PR_WAITOK);
-			sess->s_leader = p;
-			sess->s_count = 1;
-			sess->s_ttyvp = NULL;
-			sess->s_ttyp = NULL;
-			bcopy(p->p_session->s_login, sess->s_login,
-			    sizeof(sess->s_login));
+			newsess->s_leader = p;
+			newsess->s_count = 1;
+			newsess->s_ttyvp = NULL;
+			newsess->s_ttyp = NULL;
+			bcopy(p->p_session->s_login, newsess->s_login,
+			    sizeof(newsess->s_login));
 			atomic_clearbits_int(&p->p_flag, P_CONTROLT);
-			pgrp->pg_session = sess;
+			pgrp->pg_session = newsess;
 #ifdef DIAGNOSTIC
 			if (p != curproc)
 				panic("enterpgrp: mksession and p != curproc");
@@ -245,8 +250,16 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		LIST_INIT(&pgrp->pg_members);
 		LIST_INSERT_HEAD(PGRPHASH(pgid), pgrp, pg_hash);
 		pgrp->pg_jobc = 0;
-	} else if (pgrp == p->p_pgrp)
+	} else if (pgrp == p->p_pgrp) {
+		if (newsess)
+			pool_put(&session_pool, newsess);
+		pool_put(&pgrp_pool, newpgrp);
 		return (0);
+	} else {
+		if (newsess)
+			pool_put(&session_pool, newsess);
+		pool_put(&pgrp_pool, newpgrp);
+	}
 
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.

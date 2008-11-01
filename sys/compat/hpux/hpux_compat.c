@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.29 2007/09/22 09:57:40 martin Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.30 2008/11/01 05:59:21 deraadt Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/ipc.h>
 #include <sys/user.h>
@@ -1163,9 +1164,12 @@ hpux_sys_setpgrp_6x(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct pgrp *npgrp;
+
+	npgrp = pool_get(&pgrp_pool, PR_WAITOK);
 
 	if (p->p_pid != p->p_pgid)
-		enterpgrp(p, p->p_pid, 0);
+		enterpgrp(p, p->p_pid, npgrp, NULL);
 	*retval = p->p_pgid;
 	return (0);
 }

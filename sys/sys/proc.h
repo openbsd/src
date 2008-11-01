@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.108 2008/10/14 18:27:29 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.109 2008/11/01 05:59:20 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -400,6 +400,7 @@ extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool rusage_pool;		/* memory pool for zombies */
 extern struct pool ucred_pool;		/* memory pool for ucreds */
 extern struct pool session_pool;	/* memory pool for sessions */
+extern struct pool pgrp_pool;		/* memory pool for pgrps */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 
 struct simplelock;
@@ -410,7 +411,8 @@ void	proc_printit(struct proc *p, const char *modif,
     int (*pr)(const char *, ...));
 
 int	chgproccnt(uid_t uid, int diff);
-int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
+int	enterpgrp(struct proc *p, pid_t pgid, struct pgrp *newpgrp,
+	    struct session *newsess);
 void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p);
 int	leavepgrp(struct proc *p);
