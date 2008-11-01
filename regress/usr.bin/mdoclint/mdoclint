@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.6 2008/11/01 16:17:30 grunk Exp $
+# $OpenBSD: mdoclint,v 1.7 2008/11/01 17:59:27 grunk Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -111,16 +111,13 @@ sub handle_options {
     getopts($options);
     $opt_h and usage();
 
-    # default to all warnings
-    if (not $opt_a and not $opt_D and not $opt_d and not $opt_e and
-	not $opt_f and
-	not $opt_H and not $opt_m and not $opt_n and not $opt_o and
-	not $opt_P and not $opt_p and not $opt_r and not $opt_S and
-	not $opt_s and not $opt_X and not $opt_x) {
-	$opt_a = $opt_D = $opt_d = $opt_f =
-	    $opt_H = $opt_m = $opt_n = $opt_o = $opt_P =
-	    $opt_p = $opt_r = $opt_S = $opt_s =
-	    $opt_X = $opt_x = 1;
+    # default to all warnings if no flag is set
+    unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H or $opt_m
+	or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r or $opt_S or $opt_s
+	or $opt_X or $opt_x) {
+	$opt_a = $opt_D = $opt_d = $opt_f = $opt_H = $opt_m = $opt_n =
+	    $opt_o = $opt_P = $opt_p = $opt_r = $opt_S = $opt_s = $opt_X =
+	    $opt_x = 1;
     }
 }
 
