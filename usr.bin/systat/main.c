@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.46 2008/10/31 06:50:09 canacar Exp $	 */
+/* $Id: main.c,v 1.47 2008/11/01 00:41:11 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -246,48 +246,6 @@ show_help(void)
 	foreach_view(add_view_tb);
 	tb_end();
 	message_set(tmp_buf);
-
-#if 0
-	erase();
-	mvprintw(line, 2, "Systat Help");
-	line += 2;
-	mvprintw(line,    5, " h  - Help (this page)");
-	mvprintw(line++, 40, " l  - set number of Lines");
-	mvprintw(line,    5, " p  - Pause display");
-	mvprintw(line++, 40, " s  - Set update interval");
-	mvprintw(line,    5, " v  - next View");
-	mvprintw(line++, 40, " q  - Quit");
-	line++;
-	mvprintw(line++, 5, "0-7 - select view directly");
-	mvprintw(line++, 5, "SPC - update immediately");
-	mvprintw(line++, 5, "^L  - refresh display");
-	line++;
-	mvprintw(line++, 5, "cursor keys - scroll display");
-	line++;
-	mvprintw(line++,  3, "Netstat specific keys::");
-	mvprintw(line,    5, " t  - toggle TCP display");
-	mvprintw(line++, 40, " u  - toggle UDP display");
-	mvprintw(line++,  5, " n  - toggle Name resolution");
-	line++;
-	mvprintw(line++,  3, "Ifstat specific keys::");
-	mvprintw(line,    5, " r  - initialize RUN mode");
-	mvprintw(line++, 40, " b  - set BOOT mode");
-	mvprintw(line,    5, " t  - set TIME mode (default)");
-	line++;
-	line++;
-	mvprintw(line++,  3, "VMstat specific keys::");
-	mvprintw(line,    5, " r  - initialize RUN mode");
-	mvprintw(line++, 40, " b  - set BOOT mode");
-	mvprintw(line,    5, " t  - set TIME mode (default)");
-	mvprintw(line++, 40, " z  - zero in RUN mode");
-	line++;
-	mvprintw(line++, 6, "press any key to continue ...");
-
-	while (getch() == ERR) {
-		if (gotsig_close)
-			break;
-	}
-#endif
 }
 
 void
@@ -312,7 +270,7 @@ cmd_compat(const char *buf)
 	if (strncasecmp(buf, "start", 5) == 0) {
 		paused = 0;
 		gotsig_alarm = 1;
-		cmd_delay(buf + 6);
+		cmd_delay(buf + 5);
 		return;
 	}
 
@@ -440,7 +398,7 @@ main(int argc, char *argv[])
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
-	while ((ch = getopt(argc, argv, "abd:ins:S:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "abd:ins:w:")) != -1) {
 		switch (ch) {
 		case 'a':
 			maxlines = -1;
@@ -464,11 +422,6 @@ main(int argc, char *argv[])
 			delay = atof(optarg);
 			if (delay <= 0)
 				delay = 5;
-			break;
-		case 'S':
-			dispstart = atoi(optarg);
-			if (dispstart < 0)
-				dispstart = 0;
 			break;
 		case 'w':
 			rawwidth = atoi(optarg);
