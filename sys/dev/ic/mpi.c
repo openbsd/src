@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.100 2008/10/28 11:27:53 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.101 2008/11/01 18:18:16 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -145,6 +145,7 @@ int			mpi_req_cfg_page(struct mpi_softc *, u_int32_t, int,
 			    void *, int, void *, size_t);
 
 #if NBIO > 0
+int		mpi_bio_get_pg0_raid(struct mpi_softc *, int);
 int		mpi_ioctl(struct device *, u_long, caddr_t);
 int		mpi_ioctl_inq(struct mpi_softc *, struct bioc_inq *);
 int		mpi_ioctl_vol(struct mpi_softc *, struct bioc_vol *);
@@ -2584,6 +2585,58 @@ mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 
 #if NBIO > 0
 int
+mpi_bio_get_pg0_raid(struct mpi_softc *sc, int id)
+{
+	int			len, rv = EINVAL;
+	u_int32_t		address;
+	struct mpi_cfg_hdr	hdr;
+	struct mpi_cfg_raid_vol_pg0 *rpg0;
+
+	/* get IOC page 2 */
+	if (mpi_cfg_page(sc, 0, &sc->sc_cfg_hdr, 1, sc->sc_vol_page,
+	    sc->sc_cfg_hdr.page_length * 4) != 0) {
+		DNPRINTF(MPI_D_IOCTL, "%s: mpi_bio_get_pg0_raid unable to "
+		    "fetch IOC page 2\n", DEVNAME(sc));
+		goto done;
+	}
+
+	/* XXX return something else than EINVAL to indicate within hs range */
+	if (id > sc->sc_vol_page->active_vols) {
+		DNPRINTF(MPI_D_IOCTL, "%s: mpi_bio_get_pg0_raid invalid vol "
+		    "id: %d\n", DEVNAME(sc), id);
+		goto done;
+	}
+
+	/* replace current buffer with new one */
+	len = sizeof *rpg0 + sc->sc_vol_page->max_physdisks *
+	    sizeof(struct mpi_cfg_raid_vol_pg0_physdisk);
+	rpg0 = malloc(len, M_TEMP, M_WAITOK | M_CANFAIL);
+	if (rpg0 == NULL) {
+		printf("%s: can't get memory for RAID page 0, "
+		    "bio disabled\n", DEVNAME(sc));
+		goto done;
+	}
+	if (sc->sc_rpg0)
+		free(sc->sc_rpg0, M_DEVBUF);
+	sc->sc_rpg0 = rpg0;
+
+	/* get raid vol page 0 */
+	address = sc->sc_vol_list[id].vol_id |
+	    (sc->sc_vol_list[id].vol_bus << 8);
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    address, &hdr) != 0)
+		goto done;
+	if (mpi_cfg_page(sc, address, &hdr, 1, rpg0, len)) {
+		printf("%s: can't get RAID vol cfg page 0\n", DEVNAME(sc));
+		goto done;
+	}
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
 mpi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct mpi_softc	*sc = (struct mpi_softc *)dev;
@@ -2664,44 +2717,21 @@ mpi_ioctl_inq(struct mpi_softc *sc, struct bioc_inq *bi)
 int
 mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 {
-	int			i, vol, id, len, rv = EINVAL;
-	u_int32_t		address;
+	int			i, vol, id, rv = EINVAL;
 	struct device		*dev;
 	struct scsi_link	*link;
-	struct mpi_cfg_hdr	hdr;;
 	struct mpi_cfg_raid_vol_pg0 *rpg0;
-	struct mpi_cfg_raid_vol_pg0_physdisk *physdisk;
-
-	if (mpi_cfg_page(sc, 0, &sc->sc_cfg_hdr, 1, sc->sc_vol_page,
-	    sc->sc_cfg_hdr.page_length * 4) != 0) {
-		DNPRINTF(MPI_D_IOCTL, "%s: mpi_get_raid unable to fetch IOC "
-		    "page 2\n", DEVNAME(sc));
-		return (EINVAL);
-	}
 
 	id = bv->bv_volid;
+	if (mpi_bio_get_pg0_raid(sc, id))
+		goto done;
+
 	if (id > sc->sc_vol_page->active_vols)
 		return (EINVAL); /* XXX deal with hot spares */
 
-	len = sizeof *rpg0 + sc->sc_vol_page->max_physdisks * sizeof *physdisk;
-	rpg0 = malloc(len, M_TEMP, M_WAITOK | M_CANFAIL);
-	if (rpg0 == NULL) {
-		printf("%s: can't get memory for RAID page 0, "
-		    "bio disabled\n", DEVNAME(sc));
+	rpg0 = sc->sc_rpg0;
+	if (rpg0 == NULL)
 		goto done;
-	}
-	physdisk = (struct mpi_cfg_raid_vol_pg0_physdisk *)(rpg0 + 1);
-
-	/* get raid vol page 0 */
-	address = sc->sc_vol_list[id].vol_id |
-	    (sc->sc_vol_list[id].vol_bus << 8);
-	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
-	    address, &hdr) != 0)
-		goto done;
-	if (mpi_cfg_page(sc, address, &hdr, 1, rpg0, len)) {
-		printf("%s: can't get RAID vol cfg page 0\n", DEVNAME(sc));
-		goto done;
-	}
 
 	/* determine status */
 	switch (rpg0->volume_state) {
@@ -2720,10 +2750,10 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 	}
 
 	/* override status if scrubbing or something */
-	if (rpg0->volume_status == MPI_CFG_RAID_VOL_0_STATUS_RESYNCING)
+	if (rpg0->volume_status & MPI_CFG_RAID_VOL_0_STATUS_RESYNCING)
 		bv->bv_status = BIOC_SVREBUILD;
 
-	bv->bv_size = (u_quad_t)letoh32(rpg0->max_lba);
+	bv->bv_size = (u_quad_t)letoh32(rpg0->max_lba) * 512;
 
 	switch (sc->sc_vol_list[id].vol_type) {
 	case MPI_CFG_RAID_TYPE_RAID_IS:
@@ -2773,14 +2803,80 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 	}
 	rv = 0;
 done:
-	free(rpg0, M_DEVBUF);
 	return (rv);
 }
 
 int
 mpi_ioctl_disk(struct mpi_softc *sc, struct bioc_disk *bd)
 {
-	return (ENOTTY);
+	int			pdid, id, rv = EINVAL;
+	u_int32_t		address;
+	struct mpi_cfg_hdr	hdr;
+	struct mpi_cfg_raid_vol_pg0 *rpg0;
+	struct mpi_cfg_raid_vol_pg0_physdisk *physdisk;
+	struct mpi_cfg_raid_physdisk_pg0 pdpg0;
+
+	id = bd->bd_volid;
+	if (mpi_bio_get_pg0_raid(sc, id))
+		goto done;
+
+	if (id > sc->sc_vol_page->active_vols)
+		return (EINVAL); /* XXX deal with hot spares */
+
+	rpg0 = sc->sc_rpg0;
+	if (rpg0 == NULL)
+		goto done;
+
+	pdid = bd->bd_diskid;
+	if (pdid > rpg0->num_phys_disks)
+		goto done;
+	physdisk = (struct mpi_cfg_raid_vol_pg0_physdisk *)(rpg0 + 1);
+	physdisk += pdid;
+
+	/* get raid phys disk page 0 */
+	address = physdisk->phys_disk_num << 24;
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD, 0, address,
+	    &hdr) != 0)
+		goto done;
+	if (mpi_cfg_page(sc, address, &hdr, 1, &pdpg0, sizeof pdpg0)) {
+		bd->bd_status = BIOC_SDFAILED;
+		return (0);
+	}
+	bd->bd_channel = pdpg0.phys_disk_bus;
+	bd->bd_target = pdpg0.phys_disk_id;
+	bd->bd_lun = 0;
+	bd->bd_size = (u_quad_t)pdpg0.max_lba * 512;
+	strlcpy(bd->bd_vendor, pdpg0.vendor_id, sizeof(bd->bd_vendor));
+
+	switch (pdpg0.phys_disk_state) {
+	case MPI_CFG_RAID_PHYDISK_0_STATE_ONLINE:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+	case MPI_CFG_RAID_PHYDISK_0_STATE_MISSING:
+	case MPI_CFG_RAID_PHYDISK_0_STATE_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
+	case MPI_CFG_RAID_PHYDISK_0_STATE_HOSTFAIL:
+	case MPI_CFG_RAID_PHYDISK_0_STATE_OTHER:
+	case MPI_CFG_RAID_PHYDISK_0_STATE_OFFLINE:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+	case MPI_CFG_RAID_PHYDISK_0_STATE_INIT:
+		bd->bd_status = BIOC_SDSCRUB;
+		break;
+	case MPI_CFG_RAID_PHYDISK_0_STATE_INCOMPAT:
+	default:
+		bd->bd_status = BIOC_SDINVALID;
+		break;
+	}
+
+	/* XXX figure this out */
+	/* bd_serial[32]; */
+	/* bd_procdev[16]; */
+
+	rv = 0;
+done:
+	return (rv);
 }
 
 int
