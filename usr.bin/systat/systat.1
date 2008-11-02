@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.67 2008/11/01 07:43:45 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.68 2008/11/02 06:23:28 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 1 2008 $
+.Dd $Mdocdate: November 2 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -119,9 +119,10 @@ argument expects to be one of:
 .Ic swap ,
 .Ic states ,
 .Ic rules ,
-.Ic queues
+.Ic queues ,
+.Ic pf
 or
-.Ic pf .
+.Ic pool .
 These displays can also be requested interactively and are described in
 full detail below.
 .Ar view
@@ -324,6 +325,11 @@ processor is scheduled to user processes, the remaining time
 is accounted to the
 .Dq idle
 process.
+.It Ic pool
+Display kernel
+.Xr pool 9
+statistics similar to the output of
+.Cm vmstat Fl m .
 .It Ic queues
 Display statistics about the active
 .Xr altq 9
