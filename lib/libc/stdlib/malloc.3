@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.55 2008/11/02 08:50:41 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.56 2008/11/02 14:42:01 otto Exp $
 .\"
 .Dd $Mdocdate: November 2 2008 $
 .Dt MALLOC 3
@@ -235,10 +235,9 @@ Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
 .It Cm G
 .Dq Guard .
-Enable guard pages and chunk randomization.
+Enable guard pages.
 Each page size or larger allocation is followed by a guard page that will
 cause a segmentation fault upon any access.
-Smaller than page size chunks are returned in a random order.
 .It Cm H
 .Dq Hint .
 Pass a hint to the kernel about pages we don't use.
@@ -295,8 +294,8 @@ Decrease the size of the free page cache by a factor of two.
 Increase the size of the free page cache by a factor of two.
 .El
 .Pp
-So to set a systemwide reduction of cache size and coredumps on problems:
-.Li ln -s 'G<' /etc/malloc.conf
+So to set a systemwide reduction of cache size and use guard pages:
+.Dl # ln -s 'G\*(Lt' /etc/malloc.conf
 .Pp
 The
 .Cm J
