@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.22 2007/10/29 15:38:00 chl Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.23 2008/11/02 11:37:32 thib Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/un.h>
+#include <sys/dirent.h>
 #include <miscfs/portal/portal.h>
 
 #define portal_init ((int (*)(struct vfsconf *))nullop)
@@ -124,6 +125,8 @@ portal_mount(struct mount *mp, const char *path, void *data, struct nameidata *n
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
+
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -220,12 +223,8 @@ portal_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_bavail = 0;
 	sbp->f_files = 1;		/* Allow for "." */
 	sbp->f_ffree = 0;		/* See comments above */
-	if (sbp != &mp->mnt_stat) {
-		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
+
 	return (0);
 }
 
