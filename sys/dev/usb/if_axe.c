@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.88 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.89 2008/11/02 10:46:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -754,8 +754,6 @@ axe_detach(struct device *self, int flags)
 	timeout_del(&sc->axe_stat_ch);
 
 	sc->axe_dying = 1;
-
-	ether_ifdetach(ifp);
 
 	if (sc->axe_ep[AXE_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
