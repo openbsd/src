@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_mos.c,v 1.3 2008/11/02 23:50:48 jsg Exp $	*/
+
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
  *

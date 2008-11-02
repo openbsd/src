@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_mosreg.h,v 1.2 2008/11/02 23:50:48 jsg Exp $	*/
+
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
  *
