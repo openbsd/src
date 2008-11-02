@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.68 2008/11/02 06:23:28 canacar Exp $
+.\"	$OpenBSD: systat.1,v 1.69 2008/11/02 07:14:16 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -153,12 +153,18 @@ line typed as a command.
 While entering a command the
 current character erase, word erase, and line kill characters
 may be used.
+.It Ic o
+Select the next ordering which sorts the rows according to a
+combination of columns. Available orderings depend on the 
+view. Not all views support orderings.
 .It Ic p
 Pause
 .Nm .
 .It Ic q
 Exit
 .Nm .
+.It Ic r
+Reverse the selected ordering if supported by the view.
 .It Ic ^A \*(Ba Aq Ic Home
 Jump to the beginning of the current view.
 .It Ic ^B \*(Ba Aq Ic right arrow
@@ -330,6 +336,10 @@ Display kernel
 .Xr pool 9
 statistics similar to the output of
 .Cm vmstat Fl m .
+Available orderings are:
+.Ic name
+and
+.Ic requests .
 .It Ic queues
 Display statistics about the active
 .Xr altq 9
@@ -346,6 +356,20 @@ in a format similar to that of
 .It Ic states
 Display pf states statistics, similar to the output of
 .Cm pfctl Fl s Cm states .
+Available orderings are:
+.Ic none ,
+.Ic bytes ,
+.Ic expiry ,
+.Ic packets ,
+.Ic age ,
+.Ic source address ,
+.Ic source port ,
+.Ic destination address ,
+.Ic destination port ,
+.Ic rate ,
+and
+.Ic peak
+columns.
 .It Ic swap
 Show information about swap space usage on all the
 swap areas compiled into the kernel.

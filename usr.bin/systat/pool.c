@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.1 2008/11/02 06:23:28 canacar Exp $	*/
+/*	$OpenBSD: pool.c,v 1.2 2008/11/02 07:14:16 canacar Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -32,6 +32,7 @@ void showpool(int k);
 
 /* qsort callbacks */
 int sort_name_callback(const void *s1, const void *s2);
+int sort_req_callback(const void *s1, const void *s2);
 
 struct pool_info {
 	char name[32];
@@ -82,7 +83,8 @@ field_def *view_pool_0[] = {
 };
 
 order_type pool_order_list[] = {
-	{"name", "name", 0, sort_name_callback},
+	{"name", "name", 'N', sort_name_callback},
+	{"requests", "requests", 'Q', sort_req_callback},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -105,7 +107,22 @@ sort_name_callback(const void *s1, const void *s2)
 	p1 = (struct pool_info *)s1;
 	p2 = (struct pool_info *)s2;
 
-	return strcmp(p1->name, p2->name);
+	return strcmp(p1->name, p2->name) * sortdir;
+}
+
+int
+sort_req_callback(const void *s1, const void *s2)
+{
+	struct pool_info *p1, *p2;
+	p1 = (struct pool_info *)s1;
+	p2 = (struct pool_info *)s2;
+
+	if (p1->pool.pr_nget <  p2->pool.pr_nget)
+		return sortdir;
+	if (p1->pool.pr_nget >  p2->pool.pr_nget)
+		return -sortdir;
+
+	return sort_name_callback(s1, s2);
 }
 
 void
@@ -127,7 +144,7 @@ sort_pool(void)
 	if (num_pools <= 0)
 		return;
 
-	qsort(pools, num_pools, sizeof(struct pool_info), ordering->func);
+	mergesort(pools, num_pools, sizeof(struct pool_info), ordering->func);
 }
 
 int
