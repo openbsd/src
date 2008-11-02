@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.2 2008/11/02 00:01:53 sobrado Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.3 2008/11/02 08:19:13 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\"
@@ -23,11 +23,10 @@
 .Nd Simple Mail Transfer Protocol daemon configuration file
 .Sh DESCRIPTION
 .Nm
-is used to configure the
+is used to configure
 .Xr smtpd 8 ,
 a small SMTP daemon.
 .Pp
-.Sh SMTPD.CONF FILE FORMAT
 Lines beginning with
 .Sq #
 and empty lines are regarded as comments,
@@ -59,43 +58,46 @@ listen on 127.0.0.1 port $smtp_port
 .Ed
 .Sh EXPANSION
 Some configuration directives expect expansion of their parameter at
-runtime. Such directives (for example
+runtime.
+Such directives (for example
 .Ar deliver to mbox ,
 .Ar deliver to maildir ,
 .Ar deliver to mda ,
 .Ar relay via )
 may use format specifiers which will be expanded before delivery or
-relaying. The following formats are currently supported:
+relaying.
+The following formats are currently supported:
 %a expands to the user part of the email address prior to the
-resolution of aliases, %u expands to the user part after aliases
-resolution and will typically be the system account, %d expands to
-the domain part of the email address.
+resolution of aliases;
+%u expands to the user part after aliases
+resolution and will typically be the system account;
+%d expands to the domain part of the email address.
+.Sh FILES
+.Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
+.It Pa /etc/mail/smtpd.conf
+Default
+.Xr smtpd 8
+configuration file.
+.It Pa /var/spool/smtpd/
+Spool directories for mail during processing.
+.El
 .Sh EXAMPLES
 The following example configures a machine to accept local delivery
 for both localhost and example.com, as well as the relaying of mail
 destined for example.org through the mx1.example.org server and mail
 destined for example.net through regular MX records lookup:
-.Pp
-.Bd -literal -offset listen
-.Pp
+.Bd -literal -offset indent
 listen on 0.0.0.0 port 25
 accept for domain "localhost" deliver to mbox "/var/mail/%u"
 accept for domain "example.com" deliver to maildir "/home/%u/Maildir"
 accept for domain "example.org" relay via "mx1.example.org"
 accept for domain "example.net" relay
 .Ed
-.Sh FILES
-.Bl -tag -width "/etc/mail/smtpd.conf" -compact
-.It Pa /var/spool/smtpd/
-Spool directories for mail during processing.
-.It Pa /etc/mail/smtpd.conf
-Default location for this file.
-.El
 .Sh SEE ALSO
-.Xr smtpd 8 ,
 .Xr smtpctl 8 ,
+.Xr smtpd 8 ,
 .Xr smtpdb 8
 .Sh HISTORY
 .Xr smtpd 8
 first appeared in
-.Ox 4.4 .
+.Ox 4.5 .

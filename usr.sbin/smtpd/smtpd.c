@@ -73,7 +73,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-n] [-f config]\n", __progname);
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] "
+	    "[-f file]\n", __progname);
 	exit(1);
 }
 
