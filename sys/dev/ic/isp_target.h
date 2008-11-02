@@ -1,19 +1,10 @@
-/*	$OpenBSD: isp_target.h,v 1.12 2008/01/21 20:00:33 sobrado Exp $	*/
-
-/* @(#)isp_target.h 1.3 */
+/*	$OpenBSD: isp_target.h,v 1.13 2008/11/02 02:01:47 krw Exp $	*/
+/* $FreeBSD: src/sys/dev/isp/isp_target.h,v 1.30 2007/03/10 02:39:54 mjacob Exp $ */
 /*
- * QLogic Target Mode Structure and Flag Definitions
- *
  * Copyright (c) 1997, 1998
  * Patrick Stirling
  * pms@psconsult.com
  * All rights reserved.
- *
- * Additional Copyright (c) 1999, 2000, 2001
- * Matthew Jacob
- * mjacob@feral.com
- * All rights reserved.
- *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,16 +24,41 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
+ */
+/*-
+ *  Copyright (c) 1997-2007 by Matthew Jacob
+ *  All rights reserved.
+ * 
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *  SUCH DAMAGE.
+ */
+/*
+ * QLogic Target Mode Structure and Flag Definitions
  */
 #ifndef	_ISP_TARGET_H
 #define	_ISP_TARGET_H
 
-/*
- * Defines for all entry types
- */
+#define	QLTM_SENSELEN	18	/* non-FC cards only */
 #define QLTM_SVALID	0x80
-#define	QLTM_SENSELEN	18
 
 /*
  * Structure for Enable Lun and Modify Lun queue entries
@@ -125,6 +141,17 @@ typedef struct {
 	u_int16_t	in_seqid;	/* sequence id */
 } in_fcentry_t;
 
+typedef struct {
+	isphdr_t	in_header;
+	u_int32_t	in_reserved;
+	u_int16_t	in_iid;		/* initiator */
+	u_int16_t	in_scclun;
+	u_int32_t	in_reserved2;
+	u_int16_t	in_status;
+	u_int16_t	in_task_flags;
+	u_int16_t	in_seqid;	/* sequence id */
+} in_fcentry_e_t;
+
 /*
  * Values for the in_status field
  */
@@ -146,8 +173,13 @@ typedef struct {
 #define	TASK_FLAGS_ABORT_TASK		(1<<9)
 #define	TASK_FLAGS_CLEAR_TASK_SET	(1<<10)
 #define	TASK_FLAGS_TARGET_RESET		(1<<13)
+#define	TASK_FLAGS_RESERVED_MASK	(0xe700)
 #define	TASK_FLAGS_CLEAR_ACA		(1<<14)
 #define	TASK_FLAGS_TERMINATE_TASK	(1<<15)
+#define	TASK_FLAGS_TARGET_RESET		(1<<13)
+#define	TASK_FLAGS_LUN_RESET		(1<<12)
+#define	TASK_FLAGS_CLEAR_TASK_SET	(1<<10)
+#define	TASK_FLAGS_ABORT_TASK_SET	(1<<9)
 
 #ifndef	MSG_ABORT_TAG
 #define	MSG_ABORT_TAG		0x06
@@ -165,7 +197,48 @@ typedef struct {
 #define	MSG_TERM_IO_PROC	0x11
 #endif
 
+/*
+ * ISP24XX Immediate Notify
+ */
+typedef struct {
+	isphdr_t	in_header;
+	u_int32_t	in_reserved;
+	u_int16_t	in_nphdl;
+	u_int16_t	in_reserved1;
+	u_int16_t	in_flags;
+	u_int16_t	in_srr_rxid;
+	u_int16_t	in_status;
+	u_int8_t	in_status_subcode;
+	u_int8_t	in_reserved2;
+	u_int32_t	in_rxid;
+	u_int16_t	in_srr_reloff_lo;
+	u_int16_t	in_srr_reloff_hi;
+	u_int16_t	in_srr_iu;
+	u_int16_t	in_srr_oxid;
+	u_int8_t	in_reserved3[18];
+	u_int8_t	in_reserved4;
+	u_int8_t	in_vpindex;
+	u_int32_t	in_reserved5;
+	u_int16_t	in_portid_lo;
+	u_int8_t	in_portid_hi;
+	u_int8_t	in_reserved6;
+	u_int16_t	in_reserved7;
+	u_int16_t	in_oxid;
+} in_fcentry_24xx_t;
 
+#define	IN24XX_FLAG_PUREX_IOCB		0x1
+#define	IN24XX_FLAG_GLOBAL_LOGOUT	0x2
+
+#define	IN24XX_LIP_RESET	0x0E
+#define	IN24XX_LINK_RESET	0x0F
+#define	IN24XX_PORT_LOGOUT	0x29
+#define	IN24XX_PORT_CHANGED	0x2A
+#define	IN24XX_LINK_FAILED	0x2E
+#define	IN24XX_SRR_RCVD		0x45
+#define	IN24XX_ELS_RCVD		0x46	/*
+					 * login-affectin ELS received- check
+					 * subcode for specific opcode
+					 */
 /*
  * Notify Acknowledge Entry structure
  */
@@ -205,8 +278,54 @@ typedef struct {
 	u_int16_t	na_seqid;	/* sequence id */
 	u_int16_t	na_reserved3[NA2_RSVDLEN];
 } na_fcentry_t;
+
+typedef struct {
+	isphdr_t	na_header;
+	u_int32_t	na_reserved;
+	u_int16_t	na_iid;		/* initiator loop id */
+	u_int16_t	na_response;	/* response code */
+	u_int16_t	na_flags;
+	u_int16_t	na_reserved2;
+	u_int16_t	na_status;
+	u_int16_t	na_task_flags;
+	u_int16_t	na_seqid;	/* sequence id */
+	u_int16_t	na_reserved3[NA2_RSVDLEN];
+} na_fcentry_e_t;
+
 #define	NAFC_RCOUNT	0x80	/* increment resource count */
 #define NAFC_RST_CLRD	0x20	/* Clear LIP Reset */
+#define	NAFC_TVALID	0x10	/* task mangement response code is valid */
+
+/*
+ * ISP24XX Notify Acknowledge
+ */
+
+typedef struct {
+	isphdr_t	na_header;
+	u_int32_t	na_handle;
+	u_int16_t	na_nphdl;
+	u_int16_t	na_reserved1;
+	u_int16_t	na_flags;
+	u_int16_t	na_srr_rxid;
+	u_int16_t	na_status;
+	u_int8_t	na_status_subcode;
+	u_int8_t	na_reserved2;
+	u_int32_t	na_rxid;
+	u_int16_t	na_srr_reloff_lo;
+	u_int16_t	na_srr_reloff_hi;
+	u_int16_t	na_srr_iu;
+	u_int16_t	na_srr_flags;
+	u_int8_t	na_reserved3[18];
+	u_int8_t	na_reserved4;
+	u_int8_t	na_vpindex;
+	u_int8_t	na_srr_reject_vunique;
+	u_int8_t	na_srr_reject_explanation;
+	u_int8_t	na_srr_reject_code;
+	u_int8_t	na_reserved5;
+	u_int8_t	na_reserved6[6];
+	u_int16_t	na_oxid;
+} na_fcentry_24xx_t;
+
 /*
  * Accept Target I/O Entry structure
  */
@@ -244,7 +363,6 @@ typedef struct {
 #define AT_NOCAP	0x16	/* Requested capability not available */
 #define AT_BDR_MSG	0x17	/* Bus Device Reset msg received */
 #define AT_CDB		0x3D	/* CDB received */
-
 /*
  * Macros to create and fetch and test concatenated handle and tag value macros
  */
@@ -261,7 +379,24 @@ typedef struct {
 
 #define	AT_HAS_TAG(val)		((val) & 0xffff)
 #define	AT_GET_TAG(val)		AT_HAS_TAG(val) - 1
+#define	AT_GET_INST(val)	(((val) >> 26) & 0x3f)
+#define	AT_GET_BUS(val)		(((val) >> 25) & 0x1)
 #define	AT_GET_HANDLE(val)	((val) >> 16)
+
+#define	IN_MAKE_TAGID(tid, bus, inst, inp)				\
+	tid = inp->in_seqid;						\
+	tid |= (inp->in_tag_val << 16);					\
+	tid |= (1 << 24);						\
+	tid |= (bus << 25);						\
+	tid |= (inst << 26)
+
+#define	TAG_INSERT_INST(tid, inst)					\
+	tid &= ~(0x3ffffff);						\
+	tid |= (inst << 26)
+
+#define	TAG_INSERT_BUS(tid, bus)					\
+	tid &= ~(1 << 25);						\
+	tid |= (bus << 25)
 
 /*
  * Accept Target I/O Entry structure, Type 2
@@ -288,6 +423,25 @@ typedef struct {
 	u_int16_t	at_oxid;
 } at2_entry_t;
 
+typedef struct {
+	isphdr_t	at_header;
+	u_int32_t	at_reserved;
+	u_int16_t	at_iid;		/* initiator */
+	u_int16_t	at_rxid; 	/* response ID */
+	u_int16_t	at_flags;
+	u_int16_t	at_status;	/* firmware status */
+	u_int8_t	at_crn;		/* command reference number */
+	u_int8_t	at_taskcodes;
+	u_int8_t	at_taskflags;
+	u_int8_t	at_execodes;
+	u_int8_t	at_cdb[ATIO2_CDBLEN];	/* received CDB */
+	u_int32_t	at_datalen;		/* allocated data len */
+	u_int16_t	at_scclun;		/* SCC Lun or reserved */
+	u_int16_t	at_wwpn[4];		/* WWPN of initiator */
+	u_int16_t	at_reserved2[6];
+	u_int16_t	at_oxid;
+} at2e_entry_t;
+
 #define	ATIO2_WWPN_OFFSET	0x2A
 #define	ATIO2_OXID_OFFSET	0x3E
 
@@ -297,6 +451,68 @@ typedef struct {
 #define	ATIO2_TC_ATTR_ORDERED	2
 #define	ATIO2_TC_ATTR_ACAQ	4
 #define	ATIO2_TC_ATTR_UNTAGGED	5
+
+#define	ATIO2_EX_WRITE		0x1
+#define	ATIO2_EX_READ		0x2
+/*
+ * Macros to create and fetch and test concatenated handle and tag value macros
+ */
+#define	AT2_MAKE_TAGID(tid, bus, inst, aep)				\
+	tid = aep->at_rxid;						\
+	tid |= (((u_int64_t)inst) << 32);				\
+	tid |= (((u_int64_t)bus) << 48)
+
+#define	CT2_MAKE_TAGID(tid, bus, inst, ct)				\
+	tid = ct->ct_rxid;						\
+	tid |= (((u_int64_t)inst) << 32);				\
+	tid |= (((u_int64_t)(bus & 0xff)) << 48)
+
+#define	AT2_HAS_TAG(val)	1
+#define	AT2_GET_TAG(val)	((val) & 0xffffffff)
+#define	AT2_GET_INST(val)	((val) >> 32)
+#define	AT2_GET_HANDLE		AT2_GET_TAG
+#define	AT2_GET_BUS(val)	(((val) >> 48) & 0xff)
+
+#define	FC_HAS_TAG	AT2_HAS_TAG
+#define	FC_GET_TAG	AT2_GET_TAG
+#define	FC_GET_INST	AT2_GET_INST
+#define	FC_GET_HANDLE	AT2_GET_HANDLE
+
+#define	IN_FC_MAKE_TAGID(tid, bus, inst, seqid)				\
+	tid = seqid;							\
+	tid |= (((u_int64_t)inst) << 32);				\
+	tid |= (((u_int64_t)(bus & 0xff)) << 48)
+
+#define	FC_TAG_INSERT_INST(tid, inst)					\
+	tid &= ~0xffff00000000ull;					\
+	tid |= (((u_int64_t)inst) << 32)
+
+/*
+ * 24XX ATIO Definition
+ *
+ * This is *quite* different from other entry types.
+ * First of all, it has its own queue it comes in on.
+ *
+ * Secondly, it doesn't have a normal header.
+ *
+ * Thirdly, it's just a passthru of the FCP CMND IU
+ * which is recorded in big endian mode.
+ */
+typedef struct {
+	u_int8_t	at_type;
+	u_int8_t	at_count;
+	/*
+	 * Task attribute in high four bits,
+	 * the rest is the FCP CMND IU Length.
+	 * NB: the command can extend past the
+	 * length for a single queue entry.
+	 */
+	u_int16_t	at_ta_len;
+	u_int32_t	at_rxid;
+	fc_hdr_t	at_hdr;
+	fcp_cmnd_iu_t	at_cmnd;
+} at7_entry_t;
+
 
 /*
  * Continue Target I/O Entry structure
@@ -338,8 +554,8 @@ typedef struct {
  * in the MSbit of ct_iid. Bit fields are a bit too awkward here.
  *
  * Note that this does not apply to FC adapters at all which can and
- * do report IIDs between 129 && 255 (these represent devices that have
- * logged in across a SCSI fabric).
+ * do report IIDs between 0x81 && 0xfe (or 0x7ff) which represent devices
+ * that have logged in across a SCSI fabric.
  */
 #define	GET_IID_VAL(x)		(x & 0x3f)
 #define	GET_BUS_VAL(x)		((x >> 7) & 0x1)
@@ -379,14 +595,16 @@ typedef struct {
 #define	CT_BUS_ERROR	0x10	/* (FC Only) DMA PCI Error */
 #define	CT_PANIC	0x13	/* Unrecoverable Error */
 #define CT_PHASE_ERROR	0x14	/* Bus phase sequence error */
-#define CT_BDR_MSG	0x17	/* Bus Device Reset msg received */
 #define	CT_DATA_UNDER	0x15	/* (FC only) Data Underrun */
+#define CT_BDR_MSG	0x17	/* Bus Device Reset msg received */
 #define CT_TERMINATED	0x19	/* due to Terminate Transfer mbox cmd */
 #define	CT_PORTNOTAVAIL	0x28	/* port not available */
 #define	CT_LOGOUT	0x29	/* port logout */
 #define	CT_PORTCHANGED	0x2A	/* port changed */
 #define	CT_IDE		0x33	/* Initiator Detected Error */
 #define CT_NOACK	0x35	/* Outstanding Immed. Notify. entry */
+#define	CT_SRR		0x45	/* SRR Received */
+#define	CT_LUN_RESET	0x48	/* Lun Reset Received */
 
 /*
  * When the firmware returns a CTIO entry, it may overwrite the last
@@ -474,19 +692,62 @@ typedef struct {
 	} rsp;
 } ct2_entry_t;
 
+typedef struct {
+	isphdr_t	ct_header;
+	u_int32_t	ct_syshandle;
+	u_int16_t	ct_iid;		/* initiator id */
+	u_int16_t	ct_rxid;	/* response ID */
+	u_int16_t	ct_flags;
+	u_int16_t 	ct_status;	/* isp status */
+	u_int16_t	ct_timeout;
+	u_int16_t	ct_seg_count;
+	u_int32_t	ct_reloff;	/* relative offset */
+	int32_t		ct_resid;	/* residual length */
+	union {
+		struct {
+			u_int32_t _reserved;
+			u_int16_t _reserved2;
+			u_int16_t ct_scsi_status;
+			u_int32_t ct_xfrlen;
+			union {
+				ispds_t ct_dataseg[ISP_RQDSEG_T2];
+				ispds64_t ct_dataseg64[ISP_RQDSEG_T3];
+				ispdslist_t ct_dslist;
+			} u;
+		} m0;
+		struct {
+			u_int16_t _reserved;
+			u_int16_t _reserved2;
+			u_int16_t ct_senselen;
+			u_int16_t ct_scsi_status;
+			u_int16_t ct_resplen;
+			u_int8_t  ct_resp[MAXRESPLEN];
+		} m1;
+		struct {
+			u_int32_t _reserved;
+			u_int16_t _reserved2;
+			u_int16_t _reserved3;
+			u_int32_t ct_datalen;
+			ispds_t ct_fcp_rsp_iudata;
+		} m2;
+	} rsp;
+} ct2e_entry_t;
+
 /*
  * ct_flags values for CTIO2
  */
-#define	CT2_FLAG_MMASK	0x0003
 #define	CT2_FLAG_MODE0	0x0000
 #define	CT2_FLAG_MODE1	0x0001
 #define	CT2_FLAG_MODE2	0x0002
+#define		CT2_FLAG_MMASK	0x0003
 #define CT2_DATA_IN	CT_DATA_IN
 #define CT2_DATA_OUT	CT_DATA_OUT
 #define CT2_NO_DATA	CT_NO_DATA
 #define CT2_DATAMASK	CT_DATAMASK
 #define	CT2_CCINCR	0x0100
 #define	CT2_FASTPOST	0x0200
+#define	CT2_CONFIRM	0x2000
+#define	CT2_TERMINATE	0x4000
 #define CT2_SENDSTATUS	0x8000
 
 /*
@@ -502,6 +763,183 @@ typedef struct {
 #define	CT2_SNSLEN_VALID	0x0200
 #define	CT2_DATA_OVER		0x0400
 #define	CT2_DATA_UNDER		0x0800
+
+/*
+ * ISP24XX CTIO
+ */
+#define	MAXRESPLEN_24XX	24
+typedef struct {
+	isphdr_t	ct_header;
+	u_int32_t	ct_syshandle;
+	u_int16_t	ct_nphdl;	/* status on returned CTIOs */
+	u_int16_t	ct_timeout;
+	u_int16_t	ct_seg_count;
+	u_int8_t	ct_vpindex;
+	u_int8_t	ct_xflags;
+	u_int16_t	ct_iid_lo;	/* low 16 bits of portid */
+	u_int8_t	ct_iid_hi;	/* hi 8 bits of portid */
+	u_int8_t	ct_reserved;
+	u_int32_t	ct_rxid;
+	u_int16_t	ct_senselen;	/* mode 0 only */
+	u_int16_t	ct_flags;
+	int32_t		ct_resid;	/* residual length */
+	u_int16_t	ct_oxid;
+	u_int16_t	ct_scsi_status;	/* modes 0 && 1 only */
+	union {
+		struct {
+			u_int32_t	reloff;
+			u_int32_t	reserved0;
+			u_int32_t	ct_xfrlen;
+			u_int32_t	reserved1;
+			ispds64_t	ds;
+		} m0;
+		struct {
+			u_int16_t ct_resplen;
+			u_int16_t reserved;
+			u_int8_t  ct_resp[MAXRESPLEN_24XX];
+		} m1;
+		struct {
+			u_int32_t reserved0;
+			u_int32_t ct_datalen;
+			u_int32_t reserved1;
+			ispds64_t ct_fcp_rsp_iudata;
+		} m2;
+	} rsp;
+} ct7_entry_t;
+
+/*
+ * ct_flags values for CTIO7
+ */
+#define CT7_DATA_IN	0x0002
+#define CT7_DATA_OUT	0x0001
+#define CT7_NO_DATA	0x0000
+#define 	CT7_DATAMASK	0x003
+#define	CT7_DSD_ENABLE	0x0004
+#define	CT7_CONF_STSFD	0x0010
+#define	CT7_EXPLCT_CONF	0x0020
+#define	CT7_FLAG_MODE0	0x0000
+#define	CT7_FLAG_MODE1	0x0040
+#define	CT7_FLAG_MODE7	0x0080
+#define		CT7_FLAG_MMASK	0x00C0
+#define	CT7_FASTPOST	0x0100
+#define	CT7_ATTR_MASK	0x1e00	/* task attributes from atio7 */
+#define	CT7_CONFIRM	0x2000
+#define	CT7_TERMINATE	0x4000
+#define CT7_SENDSTATUS	0x8000
+
+/*
+ * Type 7 CTIO status codes
+ */
+#define CT7_OK		0x01	/* completed without error */
+#define CT7_ABORTED	0x02	/* aborted by host */
+#define CT7_ERR		0x04	/* see sense data for error */
+#define CT7_INVAL	0x06	/* request for disabled lun */
+#define	CT7_INVRXID	0x08	/* (FC only) Invalid RX_ID */
+#define	CT7_DATA_OVER	0x09	/* (FC only) Data Overrun */
+#define CT7_TIMEOUT	0x0B	/* timed out */
+#define CT7_RESET	0x0E	/* LIP Rset Received */
+#define	CT7_BUS_ERROR	0x10	/* DMA PCI Error */
+#define	CT7_REASSY_ERR	0x11	/* DMA reassembly error */
+#define	CT7_DATA_UNDER	0x15	/* (FC only) Data Underrun */
+#define	CT7_PORTUNAVAIL	0x28	/* port not available */
+#define	CT7_LOGOUT	0x29	/* port logout */
+#define	CT7_PORTCHANGED	0x2A	/* port changed */
+#define	CT7_SRR		0x45	/* SRR Received */
+
+/*
+ * Other 24XX related target IOCBs
+ */
+
+/*
+ * ABTS Received
+ */
+typedef struct {
+	isphdr_t	abts_header;
+	u_int8_t	abts_reserved0[6];
+	u_int16_t	abts_nphdl;
+	u_int16_t	abts_reserved1;
+	u_int16_t	abts_sof;
+	u_int32_t	abts_rxid_abts;
+	u_int16_t	abts_did_lo;
+	u_int8_t	abts_did_hi;
+	u_int8_t	abts_r_ctl;
+	u_int16_t	abts_sid_lo;
+	u_int8_t	abts_sid_hi;
+	u_int8_t	abts_cs_ctl;
+	u_int16_t	abts_fs_ctl;
+	u_int8_t	abts_f_ctl;
+	u_int8_t	abts_type;
+	u_int16_t	abts_seq_cnt;
+	u_int8_t	abts_df_ctl;
+	u_int8_t	abts_seq_id;
+	u_int16_t	abts_rx_id;
+	u_int16_t	abts_ox_id;
+	u_int32_t	abts_param;
+	u_int8_t	abts_reserved2[16];
+	u_int32_t	abts_rxid_task;
+} abts_t;
+
+typedef struct {
+	isphdr_t	abts_rsp_header;
+	u_int32_t	abts_rsp_handle;
+	u_int16_t	abts_rsp_status;
+	u_int16_t	abts_rsp_nphdl;
+	u_int16_t	abts_rsp_ctl_flags;
+	u_int16_t	abts_rsp_sof;
+	u_int32_t	abts_rsp_rxid_abts;
+	u_int16_t	abts_rsp_did_lo;
+	u_int8_t	abts_rsp_did_hi;
+	u_int8_t	abts_rsp_r_ctl;
+	u_int16_t	abts_rsp_sid_lo;
+	u_int8_t	abts_rsp_sid_hi;
+	u_int8_t	abts_rsp_cs_ctl;
+	u_int16_t	abts_rsp_f_ctl_lo;
+	u_int8_t	abts_rsp_f_ctl_hi;
+	u_int8_t	abts_rsp_type;
+	u_int16_t	abts_rsp_seq_cnt;
+	u_int8_t	abts_rsp_df_ctl;
+	u_int8_t	abts_rsp_seq_id;
+	u_int16_t	abts_rsp_rx_id;
+	u_int16_t	abts_rsp_ox_id;
+	u_int32_t	abts_rsp_param;
+	union {
+		struct {
+			u_int16_t reserved;
+			u_int8_t  last_seq_id;
+			u_int8_t  seq_id_valid;
+			u_int16_t aborted_rx_id;
+			u_int16_t aborted_ox_id;
+			u_int16_t high_seq_cnt;
+			u_int16_t low_seq_cnt;
+			u_int8_t  reserved2[4];
+		} ba_acc;
+		struct {
+			u_int8_t vendor_unique;
+			u_int8_t explanation;
+			u_int8_t reason;
+			u_int8_t reserved;
+			u_int8_t reserved2[12];
+		} ba_rjt;
+		struct {
+			u_int8_t  reserved[8];
+			u_int32_t subcode1;
+			u_int32_t subcode2;
+		} rsp;
+		u_int8_t reserved[16];
+	} abts_rsp_payload;
+	u_int32_t	abts_rsp_rxid_task;
+} abts_rsp_t;
+
+/* terminate this ABTS exchange */
+#define	ISP24XX_ABTS_RSP_TERMINATE	0x01
+
+#define	ISP24XX_ABTS_RSP_COMPLETE	0x00
+#define	ISP24XX_ABTS_RSP_RESET		0x04
+#define	ISP24XX_ABTS_RSP_ABORTED	0x05
+#define	ISP24XX_ABTS_RSP_TIMEOUT	0x06
+#define	ISP24XX_ABTS_RSP_INVXID		0x08
+#define	ISP24XX_ABTS_RSP_LOGOUT		0x29
+#define	ISP24XX_ABTS_RSP_SUBCODE	0x31
 
 /*
  * Debug macros
@@ -520,6 +958,12 @@ typedef struct {
  * This function handles new response queue entry appropriate for target mode.
  */
 int isp_target_notify(struct ispsoftc *, void *, u_int16_t *);
+
+/*
+ * This function externalizes the ability to acknowledge an Immediate Notify
+ * request.
+ */
+void isp_notify_ack(ispsoftc_t *, void *);
 
 /*
  * Enable/Disable/Modify a logical unit.
