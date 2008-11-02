@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.105 2008/10/17 19:06:01 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.106 2008/11/02 10:37:29 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -161,13 +161,11 @@ struct mbuf {
 #define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
 #define M_TUNNEL	0x1000  /* IP-in-IP added by tunnel mode IPsec */
 #define M_AUTH_AH	0x2000  /* header was authenticated (AH) */
-#define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
 #define M_LINK0		0x8000	/* link layer specific flag */
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
-			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|\
-			 M_FILDROP)
+			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_FILDROP)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
