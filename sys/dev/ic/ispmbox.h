@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispmbox.h,v 1.21 2008/10/27 00:46:09 krw Exp $ */
+/*     $OpenBSD: ispmbox.h,v 1.22 2008/11/02 03:17:22 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispmbox.h,v 1.59 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -1159,28 +1159,6 @@ typedef struct {
  * Common elements from the above two structures that are actually useful to us.
  */
 
-/*
- * CT definition
- *
- * This is as the QLogic f/w documentations defines it- which is just opposite,
- * bit wise, from what the specification defines it as. Additionally, the
- * ct_response and ct_resid (really from FC-GS-2) need to be byte swapped.
- */
-
-typedef struct {
-	u_int8_t	ct_revision;
-	u_int8_t	ct_portid[3];
-	u_int8_t	ct_fcs_type;
-	u_int8_t	ct_fcs_subtype;
-	u_int8_t	ct_options;
-	u_int8_t	ct_res0;
-	u_int16_t	ct_response;
-	u_int16_t	ct_resid;
-	u_int8_t	ct_res1;
-	u_int8_t	ct_reason;
-	u_int8_t	ct_explanation;
-	u_int8_t	ct_vunique;
-} ct_hdr_t;
 #define	FS_ACC	0x8002
 #define	FS_RJT	0x8001
 

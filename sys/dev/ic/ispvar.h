@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispvar.h,v 1.25 2008/10/25 22:18:10 krw Exp $ */
+/*     $OpenBSD: ispvar.h,v 1.26 2008/11/02 03:17:22 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispvar.h,v 1.85 2007/07/02 20:08:20 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -34,6 +34,7 @@
 #define	_ISPVAR_H
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+#include <dev/ic/isp_stds.h>
 #include <dev/ic/ispmbox.h>
 #ifdef	ISP_TARGET_MODE
 #include <dev/ic/isp_target.h>
@@ -41,6 +42,7 @@
 #endif
 #endif
 #ifdef	__FreeBSD__
+#include <dev/isp/isp_stds.h>
 #include <dev/isp/ispmbox.h>
 #ifdef	ISP_TARGET_MODE
 #include <dev/isp/isp_target.h>
@@ -48,6 +50,7 @@
 #endif
 #endif
 #ifdef	__linux__
+#include "isp_stds.h"
 #include "ispmbox.h"
 #ifdef	ISP_TARGET_MODE
 #include "isp_target.h"
