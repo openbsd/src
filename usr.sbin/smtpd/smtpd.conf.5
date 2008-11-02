@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.1 2008/11/01 21:35:28 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.2 2008/11/02 00:01:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\"
@@ -15,12 +15,12 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 1 2008 $
+.Dd $Mdocdate: November 2 2008 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
 .Nm smtpd.conf
-.Nd Configuration for smtpd
+.Nd Simple Mail Transfer Protocol daemon configuration file
 .Sh DESCRIPTION
 .Nm
 is used to configure the
@@ -85,7 +85,7 @@ accept for domain "example.org" relay via "mx1.example.org"
 accept for domain "example.net" relay
 .Ed
 .Sh FILES
-.Bl -tag -width "/var/mail" -compact
+.Bl -tag -width "/etc/mail/smtpd.conf" -compact
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.
 .It Pa /etc/mail/smtpd.conf
