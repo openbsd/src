@@ -757,8 +757,6 @@ mos_detach(struct device *self, int flags)
 
 	sc->mos_dying = 1;
 
-	// ether_ifdetach(ifp);
-
 	if (sc->mos_ep[MOS_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_TX]);
 	if (sc->mos_ep[MOS_ENDPT_RX] != NULL)
