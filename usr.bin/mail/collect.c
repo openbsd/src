@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.29 2008/07/16 14:53:41 martynas Exp $	*/
+/*	$OpenBSD: collect.c,v 1.30 2008/11/03 15:42:35 martynas Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: collect.c,v 1.29 2008/07/16 14:53:41 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: collect.c,v 1.30 2008/11/03 15:42:35 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,6 +211,12 @@ cont:
 			hadintr++;
 			collabort();
 			fputs("Interrupt\n", stderr);
+			goto err;
+		case 'x':
+			/*
+			 * Force a quit of sending mail.
+			 * Do not save the message.
+			 */
 			goto err;
 		case 'h':
 			/*
