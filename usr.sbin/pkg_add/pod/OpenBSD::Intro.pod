@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.8 2008/06/02 23:31:33 jmc Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.9 2008/11/03 09:32:14 landry Exp $
 
 =head1 NAME
 
@@ -128,7 +128,7 @@ will try really hard to only deal with one or two packages at a time,
 in order to minimize combinatorial complexity, and to have a maximal number
 of safe points, where an update operation can stop without hosing the
 whole system. An update set is simply a minimal bag of packages, with old
-packages that are going to be installed, new packages that are going
+packages that are going to be removed, new packages that are going
 to replace them, and an area to record related ongoing computations.
 The old set may be empty, the new set may be empty, and in all cases,
 the update set shall be small (as small as possible).   Currently,
@@ -296,7 +296,7 @@ that comes from category/someport/snapshot will never replace a package
 that comes from category/someport/stable. Likewise for flavors.
 
 Finally, pkg_add -u decides whether the update is needed by comparing
-the package signatures: a package signature is information is composed of
+the package signatures: a package signature is composed of
 the name of a package, together with relevant dependency information: 
 all wantlib versions, and all run dependencies versions. 
 If anything is different, it means the new package must replace the old one.
