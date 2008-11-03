@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.13 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.14 2008/11/03 22:55:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -331,14 +331,14 @@ mix_bzero(struct aproc *p)
 	unsigned ocount;
 
 	DPRINTFN(4, "mix_bzero: used = %u, todo = %u\n",
-	    obuf->used, obuf->mixtodo);
-	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->mixtodo);
+	    obuf->used, obuf->mixitodo);
+	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->mixitodo);
 	ocount -= ocount % obuf->bpf;
 	if (ocount == 0)
 		return;
 	memset(odata, 0, ocount);
-	obuf->mixtodo += ocount;
-	DPRINTFN(4, "mix_bzero: ocount %u, todo %u\n", ocount, obuf->mixtodo);
+	obuf->mixitodo += ocount;
+	DPRINTFN(4, "mix_bzero: ocount %u, todo %u\n", ocount, obuf->mixitodo);
 }
 
 /*
@@ -348,19 +348,19 @@ void
 mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
 	short *idata, *odata;
-	int vol = ibuf->mixvol;
+	int vol = ibuf->mixivol;
 	unsigned i, j, icnt, onext, ostart;
 	unsigned scount, icount, ocount;
 
 	DPRINTFN(4, "mix_badd: todo = %u, done = %u\n",
-	    obuf->mixtodo, ibuf->mixdone);
+	    obuf->mixitodo, ibuf->mixodone);
 
 	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
 	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
 
-	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixdone);
+	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixodone);
 	ocount /= obuf->bpf;
 	if (ocount == 0)
 		return;
@@ -379,10 +379,10 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 		odata += onext;
 	}
 	abuf_rdiscard(ibuf, scount * ibuf->bpf);
-	ibuf->mixdone += scount * obuf->bpf;
+	ibuf->mixodone += scount * obuf->bpf;
 
 	DPRINTFN(4, "mix_badd: added %u, done = %u, todo = %u\n",
-	    scount, ibuf->mixdone, obuf->mixtodo);
+	    scount, ibuf->mixodone, obuf->mixitodo);
 }
 
 int
@@ -392,30 +392,30 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	unsigned ocount;
 
 	DPRINTFN(4, "mix_in: used = %u, done = %u, todo = %u\n",
-	    ibuf->used, ibuf->mixdone, obuf->mixtodo);
+	    ibuf->used, ibuf->mixodone, obuf->mixitodo);
 		
-	if (!ABUF_ROK(ibuf) || ibuf->mixdone == obuf->mixtodo)
+	if (!ABUF_ROK(ibuf) || ibuf->mixodone == obuf->mixitodo)
 		return 0;
 
 	mix_badd(ibuf, obuf);
-	ocount = obuf->mixtodo;
+	ocount = obuf->mixitodo;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
-		if (ocount > i->mixdone)
-			ocount = i->mixdone;
+		if (ocount > i->mixodone)
+			ocount = i->mixodone;
 	}
 	if (ocount == 0)
 		return 0;
 
 	abuf_wcommit(obuf, ocount);
 	p->u.mix.lat += ocount / obuf->bpf;
-	obuf->mixtodo -= ocount;
+	obuf->mixitodo -= ocount;
 	if (!abuf_flush(obuf))
 		return 0; /* hup */
 	mix_bzero(p);
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
-		i->mixdone -= ocount;
-		if (i->mixdone < obuf->mixtodo)
+		i->mixodone -= ocount;
+		if (i->mixodone < obuf->mixitodo)
 			mix_badd(i, obuf);
 		if (!abuf_fill(i))
 			continue;
@@ -430,25 +430,25 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	unsigned ocount, drop;
 
 	DPRINTFN(4, "mix_out: used = %u, todo = %u\n",
-	    obuf->used, obuf->mixtodo);
+	    obuf->used, obuf->mixitodo);
 
 	if (!ABUF_WOK(obuf))
 		return 0;
 
 	mix_bzero(p);
-	ocount = obuf->mixtodo;
+	ocount = obuf->mixitodo;
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		if (!abuf_fill(i))
 			continue;
 		if (!ABUF_ROK(i)) {
-			if ((p->u.mix.flags & MIX_DROP) && i->mixdone == 0) {
+			if ((p->u.mix.flags & MIX_DROP) && i->mixodone == 0) {
 				if (i->xrun == XRUN_ERROR) {
 					abuf_hup(i);
 					continue;
 				}
-				drop = obuf->mixtodo;
-				i->mixdone += drop;
+				drop = obuf->mixitodo;
+				i->mixodone += drop;
 				if (i->xrun == XRUN_SYNC)
 					i->drop += drop;
 				else {
@@ -466,8 +466,8 @@ mix_out(struct aproc *p, struct abuf *obuf)
 			}
 		} else
 			mix_badd(i, obuf);
-		if (ocount > i->mixdone)
-			ocount = i->mixdone;
+		if (ocount > i->mixodone)
+			ocount = i->mixodone;
 	}
 	if (ocount == 0)
 		return 0;
@@ -478,9 +478,9 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	}
 	abuf_wcommit(obuf, ocount);
 	p->u.mix.lat += ocount / obuf->bpf;
-	obuf->mixtodo -= ocount;
+	obuf->mixitodo -= ocount;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
-		i->mixdone -= ocount;
+		i->mixodone -= ocount;
 	}
 	return 1;
 }
@@ -523,8 +523,8 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 		fprintf(stderr, "mix_newin: channel ranges mismatch\n");
 		abort();
 	}
-	ibuf->mixdone = 0;
-	ibuf->mixvol = ADATA_UNIT;
+	ibuf->mixodone = 0;
+	ibuf->mixivol = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
 	mix_setmaster(p);
 }
@@ -532,7 +532,7 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 void
 mix_newout(struct aproc *p, struct abuf *obuf)
 {
-	obuf->mixtodo = 0;
+	obuf->mixitodo = 0;
 	mix_bzero(p);
 }
 
@@ -574,9 +574,9 @@ mix_pushzero(struct aproc *p)
 {
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 
-	abuf_wcommit(obuf, obuf->mixtodo);
-	p->u.mix.lat += obuf->mixtodo / obuf->bpf;
-	obuf->mixtodo = 0;
+	abuf_wcommit(obuf, obuf->mixitodo);
+	p->u.mix.lat += obuf->mixitodo / obuf->bpf;
+	obuf->mixitodo = 0;
 	abuf_run(obuf);
 	mix_bzero(p);
 }
@@ -594,7 +594,7 @@ mix_setmaster(struct aproc *p)
 	LIST_FOREACH(buf, &p->ibuflist, ient)
 	    n++;
 	LIST_FOREACH(buf, &p->ibuflist, ient)
-	    buf->mixvol = ADATA_UNIT / n;
+	    buf->mixivol = ADATA_UNIT / n;
 }
 
 /*
@@ -607,7 +607,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 	unsigned i, j, ocnt, inext, istart;
 	unsigned icount, ocount, scount;
 
-	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->subdone);
+	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->subidone);
 	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
@@ -629,7 +629,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		idata += inext;
 	}
 	abuf_wcommit(obuf, scount * obuf->bpf);	
-	obuf->subdone += scount * ibuf->bpf;
+	obuf->subidone += scount * ibuf->bpf;
 	DPRINTFN(4, "sub_bcopy: %u frames\n", scount);
 }
 
@@ -645,7 +645,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (!ABUF_WOK(i)) {
-			if ((p->u.sub.flags & SUB_DROP) && i->subdone == 0) {
+			if ((p->u.sub.flags & SUB_DROP) && i->subidone == 0) {
 				if (i->xrun == XRUN_ERROR) {
 					abuf_eof(i);
 					continue;
@@ -664,18 +664,18 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 						    -(int)(drop / i->bpf));
 					}
 				}
-				i->subdone += drop;
+				i->subidone += drop;
 				DPRINTF("sub_in: silence = %u\n", i->silence);
 			}
 		} else
 			sub_bcopy(ibuf, i);
-		if (done > i->subdone)
-			done = i->subdone;
+		if (done > i->subidone)
+			done = i->subidone;
 		if (!abuf_flush(i))
 			continue;
 	}
 	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subdone -= done;
+		i->subidone -= done;
 	}
 	abuf_rdiscard(ibuf, done);
 	p->u.sub.lat -= done / ibuf->bpf;
@@ -694,7 +694,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	if (!abuf_fill(ibuf)) {
 		return 0;
 	}
-	if (obuf->subdone == ibuf->used)
+	if (obuf->subidone == ibuf->used)
 		return 0;
 
 	done = ibuf->used;
@@ -703,11 +703,11 @@ sub_out(struct aproc *p, struct abuf *obuf)
 		if (!abuf_flush(i))
 			continue;
 		sub_bcopy(ibuf, i);
-		if (done > i->subdone)
-			done = i->subdone;
+		if (done > i->subidone)
+			done = i->subidone;
 	}
 	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subdone -= done;
+		i->subidone -= done;
 	}
 	abuf_rdiscard(ibuf, done);
 	p->u.sub.lat -= done / ibuf->bpf;
@@ -745,7 +745,7 @@ sub_newout(struct aproc *p, struct abuf *obuf)
 		fprintf(stderr, "sub_newout: channel ranges mismatch\n");
 		abort();
 	}
-	obuf->subdone = 0;
+	obuf->subidone = 0;
 	obuf->xrun = XRUN_IGNORE;
 }
 

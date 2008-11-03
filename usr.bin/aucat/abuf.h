@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.10 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.11 2008/11/03 22:55:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,10 +32,10 @@ struct abuf {
 	 * there can be only one aproc that absorbs xruns in any 
 	 * intput->output path.
 	 */
-	int mixvol;		/* input gain */
-	unsigned mixdone;	/* input already processed */
-	unsigned mixtodo;	/* output not yet complete */
-	unsigned subdone;	/* output already processed */
+	int mixivol;		/* volume of the source stream */
+	unsigned mixodone;	/* bytes done on the dest stream */
+	unsigned mixitodo;	/* bytes to do on the source stream */
+	unsigned subidone;	/* bytes copied from the source stream */
 #define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
 #define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
 #define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
