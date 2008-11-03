@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.36 2008/06/09 22:53:24 rainer Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.37 2008/11/03 07:02:44 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ main(argc, argv)
 		rtsock = -1;
 
 	if ((pw = getpwnam(RTADVD_USER)) == NULL)
-		fatal("getpwnam");
+		fatal("getpwnam(" RTADVD_USER ")");
 	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
