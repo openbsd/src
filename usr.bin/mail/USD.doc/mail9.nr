@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail9.nr,v 1.6 2008/11/03 18:20:45 jmc Exp $
+.\"	$OpenBSD: mail9.nr,v 1.7 2008/11/03 20:07:42 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,29 +154,30 @@ while sending mail.
 center;
 c ci ci
 l li l.
-Escape	Arguments	Description
+Escape  Arguments  Description
 _
-~!	command	Execute shell command
-~b	name ...	Add names to "blind" Cc: list
-~c	name ...	Add names to Cc: field
-~d		Read \fIdead.letter\fP into message
-~e		Invoke text editor on partial message
-~f	messages	Read named messages
-~F	messages	Same as ~f, but includes all headers
-~h		Edit the header fields
-~m	messages	Read named messages, right shift by tab
-~M	messages	Same as ~m, but includes all headers
-~p		Print message entered so far
-~q		Abort entry of letter; like <Control-C>
-~r	filename	Read file into message
-~s	string	Set Subject: field to \fIstring\fP
-~t	name ...	Add names to To: field
-~v		Invoke screen editor on message
-~w	filename	Write message on file
-~x		Abort entry of letter without saving any copy
-~|	command	Pipe message through \fIcommand\fP
-~:	Mail command	Execute a \fIMail\fP command
-~~	string	Quote a ~ in front of \fIstring\fP
+~b name ...     Add names to "blind" Cc: list.
+~c name ...     Add names to Cc: field.
+~d              Read \fIdead.letter\fP into message.
+~e              Invoke text editor on partial message.
+~F messages     Same as ~f, but includes all headers.
+~f messages     Read in messages.
+~h              Edit the header fields.
+~M messages     Same as ~m, but includes all headers.
+~m messages     Read in messages, right shifted by a tab.
+~p              Print (show) the message buffer.
+~q              Abort message; optionally save copy to ~/dead.letter.
+~r filename     Read a file into the message buffer.
+~s string       Set Subject: field to \fIstring\fP.
+~t name ...     Add names to To: field.
+~v              Invoke display editor on message.
+~w filename     Write message to file.
+~x              Abort message; no copy is saved.
+~?              Print a brief summary of tilde escapes.
+~!command       Execute shell command.
+~|command       Pipe message through \fIcommand\fP.
+~:mail-command  Execute a \fIMail\fP command.
+~~string        Quote a single tilde.
 .TE
 .)b
 .(b
