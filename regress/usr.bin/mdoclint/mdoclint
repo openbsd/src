@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.7 2008/11/01 17:59:27 grunk Exp $
+# $OpenBSD: mdoclint,v 1.8 2008/11/03 12:14:46 espie Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -196,12 +196,12 @@ sub handle_file {
 		    # finished SEE ALSO section
 		    $insa = 2;
 		}
-		if (/^.Xr\s+(\S+)\s+([1-9]+)\s?(.*)?$/) {
+		if (/^.Xr\s+(\S+)\s+(3p|[1-9])\s?(.*)?$/) {
 		    my $newsaname = $1;
 		    my $newsasection = $2;
 		    my $newsarest = $3;
 		    $newsaname =~ s/^\\&//;
-		    if ($sasection > $newsasection
+		    if ($sasection gt $newsasection
 			or ($sasection eq $newsasection and
 			    ($saname cmp $newsaname) > 0)) {
 			warning("SEE ALSO: `.Xr $saname $sasection' should "
@@ -262,6 +262,8 @@ sub handle_file {
 	if ($opt_X) {
 	    if (not /^.\\\"/ and /(Free|Net|Open)BSD/
 		and not /(www|ftp).(Free|Net|Open)BSD\.org/
+		and not /OpenBSD\::.*3p/
+		and not /\/pub\/OpenBSD\//
 		and not /@(Free|Net|Open)BSD\.[oO][rR][gG]/) {
 		warning("verbose mention of `$1BSD' instead of "
 			. "`$short{$1}': `$_'");
@@ -298,7 +300,7 @@ sub handle_file {
 	    if ($mandoc_p) {
 		$destruct = $_;
 		$destruct =~ s/\\\&([\w\.])/$1/;
-		if ($destruct =~ /^\.Xr\s+([\w\.\-\+\/]+)\s+([0-9])(.*)/) {
+		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+(3p|[0-9])(.*)/) {
 		    debug("Xref to $1($2) found: `$_'");
 		    verify_xref("", $1, $2, "");
 		    if ($3 =~ /^\S/) {
@@ -311,12 +313,12 @@ sub handle_file {
 		$destruct = $_;
 		$destruct =~ s/\\f.//g;
 		if (not $destruct =~ /^\.\\\"/) {
-		    while ($destruct =~ s/([-\w.]+)\s*\(([0-9])\)//) {
+		    while ($destruct =~ s/([-\w.]+)\s*\((3p|[0-9])\)//) {
 			debug("possible Xref to $1($2) found: `$_'");
 			verify_xref("possible ", $1, $2, ": `$_'");
 			# so that we have a chance to find more than one
 			# per line
-			$destruct =~ s/(\w+)\s*\(([0-9])\)//;
+			$destruct =~ s/(\w+)\s*\((3p|[0-9])\)//;
 		    }
 		}
 	    }
