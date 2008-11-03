@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.8 2008/11/03 12:14:46 espie Exp $
+# $OpenBSD: mdoclint,v 1.9 2008/11/03 12:17:01 espie Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -126,11 +126,14 @@ sub verify_xref {
     my $xreftarget = "/usr/share/man/cat$_[2]/$_[1].0";
     my $xreftarget2 = "/usr/share/man/cat$_[2]/$arch/$_[1].0";
     my $xreftarget3 = "./$_[1].$_[2]";
+    my $xreftarget4 = "/usr/X11R6/man/cat$_[2]/$_[1].0";
+    my $xreftarget5 = "/usr/X11R6/man/man$_[2]/$_[1].$_[2]";
     if ("$_[1].$_[2]" eq $fn) {
 	warning("Xref to itself (use .Nm instead)");
     }
     if (not -f $xreftarget and not -f $xreftarget2
-	and not -f $xreftarget3) {
+	and not -f $xreftarget3
+	and not -f $xreftarget4 and not -f $xreftarget5) {
 	warning("$_[0]trailing Xref to $_[1]($_[2])$_[3]");
 	return 0;
     }
