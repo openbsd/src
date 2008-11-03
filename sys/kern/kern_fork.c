@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.98 2008/10/14 18:27:29 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.99 2008/11/03 03:03:35 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	int s;
 	extern void endtsleep(void *);
 	extern void realitexpire(void *);
+	struct  ptrace_state *newptstat;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -383,6 +384,8 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;
 	}
 
+	newptstat = malloc(sizeof(struct ptrace_state), M_SUBPROC, M_WAITOK);
+
 	/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
 	do {
 		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
@@ -402,8 +405,8 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		 * Set ptrace status.
 		 */
 		if (flags & FORK_FORK) {
-			p2->p_ptstat = malloc(sizeof(*p2->p_ptstat),
-			    M_SUBPROC, M_WAITOK);
+			p2->p_ptstat = newptstat;
+			newptstat = NULL;
 			p1->p_ptstat->pe_report_event = PTRACE_FORK;
 			p2->p_ptstat->pe_report_event = PTRACE_FORK;
 			p1->p_ptstat->pe_other_pid = p2->p_pid;
@@ -425,6 +428,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
 	SCHED_UNLOCK(s);
+
+	if (newptstat)
+		free(newptstat, M_SUBPROC);
 
 	/*
 	 * Notify any interested parties about the new process.
