@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.12 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.13 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -348,30 +348,38 @@ void
 mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
 	short *idata, *odata;
-	unsigned i, scount, icount, ocount;
 	int vol = ibuf->mixvol;
+	unsigned i, j, icnt, onext, ostart;
+	unsigned scount, icount, ocount;
 
 	DPRINTFN(4, "mix_badd: todo = %u, done = %u\n",
 	    obuf->mixtodo, ibuf->mixdone);
 
 	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
-	icount -= icount % ibuf->bpf;
+	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
 
 	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixdone);
-	ocount -= ocount % obuf->bpf;
+	ocount /= obuf->bpf;
 	if (ocount == 0)
 		return;
 
+	ostart = ibuf->cmin - obuf->cmin; 
+	onext = obuf->cmax - ibuf->cmax + ostart;
+	icnt = ibuf->cmax - ibuf->cmin + 1;
+	odata += ostart;
 	scount = (icount < ocount) ? icount : ocount;
-	for (i = scount / sizeof(short); i > 0; i--) {
-		*odata += (*idata * vol) >> ADATA_SHIFT;
-		idata++;
-		odata++;
-	}	
-	abuf_rdiscard(ibuf, scount);
-	ibuf->mixdone += scount;
+	for (i = scount; i > 0; i--) {
+		for (j = icnt; j > 0; j--) {
+			*odata += (*idata * vol) >> ADATA_SHIFT;
+			idata++;
+			odata++;
+		}
+		odata += onext;
+	}
+	abuf_rdiscard(ibuf, scount * ibuf->bpf);
+	ibuf->mixdone += scount * obuf->bpf;
 
 	DPRINTFN(4, "mix_badd: added %u, done = %u, todo = %u\n",
 	    scount, ibuf->mixdone, obuf->mixtodo);
@@ -509,6 +517,12 @@ mix_hup(struct aproc *p, struct abuf *obuf)
 void
 mix_newin(struct aproc *p, struct abuf *ibuf)
 {
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	if (!obuf || ibuf->cmin < obuf->cmin || ibuf->cmax > obuf->cmax) {
+		fprintf(stderr, "mix_newin: channel ranges mismatch\n");
+		abort();
+	}
 	ibuf->mixdone = 0;
 	ibuf->mixvol = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
@@ -589,22 +603,34 @@ mix_setmaster(struct aproc *p)
 void
 sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 {
-	unsigned char *idata, *odata;
+	short *idata, *odata;
+	unsigned i, j, ocnt, inext, istart;
 	unsigned icount, ocount, scount;
 
-	idata = abuf_rgetblk(ibuf, &icount, obuf->subdone);
-	icount -= icount % ibuf->bpf;
+	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->subdone);
+	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
-	odata = abuf_wgetblk(obuf, &ocount, 0);
-	ocount -= icount % obuf->bpf;
+	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	ocount /= obuf->bpf;
 	if (ocount == 0)
 		return;
+	istart = obuf->cmin - ibuf->cmin;
+	inext = ibuf->cmax - obuf->cmax + istart;
+	ocnt = obuf->cmax - obuf->cmin + 1;
 	scount = (icount < ocount) ? icount : ocount;
-	memcpy(odata, idata, scount);
-	abuf_wcommit(obuf, scount);	
-	obuf->subdone += scount;
-	DPRINTFN(4, "sub_bcopy: %u bytes\n", scount);
+	idata += istart;
+	for (i = scount; i > 0; i--) {
+		for (j = ocnt; j > 0; j--) {
+			*odata = *idata;
+			odata++;
+			idata++;
+		}
+		idata += inext;
+	}
+	abuf_wcommit(obuf, scount * obuf->bpf);	
+	obuf->subdone += scount * ibuf->bpf;
+	DPRINTFN(4, "sub_bcopy: %u frames\n", scount);
 }
 
 int
@@ -713,6 +739,12 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 void
 sub_newout(struct aproc *p, struct abuf *obuf)
 {
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	if (!ibuf || obuf->cmin < ibuf->cmin || obuf->cmax > ibuf->cmax) {
+		fprintf(stderr, "sub_newout: channel ranges mismatch\n");
+		abort();
+	}
 	obuf->subdone = 0;
 	obuf->xrun = XRUN_IGNORE;
 }

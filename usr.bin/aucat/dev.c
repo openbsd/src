@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.3 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.4 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -138,14 +138,14 @@ dev_init(char *devpath,
 		 * create the read end
 		 */
 		dev_rec = rpipe_new(dev_file);
-		buf = abuf_new(nfr, aparams_bpf(dipar));
+		buf = abuf_new(nfr, dipar);
 		aproc_setout(dev_rec, buf);
 		ibufsz += nfr;
 
 		/*
 		 * append a converter, if needed
 		 */
-		if (!aparams_eq(dipar, &ipar)) {
+		if (!aparams_eqenc(dipar, &ipar)) {
 			if (debug_level > 0) {
 				fprintf(stderr, "%s: ", devpath);
 				aparams_print2(dipar, &ipar);
@@ -153,7 +153,7 @@ dev_init(char *devpath,
 			}
 			conv = conv_new("subconv", dipar, &ipar);
 			aproc_setin(conv, buf);
-			buf = abuf_new(nfr, aparams_bpf(&ipar));
+			buf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, buf);
 			ibufsz += nfr;
 		}
@@ -178,14 +178,14 @@ dev_init(char *devpath,
 		 * create the write end
 		 */
 		dev_play = wpipe_new(dev_file);
-		buf = abuf_new(nfr, aparams_bpf(dopar));
+		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);
 		obufsz += nfr;
 		
 		/*
 		 * append a converter, if needed
 		 */
-		if (!aparams_eq(&opar, dopar)) {
+		if (!aparams_eqenc(&opar, dopar)) {
 			if (debug_level > 0) {
 				fprintf(stderr, "%s: ", devpath);
 				aparams_print2(&opar, dopar);
@@ -193,7 +193,7 @@ dev_init(char *devpath,
 			}
 			conv = conv_new("mixconv", &opar, dopar);
 			aproc_setout(conv, buf);
-			buf = abuf_new(nfr, aparams_bpf(&opar));
+			buf = abuf_new(nfr, &opar);
 			aproc_setin(conv, buf);
 			obufsz += nfr;
 		}
@@ -382,7 +382,9 @@ dev_attach(char *name,
 	
 	if (ibuf) {
 		pbuf = LIST_FIRST(&dev_mix->obuflist);		
-		if (!aparams_eq(ipar, &dev_opar)) {
+		if (!aparams_eqenc(ipar, &dev_opar) ||
+		    !aparams_eqrate(ipar, &dev_opar) ||
+		    !aparams_subset(ipar, &dev_opar)) {
 			if (debug_level > 1) {
 				fprintf(stderr, "dev_attach: %s: ", name);
 				aparams_print2(ipar, &dev_opar);
@@ -392,7 +394,7 @@ dev_attach(char *name,
 			nfr -= nfr % dev_round;
 			conv = conv_new(name, ipar, &dev_opar);
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, aparams_bpf(&dev_opar));
+			ibuf = abuf_new(nfr, &dev_opar);
 			aproc_setout(conv, ibuf);
 			/* XXX: call abuf_fill() here ? */
 		}
@@ -402,7 +404,9 @@ dev_attach(char *name,
 	}
 	if (obuf) {
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
-		if (!aparams_eq(opar, &dev_ipar)) {
+		if (!aparams_eqenc(opar, &dev_ipar) ||
+		    !aparams_eqrate(opar, &dev_ipar) ||
+		    !aparams_subset(opar, &dev_ipar)) {
 			if (debug_level > 1) {
 				fprintf(stderr, "dev_attach: %s: ", name);
 				aparams_print2(&dev_ipar, opar);
@@ -412,7 +416,7 @@ dev_attach(char *name,
 			nfr -= nfr % dev_round;
 			conv = conv_new(name, &dev_ipar, opar);
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, aparams_bpf(&dev_ipar));
+			obuf = abuf_new(nfr, &dev_ipar);
 			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);

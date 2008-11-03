@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.2 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -324,13 +324,13 @@ sock_allocbuf(struct sock *f)
 
 	if (f->mode & AMSG_PLAY) {
 		nfr = f->bufsz - dev_bufsz * f->rpar.rate / dev_rate;
-		rbuf = abuf_new(nfr, aparams_bpf(&f->rpar));
+		rbuf = abuf_new(nfr, &f->rpar);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		f->odelta = 0;
 	}
 	if (f->mode & AMSG_REC) {
 		nfr = f->bufsz - dev_bufsz * f->wpar.rate / dev_rate;
-		wbuf = abuf_new(nfr, aparams_bpf(&f->wpar));
+		wbuf = abuf_new(nfr, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 		f->idelta = 0;
 	}

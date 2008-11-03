@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.7 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.8 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,6 +38,7 @@
 #include <stdarg.h>
 
 #include "conf.h"
+#include "aparams.h"
 #include "aproc.h"
 #include "abuf.h"
 
@@ -63,11 +64,12 @@ abuf_dprn(int n, struct abuf *buf, char *fmt, ...)
 #endif
 
 struct abuf *
-abuf_new(unsigned nfr, unsigned bpf)
+abuf_new(unsigned nfr, struct aparams *par)
 {
 	struct abuf *buf;
-	unsigned len;
+	unsigned len, bpf;
 
+	bpf = aparams_bpf(par);
 	len = nfr * bpf;
 	buf = malloc(sizeof(struct abuf) + len);
 	if (buf == NULL) {
@@ -75,6 +77,8 @@ abuf_new(unsigned nfr, unsigned bpf)
 		abort();
 	}
 	buf->bpf = bpf;
+	buf->cmin = par->cmin;
+	buf->cmax = par->cmax;
 	buf->inuse = 0;
 
 	/*

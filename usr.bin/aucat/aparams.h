@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.2 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.3 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,7 +72,10 @@ struct aparams {
 void aparams_init(struct aparams *, unsigned, unsigned, unsigned);
 void aparams_print(struct aparams *);
 void aparams_print2(struct aparams *, struct aparams *);
+int aparams_eqrate(struct aparams *, struct aparams *);
+int aparams_eqenc(struct aparams *, struct aparams *);
 int aparams_eq(struct aparams *, struct aparams *);
+int aparams_subset(struct aparams *, struct aparams *);
 unsigned aparams_bpf(struct aparams *);
 int aparams_strtoenc(struct aparams *, char *);
 int aparams_enctostr(struct aparams *, char *);

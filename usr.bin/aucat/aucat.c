@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.30 2008/10/26 12:38:38 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.31 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -239,7 +239,7 @@ newinput(struct farg *fa)
 	 */
 	f = wav_new_in(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
 	nfr = dev_bufsz * fa->par.rate / dev_rate;
-	buf = abuf_new(nfr, aparams_bpf(&fa->par));
+	buf = abuf_new(nfr, &fa->par);
 	proc = rpipe_new((struct file *)f);
 	aproc_setout(proc, buf);
 	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
@@ -275,7 +275,7 @@ newoutput(struct farg *fa)
 	f = wav_new_out(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
 	nfr = dev_bufsz * fa->par.rate / dev_rate;
 	proc = wpipe_new((struct file *)f);
-	buf = abuf_new(nfr, aparams_bpf(&fa->par));
+	buf = abuf_new(nfr, &fa->par);
 	aproc_setin(proc, buf);
 	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->par, fa->xrun);
 }

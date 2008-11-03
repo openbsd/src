@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.2 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.3 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -183,17 +183,14 @@ aparams_print2(struct aparams *par1, struct aparams *par2)
 }
 
 /*
- * Return true if both parameters are the same.
+ * Return true if both encodings are the same.
  */
 int
-aparams_eq(struct aparams *par1, struct aparams *par2)
+aparams_eqenc(struct aparams *par1, struct aparams *par2)
 {
 	if (par1->bps != par2->bps ||
 	    par1->bits != par2->bits ||
-	    par1->sig != par2->sig ||
-	    par1->cmin != par2->cmin ||
-	    par1->cmax != par2->cmax ||
-	    par1->rate != par2->rate)
+	    par1->sig != par2->sig)
 		return 0;
 	if ((par1->bits != 8 * par1->bps) && par1->msb != par2->msb)
 		return 0;
@@ -201,6 +198,40 @@ aparams_eq(struct aparams *par1, struct aparams *par2)
 		return 0;
 	return 1;
 }
+
+/*
+ * Return true if both parameters are the same.
+ */
+int
+aparams_eq(struct aparams *par1, struct aparams *par2)
+{
+	if (!aparams_eqenc(par1, par2) ||
+	    par1->cmin != par2->cmin ||
+	    par1->cmax != par2->cmax ||
+	    par1->rate != par2->rate)
+		return 0;
+	return 1;
+}
+
+/*
+ * Retrurn true if first channel range includes second range
+ */
+int
+aparams_subset(struct aparams *subset, struct aparams *set)
+{
+	return subset->cmin >= set->cmin && subset->cmax <= set->cmax;
+}
+
+/*
+ * Return true if rates are the same
+ */
+int
+aparams_eqrate(struct aparams *p1, struct aparams *p2)
+{
+	/* XXX: allow 1/9 halftone of difference */
+	return p1->rate == p2->rate;
+}
+
 
 /*
  * Return the number of bytes per frame with the given parameters.

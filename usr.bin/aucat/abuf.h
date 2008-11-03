@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.9 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.10 2008/11/03 22:25:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,6 +21,7 @@
 
 struct abuf;
 struct aproc;
+struct aparam;
 
 struct abuf {
 	/*
@@ -32,9 +33,9 @@ struct abuf {
 	 * intput->output path.
 	 */
 	int mixvol;		/* input gain */
-	unsigned mixdone;	/* input of mixer */
-	unsigned mixtodo;	/* output of mixer */
-	unsigned subdone;	/* output if sub */
+	unsigned mixdone;	/* input already processed */
+	unsigned mixtodo;	/* output not yet complete */
+	unsigned subdone;	/* output already processed */
 #define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
 #define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
 #define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
@@ -46,6 +47,7 @@ struct abuf {
 	 * fifo parameters
 	 */
 	unsigned bpf;		/* bytes per frame */
+	unsigned cmin, cmax;	/* channel range of this buf */
 	unsigned start;		/* offset where data starts */
 	unsigned used;		/* valid data */
 	unsigned len;		/* size of the ring */
@@ -92,7 +94,7 @@ struct abuf {
  */
 #define ABUF_EMPTY(b) ((b)->used == 0)
 
-struct abuf *abuf_new(unsigned, unsigned);
+struct abuf *abuf_new(unsigned, struct aparams *);
 void abuf_del(struct abuf *);
 unsigned char *abuf_rgetblk(struct abuf *, unsigned *, unsigned);
 unsigned char *abuf_wgetblk(struct abuf *, unsigned *, unsigned);
