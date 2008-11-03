@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.103 2008/11/01 23:09:29 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.104 2008/11/03 01:42:15 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -290,30 +290,32 @@ mpi_attach(struct mpi_softc *sc)
 
 #ifdef notyet
 #if NBIO > 0
-	if (bio_register(&sc->sc_dev, mpi_ioctl) != 0)
-		panic("%s: controller registration failed", DEVNAME(sc));
-	else {
-		if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 2, 0,
-		    &sc->sc_cfg_hdr) != 0) {
-			printf("%s: can't get IOC page 2 hdr, bio disabled\n",
+	if (sc->sc_flags & MPI_F_RAID) {
+		if (bio_register(&sc->sc_dev, mpi_ioctl) != 0)
+			panic("%s: controller registration failed",
 			    DEVNAME(sc));
-			goto done;
-		}
-		sc->sc_vol_page = malloc(sc->sc_cfg_hdr.page_length * 4, M_TEMP,
-		    M_WAITOK | M_CANFAIL);
-		if (sc->sc_vol_page == NULL) {
-			printf("%s: can't get memory for IOC page 2, "
-			    "bio disabled\n", DEVNAME(sc));
-			goto done;
-		}
-		sc->sc_vol_list = (struct mpi_cfg_raid_vol *)
-		    (sc->sc_vol_page + 1);
+		else {
+			if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC,
+			    2, 0, &sc->sc_cfg_hdr) != 0) {
+				printf("%s: can't get IOC page 2 hdr, bio "
+				    "disabled\n", DEVNAME(sc));
+				goto done;
+			}
+			sc->sc_vol_page = malloc(sc->sc_cfg_hdr.page_length * 4,
+			    M_TEMP, M_WAITOK | M_CANFAIL);
+			if (sc->sc_vol_page == NULL) {
+				printf("%s: can't get memory for IOC page 2, "
+				    "bio disabled\n", DEVNAME(sc));
+				goto done;
+			}
+			sc->sc_vol_list = (struct mpi_cfg_raid_vol *)
+			    (sc->sc_vol_page + 1);
 
-		sc->sc_ioctl = mpi_ioctl;
+			sc->sc_ioctl = mpi_ioctl;
+		}
 	}
 #ifndef SMALL_KERNEL
-	if (mpi_create_sensors(sc) != 0)
-		printf("%s: unable to create sensors\n", DEVNAME(sc));
+	mpi_create_sensors(sc);
 #endif /* SMALL_KERNEL */
 done:
 #endif /* NBIO > 0 */
@@ -2645,9 +2647,6 @@ mpi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	DNPRINTF(MPI_D_IOCTL, "%s: mpi_ioctl ", DEVNAME(sc));
 
-	if (!(sc->sc_flags & MPI_F_RAID))
-		return (EINVAL);
-
 	/* make sure we have bio enabled */
 	if (sc->sc_ioctl != mpi_ioctl)
 		return (EINVAL);
@@ -2696,6 +2695,11 @@ mpi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 int
 mpi_ioctl_inq(struct mpi_softc *sc, struct bioc_inq *bi)
 {
+	if (!(sc->sc_flags & MPI_F_RAID)) {
+		bi->bi_novol = 0;
+		bi->bi_nodisk = 0;
+	}
+
 	if (mpi_cfg_page(sc, 0, &sc->sc_cfg_hdr, 1, sc->sc_vol_page,
 	    sc->sc_cfg_hdr.page_length * 4) != 0) {
 		DNPRINTF(MPI_D_IOCTL, "%s: mpi_get_raid unable to fetch IOC "
