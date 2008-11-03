@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail9.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
+.\"	$OpenBSD: mail9.nr,v 1.6 2008/11/03 18:20:45 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -173,6 +173,7 @@ _
 ~t	name ...	Add names to To: field
 ~v		Invoke screen editor on message
 ~w	filename	Write message on file
+~x		Abort entry of letter without saving any copy
 ~|	command	Pipe message through \fIcommand\fP
 ~:	Mail command	Execute a \fIMail\fP command
 ~~	string	Quote a ~ in front of \fIstring\fP

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail5.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
+.\"	$OpenBSD: mail5.nr,v 1.6 2008/11/03 18:20:45 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -504,7 +504,9 @@ beginning of a line, or a . alone on a line if you set the option
 To abort the message, type two interrupt characters (Control-C
 by default) in a row or use the
 .b ~q
-escape.
+or
+.b ~x
+escapes.
 The \fBmail\fP command can be abbreviated to \fBm\fP.
 .ip "\fBmbox\fP\ \ "
 Indicate that a list of messages be sent to

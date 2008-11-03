@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail4.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
+.\"	$OpenBSD: mail4.nr,v 1.6 2008/11/03 18:20:45 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -277,6 +277,14 @@ If the \fBsave\fP option is set, the message will be copied
 to the file
 .q dead.letter
 in your home directory.
+.pp
+If you wish to abort the current message,
+without saving any copy of it whatsoever,
+even if the \fBsave\fP option is set,
+you can use the escape
+.(l
+~x
+.)l
 .pp
 If you wish (for some reason) to send a message that contains
 a line beginning with a tilde, you must double it.  Thus, for example,
