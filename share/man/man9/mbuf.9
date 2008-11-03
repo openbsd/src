@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.36 2008/10/14 18:01:53 naddy Exp $
+.\"     $OpenBSD: mbuf.9,v 1.37 2008/11/03 22:16:51 claudio Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 14 2008 $
+.Dd $Mdocdate: November 3 2008 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -251,8 +251,6 @@ packet was authenticated (AH or ESP).
 header was authenticated (AH).
 .It Dv M_TUNNEL
 header was IP-in-IP encapsulated by tunnel mode IPsec.
-.It Dv M_ANYCAST6
-received as IPv6 anycast.
 .It Dv M_LINK0
 link layer specific flag.
 .It Dv M_LOOP
