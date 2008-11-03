@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.11 2008/10/14 09:44:58 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.12 2008/11/03 17:29:47 damien Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2008 $
+.Dd $Mdocdate: November 3 2008 $
 .Os
 .Dt IWN 4
 .Sh NAME
@@ -75,8 +75,8 @@ to secure wireless communication,
 due to serious weaknesses in it.
 The
 .Nm
-driver relies on the software 802.11 stack for both encryption and decryption
-of data frames.
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for the CCMP cipher.
 .Pp
 The device has one temperature sensor in degC.
 Sensor data is updated every 500 milliseconds.
@@ -96,12 +96,12 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwn-5000
 .El
 .Pp
-This firmware file is not free because Intel refuses to grant
+These firmware files are not free because Intel refuses to grant
 distribution rights without contractual obligations.
 As a result, even though
 .Ox
-includes the driver, the firmware file cannot be included and
-users have to download this file on their own.
+includes the driver, the firmware files cannot be included and
+users have to download these files on their own.
 .Pp
 A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
