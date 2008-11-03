@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.25 2008/10/22 06:25:07 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.26 2008/11/03 17:19:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -122,6 +122,8 @@ int		iwn_media_change(struct ifnet *);
 int		iwn_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void		iwn_iter_func(void *, struct ieee80211_node *);
 void		iwn_calib_timeout(void *);
+int		iwn_ccmp_decap(struct iwn_softc *, struct mbuf *,
+		    struct ieee80211_key *);
 void		iwn_rx_phy(struct iwn_softc *, struct iwn_rx_desc *);
 void		iwn_rx_done(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
@@ -441,9 +443,12 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_PMGT;		/* power saving supported */
 
 	/* Set supported rates. */
-	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+	if (sc->sc_flags & IWN_FLAG_HAS_5GHZ) {
+		ic->ic_sup_rates[IEEE80211_MODE_11A] =
+		    ieee80211_std_rateset_11a;
+	}
 
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
@@ -462,14 +467,12 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_node_alloc = iwn_node_alloc;
 	ic->ic_newassoc = iwn_newassoc;
 	ic->ic_updateedca = iwn_updateedca;
+	ic->ic_set_key = iwn_set_key;
+	ic->ic_delete_key = iwn_delete_key;
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwn_newstate;
-#ifdef notyet
-	ic->ic_set_key = iwn_set_key;
-	ic->ic_delete_key = iwn_delete_key;
-#endif
 	ieee80211_media_init(ifp, iwn_media_change, ieee80211_media_status);
 
 	sc->amrr.amrr_min_success_threshold =  1;
@@ -1134,10 +1137,12 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	sc->rxantmsk = IWN_RFCFG_RXANTMSK(sc->rfcfg);
 	/* Count the number of TX and RX chains. */
 	sc->ntxchains =
+	    ((sc->txantmsk >> 3) & 1) +
 	    ((sc->txantmsk >> 2) & 1) +
 	    ((sc->txantmsk >> 1) & 1) +
 	    ((sc->txantmsk >> 0) & 1);
 	sc->nrxchains =
+	    ((sc->rxantmsk >> 3) & 1) +
 	    ((sc->rxantmsk >> 2) & 1) +
 	    ((sc->rxantmsk >> 1) & 1) +
 	    ((sc->rxantmsk >> 0) & 1);
@@ -1287,9 +1292,9 @@ iwn_read_eeprom_channels(struct iwn_softc *sc, int n, uint32_t addr)
 		} else {	/* 5GHz band */
 			/*
 			 * Some adapters support channels 7, 8, 11 and 12
-			 * both in the 2GHz *and* 5GHz bands.
-			 * Because of limitations in our net80211 stack,
-			 * we can't support these channels in 5GHz band.
+			 * both in the 2GHz and 4.9GHz bands.
+			 * Because of limitations in our net80211 layer,
+			 * we don't support them in the 4.9GHz band.
 			 */
 			if (chan <= 14)
 				continue;
@@ -1297,7 +1302,7 @@ iwn_read_eeprom_channels(struct iwn_softc *sc, int n, uint32_t addr)
 			ic->ic_channels[chan].ic_freq =
 			    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
 			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_A;
-			/* We have at least one valid 5GHZ channel. */
+			/* We have at least one valid 5GHz channel. */
 			sc->sc_flags |= IWN_FLAG_HAS_5GHZ;
 		}
 
@@ -1445,6 +1450,55 @@ iwn_calib_timeout(void *arg)
 	timeout_add(&sc->calib_to, hz / 2);
 }
 
+int
+iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	uint64_t pn, *prsc;
+	uint8_t *ivp;
+	uint8_t tid;
+	int hdrlen;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
+	ivp = (uint8_t *)wh + hdrlen;
+
+	/* Check that ExtIV bit is be set. */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
+		DPRINTF(("CCMP decap ExtIV not set\n"));
+		return 1;
+	}
+	tid = ieee80211_has_qos(wh) ?
+	    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+	prsc = &k->k_rsc[tid];
+
+	/* Extract the 48-bit PN from the CCMP header. */
+	pn = (uint64_t)ivp[0]       |
+	     (uint64_t)ivp[1] <<  8 |
+	     (uint64_t)ivp[4] << 16 |
+	     (uint64_t)ivp[5] << 24 |
+	     (uint64_t)ivp[6] << 32 |
+	     (uint64_t)ivp[7] << 40;
+	if (pn <= *prsc) {
+		/*
+		 * Not necessarily a replayed frame since we did not check
+		 * the sequence number of the 802.11 header yet.
+		 */
+		DPRINTF(("CCMP replayed\n"));
+		return 1;
+	}
+	/* Update last seen packet number. */
+	*prsc = pn;
+
+	/* Clear Protected bit and strip IV. */
+	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+	ovbcopy(wh, mtod(m0, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
+	m_adj(m0, IEEE80211_CCMP_HDRLEN);
+	/* Strip MIC. */
+	m_adj(m0, -IEEE80211_CCMP_MICLEN);
+	return 0;
+}
+
 /*
  * Process an RX_PHY firmware notification.  This is usually immediately
  * followed by an MPDU_RX_DONE notification.
@@ -1480,11 +1534,11 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct mbuf *m, *mnew;
 	struct iwn_rx_stat *stat;
 	caddr_t head;
-	uint32_t *tail;
+	uint32_t flags;
 	int len, rssi;
 
 	if (desc->type == IWN_MPDU_RX_DONE) {
-		/* Check for prior RX_PHY. */
+		/* Check for prior RX_PHY notification. */
 		if (!sc->last_rx_valid) {
 			DPRINTF(("missing RX_PHY\n"));
 			ifp->if_ierrors++;
@@ -1511,10 +1565,11 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		len = letoh16(stat->len);
 	}
 
+	flags = letoh32(*(uint32_t *)(head + len));
+
 	/* Discard frames with a bad FCS early. */
-	tail = (uint32_t *)(head + len);
-	if ((letoh32(*tail) & IWN_RX_NOERROR) != IWN_RX_NOERROR) {
-		DPRINTFN(2, ("RX flags error %x\n", letoh32(*tail)));
+	if ((flags & IWN_RX_NOERROR) != IWN_RX_NOERROR) {
+		DPRINTFN(2, ("RX flags error %x\n", flags));
 		ifp->if_ierrors++;
 		return;
 	}
@@ -1532,6 +1587,38 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	m->m_pkthdr.rcvif = ifp;
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
+
+	/* Grab a reference to the source node. */
+	wh = mtod(m, struct ieee80211_frame *);
+	ni = ieee80211_find_rxnode(ic, wh);
+
+	rxi.rxi_flags = 0;
+	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
+	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+		if ((flags & IWN_RX_CIPHER_MASK) != IWN_RX_CIPHER_CCMP) {
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			return;
+		}
+		/* Check whether decryption was successful or not. */
+		if ((desc->type == IWN_MPDU_RX_DONE &&
+		     (flags & (IWN_RX_MPDU_DEC | IWN_RX_MPDU_MIC_OK)) !=
+		      (IWN_RX_MPDU_DEC | IWN_RX_MPDU_MIC_OK)) ||
+		    (desc->type != IWN_MPDU_RX_DONE &&
+		     (flags & IWN_RX_DECRYPT_MASK) != IWN_RX_DECRYPT_OK)) {
+			DPRINTF(("CCMP decryption failed 0x%x\n", flags));
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			return;
+		}
+		if (iwn_ccmp_decap(sc, m, &ni->ni_pairwise_key) != 0) {
+			ifp->if_ierrors++;
+			return;
+		}
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
+	}
 
 	if ((rbuf = SLIST_FIRST(&sc->rxq.freelist)) != NULL) {
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
@@ -1606,12 +1693,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	}
 #endif
 
-	/* Grab a reference to the source node. */
-	wh = mtod(m, struct ieee80211_frame *);
-	ni = ieee80211_find_rxnode(ic, wh);
-
 	/* Send the frame to the 802.11 layer. */
-	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_input(ifp, m, ni, &rxi);
@@ -2009,28 +2091,29 @@ iwn_fatal_intr(struct iwn_softc *sc)
 		return;
 	}
 	printf("firmware error log:\n");
-	printf("\error type       = \"%s\" (0x%08X)\n",
-	    dump.id < N(iwn_fw_errmsg) ? iwn_fw_errmsg[dump.id] : "UNKNOWN",
+	printf("  error type      = \"%s\" (0x%08X)\n",
+	    (dump.id < N(iwn_fw_errmsg)) ?
+		iwn_fw_errmsg[dump.id] : "UNKNOWN",
 	    dump.id);
-	printf("\tprogram counter = 0x%08X\n", dump.pc);
-	printf("\tsource line     = 0x%08X\n", dump.src_line);
-	printf("\terror data      = 0x%08X%08X\n",
+	printf("  program counter = 0x%08X\n", dump.pc);
+	printf("  source line     = 0x%08X\n", dump.src_line);
+	printf("  error data      = 0x%08X%08X\n",
 	    dump.error_data[0], dump.error_data[1]);
-	printf("\tbranch link     = 0x%08X%08X\n",
+	printf("  branch link     = 0x%08X%08X\n",
 	    dump.branch_link[0], dump.branch_link[1]);
-	printf("\tinterrupt link  = 0x%08X\n",
+	printf("  interrupt link  = 0x%08X%08X\n",
 	    dump.interrupt_link[0], dump.interrupt_link[1]);
-	printf("\ttime            = %u\n", dump.time[0]);
+	printf("  time            = %u\n", dump.time[0]);
 
 	/* Dump driver status (TX and RX rings) while we're here. */
 	printf("driver status:\n");
 	for (i = 0; i < hal->ntxqs; i++) {
 		struct iwn_tx_ring *ring = &sc->txq[i];
-		printf("\ttx ring %2d: qid=%2d cur=%3d queued=%3d\n",
+		printf("  tx ring %2d: qid=%-2d cur=%-3d queued=%-3d\n",
 		    i, ring->qid, ring->cur, ring->queued);
 	}
-	printf("\trx ring: cur=%d\n", sc->rxq.cur);
-	printf("\t802.11 state %d\n", sc->sc_ic.ic_state);
+	printf("  rx ring: cur=%d\n", sc->rxq.cur);
+	printf("  802.11 state %d\n", sc->sc_ic.ic_state);
 #undef N
 }
 
@@ -2162,75 +2245,6 @@ iwn_plcp_signal(int rate)
 /* Determine if a given rate is CCK or OFDM. */
 #define IWN_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
 
-#ifdef notyet
-void
-iwn_ccmp_encap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
-{
-	u_int8_t *ivp;
-
-	M_PREPEND(m0, IEEE80211_CCMP_HDRLEN, M_NOWAIT);
-	/* NB: Can't fail because of previous m_adj() call. */
-
-	k->k_tsc++;	/* Increment the 48-bit PN. */
-
-	/* Construct CCMP header. */
-	ivp = mtod(m0, u_int8_t *);
-	ivp[0] = k->k_tsc;		/* PN0 */
-	ivp[1] = k->k_tsc >> 8;		/* PN1 */
-	ivp[2] = 0;			/* Rsvd */
-	ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;	/* KeyID | ExtIV */
-	ivp[4] = k->k_tsc >> 16;	/* PN2 */
-	ivp[5] = k->k_tsc >> 24;	/* PN3 */
-	ivp[6] = k->k_tsc >> 32;	/* PN4 */
-	ivp[7] = k->k_tsc >> 40;	/* PN5 */
-}
-
-void
-iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
-{
-	struct ieee80211_frame *wh;
-	uint64_t pn, *prsc;
-	uint8_t *ivp;
-	uint8_t tid;
-	int hdrlen;
-
-	wh = mtod(m0, struct ieee80211_frame *);
-	hdrlen = ieee80211_get_hdrlen(wh);
-	ivp = (uint8_t *)wh + hdrlen;
-
-	/* Check that ExtIV bit is be set. */
-	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
-		return 1;
-
-	tid = ieee80211_has_qos(wh) ?
-	    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
-	prsc = &k->k_rsc[tid];
-
-	/* Extract the 48-bit PN from the CCMP header. */
-	pn = (u_int64_t)ivp[0]       |
-	     (u_int64_t)ivp[1] <<  8 |
-	     (u_int64_t)ivp[4] << 16 |
-	     (u_int64_t)ivp[5] << 24 |
-	     (u_int64_t)ivp[6] << 32 |
-	     (u_int64_t)ivp[7] << 40;
-	if (pn <= *prsc) {
-		/* Replayed frame, discard. */
-		ic->ic_stats.is_ccmp_replays++;
-		return 1;
-	}
-	/* Update last seen packet number. */
-	*prsc = pn;
-
-	/* Clear Protected bit and strip IV. */
-	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	ovbcopy(wh, mtod(m0, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
-	m_adj(m0, IEEE80211_CCMP_HDRLEN);
-	/* Strip MIC. */
-	m_adj(m0, -IEEE80211_CCMP_MICLEN);
-	return 0;
-}
-#endif
-
 int
 iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
@@ -2242,14 +2256,14 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct iwn_tx_cmd *cmd;
 	struct iwn_cmd_data *tx;
 	struct ieee80211_frame *wh;
-	struct ieee80211_key *k;
+	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
 	struct mbuf *mnew;
 	uint32_t flags;
 	uint16_t qos;
-	uint8_t tid, txant, type;
+	uint8_t *ivp, tid, txant, type;
 	u_int hdrlen;
-	int i, hasqos, rate, error, pad;
+	int i, totlen, hasqos, rate, error, pad;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
@@ -2304,15 +2318,22 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
+	totlen = m0->m_pkthdr.len;
+
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		/* Retrieve key for TX. */
 		k = ieee80211_get_txkey(ic, wh, ni);
-		/* Do software encryption. */
-		if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
-			return ENOBUFS;
-		/* 802.11 header may have moved. */
-		wh = mtod(m0, struct ieee80211_frame *);
+		if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+			/* Do software encryption. */
+			if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
+				return ENOBUFS;
+			/* 802.11 header may have moved. */
+			wh = mtod(m0, struct ieee80211_frame *);
+			totlen = m0->m_pkthdr.len;
+
+		} else	/* HW appends CCMP MIC. */
+			totlen += IEEE80211_CCMP_HDRLEN;
 	}
 
 	/* Prepare TX firmware command. */
@@ -2345,8 +2366,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		/* NB: Group frames are sent using CCK in 802.11b/g. */
-		if (m0->m_pkthdr.len + IEEE80211_CRC_LEN >
-		    ic->ic_rtsthreshold) {
+		if (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
 			flags |= IWN_TX_NEED_RTS;
 		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    IWN_RATE_IS_OFDM(rate)) {
@@ -2394,8 +2414,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	} else
 		pad = 0;
 
-	tx->flags = htole32(flags);
-	tx->len = htole16(m0->m_pkthdr.len);
+	tx->len = htole16(totlen);
 	tx->tid = tid;
 	tx->rts_ntries = 60;
 	tx->data_ntries = 15;
@@ -2413,14 +2432,41 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	} else {
 		tx->ridx = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
 		/* Tell adapter to ignore rflags. */
-		tx->flags |= htole32(IWN_TX_MRR_INDEX);
+		flags |= IWN_TX_MRR_INDEX;
 	}
 	/* Set physical address of "scratch area". */
 	tx->loaddr = htole32(data->scratch_paddr);
 
-	/* Copy and trim 802.11 header. */
+	/* Copy 802.11 header in TX command. */
 	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
-	m_adj(m0, hdrlen);
+
+	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
+		/* Trim 802.11 header and prepend CCMP IV. */
+		m_adj(m0, hdrlen - IEEE80211_CCMP_HDRLEN);
+		ivp = mtod(m0, uint8_t *);
+		k->k_tsc++;
+		ivp[0] = k->k_tsc;
+		ivp[1] = k->k_tsc >> 8;
+		ivp[2] = 0;
+		ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
+		ivp[4] = k->k_tsc >> 16;
+		ivp[5] = k->k_tsc >> 24;
+		ivp[6] = k->k_tsc >> 32;
+		ivp[7] = k->k_tsc >> 40;
+
+		tx->security = IWN_CIPHER_CCMP;
+		/* XXX flags |= IWN_TX_AMPDU_CCMP; */
+		memcpy(tx->key, k->k_key, k->k_len);
+
+		/* TX scheduler includes CCMP MIC len w/5000 Series. */
+		if (sc->hw_type != IWN_HW_REV_TYPE_4965)
+			totlen += IEEE80211_CCMP_MICLEN;
+	} else {
+		/* Trim 802.11 header. */
+		m_adj(m0, hdrlen);
+		tx->security = 0;
+	}
+	tx->flags = htole32(flags);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -2431,7 +2477,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		return error;
 	}
 	if (error != 0) {
-		/* Too many fragments, linearize mbuf. */
+		/* Too many DMA segments, linearize mbuf. */
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
@@ -2480,8 +2526,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 
 	/* Update TX scheduler. */
-	hal->update_sched(sc, ring->qid, ring->cur, tx->id,
-	    hdrlen + m0->m_pkthdr.len);
+	hal->update_sched(sc, ring->qid, ring->cur, tx->id, totlen);
 
 	/* Kick TX ring. */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -2754,16 +2799,16 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	uint8_t txant, rate;
 	int i, ridx;
 
+	/* Use the first valid TX antenna. */
+	txant = IWN_LSB(sc->txantmsk);
+
 	memset(&linkq, 0, sizeof linkq);
 	linkq.id = wn->id;
-	linkq.antmsk_1stream = IWN_ANT_B;
+	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_A | IWN_ANT_B;
 	linkq.ampdu_max = 64;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
-
-	/* Use the first valid TX antenna. */
-	txant = IWN_LSB(sc->txantmsk);
 
 	/* Start at highest available bit-rate. */
 	ridx = rs->rs_nrates - 1;
@@ -2909,6 +2954,7 @@ iwn4965_power_calibration(struct iwn_softc *sc, int temp)
 	/* Adjust TX power if need be (delta >= 3 degC.) */
 	DPRINTF(("temperature %d->%d\n", sc->temp, temp));
 	if (abs(temp - sc->temp) >= 3) {
+		/* Record temperature of last calibration. */
 		sc->temp = temp;
 		(void)iwn4965_set_txpower(sc, 1);
 	}
@@ -3748,8 +3794,8 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
-	*(u_int16_t *)&wh->i_dur[0] = 0;	/* filled by HW */
-	*(u_int16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
+	*(uint16_t *)&wh->i_dur[0] = 0;	/* filled by HW */
+	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
 
 	frm = (uint8_t *)(wh + 1);
 	frm = ieee80211_add_ssid(frm, NULL, 0);
@@ -3785,11 +3831,9 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		}
 		hdr->nchan++;
 		chan++;
-
-		frm += sizeof (struct iwn_scan_chan);
 	}
 
-	buflen = frm - (uint8_t *)hdr;
+	buflen = (uint8_t *)chan - buf;
 	hdr->len = htole16(buflen);
 
 	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
@@ -3896,6 +3940,7 @@ iwn_run(struct iwn_softc *sc)
 		return error;
 	}
 
+
 	/* Add BSS node. */
 	((struct iwn_node *)ni)->id = IWN_ID_BSS;
 	memset(&node, 0, sizeof node);
@@ -3940,18 +3985,19 @@ int
 iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
 	uint16_t kflags;
 
 	/*
-	 * We support CCMP hardware encryption/decryption only.  Hardware
-	 * support for TKIP really sucks and it is not worth implementing.
-	 * We should leave TKIP die anyway.
+	 * We support CCMP hardware encryption/decryption of unicast frames
+	 * only.  Hardware support for TKIP really sucks and it is not worth
+	 * implementing.  We should leave TKIP die anyway.
 	 */
-	if (k->k_cipher != IEEE80211_CIPHER_CCMP)
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    k->k_cipher != IEEE80211_CIPHER_CCMP)
 		return ieee80211_set_key(ic, ni, k);
 
 	kflags = IWN_KFLAG_CCMP | IWN_KFLAG_MAP | IWN_KFLAG_KID(k->k_id);
@@ -3966,6 +4012,7 @@ iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	node.kflags = htole16(kflags);
 	node.kid = k->k_id;
 	memcpy(node.key, k->k_key, k->k_len);
+	DPRINTF(("set key id=%d for node %d\n", k->k_id, node.id));
 	return hal->add_node(sc, &node, 1);
 }
 
@@ -3973,12 +4020,13 @@ void
 iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
 
-	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    k->k_cipher != IEEE80211_CIPHER_CCMP) {
 		/* See comment about other ciphers above. */
 		ieee80211_delete_key(ic, ni, k);
 		return;
@@ -3992,6 +4040,7 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	node.flags = IWN_FLAG_SET_KEY;
 	node.kflags = htole16(IWN_KFLAG_INVALID);
 	node.kid = 0xff;
+	DPRINTF(("delete keys for node %d\n", node.id));
 	(void)hal->add_node(sc, &node, 1);
 }
 
@@ -4003,7 +4052,7 @@ int
 iwn_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid, uint16_t ssn)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
 
@@ -4025,7 +4074,7 @@ void
 iwn_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid, uint16_t ssn)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
 
@@ -4046,7 +4095,7 @@ int
 iwn_ampdu_tx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid, uint16_t ssn)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
@@ -4074,7 +4123,7 @@ void
 iwn_ampdu_tx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid, uint16_t ssn)
 {
-	struct iwn_softc *sc = (void *)ic;
+	struct iwn_softc *sc = ic->ic_softc;
 
 	if (iwn_nic_lock(sc) != 0)
 		return;

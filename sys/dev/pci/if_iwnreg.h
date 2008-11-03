@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.12 2008/10/22 06:25:07 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.13 2008/11/03 17:19:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -354,10 +354,16 @@ struct iwn_rx_desc {
 } __packed;
 
 /* Possible RX status flags. */
-#define IWN_RX_NO_CRC_ERR	(1 << 0)
-#define IWN_RX_NO_OVFL_ERR	(1 << 1)
+#define IWN_RX_NO_CRC_ERR	(1 <<  0)
+#define IWN_RX_NO_OVFL_ERR	(1 <<  1)
 /* Shortcut for the above. */
 #define IWN_RX_NOERROR	(IWN_RX_NO_CRC_ERR | IWN_RX_NO_OVFL_ERR)
+#define IWN_RX_MPDU_MIC_OK	(1 <<  6)
+#define IWN_RX_CIPHER_MASK	(7 <<  8)
+#define IWN_RX_CIPHER_CCMP	(2 <<  8)
+#define IWN_RX_MPDU_DEC		(1 << 11)
+#define IWN_RX_DECRYPT_MASK	(3 << 11)
+#define IWN_RX_DECRYPT_OK	(3 << 11)
 
 struct iwn_tx_cmd {
 	uint8_t	code;
@@ -1279,12 +1285,16 @@ static const struct iwn_chan_band {
 	uint8_t	nchan;
 	uint8_t	chan[IWN_MAX_CHAN_PER_BAND];
 } iwn_bands[] = {
+	/* 20MHz channels, 2GHz band. */
 	{ 14, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 } },
+	/* 20MHz channels, 5GHz band. */
 	{ 13, { 183, 184, 185, 187, 188, 189, 192, 196, 7, 8, 11, 12, 16 } },
 	{ 12, { 34, 36, 38, 40, 42, 44, 46, 48, 52, 56, 60, 64 } },
 	{ 11, { 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140 } },
 	{  6, { 145, 149, 153, 157, 161, 165 } },
+	/* 40MHz channels (primary channels), 2GHz band. */
 	{  7, { 1, 2, 3, 4, 5, 6, 7 } },
+	/* 40MHz channels (primary channels), 5GHz band. */
 	{ 11, { 36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157 } }
 };
 
