@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.126 2008/04/22 02:22:54 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.127 2008/11/03 00:17:47 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -770,6 +770,9 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 				break;
 			case 0x7a:
 				name = "w83792d";
+				break;
+			case 0xc1:
+				name = "w83627dhg";
 				break;
 			}
 		} else {
