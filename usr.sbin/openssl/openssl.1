@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.61 2008/05/30 19:06:50 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.62 2008/11/03 14:49:23 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: May 30 2008 $
+.Dd $Mdocdate: November 3 2008 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1878,6 +1878,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl c
 .Op Fl d
 .Op Fl hex
+.Op Fl hmac Ar key
 .Op Fl engine Ar id
 .Op Fl keyform Ar ENGINE | PEM
 .Op Fl out Ar file
@@ -1929,6 +1930,9 @@ Digest is to be output as a hex dump.
 This is the default case for a
 .Qq normal
 digest as opposed to a digital signature.
+.It Fl hmac Ar key
+Create a hashed MAC using
+.Ar key .
 .It Fl keyform Ar ENGINE | PEM
 Key file format.
 .It Fl out Ar file
@@ -3088,6 +3092,11 @@ This option can be used multiple times.
 The certificate specified in
 .Ar file
 must be in PEM format.
+This option
+.Em must
+come before any
+.Fl cert
+options.
 .It Fl no_cert_checks
 Don't perform any additional checks on the OCSP response signer's certificate.
 That is, do not make any checks to see if the signer's certificate is
@@ -3106,7 +3115,7 @@ certificates.
 Ignore certificates contained in the OCSP response
 when searching for the signer's certificate.
 With this option, the signer's certificate must be specified with either the
-.Fl verify_certs
+.Fl verify_other
 or
 .Fl VAfile
 options.
@@ -3190,7 +3199,7 @@ as the certificate.
 If neither option is specified, the OCSP request is not signed.
 .It Fl trust_other
 The certificates specified by the
-.Fl verify_certs
+.Fl verify_other
 option should be explicitly trusted and no additional checks will be
 performed on them.
 This is useful when the complete responder certificate chain is not available
@@ -3204,7 +3213,7 @@ URLs can be specified.
 .Ar file
 containing explicitly trusted responder certificates.
 Equivalent to the
-.Fl verify_certs
+.Fl verify_other
 and
 .Fl trust_other
 options.
@@ -5685,6 +5694,8 @@ We should really report information whenever a session is renegotiated.
 .Nm openssl s_server
 .Bk -words
 .Op Fl bugs
+.Op Fl crl_check
+.Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
 .Op Fl hack
@@ -5775,6 +5786,12 @@ section for more information.
 Sets the SSL context ID.
 It can be given any string value.
 If this option is not present, a default value will be used.
+.It Fl crl_check , crl_check_all
+Check the peer certificate has not been revoked by its CA.
+The CRLs are appended to the certificate file.
+With the
+.Fl crl_check_all
+option, all CRLs of all CAs in the chain are checked.
 .It Fl crlf
 This option translates a line feed from the terminal into CR+LF.
 .It Fl dcert Ar file , Fl dkey Ar file
@@ -8316,19 +8333,6 @@ certificates.
 .\" SEE ALSO
 .\"
 .Sh SEE ALSO
-.Xr blowfish 3 ,
-.Xr crypto 3 ,
-.Xr des_crypt 3 ,
-.Xr dsa 3 ,
-.Xr ERR_error_string_n 3 ,
-.Xr HMAC 3 ,
-.Xr md4 3 ,
-.Xr md5 3 ,
-.Xr RAND_egd 3 ,
-.Xr rsa 3 ,
-.Xr sha1 3 ,
-.Xr ssl 3 ,
-.Xr des_modes 7 ,
 .Xr httpd 8 ,
 .Xr sendmail 8 ,
 .Xr ssl 8 ,
