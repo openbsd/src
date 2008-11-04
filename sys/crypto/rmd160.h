@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.4 2008/11/04 23:08:47 hshoexer Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,16 +25,25 @@
 #ifndef  _RMD160_H
 #define  _RMD160_H
 
+#define RMD160_BLOCK_LENGTH		64
+#define RMD160_DIGEST_LENGTH		20
+
 /* RMD160 context. */
 typedef struct RMD160Context {
-	u_int32_t state[5];	/* state */
-	u_int64_t count;	/* number of bits, modulo 2^64 */
-	u_char buffer[64];	/* input buffer */
+	u_int32_t state[5];			/* state */
+	u_int64_t count;			/* number of bits, mod 2^64 */
+	u_char buffer[RMD160_DIGEST_LENGTH];	/* input buffer */
 } RMD160_CTX;
 
+__BEGIN_DECLS
 void	 RMD160Init(RMD160_CTX *);
-void	 RMD160Transform(u_int32_t [5], const u_char [64]);
-void	 RMD160Update(RMD160_CTX *, const u_char *, u_int32_t);
-void	 RMD160Final(u_char [20], RMD160_CTX *);
+void	 RMD160Transform(u_int32_t [5], const u_char [RMD160_BLOCK_LENGTH])
+	     __attribute__((__bounded__(__minbytes__,1,5)))
+	     __attribute__((__bounded__(__minbytes__,2,RMD160_BLOCK_LENGTH)));
+void	 RMD160Update(RMD160_CTX *, const u_char *, u_int32_t)
+	     __attribute__((__bounded__(__string__,2,3)));
+void	 RMD160Final(u_char [RMD160_DIGEST_LENGTH], RMD160_CTX *)
+	     __attribute__((__bounded__(__minbytes__,1,RMD160_DIGEST_LENGTH)));
+__END_DECLS
 
 #endif  /* _RMD160_H */
