@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.68 2008/11/04 20:48:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.69 2008/11/04 20:55:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -58,9 +58,6 @@ typedef struct audio_params audio_params_t;
 #ifndef BUS_DMA_NOCACHE
 #define	BUS_DMA_NOCACHE 0
 #endif
-#define	auconv_delete_encodings(x...)
-#define	auconv_query_encoding(x...)	(EINVAL)
-#define	auconv_create_encodings(x...)	(0)
 
 struct audio_format {
 	void *driver_data;
@@ -278,8 +275,7 @@ int	azalia_trigger_input(void *, void *, void *, int,
 	void (*)(void *), void *, audio_params_t *);
 
 int	azalia_params2fmt(const audio_params_t *, uint16_t *);
-int azalia_create_encodings(struct audio_format *, int,
-    struct audio_encoding_set **);
+int	azalia_create_encodings(codec_t *);
 
 int	azalia_match_format(codec_t *, int, audio_params_t *);
 int	azalia_set_params_sub(codec_t *, int, audio_params_t *);
@@ -1421,13 +1417,18 @@ azalia_codec_delete(codec_t *this)
 {
 	if (this->mixer_delete != NULL)
 		this->mixer_delete(this);
+
 	if (this->formats != NULL) {
 		free(this->formats, M_DEVBUF);
 		this->formats = NULL;
 	}
-	DPRINTF(("delete_encodings...\n"));
-	auconv_delete_encodings(this->encodings);
-	this->encodings = NULL;
+	this->nformats = 0;
+	if (this->encs != NULL) {
+		free(this->encs, M_DEVBUF);
+		this->encs = NULL;
+	}
+	this->nencs = 0;
+
 	return 0;
 }
 
@@ -1519,8 +1520,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	}
 
-	err = azalia_create_encodings(this->formats, this->nformats,
-	    &this->encodings);
+	err = azalia_create_encodings(this);
 	if (err)
 		return err;
 	return 0;
@@ -2270,38 +2270,16 @@ azalia_query_encoding(void *v, audio_encoding_t *enc)
 {
 	azalia_t *az;
 	codec_t *codec;
-	int i, j;
 
 	az = v;
 	codec = &az->codecs[az->codecno];
-	for (j = 0, i = 0; j < codec->nformats; j++) {
-		if (codec->formats[j].validbits !=
-		    codec->formats[j].precision)
-			continue;
-		if (i == enc->index) {
-			enc->encoding = codec->formats[j].encoding;
-			enc->precision = codec->formats[j].precision;
-			enc->flags = 0;
-			switch (enc->encoding) {
-			case AUDIO_ENCODING_SLINEAR_LE:
-				strlcpy(enc->name, enc->precision == 8 ?
-				    AudioEslinear : AudioEslinear_le,
-				    sizeof enc->name);
-				break;
-			case AUDIO_ENCODING_ULINEAR_LE:
-				strlcpy(enc->name, enc->precision == 8 ?
-				    AudioEulinear : AudioEulinear_le,
-				    sizeof enc->name);
-				break;
-			default:
-				strlcpy(enc->name, "unknown", sizeof enc->name);
-				break;
-			}
-			return (0);
-		}
-		i++;
-	}
-	return (EINVAL);
+
+	if (enc->index >= codec->nencs)
+		return (EINVAL);
+
+	*enc = codec->encs[enc->index];
+
+	return (0);
 }
 
 void
@@ -2748,24 +2726,64 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 }
 
 int
-azalia_create_encodings(struct audio_format *formats, int nformats,
-    struct audio_encoding_set **encodings)
+azalia_create_encodings(codec_t *this)
 {
-#if 0
-	int i;
-	u_int j;
+	struct audio_format f;
+	int encs[16];
+	int enc, nencs;
+	int i, j;
 
-	for (i = 0; i < nformats; i++) {
-		printf("format(%d): encoding %u vbits %u prec %u chans %u cmask 0x%x\n",
-		    i, formats[i].encoding, formats[i].validbits,
-		    formats[i].precision, formats[i].channels,
-		    formats[i].channel_mask);
-		printf("format(%d) rates:", i);
-		for (j = 0; j < formats[i].frequency_type; j++) {
-			printf(" %u", formats[i].frequency[j]);
+	nencs = 0;
+	for (i = 0; i < this->nformats && nencs < 16; i++) {
+		f = this->formats[i];
+		if (f.validbits != f.precision)
+			continue;
+		enc = f.precision << 8 | f.encoding;
+		for (j = 0; j < nencs; j++) {
+			if (encs[j] == enc)
+				break;
 		}
-		printf("\n");
+		if (j < nencs)
+			continue;
+		encs[j] = enc;
+		nencs++;
 	}
-#endif
+
+	if (this->encs != NULL)
+		free(this->encs, M_DEVBUF);
+	this->nencs = 0;
+	this->encs = malloc(sizeof(struct audio_encoding) * nencs,
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (this->encs == NULL) {
+		printf("%s: out of memory in %s\n",
+		    XNAME(this->az), __func__);
+		return ENOMEM;
+	}
+
+	this->nencs = nencs;
+	for (i = 0; i < this->nencs; i++) {
+		this->encs[i].index = i;
+		this->encs[i].encoding = encs[i] & 0xff;
+		this->encs[i].precision = encs[i] >> 8;
+		this->encs[i].flags = 0;
+		switch (this->encs[i].encoding) {
+		case AUDIO_ENCODING_SLINEAR_LE:
+			strlcpy(this->encs[i].name,
+			    this->encs[i].precision == 8 ?
+			    AudioEslinear : AudioEslinear_le,
+			    sizeof this->encs[i].name);
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			strlcpy(this->encs[i].name,
+			    this->encs[i].precision == 8 ?
+			    AudioEulinear : AudioEulinear_le,
+			    sizeof this->encs[i].name);
+			break;
+		default:
+			DPRINTF(("%s: unknown format\n", __func__));
+			break;
+		}
+	}
+
 	return (0);
 }
