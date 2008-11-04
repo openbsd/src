@@ -202,7 +202,7 @@ drm_attach(struct device *parent, struct device *kdev,
 	dev->pci_device = PCI_PRODUCT(dev->pa.pa_id);
 
 	rw_init(&dev->dev_lock, "drmdevlk");
-	mtx_init(&dev->drw_lock, IPL_BIO);
+	mtx_init(&dev->drw_lock, IPL_NONE);
 	mtx_init(&dev->tsk_lock, IPL_BIO);
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
 
