@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.16 2008/11/04 15:22:40 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.17 2008/11/04 17:51:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1177,6 +1177,131 @@ resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
 		p->u.resamp.ctx[i] = 0;
 	if (debug_level > 0) {
 		DPRINTF("resamp_new: %s: ", p->name);
+		aparams_print2(ipar, opar);
+		DPRINTF("\n");
+	}
+	return p;
+}
+
+/*
+ * Convert one block.
+ */
+void
+cmap_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+{
+	unsigned inch;
+	short *idata;
+	unsigned onch;
+	short *odata;
+	short *ctx, *ictx, *octx;
+	unsigned c, f, scount, icount, ocount;
+
+	/*
+	 * Calculate max frames readable at once from the input buffer.
+	 */
+	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	icount /= ibuf->bpf;
+	if (icount == 0)
+		return;
+	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	ocount /= obuf->bpf;
+	if (ocount == 0)
+		return;
+	scount = icount < ocount ? icount : ocount;
+	inch = ibuf->cmax - ibuf->cmin + 1;
+	onch = obuf->cmax - obuf->cmin + 1;
+	ictx = p->u.cmap.ctx + ibuf->cmin;
+	octx = p->u.cmap.ctx + obuf->cmin;
+
+	for (f = scount; f > 0; f--) {
+		ctx = ictx;
+		for (c = inch; c > 0; c--) {
+			*ctx = *idata;
+			idata++;
+			ctx++;
+		}
+		ctx = octx;
+		for (c = onch; c > 0; c--) {
+			*odata = *ctx;
+			odata++;
+			ctx++;
+		}
+	}
+	DPRINTFN(4, "cmap_bcopy: scount = %u\n", scount);
+	abuf_rdiscard(ibuf, scount * ibuf->bpf);
+	abuf_wcommit(obuf, scount * obuf->bpf);
+}
+
+int
+cmap_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	DPRINTFN(4, "cmap_in: %s\n", p->name);
+
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	cmap_bcopy(p, ibuf, obuf);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+cmap_out(struct aproc *p, struct abuf *obuf)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	DPRINTFN(4, "cmap_out: %s\n", p->name);
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	cmap_bcopy(p, ibuf, obuf);
+	return 1;
+}
+
+void
+cmap_eof(struct aproc *p, struct abuf *ibuf)
+{
+	DPRINTFN(4, "cmap_eof: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+void
+cmap_hup(struct aproc *p, struct abuf *obuf)
+{
+	DPRINTFN(4, "cmap_hup: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+struct aproc_ops cmap_ops = {
+	"cmap",
+	cmap_in,
+	cmap_out,
+	cmap_eof,
+	cmap_hup,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+struct aproc *
+cmap_new(char *name, struct aparams *ipar, struct aparams *opar)
+{
+	struct aproc *p;
+	unsigned i;
+
+	p = aproc_new(&cmap_ops, name);
+	for (i = 0; i < NCHAN_MAX; i++)
+		p->u.cmap.ctx[i] = 0;
+	if (debug_level > 0) {
+		DPRINTF("cmap_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
 		DPRINTF("\n");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.8 2008/11/04 15:22:40 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.9 2008/11/04 17:51:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -165,6 +165,9 @@ struct aproc {
 			int ipos, opos;
 			int idelta, odelta;	/* reminder of conv_[io]pos */
 		} resamp;
+		struct {
+			short ctx[NCHAN_MAX];
+		} cmap;
 	} u;
 };
 
@@ -191,6 +194,7 @@ struct aproc *mix_new(char *, int);
 struct aproc *sub_new(char *, int);
 struct aproc *conv_new(char *, struct aparams *, struct aparams *);
 struct aproc *resamp_new(char *, struct aparams *, struct aparams *);
+struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
 
 void mix_pushzero(struct aproc *);
 void mix_setmaster(struct aproc *);
