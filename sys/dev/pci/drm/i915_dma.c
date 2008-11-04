@@ -594,10 +594,15 @@ int i915_quiescent(struct drm_device *dev)
 int i915_flush_ioctl(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv)
 {
+	int ret;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	return i915_quiescent(dev);
+	DRM_LOCK();
+	ret = i915_quiescent(dev);
+	DRM_UNLOCK();
+
+	return (ret);
 }
 
 int i915_batchbuffer(struct drm_device *dev, void *data,
@@ -627,7 +632,9 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 							sizeof(struct drm_clip_rect)))
 		return EFAULT;
 
+	DRM_LOCK();
 	ret = i915_dispatch_batchbuffer(dev, batch);
+	DRM_UNLOCK();
 
 	sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return ret;
@@ -657,7 +664,9 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 		return EFAULT;
 	}
 
+	DRM_LOCK();
 	ret = i915_dispatch_cmdbuffer(dev, cmdbuf);
+	DRM_UNLOCK();
 	if (ret) {
 		DRM_ERROR("i915_dispatch_cmdbuffer failed\n");
 		return ret;
@@ -673,9 +682,9 @@ int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *file_pri
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-
-
+	DRM_LOCK();
 	i915_dispatch_flip(dev);
+	DRM_UNLOCK();
 
 	return 0;
 }

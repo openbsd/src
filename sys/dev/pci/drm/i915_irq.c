@@ -504,7 +504,9 @@ int i915_irq_emit(struct drm_device *dev, void *data,
 		return EINVAL;
 	}
 
+	DRM_LOCK();
 	result = i915_emit_irq(dev);
+	DRM_UNLOCK();
 
 	if (DRM_COPY_TO_USER(emit->irq_seq, &result, sizeof(int))) {
 		DRM_ERROR("copy_to_user\n");
