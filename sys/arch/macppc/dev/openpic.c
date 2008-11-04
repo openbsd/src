@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.50 2008/09/19 01:49:54 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.51 2008/11/04 14:28:24 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -453,6 +453,8 @@ openpic_do_pending_int(int pcpl)
 
 	s = ppc_intr_disable();
 	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+		/* soft interrupts are being processed, just set ipl/return */
+		openpic_setipl(pcpl);
 		ppc_intr_enable(s);
 		return;
 	}
