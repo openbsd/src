@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.7 2008/11/04 14:16:09 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.8 2008/11/04 15:22:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -117,8 +117,6 @@ struct aconv {
 	 */
 
 	int bfirst;		/* bytes to skip at startup */
-	unsigned rate;		/* frames per second */
-	unsigned pos;		/* current position in the stream */
 	unsigned nch;		/* number of channels: nch = cmax - cmin + 1 */
 	unsigned bps;		/* bytes per sample (padding included) */
 	unsigned shift;		/* shift to get 32bit MSB-justified int */
@@ -127,7 +125,6 @@ struct aconv {
 	int snext;		/* bytes to skip to reach the next sample */
 	unsigned cmin;		/* provided/consumed channels */
 	unsigned bpf;		/* bytes per frame: bpf = nch * bps */
-	int ctx[NCHAN_MAX];	/* current frame (for resampling) */
 };
 
 /*

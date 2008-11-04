@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.15 2008/11/04 14:16:09 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.16 2008/11/04 15:22:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -791,25 +791,19 @@ void
 conv_bcopy(struct aconv *ist, struct aconv *ost,
     struct abuf *ibuf, struct abuf *obuf)
 {
-	int *ictx;
 	unsigned inch, ibps;
 	unsigned char *idata;
 	int ibnext, isigbit;
 	unsigned ishift;
 	int isnext;
-	unsigned ipos, orate;
-	unsigned ifr;
-	int *octx;
 	unsigned onch, oshift;
 	int osigbit;
 	unsigned obps;
 	unsigned char *odata;
 	int obnext, osnext;
-	unsigned opos, irate;
-	unsigned ofr;
-	unsigned c, i;
-	int s, *ctx;
-	unsigned icount, ocount;
+	unsigned c, i, f;
+	int ctxbuf[NCHAN_MAX], *ctx, s;
+	unsigned icount, ocount, scount;
 
 	/*
 	 * It's ok to have s uninitialized, but we dont want the compiler to
@@ -821,91 +815,71 @@ conv_bcopy(struct aconv *ist, struct aconv *ost,
 	 * Calculate max frames readable at once from the input buffer.
 	 */
 	idata = abuf_rgetblk(ibuf, &icount, 0);
-	ifr = icount / ibuf->bpf;
-	icount = ifr * ibuf->bpf;
-
+	icount /= ibuf->bpf;
+	if (icount == 0)
+		return;
 	odata = abuf_wgetblk(obuf, &ocount, 0);
-	ofr = ocount / obuf->bpf;
-	ocount = ofr * obuf->bpf;
+	ocount /= obuf->bpf;
+	if (ocount == 0)
+		return;
+	scount = (icount < ocount) ? icount : ocount;
+	DPRINTFN(4, "conv_bcopy: scount=%u\n", scount);
 
 	/*
 	 * Partially copy structures into local variables, to avoid
 	 * unnecessary indirections; this also allows the compiler to
 	 * order local variables more "cache-friendly".
 	 */
-	ictx = ist->ctx + ist->cmin;
-	octx = ist->ctx + ost->cmin;
 	inch = ist->nch;
 	ibps = ist->bps;
 	ibnext = ist->bnext;
 	isigbit = ist->sigbit;
 	ishift = ist->shift;
 	isnext = ist->snext;
-	ipos = ist->pos;
-	irate = ist->rate;
 	onch = ost->nch;
 	oshift = ost->shift;
 	osigbit = ost->sigbit;
 	obps = ost->bps;
 	obnext = ost->bnext;
 	osnext = ost->snext;
-	opos = ost->pos;
-	orate = ost->rate;
 
 	/*
 	 * Start conversion.
 	 */
 	idata += ist->bfirst;
 	odata += ost->bfirst;
-	DPRINTFN(4, "conv_bcopy: ifr=%d ofr=%d\n", ifr, ofr);
-	for (;;) {
-		if ((int)(ipos - opos) > 0) {
-			if (ofr == 0)
-				break;
-			ctx = octx;
-			for (c = onch; c > 0; c--) {
-				s = *ctx++ << 16;
-				s >>= oshift;
-				s ^= osigbit;
-				for (i = obps; i > 0; i--) {
-					*odata = (unsigned char)s;
-					s >>= 8;
-					odata += obnext;
-				}
-				odata += osnext;
+	for (f = scount; f > 0; f--) {
+		ctx = ctxbuf;
+		for (c = inch; c > 0; c--) {
+			for (i = ibps; i > 0; i--) {
+				s <<= 8;
+				s |= *idata;
+				idata += ibnext;
 			}
-			opos += irate;
-			ofr--;
-		} else {
-			if (ifr == 0)
-				break;
-			ctx = ictx;
-			for (c = inch; c > 0; c--) {
-				for (i = ibps; i > 0; i--) {
-					s <<= 8;
-					s |= *idata;
-					idata += ibnext;
-				}
-				s ^= isigbit;
-				s <<= ishift;
-				*ctx++ = (short)(s >> 16);
-				idata += isnext;
+			s ^= isigbit;
+			s <<= ishift;
+			*ctx++ = (short)(s >> 16);
+			idata += isnext;
+		}
+		ctx = ctxbuf;
+		for (c = onch; c > 0; c--) {
+			s = *ctx++ << 16;
+			s >>= oshift;
+			s ^= osigbit;
+			for (i = obps; i > 0; i--) {
+				*odata = (unsigned char)s;
+				s >>= 8;
+				odata += obnext;
 			}
-			ipos += orate;
-			ifr--;
+			odata += osnext;
 		}
 	}
-	ist->pos = ipos;
-	ost->pos = opos;
-	DPRINTFN(4, "conv_bcopy: done, ifr=%d ofr=%d\n", ifr, ofr);
 
 	/*
 	 * Update FIFO pointers.
 	 */
-	icount -= ifr * ist->bpf;
-	ocount -= ofr * ost->bpf;
-	abuf_rdiscard(ibuf, icount);
-	abuf_wcommit(obuf, ocount);
+	abuf_rdiscard(ibuf, scount * ibuf->bpf);
+	abuf_wcommit(obuf, scount * obuf->bpf);
 }
 
 int
@@ -957,8 +931,6 @@ conv_hup(struct aproc *p, struct abuf *obuf)
 void
 aconv_init(struct aconv *st, struct aparams *par, int input)
 {
-	unsigned i;
-
 	st->bps = par->bps;
 	st->sigbit = par->sig ? 0 : 1 << (par->bits - 1);
 	if (par->msb) {
@@ -978,45 +950,6 @@ aconv_init(struct aconv *st, struct aparams *par, int input)
 	st->cmin = par->cmin;
 	st->nch = par->cmax - par->cmin + 1;
 	st->bpf = st->nch * st->bps;
-	st->rate = par->rate;
-	st->pos = 0;
-
-	for (i = 0; i < NCHAN_MAX; i++)
-		st->ctx[i] = 0;
-}
-
-void
-conv_ipos(struct aproc *p, struct abuf *ibuf, int delta)
-{
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);	
-	long long ipos;
-	int ifac, ofac;
-
-	DPRINTFN(3, "conv_ipos: %d\n", delta);
-
-	ifac = p->u.conv.ist.rate;
-	ofac = p->u.conv.ost.rate;
-	ipos = p->u.conv.idelta + (long long)delta * ofac;
-	delta = (ipos + ifac - 1) / ifac;
-	p->u.conv.idelta = ipos - (long long)delta * ifac;
-	abuf_ipos(obuf, delta);
-}
-
-void
-conv_opos(struct aproc *p, struct abuf *obuf, int delta)
-{
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
-	long long opos;
-	int ifac, ofac;
-
-	DPRINTFN(3, "conv_opos: %d\n", delta);
-
-	ifac = p->u.conv.ist.rate;
-	ofac = p->u.conv.ost.rate;
-	opos = p->u.conv.odelta + (long long)delta * ifac;
-	delta = (opos + ofac - 1) / ofac;
-	p->u.conv.odelta = opos - (long long)delta * ofac;
-	abuf_opos(ibuf, delta);
 }
 
 struct aproc_ops conv_ops = {
@@ -1027,8 +960,8 @@ struct aproc_ops conv_ops = {
 	conv_hup,
 	NULL,
 	NULL,
-	conv_ipos,
-	conv_opos,
+	NULL, /* ipos */
+	NULL, /* opos */
 	NULL
 };
 
@@ -1231,6 +1164,7 @@ struct aproc *
 resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
 {
 	struct aproc *p;
+	unsigned i;
 
 	p = aproc_new(&resamp_ops, name);
 	p->u.resamp.irate = ipar->rate;
@@ -1239,6 +1173,8 @@ resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
 	p->u.resamp.opos = 0;
 	p->u.resamp.idelta = 0;
 	p->u.resamp.odelta = 0;
+	for (i = 0; i < NCHAN_MAX; i++)
+		p->u.resamp.ctx[i] = 0;
 	if (debug_level > 0) {
 		DPRINTF("resamp_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
