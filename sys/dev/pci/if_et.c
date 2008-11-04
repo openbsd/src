@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.14 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.15 2008/11/04 19:20:22 chl Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -974,17 +974,15 @@ int
 et_init(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
-	const struct et_bsize *arr;
 	int error, i, s;
 
 	s = splnet();
 
 	et_stop(sc);
 
-	arr = ifp->if_mtu <= ETHERMTU ? et_bufsize : NULL;
 	for (i = 0; i < ET_RX_NRING; ++i) {
-		sc->sc_rx_data[i].rbd_bufsize = arr[i].bufsize;
-		sc->sc_rx_data[i].rbd_newbuf = arr[i].newbuf;
+		sc->sc_rx_data[i].rbd_bufsize = et_bufsize[i].bufsize;
+		sc->sc_rx_data[i].rbd_newbuf = et_bufsize[i].newbuf;
 	}
 
 	error = et_init_tx_ring(sc);
