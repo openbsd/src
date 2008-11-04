@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.9 2008/11/04 17:51:46 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.10 2008/11/04 18:24:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,16 +115,12 @@ struct aconv {
 	/*
 	 * Format of the buffer. This part is used by conversion code.
 	 */
-
 	int bfirst;		/* bytes to skip at startup */
-	unsigned nch;		/* number of channels: nch = cmax - cmin + 1 */
 	unsigned bps;		/* bytes per sample (padding included) */
 	unsigned shift;		/* shift to get 32bit MSB-justified int */
 	int sigbit;		/* sign bits to XOR to unsigned samples */
 	int bnext;		/* bytes to skip to reach the next byte */
 	int snext;		/* bytes to skip to reach the next sample */
-	unsigned cmin;		/* provided/consumed channels */
-	unsigned bpf;		/* bytes per frame: bpf = nch * bps */
 };
 
 /*

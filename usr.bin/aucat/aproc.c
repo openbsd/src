@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.17 2008/11/04 17:51:46 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.18 2008/11/04 18:24:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -791,19 +791,21 @@ void
 conv_bcopy(struct aconv *ist, struct aconv *ost,
     struct abuf *ibuf, struct abuf *obuf)
 {
-	unsigned inch, ibps;
+	unsigned nch, ibps;
 	unsigned char *idata;
-	int ibnext, isigbit;
-	unsigned ishift;
-	int isnext;
-	unsigned onch, oshift;
-	int osigbit;
+	int ibnext;
+	unsigned i;
+	int s;
 	unsigned obps;
 	unsigned char *odata;
-	int obnext, osnext;
-	unsigned c, i, f;
-	int ctxbuf[NCHAN_MAX], *ctx, s;
-	unsigned icount, ocount, scount;
+	int obnext;
+	int isigbit;
+	unsigned ishift;
+	unsigned oshift;
+	int osigbit;
+	int isnext;
+	int osnext;
+	unsigned f, scount, icount, ocount;
 
 	/*
 	 * It's ok to have s uninitialized, but we dont want the compiler to
@@ -823,20 +825,19 @@ conv_bcopy(struct aconv *ist, struct aconv *ost,
 	if (ocount == 0)
 		return;
 	scount = (icount < ocount) ? icount : ocount;
-	DPRINTFN(4, "conv_bcopy: scount=%u\n", scount);
+	nch = ibuf->cmax - ibuf->cmin + 1;
+	DPRINTFN(4, "conv_bcopy: scount = %u, nch = %u\n", scount, nch);
 
 	/*
 	 * Partially copy structures into local variables, to avoid
 	 * unnecessary indirections; this also allows the compiler to
 	 * order local variables more "cache-friendly".
 	 */
-	inch = ist->nch;
 	ibps = ist->bps;
 	ibnext = ist->bnext;
 	isigbit = ist->sigbit;
 	ishift = ist->shift;
 	isnext = ist->snext;
-	onch = ost->nch;
 	oshift = ost->shift;
 	osigbit = ost->sigbit;
 	obps = ost->bps;
@@ -848,31 +849,28 @@ conv_bcopy(struct aconv *ist, struct aconv *ost,
 	 */
 	idata += ist->bfirst;
 	odata += ost->bfirst;
-	for (f = scount; f > 0; f--) {
-		ctx = ctxbuf;
-		for (c = inch; c > 0; c--) {
-			for (i = ibps; i > 0; i--) {
-				s <<= 8;
-				s |= *idata;
-				idata += ibnext;
-			}
-			s ^= isigbit;
-			s <<= ishift;
-			*ctx++ = (short)(s >> 16);
-			idata += isnext;
+	for (f = scount * nch; f > 0; f--) {
+		for (i = ibps; i > 0; i--) {
+			s <<= 8;
+			s |= *idata;
+			idata += ibnext;
 		}
-		ctx = ctxbuf;
-		for (c = onch; c > 0; c--) {
-			s = *ctx++ << 16;
-			s >>= oshift;
-			s ^= osigbit;
-			for (i = obps; i > 0; i--) {
-				*odata = (unsigned char)s;
-				s >>= 8;
-				odata += obnext;
-			}
-			odata += osnext;
+		s ^= isigbit;
+		s <<= ishift;
+		s >>= 16;
+
+		/* XXX: don't simplify, useful to split conv */
+		
+		s <<= 16;
+		s >>= oshift;
+		s ^= osigbit;
+		for (i = obps; i > 0; i--) {
+			*odata = (unsigned char)s;
+			s >>= 8;
+			odata += obnext;
 		}
+		idata += isnext;
+		odata += osnext;
 	}
 
 	/*
@@ -947,9 +945,6 @@ aconv_init(struct aconv *st, struct aparams *par, int input)
 		st->bnext = 1;
 		st->snext = 0;
 	}
-	st->cmin = par->cmin;
-	st->nch = par->cmax - par->cmin + 1;
-	st->bpf = st->nch * st->bps;
 }
 
 struct aproc_ops conv_ops = {
@@ -970,6 +965,10 @@ conv_new(char *name, struct aparams *ipar, struct aparams *opar)
 {
 	struct aproc *p;
 
+	if (ipar->cmax - ipar->cmin != opar->cmax - opar->cmin) {
+		fprintf(stderr, "conv_new: channel count mismatch\n");
+		abort();
+	}
 	p = aproc_new(&conv_ops, name);
 	aconv_init(&p->u.conv.ist, ipar, 1);
 	aconv_init(&p->u.conv.ost, opar, 0);

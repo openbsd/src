@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.7 2008/11/04 17:51:46 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.8 2008/11/04 18:24:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -394,9 +394,8 @@ dev_attach(char *name,
 			ipar->sig = dev_opar.sig;
 			ipar->le = dev_opar.le;
 			ipar->msb = dev_opar.msb;
-			ipar->cmin = dev_opar.cmin;
-			ipar->cmax = dev_opar.cmax;
-		} else if (!aparams_subset(ipar, &dev_opar)) {
+		}
+		if (!aparams_subset(ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = cmap_new(name, ipar, &dev_opar);
@@ -433,9 +432,8 @@ dev_attach(char *name,
 			opar->sig = dev_ipar.sig;
 			opar->le = dev_ipar.le;
 			opar->msb = dev_ipar.msb;
-			opar->cmin = dev_ipar.cmin;
-			opar->cmax = dev_ipar.cmax;
-		} else if (!aparams_subset(opar, &dev_ipar)) {
+		}
+		if (!aparams_subset(opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = cmap_new(name, &dev_ipar, opar);
