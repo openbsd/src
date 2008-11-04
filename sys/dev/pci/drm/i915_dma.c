@@ -824,7 +824,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	mtx_init(&dev_priv->swaps_lock, IPL_NONE);
-	DRM_SPININIT(&dev_priv->user_irq_lock, "I915 irq lock");
+	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
 	return ret;
 }

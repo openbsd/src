@@ -438,21 +438,20 @@ void i915_user_irq_get(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
 
-	DRM_SPINLOCK(&dev_priv->user_irq_lock);
+	mtx_enter(&dev_priv->user_irq_lock);
 	if (dev->irq_enabled && (++dev_priv->user_irq_refcount == 1))
 		i915_enable_irq(dev_priv, I915_USER_INTERRUPT);
-	DRM_SPINUNLOCK(&dev_priv->user_irq_lock);
-
+	mtx_leave(&dev_priv->user_irq_lock);
 }
 
 void i915_user_irq_put(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
 
-	DRM_SPINLOCK(&dev_priv->user_irq_lock);
+	mtx_enter(&dev_priv->user_irq_lock);
 	if (dev->irq_enabled && (--dev_priv->user_irq_refcount == 0))
 		i915_disable_irq(dev_priv, I915_USER_INTERRUPT);
-	DRM_SPINUNLOCK(&dev_priv->user_irq_lock);
+	mtx_leave(&dev_priv->user_irq_lock);
 }
 
 
@@ -555,25 +554,28 @@ int i915_enable_vblank(struct drm_device *dev, int plane)
 		return (0);
 	}
 
-	pipestat = I915_READ (pipestat_reg);
+	mtx_enter(&dev_priv->user_irq_lock);
 	/*
-	 * Older chips didn't have the start vblank interrupt,
-	 * but 
+	 * Enabling vblank events in IMR comes before PIPESTAT write, or
+	 * there's a race where the PIPESTAT vblank bit gets set to 1, so
+	 * the OR of enabled PIPESTAT bits goes to 1, so the PIPExEVENT in
+	 * ISR flashes to 1, but the IIR bit doesn't get set to 1 because
+	 * IMR masks it.  It doesn't ever get set after we clear the masking
+	 * in IMR because the ISR bit is edge, not level-triggered, on the
+	 * OR of PIPESTAT bits.
 	 */
-	if (IS_I965G (dev))
+	i915_enable_irq(dev_priv, interrupt);
+	pipestat = I915_READ(pipestat_reg);
+	if (IS_I965G(dev))
 		pipestat |= PIPE_START_VBLANK_INTERRUPT_ENABLE;
 	else
 		pipestat |= PIPE_VBLANK_INTERRUPT_ENABLE;
-	/*
-	 * Clear any pending status
-	 */
+	/* Clear any stale interrupt status */
 	pipestat |= (PIPE_START_VBLANK_INTERRUPT_STATUS |
-		     PIPE_VBLANK_INTERRUPT_STATUS);
+	    PIPE_VBLANK_INTERRUPT_STATUS);
 	I915_WRITE(pipestat_reg, pipestat);
-
-	DRM_SPINLOCK(&dev_priv->user_irq_lock);
-	i915_enable_irq(dev_priv, interrupt);
-	DRM_SPINUNLOCK(&dev_priv->user_irq_lock);
+	(void)I915_READ(pipestat_reg); /* Posting read */
+	mtx_leave(&dev_priv->user_irq_lock);
 
 	return 0;
 }
@@ -601,20 +603,17 @@ void i915_disable_vblank(struct drm_device *dev, int plane)
 		return;
 	}
 
-	DRM_SPINLOCK(&dev_priv->user_irq_lock);
+	mtx_enter(&dev_priv->user_irq_lock);
 	i915_disable_irq(dev_priv, interrupt);
-	DRM_SPINUNLOCK(&dev_priv->user_irq_lock);
-
-	pipestat = I915_READ (pipestat_reg);
+	pipestat = I915_READ(pipestat_reg);
 	pipestat &= ~(PIPE_START_VBLANK_INTERRUPT_ENABLE |
-		      PIPE_VBLANK_INTERRUPT_ENABLE);
-	/*
-	 * Clear any pending status
-	 */
+	    PIPE_VBLANK_INTERRUPT_ENABLE);
+	/* Clear any stale interrupt status */
 	pipestat |= (PIPE_START_VBLANK_INTERRUPT_STATUS |
-		     PIPE_VBLANK_INTERRUPT_STATUS);
+	    PIPE_VBLANK_INTERRUPT_STATUS);
 	I915_WRITE(pipestat_reg, pipestat);
 	(void)I915_READ(pipestat_reg);
+	mtx_leave(&dev_priv->user_irq_lock);
 }
 
 int i915_vblank_pipe_get(struct drm_device *dev, void *data,
@@ -674,11 +673,6 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 
 	mtx_enter(&dev->drw_lock);
 
-	/* It makes no sense to schedule a swap for a drawable that doesn't have
-	 * valid information at this point. E.g. this could mean that the X
-	 * server is too old to push drawable information to the DRM, in which
-	 * case all such swaps would become ineffective.
-	 */
 	if (!drm_get_drawable_info(dev, swap->drawable)) {
 		mtx_leave(&dev->drw_lock);
 		DRM_DEBUG("Invalid drawable ID %d\n", swap->drawable);
@@ -785,11 +779,6 @@ int i915_driver_irq_postinstall(struct drm_device * dev)
 
 	DRM_INIT_WAITQUEUE(&dev_priv->irq_queue);
 
-	/*
-	 * Initialize the hardware status page IRQ location.
-	 */
-
-	I915_WRITE(INSTPM, (1 << 5) | (1 << 21));
 	return 0;
 }
 
