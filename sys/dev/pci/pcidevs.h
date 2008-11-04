@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1427 2008/11/03 11:42:15 robert Exp 
+ *	OpenBSD: pcidevs,v 1.1428 2008/11/04 02:48:08 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2518,6 +2518,7 @@
 #define	PCI_PRODUCT_INTEL_82Q45_IGD_1	0x2e12		/* Q45 Video */
 #define	PCI_PRODUCT_INTEL_82Q45_IGD_2	0x2e13		/* Q45 Video */
 #define	PCI_PRODUCT_INTEL_82G45_HB	0x2e20		/* G45 Host */
+#define	PCI_PRODUCT_INTEL_82G45_PCIE	0x2e21		/* G45 PCIE */
 #define	PCI_PRODUCT_INTEL_82G45_IGD_1	0x2e22		/* G45 Video */
 #define	PCI_PRODUCT_INTEL_82G45_IGD_2	0x2e23		/* G45 Video */
 #define	PCI_PRODUCT_INTEL_82G41_HB	0x2e30		/* G41 Host */
