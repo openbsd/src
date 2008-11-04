@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.17 2008/10/16 19:16:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.18 2008/11/04 07:58:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -508,7 +508,6 @@ typedef struct {
 #endif
 #define PTR_UPPER32(x)	((uint64_t)(x) >> 32)
 #define FLAGBUFLEN	256
-#define MAX_VOLUME_255	1
 
 typedef int nid_t;
 
