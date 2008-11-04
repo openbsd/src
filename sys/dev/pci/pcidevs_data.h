@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1428 2008/11/04 02:48:08 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1429 2008/11/04 05:35:58 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5260,6 +5260,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "89HPES12N3A",
 	},
 	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES24N3A,
+	    "89HPES24N3A",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES24T6,
+	    "89HPES24T6",
+	},
+	{
 	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
 	    "WDT 50x Watchdog Timer",
 	},
@@ -7972,8 +7980,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7525 Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_HB,
+	    "7300 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_1,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_2,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_3,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_4,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_5,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_6,
+	    "7300 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_PCIE_7,
+	    "7300 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_CNB,
 	    "I/OAT CNB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_FSBINT,
+	    "7300 E5400 FSB/Boot/Interrupt",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_SNOOP,
+	    "7300 Snoop Filter",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_MISC,
+	    "7300 Misc",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_FBD_0,
+	    "7300 FBD",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_FBD_1,
+	    "7300 FBD",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801JIR_LPC,
