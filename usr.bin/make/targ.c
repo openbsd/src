@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.56 2008/01/29 22:23:10 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.57 2008/11/04 07:22:36 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@
 #include <stdlib.h>
 #endif
 
-static struct ohash targets;	/* a hash table of same */
+static struct ohash targets;	/* hash table of targets */
 struct ohash_info gnode_info = {
 	offsetof(GNode, name), NULL, hash_alloc, hash_free, element_alloc
 };
@@ -198,6 +198,10 @@ Targ_NewGNi(const char *name, const char *ename)
 	Lst_Init(&gn->commands);
 	Lst_Init(&gn->expanded);
 	gn->suffix = NULL;
+	gn->next = NULL;
+	gn->basename = NULL;
+	gn->sibling = gn;
+	gn->build_lock = false;
 
 #ifdef STATS_GN_CREATION
 	STAT_GN_COUNT++;
@@ -453,48 +457,8 @@ Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
 	Suff_PrintAll();
 }
 
-static char *curdir, *objdir;
-static size_t curdir_len, objdir_len;
-
-void
-Targ_setdirs(const char *c, const char *o)
+struct ohash *
+targets_hash()
 {
-	curdir_len = strlen(c);
-	curdir = emalloc(curdir_len+2);
-	memcpy(curdir, c, curdir_len);
-	curdir[curdir_len++] = '/';
-	curdir[curdir_len] = 0;
-
-	objdir_len = strlen(o);
-	objdir = emalloc(objdir_len+2);
-	memcpy(objdir, o, objdir_len);
-	objdir[objdir_len++] = '/';
-	objdir[objdir_len] = 0;
-}
-
-void
-look_harder_for_target(GNode *gn)
-{
-	GNode *extra, *cgn;
-	LstNode ln;
-
-	if (gn->type & (OP_RESOLVED|OP_PHONY))
-		return;
-	gn->type |= OP_RESOLVED;
-	if (strncmp(gn->name, objdir, objdir_len) == 0) {
-		extra = Targ_FindNode(gn->name + objdir_len, TARG_NOCREATE);
-		if (extra != NULL) {
-			if (Lst_IsEmpty(&gn->commands))
-				Lst_Concat(&gn->commands, &extra->commands);
-			for (ln = Lst_First(&extra->children); ln != NULL;
-			    ln = Lst_Adv(ln)) {
-				cgn = (GNode *)Lst_Datum(ln);
-
-				if (Lst_AddNew(&gn->children, cgn)) {
-					Lst_AtEnd(&cgn->parents, gn);
-					gn->unmade++;
-				}
-			}
-		}
-	}
+	return &targets;
 }

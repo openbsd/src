@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.69 2008/01/29 22:23:10 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.70 2008/11/04 07:22:35 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include "suff.h"
 #include "var.h"
 #include "targ.h"
+#include "targequiv.h"
 #include "error.h"
 #include "extern.h"
 #include "gnode.h"
@@ -72,11 +73,34 @@ CompatMake(void *gnp,	/* The node to make */
 	GNode *gn = (GNode *)gnp;
 	GNode *pgn = (GNode *)pgnp;
 
+	GNode *sib;
+	bool cmdsOk;
+
+	if (DEBUG(MAKE))
+		printf("CompatMake(%s, %s)\n", pgn ? pgn->name : "NULL", 
+		    gn->name);
+
+	/* XXX some loops are not loops, people write dependencies
+	 * between siblings to make sure they get built.
+	 * Also, we don't recognize direct loops.
+	 */
+	if (gn == pgn)
+		return;
 	look_harder_for_target(gn);
 
+	if (pgn != NULL && is_sibling(gn, pgn))
+		return;
+
+	if (pgn == NULL)
+		pgn = gn;
+
 	if (pgn->type & OP_MADE) {
-		(void)Dir_MTime(gn);
-		gn->built_status = UPTODATE;
+		sib = gn;
+		do {
+			(void)Dir_MTime(sib);
+			sib->built_status = UPTODATE;
+			sib = sib->sibling;
+		} while (sib != gn);
 	}
 
 	if (gn->type & OP_USE) {
@@ -91,9 +115,19 @@ CompatMake(void *gnp,	/* The node to make */
 		 * parent as well.  */
 		gn->must_make = true;
 		gn->built_status = BEINGMADE;
-		Suff_FindDeps(gn);
-		Lst_ForEach(&gn->children, CompatMake, gn);
+		/* note that, in case we have siblings, we only check all
+		 * children for all siblings, but we don't try to apply
+		 * any other rule.
+		 */
+		sib = gn;
+		do {
+			Suff_FindDeps(sib);
+			Lst_ForEach(&sib->children, CompatMake, gn);
+			sib = sib->sibling;
+		} while (sib != gn);
+
 		if (!gn->must_make) {
+			Error("Build for %s aborted", gn->name);
 			gn->built_status = ABORTED;
 			pgn->must_make = false;
 			return;
@@ -118,20 +152,40 @@ CompatMake(void *gnp,	/* The node to make */
 		if (queryFlag)
 			exit(-1);
 
-		/* We need to be re-made. We also have to make sure we've
-		 * got a $?  variable. To be nice, we also define the $>
-		 * variable using Make_DoAllVar().  */
-		Make_DoAllVar(gn);
+		/* normally, we run the job, but if we can't find any
+		 * commands, we defer to siblings instead.
+		 */
+		sib = gn;
+		do {
+			/* We need to be re-made. We also have to make sure
+			 * we've got a $?  variable. To be nice, we also define
+			 * the $> variable using Make_DoAllVar().  
+			 */
+			Make_DoAllVar(sib);
+			cmdsOk = Job_CheckCommands(sib);
+			if (cmdsOk || (gn->type & OP_OPTIONAL))
+				break;
 
-		if (Job_CheckCommands(gn, Fatal)) {
+			sib = sib->sibling;
+		} while (sib != gn);
+
+		if (cmdsOk) {
 			/* Our commands are ok, but we still have to worry
 			 * about the -t flag...	*/
 			if (!touchFlag)
-				run_gnode(gn);
-			else
-				Job_Touch(gn);
-		} else
-			gn->built_status = ERROR;
+				run_gnode(sib);
+			else {
+				Job_Touch(sib);
+				if (gn != sib)
+					Job_Touch(gn);
+			}
+		} else {
+			job_failure(gn, Fatal);
+			sib->built_status = ERROR;
+		}
+
+		/* copy over what we just did */
+		gn->built_status = sib->built_status;
 
 		if (gn->built_status != ERROR) {
 			/* If the node was made successfully, mark it so,
@@ -140,6 +194,7 @@ CompatMake(void *gnp,	/* The node to make */
 			 * This is to keep its state from affecting that of
 			 * its parent.  */
 			gn->built_status = MADE;
+			sib->built_status = MADE;
 			/* This is what Make does and it's actually a good
 			 * thing, as it allows rules like
 			 *
@@ -158,6 +213,12 @@ CompatMake(void *gnp,	/* The node to make */
 				gn->mtime = now;
 			if (is_strictly_before(gn->mtime, gn->cmtime))
 				gn->mtime = gn->cmtime;
+			if (sib != gn) {
+				if (noExecute || is_out_of_date(Dir_MTime(sib)))
+					sib->mtime = now;
+				if (is_strictly_before(sib->mtime, sib->cmtime))
+					sib->mtime = sib->cmtime;
+			}
 			if (DEBUG(MAKE))
 				printf("update time: %s\n",
 				    time_to_string(gn->mtime));
@@ -186,7 +247,7 @@ CompatMake(void *gnp,	/* The node to make */
 	else {
 		switch (gn->built_status) {
 		case BEINGMADE:
-			Error("Graph cycles through %s\n", gn->name);
+			Error("Graph cycles through %s", gn->name);
 			gn->built_status = ERROR;
 			pgn->must_make = false;
 			break;
@@ -234,7 +295,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	 */
 	errors = 0;
 	while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
-		CompatMake(gn, gn);
+		CompatMake(gn, NULL);
 
 		if (gn->built_status == UPTODATE)
 			printf("`%s' is up to date.\n", gn->name);

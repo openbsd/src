@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.113 2008/03/24 18:03:53 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.114 2008/11/04 07:22:35 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -171,13 +171,7 @@ static fd_set *actual_mask = NULL;	/* actual select argument */
 static int largest_fd = -1;
 static size_t mask_size = 0;
 
-/*
- * When JobStart attempts to run a job but isn't allowed to,
- * the job is placed on the queuedJobs queue to be run
- * when the next job finishes.
- */
 static LIST	stoppedJobs;	
-static LIST	queuedJobs;
 
 /* wait possibilities */
 #define JOB_EXITED 0
@@ -205,7 +199,7 @@ struct error_info {
 # endif
 #endif
 
-static void pass_signal_to_job(void *, void *);
+static void signal_running_jobs(int);
 static void handle_all_signals(void);
 static void handle_signal(int);
 static int JobCmpPid(void *, void *);
@@ -353,29 +347,20 @@ handle_all_signals()
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobCondPassSig --
- *	Pass a signal to a job if USE_PGRP
- *	is defined.
- *
- * Side Effects:
- *	None, except the job may bite it.
- *-----------------------------------------------------------------------
- */
 static void
-pass_signal_to_job(void *jobp,	/* Job to biff */
-    void *signop)		/* Signal to send it */
+signal_running_jobs(int signo)
 {
-	Job *job = (Job *)jobp;
-	int signo = *(int *)signop;
-	if (DEBUG(JOB)) {
-		(void)fprintf(stdout,
-		    "pass_signal_to_job passing signal %d to child %ld.\n",
-		    signo, (long)job->pid);
-		(void)fflush(stdout);
+	LstNode ln;
+	for (ln = Lst_First(&runningJobs); ln != NULL; ln = Lst_Adv(ln)) {
+	    	Job *job = Lst_Datum(ln);
+		if (DEBUG(JOB)) {
+			(void)fprintf(stdout,
+			    "signal %d to child %ld.\n",
+			    signo, (long)job->pid);
+			(void)fflush(stdout);
+		}
+		KILL(job->pid, signo);
 	}
-	KILL(job->pid, signo);
 }
 
 /*-
@@ -398,7 +383,7 @@ handle_signal(int signo) /* The signal number we've received */
 		(void)fprintf(stdout, "handle_signal(%d) called.\n", signo);
 		(void)fflush(stdout);
 	}
-	Lst_ForEach(&runningJobs, pass_signal_to_job, &signo);
+	signal_running_jobs(signo);
 
 	/*
 	 * Deal with proper cleanup based on the signal received. We only run
@@ -444,8 +429,7 @@ handle_signal(int signo) /* The signal number we've received */
 
 	(void)KILL(getpid(), signo);
 
-	signo = SIGCONT;
-	Lst_ForEach(&runningJobs, pass_signal_to_job, &signo);
+	signal_running_jobs(SIGCONT);
 
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -567,11 +551,6 @@ finish_job(Job *job, int reason, int code)
 		 * exited non-zero.
 		 */
 		done = code != 0;
-		/*
-		 * Old comment said: "Note we don't want to close down any of
-		 * the streams until we know we're at the end." But we do.
-		 * Otherwise when are we going to print the rest of the stuff?
-		 */
 		close_job_pipes(job);
 	} else {
 		/*
@@ -606,16 +585,6 @@ finish_job(Job *job, int reason, int code)
 			    "Warning: "
 			    "process %ld was not continuing.\n",
 			    (long)job->pid);
-#if 0
-			/*
-			 * We don't really want to restart a job from
-			 * scratch just because it continued,
-			 * especially not without killing the
-			 * continuing process!	That's why this is
-			 * ifdef'ed out.  FD - 9/17/90
-			 */
-			JobRestart(job);
-#endif
 		}
 		job->flags &= ~JOB_CONTINUING;
 		Lst_AtEnd(&runningJobs, job);
@@ -954,7 +923,7 @@ prepare_job(GNode *gn, int flags)
 	 * Check the commands now so any attributes from .DEFAULT have a chance
 	 * to migrate to the node
 	 */
-	cmdsOK = Job_CheckCommands(gn, Error);
+	cmdsOK = Job_CheckCommands(gn);
 	expand_commands(gn);
 
 	if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
@@ -962,9 +931,8 @@ prepare_job(GNode *gn, int flags)
 		 * We're serious here, but if the commands were bogus, we're
 		 * also dead...
 		 */
-		if (!cmdsOK) {
-			DieHorribly();
-		}
+		if (!cmdsOK)
+			job_failure(gn, Punt);
 
 		if (Lst_IsEmpty(&gn->commands))
 			noExec = true;
@@ -1016,7 +984,7 @@ prepare_job(GNode *gn, int flags)
  *
  * Side Effects:
  *	A new Job node is created and added to the list of running
- *	jobs. PMake is forked and a child shell created.
+ *	jobs. Make is forked and a child shell created.
  *-----------------------------------------------------------------------
  */
 static void
@@ -1313,7 +1281,6 @@ Job_Init(int maxproc)
 {
 	Static_Lst_Init(&runningJobs);
 	Static_Lst_Init(&stoppedJobs);
-	Static_Lst_Init(&queuedJobs);
 	Static_Lst_Init(&errorsList);
 	maxJobs =	  maxproc;
 	nJobs =	  	  0;

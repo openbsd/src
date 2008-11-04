@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2008/01/29 22:23:10 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.20 2008/11/04 07:22:35 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +75,7 @@ static void run_command(const char *, bool);
 static void handle_compat_interrupts(GNode *);
 
 bool
-Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
+Job_CheckCommands(GNode *gn)
 {
 	/* Alter our type to tell if errors should be ignored or things
 	 * should not be printed so CompatRunCommand knows what to do.
@@ -109,32 +110,38 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 			 * The node wasn't the target of an operator we have no
 			 * .DEFAULT rule to go on and the target doesn't
 			 * already exist. There's nothing more we can do for
-			 * this branch. If the -k flag wasn't given, we stop in
-			 * our tracks, otherwise we just don't update this
-			 * node's parents so they never get examined.
+			 * this branch. 
 			 */
-			static const char msg[] =
-			    "make: don't know how to make";
-
-			if (gn->type & OP_OPTIONAL) {
-				(void)fprintf(stdout, "%s %s(ignored)\n", msg,
-				    gn->name);
-				(void)fflush(stdout);
-			} else if (keepgoing) {
-				(void)fprintf(stdout, "%s %s(continuing)\n",
-				    msg, gn->name);
-				(void)fflush(stdout);
-				return false;
-			} else {
-				(*abortProc)("%s %s. Stop in %s.", msg,
-				    gn->name, Var_Value(".CURDIR"));
-				return false;
-			}
-		}
+			 return false;
+	    	}
 	}
 	return true;
 }
 
+void
+job_failure(GNode *gn, void (*abortProc)(char *, ...))
+{
+	/*
+	 If the -k flag wasn't given, we stop in
+	 * our tracks, otherwise we just don't update this
+	 * node's parents so they never get examined.
+	 */
+	static const char msg[] =
+	    "make: don't know how to make";
+
+	if (gn->type & OP_OPTIONAL) {
+		(void)fprintf(stdout, "%s %s(ignored)\n", msg,
+		    gn->name);
+		(void)fflush(stdout);
+	} else if (keepgoing) {
+		(void)fprintf(stdout, "%s %s(continuing)\n",
+		    msg, gn->name);
+		(void)fflush(stdout);
+	} else {
+		(*abortProc)("%s %s. Stop in %s.", msg,
+		    gn->name, Var_Value(".CURDIR"));
+	}
+}
 /* touch files the hard way, by writing stuff to them */
 static int
 rewrite_time(const char *name)
@@ -210,35 +217,37 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	GNode	*gn;	/* A child of the .USE node */
 	LstNode	ln;	/* An element in the children list */
 
-	if (cgn->type & (OP_USE|OP_TRANSFORM)) {
-		if ((cgn->type & OP_USE) || Lst_IsEmpty(&pgn->commands)) {
-			/* .USE or transformation and target has no commands
-			 * -- append the child's commands to the parent.  */
-			Lst_Concat(&pgn->commands, &cgn->commands);
-		}
 
-		for (ln = Lst_First(&cgn->children); ln != NULL;
-		    ln = Lst_Adv(ln)) {
-			gn = (GNode *)Lst_Datum(ln);
+	assert(cgn->type & (OP_USE|OP_TRANSFORM));
 
-			if (Lst_AddNew(&pgn->children, gn)) {
-				Lst_AtEnd(&gn->parents, pgn);
-				pgn->unmade++;
-			}
-		}
-
-		pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
-
-		/*
-		 * This child node is now "made", so we decrement the count of
-		 * unmade children in the parent... We also remove the child
-		 * from the parent's list to accurately reflect the number of
-		 * decent children the parent has. This is used by Make_Run to
-		 * decide whether to queue the parent or examine its children...
-		 */
-		if (cgn->type & OP_USE)
-			pgn->unmade--;
+	if ((cgn->type & OP_USE) || Lst_IsEmpty(&pgn->commands)) {
+		/* .USE or transformation and target has no commands
+		 * -- append the child's commands to the parent.  */
+		Lst_Concat(&pgn->commands, &cgn->commands);
 	}
+
+	for (ln = Lst_First(&cgn->children); ln != NULL;
+	    ln = Lst_Adv(ln)) {
+		gn = (GNode *)Lst_Datum(ln);
+
+		if (Lst_AddNew(&pgn->children, gn)) {
+			Lst_AtEnd(&gn->parents, pgn);
+			pgn->unmade++;
+		}
+	}
+
+	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
+
+	/*
+	 * This child node is now "made", so we decrement the count of
+	 * unmade children in the parent... We also remove the child
+	 * from the parent's list to accurately reflect the number of
+	 * decent children the parent has. This is used by Make_Run to
+	 * decide whether to queue the parent or examine its children...
+	 */
+	if (cgn->type & OP_USE)
+		pgn->unmade--;
+
 	/* if the parent node doesn't have any location, then inherit the
 	 * use stuff, since that gives us better error messages.
 	 */

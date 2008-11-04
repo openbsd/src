@@ -1,7 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.h,v 1.8 2007/11/03 10:41:48 espie Exp $ */
+/*	$OpenBSD: error.h,v 1.9 2008/11/04 07:22:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -45,7 +45,6 @@
 extern void Error(char *, ...);
 extern void Fatal(char *, ...);
 extern void Punt(char *, ...);
-extern void DieHorribly(void);
 extern void Finish(int);
 
 /*

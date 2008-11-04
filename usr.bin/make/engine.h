@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.5 2008/01/29 22:23:10 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.6 2008/11/04 07:22:35 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,11 +38,12 @@
  *	from: @(#)job.h 8.1 (Berkeley) 6/6/93
  */
 
-/* ok = Job_CheckCommands(node, abort);
+/* ok = Job_CheckCommands(node);
  *	verify the integrity of a node's commands, pulling stuff off
  * 	.DEFAULT and other places if necessary.
  */
-extern bool Job_CheckCommands(GNode *, void (*abortProc)(char *, ...));
+extern bool Job_CheckCommands(GNode *);
+extern void job_failure(GNode *, void (*abortProc)(char *, ...));
 /* Job_Touch(node);
  *	touch the path corresponding to a node or update the corresponding
  *	archive object.

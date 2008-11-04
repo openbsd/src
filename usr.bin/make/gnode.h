@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.13 2008/01/29 22:23:10 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.14 2008/11/04 07:22:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -88,7 +88,7 @@ struct Suff_;
 struct GNode_ {
     int special_op;	/* special op to apply */
     unsigned char special;/* type of special node */
-    char must_make;		/* true if this target needs to be remade */
+    char must_make;	/* true if this target needs to be remade */
     char childMade;	/* true if one of this target's children was
 			 * made */
     char built_status;	/* Set to reflect the state of processing
@@ -109,8 +109,9 @@ struct GNode_ {
 			 *	printed. Go back and unmark all its
 			 *	members.
 			 */
+    char build_lock;	/* for parallel build in siblings */
     char *path;		/* The full pathname of the file */
-    int type;		/* Its type (see the OP flags, below) */
+    unsigned int type;		/* Its type (see the OP flags, below) */
     int order;		/* Its wait weight */
 
     int unmade;		/* The number of unmade children */
@@ -134,10 +135,18 @@ struct GNode_ {
     struct Suff_ *suffix;/* Suffix for the node (determined by
 			 * Suff_FindDeps and opaque to everyone
 			 * but the Suff module) */
+    struct GNode_ *sibling;	/* equivalent targets */
+    /* stuff for target name equivalence */
+    char *basename;	/* pointer to name stripped of path */
+    struct GNode_ *next;
     char name[1];	/* The target's name */
 };
 
-#define has_been_built(gn)	((gn)->built_status == MADE || (gn)->built_status == UPTODATE)
+#define has_been_built(gn) \
+	((gn)->built_status == MADE || (gn)->built_status == UPTODATE)
+#define should_have_file(gn) \
+	((gn)->special == SPECIAL_NONE && \
+	((gn)->type & (OP_PHONY | OP_DUMMY)) == 0)
 /*
  * The OP_ constants are used when parsing a dependency line as a way of
  * communicating to other parts of the program the way in which a target
@@ -174,26 +183,26 @@ struct GNode_ {
 				     * children was out-of-date */
 #define OP_MADE 	0x00000800  /* Assume the node is already made; even if
 				     * it really is out of date */
-#define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
+#define OP_INVISIBLE	0x00001000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
 				     * local variables. */
-#define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
+#define OP_NOTMAIN	0x00002000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
-#define OP_PHONY	0x00010000  /* Not a file target; run always */
-#define OP_NOPATH	0x00020000  /* Don't search for file in the path */
-#define OP_NODEFAULT	0x00040000  /* Special node that never needs */
+#define OP_PHONY	0x00004000  /* Not a file target; run always */
+#define OP_NOPATH	0x00008000  /* Don't search for file in the path */
+#define OP_NODEFAULT	0x00010000  /* Special node that never needs */
 				    /* DEFAULT commands applied */
-#define OP_DUMMY	0x00080000  /* node was created by default, but it */
+#define OP_DUMMY	0x00020000  /* node was created by default, but it */
 				    /* does not really exist. */
 /* Attributes applied by PMake */
-#define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
-#define OP_MEMBER	0x40000000  /* Target is a member of an archive */
-#define OP_LIB		0x20000000  /* Target is a library */
-#define OP_ARCHV	0x10000000  /* Target is an archive construct */
-#define OP_HAS_COMMANDS 0x08000000  /* Target has all the commands it should.
+#define OP_TRANSFORM	0x00040000  /* The node is a transformation rule */
+#define OP_MEMBER	0x00080000  /* Target is a member of an archive */
+#define OP_LIB		0x00100000  /* Target is a library */
+#define OP_ARCHV	0x00200000  /* Target is an archive construct */
+#define OP_HAS_COMMANDS 0x00400000  /* Target has all the commands it should.
 				     * Used when parsing to catch multiple
 				     * commands for a target */
-#define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
+#define OP_DEPS_FOUND	0x00800000  /* Already processed by Suff_FindDeps */
 #define OP_RESOLVED	0x01000000  /* We looked harder already */
 
 /*

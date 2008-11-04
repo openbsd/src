@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.57 2008/01/12 13:08:59 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.58 2008/11/04 07:22:36 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include "engine.h"
 #include "lst.h"
 #include "targ.h"
+#include "targequiv.h"
 #include "garray.h"
 #include "memory.h"
 
@@ -250,8 +251,11 @@ Make_Update(GNode *cgn)	/* the child node */
 			printf("update time: %s\n", time_to_string(cgn->mtime));
 	}
 
+	/* SIB: this is where I should mark the build as finished */
+	cgn->build_lock = false;
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = (GNode *)Lst_Datum(ln);
+		/* SIB: there should be a siblings loop there */
 		pgn->unmade--;
 		if (pgn->must_make) {
 			if (DEBUG(MAKE))
@@ -311,6 +315,7 @@ try_to_make_node(GNode *gn)
 		return false;
 	}
 
+	/* SIB: this is where there should be a siblings loop */
 	Suff_FindDeps(gn);
 	if (gn->unmade != 0) {
 		if (DEBUG(MAKE))
@@ -319,11 +324,15 @@ try_to_make_node(GNode *gn)
 		return false;
 	}
 	if (Make_OODate(gn)) {
+		/* SIB: if a sibling is getting built, I don't build it right now */
 		if (DEBUG(MAKE))
 			printf("out-of-date\n");
 		if (queryFlag)
 			return true;
+		/* SIB: this is where commands should get prepared */
 		Make_DoAllVar(gn);
+		/* SIB: this is where I should make the gn as `being built */
+		gn->build_lock = true;
 		Job_Make(gn);
 	} else {
 		if (DEBUG(MAKE))
@@ -434,9 +443,13 @@ MakeAddChild(void *to_addp, void *ap)
 }
 
 static void
-MakeHandleUse(void *pgn, void *cgn)
+MakeHandleUse(void *cgnp, void *pgnp)
 {
-	Make_HandleUse((GNode *)pgn, (GNode *)cgn);
+	GNode *cgn = (GNode *)cgnp;
+	GNode *pgn = (GNode *)pgnp;
+
+	if (cgn->type & OP_USE)
+		Make_HandleUse(cgn, pgn);
 }
 
 /* Add stuff to the toBeMade queue. we try to sort things so that stuff 
@@ -463,6 +476,7 @@ add_targets_to_make(Lst todo)
 
 
 		look_harder_for_target(gn);
+		kludge_look_harder_for_target(gn);
 		/*
 		 * Apply any .USE rules before looking for implicit
 		 * dependencies to make sure everything that should have
