@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.32 2008/06/28 14:04:30 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.33 2008/11/04 08:22:12 djm Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
@@ -14,6 +14,8 @@ CDIAGFLAGS+=	-Wbounded
 CDIAGFLAGS+=	-Wshadow
 
 #DEBUG=-g
+
+#CFLAGS+=	-DJPAKE
 
 #CFLAGS+=	-DSMARTCARD
 #LDADD+=	-lsectok

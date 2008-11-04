@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.61 2008/07/02 12:03:51 dtucker Exp $ */
+/* $OpenBSD: auth.h,v 1.62 2008/11/04 08:22:12 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -54,6 +54,7 @@ struct Authctxt {
 	struct passwd	*pw;		/* set if 'valid' */
 	char		*style;
 	void		*kbdintctxt;
+	void		*jpake_ctx;
 	auth_session_t	*as;
 #ifdef KRB5
 	krb5_context	 krb5_ctx;
@@ -133,6 +134,9 @@ int	bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	bsdauth_respond(void *, u_int, char **);
 int	skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	skey_respond(void *, u_int, char **);
+
+void	auth2_jpake_get_pwdata(Authctxt *, BIGNUM **, char **, char **);
+void	auth2_jpake_stop(Authctxt *);
 
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);
