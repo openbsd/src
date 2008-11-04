@@ -120,53 +120,6 @@ i915_pipe_enabled(struct drm_device *dev, int pipe)
 }
 
 /**
- * Emit a synchronous flip.
- *
- * This function must be called with the drawable spinlock held.
- */
-static void
-i915_dispatch_vsync_flip(struct drm_device *dev, struct drm_drawable_info *drw,
-			 int plane)
-{
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	drm_i915_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	u16 x1, y1, x2, y2;
-	int pf_planes = 1 << plane;
-
-	DRM_SPINLOCK_ASSERT(&dev->drw_lock);
-
-	/* If the window is visible on the other plane, we have to flip on that
-	 * plane as well.
-	 */
-	if (plane == 1) {
-		x1 = sarea_priv->planeA_x;
-		y1 = sarea_priv->planeA_y;
-		x2 = x1 + sarea_priv->planeA_w;
-		y2 = y1 + sarea_priv->planeA_h;
-	} else {
-		x1 = sarea_priv->planeB_x;
-		y1 = sarea_priv->planeB_y;
-		x2 = x1 + sarea_priv->planeB_w;
-		y2 = y1 + sarea_priv->planeB_h;
-	}
-
-	if (x2 > 0 && y2 > 0) {
-		int i, num_rects = drw->num_rects;
-		struct drm_clip_rect *rect = drw->rects;
-
-		for (i = 0; i < num_rects; i++)
-			if (!(rect[i].x1 >= x2 || rect[i].y1 >= y2 ||
-			      rect[i].x2 <= x1 || rect[i].y2 <= y1)) {
-				pf_planes = 0x3;
-
-				break;
-			}
-	}
-
-	i915_dispatch_flip(dev, pf_planes, 1);
-}
-
-/**
  * Emit blits for scheduled buffer swaps.
  *
  * This function will be called with the HW lock held.
@@ -175,21 +128,22 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	struct list_head *list, *tmp, hits, *hit;
-	int nhits, nrects, slice[2], upper[2], lower[2], i, num_pages;
+	int nhits, nrects, slice[2], upper[2], lower[2], i;
 	unsigned counter[2];
 	struct drm_drawable_info *drw;
 	drm_i915_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	u32 cpp = dev_priv->cpp,  offsets[3];
+	u32 cpp = dev_priv->cpp;
 	u32 cmd = (cpp == 4) ? (XY_SRC_COPY_BLT_CMD |
 				XY_SRC_COPY_BLT_WRITE_ALPHA |
 				XY_SRC_COPY_BLT_WRITE_RGB)
 			     : XY_SRC_COPY_BLT_CMD;
 	u32 src_pitch = sarea_priv->pitch * cpp;
 	u32 dst_pitch = sarea_priv->pitch * cpp;
-	/* COPY rop (0xcc), map cpp to magic color depth constants */
 	u32 ropcpp = (0xcc << 16) | ((cpp - 1) << 24);
 	RING_LOCALS;
-	
+
+	DRM_LOCK();
+
 	if (IS_I965G(dev) && sarea_priv->front_tiled) {
 		cmd |= XY_SRC_COPY_BLT_DST_TILED;
 		dst_pitch >>= 2;
@@ -198,9 +152,9 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 		cmd |= XY_SRC_COPY_BLT_SRC_TILED;
 		src_pitch >>= 2;
 	}
-	
-	counter[0] = drm_vblank_count(dev, 0);
-	counter[1] = drm_vblank_count(dev, 1);
+
+	counter[0] = drm_vblank_count(dev, i915_get_plane(dev, 0));
+	counter[1] = drm_vblank_count(dev, i915_get_plane(dev, 1));
 
 	DRM_DEBUG("\n");
 
@@ -208,18 +162,13 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 
 	nhits = nrects = 0;
 
-	/* No irqsave/restore necessary.  This tasklet may be run in an
-	 * interrupt context or normal context, but we don't have to worry
-	 * about getting interrupted by something acquiring the lock, because
-	 * we are the interrupt context thing that acquires the lock.
-	 */
-	DRM_SPINLOCK(&dev_priv->swaps_lock);
+	mtx_enter(&dev_priv->swaps_lock);
 
 	/* Find buffer swaps scheduled for this vertical blank */
 	list_for_each_safe(list, tmp, &dev_priv->vbl_swaps.head) {
 		drm_i915_vbl_swap_t *vbl_swap =
 			list_entry(list, drm_i915_vbl_swap_t, head);
-		int pipe = i915_get_pipe(dev, vbl_swap->plane);
+		int pipe = vbl_swap->pipe;
 
 		if ((counter[pipe] - vbl_swap->sequence) > (1<<23))
 			continue;
@@ -228,17 +177,10 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 		dev_priv->swaps_pending--;
 		drm_vblank_put(dev, pipe);
 
-		DRM_SPINUNLOCK(&dev_priv->swaps_lock);
-		DRM_SPINLOCK(&dev->drw_lock);
+		mtx_leave(&dev_priv->swaps_lock);
+		mtx_enter(&dev->drw_lock);
 
 		drw = drm_get_drawable_info(dev, vbl_swap->drw_id);
-
-		if (!drw) {
-			DRM_SPINUNLOCK(&dev->drw_lock);
-			drm_free(vbl_swap, sizeof(*vbl_swap), DRM_MEM_DRIVER);
-			DRM_SPINLOCK(&dev_priv->swaps_lock);
-			continue;
-		}
 
 		list_for_each(hit, &hits) {
 			drm_i915_vbl_swap_t *swap_cmp =
@@ -246,14 +188,19 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 			struct drm_drawable_info *drw_cmp =
 				drm_get_drawable_info(dev, swap_cmp->drw_id);
 
-			if (drw_cmp &&
+			/*
+			 * Make sure both drawables are still around and have
+			 * cliprects before we poke around in them
+			 */
+			if (drw_cmp && drw_cmp->num_rects > 0 &&
+			    drw != NULL && drw->num_rects > 0 &&
 			    drw_cmp->rects[0].y1 > drw->rects[0].y1) {
 				list_add_tail(list, hit);
 				break;
 			}
 		}
 
-		DRM_SPINUNLOCK(&dev->drw_lock);
+		mtx_leave(&dev->drw_lock);
 
 		/* List of hits was empty, or we reached the end of it */
 		if (hit == &hits)
@@ -261,16 +208,40 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 
 		nhits++;
 
-		DRM_SPINLOCK(&dev_priv->swaps_lock);
+		mtx_enter(&dev_priv->swaps_lock);
 	}
 
-	DRM_SPINUNLOCK(&dev_priv->swaps_lock);
+	mtx_leave(&dev_priv->swaps_lock);
 
 	if (nhits == 0) {
+		DRM_UNLOCK();
 		return;
 	}
 
 	i915_kernel_lost_context(dev);
+
+	if (IS_I965G(dev)) {
+		BEGIN_LP_RING(4);
+
+		OUT_RING(GFX_OP_DRAWRECT_INFO_I965);
+		OUT_RING(0);
+		OUT_RING(((sarea_priv->width - 1) & 0xffff) | ((sarea_priv->height - 1) << 16));
+		OUT_RING(0);
+		ADVANCE_LP_RING();
+	} else {
+		BEGIN_LP_RING(6);
+
+		OUT_RING(GFX_OP_DRAWRECT_INFO);
+		OUT_RING(0);
+		OUT_RING(0);
+		OUT_RING(sarea_priv->width | sarea_priv->height << 16);
+		OUT_RING(sarea_priv->width | sarea_priv->height << 16);
+		OUT_RING(0);
+
+		ADVANCE_LP_RING();
+	}
+
+	sarea_priv->ctxOwner = DRM_KERNEL_CONTEXT;
 
 	upper[0] = upper[1] = 0;
 	slice[0] = max(sarea_priv->planeA_h / nhits, 1);
@@ -278,12 +249,7 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 	lower[0] = sarea_priv->planeA_y + slice[0];
 	lower[1] = sarea_priv->planeB_y + slice[0];
 
-	offsets[0] = sarea_priv->front_offset;
-	offsets[1] = sarea_priv->back_offset;
-	offsets[2] = sarea_priv->third_offset;
-	num_pages = sarea_priv->third_handle ? 3 : 2;
-
-	DRM_SPINLOCK(&dev->drw_lock);
+	mtx_enter(&dev->drw_lock);
 
 	/* Emit blits for buffer swaps, partitioning both outputs into as many
 	 * slices as there are buffer swaps scheduled in order to avoid tearing
@@ -293,8 +259,6 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 	for (i = 0; i++ < nhits;
 	     upper[0] = lower[0], lower[0] += slice[0],
 	     upper[1] = lower[1], lower[1] += slice[1]) {
-		int init_drawrect = 1;
-
 		if (i == nhits)
 			lower[0] = lower[1] = sarea_priv->height;
 
@@ -302,58 +266,22 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 			drm_i915_vbl_swap_t *swap_hit =
 				list_entry(hit, drm_i915_vbl_swap_t, head);
 			struct drm_clip_rect *rect;
-			int num_rects, plane, front, back;
+			int num_rects, pipe;
 			unsigned short top, bottom;
 
 			drw = drm_get_drawable_info(dev, swap_hit->drw_id);
 
+			/*
+			 * Drawable may have disappeared since this swap was
+			 * queued
+			 */
 			if (!drw)
 				continue;
 
-			plane = swap_hit->plane;
-
-			if (swap_hit->flip) {
-				i915_dispatch_vsync_flip(dev, drw, plane);
-				continue;
-			}
-
-			if (init_drawrect) {
-				int width  = sarea_priv->width;
-				int height = sarea_priv->height;
-				if (IS_I965G(dev)) {
-					BEGIN_LP_RING(4);
-
-					OUT_RING(GFX_OP_DRAWRECT_INFO_I965);
-					OUT_RING(0);
-					OUT_RING(((width - 1) & 0xffff) | ((height - 1) << 16));
-					OUT_RING(0);
-					
-					ADVANCE_LP_RING();
-				} else {
-					BEGIN_LP_RING(6);
-	
-					OUT_RING(GFX_OP_DRAWRECT_INFO);
-					OUT_RING(0);
-					OUT_RING(0);
-					OUT_RING(((width - 1) & 0xffff) | ((height - 1) << 16));
-					OUT_RING(0);
-					OUT_RING(0);
-					
-					ADVANCE_LP_RING();
-				}
-
-				sarea_priv->ctxOwner = DRM_KERNEL_CONTEXT;
-
-				init_drawrect = 0;
-			}
-
 			rect = drw->rects;
-			top = upper[plane];
-			bottom = lower[plane];
-
-			front = (dev_priv->sarea_priv->pf_current_page >>
-				 (2 * plane)) & 0x3;
-			back = (front + 1) % num_pages;
+			pipe = swap_hit->pipe;
+			top = upper[pipe];
+			bottom = lower[pipe];
 
 			for (num_rects = drw->num_rects; num_rects--; rect++) {
 				int y1 = max(rect->y1, top);
@@ -368,17 +296,18 @@ static void i915_vblank_tasklet(struct drm_device *dev)
 				OUT_RING(ropcpp | dst_pitch);
 				OUT_RING((y1 << 16) | rect->x1);
 				OUT_RING((y2 << 16) | rect->x2);
-				OUT_RING(offsets[front]);
+				OUT_RING(sarea_priv->front_offset);
 				OUT_RING((y1 << 16) | rect->x1);
 				OUT_RING(src_pitch);
-				OUT_RING(offsets[back]);
+				OUT_RING(sarea_priv->back_offset);
 
 				ADVANCE_LP_RING();
 			}
 		}
 	}
 
-	DRM_SPINUNLOCK(&dev->drw_lock);
+	mtx_leave(&dev->drw_lock);
+	DRM_UNLOCK();
 
 	list_for_each_safe(hit, tmp, &hits) {
 		drm_i915_vbl_swap_t *swap_hit =
@@ -710,25 +639,23 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_i915_vblank_swap_t *swap = data;
-	drm_i915_vbl_swap_t *vbl_swap;
+	drm_i915_vbl_swap_t *vbl_swap, *vbl_old;
 	unsigned int pipe, seqtype, curseq, plane;
-	unsigned long irqflags;
 	struct list_head *list;
 	int ret;
 
-	if (!dev_priv) {
+	if (!dev_priv || !dev_priv->sarea_priv) {
 		DRM_ERROR("%s called with no initialization\n", __func__);
 		return EINVAL;
 	}
 
-	if (!dev_priv->sarea_priv || dev_priv->sarea_priv->rotation) {
+	if (dev_priv->sarea_priv->rotation) {
 		DRM_DEBUG("Rotation not supported\n");
 		return EINVAL;
 	}
 
 	if (swap->seqtype & ~(_DRM_VBLANK_RELATIVE | _DRM_VBLANK_ABSOLUTE |
-			     _DRM_VBLANK_SECONDARY | _DRM_VBLANK_NEXTONMISS |
-			     _DRM_VBLANK_FLIP)) {
+			     _DRM_VBLANK_SECONDARY | _DRM_VBLANK_NEXTONMISS)) {
 		DRM_ERROR("Invalid sequence type 0x%x\n", swap->seqtype);
 		return EINVAL;
 	}
@@ -743,7 +670,7 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 		return EINVAL;
 	}
 
-	DRM_SPINLOCK_IRQSAVE(&dev->drw_lock, irqflags);
+	mtx_enter(&dev->drw_lock);
 
 	/* It makes no sense to schedule a swap for a drawable that doesn't have
 	 * valid information at this point. E.g. this could mean that the X
@@ -751,12 +678,12 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 	 * case all such swaps would become ineffective.
 	 */
 	if (!drm_get_drawable_info(dev, swap->drawable)) {
-		DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock, irqflags);
+		mtx_leave(&dev->drw_lock);
 		DRM_DEBUG("Invalid drawable ID %d\n", swap->drawable);
 		return EINVAL;
 	}
 
-	DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock, irqflags);
+	mtx_leave(&dev->drw_lock);
 
 	/*
 	 * We take the ref here and put it when the swap actually completes
@@ -780,83 +707,45 @@ int i915_vblank_swap(struct drm_device *dev, void *data,
 		}
 	}
 
-	if (swap->seqtype & _DRM_VBLANK_FLIP) {
-		swap->sequence--;
-
-		if ((curseq - swap->sequence) <= (1<<23)) {
-			struct drm_drawable_info *drw;
-
-			LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-			DRM_SPINLOCK_IRQSAVE(&dev->drw_lock, irqflags);
-
-			drw = drm_get_drawable_info(dev, swap->drawable);
-
-			if (!drw) {
-				DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock,
-				    irqflags);
-				DRM_DEBUG("Invalid drawable ID %d\n",
-					  swap->drawable);
-				drm_vblank_put(dev, pipe);
-				return EINVAL;
-			}
-
-			i915_dispatch_vsync_flip(dev, drw, plane);
-
-			DRM_SPINUNLOCK_IRQRESTORE(&dev->drw_lock, irqflags);
-
-			drm_vblank_put(dev, pipe);
-			return 0;
-		}
+	vbl_swap = drm_calloc(1, sizeof(*vbl_swap), DRM_MEM_DRIVER);
+	if (vbl_swap == NULL) {
+		DRM_ERROR("Failed to allocate memory to queue swap\n");
+		drm_vblank_put(dev, pipe);
+		return (ENOMEM);
 	}
 
-	DRM_SPINLOCK_IRQSAVE(&dev_priv->swaps_lock, irqflags);
+	vbl_swap->drw_id = swap->drawable;
+	vbl_swap->pipe = pipe;
+	vbl_swap->sequence = swap->sequence;
+
+	mtx_enter(&dev_priv->swaps_lock);
 
 	list_for_each(list, &dev_priv->vbl_swaps.head) {
-		vbl_swap = list_entry(list, drm_i915_vbl_swap_t, head);
+		vbl_old = list_entry(list, drm_i915_vbl_swap_t, head);
 
-		if (vbl_swap->drw_id == swap->drawable &&
-		    vbl_swap->plane == plane &&
-		    vbl_swap->sequence == swap->sequence) {
-			vbl_swap->flip = (swap->seqtype & _DRM_VBLANK_FLIP);
-			DRM_SPINUNLOCK_IRQRESTORE(&dev_priv->swaps_lock, irqflags);
+		if (vbl_old->drw_id == swap->drawable &&
+		    vbl_old->pipe == pipe &&
+		    vbl_old->sequence == swap->sequence) {
+			mtx_leave(&dev_priv->swaps_lock);
+			drm_vblank_put(dev, pipe);
+			drm_free(vbl_swap, sizeof(*vbl_swap), DRM_MEM_DRIVER);
 			DRM_DEBUG("Already scheduled\n");
 			return 0;
 		}
 	}
 
-	DRM_SPINUNLOCK_IRQRESTORE(&dev_priv->swaps_lock, irqflags);
-
-	if (dev_priv->swaps_pending >= 100) {
+	if (dev_priv->swaps_pending >= 10) {
 		DRM_DEBUG("Too many swaps queued\n");
+		mtx_leave(&dev_priv->swaps_lock);
 		drm_vblank_put(dev, pipe);
+		drm_free(vbl_swap, sizeof(*vbl_swap), DRM_MEM_DRIVER);
 		return EBUSY;
 	}
-
-	vbl_swap = drm_calloc(1, sizeof(*vbl_swap), DRM_MEM_DRIVER);
-
-	if (!vbl_swap) {
-		DRM_ERROR("Failed to allocate memory to queue swap\n");
-		drm_vblank_put(dev, pipe);
-		return ENOMEM;
-	}
-
-	DRM_DEBUG("\n");
-
-	vbl_swap->drw_id = swap->drawable;
-	vbl_swap->plane = plane;
-	vbl_swap->sequence = swap->sequence;
-	vbl_swap->flip = (swap->seqtype & _DRM_VBLANK_FLIP);
-
-	if (vbl_swap->flip)
-		swap->sequence++;
-
-	DRM_SPINLOCK_IRQSAVE(&dev_priv->swaps_lock, irqflags);
 
 	list_add_tail(&vbl_swap->head, &dev_priv->vbl_swaps.head);
 	dev_priv->swaps_pending++;
 
-	DRM_SPINUNLOCK_IRQRESTORE(&dev_priv->swaps_lock, irqflags);
+	mtx_leave(&dev_priv->swaps_lock);
 
 	return 0;
 }

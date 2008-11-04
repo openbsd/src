@@ -195,7 +195,9 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	dev_priv->ring.virtual_start = dev_priv->ring.map.handle;
 
 	dev_priv->cpp = init->cpp;
-
+	dev_priv->back_offset = init->back_offset;
+	dev_priv->front_offset = init->front_offset;
+	dev_priv->current_page = 0;
 	if (dev_priv->sarea_priv)
 		dev_priv->sarea_priv->pf_current_page = 0;
 
@@ -548,73 +550,37 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 	return 0;
 }
 
-static void i915_do_dispatch_flip(struct drm_device * dev, int plane, int sync)
+void i915_dispatch_flip(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	u32 num_pages, current_page, next_page, dspbase;
-	int shift = 2 * plane, x, y;
 	RING_LOCALS;
 
-	/* Calculate display base offset */
-	num_pages = dev_priv->sarea_priv->third_handle ? 3 : 2;
-	current_page = (dev_priv->sarea_priv->pf_current_page >> shift) & 0x3;
-	next_page = (current_page + 1) % num_pages;
-
-	switch (next_page) {
-	default:
-	case 0:
-		dspbase = dev_priv->sarea_priv->front_offset;
-		break;
-	case 1:
-		dspbase = dev_priv->sarea_priv->back_offset;
-		break;
-	case 2:
-		dspbase = dev_priv->sarea_priv->third_offset;
-		break;
-	}
-
-	if (plane == 0) {
-		x = dev_priv->sarea_priv->planeA_x;
-		y = dev_priv->sarea_priv->planeA_y;
-	} else {
-		x = dev_priv->sarea_priv->planeB_x;
-		y = dev_priv->sarea_priv->planeB_y;
-	}
-
-	dspbase += (y * dev_priv->sarea_priv->pitch + x) * dev_priv->cpp;
-
-	DRM_DEBUG("plane=%d current_page=%d dspbase=0x%x\n", plane, current_page,
-		  dspbase);
-
-	BEGIN_LP_RING(4);
-	OUT_RING(sync ? 0 :
-		 (MI_WAIT_FOR_EVENT | (plane ? MI_WAIT_FOR_PLANE_B_FLIP :
-				       MI_WAIT_FOR_PLANE_A_FLIP)));
-	OUT_RING(CMD_OP_DISPLAYBUFFER_INFO | (sync ? 0 : ASYNC_FLIP) |
-		 (plane ? DISPLAY_PLANE_B : DISPLAY_PLANE_A));
-	OUT_RING(dev_priv->sarea_priv->pitch * dev_priv->cpp);
-	OUT_RING(dspbase);
-	ADVANCE_LP_RING();
-
-	dev_priv->sarea_priv->pf_current_page &= ~(0x3 << shift);
-	dev_priv->sarea_priv->pf_current_page |= next_page << shift;
-}
-
-void i915_dispatch_flip(struct drm_device * dev, int planes, int sync)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	int i;
-
-	DRM_DEBUG("planes=0x%x pfCurrentPage=%d\n",
-		  planes, dev_priv->sarea_priv->pf_current_page);
+	DRM_DEBUG("page=%d pfCurrentPage=%d\n", dev_priv->current_page,
+	    dev_priv->sarea_priv->pf_current_page);
 
 	i915_emit_mi_flush(dev, MI_READ_FLUSH | MI_EXE_FLUSH);
 
-	for (i = 0; i < 2; i++)
-		if (planes & (1 << i))
-			i915_do_dispatch_flip(dev, i, sync);
+	BEGIN_LP_RING(6);
+	OUT_RING(CMD_OP_DISPLAYBUFFER_INFO | ASYNC_FLIP);
+	OUT_RING(0);
+	if (dev_priv->current_page == 0) {
+		OUT_RING(dev_priv->back_offset);
+		dev_priv->current_page = 1;
+	} else {
+		OUT_RING(dev_priv->front_offset);
+		dev_priv->current_page = 0;
+	}
+	OUT_RING(0);
+	ADVANCE_LP_RING();
+
+	BEGIN_LP_RING(2);
+	OUT_RING(MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP);
+	OUT_RING(0);
+	ADVANCE_LP_RING();
 
 	i915_emit_breadcrumb(dev);
+
+	dev_priv->sarea_priv->pf_current_page = dev_priv->current_page;
 }
 
 int i915_quiescent(struct drm_device *dev)
@@ -701,44 +667,15 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 	return 0;
 }
 
-static int i915_do_cleanup_pageflip(struct drm_device * dev)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	int i, planes, num_pages = dev_priv->sarea_priv->third_handle ? 3 : 2;
-
-	DRM_DEBUG("\n");
-
-	for (i = 0, planes = 0; i < 2; i++)
-		if (dev_priv->sarea_priv->pf_current_page & (0x3 << (2 * i))) {
-			dev_priv->sarea_priv->pf_current_page =
-				(dev_priv->sarea_priv->pf_current_page &
-				 ~(0x3 << (2 * i))) | ((num_pages - 1) << (2 * i));
-
-			planes |= 1 << i;
-		}
-
-	if (planes)
-		i915_dispatch_flip(dev, planes, 0);
-
-	return 0;
-}
-
 int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_i915_flip_t *param = data;
-
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	/* This is really planes */
-	if (param->pipes & ~0x3) {
-		DRM_ERROR("Invalid planes 0x%x, only <= 0x3 is valid\n",
-			  param->pipes);
-		return EINVAL;
-	}
 
-	i915_dispatch_flip(dev, param->pipes, 0);
+
+	i915_dispatch_flip(dev);
 
 	return 0;
 }
@@ -877,7 +814,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 			return ret;
 	}
 
-	mtx_init(&dev_priv->swaps_lock, IPL_BIO);
+	mtx_init(&dev_priv->swaps_lock, IPL_NONE);
 	DRM_SPININIT(&dev_priv->user_irq_lock, "I915 irq lock");
 
 	return ret;
@@ -908,8 +845,6 @@ void i915_driver_lastclose(struct drm_device * dev)
 	if (!dev_priv)
 		return;
 
-	if (drm_getsarea(dev) && dev_priv->sarea_priv)
-		i915_do_cleanup_pageflip(dev);
 	dev_priv->sarea_priv = NULL;
 
 	if (dev_priv->agp_heap)

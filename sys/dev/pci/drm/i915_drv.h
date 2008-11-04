@@ -79,9 +79,8 @@ struct mem_block {
 typedef struct _drm_i915_vbl_swap {
 	struct list_head head;
 	drm_drawable_t drw_id;
-	unsigned int plane;
+	unsigned int pipe;
 	unsigned int sequence;
-	int flip;
 } drm_i915_vbl_swap_t;
 
 typedef struct drm_i915_private {
@@ -99,6 +98,10 @@ typedef struct drm_i915_private {
 	drm_local_map_t hws_map;
 
 	unsigned int cpp;
+	int back_offset;
+	int front_offset;
+	int current_page;
+	int page_flipping;
 
 	wait_queue_head_t irq_queue;
 	atomic_t irq_received;
@@ -226,7 +229,7 @@ extern int i915_driver_device_is_agp(struct drm_device * dev);
 extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg);
 extern void i915_emit_breadcrumb(struct drm_device *dev);
-extern void i915_dispatch_flip(struct drm_device * dev, int pipes, int sync);
+extern void i915_dispatch_flip(struct drm_device *);
 extern int i915_emit_mi_flush(struct drm_device *dev, uint32_t flush);
 extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,
