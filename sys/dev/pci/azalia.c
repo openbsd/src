@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.67 2008/11/01 07:21:48 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.68 2008/11/04 20:48:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -281,7 +281,7 @@ int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 int azalia_create_encodings(struct audio_format *, int,
     struct audio_encoding_set **);
 
-int	azalia_match_format(codec_t *, audio_params_t *);
+int	azalia_match_format(codec_t *, int, audio_params_t *);
 int	azalia_set_params_sub(codec_t *, int, audio_params_t *);
 
 
@@ -2316,11 +2316,13 @@ azalia_get_default_params(void *addr, int mode, struct audio_params *params)
 }
 
 int
-azalia_match_format(codec_t *codec, audio_params_t *par)
+azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 {
 	int i;
 
 	for (i = 0; i < codec->nformats; i++) {
+		if (mode != codec->formats[i].mode)
+			continue;
 		if (par->encoding != codec->formats[i].encoding)
 			continue;
 		if (par->precision != codec->formats[i].precision)
@@ -2350,11 +2352,11 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 	oenc = par->encoding;
 	opre = par->precision;
 
-	i = azalia_match_format(codec, par);
+	i = azalia_match_format(codec, mode, par);
 	if (i == codec->nformats && par->channels == 1) {
 		/* find a 2 channel format and emulate mono */
 		par->channels = 2;
-		i = azalia_match_format(codec, par);
+		i = azalia_match_format(codec, mode, par);
 		if (i != codec->nformats) {
 			par->factor = 2;
 			if (mode == AUMODE_RECORD)
@@ -2370,12 +2372,12 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 		/* try with default encoding/precision */
 		par->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		par->precision = 16;
-		i = azalia_match_format(codec, par);
+		i = azalia_match_format(codec, mode, par);
 	}
 	if (i == codec->nformats && par->channels == 1) {
 		/* find a 2 channel format and emulate mono */
 		par->channels = 2;
-		i = azalia_match_format(codec, par);
+		i = azalia_match_format(codec, mode, par);
 		if (i != codec->nformats) {
 			par->factor = 2;
 			if (mode == AUMODE_RECORD)
@@ -2391,14 +2393,14 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 		par->encoding = oenc;
 		par->precision = opre;
 		par->channels = 2;
-		i = azalia_match_format(codec, par);
+		i = azalia_match_format(codec, mode, par);
 	}
 	/* try with default everything */
 	if (i == codec->nformats) {
 		par->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		par->precision = 16;
 		par->channels = 2;
-		i = azalia_match_format(codec, par);
+		i = azalia_match_format(codec, mode, par);
 		if (i == codec->nformats) {
 			DPRINTF(("%s: can't find %s format %u/%u/%u\n",
 			    __func__, cmode, par->encoding,
