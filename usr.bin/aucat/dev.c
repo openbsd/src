@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.8 2008/11/04 18:24:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.9 2008/11/04 22:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -114,17 +114,17 @@ dev_init(char *devpath,
 	if (dipar) {
 		dipar->rate = dev_rate;
 		if (debug_level > 0) {
-			DPRINTF("dev_init: dipar: ");
+			fprintf(stderr, "dev_init: hw recording ");
 			aparams_print(dipar);
-			DPRINTF("\n");
+			fprintf(stderr, "\n");
 		}
 	}
 	if (dopar) {
 		dopar->rate = dev_rate;
 		if (debug_level > 0) {
-			DPRINTF("dev_init: dopar: ");
+			fprintf(stderr, "dev_init: hw playing ");
 			aparams_print(dopar);
-			DPRINTF("\n");
+			fprintf(stderr, "\n");
 		}
 	}
 	nfr = ibufsz = obufsz = dev_bufsz;
@@ -146,12 +146,7 @@ dev_init(char *devpath,
 		 * append a converter, if needed
 		 */
 		if (!aparams_eqenc(dipar, &ipar)) {
-			if (debug_level > 0) {
-				fprintf(stderr, "%s: ", devpath);
-				aparams_print2(dipar, &ipar);
-				fprintf(stderr, "\n");
-			}
-			conv = conv_new("subconv", dipar, &ipar);
+			conv = dec_new("subin", dipar);
 			aproc_setin(conv, buf);
 			buf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, buf);
@@ -186,12 +181,7 @@ dev_init(char *devpath,
 		 * append a converter, if needed
 		 */
 		if (!aparams_eqenc(&opar, dopar)) {
-			if (debug_level > 0) {
-				fprintf(stderr, "%s: ", devpath);
-				aparams_print2(&opar, dopar);
-				fprintf(stderr, "\n");
-			}
-			conv = conv_new("mixconv", &opar, dopar);
+			conv = enc_new("mixout", dopar);
 			aproc_setout(conv, buf);
 			buf = abuf_new(nfr, &opar);
 			aproc_setin(conv, buf);
@@ -385,34 +375,34 @@ dev_attach(char *name,
 		if (!aparams_eqenc(ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = conv_new(name, ipar, &dev_opar);
-			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, &dev_opar);
-			aproc_setout(conv, ibuf);
+			conv = dec_new(name, ipar);
 			ipar->bps = dev_opar.bps;
 			ipar->bits = dev_opar.bits;
 			ipar->sig = dev_opar.sig;
 			ipar->le = dev_opar.le;
 			ipar->msb = dev_opar.msb;
+			aproc_setin(conv, ibuf);			
+			ibuf = abuf_new(nfr, ipar);
+			aproc_setout(conv, ibuf);
 		}
 		if (!aparams_subset(ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = cmap_new(name, ipar, &dev_opar);
-			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, &dev_opar);
-			aproc_setout(conv, ibuf);
 			ipar->cmin = dev_opar.cmin;
 			ipar->cmax = dev_opar.cmax;
+			aproc_setin(conv, ibuf);
+			ibuf = abuf_new(nfr, ipar);
+			aproc_setout(conv, ibuf);
 		}
 		if (!aparams_eqrate(ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = resamp_new(name, ipar, &dev_opar);
-			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, &dev_opar);
-			aproc_setout(conv, ibuf);
 			ipar->rate = dev_opar.rate;
+			aproc_setin(conv, ibuf);
+			ibuf = abuf_new(nfr, ipar);
+			aproc_setout(conv, ibuf);
 		}
 		aproc_setin(dev_mix, ibuf);
 		abuf_opos(ibuf, -dev_mix->u.mix.lat);
@@ -423,34 +413,34 @@ dev_attach(char *name,
 		if (!aparams_eqenc(opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = conv_new(name, &dev_ipar, opar);
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &dev_ipar);
-			aproc_setin(conv, obuf);
+			conv = enc_new(name, opar);
 			opar->bps = dev_ipar.bps;
 			opar->bits = dev_ipar.bits;
 			opar->sig = dev_ipar.sig;
 			opar->le = dev_ipar.le;
 			opar->msb = dev_ipar.msb;
+			aproc_setout(conv, obuf);
+			obuf = abuf_new(nfr, opar);
+			aproc_setin(conv, obuf);
 		}
 		if (!aparams_subset(opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = cmap_new(name, &dev_ipar, opar);
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &dev_ipar);
-			aproc_setin(conv, obuf);
 			opar->cmin = dev_ipar.cmin;
 			opar->cmax = dev_ipar.cmax;
+			aproc_setout(conv, obuf);
+			obuf = abuf_new(nfr, opar);
+			aproc_setin(conv, obuf);
 		}
 		if (!aparams_eqrate(opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = resamp_new(name, &dev_ipar, opar);
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &dev_ipar);
-			aproc_setin(conv, obuf);
 			opar->rate = dev_ipar.rate;
+			aproc_setout(conv, obuf);
+			obuf = abuf_new(nfr, opar);
+			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);
 		abuf_ipos(obuf, -dev_sub->u.sub.lat);

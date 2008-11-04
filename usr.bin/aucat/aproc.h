@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.10 2008/11/04 18:24:06 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.11 2008/11/04 22:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,18 +111,6 @@ struct aproc_ops {
 	void (*done)(struct aproc *);
 };
 
-struct aconv {
-	/*
-	 * Format of the buffer. This part is used by conversion code.
-	 */
-	int bfirst;		/* bytes to skip at startup */
-	unsigned bps;		/* bytes per sample (padding included) */
-	unsigned shift;		/* shift to get 32bit MSB-justified int */
-	int sigbit;		/* sign bits to XOR to unsigned samples */
-	int bnext;		/* bytes to skip to reach the next byte */
-	int snext;		/* bytes to skip to reach the next sample */
-};
-
 /*
  * The aproc structure represents a simple audio processing unit; they are
  * interconnected by abuf structures and form a kind of "circuit". The circuit
@@ -137,10 +125,6 @@ struct aproc {
 		struct {			/* file/device io */
 			struct file *file;	/* file to read/write */
 		} io;
-		struct {
-			struct aconv ist, ost;
-			int idelta, odelta;	/* reminder of conv_[io]pos */
-		} conv;
 		struct {
 #define MIX_DROP	1
 #define MIX_AUTOQUIT	2
@@ -164,6 +148,14 @@ struct aproc {
 		struct {
 			short ctx[NCHAN_MAX];
 		} cmap;
+		struct {
+			int bfirst;		/* bytes to skip at startup */
+			unsigned bps;		/* bytes per sample */
+			unsigned shift;		/* shift to get 32bit MSB */
+			int sigbit;		/* sign bits to XOR */
+			int bnext;		/* to reach the next byte */
+			int snext;		/* to reach the next sample */
+		} conv;
 	} u;
 };
 
@@ -188,11 +180,12 @@ void wpipe_hup(struct aproc *, struct abuf *);
 
 struct aproc *mix_new(char *, int);
 struct aproc *sub_new(char *, int);
-struct aproc *conv_new(char *, struct aparams *, struct aparams *);
 struct aproc *resamp_new(char *, struct aparams *, struct aparams *);
 struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
+struct aproc *enc_new(char *, struct aparams *);
+struct aproc *dec_new(char *, struct aparams *);
 
 void mix_pushzero(struct aproc *);
 void mix_setmaster(struct aproc *);
 
-#endif /* !defined(FIFO_H) */
+#endif /* !defined(APROC_H) */

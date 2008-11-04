@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.18 2008/11/04 18:24:06 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.19 2008/11/04 22:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -788,204 +788,6 @@ sub_new(char *name, int maxlat)
  * Convert one block.
  */
 void
-conv_bcopy(struct aconv *ist, struct aconv *ost,
-    struct abuf *ibuf, struct abuf *obuf)
-{
-	unsigned nch, ibps;
-	unsigned char *idata;
-	int ibnext;
-	unsigned i;
-	int s;
-	unsigned obps;
-	unsigned char *odata;
-	int obnext;
-	int isigbit;
-	unsigned ishift;
-	unsigned oshift;
-	int osigbit;
-	int isnext;
-	int osnext;
-	unsigned f, scount, icount, ocount;
-
-	/*
-	 * It's ok to have s uninitialized, but we dont want the compiler to
-	 * complain about it.
-	 */
-	s = (int)0xdeadbeef;
-
-	/*
-	 * Calculate max frames readable at once from the input buffer.
-	 */
-	idata = abuf_rgetblk(ibuf, &icount, 0);
-	icount /= ibuf->bpf;
-	if (icount == 0)
-		return;
-	odata = abuf_wgetblk(obuf, &ocount, 0);
-	ocount /= obuf->bpf;
-	if (ocount == 0)
-		return;
-	scount = (icount < ocount) ? icount : ocount;
-	nch = ibuf->cmax - ibuf->cmin + 1;
-	DPRINTFN(4, "conv_bcopy: scount = %u, nch = %u\n", scount, nch);
-
-	/*
-	 * Partially copy structures into local variables, to avoid
-	 * unnecessary indirections; this also allows the compiler to
-	 * order local variables more "cache-friendly".
-	 */
-	ibps = ist->bps;
-	ibnext = ist->bnext;
-	isigbit = ist->sigbit;
-	ishift = ist->shift;
-	isnext = ist->snext;
-	oshift = ost->shift;
-	osigbit = ost->sigbit;
-	obps = ost->bps;
-	obnext = ost->bnext;
-	osnext = ost->snext;
-
-	/*
-	 * Start conversion.
-	 */
-	idata += ist->bfirst;
-	odata += ost->bfirst;
-	for (f = scount * nch; f > 0; f--) {
-		for (i = ibps; i > 0; i--) {
-			s <<= 8;
-			s |= *idata;
-			idata += ibnext;
-		}
-		s ^= isigbit;
-		s <<= ishift;
-		s >>= 16;
-
-		/* XXX: don't simplify, useful to split conv */
-		
-		s <<= 16;
-		s >>= oshift;
-		s ^= osigbit;
-		for (i = obps; i > 0; i--) {
-			*odata = (unsigned char)s;
-			s >>= 8;
-			odata += obnext;
-		}
-		idata += isnext;
-		odata += osnext;
-	}
-
-	/*
-	 * Update FIFO pointers.
-	 */
-	abuf_rdiscard(ibuf, scount * ibuf->bpf);
-	abuf_wcommit(obuf, scount * obuf->bpf);
-}
-
-int
-conv_in(struct aproc *p, struct abuf *ibuf)
-{
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
-
-	DPRINTFN(4, "conv_in: %s\n", p->name);
-
-	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
-		return 0;
-	conv_bcopy(&p->u.conv.ist, &p->u.conv.ost, ibuf, obuf);
-	if (!abuf_flush(obuf))
-		return 0;
-	return 1;
-}
-
-int
-conv_out(struct aproc *p, struct abuf *obuf)
-{
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
-
-	DPRINTFN(4, "conv_out: %s\n", p->name);
-
-	if (!abuf_fill(ibuf))
-		return 0;
-	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
-		return 0;
-	conv_bcopy(&p->u.conv.ist, &p->u.conv.ost, ibuf, obuf);
-	return 1;
-}
-
-void
-conv_eof(struct aproc *p, struct abuf *ibuf)
-{
-	DPRINTFN(4, "conv_eof: %s\n", p->name);
-
-	aproc_del(p);
-}
-
-void
-conv_hup(struct aproc *p, struct abuf *obuf)
-{
-	DPRINTFN(4, "conv_hup: %s\n", p->name);
-
-	aproc_del(p);
-}
-
-void
-aconv_init(struct aconv *st, struct aparams *par, int input)
-{
-	st->bps = par->bps;
-	st->sigbit = par->sig ? 0 : 1 << (par->bits - 1);
-	if (par->msb) {
-		st->shift = 32 - par->bps * 8;
-	} else {
-		st->shift = 32 - par->bits;
-	}
-	if ((par->le && input) || (!par->le && !input)) {
-		st->bfirst = st->bps - 1;
-		st->bnext = -1;
-		st->snext = 2 * st->bps;
-	} else {
-		st->bfirst = 0;
-		st->bnext = 1;
-		st->snext = 0;
-	}
-}
-
-struct aproc_ops conv_ops = {
-	"conv",
-	conv_in,
-	conv_out,
-	conv_eof,
-	conv_hup,
-	NULL,
-	NULL,
-	NULL, /* ipos */
-	NULL, /* opos */
-	NULL
-};
-
-struct aproc *
-conv_new(char *name, struct aparams *ipar, struct aparams *opar)
-{
-	struct aproc *p;
-
-	if (ipar->cmax - ipar->cmin != opar->cmax - opar->cmin) {
-		fprintf(stderr, "conv_new: channel count mismatch\n");
-		abort();
-	}
-	p = aproc_new(&conv_ops, name);
-	aconv_init(&p->u.conv.ist, ipar, 1);
-	aconv_init(&p->u.conv.ost, opar, 0);
-	p->u.conv.idelta = 0;
-	p->u.conv.odelta = 0;
-	if (debug_level > 0) {
-		DPRINTF("conv_new: %s: ", p->name);		
-		aparams_print2(ipar, opar);
-		DPRINTF("\n");
-	}
-	return p;
-}
-
-/*
- * Convert one block.
- */
-void
 resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned inch;
@@ -1285,8 +1087,8 @@ struct aproc_ops cmap_ops = {
 	cmap_hup,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
+	aproc_ipos,
+	aproc_opos,
 	NULL
 };
 
@@ -1303,6 +1105,320 @@ cmap_new(char *name, struct aparams *ipar, struct aparams *opar)
 		DPRINTF("cmap_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
 		DPRINTF("\n");
+	}
+	return p;
+}
+
+/*
+ * Convert one block.
+ */
+void
+enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+{
+	unsigned nch, scount, icount, ocount;
+	unsigned f;
+	short *idata;
+	int s;
+	unsigned oshift;
+	int osigbit;
+	unsigned obps;
+	unsigned i;
+	unsigned char *odata;
+	int obnext;
+	int osnext;
+
+	/*
+	 * Calculate max frames readable at once from the input buffer.
+	 */
+	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	icount /= ibuf->bpf;
+	if (icount == 0)
+		return;
+	odata = abuf_wgetblk(obuf, &ocount, 0);
+	ocount /= obuf->bpf;
+	if (ocount == 0)
+		return;
+	scount = (icount < ocount) ? icount : ocount;
+	nch = ibuf->cmax - ibuf->cmin + 1;
+	DPRINTFN(4, "enc_bcopy: scount = %u, nch = %u\n", scount, nch);
+
+	/*
+	 * Partially copy structures into local variables, to avoid
+	 * unnecessary indirections; this also allows the compiler to
+	 * order local variables more "cache-friendly".
+	 */
+	oshift = p->u.conv.shift;
+	osigbit = p->u.conv.sigbit;
+	obps = p->u.conv.bps;
+	obnext = p->u.conv.bnext;
+	osnext = p->u.conv.snext;
+
+	/*
+	 * Start conversion.
+	 */
+	odata += p->u.conv.bfirst;
+	for (f = scount * nch; f > 0; f--) {
+		s = *idata++;
+		s <<= 16;
+		s >>= oshift;
+		s ^= osigbit;
+		for (i = obps; i > 0; i--) {
+			*odata = (unsigned char)s;
+			s >>= 8;
+			odata += obnext;
+		}
+		odata += osnext;
+	}
+
+	/*
+	 * Update FIFO pointers.
+	 */
+	abuf_rdiscard(ibuf, scount * ibuf->bpf);
+	abuf_wcommit(obuf, scount * obuf->bpf);
+}
+
+int
+enc_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	DPRINTFN(4, "enc_in: %s\n", p->name);
+
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	enc_bcopy(p, ibuf, obuf);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+enc_out(struct aproc *p, struct abuf *obuf)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	DPRINTFN(4, "enc_out: %s\n", p->name);
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	enc_bcopy(p, ibuf, obuf);
+	return 1;
+}
+
+void
+enc_eof(struct aproc *p, struct abuf *ibuf)
+{
+	DPRINTFN(4, "enc_eof: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+void
+enc_hup(struct aproc *p, struct abuf *obuf)
+{
+	DPRINTFN(4, "enc_hup: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+struct aproc_ops enc_ops = {
+	"enc",
+	enc_in,
+	enc_out,
+	enc_eof,
+	enc_hup,
+	NULL,
+	NULL,
+	aproc_ipos,
+	aproc_opos,
+	NULL
+};
+
+struct aproc *
+enc_new(char *name, struct aparams *par)
+{
+	struct aproc *p;
+
+	p = aproc_new(&enc_ops, name);
+	p->u.conv.bps = par->bps;
+	p->u.conv.sigbit = par->sig ? 0 : 1 << (par->bits - 1);
+	if (par->msb) {
+		p->u.conv.shift = 32 - par->bps * 8;
+	} else {
+		p->u.conv.shift = 32 - par->bits;
+	}
+	if (!par->le) {
+		p->u.conv.bfirst = par->bps - 1;
+		p->u.conv.bnext = -1;
+		p->u.conv.snext = 2 * par->bps;
+	} else {
+		p->u.conv.bfirst = 0;
+		p->u.conv.bnext = 1;
+		p->u.conv.snext = 0;
+	}
+	if (debug_level > 0) {
+		fprintf(stderr, "enc_new: %s: ", p->name);
+		aparams_print(par);
+		fprintf(stderr, "\n");
+	}
+	return p;
+}
+
+/*
+ * Convert one block.
+ */
+void
+dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+{
+	unsigned nch, scount, icount, ocount;
+	unsigned f;
+	unsigned ibps;
+	unsigned i;
+	int s = 0xdeadbeef;
+	unsigned char *idata;
+	int ibnext;
+	int isnext;
+	int isigbit;
+	unsigned ishift;
+	short *odata;
+
+	/*
+	 * Calculate max frames readable at once from the input buffer.
+	 */
+	idata = abuf_rgetblk(ibuf, &icount, 0);
+	icount /= ibuf->bpf;
+	if (icount == 0)
+		return;
+	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	ocount /= obuf->bpf;
+	if (ocount == 0)
+		return;
+	scount = (icount < ocount) ? icount : ocount;
+	nch = obuf->cmax - obuf->cmin + 1;
+	DPRINTFN(4, "dec_bcopy: scount = %u, nch = %u\n", scount, nch);
+
+	/*
+	 * Partially copy structures into local variables, to avoid
+	 * unnecessary indirections; this also allows the compiler to
+	 * order local variables more "cache-friendly".
+	 */
+	ibps = p->u.conv.bps;
+	ibnext = p->u.conv.bnext;
+	isigbit = p->u.conv.sigbit;
+	ishift = p->u.conv.shift;
+	isnext = p->u.conv.snext;
+
+	/*
+	 * Start conversion.
+	 */
+	idata += p->u.conv.bfirst;
+	for (f = scount * nch; f > 0; f--) {
+		for (i = ibps; i > 0; i--) {
+			s <<= 8;
+			s |= *idata;
+			idata += ibnext;
+		}
+		idata += isnext;
+		s ^= isigbit;
+		s <<= ishift;
+		s >>= 16;
+		*odata++ = s;
+	}
+
+	/*
+	 * Update FIFO pointers.
+	 */
+	abuf_rdiscard(ibuf, scount * ibuf->bpf);
+	abuf_wcommit(obuf, scount * obuf->bpf);
+}
+
+int
+dec_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	DPRINTFN(4, "dec_in: %s\n", p->name);
+
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	dec_bcopy(p, ibuf, obuf);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+dec_out(struct aproc *p, struct abuf *obuf)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	DPRINTFN(4, "dec_out: %s\n", p->name);
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	dec_bcopy(p, ibuf, obuf);
+	return 1;
+}
+
+void
+dec_eof(struct aproc *p, struct abuf *ibuf)
+{
+	DPRINTFN(4, "dec_eof: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+void
+dec_hup(struct aproc *p, struct abuf *obuf)
+{
+	DPRINTFN(4, "dec_hup: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+struct aproc_ops dec_ops = {
+	"dec",
+	dec_in,
+	dec_out,
+	dec_eof,
+	dec_hup,
+	NULL,
+	NULL,
+	aproc_ipos,
+	aproc_opos,
+	NULL
+};
+
+struct aproc *
+dec_new(char *name, struct aparams *par)
+{
+	struct aproc *p;
+
+	p = aproc_new(&dec_ops, name);
+	p->u.conv.bps = par->bps;
+	p->u.conv.sigbit = par->sig ? 0 : 1 << (par->bits - 1);
+	if (par->msb) {
+		p->u.conv.shift = 32 - par->bps * 8;
+	} else {
+		p->u.conv.shift = 32 - par->bits;
+	}
+	if (par->le) {
+		p->u.conv.bfirst = par->bps - 1;
+		p->u.conv.bnext = -1;
+		p->u.conv.snext = 2 * par->bps;
+	} else {
+		p->u.conv.bfirst = 0;
+		p->u.conv.bnext = 1;
+		p->u.conv.snext = 0;
+	}
+	if (debug_level > 0) {
+		fprintf(stderr, "dec_new: %s: ", p->name);		
+		aparams_print(par);
+		fprintf(stderr, "\n");
 	}
 	return p;
 }
