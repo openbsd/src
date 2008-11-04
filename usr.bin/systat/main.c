@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.48 2008/11/02 06:23:28 canacar Exp $	 */
+/* $Id: main.c,v 1.49 2008/11/04 19:00:08 espie Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -278,7 +278,7 @@ cmd_compat(const char *buf)
 		;
 	if (*s) {
 		if (set_view(buf))
-			error("Invalid/ambigious view: %s", buf);
+			error("Invalid/ambiguous view: %s", buf);
 	} else
 		cmd_delay(buf);
 }
@@ -469,7 +469,7 @@ main(int argc, char *argv[])
 
 	set_order(NULL);
 	if (viewstr && set_view(viewstr)) {
-		fprintf(stderr, "Unknown/ambigious view name: %s\n", viewstr);
+		fprintf(stderr, "Unknown/ambiguous view name: %s\n", viewstr);
 		return 1;
 	}
 
