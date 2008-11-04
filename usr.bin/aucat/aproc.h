@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.6 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.7 2008/11/04 14:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -162,6 +162,12 @@ struct aproc {
 			int lat;		/* current latency */
 			int maxlat;		/* max latency allowed*/
 		} sub;
+		struct {
+			short ctx[NCHAN_MAX];
+			unsigned irate, orate;
+			int ipos, opos;
+			int idelta, odelta;	/* reminder of conv_[io]pos */
+		} resamp;
 	} u;
 };
 
@@ -187,6 +193,7 @@ void wpipe_hup(struct aproc *, struct abuf *);
 struct aproc *mix_new(char *, int);
 struct aproc *sub_new(char *, int);
 struct aproc *conv_new(char *, struct aparams *, struct aparams *);
+struct aproc *resamp_new(char *, struct aparams *, struct aparams *);
 
 void mix_pushzero(struct aproc *);
 void mix_setmaster(struct aproc *);

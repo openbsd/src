@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.4 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.5 2008/11/04 14:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -383,13 +383,7 @@ dev_attach(char *name,
 	if (ibuf) {
 		pbuf = LIST_FIRST(&dev_mix->obuflist);		
 		if (!aparams_eqenc(ipar, &dev_opar) ||
-		    !aparams_eqrate(ipar, &dev_opar) ||
 		    !aparams_subset(ipar, &dev_opar)) {
-			if (debug_level > 1) {
-				fprintf(stderr, "dev_attach: %s: ", name);
-				aparams_print2(ipar, &dev_opar);
-				fprintf(stderr, "\n");
-			}
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = conv_new(name, ipar, &dev_opar);
@@ -397,6 +391,13 @@ dev_attach(char *name,
 			ibuf = abuf_new(nfr, &dev_opar);
 			aproc_setout(conv, ibuf);
 			/* XXX: call abuf_fill() here ? */
+		} else if (!aparams_eqrate(ipar, &dev_opar)) {
+			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
+			nfr -= nfr % dev_round;
+			conv = resamp_new(name, ipar, &dev_opar);
+			aproc_setin(conv, ibuf);
+			ibuf = abuf_new(nfr, &dev_opar);
+			aproc_setout(conv, ibuf);
 		}
 		aproc_setin(dev_mix, ibuf);
 		abuf_opos(ibuf, -dev_mix->u.mix.lat);
@@ -405,16 +406,17 @@ dev_attach(char *name,
 	if (obuf) {
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
 		if (!aparams_eqenc(opar, &dev_ipar) ||
-		    !aparams_eqrate(opar, &dev_ipar) ||
 		    !aparams_subset(opar, &dev_ipar)) {
-			if (debug_level > 1) {
-				fprintf(stderr, "dev_attach: %s: ", name);
-				aparams_print2(&dev_ipar, opar);
-				fprintf(stderr, "\n");
-			}
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
 			conv = conv_new(name, &dev_ipar, opar);
+			aproc_setout(conv, obuf);
+			obuf = abuf_new(nfr, &dev_ipar);
+			aproc_setin(conv, obuf);
+		} else if (!aparams_eqrate(opar, &dev_ipar)) {
+			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
+			nfr -= nfr % dev_round;
+			conv = resamp_new(name, &dev_ipar, opar);
 			aproc_setout(conv, obuf);
 			obuf = abuf_new(nfr, &dev_ipar);
 			aproc_setin(conv, obuf);

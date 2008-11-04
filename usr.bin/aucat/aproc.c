@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.14 2008/11/03 22:55:34 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.15 2008/11/04 14:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,6 +30,8 @@
  *  - sub: from 1 input -> extract/copy N outputs
  *
  *  - conv: converts/resamples/remaps a single stream
+ *
+ *  - resamp: resample streams in native format
  *
  * TODO
  *
@@ -1042,6 +1044,203 @@ conv_new(char *name, struct aparams *ipar, struct aparams *opar)
 	p->u.conv.odelta = 0;
 	if (debug_level > 0) {
 		DPRINTF("conv_new: %s: ", p->name);		
+		aparams_print2(ipar, opar);
+		DPRINTF("\n");
+	}
+	return p;
+}
+
+/*
+ * Convert one block.
+ */
+void
+resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+{
+	unsigned inch;
+	short *idata;
+	unsigned ipos, orate;
+	unsigned ifr;
+	unsigned onch;
+	short *odata;
+	unsigned opos, irate;
+	unsigned ofr;
+	unsigned c;
+	short *ctxbuf, *ctx;
+	unsigned icount, ocount;
+
+	/*
+	 * Calculate max frames readable at once from the input buffer.
+	 */
+	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	ifr = icount / ibuf->bpf;
+	icount = ifr * ibuf->bpf;
+
+	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	ofr = ocount / obuf->bpf;
+	ocount = ofr * obuf->bpf;
+
+	/*
+	 * Partially copy structures into local variables, to avoid
+	 * unnecessary indirections; this also allows the compiler to
+	 * order local variables more "cache-friendly".
+	 */
+	inch = ibuf->cmax - ibuf->cmin + 1;
+	ipos = p->u.resamp.ipos;
+	irate = p->u.resamp.irate;
+	onch = obuf->cmax - obuf->cmin + 1;
+	opos = p->u.resamp.opos;
+	orate = p->u.resamp.orate;
+	ctxbuf = p->u.resamp.ctx;
+
+	/*
+	 * Start conversion.
+	 */
+	DPRINTFN(4, "resamp_bcopy: ifr=%d ofr=%d\n", ifr, ofr);
+	for (;;) {
+		if ((int)(ipos - opos) > 0) {
+			if (ofr == 0)
+				break;
+			ctx = ctxbuf;
+			for (c = onch; c > 0; c--) {
+				*odata = *ctx;
+				odata++;
+				ctx++;
+			}
+			opos += irate;
+			ofr--;
+		} else {
+			if (ifr == 0)
+				break;
+			ctx = ctxbuf;
+			for (c = inch; c > 0; c--) {
+				*ctx = *idata;
+				idata++;
+				ctx++;
+			}
+			ipos += orate;
+			ifr--;
+		}
+	}
+	p->u.resamp.ipos = ipos;
+	p->u.resamp.opos = opos;
+	DPRINTFN(4, "resamp_bcopy: done, ifr=%d ofr=%d\n", ifr, ofr);
+
+	/*
+	 * Update FIFO pointers.
+	 */
+	icount -= ifr * ibuf->bpf;
+	ocount -= ofr * obuf->bpf;
+	abuf_rdiscard(ibuf, icount);
+	abuf_wcommit(obuf, ocount);
+}
+
+int
+resamp_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	DPRINTFN(4, "resamp_in: %s\n", p->name);
+
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	resamp_bcopy(p, ibuf, obuf);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+resamp_out(struct aproc *p, struct abuf *obuf)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	DPRINTFN(4, "resamp_out: %s\n", p->name);
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	resamp_bcopy(p, ibuf, obuf);
+	return 1;
+}
+
+void
+resamp_eof(struct aproc *p, struct abuf *ibuf)
+{
+	DPRINTFN(4, "resamp_eof: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+void
+resamp_hup(struct aproc *p, struct abuf *obuf)
+{
+	DPRINTFN(4, "resamp_hup: %s\n", p->name);
+
+	aproc_del(p);
+}
+
+void
+resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);	
+	long long ipos;
+	int ifac, ofac;
+
+	DPRINTFN(3, "resamp_ipos: %d\n", delta);
+
+	ifac = p->u.resamp.irate;
+	ofac = p->u.resamp.orate;
+	ipos = p->u.resamp.idelta + (long long)delta * ofac;
+	delta = (ipos + ifac - 1) / ifac;
+	p->u.resamp.idelta = ipos - (long long)delta * ifac;
+	abuf_ipos(obuf, delta);
+}
+
+void
+resamp_opos(struct aproc *p, struct abuf *obuf, int delta)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	long long opos;
+	int ifac, ofac;
+
+	DPRINTFN(3, "resamp_opos: %d\n", delta);
+
+	ifac = p->u.resamp.irate;
+	ofac = p->u.resamp.orate;
+	opos = p->u.resamp.odelta + (long long)delta * ifac;
+	delta = (opos + ofac - 1) / ofac;
+	p->u.resamp.odelta = opos - (long long)delta * ofac;
+	abuf_opos(ibuf, delta);
+}
+
+struct aproc_ops resamp_ops = {
+	"resamp",
+	resamp_in,
+	resamp_out,
+	resamp_eof,
+	resamp_hup,
+	NULL,
+	NULL,
+	resamp_ipos,
+	resamp_opos,
+	NULL
+};
+
+struct aproc *
+resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
+{
+	struct aproc *p;
+
+	p = aproc_new(&resamp_ops, name);
+	p->u.resamp.irate = ipar->rate;
+	p->u.resamp.orate = opar->rate;
+	p->u.resamp.ipos = 0;
+	p->u.resamp.opos = 0;
+	p->u.resamp.idelta = 0;
+	p->u.resamp.odelta = 0;
+	if (debug_level > 0) {
+		DPRINTF("resamp_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
 		DPRINTF("\n");
 	}
