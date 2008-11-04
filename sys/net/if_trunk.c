@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.57 2008/10/30 20:44:02 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.58 2008/11/04 13:44:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -946,7 +946,7 @@ trunk_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		if (tr->tr_proto != TRUNK_PROTO_NONE)
+		if (tr->tr_proto != TRUNK_PROTO_NONE && tr->tr_count)
 			error = (*tr->tr_start)(tr, m);
 		else
 			m_freem(m);
@@ -1466,11 +1466,6 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
 	struct trunk_port *tp = NULL;
 	u_int32_t p = 0;
-
-	if (tr->tr_count == 0) {
-		m_freem(m);
-		return (EINVAL);
-	}
 
 	p = trunk_hashmbuf(m, lb->lb_key);
 	p %= tr->tr_count;
