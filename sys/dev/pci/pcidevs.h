@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1429 2008/11/04 05:35:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1430 2008/11/04 16:28:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1090,6 +1090,7 @@
 #define	PCI_PRODUCT_ATI_RS690_HDA	0x7919		/* RS690 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_X1250	0x791e		/* Radeon X1250 */
 #define	PCI_PRODUCT_ATI_RADEON_2100	0x796e		/* Radeon 2100 */
+#define	PCI_PRODUCT_ATI_RADEON_HD4850	0x9442		/* Radeon HD 4850 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_XT	0x94c1		/* Radeon HD 2400 XT */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_PRO	0x94c3		/* Radeon HD 2400 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_M72	0x94c9		/* Mobility Radeon HD 2400 */
@@ -1107,6 +1108,7 @@
 #define	PCI_PRODUCT_ATI_RS690M_HDA	0xaa10		/* RS690M HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD3600_HDA	0xaa20		/* Radeon HD 3600 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD34xx_HDA	0xaa28		/* Radeon HD 34xx HD Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD48xx_HDA	0xaa30		/* Radeon HD 48xx HD Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */

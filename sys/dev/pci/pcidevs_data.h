@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1429 2008/11/04 05:35:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1430 2008/11/04 16:28:22 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2756,6 +2756,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 2100",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850,
+	    "Radeon HD 4850",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_XT,
 	    "Radeon HD 2400 XT",
 	},
@@ -2822,6 +2826,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD34xx_HDA,
 	    "Radeon HD 34xx HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD48xx_HDA,
+	    "Radeon HD 48xx HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_AGP,
