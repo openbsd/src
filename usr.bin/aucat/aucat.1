@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.28 2008/10/30 18:14:51 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.29 2008/11/04 22:20:08 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2008 $
+.Dd $Mdocdate: November 4 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -349,9 +349,6 @@ It will not work reliably on files that may block
 .Pp
 Resampling is low quality; down-sampling especially should be avoided
 when recording.
-.Pp
-CPU usage is the same for all conversions.
-It should be smaller for simpler ones.
 .Pp
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
