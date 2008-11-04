@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.36 2008/10/16 16:22:10 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.37 2008/11/04 21:37:07 deraadt Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: October 16 2008 $
+.Dd $Mdocdate: November 4 2008 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -141,8 +141,6 @@ function initialises the swap subsystem.
 .Fn uvmspace_free "struct vmspace *vm1"
 .Ft void
 .Fn uvmspace_share "struct proc *p1" "struct proc *p2"
-.Ft void
-.Fn uvmspace_unshare "struct proc *p"
 .Ft int
 .Fn UVM_MAPFLAG "vm_prot_t prot" "vm_prot_t maxprot" "vm_inherit_t inh" "int advice" "int flags"
 .nr nS 0
@@ -401,13 +399,6 @@ function causes process
 to share the address space of
 .Fa p1 .
 .Pp
-The
-.Fn uvmspace_unshare
-function ensures that process
-.Fa p
-has its own, unshared address space, by creating a new one if
-necessary by calling
-.Fn uvmspace_fork .
 .Sh PAGE FAULT HANDLING
 .nr nS 1
 .Ft int

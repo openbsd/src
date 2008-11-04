@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.106 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.107 2008/11/04 21:37:06 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3208,32 +3208,6 @@ uvmspace_share(p1, p2)
 {
 	p2->p_vmspace = p1->p_vmspace;
 	p1->p_vmspace->vm_refcnt++;
-}
-
-/*
- * uvmspace_unshare: ensure that process "p" has its own, unshared, vmspace
- *
- * - XXX: no locking on vmspace
- */
-
-void
-uvmspace_unshare(p)
-	struct proc *p; 
-{
-	struct vmspace *nvm, *ovm = p->p_vmspace;
-
-	if (ovm->vm_refcnt == 1)
-		/* nothing to do: vmspace isn't shared in the first place */
-		return;
-
-	/* make a new vmspace, still holding old one */
-	nvm = uvmspace_fork(ovm);
-
-	pmap_deactivate(p);		/* unbind old vmspace */
-	p->p_vmspace = nvm; 
-	pmap_activate(p);		/* switch to new vmspace */
-
-	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
 
 /*

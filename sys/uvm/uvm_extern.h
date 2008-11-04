@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.71 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.72 2008/11/04 21:37:06 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -528,7 +528,6 @@ void			uvmspace_exec(struct proc *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct vmspace *);
 void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
-void			uvmspace_unshare(struct proc *);
 
 
 /* uvm_meter.c */
