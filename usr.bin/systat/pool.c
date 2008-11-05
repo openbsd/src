@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.2 2008/11/02 07:14:16 canacar Exp $	*/
+/*	$OpenBSD: pool.c,v 1.3 2008/11/05 16:03:02 chl Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/pool.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "systat.h"
 
