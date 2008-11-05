@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.10 2008/11/02 06:23:28 canacar Exp $	*/
+/*	$OpenBSD: systat.h,v 1.11 2008/11/05 15:48:44 canacar Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ int initmembufs(void);
 int initpigs(void);
 int initswap(void);
 int initvmstat(void);
+int initpftop(void);
 int initpf(void);
 int initpool(void);
 

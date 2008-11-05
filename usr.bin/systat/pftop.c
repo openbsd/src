@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.6 2008/10/08 15:11:13 canacar Exp $	 */
+/* $Id: pftop.c,v 1.7 2008/11/05 15:48:44 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,6 +93,8 @@ int keyboard_callback(int ch);
 int select_queues(void);
 int read_queues(void);
 void print_queues(void);
+
+void update_cache(void);
 
 /* qsort callbacks */
 int sort_size_callback(const void *s1, const void *s2);
@@ -1579,7 +1581,7 @@ pfctl_update_qstats(struct pf_altq_node **root, int *inserts)
 			gettimeofday(&qstats.timestamp, NULL);
 			if ((node = pfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
-				// update altq data too as bandwidth may have changed
+				/* update altq data too as bandwidth may have changed */
 				memcpy(&node->altq, &pa.altq, sizeof(struct pf_altq));
 				memcpy(&node->qstats_last, &node->qstats,
 				    sizeof(struct queue_stats));
@@ -1662,8 +1664,9 @@ read_queues(void)
 	if (pfctl_update_qstats(&altq_root, &inserts))
 		return (-1);
 	
-	// Allow inserts only on first read;
-	// on subsequent reads clear and reload
+	/* Allow inserts only on first read;
+	 * on subsequent reads clear and reload
+	 */
 	if (first_read == 0 &&
 	    (inserts != 0 || pfctl_have_unvisited(altq_root) != 0)) {
 		pfctl_free_altq_node(altq_root);
@@ -1832,7 +1835,7 @@ print_queues(void)
 /* main program functions */
 
 void
-update_cache()
+update_cache(void)
 {
 	static int pstate = -1;
 	if (pstate == cachestates)
@@ -1851,7 +1854,7 @@ update_cache()
 	field_setup();
 }
 
-void
+int
 initpftop(void)
 {
 	struct pf_status status;
@@ -1881,4 +1884,6 @@ initpftop(void)
 
 	show_field(FLD_STMAX);
 	show_field(FLD_ANCHOR);
+
+	return (1);
 }

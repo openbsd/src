@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.49 2008/11/04 19:00:08 espie Exp $	 */
+/* $Id: main.c,v 1.50 2008/11/05 15:48:44 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,6 +69,9 @@ int	CMDLINE;
 
 #define TIMEPOS 55
 
+int  ucount(void);
+void usage(void);
+
 /* command prompt */
 
 void cmd_delay(const char *);
@@ -85,28 +88,14 @@ struct command cm_count = {"Number of lines to display", cmd_count};
 int
 print_header(void)
 {
-	struct tm *tp;
-	time_t t, now;
-	order_type *ordering;
+	time_t now;
 	int start = dispstart + 1, end = dispstart + maxprint;
-	extern int ucount();
 	char tbuf[26];
 
 	if (end > num_disp)
 		end = num_disp;
 
 	tb_start();
-
-#if 0
-	if (curr_mgr && curr_mgr->sort_fn != NULL) {
-		ordering = curr_mgr->order_curr;
-		if (ordering != NULL) {
-			tbprintf(", Order: %s", ordering->name);
-			if (sortdir < 0 && ordering->func != NULL)
-				tbprintf(" (rev)");
-		}
-	}
-#endif
 
 	getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 
@@ -205,7 +194,7 @@ ucount(void)
 /* main program functions */
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 	fprintf(stderr, "usage: %s [-abin] [-d count] "
@@ -237,8 +226,6 @@ add_view_tb(field_view *v)
 void
 show_help(void)
 {
-	int line = 0;
-
 	if (rawmode)
 		return;
 
