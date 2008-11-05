@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.12 2008/11/05 09:07:56 dlg Exp $	*/
+/*	$OpenBSD: event.h,v 1.13 2008/11/05 09:20:17 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -120,7 +120,7 @@ SLIST_HEAD(klist, knote);
 
 #define KNOTE(list, hint)	do { \
 					if ((list) != NULL) \
-						knote(list, hint); \
+						knote((list), (hint)); \
 				} while (0)
 
 /*
