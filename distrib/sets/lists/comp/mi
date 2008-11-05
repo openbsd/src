@@ -6369,7 +6369,6 @@
 ./usr/share/man/cat9/uvmspace_fork.0
 ./usr/share/man/cat9/uvmspace_free.0
 ./usr/share/man/cat9/uvmspace_share.0
-./usr/share/man/cat9/uvmspace_unshare.0
 ./usr/share/man/cat9/uvn_attach.0
 ./usr/share/man/cat9/vaccess.0
 ./usr/share/man/cat9/vclean.0
