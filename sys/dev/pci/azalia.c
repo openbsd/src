@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.70 2008/11/05 03:20:34 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.71 2008/11/05 04:08:24 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -350,12 +350,6 @@ static const char *pin_chass[4] = {
 /* ================================================================
  * PCI functions
  * ================================================================ */
-
-#define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
-#define PCIID_NVIDIA_MCP51	PCI_ID_CODE0(NVIDIA, MCP51_HDA)
-#define PCIID_NVIDIA_MCP55	PCI_ID_CODE0(NVIDIA, MCP55_HDA)
-#define PCIID_ALI_M5461		PCI_ID_CODE0(ALI, M5461)
-#define PCIID_VIATECH_HDA	PCI_ID_CODE0(VIATECH, HDA)
 
 #define ATI_PCIE_SNOOP_REG		0x42
 #define ATI_PCIE_SNOOP_MASK		0xf8
