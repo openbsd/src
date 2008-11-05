@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.56 2008/11/04 07:58:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.57 2008/11/05 01:14:01 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -86,7 +86,6 @@ int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 int	azalia_generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
-int	azalia_generic_mixer_pinctrl(codec_t *, nid_t, uint32_t);
 u_char	azalia_generic_mixer_from_device_value
 	(const codec_t *, nid_t, int, uint32_t );
 uint32_t azalia_generic_mixer_to_device_value
@@ -117,12 +116,10 @@ int	azalia_ad1988_init_dacgroup(codec_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9200_mixer_init(codec_t *);
-int	azalia_stac9200_unsol_event(codec_t *, int);
 int	azalia_stac9221_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9221_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_get_port(codec_t *, mixer_ctrl_t *);
-int	azalia_stac9221_apple_unsol_event(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
 int	azalia_stac7661_set_port(codec_t *, mixer_ctrl_t *);
@@ -222,8 +219,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = azalia_stac9221_mixer_init;
 		this->set_port = azalia_stac9221_set_port;
 		this->get_port = azalia_stac9221_get_port;
-		if (this->subid == STAC9221_APPLE_ID)
-			this->unsol_event = azalia_stac9221_apple_unsol_event;
 		break;
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
@@ -233,7 +228,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* http://www.idt.com/products/getDoc.cfm?docID=17812077 */
 		this->name = "Sigmatel STAC9200";
 		this->mixer_init = azalia_stac9200_mixer_init;
-		this->unsol_event = azalia_stac9200_unsol_event;
 		break;
 	case 0x83847691:
 		this->name = "Sigmatel STAC9200D";
@@ -859,21 +853,6 @@ azalia_generic_mixer_default(codec_t *this)
 		mc.dev = i;
 		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 0;
-		azalia_generic_mixer_set(this, m->nid, m->target, &mc);
-	}
-
-	/*
-	 * For bidirectional pins, make the default `output'
-	 */
-	for (i = 0; i < this->nmixers; i++) {
-		mixer_ctrl_t mc;
-
-		m = &this->mixers[i];
-		if (m->target != MI_TARGET_PINDIR)
-			continue;
-		mc.dev = i;
-		mc.type = AUDIO_MIXER_ENUM;
-		mc.un.ord = 1;
 		azalia_generic_mixer_set(this, m->nid, m->target, &mc);
 	}
 
@@ -1543,21 +1522,6 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 		return -1;
 	}
 	return 0;
-}
-
-int
-azalia_generic_mixer_pinctrl(codec_t *this, nid_t nid, uint32_t value)
-{
-	int err;
-	uint32_t result;
-
-	err = this->comresp(this, nid, CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
-	if (err)
-		return err;
-	result &= ~(CORB_PWC_OUTPUT | CORB_PWC_INPUT);
-	result |= value & (CORB_PWC_OUTPUT | CORB_PWC_INPUT);
-	return this->comresp(this, nid,
-	    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
 }
 
 u_char
@@ -2753,45 +2717,6 @@ azalia_stac9200_mixer_init(codec_t *this)
 	mc.un.value.level[0] = AUDIO_MAX_GAIN;
 	mc.un.value.level[1] = mc.un.value.level[0];
 	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_OUTAMP, &mc);
-
-#define STAC9200_EVENT_HP	0
-#define STAC9200_NID_HP		0x0d
-#define STAC9200_NID_SPEAKER	0x0e
-
-	/* register hp unsolicited event */
-	this->comresp(this, STAC9200_NID_HP, 
-	    CORB_SET_UNSOLICITED_RESPONSE,
-	    CORB_UNSOL_ENABLE | STAC9200_EVENT_HP, NULL);
-
-	azalia_stac9200_unsol_event(this, STAC9200_EVENT_HP);
-
-	return 0;
-}
-int
-azalia_stac9200_unsol_event(codec_t *this, int tag)
-{
-	int err;
-	uint32_t value;
-
-	switch (tag) {
-	case STAC9200_EVENT_HP:
-		err = this->comresp(this, STAC9200_NID_HP,
-		    CORB_GET_PIN_SENSE, 0, &value);
-		if (err)
-			break;
-		if (value & CORB_PS_PRESENCE) {
-			DPRINTF(("%s: headphone inserted\n", __func__));
-			azalia_generic_mixer_pinctrl(this, 
-			    STAC9200_NID_SPEAKER, 0);
-		} else {
-			DPRINTF(("%s: headphone pulled\n", __func__));
-			azalia_generic_mixer_pinctrl(this, 
-			    STAC9200_NID_SPEAKER, CORB_PWC_OUTPUT);
-		}
-		break;
-	default:
-		DPRINTF(("%s: unknown tag: %d\n", __func__, tag));
-	}
 	return 0;
 }
 
@@ -2860,18 +2785,6 @@ azalia_stac9221_mixer_init(codec_t *this)
 
 	azalia_generic_mixer_pin_sense(this);
 
-	if (this->subid == STAC9221_APPLE_ID) {
-#define APPLE_EVENT_HP         1
-#define APPLE_NID_HP           0x0a
-#define APPLE_NID_SPEAKER      0x0c
-#define APPLE_NID_LINE         0x0d
-
-		/* register hp unsolicited event */
-		this->comresp(this, APPLE_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
-		    CORB_UNSOL_ENABLE | APPLE_EVENT_HP, NULL);
-
-		azalia_stac9221_apple_unsol_event(this, APPLE_EVENT_HP);
-	}
 	return 0;
 }
 
@@ -2917,38 +2830,6 @@ azalia_stac9221_get_port(codec_t *this, mixer_ctrl_t *mc)
 		return azalia_generic_mixer_get(this, m->nid,
 		    MI_TARGET_OUTAMP, mc);
 	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
-}
-
-int
-azalia_stac9221_apple_unsol_event(codec_t *this, int tag)
-{
-	int err;
-	uint32_t value;
-
-	switch (tag) {
-	case APPLE_EVENT_HP:
-		err = this->comresp(this, APPLE_NID_HP,
-		    CORB_GET_PIN_SENSE, 0, &value);
-		if (err)
-			break;
-		if (value & CORB_PS_PRESENCE) {
-			DPRINTF(("%s: headphone inserted\n", __func__));
-			azalia_generic_mixer_pinctrl(this,
-			    APPLE_NID_SPEAKER, 0);
-			azalia_generic_mixer_pinctrl(this,
-			    APPLE_NID_LINE, 0);
-		} else {
-			DPRINTF(("%s: headphone pulled\n", __func__));
-			azalia_generic_mixer_pinctrl(this,
-			    APPLE_NID_SPEAKER, CORB_PWC_OUTPUT);
-			azalia_generic_mixer_pinctrl(this,
-			    APPLE_NID_LINE, CORB_PWC_OUTPUT);
-		}
-		break;
-	default:
-		DPRINTF(("%s: unknown tag: %d\n", __func__, tag));
-	}
-        return 0;
 }
 
 /* ----------------------------------------------------------------
