@@ -1,3 +1,5 @@
+/*	$OpenBSD: map.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  *

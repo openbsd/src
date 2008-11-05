@@ -1,3 +1,5 @@
+/*	$OpenBSD: queue.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
