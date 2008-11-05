@@ -1,6 +1,7 @@
-/*	$OpenBSD: atomic.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: atomic.c,v 1.3 2008/11/05 12:49:58 sobrado Exp $	*/
 
 /*
+ * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Charles Longeau <chl@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
