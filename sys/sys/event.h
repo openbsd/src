@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.11 2007/05/30 00:23:48 tedu Exp $	*/
+/*	$OpenBSD: event.h,v 1.12 2008/11/05 09:07:56 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -118,7 +118,10 @@ SLIST_HEAD(klist, knote);
 
 #ifdef _KERNEL
 
-#define KNOTE(list, hint)	if ((list) != NULL) knote(list, hint)
+#define KNOTE(list, hint)	do { \
+					if ((list) != NULL) \
+						knote(list, hint); \
+				} while (0)
 
 /*
  * Flag indicating hint is a signal.  Used by EVFILT_SIGNAL, and also
