@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.15 2008/10/30 06:12:47 todd Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.16 2008/11/05 21:38:03 jakemsr Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -605,12 +605,16 @@ i2s_get_port(h, mc)
 		return 0;
 
 	case I2S_BASS:
+		if (mc->un.value.num_channels != 1)
+			return ENXIO;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_bass;
-		return (0);
+		return 0;
 
 	case I2S_TREBLE:
+		if (mc->un.value.num_channels != 1)
+			return ENXIO;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_treble;
-		return (0);
+		return 0;
 
 	case I2S_VOL_INPUT:
 		/* XXX TO BE DONE */
