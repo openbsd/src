@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2008/06/11 10:54:08 phessler Exp $ */
+/*	$OpenBSD: mem.c,v 1.14 2008/11/05 06:32:47 matthieu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -122,7 +122,7 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
-		ap_open_count--;
+		ap_open_count = 0;
 #endif
 	return (0);
 }
