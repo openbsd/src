@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.32 2008/10/29 00:04:14 jakemsr Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.33 2008/11/05 01:43:09 jakemsr Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -562,8 +562,9 @@ snapper_set_bass(struct snapper_softc *sc, int value)
 void
 snapper_set_input(struct snapper_softc *sc, int mask)
 {
-	int val = 0;
-	switch(mask) {
+	uint8_t val = 0;
+
+	switch (mask) {
 	case    1 << 0: /* microphone */
 		val = DEQ_ACR_ADM | DEQ_ACR_LRB | DEQ_ACR_INP_B;
 		break;
@@ -684,6 +685,7 @@ tas3004_init(struct snapper_softc *sc)
 	DEQ_WRITE(sc, DEQ_RB3, tas3004_initdata.RB3);
 	DEQ_WRITE(sc, DEQ_RB4, tas3004_initdata.RB4);
 	DEQ_WRITE(sc, DEQ_RB5, tas3004_initdata.RB5);
+	DEQ_WRITE(sc, DEQ_RB6, tas3004_initdata.RB6);
 	DEQ_WRITE(sc, DEQ_MCR1, tas3004_initdata.MCR1);
 	DEQ_WRITE(sc, DEQ_MCR2, tas3004_initdata.MCR2);
 	DEQ_WRITE(sc, DEQ_DRC, tas3004_initdata.DRC);
@@ -724,6 +726,11 @@ snapper_init(struct snapper_softc *sc)
 		return;
 
 	snapper_set_volume(sc, 80, 80);
+	snapper_set_treble(sc, 128); /* 0 dB */
+	snapper_set_bass(sc, 128); /* 0 dB */
+
+	/* Line in, reflects tas3004_initdata.ACR */
+	sc->sc_record_source = 1 << 1;
 }
 
 int
