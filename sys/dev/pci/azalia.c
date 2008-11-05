@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.69 2008/11/04 20:55:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.70 2008/11/05 03:20:34 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -107,9 +107,6 @@ struct audio_format {
 	u_int frequency[AUFMT_MAX_FREQUENCIES];
 };
 
-#define	AUFMT_INVALIDATE(fmt)	(fmt)->mode |= 0x80000000
-#define	AUFMT_VALIDATE(fmt)	(fmt)->mode &= 0x7fffffff
-#define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
 /* ----------------------------------------------------------------
  * ICH6/ICH7 constant values

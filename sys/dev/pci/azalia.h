@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.19 2008/11/04 20:55:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.20 2008/11/05 03:20:35 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -507,7 +507,6 @@ typedef struct {
 # define DPRINTF(x)	do {} while (0/*CONSTCOND*/)
 #endif
 #define PTR_UPPER32(x)	((uint64_t)(x) >> 32)
-#define FLAGBUFLEN	256
 
 typedef int nid_t;
 
