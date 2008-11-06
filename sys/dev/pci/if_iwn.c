@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.26 2008/11/03 17:19:54 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.27 2008/11/06 17:04:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -508,16 +508,33 @@ iwn_hal_attach(struct iwn_softc *sc)
 	case IWN_HW_REV_TYPE_4965:
 		sc->sc_hal = &iwn4965_hal;
 		sc->critical_temp = IWN_CTOK(110);
+		sc->txantmsk = IWN_ANT_A | IWN_ANT_B;
+		sc->rxantmsk = IWN_ANT_ABC;
+		sc->ntxchains = 2;
+		sc->nrxchains = 3;
+		break;
+	case IWN_HW_REV_TYPE_5100:
+		sc->sc_hal = &iwn5000_hal;
+		sc->critical_temp = 110;
+		sc->txantmsk = IWN_ANT_B;
+		sc->rxantmsk = IWN_ANT_A | IWN_ANT_B;
+		sc->ntxchains = 1;
+		sc->nrxchains = 2;
 		break;
 	case IWN_HW_REV_TYPE_5150:
 		sc->sc_hal = &iwn5000_hal;
 		sc->critical_temp = IWN_CTOK(110);
+		sc->txantmsk = IWN_ANT_A;
+		sc->rxantmsk = IWN_ANT_A | IWN_ANT_B;
+		sc->ntxchains = 1;
+		sc->nrxchains = 2;
 		break;
-	case IWN_HW_REV_TYPE_5100:
 	case IWN_HW_REV_TYPE_5300:
 	case IWN_HW_REV_TYPE_5350:
 		sc->sc_hal = &iwn5000_hal;
 		sc->critical_temp = 110;
+		sc->txantmsk = sc->rxantmsk = IWN_ANT_ABC;
+		sc->ntxchains = sc->nrxchains = 3;
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
@@ -1133,19 +1150,6 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	iwn_read_prom_data(sc, IWN_EEPROM_RFCFG, &val, 2);
 	sc->rfcfg = letoh16(val);
 	DPRINTF(("radio config=0x%04x\n", sc->rfcfg));
-	sc->txantmsk = IWN_RFCFG_TXANTMSK(sc->rfcfg);
-	sc->rxantmsk = IWN_RFCFG_RXANTMSK(sc->rfcfg);
-	/* Count the number of TX and RX chains. */
-	sc->ntxchains =
-	    ((sc->txantmsk >> 3) & 1) +
-	    ((sc->txantmsk >> 2) & 1) +
-	    ((sc->txantmsk >> 1) & 1) +
-	    ((sc->txantmsk >> 0) & 1);
-	sc->nrxchains =
-	    ((sc->rxantmsk >> 3) & 1) +
-	    ((sc->rxantmsk >> 2) & 1) +
-	    ((sc->rxantmsk >> 1) & 1) +
-	    ((sc->rxantmsk >> 0) & 1);
 
 	/* Read MAC address. */
 	iwn_read_prom_data(sc, IWN_EEPROM_MAC, ic->ic_myaddr, 6);
@@ -2826,6 +2830,9 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, 1);
 }
 
+/*
+ * Broadcast node is used to send group-addressed and management frames.
+ */
 int
 iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 {
@@ -2842,20 +2849,16 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	if ((error = hal->add_node(sc, &node, async)) != 0)
 		return error;
 
-	/*
-	 * Setup link quality for broadcast node.  The broadcast node is
-	 * used to send group-addressed and management frames.
-	 */
+	/* Use the first valid TX antenna. */
+	txant = IWN_LSB(sc->txantmsk);
+
 	memset(&linkq, 0, sizeof linkq);
 	linkq.id = hal->broadcast_id;
-	linkq.antmsk_1stream = IWN_ANT_B;
+	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_A | IWN_ANT_B;
 	linkq.ampdu_max = 64;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
-
-	/* Use the first valid TX antenna. */
-	txant = IWN_LSB(sc->txantmsk);
 
 	/* Use lowest mandatory bit-rate. */
 	if (sc->sc_ic.ic_curmode != IEEE80211_MODE_11A) {
