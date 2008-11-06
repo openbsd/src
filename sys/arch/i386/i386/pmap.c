@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2008/11/06 19:13:31 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.126 2008/11/06 19:14:26 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1655,7 +1655,7 @@ pmap_ldt_cleanup(struct proc *p)
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
- * => called from cpu_switch()
+ * => called from cpu_switchto()
  * => if proc is the curproc, then load it into the MMU
  */
 
