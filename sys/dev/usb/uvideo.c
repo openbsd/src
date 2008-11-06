@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.87 2008/10/26 21:11:02 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.88 2008/11/06 21:07:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -597,7 +597,7 @@ uvideo_find_ctrl(struct uvideo_softc *sc, int id)
 	}
 
 	/* does the device support this control? */
-	for (found = 0, j = 0; i < sc->sc_desc_vc_pu_num; j++) {
+	for (found = 0, j = 0; j < sc->sc_desc_vc_pu_num; j++) {
 		if (UGETW(sc->sc_desc_vc_pu[j]->bmControls) &
 		    uvideo_ctrls[i].ctrl_bitmap) {
 			found = 1;
