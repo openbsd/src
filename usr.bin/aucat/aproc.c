@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.19 2008/11/04 22:18:12 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.20 2008/11/06 17:47:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -429,7 +429,7 @@ int
 mix_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *i, *inext;
-	unsigned ocount, drop;
+	unsigned ocount, fdrop;
 
 	DPRINTFN(4, "mix_out: used = %u, todo = %u\n",
 	    obuf->used, obuf->mixitodo);
@@ -449,19 +449,19 @@ mix_out(struct aproc *p, struct abuf *obuf)
 					abuf_hup(i);
 					continue;
 				}
-				drop = obuf->mixitodo;
-				i->mixodone += drop;
+				fdrop = obuf->mixitodo / obuf->bpf;
+				i->mixodone += fdrop * obuf->bpf;
 				if (i->xrun == XRUN_SYNC)
-					i->drop += drop;
+					i->drop += fdrop * i->bpf;
 				else {
-					abuf_opos(i, -(int)(drop / i->bpf));
+					abuf_opos(i, -(int)fdrop);
 					if (i->duplex) {
 						DPRINTF("mix_out: duplex %u\n",
-						    drop);
-						i->duplex->drop += drop * 
-						    i->duplex->bpf / i->bpf;
+						    fdrop);
+						i->duplex->drop += fdrop * 
+						    i->duplex->bpf;
 						abuf_ipos(i->duplex,
-						    -(int)(drop / i->bpf));
+						    -(int)fdrop);
 					}
 				}
 				DPRINTF("mix_out: drop = %u\n", i->drop);
@@ -639,7 +639,7 @@ int
 sub_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext;
-	unsigned done, drop;
+	unsigned done, fdrop;
 	
 	if (!ABUF_ROK(ibuf))
 		return 0;
@@ -652,21 +652,21 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 					abuf_eof(i);
 					continue;
 				}
-				drop = ibuf->used;
+				fdrop = ibuf->used / ibuf->bpf;
 				if (i->xrun == XRUN_SYNC)
-					i->silence += drop;
+					i->silence += fdrop * i->bpf;
 				else {
-					abuf_ipos(i, -(int)(drop / i->bpf));
+					abuf_ipos(i, -(int)fdrop);
 					if (i->duplex) {
 						DPRINTF("sub_in: duplex %u\n",
-						    drop);
-						i->duplex->silence += drop *
-						    i->duplex->bpf / i->bpf;
+						    fdrop);
+						i->duplex->silence += fdrop *
+						    i->duplex->bpf;
 						abuf_opos(i->duplex, 
-						    -(int)(drop / i->bpf));
+						    -(int)fdrop);
 					}
 				}
-				i->subidone += drop;
+				i->subidone += fdrop * ibuf->bpf;
 				DPRINTF("sub_in: silence = %u\n", i->silence);
 			}
 		} else
