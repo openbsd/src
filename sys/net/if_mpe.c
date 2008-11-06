@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.13 2008/11/01 16:37:55 michele Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.14 2008/11/06 20:53:10 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -38,10 +38,10 @@
 #endif
 
 #ifdef INET6
+#include <netinet/ip6.h>
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #include "bpfilter.h"
@@ -326,12 +326,20 @@ void
 mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
     u_int8_t ttl)
 {
-	int		 s;
+	struct ip6_hdr *ip6hdr;
+	int s;
 
 	/* label -> AF lookup */
 
 	if (mpls_mapttl_ip6) {
-		/* XXX: fixup IPv6 ttl */
+		if (m->m_len < sizeof (struct ip6_hdr) &&
+		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
+			return;
+
+		ip6hdr = mtod(m, struct ip6_hdr *);
+
+		/* set IPv6 ttl from MPLS ttl */
+		ip6hdr->ip6_hlim = ttl;
 	}
 
 #if NBPFILTER > 0
