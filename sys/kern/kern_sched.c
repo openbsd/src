@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.7 2008/11/06 19:19:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.8 2008/11/06 19:49:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -155,7 +155,7 @@ sched_exit(struct proc *p)
 	idle = spc->spc_idleproc;
 	idle->p_stat = SRUN;
 	cpu_switchto(NULL, idle);
-	panic("cpu_switchto returned);
+	panic("cpu_switchto returned");
 }
 
 /*
