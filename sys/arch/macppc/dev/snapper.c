@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.33 2008/11/05 01:43:09 jakemsr Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.34 2008/11/06 10:01:50 todd Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -578,7 +578,7 @@ snapper_set_input(struct snapper_softc *sc, int mask)
 const struct tas3004_reg tas3004_initdata = {
 	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_20 },	/* MCR1 */
 	{ 1, 0, 0, 0, 0, 0 },					/* DRC */
-	{ 0, 0, 0, 0, 0, 0 },					/* VOLUME */
+	{ 0x00, 0xd7, 0x66, 0x00, 0xd7, 0x66 },			/* VOLUME */
 	{ 0x72 },						/* TREBLE */
 	{ 0x72 },						/* BASS */
 	{ 0x10, 0x00, 0x00, 0, 0, 0, 0, 0, 0 },			/* MIXER_L */
@@ -601,7 +601,7 @@ const struct tas3004_reg tas3004_initdata = {
 	{ 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* BIQUAD */
 	{ 0, 0, 0 },						/* LLB_GAIN */
 	{ 0, 0, 0 },						/* RLB_GAIN */
-	{ 0 },							/* ACR */
+	{ DEQ_ACR_ADM | DEQ_ACR_LRB | DEQ_ACR_INP_B },		/* ACR */
 	{ 0 }							/* MCR2 */
 };
 
@@ -725,12 +725,13 @@ snapper_init(struct snapper_softc *sc)
 	if (tas3004_init(sc))
 		return;
 
-	snapper_set_volume(sc, 80, 80);
+	snapper_set_volume(sc, 190, 190);
 	snapper_set_treble(sc, 128); /* 0 dB */
 	snapper_set_bass(sc, 128); /* 0 dB */
 
-	/* Line in, reflects tas3004_initdata.ACR */
+	/* Mic in, reflects tas3004_initdata.ACR */
 	sc->sc_record_source = 1 << 1;
+	snapper_set_input(sc, sc->sc_record_source);
 }
 
 int
