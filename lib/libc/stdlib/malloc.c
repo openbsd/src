@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.105 2008/11/02 08:50:41 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.106 2008/11/06 12:32:45 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -477,6 +477,8 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 				d->free_regions_size -= psz;
 				if (zero_fill)
 					memset(p, 0, sz);
+				else if (malloc_junk && malloc_freeprot)
+					memset(p, SOME_FREEJUNK, sz);
 				return p;
 			} else if (r->size > psz)
 				big = r;
@@ -1199,7 +1201,7 @@ ofree(void *p)
 			}
 			malloc_guarded -= malloc_guard;
 		}
-		if (malloc_junk)
+		if (malloc_junk && !malloc_freeprot)
 			memset(p, SOME_FREEJUNK, PAGEROUND(sz) - malloc_guard);
 		unmap(&g_pool, p, PAGEROUND(sz));
 		delete(&g_pool, r);
@@ -1209,10 +1211,12 @@ ofree(void *p)
 
 		if (malloc_junk && sz > 0)
 			memset(p, SOME_FREEJUNK, sz);
-		i = getrbyte() & (MALLOC_DELAYED_CHUNKS - 1);
-		tmp = p;
-		p = g_pool.delayed_chunks[i];
-		g_pool.delayed_chunks[i] = tmp;
+		if (!malloc_freeprot) {
+			i = getrbyte() & (MALLOC_DELAYED_CHUNKS - 1);
+			tmp = p;
+			p = g_pool.delayed_chunks[i];
+			g_pool.delayed_chunks[i] = tmp;
+		}
 		if (p != NULL) {
 			r = find(&g_pool, p);
 			if (r == NULL) {
