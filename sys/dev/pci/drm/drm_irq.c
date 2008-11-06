@@ -36,7 +36,6 @@
 #include "drm.h"
 
 irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
-void		drm_locked_task(void *, void *);
 void		drm_update_vblank_count(struct drm_device *, int);
 void		vblank_disable(void *);
 
@@ -403,47 +402,4 @@ drm_handle_vblank(struct drm_device *dev, int crtc)
 {
 	atomic_inc(&dev->vblank[crtc].vbl_count);
 	wakeup(&dev->vblank[crtc]);
-}
-
-void
-drm_locked_task(void *context, void *pending)
-{
-	struct drm_device *dev = context;
-	void		  (*func)(struct drm_device *);
-
-	DRM_SPINLOCK(&dev->tsk_lock);
-	mtx_enter(&dev->lock.spinlock);
-	func = dev->locked_task_call;
-	if (func == NULL ||
-	    drm_lock_take(&dev->lock, DRM_KERNEL_CONTEXT) == 0) {
-		mtx_leave(&dev->lock.spinlock);
-		DRM_SPINUNLOCK(&dev->tsk_lock);
-		return;
-	}
-
-	dev->lock.file_priv = NULL; /* kernel owned */
-	dev->lock.lock_time = jiffies;
-	mtx_leave(&dev->lock.spinlock);
-	dev->locked_task_call = NULL;
-	DRM_SPINUNLOCK(&dev->tsk_lock);
-
-	(*func)(dev);
-
-	drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT);
-}
-
-void
-drm_locked_tasklet(struct drm_device *dev, void (*tasklet)(struct drm_device *))
-{
-	DRM_SPINLOCK(&dev->tsk_lock);
-	if (dev->locked_task_call != NULL) {
-		DRM_SPINUNLOCK(&dev->tsk_lock);
-		return;
-	}
-
-	dev->locked_task_call = tasklet;
-	DRM_SPINUNLOCK(&dev->tsk_lock);
-
-	if (workq_add_task(NULL, 0, drm_locked_task, dev, NULL) == ENOMEM)
-		DRM_ERROR("error adding task to workq\n");
 }

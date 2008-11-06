@@ -203,7 +203,6 @@ drm_attach(struct device *parent, struct device *kdev,
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->drw_lock, IPL_NONE);
-	mtx_init(&dev->tsk_lock, IPL_BIO);
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),

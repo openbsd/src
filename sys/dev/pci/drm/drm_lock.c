@@ -154,7 +154,6 @@ int
 drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_lock	*lock = data;
-	void		(*func)(struct drm_device *);
 
 	if (lock->context == DRM_KERNEL_CONTEXT) {
 		DRM_ERROR("Process %d using kernel context %d\n",
@@ -167,13 +166,6 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||
 	    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock) != lock->context)
 		return EINVAL;
-
-	mtx_enter(&dev->tsk_lock);
-	func = dev->locked_task_call;
-	dev->locked_task_call = NULL;
-	mtx_leave(&dev->tsk_lock);
-	if (func != NULL)
-		(*func)(dev);
 
 	if (drm_lock_free(&dev->lock, lock->context)) {
 		DRM_ERROR("\n");
