@@ -373,10 +373,8 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		DRM_SPINLOCK(&dev->vbl_lock);
 		while (ret == 0) {
 			if ((drm_vblank_count(dev, crtc)
-			    - vblwait->request.sequence) <= (1 << 23)) {
-				DRM_SPINUNLOCK(&dev->vbl_lock);
+			    - vblwait->request.sequence) <= (1 << 23))
 				break;
-			}
 			ret = msleep(&dev->vblank[crtc],
 			    &dev->vbl_lock, PZERO | PCATCH,
 			    "drmvblq", 3 * DRM_HZ);
