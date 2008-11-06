@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.118 2008/11/02 08:53:06 otto Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.119 2008/11/06 18:13:31 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -892,7 +892,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 * a little added paranoia never hurts.
 	 */
 	ump->um_savedmaxfilesize = fs->fs_maxfilesize;		/* XXX */
-	maxfilesize = FS_KERNMAXFILESIZE(fs);
+	maxfilesize = FS_KERNMAXFILESIZE(PAGE_SIZE, fs);
 	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
 		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	if (ronly == 0) {
