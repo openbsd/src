@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.25 2008/06/13 09:13:56 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.26 2008/11/06 23:41:28 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -113,6 +113,7 @@ struct cfdriver acpiec_cd = {
 	NULL, "acpiec", DV_DULL
 };
 
+const char *acpiec_hids[] = { ACPI_DEV_ECD, 0 };
 
 void
 acpiec_wait(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
@@ -264,12 +265,7 @@ acpiec_match(struct device *parent, void *match, void *aux)
 	struct cfdata		*cf = match;
 
 	/* sanity */
-	if (aa->aaa_name == NULL ||
-	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
-	    aa->aaa_table != NULL)
-		return (0);
-
-	return (1);
+	return (acpi_matchhids(aa, acpiec_hids, cf->cf_driver->cd_name));
 }
 
 void

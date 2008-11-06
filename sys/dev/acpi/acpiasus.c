@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.7 2008/10/01 19:13:57 robert Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.8 2008/11/06 23:41:28 marco Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -103,18 +103,15 @@ struct cfdriver acpiasus_cd = {
 	NULL, "acpiasus", DV_DULL
 };
 
+const char *acpiasus_hids[] = { ACPI_DEV_ASUS, 0 };
+
 int
 acpiasus_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 	struct cfdata *cf = match;
 
-	if (aa->aaa_name == NULL ||
-	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
-	    aa->aaa_table != NULL)
-		return 0;
-
-	return 1;
+	return (acpi_matchhids(aa, acpiasus_hids, cf->cf_driver->cd_name));
 }
 
 void

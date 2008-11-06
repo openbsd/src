@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.43 2008/09/15 19:25:36 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.44 2008/11/06 23:41:28 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -267,6 +267,8 @@ int	acpi_read_pmreg(struct acpi_softc *, int, int);
 void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 
 void	acpi_poll(void *);
+
+int acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
 
 #endif
 

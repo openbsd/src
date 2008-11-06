@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.25 2008/07/23 00:20:35 fgsch Exp $ */
+/* $OpenBSD: acpiac.c,v 1.26 2008/11/06 23:41:28 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -45,6 +45,8 @@ struct cfdriver acpiac_cd = {
 	NULL, "acpiac", DV_DULL
 };
 
+const char *acpiac_hids[] = { ACPI_DEV_AC, 0 };
+
 int
 acpiac_match(struct device *parent, void *match, void *aux)
 {
@@ -52,11 +54,7 @@ acpiac_match(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 
 	/* sanity */
-	if (aa->aaa_name == NULL ||
-	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
-	    aa->aaa_table != NULL)
-		return (0);
-	return (1);
+	return (acpi_matchhids(aa, acpiac_hids, cf->cf_driver->cd_name));
 }
 
 void
