@@ -76,13 +76,6 @@ struct mem_block {
 	struct drm_file *file_priv; /* NULL: free, -1: heap, other: real files */
 };
 
-typedef struct _drm_i915_vbl_swap {
-	struct list_head head;
-	drm_drawable_t drw_id;
-	unsigned int pipe;
-	unsigned int sequence;
-} drm_i915_vbl_swap_t;
-
 typedef struct drm_i915_private {
 	drm_local_map_t *sarea;
 	drm_local_map_t *mmio_map;
@@ -116,10 +109,6 @@ typedef struct drm_i915_private {
 	int allow_batchbuffer;
 	struct mem_block *agp_heap;
 	unsigned int sr01, adpa, ppcr, dvob, dvoc, lvds;
-
-	DRM_SPINTYPE swaps_lock;
-	drm_i915_vbl_swap_t vbl_swaps;
-	unsigned int swaps_pending;
 
 	/* Register state */
 	u8 saveLBB;

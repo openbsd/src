@@ -823,7 +823,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 			return ret;
 	}
 
-	mtx_init(&dev_priv->swaps_lock, IPL_NONE);
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
 	return ret;
@@ -838,7 +837,6 @@ int i915_driver_unload(struct drm_device *dev)
 	if (dev_priv->mmio_map)
 		drm_rmmap(dev, dev_priv->mmio_map);
 
-	DRM_SPINUNINIT(&dev_priv->swaps_lock);
 	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
 
 	drm_free(dev->dev_private, sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
