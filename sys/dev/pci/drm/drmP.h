@@ -531,7 +531,6 @@ struct drm_device {
 	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */
 	struct rwlock	  dev_lock;	/* protects everything else */
 	DRM_SPINTYPE	  drw_lock;
-	DRM_SPINTYPE	  tsk_lock;
 
 				/* Usage Counters */
 	int		  open_count;	/* Outstanding files open	   */
@@ -586,8 +585,6 @@ struct drm_device {
 	u_int		  drw_no;
 	/* RB tree of drawable infos */
 	RB_HEAD(drawable_tree, bsd_drm_drawable_info) drw_head;
-
-	void		  (*locked_task_call)(struct drm_device *);
 };
 
 extern int	drm_debug_flag;
@@ -749,7 +746,6 @@ int	drm_dma(struct drm_device *, void *, struct drm_file *);
 /* IRQ support (drm_irq.c) */
 int	drm_control(struct drm_device *, void *, struct drm_file *);
 int	drm_wait_vblank(struct drm_device *, void *, struct drm_file *);
-void	drm_locked_tasklet(struct drm_device *, void (*)(struct drm_device *));
 
 /* AGP/GART support (drm_agpsupport.c) */
 int	drm_agp_acquire_ioctl(struct drm_device *, void *, struct drm_file *);
