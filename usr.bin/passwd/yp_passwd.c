@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.30 2007/08/14 13:30:45 aanriot Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.31 2008/11/06 05:35:56 djm Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.30 2007/08/14 13:30:45 aanriot Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.31 2008/11/06 05:35:56 djm Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -61,16 +61,18 @@ extern int	pwd_gensalt(char *, int, login_cap_t *, char);
 extern int	pwd_check(login_cap_t *, char *);
 extern int	pwd_gettries(login_cap_t *);
 extern void	kbintr(int);
+int		yp_passwd(char *);
 
 char		*ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
 struct passwd	*ypgetpwnam(char *, int);
+struct passwd	*interpret(struct passwd *, char *, int);
 
 char *domain;
 
 static int
-pw_error(char *name, int err, int eval)
+pw_error(char *name, int error, int eval)
 {
-	if (err) {
+	if (error) {
 		if (name)
 			warn("%s", name);
 		else
@@ -84,7 +86,7 @@ pw_error(char *name, int err, int eval)
 int
 yp_passwd(char *username)
 {
-	struct yppasswd yppasswd;
+	struct yppasswd yppwd;
 	int r, rpcport, status, secure=0;
 	struct passwd *pw;
 	struct timeval tv;
@@ -150,40 +152,40 @@ yp_passwd(char *username)
 	}
 
 	/* prompt for new password */
-	yppasswd.newpw.pw_passwd = ypgetnewpasswd(pw, lc, &yppasswd.oldpass);
+	yppwd.newpw.pw_passwd = ypgetnewpasswd(pw, lc, &yppwd.oldpass);
 
 	/* tell rpc.yppasswdd */
-	yppasswd.newpw.pw_name	= pw->pw_name;
-	yppasswd.newpw.pw_uid	= pw->pw_uid;
-	yppasswd.newpw.pw_gid	= pw->pw_gid;
-	yppasswd.newpw.pw_gecos = pw->pw_gecos;
-	yppasswd.newpw.pw_dir	= pw->pw_dir;
-	yppasswd.newpw.pw_shell	= pw->pw_shell;
+	yppwd.newpw.pw_name	= pw->pw_name;
+	yppwd.newpw.pw_uid	= pw->pw_uid;
+	yppwd.newpw.pw_gid	= pw->pw_gid;
+	yppwd.newpw.pw_gecos = pw->pw_gecos;
+	yppwd.newpw.pw_dir	= pw->pw_dir;
+	yppwd.newpw.pw_shell	= pw->pw_shell;
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client==NULL) {
 		warnx("cannot contact yppasswdd on %s: Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
-		free(yppasswd.newpw.pw_passwd);
+		free(yppwd.newpw.pw_passwd);
 		return (YPERR_YPBIND);
 	}
 	client->cl_auth = authunix_create_default();
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
-	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	    xdr_yppasswd, &yppwd, xdr_int, &status, tv);
 	if (r) {
 		printf("rpc to yppasswdd failed.\n");
-		free(yppasswd.newpw.pw_passwd);
+		free(yppwd.newpw.pw_passwd);
 		return (1);
 	} else if (status) {
 		printf("Couldn't change YP password.\n");
-		free(yppasswd.newpw.pw_passwd);
+		free(yppwd.newpw.pw_passwd);
 		return (1);
 	} else {
 		printf("The YP password has been changed on %s, "
 	 	    "the master YP passwd server.\n", master);
-		free(yppasswd.newpw.pw_passwd);
+		free(yppwd.newpw.pw_passwd);
 		return (0);
 	}
 }

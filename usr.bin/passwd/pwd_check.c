@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.11 2005/05/01 00:05:10 djm Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.12 2008/11/06 05:35:56 djm Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -45,6 +45,9 @@
 #include <paths.h>
 #include <login_cap.h>
 #include <signal.h>
+
+int pwd_check(login_cap_t *, char *);
+int pwd_gettries(login_cap_t *);
 
 struct pattern {
 	char *match;
