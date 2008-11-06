@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.7 2008/11/06 09:16:25 ian Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.8 2008/11/06 11:19:24 sobrado Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -98,26 +98,22 @@ DEVNAME=$2
 case $DEVCLASS in
 2)
 	# disk devices
-
 	disklabel=`/sbin/disklabel $DEVNAME 2\*(Gt&1 | \e
-		sed -n '/^label: /s/^label: //p'`
+	    sed -n '/^label: /s/^label: //p'`
 	case $disklabel in
 	Sony*DSC*)
 		# Sony DSC camera
 		mount -o nodev,nosuid /dev/"$DEVNAME"i /mnt/camera
 		;;
 	esac
-
 	;;
 3)
 	# network devices; use hostname.if if found, else dhclient.
-
 	if [ -f /etc/hostname.$DEVNAME ]; then
 		sh /etc/netstart $DEVNAME
 	else
 		/sbin/dhclient $DEVNAME
 	fi
-
 	;;
 esac
 .Ed
