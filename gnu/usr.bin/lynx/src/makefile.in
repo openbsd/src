@@ -163,6 +163,7 @@ TABLES= \
  $(CHRTR)iso08_uni.h \
  $(CHRTR)iso09_uni.h \
  $(CHRTR)iso10_uni.h \
+ $(CHRTR)iso13_uni.h \
  $(CHRTR)iso15_uni.h \
  $(CHRTR)koi8r_uni.h \
  $(CHRTR)mac_uni.h \

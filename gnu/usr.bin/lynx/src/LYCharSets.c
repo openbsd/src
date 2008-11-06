@@ -689,6 +689,7 @@ PRIVATE CONST names_pairs OLD_charset_names[] = {
     {"ISO-8859-8-E",        "iso-8859-8"},
     {"ISO 8859-9 (Latin 5)","iso-8859-9"},
     {"ISO 8859-10",         "iso-8859-10"},
+    {"ISO 8859-13",         "iso-8859-13"},
     {"UNICODE UTF 8",       "utf-8"},
     {"RFC 1345 w/o Intro",  "mnemonic+ascii+0"},
     {"RFC 1345 Mnemonic",   "mnemonic"},

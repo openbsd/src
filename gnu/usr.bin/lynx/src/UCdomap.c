@@ -63,6 +63,7 @@
 #include <iso08_uni.h>		/* ISO 8859-8 Hebrew	*/
 #include <iso09_uni.h>		/* ISO 8859-9 (Latin 5) */
 #include <iso10_uni.h>		/* ISO 8859-10		*/
+#include <iso13_uni.h>		/* ISO 8859-13		*/
 #include <iso15_uni.h>		/* ISO 8859-15 (Latin 9)*/
 #include <koi8r_uni.h>		/* KOI8-R Cyrillic	*/
 #include <mac_uni.h>		/* Macintosh (8 bit)	*/
@@ -2074,6 +2075,7 @@ PUBLIC void UCInit NOARGS
     UC_CHARSET_SETUP_windows_1255;	  /* WinHebrew (cp1255)   */
     UC_CHARSET_SETUP_iso_8859_9;	  /* ISO 8859-9 (Latin 5) */
     UC_CHARSET_SETUP_iso_8859_10;	  /* ISO 8859-10	  */
+    UC_CHARSET_SETUP_iso_8859_13;	  /* ISO 8859-13	  */
 
     UC_CHARSET_SETUP_utf_8;		  /*** UNICODE UTF-8	  */
     UC_CHARSET_SETUP_mnemonic_ascii_0;	  /* RFC 1345 w/o Intro   */

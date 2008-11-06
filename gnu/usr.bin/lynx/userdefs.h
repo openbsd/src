@@ -680,6 +680,7 @@
  *     Eastern European (windows-1250)    windows-1250
  *     Latin 3 (ISO-8859-3)               iso-8859-3
  *     Latin 4 (ISO-8859-4)               iso-8859-4
+ *     Baltic Rim (ISO-8859-13)           iso-8859-13
  *     Baltic Rim (cp775)                 cp775
  *     Baltic Rim (windows-1257)          windows-1257
  *     Cyrillic (ISO-8859-5)              iso-8859-5
