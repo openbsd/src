@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.18 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.19 2008/11/06 22:11:36 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -256,8 +256,7 @@ schedcpu(void *arg)
 		p->p_estcpu = newcpu;
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
-			if ((p != curproc) &&
-			    p->p_stat == SRUN &&
+			if (p->p_stat == SRUN &&
 			    (p->p_priority / PPQ) != (p->p_usrpri / PPQ)) {
 				remrunqueue(p);
 				p->p_priority = p->p_usrpri;
@@ -500,6 +499,7 @@ setrunnable(struct proc *p)
 	case SONPROC:
 	case SZOMB:
 	case SDEAD:
+	case SIDL:
 	default:
 		panic("setrunnable");
 	case SSTOP:
@@ -511,8 +511,6 @@ setrunnable(struct proc *p)
 			atomic_setbits_int(&p->p_siglist, sigmask(p->p_xstat));
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
-		break;
-	case SIDL:
 		break;
 	}
 	p->p_stat = SRUN;
