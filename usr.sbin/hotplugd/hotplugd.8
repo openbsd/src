@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.6 2007/05/31 19:20:24 jmc Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.7 2008/11/06 09:16:25 ian Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 6 2008 $
 .Dt HOTPLUGD 8
 .Os
 .Sh NAME
@@ -110,9 +110,13 @@ case $DEVCLASS in
 
 	;;
 3)
-	# network devices
+	# network devices; use hostname.if if found, else dhclient.
 
-	/sbin/dhclient $DEVNAME
+	if [ -f /etc/hostname.$DEVNAME ]; then
+		sh /etc/netstart $DEVNAME
+	else
+		/sbin/dhclient $DEVNAME
+	fi
 
 	;;
 esac
