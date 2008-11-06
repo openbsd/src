@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.52 2008/10/03 20:25:29 brad Exp $ */
+/*	$OpenBSD: if_url.c,v 1.53 2008/11/06 02:32:29 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -281,6 +281,8 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = url_watchdog;
 
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/*
 	 * Do ifmedia setup.

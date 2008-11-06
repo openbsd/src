@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.3 2008/11/02 23:50:48 jsg Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.4 2008/11/06 02:32:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -712,6 +712,8 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, sc->mos_dev.dv_xname, IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Initialize MII/media info. */
 	mii = GET_MII(sc);

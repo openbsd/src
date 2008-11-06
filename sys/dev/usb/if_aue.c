@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.73 2008/10/02 20:21:14 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.74 2008/11/06 02:32:28 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -810,6 +810,8 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, sc->aue_dev.dv_xname, IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Initialize MII/media info. */
 	mii = &sc->aue_mii;
