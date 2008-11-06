@@ -1,4 +1,4 @@
-/* $Id: mpls_output.c,v 1.1 2008/10/28 01:16:14 michele Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.2 2008/11/06 19:32:51 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
