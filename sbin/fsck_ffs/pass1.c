@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.28 2008/11/02 08:54:10 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.29 2008/11/06 18:01:44 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.28 2008/11/02 08:54:10 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.29 2008/11/06 18:01:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	lastino = inumber;
 	/* This should match the file size limit in ffs_mountfs(). */
-	kernmaxfilesize = FS_KERNMAXFILESIZE(&sblock);
+	kernmaxfilesize = FS_KERNMAXFILESIZE(getpagesize(), &sblock);
 	if (DIP(dp, di_size) > kernmaxfilesize ||
 	    DIP(dp, di_size) > sblock.fs_maxfilesize ||
 	    (mode == IFDIR && DIP(dp, di_size) > MAXDIRSIZE)) {
