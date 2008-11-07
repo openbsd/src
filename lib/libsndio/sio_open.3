@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.2 2008/10/29 02:47:47 todd Exp $
+.\" $OpenBSD: sio_open.3,v 1.3 2008/11/07 21:01:15 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2008 $
+.Dd $Mdocdate: November 7 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -200,8 +200,8 @@ The number of frames that will be buffered for both
 play and record directions.
 .It Va round
 Optimal number of frames that the application buffers
-should be a multiple of, to get best performance;
-it is read-only.
+should be a multiple of, to get best performance.
+Applications can use this parameter to round their block size.
 .It Va xrun
 The action when the client doesn't accept
 recorded data or doesn't provide data to play fast enough;

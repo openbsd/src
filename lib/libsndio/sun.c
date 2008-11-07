@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.3 2008/10/30 18:25:43 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.4 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,197 +74,6 @@ struct sio_ops sun_ops = {
 	sun_revents
 };
 
-struct sun_rate {
-	unsigned rate;
-	unsigned *blksz;
-};
-
-unsigned sun_blksz_8000Hz[] = {
-	40, 48, 56, 64, 72, 80, 88, 96,
-	104, 112, 120, 125, 128, 136, 144, 152,
-	160, 168, 176, 184, 192, 200, 208, 216,
-	224, 232, 240, 248, 250, 256, 264, 272,
-	280, 288, 296, 304, 312, 320, 328, 336,
-	344, 352, 360, 368, 375, 376, 384, 392,
-	400, 408, 416, 424, 432, 440, 448, 456,
-	464, 472, 480, 488, 496, 500, 504, 512,
-	520, 528, 536, 544, 552, 560, 568, 576,
-	584, 592, 600, 608, 616, 624, 625, 632,
-	640, 648, 656, 664, 672, 680, 688, 696,
-	704, 712, 720, 728, 736, 744, 750, 752,
-	760, 768, 776, 784, 792, 800, 0
-};
-unsigned sun_blksz_11025Hz[] = {
-	105, 210, 225, 245, 315, 420, 441, 450,
-	490, 525, 630, 675, 735, 840, 882, 900,
-	945, 980, 1050, 0
-};
-unsigned sun_blksz_12000Hz[] = {
-	60, 72, 84, 96, 108, 120, 132, 144,
-	156, 168, 180, 192, 200, 204, 216, 228,
-	240, 250, 252, 264, 276, 288, 300, 312,
-	324, 336, 348, 360, 372, 375, 384, 396,
-	400, 408, 420, 432, 444, 456, 468, 480,
-	492, 500, 504, 516, 528, 540, 552, 564,
-	576, 588, 600, 612, 624, 636, 648, 660,
-	672, 684, 696, 708, 720, 732, 744, 750,
-	756, 768, 780, 792, 800, 804, 816, 828,
-	840, 852, 864, 876, 888, 900, 912, 924,
-	936, 948, 960, 972, 984, 996, 1000, 1008,
-	1020, 1032, 1044, 1056, 1068, 1080, 1092, 1104,
-	1116, 1125, 1128, 1140, 1152, 1164, 1176, 1188,
-	1200, 0
-};
-unsigned sun_blksz_16000Hz[] = {
-	80, 96, 112, 128, 144, 160, 176, 192,
-	208, 224, 240, 250, 256, 272, 288, 304,
-	320, 336, 352, 368, 384, 400, 416, 432,
-	448, 464, 480, 496, 500, 512, 528, 544,
-	560, 576, 592, 608, 624, 640, 656, 672,
-	688, 704, 720, 736, 750, 752, 768, 784,
-	800, 816, 832, 848, 864, 880, 896, 912,
-	928, 944, 960, 976, 992, 1000, 1008, 1024,
-	1040, 1056, 1072, 1088, 1104, 1120, 1136, 1152,
-	1168, 1184, 1200, 1216, 1232, 1248, 1250, 1264,
-	1280, 1296, 1312, 1328, 1344, 1360, 1376, 1392,
-	1408, 1424, 1440, 1456, 1472, 1488, 1500, 1504,
-	1520, 1536, 1552, 1568, 1584, 1600, 0
-};
-unsigned sun_blksz_22050Hz[] = {
-	210, 315, 420, 441, 450, 490, 525, 630,
-	735, 840, 882, 900, 945, 980, 1050, 1225,
-	1260, 1323, 1350, 1470, 1575, 1680, 1764, 1800,
-	1890, 1960, 2100, 2205, 0
-};
-unsigned sun_blksz_24000Hz[] = {
-	120, 144, 168, 192, 216, 240, 264, 288,
-	312, 336, 360, 375, 384, 400, 408, 432,
-	456, 480, 500, 504, 528, 552, 576, 600,
-	624, 648, 672, 696, 720, 744, 750, 768,
-	792, 800, 816, 840, 864, 888, 912, 936,
-	960, 984, 1000, 1008, 1032, 1056, 1080, 1104,
-	1125, 1128, 1152, 1176, 1200, 1224, 1248, 1272,
-	1296, 1320, 1344, 1368, 1392, 1416, 1440, 1464,
-	1488, 1500, 1512, 1536, 1560, 1584, 1600, 1608,
-	1632, 1656, 1680, 1704, 1728, 1752, 1776, 1800,
-	1824, 1848, 1872, 1875, 1896, 1920, 1944, 1968,
-	1992, 2000, 2016, 2040, 2064, 2088, 2112, 2136,
-	2160, 2184, 2208, 2232, 2250, 2256, 2280, 2304,
-	2328, 2352, 2376, 2400, 0
-};
-unsigned sun_blksz_32000Hz[] = {
-	160, 192, 224, 256, 288, 320, 352, 384,
-	416, 448, 480, 500, 512, 544, 576, 608,
-	640, 672, 704, 736, 768, 800, 832, 864,
-	896, 928, 960, 992, 1000, 1024, 1056, 1088,
-	1120, 1152, 1184, 1216, 1248, 1280, 1312, 1344,
-	1376, 1408, 1440, 1472, 1500, 1504, 1536, 1568,
-	1600, 1632, 1664, 1696, 1728, 1760, 1792, 1824,
-	1856, 1888, 1920, 1952, 1984, 2000, 2016, 2048,
-	2080, 2112, 2144, 2176, 2208, 2240, 2272, 2304,
-	2336, 2368, 2400, 2432, 2464, 2496, 2500, 2528,
-	2560, 2592, 2624, 2656, 2688, 2720, 2752, 2784,
-	2816, 2848, 2880, 2912, 2944, 2976, 3000, 3008,
-	3040, 3072, 3104, 3136, 3168, 3200, 0
-};
-unsigned sun_blksz_44100Hz[] = {
-	420, 441, 630, 735, 840, 882, 900, 980,
-	1050, 1225, 1260, 1323, 1470, 1575, 1680, 1764,
-	1800, 1890, 1960, 2100, 2205, 2450, 2520, 2646,
-	2700, 2940, 3087, 3150, 3360, 3528, 3600, 3675,
-	3780, 3920, 3969, 4200, 4410, 0
-};
-unsigned sun_blksz_48000Hz[] = {
-	240, 288, 336, 384, 432, 480, 528, 576,
-	624, 672, 720, 750, 768, 800, 816, 864,
-	912, 960, 1000, 1008, 1056, 1104, 1152, 1200,
-	1248, 1296, 1344, 1392, 1440, 1488, 1500, 1536,
-	1584, 1600, 1632, 1680, 1728, 1776, 1824, 1872,
-	1920, 1968, 2000, 2016, 2064, 2112, 2160, 2208,
-	2250, 2256, 2304, 2352, 2400, 2448, 2496, 2544,
-	2592, 2640, 2688, 2736, 2784, 2832, 2880, 2928,
-	2976, 3000, 3024, 3072, 3120, 3168, 3200, 3216,
-	3264, 3312, 3360, 3408, 3456, 3504, 3552, 3600,
-	3648, 3696, 3744, 3750, 3792, 3840, 3888, 3936,
-	3984, 4000, 4032, 4080, 4128, 4176, 4224, 4272,
-	4320, 4368, 4416, 4464, 4500, 4512, 4560, 4608,
-	4656, 4704, 4752, 4800, 0
-};
-unsigned sun_blksz_64000Hz[] = {
-	320, 384, 448, 512, 576, 640, 704, 768,
-	832, 896, 960, 1000, 1024, 1088, 1152, 1216,
-	1280, 1344, 1408, 1472, 1536, 1600, 1664, 1728,
-	1792, 1856, 1920, 1984, 2000, 2048, 2112, 2176,
-	2240, 2304, 2368, 2432, 2496, 2560, 2624, 2688,
-	2752, 2816, 2880, 2944, 3000, 3008, 3072, 3136,
-	3200, 3264, 3328, 3392, 3456, 3520, 3584, 3648,
-	3712, 3776, 3840, 3904, 3968, 4000, 4032, 4096,
-	4160, 4224, 4288, 4352, 4416, 4480, 4544, 4608,
-	4672, 4736, 4800, 4864, 4928, 4992, 5000, 5056,
-	5120, 5184, 5248, 5312, 5376, 5440, 5504, 5568,
-	5632, 5696, 5760, 5824, 5888, 5952, 6000, 6016,
-	6080, 6144, 6208, 6272, 6336, 6400, 0
-};
-unsigned sun_blksz_88200Hz[] = {
-	441, 840, 882, 1225, 1260, 1323, 1470, 1680,
-	1764, 1800, 1960, 2100, 2205, 2450, 2520, 2646,
-	2940, 3087, 3150, 3360, 3528, 3600, 3675, 3780,
-	3920, 3969, 4200, 4410, 4851, 4900, 5040, 5292,
-	5400, 5733, 5880, 6125, 6174, 6300, 6615, 6720,
-	7056, 7200, 7350, 7497, 7560, 7840, 7938, 8379,
-	8400, 8575, 8820, 0
-};
-unsigned sun_blksz_96000Hz[] = {
-	480, 576, 672, 768, 864, 960, 1056, 1152,
-	1248, 1344, 1440, 1500, 1536, 1600, 1632, 1728,
-	1824, 1920, 2000, 2016, 2112, 2208, 2304, 2400,
-	2496, 2592, 2688, 2784, 2880, 2976, 3000, 3072,
-	3168, 3200, 3264, 3360, 3456, 3552, 3648, 3744,
-	3840, 3936, 4000, 4032, 4128, 4224, 4320, 4416,
-	4500, 4512, 4608, 4704, 4800, 4896, 4992, 5088,
-	5184, 5280, 5376, 5472, 5568, 5664, 5760, 5856,
-	5952, 6000, 6048, 6144, 6240, 6336, 6400, 6432,
-	6528, 6624, 6720, 6816, 6912, 7008, 7104, 7200,
-	7296, 7392, 7488, 7500, 7584, 7680, 7776, 7872,
-	7968, 8000, 8064, 8160, 8256, 8352, 8448, 8544,
-	8640, 8736, 8832, 8928, 9000, 9024, 9120, 9216,
-	9312, 9408, 9504, 9600, 0
-};
-struct sun_rate sun_rates[] = {
-	{ 8000, sun_blksz_8000Hz },
-	{ 11025, sun_blksz_11025Hz },
-	{ 12000, sun_blksz_12000Hz },
-	{ 16000, sun_blksz_16000Hz },
-	{ 22050, sun_blksz_22050Hz },
-	{ 24000, sun_blksz_24000Hz },
-	{ 32000, sun_blksz_32000Hz },
-	{ 44100, sun_blksz_44100Hz },
-	{ 48000, sun_blksz_48000Hz },
-	{ 64000, sun_blksz_64000Hz },
-	{ 88200, sun_blksz_88200Hz },
-	{ 96000, sun_blksz_96000Hz }
-};
-
-#define SUN_MAXNRATES (sizeof(sun_rates) / sizeof(struct sun_rate))
-
-/*
- * return the closest supported rate
- */
-struct sun_rate *
-sun_findrate(unsigned rate)
-{
-	unsigned i;
-
-	if (rate <= sun_rates[0].rate)
-		return &sun_rates[0];
-
-	for (i = 0; i < SUN_MAXNRATES - 1; i++) {
-		if (rate < (sun_rates[i].rate + sun_rates[i + 1].rate) / 2)
-			return &sun_rates[i];
-	}
-	return &sun_rates[SUN_MAXNRATES];
-}
-
 /*
  * convert sun encoding to sio_par encoding
  */
@@ -321,86 +130,6 @@ sun_enctoinfo(struct audio_prinfo *ai, struct sio_par *par)
 		ai->encoding = AUDIO_ENCODING_ULINEAR_BE;
 	}
 	ai->precision = par->bits;
-}
-
-/*
- * calculate and set the largest possible block size, such that
- * play and record blocks have the same frames number
- */
-int
-sun_setnfr(struct sun_hdl *hdl, unsigned bufsz)
-{
-	struct audio_info aui;	
-	struct sio_par np;
-	struct sun_rate *nr;
-	unsigned nfr, infr = 0, onfr = 0, ibpf, obpf;
-	int i;
-
-	if (!sio_getpar(&hdl->sa, &np))
-		return 0;
-	nr = sun_findrate(np.rate);
-	if (nr->rate != np.rate) {
-		fprintf(stderr, "sun_setnfr: warning, unknown rate\n");
-	}
-	ibpf = (hdl->sa.mode & SIO_REC) ? np.rchan * np.bps : 1;
-	obpf = (hdl->sa.mode & SIO_PLAY) ? np.pchan * np.bps : 1;
-
-	/*
-	 * if no bufsz is given, use 200ms which is ok in most cases
-	 */
-	if (bufsz == 0)
-		bufsz = (np.rate * 200 + 999) / 1000;
-	if (bufsz < 32)
-		bufsz = 32;
-
-	for (i = 0; nr->blksz[i] != 0; i++) {
-		nfr = nr->blksz[i];
-		AUDIO_INITINFO(&aui);
-		aui.hiwat = (bufsz + nfr - 1) / nfr;
-		aui.lowat = aui.hiwat;
-		if (hdl->sa.mode & SIO_REC)
-			aui.record.block_size = nfr * ibpf;
-		if (hdl->sa.mode & SIO_PLAY)
-			aui.play.block_size = nfr * obpf;
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			perror("sun_setnfr: SETINFO");
-			hdl->sa.eof = 1;
-			return 0;
-		}
-		if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-			perror("sun_setnfr: GETINFO");
-			hdl->sa.eof = 1;
-			return 0;
-		}
-		infr = aui.record.block_size / ibpf;
-		onfr = aui.play.block_size / obpf;
-		if (hdl->sa.debug) {
-			fprintf(stderr, "sun_setnfr: %u -> (%u, %u)\n",
-			    nfr, infr, onfr);
-		}
-
-		/*
-		 * accept only block sizes of the table
-		 */
-		if ((hdl->sa.mode & SIO_REC) && infr != nfr)
-			continue;
-		if ((hdl->sa.mode & SIO_PLAY) && onfr != nfr)
-			continue;
-		return (hdl->sa.mode & SIO_REC) ? infr : onfr;
-	}
-
-	/*
-	 * failed to find ``optimal'' block size, try using the one the
-	 * hardware returned. We require both block sizes match, unless
-	 * we're not in full-duplex
-	 */
-	if (hdl->sa.mode != (SIO_REC | SIO_PLAY) || infr == onfr) {
-		fprintf(stderr, "sun_setnfr: using sub optimal block size\n");
-		return (hdl->sa.mode & SIO_REC) ? infr : onfr;
-	}
-	fprintf(stderr, "sun_setnfr: couldn't find a working blocksize\n");
-	hdl->sa.eof = 1;
-	return 0;
 }
 
 /*
@@ -594,6 +323,7 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct sun_hdl *hdl;
+	struct audio_info aui;
 	struct sio_par par;
 
 	hdl = malloc(sizeof(struct sun_hdl));
@@ -631,19 +361,20 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 		}
 	}
 	hdl->fd = fd;
-
-	/*
-	 * this is required to set the block size, choose a sample rate
-	 * such that the block size is in the ``optimal'' blocksize
-	 * range.
-	 */
+	AUDIO_INITINFO(&aui);
+	if (hdl->sa.mode & SIO_PLAY)
+		aui.play.encoding = AUDIO_ENCODING_SLINEAR;
+	if (hdl->sa.mode & SIO_REC)
+		aui.record.encoding = AUDIO_ENCODING_SLINEAR;
+	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
+		perror("sio_open_sun: setinfo");
+		goto bad_close;
+	}
 	sio_initpar(&par);
-	par.le = 1;
+	par.rate = 48000;
 	par.sig = 1;
 	par.bits = 16;
-	par.pchan = 2;
-	par.rchan = 2;
-	par.rate = 48000;	
+	par.bufsz = 1200;
 	if (!sio_setpar(&hdl->sa, &par))
 		goto bad_close;
 	return (struct sio_hdl *)hdl;
@@ -759,20 +490,13 @@ int
 sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct audio_info aui;	
-	struct sun_rate *r;
+	struct audio_info aui;
+	unsigned i, infr, ibpf, onfr, obpf;
+	unsigned bufsz, round;
 
 	/*
-	 * the only ones supported by Sun API
+	 * first, set encoding, rate and channels
 	 */
-	par->bps = SIO_BPS(par->bits);
-	par->msb = 1;
-	par->xrun = SIO_IGNORE;
-	if (par->rate != (unsigned)~0) {
-		r = sun_findrate(par->rate);
-		par->rate = r->rate;
-	}
-
 	AUDIO_INITINFO(&aui);
 	if (hdl->sa.mode & SIO_PLAY) {
 		aui.play.sample_rate = par->rate;
@@ -783,18 +507,80 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		aui.record.sample_rate = par->rate;
 		aui.record.channels = par->rchan;
 		sun_enctoinfo(&aui.record, par);
-	}	
-	aui.lowat = 1;
+	}
 	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0 && errno != EINVAL) {
 		perror("sun_setpar: setinfo");
 		hdl->sa.eof = 1;
 		return 0;
 	}
-	if (par->bufsz != (unsigned)~0) {
-		if (!sun_setnfr(hdl, par->bufsz))
-			return 0;
+
+	/*
+	 * if block size and buffer size are not both set then
+	 * set the blocksize to half the buffer size
+	 */ 
+	bufsz = par->bufsz;
+	round = par->round;
+	if (bufsz != (unsigned)~0) {
+		if (round == (unsigned)~0)
+			round = (bufsz + 1) / 2;
+	} else if (round != (unsigned)~0) {
+		if (bufsz == (unsigned)~0)
+			bufsz = round * 2;
+	} else
+		return 1;
+
+	/*
+	 * get the play/record frame size in bytes
+	 */
+	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
+		perror("sun_setpar: GETINFO");
+		hdl->sa.eof = 1;
+		return 0;
 	}
-	return 1;
+	ibpf = (hdl->sa.mode & SIO_REC) ?
+	    aui.record.channels * aui.record.precision / 8 : 1;
+	obpf = (hdl->sa.mode & SIO_PLAY) ?
+	    aui.play.channels * aui.play.precision / 8 : 1;
+
+	/*
+	 * try to set parameters until the device accepts
+	 * a common block size for play and record
+	 */
+	for (i = 0; i < 5; i++) {
+		AUDIO_INITINFO(&aui);
+		aui.hiwat = (bufsz + round - 1) / round;
+		aui.lowat = aui.hiwat;
+		if (hdl->sa.mode & SIO_REC)
+			aui.record.block_size = round * ibpf;
+		if (hdl->sa.mode & SIO_PLAY)
+			aui.play.block_size = round * obpf;
+		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
+			perror("sun_setpar2: SETINFO");
+			hdl->sa.eof = 1;
+			return 0;
+		}
+		if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
+			perror("sun_setpar2: GETINFO");
+			hdl->sa.eof = 1;
+			return 0;
+		}
+		infr = aui.record.block_size / ibpf;
+		onfr = aui.play.block_size / obpf;
+
+		/*
+		 * if half-duplex or both block sizes match, we're done
+		 */
+		if (hdl->sa.mode != (SIO_REC | SIO_PLAY) || infr == onfr)
+			return 1;
+
+		/*
+		 * retry with the smaller returned value
+		 */
+		round = infr < onfr ? infr : onfr;
+	}
+	fprintf(stderr, "sun_setpar: couldn't find a working blocksize\n");
+	hdl->sa.eof = 1;
+	return 0;
 }
 
 int

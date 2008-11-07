@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.2 2008/10/27 00:26:33 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.3 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,7 +49,7 @@ int safile_pollfd(struct file *, struct pollfd *, int);
 int safile_revents(struct file *, struct pollfd *);
 
 struct fileops safile_ops = {
-	"libsndsio",
+	"sndio",
 	sizeof(struct safile),
 	safile_close,
 	safile_read,
@@ -60,6 +60,101 @@ struct fileops safile_ops = {
 	safile_pollfd,
 	safile_revents
 };
+
+/*
+ * list of (rate, block-size) pairs ordered by frequency preference and
+ * then by block size preference (except for jumbo block sizes that are
+ * less prefered than anything else).
+ */
+struct blkdesc {
+	unsigned rate;		/* sample rate */
+	unsigned round;		/* usable block sizes */
+} blkdesc[] = {
+	{ 44100,	 882 },
+	{ 44100,	 840 },
+	{ 44100,	 441 },
+	{ 44100,	 420 },
+	{ 44100,	1764 },
+	{ 44100,	1680 },
+	{ 48000,	 960 },
+	{ 48000,	 768 },
+	{ 48000,	 480 },
+	{ 48000,	 384 },
+	{ 48000,	1920 },
+	{ 48000,	1536 },
+	{ 32000,	 640 },
+	{ 32000,	 512 },
+	{ 32000,	 320 },
+	{ 32000,	 256 },
+	{ 32000,	1280 },
+	{ 32000,	1024 },
+	{ 44100,	2940 },
+	{ 48000,	2976 },
+	{ 32000,	3200 },
+	{  8000,	 320 },
+	{  8000,	 256 },
+	{     0,	   0 }
+};
+
+
+int
+safile_trypar(struct sio_hdl *hdl, struct sio_par *par, int blkio)
+{
+	struct blkdesc *d;
+	struct sio_par np;
+	unsigned rate = par->rate;
+	unsigned round = par->round;
+
+	if (!blkio) {
+		fprintf(stderr, "not setting block size\n");
+		if (!sio_setpar(hdl, par))
+			return 0;
+		if (!sio_getpar(hdl, par))
+			return 0;
+		return 1;
+	}
+
+	/*
+	 * find the rate we want to use
+	 */
+	for (d = blkdesc;; d++) {
+		if (d->rate == 0) {
+			d = blkdesc;
+			break;
+		}
+		if (d->rate == rate)
+			break;
+	}
+
+	/*
+	 * find the first matching entry, (the blkdesc array is)
+	 * sorted by order of preference)
+	 */
+	for (;; d++) {
+		if (d->rate == 0)
+			break;
+		if (d->round > round)
+			continue;
+		par->rate = d->rate;
+		par->round = d->round;
+		if (!sio_setpar(hdl, par))
+			return 0;
+		if (!sio_getpar(hdl, &np))
+			return 0;
+		if (np.rate == d->rate && np.round == d->round) {
+			*par = np;
+			if (d->round >= d->rate / 15)
+				fprintf(stderr,
+				    "Warning: using jumbo block size, "
+				    "try to use another sample rate.\n");
+			return 1;
+		}
+		DPRINTF("safile_trypar: %uHz/%ufr failed, got %uHz/%ufr\n",
+		    d->rate, d->round, np.rate, np.round);
+	}
+	fprintf(stderr, "Couldn't set block size to <%u frames.\n", round);
+	return 0;
+}
 
 void
 safile_cb(void *addr, int delta)
@@ -85,7 +180,7 @@ safile_cb(void *addr, int delta)
 struct safile *
 safile_new(struct fileops *ops, char *path,
     struct aparams *ipar, struct aparams *opar,
-    unsigned *bufsz, unsigned *round)
+    unsigned *bufsz, unsigned *round, int blkio)
 {
 	struct sio_par par;
 	struct sio_hdl *hdl;
@@ -123,16 +218,10 @@ safile_new(struct fileops *ops, char *path,
 	}
 	if (opar)
 		par.pchan = opar->cmax - opar->cmin + 1;
-	if (*bufsz)
-		par.bufsz = *bufsz;
-	if (!sio_setpar(hdl, &par)) {
-		fprintf(stderr, "safile_new: sio_setpar failed\n");
+	par.bufsz = *bufsz;
+	par.round = *round;
+	if (!safile_trypar(hdl, &par, blkio))
 		exit(1);
-	}
-	if (!sio_getpar(hdl, &par)) {
-		fprintf(stderr, "safile_new: sio_getpar failed\n");
-		exit(1);
-	}
 	if (ipar) {
 		ipar->bits = par.bits;
 		ipar->bps = par.bps;
@@ -155,7 +244,7 @@ safile_new(struct fileops *ops, char *path,
 	}
 	*bufsz = par.bufsz;
 	*round = par.round;
-	DPRINTF("safile_open: using %u(%u) fpb\n", *bufsz, *round);
+	DPRINTF("safile_new: using %u(%u) fpb\n", *bufsz, *round);
 	f = (struct safile *)file_new(ops, "hdl", sio_nfds(hdl));
 	f->hdl = hdl;
 	sio_onmove(f->hdl, safile_cb, f);

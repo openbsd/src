@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.10 2008/11/07 00:21:02 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.11 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -94,7 +94,8 @@ dev_roundrate(unsigned *newrate, unsigned *newround)
  */
 void
 dev_init(char *devpath,
-    struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
+    struct aparams *dipar, struct aparams *dopar,
+    unsigned bufsz, int blkio)
 {
 	struct aparams ipar, opar;
 	struct aproc *conv;
@@ -102,11 +103,13 @@ dev_init(char *devpath,
 	unsigned nfr, ibufsz, obufsz;
 
 	/*
-	 * use 1/4 of the total buffer for the device
+	 * ask for 1/4 of the buffer for the kernel ring and
+	 * limit the block size to 1/4 of the requested buffer
 	 */
 	dev_bufsz = (bufsz + 3) / 4;
+	dev_round = (bufsz + 3) / 4;
 	dev_file = (struct file *)safile_new(&safile_ops, devpath,
-	    dipar, dopar, &dev_bufsz, &dev_round);
+	    dipar, dopar, &dev_bufsz, &dev_round, blkio);
 	if (!dev_file)
 		exit(1);
 	if (!dev_setrate(dipar ? dipar->rate : dopar->rate))
@@ -127,10 +130,22 @@ dev_init(char *devpath,
 			fprintf(stderr, "\n");
 		}
 	}
-	nfr = ibufsz = obufsz = dev_bufsz;
+	ibufsz = obufsz = dev_bufsz;
+	bufsz = (bufsz > dev_bufsz) ? bufsz - dev_bufsz : 0;
 
 	/*
-	 * create record chain: use 1/4 for the file i/o buffers
+	 * use 1/8 of the buffer for the mixer/converters.  Since we
+	 * already consumed 1/4 for the device, bufsz represents the
+	 * remaining 3/4. So 1/8 is 1/6 of 3/4
+	 */
+	nfr = (bufsz + 5) / 6;
+	nfr += dev_round - 1;
+	nfr -= nfr % dev_round;
+	if (nfr == 0)
+		nfr = dev_round;
+
+	/*
+	 * create record chain
 	 */
 	if (dipar) {
 		aparams_init(&ipar, dipar->cmin, dipar->cmax, dipar->rate);

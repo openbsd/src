@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.31 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.32 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -288,7 +288,7 @@ main(int argc, char **argv)
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
-	unsigned ivol, ovol, bufsz = 0;
+	unsigned ivol, ovol, bufsz;
 	char *devpath, *dbgenv, *listenpath;
 	const char *errstr;
 	extern char *malloc_options;
@@ -304,7 +304,6 @@ main(int argc, char **argv)
 
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
-
 	u_flag = 0;
 	l_flag = 0;
 	devpath = NULL;
@@ -313,6 +312,7 @@ main(int argc, char **argv)
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
 	ivol = ovol = MIDI_TO_ADATA(127);
+	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 
 	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lu"))
 	    != -1) {
@@ -357,7 +357,7 @@ main(int argc, char **argv)
 			u_flag = 1;
 			break;
 		case 'b':
-			if (sscanf(optarg, "%u", &bufsz) != 1) {
+			if (sscanf(optarg, "%u", &bufsz) != 1 || bufsz == 0) {
 				fprintf(stderr, "%s: bad buf size\n", optarg);
 				exit(1);
 			}
@@ -438,12 +438,13 @@ main(int argc, char **argv)
 	filelist_init();
 
 	/*
-	 * Open the device.
+	 * Open the device. Give half of the buffer to the device,
+	 * the other half is for the socket/files
 	 */
 	dev_init(devpath, 
 	    (l_flag || !SLIST_EMPTY(&ofiles)) ? &dipar : NULL,
 	    (l_flag || !SLIST_EMPTY(&ifiles)) ? &dopar : NULL,
-	    bufsz);
+	    bufsz, l_flag);
 
 	if (l_flag) {
 		listenpath = getenv("AUCAT_SOCKET");

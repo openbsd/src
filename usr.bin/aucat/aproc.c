@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.20 2008/11/06 17:47:52 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.21 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -534,6 +534,7 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 void
 mix_newout(struct aproc *p, struct abuf *obuf)
 {
+	DPRINTF("mix_newout: using %u fpb\n", obuf->len / obuf->bpf);
 	obuf->mixitodo = 0;
 	mix_bzero(p);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: safile.h,v 1.2 2008/11/07 21:01:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,7 @@ struct safile;
 struct aparams;
 
 struct safile *safile_new(struct fileops *, char *,
-    struct aparams *, struct aparams *, unsigned *, unsigned *);
+    struct aparams *, struct aparams *, unsigned *, unsigned *, int);
 
 extern struct fileops safile_ops;
 
