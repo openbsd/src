@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.16 2008/11/05 21:38:03 jakemsr Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.17 2008/11/07 19:53:20 todd Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -947,10 +947,10 @@ i2s_set_rate(sc, rate)
 	keylargo_fcr_disable(I2SClockOffset, I2S0CLKEN);
 
 	/* Wait until clock is stopped */
-	for (timo = 1000; timo > 0; timo--) {
+	for (timo = 50; timo > 0; timo--) {
 		if (in32rb(sc->sc_reg + I2S_INT) & I2S_INT_CLKSTOPPEND)
 			goto done;
-		delay(1);
+		delay(10);
 	}
 
 	printf("i2s_set_rate: timeout\n");
