@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemreg.h,v 1.13 2007/05/18 02:18:28 dlg Exp $	*/
+/*	$OpenBSD: gemreg.h,v 1.14 2008/11/07 17:37:59 brad Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -76,6 +76,12 @@
 #define	GEM_CONFIG_BURST_INF	0x000000001	/* 0->infinity, 1->64KB */
 #define	GEM_CONFIG_TXDMA_LIMIT	0x00000003e
 #define	GEM_CONFIG_RXDMA_LIMIT	0x0000007c0
+/* GEM_CONFIG_RONPAULBIT and GEM_CONFIG_BUG2FIX are Apple only. */
+#define	GEM_CONFIG_RONPAULBIT	0x000000800	/* after infinite burst use
+						 * memory read multiple for
+						 * PCI commands */
+#define	GEM_CONFIG_BUG2FIX	0x000001000	/* fix RX hang after overflow */
+
 
 #define	GEM_CONFIG_TXDMA_LIMIT_SHIFT	1
 #define	GEM_CONFIG_RXDMA_LIMIT_SHIFT	6

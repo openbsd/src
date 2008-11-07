@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.79 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.80 2008/11/07 17:37:59 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -772,9 +772,9 @@ gem_init(struct ifnet *ifp)
 
 	/* Enable DMA */
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
-	bus_space_write_4(t, h, GEM_TX_CONFIG,
-		v|GEM_TX_CONFIG_TXDMA_EN|
-		((0x4ff<<10)&GEM_TX_CONFIG_TXFIFO_TH));
+	v |= ((sc->sc_variant == GEM_SUN_ERI ? 0x100 : 0x04ff) << 10) &
+	    GEM_TX_CONFIG_TXFIFO_TH;
+	bus_space_write_4(t, h, GEM_TX_CONFIG, v | GEM_TX_CONFIG_TXDMA_EN);
 	bus_space_write_4(t, h, GEM_TX_KICK, 0);
 
 	/* step 10. ERX Configuration */
@@ -889,6 +889,22 @@ gem_init_regs(struct gem_softc *sc)
 
 	/* Un-pause stuff */
 	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0);
+
+	/*
+	 * Set the internal arbitration to "infinite" bursts of the
+	 * maximum length of 31 * 64 bytes so DMA transfers aren't
+	 * split up in cache line size chunks. This greatly improves
+	 * especially RX performance.
+	 * Enable silicon bug workarounds for the Apple variants.
+	 */
+	v = GEM_CONFIG_TXDMA_LIMIT | GEM_CONFIG_RXDMA_LIMIT;
+	if (sc->sc_pci)
+		v |= GEM_CONFIG_BURST_INF;
+	else
+		v |= GEM_CONFIG_BURST_64;
+	if (sc->sc_variant != GEM_SUN_GEM && sc->sc_variant != GEM_SUN_ERI)
+		v |= GEM_CONFIG_RONPAULBIT | GEM_CONFIG_BUG2FIX;
+	bus_space_write_4(t, h, GEM_CONFIG, v);
 
 	/*
 	 * Set the station address.
