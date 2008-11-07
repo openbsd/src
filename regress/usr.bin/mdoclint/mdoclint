@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.9 2008/11/03 12:17:01 espie Exp $
+# $OpenBSD: mdoclint,v 1.10 2008/11/07 20:20:33 espie Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -165,10 +165,10 @@ sub handle_file {
     while (<INPUT>) {
 	$line++;
 	chomp();
-	if (/\$OpenBSD.*\$/) {
+	if (/\$OpenBSD\b.*\$/o) {
 	    $rcsidseen = 1;
 	}
-	if (/^\.TH/) {
+	if (/^\.TH\s+/o) {
 	    warning("not mandoc") if $opt_m;
 	    $mandoc_p = 0;
 #	    /^.TH\s*[\w-_".]+\s*([1-9])/;
@@ -177,19 +177,19 @@ sub handle_file {
 #	if (/^.Dt\s*[\w-_".]+\s*([1-9])/) {
 #	    $section = $1;
 #	}
-	if ($opt_D and /^.Dt/) {
-	    if (! /^.Dt\s+([A-Z0-9._-]+)\s+[1-9](\s+(alpha|amd64|arm|armish|aviion|cats|hp300|hppa|hppa64|i386|landisk|luna88k|mac68k|macppc|mvme68k|mvme88k|sgi|socppc|sparc|sparc64|vax|zaurus)|)$/)  {
+	if ($opt_D and /^\.Dt\s+/o) {
+	    if (! /^\.Dt\s+(?:[A-Z\d._-]+)\s+[1-9](?:\s+(?:alpha|amd64|arm|armish|aviion|cats|hp300|hppa|hppa64|i386|landisk|luna88k|mac68k|macppc|mvme68k|mvme88k|sgi|socppc|sparc|sparc64|vax|zaurus))?$/o)  {
 		warning("bad .Dt: `$_'");
 	    }
 	}
 
 	if ($opt_a) {
 	    if ($insa eq 0) {
-		if (/^.Sh\s+SEE ALSO$/) {
+		if (/^\.Sh\s+SEE ALSO$/o) {
 		    $insa = 1;
 		}
 	    } elsif ($insa eq 1) {
-		if (/^.Sh\s+/) {
+		if (/^\.Sh\s+/o) {
 		    if (not $sarest eq "") {
 			warning("unneeded characters at end of SEE ".
 				"ALSO: `$sarest'");
@@ -199,18 +199,16 @@ sub handle_file {
 		    # finished SEE ALSO section
 		    $insa = 2;
 		}
-		if (/^.Xr\s+(\S+)\s+(3p|[1-9])\s?(.*)?$/) {
-		    my $newsaname = $1;
-		    my $newsasection = $2;
-		    my $newsarest = $3;
-		    $newsaname =~ s/^\\&//;
+		if (/^\.Xr\s+(\S+)\s+(3p|[1-9])\s?(.*)?$/o) {
+		    my ($newsaname, $newsasection, $newsarest) = ($1, $2, $3);
+		    $newsaname =~ s/^\\&//o;
 		    if ($sasection gt $newsasection
 			or ($sasection eq $newsasection and
 			    ($saname cmp $newsaname) > 0)) {
 			warning("SEE ALSO: `.Xr $saname $sasection' should "
 				. "be after `.Xr $newsaname $newsasection'");
 		    }
-		    if (not $sarest eq ",") {
+		    if ($sarest ne ",") {
 			warning("SEE ALSO: .Xr not separated by ".
 				"comma, but `$sarest'");
 		    }
@@ -218,8 +216,8 @@ sub handle_file {
 		    $sasection = $newsasection;
 		    $sarest = $newsarest;
 		}
-		if (/^.Rs(\s+|$)/) {
-		    if (not $sarest eq "") {
+		if (/^\.Rs(?:\s+|$)/o) {
+		    if ($sarest ne "") {
 			warning("SEE ALSO: Not necessary to separate".
 				" .Xr from .Rs by `$sarest'");
 		    }
@@ -228,14 +226,14 @@ sub handle_file {
 	    }
 	}
 
-	if ($opt_f and /^\.Fn.*,.+/) {
+	if ($opt_f and /^\.Fn.*,.+/o) {
 	    warning("possible .Fn misuse: `$_'");
 	}
-	if ($opt_H and not /^\.\\\"/ and (/^([<>])/ or /[^\\][<>]/)) {
+	if ($opt_H and not /^\.\\\"/o and (/^(?:[<>])/o or /[^\\][<>]/o)) {
 	    warning("use \*(Lt \*(Gt (or .Aq) instead of < >: `$_'");
 	}
 	if ($opt_S) {
-	    if (/^\.Sh\s+(.*)\s*$/) {
+	    if (/^\.Sh\s+(.*)\s*$/o) {
 		if (not $sections{$1}) {
 		    warning("unknown section header: `$1'");
 		} else {
@@ -249,10 +247,10 @@ sub handle_file {
 	}
 
 	if ($opt_s) {
-	    if (/\s+$/) {
+	    if (/\s+$/o) {
 		warning("trailing space: `$_'");
 		if ($opt_F) {
-		    s/\s+$//;
+		    s/\s+$//o;
 		    $changes = 1;
 		}
 	    }
@@ -263,91 +261,91 @@ sub handle_file {
 #	    }
 	}
 	if ($opt_X) {
-	    if (not /^.\\\"/ and /(Free|Net|Open)BSD/
-		and not /(www|ftp).(Free|Net|Open)BSD\.org/
-		and not /OpenBSD\::.*3p/
-		and not /\/pub\/OpenBSD\//
-		and not /@(Free|Net|Open)BSD\.[oO][rR][gG]/) {
+	    if (not /^\.\\\"/o and /\b(Free|Net|Open)BSD\b/o
+		and not /\b(?:www|ftp)\.(?:Free|Net|Open)BSD\.org\b/o
+		and not /\bOpenBSD\::.*3p\b/o
+		and not /\/pub\/OpenBSD\//o
+		and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
 		warning("verbose mention of `$1BSD' instead of "
 			. "`$short{$1}': `$_'");
 	    }
-	    if (/^./ and (/Bx (Open)/ or /Bx (Free)/ or /Bx (Net)/)) {
+	    if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
 		warning("`.Bx $1' found -- use $short{$1} instead");
 	    }
 	}
 	if ($opt_o) {
-	    if (/^.Os/ && !/^.Os\s*$/) {
-		/^.Os(.*)/;
+	    if (/^\.Os/o && !/^\.Os\s*$/o) {
+		/^\.Os(.*)/o;
 		warning(".Os used with argument `$1'");
 	    }
 	}
 
 	if ($opt_n) {
-	    if (/^.Nd/ and /\.\s*$/) {
+	    if (/^\.Nd/o and /\.\s*$/o) {
 		warning(".Nd ends with a dot: `$_'");
 	    }
 	}
 	if ($opt_p) {
-	    if (not /^.\\\"/ and /^\... .*[^\s][\.();,\[\]\{\}:]$/
-		and not /\s\.\.\.$/ and not /\\&.$/) {
+	    if (not /^\.\\\"/o and /^\... .*[^\s][\.();,\[\]\{\}:]$/o
+		and not /\s\.\.\.$/o and not /\\&.$/o) {
 		warning("punctuation in format string without space: `$_'");
 	    }
-	    if (not /^.\\\"/ and /^\./ and /Ns [\.();,\[\]\{\}:]/) {
+	    if (not /^\.\\\"/o and /^\./o and /Ns [\.();,\[\]\{\}:]/o) {
 		warning("possible Ns abuse: `$_'");
 	    }
-	    if (/(\w+)\(\)/) {
+	    if (/(\w+)\(\)/o) {
 		warning("use .Fn or .Xr for functions: `$1()'");
 	    }
 	}
 	if ($opt_x) {
 	    if ($mandoc_p) {
 		$destruct = $_;
-		$destruct =~ s/\\\&([\w\.])/$1/;
-		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+(3p|[0-9])(.*)/) {
+		$destruct =~ s/\\\&([\w\.])/$1/o;
+		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+(3p|[0-9])(.*)/o) {
 		    debug("Xref to $1($2) found: `$_'");
 		    verify_xref("", $1, $2, "");
-		    if ($3 =~ /^\S/) {
+		    if ($3 =~ /^\S/o) {
 			warning("No space after section number in Xref: `$_'");
 		    }
-		} elsif ($destruct =~ /^\.Xr/) {
+		} elsif ($destruct =~ /^\.Xr/o) {
 		    warning("Weird Xref found: `$_'");
 		}
 	    } else {
 		$destruct = $_;
-		$destruct =~ s/\\f.//g;
-		if (not $destruct =~ /^\.\\\"/) {
-		    while ($destruct =~ s/([-\w.]+)\s*\((3p|[0-9])\)//) {
+		$destruct =~ s/\\f.//go;
+		if ($destruct !~ /^\.\\\"/o) {
+		    while ($destruct =~ s/([-\w.]+)\s*\((3p|[0-9])\)//o) {
 			debug("possible Xref to $1($2) found: `$_'");
 			verify_xref("possible ", $1, $2, ": `$_'");
 			# so that we have a chance to find more than one
 			# per line
-			$destruct =~ s/(\w+)\s*\((3p|[0-9])\)//;
+			$destruct =~ s/(\w+)\s*\((3p|[0-9])\)//o;
 		    }
 		}
 	    }
 	}
 	if ($opt_d) {
-	    if (/^.Dd/ and not /^.Dd [\$]Mdocdate/) {
+	    if (/^\.Dd/o and not /^\.Dd [\$]Mdocdate\b/o) {
 		warning("Invalid date found: `$_'");
 	    }
 	}
 
 	if ($opt_P) {
-	    if (/^\.Bd.*-literal/) {
+	    if (/^\.Bd\b.*-literal/o) {
 		$inliteral = 1;
 	    }
 	    if ($inliteral eq 1) {
-		if (/^\.Ed/) {
+		if (/^\.Ed\b/o) {
 		    $inliteral = 0;
 		}
-	    } elsif (/^$/) {
+	    } elsif (/^$/o) {
 		warning("Paragraph problem: empty line -- use .Pp for".
 			" paragraphs");
 	    }
-	    if ($last =~ /^.Pp/ and (/^(\.S[sh])/ or /^(\.Pp)/)) {
+	    if ($last =~ /^\.Pp/o and (/^(\.S[sh])/o or /^(\.Pp)/o)) {
 		warning("Paragraph problem: $1 after .Pp");
 	    }
-	    if (/^.Pp/ and $last =~ /^(\.S[sh])/) {
+	    if (/^\.Pp/o and $last =~ /^(\.S[sh])/o) {
 		warning("Paragraph problem: .Pp after $1");
 	    }
 	}
@@ -356,15 +354,15 @@ sub handle_file {
 	# sorted alphabetically.
 	#
 	if ($opt_e) {
-		/^\.Sh\s+(.*)$/ and $current_section = $1;
+		/^\.Sh\s+(.*)$/o and $current_section = $1;
 
 		# Error names should not be sorted across different lists.
 		# (see bind(2) for an example.)
 		#
-		/^\.Bl\s+/ and $last_error_name = "";
+		/^\.Bl\s+/o and $last_error_name = "";
 
 		if ($current_section eq "ERRORS" and
-		    /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/) {
+		    /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/o) {
 			my $current_error_name = $1;
 
 			if ($last_error_name eq $current_error_name) {
@@ -387,7 +385,7 @@ sub handle_file {
 	warning("Missing RCS Id");
     }
 
-    if ($opt_P and $last =~ /^.Pp/) {
+    if ($opt_P and $last =~ /^\.Pp/o) {
 	warning("Paragraph problem: .Pp at EOF");
     }
 
