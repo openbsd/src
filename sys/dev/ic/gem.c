@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.81 2008/11/07 18:00:31 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.82 2008/11/07 18:03:52 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1450,20 +1450,14 @@ gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+			if (ifp->if_flags & IFF_RUNNING)
 				gem_setladrf(sc);
-			else {
-				if ((ifp->if_flags & IFF_RUNNING) == 0)
-					gem_init(ifp);
-			}
+			else
+				gem_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				gem_stop(ifp, 1);
 		}
-		sc->sc_if_flags = ifp->if_flags;
-
 #ifdef GEM_DEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif

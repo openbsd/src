@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.18 2008/08/30 07:41:51 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.19 2008/11/07 18:03:52 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -140,8 +140,6 @@ struct gem_softc {
 	bus_space_handle_t sc_mif;	/* HME MIF registers */
 #endif
 	int		sc_burst;	/* DVMA burst size in effect */
-
-	int		sc_if_flags;
 
 	int		sc_mif_config;	/* Selected MII reg setting */
 
