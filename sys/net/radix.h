@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.14 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: radix.h,v 1.15 2008/11/07 19:09:03 deraadt Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -93,14 +93,18 @@ extern struct radix_mask {
 #define rm_mask rm_rmu.rmu_mask
 #define rm_leaf rm_rmu.rmu_leaf		/* extra field would make 32 bytes */
 
-#define MKGet(m) {\
-	if (rn_mkfreelist) {\
-		m = rn_mkfreelist; \
-		rn_mkfreelist = (m)->rm_mklist; \
-	} else \
-		R_Malloc(m, struct radix_mask *, sizeof (*(m))); }\
+#define MKGet(m) do {							\
+	if (rn_mkfreelist) {						\
+		m = rn_mkfreelist;					\
+		rn_mkfreelist = (m)->rm_mklist;				\
+	} else								\
+		R_Malloc(m, struct radix_mask *, sizeof (*(m)));	\
+} while (0)
 
-#define MKFree(m) { (m)->rm_mklist = rn_mkfreelist; rn_mkfreelist = (m);}
+#define MKFree(m) do {							\
+	(m)->rm_mklist = rn_mkfreelist;					\
+	rn_mkfreelist = (m);						\
+} while (0)
 
 struct radix_node_head {
 	struct	radix_node *rnh_treetop;
