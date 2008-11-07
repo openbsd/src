@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.85 2008/07/17 19:59:44 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.86 2008/11/07 22:53:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1805,6 +1805,7 @@
 #define BGE_MISCCFG_BOARD_ID_5788	0x00010000
 #define BGE_MISCCFG_BOARD_ID_5788M	0x00018000
 #define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
+#define BGE_MISCCFG_EPHY_IDDQ		0x00200000
 #define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)

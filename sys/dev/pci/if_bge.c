@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.249 2008/10/19 08:13:01 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.250 2008/11/07 22:52:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1316,6 +1316,15 @@ bge_chipinit(struct bge_softc *sc)
 
 	/* Set the timer prescaler (always 66MHz) */
 	CSR_WRITE_4(sc, BGE_MISC_CFG, 65 << 1/*BGE_32BITTIME_66MHZ*/);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		DELAY(40);	/* XXX */
+
+		/* Put PHY into ready state */
+		BGE_CLRBIT(sc, BGE_MISC_CFG, BGE_MISCCFG_EPHY_IDDQ);
+		CSR_READ_4(sc, BGE_MISC_CFG); /* Flush */
+		DELAY(40);
+	}
 }
 
 int
