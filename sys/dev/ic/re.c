@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.96 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.97 2008/11/07 18:12:22 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1627,12 +1627,30 @@ re_intr(void *arg)
 
 	if (sc->rl_imtype == RL_IMTYPE_SIM) {
 		if ((sc->rl_flags & RL_FLAG_TIMERINTR)) {
-			if ((tx | rx) == 0)
+			if ((tx | rx) == 0) {
+				/*
+				 * Nothing needs to be processed, fallback
+				 * to use TX/RX interrupts.
+				 */
 				re_setup_intr(sc, 1, RL_IMTYPE_NONE);
-			else
+
+				/*
+				 * Recollect, mainly to avoid the possible
+				 * race introduced by changing interrupt
+				 * masks.
+				 */
+				re_rxeof(sc);
+				tx = re_txeof(sc);
+			} else
 				CSR_WRITE_4(sc, RL_TIMERCNT, 1); /* reload */
-		} else if (tx | rx)
+		} else if (tx | rx) {
+			/*
+			 * Assume that using simulated interrupt moderation
+			 * (hardware timer based) could reduce the interrupt
+			 * rate.
+			 */
 			re_setup_intr(sc, 1, RL_IMTYPE_SIM);
+		}
 	}
 
 	if (tx && !IFQ_IS_EMPTY(&ifp->if_snd))
