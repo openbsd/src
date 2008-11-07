@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.9 2008/11/04 22:18:12 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.10 2008/11/07 00:21:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -363,45 +363,46 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
  */
 void
 dev_attach(char *name, 
-    struct abuf *ibuf, struct aparams *ipar, unsigned underrun, 
-    struct abuf *obuf, struct aparams *opar, unsigned overrun)
+    struct abuf *ibuf, struct aparams *sipar, unsigned underrun, 
+    struct abuf *obuf, struct aparams *sopar, unsigned overrun)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
+	struct aparams ipar = *sipar, opar = *sopar;
 	struct aproc *conv;
 	unsigned nfr;
 	
 	if (ibuf) {
 		pbuf = LIST_FIRST(&dev_mix->obuflist);		
-		if (!aparams_eqenc(ipar, &dev_opar)) {
+		if (!aparams_eqenc(&ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = dec_new(name, ipar);
-			ipar->bps = dev_opar.bps;
-			ipar->bits = dev_opar.bits;
-			ipar->sig = dev_opar.sig;
-			ipar->le = dev_opar.le;
-			ipar->msb = dev_opar.msb;
+			conv = dec_new(name, &ipar);
+			ipar.bps = dev_opar.bps;
+			ipar.bits = dev_opar.bits;
+			ipar.sig = dev_opar.sig;
+			ipar.le = dev_opar.le;
+			ipar.msb = dev_opar.msb;
 			aproc_setin(conv, ibuf);			
-			ibuf = abuf_new(nfr, ipar);
+			ibuf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, ibuf);
 		}
-		if (!aparams_subset(ipar, &dev_opar)) {
+		if (!aparams_subset(&ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = cmap_new(name, ipar, &dev_opar);
-			ipar->cmin = dev_opar.cmin;
-			ipar->cmax = dev_opar.cmax;
+			conv = cmap_new(name, &ipar, &dev_opar);
+			ipar.cmin = dev_opar.cmin;
+			ipar.cmax = dev_opar.cmax;
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, ipar);
+			ibuf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, ibuf);
 		}
-		if (!aparams_eqrate(ipar, &dev_opar)) {
+		if (!aparams_eqrate(&ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = resamp_new(name, ipar, &dev_opar);
-			ipar->rate = dev_opar.rate;
+			conv = resamp_new(name, &ipar, &dev_opar);
+			ipar.rate = dev_opar.rate;
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, ipar);
+			ibuf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, ibuf);
 		}
 		aproc_setin(dev_mix, ibuf);
@@ -410,36 +411,36 @@ dev_attach(char *name,
 	}
 	if (obuf) {
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
-		if (!aparams_eqenc(opar, &dev_ipar)) {
+		if (!aparams_eqenc(&opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = enc_new(name, opar);
-			opar->bps = dev_ipar.bps;
-			opar->bits = dev_ipar.bits;
-			opar->sig = dev_ipar.sig;
-			opar->le = dev_ipar.le;
-			opar->msb = dev_ipar.msb;
+			conv = enc_new(name, &opar);
+			opar.bps = dev_ipar.bps;
+			opar.bits = dev_ipar.bits;
+			opar.sig = dev_ipar.sig;
+			opar.le = dev_ipar.le;
+			opar.msb = dev_ipar.msb;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, opar);
+			obuf = abuf_new(nfr, &opar);
 			aproc_setin(conv, obuf);
 		}
-		if (!aparams_subset(opar, &dev_ipar)) {
+		if (!aparams_subset(&opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = cmap_new(name, &dev_ipar, opar);
-			opar->cmin = dev_ipar.cmin;
-			opar->cmax = dev_ipar.cmax;
+			conv = cmap_new(name, &dev_ipar, &opar);
+			opar.cmin = dev_ipar.cmin;
+			opar.cmax = dev_ipar.cmax;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, opar);
+			obuf = abuf_new(nfr, &opar);
 			aproc_setin(conv, obuf);
 		}
-		if (!aparams_eqrate(opar, &dev_ipar)) {
+		if (!aparams_eqrate(&opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
 			nfr -= nfr % dev_round;
-			conv = resamp_new(name, &dev_ipar, opar);
-			opar->rate = dev_ipar.rate;
+			conv = resamp_new(name, &dev_ipar, &opar);
+			opar.rate = dev_ipar.rate;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, opar);
+			obuf = abuf_new(nfr, &opar);
 			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);
