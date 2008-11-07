@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.80 2008/11/07 17:37:59 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.81 2008/11/07 18:00:31 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -926,7 +926,6 @@ gem_rint(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	struct ether_header *eh;
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
 	u_int64_t rxstat;
@@ -987,7 +986,6 @@ gem_rint(struct gem_softc *sc)
 		m->m_data += 2; /* We're already off by two */
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
