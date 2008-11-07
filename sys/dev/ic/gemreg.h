@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemreg.h,v 1.14 2008/11/07 17:37:59 brad Exp $	*/
+/*	$OpenBSD: gemreg.h,v 1.15 2008/11/07 17:44:14 brad Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -57,6 +57,7 @@
 #define	GEM_PCI_BANK2_SIZE	0x14
 /* This is the same as the GEM_STATUS reg but reading it does not clear bits. */
 #define	GEM_ERROR_STATUS	0x0000  /* PCI error status R/C */
+#define	GEM_SBUS_RESET		0x0000	/* Sbus Reset */
 #define	GEM_ERROR_MASK		0x0004
 #define	GEM_SBUS_CONFIG		0x0004
 #define	GEM_BIF_CONFIG		0x0008  /* BIF config reg */
@@ -68,6 +69,7 @@
 #define	GEM_SEB_RXWON		0x000000004
 
 /* Bits in GEM_SBUS_CONFIG register */
+#define GEM_SBUS_CFG_BSIZE128	0x00000004
 #define GEM_SBUS_CFG_BMODE64	0x00000008
 #define GEM_SBUS_CFG_PARITY	0x00000200
 

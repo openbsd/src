@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.4 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.5 2008/11/07 17:44:14 brad Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -105,6 +105,8 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_variant = GEM_SUN_GEM;
+
 	/*
 	 * Map two register banks:
 	 *
@@ -134,8 +136,10 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	/*
 	 * SBUS config
 	 */
+	(void) bus_space_read_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_RESET);
+	delay(100);
 	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG,
-	    GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
+	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
