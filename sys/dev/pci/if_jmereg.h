@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmereg.h,v 1.2 2008/10/29 01:55:53 brad Exp $	*/
+/*	$OpenBSD: if_jmereg.h,v 1.3 2008/11/07 22:41:17 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -691,7 +691,7 @@
 #define	PCCRX_COAL_TO_MAX	65535
 
 #define	PCCRX_COAL_PKT_MIN	1
-#define	PCCRX_COAL_PKT_DEFAULT	2
+#define	PCCRX_COAL_PKT_DEFAULT	64
 #define	PCCRX_COAL_PKT_MAX	255
 
 /* Packet completion coalescing control of Tx queue. */
@@ -710,11 +710,11 @@
 #define	PCCTX_COAL_TXQ0		0x00000001
 
 #define	PCCTX_COAL_TO_MIN	1
-#define	PCCTX_COAL_TO_DEFAULT	100
+#define	PCCTX_COAL_TO_DEFAULT	65535
 #define	PCCTX_COAL_TO_MAX	65535
 
 #define	PCCTX_COAL_PKT_MIN	1
-#define	PCCTX_COAL_PKT_DEFAULT	8
+#define	PCCTX_COAL_PKT_DEFAULT	64
 #define	PCCTX_COAL_PKT_MAX	255
 
 /* Chip mode and FPGA version. */
