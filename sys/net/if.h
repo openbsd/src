@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.94 2008/04/10 23:15:45 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.95 2008/11/07 05:50:33 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ do {									\
 		(ifq)->ifq_tail->m_nextpkt = m;				\
 	(ifq)->ifq_tail = m;						\
 	(ifq)->ifq_len++;						\
-} while (0)
+} while (/* CONSTCOND */0)
 #define	IF_PREPEND(ifq, m)						\
 do {									\
 	(m)->m_nextpkt = (ifq)->ifq_head;				\
@@ -314,7 +314,7 @@ do {									\
 		(ifq)->ifq_tail = (m);					\
 	(ifq)->ifq_head = (m);						\
 	(ifq)->ifq_len++;						\
-} while (0)
+} while (/* CONSTCOND */0)
 #define	IF_DEQUEUE(ifq, m)						\
 do {									\
 	(m) = (ifq)->ifq_head;						\
@@ -324,7 +324,7 @@ do {									\
 		(m)->m_nextpkt = 0;					\
 		(ifq)->ifq_len--;					\
 	}								\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IF_INPUT_ENQUEUE(ifq, m)					\
 do {									\
@@ -335,7 +335,7 @@ do {									\
 			if_congestion(ifq);				\
 	} else								\
 		IF_ENQUEUE(ifq, m);					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
@@ -349,7 +349,7 @@ do {									\
 		else							\
 			m_freem(__m0);					\
 	}								\
-} while (0)
+} while (/* CONSTCOND */0)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_MAXLEN	256
@@ -644,7 +644,7 @@ do { \
 		ifafree(ifa); \
 	else \
 		(ifa)->ifa_refcnt--; \
-} while (0)
+} while (/* CONSTCOND */0)
 
 #ifdef ALTQ
 #define	ALTQ_DECL(x)		x
@@ -664,7 +664,7 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
@@ -674,7 +674,7 @@ do {									\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
@@ -684,7 +684,7 @@ do {									\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
@@ -692,10 +692,12 @@ do {									\
 		ALTQ_PURGE((ifq));					\
 	else								\
 		IF_PURGE((ifq));					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IFQ_SET_READY(ifq)						\
-	do { ((ifq)->altq_flags |= ALTQF_READY); } while (0)
+do {									\
+	((ifq)->altq_flags |= ALTQF_READY);				\
+} while (/* CONSTCOND */0)
 
 #define	IFQ_CLASSIFY(ifq, m, af, pa)					\
 do {									\
@@ -706,7 +708,7 @@ do {									\
 		(pa)->pattr_af = (af);					\
 		(pa)->pattr_hdr = mtod((m), caddr_t);			\
 	}								\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #else /* !ALTQ */
 #define	ALTQ_DECL(x)		/* nothing */
@@ -722,7 +724,7 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
 
