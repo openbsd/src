@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.42 2008/10/09 16:00:07 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.43 2008/11/07 17:31:24 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -110,8 +110,7 @@ struct socket {
 	pid_t	so_cpid;		/* pid of process that opened socket */
 };
 
-#define	SB_EMPTY_FIXUP(sb)						\
-do {									\
+#define	SB_EMPTY_FIXUP(sb) do {						\
 	if ((sb)->sb_mb == NULL) {					\
 		(sb)->sb_mbtail = NULL;					\
 		(sb)->sb_lastrecord = NULL;				\
@@ -178,24 +177,24 @@ do {									\
     ((so)->so_state & SS_CANTSENDMORE) || (so)->so_error)
 
 /* adjust counters in sb reflecting allocation of m */
-#define	sballoc(sb, m) { \
-	(sb)->sb_cc += (m)->m_len; \
-	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME) \
-		(sb)->sb_datacc += (m)->m_len; \
-	(sb)->sb_mbcnt += MSIZE; \
-	if ((m)->m_flags & M_EXT) \
-		(sb)->sb_mbcnt += (m)->m_ext.ext_size; \
-}
+#define	sballoc(sb, m) do {						\
+	(sb)->sb_cc += (m)->m_len;					\
+	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME)	\
+		(sb)->sb_datacc += (m)->m_len;				\
+	(sb)->sb_mbcnt += MSIZE;					\
+	if ((m)->m_flags & M_EXT)					\
+		(sb)->sb_mbcnt += (m)->m_ext.ext_size;			\
+} while (/* CONSTCOND */ 0)
 
 /* adjust counters in sb reflecting freeing of m */
-#define	sbfree(sb, m) { \
-	(sb)->sb_cc -= (m)->m_len; \
-	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME) \
-		(sb)->sb_datacc -= (m)->m_len; \
-	(sb)->sb_mbcnt -= MSIZE; \
-	if ((m)->m_flags & M_EXT) \
-		(sb)->sb_mbcnt -= (m)->m_ext.ext_size; \
-}
+#define	sbfree(sb, m) do {						\
+	(sb)->sb_cc -= (m)->m_len;					\
+	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME)	\
+		(sb)->sb_datacc -= (m)->m_len;				\
+	(sb)->sb_mbcnt -= MSIZE;					\
+	if ((m)->m_flags & M_EXT)					\
+		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
+} while (/* CONSTCOND */ 0)
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
@@ -207,18 +206,20 @@ do {									\
 		((sb)->sb_flags |= SB_LOCK, 0))
 
 /* release lock on sockbuf sb */
-#define	sbunlock(sb) { \
-	(sb)->sb_flags &= ~SB_LOCK; \
-	if ((sb)->sb_flags & SB_WANT) { \
-		(sb)->sb_flags &= ~SB_WANT; \
-		wakeup((caddr_t)&(sb)->sb_flags); \
-	} \
-}
+#define	sbunlock(sb) do {						\
+	(sb)->sb_flags &= ~SB_LOCK;					\
+	if ((sb)->sb_flags & SB_WANT) {					\
+		(sb)->sb_flags &= ~SB_WANT;				\
+		wakeup((caddr_t)&(sb)->sb_flags);			\
+	}								\
+} while (/* CONSTCOND */ 0)
 
-#define	sorwakeup(so)	{ sowakeup((so), &(so)->so_rcv); \
-			  if ((so)->so_upcall) \
-			    (*((so)->so_upcall))((so), (so)->so_upcallarg, M_DONTWAIT); \
-			}
+#define	sorwakeup(so) do {						\
+	sowakeup((so), &(so)->so_rcv);					\
+	if ((so)->so_upcall)						\
+		(*((so)->so_upcall))((so), (so)->so_upcallarg,		\
+		    M_DONTWAIT);					\
+} while (/* CONSTCOND */ 0)
 
 #define	sowwakeup(so)	sowakeup((so), &(so)->so_snd)
 
