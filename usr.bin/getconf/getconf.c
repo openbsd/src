@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.10 2006/12/04 15:05:19 otto Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.11 2008/11/08 01:29:10 chl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getconf.c,v 1.10 2006/12/04 15:05:19 otto Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.11 2008/11/08 01:29:10 chl Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -193,9 +193,9 @@ main(int argc, char *argv[])
 		
 		if (slen == 0 || slen == (size_t)-1) {
 			if (errno)
-				err(1, "%s", cp->value);
+				err(1, "%ld", cp->value);
 			else
-				errx(1, "%s", cp->value);
+				errx(1, "%ld", cp->value);
 		}
 		if ((sval = malloc(slen)) == NULL)
 			err(1, NULL);
