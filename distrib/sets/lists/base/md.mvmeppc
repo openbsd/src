@@ -1955,7 +1955,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/vmparam.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph

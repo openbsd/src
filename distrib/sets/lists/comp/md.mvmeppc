@@ -155,7 +155,6 @@
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/trap.h
-./usr/include/powerpc/va-ppc.h
 ./usr/include/powerpc/varargs.h
 ./usr/include/powerpc/vmparam.h
 ./usr/include/powerpc/wsconsio.h
