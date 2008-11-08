@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.50 2008/11/05 15:48:44 canacar Exp $	 */
+/* $Id: main.c,v 1.51 2008/11/08 06:38:27 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -342,6 +342,7 @@ initialize(void)
 	initpftop();
 	initpf();
 	initpool();
+	initmalloc();
 }
 
 void

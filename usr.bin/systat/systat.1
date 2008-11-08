@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.70 2008/11/02 08:49:59 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.71 2008/11/08 06:38:27 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 2 2008 $
+.Dd $Mdocdate: November 8 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -120,9 +120,11 @@ argument expects to be one of:
 .Ic states ,
 .Ic rules ,
 .Ic queues ,
-.Ic pf
+.Ic pf ,
+.Ic pool ,
+.Ic malloc ,
 or
-.Ic pool .
+.Ic buckets .
 These displays can also be requested interactively and are described in
 full detail below.
 .Ar view
@@ -227,6 +229,11 @@ Again,
 may be abbreviated to the minimum unambiguous prefix.
 The available displays are:
 .Bl -tag -width "netstatXXX"
+.It Ic buckets
+Display kernel
+.Xr malloc 9
+bucket statistics similar to the output of
+.Cm vmstat Fl m .
 .It Ic ifstat
 Display, in the lower window, interface statistics.
 The
@@ -259,6 +266,17 @@ number of disk transactions performed, and time spent in disk accesses
 .It Ic mbufs
 Display, in the lower window, the number of mbufs allocated
 for particular uses, i.e., data, socket structures, etc.
+.It Ic malloc
+Display kernel
+.Xr malloc 9
+type statistics similar to the output of
+.Cm vmstat Fl m .
+Available orderings are:
+.Ic name ,
+.Ic inuse ,
+.Ic memuse ,
+and
+.Ic requests .
 .It Ic netstat
 Display, in the lower window, network connections.
 By default, network servers awaiting requests are not displayed.
