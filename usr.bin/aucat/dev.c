@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.11 2008/11/07 21:01:15 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.12 2008/11/08 10:01:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -382,11 +382,12 @@ dev_attach(char *name,
     struct abuf *obuf, struct aparams *sopar, unsigned overrun)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
-	struct aparams ipar = *sipar, opar = *sopar;
+	struct aparams ipar, opar;
 	struct aproc *conv;
 	unsigned nfr;
 	
 	if (ibuf) {
+		ipar = *sipar;
 		pbuf = LIST_FIRST(&dev_mix->obuflist);		
 		if (!aparams_eqenc(&ipar, &dev_opar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
@@ -425,6 +426,7 @@ dev_attach(char *name,
 		ibuf->xrun = underrun;
 	}
 	if (obuf) {
+		opar = *sopar;
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
 		if (!aparams_eqenc(&opar, &dev_ipar)) {
 			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
