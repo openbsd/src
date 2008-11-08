@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.72 2008/09/10 14:01:22 blambert Exp $ */
+/*	$OpenBSD: wd.c,v 1.73 2008/11/08 01:32:06 chl Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -217,16 +217,12 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	struct wd_softc *wd = (void *)self;
 	struct ata_atapi_attach *aa_link= aux;
 	struct wdc_command wdc_c;
-	struct channel_softc *chp;
 	int i, blank;
-	u_int8_t drive;
 	char buf[41], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;
-	chp = wd->drvp->chnl_softc;
-	drive = wd->drvp->drive;
 
 	strlcpy(wd->drvp->drive_name, wd->sc_dev.dv_xname,
 	    sizeof(wd->drvp->drive_name));
