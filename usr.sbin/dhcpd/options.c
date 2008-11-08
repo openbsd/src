@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.22 2008/09/10 00:22:49 reyk Exp $	*/
+/*	$OpenBSD: options.c,v 1.23 2008/11/08 01:42:24 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -381,19 +381,19 @@ store_options(unsigned char *buffer, int main_buffer_size,
 	int second_cutoff;
 	int bufix = 0;
 
+	overload &= 3; /* Only consider valid bits. */
+
 	cutoff = main_buffer_size;
 	second_cutoff = cutoff + ((overload & 1) ? DHCP_FILE_LEN : 0);
 	buflen = second_cutoff + ((overload & 2) ? DHCP_SNAME_LEN : 0);
+
 	memset(buffer, DHO_PAD, buflen);
-
 	memcpy(buffer, DHCP_OPTIONS_COOKIE, 4);
-	bufix = 4;
 
-	if (overload) {
-		buffer[bufix++] = DHO_DHCP_OPTION_OVERLOAD;
-		buffer[bufix++] = 1;
-		buffer[bufix++] = 0; /* Note: value is at index [6] */
-	}
+	if (overload)
+		bufix = 7; /* Reserve space for DHO_DHCP_OPTION_OVERLOAD. */
+	else
+		bufix = 4;
 
 	/*
 	 * Store options in the order they appear in the priority list.
@@ -460,13 +460,15 @@ zapfrags:
 		buffer[bufix++] = DHO_END;
 
 	/* Fill in overload option value based on space used for options. */
-	if (overload && bufix > main_buffer_size) {
-		overflow = bufix - main_buffer_size;
+	overflow = bufix - main_buffer_size;
+	if (overload && overflow > 0) {
+		buffer[4] = DHO_DHCP_OPTION_OVERLOAD;
+		buffer[5] = 1;
 		if (overload & 1) {
-			buffer[6] = 1;
+			buffer[6] |= 1;
 			overflow -= DHCP_FILE_LEN;
 		}
-		if (overflow > 0)
+		if ((overload & 2) && overflow > 0)
 			buffer[6] |= 2;
 	}
 
