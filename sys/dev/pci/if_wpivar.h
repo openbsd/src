@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wpivar.h,v 1.15 2007/11/19 19:34:25 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.16 2008/11/08 11:02:09 damien Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007
+ * Copyright (c) 2006-2008
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -64,6 +64,7 @@ struct wpi_dma_info {
 
 struct wpi_tx_data {
 	bus_dmamap_t		map;
+	bus_addr_t		cmd_paddr;
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
 };
@@ -107,6 +108,7 @@ struct wpi_rx_ring {
 struct wpi_node {
 	struct	ieee80211_node		ni;	/* must be the first */
 	struct	ieee80211_amrr_node	amn;
+	uint8_t				id;
 };
 
 struct wpi_power_sample {
@@ -122,6 +124,20 @@ struct wpi_power_group {
 	int16_t	temp;
 };
 
+struct wpi_fw_part {
+	const uint8_t	*text;
+	uint32_t	textsz;
+	const uint8_t	*data;
+	uint32_t	datasz;
+};
+
+struct wpi_fw_info {
+	u_char			*data;
+	struct wpi_fw_part	init;
+	struct wpi_fw_part	main;
+	struct wpi_fw_part	boot;
+};
+
 struct wpi_softc {
 	struct device		sc_dev;
 
@@ -132,14 +148,17 @@ struct wpi_softc {
 
 	bus_dma_tag_t		sc_dmat;
 
-	/* shared area */
+	u_int			sc_flags;
+#define WPI_FLAG_HAS_5GHZ	(1 << 0)
+
+	/* Shared area. */
 	struct wpi_dma_info	shared_dma;
 	struct wpi_shared	*shared;
 
-	/* firmware DMA transfer */
+	/* Firmware DMA transfer. */
 	struct wpi_dma_info	fw_dma;
 
-	/* rings */
+	/* TX/RX rings. */
 	struct wpi_tx_ring	txq[WPI_NTXQUEUES];
 	struct wpi_rx_ring	rxq;
 
@@ -149,14 +168,19 @@ struct wpi_softc {
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
+	int			sc_cap_off;	/* PCIe Capabilities. */
 
 	struct ksensordev	sensordev;
 	struct ksensor		sensor;
 	struct timeout		calib_to;
 	int			calib_cnt;
 
-	struct wpi_config	config;
+	struct wpi_fw_info	fw;
+	uint32_t		errptr;
+
+	struct wpi_rxon		rxon;
 	int			temp;
+	uint32_t		qfullmsk;
 
 	uint8_t			cap;
 	uint16_t		rev;
