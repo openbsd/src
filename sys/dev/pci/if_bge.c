@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.250 2008/11/07 22:52:15 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.251 2008/11/08 07:00:52 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -996,7 +996,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_RXRING_VALID)
 		return (0);
 
-	for (i = 0; i < BGE_SSLOTS; i++) {
+	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
 		if (bge_newbuf_std(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
 	}
