@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.3 2008/08/03 18:08:54 kettenis Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.4 2008/11/08 23:20:50 pedro Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -290,8 +290,8 @@ buf_free_pages(struct buf *bp)
 	bp->b_pobj = NULL;
 	bp->b_poffs = 0;
 
-	for (i = 0; i < (bp->b_bufsize >> PAGE_SHIFT); i++) {
-		pg = uvm_pagelookup(uobj, off + (i * PAGE_SIZE));
+	for (i = 0; i < atop(bp->b_bufsize); i++) {
+		pg = uvm_pagelookup(uobj, off + ptoa(i));
 		KASSERT(pg != NULL);
 		KASSERT(pg->wire_count == 1);
 		pg->wire_count = 0;
