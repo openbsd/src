@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.33 2008/06/14 10:55:21 mk Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.34 2008/11/08 01:27:51 chl Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -134,7 +134,7 @@ udf_hashins(struct unode *up)
 	mtx_enter(&ump->um_hashmtx);
 	lh = &ump->um_hashtbl[up->u_ino & ump->um_hashsz];
 	if (lh == NULL)
-		LIST_INIT(lh);
+		panic("hash entry is NULL, up->u_ino = %d", up->u_ino);
 	LIST_INSERT_HEAD(lh, up, u_le);
 	mtx_leave(&ump->um_hashmtx);
 
