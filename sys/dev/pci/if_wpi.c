@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.68 2008/11/08 14:09:03 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.69 2008/11/08 18:42:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -119,7 +119,7 @@ void		wpi_notif_intr(struct wpi_softc *);
 void		wpi_fatal_intr(struct wpi_softc *);
 int		wpi_intr(void *);
 uint8_t		wpi_plcp_signal(int);
-int		wpi_tx_data(struct wpi_softc *, struct mbuf *,
+int		wpi_tx(struct wpi_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		wpi_start(struct ifnet *);
 void		wpi_watchdog(struct ifnet *);
@@ -1128,7 +1128,7 @@ wpi_calib_timeout(void *arg)
 }
 
 int
-wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
+wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
 	uint64_t pn, *prsc;
@@ -1136,7 +1136,7 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
 	uint8_t tid;
 	int hdrlen;
 
-	wh = mtod(m0, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (uint8_t *)wh + hdrlen;
 
@@ -1169,10 +1169,10 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
 
 	/* Clear Protected bit and strip IV. */
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	ovbcopy(wh, mtod(m0, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
-	m_adj(m0, IEEE80211_CCMP_HDRLEN);
+	ovbcopy(wh, mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
+	m_adj(m, IEEE80211_CCMP_HDRLEN);
 	/* Strip MIC. */
-	m_adj(m0, -IEEE80211_CCMP_MICLEN);
+	m_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }
 
@@ -1190,7 +1190,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
-	struct mbuf *m, *mnew;
+	struct mbuf *m, *m1;
 	uint32_t flags;
 
 	stat = (struct wpi_rx_stat *)(desc + 1);
@@ -1255,18 +1255,18 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	}
 
 	if ((rbuf = SLIST_FIRST(&sc->rxq.freelist)) != NULL) {
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL) {
 			ic->ic_stats.is_rx_nombuf++;
 			ifp->if_ierrors++;
 			return;
 		}
 		/* Attach RX buffer to mbuf header. */
-		MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
+		MEXTADD(m1, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
 		    rbuf);
 		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
 
-		data->m = mnew;
+		data->m = m1;
 
 		/* Update RX descriptor. */
 		ring->desc[ring->cur] = htole32(rbuf->paddr);
@@ -1647,7 +1647,7 @@ wpi_plcp_signal(int rate)
 #define WPI_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
 
 int
-wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
+wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct wpi_tx_ring *ring;
@@ -1658,14 +1658,14 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
-	struct mbuf *mnew;
+	struct mbuf *m1;
 	uint32_t flags;
 	uint16_t qos;
 	uint8_t *ivp, tid, type;
 	u_int hdrlen;
 	int i, totlen, hasqos, rate, error;
 
-	wh = mtod(m0, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
@@ -1710,7 +1710,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
+		mb.m_next = m;
 		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
@@ -1718,7 +1718,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-	totlen = m0->m_pkthdr.len;
+	totlen = m->m_pkthdr.len;
 
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
@@ -1726,11 +1726,11 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		k = ieee80211_get_txkey(ic, wh, ni);
 		if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
 			/* Do software encryption. */
-			if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
-			wh = mtod(m0, struct ieee80211_frame *);
-			totlen = m0->m_pkthdr.len;
+			wh = mtod(m, struct ieee80211_frame *);
+			totlen = m->m_pkthdr.len;
 
 		} else	/* HW appends CCMP MIC. */
 			totlen += IEEE80211_CCMP_HDRLEN;
@@ -1805,8 +1805,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
 		/* Trim 802.11 header and prepend CCMP IV. */
-		m_adj(m0, hdrlen - IEEE80211_CCMP_HDRLEN);
-		ivp = mtod(m0, uint8_t *);
+		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
+		ivp = mtod(m, uint8_t *);
 		k->k_tsc++;
 		ivp[0] = k->k_tsc;
 		ivp[1] = k->k_tsc >> 8;
@@ -1821,59 +1821,57 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		memcpy(tx->key, k->k_key, k->k_len);
 	} else {
 		/* Trim 802.11 header. */
-		m_adj(m0, hdrlen);
+		m_adj(m, hdrlen);
 		tx->security = 0;
 	}
 	tx->flags = htole32(flags);
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		m_freem(m0);
+		m_freem(m);
 		return error;
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
-			m_freem(m0);
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL) {
+			m_freem(m);
 			return ENOMEM;
 		}
-		M_DUP_PKTHDR(mnew, m0);
-		if (m0->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m0);
-				m_freem(mnew);
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m1, M_DONTWAIT);
+			if (!(m1->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(m1);
 				return ENOMEM;
 			}
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m0);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m0 = mnew;
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
+		m1->m_len = m1->m_pkthdr.len = m->m_pkthdr.len;
+		m_freem(m);
+		m = m1;
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
-			m_freem(m0);
+			m_freem(m);
 			return error;
 		}
 	}
 
-	data->m = m0;
+	data->m = m;
 	data->ni = ni;
 
 	DPRINTFN(4, ("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
-	    ring->qid, ring->cur, m0->m_pkthdr.len, data->map->dm_nsegs));
+	    ring->qid, ring->cur, m->m_pkthdr.len, data->map->dm_nsegs));
 
 	/* Fill TX descriptor. */
-	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 |
+	desc->flags = htole32(WPI_PAD32(m->m_pkthdr.len) << 28 |
 	    (1 + data->map->dm_nsegs) << 24);
 	/* First DMA segment is used by the TX command. */
 	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
@@ -1939,7 +1937,7 @@ sendit:
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-		if (wpi_tx_data(sc, m, ni) != 0) {
+		if (wpi_tx(sc, m, ni) != 0) {
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;

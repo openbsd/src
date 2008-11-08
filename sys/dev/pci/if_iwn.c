@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.30 2008/11/08 17:15:54 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.31 2008/11/08 18:42:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -145,7 +145,7 @@ void		iwn5000_update_sched(struct iwn_softc *, int, int, uint8_t,
 		    uint16_t);
 void		iwn5000_reset_sched(struct iwn_softc *, int, int);
 uint8_t		iwn_plcp_signal(int);
-int		iwn_tx_data(struct iwn_softc *, struct mbuf *,
+int		iwn_tx(struct iwn_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		iwn_start(struct ifnet *);
 void		iwn_watchdog(struct ifnet *);
@@ -1455,7 +1455,7 @@ iwn_calib_timeout(void *arg)
 }
 
 int
-iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
+iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
 	uint64_t pn, *prsc;
@@ -1463,7 +1463,7 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
 	uint8_t tid;
 	int hdrlen;
 
-	wh = mtod(m0, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (uint8_t *)wh + hdrlen;
 
@@ -1496,10 +1496,10 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_key *k)
 
 	/* Clear Protected bit and strip IV. */
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	ovbcopy(wh, mtod(m0, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
-	m_adj(m0, IEEE80211_CCMP_HDRLEN);
+	ovbcopy(wh, mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
+	m_adj(m, IEEE80211_CCMP_HDRLEN);
 	/* Strip MIC. */
-	m_adj(m0, -IEEE80211_CCMP_MICLEN);
+	m_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }
 
@@ -1535,7 +1535,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
-	struct mbuf *m, *mnew;
+	struct mbuf *m, *m1;
 	struct iwn_rx_stat *stat;
 	caddr_t head;
 	uint32_t flags;
@@ -1625,18 +1625,18 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	}
 
 	if ((rbuf = SLIST_FIRST(&sc->rxq.freelist)) != NULL) {
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL) {
 			ic->ic_stats.is_rx_nombuf++;
 			ifp->if_ierrors++;
 			return;
 		}
 		/* Attach RX buffer to mbuf header. */
-		MEXTADD(mnew, rbuf->vaddr, IWN_RBUF_SIZE, 0, iwn_free_rbuf,
+		MEXTADD(m1, rbuf->vaddr, IWN_RBUF_SIZE, 0, iwn_free_rbuf,
 		    rbuf);
 		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
 
-		data->m = mnew;
+		data->m = m1;
 
 		/* Update RX descriptor. */
 		ring->desc[ring->cur] = htole32(rbuf->paddr >> 8);
@@ -2251,7 +2251,7 @@ iwn_plcp_signal(int rate)
 #define IWN_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
 
 int
-iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
+iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2263,14 +2263,14 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
-	struct mbuf *mnew;
+	struct mbuf *m1;
 	uint32_t flags;
 	uint16_t qos;
 	uint8_t *ivp, tid, txant, type;
 	u_int hdrlen;
 	int i, totlen, hasqos, rate, error, pad;
 
-	wh = mtod(m0, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
@@ -2315,7 +2315,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
+		mb.m_next = m;
 		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
@@ -2323,7 +2323,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-	totlen = m0->m_pkthdr.len;
+	totlen = m->m_pkthdr.len;
 
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
@@ -2331,11 +2331,11 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		k = ieee80211_get_txkey(ic, wh, ni);
 		if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
 			/* Do software encryption. */
-			if ((m0 = ieee80211_encrypt(ic, m0, k)) == NULL)
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
-			wh = mtod(m0, struct ieee80211_frame *);
-			totlen = m0->m_pkthdr.len;
+			wh = mtod(m, struct ieee80211_frame *);
+			totlen = m->m_pkthdr.len;
 
 		} else	/* HW appends CCMP MIC. */
 			totlen += IEEE80211_CCMP_HDRLEN;
@@ -2447,8 +2447,8 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
 		/* Trim 802.11 header and prepend CCMP IV. */
-		m_adj(m0, hdrlen - IEEE80211_CCMP_HDRLEN);
-		ivp = mtod(m0, uint8_t *);
+		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
+		ivp = mtod(m, uint8_t *);
 		k->k_tsc++;
 		ivp[0] = k->k_tsc;
 		ivp[1] = k->k_tsc >> 8;
@@ -2468,56 +2468,54 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			totlen += IEEE80211_CCMP_MICLEN;
 	} else {
 		/* Trim 802.11 header. */
-		m_adj(m0, hdrlen);
+		m_adj(m, hdrlen);
 		tx->security = 0;
 	}
 	tx->flags = htole32(flags);
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		m_freem(m0);
+		m_freem(m);
 		return error;
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
-			m_freem(m0);
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL) {
+			m_freem(m);
 			return ENOMEM;
 		}
-		M_DUP_PKTHDR(mnew, m0);
-		if (m0->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m0);
-				m_freem(mnew);
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m1, M_DONTWAIT);
+			if (!(m1->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(m1);
 				return ENOMEM;
 			}
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m0);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m0 = mnew;
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
+		m1->m_len = m1->m_pkthdr.len = m->m_pkthdr.len;
+		m_freem(m);
+		m = m1;
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
-			m_freem(m0);
+			m_freem(m);
 			return error;
 		}
 	}
 
-	data->m = m0;
+	data->m = m;
 	data->ni = ni;
 
 	DPRINTFN(4, ("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
-	    ring->qid, ring->cur, m0->m_pkthdr.len, data->map->dm_nsegs));
+	    ring->qid, ring->cur, m->m_pkthdr.len, data->map->dm_nsegs));
 
 	/* Fill TX descriptor. */
 	IWN_SET_DESC_NSEGS(desc, 1 + data->map->dm_nsegs);
@@ -2584,7 +2582,7 @@ sendit:
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-		if (iwn_tx_data(sc, m, ni) != 0) {
+		if (iwn_tx(sc, m, ni) != 0) {
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
