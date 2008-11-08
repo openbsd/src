@@ -1,4 +1,4 @@
-/*	$OpenBSD: varargs.h,v 1.5 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.6 2008/11/08 19:49:24 kettenis Exp $	*/
 /*	$NetBSD: varargs.h,v 1.1 1996/09/30 16:34:37 ws Exp $	*/
 
 /*-
@@ -40,11 +40,18 @@
 #ifndef _POWERPC_VARARGS_H_
 #define	_POWERPC_VARARGS_H_
 
-#define _VARARGS_H
+#include <machine/stdarg.h>
 
-#include <machine/_types.h>
-#include <machine/va-ppc.h>
+#if __GNUC__ == 1
+#define	__va_ellipsis
+#else
+#define	__va_ellipsis	...
+#endif
 
-typedef __va_list va_list;
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		__builtin_va_alist_t __builtin_va_alist; __va_ellipsis
+
+#undef va_start
+#define	va_start(ap)	__builtin_varargs_start((ap))
 
 #endif /* !_POWERPC_VARARGS_H_ */

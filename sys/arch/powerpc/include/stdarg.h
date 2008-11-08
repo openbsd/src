@@ -1,7 +1,6 @@
-/*	$OpenBSD: stdarg.h,v 1.6 2006/01/06 18:53:05 millert Exp $	*/
-/*	$NetBSD: stdarg.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.7 2008/11/08 19:49:24 kettenis Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -29,19 +28,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef _POWERPC_STDARG_H_
 #define	_POWERPC_STDARG_H_
 
+#include <sys/cdefs.h>
 #include <machine/_types.h>
 
-#ifndef	_STDARG_H
-#define	_STDARG_H
-#endif
-#include <machine/va-ppc.h>
-
 typedef __va_list	va_list;
+
+#ifdef __lint__
+#define va_start(ap, last)	((ap) = (ap))
+#define va_arg(ap, type)	(*(type *)(void *)&ap)
+#define va_end(ap)
+#define __va_copy(dst, src)	((dst) = (src))
+#else
+# error "Unsupported compiler"
+#endif
 
 #endif /* !_POWERPC_STDARG_H_ */
