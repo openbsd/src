@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.29 2008/11/08 12:27:57 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.30 2008/11/08 17:15:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2629,7 +2629,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-printf("iwn_ioctl SIOCSIFADDR\n");
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -2638,7 +2637,6 @@ printf("iwn_ioctl SIOCSIFADDR\n");
 #endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
-printf("iwn_ioctl SIOCSIFFLAGS flags=0x%x\n", ifp->if_flags);
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				error = iwn_init(ifp);
