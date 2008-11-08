@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.64 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.65 2008/11/08 10:54:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2608,8 +2608,6 @@ wpi_config(struct wpi_softc *sc)
 		sc->config.mode = WPI_MODE_STA;
 		sc->config.filter |= htole32(WPI_FILTER_MULTICAST);
 		break;
-#ifndef IEEE80211_STA_ONLY
-#ifdef notyet
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		sc->config.mode = WPI_MODE_IBSS;
@@ -2617,15 +2615,10 @@ wpi_config(struct wpi_softc *sc)
 	case IEEE80211_M_HOSTAP:
 		sc->config.mode = WPI_MODE_HOSTAP;
 		break;
-#endif
-#endif
 	case IEEE80211_M_MONITOR:
 		sc->config.mode = WPI_MODE_MONITOR;
 		sc->config.filter |= htole32(WPI_FILTER_MULTICAST |
 		    WPI_FILTER_CTL | WPI_FILTER_PROMISC);
-		break;
-	default:
-		/* should not get there */
 		break;
 	}
 	sc->config.cck_mask  = 0x0f;	/* not yet negotiated */
@@ -2732,12 +2725,12 @@ wpi_reset(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_GPIO_CTL, tmp | WPI_GPIO_INIT);
 
 	/* wait for clock stabilization */
-	for (ntries = 0; ntries < 25000; ntries++) {
+	for (ntries = 0; ntries < 1000; ntries++) {
 		if (WPI_READ(sc, WPI_GPIO_CTL) & WPI_GPIO_CLOCK)
 			break;
-		DELAY(100);
+		DELAY(10);
 	}
-	if (ntries == 25000) {
+	if (ntries == 1000) {
 		printf("%s: timeout waiting for clock stabilization\n",
 		    sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
