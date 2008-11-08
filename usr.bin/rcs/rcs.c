@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.49 2008/10/09 21:45:05 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.50 2008/11/08 11:48:49 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1236,7 +1236,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				/* XXX rcsnum_cmp() is totally broken for
 				 * this purpose.
 				 */
-				numlen = MIN(brev->rn_len, rb->rb_num->rn_len);
+				numlen = MIN(brev->rn_len,
+				    rb->rb_num->rn_len - 1);
 				for (i = 0; i < numlen; i++) {
 					if (rb->rb_num->rn_id[i] !=
 					    brev->rn_id[i])
