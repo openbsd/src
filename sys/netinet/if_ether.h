@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.43 2008/10/31 21:08:33 claudio Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.44 2008/11/08 12:54:58 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -97,14 +97,14 @@ struct	ether_header {
 #define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr)				\
 	/* struct in_addr *ipaddr; */					\
 	/* u_int8_t enaddr[ETHER_ADDR_LEN]; */				\
-{									\
+do {									\
 	(enaddr)[0] = 0x01;						\
 	(enaddr)[1] = 0x00;						\
 	(enaddr)[2] = 0x5e;						\
 	(enaddr)[3] = ((u_int8_t *)ipaddr)[1] & 0x7f;			\
 	(enaddr)[4] = ((u_int8_t *)ipaddr)[2];				\
 	(enaddr)[5] = ((u_int8_t *)ipaddr)[3];				\
-}
+} while (/* CONSTCOND */ 0)
 
 /*
  * Macro to map an IPv6 multicast address to an Ethernet multicast address.
@@ -114,14 +114,14 @@ struct	ether_header {
 #define ETHER_MAP_IPV6_MULTICAST(ip6addr, enaddr)			\
 	/* struct in6_addr *ip6addr; */					\
 	/* u_int8_t enaddr[ETHER_ADDR_LEN]; */				\
-{									\
+do {									\
 	(enaddr)[0] = 0x33;						\
 	(enaddr)[1] = 0x33;						\
 	(enaddr)[2] = ((u_int8_t *)ip6addr)[12];			\
 	(enaddr)[3] = ((u_int8_t *)ip6addr)[13];			\
 	(enaddr)[4] = ((u_int8_t *)ip6addr)[14];			\
 	(enaddr)[5] = ((u_int8_t *)ip6addr)[15];			\
-}
+} while (/* CONSTCOND */ 0)
 #endif
 
 /*
@@ -241,13 +241,13 @@ struct ether_multistep {
 	/* u_int8_t addrhi[ETHER_ADDR_LEN]; */				\
 	/* struct arpcom *ac; */					\
 	/* struct ether_multi *enm; */					\
-{									\
+do {									\
 	for ((enm) = LIST_FIRST(&(ac)->ac_multiaddrs);			\
 	    (enm) != LIST_END(&(ac)->ac_multiaddrs) &&			\
 	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
 	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
 		(enm) = LIST_NEXT((enm), enm_list));			\
-}
+} while (/* CONSTCOND */ 0)
 
 /*
  * Macro to step through all of the ether_multi records, one at a time.
@@ -256,22 +256,22 @@ struct ether_multistep {
  * and get the first record.  Both macros return a NULL "enm" when there
  * are no remaining records.
  */
-#define ETHER_NEXT_MULTI(step, enm) \
-	/* struct ether_multistep step; */  \
-	/* struct ether_multi *enm; */  \
-{ \
-	if (((enm) = (step).e_enm) != NULL) \
-		(step).e_enm = LIST_NEXT((enm), enm_list); \
-}
+#define ETHER_NEXT_MULTI(step, enm)					\
+	/* struct ether_multistep step; */				\
+	/* struct ether_multi *enm; */					\
+do {									\
+	if (((enm) = (step).e_enm) != NULL)				\
+		(step).e_enm = LIST_NEXT((enm), enm_list);		\
+} while (/* CONSTCOND */ 0)
 
-#define ETHER_FIRST_MULTI(step, ac, enm) \
-	/* struct ether_multistep step; */ \
-	/* struct arpcom *ac; */ \
-	/* struct ether_multi *enm; */ \
-{ \
-	(step).e_enm = LIST_FIRST(&(ac)->ac_multiaddrs); \
-	ETHER_NEXT_MULTI((step), (enm)); \
-}
+#define ETHER_FIRST_MULTI(step, ac, enm)				\
+	/* struct ether_multistep step; */				\
+	/* struct arpcom *ac; */					\
+	/* struct ether_multi *enm; */					\
+do {									\
+	(step).e_enm = LIST_FIRST(&(ac)->ac_multiaddrs);		\
+	ETHER_NEXT_MULTI((step), (enm));				\
+} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 

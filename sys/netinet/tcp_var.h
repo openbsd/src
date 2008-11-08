@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.89 2008/05/24 19:48:32 thib Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.90 2008/11/08 12:54:58 dlg Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ do {									\
 		(tp)->t_flags |= TF_DELACK;				\
 		TCP_RESTART_DELACK(tp);					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (/* CONSTCOND */ 0)
 
 #define	TCP_CLEAR_DELACK(tp)						\
 do {									\
@@ -226,7 +226,7 @@ do {									\
 		(tp)->t_flags &= ~TF_DELACK;				\
 		timeout_del(&(tp)->t_delack_to);			\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Handy way of passing around TCP option info.

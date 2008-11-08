@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.135 2006/11/24 13:52:14 reyk Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.136 2008/11/08 12:54:58 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -484,19 +484,20 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Traverse spi chain and get attributes */
 
-#define	SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) do {\
-	int s = spltdb(); \
-	struct tdb *tmptdb = (TDBP); \
-	\
-	(have) = 0; \
-	while (tmptdb && tmptdb->tdb_xform) { \
-	        if (tmptdb == NULL || tmptdb->tdb_flags & TDBF_INVALID) \
-			break; \
-		(have) |= TDB_ATTRIB(tmptdb); \
-		tmptdb = tmptdb->TDB_DIR; \
-	} \
-	splx(s); \
-} while (0)
+#define	SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP)				\
+do {									\
+	int s = spltdb();						\
+	struct tdb *tmptdb = (TDBP);					\
+									\
+	(have) = 0;							\
+	while (tmptdb && tmptdb->tdb_xform) {				\
+	        if (tmptdb == NULL || tmptdb->tdb_flags & TDBF_INVALID)	\
+			break;						\
+		(have) |= TDB_ATTRIB(tmptdb);				\
+		tmptdb = tmptdb->TDB_DIR;				\
+	}								\
+	splx(s);							\
+} while (/* CONSTCOND */ 0)
 
 /* Misc. */
 extern char *inet_ntoa4(struct in_addr);

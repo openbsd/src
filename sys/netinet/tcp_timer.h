@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.11 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.12 2008/11/08 12:54:58 dlg Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -130,13 +130,14 @@ const char *tcptimers[] =
 /*
  * Force a time value to be in a certain range.
  */
-#define	TCPT_RANGESET(tv, value, tvmin, tvmax) { \
-	(tv) = (value); \
-	if ((tv) < (tvmin)) \
-		(tv) = (tvmin); \
-	else if ((tv) > (tvmax)) \
-		(tv) = (tvmax); \
-}
+#define	TCPT_RANGESET(tv, value, tvmin, tvmax)				\
+do {									\
+	(tv) = (value);							\
+	if ((tv) < (tvmin))						\
+		(tv) = (tvmin);						\
+	else if ((tv) > (tvmax))					\
+		(tv) = (tvmax);						\
+} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 typedef void (*tcp_timer_func_t)(void *);
