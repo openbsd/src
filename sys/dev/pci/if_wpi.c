@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.66 2008/11/08 11:02:09 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.67 2008/11/08 12:21:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -784,6 +784,14 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int qid)
 
 	/* Update shared area with ring's physical address. */
 	sc->shared->txbase[qid] = htole32(ring->desc_dma.paddr);
+
+	/*
+	 * We only use rings 0 through 4 (4 EDCA + cmd) so there is no need
+	 * to allocate commands space for other rings.
+	 * XXX Do we really need to allocate descriptors for other rings?
+	 */
+	if (qid > 4)
+		return 0;
 
 	size = WPI_TX_RING_COUNT * sizeof (struct wpi_tx_cmd);
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
