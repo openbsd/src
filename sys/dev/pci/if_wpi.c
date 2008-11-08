@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.67 2008/11/08 12:21:36 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.68 2008/11/08 14:09:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1656,7 +1656,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct wpi_tx_cmd *cmd;
 	struct wpi_cmd_data *tx;
 	struct ieee80211_frame *wh;
-	struct ieee80211_key *k;
+	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
 	struct mbuf *mnew;
 	uint32_t flags;
