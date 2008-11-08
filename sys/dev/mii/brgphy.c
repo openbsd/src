@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.83 2008/11/08 01:50:48 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.84 2008/11/08 03:03:50 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -398,14 +398,17 @@ brgphy_copper_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+		int auxsts;
+
 		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
 
-		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) &
-			BRGPHY_AUXSTS_AN_RES) {
+		auxsts = PHY_READ(sc, BRGPHY_MII_AUXSTS);
+
+		switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
 		case BRGPHY_RES_1000FD:
 			mii->mii_media_active |= IFM_1000_T | IFM_FDX;
 			break;
@@ -428,6 +431,13 @@ brgphy_copper_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T | IFM_HDX;
 			break;
 		default:
+			if (sc->mii_model == MII_MODEL_BROADCOM2_BCM5906) {
+				mii->mii_media_active |= (auxsts &
+				    BRGPHY_RES_100) ? IFM_100_TX : IFM_10_T;
+				mii->mii_media_active |= (auxsts &
+				    BRGPHY_RES_FULL) ? IFM_FDX : IFM_HDX;
+				break;
+			}
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
