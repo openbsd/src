@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.87 2008/11/08 07:10:13 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.88 2008/11/08 07:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2318,9 +2318,15 @@ struct bge_gib {
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 /*
- * Jumbo buffer stuff.
+ * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
+ * values are tuneable. They control the actual amount of buffers
+ * allocated for the standard, mini and jumbo receive rings.
  */
+
+#define BGE_SSLOTS	256
+#define BGE_MSLOTS	256
 #define BGE_JSLOTS	384
+
 #define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
 	(BGE_JRAWLEN % sizeof(u_int64_t))))
