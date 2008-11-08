@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.82 2008/08/30 08:16:13 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.83 2008/11/08 01:50:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -398,8 +398,6 @@ brgphy_copper_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BRGPHY_BMCR_AUTOEN) {
-		int gsr;
-
 		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
@@ -437,10 +435,11 @@ brgphy_copper_status(struct mii_softc *sc)
 		if (mii->mii_media_active & IFM_FDX)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
 
-		gsr = PHY_READ(sc, BRGPHY_MII_1000STS);
-		if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
-		    gsr & BRGPHY_1000STS_MSR)
-			mii->mii_media_active |= IFM_ETH_MASTER;
+		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+			if (PHY_READ(sc, BRGPHY_MII_1000STS) &
+			    BRGPHY_1000STS_MSR)
+				mii->mii_media_active |= IFM_ETH_MASTER;
+		}
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
