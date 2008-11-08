@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.251 2008/11/08 07:00:52 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.252 2008/11/08 07:10:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -982,12 +982,6 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	return (0);
 }
 
-/*
- * The standard receive ring has 512 entries in it. At 2K per mbuf cluster,
- * that's 1MB or memory, which is a lot. For now, we fill only the first
- * 256 ring entries and hope that our CPU is fast enough to keep up with
- * the NIC.
- */
 int
 bge_init_rx_ring_std(struct bge_softc *sc)
 {
@@ -2715,7 +2709,7 @@ bge_tick(void *xsc)
 		/*
 		 * Do not touch PHY if we have link up. This could break
 		 * IPMI/ASF mode or produce extra input errors.
-		 * (extra input errors was reported for bcm5701 & bcm5704).
+		 * (extra input errors was reported for BCM5701 & BCM5704).
 		 */
 		if (!BGE_STS_BIT(sc, BGE_STS_LINK))
 			mii_tick(mii);
@@ -3577,8 +3571,6 @@ bge_link_upd(struct bge_softc *sc)
 		}
         /*
 	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
-	 * This should not happen since mii callouts are locked now, but
-	 * we keep this check for debug.
 	 */
 	} else if (BGE_STS_BIT(sc, BGE_STS_AUTOPOLL)) {
 		/* 
