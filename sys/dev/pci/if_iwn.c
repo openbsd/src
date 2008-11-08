@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.28 2008/11/08 11:05:36 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.29 2008/11/08 12:27:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1860,11 +1860,12 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int retrycnt,
 	data->ni = NULL;
 
 	sc->sc_tx_timer = 0;
-	if (--ring->queued < IWN_TX_RING_LOMARK)
+	if (--ring->queued < IWN_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);
-	if (sc->qfullmsk == 0) {
-		ifp->if_flags &= ~IFF_OACTIVE;
-		(*ifp->if_start)(ifp);
+		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			(*ifp->if_start)(ifp);
+		}
 	}
 }
 
