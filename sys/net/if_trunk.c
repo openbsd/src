@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.58 2008/11/04 13:44:11 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.59 2008/11/08 01:00:01 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1638,7 +1638,7 @@ trunk_lacp_input(struct trunk_softc *tr, struct trunk_port *tp,
 
 	/* Tap off LACP control messages */
 	if (etype == ETHERTYPE_SLOW) {
-		m = lacp_input(tp, m);
+		m = lacp_input(tp, eh, m);
 		if (m == NULL)
 			return (-1);
 	}

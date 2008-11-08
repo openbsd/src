@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.7 2008/10/24 04:44:52 brad Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.8 2008/11/08 01:00:01 mpf Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -123,8 +123,10 @@ void		lacp_aggregator_delref(struct lacp_softc *,
 
 /* receive machine */
 
-int		lacp_pdu_input(struct lacp_port *, struct mbuf *);
-int		lacp_marker_input(struct lacp_port *, struct mbuf *);
+int		lacp_pdu_input(struct lacp_port *,
+		    struct ether_header *, struct mbuf *);
+int		lacp_marker_input(struct lacp_port *,
+		    struct ether_header *, struct mbuf *);
 void		lacp_sm_rx(struct lacp_port *, const struct lacpdu *);
 void		lacp_sm_rx_timer(struct lacp_port *);
 void		lacp_sm_rx_set_expired(struct lacp_port *);
@@ -219,25 +221,25 @@ const lacp_timer_func_t lacp_timer_funcs[LACP_NTIMER] = {
 };
 
 struct mbuf *
-lacp_input(struct trunk_port *tp, struct mbuf *m)
+lacp_input(struct trunk_port *tp, struct ether_header *eh, struct mbuf *m)
 {
 	struct lacp_port *lp = LACP_PORT(tp);
 	u_int8_t subtype;
 
-	if (m->m_pkthdr.len < sizeof(struct ether_header) + sizeof(subtype)) {
+	if (m->m_pkthdr.len < sizeof(subtype)) {
 		m_freem(m);
 		return (NULL);
 	}
+	subtype = *mtod(m, u_int8_t *);
 
-	m_copydata(m, sizeof(struct ether_header), sizeof(subtype), &subtype);
 	switch (subtype) {
 		/* FALLTHROUGH */
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
-			lacp_pdu_input(lp, m);
+			lacp_pdu_input(lp, eh, m);
 			return (NULL);
 
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
-			lacp_marker_input(lp, m);
+			lacp_marker_input(lp, eh, m);
 			return (NULL);
 	}
 
@@ -249,18 +251,13 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
  * lacp_pdu_input: process lacpdu
  */
 int
-lacp_pdu_input(struct lacp_port *lp, struct mbuf *m)
+lacp_pdu_input(struct lacp_port *lp, struct ether_header *eh, struct mbuf *m)
 {
 	struct lacpdu *du;
 	int error = 0;
 
-	if (m->m_pkthdr.len != sizeof(*du)) {
+	if (m->m_pkthdr.len != sizeof(*du))
 		goto bad;
-	}
-
-	if ((m->m_flags & M_MCAST) == 0) {
-		goto bad;
-	}
 
 	if (m->m_len < sizeof(*du)) {
 		m = m_pullup(m, sizeof(*du));
@@ -268,13 +265,11 @@ lacp_pdu_input(struct lacp_port *lp, struct mbuf *m)
 			return (ENOMEM);
 		}
 	}
-
 	du = mtod(m, struct lacpdu *);
 
-	if (memcmp(&du->ldu_eh.ether_dhost,
-	    &ethermulticastaddr_slowprotocols, ETHER_ADDR_LEN)) {
+	if (memcmp(&eh->ether_dhost,
+	    &ethermulticastaddr_slowprotocols, ETHER_ADDR_LEN))
 		goto bad;
-	}
 
 	/*
 	 * ignore the version for compatibility with
@@ -287,8 +282,8 @@ lacp_pdu_input(struct lacp_port *lp, struct mbuf *m)
 #endif
 
 	/*
-	 * ignore tlv types for compatibility with
-	 * the future protocol revisions.
+	 * ignore tlv types for compatibility with the
+	 * future protocol revisions. (IEEE 802.3-2005 43.4.12)
 	 */
 	if (tlv_check(du, sizeof(*du), &du->ldu_tlv_actor,
 	    lacp_info_tlv_template, 0)) {
@@ -370,6 +365,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 {
 	struct trunk_port *tp = lp->lp_trunk;
 	struct mbuf *m;
+	struct ether_header *eh;
 	struct lacpdu *du;
 	int error;
 
@@ -377,15 +373,19 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	if (m == NULL) {
 		return (ENOMEM);
 	}
-	m->m_len = m->m_pkthdr.len = sizeof(*du);
+	m->m_len = m->m_pkthdr.len = sizeof(*eh) + sizeof(*du);
 
-	du = mtod(m, struct lacpdu *);
-	memset(du, 0, sizeof(*du));
-
-	memcpy(&du->ldu_eh.ether_dhost, ethermulticastaddr_slowprotocols,
+	eh = mtod(m, struct ether_header *);
+	memcpy(&eh->ether_dhost, ethermulticastaddr_slowprotocols,
 	    ETHER_ADDR_LEN);
-	memcpy(&du->ldu_eh.ether_shost, tp->tp_lladdr, ETHER_ADDR_LEN);
-	du->ldu_eh.ether_type = htons(ETHERTYPE_SLOW);
+	memcpy(&eh->ether_shost, tp->tp_lladdr, ETHER_ADDR_LEN);
+	eh->ether_type = htons(ETHERTYPE_SLOW);
+
+	m->m_data += sizeof(*eh);
+	du = mtod(m, struct lacpdu *);
+	m->m_data -= sizeof(*eh);
+
+	memset(du, 0, sizeof(*du));
 
 	du->ldu_sph.sph_subtype = SLOWPROTOCOLS_SUBTYPE_LACP;
 	du->ldu_sph.sph_version = 1;
@@ -421,6 +421,7 @@ lacp_xmit_marker(struct lacp_port *lp)
 {
 	struct trunk_port *tp = lp->lp_trunk;
 	struct mbuf *m;
+	struct ether_header *eh;
 	struct markerdu *mdu;
 	int error;
 
@@ -428,15 +429,19 @@ lacp_xmit_marker(struct lacp_port *lp)
 	if (m == NULL) {
 		return (ENOMEM);
 	}
-	m->m_len = m->m_pkthdr.len = sizeof(*mdu);
+	m->m_len = m->m_pkthdr.len = sizeof(*eh) + sizeof(*mdu);
 
-	mdu = mtod(m, struct markerdu *);
-	memset(mdu, 0, sizeof(*mdu));
-
-	memcpy(&mdu->mdu_eh.ether_dhost, ethermulticastaddr_slowprotocols,
+	eh = mtod(m, struct ether_header *);
+	memcpy(&eh->ether_dhost, ethermulticastaddr_slowprotocols,
 	    ETHER_ADDR_LEN);
-	memcpy(&mdu->mdu_eh.ether_shost, tp->tp_lladdr, ETHER_ADDR_LEN);
-	mdu->mdu_eh.ether_type = htons(ETHERTYPE_SLOW);
+	memcpy(&eh->ether_shost, tp->tp_lladdr, ETHER_ADDR_LEN);
+	eh->ether_type = htons(ETHERTYPE_SLOW);
+
+	m->m_data += sizeof(*eh);
+	mdu = mtod(m, struct markerdu *);
+	m->m_data -= sizeof(*eh);
+
+	memset(mdu, 0, sizeof(*mdu));
 
 	mdu->mdu_sph.sph_subtype = SLOWPROTOCOLS_SUBTYPE_MARKER;
 	mdu->mdu_sph.sph_version = 1;
@@ -1251,7 +1256,7 @@ lacp_sm_mux(struct lacp_port *lp)
 {
 	enum lacp_mux_state new_state;
 	int p_sync =
-		    (lp->lp_partner.lip_state & LACP_STATE_SYNC) != 0;
+	    (lp->lp_partner.lip_state & LACP_STATE_SYNC) != 0;
 	int p_collecting =
 	    (lp->lp_partner.lip_state & LACP_STATE_COLLECTING) != 0;
 	enum lacp_selected selected = lp->lp_selected;
@@ -1649,7 +1654,7 @@ lacp_run_timers(struct lacp_port *lp)
 }
 
 int
-lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
+lacp_marker_input(struct lacp_port *lp, struct ether_header *eh, struct mbuf *m)
 {
 	struct lacp_softc *lsc = lp->lp_lsc;
 	struct trunk_port *tp = lp->lp_trunk;
@@ -1675,7 +1680,7 @@ lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
 
 	mdu = mtod(m, struct markerdu *);
 
-	if (memcmp(&mdu->mdu_eh.ether_dhost,
+	if (memcmp(&eh->ether_dhost,
 	    &ethermulticastaddr_slowprotocols, ETHER_ADDR_LEN)) {
 		goto bad;
 	}
@@ -1691,9 +1696,9 @@ lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
 			goto bad;
 		}
 		mdu->mdu_tlv.tlv_type = MARKER_TYPE_RESPONSE;
-		memcpy(&mdu->mdu_eh.ether_dhost,
+		memcpy(&eh->ether_dhost,
 		    &ethermulticastaddr_slowprotocols, ETHER_ADDR_LEN);
-		memcpy(&mdu->mdu_eh.ether_shost,
+		memcpy(&eh->ether_shost,
 		    tp->tp_lladdr, ETHER_ADDR_LEN);
 		error = trunk_enqueue(lp->lp_ifp, m);
 		break;
