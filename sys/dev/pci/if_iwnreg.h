@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.13 2008/11/03 17:19:54 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.14 2008/11/08 11:05:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -250,6 +250,7 @@
 #define IWN_FH_RX_CONFIG_ENA		(1 << 31)
 #define IWN_FH_RX_CONFIG_NRBD(x)	((x) << 20)
 #define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1 << 16)
+#define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1 << 15)
 #define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1 << 12)
 #define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4)
 #define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1 <<  2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.27 2008/11/06 17:04:55 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.28 2008/11/08 11:05:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1357,9 +1357,9 @@ iwn_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
 		iwn_stop(ifp, 0);
-		(void)iwn_init(ifp);
+		error = iwn_init(ifp);
 	}
-	return 0;
+	return error;
 }
 
 int
@@ -2537,10 +2537,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
 	/* Mark TX ring as full if we reach a certain threshold. */
-	if (++ring->queued > IWN_TX_RING_HIMARK) {
+	if (++ring->queued > IWN_TX_RING_HIMARK)
 		sc->qfullmsk |= 1 << ring->qid;
-		ic->ic_if.if_flags |= IFF_OACTIVE;
-	}
+
 	return 0;
 }
 
@@ -2550,57 +2549,44 @@ iwn_start(struct ifnet *ifp)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
-	struct mbuf *m0;
+	struct mbuf *m;
 
-	/*
-	 * net80211 may still try to send management frames even if the
-	 * IFF_RUNNING flag is not set...
-	 */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
-		if (m0 != NULL) {
-			if (sc->qfullmsk != 0)
-				break;
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
+		if (sc->qfullmsk != 0) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+		/* Send pending management frames first. */
+		IF_DEQUEUE(&ic->ic_mgtq, m);
+		if (m != NULL) {
+			ni = (void *)m->m_pkthdr.rcvif;
+			goto sendit;
+		}
+		if (ic->ic_state != IEEE80211_S_RUN)
+			break;
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+		/* Encapsulate and send data frames. */
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 #if NBPFILTER > 0
-			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-			if (iwn_tx_data(sc, m0, ni) != 0)
-				break;
-
-		} else {
-			if (ic->ic_state != IEEE80211_S_RUN)
-				break;
-			IFQ_POLL(&ifp->if_snd, m0);
-			if (m0 == NULL)
-				break;
-			if (sc->qfullmsk != 0)
-				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL)
+			continue;
+sendit:
 #if NBPFILTER > 0
-			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-			m0 = ieee80211_encap(ifp, m0, &ni);
-			if (m0 == NULL)
-				continue;
-#if NBPFILTER > 0
-			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
-#endif
-			if (iwn_tx_data(sc, m0, ni) != 0) {
-				if (ni != NULL)
-					ieee80211_release_node(ic, ni);
-				ifp->if_oerrors++;
-				break;
-			}
+		if (iwn_tx_data(sc, m, ni) != 0) {
+			ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
+			continue;
 		}
 
 		sc->sc_tx_timer = 5;
@@ -2642,6 +2628,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+printf("iwn_ioctl SIOCSIFADDR\n");
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -2650,9 +2637,10 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
+printf("iwn_ioctl SIOCSIFFLAGS flags=0x%x\n", ifp->if_flags);
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
-				(void)iwn_init(ifp);
+				error = iwn_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				iwn_stop(ifp, 1);
@@ -2695,7 +2683,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
 			iwn_stop(ifp, 0);
-			(void)iwn_init(ifp);
+			error = iwn_init(ifp);
 		}
 	}
 	splx(s);
@@ -3943,7 +3931,6 @@ iwn_run(struct iwn_softc *sc)
 		return error;
 	}
 
-
 	/* Add BSS node. */
 	((struct iwn_node *)ni)->id = IWN_ID_BSS;
 	memset(&node, 0, sizeof node);
@@ -4895,6 +4882,7 @@ iwn_hw_init(struct iwn_softc *sc)
 	    IWN_FH_RX_CONFIG_ENA           |
 	    IWN_FH_RX_CONFIG_IGN_RXF_EMPTY |	/* HW bug workaround */
 	    IWN_FH_RX_CONFIG_IRQ_DST_HOST  |
+	    IWN_FH_RX_CONFIG_SINGLE_FRAME  |
 	    IWN_FH_RX_CONFIG_RB_TIMEOUT(0) |
 	    IWN_FH_RX_CONFIG_NRBD(IWN_RX_RING_COUNT_LOG));
 	iwn_nic_unlock(sc);
