@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.147 2008/08/22 11:51:47 brad Exp $
+.\"	$OpenBSD: sysctl.8,v 1.148 2008/11/08 01:17:52 ckuethe Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: August 22 2008 $
+.Dd $Mdocdate: November 8 2008 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -378,6 +378,7 @@ not all of the variables are relevant to all architectures.
 .It ddb.panic	integer	yes
 .It ddb.console	integer	yes
 .It ddb.log	integer	yes
+.It ddb.trigger	integer	yes
 .It vfs.mounts.*	struct	no
 .It vfs.ffs.doclusterread	integer	yes
 .It vfs.ffs.doclusterwrite	integer	yes
