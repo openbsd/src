@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.3 2008/11/07 21:01:15 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.4 2008/11/08 10:40:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -106,7 +106,7 @@ safile_trypar(struct sio_hdl *hdl, struct sio_par *par, int blkio)
 	unsigned round = par->round;
 
 	if (!blkio) {
-		fprintf(stderr, "not setting block size\n");
+		DPRINTF("safile_trypar: not setting block size\n");
 		if (!sio_setpar(hdl, par))
 			return 0;
 		if (!sio_getpar(hdl, par))
@@ -192,8 +192,10 @@ safile_new(struct fileops *ops, char *path,
 		mode |= SIO_REC;
 	if (opar)
 		mode |= SIO_PLAY;
-	if (!mode)
-		fprintf(stderr, "%s: must at least play or record", path);
+	if (!mode) {
+		fprintf(stderr, "select at least play or record mode\n");
+		return NULL;
+	}
 	hdl = sio_open(path, mode, 1);
 	if (hdl == NULL) {
 		fprintf(stderr, "safile_new: can't open device\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.32 2008/11/07 21:01:15 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.33 2008/11/08 10:40:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -314,8 +314,7 @@ main(int argc, char **argv)
 	ivol = ovol = MIDI_TO_ADATA(127);
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lu"))
-	    != -1) {
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lu")) != -1) {
 		switch (c) {
 		case 'h':
 			hdr = opt_hdr();

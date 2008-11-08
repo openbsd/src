@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.3 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.4 2008/11/08 10:40:52 ratchov Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
@@ -161,7 +162,11 @@ legacy_play(char *dev, char *aufile)
 	if (fmt == FMT_RAW || fmt == FMT_AU)
 		if (lseek(fd, (off_t)pos, SEEK_SET) == -1)
 			warn("lseek");
-
+	if (dev == NULL) {
+		dev = getenv("AUDIODEVICE");
+		if (dev == NULL)
+			dev = "/dev/audio";
+	}
 	if ((afd = open(dev, O_WRONLY)) < 0) {
 		warn("can't open %s", dev);
 		return(1);
