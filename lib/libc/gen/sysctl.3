@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.183 2008/11/08 01:17:52 ckuethe Exp $
+.\"	$OpenBSD: sysctl.3,v 1.184 2008/11/09 09:00:28 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 8 2008 $
+.Dd $Mdocdate: November 9 2008 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -186,11 +186,11 @@ When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be raised.
-This variable also changes the behavior of
-.Va machdep.kbdreset :
-when DB_CONSOLE is set, the reset key sequence will cause the kernel to enter
+It also overrides the behavior of
+.Va machdep.kbdreset ,
+causing the kernel to enter
 .Xr ddb 4
-rather than triggering a system shutdown.
+instead of triggering a system shutdown.
 .It Dv DBCTL_LOG
 When set, ddb output is also logged in the kernel message buffer.
 .It Dv DBCTL_MAXLINE
@@ -225,12 +225,17 @@ This variable is also available as the ddb
 .Dv $tabstops
 variable.
 .It Dv DBCTL_TRIGGER
-When DBCTL_CONSOLE is set, writing to DBCTL_TRIGGER will cause the system
-to enter
+When
+.Dv DBCTL_CONSOLE
+is set,
+writing to
+.Dv DBCTL_TRIGGER
+causes the system to enter
 .Xr ddb 4 .
 If
 .Xr securelevel 7
-is greater than 0 the process writing to this variable must be running
+is greater than 0,
+the process writing to this variable must be running
 on the console in order to enter
 .Xr ddb 4 .
 .El
