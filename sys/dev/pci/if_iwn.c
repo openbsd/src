@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.31 2008/11/08 18:42:50 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.32 2008/11/09 10:00:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -144,7 +144,6 @@ void		iwn4965_update_sched(struct iwn_softc *, int, int, uint8_t,
 void		iwn5000_update_sched(struct iwn_softc *, int, int, uint8_t,
 		    uint16_t);
 void		iwn5000_reset_sched(struct iwn_softc *, int, int);
-uint8_t		iwn_plcp_signal(int);
 int		iwn_tx(struct iwn_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		iwn_start(struct ifnet *);
@@ -1334,15 +1333,23 @@ void
 iwn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
 	struct iwn_softc *sc = ic->ic_if.if_softc;
-	int i;
+	struct iwn_node *wn = (void *)ni;
+	uint8_t rate;
+	int ridx, i;
 
-	ieee80211_amrr_node_init(&sc->amrr, &((struct iwn_node *)ni)->amn);
+	ieee80211_amrr_node_init(&sc->amrr, &wn->amn);
 
-	/* Set rate to some reasonable initial value. */
-	for (i = ni->ni_rates.rs_nrates - 1;
-	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
-	     i--);
-	ni->ni_txrate = i;
+	for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
+		rate = ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL;
+		/* Map 802.11 rate to HW rate index. */
+		for (ridx = 0; ridx <= IWN_RIDX_MAX; ridx++)
+			if (iwn_rates[ridx].rate == rate)
+				break;
+		wn->ridx[i] = ridx;
+		/* Initial TX rate <= 24Mbps. */
+		if (rate <= 48)
+			ni->ni_txrate = i;
+	}
 }
 
 int
@@ -2221,54 +2228,27 @@ iwn5000_reset_sched(struct iwn_softc *sc, int qid, int idx)
 		*(w + IWN_TX_RING_COUNT) = *w;
 }
 
-uint8_t
-iwn_plcp_signal(int rate)
-{
-	switch (rate) {
-	/* CCK rates (returned values are device-dependent.) */
-	case 2:		return 10;
-	case 4:		return 20;
-	case 11:	return 55;
-	case 22:	return 110;
-
-	/* OFDM rates (cf IEEE Std 802.11a-1999, pp. 14 Table 80.) */
-	/* R1-R4, (u)ral is R4-R1 */
-	case 12:	return 0xd;
-	case 18:	return 0xf;
-	case 24:	return 0x5;
-	case 36:	return 0x7;
-	case 48:	return 0x9;
-	case 72:	return 0xb;
-	case 96:	return 0x1;
-	case 108:	return 0x3;
-	case 120:	return 0x3;
-	}
-	/* Unknown rate (should not get there.) */
-	return 0;
-}
-
-/* Determine if a given rate is CCK or OFDM. */
-#define IWN_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
-
 int
 iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwn_node *wn = (void *)ni;
 	struct iwn_tx_ring *ring;
 	struct iwn_tx_desc *desc;
 	struct iwn_tx_data *data;
 	struct iwn_tx_cmd *cmd;
 	struct iwn_cmd_data *tx;
+	const struct iwn_rate *rinfo;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
 	struct mbuf *m1;
 	uint32_t flags;
 	uint16_t qos;
-	uint8_t *ivp, tid, txant, type;
 	u_int hdrlen;
-	int i, totlen, hasqos, rate, error, pad;
+	uint8_t *ivp, tid, ridx, txant, type;
+	int i, totlen, hasqos, error, pad;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
@@ -2288,16 +2268,14 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
-	/* Chose a TX rate. */
+	/* Chose a TX rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA) {
-		rate = ni->ni_rates.rs_rates[0];
-	} else if (ic->ic_fixed_rate != -1) {
-		rate = ic->ic_sup_rates[ic->ic_curmode].
-		    rs_rates[ic->ic_fixed_rate];
+		ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+		    IWN_RIDX_OFDM6 : IWN_RIDX_CCK1;
 	} else
-		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	rate &= IEEE80211_RATE_VAL;
+		ridx = wn->ridx[ni->ni_txrate];
+	rinfo = &iwn_rates[ridx];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -2307,7 +2285,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_flags = 0;
 		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
-		tap->wt_rate = rate;
+		tap->wt_rate = rinfo->rate;
 		tap->wt_hwqueue = ac;
 		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
 		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
@@ -2374,7 +2352,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		if (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
 			flags |= IWN_TX_NEED_RTS;
 		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
-		    IWN_RATE_IS_OFDM(rate)) {
+		    ridx >= IWN_RIDX_OFDM6) {
 			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
 				flags |= IWN_TX_NEED_CTS;
 			else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
@@ -2394,7 +2372,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	    type != IEEE80211_FC0_TYPE_DATA)
 		tx->id = hal->broadcast_id;
 	else
-		tx->id = ((struct iwn_node *)ni)->id;
+		tx->id = wn->id;
 
 	if (type == IEEE80211_FC0_TYPE_MGT) {
 		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
@@ -2424,20 +2402,17 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->rts_ntries = 60;
 	tx->data_ntries = 15;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-	tx->rate = iwn_plcp_signal(rate);
-	tx->rflags = 0;
-	if (!IWN_RATE_IS_OFDM(rate))
-		tx->rflags |= IWN_RFLAG_CCK;
+	tx->plcp = rinfo->plcp;
+	tx->rflags = rinfo->flags;
 	if (tx->id == hal->broadcast_id) {
 		/* Group or management frame. */
-		tx->ridx = IWN_MAX_TX_RETRIES - 1;
+		tx->linkq = 0;
 		/* XXX Alternate between antenna A and B? */
 		txant = IWN_LSB(sc->txantmsk);
 		tx->rflags |= IWN_RFLAG_ANT(txant);
 	} else {
-		tx->ridx = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
-		/* Tell adapter to ignore rflags. */
-		flags |= IWN_TX_MRR_INDEX;
+		tx->linkq = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
+		flags |= IWN_TX_LINKQ;	/* enable MRR */
 	}
 	/* Set physical address of "scratch area". */
 	tx->loaddr = htole32(data->scratch_paddr);
@@ -2785,8 +2760,9 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	struct iwn_node *wn = (void *)ni;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwn_cmd_link_quality linkq;
+	const struct iwn_rate *rinfo;
 	uint8_t txant, rate;
-	int i, ridx;
+	int i, txrate;
 
 	/* Use the first valid TX antenna. */
 	txant = IWN_LSB(sc->txantmsk);
@@ -2800,17 +2776,16 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
 
 	/* Start at highest available bit-rate. */
-	ridx = rs->rs_nrates - 1;
+	txrate = rs->rs_nrates - 1;
 	for (i = 0; i < IWN_MAX_TX_RETRIES; i++) {
-		rate = rs->rs_rates[ridx] & IEEE80211_RATE_VAL;
-		DPRINTF(("retry %d, rate %d\n", i, rate));
-		linkq.retry[i].rate = iwn_plcp_signal(rate);
-		linkq.retry[i].rflags = IWN_RFLAG_ANT(txant);
-		if (!IWN_RATE_IS_OFDM(rate))
-			linkq.retry[i].rflags |= IWN_RFLAG_CCK;
+		rate = rs->rs_rates[txrate] & IEEE80211_RATE_VAL;
+		rinfo = &iwn_rates[wn->ridx[txrate]];
+		linkq.retry[i].plcp = rinfo->plcp;
+		linkq.retry[i].rflags = rinfo->flags;
+		linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
 		/* Next retry at immediate lower bit-rate. */
-		if (ridx > 0)
-			ridx--;
+		if (txrate > 0)
+			txrate--;
 	}
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, 1);
 }
@@ -2824,6 +2799,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_node_info node;
 	struct iwn_cmd_link_quality linkq;
+	const struct iwn_rate *rinfo;
 	uint8_t txant;
 	int i, error;
 
@@ -2846,15 +2822,14 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
 
 	/* Use lowest mandatory bit-rate. */
-	if (sc->sc_ic.ic_curmode != IEEE80211_MODE_11A) {
-		linkq.retry[0].rate = iwn_ridx_to_plcp[IWN_CCK1];
-		linkq.retry[0].rflags = IWN_RFLAG_CCK;
-	} else
-		linkq.retry[0].rate = iwn_ridx_to_plcp[IWN_OFDM6];
+	rinfo = (sc->sc_ic.ic_curmode != IEEE80211_MODE_11A) ?
+	    &iwn_rates[IWN_RIDX_CCK1] : &iwn_rates[IWN_RIDX_OFDM6];
+	linkq.retry[0].plcp = rinfo->plcp;
+	linkq.retry[0].rflags = rinfo->flags;
 	linkq.retry[0].rflags |= IWN_RFLAG_ANT(txant);
 	/* Use same bit-rate for all TX retries. */
 	for (i = 1; i < IWN_MAX_TX_RETRIES; i++) {
-		linkq.retry[i].rate = linkq.retry[0].rate;
+		linkq.retry[i].plcp = linkq.retry[0].plcp;
 		linkq.retry[i].rflags = linkq.retry[0].rflags;
 	}
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, async);
@@ -3752,12 +3727,12 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	if (flags & IEEE80211_CHAN_5GHZ) {
 		hdr->crc_threshold = htole16(1);
 		/* Send probe requests at 6Mbps. */
-		tx->rate = iwn_ridx_to_plcp[IWN_OFDM6];
+		tx->plcp = iwn_rates[IWN_RIDX_OFDM6].plcp;
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11A];
 	} else {
 		hdr->flags = htole32(IWN_RXON_24GHZ | IWN_RXON_AUTO);
 		/* Send probe requests at 1Mbps. */
-		tx->rate = iwn_ridx_to_plcp[IWN_CCK1];
+		tx->plcp = iwn_rates[IWN_RIDX_CCK1].plcp;
 		tx->rflags = IWN_RFLAG_CCK;
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
 	}
@@ -3928,8 +3903,11 @@ iwn_run(struct iwn_softc *sc)
 		return error;
 	}
 
-	/* Add BSS node. */
+	/* Fake a join to initialize the TX rate. */
 	((struct iwn_node *)ni)->id = IWN_ID_BSS;
+	iwn_newassoc(ic, ni, 1);
+
+	/* Add BSS node. */
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
 	node.id = IWN_ID_BSS;
@@ -3949,9 +3927,6 @@ iwn_run(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname, node.id);
 		return error;
 	}
-
-	/* Fake a join to initialize the TX rate. */
-	iwn_newassoc(ic, ni, 1);
 
 	if ((error = iwn_init_sensitivity(sc)) != 0) {
 		printf("%s: could not set sensitivity\n",

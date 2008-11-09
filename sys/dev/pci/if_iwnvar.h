@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.4 2008/10/22 06:25:07 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.5 2008/11/09 10:00:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -111,6 +111,7 @@ struct iwn_node {
 	struct	ieee80211_amrr_node	amn;
 	uint16_t			disable_tid;
 	uint8_t				id;
+	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
 };
 
 struct iwn_calib_state {

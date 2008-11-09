@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.14 2008/11/08 11:05:36 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.15 2008/11/09 10:00:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -586,7 +586,7 @@ struct iwn_cmd_data {
 #define IWN_TX_NEED_RTS		(1 <<  1)
 #define IWN_TX_NEED_CTS		(1 <<  2)
 #define IWN_TX_NEED_ACK		(1 <<  3)
-#define IWN_TX_MRR_INDEX	(1 <<  4)
+#define IWN_TX_LINKQ		(1 <<  4)
 #define IWN_TX_IMM_BA		(1 <<  6)
 #define IWN_TX_FULL_TXOP	(1 <<  7)
 #define IWN_TX_BT_DISABLE	(1 << 12)	/* bluetooth coexistence */
@@ -596,7 +596,7 @@ struct iwn_cmd_data {
 #define IWN_TX_NEED_PADDING	(1 << 20)
 
 	uint32_t	scratch;
-	uint8_t		rate;
+	uint8_t		plcp;
 	uint8_t		rflags;
 	uint16_t	xrflags;
 
@@ -607,7 +607,7 @@ struct iwn_cmd_data {
 #define IWN_CIPHER_TKIP		3
 #define IWN_CIPHER_WEP104	9
 
-	uint8_t		ridx;
+	uint8_t		linkq;
 	uint8_t		reserved2;
 	uint8_t		key[16];
 	uint16_t	fnext;
@@ -640,13 +640,9 @@ struct iwn_cmd_link_quality {
 	uint8_t		ampdu_max;
 	uint32_t	reserved2;
 	struct {
-		uint8_t		rate;
+		uint8_t		plcp;
 		uint8_t		rflags;
 		uint16_t	xrflags;
-#define IWN_CCK1	 0
-#define IWN_CCK11	 3
-#define IWN_OFDM6	 4
-#define IWN_OFDM54	11
 	} __packed	retry[IWN_MAX_TX_RETRIES];
 	uint32_t	reserved3;
 } __packed;
@@ -1299,9 +1295,28 @@ static const struct iwn_chan_band {
 	{ 11, { 36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157 } }
 };
 
-static const uint8_t iwn_ridx_to_plcp[] = {
-	10, 20, 55, 110, /* CCK */
-	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3, 0x3 /* OFDM R1-R4 */
+/* HW rate indices. */
+#define IWN_RIDX_CCK1	0
+#define IWN_RIDX_OFDM6	4
+
+static const struct iwn_rate {
+	uint8_t	rate;
+	uint8_t	plcp;
+	uint8_t	flags;
+} iwn_rates[IWN_RIDX_MAX + 1] = {
+	{   2,  10, IWN_RFLAG_CCK },
+	{   4,  20, IWN_RFLAG_CCK },
+	{  11,  55, IWN_RFLAG_CCK },
+	{  22, 110, IWN_RFLAG_CCK },
+	{  12, 0xd, 0 },
+	{  18, 0xf, 0 },
+	{  24, 0x5, 0 },
+	{  36, 0x7, 0 },
+	{  48, 0x9, 0 },
+	{  72, 0xb, 0 },
+	{  96, 0x1, 0 },
+	{ 108, 0x3, 0 },
+	{ 120, 0x3, 0 }
 };
 
 #define IWN4965_MAX_PWR_INDEX	107

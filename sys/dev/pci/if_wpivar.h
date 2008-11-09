@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.16 2008/11/08 11:02:09 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.17 2008/11/09 10:00:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -109,6 +109,7 @@ struct wpi_node {
 	struct	ieee80211_node		ni;	/* must be the first */
 	struct	ieee80211_amrr_node	amn;
 	uint8_t				id;
+	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
 };
 
 struct wpi_power_sample {

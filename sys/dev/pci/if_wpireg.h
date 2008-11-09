@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.21 2008/11/08 11:02:09 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.22 2008/11/09 10:00:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -376,7 +376,7 @@ struct wpi_node_info {
 
 	uint32_t	mask;
 	uint16_t	tid;
-	uint8_t		rate;
+	uint8_t		plcp;
 	uint8_t		antenna;
 #define WPI_ANTENNA_A		(1 << 6)
 #define WPI_ANTENNA_B		(1 << 7)
@@ -400,7 +400,7 @@ struct wpi_cmd_data {
 #define WPI_TX_AUTO_SEQ		(1 << 13)
 #define WPI_TX_INSERT_TSTAMP	(1 << 16)
 
-	uint8_t		rate;
+	uint8_t		plcp;
 	uint8_t		id;
 	uint8_t		tid;
 	uint8_t		security;
@@ -424,6 +424,7 @@ struct wpi_cmd_data {
 } __packed;
 
 /* Structure for command WPI_CMD_MRR_SETUP. */
+#define WPI_RIDX_MAX	11
 struct wpi_mrr_setup {
 	uint32_t	which;
 #define WPI_MRR_CTL	0
@@ -434,13 +435,7 @@ struct wpi_mrr_setup {
 		uint8_t	flags;
 		uint8_t	ntries;
 		uint8_t	next;
-#define WPI_OFDM6	0
-#define WPI_OFDM54	7
-#define WPI_CCK1	8
-#define WPI_CCK2	9
-#define WPI_CCK11	11
-
-	} __packed	rates[WPI_CCK11 + 1];
+	} __packed	rates[WPI_RIDX_MAX + 1];
 } __packed;
 
 /* Structure for command WPI_CMD_SET_LED. */
@@ -521,7 +516,7 @@ struct wpi_cmd_txpower {
 		uint8_t	rf_gain;
 		uint8_t	dsp_gain;
 		uint8_t	reserved;
-	} __packed	rates[WPI_CCK11 + 1];
+	} __packed	rates[WPI_RIDX_MAX + 1];
 } __packed;
 
 /* Structure for command WPI_CMD_BT_COEX. */
@@ -692,16 +687,31 @@ static const struct wpi_chan_band {
 	    { 145, 149, 153, 157, 161, 165 } }
 };
 
-/* Convert rate index (device view) into rate in 500Kbps unit. */
-static const uint8_t wpi_ridx_to_rate[] = {
-	12, 18, 24, 36, 48, 72, 96, 108, /* OFDM */
-	2, 4, 11, 22 /* CCK */
-};
+/* HW rate indices. */
+#define WPI_RIDX_OFDM6	 0
+#define WPI_RIDX_OFDM36	 5
+#define WPI_RIDX_OFDM48	 6
+#define WPI_RIDX_OFDM54	 7
+#define WPI_RIDX_CCK1	 8
+#define WPI_RIDX_CCK2	 9
+#define WPI_RIDX_CCK11	11
 
-/* Convert rate index (device view) into PLCP code. */
-static const uint8_t wpi_ridx_to_plcp[] = {
-	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3, /* OFDM R1-R4 */
-	10, 20, 55, 110 /* CCK */
+static const struct wpi_rate {
+	uint8_t	rate;
+	uint8_t	plcp;
+} wpi_rates[WPI_RIDX_MAX + 1] = {
+	{  12, 0xd },
+	{  18, 0xf },
+	{  24, 0x5 },
+	{  36, 0x7 },
+	{  48, 0x9 },
+	{  72, 0xb },
+	{  96, 0x1 },
+	{ 108, 0x3 },
+	{   2,  10 },
+	{   4,  20 },
+	{  11,  55 },
+	{  22, 110 }
 };
 
 #define WPI_MAX_PWR_INDEX	77
