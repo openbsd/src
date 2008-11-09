@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.26 2008/09/26 21:15:53 mikeb Exp $ */
+/* $OpenBSD: agp.c,v 1.27 2008/11/09 15:11:19 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -46,18 +46,48 @@
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-#include "agp_ali.h"
-#include "agp_amd.h"
-#include "agp_amd64.h"
-#include "agp_apple.h"
-#include "agp_i810.h"
-#include "agp_intel.h"
-#include "agp_sis.h"
-#include "agp_via.h"
+/*
+ * the enable and {alloc, free, bind, unbind} memory routines have default
+ * fallbacks, these macros do the right thing. The callbacks with no fallback
+ * are called directly. These are mostly hacks around the weirdness of intel
+ * integrated graphics, since they are not technically a true agp chipset,
+ * but provide an almost identical interface.
+ */
+#define AGP_ENABLE(sc, m) ((sc->sc_methods->enable != NULL) ?	\
+	sc->sc_methods->enable(sc->sc_chipc, m) :		    	\
+	agp_generic_enable(sc, m))
+
+#define AGP_ALLOC_MEMORY(sc, t, s) ((sc->sc_methods->alloc_memory != NULL) ? \
+	sc->sc_methods->alloc_memory(sc->sc_chipc, t, s) :		    \
+	agp_generic_alloc_memory(sc, t, s))
+
+#define AGP_FREE_MEMORY(sc, m) ((sc->sc_methods->free_memory != NULL) ?	\
+	sc->sc_methods->free_memory(sc->sc_chipc, m) :			\
+	agp_generic_free_memory(sc, m))
+
+#define AGP_BIND_MEMORY(sc, m, o) ((sc->sc_methods->bind_memory != NULL) ? \
+	sc->sc_methods->bind_memory(sc->sc_chipc, m, o)	:	 	  \
+	agp_generic_bind_memory(sc, m, o))
+
+#define AGP_UNBIND_MEMORY(sc, m) ((sc->sc_methods->unbind_memory != NULL) ? \
+	sc->sc_methods->unbind_memory(sc->sc_chipc, m) :		   \
+	agp_generic_unbind_memory(sc, m))
+
+int	agp_generic_enable(struct agp_softc *, u_int32_t);
+struct agp_memory *
+	agp_generic_alloc_memory(struct agp_softc *, int, vsize_t size);
+int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
+void	agp_attach(struct device *, struct device *, void *);
+int	agp_probe(struct device *, void *, void *);
+int	agpbusprint(void *, const char *);
+paddr_t	agpmmap(void *, off_t, int);
+int	agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	agpopen(dev_t, int, int, struct proc *);
+int	agpclose(dev_t, int, int , struct proc *);
 
 struct agp_memory *agp_find_memory(struct agp_softc *sc, int id);
-const struct agp_product *agp_lookup(struct pci_attach_args *pa);
 /* userland ioctl functions */
+int	agpvga_match(struct pci_attach_args *);
 int	agp_info_user(void *, agp_info *);
 int	agp_setup_user(void *, agp_setup *);
 int	agp_allocate_user(void *, agp_allocate *);
@@ -67,137 +97,133 @@ int	agp_unbind_user(void *, agp_unbind *);
 int	agp_acquire_helper(void *dev, enum agp_acquire_state state);
 int	agp_release_helper(void *dev, enum agp_acquire_state state);
 
-const struct agp_product agp_products[] = {
-#if NAGP_ALI > 0
-	{ PCI_VENDOR_ALI, -1, agp_ali_attach },
-#endif
-#if NAGP_AMD > 0
-	{ PCI_VENDOR_AMD, -1, agp_amd_attach },
-#endif
-#if NAGP_I810 > 0
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830M_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865G_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945G_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G965_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q965_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_HB, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_HB, agp_i810_attach },
-#endif 
-#if NAGP_INTEL > 0
-	{ PCI_VENDOR_INTEL, -1, agp_intel_attach },
-#endif 
-#if NAGP_SIS > 0
-	{ PCI_VENDOR_SIS, -1, agp_sis_attach },
-#endif
-#if NAGP_VIA > 0
-	{ PCI_VENDOR_VIATECH, -1, agp_via_attach },
-#endif
-	{ 0, 0, NULL }
-};
+int
+agpdev_print(void *aux, const char *pnp)
+{
+	if (pnp) {
+		printf("agp at %s", pnp);
+	}
+	return (UNCONF);
+}
 
+int
+agpbus_probe(struct agp_attach_args *aa)
+{
+	struct pci_attach_args	*pa = aa->aa_pa;
+
+	if (strncmp(aa->aa_busname, "agp", 3) == 0 &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE && 
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
+		return (1);
+	return (0);
+}
+
+/*
+ * Find the video card hanging off the agp bus XXX assumes only one bus
+ */
+int
+agpvga_match(struct pci_attach_args *pa)
+{
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA) {
+		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+		    NULL, NULL))
+			return (1);
+	}
+	return (0);
+}
+
+struct device *
+agp_attach_bus(struct pci_attach_args *pa, const struct agp_methods *methods,
+    int bar, pcireg_t type, struct device *dev)
+{
+	struct agpbus_attach_args arg;
+
+	arg.aa_methods = methods;
+	arg.aa_pa = pa;
+	arg.aa_bar = bar;
+	arg.aa_type = type;
+
+	printf("\n"); /* newline from the driver that called us */
+	return (config_found(dev, &arg, agpdev_print));
+}
 
 int
 agp_probe(struct device *parent, void *match, void *aux)
 {
-	struct agpbus_attach_args *aaa = aux;
-	struct pci_attach_args *pa = &aaa->apa_pci_args;
-
-	/* pci_args must be a pchb */
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE || 
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_HOST)
-		return (0);
-
-	if (agp_lookup(pa) == NULL)
-		return (0);
-
+	/*
+	 * we don't do any checking here, driver we're attaching this
+	 * interface to should have already done it.
+	 */
 	return (1);
 }
 
 void
 agp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct agpbus_attach_args *aaa = aux;
-	struct pci_attach_args *pa = &aaa->apa_pci_args;
+	struct agpbus_attach_args *aa = aux;
+	struct pci_attach_args *pa = aa->aa_pa;
 	struct agp_softc *sc = (struct agp_softc *)self;
-	const struct agp_product *ap;
 	u_int memsize;
-	int i, ret;
+	int i;
 
-	ap = agp_lookup(pa);
-	if (ap) {
-		static const int agp_max[][2] = {
-			{0,		0},
-			{32,		4},
-			{64,		28},
-			{128,		96},
-			{256,		204},
-			{512,		440},
-			{1024,		942},
-			{2048,		1920},
-			{4096,		3932}
-		};
+	sc->sc_chipc = parent;
+	sc->sc_methods = aa->aa_methods;
+
+	static const int agp_max[][2] = {
+		{0,		0},
+		{32,		4},
+		{64,		28},
+		{128,		96},
+		{256,		204},
+		{512,		440},
+		{1024,		942},
+		{2048,		1920},
+		{4096,		3932}
+	};
 #define	agp_max_size	 (sizeof(agp_max)/sizeof(agp_max[0]))
 
-		/*
-		 * Work out an upper bound for agp memory allocation. This
-		 * uses a heuristic table from the Linux driver.
-		 */
-		memsize = ptoa(physmem) >> 20;
+	/*
+	 * Work out an upper bound for agp memory allocation. This
+	 * uses a heuristic table from the Linux driver.
+	 */
+	memsize = ptoa(physmem) >> 20;
 
-		for (i = 0; i < agp_max_size && memsize > agp_max[i][0]; i++)
-			;
-		if (i == agp_max_size)
-			i = agp_max_size - 1;
-		sc->sc_maxmem = agp_max[i][1] << 20;
+	for (i = 0; i < agp_max_size && memsize > agp_max[i][0]; i++)
+		;
+	if (i == agp_max_size)
+		i = agp_max_size - 1;
+	sc->sc_maxmem = agp_max[i][1] << 20;
 
-		/*
-		 * The lock is used to prevent re-entry to
-		 * agp_generic_bind_memory() since that function can sleep.
-		 */
+	/*
+	 * The lock is used to prevent re-entry to
+	 * agp_generic_bind_memory() since that function can sleep.
+	 */
+	rw_init(&sc->sc_lock, "agplk");
 
-		rw_init(&sc->sc_lock, "agplk");
+	TAILQ_INIT(&sc->sc_memory);
 
-		TAILQ_INIT(&sc->sc_memory);
+	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_id = pa->pa_id;
+	sc->sc_dmat = pa->pa_dmat;
 
-		sc->sc_pcitag = pa->pa_tag;
-		sc->sc_pc = pa->pa_pc;
-		sc->sc_id = pa->pa_id;
-		sc->sc_dmat = pa->pa_dmat;
-		sc->sc_memt = pa->pa_memt;
-		sc->sc_vgapcitag = aaa->apa_vga_args.pa_tag;
-		sc->sc_vgapc = aaa->apa_vga_args.pa_pc;
+	pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
+	    &sc->sc_capoff, NULL);
 
-		pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
-		    &sc->sc_capoff, NULL);
-
-		sc->vga_softc = (struct vga_pci_softc *)parent;
-
-		printf(": ");
-		ret = (*ap->ap_attach)(sc, pa);
-		if (ret == 0)
-			printf("aperture at 0x%lx, size 0x%lx\n",
-			    (u_long)sc->sc_apaddr,
-			    (u_long)AGP_GET_APERTURE(sc));
-		else {
-			sc->sc_chipc = NULL;
-		}
+	printf(": ");
+	if (agp_map_aperture(pa, sc, aa->aa_bar, aa->aa_type) != 0) {
+		printf("can't map aperture\n");
+		sc->sc_chipc = NULL;
+		return;
 	}
+
+	printf("aperture at 0x%lx, size 0x%lx\n", (u_long)sc->sc_apaddr,
+	    (u_long)sc->sc_methods->get_aperture(sc->sc_chipc));
 }
 
 struct cfattach agp_ca = {
-        sizeof (struct agp_softc), agp_probe, agp_attach,
+	sizeof(struct agp_softc), agp_probe, agp_attach,
 	NULL, NULL
 };
 
@@ -212,7 +238,7 @@ agpmmap(void *v, off_t off, int prot)
 
 	if (sc->sc_apaddr) {
 
-		if (off > AGP_GET_APERTURE(sc))
+		if (off > sc->sc_methods->get_aperture(sc->sc_chipc))
 			return (-1);
 
 		/*
@@ -229,10 +255,7 @@ agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
         struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
 
-        if (sc == NULL)
-                return (ENXIO);
-
-        if (sc->sc_chipc == NULL)
+        if (sc == NULL || sc->sc_chipc == NULL)
                 return (ENXIO);
 
         if (!sc->sc_opened)
@@ -249,7 +272,7 @@ agpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 {
 	struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
 
-	if (sc ==NULL)
+	if (sc == NULL)
 		return (ENODEV);
 
 	if (sc->sc_methods == NULL || sc->sc_chipc == NULL)
@@ -300,8 +323,9 @@ agpclose(dev_t dev, int flags, int devtype, struct proc *p)
          */
 	if (sc->sc_state == AGP_ACQUIRE_USER) {
 		while ((mem = TAILQ_FIRST(&sc->sc_memory)) != 0) {
-			if (mem->am_is_bound)
+			if (mem->am_is_bound) {
 				AGP_UNBIND_MEMORY(sc, mem);
+			}
 			AGP_FREE_MEMORY(sc, mem);
 		}
                 agp_release_helper(sc, AGP_ACQUIRE_USER);
@@ -325,78 +349,30 @@ agp_find_memory(struct agp_softc *sc, int id)
 	return (0);
 }
 
-const struct agp_product *
-agp_lookup(struct pci_attach_args *pa)
-{
-	const struct agp_product *ap;
-
-	/* First find the vendor. */
-	for (ap = agp_products; ap->ap_attach != NULL; ap++)
-		if (ap->ap_vendor == PCI_VENDOR(pa->pa_id))
-			break;
-
-	if (ap->ap_attach == NULL)
-		return (NULL);
-
-	/* Now find the product within the vendor's domain. */
-	for (; ap->ap_attach != NULL; ap++) {
-		/* Ran out of this vendor's section of the table. */
-		if (ap->ap_vendor != PCI_VENDOR(pa->pa_id))
-			return (NULL);
-
-		if (ap->ap_product == PCI_PRODUCT(pa->pa_id))
-			break;		/* Exact match. */
-		if (ap->ap_product == (u_int32_t) -1)
-			break;		/* Wildcard match. */
-	}
-
-	if (ap->ap_attach == NULL)
-		ap = NULL;
-
-	return (ap);
-}
-
 int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, u_int32_t bar, u_int32_t memtype)
 {
 	/* Find the aperture. Don't map it (yet), this would eat KVA */
-	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar,
-	    memtype, &sc->sc_apaddr, &sc->sc_apsize,
-	    &sc->sc_apflags) != 0)
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, memtype,
+	    &sc->sc_apaddr, NULL, NULL) != 0)
 		return (ENXIO);
 
 	return (0);
 }
 
-u_int32_t
-agp_generic_get_aperture(struct agp_softc *sc)
-{
-	return (sc->sc_apsize);
-}
-
-int
-agp_generic_set_aperture(struct agp_softc *sc, u_int32_t aperture)
-{
-	if (aperture != AGP_GET_APERTURE(sc))
-		return (EINVAL);
-
-	return (0);
-}
-
 struct agp_gatt *
-agp_alloc_gatt(struct agp_softc *sc)
+agp_alloc_gatt(bus_dma_tag_t dmat, u_int32_t apsize)
 {
-	u_int32_t apsize = AGP_GET_APERTURE(sc);
-	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
-	struct agp_gatt *gatt;
-	int nseg;
+	struct agp_gatt	*gatt;
+	u_int32_t	 entries = apsize >> AGP_PAGE_SHIFT;
+	int		 nseg;
 
 	gatt = malloc(sizeof(*gatt), M_AGP, M_NOWAIT | M_ZERO);
 	if (!gatt)
 		return (NULL);
 	gatt->ag_entries = entries;
 
-	if (agp_alloc_dmamem(sc->sc_dmat, entries * sizeof(u_int32_t),
+	if (agp_alloc_dmamem(dmat, entries * sizeof(u_int32_t),
 	    0, &gatt->ag_dmamap, (caddr_t *)&gatt->ag_virtual,
 	    &gatt->ag_physical, &gatt->ag_dmaseg, 1, &nseg) != 0)
 		return (NULL);
@@ -409,28 +385,22 @@ agp_alloc_gatt(struct agp_softc *sc)
 }
 
 void
-agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt)
+agp_free_gatt(bus_dma_tag_t dmat, struct agp_gatt *gatt)
 {
-	agp_free_dmamem(sc->sc_dmat, gatt->ag_size, gatt->ag_dmamap,
+	agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap,
 	    (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
 	free(gatt, M_AGP);
 }
 
 int
-agp_generic_detach(struct agp_softc *sc)
-{
-	agp_flush_cache();
-	return (0);
-}
-
-int
 agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 {
-	pcireg_t tstatus, mstatus;
-	pcireg_t command;
-	int rq, sba, fw, rate, capoff;
+	struct pci_attach_args	pa;
+	pcireg_t		tstatus, mstatus, command;
+	int			rq, sba, fw, rate, capoff;
 	
-	if (pci_get_capability(sc->sc_vgapc, sc->sc_vgapcitag, PCI_CAP_AGP,
+	if (pci_find_device(&pa, agpvga_match) == 0 ||
+	    pci_get_capability(pa.pa_pc, pa.pa_tag, PCI_CAP_AGP,
 	    &capoff, NULL) == 0) {
 		printf("agp_generic_enable: not an AGP capable device\n");
 		return (-1);
@@ -439,7 +409,7 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 	tstatus = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 	    sc->sc_capoff + AGP_STATUS);
 	/* display agp mode */
-	mstatus = pci_conf_read(sc->sc_vgapc, sc->sc_vgapcitag,
+	mstatus = pci_conf_read(pa.pa_pc, pa.pa_tag,
 	    capoff + AGP_STATUS);
 
 	/* Set RQ to the min of mode, tstatus and mstatus */
@@ -479,8 +449,7 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 	    sc->sc_capoff + AGP_COMMAND, command);
-	pci_conf_write(sc->sc_vgapc, sc->sc_vgapcitag, capoff + AGP_COMMAND,
-	    command);
+	pci_conf_write(pa.pa_pc, pa.pa_tag, capoff + AGP_COMMAND, command);
 	return (0);
 }
 
@@ -541,9 +510,9 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		return (EINVAL);
 	}
 
-	if (offset < 0
-	    || (offset & (AGP_PAGE_SIZE - 1)) != 0
-	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
+	if (offset < 0 || (offset & (AGP_PAGE_SIZE - 1)) != 0
+	    || offset + mem->am_size >
+	    sc->sc_methods->get_aperture(sc->sc_chipc)) {
 		printf("AGP: binding memory at bad offset %#lx\n",
 		    (unsigned long) offset);
 		rw_exit_write(&sc->sc_lock);
@@ -606,14 +575,16 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 			AGP_DPF("binding offset %#lx to pa %#lx\n",
 			    (unsigned long)(offset + done + j),
 			    (unsigned long)pa);
-			error = AGP_BIND_PAGE(sc, offset + done + j, pa);
+			error = sc->sc_methods->bind_page(sc->sc_chipc,
+			    offset + done + j, pa);
 			if (error) {
 				/*
 				 * Bail out. Reverse all the mappings
 				 * and unwire the pages.
 				 */
 				for (k = 0; k < done + j; k += AGP_PAGE_SIZE)
-					AGP_UNBIND_PAGE(sc, offset + k);
+					sc->sc_methods->unbind_page(
+					    sc->sc_chipc, offset + k);
 
 				bus_dmamap_unload(sc->sc_dmat, mem->am_dmamap);
 				bus_dmamem_unmap(sc->sc_dmat, mem->am_virtual,
@@ -638,7 +609,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	/*
 	 * Make sure the chipset gets the new mappings.
 	 */
-	AGP_FLUSH_TLB(sc);
+	sc->sc_methods->flush_tlb(sc->sc_chipc);
 
 	mem->am_offset = offset;
 	mem->am_is_bound = 1;
@@ -667,10 +638,10 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	 * TLB. Unwire the pages so they can be swapped.
 	 */
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		AGP_UNBIND_PAGE(sc, mem->am_offset + i);
+		sc->sc_methods->unbind_page(sc->sc_chipc, mem->am_offset + i);
 
 	agp_flush_cache();
-	AGP_FLUSH_TLB(sc);
+	sc->sc_methods->flush_tlb(sc->sc_chipc);
 
 	bus_dmamap_unload(sc->sc_dmat, mem->am_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, mem->am_virtual, mem->am_size);
@@ -807,7 +778,7 @@ agp_info_user(void *dev, agp_info *info)
 	else
 		info->agp_mode = 0; /* i810 doesn't have real AGP */
 	info->aper_base = sc->sc_apaddr;
-	info->aper_size = AGP_GET_APERTURE(sc) >> 20;
+	info->aper_size = sc->sc_methods->get_aperture(sc->sc_chipc) >> 20;
 	info->pg_total =
 	info->pg_system = sc->sc_maxmem >> AGP_PAGE_SHIFT;
 	info->pg_used = sc->sc_allocated >> AGP_PAGE_SHIFT;
@@ -818,7 +789,7 @@ agp_info_user(void *dev, agp_info *info)
 int
 agp_setup_user(void *dev, agp_setup *setup)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
+	struct agp_softc *sc = (struct agp_softc *)dev;
 
 	return (AGP_ENABLE(sc, setup->agp_mode));
 }
@@ -826,7 +797,7 @@ agp_setup_user(void *dev, agp_setup *setup)
 int
 agp_allocate_user(void *dev, agp_allocate *alloc)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
+	struct agp_softc *sc = (struct agp_softc *)dev;
 	struct agp_memory* mem; 
 	size_t size = alloc->pg_count << AGP_PAGE_SHIFT;
 
@@ -901,10 +872,13 @@ agp_get_info(void *dev, struct agp_info *info)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
 
-        info->ai_mode = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-	    sc->sc_capoff + AGP_STATUS);
+	if (sc->sc_capoff != 0)
+		info->ai_mode = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    AGP_STATUS + sc->sc_capoff);
+	else
+		info->ai_mode = 0; /* i810 doesn't have real AGP */
 	info->ai_aperture_base = sc->sc_apaddr;
-	info->ai_aperture_size = sc->sc_apsize;
+	info->ai_aperture_size = sc->sc_methods->get_aperture(sc->sc_chipc);
         info->ai_memory_allowed = sc->sc_maxmem;
         info->ai_memory_used = sc->sc_allocated;
 }
@@ -938,7 +912,7 @@ agp_alloc_memory(void *dev, int type, vsize_t bytes)
 {
 	struct agp_softc *sc = (struct agp_softc *)dev;
 
-        return  ((void *) AGP_ALLOC_MEMORY(sc, type, bytes));
+        return  (AGP_ALLOC_MEMORY(sc, type, bytes));
 }
 
 void

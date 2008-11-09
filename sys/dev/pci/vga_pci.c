@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.37 2008/08/12 23:10:41 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.38 2008/11/09 15:11:19 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -95,7 +95,7 @@
 #include <dev/vesa/vesabiosvar.h>
 #endif
 
-#include "agp.h"
+#include "intagp.h"
 #include "drmbase.h"
 
 int	vga_pci_match(struct device *, void *, void *);
@@ -103,9 +103,9 @@ void	vga_pci_attach(struct device *, struct device *, void *);
 paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
 void	vga_pci_bar_init(struct vga_pci_softc *, struct pci_attach_args *);
 
-#if NAGP > 0
-int	agpsubmatch(struct device *, void *, void *);
-int	agpbus_print(void *, const char *);
+#if NINTAGP > 0
+int	intagpsubmatch(struct device *, void *, void *);
+int	intagp_print(void *, const char *);
 #endif 
 #if NDRMBASE > 0
 int	drmsubmatch(struct device *, void *, void *);
@@ -120,20 +120,6 @@ int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
 };
-
-#if NAGP > 0
-struct pci_attach_args agp_pchb_pa;
-int agp_pchb_pa_set = 0;
-
-void
-agp_set_pchb(struct pci_attach_args *pa)
-{
-	if (!agp_pchb_pa_set) {
-		memcpy(&agp_pchb_pa, pa, sizeof *pa);
-		agp_pchb_pa_set++;
-	}
-}
-#endif
 
 int
 vga_pci_match(struct device *parent, void *match, void *aux)
@@ -166,9 +152,6 @@ void
 vga_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-#if NAGP >0
-	struct agpbus_attach_args aba;
-#endif
 	pcireg_t reg;
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 
@@ -194,15 +177,13 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	vga_pci_bar_init(sc, pa);
 
-#if NAGP > 0
+#if NINTAGP > 0
 	/*
-	 * attach agp here instead of pchb so it can share mappings
-	 * with the DRM
+	 * attach intagp here instead of pchb so it can share mappings
+	 * with the DRM.
 	 */
-	if (agp_pchb_pa_set) {
-		aba.apa_pci_args = agp_pchb_pa;
-		memcpy(&aba.apa_vga_args, pa, sizeof(struct pci_attach_args));
-		config_found_sm(self, &aba, agpbus_print, agpsubmatch);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
+		config_found_sm(self, aux, intagp_print, intagpsubmatch);
 
 	}
 #endif
@@ -212,24 +193,24 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-#if NAGP > 0
+#if NINTAGP > 0
 int
-agpsubmatch(struct device *parent, void *match, void *aux)
+intagpsubmatch(struct device *parent, void *match, void *aux)
 {
-	extern struct cfdriver agp_cd;
+	extern struct cfdriver intagp_cd;
 	struct cfdata *cf = match;
 
-	/* only allow agp to attach */
-	if (cf->cf_driver == &agp_cd)
+	/* only allow intagp to attach */
+	if (cf->cf_driver == &intagp_cd)
 		return ((*cf->cf_attach->ca_match)(parent, match, aux));
 	return (0);
 }
 
 int
-agpbus_print(void *vaa, const char *pnp)
+intagp_print(void *vaa, const char *pnp)
 {
 	if (pnp)
-		printf("agp at %s", pnp);
+		printf("intagp at %s", pnp);
 	return (UNCONF);
 }
 #endif

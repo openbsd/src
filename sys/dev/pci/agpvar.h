@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.14 2008/07/12 17:31:06 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.15 2008/11/09 15:11:19 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -43,9 +43,17 @@
 
 #define AGPUNIT(x)	minor(x)
 
+struct agp_attach_args {
+	char			*aa_busname;
+	struct pci_attach_args	*aa_pa;
+};
+
 struct agpbus_attach_args {
-        struct pci_attach_args apa_pci_args;
-        struct pci_attach_args apa_vga_args;
+	char				*aa_busname; /*so pci doesn't conflict*/
+        struct pci_attach_args		*aa_pa;
+	const struct agp_methods	*aa_methods;
+	int				 aa_bar;
+	pcireg_t			 aa_type;
 };
 
 enum agp_acquire_state {
@@ -91,67 +99,43 @@ struct agp_memory_info {
         int             ami_is_bound;   /* non-zero if bound */
 };
 
-struct agp_softc;
-
 struct agp_methods {
-	u_int32_t (*get_aperture)(struct agp_softc *);
-	int	(*set_aperture)(struct agp_softc *, u_int32_t);
-	int	(*bind_page)(struct agp_softc *, off_t, bus_addr_t);
-	int	(*unbind_page)(struct agp_softc *, off_t);
-	void	(*flush_tlb)(struct agp_softc *);
-	int	(*enable)(struct agp_softc *, u_int32_t mode);
+	bus_size_t (*get_aperture)(void *);
+	int	(*bind_page)(void *, off_t, bus_addr_t);
+	int	(*unbind_page)(void *, off_t);
+	void	(*flush_tlb)(void *);
+	int	(*enable)(void *, u_int32_t mode);
 	struct agp_memory *
-		(*alloc_memory)(struct agp_softc *, int, vsize_t);
-	int	(*free_memory)(struct agp_softc *, struct agp_memory *);
-	int	(*bind_memory)(struct agp_softc *, struct agp_memory *,
-		    off_t);
-	int	(*unbind_memory)(struct agp_softc *, struct agp_memory *);
+		(*alloc_memory)(void *, int, vsize_t);
+	int	(*free_memory)(void *, struct agp_memory *);
+	int	(*bind_memory)(void *, struct agp_memory *, off_t);
+	int	(*unbind_memory)(void *, struct agp_memory *);
 };
-
-#define AGP_GET_APERTURE(sc)	 ((sc)->sc_methods->get_aperture(sc))
-#define AGP_SET_APERTURE(sc,a)	 ((sc)->sc_methods->set_aperture((sc),(a)))
-#define AGP_BIND_PAGE(sc,o,p)	 ((sc)->sc_methods->bind_page((sc),(o),(p)))
-#define AGP_UNBIND_PAGE(sc,o)	 ((sc)->sc_methods->unbind_page((sc), (o)))
-#define AGP_FLUSH_TLB(sc)	 ((sc)->sc_methods->flush_tlb(sc))
-#define AGP_ENABLE(sc,m)	 ((sc)->sc_methods->enable((sc),(m)))
-#define AGP_ALLOC_MEMORY(sc,t,s) ((sc)->sc_methods->alloc_memory((sc),(t),(s)))
-#define AGP_FREE_MEMORY(sc,m)	 ((sc)->sc_methods->free_memory((sc),(m)))
-#define AGP_BIND_MEMORY(sc,m,o)	 ((sc)->sc_methods->bind_memory((sc),(m),(o)))
-#define AGP_UNBIND_MEMORY(sc,m)	 ((sc)->sc_methods->unbind_memory((sc),(m)))
 
 /*
  * All chipset drivers must have this at the start of their softc.
  */
 struct agp_softc {
-	struct device sc_dev;
+	struct device			 sc_dev;
 
-	bus_space_tag_t		sc_bt, sc_memt;
-	bus_space_handle_t	sc_bh;
-	bus_addr_t		sc_apaddr;
-	bus_size_t		sc_apsize;
-	bus_dma_tag_t		sc_dmat;
-	struct rwlock		sc_lock;	/* lock for access to GATT */
-	pcitag_t		sc_pcitag;	/* PCI tag, in case we need it. */
-	pcireg_t		sc_id;
-	pci_chipset_tag_t	sc_pc;
+	struct agp_memory_list		 sc_memory; 	/* mem blocks */
+	struct rwlock			 sc_lock;	/* GATT access lock */
+	const struct agp_methods 	*sc_methods;	/* callbacks */
+	void				*sc_chipc;	/* chipset softc */
 
-	pci_chipset_tag_t	sc_vgapc;
-	pcitag_t		sc_vgapcitag;
+	bus_dma_tag_t			 sc_dmat;
+	bus_addr_t			 sc_apaddr;
+	pci_chipset_tag_t		 sc_pc;
+	pcitag_t			 sc_pcitag;
+	pcireg_t			 sc_id;
 
-	struct agp_methods 	*sc_methods;
-	void			*sc_chipc;	/* chipset-dependent state */
+	int				 sc_opened;
+	int				 sc_capoff;			
+	int				 sc_nextid;	/* next mem block id */
+	enum agp_acquire_state		 sc_state;
 
-	int			sc_opened;
-	int			sc_capoff;			
-	int			sc_apflags;
-	int			sc_nextid;	/* next memory block id */
-
-	u_int32_t		sc_maxmem;	/* allocation upper bound */
-	u_int32_t		sc_allocated;	/* amount allocated */
-	enum agp_acquire_state	sc_state;
-	struct agp_memory_list	sc_memory;	/* list of allocated memory */
-
-	struct vga_pci_softc	*vga_softc;	/* needed for shared mappings */
+	u_int32_t			 sc_maxmem;	/* mem upper bound */
+	u_int32_t			 sc_allocated;	/* amount allocated */
 };
 
 struct agp_gatt {
@@ -163,57 +147,27 @@ struct agp_gatt {
 	size_t		ag_size;
 };
 
-
-struct agp_product {
-	int	ap_vendor;
-	int	ap_product;
-	int	(*ap_attach)(struct agp_softc *,
-		     struct pci_attach_args *);
-};
-/* MD-defined */
-extern 	const struct agp_product agp_products[];
-
-void	agp_attach(struct device *, struct device *, void *);
-int	agp_probe(struct device *, void *, void *);
-paddr_t	agpmmap(void *, off_t, int);
-int	agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	agpopen(dev_t, int, int, struct proc *);
-int	agpclose(dev_t, int, int , struct proc *);
-void	agp_set_pchb(struct pci_attach_args*);
 /*
  * Functions private to the AGP code.
  */
-
-int	agp_find_caps(pci_chipset_tag_t, pcitag_t);
+struct device	*agp_attach_bus(struct pci_attach_args *,
+		     const struct agp_methods *, int, pcireg_t,
+		     struct device *);
 int	agp_map_aperture(struct pci_attach_args *, 
 	    struct agp_softc *, u_int32_t, u_int32_t);
-u_int32_t agp_generic_get_aperture(struct agp_softc *);
-int	agp_generic_set_aperture(struct agp_softc *, u_int32_t);
 struct agp_gatt *
-	agp_alloc_gatt(struct agp_softc *);
-void	agp_free_gatt(struct agp_softc *, struct agp_gatt *);
+	agp_alloc_gatt(bus_dma_tag_t, u_int32_t);
+void	agp_free_gatt(bus_dma_tag_t, struct agp_gatt *);
 void	agp_flush_cache(void);
-int	agp_generic_attach(struct agp_softc *);
-int	agp_generic_detach(struct agp_softc *);
-int	agp_generic_enable(struct agp_softc *, u_int32_t);
-struct agp_memory *
-	agp_generic_alloc_memory(struct agp_softc *, int, vsize_t size);
-int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
-int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
-	    off_t);
+int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
-
-int	agp_ali_attach(struct agp_softc *, struct pci_attach_args *);
-int	agp_amd_attach(struct agp_softc *, struct pci_attach_args *);
-int	agp_i810_attach(struct agp_softc *, struct pci_attach_args *);
-int	agp_intel_attach(struct agp_softc *, struct pci_attach_args *);
-int	agp_via_attach(struct agp_softc *, struct pci_attach_args *);
-int	agp_sis_attach(struct agp_softc *, struct pci_attach_args *);
 
 int	agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *,
 	    caddr_t *, bus_addr_t *, bus_dma_segment_t *, int, int *);
 void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
 	    caddr_t, bus_dma_segment_t *, int nseg) ;
+int	agpdev_print(void *, const char *);
+int	agpbus_probe(struct agp_attach_args *aa);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.74 2008/09/26 21:15:53 mikeb Exp $ */
+/*	$OpenBSD: pchb.c,v 1.75 2008/11/09 15:11:19 oga Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -171,19 +171,13 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int has_agp = 0, i, r;
+	int i, r;
 	int doattach = 0;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
 		printf("\n");
 		switch (PCI_PRODUCT(pa->pa_id)) {
-#ifdef __i386__
-		case PCI_PRODUCT_AMD_SC751_SC:
-		case PCI_PRODUCT_AMD_762_PCHB:
-			has_agp = 1; /* XXX is this detected otherwise */
-			break;
-#endif /* __i386__ */
 		case PCI_PRODUCT_AMD_AMD64_0F_HT:
 		case PCI_PRODUCT_AMD_AMD64_10_HT:
 		case PCI_PRODUCT_AMD_AMD64_11_HT:
@@ -303,55 +297,18 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			if (pbnum != 0)
 				doattach = 1;
 			break;
-#endif /* __i386__ */
-
-		/*
-		 * As for Intel AGP, the host bridge is either in GFX mode
-		 * (internal graphics) or in AGP mode. In GFX mode, we pretend
-		 * to have AGP because the graphics memory access is very
-		 * similar and the AGP GATT code will deal with this. In the
-		 * latter case, the pci_get_capability(PCI_CAP_AGP) test below
-		 * will fire, so we do no harm by already setting the flag.
-		 */
-
-		/* AGP only */
-#ifdef __i386__
-		case PCI_PRODUCT_INTEL_82830M_HB:
-		case PCI_PRODUCT_INTEL_82845G_HB:
-		case PCI_PRODUCT_INTEL_82855GM_HB:
-		case PCI_PRODUCT_INTEL_82865G_HB:
-#endif /* __i386__ */
-		case PCI_PRODUCT_INTEL_82915GM_HB:
-		case PCI_PRODUCT_INTEL_82945GM_HB:
-		case PCI_PRODUCT_INTEL_82945GME_HB:
-		case PCI_PRODUCT_INTEL_82G965_HB:
-		case PCI_PRODUCT_INTEL_82Q965_HB:
-		case PCI_PRODUCT_INTEL_82GM965_HB:
-		case PCI_PRODUCT_INTEL_82G33_HB:
-		case PCI_PRODUCT_INTEL_82G35_HB:
-		case PCI_PRODUCT_INTEL_82Q35_HB:
-			has_agp = 1;
-			break;
-
-		/* AGP + RNG */
-#ifdef __i386__
+		/* RNG */
 		case PCI_PRODUCT_INTEL_82810_HB:
 		case PCI_PRODUCT_INTEL_82810_DC100_HB:
 		case PCI_PRODUCT_INTEL_82810E_HB:
 		case PCI_PRODUCT_INTEL_82815_HB:
-#endif /* __i386__ */
-		case PCI_PRODUCT_INTEL_82915G_HB:
-		case PCI_PRODUCT_INTEL_82945G_HB:
-			has_agp = 1;
-			/* FALLTHROUGH */
-
-		/* RNG only */
-#ifdef __i386__
 		case PCI_PRODUCT_INTEL_82820_HB:
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82850_HB:
 		case PCI_PRODUCT_INTEL_82860_HB:
 #endif /* __i386__ */
+		case PCI_PRODUCT_INTEL_82915G_HB:
+		case PCI_PRODUCT_INTEL_82945G_HB:
 		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82955X_HB:
 			sc->sc_bt = pa->pa_memt;
@@ -397,13 +354,18 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 #if NAGP > 0
 	/*
-	 * If we haven't detected AGP yet (via a product ID),
-	 * then check for AGP capability on the device.
+	 * Intel IGD have an odd interface and attach at vga, however,
+	 * in that mode they don't have the AGP cap bit, so this
+	 * test should be sufficient
 	 */
-	if (has_agp ||
-	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
-	    NULL, NULL) != 0)
-		agp_set_pchb(pa);
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	    NULL, NULL) != 0) {
+		struct agp_attach_args	aa;
+		aa.aa_busname = "agp";
+		aa.aa_pa = pa;
+
+		config_found(self, &aa, agpdev_print);
+	}
 #endif /* NAGP > 0 */
 #ifdef __i386__
 	if (doattach == 0)

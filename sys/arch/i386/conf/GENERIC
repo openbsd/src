@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.638 2008/10/24 06:10:25 brad Exp $
+#	$OpenBSD: GENERIC,v 1.639 2008/11/09 15:11:19 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -330,7 +330,20 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
-agp*		at vga?		# AGP bridges
+intagp*		at vga?		# intel integrated graphics agp
+aliagp*		at pchb?
+amdagp*		at pchb?
+intelagp*	at pchb?
+sisagp*		at pchb?
+viaagp*		at pchb?
+
+agp*		at intagp?	# AGP bridges
+agp*		at aliagp?	# AGP bridges
+agp*		at amdagp?	# AGP bridges
+agp*		at intelagp?	# AGP bridges
+agp*		at sisagp?	# AGP bridges
+agp*		at viaagp?	# AGP bridges
+
 #option		DRM_DEBUG
 inteldrm*	at vga? 	# Intel i915, i945 DRM driver
 #machdrm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver

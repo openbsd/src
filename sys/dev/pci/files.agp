@@ -1,27 +1,34 @@
-#	$OpenBSD: files.agp,v 1.2 2008/03/16 19:00:28 oga Exp $
+#	$OpenBSD: files.agp,v 1.3 2008/11/09 15:11:19 oga Exp $
 
-file	dev/pci/agp.c		agp			needs-flag
+define agpdev {}
 
-define	agp_ali
-file	dev/pci/agp_ali.c	agp_ali & agpbus	needs-flag
+# agpbus defined in /sys/conf/files
+device agp: agpdev
+attach agp at agpdev
+file	dev/pci/agp.c		agp		needs-flag
 
-define	agp_amd
-file	dev/pci/agp_amd.c	agp_amd & agpbus	needs-flag
+device	aliagp: agpdev
+attach	aliagp at agpbus
+file	dev/pci/agp_ali.c	aliagp
 
-define	agp_apple
-file	dev/pci/agp_apple.c	agp_apple & agpbus	needs-flag
+device	amdagp: agpdev
+attach	amdagp at agpbus
+file	dev/pci/agp_amd.c	amdagp
 
-define	agp_i810
-file	dev/pci/agp_i810.c	agp_i810 & agpbus	needs-flag
+device	intelagp: agpdev
+attach	intelagp at agpbus
+file	dev/pci/agp_intel.c	intelagp
 
-define	agp_intel
-file	dev/pci/agp_intel.c	agp_intel & agpbus	needs-flag
+# agpint defined in  /sys/conf/files since it attaches at vga
+device	intagp: agpdev
+attach	intagp at agpint
+# intelagp needs file to check presence of IGD
+file	dev/pci/agp_i810.c	intagp		needs-flag
 
-define	agp_sis
-file	dev/pci/agp_sis.c	agp_sis & agpbus	needs-flag
+device	sisagp: agpdev
+attach	sisagp at agpbus
+file	dev/pci/agp_sis.c	sisagp
 
-define	agp_via
-file	dev/pci/agp_via.c	agp_via & agpbus	needs-flag
-
-define	agp_amd64
-file	dev/pci/agp_amd64.c	agp_amd64 & agpbus	needs-flag
+device	viaagp: agpdev
+attach	viaagp at agpbus
+file	dev/pci/agp_via.c	viaagp

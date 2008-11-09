@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.444 2008/10/15 23:23:51 deraadt Exp $
+#	$OpenBSD: files,v 1.445 2008/11/09 15:11:19 oga Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -97,16 +97,15 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 define	mk48txx
 file	dev/ic/mk48txx.c		mk48txx
 
-# AGP
-define agpbus {}
-include "dev/pci/files.agp"
+# agp integrated graphics attaches at vga. defines are in dev/pci/files.agp
+define agpint {}
 
 # DRM - Direct Rendering Manager: /dev/drm
 define drm {}
 include "dev/pci/drm/files.drm"
 
 # VGA graphics
-device	vga: wsemuldisplaydev, pcdisplayops, drm, agpbus
+device	vga: wsemuldisplaydev, pcdisplayops, drm, agpint
 file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
 file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
 
@@ -415,6 +414,7 @@ define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 define	sdmmcbus {}			# SD/MMC attachment
 define	btbus {}			# Bluetooth host controller
+define	agpbus {}			# AGP bridge
 
 # UHCI USB controller
 device	uhci: usbus

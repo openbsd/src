@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.26 2008/09/26 21:15:53 mikeb Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.27 2008/11/09 15:11:19 oga Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -142,7 +142,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	int has_agp = 0, i, r;
+	int i, r;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
@@ -158,35 +158,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-
-		/*
-		 * As for Intel AGP, the host bridge is either in GFX mode
-		 * (internal graphics) or in AGP mode. In GFX mode, we pretend
-		 * to have AGP because the graphics memory access is very
-		 * similar and the AGP GATT code will deal with this. In the
-		 * latter case, the pci_get_capability(PCI_CAP_AGP) test below
-		 * will fire, so we do no harm by already setting the flag.
-		 */
-
-		/* AGP only */
-		case PCI_PRODUCT_INTEL_82915GM_HB:
-		case PCI_PRODUCT_INTEL_82945GM_HB:
-		case PCI_PRODUCT_INTEL_82945GME_HB:
-		case PCI_PRODUCT_INTEL_82G965_HB:
-		case PCI_PRODUCT_INTEL_82Q965_HB:
-		case PCI_PRODUCT_INTEL_82GM965_HB:
-		case PCI_PRODUCT_INTEL_82G33_HB:
-		case PCI_PRODUCT_INTEL_82G35_HB:
-		case PCI_PRODUCT_INTEL_82Q35_HB:
-			has_agp = 1;
-			break;
-
-		/* AGP + RNG */
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82945G_HB:
-			has_agp = 1;
-			/* FALLTHROUGH */
-
 		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82955X_HB:
 			sc->sc_bt = pa->pa_memt;
@@ -232,15 +205,19 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 #if NAGP > 0
 	/*
-	 * If we haven't detected AGP yet (via a product ID),
-	 * then check for AGP capability on the device.
+	 * Intel IGD have an odd interface and attach at vga, however
+	 * in that mode they don't have the AGP cap bit, so this
+	 * test should be sufficient
 	 */
-	if (has_agp ||
-	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 	    NULL, NULL) != 0) {
-		agp_set_pchb(pa);
+		struct agp_attach_args	aa;
+		aa.aa_busname = "agp";
+		aa.aa_pa = pa;
+
+		config_found(self, &aa, agpdev_print);
 	}
-#endif
+#endif /* NAGP > 0 */
 }
 
 int
