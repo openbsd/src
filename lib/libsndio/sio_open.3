@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.3 2008/11/07 21:01:15 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.4 2008/11/09 19:49:10 naddy Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2008 $
+.Dd $Mdocdate: November 9 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Fd #include <sndio.h>
 .Ft "struct sio_hdl *"
 .Fn "sio_open" "char *name" "unsigned mode" "int nbio_flag"
-.Ft "int"
+.Ft "void"
 .Fn "sio_close" "struct sio_hdl *hdl"
 .Ft "int"
 .Fn "sio_setpar" "struct sio_hdl *hdl" "struct sio_par *par"
@@ -70,7 +70,7 @@
 .\"Fd #define SIO_LE_NATIVE
 .Sh DESCRIPTION
 The
-.Nm libsndio
+.Nm sndio
 library allows user processes to access
 .Xr audio 4
 hardware and the
@@ -336,12 +336,12 @@ parameters are usable in the corresponding parameters
 of the
 .Va sio_par
 structure.
-.It Va rchan[SIO_NENC]
+.It Va rchan[SIO_NCHAN]
 Array of supported channel numbers for recording usable
 in the
 .Va sio_par
 structure.
-.It Va pchan[SIO_NENC]
+.It Va pchan[SIO_NCHAN]
 Array of supported channel numbers for playback usable
 in the
 .Va sio_par
@@ -502,7 +502,7 @@ The
 routine can be used to register the
 .Va cb
 call-back function that will be called by the
-.Nm libsndio
+.Nm sndio
 library at regular time intervals to notify the application
 the position in the stream changed.
 The
@@ -659,7 +659,7 @@ The
 .Fn sio_read
 and
 .Fn sio_write
-functions return the number of bytes transfered.
+functions return the number of bytes transferred.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUDIODEVICE
