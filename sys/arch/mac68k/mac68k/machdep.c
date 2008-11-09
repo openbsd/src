@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2008/06/27 17:22:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.147 2008/11/09 12:34:47 tobias Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1604,7 +1604,7 @@ mac68k_set_io_offsets(base)
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *)base;
 
-		/* The following two may be overriden. */
+		/* The following two may be overridden. */
 		sccA = (volatile u_char *)base + 0xc000;
 		SCSIBase = base + 0xf000;
 

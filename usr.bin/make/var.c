@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.83 2007/11/17 16:39:45 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.84 2008/11/09 12:34:47 tobias Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 		if (DEBUG(VAR))
 			printf("global:%s = %s\n", v->name, var_get_value(v));
 	} else if (DEBUG(VAR))
-		printf("overriden:%s = %s\n", v->name, var_get_value(v));
+		printf("overridden:%s = %s\n", v->name, var_get_value(v));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.15 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: acu.c,v 1.16 2008/11/09 12:34:47 tobias Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: acu.c,v 1.15 2007/05/15 19:42:05 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: acu.c,v 1.16 2008/11/09 12:34:47 tobias Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -51,7 +51,7 @@ static jmp_buf jmpbuf;
  * The phone numbers are in PN, and the call unit is in CU.
  *
  * If the PN is an '@', then we consult the PHONES file for
- *   the phone numbers.  This file is /etc/phones, unless overriden
+ *   the phone numbers.  This file is /etc/phones, unless overridden
  *   by an exported shell variable.
  *
  * The data base files must be in the format:

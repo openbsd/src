@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.4 2008/06/26 05:42:05 ray Exp $ */
+/*	$OpenBSD: readline.c,v 1.5 2008/11/09 12:34:46 tobias Exp $ */
 /*	$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $	*/
 
 /*-
@@ -252,7 +252,7 @@ rl_initialize(void)
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
-	/* so this can be overriden */
+	/* so this can be overridden */
 	el_set(e, EL_EDITOR, "emacs");
 	if (rl_terminal_name != NULL)
 		el_set(e, EL_TERMINAL, rl_terminal_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2008/04/09 21:45:26 kurt Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.16 2008/11/09 12:34:47 tobias Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -142,7 +142,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	/*
 	 * this is normally done by the crt0 code but we have to make
 	 * sure it's set here to allow constructors to call functions
-	 * that are overriden in the user binary (that are un-pic)
+	 * that are overridden in the user binary (that are un-pic)
 	 */
 	if (object->obj_type == OBJTYPE_EXE)
 		_hppa_dl_set_dp(object->dyn.pltgot);
