@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.281 2008/09/17 06:47:57 reyk Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.282 2008/11/09 08:51:43 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2539,15 +2539,12 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 /*
  * rcs_rev_setlog()
  *
- * Sets the log message of revision <rev> to <logtext>
+ * Sets the log message of revision <rev> to <logtext>.
  */
 int
 rcs_rev_setlog(RCSFILE *rfp, RCSNUM *rev, const char *logtext)
 {
 	struct rcs_delta *rdp;
-	char buf[CVS_REV_BUFSZ];
-
-	rcsnum_tostr(rev, buf, sizeof(buf));
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 		return (-1);
