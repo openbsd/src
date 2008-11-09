@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.82 2008/09/15 20:13:10 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.83 2008/11/09 23:00:56 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
 #include <netinet/ip_ipsp.h>
 #include "netstat.h"
 
-#define kget(p, d) (kread((u_long)(p), &(d), sizeof (d)))
-
 /* alignment constraint for routing socket */
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -103,14 +101,14 @@ routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max)
 
 	printf("Routing tables\n");
 
-	if (rtree == 0 || af2idx == 0) {
+	if (rtree == NULL || af2idx == NULL) {
 		printf("rt_tables: symbol not in namelist\n");
 		return;
 	}
 
-	kget(rtree, rt_head);
-	kget(rtbl_id_max, rtidxmax);
-	kget(af2idx, af2rtafidx);
+	kread((u_long)rtree, &rt_head, sizeof(rt_head));
+	kread((u_long)rtbl_id_max, &rtidxmax, sizeof(rtidxmax));
+	kread((long)af2idx, &af2rtafidx, sizeof(af2rtafidx));
 
 	for (i = 0; i <= AF_MAX; i++) {
 		if (af2rtafidx[i] > idxmax)
@@ -128,19 +126,19 @@ routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max)
 	for (i = 0; i <= AF_MAX; i++) {
 		if (i == AF_UNSPEC) {
 			if (Aflag && (af == AF_UNSPEC || af == 0xff)) {
-				kget(mtree, rnh);
-				kget(rnh, head);
+				kread(mtree, &rnh, sizeof(rnh));
+				kread((u_long)rnh, &head, sizeof(head));
 				printf("Netmasks:\n");
 				p_tree(head.rnh_treetop);
 			}
 			continue;
 		}
-		if (af2rtafidx[i] == 0)
+		if (af2rtafidx[i] == NULL)
 			/* no table for this AF */
 			continue;
-		if ((rnh = rt_tables[af2rtafidx[i]]) == 0)
+		if ((rnh = rt_tables[af2rtafidx[i]]) == NULL)
 			continue;
-		kget(rnh, head);
+		kread((u_long)rnh, &head, sizeof(head));
 		if (af == AF_UNSPEC || af == i) {
 			pr_family(i);
 			do_rtent = 1;
@@ -154,7 +152,7 @@ static struct sockaddr *
 kgetsa(struct sockaddr *dst)
 {
 
-	kget(dst, pt_u.u_sa);
+	kread((u_long)dst, &pt_u.u_sa, sizeof(pt_u.u_sa));
 	if (pt_u.u_sa.sa_len > sizeof (pt_u.u_sa))
 		kread((u_long)dst, pt_u.u_data, pt_u.u_sa.sa_len);
 	return (&pt_u.u_sa);
@@ -165,7 +163,7 @@ p_tree(struct radix_node *rn)
 {
 
 again:
-	kget(rn, rnode);
+	kread((u_long)rn, &rnode, sizeof(rnode));
 	if (rnode.rn_b < 0) {
 		if (Aflag)
 			printf("%-16p ", rn);
@@ -174,7 +172,7 @@ again:
 				printf("(root node)%s",
 				    rnode.rn_dupedkey ? " =>\n" : "\n");
 		} else if (do_rtent) {
-			kget(rn, rtentry);
+			kread((u_long)rn, &rtentry, sizeof(rtentry));
 			p_krtentry(&rtentry);
 			if (Aflag)
 				p_rtnode();
@@ -226,7 +224,7 @@ p_rtnode(void)
 			printf(" mask ");
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
 			    0, 0, -1);
-		} else if (rm == 0) {
+		} else if (rm == NULL) {
 			putchar('\n');
 			return;
 		}
@@ -240,7 +238,7 @@ p_rtnode(void)
 	p_rtflags(rnode.rn_flags);
 
 	while (rm) {
-		kget(rm, rmask);
+		kread((u_long)rm, &rmask, sizeof(rmask));
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %16p {(%d),%s",
 		    rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
@@ -250,7 +248,7 @@ p_rtnode(void)
 			struct radix_node rnode_aux;
 
 			printf("leaf = %p ", rmask.rm_leaf);
-			kget(rmask.rm_leaf, rnode_aux);
+			kread((u_long)rmask.rm_leaf, &rnode_aux, sizeof(rnode_aux));
 			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
 			    0, 0, -1);
 		} else
@@ -300,7 +298,7 @@ p_krtentry(struct rtentry *rt)
 
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
-			kget(rt->rt_ifp, ifnet);
+			kread((u_long)rt->rt_ifp, &ifnet, sizeof(ifnet));
 			lastif = rt->rt_ifp;
 		}
 		printf(" %.16s%s", ifnet.if_xname,
@@ -433,7 +431,7 @@ encap_print(struct rtentry *rt)
 	if (sen3.sen_type == SENT_IPSP) {
 		char hostn[NI_MAXHOST];
 
-		kget(sen3.sen_ipsp, ipo);
+		kread((u_long)sen3.sen_ipsp, &ipo, sizeof(ipo));
 
 		if (getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
 		    hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST) != 0)
