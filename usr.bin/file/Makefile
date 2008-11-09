@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2004/05/19 02:32:35 tedu Exp $
+#	$OpenBSD: Makefile,v 1.11 2008/11/09 23:00:42 espie Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	root
@@ -19,7 +19,7 @@ MAGFILES=	$(.CURDIR)/magdir/Header\
 		$(.CURDIR)/magdir/OpenBSD\
 		$(.CURDIR)/magdir/[0-9a-z]*
 magic:		$(MAGFILES)
-	cat $(MAGFILES) > $(.TARGET)
+	cat ${.ALLSRC:N*.orig} > $(.TARGET)
 
 afterinstall:
 	${INSTALL} ${INSTALL_COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
