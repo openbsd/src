@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.69 2008/11/08 18:42:49 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.70 2008/11/09 09:55:42 chl Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1075,7 +1075,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		if ((error == wpi_run(sc)) != 0) {
+		if ((error = wpi_run(sc)) != 0) {
 			printf("%s: could not move to run state\n",
 			    sc->sc_dev.dv_xname);
 			return error;
