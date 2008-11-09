@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.254 2008/11/08 07:37:07 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.255 2008/11/09 15:08:26 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2535,7 +2535,7 @@ bge_rxeof(struct bge_softc *sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 #ifdef BGE_CHECKSUM
@@ -3028,7 +3028,7 @@ bge_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (pkts == 0)

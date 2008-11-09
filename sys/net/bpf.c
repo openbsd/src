@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.69 2008/09/17 20:10:37 chl Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.70 2008/11/09 15:08:26 naddy Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,11 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include "vlan.h"
+#if NVLAN > 0
+#include <net/if_vlan_var.h>
+#endif
 
 #define BPF_BUFSIZE 32768
 
@@ -1234,6 +1239,50 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
 
 	bpf_mtap(arg, (struct mbuf *) &mh, direction);
 	m->m_flags |= mh.mh_flags & M_FILDROP;
+}
+
+/*
+ * Incoming linkage from device drivers, where we have a mbuf chain
+ * but need to prepend a VLAN encapsulation header.
+ *
+ * Con up a minimal dummy header to pacify bpf.  Allocate (only) a
+ * struct m_hdr on the stack.  This is safe as bpf only reads from the
+ * fields in this header that we initialize, and will not try to free
+ * it or keep a pointer to it.
+ */
+void
+bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
+{
+#if NVLAN > 0
+	struct m_hdr mh;
+	struct ether_vlan_header evh;
+
+	if ((m->m_flags & M_VLANTAG) == 0)
+#endif
+	{
+		bpf_mtap(arg, m, direction);
+		return;
+	}
+
+#if NVLAN > 0
+	bcopy(mtod(m, char *), &evh, ETHER_HDR_LEN);
+	evh.evl_proto = evh.evl_encap_proto;
+	evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
+	evh.evl_tag = htons(m->m_pkthdr.ether_vtag);
+	m->m_len -= ETHER_HDR_LEN;
+	m->m_data += ETHER_HDR_LEN;
+
+	mh.mh_flags = 0;
+	mh.mh_next = m;
+	mh.mh_len = sizeof(evh);
+	mh.mh_data = (caddr_t)&evh;
+
+	bpf_mtap(arg, (struct mbuf *) &mh, direction);
+	m->m_flags |= mh.mh_flags & M_FILDROP;
+
+	m->m_len += ETHER_HDR_LEN;
+	m->m_data -= ETHER_HDR_LEN;
+#endif
 }
 
 /*

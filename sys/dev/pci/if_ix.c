@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.13 2008/10/28 05:39:18 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.14 2008/11/09 15:08:26 naddy Exp $	*/
 
 /******************************************************************************
 
@@ -362,7 +362,7 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 		/* Set timeout in case hardware has problems transmitting */
@@ -2813,7 +2813,8 @@ discard:
                         rxr->next_to_check = i;
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				bpf_mtap_ether(ifp->if_bpf, m,
+				    BPF_DIRECTION_IN);
 #endif
 			ether_input_mbuf(ifp, m);
 			i = rxr->next_to_check;

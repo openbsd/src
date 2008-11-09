@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.69 2008/10/19 23:16:38 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.70 2008/11/09 15:08:26 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4047,7 +4047,8 @@ bnx_rx_int_next_rx:
 			 * user see the packet.
 			 */
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				bpf_mtap_ether(ifp->if_bpf, m,
+				    BPF_DIRECTION_IN);
 #endif
 
 			DBPRINT(sc, BNX_VERBOSE_RECV,
@@ -4546,7 +4547,7 @@ bnx_start(struct ifnet *ifp)
 #if NBPFILTER > 0
 		/* Send a copy of the frame to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.98 2008/11/08 06:52:49 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.99 2008/11/09 15:08:25 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1468,7 +1468,7 @@ re_rxeof(struct rl_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 	}
@@ -1890,7 +1890,7 @@ re_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	}
 

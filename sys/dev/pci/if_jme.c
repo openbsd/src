@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.12 2008/10/29 01:55:53 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.13 2008/11/09 15:08:26 naddy Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1242,7 +1242,7 @@ jme_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 
@@ -1715,7 +1715,8 @@ jme_rxpkt(struct jme_softc *sc)
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				bpf_mtap_ether(ifp->if_bpf, m,
+				    BPF_DIRECTION_IN);
 #endif
 
 			ifp->if_ipackets++;

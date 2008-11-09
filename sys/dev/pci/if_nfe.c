@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.85 2008/10/28 05:53:20 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.86 2008/11/09 15:08:26 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -813,7 +813,7 @@ nfe_rxeof(struct nfe_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ifp->if_ipackets++;
 		ether_input_mbuf(ifp, m);
@@ -1048,7 +1048,7 @@ nfe_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (sc->txq.cur == old)	/* nothing sent */

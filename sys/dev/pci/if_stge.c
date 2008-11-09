@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.43 2008/10/22 22:57:12 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.44 2008/11/09 15:08:26 naddy Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -644,7 +644,7 @@ stge_start(struct ifnet *ifp)
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 	}
 
@@ -1068,7 +1068,7 @@ stge_rxintr(struct stge_softc *sc)
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */

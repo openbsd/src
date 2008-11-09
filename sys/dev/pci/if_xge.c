@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.47 2008/10/21 00:26:40 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.48 2008/11/09 15:08:26 naddy Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -952,7 +952,7 @@ xge_intr(void *pv)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NBPFILTER > 0 */
 
 		ether_input_mbuf(ifp, m);
@@ -1178,7 +1178,7 @@ xge_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
 		sc->sc_nexttx = NEXTTX(nexttx);
