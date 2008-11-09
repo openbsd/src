@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.9 2008/11/09 22:47:54 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.10 2008/11/09 22:54:01 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ struct cfattach sisagp_ca = {
 };
 
 struct cfdriver sisagp_cd = {
-	NULL, "intelagp", DV_DULL
+	NULL, "sisagp", DV_DULL
 };
 
 const struct agp_methods agp_sis_methods = {
