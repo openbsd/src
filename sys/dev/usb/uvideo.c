@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.88 2008/11/06 21:07:13 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.89 2008/11/09 20:14:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/kthread.h>
 #include <uvm/uvm.h>
 
 #include <machine/bus.h>
@@ -109,7 +110,9 @@ void		uvideo_vs_free(struct uvideo_softc *);
 usbd_status	uvideo_vs_open(struct uvideo_softc *);
 void		uvideo_vs_close(struct uvideo_softc *);
 usbd_status	uvideo_vs_init(struct uvideo_softc *);
-void		uvideo_vs_start(struct uvideo_softc *);
+int		uvideo_vs_start_bulk(struct uvideo_softc *);
+void		uvideo_vs_start_bulk_thread(void *);
+void		uvideo_vs_start_isoc(struct uvideo_softc *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
@@ -965,6 +968,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	uint8_t ep_dir, ep_type;
 
 	vs = &sc->sc_vs_coll[vs_nr];
 
@@ -993,8 +997,14 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		DPRINTF(1, "bEndpointAddress=0x%02x, ", ed->bEndpointAddress);
 		DPRINTF(1, "wMaxPacketSize=%d\n", UGETW(ed->wMaxPacketSize));
 
-		/* we just support isoc endpoints yet */
-		if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_ISOCHRONOUS)
+		/* locate endpoint type */
+		ep_dir = UE_GET_DIR(ed->bEndpointAddress);
+		ep_type = UE_GET_XFERTYPE(ed->bmAttributes);
+		if (ep_dir == UE_DIR_IN && ep_type == UE_ISOCHRONOUS)
+			vs->bulk_endpoint = 0;
+		else if (ep_dir == UE_DIR_IN && ep_type == UE_BULK)
+			vs->bulk_endpoint = 1;
+		else
 			goto next;
 
 		/* save endpoint with largest bandwidth */
@@ -1371,7 +1381,10 @@ uvideo_vs_alloc(struct uvideo_softc *sc)
 		return (USBD_NOMEM);	
 	}
 
-	size = sc->sc_vs_cur->max_packet_size * sc->sc_nframes;
+	if (sc->sc_vs_cur->bulk_endpoint)
+		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
+	else
+		size = sc->sc_vs_cur->max_packet_size * sc->sc_nframes;
 
 	sc->sc_vs_cur->buf = usbd_alloc_buffer(sc->sc_vs_cur->xfer, size);
 	if (sc->sc_vs_cur->buf == NULL) {
@@ -1466,6 +1479,8 @@ uvideo_vs_open(struct uvideo_softc *sc)
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
+	sc->sc_vs_cur->bulk_running = 0;
+
 	if (sc->sc_vs_cur->pipeh) {
 		usbd_abort_pipe(sc->sc_vs_cur->pipeh);
 		usbd_close_pipe(sc->sc_vs_cur->pipeh);
@@ -1510,8 +1525,58 @@ uvideo_vs_init(struct uvideo_softc *sc)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+int
+uvideo_vs_start_bulk(struct uvideo_softc *sc)
+{
+	int error;
+
+	sc->sc_vs_cur->bulk_running = 1;
+
+	error = kthread_create(uvideo_vs_start_bulk_thread, sc, NULL,
+	    DEVNAME(sc));
+	if (error) {
+		printf("%s: can't create kernel thread!", DEVNAME(sc));
+		return (error);
+	}
+
+	return (0);
+}
+
 void
-uvideo_vs_start(struct uvideo_softc *sc)
+uvideo_vs_start_bulk_thread(void *arg)
+{
+	struct uvideo_softc *sc = arg;
+	usbd_status error;
+	int size;
+
+	while (sc->sc_vs_cur->bulk_running) {
+		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
+
+		error = usbd_bulk_transfer(
+		    sc->sc_vs_cur->xfer,
+		    sc->sc_vs_cur->pipeh,
+		    USBD_NO_COPY | USBD_SHORT_XFER_OK,
+		    USBD_NO_TIMEOUT,
+		    sc->sc_vs_cur->buf,
+		    &size,
+		    "vid_bulk");
+		if (error != USBD_NORMAL_COMPLETION) {
+			DPRINTF(1, "%s: error in bulk xfer: %s!\n",
+			    DEVNAME(sc), usbd_errstr(error));
+			break;
+		}
+
+		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
+
+		(void)uvideo_vs_decode_stream_header(sc, sc->sc_vs_cur->buf,
+		    size);
+	}
+
+	kthread_exit(0);
+}
+
+void
+uvideo_vs_start_isoc(struct uvideo_softc *sc)
 {
 	int i;
 
@@ -1572,7 +1637,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 
 skip:	/* setup new transfer */
-	uvideo_vs_start(sc);
+	uvideo_vs_start_isoc(sc);
 }
 
 usbd_status
@@ -1592,8 +1657,8 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	DPRINTF(2, "%s: header_len = %d\n", DEVNAME(sc), header_len);
 
-	if (header_len != 12)
-		/* frame header is 12 bytes long */
+	if (header_len > 12 || header_len < 2)
+		/* invalid header size */
 		return (USBD_INVAL);
 	if (header_len == frame_size && !(header_flags & UVIDEO_STREAM_EOF)) {
 		/* stream header without payload and no EOF */
@@ -2619,7 +2684,10 @@ uvideo_streamon(void *v, int type)
 	if (error != USBD_NORMAL_COMPLETION)
 		return (EINVAL);
 
-	uvideo_vs_start(sc);
+	if (sc->sc_vs_cur->bulk_endpoint)
+		uvideo_vs_start_bulk(sc);
+	else
+		uvideo_vs_start_isoc(sc);
 
 	return (0);
 }
@@ -2822,7 +2890,10 @@ uvideo_start_read(void *v)
 	if (error != USBD_NORMAL_COMPLETION)
 		return (EINVAL);
 
-	uvideo_vs_start(sc);
+	if (sc->sc_vs_cur->bulk_endpoint)
+		uvideo_vs_start_bulk(sc);
+	else
+		uvideo_vs_start_isoc(sc);
 
 	return (0);
 }
