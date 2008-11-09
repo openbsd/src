@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.6 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.7 2008/11/09 22:47:54 oga Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -87,8 +87,9 @@ agp_ali_probe(struct device *parent, void *match, void *aux)
 	struct agp_attach_args	*aa = aux;
 	struct pci_attach_args	*pa = aa->aa_pa;
 
-	/* Must be a pchb */
-	if (agpbus_probe(aa) == 1 && PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI)
+	/* Must be a pchb, don't attach to iommu-style agp devs */
+	if (agpbus_probe(aa) == 1 && PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_ALI_M1689)
 		return (1);
 	return (0);
 }

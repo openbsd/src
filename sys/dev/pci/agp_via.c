@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.9 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.10 2008/11/09 22:47:54 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -96,10 +96,13 @@ agp_via_probe(struct device *parent, void *match, void *aux)
 	struct agp_attach_args	*aa = aux;
 	struct pci_attach_args	*pa = aa->aa_pa;
 
-	/* Must be a pchb */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE && 
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH)
+	/* Must be a pchb don't attach to iommu-style agp devs */
+	if (agpbus_probe(aa) == 1 &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_K8M800_0 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_K8T890_0 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_K8HTB_0 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_K8HTB)
 		return (1);
 	return (0);
 }
