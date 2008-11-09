@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.8 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.9 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,6 +109,20 @@ abuf_del(struct abuf *buf)
 	}
 #endif
 	free(buf);
+}
+
+/*
+ * Clear buffer contents
+ */
+void
+abuf_clear(struct abuf *buf)
+{
+	ABUF_DPR(buf, "abuf_clear:\n");
+	buf->used = 0;
+	buf->start = 0;
+	buf->abspos = 0;
+	buf->silence = 0;
+	buf->drop = 0;
 }
 
 /*

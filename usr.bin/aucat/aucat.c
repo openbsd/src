@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.33 2008/11/08 10:40:52 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.34 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -283,7 +283,7 @@ newoutput(struct farg *fa)
 int
 main(int argc, char **argv)
 {
-	int c, u_flag, l_flag, hdr, xrun;
+	int c, u_flag, l_flag, hdr, xrun, suspend = 0;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar;
@@ -489,8 +489,29 @@ main(int argc, char **argv)
 		}
 		if (!file_poll())
 			break;
+		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
+		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz)) {
+			if (!suspend) {
+				DPRINTF("suspending\n");
+				suspend = 1;
+				dev_stop();
+				dev_clear();
+			}
+		}
+		if ((dev_mix && dev_mix->u.mix.idle == 0) ||
+		    (dev_sub && dev_sub->u.sub.idle == 0)) {
+			if (suspend) {
+				DPRINTF("resuming\n");
+				suspend = 0;
+				dev_start();
+			}
+		}
 	}
-
+	if (suspend) {
+		DPRINTF("resuming to drain\n");
+		suspend = 0;
+		dev_start();
+	}
 	dev_done();
 	filelist_done();
 

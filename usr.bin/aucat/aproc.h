@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.11 2008/11/04 22:18:12 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.12 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -129,12 +129,14 @@ struct aproc {
 #define MIX_DROP	1
 #define MIX_AUTOQUIT	2
 			unsigned flags;		/* bit mask of above */
+			unsigned idle;		/* frames since idleing */
 			int lat;		/* current latency */
 			int maxlat;		/* max latency allowed*/
 		} mix;
 		struct {
 #define SUB_DROP	1
 #define SUB_AUTOQUIT	2
+			unsigned idle;		/* frames since idleing */
 			unsigned flags;		/* bit mask of above */
 			int lat;		/* current latency */
 			int maxlat;		/* max latency allowed*/
@@ -187,5 +189,7 @@ struct aproc *dec_new(char *, struct aparams *);
 
 void mix_pushzero(struct aproc *);
 void mix_setmaster(struct aproc *);
+void mix_clear(struct aproc *);
+void sub_clear(struct aproc *);
 
 #endif /* !defined(APROC_H) */

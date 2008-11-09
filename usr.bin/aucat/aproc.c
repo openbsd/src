@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.21 2008/11/07 21:01:15 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.22 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -422,6 +422,8 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 		if (!abuf_fill(i))
 			continue;
 	}
+	if (LIST_EMPTY(&p->ibuflist))
+		p->u.mix.idle += ocount / obuf->bpf;
 	return 1;
 }
 
@@ -484,6 +486,8 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	LIST_FOREACH(i, &p->ibuflist, ient) {
 		i->mixodone -= ocount;
 	}
+	if (LIST_EMPTY(&p->ibuflist))
+		p->u.mix.idle += ocount / obuf->bpf;
 	return 1;
 }
 
@@ -525,6 +529,7 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 		fprintf(stderr, "mix_newin: channel ranges mismatch\n");
 		abort();
 	}
+	p->u.mix.idle = 0;
 	ibuf->mixodone = 0;
 	ibuf->mixivol = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
@@ -567,6 +572,7 @@ mix_new(char *name, int maxlat)
 
 	p = aproc_new(&mix_ops, name);
 	p->u.mix.flags = 0;
+	p->u.mix.idle = 0;
 	p->u.mix.lat = 0;
 	p->u.mix.maxlat = maxlat;
 	return p;
@@ -598,6 +604,16 @@ mix_setmaster(struct aproc *p)
 	    n++;
 	LIST_FOREACH(buf, &p->ibuflist, ient)
 	    buf->mixivol = ADATA_UNIT / n;
+}
+
+void
+mix_clear(struct aproc *p)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	p->u.mix.lat = 0;
+	obuf->mixitodo = 0;
+	mix_bzero(p);
 }
 
 /*
@@ -682,6 +698,8 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	}
 	abuf_rdiscard(ibuf, done);
 	p->u.sub.lat -= done / ibuf->bpf;
+	if (LIST_EMPTY(&p->obuflist))
+		p->u.sub.idle += done / ibuf->bpf;
 	return 1;
 }
 
@@ -714,6 +732,8 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	}
 	abuf_rdiscard(ibuf, done);
 	p->u.sub.lat -= done / ibuf->bpf;
+	if (LIST_EMPTY(&p->obuflist))
+		p->u.sub.idle += done / ibuf->bpf;
 	return 1;
 }
 
@@ -748,6 +768,7 @@ sub_newout(struct aproc *p, struct abuf *obuf)
 		fprintf(stderr, "sub_newout: channel ranges mismatch\n");
 		abort();
 	}
+	p->u.sub.idle = 0;
 	obuf->subidone = 0;
 	obuf->xrun = XRUN_IGNORE;
 }
@@ -780,9 +801,16 @@ sub_new(char *name, int maxlat)
 
 	p = aproc_new(&sub_ops, name);
 	p->u.sub.flags = 0;
+	p->u.sub.idle = 0;
 	p->u.sub.lat = 0;
 	p->u.sub.maxlat = maxlat;
 	return p;
+}
+
+void
+sub_clear(struct aproc *p)
+{
+	p->u.mix.lat = 0;
 }
 
 /*

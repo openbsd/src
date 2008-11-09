@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.12 2008/11/08 10:01:43 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.13 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -472,5 +472,40 @@ dev_attach(char *name,
 		ibuf->duplex = obuf;
 		obuf->duplex = ibuf;
 		dev_sync(ibuf, obuf);
+	}
+}
+
+/*
+ * clear buffers of the play and record chains so that when the device
+ * is started, playback and record start in sync
+ */
+void
+dev_clear(void)
+{
+	struct abuf *buf;
+
+	if (dev_mix) {
+		if (!LIST_EMPTY(&dev_mix->ibuflist)) { 
+			fprintf(stderr, "dev_clear: mixer not idle\n");
+			abort();
+		}
+		buf = LIST_FIRST(&dev_mix->obuflist);
+		while (buf) {
+			abuf_clear(buf);
+			buf = LIST_FIRST(&buf->rproc->obuflist);
+		}
+		mix_clear(dev_mix);
+	}
+	if (dev_sub) {
+		if (!LIST_EMPTY(&dev_sub->obuflist)) { 
+			fprintf(stderr, "dev_suspend: demux not idle\n");
+			abort();
+		}
+		buf = LIST_FIRST(&dev_sub->ibuflist);
+		while (buf) {
+			abuf_clear(buf);
+			buf = LIST_FIRST(&buf->wproc->ibuflist);
+		}
+		sub_clear(dev_sub);
 	}
 }

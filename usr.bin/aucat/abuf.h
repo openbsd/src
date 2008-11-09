@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.11 2008/11/03 22:55:34 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.12 2008/11/09 16:26:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -96,6 +96,7 @@ struct abuf {
 
 struct abuf *abuf_new(unsigned, struct aparams *);
 void abuf_del(struct abuf *);
+void abuf_clear(struct abuf *);
 unsigned char *abuf_rgetblk(struct abuf *, unsigned *, unsigned);
 unsigned char *abuf_wgetblk(struct abuf *, unsigned *, unsigned);
 void abuf_rdiscard(struct abuf *, unsigned);
