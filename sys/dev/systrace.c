@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.48 2008/09/12 12:27:27 blambert Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.49 2008/11/09 05:13:53 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -102,6 +102,7 @@ struct str_inject {
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
 	TAILQ_ENTRY(str_process) msg_next;
+	struct str_process *firstmsg;
 
 	struct proc *proc;
 	pid_t pid;
@@ -169,7 +170,8 @@ struct proc *systrace_find(struct str_process *);
 struct str_process *systrace_findpid(struct fsystrace *fst, pid_t pid);
 void	systrace_wakeup(struct fsystrace *);
 void	systrace_closepolicy(struct fsystrace *, struct str_policy *);
-int	systrace_insert_process(struct fsystrace *, struct proc *);
+void	systrace_insert_process(struct fsystrace *, struct proc *,
+	    struct str_process *);
 struct str_policy *systrace_newpolicy(struct fsystrace *, int);
 int	systrace_msg_child(struct fsystrace *, struct str_process *, pid_t);
 int	systrace_msg_policyfree(struct fsystrace *, struct str_policy *);
@@ -643,14 +645,33 @@ systrace_exit(struct proc *proc)
 		systrace_msg_child(fst, strp, -1);
 
 		systrace_detach(strp);
+		proc->p_systrace = NULL;
 		rw_exit_write(&fst->lock);
 	} else
 		systrace_unlock();
 	atomic_clearbits_int(&proc->p_flag, P_SYSTRACE);
 }
 
+struct str_process *
+systrace_getproc(void)
+{
+	struct str_process *newstrp;
+
+	newstrp = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
+	newstrp->firstmsg = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
+	return (newstrp);
+}
+
 void
-systrace_fork(struct proc *oldproc, struct proc *p)
+systrace_freeproc(struct str_process *strp)
+{
+	if (strp->firstmsg)
+		pool_put(&systr_proc_pl, strp->firstmsg);
+	pool_put(&systr_proc_pl, strp);
+}
+
+void
+systrace_fork(struct proc *oldproc, struct proc *p, struct str_process *newstrp)
 {
 	struct str_process *oldstrp, *strp;
 	struct fsystrace *fst;
@@ -659,6 +680,7 @@ systrace_fork(struct proc *oldproc, struct proc *p)
 	oldstrp = oldproc->p_systrace;
 	if (oldstrp == NULL) {
 		systrace_unlock();
+		systrace_freeproc(newstrp);
 		return;
 	}
 
@@ -666,8 +688,7 @@ systrace_fork(struct proc *oldproc, struct proc *p)
 	rw_enter_write(&fst->lock);
 	systrace_unlock();
 
-	if (systrace_insert_process(fst, p))
-		goto out;
+	systrace_insert_process(fst, p, newstrp);
 	if ((strp = systrace_findpid(fst, p->p_pid)) == NULL)
 		panic("systrace_fork");
 
@@ -677,7 +698,6 @@ systrace_fork(struct proc *oldproc, struct proc *p)
 
 	/* Insert fork message */
 	systrace_msg_child(fst, oldstrp, p->p_pid);
- out:
 	rw_exit_write(&fst->lock);
 }
 
@@ -1220,6 +1240,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
 	struct proc *proc, *p = curproc;
+	struct str_process *newstrp;
 
 	if ((proc = pfind(pid)) == NULL) {
 		error = ESRCH;
@@ -1284,7 +1305,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		goto out;
 	}
 
-	error = systrace_insert_process(fst, proc);
+	newstrp = systrace_getproc();
+	systrace_insert_process(fst, proc, newstrp);
 
  out:
 	return (error);
@@ -1599,8 +1621,7 @@ systrace_detach(struct str_process *strp)
 	if (strp->policy)
 		systrace_closepolicy(fst, strp->policy);
 	systrace_replacefree(strp);
-	pool_put(&systr_proc_pl, strp);
-
+	systrace_freeproc(strp);
 	return (error);
 }
 
@@ -1621,16 +1642,10 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 }
 
 
-int
-systrace_insert_process(struct fsystrace *fst, struct proc *proc)
+void
+systrace_insert_process(struct fsystrace *fst, struct proc *proc,
+	struct str_process *strp)
 {
-	struct str_process *strp;
-
-	strp = pool_get(&systr_proc_pl, PR_NOWAIT);
-	if (strp == NULL)
-		return (ENOBUFS);
-
-	memset((caddr_t)strp, 0, sizeof(struct str_process));
 	strp->pid = proc->p_pid;
 	strp->proc = proc;
 	strp->parent = fst;
@@ -1640,8 +1655,6 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc)
 
 	proc->p_systrace = strp;
 	atomic_setbits_int(&proc->p_flag, P_SYSTRACE);
-
-	return (0);
 }
 
 struct str_policy *
@@ -1668,14 +1681,12 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 		systrace_closepolicy(fst, tmp);
 	}
 
-	pol = pool_get(&systr_policy_pl, PR_NOWAIT);
+	pol = pool_get(&systr_policy_pl, PR_NOWAIT|PR_ZERO);
 	if (pol == NULL)
 		return (NULL);
 
 	DPRINTF(("%s: allocating %d -> %lu\n", __func__,
 		     maxents, (u_long)maxents * sizeof(int)));
-
-	memset((caddr_t)pol, 0, sizeof(struct str_policy));
 
 	pol->sysent = (u_char *)malloc(maxents * sizeof(u_char),
 	    M_XDATA, M_WAITOK);
@@ -1802,7 +1813,11 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	struct str_message *msg;
 	struct str_msg_child *msg_child;
 
-	nstrp = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
+	if (strp->firstmsg) {
+		nstrp = strp->firstmsg;
+		strp->firstmsg = NULL;
+	} else
+		nstrp = pool_get(&systr_proc_pl, PR_WAITOK|PR_ZERO);
 
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    nstrp, strp->pid, npid));

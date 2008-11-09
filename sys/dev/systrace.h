@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.20 2006/10/06 05:47:27 djm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.21 2008/11/09 05:13:53 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -222,7 +222,9 @@ struct fsystrace {
 void systrace_namei(struct nameidata *);
 int  systrace_redirect(int, struct proc *, void *, register_t *);
 void systrace_exit(struct proc *);
-void systrace_fork(struct proc *, struct proc *);
+struct str_process *systrace_getproc(void);
+void systrace_freeproc(struct str_process *);
+void systrace_fork(struct proc *, struct proc *, struct str_process *newstrp);
 void systrace_execve0(struct proc *);
 void systrace_execve1(char *, struct proc *);
 int systrace_scriptname(struct proc *, char *);
