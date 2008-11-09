@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.4 2008/11/09 12:22:27 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.5 2008/11/09 15:32:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -435,6 +435,8 @@ sio_pollfd(struct sio_hdl *hdl, struct pollfd *pfd, int events)
 {
 	if (hdl->eof)
 		return 0;
+	if (!hdl->started)
+		events = 0;
 	return hdl->ops->pollfd(hdl, pfd, events);
 }
 
