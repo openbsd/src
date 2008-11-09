@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.89 2008/11/09 20:14:06 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.90 2008/11/09 21:24:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1645,26 +1645,25 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
-	uint8_t header_len, header_flags;
+	struct usb_video_stream_header *sh;
 	int sample_len;
 
 	if (frame_size < 2)
 		/* frame too small to contain a valid stream header */
 		return (USBD_INVAL);
 
-	header_len = frame[0];
-	header_flags = frame[1];
+	sh = (struct usb_video_stream_header *)frame;
 
-	DPRINTF(2, "%s: header_len = %d\n", DEVNAME(sc), header_len);
+	DPRINTF(2, "%s: stream header len = %d\n", DEVNAME(sc), sh->bLength);
 
-	if (header_len > 12 || header_len < 2)
+	if (sh->bLength > UVIDEO_SH_MAX_LEN || sh->bLength < UVIDEO_SH_MIN_LEN)
 		/* invalid header size */
 		return (USBD_INVAL);
-	if (header_len == frame_size && !(header_flags & UVIDEO_STREAM_EOF)) {
+	if (sh->bLength == frame_size && !(sh->bFlags & UVIDEO_SH_FLAG_EOF)) {
 		/* stream header without payload and no EOF */
 		return (USBD_INVAL);
 	}
-	if (header_flags & UVIDEO_STREAM_ERR) {
+	if (sh->bFlags & UVIDEO_SH_FLAG_ERR) {
 		/* stream error, skip xfer */
 		DPRINTF(1, "%s: %s: stream error!\n", DEVNAME(sc), __func__);
 		return (USBD_CANCELLED);
@@ -1672,40 +1671,40 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
 
-	if (header_flags & UVIDEO_STREAM_FID) {
+	if (sh->bFlags & UVIDEO_SH_FLAG_FID) {
 		DPRINTF(2, "%s: %s: FID ON (0x%02x)\n",
 		    DEVNAME(sc), __func__,
-		    header_flags & UVIDEO_STREAM_FID);
+		    sh->bFlags & UVIDEO_SH_FLAG_FID);
 	} else {
 		DPRINTF(2, "%s: %s: FID OFF (0x%02x)\n",
 		    DEVNAME(sc), __func__,
-		    header_flags & UVIDEO_STREAM_FID);
+		    sh->bFlags & UVIDEO_SH_FLAG_FID);
 	}
 
 	if (fb->sample == 0) {
 		/* first sample for a frame */
 		fb->sample = 1;
-		fb->fid = header_flags & UVIDEO_STREAM_FID;
+		fb->fid = sh->bFlags & UVIDEO_SH_FLAG_FID;
 		fb->offset = 0;
 	} else {
 		/* continues sample for a frame, check consistency */
-		if (fb->fid != (header_flags & UVIDEO_STREAM_FID)) {
+		if (fb->fid != (sh->bFlags & UVIDEO_SH_FLAG_FID)) {
 			DPRINTF(1, "%s: %s: wrong FID, ignore last frame!\n",
 			    DEVNAME(sc), __func__);
 			fb->sample = 1;
-			fb->fid = header_flags & UVIDEO_STREAM_FID;
+			fb->fid = sh->bFlags & UVIDEO_SH_FLAG_FID;
 			fb->offset = 0;
 		}
 	}
 
 	/* save sample */
-	sample_len = frame_size - header_len;
+	sample_len = frame_size - sh->bLength;
 	if ((fb->offset + sample_len) <= fb->buf_size) {
-		bcopy(frame + header_len, fb->buf + fb->offset, sample_len);
+		bcopy(frame + sh->bLength, fb->buf + fb->offset, sample_len);
 		fb->offset += sample_len;
 	}
 
-	if (header_flags & UVIDEO_STREAM_EOF) {
+	if (sh->bFlags & UVIDEO_SH_FLAG_EOF) {
 		/* got a full frame */
 		DPRINTF(2, "%s: %s: EOF (frame size = %d bytes)\n",
 		    DEVNAME(sc), __func__, fb->offset);

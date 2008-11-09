@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.32 2008/11/09 20:14:06 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.33 2008/11/09 21:24:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -308,14 +308,21 @@ struct usb_video_probe_commit {
  * USB Video Payload MJPEG
  */
 /* Table 2-1: Stream Header Format for the Motion-JPEG */
-#define	UVIDEO_STREAM_FID	(1 << 0)
-#define	UVIDEO_STREAM_EOF	(1 << 1)
-#define	UVIDEO_STREAM_PTS	(1 << 2)
-#define	UVIDEO_STREAM_SCR	(1 << 3)
-#define	UVIDEO_STREAM_RES	(1 << 4)
-#define	UVIDEO_STREAM_STI	(1 << 5)
-#define	UVIDEO_STREAM_ERR	(1 << 6)
-#define	UVIDEO_STREAM_EOH	(1 << 7)
+#define UVIDEO_SH_MAX_LEN	12
+#define UVIDEO_SH_MIN_LEN	2
+struct usb_video_stream_header {
+	uByte	bLength;
+	uByte	bFlags;
+#define	UVIDEO_SH_FLAG_FID	(1 << 0)
+#define	UVIDEO_SH_FLAG_EOF	(1 << 1)
+#define	UVIDEO_SH_FLAG_PTS	(1 << 2)
+#define	UVIDEO_SH_FLAG_SCR	(1 << 3)
+#define	UVIDEO_SH_FLAG_RES	(1 << 4)
+#define	UVIDEO_SH_FLAG_STI	(1 << 5)
+#define	UVIDEO_SH_FLAG_ERR	(1 << 6)
+#define	UVIDEO_SH_FLAG_EOH	(1 << 7)
+	/* TODO complete struct */
+} __packed;
 
 /* Table 3-1: Motion-JPEG Video Format Descriptor */
 struct usb_video_format_mjpeg_desc {
