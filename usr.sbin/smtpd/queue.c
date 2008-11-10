@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.6 2008/11/10 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: queue.c,v 1.7 2008/11/10 21:29:18 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1014,7 +1014,7 @@ queue_batch_resolved(struct smtpd *env, struct batch *lookup)
 	struct batch *batchp;
 
 	batchp = batch_by_id(env, lookup->id);
-	batchp->h_errno = lookup->h_errno;
+	batchp->getaddrinfo_error = lookup->getaddrinfo_error;
 	batchp->ss_cnt = lookup->ss_cnt;
 
 /*
@@ -1028,7 +1028,7 @@ queue_batch_resolved(struct smtpd *env, struct batch *lookup)
 
  */
 
-	switch (batchp->h_errno) {
+	switch (batchp->getaddrinfo_error) {
 	case EAI_ADDRFAMILY:
 	case EAI_BADFLAGS:
 	case EAI_BADHINTS:

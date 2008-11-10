@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.5 2008/11/10 20:10:38 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.6 2008/11/10 21:29:18 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -490,7 +490,7 @@ struct batch {
 	char				 hostname[MAXHOSTNAMELEN];
 	char				 errorline[STRLEN];
 
-	u_int8_t			 h_errno;
+	u_int8_t			 getaddrinfo_error;
 	struct sockaddr_storage		 ss[MXARRAYSIZE*2];
 	u_int8_t			 ss_cnt;
 	u_int8_t			 ss_off;

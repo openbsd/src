@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: lka.c,v 1.3 2008/11/10 21:29:18 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -533,9 +533,9 @@ lka_dispatch_queue(int sig, short event, void *p)
 			}
 
 			batchp->ss_cnt = j;
-			batchp->h_errno = 0;
+			batchp->getaddrinfo_error = 0;
 			if (j == 0)
-				batchp->h_errno = error;
+				batchp->getaddrinfo_error = error;
 			imsg_compose(ibuf, IMSG_LKA_MX_LOOKUP, 0, 0, -1, batchp, sizeof(*batchp));
 
 			if (mx != lmx)
