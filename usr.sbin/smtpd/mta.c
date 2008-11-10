@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: mta.c,v 1.3 2008/11/10 02:34:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -710,6 +710,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 
 	if (batchp->state == S_QUIT) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
+		log_debug("closing connection because of QUIT");
 		close(batchp->peerfd);
 		return;
 	}
@@ -747,6 +748,7 @@ mta_error_handler(struct bufferevent *bev, short error, void *arg)
 	struct batch *batchp = arg;
 	if (error & (EVBUFFER_TIMEOUT|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
+		log_debug("closing connection because of an error");
 		close(batchp->peerfd);
 		return;
 	}
@@ -783,6 +785,9 @@ mta_batch_update_queue(struct batch *batchp)
 
 	if (batchp->bev)
 		bufferevent_free(batchp->bev);
+
+	if (batchp->peerfd != -1)
+		close(batchp->peerfd);
 
 	free(batchp);
 }
