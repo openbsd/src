@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.21 2008/11/10 09:22:18 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.22 2008/11/10 10:48:43 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -466,7 +466,7 @@ setup_signal(int sig)
 	}
 }
 
-void
+static void
 setup_all_signals()
 {
 	/*
