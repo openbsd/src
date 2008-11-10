@@ -1,4 +1,4 @@
-/*	$OpenBSD: houses.c,v 1.6 2006/03/26 17:20:51 deraadt Exp $	*/
+/*	$OpenBSD: houses.c,v 1.7 2008/11/10 18:02:17 sthen Exp $	*/
 /*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: houses.c,v 1.6 2006/03/26 17:20:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: houses.c,v 1.7 2008/11/10 18:02:17 sthen Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ err:		printf("That makes the spread too wide.  Try again\n");
 	else if (mp->num_in == 2 && abs(temp[0] - temp[1]) > 1)
 		goto err;
 	for (tot = tot2 = i = 0; i < mp->num_in; i++) {
-		if (temp[i] == 5)
+		if (temp[i] == 5 && input[i])
 			tot2++;
 		else
 			tot += input[i];
@@ -182,12 +182,17 @@ err:		printf("That makes the spread too wide.  Try again\n");
 		    tot2, tot2 == 1 ? "":"s", nhot);
 		goto blew_it;
 	}
-
-	if (tot) {
-		printf("You asked for %d house%s and %d hotel%s for $%d\n", tot,
-		    tot == 1 ? "" : "s", tot2, tot2 == 1 ? "" : "s", tot * price);
+	if (!chot && tot2) {
+		printf(
+"You must have 4 houses on all your property before building hotels\n");
+		goto blew_it;
+	}
+	if (tot || tot2) {
+		printf("You asked for %d %s%s for $%d\n", tot ? tot : tot2, 
+		    tot ? "house" : "hotel", (tot == 1 || tot2 == 1) ? "" : "s",
+		    (tot ? tot : tot2) * price);
 		if (getyn("Is that ok? ") == 0) {
-			cur_p->money -= tot * price;
+			cur_p->money -= (tot ? tot : tot2) * price;
 			for (tot = i = 0; i < mp->num_in; i++)
 				mp->sq[i]->desc->houses = temp[i];
 		}
