@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.8 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.9 2008/11/10 03:38:53 deraadt Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	size_t len, xlen, upper_bound;
 	struct uio auio;
 	struct iovec aiov;
+	struct vmspace *vm;
 	vaddr_t argv;
 	char *arg;
 
@@ -102,7 +103,8 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 		free(arg, M_TEMP);
 		return (EFAULT);
 	}
-	p->p_vmspace->vm_refcnt++;	/* XXX */
+	vm = p->p_vmspace;
+	vm->vm_refcnt++;	/* XXX */
 
 	/*
 	 * Read in the ps_strings structure.
@@ -116,7 +118,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
+	error = uvm_io(&vm->vm_map, &auio, 0);
 	if (error)
 		goto bad;
 
@@ -132,7 +134,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ; 
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
+	error = uvm_io(&vm->vm_map, &auio, 0);
 	if (error)
 		goto bad;
 
@@ -155,7 +157,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
-		error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
+		error = uvm_io(&vm->vm_map, &auio, 0);
 		if (error)
 			goto bad;
 
@@ -178,7 +180,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 
 
  bad:
-	uvmspace_free(p->p_vmspace);
+	uvmspace_free(vm);
 	free(arg, M_TEMP);
 	return (error);
 }
