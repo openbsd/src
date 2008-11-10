@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.107 2008/11/04 21:37:06 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.108 2008/11/10 18:11:59 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1077,7 +1077,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 }
 
 /*
- * Checks if address pointed to be phint fits into the empty
+ * Checks if address pointed to by phint fits into the empty
  * space before the vm_map_entry after.  Takes aligment and
  * offset into consideration.
  */
