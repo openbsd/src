@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2008/11/10 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2008/11/10 22:35:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -453,8 +453,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= STRLEN)
+			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= MAX_LINE_SIZE)
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
@@ -528,8 +528,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= STRLEN)
+			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= MAX_LINE_SIZE)
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_LIST;
@@ -555,8 +555,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= STRLEN)
+			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= MAX_LINE_SIZE)
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_HASH;
@@ -682,8 +682,8 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= STRLEN)
+			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= MAX_LINE_SIZE)
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;

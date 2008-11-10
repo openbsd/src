@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.6 2008/11/10 21:29:18 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.7 2008/11/10 22:35:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -19,12 +19,12 @@
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAX_LISTEN		 16
-#define STRLEN			 1024
 #define PROC_COUNT		 8
 #define READ_BUF_SIZE		 32768
 #define MAX_NAME_SIZE		 64
 
 /* sizes include the tailing '\0' */
+#define MAX_LINE_SIZE		 1024
 #define MAX_LOCALPART_SIZE	 65
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
 
@@ -254,7 +254,7 @@ enum mapel_type {
 struct mapel {
 	TAILQ_ENTRY(mapel)		 me_entry;
 	union mapel_data {
-		char			 med_string[STRLEN];
+		char			 med_string[MAX_LINE_SIZE];
 		struct netaddr		 med_addr;
 	}				 me_key;
 	union mapel_data		 me_val;
@@ -265,7 +265,7 @@ struct map {
 #define F_USED				 0x01
 #define F_DYNAMIC			 0x02
 	u_int8_t			 m_flags;
-	char				 m_name[STRLEN];
+	char				 m_name[MAX_LINE_SIZE];
 	objid_t				 m_id;
 	enum map_type			 m_type;
 	enum mapel_type			 m_eltype;
@@ -372,7 +372,7 @@ struct submit_status {
 	union {
 		struct path		 path;
 		char			 msgid[MAXPATHLEN];
-		char			 errormsg[STRLEN];
+		char			 errormsg[MAX_LINE_SIZE];
 	} u;
 	struct sockaddr_storage		 ss;
 };
@@ -422,7 +422,7 @@ struct message {
 
 	char				 session_helo[MAXHOSTNAMELEN];
 	char				 session_hostname[MAXHOSTNAMELEN];
-	char				 session_errorline[STRLEN];
+	char				 session_errorline[MAX_LINE_SIZE];
 	struct sockaddr_storage		 session_ss;
 
 	struct path			 sender;
@@ -488,7 +488,7 @@ struct batch {
 
 	char				 message_id[MAXPATHLEN];
 	char				 hostname[MAXHOSTNAMELEN];
-	char				 errorline[STRLEN];
+	char				 errorline[MAX_LINE_SIZE];
 
 	u_int8_t			 getaddrinfo_error;
 	struct sockaddr_storage		 ss[MXARRAYSIZE*2];
@@ -550,7 +550,7 @@ struct listener {
 
 struct session_auth_req {
 	u_int64_t	session_id;
-	char		buffer[STRLEN];
+	char		buffer[MAX_LINE_SIZE];
 };
 
 struct session_auth_reply {

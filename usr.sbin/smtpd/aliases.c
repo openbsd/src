@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.4 2008/11/10 03:55:36 tedu Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.5 2008/11/10 22:35:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -154,7 +154,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	DBT val;
 	DB *aliasesdb;
 	struct map *map;
-	char	strkey[STRLEN];
+	char	strkey[MAX_LINE_SIZE];
 	int spret;
 
 	map = map_findbyname(env, "virtual");
@@ -170,8 +170,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	if (aliasesdb == NULL)
 		return 0;
 
-	spret = snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain);
-	if (spret == -1 || spret >= STRLEN) {
+	spret = snprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user, path->domain);
+	if (spret == -1 || spret >= MAX_LINE_SIZE) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -181,8 +181,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		spret = snprintf(strkey, STRLEN, "@%s", path->domain);
-		if (spret == -1 || spret >= STRLEN) {
+		spret = snprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain);
+		if (spret == -1 || spret >= MAX_LINE_SIZE) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -213,7 +213,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	struct alias *aliasp;
 	struct alias *nextalias;
 	struct map *map;
-	char	strkey[STRLEN];
+	char	strkey[MAX_LINE_SIZE];
 	int spret;
 
 	map = map_findbyname(env, "virtual");
@@ -229,8 +229,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	if (aliasesdb == NULL)
 		return 0;
 
-	spret = snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain);
-	if (spret == -1 || spret >= STRLEN) {
+	spret = snprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user, path->domain);
+	if (spret == -1 || spret >= MAX_LINE_SIZE) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -240,8 +240,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		spret = snprintf(strkey, STRLEN, "@%s", path->domain);
-		if (spret == -1 || spret >= STRLEN) {
+		spret = snprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain);
+		if (spret == -1 || spret >= MAX_LINE_SIZE) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}

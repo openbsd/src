@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.3 2008/11/10 02:34:50 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.4 2008/11/10 22:35:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -404,7 +404,7 @@ mta_write(int s, short event, void *arg)
 			bufferevent_free(batchp->bev);
 			batchp->bev = NULL;
 		}
-		strlcpy(batchp->errorline, "connection timed-out.", STRLEN);
+		strlcpy(batchp->errorline, "connection timed-out.", MAX_LINE_SIZE);
 
 		ret = 0;
 		while (batchp->ss_off < batchp->ss_cnt &&
@@ -469,7 +469,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	if (errstr || code < 100) {
 		/* Server sent invalid line, protocol error */
 		batchp->status |= S_BATCH_PERMFAILURE;
-		strlcpy(batchp->errorline, line, STRLEN);
+		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
 		return 0;
 	}
@@ -495,7 +495,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 450:
 	case 451:
 		batchp->status |= S_BATCH_TEMPFAILURE;
-		strlcpy(batchp->errorline, line, STRLEN);
+		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
 		return 0;
 
@@ -506,7 +506,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 550:
 		if (batchp->state == S_RCPT) {
 			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
-			strlcpy(batchp->messagep->session_errorline, line, STRLEN);
+			strlcpy(batchp->messagep->session_errorline, line, MAX_LINE_SIZE);
 			break;
 		}
 	case 354:
@@ -530,7 +530,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			log_debug("Ouch, SMTP session returned unhandled %d status.", code);
 
 		batchp->status |= S_BATCH_PERMFAILURE;
-		strlcpy(batchp->errorline, line, STRLEN);
+		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
 		return 0;
 	}
