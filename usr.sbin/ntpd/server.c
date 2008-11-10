@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.33 2008/11/10 16:59:33 deraadt Exp $ */
+/*	$OpenBSD: server.c,v 1.34 2008/11/10 17:55:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,7 +108,6 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 			log_warn("bind on %s failed, skipping",
 			    log_sockaddr((struct sockaddr *)&la->sa));
 			close(la->fd);
-			la->fd = -1;
 			nla = TAILQ_NEXT(la, entry);
 			TAILQ_REMOVE(&lconf->listen_addrs, la, entry);
 			free(la);
