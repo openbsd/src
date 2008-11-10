@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.173 2008/06/12 16:15:05 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.174 2008/11/10 18:08:42 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -636,6 +636,7 @@ do { \
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
+	ifindex2ifnet[ifp->if_index] = NULL;
 	splx(s);
 }
 
