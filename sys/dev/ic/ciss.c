@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.31 2008/09/10 14:01:22 blambert Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.32 2008/11/10 15:55:06 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -826,7 +826,6 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
 	ciss_lock_t lock;
-	int error;
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_raw_cmd "));
 
@@ -843,7 +842,6 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 		return (COMPLETE);
 	}
 
-	error = 0;
 	xs->error = XS_NOERROR;
 
 	/* TODO check this target has not yet employed w/ any volume */
@@ -886,7 +884,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	u_int8_t target = link->target;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
-	int error;
 	ciss_lock_t lock;
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_cmd "));
@@ -904,7 +901,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
 
-	error = 0;
 	xs->error = XS_NOERROR;
 
 	/* XXX emulate SYNCHRONIZE_CACHE ??? */
