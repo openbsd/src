@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.3 2008/11/10 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.4 2008/11/10 23:18:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -365,9 +365,11 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	}
 	s->s_msg.rcptcount = 0;
 
-	s->s_state = S_MAIL;
+	s->s_state = S_MAILGETFILE;
 	s->s_flags |= F_IMSG_SENT;
 	s->s_msg.id = s->s_id;
+	s->s_msg.session_id = s->s_id;
+	s->s_msg.session_ss = s->s_ss;
 
 	log_debug("session_mail_handler: sending notification to mfa");
 
@@ -456,13 +458,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_DATA;
-	s->s_flags |= F_IMSG_SENT;
-	s->s_msg.session_id = s->s_id;
-	s->s_msg.session_ss = s->s_ss;
-
-	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-	    IMSG_QUEUE_CREATE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
-	    sizeof(s->s_msg));
+	session_pickup(s, NULL);
 
 	return 1;
 }
@@ -594,7 +590,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		}
 		break;
 
-	case S_MAIL:
+	case S_MAILGETFILE:
 		/* sender was not accepted, downgrade state */
 		if (ss->code != 250) {
 			s->s_state = S_HELO;
@@ -603,9 +599,25 @@ session_pickup(struct session *s, struct submit_status *ss)
 			return;
 		}
 
+		s->s_state = S_MAIL;
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_CREATE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+
+		break;
+
+	case S_MAIL:
+
 		s->s_msg.sender = ss->u.path;
 		evbuffer_add_printf(s->s_bev->output,
 		    "%d Sender ok\r\n", ss->code);
+
+		if (s->s_msg.datafp == NULL) {
+			/* Remove message file */
+			imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_DELETE_MESSAGE_FILE,
+			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
+			return;
+		}
 		break;
 
 	case S_RCPT:
@@ -631,9 +643,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_DATA:
 		if (s->s_msg.datafp == NULL) {
-			/* Remove message file */
-			imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_DELETE_MESSAGE_FILE,
-			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 			evbuffer_add_printf(s->s_bev->output,
 			    "%d %s\r\n", 421,
 			    "Service temporarily unavailable");
