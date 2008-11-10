@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.3 2008/11/10 00:22:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,12 +21,14 @@
 #define MAX_LISTEN		 16
 #define STRLEN			 1024
 #define PROC_COUNT		 8
-#define READ_BUF_SIZE		 65535
+#define READ_BUF_SIZE		 32768
 #define MAX_NAME_SIZE		 64
 
 /* sizes include the tailing '\0' */
 #define MAX_LOCALPART_SIZE	 65
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
+
+/* return and forward path size */
 #define MAX_PATH_SIZE		 256
 
 /*#define SMTPD_CONNECT_TIMEOUT	 (60)*/
