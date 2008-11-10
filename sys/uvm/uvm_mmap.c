@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.70 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.71 2008/11/10 03:56:16 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -205,8 +205,9 @@ sys_mquery(p, v, retval)
 		}
 		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
 	}
-again:
+	vm_map_lock(&p->p_vmspace->vm_map);
 
+again:
 	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, size,
 	    &vaddr, uobj, uoff, 0, flags) == NULL) {
 		if (flags & UVM_FLAG_FIXED)
@@ -224,6 +225,7 @@ again:
 		error = 0;
 		*retval = (register_t)(vaddr);
 	}
+	vm_map_unlock(&p->p_vmspace->vm_map);
 done:
 	if (fp != NULL)
 		FRELE(fp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.66 2008/07/18 16:58:06 kurt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.67 2008/11/10 03:56:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -384,14 +384,17 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
 			    MAXDSIZ);
 
+		vm_map_lock(&p->p_vmspace->vm_map);
 		if (uvm_map_findspace(&p->p_vmspace->vm_map, addr, size,
 		    &addr, uobj, uoff, 0, UVM_FLAG_FIXED) == NULL) {
 			if (uvm_map_findspace(&p->p_vmspace->vm_map, addr, size,
 			    &addr, uobj, uoff, 0, 0) == NULL) {
 				error = ENOMEM; /* XXX */
+				vm_map_unlock(&p->p_vmspace->vm_map);
 				goto bad1;
 			}
 		} 
+		vm_map_unlock(&p->p_vmspace->vm_map);
 		if (addr != pos + loadmap[i].vaddr) {
 			/* base changed. */
 			pos = addr - trunc_page(loadmap[i].vaddr);
