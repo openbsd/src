@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: dns.c,v 1.3 2008/11/10 03:54:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,7 +47,6 @@ static void mxsort(struct mxrecord *, size_t);
 size_t getmxbyname(char *, char ***);
 
 
-/* bubble sort MX records by priority */
 static void
 mxsort(struct mxrecord *array, size_t len)
 {
@@ -55,14 +54,13 @@ mxsort(struct mxrecord *array, size_t len)
 	u_int32_t j;
 	struct mxrecord store;
 
-	for (i = j = 0; i < len - 1; ++i) {
-		for (j = i + 1; j < len; ++j) {
-			if (array[i].priority > array[j].priority) {
-				store = array[i];
-				array[i] = array[j];
-				array[j] = store;
-			}
+	for (i = 1; i < len; i++) {
+		store = array[i];
+		for (j = i - 1; j >= 0 && array[j].priority > store.priority;
+		    j--) {
+			array[j + 1] = array[j];
 		}
+		array[j + 1] = store;
 	}
 }
 
@@ -167,7 +165,7 @@ getmxbyname(char *name, char ***result)
 		mxnb = sizeof(mxarray) / sizeof(struct mxrecord);
 
 	/* Rearrange MX records by priority */
-	mxsort((struct mxrecord *)&mxarray, mxnb);
+	mxsort(mxarray, mxnb);
 
 	chunklen = 0;
 	for (i = 0; i < mxnb; ++i)
