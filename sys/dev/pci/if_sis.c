@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.83 2008/10/14 18:01:53 naddy Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.84 2008/11/10 07:23:43 cnst Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -834,7 +834,7 @@ allmulti:
 void
 sis_setpromisc(struct sis_softc *sc)
 {
-	struct ifnet	*ifp = ifp = &sc->arpcom.ac_if;
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
