@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.3 2008/11/10 00:57:35 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.4 2008/11/10 01:14:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -593,8 +593,10 @@ queue_load_submissions(struct smtpd *env, time_t tm)
 		if (dp->d_name[0] == '.')
 			continue;
 
-		if (! queue_message_from_id(dp->d_name, &message))
-			errx(1, "failed to load message");
+		if (! queue_message_from_id(dp->d_name, &message)) {
+			warnx("failed to load message \"%s\"", dp->d_name);
+			continue;
+		}
 
 		if (! queue_message_schedule(&message, tm)) {
 			if (message.flags & F_MESSAGE_EXPIRED) {
