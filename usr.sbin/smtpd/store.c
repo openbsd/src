@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.3 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: store.c,v 1.4 2008/11/10 16:33:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,11 +44,11 @@
 
 #include "smtpd.h"
 
-int fd_copy(int, int, size_t);
-int fd_append(int, int);
+int file_copy(FILE *, FILE *, size_t);
+int file_append(FILE *, FILE *);
 
 int
-fd_copy(int dest, int src, size_t len)
+file_copy(FILE *dest, FILE *src, size_t len)
 {
 	char buffer[8192];
 	size_t rlen;
@@ -56,10 +56,11 @@ fd_copy(int dest, int src, size_t len)
 	for (; len;) {
 
 		rlen = len < sizeof(buffer) ? len : sizeof(buffer);
-		if (atomic_read(src, buffer, rlen) == -1)
+
+		if (fread(buffer, 1, rlen, src) != rlen)
 			return 0;
 
-		if (atomic_write(dest, buffer, rlen) == -1)
+		if (fwrite(buffer, 1, rlen, dest) != rlen)
 			return 0;
 
 		len -= rlen;
@@ -69,23 +70,23 @@ fd_copy(int dest, int src, size_t len)
 }
 
 int
-fd_append(int dest, int src)
+file_append(FILE *dest, FILE *src)
 {
 	struct stat sb;
 	size_t srcsz;
 
-	if (fstat(src, &sb) == -1)
+	if (fstat(fileno(src), &sb) == -1)
 		return 0;
 	srcsz = sb.st_size;
 
-	if (! fd_copy(dest, src, srcsz))
+	if (! file_copy(dest, src, srcsz))
 		return 0;
 
 	return 1;
 }
 
 int
-store_write_header(struct batch *batchp, struct message *messagep)
+store_write_header(struct batch *batchp, struct message *messagep, FILE *fp)
 {
 	time_t tm;
 	char timebuf[26];	/* current time	 */
@@ -114,11 +115,13 @@ store_write_header(struct batch *batchp, struct message *messagep)
 	inet_ntop(messagep->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
 
 	if (batchp->type & T_DAEMON_BATCH) {
-		if (atomic_printfd(messagep->mboxfd, "From %s@%s %s\n",
-			"MAILER-DAEMON", batchp->env->sc_hostname, timebuf) == -1)
+
+		if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
+			batchp->env->sc_hostname, timebuf) == -1) {
 			return 0;
-		if (atomic_printfd(messagep->mboxfd,
-			"Received: from %s (%s [%s%s])\n"
+		}
+
+		if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
 			"\tby %s with ESMTP id %s\n"
 			"\tfor <%s@%s>; %s\n\n",
 			messagep->session_helo, messagep->session_hostname,
@@ -130,8 +133,7 @@ store_write_header(struct batch *batchp, struct message *messagep)
 		return 1;
 	}
 
-	if (atomic_printfd(messagep->mboxfd,
-		"From %s@%s %s\n"
+	if (fprintf(fp, "From %s@%s %s\n"
 		"Received: from %s (%s [%s%s])\n"
 		"\tby %s with ESMTP id %s\n"
 		"\tfor <%s@%s>; %s\n",
@@ -142,7 +144,6 @@ store_write_header(struct batch *batchp, struct message *messagep)
 		messagep->recipient.user, messagep->recipient.domain, ctimebuf) == -1) {
 		return 0;
 	}
-
 	return 1;
 }
 
@@ -151,34 +152,40 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 {
 	u_int32_t i;
 	struct message *recipient;
+	FILE *mboxfp;
+	FILE *messagefp;
 
-	if (! store_write_header(batchp, messagep))
+	mboxfp = fdopen(messagep->mboxfd, "a");
+	if (mboxfp == NULL)
 		return 0;
 
-	if (atomic_printfd(messagep->mboxfd,
-		"Hi !\n\n"
+	messagefp = fdopen(messagep->messagefd, "r");
+	if (messagefp == NULL)
+		goto bad;
+
+	if (! store_write_header(batchp, messagep, mboxfp))
+		goto bad;
+
+	if (fprintf(mboxfp, "Hi !\n\n"
 		"This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail it is\n"
-		"just a notification to let you know that an error has occured.\n\n") == -1) {
-		return 0;
-	}
+		"just a notification to let you know that an error has occured.\n\n") == -1)
+		goto bad;
 
-	if ((batchp->status & S_BATCH_PERMFAILURE) && atomic_printfd(messagep->mboxfd,
+	if ((batchp->status & S_BATCH_PERMFAILURE) && fprintf(mboxfp,
 		"You ran into a PERMANENT FAILURE, which means that the e-mail can't\n"
 		"be delivered to the remote host no matter how much I'll try.\n\n"
 		"Diagnostic:\n"
-		"%s\n\n", batchp->errorline) == -1) {
-		return 0;
-	}
+		"%s\n\n", batchp->errorline) == -1)
+		goto bad;
 
-	if ((batchp->status & S_BATCH_TEMPFAILURE) && atomic_printfd(messagep->mboxfd,
+	if ((batchp->status & S_BATCH_TEMPFAILURE) && fprintf(mboxfp,
 		"You ran into a TEMPORARY FAILURE, which means that the e-mail can't\n"
 		"be delivered right now, but could be deliverable at a later time. I\n"
 		"will attempt until it succeeds for the next four days, then let you\n"
 		"know if it didn't work out.\n\n"
 		"Diagnostic:\n"
-		"%s\n\n", batchp->errorline) == -1) {
-		return 0;
-	}
+		"%s\n\n", batchp->errorline) == -1)
+		goto bad;
 
 	if (! (batchp->status & S_BATCH_TEMPFAILURE)) {
 		/* First list the temporary failures */
@@ -186,16 +193,15 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 		TAILQ_FOREACH(recipient, &batchp->messages, entry) {
 			if (recipient->status & S_MESSAGE_TEMPFAILURE) {
 				if (i == 0) {
-					if (atomic_printfd(messagep->mboxfd,
+					if (fprintf(mboxfp,
 						"The following recipients caused a temporary failure:\n") == -1)
-						return 0;
+						goto bad;
 					++i;
 				}
-				if (atomic_printfd(messagep->mboxfd,
+				if (fprintf(mboxfp,
 					"\t<%s@%s>:\n%s\n\n", recipient->recipient.user, recipient->recipient.domain,
-					recipient->session_errorline) == -1) {
-					return 0;
-				}
+					recipient->session_errorline) == -1)
+					goto bad;
 			}
 		}
 
@@ -204,46 +210,80 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 		TAILQ_FOREACH(recipient, &batchp->messages, entry) {
 			if (recipient->status & S_MESSAGE_PERMFAILURE) {
 				if (i == 0) {
-					if (atomic_printfd(messagep->mboxfd,
+					if (fprintf(mboxfp,
 						"The following recipients caused a permanent failure:\n") == -1)
-						return 0;
+						goto bad;
 					++i;
 				}
-				if (atomic_printfd(messagep->mboxfd,
+				if (fprintf(mboxfp,
 					"\t<%s@%s>:\n%s\n\n", recipient->recipient.user, recipient->recipient.domain,
-					recipient->session_errorline) == -1) {
-					return 0;
-				}
+					recipient->session_errorline) == -1)
+					goto bad;
 			}
 		}
 	}
 
-	if (atomic_printfd(messagep->mboxfd,
-		"Below is a copy of the original message:\n\n") == -1)
-		return 0;
+	if (fprintf(mboxfp, "Below is a copy of the original message:\n\n") == -1)
+		goto bad;
 
-	if (! fd_append(messagep->mboxfd, messagep->messagefd))
-		return 0;
+	if (! file_append(mboxfp, messagefp))
+		goto bad;
 
-	if (atomic_printfd(messagep->mboxfd, "\n") == -1)
-		return 0;
+	if (fprintf(mboxfp, "\n") == -1)
+		goto bad;
 
+	fflush(mboxfp);
+	fsync(fileno(mboxfp));
+	fclose(mboxfp);
 	return 1;
+
+bad:
+	if (mboxfp != NULL)
+		fclose(mboxfp);
+
+	if (messagefp != NULL)
+		fclose(messagefp);
+
+	return 0;
 }
 
 int
 store_write_message(struct batch *batchp, struct message *messagep)
 {
-	if (! store_write_header(batchp, messagep))
+	FILE *mboxfp;
+	FILE *messagefp;
+
+	mboxfp = fdopen(messagep->mboxfd, "a");
+	if (mboxfp == NULL)
 		return 0;
 
-	if (! fd_append(messagep->mboxfd, messagep->messagefd))
-		return 0;
+	messagefp = fdopen(messagep->messagefd, "r");
+	if (messagefp == NULL)
+		goto bad;
 
-	if (atomic_printfd(messagep->mboxfd, "\n") == -1)
-		return 0;
+	if (! store_write_header(batchp, messagep, mboxfp))
+		goto bad;
 
+	if (! file_append(mboxfp, messagefp))
+		goto bad;
+
+	if (fprintf(mboxfp, "\n") == -1)
+		goto bad;
+
+
+	fflush(mboxfp);
+	fsync(fileno(mboxfp));
+	fclose(mboxfp);
 	return 1;
+
+bad:
+	if (mboxfp != NULL)
+		fclose(mboxfp);
+
+	if (messagefp != NULL)
+		fclose(messagefp);
+
+	return 0;
 }
 
 int
