@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.4 2008/11/10 01:14:05 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.5 2008/11/10 03:16:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -630,10 +630,9 @@ queue_load_submissions(struct smtpd *env, time_t tm)
 int
 queue_message_from_id(char *message_id, struct message *message)
 {
-	char pathname[MAXPATHLEN];
-	int fd;
-	int ret;
 	int spret;
+	char pathname[MAXPATHLEN];
+	FILE *fp;
 
 	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES, message_id);
 	if (spret == -1 || spret >= MAXPATHLEN) {
@@ -641,23 +640,23 @@ queue_message_from_id(char *message_id, struct message *message)
 		return 0;
 	}
 
-	fd = open(pathname, O_RDONLY);
-	if (fd == -1) {
-		warnx("queue_load_submissions: open: %s", message_id);
+	fp = fopen(pathname, "r");
+	if (fp == NULL) {
+		warnx("queue_load_submissions: fopen: %s", message_id);
 		goto bad;
 	}
 
-	ret = atomic_read(fd, message, sizeof(struct message));
-	if (ret != sizeof(struct message)) {
-		warnx("queue_load_submissions: atomic_read: %s", message_id);
+	if (fread(message, 1, sizeof(struct message), fp) !=
+	    sizeof(struct message)) {
+		warnx("queue_load_submissions: fread: %s", message_id);
 		goto bad;
 	}
 
-	close(fd);
+	fclose(fp);
 	return 1;
 bad:
-	if (fd != -1)
-		close(fd);
+	if (fp != NULL)
+		fclose(fp);
 	return 0;
 }
 
@@ -797,6 +796,8 @@ queue_record_submission(struct message *message)
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
 	int spret;
+	FILE *fp;
+	int hm;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -844,18 +845,26 @@ queue_record_submission(struct message *message)
 			if (unlink(linkname) == -1)
 				fatal("queue_record_submission: unlink");
 
+		fp = fdopen(fd, "w");
+		if (fp == NULL)
+			fatal("fdopen");
+
 		if (strlcpy(message->message_uid, message_uid, MAXPATHLEN)
 		    >= MAXPATHLEN)
 			fatal("queue_record_submission: message uid too long");
 
 		message->creation = time(NULL);
 
-		if (atomic_write(fd, message, sizeof(struct message))
-		    != sizeof(struct message)) {
-			close(fd);
+		if ((hm = fwrite(message, 1, sizeof(struct message), fp)) !=
+		    sizeof(struct message)) {
+			fclose(fp);
+			unlink(dbname);
 			return 0;
 		}
-		close(fd);
+		fflush(fp);
+		fsync(fd);
+		fclose(fp);
+
 		break;
 	}
 	return 1;
@@ -1085,6 +1094,7 @@ queue_update_database(struct message *message)
 	char *spool;
 	char pathname[MAXPATHLEN];
 	int spret;
+	FILE *fp;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -1109,10 +1119,16 @@ queue_update_database(struct message *message)
 	if ((fd = open(pathname, O_RDWR|O_EXLOCK)) == -1)
 		fatal("queue_update_database: cannot open database");
 
-	if (atomic_write(fd, message, sizeof (struct message)) == -1)
-		fatal("queue_update_database: cannot open database");
+	fp = fdopen(fd, "w");
+	if (fp == NULL)
+		fatal("fdopen");
 
-	close(fd);
+	if (fwrite(message, 1, sizeof(struct message), fp) !=
+	    sizeof(struct message))
+		fatal("queue_update_database: cannot write database");
+	fflush(fp);
+	fsync(fd);
+	fclose(fp);
 
 	return 1;
 }
@@ -1129,6 +1145,7 @@ queue_record_daemon(struct message *message)
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
 	int spret;
+	FILE *fp;
 
 	spret = snprintf(pathname, MAXPATHLEN, "%s/%s",
 	    PATH_MESSAGES, message->message_id);
@@ -1163,15 +1180,26 @@ queue_record_daemon(struct message *message)
 			if (unlink(linkname) == -1)
 				err(1, "unlink");
 
+		fp = fdopen(fd, "w");
+		if (fp == NULL)
+			fatal("fdopen");
+
 		(void)strlcpy(message->message_uid, message_uid, MAXPATHLEN);
 
 		message->creation = time(NULL);
 
-		atomic_write(fd, message, sizeof(*message));
-		close(fd);
+		if (fwrite(message, 1, sizeof(struct message), fp) !=
+		    sizeof(struct message)) {
+			fclose(fp);
+			unlink(dbname);
+			return 0;
+		}
+		fflush(fp);
+		fsync(fd);
+		fclose(fp);
 		break;
 	}
-
+	
 	return 1;
 }
 
