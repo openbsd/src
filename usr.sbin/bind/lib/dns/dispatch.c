@@ -399,6 +399,7 @@ dispatch_arc4random(dns_dispatchmgr_t *mgr) {
 	return (result);
 }
 
+#if 0
 static isc_uint16_t
 dispatch_arc4uniformrandom(dns_dispatchmgr_t *mgr, isc_uint16_t upper_bound) {
 	isc_uint16_t min, r;
@@ -431,6 +432,7 @@ dispatch_arc4uniformrandom(dns_dispatchmgr_t *mgr, isc_uint16_t upper_bound) {
 
 	return (r % upper_bound);
 }
+#endif
 
 /*
  * Return a hash of the destination and message id.
