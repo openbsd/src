@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2008/11/10 00:57:35 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2008/11/10 02:13:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -113,7 +113,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	KVSEP
+%token	ARROW
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -347,7 +347,7 @@ map		: MAP STRING			{
 		}
 		;
 
-keyval		: STRING KVSEP STRING		{
+keyval		: STRING ARROW STRING		{
 			struct mapel	*me;
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
@@ -766,7 +766,6 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "=>",			KVSEP },
 		{ "accept",		ACCEPT },
 		{ "all",		ALL },
 		{ "certificate",	CERTIFICATE },
@@ -1020,6 +1019,13 @@ nodigits:
 			if (c == '-')
 				return (c);
 		}
+	}
+
+	if (c == '=') {
+		if ((c = lgetc(0)) != EOF && c == '>')
+			return (ARROW);
+		lungetc(c);
+		c = '=';
 	}
 
 #define allowed_in_string(x) \
