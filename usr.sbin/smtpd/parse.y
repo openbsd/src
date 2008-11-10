@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2008/11/10 00:29:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -113,6 +113,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
+%token	KVSEP
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -346,7 +347,7 @@ map		: MAP STRING			{
 		}
 		;
 
-keyval		: STRING '=' '>' STRING		{
+keyval		: STRING KVSEP STRING		{
 			struct mapel	*me;
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
@@ -355,18 +356,18 @@ keyval		: STRING '=' '>' STRING		{
 			if (strlcpy(me->me_key.med_string, $1,
 			    sizeof(me->me_key.med_string)) >=
 			    sizeof(me->me_key.med_string) ||
-			    strlcpy(me->me_val.med_string, $4,
+			    strlcpy(me->me_val.med_string, $3,
 			    sizeof(me->me_val.med_string)) >=
 			    sizeof(me->me_val.med_string)) {
 				yyerror("map elements too long: %s, %s",
-				    $1, $4);
+				    $1, $3);
 				free(me);
 				free($1);
-				free($4);
+				free($3);
 				YYERROR;
 			}
 			free($1);
-			free($4);
+			free($3);
 
 			TAILQ_INSERT_TAIL(contents, me, me_entry);
 		}
@@ -753,6 +754,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "=>",			KVSEP },
 		{ "accept",		ACCEPT },
 		{ "all",		ALL },
 		{ "certificate",	CERTIFICATE },
