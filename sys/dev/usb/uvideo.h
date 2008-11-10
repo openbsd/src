@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.33 2008/11/09 21:24:55 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.34 2008/11/10 13:15:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -538,32 +538,13 @@ struct uvideo_controls {
 struct uvideo_softc {
 	struct device				 sc_dev;
 	usbd_device_handle			 sc_udev;
-	usbd_interface_handle			 sc_iface;
-	int					 sc_iface_number;
-	int					 sc_product;
-	int					 sc_vendor;
-
-	int					 sc_intr_number;
-	usbd_pipe_handle			 sc_intr_pipe;
-	u_char					*sc_ibuf;
-	int					 sc_isize;
-	int					 sc_vc_iface;
 
 	struct device				*sc_videodev;
 
-	struct vs_info				*sc_alts;
-	int					 sc_nalts;
-	int					 sc_nullalt;
-	int					 sc_video_rev;
 	int					 sc_enabled;
 	int					 sc_dying;
-	int					 sc_mode;
 	int					 sc_max_fbuf_size;
 	int					 sc_negotiated_flag;
-
-	u_int16_t				 uvc_version;
-	u_int32_t				 clock_frequency;
-	u_int32_t				 quirks;
 
 	struct uvideo_frame_buffer		 sc_frame_buffer;
 
