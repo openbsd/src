@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2008/11/10 02:13:40 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2008/11/10 17:24:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-	
+
 #include "smtpd.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
@@ -184,9 +184,8 @@ interval	: NUMBER quantifier		{
 			$$.tv_usec = 0;
 			$$.tv_sec = $1 * $2;
 		}
-		
 
-port		: PORT STRING 			{
+port		: PORT STRING			{
 			struct servent	*servent;
 
 			servent = getservbyname($2, "tcp");
@@ -198,7 +197,7 @@ port		: PORT STRING 			{
 			$$ = servent->s_port;
 			free($2);
 		}
-		| PORT NUMBER 			{
+		| PORT NUMBER			{
 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
 				yyerror("invalid port: %d", $2);
 				YYERROR;
@@ -222,7 +221,7 @@ ssmtp		: SSMTP				{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
 		;
 
-main		: QUEUE INTERVAL interval 	{
+main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
 		| ssmtp LISTEN ON STRING port certname {
@@ -257,7 +256,7 @@ main		: QUEUE INTERVAL interval 	{
 
 			if (host($4, &conf->sc_listeners,
 			    MAX_LISTEN, $5, flags) <= 0) {
-				yyerror("invalid virtual ip: %s", $4);  
+				yyerror("invalid virtual ip: %s", $4);
 				free($6);
 				free($4);
 				YYERROR;
@@ -284,7 +283,7 @@ maptype		: SINGLE			{ map->m_type = T_SINGLE; }
 
 mapsource	: DNS				{ map->m_src = S_DNS; }
 		| TFILE				{ map->m_src = S_FILE; }
-		| DB STRING    			{
+		| DB STRING			{
 			map->m_src = S_DB;
 			if (strlcpy(map->m_config, $2, MAXPATHLEN)
 			    >= MAXPATHLEN)
@@ -352,7 +351,7 @@ keyval		: STRING ARROW STRING		{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			
+
 			if (strlcpy(me->me_key.med_string, $1,
 			    sizeof(me->me_key.med_string)) >=
 			    sizeof(me->me_key.med_string) ||
@@ -516,7 +515,7 @@ mapref		: STRING			{
 			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
 			$$ = m->m_id;
 		}
-		| '(' 				{
+		| '('				{
 			struct map	*m;
 			int spret;
 
@@ -543,7 +542,7 @@ mapref		: STRING			{
 			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			$$ = map->m_id;
 		}
-		| '{' 				{
+		| '{'				{
 			struct map	*m;
 			int spret;
 
@@ -674,7 +673,7 @@ from		: FROM mapref			{
 			struct sockaddr_in *ssin;
 			struct sockaddr_in6 *ssin6;
 			int spret;
-			
+
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
 			m->m_id = last_map_id++;

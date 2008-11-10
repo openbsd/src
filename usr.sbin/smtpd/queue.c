@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.5 2008/11/10 03:16:02 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.6 2008/11/10 17:24:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -815,7 +815,6 @@ queue_record_submission(struct message *message)
 	}
 	spoolsz = strlen(spool);
 
-	
 	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
 	    message->message_id);
 	if (spret == -1 || spret >= MAXPATHLEN)
@@ -1199,7 +1198,7 @@ queue_record_daemon(struct message *message)
 		fclose(fp);
 		break;
 	}
-	
+
 	return 1;
 }
 

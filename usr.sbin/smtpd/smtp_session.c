@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.3 2008/11/10 17:24:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -168,7 +168,7 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 	}
 
 	req.session_id = s->s_id;
-	if (strlcpy(req.buffer, eom, sizeof(req.buffer)) >= 
+	if (strlcpy(req.buffer, eom, sizeof(req.buffer)) >=
 	    sizeof(req.buffer)) {
 		evbuffer_add_printf(s->s_bev->output,
 		    "501 Syntax error\r\n");

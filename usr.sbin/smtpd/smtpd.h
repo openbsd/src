@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.3 2008/11/10 00:22:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.4 2008/11/10 17:24:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -403,13 +403,13 @@ enum message_flags {
 	F_MESSAGE_COMPLETE	= 0x1,
 	F_MESSAGE_RESOLVED	= 0x2,
 	F_MESSAGE_READY		= 0x4,
-	F_MESSAGE_EXPIRED      	= 0x8,
+	F_MESSAGE_EXPIRED	= 0x8,
 	F_MESSAGE_PROCESSING	= 0x10
 };
 
 struct message {
 	SPLAY_ENTRY(message)		 nodes;
-	TAILQ_ENTRY(message)    	 entry;
+	TAILQ_ENTRY(message)		 entry;
 
 	enum message_type		 type;
 
@@ -471,11 +471,11 @@ struct mdaproc {
 };
 
 struct batch {
-	SPLAY_ENTRY(batch)     	 b_nodes;
+	SPLAY_ENTRY(batch)	 b_nodes;
 
-	u_int64_t      		 id;
+	u_int64_t		 id;
 	enum batch_type		 type;
-	enum batch_flags       	 flags;
+	enum batch_flags	 flags;
 
 	struct rule			 rule;
 
@@ -588,8 +588,8 @@ struct session {
 };
 
 struct smtpd {
-#define SMTPD_OPT_VERBOSE	 		 0x00000001
-#define SMTPD_OPT_NOACTION	 		 0x00000002
+#define SMTPD_OPT_VERBOSE			 0x00000001
+#define SMTPD_OPT_NOACTION			 0x00000002
 	u_int32_t				 sc_opts;
 #define SMTPD_CONFIGURING			 0x00000001
 #define SMTPD_EXITING				 0x00000002
@@ -696,7 +696,7 @@ pid_t		 smtp(struct smtpd *);
 void		 smtp_listener_setup(struct smtpd *, struct listener *);
 
 /* smtp_session.c */
-void	 	 session_init(struct listener *, struct session *);
+void		 session_init(struct listener *, struct session *);
 void		 session_read(struct bufferevent *, void *);
 void		 session_write(struct bufferevent *, void *);
 void		 session_error(struct bufferevent *, short, void *);
