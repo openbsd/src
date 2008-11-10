@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.4 2008/11/10 00:57:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.5 2008/11/10 03:41:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <err.h>
 #include <errno.h>
@@ -113,7 +114,7 @@ void
 parent_send_config(int fd, short event, void *p)
 {
 	struct smtpd		*env = p;
-	struct buf		*b;
+	struct iovec		iov[3];
 	struct listener		*l;
 	struct ssl		*s;
 
@@ -122,19 +123,15 @@ parent_send_config(int fd, short event, void *p)
 	    0, 0, -1, NULL, 0);
 
 	SPLAY_FOREACH(s, ssltree, &env->sc_ssl) {
-		b = imsg_create(env->sc_ibufs[PROC_SMTP], IMSG_CONF_SSL, 0, 0,
-		    sizeof(*s) + s->ssl_cert_len + s->ssl_key_len);
-		if (b == NULL)
-			fatal("imsg_create");
-		if (imsg_add(b, s, sizeof(*s)) == -1)
-			fatal("imsg_add: ssl");
-		if (imsg_add(b, s->ssl_cert, s->ssl_cert_len) == -1)
-			fatal("imsg_add: ssl_cert");
-		if (imsg_add(b, s->ssl_key, s->ssl_key_len) == -1)
-			fatal("imsg_add: ssl_key");
-		b->fd = -1;
-		if (imsg_close(env->sc_ibufs[PROC_SMTP], b) == -1)
-			fatal("imsg_close");
+		iov[0].iov_base = s;
+		iov[0].iov_len = sizeof(*s);
+		iov[1].iov_base = s->ssl_cert;
+		iov[1].iov_len = s->ssl_cert_len;
+		iov[2].iov_base = s->ssl_key;
+		iov[2].iov_len = s->ssl_key_len;
+
+		imsg_composev(env->sc_ibufs[PROC_SMTP], IMSG_CONF_SSL, 0, 0, -1,
+		    iov, sizeof(iov)/sizeof(iov[0]));
 	}
 
 	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
