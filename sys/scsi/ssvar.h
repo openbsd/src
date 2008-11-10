@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.11 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.12 2008/11/10 18:04:41 deraadt Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL
 
 /*
  * SCSI scanner interface description
@@ -77,3 +79,5 @@ struct ss_softc {
  */
 void mustek_attach(struct ss_softc *, struct scsi_attach_args *);
 void scanjet_attach(struct ss_softc *, struct scsi_attach_args *);
+
+#endif /* _KERNEL */

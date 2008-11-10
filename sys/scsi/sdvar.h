@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.15 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.16 2008/11/10 18:04:41 deraadt Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#ifdef _KERNEL
 struct sd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
@@ -75,3 +76,5 @@ struct sd_softc {
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
+
+#endif /* _KERNEL */

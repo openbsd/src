@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.96 2008/11/09 17:01:10 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.97 2008/11/10 18:04:41 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -48,13 +48,185 @@
  */
 
 #ifndef	SCSI_SCSICONF_H
-#define SCSI_SCSICONF_H 1
+#define SCSI_SCSICONF_H
 
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/workq.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
+
+static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto4b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto8b(u_int64_t val, u_int8_t *bytes);
+static __inline u_int32_t _2btol(u_int8_t *bytes);
+static __inline u_int32_t _3btol(u_int8_t *bytes);
+static __inline u_int32_t _4btol(u_int8_t *bytes);
+static __inline u_int64_t _5btol(u_int8_t *bytes);
+static __inline u_int64_t _8btol(u_int8_t *bytes);
+
+static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto3l(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto4l(u_int32_t val, u_int8_t *bytes);
+static __inline u_int32_t _2ltol(u_int8_t *bytes);
+static __inline u_int32_t _3ltol(u_int8_t *bytes);
+static __inline u_int32_t _4ltol(u_int8_t *bytes);
+
+static __inline void
+_lto2b(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 8) & 0xff;
+	bytes[1] = val & 0xff;
+}
+
+static __inline void
+_lto3b(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 16) & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = val & 0xff;
+}
+
+static __inline void
+_lto4b(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 24) & 0xff;
+	bytes[1] = (val >> 16) & 0xff;
+	bytes[2] = (val >> 8) & 0xff;
+	bytes[3] = val & 0xff;
+}
+
+static __inline void
+_lto8b(u_int64_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 56) & 0xff;
+	bytes[1] = (val >> 48) & 0xff;
+	bytes[2] = (val >> 40) & 0xff;
+	bytes[3] = (val >> 32) & 0xff;
+	bytes[4] = (val >> 24) & 0xff;
+	bytes[5] = (val >> 16) & 0xff;
+	bytes[6] = (val >> 8) & 0xff;
+	bytes[7] = val & 0xff;
+}
+
+static __inline u_int32_t
+_2btol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = (bytes[0] << 8) | bytes[1];
+	return (rv);
+}
+
+static __inline u_int32_t
+_3btol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
+	return (rv);
+}
+
+static __inline u_int32_t
+_4btol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = (bytes[0] << 24) | (bytes[1] << 16) |
+	    (bytes[2] << 8) | bytes[3];
+	return (rv);
+}
+
+static __inline u_int64_t
+_5btol(u_int8_t *bytes)
+{
+	u_int64_t rv;
+
+	rv = ((u_int64_t)bytes[0] << 32) |
+	     ((u_int64_t)bytes[1] << 24) |
+	     ((u_int64_t)bytes[2] << 16) |
+	     ((u_int64_t)bytes[3] << 8) |
+	     (u_int64_t)bytes[4];
+	return (rv);
+}
+
+static __inline u_int64_t
+_8btol(u_int8_t *bytes)
+{
+	u_int64_t rv;
+
+	rv = (((u_int64_t)bytes[0]) << 56) |
+	    (((u_int64_t)bytes[1]) << 48) |
+	    (((u_int64_t)bytes[2]) << 40) |
+	    (((u_int64_t)bytes[3]) << 32) |
+	    (((u_int64_t)bytes[4]) << 24) |
+	    (((u_int64_t)bytes[5]) << 16) |
+	    (((u_int64_t)bytes[6]) << 8) |
+	    ((u_int64_t)bytes[7]);
+	return (rv);
+}
+
+static __inline void
+_lto2l(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+}
+
+static __inline void
+_lto3l(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = (val >> 16) & 0xff;
+}
+
+static __inline void
+_lto4l(u_int32_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = (val >> 16) & 0xff;
+	bytes[3] = (val >> 24) & 0xff;
+}
+
+static __inline u_int32_t
+_2ltol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = bytes[0] | (bytes[1] << 8);
+	return (rv);
+}
+
+static __inline u_int32_t
+_3ltol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
+	return (rv);
+}
+
+static __inline u_int32_t
+_4ltol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = bytes[0] | (bytes[1] << 8) |
+	    (bytes[2] << 16) | (bytes[3] << 24);
+	return (rv);
+}
+
+#ifdef _KERNEL
 
 #define DEVID_NONE	0
 #define DEVID_NAA	1
@@ -105,8 +277,6 @@ struct devid {
  * scsi system to find the associated other parts.
  */
 
-struct buf;
-struct proc;
 struct scsi_xfer;
 struct scsi_link;
 struct scsibus_softc;
@@ -383,199 +553,8 @@ int	scsi_detach_bus(struct scsibus_softc *, int);
 int	scsi_detach_target(struct scsibus_softc *, int, int);
 int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
 
-static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto4b(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto8b(u_int64_t val, u_int8_t *bytes);
-static __inline u_int32_t _2btol(u_int8_t *bytes);
-static __inline u_int32_t _3btol(u_int8_t *bytes);
-static __inline u_int32_t _4btol(u_int8_t *bytes);
-static __inline u_int64_t _5btol(u_int8_t *bytes);
-static __inline u_int64_t _8btol(u_int8_t *bytes);
-
-static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto3l(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto4l(u_int32_t val, u_int8_t *bytes);
-static __inline u_int32_t _2ltol(u_int8_t *bytes);
-static __inline u_int32_t _3ltol(u_int8_t *bytes);
-static __inline u_int32_t _4ltol(u_int8_t *bytes);
-
-static __inline void
-_lto2b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = (val >> 8) & 0xff;
-	bytes[1] = val & 0xff;
-}
-
-static __inline void
-_lto3b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = (val >> 16) & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-	bytes[2] = val & 0xff;
-}
-
-static __inline void
-_lto4b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = (val >> 24) & 0xff;
-	bytes[1] = (val >> 16) & 0xff;
-	bytes[2] = (val >> 8) & 0xff;
-	bytes[3] = val & 0xff;
-}
-
-static __inline void
-_lto8b(val, bytes)
-	u_int64_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = (val >> 56) & 0xff;
-	bytes[1] = (val >> 48) & 0xff;
-	bytes[2] = (val >> 40) & 0xff;
-	bytes[3] = (val >> 32) & 0xff;
-	bytes[4] = (val >> 24) & 0xff;
-	bytes[5] = (val >> 16) & 0xff;
-	bytes[6] = (val >> 8) & 0xff;
-	bytes[7] = val & 0xff;
-}
-
-static __inline u_int32_t
-_2btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = (bytes[0] << 8) | bytes[1];
-	return (rv);
-}
-
-static __inline u_int32_t
-_3btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
-	return (rv);
-}
-
-static __inline u_int32_t
-_4btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = (bytes[0] << 24) | (bytes[1] << 16) |
-	    (bytes[2] << 8) | bytes[3];
-	return (rv);
-}
-
-static __inline u_int64_t
-_5btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int64_t rv;
-
-	rv = ((u_int64_t)bytes[0] << 32) |
-	     ((u_int64_t)bytes[1] << 24) |
-	     ((u_int64_t)bytes[2] << 16) |
-	     ((u_int64_t)bytes[3] << 8) |
-	     (u_int64_t)bytes[4];
-	return (rv);
-}
-
-static __inline u_int64_t
-_8btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int64_t rv;
-
-	rv = (((u_int64_t)bytes[0]) << 56) |
-	    (((u_int64_t)bytes[1]) << 48) |
-	    (((u_int64_t)bytes[2]) << 40) |
-	    (((u_int64_t)bytes[3]) << 32) |
-	    (((u_int64_t)bytes[4]) << 24) |
-	    (((u_int64_t)bytes[5]) << 16) |
-	    (((u_int64_t)bytes[6]) << 8) |
-	    ((u_int64_t)bytes[7]);
-	return (rv);
-}
-
-static __inline void
-_lto2l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-}
-
-static __inline void
-_lto3l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-	bytes[2] = (val >> 16) & 0xff;
-}
-
-static __inline void
-_lto4l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-	bytes[2] = (val >> 16) & 0xff;
-	bytes[3] = (val >> 24) & 0xff;
-}
-
-static __inline u_int32_t
-_2ltol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8);
-	return (rv);
-}
-
-static __inline u_int32_t
-_3ltol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
-	return (rv);
-}
-
-static __inline u_int32_t
-_4ltol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8) |
-	    (bytes[2] << 16) | (bytes[3] << 24);
-	return (rv);
-}
-
-extern const u_int8_t version_to_spc [];
+extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
 
+#endif /* _KERNEL */
 #endif /* SCSI_SCSICONF_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.8 2004/01/25 00:09:20 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.9 2008/11/10 18:04:41 deraadt Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -6,6 +6,7 @@
  */
 #ifndef	_SCSI_SCSI_DEBUG_H
 #define _SCSI_SCSI_DEBUG_H 1
+#ifdef _KERNEL
 
 /*
  * These are the new debug bits.  (Sat Oct  2 12:46:46 WST 1993)
@@ -52,4 +53,5 @@ extern int scsidebug_buses, scsidebug_targets, scsidebug_luns, scsidebug_level;
 #define SC_DEBUGN(A,B,C)
 #endif
 
+#endif /* _KERNEL */
 #endif /* _SCSI_SCSI_DEBUG_H */
