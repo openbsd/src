@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.22 2008/11/09 16:26:07 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.23 2008/11/10 23:25:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -350,9 +350,9 @@ void
 mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
 	short *idata, *odata;
-	int vol = ibuf->mixivol;
 	unsigned i, j, icnt, onext, ostart;
 	unsigned scount, icount, ocount;
+	int vol;
 
 	DPRINTFN(4, "mix_badd: todo = %u, done = %u\n",
 	    obuf->mixitodo, ibuf->mixodone);
@@ -367,6 +367,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	if (ocount == 0)
 		return;
 
+	vol = (ibuf->mixweight * ibuf->mixvol) >> ADATA_SHIFT;
 	ostart = ibuf->cmin - obuf->cmin; 
 	onext = obuf->cmax - ibuf->cmax + ostart;
 	icnt = ibuf->cmax - ibuf->cmin + 1;
@@ -531,7 +532,8 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 	}
 	p->u.mix.idle = 0;
 	ibuf->mixodone = 0;
-	ibuf->mixivol = ADATA_UNIT;
+	ibuf->mixvol = ADATA_UNIT;
+	ibuf->mixweight = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
 	mix_setmaster(p);
 }
@@ -603,7 +605,7 @@ mix_setmaster(struct aproc *p)
 	LIST_FOREACH(buf, &p->ibuflist, ient)
 	    n++;
 	LIST_FOREACH(buf, &p->ibuflist, ient)
-	    buf->mixivol = ADATA_UNIT / n;
+	    buf->mixweight = ADATA_UNIT / n;
 }
 
 void

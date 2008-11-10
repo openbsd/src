@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.34 2008/11/09 16:26:07 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.35 2008/11/10 23:25:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,7 +110,8 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-lu] [-b nsamples] [-C min:max] [-c min:max] [-e enc] "
 	    "[-f device]\n"
-	    "\t[-h fmt] [-i file] [-o file] [-r rate] [-x policy]\n",
+	    "\t[-h fmt] [-i file] [-o file] [-r rate] [-v volume] "
+	    "[-x policy]\n",
 	    __progname);
 }
 
@@ -119,7 +120,7 @@ opt_ch(struct aparams *par)
 {
 	if (sscanf(optarg, "%u:%u", &par->cmin, &par->cmax) != 2 ||
 	    par->cmax < par->cmin || par->cmax > NCHAN_MAX - 1)
-		err(1, "%s: bad channel range", optarg);
+		errx(1, "%s: bad channel range", optarg);
 }
 
 void
@@ -127,7 +128,15 @@ opt_rate(struct aparams *par)
 {
 	if (sscanf(optarg, "%u", &par->rate) != 1 ||
 	    par->rate < RATE_MIN || par->rate > RATE_MAX)
-		err(1, "%s: bad sample rate", optarg);
+		errx(1, "%s: bad sample rate", optarg);
+}
+
+void
+opt_vol(unsigned *vol)
+{
+	if (sscanf(optarg, "%u", vol) != 1 ||
+	    *vol > MIDI_MAXCTL)
+		errx(1, "%s: bad volume", optarg);
 }
 
 void
@@ -149,7 +158,7 @@ opt_hdr(void)
 		return HDR_RAW;
 	if (strcmp("wav", optarg) == 0)
 		return HDR_WAV;
-	err(1, "%s: bad header specification", optarg);
+	errx(1, "%s: bad header specification", optarg);
 }
 
 int
@@ -244,6 +253,7 @@ newinput(struct farg *fa)
 	aproc_setout(proc, buf);
 	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
 	dev_attach(fa->name, buf, &fa->par, fa->xrun, NULL, NULL, 0);
+	dev_setvol(buf, MIDI_TO_ADATA(fa->vol));
 }
 
 /*
@@ -288,7 +298,7 @@ main(int argc, char **argv)
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
-	unsigned ivol, ovol, bufsz;
+	unsigned ivol, bufsz;
 	char *devpath, *dbgenv, *listenpath;
 	const char *errstr;
 	extern char *malloc_options;
@@ -311,10 +321,10 @@ main(int argc, char **argv)
 	SLIST_INIT(&ofiles);
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
-	ivol = ovol = MIDI_TO_ADATA(127);
+	ivol = MIDI_MAXCTL;
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:i:o:f:lu")) != -1) {
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:lu")) != -1) {
 		switch (c) {
 		case 'h':
 			hdr = opt_hdr();
@@ -336,8 +346,11 @@ main(int argc, char **argv)
 			opt_rate(&ipar);
 			opar.rate = ipar.rate;
 			break;
+		case 'v':
+			opt_vol(&ivol);
+			break;
 		case 'i':
-			opt_file(&ifiles, &ipar, 127, hdr, xrun, optarg);
+			opt_file(&ifiles, &ipar, ivol, hdr, xrun, optarg);
 			break;
 		case 'o':
 			opt_file(&ofiles, &opar, 127, hdr, xrun, optarg);

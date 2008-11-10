@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.13 2008/11/09 16:26:07 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.14 2008/11/10 23:25:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -304,6 +304,41 @@ dev_stop(void)
 }
 
 /*
+ * find the end points connected to the mix/sub
+ */
+int
+dev_getep(struct abuf **sibuf, struct abuf **sobuf)
+{
+	struct abuf *ibuf, *obuf;
+
+	if (sibuf) {
+		ibuf = *sibuf;
+		for (;;) {
+			if (!ibuf || !ibuf->rproc) {
+				DPRINTF("dev_getep: reader desappeared\n");
+				return 0;
+			}
+			if (ibuf->rproc == dev_mix)
+				break;
+			ibuf = LIST_FIRST(&ibuf->rproc->obuflist);
+		}
+	}
+	if (sobuf) {
+		obuf = *sobuf;
+		for (;;) {
+			if (!obuf || !obuf->wproc) {
+				DPRINTF("dev_getep: writer desappeared\n");
+				return 0;
+			}
+			if (obuf->wproc == dev_sub)
+				break;
+			obuf = LIST_FIRST(&obuf->wproc->ibuflist);
+		}
+	}
+	return 1;
+}
+
+/*
  * sync play buffer to rec buffer (for instance when one of
  * them underruns/overruns)
  */
@@ -321,24 +356,8 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 	rbuf = LIST_FIRST(&dev_sub->ibuflist);
 	if (!rbuf)
 		return;
-	for (;;) {
-		if (!ibuf || !ibuf->rproc) {
-			DPRINTF("dev_sync: reader desappeared\n");
-			return;
-		}
-		if (ibuf->rproc == dev_mix)
-			break;
-		ibuf = LIST_FIRST(&ibuf->rproc->obuflist);
-	}
-	for (;;) {
-		if (!obuf || !obuf->wproc) {
-			DPRINTF("dev_sync: writer desappeared\n");
-			return;
-		}
-		if (obuf->wproc == dev_sub)
-			break;
-		obuf = LIST_FIRST(&obuf->wproc->ibuflist);
-	}
+	if (!dev_getep(&ibuf, &obuf))
+		return;
 
 	/*
 	 * calculate delta, the number of frames the play chain is ahead
@@ -473,6 +492,18 @@ dev_attach(char *name,
 		obuf->duplex = ibuf;
 		dev_sync(ibuf, obuf);
 	}
+}
+
+/*
+ * change the playback volume of the fiven stream
+ */
+void
+dev_setvol(struct abuf *ibuf, int vol)
+{
+	if (!dev_getep(&ibuf, NULL))
+		return;
+	fprintf(stderr, "vol = %d\n", vol);
+	ibuf->mixvol = vol;
 }
 
 /*

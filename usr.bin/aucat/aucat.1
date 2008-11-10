@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.29 2008/11/04 22:20:08 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.30 2008/11/10 23:25:37 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2008 $
+.Dd $Mdocdate: November 10 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Op Fl i Ar file
 .Op Fl o Ar file
 .Op Fl r Ar rate
+.Op Fl v Ar volume
 .Op Fl x Ar policy
 .Ek
 .Sh DESCRIPTION
@@ -105,6 +106,10 @@ if this option is specified,
 it will instead use the parameters specified by the
 .Fl Ccer
 options.
+.It Fl v Ar volume
+Software volume attenuation of the playback stream.
+The value must be between 1 and 127,
+corresponding to -42dB and -0dB attenuation.
 .It Fl x Ar policy
 Action when the output stream cannot accept
 recorded data fast enough or the input stream

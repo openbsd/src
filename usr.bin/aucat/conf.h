@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2008/11/10 23:25:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,10 +42,6 @@ extern int debug_level;
 #define DPRINTF(...) do {} while(0)
 #define DPRINTFN(n, ...) do {} while(0)
 #endif
-
-
-#define MIDI_MAXCTL		127
-#define MIDI_TO_ADATA(m)	((ADATA_UNIT * (m) + 64) / 127)
 
 /*
  * number of blocks in the device play/record buffers.  because Sun API
