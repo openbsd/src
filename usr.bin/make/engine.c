@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2008/11/04 07:22:35 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.21 2008/11/10 09:22:18 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -78,7 +78,7 @@ bool
 Job_CheckCommands(GNode *gn)
 {
 	/* Alter our type to tell if errors should be ignored or things
-	 * should not be printed so CompatRunCommand knows what to do.
+	 * should not be printed so setup_and_run_command knows what to do.
 	 */
 	if (Targ_Ignore(gn))
 		gn->type |= OP_IGNORE;
