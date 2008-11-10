@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.3 2008/11/10 00:57:35 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.4 2008/11/10 03:55:36 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -395,7 +395,7 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 		return 0;
 
 	/* @ cannot start or end an address */
-	if (domain == line || domain == line + len)
+	if (domain == line || domain == line + len - 1)
 		return 0;
 
 	/* scan pre @ for disallowed chars */
