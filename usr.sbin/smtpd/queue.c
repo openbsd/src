@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: queue.c,v 1.3 2008/11/10 00:57:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -631,9 +631,10 @@ queue_message_from_id(char *message_id, struct message *message)
 	char pathname[MAXPATHLEN];
 	int fd;
 	int ret;
+	int spret;
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES, message_id)
-	    >= MAXPATHLEN) {
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES, message_id);
+	if (spret == -1 || spret >= MAXPATHLEN) {
 		warnx("queue_load_submissions: filename too long.");
 		return 0;
 	}
@@ -749,9 +750,11 @@ queue_create_message_file(char *message_id)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
+	int spret;
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
-		PATH_MESSAGES, time(NULL)) >= MAXPATHLEN)
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
+	    PATH_MESSAGES, time(NULL));
+	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
 	fd = mkstemp(pathname);
@@ -770,9 +773,10 @@ void
 queue_delete_message_file(char *message_id)
 {
 	char pathname[MAXPATHLEN];
+	int spret;
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES, message_id)
-	    >= MAXPATHLEN)
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES, message_id);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_delete_message_file: message id too long");
 
 	if (unlink(pathname) == -1)
@@ -790,6 +794,7 @@ queue_record_submission(struct message *message)
 	size_t spoolsz;
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
+	int spret;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -807,14 +812,16 @@ queue_record_submission(struct message *message)
 	}
 	spoolsz = strlen(spool);
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
-		message->message_id) >= MAXPATHLEN)
+	
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
+	    message->message_id);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_record_submission: message id too long");
 
 	for (;;) {
-		if (snprintf(linkname, MAXPATHLEN, "%s/%s.%qu", spool,
-			message->message_id, (u_int64_t)arc4random())
-		    >= MAXPATHLEN)
+		spret = snprintf(linkname, MAXPATHLEN, "%s/%s.%qu", spool,
+		    message->message_id, (u_int64_t)arc4random());
+		if (spret == -1 || spret >= MAXPATHLEN)
 			fatal("queue_record_submission: message uid too long");
 
 		(void)strlcpy(message_uid, linkname + spoolsz + 1, MAXPATHLEN);
@@ -825,8 +832,9 @@ queue_record_submission(struct message *message)
 			err(1, "link: %s , %s", pathname, linkname);
 		}
 
-		if (snprintf(dbname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
-			message_uid) >= MAXPATHLEN)
+		spret = snprintf(dbname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
+		    message_uid);
+		if (spret == -1 || spret >= MAXPATHLEN)
 			fatal("queue_record_submission: database uid too long");
 
 		fd = open(dbname, mode, 0600);
@@ -915,6 +923,7 @@ queue_remove_submission(struct message *message)
 	char dbname[MAXPATHLEN];
 	char *spool;
 	struct stat sb;
+	int spret;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -931,16 +940,19 @@ queue_remove_submission(struct message *message)
 		}
 	}
 
-	if (snprintf(dbname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
-		message->message_uid) >= MAXPATHLEN)
+	spret = snprintf(dbname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
+	    message->message_uid);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_remove_submission: database uid too long");
 
-	if (snprintf(linkname, MAXPATHLEN, "%s/%s", spool,
-		message->message_uid) >= MAXPATHLEN)
+	spret = snprintf(linkname, MAXPATHLEN, "%s/%s", spool,
+	    message->message_uid);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_remove_submission: message uid too long");
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
-		message->message_id) >= MAXPATHLEN)
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
+	    message->message_id);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_remove_submission: message id too long");
 
 	if (unlink(dbname) == -1) {
@@ -1050,9 +1062,11 @@ queue_open_message_file(struct batch *batch)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
+	int spret;
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
-		batch->message_id) >= MAXPATHLEN)
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_MESSAGES,
+	    batch->message_id);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_open_message_file: message id too long");
 
 	fd = open(pathname, O_RDONLY);
@@ -1068,6 +1082,7 @@ queue_update_database(struct message *message)
 	int fd;
 	char *spool;
 	char pathname[MAXPATHLEN];
+	int spret;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -1084,8 +1099,9 @@ queue_update_database(struct message *message)
 		}
 	}
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
-		message->message_uid) >= MAXPATHLEN)
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
+	    message->message_uid);
+	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_update_database: pathname too long");
 
 	if ((fd = open(pathname, O_RDWR|O_EXLOCK)) == -1)
@@ -1110,16 +1126,24 @@ queue_record_daemon(struct message *message)
 	size_t spoolsz;
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
+	int spret;
 
-	(void)snprintf(pathname, MAXPATHLEN, "%s/%s",
+	spret = snprintf(pathname, MAXPATHLEN, "%s/%s",
 	    PATH_MESSAGES, message->message_id);
+	if (spret == -1 || spret >= MAXPATHLEN)
+		return 0;
 
 	spoolsz = strlen(PATH_DAEMON);
 
 	for (;;) {
-		(void)snprintf(linkname, MAXPATHLEN, "%s/%s.%qu",
+		spret = snprintf(linkname, MAXPATHLEN, "%s/%s.%qu",
 		    PATH_DAEMON, message->message_id, (u_int64_t)arc4random());
-		(void)strlcpy(message_uid, linkname + spoolsz + 1, MAXPATHLEN);
+		if (spret == -1 || spret >= MAXPATHLEN)
+			return 0;
+
+		if (strlcpy(message_uid, linkname + spoolsz + 1, MAXPATHLEN)
+		    >= MAXPATHLEN)
+			return 0;
 
 		if (link(pathname, linkname) == -1) {
 			if (errno == EEXIST)
@@ -1127,8 +1151,10 @@ queue_record_daemon(struct message *message)
 			err(1, "link");
 		}
 
-		(void)snprintf(dbname, MAXPATHLEN, "%s/%s",
+		spret = snprintf(dbname, MAXPATHLEN, "%s/%s",
 		    PATH_ENVELOPES, message_uid);
+		if (spret == -1 || spret >= MAXPATHLEN)
+			return 0;
 
 		fd = open(dbname, mode, 0600);
 		if (fd == -1)

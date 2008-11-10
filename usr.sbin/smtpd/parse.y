@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2008/11/10 00:29:33 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2008/11/10 00:57:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -444,6 +444,7 @@ mapref		: STRING			{
 			int bits;
 			struct sockaddr_in ssin;
 			struct sockaddr_in6 ssin6;
+			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -453,7 +454,9 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= STRLEN)
+				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
 
@@ -515,6 +518,7 @@ mapref		: STRING			{
 		}
 		| '(' 				{
 			struct map	*m;
+			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -525,7 +529,9 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= STRLEN)
+				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_LIST;
 
@@ -539,6 +545,7 @@ mapref		: STRING			{
 		}
 		| '{' 				{
 			struct map	*m;
+			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -549,7 +556,9 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= STRLEN)
+				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_HASH;
 
@@ -664,6 +673,7 @@ from		: FROM mapref			{
 			struct mapel	*me;
 			struct sockaddr_in *ssin;
 			struct sockaddr_in6 *ssin6;
+			int spret;
 			
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -673,7 +683,9 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			spret = snprintf(m->m_name, STRLEN, "<dynamic(%u)>", m->m_id);
+			if (spret == -1 || spret >= STRLEN)
+				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
 

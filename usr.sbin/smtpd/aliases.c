@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.3 2008/11/10 00:57:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -155,6 +155,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	DB *aliasesdb;
 	struct map *map;
 	char	strkey[STRLEN];
+	int spret;
 
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
@@ -169,8 +170,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	if (aliasesdb == NULL)
 		return 0;
 
-	if (snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain)
-	    >= STRLEN) {
+	spret = snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain);
+	if (spret == -1 || spret >= STRLEN) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -180,8 +181,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		if (snprintf(strkey, STRLEN, "@%s", path->domain)
-		    >= STRLEN) {
+		spret = snprintf(strkey, STRLEN, "@%s", path->domain);
+		if (spret == -1 || spret >= STRLEN) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -213,6 +214,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	struct alias *nextalias;
 	struct map *map;
 	char	strkey[STRLEN];
+	int spret;
 
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
@@ -227,8 +229,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	if (aliasesdb == NULL)
 		return 0;
 
-	if (snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain)
-	    >= STRLEN) {
+	spret = snprintf(strkey, STRLEN, "%s@%s", path->user, path->domain);
+	if (spret == -1 || spret >= STRLEN) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -238,8 +240,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		if (snprintf(strkey, STRLEN, "@%s", path->domain)
-		    >= STRLEN) {
+		spret = snprintf(strkey, STRLEN, "@%s", path->domain);
+		if (spret == -1 || spret >= STRLEN) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
