@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.4 2008/11/10 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.5 2008/11/10 20:10:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -707,7 +707,7 @@ void		 session_destroy(struct session *);
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
 /* store.c */
-int store_write_header(struct batch *, struct message *);
+int store_write_header(struct batch *, struct message *, FILE *);
 int store_write_message(struct batch *, struct message *);
 int store_write_daemon(struct batch *, struct message *);
 int store_message(struct batch *, struct message *,
