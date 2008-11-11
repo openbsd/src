@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.4 2008/11/10 16:33:07 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.5 2008/11/11 20:59:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -235,6 +235,7 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 	fflush(mboxfp);
 	fsync(fileno(mboxfp));
 	fclose(mboxfp);
+	fclose(messagefp);
 	return 1;
 
 bad:
@@ -274,6 +275,7 @@ store_write_message(struct batch *batchp, struct message *messagep)
 	fflush(mboxfp);
 	fsync(fileno(mboxfp));
 	fclose(mboxfp);
+	fclose(messagefp);
 	return 1;
 
 bad:
@@ -302,6 +304,5 @@ store_message(struct batch *batchp, struct message *messagep,
 		}
 		return 0;
 	}
-
 	return 1;
 }
