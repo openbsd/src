@@ -642,7 +642,7 @@ int	drm_order(unsigned long);
 drm_local_map_t
 	*drm_find_matching_map(struct drm_device *, drm_local_map_t *);
 int	drm_addmap(struct drm_device *, unsigned long, unsigned long,
-	    enum drm_map_type, enum drm_lock_flags, drm_local_map_t **);
+	    enum drm_map_type, enum drm_map_flags, drm_local_map_t **);
 int	drm_addbufs_pci(struct drm_device *, struct drm_buf_desc *);
 int	drm_addbufs_sg(struct drm_device *, struct drm_buf_desc *);
 int	drm_addbufs_agp(struct drm_device *, struct drm_buf_desc *);
