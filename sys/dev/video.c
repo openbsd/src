@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.22 2008/08/24 11:05:02 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.23 2008/11/11 12:37:07 mglocker Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -66,7 +66,7 @@ videoprobe(struct device *parent, void *match, void *aux)
 void
 videoattach(struct device *parent, struct device *self, void *aux)
 {
-	struct video_softc *sc = (void *) self;
+	struct video_softc *sc = (void *)self;
 	struct video_attach_args *sa = aux;
 	int video_buf_size = 0;
 
