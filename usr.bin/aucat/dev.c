@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.14 2008/11/10 23:25:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.15 2008/11/11 12:56:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -227,6 +227,7 @@ dev_done(void)
 {
 	struct file *f;
 
+	DPRINTF("dev_done: dev_mix = %p, dev_sub = %p\n", dev_mix, dev_sub);
 	if (dev_mix) {
 		/*
 		 * generate EOF on all inputs (but not the device), and
