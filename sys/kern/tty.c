@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.77 2008/07/28 06:13:22 stefan Exp $	*/
+/*	$OpenBSD: tty.c,v 1.78 2008/11/11 15:33:02 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2071,15 +2071,18 @@ ttyinfo(struct tty *tp)
 	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == NULL)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
+		int pctcpu;
+		long rss;
+
 		/* Pick interesting process. */
 		for (pick = NULL; p != 0; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
 
-		ttyprintf(tp, " cmd: %s %d [%s] ", pick->p_comm, pick->p_pid,
-		    pick->p_stat == SONPROC ? "running" :
-		    pick->p_stat == SRUN ? "runnable" :
-		    pick->p_wmesg ? pick->p_wmesg : "iowait");
+		/* Calculate percentage cpu, resident set size. */
+		pctcpu = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
+		rss = pick->p_stat == SIDL || P_ZOMBIE(pick) ? 0 :
+		    vm_resident_count(pick->p_vmspace);
 
 		calcru(pick, &utime, &stime, NULL);
 
@@ -2089,8 +2092,6 @@ ttyinfo(struct tty *tp)
 			utime.tv_sec += 1;
 			utime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02ldu ", utime.tv_sec,
-		    utime.tv_usec / 10000);
 
 		/* Round up and print system time. */
 		stime.tv_usec += 5000;
@@ -2098,16 +2099,15 @@ ttyinfo(struct tty *tp)
 			stime.tv_sec += 1;
 			stime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02lds ", stime.tv_sec,
-		    stime.tv_usec / 10000);
 
-#define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
-		/* Print percentage cpu, resident set size. */
-		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf(tp, "%d%% %ldk\n",
-		    tmp / 100,
-		    pick->p_stat == SIDL || P_ZOMBIE(pick) ? 0 :
-			vm_resident_count(pick->p_vmspace));
+		ttyprintf(tp,
+		    " cmd: %s %d [%s] %ld.%02ldu %ld.%02lds %d%% %ldk\n",
+		    pick->p_comm, pick->p_pid,
+		    pick->p_stat == SONPROC ? "running" :
+		    pick->p_stat == SRUN ? "runnable" :
+		    pick->p_wmesg ? pick->p_wmesg : "iowait",
+		    utime.tv_sec, utime.tv_usec / 10000,
+		    stime.tv_sec, stime.tv_usec / 10000, pctcpu / 100, rss);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
