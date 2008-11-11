@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.7 2008/11/11 01:01:39 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.8 2008/11/11 21:02:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -311,6 +311,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 			batchp = imsg.data;
 			desc = parent_open_message_file(batchp);
+
 			imsg_compose(ibuf, IMSG_MDA_MESSAGE_FILE, 0, 0,
 			    desc, batchp, sizeof(struct batch));
 
@@ -781,7 +782,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK, 0600);
+	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK|O_EXLOCK, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -804,13 +805,13 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		}
 		return -1;
 	}
-
+/*
 	if (flock(fd, LOCK_EX) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-
+*/
 	fchown(fd, pw->pw_uid, 0);
 
 	return fd;
@@ -848,18 +849,18 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	fd = open(pathname, O_CREAT|O_RDWR|O_TRUNC|O_SYNC, 0600);
+	fd = open(pathname, O_CREAT|O_RDWR|O_TRUNC|O_SYNC|O_EXLOCK, 0600);
 	if (fd == -1) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-
+/*
 	if (flock(fd, LOCK_EX) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-
+*/
 	fchown(fd, pw->pw_uid, pw->pw_gid);
 
 	return fd;
@@ -998,7 +999,7 @@ parent_open_filename(struct batch *batchp, struct path *path)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK, 0600);
+	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK|O_EXLOCK, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -1021,13 +1022,13 @@ parent_open_filename(struct batch *batchp, struct path *path)
 		}
 		return -1;
 	}
-
+/*
 	if (flock(fd, LOCK_EX) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-
+*/
 	return fd;
 }
 
