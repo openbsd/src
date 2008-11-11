@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.114 2008/11/04 07:22:35 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.115 2008/11/11 09:32:20 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -901,23 +901,8 @@ JobRestart(Job *job)
 static Job *
 prepare_job(GNode *gn, int flags)
 {
-	Job *job;       	/* new job descriptor */
 	bool cmdsOK;     	/* true if the nodes commands were all right */
 	bool noExec;     	/* Set true if we decide not to run the job */
-
-	job = emalloc(sizeof(Job));
-	if (job == NULL) {
-		Punt("JobStart out of memory");
-	}
-
-	job->node = gn;
-
-	/*
-	 * Set the initial value of the flags for this job based on the global
-	 * ones and the node's attributes... Any flags supplied by the caller
-	 * are also added to the field.
-	 */
-	job->flags = flags;
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a chance
@@ -963,15 +948,26 @@ prepare_job(GNode *gn, int flags)
 		 * We only want to work our way up the graph if we aren't here
 		 * because the commands for the job were no good.
 		 */
-		if (cmdsOK) {
-			if (aborting == 0) {
-				job->node->built_status = MADE;
-				Make_Update(job->node);
-			}
+		if (cmdsOK && !aborting) {
+			gn->built_status = MADE;
+			Make_Update(gn);
 		}
-		free(job);
 		return NULL;
 	} else {
+		Job *job;       	/* new job descriptor */
+		job = emalloc(sizeof(Job));
+		if (job == NULL)
+			Punt("JobStart out of memory");
+
+		job->node = gn;
+
+		/*
+		 * Set the initial value of the flags for this job based on the
+		 * global ones and the node's attributes... Any flags supplied
+		 * by the caller are also added to the field.
+		 */
+		job->flags = flags;
+
 		return job;
 	}
 }
