@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.1 2008/10/27 00:26:33 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.2 2008/11/11 19:39:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,6 +40,7 @@ struct aucat_hdl {
 	unsigned rbpf, wbpf;		/* read and write bytes-per-frame */
 	int maxwrite;			/* latency constraint */
 	int events;			/* events the user requested */
+	unsigned curvol, reqvol;	/* current and requested volume */
 };
 
 void aucat_close(struct sio_hdl *);
@@ -52,6 +53,8 @@ size_t aucat_read(struct sio_hdl *, void *, size_t);
 size_t aucat_write(struct sio_hdl *, void *, size_t);
 int aucat_pollfd(struct sio_hdl *, struct pollfd *, int);
 int aucat_revents(struct sio_hdl *, struct pollfd *);
+int aucat_setvol(struct sio_hdl *, unsigned);
+void aucat_getvol(struct sio_hdl *);
 
 struct sio_ops aucat_ops = {
 	aucat_close,
@@ -63,7 +66,9 @@ struct sio_ops aucat_ops = {
 	aucat_start,
 	aucat_stop,
 	aucat_pollfd,
-	aucat_revents
+	aucat_revents,
+	aucat_setvol,
+	aucat_getvol
 };
 
 struct sio_hdl *
@@ -101,6 +106,8 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	hdl->rtodo = 0xdeadbeef;
 	hdl->wstate = STATE_IDLE;
 	hdl->wtodo = 0xdeadbeef;
+	hdl->curvol = SIO_MAXVOL;
+	hdl->reqvol = SIO_MAXVOL;
 	return (struct sio_hdl *)hdl;
 }
 
@@ -434,15 +441,19 @@ aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 	return n;
 }
 
-size_t
-aucat_write(struct sio_hdl *sh, void *buf, size_t len)
+int
+aucat_buildmsg(struct aucat_hdl *hdl, size_t len)
 {
-	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	unsigned sz;
-	ssize_t n;
 
-	switch (hdl->wstate) {
-	case STATE_IDLE:
+	if (hdl->curvol != hdl->reqvol) {
+		hdl->wstate = STATE_MSG;
+		hdl->wtodo = sizeof(struct amsg);
+		hdl->wmsg.cmd = AMSG_SETVOL;
+		hdl->wmsg.u.vol.ctl = hdl->reqvol;
+		hdl->curvol = hdl->reqvol;
+		return 1;
+	} else if (len > 0) {
 		sz = (len < AMSG_DATAMAX) ? len : AMSG_DATAMAX;
 		sz -= sz % hdl->wbpf;
 		if (sz == 0)
@@ -451,44 +462,63 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 		hdl->wtodo = sizeof(struct amsg);
 		hdl->wmsg.cmd = AMSG_DATA;
 		hdl->wmsg.u.data.size = sz;
-		/* PASSTHROUGH */
-	case STATE_MSG:
-		if (!aucat_wmsg(hdl))
-			return 0;
-		hdl->wstate = STATE_DATA;
-		hdl->wtodo = hdl->wmsg.u.data.size;
-		/* PASSTHROUGH */
-	case STATE_DATA:
-		if (hdl->maxwrite <= 0)
-			return 0;
-		if (len > hdl->maxwrite)
-			len = hdl->maxwrite;
-		if (len > hdl->wtodo)
-			len = hdl->wtodo;
-		if (len == 0) {
-			fprintf(stderr, "aucat_write: len == 0\n");
+		return 1;
+	}
+	return 0;
+}
+
+size_t
+aucat_write(struct sio_hdl *sh, void *buf, size_t len)
+{
+	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
+	ssize_t n;
+
+	while (hdl->wstate != STATE_DATA) {
+		switch (hdl->wstate) {
+		case STATE_IDLE:
+			if (!aucat_buildmsg(hdl, len))
+				return 0;
+			/* PASSTHROUGH */
+		case STATE_MSG:
+			if (!aucat_wmsg(hdl))
+				return 0;
+			if (hdl->wmsg.cmd == AMSG_DATA) {
+				hdl->wstate = STATE_DATA;
+				hdl->wtodo = hdl->wmsg.u.data.size;
+			} else
+				hdl->wstate = STATE_IDLE;
+			break;
+		default:
+			fprintf(stderr, "aucat_read: bad state\n");
 			abort();
 		}
-		while ((n = write(hdl->fd, buf, len)) < 0) {
-			if (errno == EINTR)
-				continue;
-			if (errno != EAGAIN) {
-				hdl->sa.eof = 1;
-				perror("aucat_read: read");
-			}
-			return 0;
-		}
-		hdl->maxwrite -= n;
-		hdl->wtodo -= n;
-		if (hdl->wtodo == 0) {
-			hdl->wstate = STATE_IDLE;
-			hdl->wtodo = 0xdeadbeef;
-		}
-		return n;
-	default:
-		fprintf(stderr, "aucat_read: bad state\n");
+	}
+	if (hdl->maxwrite <= 0)
+		return 0;
+	if (len > hdl->maxwrite)
+		len = hdl->maxwrite;
+	if (len > hdl->wtodo)
+		len = hdl->wtodo;
+	if (len == 0) {
+		fprintf(stderr, "aucat_write: len == 0\n");
 		abort();
 	}
+	while ((n = write(hdl->fd, buf, len)) < 0) {
+		if (errno == EINTR)
+			continue;
+		if (errno != EAGAIN) {
+			hdl->sa.eof = 1;
+			perror("aucat_read: read");
+		}
+		return 0;
+	}
+	hdl->maxwrite -= n;
+	hdl->wtodo -= n;
+	if (hdl->wtodo == 0) {
+		hdl->wstate = STATE_IDLE;
+		hdl->wtodo = 0xdeadbeef;
+	}
+	return n;
 }
 
 int
@@ -525,4 +555,22 @@ aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 			revents &= ~POLLOUT;
 	}
 	return revents & hdl->events;
+}
+
+int
+aucat_setvol(struct sio_hdl *sh, unsigned vol)
+{
+	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
+
+	hdl->reqvol = vol;
+	return 1;
+}
+
+void
+aucat_getvol(struct sio_hdl *sh)
+{
+	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
+
+	sio_onvol_cb(&hdl->sa, hdl->reqvol);
+	return;
 }

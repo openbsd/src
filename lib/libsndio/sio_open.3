@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.4 2008/11/09 19:49:10 naddy Exp $
+.\" $OpenBSD: sio_open.3,v 1.5 2008/11/11 19:39:35 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2008 $
+.Dd $Mdocdate: November 11 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -32,6 +32,8 @@
 .Nm sio_pollfd ,
 .Nm sio_revents ,
 .Nm sio_eof ,
+.Nm sio_setvol ,
+.Nm sio_onvol ,
 .Nm sio_initpar
 .Nd interface to bidirectional audio streams
 .Sh SYNOPSIS
@@ -64,6 +66,10 @@
 .Fn "sio_revents" "struct sio_hdl *hdl" "struct pollfd *pfd"
 .Ft "int"
 .Fn "sio_eof" "struct sio_hdl *hdl"
+.Ft "int"
+.Fn "sio_setvol" "struct sio_hdl *hdl" "unsigned vol"
+.Ft "void"
+.Fn "sio_onvol" "struct sio_hdl *hdl" "void (*cb)(void *arg, unsigned vol)" "void *arg"
 .Ft "void"
 .Fn "sio_initpar" "struct sio_par *par"
 .\"Fd #define SIO_BPS(bits)
@@ -624,6 +630,37 @@ This mode is mostly useful for testing; portable
 applications shouldn't depend on it, since it's not available
 on other systems.
 .El
+.Ss Controlling the volume
+The
+.Fn sio_setvol
+function can be used to set the playback attenuation.
+The
+.Va vol
+parameter takes a value between 0 (maximum attenuation)
+and
+.Va SIO_MAXVOL
+(no attenuation).
+This parameter gives the weight the audio subsystem will
+give to this stream.
+It is not meant to control hardware parameters like the
+speakers gain, the
+.Xr mixer
+interface should be used for that purpose instead.
+.Pp
+An application can use the
+.Fn sio_onvol
+function to register a call-back function that
+will be called each time the volume is changed, including
+when
+.Fn sio_setvol
+is used.
+The call-back is always invoked when
+.Fn sio_onvol
+function is called in order to provide the initial volume.
+The application can safely assume that once
+.Fn sio_onvol
+returns, the call-back was already invoked and thus
+the current volume is available.
 .Ss Error handling
 Errors related to the audio subsystem
 (like hardware errors, dropped connections) and

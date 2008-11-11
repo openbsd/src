@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.2 2008/10/28 23:00:08 jsg Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.3 2008/11/11 19:39:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -112,6 +112,11 @@ struct sio_cap {
  */
 #define SIO_AUCAT_PATH	"/tmp/aucat.sock"
 
+/*
+ * maximum value of volume, eg. for sio_setvol()
+ */
+#define SIO_MAXVOL 127
+
 int sio_strtoenc(struct sio_par *, char *);
 int sio_enctostr(struct sio_par *, char *);
 void sio_initpar(struct sio_par *);
@@ -135,5 +140,7 @@ int sio_nfds(struct sio_hdl *);
 int sio_pollfd(struct sio_hdl *, struct pollfd *, int);
 int sio_revents(struct sio_hdl *, struct pollfd *);
 int sio_eof(struct sio_hdl *);
+int sio_setvol(struct sio_hdl *, unsigned);
+void sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
 
-#endif /* !defined(LIBSIO_H) */
+#endif /* !defined(SNDIO_H) */

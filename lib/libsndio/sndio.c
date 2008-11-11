@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.5 2008/11/09 15:32:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.6 2008/11/11 19:39:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -188,7 +188,8 @@ sio_create(struct sio_hdl *hdl, struct sio_ops *ops, unsigned mode, int nbio)
 	hdl->nbio = nbio;
 	hdl->started = 0;
 	hdl->eof = 0;
-	hdl->cb_pos = 0;
+	hdl->move_cb = NULL;
+	hdl->vol_cb = NULL;
 }
 
 void
@@ -487,8 +488,8 @@ sio_onmove(struct sio_hdl *hdl, void (*cb)(void *, int), void *addr)
 		hdl->eof = 1;
 		return;
 	}
-	hdl->cb_pos = cb;
-	hdl->cb_addr = addr;
+	hdl->move_cb = cb;
+	hdl->move_addr = addr;
 }
 
 void
@@ -515,6 +516,37 @@ sio_onmove_cb(struct sio_hdl *hdl, int delta)
 		    hdl->realpos < 0 ? playpos : playpos - hdl->realpos);
 	}
 #endif
-	if (hdl->cb_pos)
-		hdl->cb_pos(hdl->cb_addr, delta);
+	if (hdl->move_cb)
+		hdl->move_cb(hdl->move_addr, delta);
+}
+
+int
+sio_setvol(struct sio_hdl *hdl, unsigned ctl)
+{
+	if (hdl->eof)
+		return 0;
+	if (!hdl->ops->setvol(hdl, ctl))
+		return 0;
+	hdl->ops->getvol(hdl);
+	return 1;
+}
+
+void
+sio_onvol(struct sio_hdl *hdl, void (*cb)(void *, unsigned), void *addr)
+{
+	if (hdl->started) {
+		fprintf(stderr, "sio_onmove: already started\n");
+		hdl->eof = 1;
+		return;
+	}
+	hdl->vol_cb = cb;
+	hdl->vol_addr = addr;
+	hdl->ops->getvol(hdl);
+}
+
+void
+sio_onvol_cb(struct sio_hdl *hdl, unsigned ctl)
+{
+	if (hdl->vol_cb)
+		hdl->vol_cb(hdl->vol_addr, ctl);	
 }
