@@ -5460,7 +5460,7 @@ bool
 default_binds_local_p (exp)
      tree exp;
 {
-  return default_binds_local_p_1 (exp, flag_pic);
+  return default_binds_local_p_1 (exp, flag_shlib);
 }
 
 bool

@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.  */
 /* Definitions needed for OpenBSD, to avoid picking mips 'defaults'.  */
 
 /* GAS must know this.  */
-#define SUBTARGET_ASM_SPEC "%{fPIC:-KPIC} %|"
+#define SUBTARGET_ASM_SPEC "%{fPIC|fPIE:-KPIC} %|"
 
 /* CPP specific OpenBSD specs.  */
 #define SUBTARGET_CPP_SPEC OBSD_CPP_SPEC

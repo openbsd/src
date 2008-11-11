@@ -710,6 +710,17 @@ int flag_delayed_branch;
 
 int flag_pic;
 
+/* Nonzero if we are compiling position independent code for executable.
+   The value is 1 if we are doing "small" pic; value is 2 if we're doing
+   "large" pic.  */
+int flag_pie;
+
+/* Nonzero if we are compiling code for a shared library, zero for
+   executable.  */
+
+int flag_shlib;
+
+
 /* Set to the default thread-local storage (tls) model to use.  */
 
 enum tls_model flag_tls_default = TLS_MODEL_GLOBAL_DYNAMIC;
@@ -1102,6 +1113,9 @@ static const lang_independent_options f_options[] =
   {"pic", &flag_pic, 1,
    N_("Generate position independent code, if possible") },
   {"PIC", &flag_pic, 2, ""},
+  {"pie", &flag_pie, 1,
+   N_("Generate position independent code for executables, if possible") },
+  {"PIE", &flag_pie, 2, ""},
   {"exceptions", &flag_exceptions, 1,
    N_("Enable exception handling") },
   {"unwind-tables", &flag_unwind_tables, 1,
@@ -5082,6 +5096,12 @@ parse_options_and_default_flags (argc, argv)
 	  i++;
 	}
     }
+
+  if (flag_pie)
+    flag_pic = flag_pie;
+
+  if (flag_pic && !flag_pie)
+    flag_shlib = 1;
 
   if (flag_no_inline == 2)
     flag_no_inline = 0;
