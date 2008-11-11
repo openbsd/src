@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.7 2008/11/10 21:29:18 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.8 2008/11/11 01:01:39 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -794,7 +794,7 @@ queue_record_submission(struct message *message)
 	char *spool;
 	size_t spoolsz;
 	int fd;
-	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
+	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
 	int spret;
 	FILE *fp;
 	int hm;
@@ -843,6 +843,9 @@ queue_record_submission(struct message *message)
 		if (fd == -1)
 			if (unlink(linkname) == -1)
 				fatal("queue_record_submission: unlink");
+
+		if (flock(fd, LOCK_EX) == -1)
+			fatal("queue_record_submission: flock");
 
 		fp = fdopen(fd, "w");
 		if (fp == NULL)
@@ -1115,8 +1118,11 @@ queue_update_database(struct message *message)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_update_database: pathname too long");
 
-	if ((fd = open(pathname, O_RDWR|O_EXLOCK)) == -1)
+	if ((fd = open(pathname, O_RDWR)) == -1)
 		fatal("queue_update_database: cannot open database");
+
+	if (flock(fd, LOCK_EX) == -1)
+		fatal("queue_update_database: cannot get a lock on database");
 
 	fp = fdopen(fd, "w");
 	if (fp == NULL)
@@ -1142,7 +1148,7 @@ queue_record_daemon(struct message *message)
 	char message_uid[MAXPATHLEN];
 	size_t spoolsz;
 	int fd;
-	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
+	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
 	int spret;
 	FILE *fp;
 
@@ -1178,6 +1184,9 @@ queue_record_daemon(struct message *message)
 		if (fd == -1)
 			if (unlink(linkname) == -1)
 				err(1, "unlink");
+
+		if (flock(fd, LOCK_EX) == -1)
+			err(1, "flock");
 
 		fp = fdopen(fd, "w");
 		if (fp == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.6 2008/11/10 17:24:24 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.7 2008/11/11 01:01:39 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -781,7 +781,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_SYNC|O_NONBLOCK, 0600);
+	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -802,6 +802,12 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
+		return -1;
+	}
+
+	if (flock(fd, LOCK_EX) == -1) {
+		close(fd);
+		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
@@ -842,8 +848,14 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	fd = open(pathname, O_CREAT|O_RDWR|O_TRUNC|O_EXLOCK|O_SYNC, 0600);
+	fd = open(pathname, O_CREAT|O_RDWR|O_TRUNC|O_SYNC, 0600);
 	if (fd == -1) {
+		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+		return -1;
+	}
+
+	if (flock(fd, LOCK_EX) == -1) {
+		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
@@ -986,7 +998,7 @@ parent_open_filename(struct batch *batchp, struct path *path)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_SYNC|O_NONBLOCK, 0600);
+	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -1007,6 +1019,12 @@ parent_open_filename(struct batch *batchp, struct path *path)
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
+		return -1;
+	}
+
+	if (flock(fd, LOCK_EX) == -1) {
+		close(fd);
+		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
