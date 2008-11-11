@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.438 2008/09/30 00:47:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.439 2008/11/11 00:55:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -183,8 +183,8 @@ scan_disknames() {
 
 get_ifdevs() {
 	ifconfig \
-	    | egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
-	    | sed -ne 's/^\(.*\):.*/\1/p'
+		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
+		| sed -ne 's/^\(.*\):.*/\1/p'
 }
 
 get_drive() {
@@ -1051,7 +1051,7 @@ install_url() {
 	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
 
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
-	    "${ftp_proxy:-none}"
+		"${ftp_proxy:-none}"
 	unset ftp_proxy http_proxy
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
@@ -1374,10 +1374,10 @@ munge_fstab() {
 	while read _dev _mp _fstype _opt _rest; do
 		# Drop irrelevant lines and filesystems.
 		[[ $_dev == \#* || \
-		    $_fstype == nfs || \
-		    ! -f /sbin/mount_$_fstype || \
-		    $_opt == *noauto* || \
-		    $_opt == *xx* ]] && continue
+			$_fstype == nfs || \
+			! -f /sbin/mount_$_fstype || \
+			$_opt == *noauto* || \
+			$_opt == *xx* ]] && continue
 
 		# Remove any softdep options, as soft updates are not
 		# available in the ramdisk kernels.
@@ -1527,7 +1527,7 @@ questions() {
 	ask_yn "Start sshd(8) by default?" yes
 	if [[ $resp == n ]]; then
 		echo "sshd_flags=NO		# disabled during install" \
-		    >>/mnt/etc/rc.conf.local
+			>>/mnt/etc/rc.conf.local
 	fi
 
 	ask_yn "Start ntpd(8) by default?" no
@@ -1550,7 +1550,7 @@ server $1
 		ask_yn "Do you expect to run the X Window System?"
 		if [[ $resp == y ]]; then
 			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-			    /mnt/etc/sysctl.conf >/tmp/sysctl.conf
+				/mnt/etc/sysctl.conf >/tmp/sysctl.conf
 			cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 		fi
 	fi
@@ -1583,13 +1583,13 @@ finish_up() {
 		# and will thus not get mounted.
 		while read _dev _mp _fstype _rest; do
 			[[ $_fstype == swap ]] && \
-			    /mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
+				/mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
 		done </mnt/etc/fstab
 	fi
 
 	if grep -qs '^rtsol' /mnt/etc/hostname.*; then
 		sed -e "/^#\(net\.inet6\.ip6\.accept_rtadv\)/s//\1/" \
-		    /mnt/etc/sysctl.conf >/tmp/sysctl.conf
+			/mnt/etc/sysctl.conf >/tmp/sysctl.conf
 		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
 
