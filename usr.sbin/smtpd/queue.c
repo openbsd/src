@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.10 2008/11/11 21:13:14 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.11 2008/11/11 21:17:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1137,7 +1137,7 @@ queue_update_database(struct message *message)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_update_database: pathname too long");
 
-	if ((fd = open(pathname, O_RDWR)) == -1)
+	if ((fd = open(pathname, O_RDWR|O_EXLOCK)) == -1)
 		fatal("queue_update_database: cannot open database");
 
 	fp = fdopen(fd, "w");
