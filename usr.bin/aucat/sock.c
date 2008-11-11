@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.2 2008/11/03 22:25:13 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.3 2008/11/11 19:21:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -280,6 +280,7 @@ sock_new(struct fileops *ops, int fd, char *name)
 	f->bufsz = 2 * dev_bufsz;
 	f->round = dev_round;
 	f->odelta = f->idelta = 0;
+	f->vol = ADATA_UNIT;
 
 	wproc = aproc_new(&wsock_ops, name);
 	wproc->u.io.file = &f->pipe.file;
@@ -344,6 +345,23 @@ sock_allocbuf(struct sock *f)
 }
 
 /*
+ * free buffers
+ */
+void
+sock_setvol(struct sock *f, int vol)
+{
+	struct abuf *rbuf;
+	
+	f->vol = vol;
+	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);	
+	if (!rbuf) {
+		DPRINTF("sock_setvol: no read buffer yet\n");
+		return;
+	}
+	dev_setvol(rbuf, vol);
+}
+
+/*
  * attach play and/or record buffers to dev_mix and/or dev_sub
  */
 int
@@ -370,7 +388,9 @@ sock_attach(struct sock *f, int force)
 	dev_attach(f->pipe.file.name,
 	    (f->mode & AMSG_PLAY) ? rbuf : NULL, &f->rpar, f->xrun,
 	    (f->mode & AMSG_REC)  ? wbuf : NULL, &f->wpar, f->xrun);
-	
+	if (f->mode & AMSG_PLAY)
+		dev_setvol(rbuf, f->vol);
+
 	/*
 	 * send the initial position, if needed
 	 */
@@ -755,6 +775,24 @@ sock_execmsg(struct sock *f)
 		m->u.cap.bps = sizeof(short);
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
+		break;
+	case AMSG_SETVOL:
+		DPRINTFN(2, "sock_execmsg: %p: SETVOL\n", f);
+		if (f->pstate != SOCK_RUN &&
+		    f->pstate != SOCK_START && f->pstate != SOCK_INIT) {
+			DPRINTF("sock_execmsg: %p: SETVOL, bad state\n", f);
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		if (m->u.vol.ctl > MIDI_MAXCTL) {
+			DPRINTF("sock_execmsg: %p: SETVOL, out of range\n", f);
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		DPRINTF("sock_execmsg: SETVOL %u\n", m->u.vol.ctl);
+		sock_setvol(f, MIDI_TO_ADATA(m->u.vol.ctl));
+		f->rtodo = sizeof(struct amsg);
+		f->rstate = SOCK_RMSG;
 		break;
 	default:
 		DPRINTF("sock_execmsg: %p bogus command\n", f);

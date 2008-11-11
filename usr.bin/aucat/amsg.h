@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.1 2008/10/26 08:49:43 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.2 2008/11/11 19:21:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,6 +34,7 @@ struct amsg {
 #define AMSG_DATA	5	/* data block */
 #define AMSG_MOVE	6	/* position changed */
 #define AMSG_GETCAP	7	/* get capabilities */
+#define AMSG_SETVOL	8	/* set volume */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
@@ -74,6 +75,9 @@ struct amsg {
 		struct amsg_ts {
 			int32_t delta;
 		} ts;
+		struct amsg_vol {
+			uint32_t ctl;
+		} vol;
 	} u;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.15 2008/11/11 12:56:02 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.16 2008/11/11 19:21:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -501,10 +501,12 @@ dev_attach(char *name,
 void
 dev_setvol(struct abuf *ibuf, int vol)
 {
-	if (!dev_getep(&ibuf, NULL))
+	if (!dev_getep(&ibuf, NULL)) {
+		DPRINTF("dev_setvol: not connected yet\n");
 		return;
-	fprintf(stderr, "vol = %d\n", vol);
+	}
 	ibuf->mixvol = vol;
+	DPRINTF("dev_setvol: %d\n", vol);
 }
 
 /*
