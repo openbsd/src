@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.4 2008/11/10 23:18:47 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.5 2008/11/11 01:08:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -312,13 +312,6 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
-	struct path *pathp;
-
-	while ((pathp = TAILQ_FIRST(&s->s_msg.recipients)) != NULL) {
-		TAILQ_REMOVE(&s->s_msg.recipients, pathp, entry);
-		free(pathp);
-	}
-
 	s->s_msg.rcptcount = 0;
 	s->s_state = S_HELO;
 	evbuffer_add_printf(s->s_bev->output, "250 Reset state.\r\n");
@@ -337,7 +330,6 @@ session_rfc5321_noop_handler(struct session *s, char *args)
 int
 session_rfc5321_mail_handler(struct session *s, char *args)
 {
-	struct path *pathp;
 	char buffer[MAX_PATH_SIZE];
 
 	if (s->s_state == S_GREETED) {
@@ -359,13 +351,9 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	while ((pathp = TAILQ_FIRST(&s->s_msg.recipients)) != NULL) {
-		TAILQ_REMOVE(&s->s_msg.recipients, pathp, entry);
-		free(pathp);
-	}
 	s->s_msg.rcptcount = 0;
 
-	s->s_state = S_MAILGETFILE;
+	s->s_state = S_MAILREQUEST;
 	s->s_flags |= F_IMSG_SENT;
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
@@ -414,9 +402,8 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	mr.id = s->s_msg.id;
 
-	s->s_state = S_RCPT;
+	s->s_state = S_RCPTREQUEST;
 	s->s_flags |= F_IMSG_SENT;
-
 	mr.ss = s->s_ss;
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT_SUBMIT,
@@ -553,8 +540,6 @@ session_command(struct session *s, char *cmd, char *args)
 void
 session_pickup(struct session *s, struct submit_status *ss)
 {
-	struct path *path;
-
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
@@ -590,7 +575,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		}
 		break;
 
-	case S_MAILGETFILE:
+	case S_MAILREQUEST:
 		/* sender was not accepted, downgrade state */
 		if (ss->code != 250) {
 			s->s_state = S_HELO;
@@ -600,6 +585,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		}
 
 		s->s_state = S_MAIL;
+		s->s_msg.sender = ss->u.path;
+
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_CREATE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
@@ -607,10 +594,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAIL:
-
-		s->s_msg.sender = ss->u.path;
 		evbuffer_add_printf(s->s_bev->output,
 		    "%d Sender ok\r\n", ss->code);
+
+		strlcpy(s->s_msg.message_id, ss->u.msgid, MAXPATHLEN);
 
 		if (s->s_msg.datafp == NULL) {
 			/* Remove message file */
@@ -620,23 +607,29 @@ session_pickup(struct session *s, struct submit_status *ss)
 		}
 		break;
 
-	case S_RCPT:
+	case S_RCPTREQUEST:
 		/* recipient was not accepted */
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
 			if (s->s_msg.rcptcount == 0)
 				s->s_state = S_MAIL;
+			else
+				s->s_state = S_RCPT;
 			evbuffer_add_printf(s->s_bev->output,
 			    "%d %s\r\n", ss->code, "Recipient rejected");
 			return;
 		}
 
-		path = calloc(1, sizeof(struct path));
-		if (path == NULL)
-			err(1, "calloc");
-		*path = ss->u.path;
-		TAILQ_INSERT_TAIL(&s->s_msg.recipients, path, entry);
+		s->s_state = S_RCPT;
 		s->s_msg.rcptcount++;
+		s->s_msg.recipient = ss->u.path;
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_MESSAGE_SUBMIT, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+
+		break;
+
+	case S_RCPT:
 		evbuffer_add_printf(s->s_bev->output,
 		    "%d Recipient ok\r\n", ss->code);
 		break;
@@ -658,10 +651,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		s->s_msg.rcptcount--;
-		if (s->s_msg.rcptcount)
-			return;
-
 		s->s_state = S_HELO;
 		s->s_msg.datafp = NULL;
 		evbuffer_add_printf(s->s_bev->output,
@@ -684,10 +673,8 @@ session_init(struct listener *l, struct session *s)
 	s->s_env = l->env;
 	s->s_l = l;
 	s->s_id = queue_generate_id();
-
 	strlcpy(s->s_hostname, "<unknown>", MAXHOSTNAMELEN);
-
-	TAILQ_INIT(&s->s_msg.recipients);
+	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
 
 	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 
@@ -812,8 +799,6 @@ session_write(struct bufferevent *bev, void *p)
 void
 session_destroy(struct session *s)
 {
-	struct path *pathp;
-
 	/*
 	 * cleanup
 	 */
@@ -834,11 +819,6 @@ session_destroy(struct session *s)
 	}
 	ssl_session_destroy(s);
 
-	while ((pathp = TAILQ_FIRST(&s->s_msg.recipients)) != NULL) {
-		TAILQ_REMOVE(&s->s_msg.recipients, pathp, entry);
-		free(pathp);
-	}
-
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
 	bzero(s, sizeof(*s));
 	free(s);
@@ -855,15 +835,10 @@ session_error(struct bufferevent *bev, short event, void *p)
 void
 session_msg_submit(struct session *s)
 {
-	struct path *rpath;
-
-	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
-	TAILQ_FOREACH(rpath, &s->s_msg.recipients, entry) {
-		s->s_msg.recipient = *rpath;
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_SUBMIT, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
-	}
+	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+	    IMSG_QUEUE_MESSAGE_COMPLETE, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
+	s->s_state = S_DONE;
 }
 
 int

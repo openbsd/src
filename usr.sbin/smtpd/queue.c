@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.8 2008/11/11 01:01:39 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.9 2008/11/11 01:08:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -77,6 +77,7 @@ void		queue_register_daemon_message(struct smtpd *, struct batch *, struct messa
 void		queue_load_submissions(struct smtpd *, time_t);
 int		queue_message_schedule(struct message *, time_t);
 int		queue_message_from_id(char *, struct message *);
+int		queue_message_complete(struct message *);
 
 void
 queue_sig_handler(int sig, short event, void *p)
@@ -234,6 +235,20 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			 */
 			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_ALIAS_LOOKUP, 0, 0, -1,
 			    messagep, sizeof (struct message));
+
+			break;
+		}
+		case IMSG_QUEUE_MESSAGE_COMPLETE: {
+			struct message		*messagep;
+			struct submit_status	 ss;
+
+			messagep = imsg.data;
+			ss.id = messagep->session_id;
+
+			queue_message_complete(messagep);
+
+			imsg_compose(ibuf, IMSG_SMTP_SUBMIT_ACK, 0, 0, -1,
+			    &ss, sizeof(ss));
 
 			break;
 		}
@@ -1262,6 +1277,53 @@ batch_cmp(struct batch *s1, struct batch *s2)
 }
 
 int
+queue_message_complete(struct message *messagep)
+{
+	DIR *dirp;
+	struct dirent *dp;
+	struct message message;
+	char pathname[MAXPATHLEN];
+	FILE *fp;
+	int spret;
+
+	dirp = opendir(PATH_ENVELOPES);
+	if (dirp == NULL)
+		err(1, "opendir");
+
+	while ((dp = readdir(dirp)) != NULL) {
+
+		if (dp->d_name[0] == '.')
+			continue;
+
+		if (strncmp(messagep->message_id,
+			dp->d_name, strlen(messagep->message_id)) != 0)
+			continue;
+
+		spret = snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_ENVELOPES,
+		    dp->d_name);
+		if (spret == -1 || spret >= MAXPATHLEN)
+			continue;
+
+		fp = fopen(pathname, "r");
+		if (fp == NULL)
+			continue;
+
+		if (fread(&message, 1, sizeof(struct message), fp) !=
+		    sizeof(struct message)) {
+			fclose(fp);
+			continue;
+		}
+		fclose(fp);
+
+		message.flags |= F_MESSAGE_COMPLETE;
+		queue_update_database(&message);
+	}
+
+	closedir(dirp);
+	return 1;
+}
+
+int
 queue_message_schedule(struct message *messagep, time_t tm)
 {
 	time_t delay;
@@ -1278,6 +1340,9 @@ queue_message_schedule(struct message *messagep, time_t tm)
 	}
 
 	if ((messagep->flags & F_MESSAGE_READY) == 0)
+		return 0;
+
+	if ((messagep->flags & F_MESSAGE_COMPLETE) == 0)
 		return 0;
 
 	if ((messagep->flags & F_MESSAGE_PROCESSING) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.8 2008/11/10 23:18:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.9 2008/11/11 01:08:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -166,6 +166,8 @@ enum imsg_type {
 	IMSG_QUEUE_DELETE_MESSAGE_FILE,
 	IMSG_QUEUE_MESSAGE_SUBMIT,
 	IMSG_QUEUE_MESSAGE_UPDATE,
+	IMSG_QUEUE_MESSAGE_COMPLETE,
+	IMSG_QUEUE_MESSAGE_ACK,
 	IMSG_QUEUE_BATCH_COMPLETE,
 	IMSG_QUEUE_BATCH_CLOSE,
 	IMSG_QUEUE_MESSAGE_FD,
@@ -513,8 +515,9 @@ enum session_state {
 	S_TLS,
 	S_AUTH,
 	S_HELO,
-	S_MAILGETFILE,
+	S_MAILREQUEST,
 	S_MAIL,
+	S_RCPTREQUEST,
 	S_RCPT,
 	S_DATA,
 	S_DATACONTENT,

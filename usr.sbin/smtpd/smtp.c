@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.3 2008/11/11 01:08:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -411,9 +411,6 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				/* Session was removed while we were waiting for the message */
 				break;
 			}
-
-			(void)strlcpy(s->s_msg.message_id, ss->u.msgid,
-			    sizeof(s->s_msg.message_id));
 
 			session_pickup(s, ss);
 
