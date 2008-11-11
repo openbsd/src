@@ -2120,6 +2120,11 @@ process_event_stop_test:
 	     code segments in shared libraries might be mapped in now. */
 	  re_enable_breakpoints_in_shlibs ();
 
+	  /* For PIE executables, we dont really know where the
+	     breakpoints are going to be until we start up the
+	     inferior.  */
+          re_enable_breakpoints_at_startup ();
+
 	  /* If requested, stop when the dynamic linker notifies
 	     gdb of events.  This allows the user to get control
 	     and place breakpoints in initializer routines for

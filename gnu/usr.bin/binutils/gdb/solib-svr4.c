@@ -27,6 +27,7 @@
 #include "elf/common.h"
 #include "elf/mips.h"
 
+#include "auxv.h"
 #include "symtab.h"
 #include "bfd.h"
 #include "symfile.h"
@@ -34,6 +35,7 @@
 #include "gdbcore.h"
 #include "target.h"
 #include "inferior.h"
+#include "command.h"
 
 #include "solist.h"
 #include "solib-svr4.h"
@@ -179,7 +181,9 @@ static CORE_ADDR breakpoint_addr;	/* Address where end bkpt is set */
 
 /* Local function prototypes */
 
+#if 0
 static int match_main (char *);
+#endif
 
 static CORE_ADDR bfd_lookup_symbol (bfd *, char *, flagword);
 
@@ -301,10 +305,18 @@ elf_locate_base (void)
 {
   struct bfd_section *dyninfo_sect;
   int dyninfo_sect_size;
-  CORE_ADDR dyninfo_addr;
+  CORE_ADDR dyninfo_addr, relocated_dyninfo_addr, entry_addr;
   char *buf;
   char *bufend;
   int arch_size;
+
+  /* Find the address of the entry point of the program from the
+     auxv vector.  */
+  if (target_auxv_search (&current_target, AT_ENTRY, &entry_addr) != 1)
+    {
+      /* No auxv info, maybe an older kernel. Fake our way through.  */
+      entry_addr = bfd_get_start_address (exec_bfd); 
+    }
 
   /* Find the start address of the .dynamic section.  */
   dyninfo_sect = bfd_get_section_by_name (exec_bfd, ".dynamic");
@@ -312,10 +324,13 @@ elf_locate_base (void)
     return 0;
   dyninfo_addr = bfd_section_vma (exec_bfd, dyninfo_sect);
 
+  relocated_dyninfo_addr = dyninfo_addr
+    + entry_addr - bfd_get_start_address(exec_bfd);
+
   /* Read in .dynamic section, silently ignore errors.  */
   dyninfo_sect_size = bfd_section_size (exec_bfd, dyninfo_sect);
   buf = alloca (dyninfo_sect_size);
-  if (target_read_memory (dyninfo_addr, buf, dyninfo_sect_size))
+  if (target_read_memory (relocated_dyninfo_addr, buf, dyninfo_sect_size))
     return 0;
 
   /* Find the DT_DEBUG entry in the the .dynamic section.
@@ -636,7 +651,47 @@ svr4_current_sos (void)
          does have a name, so we can no longer use a missing name to
          decide when to ignore it. */
       if (IGNORE_FIRST_LINK_MAP_ENTRY (new))
-	free_so (new);
+	{
+          /* It is the first link map entry, i.e. it is the main executable.  */
+
+	  if (bfd_get_start_address (exec_bfd) == entry_point_address ())
+	    {
+              /* Non-pie case, main executable has not been relocated.  */
+	      free_so (new);
+	    }
+	  else
+	    {
+              /* Pie case, main executable has been relocated.  */
+	      struct so_list *gdb_solib;
+
+	      strncpy (new->so_name, exec_bfd->filename,
+		       SO_NAME_MAX_PATH_SIZE - 1);
+	      new->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+	      strcpy (new->so_original_name, new->so_name);
+	      new->main_relocated = 0;
+            
+	      for (gdb_solib = master_so_list ();
+                   gdb_solib;
+                   gdb_solib = gdb_solib->next)
+		{
+		  if (strcmp (gdb_solib->so_name, new->so_name) == 0)
+		    if (gdb_solib->main_relocated)
+		      break;
+		}
+
+	      if ((gdb_solib && !gdb_solib->main_relocated) || (!gdb_solib))
+		{
+		  add_to_target_sections (0 /*from_tty*/, &current_target, new);
+		  new->main = 1;
+		}
+
+	      /* We need this in the list of shared libs we return because
+		 solib_add_stub will loop through it and add the symbol file.  */
+	      new->next = 0;
+	      *link_ptr = new;
+	      link_ptr = &new->next; 
+	    }
+	} /* End of IGNORE_FIRST_LINK_MAP_ENTRY  */
       else
 	{
 	  int errcode;
@@ -658,17 +713,10 @@ svr4_current_sos (void)
 	      strcpy (new->so_original_name, new->so_name);
 	    }
 
-	  /* If this entry has no name, or its name matches the name
-	     for the main executable, don't include it in the list.  */
-	  if (! new->so_name[0]
-	      || match_main (new->so_name))
-	    free_so (new);
-	  else
-	    {
-	      new->next = 0;
-	      *link_ptr = new;
-	      link_ptr = &new->next;
-	    }
+	  new->next = 0;
+	  *link_ptr = new;
+	  link_ptr = &new->next;
+
 	}
 
       discard_cleanups (old_chain);
@@ -754,6 +802,7 @@ svr4_fetch_objfile_link_map (struct objfile *objfile)
    the main executable file is by looking at its name.  Return
    non-zero iff SONAME matches one of the known main executable names.  */
 
+#if 0
 static int
 match_main (char *soname)
 {
@@ -767,6 +816,7 @@ match_main (char *soname)
 
   return (0);
 }
+#endif
 
 /* Return 1 if PC lies in the dynamic symbol resolution code of the
    SVR4 run time loader.  */
@@ -1239,6 +1289,8 @@ svr4_solib_create_inferior_hook (void)
   while (stop_signal != TARGET_SIGNAL_TRAP);
   stop_soon = NO_STOP_QUIETLY;
 #endif /* defined(_SCO_DS) */
+ 
+   disable_breakpoints_at_startup (1); 
 }
 
 static void

@@ -97,4 +97,6 @@ extern int varobj_list (struct varobj ***rootlist);
 
 extern int varobj_update (struct varobj **varp, struct varobj ***changelist);
 
+extern void varobj_refresh(void);
+
 #endif /* VAROBJ_H */

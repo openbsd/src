@@ -69,6 +69,8 @@ static char *solib_absolute_prefix = NULL;
    and LD_LIBRARY_PATH.  */
 static char *solib_search_path = NULL;
 
+void add_to_target_sections (int, struct target_ops *, struct so_list *);
+
 /*
 
    GLOBAL FUNCTION
@@ -355,15 +357,37 @@ symbol_add_stub (void *arg)
   /* Have we already loaded this shared object?  */
   ALL_OBJFILES (so->objfile)
     {
-      if (strcmp (so->objfile->name, so->so_name) == 0)
+      /* Found an already loaded shared library.  */
+      if (strcmp (so->objfile->name, so->so_name) == 0
+          && !so->main)
 	return 1;
+      /* Found an already loaded main executable.  This could happen in
+         two circumstances. 
+         First case: the main file has already been read in
+         as the first thing that gdb does at startup, and the file
+         hasn't been relocated properly yet. Therefor we need to read
+         it in with the proper section info.
+         Second case: it has been read in with the correct relocation,
+         and therefore we need to skip it.  */
+      if (strcmp (so->objfile->name, so->so_name) == 0 
+          && so->main
+          && so->main_relocated)
+        return 1;
     }
 
   sap = build_section_addr_info_from_section_table (so->sections,
                                                     so->sections_end);
 
-  so->objfile = symbol_file_add (so->so_name, so->from_tty,
-				 sap, 0, OBJF_SHARED);
+  if (so->main)
+    {
+      so->objfile = symbol_file_add (so->so_name, /*so->from_tty*/ 0,
+   				     sap, 1, 0);
+      so->main_relocated = 1;
+    }
+  else
+    so->objfile = symbol_file_add (so->so_name, so->from_tty,
+				   sap, 0, OBJF_SHARED);
+
   free_section_addr_info (sap);
 
   return (1);
@@ -538,36 +562,46 @@ update_solib_list (int from_tty, struct target_ops *target)
       /* Fill in the rest of each of the `struct so_list' nodes.  */
       for (i = inferior; i; i = i->next)
 	{
-	  i->from_tty = from_tty;
-
-	  /* Fill in the rest of the `struct so_list' node.  */
-	  catch_errors (solib_map_sections, i,
-			"Error while mapping shared library sections:\n",
-			RETURN_MASK_ALL);
-
-	  /* If requested, add the shared object's sections to the TARGET's
-	     section table.  Do this immediately after mapping the object so
-	     that later nodes in the list can query this object, as is needed
-	     in solib-osf.c.  */
-	  if (target)
-	    {
-	      int count = (i->sections_end - i->sections);
-	      if (count > 0)
-		{
-		  int space = target_resize_to_sections (target, count);
-		  memcpy (target->to_sections + space,
-			  i->sections,
-			  count * sizeof (i->sections[0]));
-		}
-	    }
-
-	  /* Notify any observer that the shared object has been
-             loaded now that we've added it to GDB's tables.  */
-	  observer_notify_solib_loaded (i);
+   	  add_to_target_sections (from_tty, target, i);
 	}
     }
 }
 
+void
+add_to_target_sections (int from_tty, struct target_ops *target, struct so_list *solib)
+{
+  /* If this is set, then the sections have been already added to the
+     target list.  */
+  if (solib->main)
+    return;
+
+  solib->from_tty = from_tty;
+
+  /* Fill in the rest of the `struct so_list' node.  */
+  catch_errors (solib_map_sections, solib,
+		"Error while mapping shared library sections:\n",
+		RETURN_MASK_ALL);
+
+  /* If requested, add the shared object's sections to the TARGET's
+     section table.  Do this immediately after mapping the object so
+     that later nodes in the list can query this object, as is needed
+     in solib-osf.c.  */
+  if (target)
+    {
+      int count = (solib->sections_end - solib->sections);
+      if (count > 0)
+	{
+	  int space = target_resize_to_sections (target, count);
+	  memcpy (target->to_sections + space,
+		  solib->sections,
+		  count * sizeof (solib->sections[0]));
+	}
+    }
+    /* Notify any observer that the shared object has been
+       loaded now that we've added it to GDB's tables.  */
+    observer_notify_solib_loaded (solib);
+}
+ 
 
 /* GLOBAL FUNCTION
 

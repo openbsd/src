@@ -45,6 +45,9 @@
 #include "breakpoint.h"
 #include "block.h"
 #include "dictionary.h"
+#include "auxv.h"
+
+#include "elf/common.h"
 
 /* Prototypes for local functions */
 
@@ -257,7 +260,12 @@ init_entry_point_info (struct objfile *objfile)
 CORE_ADDR
 entry_point_address (void)
 {
-  return symfile_objfile ? symfile_objfile->ei.entry_point : 0;
+  CORE_ADDR entry_addr = symfile_objfile ? symfile_objfile->ei.entry_point : 0;
+
+  /* Find the address of the entry point of the program from the
+     auxv vector.  */
+  target_auxv_search (&current_target, AT_ENTRY, &entry_addr);
+  return entry_addr;
 }
 
 /* Create the terminating entry of OBJFILE's minimal symbol table.

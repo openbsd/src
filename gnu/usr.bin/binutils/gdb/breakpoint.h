@@ -159,6 +159,7 @@ enum enable_state
 			   automatically enabled and reset when the call 
 			   "lands" (either completes, or stops at another 
 			   eventpoint). */
+    bp_startup_disabled,
     bp_permanent	/* There is a breakpoint instruction hard-wired into
 			   the target's code.  Don't try to write another
 			   breakpoint instruction on top of it, or restore
@@ -765,7 +766,11 @@ extern void remove_thread_event_breakpoints (void);
 
 extern void disable_breakpoints_in_shlibs (int silent);
 
+extern void disable_breakpoints_at_startup (int silent);
+
 extern void re_enable_breakpoints_in_shlibs (void);
+
+void re_enable_breakpoints_at_startup (void);
 
 extern void create_solib_load_event_breakpoint (char *, int, char *, char *);
 

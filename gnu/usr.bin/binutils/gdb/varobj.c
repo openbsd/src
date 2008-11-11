@@ -854,6 +854,62 @@ varobj_list (struct varobj ***varlist)
   return rootcount;
 }
 
+void
+varobj_refresh (void)
+{
+  struct varobj *var;
+  struct varobj_root *croot;
+  int mycount = rootcount;
+  char * name;
+                                                                                
+  croot = rootlist;
+  while ((croot != NULL) && (mycount > 0))
+    {
+      var = croot->rootvar;
+                                                                                
+      /* Get rid of the memory for the old expression.  This also
+         leaves var->root->exp == NULL, which is ok for the parsing
+         below.  */
+      free_current_contents ((char **) &var->root->exp);
+                                                                                
+      value_free (var->value);
+      var->type = NULL;
+
+      name = xstrdup (var->name);
+
+      /* Reparse the expression.  Wrap the call to parse expression,
+         so we can return a sensible error. */
+      if (!gdb_parse_exp_1 (&name, var->root->valid_block, 0, &var->root->exp))
+        {
+          return;
+        }
+                                                                                
+      /* We definitively need to catch errors here.
+         If evaluate_expression succeeds we got the value we wanted.
+         But if it fails, we still go on with a call to evaluate_type()  */
+      if (gdb_evaluate_expression (var->root->exp, &var->value))
+        {
+          /* no error */
+          release_value (var->value);
+          if (VALUE_LAZY (var->value))
+            gdb_value_fetch_lazy (var->value);
+        }
+      else
+        var->value = evaluate_type (var->root->exp);
+                                                                                
+      var->type = VALUE_TYPE (var->value);
+                                                                                
+      mycount--;
+      croot = croot->next;
+    }
+                                                                                
+  if (mycount || (croot != NULL))
+    warning
+      ("varobj_refresh: assertion failed - wrong tally of root vars (%d:%d)",
+       rootcount, mycount);
+}
+                                                                                
+
 /* Update the values for a variable and its children.  This is a
    two-pronged attack.  First, re-parse the value for the root's
    expression to see if it's changed.  Then go all the way

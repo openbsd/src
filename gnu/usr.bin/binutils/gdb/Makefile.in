@@ -2289,7 +2289,7 @@ objc-lang.o: objc-lang.c $(defs_h) $(symtab_h) $(gdbtypes_h) $(expression_h) \
 objfiles.o: objfiles.c $(defs_h) $(bfd_h) $(symtab_h) $(symfile_h) \
 	$(objfiles_h) $(gdb_stabs_h) $(target_h) $(bcache_h) $(gdb_assert_h) \
 	$(gdb_stat_h) $(gdb_obstack_h) $(gdb_string_h) $(hashtab_h) \
-	$(breakpoint_h) $(block_h) $(dictionary_h)
+	$(breakpoint_h) $(block_h) $(dictionary_h) $(auxv_h) $(elf_common_h)
 observer.o: observer.c $(defs_h) $(observer_h) $(command_h) $(gdbcmd_h) \
 	$(observer_inc)
 obsd-tdep.o: obsd-tdep.c $(defs_h) $(frame_h) $(symtab_h) $(obsd_tdep_h)
@@ -2511,7 +2511,7 @@ solib-sunos.o: solib-sunos.c $(defs_h) $(gdb_string_h) $(symtab_h) $(bfd_h) \
 solib-svr4.o: solib-svr4.c $(defs_h) $(elf_external_h) $(elf_common_h) \
 	$(elf_mips_h) $(symtab_h) $(bfd_h) $(symfile_h) $(objfiles_h) \
 	$(gdbcore_h) $(target_h) $(inferior_h) $(solist_h) $(solib_svr4_h) \
-	$(bfd_target_h) $(exec_h)
+	$(bfd_target_h) $(exec_h) $(auxv_h) $(command_h)
 sol-thread.o: sol-thread.c $(defs_h) $(gdbthread_h) $(target_h) \
 	$(inferior_h) $(gdb_stat_h) $(gdbcmd_h) $(gdbcore_h) $(regcache_h) \
 	$(symfile_h) $(gdb_string_h) $(gregset_h)
@@ -2603,7 +2603,7 @@ symfile.o: symfile.c $(defs_h) $(bfdlink_h) $(symtab_h) $(gdbtypes_h) \
 	$(complaints_h) $(demangle_h) $(inferior_h) $(filenames_h) \
 	$(gdb_stabs_h) $(gdb_obstack_h) $(completer_h) $(bcache_h) \
 	$(hashtab_h) $(readline_h) $(gdb_assert_h) $(block_h) \
-	$(gdb_string_h) $(gdb_stat_h)
+	$(gdb_string_h) $(gdb_stat_h) $(varobj_h)
 symfile-mem.o: symfile-mem.c $(defs_h) $(symtab_h) $(gdbcore_h) \
 	$(objfiles_h) $(gdbcmd_h) $(target_h) $(value_h) $(symfile_h)
 symmisc.o: symmisc.c $(defs_h) $(symtab_h) $(gdbtypes_h) $(bfd_h) \

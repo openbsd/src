@@ -62,6 +62,8 @@ struct so_list
     bfd *abfd;
     char symbols_loaded;	/* flag: symbols read in yet? */
     char from_tty;		/* flag: print msgs? */
+    char main;                  /* flag: is this the main executable? */
+    char main_relocated;        /* flag: has it been relocated yet? */
     struct objfile *objfile;	/* objfile for loaded lib */
     struct section_table *sections;
     struct section_table *sections_end;
@@ -113,8 +115,14 @@ void free_so (struct so_list *so);
 /* Return address of first so_list entry in master shared object list.  */
 struct so_list *master_so_list (void);
 
+/* Return address of first so_list entry in master shared object list.  */
+struct so_list *master_so_list (void);
+
 /* Find solib binary file and open it.  */
 extern int solib_open (char *in_pathname, char **found_pathname);
+
+/* Add the list of sections in so_list to the target to_sections.  */
+extern void add_to_target_sections (int, struct target_ops *, struct so_list *);
 
 /* FIXME: gdbarch needs to control this variable */
 extern struct target_so_ops *current_target_so_ops;
