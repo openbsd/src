@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.4 2008/11/10 22:35:23 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.5 2008/11/11 02:14:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -449,7 +449,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 #define F_ISINFO	0x1
 #define F_ISPROTOERROR	0x2
 	char codebuf[4];
-	char *errstr;
+	const char *errstr;
 	int flags = 0;
 
 	line = evbuffer_readline(bev->input);
@@ -465,7 +465,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	log_debug("remote server sent: [%s]", line);
 
 	strlcpy(codebuf, line, sizeof codebuf);
-	code = strtonum(codebuf, 0, UINT16_MAX, (const char **)&errstr);
+	code = strtonum(codebuf, 0, UINT16_MAX, &errstr);
 	if (errstr || code < 100) {
 		/* Server sent invalid line, protocol error */
 		batchp->status |= S_BATCH_PERMFAILURE;
@@ -731,6 +731,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 			}
 			evbuffer_add_printf(batchp->bev->output, "%s\r\n", buf);
 			free(lbuf);
+			lbuf = NULL;
 		}
 		else {
 			evbuffer_add_printf(batchp->bev->output, ".\r\n");

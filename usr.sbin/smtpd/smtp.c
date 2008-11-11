@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.3 2008/11/11 01:08:08 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.4 2008/11/11 02:14:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -114,18 +114,13 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			(void)strlcpy(s->ssl_name, x_ssl->ssl_name,
 			    sizeof(s->ssl_name));
 			s->ssl_cert_len = x_ssl->ssl_cert_len;
-			if ((s->ssl_cert = malloc(s->ssl_cert_len + 1)) == NULL)
+			if ((s->ssl_cert =
+			    strdup((char *)imsg.data + sizeof(*s))) == NULL)
 				fatal(NULL);
-			(void)strlcpy(s->ssl_cert,
-			    (char *)imsg.data + sizeof(*s),
-			    s->ssl_cert_len);
-
 			s->ssl_key_len = x_ssl->ssl_key_len;
-			if ((s->ssl_key = malloc(s->ssl_key_len + 1)) == NULL)
+			if ((s->ssl_key = strdup((char *)imsg.data +
+			    (sizeof(*s) + s->ssl_cert_len))) == NULL)
 				fatal(NULL);
-			(void)strlcpy(s->ssl_key,
-			    (char *)imsg.data + (sizeof(*s) + s->ssl_cert_len),
-			    s->ssl_key_len);
 
 			SPLAY_INSERT(ssltree, &env->sc_ssl, s);
 			break;
