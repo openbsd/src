@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.4 2008/08/28 00:19:27 oga Exp $
+# $OpenBSD: files.drm,v 1.5 2008/11/11 21:06:18 oga Exp $
 
 # direct rendering modules
 define drmbase
@@ -73,14 +73,3 @@ file	dev/pci/drm/sis_mm.c		sisdrm
 device	tdfxdrm: drmbase
 attach	tdfxdrm at drm
 file	dev/pci/drm/tdfx_drv.c		tdfxdrm
-
-device	viadrm: drmbase
-attach	viadrm at drm
-file	dev/pci/drm/via_drv.c		viadrm
-file	dev/pci/drm/via_dma.c		viadrm
-file	dev/pci/drm/via_ds.c		viadrm
-file	dev/pci/drm/via_irq.c		viadrm
-file	dev/pci/drm/via_map.c		viadrm
-file	dev/pci/drm/via_mm.c		viadrm
-file	dev/pci/drm/via_verifier.c	viadrm
-file	dev/pci/drm/via_video.c		viadrm
