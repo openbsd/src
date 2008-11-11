@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.37 2008/11/11 13:12:03 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.38 2008/11/11 21:26:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -490,8 +490,10 @@ main(int argc, char **argv)
 				filelist_unlisten();
 			break;
 		}
-		if (!file_poll())
-			break;
+		if (!file_poll()) {
+			fprintf(stderr, "Terminated, device desappeared?\n");
+			exit(1);
+		}
 		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
 		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz)) {
 			if (!l_flag)
