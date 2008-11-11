@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.101 2007/08/15 21:05:45 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.102 2008/11/11 15:11:28 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1699,7 +1699,8 @@ next_sa:
 		    (exchange->doi->decode_ids("initiator id %s, responder"
 		    " id %s", ie->id_ci, ie->id_ci_sz, ie->id_cr,
 		    ie->id_cr_sz, 1)));
-		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1,
+		    0);
 		goto cleanup;
 	}
 
