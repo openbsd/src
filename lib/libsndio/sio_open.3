@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.5 2008/11/11 19:39:35 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.6 2008/11/11 21:45:03 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -507,7 +507,7 @@ The
 .Fn sio_onmove
 routine can be used to register the
 .Va cb
-call-back function that will be called by the
+callback function that will be called by the
 .Nm sndio
 library at regular time intervals to notify the application
 the position in the stream changed.
@@ -518,7 +518,7 @@ since the last call of
 .Va cb .
 The value of the
 .Va arg
-pointer is passed to the call-back and can contain anything.
+pointer is passed to the callback and can contain anything.
 .Pp
 If desired, the application can maintain the current position by
 starting from zero (when
@@ -633,33 +633,33 @@ on other systems.
 .Ss Controlling the volume
 The
 .Fn sio_setvol
-function can be used to set the playback attenuation.
+function can be used to set playback attenuation.
 The
 .Va vol
 parameter takes a value between 0 (maximum attenuation)
 and
-.Va SIO_MAXVOL
+.Dv SIO_MAXVOL
 (no attenuation).
-This parameter gives the weight the audio subsystem will
+It specifies the weight the audio subsystem will
 give to this stream.
-It is not meant to control hardware parameters like the
-speakers gain, the
-.Xr mixer
+It is not meant to control hardware parameters like
+speaker gain; the
+.Xr mixerctl 1
 interface should be used for that purpose instead.
 .Pp
 An application can use the
 .Fn sio_onvol
-function to register a call-back function that
-will be called each time the volume is changed, including
-when
+function to register a callback function that
+will be called each time the volume is changed,
+including when
 .Fn sio_setvol
 is used.
-The call-back is always invoked when
+The callback is always invoked when
 .Fn sio_onvol
-function is called in order to provide the initial volume.
-The application can safely assume that once
+is called in order to provide the initial volume.
+An application can safely assume that once
 .Fn sio_onvol
-returns, the call-back was already invoked and thus
+returns, the callback has already been invoked and thus
 the current volume is available.
 .Ss Error handling
 Errors related to the audio subsystem
