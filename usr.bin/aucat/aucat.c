@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.36 2008/11/11 12:56:02 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.37 2008/11/11 13:12:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -482,16 +482,6 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * automatically terminate when there no are streams
-	 */
-	if (!l_flag) {
-		if (dev_mix)
-			dev_mix->u.mix.flags |= MIX_AUTOQUIT;
-		if (dev_sub)
-			dev_sub->u.sub.flags |= SUB_AUTOQUIT;
-	}
-
-	/*
 	 * loop, start audio
 	 */
 	for (;;) {
@@ -502,10 +492,10 @@ main(int argc, char **argv)
 		}
 		if (!file_poll())
 			break;
-		if (!l_flag)
-			continue;
 		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
 		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz)) {
+			if (!l_flag)
+				break;
 			if (!suspend) {
 				DPRINTF("suspending\n");
 				suspend = 1;
@@ -527,8 +517,7 @@ main(int argc, char **argv)
 		suspend = 0;
 		dev_start();
 	}
-	if (l_flag)
-		dev_done();
+	dev_done();
 	filelist_done();
 
        	sigfillset(&sa.sa_mask);
