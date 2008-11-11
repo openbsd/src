@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.31 2008/11/11 07:47:48 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.32 2008/11/11 19:44:19 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -129,6 +129,17 @@ If the policy is
 .Dq error
 then the stream is closed permanently.
 .El
+.Pp
+If
+.Nm
+is sent
+.Dv SIGINT ,
+it terminates recording to files.
+If sent
+.Dv SIGUSR1
+or
+.Dv SIGUSR2 ,
+it increases or decreases debug level, respectively.
 .Pp
 Settings for input
 .Pq Fl i
@@ -294,13 +305,6 @@ may be a value between 0 and 4.
 Path to the Unix domain socket to use.
 .It Ev AUDIODEVICE
 The audio device to use.
-.El
-.Sh SIGNALS
-.Bl -tag -width "SIGUSR1, SIGUSR2X" -compact
-.It Va SIGINT
-Terminate saving recorded files.
-.It Va SIGUSR1 , Va SIGUSR2
-Increase or decrease debug level respectively.
 .El
 .Sh EXAMPLES
 The following command will record a stereo s16le stream at
