@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.4 2008/11/06 02:32:29 brad Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.5 2008/11/12 23:42:40 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -545,7 +545,7 @@ allmulti:
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			   ETHER_ADDR_LEN) != 0)
+		   ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
 		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
@@ -608,7 +608,7 @@ mos_match(struct device *parent, void *match, void *aux)
 		return(UMATCH_NONE);
 
 	return (mos_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*
@@ -700,7 +700,6 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 	}
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	printf(", address %s\n", ether_sprintf(eaddr));
-
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
