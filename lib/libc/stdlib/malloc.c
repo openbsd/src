@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.106 2008/11/06 12:32:45 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.107 2008/11/12 09:41:49 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -312,7 +312,7 @@ malloc_dump(int fd)
 static void
 malloc_exit(void)
 {
-	char *q = "malloc() warning: Couldn't dump stats\n";
+	const char q[] = "malloc() warning: Couldn't dump stats\n";
 	int save_errno = errno, fd;
 
 	fd = open("malloc.out", O_RDWR|O_APPEND);
@@ -320,7 +320,7 @@ malloc_exit(void)
 		malloc_dump(fd);
 		close(fd);
 	} else
-		write(STDERR_FILENO, q, strlen(q));
+		write(STDERR_FILENO, q, sizeof(q) - 1);
 	errno = save_errno;
 }
 #endif /* MALLOC_STATS */
@@ -630,12 +630,12 @@ omalloc_init(struct dir_info *d)
 			case 'Z':
 				malloc_zero = 1;
 				break;
-			default:
-				j = malloc_abort;
-				malloc_abort = 0;
-				wrterror("unknown char in MALLOC_OPTIONS");
-				malloc_abort = j;
+			default: {
+				const char q[] = "malloc() warning: "
+				    "unknown char in MALLOC_OPTIONS\n";
+				write(STDERR_FILENO, q, sizeof(q) - 1);
 				break;
+			}
 			}
 		}
 	}
@@ -649,9 +649,9 @@ omalloc_init(struct dir_info *d)
 
 #ifdef MALLOC_STATS
 	if (malloc_stats && (atexit(malloc_exit) == -1)) {
-		char *q = "malloc() warning: atexit(2) failed."
+		const char q[] = "malloc() warning: atexit(2) failed."
 		    " Will not be able to dump stats on exit\n";
-		write(STDERR_FILENO, q, strlen(q));
+		write(STDERR_FILENO, q, sizeof(q) - 1);
 	}
 #endif /* MALLOC_STATS */
 
