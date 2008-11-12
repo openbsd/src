@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.36 2005/09/21 15:04:28 brad Exp $
+ * $OpenBSD: main.c,v 1.37 2008/11/12 16:01:08 sobrado Exp $
  */
 
 #include <sys/param.h>
@@ -189,12 +189,11 @@ RestartServer(int signo)
 static void
 Usage(void)
 {
-  fprintf(stderr, "usage: ppp [-auto | -foreground | -background | -direct |"
-          " -dedicated | -ddial | -interactive]"
+  fprintf(stderr, "usage: ppp [-mode]"
 #ifndef NOALIAS
           " [-nat]"
 #endif
-          " [-quiet] [-unit N] [system ...]\n");
+          " [-quiet] [-unitN] [system ...]\n");
   exit(EX_START);
 }
 
