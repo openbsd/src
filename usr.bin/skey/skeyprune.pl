@@ -19,9 +19,9 @@
 # Materiel Command, USAF, under agreement number F39502-99-1-0512.
 #
 # Prune commented out, bogus, and crufty entries from /etc/skeykeys
-# Usage: skeyprune [days]
+# usage: skeyprune [days]
 #
-# $OpenBSD: skeyprune.pl,v 1.5 2003/06/17 21:56:26 millert Exp $
+# $OpenBSD: skeyprune.pl,v 1.6 2008/11/12 16:13:46 sobrado Exp $
 #
 
 use POSIX qw(S_ISREG);
@@ -29,7 +29,7 @@ use Fcntl qw(:DEFAULT :flock);
 
 # Keep out the stupid
 die "Only root may run $0.\n" if $>;
-die "Usage: $0 [days]\n" if $#ARGV > 0;
+die "usage: $0 [days]\n" if $#ARGV > 0;
 
 # Pathnames
 $skeydir = '/etc/skey';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.23 2006/12/11 20:50:54 deraadt Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.24 2008/11/12 16:13:46 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -223,7 +223,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "Usage: %s [-ai] [-l limit]\n",
+	(void)fprintf(stderr, "usage: %s [-ai] [-l limit]\n",
 	    __progname);
 	exit(1);
 }
