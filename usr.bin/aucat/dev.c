@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.16 2008/11/11 19:21:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.17 2008/11/12 19:36:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -229,6 +229,7 @@ dev_done(void)
 
 	DPRINTF("dev_done: dev_mix = %p, dev_sub = %p\n", dev_mix, dev_sub);
 	if (dev_mix) {
+		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
 		/*
 		 * generate EOF on all inputs (but not the device), and
 		 * put the mixer in ``autoquit'' state, so once buffers
@@ -246,8 +247,6 @@ dev_done(void)
 				goto restart;
 			}
 		}
-		if (dev_mix)
-			dev_mix->u.mix.flags |= MIX_AUTOQUIT;
 
 		/*
 		 * wait play chain to terminate
@@ -259,6 +258,7 @@ dev_done(void)
 		dev_mix = 0;
 	}
 	if (dev_sub) {
+		dev_sub->u.sub.flags |= SUB_AUTOQUIT;
 		/*
 		 * same as above, but for the record chain: generate eof
 		 * on the read-end of the device and wait record buffers
@@ -268,8 +268,6 @@ dev_done(void)
 		 */
 		dev_stop();
 		file_eof(dev_file);
-		if (dev_sub)
-			dev_sub->u.sub.flags |= SUB_AUTOQUIT;
 		for (;;) {
 			if (!file_poll())
 				break;
