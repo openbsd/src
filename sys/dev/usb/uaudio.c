@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.59 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.60 2008/11/12 16:01:09 sthen Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1576,7 +1576,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	if (sed->bDescriptorType != UDESC_CS_ENDPOINT ||
 	    sed->bDescriptorSubtype != AS_GENERAL)
 		return (USBD_INVAL);
-	DPRINTF((" streadming_endpoint: offset=%d bLength=%d\n", offs, sed->bLength));
+	DPRINTF((" streaming_endpoint: offset=%d bLength=%d\n", offs, sed->bLength));
 	offs += sed->bLength;
 	if (offs > size)
 		return (USBD_INVAL);
