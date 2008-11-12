@@ -989,12 +989,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/sis_drv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/sis_ds.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/tdfx_drv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_3d_reg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_drm.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_drv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_ds.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_mm.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/via_verifier.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/emuxkivar.ph

@@ -110,7 +110,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
-./usr/lib/libsndio.so.3.0
+./usr/lib/libsndio.so.3.1
 ./usr/lib/libssl.so.12.0
 ./usr/lib/libstdc++.so.45.1
 ./usr/lib/libtermcap.so.10.0
@@ -1230,12 +1230,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/sis_drv.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/sis_ds.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/tdfx_drv.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_3d_reg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_drm.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_drv.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_ds.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_mm.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/drm/via_verifier.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/emuxkivar.ph
