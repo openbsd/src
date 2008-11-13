@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2008/10/17 11:38:20 landry Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2008/11/13 18:33:03 landry Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1994/11/23 07:42:00 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@ enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 
 void forward(FILE *, enum STYLE, off_t, struct stat *);
 void reverse(FILE *, enum STYLE, off_t, struct stat *);
-void follow(char **, int, enum STYLE, off_t);
 
 int bytes(FILE *, off_t);
 int lines(FILE *, off_t);
