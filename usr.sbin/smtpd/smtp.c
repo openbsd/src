@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.4 2008/11/11 02:14:58 tedu Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.5 2008/11/13 23:24:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -552,6 +552,7 @@ smtp_accept(int fd, short event, void *p)
 		return;
 	}
 
+	log_debug("smtp_accept: accepted client on listener: %p", l);
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal(NULL);
 	len = sizeof(s->s_ss);
