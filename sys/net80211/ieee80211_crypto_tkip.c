@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.9 2008/09/27 15:00:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.10 2008/11/13 08:37:19 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -505,12 +505,13 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 
 	log(LOG_WARNING, "%s: Michael MIC failure", ic->ic_if.if_xname);
 
-	if (ic->ic_opmode == IEEE80211_M_STA) {
-		/* send a Michael MIC Failure Report frame to the AP */
-		(void)ieee80211_send_eapol_key_req(ic, ic->ic_bss,
-		    EAPOL_KEY_KEYMIC | EAPOL_KEY_ERROR | EAPOL_KEY_SECURE,
-		    tsc);
-	}
+	/*
+	 * NB. do not send Michael MIC Failure reports as recommended since
+	 * these may be used as an oracle to verify CRC guesses as described
+	 * in Beck, M. and Tews S. "Practical attacks against WEP and WPA"
+	 * http://dl.aircrack-ng.org/breakingwepandwpa.pdf
+	 */
+
 	/*
 	 * Activate TKIP countermeasures (see 8.3.2.4) if less than 60
 	 * seconds have passed since the most recent previous MIC failure.
@@ -533,6 +534,18 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 		break;
 #endif
 	case IEEE80211_M_STA:
+		/*
+		 * Notify the AP of MIC failures: send two Michael
+		 * MIC Failure Report frames back-to-back to trigger
+		 * countermeasures at the AP end.
+		 */
+		(void)ieee80211_send_eapol_key_req(ic, ic->ic_bss,
+		    EAPOL_KEY_KEYMIC | EAPOL_KEY_ERROR | EAPOL_KEY_SECURE,
+		    tsc);
+		(void)ieee80211_send_eapol_key_req(ic, ic->ic_bss,
+		    EAPOL_KEY_KEYMIC | EAPOL_KEY_ERROR | EAPOL_KEY_SECURE,
+		    tsc);
+
 		/* deauthenticate from the AP.. */
 		IEEE80211_SEND_MGMT(ic, ic->ic_bss,
 		    IEEE80211_FC0_SUBTYPE_DEAUTH,
