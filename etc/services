@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.69 2008/05/07 12:19:20 beck Exp $
+#	$OpenBSD: services,v 1.70 2008/11/13 03:59:14 ian Exp $
 #
 # Network services, Internet style
 #
@@ -206,6 +206,8 @@ krbupdate	760/tcp		kreg		# BSD Kerberos registration
 #
 socks		1080/tcp			# Socks
 kpop		1109/tcp			# Pop with Kerberos
+openvpn		1194/tcp			# OpenVPN
+openvpn		1194/udp			# OpenVPN
 ms-sql-s	1433/tcp	Microsoft-SQL-Server
 ms-sql-s	1433/udp	Microsoft-SQL-Server
 ms-sql-m	1434/tcp	Microsoft-SQL-Monitor
@@ -230,6 +232,8 @@ kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
 iprop		2121/tcp			# Kerberos incremental propagation
+gpsd		2947/tcp			# GPS Daemon
+gpsd		2947/udp			# GPS Daemon
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
@@ -238,6 +242,8 @@ iapp		3517/tcp	802-11-iapp	# IEEE 802.11f IAPP
 iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
+svn		3690/tcp	Subversion	# SVN Source Code Repository
+svn		3690/udp	Subversion	# SVN Source Code Repository
 krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
 ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
