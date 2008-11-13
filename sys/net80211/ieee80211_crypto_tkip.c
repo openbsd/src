@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.10 2008/11/13 08:37:19 djm Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.11 2008/11/13 13:42:35 djm Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -519,9 +519,9 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	if (ic->ic_tkip_micfail == 0 ||
 	    ticks >= ic->ic_tkip_micfail + 60 * hz) {
 		ic->ic_tkip_micfail = ticks;
+		ic->ic_tkip_micfail_last_tsc = tsc;
 		return;
 	}
-	ic->ic_tkip_micfail = ticks;
 
 	switch (ic->ic_opmode) {
 #ifndef IEEE80211_STA_ONLY
@@ -541,7 +541,7 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 		 */
 		(void)ieee80211_send_eapol_key_req(ic, ic->ic_bss,
 		    EAPOL_KEY_KEYMIC | EAPOL_KEY_ERROR | EAPOL_KEY_SECURE,
-		    tsc);
+		    ic->ic_tkip_micfail_last_tsc);
 		(void)ieee80211_send_eapol_key_req(ic, ic->ic_bss,
 		    EAPOL_KEY_KEYMIC | EAPOL_KEY_ERROR | EAPOL_KEY_SECURE,
 		    tsc);
@@ -556,6 +556,9 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	default:
 		break;
 	}
+
+	ic->ic_tkip_micfail = ticks;
+	ic->ic_tkip_micfail_last_tsc = tsc;
 }
 
 /***********************************************************************

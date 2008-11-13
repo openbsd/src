@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.54 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.55 2008/11/13 13:42:35 djm Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -277,6 +277,7 @@ struct ieee80211com {
 	struct timeout		ic_rsn_timeout;
 	u_int16_t		ic_rsn_keydonesta;
 	int			ic_tkip_micfail;
+	u_int64_t		ic_tkip_micfail_last_tsc;
 
 	TAILQ_HEAD(, ieee80211_pmk) ic_pmksa;	/* PMKSA cache */
 	u_int			ic_rsnprotos;
