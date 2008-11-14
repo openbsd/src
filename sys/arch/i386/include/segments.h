@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.15 2008/09/01 17:30:56 deraadt Exp $	*/
+/*	$OpenBSD: segments.h,v 1.16 2008/11/14 20:43:55 weingart Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -230,9 +230,6 @@ void idt_vec_free(int);
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
-#define	LUCODE1_SEL	2	/* User code descriptor */
-#define	LUCODE_SEL	3	/* User code descriptor (a stack short) */
-#define	LUDATA_SEL	4	/* User data descriptor */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 

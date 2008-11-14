@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.127 2008/11/14 15:10:31 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.128 2008/11/14 20:43:54 weingart Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -664,11 +664,10 @@ setcslimit(struct pmap *pm, struct trapframe *tf, struct pcb *pcb,
 	setsegment(&pm->pm_codeseg, 0, atop(limit),
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 
-	/* And update the GDT and LDT since we may be called by the
+	/* And update the GDT since we may be called by the
 	 * trap handler (cpu_switch won't get a chance).
 	 */
-	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
-	    pm->pm_codeseg;
+	curcpu()->ci_gdt[GUCODE_SEL].sd = pm->pm_codeseg;
 
 	pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 }
@@ -1678,10 +1677,9 @@ pmap_activate(struct proc *p)
 	if (p == curproc) {
 		/*
 		 * Set the correct descriptor value (i.e. with the
-		 * correct code segment X limit) in the GDT and the LDT.
+		 * correct code segment X limit) in the GDT.
 		 */
-		self->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
-		    pmap->pm_codeseg;
+		self->ci_gdt[GUCODE_SEL].sd = pmap->pm_codeseg;
 
 		lcr3(pcb->pcb_cr3);
 		lldt(pcb->pcb_ldt_sel);
