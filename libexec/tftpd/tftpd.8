@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.25 2007/11/29 11:38:46 jmc Exp $
+.\"   $OpenBSD: tftpd.8,v 1.26 2008/11/14 07:34:59 stevesk Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.25 2007/11/29 11:38:46 jmc Exp $
+.\"	$OpenBSD: tftpd.8,v 1.26 2008/11/14 07:34:59 stevesk Exp $
 .\"
-.Dd $Mdocdate: November 29 2007 $
+.Dd $Mdocdate: November 14 2008 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -100,7 +100,7 @@ allowing anyone to read or write to them.
 .It Fl l
 Log the client IP, type of request, and filename using
 .Xr syslog 3
-with a facility of
+with a level of
 .Dv LOG_INFO .
 .It Fl s Ar directory
 .Xr chroot 2
