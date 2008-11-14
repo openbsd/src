@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.71 2008/11/05 04:08:24 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.72 2008/11/14 21:58:11 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -236,10 +236,12 @@ int	azalia_codec_disconnect_stream(codec_t *, int);
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
 int	azalia_widget_init_audio(widget_t *, const codec_t *);
-int	azalia_widget_print_audio(const widget_t *, const char *);
 int	azalia_widget_init_pin(widget_t *, const codec_t *);
-int	azalia_widget_print_pin(const widget_t *);
 int	azalia_widget_init_connection(widget_t *, const codec_t *);
+#ifdef AZALIA_DEBUG
+int	azalia_widget_print_audio(const widget_t *, const char *);
+int	azalia_widget_print_pin(const widget_t *);
+#endif
 
 int	azalia_stream_init(stream_t *, azalia_t *, int, int, int);
 int	azalia_stream_delete(stream_t *, azalia_t *);
@@ -1641,12 +1643,15 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 			nid = group->conv[1];
 		}
 
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
-		if (err)
-			goto exit;
-		stream_chan = (number << 4) | startchan;
 		if (startchan >= nchan)
 			stream_chan = 0; /* stream#0 */
+		else
+			stream_chan = (number << 4) | startchan;
+
+		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT,
+				    fmt, NULL);
+		if (err)
+			goto exit;
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
 				    stream_chan, NULL);
 		if (err)
@@ -1877,6 +1882,7 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
     "\x09""96kHz\x08""88.2kHz\x07""48kHz\x06""44.1kHz\x05""32kHz\x04"	\
     "22.05kHz\x03""16kHz\x02""11.025kHz\x01""8kHz"
 
+#ifdef AZALIA_DEBUG
 int
 azalia_widget_print_audio(const widget_t *this, const char *lead)
 {
@@ -1886,6 +1892,7 @@ azalia_widget_print_audio(const widget_t *this, const char *lead)
 	    BITSRATES_BITS);
 	return 0;
 }
+#endif
 
 int
 azalia_widget_init_pin(widget_t *this, const codec_t *codec)
@@ -1939,6 +1946,7 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
     "\13VREFGND\12VREF50\11VREFHIZ\07BALANCE\06INPUT" \
     "\05OUTPUT\04HEADPHONE\03PRESENCE\02TRIGGER\01IMPEDANCE"
 
+#ifdef AZALIA_DEBUG
 int
 azalia_widget_print_pin(const widget_t *this)
 {
@@ -1975,6 +1983,7 @@ azalia_widget_print_pin(const widget_t *this)
 
 	return 0;
 }
+#endif
 
 int
 azalia_widget_init_connection(widget_t *this, const codec_t *codec)
