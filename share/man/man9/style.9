@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.49 2007/09/28 00:13:23 sobrado Exp $
+.\"	$OpenBSD: style.9,v 1.50 2008/11/14 13:42:05 tedu Exp $
 .\"
-.Dd $Mdocdate: September 28 2007 $
+.Dd $Mdocdate: November 14 2008 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -414,12 +414,7 @@ char *six, seven, eight, nine, ten, eleven, twelve;
 four = myfunction();
 .Ed
 .Pp
-Do not declare functions inside other functions: ANSI C says that
-such declarations have file scope regardless of the nesting of the
-declaration.
-Hiding file declarations in what appears to be a local scope is
-undesirable and will elicit complaints from a good compiler, such as
-.Dq Li gcc -Wtraditional .
+Do not declare functions inside other functions.
 .Pp
 Casts and
 .Fn sizeof
@@ -617,7 +612,7 @@ relaxed but at a minimum should be internally consistent with their style.
 .Pp
 Whenever possible, code should be run through a code checker
 (e.g.,
-.Dq Li gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ... ,
+.Dq Li gcc -Wall -W -Wpointer-arith -Wbad-function-cast ... ,
 .Xr lint 1
 or splint from the ports tree) and produce minimal warnings.
 .Pp
