@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.53 2008/06/22 20:23:56 millert Exp $
+dnl $Sudo: configure.in,v 1.535 2008/10/23 16:06:22 millert Exp $
 dnl
-dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT([sudo], [1.6.9])
+AC_INIT([sudo], [1.7])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.9])
+AC_MSG_NOTICE([Configuring Sudo version 1.7])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -37,6 +37,7 @@ AC_SUBST(SELINUX)
 AC_SUBST(BAMAN)
 AC_SUBST(LCMAN)
 AC_SUBST(SEMAN)
+AC_SUBST(devdir)
 AC_SUBST(mansectsu)
 AC_SUBST(mansectform)
 AC_SUBST(mansrcdir)
@@ -45,6 +46,10 @@ AC_SUBST(NOEXECDIR)
 AC_SUBST(noexec_file)
 AC_SUBST(INSTALL_NOEXEC)
 AC_SUBST(DONT_LEAK_PATH_INFO)
+AC_SUBST(BSDAUTH_USAGE)
+AC_SUBST(SELINUX_USAGE)
+AC_SUBST(LDAP)
+AC_SUBST(LOGINCAP_USAGE)
 dnl
 dnl Variables that get substituted in docs (not overridden by environment)
 dnl
@@ -74,6 +79,9 @@ AC_SUBST(tty_tickets)
 AC_SUBST(insults)
 AC_SUBST(root_sudo)
 AC_SUBST(path_info)
+AC_SUBST(ldap_conf)
+AC_SUBST(ldap_secret)
+AC_SUBST(nsswitch_conf)
 dnl
 dnl Initial values for above
 dnl
@@ -103,6 +111,7 @@ insults=off
 root_sudo=on
 path_info=on
 INSTALL_NOEXEC=
+devdir='$(srcdir)'
 dnl
 dnl Initial values for Makefile variables listed above
 dnl May be overridden by environment variables..
@@ -114,6 +123,7 @@ PROGS="sudo visudo"
 : ${SUDOERS_UID='0'}
 : ${SUDOERS_GID='0'}
 DEV="#"
+LDAP="#"
 SELINUX="#"
 BAMAN='.\" '
 LCMAN='.\" '
@@ -230,6 +240,7 @@ AC_ARG_WITH(devel, [  --with-devel            add development options],
 		PROGS="${PROGS} testsudoers"
 		OSDEFS="${OSDEFS} -DSUDO_DEVEL"
 		DEV=""
+		devdir=.
 		;;
     no)		;;
     *)		AC_MSG_WARN([Ignoring unknown argument to --with-devel: $with_devel])
@@ -912,6 +923,20 @@ AC_ARG_WITH(goons-insults, [  --with-goons-insults    include the insults from t
 		;;
 esac])
 
+AC_ARG_WITH(nsswitch, [  --with-nsswitch[[=PATH]]  path to nsswitch.conf],
+[case $with_nsswitch in
+    no)		;;
+    yes)	with_nsswitch="/etc/nsswitch.conf"
+		;;
+    *)		;;
+esac])
+if test ${with_nsswitch-"yes"} != "no"; then
+    SUDO_DEFINE_UNQUOTED(_PATH_NSSWITCH_CONF, "${with_nsswitch-/etc/nsswitch.conf}")
+    nsswitch_conf=${with_nsswitch-/etc/nsswitch.conf}
+else
+    nsswitch_conf='/etc/nsswitch.conf'
+fi
+
 AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]       enable LDAP support],
 [case $with_ldap in
     no)		with_ldap="";;
@@ -920,10 +945,14 @@ AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]       enable LDAP support],
 		AC_MSG_RESULT(yes)
 		;;
 esac])
-AC_ARG_WITH(ldap-conf-file, [  --with-ldap-conf-file   path to LDAP configuration file],
-[AC_DEFINE_UNQUOTED(_PATH_LDAP_CONF, "$with_ldap_conf_file", [Path to the ldap.conf file])])
-AC_ARG_WITH(ldap-secret-file, [  --with-ldap-secret-file path to LDAP secret password file],
-[AC_DEFINE_UNQUOTED(_PATH_LDAP_SECRET, "$with_ldap_secret_file", [Path to the ldap.secret file])])
+
+AC_ARG_WITH(ldap-conf-file, [  --with-ldap-conf-file   path to LDAP configuration file])
+SUDO_DEFINE_UNQUOTED(_PATH_LDAP_CONF, "${with_ldap_conf_file-/etc/ldap.conf}", [Path to the ldap.conf file])
+ldap_conf=${with_ldap_conf_file-'/etc/ldap.conf'}
+
+AC_ARG_WITH(ldap-secret-file, [  --with-ldap-secret-file path to LDAP secret password file])
+SUDO_DEFINE_UNQUOTED(_PATH_LDAP_SECRET, "${with_ldap_secret_file-/etc/ldap.secret}", [Path to the ldap.secret file])
+ldap_secret=${with_ldap_secret_file-'/etc/ldap.secret'}
 
 AC_ARG_WITH(pc-insults, [  --with-pc-insults       replace politically incorrect insults with less offensive ones],
 [case $with_pc_insults in
@@ -979,6 +1008,16 @@ AC_ARG_WITH(stow, [  --with-stow             properly handle GNU stow packaging]
     no)		AC_MSG_RESULT(no)
 		;;
     *)		AC_MSG_ERROR(["--with-stow does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to use an askpass helper)
+AC_ARG_WITH(askpass, [  --with-askpass=PATH     Fully qualified pathname of askpass helper],
+[case $with_askpass in
+    yes)	AC_MSG_ERROR(["--with-askpass takes a path as an argument."])
+		;;
+    no)		;;
+    *)		AC_DEFINE_UNQUOTED(_PATH_SUDO_ASKPASS, "$with_askpass", [The fully qualified pathname of askpass])
 		;;
 esac], AC_MSG_RESULT(no))
 
@@ -1098,7 +1137,7 @@ AC_ARG_ENABLE(noargs-shell,
 AC_MSG_CHECKING(whether to set \$HOME to target user in shell mode)
 AC_ARG_ENABLE(shell-sets-home,
 [  --enable-shell-sets-home
-                          set $HOME to target user in shell mode],
+                          Set $HOME to target user in shell mode],
 [ case "$enableval" in
     yes)	AC_MSG_RESULT(yes)
 		AC_DEFINE(SHELL_SETS_HOME)
@@ -1129,7 +1168,8 @@ AC_ARG_ENABLE(path_info,
 
 AC_ARG_WITH(selinux, [  --with-selinux          enable SELinux support],
 [case $with_selinux in
-    yes)	AC_DEFINE(HAVE_SELINUX)
+    yes)	SELINUX_USAGE="[[-r role]] [[-t type]] "
+    		AC_DEFINE(HAVE_SELINUX)
 		SUDO_LIBS="${SUDO_LIBS} -lselinux"
 		SUDO_OBJS="${SUDO_OBJS} selinux.o"
 		PROGS="${PROGS} sesh"
@@ -1140,6 +1180,12 @@ AC_ARG_WITH(selinux, [  --with-selinux          enable SELinux support],
     *)		AC_MSG_ERROR(["--with-selinux does not take an argument."])
 		;;
 esac])
+
+dnl
+dnl gss_krb5_ccache_name() may not work on Heimdal so we don't use it by default
+dnl
+AC_ARG_ENABLE(gss_krb5_ccache_name, [  --enable-gss-krb5-ccache-name
+                          Use GSS-API to set the Kerberos V cred cache name], [check_gss_krb5_ccache_name=$enableval], [check_gss_krb5_ccache_name=no])
 
 dnl
 dnl If we don't have egrep we can't do anything...
@@ -1287,6 +1333,10 @@ case "$host" in
 		if test X"$with_aixauth" = X""; then
 		    AC_CHECK_FUNCS(authenticate, [AUTH_EXCL_DEF="AIX_AUTH"])
 		fi
+
+		# AIX-specific functions
+		AC_CHECK_FUNCS(getuserattr)
+		SUDO_OBJS="$SUDO_OBJS aix.o"
 		;;
     *-*-hiuxmpp*)
 		: ${mansectsu='1m'}
@@ -1650,7 +1700,6 @@ AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_TIME
 AC_CHECK_HEADERS(malloc.h paths.h utime.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
-AC_CHECK_HEADERS([err.h], [], [AC_LIBOBJ(err)])
 dnl ultrix termio/termios are broken
 if test "$OS" != "ultrix"; then
     AC_SYS_POSIX_TERMIOS
@@ -1661,7 +1710,7 @@ if test "$OS" != "ultrix"; then
     fi
 fi
 if test ${with_logincap-'no'} != "no"; then
-    AC_CHECK_HEADERS(login_cap.h, [LCMAN=""
+    AC_CHECK_HEADERS(login_cap.h, [LOGINCAP_USAGE='[[-c class|-]] '; LCMAN=""
 	case "$OS" in
 	    freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
 	    ;;
@@ -1677,7 +1726,8 @@ dnl typedef checks
 dnl
 AC_TYPE_MODE_T
 AC_TYPE_UID_T
-AC_CHECK_TYPES([sig_atomic_t], , [AC_DEFINE(sig_atomic_t, int)], [#include <sys/types.h>
+AC_CHECK_TYPE([__signed char], [], [AC_CHECK_TYPE([signed char], [AC_DEFINE(__signed, signed)], [AC_DEFINE(__signed, [])])])
+AC_CHECK_TYPE([sig_atomic_t], [], [AC_DEFINE(sig_atomic_t, int)], [#include <sys/types.h>
 #include <signal.h>])
 AC_CHECK_TYPES([sigaction_t], [AC_DEFINE(HAVE_SIGACTION_T)], [], [#include <sys/types.h>
 #include <signal.h>])
@@ -1692,7 +1742,6 @@ SUDO_TYPE_SIZE_T
 SUDO_TYPE_SSIZE_T
 SUDO_TYPE_DEV_T
 SUDO_TYPE_INO_T
-SUDO_FULL_VOID
 SUDO_UID_T_LEN
 SUDO_TYPE_LONG_LONG
 SUDO_SOCK_SA_LEN
@@ -1732,7 +1781,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <glob.h>]], [[int i = GLOB_BRACE |
 AC_CHECK_FUNCS(lockf flock, [break])
 AC_CHECK_FUNCS(waitpid wait3, [break])
 AC_CHECK_FUNCS(innetgr _innetgr, [AC_CHECK_FUNCS(getdomainname) [break]])
-AC_CHECK_FUNCS(lsearch, [], [AC_CHECK_LIB([compat], [lsearch], [AC_CHECK_HEADER([search.h], [AC_DEFINE(HAVE_LSEARCH)] [LIBS="${LIBS} -lcompat"], [AC_LIBOBJ(lsearch)], -)], [AC_LIBOBJ(lsearch)])])
 AC_CHECK_FUNCS(utimes, [AC_CHECK_FUNCS(futimes futimesat, [break])], [AC_CHECK_FUNCS(futime) AC_LIBOBJ(utimes)])
 SUDO_FUNC_FNMATCH([AC_DEFINE(HAVE_FNMATCH)], [AC_LIBOBJ(fnmatch)])
 SUDO_FUNC_ISBLANK
@@ -1790,13 +1838,6 @@ dnl
 dnl If syslog(3) not in libc, check -lsocket, -lnsl and -linet
 dnl
 AC_CHECK_FUNC(syslog, , [AC_CHECK_LIB(socket, syslog, [NET_LIBS="${NET_LIBS} -lsocket"; LIBS="${LIBS} -lsocket"], AC_CHECK_LIB(nsl, syslog, [NET_LIBS="${NET_LIBS} -lnsl"; LIBS="${LIBS} -lnsl"], AC_CHECK_LIB(inet, syslog, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"])))])
-dnl
-dnl Bison and DCE use alloca(3), if not in libc, use the sudo one (from gcc)
-dnl (gcc includes its own alloca(3) but other compilers may not)
-dnl
-if test "$with_DCE" = "yes" -o "$ac_cv_prog_YACC" = "bison -y"; then
-    AC_FUNC_ALLOCA
-fi
 dnl
 dnl Check for getprogname() or __progname
 dnl
@@ -1859,7 +1900,7 @@ if test ${with_pam-"no"} != "no"; then
 		yes)	AC_MSG_RESULT(yes)
 			;;
 		no)		AC_MSG_RESULT(no)
-			    AC_DEFINE(NO_PAM_SESSION)
+			    AC_DEFINE([NO_PAM_SESSION], [], [PAM session support disabled])
 			    ;;
 		*)		AC_MSG_RESULT(no)
 			    AC_MSG_WARN([Ignoring unknown argument to --enable-pam-session: $enableval])
@@ -1901,6 +1942,7 @@ dnl
 if test ${with_bsdauth-'no'} != "no"; then
     AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H)
 	[AUTH_OBJS="$AUTH_OBJS bsdauth.o"]
+	[BSDAUTH_USAGE='[[-a auth_type]] ']
 	[AUTH_EXCL=BSD_AUTH; BAMAN=""],
 	[AC_MSG_ERROR([BSD authentication was specified but bsd_auth.h could not be found])])
 fi
@@ -2093,6 +2135,7 @@ if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[const char *tmp = heimdal_version;]])], [
 	    AC_MSG_RESULT(yes)
 	    AC_DEFINE(HAVE_HEIMDAL)
+	    # XXX - need to check whether -lcrypo is needed!
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lcrypto -ldes -lcom_err -lasn1"
 	    AC_CHECK_LIB(roken, main, [SUDO_LIBS="${SUDO_LIBS} -lroken"])
 	], [
@@ -2103,7 +2146,23 @@ if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
     AUTH_OBJS="$AUTH_OBJS kerb5.o"
     _LIBS="$LIBS"
     LIBS="${LIBS} ${SUDO_LIBS}"
-    AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context)
+    AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context krb5_get_init_creds_opt_alloc)
+    AC_CACHE_CHECK(whether krb5_get_init_creds_opt_free takes a two argument2,
+	sudo_cv_krb5_get_init_creds_opt_free_two_args, [
+	    AC_TRY_COMPILE([#include <krb5.h>],
+		[
+		    krb5_context context = NULL;
+		    krb5_get_init_creds_opt *opts = NULL;
+		    krb5_get_init_creds_opt_free(context, opts);
+		],
+		[sudo_cv_krb5_get_init_creds_opt_free_two_args=yes],
+		[sudo_cv_krb5_get_init_creds_opt_free_two_args=no]
+	    )
+	]
+    )
+    if test X"$sudo_cv_krb5_get_init_creds_opt_free_two_args" = X"yes"; then
+  	AC_DEFINE(HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS)
+    fi
     LIBS="$_LIBS"
 fi
 
@@ -2290,6 +2349,7 @@ if test ${with_ldap-'no'} != "no"; then
 	SUDO_APPEND_LIBPATH(LDFLAGS, [${with_ldap}/lib])
 	CPPFLAGS="${CPPFLAGS} -I${with_ldap}/include"
 	with_ldap=yes
+	LDAP=""
     fi
     SUDO_OBJS="${SUDO_OBJS} ldap.o"
 
@@ -2325,14 +2385,40 @@ if test ${with_ldap-'no'} != "no"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_LBER_H)])
 
-    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init ldapssl_set_strength)
+    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldap_sasl_interactive_bind_s ldapssl_init ldapssl_set_strength ldap_search_ext_s ldap_unbind_ext_s ldap_str2dn ldap_create ldap_sasl_bind_s)
+    AC_CHECK_HEADERS([sasl/sasl.h])
     AC_CHECK_HEADERS([ldap_ssl.h] [mps/ldap_ssl.h], [break], [], [#include <ldap.h>])
+
+    if test X"$check_gss_krb5_ccache_name" = X"yes"; then
+	AC_CHECK_LIB(gssapi, gss_krb5_ccache_name,
+	    AC_DEFINE(HAVE_GSS_KRB5_CCACHE_NAME)
+	    [LDAP_LIBS="${LDAP_LIBS} -lgssapi"],
+	    AC_CHECK_LIB(gssapi_krb5, gss_krb5_ccache_name,
+		AC_DEFINE(HAVE_GSS_KRB5_CCACHE_NAME)
+		[LDAP_LIBS="${LDAP_LIBS} -lgssapi_krb5"])
+	)
+
+	# gssapi headers may be separate or part of Kerberos V
+	found=no
+	O_CPPFLAGS="$CPPFLAGS"
+	for dir in "" "kerberosV" "krb5" "kerberos5" "kerberosv5"; do
+	    test X"$dir" != X"" && CPPFLAGS="$O_CPPFLAGS -I/usr/include/${dir}"
+	    AC_PREPROC_IFELSE([#include <gssapi/gssapi.h>], [found="gssapi/gssapi.h"; break], [AC_PREPROC_IFELSE([#include <gssapi.h>], [found="gssapi.h"; break])])
+	done
+	if test X"$found" != X"no"; then
+	    AC_CHECK_HEADERS([$found])
+	    if test X"$found" = X"gssapi/gssapi.h"; then
+		AC_CHECK_HEADERS([gssapi/gssapi_krb5.h])
+	    fi
+	else
+	    CPPFLAGS="$O_CPPFLAGS"
+	    AC_MSG_WARN([Unable to locate gssapi.h, you will have to edit the Makefile and add -I/path/to/gssapi/includes to CPPFLAGS])
+	fi
+    fi
 
     SUDO_LIBS="${SUDO_LIBS} ${LDAP_LIBS}"
     LIBS="$_LIBS"
     LDFLAGS="$_LDFLAGS"
-    # XXX - OpenLDAP has deprecated ldap_get_values()
-    CPPFLAGS="${CPPFLAGS} -DLDAP_DEPRECATED"
 fi
 
 dnl
@@ -2392,8 +2478,7 @@ dnl
 test "$exec_prefix" = "NONE" && exec_prefix='$(prefix)'
 
 dnl
-dnl Defer setting _PATH_SUDO_NOEXEC and _PATH_SUDO_SESH
-dnl until after exec_prefix is set
+dnl Defer setting _PATH_SUDO_NOEXEC until after exec_prefix is set
 dnl XXX - this is gross!
 dnl
 if test X"$with_noexec" != X"no" -o X"$with_selinux" != X"no"; then
@@ -2422,7 +2507,7 @@ fi
 dnl
 dnl Substitute into the Makefile and man pages
 dnl
-AC_CONFIG_FILES([Makefile sudo.man visudo.man sudoers.man])
+AC_CONFIG_FILES([Makefile sudo.man visudo.man sudoers.man sudoers.ldap.man sudo_usage.h])
 AC_OUTPUT
 
 dnl
@@ -2464,12 +2549,17 @@ AH_TEMPLATE(HAVE_GETPRPWNAM, [Define to 1 if you have the `getprpwnam' function.
 AH_TEMPLATE(HAVE_GETPWANAM, [Define to 1 if you have the `getpwanam' function. (SunOS 4.x shadow passwords)])
 AH_TEMPLATE(HAVE_GETSPNAM, [Define to 1 if you have the `getspnam' function (SVR4-style shadow passwords)])
 AH_TEMPLATE(HAVE_GETSPWUID, [Define to 1 if you have the `getspwuid' function. (HP-UX <= 9.X shadow passwords)])
+AH_TEMPLATE(HAVE_GSS_KRB5_CCACHE_NAME, [Define to 1 if you have the `gss_krb5_ccache_name' function.])
 AH_TEMPLATE(HAVE_HEIMDAL, [Define to 1 if your Kerberos is Heimdal.])
 AH_TEMPLATE(HAVE_IN6_ADDR, [Define to 1 if <netinet/in.h> contains struct in6_addr.])
 AH_TEMPLATE(HAVE_ISCOMSEC, [Define to 1 if you have the `iscomsec' function. (HP-UX >= 10.x check for shadow enabled)])
 AH_TEMPLATE(HAVE_ISSECURE, [Define to 1 if you have the `issecure' function. (SunOS 4.x check for shadow enabled)])
 AH_TEMPLATE(HAVE_KERB4, [Define to 1 if you use Kerberos IV.])
 AH_TEMPLATE(HAVE_KERB5, [Define to 1 if you use Kerberos V.])
+AH_TEMPLATE(HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC, [Define to 1 if you have the `krb5_get_init_creds_opt_alloc' function.])
+AH_TEMPLATE(HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS, [Define to 1 if your `krb5_get_init_creds_opt_alloc' function takes two arguments.])
+AH_TEMPLATE(HAVE_KRB5_INIT_SECURE_CONTEXT, [Define to 1 if you have the `krb5_init_secure_context' function.])
+AH_TEMPLATE(HAVE_KRB5_VERIFY_USER, [Define to 1 if you have the `krb5_verify_user' function.])
 AH_TEMPLATE(HAVE_LBER_H, [Define to 1 if your LDAP needs <lber.h>. (OpenLDAP does not)])
 AH_TEMPLATE(HAVE_LDAP, [Define to 1 if you use LDAP for sudoers.])
 AH_TEMPLATE(HAVE_OPIE, [Define to 1 if you use NRL OPIE.])
@@ -2509,6 +2599,7 @@ AH_TEMPLATE(USE_STOW, [Define to 1 if you use GNU stow packaging.])
 AH_TEMPLATE(USE_TTY_TICKETS, [Define to 1 if you want a different ticket file for each tty.])
 AH_TEMPLATE(WITHOUT_PASSWD, [Define to avoid using the passwd/shadow file for authentication.])
 AH_TEMPLATE(sig_atomic_t, [Define to `int' if <signal.h> does not define.])
+AH_TEMPLATE(__signed, [Define to `signed' or nothing if compiler does not support a signed type qualifier.])
 
 dnl
 dnl Bits to copy verbatim into config.h.in

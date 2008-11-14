@@ -1,4 +1,4 @@
-Copyright (c) 1994-1996, 1998-2005, 2007
+Copyright (c) 1994-1996, 1998-2005, 2007-2008
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.70.2.24 2008/02/19 18:22:11 millert Exp $
+$Sudo: sudo.pod,v 1.119 2008/11/09 14:13:12 millert Exp $
 =pod
 
 =head1 NAME
@@ -27,20 +27,25 @@ sudo, sudoedit - execute a command as another user
 
 =head1 SYNOPSIS
 
-B<sudo> B<-h> | B<-K> | B<-k> | B<-L> | B<-l> | B<-V> | B<-v>
+B<sudo> [B<-n>] B<-h> | B<-K> | B<-k> | B<-L> | B<-V> | B<-v>
 
-B<sudo> [B<-bEHPS>]
+B<sudo> B<-l[l]> [B<-AnS>] S<[B<-g> I<groupname>|I<#gid>]> S<[B<-U> I<username>]>
+S<[B<-u> I<username>|I<#uid>]> [I<command>]
+
+B<sudo> [B<-AbEHnPS>]
 S<[B<-a> I<auth_type>]>
+S<[B<-C> I<fd>]>
 S<[B<-c> I<class>|I<->]>
-S<[B<-p> I<prompt>]>
+S<[B<-g> I<groupname>|I<#gid>]> S<[B<-p> I<prompt>]>
 S<[B<-u> I<username>|I<#uid>]>
-S<[B<VAR>=I<value>]> S<{B<-i> | B<-s> | I<command>}>
+S<[B<VAR>=I<value>]> S<[B<-i> | B<-s>]> [I<command>]
 
-B<sudoedit> [B<-S>]
+B<sudoedit> [B<-AnS>]
 S<[B<-a> I<auth_type>]>
+S<[B<-C> I<fd>]>
 S<[B<-c> I<class>|I<->]>
-S<[B<-p> I<prompt>]> S<[B<-u> I<username>|I<#uid>]>
-file ...
+S<[B<-g> I<groupname>|I<#gid>]> S<[B<-p> I<prompt>]>
+S<[B<-u> I<username>|I<#uid>]> file ...
 
 =head1 DESCRIPTION
 
@@ -93,9 +98,19 @@ or via the I<sudoers> file.
 
 B<sudo> accepts the following command line options:
 
-=over 4
+=over 12
 
-=item -a
+=item -A
+
+Normally, if B<sudo> requires a password, it will read it from the
+current terminal.  If the B<-A> (I<askpass>) option is specified,
+a helper program is executed to read the user's password and output
+the password to the standard output.  If the C<SUDO_ASKPASS>
+environment variable is set, it specifies the path to the helper
+program.  Otherwise, the value specified by the I<askpass> option
+in L<sudoers(5)> is used.
+
+=item -a I<type>
 
 The B<-a> (I<authentication type>) option causes B<sudo> to use the
 specified authentication type when validating the user, as allowed
@@ -110,11 +125,21 @@ The B<-b> (I<background>) option tells B<sudo> to run the given
 command in the background.  Note that if you use the B<-b>
 option you cannot use shell job control to manipulate the process.
 
-=item -c
+=item -C I<fd>
+
+Normally, B<sudo> will close all open file descriptors other than
+standard input, standard output and standard error.  The B<-C>
+(I<close from>) option allows the user to specify a starting point
+above the standard error (file descriptor three).  Values less than
+three are not permitted.  This option is only available if the
+administrator has enabled the I<closefrom_override> option in
+L<sudoers(5)>.
+
+=item -c I<class>
 
 The B<-c> (I<class>) option causes B<sudo> to run the specified command
 with resources limited by the specified login class.  The I<class>
-argument can be either a class name as defined in C</etc/login.conf>,
+argument can be either a class name as defined in F</etc/login.conf>,
 or a single '-' character.  Specifying a I<class> of C<-> indicates
 that the command should be run restricted by the default login
 capabilities for the user the command is run as.  If the I<class>
@@ -146,10 +171,10 @@ set to the invoking user.
 
 =item 2.
 
-The editor specified by the C<VISUAL> or C<EDITOR> environment
-variables is run to edit the temporary files.  If neither C<VISUAL>
-nor C<EDITOR> are set, the program listed in the I<editor> I<sudoers>
-variable is used.
+The editor specified by the C<SUDO_EDITOR>, C<VISUAL> or C<EDITOR>
+environment variables is run to edit the temporary files.  If none
+of C<SUDO_EDITOR>, C<VISUAL> or C<EDITOR> are set, the first program
+listed in the I<editor> I<sudoers> variable is used.
 
 =item 3.
 
@@ -165,6 +190,18 @@ B<sudo> is unable to update a file with its edited version, the
 user will receive a warning and the edited copy will remain in a
 temporary file.
 
+=item -g I<group>
+
+Normally, B<sudo> sets the primary group to the one specified by
+the passwd database for the user the command is being run as (by
+default, root).  The B<-g> (I<group>) option causes B<sudo> to run
+the specified command with the primary group set to I<group>.  To
+specify a I<gid> instead of a I<group name>, use I<#gid>.  When
+running commands as a I<gid>, many shells require that the '#' be
+escaped with a backslash ('\').  If no B<-u> option is specified,
+the command will be run as the invoking user (not root).  In either
+case, the primary group will be set to I<group>.
+
 =item -H
 
 The B<-H> (I<HOME>) option sets the C<HOME> environment variable
@@ -176,20 +213,19 @@ in passwd(5).  By default, B<sudo> does not modify C<HOME>
 
 The B<-h> (I<help>) option causes B<sudo> to print a usage message and exit.
 
-=item -i
+=item -i [command]
 
 The B<-i> (I<simulate initial login>) option runs the shell specified
-in the L<passwd(5)> entry of the user that the command is
-being run as.  The command name argument given to the shell begins
-with a `C<->' to tell the shell to run as a login shell.  B<sudo>
-attempts to change to that user's home directory before running the
-shell.  It also initializes the environment, leaving I<TERM>
-unchanged, setting I<HOME>, I<SHELL>, I<USER>, I<LOGNAME>, and
-I<PATH>, and unsetting all other environment variables.  Note that
-because the shell to use is determined before the I<sudoers> file
-is parsed, a I<runas_default> setting in I<sudoers> will specify
-the user to run the shell as but will not affect which shell is
-actually run.
+in the L<passwd(5)> entry of the target user as a login shell.  This
+means that login-specific resource files such as C<.profile> or
+C<.login> will be read by the shell.  If a command is specified,
+it is passed to the shell for execution.  Otherwise, an interactive
+shell is executed.  B<sudo> attempts to change to that user's home
+directory before running the shell.  It also initializes the
+environment, leaving I<DISPLAY> and I<TERM> unchanged, setting
+I<HOME>, I<SHELL>, I<USER>, I<LOGNAME>, and I<PATH>, as well as
+the contents of F</etc/environment> on Linux and AIX systems.
+All other environment variables are removed.
 
 =item -K
 
@@ -211,10 +247,23 @@ The B<-L> (I<list> defaults) option will list out the parameters
 that may be set in a I<Defaults> line along with a short description
 for each.  This option is useful in conjunction with L<grep(1)>.
 
-=item -l
+=item -l[l] [I<command>]
 
-The B<-l> (I<list>) option will list out the allowed (and
-forbidden) commands for the invoking user on the current host.
+If no I<command> is specified, the B<-l> (I<list>) option will list
+the allowed (and forbidden) commands for the invoking user (or the
+user specified by the B<-U> option) on the current host.  If a
+I<command> is specified and is permitted by I<sudoers>, the
+fully-qualified path to the command is displayed along with any
+command line arguments.  If I<command> is specified but not allowed,
+B<sudo> will exit with a return value of 1.  If the B<-l> flag is
+specified with an B<l> argument (i.e. B<-ll>), or if B<-l>
+is specified multiple times, a longer list format is used.
+
+=item -n
+
+The B<-n> (I<non-interactive>) option prevents B<sudo> from prompting
+the user for a password.  If a password is required for the command
+to run, B<sudo> will display an error messages and exit.
 
 =item -P
 
@@ -224,7 +273,7 @@ B<sudo> will initialize the group vector to the list of groups the
 target user is in.  The real and effective group IDs, however, are
 still set to match the target user.
 
-=item -p
+=item -p I<prompt>
 
 The B<-p> (I<prompt>) option allows you to override the default
 password prompt and use a custom one.  The following percent (`C<%>')
@@ -262,22 +311,34 @@ two consecutive C<%> characters are collapsed into a single C<%> character
 
 =back
 
+The prompt specified by the B<-p> option will override the system
+password prompt on systems that support PAM unless the
+I<passprompt_override> flag is disabled in I<sudoers>.
+
 =item -S
 
 The B<-S> (I<stdin>) option causes B<sudo> to read the password from
 the standard input instead of the terminal device.
 
-=item -s
+=item -s [command]
 
 The B<-s> (I<shell>) option runs the shell specified by the I<SHELL>
-environment variable if it is set or the shell as specified
-in L<passwd(5)>.
+environment variable if it is set or the shell as specified in
+L<passwd(5)>.  If a command is specified, it is passed to the shell
+for execution.  Otherwise, an interactive shell is executed.
 
-=item -u
+=item -U I<user>
+
+The B<-U> (I<other user>) option is used in conjunction with the B<-l>
+option to specify the user whose privileges should be listed.  Only
+root or a user with B<sudo> C<ALL> on the current host may use this
+option.
+
+=item -u I<user>
 
 The B<-u> (I<user>) option causes B<sudo> to run the specified
 command as a user other than I<root>.  To specify a I<uid> instead
-of a I<username>, use I<#uid>.  When running commands as a I<uid>,
+of a I<user name>, use I<#uid>.  When running commands as a I<uid>,
 many shells require that the '#' be escaped with a backslash ('\').
 Note that if the I<targetpw> Defaults option is set (see L<sudoers(5)>)
 it is not possible to run commands with a uid not listed in the
@@ -411,7 +472,8 @@ B<sudo> utilizes the following environment variables:
 
 =item C<EDITOR>
 
-Default editor to use in B<-e> (sudoedit) mode if C<VISUAL> is not set
+Default editor to use in B<-e> (sudoedit) mode if neither C<SUDO_EDITOR>
+nor C<VISUAL> is set
 
 =item C<HOME>
 
@@ -426,29 +488,38 @@ Set to a sane value if the I<secure_path> sudoers option is set.
 
 Used to determine shell to run with C<-s> option
 
-=item C<SUDO_PROMPT>
+=item C<SUDO_ASKPASS>
 
-Used as the default password prompt
+Specifies the path to a helper program used to read the password
+if no terminal is available or if the C<-A> option is specified.
 
 =item C<SUDO_COMMAND>
 
 Set to the command run by sudo
 
-=item C<SUDO_USER>
+=item C<SUDO_EDITOR>
 
-Set to the login of the user who invoked sudo
-
-=item C<SUDO_UID>
-
-Set to the uid of the user who invoked sudo
+Default editor to use in B<-e> (sudoedit) mode
 
 =item C<SUDO_GID>
 
-Set to the gid of the user who invoked sudo
+Set to the group ID of the user who invoked sudo
+
+=item C<SUDO_PROMPT>
+
+Used as the default password prompt
 
 =item C<SUDO_PS1>
 
-If set, C<PS1> will be set to its value
+If set, C<PS1> will be set to its value for the program being run
+
+=item C<SUDO_UID>
+
+Set to the user ID of the user who invoked sudo
+
+=item C<SUDO_USER>
+
+Set to the login of the user who invoked sudo
 
 =item C<USER>
 
@@ -456,7 +527,8 @@ Set to the target user (root unless the B<-u> option is specified)
 
 =item C<VISUAL>
 
-Default editor to use in B<-e> (sudoedit) mode
+Default editor to use in B<-e> (sudoedit) mode if C<SUDO_EDITOR>
+is not set
 
 =back
 
@@ -471,6 +543,10 @@ List of who can run what
 =item F<@timedir@>
 
 Directory containing timestamps
+
+=item F</etc/environment>
+
+Initial environment for B<-i> mode on Linux and AIX
 
 =back
 
@@ -513,7 +589,6 @@ Many people have worked on B<sudo> over the years; this
 version consists of code written primarily by:
 
 	Todd C. Miller
-	Chris Jepeway
 
 See the HISTORY file in the B<sudo> distribution or visit
 http://www.sudo.ws/sudo/history.html for a short history

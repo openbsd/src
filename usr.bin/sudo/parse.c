@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007
- *	Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,18 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Sponsored in part by the Defense Advanced Research Projects
- * Agency (DARPA) and Air Force Research Laboratory, Air Force
- * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
 #include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
 # include <stdlib.h>
@@ -46,651 +39,630 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_FNMATCH
-# include <fnmatch.h>
-#endif /* HAVE_FNMATCH */
-#ifdef HAVE_EXTENDED_GLOB
-# include <glob.h>
-#endif /* HAVE_EXTENDED_GLOB */
-#ifdef HAVE_NETGROUP_H
-# include <netgroup.h>
-#endif /* HAVE_NETGROUP_H */
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#ifdef HAVE_DIRENT_H
-# include <dirent.h>
-# define NAMLEN(dirent) strlen((dirent)->d_name)
-#else
-# define dirent direct
-# define NAMLEN(dirent) (dirent)->d_namlen
-# ifdef HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif
-# ifdef HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif
-# ifdef HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif
 
 #include "sudo.h"
 #include "parse.h"
-#include "interfaces.h"
-
-#ifndef HAVE_FNMATCH
-# include "emul/fnmatch.h"
-#endif /* HAVE_FNMATCH */
-#ifndef HAVE_EXTENDED_GLOB
-# include "emul/glob.h"
-#endif /* HAVE_EXTENDED_GLOB */
+#include "lbuf.h"
+#include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.16 2008/02/09 14:44:48 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.236 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
-/*
- * Globals
- */
-int parse_error = FALSE;
-extern int keepall;
-extern FILE *yyin, *yyout;
+/* Characters that must be quoted in sudoers */
+#define SUDOERS_QUOTED	":\\,=#\""
+
+/* sudoers nsswitch routines */
+struct sudo_nss sudo_nss_file = {
+    &sudo_nss_file,
+    NULL,
+    sudo_file_open,
+    sudo_file_close,
+    sudo_file_parse,
+    sudo_file_setdefs,
+    sudo_file_lookup,
+    sudo_file_display_cmnd,
+    sudo_file_display_defaults,
+    sudo_file_display_bound_defaults,
+    sudo_file_display_privs
+};
 
 /*
- * Prototypes
+ * Parser externs.
  */
-static int has_meta	__P((char *));
-       void init_parser	__P((void));
+extern FILE *yyin;
+extern char *errorfile;
+extern int errorlineno, parse_error;
 
 /*
- * Look up the user in the sudoers file and check to see if they are
+ * Local prototypes.
+ */
+static void print_member	__P((struct lbuf *, char *, int, int, int));
+static int display_bound_defaults __P((int, struct lbuf *));
+
+int
+sudo_file_open(nss)
+    struct sudo_nss *nss;
+{
+    if (def_ignore_local_sudoers)
+	return(-1);
+    nss->handle = open_sudoers(_PATH_SUDOERS, NULL);
+    return(nss->handle ? 0 : -1);
+}
+
+int
+sudo_file_close(nss)
+    struct sudo_nss *nss;
+{
+    /* Free parser data structures and close sudoers file. */
+    init_parser(NULL, 0);
+    if (nss->handle != NULL) {
+	fclose(nss->handle);
+	nss->handle = NULL;
+	yyin = NULL;
+    }
+    return(0);
+}
+
+/*
+ * Parse the specified sudoers file.
+ */
+int
+sudo_file_parse(nss)
+    struct sudo_nss *nss;
+{
+    if (nss->handle == NULL)
+	return(-1);
+
+    init_parser(_PATH_SUDOERS, 0);
+    yyin = nss->handle;
+    if (yyparse() != 0 || parse_error) {
+	log_error(NO_EXIT, "parse error in %s near line %d",
+	    errorfile, errorlineno);
+	return(-1);
+    }
+    return(0);
+}
+
+/*
+ * Wrapper around update_defaults() for nsswitch code.
+ */
+int
+sudo_file_setdefs(nss)
+    struct sudo_nss *nss;
+{
+    if (nss->handle == NULL)
+	return(-1);
+
+    if (!update_defaults(SETDEF_GENERIC|SETDEF_HOST|SETDEF_USER))
+	return(-1);
+    return(0);
+}
+
+/*
+ * Look up the user in the parsed sudoers file and check to see if they are
  * allowed to run the specified command on this host as the target user.
  */
 int
-sudoers_lookup(pwflag)
+sudo_file_lookup(nss, validated, pwflag)
+    struct sudo_nss *nss;
+    int validated;
     int pwflag;
 {
-    int error, nopass;
+    int match, host_match, runas_match, cmnd_match;
+    struct cmndspec *cs;
+    struct cmndtag *tags = NULL;
+    struct privilege *priv;
+    struct userspec *us;
 
-    /* We opened _PATH_SUDOERS in check_sudoers() so just rewind it. */
-    rewind(sudoers_fp);
-    yyin = sudoers_fp;
-    yyout = stdout;
-
-    /* Allocate space for data structures in the parser. */
-    init_parser();
-
-    /* Keep more state for pseudo-commands so that listpw and verifypw work */
-    if (pwflag > 0)
-	keepall = TRUE;
-
-    /* Need to be runas user while stat'ing things in the parser. */
-    set_perms(PERM_RUNAS);
-    error = yyparse();
-
-    /* Close the sudoers file now that we are done with it. */
-    (void) fclose(sudoers_fp);
-    sudoers_fp = NULL;
-
-    if (error || parse_error) {
-	set_perms(PERM_ROOT);
-	return(VALIDATE_ERROR);
-    }
-
-    /*
-     * Assume the worst.  If the stack is empty the user was
-     * not mentioned at all.
-     */
-    if (def_authenticate)
-	error = VALIDATE_NOT_OK;
-    else
-	error = VALIDATE_NOT_OK | FLAG_NOPASS;
-    if (pwflag) {
-	SET(error, FLAG_NO_CHECK);
-    } else {
-	SET(error, FLAG_NO_HOST);
-	if (!top)
-	    SET(error, FLAG_NO_USER);
-    }
+    if (nss->handle == NULL)
+	return(validated);
 
     /*
      * Only check the actual command if pwflag is not set.
      * It is set for the "validate", "list" and "kill" pseudo-commands.
      * Always check the host and user.
      */
-    nopass = -1;
     if (pwflag) {
-	int found;
+	int nopass = UNSPEC;
 	enum def_tupple pwcheck;
 
 	pwcheck = (pwflag == -1) ? never : sudo_defs_table[pwflag].sd_un.tuple;
 
-	if (pwcheck == always && def_authenticate)
-	    nopass = FLAG_CHECK_USER;
-	else if (pwcheck == never || !def_authenticate)
-	    nopass = FLAG_NOPASS;
-	found = 0;
-	while (top) {
-	    if (host_matches == TRUE) {
-		found = 1;
-		if (pwcheck == any && no_passwd == TRUE)
-		    nopass = FLAG_NOPASS;
-		else if (pwcheck == all && nopass != 0)
-		    nopass = (no_passwd == TRUE) ? FLAG_NOPASS : 0;
-	    }
-	    top--;
-	}
-	if (found) {
-	    set_perms(PERM_ROOT);
-	    if (nopass == -1)
-		nopass = 0;
-	    return(VALIDATE_OK | nopass);
-	}
-    } else {
-	while (top) {
-	    if (host_matches == TRUE) {
-		CLR(error, FLAG_NO_HOST);
-		if (runas_matches == TRUE && cmnd_matches == TRUE) {
-		    /*
-		     * User was granted access to cmnd on host as user.
-		     */
-#ifdef HAVE_SELINUX
-		    /* Set role and type if not specified on command line. */
-		    if (user_role == NULL) {
-			if (match[top-1].role != NULL)
-			    user_role = match[top-1].role;
-			else
-			    user_role = def_role;
-		    }
-		    if (user_type == NULL) {
-			if (match[top-1].type != NULL)
-			    user_type = match[top-1].type;
-			else
-			    user_type = def_type;
-		    }
-#endif
-		    set_perms(PERM_ROOT);
-		    return(VALIDATE_OK |
-			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
-			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
-			(setenv_ok >= TRUE ? FLAG_SETENV : 0));
-		} else if ((runas_matches == TRUE && cmnd_matches == FALSE) ||
-		    (runas_matches == FALSE && cmnd_matches == TRUE)) {
-		    /*
-		     * User was explicitly denied access to cmnd on host.
-		     */
-		    set_perms(PERM_ROOT);
-		    return(VALIDATE_NOT_OK |
-			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
-			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
-			(setenv_ok >= TRUE ? FLAG_SETENV : 0));
+	if (list_pw == NULL)
+	    SET(validated, FLAG_NO_CHECK);
+	CLR(validated, FLAG_NO_USER);
+	CLR(validated, FLAG_NO_HOST);
+	match = DENY;
+	tq_foreach_rev(&userspecs, us) {
+	    if (userlist_matches(sudo_user.pw, &us->users) != ALLOW)
+		continue;
+	    tq_foreach_rev(&us->privileges, priv) {
+		if (hostlist_matches(&priv->hostlist) != ALLOW)
+		    continue;
+		tq_foreach_rev(&priv->cmndlist, cs) {
+		    /* Only check the command when listing another user. */
+		    if (user_uid == 0 || list_pw == NULL ||
+			user_uid == list_pw->pw_uid ||
+			cmnd_matches(cs->cmnd) == ALLOW)
+			    match = ALLOW;
+		    if ((pwcheck == any && nopass != TRUE) ||
+			(pwcheck == all && nopass != FALSE))
+			nopass = cs->tags.nopasswd;
+		    if (match == ALLOW)
+			goto matched_pseudo;
 		}
 	    }
-	    top--;
 	}
+	matched_pseudo:
+	if (match == ALLOW || user_uid == 0) {
+	    /* User has an entry for this host. */
+	    SET(validated, VALIDATE_OK);
+	} else if (match == DENY)
+	    SET(validated, VALIDATE_NOT_OK);
+	if (pwcheck == always && def_authenticate)
+	    SET(validated, FLAG_CHECK_USER);
+	else if (pwcheck == never || nopass == TRUE)
+	    def_authenticate = FALSE;
+	return(validated);
+    }
+
+    /* Need to be runas user while stat'ing things. */
+    set_perms(PERM_RUNAS);
+
+    match = UNSPEC;
+    tq_foreach_rev(&userspecs, us) {
+	if (userlist_matches(sudo_user.pw, &us->users) != ALLOW)
+	    continue;
+	CLR(validated, FLAG_NO_USER);
+	tq_foreach_rev(&us->privileges, priv) {
+	    host_match = hostlist_matches(&priv->hostlist);
+	    if (host_match == ALLOW)
+		CLR(validated, FLAG_NO_HOST);
+	    else
+		continue;
+	    tq_foreach_rev(&priv->cmndlist, cs) {
+		runas_match = runaslist_matches(&cs->runasuserlist,
+		    &cs->runasgrouplist);
+		if (runas_match == ALLOW) {
+		    cmnd_match = cmnd_matches(cs->cmnd);
+		    if (cmnd_match != UNSPEC) {
+			match = cmnd_match;
+			tags = &cs->tags;
+#ifdef HAVE_SELINUX
+			/* Set role and type if not specified on command line. */
+			if (user_role == NULL)
+			    user_role = cs->role ? estrdup(cs->role) : def_role;
+			if (user_type == NULL)
+			    user_type = cs->type ? estrdup(cs->type) : def_type;
+#endif /* HAVE_SELINUX */
+			goto matched2;
+		    }
+		}
+	    }
+	}
+    }
+    matched2:
+    if (match == ALLOW) {
+	SET(validated, VALIDATE_OK);
+	CLR(validated, VALIDATE_NOT_OK);
+	if (tags != NULL) {
+	    if (tags->nopasswd != UNSPEC)
+		def_authenticate = !tags->nopasswd;
+	    if (tags->noexec != UNSPEC)
+		def_noexec = tags->noexec;
+	    if (tags->setenv != UNSPEC)
+		def_setenv = tags->setenv;
+	}
+    } else if (match == DENY) {
+	SET(validated, VALIDATE_NOT_OK);
+	CLR(validated, VALIDATE_OK);
     }
     set_perms(PERM_ROOT);
+    return(validated);
+}
 
-    /*
-     * The user was neither explicitly granted nor denied access.
-     */
-    if (nopass == -1)
-	nopass = 0;
-    return(error | nopass);
+#define	TAG_CHANGED(t) \
+	(cs->tags.t != UNSPEC && cs->tags.t != IMPLIED && cs->tags.t != tags->t)
+
+static void
+sudo_file_append_cmnd(cs, tags, lbuf)
+    struct cmndspec *cs;
+    struct cmndtag *tags;
+    struct lbuf *lbuf;
+{
+    struct member *m;
+
+#ifdef HAVE_SELINUX
+    if (cs->role)
+	lbuf_append(lbuf, "ROLE=", cs->role, " ", NULL);
+    if (cs->type)
+	lbuf_append(lbuf, "TYPE=", cs->type, " ", NULL);
+#endif /* HAVE_SELINUX */
+    if (TAG_CHANGED(setenv)) {
+	lbuf_append(lbuf, cs->tags.setenv ? "SETENV: " :
+	    "NOSETENV: ", NULL);
+	tags->setenv = cs->tags.setenv;
+    }
+    if (TAG_CHANGED(noexec)) {
+	lbuf_append(lbuf, cs->tags.noexec ? "NOEXEC: " :
+	    "EXEC: ", NULL);
+	tags->noexec = cs->tags.noexec;
+    }
+    if (TAG_CHANGED(nopasswd)) {
+	lbuf_append(lbuf, cs->tags.nopasswd ? "NOPASSWD: " :
+	    "PASSWD: ", NULL);
+	tags->nopasswd = cs->tags.nopasswd;
+    }
+    m = cs->cmnd;
+    print_member(lbuf, m->name, m->type, m->negated,
+	CMNDALIAS);
+}
+
+static int
+sudo_file_display_priv_short(pw, us, lbuf)
+    struct passwd *pw;
+    struct userspec *us;
+    struct lbuf *lbuf;
+{
+    struct cmndspec *cs;
+    struct member *m;
+    struct privilege *priv;
+    struct cmndtag tags;
+    int nfound = 0;
+
+    tq_foreach_fwd(&us->privileges, priv) {
+	tags.noexec = UNSPEC;
+	tags.setenv = UNSPEC;
+	tags.nopasswd = UNSPEC;
+	lbuf_append(lbuf, "    ", NULL);
+	tq_foreach_fwd(&priv->cmndlist, cs) {
+	    if (cs != tq_first(&priv->cmndlist))
+		lbuf_append(lbuf, ", ", NULL);
+	    lbuf_append(lbuf, "(", NULL);
+	    if (!tq_empty(&cs->runasuserlist)) {
+		tq_foreach_fwd(&cs->runasuserlist, m) {
+		    if (m != tq_first(&cs->runasuserlist))
+			lbuf_append(lbuf, ", ", NULL);
+		    print_member(lbuf, m->name, m->type, m->negated,
+			RUNASALIAS);
+		}
+	    } else {
+		lbuf_append(lbuf, def_runas_default, NULL);
+	    }
+	    if (!tq_empty(&cs->runasgrouplist)) {
+		lbuf_append(lbuf, " : ", NULL);
+		tq_foreach_fwd(&cs->runasgrouplist, m) {
+		    if (m != tq_first(&cs->runasgrouplist))
+			lbuf_append(lbuf, ", ", NULL);
+		    print_member(lbuf, m->name, m->type, m->negated,
+			RUNASALIAS);
+		}
+	    }
+	    lbuf_append(lbuf, ") ", NULL);
+	    sudo_file_append_cmnd(cs, &tags, lbuf);
+	    nfound++;
+	}
+	lbuf_print(lbuf);		/* forces a newline */
+    }
+    return(nfound);
+}
+
+static int
+sudo_file_display_priv_long(pw, us, lbuf)
+    struct passwd *pw;
+    struct userspec *us;
+    struct lbuf *lbuf;
+{
+    struct cmndspec *cs;
+    struct member *m;
+    struct privilege *priv;
+    struct cmndtag tags;
+    int nfound = 0;
+
+    tq_foreach_fwd(&us->privileges, priv) {
+	tags.noexec = UNSPEC;
+	tags.setenv = UNSPEC;
+	tags.nopasswd = UNSPEC;
+	lbuf_print(lbuf);	/* force a newline */
+	lbuf_append(lbuf, "Sudoers entry:", NULL);
+	lbuf_print(lbuf);
+	tq_foreach_fwd(&priv->cmndlist, cs) {
+	    lbuf_append(lbuf, "    RunAsUsers: ", NULL);
+	    if (!tq_empty(&cs->runasuserlist)) {
+		tq_foreach_fwd(&cs->runasuserlist, m) {
+		    if (m != tq_first(&cs->runasuserlist))
+			lbuf_append(lbuf, ", ", NULL);
+		    print_member(lbuf, m->name, m->type, m->negated,
+			RUNASALIAS);
+		}
+	    } else {
+		lbuf_append(lbuf, def_runas_default, NULL);
+	    }
+	    lbuf_print(lbuf);
+	    if (!tq_empty(&cs->runasgrouplist)) {
+		lbuf_append(lbuf, "    RunAsGroups: ", NULL);
+		tq_foreach_fwd(&cs->runasgrouplist, m) {
+		    if (m != tq_first(&cs->runasgrouplist))
+			lbuf_append(lbuf, ", ", NULL);
+		    print_member(lbuf, m->name, m->type, m->negated,
+			RUNASALIAS);
+		}
+		lbuf_print(lbuf);
+	    }
+	    lbuf_append(lbuf, "    Commands: ", NULL);
+	    lbuf_print(lbuf);
+	    lbuf_append(lbuf, "\t", NULL);
+	    sudo_file_append_cmnd(cs, &tags, lbuf);
+	    lbuf_print(lbuf);
+	    nfound++;
+	}
+    }
+    return(nfound);
+}
+
+int
+sudo_file_display_privs(nss, pw, lbuf)
+    struct sudo_nss *nss;
+    struct passwd *pw;
+    struct lbuf *lbuf;
+{
+    struct userspec *us;
+    int nfound = 0;
+
+    if (nss->handle == NULL)
+	return(-1);
+
+    tq_foreach_fwd(&userspecs, us) {
+	/* XXX - why only check the first privilege here? */
+	if (userlist_matches(pw, &us->users) != ALLOW ||
+	    hostlist_matches(&us->privileges.first->hostlist) != ALLOW)
+	    continue;
+
+	if (long_list)
+	    nfound += sudo_file_display_priv_long(pw, us, lbuf);
+	else
+	    nfound += sudo_file_display_priv_short(pw, us, lbuf);
+    }
+    return(nfound);
 }
 
 /*
- * If path doesn't end in /, return TRUE iff cmnd & path name the same inode;
- * otherwise, return TRUE if user_cmnd names one of the inodes in path.
+ * Display matching Defaults entries for the given user on this host.
  */
 int
-command_matches(sudoers_cmnd, sudoers_args)
-    char *sudoers_cmnd;
-    char *sudoers_args;
+sudo_file_display_defaults(nss, pw, lbuf)
+    struct sudo_nss *nss;
+    struct passwd *pw;
+    struct lbuf *lbuf;
 {
-    struct stat sudoers_stat;
-    struct dirent *dent;
-    char **ap, *base, buf[PATH_MAX];
-    glob_t gl;
-    DIR *dirp;
+    struct defaults *d;
+    char *prefix = NULL;
+    int nfound = 0;
 
-    /* Check for pseudo-commands */
-    if (strchr(user_cmnd, '/') == NULL) {
-	/*
-	 * Return true if both sudoers_cmnd and user_cmnd are "sudoedit" AND
-	 *  a) there are no args in sudoers OR
-	 *  b) there are no args on command line and none req by sudoers OR
-	 *  c) there are args in sudoers and on command line and they match
-	 */
-	if (strcmp(sudoers_cmnd, "sudoedit") != 0 ||
-	    strcmp(user_cmnd, "sudoedit") != 0)
-	    return(FALSE);
-	if (!sudoers_args ||
-	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
-	    (sudoers_args &&
-	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    efree(safe_cmnd);
-	    safe_cmnd = estrdup(sudoers_cmnd);
-	    return(TRUE);
-	} else
-	    return(FALSE);
-    }
+    if (nss->handle == NULL)
+	return(-1);
 
-    /*
-     * If sudoers_cmnd has meta characters in it, use fnmatch(3)
-     * to do the matching.
-     */
-    if (has_meta(sudoers_cmnd)) {
-	/*
-	 * Return true if we find a match in the glob(3) results AND
-	 *  a) there are no args in sudoers OR
-	 *  b) there are no args on command line and none required by sudoers OR
-	 *  c) there are args in sudoers and on command line and they match
-	 * else return false.
-	 *
-	 * Could optimize patterns ending in "/*" to "/user_base"
-	 */
-#define GLOB_FLAGS	(GLOB_NOSORT | GLOB_MARK | GLOB_BRACE | GLOB_TILDE)
-	if (glob(sudoers_cmnd, GLOB_FLAGS, NULL, &gl) != 0) {
-	    globfree(&gl);
-	    return(FALSE);
-	}
-	/* For each glob match, compare basename, st_dev and st_ino. */
-	for (ap = gl.gl_pathv; *ap != NULL; ap++) {
-	    /* only stat if basenames are the same */
-	    if ((base = strrchr(*ap, '/')) != NULL)
-		base++;
-	    else
-		base = *ap;
-	    if (strcmp(user_base, base) != 0 ||
-		stat(*ap, &sudoers_stat) == -1)
-		continue;
-	    if (user_stat->st_dev == sudoers_stat.st_dev &&
-		user_stat->st_ino == sudoers_stat.st_ino) {
-		efree(safe_cmnd);
-		safe_cmnd = estrdup(*ap);
-		break;
-	    }
-	}
-	globfree(&gl);
-	if (*ap == NULL)
-	    return(FALSE);
-
-	if (!sudoers_args ||
-	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
-	    (sudoers_args &&
-	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    efree(safe_cmnd);
-	    safe_cmnd = estrdup(user_cmnd);
-	    return(TRUE);
-	} else
-	    return(FALSE);
-    } else {
-	size_t dlen = strlen(sudoers_cmnd);
-
-	/*
-	 * No meta characters
-	 * Check to make sure this is not a directory spec (doesn't end in '/')
-	 */
-	if (sudoers_cmnd[dlen - 1] != '/') {
-	    /* Only proceed if user_base and basename(sudoers_cmnd) match */
-	    if ((base = strrchr(sudoers_cmnd, '/')) == NULL)
-		base = sudoers_cmnd;
-	    else
-		base++;
-	    if (strcmp(user_base, base) != 0 ||
-		stat(sudoers_cmnd, &sudoers_stat) == -1)
-		return(FALSE);
-
-	    /*
-	     * Return true if inode/device matches AND
-	     *  a) there are no args in sudoers OR
-	     *  b) there are no args on command line and none req by sudoers OR
-	     *  c) there are args in sudoers and on command line and they match
-	     */
-	    if (user_stat->st_dev != sudoers_stat.st_dev ||
-		user_stat->st_ino != sudoers_stat.st_ino)
-		return(FALSE);
-	    if (!sudoers_args ||
-		(!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
-		(sudoers_args &&
-		 fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-		efree(safe_cmnd);
-		safe_cmnd = estrdup(sudoers_cmnd);
-		return(TRUE);
-	    } else
-		return(FALSE);
-	}
-
-	/*
-	 * Grot through sudoers_cmnd's directory entries, looking for user_base.
-	 */
-	dirp = opendir(sudoers_cmnd);
-	if (dirp == NULL)
-	    return(FALSE);
-
-	if (strlcpy(buf, sudoers_cmnd, sizeof(buf)) >= sizeof(buf))
-	    return(FALSE);
-	while ((dent = readdir(dirp)) != NULL) {
-	    /* ignore paths > PATH_MAX (XXX - log) */
-	    buf[dlen] = '\0';
-	    if (strlcat(buf, dent->d_name, sizeof(buf)) >= sizeof(buf))
-		continue;
-
-	    /* only stat if basenames are the same */
-	    if (strcmp(user_base, dent->d_name) != 0 ||
-		stat(buf, &sudoers_stat) == -1)
-		continue;
-	    if (user_stat->st_dev == sudoers_stat.st_dev &&
-		user_stat->st_ino == sudoers_stat.st_ino) {
-		efree(safe_cmnd);
-		safe_cmnd = estrdup(buf);
-		break;
-	    }
-	}
-
-	closedir(dirp);
-	return(dent != NULL);
-    }
-}
-
-static int
-addr_matches_if(n)
-    char *n;
-{
-    int i;
-    struct in_addr addr;
-    struct interface *ifp;
-#ifdef HAVE_IN6_ADDR
-    struct in6_addr addr6;
-    int j;
-#endif
-    int family;
-
-#ifdef HAVE_IN6_ADDR
-    if (inet_pton(AF_INET6, n, &addr6) > 0) {
-	family = AF_INET6;
-    } else
-#endif
-    {
-	family = AF_INET;
-	addr.s_addr = inet_addr(n);
-    }
-
-    for (i = 0; i < num_interfaces; i++) {
-	ifp = &interfaces[i];
-	if (ifp->family != family)
-	    continue;
-	switch(family) {
-	    case AF_INET:
-		if (ifp->addr.ip4.s_addr == addr.s_addr ||
-		    (ifp->addr.ip4.s_addr & ifp->netmask.ip4.s_addr)
-		    == addr.s_addr)
-		    return(TRUE);
-		break;
-#ifdef HAVE_IN6_ADDR
-	    case AF_INET6:
-		if (memcmp(ifp->addr.ip6.s6_addr, addr6.s6_addr,
-		    sizeof(addr6.s6_addr)) == 0)
-		    return(TRUE);
-		for (j = 0; j < sizeof(addr6.s6_addr); j++) {
-		    if ((ifp->addr.ip6.s6_addr[j] & ifp->netmask.ip6.s6_addr[j]) != addr6.s6_addr[j])
-			break;
-		}
-		if (j == sizeof(addr6.s6_addr))
-		    return(TRUE);
-#endif /* HAVE_IN6_ADDR */
-	}
-    }
-
-    return(FALSE);
-}
-
-static int
-addr_matches_if_netmask(n, m)
-    char *n;
-    char *m;
-{
-    int i;
-    struct in_addr addr, mask;
-    struct interface *ifp;
-#ifdef HAVE_IN6_ADDR
-    struct in6_addr addr6, mask6;
-    int j;
-#endif
-    int family;
-
-#ifdef HAVE_IN6_ADDR
-    if (inet_pton(AF_INET6, n, &addr6) > 0)
-	family = AF_INET6;
+    if (lbuf->len == 0)
+	prefix = "    ";
     else
-#endif
-    {
-	family = AF_INET;
-	addr.s_addr = inet_addr(n);
+	prefix = ", ";
+
+    tq_foreach_fwd(&defaults, d) {
+	switch (d->type) {
+	    case DEFAULTS_HOST:
+		if (hostlist_matches(&d->binding) != ALLOW)
+		    continue;
+		break;
+	    case DEFAULTS_USER:
+		if (userlist_matches(pw, &d->binding) != ALLOW)
+		    continue;
+		break;
+	    case DEFAULTS_RUNAS:
+	    case DEFAULTS_CMND:
+		continue;
+	}
+	lbuf_append(lbuf, prefix, NULL);
+	if (d->val != NULL) {
+	    lbuf_append(lbuf, d->var, d->op == '+' ? "+=" :
+		d->op == '-' ? "-=" : "=", NULL);
+	    if (strpbrk(d->val, " \t") != NULL) {
+		lbuf_append(lbuf, "\"", NULL);
+		lbuf_append_quoted(lbuf, "\"", d->val, NULL);
+		lbuf_append(lbuf, "\"", NULL);
+	    } else
+		lbuf_append_quoted(lbuf, SUDOERS_QUOTED, d->val, NULL);
+	} else
+	    lbuf_append(lbuf, d->op == FALSE ? "!" : "", d->var, NULL);
+	prefix = ", ";
+	nfound++;
     }
 
-    if (family == AF_INET) {
-	if (strchr(m, '.'))
-	    mask.s_addr = inet_addr(m);
-	else {
-	    i = 32 - atoi(m);
-	    mask.s_addr = 0xffffffff;
-	    mask.s_addr >>= i;
-	    mask.s_addr <<= i;
-	    mask.s_addr = htonl(mask.s_addr);
-	}
+    return(nfound);
+}
+
+/*
+ * Display Defaults entries that are per-runas or per-command
+ */
+int
+sudo_file_display_bound_defaults(nss, pw, lbuf)
+    struct sudo_nss *nss;
+    struct passwd *pw;
+    struct lbuf *lbuf;
+{
+    int nfound = 0;
+
+    /* XXX - should only print ones that match what the user can do. */
+    nfound += display_bound_defaults(DEFAULTS_RUNAS, lbuf);
+    nfound += display_bound_defaults(DEFAULTS_CMND, lbuf);
+
+    return(nfound);
+}
+
+/*
+ * Display Defaults entries of the given type.
+ */
+static int
+display_bound_defaults(dtype, lbuf)
+    int dtype;
+    struct lbuf *lbuf;
+{
+    struct defaults *d;
+    struct member *m, *binding = NULL;
+    char *dname, *dsep;
+    int atype, nfound = 0;
+
+    switch (dtype) {
+	case DEFAULTS_HOST:
+	    atype = HOSTALIAS;
+	    dname = "host";
+	    dsep = "@";
+	    break;
+	case DEFAULTS_USER:
+	    atype = USERALIAS;
+	    dname = "user";
+	    dsep = ":";
+	    break;
+	case DEFAULTS_RUNAS:
+	    atype = RUNASALIAS;
+	    dname = "runas";
+	    dsep = ">";
+	    break;
+	case DEFAULTS_CMND:
+	    atype = CMNDALIAS;
+	    dname = "cmnd";
+	    dsep = "!";
+	    break;
+	default:
+	    return(-1);
     }
-#ifdef HAVE_IN6_ADDR
-    else {
-	if (inet_pton(AF_INET6, m, &mask6) <= 0) {
-	    j = atoi(m);
-	    for (i = 0; i < 16; i++) {
-		if (j < i * 8)
-		    mask6.s6_addr[i] = 0;
-		else if (i * 8 + 8 <= j)
-		    mask6.s6_addr[i] = 0xff;
-		else
-		    mask6.s6_addr[i] = 0xff00 >> (j - i * 8);
+    /* printf("Per-%s Defaults entries:\n", dname); */
+    tq_foreach_fwd(&defaults, d) {
+	if (d->type != dtype)
+	    continue;
+
+	nfound++;
+	if (binding != tq_first(&d->binding)) {
+	    binding = tq_first(&d->binding);
+	    lbuf_append(lbuf, "    Defaults", dsep, NULL);
+	    for (m = binding; m != NULL; m = m->next) {
+		if (m != binding)
+		    lbuf_append(lbuf, ",", NULL);
+		print_member(lbuf, m->name, m->type, m->negated, atype);
+		lbuf_append(lbuf, " ", NULL);
+	    }
+	} else
+	    lbuf_append(lbuf, ", ", NULL);
+	if (d->val != NULL) {
+	    lbuf_append(lbuf, d->var, d->op == '+' ? "+=" :
+		d->op == '-' ? "-=" : "=", d->val, NULL);
+	} else
+	    lbuf_append(lbuf, d->op == FALSE ? "!" : "", d->var, NULL);
+    }
+
+    return(nfound);
+}
+
+int
+sudo_file_display_cmnd(nss, pw)
+    struct sudo_nss *nss;
+    struct passwd *pw;
+{
+    struct cmndspec *cs;
+    struct member *match;
+    struct privilege *priv;
+    struct userspec *us;
+    int rval = 1;
+    int host_match, runas_match, cmnd_match;
+
+    if (nss->handle == NULL)
+	return(rval);
+
+    match = NULL;
+    tq_foreach_rev(&userspecs, us) {
+	if (userlist_matches(pw, &us->users) != ALLOW)
+	    continue;
+
+	tq_foreach_rev(&us->privileges, priv) {
+	    host_match = hostlist_matches(&priv->hostlist);
+	    if (host_match != ALLOW)
+		continue;
+	    tq_foreach_rev(&priv->cmndlist, cs) {
+		runas_match = runaslist_matches(&cs->runasuserlist,
+		    &cs->runasgrouplist);
+		if (runas_match == ALLOW) {
+		    cmnd_match = cmnd_matches(cs->cmnd);
+		    if (cmnd_match != UNSPEC) {
+			match = host_match && runas_match ?
+			    cs->cmnd : NULL;
+			goto matched;
+		    }
+		}
 	    }
 	}
     }
-#endif /* HAVE_IN6_ADDR */
+    matched:
+    if (match != NULL && !match->negated) {
+	printf("%s%s%s\n", safe_cmnd, user_args ? " " : "",
+	    user_args ? user_args : "");
+	rval = 0;
+    }
+    return(rval);
+}
 
-    for (i = 0; i < num_interfaces; i++) {
-	ifp = &interfaces[i];
-	if (ifp->family != family)
-	    continue;
-	switch(family) {
-	    case AF_INET:
-		if ((ifp->addr.ip4.s_addr & mask.s_addr) == addr.s_addr)
-		    return(TRUE);
-#ifdef HAVE_IN6_ADDR
-	    case AF_INET6:
-		for (j = 0; j < sizeof(addr6.s6_addr); j++) {
-		    if ((ifp->addr.ip6.s6_addr[j] & mask6.s6_addr[j]) != addr6.s6_addr[j])
-			break;
+/*
+ * Print the contents of a struct member to stdout
+ */
+static void
+_print_member(lbuf, name, type, negated, alias_type)
+    struct lbuf *lbuf;
+    char *name;
+    int type, negated, alias_type;
+{
+    struct alias *a;
+    struct member *m;
+    struct sudo_command *c;
+
+    switch (type) {
+	case ALL:
+	    lbuf_append(lbuf, negated ? "!ALL" : "ALL", NULL);
+	    break;
+	case COMMAND:
+	    c = (struct sudo_command *) name;
+	    if (negated)
+		lbuf_append(lbuf, "!", NULL);
+	    lbuf_append_quoted(lbuf, SUDOERS_QUOTED, c->cmnd, NULL);
+	    if (c->args) {
+		lbuf_append(lbuf, " ", NULL);
+		lbuf_append_quoted(lbuf, SUDOERS_QUOTED, c->args, NULL);
+	    }
+	    break;
+	case ALIAS:
+	    if ((a = find_alias(name, alias_type)) != NULL) {
+		tq_foreach_fwd(&a->members, m) {
+		    if (m != tq_first(&a->members))
+			lbuf_append(lbuf, ", ", NULL);
+		    _print_member(lbuf, m->name, m->type,
+			negated ? !m->negated : m->negated, alias_type);
 		}
-		if (j == sizeof(addr6.s6_addr))
-		    return(TRUE);
-#endif /* HAVE_IN6_ADDR */
-	}
-    }
-
-    return(FALSE);
-}
-
-/*
- * Returns TRUE if "n" is one of our ip addresses or if
- * "n" is a network that we are on, else returns FALSE.
- */
-int
-addr_matches(n)
-    char *n;
-{
-    char *m;
-    int retval;
-
-    /* If there's an explicit netmask, use it. */
-    if ((m = strchr(n, '/'))) {
-	*m++ = '\0';
-	retval = addr_matches_if_netmask(n, m);
-	*(m - 1) = '/';
-    } else
-	retval = addr_matches_if(n);
-
-    return(retval);
-}
-
-/*
- * Returns 0 if the hostname matches the pattern and non-zero otherwise.
- */
-int
-hostname_matches(shost, lhost, pattern)
-    char *shost;
-    char *lhost;
-    char *pattern;
-{
-    if (has_meta(pattern)) {
-	if (strchr(pattern, '.'))
-	    return(fnmatch(pattern, lhost, FNM_CASEFOLD));
-	else
-	    return(fnmatch(pattern, shost, FNM_CASEFOLD));
-    } else {
-	if (strchr(pattern, '.'))
-	    return(strcasecmp(lhost, pattern));
-	else
-	    return(strcasecmp(shost, pattern));
+		break;
+	    }
+	    /* FALLTHROUGH */
+	default:
+	    lbuf_append(lbuf, negated ? "!" : "", name, NULL);
+	    break;
     }
 }
 
-/*
- *  Returns TRUE if the user/uid from sudoers matches the specified user/uid,
- *  else returns FALSE.
- */
-int
-userpw_matches(sudoers_user, user, pw)
-    char *sudoers_user;
-    char *user;
-    struct passwd *pw;
+static void
+print_member(lbuf, name, type, negated, alias_type)
+    struct lbuf *lbuf;
+    char *name;
+    int type, negated, alias_type;
 {
-    if (pw != NULL && *sudoers_user == '#') {
-	uid_t uid = atoi(sudoers_user + 1);
-	if (uid == pw->pw_uid)
-	    return(1);
-    }
-    return(strcmp(sudoers_user, user) == 0);
-}
-
-/*
- *  Returns TRUE if the given user belongs to the named group,
- *  else returns FALSE.
- *  XXX - reduce the number of passwd/group lookups
- */
-int
-usergr_matches(group, user, pw)
-    char *group;
-    char *user;
-    struct passwd *pw;
-{
-    struct group *grp;
-    gid_t pw_gid;
-    char **cur;
-    int i;
-
-    /* make sure we have a valid usergroup, sudo style */
-    if (*group++ != '%')
-	return(FALSE);
-
-    /* look up user's primary gid in the passwd file */
-    if (pw == NULL && (pw = getpwnam(user)) == NULL)
-	return(FALSE);
-    pw_gid = pw->pw_gid;
-
-    if ((grp = getgrnam(group)) == NULL)
-	return(FALSE);
-
-    /* check against user's primary (passwd file) gid */
-    if (grp->gr_gid == pw_gid)
-	return(TRUE);
-
-    /*
-     * If the user has a supplementary group vector, check it first.
-     */
-    for (i = 0; i < user_ngroups; i++) {
-	if (grp->gr_gid == user_groups[i])
-	    return(TRUE);
-    }
-    if (grp->gr_mem != NULL) {
-	for (cur = grp->gr_mem; *cur; cur++) {
-	    if (strcmp(*cur, user) == 0)
-		return(TRUE);
-	}
-    }
-
-    return(FALSE);
-}
-
-/*
- * Returns TRUE if "host" and "user" belong to the netgroup "netgr",
- * else return FALSE.  Either of "host", "shost" or "user" may be NULL
- * in which case that argument is not checked...
- */
-int
-netgr_matches(netgr, host, shost, user)
-    char *netgr;
-    char *host;
-    char *shost;
-    char *user;
-{
-    static char *domain;
-#ifdef HAVE_GETDOMAINNAME
-    static int initialized;
-#endif
-
-    /* make sure we have a valid netgroup, sudo style */
-    if (*netgr++ != '+')
-	return(FALSE);
-
-#ifdef HAVE_GETDOMAINNAME
-    /* get the domain name (if any) */
-    if (!initialized) {
-	domain = (char *) emalloc(MAXHOSTNAMELEN);
-	if (getdomainname(domain, MAXHOSTNAMELEN) == -1 || *domain == '\0') {
-	    efree(domain);
-	    domain = NULL;
-	}
-	initialized = 1;
-    }
-#endif /* HAVE_GETDOMAINNAME */
-
-#ifdef HAVE_INNETGR
-    if (innetgr(netgr, host, user, domain))
-	return(TRUE);
-    else if (host != shost && innetgr(netgr, shost, user, domain))
-	return(TRUE);
-#endif /* HAVE_INNETGR */
-
-    return(FALSE);
-}
-
-/*
- * Returns TRUE if "s" has shell meta characters in it,
- * else returns FALSE.
- */
-static int
-has_meta(s)
-    char *s;
-{
-    char *t;
- 
-    for (t = s; *t; t++) {
-	if (*t == '\\' || *t == '?' || *t == '*' || *t == '[' || *t == ']')
-	    return(TRUE);
-    }
-    return(FALSE);
+    alias_seqno++;
+    _print_member(lbuf, name, type, negated, alias_type);
 }

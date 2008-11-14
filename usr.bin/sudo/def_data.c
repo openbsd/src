@@ -187,6 +187,10 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"Address to send mail to: %s",
 	NULL,
     }, {
+	"mailfrom", T_STR|T_BOOL,
+	"Address to send mail from: %s",
+	NULL,
+    }, {
 	"mailsub", T_STR,
 	"Subject line for mail messages: %s",
 	NULL,
@@ -218,7 +222,10 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"runas_default", T_STR,
 	"Default user to run commands as: %s",
 	NULL,
-	set_runaspw,
+    }, {
+	"secure_path", T_STR|T_BOOL,
+	"Value to override user's $PATH with: %s",
+	NULL,
     }, {
 	"editor", T_STR|T_PATH,
 	"Path to the editor for use by visudo: %s",
@@ -242,6 +249,14 @@ struct sudo_defs_types sudo_defs_table[] = {
     }, {
 	"ignore_local_sudoers", T_FLAG,
 	"If LDAP directory is up, do we ignore local sudoers file",
+	NULL,
+    }, {
+	"closefrom", T_INT,
+	"File descriptors >= %d will be closed before executing a command",
+	NULL,
+    }, {
+	"closefrom_override", T_FLAG,
+	"If set, users may override the value of `closefrom' with the -C option",
 	NULL,
     }, {
 	"setenv", T_FLAG,
@@ -270,6 +285,22 @@ struct sudo_defs_types sudo_defs_table[] = {
     }, {
 	"type", T_STR,
 	"SELinux type to use in the new security context: %s",
+	NULL,
+    }, {
+	"askpass", T_STR|T_PATH|T_BOOL,
+	"Path to the askpass helper program: %s",
+	NULL,
+    }, {
+	"env_file", T_STR|T_PATH|T_BOOL,
+	"Path to the sudo-specific environment file: %s",
+	NULL,
+    }, {
+	"sudoers_locale", T_STR,
+	"Locale to use while parsing sudoers: %s",
+	NULL,
+    }, {
+	"visiblepw", T_FLAG,
+	"Allow sudo to prompt for a password even if it would be visisble",
 	NULL,
     }, {
 	NULL, 0, NULL

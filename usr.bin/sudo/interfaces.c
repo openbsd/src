@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005, 2007-2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,11 +60,6 @@ struct rtentry;
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <netdb.h>
 #include <errno.h>
 #ifdef _ISC
@@ -89,7 +85,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.72.2.8 2007/11/27 17:06:53 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.84 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 
@@ -193,7 +189,7 @@ load_interfaces()
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
-	err(1, "cannot open socket");
+	error(1, "cannot open socket");
 
     /*
      * Get interface configuration or return (leaving num_interfaces == 0)
@@ -249,7 +245,7 @@ load_interfaces()
 		continue;
 
 #ifdef SIOCGIFFLAGS
-	memset(&ifr_tmp, 0, sizeof(ifr_tmp));
+	zero_bytes(&ifr_tmp, sizeof(ifr_tmp));
 	strncpy(ifr_tmp.ifr_name, ifr->ifr_name, sizeof(ifr_tmp.ifr_name) - 1);
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t) &ifr_tmp) < 0)
 #endif
@@ -267,7 +263,7 @@ load_interfaces()
 	previfname = ifr->ifr_name;
 
 	/* Get the netmask. */
-	(void) memset(&ifr_tmp, 0, sizeof(ifr_tmp));
+	zero_bytes(&ifr_tmp, sizeof(ifr_tmp));
 	strncpy(ifr_tmp.ifr_name, ifr->ifr_name, sizeof(ifr_tmp.ifr_name) - 1);
 #ifdef SIOCGIFNETMASK
 #ifdef _ISC

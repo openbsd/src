@@ -46,6 +46,7 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
+#include <grp.h>
 #ifdef HAVE_GETSPNAM
 # include <shadow.h>
 #endif /* HAVE_GETSPNAM */
@@ -70,16 +71,15 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: getspwuid.c,v 1.65.2.2 2007/06/12 01:28:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: getspwuid.c,v 1.78 2005/02/12 22:56:06 millert Exp $";
 #endif /* lint */
 
 /*
- * Global variables (yuck)
+ * Exported for auth/secureware.c
  */
 #if defined(HAVE_GETPRPWNAM) && defined(__alpha)
 int crypt_type = INT_MAX;
 #endif /* HAVE_GETPRPWNAM && __alpha */
-
 
 /*
  * Return a copy of the encrypted password for the user described by pw.
@@ -106,14 +106,12 @@ sudo_getepw(pw)
     {
 	struct pr_passwd *spw;
 
-	setprpwent();
 	if ((spw = getprpwnam(pw->pw_name)) && spw->ufld.fd_encrypt) {
 # ifdef __alpha
 	    crypt_type = spw->ufld.fd_oldcrypt;
 # endif /* __alpha */
 	    epw = estrdup(spw->ufld.fd_encrypt);
 	}
-	endprpwent();
 	if (epw)
 	    return(epw);
     }
@@ -122,10 +120,8 @@ sudo_getepw(pw)
     {
 	struct spwd *spw;
 
-	setspent();
 	if ((spw = getspnam(pw->pw_name)) && spw->sp_pwdp)
 	    epw = estrdup(spw->sp_pwdp);
-	endspent();
 	if (epw)
 	    return(epw);
     }
@@ -134,10 +130,8 @@ sudo_getepw(pw)
     {
 	struct s_passwd *spw;
 
-	setspwent();
 	if ((spw = getspwuid(pw->pw_uid)) && spw->pw_passwd)
 	    epw = estrdup(spw->pw_passwd);
-	endspwent();
 	if (epw)
 	    return(epw);
     }
@@ -146,10 +140,8 @@ sudo_getepw(pw)
     {
 	struct passwd_adjunct *spw;
 
-	setpwaent();
 	if ((spw = getpwanam(pw->pw_name)) && spw->pwa_passwd)
 	    epw = estrdup(spw->pwa_passwd);
-	endpwaent();
 	if (epw)
 	    return(epw);
     }
@@ -158,10 +150,8 @@ sudo_getepw(pw)
     {
 	AUTHORIZATION *spw;
 
-	setauthent();
 	if ((spw = getauthuid(pw->pw_uid)) && spw->a_password)
 	    epw = estrdup(spw->a_password);
-	endauthent();
 	if (epw)
 	    return(epw);
     }
@@ -171,129 +161,42 @@ sudo_getepw(pw)
     return(estrdup(pw->pw_passwd));
 }
 
-/*
- * Dynamically allocate space for a struct password and the constituent parts
- * that we care about.  Fills in pw_passwd from shadow file if necessary.
- */
-struct passwd *
-sudo_pwdup(pw)
-    const struct passwd *pw;
+void
+sudo_setspent()
 {
-    char *cp;
-    const char *pw_passwd, *pw_shell;
-    size_t nsize, psize, csize, gsize, dsize, ssize, total;
-    struct passwd *newpw;
-
-    /* Get shadow password if available. */
-    pw_passwd = sudo_getepw(pw);
-
-    /* If shell field is empty, expand to _PATH_BSHELL. */
-    pw_shell = (pw->pw_shell == NULL || pw->pw_shell[0] == '\0')
-	? _PATH_BSHELL : pw->pw_shell;
-
-    /* Allocate in one big chunk for easy freeing. */
-    nsize = psize = csize = gsize = dsize = ssize = 0;
-    total = sizeof(struct passwd);
-    if (pw->pw_name) {
-	    nsize = strlen(pw->pw_name) + 1;
-	    total += nsize;
-    }
-    if (pw_passwd) {
-	    psize = strlen(pw_passwd) + 1;
-	    total += psize;
-    }
-#ifdef HAVE_LOGIN_CAP_H
-    if (pw->pw_class) {
-	    csize = strlen(pw->pw_class) + 1;
-	    total += csize;
-    }
+#ifdef HAVE_GETPRPWNAM
+    setprpwent();
 #endif
-    if (pw->pw_gecos) {
-	    gsize = strlen(pw->pw_gecos) + 1;
-	    total += gsize;
-    }
-    if (pw->pw_dir) {
-	    dsize = strlen(pw->pw_dir) + 1;
-	    total += dsize;
-    }
-    if (pw_shell) {
-	    ssize = strlen(pw_shell) + 1;
-	    total += ssize;
-    }
-    if ((cp = malloc(total)) == NULL)
-	    return (NULL);
-    newpw = (struct passwd *)cp;
-
-    /*
-     * Copy in passwd contents and make strings relative to space
-     * at the end of the buffer.
-     */
-    (void)memcpy(newpw, pw, sizeof(struct passwd));
-    cp += sizeof(struct passwd);
-    if (nsize) {
-	    (void)memcpy(cp, pw->pw_name, nsize);
-	    newpw->pw_name = cp;
-	    cp += nsize;
-    }
-    if (psize) {
-	    (void)memcpy(cp, pw_passwd, psize);
-	    newpw->pw_passwd = cp;
-	    cp += psize;
-    }
-#ifdef HAVE_LOGIN_CAP_H
-    if (csize) {
-	    (void)memcpy(cp, pw->pw_class, csize);
-	    newpw->pw_class = cp;
-	    cp += csize;
-    }
+#ifdef HAVE_GETSPNAM
+    setspent();
 #endif
-    if (gsize) {
-	    (void)memcpy(cp, pw->pw_gecos, gsize);
-	    newpw->pw_gecos = cp;
-	    cp += gsize;
-    }
-    if (dsize) {
-	    (void)memcpy(cp, pw->pw_dir, dsize);
-	    newpw->pw_dir = cp;
-	    cp += dsize;
-    }
-    if (ssize) {
-	    (void)memcpy(cp, pw_shell, ssize);
-	    newpw->pw_shell = cp;
-	    cp += ssize;
-    }
-
-    return (newpw);
+#ifdef HAVE_GETSPWUID
+    setspwent();
+#endif
+#ifdef HAVE_GETPWANAM
+    setpwaent();
+#endif
+#ifdef HAVE_GETAUTHUID
+    setauthent();
+#endif
 }
 
-/*
- * Get a password entry by uid and allocate space for it.
- * Fills in pw_passwd from shadow file if necessary.
- */
-struct passwd *
-sudo_getpwuid(uid)
-    uid_t uid;
+void
+sudo_endspent()
 {
-    struct passwd *pw;
-
-    if ((pw = getpwuid(uid)) == NULL)
-	return(NULL);
-    else
-	return(sudo_pwdup(pw));
-}
-
-/*
- * Get a password entry by name and allocate space for it.
- * Fills in pw_passwd from shadow file if necessary.
- */
-struct passwd *
-sudo_getpwnam(name)
-    const char *name;
-{
-    struct passwd *pw;
-
-    if ((pw = getpwnam(name)) == NULL)
-	return(NULL);
-    else
-	return(sudo_pwdup(pw));
+#ifdef HAVE_GETPRPWNAM
+    endprpwent();
+#endif
+#ifdef HAVE_GETSPNAM
+    endspent();
+#endif
+#ifdef HAVE_GETSPWUID
+    endspwent();
+#endif
+#ifdef HAVE_GETPWANAM
+    endpwaent();
+#endif
+#ifdef HAVE_GETAUTHUID
+    endauthent();
+#endif
 }

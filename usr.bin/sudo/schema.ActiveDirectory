@@ -1,0 +1,172 @@
+#
+# Active Directory Schema for sudo configuration (sudoers)
+#
+# To extend your Active Directory schema, run the following command
+# on your Windows DC:
+#
+#  ldifde -i -f schema.ActiveDirectory -c dc=X dc=YOURDOMAIN,DC=COM
+#
+
+dn: CN=sudoUser,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoUser
+distinguishedName: CN=sudoUser,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.1
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoUser
+adminDescription: User(s) who may run sudo
+oMSyntax: 22
+searchFlags: 1
+lDAPDisplayName: sudoUser
+name: sudoUser
+schemaIDGUID:: JrGcaKpnoU+0s+HgeFjAbg==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoHost,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoHost
+distinguishedName: CN=sudoHost,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.2
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoHost
+adminDescription: Host(s) who may run sudo
+oMSyntax: 22
+lDAPDisplayName: sudoHost
+name: sudoHost
+schemaIDGUID:: d0TTjg+Y6U28g/Y+ns2k4w==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoCommand,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoCommand
+distinguishedName: CN=sudoCommand,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.3
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoCommand
+adminDescription: Command(s) to be executed by sudo
+oMSyntax: 22
+lDAPDisplayName: sudoCommand
+name: sudoCommand
+schemaIDGUID:: D6QR4P5UyUen3RGYJCHCPg==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoRunAs,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoRunAs
+distinguishedName: CN=sudoRunAs,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.4
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoRunAs
+adminDescription: User(s) impersonated by sudo (deprecated)
+oMSyntax: 22
+lDAPDisplayName: sudoRunAs
+name: sudoRunAs
+schemaIDGUID:: CP98mCQTyUKKxGrQeM80hQ==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoOption,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoOption
+distinguishedName: CN=sudoOption,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.5
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoOption
+adminDescription: Option(s) followed by sudo
+oMSyntax: 22
+lDAPDisplayName: sudoOption
+name: sudoOption
+schemaIDGUID:: ojaPzBBlAEmsvrHxQctLnA==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoRunAsUser,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoRunAsUser
+distinguishedName: CN=sudoRunAsUser,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.6
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoRunAsUser
+adminDescription: User(s) impersonated by sudo
+oMSyntax: 22
+lDAPDisplayName: sudoRunAsUser
+name: sudoRunAsUser
+schemaIDGUID:: 9C52yPYd3RG3jMR2VtiVkw==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoRunAsGroup,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: sudoRunAsGroup
+distinguishedName: CN=sudoRunAsGroup,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+attributeID: 1.3.6.1.4.1.15953.9.1.7
+attributeSyntax: 2.5.5.5
+isSingleValued: FALSE
+showInAdvancedViewOnly: TRUE
+adminDisplayName: sudoRunAsGroup
+adminDescription: Groups(s) impersonated by sudo
+oMSyntax: 22
+lDAPDisplayName: sudoRunAsGroup
+name: sudoRunAsGroup
+schemaIDGUID:: xJhSt/Yd3RGJPTB1VtiVkw==
+objectCategory: CN=Attribute-Schema,CN=Schema,CN=Configuration,DC=X
+
+dn: CN=sudoRole,CN=Schema,CN=Configuration,DC=X
+changetype: add
+objectClass: top
+objectClass: classSchema
+cn: sudoRole
+distinguishedName: CN=sudoRole,CN=Schema,CN=Configuration,DC=X
+instanceType: 4
+possSuperiors: container
+possSuperiors: top
+subClassOf: top
+governsID: 1.3.6.1.4.1.15953.9.2.1
+mayContain: sudoCommand
+mayContain: sudoHost
+mayContain: sudoOption
+mayContain: sudoRunAs
+mayContain: sudoRunAsUser
+mayContain: sudoRunAsGroup
+mayContain: sudoUser
+rDNAttID: cn
+showInAdvancedViewOnly: FALSE
+adminDisplayName: sudoRole
+adminDescription: Sudoer Entries
+objectClassCategory: 1
+lDAPDisplayName: sudoRole
+name: sudoRole
+schemaIDGUID:: SQn432lnZ0+ukbdh3+gN3w==
+systemOnly: FALSE
+objectCategory: CN=Class-Schema,CN=Schema,CN=Configuration,DC=X
+defaultObjectCategory: CN=sudoRole,CN=Schema,CN=Configuration,DC=X

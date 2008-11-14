@@ -10,7 +10,7 @@ typedef struct sudo_auth {
     short flags;                /* various flags, see below */
     short status;               /* status from verify routine */
     char *name;			/* name of the method in string form */
-    VOID *data;                 /* method-specific data pointer */
+    void *data;                 /* method-specific data pointer */
 
     int (*init) __P((struct passwd *pw, char **prompt, sudo_auth *auth));
     int (*setup) __P((struct passwd *pw, char **prompt, sudo_auth *auth));

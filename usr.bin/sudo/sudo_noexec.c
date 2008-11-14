@@ -29,7 +29,7 @@
 #include <compat.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_noexec.c,v 1.5.2.2 2007/06/12 00:56:43 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_noexec.c,v 1.12 2005/03/12 23:43:40 millert Exp $";
 #endif /* lint */
 
 /*

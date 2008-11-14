@@ -52,7 +52,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: bsdauth.c,v 1.16.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: bsdauth.c,v 1.21 2008/03/30 21:36:51 millert Exp $";
 #endif /* lint */
 
 extern char *login_style;		/* from sudo.c */
@@ -88,7 +88,7 @@ bsdauth_init(pw, promptp, auth)
 	return(AUTH_FATAL);
     }
 
-    auth->data = (VOID *) as;
+    auth->data = (void *) as;
     return(AUTH_SUCCESS);
 }
 
@@ -146,7 +146,7 @@ bsdauth_verify(pw, prompt, auth)
 	nil_pw = 1;
 
     if (pass) {
-	authok = auth_userresponse(as, (char *)pass, 1);
+	authok = auth_userresponse(as, pass, 1);
 	zero_bytes(pass, strlen(pass));
     }
 

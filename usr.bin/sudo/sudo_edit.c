@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,14 +41,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <ctype.h>
 #include <pwd.h>
-#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -62,16 +56,19 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.6.2.9 2008/06/21 00:47:52 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.37 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 extern sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp;
 extern char **environ;
 
+static char *find_editor();
+
 /*
  * Wrapper to allow users to edit privileged files with their own uid.
  */
-int sudo_edit(argc, argv, envp)
+int
+sudo_edit(argc, argv, envp)
     int argc;
     char **argv;
     char **envp;
@@ -82,7 +79,6 @@ int sudo_edit(argc, argv, envp)
     char **nargv, **ap, *editor, *cp;
     char buf[BUFSIZ];
     int error, i, ac, ofd, tfd, nargc, rval, tmplen, wasblank;
-    sigaction_t sa;
     struct stat sb;
     struct timespec ts1, ts2;
     struct tempfile {
@@ -108,23 +104,24 @@ int sudo_edit(argc, argv, envp)
 	tmplen--;
 
     /*
+     * Close password, shadow, and group files before we try to open
+     * user-specified files to prevent the opening of things like /dev/fd/4
+     */
+    sudo_endpwent();
+    sudo_endgrent();
+
+    /*
      * For each file specified by the user, make a temporary version
      * and copy the contents of the original to it.
      */
     tf = emalloc2(argc - 1, sizeof(*tf));
-    memset(tf, 0, (argc - 1) * sizeof(*tf));
+    zero_bytes(tf, (argc - 1) * sizeof(*tf));
     for (i = 0, ap = argv + 1; i < argc - 1 && *ap != NULL; i++, ap++) {
 	error = -1;
 	set_perms(PERM_RUNAS);
-
-	/*
-	 * We close the password file before we try to open the user-specified
-	 * path to prevent the opening of things like /dev/fd/4.
-	 */
-	endpwent();
 	if ((ofd = open(*ap, O_RDONLY, 0644)) != -1 || errno == ENOENT) {
 	    if (ofd == -1) {
-		memset(&sb, 0, sizeof(sb));		/* new file */
+		zero_bytes(&sb, sizeof(sb));		/* new file */
 		error = 0;
 	    } else {
 #ifdef HAVE_FSTAT
@@ -137,9 +134,9 @@ int sudo_edit(argc, argv, envp)
 	set_perms(PERM_ROOT);
 	if (error || (ofd != -1 && !S_ISREG(sb.st_mode))) {
 	    if (error)
-		warn("%s", *ap);
+		warning("%s", *ap);
 	    else
-		warnx("%s: not a regular file", *ap);
+		warningx("%s: not a regular file", *ap);
 	    if (ofd != -1)
 		close(ofd);
 	    argc--;
@@ -159,16 +156,16 @@ int sudo_edit(argc, argv, envp)
 	tfd = mkstemp(tf[i].tfile);
 	set_perms(PERM_ROOT);
 	if (tfd == -1) {
-	    warn("mkstemp");
+	    warning("mkstemp");
 	    goto cleanup;
 	}
 	if (ofd != -1) {
 	    while ((nread = read(ofd, buf, sizeof(buf))) != 0) {
 		if ((nwritten = write(tfd, buf, nread)) != nread) {
 		    if (nwritten == -1)
-			warn("%s", tf[i].tfile);
+			warning("%s", tf[i].tfile);
 		    else
-			warnx("%s: short write", tf[i].tfile);
+			warningx("%s: short write", tf[i].tfile);
 		    goto cleanup;
 		}
 	    }
@@ -194,20 +191,8 @@ int sudo_edit(argc, argv, envp)
     if (argc == 1)
 	return(1);			/* no files readable, you lose */
 
-    /*
-     * Determine which editor to use.  We don't bother restricting this
-     * based on def_env_editor or def_editor since the editor runs with
-     * the uid of the invoking user, not the runas (privileged) user.
-     */
     environ = envp;
-    if (((editor = getenv("VISUAL")) != NULL && *editor != '\0') ||
-	((editor = getenv("EDITOR")) != NULL && *editor != '\0')) {
-	editor = estrdup(editor);
-    } else {
-	editor = estrdup(def_editor);
-	if ((cp = strchr(editor, ':')) != NULL)
-	    *cp = '\0';			/* def_editor could be a path */
-    }
+    editor = find_editor();
 
     /*
      * Allocate space for the new argument vector and fill it in.
@@ -232,9 +217,6 @@ int sudo_edit(argc, argv, envp)
     nargv[ac] = NULL;
 
     /* Allow the editor to be suspended. */
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sa.sa_handler = SIG_DFL;
     (void) sigaction(SIGTSTP, &saved_sa_tstp, NULL);
 
     /*
@@ -244,18 +226,16 @@ int sudo_edit(argc, argv, envp)
     gettime(&ts1);
     kidpid = fork();
     if (kidpid == -1) {
-	warn("fork");
+	warning("fork");
 	goto cleanup;
     } else if (kidpid == 0) {
 	/* child */
 	(void) sigaction(SIGINT, &saved_sa_int, NULL);
 	(void) sigaction(SIGQUIT, &saved_sa_quit, NULL);
 	set_perms(PERM_FULL_USER);
-	endpwent();
-	endgrent();
-	closefrom(STDERR_FILENO + 1);
+	closefrom(def_closefrom + 1);
 	execvp(nargv[0], nargv);
-	warn("unable to execute %s", nargv[0]);
+	warning("unable to execute %s", nargv[0]);
 	_exit(127);
     }
 
@@ -299,10 +279,10 @@ int sudo_edit(argc, argv, envp)
 	set_perms(PERM_ROOT);
 	if (error || !S_ISREG(sb.st_mode)) {
 	    if (error)
-		warn("%s", tf[i].tfile);
+		warning("%s", tf[i].tfile);
 	    else
-		warnx("%s: not a regular file", tf[i].tfile);
-	    warnx("%s left unmodified", tf[i].ofile);
+		warningx("%s: not a regular file", tf[i].tfile);
+	    warningx("%s left unmodified", tf[i].ofile);
 	    if (tfd != -1)
 		close(tfd);
 	    continue;
@@ -319,7 +299,7 @@ int sudo_edit(argc, argv, envp)
 	    timespecsub(&ts1, &ts2, &ts2);
 #endif
 	    if (timespecisset(&ts2)) {
-		warnx("%s unchanged", tf[i].ofile);
+		warningx("%s unchanged", tf[i].ofile);
 		unlink(tf[i].tfile);
 		close(tfd);
 		continue;
@@ -329,17 +309,17 @@ int sudo_edit(argc, argv, envp)
 	ofd = open(tf[i].ofile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
 	set_perms(PERM_ROOT);
 	if (ofd == -1) {
-	    warn("unable to write to %s", tf[i].ofile);
-	    warnx("contents of edit session left in %s", tf[i].tfile);
+	    warning("unable to write to %s", tf[i].ofile);
+	    warningx("contents of edit session left in %s", tf[i].tfile);
 	    close(tfd);
 	    continue;
 	}
 	while ((nread = read(tfd, buf, sizeof(buf))) > 0) {
 	    if ((nwritten = write(ofd, buf, nread)) != nread) {
 		if (nwritten == -1)
-		    warn("%s", tf[i].ofile);
+		    warning("%s", tf[i].ofile);
 		else
-		    warnx("%s: short write", tf[i].ofile);
+		    warningx("%s: short write", tf[i].ofile);
 		break;
 	    }
 	}
@@ -347,11 +327,11 @@ int sudo_edit(argc, argv, envp)
 	    /* success, got EOF */
 	    unlink(tf[i].tfile);
 	} else if (nread < 0) {
-	    warn("unable to read temporary file");
-	    warnx("contents of edit session left in %s", tf[i].tfile);
+	    warning("unable to read temporary file");
+	    warningx("contents of edit session left in %s", tf[i].tfile);
 	} else {
-	    warn("unable to write to %s", tf[i].ofile);
-	    warnx("contents of edit session left in %s", tf[i].tfile);
+	    warning("unable to write to %s", tf[i].ofile);
+	    warningx("contents of edit session left in %s", tf[i].tfile);
 	}
 	close(ofd);
     }
@@ -364,4 +344,41 @@ cleanup:
 	    unlink(tf[i].tfile);
     }
     return(1);
+}
+
+/*
+ * Determine which editor to use.  We don't bother restricting this
+ * based on def_env_editor or def_editor since the editor runs with
+ * the uid of the invoking user, not the runas (privileged) user.
+ */
+static char *
+find_editor()
+{
+    char *cp, *editor = NULL, **ev, *ev0[4];
+
+    ev0[0] = "SUDO_EDITOR";
+    ev0[1] = "VISUAL";
+    ev0[2] = "EDITOR";
+    ev0[3] = NULL;
+    for (ev = ev0; *ev != NULL; ev++) {
+	if ((editor = getenv(*ev)) != NULL && *editor != '\0') {
+	    if ((cp = strrchr(editor, '/')) != NULL)
+		cp++;
+	    else
+		cp = editor;
+	    /* Ignore "sudoedit" and "sudo" to avoid an endless loop. */
+	    if (strncmp(cp, "sudo", 4) != 0 ||
+		(cp[4] != ' ' && cp[4] != '\0' && strcmp(cp + 4, "edit") != 0)) {
+		editor = estrdup(editor);
+		break;
+	    }
+	}
+	editor = NULL;
+    }
+    if (editor == NULL) {
+	editor = estrdup(def_editor);
+	if ((cp = strchr(editor, ':')) != NULL)
+	    *cp = '\0';			/* def_editor could be a path */
+    }
+    return(editor);
 }

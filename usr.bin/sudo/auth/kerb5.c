@@ -54,7 +54,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.23.2.8 2008/02/13 22:17:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.34 2008/02/13 22:17:14 millert Exp $";
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
@@ -87,7 +87,7 @@ kerb5_init(pw, promptp, auth)
     char		cache_name[64];
     char		*pname;
 
-    auth->data = (VOID *) &sudo_krb5_data; /* Stash all our data here */
+    auth->data = (void *) &sudo_krb5_data; /* Stash all our data here */
 
 #ifdef HAVE_KRB5_INIT_SECURE_CONTEXT
     error = krb5_init_secure_context(&(sudo_krb5_data.sudo_context));

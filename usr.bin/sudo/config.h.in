@@ -3,6 +3,10 @@
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
 
+/* Define to `signed' or nothing if compiler does not support a signed
+   type qualifier. */
+#undef __signed
+
 /* Define to 1 if the `syslog' function returns a non-zero int to denote
    failure. */
 #undef BROKEN_SYSLOG
@@ -60,12 +64,6 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
-/* Define to 1 if you have the `authenticate' function. */
-#undef HAVE_AUTHENTICATE
-
-/* Define to 1 if you have the `auth_challenge' function. */
-#undef HAVE_AUTH_CHALLENGE
-
 /* Define to 1 if you have the `bigcrypt' function. */
 #undef HAVE_BIGCRYPT
 
@@ -93,9 +91,6 @@
 
 /* Define to 1 if you have the `dispcrypt' function. */
 #undef HAVE_DISPCRYPT
-
-/* Define to 1 if you have the <err.h> header file. */
-#undef HAVE_ERR_H
 
 /* Define to 1 if your glob.h defines the GLOB_BRACE and GLOB_TILDE flags. */
 #undef HAVE_EXTENDED_GLOB
@@ -168,8 +163,17 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define to 1 if you have the `getuserattr' function. */
+#undef HAVE_GETUSERATTR
+
 /* Define to 1 if you have the `glob' function. */
 #undef HAVE_GLOB
+
+/* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_KRB5_H
+
+/* Define to 1 if you have the `gss_krb5_ccache_name' function. */
+#undef HAVE_GSS_KRB5_CCACHE_NAME
 
 /* Define to 1 if your Kerberos is Heimdal. */
 #undef HAVE_HEIMDAL
@@ -206,6 +210,12 @@
 /* Define to 1 if you use Kerberos V. */
 #undef HAVE_KERB5
 
+/* Define to 1 if you have the `krb5_get_init_creds_opt_alloc' function. */
+#undef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC
+
+/* Define to 1 if your `krb5_get_init_creds_opt_alloc' function takes two arguments. */
+#undef HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS
+
 /* Define to 1 if you have the `krb5_init_secure_context' function. */
 #undef HAVE_KRB5_INIT_SECURE_CONTEXT
 
@@ -218,14 +228,32 @@
 /* Define to 1 if you use LDAP for sudoers. */
 #undef HAVE_LDAP
 
+/* Define to 1 if you have the `ldap_create' function. */
+#undef HAVE_LDAP_CREATE
+
 /* Define to 1 if you have the `ldap_initialize' function. */
 #undef HAVE_LDAP_INITIALIZE
+
+/* Define to 1 if you have the `ldap_sasl_bind_s' function. */
+#undef HAVE_LDAP_SASL_BIND_S
+
+/* Define to 1 if you have the `ldap_sasl_interactive_bind_s' function. */
+#undef HAVE_LDAP_SASL_INTERACTIVE_BIND_S
+
+/* Define to 1 if you have the `ldap_search_ext_s' function. */
+#undef HAVE_LDAP_SEARCH_EXT_S
 
 /* Define to 1 if you have the <ldap_ssl.h> header file. */
 #undef HAVE_LDAP_SSL_H
 
 /* Define to 1 if you have the `ldap_start_tls_s' function. */
 #undef HAVE_LDAP_START_TLS_S
+
+/* Define to 1 if you have the `ldap_str2dn' function. */
+#undef HAVE_LDAP_STR2DN
+
+/* Define to 1 if you have the `ldap_unbind_ext_s' function. */
+#undef HAVE_LDAP_UNBIND_EXT_S
 
 /* Define to 1 if you have the `ldapssl_init' function. */
 #undef HAVE_LDAPSSL_INIT
@@ -244,9 +272,6 @@
 
 /* Define to 1 if you have the `lrand48' function. */
 #undef HAVE_LRAND48
-
-/* Define to 1 if you have the `lsearch' function. */
-#undef HAVE_LSEARCH
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -296,14 +321,14 @@
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
 
+/* Define to 1 if you have the <sasl/sasl.h> header file. */
+#undef HAVE_SASL_SASL_H
+
 /* Define if your struct sockadr has an sa_len field. */
 #undef HAVE_SA_LEN
 
 /* Define to 1 if you use SecurID for authentication. */
 #undef HAVE_SECURID
-
-/* Define to 1 if you have the <security/pam_appl.h> header file. */
-#undef HAVE_SECURITY_PAM_APPL_H
 
 /* Define to 1 to enable SELinux RBAC support. */
 #undef HAVE_SELINUX
@@ -332,17 +357,11 @@
 /* Define to 1 if you use SIA authentication. */
 #undef HAVE_SIA
 
-/* Define to 1 if you have the `sia_ses_init' function. */
-#undef HAVE_SIA_SES_INIT
-
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
 /* Define to 1 if <signal.h> has the sigaction_t typedef. */
 #undef HAVE_SIGACTION_T
-
-/* Define to 1 if the system has the type `sig_atomic_t'. */
-#undef HAVE_SIG_ATOMIC_T
 
 /* Define to 1 if you use S/Key. */
 #undef HAVE_SKEY
@@ -486,10 +505,6 @@
 /* Define to 1 if you want a two line OTP (S/Key or OPIE) prompt. */
 #undef LONG_OTP_PROMPT
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
-
 /* The subject of the mail sent by sudo to the MAILTO user/address. */
 #undef MAILSUBJECT
 
@@ -596,21 +611,8 @@
 /* Define to 1 if you want a different ticket file for each tty. */
 #undef USE_TTY_TICKETS
 
-/* Define to "void" if your compiler supports void pointers, else use "char".
-   */
-#undef VOID
-
 /* Define to avoid using the passwd/shadow file for authentication. */
 #undef WITHOUT_PASSWD
-
-/* Path to the ldap.conf file */
-#undef _PATH_LDAP_CONF
-
-/* Path to the ldap.secret file */
-#undef _PATH_LDAP_SECRET
-
-/* The fully qualified pathname of sudo_noexec.so */
-#undef _PATH_SUDO_NOEXEC
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

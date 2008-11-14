@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: defaults.h,v 1.28 2004/02/13 21:36:43 millert Exp $
+ * $Sudo: defaults.h,v 1.33 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_DEFAULTS_H
@@ -91,11 +92,22 @@ struct sudo_defs_types {
 #define T_PATH		0x200
 
 /*
+ * Argument to update_defaults()
+ */
+#define SETDEF_GENERIC	0x01
+#define	SETDEF_HOST	0x02
+#define	SETDEF_USER	0x04
+#define	SETDEF_RUNAS	0x08
+#define	SETDEF_CMND	0x10
+#define SETDEF_ALL	(SETDEF_GENERIC|SETDEF_HOST|SETDEF_USER|SETDEF_RUNAS|SETDEF_CMND)
+
+/*
  * Prototypes
  */
 void dump_default	__P((void));
 int set_default		__P((char *, char *, int));
 void init_defaults	__P((void));
+int update_defaults	__P((int));
 void list_options	__P((void));
 
 extern struct sudo_defs_types sudo_defs_table[];

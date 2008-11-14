@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996, 1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,12 +48,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
@@ -62,15 +58,16 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.16 2008/06/22 20:23:57 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.203 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
 static void do_logfile		__P((char *));
 static void send_mail		__P((char *));
-static void mail_auth		__P((int, char *));
+static int should_mail		__P((int));
 static char *get_timestr	__P((void));
 static void mysyslog		__P((int, const char *, ...));
+static char *new_logline	__P((const char *, int));
 
 #define MAXSYSLOGTRIES	16	/* num of retries for broken syslogs */
 
@@ -273,56 +270,31 @@ do_logfile(msg)
 }
 
 /*
- * Two main functions, log_error() to log errors and log_auth() to
- * log allow/deny messages.
+ * Log and mail the denial message, optionally informing the user.
  */
 void
-log_auth(status, inform_user)
+log_denial(status, inform_user)
     int status;
     int inform_user;
 {
-    char *evstr = NULL;
     char *message;
     char *logline;
-    int pri;
 
-    if (ISSET(status, VALIDATE_OK))
-	pri = def_syslog_goodpri;
-    else
-	pri = def_syslog_badpri;
-
-    /* Set error message, if any. */
-    if (ISSET(status, VALIDATE_OK))
-	message = "";
-    else if (ISSET(status, FLAG_NO_USER))
-	message = "user NOT in sudoers ; ";
+    /* Set error message. */
+    if (ISSET(status, FLAG_NO_USER))
+	message = "user NOT in sudoers";
     else if (ISSET(status, FLAG_NO_HOST))
-	message = "user NOT authorized on host ; ";
-    else if (ISSET(status, VALIDATE_NOT_OK))
-	message = "command not allowed ; ";
+	message = "user NOT authorized on host";
     else
-	message = "unknown error ; ";
+	message = "command not allowed";
 
-    if (sudo_user.env_vars != NULL) {
-	size_t len = 7; /* " ; ENV=" */
-	struct list_member *cur;
-	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next)
-	    len += strlen(cur->value) + 1;
-	evstr = emalloc(len);
-	strlcpy(evstr, " ; ENV=", len);
-	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next) {
-	    strlcat(evstr, cur->value, len);
-	    strlcat(evstr, " ", len);		/* NOTE: last one will fail */
-	}
-    }
-    easprintf(&logline, "%sTTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s%s%s",
-	message, user_tty, user_cwd, *user_runas, evstr ? evstr : "",
-	user_cmnd, user_args ? " " : "", user_args ? user_args : "");
+    logline = new_logline(message, 0);
 
-    mail_auth(status, logline);		/* send mail based on status */
+    if (should_mail(status))
+	send_mail(logline);	/* send mail based on status */
 
     /* Inform the user if they failed to authenticate.  */
-    if (inform_user && ISSET(status, VALIDATE_NOT_OK)) {
+    if (inform_user) {
 	if (ISSET(status, FLAG_NO_USER))
 	    (void) fprintf(stderr, "%s is not in the sudoers file.  %s",
 		user_name, "This incident will be reported.\n");
@@ -334,20 +306,47 @@ log_auth(status, inform_user)
 		user_name, user_shost);
 	else
 	    (void) fprintf(stderr,
-		"Sorry, user %s is not allowed to execute '%s%s%s' as %s on %s.\n",
+		"Sorry, user %s is not allowed to execute '%s%s%s' as %s%s%s on %s.\n",
 		user_name, user_cmnd, user_args ? " " : "",
-		user_args ? user_args : "", *user_runas, user_host);
+		user_args ? user_args : "",
+		list_pw ? list_pw->pw_name : runas_pw ?
+		runas_pw->pw_name : user_name, runas_gr ? ":" : "",
+		runas_gr ? runas_gr->gr_name : "", user_host);
     }
 
     /*
      * Log via syslog and/or a file.
      */
     if (def_syslog)
-	do_syslog(pri, logline);
+	do_syslog(def_syslog_badpri, logline);
     if (def_logfile)
 	do_logfile(logline);
 
-    efree(evstr);
+    efree(logline);
+}
+
+/*
+ * Log and potentially mail the allowed command.
+ */
+void
+log_allowed(status)
+    int status;
+{
+    char *logline;
+
+    logline = new_logline(NULL, 0);
+
+    if (should_mail(status))
+	send_mail(logline);	/* send mail based on status */
+
+    /*
+     * Log via syslog and/or a file.
+     */
+    if (def_syslog)
+	do_syslog(def_syslog_goodpri, logline);
+    if (def_logfile)
+	do_logfile(logline);
+
     efree(logline);
 }
 
@@ -364,7 +363,6 @@ log_error(flags, fmt, va_alist)
     int serrno = errno;
     char *message;
     char *logline;
-    char *evstr = NULL;
     va_list ap;
 #ifdef __STDC__
     va_start(ap, fmt);
@@ -379,53 +377,21 @@ log_error(flags, fmt, va_alist)
     evasprintf(&message, fmt, ap);
     va_end(ap);
 
-    if (sudo_user.env_vars != NULL) {
-	size_t len = 7; /* " ; ENV=" */
-	struct list_member *cur;
-	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next)
-	    len += strlen(cur->value) + 1;
-	evstr = emalloc(len);
-	strlcpy(evstr, " ; ENV=", len);
-	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next) {
-	    strlcat(evstr, cur->value, len);
-	    strlcat(evstr, " ", len);		/* NOTE: last one will fail */
-	}
-    }
-
     if (ISSET(flags, MSG_ONLY))
 	logline = message;
-    else if (ISSET(flags, USE_ERRNO)) {
-	if (user_args) {
-	    easprintf(&logline,
-		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s %s",
-		message, strerror(serrno), user_tty, user_cwd, *user_runas,
-		evstr ? evstr : "", user_cmnd, user_args);
-	} else {
-	    easprintf(&logline,
-		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s", message,
-		strerror(serrno), user_tty, user_cwd, *user_runas,
-		evstr ? evstr : "", user_cmnd);
-	}
-    } else {
-	if (user_args) {
-	    easprintf(&logline,
-		"%s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s %s", message,
-		user_tty, user_cwd, *user_runas, evstr ? evstr : "",
-		user_cmnd, user_args);
-	} else {
-	    easprintf(&logline,
-		"%s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s", message,
-		user_tty, user_cwd, *user_runas, evstr ? evstr : "", user_cmnd);
-	}
-    }
+    else
+	logline = new_logline(message, ISSET(flags, USE_ERRNO) ? serrno : 0);
 
     /*
      * Tell the user.
      */
-    if (ISSET(flags, USE_ERRNO))
-	warn("%s", message);
-    else
-	warnx("%s", message);
+    if (!ISSET(flags, NO_STDERR)) {
+	if (ISSET(flags, USE_ERRNO))
+	    warning("%s", message);
+	else
+	    warningx("%s", message);
+    }
+    efree(message);
 
     /*
      * Send a copy of the error via mail.
@@ -441,12 +407,13 @@ log_error(flags, fmt, va_alist)
     if (def_logfile)
 	do_logfile(logline);
 
-    efree(message);
     if (logline != message)
 	efree(logline);
 
-    if (!ISSET(flags, NO_EXIT))
+    if (!ISSET(flags, NO_EXIT)) {
+	cleanup(0);
 	exit(1);
+    }
 }
 
 #define MAX_MAILFLAGS	63
@@ -481,11 +448,11 @@ send_mail(line)
     /* Fork and return, child will daemonize. */
     switch (pid = fork()) {
 	case -1:
-	    /* Error */
-	    err(1, "cannot fork");
+	    /* Error. */
+	    error(1, "cannot fork");
 	    break;
 	case 0:
-	    /* Child */
+	    /* Child. */
 	    switch (pid = fork()) {
 		case -1:
 		    /* Error. */
@@ -500,7 +467,7 @@ send_mail(line)
 	    }
 	    break;
 	default:
-	    /* Parent */
+	    /* Parent. */
 	    do {
 #ifdef HAVE_WAITPID
 		rv = waitpid(pid, &status, 0);
@@ -514,7 +481,7 @@ send_mail(line)
     /* Daemonize - disassociate from session/tty. */
 #ifdef HAVE_SETSID
     if (setsid() == -1)
-      warn("setsid");
+      warning("setsid");
 #else
     setpgrp(0, 0);
 # ifdef TIOCNOTTY
@@ -531,11 +498,13 @@ send_mail(line)
 	(void) dup2(fd, STDERR_FILENO);
     }
 
-    /* Close password and other fds so we don't leak. */
-    endpwent();
+    /* Close password, group and other fds so we don't leak. */
+    sudo_endpwent();
+    sudo_endgrent();
     closefrom(STDERR_FILENO + 1);
 
     /* Ignore SIGPIPE in case mailer exits prematurely (or is missing). */
+    zero_bytes(&sa, sizeof(sa));
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sa.sa_handler = SIG_IGN;
@@ -601,9 +570,9 @@ send_mail(line)
     (void) close(pfd[0]);
     mail = fdopen(pfd[1], "w");
 
-    /* Pipes are all setup, send message via sendmail. */
+    /* Pipes are all setup, send message. */
     (void) fprintf(mail, "To: %s\nFrom: %s\nAuto-Submitted: %s\nSubject: ",
-	def_mailto, user_name, "auto-generated");
+	def_mailto, def_mailfrom ? def_mailfrom : user_name, "auto-generated");
     for (p = def_mailsub; *p; p++) {
 	/* Expand escapes in the subject */
 	if (*p == '%' && *(p+1) != '%') {
@@ -626,40 +595,26 @@ send_mail(line)
     fclose(mail);
     do {
 #ifdef HAVE_WAITPID
-	rv = waitpid(pid, &status, 0);
+        rv = waitpid(pid, &status, 0);
 #else
-	rv = wait(&status);
+        rv = wait(&status);
 #endif
     } while (rv == -1 && errno == EINTR);
     _exit(0);
 }
 
 /*
- * Send mail based on the value of "status" and compile-time options.
+ * Determine whether we should send mail based on "status" and defaults options.
  */
-static void
-mail_auth(status, line)
+static int
+should_mail(status)
     int status;
-    char *line;
 {
-    int mail_mask;
 
-    /* If any of these bits are set in status, we send mail. */
-    if (def_mail_always)
-	mail_mask =
-	    VALIDATE_ERROR|VALIDATE_OK|FLAG_NO_USER|FLAG_NO_HOST|VALIDATE_NOT_OK;
-    else {
-	mail_mask = VALIDATE_ERROR;
-	if (def_mail_no_user)
-	    SET(mail_mask, FLAG_NO_USER);
-	if (def_mail_no_host)
-	    SET(mail_mask, FLAG_NO_HOST);
-	if (def_mail_no_perms)
-	    SET(mail_mask, VALIDATE_NOT_OK);
-    }
-
-    if ((status & mail_mask) != 0)
-	send_mail(line);
+    return(def_mail_always || ISSET(status, VALIDATE_ERROR) ||
+	(def_mail_no_user && ISSET(status, FLAG_NO_USER)) ||
+	(def_mail_no_host && ISSET(status, FLAG_NO_HOST)) ||
+	(def_mail_no_perms && !ISSET(status, VALIDATE_OK)));
 }
 
 /*
@@ -695,4 +650,113 @@ get_timestr()
 	s[15] = '\0';			/* don't care about year */
 
     return(s);
+}
+
+#define	LL_TTY_STR	"TTY="
+#define	LL_CWD_STR	"PWD="		/* XXX - should be CWD= */
+#define	LL_USER_STR	"USER="
+#define	LL_GROUP_STR	"GROUP="
+#define	LL_ENV_STR	"ENV="
+#define	LL_CMND_STR	"COMMAND="
+
+/*
+ * Allocate and fill in a new logline.
+ */
+static char *
+new_logline(message, serrno)
+    const char *message;
+    int serrno;
+{
+    size_t len = 0;
+    char *evstr = NULL;
+    char *errstr = NULL;
+    char *line;
+
+    /*
+     * Compute line length
+     */
+    if (message != NULL)
+	len += strlen(message) + 3;
+    if (serrno) {
+	errstr = strerror(serrno);
+	len += strlen(errstr) + 3;
+    }
+    len += sizeof(LL_TTY_STR) + 2 + strlen(user_tty);
+    len += sizeof(LL_CWD_STR) + 2 + strlen(user_cwd);
+    if (runas_pw != NULL)
+	len += sizeof(LL_USER_STR) + 2 + strlen(runas_pw->pw_name);
+    if (runas_gr != NULL)
+	len += sizeof(LL_GROUP_STR) + 2 + strlen(runas_gr->gr_name);
+    if (sudo_user.env_vars != NULL) {
+	size_t evlen = 0;
+	struct list_member *cur;
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next)
+	    evlen += strlen(cur->value) + 1;
+	evstr = emalloc(evlen);
+	evstr[0] = '\0';
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next) {
+	    strlcat(evstr, cur->value, evlen);
+	    strlcat(evstr, " ", evlen);	/* NOTE: last one will fail */
+	}
+	len += sizeof(LL_ENV_STR) + 2 + evlen;
+    }
+    len += sizeof(LL_CMND_STR) - 1 + strlen(user_cmnd);
+    if (user_args != NULL)
+	len += strlen(user_args) + 1;
+
+    /*
+     * Allocate and build up the line.
+     */
+    line = emalloc(++len);
+    line[0] = '\0';
+
+    if (message != NULL) {
+	if (strlcat(line, message, len) >= len ||
+	    strlcat(line, errstr ? " : " : " ; ", len) >= len)
+	    goto toobig;
+    }
+    if (serrno) {
+	if (strlcat(line, errstr, len) >= len ||
+	    strlcat(line, " ; ", len) >= len)
+	    goto toobig;
+    }
+    if (strlcat(line, LL_TTY_STR, len) >= len ||
+	strlcat(line, user_tty, len) >= len ||
+	strlcat(line, " ; ", len) >= len)
+	goto toobig;
+    if (strlcat(line, LL_CWD_STR, len) >= len ||
+	strlcat(line, user_cwd, len) >= len ||
+	strlcat(line, " ; ", len) >= len)
+	goto toobig;
+    if (runas_pw != NULL) {
+	if (strlcat(line, LL_USER_STR, len) >= len ||
+	    strlcat(line, runas_pw->pw_name, len) >= len ||
+	    strlcat(line, " ; ", len) >= len)
+	    goto toobig;
+    }
+    if (runas_gr != NULL) {
+	if (strlcat(line, LL_GROUP_STR, len) >= len ||
+	    strlcat(line, runas_gr->gr_name, len) >= len ||
+	    strlcat(line, " ; ", len) >= len)
+	    goto toobig;
+    }
+    if (evstr != NULL) {
+	if (strlcat(line, LL_ENV_STR, len) >= len ||
+	    strlcat(line, evstr, len) >= len ||
+	    strlcat(line, " ; ", len) >= len)
+	    goto toobig;
+	efree(evstr);
+    }
+    if (strlcat(line, LL_CMND_STR, len) >= len ||
+	strlcat(line, user_cmnd, len) >= len)
+	goto toobig;
+    if (user_args != NULL) {
+	if (strlcat(line, " ", len) >= len ||
+	    strlcat(line, user_args, len) >= len)
+	    goto toobig;
+    }
+
+    return (line);
+toobig:
+    errorx(1, "internal error: insufficient space for log line");
 }

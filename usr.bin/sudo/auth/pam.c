@@ -72,11 +72,11 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.10 2008/02/22 20:19:45 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.62 2008/02/22 20:19:34 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
-			  struct pam_response **, VOID *));
+			  struct pam_response **, void *));
 static char *def_prompt;
 
 #ifndef PAM_DATA_SILENT
@@ -96,7 +96,7 @@ pam_init(pw, promptp, auth)
 
     /* Initial PAM setup */
     if (auth != NULL)
-	auth->data = (VOID *) &pam_status;
+	auth->data = (void *) &pam_status;
     pam_conv.conv = sudo_conv;
     pam_status = pam_start("sudo", pw->pw_name, &pam_conv, &pamh);
     if (pam_status != PAM_SUCCESS) {
@@ -244,7 +244,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     int num_msg;
     PAM_CONST struct pam_message **msg;
     struct pam_response **response;
-    VOID *appdata_ptr;
+    void *appdata_ptr;
 {
     struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
@@ -266,7 +266,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		prompt = def_prompt;
 
 		/* Is the sudo prompt standard? (If so, we'l just use PAM's) */
-		std_prompt = strncmp(def_prompt, "Password:", 9) == 0 &&
+		std_prompt =  strncmp(def_prompt, "Password:", 9) == 0 &&
 		    (def_prompt[9] == '\0' ||
 		    (def_prompt[9] == ' ' && def_prompt[10] == '\0'));
 

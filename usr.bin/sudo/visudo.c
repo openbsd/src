@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005, 2007-2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #ifndef __TANDEM
 # include <sys/file.h>
@@ -57,72 +59,72 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <ctype.h>
 #include <pwd.h>
-#if TIME_WITH_SYS_TIME
-# include <time.h>
-#endif
+#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#if TIME_WITH_SYS_TIME
+# include <time.h>
+#endif
+#ifdef __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif
 #ifndef HAVE_TIMESPEC
 # include <emul/timespec.h>
 #endif
 
 #include "sudo.h"
+#include "interfaces.h"
+#include "parse.h"
+#include <gram.h>
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.166.2.11 2008/06/21 00:47:52 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.220 2008/11/09 20:18:22 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
     char *path;
-    char *tpath;
     int fd;
-    off_t orig_size;
-    struct timespec orig_mtim;
+    char *tpath;
+    int tfd;
+    int modified;
+    struct sudoersfile *next;
 };
 
 /*
  * Function prototypes
  */
-static void usage		__P((void)) __attribute__((__noreturn__));
-static char whatnow		__P((void));
-static RETSIGTYPE Exit		__P((int));
-static void edit_sudoers	__P((struct sudoersfile *, char *, char *, int));
-static void visudo		__P((struct sudoersfile *, char *, char *));
-static void setup_signals	__P((void));
-static void install_sudoers	__P((struct sudoersfile *, int));
-static int check_syntax		__P(());
-static int run_command		__P((char *, char **));
+static RETSIGTYPE quit		__P((int));
 static char *get_args		__P((char *));
 static char *get_editor		__P((char **));
-static FILE *open_sudoers	__P((struct sudoersfile *));
+static char whatnow		__P((void));
+static int check_aliases	__P((int));
+static int check_syntax		__P((char *, int, int));
+static int edit_sudoers		__P((struct sudoersfile *, char *, char *, int));
+static int install_sudoers	__P((struct sudoersfile *, int));
+static int print_unused		__P((void *, void *));
+static int reparse_sudoers	__P((char *, char *, int, int));
+static int run_command		__P((char *, char **));
+static void setup_signals	__P((void));
+static void usage		__P((void)) __attribute__((__noreturn__));
 
-int command_matches		__P((char *, char *));
-int addr_matches		__P((char *));
-int hostname_matches		__P((char *, char *, char *));
-int netgr_matches		__P((char *, char *, char *, char *));
-int usergr_matches		__P((char *, char *, struct passwd *));
-int userpw_matches		__P((char *, char *, struct passwd *));
-void init_parser		__P((void));
-void yyerror			__P((char *));
-void yyrestart			__P((FILE *));
+extern void yyerror		__P((const char *));
+extern void yyrestart		__P((FILE *));
 
 /*
  * External globals exported by the parser
  */
 extern FILE *yyin;
-extern int errorlineno;
-extern int pedantic;
-extern int quiet;
-
+extern char *sudoers, *errorfile;
+extern int errorlineno, parse_error;
 /* For getopt(3) */
 extern char *optarg;
 extern int optind;
@@ -130,26 +132,24 @@ extern int optind;
 /*
  * Globals
  */
+int Argc;
 char **Argv;
+int num_interfaces;
+struct interface *interfaces;
 struct sudo_user sudo_user;
-int Argc, parse_error = FALSE;
-static struct sudoersfile sudoers;
+struct passwd *list_pw;
+static struct sudoerslist {
+    struct sudoersfile *first, *last;
+} sudoerslist;
 
 int
 main(argc, argv)
     int argc;
     char **argv;
 {
-    char *args, *editor;
-    int ch, checkonly, n, oldperms;
-
-    /* Initialize sudoers struct. */
-    sudoers.path = _PATH_SUDOERS;
-    sudoers.tpath = _PATH_SUDOERS_TMP;
-    sudoers.fd = -1;
-
-    /* Warn about aliases that are used before being defined. */
-    pedantic = 1;
+    struct sudoersfile *sp;
+    char *args, *editor, *sudoers_path;
+    int ch, checkonly, quiet, strict, oldperms;
 
     Argv = argv;
     if ((Argc = argc) < 1)
@@ -158,7 +158,8 @@ main(argc, argv)
     /*
      * Arg handling.
      */
-    checkonly = oldperms = FALSE;
+    checkonly = oldperms = quiet = strict = FALSE;
+    sudoers_path = _PATH_SUDOERS;
     while ((ch = getopt(argc, argv, "Vcf:sq")) != -1) {
 	switch (ch) {
 	    case 'V':
@@ -167,13 +168,12 @@ main(argc, argv)
 	    case 'c':
 		checkonly++;		/* check mode */
 		break;
-	    case 'f':			/* sudoers file path */
-		sudoers.path = optarg;
-		easprintf(&sudoers.tpath, "%s.tmp", optarg);
+	    case 'f':
+		sudoers_path = optarg;	/* sudoers file path */
 		oldperms = TRUE;
 		break;
 	    case 's':
-		pedantic++;		/* strict mode */
+		strict++;		/* strict mode */
 		break;
 	    case 'q':
 		quiet++;		/* quiet mode */
@@ -187,59 +187,115 @@ main(argc, argv)
     if (argc)
 	usage();
 
+    sudo_setpwent();
+    sudo_setgrent();
+
     /* Mock up a fake sudo_user struct. */
     user_host = user_shost = user_cmnd = "";
-    if ((sudo_user.pw = getpwuid(getuid())) == NULL)
-	errx(1, "you don't exist in the passwd database");
+    if ((sudo_user.pw = sudo_getpwuid(getuid())) == NULL)
+	errorx(1, "you don't exist in the passwd database");
 
     /* Setup defaults data structures. */
     init_defaults();
 
     if (checkonly)
-	exit(check_syntax());
+	exit(check_syntax(sudoers_path, quiet, strict));
 
     /*
-     * Open and parse the existing sudoers file(s) in quiet mode to highlight
-     * any existing errors and to pull in editor and env_editor conf values.
-     */  
-    if ((yyin = open_sudoers(&sudoers)) == NULL)
-	err(1, "%s", sudoers.path);
-    n = quiet;
-    quiet = 1;
-    init_parser();
+     * Parse the existing sudoers file(s) in quiet mode to highlight any
+     * existing errors and to pull in editor and env_editor conf values.
+     */
+    if ((yyin = open_sudoers(sudoers_path, NULL)) == NULL)
+	error(1, "%s", sudoers_path);
+    init_parser(sudoers_path, 0);
     yyparse();
-    parse_error = FALSE;
-    quiet = n;
+    (void) update_defaults(SETDEF_GENERIC|SETDEF_HOST|SETDEF_USER);
 
-    /* Edit sudoers, check for parse errors and re-edit on failure. */
     editor = get_editor(&args);
-    visudo(&sudoers, editor, args);
 
-    /* Install the new sudoers file. */
-    install_sudoers(&sudoers, oldperms);
+    /* Install signal handlers to clean up temp files if we are killed. */
+    setup_signals();
+
+    /* Edit the sudoers file(s) */
+    tq_foreach_fwd(&sudoerslist, sp) {
+	if (sp != tq_first(&sudoerslist)) {
+	    printf("press return to edit %s: ", sp->path);
+	    while ((ch = getchar()) != EOF && ch != '\n')
+		    continue;
+	}
+	edit_sudoers(sp, editor, args, -1);
+    }
+
+    /* Check edited files for a parse error and re-edit any that fail. */
+    reparse_sudoers(editor, args, strict, quiet);
+
+    /* Install the sudoers temp files. */
+    tq_foreach_fwd(&sudoerslist, sp) {
+	if (!sp->modified)
+	    (void) unlink(sp->tpath);
+	else
+	    (void) install_sudoers(sp, oldperms);
+    }
 
     exit(0);
 }
 
 /*
- * Edit the sudoers file.
+ * Edit each sudoers file.
  * Returns TRUE on success, else FALSE.
  */
-static void
+static int
 edit_sudoers(sp, editor, args, lineno)
     struct sudoersfile *sp;
     char *editor, *args;
     int lineno;
 {
+    int tfd;				/* sudoers temp file descriptor */
+    int modified;			/* was the file modified? */
     int ac;				/* argument count */
     char **av;				/* argument vector for run_command */
     char *cp;				/* scratch char pointer */
+    char buf[PATH_MAX*2];		/* buffer used for copying files */
     char linestr[64];			/* string version of lineno */
     struct timespec ts1, ts2;		/* time before and after edit */
+    struct timespec orig_mtim;		/* starting mtime of sudoers file */
+    off_t orig_size;			/* starting size of sudoers file */
+    ssize_t nread;			/* number of bytes read */
     struct stat sb;			/* stat buffer */
 
-    /* Make timestamp on temp file match original. */
-    (void) touch(-1, sp->tpath, &sp->orig_mtim);
+#ifdef HAVE_FSTAT
+    if (fstat(sp->fd, &sb) == -1)
+#else
+    if (stat(sp->path, &sb) == -1)
+#endif
+	error(1, "can't stat %s", sp->path);
+    orig_size = sb.st_size;
+    orig_mtim.tv_sec = mtim_getsec(sb);
+    orig_mtim.tv_nsec = mtim_getnsec(sb);
+
+    /* Create the temp file if needed and set timestamp. */
+    if (sp->tpath == NULL) {
+	easprintf(&sp->tpath, "%s.tmp", sp->path);
+	tfd = open(sp->tpath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (tfd < 0)
+	    error(1, "%s", sp->tpath);
+
+	/* Copy sp->path -> sp->tpath and reset the mtime. */
+	if (orig_size != 0) {
+	    (void) lseek(sp->fd, (off_t)0, SEEK_SET);
+	    while ((nread = read(sp->fd, buf, sizeof(buf))) > 0)
+		if (write(tfd, buf, nread) != nread)
+		    error(1, "write error");
+
+	    /* Add missing newline at EOF if needed. */
+	    if (nread > 0 && buf[nread - 1] != '\n') {
+		buf[0] = '\n';
+		write(tfd, buf, 1);
+	    }
+	}
+	(void) close(tfd);
+    }
+    (void) touch(-1, sp->tpath, &orig_mtim);
 
     /* Find the length of the argument vector */
     ac = 3 + (lineno > 0);
@@ -288,24 +344,26 @@ edit_sudoers(sp, editor, args, lineno)
 	 * Sanity checks.
 	 */
 	if (stat(sp->tpath, &sb) < 0) {
-	    warnx("cannot stat temporary file (%s), %s unchanged",
+	    warningx("cannot stat temporary file (%s), %s unchanged",
 		sp->tpath, sp->path);
-	    Exit(-1);
+	    return(FALSE);
 	}
-	if (sb.st_size == 0) {
-	    warnx("zero length temporary file (%s), %s unchanged",
+	if (sb.st_size == 0 && orig_size != 0) {
+	    warningx("zero length temporary file (%s), %s unchanged",
 		sp->tpath, sp->path);
-	    Exit(-1);
+	    sp->modified = TRUE;
+	    return(FALSE);
 	}
     } else {
-	warnx("editor (%s) failed, %s unchanged", editor, sp->path);
-	Exit(-1);
+	warningx("editor (%s) failed, %s unchanged", editor, sp->path);
+	return(FALSE);
     }
 
-    /* Check to see if the user changed the file. */
-    if (sp->orig_size == sb.st_size &&
-	sp->orig_mtim.tv_sec == mtim_getsec(sb) &&
-	sp->orig_mtim.tv_nsec == mtim_getnsec(sb)) {
+    /* Set modified bit if use changed the file. */
+    modified = TRUE;
+    if (orig_size == sb.st_size &&
+	orig_mtim.tv_sec == mtim_getsec(sb) &&
+	orig_mtim.tv_nsec == mtim_getnsec(sb)) {
 	/*
 	 * If mtime and size match but the user spent no measurable
 	 * time in the editor we can't tell if the file was changed.
@@ -315,55 +373,59 @@ edit_sudoers(sp, editor, args, lineno)
 #else
 	timespecsub(&ts1, &ts2, &ts2);
 #endif
-	if (timespecisset(&ts2)) {
-	    warnx("%s unchanged", sp->tpath);
-	    Exit(0);
-	}
+	if (timespecisset(&ts2))
+	    modified = FALSE;
     }
+
+    /*
+     * If modified in this edit session, mark as modified.
+     */
+    if (modified)
+	sp->modified = modified;
+    else
+	warningx("%s unchanged", sp->tpath);
+
+    return(TRUE);
 }
 
 /*
  * Parse sudoers after editing and re-edit any ones that caused a parse error.
  * Returns TRUE on success, else FALSE.
  */
-static void
-visudo(sp, editor, args)
-    struct sudoersfile *sp;
+static int
+reparse_sudoers(editor, args, strict, quiet)
     char *editor, *args;
+    int strict, quiet;
 {
+    struct sudoersfile *sp, *last;
+    FILE *fp;
     int ch;
 
     /*
-     * Parse the edited sudoers file and do sanity checking
+     * Parse the edited sudoers files and do sanity checking
      */
     do {
-	edit_sudoers(sp, editor, args, errorlineno);
-
-	yyin = fopen(sp->tpath, "r+");
-	if (yyin == NULL) {
-	    warnx("can't re-open temporary file (%s), %s unchanged.",
+	sp = tq_first(&sudoerslist);
+	last = tq_last(&sudoerslist);
+	fp = fopen(sp->tpath, "r+");
+	if (fp == NULL)
+	    errorx(1, "can't re-open temporary file (%s), %s unchanged.",
 		sp->tpath, sp->path);
-	    Exit(-1);
-	}
-
-	/* Add missing newline at EOF if needed. */
-	if (fseek(yyin, -1, SEEK_END) == 0 && (ch = fgetc(yyin)) != '\n')
-	    fputc('\n', yyin);
-	rewind(yyin);
 
 	/* Clean slate for each parse */
-	user_runas = NULL;
 	init_defaults();
-	init_parser();
+	init_parser(sp->path, quiet);
 
 	/* Parse the sudoers temp file */
-	yyrestart(yyin);
+	yyrestart(fp);
 	if (yyparse() && parse_error != TRUE) {
-	    warnx("unabled to parse temporary file (%s), unknown error",
+	    warningx("unabled to parse temporary file (%s), unknown error",
 		sp->tpath);
 	    parse_error = TRUE;
 	}
 	fclose(yyin);
+	if (check_aliases(strict) != 0)
+	    parse_error = TRUE;
 
 	/*
 	 * Got an error, prompt the user for what to do now
@@ -372,18 +434,40 @@ visudo(sp, editor, args)
 	    switch (whatnow()) {
 		case 'Q' :	parse_error = FALSE;	/* ignore parse error */
 				break;
-		case 'x' :	Exit(0);
+		case 'x' :	cleanup(0);
+				exit(0);
 				break;
 	    }
 	}
+	if (parse_error) {
+	    /* Edit file with the parse error */
+	    tq_foreach_fwd(&sudoerslist, sp) {
+		if (errorfile == NULL || strcmp(sp->path, errorfile) == 0) {
+		    edit_sudoers(sp, editor, args, errorlineno);
+		    break;
+		}
+	    }
+	    if (sp == NULL)
+		errorx(1, "internal error, can't find %s in list!", sudoers);
+	}
+
+	/* If any new #include directives were added, edit them too. */
+	for (sp = last->next; sp != NULL; sp = sp->next) {
+	    printf("press return to edit %s: ", sp->path);
+	    while ((ch = getchar()) != EOF && ch != '\n')
+		    continue;
+	    edit_sudoers(sp, editor, args, errorlineno);
+	}
     } while (parse_error);
+
+    return(TRUE);
 }
 
 /*
  * Set the owner and mode on a sudoers temp file and
  * move it into place.  Returns TRUE on success, else FALSE.
  */
-static void
+static int
 install_sudoers(sp, oldperms)
     struct sudoersfile *sp;
     int oldperms;
@@ -401,18 +485,19 @@ install_sudoers(sp, oldperms)
 #else
 	if (stat(sp->path, &sb) == -1)
 #endif
-	    err(1, "can't stat %s", sp->path);
+	    error(1, "can't stat %s", sp->path);
 	(void) chown(sp->tpath, sb.st_uid, sb.st_gid);
 	(void) chmod(sp->tpath, sb.st_mode & 0777);
     } else {
 	if (chown(sp->tpath, SUDOERS_UID, SUDOERS_GID) != 0) {
-	    warn("unable to set (uid, gid) of %s to (%d, %d)",
+	    warning("unable to set (uid, gid) of %s to (%d, %d)",
 		sp->tpath, SUDOERS_UID, SUDOERS_GID);
-	    Exit(-1);
+	    return(FALSE);
 	}
 	if (chmod(sp->tpath, SUDOERS_MODE) != 0) {
-	    warn("unable to change mode of %s to 0%o", sp->tpath, SUDOERS_MODE);
-	    Exit(-1);
+	    warning("unable to change mode of %s to 0%o", sp->tpath,
+		SUDOERS_MODE);
+	    return(FALSE);
 	}
     }
 
@@ -421,10 +506,13 @@ install_sudoers(sp, oldperms)
      * rename(2)'d to sp->path.  If the rename(2) fails we try using
      * mv(1) in case sp->tpath and sp->path are on different file systems.
      */
-    if (rename(sp->tpath, sp->path) != 0) {
+    if (rename(sp->tpath, sp->path) == 0) {
+	efree(sp->tpath);
+	sp->tpath = NULL;
+    } else {
 	if (errno == EXDEV) {
 	    char *av[4];
-	    warnx("%s and %s not on the same file system, using mv to rename",
+	    warningx("%s and %s not on the same file system, using mv to rename",
 	      sp->tpath, sp->path);
 
 	    /* Build up argument vector for the command */
@@ -438,98 +526,64 @@ install_sudoers(sp, oldperms)
 
 	    /* And run it... */
 	    if (run_command(_PATH_MV, av)) {
-		warnx("command failed: '%s %s %s', %s unchanged",
+		warningx("command failed: '%s %s %s', %s unchanged",
 		    _PATH_MV, sp->tpath, sp->path, sp->path);
-		Exit(-1);
+		(void) unlink(sp->tpath);
+		efree(sp->tpath);
+		sp->tpath = NULL;
+		return(FALSE);
 	    }
+	    efree(sp->tpath);
+	    sp->tpath = NULL;
 	} else {
-	    warn("error renaming %s, %s unchanged", sp->tpath, sp->path);
-	    Exit(-1);
+	    warning("error renaming %s, %s unchanged", sp->tpath, sp->path);
+	    (void) unlink(sp->tpath);
+	    return(FALSE);
 	}
     }
-}
-
-/*
- * Dummy *_matches routines.
- * These exist to allow us to use the same parser as sudo(8).
- */
-int
-command_matches(path, sudoers_args)
-    char *path;
-    char *sudoers_args;
-{
     return(TRUE);
 }
 
-int
-addr_matches(n)
-    char *n;
-{
-    return(TRUE);
-}
-
-int
-hostname_matches(s, l, p)
-    char *s, *l, *p;
-{
-    return(TRUE);
-}
-
-int
-usergr_matches(g, u, pw)
-    char *g, *u;
-    struct passwd *pw;
-{
-    return(TRUE);
-}
-
-int
-userpw_matches(s, u, pw)
-    char *s, *u;
-    struct passwd *pw;
-{
-    return(TRUE);
-}
-
-int
-netgr_matches(n, h, sh, u)
-    char *n, *h, *sh, *u;
-{
-    return(TRUE);
-}
-
+/* STUB */
 void
 set_fqdn()
 {
     return;
 }
 
-int
-set_runaspw(user)
-    char *user;
-{
-    extern int sudolineno, used_runas;
-
-    if (used_runas) {
-	(void) fprintf(stderr,
-	    "%s: runas_default set after old value is in use near line %d\n",
-	    pedantic > 1 ? "Error" : "Warning", sudolineno);
-	if (pedantic > 1)
-	    yyerror(NULL);
-    }
-    return(TRUE);
-}
-
-int
-user_is_exempt()
-{
-    return(TRUE);
-}
-
+/* STUB */
 void
 init_envtables()
 {
     return;
+}
+
+/* STUB */
+int
+user_is_exempt()
+{
+    return(FALSE);
+}
+
+/* STUB */
+void
+sudo_setspent()
+{
+    return;
+}
+
+/* STUB */
+void
+sudo_endspent()
+{
+    return;
+}
+
+char *
+sudo_getepw(pw)
+    const struct passwd *pw;
+{
+    return (pw->pw_passwd);
 }
 
 /*
@@ -575,9 +629,10 @@ setup_signals()
 	/*
 	 * Setup signal handlers to cleanup nicely.
 	 */
+	zero_bytes(&sa, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = Exit;
+	sa.sa_handler = quit;
 	(void) sigaction(SIGTERM, &sa, NULL);
 	(void) sigaction(SIGHUP, &sa, NULL);
 	(void) sigaction(SIGINT, &sa, NULL);
@@ -594,14 +649,14 @@ run_command(path, argv)
 
     switch (pid = fork()) {
 	case -1:
-	    warn("unable to run %s", path);
-	    Exit(-1);
+	    error(1, "unable to run %s", path);
 	    break;	/* NOTREACHED */
 	case 0:
-	    endpwent();
+	    sudo_endpwent();
+	    sudo_endgrent();
 	    closefrom(STDERR_FILENO + 1);
 	    execv(path, argv);
-	    warn("unable to run %s", path);
+	    warning("unable to run %s", path);
 	    _exit(127);
 	    break;	/* NOTREACHED */
     }
@@ -620,86 +675,111 @@ run_command(path, argv)
 }
 
 static int
-check_syntax()
-{
-
-    if ((yyin = fopen(sudoers.path, "r")) == NULL) {
-	if (!quiet)
-	    warn("unable to open %s", sudoers.path);
-	exit(1);
-    }
-    init_parser();
-    if (yyparse() && parse_error != TRUE) {
-	if (!quiet)
-	    warnx("failed to parse %s file, unknown error", sudoers.path);
-	parse_error = TRUE;
-    }
-    if (!quiet){
-	if (parse_error)
-	    (void) printf("parse error in %s near line %d\n", sudoers.path,
-		errorlineno);
-	else
-	    (void) printf("%s file parsed OK\n", sudoers.path);
-    }
-
-    return(parse_error == TRUE);
-}
-
-static FILE *
-open_sudoers(sp)
-    struct sudoersfile *sp;
+check_syntax(sudoers_path, quiet, strict)
+    char *sudoers_path;
+    int quiet;
+    int strict;
 {
     struct stat sb;
-    ssize_t nread;
-    FILE *fp;
-    char buf[PATH_MAX*2];
-    int tfd;
+    int error;
 
-    /* Open and lock sudoers. */
-    sp->fd = open(sp->path, O_RDWR | O_CREAT, SUDOERS_MODE);
-    if (sp->fd == -1)
-	err(1, "%s", sp->path);
-    if (!lock_file(sp->fd, SUDO_TLOCK))
-	errx(1, "%s busy, try again later", sp->path);
-    if ((fp = fdopen(sp->fd, "r")) == NULL)
-	err(1, "%s", sp->path);
-
-    /* Stash sudoers size and mtime. */
+    if ((yyin = fopen(sudoers_path, "r")) == NULL) {
+	if (!quiet)
+	    warning("unable to open %s", sudoers_path);
+	exit(1);
+    }
+    init_parser(sudoers_path, quiet);
+    if (yyparse() && parse_error != TRUE) {
+	if (!quiet)
+	    warningx("failed to parse %s file, unknown error", sudoers_path);
+	parse_error = TRUE;
+    }
+    error = parse_error;
+    if (!quiet) {
+	if (parse_error)
+	    (void) printf("parse error in %s near line %d\n", sudoers_path,
+		errorlineno);
+	else
+	    (void) printf("%s: parsed OK\n", sudoers_path);
+    }
+    /* Check mode and owner in strict mode. */
 #ifdef HAVE_FSTAT
-    if (fstat(sp->fd, &sb) == -1)
+    if (strict && fstat(fileno(yyin), &sb) == 0)
 #else
-    if (stat(sp->path, &sb) == -1)
+    if (strict && stat(sudoers_path, &sb) == 0)
 #endif
-	err(1, "can't stat %s", sp->path);
-    sp->orig_size = sb.st_size;
-    sp->orig_mtim.tv_sec = mtim_getsec(sb);
-    sp->orig_mtim.tv_nsec = mtim_getnsec(sb);
-
-    /* Create the temp file. */
-    tfd = open(sp->tpath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if (tfd < 0)
-	err(1, "%s", sp->tpath);
-
-    /* Install signal handlers to clean up temp file if we are killed. */
-    setup_signals();
-
-    /* Copy sp->path -> sp->tpath. */
-    if (sp->orig_size != 0) {
-	while ((nread = read(sp->fd, buf, sizeof(buf))) > 0)
-	    if (write(tfd, buf, nread) != nread) {
-		warn("write error");
-		Exit(-1);
+    {
+	if (sb.st_uid != SUDOERS_UID || sb.st_gid != SUDOERS_GID) {
+	    error = TRUE;
+	    if (!quiet) {
+		fprintf(stderr, "%s: wrong owner (uid, gid) should be (%d, %d)\n",
+		    sudoers_path, SUDOERS_UID, SUDOERS_GID);
+		}
+	}
+	if ((sb.st_mode & 07777) != SUDOERS_MODE) {
+	    error = TRUE;
+	    if (!quiet) {
+		fprintf(stderr, "%s: bad permissions, should be mode 0%o\n",
+		    sudoers_path, SUDOERS_MODE);
 	    }
-
-	/* Add missing newline at EOF if needed. */
-	if (nread > 0 && buf[nread - 1] != '\n') {
-	    buf[0] = '\n';
-	    write(tfd, buf, 1);
 	}
     }
-    (void) close(tfd);
-    rewind(fp);
 
+    return(error);
+}
+
+/*
+ * Used to open (and lock) the initial sudoers file and to also open
+ * any subsequent files #included via a callback from the parser.
+ */
+FILE *
+open_sudoers(path, keepopen)
+    const char *path;
+    int *keepopen;
+{
+    struct sudoersfile *entry;
+    FILE *fp;
+
+    /* Check for existing entry */
+    tq_foreach_fwd(&sudoerslist, entry) {
+	if (strcmp(path, entry->path) == 0)
+	    break;
+    }
+    if (entry == NULL) {
+	entry = emalloc(sizeof(*entry));
+	entry->path = estrdup(path);
+	entry->modified = 0;
+	entry->next = NULL;
+	entry->fd = open(entry->path, O_RDWR | O_CREAT, SUDOERS_MODE);
+	entry->tpath = NULL;
+	if (entry->fd == -1) {
+	    warning("%s", entry->path);
+	    efree(entry);
+	    return(NULL);
+	}
+	if (!lock_file(entry->fd, SUDO_TLOCK))
+	    errorx(1, "%s busy, try again later", entry->path);
+	if ((fp = fdopen(entry->fd, "r")) == NULL)
+	    error(1, "%s", entry->path);
+	/* XXX - macro here? */
+	if (sudoerslist.last == NULL)
+	    sudoerslist.first = sudoerslist.last = entry;
+	else {
+	    sudoerslist.last->next = entry;
+	    sudoerslist.last = entry;
+	}
+	if (keepopen != NULL)
+	    *keepopen = TRUE;
+    } else {
+	/* Already exists, open .tmp version if there is one. */
+	if (entry->tpath != NULL) {
+	    if ((fp = fopen(entry->tpath, "r")) == NULL)
+		error(1, "%s", entry->tpath);
+	} else {
+	    if ((fp = fdopen(entry->fd, "r")) == NULL)
+		error(1, "%s", entry->path);
+	}
+    }
     return(fp);
 }
 
@@ -727,8 +807,7 @@ get_editor(args)
 	} else {
 	    if (def_env_editor) {
 		/* If we are honoring $EDITOR this is a fatal error. */
-		warnx("specified editor (%s) doesn't exist!", UserEditor);
-		Exit(-1);
+		errorx(1, "specified editor (%s) doesn't exist!", UserEditor);
 	    } else {
 		/* Otherwise, just ignore $EDITOR. */
 		UserEditor = NULL;
@@ -751,8 +830,7 @@ get_editor(args)
 
 	if (stat(UserEditor, &user_editor_sb) != 0) {
 	    /* Should never happen since we already checked above. */
-	    warn("unable to stat editor (%s)", UserEditor);
-	    Exit(-1);
+	    error(1, "unable to stat editor (%s)", UserEditor);
 	}
 	EditorPath = estrdup(def_editor);
 	Editor = strtok(EditorPath, ":");
@@ -799,10 +877,8 @@ get_editor(args)
 	} while ((Editor = strtok(NULL, ":")));
 
 	/* Bleah, none of the editors existed! */
-	if (Editor == NULL || *Editor == '\0') {
-	    warnx("no editor found (editor path = %s)", def_editor);
-	    Exit(-1);
-	}
+	if (Editor == NULL || *Editor == '\0')
+	    errorx(1, "no editor found (editor path = %s)", def_editor);
     }
     *args = EditorArgs;
     return(Editor);
@@ -829,24 +905,135 @@ get_args(cmnd)
 }
 
 /*
- * Unlink the sudoers temp file (if it exists) and exit.
- * Used in place of a normal exit() and as a signal handler.
- * A positive parameter indicates we were called as a signal handler.
+ * Iterate through the sudoers datastructures looking for undefined
+ * aliases or unused aliases.
+ */
+static int
+check_aliases(strict)
+    int strict;
+{
+    struct cmndspec *cs;
+    struct member *m;
+    struct privilege *priv;
+    struct userspec *us;
+    int error = 0;
+
+    /* Forward check. */
+    tq_foreach_fwd(&userspecs, us) {
+	tq_foreach_fwd(&us->users, m) {
+	    if (m->type == USERALIAS) {
+		if (find_alias(m->name, m->type) == NULL) {
+		    warningx("%s: User_Alias `%s' referenced but not defined",
+			strict ? "Error" : "Warning", m->name);
+		    error++;
+		}
+	    }
+	}
+	tq_foreach_fwd(&us->privileges, priv) {
+	    tq_foreach_fwd(&priv->hostlist, m) {
+		if (m->type == HOSTALIAS) {
+		    if (find_alias(m->name, m->type) == NULL) {
+			warningx("%s: Host_Alias `%s' referenced but not defined",
+			    strict ? "Error" : "Warning", m->name);
+			error++;
+		    }
+		}
+	    }
+	    tq_foreach_fwd(&priv->cmndlist, cs) {
+		tq_foreach_fwd(&cs->runasuserlist, m) {
+		    if (m->type == RUNASALIAS) {
+			if (find_alias(m->name, m->type) == NULL) {
+			    warningx("%s: Runas_Alias `%s' referenced but not defined",
+				strict ? "Error" : "Warning", m->name);
+			    error++;
+			}
+		    }
+		}
+		if ((m = cs->cmnd)->type == CMNDALIAS) {
+		    if (find_alias(m->name, m->type) == NULL) {
+			warningx("%s: Cmnd_Alias `%s' referenced but not defined",
+			    strict ? "Error" : "Warning", m->name);
+			error++;
+		    }
+		}
+	    }
+	}
+    }
+
+    /* Reverse check (destructive) */
+    tq_foreach_fwd(&userspecs, us) {
+	tq_foreach_fwd(&us->users, m) {
+	    if (m->type == USERALIAS)
+		(void) alias_remove(m->name, m->type);
+	}
+	tq_foreach_fwd(&us->privileges, priv) {
+	    tq_foreach_fwd(&priv->hostlist, m) {
+		if (m->type == HOSTALIAS)
+		    (void) alias_remove(m->name, m->type);
+	    }
+	    tq_foreach_fwd(&priv->cmndlist, cs) {
+		tq_foreach_fwd(&cs->runasuserlist, m) {
+		    if (m->type == RUNASALIAS)
+			(void) alias_remove(m->name, m->type);
+		}
+		if ((m = cs->cmnd)->type == CMNDALIAS)
+		    (void) alias_remove(m->name, m->type);
+	    }
+	}
+    }
+    /* If all aliases were referenced we will have an empty tree. */
+    if (no_aliases())
+	return(0);
+    alias_apply(print_unused, strict ? "Error" : "Warning");
+    return (strict ? 1 : 0);
+}
+
+static int
+print_unused(v1, v2)
+    void *v1;
+    void *v2;
+{
+    struct alias *a = (struct alias *)v1;
+    char *prefix = (char *)v2;
+
+    warningx("%s: unused %s_Alias %s", prefix,
+	a->type == HOSTALIAS ? "Host" : a->type == CMNDALIAS ? "Cmnd" :
+	a->type == USERALIAS ? "User" : a->type == RUNASALIAS ? "Runas" :
+	"Unknown", a->name);
+    return(0);
+}
+
+/*
+ * Unlink any sudoers temp files that remain.
+ */
+void
+cleanup(gotsignal)
+    int gotsignal;
+{
+    struct sudoersfile *sp;
+
+    tq_foreach_fwd(&sudoerslist, sp) {
+	if (sp->tpath != NULL)
+	    (void) unlink(sp->tpath);
+    }
+    if (!gotsignal) {
+	sudo_endpwent();
+	sudo_endgrent();
+    }
+}
+
+/*
+ * Unlink sudoers temp files (if any) and exit.
  */
 static RETSIGTYPE
-Exit(sig)
-    int sig;
+quit(signo)
+    int signo;
 {
+    cleanup(signo);
 #define	emsg	 " exiting due to signal.\n"
-
-    (void) unlink(sudoers.tpath);
-
-    if (sig > 0) {
-	write(STDERR_FILENO, getprogname(), strlen(getprogname()));
-	write(STDERR_FILENO, emsg, sizeof(emsg) - 1);
-	_exit(sig);
-    }
-    exit(-sig);
+    write(STDERR_FILENO, getprogname(), strlen(getprogname()));
+    write(STDERR_FILENO, emsg, sizeof(emsg) - 1);
+    _exit(signo);
 }
 
 static void

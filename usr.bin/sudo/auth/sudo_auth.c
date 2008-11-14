@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,7 +53,7 @@
 #include "insults.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.33.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.37 2008/03/02 14:31:57 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -195,7 +195,8 @@ verify_user(pw, prompt)
 		break;
 	}
 
-	pass_warn(stderr);
+	if (!ISSET(tgetpass_flags, TGP_ASKPASS))
+	    pass_warn(stderr);
     }
 
 cleanup:

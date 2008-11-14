@@ -46,12 +46,11 @@
 #include "sudo.h"
 #include "sudo_auth.h"
 
-#undef VOID
 #include <afs/stds.h>
 #include <afs/kautils.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: afs.c,v 1.10.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: afs.c,v 1.14 2007/08/31 23:30:07 millert Exp $";
 #endif /* lint */
 
 int

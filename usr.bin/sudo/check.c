@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1993-1996,1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2005, 2007-2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,11 +46,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -63,7 +59,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: check.c,v 1.223.2.10 2008/01/05 23:59:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: check.c,v 1.244 2008/11/11 18:28:08 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -88,8 +84,9 @@ static void  update_timestamp	__P((char *, char *));
  * verify who he/she is.
  */
 void
-check_user(validated)
+check_user(validated, interactive)
     int validated;
+    int interactive;
 {
     char *timestampdir = NULL;
     char *timestampfile = NULL;
@@ -103,7 +100,29 @@ check_user(validated)
     status = timestamp_status(timestampdir, timestampfile, user_name,
 	TS_MAKE_DIRS);
     if (status != TS_CURRENT || ISSET(validated, FLAG_CHECK_USER)) {
-	lecture(status);
+	/* Bail out if we are non-interactive and a password is required */
+	if (!interactive)
+	    errorx(1, "sorry, a password is required to run %s", getprogname());
+
+	/* If user specified -A, make sure we have an askpass helper. */
+	if (ISSET(tgetpass_flags, TGP_ASKPASS)) {
+	    if (user_askpass == NULL)
+		log_error(NO_MAIL,
+		    "no askpass program specified, try setting SUDO_ASKPASS");
+	} else {
+	    /* If no tty but DISPLAY is set, use askpass if we have it. */
+	    if (!user_ttypath && !ISSET(tgetpass_flags, TGP_STDIN)) {
+		if (user_askpass && user_display && *user_display != '\0') {
+		    SET(tgetpass_flags, TGP_ASKPASS);
+		} else if (!def_visiblepw) {
+		    log_error(NO_MAIL,
+			"no tty present and no askpass program specified");
+		}
+	    }
+	}
+
+	if (!ISSET(tgetpass_flags, TGP_ASKPASS))
+	    lecture(status);
 
 	/* Expand any escapes in the prompt. */
 	prompt = expand_prompt(user_prompt ? user_prompt : def_passprompt,
@@ -211,7 +230,7 @@ expand_prompt(old_prompt, user, host)
 		    if (def_rootpw)
 			    len += 2;
 		    else if (def_targetpw || def_runaspw)
-			    len += strlen(*user_runas) - 2;
+			    len += strlen(runas_pw->pw_name) - 2;
 		    else
 			    len += strlen(user_name) - 2;
 		    subst = 1;
@@ -223,7 +242,7 @@ expand_prompt(old_prompt, user, host)
 		    break;
 		case 'U':
 		    p++;
-		    len += strlen(*user_runas) - 2;
+		    len += strlen(runas_pw->pw_name) - 2;
 		    subst = 1;
 		    break;
 		case '%':
@@ -262,7 +281,7 @@ expand_prompt(old_prompt, user, host)
 			if (def_rootpw)
 				n = strlcpy(np, "root", np - endp);
 			else if (def_targetpw || def_runaspw)
-				n = strlcpy(np, *user_runas, np - endp);
+				n = strlcpy(np, runas_pw->pw_name, np - endp);
 			else
 				n = strlcpy(np, user_name, np - endp);
 			if (n >= np - endp)
@@ -278,7 +297,7 @@ expand_prompt(old_prompt, user, host)
 			continue;
 		    case 'U':
 			p++;
-			n = strlcpy(np,  *user_runas, np - endp);
+			n = strlcpy(np,  runas_pw->pw_name, np - endp);
 			if (n >= np - endp)
 			    goto oflow;
 			np += n;
@@ -304,7 +323,7 @@ expand_prompt(old_prompt, user, host)
 
 oflow:
     /* We pre-allocate enough space, so this should never happen. */
-    errx(1, "internal error, expand_prompt() overflow");
+    errorx(1, "internal error, expand_prompt() overflow");
 }
 
 /*
@@ -319,7 +338,7 @@ user_is_exempt()
     if (!def_exempt_group)
 	return(FALSE);
 
-    if (!(grp = getgrnam(def_exempt_group)))
+    if (!(grp = sudo_getgrnam(def_exempt_group)))
 	return(FALSE);
 
     if (user_gid == grp->gr_gid)
@@ -362,14 +381,14 @@ build_timestamp(timestampdir, timestampfile)
 	    p = user_tty;
 	if (def_targetpw)
 	    len = easprintf(timestampfile, "%s/%s/%s:%s", dirparent, user_name,
-		p, *user_runas);
+		p, runas_pw->pw_name);
 	else
 	    len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name, p);
 	if (len >= PATH_MAX)
 	    log_error(0, "timestamp path too long: %s", *timestampfile);
     } else if (def_targetpw) {
 	len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name,
-	    *user_runas);
+	    runas_pw->pw_name);
 	if (len >= PATH_MAX)
 	    log_error(0, "timestamp path too long: %s", *timestampfile);
     } else
@@ -584,7 +603,7 @@ remove_timestamp(remove)
 	} else {
 	    timespecclear(&ts);
 	    if (touch(-1, path, &ts) == -1)
-		err(1, "can't reset %s to Epoch", path);
+		error(1, "can't reset %s to Epoch", path);
 	}
     }
 

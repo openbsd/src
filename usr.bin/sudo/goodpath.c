@@ -39,7 +39,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: goodpath.c,v 1.40.2.3 2007/06/12 01:28:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: goodpath.c,v 1.44 2005/02/12 22:56:06 millert Exp $";
 #endif /* lint */
 
 /*

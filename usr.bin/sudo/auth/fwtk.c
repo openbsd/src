@@ -41,11 +41,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 #include <auth.h>
@@ -55,7 +50,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: fwtk.c,v 1.23.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: fwtk.c,v 1.27 2005/02/12 22:56:07 millert Exp $";
 #endif /* lint */
 
 int
@@ -68,22 +63,22 @@ fwtk_init(pw, promptp, auth)
     char resp[128];			/* Response from the server */
 
     if ((confp = cfg_read("sudo")) == (Cfg *)-1) {
-	warnx("cannot read fwtk config");
+	warningx("cannot read fwtk config");
 	return(AUTH_FATAL);
     }
 
     if (auth_open(confp)) {
-	warnx("cannot connect to authentication server");
+	warningx("cannot connect to authentication server");
 	return(AUTH_FATAL);
     }
 
     /* Get welcome message from auth server */
     if (auth_recv(resp, sizeof(resp))) {
-	warnx("lost connection to authentication server");
+	warningx("lost connection to authentication server");
 	return(AUTH_FATAL);
     }
     if (strncmp(resp, "Authsrv ready", 13) != 0) {
-	warnx("authentication server error:\n%s", resp);
+	warningx("authentication server error:\n%s", resp);
 	return(AUTH_FATAL);
     }
 
@@ -106,7 +101,7 @@ fwtk_verify(pw, prompt, auth)
     (void) snprintf(buf, sizeof(buf), "authorize %s 'sudo'", pw->pw_name);
 restart:
     if (auth_send(buf) || auth_recv(resp, sizeof(resp))) {
-	warnx("lost connection to authentication server");
+	warningx("lost connection to authentication server");
 	return(AUTH_FATAL);
     }
 
@@ -128,7 +123,7 @@ restart:
 	strlcpy(buf, "response dummy", sizeof(buf));
 	goto restart;
     } else {
-	warnx("%s", resp);
+	warningx("%s", resp);
 	return(AUTH_FATAL);
     }
     if (!pass) {			/* ^C or error */
@@ -140,7 +135,7 @@ restart:
     /* Send the user's response to the server */
     (void) snprintf(buf, sizeof(buf), "response '%s'", pass);
     if (auth_send(buf) || auth_recv(resp, sizeof(resp))) {
-	warnx("lost connection to authentication server");
+	warningx("lost connection to authentication server");
 	error = AUTH_FATAL;
 	goto done;
     }
@@ -152,7 +147,7 @@ restart:
 
     /* Main loop prints "Permission Denied" or insult. */
     if (strcmp(resp, "Permission Denied.") != 0)
-	warnx("%s", resp);
+	warningx("%s", resp);
     error = AUTH_FAILURE;
 done:
     zero_bytes(pass, strlen(pass));

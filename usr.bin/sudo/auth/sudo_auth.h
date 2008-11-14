@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: sudo_auth.h,v 1.20.2.2 2007/06/12 01:28:42 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.23 2007/08/31 23:30:07 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H
@@ -28,7 +28,7 @@ typedef struct sudo_auth {
     short flags;		/* various flags, see below */
     short status;		/* status from verify routine */
     char *name;			/* name of the method as a string */
-    VOID *data;			/* method-specific data pointer */
+    void *data;			/* method-specific data pointer */
     int (*init) __P((struct passwd *pw, char **prompt, struct sudo_auth *auth));
     int (*setup) __P((struct passwd *pw, char **prompt, struct sudo_auth *auth));
     int (*verify) __P((struct passwd *pw, char *p, struct sudo_auth *auth));

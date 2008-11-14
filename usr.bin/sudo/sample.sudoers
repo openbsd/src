@@ -5,6 +5,17 @@
 #
 # See the sudoers man page for the details on how to write a sudoers file.
 #
+# $Sudo: sample.sudoers,v 1.29 2008/10/03 19:55:57 millert Exp $
+
+##
+# Override built-in defaults
+##
+Defaults		syslog=auth
+Defaults>root		!set_logname
+Defaults:FULLTIMERS	!lecture
+Defaults:millert	!authenticate
+Defaults@SERVERS	log_year, logfile=/var/log/sudo.log
+Defaults!PAGERS		noexec
 
 ##
 # User alias specification
@@ -47,15 +58,7 @@ Cmnd_Alias	SHELLS = /sbin/sh, /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
 Cmnd_Alias	SU = /usr/bin/su
 Cmnd_Alias	VIPW = /usr/sbin/vipw, /usr/bin/passwd, /usr/bin/chsh, \
 		       /usr/bin/chfn
-
-##
-# Override built-in defaults
-##
-Defaults               syslog=auth
-Defaults>root          !set_logname
-Defaults:FULLTIMERS    !lecture
-Defaults:millert       !authenticate
-Defaults@SERVERS       log_year, logfile=/var/log/sudo.log
+Cmnd_Alias	PAGERS = /usr/bin/more, /usr/bin/pg, /usr/bin/less
 
 ##
 # User specification
@@ -85,7 +88,7 @@ operator	ALL = DUMPS, KILL, SHUTDOWN, HALT, REBOOT, PRINTING,\
 joe		ALL = /usr/bin/su operator
 
 # pete may change passwords for anyone but root on the hp snakes
-pete		HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root
+pete		HPPA = /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
 
 # bob may run anything on the sparc and sgi machines as any user
 # listed in the Runas_Alias "OP" (ie: root and operator)

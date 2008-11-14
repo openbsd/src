@@ -1,4 +1,5 @@
-Copyright (c) 1996,1998-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 1996,1998-2005, 2007-2008
+	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: visudo.pod,v 1.38.2.10 2008/02/19 15:45:12 millert Exp $
+$Sudo: visudo.pod,v 1.54 2008/11/09 14:13:13 millert Exp $
 =pod
 
 =head1 NAME
@@ -66,7 +67,7 @@ error occurred (if the editor supports this feature).
 
 B<visudo> accepts the following command line options:
 
-=over 4
+=over 12
 
 =item -c
 
@@ -77,7 +78,7 @@ If the syntax check completes successfully, B<visudo> will
 exit with a value of 0.  If a syntax error is encountered,
 B<visudo> will exit with a value of 1.
 
-=item -f
+=item -f I<sudoers>
 
 Specify and alternate I<sudoers> file location.  With this option
 B<visudo> will edit (or check) the I<sudoers> file of your choice,
@@ -107,8 +108,8 @@ and exit.
 
 =head1 ENVIRONMENT
 
-The following environment variables are used only if B<visudo>
-was configured with the I<--with-env-editor> option:
+The following environment variables may be consulted depending on
+the value of the I<editor> and I<env_editor> I<sudoers> variables:
 
 =over 16
 
@@ -152,26 +153,19 @@ You didn't run B<visudo> as root.
 
 Your userid does not appear in the system passwd file.
 
-=item Warning: undeclared Alias referenced near ...
+=item Warning: {User,Runas,Host,Cmnd}_Alias referenced but not defined
 
-Either you are using a {User,Runas,Host,Cmnd}_Alias before
-defining it or you have a user or hostname listed that
-consists solely of uppercase letters, digits, and the
-underscore ('_') character.  If the latter, you can ignore
-the warnings (B<sudo> will not complain).  In B<-s> (strict)
-mode these are errors, not warnings.
+Either you are trying to use an undeclare {User,Runas,Host,Cmnd}_Alias
+or you have a user or hostname listed that consists solely of
+uppercase letters, digits, and the underscore ('_') character.  In
+the latter case, you can ignore the warnings (B<sudo> will not
+complain).  In B<-s> (strict) mode these are errors, not warnings.
 
-=item Warning: runas_default set after old value is in use ...
+=item Warning: unused {User,Runas,Host,Cmnd}_Alias
 
-You have a I<runas_default> Defaults setting listed in the I<sudoers>
-file after its value has already been used.  This means that entries
-prior to the I<runas_default> setting will match based on the default
-value of I<runas_default> (C<@runas_default@>) whereas entries
-B<after> the I<runas_default> setting will match based on the new
-value.  This is usually unintentional and in most cases the
-<runas_default> setting should be placed before any C<Runas_Alias>
-or User specifications.  In B<-s> (strict) mode this is an error,
-not a warning.
+The specified {User,Runas,Host,Cmnd}_Alias was defined but never
+used.  You may wish to comment out or remove the unused alias.  In
+B<-s> (strict) mode this is an error, not a warning.
 
 =back
 

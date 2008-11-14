@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: interfaces.h,v 1.8.2.3 2007/10/24 16:43:27 millert Exp $
+ * $Sudo: interfaces.h,v 1.12 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_INTERFACES_H

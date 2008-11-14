@@ -47,7 +47,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.18.2.3 2007/06/21 22:29:15 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.22 2007/06/21 22:28:40 millert Exp $";
 #endif /* lint */
 
 /*

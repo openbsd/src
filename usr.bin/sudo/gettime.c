@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005, 2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,13 +29,12 @@
 #include <compat.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: gettime.c,v 1.6.2.5 2007/06/12 01:28:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: gettime.c,v 1.8 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 /*
  * Get the current time via gettimeofday() for systems with
  * timespecs in struct stat or, otherwise, using time().
- * XXX - configure check for gettimeofday() - XXX
  */
 int
 gettime(ts)

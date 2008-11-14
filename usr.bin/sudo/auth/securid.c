@@ -44,11 +44,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 #include <sdi_athd.h>
@@ -59,7 +54,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: securid.c,v 1.12.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: securid.c,v 1.17 2007/08/31 23:30:07 millert Exp $";
 #endif /* lint */
 
 union config_record configure;
@@ -72,7 +67,7 @@ securid_init(pw, promptp, auth)
 {
     static struct SD_CLIENT sd_dat;		/* SecurID data block */
 
-    auth->data = (VOID *) &sd_dat;		/* For method-specific data */
+    auth->data = (void *) &sd_dat;		/* For method-specific data */
 
     if (creadcfg() == 0)
 	return(AUTH_SUCCESS);
@@ -94,7 +89,7 @@ securid_setup(pw, promptp, auth)
 	strlcpy(sd->username, pw->pw_name, 32);
 	return(AUTH_SUCCESS);
     } else {
-	warnx("unable to contact the SecurID server");
+	warningx("unable to contact the SecurID server");
 	return(AUTH_FATAL);
     }
 }

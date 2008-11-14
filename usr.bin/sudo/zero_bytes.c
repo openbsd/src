@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 #include <compat.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: zero_bytes.c,v 1.2.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: zero_bytes.c,v 1.7 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 /*
@@ -29,7 +29,7 @@ __unused static const char rcsid[] = "$Sudo: zero_bytes.c,v 1.2.2.2 2007/06/12 0
  */
 void
 zero_bytes(v, n)
-    volatile VOID *v;
+    volatile void *v;
     size_t n;
 {
     volatile char *p, *ep;

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,17 +43,14 @@
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <ctype.h>
 
 #include "sudo.h"
+#include "parse.h"
+#include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: defaults.c,v 1.48.2.5 2007/06/18 15:51:35 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: defaults.c,v 1.73 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 /*
@@ -94,8 +92,6 @@ static struct strmap priorities[] = {
 	{ "warning",	LOG_WARNING },
 	{ NULL,		-1 }
 };
-
-extern int sudolineno;
 
 /*
  * Local prototypes.
@@ -232,8 +228,7 @@ set_default(var, val, op)
 	    break;
     }
     if (!cur->name) {
-	warnx("unknown defaults entry `%s' referenced near line %d",
-	    var, sudolineno);
+	warningx("unknown defaults entry `%s'", var);
 	return(FALSE);
     }
 
@@ -241,20 +236,18 @@ set_default(var, val, op)
 	case T_LOGFAC:
 	    if (!store_syslogfac(val, cur, op)) {
 		if (val)
-		    warnx("value `%s' is invalid for option `%s'", val, var);
+		    warningx("value `%s' is invalid for option `%s'", val, var);
 		else
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		return(FALSE);
 	    }
 	    break;
 	case T_LOGPRI:
 	    if (!store_syslogpri(val, cur, op)) {
 		if (val)
-		    warnx("value `%s' is invalid for option `%s'", val, var);
+		    warningx("value `%s' is invalid for option `%s'", val, var);
 		else
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		return(FALSE);
 	    }
 	    break;
@@ -262,17 +255,16 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		    return(FALSE);
 		}
 	    }
 	    if (ISSET(cur->type, T_PATH) && val && *val != '/') {
-		warnx("values for `%s' must start with a '/'", var);
+		warningx("values for `%s' must start with a '/'", var);
 		return(FALSE);
 	    }
 	    if (!store_str(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -280,13 +272,12 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_int(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -294,13 +285,12 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_uint(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -308,20 +298,18 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_mode(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
 	case T_FLAG:
 	    if (val) {
-		warnx("option `%s' does not take a value on line %d",
-		    var, sudolineno);
+		warningx("option `%s' does not take a value", var);
 		return(FALSE);
 	    }
 	    cur->sd_un.flag = op;
@@ -334,24 +322,22 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
+		    warningx("no value specified for `%s'", var);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_list(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
 	case T_TUPLE:
 	    if (!val && !ISSET(cur->type, T_BOOL)) {
-		warnx("no value specified for `%s' on line %d",
-		    var, sudolineno);
+		warningx("no value specified for `%s'", var);
 		return(FALSE);
 	    }
 	    if (!store_tuple(val, cur, op)) {
-		warnx("value `%s' is invalid for option `%s'", val, var);
+		warningx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -370,9 +356,9 @@ init_defaults()
     static int firsttime = 1;
     struct sudo_defs_types *def;
 
-    /* Free any strings that were set. */
+    /* Clear any old settings. */
     if (!firsttime) {
-	for (def = sudo_defs_table; def->name; def++)
+	for (def = sudo_defs_table; def->name; def++) {
 	    switch (def->type & T_MASK) {
 		case T_STR:
 		    efree(def->sd_un.str);
@@ -382,6 +368,8 @@ init_defaults()
 		    list_op(NULL, 0, def, freeall);
 		    break;
 	    }
+	    zero_bytes(&def->sd_un, sizeof(def->sd_un));
+	}
     }
 
     /* First initialize the flags. */
@@ -436,8 +424,13 @@ init_defaults()
 #ifdef ENV_EDITOR
     def_env_editor = TRUE;
 #endif
+#ifdef _PATH_SUDO_ASKPASS
+    def_askpass = estrdup(_PATH_SUDO_ASKPASS);
+#endif
+    def_sudoers_locale = estrdup("C");
     def_env_reset = TRUE;
     def_set_logname = TRUE;
+    def_closefrom = STDERR_FILENO + 1;
 
     /* Syslog options need special care since they both strings and ints */
 #if (LOGGING & SLOG_SYSLOG)
@@ -480,6 +473,9 @@ init_defaults()
 #ifdef EXEMPTGROUP
     def_exempt_group = estrdup(EXEMPTGROUP);
 #endif
+#ifdef SECURE_PATH
+    def_secure_path = estrdup(SECURE_PATH);
+#endif
     def_editor = estrdup(EDITOR);
 #ifdef _PATH_SUDO_NOEXEC
     def_noexec_file = estrdup(_PATH_SUDO_NOEXEC);
@@ -488,15 +484,53 @@ init_defaults()
     /* Finally do the lists (currently just environment tables). */
     init_envtables();
 
-    /*
-     * The following depend on the above values.
-     * We use a pointer to the string so that if its
-     * value changes we get the change.
-     */
-    if (user_runas == NULL)
-	user_runas = &def_runas_default;
-
     firsttime = 0;
+}
+
+/*
+ * Update the defaults based on what was set by sudoers.
+ * Pass in a an OR'd list of which default types to update.
+ */
+int
+update_defaults(what)
+    int what;
+{
+    struct defaults *def;
+
+    tq_foreach_fwd(&defaults, def) {
+	switch (def->type) {
+	    case DEFAULTS:
+		if (ISSET(what, SETDEF_GENERIC) &&
+		    !set_default(def->var, def->val, def->op))
+		    return(FALSE);
+		break;
+	    case DEFAULTS_USER:
+		if (ISSET(what, SETDEF_USER) &&
+		    userlist_matches(sudo_user.pw, &def->binding) == ALLOW &&
+		    !set_default(def->var, def->val, def->op))
+		    return(FALSE);
+		break;
+	    case DEFAULTS_RUNAS:
+		if (ISSET(what, SETDEF_RUNAS) &&
+		    runaslist_matches(&def->binding, NULL) == ALLOW &&
+		    !set_default(def->var, def->val, def->op))
+		    return(FALSE);
+		break;
+	    case DEFAULTS_HOST:
+		if (ISSET(what, SETDEF_HOST) &&
+		    hostlist_matches(&def->binding) == ALLOW &&
+		    !set_default(def->var, def->val, def->op))
+		    return(FALSE);
+		break;
+	    case DEFAULTS_CMND:
+		if (ISSET(what, SETDEF_CMND) &&
+		    cmndlist_matches(&def->binding) == ALLOW &&
+		    !set_default(def->var, def->val, def->op))
+		    return(FALSE);
+		break;
+	}
+    }
+    return(TRUE);
 }
 
 static int
@@ -661,9 +695,9 @@ logfac2str(n)
 
     for (fac = facilities; fac->name && fac->num != n; fac++)
 	;
-    return (fac->name);
+    return(fac->name);
 #else
-    return ("default");
+    return("default");
 #endif /* LOG_NFACILITIES */
 }
 
@@ -695,7 +729,7 @@ logpri2str(n)
 
     for (pri = priorities; pri->name && pri->num != n; pri++)
 	;
-    return (pri->name);
+    return(pri->name);
 }
 
 static int

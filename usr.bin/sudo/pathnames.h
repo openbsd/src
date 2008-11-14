@@ -19,7 +19,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: pathnames.h.in,v 1.51.2.4 2008/02/09 14:44:48 millert Exp $
+ * $Sudo: pathnames.h.in,v 1.62 2008/03/02 14:31:56 millert Exp $
  */
 
 /*
@@ -46,21 +46,16 @@
 #define _PATH_DEFPATH		"/usr/bin:/bin"
 #endif /* _PATH_DEFPATH */
 
+#ifndef _PATH_ENVIRONMENT
+#define _PATH_ENVIRONMENT	"/etc/environment"
+#endif /* _PATH_ENVIRONMENT */
+
 /*
  * NOTE: _PATH_SUDOERS is usually overriden by the Makefile.
  */
 #ifndef _PATH_SUDOERS
 #define _PATH_SUDOERS		"/etc/sudoers"
 #endif /* _PATH_SUDOERS */
-
-/*
- * NOTE:  _PATH_SUDOERS_TMP is usually overriden by the Makefile.
- *        _PATH_SUDOERS_TMP *MUST* be on the same partition
- *        as _PATH_SUDOERS!
- */
-#ifndef _PATH_SUDOERS_TMP
-#define _PATH_SUDOERS_TMP	"/etc/sudoers.tmp"
-#endif /* _PATH_SUDOERS_TMP */
 
 /*
  * The following paths are controlled via the configure script.
@@ -90,6 +85,10 @@
 #define _PATH_SUDO_NOEXEC "/usr/local/libexec/sudo_noexec.so"
 #endif /* _PATH_SUDO_NOEXEC */
 
+#ifndef _PATH_SUDO_ASKPASS
+/* #undef _PATH_SUDO_ASKPASS */
+#endif /* _PATH_SUDO_ASKPASS */
+
 #ifndef _PATH_VI
 #define _PATH_VI "/usr/bin/vi"
 #endif /* _PATH_VI */
@@ -101,10 +100,6 @@
 #ifndef _PATH_BSHELL
 #define _PATH_BSHELL "/bin/sh"
 #endif /* _PATH_BSHELL */
-
-#ifndef _PATH_SUDO_SESH
-#define	_PATH_SUDO_SESH "/usr/local/libexec/sesh"
-#endif /* _PATH_SUDO_SESH */
 
 #ifndef _PATH_TMP
 #define	_PATH_TMP	"/tmp/"
@@ -118,10 +113,18 @@
 #define	_PATH_USRTMP	"/usr/tmp/"
 #endif /* _PATH_USRTMP */
 
+#ifndef _PATH_SUDO_SESH
+#define _PATH_SUDO_SESH "/usr/local/libexec/sesh"
+#endif /* _PATH_SUDO_SESH */
+
 #ifndef _PATH_LDAP_CONF
-#define	_PATH_LDAP_CONF	"/etc/ldap.conf"
+#define	_PATH_LDAP_CONF "/etc/ldap.conf"
 #endif /* _PATH_LDAP_CONF */
 
 #ifndef _PATH_LDAP_SECRET
-#define _PATH_LDAP_SECRET	"/etc/ldap.secret"
+#define	_PATH_LDAP_SECRET "/etc/ldap.secret"
 #endif /* _PATH_LDAP_SECRET */
+
+#ifndef _PATH_NSSWITCH_CONF
+#define	_PATH_NSSWITCH_CONF "/etc/nsswitch.conf"
+#endif /* _PATH_NSSWITCH_CONF */

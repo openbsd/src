@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.9 2008/07/31 16:44:03 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.10 2008/11/14 11:58:08 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -13,7 +13,6 @@
 #define HAVE_CLOSEFROM 1
 #define HAVE_DIRENT_H 1
 #define HAVE_DIRFD 1
-#define HAVE_ERR_H 1
 #define HAVE_EXTENDED_GLOB 1
 #define HAVE_FNMATCH 1
 #define HAVE_FREEIFADDRS 1
@@ -34,7 +33,6 @@
 #define HAVE_LOCKF 1
 #define HAVE_LOGIN_CAP_H 1
 #define HAVE_LONG_LONG 1
-#define HAVE_LSEARCH 1
 #define HAVE_MALLOC_H 1
 #define HAVE_MEMCHR 1
 #define HAVE_MEMCPY 1

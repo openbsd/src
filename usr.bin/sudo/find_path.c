@@ -42,16 +42,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: find_path.c,v 1.108.2.4 2007/06/12 01:43:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: find_path.c,v 1.115 2005/03/29 14:29:46 millert Exp $";
 #endif /* lint */
 
 /*
@@ -76,7 +71,7 @@ find_path(infile, outfile, sbp, path)
     int len;			/* length parameter */
 
     if (strlen(infile) >= PATH_MAX)
-	errx(1, "%s: File name too long", infile);
+	errorx(1, "%s: File name too long", infile);
 
     /*
      * If we were given a fully qualified or relative path
@@ -92,11 +87,9 @@ find_path(infile, outfile, sbp, path)
     }
 
     /* Use PATH passed in unless SECURE_PATH is in effect.  */
-#ifdef SECURE_PATH
-    if (!user_is_exempt())
-	path = SECURE_PATH;
-#endif /* SECURE_PATH */
-    if (path == NULL)
+    if (def_secure_path && !user_is_exempt())
+	path = def_secure_path;
+    else if (path == NULL)
 	return(NOT_FOUND);
     path = estrdup(path);
     origpath = path;
@@ -120,7 +113,7 @@ find_path(infile, outfile, sbp, path)
 	 */
 	len = snprintf(command, sizeof(command), "%s/%s", path, infile);
 	if (len <= 0 || len >= sizeof(command))
-	    errx(1, "%s: File name too long", infile);
+	    errorx(1, "%s: File name too long", infile);
 	if ((result = sudo_goodpath(command, sbp)))
 	    break;
 

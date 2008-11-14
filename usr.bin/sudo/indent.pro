@@ -1,13 +1,14 @@
--di4
 -br
 -cdb
 -ce
 -d0
+-di1
 -ei
--lp
+-i4
+-nlp
 -npcs
--ps
 -npsl
+-ps
 -sc
 -TYYSTYPE
 -TLIST

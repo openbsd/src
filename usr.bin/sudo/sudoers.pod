@@ -1,4 +1,4 @@
-Copyright (c) 1994-1996, 1998-2005, 2007
+Copyright (c) 1994-1996, 1998-2005, 2007-2008
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.95.2.27 2008/07/12 12:49:04 millert Exp $
+$Sudo: sudoers.pod,v 1.152 2008/11/09 14:13:13 millert Exp $
 =pod
 
 =head1 NAME
@@ -113,32 +113,32 @@ The definitions of what constitutes a valid I<alias> member follow.
 	       User ',' User_List
 
  User ::= '!'* username |
+	  '!'* '#'uid |
 	  '!'* '%'group |
 	  '!'* '+'netgroup |
 	  '!'* User_Alias
 
-A C<User_List> is made up of one or more usernames, system groups
-(prefixed with '%'), netgroups (prefixed with '+') and other aliases.
-Each list item may be prefixed with one or more '!' operators.
-An odd number of '!' operators negate the value of the item; an even
-number just cancel each other out.
+A C<User_List> is made up of one or more usernames, uids (prefixed
+with '#'), system groups (prefixed with '%'), netgroups (prefixed
+with '+') and C<User_Alias>es.  Each list item may be prefixed with
+zero or more '!' operators.  An odd number of '!' operators negate
+the value of the item; an even number just cancel each other out.
 
- Runas_List ::= Runas_User |
-		Runas_User ',' Runas_List
+ Runas_List ::= Runas_Member |
+		Runas_Member ',' Runas_List
 
- Runas_User ::= '!'* username |
-	        '!'* '#'uid |
-	        '!'* '%'group |
-	        '!'* +netgroup |
-	        '!'* Runas_Alias
+ Runas_Member ::= '!'* username |
+	          '!'* '#'uid |
+	          '!'* '%'group |
+	          '!'* +netgroup |
+	          '!'* Runas_Alias
 
-A C<Runas_List> is similar to a C<User_List> except that it can
-also contain uids (prefixed with '#') and instead of C<User_Alias>es
-it can contain C<Runas_Alias>es.  Note that usernames and groups
-are matched as strings.  In other words, two users (groups) with
-the same uid (gid) are considered to be distinct.  If you wish to
-match all usernames with the same uid (e.g.E<nbsp>root and toor), you
-can use a uid instead (#0 in the example given).
+A C<Runas_List> is similar to a C<User_List> except that instead
+of C<User_Alias>es it can contain C<Runas_Alias>es.  Note that
+usernames and groups are matched as strings.  In other words, two
+users (groups) with the same uid (gid) are considered to be distinct.
+If you wish to match all usernames with the same uid (e.g.E<nbsp>root
+and toor), you can use a uid instead (#0 in the example given).
 
  Host_List ::= Host |
 	       Host ',' Host_List
@@ -201,11 +201,15 @@ a normal command does.
 Certain configuration options may be changed from their default
 values at runtime via one or more C<Default_Entry> lines.  These
 may affect all users on any host, all users on a specific host, a
-specific user, or commands being run as a specific user.
+specific user, a specific command, or commands being run as a specific user.
+Note that per-command entries may not include command line arguments.
+If you need to specify arguments, define a C<Cmnd_Alias> and reference
+that instead.
 
  Default_Type ::= 'Defaults' |
 		  'Defaults' '@' Host_List |
 		  'Defaults' ':' User_List |
+		  'Defaults' '!' Cmnd_List |
 		  'Defaults' '>' Runas_List
 
  Default_Entry ::= Default_Type Parameter_List
@@ -230,6 +234,10 @@ These operators are used to add to and delete from a list respectively.
 It is not an error to use the C<-=> operator to remove an element
 that does not exist in a list.
 
+Defaults entries are parsed in the following order: generic, host
+and user Defaults first, then runas Defaults and finally command
+defaults.
+
 See L</"SUDOERS OPTIONS"> for a list of supported Defaults parameters.
 
 =head2 User Specification
@@ -242,10 +250,10 @@ See L</"SUDOERS OPTIONS"> for a list of supported Defaults parameters.
 
  Cmnd_Spec ::= Runas_Spec? Tag_Spec* Cmnd
 
- Runas_Spec ::= '(' Runas_List ')'
+ Runas_Spec ::= '(' Runas_List? (: Runas_List)? ')'
 
  Tag_Spec ::= ('NOPASSWD:' | 'PASSWD:' | 'NOEXEC:' | 'EXEC:' |
-	       'SETENV:' | 'NOSETENV:')
+	       'SETENV:' | 'NOSETENV:' )
 
 A B<user specification> determines which commands a user may run
 (and as what user) on specified hosts.  By default, commands are
@@ -255,11 +263,24 @@ Let's break that down into its constituent parts:
 
 =head2 Runas_Spec
 
-A C<Runas_Spec> is simply a C<Runas_List> (as defined above)
-enclosed in a set of parentheses.  If you do not specify a
-C<Runas_Spec> in the user specification, a default C<Runas_Spec>
-of B<root> will be used.  A C<Runas_Spec> sets the default for
-commands that follow it.  What this means is that for the entry:
+A C<Runas_Spec> determines the user and/or the group that a command
+may be run as.  A fully-specified C<Runas_Spec> consists of two
+C<Runas_List>s (as defined above) separated by a colon (':') and
+enclosed in a set of parentheses.  The first C<Runas_List> indicates
+which users the command may be run as via B<sudo>'s B<-u> flag.
+The second defines a list of groups that can be specified via
+B<sudo>'s B<-g> flag.  If both C<Runas_List>s are specified, the
+command may be run with any combination of users and groups listed
+in their respective C<Runas_List>s.  If only the first is specified,
+the command may be run as any user in the list but no B<-g> flag
+may be specified.  If the first C<Runas_List> is empty but the
+second is specified, the command may be run as the invoking user
+with the group set to any listed in the C<Runas_List>.  If no
+C<Runas_Spec> is specified the command may be run as B<root> and
+no group may be specified.
+
+A C<Runas_Spec> sets the default for the commands that follow it.
+What this means is that for the entry:
 
  dgb	boulder = (operator) /bin/ls, /bin/kill, /usr/bin/lprm
 
@@ -276,10 +297,23 @@ entry.  If we modify the entry like so:
 Then user B<dgb> is now allowed to run F</bin/ls> as B<operator>,
 but  F</bin/kill> and F</usr/bin/lprm> as B<root>.
 
+We can extend this to allow B<dgb> to run C</bin/ls> with either
+the user or group set to B<operator>:
+
+ dgb	boulder = (operator : operator) /bin/ls, (root) /bin/kill, \
+	/usr/bin/lprm
+
+In the following example, user B<tcm> may run commands that access
+a modem device file with the dialer group.  Note that in this example
+only the group will be set, the command still runs as user B<tcm>.
+
+ tcm	boulder = (:dialer) /usr/bin/tip, /usr/bin/cu, \
+	/usr/local/bin/minicom
+
 =head2 Tag_Spec
 
 A command may have zero or more tags associated with it.  There are
-six possible tag values, C<NOPASSWD>, C<PASSWD>, C<NOEXEC>, C<EXEC>,
+eight possible tag values, C<NOPASSWD>, C<PASSWD>, C<NOEXEC>, C<EXEC>,
 C<SETENV> and C<NOSETENV>.
 Once a tag is set on a C<Cmnd>, subsequent C<Cmnd>s in the
 C<Cmnd_Spec_List>, inherit the tag unless it is overridden by the
@@ -371,6 +405,15 @@ escape special characters such as: "*", "?", "[", and "}".
 
 =back
 
+POSIX character classes may also be used if your system's
+L<fnmatch(3)> function supports them.  However, because the
+C<':'> character has special meaning in I<sudoers>, it must
+be escaped.  For example:
+
+    /bin/ls [[\:alpha\:]]*
+
+Would match any filename beginning with a letter.
+
 Note that a forward slash ('/') will B<not> be matched by
 wildcards used in the pathname.  When matching the command
 line arguments, however, a slash B<does> get matched by
@@ -393,6 +436,26 @@ I<sudoers> entry it means that command is not allowed to be run
 with B<any> arguments.
 
 =back
+
+=head2 Including other files from within sudoers
+
+It is possible to include other I<sudoers> files from within the
+I<sudoers> file currently being parsed using the C<#include>
+directive, similar to the one used by the C preprocessor.  This is
+useful, for example, for keeping a site-wide I<sudoers> file in
+addition to a per-machine local one.  For the sake of this example
+the site-wide I<sudoers> will be F</etc/sudoers> and the per-machine
+one will be F</etc/sudoers.local>.  To include F</etc/sudoers.local>
+from F</etc/sudoers> we would use the following line in F</etc/sudoers>:
+
+ #include /etc/sudoers.local
+
+When B<sudo> reaches this line it will suspend processing of the
+current file (F</etc/sudoers>) and switch to F</etc/sudoers.local>.
+Upon reaching the end of F</etc/sudoers.local>, the rest of
+F</etc/sudoers> will be processed.  Files that are included may
+themselves include other files.  A hard limit of 128 nested include
+files is enforced to prevent include file loops.
 
 =head2 Other special characters and reserved words
 
@@ -451,6 +514,12 @@ means of authentication) before they may run commands.  This default
 may be overridden via the C<PASSWD> and C<NOPASSWD> tags.
 This flag is I<on> by default.
 
+=item closefrom_override
+
+If set, the user may use B<sudo>'s B<-C> option which
+overrides the default starting point at which B<sudo> begins
+closing open file descriptors.  This flag is I<off> by default.
+
 =item env_editor
 
 If set, B<visudo> will use the value of the EDITOR or VISUAL
@@ -469,9 +538,9 @@ LOGNAME, SHELL, USER, USERNAME and the C<SUDO_*> variables.  Any
 variables in the caller's environment that match the C<env_keep>
 and C<env_check> lists are then added.  The default contents of the
 C<env_keep> and C<env_check> lists are displayed when B<sudo> is
-run by root with the I<-V> option.  If B<sudo> was compiled with
-the C<SECURE_PATH> option, its value will be used for the C<PATH>
-environment variable.  This flag is I<on> by default.
+run by root with the I<-V> option.  If the I<secure_path> option
+is set, its value will be used for the C<PATH> environment variable.
+This flag is I<on> by default.
 
 =item fqdn
 
@@ -492,10 +561,7 @@ I<fqdn>.  This flag is I<@fqdn@> by default.
 
 If set, B<sudo> will ignore '.' or '' (current dir) in the C<PATH>
 environment variable; the C<PATH> itself is not modified.  This
-flag is I<@ignore_dot@> by default.  Currently, while it is possible
-to set I<ignore_dot> in I<sudoers>, its value is not used.  This option
-should be considered read-only (it will be fixed in a future version
-of B<sudo>).
+flag is I<@ignore_dot@> by default.
 
 =item ignore_local_sudoers
 
@@ -596,11 +662,9 @@ user.  This flag is I<off> by default.
 =item requiretty
 
 If set, B<sudo> will only run when the user is logged in to a real
-tty.  This will disallow things like C<"rsh somehost sudo ls"> since
-L<rsh(1)> does not allocate a tty.  Because it is not possible to turn
-off echo when there is no tty present, some sites may wish to set
-this flag to prevent a user from entering a visible password.  This
-flag is I<off> by default.
+tty.  When this flag is set, B<sudo> can only be run from a login
+session and not via other means such as L<cron(8)> or cgi-bin scripts.
+This flag is I<off> by default.
 
 =item root_sudo
 
@@ -692,11 +756,28 @@ If set, B<sudo> will apply the defaults specified for the target user's
 login class if one exists.  Only available if B<sudo> is configured with
 the --with-logincap option.  This flag is I<off> by default.
 
+=item visiblepw
+
+By default, B<sudo> will refuse to run if the user must enter a
+password but it is not possible to disable echo on the terminal.
+If the I<visiblepw> flag is set, B<sudo> will prompt for a password
+even when it would be visible on the screen.  This makes it possible
+to run things like C<"rsh somehost sudo ls"> since L<rsh(1)> does
+not allocate a tty.  This flag is I<off> by default.
+
 =back
 
 B<Integers>:
 
 =over 16
+
+=item closefrom
+
+Before it executes a command, B<sudo> will close all open file
+descriptors other than standard input, standard output and standard
+error (ie: file descriptors 0-2).  The I<closefrom> option can be used
+to specify a different file descriptor at which to start closing.
+The default is C<3>.
 
 =item passwd_tries
 
@@ -733,7 +814,12 @@ own timestamps via C<sudo -v> and C<sudo -k> respectively.
 =item umask
 
 Umask to use when running the command.  Negate this option or set
-it to 0777 to preserve the user's umask.  The default is C<@sudo_umask@>.
+it to 0777 to preserve the user's umask.  The actual umask that is
+used will be the union of the user's umask and C<@sudo_umask@>.
+This guarantees that B<sudo> never lowers the umask when running a
+command.  Note on systems that use PAM, the default PAM configuration
+may specify its own umask which will override the value set in
+I<sudoers>.
 
 =back
 
@@ -824,6 +910,12 @@ Defaults to C<@badpri@>.
 Syslog priority to use when user authenticates successfully.
 Defaults to C<@goodpri@>.
 
+=item sudoers_locale
+
+Locale to use when parsing the sudoers file.  Note that changing
+the locale may affect how sudoers is interpreted.
+Defaults to C<"C">.
+
 =item timestampdir
 
 The directory in which B<sudo> stores its timestamp files.
@@ -839,6 +931,25 @@ The default is C<root>.
 B<Strings that can be used in a boolean context>:
 
 =over 12
+
+=item askpass
+
+The I<askpass> option specifies the fully-qualilfy path to a helper
+program used to read the user's password when no terminal is
+available.  This may be the case when B<sudo> is executed from a
+graphical (as opposed to text-based) application.  The program
+specified by I<askpass> should display the argument passed to it
+as the prompt and write the user's password to the standard output.
+The value of I<askpass> may be overridden by the C<SUDO_ASKPASS>
+environment variable.
+
+=item env_file
+
+The I<env_file> options specifies the fully-qualilfy path to a file
+containing variables to be set in the environment of the program
+being run.  Entries in this file should be of the form C<VARIABLE=value>.
+Variables in this file are subject to other B<sudo> environment
+settings such as I<env_keep> and I<env_check>.
 
 =item exempt_group
 
@@ -922,11 +1033,27 @@ Flags to use when invoking mailer. Defaults to B<-t>.
 Path to mail program used to send warning mail.
 Defaults to the path to sendmail found at configure time.
 
+=item mailfrom
+
+Address to use for the "from" address when sending warning and error
+mail.  The address should be enclosed in double quotes (C<">) to
+protect against B<sudo> interpreting the C<@> sign.  Defaults to
+the name of the user running B<sudo>.
+
 =item mailto
 
 Address to send warning and error mail to.  The address should
 be enclosed in double quotes (C<">) to protect against B<sudo>
 interpreting the C<@> sign.  Defaults to C<@mailto@>.
+
+=item secure_path
+
+Path used for every command run from B<sudo>.  If you don't trust the
+people running B<sudo> to have a sane C<PATH> environment variable you may
+want to use this.  Another use is if you want to have the "root path"
+be separate from the "user path."  Users in the group specified by the
+I<exempt_group> option are not affected by I<secure_path>.
+This is not set by default.
 
 =item syslog
 
@@ -1038,13 +1165,6 @@ List of network groups
 
 =head1 EXAMPLES
 
-Since the I<sudoers> file is parsed in a single pass, order is
-important.  In general, you should structure I<sudoers> such that
-the C<Host_Alias>, C<User_Alias>, and C<Cmnd_Alias> specifications
-come first, followed by any C<Default_Entry> lines, and finally the
-C<Runas_Alias> and user specifications.  The basic rule of thumb
-is you cannot reference an Alias that has not already been defined.
-
 Below are example I<sudoers> entries.  Admittedly, some of
 these are a bit contrived.  First, we define our I<aliases>:
 
@@ -1147,7 +1267,7 @@ directory F</usr/oper/bin/>.
 
 The user B<joe> may only L<su(1)> to operator.
 
- pete		HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root
+ pete		HPPA = /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
 
 The user B<pete> is allowed to change anyone's password except for
 root on the I<HPPA> machines.  Note that this assumes L<passwd(1)>

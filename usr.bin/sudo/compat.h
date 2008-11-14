@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005, 2008
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: compat.h,v 1.76.2.4 2007/06/12 01:28:41 millert Exp $
+ * $Sudo: compat.h,v 1.90 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -40,11 +41,11 @@
 #if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC__ == 2 && __GNUC_MINOR__ < 5
 # define __attribute__(x)
 #endif
- 
+
 /* For silencing gcc warnings about rcsids */
 #ifndef __unused
 # if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ > 7)
-#  define __unused      __attribute__((__unused__))
+#  define __unused	__attribute__((__unused__))
 # else
 #  define __unused
 # endif
@@ -53,7 +54,7 @@
 /* For catching format string mismatches */
 #ifndef __printflike
 # if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-#  define __printflike(f, v)    __attribute__((__format__ (__printf__, f, v)))
+#  define __printflike(f, v) 	__attribute__((__format__ (__printf__, f, v)))
 # else
 #  define __printflike(f, v)
 # endif
@@ -152,9 +153,10 @@
 #endif
 
 /*
- * Simple isblank() macro for systems without it.
+ * Simple isblank() macro and function for systems without it.
  */
 #ifndef HAVE_ISBLANK
+int isblank __P((int));
 # define isblank(_x)	((_x) == ' ' || (_x) == '\t')
 #endif
 

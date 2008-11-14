@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996, 1998-1999, 2004
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: insults.h,v 1.46 2004/02/13 21:36:43 millert Exp $
+ * $Sudo: insults.h,v 1.47 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_INSULTS_H

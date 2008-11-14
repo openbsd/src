@@ -42,11 +42,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 #if defined(HAVE_SKEY)
@@ -69,7 +64,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: rfc1938.c,v 1.16.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: rfc1938.c,v 1.20 2005/02/12 22:56:07 millert Exp $";
 #endif /* lint */
 
 int
@@ -113,7 +108,7 @@ rfc1938_setup(pw, promptp, auth)
      */
     if (rfc1938challenge(&rfc1938, pw->pw_name, challenge, sizeof(challenge))) {
 	if (IS_ONEANDONLY(auth)) {
-	    warnx("you do not exist in the %s database", auth->name);
+	    warningx("you do not exist in the %s database", auth->name);
 	    return(AUTH_FATAL);
 	} else {
 	    return(AUTH_FAILURE);

@@ -48,7 +48,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: kerb4.c,v 1.11.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: kerb4.c,v 1.15 2007/08/31 23:30:07 millert Exp $";
 #endif /* lint */
 
 int
@@ -68,7 +68,7 @@ kerb4_init(pw, promptp, auth)
 	return(AUTH_FAILURE);
 
     /* Stash a pointer to the realm (used in kerb4_verify) */
-    auth->data = (VOID *) realm;
+    auth->data = (void *) realm;
 
     return(AUTH_SUCCESS);
 }

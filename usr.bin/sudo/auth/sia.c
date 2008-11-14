@@ -50,7 +50,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sia.c,v 1.14.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sia.c,v 1.18 2007/08/31 23:30:07 millert Exp $";
 #endif /* lint */
 
 static int sudo_collect	__P((int, int, uchar_t *, int, prompt_t *));
@@ -108,7 +108,7 @@ sia_setup(pw, promptp, auth)
 	return(AUTH_FATAL);
     }
 
-    auth->data = (VOID *) siah;
+    auth->data = (void *) siah;
     return(AUTH_SUCCESS);
 }
 

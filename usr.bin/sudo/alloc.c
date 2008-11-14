@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,11 +42,6 @@
 #if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
 # include <malloc.h>
 #endif /* HAVE_MALLOC_H && !STDC_HEADERS */
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "emul/err.h"
-#endif /* HAVE_ERR_H */
 #ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif
@@ -53,7 +49,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.23.2.4 2007/09/11 12:20:15 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.33 2008/11/09 14:13:12 millert Exp $";
 #endif /* lint */
 
 /*
@@ -74,17 +70,17 @@ __unused static const char rcsid[] = "$Sudo: alloc.c,v 1.23.2.4 2007/09/11 12:20
  * emalloc() calls the system malloc(3) and exits with an error if
  * malloc(3) fails.
  */
-VOID *
+void *
 emalloc(size)
     size_t size;
 {
-    VOID *ptr;
+    void *ptr;
 
     if (size == 0)
-	errx(1, "internal error, tried to emalloc(0)");
+	errorx(1, "internal error, tried to emalloc(0)");
 
-    if ((ptr = (VOID *) malloc(size)) == NULL)
-	errx(1, "unable to allocate memory");
+    if ((ptr = malloc(size)) == NULL)
+	errorx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -92,21 +88,21 @@ emalloc(size)
  * emalloc2() allocates nmemb * size bytes and exits with an error
  * if overflow would occur or if the system malloc(3) fails.
  */
-VOID *
+void *
 emalloc2(nmemb, size)
     size_t nmemb;
     size_t size;
 {
-    VOID *ptr;
+    void *ptr;
 
     if (nmemb == 0 || size == 0)
-	errx(1, "internal error, tried to emalloc2(0)");
+	errorx(1, "internal error, tried to emalloc2(0)");
     if (nmemb > SIZE_MAX / size)
-	errx(1, "internal error, emalloc2() overflow");
+	errorx(1, "internal error, emalloc2() overflow");
 
     size *= nmemb;
-    if ((ptr = (VOID *) malloc(size)) == NULL)
-	errx(1, "unable to allocate memory");
+    if ((ptr = malloc(size)) == NULL)
+	errorx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -115,18 +111,18 @@ emalloc2(nmemb, size)
  * realloc(3) fails.  You can call erealloc() with a NULL pointer even
  * if the system realloc(3) does not support this.
  */
-VOID *
+void *
 erealloc(ptr, size)
-    VOID *ptr;
+    void *ptr;
     size_t size;
 {
 
     if (size == 0)
-	errx(1, "internal error, tried to erealloc(0)");
+	errorx(1, "internal error, tried to erealloc(0)");
 
-    ptr = ptr ? (VOID *) realloc(ptr, size) : (VOID *) malloc(size);
+    ptr = ptr ? realloc(ptr, size) : malloc(size);
     if (ptr == NULL)
-	errx(1, "unable to allocate memory");
+	errorx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -136,22 +132,22 @@ erealloc(ptr, size)
  * You can call erealloc() with a NULL pointer even if the system realloc(3)
  * does not support this.
  */
-VOID *
+void *
 erealloc3(ptr, nmemb, size)
-    VOID *ptr;
+    void *ptr;
     size_t nmemb;
     size_t size;
 {
 
     if (nmemb == 0 || size == 0)
-	errx(1, "internal error, tried to erealloc3(0)");
+	errorx(1, "internal error, tried to erealloc3(0)");
     if (nmemb > SIZE_MAX / size)
-	errx(1, "internal error, erealloc3() overflow");
+	errorx(1, "internal error, erealloc3() overflow");
 
     size *= nmemb;
-    ptr = ptr ? (VOID *) realloc(ptr, size) : (VOID *) malloc(size);
+    ptr = ptr ? realloc(ptr, size) : malloc(size);
     if (ptr == NULL)
-	errx(1, "unable to allocate memory");
+	errorx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -199,7 +195,7 @@ easprintf(ret, fmt, va_alist)
     va_end(ap);
 
     if (len == -1)
-	errx(1, "unable to allocate memory");
+	errorx(1, "unable to allocate memory");
     return(len);
 }
 
@@ -216,7 +212,7 @@ evasprintf(ret, format, args)
     int len;
 
     if ((len = vasprintf(ret, format, args)) == -1)
-	errx(1, "unable to allocate memory");
+	errorx(1, "unable to allocate memory");
     return(len);
 }
 
@@ -225,7 +221,7 @@ evasprintf(ret, format, args)
  */
 void
 efree(ptr)
-    VOID *ptr;
+    void *ptr;
 {
     if (ptr != NULL)
 	free(ptr);

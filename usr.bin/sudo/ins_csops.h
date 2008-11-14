@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998, 1999, 2004
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: ins_csops.h,v 1.28.2.1 2007/06/10 16:57:35 millert Exp $
+ * $Sudo: ins_csops.h,v 1.30 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_INS_CSOPS_H

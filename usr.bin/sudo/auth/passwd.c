@@ -47,7 +47,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: passwd.c,v 1.14.2.2 2007/06/12 01:28:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: passwd.c,v 1.17 2005/02/12 22:56:07 millert Exp $";
 #endif /* lint */
 
 #define DESLEN			13
