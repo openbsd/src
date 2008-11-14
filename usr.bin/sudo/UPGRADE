@@ -1,6 +1,33 @@
 Notes on upgrading from an older release
 ========================================
 
+o Upgrading from a version prior to 1.7.0:
+
+    Starting with sudo 1.7.0 comments in the sudoers file must not
+    have a digit or minus sign immediately after the comment character
+    ('#').  Otherwise, the comment may be interpreted as a user or
+    group ID.
+
+    When sudo is build with LDAP support the /etc/nsswitch.conf file is
+    now used to determine the sudoers seach order.  sudo will default to
+    only using /etc/sudoers unless /etc/nsswitch.conf says otherwise.
+    This can be changed with an nsswitch.conf line, e.g.:
+        sudoers:        ldap files
+    Would case LDAP to be searched first, then the sudoers file.
+    To restore the pre-1.7.0 behavior, run configure with the
+    --with-nsswitch=no flag.
+
+    Sudo now ignores user .ldaprc files as well as system LDAP defaults.
+    All LDAP configuration is now in /etc/ldap.conf (or whichever file
+    was specified by configure's --with-ldap-conf-file option).
+    If you are using TLS, you may now need to specify:
+	tls_checkpeer no
+    in sudo's ldap.conf unless ldap.conf references a valid certificate
+    authority file(s).
+
+    Please also see the WHATSNEW file for a list of new features in
+    sudo 1.7.0.
+
 o Upgrading from a version prior to 1.6.9:
 
     Starting with sudo 1.6.9, if an OS supports a modular authentication

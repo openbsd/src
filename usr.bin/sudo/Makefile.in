@@ -1,5 +1,6 @@
 #
-# Copyright (c) 1996, 1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 1996, 1998-2005, 2007-2008
+#	Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,21 +21,21 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.246.2.32 2008/06/22 20:29:03 millert Exp $
+# $Sudo: Makefile.in,v 1.325 2008/11/03 18:19:14 millert Exp $
 #
 
 #### Start of system configuration section. ####
 
 srcdir = @srcdir@
+devdir = @devdir@
 authdir = $(srcdir)/auth
 top_builddir = .
-VPATH = @srcdir@
 
 # Compiler & tools to use
 CC = @CC@
 LEX = flex
 YACC = @YACC@
-NROFF = nroff
+NROFF = nroff -Tascii
 LIBTOOL = @LIBTOOL@
 
 # Our install program supports extra flags...
@@ -61,11 +62,11 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 sbindir = @sbindir@
 sysconfdir = @sysconfdir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
 mandir = @mandir@
 noexecfile = @NOEXECFILE@
 noexecdir = @NOEXECDIR@
-libexecdir = @libexecdir@
-datarootdir = @datarootdir@
 
 # Directory in which to install sudo.
 sudodir = $(bindir)
@@ -93,7 +94,7 @@ sudoers_gid = @SUDOERS_GID@
 sudoers_mode = @SUDOERS_MODE@
 
 # Pass in paths and uid/gid + OS dependent defined
-DEFS = @OSDEFS@ -D_PATH_SUDOERS=\"$(sudoersdir)/sudoers\" -D_PATH_SUDOERS_TMP=\"$(sudoersdir)/sudoers.tmp\" -DSUDOERS_UID=$(sudoers_uid) -DSUDOERS_GID=$(sudoers_gid) -DSUDOERS_MODE=$(sudoers_mode)
+DEFS = @OSDEFS@ -D_PATH_SUDOERS=\"$(sudoersdir)/sudoers\" -DSUDOERS_UID=$(sudoers_uid) -DSUDOERS_GID=$(sudoers_gid) -DSUDOERS_MODE=$(sudoers_mode)
 
 #### End of system configuration section. ####
 
@@ -101,60 +102,68 @@ SHELL = /bin/sh
 
 PROGS = @PROGS@
 
-SRCS = alloc.c alloca.c check.c closefrom.c def_data.c defaults.c env.c err.c \
-       fileops.c find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c \
-       gettime.c glob.c goodpath.c interfaces.c ldap.c lex.yy.c lsearch.c \
-       logging.c memrchr.c mkstemp.c parse.c parse.lex parse.yacc set_perms.c \
-       sigaction.c snprintf.c strcasecmp.c strerror.c strlcat.c strlcpy.c \
-       sudo.c sudo_noexec.c sudo.tab.c sudo_edit.c testsudoers.c tgetpass.c \
-       utimes.c visudo.c zero_bytes.c selinux.c sesh.c $(AUTH_SRCS)
+SRCS = aix.c alias.c alloc.c check.c closefrom.c def_data.c defaults.c env.c \
+       error.c fileops.c find_path.c fnmatch.c getcwd.c getprogname.c \
+       getspwuid.c gettime.c glob.c goodpath.c gram.c gram.y interfaces.c \
+       isblank.c lbuf.c ldap.c list.c logging.c match.c mkstemp.c memrchr.c \
+       parse.c pwutil.c  set_perms.c sigaction.c snprintf.c strcasecmp.c \
+       strerror.c strlcat.c strlcpy.c sudo.c sudo_noexec.c sudo_edit.c \
+       sudo_nss.c testsudoers.c tgetpass.c toke.c toke.l tsgetgrpw.c utimes.c \
+       visudo.c zero_bytes.c redblack.c selinux.c sesh.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
 	    auth/secureware.c auth/securid.c auth/securid5.c auth/sia.c \
 	    auth/sudo_auth.c
 
-HDRS = compat.h def_data.h defaults.h ins_2001.h ins_classic.h ins_csops.h \
-       ins_goons.h insults.h interfaces.h logging.h parse.h sudo.h sudo.tab.h \
-       version.h auth/sudo_auth.h emul/err.h emul/fnmatch.h emul/search.h \
-       emul/utime.h emul/glob.h emul/timespec.h
+HDRS = compat.h def_data.h defaults.h error.h ins_2001.h ins_classic.h \
+       ins_csops.h ins_goons.h insults.h interfaces.h lbuf.h list.h \
+       logging.h parse.h sudo.h sudo_nss.h gram.h version.h auth/sudo_auth.h \
+       emul/charclass.h emul/fnmatch.h emul/glob.h emul/timespec.h \
+       emul/utime.h redblack.h
 
 AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
-PARSEOBJS = sudo.tab.o lex.yy.o alloc.o defaults.o
+# Note: gram.o must come first here
+COMMON_OBJS = gram.o alias.o alloc.o defaults.o error.o list.o match.o \
+	      toke.o redblack.o zero_bytes.o
 
-SUDOBJS = check.o env.o getspwuid.o gettime.o goodpath.o fileops.o find_path.o \
-	  interfaces.o logging.o parse.o set_perms.o sudo.o sudo_edit.o \
-	  tgetpass.o zero_bytes.o @SUDO_OBJS@ $(AUTH_OBJS) $(PARSEOBJS)
+SUDO_OBJS = $(COMMON_OBJS) $(AUTH_OBJS) @SUDO_OBJS@ check.o env.o \
+	    getspwuid.o gettime.o goodpath.o fileops.o find_path.o \
+	    interfaces.o lbuf.o logging.o parse.o pwutil.o set_perms.o \
+	    sudo.o sudo_edit.o sudo_nss.o tgetpass.o
 
-VISUDOBJS = visudo.o fileops.o gettime.o goodpath.o find_path.o $(PARSEOBJS)
+VISUDO_OBJS = $(COMMON_OBJS) visudo.o fileops.o gettime.o goodpath.o \
+	      find_path.o pwutil.o
 
-TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
+TEST_OBJS = $(COMMON_OBJS) interfaces.o testsudoers.o tsgetgrpw.o tspwutil.o
 
-LIBOBJS = @LIBOBJS@ @ALLOCA@
+LIB_OBJS = @LIBOBJS@
 
-VERSION = 1.6.9p17
+VERSION = 1.7.0
 
-DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
-            LICENSE Makefile.in PORTING README README.LDAP \
-            TROUBLESHOOTING UPGRADE aclocal.m4 acsite.m4 aixcrypt.exp \
-            config.guess config.h.in config.sub configure configure.in \
-            def_data.in fnmatch.3 indent.pro install-sh ltmain.sh \
-            mkdefaults mkinstalldirs pathnames.h.in sample.pam \
-            sample.syslog.conf sample.sudoers schema.OpenLDAP \
-            schema.iPlanet sudo.cat sudo.man.in sudo.pod sudoers \
-            sudoers.cat sudoers.man.in sudoers.pod sudoers2ldif \
-            visudo.cat visudo.man.in visudo.pod auth/API
+DISTFILES = $(SRCS) $(HDRS) ChangeLog HISTORY INSTALL INSTALL.configure \
+            LICENSE Makefile.in PORTING README README.LDAP TROUBLESHOOTING \
+	    UPGRADE WHATSNEW aclocal.m4 acsite.m4 aixcrypt.exp config.guess \
+	    config.h.in config.sub configure configure.in def_data.in \
+	    indent.pro install-sh ltmain.sh mkdefaults mkinstalldirs \
+	    pathnames.h.in sample.pam sample.syslog.conf sample.sudoers \
+	    schema.ActiveDirectory schema.OpenLDAP schema.iPlanet sudo.cat \
+	    sudo.man.in sudo.pod sudo.psf sudo_usage.h.in sudoers sudoers.cat \
+            sudoers.man.in sudoers.pod sudoers.ldap.cat sudoers.ldap.man.in \
+	    sudoers.ldap.pod sudoers2ldif visudo.cat visudo.man.in visudo.pod \
+	    auth/API
 
-BINFILES= BUGS CHANGES HISTORY LICENSE README TROUBLESHOOTING \
+BINFILES= ChangeLog HISTORY LICENSE README TROUBLESHOOTING \
 	  UPGRADE install-sh mkinstalldirs sample.syslog.conf sample.sudoers \
 	  sudo sudo.cat sudo.man sudo.pod sudoers sudoers.cat sudoers.man \
 	  sudoers.pod visudo visudo.cat visudo.man visudo.pod
 
-BINSPECIAL= INSTALL.binary Makefile.binary libtool
+BINSPECIAL= INSTALL.binary Makefile.binary.in libtool
 
 SUDODEP = $(srcdir)/sudo.h $(srcdir)/compat.h $(srcdir)/defaults.h \
-	  $(srcdir)/logging.h config.h def_data.h pathnames.h
+	  $(srcdir)/error.h $(srcdir)/list.h $(srcdir)/logging.h \
+	  $(srcdir)/sudo_nss.h $(devdir)/def_data.h pathnames.h config.h
 
 AUTHDEP = $(SUDODEP) $(authdir)/sudo_auth.h
 
@@ -163,7 +172,7 @@ INSDEP = $(srcdir)/ins_2001.h $(srcdir)/ins_classic.h $(srcdir)/ins_csops.h \
 
 all: $(PROGS)
 
-.SUFFIXES: .o .c .h .lex .yacc .man .cat .lo
+.SUFFIXES: .o .c .h .l .y .man .cat .lo
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $<
@@ -173,16 +182,16 @@ all: $(PROGS)
 
 .man.cat:
 	@rm -f $(srcdir)/$@
-	$(NROFF) -man $< > $(srcdir)/$@
+	sed '1s/^/.if n .ll 78n/' $< | $(NROFF) -man > $(srcdir)/$@
 
-sudo: $(SUDOBJS) $(LIBOBJS)
-	$(CC) -o $@ $(SUDOBJS) $(LIBOBJS) $(SUDO_LDFLAGS) $(SUDO_LIBS)
+sudo: $(SUDO_OBJS) $(LIB_OBJS)
+	$(CC) -o $@ $(SUDO_OBJS) $(LIB_OBJS) $(SUDO_LDFLAGS) $(SUDO_LIBS)
 
-visudo: $(VISUDOBJS) $(LIBOBJS)
-	$(CC) -o $@ $(VISUDOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
+visudo: $(VISUDO_OBJS) $(LIB_OBJS)
+	$(CC) -o $@ $(VISUDO_OBJS) $(LIB_OBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
 
-testsudoers: $(TESTOBJS) $(LIBOBJS)
-	$(CC) -o $@ $(TESTOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
+testsudoers: $(TEST_OBJS) $(LIB_OBJS)
+	$(CC) -o $@ $(TEST_OBJS) $(LIB_OBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
 
 sudo_noexec.lo: $(srcdir)/sudo_noexec.c
 	$(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_noexec.c
@@ -191,61 +200,129 @@ sudo_noexec.la: sudo_noexec.lo
 	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ sudo_noexec.lo -avoid-version -rpath $(noexecdir)
 
 # Uncomment the following if you want "make distclean" to clean the parser
-@DEV@PARSESRCS = sudo.tab.h sudo.tab.c lex.yy.c def_data.c def_data.h
+@DEV@GENERATED = gram.h gram.c toke.c def_data.c def_data.h
 
-# Uncomment the following if you intend to modify parse.yacc
-@DEV@sudo.tab.c sudo.tab.h: parse.yacc
-@DEV@	rm -f sudo.tab.h sudo.tab.c
-@DEV@	$(YACC) -d -b sudo $(srcdir)/parse.yacc
+# Uncomment the lines before -@true if you intend to modify gram.y
+$(devdir)/gram.c: $(srcdir)/gram.y
+@DEV@	$(YACC) -d $(srcdir)/gram.y
+@DEV@	mv -f y.tab.c gram.c
+@DEV@	if cmp -s y.tab.h gram.h; then rm -f y.tab.h; else mv -f y.tab.h gram.h; fi
+	-@true
 
-# Uncomment the following if you intend to modify parse.lex
-@DEV@lex.yy.c: parse.lex
-@DEV@	rm -f lex.yy.c
-@DEV@	$(LEX) $(srcdir)/parse.lex
+# Uncomment the lines before -@true if you intend to modify toke.l
+$(devdir)/toke.c: $(srcdir)/toke.l
+@DEV@	$(LEX) $(srcdir)/toke.l
+@DEV@	mv -f lex.yy.c toke.c
+	-@true
 
 # Uncomment the following if you intend to modify def_data.in
-@DEV@def_data.h def_data.c: def_data.in
+@DEV@$(devdir)/def_data.h $(devdir)/def_data.c: $(srcdir)/def_data.in
 @DEV@	perl $(srcdir)/mkdefaults -o def_data $(srcdir)/def_data.in
 
 # Dependencies (not counting auth functions)
-alloc.o: alloc.c $(SUDODEP)
-check.o: check.c $(SUDODEP)
-closefrom.o: closefrom.c config.h
-env.o: env.c $(SUDODEP)
-err.o: err.c config.h compat.h emul/err.h
-fileops.o: fileops.c $(SUDODEP)
-find_path.o: find_path.c $(SUDODEP)
-getprogname.o: getprogname.c config.h
-getspwuid.o: getspwuid.c $(SUDODEP)
-goodpath.o: goodpath.c $(SUDODEP)
-logging.o: logging.c $(SUDODEP)
-set_perms.o: set_perms.c $(SUDODEP)
-tgetpass.o: tgetpass.c $(SUDODEP)
-visudo.o: visudo.c $(SUDODEP) version.h
-sudo.o: sudo.c $(SUDODEP) interfaces.h version.h
-interfaces.o: interfaces.c $(SUDODEP) interfaces.h
-testsudoers.o: testsudoers.c $(SUDODEP) parse.h interfaces.h
-parse.o: parse.c $(SUDODEP) parse.h interfaces.h
-lex.yy.o: lex.yy.c $(SUDODEP) parse.h sudo.tab.h
-sudo.tab.o: sudo.tab.c $(SUDODEP) parse.h sudo.tab.c sudo.tab.h
-defaults.o: defaults.c $(SUDODEP) def_data.c auth/sudo_auth.h
-fnmatch.o: fnmatch.c config.h compat.h emul/fnmatch.h
-getcwd.o: getcwd.c config.h compat.h
-glob.o: glob.c config.h compat.h emul/glob.h
-lsearch.o: lsearch.c config.h compat.h emul/search.h
-memrchr.o: memrchr.c config.h compat.h
-mkstemp.o: mkstemp.c config.h compat.h
-selinux.o: selinux.c $(SUDODEP)
-snprintf.o: snprintf.c config.h compat.h
-strcasecmp.o: strcasecmp.c config.h
-strlcat.o: strlcat.c config.h
-strlcpy.o: strlcpy.c config.h
-strerror.o: strerror.c config.h
-utime.o: utime.c config.h pathnames.h compat.h emul/utime.h
-ldap.o: ldap.c $(SUDODEP) parse.h
-sudo_edit.o: sudo_edit.c $(SUDODEP)
+aix.o: $(srcdir)/aix.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/aix.c
+alias.o: $(srcdir)/alias.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(srcdir)/redblack.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/alias.c
+alloc.o: $(srcdir)/alloc.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/alloc.c
+check.o: $(srcdir)/check.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/check.c
+closefrom.o: $(srcdir)/closefrom.c config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/closefrom.c
+defaults.o: $(srcdir)/defaults.c $(SUDODEP) $(srcdir)/def_data.c $(authdir)/sudo_auth.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/defaults.c
+env.o: $(srcdir)/env.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/env.c
+error.o: $(srcdir)/error.c $(srcdir)/compat.h $(srcdir)/error.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/error.c
+fileops.o: $(srcdir)/fileops.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/fileops.c
+find_path.o: $(srcdir)/find_path.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/find_path.c
+fnmatch.o: $(srcdir)/fnmatch.c $(srcdir)/emul/fnmatch.h $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/fnmatch.c
+getcwd.o: $(srcdir)/getcwd.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/getcwd.c
+getprogname.o: $(srcdir)/getprogname.c config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/getprogname.c
+getspwuid.o: $(srcdir)/getspwuid.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/getspwuid.c
+gettime.o: $(srcdir)/gettime.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/gettime.c
+glob.o: $(srcdir)/glob.c $(srcdir)/emul/glob.h $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/glob.c
+goodpath.o: $(srcdir)/goodpath.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/goodpath.c
+gram.o: $(devdir)/gram.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(devdir)/gram.c
+interfaces.o: $(srcdir)/interfaces.c $(SUDODEP) $(srcdir)/interfaces.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/interfaces.c
+isblank.o: $(srcdir)/isblank.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/isblank.c
+lbuf.o: $(srcdir)/lbuf.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/lbuf.c
+ldap.o: $(srcdir)/ldap.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/ldap.c
+list.o: $(srcdir)/list.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/list.c
+logging.o: $(srcdir)/logging.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/logging.c
+match.o: $(srcdir)/match.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(srcdir)/interfaces.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/match.c
+memrchr.o: $(srcdir)/memrchr.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/memrchr.c
+mkstemp.o: $(srcdir)/mkstemp.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/mkstemp.c
+parse.o: $(srcdir)/parse.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/parse.c
+pwutil.o: $(srcdir)/pwutil.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/pwutil.c
+redblack.o: $(srcdir)/redblack.c $(SUDODEP) $(srcdir)/redblack.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/redblack.c
+set_perms.o: $(srcdir)/set_perms.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/set_perms.c
+sigaction.o: $(srcdir)/sigaction.c $(srcdir)/compat.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sigaction.c
+snprintf.o: $(srcdir)/snprintf.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/snprintf.c
+strcasecmp.o: $(srcdir)/strcasecmp.c $(srcdir)/compat.h  config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/strcasecmp.c
+strerror.o: $(srcdir)/strerror.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/strerror.c
+strlcat.o: $(srcdir)/strlcat.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/strlcat.c
+strlcpy.o: $(srcdir)/strlcpy.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/strlcpy.c
+selinux.o: $(srcdir)/selinux.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/selinux.c
+sudo.o: $(srcdir)/sudo.c $(SUDODEP) sudo_usage.h $(srcdir)/interfaces.h $(srcdir)/version.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo.c
+sudo_edit.o: $(srcdir)/sudo_edit.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_edit.c
+sudo_noexec.o: $(srcdir)/sudo_noexec.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_noexec.c
+sudo_nss.o: $(srcdir)/sudo_nss.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_nss.c
+testsudoers.o: $(srcdir)/testsudoers.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(srcdir)/interfaces.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/testsudoers.c
+tgetpass.o: $(srcdir)/tgetpass.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/tgetpass.c
+toke.o: $(devdir)/toke.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(devdir)/toke.c
+tsgetgrpw.o: $(srcdir)/tsgetgrpw.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/tsgetgrpw.c
+utimes.o: $(srcdir)/utimes.c $(srcdir)/compat.h $(srcdir)/emul/utime.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/utimes.c
+visudo.o: $(srcdir)/visudo.c $(SUDODEP) $(srcdir)/version.h $(devdir)/gram.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/visudo.c
+zero_bytes.o: $(srcdir)/zero_bytes.c $(srcdir)/compat.h config.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/zero_bytes.c
 
-# Authentication functions live in "auth" dir and so need extra care
+# Private copy of pwutil.o with MYPW defined for testsudoers
+tspwutil.o: $(srcdir)/pwutil.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) -DMYPW -o tspwutil.o $(srcdir)/pwutil.c
+
 sudo_auth.o: $(authdir)/sudo_auth.c $(AUTHDEP) $(INSDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sudo_auth.c
 afs.o: $(authdir)/afs.c $(AUTHDEP)
@@ -304,6 +381,24 @@ sudoers.man:: sudoers.man.in
 
 sudoers.cat: sudoers.man
 
+sudoers.ldap.man.in: $(srcdir)/sudoers.ldap.pod
+	@rm -f $(srcdir)/$@
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e '/^=pod/q' -e 's/^/.\\" /p' sudoers.ldap.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectform --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudoers.ldap.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
+
+sudoers.ldap.man:: sudoers.ldap.man.in
+	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
+
+sudoers.ldap.cat: sudoers.ldap.man
+
+@DEV@HISTORY: history.pod
+@DEV@	pod2text -l -i0 $> > $@
+@DEV@
+@DEV@LICENSE: license.pod
+@DEV@	pod2text -l -i0 $> | sed '1,2d' > $@
+
+ChangeLog:
+	cvs2cl --follow-only trunk
+
 install: install-dirs install-binaries @INSTALL_NOEXEC@ install-sudoers install-man
 
 install-dirs:
@@ -333,27 +428,23 @@ install-man:
 	ln $(DESTDIR)$(mandirsu)/sudo.$(mansectsu) $(DESTDIR)$(mandirsu)/sudoedit.$(mansectsu)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/visudo.$(mantype) $(DESTDIR)$(mandirsu)/visudo.$(mansectsu)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudoers.$(mantype) $(DESTDIR)$(mandirform)/sudoers.$(mansectform)
+	@LDAP@$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudoers.ldap.$(mantype) $(DESTDIR)$(mandirform)/sudoers.ldap.$(mansectform)
 @MAN_POSTINSTALL@
 
 check:
 	@echo nothing to check
 
-tags: $(SRCS)
-	ctags $(SRCS)
-
-TAGS: $(SRCS)
-	etags $(SRCS)
-
 clean:
-	-rm -f *.o $(PROGS) testsudoers core sudo.core visudo.core \
+	-rm -f *.o *.lo $(PROGS) testsudoers core sudo.core visudo.core \
 	       testsudoers.core
 
 mostlyclean: clean
 
 distclean: clean
 	-rm -rf Makefile pathnames.h config.h config.status config.cache \
-		config.log libtool sudo_noexec.lo .libs $(PARSESRCS) \
-		sudo.man sudoers.man visudo.man
+		config.log libtool sudo_noexec.lo .libs $(GENERATED) \
+		sudo.man sudoers.man sudoers.ldap.man visudo.man sudo_usage.h \
+		Makefile.binary
 
 clobber: distclean
 
@@ -394,9 +485,43 @@ bindist:
 	  fi ; \
 	  cp $(srcdir)/INSTALL.binary $$tdir/INSTALL ; \
 	  sh ./config.status --file=Makefile.binary && cp Makefile.binary $$tdir/Makefile ; \
-	  strip sudo ; \
-	  strip visudo ; \
+	  strip $$tdir/sudo ; \
+	  strip $$tdir/visudo ; \
 	  cd tmp.$$ARCH && tar Ocf ../sudo-$(VERSION)-$$ARCH.tar sudo-$(VERSION) && cd .. ; \
-	  gzip --best sudo-$(VERSION)-$$ARCH.tar ; \
+	  gzip -f --best sudo-$(VERSION)-$$ARCH.tar ; \
 	  rm -rf tmp.$$ARCH ; \
 	)
+
+depot:
+	( \
+	  tdir=tmp.depot ; \
+	  mkdir $$tdir ; \
+	  for i in sudo visudo sudo.man visudo.man sudoers.man sudoers ChangeLog HISTORY LICENSE README TROUBLESHOOTING UPGRADE sample.syslog.conf sample.sudoers; do \
+	    if [ -f $$i ]; then \
+	      cp $$i $$tdir ; \
+	    elif [ -f $(srcdir)/$$i ]; then \
+	      cp $(srcdir)/$$i $$tdir ; \
+	    else \
+	      echo cannot find $$i ; \
+	      exit 1 ; \
+	    fi ; \
+	  done ; \
+	  if [ -f sudo_noexec.la ]; then \
+	    cp libtool $$tdir ; \
+	    $(LIBTOOL) --mode=install $(INSTALL) sudo_noexec.la `pwd`/$$tdir ; \
+	  fi ; \
+	  sed 's/@VERSION@/$(VERSION)/g' <$(srcdir)/sudo.psf >$$tdir/sudo.psf ; \
+	  printf '#!/sbin/sh\nrm -f /usr/local/bin/sudoedit\nln /usr/local/bin/sudo /usr/local/bin/sudoedit\n' > $$tdir/sudo-exec.postinstall ; \
+	  printf '#!/sbin/sh\nrm -f /usr/local/man/man1m/sudoedit.1m\nln /usr/local/man/man1m/sudo.1m /usr/local/man/man1m/sudoedit.1m\n' > $$tdir/sudo-man.postinstall ; \
+	  printf '#!/sbin/sh\nif [ ! -s /etc/sudoers ]; then\n\techo installing /usr/local/doc/sudo/sudoers as /etc/sudoers\n\techo use /usr/local/sbin/visudo to configure sudo\n\tcp /usr/local/doc/sudo/sudoers /etc/sudoers\n\tchmod 440 /etc/sudoers\n\tchown root:root /etc/sudoers\nfi\n' > $$tdir/sudo-config.postinstall ; \
+	  chmod 755 $$tdir/sudo-exec.postinstall $$tdir/sudo-man.postinstall $$tdir/sudo-config.postinstall ; \
+	  strip $$tdir/sudo ; \
+	  strip $$tdir/visudo ; \
+	  cd $$tdir ; \
+	  swpackage -x target_type=tape -d ../sudo-$(VERSION).depot -s sudo.psf ; \
+	  cd .. ; \
+	  gzip -f --best sudo-$(VERSION).depot; \
+	  rm -rf tmp.depot ; \
+	)
+
+.PHONY:	ChangeLog

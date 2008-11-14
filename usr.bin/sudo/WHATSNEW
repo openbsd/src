@@ -1,0 +1,79 @@
+What's new in Sudo 1.7.0?
+
+ * Rewritten parser that converts sudoers into a set of data structures.
+   This eliminates a number of ordering issues and makes it possible to
+   apply sudoers Defaults entries before searching for the command.
+   It also adds support for per-command Defaults specifications.
+
+ * Sudoers now supports a #include facility to allow the inclusion of other
+   sudoers-format files.
+
+ * Sudo's -l (list) flag has been enhanced:
+    o applicable Defaults options are now listed
+    o a command argument can be specified for testing whether a user
+      may run a specific command.
+    o a new -U flag can be used in conjunction with "sudo -l" to allow
+      root (or a user with "sudo ALL") list another user's privileges.
+
+ * A new -g flag has been added to allow the user to specify a
+   primary group to run the command as.  The sudoers syntax has been
+   extended to include a group section in the Runas specification.
+
+ * A uid may now be used anywhere a username is valid.
+
+ * The "secure_path" run-time Defaults option has been restored.
+
+ * Password and group data is now cached for fast lookups.
+
+ * The file descriptor at which sudo starts closing all open files is now
+   configurable via sudoers and, optionally, the command line.
+
+ * Visudo will now warn about aliases that are defined but not used.
+
+ * The -i and -s command line flags now take an optional command
+   to be run via the shell.  Previously, the argument was passed
+   to the shell as a script to run.
+
+ * Improved LDAP support.  SASL authentication may now be used in
+   conjunction when connecting to an LDAP server.  The krb5_ccname
+   parameter in ldap.conf may be used to enable Kerberos.
+
+ * Support for /etc/nsswitch.conf.  LDAP users may now use nsswitch.conf
+   to specify the sudoers order.  E.g.:
+	sudoers: ldap files
+   to check LDAP, then /etc/sudoers.  The default is "files", even
+   when LDAP support is compiled in.  This differs from sudo 1.6
+   where LDAP was always consulted first.
+
+ * Support for /etc/environment on AIX and Linux.  If sudo is run
+   with the -i flag, the contents of /etc/environment are used to
+   populate the new environment that is passed to the command being
+   run.
+
+ * If no terminal is available or if the new -A flag is specified,
+   sudo will use a helper program to read the password if one is
+   configured.  Typically, this is a graphical password prompter
+   such as ssh-askpass.
+
+ * A new Defaults option, "mailfrom" that sets the value of the
+   "From:" field in the warning/error mail.  If unspecified, the
+   login name of the invoking user is used.
+
+ * A new Defaults option, "env_file" that refers to a file containing
+   environment variables to be set in the command being run.
+
+ * A new flag, -n, may be used to indicate that sudo should not
+   prompt the user for a password and, instead, exit with an error
+   if authentication is required.
+
+ * If sudo needs to prompt for a password and it is unable to disable
+   echo (and no askpass program is defined), it will refuse to run
+   unless the "visiblepw" Defaults option has been specified.
+
+ * Prior to version 1.7.0, hitting enter/return at the Password: prompt
+   would exit sudo.  In sudo 1.7.0 and beyond, this is treated as
+   an empty password.  To exit sudo, the user must press ^C or ^D
+   at the prompt.
+
+ * visudo will now check the sudoers file owner and mode in -c (check)
+   mode when the -s (strict) flag is specified.

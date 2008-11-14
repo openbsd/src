@@ -1,4 +1,4 @@
-This is Sudo version 1.6.9
+This is Sudo version 1.7.0
 
 The sudo philosophy
 ===================
@@ -80,15 +80,14 @@ for the appropriate links.
 
 Web page
 ========
-There is a sudo `web page' at http://www.sudo.ws/sudo/
-that contains an overview of sudo as well as pointers to BETA versions
-and other useful info.
+There is a sudo web page at http://www.sudo.ws/sudo/ that contains
+an overview of sudo, documentation, downloads, information about
+beta versions and other useful info.
 
 Bug reports
 ===========
-A list of known bugs may be found in the `BUGS' file.  If you have
-found what you believe to be a bug, you can file a bug report with
-the sudo bug database, on at web at http://www.sudo.ws/bugs/.
+If you have found what you believe to be a bug, you can file a bug
+report with the sudo bug database, on at web at http://www.sudo.ws/bugs/.
 
 Please read over the `TROUBLESHOOTING' file *before* submitting a
 bug report.  When reporting bugs, please be sure to include the

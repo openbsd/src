@@ -1,6 +1,6 @@
 dnl Local m4 macros for autoconf (used by sudo)
 dnl
-dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
 dnl XXX - should cache values in all cases!!!
 dnl
@@ -156,15 +156,6 @@ fi
 ])dnl
 
 dnl
-dnl check for fullly working void
-dnl
-AC_DEFUN(SUDO_FULL_VOID, [AC_MSG_CHECKING(for full void implementation)
-AC_TRY_COMPILE(, [void *foo;
-foo = (void *)0; (void *)"test";], AC_DEFINE(VOID, void, [Define to "void" if your compiler supports void pointers, else use "char"].)
-AC_MSG_RESULT(yes), AC_DEFINE(VOID, char)
-AC_MSG_RESULT(no))])
-
-dnl
 dnl SUDO_CHECK_TYPE(TYPE, DEFAULT)
 dnl XXX - should require the check for unistd.h...
 dnl
@@ -234,6 +225,8 @@ AC_DEFUN([SUDO_FUNC_ISBLANK],
 ] [
   if test "$sudo_cv_func_isblank" = "yes"; then
     AC_DEFINE(HAVE_ISBLANK, 1, [Define if you have isblank(3).])
+  else
+    AC_LIBOBJ(isblank)
   fi
 ])
 

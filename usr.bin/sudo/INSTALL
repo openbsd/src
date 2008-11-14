@@ -1,5 +1,5 @@
-Installation instructions for Sudo 1.6.9
-========================================
+Installation instructions for Sudo 1.7
+======================================
 
 Sudo uses a `configure' script to probe the capabilities and type
 of the system in question.  In this release, `configure' takes many
@@ -189,6 +189,12 @@ Special features/options:
 	this file instead of /etc/ldap.secret to read the secret password
 	when rootbinddn is specified in the ldap config file.
 
+  --with-nsswitch[=filename]
+	Path to nsswitch.conf or "no" to disable nsswitch support.
+	If specified, sudo uses this file instead of /etc/nsswitch.conf.
+	If nsswitch is disabled but LDAP is enabled, sudo will check
+	LDAP first, then the sudoers file.
+
   --with-aixauth
 	Enable support for the AIX 4.x general authentication function.
 	This will use the authentication scheme specified for the user
@@ -200,7 +206,7 @@ Special features/options:
 	Linux, Solaris and HP-UX (version 11 and higher).
 
 	NOTE: on RedHat Linux and Fedora you *must* have an /etc/pam.d/sudo
-	file installed.  You may either use the sample.pam file included with
+	file install.  You may either use the sample.pam file included with
 	sudo or use /etc/pam.d/su as a reference.  The sample.pam file
 	included with sudo may or may not work with other Linux distributions.
 	On Solaris and HP-UX 11 systems you should check (and understand)
@@ -228,10 +234,6 @@ Special features/options:
 	unless the 'use_loginclass' option is defined in sudoers or the user
 	specifies a class on the command line.
 
-  --with-project
-	  Enable support for Solaris project resource limits.
-	  This option is only available on Solaris 9 and above.
-
   --with-bsdauth
 	Enable support for BSD authentication.  This is the default
 	for BSD/OS and OpenBSD systems that support it.
@@ -240,6 +242,10 @@ Special features/options:
 	to do so).  Note that only the newer BSD authentication API
 	is supported.  If you don't have /usr/include/bsd_auth.h
 	then you cannot use this.
+
+  --with-project
+	Enable support for Solaris project resource limits.
+	This option is only available on Solaris 9 and above.
 
   --with-noexec[=PATH]
 	Enable support for the "noexec" functionality which prevents
@@ -522,6 +528,13 @@ The following options are also configurable at runtime:
 	option.  visudo will then only use the VISUAL or EDITOR variables
 	if they match a value specified via --with-editor.
 
+  --with-askpass=PATH
+        Set PATH as the "askpass" program to use when no tty is
+        available.  Typically, this is a graphical password prompter,
+        similar to the one used by ssh.  The program must take a
+        prompt as an argument and print the received password to
+        the standard output.
+
   --disable-authentication
 	By default, sudo requires the user to authenticate via a
 	password or similar means.  This options causes sudo to
@@ -532,6 +545,13 @@ The following options are also configurable at runtime:
 	Don't let root run sudo.  This can be used to prevent people from
 	"chaining" sudo commands to get a root shell by doing something
 	like "sudo sudo /bin/sh".
+
+  --enable-gss-krb5-ccache-name
+        Use the gss_krb5_ccache_name() function to set the Kerberos
+        V credential cache file name.  By default, sudo will use
+        the KRB5CCNAME environment variable to set this.  While
+        gss_krb5_ccache_name() provides a better API to do this it
+        is not supported by all Kerberos V and SASL combinations.
 
   --enable-log-host
 	Log the hostname in the log file.
@@ -701,6 +721,11 @@ HP-UX:
     functionality.  You must use either the HP ANSI C compiler or gcc for
     noexec to work.  Binary packages of gcc are available from
     http://hpux.connect.org.uk/ and http://hpux.cs.utah.edu/.
+
+    To prevent PAM from overriding the value of umask on HP-UX 11,
+    you will need to add a line like the following to /etc/pam.conf:
+
+    sudo	session	required	libpam_hpsec.so.1 bypass_umask
 
 SunOS 4.x:
     The /bin/sh shipped with SunOS blows up while running configure.
