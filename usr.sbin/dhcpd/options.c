@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.23 2008/11/08 01:42:24 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.24 2008/11/14 02:00:08 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -460,16 +460,27 @@ zapfrags:
 		buffer[bufix++] = DHO_END;
 
 	/* Fill in overload option value based on space used for options. */
-	overflow = bufix - main_buffer_size;
-	if (overload && overflow > 0) {
-		buffer[4] = DHO_DHCP_OPTION_OVERLOAD;
-		buffer[5] = 1;
-		if (overload & 1) {
-			buffer[6] |= 1;
-			overflow -= DHCP_FILE_LEN;
+	if (overload) {
+		overflow = bufix - main_buffer_size;
+		if (overflow > 0) {
+			buffer[4] = DHO_DHCP_OPTION_OVERLOAD;
+			buffer[5] = 1;
+			if (overload & 1) {
+				buffer[6] |= 1;
+				overflow -= DHCP_FILE_LEN;
+			}
+			if ((overload & 2) && overflow > 0)
+				buffer[6] |= 2;
+		} else {
+			/*
+			 * Compact buffer to eliminate the unused
+			 * DHO_DHCP_OPTION_OVERLOAD option. Some clients
+			 * choke on DHO_PAD options there.
+			 */
+			memmove(&buffer[4], &buffer[7], buflen - 7);
+			bufix -= 3;
+			memset(&buffer[bufix], DHO_PAD, 3);
 		}
-		if ((overload & 2) && overflow > 0)
-			buffer[6] |= 2;
 	}
 
 	return (bufix);
