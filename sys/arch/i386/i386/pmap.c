@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.126 2008/11/06 19:14:26 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.127 2008/11/14 15:10:31 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1956,8 +1956,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W))
 		return (FALSE);
 
-	opte = *pte;			/* save the old PTE */
-	*pte = 0;			/* zap! */
+	/* atomically save the old PTE and zap! it */
+	opte = i386_atomic_testset_ul(pte, 0);
 
 	pmap_exec_account(pmap, va, opte, 0);
 
