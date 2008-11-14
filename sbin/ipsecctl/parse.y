@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2008/10/17 14:33:15 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2008/11/14 23:16:37 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1576,7 +1576,7 @@ host_v4(const char *s, int mask)
 	ipa->tail = ipa;
 
 	set_ipmask(ipa, bits);
-	if (bits != (ipa->af == AF_INET ? 32 : 128))
+	if (strrchr(s, '/') != NULL)
 		ipa->netaddress = 1;
 
 	return (ipa);
