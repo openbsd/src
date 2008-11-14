@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.99 2008/11/09 15:08:25 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.100 2008/11/14 20:49:35 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -342,21 +342,23 @@ re_gmii_readreg(struct device *self, int phy, int reg)
 		return (0);
 
 	/* Let the rgephy driver read the GMEDIASTAT register */
+
 	if (reg == RL_GMEDIASTAT) {
 		rval = CSR_READ_1(sc, RL_GMEDIASTAT);
 		return (rval);
 	}
 
 	CSR_WRITE_4(sc, RL_PHYAR, reg << 16);
+	DELAY(1000);
 
-	for (i = 0; i < RL_PHY_TIMEOUT; i++) {
+	for (i = 0; i < RL_TIMEOUT; i++) {
 		rval = CSR_READ_4(sc, RL_PHYAR);
 		if (rval & RL_PHYAR_BUSY)
 			break;
-		DELAY(25);
+		DELAY(100);
 	}
 
-	if (i == RL_PHY_TIMEOUT) {
+	if (i == RL_TIMEOUT) {
 		printf ("%s: PHY read failed\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
@@ -373,15 +375,16 @@ re_gmii_writereg(struct device *dev, int phy, int reg, int data)
 
 	CSR_WRITE_4(sc, RL_PHYAR, (reg << 16) |
 	    (data & RL_PHYAR_PHYDATA) | RL_PHYAR_BUSY);
+	DELAY(1000);
 
-	for (i = 0; i < RL_PHY_TIMEOUT; i++) {
+	for (i = 0; i < RL_TIMEOUT; i++) {
 		rval = CSR_READ_4(sc, RL_PHYAR);
 		if (!(rval & RL_PHYAR_BUSY))
 			break;
-		DELAY(25);
+		DELAY(100);
 	}
 
-	if (i == RL_PHY_TIMEOUT)
+	if (i == RL_TIMEOUT)
 		printf ("%s: PHY write failed\n", sc->sc_dev.dv_xname);
 }
 
