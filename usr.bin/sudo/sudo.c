@@ -171,11 +171,11 @@ main(argc, argv, envp)
     int sources = 0, validated;
     int fd, cmnd_status, sudo_mode, pwflag, rc = 0;
     sigaction_t sa;
+    struct sudo_nss *nss;
 #if defined(SUDO_DEVEL) && defined(__OpenBSD__)
     extern char *malloc_options;
     malloc_options = "AFGJPR";
 #endif
-    struct sudo_nss *nss;
 
 #ifdef HAVE_SETLOCALE
     setlocale(LC_ALL, "");
