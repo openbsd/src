@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.59 2008/11/08 01:00:01 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.60 2008/11/16 03:42:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -946,15 +946,17 @@ trunk_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		if (tr->tr_proto != TRUNK_PROTO_NONE && tr->tr_count)
+		if (tr->tr_proto != TRUNK_PROTO_NONE && tr->tr_count) {
 			error = (*tr->tr_start)(tr, m);
-		else
+			if (error == 0)
+				ifp->if_opackets++;
+			else
+				ifp->if_oerrors++;
+		} else {
 			m_freem(m);
-
-		if (error == 0)
-			ifp->if_opackets++;
-		else
-			ifp->if_oerrors++;
+			if (tr->tr_proto != TRUNK_PROTO_NONE)
+				ifp->if_oerrors++;
+		}
 	}
 }
 
