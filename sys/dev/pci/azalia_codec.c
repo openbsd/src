@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.61 2008/11/16 23:46:52 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.62 2008/11/16 23:53:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ int	azalia_generic_mixer_autoinit(codec_t *);
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
 int	azalia_generic_mixer_pin_sense(codec_t *);
-int	azalia_generic_mixer_create_virtual(codec_t *);
+int	azalia_generic_mixer_create_virtual(codec_t *, int, int);
 int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
@@ -1059,7 +1059,7 @@ azalia_generic_mixer_pin_sense(codec_t *this)
 }
 
 int
-azalia_generic_mixer_create_virtual(codec_t *this)
+azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 {
 	mixer_item_t *m;
 	mixer_devinfo_t *d;
@@ -1074,13 +1074,17 @@ azalia_generic_mixer_create_virtual(codec_t *this)
 	}
 
 	mdac = madc = mmaster = -1;
-	for (i = 0; i < this->nmixers; i++) {
+	for (i = 0; i < this->nmixers && (mdac < 0 || madc < 0); i++) {
 		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
 			continue;
+		if (pdac >= 0 && this->mixers[i].nid == pdac)
+			mdac = mmaster = i;
 		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
 			if (this->mixers[i].nid == cgdac->conv[0])
 				mdac = mmaster = i;
 		}
+		if (padc >= 0 && this->mixers[i].nid == padc)
+			madc = i;
 		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
 			if (this->mixers[i].nid == cgadc->conv[0])
 				madc = i;
@@ -1130,7 +1134,7 @@ int
 azalia_generic_mixer_autoinit(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this);
+	azalia_generic_mixer_create_virtual(this, -1, -1);
 	azalia_generic_mixer_pin_sense(this);
 
 	return 0;
