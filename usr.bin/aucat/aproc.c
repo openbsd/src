@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.23 2008/11/10 23:25:37 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.24 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -534,8 +534,8 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 	ibuf->mixodone = 0;
 	ibuf->mixvol = ADATA_UNIT;
 	ibuf->mixweight = ADATA_UNIT;
+	ibuf->mixmaxweight = ADATA_UNIT;
 	ibuf->xrun = XRUN_IGNORE;
-	mix_setmaster(p);
 }
 
 void
@@ -600,12 +600,20 @@ mix_setmaster(struct aproc *p)
 {
 	unsigned n;
 	struct abuf *buf;
+	int weight;
 
 	n = 0;
-	LIST_FOREACH(buf, &p->ibuflist, ient)
-	    n++;
-	LIST_FOREACH(buf, &p->ibuflist, ient)
-	    buf->mixweight = ADATA_UNIT / n;
+	LIST_FOREACH(buf, &p->ibuflist, ient) {
+		n++;
+	}
+	LIST_FOREACH(buf, &p->ibuflist, ient) {
+		weight = ADATA_UNIT / n;
+		if (weight > buf->mixmaxweight)
+			weight = buf->mixmaxweight;
+		buf->mixweight = weight;
+		DPRINTF("mix_setmaster: %p: %d/%d -> %d\n", buf,
+		    buf->mixweight, buf->mixmaxweight, weight);
+	}
 }
 
 void

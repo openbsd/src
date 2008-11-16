@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.3 2008/11/11 19:21:20 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.4 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -260,7 +260,7 @@ struct aproc_ops wsock_ops = {
  * parameters
  */
 struct sock *
-sock_new(struct fileops *ops, int fd, char *name)
+sock_new(struct fileops *ops, int fd, char *name, int maxweight)
 {
 	struct aproc *rproc, *wproc;
 	struct sock *f;
@@ -280,6 +280,7 @@ sock_new(struct fileops *ops, int fd, char *name)
 	f->bufsz = 2 * dev_bufsz;
 	f->round = dev_round;
 	f->odelta = f->idelta = 0;
+	f->maxweight = maxweight;
 	f->vol = ADATA_UNIT;
 
 	wproc = aproc_new(&wsock_ops, name);
@@ -387,7 +388,8 @@ sock_attach(struct sock *f, int force)
 	 */
 	dev_attach(f->pipe.file.name,
 	    (f->mode & AMSG_PLAY) ? rbuf : NULL, &f->rpar, f->xrun,
-	    (f->mode & AMSG_REC)  ? wbuf : NULL, &f->wpar, f->xrun);
+	    (f->mode & AMSG_REC)  ? wbuf : NULL, &f->wpar, f->xrun,
+	    f->maxweight);
 	if (f->mode & AMSG_PLAY)
 		dev_setvol(rbuf, f->vol);
 

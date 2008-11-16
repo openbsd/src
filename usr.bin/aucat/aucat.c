@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.39 2008/11/12 19:36:39 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.40 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -252,7 +252,8 @@ newinput(struct farg *fa)
 	proc = rpipe_new((struct file *)f);
 	aproc_setout(proc, buf);
 	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
-	dev_attach(fa->name, buf, &fa->par, fa->xrun, NULL, NULL, 0);
+	dev_attach(fa->name, buf, &fa->par, fa->xrun,
+	    NULL, NULL, 0, ADATA_UNIT);
 	dev_setvol(buf, MIDI_TO_ADATA(fa->vol));
 }
 
@@ -287,7 +288,7 @@ newoutput(struct farg *fa)
 	proc = wpipe_new((struct file *)f);
 	buf = abuf_new(nfr, &fa->par);
 	aproc_setin(proc, buf);
-	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->par, fa->xrun);
+	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->par, fa->xrun, 0);
 }
 
 int
@@ -298,10 +299,11 @@ main(int argc, char **argv)
 	struct farglist  ifiles, ofiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
-	unsigned ivol, bufsz;
+	unsigned bufsz;
 	char *devpath, *dbgenv, *listenpath;
 	const char *errstr;
 	extern char *malloc_options;
+	unsigned volctl;
 
 	malloc_options = "FGJ";
 
@@ -321,7 +323,7 @@ main(int argc, char **argv)
 	SLIST_INIT(&ofiles);
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
-	ivol = MIDI_MAXCTL;
+	volctl = MIDI_MAXCTL;
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 
 	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:lu")) != -1) {
@@ -347,10 +349,10 @@ main(int argc, char **argv)
 			opar.rate = ipar.rate;
 			break;
 		case 'v':
-			opt_vol(&ivol);
+			opt_vol(&volctl);
 			break;
 		case 'i':
-			opt_file(&ifiles, &ipar, ivol, hdr, xrun, optarg);
+			opt_file(&ifiles, &ipar, volctl, hdr, xrun, optarg);
 			break;
 		case 'o':
 			opt_file(&ofiles, &opar, 127, hdr, xrun, optarg);
@@ -462,7 +464,8 @@ main(int argc, char **argv)
 		listenpath = getenv("AUCAT_SOCKET");
 		if (!listenpath)
 			listenpath = DEFAULT_SOCKET;
-		(void)listen_new(&listen_ops, listenpath);
+		(void)listen_new(&listen_ops, listenpath,
+		    MIDI_TO_ADATA(volctl));
 	}
 
 	/*

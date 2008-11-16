@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.2 2008/10/29 22:40:56 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.3 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,7 +46,7 @@ struct fileops listen_ops = {
 };
 
 struct listen *
-listen_new(struct fileops *ops, char *path)
+listen_new(struct fileops *ops, char *path, int maxweight)
 {
 	int sock;
 	struct sockaddr_un sockname;
@@ -83,6 +83,7 @@ listen_new(struct fileops *ops, char *path)
 		exit(1);
 	}
 	f->fd = sock;
+	f->maxweight = maxweight;
 	return f;
 }
 
@@ -122,7 +123,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 			close(sock);
 			return 0;
 		}
-		(void)sock_new(&sock_ops, sock, "socket");
+		(void)sock_new(&sock_ops, sock, "socket", f->maxweight);
 	}
 	return 0;
 }

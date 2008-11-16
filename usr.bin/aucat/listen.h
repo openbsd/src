@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: listen.h,v 1.2 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,9 +25,10 @@ struct listen {
 	struct file file;
 	char *path;
 	int fd;
+	int maxweight;		/* max dynamic range for clients */
 };
 
-struct listen *listen_new(struct fileops *, char *);
+struct listen *listen_new(struct fileops *, char *, int);
 int listen_nfds(struct file *);
 int listen_pollfd(struct file *, struct pollfd *, int events);
 int listen_revents(struct file *, struct pollfd *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.17 2008/11/12 19:36:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.18 2008/11/16 16:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -397,7 +397,7 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 void
 dev_attach(char *name, 
     struct abuf *ibuf, struct aparams *sipar, unsigned underrun, 
-    struct abuf *obuf, struct aparams *sopar, unsigned overrun)
+    struct abuf *obuf, struct aparams *sopar, unsigned overrun, int vol)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
 	struct aparams ipar, opar;
@@ -442,6 +442,8 @@ dev_attach(char *name,
 		aproc_setin(dev_mix, ibuf);
 		abuf_opos(ibuf, -dev_mix->u.mix.lat);
 		ibuf->xrun = underrun;
+		ibuf->mixmaxweight = vol;
+		mix_setmaster(dev_mix);
 	}
 	if (obuf) {
 		opar = *sopar;

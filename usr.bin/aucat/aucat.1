@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.32 2008/11/11 19:44:19 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.33 2008/11/16 16:30:22 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2008 $
+.Dd $Mdocdate: November 16 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -110,6 +110,13 @@ options.
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
 corresponding to \-42dB and \-0dB attenuation.
+In server mode, clients inherit this parameter.
+Reducing the volume in advance reduces client's dynamic range,
+but allows client volume to stay independend from the number
+of clients as long as their number is small enough.
+A good compromise is to use -4dB attenuation (12 volume units)
+for each additional client expected (eg. 115 if 2 clients are expected,
+103 for 3 clents, and so on).
 .It Fl x Ar policy
 Action when the output stream cannot accept
 recorded data fast enough or the input stream
