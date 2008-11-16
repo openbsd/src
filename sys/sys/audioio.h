@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.19 2008/03/22 11:05:31 ratchov Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.20 2008/11/16 23:36:54 jakemsr Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -284,8 +284,8 @@ typedef struct mixer_ctrl {
 #define AudioNmid	"mid"
 #define AudioNbass	"bass"
 #define AudioNbassboost	"bassboost"
-#define AudioNspeaker	"speaker"
-#define AudioNheadphone	"headphones"
+#define AudioNspeaker	"spkr"
+#define AudioNheadphone	"hp"
 #define AudioNoutput	"output"
 #define AudioNinput	"input"
 #define AudioNmaster	"master"
