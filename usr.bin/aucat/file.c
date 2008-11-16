@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 2008/11/16 17:01:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -108,6 +108,9 @@ file_poll(void)
 	struct pollfd pfds[MAXFDS];
 	struct file *f, *fnext;
 	struct aproc *p;
+#ifdef DEBUG
+	unsigned nused;
+#endif
 
 	/*
 	 * fill the pfds[] array with files that are blocked on reading
@@ -115,12 +118,19 @@ file_poll(void)
 	 */
 	DPRINTFN(4, "file_poll:");
 	nfds = 0;
+#ifdef DEBUG
+	nused = 0;
+#endif
 	LIST_FOREACH(f, &file_list, entry) {
 		events = 0;
 		if (f->rproc && !(f->state & FILE_ROK))
 			events |= POLLIN;
 		if (f->wproc && !(f->state & FILE_WOK))
 			events |= POLLOUT;
+#ifdef DEBUG
+		if (events)
+			nused++;
+#endif
 		DPRINTFN(4, " %s(%x)", f->name, events);
 		n = f->ops->pollfd(f, pfds + nfds, events);
 		if (n == 0) {
@@ -133,7 +143,7 @@ file_poll(void)
 	DPRINTFN(4, "\n");
 
 #ifdef DEBUG
-	if (nfds == 0 && !LIST_EMPTY(&file_list)) {
+	if (nused == 0 && !LIST_EMPTY(&file_list)) {
 		fprintf(stderr, "file_poll: deadlock\n");
 		abort();
 	}
