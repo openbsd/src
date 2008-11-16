@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.40 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.41 2008/11/16 18:34:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 		if (!listenpath)
 			listenpath = DEFAULT_SOCKET;
 		(void)listen_new(&listen_ops, listenpath,
-		    MIDI_TO_ADATA(volctl));
+		    &dipar, &dopar, MIDI_TO_ADATA(volctl));
 	}
 
 	/*

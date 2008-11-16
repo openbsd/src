@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.3 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.4 2008/11/16 18:34:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,9 +52,12 @@ struct sock {
 	unsigned xrun;			/* one of AMSG_IGNORE, ... */
 	int vol;			/* requested volume */
 	int maxweight;			/* max dynamic range */
+	struct aparams templ_rpar;	/* template for rpar */
+	struct aparams templ_wpar;	/* template for wpar */
 };
 
-struct sock *sock_new(struct fileops *, int fd, char *, int);
+struct sock *sock_new(struct fileops *, int fd, char *,
+    struct aparams *, struct aparams *, int);
 extern struct fileops sock_ops;
 
 #endif /* !defined(SOCK_H) */

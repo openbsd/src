@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.5 2008/11/16 17:08:32 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.6 2008/11/16 18:34:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -260,7 +260,8 @@ struct aproc_ops wsock_ops = {
  * parameters
  */
 struct sock *
-sock_new(struct fileops *ops, int fd, char *name, int maxweight)
+sock_new(struct fileops *ops, int fd, char *name,
+    struct aparams *wpar, struct aparams *rpar, int maxweight)
 {
 	struct aproc *rproc, *wproc;
 	struct sock *f;
@@ -268,12 +269,14 @@ sock_new(struct fileops *ops, int fd, char *name, int maxweight)
 	f = (struct sock *)pipe_new(ops, fd, name);
 	f->pstate = SOCK_INIT;
 	f->mode = 0;
-	if (dev_rec) {		
-		f->wpar = dev_ipar;
+	if (dev_rec) {
+		f->templ_wpar = *wpar;
+		f->wpar = f->templ_wpar;
 		f->mode |= AMSG_REC;
 	}
 	if (dev_play) {
-		f->rpar = dev_opar;
+		f->templ_rpar = *rpar;
+		f->rpar = f->templ_rpar;
 		f->mode |= AMSG_PLAY;
 	}
 	f->xrun = AMSG_IGNORE;
@@ -603,20 +606,26 @@ sock_setpar(struct sock *f)
 	if (AMSG_ISSET(p->rchan) && (f->mode & AMSG_REC)) {
 		if (p->rchan < 1)
 			p->rchan = 1;
-		if (p->rchan > NCHAN_MAX - 1)
-			p->rchan = NCHAN_MAX - 1;
-		f->wpar.cmin = 0;
-		f->wpar.cmax = p->rchan - 1;
-		DPRINTF("sock_setpar: rchan -> %u\n", p->rchan);
+		if (p->rchan > NCHAN_MAX)
+			p->rchan = NCHAN_MAX;
+		f->wpar.cmin = f->templ_wpar.cmin;
+		f->wpar.cmax = f->templ_wpar.cmin + p->rchan - 1;
+		if (f->wpar.cmax > NCHAN_MAX - 1)
+			f->wpar.cmax = NCHAN_MAX - 1;
+		DPRINTF("sock_setpar: rchan -> %u:%u\n",
+		    f->wpar.cmin, f->wpar.cmax);
 	}
 	if (AMSG_ISSET(p->pchan) && (f->mode & AMSG_PLAY)) {
 		if (p->pchan < 1)
 			p->pchan = 1;
-		if (p->pchan > NCHAN_MAX - 1)
-			p->pchan = NCHAN_MAX - 1;
-		f->rpar.cmin = 0;
-		f->rpar.cmax = p->pchan - 1;
-		DPRINTF("sock_setpar: pchan -> %u\n", p->pchan);
+		if (p->pchan > NCHAN_MAX)
+			p->pchan = NCHAN_MAX;
+		f->rpar.cmin = f->templ_rpar.cmin;
+		f->rpar.cmax = f->templ_wpar.cmin + p->pchan - 1;
+		if (f->rpar.cmax > NCHAN_MAX - 1)
+			f->rpar.cmax = NCHAN_MAX - 1;
+		DPRINTF("sock_setpar: pchan -> %u:%u\n",
+		    f->rpar.cmin, f->rpar.cmax);
 	}
 	if (AMSG_ISSET(p->rate)) {
 		if (p->rate < RATE_MIN)
@@ -773,8 +782,10 @@ sock_execmsg(struct sock *f)
 		m->cmd = AMSG_GETCAP;
 		m->u.cap.rate = dev_rate;
 		m->u.cap.rate_div = dev_rate_div;
-		m->u.cap.pchan = dev_opar.cmax - dev_opar.cmin + 1;	
-		m->u.cap.rchan = dev_ipar.cmax - dev_ipar.cmin + 1;	
+		m->u.cap.pchan = dev_mix ?
+		    (f->templ_rpar.cmax - f->templ_rpar.cmin + 1) : 0;
+		m->u.cap.rchan = dev_sub ?
+		    (f->templ_wpar.cmax - f->templ_wpar.cmin + 1) : 0;
 		m->u.cap.bits = sizeof(short) * 8;
 		m->u.cap.bps = sizeof(short);
 		f->rstate = SOCK_RRET;
@@ -970,4 +981,3 @@ sock_write(struct sock *f)
 	}
 	return 1;
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.h,v 1.2 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: listen.h,v 1.3 2008/11/16 18:34:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,17 +20,21 @@
 #include <sys/types.h>
 
 #include "file.h"
+#include "aparams.h"
 
 struct listen {
 	struct file file;
 	char *path;
 	int fd;
 	int maxweight;		/* max dynamic range for clients */
+	struct aparams wpar;	/* template for clients write params */
+	struct aparams rpar;	/* template for clients read params */
 };
 
-struct listen *listen_new(struct fileops *, char *, int);
+struct listen *listen_new(struct fileops *, char *,
+    struct aparams *, struct aparams *, int);
 int listen_nfds(struct file *);
-int listen_pollfd(struct file *, struct pollfd *, int events);
+int listen_pollfd(struct file *, struct pollfd *, int);
 int listen_revents(struct file *, struct pollfd *);
 void listen_close(struct file *);
 extern struct fileops listen_ops;
