@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2008/11/16 17:08:32 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2008/11/16 21:16:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -186,6 +186,10 @@ file_poll(void)
 				if (!p || !p->ops->out(p, NULL))
 					break;
 			}
+		}
+		if (!(f->state & FILE_ZOMB) && (revents & POLLHUP)) {
+			DPRINTFN(2, "file_poll: %s: disconnected\n", f->name);
+			f->state |= (FILE_EOF | FILE_HUP);
 		}
 		if (!(f->state & FILE_ZOMB) && (f->state & FILE_EOF)) {
 			DPRINTFN(2, "file_poll: %s: eof\n", f->name);
