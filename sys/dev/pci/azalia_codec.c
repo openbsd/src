@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.59 2008/11/14 22:03:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.60 2008/11/16 23:33:50 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -488,7 +488,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    w->type != COP_AWTYPE_POWER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
-			    "%s.source", w->name);
+			    "%s_source", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			if (w->type == COP_AWTYPE_AUDIO_MIXER)
 				d->mixer_class = AZ_CLASS_RECORD;
@@ -522,7 +522,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    w->outamp_cap & COP_AMPCAP_MUTE) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
-			    "%s.mute", w->name);
+			    "%s_mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			if (w->type == COP_AWTYPE_AUDIO_MIXER)
 				d->mixer_class = AZ_CLASS_OUTPUT;
@@ -573,7 +573,7 @@ azalia_generic_mixer_init(codec_t *this)
 			    w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
 				snprintf(d->label.name, sizeof(d->label.name),
-				    "%s.mute", w->name);
+				    "%s_mute", w->name);
 				d->type = AUDIO_MIXER_ENUM;
 				if (w->type == COP_AWTYPE_AUDIO_INPUT)
 					d->mixer_class = AZ_CLASS_RECORD;
@@ -601,7 +601,7 @@ azalia_generic_mixer_init(codec_t *this)
 					if (conn == 1)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
-					    "%s.%s.mute", w->name,
+					    "%s_%s_mute", w->name,
 					    this->w[w->connections[j]].name);
 					d->type = AUDIO_MIXER_ENUM;
 					if (w->type == COP_AWTYPE_AUDIO_INPUT)
@@ -653,7 +653,7 @@ azalia_generic_mixer_init(codec_t *this)
 					if (conn == 1)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
-					    "%s.%s", w->name,
+					    "%s_%s", w->name,
 					    this->w[w->connections[j]].name);
 					d->type = AUDIO_MIXER_VALUE;
 					if (w->type == COP_AWTYPE_AUDIO_INPUT)
@@ -676,7 +676,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    w->d.pin.cap & COP_PINCAP_INPUT) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
-			    "%s.dir", w->name);
+			    "%s_dir", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_PINDIR;
@@ -695,7 +695,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    w->d.pin.cap & COP_PINCAP_HEADPHONE) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
-			    "%s.boost", w->name);
+			    "%s_boost", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_PINBOOST;
@@ -713,7 +713,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    w->d.pin.cap & COP_PINCAP_EAPD) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
-			    "%s.eapd", w->name);
+			    "%s_eapd", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_EAPD;
