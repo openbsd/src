@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.35 2008/11/16 20:44:03 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.36 2008/11/16 20:46:16 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -400,13 +400,6 @@ when recording.
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
 16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
-.Pp
-In server mode
-.Nm
-will continue playing and recording even if there are no clients.
-This consumes system resources unnecessarily, thus starting
-.Nm
-at system or session startup is not recommended.
 .Pp
 In server mode, a full-duplex
 .Xr audio 4
