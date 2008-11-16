@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.32 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.33 2008/11/16 09:50:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2761,7 +2761,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwn_cmd_link_quality linkq;
 	const struct iwn_rate *rinfo;
-	uint8_t txant, rate;
+	uint8_t txant;
 	int i, txrate;
 
 	/* Use the first valid TX antenna. */
@@ -2778,7 +2778,6 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	/* Start at highest available bit-rate. */
 	txrate = rs->rs_nrates - 1;
 	for (i = 0; i < IWN_MAX_TX_RETRIES; i++) {
-		rate = rs->rs_rates[txrate] & IEEE80211_RATE_VAL;
 		rinfo = &iwn_rates[wn->ridx[txrate]];
 		linkq.retry[i].plcp = rinfo->plcp;
 		linkq.retry[i].rflags = rinfo->flags;
