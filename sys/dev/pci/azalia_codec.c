@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.62 2008/11/16 23:53:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.63 2008/11/16 23:58:40 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1065,7 +1065,7 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 	mixer_devinfo_t *d;
 	convgroup_t *cgdac = &this->dacs.groups[0];
 	convgroup_t *cgadc = &this->adcs.groups[0];
-	int i, err, mdac, madc, mmaster;
+	int i, err, madc, mmaster;
 
 	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
 	for (i = 0; i < this->nmixers; i++) {
@@ -1073,15 +1073,15 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		d->index = d->prev = d->next = 0;
 	}
 
-	mdac = madc = mmaster = -1;
-	for (i = 0; i < this->nmixers && (mdac < 0 || madc < 0); i++) {
+	madc = mmaster = -1;
+	for (i = 0; i < this->nmixers && (mmaster < 0 || madc < 0); i++) {
 		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
 			continue;
 		if (pdac >= 0 && this->mixers[i].nid == pdac)
-			mdac = mmaster = i;
-		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
+			mmaster = i;
+		if (mmaster < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
 			if (this->mixers[i].nid == cgdac->conv[0])
-				mdac = mmaster = i;
+				mmaster = i;
 		}
 		if (padc >= 0 && this->mixers[i].nid == padc)
 			madc = i;
@@ -1091,7 +1091,7 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		}
 	}
 
-	if (mdac >= 0) {
+	if (mmaster >= 0) {
 		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
 		if (err)
 			return err;
@@ -1100,16 +1100,6 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		memcpy(m, &this->mixers[mmaster], sizeof(*m));
 		d->mixer_class = AZ_CLASS_OUTPUT;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
-		this->nmixers++;
-
-		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
-		if (err)
-			return err;
-		m = &this->mixers[this->nmixers];
-		d = &m->devinfo;
-		memcpy(m, &this->mixers[mdac], sizeof(*m));
-		d->mixer_class = AZ_CLASS_INPUT;
-		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
 		this->nmixers++;
 	}
 
