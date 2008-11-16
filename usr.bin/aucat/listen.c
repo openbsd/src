@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.4 2008/11/16 18:34:56 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.5 2008/11/16 20:44:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -87,6 +87,15 @@ listen_new(struct fileops *ops, char *path,
 	f->wpar = *wpar;
 	f->rpar = *rpar;
 	f->maxweight = maxweight;
+#ifdef DEBUG
+	if (debug_level > 0) {
+		fprintf(stderr, "listen_new: %s: wpar=", f->path);
+		aparams_print(&f->wpar);
+		fprintf(stderr, ", rpar=");
+		aparams_print(&f->rpar);
+		fprintf(stderr, ", vol=%u\n", f->maxweight);
+	}
+#endif
 	return f;
 }
 
@@ -114,7 +123,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 	int sock;
 
 	if (pfd->revents & POLLIN) {
-		DPRINTF("listen_revents: accepting connection\n");
+		DPRINTF("listen_revents: %s: accepting connection\n", f->path);
 		caddrlen = sizeof(caddrlen);
 		sock = accept(f->fd, &caddr, &caddrlen);
 		if (sock < 0) {

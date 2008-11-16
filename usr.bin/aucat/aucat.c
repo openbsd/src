@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.41 2008/11/16 18:34:56 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.42 2008/11/16 20:44:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,7 +110,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-lu] [-b nsamples] [-C min:max] [-c min:max] [-e enc] "
 	    "[-f device]\n"
-	    "\t[-h fmt] [-i file] [-o file] [-r rate] [-v volume] "
+	    "\t[-h fmt] [-i file] [-o file] [-r rate] [-s path] [-v volume] "
 	    "[-x policy]\n",
 	    __progname);
 }
@@ -174,11 +174,12 @@ opt_xrun(void)
 }
 
 /*
- * Arguments of -i and -o opations are stored in a list.
+ * Arguments of -i, -o and -s options are stored in a list.
  */
 struct farg {
 	SLIST_ENTRY(farg) entry;
-	struct aparams par;	/* last requested format */
+	struct aparams ipar;	/* input (read) parameters */
+	struct aparams opar;	/* output (write) parameters */
 	unsigned vol;		/* last requested volume */
 	char *name;		/* optarg pointer (no need to copy it */
 	int hdr;		/* header format */
@@ -192,8 +193,9 @@ SLIST_HEAD(farglist, farg);
  * to the given file name.
  */
 void
-opt_file(struct farglist *list, 
-    struct aparams *par, unsigned vol, int hdr, int xrun, char *optarg)
+farg_add(struct farglist *list, 
+    struct aparams *ipar, struct aparams *opar, unsigned vol,
+    int hdr, int xrun, char *optarg)
 {
 	struct farg *fa;
 	size_t namelen;
@@ -215,7 +217,8 @@ opt_file(struct farglist *list,
 	} else 
 		fa->hdr = hdr;
 	fa->xrun = xrun;
-	fa->par = *par;
+	fa->ipar = *ipar;
+	fa->opar = *opar;
 	fa->vol = vol;
 	fa->name = optarg;
 	SLIST_INSERT_HEAD(list, fa, entry);
@@ -246,13 +249,13 @@ newinput(struct farg *fa)
 	/*
 	 * XXX : we should round rate, right ?
 	 */
-	f = wav_new_in(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
-	nfr = dev_bufsz * fa->par.rate / dev_rate;
-	buf = abuf_new(nfr, &fa->par);
+	f = wav_new_in(&wav_ops, fd, fa->name, &fa->ipar, fa->hdr);
+	nfr = dev_bufsz * fa->ipar.rate / dev_rate;
+	buf = abuf_new(nfr, &fa->ipar);
 	proc = rpipe_new((struct file *)f);
 	aproc_setout(proc, buf);
 	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
-	dev_attach(fa->name, buf, &fa->par, fa->xrun,
+	dev_attach(fa->name, buf, &fa->ipar, fa->xrun,
 	    NULL, NULL, 0, ADATA_UNIT);
 	dev_setvol(buf, MIDI_TO_ADATA(fa->vol));
 }
@@ -283,12 +286,12 @@ newoutput(struct farg *fa)
 	/*
 	 * XXX : we should round rate, right ?
 	 */
-	f = wav_new_out(&wav_ops, fd, fa->name, &fa->par, fa->hdr);
-	nfr = dev_bufsz * fa->par.rate / dev_rate;
+	f = wav_new_out(&wav_ops, fd, fa->name, &fa->opar, fa->hdr);
+	nfr = dev_bufsz * fa->opar.rate / dev_rate;
 	proc = wpipe_new((struct file *)f);
-	buf = abuf_new(nfr, &fa->par);
+	buf = abuf_new(nfr, &fa->opar);
 	aproc_setin(proc, buf);
-	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->par, fa->xrun, 0);
+	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->opar, fa->xrun, 0);
 }
 
 int
@@ -296,11 +299,11 @@ main(int argc, char **argv)
 {
 	int c, u_flag, l_flag, hdr, xrun, suspend = 0;
 	struct farg *fa;
-	struct farglist  ifiles, ofiles;
+	struct farglist  ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
 	unsigned bufsz;
-	char *devpath, *dbgenv, *listenpath;
+	char *devpath, *dbgenv;
 	const char *errstr;
 	extern char *malloc_options;
 	unsigned volctl;
@@ -321,12 +324,13 @@ main(int argc, char **argv)
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
+	SLIST_INIT(&sfiles);
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
 	volctl = MIDI_MAXCTL;
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:lu")) != -1) {
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:lus:")) != -1) {
 		switch (c) {
 		case 'h':
 			hdr = opt_hdr();
@@ -352,10 +356,16 @@ main(int argc, char **argv)
 			opt_vol(&volctl);
 			break;
 		case 'i':
-			opt_file(&ifiles, &ipar, volctl, hdr, xrun, optarg);
+			farg_add(&ifiles, &ipar, &opar, volctl,
+			    hdr, xrun, optarg);
 			break;
 		case 'o':
-			opt_file(&ofiles, &opar, 127, hdr, xrun, optarg);
+			farg_add(&ofiles, &ipar, &opar, volctl,
+			    hdr, xrun, optarg);
+			break;
+		case 's':
+			farg_add(&sfiles, &ipar, &opar, volctl,
+			    hdr, xrun, optarg);
 			break;
 		case 'f':
 			if (devpath)
@@ -407,7 +417,9 @@ main(int argc, char **argv)
 	}
 
 	if (l_flag && (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
-		errx(1, "can't use -l with -o or -i");
+		errx(1, "can't use -l and -s with -o or -i");
+	if (!l_flag && !SLIST_EMPTY(&sfiles))
+		errx(1, "can't use -s without -l");
 
 	if (!u_flag && !l_flag) {
 		/*
@@ -418,21 +430,29 @@ main(int argc, char **argv)
 		aparams_init(&dipar, NCHAN_MAX - 1, 0, RATE_MAX);
 		aparams_init(&dopar, NCHAN_MAX - 1, 0, RATE_MIN);
 		SLIST_FOREACH(fa, &ifiles, entry) {
-			if (dopar.cmin > fa->par.cmin)
-				dopar.cmin = fa->par.cmin;
-			if (dopar.cmax < fa->par.cmax)
-				dopar.cmax = fa->par.cmax;
-			if (dopar.rate < fa->par.rate)
-				dopar.rate = fa->par.rate;
+			if (dopar.cmin > fa->ipar.cmin)
+				dopar.cmin = fa->ipar.cmin;
+			if (dopar.cmax < fa->ipar.cmax)
+				dopar.cmax = fa->ipar.cmax;
+			if (dopar.rate < fa->ipar.rate)
+				dopar.rate = fa->ipar.rate;
 		}
 		SLIST_FOREACH(fa, &ofiles, entry) {
-			if (dipar.cmin > fa->par.cmin)
-				dipar.cmin = fa->par.cmin;
-			if (dipar.cmax < fa->par.cmax)
-				dipar.cmax = fa->par.cmax;
-			if (dipar.rate > fa->par.rate)
-				dipar.rate = fa->par.rate;
+			if (dipar.cmin > fa->opar.cmin)
+				dipar.cmin = fa->opar.cmin;
+			if (dipar.cmax < fa->opar.cmax)
+				dipar.cmax = fa->opar.cmax;
+			if (dipar.rate > fa->opar.rate)
+				dipar.rate = fa->opar.rate;
 		}
+	}
+
+	/*
+	 * if there are no sockets paths provided use the default
+	 */
+	if (l_flag && SLIST_EMPTY(&sfiles)) {
+		farg_add(&sfiles, &dopar, &dipar,
+		    MIDI_MAXCTL, HDR_RAW, XRUN_IGNORE, DEFAULT_SOCKET);
 	}
 
 	quit_flag = 0;
@@ -460,14 +480,6 @@ main(int argc, char **argv)
 	    (l_flag || !SLIST_EMPTY(&ifiles)) ? &dopar : NULL,
 	    bufsz, l_flag);
 
-	if (l_flag) {
-		listenpath = getenv("AUCAT_SOCKET");
-		if (!listenpath)
-			listenpath = DEFAULT_SOCKET;
-		(void)listen_new(&listen_ops, listenpath,
-		    &dipar, &dopar, MIDI_TO_ADATA(volctl));
-	}
-
 	/*
 	 * Create buffers for all input and output pipes.
 	 */
@@ -481,6 +493,13 @@ main(int argc, char **argv)
 		fa = SLIST_FIRST(&ofiles);
 		SLIST_REMOVE_HEAD(&ofiles, entry);
 		newoutput(fa);
+		free(fa);
+	}
+	while (!SLIST_EMPTY(&sfiles)) {
+		fa = SLIST_FIRST(&sfiles);
+		SLIST_REMOVE_HEAD(&sfiles, entry);
+		(void)listen_new(&listen_ops, fa->name,
+		    &fa->opar, &fa->ipar, MIDI_TO_ADATA(fa->vol));
 		free(fa);
 	}
 

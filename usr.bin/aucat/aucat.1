@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.34 2008/11/16 18:34:04 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.35 2008/11/16 20:44:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -33,6 +33,7 @@
 .Op Fl i Ar file
 .Op Fl o Ar file
 .Op Fl r Ar rate
+.Op Fl s Ar file
 .Op Fl v Ar volume
 .Op Fl x Ar policy
 .Ek
@@ -78,7 +79,7 @@ If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl l
-Listen for incoming connections on a Unix domain socket.
+Listen for incoming connections on Unix domain sockets.
 A client might use
 .Nm
 instead of the regular
@@ -87,9 +88,9 @@ device for audio input and output
 in order to share the physical device with other clients.
 The default socket path is
 .Pa /tmp/aucat.sock
-but it can be changed with the
-.Ev AUCAT_SOCKET
-environment variable.
+but other paths can be used with the
+.Fl s
+option.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is
@@ -98,6 +99,11 @@ then standard output will be used.
 .It Fl r Ar rate
 Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
+.It Fl s Ar file
+Add this path to the list of sockets to listen on.
+Meaningful in server mode only (i.e. when the
+.Fl l
+option is used).
 .It Fl u
 Normally
 .Nm
@@ -148,19 +154,22 @@ or
 .Dv SIGUSR2 ,
 it increases or decreases debug level, respectively.
 .Pp
-Settings for input
-.Pq Fl i
-and output
+Settings for input files
+.Pq Fl i ,
+output files
 .Pq Fl o
-files can be changed using the
-.Fl Ccehrx
+and sockets
+.Pq Fl s
+can be changed using the
+.Fl Ccehrvx
 options.
 The last
-.Fl Ccehrx
+.Fl Ccehrvx
 options specified before an
-.Fl i
-or
+.Fl i ,
 .Fl o
+and
+.Fl s
 are applied to
 .Ar file .
 .Pp
@@ -304,12 +313,10 @@ If the device does not support the encoding,
 .Nm
 will exit with an error.
 .Sh ENVIRONMENT
-.Bl -tag -width "AUCAT_SOCKETXXX" -compact
+.Bl -tag -width "AUDIODEVICE" -compact
 .It Ev AUCAT_DEBUG
 The debug level:
 may be a value between 0 and 4.
-.It Ev AUCAT_SOCKET
-Path to the Unix domain socket to use.
 .It Ev AUDIODEVICE
 The audio device to use.
 .El
@@ -350,6 +357,30 @@ The following will mix and play two files and record a third one in
 full-duplex:
 .Bd -literal -offset indent
 $ aucat -i drums.raw -i bass.raw -o guitar.raw
+.Ed
+.Pp
+The following will start
+.Nm
+in server mode with the default parameters.
+.Bd -literal -offset indent
+$ aucat -l
+.Ed
+.Pp
+The following will start
+.Nm
+in server mode with the default parameters, but will create an
+additional socket for output to channels 2:3 only (rear speakers
+on most cards).
+.Bd -literal -offset indent
+$ aucat -l -s /tmp/aucat.sock -c 2:3 -s /tmp/aucat.sock.rear
+.Ed
+.Pp
+The following will start
+.Nm
+in server mode creating the defaut socket with low volume and
+an additional socket for high volume output.
+.Bd -literal -offset indent
+$ aucat -l -v 65 -s /tmp/aucat.sock -v 127 -s /tmp/aucat.sock.max
 .Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.6 2008/11/16 18:34:56 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.7 2008/11/16 20:44:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -610,8 +610,8 @@ sock_setpar(struct sock *f)
 			p->rchan = NCHAN_MAX;
 		f->wpar.cmin = f->templ_wpar.cmin;
 		f->wpar.cmax = f->templ_wpar.cmin + p->rchan - 1;
-		if (f->wpar.cmax > NCHAN_MAX - 1)
-			f->wpar.cmax = NCHAN_MAX - 1;
+		if (f->wpar.cmax > f->templ_wpar.cmax)
+			f->wpar.cmax = f->templ_wpar.cmax;
 		DPRINTF("sock_setpar: rchan -> %u:%u\n",
 		    f->wpar.cmin, f->wpar.cmax);
 	}
@@ -621,9 +621,9 @@ sock_setpar(struct sock *f)
 		if (p->pchan > NCHAN_MAX)
 			p->pchan = NCHAN_MAX;
 		f->rpar.cmin = f->templ_rpar.cmin;
-		f->rpar.cmax = f->templ_wpar.cmin + p->pchan - 1;
-		if (f->rpar.cmax > NCHAN_MAX - 1)
-			f->rpar.cmax = NCHAN_MAX - 1;
+		f->rpar.cmax = f->templ_rpar.cmin + p->pchan - 1;
+		if (f->rpar.cmax > f->templ_rpar.cmax)
+			f->rpar.cmax = f->templ_rpar.cmax;
 		DPRINTF("sock_setpar: pchan -> %u:%u\n",
 		    f->rpar.cmin, f->rpar.cmax);
 	}
