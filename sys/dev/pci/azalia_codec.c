@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.60 2008/11/16 23:33:50 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.61 2008/11/16 23:46:52 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -419,6 +419,11 @@ azalia_generic_mixer_init(codec_t *this)
 	mixer_item_t *m;
 	int err, i, j, k;
 
+	nid_t dconns[32];
+	int ndconns = 0;
+	nid_t aconns[32];
+	int naconns = 0;
+
 	this->maxmixers = 10;
 	this->nmixers = 0;
 	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
@@ -483,6 +488,63 @@ azalia_generic_mixer_init(codec_t *this)
 				continue;
 		}
 
+		/* converters (DACc/ADCs)
+		 * not mixer widgets, but keep track of connections to
+		 * help determine mixer class.
+		 */
+		if (w->widgetcap & COP_AWCAP_FORMATOV) {
+			/* adcs */
+			if (w->type == COP_AWTYPE_AUDIO_INPUT) {
+				for (j = 0; j < w->nconnections; j++) {
+					uint8_t conn;
+
+					if (!VALID_WIDGET_NID(w->connections[j],
+					    this))
+						continue;
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
+						continue;
+					for (k = 0; k < naconns; k++) {
+						if (aconns[k] ==
+						    w->connections[j])
+							break;
+					}
+					if (k == naconns)
+						aconns[naconns++] =
+						    w->connections[j];
+					if (naconns == 32)
+						break;
+				}
+			}
+			/* dacs */
+			if (w->type == COP_AWTYPE_AUDIO_OUTPUT) {
+				for (j = 0; j < w->nconnections; j++) {
+					uint8_t conn;
+
+					if (!VALID_WIDGET_NID(w->connections[j],
+					    this))
+						continue;
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
+						continue;
+					for (k = 0; k < ndconns; k++) {
+						if (dconns[k] ==
+						    w->connections[j])
+							break;
+					}
+					if (k == ndconns)
+						dconns[ndconns++] =
+						    w->connections[j];
+					if (ndconns == 32)
+						break;
+				}
+			}
+		}
+
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER &&
 		    w->type != COP_AWTYPE_POWER && w->nconnections >= 2) {
@@ -524,11 +586,9 @@ azalia_generic_mixer_init(codec_t *this)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
-			if (w->type == COP_AWTYPE_AUDIO_MIXER)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else if (w->type == COP_AWTYPE_AUDIO_SELECTOR)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else if (w->type == COP_AWTYPE_PIN_COMPLEX)
+			if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+			    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
+			    w->type == COP_AWTYPE_PIN_COMPLEX)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			else
 				d->mixer_class = AZ_CLASS_INPUT;
@@ -550,11 +610,9 @@ azalia_generic_mixer_init(codec_t *this)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s", w->name);
 			d->type = AUDIO_MIXER_VALUE;
-			if (w->type == COP_AWTYPE_AUDIO_MIXER)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else if (w->type == COP_AWTYPE_AUDIO_SELECTOR)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else if (w->type == COP_AWTYPE_PIN_COMPLEX)
+			if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+			    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
+			    w->type == COP_AWTYPE_PIN_COMPLEX)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			else
 				d->mixer_class = AZ_CLASS_INPUT;
@@ -608,6 +666,13 @@ azalia_generic_mixer_init(codec_t *this)
 						d->mixer_class = AZ_CLASS_RECORD;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
+					for (k = 0; k < naconns; k++) {
+						if (aconns[k] == w->nid) {
+							d->mixer_class =
+							    AZ_CLASS_RECORD;
+							break;
+						}
+					}
 					m->target = j;
 					d->un.e.num_mem = 2;
 					d->un.e.member[0].ord = 0;
@@ -660,6 +725,13 @@ azalia_generic_mixer_init(codec_t *this)
 						d->mixer_class = AZ_CLASS_RECORD;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
+					for (k = 0; k < naconns; k++) {
+						if (aconns[k] == w->nid) {
+							d->mixer_class =
+							    AZ_CLASS_RECORD;
+							break;
+						}
+					}
 					m->target = j;
 					d->un.v.num_channels = WIDGET_CHANNELS(w);
 					d->un.v.units.name[0] = 0;
