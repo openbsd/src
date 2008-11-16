@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.6 2008/11/11 21:45:03 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.7 2008/11/16 21:52:58 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2008 $
+.Dd $Mdocdate: November 16 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -488,6 +488,9 @@ If
 is set,
 .Fn sio_write
 can be called without blocking.
+POLLHUP may be set if an error occures, even if
+it is not selected with
+.Fn sio_pollfd .
 .Pp
 The
 .Fn sio_nfds
