@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.4 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.5 2008/11/16 17:08:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -662,6 +662,7 @@ sock_setpar(struct sock *f)
 		f->bufsz -= f->bufsz % f->round;
 		DPRINTF("sock_setpar: bufsz -> %u\n", f->bufsz);
 	}
+#ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "sock_setpar: %p: rpar=", f);
 		aparams_print(&f->rpar);
@@ -669,6 +670,7 @@ sock_setpar(struct sock *f)
 		aparams_print(&f->wpar);
 		fprintf(stderr, ", mode=%u, bufsz=%u\n", f->mode, f->bufsz);
 	}
+#endif
 	return 1;
 }
 

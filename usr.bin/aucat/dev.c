@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.18 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.19 2008/11/16 17:08:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -116,19 +116,23 @@ dev_init(char *devpath,
 		exit(1);
 	if (dipar) {
 		dipar->rate = dev_rate;
+#ifdef DEBUG
 		if (debug_level > 0) {
 			fprintf(stderr, "dev_init: hw recording ");
 			aparams_print(dipar);
 			fprintf(stderr, "\n");
 		}
+#endif
 	}
 	if (dopar) {
 		dopar->rate = dev_rate;
+#ifdef DEBUG
 		if (debug_level > 0) {
 			fprintf(stderr, "dev_init: hw playing ");
 			aparams_print(dopar);
 			fprintf(stderr, "\n");
 		}
+#endif
 	}
 	ibufsz = obufsz = dev_bufsz;
 	bufsz = (bufsz > dev_bufsz) ? bufsz - dev_bufsz : 0;

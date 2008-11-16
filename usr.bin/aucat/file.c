@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 2008/11/16 17:01:58 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2008/11/16 17:08:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,6 +45,7 @@ struct filelist file_list;
 void
 file_dprint(int n, struct file *f)
 {
+#ifdef DEBUG
 	if (debug_level < n)
 		return;
 	fprintf(stderr, "%s:%s <", f->ops->name, f->name);
@@ -57,6 +58,7 @@ file_dprint(int n, struct file *f)
 	if (f->state & FILE_HUP)
 		fprintf(stderr, "HUP");
 	fprintf(stderr, ">");
+#endif
 }
 
 struct file *

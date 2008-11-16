@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.24 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.25 2008/11/16 17:08:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1015,11 +1015,13 @@ resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
 	p->u.resamp.odelta = 0;
 	for (i = 0; i < NCHAN_MAX; i++)
 		p->u.resamp.ctx[i] = 0;
+#ifdef DEBUG
 	if (debug_level > 0) {
-		DPRINTF("resamp_new: %s: ", p->name);
+		fprintf(stderr, "resamp_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
-		DPRINTF("\n");
+		fprintf(stderr, "\n");
 	}
+#endif
 	return p;
 }
 
@@ -1140,11 +1142,13 @@ cmap_new(char *name, struct aparams *ipar, struct aparams *opar)
 	p = aproc_new(&cmap_ops, name);
 	for (i = 0; i < NCHAN_MAX; i++)
 		p->u.cmap.ctx[i] = 0;
+#ifdef DEBUG
 	if (debug_level > 0) {
-		DPRINTF("cmap_new: %s: ", p->name);
+		fprintf(stderr, "cmap_new: %s: ", p->name);
 		aparams_print2(ipar, opar);
-		DPRINTF("\n");
+		fprintf(stderr, "\n");
 	}
+#endif
 	return p;
 }
 
@@ -1297,11 +1301,13 @@ enc_new(char *name, struct aparams *par)
 		p->u.conv.bnext = 1;
 		p->u.conv.snext = 0;
 	}
+#ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "enc_new: %s: ", p->name);
 		aparams_print(par);
 		fprintf(stderr, "\n");
 	}
+#endif
 	return p;
 }
 
@@ -1454,10 +1460,12 @@ dec_new(char *name, struct aparams *par)
 		p->u.conv.bnext = 1;
 		p->u.conv.snext = 0;
 	}
+#ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "dec_new: %s: ", p->name);		
 		aparams_print(par);
 		fprintf(stderr, "\n");
 	}
+#endif
 	return p;
 }
