@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.71 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.72 2008/11/16 09:52:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -282,6 +282,8 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Power OFF adapter. */
 	wpi_apm_stop(sc);
+	/* Clear pending interrupts. */
+	WPI_WRITE(sc, WPI_INT, 0xffffffff);
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
@@ -1040,7 +1042,7 @@ wpi_media_change(struct ifnet *ifp)
 		wpi_stop(ifp, 0);
 		error = wpi_init(ifp);
 	}
-	return 0;
+	return error;
 }
 
 int
@@ -3079,7 +3081,7 @@ wpi_hw_init(struct wpi_softc *sc)
 {
 	int qid, ntries, error;
 
-	/* Clear any pending interrupts. */
+	/* Clear pending interrupts. */
 	WPI_WRITE(sc, WPI_INT, 0xffffffff);
 
 	if ((error = wpi_apm_init(sc)) != 0) {
@@ -3158,7 +3160,7 @@ wpi_hw_init(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_UCODE_GP1_CLR, WPI_UCODE_GP1_RFKILL);
 	WPI_WRITE(sc, WPI_UCODE_GP1_CLR, WPI_UCODE_GP1_CMD_BLOCKED);
 
-	/* Clear any pending interrupts. */
+	/* Clear pending interrupts. */
 	WPI_WRITE(sc, WPI_INT, 0xffffffff);
 	/* Enable interrupts. */
 	WPI_WRITE(sc, WPI_MASK, WPI_INT_MASK);
