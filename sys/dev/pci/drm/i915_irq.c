@@ -200,7 +200,7 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 	I915_WRITE(IIR, iir);
 	(void) I915_READ(IIR); /* Flush posted writes */
 
-	if (dev_priv->sarea_priv)
+	if (dev_priv->sarea_priv != NULL)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 
 	if (iir & I915_USER_INTERRUPT) {
@@ -259,7 +259,7 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 		  READ_BREADCRUMB(dev_priv));
 
 	if (READ_BREADCRUMB(dev_priv) >= irq_nr) {
-		if (dev_priv->sarea_priv) {
+		if (dev_priv->sarea_priv != NULL) {
 			dev_priv->sarea_priv->last_dispatch =
 			    READ_BREADCRUMB(dev_priv);
 		}
@@ -276,9 +276,8 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 			  READ_BREADCRUMB(dev_priv), (int)dev_priv->counter);
 	}
 
-	if (dev_priv->sarea_priv)
-		dev_priv->sarea_priv->last_dispatch =
-			READ_BREADCRUMB(dev_priv);
+	if (dev_priv->sarea_priv != NULL)
+		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return ret;
 }
 

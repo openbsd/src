@@ -218,7 +218,7 @@ extern int i915_driver_device_is_agp(struct drm_device * dev);
 extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg);
 extern void i915_emit_breadcrumb(struct drm_device *dev);
-extern void i915_dispatch_flip(struct drm_device *);
+extern int i915_dispatch_flip(struct drm_device *);
 extern int i915_emit_mi_flush(struct drm_device *dev, uint32_t flush);
 extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,

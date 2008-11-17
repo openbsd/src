@@ -550,10 +550,13 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 	return 0;
 }
 
-void i915_dispatch_flip(struct drm_device * dev)
+int i915_dispatch_flip(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	RING_LOCALS;
+
+	if (dev_priv->sarea_priv == NULL)
+		return EINVAL;
 
 	DRM_DEBUG("page=%d pfCurrentPage=%d\n", dev_priv->current_page,
 	    dev_priv->sarea_priv->pf_current_page);
@@ -581,6 +584,7 @@ void i915_dispatch_flip(struct drm_device * dev)
 	i915_emit_breadcrumb(dev);
 
 	dev_priv->sarea_priv->pf_current_page = dev_priv->current_page;
+	return (0);
 }
 
 int i915_quiescent(struct drm_device *dev)
@@ -609,8 +613,6 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	drm_i915_sarea_t *sarea_priv = (drm_i915_sarea_t *)
-	    dev_priv->sarea_priv;
 	drm_i915_batchbuffer_t *batch = data;
 	int ret;
 
@@ -628,15 +630,15 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (batch->num_cliprects && DRM_VERIFYAREA_READ(batch->cliprects,
-							batch->num_cliprects *
-							sizeof(struct drm_clip_rect)))
+	    batch->num_cliprects * sizeof(struct drm_clip_rect)))
 		return EFAULT;
 
 	DRM_LOCK();
 	ret = i915_dispatch_batchbuffer(dev, batch);
 	DRM_UNLOCK();
 
-	sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
+	if (dev_priv->sarea_priv != NULL)
+		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return ret;
 }
 
@@ -644,7 +646,6 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 			  struct drm_file *file_priv)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
-	drm_i915_sarea_t *sarea_priv = (drm_i915_sarea_t *)dev_priv->sarea_priv;
 	drm_i915_cmdbuffer_t *cmdbuf = data;
 	int ret;
 
@@ -672,21 +673,24 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 		return ret;
 	}
 
-	sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
+	if (dev_priv->sarea_priv != NULL)
+		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return 0;
 }
 
 int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
+	int ret;
+
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	DRM_LOCK();
-	i915_dispatch_flip(dev);
+	ret = i915_dispatch_flip(dev);
 	DRM_UNLOCK();
 
-	return 0;
+	return (ret);
 }
 
 
@@ -848,8 +852,7 @@ void i915_driver_lastclose(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	/* agp off can use this to get called before dev_priv */
-	if (!dev_priv)
+	if (dev_priv == NULL)
 		return;
 
 	dev_priv->sarea_priv = NULL;
