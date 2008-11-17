@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.64 2008/11/17 00:33:35 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.65 2008/11/17 00:42:53 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -112,10 +112,13 @@ int	azalia_ad1988_init_dacgroup(codec_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9200_mixer_init(codec_t *);
+int	azalia_stac9205_init_dacgroup(codec_t *);
 int	azalia_stac9221_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9221_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_get_port(codec_t *, mixer_ctrl_t *);
+int	azalia_stac9227_init_dacgroup(codec_t *);
+int	azalia_stac9271_init_dacgroup(codec_t *);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
 int	azalia_stac7661_set_port(codec_t *, mixer_ctrl_t *);
@@ -202,10 +205,71 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Analog Devices AD1988B";
 		this->init_dacgroup = azalia_ad1988_init_dacgroup;
 		break;
+	case 0x14f15045:
+		this->name = "Conexant CX20549";  /* Venice */
+		break;
+	case 0x14f15047:
+		this->name = "Conexant CX20551";  /* Waikiki */
+		break;
+	case 0x14f15051:
+		this->name = "Conexant CX20561";  /* Hermosa */
+		break;
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
 		this->init_dacgroup = azalia_cmi9880_init_dacgroup;
 		this->mixer_init = azalia_cmi9880_mixer_init;
+		break;
+	case 0x83847616:
+		this->name = "Sigmatel STAC9228X";
+		this->init_dacgroup = azalia_stac9227_init_dacgroup;
+		break;
+	case 0x83847617:
+		this->name = "Sigmatel STAC9228D";
+		this->init_dacgroup = azalia_stac9227_init_dacgroup;
+		break;
+	case 0x83847618:
+		this->name = "Sigmatel STAC9227X";
+		this->init_dacgroup = azalia_stac9227_init_dacgroup;
+		break;
+	case 0x83847620:
+		this->name = "Sigmatel STAC9274";
+		this->init_dacgroup = azalia_stac9271_init_dacgroup;
+		break;
+	case 0x83847621:
+		this->name = "Sigmatel STAC9274D";
+		this->init_dacgroup = azalia_stac9271_init_dacgroup;
+		break;
+	case 0x83847626:
+		this->name = "Sigmatel STAC9271X";
+		this->init_dacgroup = azalia_stac9271_init_dacgroup;
+		break;
+	case 0x83847627:
+		this->name = "Sigmatel STAC9271D";
+		this->init_dacgroup = azalia_stac9271_init_dacgroup;
+		break;
+	case 0x83847632:
+		this->name = "Sigmatel STAC9202";
+		/* master volume at nid 0e */
+		/* record volume at nid 09 */
+		break;
+	case 0x83847634:
+		this->name = "Sigmatel STAC9250";
+		/* master volume at nid 0e */
+		/* record volume at nid 09 */
+		break;
+	case 0x83847636:
+		this->name = "Sigmatel STAC9251";
+		/* master volume at nid 0e */
+		/* record volume at nid 09 */
+		break;
+	case 0x83847661:
+		/* FALLTHRU */
+	case 0x83847662:
+		this->name = "Sigmatel STAC9225";
+		this->init_dacgroup = azalia_stac7661_init_dacgroup;
+		this->mixer_init = azalia_stac7661_mixer_init;
+		this->get_port = azalia_stac7661_get_port;
+		this->set_port = azalia_stac7661_set_port;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
@@ -226,13 +290,21 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847691:
 		this->name = "Sigmatel STAC9200D";
 		break;
-	case 0x83847661:
-	case 0x83847662:
-		this->name = "Sigmatel STAC9872AK";
-		this->init_dacgroup = azalia_stac7661_init_dacgroup;
-		this->mixer_init = azalia_stac7661_mixer_init;
-		this->get_port = azalia_stac7661_get_port;
-		this->set_port = azalia_stac7661_set_port;
+	case 0x838476a0:
+		this->name = "Sigmatel STAC9205X";
+		this->init_dacgroup = azalia_stac9205_init_dacgroup;
+		break;
+	case 0x838476a1:
+		this->name = "Sigmatel STAC9205D";
+		this->init_dacgroup = azalia_stac9205_init_dacgroup;
+		break;
+	case 0x838476a2:
+		this->name = "Sigmatel STAC9204X";
+		this->init_dacgroup = azalia_stac9205_init_dacgroup;
+		break;
+	case 0x838476a3:
+		this->name = "Sigmatel STAC9204D";
+		this->init_dacgroup = azalia_stac9205_init_dacgroup;
 		break;
 	}
 	return 0;
@@ -2225,10 +2297,12 @@ azalia_stac9200_mixer_init(codec_t *this)
 int
 azalia_stac9221_init_dacgroup(codec_t *this)
 {
+	/* master volume at NID 16 */
 	static const convgroupset_t dacs = {
 		-1, 1,
 		{{4, {0x02, 0x03, 0x04, 0x05}}}};
 
+	/* vols: 06:12, 07:13 */
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{2, {0x06, 0x07}},
@@ -2333,6 +2407,62 @@ azalia_stac9221_get_port(codec_t *this, mixer_ctrl_t *mc)
 		    MI_TARGET_OUTAMP, mc);
 	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
 }
+
+
+int
+azalia_stac9205_init_dacgroup(codec_t *this)
+{
+	/* volume knob at nid 24 */
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{2, {0x10, 0x11}}}};
+
+	/* vols: 1d:1b, 1e:1a */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{2, {0x1d, 0x1e}}}};
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+int
+azalia_stac9227_init_dacgroup(codec_t *this)
+{
+	/* volume knob at nid 24 */
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{4, {0x02, 0x03, 0x04, 0x05}}}};
+
+	/* vols: 07:18, 08:19, 09:1a */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{3, {0x07, 0x08, 0x09}}}};
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+int
+azalia_stac9271_init_dacgroup(codec_t *this)
+{
+	/* volume knob at nid 24 */
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{5, {0x02, 0x03, 0x04, 0x05, 0x06}}}};
+
+	/* vols: 07:18, 08:19, 09:1a */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{3, {0x07, 0x08, 0x09}}}};
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
 
 /* ----------------------------------------------------------------
  * Sony VAIO FE and SZ
