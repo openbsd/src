@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.42 2008/11/16 20:44:03 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.43 2008/11/17 07:04:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -65,6 +65,9 @@
 #include "wav.h"
 #include "listen.h"
 #include "dev.h"
+
+#define MODE_PLAY	1
+#define MODE_REC	2
 
 int debug_level = 0;
 volatile int quit_flag = 0;
@@ -171,6 +174,18 @@ opt_xrun(void)
 	if (strcmp("error", optarg) == 0)
 		return XRUN_ERROR;
 	errx(1, "%s: onderrun/overrun policy", optarg);
+}
+
+int
+opt_mode(void)
+{
+	if (strcmp("play", optarg) == 0)
+		return MODE_PLAY;
+	if (strcmp("rec", optarg) == 0)
+		return MODE_REC;
+	if (strcmp("duplex", optarg) == 0)
+		return MODE_PLAY | MODE_REC;
+	errx(1, "%s: bad mode", optarg);
 }
 
 /*
@@ -302,7 +317,7 @@ main(int argc, char **argv)
 	struct farglist  ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
-	unsigned bufsz;
+	unsigned bufsz, mode;
 	char *devpath, *dbgenv;
 	const char *errstr;
 	extern char *malloc_options;
@@ -329,9 +344,13 @@ main(int argc, char **argv)
 	xrun = XRUN_IGNORE;
 	volctl = MIDI_MAXCTL;
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
+	mode = 0;
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:lus:")) != -1) {
+	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:m:lus:")) != -1) {
 		switch (c) {
+		case 'm':
+			mode = opt_mode();
+			break;
 		case 'h':
 			hdr = opt_hdr();
 			break;
@@ -416,10 +435,17 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (l_flag && (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
-		errx(1, "can't use -l and -s with -o or -i");
 	if (!l_flag && !SLIST_EMPTY(&sfiles))
 		errx(1, "can't use -s without -l");
+	if ((l_flag || mode != 0) &&
+	    (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
+		errx(1, "can't use -l, -m and -s with -o or -i");
+	if (!mode) {
+		if (l_flag || !SLIST_EMPTY(&ifiles))
+		mode |= MODE_PLAY;
+		if (l_flag || !SLIST_EMPTY(&ofiles))
+			mode |= MODE_REC;
+	}
 
 	if (!u_flag && !l_flag) {
 		/*
@@ -470,14 +496,13 @@ main(int argc, char **argv)
 		DPRINTF("sigaction(usr2) failed1n");
 #endif
 	filelist_init();
-
 	/*
 	 * Open the device. Give half of the buffer to the device,
 	 * the other half is for the socket/files
 	 */
 	dev_init(devpath, 
-	    (l_flag || !SLIST_EMPTY(&ofiles)) ? &dipar : NULL,
-	    (l_flag || !SLIST_EMPTY(&ifiles)) ? &dopar : NULL,
+	    (mode & MODE_REC) ? &dipar : NULL,
+	    (mode & MODE_PLAY) ? &dopar : NULL,
 	    bufsz, l_flag);
 
 	/*

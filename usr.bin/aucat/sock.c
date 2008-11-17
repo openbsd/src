@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.7 2008/11/16 20:44:03 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.8 2008/11/17 07:04:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -697,6 +697,11 @@ sock_execmsg(struct sock *f)
 		DPRINTFN(4, "sock_execmsg: %p: DATA\n", f);
 		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START) {
 			DPRINTF("sock_execmsg: %p: DATA, bad state\n", f);
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		if (!(f->mode & AMSG_PLAY)) {
+			DPRINTF("sock_execmsg: %p: DATA, not allowed\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}

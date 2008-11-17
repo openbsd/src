@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.36 2008/11/16 20:46:16 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.37 2008/11/17 07:04:13 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2008 $
+.Dd $Mdocdate: November 17 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Op Fl f Ar device
 .Op Fl h Ar fmt
 .Op Fl i Ar file
+.Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl r Ar rate
 .Op Fl s Ar file
@@ -91,6 +92,16 @@ The default socket path is
 but other paths can be used with the
 .Fl s
 option.
+.It Fl m Ar mode
+Set the server mode.
+Valid modes are
+.Va play ,
+.Va rec ,
+and
+.Va duplex ,
+for play-only, record-only and full-duplex, respectively.
+The default is
+.Va duplex .
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is

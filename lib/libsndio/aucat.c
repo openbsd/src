@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.3 2008/11/16 21:18:30 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.4 2008/11/17 07:04:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,6 +75,7 @@ struct sio_hdl *
 sio_open_aucat(char *path, unsigned mode, int nbio)
 {
 	int s;
+	struct sio_cap cap;
 	struct aucat_hdl *hdl;
 	struct sockaddr_un ca;	
 	socklen_t len = sizeof(struct sockaddr_un);
@@ -87,19 +88,14 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	sio_create(&hdl->sa, &aucat_ops, mode, nbio);	
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (s < 0) {
-		free(hdl);
-		return NULL;
-	}	
+	if (s < 0)
+		goto bad_free;
 	ca.sun_family = AF_UNIX;
 	memcpy(ca.sun_path, path, strlen(path) + 1);
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 		if (errno == EINTR)
 			continue;
-		while (close(s) < 0 && errno == EINTR)
-			; /* retry */
-		free(hdl);
-		return NULL;
+		goto bad_connect;
 	}
 	hdl->fd = s;
 	hdl->rstate = STATE_IDLE;
@@ -108,7 +104,18 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	hdl->wtodo = 0xdeadbeef;
 	hdl->curvol = SIO_MAXVOL;
 	hdl->reqvol = SIO_MAXVOL;
+	if (!sio_getcap(&hdl->sa, &cap))
+		goto bad_connect;
+	if (((mode & SIO_PLAY) && cap.confs[0].pchan == 0) ||
+	    ((mode & SIO_REC)  && cap.confs[0].rchan == 0))
+		goto bad_connect;
 	return (struct sio_hdl *)hdl;
+ bad_connect:
+	while (close(s) < 0 && errno == EINTR)
+		; /* retry */
+ bad_free:
+	free(hdl);
+	return NULL;
 }
 
 /*
@@ -393,8 +400,8 @@ aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	cap->pchan[0] = hdl->rmsg.u.cap.pchan;
 	cap->rate[0] = hdl->rmsg.u.cap.rate;
 	cap->confs[0].enc = 1;
-	cap->confs[0].pchan = (hdl->sa.mode & SIO_PLAY) ? 1 : 0;
-	cap->confs[0].rchan = (hdl->sa.mode & SIO_REC) ? 1 : 0;
+	cap->confs[0].rchan = (hdl->rmsg.u.cap.rchan > 0) ? 1 : 0;
+	cap->confs[0].pchan = (hdl->rmsg.u.cap.pchan > 0) ? 1 : 0;
 	cap->confs[0].rate = 1;
 	cap->nconf = 1;
 	return 1;
