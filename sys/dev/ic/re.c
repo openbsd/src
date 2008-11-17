@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.100 2008/11/14 20:49:35 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.101 2008/11/17 01:25:31 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1059,16 +1059,16 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		goto fail_7;
 	}
 
-        /* Create DMA maps for RX buffers */
-        for (i = 0; i < RL_RX_DESC_CNT; i++) {
-                error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-                    0, 0, &sc->rl_ldata.rl_rxsoft[i].rxs_dmamap);
-                if (error) {
-                        printf("%s: can't create DMA map for RX\n",
-                            sc->sc_dev.dv_xname);
+	/* Create DMA maps for RX buffers */
+	for (i = 0; i < RL_RX_DESC_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, 0, &sc->rl_ldata.rl_rxsoft[i].rxs_dmamap);
+		if (error) {
+			printf("%s: can't create DMA map for RX\n",
+			    sc->sc_dev.dv_xname);
 			goto fail_8;
-                }
-        }
+		}
+	}
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
