@@ -145,11 +145,12 @@ drm_attach(struct device *parent, struct device *kdev,
 			goto error;
 	}
 
-	if (dev->driver->use_agp) {
+	if (dev->driver->flags & DRIVER_AGP) {
 		if (drm_device_is_agp(dev))
 			dev->agp = drm_agp_init();
-		if (dev->driver->require_agp && dev->agp == NULL) {
-			printf(":couldn't find agp\n");
+		if (dev->driver->flags & DRIVER_AGP_REQUIRE &&
+		    dev->agp == NULL) {
+			printf(": couldn't find agp\n");
 			goto error;
 		}
 		if (dev->agp != NULL) {
@@ -244,7 +245,7 @@ drm_firstopen(struct drm_device *dev)
 	if (dev->driver->firstopen)
 		dev->driver->firstopen(dev);
 
-	if (dev->driver->use_dma) {
+	if (dev->driver->flags & DRIVER_DMA) {
 		i = drm_dma_setup(dev);
 		if (i != 0)
 			return i;
@@ -480,7 +481,8 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		}
 	}
 
-	if (dev->driver->use_dma && !dev->driver->reclaim_buffers_locked)
+	if (dev->driver->flags & DRIVER_DMA &&
+	    !dev->driver->reclaim_buffers_locked)
 		drm_reclaim_buffers(dev, file_priv);
 
 	dev->buf_pgid = 0;

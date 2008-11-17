@@ -53,8 +53,7 @@ static const struct drm_driver_info sis_driver = {
 	.minor			= DRIVER_MINOR,
 	.patchlevel		= DRIVER_PATCHLEVEL,
 
-	.use_agp		= 1,
-	.use_mtrr		= 1,
+	.flags			= DRIVER_AGP | DRIVER_MTRR,
 };
 
 int

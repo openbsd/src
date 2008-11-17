@@ -118,9 +118,6 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	    lock->context, DRM_CURRENTPID, dev->lock.hw_lock->lock,
 	    lock->flags);
 
-        if (dev->driver->use_dma_queue && lock->context < 0)
-                return EINVAL;
-
 	mtx_enter(&dev->lock.spinlock);
 	for (;;) {
 		if (drm_lock_take(&dev->lock, lock->context)) {

@@ -968,8 +968,10 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (request->count < dma->buf_count)
 		goto done;
 
-	if ((dev->driver->use_agp && (dma->flags & _DRM_DMA_USE_AGP)) ||
-	    (dev->driver->use_sg && (dma->flags & _DRM_DMA_USE_SG))) {
+	if ((dev->driver->flags & DRIVER_AGP &&
+	    (dma->flags & _DRM_DMA_USE_AGP)) ||
+	    (dev->driver->flags & DRIVER_SG &&
+	    (dma->flags & _DRM_DMA_USE_SG))) {
 		drm_local_map_t *map = dev->agp_buffer_map;
 
 		if (map == NULL) {

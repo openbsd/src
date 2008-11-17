@@ -278,12 +278,6 @@ typedef struct drm_ioctl_desc {
 	int (*func)(struct drm_device *, void *, struct drm_file *);
 	int flags;
 } drm_ioctl_desc_t;
-/**
- * Creates a driver or general drm_ioctl_desc array entry for the given
- * ioctl, for use by drm_ioctl().
- */
-#define DRM_IOCTL_DEF(ioctl, func, flags) \
-	[DRM_IOCTL_NR(ioctl)] = {ioctl, func, flags}
 
 struct drm_magic_entry {
 	drm_magic_t	       magic;
@@ -494,15 +488,15 @@ struct drm_driver_info {
 	const char *desc;		/* Longer driver name		   */
 	const char *date;		/* Date of last major changes.	   */
 
-	unsigned use_agp :1;
-	unsigned require_agp :1;
-	unsigned use_sg :1;
-	unsigned use_dma :1;
-	unsigned use_pci_dma :1;
-	unsigned use_dma_queue :1;
-	unsigned use_irq :1;
-	unsigned use_vbl_irq :1;
-	unsigned use_mtrr :1;
+#define DRIVER_AGP		0x1
+#define DRIVER_AGP_REQUIRE	0x2
+#define DRIVER_MTRR		0x4
+#define DRIVER_DMA		0x8
+#define DRIVER_PCI_DMA		0x10
+#define DRIVER_SG		0x20
+#define DRIVER_IRQ		0x40
+
+	u_int	flags;
 };
 
 /* Length for the array of resource pointers for drm_get_resource_*. */

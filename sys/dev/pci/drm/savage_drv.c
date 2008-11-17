@@ -57,10 +57,8 @@ static const struct drm_driver_info savage_driver = {
 	.minor			= DRIVER_MINOR,
 	.patchlevel		= DRIVER_PATCHLEVEL,
 
-	.use_agp		= 1,
-	.use_mtrr		= 1,
-	.use_pci_dma		= 1,
-	.use_dma		= 1,
+	.flags			= DRIVER_AGP | DRIVER_MTRR | DRIVER_PCI_DMA |
+				    DRIVER_DMA,
 };
 
 int

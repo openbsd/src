@@ -153,7 +153,7 @@ drm_control(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	struct drm_control	*ctl = data;
 
 	/* Handle drivers who used to require IRQ setup no longer does. */
-	if (!dev->driver->use_irq)
+	if (!(dev->driver->flags & DRIVER_IRQ))
 		return (0);
 
 	switch (ctl->func) {

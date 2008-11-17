@@ -117,12 +117,8 @@ static const struct drm_driver_info mga_driver = {
 	.minor			= DRIVER_MINOR,
 	.patchlevel		= DRIVER_PATCHLEVEL,
 
-	.use_agp		= 1,
-	.require_agp		= 1,
-	.use_mtrr		= 1,
-	.use_dma		= 1,
-	.use_irq		= 1,
-	.use_vbl_irq		= 1,
+	.flags			= DRIVER_AGP | DRIVER_AGP_REQUIRE |
+				    DRIVER_MTRR | DRIVER_DMA | DRIVER_IRQ,
 };
 
 int

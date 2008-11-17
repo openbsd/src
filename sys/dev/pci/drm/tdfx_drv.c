@@ -51,7 +51,7 @@ static const struct drm_driver_info tdfx_driver = {
 	.minor		= DRIVER_MINOR,
 	.patchlevel	= DRIVER_PATCHLEVEL,
 
-	.use_mtrr	= 1,
+	.flags		= DRIVER_MTRR,
 };
 
 int	tdfxdrm_probe(struct device *, void *, void *);
