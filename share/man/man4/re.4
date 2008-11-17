@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.38 2008/10/28 06:27:28 brad Exp $
+.\" $OpenBSD: re.4,v 1.39 2008/11/17 02:40:42 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: October 28 2008 $
+.Dd $Mdocdate: November 17 2008 $
 .Dt RE 4
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Cd "re* at pci?"
 .Cd "re* at cardbus?"
+.Cd "eephy* at mii?"
 .Cd "rgephy* at mii?"
 .Cd "rlphy* at mii?"
 .Sh DESCRIPTION
@@ -169,11 +170,13 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr eephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr rgephy 4 ,
+.Xr rlphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
