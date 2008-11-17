@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.12 2008/11/17 20:37:48 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.13 2008/11/17 21:03:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,7 +71,6 @@ struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
 void		queue_mailer_daemon(struct smtpd *, struct batch *, enum batch_status);
 void		debug_display_batch(struct batch *);
 void		debug_display_message(struct message *);
-int		queue_record_daemon(struct message *);
 struct batch	*queue_register_daemon_batch(struct smtpd *, struct batch *);
 void		queue_register_daemon_message(struct smtpd *, struct batch *, struct message *);
 void		queue_load_submissions(struct smtpd *, time_t);
@@ -1158,80 +1157,6 @@ queue_update_database(struct message *message)
 
 	return 1;
 }
-
-
-int
-queue_record_daemon(struct message *message)
-{
-	char pathname[MAXPATHLEN];
-	char linkname[MAXPATHLEN];
-	char dbname[MAXPATHLEN];
-	char message_uid[MAXPATHLEN];
-	size_t spoolsz;
-	int fd;
-	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
-	int spret;
-	FILE *fp;
-
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%s",
-	    PATH_MESSAGES, message->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
-		return 0;
-
-	spoolsz = strlen(PATH_DAEMON);
-
-	for (;;) {
-		spret = snprintf(linkname, MAXPATHLEN, "%s/%s.%qu",
-		    PATH_DAEMON, message->message_id, (u_int64_t)arc4random());
-		if (spret == -1 || spret >= MAXPATHLEN)
-			return 0;
-
-		if (strlcpy(message_uid, linkname + spoolsz + 1, MAXPATHLEN)
-		    >= MAXPATHLEN)
-			return 0;
-
-		if (link(pathname, linkname) == -1) {
-			if (errno == EEXIST)
-				continue;
-			err(1, "link");
-		}
-
-		spret = snprintf(dbname, MAXPATHLEN, "%s/%s",
-		    PATH_ENVELOPES, message_uid);
-		if (spret == -1 || spret >= MAXPATHLEN)
-			return 0;
-
-		fd = open(dbname, mode, 0600);
-		if (fd == -1)
-			if (unlink(linkname) == -1)
-				err(1, "unlink");
-
-		if (flock(fd, LOCK_EX) == -1)
-			err(1, "flock");
-
-		fp = fdopen(fd, "w");
-		if (fp == NULL)
-			fatal("fdopen");
-
-		(void)strlcpy(message->message_uid, message_uid, MAXPATHLEN);
-
-		message->creation = time(NULL);
-
-		if (fwrite(message, 1, sizeof(struct message), fp) !=
-		    sizeof(struct message)) {
-			fclose(fp);
-			unlink(dbname);
-			return 0;
-		}
-		fflush(fp);
-		fsync(fd);
-		fclose(fp);
-		break;
-	}
-
-	return 1;
-}
-
 
 struct batch *
 batch_lookup(struct smtpd *env, struct message *message)
