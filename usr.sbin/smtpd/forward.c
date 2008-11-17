@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: forward.c,v 1.3 2008/11/17 21:32:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,6 +68,7 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	if (fp == NULL)
 		return 0;
 
+	log_debug("+ opening forward file %s", pathname);
 	/* make sure ~/ is not writable by anyone but owner */
 	if (stat(pw->pw_dir, &sb) == -1)
 		goto bad;
@@ -87,12 +88,13 @@ forwards_get(struct aliaseslist *aliases, char *username)
 		else {
 			/* EOF without EOL, copy and add the NUL */
 			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
+				fatal("malloc");
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-		printf("%s\n", buf);
+
+		log_debug("\tforward: %s", buf);
 		if (! alias_parse(&alias, buf)) {
 			log_debug("bad entry in ~/.forward");
 			continue;
@@ -104,7 +106,7 @@ forwards_get(struct aliaseslist *aliases, char *username)
 		}
 		aliasp = calloc(1, sizeof(struct alias));
 		if (aliasp == NULL)
-			err(1, "calloc");
+			fatal("calloc");
 		*aliasp = alias;
 		TAILQ_INSERT_HEAD(aliases, aliasp, entry);
 
@@ -114,6 +116,7 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	return 1;
 
 bad:
+	log_debug("+ forward file error, probably bad perms/mode");
 	if (fp != NULL)
 		fclose(fp);
 	return 0;
