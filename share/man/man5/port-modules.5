@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.29 2008/11/17 11:39:44 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.30 2008/11/17 13:16:28 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -429,7 +429,7 @@ Sets MODINTLTOOL_OVERRIDE.
 is added to BUILD_DEPENDS.
 MODINTLTOOL_OVERRIDE changes the paths of INTLTOOL_EXTRACT, INTLTOOL_MERGE and
 INTLTOOL_UPDATE to use the installed versions of intltool-extract,
-intltool-merge and intltool-update, instead of the versions pacakges into the
+intltool-merge and intltool-update, instead of the version's packages into the
 distfile of the port using this module.
 Also affects CONFIGURE_ENV, MAKE_ENV and MAKE_FLAGS by appending
 MODINTLTOOL_OVERRIDE to them.
@@ -439,7 +439,8 @@ MODINTLTOOL_OVERRIDE to them.
 .It www/zope
 .It x11/gnome
 Sets DESKTOP_FILES, EXTRACT_SUFX, MODGNOME_HELP_FILES, MODGNOME_RUN_DEPENDS,
-and USE_GMAKE. EXTRACT_SUFX defaults to .tar.bz2 .
+and USE_GMAKE.
+EXTRACT_SUFX defaults to .tar.bz2.
 Also affects CATEGORIES.
 If DESKTOP_FILES=Yes, a dependency on
 .Pa devel/desktop-file-utils
