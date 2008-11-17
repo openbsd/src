@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2008/11/10 17:24:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2008/11/17 21:23:54 gilles Exp $
 
 PROG=		smtpd
-SRCS=		parse.y atomic.c log.c config.c buffer.c imsg.c		\
+SRCS=		parse.y log.c config.c buffer.c imsg.c			\
 		smtpd.c lka.c mfa.c queue.c mta.c mda.c control.c	\
 		smtp.c	smtp_session.c store.c debug.c			\
 		ssl.c ssl_privsep.c dns.c aliases.c forward.c		\
