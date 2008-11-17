@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.7 2008/11/17 21:50:43 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.8 2008/11/17 21:52:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -234,6 +234,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_HELO;
+	s->s_flags = 0;
 
 	if (s->s_ss.ss_family == PF_INET) {
 		struct sockaddr_in *ssin = (struct sockaddr_in *)&s->s_ss;
@@ -275,7 +276,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_HELO;
-	s->s_flags |= F_EHLO;
+	s->s_flags = F_EHLO;
 	s->s_flags |= F_8BITMIME;
 
 	if (s->s_ss.ss_family == PF_INET) {
