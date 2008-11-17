@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.445 2008/11/09 15:11:19 oga Exp $
+#	$OpenBSD: files,v 1.446 2008/11/17 00:18:13 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -190,6 +190,7 @@ file	dev/ic/mfi.c			mfi
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_openbsd.c		isp
+file	dev/ic/isp_library.c		isp
 
 # LSI Logic Fusion-MPT Message Passing Interface
 device	mpi: scsi

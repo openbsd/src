@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.28 2008/06/01 15:49:25 kettenis Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.29 2008/11/17 00:18:13 krw Exp $ */
 /*
  * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
@@ -427,9 +427,6 @@ isp_wait_complete(struct ispsoftc *isp)
 	}
 }
 
-/*
- * Common INLINE functions
- */
-#include <dev/ic/isp_inline.h>
+#include <dev/ic/isp_library.h>
 
 #endif	/* _ISP_NETBSD_H */
