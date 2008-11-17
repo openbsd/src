@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.206 2008/09/30 13:11:48 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.207 2008/11/17 22:23:14 mpf Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4182,15 +4182,19 @@ trunk_status(void)
 			printf(" trunkdev %s", rp.rp_ifname);
 		putchar('\n');
 		if (ra.ra_proto == TRUNK_PROTO_LACP) {
+			char *act_mac = strdup(
+			    ether_ntoa((struct ether_addr*)lp->actor_mac));
+			if (act_mac == NULL)
+				err(1, "strdup");
 			printf("\ttrunk id: [(%04X,%s,%04X,%04X,%04X),\n"
 			    "\t\t (%04X,%s,%04X,%04X,%04X)]\n",
-			    lp->actor_prio,
-			    ether_ntoa((struct ether_addr*)lp->actor_mac),
+			    lp->actor_prio, act_mac,
 			    lp->actor_key, lp->actor_portprio, lp->actor_portno,
 			    lp->partner_prio,
 			    ether_ntoa((struct ether_addr*)lp->partner_mac),
 			    lp->partner_key, lp->partner_portprio,
 			    lp->partner_portno);
+			free(act_mac);
 		}
 
 		for (i = 0; i < ra.ra_ports; i++) {
