@@ -35,41 +35,15 @@
 #include "radeon_drv.h"
 #include "drm_pciids.h"
 
+int	radeondrm_probe(struct device *, void *, void *);
+void	radeondrm_attach(struct device *, struct device *, void *);
+int	radeondrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+
 int radeon_no_wb;
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t radeon_pciidlist[] = {
 	radeon_PCI_IDS
-};
-
-struct drm_ioctl_desc radeon_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_RADEON_CP_INIT, radeon_cp_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_CP_START, radeon_cp_start, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_CP_STOP, radeon_cp_stop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_CP_RESET, radeon_cp_reset, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_CP_IDLE, radeon_cp_idle, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_CP_RESUME, radeon_cp_resume, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_RESET, radeon_engine_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_FULLSCREEN, radeon_fullscreen, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_SWAP, radeon_cp_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_CLEAR, radeon_cp_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_VERTEX, radeon_cp_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_INDICES, radeon_cp_indices, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_TEXTURE, radeon_cp_texture, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_STIPPLE, radeon_cp_stipple, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_INDIRECT, radeon_cp_indirect, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_VERTEX2, radeon_cp_vertex2, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_CMDBUF, radeon_cp_cmdbuf, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_GETPARAM, radeon_cp_getparam, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_FLIP, radeon_cp_flip, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_ALLOC, radeon_mem_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_FREE, radeon_mem_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_INIT_HEAP, radeon_mem_init_heap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_RADEON_IRQ_EMIT, radeon_irq_emit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_IRQ_WAIT, radeon_irq_wait, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_SETPARAM, radeon_cp_setparam, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_SURF_ALLOC, radeon_surface_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_RADEON_SURF_FREE, radeon_surface_free, DRM_AUTH)
 };
 
 static const struct drm_driver_info radeon_driver = {
@@ -78,6 +52,7 @@ static const struct drm_driver_info radeon_driver = {
 	.unload			= radeon_driver_unload,
 	.firstopen		= radeon_driver_firstopen,
 	.open			= radeon_driver_open,
+	.ioctl			= radeondrm_ioctl,
 	.preclose		= radeon_driver_preclose,
 	.postclose		= radeon_driver_postclose,
 	.lastclose		= radeon_driver_lastclose,
@@ -89,9 +64,6 @@ static const struct drm_driver_info radeon_driver = {
 	.irq_uninstall		= radeon_driver_irq_uninstall,
 	.irq_handler		= radeon_driver_irq_handler,
 	.dma_ioctl		= radeon_cp_buffers,
-
-	.ioctls			= radeon_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(radeon_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -108,9 +80,6 @@ static const struct drm_driver_info radeon_driver = {
 	.use_irq		= 1,
 	.use_vbl_irq		= 1,
 };
-
-int	radeondrm_probe(struct device *, void *, void *);
-void	radeondrm_attach(struct device *, struct device *, void *);
 
 int
 radeondrm_probe(struct device *parent, void *match, void *aux)
@@ -136,3 +105,73 @@ struct cfattach radeondrm_ca = {
 struct cfdriver radeondrm_cd = {
 	NULL, "radeondrm", DV_DULL
 }; 
+
+int
+radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_RADEON_CP_IDLE:
+			return (radeon_cp_idle(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CP_RESUME:
+			return (radeon_cp_resume(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_RESET:
+			return (radeon_engine_reset(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_FULLSCREEN:
+			return (radeon_fullscreen(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_SWAP:
+			return (radeon_cp_swap(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CLEAR:
+			return (radeon_cp_clear(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_VERTEX:
+			return (radeon_cp_vertex(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_INDICES:
+			return (radeon_cp_indices(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_TEXTURE:
+			return (radeon_cp_texture(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_STIPPLE:
+			return (radeon_cp_stipple(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_VERTEX2:
+			return (radeon_cp_vertex2(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CMDBUF:
+			return (radeon_cp_cmdbuf(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_GETPARAM:
+			return (radeon_cp_getparam(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_FLIP:
+			return (radeon_cp_flip(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_ALLOC:
+			return (radeon_mem_alloc(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_FREE:
+			return (radeon_mem_free(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_IRQ_EMIT:
+			return (radeon_irq_emit(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_IRQ_WAIT:
+			return (radeon_irq_wait(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_SETPARAM:
+			return (radeon_cp_setparam(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_SURF_ALLOC:
+			return (radeon_surface_alloc(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_SURF_FREE:
+			return (radeon_surface_free(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_RADEON_CP_INIT:
+			return (radeon_cp_init(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CP_START:
+			return (radeon_cp_start(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CP_STOP:
+			return (radeon_cp_stop(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CP_RESET:
+			return (radeon_cp_reset(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_INDIRECT:
+			return (radeon_cp_indirect(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_INIT_HEAP:
+			return (radeon_mem_init_heap(dev, data, file_priv));
+		}
+	}
+	return (EINVAL);
+}

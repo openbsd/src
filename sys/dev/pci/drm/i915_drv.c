@@ -35,35 +35,19 @@
 #include "i915_drv.h"
 #include "drm_pciids.h"
 
+int	i915drm_probe(struct device *, void *, void *);
+void	i915drm_attach(struct device *, struct device *, void *);
+int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t i915_pciidlist[] = {
 	i915_PCI_IDS
 };
 
-struct drm_ioctl_desc i915_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_I915_INIT, i915_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_I915_FLUSH, i915_flush_ioctl, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_FLIP, i915_flip_bufs, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_BATCHBUFFER, i915_batchbuffer, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_IRQ_EMIT, i915_irq_emit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_IRQ_WAIT, i915_irq_wait, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_GETPARAM, i915_getparam, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_SETPARAM, i915_setparam, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_I915_ALLOC, i915_mem_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_FREE, i915_mem_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_INIT_HEAP, i915_mem_init_heap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_I915_CMDBUFFER, i915_cmdbuffer, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_DESTROY_HEAP,  i915_mem_destroy_heap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY ),
-	DRM_IOCTL_DEF(DRM_I915_SET_VBLANK_PIPE,  drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY ),
-	DRM_IOCTL_DEF(DRM_I915_GET_VBLANK_PIPE,  i915_vblank_pipe_get, DRM_AUTH ),
-	DRM_IOCTL_DEF(DRM_I915_VBLANK_SWAP, i915_vblank_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_I915_HWS_ADDR, i915_set_status_page,
-	    DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-};
-
 static const struct drm_driver_info i915_driver = {
 	.buf_priv_size		= 1,	/* No dev_priv */
 	.load			= i915_driver_load,
+	.ioctl			= inteldrm_ioctl,
 	.preclose		= i915_driver_preclose,
 	.lastclose		= i915_driver_lastclose,
 	.device_is_agp		= i915_driver_device_is_agp,
@@ -74,9 +58,6 @@ static const struct drm_driver_info i915_driver = {
 	.irq_postinstall	= i915_driver_irq_postinstall,
 	.irq_uninstall		= i915_driver_irq_uninstall,
 	.irq_handler		= i915_driver_irq_handler,
-
-	.ioctls			= i915_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(i915_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -91,9 +72,6 @@ static const struct drm_driver_info i915_driver = {
 	.use_irq		= 1,
 	.use_vbl_irq		= 1,
 };
-
-int	i915drm_probe(struct device *, void *, void *);
-void	i915drm_attach(struct device *, struct device *, void *);
 
 int
 i915drm_probe(struct device *parent, void *match, void *aux)
@@ -120,3 +98,53 @@ struct cfattach inteldrm_ca = {
 struct cfdriver inteldrm_cd = {
 	0, "inteldrm", DV_DULL
 };
+
+int
+inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_I915_FLUSH:
+			return (i915_flush_ioctl(dev, data, file_priv));
+		case DRM_IOCTL_I915_FLIP:
+			return (i915_flip_bufs(dev, data, file_priv));
+		case DRM_IOCTL_I915_BATCHBUFFER:
+			return (i915_batchbuffer(dev, data, file_priv));
+		case DRM_IOCTL_I915_IRQ_EMIT:
+			return (i915_irq_emit(dev, data, file_priv));
+		case DRM_IOCTL_I915_IRQ_WAIT:
+			return (i915_irq_wait(dev, data, file_priv));
+		case DRM_IOCTL_I915_GETPARAM:
+			return (i915_getparam(dev, data, file_priv));
+		case DRM_IOCTL_I915_ALLOC:
+			return (i915_mem_alloc(dev, data, file_priv));
+		case DRM_IOCTL_I915_FREE:
+			return (i915_mem_free(dev, data, file_priv));
+		case DRM_IOCTL_I915_CMDBUFFER:
+			return (i915_cmdbuffer(dev, data, file_priv));
+		case DRM_IOCTL_I915_GET_VBLANK_PIPE:
+			return (i915_vblank_pipe_get(dev, data, file_priv));
+		case DRM_IOCTL_I915_VBLANK_SWAP:
+			return (i915_vblank_swap(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_I915_SETPARAM:
+			return (i915_setparam(dev, data, file_priv));
+		case DRM_IOCTL_I915_INIT:
+			return (i915_dma_init(dev, data, file_priv));
+		case DRM_IOCTL_I915_INIT_HEAP:
+			return (i915_mem_init_heap(dev, data, file_priv));
+		case DRM_IOCTL_I915_DESTROY_HEAP:
+			return (i915_mem_destroy_heap(dev, data, file_priv));
+		case DRM_IOCTL_I915_HWS_ADDR:
+			return (i915_set_status_page(dev, data, file_priv));
+		case DRM_IOCTL_I915_SET_VBLANK_PIPE:
+			return (0);
+		}
+	}
+	return (EINVAL);
+}

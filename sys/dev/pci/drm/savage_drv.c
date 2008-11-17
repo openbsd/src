@@ -32,19 +32,14 @@
 #include "savage_drv.h"
 #include "drm_pciids.h"
 
+int	savagedrm_probe(struct device *, void *, void *);
+void	savagedrm_attach(struct device *, struct device *, void *);
+int	savagedrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {
 	savage_PCI_IDS
 };
-
-struct drm_ioctl_desc savage_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_INIT, savage_bci_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_CMDBUF, savage_bci_cmdbuf, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_EMIT, savage_bci_event_emit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SAVAGE_BCI_EVENT_WAIT, savage_bci_event_wait, DRM_AUTH),
-};
-
-int savage_max_ioctl = DRM_ARRAY_SIZE(savage_ioctls);
 
 static const struct drm_driver_info savage_driver = {
 	.buf_priv_size		= sizeof(drm_savage_buf_priv_t),
@@ -54,9 +49,6 @@ static const struct drm_driver_info savage_driver = {
 	.unload			= savage_driver_unload,
 	.reclaim_buffers_locked = savage_reclaim_buffers,
 	.dma_ioctl		= savage_bci_buffers,
-
-	.ioctls			= savage_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(savage_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -70,9 +62,6 @@ static const struct drm_driver_info savage_driver = {
 	.use_pci_dma		= 1,
 	.use_dma		= 1,
 };
-
-int	savagedrm_probe(struct device *, void *, void *);
-void	savagedrm_attach(struct device *, struct device *, void *);
 
 int
 savagedrm_probe(struct device *parent, void *match, void *aux)
@@ -98,3 +87,27 @@ struct cfattach savagedrm_ca = {
 struct cfdriver savagedrm_cd = {
 	0, "savagedrm", DV_DULL
 };
+
+int
+savagedrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_SAVAGE_CMDBUF:
+			return (savage_bci_cmdbuf(dev, data, file_priv));
+		case DRM_IOCTL_SAVAGE_EVENT_EMIT:
+			return (savage_bci_event_emit(dev, data, file_priv));
+		case DRM_IOCTL_SAVAGE_EVENT_WAIT:
+			return (savage_bci_event_wait(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_SAVAGE_INIT:
+			return (savage_bci_init(dev, data, file_priv));
+		}
+	}
+	return (EINVAL);
+}

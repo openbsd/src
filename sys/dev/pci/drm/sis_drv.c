@@ -31,29 +31,20 @@
 #include "sis_drv.h"
 #include "drm_pciids.h"
 
+int	sisdrm_probe(struct device *, void *, void *);
+void	sisdrm_attach(struct device *, struct device *, void *);
+int	sisdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t sis_pciidlist[] = {
 	sis_PCI_IDS
 };
 
-drm_ioctl_desc_t sis_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_SIS_FB_ALLOC, sis_fb_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_FB_FREE, sis_fb_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_INIT, sis_ioctl_agp_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_ALLOC, sis_ioctl_agp_alloc, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_AGP_FREE, sis_ioctl_agp_free, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_SIS_FB_INIT, sis_fb_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY)
-};
-
-int sis_max_ioctl = DRM_ARRAY_SIZE(sis_ioctls);
-
 static const struct drm_driver_info sis_driver = {
 	.buf_priv_size		= 1, /* No dev_priv */
+	.ioctl			= sisdrm_ioctl,
 	.context_ctor		= sis_init_context,
 	.context_dtor		= sis_final_context,
-
-	.ioctls			= sis_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(sis_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -65,9 +56,6 @@ static const struct drm_driver_info sis_driver = {
 	.use_agp		= 1,
 	.use_mtrr		= 1,
 };
-
-int	sisdrm_probe(struct device *, void *, void *);
-void	sisdrm_attach(struct device *, struct device *, void *);
 
 int
 sisdrm_probe(struct device *parent, void *match, void *aux)
@@ -93,3 +81,31 @@ struct cfattach sisdrm_ca = {
 struct cfdriver sisdrm_cd = {
 	0, "sisdrm", DV_DULL
 };
+
+int
+sisdrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_SIS_FB_ALLOC:
+			return (sis_fb_alloc(dev, data, file_priv));
+		case DRM_IOCTL_SIS_FB_FREE:
+			return (sis_fb_free(dev, data, file_priv));
+		case DRM_IOCTL_SIS_AGP_ALLOC:
+			return (sis_ioctl_agp_alloc(dev, data, file_priv));
+		case DRM_IOCTL_SIS_AGP_FREE:
+			return (sis_ioctl_agp_free(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_SIS_AGP_INIT:
+			return (sis_ioctl_agp_init(dev, data, file_priv));
+		case DRM_IOCTL_SIS_FB_INIT:
+			return (sis_fb_init(dev, data, file_priv));
+		}
+	}
+	return (EINVAL);
+}

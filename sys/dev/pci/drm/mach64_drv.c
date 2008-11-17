@@ -39,31 +39,18 @@
 #include "mach64_drv.h"
 #include "drm_pciids.h"
 
+int	mach64drm_probe(struct device *, void *, void *);
+void	mach64drm_attach(struct device *, struct device *, void *);
+int	machdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mach64_pciidlist[] = {
 	mach64_PCI_IDS
 };
 
-/* Interface history:
- *
- * 1.0 - Initial mach64 DRM
- *
- */
-struct drm_ioctl_desc mach64_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_MACH64_INIT, mach64_dma_init,
-	    DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_MACH64_CLEAR, mach64_dma_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_SWAP, mach64_dma_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_IDLE, mach64_dma_idle, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_RESET, mach64_engine_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_VERTEX, mach64_dma_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_BLIT, mach64_dma_blit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_FLUSH, mach64_dma_flush, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MACH64_GETPARAM, mach64_get_param, DRM_AUTH),
-};
-
 static const struct drm_driver_info mach64_driver = {
 	.buf_priv_size		= 1, /* No dev_priv */
+	.ioctl			= machdrm_ioctl,
 	.lastclose		= mach64_driver_lastclose,
 	.get_vblank_counter	= mach64_get_vblank_counter,
 	.enable_vblank		= mach64_enable_vblank,
@@ -73,9 +60,6 @@ static const struct drm_driver_info mach64_driver = {
 	.irq_uninstall		= mach64_driver_irq_uninstall,
 	.irq_handler		= mach64_driver_irq_handler,
 	.dma_ioctl		= mach64_dma_buffers,
-
-	.ioctls			= mach64_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(mach64_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -91,9 +75,6 @@ static const struct drm_driver_info mach64_driver = {
 	.use_irq		= 1,
 	.use_vbl_irq		= 1,
 };
-
-int	mach64drm_probe(struct device *, void *, void *);
-void	mach64drm_attach(struct device *, struct device *, void *);
 
 int
 mach64drm_probe(struct device *parent, void *match, void *aux)
@@ -120,3 +101,37 @@ struct cfattach machdrm_ca = {
 struct cfdriver machdrm_cd = {
 	0, "machdrm", DV_DULL
 };
+
+int
+machdrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_MACH64_CLEAR:
+			return (mach64_dma_clear(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_SWAP:
+			return (mach64_dma_swap(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_IDLE:
+			return (mach64_dma_idle(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_RESET:
+			return (mach64_engine_reset(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_VERTEX:
+			return (mach64_dma_vertex(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_BLIT:
+			return (mach64_dma_blit(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_FLUSH:
+			return (mach64_dma_flush(dev, data, file_priv));
+		case DRM_IOCTL_MACH64_GETPARAM:
+			return (mach64_get_param(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_MACH64_INIT:
+			return (mach64_dma_init(dev, data, file_priv));
+		}
+	}
+	return (EINVAL);
+}

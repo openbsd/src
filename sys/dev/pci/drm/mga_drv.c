@@ -37,7 +37,10 @@
 #include "mga_drv.h"
 #include "drm_pciids.h"
 
+int	mgadrm_probe(struct device *, void *, void *);
+void	mgadrm_attach(struct device *, struct device *, void *);
 int	mga_driver_device_is_agp(struct drm_device * );
+int	mgadrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {
@@ -90,27 +93,11 @@ mga_driver_device_is_agp(struct drm_device * dev)
 
 }
 
-struct drm_ioctl_desc mga_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_MGA_INIT, mga_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_MGA_FLUSH, mga_dma_flush, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_RESET, mga_dma_reset, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_SWAP, mga_dma_swap, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_CLEAR, mga_dma_clear, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_VERTEX, mga_dma_vertex, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_INDICES, mga_dma_indices, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_ILOAD, mga_dma_iload, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_BLIT, mga_dma_blit, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_GETPARAM, mga_getparam, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_SET_FENCE, mga_set_fence, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_WAIT_FENCE, mga_wait_fence, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_MGA_DMA_BOOTSTRAP, mga_dma_bootstrap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-};
-
 static const struct drm_driver_info mga_driver = {
 	.buf_priv_size		= sizeof(drm_mga_buf_priv_t),
 	.load			= mga_driver_load,
 	.unload			= mga_driver_unload,
+	.ioctl			= mgadrm_ioctl,
 	.lastclose		= mga_driver_lastclose,
 	.enable_vblank		= mga_enable_vblank,
 	.disable_vblank		= mga_disable_vblank,
@@ -122,9 +109,6 @@ static const struct drm_driver_info mga_driver = {
 	.dma_ioctl		= mga_dma_buffers,
 	.dma_quiescent		= mga_driver_dma_quiescent,
 	.device_is_agp		= mga_driver_device_is_agp,
-
-	.ioctls			= mga_ioctls,
-	.max_ioctl		= DRM_ARRAY_SIZE(mga_ioctls),
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -141,8 +125,6 @@ static const struct drm_driver_info mga_driver = {
 	.use_vbl_irq		= 1,
 };
 
-int	mgadrm_probe(struct device *, void *, void *);
-void	mgadrm_attach(struct device *, struct device *, void *);
 int
 mgadrm_probe(struct device *parent, void *match, void *aux)
 {
@@ -167,3 +149,46 @@ struct cfattach mgadrm_ca = {
 struct cfdriver mgadrm_cd = {
 	0, "mgadrm", DV_DULL
 };
+
+int
+mgadrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	if (file_priv->authenticated == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_MGA_FLUSH:
+			return (mga_dma_flush(dev, data, file_priv));
+		case DRM_IOCTL_MGA_RESET:
+			return (mga_dma_reset(dev, data, file_priv));
+		case DRM_IOCTL_MGA_SWAP:
+			return (mga_dma_swap(dev, data, file_priv));
+		case DRM_IOCTL_MGA_CLEAR:
+			return (mga_dma_clear(dev, data, file_priv));
+		case DRM_IOCTL_MGA_VERTEX:
+			return (mga_dma_vertex(dev, data, file_priv));
+		case DRM_IOCTL_MGA_INDICES:
+			return (mga_dma_indices(dev, data, file_priv));
+		case DRM_IOCTL_MGA_ILOAD:
+			return (mga_dma_iload(dev, data, file_priv));
+		case DRM_IOCTL_MGA_BLIT:
+			return (mga_dma_blit(dev, data, file_priv));
+		case DRM_IOCTL_MGA_GETPARAM:
+			return (mga_getparam(dev, data, file_priv));
+		case DRM_IOCTL_MGA_SET_FENCE:
+			return (mga_set_fence(dev, data, file_priv));
+		case DRM_IOCTL_MGA_WAIT_FENCE:
+			return (mga_wait_fence(dev, data, file_priv));
+		}
+	}
+
+	if (file_priv->master == 1) {
+		switch (cmd) {
+		case DRM_IOCTL_MGA_INIT:
+			return (mga_dma_init(dev, data, file_priv));
+		case DRM_IOCTL_MGA_DMA_BOOTSTRAP:
+			return (mga_dma_bootstrap(dev, data, file_priv));
+		}
+	}
+	return (EINVAL);
+
+}

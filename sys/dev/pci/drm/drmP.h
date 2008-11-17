@@ -452,6 +452,8 @@ struct drm_driver_info {
 	int	(*load)(struct drm_device *, unsigned long);
 	int	(*firstopen)(struct drm_device *);
 	int	(*open)(struct drm_device *, struct drm_file *);
+	int	(*ioctl)(struct drm_device*, u_long, caddr_t,
+		    struct drm_file *);
 	void	(*preclose)(struct drm_device *, struct drm_file *);
 	void	(*postclose)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
@@ -482,9 +484,6 @@ struct drm_driver_info {
 	 * (return of 1), or may or may not be AGP (return of 2).
 	 */
 	int	(*device_is_agp) (struct drm_device * dev);
-
-	drm_ioctl_desc_t *ioctls;
-	int	max_ioctl;
 
 	int	buf_priv_size;
 
