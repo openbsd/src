@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.9 2008/11/17 20:14:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.10 2008/11/17 20:37:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -771,6 +771,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	struct passwd *pw;
 	char pathname[MAXPATHLEN];
 	int spret;
+	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
 	pw = getpwnam(path->pw_name);
 	if (pw == NULL) {
@@ -782,7 +783,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK|O_EXLOCK, 0600);
+	fd = open(pathname, mode, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -803,15 +804,16 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
+
 		return -1;
 	}
-/*
-	if (flock(fd, LOCK_EX) == -1) {
+
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-*/
+
 	fchown(fd, pw->pw_uid, 0);
 
 	return fd;
@@ -825,6 +827,7 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 	struct passwd *pw;
 	char pathname[MAXPATHLEN];
 	int spret;
+	mode_t mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
 	pw = getpwnam(path->pw_name);
 	if (pw == NULL) {
@@ -849,18 +852,18 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	fd = open(pathname, O_CREAT|O_RDWR|O_TRUNC|O_SYNC|O_EXLOCK, 0600);
+	fd = open(pathname, mode, 0600);
 	if (fd == -1) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-/*
-	if (flock(fd, LOCK_EX) == -1) {
+
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-*/
+
 	fchown(fd, pw->pw_uid, pw->pw_gid);
 
 	return fd;
@@ -994,12 +997,13 @@ parent_open_filename(struct batch *batchp, struct path *path)
 	int fd;
 	char pathname[MAXPATHLEN];
 	int spret;
+	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
 	spret = snprintf(pathname, MAXPATHLEN, "%s", path->u.filename);
 	if (spret == -1 || spret >= MAXPATHLEN)
 		return -1;
 
-	fd = open(pathname, O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK|O_EXLOCK, 0600);
+	fd = open(pathname, mode, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -1022,13 +1026,13 @@ parent_open_filename(struct batch *batchp, struct path *path)
 		}
 		return -1;
 	}
-/*
-	if (flock(fd, LOCK_EX) == -1) {
+
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
 		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-*/
+
 	return fd;
 }
 

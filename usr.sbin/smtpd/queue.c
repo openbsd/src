@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.11 2008/11/11 21:17:49 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.12 2008/11/17 20:37:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -813,7 +813,7 @@ queue_record_submission(struct message *message)
 	char *spool;
 	size_t spoolsz;
 	int fd;
-	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXCL;
+	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
 	int spret;
 	FILE *fp;
 	int hm;
@@ -863,8 +863,8 @@ queue_record_submission(struct message *message)
 			if (unlink(linkname) == -1)
 				fatal("queue_record_submission: unlink");
 
-//		if (flock(fd, LOCK_EX) == -1)
-//			fatal("queue_record_submission: flock");
+		if (flock(fd, LOCK_EX) == -1)
+			fatal("queue_record_submission: flock");
 
 		fp = fdopen(fd, "w");
 		if (fp == NULL)
@@ -1116,6 +1116,7 @@ queue_update_database(struct message *message)
 	char pathname[MAXPATHLEN];
 	int spret;
 	FILE *fp;
+	mode_t mode = O_RDWR;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -1137,8 +1138,12 @@ queue_update_database(struct message *message)
 	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_update_database: pathname too long");
 
-	if ((fd = open(pathname, O_RDWR|O_EXLOCK)) == -1)
+	if ((fd = open(pathname, mode)) == -1)
 		fatal("queue_update_database: cannot open database");
+
+
+	if (flock(fd, LOCK_EX) == -1)
+		fatal("queue_update_database: flock");
 
 	fp = fdopen(fd, "w");
 	if (fp == NULL)
@@ -1164,7 +1169,7 @@ queue_record_daemon(struct message *message)
 	char message_uid[MAXPATHLEN];
 	size_t spoolsz;
 	int fd;
-	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC|O_EXLOCK;
+	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
 	int spret;
 	FILE *fp;
 
@@ -1201,8 +1206,8 @@ queue_record_daemon(struct message *message)
 			if (unlink(linkname) == -1)
 				err(1, "unlink");
 
-//		if (flock(fd, LOCK_EX) == -1)
-//			err(1, "flock");
+		if (flock(fd, LOCK_EX) == -1)
+			err(1, "flock");
 
 		fp = fdopen(fd, "w");
 		if (fp == NULL)
