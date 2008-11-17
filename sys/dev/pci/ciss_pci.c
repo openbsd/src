@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.12 2008/06/11 20:24:47 jsg Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.13 2008/11/17 06:56:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -68,6 +68,8 @@ const struct pci_matchid ciss_pci_devices[] = {
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP410I },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP411 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP600 },
+	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP711M },
+	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP712M },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP800 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP812 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAV100 },
