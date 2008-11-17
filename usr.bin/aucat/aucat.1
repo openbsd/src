@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.39 2008/11/17 07:36:43 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.40 2008/11/17 09:40:09 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -34,7 +34,7 @@
 .Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl r Ar rate
-.Op Fl s Ar file
+.Op Fl s Ar socket
 .Op Fl v Ar volume
 .Op Fl x Ar policy
 .Ek
@@ -110,8 +110,10 @@ then standard output will be used.
 .It Fl r Ar rate
 Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
-.It Fl s Ar file
-Add this path to the list of sockets to listen on.
+.It Fl s Ar socket
+Add the path
+.Ar socket
+to the list of sockets to listen on.
 Meaningful in server mode only.
 .It Fl u
 Normally
@@ -330,20 +332,6 @@ may be a value between 0 and 4.
 The audio device to use.
 .El
 .Sh EXAMPLES
-The following command will record a stereo s16le stream at
-44100Hz from the default device.
-If necessary, the stream will be converted and/or resampled
-to match parameters supported by the device:
-.Bd -literal -offset indent
-$ aucat -o file.raw
-.Ed
-.Pp
-The following command will play a stereo s16le stream at
-44100Hz on the default device, doing any necessary conversions:
-.Bd -literal -offset indent
-$ aucat -i file.raw
-.Ed
-.Pp
 The following will mix and play two stereo streams,
 the first at 48kHz and the second at 44.1kHz:
 .Bd -literal -offset indent
@@ -357,27 +345,9 @@ both:
 $ aucat -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
 .Ed
 .Pp
-The following will play two s18le mono files, one on each channel:
-.Bd -literal -offset indent
-$ aucat -e s18le -c 0:0 -i f1.raw -c 1:1 -i f2.raw
-.Ed
-.Pp
-The following will mix and play two files and record a third one in
-full-duplex:
-.Bd -literal -offset indent
-$ aucat -i drums.raw -i bass.raw -o guitar.raw
-.Ed
-.Pp
 The following will start
 .Nm
-in server mode with the default parameters:
-.Bd -literal -offset indent
-$ aucat -l
-.Ed
-.Pp
-The following will start
-.Nm
-in server mode with the default parameters, but will create an
+in server mode using default parameters, but will create an
 additional socket for output to channels 2:3 only (rear speakers
 on most cards):
 .Bd -literal -offset indent
