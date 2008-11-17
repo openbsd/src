@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.5 2008/11/11 01:08:08 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.6 2008/11/17 20:11:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -263,7 +263,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 
 	if (args == NULL) {
 		evbuffer_add_printf(s->s_bev->output,
-		    "501 HELO requires domain address.\r\n");
+		    "501 EHLO requires domain address.\r\n");
 		return 1;
 	}
 
@@ -340,14 +340,14 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
 		evbuffer_add_printf(s->s_bev->output,
-		    "%d %s\r\n", 553, "Syntax error for sender address");
+		    "553 Syntax error for sender address\r\n");
 		return 1;
 	}
 
 	if (! session_set_path(&s->s_msg.sender, buffer)) {
 		/* No need to even transmit to MFA, path is invalid */
 		evbuffer_add_printf(s->s_bev->output,
-		    "%d %s\r\n", 553, "Syntax error for sender address");
+		    "553 Syntax error for sender address\r\n");
 		return 1;
 	}
 
@@ -389,14 +389,14 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
 		evbuffer_add_printf(s->s_bev->output,
-		    "%d %s\r\n", 553, "Syntax error for recipient address");
+		    "553 Syntax error for recipient address\r\n");
 		return 1;
 	}
 
 	if (! session_set_path(&mr.path, buffer)) {
 		/* No need to even transmit to MFA, path is invalid */
 		evbuffer_add_printf(s->s_bev->output,
-		    "%d %s\r\n", 553, "Syntax error for recipient address");
+		    "553 Syntax error for recipient address\r\n");
 		return 1;
 	}
 
@@ -637,14 +637,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_DATA:
 		if (s->s_msg.datafp == NULL) {
 			evbuffer_add_printf(s->s_bev->output,
-			    "%d %s\r\n", 421,
-			    "Service temporarily unavailable");
+			    "421 Service temporarily unavailable\r\n");
 			return;
 		}
 		s->s_state = S_DATACONTENT;
 		evbuffer_add_printf(s->s_bev->output,
-		    "%d %s\r\n", 354,
-		    "Enter mail, end with \".\" on a line by itself");
+		    "354 Enter mail, end with \".\" on a line by itself\r\n");
 		break;
 
 	case S_DATACONTENT:
