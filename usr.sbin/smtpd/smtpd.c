@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.8 2008/11/11 21:02:20 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.9 2008/11/17 20:14:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -974,12 +974,12 @@ parent_external_mda(struct batch *batchp, struct path *path)
 		dup2(pipefd[1], 0);
 
 		execlp(_PATH_BSHELL, "sh", "-c", path->rule.r_value.path, (void *)NULL);
-		exit(1);
+		_exit(1);
 	}
 
 	mdaproc = calloc(1, sizeof (struct mdaproc));
 	if (mdaproc == NULL)
-		err(1, "calloc");
+		fatal("calloc");
 	mdaproc->pid = pid;
 
 	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
