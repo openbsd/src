@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.5 2008/11/10 22:35:23 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.6 2008/11/17 20:16:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -162,7 +162,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 		return 0;
 
 	if (map->m_src != S_DB) {
-		log_info("map source for \"aliases\" must be \"db\".");
+		log_info("map source for \"virtual\" must be \"db\".");
 		return 0;
 	}
 
