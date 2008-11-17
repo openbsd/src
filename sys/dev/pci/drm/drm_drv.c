@@ -24,6 +24,7 @@
  *
  * Authors:
  *    Rickard E. (Rik) Faith <faith@valinux.com>
+ *    Daryll Strauss <daryll@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
  *
  */
@@ -228,6 +229,19 @@ drm_find_description(int vendor, int device, drm_pci_id_list_t *idlist)
 			return &idlist[i];
 	}
 	return NULL;
+}
+
+struct drm_file *
+drm_find_file_by_minor(struct drm_device *dev, int minor)
+{
+	struct drm_file *priv;
+
+	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+
+	TAILQ_FOREACH(priv, &dev->files, link)
+		if (priv->minor == minor)
+			break;
+        return (priv);
 }
 
 int
