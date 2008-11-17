@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.28 2008/11/17 10:48:44 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.29 2008/11/17 11:39:44 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -348,8 +348,12 @@ of regress tests to CPAN.
 .It devel/pmk
 .It devel/scons
 .It devel/waf
-Adds devel/waf to BUILD_DEPENDS, lang/python to MODULES, and provides
-do-configure, do-build, do-install and post-install targets.
+Adds
+.Pa devel/waf
+to BUILD_DEPENDS,
+.Pa lang/python
+to MODULES, and provides do-configure, do-build, do-install and
+post-install targets.
 do-build, do-install and post-install can be overridden in the port
 Makefile.
 .It gcc3
