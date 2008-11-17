@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.5 2008/11/11 20:59:11 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.6 2008/11/17 21:56:18 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
+#include <time.h>
 #include <util.h>
 #include <unistd.h>
 
