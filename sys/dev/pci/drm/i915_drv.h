@@ -104,6 +104,7 @@ typedef struct drm_i915_private {
 	int user_irq_refcount;
 	/* Cached value of IMR to avoid reads in updating the bitfield */
 	u_int32_t irq_mask_reg;
+	u_int32_t pipestat[2];
 
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
