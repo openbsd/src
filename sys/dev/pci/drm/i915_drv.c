@@ -123,7 +123,11 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_I915_GET_VBLANK_PIPE:
 			return (i915_vblank_pipe_get(dev, data, file_priv));
 		case DRM_IOCTL_I915_VBLANK_SWAP:
-			return (i915_vblank_swap(dev, data, file_priv));
+			/*
+			 * removed due to being racy. Userland falls back
+			 * correctly when it errors out
+			 */
+			return (EINVAL);
 		}
 	}
 

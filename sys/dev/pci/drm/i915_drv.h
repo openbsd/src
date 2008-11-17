@@ -242,8 +242,6 @@ extern int i915_emit_irq(struct drm_device * dev);
 extern int i915_enable_vblank(struct drm_device *dev, int crtc);
 extern void i915_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
-extern int i915_vblank_swap(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv);
 extern void i915_user_irq_get(struct drm_device *dev);
 extern void i915_user_irq_put(struct drm_device *dev);
 
