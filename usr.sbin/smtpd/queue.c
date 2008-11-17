@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.13 2008/11/17 21:03:33 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.14 2008/11/17 21:05:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,11 +68,8 @@ int		queue_batch_resolved(struct smtpd *, struct batch *);
 struct batch	*queue_record_batch(struct smtpd *, struct message *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
-void		queue_mailer_daemon(struct smtpd *, struct batch *, enum batch_status);
 void		debug_display_batch(struct batch *);
 void		debug_display_message(struct message *);
-struct batch	*queue_register_daemon_batch(struct smtpd *, struct batch *);
-void		queue_register_daemon_message(struct smtpd *, struct batch *, struct message *);
 void		queue_load_submissions(struct smtpd *, time_t);
 int		queue_message_schedule(struct message *, time_t);
 int		queue_message_from_id(char *, struct message *);
