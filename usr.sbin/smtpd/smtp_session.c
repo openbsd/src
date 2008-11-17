@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.6 2008/11/17 20:11:27 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.7 2008/11/17 21:50:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -275,6 +275,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_HELO;
+	s->s_flags |= F_EHLO;
 	s->s_flags |= F_8BITMIME;
 
 	if (s->s_ss.ss_family == PF_INET) {
@@ -495,6 +496,9 @@ session_command(struct session *s, char *cmd, char *args)
 {
 	int	i;
 
+	if (!(s->s_flags & F_EHLO))
+		goto rfc5321;
+
 	/* RFC 1652 - 8BITMIME */
 	for (i = 0; i < (int)(sizeof(rfc1652_cmdtab) / sizeof(struct session_cmd)); ++i)
 		if (strcasecmp(rfc1652_cmdtab[i].name, cmd) == 0)
@@ -524,6 +528,7 @@ session_command(struct session *s, char *cmd, char *args)
 	}
 	*/
 
+rfc5321:
 	/* RFC 5321 - SMTP */
 	for (i = 0; i < (int)(sizeof(rfc5321_cmdtab) / sizeof(struct session_cmd)); ++i)
 		if (strcasecmp(rfc5321_cmdtab[i].name, cmd) == 0)
