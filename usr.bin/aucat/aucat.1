@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.38 2008/11/17 07:05:09 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.39 2008/11/17 07:36:43 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -81,7 +81,7 @@ If the option argument is
 then standard input will be used.
 .It Fl l
 Listen for incoming connections on Unix domain sockets.
-A client might use
+This allows clients to use
 .Nm
 instead of the regular
 .Xr audio 4
@@ -95,13 +95,13 @@ option.
 .It Fl m Ar mode
 Set the server mode.
 Valid modes are
-.Va play ,
-.Va rec ,
+.Ar play ,
+.Ar rec ,
 and
-.Va duplex ,
-for play-only, record-only and full-duplex, respectively.
+.Ar duplex ,
+for play-only, record-only, and full-duplex, respectively.
 The default is
-.Va duplex .
+.Ar duplex .
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is
@@ -112,9 +112,7 @@ Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
 .It Fl s Ar file
 Add this path to the list of sockets to listen on.
-Meaningful in server mode only (i.e. when the
-.Fl l
-option is used).
+Meaningful in server mode only.
 .It Fl u
 Normally
 .Nm
@@ -168,7 +166,7 @@ it increases or decreases debug level, respectively.
 Settings for input files
 .Pq Fl i ,
 output files
-.Pq Fl o
+.Pq Fl o ,
 and sockets
 .Pq Fl s
 can be changed using the
@@ -178,8 +176,8 @@ The last
 .Fl Ccehrvx
 options specified before an
 .Fl i ,
-.Fl o
-and
+.Fl o ,
+or
 .Fl s
 are applied to
 .Ar file .
@@ -372,7 +370,7 @@ $ aucat -i drums.raw -i bass.raw -o guitar.raw
 .Pp
 The following will start
 .Nm
-in server mode with the default parameters.
+in server mode with the default parameters:
 .Bd -literal -offset indent
 $ aucat -l
 .Ed
@@ -381,15 +379,15 @@ The following will start
 .Nm
 in server mode with the default parameters, but will create an
 additional socket for output to channels 2:3 only (rear speakers
-on most cards).
+on most cards):
 .Bd -literal -offset indent
 $ aucat -l -s /tmp/aucat.sock -c 2:3 -s /tmp/aucat.sock.rear
 .Ed
 .Pp
 The following will start
 .Nm
-in server mode creating the defaut socket with low volume and
-an additional socket for high volume output.
+in server mode creating the default socket with low volume and
+an additional socket for high volume output:
 .Bd -literal -offset indent
 $ aucat -l -v 65 -s /tmp/aucat.sock -v 127 -s /tmp/aucat.sock.max
 .Ed
