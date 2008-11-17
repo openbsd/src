@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.31 2008/11/17 15:22:40 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.32 2008/11/17 15:29:07 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -346,6 +346,10 @@ of regress tests to CPAN.
 .It devel/cmake
 .It devel/gettext
 .It devel/pmk
+Sets CONFIGURE_SCRIPT, CONFIGURE_ARGS and MODPMK_configure.
+It appends
+.Pa devel/pmk
+to BUILD_DEPENDS.
 .It devel/scons
 .It devel/waf
 Adds
