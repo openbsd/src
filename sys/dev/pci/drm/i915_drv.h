@@ -77,8 +77,8 @@ struct mem_block {
 };
 
 typedef struct drm_i915_private {
+	struct vga_pci_bar *regs;
 	drm_local_map_t *sarea;
-	drm_local_map_t *mmio_map;
 
 	drm_i915_sarea_t *sarea_priv;
 	drm_i915_ring_buffer_t ring;
@@ -273,12 +273,18 @@ extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);
 extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
-#define I915_READ(reg)          DRM_READ32(dev_priv->mmio_map, (reg))
-#define I915_WRITE(reg,val)     DRM_WRITE32(dev_priv->mmio_map, (reg), (val))
-#define I915_READ16(reg)	DRM_READ16(dev_priv->mmio_map, (reg))
-#define I915_WRITE16(reg,val)	DRM_WRITE16(dev_priv->mmio_map, (reg), (val))
-#define I915_READ8(reg)		DRM_READ8(dev_priv->mmio_map, (reg))
-#define I915_WRITE8(reg,val)	DRM_WRITE8(dev_priv->mmio_map, (reg), (val))
+#define I915_READ(reg)		bus_space_read_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define I915_WRITE(reg,val)	bus_space_write_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
+#define I915_READ16(reg)	bus_space_read_2(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define I915_WRITE16(reg,val)	bus_space_write_2(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
+#define I915_READ8(reg)		bus_space_read_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
 
 #define I915_VERBOSE 0
 

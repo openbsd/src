@@ -817,8 +817,9 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	base = drm_get_resource_start(dev, mmio_bar);
 	size = drm_get_resource_len(dev, mmio_bar);
 
-	ret = drm_addmap(dev, base, size, _DRM_REGISTERS,
-		_DRM_KERNEL | _DRM_DRIVER, &dev_priv->mmio_map);
+	dev_priv->regs = vga_pci_bar_map(dev->vga_softc, base, size, 0);
+	if (dev_priv->regs == NULL)
+		return (ENOMEM);
 
 	/* Init HWS */
 	if (!I915_NEED_GFX_HWS(dev)) {
@@ -838,8 +839,8 @@ int i915_driver_unload(struct drm_device *dev)
 
 	i915_free_hws(dev);
 
-	if (dev_priv->mmio_map)
-		drm_rmmap(dev, dev_priv->mmio_map);
+	if (dev_priv->regs != NULL)
+		vga_pci_bar_unmap(dev_priv->regs);
 
 	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
 
