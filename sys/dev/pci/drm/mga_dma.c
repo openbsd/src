@@ -538,22 +538,6 @@ static int mga_do_agp_dma_bootstrap(struct drm_device *dev,
 		return err;
 	}
 
-#ifdef __linux__
-	{
-		struct drm_map_list *_entry;
-		unsigned long agp_token = 0;
-
-		list_for_each_entry(_entry, &dev->maplist, head) {
-			if (_entry->map == dev->agp_buffer_map)
-				agp_token = _entry->user_token;
-		}
-		if (!agp_token)
-			return EFAULT;
-
-		dev->agp_buffer_token = agp_token;
-	}
-#endif
-
 	offset += secondary_size;
 	err = drm_addmap(dev, offset, agp_size - offset,
 			 _DRM_AGP, 0, & dev_priv->agp_textures);
@@ -845,7 +829,6 @@ static int mga_do_init_dma(struct drm_device * dev, drm_mga_init_t * init)
 			DRM_ERROR("failed to find primary dma region!\n");
 			return EINVAL;
 		}
-		dev->agp_buffer_token = init->buffers_offset;
 		dev->agp_buffer_map =
 			drm_core_findmap(dev, init->buffers_offset);
 		if (!dev->agp_buffer_map) {
