@@ -47,7 +47,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: alias.c,v 1.13 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: alias.c,v 1.14 2008/11/18 13:29:58 millert Exp $";
 #endif /* lint */
 
 /*
@@ -193,14 +193,14 @@ alias_remove(name, type)
     int type;
 {
     struct rbnode *node;
-    struct alias key;
+    struct alias key, *a;
 
     key.name = name;
     key.type = type;
     if ((node = rbfind(aliases, &key)) == NULL)
 	return(FALSE);
-    rbdelete(aliases, node);
-    alias_free(node->data);
+    a = rbdelete(aliases, node);
+    alias_free(a);
     return(TRUE);
 }
 
