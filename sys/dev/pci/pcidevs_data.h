@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1434 2008/11/18 20:49:07 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1435 2008/11/18 23:26:38 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5093,11 +5093,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP712M,
-	    "Smart Array 712m",
+	    "Smart Array P712m",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP711M,
-	    "Smart Array 711m",
+	    "Smart Array P711m",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_USB,

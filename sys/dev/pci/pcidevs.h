@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1434 2008/11/18 20:49:07 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1435 2008/11/18 23:26:38 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1817,8 +1817,8 @@
 #define	PCI_PRODUCT_HP_HPSAP410I	0x3245		/* Smart Array P410i */
 #define	PCI_PRODUCT_HP_HPSAP411	0x3247		/* Smart Array P411 */
 #define	PCI_PRODUCT_HP_HPSAP812	0x3249		/* Smart Array P812 */
-#define	PCI_PRODUCT_HP_HPSAP712M	0x324a		/* Smart Array 712m */
-#define	PCI_PRODUCT_HP_HPSAP711M	0x324b		/* Smart Array 711m */
+#define	PCI_PRODUCT_HP_HPSAP712M	0x324a		/* Smart Array P712m */
+#define	PCI_PRODUCT_HP_HPSAP711M	0x324b		/* Smart Array P711m */
 #define	PCI_PRODUCT_HP_USB	0x3300		/* USB */
 #define	PCI_PRODUCT_HP_IPMI	0x3302		/* IPMI */
 
