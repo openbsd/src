@@ -87,7 +87,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.220 2008/11/09 20:18:22 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.221 2008/11/18 15:50:53 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
@@ -921,8 +921,9 @@ check_aliases(strict)
     /* Forward check. */
     tq_foreach_fwd(&userspecs, us) {
 	tq_foreach_fwd(&us->users, m) {
-	    if (m->type == USERALIAS) {
-		if (find_alias(m->name, m->type) == NULL) {
+	    if (m->type == ALIAS) {
+		alias_seqno++;
+		if (find_alias(m->name, USERALIAS) == NULL) {
 		    warningx("%s: User_Alias `%s' referenced but not defined",
 			strict ? "Error" : "Warning", m->name);
 		    error++;
@@ -931,8 +932,9 @@ check_aliases(strict)
 	}
 	tq_foreach_fwd(&us->privileges, priv) {
 	    tq_foreach_fwd(&priv->hostlist, m) {
-		if (m->type == HOSTALIAS) {
-		    if (find_alias(m->name, m->type) == NULL) {
+		if (m->type == ALIAS) {
+		    alias_seqno++;
+		    if (find_alias(m->name, HOSTALIAS) == NULL) {
 			warningx("%s: Host_Alias `%s' referenced but not defined",
 			    strict ? "Error" : "Warning", m->name);
 			error++;
@@ -941,16 +943,18 @@ check_aliases(strict)
 	    }
 	    tq_foreach_fwd(&priv->cmndlist, cs) {
 		tq_foreach_fwd(&cs->runasuserlist, m) {
-		    if (m->type == RUNASALIAS) {
-			if (find_alias(m->name, m->type) == NULL) {
+		    if (m->type == ALIAS) {
+			alias_seqno++;
+			if (find_alias(m->name, RUNASALIAS) == NULL) {
 			    warningx("%s: Runas_Alias `%s' referenced but not defined",
 				strict ? "Error" : "Warning", m->name);
 			    error++;
 			}
 		    }
 		}
-		if ((m = cs->cmnd)->type == CMNDALIAS) {
-		    if (find_alias(m->name, m->type) == NULL) {
+		if ((m = cs->cmnd)->type == ALIAS) {
+		    alias_seqno++;
+		    if (find_alias(m->name, CMNDALIAS) == NULL) {
 			warningx("%s: Cmnd_Alias `%s' referenced but not defined",
 			    strict ? "Error" : "Warning", m->name);
 			error++;
@@ -963,21 +967,21 @@ check_aliases(strict)
     /* Reverse check (destructive) */
     tq_foreach_fwd(&userspecs, us) {
 	tq_foreach_fwd(&us->users, m) {
-	    if (m->type == USERALIAS)
-		(void) alias_remove(m->name, m->type);
+	    if (m->type == ALIAS)
+		(void) alias_remove(m->name, USERALIAS);
 	}
 	tq_foreach_fwd(&us->privileges, priv) {
 	    tq_foreach_fwd(&priv->hostlist, m) {
-		if (m->type == HOSTALIAS)
-		    (void) alias_remove(m->name, m->type);
+		if (m->type == ALIAS)
+		    (void) alias_remove(m->name, HOSTALIAS);
 	    }
 	    tq_foreach_fwd(&priv->cmndlist, cs) {
 		tq_foreach_fwd(&cs->runasuserlist, m) {
-		    if (m->type == RUNASALIAS)
-			(void) alias_remove(m->name, m->type);
+		    if (m->type == ALIAS)
+			(void) alias_remove(m->name, RUNASALIAS);
 		}
-		if ((m = cs->cmnd)->type == CMNDALIAS)
-		    (void) alias_remove(m->name, m->type);
+		if ((m = cs->cmnd)->type == ALIAS)
+		    (void) alias_remove(m->name, CMNDALIAS);
 	    }
 	}
     }
