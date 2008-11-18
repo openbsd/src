@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.104 2008/11/03 01:42:15 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.105 2008/11/18 21:52:39 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -153,7 +153,6 @@ int		mpi_ioctl_disk(struct mpi_softc *, struct bioc_disk *);
 int		mpi_ioctl_setstate(struct mpi_softc *, struct bioc_setstate *);
 #ifndef SMALL_KERNEL
 int		mpi_create_sensors(struct mpi_softc *);
-void		mpi_refresh_sensors(void *);
 void		mpi_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
