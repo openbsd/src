@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1433 2008/11/17 06:54:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1434 2008/11/18 20:49:07 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3148,7 +3148,7 @@
 #define	PCI_PRODUCT_SIIG_2061	0x2061		/* I/O */
 #define	PCI_PRODUCT_SIIG_2062	0x2062		/* I/O */
 #define	PCI_PRODUCT_SIIG_2081	0x2081		/* I/O */
-#define	PCI_PRODUCT_SIIG_2082	0x2081		/* I/O */
+#define	PCI_PRODUCT_SIIG_2082	0x2082		/* I/O */
 
 /* Solarflare products */
 #define	PCI_PRODUCT_SOLARFLARE_FALCON_P	0x0703		/* Falcon P */
