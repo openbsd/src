@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.23 2008/10/25 11:51:56 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.24 2008/11/18 14:29:30 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2008 $
+.Dd $Mdocdate: November 18 2008 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -45,42 +45,49 @@ option and removed using the
 option.
 .Pp
 The driver currently supports the trunk protocols
-.Ic roundrobin
-(the default),
-.Ic failover ,
-.Ic loadbalance ,
 .Ic broadcast ,
+.Ic failover ,
+.Ic lacp ,
+.Ic loadbalance ,
+.Ic none ,
 and
-.Ic none .
+.Ic roundrobin
+(the default).
 The protocols determine which ports are used for outgoing traffic
 and whether a specific port accepts incoming traffic.
 The interface link state is used to validate if the port is active or
 not.
 .Bl -tag -width loadbalance
-.It Ic roundrobin
-Distributes outgoing traffic through all active ports
-and accepts incoming traffic from any active port.
-A round-robin scheduler is used to aggregate the traffic.
+.It Ic broadcast
+Sends frames to all ports of the trunk and receives frames on any
+port of the trunk.
 .It Ic failover
 Sends and receives traffic only through the master port.
 If the master port becomes unavailable,
 the next active port is used.
 The first interface added is the master port;
 any interfaces added after that are used as failover devices.
+.It Ic lacp
+Uses the IEEE 802.3ad Link Aggregation Control Protocol (LACP)
+and the Marker Protocol
+to increase link speed and provide redundancy.
+LACP trunk groups are composed of ports of the same speed,
+set to full-duplex operation.
 .It Ic loadbalance
 Distributes outgoing traffic through all active ports
 and accepts incoming traffic from any active port.
 A hash of the protocol header is used to maintain packet ordering.
 The hash includes the Ethernet source and destination address, and, if
 available, the VLAN tag, and the IP source and destination address.
-.It Ic broadcast
-Sends frames to all ports of the trunk and receives frames on any
-port of the trunk.
 .It Ic none
 This protocol is intended to do nothing: it disables any traffic without
 disabling the
 .Nm
 interface itself.
+.It Ic roundrobin
+Distributes outgoing traffic through all active ports
+and accepts incoming traffic from any active port.
+A round-robin scheduler is used to aggregate the traffic.
 .El
 .Pp
 The configuration can be done at runtime or by setting up a
@@ -124,13 +131,22 @@ driver was written by
 .An Reyk Floeter Aq reyk@openbsd.org .
 .Sh CAVEATS
 The trunk protocols
-.Ic roundrobin
-and
 .Ic loadbalance
-require a switch which supports IEEE 802.3ad link aggregation
-for multicast/broadcast packets.
-Otherwise protocols
+and
+.Ic roundrobin
+require a switch which supports IEEE 802.3ad link aggregation;
+otherwise protocols
 such as
 .Xr inet6 4
 duplicate address detection (DAD)
 cannot properly deal with duplicate packets.
+The trunk protocol
+.Ic lacp
+requires a switch which supports
+the IEEE 802.3ad Link Aggregation Control Protocol (LACP)
+to work at all.
+.Pp
+There is no way to configure LACP administrative variables, including
+system and port priorities.
+The current implementation always performs active-mode LACP and uses
+0x8000 as system and port priorities.
