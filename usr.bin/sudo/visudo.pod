@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: visudo.pod,v 1.54 2008/11/09 14:13:13 millert Exp $
+$Sudo: visudo.pod,v 1.55 2008/11/15 18:34:01 millert Exp $
 =pod
 
 =head1 NAME
@@ -44,7 +44,7 @@ your system, as determined by the I<configure> script.  Normally,
 B<visudo> does not honor the C<VISUAL> or C<EDITOR> environment
 variables unless they contain an editor in the aforementioned editors
 list.  However, if B<visudo> is configured with the I<--with-enveditor>
-flag or the I<env_editor> C<Default> variable is set in I<sudoers>,
+option or the I<env_editor> C<Default> variable is set in I<sudoers>,
 B<visudo> will use any the editor defines by C<VISUAL> or C<EDITOR>.
 Note that this can be a security hole since it allows the user to
 execute any program they wish simply by setting C<VISUAL> or C<EDITOR>.
@@ -89,7 +89,7 @@ is the specified I<sudoers> file with ".tmp" appended to it.
 
 Enable B<quiet> mode.  In this mode details about syntax errors
 are not printed.  This option is only useful when combined with
-the B<-c> flag.
+the B<-c> option.
 
 =item -s
 

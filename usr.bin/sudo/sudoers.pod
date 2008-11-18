@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.152 2008/11/09 14:13:13 millert Exp $
+$Sudo: sudoers.pod,v 1.153 2008/11/15 18:34:01 millert Exp $
 =pod
 
 =head1 NAME
@@ -192,7 +192,7 @@ in the C<Cmnd> must match exactly those given by the user on the command line
 (or match the wildcards if there are any).  Note that the following
 characters must be escaped with a '\' if they are used in command
 arguments: ',', ':', '=', '\'.  The special command C<"sudoedit">
-is used to permit a user to run B<sudo> with the B<-e> flag (or
+is used to permit a user to run B<sudo> with the B<-e> option (or
 as B<sudoedit>).  It may take command line arguments just as
 a normal command does.
 
@@ -267,12 +267,12 @@ A C<Runas_Spec> determines the user and/or the group that a command
 may be run as.  A fully-specified C<Runas_Spec> consists of two
 C<Runas_List>s (as defined above) separated by a colon (':') and
 enclosed in a set of parentheses.  The first C<Runas_List> indicates
-which users the command may be run as via B<sudo>'s B<-u> flag.
+which users the command may be run as via B<sudo>'s B<-u> option.
 The second defines a list of groups that can be specified via
-B<sudo>'s B<-g> flag.  If both C<Runas_List>s are specified, the
+B<sudo>'s B<-g> option.  If both C<Runas_List>s are specified, the
 command may be run with any combination of users and groups listed
 in their respective C<Runas_List>s.  If only the first is specified,
-the command may be run as any user in the list but no B<-g> flag
+the command may be run as any user in the list but no B<-g> option
 may be specified.  If the first C<Runas_List> is empty but the
 second is specified, the command may be run as the invoking user
 with the group set to any listed in the C<Runas_List>.  If no
@@ -504,7 +504,7 @@ B<Flags>:
 
 If set, B<sudo> will set the C<HOME> environment variable to the home
 directory of the target user (which is root unless the B<-u> option is used).
-This effectively means that the B<-H> flag is always implied.
+This effectively means that the B<-H> option is always implied.
 This flag is I<off> by default.
 
 =item authenticate
@@ -689,16 +689,16 @@ password of the invoking user.  This flag is I<off> by default.
 
 =item set_home
 
-If set and B<sudo> is invoked with the B<-s> flag the C<HOME>
+If set and B<sudo> is invoked with the B<-s> option the C<HOME>
 environment variable will be set to the home directory of the target
 user (which is root unless the B<-u> option is used).  This effectively
-makes the B<-s> flag imply B<-H>.  This flag is I<off> by default.
+makes the B<-s> option imply B<-H>.  This flag is I<off> by default.
 
 =item set_logname
 
 Normally, B<sudo> will set the C<LOGNAME>, C<USER> and C<USERNAME>
 environment variables to the name of the target user (usually root
-unless the B<-u> flag is given).  However, since some programs
+unless the B<-u> option is given).  However, since some programs
 (including the RCS revision control system) use C<LOGNAME> to
 determine the real identity of the user, it may be desirable to
 change this behavior.  This can be done by negating the set_logname
@@ -718,7 +718,7 @@ by default.
 =item shell_noargs
 
 If set and B<sudo> is invoked with no arguments it acts as if the
-B<-s> flag had been given.  That is, it runs a shell as root (the
+B<-s> option had been given.  That is, it runs a shell as root (the
 shell is determined by the C<SHELL> environment variable if it is
 set, falling back on the shell listed in the invoking user's
 /etc/passwd entry if not).  This flag is I<off> by default.
@@ -737,9 +737,9 @@ function.  This flag is I<off> by default.
 =item targetpw
 
 If set, B<sudo> will prompt for the password of the user specified by
-the B<-u> flag (defaults to C<root>) instead of the password of the
+the B<-u> option (defaults to C<root>) instead of the password of the
 invoking user.  Note that this precludes the use of a uid not listed
-in the passwd database as an argument to the B<-u> flag.
+in the passwd database as an argument to the B<-u> option.
 This flag is I<off> by default.
 
 =item tty_tickets
@@ -895,7 +895,7 @@ The default value is C<@passprompt@>.
 
 =item runas_default
 
-The default user to run commands as if the B<-u> flag is not specified
+The default user to run commands as if the B<-u> option is not specified
 on the command line.  This defaults to C<@runas_default@>.
 Note that if I<runas_default> is set it B<must> occur before
 any C<Runas_Alias> specifications.
@@ -990,7 +990,7 @@ By default, B<sudo> uses a built-in lecture.
 =item listpw
 
 This option controls when a password will be required when a
-user runs B<sudo> with the B<-l> flag.  It has the following possible values:
+user runs B<sudo> with the B<-l> option.  It has the following possible values:
 
 =over 8
 
@@ -1001,7 +1001,7 @@ the C<NOPASSWD> flag set to avoid entering a password.
 
 =item always
 
-The user must always enter a password to use the B<-l> flag.
+The user must always enter a password to use the B<-l> option.
 
 =item any
 
@@ -1010,7 +1010,7 @@ must have the C<NOPASSWD> flag set to avoid entering a password.
 
 =item never
 
-The user need never enter a password to use the B<-l> flag.
+The user need never enter a password to use the B<-l> option.
 
 =back
 
@@ -1063,7 +1063,7 @@ disable syslog logging).  Defaults to C<@logfac@>.
 =item verifypw
 
 This option controls when a password will be required when a user runs
-B<sudo> with the B<-v> flag.  It has the following possible values:
+B<sudo> with the B<-v> option.  It has the following possible values:
 
 =over 8
 
@@ -1074,7 +1074,7 @@ the C<NOPASSWD> flag set to avoid entering a password.
 
 =item always
 
-The user must always enter a password to use the B<-v> flag.
+The user must always enter a password to use the B<-v> option.
 
 =item any
 
@@ -1083,7 +1083,7 @@ must have the C<NOPASSWD> flag set to avoid entering a password.
 
 =item never
 
-The user need never enter a password to use the B<-v> flag.
+The user need never enter a password to use the B<-v> option.
 
 =back
 
@@ -1297,7 +1297,7 @@ The user B<fred> can run commands as any user in the I<DB> C<Runas_Alias>
  john		ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
 
 On the I<ALPHA> machines, user B<john> may su to anyone except root
-but he is not allowed to give L<su(1)> any flags.
+but he is not allowed to specify any options to the L<su(1)> command.
 
  jen		ALL, !SERVERS = ALL
 

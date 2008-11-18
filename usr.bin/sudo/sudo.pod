@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.119 2008/11/09 14:13:12 millert Exp $
+$Sudo: sudo.pod,v 1.120 2008/11/15 18:34:01 millert Exp $
 =pod
 
 =head1 NAME
@@ -67,17 +67,17 @@ When invoked as B<sudoedit>, the B<-e> option (described below),
 is implied.
 
 B<sudo> determines who is an authorized user by consulting the file
-F<@sysconfdir@/sudoers>.  By giving B<sudo> the B<-v> flag, a user
-can update the time stamp without running a I<command>. The password
-prompt itself will also time out if the user's password is not
-entered within C<@password_timeout@> minutes (unless overridden via
-I<sudoers>).
+F<@sysconfdir@/sudoers>.  By running B<sudo> with the B<-v> option,
+a user can update the time stamp without running a I<command>. The
+password prompt itself will also time out if the user's password
+is not entered within C<@password_timeout@> minutes (unless overridden
+via I<sudoers>).
 
 If a user who is not listed in the I<sudoers> file tries to run a
 command via B<sudo>, mail is sent to the proper authorities, as
 defined at configure time or in the I<sudoers> file (defaults to
 C<@mailto@>).  Note that the mail will not be sent if an unauthorized
-user tries to run sudo with the B<-l> or B<-v> flags.  This allows
+user tries to run sudo with the B<-l> or B<-v> option.  This allows
 users to determine for themselves whether or not they are allowed
 to use B<sudo>.
 
@@ -85,7 +85,7 @@ If B<sudo> is run by root and the C<SUDO_USER> environment variable
 is set, B<sudo> will use this value to determine who the actual
 user is.  This can be used by a user to log commands through sudo
 even when a root shell has been invoked.  It also allows the B<-e>
-flag to remain useful even when being run via a sudo-run script or
+option to remain useful even when being run via a sudo-run script or
 program.  Note however, that the sudoers lookup is still done for
 root, not the user specified by C<SUDO_USER>.
 
@@ -255,7 +255,7 @@ user specified by the B<-U> option) on the current host.  If a
 I<command> is specified and is permitted by I<sudoers>, the
 fully-qualified path to the command is displayed along with any
 command line arguments.  If I<command> is specified but not allowed,
-B<sudo> will exit with a return value of 1.  If the B<-l> flag is
+B<sudo> will exit with a status value of 1.  If the B<-l> option is
 specified with an B<l> argument (i.e. B<-ll>), or if B<-l>
 is specified multiple times, a longer list format is used.
 
@@ -361,8 +361,8 @@ a command.
 
 =item --
 
-The B<--> flag indicates that B<sudo> should stop processing command
-line arguments.  It is most useful in conjunction with the B<-s> flag.
+The B<--> option indicates that B<sudo> should stop processing command
+line arguments.  It is most useful in conjunction with the B<-s> option.
 
 =back
 
@@ -377,8 +377,8 @@ that would overwise be forbidden.  See L<sudoers(5)> for more information.
 
 =head1 RETURN VALUES
 
-Upon successful execution of a program, the return value from B<sudo>
-will simply be the return value of the program that was executed.
+Upon successful execution of a program, the exit status from B<sudo>
+will simply be the exit status of the program that was executed.
 
 Otherwise, B<sudo> quits with an exit value of 1 if there is a
 configuration/permission problem or if B<sudo> cannot execute the
