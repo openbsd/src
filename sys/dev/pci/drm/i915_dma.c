@@ -804,8 +804,8 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 int i915_driver_load(struct drm_device *dev, unsigned long flags)
 {
 	struct drm_i915_private *dev_priv;
-	unsigned long base, size;
-	int ret = 0, mmio_bar = IS_I9XX(dev) ? 0 : 1;
+	struct vga_pci_bar	*bar;
+	int			 ret;
 
 	dev_priv = drm_calloc(1, sizeof(drm_i915_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
@@ -814,12 +814,18 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev->dev_private = (void *)dev_priv;
 
 	/* Add register map (needed for suspend/resume) */
-	base = drm_get_resource_start(dev, mmio_bar);
-	size = drm_get_resource_len(dev, mmio_bar);
+	bar = vga_pci_bar_info(dev->vga_softc, (IS_I9XX(dev) ? 0 : 1));
+	if (bar == NULL) {
+		printf(": can't get BAR info\n");
+		return (EINVAL);
+	}
 
-	dev_priv->regs = vga_pci_bar_map(dev->vga_softc, base, size, 0);
-	if (dev_priv->regs == NULL)
+	dev_priv->regs = vga_pci_bar_map(dev->vga_softc,
+	    bar->addr, bar->size, 0);
+	if (dev_priv->regs == NULL) {
+		printf(": can't map mmio space\n");
 		return (ENOMEM);
+	}
 
 	/* Init HWS */
 	if (!I915_NEED_GFX_HWS(dev)) {
