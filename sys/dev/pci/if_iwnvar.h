@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.5 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.6 2008/11/19 18:52:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -246,7 +246,7 @@ struct iwn_softc {
 	struct iwn_calib_state	calib;
 
 	struct iwn_fw_info	fw;
-	struct iwn_calib_info	calibcmd[3];
+	struct iwn_calib_info	calibcmd[4];
 	uint32_t		errptr;
 
 	struct iwn_rx_stat	last_rx_stat;

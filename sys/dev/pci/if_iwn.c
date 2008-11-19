@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.34 2008/11/16 09:52:31 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.35 2008/11/19 18:52:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1737,11 +1737,14 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	case IWN5000_PHY_CALIB_LO:
 		idx = 0;
 		break;
-	case IWN5000_PHY_CALIB_LO_TX_IQ:
+	case IWN5000_PHY_CALIB_TX_IQ:
 		idx = 1;
 		break;
-	case IWN5000_PHY_CALIB_LO_TX_IQ_PERD:
+	case IWN5000_PHY_CALIB_TX_IQ_PERD:
 		idx = 2;
+		break;
+	case IWN5000_PHY_CALIB_BASE_BAND:
+		idx = 3;
 		break;
 	default:
 		/* Ignore other results. */
@@ -4247,7 +4250,7 @@ iwn5000_send_calibration(struct iwn_softc *sc)
 {
 	int idx, error;
 
-	for (idx = 0; idx < 3; idx++) {
+	for (idx = 0; idx < 4; idx++) {
 		if (sc->calibcmd[idx].buf == NULL)
 			continue;	/* No results available. */
 		DPRINTF(("send calibration result idx=%d len=%d\n",
@@ -4282,6 +4285,9 @@ iwn4965_post_alive(struct iwn_softc *sc)
 
 	/* Set physical address of TX scheduler rings (1KB aligned.) */
 	iwn_prph_write(sc, IWN4965_SCHED_DRAM_ADDR, sc->sched_dma.paddr >> 10);
+
+	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
+
 	/* Disable chain mode for all our 16 queues. */
 	iwn_prph_write(sc, IWN4965_SCHED_QCHAIN_SEL, 0);
 
@@ -4333,6 +4339,9 @@ iwn5000_post_alive(struct iwn_softc *sc)
 
 	/* Set physical address of TX scheduler rings (1KB aligned.) */
 	iwn_prph_write(sc, IWN5000_SCHED_DRAM_ADDR, sc->sched_dma.paddr >> 10);
+
+	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
+
 	/* Enable chain mode for all our 20 queues. */
 	iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xfffff);
 	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);

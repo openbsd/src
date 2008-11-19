@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.15 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.16 2008/11/19 18:52:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -87,6 +87,7 @@
 #define IWN_FH_RX_STATUS		0x1c44
 #define IWN_FH_TX_CONFIG(qid)		(0x1d00 + (qid) * 32)
 #define IWN_FH_TXBUF_STATUS(qid)	(0x1d08 + (qid) * 32)
+#define IWN_FH_TX_CHICKEN		0x1e98
 #define IWN_FH_TX_STATUS		0x1eb0
 
 /*
@@ -241,6 +242,9 @@
 #define IWN_FH_TXBUF_STATUS_TBNUM(x)	((x) << 20)
 #define IWN_FH_TXBUF_STATUS_TBIDX(x)	((x) << 12)
 #define IWN_FH_TXBUF_STATUS_TFBD_VALID	3
+
+/* Possible flags for register IWN_FH_TX_CHICKEN. */
+#define IWN_FH_TX_CHICKEN_SCHED_RETRY	(1 << 1)
 
 /* Possible flags for register IWN_FH_TX_STATUS. */
 #define IWN_FH_TX_STATUS_IDLE(chnl)					\
@@ -820,9 +824,10 @@ struct iwn_phy_calib {
 	uint8_t	code;
 #define IWN4965_PHY_CALIB_DIFF_GAIN		 7
 #define IWN5000_PHY_CALIB_LO			 9
-#define IWN5000_PHY_CALIB_LO_TX_IQ		11
+#define IWN5000_PHY_CALIB_TX_IQ			11
 #define IWN5000_PHY_CALIB_CRYSTAL		15
-#define IWN5000_PHY_CALIB_LO_TX_IQ_PERD		17
+#define IWN5000_PHY_CALIB_BASE_BAND		16
+#define IWN5000_PHY_CALIB_TX_IQ_PERD		17
 #define IWN5000_PHY_CALIB_RESET_NOISE_GAIN	18
 #define IWN5000_PHY_CALIB_NOISE_GAIN		19
 
