@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.82 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.83 2008/11/19 08:17:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1998,7 +1998,6 @@ xl_init(void *xsc)
 	CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
 
 	/* Set the TX start threshold for best performance. */
-	sc->xl_tx_thresh = XL_MIN_FRAMELEN;
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_SET_START|sc->xl_tx_thresh);
 
 	/*
@@ -2569,6 +2568,9 @@ xl_attach(struct xl_softc *sc)
 		sc->xl_type = XL_TYPE_905B;
 	else
 		sc->xl_type = XL_TYPE_90X;
+
+	/* Set the TX start threshold for best performance. */
+	sc->xl_tx_thresh = XL_MIN_FRAMELEN;
 
 	timeout_set(&sc->xl_stsup_tmo, xl_stats_update, sc);
 
