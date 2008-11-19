@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.20 2008/11/05 03:20:35 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.21 2008/11/19 03:44:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -474,6 +474,7 @@
 
 #define CORB_NID_ROOT		0
 #define HDA_MAX_CHANNELS	16
+#define AZ_MAX_SENSE_PINS	8
 
 /* memory-mapped types */
 typedef struct {
@@ -556,6 +557,7 @@ typedef struct {
 #define MI_TARGET_SPDIF		0x107
 #define MI_TARGET_SPDIF_CC	0x108
 #define MI_TARGET_EAPD		0x109
+#define AZ_TARGET_PINSENSE	0xf00
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
@@ -615,6 +617,9 @@ typedef struct codec_t {
 	int nformats;
 	struct audio_encoding* encs;
 	int nencs;
+
+	nid_t sense_pins[AZ_MAX_SENSE_PINS];
+	int nsense_pins;
 
 	uint32_t *extra;
 	u_int rate;
