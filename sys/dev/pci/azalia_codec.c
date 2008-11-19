@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.66 2008/11/19 03:44:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.67 2008/11/19 21:49:44 naddy Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1898,7 +1898,7 @@ azalia_alc880_init_dacgroup(codec_t *this)
 		 {1, {0x06}}}};	/* digital */
 	static const convgroupset_t adcs = {
 		-1, 2,
-		{{2, {0x08, 0x09}}, /* analog 4ch */
+		{{3, {0x07, 0x08, 0x09}}, /* analog 6ch */
 		 {1, {0x0a}}}};	/* digital */
 
 	this->dacs = dacs;
@@ -1915,9 +1915,8 @@ azalia_alc882_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 2,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		{{5, {0x02, 0x03, 0x04, 0x05, 0x25}}, /* analog 10ch */
 		 {1, {0x06}}}};	/* digital */
-		/* don't support for 0x25 dac */
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{3, {0x07, 0x08, 0x09}}, /* analog 6ch */
@@ -1938,9 +1937,8 @@ azalia_alc883_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 2,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		{{5, {0x02, 0x03, 0x04, 0x05, 0x25}}, /* analog 10ch */
 		 {1, {0x06}}}}; /* digital */
-
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{2, {0x08, 0x09}}, /* analog 4ch */
@@ -1960,9 +1958,8 @@ azalia_alc885_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 2,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		{{5, {0x02, 0x03, 0x04, 0x05, 0x25}}, /* analog 10ch */
 		 {1, {0x06}}}};	/* digital */
-		/* don't support for 0x25 dac */
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{3, {0x07, 0x08, 0x09}},	/* analog 6ch */
@@ -1982,9 +1979,8 @@ azalia_alc888_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 2,
-		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		{{5, {0x02, 0x03, 0x04, 0x05, 0x25}}, /* analog 10ch */
 		 {1, {0x06}}}};	/* digital */
-		/* don't support for 0x25 dac */
 		/* ALC888S has another SPDIF-out 0x10 */
 	static const convgroupset_t adcs = {
 		-1, 2,
