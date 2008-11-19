@@ -926,6 +926,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/isp_inline.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/isp_library.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/isp_openbsd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/isp_stds.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/isp_target.ph
