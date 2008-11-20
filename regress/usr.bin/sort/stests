@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.2 2001/02/04 21:29:31 ericj Exp $
+#	$OpenBSD: stests,v 1.3 2008/11/20 10:18:40 otto Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -55,7 +55,7 @@ if sort -T. </dev/null 2>/dev/null; then
 
 export TEST	# major sequence number of test
 
-trap "rm -f in in1 out xx -k xsort linecount fields; exit" 0 1 2 13 15
+trap "rm -f -- -k in in1 out xx -k xsort linecount fields; exit" 0 1 2 13 15
 
 # xsort testno options
 # Sort file "in" with specified options.
@@ -684,6 +684,7 @@ sort -- -k </dev/null >xx || echo ${TEST}A argument failed
 cmp xx -k || echo ${TEST}A comparison failed
 
 sort - -c </dev/null 2>/dev/null && echo ${TEST}B failed
+rm -- -k
 
 #---------------------------------------------------------------
 TEST=30; echo $TEST	# missing newline
@@ -943,3 +944,22 @@ BEGIN {
 { print $1 " " line; if (idx++ > 200) exit 0 }' > in
 ln -sf in out
 xsort "B" -f
+rm -f in out 
+#---------------------------------------------------------------
+TEST=41; echo "$TEST"
+
+# sort okay at reps=87381, broken at 87382
+# on 64-bit platforms, it's already broken at 87382/2
+
+awk '
+BEGIN {
+	reps=87382
+	i=0
+	while (i++ < reps) {
+		print "lo0" > "in"
+		print "ce0" > "in"
+		print "ce1" > "in"
+	}
+
+}'
+xsort A -u
