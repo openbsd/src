@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.12 2008/07/24 09:40:16 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.13 2008/11/20 23:21:37 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -36,12 +36,15 @@
 
 /*
  * copysign(x,y),
+ * copysignf(x,y),
  * logb(x),
+ * logbf(x),
  * scalbn(x,N),
  * finite(x),
  * remainder(x,y),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
  * Revised by K.C. Ng on 4/9/85.
+ * Float versions by M.V. on 11/19/08.
  */
 
 /*
@@ -59,6 +62,20 @@ ENTRY(copysign, R2)
 Lz:	ret
 
 /*
+ * float
+ * copysignf(float x, float y)
+ */
+
+ENTRY(copysignf, R2)
+	movl	4(ap),r0		# load x into r0
+	bicw3	$0x807f,r0,r2		# mask off the exponent of x
+	beql	Fz			# if zero or reserved op then return x
+	bicw3	$0x7fff,8(ap),r2	# copy the sign bit of y into r2
+	bicw2	$0x8000,r0		# replace x by |x|
+	bisw2	r2,r0			# copy the sign bit of y to x
+Fz:	ret
+
+/*
  * double
  * logb(double x)
  */
@@ -73,6 +90,23 @@ ENTRY(logb, 0)
 Ln:	movq	4(ap),r0		# r0:1 = x (zero or reserved op)
 	bneq	1f			# simply return if reserved op
 	movq 	$0x0000fe00ffffcfff,r0  # -2147483647.0
+1:	ret
+
+/*
+ * float
+ * logbf(float x)
+ */
+
+ENTRY(logbf, 0)
+	bicl3	$0xffff807f,4(ap),r0	# mask off the exponent of x
+	beql    Fn
+	ashl	$-7,r0,r0		# get the bias exponent
+	subl2	$129,r0			# get the unbias exponent
+	cvtlf	r0,r0			# return the answer in float
+	ret
+Fn:	movl	4(ap),r0		# r0:1 = x (zero or reserved op)
+	bneq	1f			# simply return if reserved op
+	movl 	$0x0000d000,r0		# -2147483647.0
 1:	ret
 
 /*
