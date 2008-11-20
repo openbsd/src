@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.45 2008/11/17 09:40:09 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.46 2008/11/20 10:10:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -447,38 +447,32 @@ main(int argc, char **argv)
 			mode |= MODE_REC;
 	}
 
-	if (!u_flag && !l_flag) {
-		/*
-		 * Calculate "best" device parameters. Iterate over all
-		 * inputs and outputs and find the maximum sample rate
-		 * and channel number.
-		 */
-		aparams_init(&dipar, NCHAN_MAX - 1, 0, RATE_MAX);
-		aparams_init(&dopar, NCHAN_MAX - 1, 0, RATE_MIN);
-		SLIST_FOREACH(fa, &ifiles, entry) {
-			if (dopar.cmin > fa->ipar.cmin)
-				dopar.cmin = fa->ipar.cmin;
-			if (dopar.cmax < fa->ipar.cmax)
-				dopar.cmax = fa->ipar.cmax;
-			if (dopar.rate < fa->ipar.rate)
-				dopar.rate = fa->ipar.rate;
-		}
-		SLIST_FOREACH(fa, &ofiles, entry) {
-			if (dipar.cmin > fa->opar.cmin)
-				dipar.cmin = fa->opar.cmin;
-			if (dipar.cmax < fa->opar.cmax)
-				dipar.cmax = fa->opar.cmax;
-			if (dipar.rate > fa->opar.rate)
-				dipar.rate = fa->opar.rate;
-		}
-	}
-
 	/*
 	 * if there are no sockets paths provided use the default
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
 		    MIDI_MAXCTL, HDR_RAW, XRUN_IGNORE, DEFAULT_SOCKET);
+	}
+
+	if (!u_flag) {
+		/*
+		 * Calculate "best" device parameters. Iterate over all
+		 * inputs and outputs and find the maximum sample rate
+		 * and channel number.
+		 */
+		aparams_init(&dipar, NCHAN_MAX - 1, 0, RATE_MIN);
+		aparams_init(&dopar, NCHAN_MAX - 1, 0, RATE_MIN);
+		SLIST_FOREACH(fa, &ifiles, entry) {
+			aparams_grow(&dopar, &fa->ipar);
+		}
+		SLIST_FOREACH(fa, &ofiles, entry) {
+			aparams_grow(&dipar, &fa->opar);
+		}
+		SLIST_FOREACH(fa, &sfiles, entry) {
+			aparams_grow(&dopar, &fa->ipar);
+			aparams_grow(&dipar, &fa->opar);
+		}
 	}
 
 	quit_flag = 0;

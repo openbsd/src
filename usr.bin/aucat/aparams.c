@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.4 2008/11/10 23:25:37 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.5 2008/11/20 10:10:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -243,6 +243,21 @@ aparams_subset(struct aparams *subset, struct aparams *set)
 }
 
 /*
+ * grow channels range and sample rate of ``set'' in order ``subset'' to
+ * become an actual subset of it.
+ */
+void
+aparams_grow(struct aparams *set, struct aparams *subset)
+{
+	if (set->cmin > subset->cmin)
+		set->cmin = subset->cmin;
+	if (set->cmax < subset->cmax)
+		set->cmax = subset->cmax;
+	if (set->rate < subset->rate)
+		set->rate = subset->rate;
+}
+
+/*
  * Return true if rates are the same
  */
 int
@@ -271,4 +286,3 @@ aparams_copyenc(struct aparams *dst, struct aparams *src)
 	dst->bits = src->bits;
 	dst->bps = src->bps;
 }
-
