@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.109 2008/11/20 09:01:24 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.110 2008/11/20 09:05:15 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -154,7 +154,7 @@ static int	malloc_active;		/* status of malloc */
 static int	malloc_freeprot;	/* mprotect free pages PROT_NONE? */
 static int	malloc_hint;		/* call madvice on free pages?  */
 static int	malloc_junk;		/* junk fill? */
-static int	malloc_move;		/* move allocations to end of page? */
+static int	malloc_move = 1;	/* move allocations to end of page? */
 static int	malloc_realloc;		/* always realloc? */
 static int	malloc_xmalloc;		/* xmalloc behaviour? */
 static int	malloc_zero;		/* zero fill? */
