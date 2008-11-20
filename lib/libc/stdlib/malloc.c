@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.108 2008/11/13 07:38:45 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.109 2008/11/20 09:01:24 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -70,7 +70,7 @@
  * This is the extra headroom we allow. Set to zero to be the most
  * strict.
  */
-#define MALLOC_LEEWAY		16
+#define MALLOC_LEEWAY		0
 
 #define PAGEROUND(x)  (((x) + (MALLOC_PAGEMASK)) & ~MALLOC_PAGEMASK)
 
