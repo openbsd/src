@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.19 2007/08/21 20:29:25 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.20 2008/11/20 12:14:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.19 2007/08/21 20:29:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.20 2008/11/20 12:14:16 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,15 +119,15 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 			keypos = keylist;
 			nelem = 0;
 			crec = (RECHEADER *) buffer;
-			while((c = get(binno, infiles, nfiles, crec, bufend,
+			while ((c = get(binno, infiles, nfiles, crec, bufend,
 			    ftbl)) == 0) {
 				*keypos++ = crec->data + depth;
 				if (++nelem == MAXNUM) {
 					c = BUFFEND;
 					break;
 				}
-				crec =(RECHEADER *)	((char *) crec +
-				SALIGN(crec->length) + sizeof(TRECHEADER));
+				crec = (RECHEADER *)((char *)crec +
+				    SALIGN(crec->length) + sizeof(TRECHEADER));
 			}
 			/*
 			 * buffer was too small for data, allocate
@@ -274,17 +274,17 @@ onepass(u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 	bpmax = bin + 256;
 	tp = top, hp = histo;
 	for (bp = bin; bp < bpmax; bp++) {
-		*tp++ = *(bp+1) = *bp + (c = *hp);
+		*tp++ = *(bp + 1) = *bp + (c = *hp);
 		*hp++ = 0;
 		if (c <= 1)
 			continue;
 	}
-	for (aj = a; aj < an; *aj = r, aj = bin[c+1]) 
-		for(r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)			
+	for (aj = a; aj < an; *aj = r, aj = bin[c + 1]) 
+		for (r = *aj; aj < (ak = --top[c = tr[r[depth]]]); )
 			swap(*ak, r, t);
 
 	for (ak = a, c = 0; c < 256; c++) {
-		an = bin[c+1];
+		an = bin[c + 1];
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
