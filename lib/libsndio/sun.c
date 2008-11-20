@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.5 2008/11/11 19:39:35 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.6 2008/11/20 08:32:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -612,6 +612,7 @@ sun_stop(struct sio_hdl *sh)
 int
 sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
+#define NRETRIES 8
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	struct audio_info aui;
 	unsigned i, infr, ibpf, onfr, obpf;
@@ -665,11 +666,15 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	obpf = (hdl->sa.mode & SIO_PLAY) ?
 	    aui.play.channels * aui.play.precision / 8 : 1;
 
+#ifdef DEBUG
+	if (hdl->sa.debug)
+		fprintf(stderr, "sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
+#endif
 	/*
 	 * try to set parameters until the device accepts
 	 * a common block size for play and record
 	 */
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < NRETRIES; i++) {
 		AUDIO_INITINFO(&aui);
 		aui.hiwat = (bufsz + round - 1) / round;
 		aui.lowat = aui.hiwat;
@@ -689,21 +694,38 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		}
 		infr = aui.record.block_size / ibpf;
 		onfr = aui.play.block_size / obpf;
+#ifdef DEBUG
+		if (hdl->sa.debug) {
+			fprintf(stderr,
+			    "sun_setpar: %i: trying rond = %u -> (%u, %u)\n",
+			    i, round, infr, onfr);
+		}
+#endif
 
 		/*
 		 * if half-duplex or both block sizes match, we're done
 		 */
-		if (hdl->sa.mode != (SIO_REC | SIO_PLAY) || infr == onfr)
+		if (hdl->sa.mode != (SIO_REC | SIO_PLAY) || infr == onfr) {
+#ifdef DEBUG
+			if (hdl->sa.debug)
+				fprintf(stderr, "sun_setpar: blocksize ok\n");
+#endif
 			return 1;
+		}
 
 		/*
-		 * retry with the smaller returned value
+		 * half of the retries, retry with the smaller value,
+		 * then with the larger returned value
 		 */
-		round = infr < onfr ? infr : onfr;
+		if (i < NRETRIES / 2)
+			round = infr < onfr ? infr : onfr;
+		else
+			round = infr < onfr ? onfr : infr;
 	}
 	fprintf(stderr, "sun_setpar: couldn't find a working blocksize\n");
 	hdl->sa.eof = 1;
 	return 0;
+#undef NRETRIES
 }
 
 int
