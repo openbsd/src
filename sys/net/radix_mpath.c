@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.11 2008/05/07 05:14:21 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.12 2008/11/21 18:01:30 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ rn_mpath_capable(struct radix_node_head *rnh)
 }
 
 struct radix_node *
-rn_mpath_next(struct radix_node *rn)
+rn_mpath_next(struct radix_node *rn, int all)
 {
 	struct radix_node	*next;
 	struct rtentry		*rt = (struct rtentry *)rn;
@@ -73,8 +73,8 @@ rn_mpath_next(struct radix_node *rn)
 	if (!rn->rn_dupedkey)
 		return NULL;
 	next = rn->rn_dupedkey;
-	if (rn->rn_mask == next->rn_mask &&
-	    rt->rt_priority == ((struct rtentry *)next)->rt_priority)
+	if (rn->rn_mask == next->rn_mask && (all ||
+	    rt->rt_priority == ((struct rtentry *)next)->rt_priority))
 		return next;
 	else
 		return NULL;
@@ -112,7 +112,7 @@ rn_mpath_count(struct radix_node *rn)
 	int i;
 
 	i = 1;
-	while ((rn = rn_mpath_next(rn)) != NULL)
+	while ((rn = rn_mpath_next(rn, 0)) != NULL)
 		i++;
 	return i;
 }
@@ -122,27 +122,26 @@ rt_mpath_matchgate(struct rtentry *rt, struct sockaddr *gate, u_int8_t prio)
 {
 	struct radix_node *rn = (struct radix_node *)rt;
 
-	rn = rn_mpath_prio((struct radix_node *)rt, prio);
-	rt = (struct rtentry *)rn;
-	/* check if returned node has same priority */
-	if (prio != RTP_ANY && rt->rt_priority != prio)
-		return NULL;
-
-	/*
-	 * if gate is set it must be compared, if not set the route must be
-	 * a non-multipath one.
-	 */
-	if (!gate && !rn_mpath_next(rn))
-		return rt;
-	if (!gate)
-		return NULL;
-
 	do {
 		rt = (struct rtentry *)rn;
+
+		/* first find routes with correct priority */
+		if (prio != RTP_ANY &&
+		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
+			continue;
+		/*
+		 * if gate is set it must be compared, if not set the route
+		 * must be a non-multipath one.
+		 */
+		if (!gate && !rn_mpath_next(rn, 0))
+			return rt;
+		if (!gate)
+			return NULL;
+
 		if (rt->rt_gateway->sa_len == gate->sa_len &&
 		    !memcmp(rt->rt_gateway, gate, gate->sa_len))
 			break;
-	} while ((rn = rn_mpath_next(rn)) != NULL);
+	} while ((rn = rn_mpath_next(rn, 1)) != NULL);
 
 	return (struct rtentry *)rn;
 }
@@ -247,7 +246,7 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 
 		/* all key/mask/gateway are the same.  conflicting entry. */
 		return EEXIST;
-	} while ((rn1 = rn_mpath_next(rn1)) != NULL);
+	} while ((rn1 = rn_mpath_next(rn1, 0)) != NULL);
 
  different:
 	return 0;

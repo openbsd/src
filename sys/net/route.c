@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.97 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.98 2008/11/21 18:01:30 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -771,7 +771,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (rn_mpath_capable(rnh)) {
 			if ((rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
-			    rn_mpath_next(rn) == NULL)
+			    rn_mpath_next(rn, 0) == NULL)
 				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
 		}
 #endif
@@ -887,7 +887,7 @@ makeroute:
 		    (rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
 		    (rn = rn_mpath_prio(rn, prio)) != NULL) {
-			if (rn_mpath_next(rn) == NULL)
+			if (rn_mpath_next(rn, 0) == NULL)
 				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
 			else
 				((struct rtentry *)rn)->rt_flags |= RTF_MPATH;
