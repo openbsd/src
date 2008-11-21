@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.8 2008/10/21 20:20:00 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.9 2008/11/21 10:39:32 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -48,6 +48,7 @@ void	 srt_update_ds_forwarders(struct src_node *, struct rt_node *,
 void	 srt_current_forwarder(struct src_node *, struct rt_node *,
 	    struct iface *, u_int32_t, u_int32_t);
 
+/* Downstrean neighbor */
 void		 srt_add_ds(struct src_node *, struct rt_node *, u_int32_t,
 		    u_int32_t);
 struct ds	*srt_find_ds(struct src_node *, u_int32_t);
@@ -56,6 +57,10 @@ void		 srt_delete_ds(struct src_node *, struct rt_node *, struct ds *,
 struct src_node	*srt_find_src(struct in_addr, struct in_addr);
 struct src_node	*srt_add_src(struct in_addr, struct in_addr, u_int32_t);
 void		 srt_delete_src(struct src_node *);
+
+/* Flash updates */
+void		 flash_update(struct rt_node *); 
+void		 flash_update_ds(struct rt_node *); 
 
 RB_HEAD(rt_tree, rt_node)	 rt;
 RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
@@ -337,13 +342,16 @@ srt_check_route(struct route_report *rr, int connected)
 				srt_delete_ds(src, rn, ds_nbr, iface);
 
 		if (adj_metric > rn->cost) {
-			if (nbr_ip == nbr_report)
+			if (nbr_ip == nbr_report) {
 				rn->cost = adj_metric;
+				flash_update_ds(rn);
+			}
 		} else if (adj_metric < rn->cost) {
 			rn->cost = adj_metric;
 			if (nbr_ip != nbr_report) {
 				rn->nexthop.s_addr = nbr_report;
 				srt_set_upstream(rn, ifindex);
+				flash_update(rn);
 			}
 			/* We have a new best route to source, update the
 			 * designated forwarders on downstream interfaces to
@@ -353,6 +361,7 @@ srt_check_route(struct route_report *rr, int connected)
 			if (nbr_report < nbr_ip) {
 				rn->nexthop.s_addr = nbr_report;
 				srt_set_upstream(rn, ifindex);
+				flash_update(rn);
 			}
 		}
 		/* Update forwarder of current interface if necessary and
@@ -550,4 +559,26 @@ srt_delete_src(struct src_node *src_node)
 
 	RB_REMOVE(src_head, &rdeconf->src_list, src_node);
 	free(src_node);
+}
+
+void
+flash_update(struct rt_node *rn) {
+	struct route_report	rr;
+
+	rr.net = rn->prefix;
+	rr.mask.s_addr = ntohl(prefixlen2mask(rn->prefixlen));
+	rr.metric = rn->cost;
+	rr.ifindex = rn->ifindex;
+	rde_imsg_compose_dvmrpe(IMSG_FLASH_UPDATE, 0, 0, &rr, sizeof(rr));
+}
+
+void
+flash_update_ds(struct rt_node *rn) {
+	struct route_report	rr;
+
+	rr.net = rn->prefix;
+	rr.mask.s_addr = ntohl(prefixlen2mask(rn->prefixlen));
+	rr.metric = rn->cost;
+	rr.ifindex = rn->ifindex;
+	rde_imsg_compose_dvmrpe(IMSG_FLASH_UPDATE_DS, 0, 0, &rr, sizeof(rr));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.2 2006/06/01 21:47:27 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.3 2008/11/21 10:39:32 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,6 +348,42 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			rr_list_send(&nbr->rr_list, NULL, nbr);
+			break;
+		case IMSG_FLASH_UPDATE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(*rr))
+				fatalx("invalid size of RDE request");
+
+			if ((rr = calloc(1, sizeof(*rr))) == NULL)
+				fatal("dvmrpe_dispatch_rde");
+
+			memcpy(rr, imsg.data, sizeof(*rr));
+
+			LIST_FOREACH(iface, &deconf->iface_list, entry) {
+				if (!if_nbr_list_empty(iface)) {
+					rr_list_add(&iface->rr_list, rr);
+					rr_list_send(&iface->rr_list, iface,
+					    NULL);
+				}
+			}
+			break;
+		case IMSG_FLASH_UPDATE_DS:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(*rr))
+				fatalx("invalid size of RDE request");
+
+			if ((rr = calloc(1, sizeof(*rr))) == NULL)
+				fatal("dvmrpe_dispatch_rde");
+
+			memcpy(rr, imsg.data, sizeof(*rr));
+
+			LIST_FOREACH(iface, &deconf->iface_list, entry) {
+				if (iface->ifindex == rr->ifindex)
+					continue;
+				if (!if_nbr_list_empty(iface)) {
+					rr_list_add(&iface->rr_list, rr);
+					rr_list_send(&iface->rr_list, iface,
+					    NULL);
+				}
+			}
 			break;
 		default:
 			log_debug("dvmrpe_dispatch_rde: error handling imsg %d",
