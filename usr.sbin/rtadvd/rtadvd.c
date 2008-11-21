@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.37 2008/11/03 07:02:44 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.38 2008/11/21 23:44:04 tedu Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -157,6 +157,8 @@ main(argc, argv)
 	struct passwd *pw;
 
 	log_init(1);		/* log to stderr until daemonized */
+
+	closefrom(3);
 
 	/* get command line options and arguments */
 #define OPTIONS "c:dM:Rs"
