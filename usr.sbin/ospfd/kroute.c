@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.60 2008/09/29 09:54:30 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.61 2008/11/21 17:10:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -190,9 +190,6 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 				/* stale route */
 				if (kr_delete_fib(kn) == -1)
 					log_warnx("kr_delete_fib failed");
-			log_debug("kr_update_fib: before: %s%s",
-			    inet_ntoa(kn->r.nexthop),
-			    i == krcount ? " (deleted)" : "");
 		}
 	}
 
@@ -211,10 +208,6 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 				    kroute[i].nexthop.s_addr)
 					break;
 			}
-
-			log_debug("kr_update_fib: after : %s%s",
-			     inet_ntoa(kroute[i].nexthop),
-			     kn == NULL ? " (added)" : "");
 
 			if (kn != NULL)
 				/* nexthop already present, skip it */
