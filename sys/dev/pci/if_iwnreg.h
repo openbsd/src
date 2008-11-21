@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.16 2008/11/19 18:52:53 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.17 2008/11/21 17:17:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -833,26 +833,27 @@ struct iwn_phy_calib {
 
 	uint8_t	group;
 	uint8_t	ngroups;
-	uint8_t	valid;
+	uint8_t	isvalid;
 } __packed;
 
 struct iwn5000_phy_calib_crystal {
 	uint8_t	code;
 	uint8_t	group;
 	uint8_t	ngroups;
-	uint8_t	valid;
+	uint8_t	isvalid;
 
-	uint8_t	data[2];
+	uint8_t	cap_pin[2];
+	uint8_t	reserved[2];
 } __packed;
 
 struct iwn_phy_calib_gain {
 	uint8_t	code;
 	uint8_t	group;
 	uint8_t	ngroups;
-	uint8_t	valid;
+	uint8_t	isvalid;
 
 	int8_t	gain[3];
-	uint8_t	reserved2;
+	uint8_t	reserved;
 } __packed;
 
 /* Structure for command IWN_CMD_SPECTRUM_MEASUREMENT. */

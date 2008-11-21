@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.35 2008/11/19 18:52:53 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.36 2008/11/21 17:17:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -3294,6 +3294,8 @@ iwn5000_init_gains(struct iwn_softc *sc)
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.code = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
+	cmd.ngroups = 1;
+	cmd.isvalid = 1;
 	DPRINTF(("setting initial differential gains\n"));
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 1);
 }
@@ -3339,6 +3341,8 @@ iwn5000_set_gains(struct iwn_softc *sc)
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.code = IWN5000_PHY_CALIB_NOISE_GAIN;
+	cmd.ngroups = 1;
+	cmd.isvalid = 1;
 	/* Set differential gains for antennas B and C. */
 	for (i = 1; i < 3; i++) {
 		if (sc->antmsk & (1 << i)) {
@@ -3346,13 +3350,13 @@ iwn5000_set_gains(struct iwn_softc *sc)
 			delta = ((int32_t)calib->noise[0] -
 			    (int32_t)calib->noise[i]) / 30;
 			/* Limit to [-4.5dB,+4.5dB]. */
-			cmd.gain[i] = MIN(abs(delta), 3);
+			cmd.gain[i - 1] = MIN(abs(delta), 3);
 			if (delta < 0)
-				cmd.gain[i] |= 1 << 2;	/* sign bit */
+				cmd.gain[i - 1] |= 1 << 2;	/* sign bit */
 		}
 	}
-	DPRINTF(("setting differential gains Ant A/B/C: %x/%x/%x (%x)\n",
-	    cmd.gain[0], cmd.gain[1], cmd.gain[2], sc->antmsk));
+	DPRINTF(("setting differential gains Ant B/C: %x/%x (%x)\n",
+	    cmd.gain[0], cmd.gain[1], sc->antmsk));
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 1);
 }
 
@@ -3947,6 +3951,10 @@ iwn_run(struct iwn_softc *sc)
 	return 0;
 }
 
+/*
+ * We support CCMP hardware encryption/decryption of unicast frames only.
+ * HW support for TKIP really sucks.  We should leave TKIP die anyway.
+ */
 int
 iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
@@ -3957,11 +3965,6 @@ iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct iwn_node_info node;
 	uint16_t kflags;
 
-	/*
-	 * We support CCMP hardware encryption/decryption of unicast frames
-	 * only.  Hardware support for TKIP really sucks and it is not worth
-	 * implementing.  We should leave TKIP die anyway.
-	 */
 	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
 	    k->k_cipher != IEEE80211_CIPHER_CCMP)
 		return ieee80211_set_key(ic, ni, k);
@@ -4387,10 +4390,12 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		/* Perform crystal calibration. */
 		memset(&cmd, 0, sizeof cmd);
 		cmd.code = IWN5000_PHY_CALIB_CRYSTAL;
-		cmd.data[0] = letoh32(sc->eeprom_crystal) & 0xff;
-		cmd.data[1] = (letoh32(sc->eeprom_crystal) >> 16) & 0xff;
+		cmd.ngroups = 1;
+		cmd.isvalid = 1;
+		cmd.cap_pin[0] = letoh32(sc->eeprom_crystal) & 0xff;
+		cmd.cap_pin[1] = (letoh32(sc->eeprom_crystal) >> 16) & 0xff;
 		DPRINTF(("sending crystal calibration %d, %d\n",
-		    cmd.data[0], cmd.data[1]));
+		    cmd.cap_pin[0], cmd.cap_pin[1]));
 		error = iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
 		if (error != 0) {
 			printf("%s: crystal calibration failed\n",
