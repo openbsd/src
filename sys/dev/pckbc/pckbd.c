@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.15 2008/07/16 20:00:45 miod Exp $ */
+/* $OpenBSD: pckbd.c,v 1.16 2008/11/21 14:38:03 robert Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -79,12 +79,13 @@
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdreg.h>
 #include <dev/pckbc/pckbdvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include <dev/pckbc/wskbdmap_mfii.h>
 
 struct pckbd_internal {
 	int t_isconsole;
