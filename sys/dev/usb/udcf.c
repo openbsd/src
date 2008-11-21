@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.44 2008/07/10 13:48:54 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.45 2008/11/21 11:36:19 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -145,16 +145,16 @@ int udcf_nc_init_hw(struct udcf_softc *);
 int udcf_ft232r_signal(struct udcf_softc *);
 int udcf_ft232r_init_hw(struct udcf_softc *);
 
-struct cfdriver udcf_cd = { 
-	NULL, "udcf", DV_DULL 
-}; 
+struct cfdriver udcf_cd = {
+	NULL, "udcf", DV_DULL
+};
 
-const struct cfattach udcf_ca = { 
-	sizeof(struct udcf_softc), 
-	udcf_match, 
-	udcf_attach, 
-	udcf_detach, 
-	udcf_activate, 
+const struct cfattach udcf_ca = {
+	sizeof(struct udcf_softc),
+	udcf_match,
+	udcf_attach,
+	udcf_detach,
+	udcf_activate
 };
 
 static const struct usb_devno udcf_devs[] = {
