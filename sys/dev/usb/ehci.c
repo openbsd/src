@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.95 2008/10/30 08:11:13 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.96 2008/11/21 17:08:42 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -567,6 +567,10 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 
 	intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
+	if (intrs == 0xffffffff) {
+		sc->sc_dying = 1;
+		return (0);
+	}
 	if (!intrs)
 		return (0);
 

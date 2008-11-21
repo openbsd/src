@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.88 2008/09/10 14:01:23 blambert Exp $ */
+/*	$OpenBSD: ohci.c,v 1.89 2008/11/21 17:08:42 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1128,6 +1128,11 @@ ohci_intr1(ohci_softc_t *sc)
 			done = letoh32(sc->sc_hcca->hcca_done_head);
 			sc->sc_hcca->hcca_done_head = 0;
 		}
+	}
+
+	if (intrs == 0xffffffff) {
+		sc->sc_dying = 1;
+		return (0);
 	}
 
 	if (!intrs)

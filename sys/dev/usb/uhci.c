@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.68 2008/06/29 10:04:15 yuo Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.69 2008/11/21 17:08:42 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1161,6 +1161,10 @@ uhci_intr1(uhci_softc_t *sc)
 	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
 	if (status == 0)	/* The interrupt was not for us. */
 		return (0);
+	if (status == 0xffffffff) {
+		sc->sc_dying = 1;
+		return (0);
+	}
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 15) {
