@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.60 2008/11/12 16:01:09 sthen Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.61 2008/11/21 17:55:02 robert Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1058,7 +1058,7 @@ void
 uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_feature_unit *d = iot[id].d.fu;
-	uByte *ctls = d->bmaControls;
+	uByte *ctls = (uByte *)d->bmaControls;
 	int ctlsize = d->bControlSize;
 	int nchan = (d->bLength - 7) / ctlsize;
 	u_int fumask, mmask, cmask;
