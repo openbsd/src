@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.102 2008/01/23 08:11:32 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.103 2008/11/21 17:41:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -352,7 +352,8 @@ void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int,
 		    u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *, u_int32_t);
-void		 prefix_updateall(struct rde_aspath *, enum nexthop_state);
+void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,
+		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
 void		 prefix_network_clean(struct rde_peer *, time_t);
 

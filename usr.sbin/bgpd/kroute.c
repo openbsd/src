@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.160 2008/05/09 12:45:25 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.161 2008/11/21 17:41:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,6 +118,7 @@ int			 kif_validate(struct kif *);
 int			 kroute_validate(struct kroute *);
 int			 kroute6_validate(struct kroute6 *);
 void			 knexthop_validate(struct knexthop_node *);
+void			 knexthop_track(void *);
 struct kroute_node	*kroute_match(in_addr_t, int);
 struct kroute6_node	*kroute6_match(struct in6_addr *, int);
 void			 kroute_detach_nexthop(struct knexthop_node *);
@@ -1374,6 +1375,46 @@ knexthop_validate(struct knexthop_node *kn)
 	}
 }
 
+void
+knexthop_track(void *krn)
+{
+	struct knexthop_node	*kn;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
+	struct kroute_nexthop	 n;
+
+	RB_FOREACH(kn, knexthop_tree, &knt)
+		if (kn->kroute == krn) {
+			bzero(&n, sizeof(n));
+			memcpy(&n.nexthop, &kn->nexthop, sizeof(n.nexthop));
+
+			switch (kn->nexthop.af) {
+			case AF_INET:
+				kr = krn;
+				n.valid = 1;
+				n.connected = kr->r.flags & F_CONNECTED;
+				if ((n.gateway.v4.s_addr =
+				    kr->r.nexthop.s_addr) != 0)
+					n.gateway.af = AF_INET;
+				memcpy(&n.kr.kr4, &kr->r, sizeof(n.kr.kr4));
+				break;
+			case AF_INET6:
+				kr6 = krn;
+				n.valid = 1;
+				n.connected = kr6->r.flags & F_CONNECTED;
+				if (memcmp(&kr6->r.nexthop, &in6addr_any,
+				    sizeof(struct in6_addr)) != 0) {
+					n.gateway.af = AF_INET6;
+					memcpy(&n.gateway.v6, &kr6->r.nexthop,
+					    sizeof(struct in6_addr));
+				}
+				memcpy(&n.kr.kr6, &kr6->r, sizeof(n.kr.kr6));
+				break;
+			}
+			send_nexthop_update(&n);
+		}
+}
+
 struct kroute_node *
 kroute_match(in_addr_t key, int matchall)
 {
@@ -1455,7 +1496,6 @@ kroute_detach_nexthop(struct knexthop_node *kn)
 
 	kn->kroute = NULL;
 }
-
 
 /*
  * misc helpers
@@ -2409,6 +2449,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 					kr_redistribute(IMSG_NETWORK_ADD,
 					    &kr->r);
 				}
+				if (kr->r.flags & F_NEXTHOP)
+					knexthop_track(kr);
 			}
 		} else if (rtm->rtm_type == RTM_CHANGE) {
 			log_warnx("change req for %s/%u: not in table",
@@ -2461,6 +2503,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 					kr_redistribute6(IMSG_NETWORK_ADD,
 					    &kr6->r);
 				}
+				if (kr6->r.flags & F_NEXTHOP)
+					knexthop_track(kr6);
 			}
 		} else if (rtm->rtm_type == RTM_CHANGE) {
 			log_warnx("change req for %s/%u: not in table",

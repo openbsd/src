@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.96 2007/06/01 04:17:30 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.97 2008/11/21 17:41:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -616,7 +616,8 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer, u_int32_t flags)
 }
 
 void
-prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
+prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
+    enum nexthop_state oldstate)
 {
 	struct prefix	*p;
 
@@ -631,6 +632,18 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 		 */
 		if (!(p->flags & F_LOCAL))
 			continue;
+
+		if (oldstate == state && state == NEXTHOP_REACH) {
+			/*
+			 * The state of the nexthop did not change. The only
+			 * thing that may have changed is the true_nexthop
+			 * or other internal infos. This will not change
+			 * the routing decision so shortcut here.
+			 */
+			if (p == p->prefix->active)
+				rde_send_kroute(p, NULL);
+			continue;
+		}
 
 		/* redo the route decision */
 		LIST_REMOVE(p, prefix_l);
@@ -817,6 +830,7 @@ nexthop_update(struct kroute_nexthop *msg)
 {
 	struct nexthop		*nh;
 	struct rde_aspath	*asp;
+	enum nexthop_state	 oldstate;
 
 	nh = nexthop_lookup(&msg->nexthop);
 	if (nh == NULL) {
@@ -825,14 +839,15 @@ nexthop_update(struct kroute_nexthop *msg)
 		return;
 	}
 
+	if (nexthop_delete(nh))
+		/* nexthop no longer used */
+		return;
+
+	oldstate = nh->state;
 	if (msg->valid)
 		nh->state = NEXTHOP_REACH;
 	else
 		nh->state = NEXTHOP_UNREACH;
-
-	if (nexthop_delete(nh))
-		/* nexthop no longer used */
-		return;
 
 	if (msg->connected) {
 		nh->flags |= NEXTHOP_CONNECTED;
@@ -866,7 +881,7 @@ nexthop_update(struct kroute_nexthop *msg)
 		return;
 
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
-		prefix_updateall(asp, nh->state);
+		prefix_updateall(asp, nh->state, oldstate);
 	}
 }
 
