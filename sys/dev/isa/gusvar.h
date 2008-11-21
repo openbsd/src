@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.6 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.7 2008/11/21 16:06:36 robert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -385,9 +385,6 @@ extern const int gus_irq_map[];
 extern const int gus_drq_map[];
 extern const int gus_base_addrs[];
 extern const int gus_addrs;
-extern const int gus_max_frequency[];
-
-extern const ushort gus_log_volumes[];
 
 #define SELECT_GUS_REG(iot,ioh1,x) bus_space_write_1(iot,ioh1,GUS_REG_SELECT,x)
 #define ADDR_HIGH(x) (unsigned int) ((x >> 7L) & 0x1fffL)
@@ -409,7 +406,6 @@ extern const ushort gus_log_volumes[];
 #define splgus splaudio
 
 extern struct audio_hw_if gus_hw_if;
-extern struct audio_hw_if gusmax_hw_if;
 extern struct audio_device gus_device;
 
 #define FLIP_REV	5		/* This rev has flipped mixer chans */
