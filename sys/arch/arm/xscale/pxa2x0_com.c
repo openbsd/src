@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.8 2008/05/15 22:17:08 brad Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.9 2008/11/22 17:05:35 drahn Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -158,8 +158,10 @@ pxauart_power(int why, void *arg)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
+#ifdef __zaurus__
 		if (sc->enabled && ISSET(sc->sc_hwflags, COM_HW_SIR))
 			scoop_set_irled(0);
+#endif
 		break;
 	case PWR_RESUME:
 		if (sc->enabled) {
@@ -168,7 +170,9 @@ pxauart_power(int why, void *arg)
 			bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 
 			if (ISSET(sc->sc_hwflags, COM_HW_SIR)) {
+#ifdef __zaurus__
 				scoop_set_irled(1);
+#endif
 				bus_space_write_1(iot, ioh, com_isr,
 				    ISR_RECV);
 			}
