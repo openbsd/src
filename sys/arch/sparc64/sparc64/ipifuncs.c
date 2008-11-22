@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.11 2008/07/21 10:07:14 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.12 2008/11/22 18:12:32 art Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -233,11 +233,9 @@ smp_tlb_flush_ctx(int ctx)
 }
 
 void
-smp_signotify(struct proc *p)
+cpu_unidle(struct cpu_info *ci)
 {
-	struct cpu_info *ci = p->p_cpu;
-
-	if (db_active)
+	if (ci == curcpu() || db_active || ((ci->ci_flags & CPUF_RUNNING) == 0))
 		return;
 
 	if (CPU_ISSUN4V)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.50 2008/10/15 23:23:50 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.51 2008/11/22 18:12:32 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -751,8 +751,13 @@ void
 need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
-	if (ci->ci_curproc != NULL)
+
+	/* There's a risk we'll be called before the idle threads start */
+	if (ci->ci_curproc) {
 		aston(ci->ci_curproc);
+		if (ci != curcpu())
+			cpu_unidle(ci);
+	}
 }
 
 /*

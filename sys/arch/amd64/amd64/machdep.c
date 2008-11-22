@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2008/10/09 19:04:18 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 2008/11/22 18:12:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -726,11 +726,17 @@ void
 signotify(struct proc *p)
 {
 	aston(p);
-#ifdef MULTIPROCESSOR
-	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
-		x86_send_ipi(p->p_cpu, X86_IPI_NOP);
-#endif
+	cpu_unidle(p->p_cpu);
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		x86_send_ipi(ci, X86_IPI_NOP);
+}
+#endif
 
 int	waittime = -1;
 struct pcb dumppcb;
@@ -1743,8 +1749,13 @@ void
 need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
-	if ((ci)->ci_curproc != NULL)
-		aston((ci)->ci_curproc);
+
+	/* There's a risk we'll be called before the idle threads start */
+	if (ci->ci_curproc) {
+		aston(ci->ci_curproc);
+		if (ci != curcpu())
+			cpu_unidle(ci);
+	}
 }
 
 /*

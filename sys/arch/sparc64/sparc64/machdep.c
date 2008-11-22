@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2008/06/27 17:22:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.113 2008/11/22 18:12:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -669,11 +669,7 @@ void
 signotify(struct proc *p)
 {
 	aston(p);
-#ifdef MULTIPROCESSOR
-	/* Send IPI if necessary. */
-	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
-		smp_signotify(p);
-#endif
+	cpu_unidle(p->p_cpu);
 }
 
 int	waittime = -1;

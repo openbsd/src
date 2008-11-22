@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.438 2008/11/14 20:43:54 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.439 2008/11/22 18:12:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2340,11 +2340,17 @@ void
 signotify(struct proc *p)
 {
 	aston(p);
-#ifdef MULTIPROCESSOR
-	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
-		i386_send_ipi(p->p_cpu, I386_IPI_NOP);
-#endif
+	cpu_unidle(p->p_cpu);
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		i386_send_ipi(ci, I386_IPI_NOP);
+}
+#endif
 
 int	waittime = -1;
 struct pcb dumppcb;
@@ -3243,16 +3249,14 @@ cpu_initclocks(void)
 void
 need_resched(struct cpu_info *ci)
 {
-	struct proc *p;
-
 	ci->ci_want_resched = 1;
 
-	/*
-	 * Need to catch the curproc in case it's cleared just
-	 * between the check and the aston().
-	 */
-	if ((p = ci->ci_curproc) != NULL)
-		aston(p);
+	/* There's a risk we'll be called before the idle threads start */
+	if (ci->ci_curproc) {
+		aston(ci->ci_curproc);
+		if (ci != curcpu())
+			cpu_unidle(ci);
+	}
 }
 
 /* Allocate an IDT vector slot within the given range.
