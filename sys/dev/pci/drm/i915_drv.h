@@ -106,6 +106,7 @@ typedef struct drm_i915_private {
 	u_int32_t irq_mask_reg;
 	u_int32_t pipestat[2];
 
+	u_long flags;
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
 	struct mem_block *agp_heap;
@@ -201,12 +202,23 @@ typedef struct drm_i915_private {
 	u8 saveCR[37];
 } drm_i915_private_t;
 
-enum intel_chip_family {
-	CHIP_I8XX = 0x01,
-	CHIP_I9XX = 0x02,
-	CHIP_I915 = 0x04,
-	CHIP_I965 = 0x08,
-};
+/* chip type flags */
+#define CHIP_I830	0x0001
+#define CHIP_I845G	0x0002
+#define CHIP_I85X	0x0004
+#define CHIP_I865G	0x0008
+#define CHIP_I9XX	0x0010
+#define CHIP_I915G	0x0020
+#define CHIP_I915GM	0x0040
+#define CHIP_I945G	0x0080
+#define CHIP_I945GM	0x0100
+#define CHIP_I965	0x0200
+#define CHIP_I965GM	0x0400
+#define CHIP_G33	0x0800
+#define CHIP_GM45	0x1000
+#define CHIP_G4X	0x2000
+#define CHIP_M		0x4000
+#define CHIP_HWS	0x8000
 
 				/* i915_dma.c */
 extern void i915_kernel_lost_context(struct drm_device * dev);
@@ -1706,47 +1718,28 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 
 /* Chipset type macros */
 
-#define IS_I830(dev) ((dev)->pci_device == 0x3577)
-#define IS_845G(dev) ((dev)->pci_device == 0x2562)
-#define IS_I85X(dev) ((dev)->pci_device == 0x3582)
-#define IS_I855(dev) ((dev)->pci_device == 0x3582)
-#define IS_I865G(dev) ((dev)->pci_device == 0x2572)
+#define IS_I830(dev) ((dev_priv)->flags & CHIP_I830)
+#define IS_845G(dev) ((dev_priv)->flags & CHIP_I845G)
+#define IS_I85X(dev) ((dev_priv)->flags & CHIP_I85X)
+#define IS_I865G(dev) ((dev_priv)->flags & CHIP_I865G)
 
-#define IS_I915G(dev) ((dev)->pci_device == 0x2582 || (dev)->pci_device == 0x258a)
-#define IS_I915GM(dev) ((dev)->pci_device == 0x2592)
-#define IS_I945G(dev) ((dev)->pci_device == 0x2772)
-#define IS_I945GM(dev) ((dev)->pci_device == 0x27A2 ||\
-		        (dev)->pci_device == 0x27AE)
-#define IS_I965G(dev) ((dev)->pci_device == 0x2972 || \
-		       (dev)->pci_device == 0x2982 || \
-		       (dev)->pci_device == 0x2992 || \
-		       (dev)->pci_device == 0x29A2 || \
-		       (dev)->pci_device == 0x2A02 || \
-		       (dev)->pci_device == 0x2A12 || \
-		       (dev)->pci_device == 0x2A42 || \
-		       (dev)->pci_device == 0x2E02 || \
-		       (dev)->pci_device == 0x2E12 || \
-		       (dev)->pci_device == 0x2E22)
+#define IS_I915G(dev) ((dev_priv)->flags & CHIP_I915G)
+#define IS_I915GM(dev) ((dev_priv)->flags & CHIP_I915GM)
+#define IS_I945G(dev) ((dev)->flags & CHIP_I945G)
+#define IS_I945GM(dev) ((dev_priv)->flags & CHIP_I945GM)
+#define IS_I965G(dev) ((dev_priv)->flags & CHIP_I965)
+#define IS_I965GM(dev) ((dev_priv)->flags & CHIP_I965GM)
 
-#define IS_I965GM(dev) ((dev)->pci_device == 0x2A02)
+#define IS_GM45(dev) ((dev_priv)->flags & CHIP_GM45)
+#define IS_G4X(dev) ((dev_priv)->flags & CHIP_G4X)
 
-#define IS_GM45(dev) ((dev)->pci_device == 0x2A42)
+#define IS_G33(dev)    ((dev_priv)->flags & CHIP_G33)
 
-#define IS_G4X(dev) ((dev)->pci_device == 0x2E02 || \
-		     (dev)->pci_device == 0x2E12 || \
-		     (dev)->pci_device == 0x2E22)
+#define IS_I9XX(dev) ((dev_priv)->flags & CHIP_I9XX)
 
-#define IS_G33(dev)    ((dev)->pci_device == 0x29C2 ||	\
-			(dev)->pci_device == 0x29B2 ||	\
-			(dev)->pci_device == 0x29D2)
+#define IS_MOBILE(dev) (dev_priv->flags & CHIP_M)
 
-#define IS_I9XX(dev) (IS_I915G(dev) || IS_I915GM(dev) || IS_I945G(dev) || \
-		      IS_I945GM(dev) || IS_I965G(dev) || IS_G33(dev))
-
-#define IS_MOBILE(dev) (IS_I830(dev) || IS_I85X(dev) || IS_I915GM(dev) || \
-			IS_I945GM(dev) || IS_I965GM(dev) || IS_GM45(dev))
-
-#define I915_NEED_GFX_HWS(dev) (IS_G33(dev) || IS_GM45(dev) || IS_G4X(dev))
+#define I915_NEED_GFX_HWS(dev) (dev_priv->flags & CHIP_HWS)
 
 #define PRIMARY_RINGBUFFER_SIZE         (128*1024)
 

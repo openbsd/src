@@ -813,6 +813,8 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 
 	dev->dev_private = (void *)dev_priv;
 
+	dev_priv->flags = flags;
+
 	/* Add register map (needed for suspend/resume) */
 	bar = vga_pci_bar_info(dev->vga_softc, (IS_I9XX(dev) ? 0 : 1));
 	if (bar == NULL) {
