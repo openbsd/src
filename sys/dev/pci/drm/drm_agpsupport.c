@@ -58,13 +58,6 @@ drm_device_is_agp(struct drm_device *dev)
 }
 
 int
-drm_device_is_pcie(struct drm_device *dev)
-{
-	return (pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag,
-	    PCI_CAP_PCIEXPRESS, NULL, NULL));
-}
-
-int
 drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 {
 	struct agp_info	*kern;

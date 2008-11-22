@@ -117,8 +117,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
-	dev->pci_vendor = PCI_VENDOR(dev->pa.pa_id);
-	dev->pci_device = PCI_PRODUCT(dev->pa.pa_id);
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->drw_lock, IPL_NONE);

@@ -127,16 +127,15 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
-	int			 mmio_bar;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
-
-	mmio_bar = IS_I9XX(dev_priv) ? 0 : 1;
+	dev_priv->pci_device = PCI_PRODUCT(pa->pa_id);
 
 	/* Add register map (needed for suspend/resume) */
-	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, mmio_bar);
+	bar = vga_pci_bar_info((struct vga_pci_softc *)parent,
+	    IS_I9XX(dev_priv) ? 0 : 1);
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
 		return;

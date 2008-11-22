@@ -504,9 +504,6 @@ struct drm_device {
 
 	const struct drm_driver_info *driver;
 
-	u_int16_t pci_device;		/* PCI device id */
-	u_int16_t pci_vendor;		/* PCI vendor id */
-
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
 	struct vga_pci_softc *vga_softc;
@@ -664,7 +661,6 @@ void	drm_handle_vblank(struct drm_device *, int);
 
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(struct drm_device *);
-int	drm_device_is_pcie(struct drm_device *);
 struct drm_agp_head *drm_agp_init(void);
 void	drm_agp_takedown(struct drm_device *);
 int	drm_agp_acquire(struct drm_device *);

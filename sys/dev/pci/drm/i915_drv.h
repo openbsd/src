@@ -81,6 +81,9 @@ typedef struct drm_i915_private {
 	struct device		*drmdev;
 	bus_dma_tag_t		 dmat;
 
+	u_long			 flags;
+	u_int16_t		 pci_device;
+
 	struct vga_pci_bar	*regs;
 	drm_local_map_t *sarea;
 
@@ -109,7 +112,6 @@ typedef struct drm_i915_private {
 	u_int32_t irq_mask_reg;
 	u_int32_t pipestat[2];
 
-	u_long flags;
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
 	struct mem_block *agp_heap;
