@@ -250,7 +250,8 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 		align = map->size;
 		if ((align & (align - 1)) != 0)
 			align = PAGE_SIZE;
-		map->dmah = drm_pci_alloc(dev, map->size, align, 0xfffffffful);
+		map->dmah = drm_pci_alloc(dev->pa.pa_dmat, map->size, align,
+		    0xfffffffful);
 		if (map->dmah == NULL) {
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 			return (ENOMEM);
@@ -262,7 +263,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 			/* Prevent a 2nd X Server from creating a 2nd lock */
 			if (dev->lock.hw_lock != NULL) {
 				DRM_UNLOCK();
-				drm_pci_free(dev, map->dmah);
+				drm_pci_free(dev->pa.pa_dmat, map->dmah);
 				drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 				return (EBUSY);
 			}
@@ -348,7 +349,7 @@ drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
 		break;
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:
-		drm_pci_free(dev, map->dmah);
+		drm_pci_free(dev->pa.pa_dmat, map->dmah);
 		break;
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
@@ -594,8 +595,8 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 	page_count = 0;
 
 	while (entry->buf_count < count) {
-		drm_dma_handle_t *dmah = drm_pci_alloc(dev, size, alignment,
-		    0xfffffffful);
+		drm_dma_handle_t *dmah = drm_pci_alloc(dev->pa.pa_dmat, size,
+		    alignment, 0xfffffffful);
 		if (dmah == NULL) {
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;

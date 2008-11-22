@@ -28,7 +28,7 @@
  * memory block.
  */
 drm_dma_handle_t *
-drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
+drm_pci_alloc(bus_dma_tag_t dmat, size_t size, size_t align,
     dma_addr_t maxaddr)
 {
 	drm_dma_handle_t *dmah;
@@ -45,11 +45,11 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
 	if (dmah == NULL)
 		return NULL;
 
-	if (bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
+	if (bus_dmamap_create(dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->dmamap) != 0)
 		goto dmahfree;
 		
-	if (bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	if (bus_dmamem_alloc(dmat, size, align, 0,
 	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
 		DRM_ERROR("bus_dmamem_alloc(%zd, %zd) returned %d\n",
 		    size, align, ret);
@@ -61,13 +61,13 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
 		goto free;
 	}
 
-	if (bus_dmamem_map(dev->pa.pa_dmat, &dmah->seg, 1, size,
+	if (bus_dmamem_map(dmat, &dmah->seg, 1, size,
 	    (caddr_t*)&dmah->addr, BUS_DMA_NOWAIT) != 0) {
 		DRM_ERROR("bus_dmamem_map() failed %d\n", ret);
 		goto free;
 	}
 
-	if (bus_dmamap_load(dev->pa.pa_dmat, dmah->dmamap, dmah->addr, size,
+	if (bus_dmamap_load(dmat, dmah->dmamap, dmah->addr, size,
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
@@ -78,11 +78,11 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align,
 	return dmah;
 
 unmap:
-	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->addr, size);
+	bus_dmamem_unmap(dmat, dmah->addr, size);
 free:
-	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
+	bus_dmamem_free(dmat, &dmah->seg, 1);
 destroy:
-	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->dmamap);
+	bus_dmamap_destroy(dmat, dmah->dmamap);
 dmahfree:
 	drm_free(dmah, sizeof(*dmah), DRM_MEM_DMA);
 
@@ -94,15 +94,15 @@ dmahfree:
  * Free a DMA-accessible consistent memory block.
  */
 void
-drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
+drm_pci_free(bus_dma_tag_t dmat, drm_dma_handle_t *dmah)
 {
 	if (dmah == NULL)
 		return;
 
-	bus_dmamap_unload(dev->pa.pa_dmat, dmah->dmamap);
-	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->vaddr, dmah->size);
-	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
-	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->dmamap);
+	bus_dmamap_unload(dmat, dmah->dmamap);
+	bus_dmamem_unmap(dmat, dmah->vaddr, dmah->size);
+	bus_dmamem_free(dmat, &dmah->seg, 1);
+	bus_dmamap_destroy(dmat, dmah->dmamap);
 
 	drm_free(dmah, sizeof(*dmah), DRM_MEM_DMA);
 }

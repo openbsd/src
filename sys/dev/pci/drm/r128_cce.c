@@ -598,11 +598,11 @@ int r128_do_cleanup_cce(struct drm_device * dev)
 #if __OS_HAS_AGP
 		if (!dev_priv->is_pci) {
 			if (dev_priv->cce_ring != NULL)
-				drm_core_ioremapfree(dev_priv->cce_ring, dev);
+				drm_core_ioremapfree(dev_priv->cce_ring);
 			if (dev_priv->ring_rptr != NULL)
-				drm_core_ioremapfree(dev_priv->ring_rptr, dev);
+				drm_core_ioremapfree(dev_priv->ring_rptr);
 			if (dev->agp_buffer_map != NULL) {
-				drm_core_ioremapfree(dev->agp_buffer_map, dev);
+				drm_core_ioremapfree(dev->agp_buffer_map);
 				dev->agp_buffer_map = NULL;
 			}
 		} else

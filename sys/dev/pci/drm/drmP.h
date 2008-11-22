@@ -752,9 +752,9 @@ int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
 
 /* consistent PCI memory functions (drm_pci.c) */
-drm_dma_handle_t *drm_pci_alloc(struct drm_device *, size_t, size_t,
+drm_dma_handle_t *drm_pci_alloc(bus_dma_tag_t, size_t, size_t,
 		      dma_addr_t);
-void	drm_pci_free(struct drm_device *, drm_dma_handle_t *);
+void	drm_pci_free(bus_dma_tag_t, drm_dma_handle_t *);
 
 /* Inline replacements for DRM_IOREMAP macros */
 #define drm_core_ioremap_wc drm_core_ioremap
@@ -762,7 +762,7 @@ static __inline__ void drm_core_ioremap(struct drm_local_map *map, struct drm_de
 {
 	map->handle = drm_ioremap(dev, map);
 }
-static __inline__ void drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
+static __inline__ void drm_core_ioremapfree(struct drm_local_map *map)
 {
 	if ( map->handle && map->size )
 		drm_ioremapfree(map);

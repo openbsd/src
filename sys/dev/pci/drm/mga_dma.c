@@ -920,14 +920,14 @@ static int mga_do_cleanup_dma(struct drm_device *dev, int full_cleanup)
 
 		if ((dev_priv->warp != NULL)
 		    && (dev_priv->warp->type != _DRM_CONSISTENT))
-			drm_core_ioremapfree(dev_priv->warp, dev);
+			drm_core_ioremapfree(dev_priv->warp);
 
 		if ((dev_priv->primary != NULL)
 		    && (dev_priv->primary->type != _DRM_CONSISTENT))
-			drm_core_ioremapfree(dev_priv->primary, dev);
+			drm_core_ioremapfree(dev_priv->primary);
 
 		if (dev->agp_buffer_map != NULL)
-			drm_core_ioremapfree(dev->agp_buffer_map, dev);
+			drm_core_ioremapfree(dev->agp_buffer_map);
 
 		if (dev_priv->used_new_dma_init) {
 			if (dev_priv->agp_handle != 0) {

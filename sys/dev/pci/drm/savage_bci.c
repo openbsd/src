@@ -906,11 +906,11 @@ static int savage_do_cleanup_bci(struct drm_device *dev)
 	} else if (dev_priv->cmd_dma && dev_priv->cmd_dma->handle &&
 		   dev_priv->cmd_dma->type == _DRM_AGP &&
 		   dev_priv->dma_type == SAVAGE_DMA_AGP)
-		drm_core_ioremapfree(dev_priv->cmd_dma, dev);
+		drm_core_ioremapfree(dev_priv->cmd_dma);
 
 	if (dev_priv->dma_type == SAVAGE_DMA_AGP &&
 	    dev->agp_buffer_map && dev->agp_buffer_map->handle) {
-		drm_core_ioremapfree(dev->agp_buffer_map, dev);
+		drm_core_ioremapfree(dev->agp_buffer_map);
 		/* make sure the next instance (which may be running
 		 * in PCI mode) doesn't try to use an old
 		 * agp_buffer_map. */

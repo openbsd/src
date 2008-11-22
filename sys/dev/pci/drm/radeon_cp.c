@@ -1240,15 +1240,15 @@ static int radeon_do_cleanup_cp(struct drm_device * dev)
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		if (dev_priv->cp_ring != NULL) {
-			drm_core_ioremapfree(dev_priv->cp_ring, dev);
+			drm_core_ioremapfree(dev_priv->cp_ring);
 			dev_priv->cp_ring = NULL;
 		}
 		if (dev_priv->ring_rptr != NULL) {
-			drm_core_ioremapfree(dev_priv->ring_rptr, dev);
+			drm_core_ioremapfree(dev_priv->ring_rptr);
 			dev_priv->ring_rptr = NULL;
 		}
 		if (dev->agp_buffer_map != NULL) {
-			drm_core_ioremapfree(dev->agp_buffer_map, dev);
+			drm_core_ioremapfree(dev->agp_buffer_map);
 			dev->agp_buffer_map = NULL;
 		}
 	} else
@@ -1264,7 +1264,7 @@ static int radeon_do_cleanup_cp(struct drm_device * dev)
 
 		if (dev_priv->gart_info.gart_table_location == DRM_ATI_GART_FB)
 		{
-			drm_core_ioremapfree(&dev_priv->gart_info.mapping, dev);
+			drm_core_ioremapfree(&dev_priv->gart_info.mapping);
 			dev_priv->gart_info.addr = 0;
 		}
 	}
