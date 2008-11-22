@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: securid.c,v 1.17 2007/08/31 23:30:07 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: securid.c,v 1.18 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 union config_record configure;

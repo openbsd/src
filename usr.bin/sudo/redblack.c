@@ -18,6 +18,8 @@
  * Adapted from the following code written by Emin Martinian:
  * http://web.mit.edu/~emin/www/source_code/red_black_tree/index.html
  *
+ * Copyright (c) 2001 Emin Martinian
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that neither the name of Emin
  * Martinian nor the names of any contributors are be used to endorse or
@@ -56,7 +58,7 @@
 #include "redblack.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.8 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.10 2008/11/22 15:01:25 millert Exp $";
 #endif /* lint */
 
 static void rbrepair		__P((struct rbtree *, struct rbnode *));
@@ -367,59 +369,45 @@ rbdestroy(tree, destroy)
 }
 
 /*
- * Delete victim from tree and return its data pointer.
+ * Delete node 'z' from the tree and return its data pointer.
  */
-void *
-rbdelete(tree, victim)
-    struct rbtree *tree;
-    struct rbnode *victim;
+void *rbdelete(tree, z)
+    struct rbtree* tree;
+    struct rbnode* z;
 {
-    struct rbnode *pred, *succ;
-    void *data;
+    struct rbnode *x, *y;
+    void *data = z->data;
 
-    if (victim->left != rbnil(tree) && victim->right != rbnil(tree)) {
-	succ = rbsuccessor(tree, victim);
-	pred = succ->left == rbnil(tree) ? succ->right : succ->left;
-	if (succ->parent == rbroot(tree)) {
-	    pred->parent = rbroot(tree);
-	    rbfirst(tree) = pred;
-	} else {
-	    if (succ == succ->parent->left)
-		succ->parent->left = pred;
-	    else
-		succ->parent->right = pred;
-	}
-	if ((succ->color == black))
-	    rbrepair(tree, pred);
+    if (z->left == rbnil(tree) || z->right == rbnil(tree))
+	y = z;
+    else
+	y = rbsuccessor(tree, z);
+    x = (y->left == rbnil(tree)) ? y->right : y->left;
 
-	succ->left = victim->left;
-	succ->right = victim->right;
-	succ->parent = victim->parent;
-	succ->color = victim->color;
-	victim->left->parent = victim->right->parent = succ;
-	if (victim == victim->parent->left)
-	    victim->parent->left = succ;
-	else
-	    victim->parent->right = succ;
-	data = victim->data;
-	efree(victim);
+    if ((x->parent = y->parent) == rbroot(tree)) {
+	rbfirst(tree) = x;
     } else {
-	pred = victim->left == rbnil(tree) ? victim->right : victim->left;
-	if (victim->parent == rbroot(tree)) {
-	    pred->parent = rbroot(tree);
-	    rbfirst(tree) = pred;
-	} else {
-	    if (victim == victim->parent->left)
-		victim->parent->left = pred;
-	    else
-		victim->parent->right = pred;
-	}
-	if (victim->color == black)
-	    rbrepair(tree, pred);
-	data = victim->data;
-	efree(victim);
+	if (y == y->parent->left)
+	    y->parent->left = x;
+	else
+	    y->parent->right = x;
     }
-    return(data);
+    if (y->color == black)
+	rbrepair(tree, x);
+    if (y != z) {
+	y->left = z->left;
+	y->right = z->right;
+	y->parent = z->parent;
+	y->color = z->color;
+	z->left->parent = z->right->parent = y;
+	if (z == z->parent->left)
+	    z->parent->left = y; 
+	else
+	    z->parent->right = y;
+    }
+    free(z); 
+    
+    return (data);
 }
 
 /*
@@ -433,7 +421,7 @@ rbrepair(tree, node)
 {
     struct rbnode *sibling;
 
-    while (node->color == black && node != rbfirst(tree)) {
+    while (node->color == black) {
 	if (node == node->parent->left) {
 	    sibling = node->parent->right;
 	    if (sibling->color == red) {
@@ -456,7 +444,7 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->right->color = black;
 		rotate_left(tree, node->parent);
-		return;	/* XXX */
+		break;
 	    }
 	} else { /* if (node == node->parent->right) */
 	    sibling = node->parent->left;
@@ -480,9 +468,8 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->left->color = black;
 		rotate_right(tree, node->parent);
-		return; /* XXX */
+		break;
 	    }
 	}
     }
-    node->color = black;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +50,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: fwtk.c,v 1.27 2005/02/12 22:56:07 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: fwtk.c,v 1.29 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 int
@@ -95,7 +95,6 @@ fwtk_verify(pw, prompt, auth)
     char buf[SUDO_PASS_MAX + 12];	/* General prupose buffer */
     char resp[128];			/* Response from the server */
     int error;
-    extern int nil_pw;
 
     /* Send username to authentication server. */
     (void) snprintf(buf, sizeof(buf), "authorize %s 'sudo'", pw->pw_name);
@@ -127,10 +126,8 @@ restart:
 	return(AUTH_FATAL);
     }
     if (!pass) {			/* ^C or error */
-	nil_pw = 1;
-	return(AUTH_FAILURE);
-    } else if (*pass == '\0')		/* empty password */
-	nil_pw = 1;
+	return(AUTH_INTR);
+    }
 
     /* Send the user's response to the server */
     (void) snprintf(buf, sizeof(buf), "response '%s'", pass);

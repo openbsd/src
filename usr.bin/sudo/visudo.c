@@ -87,7 +87,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.221 2008/11/18 15:50:53 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.223 2008/11/22 15:12:26 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
@@ -150,6 +150,10 @@ main(argc, argv)
     struct sudoersfile *sp;
     char *args, *editor, *sudoers_path;
     int ch, checkonly, quiet, strict, oldperms;
+#if defined(SUDO_DEVEL) && defined(__OpenBSD__)
+    extern char *malloc_options;
+    malloc_options = "AFGJPR";
+#endif
 
     Argv = argv;
     if ((Argc = argc) < 1)
@@ -913,10 +917,11 @@ check_aliases(strict)
     int strict;
 {
     struct cmndspec *cs;
-    struct member *m;
+    struct member *m, *binding;
     struct privilege *priv;
     struct userspec *us;
-    int error = 0;
+    struct defaults *d;
+    int atype, error = 0;
 
     /* Forward check. */
     tq_foreach_fwd(&userspecs, us) {
@@ -985,6 +990,31 @@ check_aliases(strict)
 	    }
 	}
     }
+    tq_foreach_fwd(&defaults, d) {
+	switch (d->type) {
+	    case DEFAULTS_HOST:
+		atype = HOSTALIAS;
+		break;
+	    case DEFAULTS_USER:
+		atype = USERALIAS;
+		break;
+	    case DEFAULTS_RUNAS:
+		atype = RUNASALIAS;
+		break;
+	    case DEFAULTS_CMND:
+		atype = CMNDALIAS;
+		break;
+	    default:
+		continue; /* not an alias */
+	}
+	tq_foreach_fwd(&d->binding, binding) {
+	    for (m = binding; m != NULL; m = m->next) {
+		if (m->type == ALIAS)
+		    (void) alias_remove(m->name, atype);
+	    }
+	}
+    }
+
     /* If all aliases were referenced we will have an empty tree. */
     if (no_aliases())
 	return(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,7 +52,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: bsdauth.c,v 1.21 2008/03/30 21:36:51 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: bsdauth.c,v 1.23 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 extern char *login_style;		/* from sudo.c */
@@ -104,7 +104,6 @@ bsdauth_verify(pw, prompt, auth)
     int authok = 0;
     sigaction_t sa, osa;
     auth_session_t *as = (auth_session_t *) auth->data;
-    extern int nil_pw;
 
     /* save old signal handler */
     sigemptyset(&sa.sa_mask);
@@ -142,9 +141,6 @@ bsdauth_verify(pw, prompt, auth)
 	}
     }
 
-    if (!pass || *pass == '\0')		/* ^C or empty password */
-	nil_pw = 1;
-
     if (pass) {
 	authok = auth_userresponse(as, pass, 1);
 	zero_bytes(pass, strlen(pass));
@@ -155,6 +151,9 @@ bsdauth_verify(pw, prompt, auth)
 
     if (authok)
 	return(AUTH_SUCCESS);
+
+    if (!pass)
+	return(AUTH_INTR);
 
     if ((s = auth_getvalue(as, "errormsg")) != NULL)
 	log_error(NO_EXIT|NO_MAIL, "%s", s);

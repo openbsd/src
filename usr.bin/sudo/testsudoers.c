@@ -71,7 +71,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.127 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.128 2008/11/19 17:01:20 millert Exp $";
 #endif /* lint */
 
 
@@ -99,6 +99,13 @@ struct passwd *(*my_getpwuid) __P((uid_t)) = getpwuid;
 /* For getopt(3) */
 extern char *optarg;
 extern int optind;
+
+#if defined(SUDO_DEVEL) && defined(__OpenBSD__)
+extern char *malloc_options;
+#endif
+#ifdef YYDEBUG
+extern int yydebug;
+#endif
 
 int  print_alias __P((void *, void *));
 void dump_sudoers __P((void));
@@ -133,8 +140,11 @@ main(argc, argv)
     char *p, *grfile, *pwfile, *runas_group, *runas_user;
     char hbuf[MAXHOSTNAMELEN + 1];
     int ch, dflag, rval, matched;
-#ifdef	YYDEBUG
-    extern int yydebug;
+
+#if defined(SUDO_DEVEL) && defined(__OpenBSD__)
+    malloc_options = "AFGJPR";
+#endif
+#ifdef YYDEBUG
     yydebug = 1;
 #endif
 

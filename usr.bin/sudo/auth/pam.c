@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,12 +72,13 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.62 2008/02/22 20:19:34 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.64 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
 			  struct pam_response **, void *));
 static char *def_prompt;
+static int gotintr;
 
 #ifndef PAM_DATA_SILENT
 #define PAM_DATA_SILENT	0
@@ -162,6 +163,10 @@ pam_verify(pw, prompt, auth)
 	    }
 	    /* FALLTHROUGH */
 	case PAM_AUTH_ERR:
+	    if (gotintr) {
+		/* error or ^C from tgetpass() */
+		return(AUTH_INTR);
+	    }
 	case PAM_MAXTRIES:
 	case PAM_PERM_DENIED:
 	    return(AUTH_FAILURE);
@@ -251,7 +256,6 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     const char *prompt;
     char *pass;
     int n, flags, std_prompt;
-    extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
 	return(PAM_CONV_ERR);
@@ -286,14 +290,11 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		pass = tgetpass(prompt, def_passwd_timeout * 60, flags);
 		if (pass == NULL) {
 		    /* We got ^C instead of a password; abort quickly. */
-		    nil_pw = 1;
+		    gotintr = 1;
 		    goto err;
 		}
 		pr->resp = estrdup(pass);
-		if (*pr->resp == '\0')
-		    nil_pw = 1;		/* empty password */
-		else
-		    zero_bytes(pass, strlen(pass));
+		zero_bytes(pass, strlen(pass));
 		break;
 	    case PAM_TEXT_INFO:
 		if (pm->msg)

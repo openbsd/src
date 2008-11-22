@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: sudo_auth.h,v 1.23 2007/08/31 23:30:07 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.27 2008/11/18 12:54:51 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H
@@ -22,7 +22,8 @@
 /* Auth function return values.  */
 #define AUTH_SUCCESS	0
 #define AUTH_FAILURE	1
-#define AUTH_FATAL	2
+#define AUTH_INTR	2
+#define AUTH_FATAL	3
 
 typedef struct sudo_auth {
     short flags;		/* various flags, see below */
@@ -57,6 +58,7 @@ int sia_setup __P((struct passwd *pw, char **prompt, sudo_auth *auth));
 int sia_verify __P((struct passwd *pw, char *prompt, sudo_auth *auth));
 int sia_cleanup __P((struct passwd *pw, sudo_auth *auth));
 int aixauth_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
+int aixauth_cleanup __P((struct passwd *pw, sudo_auth *auth));
 int bsdauth_init __P((struct passwd *pw, char **prompt, sudo_auth *auth));
 int bsdauth_verify __P((struct passwd *pw, char *prompt, sudo_auth *auth));
 int bsdauth_cleanup __P((struct passwd *pw, sudo_auth *auth));
@@ -99,7 +101,7 @@ int securid_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
 #elif defined(HAVE_AIXAUTH)
 #  define AUTH_STANDALONE \
 	AUTH_ENTRY(0, "aixauth", \
-	    NULL, NULL, aixauth_verify, NULL)
+	    NULL, NULL, aixauth_verify, aixauth_cleanup)
 #elif defined(HAVE_FWTK)
 #  define AUTH_STANDALONE \
 	AUTH_ENTRY(0, "fwtk", \

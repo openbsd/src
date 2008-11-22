@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.499 2008/11/11 18:28:08 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.500 2008/11/18 15:57:09 millert Exp $";
 #endif /* lint */
 
 /*

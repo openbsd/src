@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1999, 2001-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2001-2005, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +51,7 @@
 #include <afs/kautils.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: afs.c,v 1.14 2007/08/31 23:30:07 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: afs.c,v 1.15 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 int

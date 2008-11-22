@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.22 2007/06/21 22:28:40 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.25 2008/11/09 14:13:13 millert Exp $";
 #endif /* lint */
 
 /*
@@ -74,4 +74,15 @@ aixauth_verify(pw, prompt, auth)
 	zero_bytes(pass, strlen(pass));
     }
     return(rval);
+}
+
+int
+aixauth_cleanup(pw, auth)
+    struct passwd *pw;
+    sudo_auth *auth;
+{
+    /* Unset AUTHSTATE as it may not be correct for the runas user. */
+    sudo_unsetenv("AUTHSTATE");
+
+    return(AUTH_SUCCESS);
 }
