@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.10 2008/11/17 20:37:48 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.11 2008/11/22 22:22:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -554,10 +554,9 @@ main(int argc, char *argv[])
 
 	log_init(debug);
 
-	if (!debug) {
-		if (daemon(1, 0) == -1)
+	if (!debug)
+		if (daemon(0, 0) == -1)
 			err(1, "failed to daemonize");
-	}
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
 
