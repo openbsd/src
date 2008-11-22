@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.9 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.10 2008/11/22 16:56:39 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $	*/
 
 /*-
@@ -134,6 +134,13 @@ int
 hci_enable(struct hci_unit *unit)
 {
 	int err;
+
+	/*
+	 * Block further attempts to enable the interface until the
+	 * previous attempt has completed.
+	 */
+	if (unit->hci_flags & BTF_INIT)
+		return EBUSY;
 
 	/*
 	 * Bluetooth spec says that a device can accept one
