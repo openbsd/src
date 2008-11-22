@@ -402,8 +402,6 @@ extern void radeon_driver_irq_uninstall(struct drm_device * dev);
 extern int radeon_vblank_crtc_get(struct drm_device *dev);
 extern int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value);
 
-extern int radeon_driver_load(struct drm_device *dev, unsigned long flags);
-extern int radeon_driver_unload(struct drm_device *dev);
 extern int radeon_driver_firstopen(struct drm_device *dev);
 extern void radeon_driver_preclose(struct drm_device * dev,
 				   struct drm_file *file_priv);

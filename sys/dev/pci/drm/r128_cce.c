@@ -353,9 +353,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 
 	DRM_DEBUG("\n");
 
-	dev_priv = drm_calloc(1, sizeof(drm_r128_private_t), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return ENOMEM;
 
 	dev_priv->is_pci = init->is_pci;
 
@@ -457,7 +454,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 	dev_priv->sarea = drm_getsarea(dev);
 	if (!dev_priv->sarea) {
 		DRM_ERROR("could not find sarea!\n");
-		dev->dev_private = (void *)dev_priv;
 		r128_do_cleanup_cce(dev);
 		return EINVAL;
 	}
@@ -465,28 +461,24 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 	dev_priv->mmio = drm_core_findmap(dev, init->mmio_offset);
 	if (!dev_priv->mmio) {
 		DRM_ERROR("could not find mmio region!\n");
-		dev->dev_private = (void *)dev_priv;
 		r128_do_cleanup_cce(dev);
 		return EINVAL;
 	}
 	dev_priv->cce_ring = drm_core_findmap(dev, init->ring_offset);
 	if (!dev_priv->cce_ring) {
 		DRM_ERROR("could not find cce ring region!\n");
-		dev->dev_private = (void *)dev_priv;
 		r128_do_cleanup_cce(dev);
 		return EINVAL;
 	}
 	dev_priv->ring_rptr = drm_core_findmap(dev, init->ring_rptr_offset);
 	if (!dev_priv->ring_rptr) {
 		DRM_ERROR("could not find ring read pointer!\n");
-		dev->dev_private = (void *)dev_priv;
 		r128_do_cleanup_cce(dev);
 		return EINVAL;
 	}
 	dev->agp_buffer_map = drm_core_findmap(dev, init->buffers_offset);
 	if (!dev->agp_buffer_map) {
 		DRM_ERROR("could not find dma buffer region!\n");
-		dev->dev_private = (void *)dev_priv;
 		r128_do_cleanup_cce(dev);
 		return EINVAL;
 	}
@@ -496,7 +488,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 		    drm_core_findmap(dev, init->agp_textures_offset);
 		if (!dev_priv->agp_textures) {
 			DRM_ERROR("could not find agp texture region!\n");
-			dev->dev_private = (void *)dev_priv;
 			r128_do_cleanup_cce(dev);
 			return EINVAL;
 		}
@@ -515,7 +506,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 		    !dev_priv->ring_rptr->handle ||
 		    !dev->agp_buffer_map->handle) {
 			DRM_ERROR("Could not ioremap agp regions!\n");
-			dev->dev_private = (void *)dev_priv;
 			r128_do_cleanup_cce(dev);
 			return ENOMEM;
 		}
@@ -563,7 +553,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 		dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCI;
 		if (!drm_ati_pcigart_init(dev, &dev_priv->gart_info)) {
 			DRM_ERROR("failed to init PCI GART!\n");
-			dev->dev_private = (void *)dev_priv;
 			r128_do_cleanup_cce(dev);
 			return ENOMEM;
 		}
@@ -575,8 +564,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 	r128_cce_init_ring_buffer(dev, dev_priv);
 	r128_cce_load_microcode(dev_priv);
 
-	dev->dev_private = (void *)dev_priv;
-
 	r128_do_engine_reset(dev);
 
 	return 0;
@@ -584,38 +571,30 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 
 int r128_do_cleanup_cce(struct drm_device * dev)
 {
+	drm_r128_private_t *dev_priv = dev->dev_private;
 
 	/* Make sure interrupts are disabled here because the uninstall ioctl
-	 * may not have been called from userspace and after dev_private
-	 * is freed, it's too late.
+	 * may not have been called from userspace
 	 */
 	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
-	if (dev->dev_private) {
-		drm_r128_private_t *dev_priv = dev->dev_private;
-
 #if __OS_HAS_AGP
-		if (!dev_priv->is_pci) {
-			if (dev_priv->cce_ring != NULL)
-				drm_core_ioremapfree(dev_priv->cce_ring);
-			if (dev_priv->ring_rptr != NULL)
-				drm_core_ioremapfree(dev_priv->ring_rptr);
-			if (dev->agp_buffer_map != NULL) {
-				drm_core_ioremapfree(dev->agp_buffer_map);
-				dev->agp_buffer_map = NULL;
-			}
-		} else
-#endif
-		{
-			if (dev_priv->gart_info.bus_addr)
-				if (!drm_ati_pcigart_cleanup(dev, &dev_priv->gart_info))
-					DRM_ERROR("failed to cleanup PCI GART!\n");
+	if (!dev_priv->is_pci) {
+		if (dev_priv->cce_ring != NULL)
+			drm_core_ioremapfree(dev_priv->cce_ring);
+		if (dev_priv->ring_rptr != NULL)
+			drm_core_ioremapfree(dev_priv->ring_rptr);
+		if (dev->agp_buffer_map != NULL) {
+			drm_core_ioremapfree(dev->agp_buffer_map);
+			dev->agp_buffer_map = NULL;
 		}
-
-		drm_free(dev->dev_private, sizeof(drm_r128_private_t),
-			 DRM_MEM_DRIVER);
-		dev->dev_private = NULL;
+	} else
+#endif
+	{
+		if (dev_priv->gart_info.bus_addr)
+			if (!drm_ati_pcigart_cleanup(dev, &dev_priv->gart_info))
+				DRM_ERROR("failed to cleanup PCI GART!\n");
 	}
 
 	return 0;

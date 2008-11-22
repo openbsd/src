@@ -33,9 +33,10 @@
 
 int	savagedrm_probe(struct device *, void *, void *);
 void	savagedrm_attach(struct device *, struct device *, void *);
+int	savagedrm_detach(struct device *, int);
 int	savagedrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-static drm_pci_id_list_t savage_pciidlist[] = {
+static drm_pci_id_list_t savagedrm_pciidlist[] = {
 	{PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D, S3_SAVAGE3D},
 	{PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D_M, S3_SAVAGE3D},
 	{PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4, S3_SAVAGE4},
@@ -62,12 +63,10 @@ static drm_pci_id_list_t savage_pciidlist[] = {
 	{0, 0, 0}
 };
 
-static const struct drm_driver_info savage_driver = {
+static const struct drm_driver_info savagedrm_driver = {
 	.buf_priv_size		= sizeof(drm_savage_buf_priv_t),
-	.load			= savage_driver_load,
 	.firstopen		= savage_driver_firstopen,
 	.lastclose		= savage_driver_lastclose,
-	.unload			= savage_driver_unload,
 	.reclaim_buffers_locked = savage_reclaim_buffers,
 	.dma_ioctl		= savage_bci_buffers,
 
@@ -85,22 +84,46 @@ static const struct drm_driver_info savage_driver = {
 int
 savagedrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, savage_pciidlist);
+	return drm_probe((struct pci_attach_args *)aux, savagedrm_pciidlist);
 }
 
 void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
+	struct pci_attach_args	*pa = aux;
+	struct drm_device	*dev = (struct drm_device *)self;
+	drm_pci_id_list_t	*id_entry;
+	drm_savage_private_t	*dev_priv;
 
-	dev->driver = &savage_driver;
-	return drm_attach(parent, self, pa, savage_pciidlist);
+	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	if (dev_priv == NULL)
+		return;
+
+	dev->dev_private = (void *)dev_priv;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), savagedrm_pciidlist);
+	dev_priv->chipset = (enum savage_family)id_entry->driver_private;
+
+	dev->driver = &savagedrm_driver;
+	return drm_attach(parent, self, pa);
+}
+
+int
+savagedrm_detach(struct device *self, int flags)
+{
+	struct drm_device	*dev = (struct drm_device *)self;
+	drm_savage_private_t	*dev_priv = dev->dev_private;
+
+	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	dev->dev_private = NULL;
+
+	return (drm_detach(self, flags));
 }
 
 struct cfattach savagedrm_ca = {
 	sizeof(struct drm_device), savagedrm_probe, savagedrm_attach,
-	drm_detach, drm_activate
+	savagedrm_detach, drm_activate
 };
 
 struct cfdriver savagedrm_cd = {

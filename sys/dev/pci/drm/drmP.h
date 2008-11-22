@@ -442,7 +442,6 @@ struct drm_ati_pcigart_info {
 };
 
 struct drm_driver_info {
-	int	(*load)(struct drm_device *, unsigned long);
 	int	(*firstopen)(struct drm_device *);
 	int	(*open)(struct drm_device *, struct drm_file *);
 	int	(*ioctl)(struct drm_device*, u_long, caddr_t,
@@ -450,7 +449,6 @@ struct drm_driver_info {
 	void	(*preclose)(struct drm_device *, struct drm_file *);
 	void	(*postclose)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
-	int	(*unload)(struct drm_device *);
 	void	(*reclaim_buffers_locked)(struct drm_device *,
 		    struct drm_file *);
 	int	(*dma_ioctl)(struct drm_device *, void *, struct drm_file *);
@@ -581,8 +579,7 @@ extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
 int	drm_probe(struct pci_attach_args *, drm_pci_id_list_t * );
-void	drm_attach(struct device *, struct device *,
-	    struct pci_attach_args *, drm_pci_id_list_t *);
+void	drm_attach(struct device *, struct device *, struct pci_attach_args *);
 int	drm_detach(struct device *, int );
 int	drm_activate(struct device *, enum devact);
 dev_type_ioctl(drmioctl);
@@ -592,6 +589,8 @@ dev_type_read(drmread);
 dev_type_poll(drmpoll);
 dev_type_mmap(drmmmap);
 extern drm_local_map_t	*drm_getsarea(struct drm_device *);
+
+drm_pci_id_list_t *drm_find_description(int , int , drm_pci_id_list_t *);
 
 /* File operations helpers (drm_fops.c) */
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);

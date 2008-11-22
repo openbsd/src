@@ -222,8 +222,6 @@ typedef struct drm_i915_private {
 
 				/* i915_dma.c */
 extern void i915_kernel_lost_context(struct drm_device * dev);
-extern int i915_driver_load(struct drm_device *, unsigned long flags);
-extern int i915_driver_unload(struct drm_device *);
 extern void i915_driver_lastclose(struct drm_device * dev);
 extern void i915_driver_preclose(struct drm_device *dev,
 				 struct drm_file *file_priv);
@@ -237,6 +235,9 @@ extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,
 				     drm_i915_batchbuffer_t * batch);
 extern int i915_quiescent(struct drm_device *dev);
+
+int	i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
+void	i915_free_hws(drm_i915_private_t *, bus_dma_tag_t);
 
 /* i915_irq.c */
 extern int i915_irq_emit(struct drm_device *dev, void *data,

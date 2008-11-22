@@ -208,10 +208,8 @@ extern void savage_dma_reset(drm_savage_private_t *dev_priv);
 extern void savage_dma_wait(drm_savage_private_t *dev_priv, unsigned int page);
 extern uint32_t *savage_dma_alloc(drm_savage_private_t *dev_priv,
 				  unsigned int n);
-extern int savage_driver_load(struct drm_device *dev, unsigned long chipset);
 extern int savage_driver_firstopen(struct drm_device *dev);
 extern void savage_driver_lastclose(struct drm_device *dev);
-extern int savage_driver_unload(struct drm_device *dev);
 extern void savage_reclaim_buffers(struct drm_device *dev,
 				   struct drm_file *file_priv);
 

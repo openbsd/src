@@ -36,11 +36,12 @@
 
 int	radeondrm_probe(struct device *, void *, void *);
 void	radeondrm_attach(struct device *, struct device *, void *);
+int	radeondrm_detach(struct device *, int);
 int	radeondrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int radeon_no_wb;
 
-static drm_pci_id_list_t radeon_pciidlist[] = {
+static drm_pci_id_list_t radeondrm_pciidlist[] = {
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,
 	    CHIP_RV380|RADEON_IS_MOBILITY},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300M24,
@@ -475,10 +476,8 @@ static drm_pci_id_list_t radeon_pciidlist[] = {
         {0, 0, 0}
 };
 
-static const struct drm_driver_info radeon_driver = {
+static const struct drm_driver_info radeondrm_driver = {
 	.buf_priv_size		= sizeof(drm_radeon_buf_priv_t),
-	.load			= radeon_driver_load,
-	.unload			= radeon_driver_unload,
 	.firstopen		= radeon_driver_firstopen,
 	.open			= radeon_driver_open,
 	.ioctl			= radeondrm_ioctl,
@@ -508,22 +507,80 @@ static const struct drm_driver_info radeon_driver = {
 int
 radeondrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, radeon_pciidlist);
+	return drm_probe((struct pci_attach_args *)aux, radeondrm_pciidlist);
 }
 
 void
 radeondrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
+	struct pci_attach_args	*pa = aux;
+	struct drm_device	*dev = (struct drm_device *)self;
+	drm_radeon_private_t	*dev_priv;
+	drm_pci_id_list_t	*id_entry;
 
-	dev->driver = &radeon_driver;
-	return drm_attach(parent, self, pa, radeon_pciidlist);
+	dev_priv = drm_calloc(1, sizeof(drm_radeon_private_t), DRM_MEM_DRIVER);
+	if (dev_priv == NULL)
+		return;
+
+	dev->dev_private = (void *)dev_priv;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), radeondrm_pciidlist);
+	dev_priv->flags = id_entry->driver_private;
+
+	switch (dev_priv->flags & RADEON_FAMILY_MASK) {
+	case CHIP_R100:
+	case CHIP_RV200:
+	case CHIP_R200:
+	case CHIP_R300:
+	case CHIP_R350:
+	case CHIP_R420:
+	case CHIP_R423:
+	case CHIP_RV410:
+	case CHIP_RV515:
+	case CHIP_R520:
+	case CHIP_RV570:
+	case CHIP_R580:
+		dev_priv->flags |= RADEON_HAS_HIERZ;
+		break;
+	default:
+		/* all other chips have no hierarchical z buffer */
+		break;
+	}
+
+	dev_priv->chip_family = dev_priv->flags & RADEON_FAMILY_MASK;
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL))
+		dev_priv->flags |= RADEON_IS_AGP;
+	else if (pci_get_capability(pa->pa_pc, pa->pa_tag,
+	    PCI_CAP_PCIEXPRESS, NULL, NULL))
+		dev_priv->flags |= RADEON_IS_PCIE;
+	else
+		dev_priv->flags |= RADEON_IS_PCI;
+
+	DRM_DEBUG("%s card detected\n",
+		  ((dev_priv->flags & RADEON_IS_AGP) ? "AGP" :
+		  (((dev_priv->flags & RADEON_IS_PCIE) ? "PCIE" : "PCI"))));
+
+	dev->driver = &radeondrm_driver;
+	return drm_attach(parent, self, pa);
+}
+
+int
+radeondrm_detach(struct device *self, int flags)
+{
+	struct drm_device *dev = (struct drm_device *)self;
+	drm_radeon_private_t *dev_priv = dev->dev_private;
+
+	DRM_DEBUG("\n");
+	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
+
+	dev->dev_private = NULL;
+	return (drm_detach(self, flags));
 }
 
 struct cfattach radeondrm_ca = {
         sizeof (struct drm_device), radeondrm_probe, radeondrm_attach, 
-	drm_detach, drm_activate
+	radeondrm_detach, drm_activate
 }; 
 
 struct cfdriver radeondrm_cd = {

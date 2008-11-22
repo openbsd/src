@@ -38,10 +38,13 @@
 
 int	mgadrm_probe(struct device *, void *, void *);
 void	mgadrm_attach(struct device *, struct device *, void *);
+int	mgadrm_detach(struct device *, int);
 int	mga_driver_device_is_agp(struct drm_device * );
 int	mgadrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-static drm_pci_id_list_t mga_pciidlist[] = {
+#define MGA_DEFAULT_USEC_TIMEOUT	10000
+
+static drm_pci_id_list_t mgadrm_pciidlist[] = {
 	{PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_PCI,
 	    MGA_CARD_TYPE_G200},
 	{PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_AGP,
@@ -101,8 +104,6 @@ mga_driver_device_is_agp(struct drm_device * dev)
 
 static const struct drm_driver_info mga_driver = {
 	.buf_priv_size		= sizeof(drm_mga_buf_priv_t),
-	.load			= mga_driver_load,
-	.unload			= mga_driver_unload,
 	.ioctl			= mgadrm_ioctl,
 	.lastclose		= mga_driver_lastclose,
 	.enable_vblank		= mga_enable_vblank,
@@ -130,22 +131,51 @@ static const struct drm_driver_info mga_driver = {
 int
 mgadrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, mga_pciidlist);
+	return drm_probe((struct pci_attach_args *)aux, mgadrm_pciidlist);
 }
 
 void
 mgadrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
+	struct pci_attach_args	*pa = aux;
+	struct drm_device	*dev = (struct drm_device *)self;
+	drm_mga_private_t	*dev_priv;
+	drm_pci_id_list_t	*id_entry;
+
+	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	if (!dev_priv)
+		return;
+
+	dev->dev_private = (void *)dev_priv;
+
+	dev_priv->usec_timeout = MGA_DEFAULT_USEC_TIMEOUT;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), mgadrm_pciidlist);
+	dev_priv->chipset = id_entry->driver_private;
+
+	dev_priv->mmio_base = drm_get_resource_start(dev, 1);
+	dev_priv->mmio_size = drm_get_resource_len(dev, 1);
 
 	dev->driver = &mga_driver;
-	return drm_attach(parent, self, pa, mga_pciidlist);
+	return drm_attach(parent, self, pa);
+}
+
+int
+mgadrm_detach(struct device *self, int flags)
+{
+	struct drm_device	*dev = (struct drm_device *)self;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+
+	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	dev->dev_private = NULL;
+
+	return (drm_detach(self, flags));
 }
 
 struct cfattach mgadrm_ca = {
 	sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
-	drm_detach, drm_activate
+	mgadrm_detach, drm_activate
 };
 
 struct cfdriver mgadrm_cd = {

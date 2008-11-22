@@ -32,6 +32,7 @@
 
 int	sisdrm_probe(struct device *, void *, void *);
 void	sisdrm_attach(struct device *, struct device *, void *);
+int	sisdrm_detach(struct device *, int);
 int	sisdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 static drm_pci_id_list_t sis_pciidlist[] = {
@@ -40,10 +41,8 @@ static drm_pci_id_list_t sis_pciidlist[] = {
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6300},
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6330},
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7300},
-	{PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_V3XT},
-#if 0 /* do these actually EXIST? */
 	{PCI_VENDOR_XGI, 0x0042, SIS_CHIP_315},
-#endif
+	{PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_V3XT},
 	{0, 0, 0}
 };
 
@@ -74,14 +73,30 @@ sisdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
+	drm_sis_private_t *dev_priv = dev->dev_private;
+
+	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	dev->dev_private = dev_priv;
 
 	dev->driver = &sis_driver;
-	return drm_attach(parent, self, pa, sis_pciidlist);
+	return drm_attach(parent, self, pa);
+}
+
+int
+sisdrm_detach(struct device *self, int flags)
+{
+	struct drm_device *dev = (struct drm_device *)self;
+	drm_sis_private_t *dev_priv = dev->dev_private;
+
+	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
+	dev->dev_private = NULL;
+
+	return (drm_detach(self, flags));
 }
 
 struct cfattach sisdrm_ca = {
 	sizeof(struct drm_device), sisdrm_probe, sisdrm_attach,
-	drm_detach, drm_activate
+	sisdrm_detach, drm_activate
 };
 
 struct cfdriver sisdrm_cd = {

@@ -88,16 +88,8 @@ int sis_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_fb_t *fb = data;
 
-	if (dev_priv == NULL) {
-		dev->dev_private = drm_calloc(1, sizeof(drm_sis_private_t),
-					      DRM_MEM_DRIVER);
-		dev_priv = dev->dev_private;
-		if (dev_priv == NULL)
-			return ENOMEM;
-	}
-
 	if (dev_priv->FBHeap != NULL)
-		return EINVAL;
+		return (EINVAL);
 
 	dev_priv->FBHeap = mmInit(fb->offset, fb->size);
 
@@ -163,14 +155,6 @@ int sis_ioctl_agp_init(struct drm_device *dev, void *data, struct drm_file *file
 {
 	drm_sis_private_t *dev_priv = dev->dev_private;
 	drm_sis_agp_t *agp = data;
-
-	if (dev_priv == NULL) {
-		dev->dev_private = drm_calloc(1, sizeof(drm_sis_private_t),
-					      DRM_MEM_DRIVER);
-		dev_priv = dev->dev_private;
-		if (dev_priv == NULL)
-			return ENOMEM;
-	}
 
 	if (dev_priv->AGPHeap != NULL)
 		return EINVAL;

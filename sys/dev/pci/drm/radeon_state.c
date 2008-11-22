@@ -3180,24 +3180,21 @@ int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file
 void radeon_driver_preclose(struct drm_device *dev,
 			    struct drm_file *file_priv)
 {
-	if (dev->dev_private) {
-		drm_radeon_private_t *dev_priv = dev->dev_private;
-		dev_priv->page_flipping = 0;
-		radeon_mem_release(file_priv, dev_priv->gart_heap);
-		radeon_mem_release(file_priv, dev_priv->fb_heap);
-		radeon_surfaces_release(file_priv, dev_priv);
-	}
+	drm_radeon_private_t *dev_priv = dev->dev_private;
+
+	dev_priv->page_flipping = 0;
+	radeon_mem_release(file_priv, dev_priv->gart_heap);
+	radeon_mem_release(file_priv, dev_priv->fb_heap);
+	radeon_surfaces_release(file_priv, dev_priv);
 }
 
 void radeon_driver_lastclose(struct drm_device *dev)
 {
-	if (dev->dev_private) {
-		drm_radeon_private_t *dev_priv = dev->dev_private;
+	drm_radeon_private_t *dev_priv = dev->dev_private;
 
-		if (dev_priv->sarea_priv &&
-		    dev_priv->sarea_priv->pfCurrentPage != 0)
-			radeon_cp_dispatch_flip(dev);
-	}
+	if (dev_priv->sarea_priv &&
+	    dev_priv->sarea_priv->pfCurrentPage != 0)
+		radeon_cp_dispatch_flip(dev);
 
 	radeon_do_release(dev);
 }

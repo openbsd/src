@@ -1714,51 +1714,6 @@ int radeon_cp_buffers(struct drm_device *dev, void *data, struct drm_file *file_
 	return ret;
 }
 
-int radeon_driver_load(struct drm_device *dev, unsigned long flags)
-{
-	drm_radeon_private_t *dev_priv;
-	int ret = 0;
-
-	dev_priv = drm_calloc(1, sizeof(drm_radeon_private_t), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return ENOMEM;
-
-	dev->dev_private = (void *)dev_priv;
-	dev_priv->flags = flags;
-
-	switch (flags & RADEON_FAMILY_MASK) {
-	case CHIP_R100:
-	case CHIP_RV200:
-	case CHIP_R200:
-	case CHIP_R300:
-	case CHIP_R350:
-	case CHIP_R420:
-	case CHIP_R423:
-	case CHIP_RV410:
-	case CHIP_RV515:
-	case CHIP_R520:
-	case CHIP_RV570:
-	case CHIP_R580:
-		dev_priv->flags |= RADEON_HAS_HIERZ;
-		break;
-	default:
-		/* all other chips have no hierarchical z buffer */
-		break;
-	}
-
-	dev_priv->chip_family = flags & RADEON_FAMILY_MASK;
-	if (drm_device_is_agp(dev))
-		dev_priv->flags |= RADEON_IS_AGP;
-	else if (drm_device_is_pcie(dev))
-		dev_priv->flags |= RADEON_IS_PCIE;
-	else
-		dev_priv->flags |= RADEON_IS_PCI;
-
-	DRM_DEBUG("%s card detected\n",
-		  ((dev_priv->flags & RADEON_IS_AGP) ? "AGP" : (((dev_priv->flags & RADEON_IS_PCIE) ? "PCIE" : "PCI"))));
-	return ret;
-}
-
 /* Create mappings for registers and framebuffer so userland doesn't necessarily
  * have to find them.
  */
@@ -1783,16 +1738,5 @@ int radeon_driver_firstopen(struct drm_device *dev)
 	if (ret != 0)
 		return ret;
 
-	return 0;
-}
-
-int radeon_driver_unload(struct drm_device *dev)
-{
-	drm_radeon_private_t *dev_priv = dev->dev_private;
-
-	DRM_DEBUG("\n");
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-
-	dev->dev_private = NULL;
 	return 0;
 }

@@ -1645,11 +1645,10 @@ int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv
 
 void r128_driver_preclose(struct drm_device * dev, struct drm_file *file_priv)
 {
-	if (dev->dev_private) {
-		drm_r128_private_t *dev_priv = dev->dev_private;
-		if (dev_priv->page_flipping) {
-			r128_do_cleanup_pageflip(dev);
-		}
+	drm_r128_private_t *dev_priv = dev->dev_private;
+
+	if (dev_priv->page_flipping) {
+		r128_do_cleanup_pageflip(dev);
 	}
 }
 

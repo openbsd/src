@@ -535,21 +535,6 @@ static void savage_fake_dma_flush(drm_savage_private_t *dev_priv)
 	dev_priv->first_dma_page = dev_priv->current_dma_page = 0;
 }
 
-int savage_driver_load(struct drm_device *dev, unsigned long chipset)
-{
-	drm_savage_private_t *dev_priv;
-
-	dev_priv = drm_calloc(1, sizeof(drm_savage_private_t), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return ENOMEM;
-
-	dev->dev_private = (void *)dev_priv;
-
-	dev_priv->chipset = (enum savage_family)chipset;
-
-	return 0;
-}
-
 /*
  * Initalize mappings. On Savage4 and SavageIX the alignment
  * and size of the aperture is not suitable for automatic MTRR setup
@@ -663,15 +648,6 @@ void savage_driver_lastclose(struct drm_device *dev)
 			drm_mtrr_del(dev_priv->mtrr[i].handle,
 				     dev_priv->mtrr[i].base,
 				     dev_priv->mtrr[i].size, DRM_MTRR_WC);
-}
-
-int savage_driver_unload(struct drm_device *dev)
-{
-	drm_savage_private_t *dev_priv = dev->dev_private;
-
-	drm_free(dev_priv, sizeof(drm_savage_private_t), DRM_MEM_DRIVER);
-
-	return 0;
 }
 
 static int savage_do_init_bci(struct drm_device *dev, drm_savage_init_t *init)

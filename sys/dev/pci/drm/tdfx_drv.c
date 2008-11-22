@@ -35,7 +35,10 @@
 #include "tdfx_drv.h"
 #include "drmP.h"
 
-static drm_pci_id_list_t tdfx_pciidlist[] = {
+int	tdfxdrm_probe(struct device *, void *, void *);
+void	tdfxdrm_attach(struct device *, struct device *, void *);
+
+static drm_pci_id_list_t tdfxdrm_pciidlist[] = {
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE},
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO32000},
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3},
@@ -45,7 +48,7 @@ static drm_pci_id_list_t tdfx_pciidlist[] = {
         {0, 0, 0}
 };
 
-static const struct drm_driver_info tdfx_driver = {
+static const struct drm_driver_info tdfxdrm_driver = {
 	.buf_priv_size	= 1, /* No dev_priv */
 
 	.name		= DRIVER_NAME,
@@ -58,13 +61,10 @@ static const struct drm_driver_info tdfx_driver = {
 	.flags		= DRIVER_MTRR,
 };
 
-int	tdfxdrm_probe(struct device *, void *, void *);
-void	tdfxdrm_attach(struct device *, struct device *, void *);
-
 int
 tdfxdrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, tdfx_pciidlist);
+	return drm_probe((struct pci_attach_args *)aux, tdfxdrm_pciidlist);
 }
 
 void
@@ -73,8 +73,8 @@ tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = (struct drm_device *)self;
 
-	dev->driver = &tdfx_driver;
-	return drm_attach(parent, self, pa, tdfx_pciidlist);
+	dev->driver = &tdfxdrm_driver;
+	return drm_attach(parent, self, pa);
 }
 
 struct cfattach tdfxdrm_ca = {

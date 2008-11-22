@@ -47,8 +47,6 @@ int drm_debug_flag = 1;
 int drm_debug_flag = 0;
 #endif
 
-drm_pci_id_list_t *drm_find_description(int , int ,
-	    drm_pci_id_list_t *);
 int	 drm_firstopen(struct drm_device *);
 int	 drm_lastclose(struct drm_device *);
 
@@ -80,11 +78,10 @@ drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 
 void
 drm_attach(struct device *parent, struct device *kdev,
-    struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
+    struct pci_attach_args *pa)
 {
 	int unit;
 	struct drm_device *dev;
-	drm_pci_id_list_t *id_entry;
 
 	if (init_units) {
 		for (unit=0; unit<DRM_MAXUNITS; unit++)
@@ -118,9 +115,6 @@ drm_attach(struct device *parent, struct device *kdev,
 	mtx_init(&dev->drw_lock, IPL_NONE);
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
 
-	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id), idlist);
-
 	TAILQ_INIT(&dev->maplist);
 
 	drm_mem_init();
@@ -135,14 +129,6 @@ drm_attach(struct device *parent, struct device *kdev,
 	if (dev->handle_ext == NULL) {
 		DRM_ERROR("Failed to initialise handle extent\n");
 		goto error;
-	}
-
-	if (dev->driver->load != NULL) {
-		int retcode;
-
-		retcode = dev->driver->load(dev, id_entry->driver_private);
-		if (retcode != 0)
-			goto error;
 	}
 
 	if (dev->driver->flags & DRIVER_AGP) {
@@ -194,9 +180,6 @@ drm_detach(struct device *self, int flags)
 		drm_free(dev->agp, sizeof(*dev->agp), DRM_MEM_AGPLISTS);
 		dev->agp = NULL;
 	}
-
-	if (dev->driver->unload != NULL)
-		dev->driver->unload(dev);
 
 	drm_mem_uninit();
 	return 0;
