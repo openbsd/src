@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.77 2008/11/21 18:01:30 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.78 2008/11/22 22:34:11 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -642,7 +642,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 	rtm = mtod(m, struct rt_msghdr *);
 	bzero(rtm, len);
 	for (i = 0; i < RTAX_MAX; i++) {
-		if ((sa = rtinfo->rti_info[i]) == NULL)
+		if (rtinfo == NULL || (sa = rtinfo->rti_info[i]) == NULL)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
@@ -800,12 +800,10 @@ rt_ifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr	*ifm;
 	struct mbuf		*m;
-	struct rt_addrinfo	 info;
 
 	if (route_cb.any_count == 0)
 		return;
-	bzero(&info, sizeof(info));
-	m = rt_msg1(RTM_IFINFO, &info);
+	m = rt_msg1(RTM_IFINFO, NULL);
 	if (m == 0)
 		return;
 	ifm = mtod(m, struct if_msghdr *);
@@ -894,12 +892,10 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
 {
 	struct if_announcemsghdr	*ifan;
 	struct mbuf			*m;
-	struct rt_addrinfo		 info;
 
 	if (route_cb.any_count == 0)
 		return;
-	bzero(&info, sizeof(info));
-	m = rt_msg1(RTM_IFANNOUNCE, &info);
+	m = rt_msg1(RTM_IFANNOUNCE, NULL);
 	if (m == 0)
 		return;
 	ifan = mtod(m, struct if_announcemsghdr *);
