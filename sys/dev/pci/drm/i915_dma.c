@@ -43,7 +43,7 @@ int i915_wait_ring(struct drm_device * dev, int n, const char *caller)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_i915_ring_buffer_t *ring = &(dev_priv->ring);
-	u_int32_t acthd_reg = IS_I965G(dev) ? ACTHD_I965 : ACTHD;
+	u_int32_t acthd_reg = IS_I965G(dev_priv) ? ACTHD_I965 : ACTHD;
 	u_int32_t last_acthd = I915_READ(acthd_reg);
 	u_int32_t acthd;
 	u_int32_t last_head = I915_READ(PRB0_HEAD) & HEAD_ADDR;
@@ -148,7 +148,7 @@ static int i915_dma_cleanup(struct drm_device * dev)
 	}
 
 	/* Clear the HWS virtual address at teardown */
-	if (I915_NEED_GFX_HWS(dev))
+	if (I915_NEED_GFX_HWS(dev_priv))
 		i915_free_hws(dev);
 
 	return 0;
@@ -399,7 +399,7 @@ static int i915_emit_box(struct drm_device * dev,
 		return EINVAL;
 	}
 
-	if (IS_I965G(dev)) {
+	if (IS_I965G(dev_priv)) {
 		BEGIN_LP_RING(4);
 		OUT_RING(GFX_OP_DRAWRECT_INFO_I965);
 		OUT_RING((box.x1 & 0xffff) | (box.y1 << 16));
@@ -525,9 +525,9 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 				return ret;
 		}
 
-		if (!IS_I830(dev) && !IS_845G(dev)) {
+		if (!IS_I830(dev_priv) && !IS_845G(dev_priv)) {
 			BEGIN_LP_RING(2);
-			if (IS_I965G(dev)) {
+			if (IS_I965G(dev_priv)) {
 				OUT_RING(MI_BATCH_BUFFER_START | (2 << 6) | MI_BATCH_NON_SECURE_I965);
 				OUT_RING(batch->start);
 			} else {
@@ -766,7 +766,7 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_i915_hws_addr_t *hws = data;
 
-	if (!I915_NEED_GFX_HWS(dev))
+	if (!I915_NEED_GFX_HWS(dev_priv))
 		return EINVAL;
 
 	if (!dev_priv) {
@@ -816,7 +816,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev_priv->flags = flags;
 
 	/* Add register map (needed for suspend/resume) */
-	bar = vga_pci_bar_info(dev->vga_softc, (IS_I9XX(dev) ? 0 : 1));
+	bar = vga_pci_bar_info(dev->vga_softc, (IS_I9XX(dev_priv) ? 0 : 1));
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
 		return (EINVAL);
@@ -830,7 +830,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	/* Init HWS */
-	if (!I915_NEED_GFX_HWS(dev)) {
+	if (!I915_NEED_GFX_HWS(dev_priv)) {
 		ret = i915_init_phys_hws(dev);
 		if (ret != 0)
 			return ret;

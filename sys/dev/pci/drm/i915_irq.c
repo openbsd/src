@@ -364,7 +364,7 @@ int i915_enable_vblank(struct drm_device *dev, int plane)
 	int pipe = i915_get_pipe(dev, plane);
 
 	mtx_enter(&dev_priv->user_irq_lock);
-	i915_enable_pipestat(dev_priv, pipe, (IS_I965G(dev) ? 
+	i915_enable_pipestat(dev_priv, pipe, (IS_I965G(dev_priv) ? 
 	    PIPE_START_VBLANK_INTERRUPT_ENABLE : PIPE_VBLANK_INTERRUPT_ENABLE));
 	mtx_leave(&dev_priv->user_irq_lock);
 

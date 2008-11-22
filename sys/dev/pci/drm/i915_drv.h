@@ -1718,28 +1718,28 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 
 /* Chipset type macros */
 
-#define IS_I830(dev) ((dev_priv)->flags & CHIP_I830)
-#define IS_845G(dev) ((dev_priv)->flags & CHIP_I845G)
-#define IS_I85X(dev) ((dev_priv)->flags & CHIP_I85X)
-#define IS_I865G(dev) ((dev_priv)->flags & CHIP_I865G)
+#define IS_I830(dev_priv) ((dev_priv)->flags & CHIP_I830)
+#define IS_845G(dev_priv) ((dev_priv)->flags & CHIP_I845G)
+#define IS_I85X(dev_priv) ((dev_priv)->flags & CHIP_I85X)
+#define IS_I865G(dev_priv) ((dev_priv)->flags & CHIP_I865G)
 
-#define IS_I915G(dev) ((dev_priv)->flags & CHIP_I915G)
-#define IS_I915GM(dev) ((dev_priv)->flags & CHIP_I915GM)
-#define IS_I945G(dev) ((dev)->flags & CHIP_I945G)
-#define IS_I945GM(dev) ((dev_priv)->flags & CHIP_I945GM)
-#define IS_I965G(dev) ((dev_priv)->flags & CHIP_I965)
-#define IS_I965GM(dev) ((dev_priv)->flags & CHIP_I965GM)
+#define IS_I915G(dev_priv) ((dev_priv)->flags & CHIP_I915G)
+#define IS_I915GM(dev_priv) ((dev_priv)->flags & CHIP_I915GM)
+#define IS_I945G(dev_priv) ((dev)->flags & CHIP_I945G)
+#define IS_I945GM(dev_priv) ((dev_priv)->flags & CHIP_I945GM)
+#define IS_I965G(dev_priv) ((dev_priv)->flags & CHIP_I965)
+#define IS_I965GM(dev_priv) ((dev_priv)->flags & CHIP_I965GM)
 
-#define IS_GM45(dev) ((dev_priv)->flags & CHIP_GM45)
-#define IS_G4X(dev) ((dev_priv)->flags & CHIP_G4X)
+#define IS_GM45(dev_priv) ((dev_priv)->flags & CHIP_GM45)
+#define IS_G4X(dev_priv) ((dev_priv)->flags & CHIP_G4X)
 
-#define IS_G33(dev)    ((dev_priv)->flags & CHIP_G33)
+#define IS_G33(dev_priv)    ((dev_priv)->flags & CHIP_G33)
 
-#define IS_I9XX(dev) ((dev_priv)->flags & CHIP_I9XX)
+#define IS_I9XX(dev_priv) ((dev_priv)->flags & CHIP_I9XX)
 
-#define IS_MOBILE(dev) (dev_priv->flags & CHIP_M)
+#define IS_MOBILE(dev_priv) (dev_priv->flags & CHIP_M)
 
-#define I915_NEED_GFX_HWS(dev) (dev_priv->flags & CHIP_HWS)
+#define I915_NEED_GFX_HWS(dev_priv) (dev_priv->flags & CHIP_HWS)
 
 #define PRIMARY_RINGBUFFER_SIZE         (128*1024)
 
