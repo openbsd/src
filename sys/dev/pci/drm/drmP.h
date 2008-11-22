@@ -132,7 +132,6 @@
 #define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
 #define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
 #define DRM_MAXUNITS	8
-extern struct drm_device *drm_units[];
 
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
@@ -151,13 +150,10 @@ enum {
 #define DRM_AGP_MEM		struct agp_memory_info
 
 /* D_CLONE only supports one device, this will be fixed eventually */
+#define drm_get_device_from_kdev(_kdev) drm_cd.cd_devs[0]
+#if 0
 #define drm_get_device_from_kdev(_kdev)			\
-	drm_units[0]
-
-#if 0 /* D_CLONE only supports on device for now */
-#define drm_get_device_from_kdev(_kdev) 		\
-	(minor(kdev) < DRM_MAXUNITS) ?			\
-	    drm_units[minor(kdev)] : NULL
+	(minor(_kdev) < drm_cd.cd_ndevs) ? drm_cd.cd_devs[minor(_kdev)] : NULL
 #endif
 
 
@@ -209,7 +205,7 @@ typedef u_int8_t u8;
 
 #define DRM_VERIFYAREA_READ( uaddr, size )				\
 	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),		\
-		    (vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
+	    (vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
 
 #define DRM_COPY_TO_USER(user, kern, size) \
 	copyout(kern, user, size)
@@ -251,7 +247,7 @@ DRM_SPINUNLOCK(&dev->irq_lock)
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
 	    DRM_CURRENTPID, __func__ , ## arg)
 
-#define DRM_INFO(fmt, arg...)  printf("%s: " fmt, drm_units[0]->device.dv_xname, ## arg)
+#define DRM_INFO(fmt, arg...)  printf("%s: " fmt, dev_priv->dev.dv_xname, ## arg)
 
 #undef DRM_DEBUG
 #define DRM_DEBUG(fmt, arg...) do {					\
@@ -268,6 +264,7 @@ typedef struct drm_pci_id_list
 } drm_pci_id_list_t;
 
 struct drm_file;
+struct drm_device;
 
 #define DRM_AUTH	0x1
 #define DRM_MASTER	0x2
@@ -575,13 +572,19 @@ struct drm_device {
 	RB_HEAD(drawable_tree, bsd_drm_drawable_info) drw_head;
 };
 
+struct drm_attach_args {
+	const struct drm_driver_info	*driver;
+	struct pci_attach_args		*pa;
+	struct vga_pci_softc		*vga;
+};
+
 extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
-int	drm_probe(struct pci_attach_args *, drm_pci_id_list_t * );
-void	drm_attach(struct device *, struct device *, struct pci_attach_args *);
-int	drm_detach(struct device *, int );
-int	drm_activate(struct device *, enum devact);
+int	drm_pciprobe(struct pci_attach_args *, drm_pci_id_list_t * );
+struct device	*drm_attach_mi(const struct drm_driver_info *,
+		     struct pci_attach_args *pa, struct device *,
+		     struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);

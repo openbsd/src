@@ -221,6 +221,8 @@ struct radeon_virt_surface {
 #define RADEON_PURGE_EMITED	(1 < 1)
 
 typedef struct drm_radeon_private {
+	struct device	 dev;
+	struct device	*drmdev;
 
 	drm_radeon_ring_buffer_t ring;
 	drm_radeon_sarea_t *sarea_priv;

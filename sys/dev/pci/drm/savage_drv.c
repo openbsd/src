@@ -84,46 +84,39 @@ static const struct drm_driver_info savagedrm_driver = {
 int
 savagedrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, savagedrm_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, savagedrm_pciidlist);
 }
 
 void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
+	drm_savage_private_t	*dev_priv = (drm_savage_private_t *)self;
 	struct pci_attach_args	*pa = aux;
-	struct drm_device	*dev = (struct drm_device *)self;
 	drm_pci_id_list_t	*id_entry;
-	drm_savage_private_t	*dev_priv;
-
-	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return;
-
-	dev->dev_private = (void *)dev_priv;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), savagedrm_pciidlist);
 	dev_priv->chipset = (enum savage_family)id_entry->driver_private;
 
-	dev->driver = &savagedrm_driver;
-	return drm_attach(parent, self, pa);
+	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa, parent, self);
 }
 
 int
 savagedrm_detach(struct device *self, int flags)
 {
-	struct drm_device	*dev = (struct drm_device *)self;
-	drm_savage_private_t	*dev_priv = dev->dev_private;
+	drm_savage_private_t	*dev_priv = (drm_savage_private_t *)self;
 
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	dev->dev_private = NULL;
+	if (dev_priv->drmdev != NULL) {
+		config_detach(dev_priv->drmdev, flags);
+		dev_priv->drmdev = NULL;
+	}
 
-	return (drm_detach(self, flags));
+	return (0);
 }
 
 struct cfattach savagedrm_ca = {
-	sizeof(struct drm_device), savagedrm_probe, savagedrm_attach,
-	savagedrm_detach, drm_activate
+	sizeof(drm_savage_private_t), savagedrm_probe, savagedrm_attach,
+	savagedrm_detach
 };
 
 struct cfdriver savagedrm_cd = {

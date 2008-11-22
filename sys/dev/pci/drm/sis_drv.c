@@ -65,38 +65,34 @@ static const struct drm_driver_info sis_driver = {
 int
 sisdrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, sis_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, sis_pciidlist);
 }
 
 void
 sisdrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
-	drm_sis_private_t *dev_priv = dev->dev_private;
+	drm_sis_private_t	*dev_priv = (drm_sis_private_t *)self;
+	struct pci_attach_args	*pa = aux;
 
-	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	dev->dev_private = dev_priv;
-
-	dev->driver = &sis_driver;
-	return drm_attach(parent, self, pa);
+	dev_priv->drmdev = drm_attach_mi(&sis_driver, pa, parent, self);
 }
 
 int
 sisdrm_detach(struct device *self, int flags)
 {
-	struct drm_device *dev = (struct drm_device *)self;
-	drm_sis_private_t *dev_priv = dev->dev_private;
+	drm_sis_private_t *dev_priv = (drm_sis_private_t *)self;
 
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	dev->dev_private = NULL;
+	if (dev_priv->drmdev != NULL) {
+		config_detach(dev_priv->drmdev, flags);
+		dev_priv->drmdev = NULL;
+	}
 
-	return (drm_detach(self, flags));
+	return (0);
 }
 
 struct cfattach sisdrm_ca = {
-	sizeof(struct drm_device), sisdrm_probe, sisdrm_attach,
-	sisdrm_detach, drm_activate
+	sizeof(drm_sis_private_t), sisdrm_probe, sisdrm_attach,
+	sisdrm_detach
 };
 
 struct cfdriver sisdrm_cd = {

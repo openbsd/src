@@ -75,6 +75,9 @@ typedef struct {
 } drm_mga_buf_priv_t;
 
 typedef struct drm_mga_private {
+	struct device	 dev;
+	struct device	*drmdev;
+
 	drm_mga_primary_buffer_t prim;
 	drm_mga_sarea_t *sarea_priv;
 

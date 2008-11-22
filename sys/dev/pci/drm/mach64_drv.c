@@ -67,7 +67,7 @@ static drm_pci_id_list_t mach64_pciidlist[] = {
 	{0, 0, 0}
 };
 
-static const struct drm_driver_info mach64_driver = {
+static const struct drm_driver_info machdrm_driver = {
 	.buf_priv_size		= 1, /* No dev_priv */
 	.ioctl			= machdrm_ioctl,
 	.lastclose		= mach64_driver_lastclose,
@@ -94,41 +94,34 @@ static const struct drm_driver_info mach64_driver = {
 int
 machdrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, mach64_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, mach64_pciidlist);
 }
 
 void
 machdrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
-	drm_mach64_private_t *dev_priv;
+	drm_mach64_private_t	*dev_priv = (drm_mach64_private_t *)self;
+	struct pci_attach_args	*pa = aux;
 
-	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return;
-	dev->dev_private = (void *)dev_priv;
-
-	dev->driver = &mach64_driver;
-
-	return drm_attach(parent, self, pa);
+	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa, parent, self);
 }
 
 int
 machdrm_detach(struct device *self, int flags)
 {
-	struct drm_device *dev = (struct drm_device *)self;
-	drm_mach64_private_t *dev_priv = dev->dev_private;
+	drm_mach64_private_t *dev_priv = (drm_mach64_private_t *)self;
 
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	dev->dev_private = NULL;
+	if (dev_priv->drmdev != NULL) {
+		config_detach(dev_priv->drmdev, flags);
+		dev_priv->drmdev = NULL;
+	}
 
-	return (drm_detach(self, flags));
+	return (0);
 }
 
 struct cfattach machdrm_ca = {
-	sizeof(struct drm_device), machdrm_probe, machdrm_attach,
-	machdrm_detach, drm_activate
+	sizeof(drm_mach64_private_t), machdrm_probe, machdrm_attach,
+	machdrm_detach
 };
 
 struct cfdriver machdrm_cd = {

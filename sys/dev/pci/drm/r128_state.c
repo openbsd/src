@@ -336,7 +336,8 @@ static void r128_cce_performance_boxes(drm_r128_private_t * dev_priv)
  * CCE command dispatch functions
  */
 
-static void r128_print_dirty(const char *msg, unsigned int flags)
+static void r128_print_dirty(drm_r128_private_t *dev_priv, const char *msg,
+    unsigned int flags)
 {
 	DRM_INFO("%s: (0x%x) %s%s%s%s%s%s%s%s%s\n",
 		 msg,
@@ -580,7 +581,8 @@ static void r128_cce_dispatch_vertex(struct drm_device * dev, struct drm_buf * b
 	DRM_DEBUG("buf=%d nbox=%d\n", buf->idx, sarea_priv->nbox);
 
 	if (0)
-		r128_print_dirty("dispatch_vertex", sarea_priv->dirty);
+		r128_print_dirty(dev_priv, "dispatch_vertex",
+		    sarea_priv->dirty);
 
 	if (buf->used) {
 		buf_priv->dispatched = 1;
@@ -708,7 +710,8 @@ static void r128_cce_dispatch_indices(struct drm_device * dev,
 	DRM_DEBUG("indices: s=%d e=%d c=%d\n", start, end, count);
 
 	if (0)
-		r128_print_dirty("dispatch_indices", sarea_priv->dirty);
+		r128_print_dirty(dev_priv, "dispatch_indices",
+		    sarea_priv->dirty);
 
 	if (start != end) {
 		buf_priv->dispatched = 1;

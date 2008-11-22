@@ -117,72 +117,74 @@ static const struct drm_driver_info inteldrm_driver = {
 int
 inteldrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, inteldrm_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, inteldrm_pciidlist);
 }
 
 void
 inteldrm_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct drm_i915_private	*dev_priv = (struct drm_i915_private *)self;
 	struct pci_attach_args	*pa = aux;
-	struct drm_i915_private	*dev_priv;
-	struct drm_device	*dev = (struct drm_device *)self;
+	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
-	unsigned long		 base, size;
-	int			 ret = 0, mmio_bar = IS_I9XX(dev_priv) ? 0 : 1;
-
-	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	if (dev_priv == NULL)
-		return;
-
-	dev->dev_private = (void *)dev_priv;
+	int			 mmio_bar;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
 
-	/* Add register map (needed for suspend/resume) */
-	base = drm_get_resource_start(dev, mmio_bar);
-	size = drm_get_resource_len(dev, mmio_bar);
+	mmio_bar = IS_I9XX(dev_priv) ? 0 : 1;
 
-	dev_priv->regs = vga_pci_bar_map(dev->vga_softc, base, size, 0);
-	if (dev_priv->regs == NULL)
+	/* Add register map (needed for suspend/resume) */
+	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, mmio_bar);
+	if (bar == NULL) {
+		printf(": can't get BAR info\n");
 		return;
+	}
+
+	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
+	    bar->addr, bar->size, 0);
+	if (dev_priv->regs == NULL) {
+		printf(": can't map mmio space\n");
+		return;
+	}
 
 	/* Init HWS */
 	if (!I915_NEED_GFX_HWS(dev_priv)) {
-		ret = i915_init_phys_hws(dev_priv, dev->pa.pa_dmat);
-		if (ret != 0)
+		if (i915_init_phys_hws(dev_priv, pa->pa_dmat) != 0) {
+			printf(": couldn't initialize hardware status page\n");
 			return;
+		}
 	}
 
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
-	dev->driver = &inteldrm_driver;
-
-	drm_attach(parent, self, pa);
+	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa, parent, self);
 }
 
 int
 inteldrm_detach(struct device *self, int flags)
 {
-	struct drm_device *dev = (struct drm_device *)self;
-	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = (struct drm_i915_private *)self;
 
-	i915_free_hws(dev_priv, dev->pa.pa_dmat);
+	if (dev_priv->drmdev != NULL) {
+		config_detach(dev_priv->drmdev, flags);
+		dev_priv->drmdev = NULL;
+	}
+
+	i915_free_hws(dev_priv, dev_priv->dmat);
 
 	if (dev_priv->regs != NULL)
 		vga_pci_bar_unmap(dev_priv->regs);
 
 	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
 
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-
-	return (drm_detach(self, flags));
+	return (0);
 }
 
 struct cfattach inteldrm_ca = {
-	sizeof(struct drm_device), inteldrm_probe, inteldrm_attach,
-	inteldrm_detach, drm_activate
+	sizeof(struct drm_i915_private), inteldrm_probe, inteldrm_attach,
+	inteldrm_detach
 };
 
 struct cfdriver inteldrm_cd = {

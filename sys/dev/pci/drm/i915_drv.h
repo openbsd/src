@@ -77,12 +77,15 @@ struct mem_block {
 };
 
 typedef struct drm_i915_private {
-	struct vga_pci_bar *regs;
+	struct device		 dev;
+	struct device		*drmdev;
+	bus_dma_tag_t		 dmat;
+
+	struct vga_pci_bar	*regs;
 	drm_local_map_t *sarea;
 
 	drm_i915_sarea_t *sarea_priv;
 	drm_i915_ring_buffer_t ring;
-
 	drm_dma_handle_t *status_page_dmah;
 	void *hw_status_page;
 	dma_addr_t dma_status_page;

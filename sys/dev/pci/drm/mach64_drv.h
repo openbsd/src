@@ -73,6 +73,9 @@ typedef struct drm_mach64_descriptor_ring {
 } drm_mach64_descriptor_ring_t;
 
 typedef struct drm_mach64_private {
+	struct device	 dev;
+	struct device	*drmdev;
+
 	drm_mach64_sarea_t *sarea_priv;
 
 	int is_pci;

@@ -122,6 +122,9 @@ enum savage_family {
 #define SAVAGE_IS_AGP 1
 
 typedef struct drm_savage_private {
+	struct device	 dev;
+	struct device	*drmdev;
+
 	drm_savage_sarea_t *sarea_priv;
 
 	drm_savage_buf_priv_t head, tail;

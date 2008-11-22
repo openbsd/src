@@ -131,22 +131,16 @@ static const struct drm_driver_info mga_driver = {
 int
 mgadrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, mgadrm_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, mgadrm_pciidlist);
 }
 
 void
 mgadrm_attach(struct device *parent, struct device *self, void *aux)
 {
+	drm_mga_private_t	*dev_priv = (drm_mga_private_t *)self;
 	struct pci_attach_args	*pa = aux;
-	struct drm_device	*dev = (struct drm_device *)self;
-	drm_mga_private_t	*dev_priv;
+	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
-
-	dev_priv = drm_calloc(1, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	if (!dev_priv)
-		return;
-
-	dev->dev_private = (void *)dev_priv;
 
 	dev_priv->usec_timeout = MGA_DEFAULT_USEC_TIMEOUT;
 
@@ -154,28 +148,34 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), mgadrm_pciidlist);
 	dev_priv->chipset = id_entry->driver_private;
 
-	dev_priv->mmio_base = drm_get_resource_start(dev, 1);
-	dev_priv->mmio_size = drm_get_resource_len(dev, 1);
+	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 1);
+	if (bar == NULL) {
+		printf(": couldn't get BAR info\n");
+		return;
+	}
 
-	dev->driver = &mga_driver;
-	return drm_attach(parent, self, pa);
+	dev_priv->mmio_base = bar->base;
+	dev_priv->mmio_size = bar->maxsize;
+
+	dev_priv->drmdev = drm_attach_mi(&mga_driver, pa, parent, self);
 }
 
 int
 mgadrm_detach(struct device *self, int flags)
 {
-	struct drm_device	*dev = (struct drm_device *)self;
-	drm_mga_private_t	*dev_priv = dev->dev_private;
+	drm_mga_private_t	*dev_priv = (drm_mga_private_t *)self;
 
-	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
-	dev->dev_private = NULL;
+	if (dev_priv->drmdev != NULL) {
+		config_detach(dev_priv->drmdev, flags);
+		dev_priv->drmdev = NULL;
+	}
 
-	return (drm_detach(self, flags));
+	return (0);
 }
 
 struct cfattach mgadrm_ca = {
-	sizeof(struct drm_device), mgadrm_probe, mgadrm_attach,
-	mgadrm_detach, drm_activate
+	sizeof(drm_mga_private_t), mgadrm_probe, mgadrm_attach,
+	mgadrm_detach
 };
 
 struct cfdriver mgadrm_cd = {

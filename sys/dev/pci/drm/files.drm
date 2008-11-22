@@ -1,39 +1,41 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.6 2008/11/17 00:40:04 oga Exp $
+# $OpenBSD: files.drm,v 1.7 2008/11/22 21:26:48 oga Exp $
 
 # direct rendering modules
-define drmbase
-file   dev/pci/drm/drm_agpsupport.c    drmbase
-file   dev/pci/drm/drm_auth.c          drmbase
-file   dev/pci/drm/drm_bufs.c          drmbase
-file   dev/pci/drm/drm_context.c       drmbase
-file   dev/pci/drm/drm_dma.c           drmbase
-file   dev/pci/drm/drm_drawable.c      drmbase
-file   dev/pci/drm/drm_drv.c           drmbase needs-flag
-file   dev/pci/drm/drm_ioctl.c         drmbase
-file   dev/pci/drm/drm_irq.c           drmbase
-file   dev/pci/drm/drm_lock.c          drmbase
-file   dev/pci/drm/drm_memory.c        drmbase
-file   dev/pci/drm/drm_pci.c           drmbase
-file   dev/pci/drm/drm_scatter.c       drmbase
-file   dev/pci/drm/drm_vm.c            drmbase
+define drmbase {}
+device drm: drmbase
+attach drm at drmbase
+file   dev/pci/drm/drm_agpsupport.c    drm
+file   dev/pci/drm/drm_auth.c          drm
+file   dev/pci/drm/drm_bufs.c          drm
+file   dev/pci/drm/drm_context.c       drm
+file   dev/pci/drm/drm_dma.c           drm
+file   dev/pci/drm/drm_drawable.c      drm
+file   dev/pci/drm/drm_drv.c           drm	needs-flag
+file   dev/pci/drm/drm_ioctl.c         drm
+file   dev/pci/drm/drm_irq.c           drm
+file   dev/pci/drm/drm_lock.c          drm
+file   dev/pci/drm/drm_memory.c        drm
+file   dev/pci/drm/drm_pci.c           drm
+file   dev/pci/drm/drm_scatter.c       drm
+file   dev/pci/drm/drm_vm.c            drm
 
 device	inteldrm: drmbase
-attach	inteldrm at drm
+attach	inteldrm at drmdev 
 file	dev/pci/drm/i915_drv.c		inteldrm
 file	dev/pci/drm/i915_dma.c		inteldrm
 file	dev/pci/drm/i915_irq.c		inteldrm
 file	dev/pci/drm/i915_mem.c		inteldrm
 
 device	machdrm: drmbase
-attach	machdrm at drm
+attach	machdrm at drmdev
 file	dev/pci/drm/mach64_dma.c	machdrm
 file	dev/pci/drm/mach64_drv.c	machdrm
 file	dev/pci/drm/mach64_irq.c	machdrm
 file	dev/pci/drm/mach64_state.c	machdrm
 
 device	mgadrm: drmbase
-attach	mgadrm at drm
+attach	mgadrm at drmdev
 file	dev/pci/drm/mga_dma.c		mgadrm
 file	dev/pci/drm/mga_drv.c		mgadrm
 file	dev/pci/drm/mga_irq.c		mgadrm
@@ -41,7 +43,7 @@ file	dev/pci/drm/mga_state.c		mgadrm
 file	dev/pci/drm/mga_warp.c		mgadrm
 
 device	ragedrm: drmbase
-attach	ragedrm at drm
+attach	ragedrm at drmdev
 file	dev/pci/drm/ati_pcigart.c	ragedrm | radeondrm
 file	dev/pci/drm/r128_cce.c		ragedrm
 file	dev/pci/drm/r128_drv.c		ragedrm
@@ -49,7 +51,7 @@ file	dev/pci/drm/r128_irq.c		ragedrm
 file	dev/pci/drm/r128_state.c	ragedrm
 
 device	radeondrm: drmbase
-attach	radeondrm at drm
+attach	radeondrm at drmdev
 file	dev/pci/drm/r300_cmdbuf.c	radeondrm
 file	dev/pci/drm/radeon_cp.c		radeondrm
 file	dev/pci/drm/radeon_drv.c	radeondrm
@@ -58,17 +60,17 @@ file	dev/pci/drm/radeon_mem.c	radeondrm
 file	dev/pci/drm/radeon_state.c	radeondrm
 
 device	savagedrm: drmbase
-attach	savagedrm at drm
+attach	savagedrm at drmdev
 file	dev/pci/drm/savage_bci.c	savagedrm
 file	dev/pci/drm/savage_drv.c	savagedrm
 file	dev/pci/drm/savage_state.c	savagedrm
 
 device	sisdrm: drmbase
-attach	sisdrm at drm
+attach	sisdrm at drmdev
 file	dev/pci/drm/sis_drv.c		sisdrm
 file	dev/pci/drm/sis_ds.c		sisdrm
 file	dev/pci/drm/sis_mm.c		sisdrm
 
 device	tdfxdrm: drmbase
-attach	tdfxdrm at drm
+attach	tdfxdrm at drmdev
 file	dev/pci/drm/tdfx_drv.c		tdfxdrm

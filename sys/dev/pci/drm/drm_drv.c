@@ -49,24 +49,38 @@ int drm_debug_flag = 0;
 
 int	 drm_firstopen(struct drm_device *);
 int	 drm_lastclose(struct drm_device *);
+void	 drm_attach(struct device *, struct device *, void *);
+int	 drm_probe(struct device *, void *, void *);
+int	 drm_detach(struct device *, int);
+int	 drm_activate(struct device *, enum devact);
+int	 drmprint(void *, const char *);
 
+struct device *
+drm_attach_mi(const struct drm_driver_info *driver, struct pci_attach_args *pa,
+    struct device *vga, struct device *dev)
+{
+	struct drm_attach_args arg;
 
-struct drm_device *drm_units[DRM_MAXUNITS];
+	arg.driver = driver;
+	arg.pa = pa;
+	arg.vga = (struct vga_pci_softc *)vga;
 
-static int init_units = 1;
+	printf("\n");
+	return (config_found(dev, &arg, drmprint));
+}
 
 int
-drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
+drmprint(void *aux, const char *pnp)
 {
-	int unit;
-	drm_pci_id_list_t *id_entry;
+	if (pnp != NULL)
+		printf("drm at %s\n", pnp);
+	return (UNCONF);
+}
 
-	/* first make sure there is place for the device */
-	for (unit=0; unit<DRM_MAXUNITS; unit++)
-		if (drm_units[unit] == NULL)
-			break;
-	if (unit == DRM_MAXUNITS)
-		return 0;
+int
+drm_pciprobe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
+{
+	drm_pci_id_list_t *id_entry;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
@@ -76,32 +90,27 @@ drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	return 0;
 }
 
-void
-drm_attach(struct device *parent, struct device *kdev,
-    struct pci_attach_args *pa)
+int
+drm_probe(struct device *parent, void *match, void *aux)
 {
-	int unit;
-	struct drm_device *dev;
+	struct drm_attach_args *da = aux;
 
-	if (init_units) {
-		for (unit=0; unit<DRM_MAXUNITS; unit++)
-			drm_units[unit] = NULL;
-		init_units = 0;
-	}
+	return (da->driver != NULL ? 1 : 0);
+}
 
+void
+drm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct drm_device	*dev = (struct drm_device *)self;
+	struct drm_attach_args	*da = aux;
+	struct pci_attach_args	*pa = da->pa;
 
-        for (unit=0; unit<DRM_MAXUNITS; unit++)
-		if (drm_units[unit] == NULL)
-			break;
-	if (unit == DRM_MAXUNITS)
-		return;
-
-	dev = drm_units[unit] = (struct drm_device*)kdev;
-	dev->unit = unit;
+	dev->dev_private = parent;
+	dev->driver = da->driver;
+	dev->vga_softc = da->vga;
 
 	/* needed for pci_mapreg_* */
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
-	dev->vga_softc = (struct vga_pci_softc *)parent;
 
 	dev->irq = pa->pa_intrline;
 	dev->pci_domain = 0;
@@ -199,6 +208,15 @@ drm_activate(struct device *self, enum devact act)
 	}
 	return (0);
 }
+
+struct cfattach drm_ca = {
+	sizeof(struct drm_device), drm_probe, drm_attach,
+	drm_detach, drm_activate
+};
+
+struct cfdriver drm_cd = {
+	0, "drm", DV_DULL
+};
 
 drm_pci_id_list_t *
 drm_find_description(int vendor, int device, drm_pci_id_list_t *idlist)

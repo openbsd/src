@@ -35,6 +35,11 @@
 #include "tdfx_drv.h"
 #include "drmP.h"
 
+struct tdfxdrm_softc {
+	struct device	 dev;
+	struct device	*drmdev;
+};
+
 int	tdfxdrm_probe(struct device *, void *, void *);
 void	tdfxdrm_attach(struct device *, struct device *, void *);
 
@@ -64,22 +69,20 @@ static const struct drm_driver_info tdfxdrm_driver = {
 int
 tdfxdrm_probe(struct device *parent, void *match, void *aux)
 {
-	return drm_probe((struct pci_attach_args *)aux, tdfxdrm_pciidlist);
+	return drm_pciprobe((struct pci_attach_args *)aux, tdfxdrm_pciidlist);
 }
 
 void
 tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct drm_device *dev = (struct drm_device *)self;
+	struct tdfxdrm_softc	*dev_priv = (struct tdfxdrm_softc *)self;
+	struct pci_attach_args	*pa = aux;
 
-	dev->driver = &tdfxdrm_driver;
-	return drm_attach(parent, self, pa);
+	dev_priv->drmdev = drm_attach_mi(&tdfxdrm_driver, pa, parent, self);
 }
 
 struct cfattach tdfxdrm_ca = {
-	sizeof(struct drm_device), tdfxdrm_probe, tdfxdrm_attach,
-	drm_detach, drm_activate
+	sizeof(struct tdfxdrm_softc), tdfxdrm_probe, tdfxdrm_attach,
 };
 
 struct cfdriver tdfxdrm_cd = {
