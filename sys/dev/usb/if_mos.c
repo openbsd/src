@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.5 2008/11/12 23:42:40 sthen Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.6 2008/11/22 09:46:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -221,7 +221,7 @@ mos_reg_read_1(struct mos_softc *sc, int reg)
 
 	if (err) {
 		DPRINTF(("mos_reg_read_1 error, reg: %d\n", reg));
-		return (0);
+		return (-1);
 	}
 
 	return (val);
@@ -249,7 +249,7 @@ mos_reg_read_2(struct mos_softc *sc, int reg)
 
 	if (err) {
 		DPRINTF(("mos_reg_read_2 error, reg: %d\n", reg));
-		return(0);
+		return (-1);
 	}
 
 	return(UGETW(val));
@@ -277,7 +277,7 @@ mos_reg_write_1(struct mos_softc *sc, int reg, int aval)
 
 	if (err) {
 		DPRINTF(("mos_reg_write_1 error, reg: %d\n", reg));
-		return(-1);
+		return (-1);
 	}
 
 	return(0);
@@ -293,7 +293,7 @@ mos_reg_write_2(struct mos_softc *sc, int reg, int aval)
 	USETW(val, aval);
 
 	if (sc->mos_dying)
-		return(0);
+		return (0);
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = MOS_UR_WRITEREG;
@@ -305,10 +305,10 @@ mos_reg_write_2(struct mos_softc *sc, int reg, int aval)
 
 	if (err) {
 		DPRINTF(("mos_reg_write_2 error, reg: %d\n", reg));
-		return(-1);
+		return (-1);
 	}
 
-	return(0);
+	return (0);
 }
 
 int
@@ -330,10 +330,10 @@ mos_readmac(struct mos_softc *sc, u_char *mac)
 
 	if (err) {
 		DPRINTF(("mos_readmac error"));
-		return(-1);
+		return (-1);
 	}
 
-	return(0);
+	return (0);
 }
 
 int
@@ -355,10 +355,10 @@ mos_writemac(struct mos_softc *sc, u_char *mac)
 
 	if (err) {
 		DPRINTF(("mos_writemac error"));
-		return(-1);
+		return (-1);
 	}
 
-	return(0);
+	return (0);
 }
 
 int
@@ -460,7 +460,16 @@ mos_miibus_statchg(struct device *dev)
 	struct mii_data		*mii = GET_MII(sc);
 	int			val, err;
 
+	mos_lock_mii(sc);
+
+	/* disable RX, TX prior to changing FDX, SPEEDSEL */
 	val = mos_reg_read_1(sc, MOS_CTL);
+	val &= ~(MOS_CTL_TX_ENB | MOS_CTL_RX_ENB);
+	mos_reg_write_1(sc, MOS_CTL, val);
+
+	/* reset register which counts dropped frames */
+	mos_reg_write_1(sc, MOS_FRAME_DROP_CNT, 0);
+
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 		val |= MOS_CTL_FDX_ENB;
 	else
@@ -475,7 +484,11 @@ mos_miibus_statchg(struct device *dev)
 			break;
 	}
 
+	/* re-enable TX, RX */
+	val |= (MOS_CTL_TX_ENB | MOS_CTL_RX_ENB);
 	err = mos_reg_write_1(sc, MOS_CTL, val);
+	mos_unlock_mii(sc);
+
 	if (err) {
 		printf("%s: media change failed\n", sc->mos_dev.dv_xname);
 		return;
@@ -572,6 +585,9 @@ mos_reset(struct mos_softc *sc)
 	/* Disable RX, TX, promiscuous and allmulticast mode */
 	mos_reg_write_1(sc, MOS_CTL, ctl);
 
+	/* Reset frame drop counter register to zero */
+	mos_reg_write_1(sc, MOS_FRAME_DROP_CNT, 0);
+
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
 	return;
@@ -580,17 +596,15 @@ mos_reset(struct mos_softc *sc)
 void
 mos_chip_init(struct mos_softc *sc)
 {
-	uByte	val;
 	int	i;
 
 	/*
 	 * Rev.C devices have a pause threshold register which needs to be set
 	 * at startup.
 	 */
-	val = mos_reg_read_1(sc, MOS_MAC0);
-	if (val) {
+	if (mos_reg_read_1(sc, MOS_PAUSE_TRHD) != -1) {
 		for (i=0;i<MOS_PAUSE_REWRITES;i++)
-			mos_reg_write_1(sc, MOS_CTL, 0);
+			mos_reg_write_1(sc, MOS_PAUSE_TRHD, 0);
 	}
 
 	sc->mos_phyaddrs[0] = 1; sc->mos_phyaddrs[1] = 0xFF;
@@ -654,8 +668,7 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->mos_iface);
 
-	sc->mos_bufsz = (sc->mos_udev->speed == USB_SPEED_HIGH) ?
-		    MOS_MAX_BUFSZ : MOS_MIN_BUFSZ;
+	sc->mos_bufsz = MOS_BUFSZ;
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -923,6 +936,7 @@ mos_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct mos_softc	*sc = c->mos_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	u_char			*buf = c->mos_buf;
+	u_int8_t		rxstat;
 	u_int32_t		total_len;
 	u_int16_t		pktlen = 0;
 	struct mbuf		*m;
@@ -953,12 +967,26 @@ mos_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (total_len <= 1)
 		goto done;
 
-	/* status byte at the end */
+	/* evaluate status byte at the end */
 	pktlen = total_len - 1;
+	rxstat = buf[pktlen] & MOS_RXSTS_MASK;
 
-	/* 0x20 seems to indicate that the packet is OK */
-	if ( ( pktlen < sizeof(struct ether_header) )
-	    || ( buf[pktlen] != 0x20 ) ) {
+	if (rxstat != MOS_RXSTS_VALID) {
+		DPRINTF(("%s: erroneous frame received: ", 
+		    sc->mos_dev.dv_xname));
+		if (rxstat & MOS_RXSTS_SHORT_FRAME)
+			DPRINTF(("frame size less than 64 bytes\n"));
+		if (rxstat & MOS_RXSTS_LARGE_FRAME)
+			DPRINTF(("frame size larger than 1532 bytes\n"));
+		if (rxstat & MOS_RXSTS_CRC_ERROR)
+			DPRINTF(("CRC error\n"));
+		if (rxstat & MOS_RXSTS_ALIGN_ERROR)
+			DPRINTF(("alignment error\n"));
+		ifp->if_ierrors++;
+		goto done;
+	}
+
+	if ( pktlen < sizeof(struct ether_header) ) {
 		ifp->if_ierrors++;
 		goto done;
 	}
@@ -1100,7 +1128,7 @@ mos_tick_task(void *xsc)
 			 sc->mos_dev.dv_xname, __func__));
 		sc->mos_link++;
 		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-			   mos_start(ifp);
+			mos_start(ifp);
 	}
 
 	timeout_add_sec(&sc->mos_stat_ch, 1);
@@ -1217,7 +1245,9 @@ mos_init(void *xsc)
 		return;
 	}
 
-	/* Set transmitter IPG values */
+	/* Read and set transmitter IPG values */
+	sc->mos_ipgs[0] = mos_reg_read_1(sc, MOS_IPG0);
+	sc->mos_ipgs[1] = mos_reg_read_1(sc, MOS_IPG1);
 	mos_reg_write_1(sc, MOS_IPG0, sc->mos_ipgs[0]);
 	mos_reg_write_1(sc, MOS_IPG1, sc->mos_ipgs[1]);
 

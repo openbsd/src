@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mosreg.h,v 1.2 2008/11/02 23:50:48 jsg Exp $	*/
+/*	$OpenBSD: if_mosreg.h,v 1.3 2008/11/22 09:46:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -69,6 +69,7 @@
 #define MOS_MAC5		0x14
 #define MOS_MAC			MOS_MAC0
 /* apparently only available on hardware rev. C */
+#define MOS_FRAME_DROP_CNT	0x15
 #define MOS_PAUSE_TRHD		0x16
 
 #define MOS_PHYCTL_PHYADDR	0x1f
@@ -94,6 +95,18 @@
 /* 0 = PHY controls speed/duplex mode, 1 = bridge controls speed/duplex mode */
 #define MOS_CTL_BS_ENB		0x80
 
+#define MOS_RXSTS_SHORT_FRAME	0x01
+#define MOS_RXSTS_LENGTH_ERROR	0x02
+#define MOS_RXSTS_ALIGN_ERROR	0x04
+#define MOS_RXSTS_CRC_ERROR	0x08
+#define MOS_RXSTS_LARGE_FRAME	0x10
+#define MOS_RXSTS_VALID		0x20
+/*
+ * The EtherType field of an Ethernet frame can contain values other than
+ * the frame length, hence length errors are ignored.
+ */
+#define MOS_RXSTS_MASK		0x3d
+
 #define MOS_PAUSE_TRHD_DEFAULT	0
 #define MOS_PAUSE_REWRITES	3
 
@@ -102,8 +115,8 @@
 #define MOS_RX_LIST_CNT		1
 #define MOS_TX_LIST_CNT		1
 
-#define MOS_MIN_BUFSZ		2048
-#define MOS_MAX_BUFSZ		16384
+/* Maximum size of a fast ethernet frame plus one byte for the status */
+#define MOS_BUFSZ	 	(ETHER_MAX_LEN+1)
 
 /*
  * USB endpoints.
