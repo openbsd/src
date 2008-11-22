@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.46 2008/10/01 19:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.47 2008/11/22 10:32:20 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -117,7 +117,7 @@ wsdisplay*	at vga?
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
-#pccom*	at pcmcia?			# PCMCIA modem cards
+#com*	at pcmcia?			# PCMCIA modem cards
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
