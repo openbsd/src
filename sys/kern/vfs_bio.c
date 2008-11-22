@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.107 2008/06/14 00:49:35 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.108 2008/11/22 12:40:39 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -261,23 +261,22 @@ void
 buf_put(struct buf *bp)
 {
 	splassert(IPL_BIO);
+
 #ifdef DIAGNOSTIC
 	if (bp->b_pobj != NULL)
 		KASSERT(bp->b_bufsize > 0);
-#endif
-#ifdef DIAGNOSTIC
+	if (ISSET(bp->b_flags, B_DELWRI))
+		panic("buf_put: releasing dirty buffer");
 	if (bp->b_freelist.tqe_next != NOLIST &&
 	    bp->b_freelist.tqe_next != (void *)-1)
 		panic("buf_put: still on the free list");
-
 	if (bp->b_vnbufs.le_next != NOLIST &&
 	    bp->b_vnbufs.le_next != (void *)-1)
 		panic("buf_put: still on the vnode list");
-#endif
-#ifdef DIAGNOSTIC
 	if (!LIST_EMPTY(&bp->b_dep))
 		panic("buf_put: b_dep is not empty");
 #endif
+
 	LIST_REMOVE(bp, b_list);
 	bcstats.numbufs--;
 
@@ -1018,22 +1017,7 @@ getsome:
 	bp->b_flags = 0;
 	buf_acquire(bp);
 
-#ifdef DIAGNOSTIC
-	if (ISSET(bp->b_flags, B_DELWRI))
-		panic("Dirty buffer on BQ_CLEAN");
-#endif
-
-	/* disassociate us from our vnode, if we had one... */
-	if (bp->b_vp)
-		brelvp(bp);
-
 	splx(s);
-
-#ifdef DIAGNOSTIC
-	/* CLEAN buffers must have no dependencies */ 
-	if (LIST_FIRST(&bp->b_dep) != NULL)
-		panic("BQ_CLEAN has buffer with dependencies");
-#endif
 
 	/* clear out various other fields */
 	bp->b_dev = NODEV;
