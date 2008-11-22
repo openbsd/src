@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.14 2007/03/20 04:00:32 tedu Exp $ */
+/*	$OpenBSD: cmd.c,v 1.15 2008/11/22 11:18:53 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.14 2007/03/20 04:00:32 tedu Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.15 2008/11/22 11:18:53 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ Xenable(cmd_t *cmd)
 	if (strlen(cmd->args) == 0)
 		printf("Attr, DevNo or Dev expected\n");
 	else if (attr(cmd->args, &a) == 0)
-		common_attr(cmd->args, a, UC_DISABLE);
+		common_attr(cmd->args, a, UC_ENABLE);
 	else if (number(cmd->args, &a) == 0)
 		enable(a);
 	else if (device(cmd->args, &a, &unit, &state) == 0)
