@@ -513,7 +513,6 @@
 ./usr/include/dev/pci/drm/drm_atomic.h
 ./usr/include/dev/pci/drm/drm_internal.h
 ./usr/include/dev/pci/drm/drm_linux_list.h
-./usr/include/dev/pci/drm/drm_pciids.h
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
 ./usr/include/dev/pci/drm/i915_drv.h
