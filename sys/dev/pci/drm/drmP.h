@@ -265,7 +265,6 @@ typedef struct drm_pci_id_list
 	int vendor;
 	int device;
 	long driver_private;
-	char *name;
 } drm_pci_id_list_t;
 
 struct drm_file;

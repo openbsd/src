@@ -35,14 +35,16 @@ void	sisdrm_attach(struct device *, struct device *, void *);
 int	sisdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 static drm_pci_id_list_t sis_pciidlist[] = {
-	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300, 0, "SiS 300/305"},
-	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5300, 0, "SiS 540"},
-	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6300, 0, "SiS 630"},
-	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6330, SIS_CHIP_315, "SiS 661"},
-	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7300, 0, "SiS 730"},
-	{PCI_VENDOR_XGI, 0x0042, SIS_CHIP_315, "Volari Unknown"},
-	{PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_V3XT, SIS_CHIP_315, "Volari V3XT/V5/V8"},
-	{0, 0, 0, NULL}
+	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300},
+	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5300},
+	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6300},
+	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6330},
+	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7300},
+	{PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_V3XT},
+#if 0 /* do these actually EXIST? */
+	{PCI_VENDOR_XGI, 0x0042, SIS_CHIP_315},
+#endif
+	{0, 0, 0}
 };
 
 static const struct drm_driver_info sis_driver = {
