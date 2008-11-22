@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.184 2008/11/09 15:11:19 oga Exp $
+#	$OpenBSD: files.i386,v 1.185 2008/11/22 17:45:20 oga Exp $
 #
 # new style config file for i386 architecture
 #
@@ -11,6 +11,7 @@ maxusers 2 16 100
 major	{ccd = 16}
 
 file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/bus_space.c
 file	arch/i386/i386/conf.c
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb

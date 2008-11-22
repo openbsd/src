@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2008/11/21 23:16:16 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2008/11/22 17:45:20 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -201,7 +201,6 @@ void	bus_space_read_multi_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 
 void	bus_space_read_region_1(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int8_t *, bus_size_t);
-
 void	bus_space_read_region_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t *, bus_size_t);
 void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
@@ -245,10 +244,8 @@ void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
 
 void	bus_space_write_1(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int8_t);
-
 void	bus_space_write_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t);
-
 void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t);
 
@@ -313,7 +310,6 @@ void	bus_space_write_region_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int16_t *, bus_size_t);
 void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int32_t *, bus_size_t);
-
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
