@@ -396,7 +396,6 @@ typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
 typedef struct drm_local_map {
 	TAILQ_ENTRY(drm_local_map)	 link;	/* Link for map list */
-	struct vga_pci_bar		*bsr;	/* Vga BAR, if applicable */
 	drm_dma_handle_t		*dmah;	/* Handle to DMA mem */
 	void				*handle;/* KVA, if mapped */
 	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
@@ -493,9 +492,6 @@ struct drm_driver_info {
 	u_int	flags;
 };
 
-/* Length for the array of resource pointers for drm_get_resource_*. */
-#define DRM_MAX_PCI_RESOURCE	3
-
 /** 
  * DRM device functions structure
  */
@@ -506,7 +502,6 @@ struct drm_device {
 
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
-	struct vga_pci_softc *vga_softc;
 	
 	int		  if_version;	/* Highest interface version set */
 				/* Locks */
@@ -539,9 +534,6 @@ struct drm_device {
 	struct pci_attach_args  pa;
 	int		  unit;		/* drm unit number */
 	void		  *irqh;	/* Handle from bus_setup_intr      */
-
-	/* Storage of resource pointers for drm_get_resource_* */
-	struct vga_pci_bar	  *pcir[DRM_MAX_PCI_RESOURCE];
 
 	int		  pci_domain;
 	int		  pci_bus;
@@ -580,8 +572,7 @@ extern int	drm_debug_flag;
 /* Device setup support (drm_drv.c) */
 int	drm_pciprobe(struct pci_attach_args *, drm_pci_id_list_t * );
 struct device	*drm_attach_mi(const struct drm_driver_info *,
-		     struct pci_attach_args *pa, struct device *,
-		     struct device *);
+		     struct pci_attach_args *pa, struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
@@ -623,8 +614,6 @@ int	drm_lock_take(struct drm_lock_data *, unsigned int);
 int	drm_lock_free(struct drm_lock_data *, unsigned int);
 
 /* Buffer management support (drm_bufs.c) */
-unsigned long drm_get_resource_start(struct drm_device *, unsigned int);
-unsigned long drm_get_resource_len(struct drm_device *, unsigned int);
 void	drm_rmmap(struct drm_device *, drm_local_map_t *);
 void	drm_rmmap_locked(struct drm_device *, drm_local_map_t *);
 int	drm_order(unsigned long);

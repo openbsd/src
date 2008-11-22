@@ -122,10 +122,15 @@ enum savage_family {
 #define SAVAGE_IS_AGP 1
 
 typedef struct drm_savage_private {
-	struct device	 dev;
-	struct device	*drmdev;
+	struct device		 dev;
+	struct device		*drmdev;
+	drm_savage_sarea_t	*sarea_priv;
 
-	drm_savage_sarea_t *sarea_priv;
+	bus_space_tag_t		 bst;
+	bus_space_handle_t	 bsh;
+	bus_addr_t		 fb_base;
+	bus_size_t		 fb_size;
+	bus_addr_t		 aperture_base;
 
 	drm_savage_buf_priv_t head, tail;
 
@@ -152,7 +157,6 @@ typedef struct drm_savage_private {
 
 	/* memory regions in physical memory */
 	drm_local_map_t *sarea;
-	drm_local_map_t *mmio;
 	drm_local_map_t *fb;
 	drm_local_map_t *aperture;
 	drm_local_map_t *status;
@@ -486,8 +490,10 @@ extern void savage_emit_clip_rect_s4(drm_savage_private_t *dev_priv,
 /*
  * access to MMIO
  */
-#define SAVAGE_READ(reg)	DRM_READ32(  dev_priv->mmio, (reg) )
-#define SAVAGE_WRITE(reg)	DRM_WRITE32( dev_priv->mmio, (reg) )
+#define SAVAGE_READ(reg)	bus_space_read_4(dev_priv->bst,		\
+				    dev_priv->bsh, (reg))
+#define SAVAGE_WRITE(reg, val)	bus_space_write_4(dev_priv->bst,	\
+				    dev_priv->bsh, (reg), (val))
 
 /*
  * access to the burst command interface (BCI)

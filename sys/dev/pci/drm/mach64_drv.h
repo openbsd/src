@@ -73,9 +73,10 @@ typedef struct drm_mach64_descriptor_ring {
 } drm_mach64_descriptor_ring_t;
 
 typedef struct drm_mach64_private {
-	struct device	 dev;
-	struct device	*drmdev;
+	struct device		 dev;
+	struct device		*drmdev;
 
+	struct vga_pci_bar	*regs;
 	drm_mach64_sarea_t *sarea_priv;
 
 	int is_pci;
@@ -107,7 +108,6 @@ typedef struct drm_mach64_private {
 
 	drm_local_map_t *sarea;
 	drm_local_map_t *fb;
-	drm_local_map_t *mmio;
 	drm_local_map_t *ring_map;
 	drm_local_map_t *dev_buffers;	/* this is a pointer to a structure in dev */
 	drm_local_map_t *agp_textures;
@@ -487,8 +487,10 @@ extern void mach64_driver_irq_uninstall(struct drm_device *dev);
 #define MACH64_DATATYPE_AYUV444				14
 #define MACH64_DATATYPE_ARGB4444			15
 
-#define MACH64_READ(reg)	DRM_READ32(dev_priv->mmio, (reg) )
-#define MACH64_WRITE(reg,val)	DRM_WRITE32(dev_priv->mmio, (reg), (val) )
+#define MACH64_READ(reg)	bus_space_read_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define MACH64_WRITE(reg,val)	bus_space_write_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
 
 #define DWMREG0		0x0400
 #define DWMREG0_END	0x07ff

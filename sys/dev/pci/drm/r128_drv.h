@@ -76,9 +76,10 @@ typedef struct drm_r128_ring_buffer {
 } drm_r128_ring_buffer_t;
 
 typedef struct drm_r128_private {
-	struct device	 dev;
-	struct device	*drmdev;
+	struct device		 dev;
+	struct device		*drmdev;
 
+	struct vga_pci_bar	*regs;
 	drm_r128_ring_buffer_t ring;
 	drm_r128_sarea_t *sarea_priv;
 
@@ -119,7 +120,6 @@ typedef struct drm_r128_private {
 	u32 span_pitch_offset_c;
 
 	drm_local_map_t *sarea;
-	drm_local_map_t *mmio;
 	drm_local_map_t *cce_ring;
 	drm_local_map_t *ring_rptr;
 	drm_local_map_t *agp_textures;
@@ -399,10 +399,14 @@ extern long r128_compat_ioctl(struct file *filp, unsigned int cmd,
 
 #define R128_PCIGART_TABLE_SIZE         32768
 
-#define R128_READ(reg)		DRM_READ32(  dev_priv->mmio, (reg) )
-#define R128_WRITE(reg,val)	DRM_WRITE32( dev_priv->mmio, (reg), (val) )
-#define R128_READ8(reg)		DRM_READ8(   dev_priv->mmio, (reg) )
-#define R128_WRITE8(reg,val)	DRM_WRITE8(  dev_priv->mmio, (reg), (val) )
+#define R128_READ(reg)		bus_space_read_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define R128_WRITE(reg,val)	bus_space_write_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
+#define R128_READ8(reg)		bus_space_read_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define R128_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
 
 #define R128_WRITE_PLL(addr,val)					\
 do {									\

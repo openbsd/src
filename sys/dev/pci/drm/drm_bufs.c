@@ -37,7 +37,6 @@
 
 #include "drmP.h"
 
-int	drm_alloc_resource(struct drm_device *, int);
 int	drm_do_addbufs_agp(struct drm_device *, drm_buf_desc_t *);
 int	drm_do_addbufs_pci(struct drm_device *, drm_buf_desc_t *);
 int	drm_do_addbufs_sg(struct drm_device *, drm_buf_desc_t *);
@@ -58,49 +57,6 @@ drm_order(unsigned long size)
 		++order;
 
 	return order;
-}
-
-/* Allocation of PCI memory resources (framebuffer, registers, etc.) for
- * drm_get_resource_*.  Note that they are not RF_ACTIVE, so there's no virtual
- * address for accessing them.  Cleaned up at unload.
- */
-int
-drm_alloc_resource(struct drm_device *dev, int resource)
-{
-	if (resource >= DRM_MAX_PCI_RESOURCE) {
-		DRM_ERROR("Resource %d too large\n", resource);
-		return 1;
-	}
-
-	if (dev->pcir[resource] != NULL)
-		return 0;
-
-	dev->pcir[resource] = vga_pci_bar_info(dev->vga_softc, resource);
-	if (dev->pcir[resource] == NULL) {
-		DRM_ERROR("Can't get bar info for resource 0x%x\n", resource);
-		return 1;
-	}
-
-	return 0;
-}
-
-
-unsigned long
-drm_get_resource_start(struct drm_device *dev, unsigned int resource)
-{
-	if (drm_alloc_resource(dev, resource) != 0)
-		return 0;
-
-	return dev->pcir[resource]->base;
-}
-
-unsigned long
-drm_get_resource_len(struct drm_device *dev, unsigned int resource)
-{
-	if (drm_alloc_resource(dev, resource) != 0)
-		return 0;
-
-	return dev->pcir[resource]->maxsize;
 }
 
 int

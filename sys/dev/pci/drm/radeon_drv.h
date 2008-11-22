@@ -221,9 +221,10 @@ struct radeon_virt_surface {
 #define RADEON_PURGE_EMITED	(1 < 1)
 
 typedef struct drm_radeon_private {
-	struct device	 dev;
-	struct device	*drmdev;
+	struct device		 dev;
+	struct device		*drmdev;
 
+	struct vga_pci_bar	*regs;
 	drm_radeon_ring_buffer_t ring;
 	drm_radeon_sarea_t *sarea_priv;
 
@@ -282,7 +283,6 @@ typedef struct drm_radeon_private {
 	unsigned long gart_textures_offset;
 
 	drm_local_map_t *sarea;
-	drm_local_map_t *mmio;
 	drm_local_map_t *cp_ring;
 	drm_local_map_t *ring_rptr;
 	drm_local_map_t *gart_textures;
@@ -313,6 +313,7 @@ typedef struct drm_radeon_private {
 	/* starting from here on, data is preserved accross an open */
 	uint32_t flags;		/* see radeon_chip_flags */
 	unsigned long fb_aper_offset;
+	unsigned long fb_aper_size;
 
 	int num_gb_pipes;
 	int track_flush;
@@ -1227,10 +1228,14 @@ extern int r300_do_cp_cmdbuf(struct drm_device *dev,
 
 #define RADEON_PCIGART_TABLE_SIZE      (32*1024)
 
-#define RADEON_READ(reg)    DRM_READ32(  dev_priv->mmio, (reg) )
-#define RADEON_WRITE(reg,val)  DRM_WRITE32( dev_priv->mmio, (reg), (val) )
-#define RADEON_READ8(reg)	DRM_READ8(  dev_priv->mmio, (reg) )
-#define RADEON_WRITE8(reg,val)	DRM_WRITE8( dev_priv->mmio, (reg), (val) )
+#define RADEON_READ(reg)	bus_space_read_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define RADEON_WRITE(reg,val)	bus_space_write_4(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
+#define RADEON_READ8(reg)	bus_space_read_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg))
+#define RADEON_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
+				    dev_priv->regs->bsh, (reg), (val))
 
 #define RADEON_WRITE_PLL( addr, val )					\
 do {									\

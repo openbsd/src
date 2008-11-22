@@ -102,8 +102,22 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	drm_mach64_private_t	*dev_priv = (drm_mach64_private_t *)self;
 	struct pci_attach_args	*pa = aux;
+	struct vga_pci_bar	*bar;
 
-	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa, parent, self);
+	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 2);
+	if (bar == NULL) {
+		printf(": can't get BAR info\n");
+		return;
+	}
+
+	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
+	    bar->addr, bar->size, 0);
+	if (dev_priv->regs == NULL) {
+		printf(": can't map mmio space\n");
+		return;
+	}
+
+	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa, self);
 }
 
 int
@@ -115,6 +129,9 @@ machdrm_detach(struct device *self, int flags)
 		config_detach(dev_priv->drmdev, flags);
 		dev_priv->drmdev = NULL;
 	}
+
+	if (dev_priv->regs != NULL)
+		vga_pci_bar_unmap(dev_priv->regs);
 
 	return (0);
 }

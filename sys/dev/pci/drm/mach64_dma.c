@@ -1044,12 +1044,6 @@ static int mach64_do_dma_init(struct drm_device * dev, drm_mach64_init_t * init)
 		mach64_do_cleanup_dma(dev);
 		return EINVAL;
 	}
-	dev_priv->mmio = drm_core_findmap(dev, init->mmio_offset);
-	if (!dev_priv->mmio) {
-		DRM_ERROR("can not find mmio map!\n");
-		mach64_do_cleanup_dma(dev);
-		return EINVAL;
-	}
 
 	dev_priv->ring_map = drm_core_findmap(dev, init->ring_offset);
 	if (!dev_priv->ring_map) {

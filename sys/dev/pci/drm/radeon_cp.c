@@ -1426,17 +1426,15 @@ void radeon_do_release(struct drm_device * dev)
 		}
 
 		/* Disable *all* interrupts */
-		if (dev_priv->mmio)	/* remove this after permanent addmaps */
-			RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
+		RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
 
-		if (dev_priv->mmio) {	/* remove all surfaces */
-			for (i = 0; i < RADEON_MAX_SURFACES; i++) {
-				RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * i, 0);
-				RADEON_WRITE(RADEON_SURFACE0_LOWER_BOUND +
-					     16 * i, 0);
-				RADEON_WRITE(RADEON_SURFACE0_UPPER_BOUND +
-					     16 * i, 0);
-			}
+		/* remove all surfaces */
+		for (i = 0; i < RADEON_MAX_SURFACES; i++) {
+			RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * i, 0);
+			RADEON_WRITE(RADEON_SURFACE0_LOWER_BOUND +
+				     16 * i, 0);
+			RADEON_WRITE(RADEON_SURFACE0_UPPER_BOUND +
+				     16 * i, 0);
 		}
 
 		/* Free memory heap structures */
@@ -1725,16 +1723,8 @@ int radeon_driver_firstopen(struct drm_device *dev)
 
 	dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
 
-	ret = drm_addmap(dev, drm_get_resource_start(dev, 2),
-			 drm_get_resource_len(dev, 2), _DRM_REGISTERS,
-			 _DRM_READ_ONLY, &dev_priv->mmio);
-	if (ret != 0)
-		return ret;
-
-	dev_priv->fb_aper_offset = drm_get_resource_start(dev, 0);
-	ret = drm_addmap(dev, dev_priv->fb_aper_offset,
-			 drm_get_resource_len(dev, 0), _DRM_FRAME_BUFFER,
-			 _DRM_WRITE_COMBINING, &map);
+	ret = drm_addmap(dev, dev_priv->fb_aper_offset, dev_priv->fb_aper_size,
+	    _DRM_FRAME_BUFFER, _DRM_WRITE_COMBINING, &map);
 	if (ret != 0)
 		return ret;
 

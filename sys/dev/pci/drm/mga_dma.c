@@ -663,16 +663,8 @@ static int mga_do_dma_bootstrap(struct drm_device *dev,
 	dev_priv->used_new_dma_init = 1;
 
 	/* The first steps are the same for both PCI and AGP based DMA.  Map
-	 * the cards MMIO registers and map a status page.
+	 * a status page. The mmio registers were mapped on attach.
 	 */
-	err = drm_addmap(dev, dev_priv->mmio_base, dev_priv->mmio_size,
-			 _DRM_REGISTERS, _DRM_READ_ONLY, & dev_priv->mmio);
-	if (err) {
-		DRM_ERROR("Unable to map MMIO region: %d\n", err);
-		return err;
-	}
-
-
 	err = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
 			 _DRM_READ_ONLY | _DRM_LOCKED | _DRM_KERNEL,
 			 & dev_priv->status);
@@ -792,11 +784,6 @@ static int mga_do_init_dma(struct drm_device * dev, drm_mga_init_t * init)
 		dev_priv->status = drm_core_findmap(dev, init->status_offset);
 		if (!dev_priv->status) {
 			DRM_ERROR("failed to find status page!\n");
-			return EINVAL;
-		}
-		dev_priv->mmio = drm_core_findmap(dev, init->mmio_offset);
-		if (!dev_priv->mmio) {
-			DRM_ERROR("failed to find mmio region!\n");
 			return EINVAL;
 		}
 		dev_priv->warp = drm_core_findmap(dev, init->warp_offset);
@@ -936,7 +923,6 @@ static int mga_do_cleanup_dma(struct drm_device *dev, int full_cleanup)
 	dev->agp_buffer_map = NULL;
 
 	if (full_cleanup) {
-		dev_priv->mmio = NULL;
 		dev_priv->status = NULL;
 		dev_priv->used_new_dma_init = 0;
 	}

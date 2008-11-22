@@ -1920,9 +1920,6 @@ static void radeon_cp_dispatch_stipple(struct drm_device * dev, u32 * stipple)
 static void radeon_apply_surface_regs(int surf_index,
 				      drm_radeon_private_t *dev_priv)
 {
-	if (!dev_priv->mmio)
-		return;
-
 	radeon_do_cp_idle(dev_priv);
 
 	RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * surf_index,
@@ -3054,7 +3051,7 @@ int radeon_cp_getparam(struct drm_device *dev, void *data, struct drm_file *file
 		value = dev_priv->gart_vm_start;
 		break;
 	case RADEON_PARAM_REGISTER_HANDLE:
-		value = dev_priv->mmio->offset;
+		value = 0;
 		break;
 	case RADEON_PARAM_STATUS_HANDLE:
 		value = dev_priv->ring_rptr_offset;

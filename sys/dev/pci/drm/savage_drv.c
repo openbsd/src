@@ -92,13 +92,83 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	drm_savage_private_t	*dev_priv = (drm_savage_private_t *)self;
 	struct pci_attach_args	*pa = aux;
+	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
+	unsigned long		 mmio_base;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), savagedrm_pciidlist);
 	dev_priv->chipset = (enum savage_family)id_entry->driver_private;
 
-	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa, parent, self);
+	if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 0);	
+		if (bar == NULL) {
+			printf(": can't find fb info\n");
+			return;
+		}
+		dev_priv->fb_base = bar->base;
+		dev_priv->fb_size = SAVAGE_FB_SIZE_S3;
+		mmio_base = dev_priv->fb_base + dev_priv->fb_size;
+		dev_priv->aperture_base = dev_priv->fb_base +
+		    SAVAGE_APERTURE_OFFSET;
+		/* this should always be true */
+		if (bar->size != 0x08000000) {
+			printf(": strange pci resource len $08lx\n", bar->size);
+			return;
+		}
+	} else if (dev_priv->chipset != S3_SUPERSAVAGE &&
+		   dev_priv->chipset != S3_SAVAGE2000) {
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 0);	
+		if (bar == NULL) {
+			printf(": can't find mmio info\n");
+			return;
+		}
+		mmio_base = bar->base;
+
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 1);	
+		if (bar == NULL) {
+			printf(": can't find fb info\n");
+			return;
+		}
+		dev_priv->fb_base = bar->base;
+		dev_priv->fb_size = SAVAGE_FB_SIZE_S4;
+		dev_priv->aperture_base = dev_priv->fb_base +
+		    SAVAGE_APERTURE_OFFSET;
+		/* this should always be true */
+		if (bar->size != 0x08000000) {
+			printf(": strange pci resource len $08lx\n", bar->size);
+			return;
+		}
+	} else {
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 0);	
+		if (bar == NULL) {
+			printf(": can't find mmio info\n");
+			return;
+		}
+		mmio_base = bar->base;
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 1);	
+		if (bar == NULL) {
+			printf(": can't find fb info\n");
+			return;
+		}
+		dev_priv->fb_base = bar->base;
+		dev_priv->fb_size = bar->size;
+		bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 2);	
+		if (bar == NULL) {
+			printf(": can't find aperture info\n");
+			return;
+		}
+		dev_priv->aperture_base = bar->base;
+	}
+
+	if (bus_space_map(pa->pa_memt, mmio_base, SAVAGE_MMIO_SIZE,
+	    BUS_SPACE_MAP_LINEAR, &dev_priv->bsh) != 0) {
+		printf(": can't map mmio space\n");
+		return;
+	}
+	dev_priv->bst = pa->pa_memt;
+
+	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa, self);
 }
 
 int
@@ -110,6 +180,8 @@ savagedrm_detach(struct device *self, int flags)
 		config_detach(dev_priv->drmdev, flags);
 		dev_priv->drmdev = NULL;
 	}
+
+	bus_space_unmap(dev_priv->bst, dev_priv->bsh, SAVAGE_MMIO_SIZE);
 
 	return (0);
 }

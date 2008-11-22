@@ -458,12 +458,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 		return EINVAL;
 	}
 
-	dev_priv->mmio = drm_core_findmap(dev, init->mmio_offset);
-	if (!dev_priv->mmio) {
-		DRM_ERROR("could not find mmio region!\n");
-		r128_do_cleanup_cce(dev);
-		return EINVAL;
-	}
 	dev_priv->cce_ring = drm_core_findmap(dev, init->ring_offset);
 	if (!dev_priv->cce_ring) {
 		DRM_ERROR("could not find cce ring region!\n");

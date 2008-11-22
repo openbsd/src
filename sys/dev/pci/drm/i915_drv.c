@@ -135,7 +135,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Add register map (needed for suspend/resume) */
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent,
-	    IS_I9XX(dev_priv) ? 0 : 1);
+	    (IS_I9XX(dev_priv) ? 0 : 1));
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
 		return;
@@ -158,7 +158,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
-	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa, parent, self);
+	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa, self);
 }
 
 int

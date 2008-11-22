@@ -57,13 +57,12 @@ int	 drmprint(void *, const char *);
 
 struct device *
 drm_attach_mi(const struct drm_driver_info *driver, struct pci_attach_args *pa,
-    struct device *vga, struct device *dev)
+    struct device *dev)
 {
 	struct drm_attach_args arg;
 
 	arg.driver = driver;
 	arg.pa = pa;
-	arg.vga = (struct vga_pci_softc *)vga;
 
 	printf("\n");
 	return (config_found(dev, &arg, drmprint));
@@ -107,7 +106,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev->dev_private = parent;
 	dev->driver = da->driver;
-	dev->vga_softc = da->vga;
 
 	/* needed for pci_mapreg_* */
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
