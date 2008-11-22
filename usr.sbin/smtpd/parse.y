@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2008/11/13 23:24:19 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2008/11/22 20:26:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -651,17 +651,18 @@ action		: DELIVER TO MAILDIR STRING	{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA STRING PORT NUMBER {
+		| RELAY VIA ssmtp STRING port {
 			rule->r_action = A_RELAYVIA;
-			if (strlcpy(rule->r_value.host.hostname, $3, MAXHOSTNAMELEN)
+			if (strlcpy(rule->r_value.host.hostname, $4, MAXHOSTNAMELEN)
 			    >= MAXHOSTNAMELEN)
 				fatal("hostname too long");
-			if ($5 <= 0 || $5 >= (int)USHRT_MAX) {
-				yyerror("invalid port: %d", $5);
-				YYERROR;
-			}
-			rule->r_value.host.port = $5;
-			free($3);
+
+			if ($5 == 0)
+				rule->r_value.host.port = htons(25);
+			else
+				rule->r_value.host.port = htons($5);
+
+			free($4);
 		}
 		;
 
