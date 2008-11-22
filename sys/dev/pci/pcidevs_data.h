@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1435 2008/11/18 23:26:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1436 2008/11/22 04:15:06 oga Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -352,12 +352,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Banshee",
 	},
 	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO32000,
+	    "Voodoo3",
+	},
+	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3,
 	    "Voodoo3",
 	},
 	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO4,
+	    "Voodoo4",
+	},
+	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5,
 	    "Voodoo5",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO44200,
+	    "Voodoo4",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
@@ -1757,23 +1769,67 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,
-	    "Radeon Mobility X600",
+	    "Radeon M241P",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300M24,
+	    "Radeon X300 M24",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M24GL,
+	    "FireGL M24 GL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380,
+	    "Radeon X600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3200,
 	    "FireGL V3200",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380,
-	    "Radeon X600 (RV380)",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380_S,
+	    "Radeon X600 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380_S,
-	    "Radeon X600 (RV380) Sec",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP320,
+	    "Radeon IGP 320",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP340,
+	    "Radeon IGP 340",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9500PRO,
 	    "Radeon 9500 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AE9700PRO,
+	    "Radeon AE 9700 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AF9600TX,
+	    "Radeon AF 9600TX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_AGZ1,
+	    "FireGL AGZ1",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AH_9800SE,
+	    "Radeon AH 9800 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AI_9800,
+	    "Radeon AI 9800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AJ_9800,
+	    "Radeon AJ 9800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_AKX2,
+	    "FireGL AK X2",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600PRO,
@@ -1781,15 +1837,27 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600LE,
-	    "Radeon 9600 LE",
+	    "Radeon 9600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT,
-	    "Radeon 9600 XT",
+	    "Radeon 9600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9550,
 	    "Radeon 9550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_ATT2,
+	    "FireGL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9650,
+	    "Radeon 9650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_AVT2,
+	    "FireGL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -1816,8 +1884,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9550 Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP_RS250,
+	    "Radeon IGP",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_BB,
-	    "Radeon 8500 BB",
+	    "Radeon 8500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_BC,
+	    "Radeon BC R200",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP320M,
@@ -2072,6 +2148,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SB700 ISA",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_MIGP_RS250,
+	    "Radeon Mobility IGP",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
 	    "Mach64 ET",
 	},
@@ -2081,35 +2161,35 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD,
-	    "Mach64 GD",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI,
-	    "Mach64 GI",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GL,
-	    "Mach64 GL",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GM,
-	    "Mach64 GM",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GN,
-	    "Mach64 GN",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GO,
-	    "Mach64 GO",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
-	    "Mach64 GP",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ,
-	    "Mach64 GQ",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXL,
@@ -2117,38 +2197,42 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GS,
-	    "Mach64 GS",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
-	    "Mach64 GT",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GU,
-	    "Mach64 GU",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GV,
-	    "Mach64 GV",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GW,
-	    "Mach64 GW",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
-	    "Mach64 GX",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GY,
-	    "Mach64 GY",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GZ,
-	    "Mach64 GZ",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV250,
+	    "Radeon 9000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IG9000,
 	    "Radeon 9000",
 	},
 	{
@@ -2156,24 +2240,76 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9000 Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_JHX800,
+	    "Radeon X800",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800PRO,
 	    "Radeon X800 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800SE,
+	    "Radeon X800SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XT,
+	    "Radeon X800XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800,
+	    "Radeon X800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_X3256,
+	    "FireGL X3-256",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M18,
+	    "Radeon Mobility M18",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_JOX800SE,
+	    "Radeon X800 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XTPE,
+	    "Radeon X800 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AIW_X800VE,
+	    "Radeon AIW X800 VE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800PRO_S,
 	    "Radeon X800 Pro Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT,
+	    "Radeon X850 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850SE,
+	    "Radeon X850 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850PRO,
+	    "Radeon X850 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XTPE,
+	    "Radeon X850 XT PE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
-	    "Mach64 LB",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD,
-	    "Mach64 LD",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_LE,
-	    "Rage128 LE",
+	    "Rage128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3,
@@ -2181,11 +2317,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
-	    "Mach64 LG",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI,
-	    "Mach64 LI",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_1,
@@ -2193,15 +2329,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LN,
-	    "Mach64 LN",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
-	    "Mach64 LP",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LQ,
-	    "Mach64 LQ",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PM,
@@ -2209,31 +2345,43 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64LS,
-	    "Mach64 LS",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M7LW,
-	    "Radeon Mobility M7 LW",
+	    "Radeon Mobility M7",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M7,
+	    "FireGL Mobility 7800 M7",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6LY,
-	    "Radeon Mobility M6 LY",
+	    "Radeon Mobility M6",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6LZ,
-	    "Radeon Mobility M6 LZ",
+	    "Radeon Mobility M6",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9LD,
+	    "Radeon Mobility M9",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9Lf,
-	    "Radeon Mobility M9 Lf",
+	    "Radeon Mobility M9",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9Lg,
+	    "Radeon Mobility M9",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_MF,
-	    "Rage 128 Mobility MF",
+	    "Rage 128 Mobility",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_ML,
-	    "Rage 128 Mobility ML",
+	    "Rage 128 Mobility",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300,
@@ -2244,20 +2392,52 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9500 Pro",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800XT,
-	    "Radeon 9800 XT",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON9600TX,
+	    "Radeon 9600 TX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_X1,
+	    "FireGL X1",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R350,
 	    "Radeon 9800 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON9800,
+	    "RAdeon 9800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800XT,
+	    "Radeon 9800 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_X2,
+	    "FireGL X2",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350,
-	    "Radeon Mobility M10 NP",
+	    "Radeon Mobility M10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350NQ,
+	    "Radeon Mobility M10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350NR,
+	    "Radeon Mobility M10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350NS,
+	    "Radeon Mobility M10",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350_WS,
-	    "Radeon Mobility M10 NT",
+	    "Radeon Mobility M10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_9550,
+	    "Radeon Mobility 9550",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300_S,
@@ -2268,16 +2448,100 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9800 Pro Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PA,
+	    "Rage 128 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PB,
+	    "Rage 128 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PC,
+	    "Rage 128 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PD,
-	    "Rage 128 Pro PD",
+	    "Rage 128 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PE,
+	    "Rage 128 Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
 	    "Rage Fury",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PG,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PH,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PI,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PJ,
+	    "Rage 128",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PK,
-	    "Rage 128 PK",
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PL,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PM,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PN,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PO,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PP,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PQ,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PR,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PS,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PT,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PU,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PV,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PW,
+	    "Rage 128",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PX,
+	    "Rage 128 PX",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AIW,
@@ -2285,43 +2549,51 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QE,
-	    "Radeon QE",
+	    "Radeon",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QF,
-	    "Radeon QF",
+	    "Radeon",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QG,
-	    "Radeon QG",
+	    "Radeon",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QH,
+	    "Radeon",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QL,
-	    "Radeon 8500 QL",
+	    "Radeon 8500",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QM,
-	    "Radeon 9100 QM",
+	    "Radeon 9100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QN,
-	    "Radeon 8500 QN",
+	    "Radeon 8500",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QO,
-	    "Radeon 8500 QO",
+	    "Radeon 8500",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV200_QW,
-	    "Radeon 7500 QW",
+	    "Radeon 7500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV200_QX,
+	    "Radeon 7500",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QY,
-	    "Radeon VE QY",
+	    "Radeon VE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QZ,
-	    "Radeon VE QZ",
+	    "Radeon VE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000,
@@ -2329,11 +2601,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_Ql,
-	    "Radeon 8500 Ql",
+	    "Radeon 8500",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_GL,
-	    "Rage 128 GL",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
@@ -2341,31 +2613,31 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_RG,
-	    "Rage 128 RG",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_RK,
-	    "Rage 128 RK",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_VR,
-	    "Rage 128 VR",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SH,
-	    "Rage 128 SH",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SK,
-	    "Rage 128 SK",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SL,
-	    "Rage 128 SL",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SM,
-	    "Rage 128 SM",
+	    "Rage 128",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128,
@@ -2373,27 +2645,91 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TF,
-	    "Rage 128 Pro TF",
+	    "Rage 128 Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TL,
-	    "Rage 128 Pro TL",
+	    "Rage 128 Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TR,
-	    "Rage 128 Pro TR",
+	    "Rage 128 Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M300_M22,
 	    "Radeon Mobility M300 M22",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_M24C,
+	    "Radeon Mobility X600 M24C",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M44,
+	    "FireGL M44 GL 5464",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_RV423,
+	    "Radeon X800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800PRORV423,
+	    "Radeon X800 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XT_RV423,
+	    "Radeon X800 XT PE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800SE_RV423,
+	    "Radeon X800 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XTPRV430,
+	    "Radeon X800 XTP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XL_RV430,
+	    "Radeon X800 XL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800SE_RV430,
+	    "Radeon X800 SE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_RV430,
-	    "Radeon X800 (RV430)",
+	    "Radeon X800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7100_RV423,
+	    "FireGL V7100",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5100_RV423,
+	    "FireGL V5100",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_UR_RV423,
+	    "FireGL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_UT_RV423,
+	    "FireGL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_RV430_S,
-	    "Radeon X800 (RV430) Sec",
+	    "Radeon X800 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5000_M26,
+	    "Mobility FireGL V5000 M26",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5000_M26b,
+	    "Mobility FireGL V5000 M26",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700XL_M26,
+	    "Radeon Mobility X700 XL M26",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_M26_1,
@@ -2405,15 +2741,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
-	    "Mach64 VT",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VU,
-	    "Mach64 VU",
+	    "Mach64",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VV,
-	    "Mach64 VV",
+	    "Mach64",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X550XTX,
+	    "Radeon X550XTX",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_100_HB,
@@ -2430,6 +2770,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP9100_HB,
 	    "Radeon IGP 9100 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP9100_IGP,
+	    "Radeon IGP 9100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP9100,
@@ -2490,6 +2834,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE_S,
 	    "Radeon 9200 SE Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2200,
+	    "FireMV 2200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000_1,
+	    "ES1000",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482,
@@ -2572,12 +2924,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FireGL V3100",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2200_5B65,
+	    "FireMV 2200 5B65",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
 	    "Radeon X300 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV370_S,
-	    "Radeon X600 (RV370) Sec",
+	    "Radeon X600 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X550_S,
@@ -2593,23 +2949,79 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9PLUS,
-	    "Radeon Mobility 9200 (M9+)",
+	    "Radeon Mobility 9200",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE,
 	    "Radeon 9200 SE",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XT_M28,
+	    "Radeon X800 XT M28",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5100_M28,
+	    "FireGL V5100 M28",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X800_M28,
+	    "Radeon Mobility X800 M28",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850_R480,
+	    "Radeon X850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XTPER480,
+	    "Radeon X850 XT PE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850SE_R480,
+	    "Radeon X850 SE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_GTO,
-	    "Radeon X800 GTO",
+	    "Radeon X800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_R480,
+	    "FireGL R480",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT_R480,
+	    "Radeon X850XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800XT_R423,
+	    "Radeon X800XT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_GTO_S,
 	    "Radeon X800 GTO Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5000_R410,
+	    "FireGL V5000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700XT_R410,
+	    "FireGL X700 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700PRO_R410,
+	    "FireGL X700 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700SE_R410,
+	    "FireGL X700 SE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_PCIE,
 	    "Radeon X700 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700SE_PCIE,
+	    "Radeon X700 SE PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_PCIE_S,
@@ -2632,32 +3044,204 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS200 PCI",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800A,
 	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800XT,
+	    "Radeon X1800 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1800,
+	    "Radeon Mobility X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M_V7200,
+	    "FireGL Mobility V7200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7200,
+	    "FireGL V7200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5300,
+	    "FireGL V5300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M_V7100,
+	    "FireGL Mobility V7100",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800B,
+	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800C,
+	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800D,
+	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800E,
+	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1800F,
+	    "Radeon X1800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7300,
+	    "FireGL V7300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7350,
+	    "FireGL V7350",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600,
 	    "Radeon X1600",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV505_1,
+	    "RV505",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_X1550,
+	    "Radeon X1300/X1550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550,
+	    "Radeon X1550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_M54_GL,
+	    "M54-GL",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1400,
 	    "Radeon Mobility X1400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_X1300,
+	    "Radeon X1300/X1550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_64,
+	    "RADEON X1550 64-bit",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_M52,
 	    "Radeon Mobility X1300 M52-64",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1300_4A,
+	    "Radeon Mobility X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1300_4B,
+	    "Radeon Mobility X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1300_4C,
+	    "Radeon Mobility X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_4D,
+	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_4E,
+	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV505_2,
+	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV505_3,
+	    "RV505",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3300,
+	    "FireGL V3300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3350,
+	    "FireGL V3350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_5E,
+	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_64_2,
+	    "Radeon X1550",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_S,
 	    "Radeon X1600 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300X1550,
+	    "Radeon X1300/X1550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_81,
+	    "Radeon X1600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300PRO,
 	    "Radeon X1300 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1450,
+	    "Radeon X1450",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300,
 	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X2300,
+	    "Radeon Mobility X2300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X2300_2,
+	    "Radeon Mobility X2300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1350,
+	    "Radeon Mobility X1350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1350_2,
+	    "Radeon Mobility X1350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1450,
+	    "Radeon Mobility X1450",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_8F,
+	    "Radeon X1300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_2,
+	    "Radeon X1550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1350_3,
+	    "Radeon Mobility X1350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2250,
+	    "FireMV 2250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_64_3,
+	    "Radeon X1550 64-bit",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300PRO_S,
@@ -2668,8 +3252,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1300 Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_C0,
+	    "Radeon X1600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1650,
+	    "Radeon X1650",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO,
 	    "Radeon X1600 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_C3,
+	    "Radeon X1600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5200,
+	    "FireGL V5200",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_M,
@@ -2684,8 +3284,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1650 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_CD,
+	    "Radeon X1600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_XT,
+	    "Radeon X1300 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3400,
+	    "FireGL V3400",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV530_M56,
 	    "Mobility FireGL V5250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1700,
+	    "Radeon X1700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1700XT,
+	    "Radeon X1700 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5200_1,
+	    "FireGL V5200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1700,
+	    "Radeon Mobility X1700",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO_S,
@@ -2700,12 +3328,124 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1650 Pro Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X2300HD,
+	    "Radeon X2300HD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X2300HD,
+	    "Radeon Mobility X2300HD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X2300HD_1,
+	    "Radeon Mobility X2300HD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_40,
+	    "Radeon X1950",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_43,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_44,
+	    "Radeon X1950",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_45,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_46,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_47,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_48,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_49,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_4A,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_4B,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_4C,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_4D,
+	    "Radeon X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_STREAM_PROCESSOR,
+	    "AMD Stream Processor",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1900_4F,
+	    "Radeon X1900",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_PRO,
 	    "Radeon X1950 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560,
+	    "RV560",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560_1,
+	    "RV560",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_X1900,
+	    "Radeon Mobility X1900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560_2,
+	    "RV560",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950GT,
+	    "Radeon X1950 GT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV570,
+	    "RV570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV570_2,
+	    "RV570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7400,
+	    "FireGL V7400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560_3,
+	    "Rv560",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT,
 	    "Radeon RX1650 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1650_1,
+	    "Radeon X1650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560_4,
+	    "RV560",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1950_PRO_S,
@@ -2714,6 +3454,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT_2,
 	    "Radeon RX1650 XT Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9000IGP,
+	    "Radeon 9000/9100 IGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS350IGP,
+	    "Radeon RS350IGP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HB,
@@ -2750,6 +3498,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1250,
 	    "Radeon X1250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1250IGP,
+	    "Radeon X1250 IGP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_2100,
@@ -13316,6 +14068,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Savage 4",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4_2,
+	    "Savage 4",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_PM133,
 	    "ProSavage PM133",
 	},
@@ -13348,8 +14104,40 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Savage/IX",
 	},
 	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE,
-	    "SuperSavage",
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_MX128,
+	    "SuperSavage MX/128",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_MX64,
+	    "SuperSavage MX/64",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_MX64C,
+	    "SuperSavage MX/64C",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IX128SDR,
+	    "SuperSavage IX/128 SDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IX128DDR,
+	    "SuperSavage IX/128 DDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IX64SDR,
+	    "SuperSavage IX/64 SDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IX64DDR,
+	    "SuperSavage IX/64 DDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IXCSDR,
+	    "SuperSavage IX/C SDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE_IXCDDR,
+	    "SuperSavage IX/C DDR",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TWISTER,
@@ -13362,6 +14150,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_DDR,
 	    "ProSavage DDR",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_DDR_K,
+	    "ProSavage DDR-K",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
@@ -13736,6 +14528,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "968 ISA",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5300,
+	    "540 VGA",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5315,
 	    "530 VGA",
 	},
@@ -13834,6 +14630,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7019,
 	    "7019 Audio",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7300,
+	    "7300 VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_966_HDA,
@@ -16102,6 +16902,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_Z7,
 	    "Volari Z7",
+	},
+	{
+	    PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_V3XT,
+	    "Volari V3XT",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
