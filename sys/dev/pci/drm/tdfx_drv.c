@@ -34,11 +34,15 @@
 
 #include "tdfx_drv.h"
 #include "drmP.h"
-#include "drm_pciids.h"
 
-/* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
-	tdfx_PCI_IDS
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE, 0, "3dfx Voodoo Banshee"},
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO32000, 0, "3dfx Voodoo3 2000"},
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3, 0, "3dfx Voodoo3 3000"},
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO4, 0, "3dfx Voodoo4 4500"},
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5, 0, "3dfx Voodoo5 5500"},
+	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO44200, 0, "3dfx Voodoo4 4200"},
+        {0, 0, 0, NULL}
 };
 
 static const struct drm_driver_info tdfx_driver = {

@@ -37,15 +37,33 @@
 #include "drm.h"
 #include "mach64_drm.h"
 #include "mach64_drv.h"
-#include "drm_pciids.h"
 
 int	mach64drm_probe(struct device *, void *, void *);
 void	mach64drm_attach(struct device *, struct device *, void *);
 int	machdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-/* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mach64_pciidlist[] = {
-	mach64_PCI_IDS
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI, 0, "3D Rage Pro"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP, 0, "3D Rage Pro 215GP"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ, 0, "3D Rage Pro 215GQ"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEPRO, 0, "3D Rage Pro AGP 1X/2X"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD, 0, "3D Rage Pro AGP 1X"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI, 0, "3D Rage LT Pro"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP, 0, "3D Rage LT Pro"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LQ, 0, "3D Rage LT Pro"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB, 0, "3D Rage LT Pro AGP-133"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD, 0, "3D Rage LT Pro AGP-66"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GL, 0, "Rage XC"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GO, 0, "Rage XL"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXL, 0, "Rage XL"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GS, 0, "Rage XC"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GM, 0, "Rage XL AGP 2X"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GN, 0, "Rage XC AGP"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PM, 0, "Rage Mobility P/M"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64LS, 0, "Rage Mobility L"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_1, 0, "Rage Mobility P/M AGP 2X"},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LN, 0, "Rage Mobility L AGP 2X"},
+	{0, 0, 0, NULL}
 };
 
 static const struct drm_driver_info mach64_driver = {
