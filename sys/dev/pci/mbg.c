@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.25 2008/09/10 14:01:23 blambert Exp $ */
+/*	$OpenBSD: mbg.c,v 1.26 2008/11/22 15:05:24 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -562,8 +562,8 @@ mbg_read_asic(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 }
 
 /*
- * Degrade the sensor state if we are feerunning for more than
- * TRUSTTIME seconds.
+ * degrade the sensor state if we are feerunning for more than
+ * sc->sc_trust seconds.
  */
 void
 mbg_timeout(void *xsc)
@@ -573,8 +573,8 @@ mbg_timeout(void *xsc)
 	if (sc->sc_timedelta.status == SENSOR_S_OK) {
 		sc->sc_timedelta.status = SENSOR_S_WARN;
 		/*
-		 * further degrade in TRUSTTIME seconds if no new valid NMEA
-		 * sentences are received.
+		 * further degrade in sc->sc_trust seconds if no new valid
+		 * time data can be read from the device.
 		 */
 		timeout_add_sec(&sc->sc_timeout, sc->sc_trust);
 	} else
