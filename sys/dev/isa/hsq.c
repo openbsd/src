@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsq.c,v 1.4 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: hsq.c,v 1.5 2008/11/22 10:33:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Denis A. Doroshenko. All rights reserved.
@@ -49,7 +49,7 @@
  * with setserial, BSD systems are not so flexible with serial ports,
  * so i took ast driver and changed it, in the way i think Hostess
  * muxes should work. It works ifine with my mux (it has ti16c750
- * UARTs on it, and current pccom driver detects them as 550A, so i
+ * UARTs on it, and current com driver detects them as 550A, so i
  * changed it a bit, to use the power of 750).
  * 
  * Hostess cards use scratch register of lead UART to control the mux.
