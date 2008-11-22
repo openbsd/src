@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.14 2008/07/03 03:00:37 ray Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.15 2008/11/22 17:08:03 drahn Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -150,7 +150,9 @@ void
 pxaip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaip_softc *sc = (struct pxaip_softc *)self;
+#ifdef __APM__
 	extern int freq;
+#endif
 	int cpuclock;
 
 	pxaip_sc = sc;
@@ -172,7 +174,9 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
 	if (cpuclock % 1000 > 500)
 		cpuclock = cpuclock + 1000 - cpuclock % 1000;
+#ifdef __APM__
 	freq = cpuclock / 1000;
+#endif
 
 	printf(": CPU clock = %d.%03d MHz\n", cpuclock/1000, cpuclock%1000);
 
