@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_dlc.c,v 1.3 2008/09/10 14:01:23 blambert Exp $	*/
-/*	$NetBSD: rfcomm_dlc.c,v 1.4 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_dlc.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.6 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -192,16 +192,15 @@ void
 rfcomm_dlc_timeout(void *arg)
 {
 	struct rfcomm_dlc *dlc = arg;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
 		rfcomm_dlc_close(dlc, ETIMEDOUT);
 	else if (dlc->rd_flags & RFCOMM_DLC_DETACH)
 		free(dlc, M_BLUETOOTH);
 
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 /*

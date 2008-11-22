@@ -1,5 +1,5 @@
-/*	$OpenBSD: sco.h,v 1.3 2008/05/27 19:41:14 thib Exp $	*/
-/*	$NetBSD: sco.h,v 1.2 2006/07/26 10:20:56 tron Exp $	*/
+/*	$OpenBSD: sco.h,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: sco.h,v 1.3 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.

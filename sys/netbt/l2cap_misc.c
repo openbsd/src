@@ -1,5 +1,5 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.5 2008/09/10 14:01:23 blambert Exp $	*/
-/*	$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.6 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.6 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -188,9 +188,8 @@ l2cap_rtx(void *arg)
 {
 	struct l2cap_req *req = arg;
 	struct l2cap_channel *chan;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 
 	chan = req->lr_chan;
 	DPRINTF("cid %d, ident %d\n", (chan ? chan->lc_lcid : 0), req->lr_id);
@@ -200,7 +199,7 @@ l2cap_rtx(void *arg)
 	if (chan && chan->lc_state != L2CAP_CLOSED)
 		l2cap_close(chan, ETIMEDOUT);
 
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 /*

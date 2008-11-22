@@ -1,5 +1,5 @@
-/*	$OpenBSD: ubt.c,v 1.13 2008/07/10 13:48:54 mbalmer Exp $	*/
-/*	$NetBSD: ubt.c,v 1.30 2007/12/16 19:01:37 christos Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.14 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -449,6 +449,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 			   &sc->sc_dev);
 
 	sc->sc_ok = 1;
+	/* XXX pmf_device_deregister in NetBSD (power hook) */
 }
 
 int
@@ -458,6 +459,8 @@ ubt_detach(struct device *self, int flags)
 	int s;
 
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
+
+	/* XXX pmf_device_deregister in NetBSD (power hook) */
 
 	sc->sc_dying = 1;
 
@@ -718,7 +721,6 @@ ubt_abortdealloc(struct ubt_softc *sc)
  *
  * Bluetooth Unit/USB callbacks
  *
- * All of this will be called at the IPL_ we specified above
  */
 int
 ubt_enable(struct device *self)

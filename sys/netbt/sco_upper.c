@@ -1,5 +1,5 @@
-/*	$OpenBSD: sco_upper.c,v 1.2 2007/10/01 16:39:30 krw Exp $	*/
-/*	$NetBSD: sco_upper.c,v 1.6 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$OpenBSD: sco_upper.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.8 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -149,12 +149,9 @@ sco_connect(struct sco_pcb *pcb, struct sockaddr_bt *dest)
 	if (acl == NULL || acl->hl_state != HCI_LINK_OPEN)
 		return EHOSTUNREACH;
 
-	sco = hci_link_alloc(unit);
+	sco = hci_link_alloc(unit, &pcb->sp_raddr, HCI_LINK_SCO);
 	if (sco == NULL)
 		return ENOMEM;
-
-	sco->hl_type = HCI_LINK_SCO;
-	bdaddr_copy(&sco->hl_bdaddr, &pcb->sp_raddr);
 
 	sco->hl_link = hci_acl_open(unit, &pcb->sp_raddr);
 	KASSERT(sco->hl_link == acl);

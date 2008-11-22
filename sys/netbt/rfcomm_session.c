@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_session.c,v 1.4 2008/09/10 14:01:23 blambert Exp $	*/
-/*	$NetBSD: rfcomm_session.c,v 1.12 2008/01/31 19:30:23 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_session.c,v 1.5 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.14 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -298,11 +298,10 @@ rfcomm_session_timeout(void *arg)
 {
 	struct rfcomm_session *rs = arg;
 	struct rfcomm_dlc *dlc;
-	int s;
 
 	KASSERT(rs != NULL);
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 
 	if (rs->rs_state != RFCOMM_SESSION_OPEN) {
 		DPRINTF("timeout\n");
@@ -319,7 +318,7 @@ rfcomm_session_timeout(void *arg)
 		DPRINTF("expiring\n");
 		rfcomm_session_free(rs);
 	}
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 /***********************************************************************

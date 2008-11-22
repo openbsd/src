@@ -1,5 +1,5 @@
-/*	$OpenBSD: hci_link.c,v 1.8 2008/09/10 14:01:23 blambert Exp $	*/
-/*	$NetBSD: hci_link.c,v 1.16 2007/11/10 23:12:22 plunky Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.9 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.20 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -75,12 +75,9 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 	link = hci_link_lookup_bdaddr(unit, bdaddr, HCI_LINK_ACL);
 	if (link == NULL) {
-		link = hci_link_alloc(unit);
+		link = hci_link_alloc(unit, bdaddr, HCI_LINK_ACL);
 		if (link == NULL)
 			return NULL;
-
-		link->hl_type = HCI_LINK_ACL;
-		bdaddr_copy(&link->hl_bdaddr, bdaddr);
 	}
 
 	switch(link->hl_state) {
@@ -108,6 +105,7 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 			return NULL;
 		}
 
+		link->hl_flags |= HCI_LINK_CREATE_CON;
 		link->hl_state = HCI_LINK_WAIT_CONNECT;
 		break;
 
@@ -178,11 +176,9 @@ hci_acl_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 	if (link != NULL)
 		return NULL;
 
-	link = hci_link_alloc(unit);
+	link = hci_link_alloc(unit, bdaddr, HCI_LINK_ACL);
 	if (link != NULL) {
 		link->hl_state = HCI_LINK_WAIT_CONNECT;
-		link->hl_type = HCI_LINK_ACL;
-		bdaddr_copy(&link->hl_bdaddr, bdaddr);
 
 		if (hci_acl_expiry > 0)
 			timeout_add_sec(&link->hl_expire, hci_acl_expiry);
@@ -196,9 +192,9 @@ hci_acl_timeout(void *arg)
 {
 	struct hci_link *link = arg;
 	hci_discon_cp cp;
-	int s, err;
+	int err;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 
 	if (link->hl_refcnt > 0)
 		goto out;
@@ -234,7 +230,7 @@ hci_acl_timeout(void *arg)
 	}
 
 out:
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 /*
@@ -789,14 +785,11 @@ hci_sco_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 		bdaddr_copy(&new->sp_laddr, &unit->hci_bdaddr);
 		bdaddr_copy(&new->sp_raddr, bdaddr);
 
-		sco = hci_link_alloc(unit);
+		sco = hci_link_alloc(unit, bdaddr, HCI_LINK_SCO);
 		if (sco == NULL) {
 			sco_detach(&new);
 			return NULL;
 		}
-
-		sco->hl_type = HCI_LINK_SCO;
-		bdaddr_copy(&sco->hl_bdaddr, bdaddr);
 
 		sco->hl_link = hci_acl_open(unit, bdaddr);
 		KASSERT(sco->hl_link == acl);
@@ -885,7 +878,7 @@ hci_sco_complete(struct hci_link *link, int num)
  */
 
 struct hci_link *
-hci_link_alloc(struct hci_unit *unit)
+hci_link_alloc(struct hci_unit *unit, bdaddr_t *bdaddr, uint8_t type)
 {
 	struct hci_link *link;
 
@@ -896,7 +889,9 @@ hci_link_alloc(struct hci_unit *unit)
 		return NULL;
 
 	link->hl_unit = unit;
+	link->hl_type = type;
 	link->hl_state = HCI_LINK_CLOSED;
+	bdaddr_copy(&link->hl_bdaddr, bdaddr);
 
 	/* init ACL portion */
 	timeout_set(&link->hl_expire, hci_acl_timeout, link);
@@ -911,7 +906,7 @@ hci_link_alloc(struct hci_unit *unit)
 	/* &link->hl_data is already zero-initialized. */
 
 	/* attach to unit */
-	TAILQ_INSERT_HEAD(&unit->hci_links, link, hl_next);
+	TAILQ_INSERT_TAIL(&unit->hci_links, link, hl_next);
 	return link;
 }
 
@@ -1009,28 +1004,12 @@ hci_link_free(struct hci_link *link, int err)
 }
 
 /*
- * Lookup HCI link by type and state.
- */
-struct hci_link *
-hci_link_lookup_state(struct hci_unit *unit, uint16_t type, uint16_t state)
-{
-	struct hci_link *link;
-
-	TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
-		if (link->hl_type == type && link->hl_state == state)
-			break;
-	}
-
-	return link;
-}
-
-/*
  * Lookup HCI link by address and type. Note that for SCO links there may
  * be more than one link per address, so we only return links with no
  * handle (ie new links)
  */
 struct hci_link *
-hci_link_lookup_bdaddr(struct hci_unit *unit, bdaddr_t *bdaddr, uint16_t type)
+hci_link_lookup_bdaddr(struct hci_unit *unit, bdaddr_t *bdaddr, uint8_t type)
 {
 	struct hci_link *link;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sco_socket.c,v 1.2 2008/05/27 19:41:14 thib Exp $	*/
-/*	$NetBSD: sco_socket.c,v 1.9 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$OpenBSD: sco_socket.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -117,9 +117,9 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 #endif
 
 	case PRU_ATTACH:
+		/* XXX solock() and bt_lock fiddling in NetBSD */
 		if (pcb)
 			return EINVAL;
-
 		err = soreserve(up, sco_sendspace, sco_recvspace);
 		if (err)
 			return err;

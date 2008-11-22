@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_socket.c,v 1.3 2008/05/27 19:41:14 thib Exp $	*/
-/*	$NetBSD: rfcomm_socket.c,v 1.8 2007/10/15 18:04:34 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_socket.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.10 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -122,9 +122,9 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 #endif
 
 	case PRU_ATTACH:
+		/* XXX solock() and bt_lock fiddling in NetBSD */
 		if (pcb != NULL)
 			return EINVAL;
-
 		/*
 		 * Since we have nothing to add, we attach the DLC
 		 * structure directly to our PCB pointer.

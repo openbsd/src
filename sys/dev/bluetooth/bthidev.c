@@ -1,5 +1,5 @@
-/*	$OpenBSD: bthidev.c,v 1.3 2008/10/15 19:12:19 blambert Exp $	*/
-/*	$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -88,7 +88,6 @@ struct bthidev_softc {
 #define BTHID_WAIT_CTL		1
 #define BTHID_WAIT_INT		2
 #define BTHID_OPEN		3
-#define BTHID_DETACHING		4
 
 #define	BTHID_RETRY_INTERVAL	5	/* seconds between connection attempts */
 
@@ -177,7 +176,7 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 	struct bthidev *hidev;
 	struct hid_data *d;
 	struct hid_item h;
-	int maxid, rep, s;
+	int maxid, rep;
 
 	/*
 	 * Init softc
@@ -188,6 +187,8 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = BTHID_CONNECTING;
 	sc->sc_ctlpsm = L2CAP_PSM_HID_CNTL;
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
+
+	sc->sc_mode = 0;
 
 	/*
 	 * copy in our configuration info
@@ -284,13 +285,13 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * start bluetooth connections
 	 */
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 	if ((sc->sc_flags & BTHID_RECONNECT) == 0)
 		bthidev_listen(sc);
 
 	if (sc->sc_flags & BTHID_CONNECTING)
 		bthidev_connect(sc);
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 int
@@ -298,9 +299,8 @@ bthidev_detach(struct device *self, int flags)
 {
 	struct bthidev_softc *sc = (struct bthidev_softc *)self;
 	struct bthidev *hidev;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 	sc->sc_flags = 0;	/* disable reconnecting */
 
 	/* release interrupt listen */
@@ -330,10 +330,9 @@ bthidev_detach(struct device *self, int flags)
 	}
 
 	/* remove timeout */
-	sc->sc_state = BTHID_DETACHING;
 	timeout_del(&sc->sc_reconnect);
 
-	splx(s);
+	mutex_exit(&bt_lock);
 
 	/* detach children */
 	while ((hidev = LIST_FIRST(&sc->sc_list)) != NULL) {
@@ -393,9 +392,8 @@ void
 bthidev_timeout(void *arg)
 {
 	struct bthidev_softc *sc = arg;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 
 	switch (sc->sc_state) {
 	case BTHID_CLOSED:
@@ -426,14 +424,10 @@ bthidev_timeout(void *arg)
 	case BTHID_OPEN:
 		break;
 
-	case BTHID_DETACHING:
-		wakeup(sc);
-		break;
-
 	default:
 		break;
 	}
-	splx(s);
+	mutex_exit(&bt_lock);
 }
 
 /*
@@ -865,7 +859,7 @@ bthidev_output(struct bthidev *hidev, uint8_t *report, int rlen)
 {
 	struct bthidev_softc *sc = (struct bthidev_softc *)hidev->sc_parent;
 	struct mbuf *m;
-	int s, err;
+	int err;
 
 	if (sc == NULL || sc->sc_state != BTHID_OPEN)
 		return ENOTCONN;
@@ -897,9 +891,9 @@ bthidev_output(struct bthidev *hidev, uint8_t *report, int rlen)
 	memcpy(mtod(m, uint8_t *) + 2, report, rlen);
 	m->m_pkthdr.len = m->m_len = rlen + 2;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 	err = l2cap_send(sc->sc_int, m);
-	splx(s);
+	mutex_exit(&bt_lock);
 
 	return err;
 }

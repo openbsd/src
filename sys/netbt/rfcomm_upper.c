@@ -1,5 +1,5 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.5 2008/09/10 14:01:23 blambert Exp $	*/
-/*	$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.6 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.

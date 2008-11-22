@@ -1,5 +1,5 @@
-/*	$OpenBSD: hci_socket.c,v 1.6 2008/05/27 19:41:14 thib Exp $	*/
-/*	$NetBSD: hci_socket.c,v 1.14 2008/02/10 17:40:54 plunky Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.7 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.17 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -555,12 +555,15 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	switch(req) {
 	case PRU_CONTROL:
-		return hci_ioctl((unsigned long)m, (void *)nam, curproc);
+		mutex_enter(&bt_lock);
+		err = hci_ioctl((unsigned long)m, (void *)nam, curproc);
+		mutex_exit(&bt_lock);
+		return err;
 
 	case PRU_ATTACH:
+		/* XXX solock() and bt_lock fiddling in NetBSD */
 		if (pcb)
 			return EINVAL;
-
 		err = soreserve(up, hci_sendspace, hci_recvspace);
 		if (err)
 			return err;

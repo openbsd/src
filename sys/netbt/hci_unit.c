@@ -1,5 +1,5 @@
-/*	$OpenBSD: hci_unit.c,v 1.8 2008/02/24 21:34:48 uwe Exp $	*/
-/*	$NetBSD: hci_unit.c,v 1.9 2007/12/30 18:26:42 plunky Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.9 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -81,7 +81,6 @@ struct hci_unit *
 hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 {
 	struct hci_unit *unit;
-	int s;
 
 	KASSERT(dev != NULL);
 	KASSERT(hci_if->enable != NULL);
@@ -99,6 +98,7 @@ hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 	unit->hci_flags = flags;
 
 	mtx_init(&unit->hci_devlock, hci_if->ipl);
+	unit->hci_init = 0;	/* kcondvar_t in NetBSD */
 
 	unit->hci_eventq.ifq_maxlen = hci_eventq_max;
 	unit->hci_aclrxq.ifq_maxlen = hci_aclrxq_max;
@@ -109,9 +109,9 @@ hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 	TAILQ_INIT(&unit->hci_links);
 	LIST_INIT(&unit->hci_memos);
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 	TAILQ_INSERT_TAIL(&hci_unit_list, unit, hci_next);
-	splx(s);
+	mutex_exit(&bt_lock);
 
 	return unit;
 }
@@ -119,14 +119,14 @@ hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 void
 hci_detach(struct hci_unit *unit)
 {
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(&bt_lock);
 	hci_disable(unit);
 
 	TAILQ_REMOVE(&hci_unit_list, unit, hci_next);
-	splx(s);
+	mutex_exit(&bt_lock);
 
+	/* mutex_destroy(&unit->hci_devlock) in NetBSD */
 	free(unit, M_BLUETOOTH);
 }
 
@@ -178,7 +178,8 @@ hci_enable(struct hci_unit *unit)
 		goto bad2;
 
 	while (unit->hci_flags & BTF_INIT) {
-		err = tsleep(unit, PWAIT | PCATCH, __func__, 5 * hz);
+		err = msleep(&unit->hci_init, &bt_lock, PWAIT | PCATCH,
+		    __func__, 5 * hz);
 		if (err)
 			goto bad2;
 
@@ -216,8 +217,14 @@ hci_disable(struct hci_unit *unit)
 	int acl;
 
 	if (unit->hci_bthub) {
-		config_detach(unit->hci_bthub, DETACH_FORCE);
+		struct device *hub;
+
+		hub = unit->hci_bthub;
 		unit->hci_bthub = NULL;
+
+		mutex_exit(&bt_lock);
+		config_detach(hub, DETACH_FORCE);
+		mutex_enter(&bt_lock);
 	}
 
 #ifndef __OpenBSD__
@@ -333,13 +340,14 @@ hci_intr(void *arg)
 	struct hci_unit *unit = arg;
 	struct mbuf *m;
 
+	mutex_enter(&bt_lock);
 another:
-	mtx_enter(&unit->hci_devlock);
+	mutex_enter(&unit->hci_devlock);
 
 	if (unit->hci_eventqlen > 0) {
 		IF_DEQUEUE(&unit->hci_eventq, m);
 		unit->hci_eventqlen--;
-		mtx_leave(&unit->hci_devlock);
+		mutex_exit(&unit->hci_devlock);
 
 		KASSERT(m != NULL);
 
@@ -356,7 +364,7 @@ another:
 	if (unit->hci_scorxqlen > 0) {
 		IF_DEQUEUE(&unit->hci_scorxq, m);
 		unit->hci_scorxqlen--;
-		mtx_leave(&unit->hci_devlock);
+		mutex_exit(&unit->hci_devlock);
 
 		KASSERT(m != NULL);
 
@@ -373,7 +381,7 @@ another:
 	if (unit->hci_aclrxqlen > 0) {
 		IF_DEQUEUE(&unit->hci_aclrxq, m);
 		unit->hci_aclrxqlen--;
-		mtx_leave(&unit->hci_devlock);
+		mutex_exit(&unit->hci_devlock);
 
 		KASSERT(m != NULL);
 
@@ -391,7 +399,7 @@ another:
 	if (m != NULL) {
 		struct hci_link *link;
 
-		mtx_leave(&unit->hci_devlock);
+		mutex_exit(&unit->hci_devlock);
 
 		DPRINTFN(11, "(%s) complete SCO\n",
 		    device_xname(unit->hci_dev));
@@ -409,7 +417,8 @@ another:
 		goto another;
 	}
 
-	mtx_leave(&unit->hci_devlock);
+	mutex_exit(&unit->hci_devlock);
+	mutex_exit(&bt_lock);
 
 	DPRINTFN(10, "done\n");
 }
@@ -428,7 +437,7 @@ hci_input_event(struct hci_unit *unit, struct mbuf *m)
 {
 	int rv;
 
-	mtx_enter(&unit->hci_devlock);
+	mutex_enter(&unit->hci_devlock);
 
 	if (unit->hci_eventqlen > hci_eventq_max) {
 		DPRINTF("(%s) dropped event packet.\n", device_xname(unit->hci_dev));
@@ -441,7 +450,7 @@ hci_input_event(struct hci_unit *unit, struct mbuf *m)
 		rv = 1;
 	}
 
-	mtx_leave(&unit->hci_devlock);
+	mutex_exit(&unit->hci_devlock);
 	return rv;
 }
 
@@ -450,7 +459,7 @@ hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 {
 	int rv;
 
-	mtx_enter(&unit->hci_devlock);
+	mutex_enter(&unit->hci_devlock);
 
 	if (unit->hci_aclrxqlen > hci_aclrxq_max) {
 		DPRINTF("(%s) dropped ACL packet.\n", device_xname(unit->hci_dev));
@@ -463,7 +472,7 @@ hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 		rv = 1;
 	}
 
-	mtx_leave(&unit->hci_devlock);
+	mutex_exit(&unit->hci_devlock);
 	return rv;
 }
 
@@ -472,7 +481,7 @@ hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 {
 	int rv;
 
-	mtx_enter(&unit->hci_devlock);
+	mutex_enter(&unit->hci_devlock);
 
 	if (unit->hci_scorxqlen > hci_scorxq_max) {
 		DPRINTF("(%s) dropped SCO packet.\n", device_xname(unit->hci_dev));
@@ -485,7 +494,7 @@ hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 		rv = 1;
 	}
 
-	mtx_leave(&unit->hci_devlock);
+	mutex_exit(&unit->hci_devlock);
 	return rv;
 }
 
@@ -550,11 +559,27 @@ hci_complete_sco(struct hci_unit *unit, struct mbuf *m)
 	}
 #endif
 
-	mtx_enter(&unit->hci_devlock);
+	mutex_enter(&unit->hci_devlock);
 
 	IF_ENQUEUE(&unit->hci_scodone, m);
 	schednetisr(NETISR_BT);
 
-	mtx_leave(&unit->hci_devlock);
+	mutex_exit(&unit->hci_devlock);
 	return 1;
+}
+
+/*
+ * update num_cmd_pkts and push on pending commands queue
+ */
+void
+hci_num_cmds(struct hci_unit *unit, uint8_t num)
+{
+	struct mbuf *m;
+
+	unit->hci_num_cmd_pkts = num;
+
+	while (unit->hci_num_cmd_pkts > 0 && !IF_IS_EMPTY(&unit->hci_cmdwait)) {
+		IF_DEQUEUE(&unit->hci_cmdwait, m);
+		hci_output_cmd(unit, m);
+	}
 }

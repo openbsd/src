@@ -1,5 +1,5 @@
-/*	$OpenBSD: l2cap_upper.c,v 1.2 2007/10/01 16:39:30 krw Exp $	*/
-/*	$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $	*/
+/*	$OpenBSD: l2cap_upper.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
