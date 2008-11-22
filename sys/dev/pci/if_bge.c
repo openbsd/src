@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.255 2008/11/09 15:08:26 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.256 2008/11/22 18:16:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -914,6 +914,9 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 	r->bge_flags = BGE_RXBDFLAG_END;
 	r->bge_len = m_new->m_len;
 	r->bge_idx = i;
+
+	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
@@ -2494,6 +2497,8 @@ bge_rxeof(struct bge_softc *sc)
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
+			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
