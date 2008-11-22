@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.142 2008/09/17 06:18:45 brad Exp $ */
+/*	$OpenBSD: ahci.c,v 1.143 2008/11/22 17:31:38 mikeb Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -423,12 +423,16 @@ int			ahci_vt8251_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_ati_sb600_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
+int			ahci_nvidia_mcp77_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
 	    ahci_no_match,	ahci_vt8251_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
-	    NULL,		ahci_ati_sb600_attach }
+	    NULL,		ahci_ati_sb600_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP77_AHCI_5,
+	    NULL,		ahci_nvidia_mcp77_attach }
 };
 
 int			ahci_pci_match(struct device *, void *, void *);
@@ -585,6 +589,14 @@ ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_flags |= AHCI_F_IGN_FR;
 
+	return (0);
+}
+
+int
+ahci_nvidia_mcp77_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	sc->sc_flags |= AHCI_F_IGN_FR;
+	
 	return (0);
 }
 
