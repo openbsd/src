@@ -83,7 +83,7 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 		}
 
 		atomic_inc(&dev_priv->last_fence_retired);
-		DRM_WAKEUP(&dev_priv->fence_queue);
+		DRM_WAKEUP(&dev_priv);
 		handled = 1;
 	}
 
@@ -132,7 +132,7 @@ int mga_driver_fence_wait(struct drm_device * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using fences.
 	 */
-	DRM_WAIT_ON(ret, dev_priv->fence_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
 		    (((cur_fence = atomic_read(&dev_priv->last_fence_retired))
 		      - *sequence) <= (1 << 23)));
 
@@ -159,8 +159,6 @@ int mga_driver_irq_postinstall(struct drm_device * dev)
 	ret = drm_vblank_init(dev, 1);
 	if (ret)
 		return ret;
-
-	DRM_INIT_WAITQUEUE(&dev_priv->fence_queue);
 
 	/* Turn on soft trap interrupt.  Vertical blank interrupts are enabled
 	 * in mga_enable_vblank.

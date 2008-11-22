@@ -231,7 +231,7 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 
 	if (iir & I915_USER_INTERRUPT) {
-		DRM_WAKEUP(&dev_priv->irq_queue);
+		DRM_WAKEUP(&dev_priv);
 	}
 
 	if (pipea_stats & I915_VBLANK_INTERRUPT_STATUS)
@@ -300,7 +300,7 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 	}
 
 	i915_user_irq_get(dev);
-	DRM_WAIT_ON(ret, dev_priv->irq_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
 	i915_user_irq_put(dev);
 
@@ -437,8 +437,6 @@ int i915_driver_irq_postinstall(struct drm_device * dev)
 	I915_WRITE(IER, I915_INTERRUPT_ENABLE_MASK);
 	I915_WRITE(IMR, dev_priv->irq_mask_reg);
 	(void)I915_READ(IER);
-
-	DRM_INIT_WAITQUEUE(&dev_priv->irq_queue);
 
 	return 0;
 }

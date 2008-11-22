@@ -291,7 +291,6 @@ typedef struct drm_radeon_private {
 	struct mem_block *fb_heap;
 
 	/* SW interrupt */
-	wait_queue_head_t swi_queue;
 	atomic_t swi_emitted;
 	int vblank_crtc;
 	uint32_t irq_enable_reg;

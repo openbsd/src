@@ -111,9 +111,7 @@
 
 #define __OS_HAS_AGP	1
 
-#define wait_queue_head_t	atomic_t
 #define DRM_WAKEUP(w)		wakeup((void *)w)
-#define DRM_INIT_WAITQUEUE(queue) do {(void)(queue);} while (0)
 
 #define DRM_CURPROC		curproc
 #define DRM_CURRENTPID		curproc->p_pid
