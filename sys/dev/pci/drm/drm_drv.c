@@ -120,7 +120,6 @@ drm_attach(struct device *parent, struct device *kdev,
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
-	dev->id_entry = id_entry;
 
 	TAILQ_INIT(&dev->maplist);
 
@@ -141,7 +140,7 @@ drm_attach(struct device *parent, struct device *kdev,
 	if (dev->driver->load != NULL) {
 		int retcode;
 
-		retcode = dev->driver->load(dev, dev->id_entry->driver_private);
+		retcode = dev->driver->load(dev, id_entry->driver_private);
 		if (retcode != 0)
 			goto error;
 	}
