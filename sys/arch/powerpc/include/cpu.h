@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.41 2008/10/15 23:23:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.42 2008/11/22 14:42:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -117,6 +117,8 @@ void	cpu_boot_secondary_processors(void);
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = &cpu_info[0]; cii < PPC_MAXPROCS; cii++, ci++)
 
+void cpu_unidle(struct cpu_info *);
+
 #else
 
 #define PPC_MAXPROCS		1
@@ -127,6 +129,8 @@ void	cpu_boot_secondary_processors(void);
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+
+#define cpu_unidle(ci)
 
 #endif
 
