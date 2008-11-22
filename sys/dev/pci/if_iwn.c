@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.36 2008/11/21 17:17:05 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.37 2008/11/22 08:23:52 brad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -3953,7 +3953,7 @@ iwn_run(struct iwn_softc *sc)
 
 /*
  * We support CCMP hardware encryption/decryption of unicast frames only.
- * HW support for TKIP really sucks.  We should leave TKIP die anyway.
+ * HW support for TKIP really sucks.  We should let TKIP die anyway.
  */
 int
 iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,

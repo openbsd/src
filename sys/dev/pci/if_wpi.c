@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.72 2008/11/16 09:52:31 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.73 2008/11/22 08:23:52 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2728,6 +2728,10 @@ wpi_run(struct wpi_softc *sc)
 	return 0;
 }
 
+/*
+ * We support CCMP hardware encryption/decryption of unicast frames only.
+ * HW support for TKIP really sucks.  We should let TKIP die anyway.
+ */
 int
 wpi_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
@@ -2737,11 +2741,6 @@ wpi_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct wpi_node_info node;
 	uint16_t kflags;
 
-	/*
-	 * We support CCMP hardware encryption/decryption of unicast frames
-	 * only.  Hardware support for TKIP really sucks and it is not worth
-	 * implementing.  We should leave TKIP die anyway.
-	 */
 	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
 	    k->k_cipher != IEEE80211_CIPHER_CCMP)
 		return ieee80211_set_key(ic, ni, k);
