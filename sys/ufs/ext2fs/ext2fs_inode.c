@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.42 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.43 2008/11/23 23:52:35 tedu Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
 	}
 	ip->i_flag &= ~(IN_MODIFIED);
 	cp = (caddr_t)bp->b_data +
-	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
 
 	/*
 	 * See note about 16-bit UID/GID limitation in ext2fs_vget(). Now

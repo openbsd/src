@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.50 2008/09/12 12:27:27 blambert Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.51 2008/11/23 23:52:35 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 		return (error);
 	}
 	cp = (caddr_t)bp->b_data +
-	    (ino_to_fsbo(era->fs, ip->i_number) * EXT2_DINODE_SIZE);
+	    (ino_to_fsbo(era->fs, ip->i_number) * EXT2_DINODE_SIZE(era->fs));
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_e2din);
 	brelse(bp);
 	vput(vp);
@@ -438,7 +438,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
 			fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg/fs->e2fs_ipb;
 
 	/*
@@ -512,8 +512,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump = NULL;
 
 #ifdef DEBUG_EXT2
-	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
-	    EXT2_DINODE_SIZE);
+	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
 	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
 	if (error)
@@ -531,6 +530,10 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	m_fs = ump->um_e2fs;
 	m_fs->e2fs_ronly = ronly;
 	ump->um_fstype = UM_EXT2FS;
+	       
+#ifdef DEBUG_EXT2
+	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
+#endif
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 			m_fs->e2fs.e2fs_state = 0;
@@ -551,7 +554,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
 	m_fs->e2fs_ngdb = howmany(m_fs->e2fs_ncg,
 		m_fs->e2fs_bsize / sizeof(struct ext2_gd));
-	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
 	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg/m_fs->e2fs_ipb;
 
 	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
@@ -872,7 +875,9 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (error);
 	}
 
-	dp = (struct ext2fs_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
+	dp = (struct ext2fs_dinode *) ((char *)bp->b_data
+			  + EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, ino));
+	
 	ip->i_e2din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload(dp, ip->i_e2din);
 	brelse(bp);
@@ -1059,9 +1064,8 @@ ext2fs_checksb(struct ext2fs *fs, int ronly)
 		return (EIO);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
-		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO ||
-		    fs2h16(fs->e2fs_inode_size) != EXT2_DINODE_SIZE) {
-			printf("Ext2 fs: unsupported inode size\n");
+		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
+			printf("Ext2 fs: unsupported first inode position");
 			return (EINVAL);      /* XXX needs translation */
 		}
 		if (fs2h32(fs->e2fs_features_incompat) &
