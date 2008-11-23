@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.6 2007/10/24 19:05:06 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.7 2008/11/23 13:09:31 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -95,11 +95,11 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 
 	if ((xconf->rip_socket = socket(AF_INET, SOCK_DGRAM,
 	    IPPROTO_UDP)) == -1)
-		fatalx("if_init: cannot create socket");
+		fatalx("error creating socket");
 
 	if (bind(xconf->rip_socket, (struct sockaddr *)&addr,
 	    sizeof(addr)) == -1)
-		fatal("error creating socket");
+		fatal("error binding socket");
 
 	/* set some defaults */
 	if (if_set_opt(xconf->rip_socket) == -1)
