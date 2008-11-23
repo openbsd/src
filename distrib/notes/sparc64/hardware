@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.143 2008/09/23 13:57:21 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.144 2008/11/23 17:05:09 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -485,7 +485,8 @@ Supported devices {:-include-:}:
 		    Repotec RP-WB7108
 		    SATech SN-54C
 		    Sitecom WL-112
-		    SparkLAN WL-685R
+		    SparkLAN WL-611R
+		    SparkLAN WPCR-501
 		    Surecom EP-9428-g
 		    Sweex LC500050
 		    TekComm NE-9428-g
