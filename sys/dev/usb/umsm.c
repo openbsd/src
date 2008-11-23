@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.38 2008/11/23 14:32:34 fkr Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.39 2008/11/23 21:55:08 fkr Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -41,7 +41,7 @@
 #endif
 
 #ifdef UMSM_DEBUG
-int     umsmdebug = 1;
+int     umsmdebug = 0;
 #define DPRINTFN(n, x)  do { if (umsmdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)
