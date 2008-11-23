@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.39 2007/11/28 13:47:09 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.40 2008/11/23 12:46:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -838,14 +838,14 @@ sili_ata_cmd(struct ata_xfer *xa)
 			atapi->control = htole16(SILI_PRB_PACKET_READ);
 
 		sgl = atapi->sgl;
-		sgllen = sizeofa(atapi->sgl);
+		sgllen = nitems(atapi->sgl);
 	} else {
 		ata = ccb->ccb_cmd;
 
 		ata->control = 0;
 
 		sgl = ata->sgl;
-		sgllen = sizeofa(ata->sgl);
+		sgllen = nitems(ata->sgl);
 	}
 
 	if (sili_load(ccb, sgl, sgllen) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.119 2008/10/02 20:21:14 brad Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.120 2008/11/23 12:48:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -637,7 +637,6 @@ int			tht_wait_ne(struct tht_softc *, bus_size_t, u_int32_t,
 
 /* misc */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
-#define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
 #define LWORDS(_b)	(((_b) + 7) >> 3)
 
 
@@ -661,7 +660,7 @@ thtc_lookup(struct pci_attach_args *pa)
 	int				i;
 	const struct thtc_device	*td;
 
-	for (i = 0; i < sizeofa(thtc_devices); i++) {
+	for (i = 0; i < nitems(thtc_devices); i++) {
 		td = &thtc_devices[i];
 		if (td->td_vendor == PCI_VENDOR(pa->pa_id) &&
 		    td->td_product == PCI_PRODUCT(pa->pa_id))
@@ -1615,7 +1614,7 @@ tht_lladdr_read(struct tht_softc *sc)
 {
 	int				i;
 
-	for (i = 0; i < sizeofa(tht_mac_regs); i++)
+	for (i = 0; i < nitems(tht_mac_regs); i++)
 		sc->sc_lladdr[i] = betoh16(tht_read(sc, tht_mac_regs[i]));
 }
 
@@ -1624,7 +1623,7 @@ tht_lladdr_write(struct tht_softc *sc)
 {
 	int				i;
 
-	for (i = 0; i < sizeofa(tht_mac_regs); i++)
+	for (i = 0; i < nitems(tht_mac_regs); i++)
 		tht_write(sc, tht_mac_regs[i], htobe16(sc->sc_lladdr[i]));
 }
 

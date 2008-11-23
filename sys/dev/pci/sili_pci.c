@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.8 2007/11/23 18:18:58 dlg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.9 2008/11/23 12:46:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -77,7 +77,7 @@ sili_lookup(struct pci_attach_args *pa)
 	int				i;
 	const struct sili_device	*sd;
 
-	for (i = 0; i < sizeofa(sili_devices); i++) {
+	for (i = 0; i < nitems(sili_devices); i++) {
 		sd = &sili_devices[i];
 		if (sd->sd_vendor == PCI_VENDOR(pa->pa_id) &&
 		    sd->sd_product == PCI_PRODUCT(pa->pa_id))

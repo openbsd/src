@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.57 2008/10/29 01:14:47 deraadt Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.58 2008/11/23 12:51:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -833,7 +833,6 @@ int			nxe_rom_read_region(struct nxe_softc *, u_int32_t,
 
 /* misc bits */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
-#define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
 
 /* let's go! */
 
@@ -864,7 +863,7 @@ nxe_match(struct device *parent, void *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_NETWORK)
 		return (0);
 
-	return (pci_matchbyid(pa, nxe_devices, sizeofa(nxe_devices)));
+	return (pci_matchbyid(pa, nxe_devices, nitems(nxe_devices)));
 }
 
 void

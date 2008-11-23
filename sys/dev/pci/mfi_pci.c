@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.17 2008/10/27 03:11:58 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.18 2008/11/23 12:50:23 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -91,7 +91,6 @@ struct	mfi_pci_device {
 	  MFI_IOP_PPC,		mfi_1078_subtypes }
 };
 
-#define sizeofa(_a) (sizeof(_a) / sizeof((_a)[0]))
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
 
 const struct mfi_pci_device *
@@ -100,7 +99,7 @@ mfi_pci_find_device(struct pci_attach_args *pa)
 	const struct mfi_pci_device *mpd;
 	int i;
 
-	for (i = 0; i < sizeofa(mfi_pci_devices); i++) {
+	for (i = 0; i < nitems(mfi_pci_devices); i++) {
 		mpd = &mfi_pci_devices[i];
 
 		if (mpd->mpd_vendor == PCI_VENDOR(pa->pa_id) &&
