@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.440 2008/11/11 23:36:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.441 2008/11/23 01:57:06 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -675,6 +675,8 @@ v4_config() {
 		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
 			addhostent "127.0.0.1" "$_name"
 			echo "dhcp NONE NONE NONE $_media" >>$_hn
+			# Create a new bpf in case we start another dhclient
+			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 		fi
 		;;
 	*)	_addr=$resp
@@ -823,6 +825,8 @@ enable_network() {
 				dhcpif="$dhcpif $if"
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
 				cmd="$cmd; dhclient $if"
+				# Create a new bpf in case we start another dhclient
+				makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 				;;
 			"rtsol")
 				rtsolif="$rtsolif $if"
