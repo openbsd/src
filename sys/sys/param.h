@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.78 2008/10/18 12:11:30 kettenis Exp $	*/
+/*	$OpenBSD: param.h,v 1.79 2008/11/23 12:43:37 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -196,6 +196,8 @@
 #if !defined(offsetof) && defined(_KERNEL)
 #define offsetof(s, e) ((size_t)&((s *)0)->e)
 #endif
+
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.
