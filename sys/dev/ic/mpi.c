@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.105 2008/11/18 21:52:39 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.106 2008/11/23 12:45:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -160,7 +160,6 @@ void		mpi_refresh_sensors(void *);
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
 #define	dwordsof(s)		(sizeof(s) / sizeof(u_int32_t))
-#define	sizeofa(s)		(sizeof(s) / sizeof((s)[0]))
 
 #define mpi_read_db(s)		mpi_read((s), MPI_DOORBELL)
 #define mpi_write_db(s, v)	mpi_write((s), MPI_DOORBELL, (v))
