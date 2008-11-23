@@ -164,7 +164,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
-	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa->pa_dmat, pa, self);
 }
 
 int

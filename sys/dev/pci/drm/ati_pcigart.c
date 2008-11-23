@@ -48,7 +48,7 @@ int
 drm_ati_alloc_pcigart_table(struct drm_device *dev,
     struct drm_ati_pcigart_info *gart_info)
 {
-	dev->sg->dmah = drm_pci_alloc(dev->pa.pa_dmat, gart_info->table_size,
+	dev->sg->dmah = drm_pci_alloc(dev->dmat, gart_info->table_size,
 	    PAGE_SIZE, gart_info->table_mask);
 	if (dev->sg->dmah == NULL)
 		return ENOMEM;
@@ -60,7 +60,7 @@ void
 drm_ati_free_pcigart_table(struct drm_device *dev,
     struct drm_ati_pcigart_info *gart_info)
 {
-	drm_pci_free(dev->pa.pa_dmat, dev->sg->dmah);
+	drm_pci_free(dev->dmat, dev->sg->dmah);
 	dev->sg->dmah = NULL;
 }
 

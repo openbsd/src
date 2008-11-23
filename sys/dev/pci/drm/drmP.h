@@ -498,6 +498,8 @@ struct drm_device {
 
 	const struct drm_driver_info *driver;
 
+	bus_dma_tag_t			dmat;
+
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
 	
@@ -561,13 +563,14 @@ struct drm_attach_args {
 	const struct drm_driver_info	*driver;
 	struct pci_attach_args		*pa;
 	struct vga_pci_softc		*vga;
+	bus_dma_tag_t			 dmat;
 };
 
 extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
 int	drm_pciprobe(struct pci_attach_args *, drm_pci_id_list_t * );
-struct device	*drm_attach_mi(const struct drm_driver_info *,
+struct device	*drm_attach_mi(const struct drm_driver_info *, bus_dma_tag_t,
 		     struct pci_attach_args *pa, struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);

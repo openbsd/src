@@ -74,7 +74,7 @@ sisdrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_sis_private_t	*dev_priv = (drm_sis_private_t *)self;
 	struct pci_attach_args	*pa = aux;
 
-	dev_priv->drmdev = drm_attach_mi(&sis_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&sis_driver, pa->pa_dmat, pa, self);
 }
 
 int

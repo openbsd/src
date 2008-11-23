@@ -582,7 +582,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 		  ((dev_priv->flags & RADEON_IS_AGP) ? "AGP" :
 		  (((dev_priv->flags & RADEON_IS_PCIE) ? "PCIE" : "PCI"))));
 
-	dev_priv->drmdev = drm_attach_mi(&radeondrm_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&radeondrm_driver, pa->pa_dmat, pa, self);
 }
 
 int

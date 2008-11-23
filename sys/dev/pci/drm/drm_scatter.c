@@ -35,7 +35,7 @@
  */
 #include "drmP.h"
 
-struct drm_sg_dmamem	*drm_sg_dmamem_alloc(struct drm_device *, size_t);
+struct drm_sg_dmamem	*drm_sg_dmamem_alloc(bus_dma_tag_t, size_t);
 void			 drm_sg_dmamem_free(struct drm_sg_dmamem *);
 
 void
@@ -76,7 +76,7 @@ drm_sg_alloc(struct drm_device * dev, struct drm_scatter_gather *request)
 		return ENOMEM;
 	}
 
-	if ((entry->mem = drm_sg_dmamem_alloc(dev, pages)) == NULL) {
+	if ((entry->mem = drm_sg_dmamem_alloc(dev->dmat, pages)) == NULL) {
 		drm_sg_cleanup(entry);
 		return ENOMEM;
 	}
@@ -142,7 +142,7 @@ drm_sg_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
  * scatter/gather
  */
 struct drm_sg_dmamem*
-drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
+drm_sg_dmamem_alloc(bus_dma_tag_t dmat, size_t pages)
 {
 	struct drm_sg_dmamem	*dsd = NULL;
 	bus_size_t	  	 size = pages << PAGE_SHIFT;
@@ -157,22 +157,22 @@ drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 	if (dsd->sg_segs == NULL)
 		goto dsdfree;
 
-	dsd->sg_tag = dev->pa.pa_dmat;
+	dsd->sg_tag = dmat;
 	dsd->sg_size = size;
 
-	if (bus_dmamap_create(dev->pa.pa_dmat, size, pages, PAGE_SIZE, 0,
+	if (bus_dmamap_create(dmat, size, pages, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dsd->sg_map) != 0)
 		goto segsfree;
 
-	if ((ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, PAGE_SIZE, 0,
+	if ((ret = bus_dmamem_alloc(dmat, size, PAGE_SIZE, 0,
 	    dsd->sg_segs, pages, &dsd->sg_nsegs, BUS_DMA_NOWAIT)) != 0)
 		goto destroy;
 
-	if (bus_dmamem_map(dev->pa.pa_dmat, dsd->sg_segs, dsd->sg_nsegs, size, 
+	if (bus_dmamem_map(dmat, dsd->sg_segs, dsd->sg_nsegs, size, 
 	    &dsd->sg_kva, BUS_DMA_NOWAIT) != 0)
 		goto free;
 
-	if (bus_dmamap_load(dev->pa.pa_dmat, dsd->sg_map, dsd->sg_kva, size,
+	if (bus_dmamap_load(dmat, dsd->sg_map, dsd->sg_kva, size,
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
@@ -181,11 +181,11 @@ drm_sg_dmamem_alloc(struct drm_device *dev, size_t pages)
 	return (dsd);
 
 unmap:
-	bus_dmamem_unmap(dev->pa.pa_dmat, dsd->sg_kva, size);
+	bus_dmamem_unmap(dmat, dsd->sg_kva, size);
 free:
-	bus_dmamem_free(dev->pa.pa_dmat, dsd->sg_segs, dsd->sg_nsegs);
+	bus_dmamem_free(dmat, dsd->sg_segs, dsd->sg_nsegs);
 destroy:
-	bus_dmamap_destroy(dev->pa.pa_dmat, dsd->sg_map);
+	bus_dmamap_destroy(dmat, dsd->sg_map);
 segsfree:
 	drm_free(dsd->sg_segs, sizeof(*dsd->sg_segs) * pages, DRM_MEM_SGLISTS);
 

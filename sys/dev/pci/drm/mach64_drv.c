@@ -123,7 +123,7 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa->pa_dmat, pa, self);
 }
 
 int

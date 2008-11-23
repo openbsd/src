@@ -56,13 +56,14 @@ int	 drm_activate(struct device *, enum devact);
 int	 drmprint(void *, const char *);
 
 struct device *
-drm_attach_mi(const struct drm_driver_info *driver, struct pci_attach_args *pa,
-    struct device *dev)
+drm_attach_mi(const struct drm_driver_info *driver, bus_dma_tag_t dmat,
+    struct pci_attach_args *pa, struct device *dev)
 {
 	struct drm_attach_args arg;
 
 	arg.driver = driver;
 	arg.pa = pa;
+	arg.dmat = dmat;
 
 	printf("\n");
 	return (config_found(dev, &arg, drmprint));
@@ -110,6 +111,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	/* needed for pci_mapreg_* */
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
+	dev->dmat = da->dmat;
 	dev->irq = pa->pa_intrline;
 	dev->pci_domain = 0;
 	dev->pci_bus = pa->pa_bus;

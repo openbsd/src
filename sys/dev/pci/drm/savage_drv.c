@@ -168,7 +168,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	dev_priv->bst = pa->pa_memt;
 
-	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa->pa_dmat, pa, self);
 }
 
 int

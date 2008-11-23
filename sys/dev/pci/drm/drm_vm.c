@@ -102,12 +102,12 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		break;
 	/* XXX unify all the bus_dmamem_mmap bits */
 	case _DRM_SCATTER_GATHER:
-		return (bus_dmamem_mmap(dev->pa.pa_dmat, dev->sg->mem->sg_segs,
+		return (bus_dmamem_mmap(dev->dmat, dev->sg->mem->sg_segs,
 		    dev->sg->mem->sg_nsegs, map->offset - dev->sg->handle +
 		    offset, prot, BUS_DMA_NOWAIT));
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:
-		return (bus_dmamem_mmap(dev->pa.pa_dmat, &map->dmah->seg, 1,
+		return (bus_dmamem_mmap(dev->dmat, &map->dmah->seg, 1,
 		    offset, prot, BUS_DMA_NOWAIT));
 	default:
 		DRM_ERROR("bad map type %d\n", type);

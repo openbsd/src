@@ -140,7 +140,7 @@ ragedrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->drmdev = drm_attach_mi(&ragedrm_driver, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&ragedrm_driver, pa->pa_dmat, pa, self);
 }
 
 int
