@@ -125,6 +125,12 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	drm_mem_init();
 	TAILQ_INIT(&dev->files);
 
+	if (dev->driver->vblank_pipes != 0 && drm_vblank_init(dev,
+	    dev->driver->vblank_pipes)) {
+		printf(": failed to allocate vblank data\n");
+		goto error;
+	}
+
 	/*
 	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
 	 * conflict with it.
@@ -167,9 +173,13 @@ drm_detach(struct device *self, int flags)
 {
 	struct drm_device *dev = (struct drm_device *)self;
 
+	drm_lastclose(dev);
+
 	drm_ctxbitmap_cleanup(dev);
 
 	extent_destroy(dev->handle_ext);
+
+	drm_vblank_cleanup(dev);
 
 	if (dev->agp && dev->agp->mtrr) {
 		int retcode;
@@ -179,7 +189,6 @@ drm_detach(struct device *self, int flags)
 		DRM_DEBUG("mtrr_del = %d", retcode);
 	}
 
-	drm_lastclose(dev);
 
 	if (dev->agp != NULL) {
 		drm_free(dev->agp, sizeof(*dev->agp), DRM_MEM_AGPLISTS);

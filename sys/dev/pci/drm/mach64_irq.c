@@ -141,11 +141,6 @@ void mach64_driver_irq_preinstall(struct drm_device * dev)
 	mach64_disable_vblank_local(dev, 0);
 }
 
-int mach64_driver_irq_postinstall(struct drm_device * dev)
-{
-	return drm_vblank_init(dev, 1);
-}
-
 void mach64_driver_irq_uninstall(struct drm_device * dev)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;

@@ -453,6 +453,7 @@ struct drm_driver_info {
 	int	(*irq_postinstall)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
 	irqreturn_t	(*irq_handler)(DRM_IRQ_ARGS);
+	int	vblank_pipes;
 	u_int32_t (*get_vblank_counter)(struct drm_device *, int);
 	int	(*enable_vblank)(struct drm_device *, int);
 	void	(*disable_vblank)(struct drm_device *, int);

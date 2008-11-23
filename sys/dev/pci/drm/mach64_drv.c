@@ -71,11 +71,11 @@ static const struct drm_driver_info machdrm_driver = {
 	.buf_priv_size		= 1, /* No dev_priv */
 	.ioctl			= machdrm_ioctl,
 	.lastclose		= mach64_driver_lastclose,
+	.vblank_pipes		= 1,
 	.get_vblank_counter	= mach64_get_vblank_counter,
 	.enable_vblank		= mach64_enable_vblank,
 	.disable_vblank		= mach64_disable_vblank,
 	.irq_preinstall		= mach64_driver_irq_preinstall,
-	.irq_postinstall	= mach64_driver_irq_postinstall,
 	.irq_uninstall		= mach64_driver_irq_uninstall,
 	.irq_handler		= mach64_driver_irq_handler,
 	.dma_ioctl		= mach64_dma_buffers,
@@ -90,7 +90,6 @@ static const struct drm_driver_info machdrm_driver = {
 	.flags			= DRIVER_AGP | DRIVER_MTRR | DRIVER_PCI_DMA |
 				    DRIVER_DMA | DRIVER_SG | DRIVER_IRQ,
 };
-
 int
 machdrm_probe(struct device *parent, void *match, void *aux)
 {

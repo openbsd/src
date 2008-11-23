@@ -95,6 +95,7 @@ static const struct drm_driver_info inteldrm_driver = {
 	.preclose		= i915_driver_preclose,
 	.lastclose		= i915_driver_lastclose,
 	.device_is_agp		= i915_driver_device_is_agp,
+	.vblank_pipes		= 2,
 	.get_vblank_counter	= i915_get_vblank_counter,
 	.enable_vblank		= i915_enable_vblank,
 	.disable_vblank		= i915_disable_vblank,

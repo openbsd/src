@@ -100,11 +100,6 @@ void r128_driver_irq_preinstall(struct drm_device * dev)
 	R128_WRITE(R128_GEN_INT_STATUS, R128_CRTC_VBLANK_INT_AK);
 }
 
-int r128_driver_irq_postinstall(struct drm_device * dev)
-{
-	return drm_vblank_init(dev, 1);
-}
-
 void r128_driver_irq_uninstall(struct drm_device * dev)
 {
 	drm_r128_private_t *dev_priv = (drm_r128_private_t *) dev->dev_private;

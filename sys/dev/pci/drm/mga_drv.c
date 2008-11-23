@@ -106,6 +106,7 @@ static const struct drm_driver_info mga_driver = {
 	.buf_priv_size		= sizeof(drm_mga_buf_priv_t),
 	.ioctl			= mgadrm_ioctl,
 	.lastclose		= mga_driver_lastclose,
+	.vblank_pipes		= 1,
 	.enable_vblank		= mga_enable_vblank,
 	.disable_vblank		= mga_disable_vblank,
 	.get_vblank_counter	= mga_get_vblank_counter,

@@ -339,13 +339,8 @@ int radeon_driver_irq_postinstall(struct drm_device * dev)
 {
 	drm_radeon_private_t *dev_priv =
 	    (drm_radeon_private_t *) dev->dev_private;
-	int ret;
 
 	atomic_set(&dev_priv->swi_emitted, 0);
-
-	ret = drm_vblank_init(dev, 2);
-	if (ret)
-		return ret;
 
 	dev->max_vblank_count = 0x001fffff;
 

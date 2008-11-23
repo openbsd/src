@@ -111,7 +111,8 @@ drm_irq_install(struct drm_device *dev)
 	DRM_DEBUG("%s: interrupting at %s\n", dev->device.dv_xname, istr);
 
 	/* After installing handler */
-	dev->driver->irq_postinstall(dev);
+	if (dev->driver->irq_postinstall != NULL)
+		dev->driver->irq_postinstall(dev);
 
 	return 0;
 err:
@@ -141,7 +142,6 @@ drm_irq_uninstall(struct drm_device *dev)
 
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 
-	drm_vblank_cleanup(dev);
 	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;

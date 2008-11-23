@@ -484,6 +484,7 @@ static const struct drm_driver_info radeondrm_driver = {
 	.preclose		= radeon_driver_preclose,
 	.postclose		= radeon_driver_postclose,
 	.lastclose		= radeon_driver_lastclose,
+	.vblank_pipes		= 2,
 	.get_vblank_counter	= radeon_get_vblank_counter,
 	.enable_vblank		= radeon_enable_vblank,
 	.disable_vblank		= radeon_disable_vblank,

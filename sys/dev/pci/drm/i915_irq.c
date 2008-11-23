@@ -415,11 +415,6 @@ void i915_driver_irq_preinstall(struct drm_device * dev)
 int i915_driver_irq_postinstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	int ret, num_pipes = 2;
-
-	ret = drm_vblank_init(dev, num_pipes);
-	if (ret)
-		return ret;
 
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */
 
