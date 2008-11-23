@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.10 2008/11/07 20:20:33 espie Exp $
+# $OpenBSD: mdoclint,v 1.11 2008/11/23 17:07:36 jmc Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -286,6 +286,9 @@ sub handle_file {
 	    }
 	}
 	if ($opt_p) {
+	    if (not /^\.\\\"/o and /\w\w\.\s+[A-Z]/o) {
+		warning("new sentence, new line: `$_'");
+	    }
 	    if (not /^\.\\\"/o and /^\... .*[^\s][\.();,\[\]\{\}:]$/o
 		and not /\s\.\.\.$/o and not /\\&.$/o) {
 		warning("punctuation in format string without space: `$_'");
