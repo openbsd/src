@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.87 2008/08/27 09:05:03 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.88 2008/11/23 12:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -224,8 +224,6 @@ acx_attach(struct acx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i, error;
-
-	ifp->if_softc = sc;
 
 	/* Initialize channel scanning timer */
 	timeout_set(&sc->sc_chanscan_timer, acx_next_scan, sc);
@@ -1455,7 +1453,6 @@ int
 acx_read_eeprom(struct acx_softc *sc, uint32_t offset, uint8_t *val)
 {
 	int i;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	CSR_WRITE_4(sc, ACXREG_EEPROM_CONF, 0);
 	CSR_WRITE_4(sc, ACXREG_EEPROM_ADDR, offset);
@@ -1469,7 +1466,7 @@ acx_read_eeprom(struct acx_softc *sc, uint32_t offset, uint8_t *val)
 	}
 	if (i == EE_READ_RETRY_MAX) {
 		printf("%s: can't read EEPROM offset %x (timeout)\n",
-		    ifp->if_xname, offset);
+		    sc->sc_dev.dv_xname, offset);
 		return (ETIMEDOUT);
 	}
 #undef EE_READ_RETRY_MAX
@@ -1886,7 +1883,6 @@ acx_dma_alloc(struct acx_softc *sc)
 {
 	struct acx_ring_data *rd = &sc->sc_ring_data;
 	struct acx_buf_data *bd = &sc->sc_buf_data;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i, error, nsegs;
 
 	/* Allocate DMA stuffs for RX descriptors  */
@@ -1935,7 +1931,8 @@ acx_dma_alloc(struct acx_softc *sc)
 	    ACX_TX_RING_SIZE, 0, BUS_DMA_NOWAIT, &rd->tx_ring_dmamap);
 
 	if (error) {
-		printf("%s: can't create tx ring dma tag\n", ifp->if_xname);
+		printf("%s: can't create tx ring dma tag\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -1944,7 +1941,7 @@ acx_dma_alloc(struct acx_softc *sc)
 
 	if (error) {
 		printf("%s: can't allocate tx ring dma memory\n",
-		    ifp->if_xname);
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -1961,7 +1958,8 @@ acx_dma_alloc(struct acx_softc *sc)
 	    rd->tx_ring, ACX_TX_RING_SIZE, NULL, BUS_DMA_WAITOK);
 
 	if (error) {
-		printf("%s: can't get tx ring dma address\n", ifp->if_xname);
+		printf("%s: can't get tx ring dma address\n",
+		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &rd->tx_ring_seg, 1);
 		return (error);
 	}
@@ -1973,7 +1971,8 @@ acx_dma_alloc(struct acx_softc *sc)
 	    0, 0, &bd->mbuf_tmp_dmamap);
 
 	if (error) {
-		printf("%s: can't create tmp mbuf dma map\n", ifp->if_xname);
+		printf("%s: can't create tmp mbuf dma map\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -1983,7 +1982,7 @@ acx_dma_alloc(struct acx_softc *sc)
 		    MCLBYTES, 0, 0, &bd->rx_buf[i].rb_mbuf_dmamap);
 		if (error) {
 			printf("%s: can't create rx mbuf dma map (%d)\n",
-			    ifp->if_xname, i);
+			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
 		bd->rx_buf[i].rb_desc = &rd->rx_ring[i];
@@ -1995,7 +1994,7 @@ acx_dma_alloc(struct acx_softc *sc)
 		    MCLBYTES, 0, 0, &bd->tx_buf[i].tb_mbuf_dmamap);
 		if (error) {
 			printf("%s: can't create tx mbuf dma map (%d)\n",
-			    ifp->if_xname, i);
+			    sc->sc_dev.dv_xname, i);
 			return (error);
 		}
 		bd->tx_buf[i].tb_desc1 = &rd->tx_ring[i * 2];
