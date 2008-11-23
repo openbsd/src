@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.22 2006/12/11 11:26:05 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.23 2008/11/23 13:30:59 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -226,8 +226,8 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 * our src addr is taken from the i/f, else punt.
 	 */
 	if (ro) {
-		if (ro->ro_rt &&
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst)) {
+		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}

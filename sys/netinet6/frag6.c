@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.26 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.27 2008/11/23 13:30:59 claudio Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -197,8 +197,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 #ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
 	dst = (struct sockaddr_in6 *)&ro.ro_dst;
-	if (ro.ro_rt
-	 && ((ro.ro_rt->rt_flags & RTF_UP) == 0
+	if (ro.ro_rt && ((ro.ro_rt->rt_flags & RTF_UP) == 0
 	  || !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
 		RTFREE(ro.ro_rt);
 		ro.ro_rt = (struct rtentry *)0;
