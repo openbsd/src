@@ -38,24 +38,14 @@
 
 #include "drmP.h"
 
-void
-drm_mem_init(void)
-{
-}
-
-void
-drm_mem_uninit(void)
-{
-}
-
 void*
-drm_alloc(size_t size, int area)
+_drm_alloc(size_t size)
 {
 	return malloc(size, M_DRM, M_NOWAIT);
 }
 
 void *
-drm_calloc(size_t nmemb, size_t size, int area)
+_drm_calloc(size_t nmemb, size_t size)
 {
 	if (nmemb == 0 || SIZE_MAX / nmemb < size)
 		return (NULL);
@@ -64,7 +54,7 @@ drm_calloc(size_t nmemb, size_t size, int area)
 }
 
 void *
-drm_realloc(void *oldpt, size_t oldsize, size_t size, int area)
+_drm_realloc(void *oldpt, size_t oldsize, size_t size)
 {
 	void *pt;
 
@@ -79,7 +69,7 @@ drm_realloc(void *oldpt, size_t oldsize, size_t size, int area)
 }
 
 void
-drm_free(void *pt, size_t size, int area)
+_drm_free(void *pt)
 {
 	if (pt != NULL)
 		free(pt, M_DRM);

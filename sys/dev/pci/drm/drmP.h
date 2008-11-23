@@ -583,12 +583,15 @@ drm_pci_id_list_t *drm_find_description(int , int , drm_pci_id_list_t *);
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
 
 /* Memory management support (drm_memory.c) */
-void	drm_mem_init(void);
-void	drm_mem_uninit(void);
-void	*drm_alloc(size_t, int);
-void	*drm_calloc(size_t, size_t, int);
-void	*drm_realloc(void *, size_t, size_t, int);
-void	drm_free(void *, size_t, int);
+void	*_drm_alloc(size_t);
+#define	drm_alloc(size, area)	_drm_alloc(size)
+void	*_drm_calloc(size_t, size_t);
+#define	drm_calloc(nmemb, size, area) _drm_calloc(nmemb, size)
+void	*_drm_realloc(void *, size_t, size_t);
+#define	drm_realloc(old, oldsz, size, area) _drm_realloc(old, oldsz, size)
+void	_drm_free(void *);
+#define	drm_free(ptr, size, area) do { _drm_free(ptr); (void)(size); \
+} while( /*CONSTCOND*/ 0)
 void	*drm_ioremap(struct drm_device *, drm_local_map_t *);
 void	drm_ioremapfree(drm_local_map_t *);
 int	drm_mtrr_add(unsigned long, size_t, int);

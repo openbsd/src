@@ -121,8 +121,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
 
 	TAILQ_INIT(&dev->maplist);
-
-	drm_mem_init();
 	TAILQ_INIT(&dev->files);
 
 	if (dev->driver->vblank_pipes != 0 && drm_vblank_init(dev,
@@ -195,7 +193,6 @@ drm_detach(struct device *self, int flags)
 		dev->agp = NULL;
 	}
 
-	drm_mem_uninit();
 	return 0;
 }
 
