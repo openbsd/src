@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.36 2008/11/21 21:10:03 fkr Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.37 2008/11/23 14:20:01 fkr Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -181,7 +181,7 @@ umsm_match(struct device *parent, void *match, void *aux)
 
 		if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
 			/*
-			 * Some high-speed modem requre special care.
+			 * Some high-speed modems require special care.
 			 */
 			if (flag & DEV_HUAWEI) {
 				if  (uaa->ifaceno != 2) 
@@ -217,13 +217,13 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
 	/*
-	 * Some 3G modem devices have multiple interface and some 
-	 * of them are umass class. Don't claim ownership in such case.
+	 * Some 3G modems have multiple interfaces and some of them
+	 * are umass class. Don't claim ownership in such case.
 	 */
 	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
 		/*
-		 * Some 3G modems require special request to
-		 * enable it's modem function.
+		 * Some 3G modems require a special request to
+		 * enable their modem function.
 		 */
 		if ((sc->sc_flag & DEV_HUAWEI) && uaa->ifaceno == 0) {
                         umsm_huawei_changemode(uaa->device);
