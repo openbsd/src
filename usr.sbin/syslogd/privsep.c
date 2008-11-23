@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.33 2008/09/29 18:41:56 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.34 2008/11/23 04:29:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -113,7 +113,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = SIG_DFL; 
+	sa.sa_handler = SIG_DFL;
 	for (i = 1; i < _NSIG; i++)
 		sigaction(i, &sa, NULL);
 
@@ -159,7 +159,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	/* Father */
 	/* Pass TERM/HUP/INT/QUIT through to child, and accept CHLD */
-	sa.sa_handler = sig_pass_to_chld; 
+	sa.sa_handler = sig_pass_to_chld;
 	sigaction(SIGTERM, &sa, NULL);
 	sigaction(SIGHUP, &sa, NULL);
 	sigaction(SIGINT, &sa, NULL);
