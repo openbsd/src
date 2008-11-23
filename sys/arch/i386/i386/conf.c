@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.128 2008/11/22 21:26:48 oga Exp $	*/
+/*	$OpenBSD: conf.c,v 1.129 2008/11/23 18:19:02 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -179,11 +179,6 @@ cdev_decl(agp);
 #include "drm.h"
 cdev_decl(drm);
 
-/* XXX -- this needs to be supported by config(8)! */
-#if (NCOM > 0) && (NPCCOM > 0)
-#error com and pccom are mutually exclusive.  Sorry.
-#endif
-
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
@@ -209,11 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
-#if NPCCOM > 0
-	cdev_tty_init(NPCCOM,com),	/* 8: serial port */
-#else
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
-#endif
 	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
@@ -462,7 +453,7 @@ struct	consdev constab[] = {
 #if NWSDISPLAY > 0
 	cons_init(ws),
 #endif
-#if NCOM + NPCCOM > 0
+#if NCOM
 	cons_init(com),
 #endif
 	{ 0 },
