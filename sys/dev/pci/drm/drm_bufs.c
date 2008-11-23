@@ -289,7 +289,6 @@ drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
-		drm_ioremapfree(map);
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
 		if (map->mtrr) {
@@ -301,9 +300,11 @@ drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
 		}
 		break;
 	case _DRM_AGP:
+		/* FALLTHROUGH */
 	case _DRM_SCATTER_GATHER:
 		break;
 	case _DRM_SHM:
+		/* FALLTHROUGH */
 	case _DRM_CONSISTENT:
 		drm_pci_free(dev->pa.pa_dmat, map->dmah);
 		break;

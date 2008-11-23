@@ -79,6 +79,10 @@ typedef struct drm_r128_private {
 	struct device		 dev;
 	struct device		*drmdev;
 
+	pci_chipset_tag_t	 pc;
+	pci_intr_handle_t	 ih;
+	void			*irqh;
+
 	struct vga_pci_bar	*regs;
 	drm_r128_ring_buffer_t ring;
 	drm_r128_sarea_t *sarea_priv;
@@ -165,7 +169,7 @@ extern int r128_enable_vblank(struct drm_device *dev, int crtc);
 extern void r128_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 r128_get_vblank_counter(struct drm_device *dev, int crtc);
 extern irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS);
-extern void r128_driver_irq_preinstall(struct drm_device * dev);
+extern int r128_driver_irq_install(struct drm_device * dev);
 extern void r128_driver_irq_uninstall(struct drm_device * dev);
 extern void r128_driver_lastclose(struct drm_device * dev);
 extern void r128_driver_preclose(struct drm_device * dev,

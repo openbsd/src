@@ -488,8 +488,7 @@ static const struct drm_driver_info radeondrm_driver = {
 	.get_vblank_counter	= radeon_get_vblank_counter,
 	.enable_vblank		= radeon_enable_vblank,
 	.disable_vblank		= radeon_disable_vblank,
-	.irq_preinstall		= radeon_driver_irq_preinstall,
-	.irq_postinstall	= radeon_driver_irq_postinstall,
+	.irq_install		= radeon_driver_irq_install,
 	.irq_uninstall		= radeon_driver_irq_uninstall,
 	.irq_handler		= radeon_driver_irq_handler,
 	.dma_ioctl		= radeon_cp_buffers,
@@ -522,6 +521,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), radeondrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
+	dev_priv->pc = pa->pa_pc;
 
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 0);
 	if (bar == NULL) {
@@ -541,6 +541,11 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	    bar->addr, bar->size, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 

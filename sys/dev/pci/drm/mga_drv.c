@@ -110,8 +110,7 @@ static const struct drm_driver_info mga_driver = {
 	.enable_vblank		= mga_enable_vblank,
 	.disable_vblank		= mga_disable_vblank,
 	.get_vblank_counter	= mga_get_vblank_counter,
-	.irq_preinstall		= mga_driver_irq_preinstall,
-	.irq_postinstall	= mga_driver_irq_postinstall,
+	.irq_install		= mga_driver_irq_install,
 	.irq_uninstall		= mga_driver_irq_uninstall,
 	.irq_handler		= mga_driver_irq_handler,
 	.dma_ioctl		= mga_dma_buffers,
@@ -144,6 +143,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_pci_id_list_t	*id_entry;
 
 	dev_priv->usec_timeout = MGA_DEFAULT_USEC_TIMEOUT;
+	dev_priv->pc = pa->pa_pc;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), mgadrm_pciidlist);
@@ -154,6 +154,13 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't get BAR info\n");
 		return;
 	}
+	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
+	    bar->addr, bar->size, 0);
+	if (dev_priv->regs == NULL) {
+		printf(": can't map mmio space\n");
+		return;
+	}
+
 	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
 	    bar->addr, bar->size, 0);
 	if (dev_priv->regs == NULL) {

@@ -91,7 +91,7 @@ static const struct drm_driver_info ragedrm_driver = {
 	.get_vblank_counter	= r128_get_vblank_counter,
 	.enable_vblank 		= r128_enable_vblank,
 	.disable_vblank		= r128_disable_vblank,
-	.irq_preinstall		= r128_driver_irq_preinstall,
+	.irq_install		= r128_driver_irq_install,
 	.irq_uninstall		= r128_driver_irq_uninstall,
 	.irq_handler		= r128_driver_irq_handler,
 	.dma_ioctl		= r128_cce_buffers,
@@ -120,6 +120,8 @@ ragedrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 
+	dev_priv->pc = pa->pa_pc;
+
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 2);
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
@@ -130,6 +132,11 @@ ragedrm_attach(struct device *parent, struct device *self, void *aux)
 	    bar->addr, bar->size, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 

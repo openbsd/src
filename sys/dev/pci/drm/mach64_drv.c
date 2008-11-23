@@ -75,7 +75,7 @@ static const struct drm_driver_info machdrm_driver = {
 	.get_vblank_counter	= mach64_get_vblank_counter,
 	.enable_vblank		= mach64_enable_vblank,
 	.disable_vblank		= mach64_disable_vblank,
-	.irq_preinstall		= mach64_driver_irq_preinstall,
+	.irq_install		= mach64_driver_irq_install,
 	.irq_uninstall		= mach64_driver_irq_uninstall,
 	.irq_handler		= mach64_driver_irq_handler,
 	.dma_ioctl		= mach64_dma_buffers,
@@ -103,6 +103,8 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 
+	dev_priv->pc = pa->pa_pc;
+
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 2);
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
@@ -113,6 +115,11 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 	    bar->addr, bar->size, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 

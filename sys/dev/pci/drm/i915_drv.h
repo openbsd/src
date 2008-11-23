@@ -84,6 +84,10 @@ typedef struct drm_i915_private {
 	u_long			 flags;
 	u_int16_t		 pci_device;
 
+	pci_chipset_tag_t	 pc;
+	pci_intr_handle_t	 ih;
+	void			*irqh;
+
 	struct vga_pci_bar	*regs;
 	drm_local_map_t *sarea;
 
@@ -250,8 +254,7 @@ extern int i915_irq_wait(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 
 extern irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS);
-extern void i915_driver_irq_preinstall(struct drm_device * dev);
-extern int i915_driver_irq_postinstall(struct drm_device * dev);
+extern int i915_driver_irq_install(struct drm_device * dev);
 extern void i915_driver_irq_uninstall(struct drm_device * dev);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);

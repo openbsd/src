@@ -35,7 +35,6 @@
 #include "drmP.h"
 #include "drm.h"
 
-irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
 void		drm_update_vblank_count(struct drm_device *, int);
 void		vblank_disable(void *);
 
@@ -74,9 +73,7 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 int
 drm_irq_install(struct drm_device *dev)
 {
-	int retcode;
-	pci_intr_handle_t ih;
-	const char *istr;
+	int	ret;
 
 	if (dev->irq == 0 || dev->dev_private == NULL)
 		return (EINVAL);
@@ -93,34 +90,16 @@ drm_irq_install(struct drm_device *dev)
 
 	mtx_init(&dev->irq_lock, IPL_BIO);
 
-	/* Before installing handler */
-	dev->driver->irq_preinstall(dev);
-
-	/* Install handler */
-	if (pci_intr_map(&dev->pa, &ih) != 0) {
-		retcode = ENOENT;
+	if ((ret = dev->driver->irq_install(dev)) != 0)
 		goto err;
-	}
-	istr = pci_intr_string(dev->pa.pa_pc, ih);
-	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_BIO,
-	    drm_irq_handler_wrap, dev, dev->device.dv_xname);
-	if (!dev->irqh) {
-		retcode = ENOENT;
-		goto err;
-	}
-	DRM_DEBUG("%s: interrupting at %s\n", dev->device.dv_xname, istr);
 
-	/* After installing handler */
-	if (dev->driver->irq_postinstall != NULL)
-		dev->driver->irq_postinstall(dev);
-
-	return 0;
+	return (0);
 err:
 	DRM_LOCK();
 	dev->irq_enabled = 0;
 	DRM_SPINUNINIT(&dev->irq_lock);
 	DRM_UNLOCK();
-	return retcode;
+	return (ret);
 }
 
 int
@@ -139,8 +118,6 @@ drm_irq_uninstall(struct drm_device *dev)
 	DRM_DEBUG("irq=%d\n", dev->irq);
 
 	dev->driver->irq_uninstall(dev);
-
-	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 
 	DRM_SPINUNINIT(&dev->irq_lock);
 

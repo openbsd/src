@@ -99,8 +99,7 @@ static const struct drm_driver_info inteldrm_driver = {
 	.get_vblank_counter	= i915_get_vblank_counter,
 	.enable_vblank		= i915_enable_vblank,
 	.disable_vblank		= i915_disable_vblank,
-	.irq_preinstall		= i915_driver_irq_preinstall,
-	.irq_postinstall	= i915_driver_irq_postinstall,
+	.irq_install		= i915_driver_irq_install,
 	.irq_uninstall		= i915_driver_irq_uninstall,
 	.irq_handler		= i915_driver_irq_handler,
 
@@ -133,6 +132,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
 	dev_priv->pci_device = PCI_PRODUCT(pa->pa_id);
+	dev_priv->pc = pa->pa_pc;
 
 	/* Add register map (needed for suspend/resume) */
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent,
@@ -146,6 +146,11 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    bar->addr, bar->size, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 

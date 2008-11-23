@@ -76,6 +76,10 @@ typedef struct drm_mach64_private {
 	struct device		 dev;
 	struct device		*drmdev;
 
+	pci_chipset_tag_t	 pc;
+	pci_intr_handle_t	 ih;
+	void			*irqh;
+
 	struct vga_pci_bar	*regs;
 	drm_mach64_sarea_t *sarea_priv;
 
@@ -167,7 +171,7 @@ extern u32 mach64_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mach64_enable_vblank(struct drm_device *dev, int crtc);
 extern void mach64_disable_vblank(struct drm_device *dev, int crtc);
 extern irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS);
-extern void mach64_driver_irq_preinstall(struct drm_device *dev);
+extern int mach64_driver_irq_install(struct drm_device *dev);
 extern void mach64_driver_irq_uninstall(struct drm_device *dev);
 
 /* ================================================================

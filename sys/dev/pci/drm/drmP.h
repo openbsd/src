@@ -449,8 +449,7 @@ struct drm_driver_info {
 	int	(*dma_quiescent)(struct drm_device *);
 	int	(*context_ctor)(struct drm_device *, int);
 	int	(*context_dtor)(struct drm_device *, int);
-	void	(*irq_preinstall)(struct drm_device *);
-	int	(*irq_postinstall)(struct drm_device *);
+	int	(*irq_install)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
 	irqreturn_t	(*irq_handler)(DRM_IRQ_ARGS);
 	int	vblank_pipes;
@@ -531,8 +530,6 @@ struct drm_device {
 	int		  irq;		/* Interrupt used by board	   */
 	int		  irq_enabled;	/* True if the irq handler is enabled */
 	struct pci_attach_args  pa;
-	int		  unit;		/* drm unit number */
-	void		  *irqh;	/* Handle from bus_setup_intr      */
 
 	int		  pci_domain;
 	int		  pci_bus;
@@ -635,10 +632,7 @@ void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 /* IRQ support (drm_irq.c) */
 int	drm_irq_install(struct drm_device *);
 int	drm_irq_uninstall(struct drm_device *);
-irqreturn_t drm_irq_handler(DRM_IRQ_ARGS);
-void	drm_driver_irq_preinstall(struct drm_device *);
-void	drm_driver_irq_postinstall(struct drm_device *);
-void	drm_driver_irq_uninstall(struct drm_device *);
+irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
 void	drm_vblank_cleanup(struct drm_device *);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);

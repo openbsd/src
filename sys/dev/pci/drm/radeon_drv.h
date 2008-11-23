@@ -224,6 +224,10 @@ typedef struct drm_radeon_private {
 	struct device		 dev;
 	struct device		*drmdev;
 
+	pci_chipset_tag_t	 pc;
+	pci_intr_handle_t	 ih;
+	void			*irqh;
+
 	struct vga_pci_bar	*regs;
 	drm_radeon_ring_buffer_t ring;
 	drm_radeon_sarea_t *sarea_priv;
@@ -398,8 +402,7 @@ extern u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int radeon_enable_vblank(struct drm_device *dev, int crtc);
 extern void radeon_disable_vblank(struct drm_device *dev, int crtc);
 extern irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS);
-extern void radeon_driver_irq_preinstall(struct drm_device * dev);
-extern int radeon_driver_irq_postinstall(struct drm_device * dev);
+extern int radeon_driver_irq_install(struct drm_device * dev);
 extern void radeon_driver_irq_uninstall(struct drm_device * dev);
 extern int radeon_vblank_crtc_get(struct drm_device *dev);
 extern int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value);

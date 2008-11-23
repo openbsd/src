@@ -130,7 +130,8 @@ static void mach64_disable_vblank_local(struct drm_device * dev, int crtc)
 		     | MACH64_CRTC_VBLANK_INT);
 }
 
-void mach64_driver_irq_preinstall(struct drm_device * dev)
+int
+mach64_driver_irq_install(struct drm_device * dev)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 
@@ -139,16 +140,21 @@ void mach64_driver_irq_preinstall(struct drm_device * dev)
 	DRM_DEBUG("before install CRTC_INT_CTNL: 0x%08x\n", status);
 
 	mach64_disable_vblank_local(dev, 0);
+
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
+	    drm_irq_handler_wrap, dev, dev_priv->dev.dv_xname);
+	if (dev_priv->irqh == NULL)
+		return (ENOENT);
+	return (0);
 }
 
 void mach64_driver_irq_uninstall(struct drm_device * dev)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;
-	if (!dev_priv)
-		return;
 
 	mach64_disable_vblank_local(dev, 0);
 
 	DRM_DEBUG("after uninstall CRTC_INT_CTNL: 0x%08x\n",
 		  MACH64_READ(MACH64_CRTC_INT_CNTL));
+	pci_intr_disestablish(dev_priv->pc, dev_priv->irqh);
 }

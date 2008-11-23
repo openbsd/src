@@ -78,6 +78,10 @@ typedef struct drm_mga_private {
 	struct device		 dev;
 	struct device		*drmdev;
 
+	pci_chipset_tag_t	 pc;
+	pci_intr_handle_t	 ih;
+	void			*irqh;
+
 	struct vga_pci_bar	*regs;
 
 	drm_mga_primary_buffer_t prim;
@@ -185,8 +189,7 @@ extern u32 mga_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mga_driver_fence_wait(struct drm_device * dev, unsigned int *sequence);
 extern int mga_driver_vblank_wait(struct drm_device * dev, unsigned int *sequence);
 extern irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS);
-extern void mga_driver_irq_preinstall(struct drm_device * dev);
-extern int mga_driver_irq_postinstall(struct drm_device * dev);
+extern int mga_driver_irq_install(struct drm_device * dev);
 extern void mga_driver_irq_uninstall(struct drm_device * dev);
 extern long mga_compat_ioctl(struct file *filp, unsigned int cmd,
 			     unsigned long arg);
