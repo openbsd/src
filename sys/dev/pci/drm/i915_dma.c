@@ -714,6 +714,9 @@ int i915_getparam(struct drm_device *dev, void *data,
 	case I915_PARAM_CHIPSET_ID:
 		value = dev_priv->pci_device;
 		break;
+	case I915_PARAM_HAS_GEM:
+		value = 0;
+		break;
 	default:
 		DRM_ERROR("Unknown parameter %d\n", param->param);
 		return EINVAL;
