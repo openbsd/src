@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.107 2008/11/07 17:31:24 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.108 2008/11/23 16:17:17 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct	pkthdr {
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
-struct m_ext {
+struct mbuf_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 					/* free routine if not the usual */
 	void	(*ext_free)(caddr_t, u_int, void *);
@@ -125,7 +125,7 @@ struct mbuf {
 		struct {
 			struct	pkthdr MH_pkthdr;	/* M_PKTHDR set */
 			union {
-				struct	m_ext MH_ext;	/* M_EXT set */
+				struct	mbuf_ext MH_ext; /* M_EXT set */
 				char	MH_databuf[MHLEN];
 			} MH_dat;
 		} MH;
