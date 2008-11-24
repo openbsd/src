@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.626 2008/11/21 18:01:30 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.627 2008/11/24 13:22:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1183,7 +1183,7 @@ pf_tbladdr_setup(struct pf_ruleset *rs, struct pf_addr_wrap *aw)
 {
 	if (aw->type != PF_ADDR_TABLE)
 		return (0);
-	if ((aw->p.tbl = pfr_attach_table(rs, aw->v.tblname)) == NULL)
+	if ((aw->p.tbl = pfr_attach_table(rs, aw->v.tblname, 1)) == NULL)
 		return (1);
 	return (0);
 }

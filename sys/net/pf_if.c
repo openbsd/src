@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.54 2008/06/14 16:55:28 mk Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.55 2008/11/24 13:22:09 mikeb Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -367,7 +367,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 		goto _bad;
 	}
 
-	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname)) == NULL) {
+	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname, 1)) == NULL) {
 		rv = 1;
 		goto _bad;
 	}
