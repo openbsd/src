@@ -629,7 +629,7 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_RADEON_RESET:
 			return (radeon_engine_reset(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_FULLSCREEN:
-			return (radeon_fullscreen(dev, data, file_priv));
+			return (0); /* oh so deprecated */
 		case DRM_IOCTL_RADEON_SWAP:
 			return (radeon_cp_swap(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_CLEAR:

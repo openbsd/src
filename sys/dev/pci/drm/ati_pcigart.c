@@ -75,11 +75,10 @@ drm_ati_pcigart_cleanup(struct drm_device *dev,
 	}
 
 	if (gart_info->bus_addr) {
-		if (gart_info->gart_table_location == DRM_ATI_GART_MAIN) {
-			gart_info->bus_addr = 0;
-			if (dev->sg->dmah)
-				drm_ati_free_pcigart_table(dev, gart_info);
-		}
+		gart_info->bus_addr = 0;
+		if (gart_info->gart_table_location == DRM_ATI_GART_MAIN &&
+		    dev->sg->dmah != NULL)
+			drm_ati_free_pcigart_table(dev, gart_info);
 	}
 
 	return 1;

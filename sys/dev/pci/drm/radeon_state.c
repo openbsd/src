@@ -3234,7 +3234,8 @@ void radeon_driver_close(struct drm_device *dev,
 	dev_priv->page_flipping = 0;
 	radeon_mem_release(file_priv, dev_priv->gart_heap);
 	radeon_mem_release(file_priv, dev_priv->fb_heap);
-	radeon_surfaces_release(file_priv, dev_priv);
+	if (dev_priv->cp_running)
+		radeon_surfaces_release(file_priv, dev_priv);
 }
 
 void radeon_driver_lastclose(struct drm_device *dev)

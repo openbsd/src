@@ -1300,18 +1300,12 @@ radeon_do_cleanup_cp(struct drm_device *dev)
 
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
-		if (dev_priv->cp_ring != NULL) {
+		if (dev_priv->cp_ring != NULL)
 			drm_core_ioremapfree(dev_priv->cp_ring);
-			dev_priv->cp_ring = NULL;
-		}
-		if (dev_priv->ring_rptr != NULL) {
+		if (dev_priv->ring_rptr != NULL)
 			drm_core_ioremapfree(dev_priv->ring_rptr);
-			dev_priv->ring_rptr = NULL;
-		}
-		if (dev->agp_buffer_map != NULL) {
+		if (dev->agp_buffer_map != NULL)
 			drm_core_ioremapfree(dev->agp_buffer_map);
-			dev->agp_buffer_map = NULL;
-		}
 	} else
 #endif
 	{
@@ -1327,8 +1321,12 @@ radeon_do_cleanup_cp(struct drm_device *dev)
 		{
 			drm_core_ioremapfree(&dev_priv->gart_info.mapping);
 			dev_priv->gart_info.addr = 0;
+			dev_priv->gart_info.gart_table_location = 0;
 		}
 	}
+	dev_priv->cp_ring = NULL;
+	dev_priv->ring_rptr = NULL;
+	dev->agp_buffer_map = NULL;
 
 	return 0;
 }
@@ -1469,45 +1467,32 @@ radeon_do_release(struct drm_device *dev)
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	int i, ret;
 
-	if (dev_priv) {
-		if (dev_priv->cp_running) {
-			/* Stop the cp */
-			while ((ret = radeon_do_cp_idle(dev_priv)) != 0) {
-				DRM_DEBUG("radeon_do_cp_idle %d\n", ret);
-#ifdef __linux__
-				schedule();
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version > 500000
-				mtx_sleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
-				       1);
-#else
+	if (dev_priv->cp_running) {
+		/* Stop the cp */
+		while ((ret = radeon_do_cp_idle(dev_priv)) != 0) {
+			DRM_DEBUG("radeon_do_cp_idle %d\n", ret);
 				tsleep(&ret, PZERO, "rdnrel", 1);
-#endif
-#endif
-			}
-			radeon_do_cp_stop(dev_priv);
-			radeon_do_engine_reset(dev);
 		}
-
-		/* Disable *all* interrupts */
-		RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
-
-		/* remove all surfaces */
-		for (i = 0; i < RADEON_MAX_SURFACES; i++) {
-			RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * i, 0);
-			RADEON_WRITE(RADEON_SURFACE0_LOWER_BOUND +
-				     16 * i, 0);
-			RADEON_WRITE(RADEON_SURFACE0_UPPER_BOUND +
-				     16 * i, 0);
-		}
-
-		/* Free memory heap structures */
-		radeon_mem_takedown(&(dev_priv->gart_heap));
-		radeon_mem_takedown(&(dev_priv->fb_heap));
-
-		/* deallocate kernel resources */
-		radeon_do_cleanup_cp(dev);
+		radeon_do_cp_stop(dev_priv);
+		radeon_do_engine_reset(dev);
 	}
+
+	/* Disable *all* interrupts */
+	RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
+
+	/* remove all surfaces */
+	for (i = 0; i < RADEON_MAX_SURFACES; i++) {
+		RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * i, 0);
+		RADEON_WRITE(RADEON_SURFACE0_LOWER_BOUND + 16 * i, 0);
+		RADEON_WRITE(RADEON_SURFACE0_UPPER_BOUND + 16 * i, 0);
+	}
+
+	/* Free memory heap structures */
+	radeon_mem_takedown(&(dev_priv->gart_heap));
+	radeon_mem_takedown(&(dev_priv->fb_heap));
+
+	/* deallocate kernel resources */
+	radeon_do_cleanup_cp(dev);
 }
 
 /* Just reset the CP ring.  Called as part of an X Server engine reset.
@@ -1564,18 +1549,6 @@ radeon_engine_reset(struct drm_device *dev, void *data,
 	return radeon_do_engine_reset(dev);
 }
 
-/* ================================================================
- * Fullscreen mode
- */
-
-/* KW: Deprecated to say the least:
- */
-int
-radeon_fullscreen(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	return 0;
-}
 
 /* ================================================================
  * Freelist management
