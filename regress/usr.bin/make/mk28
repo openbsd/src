@@ -1,0 +1,15 @@
+# $OpenBSD: mk28,v 1.1 2008/11/24 16:22:38 espie Exp $
+# checks that hex constants evaluate correctly
+# (bug from NetBSD)
+
+B=222
+.if $B == 0xDE
+A=0
+.else
+A=1
+.endif
+
+all:
+	@exit $A
+
+.PHONY: all
