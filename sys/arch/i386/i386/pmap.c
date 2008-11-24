@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.128 2008/11/14 20:43:54 weingart Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.129 2008/11/24 03:13:22 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2363,7 +2363,7 @@ boolean_t
 pmap_clear_attrs(struct vm_page *pg, int clearbits)
 {
 	struct pv_entry *pve;
-	pt_entry_t *ptes, npte, opte;
+	pt_entry_t *ptes, opte;
 	u_long clearflags;
 	int result;
 
@@ -2376,19 +2376,18 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 		atomic_clearbits_int(&pg->pg_flags, clearflags);
 
 	for (pve = pg->mdpage.pv_list; pve != NULL; pve = pve->pv_next) {
+		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
 			      "detected");
 #endif
 
-		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
-		npte = ptes[atop(pve->pv_va)];
-		if (npte & clearbits) {
+		opte = ptes[atop(pve->pv_va)];
+		if (opte & clearbits) {
 			result = TRUE;
-			npte &= ~clearbits;
-			opte = i386_atomic_testset_ul(
-			    &ptes[atop(pve->pv_va)], npte);
+			i386_atomic_clearbits_l(&ptes[atop(pve->pv_va)],
+			    (opte & clearbits));
 			pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
 		}
 		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
