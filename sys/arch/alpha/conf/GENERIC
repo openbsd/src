@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.203 2008/06/27 05:40:21 brad Exp $
+#	$OpenBSD: GENERIC,v 1.204 2008/11/24 22:31:18 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -143,6 +143,10 @@ video*  at uvideo?
 #btms*	at bthidev?
 #wskbd*	at btkbd? mux 1
 #wsmouse* at btms? mux 0
+
+# Bluetooth audio support
+#btsco*	at bthub?
+#audio*	at btsco?
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0

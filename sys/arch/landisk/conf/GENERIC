@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.16 2008/04/12 19:24:49 miod Exp $
+# $OpenBSD: GENERIC,v 1.17 2008/11/24 22:31:19 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -169,6 +169,10 @@ udcf*	at uhub?		# Gude Expert mouseCLOCK
 #btms*	at bthidev?
 #wskbd*	at btkbd? mux 1
 #wsmouse* at btms? mux 0
+
+# Bluetooth audio support
+#btsco*	at bthub?
+#audio*	at btsco?
 
 sd*	at scsibus?			# SCSI disk drives
 cd*	at scsibus?			# SCSI CD-ROM drives

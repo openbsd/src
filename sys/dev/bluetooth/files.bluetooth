@@ -1,4 +1,4 @@
-#	$OpenBSD: files.bluetooth,v 1.5 2007/09/01 17:06:26 xsa Exp $
+#	$OpenBSD: files.bluetooth,v 1.6 2008/11/24 22:31:19 uwe Exp $
 #
 # Config file and device description for machine-independent Bluetooth code.
 # Included by ports that support Bluetooth host controllers.
@@ -25,3 +25,8 @@ file dev/bluetooth/btms.c		btms
 device btkbd: hid, wskbddev
 attach btkbd at bthidbus
 file dev/bluetooth/btkbd.c		btkbd
+
+# SCO Audio
+device btsco: bluetooth, audio, auconv, mulaw
+attach btsco at bthub
+file dev/bluetooth/btsco.c		btsco
