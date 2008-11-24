@@ -819,20 +819,3 @@ void i915_driver_preclose(struct drm_device * dev, struct drm_file *file_priv)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	i915_mem_release(dev, file_priv, dev_priv->agp_heap);
 }
-
-
-/**
- * Determine if the device really is AGP or not.
- *
- * All Intel graphics chipsets are treated as AGP, even if they are really
- * PCI-e.
- *
- * \param dev   The device to be tested.
- *
- * \returns
- * A value of 1 is always retured to indictate every i9x5 is AGP.
- */
-int i915_driver_device_is_agp(struct drm_device * dev)
-{
-	return 1;
-}

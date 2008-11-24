@@ -654,7 +654,7 @@ static int mga_do_pci_dma_bootstrap(struct drm_device * dev,
 static int mga_do_dma_bootstrap(struct drm_device *dev,
 				drm_mga_dma_bootstrap_t *dma_bs)
 {
-	const int is_agp = (dma_bs->agp_mode != 0) && drm_device_is_agp(dev);
+	const int is_agp = (dma_bs->agp_mode != 0) && dev->agp != NULL;
 	int err;
 	drm_mga_private_t *const dev_priv =
 		(drm_mga_private_t *) dev->dev_private;

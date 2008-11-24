@@ -95,6 +95,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
 	unsigned long		 mmio_base;
+	int			 is_agp;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), savagedrm_pciidlist);
@@ -170,7 +171,11 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	dev_priv->bst = pa->pa_memt;
 
-	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa->pa_dmat, pa, self);
+	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	    NULL, NULL);
+
+	dev_priv->drmdev = drm_attach_mi(&savagedrm_driver, pa->pa_dmat,
+	    pa, is_agp, self);
 }
 
 int

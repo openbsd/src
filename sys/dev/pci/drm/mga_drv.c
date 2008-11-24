@@ -115,7 +115,6 @@ static const struct drm_driver_info mga_driver = {
 	.irq_handler		= mga_driver_irq_handler,
 	.dma_ioctl		= mga_dma_buffers,
 	.dma_quiescent		= mga_driver_dma_quiescent,
-	.device_is_agp		= mga_driver_device_is_agp,
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -141,6 +140,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
+	int			 is_agp;
 
 	dev_priv->usec_timeout = MGA_DEFAULT_USEC_TIMEOUT;
 	dev_priv->pc = pa->pa_pc;
@@ -168,7 +168,8 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->drmdev = drm_attach_mi(&mga_driver, pa->pa_dmat, pa, self);
+	dev_priv->drmdev = drm_attach_mi(&mga_driver, pa->pa_dmat, pa,
+	    is_agp, self);
 }
 
 int

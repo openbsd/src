@@ -517,6 +517,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 	drm_pci_id_list_t	*id_entry;
+	int			 is_agp;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), radeondrm_pciidlist);
@@ -582,7 +583,11 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 		  ((dev_priv->flags & RADEON_IS_AGP) ? "AGP" :
 		  (((dev_priv->flags & RADEON_IS_PCIE) ? "PCIE" : "PCI"))));
 
-	dev_priv->drmdev = drm_attach_mi(&radeondrm_driver, pa->pa_dmat, pa, self);
+	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	    NULL, NULL);
+
+	dev_priv->drmdev = drm_attach_mi(&radeondrm_driver, pa->pa_dmat,
+	    pa, is_agp, self);
 }
 
 int

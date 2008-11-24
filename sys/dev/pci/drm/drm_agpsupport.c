@@ -40,24 +40,6 @@ void			 drm_agp_remove_entry(struct drm_device *,
 			     struct drm_agp_mem *);
 
 int
-drm_device_is_agp(struct drm_device *dev)
-{
-	if (dev->driver->device_is_agp != NULL) {
-		int ret;
-		/*
-		 * device_is_agp returns a tristate, 0 = not AGP, 1 = definitely
-		 * AGP, 2 = fall back to PCI capability
-		 */
-		ret = (*dev->driver->device_is_agp)(dev);
-		if (ret != DRM_MIGHT_BE_AGP)
-			return (ret);
-	}
-
-	return (pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, PCI_CAP_AGP,
-	    NULL, NULL));
-}
-
-int
 drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 {
 	struct agp_info	*kern;

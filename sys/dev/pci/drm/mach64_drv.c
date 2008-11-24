@@ -102,6 +102,7 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_mach64_private_t	*dev_priv = (drm_mach64_private_t *)self;
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
+	int			 is_agp;
 
 	dev_priv->pc = pa->pa_pc;
 
@@ -123,7 +124,11 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa->pa_dmat, pa, self);
+	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	    NULL, NULL);
+
+	dev_priv->drmdev = drm_attach_mi(&machdrm_driver, pa->pa_dmat,
+	    pa, is_agp, self);
 }
 
 int

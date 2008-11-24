@@ -57,13 +57,14 @@ int	 drmprint(void *, const char *);
 
 struct device *
 drm_attach_mi(const struct drm_driver_info *driver, bus_dma_tag_t dmat,
-    struct pci_attach_args *pa, struct device *dev)
+    struct pci_attach_args *pa, int is_agp, struct device *dev)
 {
 	struct drm_attach_args arg;
 
 	arg.driver = driver;
 	arg.pa = pa;
 	arg.dmat = dmat;
+	arg.is_agp = is_agp;
 
 	printf("\n");
 	return (config_found(dev, &arg, drmprint));
@@ -143,7 +144,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (dev->driver->flags & DRIVER_AGP) {
-		if (drm_device_is_agp(dev))
+		if (da->is_agp)
 			dev->agp = drm_agp_init();
 		if (dev->driver->flags & DRIVER_AGP_REQUIRE &&
 		    dev->agp == NULL) {

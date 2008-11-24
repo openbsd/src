@@ -94,7 +94,6 @@ static const struct drm_driver_info inteldrm_driver = {
 	.ioctl			= inteldrm_ioctl,
 	.preclose		= i915_driver_preclose,
 	.lastclose		= i915_driver_lastclose,
-	.device_is_agp		= i915_driver_device_is_agp,
 	.vblank_pipes		= 2,
 	.get_vblank_counter	= i915_get_vblank_counter,
 	.enable_vblank		= i915_enable_vblank,
@@ -164,7 +163,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
-	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa->pa_dmat, pa, self);
+	/* All intel chipsets need to be treated as agp, so just pass one */
+	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa->pa_dmat,
+	    pa, 1, self);
 }
 
 int

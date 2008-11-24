@@ -457,19 +457,6 @@ struct drm_driver_info {
 	int	(*enable_vblank)(struct drm_device *, int);
 	void	(*disable_vblank)(struct drm_device *, int);
 
-	/**
-	 * Called by \c drm_device_is_agp.  Typically used to determine if a
-	 * card is really attached to AGP or not.
-	 *
-	 * \param dev  DRM device handle
-	 *
-	 * \returns 
-	 * One of three values is returned depending on whether or not the
-	 * card is absolutely \b not AGP (return of 0), absolutely \b is AGP
-	 * (return of 1), or may or may not be AGP (return of 2).
-	 */
-	int	(*device_is_agp) (struct drm_device * dev);
-
 	int	buf_priv_size;
 
 	int	major;
@@ -564,6 +551,7 @@ struct drm_attach_args {
 	struct pci_attach_args		*pa;
 	struct vga_pci_softc		*vga;
 	bus_dma_tag_t			 dmat;
+	int				 is_agp;
 };
 
 extern int	drm_debug_flag;
@@ -571,7 +559,7 @@ extern int	drm_debug_flag;
 /* Device setup support (drm_drv.c) */
 int	drm_pciprobe(struct pci_attach_args *, drm_pci_id_list_t * );
 struct device	*drm_attach_mi(const struct drm_driver_info *, bus_dma_tag_t,
-		     struct pci_attach_args *pa, struct device *);
+		     struct pci_attach_args *pa, int, struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
@@ -648,7 +636,6 @@ int	drm_modeset_ctl(struct drm_device *, void *, struct drm_file *);
 void	drm_handle_vblank(struct drm_device *, int);
 
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
-int	drm_device_is_agp(struct drm_device *);
 struct drm_agp_head *drm_agp_init(void);
 void	drm_agp_takedown(struct drm_device *);
 int	drm_agp_acquire(struct drm_device *);
