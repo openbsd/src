@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.9 2002/08/09 06:12:25 itojun Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.10 2008/11/24 20:08:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -36,6 +36,7 @@
 
 #include <errno.h>
 #include <ifaddrs.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -61,7 +62,7 @@ getifaddrs(struct ifaddrs **pif)
 	struct sockaddr_dl *dl;
 	struct sockaddr *sa;
 	u_short index = 0;
-	size_t len, alen;
+	size_t len, alen, dlen;
 	struct ifaddrs *ifa, *ift;
 	int i;
 	char *data;
@@ -92,7 +93,8 @@ getifaddrs(struct ifaddrs **pif)
 			if (ifm->ifm_addrs & RTA_IFP) {
 				index = ifm->ifm_index;
 				++icnt;
-				dl = (struct sockaddr_dl *)(ifm + 1);
+				dl = (struct sockaddr_dl *)(next +
+				    rtm->rtm_hdrlen);
 				dcnt += SA_RLEN((struct sockaddr *)dl) +
 					ALIGNBYTES;
 				dcnt += sizeof(ifm->ifm_data);
@@ -109,7 +111,7 @@ getifaddrs(struct ifaddrs **pif)
 #define	RTA_MASKS	(RTA_NETMASK | RTA_IFA | RTA_BRD)
 			if (index == 0 || (ifam->ifam_addrs & RTA_MASKS) == 0)
 				break;
-			p = (char *)(ifam + 1);
+			p = next + rtm->rtm_hdrlen;
 			++icnt;
 			/* Scan to look for length of address */
 			alen = 0;
@@ -169,7 +171,8 @@ getifaddrs(struct ifaddrs **pif)
 			ifm = (struct if_msghdr *)rtm;
 			if (ifm->ifm_addrs & RTA_IFP) {
 				index = ifm->ifm_index;
-				dl = (struct sockaddr_dl *)(ifm + 1);
+				dl = (struct sockaddr_dl *)(next +
+				    rtm->rtm_hdrlen);
 
 				cif = ift;
 				ift->ifa_name = names;
@@ -185,7 +188,11 @@ getifaddrs(struct ifaddrs **pif)
 
 				/* ifm_data needs to be aligned */
 				ift->ifa_data = data = (void *)ALIGN(data);
-				memcpy(data, &ifm->ifm_data, sizeof(ifm->ifm_data));
+				dlen = rtm->rtm_hdrlen -
+				    offsetof(struct if_msghdr, ifm_data);
+				if (dlen > sizeof(ifm->ifm_data))
+					dlen = sizeof(ifm->ifm_data);
+				memcpy(data, &ifm->ifm_data, dlen);
  				data += sizeof(ifm->ifm_data);
 
 				ift = (ift->ifa_next = ift + 1);
@@ -203,7 +210,7 @@ getifaddrs(struct ifaddrs **pif)
 			ift->ifa_name = cif->ifa_name;
 			ift->ifa_flags = cif->ifa_flags;
 			ift->ifa_data = NULL;
-			p = (char *)(ifam + 1);
+			p = next + rtm->rtm_hdrlen;
 			/* Scan to look for length of address */
 			alen = 0;
 			for (p0 = p, i = 0; i < RTAX_MAX; i++) {
