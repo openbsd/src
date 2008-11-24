@@ -1146,7 +1146,8 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 	DMA_FLUSH();
 
 	if (dmabuf && cmdbuf->discard) {
-		drm_savage_buf_priv_t *buf_priv = dmabuf->dev_private;
+		drm_savage_buf_priv_t *buf_priv =
+		    (drm_savage_buf_priv_t *)dmabuf;
 		uint16_t event;
 		event = savage_bci_emit_event(dev_priv, SAVAGE_WAIT_3D);
 		SET_AGE(&buf_priv->age, event, dev_priv->event_wrap);

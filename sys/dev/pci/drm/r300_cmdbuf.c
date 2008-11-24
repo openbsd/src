@@ -864,7 +864,7 @@ static __inline__ void r300_pacify(drm_radeon_private_t *dev_priv)
 static void r300_discard_buffer(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	drm_radeon_buf_priv_t *buf_priv = buf->dev_private;
+	drm_radeon_buf_priv_t *buf_priv = (drm_radeon_buf_priv_t *)buf;
 
 	buf_priv->age = ++dev_priv->sarea_priv->last_dispatch;
 	buf->pending = 1;

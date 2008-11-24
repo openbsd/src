@@ -288,7 +288,6 @@ typedef struct drm_buf {
 	unsigned long	  bus_address; /* Bus address of buffer		     */
 	__volatile__ int  pending;     /* On hardware DMA queue		     */
 	struct drm_file   *file_priv;  /* Unique identifier of holding process */
-	void		  *dev_private;  /* Per-buffer private storage       */
 } drm_buf_t;
 
 typedef struct drm_dma_handle {

@@ -1548,7 +1548,7 @@ static void radeon_cp_dispatch_vertex(struct drm_device * dev,
 static void radeon_cp_discard_buffer(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	drm_radeon_buf_priv_t *buf_priv = buf->dev_private;
+	drm_radeon_buf_priv_t *buf_priv = (drm_radeon_buf_priv_t *)buf;
 	RING_LOCALS;
 
 	buf_priv->age = ++dev_priv->sarea_priv->last_dispatch;

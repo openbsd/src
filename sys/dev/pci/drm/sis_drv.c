@@ -47,7 +47,6 @@ static drm_pci_id_list_t sis_pciidlist[] = {
 };
 
 static const struct drm_driver_info sis_driver = {
-	.buf_priv_size		= 1, /* No dev_priv */
 	.ioctl			= sisdrm_ioctl,
 	.context_ctor		= sis_init_context,
 	.context_dtor		= sis_final_context,

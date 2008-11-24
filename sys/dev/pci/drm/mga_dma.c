@@ -261,7 +261,7 @@ static int mga_freelist_init(struct drm_device * dev, drm_mga_private_t * dev_pr
 
 	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
-		buf_priv = buf->dev_private;
+		buf_priv = (drm_mga_buf_priv_t *)buf;
 
 		entry = drm_calloc(1, sizeof(drm_mga_freelist_t),
 		    DRM_MEM_DRIVER);
@@ -271,7 +271,6 @@ static int mga_freelist_init(struct drm_device * dev, drm_mga_private_t * dev_pr
 		entry->next = dev_priv->head->next;
 		entry->prev = dev_priv->head;
 		SET_AGE(&entry->age, MGA_BUFFER_FREE, 0);
-		entry->buf = buf;
 
 		if (dev_priv->head->next != NULL)
 			dev_priv->head->next->prev = entry;
@@ -359,7 +358,7 @@ static struct drm_buf *mga_freelist_get(struct drm_device * dev)
 int mga_freelist_put(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
+	drm_mga_buf_priv_t *buf_priv = (drm_mga_buf_priv_t *)buf;
 	drm_mga_freelist_t *head, *entry, *prev;
 
 	DRM_DEBUG("age=0x%06lx wrap=%d\n",

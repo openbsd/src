@@ -90,7 +90,6 @@ static drm_pci_id_list_t inteldrm_pciidlist[] = {
 };
 
 static const struct drm_driver_info inteldrm_driver = {
-	.buf_priv_size		= 1,	/* No dev_priv */
 	.ioctl			= inteldrm_ioctl,
 	.preclose		= i915_driver_preclose,
 	.lastclose		= i915_driver_lastclose,

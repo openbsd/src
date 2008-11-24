@@ -68,7 +68,6 @@ static drm_pci_id_list_t mach64_pciidlist[] = {
 };
 
 static const struct drm_driver_info machdrm_driver = {
-	.buf_priv_size		= 1, /* No dev_priv */
 	.ioctl			= machdrm_ioctl,
 	.lastclose		= mach64_driver_lastclose,
 	.vblank_pipes		= 1,

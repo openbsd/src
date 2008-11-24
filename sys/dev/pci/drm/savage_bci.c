@@ -214,18 +214,15 @@ static int savage_freelist_init(struct drm_device *dev)
 
 	dev_priv->head.next = &dev_priv->tail;
 	dev_priv->head.prev = NULL;
-	dev_priv->head.buf = NULL;
 
 	dev_priv->tail.next = NULL;
 	dev_priv->tail.prev = &dev_priv->head;
-	dev_priv->tail.buf = NULL;
 
 	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
-		entry = buf->dev_private;
+		entry = (drm_savage_buf_priv_t *)buf;
 
 		SET_AGE(&entry->age, 0, 0);
-		entry->buf = buf;
 
 		entry->next = dev_priv->head.next;
 		entry->prev = &dev_priv->head;
@@ -256,13 +253,13 @@ static struct drm_buf *savage_freelist_get(struct drm_device *dev)
 	DRM_DEBUG("   tail=0x%04x %d\n", tail->age.event, tail->age.wrap);
 	DRM_DEBUG("   head=0x%04x %d\n", event, wrap);
 
-	if (tail->buf && (TEST_AGE(&tail->age, event, wrap) || event == 0)) {
+	if ((TEST_AGE(&tail->age, event, wrap) || event == 0)) {
 		drm_savage_buf_priv_t *next = tail->next;
 		drm_savage_buf_priv_t *prev = tail->prev;
 		prev->next = next;
 		next->prev = prev;
 		tail->next = tail->prev = NULL;
-		return tail->buf;
+		return &tail->buf;
 	}
 
 	DRM_DEBUG("returning NULL, tail->buf=%p!\n", tail->buf);
@@ -271,8 +268,9 @@ static struct drm_buf *savage_freelist_get(struct drm_device *dev)
 
 void savage_freelist_put(struct drm_device *dev, struct drm_buf *buf)
 {
-	drm_savage_private_t *dev_priv = dev->dev_private;
-	drm_savage_buf_priv_t *entry = buf->dev_private, *prev, *next;
+	drm_savage_private_t	*dev_priv = dev->dev_private;
+	drm_savage_buf_priv_t	*entry = (drm_savage_buf_priv_t *)buf;
+	drm_savage_buf_priv_t	*prev, *next;
 
 	DRM_DEBUG("age=0x%04x wrap=%d\n", entry->age.event, entry->age.wrap);
 
@@ -1000,7 +998,7 @@ void savage_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 
 	for (i = 0; i < dma->buf_count; i++) {
 		struct drm_buf *buf = dma->buflist[i];
-		drm_savage_buf_priv_t *buf_priv = buf->dev_private;
+		drm_savage_buf_priv_t *buf_priv = (drm_savage_buf_priv_t *)buf;
 
 		if (buf->file_priv == file_priv && buf_priv &&
 		    buf_priv->next == NULL && buf_priv->prev == NULL) {

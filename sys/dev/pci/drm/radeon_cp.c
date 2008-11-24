@@ -1544,7 +1544,7 @@ struct drm_buf *radeon_freelist_get(struct drm_device * dev)
 		DRM_DEBUG("done_age = %d\n", done_age);
 		for (i = start; i < dma->buf_count; i++) {
 			buf = dma->buflist[i];
-			buf_priv = buf->dev_private;
+			buf_priv = (drm_radeon_buf_priv_t *)buf;
 			if (buf->file_priv == NULL || (buf->pending &&
 						       buf_priv->age <=
 						       done_age)) {
@@ -1610,7 +1610,7 @@ void radeon_freelist_reset(struct drm_device * dev)
 	dev_priv->last_buf = 0;
 	for (i = 0; i < dma->buf_count; i++) {
 		struct drm_buf *buf = dma->buflist[i];
-		drm_radeon_buf_priv_t *buf_priv = buf->dev_private;
+		drm_radeon_buf_priv_t *buf_priv = (drm_radeon_buf_priv_t *)buf;
 		buf_priv->age = 0;
 	}
 }
