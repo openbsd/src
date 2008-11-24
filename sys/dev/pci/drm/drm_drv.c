@@ -313,12 +313,6 @@ drm_lastclose(struct drm_device *dev)
 	drm_dma_takedown(dev);
 
 	DRM_LOCK();
-	if (dev->unique != NULL) {
-		drm_free(dev->unique, dev->unique_len + 1,  DRM_MEM_DRIVER);
-		dev->unique = NULL;
-		dev->unique_len = 0;
-	}
-
 	/* Clear pid list */
 	while ((pt = SPLAY_ROOT(&dev->magiclist)) != NULL) {
 		SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
