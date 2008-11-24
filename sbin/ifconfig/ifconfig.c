@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.207 2008/11/17 22:23:14 mpf Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.208 2008/11/24 04:30:32 stevesk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1609,7 +1609,7 @@ setifwpapsk(const char *val, int d)
 		len = sizeof(psk.i_psk);
 		val = get_string(val, NULL, psk.i_psk, &len);
 		if (val == NULL)
-			errx(1, "wpapsk: invalid pre-shared key\n");
+			errx(1, "wpapsk: invalid pre-shared key");
 		if (len != sizeof(psk.i_psk))
 			errx(1, "wpapsk: bad pre-shared key length");
 		psk.i_enabled = 1;
