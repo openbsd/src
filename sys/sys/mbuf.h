@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.109 2008/11/24 12:57:37 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.110 2008/11/24 15:04:37 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -263,30 +263,12 @@ struct mbuf {
 /*
  * Macros for mbuf external storage.
  *
- * MEXTMALLOC allocates external storage and adds it to
- * a normal mbuf; the flag M_EXT is set upon success.
- *
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set.
  *
  * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
  * the flag M_EXT is set upon success.
  */
-#define	MEXTMALLOC(m, size, how) do {					\
-	(m)->m_ext.ext_buf =						\
-	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
-	if ((m)->m_ext.ext_buf != NULL) {				\
-		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags |= M_EXT;					\
-		(m)->m_flags &= ~M_CLUSTER;				\
-		(m)->m_ext.ext_size = (size);				\
-		(m)->m_ext.ext_free = NULL;				\
-		(m)->m_ext.ext_arg = NULL;				\
-		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
-		MCLINITREFERENCE(m);					\
-	}								\
-} while (/* CONSTCOND */ 0)
-
 #define	MEXTADD(m, buf, size, type, free, arg) do {			\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
 	(m)->m_flags |= M_EXT;						\
