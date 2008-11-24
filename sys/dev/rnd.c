@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.95 2008/10/15 03:30:57 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.96 2008/11/24 10:30:12 mpf Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -251,6 +251,7 @@
 #include <sys/timeout.h>
 #include <sys/poll.h>
 #include <sys/mutex.h>
+#include <sys/msgbuf.h>
 
 #include <crypto/md5.h>
 #include <crypto/arc4.h>
@@ -782,11 +783,9 @@ arc4_stir(void)
 	int len;
 
 	nanotime((struct timespec *) buf);
-	len = random_state.entropy_count / 8; /* XXX maybe a half? */
-	if (len > sizeof(buf) - sizeof(struct timeval))
-		len = sizeof(buf) - sizeof(struct timeval);
-	get_random_bytes(buf + sizeof (struct timeval), len);
-	len += sizeof(struct timeval);
+	len = sizeof(buf) - sizeof(struct timespec);
+	get_random_bytes(buf + sizeof (struct timespec), len);
+	len += sizeof(struct timespec);
 
 	mtx_enter(&rndlock);
 	if (rndstats.arc4_nstirs > 0)
@@ -858,6 +857,9 @@ randomattach(void)
 	mtx_init(&rndlock, IPL_HIGH);
 	arc4_reinit(NULL);
 
+	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
+		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
+		    msgbufp->msg_bufs / sizeof(u_int32_t));
 	rnd_attached = 1;
 }
 
