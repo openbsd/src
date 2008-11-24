@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.3 2008/08/23 07:24:06 jmc Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.4 2008/11/24 17:23:26 drahn Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -96,7 +96,7 @@ int             goterror = 0;
 
 extern char	*__progname;
 
-int             verbose = 1, readcache = 1, elf_names;	/* options */
+int             verbose = 1, readcache = 1, elf_names, elf_mangle; /* options */
 int             reading_cache;
 
 void            status(char *str);
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	extern int      optind;
 	extern char    *optarg;
 
-	while ((optc = getopt(argc, argv, "hm:c:e:fqD:EL:O:")) != -1) {
+	while ((optc = getopt(argc, argv, "hm:c:e:fqD:EL:O:M")) != -1) {
 		switch (optc) {
 		case 'h':
 			optreset = 1;
@@ -163,6 +163,9 @@ main(int argc, char *argv[])
 			if (strlcpy(objdir, optarg, sizeof(objdir)) >=
 			    sizeof(objdir))
 				usage();
+			break;
+		case 'M':
+			elf_mangle = 1;
 			break;
 		default:
 			usage();
@@ -212,7 +215,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: crunchgen [-Efq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
+	    "usage: crunchgen [-EfMq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
 	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name] conf-file\n");
 	fprintf(stderr,
 	    "       crunchgen -h [-f keep-list-file] [-k keep-symbol] object-file ...\n");
@@ -933,7 +936,8 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	    p->name, p->name, p->ident);
 	fprintf(outmk, "\t$(LINK) -o $@ %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->ident);
-	fprintf(outmk, "\tcrunchgen -h -k %s_crunched_%s_stub $@\n",
+	fprintf(outmk, "\tcrunchgen %s -h -k %s_crunched_%s_stub $@\n",
+	    elf_mangle ? "-M" : "",
 	    elf_names ? "" : "_", p->ident);
 }
 

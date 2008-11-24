@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.2 2008/09/08 20:42:24 deraadt Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.3 2008/11/24 17:23:26 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -39,6 +39,8 @@
 #include <sys/exec.h>
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
+
+extern	int elf_mangle;
 
 void	load_strtab(Elf_Ehdr * pehdr, char *pexe);
 void	dump_strtab();
@@ -304,14 +306,8 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
     Elf_Sym * symtab, int symtabsize, int symtabsecnum)
 {
 	int             i;
-#ifndef __mips__
 	unsigned char   info;
-#endif
 	Elf_Sym        *psymtab;
-
-#ifdef __mips__
-	u_int32_t f = arc4random();
-#endif
 
 	for (i = 0; i < (symtabsize / sizeof(Elf_Sym)); i++) {
 		psymtab = &(symtab[i]);
@@ -325,24 +321,26 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 			    get_str(psymtab->st_name));
 			printf("st_info %x\n", psymtab->st_info);
 #endif
-#ifndef __mips__
-			info = psymtab->st_info;
-			info = info & 0xf;
-			psymtab->st_info = info;
-#else
-			/*
-			 * XXX This is a small ugly hack to be able to use
-			 * XXX chrunchide with MIPS.
-			 * XXX Because MIPS needs global symbols to stay
-			 * XXX global (has to do with GOT), we mess around
-			 * XXX with the symbol names instead. For most uses
-			 * XXX this will be no problem, symbols are stripped
-			 * XXX anyway. However, if many one character
-			 * XXX symbols exist, names may clash.
-			 */
-			{
+			if (!elf_mangle) {
+				info = psymtab->st_info;
+				info = info & 0xf;
+				psymtab->st_info = info;
+			} else {
+				/*
+				 * XXX This is a small ugly hack to be able to
+				 * XXX use chrunchide with MIPS.
+				 * XXX Because MIPS needs global symbols to stay
+				 * XXX global (has to do with GOT), we mess
+				 * XXX around with the symbol names instead.
+				 * XXX For most uses this will be no problem,
+				 * XXX symbols are stripped anyway.
+				 * XXX However, if many one character
+				 * XXX symbols exist, names may clash.
+				 */
 				char *p;
 				u_int32_t n, z;
+				u_int32_t f;
+				f = arc4random();
 
 				z = f++;
 				p = get_str(psymtab->st_name);
@@ -356,8 +354,6 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 						p[n] += arc4random();
 				}
 			}
-
-#endif
 #ifdef DEBUG
 			printf("st_info %x\n", psymtab->st_info);
 #endif
