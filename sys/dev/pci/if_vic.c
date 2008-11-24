@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.56 2008/10/29 01:14:47 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.57 2008/11/24 12:34:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -292,7 +292,11 @@ struct vic_softc {
 
 	struct vic_rxbuf	*sc_rxbuf;
 	struct vic_rxdesc	*sc_rxq;
+	int			sc_rxq_end;
+	int			sc_rxq_len;
 	struct vic_rxdesc	*sc_rxq2;
+	int			sc_rxq_end2;
+	int			sc_rxq_len2;
 
 	struct vic_txbuf	*sc_txbuf;
 	struct vic_txdesc	*sc_txq;
@@ -327,6 +331,7 @@ int		vic_alloc_dmamem(struct vic_softc *);
 void		vic_free_dmamem(struct vic_softc *);
 
 void		vic_link_state(struct vic_softc *);
+void		vic_rx_fill(struct vic_softc *);
 void		vic_rx_proc(struct vic_softc *);
 void		vic_tx_proc(struct vic_softc *);
 void		vic_iff(struct vic_softc *);
@@ -598,7 +603,16 @@ vic_alloc_data(struct vic_softc *sc)
 	sc->sc_data->vd_rx_offset = offset;
 	sc->sc_data->vd_rx_length = sc->sc_nrxbuf;
 
-	offset += sizeof(struct vic_rxdesc) * sc->sc_nrxbuf;
+	for (i = 0; i < sc->sc_nrxbuf; i++) {
+		rxd = &sc->sc_rxq[i];
+
+		rxd->rx_physaddr = 0;
+		rxd->rx_buflength = 0;
+		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_DRIVER;
+
+		offset += sizeof(struct vic_rxdesc);
+	}
 
 	/* set up the dummy rx ring 2 with an unusable entry */
 	sc->sc_rxq2 = (struct vic_rxdesc *)&kva[offset];
@@ -632,6 +646,33 @@ err:
 	return (1);
 }
 
+void
+vic_rx_fill(struct vic_softc *sc)
+{
+	struct vic_rxbuf		*rxb;
+	struct vic_rxdesc		*rxd;
+
+	while (sc->sc_rxq_len < sc->sc_data->vd_rx_length) {
+		rxb = &sc->sc_rxbuf[sc->sc_rxq_end];
+		rxd = &sc->sc_rxq[sc->sc_rxq_end];
+
+		rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_dmamap);
+		if (rxb->rxb_m == NULL)
+			break;
+
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
+		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
+		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len;
+		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_NIC;
+
+		VIC_INC(sc->sc_rxq_end, sc->sc_data->vd_rx_length);
+		sc->sc_rxq_len++;
+	}
+}
+
 int
 vic_init_data(struct vic_softc *sc)
 {
@@ -652,21 +693,16 @@ vic_init_data(struct vic_softc *sc)
 			goto freerxbs;
 		}
 
-		rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_dmamap);
-		if (rxb->rxb_m == NULL) {
-			/* error already printed */
-			bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
-			goto freerxbs;
-		}
-
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
-		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
-
-		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
-		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len; /* XXX? */
+		/* scrub the ring */
+		rxd->rx_physaddr = 0;
+		rxd->rx_buflength = 0;
 		rxd->rx_length = 0;
-		rxd->rx_owner = VIC_OWNER_NIC;
+		rxd->rx_owner = VIC_OWNER_DRIVER;
 	}
+
+	sc->sc_rxq_len = 0;
+	sc->sc_rxq_end = 0;
+	vic_rx_fill(sc);
 
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
 		txb = &sc->sc_txbuf[i];
@@ -692,9 +728,14 @@ freetxbs:
 freerxbs:
 	while (i--) {
 		rxb = &sc->sc_rxbuf[i];
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
-		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+
+		if (rxb->rxb_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+			    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+			m_freem(rxb->rxb_m);
+			rxb->rxb_m = NULL;
+		}
 		bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
 	}
 
@@ -714,13 +755,14 @@ vic_uninit_data(struct vic_softc *sc)
 		rxb = &sc->sc_rxbuf[i];
 		rxd = &sc->sc_rxq[i];
 
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
-		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+		if (rxb->rxb_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+			    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+			m_freem(rxb->rxb_m);
+			rxb->rxb_m = NULL;
+		}
 		bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
-
-		m_freem(rxb->rxb_m);
-		rxb->rxb_m = NULL;
 	}
 
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
@@ -783,7 +825,7 @@ vic_rx_proc(struct vic_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	for (;;) {
+	while (sc->sc_rxq_len > 0) {
 		idx = sc->sc_data->vd_rx_nextidx;
 		if (idx >= sc->sc_data->vd_rx_length) {
 			ifp->if_ierrors++;
@@ -799,12 +841,6 @@ vic_rx_proc(struct vic_softc *sc)
 
 		rxb = &sc->sc_rxbuf[idx];
 
-		len = rxd->rx_length;
-		if (len < VIC_MIN_FRAMELEN) {
-			ifp->if_iqdrops++;
-			goto nextp;
-		}
-
 		if (rxb->rxb_m == NULL) {
 			ifp->if_ierrors++;
 			printf("%s: rxb %d has no mbuf\n", DEVNAME(sc), idx);
@@ -815,25 +851,24 @@ vic_rx_proc(struct vic_softc *sc)
 		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
 
+		len = rxd->rx_length;
+		if (len < VIC_MIN_FRAMELEN) {
+			m = rxb->rxb_m;
+			m_freem(m);
+
+			rxd->rx_owner = VIC_OWNER_DRIVER;
+			rxd->rx_length = 0;
+
+			rxb->rxb_m = NULL;
+
+			ifp->if_iqdrops++;
+			goto nextp;
+		}
+
 		m = rxb->rxb_m;
 		rxb->rxb_m = NULL;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-
-		/* Get new mbuf for the Rx queue */
-		rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_dmamap);
-		if (rxb->rxb_m == NULL) {
-			ifp->if_ierrors++;
-			printf("%s: mbuf alloc failed\n", DEVNAME(sc));
-			break;
-		}
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
-		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
-
-		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
-		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len;
-		rxd->rx_length = 0;
-		rxd->rx_owner = VIC_OWNER_DRIVER;
 
 		ifp->if_ipackets++;
 
@@ -845,9 +880,11 @@ vic_rx_proc(struct vic_softc *sc)
 		ether_input_mbuf(ifp, m);
 
 nextp:
-		rxd->rx_owner = VIC_OWNER_NIC;
+		sc->sc_rxq_len--;
 		VIC_INC(sc->sc_data->vd_rx_nextidx, sc->sc_data->vd_rx_length);
 	}
+
+	vic_rx_fill(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1249,9 +1286,6 @@ vic_init(struct ifnet *ifp)
 	struct vic_softc	*sc = (struct vic_softc *)ifp->if_softc;
 	int			s;
 
-	if (vic_init_data(sc) != 0)
-		return;
-
 	sc->sc_data->vd_tx_curidx = 0;
 	sc->sc_data->vd_tx_nextidx = 0;
 	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
@@ -1262,6 +1296,9 @@ vic_init(struct ifnet *ifp)
 	sc->sc_data->vd_rx_saved_nextidx = 0;
 	sc->sc_data->vd_rx_saved_nextidx2 = 0;
 	sc->sc_data->vd_tx_saved_nextidx = 0;
+
+	if (vic_init_data(sc) != 0)
+		return;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
