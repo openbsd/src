@@ -685,9 +685,6 @@ int	drm_irq_by_busid(struct drm_device *, void *, struct drm_file *);
 int	drm_getunique(struct drm_device *, void *, struct drm_file *);
 int	drm_setunique(struct drm_device *, void *, struct drm_file *);
 int	drm_getmap(struct drm_device *, void *, struct drm_file *);
-int	drm_getclient(struct drm_device *, void *, struct drm_file *);
-int	drm_getstats(struct drm_device *, void *, struct drm_file *);
-int	drm_noop(struct drm_device *, void *, struct drm_file *);
 
 /* Context IOCTL support (drm_context.c) */
 int	drm_resctx(struct drm_device *, void *, struct drm_file *);

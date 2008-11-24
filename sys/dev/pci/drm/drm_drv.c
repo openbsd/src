@@ -569,15 +569,16 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		return (drm_getmagic(dev, data, file_priv));
 	case DRM_IOCTL_GET_MAP:
 		return (drm_getmap(dev, data, file_priv));
-	case DRM_IOCTL_GET_CLIENT:
-		return (drm_getclient(dev, data, file_priv));
-	case DRM_IOCTL_GET_STATS:
-		return (drm_getstats(dev, data, file_priv));
 	case DRM_IOCTL_WAIT_VBLANK:
 		return (drm_wait_vblank(dev, data, file_priv));
 	case DRM_IOCTL_MODESET_CTL:
 		return (drm_modeset_ctl(dev, data, file_priv));
 
+	/* removed */
+	case DRM_IOCTL_GET_CLIENT:
+		/*FALLTHROUGH*/
+	case DRM_IOCTL_GET_STATS:
+		return (EINVAL);
 	/*
 	 * no-oped ioctls, we don't check permissions on them because
 	 * they do nothing. they'll be removed as soon as userland is

@@ -181,18 +181,6 @@ drm_getmap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int
-drm_getclient(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	return (EINVAL);
-}
-
-int
-drm_getstats(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	return (EINVAL);
-}
-
 #define DRM_IF_MAJOR	1
 #define DRM_IF_MINOR	2
 
@@ -235,13 +223,5 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 	}
 
-	return 0;
-}
-
-
-int
-drm_noop(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	DRM_DEBUG("\n");
 	return 0;
 }
