@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.388 2008/11/16 09:33:43 damien Exp $
+$OpenBSD: usbdevs,v 1.389 2008/11/24 00:03:19 drahn Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -481,6 +481,7 @@ vendor AZUREWAVE	0x13d3	AsureWave
 vendor NOVATEL		0x1410	Novatel
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor RADIOSHACK	0x1453	Radio Shack
+vendor OPENMOKO		0x1457	OpenMoko
 vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
@@ -2342,6 +2343,9 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 
 /* Radio Shack products */
 product RADIOSHACK PL2303	0x4026	PL2303 Serial
+
+/* OpenMoko products */
+product OPENMOKO N1793D		0x5118	Neo1973 Debug
 
 /* Rainbow Technologies products */
 product	RAINBOW IKEY2000	0x1200	i-Key 2000
