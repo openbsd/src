@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.59 2008/11/24 16:13:47 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.60 2008/11/24 18:36:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -566,7 +566,7 @@ vic_alloc_data(struct vic_softc *sc)
 	int				i, q;
 
 	sc->sc_rxq[0].pktlen = MCLBYTES;
-	sc->sc_rxq[1].pktlen = 4096; /* XXX VIC_JUMBO_FRAMELEN; */
+	sc->sc_rxq[1].pktlen = VIC_JUMBO_FRAMELEN;
 
 	for (q = 0; q < VIC_NRXRINGS; q++) {
 		sc->sc_rxq[q].bufs = malloc(sizeof(struct vic_rxbuf) *
