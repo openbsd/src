@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.53 2008/11/07 19:09:03 deraadt Exp $	*/
+/*	$OpenBSD: route.h,v 1.54 2008/11/24 12:53:53 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -413,6 +413,10 @@ void	 rtredirect(struct sockaddr *, struct sockaddr *,
 int	 rtrequest1(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 	     u_int);
 void	 rt_if_remove(struct ifnet *);
+#ifndef SMALL_KERNEL
+void	 rt_if_track(struct ifnet *);
+#endif
+int	 rtdeletemsg(struct rtentry *, u_int);
 
 struct radix_node_head	*rt_gettable(sa_family_t, u_int);
 struct radix_node	*rt_lookup(struct sockaddr *, struct sockaddr *, int);

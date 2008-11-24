@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.175 2008/11/21 18:01:30 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.176 2008/11/24 12:53:53 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1066,6 +1066,9 @@ if_down(struct ifnet *ifp)
 		bstp_ifstate(ifp);
 #endif
 	rt_ifmsg(ifp);
+#ifndef SMALL_KERNEL
+	rt_if_track(ifp);
+#endif
 }
 
 /*
@@ -1102,6 +1105,9 @@ if_up(struct ifnet *ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
+#ifndef SMALL_KERNEL
+	rt_if_track(ifp);
+#endif
 }
 
 /*
@@ -1112,6 +1118,9 @@ void
 if_link_state_change(struct ifnet *ifp)
 {
 	rt_ifmsg(ifp);
+#ifndef SMALL_KERNEL
+	rt_if_track(ifp);
+#endif
 	dohooks(ifp->if_linkstatehooks, 0);
 }
 

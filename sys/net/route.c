@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.98 2008/11/21 18:01:30 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.99 2008/11/24 12:53:53 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -144,10 +144,12 @@ struct pool		rttimer_pool;	/* pool for rttimer structures */
 
 int	rtable_init(struct radix_node_head ***);
 int	okaytoclone(u_int, int);
-int	rtdeletemsg(struct rtentry *, u_int);
 int	rtflushclone1(struct radix_node *, void *);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *);
+#ifndef SMALL_KERNEL
+int	rt_if_linkstate_change(struct radix_node *, void *);
+#endif
 
 #define	LABELID_MAX	50000
 
@@ -399,6 +401,8 @@ rtfree(struct rtentry *rt)
 	rt->rt_refcnt--;
 
 	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
+		if (rt->rt_refcnt == 0 && (rt->rt_nodes->rn_flags & RNF_ACTIVE))
+			return; /* route still active but currently down */
 		if (rt->rt_nodes->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic("rtfree 2");
 		rttrash--;
@@ -811,8 +815,16 @@ makeroute:
 		if (rt == NULL)
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
-		rt->rt_flags = RTF_UP | info->rti_flags;
+		rt->rt_flags = info->rti_flags;
 		rt->rt_priority = prio;	/* init routing priority */
+		if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
+		    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN) &&
+		    ifa->ifa_ifp->if_flags & IFF_UP)
+			rt->rt_flags |= RTF_UP;
+		else {
+			rt->rt_flags &= ~RTF_UP;
+			rt->rt_priority |= RTP_DOWN;
+		}
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_GATEWAY], tableid)) {
@@ -1395,3 +1407,56 @@ rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
 
 	return (0);
 }
+
+#ifndef SMALL_KERNEL
+void
+rt_if_track(struct ifnet *ifp)
+{
+	struct radix_node_head *rnh;
+	int i;
+	u_int tid;
+
+	if (rt_tables == NULL)
+		return;
+
+	for (tid = 0; tid <= rtbl_id_max; tid++) {
+		for (i = 1; i <= AF_MAX; i++) {
+			if ((rnh = rt_gettable(i, tid)) != NULL) {
+				if (!rn_mpath_capable(rnh))
+					continue;
+				while ((*rnh->rnh_walktree)(rnh,
+				    rt_if_linkstate_change, ifp) == EAGAIN)
+					;	/* nothing */
+			}
+		}
+	}
+}
+
+int
+rt_if_linkstate_change(struct radix_node *rn, void *arg)
+{
+	struct ifnet *ifp = arg;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp) {
+		if ((LINK_STATE_IS_UP(ifp->if_link_state) ||
+		    ifp->if_link_state == LINK_STATE_UNKNOWN) &&
+		    ifp->if_flags & IFF_UP) {
+			if (!(rt->rt_flags & RTF_UP)) {
+				/* bring route up */
+				rt->rt_flags |= RTF_UP;
+				rn_mpath_reprio(rn, rt->rt_priority & RTP_MASK);
+			}
+		} else {
+			if (rt->rt_flags & RTF_UP) {
+				/* take route done */
+				rt->rt_flags &= ~RTF_UP;
+				rn_mpath_reprio(rn, rt->rt_priority | RTP_DOWN);
+			}
+		}
+		if_group_routechange(rt_key(rt), rt_mask(rt));
+	}
+
+	return (0);
+}
+#endif

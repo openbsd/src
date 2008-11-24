@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.12 2008/11/21 18:01:30 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.13 2008/11/24 12:53:53 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -57,6 +57,9 @@ u_int32_t rn_mpath_hash(struct route *, u_int32_t *);
  * give some jitter to hash, to avoid synchronization between routers
  */
 static u_int32_t hashjitter;
+#ifdef RN_DEBUG
+extern struct radix_node	*rn_clist;
+#endif
 
 int
 rn_mpath_capable(struct radix_node_head *rnh)
@@ -104,6 +107,104 @@ rn_mpath_prio(struct radix_node *rn, u_int8_t prio)
 		rn = rn->rn_dupedkey;
 	}
 	return (prev);
+}
+
+void
+rn_mpath_reprio(struct radix_node *rn, int newprio)
+{
+	struct radix_node	*prev = rn->rn_p;
+	struct radix_node	*next = rn->rn_dupedkey;
+	struct radix_node	*t, *tt, *saved_tt;
+	struct rtentry		*rt = (struct rtentry *)rn;
+	int			 mid, oldprio, prioinv = 0;
+
+	oldprio = rt->rt_priority;
+	rt->rt_priority = newprio;
+
+	/* same prio, no change needed */
+	if (oldprio == newprio)
+		return;
+	if (rn_mpath_next(rn, 1) == NULL) {
+		/* no need to move node route is alone */
+		if (prev->rn_mask != rn->rn_mask)
+			return;
+		/* ... or route is last and prio gets bigger */
+		if (oldprio < newprio)
+			return;
+	}
+
+	/* remove node from dupedkey list and reinsert at correct place */
+	if (prev->rn_dupedkey == rn) {
+		prev->rn_dupedkey = next;
+		if (next)
+			next->rn_p = prev;
+		else
+			next = prev;
+	} else {
+		if (next == NULL)
+			panic("next == NULL");
+		next->rn_p = prev;
+		if (prev->rn_l == rn)
+			prev->rn_l = next;
+		else
+			prev->rn_r = next;
+	}
+
+	/* re-insert rn at the right spot */
+	for (tt = next; tt->rn_p->rn_mask == rn->rn_mask;
+	    tt = tt->rn_p)
+		;
+	saved_tt = tt;
+
+	/*
+	 * Stolen from radix.c rn_addroute().
+	 * This is nasty code with a certain amount of magic and dragons.
+	 * t is the element where the re-priorized rn is inserted -- before
+	 * or after depending on prioinv. tt and saved_tt are just helpers.
+	 */
+	tt = rn_mpath_prio(tt, newprio);
+	if (((struct rtentry *)tt)->rt_priority != newprio) {
+		if (((struct rtentry *)tt)->rt_priority > newprio)
+			prioinv = 1;
+		t = tt;
+	} else {
+		mid = rn_mpath_count(tt) / 2;
+		do {
+			t = tt;
+			tt = rn_mpath_next(tt, 0);
+		} while (tt && --mid > 0);
+	}
+
+	if (tt == saved_tt && prioinv) {
+		/* link in at head of list */
+		rn->rn_dupedkey = tt;
+		rn->rn_p = tt->rn_p;
+		tt->rn_p = rn;
+		if (rn->rn_p->rn_l == tt)
+			rn->rn_p->rn_l = rn;
+		else
+			rn->rn_p->rn_r = rn;
+	} else if (prioinv == 1) {
+		rn->rn_dupedkey = t;
+		t->rn_p->rn_dupedkey = rn;
+		rn->rn_p = t->rn_p;
+		t->rn_p = rn;
+	} else {
+		rn->rn_dupedkey = t->rn_dupedkey;
+		t->rn_dupedkey = rn;
+		rn->rn_p = t;
+		if (rn->rn_dupedkey)
+			rn->rn_dupedkey->rn_p = rn;
+	}
+#ifdef RN_DEBUG
+	/* readd at head of creation list */
+	for (t = rn_clist; t && t->rn_ybro != rn; t->rn_ybro)
+		;
+	if (t)
+		t->rn_ybro = rn->rn_ybro;
+	rn->rn_ybro = rn_clist;
+	rn_clist = rn;
+#endif
 }
 
 int
