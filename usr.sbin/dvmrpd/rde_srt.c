@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.9 2008/11/21 10:39:32 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.10 2008/11/24 21:55:52 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -37,6 +37,8 @@
 void	 rt_invalidate(void);
 void	 rt_expire_timer(int, short, void *);
 int	 rt_start_expire_timer(struct rt_node *);
+void	 rt_holddown_timer(int, short, void *);
+void	 rt_start_holddown_timer(struct rt_node *);
 
 void	 srt_set_upstream(struct rt_node *, u_int32_t);
 
@@ -54,7 +56,7 @@ void		 srt_add_ds(struct src_node *, struct rt_node *, u_int32_t,
 struct ds	*srt_find_ds(struct src_node *, u_int32_t);
 void		 srt_delete_ds(struct src_node *, struct rt_node *, struct ds *,
 		    struct iface *);
-struct src_node	*srt_find_src(struct in_addr, struct in_addr);
+struct src_node	*srt_find_src(in_addr_t, in_addr_t);
 struct src_node	*srt_add_src(struct in_addr, struct in_addr, u_int32_t);
 void		 srt_delete_src(struct src_node *);
 
@@ -75,15 +77,18 @@ void
 rt_expire_timer(int fd, short event, void *arg)
 {
 	struct rt_node	*rn = arg;
+	struct timeval	 tv;
 
 	log_debug("rt_expire_timer: route %s/%d", inet_ntoa(rn->prefix),
 	    rn->prefixlen);
 
-	/* XXX tell neighbors */
+	timerclear(&tv);
+	rn->old_cost = rn->cost;
+	rn->cost = INFINITY_METRIC;
+	tv.tv_sec = ROUTE_HOLD_DOWN;
 
-	/* remove route entry */
-	event_del(&rn->expiration_timer);
-	rt_remove(rn);
+	if (evtimer_add(&rn->holddown_timer, &tv) == -1)
+		fatal("rt_expire_timer");
 }
 
 int
@@ -91,10 +96,45 @@ rt_start_expire_timer(struct rt_node *rn)
 {
 	struct timeval	tv;
 
+	rn->old_cost = 0;
+
+	if (evtimer_pending(&rn->holddown_timer, NULL))
+		if (evtimer_del(&rn->holddown_timer) == -1)
+			fatal("rt_start_expire_timer");
+
 	timerclear(&tv);
 	tv.tv_sec = ROUTE_EXPIRATION_TIME;
 	return (evtimer_add(&rn->expiration_timer, &tv));
+}
 
+void
+rt_holddown_timer(int fd, short event, void *arg)
+{
+	struct rt_node	*rn = arg;
+	struct src_node	*src;
+
+	log_debug("rt_holddown_timer: route %s/%d", inet_ntoa(rn->prefix),
+	    rn->prefixlen);
+
+	/* remove route entry */
+	src = srt_find_src(rn->prefix.s_addr, prefixlen2mask(rn->prefixlen));
+	srt_delete_src(src);
+
+	rt_remove(rn);
+}
+
+void
+rt_start_holddown_timer(struct rt_node *rn)
+{
+	struct timeval	tv;
+
+	timerclear(&tv);
+	tv.tv_sec = ROUTE_HOLD_DOWN;
+	if (evtimer_pending(&rn->expiration_timer, NULL)) {
+		if (evtimer_del(&rn->expiration_timer) == -1)
+			fatal("rt_start_holddown_timer");
+		evtimer_add(&rn->holddown_timer, &tv);
+	}
 }
 
 /* route table */
@@ -331,7 +371,7 @@ srt_check_route(struct route_report *rr, int connected)
 	nbr_ip = rn->nexthop.s_addr;
 	nbr_report = rr->nexthop.s_addr;
 
-	if ((src = srt_find_src(rr->net, rr->mask)) == NULL)
+	if ((src = srt_find_src(rr->net.s_addr, rr->mask.s_addr)) == NULL)
 		fatal("srt_check_route");
 
 	if (rr->metric < INFINITY_METRIC) {
@@ -362,7 +402,10 @@ srt_check_route(struct route_report *rr, int connected)
 				rn->nexthop.s_addr = nbr_report;
 				srt_set_upstream(rn, ifindex);
 				flash_update(rn);
-			}
+			} else if (nbr_report == nbr_ip &&
+			    adj_metric == rn->old_cost)
+				rt_update(rn);
+				flash_update_ds(rn);
 		}
 		/* Update forwarder of current interface if necessary and
 		 * refresh the route */
@@ -373,10 +416,8 @@ srt_check_route(struct route_report *rr, int connected)
 			srt_set_forwarder_self(src, iface, rn);
 infinity:
 		if (nbr_ip == nbr_report) {
-			if (rn->cost < INFINITY_METRIC) {
-				rt_remove(rn);
-				srt_delete_src(src);
-			}
+			if (rn->cost < INFINITY_METRIC)
+				rt_start_holddown_timer(rn);
 		} else
 			if ((ds_nbr = srt_find_ds(src, nbr_report)))
 				srt_delete_ds(src, rn, ds_nbr, iface);
@@ -505,13 +546,13 @@ srt_delete_ds(struct src_node *src_node, struct rt_node *rn, struct ds *ds_nbr,
 }
 
 struct src_node *
-srt_find_src(struct in_addr net, struct in_addr mask)
+srt_find_src(in_addr_t net, in_addr_t mask)
 {
 	struct src_node		*src_node;
 
 	RB_FOREACH(src_node, src_head, &rdeconf->src_list)
-		if (src_node->origin.s_addr == net.s_addr &&
-		    src_node->mask.s_addr == mask.s_addr)
+		if (src_node->origin.s_addr == net &&
+		    src_node->mask.s_addr == mask)
 			return (src_node);
 
 	return (NULL);
@@ -551,6 +592,9 @@ void
 srt_delete_src(struct src_node *src_node)
 {
 	struct ds	*ds_nbr;
+
+	if (src_node == NULL)
+		return;
 
 	LIST_FOREACH(ds_nbr, &src_node->ds_list, entry) {
 		LIST_REMOVE(ds_nbr, entry);
