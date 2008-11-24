@@ -144,7 +144,7 @@ static int i915_dma_cleanup(struct drm_device * dev)
 
 	/* Clear the HWS virtual address at teardown */
 	if (I915_NEED_GFX_HWS(dev_priv))
-		i915_free_hws(dev_priv, dev->pa.pa_dmat);
+		i915_free_hws(dev_priv, dev->dmat);
 
 	return 0;
 }
