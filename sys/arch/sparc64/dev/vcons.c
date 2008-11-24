@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.4 2008/10/12 09:18:24 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.5 2008/11/24 16:19:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -111,7 +111,8 @@ vcons_intr(void *arg)
 {
 	struct vcons_softc *sc = arg;
 
-	softintr_schedule(sc->sc_si);
+	if (sc->sc_tty)
+		softintr_schedule(sc->sc_si);
 	return (1);
 }
 
