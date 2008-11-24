@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.91 2008/11/10 11:54:39 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.92 2008/11/24 23:25:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -780,8 +780,14 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
 	    (struct uvideo_format_desc *)d;
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-	    sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format->u.mjpeg.bDefaultFrameIndex;
+	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->bDefaultFrameIndex < 1) {
+		/* sanitize wrong bDefaultFrameIndex value */
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
+	} else {
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
+		    d->bDefaultFrameIndex;
+	}
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].pixelformat = V4L2_PIX_FMT_MJPEG;
 
 	if (sc->sc_fmtgrp_cur == NULL)
@@ -816,8 +822,14 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
 	    (struct uvideo_format_desc *)d;
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-	    sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format->u.uc.bDefaultFrameIndex;
+	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->bDefaultFrameIndex < 1) {
+		/* sanitize wrong bDefaultFrameIndex value */
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
+	} else {
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
+		    d->bDefaultFrameIndex;
+	}
 	i = sc->sc_fmtgrp_idx;
 	if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "YUY2")) {
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_YUYV;
@@ -894,16 +906,7 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 	fmtidx = sc->sc_fmtgrp_idx;
 	sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex] = d;
 
-	/*
-	 * If bDefaultFrameIndex is not set by the device
-	 * use the first bFrameIndex available, otherwise
-	 * set it to the default one.
-	 */
-	if (sc->sc_fmtgrp[fmtidx].format->u.mjpeg.bDefaultFrameIndex == 0) {
-		sc->sc_fmtgrp[fmtidx].frame_cur =
-		    sc->sc_fmtgrp[fmtidx].frame[1];
-	} else if (sc->sc_fmtgrp[fmtidx].format->u.mjpeg.bDefaultFrameIndex ==
-	    d->bFrameIndex) {
+	if (sc->sc_fmtgrp[fmtidx].format_dfidx == d->bFrameIndex) {
 		sc->sc_fmtgrp[fmtidx].frame_cur =
 		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex];
 	}
@@ -936,16 +939,7 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex] =
 	    (struct usb_video_frame_mjpeg_desc *)d;
 
-	/*
-	 * If bDefaultFrameIndex is not set by the device
-	 * use the first bFrameIndex available, otherwise
-	 * set it to the default one.
-	 */
-	if (sc->sc_fmtgrp[fmtidx].format->u.uc.bDefaultFrameIndex == 0) {
-		sc->sc_fmtgrp[fmtidx].frame_cur =
-		    sc->sc_fmtgrp[fmtidx].frame[1];
-	} else if (sc->sc_fmtgrp[fmtidx].format->u.uc.bDefaultFrameIndex ==
-	    d->bFrameIndex) {
+	if (sc->sc_fmtgrp[fmtidx].format_dfidx == d->bFrameIndex) {
 		sc->sc_fmtgrp[fmtidx].frame_cur =
 		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex];
 	}
