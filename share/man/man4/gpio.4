@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.11 2007/11/17 16:55:05 mbalmer Exp $
+.\"	$OpenBSD: gpio.4,v 1.12 2008/11/24 13:50:24 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: November 24 2008 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -149,6 +149,30 @@ On return the
 .Fa gp_caps
 field contains flags that are supported.
 If no flags are specified, the pin configuration stays unchanged.
+.Pp
+.It Dv GPIOATTACH (struct gpio_attach)
+Attach the device described in the
+.Fa gpio_attach
+structure on this gpio device.
+.Bd -literal
+struct gpio_attach {
+	char ga_dvname[16];     /* device name */
+	int ga_offset;		/* pin number */
+	u_int32_t ga_mask;	/* binary mask */
+};
+.Ed
+.Pp
+.It Dv GPIODETACH (struct gpio_attach)
+Detach a device from this gpio device that was previously attached using the
+.Ar GPIOATTACH
+.Xr ioctl 2 .
+The
+.Fa ga_offset
+and
+.Fa ga_mask
+fields of the
+.Fa gpio_attach
+structure are ignored.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
@@ -170,5 +194,7 @@ The
 .Nm
 driver was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
+Runtime device attachment was added by
+.An Marc Balmer Aq mbalmer@openbsd.org .
 .Sh BUGS
 Event capabilities are not supported.
