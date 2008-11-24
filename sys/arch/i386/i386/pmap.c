@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.131 2008/11/24 15:50:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.132 2008/11/24 16:32:45 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1472,11 +1472,9 @@ pmap_pinit(struct pmap *pmap)
 	/* init PDP */
 	/* zero init area */
 	bzero(pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
-#if 0
 	/* put in recursive PDE to map the PTEs */
 	pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW | PG_U |
 	    PG_M;
-#endif
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
