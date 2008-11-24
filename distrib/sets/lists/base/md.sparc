@@ -1159,6 +1159,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/ethertypes.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_aoe.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_arp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_atm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_bridge.ph

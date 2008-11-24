@@ -1057,6 +1057,7 @@
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/ethertypes.h
 ./usr/include/net/if.h
+./usr/include/net/if_aoe.h
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_atm.h
 ./usr/include/net/if_bridge.h
