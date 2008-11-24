@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioow.4,v 1.5 2008/11/24 14:17:57 mbalmer Exp $
+.\"	$OpenBSD: gpioow.4,v 1.6 2008/11/24 15:30:21 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -31,7 +31,7 @@ driver allows bit-banging a 1-Wire bus as a master using one GPIO pin.
 The pin is used as a data signal.
 The GPIO pin must be able to drive an output and read an input.
 .Pp
-The pin number can specified in the kernel configuration with the
+The pin number can be specified in the kernel configuration with the
 .Ar offset
 locator.
 The
@@ -44,7 +44,7 @@ and
 can also be specified when
 .Nm
 is attached at runtime using the
-.Ar GPIOATTACH
+.Dv GPIOATTACH
 .Xr ioctl 2
 on the
 .Xr gpio 4
