@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.12 2008/11/24 13:50:24 mbalmer Exp $
+.\"	$OpenBSD: gpio.4,v 1.13 2008/11/24 15:13:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -36,13 +36,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-device attaches to the
-.Tn GPIO
+device attaches to the GPIO
 controller and provides a uniform programming interface to its pins.
 .Pp
-Each
-.Tn GPIO
-controller with an attached
+Each GPIO controller with an attached
 .Nm
 device has an associated device file under the
 .Pa /dev
@@ -56,10 +53,9 @@ The following structures and constants are defined in the
 .Aq Pa sys/gpio.h
 header file:
 .Pp
-.Bl -tag -width XXXX -compact
+.Bl -tag -width XXXX
 .It Dv GPIOINFO (struct gpio_info)
-Returns information about the
-.Tn GPIO
+Returns information about the GPIO
 controller in the
 .Fa gpio_info
 structure:
@@ -68,7 +64,6 @@ struct gpio_info {
 	int gpio_npins;		/* total number of pins available */
 };
 .Ed
-.Pp
 .It Dv GPIOPINREAD (struct gpio_pin_op)
 Returns the input pin value in the
 .Fa gpio_pin_op
@@ -83,7 +78,6 @@ struct gpio_pin_op {
 The
 .Fa gp_pin
 field must be set before calling.
-.Pp
 .It Dv GPIOPINWRITE (struct gpio_pin_op)
 Writes the output value to the pin.
 The value set in the
@@ -96,12 +90,10 @@ field must be either
 On return, the
 .Fa gp_value
 field contains the old pin state.
-.Pp
 .It Dv GPIOPINTOGGLE (struct gpio_pin_op)
 Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
-.Pp
 .It Dv GPIOPINCTL (struct gpio_pin_ctl)
 Changes pin configuration flags with the new ones provided in the
 .Fa gpio_pin_ctl
@@ -141,15 +133,12 @@ invert input
 invert output
 .El
 .Pp
-Note that the
-.Tn GPIO
-controller
+Note that the GPIO controller
 may not support all of these flags.
 On return the
 .Fa gp_caps
 field contains flags that are supported.
 If no flags are specified, the pin configuration stays unchanged.
-.Pp
 .It Dv GPIOATTACH (struct gpio_attach)
 Attach the device described in the
 .Fa gpio_attach
@@ -161,10 +150,9 @@ struct gpio_attach {
 	u_int32_t ga_mask;	/* binary mask */
 };
 .Ed
-.Pp
 .It Dv GPIODETACH (struct gpio_attach)
 Detach a device from this gpio device that was previously attached using the
-.Ar GPIOATTACH
+.Dv GPIOATTACH
 .Xr ioctl 2 .
 The
 .Fa ga_offset
