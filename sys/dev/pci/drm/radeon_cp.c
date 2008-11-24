@@ -1268,8 +1268,6 @@ static int radeon_do_cleanup_cp(struct drm_device * dev)
 			dev_priv->gart_info.addr = 0;
 		}
 	}
-	/* only clear to the start of flags */
-	memset(dev_priv, 0, offsetof(drm_radeon_private_t, flags));
 
 	return 0;
 }
