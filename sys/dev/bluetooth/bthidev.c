@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.5 2008/11/24 08:49:22 uwe Exp $	*/
 /*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -639,6 +639,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 
 	if (sc->sc_int == NULL) {
 		printf("%s: disconnected\n", sc->sc_btdev.sc_dev.dv_xname);
+		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
 			timeout_add(&sc->sc_reconnect,
