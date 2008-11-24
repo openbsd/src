@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.14 2008/11/17 21:05:05 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.15 2008/11/24 23:55:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -658,8 +658,7 @@ queue_message_from_id(char *message_id, struct message *message)
 		goto bad;
 	}
 
-	if (fread(message, 1, sizeof(struct message), fp) !=
-	    sizeof(struct message)) {
+	if (fread(message, sizeof(struct message), 1, fp) != 1) {
 		warnx("queue_load_submissions: fread: %s", message_id);
 		goto bad;
 	}
@@ -812,7 +811,6 @@ queue_record_submission(struct message *message)
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
 	int spret;
 	FILE *fp;
-	int hm;
 
 	if (message->type & T_DAEMON_MESSAGE) {
 		spool = PATH_DAEMON;
@@ -872,8 +870,7 @@ queue_record_submission(struct message *message)
 
 		message->creation = time(NULL);
 
-		if ((hm = fwrite(message, 1, sizeof(struct message), fp)) !=
-		    sizeof(struct message)) {
+		if (fwrite(message, sizeof(struct message), 1, fp) != 1) {
 			fclose(fp);
 			unlink(dbname);
 			return 0;
@@ -1145,8 +1142,7 @@ queue_update_database(struct message *message)
 	if (fp == NULL)
 		fatal("fdopen");
 
-	if (fwrite(message, 1, sizeof(struct message), fp) !=
-	    sizeof(struct message))
+	if (fwrite(message, sizeof(struct message), 1, fp) != 1)
 		fatal("queue_update_database: cannot write database");
 	fflush(fp);
 	fsync(fd);
@@ -1232,8 +1228,7 @@ queue_init_submissions(void)
 		if (fp == NULL)
 			continue;
 
-		if (fread(&message, 1, sizeof(struct message), fp) !=
-		    sizeof(struct message)) {
+		if (fread(&message, sizeof(struct message), 1, fp) != 1) {
 			fclose(fp);
 			continue;
 		}
@@ -1283,8 +1278,7 @@ queue_message_complete(struct message *messagep)
 		if (fp == NULL)
 			continue;
 
-		if (fread(&message, 1, sizeof(struct message), fp) !=
-		    sizeof(struct message)) {
+		if (fread(&message, sizeof(struct message), 1, fp) != 1) {
 			fclose(fp);
 			continue;
 		}

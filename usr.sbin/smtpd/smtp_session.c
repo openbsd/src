@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.9 2008/11/17 21:56:18 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.10 2008/11/24 23:55:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -744,8 +744,8 @@ read:
 			size_t len;
 
 			len = strlen(line);
-			fwrite(line, len, 1, s->s_msg.datafp);
-			fwrite("\n", 1, 1,  s->s_msg.datafp);
+			fwrite(line, 1, len, s->s_msg.datafp);
+			fwrite("\n", 1, 1, s->s_msg.datafp);
 			fflush(s->s_msg.datafp);
 
 			if (! (s->s_flags & F_8BITMIME)) {
