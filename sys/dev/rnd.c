@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.96 2008/11/24 10:30:12 mpf Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.97 2008/11/24 16:36:41 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -595,10 +595,6 @@ enqueue_randomness(int state, int val)
 	struct timespec	tv;
 	u_int	time, nbits;
 
-	/* XXX on sparc we get here before randomattach() */
-	if (!rnd_attached)
-		return;
-
 #ifdef DIAGNOSTIC
 	if (state < 0 || state >= RND_SRC_NUM)
 		return;
@@ -606,6 +602,21 @@ enqueue_randomness(int state, int val)
 
 	p = &rnd_states[state];
 	val += state << 13;
+
+	if (!rnd_attached) {
+		struct rand_event *rep;
+		
+		if ((rep = rnd_put()) == NULL) {
+			rndstats.rnd_drops++;
+			return;
+		}
+
+		rep->re_state = &rnd_states[RND_SRC_TIMER];
+		rep->re_nbits = 0;
+		rep->re_time = 0;
+		rep->re_time = val;
+		return;
+	}
 
 	nanotime(&tv);
 	time = (tv.tv_nsec >> 10) + (tv.tv_sec << 20);
@@ -850,10 +861,6 @@ randomattach(void)
 	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
 
-	bzero(&rndstats, sizeof(rndstats));
-	bzero(&rnd_event_space, sizeof(rnd_event_space));
-
-	bzero(&arc4random_state, sizeof(arc4random_state));
 	mtx_init(&rndlock, IPL_HIGH);
 	arc4_reinit(NULL);
 
