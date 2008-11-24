@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.44 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.45 2008/11/24 12:57:37 dlg Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ const char	netlck[] = "netlck";
 
 u_long	sb_max = SB_MAX;		/* patchable */
 
-extern struct pool mclpool;
+extern struct pool mclpools[];
 
 /*
  * Procedures to manipulate state flags of socket
@@ -158,7 +158,7 @@ sonewconn(struct socket *head, int connstatus)
 
 	splassert(IPL_SOFTNET);
 
-	if (mclpool.pr_nout > mclpool.pr_hardlimit * 95 / 100)
+	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)
 		return ((struct socket *)0);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);
@@ -407,7 +407,7 @@ int
 sbcheckreserve(u_long cnt, u_long defcnt)
 {
 	if (cnt > defcnt &&
-	    mclpool.pr_nout> mclpool.pr_hardlimit / 2)
+	    mclpools[0].pr_nout> mclpools[0].pr_hardlimit / 2)
 		return (ENOBUFS);
 	return (0);
 }

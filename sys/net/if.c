@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.176 2008/11/24 12:53:53 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.177 2008/11/24 12:57:37 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -146,6 +146,8 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 
 void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
+
+void	m_clinitifp(struct ifnet *);
 
 TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -454,6 +456,8 @@ if_attach(struct ifnet *ifp)
 #else
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 #endif
+
+	m_clinitifp(ifp);
 
 	if_attachsetup(ifp);
 }
@@ -1105,9 +1109,12 @@ if_up(struct ifnet *ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
+
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
+
+	m_clinitifp(ifp);
 }
 
 /*
@@ -2007,4 +2014,50 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+void
+m_clinitifp(struct ifnet *ifp)
+{
+	extern struct mclsizes mclsizes[];
+	int i;
+
+	/* Initialize high water marks for use of cluster pools */
+	for (i = 0; i < MCLPOOLS; i++)
+		ifp->if_mclstat.mclpool[i].mcl_hwm = mclsizes[i].hwm;
+}
+
+int
+m_cldrop(struct ifnet *ifp, int pi)
+{
+	struct mclstat *mcls = &ifp->if_mclstat;
+	extern struct mclsizes mclsizes[];
+
+	if (mcls->mclpool[pi].mcl_alive <= 2 && ISSET(ifp->if_flags, IFF_UP)) {
+		/* About to run out, so increase the watermark */
+		mcls->mclpool[pi].mcl_hwm +=
+		    mcls->mclpool[pi].mcl_hwm / mclsizes[pi].factor;
+	} else if (mcls->mclpool[pi].mcl_alive >= mcls->mclpool[pi].mcl_hwm)
+		return (1);		/* No more packets given */
+
+	return (0);
+}
+
+void
+m_clcount(struct ifnet *ifp, int pi)
+{
+	ifp->if_mclstat.mclpool[pi].mcl_alive++;
+}
+
+void
+m_cluncount(struct mbuf *m)
+{
+	struct mbuf_ext *me = &m->m_ext;
+
+	if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
+	    (me->ext_ifp == NULL))
+		return;
+
+	me->ext_ifp->if_mclstat.mclpool[me->ext_backend].mcl_alive--;
+	me->ext_ifp = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.94 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.95 2008/11/24 12:57:37 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -90,7 +90,22 @@
 
 struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
-struct	pool mclpool;		/* mbuf cluster pool */
+
+/* mbuf cluster pools */
+struct	mclsizes mclsizes[] = {
+	{  MCLBYTES, 4, 1 }, /* must be at slot 0 */
+	{  4 * 1024, 4, 2 },
+#ifdef notyet
+	/* pool allocator cannot cope with >PAGESIZE objects */
+	{  8 * 1024, 4, 2 },
+	{  9 * 1024, 4, 2 },
+	{ 12 * 1024, 4, 2 },
+	{ 16 * 1024, 4, 2 },
+	{ 64 * 1024, 4, 2 }
+#endif
+};
+static	char mclnames[MCLPOOLS][8];
+struct	pool mclpools[MCLPOOLS];
 
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
@@ -102,7 +117,7 @@ void	nmbclust_update(void);
 
 
 const char *mclpool_warnmsg =
-    "WARNING: mclpool limit reached; increase kern.maxclusters";
+    "WARNING: mclpools limit reached; increase kern.maxclusters";
 
 /*
  * Initialize the mbuf allocator.
@@ -110,30 +125,35 @@ const char *mclpool_warnmsg =
 void
 mbinit(void)
 {
+	int i;
+
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
-	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", NULL);
+	pool_setlowat(&mbpool, mblowat);
+
+	for (i = 0; i < nitems(mclsizes); i++) {
+		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
+		    mclsizes[i].size >> 10);
+		pool_init(&mclpools[i], mclsizes[i].size, 0, 0, 0, mclnames[i],
+		    NULL);
+		pool_setlowat(&mclpools[i], mcllowat);
+	}
 
 	nmbclust_update();
-
-	/*
-	 * Set a low water mark for both mbufs and clusters.  This should
-	 * help ensure that they can be allocated in a memory starvation
-	 * situation.  This is important for e.g. diskless systems which
-	 * must allocate mbufs in order for the pagedaemon to clean pages.
-	 */
-	pool_setlowat(&mbpool, mblowat);
-	pool_setlowat(&mclpool, mcllowat);
 }
 
 void
 nmbclust_update(void)
 {
+	int i;
 	/*
-	 * Set the hard limit on the mclpool to the number of
+	 * Set the hard limit on the mclpools to the number of
 	 * mbuf clusters the kernel is to support.  Log the limit
 	 * reached message max once a minute.
 	 */
-	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
+	for (i = 0; i < nitems(mclsizes); i++) {
+		(void)pool_sethardlimit(&mclpools[i], nmbclust,
+		    mclpool_warnmsg, 60);
+	}
 	pool_sethiwat(&mbpool, nmbclust);
 }
 
@@ -244,20 +264,41 @@ m_getclr(int nowait, int type)
 }
 
 void
-m_clget(struct mbuf *m, int how)
+m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 {
+	struct pool *mclp;
+	int pi;
 	int s;
 
+	for (pi = 0; pi < nitems(mclpools); pi++) {
+		mclp = &mclpools[pi];
+		if (pktlen <= mclp->pr_size)
+			break;
+	}
+
+#ifdef DIAGNOSTIC
+	if (mclp == NULL)
+		panic("m_clget: request for %d sized cluster", pktlen);
+#endif
+
+	if (ifp != NULL && m_cldrop(ifp, pi))
+		return;
+
 	s = splvm();
-	m->m_ext.ext_buf =
-	    pool_get(&mclpool, how == M_WAIT ? PR_WAITOK : 0);
+	m->m_ext.ext_buf = pool_get(mclp, how == M_WAIT ? PR_WAITOK : 0);
 	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
 		m->m_data = m->m_ext.ext_buf;
 		m->m_flags |= M_EXT|M_CLUSTER;
-		m->m_ext.ext_size = MCLBYTES;
+		m->m_ext.ext_size = mclp->pr_size;
 		m->m_ext.ext_free = NULL;
 		m->m_ext.ext_arg = NULL;
+
+		m->m_ext.ext_backend = pi;
+		m->m_ext.ext_ifp = ifp;
+		if (ifp != NULL)
+			m_clcount(ifp, pi);
+
 		MCLINITREFERENCE(m);
 	}
 }
@@ -278,9 +319,11 @@ m_free(struct mbuf *m)
 			    m->m_ext.ext_prevref;
 			m->m_ext.ext_prevref->m_ext.ext_nextref =
 			    m->m_ext.ext_nextref;
-		} else if (m->m_flags & M_CLUSTER)
-			pool_put(&mclpool, m->m_ext.ext_buf);
-		else if (m->m_ext.ext_free)
+		} else if (m->m_flags & M_CLUSTER) {
+			m_cluncount(m);
+			pool_put(&mclpools[m->m_ext.ext_backend],
+			    m->m_ext.ext_buf);
+		} else if (m->m_ext.ext_free)
 			(*(m->m_ext.ext_free))(m->m_ext.ext_buf,
 			    m->m_ext.ext_size, m->m_ext.ext_arg);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.108 2008/11/23 16:17:17 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.109 2008/11/24 12:57:37 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ struct mbuf_ext {
 	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;
+	struct ifnet* ext_ifp;
+	int	ext_backend;		/* backend pool the storage came from */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
 #ifdef DEBUG
@@ -296,7 +298,8 @@ struct mbuf {
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
-#define MCLGET(m, how) m_clget((m), (how))
+#define MCLGET(m, how) m_clget((m), (how), NULL, MCLBYTES)
+#define MCLGETI(m, how, ifp, l) m_clget((m), (how), (ifp), (l))
 
 /*
  * Reset the data pointer on an mbuf.
@@ -438,6 +441,13 @@ struct mbstat {
 };
 
 #ifdef	_KERNEL
+
+struct	mclsizes {
+	u_int	size;
+	u_int	hwm;
+	u_int	factor;
+};
+
 extern	struct mbstat mbstat;
 extern	int nmbclust;			/* limit on the # of clusters */
 extern	int mblowat;			/* mbuf low water mark */
@@ -465,7 +475,10 @@ struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
-void	m_clget(struct mbuf *, int);
+void	m_clget(struct mbuf *, int, struct ifnet *, u_int);
+int	m_cldrop(struct ifnet *, int);
+void	m_clcount(struct ifnet *, int);
+void	m_cluncount(struct mbuf *);
 void	m_adj(struct mbuf *, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
 void	m_freem(struct mbuf *);
