@@ -35,7 +35,13 @@
 #include "radeon_drm.h"
 #include "radeon_drv.h"
 
-void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state)
+void	r500_vbl_irq_set_state(struct drm_device *, u32, int);
+u_int32_t	radeon_acknowledge_irqs(drm_radeon_private_t *, u32 *);
+int	radeon_emit_irq(struct drm_device *);
+int	radeon_wait_irq(struct drm_device *, int);
+
+void
+radeon_irq_set_state(struct drm_device *dev, u32 mask, int state)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -47,7 +53,8 @@ void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state)
 	RADEON_WRITE(RADEON_GEN_INT_CNTL, dev_priv->irq_enable_reg);
 }
 
-static void r500_vbl_irq_set_state(struct drm_device *dev, u32 mask, int state)
+void
+r500_vbl_irq_set_state(struct drm_device *dev, u32 mask, int state)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -127,7 +134,8 @@ void radeon_disable_vblank(struct drm_device *dev, int crtc)
 	}
 }
 
-static __inline__ u32 radeon_acknowledge_irqs(drm_radeon_private_t * dev_priv, u32 *r500_disp_int)
+u_int32_t
+radeon_acknowledge_irqs(drm_radeon_private_t *dev_priv, u32 *r500_disp_int)
 {
 	u32 irqs = RADEON_READ(RADEON_GEN_INT_STATUS);
 	u32 irq_mask = RADEON_SW_INT_TEST;
@@ -216,7 +224,8 @@ irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS)
 	return IRQ_HANDLED;
 }
 
-static int radeon_emit_irq(struct drm_device * dev)
+int
+radeon_emit_irq(struct drm_device * dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	unsigned int ret;
@@ -234,7 +243,8 @@ static int radeon_emit_irq(struct drm_device * dev)
 	return ret;
 }
 
-static int radeon_wait_irq(struct drm_device * dev, int swi_nr)
+int
+radeon_wait_irq(struct drm_device * dev, int swi_nr)
 {
 	drm_radeon_private_t *dev_priv =
 	    (drm_radeon_private_t *) dev->dev_private;
