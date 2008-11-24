@@ -55,7 +55,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: toke.l,v 1.26 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: toke.l,v 1.27 2008/11/24 00:41:36 millert Exp $";
 #endif /* lint */
 
 extern YYSTYPE yylval;
@@ -467,7 +467,7 @@ sudoedit		{
 			    LEXTRACE("\n\t");
 			}			/* throw away EOL after \ */
 
-<INITIAL,STARTDEFS,INDEFS>#[^0-9-].*\n	{
+<INITIAL,STARTDEFS,INDEFS>#([^\n0-9-].*)?\n	{
 			    BEGIN INITIAL;
 			    ++sudolineno;
 			    LEXTRACE("\n");

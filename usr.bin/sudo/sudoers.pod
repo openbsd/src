@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.153 2008/11/15 18:34:01 millert Exp $
+$Sudo: sudoers.pod,v 1.154 2008/11/24 15:08:16 millert Exp $
 =pod
 
 =head1 NAME
@@ -934,7 +934,7 @@ B<Strings that can be used in a boolean context>:
 
 =item askpass
 
-The I<askpass> option specifies the fully-qualilfy path to a helper
+The I<askpass> option specifies the fully qualified path to a helper
 program used to read the user's password when no terminal is
 available.  This may be the case when B<sudo> is executed from a
 graphical (as opposed to text-based) application.  The program
@@ -945,7 +945,7 @@ environment variable.
 
 =item env_file
 
-The I<env_file> options specifies the fully-qualilfy path to a file
+The I<env_file> options specifies the fully qualified path to a file
 containing variables to be set in the environment of the program
 being run.  Entries in this file should be of the form C<VARIABLE=value>.
 Variables in this file are subject to other B<sudo> environment

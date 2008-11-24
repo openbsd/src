@@ -1,3 +1,83 @@
+2008-11-23 19:42  millert
+
+	* toke.c: regen
+
+2008-11-23 19:41  millert
+
+	* toke.l: Fix matching of a line that only consists of a comment
+	  char
+
+2008-11-22 13:17  millert
+
+	* auth/pam.c: MacOS pam will retry conversation function if it
+	  fails so just treat ^C as an empty password.
+
+2008-11-22 10:12  millert
+
+	* visudo.c: When checking for alias use, also check defaults
+	  bindings.
+
+2008-11-22 10:01  millert
+
+	* redblack.c: unused var
+
+2008-11-22 09:42  millert
+
+	* redblack.c: Replace my rbdelete with Emin's version (which
+	  actually works ;-)
+
+2008-11-19 12:01  millert
+
+	* testsudoers.c: malloc debugging
+
+2008-11-19 07:37  millert
+
+	* visudo.c: malloc options in devel mode for visudo too
+
+2008-11-18 10:57  millert
+
+	* sudo.c: fix compilation on non-C99; from Theo
+
+2008-11-18 10:50  millert
+
+	* visudo.c: fix check_aliases
+
+2008-11-18 08:29  millert
+
+	* alias.c: when destroying an alias, free the correct data pointer
+
+2008-11-18 07:54  millert
+
+	* auth/sudo_auth.h: add proto for aixauth_cleanup; from Dale King
+
+2008-11-15 13:34  millert
+
+	* sudo.cat, sudo.man.in, sudoers.cat, sudoers.man.in, visudo.cat,
+	  visudo.man.in: regen
+
+2008-11-15 13:34  millert
+
+	* sudo.pod, sudoers.pod, visudo.pod: standardize on the term
+	  'option' for command line options (not flag)
+
+2008-11-14 06:18  millert
+
+	* INSTALL: Add note on configuring HP-UX pam
+
+2008-11-11 13:28  millert
+
+	* check.c, sudo.c: Move tty checks into check_user() so we only do
+	  them if we actually need a password.
+
+2008-11-11 12:34  millert
+
+	* sudo.c: Don't error out if no tty or askpass unless we actually
+	  need to authenticate.
+
+2008-11-10 15:20  millert
+
+	* ChangeLog: regen
+
 2008-11-10 08:07  millert
 
 	* pathnames.h.in, sudo.c: s/overriden/overridden/; from Tobias
@@ -4346,7 +4426,7 @@
 2004-10-01 10:58  millert
 
 	* sample.pam, sample.sudoers, sample.syslog.conf, sudoers: Add
-	  $Sudo: ChangeLog,v 1.16 2008/11/10 20:20:10 millert Exp $ tags.
+	  $Sudo: ChangeLog,v 1.17 2008/11/24 12:08:55 millert Exp $ tags.
 
 2004-10-01 10:47  millert
 

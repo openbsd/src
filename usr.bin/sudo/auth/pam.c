@@ -45,6 +45,7 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
+#include <errno.h>
 
 #ifdef HAVE_PAM_PAM_APPL_H
 # include <pam/pam_appl.h>
@@ -72,7 +73,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.64 2008/11/09 14:13:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.65 2008/11/22 18:17:44 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -286,12 +287,17 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		    && (pm->msg[9] != ' ' || pm->msg[10] != '\0'))))
 		    prompt = pm->msg;
 #endif
-		/* Read the password. */
+		/* Read the password unless interrupted. */
 		pass = tgetpass(prompt, def_passwd_timeout * 60, flags);
 		if (pass == NULL) {
 		    /* We got ^C instead of a password; abort quickly. */
-		    gotintr = 1;
+		    if (errno == EINTR)
+			gotintr = 1;
+#if defined(__darwin__) || defined(__APPLE__)
+		    pass = "";
+#else
 		    goto err;
+#endif
 		}
 		pr->resp = estrdup(pass);
 		zero_bytes(pass, strlen(pass));
