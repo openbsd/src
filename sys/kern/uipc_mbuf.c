@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.97 2008/11/24 18:34:40 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.98 2008/11/24 19:17:16 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -99,11 +99,13 @@ struct	pool mbpool;		/* mbuf pool */
 struct	mclsizes mclsizes[] = {
 	{  MCLBYTES, 4, 1 }, /* must be at slot 0 */
 	{  4 * 1024, 4, 2 },
+#if art_doesnt_suck
 	{  8 * 1024, 4, 2 },
 	{  9 * 1024, 4, 2 },
 	{ 12 * 1024, 4, 2 },
 	{ 16 * 1024, 4, 2 },
 	{ 64 * 1024, 4, 2 }
+#endif
 };
 static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
