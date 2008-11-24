@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.112 2008/11/24 15:09:39 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.113 2008/11/24 15:14:33 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -195,19 +195,6 @@ struct mbuf {
 #define	M_WAIT		M_WAITOK
 
 /*
- * mbuf utility macros:
- *
- *	MBUFLOCK(code)
- * prevents a section of code from from being interrupted by network
- * drivers.
- */
-#define	MBUFLOCK(code) do {						\
-	int ms = splvm();						\
-	{ code }							\
-	splx(ms);							\
-} while (/* CONSTCOND */ 0)
-
-/*
  * mbuf allocation/deallocation macros:
  *
  *	MGET(struct mbuf *m, int how, int type)
@@ -242,12 +229,14 @@ struct mbuf {
 
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
 
-#define	_MCLADDREFERENCE(o, n)	do {					\
+#define	MCLADDREFERENCE(o, n)	do {					\
+		int ms =  splvm();					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
 		(n)->m_ext.ext_prevref = (o);				\
 		(o)->m_ext.ext_nextref = (n);				\
 		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
+		splx(ms);						\
 		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
 	} while (/* CONSTCOND */ 0)
 
@@ -257,8 +246,6 @@ struct mbuf {
 		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
 		MCLREFDEBUGN((m), NULL, 0);				\
 	} while (/* CONSTCOND */ 0)
-
-#define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
 
 /*
  * Macros for mbuf external storage.
