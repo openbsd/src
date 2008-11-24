@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.57 2008/10/02 15:28:07 mbalmer Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.58 2008/11/24 23:46:06 kettenis Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -850,6 +850,17 @@ const struct puc_device_description puc_devices[] = {
 	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
+
+	/* Exsys EX-1372 (uses Oxford OX16PCI952 and a 8x clock) */
+	{   /* "Oxford Semiconductor OX16PCI952 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952,
+		PCI_VENDOR_OXFORD2, 0x0001 },
+	    {   0xffff, 0xffff,	0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+	    },
+	},
 
 	/* Oxford Semiconductor OX16PCI952 PCI `950 UARTs - 128 byte FIFOs */
 	{   /* "Oxford Semiconductor OX16PCI952 UARTs", */
