@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.110 2008/11/24 15:04:37 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.111 2008/11/24 15:06:55 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -282,18 +282,6 @@ struct mbuf {
 
 #define MCLGET(m, how) m_clget((m), (how), NULL, MCLBYTES)
 #define MCLGETI(m, how, ifp, l) m_clget((m), (how), (ifp), (l))
-
-/*
- * Reset the data pointer on an mbuf.
- */
-#define	MRESETDATA(m) do {						\
-	if ((m)->m_flags & M_EXT)					\
-		(m)->m_data = (m)->m_ext.ext_buf;			\
-	else if ((m)->m_flags & M_PKTHDR)				\
-		(m)->m_data = (m)->m_pktdat;				\
-	else								\
-		(m)->m_data = (m)->m_dat;				\
-} while (/* CONSTCOND */ 0)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
