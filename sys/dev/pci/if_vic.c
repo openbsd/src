@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.57 2008/11/24 12:34:29 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.58 2008/11/24 13:10:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1362,7 +1362,7 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 	if (m == NULL)
 		return (NULL);
 
-	MCLGET(m, M_DONTWAIT);
+	MCLGETI(m, M_DONTWAIT, &sc->sc_ac.ac_if, MCLBYTES);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return (NULL);
