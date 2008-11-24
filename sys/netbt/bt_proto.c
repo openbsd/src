@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_proto.c,v 1.5 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: bt_proto.c,v 1.6 2008/11/24 20:19:51 uwe Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -82,5 +82,5 @@ bt_init(void)
 	 * For unknown reasons, in NetBSD the interrupt level is
 	 * IPL_NONE.
 	 */
-	mtx_init(&bt_lock, IPL_SOFTNET);
+	mtx_init(&bt_lock, IPL_BIO);
 }
