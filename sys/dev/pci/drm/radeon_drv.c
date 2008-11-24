@@ -529,7 +529,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	dev_priv->fb_aper_offset = bar->base;
-	dev_priv->fb_aper_size = bar->size;
+	dev_priv->fb_aper_size = bar->maxsize;
 
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 2);
 	if (bar == NULL) {
@@ -538,7 +538,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
-	    bar->addr, bar->size, 0);
+	    bar->addr, 0, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
 		return;

@@ -129,7 +129,7 @@ ragedrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
-	    bar->addr, bar->size, 0);
+	    bar->addr, 0, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
 		return;
