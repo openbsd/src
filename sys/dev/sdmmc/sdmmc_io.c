@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.11 2008/11/24 07:32:08 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -132,6 +132,8 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 {
 	struct sdmmc_function *sf0, *sf;
 	int i;
+
+	SDMMC_ASSERT_LOCKED(sc);
 
 	sf0 = sdmmc_function_alloc(sc);
 	sf0->number = 0;
@@ -534,7 +536,7 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 	int error;
 	int i;
 
-	SDMMC_LOCK(sc);
+	SDMMC_ASSERT_LOCKED(sc);
 
 	/*
 	 * If we change the OCR value, retry the command until the OCR
@@ -559,7 +561,6 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 	if (error == 0 && ocrp != NULL)
 		*ocrp = MMC_R4(cmd.c_resp);
 
-	SDMMC_UNLOCK(sc);
 	return error;
 }
 
