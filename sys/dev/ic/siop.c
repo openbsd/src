@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.50 2008/08/31 17:21:57 miod Exp $ */
+/*	$OpenBSD: siop.c,v 1.51 2008/11/24 00:31:35 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1375,7 +1375,7 @@ siop_scsicmd(xs)
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd == NULL) {
 		splx(s);
-		return(TRY_AGAIN_LATER);
+		return(NO_CCB);
 	}
 	TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 

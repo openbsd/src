@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.20 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.21 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ ncr5380_scsi_cmd(xs)
 		if (sc->sc_ring[i].sr_xs == NULL)
 			goto new;
 
-	rv = TRY_AGAIN_LATER;
+	rv = NO_CCB;
 	NCR_TRACE("scsi_cmd: no openings, rv=%d\n", rv);
 	goto out;
 

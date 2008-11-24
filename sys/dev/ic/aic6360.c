@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.16 2007/11/05 18:16:19 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.17 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -518,7 +518,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 
 	flags = xs->flags;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
-		return TRY_AGAIN_LATER;
+		return (NO_CCB);
 	}
 
 	/* Initialize acb */

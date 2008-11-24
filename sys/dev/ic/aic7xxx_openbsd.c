@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.38 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.39 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ ahc_action(struct scsi_xfer *xs)
 	s = splbio();
 	if ((scb = ahc_get_scb(ahc)) == NULL) {
 		splx(s);
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	splx(s);
 

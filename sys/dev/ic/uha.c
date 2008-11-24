@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.10 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: uha.c,v 1.11 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -373,7 +373,7 @@ uha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((mscp = uha_get_mscp(sc, flags)) == NULL) {
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	mscp->xs = xs;
 	mscp->timeout = xs->timeout;

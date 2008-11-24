@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.9 2008/08/31 17:21:57 miod Exp $
+/*	$OpenBSD: trm.c,v 1.10 2008/11/24 00:31:35 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -397,7 +397,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 
 	if (pSRB == NULL) {
 		splx(intflag);
-		return TRY_AGAIN_LATER;
+		return (NO_CCB);
 	}
 
 	/* 

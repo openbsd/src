@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.28 2007/10/20 00:21:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.29 2008/11/24 00:31:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -347,7 +347,7 @@ ahd_action(struct scsi_xfer *xs)
 	if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
 		ahd->flags |= AHD_RESOURCE_SHORTAGE;
 		ahd_unlock(ahd, &s);
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	ahd_unlock(ahd, &s);
 		

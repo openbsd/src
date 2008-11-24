@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.20 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: adv.c,v 1.21 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -691,7 +691,7 @@ adv_scsi_cmd(xs)
                  */
 		if (dontqueue) {
 			splx(s);
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 		/*
                  * Stuff ourselves into the queue, in front

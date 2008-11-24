@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.17 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.18 2008/11/24 00:31:35 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -1044,7 +1044,7 @@ dpt_scsi_cmd(xs)
 		/* If we can't queue, we lose */
 		if (dontqueue) {
 			splx(s);
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 		
 		/* 
