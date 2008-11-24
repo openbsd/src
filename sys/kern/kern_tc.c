@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.11 2008/11/21 17:56:34 robert Exp $
+ * $OpenBSD: kern_tc.c,v 1.12 2008/11/24 16:38:05 deraadt Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -17,6 +17,7 @@
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/malloc.h>
+#include <dev/rndvar.h>
 
 #ifdef __HAVE_TIMECOUNTER
 /*
@@ -266,7 +267,8 @@ tc_init(struct timecounter *tc)
 	    tc->tc_frequency < timecounter->tc_frequency)
 		return;
 	(void)tc->tc_get_timecount(tc);
-	(void)tc->tc_get_timecount(tc);
+	add_timer_randomness(tc->tc_get_timecount(tc));
+
 	timecounter = tc;
 }
 
@@ -295,6 +297,7 @@ tc_setclock(struct timespec *ts)
 	bintime_add(&bt2, &boottimebin);
 	boottimebin = bt;
 	bintime2timeval(&bt, &boottime);
+	add_timer_randomness(ts->tv_sec);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
