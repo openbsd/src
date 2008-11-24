@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.13 2008/11/24 14:11:58 mbalmer Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.14 2008/11/24 15:27:52 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -33,28 +33,23 @@
 .Ar pin
 .Op Ar flags
 .Nm gpioctl
-.Op Fl A Ar device
+.Fl A Ar device
 .Fl o Ar offset
 .Fl m Ar mask
 .Nm gpioctl
-.Op Fl D Ar device
+.Fl D Ar device
 .Sh DESCRIPTION
 The
 .Nm
-program allows manipulation of
-.Tn GPIO
+program allows manipulation of GPIO
 (General Purpose Input/Output) device pins.
-Such devices can be either part of the chipset or embedded
-.Tn CPU ,
+Such devices can be either part of the chipset or embedded CPU,
 or a separate chip.
-The usual way of using
-.Tn GPIO
-is to connect some simple devices such as LEDs, 1-wire thermal sensors,
-etc., to its pins.
+The usual way of using GPIO
+is to connect some simple devices such as LEDs and 1-wire thermal sensors
+to its pins.
 .Pp
-Each
-.Tn GPIO
-device has an associated device file in the
+Each GPIO device has an associated device file in the
 .Pa /dev
 directory.
 By default
@@ -62,11 +57,9 @@ By default
 uses
 .Pa /dev/gpio0 ,
 which corresponds to the first found
-.Tn GPIO
-device in the system.
+GPIO device in the system.
 .Pp
-.Tn GPIO
-pins can be either
+GPIO pins can be either
 .Dq read
 or
 .Dq written
@@ -74,9 +67,7 @@ with the values of logical 0 or 1.
 If only a
 .Ar pin
 number is specified on the command line, the pin state will be read
-from the
-.Tn GPIO
-controller and displayed.
+from the GPIO controller and displayed.
 To write to a pin, a value must be specified after the
 .Ar pin
 number.
@@ -87,9 +78,7 @@ the pin, i.e. changes its state to the opposite.
 .Pp
 The following configuration
 .Ar flags
-are supported by the
-.Tn GPIO
-framework:
+are supported by the GPIO framework:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It in
@@ -114,18 +103,25 @@ invert input
 invert output
 .El
 .Pp
-Note that not all the flags can be supported by the particular
-.Tn GPIO
-controller.
+Note that not all the flags can be supported by the particular GPIO controller.
 .Pp
 When executed without any arguments,
 .Nm
 reads information about the
-.Tn GPIO
-device and displays it.
+GPIO device and displays it.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A Ar device
+Attach
+.Ar device
+at this gpiobus.
+An
+.Fl o Ar offset
+(a pin number) and
+.Fl m Ar mask
+(a binary mask)
+must also be specified.
 .It Fl c Ar pin
 Configure
 .Ar pin
@@ -137,32 +133,30 @@ with this option.
 To change pin flags,
 a new flags set separated by spaces must be specified
 after the pin number.
-.It Fl d Ar device
-If more than one
-.Tn GPIO
-device is present, an alternative
-.Ar device
-file can be specified with the
-.Fl d
-option in order to access a particular
-.Tn GPIO
-device.
-.It Fl A Ar device
-attach
-.Ar device
-at this gpiobus.
-You must also specify
-.Fl o Ar offset
-(a pin number) and
-.Fl m Ar mask
-(a binary mask).
 .It Fl D Ar device
-detach
+Detach
 .Ar device
 from this gpiobus.
 Only devices that have been attached using the
 .Fl a
 option can be detached.
+.It Fl d Ar device
+If more than one GPIO device is present,
+an alternative
+.Ar device
+file can be specified with the
+.Fl d
+option in order to access a particular GPIO device.
+.It Fl m Ar mask
+Specify a binary mask,
+.Ar mask ,
+for the device being attached
+.Pq Fl A .
+.It Fl o Ar offset
+Specify a pin number,
+.Ar offset ,
+for the device being attached
+.Pq Fl A .
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
 .El
@@ -182,7 +176,11 @@ Write logical 1 to pin 20:
 .Pp
 .Dl # gpioctl 20 1
 .Pp
-Attach a onewire(4) bus on a gpioow(4) device on pin 4:
+Attach a
+.Xr onewire 4
+bus on a
+.Xr gpioow 4
+device on pin 4:
 .Pp
 .Dl # gpioctl -A gpioow -o 4 -m 0x01
 .Pp
@@ -203,4 +201,3 @@ program was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
 Device attachment was added by
 .An Marc Balmer Aq mbalmer@openbsd.org .
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.8 2008/11/24 14:11:58 mbalmer Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.9 2008/11/24 15:27:52 jmc Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -289,9 +289,9 @@ usage(void)
 	    __progname);
 	fprintf(stderr, "       %s [-q] [-d device] -c pin [flags]\n",
 	    __progname);
-	fprintf(stderr, "       %s [-A device] -o offset -m mask\n",
+	fprintf(stderr, "       %s -A device -o offset -m mask\n",
 	    __progname);
-	fprintf(stderr, "       %s [-D device]\n", __progname);
+	fprintf(stderr, "       %s -D device\n", __progname);
 
 	exit(1);
 }
