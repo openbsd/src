@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.86 2008/08/25 09:26:17 pedro Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.87 2008/11/24 20:14:52 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1804,7 +1804,7 @@ nfsrv_errmap(nd, err)
 	    } else
 		return (err & 0xffff);
 	}
-	if (err <= sizeof(nfsrv_v2errmap)/sizeof(nfsrv_v2errmap[0]))
+	if (err <= nitems(nfsrv_v2errmap))
 		return ((int)nfsrv_v2errmap[err - 1]);
 	return (NFSERR_IO);
 }
