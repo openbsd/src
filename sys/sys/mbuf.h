@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.111 2008/11/24 15:06:55 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.112 2008/11/24 15:09:39 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -377,15 +377,6 @@ struct mbuf {
 		(m) = m_prepend((m), (plen), (how));			\
 	if ((m) && (m)->m_flags & M_PKTHDR)				\
 		(m)->m_pkthdr.len += (plen);				\
-} while (/* CONSTCOND */ 0)
-
-/* change mbuf to new type */
-#define MCHTYPE(m, t) do {						\
-	MBUFLOCK(							\
-		mbstat.m_mtypes[(m)->m_type]--;				\
-		mbstat.m_mtypes[t]++;					\
-	);								\
-	(m)->m_type = t;						\
 } while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
