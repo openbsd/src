@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.68 2008/11/24 17:42:34 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.69 2008/11/24 21:36:07 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1402,15 +1402,24 @@ void *
 pool_large_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
+	vaddr_t va;
+	int s;
 
-	return ((void *)uvm_km_kmemalloc(kmem_map, NULL,
-	    pp->pr_alloc->pa_pagesz, kfl));
+	s = splvm();
+	va = uvm_km_kmemalloc(kmem_map, NULL, pp->pr_alloc->pa_pagesz, kfl);
+	splx(s);
+
+	return ((void *)va);
 }
 
 void
 pool_large_free(struct pool *pp, void *v)
 {
+	int s;
+
+	s = splvm();
 	uvm_km_free(kmem_map, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
+	splx(s);
 }
 
 void *
