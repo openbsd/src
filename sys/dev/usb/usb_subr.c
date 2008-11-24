@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.71 2008/08/03 02:02:14 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.72 2008/11/24 15:12:00 yuo Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1081,17 +1081,47 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	}
 
 	dd = &dev->ddesc;
-	/* Try a few times in case the device is slow (i.e. outside specs.) */
-	for (i = 0; i < 15; i++) {
+
+	/* Try to get device descriptor */
+	/* 
+	 * some device will need small size query at first (XXX: out of spec)
+	 * we will get full size descriptor later, just determin the maximum
+	 * packet size of the control pipe at this moment.
+	 */
+	for (i = 0; i < 3; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
+		/* 8 byte is magic size, some device only return 8 byte for 1st
+		 * query (XXX: out of spec) */
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (!err)
 			break;
-		if ((i % 4) == 0)
-			usbd_reset_port(up->parent, port, &ps);
-		else
-			usbd_delay_ms(dev, 200);
+		usbd_delay_ms(dev, 100+50*i);
 	}
+
+	/* some device need actual size request for the query. try again */
+	if (err) {
+		USETW(dev->def_ep_desc.wMaxPacketSize,
+			USB_DEVICE_DESCRIPTOR_SIZE);
+		usbd_reset_port(up->parent, port, &ps);
+		for (i = 0; i < 3; i++) {
+			err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
+				USB_DEVICE_DESCRIPTOR_SIZE, dd);
+			if (!err)
+				break;
+			usbd_delay_ms(dev, 100+50*i);
+		}
+	}
+
+	/* XXX some devices need more time to wake up */
+	if (err) {
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+		usbd_reset_port(up->parent, port, &ps);
+		usbd_delay_ms(dev, 500);
+		err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
+			USB_MAX_IPACKET, dd);
+	}
+
+	/* fail to get device descriptor, give up */
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
 		    "failed\n", addr));
