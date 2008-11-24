@@ -478,11 +478,11 @@ static drm_pci_id_list_t radeondrm_pciidlist[] = {
 
 static const struct drm_driver_info radeondrm_driver = {
 	.buf_priv_size		= sizeof(drm_radeon_buf_priv_t),
+	.file_priv_size		= sizeof(struct drm_radeon_file),
 	.firstopen		= radeon_driver_firstopen,
 	.open			= radeon_driver_open,
 	.ioctl			= radeondrm_ioctl,
-	.preclose		= radeon_driver_preclose,
-	.postclose		= radeon_driver_postclose,
+	.close			= radeon_driver_close,
 	.lastclose		= radeon_driver_lastclose,
 	.vblank_pipes		= 2,
 	.get_vblank_counter	= radeon_get_vblank_counter,

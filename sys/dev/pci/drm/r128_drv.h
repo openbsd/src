@@ -173,7 +173,7 @@ extern irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS);
 extern int r128_driver_irq_install(struct drm_device * dev);
 extern void r128_driver_irq_uninstall(struct drm_device * dev);
 extern void r128_driver_lastclose(struct drm_device * dev);
-extern void r128_driver_preclose(struct drm_device * dev,
+extern void r128_driver_close(struct drm_device * dev,
 				 struct drm_file *file_priv);
 
 extern long r128_compat_ioctl(struct file *filp, unsigned int cmd,

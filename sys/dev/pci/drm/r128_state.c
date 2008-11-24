@@ -1646,7 +1646,7 @@ int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv
 	return 0;
 }
 
-void r128_driver_preclose(struct drm_device * dev, struct drm_file *file_priv)
+void r128_driver_close(struct drm_device * dev, struct drm_file *file_priv)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 

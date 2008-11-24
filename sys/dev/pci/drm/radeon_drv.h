@@ -190,8 +190,9 @@ typedef struct drm_radeon_depth_clear_t {
 	u32 se_cntl;
 } drm_radeon_depth_clear_t;
 
-struct drm_radeon_driver_file_fields {
-	int64_t radeon_fb_delta;
+struct drm_radeon_file {
+	struct drm_file	file_priv;
+	int64_t		radeon_fb_delta;
 };
 
 struct mem_block {
@@ -409,10 +410,8 @@ extern int radeon_vblank_crtc_get(struct drm_device *dev);
 extern int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value);
 
 extern int radeon_driver_firstopen(struct drm_device *dev);
-extern void radeon_driver_preclose(struct drm_device * dev,
+extern void radeon_driver_close(struct drm_device * dev,
 				   struct drm_file *file_priv);
-extern void radeon_driver_postclose(struct drm_device * dev,
-				    struct drm_file *file_priv);
 extern void radeon_driver_lastclose(struct drm_device * dev);
 extern int radeon_driver_open(struct drm_device * dev,
 			      struct drm_file * file_priv);

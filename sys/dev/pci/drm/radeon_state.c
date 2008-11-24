@@ -44,7 +44,7 @@ static __inline__ int radeon_check_and_fixup_offset(drm_radeon_private_t *
 {
 	u64 off = *offset;
 	u32 fb_end = dev_priv->fb_location + dev_priv->fb_size - 1;
-	struct drm_radeon_driver_file_fields *radeon_priv;
+	struct drm_radeon_file	*radeon_priv;
 
 	/* Hrm ... the story of the offset ... So this function converts
 	 * the various ideas of what userland clients might have for an
@@ -71,7 +71,7 @@ static __inline__ int radeon_check_and_fixup_offset(drm_radeon_private_t *
 	 * magic offset we get from SETPARAM or calculated from fb_location
 	 */
 	if (off < (dev_priv->fb_size + dev_priv->gart_size)) {
-		radeon_priv = file_priv->driver_priv;
+		radeon_priv = (struct drm_radeon_file *)file_priv;
 		off += radeon_priv->radeon_fb_delta;
 	}
 
@@ -3114,7 +3114,7 @@ int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_setparam_t *sp = data;
-	struct drm_radeon_driver_file_fields *radeon_priv;
+	struct drm_radeon_file	*radeon_priv;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
@@ -3123,7 +3123,7 @@ int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file
 
 	switch (sp->param) {
 	case RADEON_SETPARAM_FB_LOCATION:
-		radeon_priv = file_priv->driver_priv;
+		radeon_priv = (struct drm_radeon_file *)file_priv;
 		radeon_priv->radeon_fb_delta = dev_priv->fb_location -
 		    sp->value;
 		break;
@@ -3174,7 +3174,7 @@ int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file
  *
  * DRM infrastructure takes care of reclaiming dma buffers.
  */
-void radeon_driver_preclose(struct drm_device *dev,
+void radeon_driver_close(struct drm_device *dev,
 			    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
@@ -3199,29 +3199,12 @@ void radeon_driver_lastclose(struct drm_device *dev)
 int radeon_driver_open(struct drm_device *dev, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	struct drm_radeon_driver_file_fields *radeon_priv;
+	struct drm_radeon_file *radeon_priv =
+	    (struct drm_radeon_file *)file_priv;
 
 	DRM_DEBUG("\n");
-	radeon_priv =
-	    (struct drm_radeon_driver_file_fields *)
-	    drm_alloc(sizeof(*radeon_priv), DRM_MEM_FILES);
 
-	if (!radeon_priv)
-		return ENOMEM;
-
-	file_priv->driver_priv = radeon_priv;
-
-	if (dev_priv)
-		radeon_priv->radeon_fb_delta = dev_priv->fb_location;
-	else
-		radeon_priv->radeon_fb_delta = 0;
+	radeon_priv->radeon_fb_delta = dev_priv->fb_location;
 	return 0;
 }
 
-void radeon_driver_postclose(struct drm_device *dev, struct drm_file *file_priv)
-{
-	struct drm_radeon_driver_file_fields *radeon_priv =
-	    file_priv->driver_priv;
-
-	drm_free(radeon_priv, sizeof(*radeon_priv), DRM_MEM_FILES);
-}

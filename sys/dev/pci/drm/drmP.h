@@ -311,7 +311,6 @@ typedef struct drm_buf_entry {
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
 struct drm_file {
 	TAILQ_ENTRY(drm_file)	 link;
-	void			*driver_priv;
 	int			 authenticated;
 	unsigned long		 ioctl_count;
 	dev_t			 kdev;
@@ -439,8 +438,7 @@ struct drm_driver_info {
 	int	(*open)(struct drm_device *, struct drm_file *);
 	int	(*ioctl)(struct drm_device*, u_long, caddr_t,
 		    struct drm_file *);
-	void	(*preclose)(struct drm_device *, struct drm_file *);
-	void	(*postclose)(struct drm_device *, struct drm_file *);
+	void	(*close)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
 	void	(*reclaim_buffers_locked)(struct drm_device *,
 		    struct drm_file *);
@@ -456,7 +454,8 @@ struct drm_driver_info {
 	int	(*enable_vblank)(struct drm_device *, int);
 	void	(*disable_vblank)(struct drm_device *, int);
 
-	int	buf_priv_size;
+	size_t	buf_priv_size;
+	size_t	file_priv_size;
 
 	int	major;
 	int	minor;

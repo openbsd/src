@@ -402,8 +402,9 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 		DRM_UNLOCK();
 	}
 
-
-	priv = drm_calloc(1, sizeof(*priv), DRM_MEM_FILES);
+	/* always allocate at least enough space for our data */
+	priv = drm_calloc(1, max(dev->driver->file_priv_size,
+	    sizeof(*priv)), DRM_MEM_FILES);
 	if (priv == NULL) {
 		ret = ENOMEM;
 		goto err;
@@ -440,7 +441,8 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	return (0);
 
 free_priv:
-	drm_free(priv, sizeof(*priv), DRM_MEM_FILES);
+	drm_free(priv, max(dev->driver->file_priv_size,
+	    sizeof(*priv)), DRM_MEM_FILES);
 err:
 	DRM_LOCK();
 	--dev->open_count;
@@ -459,16 +461,15 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	DRM_LOCK();
 	file_priv = drm_find_file_by_minor(dev, minor(kdev));
-	if (!file_priv) {
-		DRM_UNLOCK();
+	DRM_UNLOCK();
+	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
 		retcode = EINVAL;
 		goto done;
 	}
-	DRM_UNLOCK();
 
-	if (dev->driver->preclose != NULL)
-		dev->driver->preclose(dev, file_priv);
+	if (dev->driver->close != NULL)
+		dev->driver->close(dev, file_priv);
 
 	DRM_DEBUG("pid = %d, device = 0x%lx, open_count = %d\n",
 	    DRM_CURRENTPID, (long)&dev->device, dev->open_count);
@@ -517,12 +518,10 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	dev->buf_pgid = 0;
 
-	if (dev->driver->postclose != NULL)
-		dev->driver->postclose(dev, file_priv);
-
 	DRM_LOCK();
 	TAILQ_REMOVE(&dev->files, file_priv, link);
-	drm_free(file_priv, sizeof(*file_priv), DRM_MEM_FILES);
+	drm_free(file_priv, max(dev->driver->file_priv_size, 
+	    sizeof(*file_priv)), DRM_MEM_FILES);
 
 done:
 	if (--dev->open_count == 0) {

@@ -231,7 +231,7 @@ typedef struct drm_i915_private {
 				/* i915_dma.c */
 extern void i915_kernel_lost_context(struct drm_device * dev);
 extern void i915_driver_lastclose(struct drm_device * dev);
-extern void i915_driver_preclose(struct drm_device *dev,
+extern void i915_driver_close(struct drm_device *dev,
 				 struct drm_file *file_priv);
 extern int i915_driver_device_is_agp(struct drm_device * dev);
 extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
