@@ -650,7 +650,7 @@ static void mga_dma_dispatch_swap(struct drm_device * dev)
 static void mga_dma_dispatch_vertex(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = (drm_mga_buf_priv_t *)buf;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	u32 address = (u32) buf->bus_address;
 	u32 length = (u32) buf->used;
@@ -698,7 +698,7 @@ static void mga_dma_dispatch_indices(struct drm_device * dev, struct drm_buf * b
 				     unsigned int start, unsigned int end)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = (drm_mga_buf_priv_t *)buf;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	u32 address = (u32) buf->bus_address;
 	int i = 0;
@@ -747,7 +747,7 @@ static void mga_dma_dispatch_iload(struct drm_device * dev, struct drm_buf * buf
 				   unsigned int dstorg, unsigned int length)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = (drm_mga_buf_priv_t *)buf;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
 	drm_mga_context_regs_t *ctx = &dev_priv->sarea_priv->context_state;
 	u32 srcorg = buf->bus_address | dev_priv->dma_access | MGA_SRCMAP_SYSMEM;
 	u32 y2;
@@ -917,7 +917,7 @@ int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_pri
 	if (vertex->idx < 0 || vertex->idx > dma->buf_count)
 		return EINVAL;
 	buf = dma->buflist[vertex->idx];
-	buf_priv = (drm_mga_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	buf->used = vertex->used;
 	buf_priv->discard = vertex->discard;
@@ -953,7 +953,7 @@ int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_pr
 		return EINVAL;
 
 	buf = dma->buflist[indices->idx];
-	buf_priv = (drm_mga_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	buf_priv->discard = indices->discard;
 
@@ -996,7 +996,7 @@ int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv
 		return EINVAL;
 
 	buf = dma->buflist[iload->idx];
-	buf_priv = (drm_mga_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	if (mga_verify_iload(dev_priv, iload->dstorg, iload->length)) {
 		mga_freelist_put(dev, buf);

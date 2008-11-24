@@ -131,12 +131,11 @@ typedef struct drm_r128_private {
 } drm_r128_private_t;
 
 typedef struct drm_r128_buf_priv {
-	struct drm_buf		 buf;
-	drm_r128_freelist_t	*list_entry;
-	u_int32_t		 age;
-	int	 		 prim;
-	int			 discard;
-	int			 dispatched;
+	u32 age;
+	int prim;
+	int discard;
+	int dispatched;
+	drm_r128_freelist_t *list_entry;
 } drm_r128_buf_priv_t;
 
 				/* r128_cce.c */

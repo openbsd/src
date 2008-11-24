@@ -784,7 +784,7 @@ static struct drm_buf *r128_freelist_get(struct drm_device * dev)
 
 	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
-		buf_priv = (drm_r128_buf_priv_t *)buf;
+		buf_priv = buf->dev_private;
 		if (buf->file_priv == 0)
 			return buf;
 	}
@@ -794,7 +794,7 @@ static struct drm_buf *r128_freelist_get(struct drm_device * dev)
 
 		for (i = 0; i < dma->buf_count; i++) {
 			buf = dma->buflist[i];
-			buf_priv = (drm_r128_buf_priv_t *)buf;
+			buf_priv = buf->dev_private;
 			if (buf->pending && buf_priv->age <= done_age) {
 				/* The buffer has been processed, so it
 				 * can now be used.
@@ -817,7 +817,7 @@ void r128_freelist_reset(struct drm_device * dev)
 
 	for (i = 0; i < dma->buf_count; i++) {
 		struct drm_buf *buf = dma->buflist[i];
-		drm_r128_buf_priv_t *buf_priv = (drm_r128_buf_priv_t *)buf;
+		drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 		buf_priv->age = 0;
 	}
 }

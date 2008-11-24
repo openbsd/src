@@ -55,10 +55,10 @@ typedef struct drm_savage_age {
 } drm_savage_age_t;
 
 typedef struct drm_savage_buf_priv {
-	struct drm_buf			 buf;
-	struct drm_savage_buf_priv	*next;
-	struct drm_savage_buf_priv	*prev;
-	drm_savage_age_t		 age;
+	struct drm_savage_buf_priv *next;
+	struct drm_savage_buf_priv *prev;
+	drm_savage_age_t age;
+	struct drm_buf *buf;
 } drm_savage_buf_priv_t;
 
 typedef struct drm_savage_dma_page {

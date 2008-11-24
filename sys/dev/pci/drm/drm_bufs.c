@@ -417,10 +417,7 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 
 	entry = &dma->bufs[order];
 
-	if (dev->driver->buf_priv_size == 0)
-		return (ENOMEM);
-
-	entry->buflist = drm_calloc(count, dev->driver->buf_priv_size,
+	entry->buflist = drm_calloc(count, sizeof(*entry->buflist),
 	    DRM_MEM_BUFS);
 	if (entry->buflist == NULL)
 		return ENOMEM;
@@ -440,6 +437,15 @@ drm_do_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 		buf->bus_address = agp_offset + offset;
 		buf->pending = 0;
 		buf->file_priv = NULL;
+
+		buf->dev_private = drm_calloc(1, dev->driver->buf_priv_size,
+		    DRM_MEM_BUFS);
+		if (buf->dev_private == NULL) {
+			/* Set count correctly so we free the proper amount. */
+			entry->buf_count = count;
+			drm_cleanup_buf(dev, entry);
+			return ENOMEM;
+		}
 
 		offset += alignment;
 		entry->buf_count++;
@@ -509,10 +515,7 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 
 	entry = &dma->bufs[order];
 
-	if (dev->driver->buf_priv_size == 0)
-		return (EINVAL);
-
-	entry->buflist = drm_calloc(count, dev->driver->buf_priv_size,
+	entry->buflist = drm_calloc(count, sizeof(*entry->buflist),
 	    DRM_MEM_BUFS);
 	entry->seglist = drm_calloc(count, sizeof(*entry->seglist),
 	    DRM_MEM_BUFS);
@@ -579,6 +582,20 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			buf->bus_address = dmah->busaddr + offset;
 			buf->pending = 0;
 			buf->file_priv = NULL;
+
+			buf->dev_private = drm_calloc(1,
+			    dev->driver->buf_priv_size, DRM_MEM_BUFS);
+			if (buf->dev_private == NULL) {
+				/* Set count so we free the proper amount. */
+				entry->buf_count = count;
+				entry->seg_count = count;
+				drm_cleanup_buf(dev, entry);
+				drm_free(temp_pagelist, (dma->page_count +
+				    (count << page_order)) *
+				    sizeof(*dma->pagelist),
+				    DRM_MEM_BUFS);
+				return ENOMEM;
+			}
 
 			DRM_DEBUG("buffer %d\n",
 			    entry->buf_count);
@@ -661,10 +678,7 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 
 	entry = &dma->bufs[order];
 
-	if (dev->driver->buf_priv_size == 0)
-		return (ENOMEM);
-
-	entry->buflist = drm_calloc(count, dev->driver->buf_priv_size,
+	entry->buflist = drm_calloc(count, sizeof(*entry->buflist),
 	    DRM_MEM_BUFS);
 	if (entry->buflist == NULL)
 		return ENOMEM;
@@ -684,6 +698,15 @@ drm_do_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 		buf->bus_address = agp_offset + offset;
 		buf->pending = 0;
 		buf->file_priv = NULL;
+
+		buf->dev_private = drm_calloc(1, dev->driver->buf_priv_size,
+		    DRM_MEM_BUFS);
+		if (buf->dev_private == NULL) {
+			/* Set count correctly so we free the proper amount. */
+			entry->buf_count = count;
+			drm_cleanup_buf(dev, entry);
+			return ENOMEM;
+		}
 
 		DRM_DEBUG("buffer %d\n", entry->buf_count);
 

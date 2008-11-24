@@ -570,7 +570,7 @@ static void r128_cce_dispatch_flip(struct drm_device * dev)
 static void r128_cce_dispatch_vertex(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
-	drm_r128_buf_priv_t *buf_priv = (drm_r128_buf_priv_t *)buf;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	int format = sarea_priv->vc_format;
 	int offset = buf->bus_address;
@@ -642,7 +642,7 @@ static void r128_cce_dispatch_indirect(struct drm_device * dev,
 				       struct drm_buf * buf, int start, int end)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
-	drm_r128_buf_priv_t *buf_priv = (drm_r128_buf_priv_t *)buf;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	RING_LOCALS;
 	DRM_DEBUG("indirect: buf=%d s=0x%x e=0x%x\n", buf->idx, start, end);
 
@@ -698,7 +698,7 @@ static void r128_cce_dispatch_indices(struct drm_device * dev,
 				      int start, int end, int count)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
-	drm_r128_buf_priv_t *buf_priv = (drm_r128_buf_priv_t *)buf;
+	drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	int format = sarea_priv->vc_format;
 	int offset = dev->agp_buffer_map->offset - dev_priv->cce_buffers_offset;
@@ -830,7 +830,7 @@ static int r128_cce_dispatch_blit(struct drm_device * dev,
 	/* Dispatch the indirect buffer.
 	 */
 	buf = dma->buflist[blit->idx];
-	buf_priv = (drm_r128_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
@@ -1380,7 +1380,7 @@ int r128_cce_vertex(struct drm_device *dev, void *data, struct drm_file *file_pr
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[vertex->idx];
-	buf_priv = (drm_r128_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
@@ -1436,7 +1436,7 @@ int r128_cce_indices(struct drm_device *dev, void *data, struct drm_file *file_p
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[elts->idx];
-	buf_priv = (drm_r128_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",
@@ -1574,7 +1574,7 @@ int r128_cce_indirect(struct drm_device *dev, void *data, struct drm_file *file_
 	}
 
 	buf = dma->buflist[indirect->idx];
-	buf_priv = (drm_r128_buf_priv_t *)buf;
+	buf_priv = buf->dev_private;
 
 	if (buf->file_priv != file_priv) {
 		DRM_ERROR("process %d using buffer owned by %p\n",

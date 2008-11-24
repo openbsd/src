@@ -325,8 +325,7 @@ typedef struct drm_radeon_private {
 } drm_radeon_private_t;
 
 typedef struct drm_radeon_buf_priv {
-	struct drm_buf	buf;	
-	u_int32_t	age;
+	u32 age;
 } drm_radeon_buf_priv_t;
 
 typedef struct drm_radeon_kcmd_buffer {

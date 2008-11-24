@@ -69,10 +69,9 @@ typedef struct drm_mga_freelist {
 } drm_mga_freelist_t;
 
 typedef struct {
-	struct drm_buf		 buf;
-	drm_mga_freelist_t	*list_entry;
-	int			 discard;
-	int			 dispatched;
+	drm_mga_freelist_t *list_entry;
+	int discard;
+	int dispatched;
 } drm_mga_buf_priv_t;
 
 typedef struct drm_mga_private {
