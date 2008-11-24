@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.195 2008/11/09 15:08:26 naddy Exp $ */
+/* $OpenBSD: if_em.c,v 1.196 2008/11/24 17:08:36 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2575,7 +2575,7 @@ em_rxeof(struct em_softc *sc, int count)
 
 	/* Pointer to the receive descriptor being examined. */
 	struct em_rx_desc   *current_desc;
-	u_int8_t            status;
+	u_int8_t	    status;
 
 	ifp = &sc->interface_data.ac_if;
 	i = sc->next_rx_desc_to_check;
@@ -2626,7 +2626,7 @@ em_rxeof(struct em_softc *sc, int count)
 
 			last_byte = *(mtod(mp, caddr_t) + desc_len - 1);
 			if (TBI_ACCEPT(&sc->hw, status, current_desc->errors,
-				       pkt_len, last_byte)) {
+			    pkt_len, last_byte)) {
 				em_tbi_adjust_stats(&sc->hw, 
 						    &sc->stats, 
 						    pkt_len, 
@@ -2702,17 +2702,18 @@ em_rxeof(struct em_softc *sc, int count)
 			} else {
 				/* Chain mbuf's together */
 				mp->m_flags &= ~M_PKTHDR;
-                                /*
-                                 * Adjust length of previous mbuf in chain if we
-                                 * received less than 4 bytes in the last descriptor.
-                                 */
-                                if (prev_len_adj > 0) {
-                                        sc->lmp->m_len -= prev_len_adj;
-                                        sc->fmp->m_pkthdr.len -= prev_len_adj;
-                                }
-                                sc->lmp->m_next = mp;
-                                sc->lmp = sc->lmp->m_next;
-                                sc->fmp->m_pkthdr.len += mp->m_len;
+				/*
+				 * Adjust length of previous mbuf in chain if
+				 * we received less than 4 bytes in the last
+				 * descriptor.
+				 */
+				if (prev_len_adj > 0) {
+					sc->lmp->m_len -= prev_len_adj;
+					sc->fmp->m_pkthdr.len -= prev_len_adj;
+				}
+				sc->lmp->m_next = mp;
+				sc->lmp = sc->lmp->m_next;
+				sc->fmp->m_pkthdr.len += mp->m_len;
 			}
 
 			if (eop) {
