@@ -164,8 +164,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
 
 	/* All intel chipsets need to be treated as agp, so just pass one */
-	dev_priv->drmdev = drm_attach_mi(&inteldrm_driver, pa->pa_dmat,
-	    pa, 1, self);
+	dev_priv->drmdev = drm_attach_pci(&inteldrm_driver, pa, 1, self);
 }
 
 int

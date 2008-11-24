@@ -486,6 +486,7 @@ struct drm_device {
 	const struct drm_driver_info *driver;
 
 	bus_dma_tag_t			dmat;
+	bus_space_tag_t			bst;
 
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
@@ -518,12 +519,6 @@ struct drm_device {
 				/* Context support */
 	int		  irq;		/* Interrupt used by board	   */
 	int		  irq_enabled;	/* True if the irq handler is enabled */
-	struct pci_attach_args  pa;
-
-	int		  pci_domain;
-	int		  pci_bus;
-	int		  pci_slot;
-	int		  pci_func;
 
 	/* VBLANK support */
 	int			 num_crtcs;		/* number of crtcs */
@@ -548,18 +543,20 @@ struct drm_device {
 
 struct drm_attach_args {
 	const struct drm_driver_info	*driver;
-	struct pci_attach_args		*pa;
-	struct vga_pci_softc		*vga;
+	char				*busid;
 	bus_dma_tag_t			 dmat;
+	bus_space_tag_t			 bst;
+	size_t				 busid_len;
 	int				 is_agp;
+	u_int8_t			 irq;
 };
 
 extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
 int	drm_pciprobe(struct pci_attach_args *, drm_pci_id_list_t * );
-struct device	*drm_attach_mi(const struct drm_driver_info *, bus_dma_tag_t,
-		     struct pci_attach_args *pa, int, struct device *);
+struct device	*drm_attach_pci(const struct drm_driver_info *, 
+		     struct pci_attach_args *, int, struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
@@ -670,7 +667,6 @@ int	drm_setversion(struct drm_device *, void *, struct drm_file *);
 /* Misc. IOCTL support (drm_ioctl.c) */
 int	drm_irq_by_busid(struct drm_device *, void *, struct drm_file *);
 int	drm_getunique(struct drm_device *, void *, struct drm_file *);
-int	drm_setunique(struct drm_device *, void *, struct drm_file *);
 int	drm_getmap(struct drm_device *, void *, struct drm_file *);
 
 /* Context IOCTL support (drm_context.c) */

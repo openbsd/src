@@ -56,15 +56,25 @@ int	 drm_activate(struct device *, enum devact);
 int	 drmprint(void *, const char *);
 
 struct device *
-drm_attach_mi(const struct drm_driver_info *driver, bus_dma_tag_t dmat,
-    struct pci_attach_args *pa, int is_agp, struct device *dev)
+drm_attach_pci(const struct drm_driver_info *driver, struct pci_attach_args *pa,
+    int is_agp, struct device *dev)
 {
 	struct drm_attach_args arg;
 
 	arg.driver = driver;
-	arg.pa = pa;
-	arg.dmat = dmat;
+	arg.dmat = pa->pa_dmat;
+	arg.bst = pa->pa_memt;
+	arg.irq = pa->pa_intrline;
 	arg.is_agp = is_agp;
+
+	arg.busid_len = 20;
+	arg.busid = malloc(arg.busid_len + 1, M_DRM, M_NOWAIT);
+	if (arg.busid == NULL) {
+		printf(": no memory for drm\n");
+		return (NULL);
+	}
+	snprintf(arg.busid, arg.busid_len, "pci:%04x:%02x:%02x.%1x",
+	    pa->pa_domain, pa->pa_bus, pa->pa_device, pa->pa_function);
 
 	printf("\n");
 	return (config_found(dev, &arg, drmprint));
@@ -104,20 +114,14 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct drm_device	*dev = (struct drm_device *)self;
 	struct drm_attach_args	*da = aux;
-	struct pci_attach_args	*pa = da->pa;
 
 	dev->dev_private = parent;
 	dev->driver = da->driver;
 
-	/* needed for pci_mapreg_* */
-	memcpy(&dev->pa, pa, sizeof(dev->pa));
-
 	dev->dmat = da->dmat;
-	dev->irq = pa->pa_intrline;
-	dev->pci_domain = 0;
-	dev->pci_bus = pa->pa_bus;
-	dev->pci_slot = pa->pa_device;
-	dev->pci_func = pa->pa_function;
+	dev->irq = da->irq;
+	dev->unique = da->busid;
+	dev->unique_len = da->busid_len;
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->drw_lock, IPL_NONE);
@@ -628,8 +632,6 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_setversion(dev, data, file_priv));
 		case DRM_IOCTL_IRQ_BUSID:
 			return (drm_irq_by_busid(dev, data, file_priv));
-		case DRM_IOCTL_SET_UNIQUE:
-			return (drm_setunique(dev, data, file_priv));
 		case DRM_IOCTL_AUTH_MAGIC:
 			return (drm_authmagic(dev, data, file_priv));
 		case DRM_IOCTL_ADD_MAP:
@@ -666,6 +668,13 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_sg_free(dev, data, file_priv));
 		case DRM_IOCTL_UPDATE_DRAW:
 			return (drm_update_draw(dev, data, file_priv));
+		case DRM_IOCTL_SET_UNIQUE:
+		/*
+		 * Deprecated in DRM version 1.1, and will return EBUSY
+		 * when setversion has
+		 * requested version 1.1 or greater.
+		 */
+			return (EBUSY);
 		}
 	}
 	if (dev->driver->ioctl != NULL)

@@ -88,7 +88,7 @@ drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
 	 * to map it.
 	 */
 		DRM_DEBUG("AGP map\n");
-		map->bst = dev->pa.pa_memt;
+		map->bst = dev->bst;
 		if (bus_space_map(map->bst, map->offset,
 		    map->size, BUS_SPACE_MAP_LINEAR, &map->bsh)) {
 			DRM_ERROR("ioremap fail\n");

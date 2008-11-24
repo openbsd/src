@@ -43,12 +43,11 @@ drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_irq_busid	*irq = data;
 
-	if ((irq->busnum >> 8) != dev->pci_domain ||
-	    (irq->busnum & 0xff) != dev->pci_bus ||
-	    irq->devnum != dev->pci_slot ||
-	    irq->funcnum != dev->pci_func)
-		return EINVAL;
-
+	/*
+	 * This is only ever called by root as part of a stupid interface.
+	 * just hand over the irq without checking the busid. If all clients
+	 * can be forced to use interface 1.2 then this can die.
+	 */
 	irq->irq = dev->irq;
 
 	DRM_DEBUG("%d:%d:%d => IRQ %d\n", irq->busnum, irq->devnum,

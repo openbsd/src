@@ -35,8 +35,6 @@
 
 #include "drmP.h"
 
-int	drm_set_busid(struct drm_device *);
-
 /*
  * Beginning in revision 1.1 of the DRM interface, getunique will return
  * a unique in the form pci:oooo:bb:dd.f (o=domain, b=bus, d=device, f=function)
@@ -53,94 +51,6 @@ drm_getunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			return EFAULT;
 	}
 	u->unique_len = dev->unique_len;
-
-	return 0;
-}
-
-/* Deprecated in DRM version 1.1, and will return EBUSY when setversion has
- * requested version 1.1 or greater.
- */
-int
-drm_setunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	struct drm_unique	*u = data;
-	char			*busid;
-	int			 domain, bus, slot, func, ret;
-#if defined (__NetBSD__) 
-	return EOPNOTSUPP;
-#endif
-
-	/* Check and copy in the submitted Bus ID */
-	if (!u->unique_len || u->unique_len > 1024)
-		return EINVAL;
-
-	busid = drm_alloc(u->unique_len + 1, DRM_MEM_DRIVER);
-	if (busid == NULL)
-		return ENOMEM;
-
-	if (DRM_COPY_FROM_USER(busid, u->unique, u->unique_len)) {
-		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
-		return EFAULT;
-	}
-	busid[u->unique_len] = '\0';
-
-	/* Return error if the busid submitted doesn't match the device's actual
-	 * busid.
-	 */
-#ifdef __FreeBSD__
-	ret = sscanf(busid, "PCI:%d:%d:%d", &bus, &slot, &func);
-#endif /* Net and Openbsd don't have sscanf in the kernel this is deprecated anyway. */
-
-	if (ret != 3) {
-		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
-		return EINVAL;
-	}
-	domain = bus >> 8;
-	bus &= 0xff;
-	
-	if ((domain != dev->pci_domain) || (bus != dev->pci_bus) ||
-	    (slot != dev->pci_slot) || (func != dev->pci_func)) {
-		drm_free(busid, u->unique_len + 1, DRM_MEM_DRIVER);
-		return EINVAL;
-	}
-
-	/* Actually set the device's busid now. */
-	DRM_LOCK();
-	if (dev->unique_len || dev->unique) {
-		DRM_UNLOCK();
-		return EBUSY;
-	}
-
-	dev->unique_len = u->unique_len;
-	dev->unique = busid;
-	DRM_UNLOCK();
-
-	return 0;
-}
-
-
-int
-drm_set_busid(struct drm_device *dev)
-{
-
-	DRM_LOCK();
-
-	if (dev->unique != NULL) {
-		DRM_UNLOCK();
-		return EBUSY;
-	}
-
-	dev->unique_len = 20;
-	dev->unique = drm_alloc(dev->unique_len + 1, DRM_MEM_DRIVER);
-	if (dev->unique == NULL) {
-		DRM_UNLOCK();
-		return ENOMEM;
-	}
-
-	snprintf(dev->unique, dev->unique_len, "pci:%04x:%02x:%02x.%1x",
-	    dev->pci_domain, dev->pci_bus, dev->pci_slot, dev->pci_func);
-
-	DRM_UNLOCK();
 
 	return 0;
 }
@@ -199,28 +109,25 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	sv->drm_dd_major = dev->driver->major;
 	sv->drm_dd_minor = dev->driver->minor;
 
+	/*
+	 * We no longer support interface versions less than 1.1, so error
+	 * out if the xserver is too old. 1.1 always ties the drm to a
+	 * certain busid, this was done on attach
+	 */
 	if (ver.drm_di_major != -1) {
-		if (ver.drm_di_major != DRM_IF_MAJOR || ver.drm_di_minor < 0 ||
+		if (ver.drm_di_major != DRM_IF_MAJOR || ver.drm_di_minor < 1 ||
 		    ver.drm_di_minor > DRM_IF_MINOR) {
 			return EINVAL;
 		}
 		if_version = DRM_IF_VERSION(ver.drm_di_major, ver.drm_dd_minor);
 		dev->if_version = DRM_MAX(if_version, dev->if_version);
-		if (ver.drm_di_minor >= 1) {
-			/*
-			 * Version 1.1 includes tying of DRM to specific device
-			 */
-			drm_set_busid(dev);
-		}
 	}
 
 	if (ver.drm_dd_major != -1) {
 		if (ver.drm_dd_major != dev->driver->major ||
 		    ver.drm_dd_minor < 0 ||
 		    ver.drm_dd_minor > dev->driver->minor)
-		{
 			return EINVAL;
-		}
 	}
 
 	return 0;

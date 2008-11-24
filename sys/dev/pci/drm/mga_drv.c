@@ -168,8 +168,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->drmdev = drm_attach_mi(&mga_driver, pa->pa_dmat, pa,
-	    is_agp, self);
+	dev_priv->drmdev = drm_attach_pci(&mga_driver, pa, is_agp, self);
 }
 
 int
