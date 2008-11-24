@@ -55,6 +55,12 @@ int	 drm_detach(struct device *, int);
 int	 drm_activate(struct device *, enum devact);
 int	 drmprint(void *, const char *);
 
+/*
+ * attach drm to a pci-based driver.
+ *
+ * This function does all the pci-specific calculations for the 
+ * drm_attach_args.
+ */
 struct device *
 drm_attach_pci(const struct drm_driver_info *driver, struct pci_attach_args *pa,
     int is_agp, struct device *dev)
@@ -119,6 +125,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->driver = da->driver;
 
 	dev->dmat = da->dmat;
+	dev->bst = da->bst;
 	dev->irq = da->irq;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
