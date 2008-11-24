@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.27 2008/11/10 07:22:47 cnst Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.28 2008/11/24 05:28:57 cnst Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -255,7 +255,7 @@ void
 spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
 	const char *type;
-	int dimm_size, cycle_time, p_clk;
+	int dimm_size, p_clk;
 	int num_banks, per_chip;
 	uint8_t rows, cols;
 
@@ -289,36 +289,24 @@ spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf(" %s",
 		    spdmem_parity_types[s->sm_data[SPDMEM_FPM_CONFIG]]);
 
-	/* cycle_time is expressed in units of 0.01 ns */
-	cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
-	    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f) * 10;
-
-	if (cycle_time != 0) {
-		/*
-		 * cycle time is scaled by a factor of 100 to avoid using
-		 * floating point.  Calculate memory speed as the number
-		 * of cycles per microsecond.
-		 */
-
-		p_clk = 66;
-		if (s->sm_len >= 128) {
-			switch (spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
-			case SPDMEM_SDR_FREQ_100:
-			case SPDMEM_SDR_FREQ_133:
-				/* We need to check ns to decide here */
-				if (s->sm_data[SPDMEM_SDR_CYCLE] < 0x80)
-					p_clk = 133;
-				else
-					p_clk = 100;
-				break;
-			case SPDMEM_SDR_FREQ_66:
-			default:
-				p_clk = 66;
-				break;
-			}
+	p_clk = 66;
+	if (s->sm_len >= 128) {
+		switch (spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
+		case SPDMEM_SDR_FREQ_100:
+		case SPDMEM_SDR_FREQ_133:
+			/* We need to check ns to decide here */
+			if (s->sm_data[SPDMEM_SDR_CYCLE] < 0x80)
+				p_clk = 133;
+			else
+				p_clk = 100;
+			break;
+		case SPDMEM_SDR_FREQ_66:
+		default:
+			p_clk = 66;
+			break;
 		}
-		printf(" PC%d", p_clk);
 	}
+	printf(" PC%d", p_clk);
 
 	/* Print CAS latency */
 	if (s->sm_len < 128)
