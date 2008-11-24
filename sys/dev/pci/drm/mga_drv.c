@@ -168,6 +168,10 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* XXX pcie */
+	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+	    NULL, NULL);
+
 	dev_priv->drmdev = drm_attach_pci(&mga_driver, pa, is_agp, self);
 }
 
