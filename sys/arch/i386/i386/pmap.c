@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.129 2008/11/24 03:13:22 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.130 2008/11/24 03:19:42 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2428,7 +2428,7 @@ void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
     vm_prot_t prot)
 {
-	pt_entry_t *ptes, *spte, *epte, npte;
+	pt_entry_t *ptes, *spte, *epte, npte, opte;
 	vaddr_t blockend;
 	u_int32_t md_prot;
 	vaddr_t va;
@@ -2480,11 +2480,14 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 			if (!pmap_valid_entry(*spte))	/* no mapping? */
 				continue;
 
-			npte = (*spte & ~PG_PROT) | md_prot;
+			opte = *spte;
+			npte = (opte & ~PG_PROT) | md_prot;
 
-			if (npte != *spte) {
+			if (npte != opte) {
 				pmap_exec_account(pmap, va, *spte, npte);
-				i386_atomic_testset_ul(spte, npte);
+				i386_atomic_clearbits_l(spte,
+				    (~md_prot & opte) & PG_PROT);
+				i386_atomic_setbits_l(spte, md_prot);
 			}
 		}
 	}
