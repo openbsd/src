@@ -138,9 +138,6 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
-		map->handle = drm_ioremap(dev, map);
-		if (map->handle == NULL)
-			return (EINVAL);
 		if (!(map->flags & _DRM_WRITE_COMBINING))
 			break;
 		/* FALLTHROUGH */
