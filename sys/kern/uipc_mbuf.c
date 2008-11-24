@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.95 2008/11/24 12:57:37 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.96 2008/11/24 14:26:54 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -83,6 +83,10 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>
+
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <net/if.h>
 
 #include <machine/cpu.h>
 
