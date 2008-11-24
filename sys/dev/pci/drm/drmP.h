@@ -236,7 +236,7 @@ DRM_SPINLOCK(&dev->irq_lock);				\
 while ( ret == 0 ) {					\
 	if (condition)					\
 		break;					\
-	ret = msleep(&(queue), &dev->irq_lock,	 	\
+	ret = msleep((queue), &dev->irq_lock,	 	\
 	     PZERO | PCATCH, "drmwtq", (timeout));	\
 }							\
 DRM_SPINUNLOCK(&dev->irq_lock)
