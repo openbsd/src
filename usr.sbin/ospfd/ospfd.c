@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.57 2008/05/12 19:15:02 pyr Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.58 2008/11/24 18:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -701,6 +701,10 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 		 * stub is not yet used but switching between stub and normal
 		 * will be another painful job.
 		 */
+		if (a->stub != xa->stub &&
+		    ospfd_process == PROC_OSPF_ENGINE)
+			a->dirty = 1; /* force rtr LSA update */
+
 		a->stub = xa->stub;
 		a->stub_default_cost = xa->stub_default_cost;
 		if (ospfd_process == PROC_RDE_ENGINE)

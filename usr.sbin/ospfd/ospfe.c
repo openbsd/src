@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.60 2007/10/13 13:21:24 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.61 2008/11/24 18:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -432,6 +432,15 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
+			/*
+			 * Ignore imsg when in the wrong state because a
+			 * NBR_EVT_SEQ_NUM_MIS may have been issued in between.
+			 * Luckily regetting the DB snapshot acts as a barrier
+			 * for both state and process synchronisation.
+			 */
+			if ((nbr->state & NBR_STA_FLOOD) == 0)
+				break;
+
 			/* put these on my ls_req_list for retrieval */
 			lhp = lsa_hdr_new();
 			memcpy(lhp, imsg.data, sizeof(*lhp));
@@ -442,6 +451,10 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
+			/* see above */
+			if ((nbr->state & NBR_STA_FLOOD) == 0)
+				break;
+
 			nbr->dd_pending--;
 			if (nbr->dd_pending == 0 && nbr->state & NBR_STA_LOAD) {
 				if (ls_req_list_empty(nbr))
@@ -449,6 +462,17 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				else
 					start_ls_req_tx_timer(nbr);
 			}
+			break;
+		case IMSG_DD_BADLSA:
+			nbr = nbr_find_peerid(imsg.hdr.peerid);
+			if (nbr == NULL)
+				break;
+
+			if (nbr->iface->self == nbr)
+				fatalx("ospfe_dispatch_rde: "
+				    "dummy neighbor got BADREQ");
+
+			nbr_fsm(nbr, NBR_EVT_SEQ_NUM_MIS);
 			break;
 		case IMSG_DB_SNAPSHOT:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
@@ -894,6 +918,7 @@ orig_rtr_lsa(struct area *area)
 	/*
 	 * Set the E bit as soon as an as-ext lsa may be redistributed, only
 	 * setting it in case we redistribute something is not worth the fuss.
+	 * Do not set the E bit in case of a stub area.
 	 */
 	if (oeconf->redistribute && !area->stub)
 		lsa_rtr.flags |= OSPF_RTR_E;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2008/10/17 13:02:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.63 2008/11/24 18:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -525,6 +525,7 @@ areaoptsl	: interface
 			}
 		}
 		| defaults
+		| STUB			{ area->stub = 1; }
 		;
 
 interface	: INTERFACE STRING	{

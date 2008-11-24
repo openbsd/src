@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.73 2008/02/11 12:37:37 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.74 2008/11/24 18:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -236,7 +236,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	char			*buf;
 	ssize_t			 n;
 	time_t			 now;
-	int			 r, state, self, shut = 0;
+	int			 r, state, self, error, shut = 0;
 	u_int16_t		 l;
 
 	switch (event) {
@@ -311,11 +311,17 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 
 			buf = imsg.data;
+			error = 0;
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
 			    l >= sizeof(lsa_hdr); l -= sizeof(lsa_hdr)) {
 				memcpy(&lsa_hdr, buf, sizeof(lsa_hdr));
 				buf += sizeof(lsa_hdr);
 
+				if (lsa_hdr.type == LSA_TYPE_EXTERNAL &&
+				    nbr->area->stub) {
+					error = 1;
+					break;
+				}
 				v = lsa_find(nbr->area, lsa_hdr.type,
 				    lsa_hdr.ls_id, lsa_hdr.adv_rtr);
 				if (v == NULL)
@@ -334,13 +340,17 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					    sizeof(lsa_hdr));
 				}
 			}
-			if (l != 0)
+			if (l != 0 && !error)
 				log_warnx("rde_dispatch_imsg: peerid %lu, "
 				    "trailing garbage in Database Description "
 				    "packet", imsg.hdr.peerid);
 
-			imsg_compose(ibuf_ospfe, IMSG_DD_END, imsg.hdr.peerid,
-			    0, NULL, 0);
+			if (!error)
+				imsg_compose(ibuf_ospfe, IMSG_DD_END,
+				    imsg.hdr.peerid, 0, NULL, 0);
+			else
+				imsg_compose(ibuf_ospfe, IMSG_DD_BADLSA,
+				    imsg.hdr.peerid, 0, NULL, 0);
 			break;
 		case IMSG_LS_REQ:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -1090,6 +1100,9 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	if (rte->d_type == DT_NET) {
 		type = LSA_TYPE_SUM_NETWORK;
 	} else if (rte->d_type == DT_RTR) {
+		if (area->stub)
+			/* do not redistribute type 4 LSA into stub areas */
+			return;
 		type = LSA_TYPE_SUM_ROUTER;
 	} else
 		fatalx("rde_summary_update: unknown route type");
