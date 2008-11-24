@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.44 2007/11/26 22:49:08 miod Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.45 2008/11/24 19:55:33 thib Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -885,30 +885,4 @@ freed:
 		vwakeup(bp->b_vp);
 	}
 	pool_put(&bufpool, bp);
-}
-
-/*
- * translate unix errno values to VM_PAGER_*.
- */
-
-int
-uvm_errno2vmerror(errno)
-	int errno;
-{
-	switch (errno) {
-	case 0:
-		return VM_PAGER_OK;
-	case EINVAL:
-		return VM_PAGER_BAD;
-	case EINPROGRESS:
-		return VM_PAGER_PEND;
-	case EIO:
-		return VM_PAGER_ERROR;
-	case EAGAIN:
-		return VM_PAGER_AGAIN;
-	case EBUSY:
-		return VM_PAGER_UNLOCK;
-	default:
-		return VM_PAGER_ERROR;
-	}
 }

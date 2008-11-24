@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.20 2003/06/02 23:28:24 millert Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.21 2008/11/24 19:55:33 thib Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -164,8 +164,6 @@ void		uvm_pagermapout(vaddr_t, int);
 struct vm_page **uvm_mk_pcluster(struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t);
-int		uvm_errno2vmerror(int);
-
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
 #define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */
