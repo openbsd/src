@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.7 2007/11/17 16:55:05 mbalmer Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.8 2008/11/24 14:11:58 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <sys/limits.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,8 @@ void	getinfo(void);
 void	pinread(int);
 void	pinwrite(int, int);
 void	pinctl(int, char *[], int);
+void	devattach(char *, int, u_int32_t);
+void	devdetach(char *);
 
 __dead void usage(void);
 
@@ -66,16 +69,45 @@ main(int argc, char *argv[])
 {
 	int ch;
 	const char *errstr;
+	char *ga_dvname = NULL, *ep;
 	int do_ctl = 0;
-	int pin = 0, value = 0;
+	int pin = 0, value = 0, attach = 0, detach = 0;
+	u_int32_t ga_mask = 0, ga_offset = -1;
+	long lval;
 
-	while ((ch = getopt(argc, argv, "cd:q")) != -1)
+	while ((ch = getopt(argc, argv, "A:cd:D:m:o:q")) != -1)
 		switch (ch) {
+		case 'A':
+			if (detach)
+				errx(1, "-A and -D are mutual exclusive");
+			ga_dvname = optarg;
+			attach = 1;
+			break;
 		case 'c':
 			do_ctl = 1;
 			break;
 		case 'd':
 			device = optarg;
+			break;
+		case 'D':
+			if (attach)
+				errx(1, "-D and -A are mutual exclusive");
+			ga_dvname = optarg;
+			detach = 1;
+			break;
+		case 'm':
+			lval = strtol(optarg, &ep, 0);
+			if (*optarg == '\0' || *ep != '\0')
+				errx(1, "invalid mask (not a number)");
+			if ((errno == ERANGE && (lval == LONG_MAX
+			    || lval == LONG_MIN)) || lval > UINT_MAX)
+				errx(1, "mask out of range");
+			ga_mask = lval;
+			break;
+		case 'o':
+			ga_offset = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "offset is %s: %s", errstr, optarg);
 			break;
 		case 'q':
 			quiet = 1;
@@ -96,7 +128,13 @@ main(int argc, char *argv[])
 	if ((devfd = open(device, O_RDWR)) == -1)
 		err(1, "%s", device);
 
-	if (argc == 0 && !do_ctl) {
+	if (attach) {
+		if (ga_offset == -1 || ga_mask == 0)
+			errx(1, "gpio attach needs an offset and a mask");
+		devattach(ga_dvname, ga_offset, ga_mask);
+	} else if (detach) {
+		devdetach(ga_dvname);
+	} else if (argc == 0 && !do_ctl) {
 		getinfo();
 	} else if (argc == 1) {
 		if (do_ctl)
@@ -220,6 +258,29 @@ pinctl(int pin, char *flags[], int nflags)
 }
 
 void
+devattach(char *dvname, int offset, u_int32_t mask)
+{
+	struct gpio_attach attach;
+
+	bzero(&attach, sizeof(attach));
+	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
+	attach.ga_offset = offset;
+	attach.ga_mask = mask;
+	if (ioctl(devfd, GPIOATTACH, &attach) == -1)
+		err(1, "GPIOATTACH");
+}
+
+void
+devdetach(char *dvname)
+{
+	struct gpio_attach attach;
+
+	bzero(&attach, sizeof(attach));
+	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
+	if (ioctl(devfd, GPIODETACH, &attach) == -1)
+		err(1, "GPIODETACH");
+}
+void
 usage(void)
 {
 	extern char *__progname;
@@ -228,6 +289,9 @@ usage(void)
 	    __progname);
 	fprintf(stderr, "       %s [-q] [-d device] -c pin [flags]\n",
 	    __progname);
+	fprintf(stderr, "       %s [-A device] -o offset -m mask\n",
+	    __progname);
+	fprintf(stderr, "       %s [-D device]\n", __progname);
 
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.12 2007/11/17 16:55:05 mbalmer Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.13 2008/11/24 14:11:58 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: November 24 2008 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -32,6 +32,12 @@
 .Fl c
 .Ar pin
 .Op Ar flags
+.Nm gpioctl
+.Op Fl A Ar device
+.Fl o Ar offset
+.Fl m Ar mask
+.Nm gpioctl
+.Op Fl D Ar device
 .Sh DESCRIPTION
 The
 .Nm
@@ -141,6 +147,22 @@ file can be specified with the
 option in order to access a particular
 .Tn GPIO
 device.
+.It Fl A Ar device
+attach
+.Ar device
+at this gpiobus.
+You must also specify
+.Fl o Ar offset
+(a pin number) and
+.Fl m Ar mask
+(a binary mask).
+.It Fl D Ar device
+detach
+.Ar device
+from this gpiobus.
+Only devices that have been attached using the
+.Fl a
+option can be detached.
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
 .El
@@ -159,6 +181,14 @@ Configure pin 20 to have push-pull output:
 Write logical 1 to pin 20:
 .Pp
 .Dl # gpioctl 20 1
+.Pp
+Attach a onewire(4) bus on a gpioow(4) device on pin 4:
+.Pp
+.Dl # gpioctl -A gpioow -o 4 -m 0x01
+.Pp
+Detach the gpioow0 device:
+.Pp
+.Dl # gpioctl -D gpioow0
 .Sh SEE ALSO
 .Xr gpio 4
 .Sh HISTORY
@@ -171,3 +201,6 @@ The
 .Nm
 program was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
+Device attachment was added by
+.An Marc Balmer Aq mbalmer@openbsd.org .
+
