@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.7 2006/03/26 18:48:17 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -28,6 +28,8 @@
 #include <sys/ioctl.h>
 #include <sys/gpio.h>
 #include <sys/vnode.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -39,9 +41,11 @@ struct gpio_softc {
 	int sc_npins;			/* total number of pins */
 
 	int sc_opened;
+	LIST_HEAD(, gpio_dev) sc_list;
 };
 
 int	gpio_match(struct device *, void *, void *);
+int	gpio_submatch(struct device *, void *, void *);
 void	gpio_attach(struct device *, struct device *, void *);
 int	gpio_detach(struct device *, int);
 int	gpio_search(struct device *, void *, void *);
@@ -64,10 +68,16 @@ gpio_match(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	struct gpiobus_attach_args *gba = aux;
 
-	if (strcmp(gba->gba_name, cf->cf_driver->cd_name) != 0)
-		return (0);
+	return (strcmp(gba->gba_name, cf->cf_driver->cd_name) == 0);
+}
 
-	return (1);
+int
+gpio_submatch(struct device *parent, void *match, void *aux)
+{
+	struct cfdata *cf = match;
+	struct gpio_attach_args *ga = aux;
+
+	return (strcmp(ga->ga_dvname, cf->cf_driver->cd_name) == 0);
 }
 
 void
@@ -263,6 +273,10 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct gpio_info *info;
 	struct gpio_pin_op *op;
 	struct gpio_pin_ctl *ctl;
+	struct gpio_attach *attach;
+	struct gpio_attach_args ga;
+	struct gpio_dev *gdev;
+	struct device *dv;
 	int pin, value, flags;
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
@@ -350,6 +364,35 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			gpiobus_pin_ctl(gc, pin, flags);
 			/* update current value */
 			sc->sc_pins[pin].pin_flags = flags;
+		}
+		break;
+	case GPIOATTACH:
+		attach = (struct gpio_attach *)data;
+		bzero(&ga, sizeof(ga));
+		ga.ga_gpio = sc;
+		ga.ga_dvname = attach->ga_dvname;
+		ga.ga_offset = attach->ga_offset;
+		ga.ga_mask = attach->ga_mask;
+		dv = config_found_sm((struct device *)sc, &ga, gpiobus_print,
+		    gpio_submatch);
+		if (dv != NULL) {
+			gdev = malloc(sizeof(struct gpio_dev), M_DEVBUF,
+			    M_WAITOK);
+			gdev->sc_dev = dv;
+			LIST_INSERT_HEAD(&sc->sc_list, gdev, sc_next);
+		}
+		break;
+	case GPIODETACH:
+		attach = (struct gpio_attach *)data;
+		LIST_FOREACH(gdev, &sc->sc_list, sc_next) {
+			if (strcmp(gdev->sc_dev->dv_xname, attach->ga_dvname)
+			    == 0) {
+				if (config_detach(gdev->sc_dev, 0) == 0) {
+					LIST_REMOVE(gdev, sc_next);
+					free(gdev, M_DEVBUF);
+				}
+				break;
+			}
 		}
 		break;
 	default:

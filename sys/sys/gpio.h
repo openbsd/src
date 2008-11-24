@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.h,v 1.3 2007/11/17 16:55:05 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.h,v 1.4 2008/11/24 12:12:12 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -52,10 +52,19 @@ struct gpio_pin_ctl {
 	int gp_flags;		/* pin configuration flags */
 };
 
+/* Attach/detach device drivers that use GPIO pins */
+struct gpio_attach {
+	char ga_dvname[16];	/* device name */
+	int ga_offset;
+	int ga_mask;
+};
+
 #define GPIOINFO		_IOR('G', 0, struct gpio_info)
 #define GPIOPINREAD		_IOWR('G', 1, struct gpio_pin_op)
 #define GPIOPINWRITE		_IOWR('G', 2, struct gpio_pin_op)
 #define GPIOPINTOGGLE		_IOWR('G', 3, struct gpio_pin_op)
 #define GPIOPINCTL		_IOWR('G', 4, struct gpio_pin_ctl)
+#define GPIOATTACH		_IOWR('G', 5, struct gpio_attach)
+#define GPIODETACH		_IOWR('G', 6, struct gpio_attach)
 
 #endif	/* !_SYS_GPIO_H_ */

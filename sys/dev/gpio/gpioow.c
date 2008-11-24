@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioow.c,v 1.2 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: gpioow.c,v 1.3 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -82,6 +82,10 @@ int
 gpioow_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
+	struct gpio_attach_args *ga = aux;
+
+	if (ga->ga_offset == -1)
+		return 0;
 
 	return (strcmp(cf->cf_driver->cd_name, "gpioow") == 0);
 }
@@ -156,6 +160,8 @@ gpioow_detach(struct device *self, int flags)
 {
 	struct gpioow_softc *sc = (struct gpioow_softc *)self;
 	int rv = 0;
+
+	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);

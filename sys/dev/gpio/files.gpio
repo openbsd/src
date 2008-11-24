@@ -1,10 +1,15 @@
-# $OpenBSD: files.gpio,v 1.6 2006/03/04 16:27:03 grange Exp $
+# $OpenBSD: files.gpio,v 1.7 2008/11/24 12:12:12 mbalmer Exp $
 
-define	gpio {offset, mask}
+define	gpio {[offset = -1], [mask = 0]}
 
 device	gpio: gpio
 attach	gpio at gpiobus
 file	dev/gpio/gpio.c				gpio	needs-flag
+
+# GPIO simulator
+device	gpiosim: gpiobus
+attach	gpiosim at root
+file	dev/gpio/gpiosim.c			gpiosim needs-flag
 
 # I2C bus bit-banging
 device	gpioiic: i2cbus, i2c_bitbang
