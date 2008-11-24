@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.97 2008/11/24 16:36:41 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.98 2008/11/24 19:02:38 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -604,8 +604,6 @@ enqueue_randomness(int state, int val)
 	val += state << 13;
 
 	if (!rnd_attached) {
-		struct rand_event *rep;
-		
 		if ((rep = rnd_put()) == NULL) {
 			rndstats.rnd_drops++;
 			return;
