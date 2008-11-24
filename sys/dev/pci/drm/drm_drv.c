@@ -455,12 +455,12 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	DRM_LOCK();
 	file_priv = drm_find_file_by_minor(dev, minor(kdev));
-	DRM_UNLOCK();
 	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
 		retcode = EINVAL;
 		goto done;
 	}
+	DRM_UNLOCK();
 
 	if (dev->driver->close != NULL)
 		dev->driver->close(dev, file_priv);
