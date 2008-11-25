@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.102 2008/11/25 17:01:14 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.103 2008/11/25 19:09:34 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
 int max_datalen;		/* MHLEN - max_hdr */
 
+void	m_extfree(struct mbuf *);
 struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
 
@@ -198,6 +199,10 @@ m_get(int nowait, int type)
 	return (m);
 }
 
+/*
+ * ATTN: When changing anything here check m_inithdr() and m_defrag() those
+ * may need to change as well.
+ */
 struct mbuf *
 m_gethdr(int nowait, int type)
 {
@@ -316,29 +321,35 @@ m_free(struct mbuf *m)
 	mbstat.m_mtypes[m->m_type]--;
 	if (m->m_flags & M_PKTHDR)
 		m_tag_delete_chain(m);
-	if (m->m_flags & M_EXT) {
-		if (MCLISREFERENCED(m)) {
-			m->m_ext.ext_nextref->m_ext.ext_prevref =
-			    m->m_ext.ext_prevref;
-			m->m_ext.ext_prevref->m_ext.ext_nextref =
-			    m->m_ext.ext_nextref;
-		} else if (m->m_flags & M_CLUSTER) {
-			m_cluncount(m, 0);
-			pool_put(&mclpools[m->m_ext.ext_backend],
-			    m->m_ext.ext_buf);
-		} else if (m->m_ext.ext_free)
-			(*(m->m_ext.ext_free))(m->m_ext.ext_buf,
-			    m->m_ext.ext_size, m->m_ext.ext_arg);
-		else
-			free(m->m_ext.ext_buf,m->m_ext.ext_type);
-		m->m_ext.ext_size = 0;
-	}
+	if (m->m_flags & M_EXT)
+		m_extfree(m);
 	m->m_flags = 0;
 	n = m->m_next;
 	pool_put(&mbpool, m);
 	splx(s);
 
 	return (n);
+}
+
+void
+m_extfree(struct mbuf *m)
+{
+	if (MCLISREFERENCED(m)) {
+		m->m_ext.ext_nextref->m_ext.ext_prevref =
+		    m->m_ext.ext_prevref;
+		m->m_ext.ext_prevref->m_ext.ext_nextref =
+		    m->m_ext.ext_nextref;
+	} else if (m->m_flags & M_CLUSTER) {
+		m_cluncount(m, 0);
+		pool_put(&mclpools[m->m_ext.ext_backend],
+		    m->m_ext.ext_buf);
+	} else if (m->m_ext.ext_free)
+		(*(m->m_ext.ext_free))(m->m_ext.ext_buf,
+		    m->m_ext.ext_size, m->m_ext.ext_arg);
+	else
+		panic("unknown type of extension buffer");
+	m->m_ext.ext_size = 0;
+	m->m_flags &= ~(M_EXT|M_CLUSTER);
 }
 
 void
@@ -351,6 +362,63 @@ m_freem(struct mbuf *m)
 	do {
 		MFREE(m, n);
 	} while ((m = n) != NULL);
+}
+
+/*
+ * mbuf chain defragmenter. This function uses some evil tricks to defragment
+ * an mbuf chain into a single buffer without changing the mbuf pointer.
+ * This needs to know a lot of the mbuf internals to make this work.
+ */
+int
+m_defrag(struct mbuf *m, int how)
+{
+	struct mbuf *m0;
+
+#ifdef DIAGNOSTIC
+	if (!(m->m_flags & M_PKTHDR) || m->m_next == NULL)
+		panic("m_defrag: no packet hdr or not a chain");
+#endif
+
+	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
+		return -1;
+	if (m->m_pkthdr.len > MHLEN) {
+		MCLGETI(m0, how, NULL, m->m_pkthdr.len);
+		if (!(m0->m_flags & M_EXT)) {
+			m_free(m0);
+			return -1;
+		}
+	}
+	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
+	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
+
+	/* free chain behind and possible ext buf on the first mbuf */
+	m_freem(m->m_next);
+	m->m_next = NULL;
+
+	if (m->m_flags & M_EXT)
+		m_extfree(m);
+
+	/*
+	 * Bounce copy mbuf over to the original mbuf and set everything up.
+	 * This needs to reset or clear all pointers that may go into the
+	 * original mbuf chain.
+	 */
+	if (m0->m_flags & M_EXT) {
+		bcopy(&m0->m_ext, &m->m_ext, sizeof(struct mbuf_ext));
+		MCLINITREFERENCE(m);
+		m->m_flags |= M_EXT|M_CLUSTER;
+		m->m_data = m->m_ext.ext_buf;
+	} else {
+		m->m_data = m->m_pktdat;
+		bcopy(&m0->m_data, &m->m_data, m0->m_len);
+	}
+	m->m_pkthdr.len = m->m_len = m0->m_len;
+	m->m_pkthdr.pf.hdr = NULL;	/* altq will cope */
+
+	m0->m_flags &= ~(M_EXT|M_CLUSTER);	/* cluster is gone */
+	m_free(m0);
+
+	return 0;
 }
 
 /*
