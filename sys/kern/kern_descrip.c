@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.80 2008/09/19 12:24:55 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.81 2008/11/25 18:04:38 blambert Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -454,8 +454,8 @@ restart:
 
 		if (fp != fd_getfile(fdp, fd)) {
 			/*
-			 * We have lost the race with close() or dup2()
-			 * unlock, pretend that we'd won the race and that
+			 * We have lost the race with close() or dup2();
+			 * unlock, pretend that we've won the race and that
 			 * lock had been removed by close()
 			 */
 			fl.l_whence = SEEK_SET;
