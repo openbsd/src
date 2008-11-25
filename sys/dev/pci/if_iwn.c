@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.38 2008/11/25 17:06:27 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.39 2008/11/25 21:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2144,7 +2144,6 @@ iwn_wakeup_intr(struct iwn_softc *sc)
 void
 iwn_fatal_intr(struct iwn_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_fw_dump dump;
 	int i;
@@ -2174,7 +2173,7 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	}
 	printf("firmware error log:\n");
 	printf("  error type      = \"%s\" (0x%08X)\n",
-	    (dump.id < N(iwn_fw_errmsg)) ?
+	    (dump.id < nitems(iwn_fw_errmsg)) ?
 		iwn_fw_errmsg[dump.id] : "UNKNOWN",
 	    dump.id);
 	printf("  program counter = 0x%08X\n", dump.pc);
@@ -2196,7 +2195,6 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	}
 	printf("  rx ring: cur=%d\n", sc->rxq.cur);
 	printf("  802.11 state %d\n", sc->sc_ic.ic_state);
-#undef N
 }
 
 int
@@ -2334,7 +2332,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	enum ieee80211_edca_ac ac;
-	struct mbuf *m1;
 	uint32_t flags;
 	uint16_t qos;
 	u_int hdrlen;
@@ -2549,24 +2546,10 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (m_defrag(m, M_DONTWAIT) != 0) {
 			m_freem(m);
 			return ENOMEM;
 		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOMEM;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_len = m1->m_pkthdr.len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {

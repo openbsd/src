@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.94 2008/09/04 15:59:52 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.95 2008/11/25 21:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1236,7 +1236,6 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	struct iwi_tx_data *data;
 	struct iwi_tx_desc *desc;
 	struct iwi_tx_ring *txq = &sc->txq[0];
-	struct mbuf *mnew;
 	int hdrlen, error, i, station = 0;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -1300,27 +1299,10 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* too many fragments, linearize */
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
+		if (m_defrag(m0, M_DONTWAIT) != 0) {
 			m_freem(m0);
 			return ENOMEM;
 		}
-		M_DUP_PKTHDR(mnew, m0);
-		if (m0->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m0);
-				m_freem(mnew);
-				return ENOMEM;
-			}
-		}
-
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m0);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m0 = mnew;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {

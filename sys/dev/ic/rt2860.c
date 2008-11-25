@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.19 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.20 2008/11/25 21:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008
@@ -170,7 +170,6 @@ static const struct rfprog {
 int
 rt2860_attach(void *xsc, int id)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rt2860_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -255,7 +254,7 @@ rt2860_attach(void *xsc, int id)
 		    ieee80211_std_rateset_11a;
 
 		/* set supported .11a channels */
-		for (i = 14; i < N(rt2860_rf2850); i++) {
+		for (i = 14; i < nitems(rt2860_rf2850); i++) {
 			uint8_t chan = rt2860_rf2850[i].chan;
 			ic->ic_channels[chan].ic_freq =
 			    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
@@ -333,7 +332,6 @@ fail2:	rt2860_free_rx_ring(sc, &sc->rxq);
 fail1:	while (--qid >= 0)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);
 	return error;
-#undef N
 }
 
 int
@@ -1488,27 +1486,10 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		}
 	}
 	if (error != 0) {	/* too many fragments, linearize */
-		struct mbuf *m1;
-
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (m_defrag(m0, M_DONTWAIT) != 0) {
 			m_freem(m0);
 			return ENOMEM;
 		}
-		M_DUP_PKTHDR(m1, m0);
-		if (m0->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m0);
-				m_freem(m1);
-				return ENOMEM;
-			}
-		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_len = m1->m_pkthdr.len;
-		m_freem(m0);
-		m0 = m1;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
@@ -2322,7 +2303,6 @@ rt2860_get_rf(uint8_t rev)
 int
 rt2860_read_eeprom(struct rt2860_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t val;
 	int8_t delta_2ghz, delta_5ghz;
@@ -2579,13 +2559,11 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	}
 
 	return 0;
-#undef N
 }
 
 int
 rt2860_bbp_init(struct rt2860_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
 
 	/* wait for BBP to wake up */
@@ -2601,7 +2579,7 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 	}
 
 	/* initialize BBP registers to default values */
-	for (i = 0; i < N(rt2860_def_bbp); i++) {
+	for (i = 0; i < nitems(rt2860_def_bbp); i++) {
 		rt2860_mcu_bbp_write(sc, rt2860_def_bbp[i].reg,
 		    rt2860_def_bbp[i].val);
 	}
@@ -2613,13 +2591,11 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 	}
 
 	return 0;
-#undef N
 }
 
 int
 rt2860_init(struct ifnet *ifp)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rt2860_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
@@ -2693,7 +2669,7 @@ rt2860_init(struct ifnet *ifp)
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_BBP_HRST | RT2860_MAC_SRST);
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, 0);
 
-	for (i = 0; i < N(rt2860_def_mac); i++)
+	for (i = 0; i < nitems(rt2860_def_mac); i++)
 		RAL_WRITE(sc, rt2860_def_mac[i].reg, rt2860_def_mac[i].val);
 
 	/* wait while MAC is busy */
@@ -2857,7 +2833,6 @@ rt2860_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return 0;
-#undef N
 }
 
 void

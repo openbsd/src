@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.80 2008/09/03 19:43:59 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.81 2008/11/25 21:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -610,7 +610,6 @@ ipw_media_change(struct ifnet *ifp)
 void
 ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
-#define N(a)	(sizeof (a) / sizeof (a[0]))
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	static const struct {
@@ -635,8 +634,8 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	val &= 0xf;
 
 	/* convert rate to 802.11 rate */
-	for (i = 0; i < N(rates) && rates[i].val != val; i++);
-	rate = (i < N(rates)) ? rates[i].rate : 0;
+	for (i = 0; i < nitems(rates) && rates[i].val != val; i++);
+	rate = (i < nitems(rates)) ? rates[i].rate : 0;
 
 	imr->ifm_active |= IFM_IEEE80211_11B;
 	imr->ifm_active |= ieee80211_rate2media(ic, rate, IEEE80211_MODE_11B);
@@ -655,7 +654,6 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		/* should not get there */
 		break;
 	}
-#undef N
 }
 
 int
@@ -1132,7 +1130,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
-	struct mbuf *mnew;
 	int error, i;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1194,26 +1191,10 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* too many fragments, linearize */
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
+		if (m_defrag(m, M_DONTWAIT) != 0) {
 			m_freem(m);
 			return ENOMEM;
 		}
-		M_DUP_PKTHDR(mnew, m);
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(mnew);
-				return ENOMEM;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m = mnew;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, sbuf->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
