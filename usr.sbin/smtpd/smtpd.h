@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.14 2008/11/25 23:01:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.15 2008/11/25 23:03:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -652,6 +652,11 @@ void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
+
+
+/* dns.c */
+size_t getmxbyname(char *, char ***);
+
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
