@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.12 2008/11/25 15:58:14 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.13 2008/11/25 20:35:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -754,6 +754,7 @@ read:
 					}
 				}
 			}
+			free(line);
 		}
 		goto read;
 	}
