@@ -235,7 +235,7 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 {
 	int ret = 0;
 
-	if (dev_priv->irq_enabled == 0)
+	if (dev->irq_enabled == 0)
 		return (EINVAL);
 
 	DRM_SPINLOCK(&dev->vbl_lock);
