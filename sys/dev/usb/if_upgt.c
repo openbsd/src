@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.39 2008/10/14 18:01:53 naddy Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.40 2008/11/25 08:25:02 kevlo Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -49,7 +49,6 @@
 #include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
