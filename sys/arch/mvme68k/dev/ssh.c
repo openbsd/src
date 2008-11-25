@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.19 2008/09/12 11:14:02 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.20 2008/11/25 17:52:02 krw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -170,7 +170,7 @@ struct scsi_xfer *xs;
 	splx(s);
 
 	if (acb == NULL) {
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 
 	acb->flags = ACB_ACTIVE;

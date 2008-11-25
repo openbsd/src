@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.20 2008/09/12 11:14:02 miod Exp $ */
+/*	$OpenBSD: sbic.c,v 1.21 2008/11/25 17:52:02 krw Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ sbic_scsicmd(xs)
         Debugger();
 #endif
 #endif
-        return(TRY_AGAIN_LATER);
+        return (NO_CCB);
     }
 
     if ( flags & SCSI_DATA_IN )

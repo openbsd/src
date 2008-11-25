@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.15 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.16 2008/11/25 17:52:02 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -412,7 +412,7 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 
 	flags = xs->flags;
 	if ((acb = spc_get_acb(sc, flags)) == NULL) {
-		return TRY_AGAIN_LATER;
+		return (NO_CCB);
 	}
 
 	/* Initialize acb */

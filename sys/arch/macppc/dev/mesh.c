@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.20 2008/10/15 19:12:19 blambert Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.21 2008/11/25 17:52:02 krw Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -1048,7 +1048,7 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	scb = mesh_get_scb(sc);
 	splx(s);
 	if (scb == NULL)
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	DPRINTF("cmdlen: %d\n", xs->cmdlen);
 	scb->xs = xs;
 	scb->flags = 0;

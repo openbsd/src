@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.3 2008/08/30 20:13:03 miod Exp $	*/
+/*	$OpenBSD: sii.c,v 1.4 2008/11/25 17:52:02 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -240,7 +240,7 @@ sii_scsi_cmd(xs)
 #ifdef DEBUG
 		printf("[busy at start]\n");
 #endif
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	/*
 	 * Build a ScsiCmd for this command and start it.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.13 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.14 2008/11/25 17:52:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -505,7 +505,7 @@ ioprbs_scsi_cmd(xs)
 			 */
 			if (ccb == NULL) {
 				splx(s);
-				return (TRY_AGAIN_LATER);
+				return (NO_CCB);
 			}
 
 			ccb->ic_blockno = blockno;

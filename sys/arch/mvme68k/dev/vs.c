@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.25 2008/07/30 18:08:03 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.26 2008/11/25 17:52:02 krw Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -297,7 +297,7 @@ vs_scsicmd(xs)
 	} else {
 		cqep = vs_getcqe(sc);
 		if (cqep == NULL) {
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 		iopb = vs_getiopb(sc);
 	}

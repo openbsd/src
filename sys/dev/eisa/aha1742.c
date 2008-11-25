@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.27 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.28 2008/11/25 17:52:02 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -967,7 +967,7 @@ ahb_scsi_cmd(xs)
 		xs->flags &= ~ITSDONE;
 	}
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		return TRY_AGAIN_LATER;
+		return (NO_CCB);
 	}
 	ecb->xs = xs;
 	timeout_set(&ecb->xs->stimeout, ahb_timeout, ecb);

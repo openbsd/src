@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.23 2007/11/05 17:42:26 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.24 2008/11/25 17:52:02 krw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -549,7 +549,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 		xs->flags &= ~ITSDONE;
 	}
 	if ((scb = sea_get_scb(sea, flags)) == NULL) {
-		return TRY_AGAIN_LATER;
+		return (NO_CCB);
 	}
 	scb->flags = SCB_ACTIVE;
 	scb->xs = xs;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.80 2008/05/22 20:11:03 drahn Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.81 2008/11/25 17:52:02 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -341,7 +341,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	xfer = wdc_get_xfer(sc_xfer->flags & SCSI_NOSLEEP
 	    ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.59 2008/09/12 11:14:04 miod Exp $	*/
+/*	$OpenBSD: aha.c,v 1.60 2008/11/25 17:52:02 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1271,7 +1271,7 @@ aha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
