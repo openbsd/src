@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.69 2008/11/24 21:36:07 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.70 2008/11/25 13:05:51 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -140,9 +140,11 @@ phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
 	long diff = (vaddr_t)a->ph_page - (vaddr_t)b->ph_page;
 	if (diff < 0)
-		return -((a->ph_pagesize + diff) > 0);
-	else
+		return -(-diff < a->ph_pagesize);
+	else if (diff > 0)
 		return (diff > b->ph_pagesize);
+	else
+		return (0);
 }
 
 SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
