@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.8 2006/11/25 18:10:29 uwe Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.1 2008/11/25 14:55:44 drahn Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -75,9 +75,9 @@
 #define C3000_RC_IRQ_PIN	13	/* remote control */
 #define C3000_CF0_IRQ_PIN	94
 #define C3000_CF1_IRQ_PIN	93
-#define C3000_USB_DEVICE_PIN	35	/* indicate connection type */
-#define C3000_USB_CONNECT_PIN	41	/* connection interrupt */
-#define C3000_USB_PULLUP_PIN	45	/* show/hide device presence */
+#define PXA_USB_DEVICE_PIN	35	/* indicate connection type */
+#define PXA_USB_CONNECT_PIN	41	/* connection interrupt */
+#define PXA_USB_PULLUP_PIN	45	/* show/hide device presence */
 #define GPIO_HP_IN_C3000	116	/* headphone jack */
 
 #endif /* _ZAURUS_REG_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.17 2007/12/27 07:09:46 thib Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.18 2008/11/25 14:55:44 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -29,7 +29,7 @@
 
 #include <arm/xscale/pxa2x0var.h>
 
-#include <machine/zaurus_reg.h>
+#include <machine/machine_reg.h>
 #include <machine/zaurus_var.h>
 
 #include <zaurus/dev/zaurus_scoopreg.h>

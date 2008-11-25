@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_var.h,v 1.4 2005/07/01 23:56:47 uwe Exp $	*/
+/*	$OpenBSD: zaurus_var.h,v 1.5 2008/11/25 14:55:44 drahn Exp $	*/
 /*	$NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/zaurus_reg.h>
+#include <machine/machine_reg.h>
 
 #ifdef _KERNEL
 
