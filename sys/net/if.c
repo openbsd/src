@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.179 2008/11/25 12:47:00 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.180 2008/11/25 15:43:32 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2019,7 +2019,7 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 void
 m_clinitifp(struct ifnet *ifp)
 {
-	extern u_short mclsizes[];
+	extern u_int mclsizes[];
 	int i;
 
 	/* Initialize high water marks for use of cluster pools */
