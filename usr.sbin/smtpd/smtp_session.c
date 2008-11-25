@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.10 2008/11/24 23:55:25 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.11 2008/11/25 15:55:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -357,7 +357,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	s->s_msg.rcptcount = 0;
 
 	s->s_state = S_MAILREQUEST;
-	s->s_flags |= F_IMSG_SENT;
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
@@ -406,7 +405,6 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	mr.id = s->s_msg.id;
 
 	s->s_state = S_RCPTREQUEST;
-	s->s_flags |= F_IMSG_SENT;
 	mr.ss = s->s_ss;
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT_SUBMIT,
@@ -709,7 +707,6 @@ session_read(struct bufferevent *bev, void *p)
 
 read:
 	s->s_tm = time(NULL);
-	s->s_flags &= ~F_IMSG_SENT;
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
 		bufferevent_disable(s->s_bev, EV_READ);
