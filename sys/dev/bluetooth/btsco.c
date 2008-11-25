@@ -1,4 +1,4 @@
-/*	$OpenBSD: btsco.c,v 1.3 2008/11/25 17:28:03 ratchov Exp $	*/
+/*	$OpenBSD: btsco.c,v 1.4 2008/11/25 18:29:27 todd Exp $	*/
 /*	$NetBSD: btsco.c,v 1.22 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -758,7 +758,7 @@ btsco_set_params(void *hdl, int setmode, int usemode,
 	 */
 	for (i = 0; i < 2; i++) {
 		if (i) {
-			mode = AUMODE_REC;
+			mode = AUMODE_RECORD;
 			p = rec;
 		} else {
 			mode = AUMODE_PLAY;
@@ -767,7 +767,7 @@ btsco_set_params(void *hdl, int setmode, int usemode,
 		if (!(setmode & mode))
 			continue;
 		p->sample_rate = 8000;
-		p->encoding = slinear_le;
+		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->precision = 16;
 		p->channels = 1;
 	}
@@ -788,8 +788,8 @@ btsco_round_blocksize(void *hdl, int bs)
 			bs = sc->sc_mtu;
 	}
 
-	DPRINTF("%s mode=0x%x, bs=%d, sc_mtu=%d\n",
-			sc->sc_name, mode, bs, sc->sc_mtu);
+	DPRINTF("%s bs=%d, sc_mtu=%d\n",
+			sc->sc_name, bs, sc->sc_mtu);
 
 	return bs;
 }
