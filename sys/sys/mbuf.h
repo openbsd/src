@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.113 2008/11/24 15:14:33 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.114 2008/11/25 12:07:55 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ int	m_trailingspace(struct mbuf *);
 void	m_clget(struct mbuf *, int, struct ifnet *, u_int);
 int	m_cldrop(struct ifnet *, int);
 void	m_clcount(struct ifnet *, int);
-void	m_cluncount(struct mbuf *);
+void	m_cluncount(struct mbuf *, int);
 void	m_adj(struct mbuf *, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
 void	m_freem(struct mbuf *);

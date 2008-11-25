@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.98 2008/11/24 19:17:16 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.99 2008/11/25 12:07:55 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ m_free(struct mbuf *m)
 			m->m_ext.ext_prevref->m_ext.ext_nextref =
 			    m->m_ext.ext_nextref;
 		} else if (m->m_flags & M_CLUSTER) {
-			m_cluncount(m);
+			m_cluncount(m, 0);
 			pool_put(&mclpools[m->m_ext.ext_backend],
 			    m->m_ext.ext_buf);
 		} else if (m->m_ext.ext_free)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.177 2008/11/24 12:57:37 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.178 2008/11/25 12:07:55 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2050,14 +2050,17 @@ m_clcount(struct ifnet *ifp, int pi)
 }
 
 void
-m_cluncount(struct mbuf *m)
+m_cluncount(struct mbuf *m, int all)
 {
-	struct mbuf_ext *me = &m->m_ext;
+	struct mbuf_ext *me;
 
-	if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
-	    (me->ext_ifp == NULL))
-		return;
+	do {
+		me = &m->m_ext;
+		if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
+		    (me->ext_ifp == NULL))
+			continue;
 
-	me->ext_ifp->if_mclstat.mclpool[me->ext_backend].mcl_alive--;
-	me->ext_ifp = NULL;
+		me->ext_ifp->if_mclstat.mclpool[me->ext_backend].mcl_alive--;
+		me->ext_ifp = NULL;
+	} while (all && (m = m->m_next));
 }
