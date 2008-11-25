@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.6 2008/11/24 22:30:19 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.7 2008/11/25 20:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -158,7 +158,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 				err(1, "calloc");
 
 			*batchp = *(struct batch *)imsg.data;
-			batchp->ss_off = 0;
+			batchp->mx_off = 0;
 			batchp->env = env;
 			batchp->flags = 0;
 
@@ -196,7 +196,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 			batchp->flags |= F_BATCH_COMPLETE;
 
 			while (! mta_connect(batchp)) {
-				if (batchp->ss_off == batchp->ss_cnt) {
+				if (batchp->mx_off == batchp->mx_cnt) {
 					break;
 				}
 			}
@@ -341,7 +341,7 @@ mta_connect(struct batch *batchp)
 	struct sockaddr_in ssin;
 	struct sockaddr_in6 ssin6;
 
-	if ((s = socket(batchp->ss[batchp->ss_off].ss_family, SOCK_STREAM, 0)) == -1) {
+	if ((s = socket(batchp->mxarray[batchp->mx_off].ss.ss_family, SOCK_STREAM, 0)) == -1) {
 		goto bad;
 	}
 
@@ -357,8 +357,8 @@ mta_connect(struct batch *batchp)
 
 	session_socket_blockmode(s, BM_NONBLOCK);
 
-	if (batchp->ss[batchp->ss_off].ss_family == PF_INET) {
-		ssin = *(struct sockaddr_in *)&batchp->ss[batchp->ss_off];
+	if (batchp->mxarray[batchp->mx_off].ss.ss_family == PF_INET) {
+		ssin = *(struct sockaddr_in *)&batchp->mxarray[batchp->mx_off].ss;
 		if (connect(s, (struct sockaddr *)&ssin, sizeof(struct sockaddr_in)) == -1) {
 			if (errno != EINPROGRESS) {
 				goto bad;
@@ -366,8 +366,8 @@ mta_connect(struct batch *batchp)
 		}
 	}
 
-	if (batchp->ss[batchp->ss_off].ss_family == PF_INET6) {
-		ssin6 = *(struct sockaddr_in6 *)&batchp->ss[batchp->ss_off];
+	if (batchp->mxarray[batchp->mx_off].ss.ss_family == PF_INET6) {
+		ssin6 = *(struct sockaddr_in6 *)&batchp->mxarray[batchp->mx_off].ss;
 		if (connect(s, (struct sockaddr *)&ssin6, sizeof(struct sockaddr_in6)) == -1) {
 			if (errno != EINPROGRESS) {
 				goto bad;
@@ -384,7 +384,7 @@ mta_connect(struct batch *batchp)
 	return 1;
 
 bad:
-	batchp->ss_off++;
+	batchp->mx_off++;
 	close(s);
 	return 0;
 }
@@ -396,7 +396,7 @@ mta_write(int s, short event, void *arg)
 	int ret;
 
 	if (event == EV_TIMEOUT) {
-		batchp->ss_off++;
+		batchp->mx_off++;
 		close(s);
 		if (batchp->bev) {
 			bufferevent_free(batchp->bev);
@@ -405,7 +405,7 @@ mta_write(int s, short event, void *arg)
 		strlcpy(batchp->errorline, "connection timed-out.", MAX_LINE_SIZE);
 
 		ret = 0;
-		while (batchp->ss_off < batchp->ss_cnt &&
+		while (batchp->mx_off < batchp->mx_cnt &&
 		    (ret = mta_connect(batchp)) == 0) {
 			continue;
 		}

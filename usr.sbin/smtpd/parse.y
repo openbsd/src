@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2008/11/22 20:26:08 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2008/11/25 20:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -230,9 +230,9 @@ main		: QUEUE INTERVAL interval	{
 
 			if ($5 == 0) {
 				if ($1)
-					$5 = htons(487);
+					$5 = 487;
 				else
-					$5 = htons(25);
+					$5 = 25;
 			}
 			cert = ($6 != NULL) ? $6 : $4;
 
@@ -653,14 +653,18 @@ action		: DELIVER TO MAILDIR STRING	{
 		}
 		| RELAY VIA ssmtp STRING port {
 			rule->r_action = A_RELAYVIA;
-			if (strlcpy(rule->r_value.host.hostname, $4, MAXHOSTNAMELEN)
+
+			if ($3)
+				rule->r_value.relayhost.flags = F_SSMTP;
+
+			if (strlcpy(rule->r_value.relayhost.hostname, $4, MAXHOSTNAMELEN)
 			    >= MAXHOSTNAMELEN)
 				fatal("hostname too long");
 
 			if ($5 == 0)
-				rule->r_value.host.port = htons(25);
+				rule->r_value.relayhost.port = 25;
 			else
-				rule->r_value.host.port = htons($5);
+				rule->r_value.relayhost.port = $5;
 
 			free($4);
 		}

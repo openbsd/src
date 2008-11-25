@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.12 2008/11/25 15:55:13 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.13 2008/11/25 20:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,14 +58,26 @@
 /* number of MX records to lookup */
 #define MXARRAYSIZE	5
 
-struct address {
-	char hostname[MAXHOSTNAMELEN];
-	u_int16_t port;
-};
+
+#define F_STARTTLS		 0x01
+#define F_SSMTP			 0x02
+#define F_SSL			(F_SSMTP|F_STARTTLS)
+
 
 struct netaddr {
 	struct sockaddr_storage ss;
 	int masked;
+};
+
+struct relayhost {
+	u_int8_t flags;
+	char hostname[MAXHOSTNAMELEN];
+	u_int16_t port;
+};
+
+struct mxhost {
+	u_int8_t flags;
+	struct sockaddr_storage ss;
 };
 
 /* buffer specific headers */
@@ -319,7 +331,7 @@ struct rule {
 	enum action_type		 r_action;
 	union {
 		char			 path[MAXPATHLEN];
-		struct address		 host;
+		struct relayhost       	 relayhost;
 #define	MAXCOMMANDLEN	256
 		char			 command[MAXCOMMANDLEN];
 	}				 r_value;
@@ -493,9 +505,9 @@ struct batch {
 	char				 errorline[MAX_LINE_SIZE];
 
 	u_int8_t			 getaddrinfo_error;
-	struct sockaddr_storage		 ss[MXARRAYSIZE*2];
-	u_int8_t			 ss_cnt;
-	u_int8_t			 ss_off;
+	struct mxhost			 mxarray[MXARRAYSIZE*2];
+	u_int8_t			 mx_cnt;
+	u_int8_t			 mx_off;
 
 	time_t				 creation;
 	time_t				 lasttry;
@@ -535,9 +547,6 @@ struct ssl {
 };
 
 struct listener {
-#define F_STARTTLS		 0x01
-#define F_SSMTP			 0x02
-#define F_SSL			(F_SSMTP|F_STARTTLS)
 	u_int8_t		 flags;
 	int			 fd;
 	struct sockaddr_storage	 ss;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.15 2008/11/24 23:55:25 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.16 2008/11/25 20:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1030,7 +1030,7 @@ queue_batch_resolved(struct smtpd *env, struct batch *lookup)
 
 	batchp = batch_by_id(env, lookup->id);
 	batchp->getaddrinfo_error = lookup->getaddrinfo_error;
-	batchp->ss_cnt = lookup->ss_cnt;
+	batchp->mx_cnt = lookup->mx_cnt;
 
 /*
            EAI_NODATA        no address associated with hostname
@@ -1076,8 +1076,8 @@ queue_batch_resolved(struct smtpd *env, struct batch *lookup)
 
 	default:
 		batchp->flags |= F_BATCH_RESOLVED;
-		for (i = 0; i < batchp->ss_cnt; ++i)
-			batchp->ss[i] = lookup->ss[i];
+		for (i = 0; i < batchp->mx_cnt; ++i)
+			batchp->mxarray[i].ss = lookup->mxarray[i].ss;
 	}
 	return 1;
 }

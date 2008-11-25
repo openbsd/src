@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.3 2008/11/10 21:29:18 chl Exp $	*/
+/*	$OpenBSD: lka.c,v 1.4 2008/11/25 20:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -477,7 +477,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 			char *lmx[1];
 			size_t len, i, j;
 			int error;
-			u_int16_t port = 25;
+			u_int16_t port = htons(25);
 
 			batchp = imsg.data;
 
@@ -494,11 +494,13 @@ lka_dispatch_queue(int sig, short event, void *p)
 				}
 			}
 			else if (batchp->rule.r_action == A_RELAYVIA) {
-				lmx[0] = batchp->rule.r_value.host.hostname;
-				port = batchp->rule.r_value.host.port;
-				log_debug("attempting to resolve %s:%d (forced)", lmx[0], port);
+
+				lmx[0] = batchp->rule.r_value.relayhost.hostname;
+				port = batchp->rule.r_value.relayhost.port;
+				log_debug("attempting to resolve %s:%d (forced)", lmx[0], ntohs(port));
 				mx = lmx;
 				len = 1;
+
 			}
 
 			memset(&hints, 0, sizeof(hints));
@@ -515,16 +517,16 @@ lka_dispatch_queue(int sig, short event, void *p)
 					if (resp->ai_family == PF_INET) {
 						struct sockaddr_in *ssin;
 
-						batchp->ss[j] = *(struct sockaddr_storage *)resp->ai_addr;
-						ssin = (struct sockaddr_in *)&batchp->ss[j];
-						ssin->sin_port = htons(port);
+						batchp->mxarray[j].ss = *(struct sockaddr_storage *)resp->ai_addr;
+						ssin = (struct sockaddr_in *)&batchp->mxarray[j].ss;
+						ssin->sin_port = port;
 						++j;
 					}
 					if (resp->ai_family == PF_INET6) {
 						struct sockaddr_in6 *ssin6;
-						batchp->ss[j] = *(struct sockaddr_storage *)resp->ai_addr;
-						ssin6 = (struct sockaddr_in6 *)&batchp->ss[j];
-						ssin6->sin6_port = htons(port);
+						batchp->mxarray[j].ss = *(struct sockaddr_storage *)resp->ai_addr;
+						ssin6 = (struct sockaddr_in6 *)&batchp->mxarray[j].ss;
+						ssin6->sin6_port = port;
 						++j;
 					}
 				}
@@ -532,7 +534,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 				freeaddrinfo(res);
 			}
 
-			batchp->ss_cnt = j;
+			batchp->mx_cnt = j;
 			batchp->getaddrinfo_error = 0;
 			if (j == 0)
 				batchp->getaddrinfo_error = error;
