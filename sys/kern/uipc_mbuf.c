@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.99 2008/11/25 12:07:55 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.100 2008/11/25 12:47:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -96,15 +96,15 @@ struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
 
 /* mbuf cluster pools */
-struct	mclsizes mclsizes[] = {
-	{  MCLBYTES, 4, 1 }, /* must be at slot 0 */
-	{  4 * 1024, 4, 2 },
+u_short	mclsizes[] = {
+	MCLBYTES,	/* must be at slot 0 */
+	4 * 1024,
 #if art_doesnt_suck
-	{  8 * 1024, 4, 2 },
-	{  9 * 1024, 4, 2 },
-	{ 12 * 1024, 4, 2 },
-	{ 16 * 1024, 4, 2 },
-	{ 64 * 1024, 4, 2 }
+	8 * 1024,
+	9 * 1024,
+	12 * 1024,
+	16 * 1024,
+	64 * 1024
 #endif
 };
 static	char mclnames[MCLPOOLS][8];
@@ -135,8 +135,8 @@ mbinit(void)
 
 	for (i = 0; i < nitems(mclsizes); i++) {
 		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
-		    mclsizes[i].size >> 10);
-		pool_init(&mclpools[i], mclsizes[i].size, 0, 0, 0, mclnames[i],
+		    mclsizes[i] >> 10);
+		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0, mclnames[i],
 		    NULL);
 		pool_setlowat(&mclpools[i], mcllowat);
 	}

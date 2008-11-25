@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.114 2008/11/25 12:07:55 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.115 2008/11/25 12:47:00 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -393,7 +393,6 @@ struct mbstat {
 struct	mclsizes {
 	u_int	size;
 	u_int	hwm;
-	u_int	factor;
 };
 
 extern	struct mbstat mbstat;
