@@ -1,4 +1,4 @@
-/*	$OpenBSD: btsco.c,v 1.2 2008/11/25 17:25:53 ratchov Exp $	*/
+/*	$OpenBSD: btsco.c,v 1.3 2008/11/25 17:28:03 ratchov Exp $	*/
 /*	$NetBSD: btsco.c,v 1.22 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -998,7 +998,7 @@ btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
 
 	switch(di->index) {
 	case BTSCO_VGS:
-		di->mixer_class = BTSCO_INPUT_CLASS;
+		di->mixer_class = BTSCO_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strlcpy(di->label.name, AudioNspeaker,
 		    sizeof(di->label.name));
@@ -1025,6 +1025,14 @@ btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->mixer_class = BTSCO_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strlcpy(di->label.name, AudioCinputs,
+		    sizeof(di->label.name));
+		di->type = AUDIO_MIXER_CLASS;
+		break;
+
+	case BTSCO_OUTPUT_CLASS:
+		di->mixer_class = BTSCO_OUTPUT_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		strlcpy(di->label.name, AudioCoutputs,
 		    sizeof(di->label.name));
 		di->type = AUDIO_MIXER_CLASS;
 		break;
