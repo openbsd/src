@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.389 2008/11/24 00:03:19 drahn Exp $
+$OpenBSD: usbdevs,v 1.390 2008/11/25 08:54:40 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -405,6 +405,7 @@ vendor MICRODIA		0x0c45	Microdia
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor EASYDISK		0x0c76	EasyDisk
 vendor KYOCERA2		0x0c88	Kyocera
+vendor TERRATEC		0x0ccd	TerraTec Electronic GmbH
 vendor ZCOM		0x0cde	Z-Com
 vendor ATHEROS2		0x0cf3	Atheros Communications
 vendor POSIFLEX		0x0d3a	Posiflex Technologies
@@ -2751,6 +2752,9 @@ product TENDA TWL541U		0x1fab	TWL541U WLAN
 
 /* Ten X Technology, Inc. */
 product TENX MISSILE		0x0202	Missile Launcher
+
+/* TerraTec Electronic GmbH */
+product	TERRATEC AUREON		0x0077	Aureon Dual USB
 
 /* Dream Cheeky */
 product DREAMCHEEKY ROCKETBABY	0x0701	Missile Launcher
