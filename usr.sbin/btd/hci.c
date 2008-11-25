@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.c,v 1.1 2008/11/24 23:34:42 uwe Exp $	*/
+/*	$OpenBSD: hci.c,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
 /*	$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
 #include <sys/ioctl.h>
 
 #include <assert.h>
-#include <bluetooth.h>
 #include <errno.h>
 #include <event.h>
 #include <string.h>
@@ -44,6 +43,8 @@
 #include <unistd.h>
 
 #include "btd.h"
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int hci_init_config(struct bt_interface *);
 
@@ -160,7 +161,7 @@ hci_init(struct btd *env)
 			continue;
 		}
 
-		/* Skip disabled interfaces. */
+		/* Skip manually disabled interfaces. */
 		if (iface->disabled) {
 			log_info("interface disabled: %s (%s)",
 			    bt_ntoa(&iface->addr, NULL), iface->xname);
@@ -218,22 +219,10 @@ int
 hci_init_config(struct bt_interface *iface)
 {
 	struct btreq btr;
-	struct btd *env = iface->env;
-	struct bt_interface *defaults;
-	const char *name;
 	uint8_t val;
 
-	defaults = conf_find_interface(env, BDADDR_ANY);
-
-	if (iface->name != NULL)
-		name = iface->name;
-	else if (defaults != NULL && defaults->name != NULL)
-		name = defaults->name;
-	else
-		name = NULL;
-
-	if (name != NULL && hci_write(iface, HCI_CMD_WRITE_LOCAL_NAME,
-	    (char *)name, HCI_UNIT_NAME_SIZE))
+	if (hci_write(iface, HCI_CMD_WRITE_LOCAL_NAME, iface->name,
+	    HCI_UNIT_NAME_SIZE))
 		return -1;
 
 	if (hci_read(iface, HCI_CMD_READ_SCAN_ENABLE, &val, sizeof(val)))
@@ -319,25 +308,16 @@ int
 hci_process_pin_code_req(struct bt_interface *iface,
     struct sockaddr_bt *sa, const bdaddr_t *addr)
 {
-	const uint8_t *pin;
+	hci_pin_code_rep_cp cp;
 
-	pin = conf_lookup_pin(iface->env, addr);
+	conf_lookup_pin(iface->env, addr, cp.pin, &cp.pin_size);
 
-	if (pin == NULL) {
+	if (cp.pin_size == 0) {
 		log_info("%s: PIN code not found", bt_ntoa(addr, NULL));
 		return hci_send_cmd(iface->fd, sa, HCI_CMD_PIN_CODE_NEG_REP,
 		    sizeof(bdaddr_t), (void *)addr);
 	} else {
-		hci_pin_code_rep_cp cp;
-		int n;
-
 		bdaddr_copy(&cp.bdaddr, addr);
-		memcpy(cp.pin, pin, HCI_PIN_SIZE);
-
-		n = HCI_PIN_SIZE;
-		while (n > 0 && pin[n - 1] == 0)
-			n--;
-		cp.pin_size = n;
 
 		log_info("%s: PIN code found", bt_ntoa(addr, NULL));
 		return hci_send_cmd(iface->fd, sa, HCI_CMD_PIN_CODE_REP,

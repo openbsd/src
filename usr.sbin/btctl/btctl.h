@@ -1,4 +1,4 @@
-/*	$OpenBSD: btctl.h,v 1.1 2008/11/24 23:34:41 uwe Exp $	*/
+/*	$OpenBSD: btctl.h,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,7 @@ typedef struct {
 	bdaddr_t addr;
 	uint16_t type;
 	uint8_t pin[HCI_PIN_SIZE];
+	uint8_t pin_len;
 } btctl_attach_stmt;
 
 /* parse.y */

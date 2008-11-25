@@ -1,14 +1,13 @@
-#	$OpenBSD: Makefile,v 1.1 2008/11/24 23:34:41 uwe Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/11/25 17:13:53 uwe Exp $
 
 .PATH:		${.CURDIR}/../btd
 
 PROG=		btctl
-SRCS=		btctl.c conf.c log.c parse.y
+SRCS=		bt_subr.c btctl.c conf.c log.c parse.y
 NOMAN=
 
-LDADD+=		-lbluetooth -lsdp -lusbhid
-LDFLAGS+=	-L/usr/local/lib
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../btd -I/usr/local/include
+LDADD+=		-lusbhid
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../btd
 COPTS+=		-Wall -Werror
 DEBUG=		-g
 

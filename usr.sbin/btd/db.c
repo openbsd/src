@@ -3,7 +3,6 @@
 #include <netbt/hci.h>
 
 #include <assert.h>
-#include <bluetooth.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>

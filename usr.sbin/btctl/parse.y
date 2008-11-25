@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2008/11/24 23:34:41 uwe Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2008/11/25 17:13:53 uwe Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -28,7 +28,6 @@
 
 #include <dev/bluetooth/btdev.h>
 
-#include <bluetooth.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -116,14 +115,18 @@ main
 	btctl_interface_stmt stmt;
 
 	bdaddr_copy(&stmt.addr, &$2);
+
 	strbufcpy("interface name", $3, stmt.name);
+	free($3);
+
 	stmt.flags = $4 ? BTCTL_INTERFACE_DISABLED : 0;
 
 	switch (exec_stmt(BTCTL_INTERFACE_STMT, &stmt, sizeof(stmt))) {
 	case 0: break;
 	case EEXIST:
 		yyerror("interface %s is already defined",
-		    bdaddr_any(&$2) ? "*" : bt_ntoa(&$2, NULL));
+		    bdaddr_any(&stmt.addr) ? "*" :
+		    bt_ntoa(&stmt.addr, NULL));
 		YYERROR;
 	default:
 		yyerror("could not add interface");
@@ -135,14 +138,22 @@ main
 	btctl_attach_stmt stmt;
 
 	bdaddr_copy(&stmt.addr, &$2);
+
 	stmt.type = $3;
-	strbufcpy("PIN code", $4, stmt.pin);
+
+	if ($4 != NULL) {
+		strbufcpy("PIN code", $4, stmt.pin);
+		stmt.pin_len = strlen(stmt.pin);
+		free($4);
+	} else
+		stmt.pin_len = 0;
 
 	switch (exec_stmt(BTCTL_ATTACH_STMT, &stmt, sizeof(stmt))) {
 	case 0: break;
 	case EEXIST:
 		yyerror("device %s is already defined",
-		    bdaddr_any(&$2) ? "*" : bt_ntoa(&$2, NULL));
+		    bdaddr_any(&stmt.addr) ? "*" :
+		    bt_ntoa(&stmt.addr, NULL));
 		YYERROR;
 	default:
 		yyerror("could not add device");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2008/11/24 23:34:42 uwe Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -33,15 +33,19 @@
 
 #define CONTROL_BACKLOG 5
 
+void socket_blockmode(int, int);
 void control_acceptcb(int, short, void *);
 void control_readcb(struct bufferevent *, void *);
 void control_errorcb(struct bufferevent *, short, void *);
-
-void socket_blockmode(int, int);
+int control_interface_stmt(struct btd *, btctl_interface_stmt *);
+int control_attach_stmt(struct btd *, btctl_attach_stmt *);
+int control_commit(struct btd *, const struct btd *);
 
 struct control_connection {
 	TAILQ_ENTRY(control_connection) entry;
 	struct bufferevent *ev;
+	struct btd *env;
+	struct btd *new_env;
 	int fd;
 };
 
@@ -90,6 +94,7 @@ control_init(struct btd *env)
 	event_add(&ev_control, NULL);
 }
 
+/* called from priv process */
 void
 control_cleanup(void)
 {
@@ -98,13 +103,32 @@ control_cleanup(void)
 }
 
 void
+socket_blockmode(int fd, int block)
+{
+	int flags;
+
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+		fatal("fcntl F_GETFL");
+
+	if (block)
+		flags &= ~O_NONBLOCK;
+	else
+		flags |= O_NONBLOCK;
+
+	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
+		fatal("fcntl F_SETFL");
+}
+
+void
 control_acceptcb(int fd, short evflags, void *arg)
 {
+	struct btd *env = arg;
 	struct control_connection *conn;
 	struct sockaddr_storage sa;
-	socklen_t salen = sizeof(sa);
+	socklen_t salen;
 	int new_fd;
 
+	salen = sizeof(sa);
 	if ((new_fd = accept(fd, (struct sockaddr *)&sa, &salen)) == -1) {
 		log_warn("control_eventcb: accept");
 		return;
@@ -113,6 +137,7 @@ control_acceptcb(int fd, short evflags, void *arg)
 	if ((conn = calloc(1, sizeof(*conn))) == NULL)
 		fatal("control_eventcb: calloc");
 
+	conn->env = env;
 	conn->fd = new_fd;
 
 	if ((conn->ev = bufferevent_new(new_fd, control_readcb, NULL,
@@ -160,22 +185,56 @@ control_readcb(struct bufferevent *ev, void *arg)
 
 	switch (stmt_type) {
 	case BTCTL_CONFIG:
+		if (conn->new_env == NULL) {
+			conn->new_env = conf_new();
+			err = conn->new_env == NULL ? ENOMEM : 0;
+		} else
+			err = EALREADY;
+		break;
+
 	case BTCTL_COMMIT:
+		if (conn->new_env != NULL) {
+			err = control_commit(conn->env, conn->new_env);
+			if (err == 0) {
+				conf_delete(conn->new_env);
+				conn->new_env = NULL;
+			}
+		} else
+			err = 0;
+		break;
+
 	case BTCTL_ROLLBACK:
+		if (conn->new_env != NULL) {
+			conf_delete(conn->new_env);
+			conn->new_env = NULL;
+		}
+		err = 0;
 		break;
+
 	case BTCTL_INTERFACE_STMT:
+		if (conn->new_env == NULL) {
+			err = EOPNOTSUPP;
+			break;
+		}
 		bufferevent_read(ev, &interface_stmt, stmt_size);
+		err = control_interface_stmt(conn->new_env, &interface_stmt);
 		break;
+
 	case BTCTL_ATTACH_STMT:
+		if (conn->new_env == NULL) {
+			err = EOPNOTSUPP;
+			break;
+		}
 		bufferevent_read(ev, &attach_stmt, stmt_size);
+		err = control_attach_stmt(conn->new_env, &attach_stmt);
 		break;
+
 	default:
 		log_warnx("Invalid control packet of type %#x", stmt_type);
 		close(conn->fd);
 		return;
 	}
 
-	err = 0;
 	bufferevent_write(ev, &err, sizeof(err));
 }
 
@@ -185,24 +244,59 @@ control_errorcb(struct bufferevent *ev, short what, void *arg)
 	struct control_connection *conn = arg;
 
 	TAILQ_REMOVE(&connections, conn, entry);
+
+	if (conn->new_env != NULL)
+		conf_delete(conn->new_env);
+
 	bufferevent_free(conn->ev);
 	close(conn->fd);
 	free(conn);
 }
 
-void
-socket_blockmode(int fd, int block)
+int
+control_interface_stmt(struct btd *conf, btctl_interface_stmt *stmt)
 {
-	int flags;
+	struct bt_interface *iface;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
+	if ((iface = conf_add_interface(conf, &stmt->addr)) == NULL)
+		return errno;
 
-	if (block)
-		flags &= ~O_NONBLOCK;
-	else
-		flags |= O_NONBLOCK;
+	strlcpy(iface->name, stmt->name,  sizeof(iface->name));
 
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
+	if (stmt->flags & BTCTL_INTERFACE_DISABLED)
+		iface->disabled = 1;
+
+	return 0;
+}
+
+int
+control_attach_stmt(struct btd *conf, btctl_attach_stmt *stmt)
+{
+	struct bt_device *btdev;
+
+	if ((btdev = conf_add_device(conf, &stmt->addr)) == NULL)
+		return errno;
+
+	btdev->type = stmt->type;
+
+	strlcpy(btdev->pin, stmt->pin,  sizeof(btdev->pin));
+	btdev->pin_len = stmt->pin_len;
+
+	btdev->flags |= BTDF_ATTACH;
+
+	return 0;
+}
+
+int
+control_commit(struct btd *env, const struct btd *conf)
+{
+#if 0
+	struct bt_interface *iface;
+	struct bt_interface *conf_iface;
+#endif
+
+	conf_dump(env);
+	conf_dump(conf);
+
+	return 0;
 }

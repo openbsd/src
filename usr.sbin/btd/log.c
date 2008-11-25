@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2008/11/24 23:34:42 uwe Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2008/11/25 17:13:53 uwe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <bluetooth.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

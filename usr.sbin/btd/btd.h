@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.h,v 1.1 2008/11/24 23:34:42 uwe Exp $	*/
+/*	$OpenBSD: btd.h,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <dev/bluetooth/btdev.h>
 #include <netbt/bluetooth.h>
+#include <netbt/hci.h>
 
 #include <db.h>
 #include <event.h>
@@ -40,19 +41,19 @@
 
 struct btd;
 
+struct btd_db {
+	DB *dbh;
+};
+
 struct bt_interface {
 	TAILQ_ENTRY(bt_interface) entry;
-	struct event ev;
 	struct btd *env;
 	const char *xname;
 	bdaddr_t addr;
-	const char *name;
+	char name[HCI_UNIT_NAME_SIZE];
 	int disabled;
+	struct event ev;
 	int fd;
-};
-
-struct btd_db {
-	DB *dbh;
 };
 
 struct btd_hci {
@@ -68,9 +69,11 @@ struct bt_devinfo {
 
 struct bt_device {
 	TAILQ_ENTRY(bt_device) entry;
+	struct btd *env;
 	bdaddr_t addr;
 	uint16_t type;
-	uint8_t *pin;		/* HCI_PIN_SIZE when not NULL */
+	uint8_t pin[HCI_PIN_SIZE];
+	uint8_t pin_len;
 	time_t last_seen;	/* last response to an inquiry */
 	int flags;
 	struct bt_devinfo info;
@@ -105,16 +108,26 @@ enum imsg_type {
 /* bt.c */
 pid_t bt_main(int[2], struct btd *, struct passwd *);
 
+/* bt_subr.c */
+char const *bt_ntoa(bdaddr_t const *, char[18]);
+int bt_aton(char const *, bdaddr_t *);
+
 /* conf.c */
-struct bt_device *conf_add_device(struct btd *,
-    const bdaddr_t *);
-struct bt_device *conf_find_device(const struct btd *,
-    const bdaddr_t *);
-struct bt_interface *conf_add_interface(struct btd *,
-    const bdaddr_t *);
-struct bt_interface *conf_find_interface(const struct btd *,
-    const bdaddr_t *);
-const uint8_t *conf_lookup_pin(const struct btd *, const bdaddr_t *);
+struct btd *conf_new(void);
+void conf_delete(struct btd *);
+
+struct bt_interface *conf_add_interface(struct btd *, const bdaddr_t *);
+struct bt_interface *conf_find_interface(const struct btd *, const bdaddr_t *);
+void conf_delete_interface(struct bt_interface *);
+
+struct bt_device *conf_add_device(struct btd *, const bdaddr_t *);
+struct bt_device *conf_find_device(const struct btd *, const bdaddr_t *);
+void conf_delete_device(struct bt_device *);
+
+void conf_lookup_pin(const struct btd *, const bdaddr_t *,
+    uint8_t[HCI_PIN_SIZE], uint8_t *);
+
+void conf_dump(const struct btd *);
 
 /* control.c */
 void control_init(struct btd *);
