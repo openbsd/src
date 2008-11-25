@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.123 2008/11/23 23:44:01 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.124 2008/11/25 22:48:22 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1444,6 +1444,19 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	xs->error = XS_NOERROR;
 	wu->swu_xs = xs;
+
+	/* the midlayer will query LUNs so report sense to stop scanning */
+	if (link->target != 0 || link->lun != 0) {
+		DNPRINTF(SR_D_CMD, "%s: bad target:lun %d:%d\n",
+		    DEVNAME(sc), link->target, link->lun);
+		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
+		    SSD_ERRCODE_VALID;
+		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
+		sd->sd_scsi_sense.add_sense_code = 0x25;
+		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
+		sd->sd_scsi_sense.extra_len = 4;
+		goto stuffup;
+	}
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
