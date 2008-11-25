@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.180 2008/11/25 15:43:32 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.181 2008/11/25 16:32:41 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2036,7 +2036,7 @@ m_cldrop(struct ifnet *ifp, int pi)
 
 	if (mcls->mclpool[pi].mcl_alive <= 2 &&
 	    mcls->mclpool[pi].mcl_hwm < 32768 &&
-	    ISSET(ifp->if_flags, IFF_UP)) {
+	    ISSET(ifp->if_flags, IFF_RUNNING)) {
 		/* About to run out, so increase the watermark */
 		mcls->mclpool[pi].mcl_hwm++;
 	} else if (mcls->mclpool[pi].mcl_alive >= mcls->mclpool[pi].mcl_hwm)
