@@ -235,18 +235,20 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 {
 	int ret = 0;
 
-	DRM_SPINLOCK(&dev->vbl_lock);
+	if (dev_priv->irq_enabled == 0)
+		return (EINVAL);
 
+	DRM_SPINLOCK(&dev->vbl_lock);
 	atomic_add(1, &dev->vblank[crtc].vbl_refcount);
 	if (dev->vblank[crtc].vbl_refcount == 1 &&
 	    dev->vblank[crtc].vbl_enabled == 0) {
-		ret = dev->driver->enable_vblank(dev, crtc);
-		if (ret) {
-			atomic_dec(&dev->vblank[crtc].vbl_refcount);
-		} else {
+		if ((ret = dev->driver->enable_vblank(dev, crtc)) == 0) {
 			dev->vblank[crtc].vbl_enabled = 1;
 			drm_update_vblank_count(dev, crtc);
+		} else {
+			atomic_dec(&dev->vblank[crtc].vbl_refcount);
 		}
+
 	}
 	DRM_SPINUNLOCK(&dev->vbl_lock);
 
@@ -256,6 +258,9 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 void
 drm_vblank_put(struct drm_device *dev, int crtc)
 {
+	if (dev->irq_enabled == 0)
+		return;
+
 	DRM_SPINLOCK(&dev->vbl_lock);
 	/* Last user schedules interrupt disable */
 	atomic_dec(&dev->vblank[crtc].vbl_refcount);
