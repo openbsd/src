@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.11 2008/11/25 15:55:13 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.12 2008/11/25 15:58:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -484,7 +484,7 @@ session_rfc5321_help_handler(struct session *s, char *args)
 	evbuffer_add_printf(s->s_bev->output,
 	    "214- This is OpenSMTPD\r\n"
 	    "214- To report bugs in the implementation, please contact\r\n"
-	    "214- bugs@poolp.org\r\n");
+	    "214- bugs@openbsd.org with full details\r\n");
 	evbuffer_add_printf(s->s_bev->output,
 	    "214 End of HELP info\r\n");
 
