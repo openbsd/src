@@ -1452,6 +1452,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/scsi
 ./usr/libdata/perl5/site_perl/sparc-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/scsi/safte.ph

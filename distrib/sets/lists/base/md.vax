@@ -1388,6 +1388,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/safte.ph

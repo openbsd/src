@@ -2013,6 +2013,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/safte.ph

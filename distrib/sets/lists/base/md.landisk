@@ -2079,6 +2079,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/scsi
 ./usr/libdata/perl5/site_perl/sh-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/scsi/safte.ph

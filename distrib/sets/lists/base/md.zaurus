@@ -2098,6 +2098,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/safte.ph

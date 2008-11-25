@@ -131,6 +131,7 @@
 ./usr/include/dev/bluetooth/btdev.h
 ./usr/include/dev/bluetooth/bthid.h
 ./usr/include/dev/bluetooth/bthidev.h
+./usr/include/dev/bluetooth/btsco.h
 ./usr/include/dev/cardbus
 ./usr/include/dev/cardbus/cardbus_exrom.h
 ./usr/include/dev/cardbus/cardbusvar.h

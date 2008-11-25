@@ -1953,6 +1953,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/safte.ph

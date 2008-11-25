@@ -2120,6 +2120,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sched.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/safte.ph
