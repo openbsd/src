@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.123 2008/08/14 00:59:50 sthen Exp $
+#	$OpenBSD: netstart,v 1.124 2008/11/25 12:11:44 markus Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -390,5 +390,8 @@ done
 
 if [ "$ip6kernel" = "YES" ]; then
 	# this is to make sure DAD is completed before going further.
-	sleep `sysctl -n net.inet6.ip6.dad_count`
+	count=0
+	while [ $((count++)) -lt 10 -a "x"`sysctl -n net.inet6.ip6.dad_pending` != "x0" ]; do
+		sleep 1
+	done
 fi

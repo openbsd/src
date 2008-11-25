@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.56 2008/06/11 06:30:36 mcbride Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.57 2008/11/25 12:11:45 markus Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -265,6 +265,7 @@ int	ip6_maxfrags = 200;
 int	ip6_log_interval = 5;
 int	ip6_hdrnestlimit = 10;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
+int	ip6_dad_pending;	/* number of currently running DADs */
 int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix

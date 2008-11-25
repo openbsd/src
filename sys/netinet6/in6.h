@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.46 2008/06/11 06:30:36 mcbride Exp $	*/
+/*	$OpenBSD: in6.h,v 1.47 2008/11/25 12:11:44 markus Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -618,7 +618,8 @@ struct ip6_mtuinfo {
 #define IPV6CTL_MAXIFPREFIXES	46
 #define IPV6CTL_MAXIFDEFROUTERS 47
 #define IPV6CTL_MAXDYNROUTES	48
-#define IPV6CTL_MAXID		49
+#define IPV6CTL_DAD_PENDING	49
+#define IPV6CTL_MAXID		50
 
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
@@ -673,6 +674,7 @@ struct ip6_mtuinfo {
 	{ "maxifprefixes", CTLTYPE_INT }, \
 	{ "maxifdefrouters", CTLTYPE_INT }, \
 	{ "maxdynroutes", CTLTYPE_INT }, \
+	{ "dad_pending", CTLTYPE_INT }, \
 }
 
 #define IPV6CTL_VARS { \
@@ -725,6 +727,7 @@ struct ip6_mtuinfo {
 	&ip6_maxifprefixes, \
 	&ip6_maxifdefrouters, \
 	&ip6_maxdynroutes, \
+	NULL, \
 }
 
 #endif /* __BSD_VISIBLE */

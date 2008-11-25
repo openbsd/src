@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.53 2008/10/01 21:17:06 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.54 2008/11/25 12:11:45 markus Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1127,6 +1127,7 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	}
 	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
+	ip6_dad_pending++;
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
 	    ip6_sprintf(&ia->ia_addr.sin6_addr)));
@@ -1181,6 +1182,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
+	ip6_dad_pending--;
 }
 
 static void
@@ -1226,6 +1228,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 		free(dp, M_IP6NDP);
 		dp = NULL;
 		IFAFREE(ifa);
+		ip6_dad_pending--;
 		goto done;
 	}
 
@@ -1279,6 +1282,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			free(dp, M_IP6NDP);
 			dp = NULL;
 			IFAFREE(ifa);
+			ip6_dad_pending--;
 		}
 	}
 
@@ -1318,6 +1322,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
+	ip6_dad_pending--;
 }
 
 static void

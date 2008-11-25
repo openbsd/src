@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.89 2008/11/02 10:37:29 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.90 2008/11/25 12:11:45 markus Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1471,6 +1471,8 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_V6ONLY:
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
+	case IPV6CTL_DAD_PENDING:
+		return sysctl_rdint(oldp, oldlenp, newp, ip6_dad_pending);
 	case IPV6CTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
