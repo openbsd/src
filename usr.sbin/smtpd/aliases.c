@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.6 2008/11/17 20:16:48 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.7 2008/11/25 23:01:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,12 +40,7 @@
 
 #include "smtpd.h"
 
-int aliases_exist(struct smtpd *, char *);
-int aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int aliases_virtual_exist(struct smtpd *, struct path *);
-int aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
 int aliases_expand_include(struct aliaseslist *, char *);
-
 int alias_parse(struct alias *, char *);
 int alias_is_filter(struct alias *, char *, size_t);
 int alias_is_username(struct alias *, char *, size_t);
