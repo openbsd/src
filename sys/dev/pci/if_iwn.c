@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.39 2008/11/25 21:43:57 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.40 2008/11/25 22:20:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -304,7 +304,7 @@ int
 iwn_match(struct device *parent, void *match, void *aux)
 {
 	return pci_matchbyid((struct pci_attach_args *)aux, iwn_devices,
-	    sizeof iwn_devices / sizeof iwn_devices[0]);
+	    nitems(iwn_devices));
 }
 
 void

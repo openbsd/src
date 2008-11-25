@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.13 2008/07/21 19:41:44 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.14 2008/11/25 22:20:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -119,7 +119,7 @@ int
 ral_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ral_pci_devices,
-	    sizeof (ral_pci_devices) / sizeof (ral_pci_devices[0])));
+	    nitems(ral_pci_devices)));
 }
 
 void

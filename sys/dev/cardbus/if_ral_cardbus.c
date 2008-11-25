@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.11 2008/07/21 19:41:44 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.12 2008/11/25 22:20:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -126,8 +126,7 @@ int
 ral_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
-	    ral_cardbus_devices,
-	    sizeof (ral_cardbus_devices) / sizeof (ral_cardbus_devices[0])));
+	    ral_cardbus_devices, nitems(ral_cardbus_devices)));
 }
 
 void

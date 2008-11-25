@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.95 2008/11/25 21:43:57 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.96 2008/11/25 22:20:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -149,7 +149,7 @@ int
 iwi_match(struct device *parent, void *match, void *aux)
 {
 	return pci_matchbyid((struct pci_attach_args *)aux, iwi_devices,
-	    sizeof (iwi_devices) / sizeof (iwi_devices[0]));
+	    nitems(iwi_devices));
 }
 
 /* Base Address Register */

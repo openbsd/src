@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.75 2008/11/25 21:43:57 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.76 2008/11/25 22:20:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -176,7 +176,7 @@ int
 wpi_match(struct device *parent, void *match, void *aux)
 {
 	return pci_matchbyid((struct pci_attach_args *)aux, wpi_devices,
-	    sizeof wpi_devices / sizeof wpi_devices[0]);
+	    nitems(wpi_devices));
 }
 
 void
