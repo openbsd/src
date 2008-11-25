@@ -18,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.268 2008/08/20 11:41:22 millert Exp $
+ * $Sudo: sudo.h,v 1.269 2008/11/25 17:01:34 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -240,6 +240,7 @@ int mkstemp		__P((char *));
 char *sudo_goodpath	__P((const char *, struct stat *));
 char *tgetpass		__P((const char *, int, int));
 int find_path		__P((char *, char **, struct stat *, char *));
+int tty_present		__P((void));
 void check_user		__P((int, int));
 void verify_user	__P((struct passwd *, char *));
 #ifdef HAVE_LDAP

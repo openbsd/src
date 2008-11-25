@@ -71,7 +71,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.124 2008/11/08 15:30:42 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.125 2008/11/25 17:01:34 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -308,4 +308,14 @@ handler(s)
 {
     if (s != SIGALRM)
 	signo = s;
+}
+
+int
+tty_present()
+{
+    int fd;
+
+    if ((fd = open(_PATH_TTY, O_RDWR|O_NOCTTY)) != -1)
+	close(fd);
+    return(fd != -1);
 }
