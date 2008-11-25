@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.17 2008/11/21 17:17:05 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.18 2008/11/25 18:49:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -35,13 +35,6 @@
 
 /* Base Address Register. */
 #define IWN_PCI_BAR0	PCI_MAPREG_START
-
-/* Possible flags for PCIe Device Control Register (see PCIe 7.8.4) */
-#define PCI_PCIE_DCSR_ENA_NO_SNOOP	(1 << 11)
-
-/* Possible flags for PCIe Link Control Register (see PCIe 7.8.7) */
-#define PCI_PCIE_LCSR_ASPM_L0S	(1 << 0)
-#define PCI_PCIE_LCSR_ASPM_L1	(1 << 1)
 
 /*
  * Control and status registers.

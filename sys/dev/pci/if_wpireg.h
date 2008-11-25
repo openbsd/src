@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.22 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.23 2008/11/25 18:49:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -33,9 +33,6 @@
 
 /* Base Address Register. */
 #define WPI_PCI_BAR0	PCI_MAPREG_START
-
-/* Possible flags for PCIe Link Control Register (see PCIe 7.8.7) */
-#define PCI_PCIE_LCSR_ASPM_L0S	(1 << 0)
 
 /*
  * Control and status registers.
