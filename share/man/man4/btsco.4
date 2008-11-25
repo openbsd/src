@@ -1,4 +1,4 @@
-.\" $OpenBSD: btsco.4,v 1.1 2008/11/24 22:58:26 uwe Exp $
+.\" $OpenBSD: btsco.4,v 1.2 2008/11/25 16:18:30 jmc Exp $
 .\" $NetBSD: btsco.4,v 1.9 2006/10/04 19:29:25 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2006
+.Dd $Mdocdate: November 25 2008 $
 .Dt BTSCO 4
 .Os
 .Sh NAME
@@ -40,30 +40,26 @@
 .Cd "btsco*	at bthub?"
 .Cd "audio*	at audiobus?"
 .Sh DESCRIPTION
-The
 .Nm
-driver provides support for Bluetooth SCO Audio devices through the
+provides support for Bluetooth SCO Audio devices through the
 .Xr audio 4
 driver.
-.Pp
-The
 .Nm
-driver must be configured at run time with the
-.Xr btdevctl 8
-program.
-The following properties are used by the
-.Nm
-driver during autoconfiguration:
+is configured at run time with the
+btdevctl program.
 .Pp
-.Bl -tag -width listenXX
+The following properties are used by
+.Nm
+during autoconfiguration:
+.Pp
+.Bl -tag -width Ds
 .It local-bdaddr
 Local device address.
 .It remote-bdaddr
 Remote device address.
 .It service-name
-The
 .Nm
-driver matches the
+matches the
 .Sq HF
 and
 .Sq HSET
@@ -82,14 +78,13 @@ will attempt to initiate a connection to the remote device.
 This integer value is not used directly, but will be stored and
 passed via the
 .Dv BTSCO_INFO
-ioctl as below:
+ioctl as shown below.
 .El
 .Pp
 SCO connections require a baseband connection between the two devices before
 they can be created.
-The
 .Nm
-driver does not create this, but can provide information to facilitate
+does not create this, but can provide information to facilitate
 an application setting up a control channel prior to use, via the
 .Dv BTSCO_INFO
 .Xr ioctl 2
@@ -97,7 +92,7 @@ call on the mixer device, which returns a
 .Ar btsco_info
 structure as follows:
 .Bd -literal -offset
-#include \*[Lt]dev/bluetooth/btsco.h\*[Gt]
+#include <dev/bluetooth/btsco.h>
 
 struct btsco_info {
 	bdaddr_t	laddr;		/* controller bdaddr */
@@ -110,23 +105,18 @@ struct btsco_info {
 #define BTSCO_INFO	_IOR('b', 16, struct btsco_info)
 .Ed
 .Pp
-The
 .Nm
-driver can be configured to act in Connect or Listen mode.
-In Connect mode, the
-.Nm
-driver will initate a connection to the remote device on an
+can be configured to act in Connect or Listen mode.
+In Connect mode,
+it will initiate a connection to the remote device on an
 .Xr open 2
-call, whereas in Listen mode,
+call, whereas in Listen mode
 .Xr open 2
 will block until the remote device initiates the connection.
 .Sh SEE ALSO
-.Xr bthset 1 ,
 .Xr ioctl 2 ,
 .Xr audio 4 ,
-.Xr bluetooth 4 ,
-.Xr bthub 4 ,
-.Xr btdevctl 8
+.Xr bluetooth 4
 .Sh HISTORY
 The
 .Nm
@@ -138,5 +128,6 @@ by
 under the sponsorship of Itronix, Inc.
 .Sh BUGS
 .Nm
-takes no notice of the HCI Voice Setting in the Bluetooth controller, and this
-must be 0x0060 (the default) as alternate values are currently unsupported.
+takes no notice of the HCI Voice Setting in the Bluetooth controller,
+and must be 0x0060 (the default)
+as alternate values are currently unsupported.
