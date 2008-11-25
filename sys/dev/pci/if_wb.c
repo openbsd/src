@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.41 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.42 2008/11/25 11:01:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -135,10 +135,8 @@ int wb_probe(struct device *, void *, void *);
 void wb_attach(struct device *, struct device *, void *);
 
 void wb_bfree(caddr_t, u_int, void *);
-int wb_newbuf(struct wb_softc *, struct wb_chain_onefrag *,
-    struct mbuf *);
-int wb_encap(struct wb_softc *, struct wb_chain *,
-    struct mbuf *);
+void wb_newbuf(struct wb_softc *, struct wb_chain_onefrag *);
+int wb_encap(struct wb_softc *, struct wb_chain *, struct mbuf *);
 
 void wb_rxeof(struct wb_softc *);
 void wb_rxeoc(struct wb_softc *);
@@ -928,8 +926,7 @@ int wb_list_rx_init(sc)
 		cd->wb_rx_chain[i].wb_ptr =
 			(struct wb_desc *)&ld->wb_rx_list[i];
 		cd->wb_rx_chain[i].wb_buf = (void *)&ld->wb_rxbufs[i];
-		if (wb_newbuf(sc, &cd->wb_rx_chain[i], NULL) == ENOBUFS)
-			return(ENOBUFS);
+		wb_newbuf(sc, &cd->wb_rx_chain[i]);
 		if (i == (WB_RX_LIST_CNT - 1)) {
 			cd->wb_rx_chain[i].wb_nextdesc = &cd->wb_rx_chain[0];
 			ld->wb_rx_list[i].wb_next = 
@@ -947,50 +944,17 @@ int wb_list_rx_init(sc)
 	return(0);
 }
 
-void
-wb_bfree(buf, size, arg)
-	caddr_t			buf;
-	u_int			size;
-	void *arg;
-{
-}
-
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-int
-wb_newbuf(sc, c, m)
+void
+wb_newbuf(sc, c)
 	struct wb_softc *sc;
 	struct wb_chain_onefrag *c;
-	struct mbuf *m;
 {
-	struct mbuf		*m_new = NULL;
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return(ENOBUFS);
-		m_new->m_data = m_new->m_ext.ext_buf = c->wb_buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
-		    m_new->m_len = WB_BUFBYTES;
-		m_new->m_ext.ext_free = wb_bfree;
-		m_new->m_ext.ext_arg = NULL;
-		MCLINITREFERENCE(m_new);
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = WB_BUFBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	m_adj(m_new, sizeof(u_int64_t));
-
-	c->wb_mbuf = m_new;
-	c->wb_ptr->wb_data = VTOPHYS(mtod(m_new, caddr_t));
+	c->wb_ptr->wb_data = VTOPHYS(c->wb_buf + sizeof(u_int64_t));
 	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | ETHER_MAX_DIX_LEN;
 	c->wb_ptr->wb_status = WB_RXSTAT;
-
-	return(0);
 }
 
 /*
@@ -1000,7 +964,6 @@ wb_newbuf(sc, c, m)
 void wb_rxeof(sc)
 	struct wb_softc		*sc;
 {
-        struct mbuf		*m = NULL;
         struct ifnet		*ifp;
 	struct wb_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -1010,12 +973,10 @@ void wb_rxeof(sc)
 
 	while(!((rxstat = sc->wb_cdata.wb_rx_head->wb_ptr->wb_status) &
 							WB_RXSTAT_OWN)) {
-		struct mbuf *m0 = NULL;
+		struct mbuf *m;
 
 		cur_rx = sc->wb_cdata.wb_rx_head;
 		sc->wb_cdata.wb_rx_head = cur_rx->wb_nextdesc;
-
-		m = cur_rx->wb_mbuf;
 
 		if ((rxstat & WB_RXSTAT_MIIERR) ||
 		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) < WB_MIN_FRAMELEN) ||
@@ -1023,7 +984,7 @@ void wb_rxeof(sc)
 		    !(rxstat & WB_RXSTAT_LASTFRAG) ||
 		    !(rxstat & WB_RXSTAT_RXCMP)) {
 			ifp->if_ierrors++;
-			wb_newbuf(sc, cur_rx, m);
+			wb_newbuf(sc, cur_rx);
 			printf("%s: receiver babbling: possible chip "
 				"bug, forcing reset\n", sc->sc_dev.dv_xname);
 			wb_fixmedia(sc);
@@ -1034,7 +995,7 @@ void wb_rxeof(sc)
 
 		if (rxstat & WB_RXSTAT_RXERR) {
 			ifp->if_ierrors++;
-			wb_newbuf(sc, cur_rx, m);
+			wb_newbuf(sc, cur_rx);
 			break;
 		}
 
@@ -1050,14 +1011,13 @@ void wb_rxeof(sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
-		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
-		    ifp, NULL);
-		wb_newbuf(sc, cur_rx, m);
-		if (m0 == NULL) {
+		m = m_devget(cur_rx->wb_buf + sizeof(u_int64_t), total_len,
+		    ETHER_ALIGN, ifp, NULL);
+		wb_newbuf(sc, cur_rx);
+		if (m == NULL) {
 			ifp->if_ierrors++;
 			break;
 		}
-		m = m0;
 
 		ifp->if_ipackets++;
 
@@ -1719,12 +1679,6 @@ void wb_stop(sc)
 	/*
 	 * Free data in the RX lists.
 	 */
-	for (i = 0; i < WB_RX_LIST_CNT; i++) {
-		if (sc->wb_cdata.wb_rx_chain[i].wb_mbuf != NULL) {
-			m_freem(sc->wb_cdata.wb_rx_chain[i].wb_mbuf);
-			sc->wb_cdata.wb_rx_chain[i].wb_mbuf = NULL;
-		}
-	}
 	bzero((char *)&sc->wb_ldata->wb_rx_list,
 		sizeof(sc->wb_ldata->wb_rx_list));
 
