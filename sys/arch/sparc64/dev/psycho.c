@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.62 2008/07/23 12:18:40 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.63 2008/11/25 16:31:19 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -554,12 +554,14 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_is->is_sb[1] = &pp->pp_sb;
 
 		printf("%s: ", sc->sc_dev.dv_xname);
-		printf("dvma map %x-%x, ", sc->sc_is->is_dvmabase,
+		printf("dvma map %x-%x", sc->sc_is->is_dvmabase,
 		    sc->sc_is->is_dvmaend);
-		printf("iotdb %llx-%llx",
+#ifdef DEBUG
+		printf(", iotdb %llx-%llx",
 		    (unsigned long long)sc->sc_is->is_ptsb,
 		    (unsigned long long)(sc->sc_is->is_ptsb +
 		    (PAGE_SIZE << sc->sc_is->is_tsbsize)));
+#endif
 		iommu_reset(sc->sc_is);
 		printf("\n");
 	}
