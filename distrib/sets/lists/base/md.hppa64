@@ -775,6 +775,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/bluetooth/bthid.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/bluetooth/bthidev.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/cardbus/cardbusvar.ph
@@ -2119,7 +2120,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sched.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/safte.ph

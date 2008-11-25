@@ -783,6 +783,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/bthid.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/bthidev.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus/cardbusvar.ph
@@ -2152,7 +2153,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/rpcsvc/ypclnt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sched.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sco/bluetooth/btdev.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/safte.ph
