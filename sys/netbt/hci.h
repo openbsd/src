@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.h,v 1.12 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: hci.h,v 1.13 2008/11/25 14:00:12 uwe Exp $	*/
 /*	$NetBSD: hci.h,v 1.28 2008/09/08 23:36:55 gmcgarry Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.12 2008/11/22 04:42:58 uwe Exp $
+ * $Id: hci.h,v 1.13 2008/11/25 14:00:12 uwe Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2363,6 +2363,7 @@ struct btreq {
 
 #ifdef _KERNEL
 
+#include <sys/device.h>
 #include <net/if.h>		/* for struct ifqueue */
 
 struct l2cap_channel;
