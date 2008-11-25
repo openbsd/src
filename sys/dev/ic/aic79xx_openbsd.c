@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.29 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.30 2008/11/25 18:10:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -308,7 +308,6 @@ ahd_action(struct scsi_xfer *xs)
 	u_int	target_id;
 	u_int	our_id;
 	int	s;
-	int	dontqueue = 0;
 	struct	ahd_initiator_tinfo *tinfo;
 	struct	ahd_tmode_tstate *tstate;
 	u_int	col_idx;
@@ -316,9 +315,6 @@ ahd_action(struct scsi_xfer *xs)
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahd_action\n"));
 	ahd = (struct ahd_softc *)xs->sc_link->adapter_softc;
-
-	/* determine safety of software queueing */
-	dontqueue = xs->flags & SCSI_POLL;
 
 	target_id = xs->sc_link->target;
 	our_id = SCSI_SCSI_ID(ahd, xs->sc_link);
