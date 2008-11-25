@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.124 2008/11/25 22:48:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.125 2008/11/25 23:05:17 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1403,6 +1403,18 @@ sr_wu_get(struct sr_discipline *sd)
 	return (wu);
 }
 
+void
+sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
+{
+	int			s;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_scsi_done: xs %p\n", DEVNAME(sd->sd_sc), xs);
+
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
+}
+
 int
 sr_scsi_cmd(struct scsi_xfer *xs)
 {
@@ -1532,11 +1544,9 @@ stuffup:
 		xs->flags |= ITSDONE;
 	}
 complete:
-	s = splbio();
-	scsi_done(xs);
-	splx(s);
 	if (wu)
 		sr_wu_put(wu);
+	sr_scsi_done(sd, xs);
 	return (COMPLETE);
 }
 int

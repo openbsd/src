@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.64 2008/11/23 23:44:01 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.65 2008/11/25 23:05:17 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -466,6 +466,8 @@ void			sr_meta_save_callback(void *, void *);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
 			    char *);
 int			sr_check_io_collision(struct sr_workunit *);
+void			sr_scsi_done(struct sr_discipline *,
+			    struct scsi_xfer *);
 
 /* discipline functions */
 int			sr_raid_inquiry(struct sr_workunit *);

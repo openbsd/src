@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.10 2008/10/04 19:21:00 miod Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.11 2008/11/25 23:05:17 marco Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -382,7 +382,7 @@ sr_raid0_intr(struct buf *bp)
 
 		/* do not change the order of these 2 functions */
 		sr_wu_put(wu);
-		scsi_done(xs);
+		sr_scsi_done(sd, xs);
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
 			wakeup(sd);
@@ -394,6 +394,6 @@ bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
 	sr_wu_put(wu);
-	scsi_done(xs);
+	sr_scsi_done(sd, xs);
 	splx(s);
 }
