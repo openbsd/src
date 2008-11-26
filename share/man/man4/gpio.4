@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.13 2008/11/24 15:13:01 jmc Exp $
+.\"	$OpenBSD: gpio.4,v 1.14 2008/11/26 14:57:40 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2008 $
+.Dd $Mdocdate: November 26 2008 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -48,6 +48,14 @@ directory, e.g.\&
 Access from userland is performed through
 .Xr ioctl 2
 calls on these devices.
+.Pp
+The layout of the GPIO device is defined at securelevel 0, i.e. typically
+during system boot, and can not be changed later.
+GPIO pins can be configured and given a symbolic name and device drivers
+that use GPIO pins can be attached to the
+.Nm
+device at securelevel 0.
+All other pins will not be accessible once the runlevel has been raised.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in the
 .Aq Pa sys/gpio.h
@@ -69,13 +77,18 @@ Returns the input pin value in the
 .Fa gpio_pin_op
 structure:
 .Bd -literal
+#define GPIOPINMAXNAME		64
+
 struct gpio_pin_op {
-	int gp_pin;		/* pin number */
-	int gp_value;		/* value */
+	char gp_name[GPIOPINMAXNAME];	/* pin name */
+	int gp_pin;			/* pin number */
+	int gp_value;			/* value */
 };
 .Ed
 .Pp
 The
+.Fa gp_name
+or
 .Fa gp_pin
 field must be set before calling.
 .It Dv GPIOPINWRITE (struct gpio_pin_op)
@@ -94,15 +107,19 @@ field contains the old pin state.
 Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
-.It Dv GPIOPINCTL (struct gpio_pin_ctl)
+.It Dv GPIOPINSET (struct gpio_pin_set)
 Changes pin configuration flags with the new ones provided in the
-.Fa gpio_pin_ctl
+.Fa gpio_pin_set
 structure:
 .Bd -literal
-struct gpio_pin_ctl {
-	int gp_pin;		/* pin number */
-	int gp_caps;		/* pin capabilities (read-only) */
-	int gp_flags;		/* pin configuration flags */
+#define GPIOPINMAXNAME		64
+
+struct gpio_pin_set {
+	char gp_name[GPIOPINMAXNAME];	/* pin name */
+	int gp_pin;			/* pin number */
+	int gp_caps;			/* pin capabilities (ro) */
+	int gp_flags;			/* pin configuration flags */
+	char gp_name2[GPIOPINMAXNAME];	/* new name */
 };
 .Ed
 .Pp
@@ -139,6 +156,13 @@ On return the
 .Fa gp_caps
 field contains flags that are supported.
 If no flags are specified, the pin configuration stays unchanged.
+.Pp
+Only GPIO pins that have been set using
+.Ar GPIOPINSET
+will be accessible at securelevels > 0.
+.It Dv GPIOPINUNSET (struct gpio_pin_set)
+Unset the specified pin, i.e. clear its name and make it unaccessible
+at securelevels > 0.
 .It Dv GPIOATTACH (struct gpio_attach)
 Attach the device described in the
 .Fa gpio_attach
