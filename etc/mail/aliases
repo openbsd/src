@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.27 2008/11/26 00:07:15 fkr Exp $
+#	$OpenBSD: aliases,v 1.28 2008/11/26 12:55:14 fkr Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
@@ -23,6 +23,7 @@ www:	root
 # Redirections for pseudo accounts that should not receive mail
 _afs: /dev/null
 _bgpd: /dev/null
+_btd: /dev/null
 _dhcp: /dev/null
 _dvmrpd: /dev/null
 _fingerd: /dev/null
@@ -52,7 +53,6 @@ _tcpdump: /dev/null
 _tftpd: /dev/null
 _x11:   /dev/null
 _ypldap: /dev/null
-_btd: /dev/null
 bin:	/dev/null
 named:	/dev/null
 nobody:	/dev/null
