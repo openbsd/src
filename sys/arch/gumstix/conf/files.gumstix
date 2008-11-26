@@ -1,0 +1,74 @@
+#	$OpenBSD: files.gumstix,v 1.1 2008/11/26 14:18:11 drahn Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	16
+maxusers	2 8 64
+
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+major	{rd = 18}
+
+file	arch/arm/arm/conf.c
+
+file	arch/gumstix/gumstix/gumstix_machdep.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+
+# CPU support and integrated peripherals
+include "arch/arm/xscale/files.pxa2x0"
+
+
+# NAND flash pseudo-disk device (Xilinx NAND flash controller)
+device	flash: disk
+attach	flash at pxaip with flash_pxaip
+file	arch/gumstix/dev/gumstix_flash.c		flash_pxaip
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+# Generic MD files
+file	arch/gumstix/gumstix/autoconf.c
+
+file	arch/arm/arm/disksubr.c			disk
+
+# ARM FPE
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+file	arch/arm/fpe-arm/armfpe.s		armfpe
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/pckbc/files.pckbc"
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
+
+# Media Independent Interface (mii)
+include "dev/mii/files.mii"
+
+#
+# Machine-independent SD/MMC drivers
+#
+include "dev/sdmmc/files.sdmmc"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"
