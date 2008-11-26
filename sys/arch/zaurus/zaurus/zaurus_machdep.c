@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.30 2008/11/25 14:55:44 drahn Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.31 2008/11/26 01:29:00 kevlo Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -273,7 +273,7 @@ int comcnmode = CONMODE;
 
 
 /*
- * void boot(int howto, char *bootstr)
+ * void boot(int howto)
  *
  * Reboots the system
  *
