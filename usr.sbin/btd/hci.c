@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.c,v 1.4 2008/11/26 15:32:56 uwe Exp $	*/
+/*	$OpenBSD: hci.c,v 1.5 2008/11/26 21:48:30 uwe Exp $	*/
 /*	$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
@@ -395,7 +395,8 @@ hci_interface_open(struct bt_interface *iface)
 		return -1;
 	}
 
-	log_info("listening on %s", bt_ntoa(&physif->addr, NULL));
+	log_info("listening on %s (%s)", bt_ntoa(&physif->addr, NULL),
+	    physif->xname);
 	return 0;
 }
 

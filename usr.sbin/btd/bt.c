@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt.c,v 1.4 2008/11/26 15:32:56 uwe Exp $ */
+/*	$OpenBSD: bt.c,v 1.5 2008/11/26 21:48:30 uwe Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -160,7 +160,7 @@ bt_find_inquiry_interface(struct btd *env)
 {
 	struct bt_interface *iface;
 
-	TAILQ_FOREACH(iface, &env->interfaces, entry) {
+	TAILQ_FOREACH_REVERSE(iface, &env->interfaces, interfaces, entry) {
 		if (iface->physif != NULL)
 			return iface;
 	}
@@ -173,8 +173,7 @@ bt_find_attach_interface(struct bt_device *btdev)
 {
 	struct bt_interface *iface;
 
-	TAILQ_FOREACH_REVERSE(iface, &btdev->env->interfaces,
-	    interfaces, entry) {
+	TAILQ_FOREACH(iface, &btdev->env->interfaces, entry) {
 		if (iface->physif != NULL)
 			return iface;
 	}
@@ -188,6 +187,8 @@ bt_devices_changed(void)
 	struct timeval tv;
 
 	memset(&tv, 0, sizeof(tv));
+	tv.tv_sec = 1;
+
 	evtimer_add(&ev_check_devices, &tv);
 }
 
@@ -198,7 +199,8 @@ bt_check_devices(int fd, short evflags, void *arg)
 	struct bt_device *btdev;
 
 	for (btdev = TAILQ_FIRST(&env->devices); btdev != NULL;) {
-		if ((btdev->flags & (BTDF_ATTACH|BTDF_ATTACH_DONE)) ==
+		if (!bdaddr_same(&btdev->addr, BDADDR_ANY) &&
+		    (btdev->flags & (BTDF_ATTACH|BTDF_ATTACH_DONE)) ==
 		    BTDF_ATTACH_DONE) {
 			if (bt_device_detach(btdev) < 0) {
 				btdev = TAILQ_NEXT(btdev, entry);
@@ -219,7 +221,8 @@ bt_check_devices(int fd, short evflags, void *arg)
 			continue;
 		}
 
-		if ((btdev->flags & (BTDF_ATTACH|BTDF_ATTACH_DONE)) ==
+		if (!bdaddr_same(&btdev->addr, BDADDR_ANY) &&
+		    (btdev->flags & (BTDF_ATTACH|BTDF_ATTACH_DONE)) ==
 		    BTDF_ATTACH) {
 			if (bt_device_attach(btdev) < 0) {
 				btdev = TAILQ_NEXT(btdev, entry);
@@ -245,11 +248,32 @@ bt_get_devinfo(struct bt_device *btdev)
 	if (res < 0)
 		return -1;
 	else if (res != 0) {
-		/* try sdp query */
-		return 0;
+		struct bt_interface *iface;
+
+		if ((iface = bt_find_attach_interface(btdev)) == NULL)
+			return 0;
+
+		res = sdp_get_devinfo(iface, btdev);
+		if (res < 0) {
+			btdev->flags &= ~BTDF_SDP_STARTED;
+			return -1;
+		} else if (res == 1) {
+			btdev->flags &= ~BTDF_SDP_STARTED;
+			log_info("%s: SDP query failed",
+			    bt_ntoa(&btdev->addr, NULL));
+			return 0;
+		} else if (res == 2) {
+			if (!(btdev->flags & BTDF_SDP_STARTED)) {
+				btdev->flags |= BTDF_SDP_STARTED;
+				log_info("%s: SDP query started",
+				    bt_ntoa(&btdev->addr, NULL));
+			}
+			return 0;
+		} else if (res != 0)
+			fatalx("bt_get_devinfo: sdp_get_devinfo");
 	}
 
-	bdaddr_copy(&btdev->info.baa.bd_raddr, &btdev->addr);
+	bdaddr_copy(devinfo_raddr(&btdev->info), &btdev->addr);
 	btdev->flags |= BTDF_DEVINFO_VALID;
 	return 0;
 }
@@ -272,11 +296,11 @@ bt_device_attach(struct bt_device *btdev)
 			return 0;
 	}
 
-	if (bdaddr_any(&btdev->info.baa.bd_laddr)) {
+	if (bdaddr_any(devinfo_laddr(&btdev->info))) {
 		if ((iface = bt_find_attach_interface(btdev)) == NULL)
 			return 0;
 
-		bdaddr_copy(&btdev->info.baa.bd_laddr, &iface->addr);
+		bdaddr_copy(devinfo_laddr(&btdev->info), &iface->addr);
 	}
 
 	if (devinfo_store(&btdev->info, &buf, &n) < 0)
@@ -319,11 +343,11 @@ bt_device_detach(struct bt_device *btdev)
 			return 0;
 	}
 
-	if (bdaddr_any(&btdev->info.baa.bd_laddr)) {
+	if (bdaddr_any(devinfo_laddr(&btdev->info))) {
 		if ((iface = bt_find_attach_interface(btdev)) == NULL)
 			return 0;
 
-		bdaddr_copy(&btdev->info.baa.bd_laddr, &iface->addr);
+		bdaddr_copy(devinfo_laddr(&btdev->info), &iface->addr);
 	}
 
 	if (devinfo_store(&btdev->info, &buf, &n) < 0)

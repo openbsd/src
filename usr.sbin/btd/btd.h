@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.h,v 1.4 2008/11/26 15:32:56 uwe Exp $	*/
+/*	$OpenBSD: btd.h,v 1.5 2008/11/26 21:48:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -155,6 +155,8 @@ int db_get_devinfo(struct btd_db *, const bdaddr_t *, struct bt_devinfo *);
 void db_dump(struct btd_db *);
 
 /* devinfo.c */
+bdaddr_t *devinfo_laddr(struct bt_devinfo *);
+bdaddr_t *devinfo_raddr(struct bt_devinfo *);
 int devinfo_load(struct bt_devinfo *, void *, size_t);
 void devinfo_unload(struct bt_devinfo *);
 int devinfo_store(const struct bt_devinfo *, void **, size_t *);
@@ -184,7 +186,7 @@ void fatalx(const char *);
 
 /* sdp.c */
 void sdp_init(struct btd *);
-int sdp_query(struct bt_interface *, struct bt_device *);
+int sdp_get_devinfo(struct bt_interface *, struct bt_device *);
 
 /* util.c */
 time_t getmonotime(void);

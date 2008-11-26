@@ -3,6 +3,18 @@
 
 #include "btd.h"
 
+bdaddr_t *
+devinfo_laddr(struct bt_devinfo *info)
+{
+	return &info->baa.bd_laddr;
+}
+
+bdaddr_t *
+devinfo_raddr(struct bt_devinfo *info)
+{
+	return &info->baa.bd_raddr;
+}
+
 int
 devinfo_store(const struct bt_devinfo *info, void **data, size_t *datalen)
 {
