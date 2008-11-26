@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.36 2008/11/09 15:08:26 naddy Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.37 2008/11/26 18:01:43 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -284,8 +284,5 @@ u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define BPF_MEMWORDS 16
-
-extern int ticks;	/* from kern/kern_clock.c; incremented each */
-			/* clock tick. */
 
 #endif /* _NET_BPF_H_ */

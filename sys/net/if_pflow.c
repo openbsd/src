@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.7 2008/10/28 15:51:27 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.8 2008/11/26 18:01:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -90,6 +90,9 @@ struct if_clone	pflow_cloner =
 /* from in_pcb.c */
 extern int ipport_hifirstauto;
 extern int ipport_hilastauto;
+
+/* from kern/kern_clock.c; incremented each clock tick. */
+extern int ticks;
 
 void
 pflowattach(int npflow)
