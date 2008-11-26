@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.82 2008/11/07 18:03:52 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.83 2008/11/26 18:34:31 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1642,7 +1642,7 @@ void
 gem_start(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
-	struct mbuf *m, *m0;
+	struct mbuf *m;
 	u_int64_t flags;
 	bus_dmamap_t map;
 	u_int32_t cur, frag, i;
@@ -1663,7 +1663,6 @@ gem_start(struct ifnet *ifp)
 
 		cur = frag = sc->sc_tx_prod;
 		map = sc->sc_txd[cur].sd_map;
-		m0 = NULL;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
 		    BUS_DMA_NOWAIT);
@@ -1671,41 +1670,22 @@ gem_start(struct ifnet *ifp)
 			goto drop;
 		if (error != 0) {
 			/* Too many fragments, linearize. */
-			MGETHDR(m0, M_DONTWAIT, MT_DATA);
-			if (m0 == NULL)
+			if (m_defrag(m, M_DONTWAIT))
 				goto drop;
-			if (m->m_pkthdr.len > MHLEN) {
-				MCLGET(m0, M_DONTWAIT);
-				if (!(m0->m_flags & M_EXT)) {
-					m_freem(m0);
-					goto drop;
-				}
-			}
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
-			m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m0,
+			error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
 			    BUS_DMA_NOWAIT);
-			if (error != 0) {
-				m_freem(m0);
+			if (error != 0)
 				goto drop;
-			}
 		}
 
 		if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
 			bus_dmamap_unload(sc->sc_dmatag, map);
 			ifp->if_flags |= IFF_OACTIVE;
-			if (m0 != NULL)
-				m_free(m0);
 			break;
 		}
 
 		/* We are now committed to transmitting the packet. */
-
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m0 != NULL) {
-			m_free(m);
-			m = m0;
-		}
 
 #if NBPFILTER > 0
 		/*
