@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.h,v 1.6 2008/11/24 13:22:53 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -22,6 +22,9 @@
 #define GPIO_PIN_LOW		0x00	/* low level (logical 0) */
 #define GPIO_PIN_HIGH		0x01	/* high level (logical 1) */
 
+/* Max name length of a pin */
+#define GPIOPINMAXNAME		64
+
 /* GPIO pin configuration flags */
 #define GPIO_PIN_INPUT		0x0001	/* input direction */
 #define GPIO_PIN_OUTPUT		0x0002	/* output direction */
@@ -33,6 +36,8 @@
 #define GPIO_PIN_PULLDOWN	0x0080	/* internal pull-down enabled */
 #define GPIO_PIN_INVIN		0x0100	/* invert input */
 #define GPIO_PIN_INVOUT		0x0200	/* invert output */
+#define GPIO_PIN_USER		0x0400	/* user != 0 can access */
+#define GPIO_PIN_SET		0x8000	/* set for securelevel access */
 
 /* GPIO controller description */
 struct gpio_info {
@@ -41,15 +46,18 @@ struct gpio_info {
 
 /* GPIO pin operation (read/write/toggle) */
 struct gpio_pin_op {
-	int gp_pin;		/* pin number */
-	int gp_value;		/* value */
+	char gp_name[GPIOPINMAXNAME];	/* pin name */
+	int gp_pin;			/* pin number */
+	int gp_value;			/* value */
 };
 
-/* GPIO pin control */
-struct gpio_pin_ctl {
-	int gp_pin;		/* pin number */
-	int gp_caps;		/* pin capabilities (read-only) */
-	int gp_flags;		/* pin configuration flags */
+/* GPIO pin configuration */
+struct gpio_pin_set {
+	char gp_name[GPIOPINMAXNAME];
+	int gp_pin;
+	int gp_caps;
+	int gp_flags;
+	char gp_name2[GPIOPINMAXNAME];	/* new name */
 };
 
 /* Attach/detach device drivers that use GPIO pins */
@@ -63,8 +71,9 @@ struct gpio_attach {
 #define GPIOPINREAD		_IOWR('G', 1, struct gpio_pin_op)
 #define GPIOPINWRITE		_IOWR('G', 2, struct gpio_pin_op)
 #define GPIOPINTOGGLE		_IOWR('G', 3, struct gpio_pin_op)
-#define GPIOPINCTL		_IOWR('G', 4, struct gpio_pin_ctl)
-#define GPIOATTACH		_IOWR('G', 5, struct gpio_attach)
-#define GPIODETACH		_IOWR('G', 6, struct gpio_attach)
+#define GPIOPINSET		_IOWR('G', 4, struct gpio_pin_set)
+#define GPIOPINUNSET		_IOWR('G', 5, struct gpio_pin_set)
+#define GPIOATTACH		_IOWR('G', 6, struct gpio_attach)
+#define GPIODETACH		_IOWR('G', 7, struct gpio_attach)
 
 #endif	/* !_SYS_GPIO_H_ */

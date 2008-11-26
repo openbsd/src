@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.9 2008/11/26 14:51:20 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -36,12 +36,13 @@
 struct gpio_softc {
 	struct device sc_dev;
 
-	gpio_chipset_tag_t sc_gc;	/* our GPIO controller */
-	gpio_pin_t *sc_pins;		/* pins array */
-	int sc_npins;			/* total number of pins */
+	gpio_chipset_tag_t		 sc_gc;		/* GPIO controller */
+	gpio_pin_t			*sc_pins;	/* pins array */
+	int				 sc_npins;	/* number of pins */
 
 	int sc_opened;
-	LIST_HEAD(, gpio_dev) sc_list;
+	LIST_HEAD(, gpio_dev)		 sc_devs;	/* devices */
+	LIST_HEAD(, gpio_name) 	 	 sc_names;	/* named pins */
 };
 
 int	gpio_match(struct device *, void *, void *);
@@ -50,6 +51,7 @@ void	gpio_attach(struct device *, struct device *, void *);
 int	gpio_detach(struct device *, int);
 int	gpio_search(struct device *, void *, void *);
 int	gpio_print(void *, const char *);
+int	gpio_pinbyname(struct gpio_softc *, char *gp_name);
 
 struct cfattach gpio_ca = {
 	sizeof (struct gpio_softc),
@@ -266,18 +268,30 @@ gpioclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
+gpio_pinbyname(struct gpio_softc *sc, char *gp_name)
+{
+	struct gpio_name *nm;
+
+	LIST_FOREACH(nm, &sc->sc_names, gp_next)
+		if (!strcmp(nm->gp_name, gp_name))
+			return (nm->gp_pin);
+	return (-1);
+}
+
+int
 gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;
 	struct gpio_info *info;
 	struct gpio_pin_op *op;
-	struct gpio_pin_ctl *ctl;
 	struct gpio_attach *attach;
 	struct gpio_attach_args ga;
 	struct gpio_dev *gdev;
+	struct gpio_name *nm;
+	struct gpio_pin_set *set;
 	struct device *dv;
-	int pin, value, flags;
+	int pin, value, flags, npins, found;
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
 	gc = sc->sc_gc;
@@ -285,15 +299,31 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case GPIOINFO:
 		info = (struct gpio_info *)data;
-
-		info->gpio_npins = sc->sc_npins;
+		if (securelevel < 1)
+			info->gpio_npins = sc->sc_npins;
+		else {
+			for (pin = npins = 0; pin < sc->sc_npins; pin++)
+				if (sc->sc_pins[pin].pin_flags & GPIO_PIN_SET)
+					++npins;
+			info->gpio_npins = npins;
+		}
 		break;
 	case GPIOPINREAD:
 		op = (struct gpio_pin_op *)data;
 
-		pin = op->gp_pin;
+		if (op->gp_name[0] != '\0') {
+			pin = gpio_pinbyname(sc, op->gp_name);
+			if (pin == -1)
+				return (EINVAL);
+		} else
+			pin = op->gp_pin;
+
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+
+		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
+		    securelevel > 0)
+			return (EPERM);
 
 		/* return read value */
 		op->gp_value = gpiobus_pin_read(gc, pin);
@@ -304,11 +334,22 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		op = (struct gpio_pin_op *)data;
 
-		pin = op->gp_pin;
+		if (op->gp_name[0] != '\0') {
+			pin = gpio_pinbyname(sc, op->gp_name);
+			if (pin == -1)
+				return (EINVAL);
+		} else
+			pin = op->gp_pin;
+
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+
 		if (sc->sc_pins[pin].pin_mapped)
 			return (EBUSY);
+
+		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
+		    securelevel > 0)
+			return (EPERM);
 
 		value = op->gp_value;
 		if (value != GPIO_PIN_LOW && value != GPIO_PIN_HIGH)
@@ -326,11 +367,22 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		op = (struct gpio_pin_op *)data;
 
-		pin = op->gp_pin;
+		if (op->gp_name[0] != '\0') {
+			pin = gpio_pinbyname(sc, op->gp_name);
+			if (pin == -1)
+				return (EINVAL);
+		} else
+			pin = op->gp_pin;
+
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+
 		if (sc->sc_pins[pin].pin_mapped)
 			return (EBUSY);
+
+		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
+		    securelevel > 0)
+			return (EPERM);
 
 		value = (sc->sc_pins[pin].pin_state == GPIO_PIN_LOW ?
 		    GPIO_PIN_HIGH : GPIO_PIN_LOW);
@@ -340,33 +392,10 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* update current value */
 		sc->sc_pins[pin].pin_state = value;
 		break;
-	case GPIOPINCTL:
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		ctl = (struct gpio_pin_ctl *)data;
-
-		pin = ctl->gp_pin;
-		if (pin < 0 || pin >= sc->sc_npins)
-			return (EINVAL);
-		if (sc->sc_pins[pin].pin_mapped)
-			return (EBUSY);
-
-		flags = ctl->gp_flags;
-		/* check that the controller supports all requested flags */
-		if ((flags & sc->sc_pins[pin].pin_caps) != flags)
-			return (ENODEV);
-
-		ctl->gp_caps = sc->sc_pins[pin].pin_caps;
-		/* return old value */
-		ctl->gp_flags = sc->sc_pins[pin].pin_flags;
-		if (flags > 0) {
-			gpiobus_pin_ctl(gc, pin, flags);
-			/* update current value */
-			sc->sc_pins[pin].pin_flags = flags;
-		}
-		break;
 	case GPIOATTACH:
+		if (securelevel > 0)
+			return (EPERM);
+
 		attach = (struct gpio_attach *)data;
 		bzero(&ga, sizeof(ga));
 		ga.ga_gpio = sc;
@@ -379,12 +408,15 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			gdev = malloc(sizeof(struct gpio_dev), M_DEVBUF,
 			    M_WAITOK);
 			gdev->sc_dev = dv;
-			LIST_INSERT_HEAD(&sc->sc_list, gdev, sc_next);
+			LIST_INSERT_HEAD(&sc->sc_devs, gdev, sc_next);
 		}
 		break;
 	case GPIODETACH:
+		if (securelevel > 0)
+			return (EPERM);
+
 		attach = (struct gpio_attach *)data;
-		LIST_FOREACH(gdev, &sc->sc_list, sc_next) {
+		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
 			if (strcmp(gdev->sc_dev->dv_xname, attach->ga_dvname)
 			    == 0) {
 				if (config_detach(gdev->sc_dev, 0) == 0) {
@@ -394,6 +426,83 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 		}
+		break;
+	case GPIOPINSET:
+		if (securelevel > 0)
+			return (EPERM);
+
+		set = (struct gpio_pin_set *)data;
+
+		if (set->gp_name[0] != '\0') {
+			pin = gpio_pinbyname(sc, set->gp_name);
+			if (pin == -1)
+				return (EINVAL);
+		} else
+			pin = set->gp_pin;
+		if (pin < 0 || pin >= sc->sc_npins)
+			return (EINVAL);
+		flags = set->gp_flags;
+		/* check that the controller supports all requested flags */
+		if ((flags & sc->sc_pins[pin].pin_caps) != flags)
+			return (ENODEV);
+		flags = set->gp_flags | GPIO_PIN_SET;
+
+		set->gp_caps = sc->sc_pins[pin].pin_caps;
+		/* return old value */
+		set->gp_flags = sc->sc_pins[pin].pin_flags;
+		if (flags > 0) {
+			gpiobus_pin_ctl(gc, pin, flags);
+			/* update current value */
+			sc->sc_pins[pin].pin_flags = flags;
+		}
+
+		/* rename pin or new pin? */
+		if (set->gp_name2[0] != '\0') {
+			found = 0;
+			LIST_FOREACH(nm, &sc->sc_names, gp_next)
+				if (nm->gp_pin == pin) {
+					strlcpy(nm->gp_name, set->gp_name2,
+					    sizeof(nm->gp_name));
+					found = 1;
+					break;
+				}
+			if (!found) {
+				nm = malloc(sizeof(struct gpio_name),
+				    M_DEVBUF, M_WAITOK);
+				strlcpy(nm->gp_name, set->gp_name2,
+				    sizeof(nm->gp_name));
+				nm->gp_pin = set->gp_pin;
+				LIST_INSERT_HEAD(&sc->sc_names, nm, gp_next);
+			}
+		}
+		break;
+	case GPIOPINUNSET:
+		if (securelevel > 0)
+			return (EPERM);
+
+		set = (struct gpio_pin_set *)data;
+		if (set->gp_name[0] != '\0') {
+			pin = gpio_pinbyname(sc, set->gp_name);
+			if (pin == -1)
+				return (EINVAL);
+		} else
+			pin = set->gp_pin;
+		
+		if (pin < 0 || pin >= sc->sc_npins)
+			return (EINVAL);
+		if (sc->sc_pins[pin].pin_mapped)
+			return (EBUSY);
+		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET))
+			return (EINVAL);
+
+		LIST_FOREACH(nm, &sc->sc_names, gp_next) {
+			if (nm->gp_pin == pin) {
+				LIST_REMOVE(nm, gp_next);
+				free(nm, M_DEVBUF);
+				break;
+			}
+		}
+		sc->sc_pins[pin].pin_flags &= ~GPIO_PIN_SET;
 		break;
 	default:
 		return (ENOTTY);
