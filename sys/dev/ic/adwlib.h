@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.11 2008/06/26 05:42:15 ray Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.12 2008/11/26 16:39:31 krw Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -746,9 +746,6 @@ typedef struct adw_softc {
 	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
 	struct scsi_link	sc_link;     /* prototype for devs */
 	struct scsi_adapter	sc_adapter;
-
-	LIST_HEAD(, scsi_xfer)  sc_queue;
-	struct scsi_xfer	*sc_queuelast;
 
 	int			sc_freeze_dev[ADW_MAX_TID+1];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.h,v 1.9 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: advlib.h,v 1.10 2008/11/26 16:39:31 krw Exp $	*/
 /*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -835,9 +835,6 @@ typedef struct asc_softc
 	struct adv_control	*sc_control; /* control structures */
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;
 	struct scsi_link	sc_link;     /* prototype for devs */
-
-	LIST_HEAD(, scsi_xfer)	sc_queue;
-	struct scsi_xfer	*sc_queuelast;
 
 	u_int8_t		*overrun_buf;
 
