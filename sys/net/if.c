@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.182 2008/11/26 17:36:23 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.183 2008/11/26 19:07:33 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,23 @@ TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
+int m_clticks;
+struct timeout m_cltick_tmo;
+
+/*
+ * Record when the last timeout has been run.  If the delta is
+ * too high, m_cldrop() will notice and decrease the interface
+ * high water marks.
+ */
+static void
+m_cltick(void *arg)
+{
+	extern int ticks;
+
+	m_clticks = ticks;
+	timeout_add(&m_cltick_tmo, 1);
+}
+
 /*
  * Network interface utility routines.
  *
@@ -167,6 +184,9 @@ ifinit()
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
 
 	if_slowtimo(&if_slowtim);
+
+	timeout_set(&m_cltick_tmo, m_cltick, NULL);
+	m_cltick(NULL);
 }
 
 static int if_index = 0;
@@ -2049,11 +2069,36 @@ m_clsetlwm(struct ifnet *ifp, u_int pktlen, u_int lwm)
 int
 m_cldrop(struct ifnet *ifp, int pi)
 {
-	struct mclstat *mcls = &ifp->if_mclstat;
+	static int livelock, liveticks;
+	struct mclstat *mcls;
+	extern int ticks;
+	int i;
 
+	if (livelock == 0 && ticks - m_clticks > 2) {
+		struct ifnet *aifp;
+
+		/*
+		 * Timeout did not run, so we are in some kind of livelock.
+		 * Decrease the cluster allocation high water marks on all
+		 * interfaces and prevent them from growth for the very near
+		 * future.
+		 */
+		livelock = 1;
+		liveticks = ticks;
+		TAILQ_FOREACH(aifp, &ifnet, if_list) {
+			mcls = &aifp->if_mclstat;
+			for (i = 0; i < nitems(mcls->mclpool); i++)
+				mcls->mclpool[i].mcl_hwm =
+				    max(mcls->mclpool[i].mcl_hwm / 2,
+				    mcls->mclpool[i].mcl_lwm);
+		}
+	} else if (livelock && ticks - liveticks > 5)
+		livelock = 0;	/* Let the high water marks grow again */
+
+	mcls = &ifp->if_mclstat;
 	if (mcls->mclpool[pi].mcl_alive <= 2 &&
 	    mcls->mclpool[pi].mcl_hwm < 32768 &&
-	    ISSET(ifp->if_flags, IFF_RUNNING)) {
+	    ISSET(ifp->if_flags, IFF_RUNNING) && livelock == 0) {
 		/* About to run out, so increase the watermark */
 		mcls->mclpool[pi].mcl_hwm++;
 	} else if (mcls->mclpool[pi].mcl_alive >= mcls->mclpool[pi].mcl_hwm)
