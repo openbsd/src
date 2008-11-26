@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2008/11/25 17:13:53 uwe Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2008/11/26 06:51:04 uwe Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -143,10 +143,10 @@ main
 
 	if ($4 != NULL) {
 		strbufcpy("PIN code", $4, stmt.pin);
-		stmt.pin_len = strlen(stmt.pin);
+		stmt.pin_size = strlen(stmt.pin);
 		free($4);
 	} else
-		stmt.pin_len = 0;
+		stmt.pin_size = 0;
 
 	switch (exec_stmt(BTCTL_ATTACH_STMT, &stmt, sizeof(stmt))) {
 	case 0: break;
