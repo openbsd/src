@@ -1,4 +1,4 @@
-/*	$OpenBSD: btctl.c,v 1.1 2008/11/24 23:34:41 uwe Exp $	*/
+/*	$OpenBSD: btctl.c,v 1.2 2008/11/26 22:17:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler
@@ -23,10 +23,12 @@
 #include <sys/un.h>
 
 #include <err.h>
+#include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "btd.h"
 #include "btctl.h"
@@ -49,6 +51,7 @@ main(int argc, char *argv[])
 	const char *conffile;
 	int ctl_sock;
 	int ch;
+	int try;
 
 	progname = basename(argv[0]);
 	conffile = NULL;
@@ -75,7 +78,6 @@ main(int argc, char *argv[])
 
 	log_init(1);
 
-	/* connect to btd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
@@ -83,8 +85,18 @@ main(int argc, char *argv[])
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, BTD_SOCKET, sizeof(sun.sun_path));
 
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+	try = 0;
+ reconnect:
+	/* connect to btd control socket, retry a few times */
+	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+		/* Keep retrying if running in monitor mode */
+		if ((errno == ENOENT || errno == ECONNREFUSED) &&
+		    ++try < 50) {
+			usleep(100);
+			goto reconnect;
+		}
 		err(1, "%s", BTD_SOCKET);
+	}
 
 	if (parse_config(conffile, ctl_sock))
 		exit(1);
