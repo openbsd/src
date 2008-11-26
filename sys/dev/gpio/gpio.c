@@ -1,6 +1,7 @@
-/*	$OpenBSD: gpio.c,v 1.9 2008/11/26 14:51:20 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.10 2008/11/26 15:04:42 mbalmer Exp $	*/
 
 /*
+ * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
