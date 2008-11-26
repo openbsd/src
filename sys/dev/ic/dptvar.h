@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.3 2008/11/26 22:03:11 krw Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -89,13 +89,6 @@ struct dpt_softc {
 	int		sc_nccbs;	/* number of CCBs available */
 	int		sc_open;	/* device is open */
 	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
-#ifdef __NetBSD__
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;/* pending commands */
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	LIST_HEAD(, scsi_xfer) sc_queue;/* pending commands */
-	struct scsi_xfer *sc_queuelast;
-#endif /* __NetBSD__ */
 };
 
 int	dpt_intr(void *);

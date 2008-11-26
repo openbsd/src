@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.18 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.19 2008/11/26 22:03:11 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -90,9 +90,6 @@
 #include <dev/ic/dptvar.h>
 
 #ifdef __OpenBSD__
-static void dpt_enqueue(struct dpt_softc *, struct scsi_xfer *, int);
-static struct scsi_xfer *dpt_dequeue(struct dpt_softc *);
-
 struct cfdriver dpt_cd = {
 	NULL, "dpt", DV_DULL
 };
@@ -862,63 +859,7 @@ dpt_done_ccb(sc, ccb)
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 #endif /* __OpenBSD__ */
-
-	/*
-	 * If there are entries in the software queue, try to run the first
-	 * one. We should be more or less guaranteed to succeed, since we
-	 * just freed an CCB. NOTE: dpt_scsi_cmd() relies on our calling it
-	 * with the first entry in the queue.
-	 */
-#ifdef __NetBSD__
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	if ((xs = LIST_FIRST(&sc->sc_queue)) != NULL)
-#endif /* __OpenBSD__ */
-		dpt_scsi_cmd(xs);
 }
-
-#ifdef __OpenBSD__
-/*
- * Insert a scsi_xfer into the software queue.  We overload xs->free_list
- * to avoid having to allocate additional resources (since we're used
- * only during resource shortages anyhow.
- */
-static void
-dpt_enqueue(sc, xs, infront)
-	struct dpt_softc *sc;
-	struct scsi_xfer *xs;
-	int             infront;
-{
-
-	if (infront || LIST_EMPTY(&sc->sc_queue)) {
-		if (LIST_EMPTY(&sc->sc_queue))
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
-}
-
-/*
- * Pull a scsi_xfer off the front of the software queue.
- */
-static struct scsi_xfer *
-dpt_dequeue(sc)
-	struct dpt_softc *sc;
-{
-	struct scsi_xfer *xs;
-
-	xs = LIST_FIRST(&sc->sc_queue);
-	LIST_REMOVE(xs, free_list);
-
-	if (LIST_EMPTY(&sc->sc_queue))
-		sc->sc_queuelast = NULL;
-
-	return (xs);
-}
-#endif /* __OpenBSD__ */
 
 /*
  * Start a SCSI command.
@@ -932,7 +873,7 @@ dpt_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 #endif /* __OpenBSD__ */
 {
-	int error, i, flags, s, fromqueue, dontqueue;
+	int error, i, flags, s;
 #ifdef __NetBSD__
 	struct scsipi_link *sc_link;
 #endif /* __NetBSD__ */
@@ -955,34 +896,18 @@ dpt_scsi_cmd(xs)
 #endif /* __OpenBSD__ */
 	sc = sc_link->adapter_softc;
 	dmat = sc->sc_dmat;
-	fromqueue = 0;
-	dontqueue = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsi_cmd\n"));
 
 	/* Protect the queue */
 	s = splbio();
 
-	/*
-	 * If we're running the queue from dpt_done_ccb(), we've been called 
-	 * with the first queue entry as our argument.
-	 */
-#ifdef __NetBSD__
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	if (xs == LIST_FIRST(&sc->sc_queue)) {
-		xs = dpt_dequeue(sc);
-#endif /* __OpenBSD__ */
-		fromqueue = 1;
-	} else {
-		/* Cmds must be no more than 12 bytes for us */
-		if (xs->cmdlen > 12) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
-		}
+	/* Cmds must be no more than 12 bytes for us */
+	if (xs->cmdlen > 12) {
+		splx(s);
+		xs->error = XS_DRIVER_STUFFUP;
+		return (COMPLETE);
+	}
 
 		/* XXX we can't reset devices just yet */
 #ifdef __NetBSD__
@@ -996,44 +921,6 @@ dpt_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 
-		/* Polled requests can't be queued for later */
-#ifdef __NetBSD__
-		dontqueue = flags & XS_CTL_POLL;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		dontqueue = xs->flags & SCSI_POLL;
-#endif /* __OpenBSD__ */
-
-		/* If there are jobs in the queue, run them first */
-#ifdef __NetBSD__
-		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		if (!LIST_EMPTY(&sc->sc_queue)) {
-#endif /* __OpenBSD__ */
-			/*
-			 * If we can't queue we abort, since we must 
-			 * preserve the queue order.
-			 */
-			if (dontqueue) {
-				splx(s);
-				return (TRY_AGAIN_LATER);
-			}
-
-			/* Swap with the first queue entry. */
-#ifdef __NetBSD__
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-			xs = TAILQ_FIRST(&sc->sc_queue);
-			TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-			dpt_enqueue(sc, xs, 0);
-			xs = dpt_dequeue(sc);
-#endif /* __OpenBSD__ */
-			fromqueue = 1;
-		}
-	}
-
 	/* Get a CCB */
 #ifdef __NetBSD__
 	if ((ccb = dpt_alloc_ccb(sc, flags)) == NULL) {
@@ -1041,27 +928,8 @@ dpt_scsi_cmd(xs)
 #ifdef __OpenBSD__
 	if ((ccb = dpt_alloc_ccb(sc, xs->flags)) == NULL) {
 #endif /* __OpenBSD__ */
-		/* If we can't queue, we lose */
-		if (dontqueue) {
-			splx(s);
-			return (NO_CCB);
-		}
-		
-		/* 
-		 * Stuff request into the queue, in front if we came off 
-		 * it in the first place.
-		 */
-#ifdef __NetBSD__
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		dpt_enqueue(sc, xs, fromqueue);
-#endif /* __OpenBSD__ */
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
+		return (NO_CCB);
 	}
 
 	splx(s);
@@ -1182,7 +1050,7 @@ dpt_scsi_cmd(xs)
 	 * private so that dpt_intr/dpt_done_ccb don't recycle the CCB 
 	 * without us noticing.
 	 */
-	if (dontqueue != 0)
+	if ((xs->flags & SCSI_POLL) != 0)
 		ccb->ccb_flg |= CCB_PRIVATE; 
 	
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
@@ -1191,7 +1059,7 @@ dpt_scsi_cmd(xs)
 		return (TRY_AGAIN_LATER);
 	}
 
-	if (dontqueue == 0)
+	if ((xs->flags & SCSI_POLL) == 0)
 		return (SUCCESSFULLY_QUEUED);
 
 	/* Don't wait longer than this single command wants to wait */
