@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.9 2008/11/24 15:27:52 jmc Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.10 2008/11/26 14:56:10 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -27,21 +27,23 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define _PATH_DEV_GPIO	"/dev/gpio0"
 
-char *device = _PATH_DEV_GPIO;
+char *dev;
 int devfd = -1;
 int quiet = 0;
 
 void	getinfo(void);
-void	pinread(int);
-void	pinwrite(int, int);
-void	pinctl(int, char *[], int);
+void	pinread(int, char *);
+void	pinwrite(int, char *, int);
+void	pinctl(int, char *, char *[], int);
+void	pinset(int pin, char *name, int flags, char *alias);
+void	unset(int pin, char *name);
 void	devattach(char *, int, u_int32_t);
 void	devdetach(char *);
 
@@ -69,46 +71,17 @@ main(int argc, char *argv[])
 {
 	int ch;
 	const char *errstr;
-	char *ga_dvname = NULL, *ep;
-	int do_ctl = 0;
-	int pin = 0, value = 0, attach = 0, detach = 0;
+	const struct bitstr *bs;
+	char *ep;
+	int n, fl = 0, value = 0;
 	u_int32_t ga_mask = 0, ga_offset = -1;
 	long lval;
+	char devn[32];
+	int pin;
+	char *nam = NULL;
 
-	while ((ch = getopt(argc, argv, "A:cd:D:m:o:q")) != -1)
+	while ((ch = getopt(argc, argv, "q")) != -1)
 		switch (ch) {
-		case 'A':
-			if (detach)
-				errx(1, "-A and -D are mutual exclusive");
-			ga_dvname = optarg;
-			attach = 1;
-			break;
-		case 'c':
-			do_ctl = 1;
-			break;
-		case 'd':
-			device = optarg;
-			break;
-		case 'D':
-			if (attach)
-				errx(1, "-D and -A are mutual exclusive");
-			ga_dvname = optarg;
-			detach = 1;
-			break;
-		case 'm':
-			lval = strtol(optarg, &ep, 0);
-			if (*optarg == '\0' || *ep != '\0')
-				errx(1, "invalid mask (not a number)");
-			if ((errno == ERANGE && (lval == LONG_MAX
-			    || lval == LONG_MIN)) || lval > UINT_MAX)
-				errx(1, "mask out of range");
-			ga_mask = lval;
-			break;
-		case 'o':
-			ga_offset = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "offset is %s: %s", errstr, optarg);
-			break;
 		case 'q':
 			quiet = 1;
 			break;
@@ -119,40 +92,83 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0) {
-		pin = strtonum(argv[0], 0, INT_MAX, &errstr);
-		if (errstr)
-			errx(1, "%s: invalid pin", argv[0]);
+	if (argc < 1)
+		usage();
+	dev = argv[0];
+
+	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
+		(void)snprintf(devn, sizeof(devn), "%s/%s", _PATH_DEV, dev);
+		dev = devn;
 	}
 
-	if ((devfd = open(device, O_RDWR)) == -1)
-		err(1, "%s", device);
+	if ((devfd = open(dev, O_RDWR)) == -1)
+		err(1, "%s", dev);
 
-	if (attach) {
-		if (ga_offset == -1 || ga_mask == 0)
-			errx(1, "gpio attach needs an offset and a mask");
-		devattach(ga_dvname, ga_offset, ga_mask);
-	} else if (detach) {
-		devdetach(ga_dvname);
-	} else if (argc == 0 && !do_ctl) {
+	if (argc == 1) {
 		getinfo();
-	} else if (argc == 1) {
-		if (do_ctl)
-			pinctl(pin, NULL, 0);
-		else
-			pinread(pin);
-	} else if (argc > 1) {
-		if (do_ctl) {
-			pinctl(pin, argv + 1, argc - 1);
-		} else {
-			value = strtonum(argv[1], INT_MIN, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "%s: invalid value", argv[1]);
-			pinwrite(pin, value);
-		}
+		return 0;
+	}
+
+	if (!strcmp(argv[1], "attach")) {
+		char *driver, *offset, *mask;
+
+		if (argc != 5)
+			usage();
+
+		driver = argv[2];
+		offset = argv[3];
+		mask = argv[4];
+
+		ga_offset = strtonum(offset, 0, INT_MAX, &errstr);
+		if (errstr)
+			errx(1, "offset is %s: %s", errstr, offset);
+
+		lval = strtol(mask, &ep, 0);
+		if (*mask == '\0' || *ep != '\0')
+			errx(1, "invalid mask (not a number)");
+		if ((errno == ERANGE && (lval == LONG_MAX
+		    || lval == LONG_MIN)) || lval > UINT_MAX)
+			errx(1, "mask out of range");
+		ga_mask = lval;
+		devattach(driver, ga_offset, ga_mask);
+		return 0;
+	} else if (!strcmp(argv[1], "detach")) {
+		if (argc != 3)
+			usage();
+		devdetach(argv[2]);
 	} else {
-		usage();
-		/* NOTREACHED */
+		char *nm = NULL;
+	
+		/* expecting a pin number or name */
+		pin = strtonum(argv[1], 0, INT_MAX, &errstr);
+		if (errstr)
+			nm = argv[1];	/* try named pin */
+		if (argc > 2) { 
+			if (!strcmp(argv[2], "set")) {
+				for (n = 3; n < argc; n++) {
+					for (bs = pinflags; bs->string != NULL;
+					     bs++) {
+						if (!strcmp(argv[n],
+						    bs->string)) {
+							fl |= bs->mask;
+							break;
+						}
+					}
+					if (bs->string == NULL)
+						nam = argv[n];
+				}
+				pinset(pin, nm, fl, nam);
+			} else if (!strcmp(argv[2], "unset")) {
+				unset(pin, nm);
+			} else {
+				value = strtonum(argv[2], INT_MIN, INT_MAX,
+				   &errstr);
+				if (errstr)
+					errx(1, "%s: invalid value", argv[2]);
+				pinwrite(pin, nm, value);
+			}
+		} else
+			pinread(pin, nm);
 	}
 
 	return (0);
@@ -170,27 +186,34 @@ getinfo(void)
 	if (quiet)
 		return;
 
-	printf("%s: %d pins\n", device, info.gpio_npins);
+	printf("%s: %d pins\n", dev, info.gpio_npins);
 }
 
 void
-pinread(int pin)
+pinread(int pin, char *gp_name)
 {
 	struct gpio_pin_op op;
 
 	bzero(&op, sizeof(op));
-	op.gp_pin = pin;
+	if (gp_name != NULL)
+		strlcpy(op.gp_name, gp_name, sizeof(op.gp_name));
+	else
+		op.gp_pin = pin;
+
 	if (ioctl(devfd, GPIOPINREAD, &op) == -1)
 		err(1, "GPIOPINREAD");
 
 	if (quiet)
 		return;
 
-	printf("pin %d: state %d\n", pin, op.gp_value);
+	if (gp_name)
+		printf("pin %s: state %d\n", gp_name, op.gp_value);
+	else
+		printf("pin %d: state %d\n", pin, op.gp_value);
 }
 
 void
-pinwrite(int pin, int value)
+pinwrite(int pin, char *gp_name, int value)
 {
 	struct gpio_pin_op op;
 
@@ -198,11 +221,14 @@ pinwrite(int pin, int value)
 		errx(1, "%d: invalid value", value);
 
 	bzero(&op, sizeof(op));
-	op.gp_pin = pin;
+	if (gp_name != NULL)
+		strlcpy(op.gp_name, gp_name, sizeof(op.gp_name));
+	else
+		op.gp_pin = pin;
 	op.gp_value = (value == 0 ? GPIO_PIN_LOW : GPIO_PIN_HIGH);
 	if (value < 2) {
 		if (ioctl(devfd, GPIOPINWRITE, &op) == -1)
-			err(1, "GPIOPINWRITE");
+			err(1, "GPIOPINWR");
 	} else {
 		if (ioctl(devfd, GPIOPINTOGGLE, &op) == -1)
 			err(1, "GPIOPINTOGGLE");
@@ -211,42 +237,46 @@ pinwrite(int pin, int value)
 	if (quiet)
 		return;
 
-	printf("pin %d: state %d -> %d\n", pin, op.gp_value,
-	    (value < 2 ? value : 1 - op.gp_value));
+	if (gp_name)
+		printf("pin %s: state %d -> %d\n", gp_name, op.gp_value,
+		    (value < 2 ? value : 1 - op.gp_value));
+	else
+		printf("pin %d: state %d -> %d\n", pin, op.gp_value,
+		    (value < 2 ? value : 1 - op.gp_value));
 }
 
 void
-pinctl(int pin, char *flags[], int nflags)
+pinset(int pin, char *name, int fl, char *alias)
 {
-	struct gpio_pin_ctl ctl;
-	int fl = 0;
+	struct gpio_pin_set set;
 	const struct bitstr *bs;
-	int i;
 
-	bzero(&ctl, sizeof(ctl));
-	ctl.gp_pin = pin;
-	if (flags != NULL) {
-		for (i = 0; i < nflags; i++)
-			for (bs = pinflags; bs->string != NULL; bs++)
-				if (strcmp(flags[i], bs->string) == 0) {
-					fl |= bs->mask;
-					break;
-				}
-	}
-	ctl.gp_flags = fl;
-	if (ioctl(devfd, GPIOPINCTL, &ctl) == -1)
-		err(1, "GPIOPINCTL");
+	bzero(&set, sizeof(set));
+	if (name != NULL)
+		strlcpy(set.gp_name, name, sizeof(set.gp_name));
+	else
+		set.gp_pin = pin;
+	set.gp_flags = fl;
+
+	if (alias != NULL)
+		strlcpy(set.gp_name2, alias, sizeof(set.gp_name2));
+
+	if (ioctl(devfd, GPIOPINSET, &set) == -1)
+		err(1, "GPIOPINSET");
 
 	if (quiet)
 		return;
 
-	printf("pin %d: caps:", pin);
+	if (name != NULL)
+		printf("pin %s: caps:", name);
+	else
+		printf("pin %d: caps:", pin);
 	for (bs = pinflags; bs->string != NULL; bs++)
-		if (ctl.gp_caps & bs->mask)
+		if (set.gp_caps & bs->mask)
 			printf(" %s", bs->string);
 	printf(", flags:");
 	for (bs = pinflags; bs->string != NULL; bs++)
-		if (ctl.gp_flags & bs->mask)
+		if (set.gp_flags & bs->mask)
 			printf(" %s", bs->string);
 	if (fl > 0) {
 		printf(" ->");
@@ -255,6 +285,21 @@ pinctl(int pin, char *flags[], int nflags)
 				printf(" %s", bs->string);
 	}
 	printf("\n");
+}
+
+void
+unset(int pin, char *name)
+{
+	struct gpio_pin_set set;
+
+	bzero(&set, sizeof(set));
+	if (name != NULL)
+		strlcpy(set.gp_name, name, sizeof(set.gp_name));
+	else
+		set.gp_pin = pin;
+
+	if (ioctl(devfd, GPIOPINUNSET, &set) == -1)
+		err(1, "GPIOPINUNSET");
 }
 
 void
@@ -285,13 +330,14 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-q] [-d device] [pin] [0 | 1 | 2]\n",
+	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2]\n",
 	    __progname);
-	fprintf(stderr, "       %s [-q] [-d device] -c pin [flags]\n",
+	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    __progname);
-	fprintf(stderr, "       %s -A device -o offset -m mask\n",
+	fprintf(stderr, "       %s [-q] device pin unset\n", __progname);
+	fprintf(stderr, "       %s [-q] device attach device  offset mask\n",
 	    __progname);
-	fprintf(stderr, "       %s -D device\n", __progname);
+	fprintf(stderr, "       %s [-q] device detach device\n", __progname);
 
 	exit(1);
 }

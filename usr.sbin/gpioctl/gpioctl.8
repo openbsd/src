@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.14 2008/11/24 15:27:52 jmc Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.15 2008/11/26 14:56:10 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2008 $
+.Dd $Mdocdate: November 26 2008 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -23,21 +23,33 @@
 .Sh SYNOPSIS
 .Nm gpioctl
 .Op Fl q
-.Op Fl d Ar device
-.Op Ar pin
+.Ar device
+attach
+.Ar device
+.Ar offset
+.Ar mask
+.Nm gpioctl
+.Op Fl q
+.Ar device
+detach
+.Ar device
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
 .Op Ar 0 | 1 | 2
 .Nm gpioctl
 .Op Fl q
-.Op Fl d Ar device
-.Fl c
+.Ar device
 .Ar pin
+set
 .Op Ar flags
+.Op Ar name
 .Nm gpioctl
-.Fl A Ar device
-.Fl o Ar offset
-.Fl m Ar mask
-.Nm gpioctl
-.Fl D Ar device
+.Op Fl q
+.Ar device
+.Ar pin
+unset
 .Sh DESCRIPTION
 The
 .Nm
@@ -76,6 +88,16 @@ A value of 2 has a special meaning: it
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
 .Pp
+Only pins that have been configured at securelevel 0, typically during system
+startup, are accessible once the securelevel has been raised.
+Pins can be given symbolic names for easier use.
+Besides using individual pins, device drivers that use GPIO pins can be
+attached to a
+.Xr gpio 4
+device using the
+.Nm
+command.
+.Pp
 The following configuration
 .Ar flags
 are supported by the GPIO framework:
@@ -105,58 +127,18 @@ invert output
 .Pp
 Note that not all the flags can be supported by the particular GPIO controller.
 .Pp
-When executed without any arguments,
+When executed with only the
+.Xr gpio 4
+device name as argument,
 .Nm
 reads information about the
-GPIO device and displays it.
+.Tn GPIO
+device and displays it.
+At securelevel 0 the number of physically available pins is displayed,
+at higher securelevels the number of configured (set) pins is displayed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl A Ar device
-Attach
-.Ar device
-at this gpiobus.
-An
-.Fl o Ar offset
-(a pin number) and
-.Fl m Ar mask
-(a binary mask)
-must also be specified.
-.It Fl c Ar pin
-Configure
-.Ar pin
-with any of the various flags,
-as documented above.
-The list of supported flags is always displayed when executing
-.Nm
-with this option.
-To change pin flags,
-a new flags set separated by spaces must be specified
-after the pin number.
-.It Fl D Ar device
-Detach
-.Ar device
-from this gpiobus.
-Only devices that have been attached using the
-.Fl a
-option can be detached.
-.It Fl d Ar device
-If more than one GPIO device is present,
-an alternative
-.Ar device
-file can be specified with the
-.Fl d
-option in order to access a particular GPIO device.
-.It Fl m Ar mask
-Specify a binary mask,
-.Ar mask ,
-for the device being attached
-.Pq Fl A .
-.It Fl o Ar offset
-Specify a pin number,
-.Ar offset ,
-for the device being attached
-.Pq Fl A .
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
 .El
@@ -170,11 +152,11 @@ file.
 .Sh EXAMPLES
 Configure pin 20 to have push-pull output:
 .Pp
-.Dl # gpioctl -c 20 out pp
+.Dl # gpioctl gpio0 20 out pp
 .Pp
 Write logical 1 to pin 20:
 .Pp
-.Dl # gpioctl 20 1
+.Dl # gpioctl gpio0 20 1
 .Pp
 Attach a
 .Xr onewire 4
@@ -182,11 +164,19 @@ bus on a
 .Xr gpioow 4
 device on pin 4:
 .Pp
-.Dl # gpioctl -A gpioow -o 4 -m 0x01
+.Dl # gpioctl gpio0 attach gpioow 4 0x01
 .Pp
 Detach the gpioow0 device:
 .Pp
-.Dl # gpioctl -D gpioow0
+.Dl # gpioctl gpio0 detach gpioow0
+.Pp
+Configure pin 5 as output and name it error_led:
+.Pp
+.Dl # gpioctl gpio0 5 set out error_led
+.Pp
+Toggle the error_led:
+.Pp
+.Dl # gpioctl gpio0 error_led 2
 .Sh SEE ALSO
 .Xr gpio 4
 .Sh HISTORY
