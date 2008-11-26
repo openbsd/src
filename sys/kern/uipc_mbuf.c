@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.103 2008/11/25 19:09:34 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.104 2008/11/26 21:39:57 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ m_get(int nowait, int type)
 
 	s = splvm();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
+	splx(s);
 	if (m) {
 		m->m_type = type;
 		mbstat.m_mtypes[type]++;
@@ -195,7 +196,6 @@ m_get(int nowait, int type)
 		m->m_data = m->m_dat;
 		m->m_flags = 0;
 	}
-	splx(s);
 	return (m);
 }
 
@@ -211,6 +211,7 @@ m_gethdr(int nowait, int type)
 
 	s = splvm();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
+	splx(s);
 	if (m) {
 		m->m_type = type;
 		mbstat.m_mtypes[type]++;
@@ -232,7 +233,6 @@ m_gethdr(int nowait, int type)
 		m->m_pkthdr.pf.flags = 0;
 		m->m_pkthdr.pf.routed = 0;
 	}
-	splx(s);
 	return (m);
 }
 
