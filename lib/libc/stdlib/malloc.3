@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.57 2008/11/20 09:05:15 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.58 2008/11/26 12:06:54 pedro Exp $
 .\"
-.Dd $Mdocdate: November 20 2008 $
+.Dd $Mdocdate: November 26 2008 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -251,7 +251,7 @@ Currently junk is bytes of 0xd0 when allocating; this is pronounced
 Freed chunks are filled with 0xdf.
 .It Cm P
 .Dq Move allocations within a page.
-Allocations larger than half a page but smaller that a page
+Allocations larger than half a page but smaller than a page
 are aligned to the end of a page to catch buffer overruns in more
 cases.
 This is the default.
