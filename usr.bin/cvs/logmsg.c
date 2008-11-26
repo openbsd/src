@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.50 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.51 2008/11/26 00:09:02 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -66,14 +66,13 @@ cvs_logmsg_read(const char *path)
 	while ((buf = fgetln(fp, &len))) {
 		if (buf[len - 1] == '\n') {
 			buf[len - 1] = '\0';
+			--len;
 		} else {
 			lbuf = xmalloc(len + 1);
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-
-		len = strlen(buf);
 
 		if (!strncmp(buf, CVS_LOGMSG_PREFIX,
 		    sizeof(CVS_LOGMSG_PREFIX) - 1))
