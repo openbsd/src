@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.116 2008/11/25 19:09:34 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.117 2008/11/26 16:48:16 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -301,9 +301,11 @@ struct mbuf {
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define M_DUP_PKTHDR(to, from) do {					\
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	(to)->m_flags = ((to)->m_flags & (M_EXT | M_CLUSTER));		\
+	(to)->m_flags |= (from)->m_flags & M_COPYFLAGS;			\
 	M_DUP_HDR((to), (from));					\
-	(to)->m_data = (to)->m_pktdat;					\
+	if (((to)->m_flags & M_EXT) == 0)				\
+		(to)->m_data = (to)->m_pktdat;				\
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -311,9 +313,11 @@ struct mbuf {
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define	M_MOVE_PKTHDR(to, from) do {					\
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	(to)->m_flags = ((to)->m_flags & (M_EXT | M_CLUSTER));		\
+	(to)->m_flags |= (from)->m_flags & M_COPYFLAGS;			\
 	M_MOVE_HDR((to), (from));					\
-	(to)->m_data = (to)->m_pktdat;					\
+	if (((to)->m_flags & M_EXT) == 0)				\
+		(to)->m_data = (to)->m_pktdat;				\
 } while (/* CONSTCOND */ 0)
 
 /*
