@@ -53,6 +53,9 @@ wav_new_out(struct fileops *ops, int fd, char *name,
 
 	f = (struct wav *)pipe_new(ops, fd, name);
 	if (hdr == HDR_WAV) {
+		par->le = 1;
+		par->sig = (par->bits <= 8) ? 0 : 1; 
+		par->bps = (par->bits + 7) / 8;
 		if (!wav_writehdr(f->pipe.fd, par))
 			exit(1);
 		f->hpar = *par;
