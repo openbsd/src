@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.223 2008/11/24 22:31:19 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.224 2008/11/26 21:54:20 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -247,21 +247,21 @@ uvideo* at uhub?
 video*  at uvideo?
 
 # Bluetooth controllers
-#ubt*	at uhub?		# USB Bluetooth
+ubt*	at uhub?		# USB Bluetooth
 
 # Bluetooth bus support
-#bthub*	at ubt?
+bthub*	at ubt?
 
 # Bluetooth HID support
-#bthidev* at bthub?
-#btkbd*	at bthidev?
-#btms*	at bthidev?
-#wskbd*	at btkbd? mux 1
-#wsmouse* at btms? mux 0
+bthidev* at bthub?
+btkbd*	at bthidev?
+btms*	at bthidev?
+wskbd*	at btkbd? mux 1
+wsmouse* at btms? mux 0
 
 # Bluetooth audio support
-#btsco*	at bthub?
-#audio*	at btsco?
+btsco*	at bthub?
+audio*	at btsco?
 
 # CardBus bus support
 cardbus* at cardslot?
