@@ -1,4 +1,22 @@
-/*	$OpenBSD: btd.c,v 1.1 2008/11/24 23:34:42 uwe Exp $	*/
+/*	$OpenBSD: btd.c,v 1.2 2008/11/26 06:51:43 uwe Exp $	*/
+
+/*
+ * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
+ * Copyright (c) 2003 Can Erkin Acar
+ * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -7,9 +25,9 @@
 
 #include <err.h>
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,27 +36,23 @@
 
 #include "btd.h"
 
-void sighdlr(int, short, void *);
-__dead void usage(void);
-int check_child(pid_t, const char *);
+static void sighdlr(int);
+static __dead void usage(void);
+static int check_child(pid_t, const char *);
+static int btd_read(void *, size_t);
+static int btd_write(const void *, size_t);
+static int dispatch_imsg(struct btd *);
+static void btd_open_hci(struct btd *);
+static void btd_set_link_policy(struct btd *);
 
 static const char *progname;
-static int quit = 0;
-static int reconfig = 0;
-static int sigchld = 0;
+static volatile sig_atomic_t quit = 0;
+static volatile sig_atomic_t reconfig = 0;
+static volatile sig_atomic_t sigchld = 0;
+static int pipe_fd;
 
-static struct event ev_sigchld;
-static struct event ev_sighup;
-static struct event ev_sigint;
-static struct event ev_sigterm;
-static struct bufferevent *ev_bt;
-
-static void readcb(struct bufferevent *, void *);
-static void writecb(struct bufferevent *, void *);
-static void errorcb(struct bufferevent *, short, void *);
-
-void
-sighdlr(int sig, short what, void *arg)
+static void
+sighdlr(int sig)
 {
 	switch (sig) {
 	case SIGTERM:
@@ -54,7 +68,7 @@ sighdlr(int sig, short what, void *arg)
 	}
 }
 
-__dead void
+static __dead void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-d]\n", progname);
@@ -68,6 +82,7 @@ main(int argc, char *argv[])
 	pid_t chld_pid, pid;
 	int pipe_chld[2];
 	struct passwd *pw;
+	struct pollfd pfd;
 	int ch;
 
 	progname = basename(argv[0]);
@@ -115,29 +130,30 @@ main(int argc, char *argv[])
 
 	setproctitle("[priv]");
 
-	/* only after daemon() */
-	event_init();
-
-	signal_set(&ev_sigchld, SIGCHLD, sighdlr, &env);
-	signal_set(&ev_sighup, SIGHUP, sighdlr, &env);
-	signal_set(&ev_sigint, SIGINT, sighdlr, &env);
-	signal_set(&ev_sigterm, SIGTERM, sighdlr, &env);
-	signal_add(&ev_sigchld, NULL);
-	signal_add(&ev_sighup, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
+	signal(SIGCHLD, sighdlr);
+	signal(SIGTERM, sighdlr);
+	signal(SIGINT, sighdlr);
+	signal(SIGHUP, sighdlr);
 
 	close(pipe_chld[1]);
-
-	if ((ev_bt = bufferevent_new(pipe_chld[0], readcb,
-	    writecb, errorcb, &env)) == NULL)
-		fatalx("bufferevent_new ev_bt");
-
-	bufferevent_enable(ev_bt, EV_READ);
+	pipe_fd = pipe_chld[0];
 
 	while (quit == 0) {
-		if (!event_loop(EVLOOP_ONCE))
-			quit = 1;
+		int nfds;
+
+		pfd.fd = pipe_fd;
+		pfd.events = POLLIN;
+
+		if ((nfds = poll(&pfd, 1, 0)) == -1)
+			if (errno != EINTR) {
+				log_warn("poll error");
+				quit = 1;
+			}
+
+
+		if (pfd.revents & POLLIN)
+			if (dispatch_imsg(&env) == -1)
+				quit = 1;
 
 		if (sigchld) {
 			if (check_child(chld_pid, "child")) {
@@ -146,9 +162,10 @@ main(int argc, char *argv[])
 			}
 			sigchld = 0;
 		}
+
 	}
 
-	signal_del(&ev_sigchld);
+	signal(SIGCHLD, SIG_DFL);
 
 	if (chld_pid)
 		kill(chld_pid, SIGTERM);
@@ -187,57 +204,127 @@ check_child(pid_t pid, const char *pname)
 	return (0);
 }
 
-static void
-readcb(struct bufferevent *ev, void *arg)
+static int
+btd_read(void *buf, size_t n)
 {
-	log_warnx("readcb");
-}
-
-static void
-writecb(struct bufferevent *ev, void *arg)
-{
-	/* nothing to do here */
-	log_warnx("writecb");
-}
-
-static void
-errorcb(struct bufferevent *ev, short what, void *arg)
-{
-	log_warnx("Pipe error");
-	quit = 1;
-}
-
-#ifdef notyet
-void
-btd_devctl(struct imsg *imsg)
-{
-	struct btdev_attach_args baa;
-	char buf[sizeof(int) + sizeof(bdaddr_t)];
-	unsigned long cmd;
-	int res;
-	int fd;
-
-	if (devinfo_load_attach_args(&baa, imsg->data,
-	    imsg->hdr.len - IMSG_HEADER_SIZE))
-		fatalx("invalid IMSG_ATTACH/DETACH received");
-
-	if ((fd = open(BTHUB_PATH, O_WRONLY, 0)) == -1) {
-		res = errno;
-		log_warn("can't open %s", BTHUB_PATH);
-		goto ret;
+	if (atomic_read(pipe_fd, buf, n) < 0) {
+		close(pipe_fd);
+		pipe_fd = -1;
+		quit = 1;
+		return -1;
 	}
 
-	cmd = imsg->hdr.type == IMSG_ATTACH ? BTDEV_ATTACH : BTDEV_DETACH;
-	if (ioctl(fd, cmd, &baa) == -1)
-		res = errno;
-
-	res = 0;
-	(void)close(fd);
-ret:
-	devinfo_unload_attach_args(&baa);
-
-	memcpy(buf, &res, sizeof(res));
-	memcpy((int *)buf + 1, &baa.bd_raddr, sizeof(bdaddr_t));
-	/* send reply */
+	return 0;
 }
-#endif
+
+static int
+btd_write(const void *buf, size_t n)
+{
+	if (atomic_write(pipe_fd, buf, n) < 0) {
+		close(pipe_fd);
+		pipe_fd = -1;
+		quit = 1;
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+dispatch_imsg(struct btd *env)
+{
+	enum imsg_type type;
+
+	if (btd_read(&type, sizeof(type)) < 0) {
+		log_warnx("btd_read");
+		return -1;
+	}
+
+	switch (type) {
+	case IMSG_OPEN_HCI:
+		btd_open_hci(env);
+		break;
+	case IMSG_SET_LINK_POLICY:
+		btd_set_link_policy(env);
+		break;
+	default:
+		log_warnx("invalid message, type=%#x", type);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+btd_open_hci(struct btd *env)
+{
+	struct sockaddr_bt sa;
+	bdaddr_t addr;
+	int fd;
+	int err = 0;
+
+	if (btd_read(&addr, sizeof(addr)) < 0)
+		return;
+
+	if ((fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) == -1) {
+		err = errno;
+		btd_write(&err, sizeof(err));
+		return;
+	}
+
+	bzero(&sa, sizeof(sa));
+	sa.bt_len = sizeof(sa);
+	sa.bt_family = AF_BLUETOOTH;
+	bdaddr_copy(&sa.bt_bdaddr, &addr);
+
+	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0 ||
+	    connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
+		err = errno;
+		close(fd);
+		fd = -1;
+	}
+
+	send_fd(pipe_fd, fd);
+
+	(void)btd_write(&err, sizeof(err));
+
+	if (fd != -1)
+		close(fd);
+}
+
+static void
+btd_set_link_policy(struct btd *env)
+{
+	struct btreq btr;
+	bdaddr_t addr;
+	uint16_t link_policy;
+	int err = 0;
+	int fd;
+
+	if (btd_read(&addr, sizeof(addr)) < 0 ||
+	    btd_read(&link_policy, sizeof(link_policy)) < 0)
+		return;
+
+	if ((fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) == -1) {
+		err = errno;
+		btd_write(&err, sizeof(err));
+		return;
+	}
+
+	bdaddr_copy(&btr.btr_bdaddr, &addr);
+
+	if (ioctl(fd, SIOCGBTINFOA, &btr) < 0) {
+		err = errno;
+		close(fd);
+		btd_write(&err, sizeof(err));
+		return;
+	}
+
+	btr.btr_link_policy = link_policy;
+
+	if (ioctl(fd, SIOCSBTPOLICY, &btr) < 0)
+		err = errno;
+
+	btd_write(&err, sizeof(err));
+	close(fd);
+}

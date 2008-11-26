@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt.c,v 1.2 2008/11/25 17:13:53 uwe Exp $ */
+/*	$OpenBSD: bt.c,v 1.3 2008/11/26 06:51:43 uwe Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -42,14 +42,13 @@ struct event ev_sigint;
 struct event ev_sigterm;
 struct event ev_siginfo;
 
-struct bufferevent *ev_priv;
-void bt_priv_readcb(struct bufferevent *, void *);
-void bt_priv_writecb(struct bufferevent *, void *);
-void bt_priv_errorcb(struct bufferevent *, short, void *);
+int priv_fd;
 
 void
 bt_sighdlr(int sig, short ev, void *arg)
 {
+	struct btd *env = arg;
+
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
@@ -57,7 +56,7 @@ bt_sighdlr(int sig, short ev, void *arg)
 		break;
 
 	case SIGINFO:
-		/* report status */
+		conf_dump(env);
 		break;
 	}
 }
@@ -107,15 +106,11 @@ bt_main(int pipe_prnt[2], struct btd *env, struct passwd *pw)
 
 	close(pipe_prnt[0]);
 
-	if ((ev_priv = bufferevent_new(pipe_prnt[1], bt_priv_readcb,
-	    bt_priv_writecb, bt_priv_errorcb, env)) == NULL)
-		fatalx("bufferevent_new ev_priv");
+	priv_fd = pipe_prnt[1];
 
-	bufferevent_enable(ev_priv, EV_READ);
-
-	signal_set(&ev_sigint, SIGINT, bt_sighdlr, NULL);
-	signal_set(&ev_sigterm, SIGTERM, bt_sighdlr, NULL);
-	signal_set(&ev_siginfo, SIGINFO, bt_sighdlr, NULL);
+	signal_set(&ev_sigint, SIGINT, bt_sighdlr, env);
+	signal_set(&ev_sigterm, SIGTERM, bt_sighdlr, env);
+	signal_set(&ev_siginfo, SIGINFO, bt_sighdlr, env);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_siginfo, NULL);
@@ -133,21 +128,21 @@ bt_main(int pipe_prnt[2], struct btd *env, struct passwd *pw)
 }
 
 void
-bt_priv_readcb(struct bufferevent *ev, void *arg)
+bt_priv_msg(enum imsg_type type)
 {
-	log_debug(__func__);
+	bt_priv_send(&type, sizeof(type));
 }
 
 void
-bt_priv_writecb(struct bufferevent *ev, void *arg)
+bt_priv_send(const void *buf, size_t n)
 {
-	/* nothing to do */
-	log_debug(__func__);
+	if (atomic_write(priv_fd, buf, n) < 0)
+		fatal("atomic_write");
 }
 
 void
-bt_priv_errorcb(struct bufferevent *ev, short what, void *arg)
+bt_priv_recv(void *buf, size_t n)
 {
-	log_warnx("priv pipe error, what=%#x", what);
-	exit(0);
+	if (atomic_read(priv_fd, buf, n) < 0)
+		fatal("atomic_read");
 }

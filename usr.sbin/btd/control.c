@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2008/11/26 06:51:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -181,7 +181,7 @@ control_readcb(struct bufferevent *ev, void *arg)
 		return;
 
 	bufferevent_read(ev, &stmt_type, sizeof(stmt_type));
-	log_debug("stmt %#x size %lu", stmt_type, stmt_size);
+	/*log_debug("stmt %#x size %lu", stmt_type, stmt_size);*/
 
 	switch (stmt_type) {
 	case BTCTL_CONFIG:
@@ -280,7 +280,7 @@ control_attach_stmt(struct btd *conf, btctl_attach_stmt *stmt)
 	btdev->type = stmt->type;
 
 	strlcpy(btdev->pin, stmt->pin,  sizeof(btdev->pin));
-	btdev->pin_len = stmt->pin_len;
+	btdev->pin_size = stmt->pin_size;
 
 	btdev->flags |= BTDF_ATTACH;
 
@@ -290,13 +290,5 @@ control_attach_stmt(struct btd *conf, btctl_attach_stmt *stmt)
 int
 control_commit(struct btd *env, const struct btd *conf)
 {
-#if 0
-	struct bt_interface *iface;
-	struct bt_interface *conf_iface;
-#endif
-
-	conf_dump(env);
-	conf_dump(conf);
-
-	return 0;
+	return hci_reinit(env, conf);
 }

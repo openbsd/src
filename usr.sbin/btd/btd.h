@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.h,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
+/*	$OpenBSD: btd.h,v 1.3 2008/11/26 06:51:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -48,18 +48,15 @@ struct btd_db {
 struct bt_interface {
 	TAILQ_ENTRY(bt_interface) entry;
 	struct btd *env;
-	const char *xname;
+	struct hci_physif *physif;
 	bdaddr_t addr;
 	char name[HCI_UNIT_NAME_SIZE];
 	int disabled;
-	struct event ev;
-	int fd;
-};
-
-struct btd_hci {
-	struct bt_interface *inquiry_interface;
-	int inquiry_running;
-	time_t last_inquiry;	/* start time */
+	int flags;
+#define BTIF_EXPLICIT		0x0001 /* listed in config */
+	int changes;
+#define BTIF_DELETED		0x0001
+#define BTIF_NAME_CHANGED	0x0002
 };
 
 struct bt_devinfo {
@@ -73,8 +70,7 @@ struct bt_device {
 	bdaddr_t addr;
 	uint16_t type;
 	uint8_t pin[HCI_PIN_SIZE];
-	uint8_t pin_len;
-	time_t last_seen;	/* last response to an inquiry */
+	uint8_t pin_size;
 	int flags;
 	struct bt_devinfo info;
 };
@@ -85,7 +81,7 @@ struct bt_device {
 struct btd {
 	int debug;
 	struct btd_db db;
-	struct btd_hci hci;
+	struct hci_state *hci;
 	TAILQ_HEAD(interfaces, bt_interface) interfaces;
 	TAILQ_HEAD(devices, bt_device) devices;
 };
@@ -99,14 +95,24 @@ enum imsg_type {
 	IMSG_CONFIG_DEVICE,
 	IMSG_CONFIG_COMMIT,
 	IMSG_CONFIG_ROLLBACK,
+	IMSG_OPEN_HCI,
+	IMSG_SET_LINK_POLICY,
 	IMSG_ATTACH,
 	IMSG_DETACH
 };
 
 /* prototypes */
 
+/* atomic.c */
+int atomic_read(int, void *, size_t);
+int atomic_write(int, const void *, size_t);
+
 /* bt.c */
+extern int priv_fd;
 pid_t bt_main(int[2], struct btd *, struct passwd *);
+void bt_priv_msg(enum imsg_type);
+void bt_priv_send(const void *, size_t);
+void bt_priv_recv(void *, size_t);
 
 /* bt_subr.c */
 char const *bt_ntoa(bdaddr_t const *, char[18]);
@@ -150,10 +156,13 @@ int devinfo_load_attach_args(struct btdev_attach_args *, void *, size_t);
 void devinfo_unload_attach_args(struct btdev_attach_args *);
 void devinfo_dump(const struct bt_devinfo *);
 
+/* fdpass.c */
+void send_fd(int, int);
+int receive_fd(int);
+
 /* hci.c */
 int hci_init(struct btd *);
-time_t hci_ping(struct btd *);
-int hci_dispatch(int, struct btd *);
+int hci_reinit(struct btd *, const struct btd *);
 
 /* log.c */
 extern int debug;

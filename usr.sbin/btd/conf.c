@@ -50,7 +50,6 @@ conf_add_interface(struct btd *conf, const bdaddr_t *addr)
 
 	iface->env = conf;
 	bdaddr_copy(&iface->addr, addr);
-	iface->fd = -1;
 
 	TAILQ_INSERT_TAIL(&conf->interfaces, iface, entry);
 
@@ -128,19 +127,19 @@ conf_delete_device(struct bt_device *btdev)
 
 void
 conf_lookup_pin(const struct btd *conf, const bdaddr_t *addr,
-    uint8_t pin[HCI_PIN_SIZE], uint8_t *pin_len)
+    uint8_t pin[HCI_PIN_SIZE], uint8_t *pin_size)
 {
 	struct bt_device *btdev;
 
 	if ((btdev = conf_find_device(conf, addr)) == NULL &&
 	    (btdev = conf_find_device(conf, BDADDR_ANY)) == NULL) {
 		memset(pin, 0, HCI_PIN_SIZE);
-		*pin_len = 0;
+		*pin_size = 0;
 		return;
 	}
 
 	memcpy(pin, btdev->pin, HCI_PIN_SIZE);
-	*pin_len = btdev->pin_len;
+	*pin_size = btdev->pin_size;
 }
 
 void
@@ -150,11 +149,15 @@ conf_dump(const struct btd *conf)
 	struct bt_device *btdev;
 
 	TAILQ_FOREACH(iface, &conf->interfaces, entry) {
-		log_info("interface %s", bt_ntoa(&iface->addr, NULL));
+		log_debug("interface %s%s", bt_ntoa(&iface->addr, NULL),
+		    iface->disabled ? " disabled" : "");
 	}
 
 	TAILQ_FOREACH(btdev, &conf->devices, entry) {
-		log_info("device %s", bt_ntoa(&btdev->addr, NULL));
+		log_debug("device %s type %#x%s%*s%s",
+		    bt_ntoa(&btdev->addr, NULL), btdev->type,
+		    btdev->pin_size > 0 ? " pin \"" : "", btdev->pin_size,
+		    btdev->pin, btdev->pin_size > 0 ? "\"" : "");
 	}
 
 }

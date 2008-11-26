@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.c,v 1.2 2008/11/25 17:13:53 uwe Exp $	*/
+/*	$OpenBSD: hci.c,v 1.3 2008/11/26 06:51:43 uwe Exp $	*/
 /*	$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
@@ -44,208 +44,434 @@
 
 #include "btd.h"
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+struct hci_physif {
+	TAILQ_ENTRY(hci_physif) entry;
+	struct btd *env;
+	int present;
+	bdaddr_t addr;
+	char xname[16];
+	struct event ev;
+	int fd;
+};
 
-int hci_init_config(struct bt_interface *);
+struct hci_state {
+	TAILQ_HEAD(, hci_physif) physifs;
+	int raw_sock;
+};
+
+void hci_update_physifs(struct btd *);
+struct hci_physif *hci_find_physif(struct hci_state *, bdaddr_t *);
+
+void hci_if_config(struct bt_interface *, const struct bt_interface *);
+void hci_if_apply(struct bt_interface *);
+
+int hci_interface_open(struct bt_interface *);
+void hci_interface_close(struct bt_interface *);
+int hci_interface_reinit(struct bt_interface *);
 
 void hci_eventcb(int, short, void *);
 
-int hci_process_pin_code_req(struct bt_interface *,
+int hci_process_pin_code_req(struct hci_physif *,
     struct sockaddr_bt *, const bdaddr_t *);
-int hci_process_link_key_req(struct bt_interface *,
+int hci_process_link_key_req(struct hci_physif *,
     struct sockaddr_bt *, const bdaddr_t *);
-int hci_process_link_key_notification(struct bt_interface *, struct sockaddr_bt *,
-    const hci_link_key_notification_ep *);
+int hci_process_link_key_notification(struct hci_physif *,
+    struct sockaddr_bt *, const hci_link_key_notification_ep *);
 int hci_req(int, uint16_t, uint8_t , void *, size_t, void *, size_t);
 int hci_send_cmd(int, struct sockaddr_bt *, uint16_t, size_t, void *);
 
-#define hci_write(iface, opcode, wbuf, wlen) \
-	hci_req(iface->fd, opcode, 0, wbuf, wlen, NULL, 0)
-#define hci_read(iface, opcode, rbuf, rlen) \
-	hci_req(iface->fd, opcode, 0, NULL, 0, rbuf, rlen)
-#define hci_cmd(iface, opcode, cbuf, clen) \
-	hci_req(iface->fd, opcode, 0, cbuf, clen, NULL, 0)
+#define hci_write(fd, opcode, wbuf, wlen) \
+	hci_req(fd, opcode, 0, wbuf, wlen, NULL, 0)
+#define hci_read(fd, opcode, rbuf, rlen) \
+	hci_req(fd, opcode, 0, NULL, 0, rbuf, rlen)
+#define hci_cmd(fd, opcode, cbuf, clen) \
+	hci_req(fd, opcode, 0, cbuf, clen, NULL, 0)
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int
 hci_init(struct btd *env)
 {
-	struct btreq btr;
-	struct bt_interface *defaults;
-	struct bt_interface *iface;
-	int hci;
+	struct hci_state *hci;
 
-	hci = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
-	if (hci == -1)
+	hci = env->hci = calloc(1, sizeof(*env->hci));
+
+	hci->raw_sock = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
+	if (hci->raw_sock == -1)
 		fatal("could not open raw HCI socket");
 
-	defaults = conf_find_interface(env, BDADDR_ANY);
-	iface = NULL;
+	TAILQ_INIT(&hci->physifs);
+
+	return 0;
+}
+
+void
+hci_update_physifs(struct btd *env)
+{
+	struct btreq btr;
+	struct hci_state *hci = env->hci;
+	struct hci_physif *physif;
+	int sock;
 
 	bzero(&btr, sizeof(btr));
+	sock = hci->raw_sock;
+
+	TAILQ_FOREACH(physif, &hci->physifs, entry)
+		physif->present = 0;
+
 	for (;;) {
 		int flags;
 
-		if (ioctl(hci, SIOCNBTINFO, &btr) == -1)
+		if (ioctl(sock, SIOCNBTINFO, &btr) < 0)
 			break;
 
 		/*
-		 * Interfaces must be up, just to determine their
-		 * bdaddr. Grrrr...
+		 * XXX Interfaces must be up, just to determine their
+		 * XXX bdaddr. Grrrr...
 		 */
-		if (!((flags = btr.btr_flags) & BTF_UP)) {
+		if (!((flags = btr.btr_flags) & BTF_UP) ||
+		    bdaddr_any(&btr.btr_bdaddr)) {
 			btr.btr_flags |= BTF_UP;
-			if (ioctl(hci, SIOCSBTFLAGS, &btr) == -1) {
+			if (ioctl(sock, SIOCSBTFLAGS, &btr) < 0) {
 				log_warn("%s: SIOCSBTFLAGS", btr.btr_name);
 				continue;
 			}
-			if (ioctl(hci, SIOCGBTINFO, &btr) == -1) {
+			if (ioctl(sock, SIOCGBTINFO, &btr) < 0) {
 				log_warn("%s: SIOCGBTINFO", btr.btr_name);
 				continue;
 			}
+			if (!(btr.btr_flags & BTF_UP) ||
+			    bdaddr_any(&btr.btr_bdaddr)) {
+				log_warnx("could not enable %s",
+				    btr.btr_name);
+				goto redisable;
+			}
 		}
 
-		if (!(btr.btr_flags & BTF_UP) ||
-		    bdaddr_any(&btr.btr_bdaddr)) {
-			log_warn("could not enable %s", btr.btr_name);
-			goto redisable;
+		if ((physif = hci_find_physif(hci, &btr.btr_bdaddr))) {
+			physif->present = 1;
+			goto found;
 		}
 
-		/*
-		 * Discover device driver unit names for explicitly
-		 * configured interfaces.
-		 */
-		iface = conf_find_interface(env, &btr.btr_bdaddr);
-		if (iface != NULL) {
-			assert(iface->xname == NULL);
-			iface->xname = strdup(btr.btr_name);
-			if (iface->xname == NULL)
-				fatal("hci_init strdup 1");
-			goto redisable;
-		}
+		if ((physif = calloc(1, sizeof(*physif))) == NULL)
+			fatalx("hci physif calloc");
 
-		/*
-		 * Add interfaces not explicitly configured.
-		 */
-		iface = conf_add_interface(env, &btr.btr_bdaddr);
-		if (iface == NULL)
-			fatalx("hci_init add_interface");
+		physif->env = env;
+		physif->fd = -1;
+		physif->present = 1;
+		bdaddr_copy(&physif->addr, &btr.btr_bdaddr);
+		strlcpy(physif->xname, btr.btr_name, sizeof(physif->xname));
 
-		iface->xname = strdup(btr.btr_name);
-		if (iface->xname == NULL)
-			fatal("hci_init strdup 2");
+		TAILQ_INSERT_TAIL(&hci->physifs, physif, entry);
+
+	found:
+		(void)conf_add_interface(env, &physif->addr);
 
 	redisable:
-		/* See above. Grrrr... */
-		if (!(flags & BTF_UP) &&
-		    (iface == NULL || iface->disabled)) {
+		/* XXX See above. Grrrr... */
+		if (!(flags & BTF_UP)) {
 			btr.btr_flags &= ~BTF_UP;
-			if (ioctl(hci, SIOCSBTFLAGS, &btr) == -1)
+			if (ioctl(sock, SIOCSBTFLAGS, &btr) < 0)
 				fatal("hci_init SIOCSBTFLAGS");
 		}
 	}
 
-	close(hci);
+	for (physif = TAILQ_FIRST(&hci->physifs); physif != NULL;) {
+		if (!physif->present) {
+			struct hci_physif *next;
+			struct bt_interface *iface;
 
+			iface = conf_find_interface(env, &physif->addr);
+			if (iface != NULL) {
+				hci_interface_close(iface);
+				conf_delete_interface(iface);
+			}
+
+			next = TAILQ_NEXT(physif, entry);
+			TAILQ_REMOVE(&hci->physifs, physif, entry);
+			free(physif);
+			physif = next;
+			continue;
+		}
+
+		physif = TAILQ_NEXT(physif, entry);
+	}
+}
+
+struct hci_physif *
+hci_find_physif(struct hci_state *hci, bdaddr_t *addr)
+{
+	struct hci_physif *physif;
+
+	TAILQ_FOREACH(physif, &hci->physifs, entry)
+		if (bdaddr_same(&physif->addr, addr))
+			return physif;
+
+	return NULL;
+}
+
+int
+hci_reinit(struct btd *env, const struct btd *conf)
+{
+	struct bt_interface *conf_iface;
+	struct bt_interface *iface;
+	struct bt_device *conf_btdev;
+	struct bt_device *btdev;
+
+	hci_update_physifs(env);
+
+	/*
+	 * "Downgrade" all explicit interfaces, which are not in the
+	 * configuration anymore.
+	 */
 	TAILQ_FOREACH(iface, &env->interfaces, entry) {
-		struct sockaddr_bt sa;
-		struct hci_filter filter;
-
-		if (bdaddr_any(&iface->addr))
-			continue;
-
-		/* Disable interfaces not present in the system. */
-		if (iface->xname == NULL) {
-			iface->disabled = 1;
-			log_info("interface disabled: %s (not present)",
-			    bt_ntoa(&iface->addr, NULL));
-			continue;
-		}
-
-		/* Skip manually disabled interfaces. */
-		if (iface->disabled) {
-			log_info("interface disabled: %s (%s)",
-			    bt_ntoa(&iface->addr, NULL), iface->xname);
-			continue;
-		}
-
-		log_info("listening on %s (%s)",
-		    bt_ntoa(&iface->addr, NULL), iface->xname);
-
-		iface->fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
-		if (iface->fd == -1)
-			fatal("socket");
-
-		bzero(&sa, sizeof(sa));
-		sa.bt_len = sizeof(sa);
-		sa.bt_family = AF_BLUETOOTH;
-		bdaddr_copy(&sa.bt_bdaddr, &iface->addr);
-		if (bind(iface->fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-			fatal("bind");
-
-		if (connect(iface->fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-			fatal("connect");
-
-		if (hci_init_config(iface) == -1)
-			fatalx("hci_init_config");
-
-		bzero(&filter, sizeof(filter));
-		hci_filter_set(HCI_EVENT_PIN_CODE_REQ, &filter);
-		hci_filter_set(HCI_EVENT_LINK_KEY_REQ, &filter);
-		hci_filter_set(HCI_EVENT_LINK_KEY_NOTIFICATION, &filter);
-		if (setsockopt(iface->fd, BTPROTO_HCI, SO_HCI_EVT_FILTER,
-		    (const void *)&filter, sizeof(filter)) < 0)
-			fatal("setsockopt");
-
-		event_set(&iface->ev, iface->fd, EV_READ | EV_PERSIST,
-		    hci_eventcb, iface);
-		event_add(&iface->ev, NULL);
+		conf_iface = conf_find_interface(conf, &iface->addr);
+		if (conf_iface == NULL)
+			iface->flags &= ~BTIF_EXPLICIT;
 	}
 
 	/*
-	 * Run device discovery on the first available
-	 * interface. This should be configurable.
+	 * Add new interfaces from the configuration and mark the
+	 * changed properties of existing interfaces. The wildcard
+	 * interface is not treated specially in this loop.
 	 */
-	TAILQ_FOREACH(iface, &env->interfaces, entry) {
-		if (!bdaddr_any(&iface->addr) && !iface->disabled) {
-			env->hci.inquiry_interface = iface;
-			break;
+	TAILQ_FOREACH(conf_iface, &conf->interfaces, entry) {
+		iface = conf_find_interface(env, &conf_iface->addr);
+
+		if (iface == NULL) {
+			iface = conf_add_interface(env, &conf_iface->addr);
+			if (iface == NULL) {
+				int err = errno;
+				log_warn("could not add interface %s",
+				    bt_ntoa(&conf_iface->addr, NULL));
+				errno = err;
+				return -1;
+			}
+
+			iface->changes |= BTIF_NAME_CHANGED;
 		}
+
+		iface->flags |= BTIF_EXPLICIT;
+
+		hci_if_config(iface, conf_iface);
+	}
+
+	/*
+	 * Apply the changes in the wildcard interface to all
+	 * non-explicit interfaces. If there is no wildcard interface,
+	 * delete all non-explicit interfaces.
+	 */
+	conf_iface = conf_find_interface(conf, BDADDR_ANY);
+	TAILQ_FOREACH(iface, &env->interfaces, entry) {
+		if (!(iface->flags & BTIF_EXPLICIT)) {
+			if (conf_iface != NULL)
+				hci_if_config(iface, conf_iface);
+			else
+				iface->changes |= BTIF_DELETED;
+		}
+	}
+
+	/*
+	 * Apply all interface changes now.
+	 */
+	for (iface = TAILQ_FIRST(&env->interfaces); iface != NULL;) {
+		if (iface->changes & BTIF_DELETED) {
+			struct bt_interface *next;
+
+			hci_interface_close(iface);
+
+			next = TAILQ_NEXT(iface, entry);
+			conf_delete_interface(iface);
+			iface = next;
+			continue;
+		}
+
+		if (!bdaddr_any(&iface->addr))
+			hci_if_apply(iface);
+
+		iface = TAILQ_NEXT(iface, entry);
+	}
+
+	TAILQ_FOREACH(btdev, &env->devices, entry) {
+		conf_btdev = conf_find_device(conf, &btdev->addr);
+		if (conf_btdev == NULL) {
+			struct bt_device *next;
+
+			/* XXX detach */
+
+			next = TAILQ_NEXT(btdev, entry);
+			conf_delete_device(btdev);
+			btdev = next;
+			continue;
+		}
+	}
+
+	TAILQ_FOREACH(conf_btdev, &conf->devices, entry) {
+		btdev = conf_find_device(env, &conf_btdev->addr);
+		if (btdev == NULL) {
+			btdev = conf_add_device(env, &conf_btdev->addr);
+			if (btdev == NULL) {
+				int err = errno;
+				log_warn("could not add device %s",
+				    bt_ntoa(&conf_btdev->addr, NULL));
+				errno = err;
+				return -1;
+			}
+		}
+
+		btdev->type = conf_btdev->type;
+
+		memcpy(btdev->pin, conf_btdev->pin, sizeof(btdev->pin));
+		btdev->pin_size = conf_btdev->pin_size;
 	}
 
 	return 0;
 }
 
+void
+hci_if_config(struct bt_interface *iface, const struct bt_interface *other)
+{
+	if (memcmp(iface->name, other->name, sizeof(iface->name))) {
+		iface->changes |= BTIF_NAME_CHANGED;
+		memcpy(iface->name, other->name, sizeof(iface->name));
+	}
+
+	iface->disabled = other->disabled;
+}
+
+void
+hci_if_apply(struct bt_interface *iface)
+{
+	if (iface->disabled) {
+		hci_interface_close(iface);
+		return;
+	}
+
+	if (hci_interface_open(iface) < 0)
+		return;
+
+	if (iface->changes != 0) {
+		(void)hci_interface_reinit(iface);
+		iface->changes = 0;
+	}
+}
+
 int
-hci_init_config(struct bt_interface *iface)
+hci_interface_open(struct bt_interface *iface)
+{
+	struct hci_filter filter;
+	struct hci_state *hci = iface->env->hci;
+	struct hci_physif *physif;
+	int err;
+
+	if (iface->physif == NULL) {
+		iface->physif = hci_find_physif(hci, &iface->addr);
+		if (iface->physif == NULL)
+			/* no physical interface to open, but that's ok */
+			return 0;
+	}
+
+	physif = iface->physif;
+
+	if (physif->fd != -1)
+		return 0;
+
+	bt_priv_msg(IMSG_OPEN_HCI);
+	bt_priv_send(&physif->addr, sizeof(bdaddr_t));
+	physif->fd = receive_fd(priv_fd);
+	bt_priv_recv(&err, sizeof(int));
+	if (err != 0) {
+		log_warnx("OPEN_HCI failed (%s)", strerror(err));
+		return -1;
+	}
+
+	memset(&filter, 0, sizeof(filter));
+	hci_filter_set(HCI_EVENT_COMMAND_STATUS, &filter);
+	hci_filter_set(HCI_EVENT_COMMAND_COMPL, &filter);
+	hci_filter_set(HCI_EVENT_PIN_CODE_REQ, &filter);
+	hci_filter_set(HCI_EVENT_LINK_KEY_REQ, &filter);
+	hci_filter_set(HCI_EVENT_LINK_KEY_NOTIFICATION, &filter);
+	if (setsockopt(physif->fd, BTPROTO_HCI, SO_HCI_EVT_FILTER,
+	    &filter, sizeof(filter)) < 0) {
+		log_warn("SO_HCI_EVT_FILTER");
+		return -1;
+	}
+
+	event_set(&physif->ev, physif->fd, EV_READ|EV_PERSIST,
+	    &hci_eventcb, physif);
+	if (event_add(&physif->ev, NULL)) {
+		log_warnx("event_add");
+		return -1;
+	}
+
+	log_info("listening on %s", bt_ntoa(&physif->addr, NULL));
+	return 0;
+}
+
+void
+hci_interface_close(struct bt_interface *iface)
+{
+	struct hci_physif *physif = iface->physif;
+
+	if (physif == NULL)
+		return;
+
+	if (physif->fd != -1) {
+		close(physif->fd);
+		physif->fd = -1;
+	}
+
+	iface->physif = NULL;
+}
+
+int
+hci_interface_reinit(struct bt_interface *iface)
 {
 	struct btreq btr;
+	struct hci_physif *physif;
 	uint8_t val;
+	int err;
 
-	if (hci_write(iface, HCI_CMD_WRITE_LOCAL_NAME, iface->name,
-	    HCI_UNIT_NAME_SIZE))
-		return -1;
+	if ((physif = iface->physif) == NULL)
+		/* no physical interface, so we keep changes pending */
+		return 0;
 
-	if (hci_read(iface, HCI_CMD_READ_SCAN_ENABLE, &val, sizeof(val)))
+	if (iface->changes & BTIF_NAME_CHANGED) {
+		if (hci_write(physif->fd, HCI_CMD_WRITE_LOCAL_NAME,
+		    iface->name, HCI_UNIT_NAME_SIZE))
+			return -1;
+		iface->changes &= ~BTIF_NAME_CHANGED;
+	}
+
+	/* The rest is unconditional configuration. */
+
+	if (hci_read(physif->fd, HCI_CMD_READ_SCAN_ENABLE, &val,
+	    sizeof(val)))
 		return -1;
 
 	val |= HCI_PAGE_SCAN_ENABLE;
 	val |= HCI_INQUIRY_SCAN_ENABLE;
 
-	if (hci_write(iface, HCI_CMD_WRITE_SCAN_ENABLE, &val, sizeof(val)))
+	if (hci_write(physif->fd, HCI_CMD_WRITE_SCAN_ENABLE, &val,
+	    sizeof(val)))
 		return -1;
 
-	bdaddr_copy(&btr.btr_bdaddr, &iface->addr);
-	if (ioctl(iface->fd, SIOCGBTINFOA, &btr) < 0) {
+	bdaddr_copy(&btr.btr_bdaddr, &physif->addr);
+
+	if (ioctl(physif->fd, SIOCGBTINFOA, &btr) < 0) {
 		log_warn("SIOCGBTINFOA");
 		return -1;
 	}
 
-	val = btr.btr_link_policy;
-	val |= HCI_LINK_POLICY_ENABLE_ROLE_SWITCH;
-	btr.btr_link_policy = val;
+	btr.btr_link_policy |= HCI_LINK_POLICY_ENABLE_ROLE_SWITCH;
 
-	if (ioctl(iface->fd, SIOCSBTPOLICY, &btr) < 0) {
-		log_warn("SIOCSBTPOLICY");
+	bt_priv_msg(IMSG_SET_LINK_POLICY);
+	bt_priv_send(&physif->addr, sizeof(bdaddr_t));
+	bt_priv_send(&btr.btr_link_policy, sizeof(uint16_t));
+	bt_priv_recv(&err, sizeof(int));
+
+	if (err != 0) {
+		log_warnx("SET_LINK_POLICY failed (%s)", strerror(err));
 		return -1;
 	}
 
@@ -257,26 +483,31 @@ hci_eventcb(int fd, short evflags, void *arg)
 {
 	char buf[HCI_EVENT_PKT_SIZE];
 	hci_event_hdr_t *event = (hci_event_hdr_t *)buf;
-	struct bt_interface *iface = arg;
+	struct hci_physif *physif = arg;
 	struct sockaddr_bt sa;
 	socklen_t size;
 	bdaddr_t *addr;
 	void *ep;
 	int n;
 
-	if (iface == NULL)
+	if (physif == NULL)
 		fatal("HCI event on closed socket?");
 
 	size = sizeof(sa);
-	n = recvfrom(iface->fd, buf, sizeof(buf), 0,
+	n = recvfrom(physif->fd, buf, sizeof(buf), 0,
 	    (struct sockaddr *)&sa, &size);
 	if (n < 0) {
 		log_warn("could not receive from HCI socket");
 		return;
 	}
 
+	if (n < sizeof(hci_event_hdr_t)) {
+		log_warnx("short HCI packet");
+		return;
+	}
+
 	if (event->type != HCI_EVENT_PKT) {
-		log_packet(&sa.bt_bdaddr, &iface->addr,
+		log_packet(&sa.bt_bdaddr, &physif->addr,
 		    "unexpected HCI packet, type=%#x", event->type);
 		return;
 	}
@@ -284,74 +515,81 @@ hci_eventcb(int fd, short evflags, void *arg)
 	addr = (bdaddr_t *)(event + 1);
 	ep = (bdaddr_t *)(event + 1);
 
+	/* XXX check packet size */
 	switch (event->event) {
+	case HCI_EVENT_COMMAND_STATUS:
+	case HCI_EVENT_COMMAND_COMPL:
+		break;
+
 	case HCI_EVENT_PIN_CODE_REQ:
-		hci_process_pin_code_req(iface, &sa, addr);
+		hci_process_pin_code_req(physif, &sa, addr);
 		break;
 
 	case HCI_EVENT_LINK_KEY_REQ:
-		hci_process_link_key_req(iface, &sa, addr);
+		hci_process_link_key_req(physif, &sa, addr);
 		break;
 
 	case HCI_EVENT_LINK_KEY_NOTIFICATION:
-		hci_process_link_key_notification(iface, &sa, ep);
+		hci_process_link_key_notification(physif, &sa, ep);
 		break;
 
 	default:
-		log_packet(&sa.bt_bdaddr, &iface->addr,
+		log_packet(&sa.bt_bdaddr, &physif->addr,
 		    "unexpected HCI event, event=%#x", event->event);
 		break;
 	}
 }
 
 int
-hci_process_pin_code_req(struct bt_interface *iface,
+hci_process_pin_code_req(struct hci_physif *physif,
     struct sockaddr_bt *sa, const bdaddr_t *addr)
 {
 	hci_pin_code_rep_cp cp;
+	struct btd *env = physif->env;
+	int fd = physif->fd;
 
-	conf_lookup_pin(iface->env, addr, cp.pin, &cp.pin_size);
+	conf_lookup_pin(env, addr, cp.pin, &cp.pin_size);
 
 	if (cp.pin_size == 0) {
 		log_info("%s: PIN code not found", bt_ntoa(addr, NULL));
-		return hci_send_cmd(iface->fd, sa, HCI_CMD_PIN_CODE_NEG_REP,
+		return hci_send_cmd(fd, sa, HCI_CMD_PIN_CODE_NEG_REP,
 		    sizeof(bdaddr_t), (void *)addr);
 	} else {
-		bdaddr_copy(&cp.bdaddr, addr);
-
 		log_info("%s: PIN code found", bt_ntoa(addr, NULL));
-		return hci_send_cmd(iface->fd, sa, HCI_CMD_PIN_CODE_REP,
+		bdaddr_copy(&cp.bdaddr, addr);
+		return hci_send_cmd(fd, sa, HCI_CMD_PIN_CODE_REP,
 		    sizeof(cp), &cp);
 	}
 }
 
 int
-hci_process_link_key_req(struct bt_interface *iface,
-    struct sockaddr_bt *sa, const bdaddr_t *addr)
+hci_process_link_key_req(struct hci_physif *physif, struct sockaddr_bt *sa,
+    const bdaddr_t *addr)
 {
 	hci_link_key_rep_cp cp;
+	struct btd *env = physif->env;
+	int fd = physif->fd;
 
-	if (db_get_link_key(&iface->env->db, addr, cp.key)) {
+	if (db_get_link_key(&env->db, addr, cp.key)) {
 		log_info("%s: link key not found", bt_ntoa(addr, NULL));
-		return hci_send_cmd(iface->fd, sa, HCI_CMD_LINK_KEY_NEG_REP,
+		return hci_send_cmd(fd, sa, HCI_CMD_LINK_KEY_NEG_REP,
 		    sizeof(bdaddr_t), (void *)addr);
 	}
 
 	log_info("%s: link key found", bt_ntoa(addr, NULL));
 	bdaddr_copy(&cp.bdaddr, addr);
-
-	return hci_send_cmd(iface->fd, sa, HCI_CMD_LINK_KEY_REP,
-	    sizeof(cp), &cp);
+	return hci_send_cmd(fd, sa, HCI_CMD_LINK_KEY_REP, sizeof(cp), &cp);
 }
 
 int
-hci_process_link_key_notification(struct bt_interface *iface,
+hci_process_link_key_notification(struct hci_physif *physif,
     struct sockaddr_bt *sa, const hci_link_key_notification_ep *ep)
 {
 	const bdaddr_t *addr = &ep->bdaddr;
+	struct btd *env = physif->env;
 	int res;
 
-	if ((res = db_put_link_key(&iface->env->db, addr, ep->key)) == 0)
+	if ((res = db_put_link_key(&env->db, addr, ep->key)) == 0)
 		log_info("%s: link key stored", bt_ntoa(addr, NULL));
 	else
 		log_info("%s: link key not stored", bt_ntoa(addr, NULL));
