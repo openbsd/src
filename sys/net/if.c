@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.181 2008/11/25 16:32:41 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.182 2008/11/26 17:36:23 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2024,9 +2024,26 @@ m_clinitifp(struct ifnet *ifp)
 
 	/* Initialize high water marks for use of cluster pools */
 	for (i = 0; i < MCLPOOLS; i++) {
-		ifp->if_mclstat.mclpool[i].mcl_hwm = 4;
+		ifp->if_mclstat.mclpool[i].mcl_hwm = MAX(4,
+		    ifp->if_mclstat.mclpool[i].mcl_lwm);
 		ifp->if_mclstat.mclpool[i].mcl_size = mclsizes[i];
 	}
+}
+
+void
+m_clsetlwm(struct ifnet *ifp, u_int pktlen, u_int lwm)
+{
+	extern u_int mclsizes[];
+	int i;
+
+	for (i = 0; i < MCLPOOLS; i++) {
+                if (pktlen <= mclsizes[i])
+			break;
+        }
+	if (i >= MCLPOOLS)
+		return;
+
+	ifp->if_mclstat.mclpool[i].mcl_lwm = lwm;
 }
 
 int
