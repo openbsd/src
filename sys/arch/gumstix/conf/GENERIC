@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2008/11/26 14:18:11 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.2 2008/11/26 21:59:12 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,16 +49,16 @@ pxadmac0	at pxaip?		# DMA controller
 pxaost0		at pxaip? addr 0x40a00000 size 0x20
 
 # PCMCIA/CF socket and GPIO controllers
-scoop0		at pxaip?
-scoop1		at pxaip?
+#scoop0		at pxaip?
+#scoop1		at pxaip?
 
 # touch screen
-zts0		at pxaip?
-wsmouse*	at zts? mux 0
+#zts0		at pxaip?
+#wsmouse*	at zts? mux 0
 
 # keyboard
-zkbd0		at pxaip?
-wskbd*		at zkbd? mux 1
+#zkbd0		at pxaip?
+#wskbd*		at zkbd? mux 1
 
 # USB controllers
 pxaudc0		at pxaip?		# USB Device Controller
@@ -103,7 +103,7 @@ midi*		at umidi?
 ulpt*		at uhub?		# USB Printers
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
-atapiscsi*	at umass?
+#atapiscsi*	at umass?
 uhidev*		at uhub?		# Human Interface Devices
 ums*		at uhidev?		# USB mouse
 wsmouse*	at ums? mux 0
@@ -151,22 +151,22 @@ com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
 com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 
 # integrated PCMCIA/CF controller
-pxapcic0	at pxaip?
+# pxapcic0	at pxaip?
 
 # PCMCIA bus support
-pcmcia*		at pxapcic?
+#pcmcia*		at pxapcic?
 
 # PCMCIA (CF) devices
-com*		at pcmcia?		# PCMCIA modems/serial ports
-wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
-malo*		at pcmcia?		# Marvell 88W8385
-ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
-wdc*		at pcmcia?		# hard disk controller
+#com*		at pcmcia?		# PCMCIA modems/serial ports
+#wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
+#malo*		at pcmcia?		# Marvell 88W8385
+#ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
+#wdc*		at pcmcia?		# hard disk controller
 #cfxga*		at pcmcia?		# VoyagerVGA frame buffer
 #wsdisplay*	at cfxga?
 
 # IDE hard drives
-wd*		at wdc? flags 0x0000
+#wd*		at wdc? flags 0x0000
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
@@ -194,20 +194,20 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 #ciphy* at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
-lcd0		at pxaip?		# LCD
-wsdisplay*	at lcd? console ?
-zssp0		at pxaip?		# ADC, touch screen, backlight
-apm0		at pxaip?		# APM emulation
+#lcd0		at pxaip?		# LCD
+#wsdisplay*	at lcd? console ?
+#zssp0		at pxaip?		# ADC, touch screen, backlight
+#apm0		at pxaip?		# APM emulation
 
-zaudio0		at pxaip?		# Zaurus I2S/I2C sound
-audio*		at zaudio?
-zrc0		at pxaip?		# Zaurus remote control
-wskbd*		at zrc? mux 1
-flash0		at pxaip?		# NAND flash memory
+#zaudio0		at pxaip?		# Zaurus I2S/I2C sound
+#audio*		at zaudio?
+#zrc0		at pxaip?		# Zaurus remote control
+#wskbd*		at zrc? mux 1
+#flash0		at pxaip?		# NAND flash memory
 
-pxammc0		at pxaip?		# MMC/SD/SDIO controller
-sdmmc*		at pxammc?		# SD/MMC bus
-scsibus*	at sdmmc?		# SCSI emulation
+#pxammc0		at pxaip?		# MMC/SD/SDIO controller
+#sdmmc*		at pxammc?		# SD/MMC bus
+#scsibus*	at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
 #sbt*	at sdmmc?			# SDIO Bluetooth
