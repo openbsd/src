@@ -154,10 +154,13 @@ conf_dump(const struct btd *conf)
 	}
 
 	TAILQ_FOREACH(btdev, &conf->devices, entry) {
-		log_debug("device %s type %#x%s%*s%s",
+		log_debug("%s %s type %#x%s%*s%s (%s)",
+		    btdev->flags & BTDF_ATTACH ? "attach" : "device",
 		    bt_ntoa(&btdev->addr, NULL), btdev->type,
 		    btdev->pin_size > 0 ? " pin \"" : "", btdev->pin_size,
-		    btdev->pin, btdev->pin_size > 0 ? "\"" : "");
+		    btdev->pin, btdev->pin_size > 0 ? "\"" : "",
+		    btdev->flags & BTDF_ATTACH_DONE ? "attached" :
+		    "detached");
 	}
 
 }

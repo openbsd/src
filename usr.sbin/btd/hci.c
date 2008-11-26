@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.c,v 1.3 2008/11/26 06:51:43 uwe Exp $	*/
+/*	$OpenBSD: hci.c,v 1.4 2008/11/26 15:32:56 uwe Exp $	*/
 /*	$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ int hci_send_cmd(int, struct sockaddr_bt *, uint16_t, size_t, void *);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int
+void
 hci_init(struct btd *env)
 {
 	struct hci_state *hci;
@@ -101,8 +101,6 @@ hci_init(struct btd *env)
 		fatal("could not open raw HCI socket");
 
 	TAILQ_INIT(&hci->physifs);
-
-	return 0;
 }
 
 void
@@ -295,35 +293,28 @@ hci_reinit(struct btd *env, const struct btd *conf)
 	TAILQ_FOREACH(btdev, &env->devices, entry) {
 		conf_btdev = conf_find_device(conf, &btdev->addr);
 		if (conf_btdev == NULL) {
-			struct bt_device *next;
-
-			/* XXX detach */
-
-			next = TAILQ_NEXT(btdev, entry);
-			conf_delete_device(btdev);
-			btdev = next;
-			continue;
+			btdev->flags &= ~BTDF_ATTACH;
+			btdev->flags |= BTDF_DELETED;
 		}
 	}
 
 	TAILQ_FOREACH(conf_btdev, &conf->devices, entry) {
 		btdev = conf_find_device(env, &conf_btdev->addr);
-		if (btdev == NULL) {
+		if (btdev == NULL)
 			btdev = conf_add_device(env, &conf_btdev->addr);
-			if (btdev == NULL) {
-				int err = errno;
-				log_warn("could not add device %s",
-				    bt_ntoa(&conf_btdev->addr, NULL));
-				errno = err;
-				return -1;
-			}
-		}
+		if (btdev == NULL)
+			fatal("hci_reinit conf_add_device");
 
 		btdev->type = conf_btdev->type;
 
 		memcpy(btdev->pin, conf_btdev->pin, sizeof(btdev->pin));
 		btdev->pin_size = conf_btdev->pin_size;
+
+		btdev->flags |= conf_btdev->flags & BTDF_ATTACH;
+
 	}
+
+	bt_devices_changed();
 
 	return 0;
 }
@@ -422,6 +413,8 @@ hci_interface_close(struct bt_interface *iface)
 	}
 
 	iface->physif = NULL;
+
+	log_info("stopped listening on %s", bt_ntoa(&physif->addr, NULL));
 }
 
 int

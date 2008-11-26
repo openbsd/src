@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.c,v 1.2 2008/11/26 06:51:43 uwe Exp $	*/
+/*	$OpenBSD: btd.c,v 1.3 2008/11/26 15:32:56 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -39,11 +39,12 @@
 static void sighdlr(int);
 static __dead void usage(void);
 static int check_child(pid_t, const char *);
-static int btd_read(void *, size_t);
-static int btd_write(const void *, size_t);
+static int read_all(void *, size_t);
+static int write_all(const void *, size_t);
 static int dispatch_imsg(struct btd *);
 static void btd_open_hci(struct btd *);
 static void btd_set_link_policy(struct btd *);
+static void btd_devctl(struct btd *, enum imsg_type);
 
 static const char *progname;
 static volatile sig_atomic_t quit = 0;
@@ -205,7 +206,7 @@ check_child(pid_t pid, const char *pname)
 }
 
 static int
-btd_read(void *buf, size_t n)
+read_all(void *buf, size_t n)
 {
 	if (atomic_read(pipe_fd, buf, n) < 0) {
 		close(pipe_fd);
@@ -218,7 +219,7 @@ btd_read(void *buf, size_t n)
 }
 
 static int
-btd_write(const void *buf, size_t n)
+write_all(const void *buf, size_t n)
 {
 	if (atomic_write(pipe_fd, buf, n) < 0) {
 		close(pipe_fd);
@@ -235,8 +236,8 @@ dispatch_imsg(struct btd *env)
 {
 	enum imsg_type type;
 
-	if (btd_read(&type, sizeof(type)) < 0) {
-		log_warnx("btd_read");
+	if (read_all(&type, sizeof(type)) < 0) {
+		log_warnx("read_all");
 		return -1;
 	}
 
@@ -246,6 +247,10 @@ dispatch_imsg(struct btd *env)
 		break;
 	case IMSG_SET_LINK_POLICY:
 		btd_set_link_policy(env);
+		break;
+	case IMSG_ATTACH:
+	case IMSG_DETACH:
+		btd_devctl(env, type);
 		break;
 	default:
 		log_warnx("invalid message, type=%#x", type);
@@ -263,12 +268,12 @@ btd_open_hci(struct btd *env)
 	int fd;
 	int err = 0;
 
-	if (btd_read(&addr, sizeof(addr)) < 0)
+	if (read_all(&addr, sizeof(addr)) < 0)
 		return;
 
 	if ((fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) == -1) {
 		err = errno;
-		btd_write(&err, sizeof(err));
+		write_all(&err, sizeof(err));
 		return;
 	}
 
@@ -286,7 +291,7 @@ btd_open_hci(struct btd *env)
 
 	send_fd(pipe_fd, fd);
 
-	(void)btd_write(&err, sizeof(err));
+	(void)write_all(&err, sizeof(err));
 
 	if (fd != -1)
 		close(fd);
@@ -301,13 +306,13 @@ btd_set_link_policy(struct btd *env)
 	int err = 0;
 	int fd;
 
-	if (btd_read(&addr, sizeof(addr)) < 0 ||
-	    btd_read(&link_policy, sizeof(link_policy)) < 0)
+	if (read_all(&addr, sizeof(addr)) < 0 ||
+	    read_all(&link_policy, sizeof(link_policy)) < 0)
 		return;
 
 	if ((fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) == -1) {
 		err = errno;
-		btd_write(&err, sizeof(err));
+		write_all(&err, sizeof(err));
 		return;
 	}
 
@@ -316,7 +321,7 @@ btd_set_link_policy(struct btd *env)
 	if (ioctl(fd, SIOCGBTINFOA, &btr) < 0) {
 		err = errno;
 		close(fd);
-		btd_write(&err, sizeof(err));
+		write_all(&err, sizeof(err));
 		return;
 	}
 
@@ -325,6 +330,52 @@ btd_set_link_policy(struct btd *env)
 	if (ioctl(fd, SIOCSBTPOLICY, &btr) < 0)
 		err = errno;
 
-	btd_write(&err, sizeof(err));
+	write_all(&err, sizeof(err));
 	close(fd);
+}
+
+void
+btd_devctl(struct btd *env, enum imsg_type type)
+{
+	struct btdev_attach_args baa;
+	unsigned long cmd;
+	void *data;
+	size_t datalen;
+	int res = 0;
+	int fd;
+
+	if (read_all(&datalen, sizeof(datalen)) < 0)
+		return;
+
+	if (datalen < sizeof(baa) || datalen > sizeof(baa) + 65536)
+		fatalx("invalid data length in IMSG_ATTACH/DETACH");
+
+	if ((data = malloc(datalen)) == NULL)
+		fatal("btd_devctl");
+
+	if (read_all(data, datalen) < 0) {
+		free(data);
+		return;
+	}
+
+	if (devinfo_load_attach_args(&baa, data, datalen))
+		fatalx("invalid IMSG_ATTACH/DETACH received");
+
+	if ((fd = open(BTHUB_PATH, O_WRONLY, 0)) == -1) {
+		res = errno;
+		goto ret;
+	}
+
+	cmd = type == IMSG_ATTACH ? BTDEV_ATTACH : BTDEV_DETACH;
+	if (ioctl(fd, cmd, &baa) != 0)
+		res = errno;
+
+	(void)close(fd);
+ret:
+	if (data != NULL)
+		free(data);
+
+	devinfo_unload_attach_args(&baa);
+
+	write_all(&res, sizeof(res));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.h,v 1.3 2008/11/26 06:51:43 uwe Exp $	*/
+/*	$OpenBSD: btd.h,v 1.4 2008/11/26 15:32:56 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -72,16 +72,21 @@ struct bt_device {
 	uint8_t pin[HCI_PIN_SIZE];
 	uint8_t pin_size;
 	int flags;
-	struct bt_devinfo info;
+	struct bt_devinfo info;	/* filled in from database or SDP */
 };
 
-#define BTDF_VISIBLE		0x0001	/* device is discoverable */
-#define BTDF_ATTACH		0x0002	/* attempt to attach a driver */
+#define BTDF_ATTACH		0x0001	/* try attaching a driver */
+#define BTDF_ATTACH_DONE	0x0002	/* driver is attached */
+#define BTDF_SDP_STARTED	0x0004	/* SDP query is running */
+#define BTDF_SDP_DONE		0x0008	/* SDP query is done */
+#define BTDF_DEVINFO_VALID	0x0010	/* got device information */
+#define BTDF_DELETED		0x0020	/* device deleted in config */
 
 struct btd {
 	int debug;
 	struct btd_db db;
 	struct hci_state *hci;
+	struct sdp_state *sdp;
 	TAILQ_HEAD(interfaces, bt_interface) interfaces;
 	TAILQ_HEAD(devices, bt_device) devices;
 };
@@ -113,6 +118,7 @@ pid_t bt_main(int[2], struct btd *, struct passwd *);
 void bt_priv_msg(enum imsg_type);
 void bt_priv_send(const void *, size_t);
 void bt_priv_recv(void *, size_t);
+void bt_devices_changed(void);
 
 /* bt_subr.c */
 char const *bt_ntoa(bdaddr_t const *, char[18]);
@@ -161,7 +167,7 @@ void send_fd(int, int);
 int receive_fd(int);
 
 /* hci.c */
-int hci_init(struct btd *);
+void hci_init(struct btd *);
 int hci_reinit(struct btd *, const struct btd *);
 
 /* log.c */
@@ -177,7 +183,8 @@ void fatal(const char *);
 void fatalx(const char *);
 
 /* sdp.c */
-int sdp_query(struct btdev_attach_args *, bdaddr_t *, bdaddr_t *, const char *);
+void sdp_init(struct btd *);
+int sdp_query(struct bt_interface *, struct bt_device *);
 
 /* util.c */
 time_t getmonotime(void);
