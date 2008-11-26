@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.13 2008/07/12 11:09:02 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.14 2008/11/26 14:10:23 claudio Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  *		u_int64	tag_g:1,	(global flag)
  *			tag_ctxt:15,	(context for mapping)
  *			tag_unassigned:6,
- *			tag_va:42;	(virtual address bits<64:22>)
+ *			tag_va:42;	(virtual address bits<63:22>)
  *		u_int64	data_v:1,	(valid bit)
  *			data_size:2,	(page size [8K*8**<SIZE>])
  *			data_nfo:1,	(no-fault only)
