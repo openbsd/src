@@ -1,5 +1,6 @@
-/*	$OpenBSD: gpioctl.c,v 1.10 2008/11/26 14:56:10 mbalmer Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.11 2008/11/26 15:02:43 mbalmer Exp $	*/
 /*
+ * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -69,16 +70,13 @@ const struct bitstr {
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	const char *errstr;
 	const struct bitstr *bs;
-	char *ep;
-	int n, fl = 0, value = 0;
-	u_int32_t ga_mask = 0, ga_offset = -1;
 	long lval;
+	u_int32_t ga_mask = 0;
+	int pin, ch, ga_offset = -1, n, fl = 0, value = 0;
+	const char *errstr;
+	char *ep, *nam = NULL;
 	char devn[32];
-	int pin;
-	char *nam = NULL;
 
 	while ((ch = getopt(argc, argv, "q")) != -1)
 		switch (ch) {
