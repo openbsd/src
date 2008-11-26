@@ -328,7 +328,7 @@ radeon_init_pipes(drm_radeon_private_t *dev_priv)
 			dev_priv->num_gb_pipes = 1;
 		}
 	}
-	DRM_INFO("Num pipes: %d\n", dev_priv->num_gb_pipes);
+	DRM_DEBUG("Num pipes: %d\n", dev_priv->num_gb_pipes);
 
 	gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16 /*| R300_SUBPIXEL_1_16*/);
 
@@ -1485,6 +1485,7 @@ radeon_do_release(struct drm_device *dev)
 		RADEON_WRITE(RADEON_SURFACE0_INFO + 16 * i, 0);
 		RADEON_WRITE(RADEON_SURFACE0_LOWER_BOUND + 16 * i, 0);
 		RADEON_WRITE(RADEON_SURFACE0_UPPER_BOUND + 16 * i, 0);
+		bzero(&dev_priv->surfaces[i], sizeof(struct radeon_surface));
 	}
 
 	/* Free memory heap structures */
