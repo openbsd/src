@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.73 2008/11/19 03:44:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.74 2008/11/27 22:54:20 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -105,6 +105,14 @@ struct audio_format {
 	 */
 	u_int frequency[AUFMT_MAX_FREQUENCIES];
 };
+
+
+#ifdef AZALIA_DEBUG
+# define DPRINTFN(n,x)	do { if (az_debug > (n)) printf x; } while (0/*CONSTCOND*/)
+int az_debug = 0;
+#else
+# define DPRINTFN(n,x)	do {} while (0/*CONSTCOND*/)
+#endif
 
 
 /* ----------------------------------------------------------------
@@ -1289,6 +1297,13 @@ azalia_codec_init(codec_t *this)
 		}
 		DPRINTF(("\n"));
 	}
+	for (i = 0; i < this->adcs.ngroups; i++) {
+		DPRINTF(("%s: adcgroup[%d]:", __func__, i));
+		for (n = 0; n < this->adcs.groups[i].nconv; n++) {
+			DPRINTF((" %2.2x", this->adcs.groups[i].conv[n]));
+		}
+		DPRINTF(("\n"));
+	}
 #endif
 
 	/* set invalid values for azalia_codec_construct_format() to work */
@@ -1516,7 +1531,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	nid_t nid;
 	boolean_t flag222;
 
-	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
+	DPRINTFN(1, ("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
 	if (dir == AUMODE_RECORD)
 		group = &this->adcs.groups[this->adcs.cur];
@@ -1564,7 +1579,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	}
 
 exit:
-	DPRINTF(("%s: leave with %d\n", __func__, err));
+	DPRINTFN(1, ("%s: leave with %d\n", __func__, err));
 	return err;
 }
 
@@ -2151,7 +2166,7 @@ azalia_open(void *v, int flags)
 	azalia_t *az;
 	codec_t *codec;
 
-	DPRINTF(("%s: flags=0x%x\n", __func__, flags));
+	DPRINTFN(1, ("%s: flags=0x%x\n", __func__, flags));
 	az = v;
 	codec = &az->codecs[az->codecno];
 	codec->running++;
@@ -2164,7 +2179,7 @@ azalia_close(void *v)
 	azalia_t *az;
 	codec_t *codec;
 
-	DPRINTF(("%s\n", __func__));
+	DPRINTFN(1, ("%s\n", __func__));
 	az = v;
 	codec = &az->codecs[az->codecno];
 	codec->running--;
@@ -2374,7 +2389,7 @@ azalia_round_blocksize(void *v, int blk)
 		if (blk & 0x7f)
 			blk = (blk + 0x7f) & ~0x7f;
 	}
-	DPRINTF(("%s: resultant block size = %d\n", __func__, blk));
+	DPRINTFN(1,("%s: resultant block size = %d\n", __func__, blk));
 	return blk;
 }
 
@@ -2383,7 +2398,7 @@ azalia_halt_output(void *v)
 {
 	azalia_t *az;
 
-	DPRINTF(("%s\n", __func__));
+	DPRINTFN(1, ("%s\n", __func__));
 	az = v;
 	return azalia_stream_halt(&az->pstream);
 }
@@ -2393,7 +2408,7 @@ azalia_halt_input(void *v)
 {
 	azalia_t *az;
 
-	DPRINTF(("%s\n", __func__));
+	DPRINTFN(1, ("%s\n", __func__));
 	az = v;
 	return azalia_stream_halt(&az->rstream);
 }
@@ -2524,7 +2539,7 @@ azalia_trigger_input(void *v, void *start, void *end, int blk,
 	int err;
 	uint16_t fmt;
 
-	DPRINTF(("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %u/%ubit %uHz}\n",
+	DPRINTFN(1, ("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %u/%ubit %uHz}\n",
 	    __func__, v, start, end, blk, param->encoding, param->channels,
 	    param->precision, param->precision, param->sample_rate));
 
