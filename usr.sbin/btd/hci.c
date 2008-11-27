@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.c,v 1.5 2008/11/26 21:48:30 uwe Exp $	*/
+/*	$OpenBSD: hci.c,v 1.6 2008/11/27 00:51:17 uwe Exp $	*/
 /*	$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
@@ -61,6 +61,9 @@ struct hci_state {
 
 void hci_update_physifs(struct btd *);
 struct hci_physif *hci_find_physif(struct hci_state *, bdaddr_t *);
+
+int hci_unit_up(const char *);
+int hci_unit_down(const char *);
 
 void hci_if_config(struct bt_interface *, const struct bt_interface *);
 void hci_if_apply(struct bt_interface *);
@@ -129,21 +132,25 @@ hci_update_physifs(struct btd *env)
 		 */
 		if (!((flags = btr.btr_flags) & BTF_UP) ||
 		    bdaddr_any(&btr.btr_bdaddr)) {
-			btr.btr_flags |= BTF_UP;
-			if (ioctl(sock, SIOCSBTFLAGS, &btr) < 0) {
-				log_warn("%s: SIOCSBTFLAGS", btr.btr_name);
+			if (hci_unit_up(btr.btr_name) < 0)
 				continue;
-			}
+
 			if (ioctl(sock, SIOCGBTINFO, &btr) < 0) {
 				log_warn("%s: SIOCGBTINFO", btr.btr_name);
 				continue;
 			}
+
 			if (!(btr.btr_flags & BTF_UP) ||
 			    bdaddr_any(&btr.btr_bdaddr)) {
 				log_warnx("could not enable %s",
 				    btr.btr_name);
-				goto redisable;
+				continue;
 			}
+
+#if 0
+			if (hci_unit_down(btr.btr_name) < 0)
+				continue;
+#endif
 		}
 
 		if ((physif = hci_find_physif(hci, &btr.btr_bdaddr))) {
@@ -164,14 +171,6 @@ hci_update_physifs(struct btd *env)
 
 	found:
 		(void)conf_add_interface(env, &physif->addr);
-
-	redisable:
-		/* XXX See above. Grrrr... */
-		if (!(flags & BTF_UP)) {
-			btr.btr_flags &= ~BTF_UP;
-			if (ioctl(sock, SIOCSBTFLAGS, &btr) < 0)
-				fatal("hci_init SIOCSBTFLAGS");
-		}
 	}
 
 	for (physif = TAILQ_FIRST(&hci->physifs); physif != NULL;) {
@@ -319,6 +318,42 @@ hci_reinit(struct btd *env, const struct btd *conf)
 	return 0;
 }
 
+int
+hci_unit_up(const char *xname)
+{
+	struct btreq btr;
+
+	memset(&btr, 0, sizeof(btr));
+	strlcpy(btr.btr_name, xname, sizeof(btr.btr_name));
+
+	btr.btr_flags = BTF_UP;
+
+	if (bt_set_interface_flags(&btr) < 0) {
+		log_warn("hci_unit_up: %s", xname);
+		return -1;
+	}
+
+	return 0;
+}
+
+int
+hci_unit_down(const char *xname)
+{
+	struct btreq btr;
+
+	memset(&btr, 0, sizeof(btr));
+	strlcpy(btr.btr_name, xname, sizeof(btr.btr_name));
+
+	btr.btr_flags = 0;
+
+	if (bt_set_interface_flags(&btr) < 0) {
+		log_warn("hci_unit_down: %s", xname);
+		return -1;
+	}
+
+	return 0;
+}
+
 void
 hci_if_config(struct bt_interface *iface, const struct bt_interface *other)
 {
@@ -367,6 +402,9 @@ hci_interface_open(struct bt_interface *iface)
 	if (physif->fd != -1)
 		return 0;
 
+	if (hci_unit_up(physif->xname) < 0)
+		return -1;
+
 	bt_priv_msg(IMSG_OPEN_HCI);
 	bt_priv_send(&physif->addr, sizeof(bdaddr_t));
 	physif->fd = receive_fd(priv_fd);
@@ -414,6 +452,11 @@ hci_interface_close(struct bt_interface *iface)
 	}
 
 	iface->physif = NULL;
+
+#if 0
+	if (hci_unit_down(physif->xname) < 0)
+		return;
+#endif
 
 	log_info("stopped listening on %s", bt_ntoa(&physif->addr, NULL));
 }

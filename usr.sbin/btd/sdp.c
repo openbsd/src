@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdp.c,v 1.4 2008/11/26 21:48:30 uwe Exp $	*/
+/*	$OpenBSD: sdp.c,v 1.5 2008/11/27 00:51:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -55,8 +55,6 @@ sdp_get_devinfo(struct bt_interface *iface, struct bt_device *btdev)
 	struct sdp_session *sess;
 	const char *service;
 
-	log_debug("sdp_get_devinfo: raddr %s", bt_ntoa(&btdev->addr, NULL));
-
 	switch (btdev->type) {
 	case BTDEV_NONE:
 		return 1;
@@ -84,7 +82,6 @@ sdp_get_devinfo(struct bt_interface *iface, struct bt_device *btdev)
 
 	if (sdp_query(sess, &btdev->info.baa, &iface->addr, &btdev->addr,
 	    service) < 0) {
-		log_warnx("sdp_query failed");
 		sdp_close_session(sess);
 		return -1;
 	}
@@ -223,8 +220,6 @@ sdp_close_session(struct sdp_session *sess)
 {
 	if (sess->state == SDP_SESSION_CLOSED)
 		return;
-
-	log_debug("sdp_close_session: laddr %s", bt_ntoa(&sess->laddr, NULL));
 
 	if (sess->req != NULL) {
 		free(sess->req);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.c,v 1.3 2008/11/26 15:32:56 uwe Exp $	*/
+/*	$OpenBSD: btd.c,v 1.4 2008/11/27 00:51:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -44,6 +44,7 @@ static int write_all(const void *, size_t);
 static int dispatch_imsg(struct btd *);
 static void btd_open_hci(struct btd *);
 static void btd_set_link_policy(struct btd *);
+static void btd_set_interface_flags(struct btd *);
 static void btd_devctl(struct btd *, enum imsg_type);
 
 static const char *progname;
@@ -248,6 +249,9 @@ dispatch_imsg(struct btd *env)
 	case IMSG_SET_LINK_POLICY:
 		btd_set_link_policy(env);
 		break;
+	case IMSG_SET_INTERFACE_FLAGS:
+		btd_set_interface_flags(env);
+		break;
 	case IMSG_ATTACH:
 	case IMSG_DETACH:
 		btd_devctl(env, type);
@@ -329,6 +333,51 @@ btd_set_link_policy(struct btd *env)
 
 	if (ioctl(fd, SIOCSBTPOLICY, &btr) < 0)
 		err = errno;
+
+	write_all(&err, sizeof(err));
+	close(fd);
+}
+
+static void
+btd_set_interface_flags(struct btd *env)
+{
+	struct btreq btr;
+	uint16_t mask;
+	uint16_t flags;
+	int err = 0;
+	int fd;
+
+	memset(&btr, 0, sizeof(btr));
+
+	if (read_all(&btr.btr_name, sizeof(btr.btr_name)) < 0 ||
+	    read_all(&flags, sizeof(flags)) < 0)
+		return;
+
+	if ((fd = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) == -1) {
+		err = errno;
+		write_all(&err, sizeof(err));
+		return;
+	}
+
+	if (ioctl(fd, SIOCGBTINFO, &btr) < 0) {
+		err = errno;
+		log_warn("SIOCGBTINFO");
+		close(fd);
+		write_all(&err, sizeof(err));
+		return;
+	}
+
+	/* limit allowed flags */
+	mask = BTF_UP;
+	btr.btr_flags &= ~mask;
+	btr.btr_flags |= (flags & mask);
+
+	if (ioctl(fd, SIOCSBTFLAGS, &btr) < 0) {
+		err = errno;
+		log_warn("SIOCSBTFLAGS");
+	}
+
+	sleep(1); /* XXX wait until it comes up */
 
 	write_all(&err, sizeof(err));
 	close(fd);

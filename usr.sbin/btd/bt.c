@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt.c,v 1.5 2008/11/26 21:48:30 uwe Exp $ */
+/*	$OpenBSD: bt.c,v 1.6 2008/11/27 00:51:17 uwe Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -369,4 +369,17 @@ bt_device_detach(struct bt_device *btdev)
 		    bt_ntoa(&btdev->addr, NULL), strerror(err));
 		return -1;
 	}
+}
+
+int
+bt_set_interface_flags(const struct btreq *btr)
+{
+	int err;
+
+	bt_priv_msg(IMSG_SET_INTERFACE_FLAGS);
+	bt_priv_send(btr->btr_name, sizeof(btr->btr_name));
+	bt_priv_send(&btr->btr_flags, sizeof(btr->btr_flags));
+	bt_priv_recv(&err, sizeof(err));
+
+	return (errno = err) ? -1 : 0;
 }

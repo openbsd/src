@@ -1,4 +1,4 @@
-/*	$OpenBSD: btd.h,v 1.5 2008/11/26 21:48:30 uwe Exp $	*/
+/*	$OpenBSD: btd.h,v 1.6 2008/11/27 00:51:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -102,6 +102,7 @@ enum imsg_type {
 	IMSG_CONFIG_ROLLBACK,
 	IMSG_OPEN_HCI,
 	IMSG_SET_LINK_POLICY,
+	IMSG_SET_INTERFACE_FLAGS,
 	IMSG_ATTACH,
 	IMSG_DETACH
 };
@@ -119,6 +120,7 @@ void bt_priv_msg(enum imsg_type);
 void bt_priv_send(const void *, size_t);
 void bt_priv_recv(void *, size_t);
 void bt_devices_changed(void);
+int bt_set_interface_flags(const struct btreq *);
 
 /* bt_subr.c */
 char const *bt_ntoa(bdaddr_t const *, char[18]);
