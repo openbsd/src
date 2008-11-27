@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.50 2008/06/15 00:36:41 krw Exp $ */
+/*	$OpenBSD: mcd.c,v 1.51 2008/11/27 22:59:52 miod Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/file.h>
+#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
