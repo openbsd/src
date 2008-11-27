@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.2 2008/11/27 00:21:26 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.3 2008/11/27 11:38:02 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -273,9 +273,13 @@ void	sscom_kgdb_putc (void *, int);
 #define UCON_DEBUGPORT	  (UCON_RXINT_ENABLE|UCON_TXINT_ENABLE)
 
 
-static inline void
+void __sscom_output_chunk(struct sscom_softc *sc, int ufstat);
+void sscom_output_chunk(struct sscom_softc *sc);
+
+void
 __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 {
+#if 0
 	int n, space;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -291,9 +295,27 @@ __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
+#else
+	int cnt, max;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	uint8_t buffer[16+1];
+	uint8_t *tptr;
+	struct tty *tp = sc->sc_tty;
+
+	max = 16 - ((ufstat & UFSTAT_TXCOUNT) >> UFSTAT_TXCOUNT_SHIFT);
+	cnt = min ((int)max,tp->t_outq.c_cc);
+	if (cnt != 0) {
+		cnt = q_to_b(&tp->t_outq, buffer, cnt);
+		for (tptr = buffer; tptr < &buffer[cnt]; tptr ++) {
+			bus_space_write_1(iot, ioh, SSCOM_UTXH, *tptr);
+		}
+	}
+	
+#endif
 }
 
-static void
+void
 sscom_output_chunk(struct sscom_softc *sc)
 {
 	int ufstat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SSCOM_UFSTAT);
@@ -1391,7 +1413,6 @@ sscomstart(struct tty *tp)
 			goto out;
 		selwakeup(&tp->t_wsel);
 	}
-	SET(tp->t_state, TS_BUSY);
 #endif
 
 	SET(tp->t_state, TS_BUSY);
@@ -1897,10 +1918,10 @@ sscomtxintr(void *arg)
 		 * Output the next chunk of the contiguous
 		 * buffer, if any.
 		 */
+#if 0
 		if (sc->sc_tbc > 0) {
 			__sscom_output_chunk(sc, ufstat);
-		}
-		else {
+		} else {
 			/*
 			 * Disable transmit sscompletion
 			 * interrupts if necessary.
@@ -1912,6 +1933,21 @@ sscomtxintr(void *arg)
 				sc->sc_tx_done = 1;
 			}
 		}
+#else
+		if ( sc->sc_tty->t_outq.c_cc > 0) {
+			__sscom_output_chunk(sc, ufstat);
+		} else {
+			/*
+			 * Disable transmit sscompletion
+			 * interrupts.
+			 */
+			sscom_disable_txint(sc);
+			if (sc->sc_tx_busy) {
+				sc->sc_tx_busy = 0;
+				sc->sc_tx_done = 1;
+			}
+		}
+#endif
 	}
 
 	SSCOM_UNLOCK(sc);
