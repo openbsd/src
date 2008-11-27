@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.319 2008/10/03 14:25:11 deraadt Exp $
+#	$OpenBSD: rc,v 1.320 2008/11/27 00:52:06 uwe Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -673,6 +673,13 @@ fi
 
 if [ X"${hostapd_flags}" != X"NO" ]; then
 	echo -n ' hostapd';		/usr/sbin/hostapd ${hostapd_flags};
+fi
+
+if [ X"${bt}" != X"NO" ]; then
+	echo -n ' btd';			/usr/sbin/btd
+	if [ -f ${bt_rules} ]; then
+		btctl -f ${bt_rules}
+	fi
 fi
 
 if [ X"${rwhod}" = X"YES" ]; then
