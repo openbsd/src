@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.14 2008/11/26 14:57:40 mbalmer Exp $
+.\"	$OpenBSD: gpio.4,v 1.15 2008/11/27 14:15:02 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2008 $
+.Dd $Mdocdate: November 27 2008 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ Access from userland is performed through
 calls on these devices.
 .Pp
 The layout of the GPIO device is defined at securelevel 0, i.e. typically
-during system boot, and can not be changed later.
+during system boot, and cannot be changed later.
 GPIO pins can be configured and given a symbolic name and device drivers
 that use GPIO pins can be attached to the
 .Nm
@@ -60,7 +60,6 @@ All other pins will not be accessible once the runlevel has been raised.
 The following structures and constants are defined in the
 .Aq Pa sys/gpio.h
 header file:
-.Pp
 .Bl -tag -width XXXX
 .It Dv GPIOINFO (struct gpio_info)
 Returns information about the GPIO
@@ -159,10 +158,10 @@ If no flags are specified, the pin configuration stays unchanged.
 .Pp
 Only GPIO pins that have been set using
 .Ar GPIOPINSET
-will be accessible at securelevels > 0.
+will be accessible at securelevels greater than 0.
 .It Dv GPIOPINUNSET (struct gpio_pin_set)
 Unset the specified pin, i.e. clear its name and make it unaccessible
-at securelevels > 0.
+at securelevels greater than 0.
 .It Dv GPIOATTACH (struct gpio_attach)
 Attach the device described in the
 .Fa gpio_attach
