@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2008/05/02 21:44:46 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2008/11/27 20:46:48 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1454,7 +1454,7 @@ child_return(arg)
 	/* skip br instruction as in syscall() */
 #ifdef M88100
 	if (CPU_IS88100) {
-		tf->tf_snip = tf->tf_sfip & XIP_ADDR;
+		tf->tf_snip = (tf->tf_sfip & XIP_ADDR) | XIP_V;
 		tf->tf_sfip = tf->tf_snip + 4;
 	}
 #endif

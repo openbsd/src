@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.41 2007/12/26 22:21:39 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.42 2008/11/27 20:46:48 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -178,9 +178,20 @@ setregs(p, pack, stack, retval)
 #ifdef M88100
 	if (CPU_IS88100) {
 		/*
-		 * m88100_syscall() will resume at sfip / sfip + 4.
+		 * m88100_syscall() will resume at sfip / sfip + 4...
 		 */
 		tf->tf_sfip = ((pack->ep_entry + 8) & FIP_ADDR) | FIP_V;
+
+		/*
+		 * ... unless we are starting init, in which case we
+		 * won't be returning through the regular path, and
+		 * need to explicitely set up nip and fip (note that
+		 * 88110 do not need such a test).
+		 */
+		if (p->p_pid == 1) {
+			tf->tf_snip = tf->tf_sfip;
+			tf->tf_sfip += 4;
+		}
 	}
 #endif
 	tf->tf_r[2] = retval[0] = stack;
