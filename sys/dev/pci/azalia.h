@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.21 2008/11/19 03:44:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.22 2008/11/27 23:30:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -513,6 +513,7 @@ typedef int nid_t;
 
 typedef struct {
 	nid_t nid;
+	int enable;
 	uint32_t widgetcap;
 	int type;		/* = bit20-24 of widgetcap */
 	int nconnections;
@@ -563,15 +564,6 @@ typedef struct {
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
 					 (nid >= (codec)->wstart &&   \
 					  nid < (codec)->wend))
-
-#define PIN_STATUS(wid, conn)						\
-	do {								\
-		if ((wid)->type != COP_AWTYPE_PIN_COMPLEX)		\
-			(conn) = 0;					\
-		else							\
-			(conn) =					\
-			    ((wid)->d.pin.config & CORB_CD_PORT_MASK) >> 30; \
-	} while (0)
 
 typedef struct {
 	int nconv;

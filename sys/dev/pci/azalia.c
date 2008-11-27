@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.74 2008/11/27 22:54:20 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.75 2008/11/27 23:30:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1284,8 +1284,8 @@ azalia_codec_init(codec_t *this)
 			return err;
 	}
 	err = azalia_widget_label_widgets(this);
-		if (err)
-			return err;
+	if (err)
+		return err;
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
@@ -1632,22 +1632,32 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	this->widgetcap = result;
 	this->type = COP_AWCAP_TYPE(result);
 	if (this->widgetcap & COP_AWCAP_POWER) {
-		codec->comresp(codec, nid, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
+		codec->comresp(codec, nid, CORB_SET_POWER_STATE,
+		    CORB_PS_D0, &result);
 		DELAY(100);
 	}
-	if ((this->type == COP_AWTYPE_AUDIO_OUTPUT) ||
-	    (this->type == COP_AWTYPE_AUDIO_INPUT))
-		azalia_widget_init_audio(this, codec);
-	if (this->type == COP_AWTYPE_PIN_COMPLEX)
-		azalia_widget_init_pin(this, codec);
-	if (this->type == COP_AWTYPE_VOLUME_KNOB) {
-		err = codec->comresp(codec, this->nid,
-		    CORB_GET_PARAMETER,
-		    COP_VOLUME_KNOB_CAPABILITIES, &result);
-		if (!err)
-			this->d.volume.cap = result;
-	}
 
+	this->enable = 1;
+	switch (this->type) {
+	case COP_AWTYPE_AUDIO_OUTPUT:
+		/* FALLTHROUGH */
+	case COP_AWTYPE_AUDIO_INPUT:
+		azalia_widget_init_audio(this, codec);
+		break;
+	case COP_AWTYPE_PIN_COMPLEX:
+		azalia_widget_init_pin(this, codec);
+		break;
+	case COP_AWTYPE_VOLUME_KNOB:
+		err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
+		    COP_VOLUME_KNOB_CAPABILITIES, &result);
+		if (err)
+			return err;
+		this->d.volume.cap = result;
+		break;
+	case COP_AWTYPE_POWER:
+		this->enable = 0;
+		break;
+	}
 
 	/* amplifier information */
 	if (this->widgetcap & COP_AWCAP_INAMP) {
@@ -1808,6 +1818,12 @@ azalia_widget_print_audio(const widget_t *this, const char *lead)
 int
 azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 {
+	typedef enum {
+		PIN_DIR_IN,
+		PIN_DIR_OUT,
+		PIN_DIR_MIC
+	} pintype_t;
+	pintype_t pintype = PIN_DIR_IN;
 	codec_t *wcodec;
 	uint32_t result;
 	int err;
@@ -1828,28 +1844,67 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		return err;
 	this->d.pin.cap = result;
 
-	/* input pin */
-	if ((this->d.pin.cap & COP_PINCAP_INPUT) &&
-	    (this->d.pin.cap & COP_PINCAP_OUTPUT) == 0) {
-		err = codec->comresp(codec, this->nid,
-		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
-		if (err == 0) {
-			result &= ~CORB_PWC_OUTPUT;
-			result |= CORB_PWC_INPUT;
-			codec->comresp(codec, this->nid,
-			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
-		}
+	if (!(this->d.pin.cap & COP_PINCAP_INPUT))
+		pintype = PIN_DIR_OUT;
+	if (!(this->d.pin.cap & COP_PINCAP_OUTPUT))
+		pintype = PIN_DIR_IN;
+
+	switch (this->d.pin.device) {
+	case CORB_CD_LINEOUT:
+	case CORB_CD_SPEAKER:
+	case CORB_CD_HEADPHONE:
+	case CORB_CD_SPDIFOUT:
+	case CORB_CD_DIGITALOUT:
+		pintype = PIN_DIR_OUT;
+		break;
+	case CORB_CD_CD:
+	case CORB_CD_LINEIN:
+	case CORB_CD_SPDIFIN:
+	case CORB_CD_DIGITALIN:
+		pintype = PIN_DIR_IN;
+		break;
+	case CORB_CD_MICIN:
+		pintype = PIN_DIR_MIC;
+		break;
 	}
-	/* output pin, or bidirectional pin */
-	if (this->d.pin.cap & COP_PINCAP_OUTPUT) {
-		err = codec->comresp(codec, this->nid,
-		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
-		if (err == 0) {
-			result &= ~CORB_PWC_INPUT;
-			result |= CORB_PWC_OUTPUT;
-			codec->comresp(codec, this->nid,
-			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
-		}
+
+	/* Disable unconnected pins */
+	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE)
+		this->enable = 0;
+
+	/* Workaround broken machines which have their actual
+	   output on ports marked conn=none (e.g. MacBookPro1,2).
+	   Should not harm correct codec configurations. */
+	if (!this->enable)
+		pintype = PIN_DIR_OUT;
+
+	switch (pintype) {
+	case PIN_DIR_IN:
+		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
+		    CORB_PWC_INPUT, NULL);
+		break;
+	case PIN_DIR_OUT:
+		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
+		    CORB_PWC_OUTPUT, NULL);
+		break;
+	case PIN_DIR_MIC:
+		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
+		    CORB_PWC_INPUT|CORB_PWC_VREF_80, NULL);
+		break;
+	}
+
+	/* EAPD pin */
+	if (this->d.pin.cap & COP_PINCAP_EAPD) {
+		err = codec->comresp(codec, this->nid, CORB_GET_EAPD_BTL_ENABLE,
+		    0, &result);
+		if (err)
+			return err;
+		result &= 0xff;
+		result |= CORB_EAPD_EAPD;
+		err = codec->comresp(codec, this->nid, CORB_SET_EAPD_BTL_ENABLE,
+		    result, &result);
+		if (err)
+			return err;
 	}
 	/* sense pin */
 	if (codec->nsense_pins < AZ_MAX_SENSE_PINS &&

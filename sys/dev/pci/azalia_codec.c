@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.68 2008/11/27 23:03:29 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.69 2008/11/27 23:30:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #define AzaliaNclfe	"clfe"
 #define AzaliaNside	"side"
 
-#define ALC260_FUJITSU_ID	0x132610cf
 #define REALTEK_ALC660		0x10ec0660
 #define ALC660_ASUS_G2K		0x13391043
 #define REALTEK_ALC880		0x10ec0880
@@ -71,7 +70,6 @@
 #define STAC9205_DELL_V1500	0x02281028
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
-int	azalia_generic_codec_is_live_pin(const widget_t *, uint32_t, uint32_t);
 int	azalia_generic_codec_fnode(codec_t *, nid_t, int, int);
 int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
     uint32_t, uint32_t);
@@ -328,17 +326,24 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 	for (assoc = 0; assoc <= CORB_CD_ASSOCIATION_MAX; assoc++) {
 		for (seq = 0; seq <= CORB_CD_SEQUENCE_MAX; seq++) {
 			FOR_EACH_WIDGET(this, i) {
-				const widget_t *w = &this->w[i];
+				const widget_t *w;
+
+				w = &this->w[i];
+				if (!w->enable)
+					continue;
+				if (w->type != COP_AWTYPE_PIN_COMPLEX)
+					continue;
+				if ((w->widgetcap &
+				    COP_AWCAP_DIGITAL) != digital)
+					continue;
 				if (w->d.pin.sequence != seq ||
 				    w->d.pin.association != assoc)
 					continue;
 				if (type == COP_AWTYPE_AUDIO_OUTPUT) {
-					if (azalia_generic_codec_is_live_pin(w,
-					    COP_PINCAP_OUTPUT, digital) == 0)
+					if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
 						continue;
 				} else {
-					if (azalia_generic_codec_is_live_pin(w,
-					    COP_PINCAP_INPUT, digital) == 0)
+					if (!(w->d.pin.cap & COP_PINCAP_INPUT))
 						continue;
 				}
 				DPRINTF(("\tpin=%2.2x, assoc=%d, seq=%d:",
@@ -392,37 +397,6 @@ done:
 }
 
 int
-azalia_generic_codec_is_live_pin(const widget_t *w, uint32_t iocap, uint32_t digital)
-{
-	uint8_t conn, dev;
-
-	if (w->type != COP_AWTYPE_PIN_COMPLEX)
-		return 0;
-	if ((w->d.pin.cap & iocap) == 0)
-		return 0;
-	if ((w->widgetcap & COP_AWCAP_DIGITAL) != digital)
-		return 0;
-	PIN_STATUS(w, conn);
-	if (conn == CORB_CD_NONE)
-		return 0;
-	dev = CORB_CD_DEVICE(w->d.pin.config);
-	if (iocap == COP_PINCAP_OUTPUT) {
-		if (dev == CORB_CD_LINEOUT || dev == CORB_CD_SPEAKER ||
-		    dev == CORB_CD_HEADPHONE ||
-		    (digital == COP_AWCAP_DIGITAL &&
-		    (dev == CORB_CD_SPDIFOUT || dev == CORB_CD_DIGITALOUT)))
-			return 1;
-	} else {
-		if (dev == CORB_CD_MICIN || dev == CORB_CD_LINEIN ||
-		    (digital == COP_AWCAP_DIGITAL &&
-		    (dev == CORB_CD_SPDIFIN || dev == CORB_CD_DIGITALIN)))
-			return 1;
-	}
-
-	return 0;
-}
-
-int
 azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 {
 	const widget_t *w;
@@ -449,9 +423,12 @@ azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 			if (this->w[k].nid == j)
 				break;
 		if (k < this->wend) {
-			ret = azalia_generic_codec_fnode(this, node, k, depth);
-			if (ret >= 0)
-				return ret;
+			if (this->w[k].enable) {
+				ret = azalia_generic_codec_fnode(this, node,
+				    k, depth);
+				if (ret >= 0)
+					return ret;
+			}
 		}
 	}
 	return -1;
@@ -534,14 +511,8 @@ azalia_generic_mixer_init(codec_t *this)
 		const widget_t *w;
 
 		w = &this->w[i];
-
-		/* skip unconnected pins */
-		if (w->type == COP_AWTYPE_PIN_COMPLEX) {
-			uint8_t conn =
-			    (w->d.pin.config & CORB_CD_PORT_MASK) >> 30;
-			if (conn == 1)	/* no physical connection */
-				continue;
-		}
+		if (!w->enable)
+			continue;
 
 		/* converters (DACc/ADCs)
 		 * not mixer widgets, but keep track of connections to
@@ -551,15 +522,13 @@ azalia_generic_mixer_init(codec_t *this)
 			/* adcs */
 			if (w->type == COP_AWTYPE_AUDIO_INPUT) {
 				for (j = 0; j < w->nconnections; j++) {
-					uint8_t conn;
+					const widget_t *ww;
 
 					if (!VALID_WIDGET_NID(w->connections[j],
 					    this))
 						continue;
-					/* skip unconnected pins */
-					PIN_STATUS(&this->w[w->connections[j]],
-					    conn);
-					if (conn == 1)
+					ww = &this->w[w->connections[j]];
+					if (!ww->enable)
 						continue;
 					for (k = 0; k < naconns; k++) {
 						if (aconns[k] ==
@@ -576,15 +545,13 @@ azalia_generic_mixer_init(codec_t *this)
 			/* dacs */
 			if (w->type == COP_AWTYPE_AUDIO_OUTPUT) {
 				for (j = 0; j < w->nconnections; j++) {
-					uint8_t conn;
+					const widget_t *ww;
 
 					if (!VALID_WIDGET_NID(w->connections[j],
 					    this))
 						continue;
-					/* skip unconnected pins */
-					PIN_STATUS(&this->w[w->connections[j]],
-					    conn);
-					if (conn == 1)
+					ww = &this->w[w->connections[j]];
+					if (!ww->enable)
 						continue;
 					for (k = 0; k < ndconns; k++) {
 						if (dconns[k] ==
@@ -601,8 +568,7 @@ azalia_generic_mixer_init(codec_t *this)
 		}
 
 		/* selector */
-		if (w->type != COP_AWTYPE_AUDIO_MIXER &&
-		    w->type != COP_AWTYPE_POWER && w->nconnections >= 2) {
+		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_source", w->name);
@@ -615,14 +581,12 @@ azalia_generic_mixer_init(codec_t *this)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
-				uint8_t conn;
+				const widget_t *ww;
 
 				if (!VALID_WIDGET_NID(w->connections[j], this))
 					continue;
-				/* skip unconnected pins */
-				PIN_STATUS(&this->w[w->connections[j]],
-				    conn);
-				if (conn == 1)
+				ww = &this->w[w->connections[j]];
+				if (!ww->enable)
 					continue;
 				d->un.e.member[k].ord = j;
 				strlcpy(d->un.e.member[k].label.name,
@@ -702,16 +666,15 @@ azalia_generic_mixer_init(codec_t *this)
 				    AudioNon, MAX_AUDIO_DEV_LEN);
 				this->nmixers++;
 			} else {
-				uint8_t conn;
-
 				for (j = 0; j < w->nconnections; j++) {
+					const widget_t *ww;
+
 					MIXER_REG_PROLOG;
-					if (!VALID_WIDGET_NID(w->connections[j], this))
+					if (!VALID_WIDGET_NID(w->connections[j],
+					    this))
 						continue;
-					/* skip unconnected pins */
-					PIN_STATUS(&this->w[w->connections[j]],
-					    conn);
-					if (conn == 1)
+					ww = &this->w[w->connections[j]];
+					if (!ww->enable)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s_%s_mute", w->name,
@@ -761,16 +724,15 @@ azalia_generic_mixer_init(codec_t *this)
 				    MIXER_DELTA(COP_AMPCAP_NUMSTEPS(w->inamp_cap));
 				this->nmixers++;
 			} else {
-				uint8_t conn;
-
 				for (j = 0; j < w->nconnections; j++) {
+					const widget_t *ww;
+
 					MIXER_REG_PROLOG;
-					if (!VALID_WIDGET_NID(w->connections[j], this))
+					if (!VALID_WIDGET_NID(w->connections[j],
+					    this))
 						continue;
-					/* skip unconnected pins */
-					PIN_STATUS(&this->w[w->connections[j]],
-					    conn);
-					if (conn == 1)
+					ww = &this->w[w->connections[j]];
+					if (!ww->enable)
 						continue;
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s_%s", w->name,
@@ -1041,77 +1003,6 @@ azalia_generic_mixer_default(codec_t *this)
 int
 azalia_generic_mixer_pin_sense(codec_t *this)
 {
-	typedef enum {
-		PIN_DIR_IN,
-		PIN_DIR_OUT,
-		PIN_DIR_MIC
-	} pintype_t;
-	const widget_t *w;
-	int i;
-
-	FOR_EACH_WIDGET(this, i) {
-		pintype_t pintype = PIN_DIR_IN;
-
-		w = &this->w[i];
-		if (w->type != COP_AWTYPE_PIN_COMPLEX)
-			continue;
-		if (!(w->d.pin.cap & COP_PINCAP_INPUT))
-			pintype = PIN_DIR_OUT;
-		if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
-			pintype = PIN_DIR_IN;
-
-		switch (w->d.pin.device) {
-		case CORB_CD_LINEOUT:
-		case CORB_CD_SPEAKER:
-		case CORB_CD_HEADPHONE:
-		case CORB_CD_SPDIFOUT:
-		case CORB_CD_DIGITALOUT:
-			pintype = PIN_DIR_OUT;
-			break;
-		case CORB_CD_CD:
-		case CORB_CD_LINEIN:
-			pintype = PIN_DIR_IN;
-			break;
-		case CORB_CD_MICIN:
-			pintype = PIN_DIR_MIC;
-			break;
-		}
-
-		switch (pintype) {
-		case PIN_DIR_IN:
-			this->comresp(this, w->nid,
-			    CORB_SET_PIN_WIDGET_CONTROL,
-			    CORB_PWC_INPUT, NULL);
-			break;
-		case PIN_DIR_OUT:
-			this->comresp(this, w->nid,
-			    CORB_SET_PIN_WIDGET_CONTROL,
-			    CORB_PWC_OUTPUT, NULL);
-			break;
-		case PIN_DIR_MIC:
-			this->comresp(this, w->nid,
-			    CORB_SET_PIN_WIDGET_CONTROL,
-			    CORB_PWC_INPUT|CORB_PWC_VREF_80, NULL);
-			break;
-		}
-
-		if (w->d.pin.cap & COP_PINCAP_EAPD) {
-			uint32_t result;
-			int err;
-
-			err = this->comresp(this, w->nid,
-			    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
-			if (err)
-				continue;
-			result &= 0xff;
-			result |= CORB_EAPD_EAPD;
-			err = this->comresp(this, w->nid,
-			    CORB_SET_EAPD_BTL_ENABLE, result, &result);
-			if (err)
-				continue;
-		}
-	}
-
 	/* GPIO quirks */
 
 	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
