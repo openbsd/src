@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2008/11/26 14:18:11 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2008/11/27 20:51:48 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ZAURUS_PARAM_H_
-#define	_ZAURUS_PARAM_H_
+#ifndef	_GUMSTIX_PARAM_H_
+#define	_GUMSTIX_PARAM_H_
 
 /*
  * 1 page should be enough
@@ -48,4 +48,4 @@
 #define	_MACHINE	gumstix
 #define	MACHINE		"gumstix"
 
-#endif	/* _ZAURUS_PARAM_H_ */
+#endif	/* _GUMSTIX_PARAM_H_ */

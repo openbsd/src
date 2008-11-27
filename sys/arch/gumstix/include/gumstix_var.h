@@ -1,4 +1,4 @@
-/*	$OpenBSD: gumstix_var.h,v 1.1 2008/11/26 14:18:11 drahn Exp $	*/
+/*	$OpenBSD: gumstix_var.h,v 1.2 2008/11/27 20:51:48 miod Exp $	*/
 /*	$NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_ZAURUS_VAR_H
-#define _EVBARM_ZAURUS_VAR_H
+#ifndef _EVBARM_GUMSTIX_VAR_H
+#define _EVBARM_GUMSTIX_VAR_H
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -43,4 +43,4 @@
 
 #endif
 
-#endif /* _EVBARM_ZAURUS_VAR_H */
+#endif /* _EVBARM_GUMSTIX_VAR_H */
