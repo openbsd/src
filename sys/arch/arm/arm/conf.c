@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2008/06/12 20:03:48 mglocker Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2008/11/27 11:40:18 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -65,6 +65,13 @@
  * Standard MI devices (e.g. ones in dev/ic)
  */
 #include "com.h"		/* NS164x0 serial ports */
+
+#ifdef CONF_HAVE_SSCOM
+#include "sscom.h"
+cdev_decl(sscom);
+#else
+#define NSSCOM 0
+#endif
 
 /*
  * Standard pseudo-devices
@@ -302,7 +309,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 11: */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
 	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
-	cdev_lkm_dummy(),			/* 14: */
+	cdev_tty_init(NSSCOM,sscom),		/* 14: alternate serial port */
 	cdev_lkm_dummy(),			/* 15: */
 	cdev_disk_init(NWD,wd),			/* 16: ST506/ESDI/IDE disk */
 	cdev_lkm_dummy(),			/* 17: */
