@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.98 2008/11/23 17:05:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.99 2008/11/27 15:15:03 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -607,7 +607,6 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    FSC Connect2Air E-5400 USB D1700
 		    Gigaset USB Adapter 54
 		    Inventel UR045G
-		    Netgear WG111v2
 		    SMC EZ ConnectG SMC2862W-G
 		    Sagem XG703A
 		    Spinnaker DUT
