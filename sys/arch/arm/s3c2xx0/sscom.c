@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.2 2008/11/27 00:21:26 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -685,8 +685,7 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 			SET(tp->t_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
-		/* Make sure sscomparam() will do something. */
-		tp->t_ospeed = 0;
+
 		(void) sscomparam(tp, &tp->t_termios);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
