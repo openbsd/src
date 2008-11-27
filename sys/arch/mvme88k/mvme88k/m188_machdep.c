@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.44 2007/12/27 23:17:55 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.45 2008/11/27 21:43:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -180,9 +180,9 @@ u_int32_t int_mask_val[NIPLS];
  * the range. Since memory is packed at low addresses, we will hit all memory
  * boards in order until reaching either a VME space or a non-claimed space.
  *
- * As a safety measure, we never check for more than 256MB - the 188 can
+ * As a safety measure, we never check for more than 512MB - the 188 can
  * only have up to 4 memory boards, which theoretically can not be larger
- * than 64MB, and I am not aware of third-party larger memory boards.
+ * than 128MB, and I am not aware of third-party larger memory boards.
  */
 vaddr_t
 m188_memsize()
@@ -190,7 +190,7 @@ m188_memsize()
 	u_int pgnum;
 	int32_t rmad;
 
-#define	MVME188_MAX_MEMORY	((4 * 64) / 4)	/* 4 64MB boards */
+#define	MVME188_MAX_MEMORY	((4 * 128) / 4)	/* 4 128MB boards */
 	for (pgnum = 0; pgnum <	MVME188_MAX_MEMORY; pgnum++) {
 		*(volatile int32_t *)MVME188_RMAD = (pgnum << 22);
 		rmad = *(volatile int32_t *)MVME188_RMAD;
