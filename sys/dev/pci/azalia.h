@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.23 2008/11/28 04:03:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.24 2008/11/28 21:33:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -401,6 +401,8 @@
 #define		CORB_CD_ASSOCIATION(x)	((x >> 4) & 0xf)
 #define		CORB_CD_ASSOCIATION_MAX	0x0f
 #define		CORB_CD_MISC_MASK	0x00000f00
+#define		CORB_CD_MISC(x)		((x >> 8) & 0xf)
+#define			CORB_CD_PRESENCEOV	0x1
 #define		CORB_CD_COLOR(x)	((x >> 12) & 0xf)
 #define			CORB_CD_COLOR_UNKNOWN	0x0
 #define			CORB_CD_BLACK	0x1

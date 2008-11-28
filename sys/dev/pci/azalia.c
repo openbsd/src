@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.75 2008/11/27 23:30:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.76 2008/11/28 21:33:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1910,9 +1910,16 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (codec->nsense_pins < AZ_MAX_SENSE_PINS &&
 	    this->d.pin.cap & COP_PINCAP_PRESENCE &&
 	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK) {
-		wcodec = &codec->az->codecs[codec->az->codecno];
-		wcodec->sense_pins[codec->nsense_pins] = this->nid;
-		wcodec->nsense_pins++;
+		/* check override bit */
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_CONFIGURATION_DEFAULT, 0, &result);
+		if (err)
+			return err;
+		if (!(CORB_CD_MISC(result) & CORB_CD_PRESENCEOV)) {
+			wcodec = &codec->az->codecs[codec->az->codecno];
+			wcodec->sense_pins[codec->nsense_pins] = this->nid;
+			wcodec->nsense_pins++;
+		}
 	}
 	return 0;
 }
