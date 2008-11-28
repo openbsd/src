@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.69 2008/11/27 23:30:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.70 2008/11/28 03:18:11 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -91,6 +91,8 @@ uint32_t azalia_generic_mixer_to_device_value
 int	azalia_generic_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_gpio_unmute(codec_t *, int);
+
+int	azalia_nid_to_index(const codec_t *, nid_t);
 
 int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc88x_mixer_init(codec_t *);
@@ -279,6 +281,23 @@ azalia_codec_init_vtbl(codec_t *this)
  * ---------------------------------------------------------------- */
 
 int
+azalia_nid_to_index(const codec_t *this, nid_t nid)
+{
+	int i;
+
+	FOR_EACH_WIDGET(this, i)
+		if (this->w[i].nid == nid)
+			break;
+	if (i == this->wend ||
+	    !VALID_WIDGET_NID(this->w[i].nid, this) ||
+	    !this->w[i].enable)
+		return -1;
+
+	return i;
+}
+
+
+int
 azalia_generic_codec_init_dacgroup(codec_t *this)
 {
 	this->dacs.ngroups = 0;
@@ -363,10 +382,10 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 						    this->w[k].nid != conv)
 							continue;
 					} else {
-						FOR_EACH_WIDGET(this, l)
-							if (this->w[l].nid ==
-							    conv)
-								break;
+						l = azalia_nid_to_index(this,
+						    conv);
+						if (l == -1)
+							continue;
 						k = azalia_generic_codec_fnode
 						    (this, w->nid, l, 0);
 						if (k < 0 || this->w[k].nid !=
@@ -400,7 +419,7 @@ int
 azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 {
 	const widget_t *w;
-	int i, j, k, ret;
+	int i, j, ret;
 
 	w = &this->w[index];
 	if (w->nid == node) {
@@ -416,20 +435,12 @@ azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 	if (++depth >= 10)
 		return -1;
 	for (i = 0; i < w->nconnections; i++) {
-		j = w->connections[i];
-		if (!VALID_WIDGET_NID(j, this))
+		j = azalia_nid_to_index(this, w->connections[i]);
+		if (j == -1)
 			continue;
-		FOR_EACH_WIDGET(this, k)
-			if (this->w[k].nid == j)
-				break;
-		if (k < this->wend) {
-			if (this->w[k].enable) {
-				ret = azalia_generic_codec_fnode(this, node,
-				    k, depth);
-				if (ret >= 0)
-					return ret;
-			}
-		}
+		ret = azalia_generic_codec_fnode(this, node, j, depth);
+		if (ret >= 0)
+			return ret;
 	}
 	return -1;
 }
@@ -834,11 +845,8 @@ azalia_generic_mixer_init(codec_t *this)
 
 	/* sense pins */
 	for (i = 0; i < this->nsense_pins; i++) {
-		FOR_EACH_WIDGET(this, j) {
-			if (this->w[j].nid == this->sense_pins[i])
-				break;
-		}
-		if (j == this->wend) {
+		j = azalia_nid_to_index(this, this->sense_pins[i]);
+		if (j == -1) {
 			DPRINTF(("%s: sense pin %2.2x not found\n",
 			    __func__, this->sense_pins[i]));
 			continue;
