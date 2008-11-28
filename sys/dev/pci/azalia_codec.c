@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.70 2008/11/28 03:18:11 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.71 2008/11/28 03:27:11 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -460,12 +460,10 @@ azalia_generic_mixer_init(codec_t *this)
 	 * selector	"sel%2.2x"
 	 */
 	mixer_item_t *m;
-	int err, i, j, k;
+	int err, i, j, k, l;
 
-	nid_t dconns[32];
-	int ndconns = 0;
 	nid_t aconns[32];
-	int naconns = 0;
+	int naconns;
 
 	this->maxmixers = 10;
 	this->nmixers = 0;
@@ -518,6 +516,7 @@ azalia_generic_mixer_init(codec_t *this)
 	d = &m->devinfo; \
 	m->nid = i
 
+	naconns = 0;
 	FOR_EACH_WIDGET(this, i) {
 		const widget_t *w;
 
@@ -525,56 +524,27 @@ azalia_generic_mixer_init(codec_t *this)
 		if (!w->enable)
 			continue;
 
-		/* converters (DACc/ADCs)
-		 * not mixer widgets, but keep track of connections to
-		 * help determine mixer class.
-		 */
-		if (w->widgetcap & COP_AWCAP_FORMATOV) {
-			/* adcs */
-			if (w->type == COP_AWTYPE_AUDIO_INPUT) {
-				for (j = 0; j < w->nconnections; j++) {
-					const widget_t *ww;
+		/* usable adcs - connections should be in AZ_CLASS_RECORD */
+		if (w->type == COP_AWTYPE_AUDIO_INPUT) {
+			const convgroupset_t *group;
 
-					if (!VALID_WIDGET_NID(w->connections[j],
-					    this))
-						continue;
-					ww = &this->w[w->connections[j]];
-					if (!ww->enable)
-						continue;
-					for (k = 0; k < naconns; k++) {
-						if (aconns[k] ==
-						    w->connections[j])
-							break;
-					}
-					if (k == naconns)
-						aconns[naconns++] =
-						    w->connections[j];
-					if (naconns == 32)
-						break;
-				}
-			}
-			/* dacs */
-			if (w->type == COP_AWTYPE_AUDIO_OUTPUT) {
-				for (j = 0; j < w->nconnections; j++) {
-					const widget_t *ww;
+			group = &this->adcs;
+			for (j = 0; j < group->groups[group->cur].nconv; j++)
+				if (group->groups[group->cur].conv[j] == w->nid)
+					break;
+			if (j == group->groups[group->cur].nconv)
+				continue;
 
-					if (!VALID_WIDGET_NID(w->connections[j],
-					    this))
-						continue;
-					ww = &this->w[w->connections[j]];
-					if (!ww->enable)
-						continue;
-					for (k = 0; k < ndconns; k++) {
-						if (dconns[k] ==
-						    w->connections[j])
-							break;
-					}
-					if (k == ndconns)
-						dconns[ndconns++] =
-						    w->connections[j];
-					if (ndconns == 32)
+			for (j = 0; j < w->nconnections && naconns < 32; j++) {
+				k = azalia_nid_to_index(this,
+				    w->connections[j]);
+				if (k == -1)
+					continue;
+				for (l = 0; l < naconns; l++)
+					if (aconns[l] == this->w[k].nid)
 						break;
-				}
+				if (l == naconns)
+					aconns[naconns++] = this->w[k].nid;
 			}
 		}
 
