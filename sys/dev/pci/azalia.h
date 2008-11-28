@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.22 2008/11/27 23:30:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.23 2008/11/28 04:03:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -558,6 +558,7 @@ typedef struct {
 #define MI_TARGET_SPDIF		0x107
 #define MI_TARGET_SPDIF_CC	0x108
 #define MI_TARGET_EAPD		0x109
+#define MI_TARGET_MUTESET	0x110
 #define AZ_TARGET_PINSENSE	0xf00
 } mixer_item_t;
 
