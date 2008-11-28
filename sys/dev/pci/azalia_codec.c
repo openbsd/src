@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.72 2008/11/28 04:03:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.73 2008/11/28 09:58:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -378,8 +378,7 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 					if (type == COP_AWTYPE_AUDIO_OUTPUT) {
 						k = azalia_generic_codec_fnode
 						    (this, conv, i, 0);
-						if (k < 0 ||
-						    this->w[k].nid != conv)
+						if (k < 0)
 							continue;
 					} else {
 						l = azalia_nid_to_index(this,
@@ -388,8 +387,7 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 							continue;
 						k = azalia_generic_codec_fnode
 						    (this, w->nid, l, 0);
-						if (k < 0 || this->w[k].nid !=
-						    w->nid)
+						if (k < 0)
 							continue;
 					}
 					convs[nconvs++] = conv;
@@ -707,18 +705,14 @@ azalia_generic_mixer_init(codec_t *this)
 				this->nmixers++;
 			} else {
 				for (j = 0; j < w->nconnections; j++) {
-					const widget_t *ww;
-
+					k = azalia_nid_to_index(this,
+					    w->connections[j]);
+					if (k == -1)
+						continue;
 					MIXER_REG_PROLOG;
-					if (!VALID_WIDGET_NID(w->connections[j],
-					    this))
-						continue;
-					ww = &this->w[w->connections[j]];
-					if (!ww->enable)
-						continue;
-					snprintf(d->label.name, sizeof(d->label.name),
-					    "%s_%s", w->name,
-					    this->w[w->connections[j]].name);
+					snprintf(d->label.name,
+					    sizeof(d->label.name), "%s_%s",
+					    w->name, this->w[k].name);
 					d->type = AUDIO_MIXER_VALUE;
 					if (w->type == COP_AWTYPE_AUDIO_INPUT)
 						d->mixer_class = AZ_CLASS_RECORD;
