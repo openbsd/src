@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.256 2008/11/22 18:16:55 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.257 2008/11/28 02:44:17 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3281,8 +3281,8 @@ int
 bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct bge_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 	struct mii_data *mii;
 
@@ -3298,12 +3298,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif /* INET */
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -3316,18 +3311,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		sc->bge_if_flags = ifp->if_flags;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI)
-			? ether_addmulti(ifr, &sc->arpcom)
-			: ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_iff(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
@@ -3359,8 +3343,15 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    command);
 		}
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			bge_iff(sc);
+		error = 0;
 	}
 
 	splx(s);

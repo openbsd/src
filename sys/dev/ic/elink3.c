@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.72 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.73 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1499,14 +1499,6 @@ epioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		}
-		break;
-
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
@@ -1532,25 +1524,14 @@ epioctl(ifp, cmd, data)
 		}
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				epreset(sc);
-			error = 0;
-		}
-		break;
-
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			epreset(sc);
+		error = 0;
 	}
 
 	splx(s);

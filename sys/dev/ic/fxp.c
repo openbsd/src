@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.93 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.94 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1644,13 +1644,6 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
 	case SIOCSIFFLAGS:
 		/*
 		 * If interface is marked up and not running, then start it.
@@ -1664,22 +1657,6 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			fxp_stop(sc, 1);
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				fxp_init(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
@@ -1687,6 +1664,12 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			fxp_init(sc);
+		error = 0;
 	}
 
 	splx(s);

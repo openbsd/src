@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.36 2008/11/21 16:53:05 oga Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.37 2008/11/28 02:44:18 brad Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -985,22 +985,6 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else if (ifp->if_flags & IFF_RUNNING)
 			ray_disable(sc);
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (cmd == SIOCADDMULTI) {
-			RAY_DPRINTF(("%s: ioctl: cmd SIOCADDMULTI\n",
-			    ifp->if_xname));
-			error = ether_addmulti(ifr, &sc->sc_ec);
-		} else {
-			RAY_DPRINTF(("%s: ioctl: cmd SIOCDELMULTI\n",
-			    ifp->if_xname));
-			error = ether_delmulti(ifr, &sc->sc_ec);
-		}
-		if (error == ENETRESET) {
-			error = 0;
-			ray_update_mcast(sc);
-		}
-		break;
 	case SIOCSIFMEDIA:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCSIFMEDIA\n", ifp->if_xname));
 	case SIOCGIFMEDIA:
@@ -1073,6 +1057,12 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ec, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			ray_update_mcast(sc);
+		error = 0;
 	}
 
 	RAY_DPRINTF(("%s: ioctl: returns %d\n", ifp->if_xname, error));

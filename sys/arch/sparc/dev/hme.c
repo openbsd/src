@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.57 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: hme.c,v 1.58 2008/11/28 02:44:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -440,28 +440,19 @@ hmeioctl(ifp, cmd, data)
 		}
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_arpcom):
-			ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				hme_mcreset(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr,  &sc->sc_mii.mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			hme_mcreset(sc);
+		error = 0;
 	}
 
 	sc->sc_if_flags = ifp->if_flags;

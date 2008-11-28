@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.42 2008/11/09 15:08:26 naddy Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.43 2008/11/28 02:44:18 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1733,8 +1733,8 @@ int
 vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vge_softc	*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
 	struct ifaddr		*ifa = (struct ifaddr *) data;
+	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
 
 	s = splnet();
@@ -1754,12 +1754,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 		}
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -1782,24 +1777,20 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		sc->vge_if_flags = ifp->if_flags;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				vge_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			vge_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

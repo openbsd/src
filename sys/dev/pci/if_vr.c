@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.79 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.80 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1326,9 +1326,9 @@ int
 vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vr_softc		*sc = ifp->if_softc;
+	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 
 	s = splnet();
 
@@ -1342,6 +1342,7 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif
 		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -1369,34 +1370,20 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				vr_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			vr_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

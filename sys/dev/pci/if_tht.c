@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.120 2008/11/23 12:48:43 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.121 2008/11/28 02:44:18 brad Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -863,25 +863,23 @@ int
 tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct tht_softc		*sc = ifp->if_softc;
+	struct ifaddr			*ifa = (struct ifaddr *)addr;
 	struct ifreq			*ifr = (struct ifreq *)addr;
-	struct ifaddr			*ifa;
-	int				error = 0;
-	int				s;
+	int				s, error = 0;
 
 	rw_enter_write(&sc->sc_lock);
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)addr;
+		ifp->if_flags |= IFF_UP;
 
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
 #endif
-
-		ifp->if_flags |= IFF_UP;
 		/* FALLTHROUGH */
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -892,20 +890,6 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			if (ifp->if_flags & IFF_RUNNING)
 				tht_down(sc);
 		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCADDMULTI:
-		error = ether_addmulti(ifr, &sc->sc_ac);
-		break;
-	case SIOCDELMULTI:
-		error = ether_delmulti(ifr, &sc->sc_ac);
 		break;
 
 	case SIOCGIFMEDIA:

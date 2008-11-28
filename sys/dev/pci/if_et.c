@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.15 2008/11/04 19:20:22 chl Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.16 2008/11/28 02:44:17 brad Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1030,8 +1030,8 @@ int
 et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct et_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1046,12 +1046,7 @@ et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 #endif
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			/*
@@ -1073,24 +1068,20 @@ et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				et_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_miibus.mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			et_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.70 2008/08/27 10:29:53 damien Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.71 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2614,21 +2614,15 @@ rtw_led_attach(struct rtw_led_state *ls, void *arg)
 int
 rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	int rc = 0, s;
 	struct rtw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int rc = 0, s;
 
 	s = splnet();
+
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-			rc = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		}
-		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -2647,6 +2641,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else if ((sc->sc_flags & RTW_F_ENABLED) != 0)
 			rtw_stop(ifp, 1);
 		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if (cmd == SIOCADDMULTI)
@@ -2659,6 +2654,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			rtw_pktfilt_load(sc);
 		rc = 0;
 		break;
+
 	default:
 		if ((rc = ieee80211_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if ((sc->sc_flags & RTW_F_ENABLED) != 0)
@@ -2668,6 +2664,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	}
+
 	splx(s);
 	return rc;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.7 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.8 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -571,27 +571,6 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_flags = ifp->if_flags;
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_arpcom) :
-			ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				sf_set_filter(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
@@ -599,6 +578,12 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			sf_set_filter(sc);
+		error = 0;
 	}
 
 	/* Try to get more packets going. */

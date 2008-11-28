@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.18 2008/10/08 23:53:08 brad Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.19 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -176,15 +176,13 @@ mcioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct mc_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa;
-	struct ifreq *ifr;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	int s, err = 0;
 
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -225,25 +223,14 @@ mcioctl(ifp, cmd, data)
 		}
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *) data;
-		err = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (err == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly. But remember UP flag!
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				mcreset(sc);
-			err = 0;
-		}
-		break;
 	default:
 		err = ether_ioctl(ifp, &sc->sc_ethercom, cmd, data);
+	}
+
+	if (err == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			mcreset(sc);
+		err = 0;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.11 2008/10/02 20:21:13 brad Exp $ */
+/* $OpenBSD: lemac.c,v 1.12 2008/11/28 02:44:17 brad Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -792,10 +792,9 @@ int
 lemac_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct lemac_softc *const sc = LEMAC_IFP_TO_SOFTC(ifp);
-	int s;
-	int error = 0;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -819,39 +818,19 @@ lemac_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		lemac_init(sc);
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		/*
-		 * Update multicast listeners
-		 */
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/* Reset multicast filtering. */
-			if (ifp->if_flags & IFF_RUNNING)
-				lemac_init(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-		    &sc->sc_ifmedia, cmd);
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		}
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
 		break;
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			lemac_init(sc);
+		error = 0;
 	}
 
 	splx(s);

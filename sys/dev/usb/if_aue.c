@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.74 2008/11/06 02:32:28 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.75 2008/11/28 02:44:18 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1537,13 +1537,6 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -1563,25 +1556,21 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		sc->aue_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->arpcom) :
-			ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				aue_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		mii = GET_MII(sc);
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			aue_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.60 2008/11/16 03:42:13 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.61 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -741,13 +741,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&tr->tr_ac, ifa);
 #endif /* INET */
 		error = ENETRESET;
-		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU) {
-			error = EINVAL;
-			break;
-		}
-		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
 		error = ENETRESET;

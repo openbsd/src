@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.20 2008/10/07 16:03:37 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.21 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -1044,8 +1044,8 @@ int
 lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct lii_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
-	struct ifaddr *ifa;
 	int s, error = 0;
 
 	s = splnet();
@@ -1054,11 +1054,11 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFADDR:
 		SET(ifp->if_flags, IFF_UP);
 #ifdef INET
-		ifa = (struct ifaddr *)addr;
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
 #endif
 		/* FALLTHROUGH */
+
 	case SIOCSIFFLAGS:
 		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
@@ -1071,17 +1071,11 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		break;
 
-	case SIOCADDMULTI:
-		error = ether_addmulti(ifr, &sc->sc_ac);
-		break;
-	case SIOCDELMULTI:
-		error = ether_delmulti(ifr, &sc->sc_ac);
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.66 2008/11/09 15:08:26 naddy Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.67 2008/11/28 02:44:18 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -2061,20 +2061,14 @@ nge_ioctl(ifp, command, data)
 	caddr_t			data;
 {
 	struct nge_softc	*sc = ifp->if_softc;
+	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct mii_data		*mii;
 	int			s, error = 0;
 
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -2089,6 +2083,7 @@ nge_ioctl(ifp, command, data)
 			break;
                 }
 		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -2116,18 +2111,7 @@ nge_ioctl(ifp, command, data)
 		sc->nge_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI)
-			? ether_addmulti(ifr, &sc->arpcom)
-			: ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				nge_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		if (sc->nge_tbi) {
@@ -2139,8 +2123,15 @@ nge_ioctl(ifp, command, data)
 					      command);
 		}
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			nge_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

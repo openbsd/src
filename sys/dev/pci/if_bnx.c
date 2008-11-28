@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.70 2008/11/09 15:08:26 naddy Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.71 2008/11/28 02:44:17 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4586,8 +4586,8 @@ int
 bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct bnx_softc	*sc = ifp->if_softc;
+	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct mii_data		*mii = &sc->bnx_mii;
 	int			s, error = 0;
 
@@ -4602,13 +4602,6 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif /* INET */
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
 	case SIOCSIFFLAGS:
@@ -4628,19 +4621,6 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI)
-			? ether_addmulti(ifr, &sc->arpcom)
-			: ether_delmulti(ifr, &sc->arpcom);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				bnx_set_rx_mode(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
@@ -4651,6 +4631,12 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			bnx_set_rx_mode(sc);
+		error = 0;
 	}
 
 	splx(s);

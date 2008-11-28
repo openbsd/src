@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.23 2008/10/14 18:01:53 naddy Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.24 2008/11/28 02:44:17 brad Exp $	*/
 
 /*
  *
@@ -1718,31 +1718,6 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				cas_setladrf(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -1750,6 +1725,12 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			cas_setladrf(sc);
+		error = 0;
 	}
 
 	splx(s);

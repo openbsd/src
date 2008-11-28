@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.63 2008/11/25 17:01:14 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.64 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1214,15 +1214,14 @@ int
 vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -1241,27 +1240,6 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ac) :
-		    ether_delmulti(ifr, &sc->sc_ac);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				vic_iff(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -1272,9 +1250,8 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
-			vic_iff(ifp->if_softc);
+		if (ifp->if_flags & IFF_RUNNING)
+			vic_iff(sc);
 		error = 0;
 	}
 

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.197 2008/11/26 00:14:48 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.198 2008/11/28 02:44:17 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -555,13 +555,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->interface_data, ifa);
 #endif /* INET */
 		break;
-	case SIOCSIFMTU:
-		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
+
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
@@ -584,24 +578,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		sc->if_flags = ifp->if_flags;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		IOCTL_DEBUGOUT("ioctl rcv'd: SIOC(ADD|DEL)MULTI");
-		error = (command == SIOCADDMULTI)
-			? ether_addmulti(ifr, &sc->interface_data)
-			: ether_delmulti(ifr, &sc->interface_data);
 
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				em_disable_intr(sc);
-				em_set_multi(sc);
-				if (sc->hw.mac_type == em_82542_rev2_0)
-					em_initialize_receive_unit(sc);
-				em_enable_intr(sc);
-			}
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 		/* Check SOL/IDER usage */
 		if (em_check_phy_reset_block(&sc->hw)) {
@@ -613,8 +590,20 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCxIFMEDIA (Get/Set Interface Media)");
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->interface_data, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING) {
+			em_disable_intr(sc);
+			em_set_multi(sc);
+			if (sc->hw.mac_type == em_82542_rev2_0)
+				em_initialize_receive_unit(sc);
+			em_enable_intr(sc);
+		}
+		error = 0;
 	}
 
 	splx(s);

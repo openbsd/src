@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.42 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.43 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -892,23 +892,6 @@ am7990_ioctl(ifp, cmd, data)
 #endif
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				am7990_reset(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		if (sc->sc_hasifmedia)
@@ -919,6 +902,12 @@ am7990_ioctl(ifp, cmd, data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			am7990_reset(sc);
+		error = 0;
 	}
 
 	splx(s);

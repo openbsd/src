@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.31 2008/10/03 00:19:55 brad Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.32 2008/11/28 02:44:17 brad Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1920,23 +1920,6 @@ i82596_ioctl(ifp, cmd, data)
 #endif
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom):
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				ie_mc_reset(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -1944,6 +1927,12 @@ i82596_ioctl(ifp, cmd, data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			ie_mc_reset(sc);
+		error = 0;
 	}
 
 	splx(s);

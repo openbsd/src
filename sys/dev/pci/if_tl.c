@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.45 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.46 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1782,8 +1782,8 @@ int tl_ioctl(ifp, command, data)
 	caddr_t			data;
 {
 	struct tl_softc		*sc = ifp->if_softc;
+	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	s = splnet();
@@ -1803,6 +1803,7 @@ int tl_ioctl(ifp, command, data)
 			break;
 		}
 		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -1825,21 +1826,7 @@ int tl_ioctl(ifp, command, data)
 		sc->tl_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
 
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			tl_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		if (sc->tl_bitrate)
@@ -1848,8 +1835,15 @@ int tl_ioctl(ifp, command, data)
 			error = ifmedia_ioctl(ifp, ifr,
 			    &sc->sc_mii.mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			tl_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.17 2008/10/15 19:12:19 blambert Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.18 2008/11/28 02:44:17 brad Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1060,12 +1060,6 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
 
 	case SIOCSIFFLAGS:
 		/*
@@ -1080,23 +1074,6 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			mec_stop(ifp);
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ac) :
-		    ether_delmulti(ifr, &sc->sc_ac);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				mec_init(ifp);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
@@ -1104,6 +1081,12 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			mec_init(ifp);
+		error = 0;
 	}
 
 	splx(s);

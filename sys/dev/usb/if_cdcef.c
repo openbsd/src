@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.21 2008/10/02 20:21:14 brad Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.22 2008/11/28 02:44:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -489,13 +489,6 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
@@ -507,19 +500,12 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = 0;
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET)
-			error = 0;
-		break;
-
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
+
+	if (error = ENETRESET)
+		error = 0;
 
 	splx(s);
 	return (error);

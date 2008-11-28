@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.13 2008/10/15 19:12:19 blambert Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.14 2008/11/28 02:44:17 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -480,26 +480,6 @@ tsec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ac) :
-		    ether_delmulti(ifr, &sc->sc_ac);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				tsec_iff(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -508,6 +488,12 @@ tsec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 		break;
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			tsec_iff(sc);
+		error = 0;
 	}
 
 	splx(s);
