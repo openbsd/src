@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.6 2008/10/28 13:47:22 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.6 2008/10/28 13:47:22 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.7 2008/11/28 10:07:56 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.7 2008/11/28 10:07:56 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -33,7 +33,8 @@
 static struct ber_element	*ldap_parse_search_filter(struct ber_element*, char *);
 static struct ber_element	*ldap_do_parse_search_filter(struct ber_element*, char **);
 char				**aldap_get_stringset(struct ber_element *);
-char				*utoa(char *u);
+char				*utoa(char *);
+char				*parseval(char *, size_t);
 
 #ifdef DEBUG
 void			 ldap_debug_elements(struct ber_element *);
@@ -518,7 +519,7 @@ aldap_get_stringset(struct ber_element *elm)
 }
 
 /*
- * Base case for __ldap_do_parse_search_filter
+ * Base case for ldap_do_parse_search_filter
  *
  * returns:
  *	struct ber_element *, ber_element tree
@@ -550,7 +551,7 @@ ldap_parse_search_filter(struct ber_element *ber, char *filter)
 }
 
 /*
- * Translate RFC2254 search filter string into ber_element tree
+ * Translate RFC4515 search filter string into ber_element tree
  *
  * returns:
  *	struct ber_element *, ber_element tree
@@ -564,13 +565,12 @@ ldap_parse_search_filter(struct ber_element *ber, char *filter)
  *	goto's used to discriminate error-handling based on error type
  *	doesn't handle extended filters (yet)
  *
- *	escaped characters aren't supported (yet).
  */
 static struct ber_element *
 ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 {
 	struct ber_element *elm, *root;
-	char *attr_desc, *attr_val, *cp;
+	char *attr_desc, *attr_val, *parsed_val, *cp;
 	size_t len;
 	unsigned long type;
 
@@ -704,9 +704,14 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 				else
 					type = LDAP_FILT_SUBS_ANY;
 
-				if ((elm =
-				    ber_add_nstring(elm, attr_val, len)) == NULL)
+				if((parsed_val = parseval(attr_val, len)) ==
+				    NULL)
 					goto callfail;
+				if ((elm =
+				    ber_add_nstring(elm, parsed_val,
+					    strlen(parsed_val))) == NULL)
+					goto callfail;
+				free(parsed_val);
 				ber_set_header(elm, BER_CLASS_CONTEXT, type);
 				if (type == LDAP_FILT_SUBS_FIN)
 					break;
@@ -714,8 +719,13 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 			break;
 		}
 
-		if ((elm = ber_add_nstring(elm, attr_val, len)) == NULL)
+		if((parsed_val = parseval(attr_val, len)) ==
+		    NULL)
 			goto callfail;
+		if ((elm = ber_add_nstring(elm, parsed_val, strlen(parsed_val)))
+		    == NULL)
+			goto callfail;
+		free(parsed_val);
 		break;
 	}
 
@@ -967,7 +977,8 @@ utoa(char *u)
 		len++;
 	}
 
-	str = calloc(len + 1, sizeof(char));
+	if((str = calloc(len + 1, sizeof(char))) == NULL)
+		return NULL;
 
 	/* copy the ASCII characters to the newly allocated string */
 	for(i = 0, j = 0; u[i] != NULL; j++) {
@@ -987,4 +998,44 @@ utoa(char *u)
 	}
 
 	return str;
+}
+
+/*
+ * Parse a LDAP value
+ * notes:
+ *	the argument u should be a NULL terminated sequence of ASCII bytes.
+ */
+char *
+parseval(char *p, size_t len)
+{
+	char	 hex[3];
+	char	*cp = p, *buffer, *newbuffer;
+	size_t	 size, newsize, i, j;
+
+	size = 50;
+	if((buffer = calloc(1, size)) == NULL)
+		return NULL;
+
+	for(i = 0, j = 0; i >= 0 && j < len; i++) {
+		if(i >= size) {
+			newsize = size + 1024;
+			if ((newbuffer = realloc(buffer, newsize)) == NULL) {
+				free(buffer);
+				return (NULL);
+			}
+			buffer = newbuffer;
+			size = newsize;
+		}
+
+		if(cp[j] == '\\') {
+			strlcpy(hex, cp + j + 1, sizeof(hex));
+			buffer[i] = (char)strtoumax(hex, NULL, 16);
+			j += 3;
+		} else {
+			buffer[i] = cp[j];
+			j++;
+		}
+	}
+
+	return buffer;
 }
