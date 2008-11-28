@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.24 2008/06/24 08:33:04 sobrado Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.25 2008/11/28 00:15:54 ckuethe Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -303,6 +303,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 * Now write the new superblock back to disk.
 	 */
 	sblock.fs_time = utime;
+	sblock.fs_clean = 0;
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
 		sblock.fs_ffs1_time = (int32_t)sblock.fs_time;
 		sblock.fs_ffs1_size = (int32_t)sblock.fs_size;
@@ -2009,6 +2010,8 @@ main(int argc, char **argv)
 	}
 	if (sblock_try[i] == -1)
 		errx(1, "superblock not recognized");
+	if (osblock.fs_clean == 0)
+		errx(1, "filesystem not clean - run fsck");
 	if (sblock.fs_magic == FS_UFS1_MAGIC &&
 	    (sblock.fs_ffs1_flags & FS_FLAGS_UPDATED) == 0)
 		ffs1_sb_update(&sblock, sblock_try[i]);
