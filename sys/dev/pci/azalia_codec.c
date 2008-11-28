@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.73 2008/11/28 09:58:18 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.74 2008/11/28 21:45:49 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -823,7 +823,7 @@ azalia_generic_mixer_init(codec_t *this)
 		    this->w[j].name);
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_OUTPUT;
-		m->target = AZ_TARGET_PINSENSE;
+		m->target = MI_TARGET_PINSENSE;
 		d->un.e.num_mem = 2;
 		d->un.e.member[0].ord = 0;
 		strlcpy(d->un.e.member[0].label.name, "unplugged",
@@ -1276,7 +1276,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 	}
 
 	/* sense pin */
-	else if (target == AZ_TARGET_PINSENSE) {
+	else if (target == MI_TARGET_PINSENSE) {
 		err = this->comresp(this, nid, CORB_GET_PIN_SENSE,
 		    0, &result);
 		if (err)
@@ -1591,7 +1591,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			return err;
 	}
 
-	else if (target == AZ_TARGET_PINSENSE) {
+	else if (target == MI_TARGET_PINSENSE) {
 		/* do nothing, control is read only */
 	}
 
