@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.22 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.23 2008/11/29 10:24:33 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -125,6 +125,8 @@ struct usbf_function_methods cdcef_methods = {
 #endif
 
 #define DEVNAME(sc)	((sc)->sc_dev.bdev.dv_xname)
+
+extern int ticks;
 
 /*
  * USB function match/attach/detach
@@ -473,7 +475,6 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdcef_softc	*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 s, error = 0;
 
 	s = splnet();
@@ -504,7 +505,7 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
-	if (error = ENETRESET)
+	if (error == ENETRESET)
 		error = 0;
 
 	splx(s);
