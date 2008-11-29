@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.390 2008/11/25 08:54:40 jasper Exp $
+$OpenBSD: usbdevs,v 1.391 2008/11/29 21:54:46 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -252,6 +252,7 @@ vendor AGFA		0x06bd	AGFA-Gevaert
 vendor ASIAMD		0x06be	Asia Microelectronic Development
 vendor BIZLINK		0x06c4	Bizlink International
 vendor KEYSPAN		0x06cd	Keyspan
+vendor LIEBERT		0x06da	Liebert
 vendor AASHIMA		0x06d6	Aashima Technology
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
@@ -1798,6 +1799,9 @@ product LEXAR 2662WAR		0xa002	2662W-AR
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
+
+/* Liebert products */
+product LIEBERT POWERSURE_PXT	0xffff	PowerSure Personal XT
 
 /* Linksys products */
 product LINKSYS4 USB1000	0x0039	USB1000

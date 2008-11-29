@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.49 2008/11/25 08:57:07 jasper Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.50 2008/11/29 21:54:46 deraadt Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -142,6 +142,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_CYBERPOWER, USB_PRODUCT_CYBERPOWER_1500,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_MUSTEK2, USB_PRODUCT_MUSTEK2_PM800,	ANY,	{ UQ_BAD_HID }},
+ { USB_VENDOR_LIEBERT, USB_PRODUCT_LIEBERT_POWERSURE_PXT, ANY, { UQ_BAD_HID }},
 
   /* MS keyboards do weird things */
   { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLNOTEBOOK,
