@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.15 2008/08/09 22:59:20 mglocker Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.16 2008/11/29 08:52:03 mglocker Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -207,8 +207,8 @@ typedef struct {
 #define EHCI_ITD_IOC		0x8000
 #define EHCI_ITD_GET_IOC(x)	(((x) >> 15) & 1)
 #define EHCI_ITD_SET_IOC(x)	(((x) << 15) & EHCI_ITD_IOC)
-#define EHCI_ITD_GET_PG(x)	(((x) >> 12) & 0xf)
-#define EHCI_ITD_SET_PG(x)	(((x) & 0xf) << 12)
+#define EHCI_ITD_GET_PG(x)	(((x) >> 12) & 0x7)
+#define EHCI_ITD_SET_PG(x)	(((x) & 0x7) << 12)
 #define EHCI_ITD_GET_OFFS(x)	(((x) >> 0) & 0xfff)
 #define EHCI_ITD_SET_OFFS(x)	(((x) & 0xfff) << 0)
 	volatile ehci_isoc_bufr_ptr_t   itd_bufr[7];
@@ -224,6 +224,7 @@ typedef struct {
 #define EHCI_ITD_SET_MAXPKT(x)	((x) & 0x7ff)
 #define EHCI_ITD_GET_MULTI(x)	((x) & 0x3)
 #define EHCI_ITD_SET_MULTI(x)	((x) & 0x3)
+	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[7];
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN		32
 
