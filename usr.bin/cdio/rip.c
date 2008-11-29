@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.8 2008/06/30 23:35:39 av Exp $	*/
+/*	$OpenBSD: rip.c,v 1.9 2008/11/29 08:57:10 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -19,7 +19,6 @@
 #include <sys/signal.h>
 #include <sys/device.h>
 
-#include <sys/audioio.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
@@ -34,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sndio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,6 +86,8 @@ int		read_data_sector(u_int32_t, u_char *, u_int32_t);
 
 struct track_info {
 	int fd;		/* descriptor of output file */
+	struct sio_hdl *hdl; /* sndio handle */
+	struct sio_par par; /* sndio parameters */
 	u_int track;	/* track number */
 	char name[12];	/* output file name, i.e. trackXX.wav/trackXX.dat */
 	u_char isaudio;	/* true if audio track, otherwise it's data track */
@@ -93,7 +95,7 @@ struct track_info {
 	u_int32_t end_lba;	/* starting address of the next track */
 };
 
-int	read_track(int, struct track_info *);
+int	read_track(struct track_info *);
 
 int	rip_next_track(struct track_info *);
 int	play_next_track(struct track_info *);
@@ -356,7 +358,7 @@ read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize)
 }
 
 int
-read_track(int fd, struct track_info *ti)
+read_track(struct track_info *ti)
 {
 	struct timeval tv, otv, atv;
 	u_int32_t i, blksize, n_sec;
@@ -385,10 +387,18 @@ read_track(int fd, struct track_info *ti)
 
 		error = read_data_sector(i + ti->start_lba, sec, blksize);
 		if (error == 0) {
-			if (write_sector(ti->fd, sec, blksize) != 0) {
+			if (ti->fd >= 0 &&
+			    (write_sector(ti->fd, sec, blksize) != 0)) {
 				free(sec);
 				warnx("\nerror while writing to the %s file",
 				    ti->name);
+				return (-1);
+			}
+			if (ti->hdl != NULL &&
+			    (sio_write(ti->hdl, sec, blksize) == 0)) {
+				sio_close(ti->hdl);
+				ti->hdl = NULL;
+				warnx("\nerror while writing to audio output");
 				return (-1);
 			}
 
@@ -441,39 +451,61 @@ rip_next_track(struct track_info *info)
 int
 play_next_track(struct track_info *info)
 {
-	int fd, error;
-	audio_info_t ai;
+	char *dev;
 
 	if (!info->isaudio)
 		return (NXTRACK_SKIP);
 
-	info->fd = open("/dev/audio", O_CREAT | O_TRUNC | O_RDWR,
-	    S_IRUSR | S_IWUSR);
-	if (info->fd == -1) {
-		warnx("can't open /dev/audio");
-		return (NXTRACK_FAIL);
+	if (info->hdl != NULL)
+		return (NXTRACK_OK);
+
+	dev = getenv("AUDIODEVICE");
+
+	info->hdl = sio_open(dev, SIO_PLAY, 0);
+	if (info->hdl == NULL) {
+		warnx("could not open audio backend");
+		goto bad;
 	}
 
-	fd = open("/dev/audioctl", O_RDWR);
-	if (fd != -1) {
-		AUDIO_INITINFO(&ai);
-		ai.play.sample_rate = 44100;
-		ai.play.channels = 2;
-		ai.play.precision = 16;
-		ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		error = ioctl(fd, AUDIO_SETINFO, &ai);
-		close(fd);
-	} else
-		error = -1;
+	sio_initpar(&info->par);
 
-	if (error == -1) {
-		warnx("can't configure audio device");
-		close(info->fd);
-		info->fd = -1;
-		return (NXTRACK_FAIL);
+	info->par.rate = 44100;
+	info->par.pchan = 2;
+	info->par.bits = 16;
+	info->par.sig = 1;
+	info->par.le = 1;
+	info->par.bufsz = info->par.rate * 3 / 4;
+
+	if (sio_setpar(info->hdl, &info->par) == 0) {
+		warnx("could not set audio parameters");
+		goto bad;
+	}
+
+	if (sio_getpar(info->hdl, &info->par) == 0) {
+		warnx("could not get audio parameters");
+		goto bad;
+	}
+
+	if (info->par.le != 1 ||
+	    info->par.sig != 1 ||
+	    info->par.bits != 16 ||
+	    info->par.pchan != 2 ||
+	    (info->par.rate > 44100 * 1.05 || info->par.rate < 44100 * 0.95)) {
+		warnx("could not configure audio parameters as desired");
+		goto bad;
+	}
+
+	if (sio_start(info->hdl) == 0) {
+		warnx("could not start audio output");
+		goto bad;
 	}
 
 	return (NXTRACK_OK);
+
+bad:
+	sio_close(info->hdl);
+	info->hdl = NULL;
+	return (NXTRACK_FAIL);
 }
 
 static int
@@ -485,6 +517,9 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 	u_int i;
 	char order;
 	int error;
+
+	info.fd = -1;
+	info.hdl = NULL;
 
 	order = (tp->start > tp->end) ? -1 : 1;
 	trk = tp->start;
@@ -522,9 +557,11 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 				error = -1;
 				break;
 			} else if (error != NXTRACK_SKIP) {
-				error = read_track(fd, &info);
-				close(info.fd);
-
+				error = read_track(&info);
+				if (info.fd >= 0) {
+					close(info.fd);
+					info.fd = -1;
+				}
 				if (error != 0) {
 					warnx("can't rip %u track",
 					    toc_buffer[i].track);
@@ -536,6 +573,11 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 		if (trk == tp->end)
 			break;
 		trk += order;
+	}
+
+	if (info.hdl != NULL) {
+		sio_close(info.hdl);
+		info.hdl = NULL;
 	}
 
 	return (error);
