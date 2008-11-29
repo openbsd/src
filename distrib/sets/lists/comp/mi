@@ -5748,6 +5748,7 @@
 ./usr/share/man/cat9/KTRPOINT.0
 ./usr/share/man/cat9/MCHTYPE.0
 ./usr/share/man/cat9/MCLGET.0
+./usr/share/man/cat9/MCLGETI.0
 ./usr/share/man/cat9/MD5Init.0
 ./usr/share/man/cat9/MD5Transform.0
 ./usr/share/man/cat9/MEXTADD.0
