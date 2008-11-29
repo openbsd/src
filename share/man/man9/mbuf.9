@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.37 2008/11/03 22:16:51 claudio Exp $
+.\"     $OpenBSD: mbuf.9,v 1.38 2008/11/29 02:39:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 3 2008 $
+.Dd $Mdocdate: November 29 2008 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -85,6 +85,8 @@
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
 .Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
 .Fn MCLGET "struct mbuf *m" "int how"
+.Ft struct mbuf *
+.Fn MCLGETI "struct mbuf" "int how" "struct ifnet *ifp" "int len"
 .Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 .Fn M_ALIGN "struct mbuf *m" "int len"
@@ -612,6 +614,26 @@ cast to
 Allocate and add an mbuf cluster to the mbuf pointed to by
 .Fa m .
 On success, the flag M_EXT is set in the mbuf.
+See
+.Fn m_get
+for a description of
+.Fa how .
+.It Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
+If
+.Fa m
+is NULL, allocate it.
+Then allocate and add an mbuf cluster of length
+.Fa len
+to the mbuf pointed to by
+.Fa m .
+If
+.Fa ifp
+is passed in, then per-interface accounting for the mbuf will occur,
+and thus mbuf allocation can fail in when limits are reached.
+Returns either the mbuf
+.Fa m
+that was passed in, or the newly allocated one which was allocated; in
+either case the flag M_EXT is set in the mbuf.
 See
 .Fn m_get
 for a description of
