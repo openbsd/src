@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.16 2008/11/29 01:55:06 ray Exp $	*/
+/*	$OpenBSD: magma.c,v 1.17 2008/11/29 05:56:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define MAGMA_DEBUG
+/* #define MAGMA_DEBUG */
 
 /*
  * Driver for Magma SBus Serial/Parallel cards using the Cirrus Logic
