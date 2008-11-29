@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.118 2008/04/11 00:05:51 reyk Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.119 2008/11/29 11:32:59 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2008 $
+.Dd $Mdocdate: November 29 2008 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -252,6 +252,11 @@ and destination address
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
+Host addresses will be parsed as type
+.Dq IPV4_ADDR ;
+adding the suffix /32 will change the type to
+.Dq IPV4_ADDR_SUBNET ,
+which can improve interoperability with some IKE implementations.
 The optional
 .Ic port
 modifiers restrict the flows to the specified ports.
