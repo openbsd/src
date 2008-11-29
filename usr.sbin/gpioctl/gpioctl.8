@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.15 2008/11/26 14:56:10 mbalmer Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.16 2008/11/29 09:19:25 mbalmer Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2008 $
+.Dd $Mdocdate: November 29 2008 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -38,6 +38,11 @@ detach
 .Ar device
 .Ar pin
 .Op Ar 0 | 1 | 2
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+.Op Ar on | off | toggle
 .Nm gpioctl
 .Op Fl q
 .Ar device
@@ -87,6 +92,12 @@ Values can be either 0 or 1.
 A value of 2 has a special meaning: it
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
+Instead of the numerical values, the word
+.Ar on ,
+.Ar off ,
+or
+.Ar toggle
+can be used.
 .Pp
 Only pins that have been configured at securelevel 0, typically during system
 startup, are accessible once the securelevel has been raised.

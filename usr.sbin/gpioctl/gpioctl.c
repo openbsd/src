@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.11 2008/11/26 15:02:43 mbalmer Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.12 2008/11/29 09:19:25 mbalmer Exp $	*/
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -161,8 +161,17 @@ main(int argc, char *argv[])
 			} else {
 				value = strtonum(argv[2], INT_MIN, INT_MAX,
 				   &errstr);
-				if (errstr)
-					errx(1, "%s: invalid value", argv[2]);
+				if (errstr) {
+					if (!strcmp(argv[2], "on"))
+						value = 1;
+					else if (!strcmp(argv[2], "off"))
+						value = 0;
+					else if (!strcmp(argv[2], "toggle"))
+						value = 2;
+					else
+						errx(1, "%s: invalid value",
+						    argv[2]);
+				}
 				pinwrite(pin, nm, value);
 			}
 		} else
@@ -226,7 +235,7 @@ pinwrite(int pin, char *gp_name, int value)
 	op.gp_value = (value == 0 ? GPIO_PIN_LOW : GPIO_PIN_HIGH);
 	if (value < 2) {
 		if (ioctl(devfd, GPIOPINWRITE, &op) == -1)
-			err(1, "GPIOPINWR");
+			err(1, "GPIOPINWRITE");
 	} else {
 		if (ioctl(devfd, GPIOPINTOGGLE, &op) == -1)
 			err(1, "GPIOPINTOGGLE");
@@ -328,12 +337,12 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2 | "
+	    "on | off | toggle]\n", __progname);
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    __progname);
 	fprintf(stderr, "       %s [-q] device pin unset\n", __progname);
-	fprintf(stderr, "       %s [-q] device attach device  offset mask\n",
+	fprintf(stderr, "       %s [-q] device attach device offset mask\n",
 	    __progname);
 	fprintf(stderr, "       %s [-q] device detach device\n", __progname);
 
