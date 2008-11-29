@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.106 2008/11/26 23:47:14 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.107 2008/11/29 19:57:09 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -398,8 +398,11 @@ m_defrag(struct mbuf *m, int how)
 	m_freem(m->m_next);
 	m->m_next = NULL;
 
-	if (m->m_flags & M_EXT)
+	if (m->m_flags & M_EXT) {
+		int s = splvm();
 		m_extfree(m);
+		splx(s);
+	}
 
 	/*
 	 * Bounce copy mbuf over to the original mbuf and set everything up.
