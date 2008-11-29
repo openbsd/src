@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.5 2005/12/31 21:22:34 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 2008/11/29 09:47:35 matthieu Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ cdev_decl(kbd);
 cdev_decl(iic);
 cdev_decl(rtc);
 cdev_decl(fcom);
+cdev_decl(sscom);
 cdev_decl(pc);
 cdev_decl(ofcons_);
 cdev_decl(ofd);
