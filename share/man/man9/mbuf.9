@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.38 2008/11/29 02:39:30 deraadt Exp $
+.\"     $OpenBSD: mbuf.9,v 1.39 2008/11/29 15:44:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -629,7 +629,7 @@ to the mbuf pointed to by
 If
 .Fa ifp
 is passed in, then per-interface accounting for the mbuf will occur,
-and thus mbuf allocation can fail in when limits are reached.
+and thus mbuf allocation can fail when limits are reached.
 Returns either the mbuf
 .Fa m
 that was passed in, or the newly allocated one which was allocated; in
