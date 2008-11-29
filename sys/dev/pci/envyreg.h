@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.3 2008/02/21 01:37:55 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.4 2008/11/29 18:32:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -121,7 +121,7 @@
 #define   ENVY_MT_OUTSRC_MON	0x01
 #define   ENVY_MT_OUTSRC_LINE	0x02
 #define   ENVY_MT_OUTSRC_SPD	0x03
-#define   ENVY_MT_OUTSRC_MASK	0x04
+#define   ENVY_MT_OUTSRC_MASK	0x03
 #define ENVY_MT_SPDROUTE	0x32
 #define   ENVY_MT_SPDSRC_DMA	0x00
 #define   ENVY_MT_SPDSRC_MON	0x01
