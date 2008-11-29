@@ -831,6 +831,7 @@
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_upgtvar.h
 ./usr/include/dev/usb/if_urlreg.h
+./usr/include/dev/usb/if_urtwreg.h
 ./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/if_zydreg.h
 ./usr/include/dev/usb/ohcireg.h
@@ -1368,6 +1369,7 @@
 ./usr/include/sched.h
 ./usr/include/scsi
 ./usr/include/scsi/cd.h
+./usr/include/scsi/iscsi.h
 ./usr/include/scsi/safte.h
 ./usr/include/scsi/scsi_all.h
 ./usr/include/scsi/scsi_changer.h

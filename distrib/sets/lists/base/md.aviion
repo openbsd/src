@@ -1338,6 +1338,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_upgtvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_urlreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_urtwreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/if_zydreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ohcireg.ph
@@ -1961,6 +1962,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/cd.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/iscsi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/scsi_changer.ph

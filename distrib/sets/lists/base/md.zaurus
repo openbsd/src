@@ -1506,6 +1506,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_upgtvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_urlreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_urtwreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_zydreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ohcireg.ph
@@ -2101,6 +2102,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/cd.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/scsi/iscsi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_changer.ph

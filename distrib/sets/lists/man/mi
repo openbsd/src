@@ -1239,6 +1239,9 @@
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/brgphy.0
 ./usr/share/man/cat4/bridge.0
+./usr/share/man/cat4/btkbd.0
+./usr/share/man/cat4/btms.0
+./usr/share/man/cat4/btsco.0
 ./usr/share/man/cat4/bwi.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
@@ -1308,6 +1311,7 @@
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/glenv.0
 ./usr/share/man/cat4/gpio.0
+./usr/share/man/cat4/gpiodcf.0
 ./usr/share/man/cat4/gpioiic.0
 ./usr/share/man/cat4/gpioow.0
 ./usr/share/man/cat4/gpr.0
@@ -1914,6 +1918,7 @@
 ./usr/share/man/cat4/urio.0
 ./usr/share/man/cat4/url.0
 ./usr/share/man/cat4/urlphy.0
+./usr/share/man/cat4/urtw.0
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/usbf.0
 ./usr/share/man/cat4/uscanner.0
