@@ -148,7 +148,8 @@ enum {
 #define DRM_AGP_MEM		struct agp_memory_info
 
 /* D_CLONE only supports one device, this will be fixed eventually */
-#define drm_get_device_from_kdev(_kdev) drm_cd.cd_devs[0]
+#define drm_get_device_from_kdev(_kdev)	\
+	(drm_cd.cd_ndevs > 0 ? drm_cd.cd_devs[0] : NULL)
 #if 0
 #define drm_get_device_from_kdev(_kdev)			\
 	(minor(_kdev) < drm_cd.cd_ndevs) ? drm_cd.cd_devs[minor(_kdev)] : NULL
