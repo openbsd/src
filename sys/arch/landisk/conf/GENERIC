@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.18 2008/11/26 21:54:20 uwe Exp $
+# $OpenBSD: GENERIC,v 1.19 2008/11/30 19:20:50 maja Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -165,10 +165,10 @@ bthub*	at ubt?
 
 # Bluetooth HID support
 bthidev* at bthub?
-btkbd*	at bthidev?
-btms*	at bthidev?
-wskbd*	at btkbd? mux 1
-wsmouse* at btms? mux 0
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
 
 # Bluetooth audio support
 btsco*	at bthub?
