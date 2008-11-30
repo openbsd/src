@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.16 2008/05/12 17:54:02 millert Exp $
+.\"	$OpenBSD: tree.3,v 1.17 2008/11/30 20:19:16 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -23,7 +23,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd $Mdocdate: May 12 2008 $
+.Dd $Mdocdate: November 30 2008 $
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -143,12 +143,12 @@ splay trees and red-black trees.
 .Pp
 In the macro definitions,
 .Fa TYPE
-is the name tag of a user defined structure that must contain a field of type
-.Li SPLAY_ENTRY ,
+is the name tag of a user defined structure that must contain a field named
+.Fa FIELD ,
+of type
+.Li SPLAY_ENTRY
 or
-.Li RB_ENTRY ,
-named
-.Fa ENTRYNAME .
+.Li RB_ENTRY .
 The argument
 .Fa HEADNAME
 is the name tag of a user defined structure that must be declared
@@ -231,7 +231,7 @@ macro, but should be used only once.
 Finally,
 the
 .Fa CMP
-argument is the name of a function used to compare trees noded
+argument is the name of a function used to compare trees' nodes
 with each other.
 The function takes two arguments of type
 .Fa "struct TYPE *" .
@@ -366,7 +366,7 @@ macros, but should be used only once.
 Finally,
 the
 .Fa CMP
-argument is the name of a function used to compare trees noded
+argument is the name of a function used to compare trees' nodes
 with each other.
 The function takes two arguments of type
 .Fa "struct TYPE *" .
