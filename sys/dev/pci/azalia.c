@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.78 2008/11/30 08:36:57 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.79 2008/11/30 20:06:41 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -242,6 +242,7 @@ int	azalia_widget_label_widgets(codec_t *);
 int	azalia_widget_init_audio(widget_t *, const codec_t *);
 int	azalia_widget_init_pin(widget_t *, const codec_t *);
 int	azalia_widget_init_connection(widget_t *, const codec_t *);
+int	azalia_widget_check_conn(codec_t *, int, int);
 #ifdef AZALIA_DEBUG
 int	azalia_widget_print_audio(const widget_t *, const char *);
 int	azalia_widget_print_pin(const widget_t *);
@@ -1286,6 +1287,17 @@ azalia_codec_init(codec_t *this)
 	err = azalia_widget_label_widgets(this);
 	if (err)
 		return err;
+	/* Find widgets without any enabled inputs and disable them.
+	 * Must be done after all widgets are initialized and
+	 * their connections created.
+	 */
+	FOR_EACH_WIDGET(this, i) {
+		if (this->w[i].type == COP_AWTYPE_AUDIO_MIXER ||
+		    this->w[i].type == COP_AWTYPE_AUDIO_SELECTOR) {
+			if (!azalia_widget_check_conn(this, i, 0))
+				this->w[i].enable = 0;
+		}
+	}
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
@@ -2046,6 +2058,36 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	}
 	return 0;
 }
+
+int
+azalia_widget_check_conn(codec_t *codec, int index, int depth)
+{
+	const widget_t *w;
+	int i;
+
+	w = &codec->w[index];
+
+	if (depth > 0 &&
+	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_AUDIO_OUTPUT ||
+	    w->type == COP_AWTYPE_AUDIO_INPUT)) {
+		if (w->enable)
+			return 1;
+		else
+			return 0;
+	}
+	if (++depth >= 10)
+		return 0;
+	for (i = 0; i < w->nconnections; i++) {
+		if (!VALID_WIDGET_NID(w->connections[i], codec) ||
+		    !codec->w[w->connections[i]].enable)
+			continue;
+		if (azalia_widget_check_conn(codec, w->connections[i], depth))
+			return 1;
+	}
+	return 0;
+}
+
 
 /* ================================================================
  * Stream functions
