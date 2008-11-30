@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.78 2008/09/07 18:35:02 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.79 2008/11/30 15:52:47 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 .\" times and is guaranteed to give a worst case performance
 .\" for an already extremely slow package.
 .\"
-.Dd $Mdocdate: September 7 2008 $
+.Dd $Mdocdate: November 30 2008 $
 .Dt MDOC.SAMPLES 7
 .Os
 .Sh NAME
@@ -948,8 +948,9 @@ of the form addr1[,addr2[,addr3]].
 It is an error to call
 .Ql \&.Ad
 without arguments.
+The
 .Ql \&.Ad
-is callable by other macros and is parsed.
+macro is parsed and is callable.
 .Ss Argument Macro
 The
 .Ql \&.Ar
@@ -1065,8 +1066,9 @@ by the macro
 It is an error to call
 .Ql \&.Dv
 without arguments.
+The
 .Ql \&.Dv
-is parsed and is callable.
+macro is parsed and is callable.
 .Ss Environment Variables
 The
 .Ql \&.Ev
@@ -1125,7 +1127,7 @@ The
 macro displays a standardised text concerning the exit values of applications.
 The
 .Ql \&.Ex
-macro does not call other macros and is not callable by other macros.
+macro is neither parsed nor callable.
 The
 .Ql -std
 flag is purely for compatibility purposes, and must be included.
@@ -1202,8 +1204,7 @@ It is an error to call
 without any arguments.
 The
 .Ql \&.Fn
-macro
-is parsed and is callable.
+macro is parsed and is callable.
 Note that any call to another macro signals the end of
 the
 .Ql \&.Fn
@@ -1306,8 +1307,9 @@ may also be used to refer to structure members.
 It is an error to call
 .Ql \&.Fa
 without arguments.
+The
 .Ql \&.Fa
-is parsed and is callable.
+macro is parsed and is callable.
 .Ss Function Declaration
 The
 .Ql \&.Fd
@@ -1316,8 +1318,7 @@ macro is used in the
 section with section two, three, and nine functions.
 The
 .Ql \&.Fd
-macro does not call other macros and is not callable by other
-macros.
+macro is neither parsed nor callable.
 .Pp
 .Dl Usage: .Fd include_file (or defined variable)
 .Pp
@@ -1351,7 +1352,7 @@ function name to appear on the next line.
 .Pp
 The
 .Ql \&.Ft
-request is not callable by other macros.
+macro is neither parsed nor callable.
 .Ss Interactive Commands
 The
 .Ql \&.Ic
@@ -1382,7 +1383,7 @@ macro is used in the
 section with section two, three, and nine header files.
 The
 .Ql \&.In
-macro does not call other macros and is not callable by other macros.
+macro is neither parsed nor callable.
 .Pp
 .Dl Usage: .In include_file
 .Pp
@@ -1568,7 +1569,7 @@ The
 macro displays a standardised text concerning the return values of functions.
 The
 .Ql \&.Rv
-macro does not call other macros and is not callable by other macros.
+macro is neither parsed nor callable.
 The
 .Ql -std
 flag is purely for compatibility purposes, and must be included.
@@ -1762,11 +1763,7 @@ Usage: .At [v6 | v7 | 32v | V.1 | V.4] ... \" \*(Pu
 .Pp
 The
 .Ql \&.At
-macro is
-.Em not
-parsed and
-.Em not
-callable.
+macro is neither parsed nor callable.
 It accepts at most two arguments.
 It cannot currently handle punctuation.
 .Ss BSD Macro
@@ -1781,9 +1778,7 @@ It cannot currently handle punctuation.
 .Pp
 The
 .Ql \&.Bx
-macro is parsed, but is
-.Em not
-callable.
+macro is parsed, but is not callable.
 .Ss BSDI Macro
 .Dl Usage: .Bsx [Version/release] ... \*(Pu
 .Pp
@@ -1796,9 +1791,7 @@ callable.
 .Pp
 The
 .Ql \&.Bsx
-macro is parsed, but is
-.Em not
-callable.
+macro is parsed, but is not callable.
 .Ss OpenBSD/FreeBSD/NetBSD Macros
 .Dl Usage: .Ox [Version/release] ... \*(Pu
 .Pp
@@ -1832,10 +1825,7 @@ The
 .Ql \&.Fx ,
 and
 .Ql \&.Nx
-macros are
-parsed but are
-.Em not
-callable.
+macros are parsed, but are not callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
 .Pp
@@ -1846,9 +1836,7 @@ callable.
 .Pp
 The
 .Ql \&.Ux
-macro is parsed, but is
-.Em not
-callable.
+macro is parsed, but is not callable.
 .Ss Emphasis Macro
 Text may be stressed or emphasized with the
 .Ql \&.Em
@@ -2063,13 +2051,15 @@ produces
 .Pf ( Fa name2
 .El
 .Pp
-The prefix macro is not callable, but it is parsed.
+The prefix macro is parsed, but is not callable.
 .Ss Section Cross References
 The
 .Ql \&.Sx
 macro designates a reference to a section header
 within the same document.
-It is parsed and is callable.
+The
+.Ql \&.Sx
+macro is parsed and is callable.
 .Bl -tag -width "Li \&.Sx FILES" -offset 14n
 .It Li \&.Sx FILES
 .Sx FILES
@@ -2188,8 +2178,7 @@ all upper case words longer than two characters.
 .Pp
 The
 .Ql \&.Tn
-macro
-is parsed and is callable by other macros.
+macro is parsed and is callable.
 .Ss Extended Arguments
 The
 .Ql \&.Xo
@@ -2340,7 +2329,9 @@ writing the manual page.
 The
 .Ql \&.Sh
 macro can take up to nine arguments.
-It is parsed but is not callable.
+The
+.Ql \&.Sh
+macro is neither parsed nor callable.
 .Bl -tag -width "XSh SYNOPSIS"
 .It Li \&.Sh NAME
 The
@@ -2536,6 +2527,20 @@ for example, this section was set with:
 .Bd -literal -offset 14n
 \&.Sh PAGE STRUCTURE DOMAIN
 .Ed
+.Ss Subsection Headers
+.Bl -tag -width 6n
+.It Li \&.Ss
+The
+.Ql \&.Ss
+macro begins a subsection header,
+such as the one used for this subsection.
+The
+.Ql \&.Ss
+macro can take up to nine arguments.
+The
+.Ql \&.Ss
+macro is neither parsed nor callable.
+.El
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
 .It Li \&.Pp
@@ -2720,7 +2725,9 @@ end-display macros.
 .Bl -tag -width \&.Dlxx
 .It Li \&.D1
 (D-one) Display one line of indented text.
-This macro is parsed, but it is not callable.
+The
+.Ql \&.D1
+macro is parsed, but is not callable.
 .Pp
 .Dl Fl ldghfstru
 .Pp
@@ -2739,8 +2746,9 @@ It allows
 the indent (display) of one line of text.
 Its default font is set to
 constant width (literal).
-It is parsed, however, and will recognize other macros.
-It is not callable.
+The
+.Ql \&.Dl
+macro is parsed, but is not callable.
 .Pp
 .Dl % ls -ldg /usr/local/bin
 .Pp
