@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.77 2008/11/30 04:01:53 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.78 2008/11/30 21:58:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -525,7 +525,9 @@ azalia_generic_mixer_init(codec_t *this)
 		if (!w->enable)
 			continue;
 
-		/* usable adcs - connections should be in AZ_CLASS_RECORD */
+		/* Widgets that are the sole input to an ADC should be in
+		 * AZ_CLASS_RECORD.
+		 */
 		if (w->type == COP_AWTYPE_AUDIO_INPUT &&
 		    this->adcs.ngroups > 0) {
 			const convgroupset_t *group;
@@ -537,16 +539,17 @@ azalia_generic_mixer_init(codec_t *this)
 					break;
 			if (j < group->groups[group->cur].nconv)
 				k = w->nconnections;
-			for (j = 0; j < k && naconns < 32; j++) {
+			if (k == 1) {
 				k = azalia_nid_to_index(this,
-				    w->connections[j]);
-				if (k == -1)
-					continue;
-				for (l = 0; l < naconns; l++)
-					if (aconns[l] == this->w[k].nid)
-						break;
-				if (l == naconns)
-					aconns[naconns++] = this->w[k].nid;
+				    w->connections[0]);
+				if (k != -1) {
+					for (l = 0; l < naconns; l++)
+						if (aconns[l] == this->w[k].nid)
+							break;
+					if (l == naconns)
+						aconns[naconns++] =
+						    this->w[k].nid;
+				}
 			}
 		}
 
