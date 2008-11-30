@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.76 2008/11/30 03:50:29 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.77 2008/11/30 04:01:53 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1535,8 +1535,11 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			return EBUSY;
 		if (mc->un.ord >= this->dacs.ngroups)
 			return EINVAL;
-		return azalia_codec_construct_format(this,
-		    mc->un.ord, this->adcs.cur);
+		if (mc->un.ord != this->dacs.cur)
+			return azalia_codec_construct_format(this,
+			    mc->un.ord, this->adcs.cur);
+		else
+			return 0;
 	}
 
 	/* ADC selection */
@@ -1545,8 +1548,11 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			return EBUSY;
 		if (mc->un.ord >= this->adcs.ngroups)
 			return EINVAL;
-		return azalia_codec_construct_format(this,
-		    this->dacs.cur, mc->un.ord);
+		if (mc->un.ord != this->adcs.cur)
+			return azalia_codec_construct_format(this,
+			    this->dacs.cur, mc->un.ord);
+		else
+			return 0;
 	}
 
 	/* Volume knob */
