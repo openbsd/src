@@ -439,9 +439,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci0 pci1 pci2 pci3 uall video0 audio0 uk0
-	R random tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1
-	R wd2 wd3 std st0 st1 fd
+	R local wscons pci0 pci1 pci2 pci3 uall video0 audio0 audio1
+	R audio2 uk0 random tty00 tty01 tty02 tty03 crypto pf systrace
+	R wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
