@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.77 2008/11/30 03:50:29 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.78 2008/11/30 08:36:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1923,7 +1923,7 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 			return err;
 	}
 	/* sense pin */
-	if (codec->nsense_pins < AZ_MAX_SENSE_PINS &&
+	if (codec->nsense_pins < HDA_MAX_SENSE_PINS &&
 	    this->d.pin.cap & COP_PINCAP_PRESENCE &&
 	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK) {
 		/* check override bit */
