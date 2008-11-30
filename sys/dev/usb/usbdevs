@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.391 2008/11/29 21:54:46 deraadt Exp $
+$OpenBSD: usbdevs,v 1.392 2008/11/30 18:08:17 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2380,7 +2380,16 @@ product RIM PEARL_DUAL		0x0004	RIM Mass Storage Device
 product RIM PEARL		0x0006	Blackberry pearl
 
 /* Ricoh products */
-product RICOH CAMERA		0x1832	Camera
+product RICOH VGPVCC2		0x1830	VGP-VCC2 Camera
+product RICOH VGPVCC3		0x1832	VGP-VCC3 Camera
+product RICOH VGPVCC2_2		0x1833	VGP-VCC2 Camera
+product RICOH VGPVCC2_3		0x1834	VGP-VCC2 Camera
+product RICOH VGPVCC5		0x1835	VGP-VCC5 Camera
+product RICOH VGPVCC4		0x1836	VGP-VCC4 Camera
+product RICOH VGPVCC4_2		0x1837	VGP-VCC4 Camera
+product RICOH VGPVCC6		0x1839	VGP-VCC6 Camera
+product RICOH VGPVCC7		0x183a	VGP-VCC7 Camera
+product RICOH VGPVCC8		0x183b	VGP-VCC8 Camera
 
 /* Roland products */
 product ROLAND UA100		0x0000	UA-100 Audio I/F
