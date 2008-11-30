@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.34 2008/11/10 13:15:51 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.35 2008/11/30 15:20:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -425,21 +425,34 @@ struct uvideo_format_desc {
 	} u;
 } __packed;
 
-#define UVIDEO_NFRAMES_MAX	40
-struct uvideo_vs_iface {
+#define UVIDEO_NFRAMES_MAX	640
+struct uvideo_isoc_xfer {
 	struct uvideo_softc	*sc;
 	usbd_xfer_handle	 xfer;
 	void			*buf;
+	uint16_t		 size[UVIDEO_NFRAMES_MAX];
+};
+
+struct uvideo_bulk_xfer {
+	struct uvideo_softc	*sc;
+	usbd_xfer_handle	 xfer;
+	void			*buf;
+	uint16_t		 size;
+};
+
+#define UVIDEO_IXFERS		3
+struct uvideo_vs_iface {
 	usbd_interface_handle  	 ifaceh;
 	int			 endpoint;
 	usbd_pipe_handle	 pipeh;
-	uint16_t		 size[UVIDEO_NFRAMES_MAX];
 	int			 numalts;
 	int			 curalt;
 	uint32_t		 max_packet_size;
 	int			 iface;
 	int			 bulk_endpoint;
 	int			 bulk_running;
+	struct uvideo_isoc_xfer	 ixfer[UVIDEO_IXFERS];
+	struct uvideo_bulk_xfer	 bxfer;
 };
 
 struct uvideo_frame_buffer {

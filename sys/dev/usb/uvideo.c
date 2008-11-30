@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.92 2008/11/24 23:25:33 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.93 2008/11/30 15:20:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -105,14 +105,18 @@ usbd_status	uvideo_vs_get_probe(struct uvideo_softc *, uint8_t *, uint8_t);
 usbd_status	uvideo_vs_set_commit(struct uvideo_softc *, uint8_t *);
 usbd_status	uvideo_vs_alloc_frame(struct uvideo_softc *);
 void		uvideo_vs_free_frame(struct uvideo_softc *);
-usbd_status	uvideo_vs_alloc(struct uvideo_softc *);
-void		uvideo_vs_free(struct uvideo_softc *);
+usbd_status	uvideo_vs_alloc_isoc(struct uvideo_softc *);
+usbd_status	uvideo_vs_alloc_bulk(struct uvideo_softc *);
+void		uvideo_vs_free_isoc(struct uvideo_softc *);
+void		uvideo_vs_free_bulk(struct uvideo_softc *);
 usbd_status	uvideo_vs_open(struct uvideo_softc *);
 void		uvideo_vs_close(struct uvideo_softc *);
 usbd_status	uvideo_vs_init(struct uvideo_softc *);
 int		uvideo_vs_start_bulk(struct uvideo_softc *);
 void		uvideo_vs_start_bulk_thread(void *);
 void		uvideo_vs_start_isoc(struct uvideo_softc *);
+void		uvideo_vs_start_isoc_ixfer(struct uvideo_softc *,
+		    struct uvideo_isoc_xfer *);
 void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
@@ -301,7 +305,10 @@ uvideo_close(void *addr)
 	uvideo_vs_close(sc);
 
 	/* free video stream xfer buffer */
-	uvideo_vs_free(sc);
+	if (sc->sc_vs_cur->bulk_endpoint)
+		uvideo_vs_free_bulk(sc);
+	else
+		uvideo_vs_free_isoc(sc);
 
 	/* free video stream frame buffer */
 	uvideo_vs_free_frame(sc);
@@ -1361,49 +1368,98 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 }
 
 usbd_status
-uvideo_vs_alloc(struct uvideo_softc *sc)
+uvideo_vs_alloc_isoc(struct uvideo_softc *sc)
 {
-	int size;
+	int size, i;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	sc->sc_vs_cur->sc = sc;
+	for (i = 0; i < UVIDEO_IXFERS; i++) {
+		sc->sc_vs_cur->ixfer[i].sc = sc;
 
-	sc->sc_vs_cur->xfer = usbd_alloc_xfer(sc->sc_udev);	
-	if (sc->sc_vs_cur->xfer == NULL) {
-		printf("%s: could not allocate VS xfer!\n", DEVNAME(sc));
-		return (USBD_NOMEM);	
-	}
+		sc->sc_vs_cur->ixfer[i].xfer = usbd_alloc_xfer(sc->sc_udev);	
+		if (sc->sc_vs_cur->ixfer[i].xfer == NULL) {
+			printf("%s: could not allocate isoc VS xfer!\n",
+			    DEVNAME(sc));
+			return (USBD_NOMEM);	
+		}
 
-	if (sc->sc_vs_cur->bulk_endpoint)
-		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
-	else
 		size = sc->sc_vs_cur->max_packet_size * sc->sc_nframes;
 
-	sc->sc_vs_cur->buf = usbd_alloc_buffer(sc->sc_vs_cur->xfer, size);
-	if (sc->sc_vs_cur->buf == NULL) {
-		printf("%s: could not allocate VS buffer!\n", DEVNAME(sc));
+		sc->sc_vs_cur->ixfer[i].buf =
+		    usbd_alloc_buffer(sc->sc_vs_cur->ixfer[i].xfer, size);
+		if (sc->sc_vs_cur->ixfer[i].buf == NULL) {
+			printf("%s: could not allocate isoc VS buffer!\n",
+			    DEVNAME(sc));
+			return (USBD_NOMEM);
+		}
+		DPRINTF(1, "%s: allocated %d bytes isoc VS xfer buffer\n",
+	    	    DEVNAME(sc), size);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+uvideo_vs_alloc_bulk(struct uvideo_softc *sc)
+{
+	int size;
+
+	sc->sc_vs_cur->bxfer.sc = sc;
+
+	sc->sc_vs_cur->bxfer.xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (sc->sc_vs_cur->bxfer.xfer == NULL) {
+		printf("%s: could not allocate bulk VS xfer!\n",
+		    DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
-	DPRINTF(1, "%s: allocated %d bytes VS xfer buffer\n",
+
+	size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
+
+	sc->sc_vs_cur->bxfer.buf =
+	    usbd_alloc_buffer(sc->sc_vs_cur->bxfer.xfer, size);
+	if (sc->sc_vs_cur->bxfer.buf == NULL) {
+		printf("%s: could not allocate bulk VS buffer!\n",
+		    DEVNAME(sc));
+		return (USBD_NOMEM);
+	}
+	DPRINTF(1, "%s: allocated %d bytes bulk VS xfer buffer\n",
 	    DEVNAME(sc), size);
 
 	return (USBD_NORMAL_COMPLETION);
 }
 
 void
-uvideo_vs_free(struct uvideo_softc *sc)
+uvideo_vs_free_isoc(struct uvideo_softc *sc)
 {
+	int i;
+
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	if (sc->sc_vs_cur->buf != NULL) {
-		usbd_free_buffer(sc->sc_vs_cur->xfer);
-		sc->sc_vs_cur->buf = NULL;
+	for (i = 0; i < UVIDEO_IXFERS; i++) {
+		if (sc->sc_vs_cur->ixfer[i].buf != NULL) {
+			usbd_free_buffer(sc->sc_vs_cur->ixfer[i].xfer);
+			sc->sc_vs_cur->ixfer[i].buf = NULL;
+		}
+
+		if (sc->sc_vs_cur->ixfer[i].xfer != NULL) {
+			usbd_free_xfer(sc->sc_vs_cur->ixfer[i].xfer);
+			sc->sc_vs_cur->ixfer[i].xfer = NULL;
+		}
+	}
+}
+
+void
+uvideo_vs_free_bulk(struct uvideo_softc *sc)
+{
+	if (sc->sc_vs_cur->bxfer.buf != NULL) {
+		usbd_free_buffer(sc->sc_vs_cur->bxfer.xfer);
+		sc->sc_vs_cur->bxfer.buf = NULL;
 	}
 
-	if (sc->sc_vs_cur->xfer != NULL) {
-		usbd_free_xfer(sc->sc_vs_cur->xfer);
-		sc->sc_vs_cur->xfer = NULL;
+	if (sc->sc_vs_cur->bxfer.xfer != NULL) {
+		usbd_free_xfer(sc->sc_vs_cur->bxfer.xfer);
+		sc->sc_vs_cur->bxfer.xfer = NULL;
 	}
 }
 
@@ -1503,7 +1559,10 @@ uvideo_vs_init(struct uvideo_softc *sc)
 		return (USBD_INVAL);
 
 	/* allocate video stream xfer buffer */
-	error = uvideo_vs_alloc(sc);
+	if (sc->sc_vs_cur->bulk_endpoint)
+		error = uvideo_vs_alloc_bulk(sc);
+	else
+		error = uvideo_vs_alloc_isoc(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (USBD_INVAL);
 
@@ -1547,11 +1606,11 @@ uvideo_vs_start_bulk_thread(void *arg)
 		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
 
 		error = usbd_bulk_transfer(
-		    sc->sc_vs_cur->xfer,
+		    sc->sc_vs_cur->bxfer.xfer,
 		    sc->sc_vs_cur->pipeh,
 		    USBD_NO_COPY | USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT,
-		    sc->sc_vs_cur->buf,
+		    sc->sc_vs_cur->bxfer.buf,
 		    &size,
 		    "vid_bulk");
 		if (error != USBD_NORMAL_COMPLETION) {
@@ -1562,8 +1621,8 @@ uvideo_vs_start_bulk_thread(void *arg)
 
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
 
-		(void)uvideo_vs_decode_stream_header(sc, sc->sc_vs_cur->buf,
-		    size);
+		(void)uvideo_vs_decode_stream_header(sc,
+		    sc->sc_vs_cur->bxfer.buf, size);
 	}
 
 	kthread_exit(0);
@@ -1574,32 +1633,47 @@ uvideo_vs_start_isoc(struct uvideo_softc *sc)
 {
 	int i;
 
+	for (i = 0; i < UVIDEO_IXFERS; i++)
+		uvideo_vs_start_isoc_ixfer(sc, &sc->sc_vs_cur->ixfer[i]);
+}
+
+void
+uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
+    struct uvideo_isoc_xfer *ixfer)
+{
+	int i;
+	usbd_status error;
+
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
 	if (sc->sc_dying)
 		return;
 
 	for (i = 0; i < sc->sc_nframes; i++)
-		sc->sc_vs_cur->size[i] = sc->sc_vs_cur->max_packet_size;
+		ixfer->size[i] = sc->sc_vs_cur->max_packet_size;
 
 	usbd_setup_isoc_xfer(
-	    sc->sc_vs_cur->xfer,
+	    ixfer->xfer,
 	    sc->sc_vs_cur->pipeh,
-	    sc->sc_vs_cur,
-	    sc->sc_vs_cur->size,
+	    ixfer,
+	    ixfer->size,
 	    sc->sc_nframes,
 	    USBD_NO_COPY | USBD_SHORT_XFER_OK,
 	    uvideo_vs_cb);
 
-	(void)usbd_transfer(sc->sc_vs_cur->xfer);
+	error = usbd_transfer(ixfer->xfer);
+	if (error != USBD_IN_PROGRESS) {
+		DPRINTF(1, "%s: usbd_transfer error=%s!\n",
+		    DEVNAME(sc), usbd_errstr(error));
+	}
 }
 
 void
 uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
-	struct uvideo_vs_iface *vs = priv;
-	struct uvideo_softc *sc = vs->sc;
+	struct uvideo_isoc_xfer *ixfer = priv;
+	struct uvideo_softc *sc = ixfer->sc;
 	int len, i, frame_size;
 	uint8_t *frame;
 	usbd_status error;
@@ -1618,8 +1692,8 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		goto skip;
 
 	for (i = 0; i < sc->sc_nframes; i++) {
-		frame = vs->buf + (i * vs->max_packet_size);
-		frame_size = vs->size[i];
+		frame = ixfer->buf + (i * sc->sc_vs_cur->max_packet_size);
+		frame_size = ixfer->size[i];
 
 		if (frame_size == 0)
 			/* frame is empty */
@@ -1631,7 +1705,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 
 skip:	/* setup new transfer */
-	uvideo_vs_start_isoc(sc);
+	uvideo_vs_start_isoc_ixfer(sc, ixfer);
 }
 
 usbd_status
