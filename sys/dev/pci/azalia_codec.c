@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.75 2008/11/28 21:50:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.76 2008/11/30 03:50:29 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -333,15 +333,18 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 	    digital ? "digital" : "analog",
 	    (type == COP_AWTYPE_AUDIO_OUTPUT) ? "DACs" : "ADCs"));
 
+	nconvs = 0;
 	nall_convs = 0;
+
 	FOR_EACH_WIDGET(this, i) {
 		if (this->w[i].type == type &&
 		    (this->w[i].widgetcap & COP_AWCAP_DIGITAL) == digital &&
 		    nall_convs < HDA_MAX_CHANNELS)
 			all_convs[nall_convs++] = this->w[i].nid;
 	}
+	if (nall_convs == 0)
+		goto done;
 
-	nconvs = 0;
 	for (assoc = 0; assoc <= CORB_CD_ASSOCIATION_MAX; assoc++) {
 		for (seq = 0; seq <= CORB_CD_SEQUENCE_MAX; seq++) {
 			FOR_EACH_WIDGET(this, i) {
@@ -523,17 +526,18 @@ azalia_generic_mixer_init(codec_t *this)
 			continue;
 
 		/* usable adcs - connections should be in AZ_CLASS_RECORD */
-		if (w->type == COP_AWTYPE_AUDIO_INPUT) {
+		if (w->type == COP_AWTYPE_AUDIO_INPUT &&
+		    this->adcs.ngroups > 0) {
 			const convgroupset_t *group;
 
 			group = &this->adcs;
+			k = 0;
 			for (j = 0; j < group->groups[group->cur].nconv; j++)
 				if (group->groups[group->cur].conv[j] == w->nid)
 					break;
-			if (j == group->groups[group->cur].nconv)
-				continue;
-
-			for (j = 0; j < w->nconnections && naconns < 32; j++) {
+			if (j < group->groups[group->cur].nconv)
+				k = w->nconnections;
+			for (j = 0; j < k && naconns < 32; j++) {
 				k = azalia_nid_to_index(this,
 				    w->connections[j]);
 				if (k == -1)
@@ -1038,9 +1042,14 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 {
 	mixer_item_t *m;
 	mixer_devinfo_t *d;
-	convgroup_t *cgdac = &this->dacs.groups[0];
-	convgroup_t *cgadc = &this->adcs.groups[0];
+	convgroup_t *cgdac;
+	convgroup_t *cgadc;
 	int i, err, madc, mmaster;
+
+	if (this->dacs.ngroups > 0)
+		cgdac = &this->dacs.groups[0];
+	if (this->adcs.ngroups > 0)
+		cgadc = &this->adcs.groups[0];
 
 	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
 	for (i = 0; i < this->nmixers; i++) {
