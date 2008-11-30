@@ -226,6 +226,7 @@
 ./usr/include/zaurus/limits.h
 ./usr/include/zaurus/loadfile_machdep.h
 ./usr/include/zaurus/lock.h
+./usr/include/zaurus/machine_reg.h
 ./usr/include/zaurus/mutex.h
 ./usr/include/zaurus/param.h
 ./usr/include/zaurus/pcb.h
@@ -244,7 +245,6 @@
 ./usr/include/zaurus/sysarch.h
 ./usr/include/zaurus/trap.h
 ./usr/include/zaurus/vmparam.h
-./usr/include/zaurus/zaurus_reg.h
 ./usr/include/zaurus/zaurus_var.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o

@@ -2393,6 +2393,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/lock.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/machine_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/pcb.ph
@@ -2411,7 +2412,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/sysarch.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/trap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/vmparam.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/zaurus_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/zaurus_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
