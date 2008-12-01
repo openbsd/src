@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmevar.h,v 1.3 2008/10/29 01:55:53 brad Exp $	*/
+/*	$OpenBSD: if_jmevar.h,v 1.4 2008/12/01 09:12:59 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -175,6 +175,7 @@ struct jme_softc {
 	bus_dma_tag_t		sc_dmat;
 	pci_chipset_tag_t	jme_pct;
 	pcitag_t		jme_pcitag;
+	uint8_t			jme_revfm;
 
 	int			jme_irq_rid;
 	struct resource		*jme_irq_res;
