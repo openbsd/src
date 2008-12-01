@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2008/11/26 06:51:04 uwe Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2008/12/01 23:31:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -23,17 +23,20 @@
  */
 
 %{
-#include <sys/limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/queue.h>
 
 #include <dev/bluetooth/btdev.h>
 
-#include <ctype.h>
-#include <errno.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <ctype.h>
+#include <syslog.h>
 
 #include "btctl.h"
 #include "btd.h"
@@ -99,127 +102,114 @@ void must_write(const void *, size_t);
 %type	<v.string>		pin_opt
 %%
 
-grammar
-: /* empty */
-| grammar '\n'
-| grammar main '\n'
-| grammar error '\n'
-{
-	file->errors++;
-}
-;
+ruleset		: /* empty */
+		| ruleset '\n'
+		| ruleset main '\n'
+		| ruleset error '\n'	{ file->errors++; }
+		;
 
-main
-: INTERFACE address name_opt disabled_opt
-{
-	btctl_interface_stmt stmt;
+main		: INTERFACE address name_opt disabled_opt {
+			btctl_interface_stmt stmt;
 
-	bdaddr_copy(&stmt.addr, &$2);
+			bdaddr_copy(&stmt.addr, &$2);
 
-	strbufcpy("interface name", $3, stmt.name);
-	free($3);
+			strbufcpy("interface name", $3, stmt.name);
+			free($3);
 
-	stmt.flags = $4 ? BTCTL_INTERFACE_DISABLED : 0;
+			stmt.flags = $4 ? BTCTL_INTERFACE_DISABLED : 0;
 
-	switch (exec_stmt(BTCTL_INTERFACE_STMT, &stmt, sizeof(stmt))) {
-	case 0: break;
-	case EEXIST:
-		yyerror("interface %s is already defined",
-		    bdaddr_any(&stmt.addr) ? "*" :
-		    bt_ntoa(&stmt.addr, NULL));
-		YYERROR;
-	default:
-		yyerror("could not add interface");
-		YYERROR;
-	}
-}
-| ATTACH address type_opt pin_opt
-{
-	btctl_attach_stmt stmt;
-
-	bdaddr_copy(&stmt.addr, &$2);
-
-	stmt.type = $3;
-
-	if ($4 != NULL) {
-		strbufcpy("PIN code", $4, stmt.pin);
-		stmt.pin_size = strlen(stmt.pin);
-		free($4);
-	} else
-		stmt.pin_size = 0;
-
-	switch (exec_stmt(BTCTL_ATTACH_STMT, &stmt, sizeof(stmt))) {
-	case 0: break;
-	case EEXIST:
-		yyerror("device %s is already defined",
-		    bdaddr_any(&stmt.addr) ? "*" :
-		    bt_ntoa(&stmt.addr, NULL));
-		YYERROR;
-	default:
-		yyerror("could not add device");
-		YYERROR;
-	}
-}
-;
-
-name_opt
-: /* empty */
-{ $$ = NULL; }
-| NAME STRING
-{ $$ = $2; }
-;
-
-disabled_opt
-: /* empty */
-{ $$ = 0; }
-| DISABLED
-{ $$ = 1; }
-;
-
-type_opt
-: /* empty */
-{ $$ = BTDEV_NONE; }
-| TYPE NONE
-{ $$ = BTDEV_NONE; }
-| TYPE HID
-{ $$ = BTDEV_HID; }
-| TYPE HSET
-{ $$ = BTDEV_HSET; }
-| TYPE HF
-{ $$ = BTDEV_HF; }
-;
-
-pin_opt
-: /* empty */
-{ $$ = NULL; }
-| PIN STRING
-{
-	if (($$ = calloc(HCI_PIN_SIZE, sizeof(uint8_t))) == NULL)
-		fatal("pin_opt calloc");
-
-	strlcpy($$, $2, HCI_PIN_SIZE);
-	free($2);
-}
-;
-
-address
-: STRING
-{
-	if (strcmp($1, "*")) {
-		bt_aton($1, &$$);
-
-		if (bdaddr_any(&$$)) {
-			/* 0:0:0:0:0:0 could be misinterpreted */
-			yyerror("invalid address '%s'", $1);
-			free($1);
-			YYERROR;
+			switch (exec_stmt(BTCTL_INTERFACE_STMT, &stmt, sizeof(stmt))) {
+			case 0:
+				break;
+			case EEXIST:
+				yyerror("interface %s is already defined",
+				    bdaddr_any(&stmt.addr) ? "*" :
+				    bt_ntoa(&stmt.addr, NULL));
+				YYERROR;
+			default:
+				yyerror("could not add interface");
+				YYERROR;
+			}
 		}
+		| ATTACH address type_opt pin_opt {
+			btctl_attach_stmt stmt;
 
-		free($1);
-	} else 
-		bdaddr_copy(&$$, BDADDR_ANY);
-}
-;
+			bdaddr_copy(&stmt.addr, &$2);
+
+			stmt.type = $3;
+
+			if ($4 != NULL) {
+				strbufcpy("PIN code", $4, stmt.pin);
+				stmt.pin_size = strlen(stmt.pin);
+				free($4);
+			} else
+				stmt.pin_size = 0;
+
+			switch (exec_stmt(BTCTL_ATTACH_STMT, &stmt, sizeof(stmt))) {
+			case 0:
+				break;
+			case EEXIST:
+				yyerror("device %s is already defined",
+				    bdaddr_any(&stmt.addr) ? "*" :
+				    bt_ntoa(&stmt.addr, NULL));
+				YYERROR;
+			default:
+				yyerror("could not add device");
+				YYERROR;
+			}
+		}
+		;
+
+name_opt	: /* empty */
+			{ $$ = NULL; }
+		| NAME STRING
+			{ $$ = $2; }
+		;
+
+disabled_opt	: /* empty */
+			{ $$ = 0; }
+		| DISABLED
+			{ $$ = 1; }
+		;
+
+type_opt	: /* empty */
+			{ $$ = BTDEV_NONE; }
+		| TYPE NONE
+			{ $$ = BTDEV_NONE; }
+		| TYPE HID
+			{ $$ = BTDEV_HID; }
+		| TYPE HSET
+			{ $$ = BTDEV_HSET; }
+		| TYPE HF
+			{ $$ = BTDEV_HF; }
+		;
+
+pin_opt		: /* empty */
+			{ $$ = NULL; }
+		| PIN STRING {
+			if (($$ = calloc(HCI_PIN_SIZE, sizeof(uint8_t))) == NULL)
+				fatal("pin_opt calloc");
+
+			strlcpy($$, $2, HCI_PIN_SIZE);
+			free($2);
+		}
+		;
+
+address		: STRING {
+			if (strcmp($1, "*")) {
+				bt_aton($1, &$$);
+
+				if (bdaddr_any(&$$)) {
+					/* 0:0:0:0:0:0 could be misinterpreted */
+					yyerror("invalid address '%s'", $1);
+					free($1);
+					YYERROR;
+				}
+				free($1);
+			} else
+				bdaddr_copy(&$$, BDADDR_ANY);
+		}
+		;
 
 %%
 
