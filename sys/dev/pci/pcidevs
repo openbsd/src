@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1438 2008/11/30 14:39:09 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1439 2008/12/01 10:25:40 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2931,6 +2931,10 @@ product JMICRON JMB363		0x2363	JMB363 IDE/SATA
 product JMICRON JMB365		0x2365	JMB365 IDE/SATA
 product JMICRON JMB366		0x2366	JMB366 IDE/SATA
 product JMICRON JMB368		0x2368	JMB368 IDE
+product JMICRON SD		0x2381	SD Host Controller
+product JMICRON SDMMC		0x2382	SD/MMC
+product JMICRON MS		0x2383	Memory Stick
+product JMICRON XD		0x2384	xD
 
 /* KTI */
 product KTI KTIE		0x3000	KTI
