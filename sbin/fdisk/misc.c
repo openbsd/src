@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.19 2008/12/01 04:05:43 ray Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2008/12/01 20:15:35 ray Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,7 +30,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/disklabel.h>
+#include <limits.h>
 #include "misc.h"
 
 struct unit_type unit_types[] = {
@@ -193,17 +195,16 @@ putlong(void *p, u_int32_t l)
 
 /*
  * adapted from sbin/disklabel/editor.c
- * retries on error
+ * Returns UINT_MAX on error
  */
 u_int32_t
 getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
     u_int32_t maxval, u_int32_t offset,	int flags)
 {
-	char buf[BUFSIZ], *p, operator;
-	const char *errstr;
+	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	u_int32_t rval = oval;
 	size_t n;
-	int mult, secsize = unit_types[SECTORS].conversion;
+	int mult = 1, secsize = unit_types[SECTORS].conversion;
 	double d;
 	int secpercyl;
 
@@ -212,9 +213,7 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	/* We only care about the remainder */
 	offset = offset % secpercyl;
 
- restart:
-	mult = 1;
-	operator = '\0';
+	buf[0] = '\0';
 	do {
 		printf("%s: [%u] ", prompt, oval);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
@@ -222,6 +221,7 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 			if (feof(stdin)) {
 				clearerr(stdin);
 				putchar('\n');
+				return(UINT_MAX - 1);
 			}
 		}
 		n = strlen(buf);
@@ -273,10 +273,15 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 			if (*p == '+' || *p == '-')
 				operator = *p++;
 
-			d = strtonum(p, 0, maxval, &errstr);
-			if (errstr)
-				goto restart;
-			else {
+			endptr = p;
+			errno = 0;
+			d = strtod(p, &endptr);
+			if (errno == ERANGE)
+				rval = UINT_MAX;	/* too big/small */
+			else if (*endptr != '\0') {
+				errno = EINVAL;		/* non-numbers in str */
+				rval = UINT_MAX;
+			} else {
 				/* XXX - should check for overflow */
 				if (mult > 0)
 					rval = d * mult;
@@ -292,7 +297,7 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 			}
 		}
 	}
-	if (flags & DO_ROUNDING) {
+	if ((flags & DO_ROUNDING) && rval < UINT_MAX) {
 #ifndef CYLCHECK
 		/* Round to nearest cylinder unless given in sectors */
 		if (mult != 1)
