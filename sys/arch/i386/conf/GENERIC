@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.643 2008/11/27 11:36:04 mbalmer Exp $
+#	$OpenBSD: GENERIC,v 1.644 2008/12/01 23:48:46 todd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -295,21 +295,16 @@ scsibus* at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
 sbt*	at sdmmc?		# SDIO Bluetooth
-ubt*	at uhub?		# USB Bluetooth
-
-# Bluetooth bus support
 bthub*	at sbt?
+ubt*	at uhub?		# USB Bluetooth
 bthub*	at ubt?
 
-# Bluetooth HID support
-bthidev* at bthub?
+bthidev* at bthub?		# Bluetooth HID support
 btkbd*	at bthidev?
 btms*	at bthidev?
 wskbd*	at btkbd? mux 1
 wsmouse* at btms? mux 0
-
-# Bluetooth audio support
-btsco*	at bthub?
+btsco*	at bthub?		# Bluetooth audio support
 audio*	at btsco?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor

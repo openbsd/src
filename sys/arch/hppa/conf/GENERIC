@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.122 2008/11/26 21:54:20 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.123 2008/12/01 23:48:46 todd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -173,19 +173,14 @@ onewire* at uow?
 
 # Bluetooth controllers
 ubt*	at uhub?		# USB Bluetooth
-
-# Bluetooth bus support
 bthub*	at ubt?
 
-# Bluetooth HID support
-bthidev* at bthub?
+bthidev* at bthub?		# Bluetooth HID support
 btkbd*	at bthidev?
 btms*	at bthidev?
 wskbd*	at btkbd? mux 1
 wsmouse* at btms? mux 0
-
-# Bluetooth audio support
-btsco*	at bthub?
+btsco*	at bthub?		# Bluetooth audio support
 audio*	at btsco?
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics

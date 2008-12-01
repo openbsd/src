@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2008/11/26 21:59:12 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.3 2008/12/01 23:48:46 todd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -211,14 +211,11 @@ ukphy*	at mii?				# "unknown" PHYs
 
 # Bluetooth controllers
 #sbt*	at sdmmc?			# SDIO Bluetooth
-#ubt*	at uhub?			# USB Bluetooth
-
-# Bluetooth bus support
 #bthub*	at sbt?
+#ubt*	at uhub?			# USB Bluetooth
 #bthub*	at ubt?
 
-# Bluetooth HID support
-#bthidev* at bthub?
+#bthidev* at bthub?			# Bluetooth HID support
 #btkbd*	at bthidev?
 #btms*	at bthidev?
 #wskbd*	at btkbd? mux 1

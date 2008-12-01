@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.19 2008/11/30 19:20:50 maja Exp $
+# $OpenBSD: GENERIC,v 1.20 2008/12/01 23:48:46 todd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -159,19 +159,14 @@ udcf*	at uhub?		# Gude Expert mouseCLOCK
 
 # Bluetooth controllers
 ubt*	at uhub?		# USB Bluetooth
-
-# Bluetooth bus support
 bthub*	at ubt?
 
-# Bluetooth HID support
-bthidev* at bthub?
+bthidev* at bthub?		# Bluetooth HID support
 #btkbd*	at bthidev?
 #btms*	at bthidev?
 #wskbd*	at btkbd? mux 1
 #wsmouse* at btms? mux 0
-
-# Bluetooth audio support
-btsco*	at bthub?
+btsco*	at bthub?		# Bluetooth audio support
 audio*	at btsco?
 
 sd*	at scsibus?			# SCSI disk drives
