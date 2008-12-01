@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.4 2008/11/25 23:03:24 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.5 2008/12/01 22:54:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,7 +49,7 @@ static void
 mxsort(struct mxrecord *array, size_t len)
 {
 	u_int32_t i;
-	u_int32_t j;
+	int32_t j;
 	struct mxrecord store;
 
 	for (i = 1; i < len; i++) {
