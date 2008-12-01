@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1438 2008/11/30 14:39:09 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1439 2008/12/01 10:25:40 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2936,6 +2936,10 @@
 #define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 IDE/SATA */
 #define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 IDE/SATA */
 #define	PCI_PRODUCT_JMICRON_JMB368	0x2368		/* JMB368 IDE */
+#define	PCI_PRODUCT_JMICRON_SD	0x2381		/* SD Host Controller */
+#define	PCI_PRODUCT_JMICRON_SDMMC	0x2382		/* SD/MMC */
+#define	PCI_PRODUCT_JMICRON_MS	0x2383		/* Memory Stick */
+#define	PCI_PRODUCT_JMICRON_XD	0x2384		/* xD */
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
