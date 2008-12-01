@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2008/12/01 23:31:41 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2008/12/01 23:32:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -111,6 +111,7 @@ ruleset		: /* empty */
 main		: INTERFACE address name_opt disabled_opt {
 			btctl_interface_stmt stmt;
 
+			bzero(&stmt, sizeof(stmt));
 			bdaddr_copy(&stmt.addr, &$2);
 
 			strbufcpy("interface name", $3, stmt.name);
@@ -134,6 +135,7 @@ main		: INTERFACE address name_opt disabled_opt {
 		| ATTACH address type_opt pin_opt {
 			btctl_attach_stmt stmt;
 
+			bzero(&stmt, sizeof(stmt));
 			bdaddr_copy(&stmt.addr, &$2);
 
 			stmt.type = $3;
