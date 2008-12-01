@@ -1,0 +1,84 @@
+.\"	$OpenBSD: bt.conf.5,v 1.1 2008/12/01 19:02:25 todd Exp $
+.\"
+.\" Copyright (c) 2008 Todd T. Fries <todd@OpenBSD.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 1 2008 $
+.Dt BT.CONF 5
+.Os
+.Sh NAME
+.Nm bt.conf
+.Nd Bluetooth configuration file
+.Sh DESCRIPTION
+The
+.Nm
+file specifies interfaces and device attachments for bluetooth.
+.Pp
+The bluetooth daemon,
+.Xr btd 8 ,
+can be enabled to run at boot time via the
+.Va bt
+variable in
+.Xr rc.conf.local 8 .
+The
+.Nm
+configuration itself is loaded at boot time
+in
+.Xr rc.conf.local 8 .
+A utility called
+.Xr btctl 8
+is also available to load
+.Nm
+configurations.
+.Pp
+.Sh BT.CONF FILE FORMAT
+Lines beginning with
+.Sq #
+and empty lines are regarded as comments,
+and ignored.
+.\" Lines may be split using the
+.\" .Sq \e
+.\" character.
+.Pp
+.Ar type
+describes the type of device to attach.
+Possible types are
+.Ar none ,
+.Ar hf ,
+.Ar hid ,
+and
+.Ar hset .
+.Pp
+.Ar pin
+describes the pin number used to pair with the device.
+The pin number must be speicified in quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+# Enable all interfaces.
+interface * "OpenBSD BT"
+# Attach a keyboard and/or mouse,
+# or a mobile phone emulating such things.
+attach 00:02:76:08:1c:37 type hid pin "0000"
+.Ed
+.Sh SEE ALSO
+.Xr btctl 8 ,
+.Xr btd 8 ,
+.Xr ubt 4 ,
+.Xr sbt 4 ,
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 4.5 .
