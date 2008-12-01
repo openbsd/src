@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.13 2008/06/10 20:50:19 miod Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.14 2008/12/01 16:58:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -88,8 +88,11 @@ usbf_realloc(void **pp, size_t *sizep, size_t newsize)
 	oldsize = MIN(*sizep, newsize);
 	if (oldsize > 0)
 		bcopy(*pp, p, oldsize);
+#if 0
+	/* XXX must leak for now; something unknown has a pointer */
 	if (*pp != NULL)
 		free(*pp, M_USB);
+#endif
 	*pp = p;
 	*sizep = newsize;
 	return p;
