@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.5 2008/10/31 06:50:09 canacar Exp $	 */
+/* $Id: engine.c,v 1.6 2008/12/01 18:03:06 naddy Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -805,6 +805,26 @@ print_fld_uint(field_def *fld, unsigned int size)
 
 	tb_start();
 	if (tbprintf("%u", size) > len)
+		print_fld_str(fld, "*");
+	else
+		print_fld_tb(fld);
+	tb_end();
+}
+
+void
+print_fld_float(field_def *fld, double f, int prec)
+{
+	int len;
+
+	if (fld == NULL)
+		return;
+
+	len = fld->width;
+	if (len < 1)
+		return;
+
+	tb_start();
+	if (tbprintf("%*.*f", len, prec, f) > len)
 		print_fld_str(fld, "*");
 	else
 		print_fld_tb(fld);

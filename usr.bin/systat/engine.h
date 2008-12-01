@@ -1,4 +1,4 @@
-/* $Id: engine.h,v 1.3 2008/10/31 06:50:09 canacar Exp $	 */
+/* $Id: engine.h,v 1.4 2008/12/01 18:03:06 naddy Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -114,6 +114,7 @@ void print_fld_ssize(field_def *fld, int64_t size);
 void print_fld_bw(field_def *fld, double bw);
 void print_fld_rate(field_def *fld, double rate);
 void print_fld_uint(field_def *fld, unsigned int size);
+void print_fld_float(field_def *fld, double f, int prec);
 void print_fld_bar(field_def *fld, int value);
 void print_fld_tb(field_def *fld);
 
