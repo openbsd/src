@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.conf.5,v 1.1 2008/12/01 19:02:25 todd Exp $
+.\"	$OpenBSD: bt.conf.5,v 1.2 2008/12/01 20:22:56 todd Exp $
 .\"
 .\" Copyright (c) 2008 Todd T. Fries <todd@OpenBSD.org>
 .\"
@@ -30,7 +30,7 @@ The bluetooth daemon,
 can be enabled to run at boot time via the
 .Va bt
 variable in
-.Xr rc.conf.local 8 .
+.Xr rc 8 .
 The
 .Nm
 configuration itself is loaded at boot time
@@ -41,7 +41,6 @@ A utility called
 is also available to load
 .Nm
 configurations.
-.Pp
 .Sh BT.CONF FILE FORMAT
 Lines beginning with
 .Sq #
@@ -51,14 +50,47 @@ and ignored.
 .\" .Sq \e
 .\" character.
 .Pp
+.Ar interface
+describes the
+.Xr bluetooth 3
+interface to attach to.
+Possible arguments include
+.Ar interfacemac
+and
+.Ar name .
+.Ar interfacemac
+may be
+.Sq *
+to match any further interfaces.
+.Ar name
+may be
+.Dq disable
+to disable an interface from being used.
+.Pp
+.Ar attach
+describes the
+.Xr bluetooth 3
+devices to attach.
+Possible arguments include
+.Ar devicemac ,
+.Ar type ,
+and
+.Ar pin .
+.Ar devicemac
+may be
+.Sq *
+to match any device.
 .Ar type
 describes the type of device to attach.
 Possible types are
-.Ar none ,
-.Ar hf ,
-.Ar hid ,
-and
-.Ar hset .
+.Pp
+.Bl -column "noneXX" "Keyboard/Mouse" -offset indent -compact
+.It Em Type Description
+.It Li none Ta "catchall"
+.It Li hf Ta "Hands Free"
+.It Li hid Ta "Keyboard/Mouse"
+.It Li hset Ta "Handset"
+.El
 .Pp
 .Ar pin
 describes the pin number used to pair with the device.
@@ -73,10 +105,10 @@ interface * "OpenBSD BT"
 attach 00:02:76:08:1c:37 type hid pin "0000"
 .Ed
 .Sh SEE ALSO
-.Xr btctl 8 ,
-.Xr btd 8 ,
-.Xr ubt 4 ,
 .Xr sbt 4 ,
+.Xr ubt 4 ,
+.Xr btctl 8 ,
+.Xr btd 8
 .Sh HISTORY
 The
 .Nm

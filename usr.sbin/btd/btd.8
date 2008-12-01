@@ -1,0 +1,60 @@
+.\"	$OpenBSD: btd.8,v 1.1 2008/12/01 20:22:56 todd Exp $
+.\"
+.\" Copyright (c) 2008 Todd T. Fries <todd@OpenBSD.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 1 2008 $
+.Dt BTD 8
+.Os
+.Sh NAME
+.Nm btd
+.Nd Bluetooth daemon
+.Sh SYNOPSIS
+.Nm btd
+.Op Fl d
+.Sh DESCRIPTION
+.Nm
+is a bluetooth daemon which keeps track of SDP responses
+and link keys for bluetooth devices.
+.Pp
+.Nm
+is usually started at boot time, and can be enabled by
+setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl bt=YES
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+foreground mode.
+.Sh FILES
+.Bl -tag -width "/var/run/btd.sockXXX" -compact
+.It Pa /var/run/btd.sock
+Socket
+.Nm
+listens on.
+.It Pa /var/db/btd.db
+Where SDP responses and link keys are cached.
+.Sh SEE ALSO
+.Xr sbt 4 ,
+.Xr ubt 4 ,
+.Xr bt.conf 5 ,
+.Xr btctl 8 ,
+.Xr rc 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.5 .
