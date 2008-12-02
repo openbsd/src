@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.11 2008/11/24 07:32:08 blambert Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.12 2008/12/02 23:49:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -187,12 +187,6 @@ struct sdmmc_attach_args {
 
 #define SDMMC_LOCK(sc)	 lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
 #define SDMMC_UNLOCK(sc) lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
-#ifdef DIAGNOSTIC
-#define	SDMMC_ASSERT_LOCKED(sc) \
-	KASSERT(lockstatus(&((sc))->sc_lock) == LK_EXCLUSIVE)
-#else
-#define	SDMMC_ASSERT_LOCKED(sc)
-#endif /* DIAGNOSTIC */
 
 void	sdmmc_add_task(struct sdmmc_softc *, struct sdmmc_task *);
 void	sdmmc_del_task(struct sdmmc_task *);

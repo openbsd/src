@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.15 2008/11/24 07:32:08 blambert Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.16 2008/12/02 23:49:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -108,7 +108,7 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->sc_intrq);
 	sdmmc_init_task(&sc->sc_discover_task, sdmmc_discover_task, sc);
 	sdmmc_init_task(&sc->sc_intr_task, sdmmc_intr_task, sc);
-	lockinit(&sc->sc_lock, PRIBIO, DEVNAME(sc), 0, 0);
+	lockinit(&sc->sc_lock, PRIBIO, DEVNAME(sc), 0, LK_CANRECURSE);
 
 #ifdef SDMMC_IOCTL
 	if (bio_register(self, sdmmc_ioctl) != 0)
@@ -174,11 +174,8 @@ sdmmc_task_thread(void *arg)
 	}
 	splx(s);
 
-	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
-		SDMMC_LOCK(sc);
+	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
 		sdmmc_card_detach(sc, DETACH_FORCE);
-		SDMMC_UNLOCK(sc);
-	}
 
 	sc->sc_task_thread = NULL;
 	wakeup(sc);
@@ -236,9 +233,7 @@ sdmmc_discover_task(void *arg)
 	} else {
 		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
 			CLR(sc->sc_flags, SMF_CARD_PRESENT);
-			SDMMC_LOCK(sc);
 			sdmmc_card_detach(sc, DETACH_FORCE);
-			SDMMC_UNLOCK(sc);
 		}
 	}
 }
@@ -304,8 +299,6 @@ sdmmc_card_detach(struct sdmmc_softc *sc, int flags)
 {
 	struct sdmmc_function *sf, *sfnext;
 
-	SDMMC_ASSERT_LOCKED(sc);
-
 	DPRINTF(1,("%s: detach card\n", DEVNAME(sc)));
 
 	if (ISSET(sc->sc_flags, SMF_CARD_ATTACHED)) {
@@ -338,8 +331,6 @@ sdmmc_enable(struct sdmmc_softc *sc)
 {
 	u_int32_t host_ocr;
 	int error;
-
-	SDMMC_ASSERT_LOCKED(sc);
 
 	/*
 	 * Calculate the equivalent of the card OCR from the host
@@ -381,7 +372,6 @@ sdmmc_enable(struct sdmmc_softc *sc)
  err:
 	if (error != 0)
 		sdmmc_disable(sc);
-
 	return error;
 }
 
@@ -452,9 +442,6 @@ sdmmc_function_free(struct sdmmc_function *sf)
 int
 sdmmc_scan(struct sdmmc_softc *sc)
 {
-
-	SDMMC_ASSERT_LOCKED(sc);
-
 	/* Scan for I/O functions. */
 	if (ISSET(sc->sc_flags, SMF_IO_MODE))
 		sdmmc_io_scan(sc);
@@ -517,7 +504,7 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 	struct sdmmc_command acmd;
 	int error;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	SDMMC_LOCK(sc);
 
 	bzero(&acmd, sizeof acmd);
 	acmd.c_opcode = MMC_APP_CMD;
@@ -526,15 +513,18 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	error = sdmmc_mmc_command(sc, &acmd);
 	if (error != 0) {
+		SDMMC_UNLOCK(sc);
 		return error;
 	}
 
 	if (!ISSET(MMC_R1(acmd.c_resp), MMC_R1_APP_CMD)) {
 		/* Card does not support application commands. */
+		SDMMC_UNLOCK(sc);
 		return ENODEV;
 	}
 
 	error = sdmmc_mmc_command(sc, cmd);
+	SDMMC_UNLOCK(sc);
 	return error;
 }
 
@@ -548,7 +538,7 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 {
 	int error;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	SDMMC_LOCK(sc);
 
 	sdmmc_chip_exec_command(sc->sct, sc->sch, cmd);
 
@@ -559,6 +549,7 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 	error = cmd->c_error;
 	wakeup(cmd);
 
+	SDMMC_UNLOCK(sc);
 	return error;
 }
 
@@ -569,8 +560,6 @@ void
 sdmmc_go_idle_state(struct sdmmc_softc *sc)
 {
 	struct sdmmc_command cmd;
-
-	SDMMC_ASSERT_LOCKED(sc);
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_opcode = MMC_GO_IDLE_STATE;
@@ -587,8 +576,6 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc,
     struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
-
-	SDMMC_ASSERT_LOCKED(sc);
 
 	bzero(&cmd, sizeof cmd);
 
@@ -712,14 +699,12 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 			cmd.c_datalen = ucmd->c_datalen;
 		}
 
-		SDMMC_LOCK(sc);
 		if (request == SDIOCEXECMMC)
 			error = sdmmc_mmc_command(sc, &cmd);
 		else
 			error = sdmmc_app_command(sc, &cmd);
 		if (error && !cmd.c_error)
 			cmd.c_error = error;
-		SDMMC_UNLOCK(sc);
 
 		bcopy(&cmd.c_resp, ucmd->c_resp, sizeof cmd.c_resp);
 		ucmd->c_flags = cmd.c_flags;
