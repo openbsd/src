@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.73 2008/11/17 08:10:51 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.74 2008/12/02 08:41:32 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 17 2008 $
+.Dd $Mdocdate: December 2 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -191,9 +191,6 @@ command interpreter.
 .Bl -tag -width Fl
 .It Ic help
 Print the names of the available views on the command line.
-.It Ic load
-Print the load average over the past 1, 5, and 15 minutes
-on the command line.
 .It Ic quit
 Quit
 .Nm .
@@ -534,24 +531,24 @@ period, such as from boot time (see the
 .Cm boot
 option below).
 .El
-.Pp
-The following commands are specific to the
-.Ic vmstat
-and
-.Ic ifstat
-views; the minimum unambiguous prefix may be supplied.
-.Pp
-.Bl -tag -width Ds -compact
-.It Cm boot
-Display cumulative statistics since the system was booted.
-.It Cm run
-Display statistics as a running total from the point this
-command is given.
-.It Cm time
-Display statistics averaged over the refresh interval (the default).
-.It Cm zero
-Reset running statistics to zero.
-.El
+.\".Pp
+.\"The following commands are specific to the
+.\".Ic vmstat
+.\"and
+.\".Ic ifstat
+.\"views; the minimum unambiguous prefix may be supplied.
+.\".Pp
+.\".Bl -tag -width Ds -compact
+.\".It Cm boot
+.\"Display cumulative statistics since the system was booted.
+.\".It Cm run
+.\"Display statistics as a running total from the point this
+.\"command is given.
+.\".It Cm time
+.\"Display statistics averaged over the refresh interval (the default).
+.\".It Cm zero
+.\"Reset running statistics to zero.
+.\".El
 .Pp
 Certain information may be discarded when the screen size is
 insufficient for display.
@@ -562,21 +559,21 @@ When a bar graph would overflow the allotted screen space it is
 truncated and the actual value is printed
 .Dq over top
 of the bar.
-.Pp
-The following commands are common to each view which shows
-information about disk drives.
-These commands are used to select a set of drives to report on,
-should a system have more drives configured
-than can normally be displayed on the screen.
-.Pp
-.Bl -tag -width Tx -compact
-.It Cm display Op Ar drives
-Display information about the drives indicated.
-Multiple drives may be specified, separated by spaces.
-.It Cm ignore Op Ar drives
-Do not display information about the drives indicated.
-Multiple drives may be specified, separated by spaces.
-.El
+.\".Pp
+.\"The following commands are common to each view which shows
+.\"information about disk drives.
+.\"These commands are used to select a set of drives to report on,
+.\"should a system have more drives configured
+.\"than can normally be displayed on the screen.
+.\".Pp
+.\".Bl -tag -width Tx -compact
+.\".It Cm display Op Ar drives
+.\"Display information about the drives indicated.
+.\"Multiple drives may be specified, separated by spaces.
+.\".It Cm ignore Op Ar drives
+.\"Do not display information about the drives indicated.
+.\"Multiple drives may be specified, separated by spaces.
+.\".El
 .Sh FILES
 .Bl -tag -width "/etc/networksXXX" -compact
 .It Pa /etc/hosts
