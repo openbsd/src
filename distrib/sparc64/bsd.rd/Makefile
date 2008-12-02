@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2008/12/02 01:01:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2008/12/02 03:20:58 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -50,7 +50,7 @@ bsd.rd:	bsd.rd_unz
 
 bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
 	cp bsd bsd.rd_unz
-	${.OBJDIR}/${RDSETROOT} bsd.rd_unz < ${IMAGE}
+	${.OBJDIR}/${RDSETROOT} bsd.rd_unz ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/sparc64/conf && config ${RAMDISK}

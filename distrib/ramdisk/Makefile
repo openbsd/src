@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2008/01/11 10:16:40 espie Exp $
+#	$OpenBSD: Makefile,v 1.33 2008/12/02 03:20:57 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -90,7 +90,7 @@ bsd:
 
 bsd.rd:	bsd ${IMAGE} ${RDSETROOT}
 	cp bsd bsd.rd
-	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
+	${.OBJDIR}/${RDSETROOT} bsd.rd ${IMAGE}
 	${STRIP} bsd.rd
 
 bsd.gz:	bsd.rd

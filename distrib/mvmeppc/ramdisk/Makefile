@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2008/12/02 01:01:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2008/12/02 03:20:57 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -35,7 +35,7 @@ all:	${BSD_RD} cd
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
 
 cd: ${BSD_RD}
 	-rm -rf ${.OBJDIR}/cd-dir/

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2008/12/02 01:01:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2008/12/02 03:20:57 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -60,7 +60,7 @@ bsd.gz: bsd.rd
 
 bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
 
 
 bsd:

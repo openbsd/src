@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2008/12/02 01:01:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/12/02 03:20:58 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -38,7 +38,7 @@ all:	${BSD_RD} ${BSD_BIN}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
 
 ${BSD_BIN}: ${BSD_RD}
 	objcopy -O binary ${BSD_RD} ${BSD_BIN}

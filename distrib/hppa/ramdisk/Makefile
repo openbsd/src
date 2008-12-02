@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2008/03/04 23:43:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2008/12/02 03:20:57 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -70,7 +70,7 @@ obsd:
 
 bsd.rd:	obsd ${IMAGE} ${RDSETROOT}
 	cp obsd bsd.rd
-	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
+	${.OBJDIR}/${RDSETROOT} bsd.rd ${IMAGE}
 	@${STRIP} bsd.rd
 
 bsd:	bsd.rd
