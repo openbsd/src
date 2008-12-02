@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.3 2006/11/10 11:09:56 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.4 2008/12/02 13:42:44 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -189,6 +189,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr = NULL;
+	struct rde_nbr	 rn;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
@@ -212,6 +213,11 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	/* set event structures */
 	evtimer_set(&nbr->inactivity_timer, nbr_itimer, nbr);
 
+	bzero(&rn, sizeof(rn));
+	rn.iface = iface;
+	dvmrpe_imsg_compose_rde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
+	    sizeof(rn));
+
 	log_debug("nbr_new: neighbor ID %s, peerid %lu",
 	    inet_ntoa(nbr->id), nbr->peerid);
 
@@ -223,6 +229,8 @@ nbr_del(struct nbr *nbr)
 {
 	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
+
+	dvmrpe_imsg_compose_rde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
 
 	/* clear lists */
 	rr_list_clr(&nbr->rr_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.5 2008/11/24 21:55:52 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.6 2008/12/02 13:42:44 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -53,6 +53,15 @@ struct mfc_node {
 	time_t			 uptime;
 };
 
+/* just the infos rde needs */
+struct rde_nbr {
+	LIST_ENTRY(rde_nbr)	 entry, hash;
+	struct in_addr		 addr;
+	u_int32_t		 peerid;
+
+	struct iface		*iface;
+};
+
 struct ds {
 	LIST_ENTRY(ds)		 entry;
 	struct in_addr		 addr;
@@ -102,6 +111,8 @@ void		 rt_dump(pid_t);
 
 int		 srt_check_route(struct route_report *, int);
 int		 src_compare(struct src_node *, struct src_node *);
+
+void		 srt_expire_nbr(struct in_addr, struct iface *);
 
 RB_PROTOTYPE(src_head, src_node, entry, src_compare);
 

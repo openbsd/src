@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.10 2008/11/24 21:55:52 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.11 2008/12/02 13:42:44 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -603,6 +603,24 @@ srt_delete_src(struct src_node *src_node)
 
 	RB_REMOVE(src_head, &rdeconf->src_list, src_node);
 	free(src_node);
+}
+
+void
+srt_expire_nbr(struct in_addr addr, struct iface *iface)
+{
+	struct src_node		*src_node;
+	struct ds		*ds;
+	struct rt_node		*rn;
+
+	RB_FOREACH(src_node, src_head, &rdeconf->src_list) {
+		rn = rt_find(src_node->origin.s_addr,
+		    mask2prefixlen(src_node->mask.s_addr));
+		if (rn == NULL)
+			fatalx("srt_expires_nbr: route not found");
+		ds = srt_find_ds(src_node, addr.s_addr);
+		if (ds)	
+			srt_delete_ds(src_node, rn, ds, iface);
+	}
 }
 
 void
