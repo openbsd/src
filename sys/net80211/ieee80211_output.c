@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.79 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.80 2008/12/02 17:37:11 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -404,13 +404,8 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 	u_int8_t ds_field;
 #endif
 #if NVLAN > 0
-	if ((m->m_flags & M_PROTO1) == M_PROTO1 && m->m_pkthdr.rcvif != NULL) {
-		struct ifvlan *ifv = m->m_pkthdr.rcvif->if_softc;
-
-		/* use VLAN 802.1D user-priority */
-		if (ifv->ifv_prio <= 7)
-			return ifv->ifv_prio;
-	}
+	if (m->m_flags & M_VLANTAG)	/* use VLAN 802.1D user-priority */
+		return EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
 #endif
 #ifdef INET
 	eh = mtod(m, struct ether_header *);
