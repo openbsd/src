@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.6 2008/11/19 18:52:53 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.7 2008/12/02 17:17:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -186,7 +186,6 @@ struct iwn_hal {
 			    struct ieee80211_node *, uint8_t, uint16_t);
 	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
 			    uint16_t);
-	const char	*fwname;
 	const struct	iwn_sensitivity_limits *limits;
 	int		ntxqs;
 	uint8_t		broadcast_id;
@@ -215,6 +214,7 @@ struct iwn_softc {
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
+	const char		*fwname;
 
 	/* TX scheduler rings. */
 	struct iwn_dma_info	sched_dma;
@@ -246,7 +246,7 @@ struct iwn_softc {
 	struct iwn_calib_state	calib;
 
 	struct iwn_fw_info	fw;
-	struct iwn_calib_info	calibcmd[4];
+	struct iwn_calib_info	calibcmd[5];
 	uint32_t		errptr;
 
 	struct iwn_rx_stat	last_rx_stat;

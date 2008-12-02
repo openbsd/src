@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.18 2008/11/25 18:49:49 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.19 2008/12/02 17:17:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -816,6 +816,7 @@ struct iwn_sensitivity_cmd {
 struct iwn_phy_calib {
 	uint8_t	code;
 #define IWN4965_PHY_CALIB_DIFF_GAIN		 7
+#define IWN5000_PHY_CALIB_DC			 8
 #define IWN5000_PHY_CALIB_LO			 9
 #define IWN5000_PHY_CALIB_TX_IQ			11
 #define IWN5000_PHY_CALIB_CRYSTAL		15
@@ -1215,7 +1216,9 @@ struct iwn_firmware_hdr {
 #define IWN5000_EEPROM_BAND5	0x03a
 #define IWN5000_EEPROM_BAND6	0x041
 #define IWN5000_EEPROM_BAND7	0x049
-#define IWN5000_EEPROM_CRYSTAL	0x094
+#define IWN5000_EEPROM_CRYSTAL	0x128
+#define IWN5000_EEPROM_TEMP	0x12a
+#define IWN5000_EEPROM_VOLT	0x12b
 
 /* Possible flags for IWN_EEPROM_RFCFG. */
 #define IWN_RFCFG_TYPE(x)	(((x) >>  0) & 0x3)

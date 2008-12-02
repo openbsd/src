@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.40 2008/11/25 22:20:11 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.41 2008/12/02 17:17:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -71,6 +71,8 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5100AGN_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5150AGN_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5150AGN_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5300AGN_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1 },
@@ -252,7 +254,6 @@ static const struct iwn_hal iwn4965_hal = {
 	iwn4965_tx_done,
 	iwn4965_ampdu_tx_start,
 	iwn4965_ampdu_tx_stop,
-	"iwn-4965",
 	&iwn4965_sensitivity_limits,
 	IWN4965_NTXQUEUES,
 	IWN4965_ID_BROADCAST,
@@ -280,7 +281,6 @@ static const struct iwn_hal iwn5000_hal = {
 	iwn5000_tx_done,
 	iwn5000_ampdu_tx_start,
 	iwn5000_ampdu_tx_stop,
-	"iwn-5000",
 	&iwn5000_sensitivity_limits,
 	IWN5000_NTXQUEUES,
 	IWN5000_ID_BROADCAST,
@@ -508,6 +508,7 @@ iwn_hal_attach(struct iwn_softc *sc)
 	switch (sc->hw_type) {
 	case IWN_HW_REV_TYPE_4965:
 		sc->sc_hal = &iwn4965_hal;
+		sc->fwname = "iwn-4965";
 		sc->critical_temp = IWN_CTOK(110);
 		sc->txantmsk = IWN_ANT_A | IWN_ANT_B;
 		sc->rxantmsk = IWN_ANT_ABC;
@@ -516,6 +517,7 @@ iwn_hal_attach(struct iwn_softc *sc)
 		break;
 	case IWN_HW_REV_TYPE_5100:
 		sc->sc_hal = &iwn5000_hal;
+		sc->fwname = "iwn-5000";
 		sc->critical_temp = 110;
 		sc->txantmsk = IWN_ANT_B;
 		sc->rxantmsk = IWN_ANT_A | IWN_ANT_B;
@@ -524,7 +526,8 @@ iwn_hal_attach(struct iwn_softc *sc)
 		break;
 	case IWN_HW_REV_TYPE_5150:
 		sc->sc_hal = &iwn5000_hal;
-		sc->critical_temp = IWN_CTOK(110);
+		sc->fwname = "iwn-5150";
+		/* NB: critical temperature will be read from EEPROM. */
 		sc->txantmsk = IWN_ANT_A;
 		sc->rxantmsk = IWN_ANT_A | IWN_ANT_B;
 		sc->ntxchains = 1;
@@ -533,6 +536,7 @@ iwn_hal_attach(struct iwn_softc *sc)
 	case IWN_HW_REV_TYPE_5300:
 	case IWN_HW_REV_TYPE_5350:
 		sc->sc_hal = &iwn5000_hal;
+		sc->fwname = "iwn-5000";
 		sc->critical_temp = 110;
 		sc->txantmsk = sc->rxantmsk = IWN_ANT_ABC;
 		sc->ntxchains = sc->nrxchains = 3;
@@ -1258,12 +1262,13 @@ iwn4965_print_power_group(struct iwn_softc *sc, int i)
 void
 iwn5000_read_eeprom(struct iwn_softc *sc)
 {
+	int32_t temp, volt, delta;
 	uint32_t base, addr;
 	uint16_t val;
 	int i;
 
 	/* Read regulatory domain (4 ASCII characters.) */
-	iwn_read_prom_data(sc, IWN5000_EEPROM_REG, &val, sizeof val);
+	iwn_read_prom_data(sc, IWN5000_EEPROM_REG, &val, 2);
 	base = letoh16(val);
 	iwn_read_prom_data(sc, base + IWN5000_EEPROM_DOMAIN,
 	    sc->eeprom_domain, 4);
@@ -1274,12 +1279,25 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 		iwn_read_eeprom_channels(sc, i, addr);
 	}
 
-	/* Read crystal calibration. */
-	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, sizeof val);
+	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, 2);
 	base = letoh16(val);
-	iwn_read_prom_data(sc, base + IWN5000_EEPROM_CRYSTAL,
-	    &sc->eeprom_crystal, sizeof (uint32_t));
-	DPRINTF(("crystal calibration 0x%08x\n", sc->eeprom_crystal));
+	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
+		/* Compute critical temperature (in Kelvin.) */
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
+		temp = letoh16(val);
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_VOLT, &val, 2);
+		volt = letoh16(val);
+		delta = temp - (volt / -5);
+		sc->critical_temp = (IWN_CTOK(110) - delta) * -5;
+		DPRINTF(("temp=%d volt=%d delta=%dK\n",
+		    temp, volt, delta));
+	} else {
+		/* Read crystal calibration. */
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_CRYSTAL,
+		    &sc->eeprom_crystal, sizeof (uint32_t));
+		DPRINTF(("crystal calibration 0x%08x\n",
+		    letoh32(sc->eeprom_crystal)));
+	}
 }
 
 void
@@ -1746,11 +1764,7 @@ void
 iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 {
 	struct iwn_phy_calib *calib = (struct iwn_phy_calib *)(desc + 1);
-	u_int idx, len;
-
-	/* No initial calibration required for 5150! */
-	if (sc->hw_type == IWN_HW_REV_TYPE_5150)
-		return;
+	int len, idx = -1;
 
 	/* Runtime firmware should not send such a notification. */
 	if (!(sc->sc_flags & IWN_FLAG_FIRST_BOOT))
@@ -1762,22 +1776,27 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	    BUS_DMASYNC_POSTREAD);
 
 	switch (calib->code) {
-	case IWN5000_PHY_CALIB_LO:
-		idx = 0;
+	case IWN5000_PHY_CALIB_DC:
+		if (sc->hw_type == IWN_HW_REV_TYPE_5150)
+			idx = 0;
 		break;
-	case IWN5000_PHY_CALIB_TX_IQ:
+	case IWN5000_PHY_CALIB_LO:
 		idx = 1;
 		break;
-	case IWN5000_PHY_CALIB_TX_IQ_PERD:
+	case IWN5000_PHY_CALIB_TX_IQ:
 		idx = 2;
 		break;
-	case IWN5000_PHY_CALIB_BASE_BAND:
-		idx = 3;
+	case IWN5000_PHY_CALIB_TX_IQ_PERD:
+		if (sc->hw_type != IWN_HW_REV_TYPE_5150)
+			idx = 3;
 		break;
-	default:
-		/* Ignore other results. */
-		return;
+	case IWN5000_PHY_CALIB_BASE_BAND:
+		idx = 4;
+		break;
 	}
+	if (idx == -1)	/* Ignore other results. */
+		return;
+
 	/* Save calibration result. */
 	if (sc->calibcmd[idx].buf != NULL)
 		free(sc->calibcmd[idx].buf, M_DEVBUF);
@@ -4343,7 +4362,7 @@ iwn5000_send_calibration(struct iwn_softc *sc)
 {
 	int idx, error;
 
-	for (idx = 0; idx < 4; idx++) {
+	for (idx = 0; idx < 5; idx++) {
 		if (sc->calibcmd[idx].buf == NULL)
 			continue;	/* No results available. */
 		DPRINTF(("send calibration result idx=%d len=%d\n",
@@ -4707,9 +4726,9 @@ iwn_read_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* Read firmware image from filesystem. */
-	if ((error = loadfirmware(hal->fwname, &fw->data, &size)) != 0) {
+	if ((error = loadfirmware(sc->fwname, &fw->data, &size)) != 0) {
 		printf("%s: error, %d, could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, error, hal->fwname);
+		    sc->sc_dev.dv_xname, error, sc->fwname);
 		return error;
 	}
 	if (size < sizeof (*hdr)) {
