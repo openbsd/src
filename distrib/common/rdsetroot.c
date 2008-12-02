@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.10 2007/08/02 23:10:05 ray Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.11 2008/12/02 00:37:54 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 struct nlist wantsyms[] = {
 	{ "_rd_root_size", 0 },
 	{ "_rd_root_image", 0 },
-	{ NULL, 0 },
+	{ NULL, 0 }
 };
 
 void
