@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.13 2008/09/02 19:21:28 drahn Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.14 2008/12/02 00:40:20 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ long	rd_root_image_off, rd_root_size_off;
 off_t	rd_root_size_val;
 
 /* pointers to pieces of mapped file */
-char *dataseg;
+char	*dataseg;
 
 /* parameters to mmap digged out from program header */
 off_t	mmap_offs;
@@ -75,7 +75,7 @@ int	find_rd_root_image(char *, Elf_Ehdr *, Elf_Phdr *, int);
 __dead void usage(void);
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int ch, fd, n, xflag = 0, found = 0, phsize;
 	u_int32_t *ip;

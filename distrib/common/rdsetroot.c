@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.11 2008/12/02 00:37:54 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.12 2008/12/02 00:40:20 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -69,10 +69,9 @@ __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, fd, n, xflag;
+	int ch, fd, n, xflag = 0;
 	int *ip;
 
-	xflag = 0;
 	while ((ch = getopt(argc, argv, "x")) != -1) {
 		switch (ch) {
 		case 'x':
