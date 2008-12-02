@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.18 2008/12/02 01:54:55 weerd Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.19 2008/12/02 03:20:38 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -79,7 +79,8 @@ int	debug;
 int
 main(int argc, char *argv[])
 {
-	int ch, fd, n, xflag = 0, found = 0, phsize;
+	int ch, fd, n, xflag = 0, found = 0, phsize, fsd;
+	char *fs = NULL;
 	u_int32_t *ip;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph;
@@ -99,13 +100,33 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc == 1)
+		file = argv[0];
+	else if (argc == 2) {
+		file = argv[0];
+		fs = argv[1];
+	} else
 		usage();
-	file = argv[0];
 
 	fd = open(file, xflag ? O_RDONLY : O_RDWR, 0644);
 	if (fd < 0) {
 		perror(file);
+		exit(1);
+	}
+
+	if (fs) {
+		if (xflag)
+			fsd = open(fs, O_RDWR | O_CREAT | O_TRUNC, 0644);
+		else
+			fsd = open(fs, O_RDONLY, 0644);
+	} else {
+		if (xflag)
+			fsd = dup(STDOUT_FILENO);
+		else
+			fsd = dup(STDIN_FILENO);
+	}
+	if (fsd < 0) {
+		perror(fs);
 		exit(1);
 	}
 
@@ -167,7 +188,7 @@ main(int argc, char *argv[])
 	if (debug)
 		fprintf(stderr, "copying root image...\n");
 	if (xflag) {
-		n = write(STDOUT_FILENO, dataseg + rd_root_image_off,
+		n = write(fsd, dataseg + rd_root_image_off,
 		    rd_root_size_val);
 		if (n != rd_root_size_val) {
 			perror("write");
@@ -176,7 +197,7 @@ main(int argc, char *argv[])
 	} else {
 		struct stat sstat;
 
-		if (fstat(STDIN_FILENO, &sstat) == -1) {
+		if (fstat(fsd, &sstat) == -1) {
 			perror("fstat");
 			exit(1);
 		}
@@ -186,7 +207,7 @@ main(int argc, char *argv[])
 			    (long)sstat.st_size, rd_root_size_val);
 			exit(1);
 		}
-		n = read(STDIN_FILENO, dataseg + rd_root_image_off,
+		n = read(fsd, dataseg + rd_root_image_off,
 		    rd_root_size_val);
 		if (n < 0) {
 			perror("read");
@@ -259,6 +280,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dx] file_name\n", __progname);
+	fprintf(stderr, "usage: %s [-dx] bsd [fs]\n", __progname);
 	exit(1);
 }
