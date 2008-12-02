@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.15 2008/12/02 00:51:40 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.16 2008/12/02 01:03:52 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -66,14 +66,19 @@ int	data_pgoff;
 void	find_rd_root_image(char *);
 __dead void usage(void);
 
+int	debug;
+
 int
 main(int argc, char *argv[])
 {
 	int ch, fd, n, xflag = 0;
 	int *ip;
 
-	while ((ch = getopt(argc, argv, "x")) != -1) {
+	while ((ch = getopt(argc, argv, "dx")) != -1) {
 		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
 		case 'x':
 			xflag = 1;
 			break;
@@ -105,15 +110,15 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-#ifdef	DEBUG
-	fprintf(stderr, " text:  %9d\n", head.a_text);
-	fprintf(stderr, " data:  %9d\n", head.a_data);
-	fprintf(stderr, "  bss:  %9d\n", head.a_bss);
-	fprintf(stderr, " syms:  %9d\n", head.a_syms);
-	fprintf(stderr, "entry: 0x%08X\n", head.a_entry);
-	fprintf(stderr, "trsiz:  %9d\n", head.a_trsize);
-	fprintf(stderr, "drsiz:  %9d\n", head.a_drsize);
-#endif
+	if (debug) {
+		fprintf(stderr, " text:  %9d\n", head.a_text);
+		fprintf(stderr, " data:  %9d\n", head.a_data);
+		fprintf(stderr, "  bss:  %9d\n", head.a_bss);
+		fprintf(stderr, " syms:  %9d\n", head.a_syms);
+		fprintf(stderr, "entry: 0x%08X\n", head.a_entry);
+		fprintf(stderr, "trsiz:  %9d\n", head.a_trsize);
+		fprintf(stderr, "drsiz:  %9d\n", head.a_drsize);
+	}
 
 	if (head.a_syms <= 0) {
 		fprintf(stderr, "%s: no symbols\n", file);
@@ -162,17 +167,16 @@ main(int argc, char *argv[])
 	 */
 	ip = (int*) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
-#ifdef	DEBUG
-	fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
-	    rd_root_size_val, (rd_root_size_val >> 9));
-#endif
+	if (debug)
+		fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
+		    rd_root_size_val, (rd_root_size_val >> 9));
 
 	/*
 	 * Copy the symbol table and string table.
 	 */
-#ifdef	DEBUG
-	fprintf(stderr, "copying root image...\n");
-#endif
+	if (debug)
+		fprintf(stderr, "copying root image...\n");
+
 	if (xflag) {
 		n = write(STDOUT_FILENO, dataseg + rd_root_image_off,
 		    rd_root_size_val);
@@ -202,9 +206,8 @@ main(int argc, char *argv[])
 		msync(dataseg - data_pgoff, data_len, 0);
 	}
 
-#ifdef	DEBUG
-	fprintf(stderr, "copied %d bytes\n", n);
-#endif
+	if (debug)
+		fprintf(stderr, "copied %d bytes\n", n);
 	exit(0);
 }
 
@@ -239,13 +242,14 @@ find_rd_root_image(char *file)
 
 	rd_root_size_off = wantsyms[0].n_value - data_va;
 	rd_root_image_off = wantsyms[1].n_value - data_va;
-#ifdef	DEBUG
-	fprintf(stderr, "data segment  va: 0x%08X\n", data_va);
-	fprintf(stderr, "rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-	fprintf(stderr, "rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-	fprintf(stderr, "rd_root_size  off: 0x%08X\n", rd_root_size_off);
-	fprintf(stderr, "rd_root_image off: 0x%08X\n", rd_root_image_off);
-#endif
+
+	if (debug) {
+		fprintf(stderr, "data segment  va: 0x%08X\n", data_va);
+		fprintf(stderr, "rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
+		fprintf(stderr, "rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
+		fprintf(stderr, "rd_root_size  off: 0x%08X\n", rd_root_size_off);
+		fprintf(stderr, "rd_root_image off: 0x%08X\n", rd_root_image_off);
+	}
 
 	/*
 	 * Sanity check locations of db_* symbols
@@ -265,6 +269,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-x] file_name\n", __progname);
+	fprintf(stderr, "usage: %s [-dx] file_name\n", __progname);
 	exit(1);
 }

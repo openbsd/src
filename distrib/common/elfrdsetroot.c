@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.16 2008/12/02 00:51:40 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.17 2008/12/02 01:03:52 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -74,6 +74,8 @@ size_t	mmap_size;
 int	find_rd_root_image(char *, Elf_Ehdr *, Elf_Phdr *, int);
 __dead void usage(void);
 
+int	debug;
+
 int
 main(int argc, char *argv[])
 {
@@ -82,8 +84,11 @@ main(int argc, char *argv[])
 	Elf_Ehdr eh;
 	Elf_Phdr *ph;
 
-	while ((ch = getopt(argc, argv, "x")) != -1) {
+	while ((ch = getopt(argc, argv, "xd")) != -1) {
 		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
 		case 'x':
 			xflag = 1;
 			break;
@@ -150,18 +155,16 @@ main(int argc, char *argv[])
 	 */
 	ip = (u_int32_t*) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
-#ifdef	DEBUG
-	fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
-	    (u_int32_t)rd_root_size_val,
-	    (u_int32_t)(rd_root_size_val >> 9));
-#endif
+	if (debug)
+		fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
+		    (u_int32_t)rd_root_size_val,
+		    (u_int32_t)(rd_root_size_val >> 9));
 
 	/*
 	 * Copy the symbol table and string table.
 	 */
-#ifdef	DEBUG
-	fprintf(stderr, "copying root image...\n");
-#endif
+	if (debug)
+		fprintf(stderr, "copying root image...\n");
 	if (xflag) {
 		n = write(STDOUT_FILENO, dataseg + rd_root_image_off,
 		    rd_root_size_val);
@@ -192,9 +195,8 @@ main(int argc, char *argv[])
 		msync(dataseg, mmap_size, 0);
 	}
 
-#ifdef	DEBUG
-	fprintf(stderr, "...copied %d bytes\n", n);
-#endif
+	if (debug)
+		fprintf(stderr, "...copied %d bytes\n", n);
 	exit(0);
 }
 
@@ -225,16 +227,16 @@ find_rd_root_image(char *file, Elf_Ehdr *eh, Elf_Phdr *ph, int segment)
 	rd_root_image_off	= wantsyms[1].n_value - kernel_start;
 	rd_root_image_off	-= (ph->p_vaddr - ph->p_paddr);
 
-#ifdef DEBUG
-	fprintf(stderr, "segment %d rd_root_size_off = 0x%x\n", segment,
-	    rd_root_size_off);
-	if ((ph->p_vaddr - ph->p_paddr) != 0)
-		fprintf(stderr, "root_off v %x p %x, diff %x altered %x\n",
-		    ph->p_vaddr, ph->p_paddr,
-		    (ph->p_vaddr - ph->p_paddr),
-		    rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
-	fprintf(stderr, "rd_root_image_off = 0x%x\n", rd_root_image_off);
-#endif
+	if (debug) {
+		fprintf(stderr, "segment %d rd_root_size_off = 0x%x\n", segment,
+		    rd_root_size_off);
+		if ((ph->p_vaddr - ph->p_paddr) != 0)
+			fprintf(stderr, "root_off v %x p %x, diff %x altered %x\n",
+			    ph->p_vaddr, ph->p_paddr,
+			    (ph->p_vaddr - ph->p_paddr),
+			    rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
+		fprintf(stderr, "rd_root_image_off = 0x%x\n", rd_root_image_off);
+	}
 
 	/*
 	 * Sanity check locations of db_* symbols
@@ -256,6 +258,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-x] file_name\n", __progname);
+	fprintf(stderr, "usage: %s [-dx] file_name\n", __progname);
 	exit(1);
 }
