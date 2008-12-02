@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.14 2008/12/02 00:48:19 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.15 2008/12/02 00:51:40 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -205,7 +205,6 @@ main(int argc, char *argv[])
 #ifdef	DEBUG
 	fprintf(stderr, "copied %d bytes\n", n);
 #endif
-	close(fd);
 	exit(0);
 }
 
