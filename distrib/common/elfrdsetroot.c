@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.17 2008/12/02 01:03:52 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.18 2008/12/02 01:54:55 weerd Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 		usage();
 	file = argv[0];
 
-	fd = open(file, O_RDWR, 0644);
+	fd = open(file, xflag ? O_RDONLY : O_RDWR, 0644);
 	if (fd < 0) {
 		perror(file);
 		exit(1);
@@ -142,7 +142,8 @@ main(int argc, char *argv[])
 	 * Map in the whole data segment.
 	 * The file offset needs to be page aligned.
 	 */
-	dataseg = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE,
+	dataseg = mmap(NULL, mmap_size,
+	    xflag ? PROT_READ : PROT_READ | PROT_WRITE,
 	    MAP_SHARED, fd, mmap_offs);
 	if (dataseg == MAP_FAILED) {
 		fprintf(stderr, "%s: can not map data seg\n", file);

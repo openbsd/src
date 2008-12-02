@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.16 2008/12/02 01:03:52 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.17 2008/12/02 01:54:55 weerd Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 		usage();
 	file = argv[0];
 
-	fd = open(file, O_RDWR, 0644);
+	fd = open(file, xflag ? O_RDONLY : O_RDWR, 0644);
 	if (fd < 0) {
 		perror(file);
 		exit(1);
@@ -153,7 +153,8 @@ main(int argc, char *argv[])
 	data_off -= data_pgoff;
 	data_len += data_pgoff;
 	/* map in in... */
-	dataseg = mmap(NULL, data_len, PROT_READ | PROT_WRITE,
+	dataseg = mmap(NULL, data_len,
+	    xflag ? PROT_READ : PROT_READ | PROT_WRITE,
 	    MAP_SHARED, fd, data_off);
 	if (dataseg == MAP_FAILED) {
 		fprintf(stderr, "%s: can not map data seg\n", file);
