@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btctl.8,v 1.1 2008/12/01 20:22:56 todd Exp $
+.\"	$OpenBSD: btctl.8,v 1.2 2008/12/02 07:57:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Todd T. Fries <todd@OpenBSD.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2008 $
+.Dd $Mdocdate: December 2 2008 $
 .Dt BTCTL 8
 .Os
 .Sh NAME
@@ -28,7 +28,8 @@ The
 .Nm
 utility loads rules into
 .Xr btd 8 .
-.Nm only does parsing, no interpretation.
+.Nm
+only does parsing, not interpretation.
 The rulset grammer is described in
 .Xr bt.conf 5 .
 .Pp
@@ -37,12 +38,14 @@ The options are as follows:
 .It Fl f Ar file
 Load the rules contained in
 .Ar file .
+.El
 .Sh EXAMPLES
 The following command, executed from the command line, would configure
 the
 .Xr btd 8
-daemon with the contents of /etc/bt.conf:
-.Bd -literal -offset 3n
+daemon with the contents of
+.Pa /etc/bt.conf :
+.Bd -literal -offset indent
 # btctl -f /etc/bt.conf
 .Ed
 .Sh SEE ALSO
