@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.12 2008/12/02 00:40:20 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.13 2008/12/02 00:42:41 weerd Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -96,31 +96,31 @@ main(int argc, char *argv[])
 
 	n = read(fd, &head, sizeof(head));
 	if (n < sizeof(head)) {
-		printf("%s: reading header\n", file);
+		fprintf(stderr, "%s: reading header\n", file);
 		exit(1);
 	}
 
 	if (N_BADMAG(head)) {
-		printf("%s: bad magic number\n", file);
+		fprintf(stderr, "%s: bad magic number\n", file);
 		exit(1);
 	}
 
 #ifdef	DEBUG
-	printf(" text:  %9d\n", head.a_text);
-	printf(" data:  %9d\n", head.a_data);
-	printf("  bss:  %9d\n", head.a_bss);
-	printf(" syms:  %9d\n", head.a_syms);
-	printf("entry: 0x%08X\n", head.a_entry);
-	printf("trsiz:  %9d\n", head.a_trsize);
-	printf("drsiz:  %9d\n", head.a_drsize);
+	fprintf(stderr, " text:  %9d\n", head.a_text);
+	fprintf(stderr, " data:  %9d\n", head.a_data);
+	fprintf(stderr, "  bss:  %9d\n", head.a_bss);
+	fprintf(stderr, " syms:  %9d\n", head.a_syms);
+	fprintf(stderr, "entry: 0x%08X\n", head.a_entry);
+	fprintf(stderr, "trsiz:  %9d\n", head.a_trsize);
+	fprintf(stderr, "drsiz:  %9d\n", head.a_drsize);
 #endif
 
 	if (head.a_syms <= 0) {
-		printf("%s: no symbols\n", file);
+		fprintf(stderr, "%s: no symbols\n", file);
 		exit(1);
 	}
 	if (head.a_trsize || head.a_drsize) {
-		printf("%s: has relocations\n", file);
+		fprintf(stderr, "%s: has relocations\n", file);
 		exit(1);
 	}
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 	dataseg = mmap(NULL, data_len, PROT_READ | PROT_WRITE,
 	    MAP_SHARED, fd, data_off);
 	if (dataseg == MAP_FAILED) {
-		printf("%s: can not map data seg\n", file);
+		fprintf(stderr, "%s: can not map data seg\n", file);
 		perror(file);
 		exit(1);
 	}
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	ip = (int*) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 #ifdef	DEBUG
-	printf("rd_root_size  val: 0x%08X (%d blocks)\n",
+	fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
 	    rd_root_size_val, (rd_root_size_val >> 9));
 #endif
 
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 	 * Copy the symbol table and string table.
 	 */
 #ifdef	DEBUG
-	printf("copying root image...\n");
+	fprintf(stderr, "copying root image...\n");
 #endif
 	if (xflag) {
 		n = write(STDOUT_FILENO, dataseg + rd_root_image_off,
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	}
 
 #ifdef	DEBUG
-	printf("...copied %d bytes\n", n);
+	fprintf(stderr, "copied %d bytes\n", n);
 #endif
 	close(fd);
 	exit(0);
@@ -225,37 +225,38 @@ find_rd_root_image(char *file)
 	int data_va, std_entry;
 
 	if (nlist(file, wantsyms)) {
-		printf("%s: no rd_root_image symbols?\n", file);
+		fprintf(stderr, "%s: no rd_root_image symbols?\n", file);
 		exit(1);
 	}
 	std_entry = N_TXTADDR(head) + (head.a_entry & (N_PAGSIZ(head)-1));
 	data_va = N_DATADDR(head);
 	if (head.a_entry != std_entry) {
-		printf("%s: warning: non-standard entry point: 0x%08x\n",
-		    file, head.a_entry);
-		printf("\texpecting entry=0x%X\n", std_entry);
+		fprintf(stderr,
+		    "%s: warning: non-standard entry point: 0x%08x\n", file
+		    head.a_entry);
+		fprintf(stderr, "\texpecting entry=0x%X\n", std_entry);
 		data_va += (head.a_entry - std_entry);
 	}
 
 	rd_root_size_off = wantsyms[0].n_value - data_va;
 	rd_root_image_off = wantsyms[1].n_value - data_va;
 #ifdef	DEBUG
-	printf(".data segment  va: 0x%08X\n", data_va);
-	printf("rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-	printf("rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-	printf("rd_root_size  off: 0x%08X\n", rd_root_size_off);
-	printf("rd_root_image off: 0x%08X\n", rd_root_image_off);
+	fprintf(stderr, "data segment  va: 0x%08X\n", data_va);
+	fprintf(stderr, "rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
+	fprintf(stderr, "rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
+	fprintf(stderr, "rd_root_size  off: 0x%08X\n", rd_root_size_off);
+	fprintf(stderr, "rd_root_image off: 0x%08X\n", rd_root_image_off);
 #endif
 
 	/*
 	 * Sanity check locations of db_* symbols
 	 */
 	if (rd_root_image_off < 0 || rd_root_image_off >= head.a_data) {
-		printf("%s: rd_root_image not in data segment?\n", file);
+		fprintf("%s: rd_root_image not in data segment?\n", file);
 		exit(1);
 	}
 	if (rd_root_size_off < 0 || rd_root_size_off >= head.a_data) {
-		printf("%s: rd_root_size not in data segment?\n", file);
+		fprintf("%s: rd_root_size not in data segment?\n", file);
 		exit(1);
 	}
 }
