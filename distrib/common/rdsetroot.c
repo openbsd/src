@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.13 2008/12/02 00:42:41 weerd Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.14 2008/12/02 00:48:19 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ find_rd_root_image(char *file)
 	data_va = N_DATADDR(head);
 	if (head.a_entry != std_entry) {
 		fprintf(stderr,
-		    "%s: warning: non-standard entry point: 0x%08x\n", file
+		    "%s: warning: non-standard entry point: 0x%08x\n", file,
 		    head.a_entry);
 		fprintf(stderr, "\texpecting entry=0x%X\n", std_entry);
 		data_va += (head.a_entry - std_entry);
@@ -252,11 +252,11 @@ find_rd_root_image(char *file)
 	 * Sanity check locations of db_* symbols
 	 */
 	if (rd_root_image_off < 0 || rd_root_image_off >= head.a_data) {
-		fprintf("%s: rd_root_image not in data segment?\n", file);
+		fprintf(stderr, "%s: rd_root_image not in data segment?\n", file);
 		exit(1);
 	}
 	if (rd_root_size_off < 0 || rd_root_size_off >= head.a_data) {
-		fprintf("%s: rd_root_size not in data segment?\n", file);
+		fprintf(stderr, "%s: rd_root_size not in data segment?\n", file);
 		exit(1);
 	}
 }
