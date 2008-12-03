@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.16 2008/11/29 09:19:25 mbalmer Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.17 2008/12/03 16:26:43 stevesk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2008 $
+.Dd $Mdocdate: December 3 2008 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -69,12 +69,6 @@ to its pins.
 Each GPIO device has an associated device file in the
 .Pa /dev
 directory.
-By default
-.Nm
-uses
-.Pa /dev/gpio0 ,
-which corresponds to the first found
-GPIO device in the system.
 .Pp
 GPIO pins can be either
 .Dq read
