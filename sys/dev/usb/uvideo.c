@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.97 2008/12/03 05:18:29 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.98 2008/12/03 08:32:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1182,6 +1182,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	USETW(pc->bmHint, 0x1);
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
 	pc->bFrameIndex = sc->sc_fmtgrp_cur->format_dfidx;
+	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=100000 */
 	USETDW(pc->dwFrameInterval,
 	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
 	USETDW(pc->dwMaxVideoFrameSize, 0);
@@ -1238,7 +1239,8 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
-	DPRINTF(1, "dwFrameInterval=%d (ns)\n", UGETDW(pc->dwFrameInterval));
+	DPRINTF(1, "dwFrameInterval=%d (100ns units)\n",
+	    UGETDW(pc->dwFrameInterval));
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
 	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
 	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
@@ -1282,7 +1284,8 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
 	DPRINTF(1, "bFrameIndex=0x%02x\n", pc->bFrameIndex);
-	DPRINTF(1, "dwFrameInterval=%d (ns)\n", UGETDW(pc->dwFrameInterval));
+	DPRINTF(1, "dwFrameInterval=%d (100ns units)\n",
+	    UGETDW(pc->dwFrameInterval));
 	DPRINTF(1, "wKeyFrameRate=%d\n", UGETW(pc->wKeyFrameRate));
 	DPRINTF(1, "wPFrameRate=%d\n", UGETW(pc->wPFrameRate));
 	DPRINTF(1, "wCompQuality=%d\n", UGETW(pc->wCompQuality));
