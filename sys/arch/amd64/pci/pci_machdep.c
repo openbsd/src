@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.15 2008/11/26 12:27:31 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.16 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _X86_BUS_DMA_PRIVATE
+#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/pio.h>
@@ -155,7 +155,7 @@ struct {
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-struct x86_bus_dma_tag pci_bus_dma_tag = {
+struct bus_dma_tag pci_bus_dma_tag = {
 	NULL,			/* _may_bounce */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,

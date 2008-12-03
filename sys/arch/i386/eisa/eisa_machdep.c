@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.11 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.12 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/i8259.h>
 
@@ -83,7 +83,7 @@
  * EISA doesn't have any special needs; just use the generic versions
  * of these funcions.
  */
-struct i386_bus_dma_tag eisa_bus_dma_tag = {
+struct bus_dma_tag eisa_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,

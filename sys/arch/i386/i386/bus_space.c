@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.1 2008/11/22 17:45:20 oga Exp $ */
+/*	$OpenBSD: bus_space.c,v 1.2 2008/12/03 15:46:06 oga Exp $ */
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,6 @@
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
-#define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 u_int8_t

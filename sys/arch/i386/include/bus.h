@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.44 2008/11/22 17:45:20 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.45 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -466,8 +466,8 @@ struct uio;
 #define BUS_DMASYNC_PREWRITE	0x04
 #define BUS_DMASYNC_POSTWRITE	0x08
 
-typedef struct i386_bus_dma_tag		*bus_dma_tag_t;
-typedef struct i386_bus_dmamap		*bus_dmamap_t;
+typedef struct bus_dma_tag		*bus_dma_tag_t;
+typedef struct bus_dmamap		*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -475,11 +475,11 @@ typedef struct i386_bus_dmamap		*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct i386_bus_dma_segment {
+struct bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 };
-typedef struct i386_bus_dma_segment	bus_dma_segment_t;
+typedef struct bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -488,7 +488,7 @@ typedef struct i386_bus_dma_segment	bus_dma_segment_t;
  *	DMA for a given bus.
  */
 
-struct i386_bus_dma_tag {
+struct bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 
 	/*
@@ -557,7 +557,7 @@ struct i386_bus_dma_tag {
  *
  *	Describes a DMA mapping.
  */
-struct i386_bus_dmamap {
+struct bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
@@ -577,7 +577,7 @@ struct i386_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _I386_BUS_DMA_PRIVATE
+#ifdef _BUS_DMA_PRIVATE
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -609,6 +609,6 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
-#endif /* _I386_BUS_DMA_PRIVATE */
+#endif /* _BUS_DMA_PRIVATE */
 
 #endif /* _I386_BUS_H_ */

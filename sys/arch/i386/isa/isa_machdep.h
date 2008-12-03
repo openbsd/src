@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.22 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.23 2008/12/03 15:46:07 oga Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
  * BY PORTABLE CODE.
  */
 
-extern struct i386_bus_dma_tag isa_bus_dma_tag;
+extern struct bus_dma_tag isa_bus_dma_tag;
 
 /*
  * Cookie used by ISA dma.  A pointer to one of these it stashed in

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.439 2008/11/22 18:12:32 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.440 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_swap.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
@@ -3679,7 +3679,7 @@ int
 _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct i386_bus_dmamap *map;
+	struct bus_dmamap *map;
 	void *mapstore;
 	size_t mapsize;
 
@@ -3695,13 +3695,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct i386_bus_dmamap) +
+	mapsize = sizeof(struct bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DEVBUF,
 	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	map = (struct i386_bus_dmamap *)mapstore;
+	map = (struct bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;

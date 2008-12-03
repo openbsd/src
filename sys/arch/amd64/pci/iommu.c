@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.22 2008/04/28 06:17:47 brad Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.23 2008/12/03 15:46:06 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -38,7 +38,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _X86_BUS_DMA_PRIVATE
+#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/pio.h>
@@ -151,7 +151,7 @@ void amdgart_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 paddr_t amdgart_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int, off_t,
     int, int);
 
-struct x86_bus_dma_tag amdgart_bus_dma_tag = {
+struct bus_dma_tag amdgart_bus_dma_tag = {
 	NULL,			/* _may_bounce */
 	amdgart_dmamap_create,
 	amdgart_dmamap_destroy,

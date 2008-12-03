@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.14 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.15 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -85,7 +85,7 @@
 #include <machine/mpbiosvar.h>
 #endif
 
-#define _X86_BUS_DMA_PRIVATE
+#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/intr.h>
@@ -148,7 +148,7 @@ void	_isa_dma_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
  * the generic functions that understand how to deal with bounce
  * buffers, if necessary.
  */
-struct x86_bus_dma_tag isa_bus_dma_tag = {
+struct bus_dma_tag isa_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,

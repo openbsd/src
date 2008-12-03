@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.6 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.7 2008/12/03 15:46:06 oga Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define	EISA_ID_LEN		(sizeof(EISA_ID) - 1)
 #define	EISA_ID_PADDR		0xfffd9
 
-extern struct i386_bus_dma_tag eisa_bus_dma_tag;
+extern struct bus_dma_tag eisa_bus_dma_tag;
 
 #define ELCR0	0x4d0		/* eisa irq 0-7 */
 #define ELCR1	0x4d1		/* eisa irq 8-15 */
