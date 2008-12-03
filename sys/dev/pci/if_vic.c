@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.64 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.65 2008/12/03 04:07:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -571,7 +571,7 @@ vic_alloc_data(struct vic_softc *sc)
 	for (q = 0; q < VIC_NRXRINGS; q++) {
 		sc->sc_rxq[q].bufs = malloc(sizeof(struct vic_rxbuf) *
 		    sc->sc_nrxbuf, M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (sc->sc_rxq[i].bufs == NULL) {
+		if (sc->sc_rxq[q].bufs == NULL) {
 			printf(": unable to allocate rxbuf for ring %d\n", q);
 			goto freerx;
 		}
