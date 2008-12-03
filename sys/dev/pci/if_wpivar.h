@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.17 2008/11/09 10:00:17 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.18 2008/12/03 17:17:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -145,7 +145,9 @@ struct wpi_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+
 	struct ieee80211_amrr	amrr;
+	uint8_t			fixed_ridx;
 
 	bus_dma_tag_t		sc_dmat;
 

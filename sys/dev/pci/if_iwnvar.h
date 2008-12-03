@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.7 2008/12/02 17:17:50 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -205,6 +205,7 @@ struct iwn_softc {
 				    enum ieee80211_state, int);
 
 	struct ieee80211_amrr	amrr;
+	uint8_t			fixed_ridx;
 
 	bus_dma_tag_t		sc_dmat;
 

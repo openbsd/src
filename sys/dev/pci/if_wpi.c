@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.77 2008/12/03 14:47:17 cnst Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.78 2008/12/03 17:17:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1040,11 +1040,24 @@ wpi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 int
 wpi_media_change(struct ifnet *ifp)
 {
+	struct wpi_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t rate, ridx;
 	int error;
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
 		return error;
+
+	if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
+		/* Map 802.11 rate to HW rate index. */
+		for (ridx = 0; ridx <= WPI_RIDX_MAX; ridx++)
+			if (wpi_rates[ridx].rate == rate)
+				break;
+		sc->fixed_ridx = ridx;
+	}
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
@@ -1699,11 +1712,13 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
-	/* Chose a TX rate index. */
+	/* Choose a TX rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA) {
 		ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 		    WPI_RIDX_OFDM6 : WPI_RIDX_CCK1;
+	} else if (ic->ic_fixed_rate != -1) {
+		ridx = sc->fixed_ridx;
 	} else
 		ridx = wn->ridx[ni->ni_txrate];
 	rinfo = &wpi_rates[ridx];
