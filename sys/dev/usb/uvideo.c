@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.93 2008/11/30 15:20:33 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.94 2008/12/03 03:28:25 yuo Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1009,12 +1009,12 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 			goto next;
 
 		/* save endpoint with largest bandwidth */
-		if (UGETW(ed->wMaxPacketSize) > vs->max_packet_size) {
+		if (UGETW(ed->wMaxPacketSize) > vs->psize) {
 			vs->ifaceh = uaa->ifaces[iface];
 			vs->endpoint = ed->bEndpointAddress;
 			vs->numalts = numalts;
 			vs->curalt = id->bAlternateSetting;
-			vs->max_packet_size = UGETW(ed->wMaxPacketSize);
+			vs->psize = UGETW(ed->wMaxPacketSize);
 			vs->iface = iface;
 		}
 next:
@@ -1041,6 +1041,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 	usb_endpoint_descriptor_t *ed;
 	int i;
 	usbd_status error;
+	uint32_t psize;
 
 	i = 0;
 	usb_desc_iter_init(sc->sc_udev, &iter);
@@ -1063,10 +1064,12 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 		i++;
 
 		/* save endpoint with requested bandwidth */
-		if (UGETW(ed->wMaxPacketSize) >= max_packet_size) {
+		psize = UGETW(ed->wMaxPacketSize);
+		psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
+		if (psize == max_packet_size) {
 			sc->sc_vs_cur->endpoint = ed->bEndpointAddress;
 			sc->sc_vs_cur->curalt = id->bAlternateSetting;
-			sc->sc_vs_cur->max_packet_size = max_packet_size;
+			sc->sc_vs_cur->psize = psize;
 			DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
 			DPRINTF(1, "bAlternateSetting=0x%02x\n",
 			    id->bAlternateSetting);
@@ -1384,7 +1387,7 @@ uvideo_vs_alloc_isoc(struct uvideo_softc *sc)
 			return (USBD_NOMEM);	
 		}
 
-		size = sc->sc_vs_cur->max_packet_size * sc->sc_nframes;
+		size = sc->sc_vs_cur->psize * sc->sc_nframes;
 
 		sc->sc_vs_cur->ixfer[i].buf =
 		    usbd_alloc_buffer(sc->sc_vs_cur->ixfer[i].xfer, size);
@@ -1468,6 +1471,7 @@ uvideo_vs_open(struct uvideo_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
+	uint32_t dwMaxVideoFrameSize;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -1497,7 +1501,7 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	    ed->bEndpointAddress,
 	    sc->sc_vs_cur->endpoint,
 	    UGETW(ed->wMaxPacketSize),
-	    sc->sc_vs_cur->max_packet_size);
+	    sc->sc_vs_cur->psize);
 
 	error = usbd_open_pipe(
 	    sc->sc_vs_cur->ifaceh,
@@ -1513,11 +1517,12 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	/* calculate optimal isoc xfer size */
 	if (strncmp(sc->sc_udev->bus->bdev.dv_xname, "ohci", 4) == 0) {
 		/* ohci workaround */
-		sc->sc_nframes = 6400 /
-		    sc->sc_vs_cur->max_packet_size;
+		sc->sc_nframes = 6400 / sc->sc_vs_cur->psize;
 	} else {
-		sc->sc_nframes = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize) /
-		    sc->sc_vs_cur->max_packet_size;
+		dwMaxVideoFrameSize =
+		    UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+		sc->sc_nframes = (dwMaxVideoFrameSize + sc->sc_vs_cur->psize -
+		    1) / sc->sc_vs_cur->psize;
 	}
 	if (sc->sc_nframes > UVIDEO_NFRAMES_MAX)
 		sc->sc_nframes = UVIDEO_NFRAMES_MAX;
@@ -1650,7 +1655,7 @@ uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
 		return;
 
 	for (i = 0; i < sc->sc_nframes; i++)
-		ixfer->size[i] = sc->sc_vs_cur->max_packet_size;
+		ixfer->size[i] = sc->sc_vs_cur->psize;
 
 	usbd_setup_isoc_xfer(
 	    ixfer->xfer,
@@ -1692,7 +1697,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		goto skip;
 
 	for (i = 0; i < sc->sc_nframes; i++) {
-		frame = ixfer->buf + (i * sc->sc_vs_cur->max_packet_size);
+		frame = ixfer->buf + (i * sc->sc_vs_cur->psize);
 		frame_size = ixfer->size[i];
 
 		if (frame_size == 0)
