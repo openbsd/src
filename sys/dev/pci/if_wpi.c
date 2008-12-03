@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.76 2008/11/25 22:20:11 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.77 2008/12/03 14:47:17 cnst Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2039,12 +2039,12 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	if (error == ENETRESET) {
+		error = 0;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
 			wpi_stop(ifp, 0);
 			error = wpi_init(ifp);
 		}
-		error = 0;
 	}
 
 	splx(s);
