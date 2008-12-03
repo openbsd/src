@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.449 2008/11/24 04:46:59 tedu Exp $
+#	$OpenBSD: files,v 1.450 2008/12/03 23:39:32 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -443,6 +443,11 @@ file	dev/ipmi.c			ipmi	needs-flag
 # VMware Tools
 device	vmt
 file	dev/vmt.c			vmt	needs-flag
+
+# Virtual SCSI
+device	vscsi: scsi
+attach	vscsi at root
+file	dev/vscsi.c			vscsi	needs-flag
 
 # Software RAID
 device	softraid: scsi

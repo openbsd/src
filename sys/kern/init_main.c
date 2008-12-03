@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.154 2008/10/15 23:23:51 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.155 2008/12/03 23:39:32 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -98,6 +98,7 @@
 extern void nfs_init(void);
 #endif
 
+#include "vscsi.h"
 #include "softraid.h"
 
 const char	copyright[] =
@@ -440,6 +441,9 @@ main(void *framep)
 
 	dostartuphooks();
 
+#if NVSCSI > 0
+	config_rootfound("vscsi", NULL);
+#endif
 #if NSOFTRAID > 0
 	config_rootfound("softraid", NULL);
 #endif

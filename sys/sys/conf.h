@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.91 2008/11/17 00:40:04 oga Exp $	*/
+/*	$OpenBSD: conf.h,v 1.92 2008/12/03 23:39:32 dlg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -302,6 +302,14 @@ extern struct cdevsw cdevsw[];
 #define cdev_tun_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
+	0, D_KQFILTER, dev_init(c,n,kqfilter) }
+
+/* open, close, ioctl, poll, kqfilter -- XXX should be generic device */
+#define cdev_vscsi_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
 	0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
@@ -666,6 +674,7 @@ cdev_decl(crypto);
 cdev_decl(systrace);
 
 cdev_decl(bio);
+cdev_decl(vscsi);
 cdev_decl(bthub);
 
 cdev_decl(gpr);
