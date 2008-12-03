@@ -5808,7 +5808,7 @@ Changes with Apache 1.3b4
      set with SetEnv/BrowserMatch and similar directives.
      [Dean Gaudet]
 
-  *) mod_speling returned incorrect HREF's when an ambigous match
+  *) mod_speling returned incorrect HREF's when an ambiguous match
      was found. Noticed by <robinton@amtrash.comlink.de> (Soeren Ziehe)
      [robinton@amtrash.comlink.de (Soeren Ziehe), Martin Kraemer]
 

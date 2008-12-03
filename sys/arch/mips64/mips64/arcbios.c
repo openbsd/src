@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.14 2008/04/07 22:40:58 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.15 2008/12/03 15:43:17 sthen Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -59,7 +59,7 @@ int bios_get_system_type(void);
 arc_dsp_stat_t	displayinfo;		/* Save area for display status info. */
 
 static struct systypes {
-	char *sys_vend;		/* Vendor ID if name is ambigous */
+	char *sys_vend;		/* Vendor ID if name is ambiguous */
 	char *sys_name;		/* May be left NULL if name is sufficient */
 	int  sys_type;
 } sys_types[] = {
