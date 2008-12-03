@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.7 2008/11/24 22:30:19 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.8 2008/12/03 17:58:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -358,6 +358,27 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_SMTP_MESSAGE_ID: {
+			struct submit_status	*ss;
+			struct session		*s;
+			struct session		 key;
+
+			log_debug("smtp_dispatch_queue: queue handled message creation");
+			ss = imsg.data;
+
+			key.s_id = ss->id;
+
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+			if (s == NULL) {
+				/* Session was removed while we were waiting for the message */
+				break;
+			}
+
+			(void)strlcpy(s->s_msg.message_id, ss->u.msgid,
+			    sizeof(s->s_msg.message_id));
+			session_pickup(s, ss);
+			break;
+		}
 		case IMSG_SMTP_MESSAGE_FILE: {
 			struct submit_status	*ss;
 			struct session		*s;
@@ -374,9 +395,6 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				/* Session was removed while we were waiting for the message */
 				break;
 			}
-
-			(void)strlcpy(s->s_msg.message_id, ss->u.msgid,
-			    sizeof(s->s_msg.message_id));
 
 			fd = imsg_get_fd(ibuf, &imsg);
 			if (fd != -1) {

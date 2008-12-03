@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.13 2008/11/25 20:35:54 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.14 2008/12/03 17:58:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -403,7 +403,6 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	}
 
 	mr.id = s->s_msg.id;
-
 	s->s_state = S_RCPTREQUEST;
 	mr.ss = s->s_ss;
 
@@ -446,8 +445,10 @@ session_rfc5321_data_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_DATA;
-	session_pickup(s, NULL);
-
+	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+	    IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
+	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
 }
 
@@ -495,6 +496,8 @@ void
 session_command(struct session *s, char *cmd, char *args)
 {
 	int	i;
+
+	bufferevent_enable(s->s_bev, EV_WRITE);
 
 	if (!(s->s_flags & F_EHLO))
 		goto rfc5321;
@@ -548,8 +551,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
-	bufferevent_disable(s->s_bev, EV_READ);
-	bufferevent_enable(s->s_bev, EV_WRITE);
+	bufferevent_enable(s->s_bev, EV_READ|EV_WRITE);
+
+	if (ss != NULL && ss->code == 421)
+		goto tempfail;
 
 	switch (s->s_state) {
 	case S_INIT:
@@ -564,9 +569,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_TLS:
+		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		s->s_state = S_GREETED;
 		ssl_session_init(s);
-		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		break;
 
 	case S_AUTH:
@@ -592,24 +597,24 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_MAIL;
 		s->s_msg.sender = ss->u.path;
 
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_CREATE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
+		if (s->s_msg.datafp != NULL) {
+			fclose(s->s_msg.datafp);
+			s->s_msg.datafp = NULL;
+			imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
+			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
+		}
 
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+		bufferevent_disable(s->s_bev, EV_READ);
 		break;
 
 	case S_MAIL:
-		evbuffer_add_printf(s->s_bev->output,
-		    "%d Sender ok\r\n", ss->code);
 
-		strlcpy(s->s_msg.message_id, ss->u.msgid, MAXPATHLEN);
+		evbuffer_add_printf(s->s_bev->output, "%d Sender ok\r\n",
+		    ss->code);
 
-		if (s->s_msg.datafp == NULL) {
-			/* Remove message file */
-			imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_DELETE_MESSAGE_FILE,
-			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-			return;
-		}
 		break;
 
 	case S_RCPTREQUEST:
@@ -629,22 +634,20 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_msg.rcptcount++;
 		s->s_msg.recipient = ss->u.path;
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_SUBMIT, 0, 0, -1, &s->s_msg,
+		    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
-
+		bufferevent_disable(s->s_bev, EV_READ);
 		break;
 
 	case S_RCPT:
-		evbuffer_add_printf(s->s_bev->output,
-		    "%d Recipient ok\r\n", ss->code);
+		evbuffer_add_printf(s->s_bev->output, "%d Recipient ok\r\n",
+		    ss->code);
 		break;
 
 	case S_DATA:
-		if (s->s_msg.datafp == NULL) {
-			evbuffer_add_printf(s->s_bev->output,
-			    "421 Service temporarily unavailable\r\n");
-			return;
-		}
+		if (s->s_msg.datafp == NULL)
+			goto tempfail;
+
 		s->s_state = S_DATACONTENT;
 		evbuffer_add_printf(s->s_bev->output,
 		    "354 Enter mail, end with \".\" on a line by itself\r\n");
@@ -655,6 +658,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_DONE:
 		s->s_state = S_HELO;
+
 		s->s_msg.datafp = NULL;
 		evbuffer_add_printf(s->s_bev->output,
 		    "250 %s Message accepted for delivery\r\n",
@@ -667,6 +671,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 		fatal("session_pickup: unknown state");
 		break;
 	}
+
+	return;
+
+tempfail:
+	s->s_flags |= F_QUIT;
+	evbuffer_add_printf(s->s_bev->output,
+	    "421 Service temporarily unavailable\r\n");
+	return;
 }
 
 void
@@ -709,8 +721,6 @@ read:
 	s->s_tm = time(NULL);
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
-		bufferevent_disable(s->s_bev, EV_READ);
-		bufferevent_enable(s->s_bev, EV_WRITE);
 		return;
 	}
 
@@ -726,9 +736,8 @@ read:
 
 				s->s_msg.datafp = NULL;
 				/* Remove message file */
-				imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_DELETE_MESSAGE_FILE,
+				imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
 				    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-				bufferevent_enable(s->s_bev, EV_WRITE);
 				free(line);
 				return;
 			}
@@ -749,7 +758,8 @@ read:
 				for (i = 0; i < len; ++i) {
 					if (line[i] & 0x80) {
 						s->s_msg.status |= S_MESSAGE_PERMFAILURE;
-						strlcpy(s->s_msg.session_errorline, "8BIT data transfered over 7BIT limited channel",
+						strlcpy(s->s_msg.session_errorline,
+						    "8BIT data transfered over 7BIT limited channel",
 							sizeof s->s_msg.session_errorline);
 					}
 				}
@@ -758,8 +768,6 @@ read:
 		}
 		goto read;
 	}
-	bufferevent_disable(s->s_bev, EV_READ);
-	bufferevent_enable(s->s_bev, EV_WRITE);
 
 	line[strcspn(line, "\r")] = '\0';
 	if ((ep = strchr(line, ':')) == NULL)
@@ -783,20 +791,14 @@ session_write(struct bufferevent *bev, void *p)
 	struct session	*s = p;
 
 	if (!(s->s_flags & F_QUIT)) {
-		if (! EVBUFFER_LENGTH(EVBUFFER_OUTPUT(bev))) {
-			bufferevent_disable(s->s_bev, EV_WRITE);
-			bufferevent_enable(s->s_bev, EV_READ);
-		}
-
+		
 		if (s->s_state == S_TLS)
 			session_pickup(s, NULL);
 
 		return;
 	}
 
-	if (! EVBUFFER_LENGTH(EVBUFFER_OUTPUT(bev))) {
-		session_destroy(s);
-	}
+	session_destroy(s);
 }
 
 void
@@ -811,13 +813,14 @@ session_destroy(struct session *s)
 	if (s->s_msg.datafp != NULL) {
 		fclose(s->s_msg.datafp);
 		s->s_msg.datafp = NULL;
-		/* Remove message file */
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_DELETE_MESSAGE_FILE,
+	}
+
+	if (s->s_state > S_MAIL) {
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
 		    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 	}
 
 	if (s->s_bev != NULL) {
-		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		bufferevent_free(s->s_bev);
 	}
 	ssl_session_destroy(s);
@@ -839,7 +842,7 @@ void
 session_msg_submit(struct session *s)
 {
 	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-	    IMSG_QUEUE_MESSAGE_COMPLETE, 0, 0, -1, &s->s_msg,
+	    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	s->s_state = S_DONE;
 }

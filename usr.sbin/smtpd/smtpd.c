@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.11 2008/11/22 22:22:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.12 2008/12/03 17:58:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,6 +59,7 @@ int		parent_maildir_init(struct passwd *, char *);
 int		parent_external_mda(struct batch *, struct path *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
+u_int16_t	queue_message_hash(struct message *);
 
 pid_t	lka_pid = 0;
 pid_t	mfa_pid = 0;
@@ -622,8 +623,9 @@ int
 setup_spool(uid_t uid, gid_t gid)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_MESSAGES, PATH_LOCAL, PATH_RELAY,
-				     PATH_DAEMON, PATH_ENVELOPES };
+	char		*paths[] = { PATH_INCOMING, PATH_QUEUE,
+				     PATH_RUNQUEUE, PATH_RUNQUEUELOW,
+				     PATH_RUNQUEUEHIGH };
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
 	int		 ret;
@@ -751,9 +753,14 @@ parent_open_message_file(struct batch *batchp)
 	int fd;
 	char pathname[MAXPATHLEN];
 	int spret;
+	u_int16_t hval;
+	struct message *messagep;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s%s/%s",
-	    PATH_SPOOL, PATH_MESSAGES, batchp->message_id);
+	messagep = &batchp->message;
+	hval = queue_message_hash(messagep);
+
+	spret = snprintf(pathname, MAXPATHLEN, "%s%s/%d/%s/message",
+	    PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id);
 	if (spret == -1 || spret >= MAXPATHLEN) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;

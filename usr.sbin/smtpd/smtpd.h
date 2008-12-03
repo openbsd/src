@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.16 2008/11/25 23:06:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.17 2008/12/03 17:58:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -43,13 +43,18 @@
 
 #define RCPTBUFSZ		 256
 
+#define	DIRHASH_BUCKETS		 4096
+
 #define PATH_SPOOL		"/var/spool/smtpd"
 
-#define PATH_MESSAGES		"/messages"
-#define PATH_LOCAL		"/local"
-#define PATH_RELAY		"/relay"
-#define PATH_DAEMON		"/daemon"
+#define PATH_INCOMING		"/incoming"
+#define PATH_QUEUE		"/queue"
+#define PATH_MESSAGE		"/message"
 #define PATH_ENVELOPES		"/envelopes"
+
+#define PATH_RUNQUEUE		"/runqueue"
+#define PATH_RUNQUEUEHIGH	"/runqueue-high"
+#define PATH_RUNQUEUELOW	"/runqueue-low"
 
 /* used by newaliases */
 #define	PATH_ALIASES		"/etc/mail/aliases"
@@ -173,6 +178,12 @@ enum imsg_type {
 	IMSG_MFA_DATA_SUBMIT,
 	IMSG_MFA_LOOKUP_MAIL,
 	IMSG_MFA_LOOKUP_RCPT,
+
+	IMSG_QUEUE_CREATE_MESSAGE,
+	IMSG_QUEUE_SUBMIT_ENVELOPE,
+	IMSG_QUEUE_REMOVE_MESSAGE,
+	IMSG_QUEUE_COMMIT_MESSAGE,
+
 	IMSG_QUEUE_REMOVE_SUBMISSION,
 	IMSG_QUEUE_CREATE_MESSAGE_FILE,
 	IMSG_QUEUE_DELETE_MESSAGE_FILE,
@@ -183,6 +194,7 @@ enum imsg_type {
 	IMSG_QUEUE_BATCH_COMPLETE,
 	IMSG_QUEUE_BATCH_CLOSE,
 	IMSG_QUEUE_MESSAGE_FD,
+	IMSG_QUEUE_MESSAGE_FILE,
 
 	IMSG_QUEUE_ACCEPTED_CLOSE,
 	IMSG_QUEUE_RETRY_CLOSE,
@@ -194,6 +206,8 @@ enum imsg_type {
 	IMSG_CREATE_BATCH,
 	IMSG_BATCH_APPEND,
 	IMSG_BATCH_CLOSE,
+
+	IMSG_SMTP_MESSAGE_ID,
 
 	IMSG_SMTP_MESSAGE_FILE,
 	IMSG_SMTP_SUBMIT_ACK,
@@ -414,11 +428,10 @@ enum message_status {
 };
 
 enum message_flags {
-	F_MESSAGE_COMPLETE	= 0x1,
-	F_MESSAGE_RESOLVED	= 0x2,
-	F_MESSAGE_READY		= 0x4,
-	F_MESSAGE_EXPIRED	= 0x8,
-	F_MESSAGE_PROCESSING	= 0x10
+	F_MESSAGE_RESOLVED	= 0x1,
+	F_MESSAGE_EXPIRED	= 0x2,
+	F_MESSAGE_SCHEDULED	= 0x4,
+	F_MESSAGE_PROCESSING	= 0x8
 };
 
 struct message {
@@ -609,6 +622,7 @@ struct smtpd {
 	u_int32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	struct event				 sc_ev;
+	struct event				 sc_rqev;
 	int					 sc_pipes[PROC_COUNT]
 						    [PROC_COUNT][2];
 	struct imsgbuf				*sc_ibufs[PROC_COUNT];
