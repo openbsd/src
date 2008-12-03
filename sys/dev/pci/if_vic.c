@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.65 2008/12/03 04:07:20 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.66 2008/12/03 05:00:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -238,7 +238,6 @@ struct vic_data {
 #define VIC_NBUF_MAX		128
 #define VIC_MAX_SCATTER		1	/* 8? */
 #define VIC_QUEUE_SIZE		VIC_NBUF_MAX
-#define VIC_QUEUE2_SIZE		1
 #define VIC_INC(_x, _y)		(_x) = ((_x) + 1) % (_y)
 #define VIC_TX_TIMEOUT		5
 
@@ -585,7 +584,7 @@ vic_alloc_data(struct vic_softc *sc)
 	}
 
 	sc->sc_dma_size = sizeof(struct vic_data) +
-	    (sc->sc_nrxbuf + VIC_QUEUE2_SIZE) * sizeof(struct vic_rxdesc) +
+	    (sc->sc_nrxbuf * VIC_NRXRINGS) * sizeof(struct vic_rxdesc) +
 	    sc->sc_ntxbuf * sizeof(struct vic_txdesc);
 
 	if (vic_alloc_dmamem(sc) != 0) {
@@ -602,7 +601,7 @@ vic_alloc_data(struct vic_softc *sc)
 
 	offset = sizeof(struct vic_data);
 
-	/* set up the rx ring */
+	/* set up the rx rings */
 
 	for (q = 0; q < VIC_NRXRINGS; q++) {
 		sc->sc_rxq[q].slots = (struct vic_rxdesc *)&kva[offset];
@@ -722,9 +721,9 @@ freetxbs:
 	}
 
 	i = sc->sc_nrxbuf;
-	q = VIC_NRXRINGS;
+	q = VIC_NRXRINGS - 1;
 freerxbs:
-	do {
+	while (q >= 0) {
 		while (i--) {
 			rxb = &sc->sc_rxq[q].bufs[i];
 
@@ -738,7 +737,8 @@ freerxbs:
 			}
 			bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
 		}
-	} while (--q);
+		q--;
+	}
 
 	return (1);
 }
