@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.7 2008/09/27 15:00:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.8 2008/12/03 17:25:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -280,7 +280,7 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		n = n->m_next;
 		n->m_len = 0;
 	}
-	/* finalize MIC, U := T XOR first-M-bytes( S_O ) */
+	/* finalize MIC, U := T XOR first-M-bytes( S_0 ) */
 	mic = mtod(n, u_int8_t *) + n->m_len;
 	for (i = 0; i < IEEE80211_CCMP_MICLEN; i++)
 		mic[i] = b[i] ^ s0[i];
@@ -322,7 +322,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		m_freem(m0);
 		return NULL;
 	}
-	/* check that ExtIV bit is be set */
+	/* check that ExtIV bit is set */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
 		m_freem(m0);
 		return NULL;
@@ -437,7 +437,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	if (j != 0)	/* partial block, encrypt MIC */
 		rijndael_encrypt(&ctx->rijndael, b, b);
 
-	/* finalize MIC, U := T XOR first-M-bytes( S_O ) */
+	/* finalize MIC, U := T XOR first-M-bytes( S_0 ) */
 	for (i = 0; i < IEEE80211_CCMP_MICLEN; i++)
 		b[i] ^= s0[i];
 

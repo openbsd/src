@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.11 2008/11/13 13:42:35 djm Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.12 2008/12/03 17:25:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -336,7 +336,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	ivp = (u_int8_t *)wh + hdrlen;
-	/* check that ExtIV bit is be set */
+	/* check that ExtIV bit is set */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
 		m_freem(m0);
 		return NULL;
