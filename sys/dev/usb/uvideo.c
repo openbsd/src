@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.96 2008/12/03 03:47:25 yuo Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.97 2008/12/03 05:18:29 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1665,7 +1665,7 @@ uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
 	    uvideo_vs_cb);
 
 	error = usbd_transfer(ixfer->xfer);
-	if (error != USBD_IN_PROGRESS) {
+	if (error && error != USBD_IN_PROGRESS) {
 		DPRINTF(1, "%s: usbd_transfer error=%s!\n",
 		    DEVNAME(sc), usbd_errstr(error));
 	}
