@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.17 2008/12/03 17:58:00 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.18 2008/12/03 20:08:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1315,7 +1315,6 @@ queue_delete_incoming_message(char *message_id)
 			fatal("queue_delete_incoming_message: unlink");
 	}
 
-	log_debug("evpdir: %s", evpdir);
 	dirp = opendir(evpdir);
 	if (dirp == NULL)
 		fatal("queue_delete_incoming_message: opendir");
