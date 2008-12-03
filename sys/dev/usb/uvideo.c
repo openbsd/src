@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.95 2008/12/03 03:38:53 yuo Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.96 2008/12/03 03:47:25 yuo Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -842,6 +842,8 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_YUYV;
 	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "NV12")) {
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_NV12;
+	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "UYVY")) {
+		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_UYVY;
 	} else {
 		sc->sc_fmtgrp[i].pixelformat = 0;
 	}
