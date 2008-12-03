@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.17 2008/12/03 16:26:43 stevesk Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.18 2008/12/03 20:40:56 stevesk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -69,6 +69,14 @@ to its pins.
 Each GPIO device has an associated device file in the
 .Pa /dev
 directory.
+.Ar device
+can be specified with or without the
+.Pa /dev
+prefix.
+For example,
+.Pa /dev/gpio0
+or
+.Pa gpio0 .
 .Pp
 GPIO pins can be either
 .Dq read
