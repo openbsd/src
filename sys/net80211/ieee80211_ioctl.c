@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.26 2008/10/02 20:21:15 brad Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.27 2008/12/03 17:24:45 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -726,13 +726,14 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc, 0)) != 0)
 			break;
 		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+		if (
 #ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+		    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+#endif
 		    (flags & IEEE80211_F_HOSTAPMASK)) {
 			error = EINVAL;
 			break;
 		}
-#endif
 		ic->ic_flags = (ic->ic_flags & ~IEEE80211_F_USERMASK) | flags;
 		error = ENETRESET;
 		break;
