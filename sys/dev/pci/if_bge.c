@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.257 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.258 2008/12/03 23:51:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -165,12 +165,15 @@ void bge_iff(struct bge_softc *);
 int bge_alloc_jumbo_mem(struct bge_softc *);
 void *bge_jalloc(struct bge_softc *);
 void bge_jfree(caddr_t, u_int, void *);
-int bge_newbuf_std(struct bge_softc *, int, struct mbuf *, bus_dmamap_t);
 int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
-int bge_init_rx_ring_std(struct bge_softc *);
-void bge_free_rx_ring_std(struct bge_softc *);
 int bge_init_rx_ring_jumbo(struct bge_softc *);
 void bge_free_rx_ring_jumbo(struct bge_softc *);
+
+int bge_newbuf(struct bge_softc *, int);
+int bge_init_rx_ring_std(struct bge_softc *);
+void bge_fill_rx_ring_std(struct bge_softc *);
+void bge_free_rx_ring_std(struct bge_softc *);
+
 void bge_free_tx_ring(struct bge_softc *);
 int bge_init_tx_ring(struct bge_softc *);
 
@@ -857,72 +860,55 @@ bge_jfree(caddr_t buf, u_int size, void *arg)
  * Intialize a standard receive ring descriptor.
  */
 int
-bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
-    bus_dmamap_t dmamap)
+bge_newbuf(struct bge_softc *sc, int i)
 {
-	struct mbuf		*m_new = NULL;
-	struct bge_rx_bd	*r;
+	bus_dmamap_t		dmap = sc->bge_cdata.bge_rx_std_map[i];
+	struct bge_rx_bd	*r = &sc->bge_rdata->bge_rx_std_ring[i];
+	struct mbuf		*m;
 	int			error;
 
-	if (dmamap == NULL) {
-		error = bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap);
-		if (error != 0)
-			return (error);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
+
+	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (ENOBUFS);
 	}
-
-	sc->bge_cdata.bge_rx_std_map[i] = dmamap;
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (ENOBUFS);
-
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		/*
-		 * We're re-using a previously allocated mbuf;
-		 * be sure to re-init pointers and lengths to
-		 * default values.
-		 */
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	if (!(sc->bge_flags & BGE_RX_ALIGNBUG))
-	    m_adj(m_new, ETHER_ALIGN);
+	    m_adj(m, ETHER_ALIGN);
 
-	error = bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
+	error = bus_dmamap_load_mbuf(sc->bge_dmatag, dmap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		if (m == NULL) {
-			m_freem(m_new);
-			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
-		}
+		m_freem(m);
 		return (ENOBUFS);
 	}
 
-	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
-	r = &sc->bge_rdata->bge_rx_std_ring[i];
-	BGE_HOSTADDR(r->bge_addr, dmamap->dm_segs[0].ds_addr);
-	r->bge_flags = BGE_RXBDFLAG_END;
-	r->bge_len = m_new->m_len;
-	r->bge_idx = i;
-
-	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
+	bus_dmamap_sync(sc->bge_dmatag, dmap, 0, dmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
+	sc->bge_cdata.bge_rx_std_chain[i] = m;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
 		i * sizeof (struct bge_rx_bd),
 	    sizeof (struct bge_rx_bd),
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_POSTWRITE);
+
+	BGE_HOSTADDR(r->bge_addr, dmap->dm_segs[0].ds_addr);
+	r->bge_flags = BGE_RXBDFLAG_END;
+	r->bge_len = m->m_len;
+	r->bge_idx = i;
+
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
+		i * sizeof (struct bge_rx_bd),
+	    sizeof (struct bge_rx_bd),
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->bge_std_cnt++;
 
 	return (0);
 }
@@ -996,42 +982,85 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 
-	if (sc->bge_flags & BGE_RXRING_VALID)
+	if (ISSET(sc->bge_flags, BGE_RXRING_VALID))
 		return (0);
 
-	for (i = 0; i < BGE_SSLOTS; i++) {
-		if (bge_newbuf_std(sc, i, NULL, 0) == ENOBUFS)
-			return (ENOBUFS);
-	}
-
-	sc->bge_std = i - 1;
-	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
-
-	sc->bge_flags |= BGE_RXRING_VALID;
-
-	return (0);
-}
-
-void
-bge_free_rx_ring_std(struct bge_softc *sc)
-{
-	int i;
-
-	if (!(sc->bge_flags & BGE_RXRING_VALID))
-		return;
-
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
-		if (sc->bge_cdata.bge_rx_std_chain[i] != NULL) {
-			m_freem(sc->bge_cdata.bge_rx_std_chain[i]);
-			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
-			bus_dmamap_destroy(sc->bge_dmatag,
-			    sc->bge_cdata.bge_rx_std_map[i]);
+		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &sc->bge_cdata.bge_rx_std_map[i]) != 0) {
+			printf("%s: unable to create dmamap for slot %d\n",
+			    sc->bge_dev.dv_xname, i);
+			goto uncreate;
 		}
 		bzero((char *)&sc->bge_rdata->bge_rx_std_ring[i],
 		    sizeof(struct bge_rx_bd));
 	}
 
-	sc->bge_flags &= ~BGE_RXRING_VALID;
+	sc->bge_std = BGE_STD_RX_RING_CNT - 1;
+	sc->bge_std_cnt = 0;
+	bge_fill_rx_ring_std(sc);
+
+	SET(sc->bge_flags, BGE_RXRING_VALID);
+
+	return (0);
+
+uncreate:
+	while (--i) {
+		bus_dmamap_destroy(sc->bge_dmatag,
+		    sc->bge_cdata.bge_rx_std_map[i]);
+	}
+	return (1);
+}
+
+void
+bge_fill_rx_ring_std(struct bge_softc *sc)
+{
+	int i;
+	int post = 0;
+
+	i = sc->bge_std;
+	while (sc->bge_std_cnt < BGE_STD_RX_RING_CNT) {
+		BGE_INC(i, BGE_STD_RX_RING_CNT);
+
+		if (bge_newbuf(sc, i) != 0)
+			break;
+
+		sc->bge_std = i;
+		post = 1;
+	}
+
+	if (post)
+		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+}
+
+void
+bge_free_rx_ring_std(struct bge_softc *sc)
+{
+	bus_dmamap_t dmap;
+	struct mbuf *m;
+	int i;
+
+	if (!ISSET(sc->bge_flags, BGE_RXRING_VALID))
+		return;
+
+	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
+		dmap = sc->bge_cdata.bge_rx_std_map[i];
+		m = sc->bge_cdata.bge_rx_std_chain[i];
+		if (m != NULL) {
+			bus_dmamap_sync(sc->bge_dmatag, dmap, 0,
+			    dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmap);
+			m_freem(m);
+			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
+		}
+		bus_dmamap_destroy(sc->bge_dmatag, dmap);
+		sc->bge_cdata.bge_rx_std_map[i] = NULL;
+		bzero((char *)&sc->bge_rdata->bge_rx_std_ring[i],
+		    sizeof(struct bge_rx_bd));
+	}
+
+	CLR(sc->bge_flags, BGE_RXRING_VALID);
 }
 
 int
@@ -1471,6 +1500,7 @@ bge_blockinit(struct bge_softc *sc)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 
+#if 0
 	/*
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
@@ -1488,6 +1518,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
+#endif
 		i = 8;
 
 	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
@@ -2087,6 +2118,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = bge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+	m_clsetlwm(ifp, MCLBYTES, 17); /* must be > replenish threshold */
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -2491,24 +2523,20 @@ bge_rxeof(struct bge_softc *sc)
 				m = m0;
 			}
 		} else {
-			BGE_INC(sc->bge_std, BGE_STD_RX_RING_CNT);
 			m = sc->bge_cdata.bge_rx_std_chain[rxidx];
 			sc->bge_cdata.bge_rx_std_chain[rxidx] = NULL;
+
 			stdcnt++;
+			sc->bge_std_cnt--;
+
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
-			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
+				m_freem(m);
 				ifp->if_ierrors++;
-				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
-				continue;
-			}
-			if (bge_newbuf_std(sc, sc->bge_std,
-			    NULL, dmamap) == ENOBUFS) {
-				ifp->if_ierrors++;
-				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
 				continue;
 			}
 		}
@@ -2563,7 +2591,7 @@ bge_rxeof(struct bge_softc *sc)
 
 	bge_writembx(sc, BGE_MBX_RX_CONS0_LO, sc->bge_rx_saved_considx);
 	if (stdcnt)
-		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+		bge_fill_rx_ring_std(sc);
 	if (jumbocnt)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
 }
