@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.94 2008/12/03 03:28:25 yuo Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.95 2008/12/03 03:38:53 yuo Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1175,13 +1175,9 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 		return (USBD_INVAL);
 	}
 
-	/* get probe */
-	bzero(probe_data, sizeof(probe_data));
-	error = uvideo_vs_get_probe(sc, probe_data, GET_CUR);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (error);
-
 	/* set probe */
+	bzero(probe_data, sizeof(probe_data));
+	USETW(pc->bmHint, 0x1);
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
 	pc->bFrameIndex = sc->sc_fmtgrp_cur->format_dfidx;
 	USETDW(pc->dwFrameInterval,
