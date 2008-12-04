@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.200 2008/12/03 00:59:48 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.201 2008/12/04 02:36:51 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -127,7 +127,9 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IFE_G },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IFE_GT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_AMT },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_C }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_C },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_M },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_M_AMT }
 };
 
 /*********************************************************************
