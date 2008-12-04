@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.71 2008/11/25 17:58:01 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.72 2008/12/04 12:40:35 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
+	int			ph_pagesize;
 };
 
 struct pool_item {
@@ -109,6 +110,23 @@ struct pool_item_header *pool_alloc_item_header(struct pool *, caddr_t , int);
 void	*pool_allocator_alloc(struct pool *, int, int *);
 void	 pool_allocator_free(struct pool *, void *);
 
+/*
+ * XXX - quick hack. For pools with large items we want to use a special
+ *       allocator. For now, instead of having the allocator figure out
+ *       the allocation size from the pool (which can be done trivially
+ *       with round_page(pr_itemsperpage * pr_size)) which would require
+ *	 lots of changes everywhere, we just create allocators for each
+ *	 size. We limit those to 128 pages.
+ */
+#define POOL_LARGE_MAXPAGES 128
+struct pool_allocator pool_allocator_large[POOL_LARGE_MAXPAGES];
+struct pool_allocator pool_allocator_large_ni[POOL_LARGE_MAXPAGES];
+void	*pool_large_alloc(struct pool *, int, int *);
+void	pool_large_free(struct pool *, void *);
+void	*pool_large_alloc_ni(struct pool *, int, int *);
+void	pool_large_free_ni(struct pool *, void *);
+
+
 #ifdef DDB
 void	 pool_print_pagelist(struct pool_pagelist *,
 	    int (*)(const char *, ...));
@@ -120,10 +138,11 @@ void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...));
 static __inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
-	if (a->ph_page < b->ph_page)
-		return (-1);
-	else if (a->ph_page > b->ph_page)
-		return (1);
+	long diff = (vaddr_t)a->ph_page - (vaddr_t)b->ph_page;
+	if (diff < 0)
+		return -(-diff >= a->ph_pagesize);
+	else if (diff > 0)
+		return (diff >= b->ph_pagesize);
 	else
 		return (0);
 }
@@ -135,15 +154,37 @@ SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
  * Return the pool page header based on page address.
  */
 static __inline struct pool_item_header *
-pr_find_pagehead(struct pool *pp, caddr_t page)
+pr_find_pagehead(struct pool *pp, void *v)
 {
 	struct pool_item_header *ph, tmp;
 
-	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		return ((struct pool_item_header *)(page + pp->pr_phoffset));
+	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
+		caddr_t page;
 
-	tmp.ph_page = page;
+		page = (caddr_t)((vaddr_t)v & pp->pr_alloc->pa_pagemask);
+
+		return ((struct pool_item_header *)(page + pp->pr_phoffset));
+	}
+
+	/*
+	 * The trick we're using in the tree compare function is to compare
+	 * two elements equal when they overlap. We want to return the
+	 * page header that belongs to the element just before this address.
+	 * We don't want this element to compare equal to the next element,
+	 * so the compare function takes the pagesize from the lower element.
+	 * If this header is the lower, its pagesize is zero, so it can't
+	 * overlap with the next header. But if the header we're looking for
+	 * is lower, we'll use its pagesize and it will overlap and return
+	 * equal.
+	 */
+	tmp.ph_page = v;
+	tmp.ph_pagesize = 0;
 	ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+
+	if (ph) {
+		KASSERT(ph->ph_page <= (caddr_t)v);
+		KASSERT(ph->ph_page + ph->ph_pagesize > (caddr_t)v);
+	}
 	return ph;
 }
 
@@ -208,10 +249,42 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	/*
 	 * Check arguments and construct default values.
 	 */
-	if (palloc == NULL)
-		palloc = &pool_allocator_nointr;
+	if (palloc == NULL) {
+		if (size > PAGE_SIZE) {
+			int psize;
+
+			/*
+			 * XXX - should take align into account as well.
+			 */
+			if (size == round_page(size))
+				psize = size / PAGE_SIZE;
+			else
+				psize = PAGE_SIZE / roundup(size % PAGE_SIZE,
+				    1024);
+			if (psize > POOL_LARGE_MAXPAGES)
+				psize = POOL_LARGE_MAXPAGES;
+			if (flags & PR_WAITOK)
+				palloc = &pool_allocator_large_ni[psize-1];
+			else
+				palloc = &pool_allocator_large[psize-1];
+			if (palloc->pa_pagesz == 0) {
+				palloc->pa_pagesz = psize * PAGE_SIZE;
+				if (flags & PR_WAITOK) {
+					palloc->pa_alloc = pool_large_alloc_ni;
+					palloc->pa_free = pool_large_free_ni;
+				} else {
+					palloc->pa_alloc = pool_large_alloc;
+					palloc->pa_free = pool_large_free;
+				}
+			}
+		} else {
+			palloc = &pool_allocator_nointr;
+		}
+	}
 	if (palloc->pa_pagesz == 0) {
 		palloc->pa_pagesz = PAGE_SIZE;
+	}
+	if (palloc->pa_pagemask == 0) {
 		palloc->pa_pagemask = ~(palloc->pa_pagesz - 1);
 		palloc->pa_pageshift = ffs(palloc->pa_pagesz) - 1;
 	}
@@ -265,7 +338,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * with its header based on the page address.
 	 * We use 1/16 of the page size as the threshold (XXX: tune)
 	 */
-	if (pp->pr_size < palloc->pa_pagesz/16) {
+	if (pp->pr_size < palloc->pa_pagesz/16 && pp->pr_size < PAGE_SIZE) {
 		/* Use the end of the page for the page header */
 		pp->pr_roflags |= PR_PHINPAGE;
 		pp->pr_phoffset = off = palloc->pa_pagesz -
@@ -603,7 +676,6 @@ pool_do_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
-	caddr_t page;
 #ifdef DIAGNOSTIC
 	int i, *ip;
 #endif
@@ -618,8 +690,6 @@ pool_do_put(struct pool *pp, void *v)
 	}
 #endif
 
-	page = (caddr_t)((vaddr_t)v & pp->pr_alloc->pa_pagemask);
-
 #ifdef DIAGNOSTIC
 	if (pp->pr_ipl != -1)
 		splassert(pp->pr_ipl);
@@ -631,7 +701,7 @@ pool_do_put(struct pool *pp, void *v)
 	}
 #endif
 
-	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
+	if (__predict_false((ph = pr_find_pagehead(pp, v)) == NULL)) {
 		panic("pool_do_put: %s: page header missing", pp->pr_wchan);
 	}
 
@@ -750,17 +820,13 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	int i, *ip;
 #endif
 
-#ifdef DIAGNOSTIC
-	if (((u_long)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
-		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
-#endif
-
 	/*
 	 * Insert page header.
 	 */
 	LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
 	TAILQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
+	ph->ph_pagesize = pp->pr_alloc->pa_pagesz;
 	ph->ph_nmissing = 0;
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
@@ -1337,4 +1403,43 @@ pool_page_free(struct pool *pp, void *v)
 {
 
 	uvm_km_putpage(v);
+}
+
+void *
+pool_large_alloc(struct pool *pp, int flags, int *slowdown)
+{
+	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
+	vaddr_t va;
+	int s;
+
+	s = splvm();
+	va = uvm_km_kmemalloc(kmem_map, NULL, pp->pr_alloc->pa_pagesz, kfl);
+	splx(s);
+
+	return ((void *)va);
+}
+
+void
+pool_large_free(struct pool *pp, void *v)
+{
+	int s;
+
+	s = splvm();
+	uvm_km_free(kmem_map, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
+	splx(s);
+}
+
+void *
+pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
+{
+	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
+
+	return ((void *)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
+	    pp->pr_alloc->pa_pagesz, kfl));
+}
+
+void
+pool_large_free_ni(struct pool *pp, void *v)
+{
+	uvm_km_free(kernel_map, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
 }
