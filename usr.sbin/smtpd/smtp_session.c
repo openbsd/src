@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.15 2008/12/04 01:16:14 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.16 2008/12/04 02:04:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -811,7 +811,7 @@ session_destroy(struct session *s)
 	/*
 	 * cleanup
 	 */
-	log_debug("session_destroy: killing client");
+	log_debug("session_destroy: killing client: %p", s);
 	close(s->s_fd);
 
 	if (s->s_msg.datafp != NULL) {
@@ -920,8 +920,10 @@ session_timeout(int fd, short event, void *p)
 	rmsession = NULL;
 	SPLAY_FOREACH(sessionp, sessiontree, &env->sc_sessions) {
 
-		if (rmsession != NULL)
+		if (rmsession != NULL) {
 			session_destroy(rmsession);
+			rmsession = NULL;
+		}
 
 		for (i = 0; i < sizeof (rfc5321_timeouttab) /
 			 sizeof(struct session_timeout); ++i)
