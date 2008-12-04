@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vscsi.4,v 1.2 2008/12/04 01:55:02 dlg Exp $
+.\"	$OpenBSD: vscsi.4,v 1.3 2008/12/04 06:29:21 jmc Exp $
 .\"
 .\" Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
 .\"
@@ -35,15 +35,16 @@ device takes commands from the kernel SCSI midlayer and makes them available
 to userland for handling.
 Using this interface it is possible to implement virtual SCSI devices that are
 usable by the kernel.
-.Sh IOCTLS
+.Pp
 The following
 .Xr ioctl 2
 commands are provided to allow userland to dequeue SCSI commands and reply to
 them:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It VSCSI_I2T (struct vscsi_ioc_i2t *)
 Dequeue a SCSI command.
-.Bd -literal
+.Bd -literal -offset indent
 struct vscsi_ioc_i2t {
 	int			tag;
 
@@ -60,10 +61,11 @@ struct vscsi_ioc_i2t {
 #define VSCSI_DIR_WRITE		2
 };
 .Ed
+.Pp
 .It VSCSI_DATA_READ (struct vscsi_ioc_data *)
 .It VSCSI_DATA_WRITE (struct vscsi_ioc_data *)
 Read or write data in response to a SCSI command identified by tag.
-.Bd -literal
+.Bd -literal -offset indent
 struct vscsi_ioc_data {
 	int			tag;
 
@@ -71,9 +73,10 @@ struct vscsi_ioc_data {
 	size_t			datalen;
 };
 .Ed
+.Pp
 .It VSCSI_T2I (struct vscsi_ioc_t2i *)
 Signal completion of a SCSI command identified by tag.
-.Bd -literal
+.Bd -literal -offset indent
 struct vscsi_ioc_t2i {
 	int			tag;
 
@@ -85,9 +88,10 @@ struct vscsi_ioc_t2i {
 	size_t			senselen;
 };
 .Ed
+.El
 .Sh FILES
 .Bl -tag -width /dev/vscsi0
-.It Pa /dev/vscsi0
+.It /dev/vscsi0
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
