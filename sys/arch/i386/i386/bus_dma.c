@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2008/12/04 15:24:18 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.2 2008/12/04 19:25:38 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,7 +92,7 @@ int
 _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct x86_bus_dmamap *map;
+	struct bus_dmamap *map;
 	void *mapstore;
 	size_t mapsize;
 
@@ -108,13 +108,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct x86_bus_dmamap) +
+	mapsize = sizeof(struct bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DEVBUF,
 	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	map = (struct x86_bus_dmamap *)mapstore;
+	map = (struct bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
