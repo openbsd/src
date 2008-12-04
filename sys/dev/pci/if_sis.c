@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.85 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.86 2008/12/04 23:05:32 oga Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -319,22 +319,15 @@ void
 sis_read_cmos(struct sis_softc *sc, struct pci_attach_args *pa,
     caddr_t dest, int off, int cnt)
 {
-	bus_space_tag_t btag;
 	u_int32_t reg;
 	int i;
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x48);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x48, reg | 0x40);
 
-#if defined(__amd64__)
-	btag = X86_BUS_SPACE_IO;
-#elif defined(__i386__)
-	btag = I386_BUS_SPACE_IO;
-#endif
-
 	for (i = 0; i < cnt; i++) {
-		bus_space_write_1(btag, 0x0, 0x70, i + off);
-		*(dest + i) = bus_space_read_1(btag, 0x0, 0x71);
+		bus_space_write_1(pa->pa_iot, 0x0, 0x70, i + off);
+		*(dest + i) = bus_space_read_1(pa->pa_iot, 0x0, 0x71);
 	}
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x48, reg & ~0x40);
