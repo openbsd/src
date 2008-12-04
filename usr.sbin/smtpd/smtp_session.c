@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.16 2008/12/04 02:04:50 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.17 2008/12/04 04:09:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -723,16 +723,19 @@ read:
 	s->s_tm = time(NULL);
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
-		bufferevent_disable(s->s_bev, EV_READ);
+		if (s->s_state != S_DATACONTENT)
+			bufferevent_disable(s->s_bev, EV_READ);
 		return;
 	}
 
 	if (s->s_state == S_DATACONTENT) {
 		line[strcspn(line, "\r")] = '\0';
-		/*		log_debug("content: %s", line);*/
+		/*log_debug("content: %s", line);*/
 		if (strcmp(line, ".") == 0) {
 			s->s_state = S_DONE;
 			fclose(s->s_msg.datafp);
+
+			bufferevent_disable(s->s_bev, EV_READ);
 
 			if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
 				evbuffer_add_printf(s->s_bev->output,
@@ -745,7 +748,6 @@ read:
 				free(line);
 				return;
 			}
-			bufferevent_disable(s->s_bev, EV_READ);
 			session_msg_submit(s);
 			free(line);
 			return;
