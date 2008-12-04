@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.34 2008/09/29 15:12:22 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.35 2008/12/04 17:13:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -231,9 +231,11 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 	}
 	free(addlist);
 
-	log_debug("sync_table: table %s: %d added, %d deleted, %d changed",
-	    io.pfrio_table.pfrt_name,
-	    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
+	if (env->sc_opts & RELAYD_OPT_LOGUPDATE)
+		log_info("table %s: %d added, %d deleted, "
+		    "%d changed",
+		    io.pfrio_table.pfrt_name,
+		    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
 	return;
 
  toolong:
@@ -584,7 +586,7 @@ check_table(struct relayd *env, struct rdr *rdr, struct table *table)
 		goto toolong;
 
 	if (ioctl(env->sc_pf->dev, DIOCRGETTSTATS, &io) == -1)
-		fatal("sync_table: cannot get table stats");
+		fatal("check_table: cannot get table stats");
 
 	return (tstats.pfrts_match);
 
