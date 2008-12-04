@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.98 2008/12/03 08:32:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.99 2008/12/04 07:22:10 yuo Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1182,7 +1182,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	USETW(pc->bmHint, 0x1);
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
 	pc->bFrameIndex = sc->sc_fmtgrp_cur->format_dfidx;
-	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=100000 */
+	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=1000000 */
 	USETDW(pc->dwFrameInterval,
 	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
 	USETDW(pc->dwMaxVideoFrameSize, 0);
