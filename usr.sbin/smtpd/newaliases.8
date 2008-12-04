@@ -1,3 +1,4 @@
+.\"	$OpenBSD: newaliases.8,v 1.2 2008/12/04 06:22:05 jmc Exp $
 .\" Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
@@ -11,28 +12,26 @@
 .\"
 .\"     $Sendmail: newaliases.1,v 8.19 2001/10/10 03:23:17 ca Exp $
 .\"
-.Dd October 21, 2008
+.Dd $Mdocdate: December 4 2008 $
 .Dt NEWALIASES 8
 .Os
 .Sh NAME
 .Nm newaliases
-.Nd rebuild the data base for the mail aliases file
+.Nd rebuild the database for the mail aliases file
 .Sh SYNOPSIS
 .Nm newaliases
 .Sh DESCRIPTION
 .Nm
-rebuilds the random access data base for the mail aliases file
+rebuilds the random access database for the mail aliases file
 .Pa /etc/mail/aliases .
 It must be run each time this file is changed
 in order for the change to take effect.
 .Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
+.Ex -std newaliases
 .Sh FILES
-.Bl -tag -width /etc/mail/aliases -compact
+.Bl -tag -width "/etc/mail/aliasesXXX" -compact
 .It Pa /etc/mail/aliases
-The mail aliases file
+The mail aliases file.
 .El
 .Sh SEE ALSO
 .Xr aliases 5 ,
@@ -40,11 +39,10 @@ The mail aliases file
 .Xr makemap 8 ,
 .Xr smtpd 8
 .Sh HISTORY
-The
+This
 .Nm
-command appeared in
+command first appeared in
 .Ox 4.5
-as a replacement for the older
+as a replacement for the
 .Nm
-utility that was shipped with
-.Xr sendmail .
+command that was shipped with sendmail.

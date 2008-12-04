@@ -1,3 +1,4 @@
+.\"	$OpenBSD: makemap.8,v 1.2 2008/12/04 06:22:05 jmc Exp $
 .\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -10,7 +11,7 @@
 .\"
 .\"     $Sendmail: makemap.8,v 8.30 2002/06/27 23:41:04 gshapiro Exp $
 .\"
-.Dd October 21, 2008
+.Dd $Mdocdate: December 4 2008 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -35,21 +36,20 @@ words separated by whitespace.
 The first is the database key,
 the second is the value.
 .Pp
-Notice: do
-.Em not
+Note:
 use
-.Nm
-to create the aliases data base, but
 .Xr newaliases 8
+to create the aliases database, not
+.Nm ,
 as the input formats differ for historical reasons.
 .Sh SEE ALSO
 .Xr editmap 8 ,
 .Xr newaliases 8 ,
 .Xr smtpd 8
 .Sh HISTORY
-The
+This
 .Nm
-command appeared in
+command first appeared in
 .Ox 4.5
 as a replacement for the
 .Nm
