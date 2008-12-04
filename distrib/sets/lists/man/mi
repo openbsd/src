@@ -1980,6 +1980,7 @@
 ./usr/share/man/cat4/vmt.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
+./usr/share/man/cat4/vscsi.0
 ./usr/share/man/cat4/watchdog.0
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wbenv.0

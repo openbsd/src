@@ -878,6 +878,7 @@
 ./usr/include/dev/videovar.h
 ./usr/include/dev/vmtvar.h
 ./usr/include/dev/vndioctl.h
+./usr/include/dev/vscsivar.h
 ./usr/include/dev/wscons
 ./usr/include/dev/wscons/ascii.h
 ./usr/include/dev/wscons/unicode.h

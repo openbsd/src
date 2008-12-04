@@ -1522,6 +1522,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/vndioctl.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/wscons/unicode.ph

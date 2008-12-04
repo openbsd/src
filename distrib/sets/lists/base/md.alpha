@@ -1575,6 +1575,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/vndioctl.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/unicode.ph

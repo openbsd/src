@@ -859,6 +859,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vndioctl.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/unicode.ph

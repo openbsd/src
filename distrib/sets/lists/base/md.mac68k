@@ -1472,6 +1472,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/vndioctl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/unicode.ph
