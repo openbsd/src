@@ -1,21 +1,11 @@
-#	$OpenBSD: Makefile,v 1.4 2008/12/03 20:11:35 gilles Exp $
+#	$OpenBSD: Makefile,v 1.5 2008/12/04 13:36:58 todd Exp $
 
-PROG=		smtpd
-SRCS=		parse.y log.c config.c buffer.c imsg.c			\
-		smtpd.c lka.c mfa.c queue.c mta.c mda.c control.c	\
-		smtp.c	smtp_session.c store.c				\
-		ssl.c ssl_privsep.c dns.c aliases.c forward.c		\
-		map.c
-MAN=		smtpd.8 smtpd.conf.5
+.include <bsd.own.mk>
 
-LDADD=		-levent -lutil -lssl -lcrypto
-DPADD=		${LIBEVENT} ${LIBSSL} ${LIBCRYPTO}
-CFLAGS=		-g3 -ggdb -I${.CURDIR}
-CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS+=	-Wmissing-declarations
-CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
-CFLAGS+=	-Wsign-compare -Wbounded
-#CFLAGS+=	-Werror # during development phase (breaks some archs)
-YFLAGS=
+SUBDIRS = makemap newaliases smtpd
 
-.include <bsd.prog.mk>
+distribution:
+	${INSTALL} -C -o root -g wheel -m 0644 ${.CURDIR}/smtpd.conf \
+		${DESTDIR}/etc/mail/smtpd.conf
+
+.include <bsd.subdir.mk>
