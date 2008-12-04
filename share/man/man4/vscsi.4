@@ -1,0 +1,103 @@
+.\"	$OpenBSD: vscsi.4,v 1.1 2008/12/04 00:37:39 dlg Exp $
+.\"
+.\" Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 4 2008 $
+.Dt VSCSI 4
+.Os
+.Sh NAME
+.Nm vscsi
+.Nd Virtual SCSI controller
+.Sh SYNOPSIS
+.Cd "vscsi0 at root"
+.Cd "scsibus*  at vscsi?"
+.Pp
+.Fd #include <sys/types.h>
+.Fd #include <sys/ioctl.h>
+.Fd #include <sys/scsi/scsi_all.h>
+.Fd #include <sys/dev/vscsivar.h>
+.Sh DESCRIPTION
+The
+.Nm
+device takes commands from the kernel SCSI midlayer and makes them available
+to userland for handling.
+Using this interface it is possible to implement virtual SCSI devices that are
+usable by the kernel.
+.Sh IOCTLS
+The following
+.Xr ioctl 2
+commands are provided to allow userland to dequeue SCSI commands and reply to
+them:
+.Bl -tag -width Ds
+.It VSCSI_I2T (struct vscsi_ioc_i2t *)
+Dequeue a SCSI command.
+.Bd -literal
+struct vscsi_ioc_i2t {
+	int			tag;
+
+	u_int			target;
+	u_int			lun;
+
+	struct scsi_generic	cmd;
+	size_t			cmdlen;
+
+	size_t			datalen;
+	int			direction;
+#define VSCSI_DIR_NONE		0
+#define VSCSI_DIR_READ		1
+#define VSCSI_DIR_WRITE		2
+};
+.Ed
+.It VSCSI_DATA_READ (struct vscsi_ioc_data *)
+.It VSCSI_DATA_WRITE (struct vscsi_ioc_data *)
+Read or write data in response to a SCSI command identified by tag.
+.Bd -literal
+struct vscsi_ioc_data {
+	int			tag;
+
+	void *			data;
+	size_t			datalen;
+};
+.Ed
+.It VSCSI_T2I (struct vscsi_ioc_t2i *)
+Signal completion of a SCSI command identified by tag.
+.Bd -literal
+struct vscsi_ioc_t2i {
+	int			tag;
+
+	int			status;
+#define VSCSI_STAT_DONE		0
+#define VSCSI_STAT_SENSE	1
+#define VSCSI_STAT_ERR		2
+	struct scsi_sense_data	sense;
+	size_t			senselen;
+};
+.Ed
+.Sh FILES
+.Bl -tag -width /dev/vscsi0
+.It Pa /dev/vscsi0
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr MAKEDEV 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.5 .
+.Sh AUTHORS
+.An David Gwynne Aq dlg@openbsd.org .
