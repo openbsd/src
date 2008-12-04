@@ -1,4 +1,4 @@
-/*	$OpenBSD: complex.h,v 1.1 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: complex.h,v 1.2 2008/12/04 03:52:31 ray Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -119,4 +119,4 @@ long double creall(long double complex);
 #endif
 __END_DECLS
 
-#endif _COMPLEX_H_ /* !_COMPLEX_H_ */
+#endif /* !_COMPLEX_H_ */
