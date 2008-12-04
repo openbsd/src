@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2008/12/04 15:48:19 weingart Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
  */
 
 #define __lockbarrier() __asm __volatile("": : :"memory")
+#define SPINLOCK_SPIN_HOOK __asm __volatile("pause": : :"memory");
 
 #include <machine/atomic.h>
 

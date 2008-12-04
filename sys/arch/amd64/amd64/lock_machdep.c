@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.2 2007/11/27 15:55:29 art Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.3 2008/12/04 15:48:19 weingart Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -42,8 +42,6 @@ __mp_lock_init(struct __mp_lock *lock)
 /* CPU-dependent timing, needs this to be settable from ddb. */
 extern int __mp_lock_spinout;
 #endif
-
-#define SPINLOCK_SPIN_HOOK	__asm __volatile("pause": : :"memory")
 
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl)

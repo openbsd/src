@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.43 2007/11/28 17:05:09 tedu Exp $	*/
+/*	$OpenBSD: npx.c,v 1.44 2008/12/04 15:48:19 weingart Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -812,27 +812,14 @@ npxsave_proc(struct proc *p, int save)
 		npxsave_cpu(ci, save);
 		splx(s);
 	} else {
-#ifdef DIAGNOSTIC
-		int spincount;
-#endif
-
 		IPRINTF(("%s: fp ipi to %s %s %lx\n", ci->ci_dev.dv_xname,
 		    oci->ci_dev.dv_xname, save ? "save" : "flush", (u_long)p));
 
 		i386_send_ipi(oci,
 		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
 
-#ifdef DIAGNOSTIC
-		spincount = 0;
-#endif
-		while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 			SPINLOCK_SPIN_HOOK;
-#ifdef DIAGNOSTIC
-			if (spincount++ > 100000000)
-				panic("%s: fp_save ipi didn't (%s)",
-				    ci->ci_dev.dv_xname, oci->ci_dev.dv_xname);
-#endif
-		}
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2008/06/10 02:55:39 weingart Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2008/12/04 15:48:19 weingart Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2484,9 +2484,6 @@ volatile long tlb_shoot_wait;
 
 volatile vaddr_t tlb_shoot_addr1;
 volatile vaddr_t tlb_shoot_addr2;
-
-/* XXX */
-#define SPINLOCK_SPIN_HOOK __asm __volatile("pause": : :"memory")
 
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)

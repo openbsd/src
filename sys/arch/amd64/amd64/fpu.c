@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.13 2007/11/12 14:47:56 millert Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.14 2008/12/04 15:48:19 weingart Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -311,28 +312,10 @@ fpusave_proc(struct proc *p, int save)
 		fpusave_cpu(ci, save);
 		splx(s);
 	} else {
-#ifdef DIAGNOSTIC
-		int spincount;
-#endif
-
 		x86_send_ipi(oci,
-		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
-
-#ifdef DIAGNOSTIC
-		spincount = 0;
-#endif
+	    	save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-#ifdef DIAGNOSTIC
-		{
-			spincount++;
-			if (spincount > 10000000) {
-				panic("fp_save ipi didn't");
-			}
-		}
-#else
-		__splbarrier();		/* XXX replace by generic barrier */
-		;
-#endif
+			SPINLOCK_SPIN_HOOK;
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);
