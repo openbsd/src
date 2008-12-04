@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.18 2008/12/04 01:16:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.19 2008/12/04 17:24:13 cloder Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -649,10 +649,14 @@ int aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
 
 /* log.c */
 void		log_init(int);
-void		log_warn(const char *, ...);
-void		log_warnx(const char *, ...);
-void		log_info(const char *, ...);
-void		log_debug(const char *, ...);
+void		log_warn(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_warnx(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_info(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_debug(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 __dead void	fatal(const char *);
 __dead void	fatalx(const char *);
 

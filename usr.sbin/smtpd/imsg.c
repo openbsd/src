@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.1 2008/11/01 21:35:28 gilles Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.2 2008/12/04 17:24:13 cloder Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,8 +202,8 @@ imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 
 	datalen += IMSG_HEADER_SIZE;
 	if (datalen > MAX_IMSGSIZE) {
-		log_warnx("imsg_create: len %u > MAX_IMSGSIZE; "
-		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
+		log_warnx("imsg_create: len %zu > MAX_IMSGSIZE; "
+		    "type %u peerid %u", datalen + IMSG_HEADER_SIZE,
 		    type, peerid);
 		return (NULL);
 	}

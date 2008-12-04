@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2008/12/04 00:10:15 ian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2008/12/04 17:24:13 cloder Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,12 +61,13 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
+int		 yyerror(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -178,7 +179,7 @@ quantifier	: /* empty */			{ $$ = 1; }
 
 interval	: NUMBER quantifier		{
 			if ($1 < 0) {
-				yyerror("invalid interval: %d\n", $1);
+				yyerror("invalid interval: %lld", $1);
 				YYERROR;
 			}
 			$$.tv_usec = 0;
@@ -199,7 +200,7 @@ port		: PORT STRING			{
 		}
 		| PORT NUMBER			{
 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
-				yyerror("invalid port: %d", $2);
+				yyerror("invalid port: %lld", $2);
 				YYERROR;
 			}
 			$$ = htons($2);
@@ -337,7 +338,7 @@ map		: MAP STRING			{
 			map = m;
 		} '{' optnl mapopts_l '}'	{
 			if (map->m_src == S_NONE) {
-				yyerror("map %s has no source defined");
+				yyerror("map %s has no source defined", $2);
 				free(map);
 				map = NULL;
 				YYERROR;
@@ -574,7 +575,7 @@ mapref		: STRING			{
 			struct map	*m;
 
 			if ((m = map_findbyname(conf, $2)) == NULL) {
-				yyerror("no such map: %s");
+				yyerror("no such map: %s", $2);
 				free($2);
 				YYERROR;
 			}

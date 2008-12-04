@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2008/11/17 21:56:18 chl Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2008/12/04 17:24:13 cloder Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,9 @@
 int	 debug;
 
 void	 vlog(int, const char *, va_list);
-void	 logit(int, const char *, ...);
+void	 logit(int, const char *, ...)
+    __attribute__ ((format (printf, 2, 3)));
+
 
 void
 log_init(int n_debug)
