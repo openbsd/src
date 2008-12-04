@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1440 2008/12/02 17:13:30 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1442 2008/12/04 05:29:33 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8560,6 +8560,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GM45 Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_PCIE,
+	    "GM45 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1,
 	    "GM45 Video",
 	},
@@ -8574,6 +8578,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_HECI_2,
 	    "GM45 HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_PT_IDER,
+	    "GM45 PT IDER",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_AMT_SOL,
+	    "GM45 AMT SOL",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB,
