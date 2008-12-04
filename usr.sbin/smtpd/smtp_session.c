@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.14 2008/12/03 17:58:00 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.15 2008/12/04 01:16:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -365,7 +365,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RPATH_SUBMIT,
 	    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-
+	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
 }
 
@@ -408,7 +408,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT_SUBMIT,
 	    0, 0, -1, &mr, sizeof(mr));
-
+	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
 }
 
@@ -444,11 +444,8 @@ session_rfc5321_data_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_DATA;
-	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-	    IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
-	    sizeof(s->s_msg));
-	bufferevent_disable(s->s_bev, EV_READ);
+	s->s_state = S_DATAREQUEST;
+	session_pickup(s, NULL);
 	return 1;
 }
 
@@ -644,6 +641,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    ss->code);
 		break;
 
+	case S_DATAREQUEST:
+		s->s_state = S_DATA;
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+		bufferevent_disable(s->s_bev, EV_READ);
+		break;
+
 	case S_DATA:
 		if (s->s_msg.datafp == NULL)
 			goto tempfail;
@@ -651,9 +656,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_DATACONTENT;
 		evbuffer_add_printf(s->s_bev->output,
 		    "354 Enter mail, end with \".\" on a line by itself\r\n");
-		break;
-
-	case S_DATACONTENT:
 		break;
 
 	case S_DONE:
@@ -721,11 +723,13 @@ read:
 	s->s_tm = time(NULL);
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
+		bufferevent_disable(s->s_bev, EV_READ);
 		return;
 	}
 
 	if (s->s_state == S_DATACONTENT) {
 		line[strcspn(line, "\r")] = '\0';
+		/*		log_debug("content: %s", line);*/
 		if (strcmp(line, ".") == 0) {
 			s->s_state = S_DONE;
 			fclose(s->s_msg.datafp);
