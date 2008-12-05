@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.126 2008/10/17 13:02:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.127 2008/12/05 16:53:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -649,7 +649,8 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 				YYERROR;
 			}
 			if (asprintf(&table->sendbuf,
-			    "HEAD %s HTTP/1.0\r\n%s\r\n", $2, $3) == -1)
+			    "HEAD %s HTTP/1.%c\r\n%s\r\n",
+			    $2, strlen($3) ? '1' : '0', $3) == -1)
 				fatal("asprintf");
 			free($2);
 			free($3);
@@ -664,7 +665,8 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 			}
 			table->conf.check = CHECK_HTTP_DIGEST;
 			if (asprintf(&table->sendbuf,
-			    "GET %s HTTP/1.0\r\n%s\r\n", $2, $3) == -1)
+			    "GET %s HTTP/1.%c\r\n%s\r\n",
+			    $2, strlen($3) ? '1' : '0', $3) == -1)
 				fatal("asprintf");
 			free($2);
 			free($3);
