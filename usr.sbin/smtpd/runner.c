@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.1 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.2 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -613,7 +612,7 @@ runner_process_runqueue(struct smtpd *env)
 
 		messagep = calloc(1, sizeof (struct message));
 		if (messagep == NULL)
-			err(1, "calloc");
+			fatal("runner_process_runqueue: calloc");
 		*messagep = message;
 
 		batchp = batch_lookup(env, messagep);
@@ -802,12 +801,12 @@ batch_record(struct smtpd *env, struct message *messagep)
 	if (messagep->batch_id != 0) {
 		batchp = batch_by_id(env, messagep->batch_id);
 		if (batchp == NULL)
-			errx(1, "%s: internal inconsistency.", __func__);
+			fatalx("batch_record: internal inconsistency.");
 	}
 	if (batchp == NULL) {
 		batchp = calloc(1, sizeof(struct batch));
 		if (batchp == NULL)
-			err(1, "%s: calloc", __func__);
+			fatal("batch_record: calloc");
 
 		batchp->id = queue_generate_id();
 		batchp->creation = messagep->creation;

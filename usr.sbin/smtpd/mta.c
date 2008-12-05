@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.8 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.9 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -26,7 +26,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -157,14 +156,14 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 			if ((fd = imsg_get_fd(ibuf, &imsg)) == -1) {
 				/* NEEDS_FIX - unsure yet how it must be handled */
-				errx(1, "imsg_get_fd");
+				fatalx("mta_dispatch_queue: imsg_get_fd");
 			}
 
 			batchp = (struct batch *)imsg.data;
 			batchp = batch_by_id(env, batchp->id);
 
 			if ((batchp->messagefp = fdopen(fd, "r")) == NULL)
-				err(1, "fdopen");
+				fatal("mta_dispatch_queue: fdopen");
 
 			evbuffer_add_printf(batchp->bev->output, "DATA\r\n");
 
@@ -222,7 +221,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			batchp = calloc(1, sizeof (struct batch));
 			if (batchp == NULL)
-				err(1, "calloc");
+				fatal("mta_dispatch_runner: calloc");
 
 			*batchp = *(struct batch *)imsg.data;
 			batchp->mx_off = 0;
@@ -240,13 +239,13 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			messagep = calloc(1, sizeof (struct message));
 			if (messagep == NULL)
-				fatal("calloc");
+				fatal("mta_dispatch_runner: calloc");
 
 			*messagep = *(struct message *)imsg.data;
 
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mta_dispatch_runner: internal inconsistency.");
 
 			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 
@@ -258,7 +257,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 			batchp = (struct batch *)imsg.data;
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mta_dispatch_runner: internal inconsistency.");
 
 			batchp->flags |= F_BATCH_COMPLETE;
 
@@ -770,7 +769,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 				buf[len - 1] = '\0';
 			else {
 				if ((lbuf = malloc(len + 1)) == NULL)
-					err(1, "malloc");
+					fatal("mta_write_handler: malloc");
 				memcpy(lbuf, buf, len);
 				lbuf[len] = '\0';
 				buf = lbuf;

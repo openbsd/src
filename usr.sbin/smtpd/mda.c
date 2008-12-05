@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.3 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.4 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -89,7 +89,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_mda: imsg_read error");
+			fatal("mda_dispatch_parent: imsg_read error");
 		if (n == 0)
 			break;
 
@@ -105,11 +105,11 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_parent: internal inconsistency.");
 
 			messagep = message_by_id(env, batchp, messagep->id);
 			if (messagep == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
 			messagep->mboxfd = imsg_get_fd(ibuf, &imsg);
@@ -137,11 +137,11 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_parent: internal inconsistency.");
 
 			messagep = message_by_id(env, batchp, messagep->id);
 			if (messagep == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
 			messagep->messagefd = imsg_get_fd(ibuf, &imsg);
@@ -173,7 +173,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_mda: unexpected imsg %d",
+			log_debug("mda_dispatch_parent: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -290,7 +290,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			*messagep = *(struct message *)imsg.data;
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_runner: internal inconsistency.");
 
 			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 			break;
@@ -304,7 +304,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			lookup = *(struct batch *)imsg.data;
 			batchp = batch_by_id(env, lookup.id);
 			if (batchp == NULL)
-				errx(1, "%s: internal inconsistency.", __func__);
+				fatalx("mda_dispatch_runner: internal inconsistency.");
 
 			lookup = *batchp;
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {

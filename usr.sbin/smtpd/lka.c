@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.5 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.6 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -29,7 +29,6 @@
 
 #include <ctype.h>
 #include <db.h>
-#include <err.h>
 #include <event.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -529,7 +528,7 @@ lka_dispatch_runner(int sig, short event, void *p)
 			batchp = imsg.data;
 
 			if (! IS_RELAY(batchp->rule.r_action))
-				err(1, "lka_dispatch_queue: inconsistent internal state");
+				fatalx("lka_dispatch_queue: inconsistent internal state");
 
 			if (batchp->rule.r_action == A_RELAY) {
 				log_debug("attempting to resolve %s", batchp->hostname);

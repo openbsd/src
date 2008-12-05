@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.8 2008/12/05 17:31:54 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.9 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -287,7 +287,7 @@ aliases_expand_include(struct aliaseslist *aliases, char *filename)
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		warnx("failed to open include file \"%s\".", filename);
+		log_warnx("failed to open include file \"%s\".", filename);
 		return 0;
 	}
 
@@ -297,11 +297,11 @@ aliases_expand_include(struct aliaseslist *aliases, char *filename)
 			continue;
 		}
 		if (! alias_parse(&alias, line)) {
-			warnx("could not parse include entry \"%s\".", line);
+			log_warnx("could not parse include entry \"%s\".", line);
 		}
 
 		if (alias.type == ALIAS_INCLUDE) {
-			warnx("nested inclusion is not supported.");
+			log_warnx("nested inclusion is not supported.");
 		}
 		else {
 			aliasp = calloc(1, sizeof(struct alias));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.5 2008/12/01 22:54:08 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.6 2008/12/05 19:09:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,7 +26,6 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
-#include <err.h>
 #include <event.h>
 #include <netdb.h>
 #include <resolv.h>
@@ -171,9 +170,8 @@ getmxbyname(char *name, char ***result)
 	chunklen += ((mxnb + 1) * sizeof(char *));
 
 	*result = calloc(1, chunklen);
-	if (*result == NULL) {
-		err(1, "calloc");
-	}
+	if (*result == NULL)
+		fatal("getmxbyname: calloc");
 
 	ptr = (u_int8_t *)*result + (mxnb + 1) * sizeof(char *);
 	for (i = 0; i < mxnb; ++i) {
