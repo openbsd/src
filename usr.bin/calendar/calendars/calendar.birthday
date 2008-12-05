@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.50 2008/03/22 02:08:45 sthen Exp $
+ * $OpenBSD: calendar.birthday,v 1.51 2008/12/05 02:40:12 jakemsr Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -20,7 +20,7 @@
 01/06	Millard Fillmore's birthday (let's party!)
 01/07	Nikola Tesla died in the Hotel New Yorker room 3327, 1943
 01/11	Alexander Hamilton born in Nevis, British West Indies, 1755/57?
-01/11	Albert Hofman born in  Baden, Switzerland 1906
+01/11	Albert Hofmann born in Baden, Switzerland 1906
 01/12	John Hancock born, 1737
 01/12	"Long" John Baldry is born in London, 1941
 01/13	Horatio Alger born, 1832
@@ -159,6 +159,7 @@
 04/28	Mussolini executed, 1945
 04/29	Jules Henri Poincare born, 1854, founder of topology
 04/29	William Randolph Hearst born in San Francisco, 1863
+04/29	Albert Hofmann died, 2008
 04/30	Karl Friedrich Gauss born, 1777, mathematician & astronomer
 04/30	Adolph Hitler committed suicide, 1945
 05/01	Little Walter (Marion Walter Jacobs) is born in Alexandria,
@@ -253,6 +254,7 @@
 09/13	Walter Reed born, 1851
 09/15	Agatha Christie born in Torquay, England, 1890
 09/16	Allen Funt born in Brooklyn, NY, 1914
+09/17	Ken Kesey born in La Junta, CO, 1935
 09/18	Konstantin Eduardovich Tsiolkovsky born, 1857, father of rocket flight
 09/18	Greta Garbo born, 1905
 09/18	Jimi Hendrix dies from an overdose, 1970
@@ -302,6 +304,7 @@
 11/09	Carl Sagan born, 1934
 11/10	Martin Luther born in Eisleben, Germany, 1483
 11/10	Soviet President Leonid Brezhnev dies at age 75, 1982
+11/10	Ken Kesey died, 2001
 11/11	Fyodor Mikhailovich Dostoevsky born in Moscow, Russia, 1821
 11/11	Kurt Vonnegut, Jr, born in Indianapolis, 1922
 11/13	Robert Louis Stevenson born, 1850
