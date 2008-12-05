@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.18 2008/12/03 20:40:56 stevesk Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.19 2008/12/05 15:45:53 stevesk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2008 $
+.Dd $Mdocdate: December 5 2008 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ file.
 .Sh EXAMPLES
 Configure pin 20 to have push-pull output:
 .Pp
-.Dl # gpioctl gpio0 20 out pp
+.Dl # gpioctl gpio0 20 set out pp
 .Pp
 Write logical 1 to pin 20:
 .Pp
