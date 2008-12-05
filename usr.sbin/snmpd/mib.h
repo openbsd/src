@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.16 2008/07/24 12:59:06 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.17 2008/12/05 16:06:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -140,6 +140,42 @@
 #define MIB_hrStorageSize		MIB_hrStorageEntry, 5
 #define MIB_hrStorageUsed		MIB_hrStorageEntry, 6
 #define MIB_hrStorageAllocationFailures	MIB_hrStorageEntry, 7
+#define MIB_hrDevice			MIB_host, 3
+#define MIB_hrDeviceTypes		MIB_hrDevice, 1
+#define MIB_hrDeviceOther		MIB_hrDeviceTypes, 1
+#define MIB_hrDeviceUnknown		MIB_hrDeviceTypes, 2
+#define MIB_hrDeviceProcessor		MIB_hrDeviceTypes, 3
+#define MIB_hrDeviceNetwork		MIB_hrDeviceTypes, 4
+#define MIB_hrDevicePrinter		MIB_hrDeviceTypes, 5
+#define MIB_hrDeviceDiskStorage		MIB_hrDeviceTypes, 6
+#define MIB_hrDeviceVideo		MIB_hrDeviceTypes, 10
+#define MIB_hrDeviceAudio		MIB_hrDeviceTypes, 11
+#define MIB_hrDeviceCoprocessor		MIB_hrDeviceTypes, 12
+#define MIB_hrDeviceKeyboard		MIB_hrDeviceTypes, 13
+#define MIB_hrDeviceModem		MIB_hrDeviceTypes, 14
+#define MIB_hrDeviceParallelPort	MIB_hrDeviceTypes, 15
+#define MIB_hrDevicePointing		MIB_hrDeviceTypes, 16
+#define MIB_hrDeviceSerialPort		MIB_hrDeviceTypes, 17
+#define MIB_hrDeviceTape		MIB_hrDeviceTypes, 18
+#define MIB_hrDeviceClock		MIB_hrDeviceTypes, 19
+#define MIB_hrDeviceVolatileMemory	MIB_hrDeviceTypes, 20
+#define MIB_hrDeviceNonVolatileMemory	MIB_hrDeviceTypes, 21
+#define MIB_hrDeviceTable		MIB_hrDevice, 2
+#define MIB_hrDeviceEntry		MIB_hrDeviceTable, 1
+#define OIDIDX_hrDevice			10
+#define OIDIDX_hrDeviceEntry		11
+#define MIB_hrDeviceIndex		MIB_hrDeviceEntry, 1
+#define MIB_hrDeviceType		MIB_hrDeviceEntry, 2
+#define MIB_hrDeviceDescr		MIB_hrDeviceEntry, 3
+#define MIB_hrDeviceID			MIB_hrDeviceEntry, 4
+#define MIB_hrDeviceStatus		MIB_hrDeviceEntry, 5
+#define MIB_hrDeviceErrors		MIB_hrDeviceEntry, 6
+#define MIB_hrProcessorTable		MIB_hrDevice, 3
+#define MIB_hrProcessorEntry		MIB_hrProcessorTable, 1
+#define OIDIDX_hrProcessor		10
+#define OIDIDX_hrProcessorEntry		11
+#define MIB_hrProcessorFrwID		MIB_hrProcessorEntry, 1
+#define MIB_hrProcessorLoad		MIB_hrProcessorEntry, 2
 #define MIB_hrSWRun			MIB_host, 4
 #define MIB_hrSWOSIndex			MIB_hrSWRun, 1
 #define MIB_hrSWRunTable		MIB_hrSWRun, 2
@@ -454,6 +490,38 @@
 	{ MIBDECL(hrStorageSize) },			\
 	{ MIBDECL(hrStorageUsed) },			\
 	{ MIBDECL(hrStorageAllocationFailures) },	\
+	{ MIBDECL(hrDevice) },				\
+	{ MIBDECL(hrDeviceTypes) },			\
+	{ MIBDECL(hrDeviceOther) },			\
+	{ MIBDECL(hrDeviceUnknown) },			\
+	{ MIBDECL(hrDeviceProcessor) },			\
+	{ MIBDECL(hrDeviceNetwork) },			\
+	{ MIBDECL(hrDevicePrinter) },			\
+	{ MIBDECL(hrDeviceDiskStorage) },		\
+	{ MIBDECL(hrDeviceVideo) },			\
+	{ MIBDECL(hrDeviceAudio) },			\
+	{ MIBDECL(hrDeviceCoprocessor) },		\
+	{ MIBDECL(hrDeviceKeyboard) },			\
+	{ MIBDECL(hrDeviceModem) },			\
+	{ MIBDECL(hrDeviceParallelPort) },		\
+	{ MIBDECL(hrDevicePointing) },			\
+	{ MIBDECL(hrDeviceSerialPort) },		\
+	{ MIBDECL(hrDeviceTape) },			\
+	{ MIBDECL(hrDeviceClock) },			\
+	{ MIBDECL(hrDeviceVolatileMemory) },		\
+	{ MIBDECL(hrDeviceNonVolatileMemory) },		\
+	{ MIBDECL(hrDeviceTable) },			\
+	{ MIBDECL(hrDeviceEntry) },			\
+	{ MIBDECL(hrDeviceIndex) },			\
+	{ MIBDECL(hrDeviceType) },			\
+	{ MIBDECL(hrDeviceDescr) },			\
+	{ MIBDECL(hrDeviceID) },			\
+	{ MIBDECL(hrDeviceStatus) },			\
+	{ MIBDECL(hrDeviceErrors) },			\
+	{ MIBDECL(hrProcessorTable) },			\
+	{ MIBDECL(hrProcessorEntry) },			\
+	{ MIBDECL(hrProcessorFrwID) },			\
+	{ MIBDECL(hrProcessorLoad) },			\
 	{ MIBDECL(hrSWRun) },				\
 	{ MIBDECL(hrSWOSIndex) },			\
 	{ MIBDECL(hrSWRunTable) },			\
