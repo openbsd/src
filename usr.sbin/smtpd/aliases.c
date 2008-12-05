@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.7 2008/11/25 23:01:00 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.8 2008/12/05 17:31:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include <ctype.h>
 #include <db.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -132,7 +131,7 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 		else {
 			aliasp = calloc(1, sizeof(struct alias));
 			if (aliasp == NULL)
-				err(1, "calloc");
+				fatal("aliases_get: calloc");
 			*aliasp = alias;
 			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
 		}
@@ -266,7 +265,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		else {
 			aliasp = calloc(1, sizeof(struct alias));
 			if (aliasp == NULL)
-				err(1, "calloc");
+				fatal("aliases_virtual_get: calloc");
 			*aliasp = alias;
 			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
 		}
@@ -307,7 +306,7 @@ aliases_expand_include(struct aliaseslist *aliases, char *filename)
 		else {
 			aliasp = calloc(1, sizeof(struct alias));
 			if (aliasp == NULL)
-				err(1, "calloc");
+				fatal("aliases_expand_include: calloc");
 			*aliasp = alias;
 			TAILQ_INSERT_TAIL(aliases, aliasp, entry);
 		}
