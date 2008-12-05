@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.40 2008/11/17 09:40:09 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.41 2008/12/05 07:03:52 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2008 $
+.Dd $Mdocdate: December 5 2008 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -181,8 +181,7 @@ options specified before an
 .Fl o ,
 or
 .Fl s
-are applied to
-.Ar file .
+are applied to the corresponding file.
 .Pp
 Settings for the audio device
 can be changed using the
@@ -206,12 +205,11 @@ is given anyway,
 any
 .Fl Ccer
 options specified before
-.Fl io
-options are applied both to
-.Ar file
+.Fl ios
+options are applied both to the corresponding file
 and the default audio device;
 if they are specified after
-.Fl io
+.Fl ios
 options,
 they will be applied only to the default audio device.
 .Pp
