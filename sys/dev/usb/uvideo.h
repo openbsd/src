@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.38 2008/12/03 03:47:25 yuo Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.39 2008/12/05 10:44:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -447,12 +447,12 @@ struct uvideo_bulk_xfer {
 #define UVIDEO_IXFERS		3
 struct uvideo_vs_iface {
 	usbd_interface_handle  	 ifaceh;
-	int			 endpoint;
 	usbd_pipe_handle	 pipeh;
+	int			 iface;
 	int			 numalts;
 	int			 curalt;
+	int			 endpoint;
 	uint32_t		 psize;
-	int			 iface;
 	int			 bulk_endpoint;
 	int			 bulk_running;
 	struct uvideo_isoc_xfer	 ixfer[UVIDEO_IXFERS];
