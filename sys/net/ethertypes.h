@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.9 2008/05/05 13:40:17 dlg Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.10 2008/12/05 01:25:24 sthen Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -300,6 +300,7 @@
 #define	ETHERTYPE_LANPROBE	0x8888	/* HP LanProbe test? */
 #define	ETHERTYPE_PAE		0x888E	/* 802.1X Port Access Entity */
 #define	ETHERTYPE_AOE		0x88A2	/* ATA over Ethernet */
+#define	ETHERTYPE_QINQ		0x88A8	/* 802.1ad VLAN stacking */
 #define	ETHERTYPE_LLDP		0x88CC	/* Link Layer Discovery Protocol */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */

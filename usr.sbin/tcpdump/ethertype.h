@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertype.h,v 1.13 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.14 2008/12/05 01:25:24 sthen Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: ethertype.h,v 1.13 2007/10/07 16:41:05 deraadt Exp $ (LBL)
+ * @(#) $Id: ethertype.h,v 1.14 2008/12/05 01:25:24 sthen Exp $ (LBL)
  */
 
 /*
@@ -101,6 +101,9 @@
 #endif
 #ifndef ETHERTYPE_8021Q
 #define ETHERTYPE_8021Q		0x8100
+#endif
+#ifndef ETHERTYPE_QINQ
+#define ETHERTYPE_QINQ		0x88a8
 #endif
 #ifndef ETHERTYPE_IPX
 #define ETHERTYPE_IPX		0x8137

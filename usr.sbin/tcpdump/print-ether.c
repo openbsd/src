@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.24 2008/10/16 12:57:01 mpf Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.25 2008/12/05 01:25:24 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-ether.c,v 1.24 2008/10/16 12:57:01 mpf Exp $ (LBL)";
+    "@(#) $Id: print-ether.c,v 1.25 2008/12/05 01:25:24 sthen Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -204,7 +204,11 @@ recurse:
 		return (1);
 
 	case ETHERTYPE_8021Q:
-		printf("802.1Q vid %d pri %d%s",
+		printf("802.1Q ");
+	case ETHERTYPE_QINQ:
+		if (ethertype == ETHERTYPE_QINQ)
+			printf("QinQ s");
+		printf("vid %d pri %d%s",
 		       ntohs(*(unsigned short*)p)&0xFFF,
 		       ntohs(*(unsigned short*)p)>>13,
 		       (ntohs(*(unsigned short*)p)&0x1000) ? " cfi " : " ");
