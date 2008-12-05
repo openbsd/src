@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.21 2008/09/26 15:19:55 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.22 2008/12/05 12:34:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -430,7 +430,8 @@ snmpe_debug_elements(struct ber_element *root)
 			fprintf(stderr, "addr %s\n",
 			    inet_ntoa(*(struct in_addr *)buf));
 		} else
-			fprintf(stderr, "string \"%s\"\n", buf);
+			fprintf(stderr, "string \"%s\"\n",
+			    root->be_len ? buf : "");
 		break;
 	case BER_TYPE_NULL:	/* no payload */
 	case BER_TYPE_EOC:
