@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.12 2008/12/03 17:58:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.13 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,6 +68,7 @@ pid_t	mda_pid = 0;
 pid_t	mta_pid = 0;
 pid_t	control_pid = 0;
 pid_t	smtp_pid = 0;
+pid_t	runner_pid = 0;
 
 
 int __b64_pton(char const *, unsigned char *, size_t);
@@ -94,7 +95,8 @@ parent_shutdown(void)
 		mda_pid,
 		mta_pid,
 		control_pid,
-		smtp_pid
+		smtp_pid,
+		runner_pid
 	};
 
 	for (i = 0; i < sizeof(pids) / sizeof(pid); i++)
@@ -427,6 +429,7 @@ parent_sig_handler(int sig, short event, void *p)
 		{ mta_pid,	"mail transfer agent" },
 		{ control_pid,	"control process" },
 		{ smtp_pid,	"smtp server" },
+		{ runner_pid,	"runner" },
 		{ 0,		NULL },
 	};
 
@@ -571,6 +574,7 @@ main(int argc, char *argv[])
 	mta_pid = mta(&env);
 	smtp_pid = smtp(&env);
 	control_pid = control(&env);
+	runner_pid = runner(&env);
 
 	setproctitle("parent");
 	SPLAY_INIT(&env.mdaproc_queue);

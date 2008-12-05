@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.7 2008/11/25 20:26:40 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.8 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,7 @@ __dead void	mta_shutdown(void);
 void		mta_sig_handler(int, short, void *);
 void		mta_dispatch_parent(int, short, void *);
 void		mta_dispatch_queue(int, short, void *);
+void		mta_dispatch_runner(int, short, void *);
 void		mta_setup_events(struct smtpd *);
 void		mta_disable_events(struct smtpd *);
 void		mta_timeout(int, short, void *);
@@ -150,6 +151,72 @@ mta_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_QUEUE_MESSAGE_FD: {
+			struct batch	*batchp;
+			int fd;
+
+			if ((fd = imsg_get_fd(ibuf, &imsg)) == -1) {
+				/* NEEDS_FIX - unsure yet how it must be handled */
+				errx(1, "imsg_get_fd");
+			}
+
+			batchp = (struct batch *)imsg.data;
+			batchp = batch_by_id(env, batchp->id);
+
+			if ((batchp->messagefp = fdopen(fd, "r")) == NULL)
+				err(1, "fdopen");
+
+			evbuffer_add_printf(batchp->bev->output, "DATA\r\n");
+
+			bufferevent_enable(batchp->bev, EV_WRITE|EV_READ);
+			break;
+		}
+		default:
+			log_debug("parent_dispatch_mta: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+mta_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_RUNNER];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("mta_dispatch_runner: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
 		case IMSG_CREATE_BATCH: {
 			struct batch *batchp;
 
@@ -202,28 +269,8 @@ mta_dispatch_queue(int sig, short event, void *p)
 			}
 			break;
 		}
-		case IMSG_QUEUE_MESSAGE_FD: {
-			struct batch	*batchp;
-			int fd;
-
-			if ((fd = imsg_get_fd(ibuf, &imsg)) == -1) {
-				/* NEEDS_FIX - unsure yet how it must be handled */
-				errx(1, "imsg_get_fd");
-			}
-
-			batchp = (struct batch *)imsg.data;
-			batchp = batch_by_id(env, batchp->id);
-
-			if ((batchp->messagefp = fdopen(fd, "r")) == NULL)
-				err(1, "fdopen");
-
-			evbuffer_add_printf(batchp->bev->output, "DATA\r\n");
-
-			bufferevent_enable(batchp->bev, EV_WRITE|EV_READ);
-			break;
-		}
 		default:
-			log_debug("parent_dispatch_mta: unexpected imsg %d",
+			log_debug("mta_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -277,7 +324,8 @@ mta(struct smtpd *env)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
-		{ PROC_QUEUE,	mta_dispatch_queue }
+		{ PROC_QUEUE,	mta_dispatch_queue },
+		{ PROC_RUNNER,	mta_dispatch_runner }
 	};
 
 	switch (pid = fork()) {
@@ -320,7 +368,7 @@ mta(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_peers(env, peers, 1);
+	config_peers(env, peers, 2);
 
 	SPLAY_INIT(&env->batch_queue);
 

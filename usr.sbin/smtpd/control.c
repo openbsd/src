@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2008/11/17 21:27:03 chl Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,6 +57,7 @@ void		 control_dispatch_ext(int, short, void *);
 void		 control_dispatch_lka(int, short, void *);
 void		 control_dispatch_mfa(int, short, void *);
 void		 control_dispatch_queue(int, short, void *);
+void		 control_dispatch_runner(int, short, void *);
 
 struct ctl_connlist	ctl_conns;
 
@@ -86,6 +87,7 @@ control(struct smtpd *env)
 	struct event		 ev_sigterm;
 	struct peer		 peers [] = {
 		{ PROC_QUEUE,	 control_dispatch_queue },
+		{ PROC_RUNNER,	 control_dispatch_runner },
 	};
 
 	switch (pid = fork()) {
@@ -158,7 +160,7 @@ control(struct smtpd *env)
 
 	TAILQ_INIT(&ctl_conns);
 
-	config_peers(env, peers, 1);
+	config_peers(env, peers, 2);
 	control_listen(env);
 	event_dispatch();
 	control_shutdown();
@@ -451,6 +453,52 @@ control_dispatch_queue(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		default:
 			log_debug("control_dispatch_queue: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+control_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_RUNNER];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("control_dispatch_runner: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("control_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}

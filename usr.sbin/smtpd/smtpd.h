@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.19 2008/12/04 17:24:13 cloder Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.20 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -19,7 +19,7 @@
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAX_LISTEN		 16
-#define PROC_COUNT		 8
+#define PROC_COUNT		 9
 #define READ_BUF_SIZE		 32768
 #define MAX_NAME_SIZE		 64
 
@@ -251,6 +251,7 @@ enum smtp_proc_type {
 	PROC_MDA,
 	PROC_MTA,
 	PROC_CONTROL,
+	PROC_RUNNER,
 } smtpd_process;
 
 struct peer {
@@ -623,7 +624,6 @@ struct smtpd {
 	u_int32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	struct event				 sc_ev;
-	struct event				 sc_rqev;
 	int					 sc_pipes[PROC_COUNT]
 						    [PROC_COUNT][2];
 	struct imsgbuf				*sc_ibufs[PROC_COUNT];
@@ -717,7 +717,6 @@ int		 batch_cmp(struct batch *, struct batch *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
 int		 queue_remove_batch_message(struct smtpd *, struct batch *, struct message *);
-SPLAY_PROTOTYPE(batchtree, batch, b_nodes, batch_cmp);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);
@@ -730,6 +729,11 @@ pid_t		 mta(struct smtpd *);
 /* control.c */
 pid_t		 control(struct smtpd *);
 void		 session_socket_blockmode(int, enum blockmodes);
+
+/* runner.c */
+pid_t		 runner(struct smtpd *);
+SPLAY_PROTOTYPE(batchtree, batch, b_nodes, batch_cmp);
+
 
 /* smtp.c */
 pid_t		 smtp(struct smtpd *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.4 2008/11/25 20:26:40 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.5 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,6 +49,7 @@ void		lka_dispatch_parent(int, short, void *);
 void		lka_dispatch_mfa(int, short, void *);
 void		lka_dispatch_smtp(int, short, void *);
 void		lka_dispatch_queue(int, short, void *);
+void		lka_dispatch_runner(int, short, void *);
 void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
@@ -470,6 +471,52 @@ lka_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 
+		default:
+			log_debug("lka_dispatch_queue: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+lka_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_RUNNER];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("lka_dispatch_runner: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
 		case IMSG_LKA_MX_LOOKUP: {
 			struct batch *batchp;
 			struct addrinfo hints, *res, *resp;
@@ -545,8 +592,9 @@ lka_dispatch_queue(int sig, short event, void *p)
 
 			break;
 		}
+
 		default:
-			log_debug("lka_dispatch_queue: unexpected imsg %d",
+			log_debug("lka_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -586,6 +634,7 @@ lka(struct smtpd *env)
 		{ PROC_MFA,	lka_dispatch_mfa },
 		{ PROC_QUEUE,	lka_dispatch_queue },
 		{ PROC_SMTP,	lka_dispatch_smtp },
+		{ PROC_RUNNER,	lka_dispatch_runner },
 	};
 
 	switch (pid = fork()) {
@@ -620,7 +669,7 @@ lka(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_peers(env, peers, 4);
+	config_peers(env, peers, 5);
 
 	lka_setup_events(env);
 	event_dispatch();

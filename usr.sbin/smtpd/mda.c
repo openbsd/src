@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: mda.c,v 1.3 2008/12/05 02:51:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,7 @@ __dead void	mda_shutdown(void);
 void		mda_sig_handler(int, short, void *);
 void		mda_dispatch_parent(int, short, void *);
 void		mda_dispatch_queue(int, short, void *);
+void		mda_dispatch_runner(int, short, void *);
 void		mda_setup_events(struct smtpd *);
 void		mda_disable_events(struct smtpd *);
 void		mda_timeout(int, short, void *);
@@ -217,6 +218,52 @@ mda_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		default:
+			log_debug("parent_dispatch_queue: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+mda_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_RUNNER];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("parent_dispatch_runner: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
 		case IMSG_CREATE_BATCH: {
 			struct batch	*batchp;
 
@@ -269,9 +316,8 @@ mda_dispatch_queue(int sig, short event, void *p)
 
 			break;
 		}
-
 		default:
-			log_debug("parent_dispatch_queue: unexpected imsg %d",
+			log_debug("parent_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -327,7 +373,8 @@ mda(struct smtpd *env)
 
 	struct peer peers[] = {
 		{ PROC_PARENT,	mda_dispatch_parent },
-		{ PROC_QUEUE,	mda_dispatch_queue }
+		{ PROC_QUEUE,	mda_dispatch_queue },
+		{ PROC_RUNNER,	mda_dispatch_runner }
 	};
 
 	switch (pid = fork()) {
@@ -373,7 +420,7 @@ mda(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_peers(env, peers, 2);
+	config_peers(env, peers, 3);
 
 	mda_setup_events(env);
 	event_dispatch();
