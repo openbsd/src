@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.13 2008/07/18 12:26:52 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.14 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,111 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
+}
+
+const char *
+host_error(enum host_error he)
+{
+	switch (he) {
+	case HCE_NONE:
+		return ("none");
+		break;
+	case HCE_ABORT:
+		return ("aborted");
+		break;
+	case HCE_INTERVAL_TIMEOUT:
+		return ("interval timeout");
+		break;
+	case HCE_ICMP_OK:
+		return ("icmp ok");
+		break;
+	case HCE_ICMP_READ_TIMEOUT:
+		return ("icmp read timeout");
+		break;
+	case HCE_ICMP_WRITE_TIMEOUT:
+		return ("icmp write timeout");
+		break;
+	case HCE_TCP_CONNECT_ERROR:
+		return ("tcp connect error");
+		break;
+	case HCE_TCP_CONNECT_FAIL:
+		return ("tcp connect failed");
+		break;
+	case HCE_TCP_CONNECT_TIMEOUT:
+		return ("tcp connect timeout");
+		break;
+	case HCE_TCP_CONNECT_OK:
+		return ("tcp connect ok");
+		break;
+	case HCE_TCP_WRITE_TIMEOUT:
+		return ("tcp write timeout");
+		break;
+	case HCE_TCP_WRITE_FAIL:
+		return ("tcp write failed");
+		break;
+	case HCE_TCP_READ_TIMEOUT:
+		return ("tcp read timeout");
+		break;
+	case HCE_TCP_READ_FAIL:
+		return ("tcp read failed");
+		break;
+	case HCE_SCRIPT_OK:
+		return ("script ok");
+		break;
+	case HCE_SCRIPT_FAIL:
+		return ("script failed");
+		break;
+	case HCE_SSL_CONNECT_OK:
+		return ("ssl connect ok");
+		break;
+	case HCE_SSL_CONNECT_FAIL:
+		return ("ssl connect failed");
+		break;
+	case HCE_SSL_CONNECT_TIMEOUT:
+		return ("ssl connect timeout");
+		break;
+	case HCE_SSL_CONNECT_ERROR:
+		return ("ssl connect error");
+		break;
+	case HCE_SSL_READ_TIMEOUT:
+		return ("ssl read timeout");
+		break;
+	case HCE_SSL_WRITE_TIMEOUT:
+		return ("ssl write timeout");
+		break;
+	case HCE_SSL_READ_ERROR:
+		return ("ssl read error");
+		break;
+	case HCE_SSL_WRITE_ERROR:
+		return ("ssl write error");
+		break;
+	case HCE_SEND_EXPECT_FAIL:
+		return ("send/expect failed");
+		break;
+	case HCE_SEND_EXPECT_OK:
+		return ("send/expect ok");
+		break;
+	case HCE_HTTP_CODE_ERROR:
+		return ("http code malformed");
+		break;
+	case HCE_HTTP_CODE_FAIL:
+		return ("http code mismatch");
+		break;
+	case HCE_HTTP_CODE_OK:
+		return ("http code ok");
+		break;
+	case HCE_HTTP_DIGEST_ERROR:
+		return ("http digest malformed");
+		break;
+	case HCE_HTTP_DIGEST_FAIL:
+		return ("http digest mismatch");
+		break;
+	case HCE_HTTP_DIGEST_OK:
+		return ("http digest ok");
+		break;
+	}
+	/* NOTREACHED */
+	return ("invalid");
 }
 
 const char *

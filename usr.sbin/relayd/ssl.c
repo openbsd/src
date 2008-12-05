@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.13 2007/12/07 17:17:01 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.14 2008/12/05 16:37:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,7 +54,7 @@ ssl_read(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, "ssl_read: timeout");
+		hce_notify_done(cte->host, HCE_SSL_READ_TIMEOUT);
 		return;
 	}
 
@@ -78,12 +78,7 @@ ssl_read(int s, short event, void *arg)
 				cte->host->up = HOST_DOWN;
 				(void)cte->validate_close(cte);
 				ssl_cleanup(cte);
-				if (cte->host->up == HOST_UP)
-					hce_notify_done(cte->host,
-					    "ssl_read: check succeeded");
-				else
-					hce_notify_done(cte->host,
-					    "ssl_read: check failed");
+				hce_notify_done(cte->host, cte->host->he);
 				return;
 			}
 			/* FALLTHROUGH */
@@ -91,7 +86,7 @@ ssl_read(int s, short event, void *arg)
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot read");
 			ssl_cleanup(cte);
-			hce_notify_done(cte->host, "ssl_read: SSL error");
+			hce_notify_done(cte->host, HCE_SSL_READ_ERROR);
 			break;
 		}
 		return;
@@ -103,10 +98,7 @@ ssl_read(int s, short event, void *arg)
 			goto retry;
 
 		ssl_cleanup(cte);
-		if (cte->host->up == HOST_UP)
-			hce_notify_done(cte->host, "ssl_read: check succeeded");
-		else
-			hce_notify_done(cte->host, "ssl_read: check failed");
+		hce_notify_done(cte->host, cte->host->he);
 		return;
 	}
 
@@ -128,7 +120,7 @@ ssl_write(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, "ssl_write: timeout");
+		hce_notify_done(cte->host, HCE_SSL_WRITE_TIMEOUT);
 		return;
 	}
 
@@ -149,7 +141,7 @@ ssl_write(int s, short event, void *arg)
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot write");
 			ssl_cleanup(cte);
-			hce_notify_done(cte->host, "ssl_write: SSL error");
+			hce_notify_done(cte->host, HCE_SSL_WRITE_ERROR);
 			return;
 		}
 	}
@@ -174,7 +166,7 @@ ssl_connect(int s, short event, void *arg)
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
-		hce_notify_done(cte->host, "ssl_connect: timeout");
+		hce_notify_done(cte->host, HCE_SSL_CONNECT_TIMEOUT);
 		ssl_cleanup(cte);
 		return;
 	}
@@ -194,7 +186,7 @@ ssl_connect(int s, short event, void *arg)
 		default:
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot connect");
-			hce_notify_done(cte->host, "ssl_connect: SSL error");
+			hce_notify_done(cte->host, HCE_SSL_CONNECT_FAIL);
 			ssl_cleanup(cte);
 			return;
 		}
@@ -202,7 +194,7 @@ ssl_connect(int s, short event, void *arg)
 
 	if (cte->table->conf.check == CHECK_TCP) {
 		cte->host->up = HOST_UP;
-		hce_notify_done(cte->host, "ssl_connect: connect successful");
+		hce_notify_done(cte->host, HCE_SSL_CONNECT_OK);
 		ssl_cleanup(cte);
 		return;
 	}
@@ -272,8 +264,7 @@ ssl_transaction(struct ctl_tcp_event *cte)
 		cte->host->up = HOST_UNKNOWN;
 		ssl_error(cte->host->conf.name, "cannot set fd");
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host,
-		    "ssl_transaction: cannot set SSL fd");
+		hce_notify_done(cte->host, HCE_SSL_CONNECT_ERROR);
 		return;
 	}
 	SSL_set_connect_state(cte->ssl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.52 2008/09/03 13:41:49 jsg Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.53 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -263,6 +263,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			memcpy(&st, imsg.data, sizeof(st));
 			if ((host = host_find(env, st.id)) == NULL)
 				fatalx("pfe_dispatch_imsg: invalid host id");
+			host->he = st.he;
 			if (host->flags & F_DISABLE)
 				break;
 			host->retry_cnt = st.retry_cnt;

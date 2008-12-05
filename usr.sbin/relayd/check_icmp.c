@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.25 2008/08/08 08:51:21 thib Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.26 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -43,7 +43,7 @@ void	icmp_setup(struct relayd *, struct ctl_icmp_event *, int);
 void	check_icmp_add(struct ctl_icmp_event *, int, struct timeval *,
 	    void (*)(int, short, void *));
 int	icmp_checks_done(struct ctl_icmp_event *);
-void	icmp_checks_timeout(struct ctl_icmp_event *, const char *);
+void	icmp_checks_timeout(struct ctl_icmp_event *, enum host_error);
 void	send_icmp(int, short, void *);
 void	recv_icmp(int, short, void *);
 int	in_cksum(u_short *, int);
@@ -135,7 +135,7 @@ icmp_checks_done(struct ctl_icmp_event *cie)
 }
 
 void
-icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
+icmp_checks_timeout(struct ctl_icmp_event *cie, enum host_error he)
 {
 	struct table	*table;
 	struct host	*host;
@@ -150,7 +150,7 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 				continue;
 			if (!(host->flags & F_CHECK_DONE)) {
 				host->up = HOST_DOWN;
-				hce_notify_done(host, msg);
+				hce_notify_done(host, he);
 			}
 		}
 	}
@@ -171,7 +171,7 @@ send_icmp(int s, short event, void *arg)
 	int			 i = 0;
 
 	if (event == EV_TIMEOUT) {
-		icmp_checks_timeout(cie, "send_icmp: timeout");
+		icmp_checks_timeout(cie, HCE_ICMP_WRITE_TIMEOUT);
 		return;
 	}
 
@@ -255,7 +255,7 @@ recv_icmp(int s, short event, void *arg)
 	objid_t			 id;
 
 	if (event == EV_TIMEOUT) {
-		icmp_checks_timeout(cie, NULL);
+		icmp_checks_timeout(cie, HCE_ICMP_READ_TIMEOUT);
 		return;
 	}
 
@@ -293,7 +293,7 @@ recv_icmp(int s, short event, void *arg)
 
 	host->up = HOST_UP;
 	host->flags |= F_CHECK_DONE;
-	hce_notify_done(host, "recv_icmp: done");
+	hce_notify_done(host, HCE_ICMP_OK);
 
 	if (icmp_checks_done(cie))
 		return;

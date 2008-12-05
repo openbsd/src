@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.45 2008/09/29 15:12:22 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.46 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -192,6 +192,7 @@ hce_disable_events(void)
 	evtimer_del(&env->sc_ev);
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
+			host->he = HCE_ABORT;
 			event_del(&host->cte.ev);
 			close(host->cte.s);
 		}
@@ -219,6 +220,8 @@ hce_launch_checks(int fd, short event, void *arg)
 	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, -1, NULL, 0);
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
+			if ((host->flags & F_CHECK_DONE) == 0)
+				host->he = HCE_INTERVAL_TIMEOUT;
 			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 			event_del(&host->cte.ev);
 		}
@@ -269,7 +272,7 @@ hce_launch_checks(int fd, short event, void *arg)
 }
 
 void
-hce_notify_done(struct host *host, const char *msg)
+hce_notify_done(struct host *host, enum host_error he)
 {
 	struct table		*table;
 	struct ctl_status	 st;
@@ -278,8 +281,10 @@ hce_notify_done(struct host *host, const char *msg)
 	u_int			 logopt;
 	struct host		*h;
 	int			 hostup;
+	const char		*msg;
 
 	hostup = host->up;
+	host->he = he;
 
 	if (host->up == HOST_DOWN && host->retry_cnt) {
 		log_debug("hce_notify_done: host %s retry %d",
@@ -297,7 +302,9 @@ hce_notify_done(struct host *host, const char *msg)
 	st.up = host->up;
 	st.check_cnt = host->check_cnt;
 	st.retry_cnt = host->retry_cnt;
+	st.he = he;
 	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
+	msg = host_error(he);
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
 
@@ -338,7 +345,7 @@ hce_notify_done(struct host *host, const char *msg)
 	/* Notify for all other hosts that inherit the state from this one */
 	SLIST_FOREACH(h, &host->children, child) {
 		h->up = hostup;
-		hce_notify_done(h, msg);
+		hce_notify_done(h, he);
 	}
 }
 
@@ -395,6 +402,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			host->up = HOST_UNKNOWN;
 			host->check_cnt = 0;
 			host->up_cnt = 0;
+			host->he = HCE_NONE;
 			break;
 		case IMSG_HOST_ENABLE:
 			memcpy(&id, imsg.data, sizeof(id));
@@ -402,6 +410,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 				fatalx("hce_dispatch_imsg: desynchronized");
 			host->flags &= ~(F_DISABLE);
 			host->up = HOST_UNKNOWN;
+			host->he = HCE_NONE;
 			break;
 		case IMSG_TABLE_DISABLE:
 			memcpy(&id, imsg.data, sizeof(id));

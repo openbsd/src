@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.98 2008/11/09 12:34:47 tobias Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.99 2008/12/05 16:37:56 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2008 $
+.Dd $Mdocdate: December 5 2008 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -248,6 +248,16 @@ If
 is specified, it is used as the
 .Dq Host:
 header to query a specific hostname at the target host.
+To validate the HTTP return code, use this shell command:
+.Bd -literal -offset indent
+$ echo -n "HEAD <path> HTTP/1.0\er\en\er\en" | \e
+	nc <host> <port> | head -n1
+.Ed
+.Pp
+This prints the status header including the actual return code:
+.Bd -literal -offset indent
+HTTP/1.1 200 OK
+.Ed
 .It Xo
 .Ic check https Ar path
 .Op Ic host Ar hostname
@@ -280,8 +290,7 @@ To compute the digest, use this simple command:
 $ ftp -o - http://host[:port]/path | sha1
 .Ed
 .Pp
-This gives a digest
-that can be used as-is in a digest statement:
+This gives a digest that can be used as-is in a digest statement:
 .Bd -literal -offset indent
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.6 2008/02/13 11:32:59 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.7 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,7 @@ script_done(struct relayd *env, struct ctl_script *scr)
 	host->flags |= F_CHECK_DONE;
 
 	hce_notify_done(host, host->up == HOST_UP ?
-	    "script: done" : "script: failed");
+	    HCE_SCRIPT_OK : HCE_SCRIPT_FAIL);
 }
 
 void

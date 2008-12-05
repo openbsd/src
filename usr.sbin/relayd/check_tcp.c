@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.32 2008/03/03 16:58:41 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.33 2008/12/05 16:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,6 +54,7 @@ check_tcp(struct ctl_tcp_event *cte)
 	socklen_t		 len;
 	struct timeval		 tv;
 	struct linger		 lng;
+	int			 he = HCE_TCP_CONNECT_ERROR;
 
 	switch (cte->host->conf.ss.ss_family) {
 	case AF_INET:
@@ -84,8 +85,10 @@ check_tcp(struct ctl_tcp_event *cte)
 
 	bcopy(&cte->table->conf.timeout, &tv, sizeof(tv));
 	if (connect(s, (struct sockaddr *)&cte->host->conf.ss, len) == -1) {
-		if (errno != EINPROGRESS)
+		if (errno != EINPROGRESS) {
+			he = HCE_TCP_CONNECT_FAIL;
 			goto bad;
+		}
 	}
 
 	cte->host->up = HOST_UP;
@@ -96,7 +99,7 @@ check_tcp(struct ctl_tcp_event *cte)
 bad:
 	close(s);
 	cte->host->up = HOST_DOWN;
-	hce_notify_done(cte->host, "check_tcp: cannot connect");
+	hce_notify_done(cte->host, he);
 }
 
 void
@@ -109,7 +112,7 @@ tcp_write(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		close(s);
 		cte->host->up = HOST_DOWN;
-		hce_notify_done(cte->host, "tcp_write: connect timed out");
+		hce_notify_done(cte->host, HCE_TCP_CONNECT_TIMEOUT);
 		return;
 	}
 
@@ -119,7 +122,7 @@ tcp_write(int s, short event, void *arg)
 	if (err != 0) {
 		close(s);
 		cte->host->up = HOST_DOWN;
-		hce_notify_done(cte->host, "tcp_write: connect failed");
+		hce_notify_done(cte->host, HCE_TCP_CONNECT_FAIL);
 		return;
 	}
 
@@ -137,7 +140,7 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		if (cte->table->conf.flags & F_SSL)
 			break;
 		close(s);
-		hce_notify_done(cte->host, "tcp_host_up: connect successful");
+		hce_notify_done(cte->host, HCE_TCP_CONNECT_OK);
 		return;
 	case CHECK_HTTP_CODE:
 		cte->validate_read = NULL;
@@ -181,7 +184,7 @@ tcp_send_req(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		close(cte->s);
-		hce_notify_done(cte->host, "tcp_send_req: timeout");
+		hce_notify_done(cte->host, HCE_TCP_WRITE_TIMEOUT);
 		return;
 	}
 	len = strlen(cte->req);
@@ -193,7 +196,7 @@ tcp_send_req(int s, short event, void *arg)
 			log_warnx("tcp_send_req: cannot send request");
 			cte->host->up = HOST_DOWN;
 			close(cte->s);
-			hce_notify_done(cte->host, "tcp_send_req: write");
+			hce_notify_done(cte->host, HCE_TCP_WRITE_FAIL);
 			return;
 		}
 		cte->req += bs;
@@ -222,7 +225,7 @@ tcp_read_buf(int s, short event, void *arg)
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
 		close(s);
-		hce_notify_done(cte->host, "tcp_read_buf: timeout");
+		hce_notify_done(cte->host, HCE_TCP_READ_TIMEOUT);
 		return;
 	}
 
@@ -235,19 +238,14 @@ tcp_read_buf(int s, short event, void *arg)
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
 		close(cte->s);
-		hce_notify_done(cte->host, "tcp_read_buf: read failed");
+		hce_notify_done(cte->host, HCE_TCP_READ_FAIL);
 		return;
 	case 0:
 		cte->host->up = HOST_DOWN;
 		(void)cte->validate_close(cte);
 		close(cte->s);
 		buf_free(cte->buf);
-		if (cte->host->up == HOST_UP)
-			hce_notify_done(cte->host,
-			    "tcp_read_buf: check succeeded");
-		else
-			hce_notify_done(cte->host,
-			    "tcp_read_buf: check failed");
+		hce_notify_done(cte->host, cte->host->he);
 		return;
 	default:
 		if (buf_add(cte->buf, rbuf, br) == -1)
@@ -258,12 +256,7 @@ tcp_read_buf(int s, short event, void *arg)
 
 			close(cte->s);
 			buf_free(cte->buf);
-			if (cte->host->up == HOST_UP)
-				hce_notify_done(cte->host,
-				    "tcp_read_buf: check succeeded");
-			else
-				hce_notify_done(cte->host,
-				    "tcp_read_buf: check failed");
+			hce_notify_done(cte->host, cte->host->he);
 			return;
 		}
 		break; /* retry */
@@ -286,9 +279,11 @@ check_send_expect(struct ctl_tcp_event *cte)
 		fatal("out of memory");
 	*b = '\0';
 	if (fnmatch(cte->table->conf.exbuf, cte->buf->buf, 0) == 0) {
+		cte->host->he = HCE_SEND_EXPECT_OK;
 		cte->host->up = HOST_UP;
 		return (0);
 	}
+	cte->host->he = HCE_SEND_EXPECT_FAIL;
 	cte->host->up = HOST_UNKNOWN;
 
 	/*
@@ -318,6 +313,8 @@ check_http_code(struct ctl_tcp_event *cte)
 
 	head = cte->buf->buf;
 	host = cte->host;
+	host->he = HCE_HTTP_CODE_ERROR;
+
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
 		log_debug("check_http_code: %s failed "
@@ -341,9 +338,12 @@ check_http_code(struct ctl_tcp_event *cte)
 	if (code != cte->table->conf.retcode) {
 		log_debug("check_http_code: %s failed "
 		    "(invalid HTTP code returned)", host->conf.name);
+		host->he = HCE_HTTP_CODE_FAIL;
 		host->up = HOST_DOWN;
-	} else
+	} else {
+		host->he = HCE_HTTP_CODE_OK;
 		host->up = HOST_UP;
+	}
 	return (!(host->up == HOST_UP));
 }
 
@@ -365,6 +365,8 @@ check_http_digest(struct ctl_tcp_event *cte)
 
 	head = cte->buf->buf;
 	host = cte->host;
+	host->he = HCE_HTTP_DIGEST_ERROR;
+
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
 		log_debug("check_http_digest: %s failed "
 		    "(no end of headers)", host->conf.name);
@@ -378,8 +380,11 @@ check_http_digest(struct ctl_tcp_event *cte)
 	if (strcmp(cte->table->conf.digest, digest)) {
 		log_warnx("check_http_digest: %s failed "
 		    "(wrong digest)", host->conf.name);
+		host->he = HCE_HTTP_DIGEST_FAIL;
 		host->up = HOST_DOWN;
-	} else
+	} else {
+		host->he = HCE_HTTP_DIGEST_OK;
 		host->up = HOST_UP;
+	}
 	return (!(host->up == HOST_UP));
 }
