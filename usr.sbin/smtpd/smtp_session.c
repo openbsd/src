@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.18 2008/12/04 23:02:12 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.19 2008/12/05 17:29:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -623,7 +623,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 			else
 				s->s_state = S_RCPT;
 			evbuffer_add_printf(s->s_bev->output,
-			    "%d %s\r\n", ss->code, "Recipient rejected");
+			    "%d Recipient rejected\r\n", ss->code);
 			return;
 		}
 
