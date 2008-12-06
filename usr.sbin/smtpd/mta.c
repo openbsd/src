@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.9 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.10 2008/12/06 02:43:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -502,8 +502,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		bufferevent_enable(bev, EV_READ|EV_WRITE);
 		return 0;
 	}
-
-	line[strcspn(line, "\r")] = '\0';
 
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.19 2008/12/05 17:29:11 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.20 2008/12/06 02:43:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -729,7 +729,6 @@ read:
 	}
 
 	if (s->s_state == S_DATACONTENT) {
-		line[strcspn(line, "\r")] = '\0';
 		/*log_debug("content: %s", line);*/
 		if (strcmp(line, ".") == 0) {
 			s->s_state = S_DONE;
@@ -776,7 +775,6 @@ read:
 		goto read;
 	}
 
-	line[strcspn(line, "\r")] = '\0';
 	if ((ep = strchr(line, ':')) == NULL)
 		ep = strchr(line, ' ');
 	if (ep != NULL) {
