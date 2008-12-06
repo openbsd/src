@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.1 2008/12/05 03:28:37 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.2 2008/12/06 02:44:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,8 @@
 
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
+void		show_queue(int);
+void		show_runqueue(int);
 
 struct imsgname {
 	int type;
@@ -89,10 +91,28 @@ main(int argc, char *argv[])
 	int			done = 0;
 	int			n;
 
+	/* check for root privileges */
+	if (geteuid())
+		errx(1, "need root privileges");
+
 	/* parse options */
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
 		exit(1);
 
+	/* handle "disconnected" commands */
+	switch (res->action) {
+	case SHOWQUEUE:
+		show_queue(0);
+		break;
+	case SHOWRUNQUEUE:
+		show_runqueue(0);
+		break;
+	default:
+		goto connected;
+	}
+	return 0;
+
+connected:
 	/* connect to relayd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
