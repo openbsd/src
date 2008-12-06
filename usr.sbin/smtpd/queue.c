@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.20 2008/12/06 14:30:51 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.21 2008/12/06 23:49:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -813,30 +813,34 @@ queue_delete_incoming_message(char *message_id)
 	}
 
 	dirp = opendir(evpdir);
-	if (dirp == NULL)
+	if (dirp == NULL) {
+		if (errno == ENOENT)
+			goto delroot;
 		fatal("queue_delete_incoming_message: opendir");
+	}
 	while ((dp = readdir(dirp)) != NULL) {
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
 		spret = snprintf(evppath, MAXPATHLEN, "%s/%s", evpdir, dp->d_name);
 		if (spret == -1 || spret >= MAXPATHLEN)
-			fatal("queue_create_incoming_message: snprintf");
+			fatal("queue_delete_incoming_message: snprintf");
 
 		if (unlink(evppath) == -1) {
 			if (errno != ENOENT)
-				fatal("queue_create_incoming_message: unlink");
+				fatal("queue_delete_incoming_message: unlink");
 		}
 	}
 	closedir(dirp);
 
 	if (rmdir(evpdir) == -1)
 		if (errno != ENOENT)
-			fatal("queue_create_incoming_message: rmdir");
+			fatal("queue_delete_incoming_message: rmdir");
 
+delroot:
 	if (rmdir(rootdir) == -1)
 		if (errno != ENOENT)
-			fatal("queue_create_incoming_message: rmdir");
+			fatal("queue_delete_incoming_message: rmdir");
 
 	return;
 }
