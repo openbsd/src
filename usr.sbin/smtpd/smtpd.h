@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.20 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.21 2008/12/06 15:18:36 weerd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -344,7 +344,7 @@ struct rule {
 	struct map			*r_sources;
 	TAILQ_HEAD(condlist, cond)	 r_conditions;
 	enum action_type		 r_action;
-	union {
+	union rule_dest {
 		char			 path[MAXPATHLEN];
 		struct relayhost       	 relayhost;
 #define	MAXCOMMANDLEN	256
@@ -369,10 +369,10 @@ struct path {
 	char				 user[MAX_LOCALPART_SIZE];
 	char				 domain[MAX_DOMAINPART_SIZE];
 	char				 pw_name[MAXLOGNAME];
-	union {
+	union path_data {
 		char filename[MAXPATHLEN];
 		char filter[MAXPATHLEN];
-	} u;
+	}				 u;
 };
 
 enum alias_type {
@@ -386,23 +386,23 @@ enum alias_type {
 struct alias {
 	TAILQ_ENTRY(alias)		entry;
 	enum alias_type			 type;
-	union {
+	union alias_data {
 		char username[MAXLOGNAME];
 		char filename[MAXPATHLEN];
 		char filter[MAXPATHLEN];
 		struct path path;
-	} u;
+	}                                   u;
 };
 TAILQ_HEAD(aliaseslist, alias);
 
 struct submit_status {
 	u_int64_t			 id;
 	int				 code;
-	union {
+	union submit_path {
 		struct path		 path;
 		char			 msgid[MAXPATHLEN];
 		char			 errormsg[MAX_LINE_SIZE];
-	} u;
+	}				 u;
 	struct sockaddr_storage		 ss;
 };
 
