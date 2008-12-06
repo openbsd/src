@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.16 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.17 2008/12/06 05:08:02 tedu Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -518,8 +518,8 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 }
 
 void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *what)
+pci_intr_establish_flags(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, char *what, int flags)
 {
 	int pin, irq;
 	struct pic *pic;
@@ -542,7 +542,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg, what);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg, what,
+	    flags);
 }
 
 void
