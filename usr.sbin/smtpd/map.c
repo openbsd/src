@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: map.c,v 1.3 2008/12/06 14:30:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
