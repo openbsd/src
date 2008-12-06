@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2008/12/04 17:24:13 cloder Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2008/12/06 02:04:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,6 +37,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <pwd.h>
 #include <netdb.h>
@@ -256,12 +257,15 @@ main		: QUEUE INTERVAL interval	{
 					flags = F_STARTTLS;
 			}
 
-			if (host($4, &conf->sc_listeners,
-			    MAX_LISTEN, $5, flags) <= 0) {
-				yyerror("invalid virtual ip: %s", $4);
-				free($6);
-				free($4);
-				YYERROR;
+			if (! interface($4, &conf->sc_listeners,
+				MAX_LISTEN, $5, flags)) {
+				if (host($4, &conf->sc_listeners,
+					MAX_LISTEN, $5, flags) <= 0) {
+					yyerror("invalid virtual ip or interface: %s", $4);
+					free($6);
+					free($4);
+					YYERROR;
+				}
 			}
 			free($6);
 			free($4);
@@ -1407,4 +1411,65 @@ host(const char *s, struct listenerlist *al, int max, in_port_t port,
 	}
 
 	return (host_dns(s, al, max, port, flags));
+}
+
+int
+interface(const char *s, struct listenerlist *al, int max, in_port_t port,
+    u_int8_t flags)
+{
+	struct ifaddrs *ifap, *p;
+	struct sockaddr_in	*sain;
+	struct sockaddr_in6	*sin6;
+	struct listener		*h;
+	int ret = 0;
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	for (p = ifap; p != NULL; p = p->ifa_next) {
+		if (strcmp(s, p->ifa_name) != 0)
+			continue;
+
+		switch (p->ifa_addr->sa_family) {
+		case AF_INET:
+			if ((h = calloc(1, sizeof(*h))) == NULL)
+				fatal(NULL);
+			sain = (struct sockaddr_in *)&h->ss;
+			*sain = *(struct sockaddr_in *)p->ifa_addr;
+			sain->sin_len = sizeof(struct sockaddr_in);
+			sain->sin_port = port;
+
+			h->port = port;
+			h->flags = flags;
+			h->ssl = NULL;
+			(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+
+			ret = 1;
+			TAILQ_INSERT_HEAD(al, h, entry);
+
+			break;
+
+		case AF_INET6:
+			if ((h = calloc(1, sizeof(*h))) == NULL)
+				fatal(NULL);
+			sin6 = (struct sockaddr_in6 *)&h->ss;
+			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
+			sin6->sin6_len = sizeof(struct sockaddr_in6);
+			sin6->sin6_port = port;
+
+			h->port = port;
+			h->flags = flags;
+			h->ssl = NULL;
+			(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+
+			ret = 1;
+			TAILQ_INSERT_HEAD(al, h, entry);
+
+			break;
+		}
+	}
+
+	freeifaddrs(ifap);
+
+	return ret;
 }
