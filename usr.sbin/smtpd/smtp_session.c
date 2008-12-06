@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.20 2008/12/06 02:43:58 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.21 2008/12/06 04:49:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -733,6 +733,7 @@ read:
 		if (strcmp(line, ".") == 0) {
 			s->s_state = S_DONE;
 			fclose(s->s_msg.datafp);
+			s->s_msg.datafp = NULL;
 
 			bufferevent_disable(s->s_bev, EV_READ);
 
@@ -741,7 +742,6 @@ read:
 				evbuffer_add_printf(s->s_bev->output,
 				    "554 Transaction failed\r\n");
 
-				s->s_msg.datafp = NULL;
 				/* Remove message file */
 				imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
 				    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
