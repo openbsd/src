@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2008/12/06 04:31:24 tedu Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.3 2008/12/06 19:59:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -82,8 +82,6 @@ struct hppa_pci_chipset_tag {
     (*(c)->pc_intr_string)((c)->_cookie, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\
     (*(c)->pc_intr_establish)((c)->_cookie, (ih), (l), (h), (a), (nm))
-#define	pci_intr_establish_mpsafe(c, ih, l, h, a, nm)			\
-    pci_intr_establish(c, ih, l, h, a, nm)
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->_cookie, (iv))
 

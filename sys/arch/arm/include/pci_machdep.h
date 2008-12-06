@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.5 2008/12/06 04:31:24 tedu Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.6 2008/12/06 19:59:38 tedu Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:52 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,5 @@ struct arm32_pci_chipset {
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, n)				\
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (n))
-#define	pci_intr_establish_mpsafe(c,h,l,f,a,w)				\
-    pci_intr_establish(c,h,l,f,a,w)
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))

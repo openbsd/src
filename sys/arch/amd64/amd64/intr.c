@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.21 2008/12/06 14:36:49 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.22 2008/12/06 19:59:38 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ struct pic softintr_pic = {
 	NULL,
 	NULL,
 };
-
-int intr_biglock_wrap(void *);
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -355,17 +353,13 @@ found:
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-    int (*handler)(void *), void *arg, char *what, int flags)
+    int (*handler)(void *), void *arg, char *what)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;
 	int slot, error, idt_vec;
 	struct intrsource *source;
 	struct intrstub *stubp;
-	int mpsafe = 0;
-
-	if (level >= IPL_SCHED || (flags & INTR_ESTABLISH_MPSAFE))
-		mpsafe = 1;
 
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
@@ -450,14 +444,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
-#ifdef MULTIPROCESSOR
-	if (!mpsafe) {
-		ih->ih_wrapped_fun = handler;
-		ih->ih_wrapped_arg = arg;
-		ih->ih_fun = intr_biglock_wrap;
-		ih->ih_arg = ih;
-	}
-#endif
 	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_pin,
 	    &evcount_intr);
 
@@ -553,21 +539,6 @@ intr_disestablish(struct intrhand *ih)
 	simple_unlock(&ci->ci_slock);
 }
 
-#ifdef MULTIPROCESSOR
-int
-intr_biglock_wrap(void *v)
-{
-	struct intrhand *ih = v;
-	int ret;
-
-	__mp_lock(&kernel_lock);
-	ret = (*ih->ih_wrapped_fun)(ih->ih_wrapped_arg);
-	__mp_unlock(&kernel_lock);
-
-	return (ret);
-}
-#endif
-
 #define CONCAT(x,y)	__CONCAT(x,y)
 
 /*
@@ -652,6 +623,20 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
+void
+x86_intlock(struct intrframe iframe)
+{
+	if (iframe.if_ppl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+}
+
+void
+x86_intunlock(struct intrframe iframe)
+{
+	if (iframe.if_ppl < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+}
+
 void
 x86_softintlock(void)
 {
