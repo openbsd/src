@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.13 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.14 2008/12/06 09:02:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -356,7 +356,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		ic->ic_stats.is_rx_eapol_replay++;
 		return;
 	}
-	/* make sure that a PMK as been selected */
+	/* make sure that a PMK has been selected */
 	if (!(ni->ni_flags & IEEE80211_NODE_PMK)) {
 		DPRINTF(("no PMK found for %s\n",
 		    ether_sprintf(ni->ni_macaddr)));
