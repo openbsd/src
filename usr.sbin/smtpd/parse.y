@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2008/12/06 02:04:56 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2008/12/06 14:23:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -95,6 +95,8 @@ int		 host_dns(const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
 int		 host(const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
+int		 interface(const char *, struct listenerlist *, int, in_port_t,
+		    u_int8_t);
 
 typedef struct {
 	union {
