@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.99 2008/12/04 07:22:10 yuo Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.100 2008/12/06 20:06:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1185,8 +1185,6 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=1000000 */
 	USETDW(pc->dwFrameInterval,
 	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
-	USETDW(pc->dwMaxVideoFrameSize, 0);
-	USETDW(pc->dwMaxPayloadTransferSize, 0);
 	error = uvideo_vs_set_probe(sc, probe_data);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
