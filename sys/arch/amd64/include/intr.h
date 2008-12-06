@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2008/12/06 04:31:24 tedu Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -91,6 +91,8 @@ struct intrsource {
 struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
+	int	(*ih_wrapped_fun)(void *);
+	void	*ih_wrapped_arg;
 	int	ih_level;
 	struct	intrhand *ih_next;
 	int	ih_pin;
@@ -206,8 +208,10 @@ void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
 int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 	    int *);
+
+#define		INTR_ESTABLISH_MPSAFE	0x01
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
-	    void *, char *);
+	    void *, char *, int);
 void intr_disestablish(struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);
@@ -219,8 +223,6 @@ int x86_fast_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);
-void x86_intlock(struct intrframe);
-void x86_intunlock(struct intrframe);
 void x86_softintlock(void);
 void x86_softintunlock(void);
 void x86_setperf_ipi(struct cpu_info *);
