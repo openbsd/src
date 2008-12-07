@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.75 2008/12/07 07:46:05 canacar Exp $
+.\"	$OpenBSD: systat.1,v 1.76 2008/12/07 08:40:40 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -61,18 +61,18 @@ The information displayed in the rest of the screen
 comprises a
 .Em view ,
 and is the main interface for
-displaying differing types of system statistics.
+displaying different types of system statistics.
 The
 .Ic vmstat
 view is the default.
-.Pp
-Input is interpreted at two different levels.
-A
-.Dq global
-command interpreter processes all keyboard input.
-If this command interpreter fails to recognize a command, the
-input line is passed to a per-display command interpreter.
-This allows each display to have certain display-specific commands.
+.\".Pp
+.\"Input is interpreted at two different levels.
+.\"A
+.\".Dq global
+.\"command interpreter processes all keyboard input.
+.\"If this command interpreter fails to recognize a command, the
+.\"input line is passed to a per-display command interpreter.
+.\"This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -241,7 +241,7 @@ represent whether the interface is connected or not;
 in the case of
 .Xr carp 4
 interfaces, whether the interface is in master or backup state, respectively.
-See below for more options.
+.\"See below for more options.
 .It Ic iostat
 Display statistics about disk throughput.
 Statistics
@@ -268,59 +268,59 @@ Display network connections.
 By default, network servers awaiting requests are not displayed.
 Each address
 is displayed in the format
-.Dq host.port ,
+.Dq host:port ,
 with each shown symbolically, when possible.
-It is possible to have addresses displayed numerically,
-limit the display to a set of ports, hosts, and/or protocols
-(the minimum unambiguous prefix may be supplied):
-.Bl -tag -width Ar
-.It Cm all
-Toggle the displaying of server processes awaiting requests (this
-is the equivalent of the
-.Fl a
-flag to
-.Xr netstat 1 ) .
-.It Cm display Op Ar items
-Display information about the connections associated with the
-specified hosts or ports.
-As for
-.Ar ignore ,
-.Ar items
-may be names or numbers.
-.It Cm ignore Op Ar items
-Do not display information about connections associated with
-the specified hosts or ports.
-Hosts and ports may be specified
-by name
-.Pf ( Dq vangogh ,
-.Dq ftp ) ,
-or numerically.
-Host addresses
-use the Internet dot notation
-.Pq Dq 128.32.0.9 .
-Multiple items
-may be specified with a single command by separating them with
-spaces.
-.It Cm names
-Display network addresses symbolically.
-.It Cm numbers
-Display network addresses numerically.
-.It Cm reset
-Reset the port, host, and protocol matching mechanisms to the default
-(any protocol, port, or host).
-.It Cm show Oo
-.Ar protocols \*(Ba ports \*(Ba hosts
-.Oc
-Show, on the command line, the currently selected protocols,
-hosts, and ports.
-Protocols, hosts and ports which are being ignored are prefixed with a
-.Ql \&! .
-If an argument is supplied to
-.Cm show ,
-then only the requested information will be displayed.
-.It Cm tcp \*(Ba udp \*(Ba all
-Display only network connections using the indicated protocol.
-.El
+.\"It is possible to have addresses displayed numerically,
+.\"limit the display to a set of ports, hosts, and/or protocols
+.\"(the minimum unambiguous prefix may be supplied):
+.\".Bl -tag -width Ar
+.\".It Cm all
+.\"Toggle the displaying of server processes awaiting requests (this
+.\"is the equivalent of the
+.\".Fl a
+.\"flag to
+.\".Xr netstat 1 ) .
+.\".It Cm display Op Ar items
+.\"Display information about the connections associated with the
+.\"specified hosts or ports.
+.\"As for
+.\".Ar ignore ,
+.\".Ar items
+.\"may be names or numbers.
+.\".It Cm ignore Op Ar items
+.\"Do not display information about connections associated with
+.\"the specified hosts or ports.
+.\"Hosts and ports may be specified
+.\"by name
+.\".Pf ( Dq vangogh ,
+.\".Dq ftp ) ,
+.\"or numerically.
+.\"Host addresses
+.\"use the Internet dot notation
+.\".Pq Dq 128.32.0.9 .
+.\"Multiple items
+.\"may be specified with a single command by separating them with
+.\"spaces.
+.\".It Cm names
+.\"Display network addresses symbolically.
+.\".It Cm numbers
+.\"Display network addresses numerically.
+.\".It Cm reset
+.\"Reset the port, host, and protocol matching mechanisms to the default
+.\"(any protocol, port, or host).
+.\".It Cm show Oo
+.\".Ar protocols \*(Ba ports \*(Ba hosts
+.\".Oc
+.\"Show, on the command line, the currently selected protocols,
+.\"hosts, and ports.
+.\"Protocols, hosts and ports which are being ignored are prefixed with a
+.\".Ql \&! .
+.\"If an argument is supplied to
+.\".Cm show ,
+.\"then only the requested information will be displayed.
+.\".It Cm tcp \*(Ba udp \*(Ba all
+.\"Display only network connections using the indicated protocol.
+.\".El
 .It Ic pf
 Display filter information about
 .Xr pf 4 ,
@@ -344,7 +344,7 @@ statistics similar to the output of
 Available orderings are:
 .Ic name ,
 .Ic requests ,
-.Ic size
+.Ic size ,
 and
 .Ic number of pages .
 .It Ic queues
@@ -529,9 +529,10 @@ number of kernel map entries
 The
 .Ql %zfod
 value is more interesting when observed over a long
-period, such as from boot time (see the
-.Cm boot
-option below).
+period, such as from boot time.
+.\"(see the
+.\".Cm boot
+.\"option below).
 .El
 .\".Pp
 .\"The following commands are specific to the
