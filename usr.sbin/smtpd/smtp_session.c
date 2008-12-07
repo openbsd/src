@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.23 2008/12/06 14:58:09 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.24 2008/12/07 01:03:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -593,13 +593,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_MAIL;
 		s->s_msg.sender = ss->u.path;
 
-		if (s->s_msg.datafp != NULL) {
-			fclose(s->s_msg.datafp);
-			s->s_msg.datafp = NULL;
-			imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
-			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-		}
-
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
@@ -660,7 +653,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_DONE:
 		s->s_state = S_HELO;
 
-		s->s_msg.datafp = NULL;
 		evbuffer_add_printf(s->s_bev->output,
 		    "250 %s Message accepted for delivery\r\n",
 		    s->s_msg.message_id);
