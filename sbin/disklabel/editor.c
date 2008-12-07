@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.171 2008/09/03 11:13:54 jsg Exp $	*/
+/*	$OpenBSD: editor.c,v 1.172 2008/12/07 01:11:50 cnst Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.171 2008/09/03 11:13:54 jsg Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.172 2008/12/07 01:11:50 cnst Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -366,7 +366,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 				arg = getstring("Filename",
 				    "Name of the file to save label into.",
 				    NULL);
-				if (arg == NULL && *arg == '\0')
+				if (arg == NULL || *arg == '\0')
 					break;
 			}
 			if ((fp = fopen(arg, "w")) == NULL) {
