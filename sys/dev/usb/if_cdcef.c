@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.23 2008/11/29 10:24:33 matthieu Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.24 2008/12/07 18:47:08 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -290,7 +290,7 @@ cdcef_start(struct ifnet *ifp)
 
 	if (sc->sc_listening == 0 || m_head->m_pkthdr.len > CDCEF_BUFSZ) {
 		/*
-		 * drop packet because reciever is not listening,
+		 * drop packet because receiver is not listening,
 		 * or if packet is larger than xmit buffer
 		 */
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -530,7 +530,7 @@ cdcef_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* cancel recieve pipe? */
+	/* cancel receive pipe? */
 	usbf_abort_pipe(sc->sc_pipe_in); /* in is tx pipe */
 	splx(s);
 }
@@ -582,7 +582,7 @@ cdcef_stop(struct cdcef_softc *sc)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	/* cancel recieve pipe? */
+	/* cancel receive pipe? */
 
 	if (sc->sc_xmit_mbuf != NULL) {
 		m_freem(sc->sc_xmit_mbuf);
