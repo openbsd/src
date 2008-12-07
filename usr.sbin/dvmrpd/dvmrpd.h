@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.10 2008/12/02 13:42:44 michele Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.11 2008/12/07 16:37:04 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -265,7 +265,6 @@ struct dvmrpd_conf {
 #define DVMRPD_OPT_NOACTION	 0x00000004
 	int			 maxdepth;
 	LIST_HEAD(, iface)	 iface_list;
-	struct src_head		 src_list;
 	int			 dvmrp_socket;
 	int			 mroute_socket;
 	int			 flags;

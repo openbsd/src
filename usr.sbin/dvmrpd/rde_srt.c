@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.11 2008/12/02 13:42:44 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.12 2008/12/07 16:37:04 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -43,22 +43,17 @@ void	 rt_start_holddown_timer(struct rt_node *);
 void	 srt_set_upstream(struct rt_node *, u_int32_t);
 
 /* Designated forwarder */
-void	 srt_set_forwarder_self(struct src_node *, struct iface *,
-	    struct rt_node *);
-void	 srt_update_ds_forwarders(struct src_node *, struct rt_node *,
-	    struct iface *, u_int32_t);
-void	 srt_current_forwarder(struct src_node *, struct rt_node *,
-	    struct iface *, u_int32_t, u_int32_t);
+void	 srt_set_forwarder_self(struct rt_node *, struct iface *);
+void	 srt_update_ds_forwarders(struct rt_node *, struct iface *,
+	    u_int32_t);
+void	 srt_current_forwarder(struct rt_node *, struct iface *,
+	    u_int32_t, u_int32_t);
 
-/* Downstrean neighbor */
-void		 srt_add_ds(struct src_node *, struct rt_node *, u_int32_t,
-		    u_int32_t);
-struct ds	*srt_find_ds(struct src_node *, u_int32_t);
-void		 srt_delete_ds(struct src_node *, struct rt_node *, struct ds *,
+/* Downstream neighbors */
+void		 srt_add_ds(struct rt_node *, u_int32_t, u_int32_t);
+struct ds_nbr	*srt_find_ds(struct rt_node *, u_int32_t);
+void		 srt_delete_ds(struct rt_node *, struct ds_nbr *,
 		    struct iface *);
-struct src_node	*srt_find_src(in_addr_t, in_addr_t);
-struct src_node	*srt_add_src(struct in_addr, struct in_addr, u_int32_t);
-void		 srt_delete_src(struct src_node *);
 
 /* Flash updates */
 void		 flash_update(struct rt_node *); 
@@ -67,8 +62,6 @@ void		 flash_update_ds(struct rt_node *);
 RB_HEAD(rt_tree, rt_node)	 rt;
 RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
-
-RB_GENERATE(src_head, src_node, entry, src_compare);
 
 extern struct dvmrpd_conf	*rdeconf;
 
@@ -111,14 +104,9 @@ void
 rt_holddown_timer(int fd, short event, void *arg)
 {
 	struct rt_node	*rn = arg;
-	struct src_node	*src;
 
 	log_debug("rt_holddown_timer: route %s/%d", inet_ntoa(rn->prefix),
 	    rn->prefixlen);
-
-	/* remove route entry */
-	src = srt_find_src(rn->prefix.s_addr, prefixlen2mask(rn->prefixlen));
-	srt_delete_src(src);
 
 	rt_remove(rn);
 }
@@ -162,20 +150,6 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 	return (0);
 }
 
-int
-src_compare(struct src_node *a, struct src_node *b)
-{
-	if (ntohl(a->origin.s_addr) < ntohl(b->origin.s_addr))
-		return (-1);
-	if (ntohl(a->origin.s_addr) > ntohl(b->origin.s_addr))
-		return (1);
-	if (ntohl(a->mask.s_addr) < ntohl(b->mask.s_addr))
-		return (-1);
-	if (ntohl(a->mask.s_addr) > ntohl(b->mask.s_addr))
-		return (1);
-	return (0);
-}
-
 struct rt_node *
 rt_find(in_addr_t prefix, u_int8_t prefixlen)
 {
@@ -205,8 +179,14 @@ rr_new_rt(struct route_report *rr, u_int32_t adj_metric, int connected)
 	rn->cost = adj_metric;
 	rn->ifindex = rr->ifindex;
 
-	for (i = 0; i < MAXVIFS; i++)
+	for (i = 0; i < MAXVIFS; i++) {
 		rn->ttls[i] = 0;
+		rn->ds_cnt[i] = 0;
+		rn->adv_rtr[i].addr.s_addr = 0;
+		rn->adv_rtr[i].metric = 0;
+	}
+
+	LIST_INIT(&rn->ds_list);
 
 	rn->flags = F_DVMRPD_INSERTED;
 	rn->connected = connected;
@@ -233,10 +213,17 @@ rt_insert(struct rt_node *r)
 int
 rt_remove(struct rt_node *r)
 {
+	struct ds_nbr	*ds_nbr;
+
 	if (RB_REMOVE(rt_tree, &rt, r) == NULL) {
 		log_warnx("rt_remove failed for %s/%u",
 		    inet_ntoa(r->prefix), r->prefixlen);
 		return (-1);
+	}
+
+	LIST_FOREACH(ds_nbr, &r->ds_list, entry) {
+		LIST_REMOVE(ds_nbr, entry);
+		free(ds_nbr);
 	}
 
 	free(r);
@@ -330,8 +317,7 @@ srt_check_route(struct route_report *rr, int connected)
 {
 	struct rt_node		*rn;
 	struct iface		*iface;
-	struct src_node		*src;
-	struct ds		*ds_nbr;
+	struct ds_nbr		*ds_nbr;
 	u_int32_t		 adj_metric;
 	u_int32_t		 nbr_ip, nbr_report, ifindex;
 
@@ -359,7 +345,6 @@ srt_check_route(struct route_report *rr, int connected)
 		if (adj_metric < INFINITY_METRIC) {
 			rn = rr_new_rt(rr, adj_metric, connected);
 			rt_insert(rn);
-			src = srt_add_src(rr->net, rr->mask, adj_metric);
 		}
 		return (0);
 	}
@@ -371,15 +356,12 @@ srt_check_route(struct route_report *rr, int connected)
 	nbr_ip = rn->nexthop.s_addr;
 	nbr_report = rr->nexthop.s_addr;
 
-	if ((src = srt_find_src(rr->net.s_addr, rr->mask.s_addr)) == NULL)
-		fatal("srt_check_route");
-
 	if (rr->metric < INFINITY_METRIC) {
 		/* If it is our current nexthop it cannot be a
 		 * downstream router */ 
 		if (nbr_ip != nbr_report)
-			if ((ds_nbr = srt_find_ds(src, nbr_report)))
-				srt_delete_ds(src, rn, ds_nbr, iface);
+			if ((ds_nbr = srt_find_ds(rn, nbr_report)))
+				srt_delete_ds(rn, ds_nbr, iface);
 
 		if (adj_metric > rn->cost) {
 			if (nbr_ip == nbr_report) {
@@ -396,7 +378,7 @@ srt_check_route(struct route_report *rr, int connected)
 			/* We have a new best route to source, update the
 			 * designated forwarders on downstream interfaces to
 			 * reflect the new metric */
-			srt_update_ds_forwarders(src, rn, iface, nbr_report);
+			srt_update_ds_forwarders(rn, iface, nbr_report);
 		} else {
 			if (nbr_report < nbr_ip) {
 				rn->nexthop.s_addr = nbr_report;
@@ -409,86 +391,85 @@ srt_check_route(struct route_report *rr, int connected)
 		}
 		/* Update forwarder of current interface if necessary and
 		 * refresh the route */
-		srt_current_forwarder(src, rn, iface, rr->metric, nbr_report);
+		srt_current_forwarder(rn, iface, rr->metric, nbr_report);
 		rt_update(rn);
 	} else if (rr->metric == INFINITY_METRIC) {
-		if (nbr_report == src->adv_rtr[ifindex].addr.s_addr)
-			srt_set_forwarder_self(src, iface, rn);
+		if (nbr_report == rn->adv_rtr[ifindex].addr.s_addr)
+			srt_set_forwarder_self(rn, iface);
 infinity:
 		if (nbr_ip == nbr_report) {
 			if (rn->cost < INFINITY_METRIC)
 				rt_start_holddown_timer(rn);
 		} else
-			if ((ds_nbr = srt_find_ds(src, nbr_report)))
-				srt_delete_ds(src, rn, ds_nbr, iface);
+			if ((ds_nbr = srt_find_ds(rn, nbr_report)))
+				srt_delete_ds(rn, ds_nbr, iface);
 	} else if (INFINITY_METRIC < rr->metric &&
 	    rr->metric < 2 * INFINITY_METRIC) {
 		/* Neighbor is reporting his dependency for this source */
-		if (nbr_report == src->adv_rtr[ifindex].addr.s_addr)
-			srt_set_forwarder_self(src, iface, rn);
+		if (nbr_report == rn->adv_rtr[ifindex].addr.s_addr)
+			srt_set_forwarder_self(rn, iface);
 
 		if (rn->ifindex == ifindex)
 			goto infinity;
 		else
-			if (srt_find_ds(src, nbr_report) == NULL)
-				srt_add_ds(src, rn, nbr_report, ifindex);
+			if (srt_find_ds(rn, nbr_report) == NULL)
+				srt_add_ds(rn, nbr_report, ifindex);
 	}
 
 	return (0);
 }
 
 void
-srt_current_forwarder(struct src_node *src_node, struct rt_node *rn,
-    struct iface *iface, u_int32_t metric, u_int32_t nbr_report)
+srt_current_forwarder(struct rt_node *rn, struct iface *iface,
+    u_int32_t metric, u_int32_t nbr_report)
 {
 	/* If it is our designated forwarder */ 
-	if (nbr_report == src_node->adv_rtr[iface->ifindex].addr.s_addr) {
+	if (nbr_report == rn->adv_rtr[iface->ifindex].addr.s_addr) {
 		if (metric > rn->cost || (metric == rn->cost &&
 		    iface->addr.s_addr < nbr_report)) {
-			src_node->adv_rtr[iface->ifindex].addr.s_addr =
+			rn->adv_rtr[iface->ifindex].addr.s_addr =
 			    iface->addr.s_addr;
-			src_node->adv_rtr[iface->ifindex].metric = rn->cost;
+			rn->adv_rtr[iface->ifindex].metric = rn->cost;
 
 			/* XXX: check if there are groups with this source */
 			if (group_list_empty(iface))
 				rn->ttls[iface->ifindex] = 1;
 		}
-	} else if (metric < src_node->adv_rtr[iface->ifindex].metric ||
-	    (metric == src_node->adv_rtr[iface->ifindex].metric &&
-	    nbr_report < src_node->adv_rtr[iface->ifindex].addr.s_addr)) {
-		if (src_node->adv_rtr[iface->ifindex].addr.s_addr ==
-		    iface->addr.s_addr && !src_node->ds_cnt[iface->ifindex])
+	} else if (metric < rn->adv_rtr[iface->ifindex].metric ||
+	    (metric == rn->adv_rtr[iface->ifindex].metric &&
+	    nbr_report < rn->adv_rtr[iface->ifindex].addr.s_addr)) {
+		if (rn->adv_rtr[iface->ifindex].addr.s_addr ==
+		    iface->addr.s_addr && !rn->ds_cnt[iface->ifindex])
 			rn->ttls[iface->ifindex] = 0;
 
-		src_node->adv_rtr[iface->ifindex].addr.s_addr = nbr_report;
-		src_node->adv_rtr[iface->ifindex].metric = metric;
+		rn->adv_rtr[iface->ifindex].addr.s_addr = nbr_report;
+		rn->adv_rtr[iface->ifindex].metric = metric;
 	}
 }
 
 void
-srt_update_ds_forwarders(struct src_node *src_node, struct rt_node *rn,
-    struct iface *iface, u_int32_t nbr_report)
+srt_update_ds_forwarders(struct rt_node *rn, struct iface *iface,
+    u_int32_t nbr_report)
 {
 	struct iface	*ifa;
 	int		 i;
 
 	for (i = 0; i < MAXVIFS; i++) {
-		if (src_node->adv_rtr[i].addr.s_addr &&
-		    (rn->cost < src_node->adv_rtr[i].metric ||
-		    (rn->cost == src_node->adv_rtr[i].metric &&
+		if (rn->adv_rtr[i].addr.s_addr &&
+		    (rn->cost < rn->adv_rtr[i].metric ||
+		    (rn->cost == rn->adv_rtr[i].metric &&
 		    iface->addr.s_addr < nbr_report))) {
 			ifa = if_find_index(i);
-			srt_set_forwarder_self(src_node, ifa, rn);
+			srt_set_forwarder_self(rn, ifa);
 		}
 	}
 }
 
 void
-srt_set_forwarder_self(struct src_node *src, struct iface *iface,
-    struct rt_node *rn)
+srt_set_forwarder_self(struct rt_node *rn, struct iface *iface)
 {
-	src->adv_rtr[iface->ifindex].addr.s_addr = iface->addr.s_addr;
-	src->adv_rtr[iface->ifindex].metric = rn->cost;
+	rn->adv_rtr[iface->ifindex].addr.s_addr = iface->addr.s_addr;
+	rn->adv_rtr[iface->ifindex].metric = rn->cost;
 
 	/* XXX: check if there are groups with this source */
 	if (group_list_empty(iface))
@@ -505,27 +486,26 @@ srt_set_upstream(struct rt_node *rn, u_int32_t ifindex)
 }
 
 void
-srt_add_ds(struct src_node *src_node, struct rt_node *rn, u_int32_t nbr_report,
-    u_int32_t ifindex)
+srt_add_ds(struct rt_node *rn, u_int32_t nbr_report, u_int32_t ifindex)
 {
-	struct ds	*ds_nbr;
+	struct ds_nbr	*ds_nbr;
 
-	if ((ds_nbr = malloc(sizeof(struct ds))) == NULL)
+	if ((ds_nbr = malloc(sizeof(struct ds_nbr))) == NULL)
 		fatal("srt_add_ds");
 
 	ds_nbr->addr.s_addr = nbr_report;
 
-	LIST_INSERT_HEAD(&src_node->ds_list, ds_nbr, entry);
-	src_node->ds_cnt[ifindex]++;
+	LIST_INSERT_HEAD(&rn->ds_list, ds_nbr, entry);
+	rn->ds_cnt[ifindex]++;
 	rn->ttls[ifindex] = 1;
 }
 
-struct ds *
-srt_find_ds(struct src_node *src_node, u_int32_t nbr_report)
+struct ds_nbr *
+srt_find_ds(struct rt_node *rn, u_int32_t nbr_report)
 {
-	struct ds	*ds_nbr;
+	struct ds_nbr	*ds_nbr;
 
-	LIST_FOREACH(ds_nbr, &src_node->ds_list, entry)
+	LIST_FOREACH(ds_nbr, &rn->ds_list, entry)
 		if (ds_nbr->addr.s_addr == nbr_report)
 			return (ds_nbr);
 
@@ -533,93 +513,27 @@ srt_find_ds(struct src_node *src_node, u_int32_t nbr_report)
 }
 
 void
-srt_delete_ds(struct src_node *src_node, struct rt_node *rn, struct ds *ds_nbr,
-    struct iface *iface)
+srt_delete_ds(struct rt_node *rn, struct ds_nbr *ds_nbr, struct iface *iface)
 {
 	LIST_REMOVE(ds_nbr, entry);
 	free(ds_nbr);
-	src_node->ds_cnt[iface->ifindex]--;
+	rn->ds_cnt[iface->ifindex]--;
 
 	/* XXX: check if there are group with this source */
-	if (!src_node->ds_cnt[iface->ifindex] && group_list_empty(iface))
+	if (!rn->ds_cnt[iface->ifindex] && group_list_empty(iface))
 		rn->ttls[iface->ifindex] = 0;
-}
-
-struct src_node *
-srt_find_src(in_addr_t net, in_addr_t mask)
-{
-	struct src_node		*src_node;
-
-	RB_FOREACH(src_node, src_head, &rdeconf->src_list)
-		if (src_node->origin.s_addr == net &&
-		    src_node->mask.s_addr == mask)
-			return (src_node);
-
-	return (NULL);
-}
-
-struct src_node *
-srt_add_src(struct in_addr net, struct in_addr mask, u_int32_t adj_metric)
-{
-	struct src_node		*src_node;
-	struct iface		*iface;
-	u_int32_t		 i;
-
-	if ((src_node = malloc(sizeof(struct src_node))) == NULL)
-		fatal("srt_add_src");
-
-	src_node->origin.s_addr = net.s_addr;
-	src_node->mask.s_addr = mask.s_addr;
-
-	for (i = 0; i < MAXVIFS; i++) {
-		bzero(&src_node->adv_rtr[i], sizeof(struct adv_rtr));
-		src_node->ds_cnt[i] = 0;
-	}
-
-	LIST_FOREACH(iface, &rdeconf->iface_list, entry) {
-		src_node->adv_rtr[iface->ifindex].addr.s_addr =
-		    iface->addr.s_addr;
-		src_node->adv_rtr[iface->ifindex].metric = adj_metric;
-	}
-
-	LIST_INIT(&src_node->ds_list);
-	RB_INSERT(src_head, &rdeconf->src_list, src_node);
-
-	return (src_node);
-}
-
-void
-srt_delete_src(struct src_node *src_node)
-{
-	struct ds	*ds_nbr;
-
-	if (src_node == NULL)
-		return;
-
-	LIST_FOREACH(ds_nbr, &src_node->ds_list, entry) {
-		LIST_REMOVE(ds_nbr, entry);
-		free(ds_nbr);
-	}
-
-	RB_REMOVE(src_head, &rdeconf->src_list, src_node);
-	free(src_node);
 }
 
 void
 srt_expire_nbr(struct in_addr addr, struct iface *iface)
 {
-	struct src_node		*src_node;
-	struct ds		*ds;
+	struct ds_nbr		*ds;
 	struct rt_node		*rn;
 
-	RB_FOREACH(src_node, src_head, &rdeconf->src_list) {
-		rn = rt_find(src_node->origin.s_addr,
-		    mask2prefixlen(src_node->mask.s_addr));
-		if (rn == NULL)
-			fatalx("srt_expires_nbr: route not found");
-		ds = srt_find_ds(src_node, addr.s_addr);
+	RB_FOREACH(rn, rt_tree, &rt) {
+		ds = srt_find_ds(rn, addr.s_addr);
 		if (ds)	
-			srt_delete_ds(src_node, rn, ds, iface);
+			srt_delete_ds(rn, ds, iface);
 	}
 }
 

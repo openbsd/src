@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.6 2008/12/02 13:42:44 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.7 2008/12/07 16:37:04 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -26,6 +26,11 @@
 #include <event.h>
 #include <limits.h>
 
+struct adv_rtr {
+	struct in_addr		 addr;
+	u_int32_t		 metric;
+};
+
 struct rt_node {
 	RB_ENTRY(rt_node)	 entry;
 	struct event		 expiration_timer;
@@ -36,6 +41,9 @@ struct rt_node {
 	u_int32_t		 cost;
 	u_int32_t		 old_cost;	/* used when in hold-down */
 	u_short			 ifindex;	/* learned from this iface */
+	struct adv_rtr		 adv_rtr[MAXVIFS];
+	u_int16_t		 ds_cnt[MAXVIFS];
+	LIST_HEAD(, ds_nbr)	 ds_list;
 	time_t			 uptime;
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
@@ -62,23 +70,10 @@ struct rde_nbr {
 	struct iface		*iface;
 };
 
-struct ds {
-	LIST_ENTRY(ds)		 entry;
+/* downstream neighbor per source */
+struct ds_nbr {
+	LIST_ENTRY(ds_nbr)	 entry;
 	struct in_addr		 addr;
-};
-
-struct adv_rtr {
-	struct in_addr		 addr;
-	u_int32_t		 metric;
-};
-
-struct src_node {
-	RB_ENTRY(src_node)	 entry;
-	struct in_addr		 origin;
-	struct in_addr		 mask;
-	struct adv_rtr		 adv_rtr[MAXVIFS];
-	u_int16_t		 ds_cnt[MAXVIFS];
-	LIST_HEAD(, ds)		 ds_list;
 };
 
 /* rde.c */
