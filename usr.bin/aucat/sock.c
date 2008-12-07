@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.8 2008/11/17 07:04:13 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.9 2008/12/07 17:10:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -567,7 +567,7 @@ int
 sock_setpar(struct sock *f)
 {
 	struct amsg_par *p = &f->rmsg.u.par;
-	unsigned minbuf, maxbuf;
+	unsigned min, max, rate;
 	
 	if (AMSG_ISSET(p->mode)) {
 		if ((p->mode & ~(AMSG_PLAY | AMSG_REC)) || p->mode == 0) {
@@ -632,13 +632,12 @@ sock_setpar(struct sock *f)
 			p->rate = RATE_MIN;
 		if (p->rate > RATE_MAX)
 			p->rate = RATE_MAX;
-		dev_roundrate(&p->rate, &f->round);
+		f->round = dev_roundof(p->rate);
 		f->rpar.rate = f->wpar.rate = p->rate;
-		if (f->mode & AMSG_PLAY)
-			f->bufsz = 2 * dev_bufsz * f->rpar.rate / dev_rate;
-		else
-			f->bufsz = 2 * dev_bufsz * f->wpar.rate / dev_rate;
-		DPRINTF("sock_setpar: rate -> %u\n", p->rate);
+		if (!AMSG_ISSET(p->bufsz))
+			p->bufsz = 2 * dev_bufsz / dev_round * f->round;
+		DPRINTF("sock_setpar: rate -> %u, round -> %u\n",
+		    p->rate, f->round);
 	}
 	if (AMSG_ISSET(p->xrun)) {
 		if (p->xrun != AMSG_IGNORE &&
@@ -651,24 +650,18 @@ sock_setpar(struct sock *f)
 		DPRINTF("sock_setpar: xrun -> %u\n", f->xrun);
 	}
 	if (AMSG_ISSET(p->bufsz)) {
-		minbuf = 3 * dev_bufsz / 2;
-		minbuf -= minbuf % dev_round;
-		maxbuf = dev_bufsz;
-		if (f->mode & AMSG_PLAY) {
-			minbuf = minbuf * f->rpar.rate / dev_rate;
-			maxbuf = maxbuf * f->rpar.rate / dev_rate;
-			maxbuf += f->rpar.rate;
-		} else {
-			minbuf = minbuf * f->wpar.rate / dev_rate;
-			maxbuf = maxbuf * f->wpar.rate / dev_rate;
-			maxbuf += f->wpar.rate;
-		}
-		if (p->bufsz < minbuf)
-			p->bufsz = minbuf;
-		if (p->bufsz > maxbuf)
-			p->bufsz = maxbuf;
-		f->bufsz = p->bufsz + f->round - 1;
-		f->bufsz -= f->bufsz % f->round;
+		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
+		min = (3 * (dev_bufsz / dev_round) + 1) / 2;
+		max = (dev_bufsz + rate + dev_round - 1) / dev_round;
+		min *= f->round;
+		max *= f->round;
+		p->bufsz += f->round - 1;
+		p->bufsz -= p->bufsz % f->round;
+		if (p->bufsz < min)
+			p->bufsz = min;
+		if (p->bufsz > max)
+			p->bufsz = max;
+		f->bufsz = p->bufsz;
 		DPRINTF("sock_setpar: bufsz -> %u\n", f->bufsz);
 	}
 #ifdef DEBUG
@@ -786,7 +779,7 @@ sock_execmsg(struct sock *f)
 		AMSG_INIT(m);
 		m->cmd = AMSG_GETCAP;
 		m->u.cap.rate = dev_rate;
-		m->u.cap.rate_div = dev_rate_div;
+		m->u.cap.rate_div = dev_rate;
 		m->u.cap.pchan = dev_mix ?
 		    (f->templ_rpar.cmax - f->templ_rpar.cmin + 1) : 0;
 		m->u.cap.rchan = dev_sub ?

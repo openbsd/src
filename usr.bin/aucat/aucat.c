@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.47 2008/11/23 12:29:32 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.48 2008/12/07 17:10:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 	dev_init(devpath, 
 	    (mode & MODE_REC) ? &dipar : NULL,
 	    (mode & MODE_PLAY) ? &dopar : NULL,
-	    bufsz, l_flag);
+	    bufsz);
 
 	/*
 	 * Create buffers for all input and output pipes.

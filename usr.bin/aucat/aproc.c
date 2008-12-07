@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.25 2008/11/16 17:08:32 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.26 2008/12/07 17:10:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -831,11 +831,11 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned inch;
 	short *idata;
-	unsigned ipos, orate;
+	unsigned ipos, oblksz;
 	unsigned ifr;
 	unsigned onch;
 	short *odata;
-	unsigned opos, irate;
+	unsigned opos, iblksz;
 	unsigned ofr;
 	unsigned c;
 	short *ctxbuf, *ctx;
@@ -859,10 +859,10 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	 */
 	inch = ibuf->cmax - ibuf->cmin + 1;
 	ipos = p->u.resamp.ipos;
-	irate = p->u.resamp.irate;
+	iblksz = p->u.resamp.iblksz;
 	onch = obuf->cmax - obuf->cmin + 1;
 	opos = p->u.resamp.opos;
-	orate = p->u.resamp.orate;
+	oblksz = p->u.resamp.oblksz;
 	ctxbuf = p->u.resamp.ctx;
 
 	/*
@@ -879,7 +879,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 				odata++;
 				ctx++;
 			}
-			opos += irate;
+			opos += iblksz;
 			ofr--;
 		} else {
 			if (ifr == 0)
@@ -890,7 +890,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 				idata++;
 				ctx++;
 			}
-			ipos += orate;
+			ipos += oblksz;
 			ifr--;
 		}
 	}
@@ -962,8 +962,8 @@ resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 
 	DPRINTFN(3, "resamp_ipos: %d\n", delta);
 
-	ifac = p->u.resamp.irate;
-	ofac = p->u.resamp.orate;
+	ifac = p->u.resamp.iblksz;
+	ofac = p->u.resamp.oblksz;
 	ipos = p->u.resamp.idelta + (long long)delta * ofac;
 	delta = (ipos + ifac - 1) / ifac;
 	p->u.resamp.idelta = ipos - (long long)delta * ifac;
@@ -979,8 +979,8 @@ resamp_opos(struct aproc *p, struct abuf *obuf, int delta)
 
 	DPRINTFN(3, "resamp_opos: %d\n", delta);
 
-	ifac = p->u.resamp.irate;
-	ofac = p->u.resamp.orate;
+	ifac = p->u.resamp.iblksz;
+	ofac = p->u.resamp.oblksz;
 	opos = p->u.resamp.odelta + (long long)delta * ifac;
 	delta = (opos + ofac - 1) / ofac;
 	p->u.resamp.odelta = opos - (long long)delta * ofac;
@@ -1001,14 +1001,14 @@ struct aproc_ops resamp_ops = {
 };
 
 struct aproc *
-resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
+resamp_new(char *name, unsigned iblksz, unsigned oblksz)
 {
 	struct aproc *p;
 	unsigned i;
 
 	p = aproc_new(&resamp_ops, name);
-	p->u.resamp.irate = ipar->rate;
-	p->u.resamp.orate = opar->rate;
+	p->u.resamp.iblksz = iblksz;
+	p->u.resamp.oblksz = oblksz;
 	p->u.resamp.ipos = 0;
 	p->u.resamp.opos = 0;
 	p->u.resamp.idelta = 0;
@@ -1016,11 +1016,8 @@ resamp_new(char *name, struct aparams *ipar, struct aparams *opar)
 	for (i = 0; i < NCHAN_MAX; i++)
 		p->u.resamp.ctx[i] = 0;
 #ifdef DEBUG
-	if (debug_level > 0) {
-		fprintf(stderr, "resamp_new: %s: ", p->name);
-		aparams_print2(ipar, opar);
-		fprintf(stderr, "\n");
-	}
+	if (debug_level > 0)
+		fprintf(stderr, "resamp_new: %u/%u\n", iblksz, oblksz);
 #endif
 	return p;
 }

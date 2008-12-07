@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.19 2008/11/16 17:08:32 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.20 2008/12/07 17:10:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,65 +26,14 @@
 #include "safile.h"
 
 unsigned dev_bufsz, dev_round, dev_rate;
-unsigned dev_rate_div, dev_round_div;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
 struct file *dev_file;
 
-/*
- * supported rates
- */
-#define NRATES (sizeof(dev_rates) / sizeof(dev_rates[0]))
-unsigned dev_rates[] = {
-	  6400,   7200,   8000,   9600,  11025,  12000,
-	 12800,  14400,  16000,  19200,  22050,  24000,
-	 25600,  28800,  32000,  38400,  44100,  48000,
-	 51200,  57600,  64000,  76800,  88200,  96000,
-	102400, 115200, 128000, 153600, 176400, 192000
-};
-
-/*
- * factors of supported rates
- */
-#define NPRIMES (sizeof(dev_primes) / sizeof(dev_primes[0]))
-unsigned dev_primes[] = {2, 3, 5, 7};
-
-int
-dev_setrate(unsigned rate)
+unsigned
+dev_roundof(unsigned newrate)
 {
-	unsigned i, r, p;
-
-	r = 1000 * rate;
-	for (i = 0; i < NRATES; i++) {
-		if (i == NRATES) {
-			fprintf(stderr, "dev_setrate: %u, unsupported\n", rate);
-			return 0;
-		}
-		if (r > 996 * dev_rates[i] &&
-		    r < 1004 * dev_rates[i]) {
-			dev_rate = dev_rates[i];
-			break;
-		}
-	}
-
-	dev_rate_div = dev_rate;
-	dev_round_div = dev_round;
-	for (i = 0; i < NPRIMES; i++) {
-		p = dev_primes[i];
-		while (dev_rate_div % p == 0 && dev_round_div % p == 0) {
-			dev_rate_div /= p;
-			dev_round_div /= p;
-		}
-	}
-	return 1;
-}
-
-void
-dev_roundrate(unsigned *newrate, unsigned *newround)
-{
-	*newrate += dev_rate_div - 1;
-	*newrate -= *newrate % dev_rate_div;
-	*newround = *newrate * dev_round_div / dev_rate_div;
+	return (dev_round * newrate + dev_rate / 2) / dev_rate;
 }
 
 /*
@@ -94,14 +43,13 @@ dev_roundrate(unsigned *newrate, unsigned *newround)
  */
 void
 dev_init(char *devpath,
-    struct aparams *dipar, struct aparams *dopar,
-    unsigned bufsz, int blkio)
+    struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 {
 	struct aparams ipar, opar;
 	struct aproc *conv;
 	struct abuf *buf;
 	unsigned nfr, ibufsz, obufsz;
-
+	
 	/*
 	 * ask for 1/4 of the buffer for the kernel ring and
 	 * limit the block size to 1/4 of the requested buffer
@@ -109,13 +57,10 @@ dev_init(char *devpath,
 	dev_bufsz = (bufsz + 3) / 4;
 	dev_round = (bufsz + 3) / 4;
 	dev_file = (struct file *)safile_new(&safile_ops, devpath,
-	    dipar, dopar, &dev_bufsz, &dev_round, blkio);
+	    dipar, dopar, &dev_bufsz, &dev_round);
 	if (!dev_file)
 		exit(1);
-	if (!dev_setrate(dipar ? dipar->rate : dopar->rate))
-		exit(1);
 	if (dipar) {
-		dipar->rate = dev_rate;
 #ifdef DEBUG
 		if (debug_level > 0) {
 			fprintf(stderr, "dev_init: hw recording ");
@@ -123,9 +68,9 @@ dev_init(char *devpath,
 			fprintf(stderr, "\n");
 		}
 #endif
+		dev_rate = dipar->rate;
 	}
 	if (dopar) {
-		dopar->rate = dev_rate;
 #ifdef DEBUG
 		if (debug_level > 0) {
 			fprintf(stderr, "dev_init: hw playing ");
@@ -133,6 +78,7 @@ dev_init(char *devpath,
 			fprintf(stderr, "\n");
 		}
 #endif
+		dev_rate = dopar->rate;
 	}
 	ibufsz = obufsz = dev_bufsz;
 	bufsz = (bufsz > dev_bufsz) ? bufsz - dev_bufsz : 0;
@@ -406,14 +352,14 @@ dev_attach(char *name,
 	struct abuf *pbuf = NULL, *rbuf = NULL;
 	struct aparams ipar, opar;
 	struct aproc *conv;
-	unsigned nfr;
-	
+	unsigned round, nblk;
+
 	if (ibuf) {
 		ipar = *sipar;
-		pbuf = LIST_FIRST(&dev_mix->obuflist);		
+		pbuf = LIST_FIRST(&dev_mix->obuflist);
+		nblk = (dev_bufsz / dev_round + 3) / 4;
+		round = dev_roundof(ipar.rate);
 		if (!aparams_eqenc(&ipar, &dev_opar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
 			conv = dec_new(name, &ipar);
 			ipar.bps = dev_opar.bps;
 			ipar.bits = dev_opar.bits;
@@ -421,26 +367,23 @@ dev_attach(char *name,
 			ipar.le = dev_opar.le;
 			ipar.msb = dev_opar.msb;
 			aproc_setin(conv, ibuf);			
-			ibuf = abuf_new(nfr, &ipar);
+			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
 		if (!aparams_subset(&ipar, &dev_opar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
 			conv = cmap_new(name, &ipar, &dev_opar);
 			ipar.cmin = dev_opar.cmin;
 			ipar.cmax = dev_opar.cmax;
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, &ipar);
+			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
 		if (!aparams_eqrate(&ipar, &dev_opar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
-			conv = resamp_new(name, &ipar, &dev_opar);
+			conv = resamp_new(name, round, dev_round);
 			ipar.rate = dev_opar.rate;
+			round = dev_round;
 			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nfr, &ipar);
+			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
 		aproc_setin(dev_mix, ibuf);
@@ -452,9 +395,9 @@ dev_attach(char *name,
 	if (obuf) {
 		opar = *sopar;
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
+		round = dev_roundof(opar.rate);
+		nblk = (dev_bufsz / dev_round + 3) / 4;
 		if (!aparams_eqenc(&opar, &dev_ipar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
 			conv = enc_new(name, &opar);
 			opar.bps = dev_ipar.bps;
 			opar.bits = dev_ipar.bits;
@@ -462,26 +405,23 @@ dev_attach(char *name,
 			opar.le = dev_ipar.le;
 			opar.msb = dev_ipar.msb;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &opar);
+			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
 		if (!aparams_subset(&opar, &dev_ipar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
 			conv = cmap_new(name, &dev_ipar, &opar);
 			opar.cmin = dev_ipar.cmin;
 			opar.cmax = dev_ipar.cmax;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &opar);
+			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
 		if (!aparams_eqrate(&opar, &dev_ipar)) {
-			nfr = (dev_bufsz + 3) / 4 + dev_round - 1;
-			nfr -= nfr % dev_round;
-			conv = resamp_new(name, &dev_ipar, &opar);
+			conv = resamp_new(name, dev_round, round);
 			opar.rate = dev_ipar.rate;
+			round = dev_round;
 			aproc_setout(conv, obuf);
-			obuf = abuf_new(nfr, &opar);
+			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);

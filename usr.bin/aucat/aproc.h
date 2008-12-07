@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.12 2008/11/09 16:26:07 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.13 2008/12/07 17:10:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -143,7 +143,7 @@ struct aproc {
 		} sub;
 		struct {
 			short ctx[NCHAN_MAX];
-			unsigned irate, orate;
+			unsigned iblksz, oblksz;
 			int ipos, opos;
 			int idelta, odelta;	/* reminder of conv_[io]pos */
 		} resamp;
@@ -182,7 +182,7 @@ void wpipe_hup(struct aproc *, struct abuf *);
 
 struct aproc *mix_new(char *, int);
 struct aproc *sub_new(char *, int);
-struct aproc *resamp_new(char *, struct aparams *, struct aparams *);
+struct aproc *resamp_new(char *, unsigned, unsigned);
 struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
 struct aproc *enc_new(char *, struct aparams *);
 struct aproc *dec_new(char *, struct aparams *);
