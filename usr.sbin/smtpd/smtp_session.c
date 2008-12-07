@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.24 2008/12/07 01:03:25 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.25 2008/12/07 15:38:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -62,6 +62,8 @@ int		session_rfc4954_auth_handler(struct session *, char *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
+void		session_respond(struct session *, char *, ...)
+		    __attribute__ ((format (printf, 2, 3)));
 
 struct session_timeout {
 	enum session_state	state;
@@ -115,19 +117,16 @@ int
 session_rfc3207_stls_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
 	if (args != NULL) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Syntax error (no parameters allowed)\r\n");
+		session_respond(s, "501 No parameters allowed");
 		return 1;
 	}
 
-	evbuffer_add_printf(s->s_bev->output,
-	    "220 Ready to start TLS\r\n");
+	session_respond(s, "220 Ready to start TLS");
 
 	s->s_state = S_TLS;
 
@@ -142,14 +141,12 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 	struct session_auth_req req;
 
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
 	if (args == NULL) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Syntax error (no parameters given)\r\n");
+		session_respond(s, "501 No parameters given");
 		return 1;
 	}
 
@@ -162,16 +159,14 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 
 	if (eom == NULL) {
 		/* NEEDS_FIX - unsupported yet */
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Syntax error\r\n");
+		session_respond(s, "501 Syntax error");
 		return 1;
 	}
 
 	req.session_id = s->s_id;
 	if (strlcpy(req.buffer, eom, sizeof(req.buffer)) >=
 	    sizeof(req.buffer)) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Syntax error\r\n");
+		session_respond(s, "501 Syntax error");
 		return 1;
 	}
 
@@ -189,8 +184,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 	char *body;
 
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
@@ -203,8 +197,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 		}
 
 		else if (strcasecmp("body=8bitmime", body) != 0) {
-			evbuffer_add_printf(s->s_bev->output,
-			    "503 Invalid BODY\r\n");
+			session_respond(s, "503 Invalid BODY");
 			return 1;
 		}
 
@@ -221,15 +214,13 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	char	 addrbuf[INET6_ADDRSTRLEN];
 
 	if (args == NULL) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 HELO requires domain address.\r\n");
+		session_respond(s, "501 HELO requires domain address");
 		return 1;
 	}
 
 	if (strlcpy(s->s_msg.session_helo, args, sizeof(s->s_msg.session_helo))
 	    >= sizeof(s->s_msg.session_helo)) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Invalid domain name\r\n");
+		session_respond(s, "501 Invalid domain name");
 		return 1;
 	}
 
@@ -248,8 +239,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	bzero(addrbuf, sizeof (addrbuf));
 	inet_ntop(s->s_ss.ss_family, p, addrbuf, sizeof (addrbuf));
 
-	evbuffer_add_printf(s->s_bev->output,
-	    "250 %s Hello %s [%s%s], pleased to meet you\r\n",
+	session_respond(s, "250 %s Hello %s [%s%s], pleased to meet you",
 	    s->s_env->sc_hostname, args,
 	    s->s_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
 
@@ -263,15 +253,13 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	char	 addrbuf[INET6_ADDRSTRLEN];
 
 	if (args == NULL) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 EHLO requires domain address.\r\n");
+		session_respond(s, "501 EHLO requires domain address");
 		return 1;
 	}
 
 	if (strlcpy(s->s_msg.session_helo, args, sizeof(s->s_msg.session_helo))
 	    >= sizeof(s->s_msg.session_helo)) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "501 Invalid domain name\r\n");
+		session_respond(s, "501 Invalid domain name");
 		return 1;
 	}
 
@@ -290,23 +278,22 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 
 	bzero(addrbuf, sizeof (addrbuf));
 	inet_ntop(s->s_ss.ss_family, p, addrbuf, sizeof (addrbuf));
-	evbuffer_add_printf(s->s_bev->output,
-	    "250-%s Hello %s [%s%s], pleased to meet you\r\n",
+	session_respond(s, "250-%s Hello %s [%s%s], pleased to meet you",
 	    s->s_env->sc_hostname, args,
 	    s->s_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
 
-	evbuffer_add_printf(s->s_bev->output, "250-8BITMIME\r\n");
+	session_respond(s, "250-8BITMIME");
 
 	/* only advertise starttls if listener can support it */
 	if (s->s_l->flags & F_STARTTLS)
-		evbuffer_add_printf(s->s_bev->output, "250-STARTTLS\r\n");
+		session_respond(s, "250-STARTTLS");
 
 	/* only advertise auth if session is secure */
 	/*
 	if (s->s_flags & F_SECURE)
-		evbuffer_add_printf(s->s_bev->output, "250-AUTH %s\r\n", "PLAIN");
+		session_respond(s, "250-AUTH %s", "PLAIN");
 	 */
-	evbuffer_add_printf(s->s_bev->output, "250 HELP\r\n");
+	session_respond(s, "250 HELP");
 
 	return 1;
 }
@@ -316,7 +303,7 @@ session_rfc5321_rset_handler(struct session *s, char *args)
 {
 	s->s_msg.rcptcount = 0;
 	s->s_state = S_HELO;
-	evbuffer_add_printf(s->s_bev->output, "250 Reset state.\r\n");
+	session_respond(s, "250 Reset state");
 
 	return 1;
 }
@@ -324,7 +311,7 @@ session_rfc5321_rset_handler(struct session *s, char *args)
 int
 session_rfc5321_noop_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output, "250 OK.\r\n");
+	session_respond(s, "250 OK");
 
 	return 1;
 }
@@ -335,21 +322,18 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	char buffer[MAX_PATH_SIZE];
 
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
 	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "553 Syntax error for sender address\r\n");
+		session_respond(s, "553 Sender address syntax error");
 		return 1;
 	}
 
 	if (! session_set_path(&s->s_msg.sender, buffer)) {
 		/* No need to even transmit to MFA, path is invalid */
-		evbuffer_add_printf(s->s_bev->output,
-		    "553 Syntax error for sender address\r\n");
+		session_respond(s, "553 Sender address syntax error");
 		return 1;
 	}
 
@@ -375,29 +359,25 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	struct message_recipient	mr;
 
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
 	if (s->s_state == S_HELO) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Need MAIL before RCPT\r\n");
+		session_respond(s, "503 Need MAIL before RCPT");
 		return 1;
 	}
 
 	bzero(&mr, sizeof(mr));
 
 	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "553 Syntax error for recipient address\r\n");
+		session_respond(s, "553 Recipient address syntax error");
 		return 1;
 	}
 
 	if (! session_set_path(&mr.path, buffer)) {
 		/* No need to even transmit to MFA, path is invalid */
-		evbuffer_add_printf(s->s_bev->output,
-		    "553 Syntax error for recipient address\r\n");
+		session_respond(s, "553 Recipient address syntax error");
 		return 1;
 	}
 
@@ -414,8 +394,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 int
 session_rfc5321_quit_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output, "221 %s Closing connection.\r\n",
-	    s->s_env->sc_hostname);
+	session_respond(s, "221 %s Closing connection", s->s_env->sc_hostname);
 
 	s->s_flags |= F_QUIT;
 
@@ -426,20 +405,17 @@ int
 session_rfc5321_data_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Polite people say HELO first\r\n");
+		session_respond(s, "503 Polite people say HELO first");
 		return 1;
 	}
 
 	if (s->s_state == S_HELO) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Need MAIL before DATA\r\n");
+		session_respond(s, "503 Need MAIL before DATA");
 		return 1;
 	}
 
 	if (s->s_state == S_MAIL) {
-		evbuffer_add_printf(s->s_bev->output,
-		    "503 Need RCPT before DATA\r\n");
+		session_respond(s, "503 Need RCPT before DATA");
 		return 1;
 	}
 
@@ -451,8 +427,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 int
 session_rfc5321_vrfy_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output,
-	    "252 Cannot VRFY user; try RCPT to attempt delivery.\r\n");
+	session_respond(s, "252 Cannot VRFY; try RCPT to attempt delivery");
 
 	return 1;
 }
@@ -460,8 +435,7 @@ session_rfc5321_vrfy_handler(struct session *s, char *args)
 int
 session_rfc5321_expn_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output,
-	    "502 Sorry, we do not allow this operation.\r\n");
+	session_respond(s, "502 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -469,8 +443,7 @@ session_rfc5321_expn_handler(struct session *s, char *args)
 int
 session_rfc5321_turn_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output,
-	    "502 Sorry, we do not allow this operation.\r\n");
+	session_respond(s, "502 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -478,12 +451,11 @@ session_rfc5321_turn_handler(struct session *s, char *args)
 int
 session_rfc5321_help_handler(struct session *s, char *args)
 {
-	evbuffer_add_printf(s->s_bev->output,
-	    "214- This is OpenSMTPD\r\n"
-	    "214- To report bugs in the implementation, please contact\r\n"
-	    "214- bugs@openbsd.org with full details\r\n");
-	evbuffer_add_printf(s->s_bev->output,
-	    "214 End of HELP info\r\n");
+	session_respond(s, "214- This is OpenSMTPD");
+	session_respond(s, "214- To report bugs in the implementation, please "
+	    "contact bugs@openbsd.org");
+	session_respond(s, "214- with full details");
+	session_respond(s, "214 End of HELP info");
 
 	return 1;
 }
@@ -492,8 +464,6 @@ void
 session_command(struct session *s, char *cmd, char *args)
 {
 	int	i;
-
-	bufferevent_enable(s->s_bev, EV_WRITE);
 
 	if (!(s->s_flags & F_EHLO))
 		goto rfc5321;
@@ -537,8 +507,7 @@ rfc5321:
 			return;
 	}
 
-	evbuffer_add_printf(s->s_bev->output,
-	    "500 Command unrecognized.\r\n");
+	session_respond(s, "500 Command unrecognized");
 }
 
 void
@@ -547,7 +516,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
-	bufferevent_enable(s->s_bev, EV_READ|EV_WRITE);
+	bufferevent_enable(s->s_bev, EV_READ);
 
 	if (ss != NULL && ss->code == 421)
 		goto tempfail;
@@ -556,8 +525,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_INIT:
 		s->s_state = S_GREETED;
 		log_debug("session_pickup: greeting client");
-		evbuffer_add_printf(s->s_bev->output,
-		    SMTPD_BANNER, s->s_env->sc_hostname);
+		session_respond(s, SMTPD_BANNER, s->s_env->sc_hostname);
 		break;
 
 	case S_GREETED:
@@ -571,22 +539,17 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_AUTH:
-		if (s->s_flags & F_AUTHENTICATED) {
-			evbuffer_add_printf(s->s_bev->output,
-			    "235 Authentication Succeeded\r\n");
-		}
-		else {
-			evbuffer_add_printf(s->s_bev->output,
-			    "535 Authentication Credentials Invalid\r\n");
-		}
+		if (s->s_flags & F_AUTHENTICATED)
+			session_respond(s, "235 Authentication succeeded");
+		else
+			session_respond(s, "535 Authentication failed");
 		break;
 
 	case S_MAILREQUEST:
 		/* sender was not accepted, downgrade state */
 		if (ss->code != 250) {
 			s->s_state = S_HELO;
-			evbuffer_add_printf(s->s_bev->output,
-			    "%d Sender rejected\r\n", ss->code);
+			session_respond(s, "%d Sender rejected", ss->code);
 			return;
 		}
 
@@ -601,8 +564,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_MAIL:
 
-		evbuffer_add_printf(s->s_bev->output, "%d Sender ok\r\n",
-		    ss->code);
+		session_respond(s, "%d Sender ok", ss->code);
 
 		break;
 
@@ -614,8 +576,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 				s->s_state = S_MAIL;
 			else
 				s->s_state = S_RCPT;
-			evbuffer_add_printf(s->s_bev->output,
-			    "%d Recipient rejected\r\n", ss->code);
+			session_respond(s, "%d Recipient rejected", ss->code);
 			return;
 		}
 
@@ -629,8 +590,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_RCPT:
-		evbuffer_add_printf(s->s_bev->output, "%d Recipient ok\r\n",
-		    ss->code);
+		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
 	case S_DATAREQUEST:
@@ -646,15 +606,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 			goto tempfail;
 
 		s->s_state = S_DATACONTENT;
-		evbuffer_add_printf(s->s_bev->output,
-		    "354 Enter mail, end with \".\" on a line by itself\r\n");
+		session_respond(s, "354 Enter mail, end with \".\" on a line by"
+		    " itself");
 		break;
 
 	case S_DONE:
 		s->s_state = S_HELO;
 
-		evbuffer_add_printf(s->s_bev->output,
-		    "250 %s Message accepted for delivery\r\n",
+		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
 
 		break;
@@ -669,8 +628,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 tempfail:
 	s->s_flags |= F_QUIT;
-	evbuffer_add_printf(s->s_bev->output,
-	    "421 Service temporarily unavailable\r\n");
+	session_respond(s, "421 Service temporarily unavailable");
 	return;
 }
 
@@ -729,9 +687,7 @@ read:
 			bufferevent_disable(s->s_bev, EV_READ);
 
 			if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
-				bufferevent_disable(s->s_bev, EV_WRITE);
-				evbuffer_add_printf(s->s_bev->output,
-				    "554 Transaction failed\r\n");
+				session_respond(s, "554 Transaction failed");
 
 				/* Remove message file */
 				imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
@@ -941,5 +897,18 @@ session_timeout(int fd, short event, void *p)
 	evtimer_add(&env->sc_ev, &tv);
 }
 
+void
+session_respond(struct session *s, char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (evbuffer_add_vprintf(EVBUFFER_OUTPUT(s->s_bev), fmt, ap) == -1 ||
+	    evbuffer_add_printf(EVBUFFER_OUTPUT(s->s_bev), "\r\n") == -1)
+		fatal("session_respond: evbuffer_add_vprintf failed");
+	va_end(ap);
+
+	bufferevent_enable(s->s_bev, EV_WRITE);
+}
 
 SPLAY_GENERATE(sessiontree, session, s_nodes, session_cmp);

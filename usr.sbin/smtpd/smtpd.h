@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.22 2008/12/07 03:14:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.23 2008/12/07 15:38:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,7 +38,7 @@
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
-#define SMTPD_BANNER		 "220 %s OpenSMTPD\r\n"
+#define SMTPD_BANNER		 "220 %s OpenSMTPD"
 #define SMTPD_SESSION_TIMEOUT	 300
 
 #define RCPTBUFSZ		 256
