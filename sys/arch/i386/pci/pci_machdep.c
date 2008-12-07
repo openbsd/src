@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.41 2008/12/03 15:46:07 oga Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.42 2008/12/07 14:33:26 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -426,6 +426,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 
+	ihp->tag = pa->pa_intrtag;
 	ihp->line = line;
 	ihp->pin = pin;
 
@@ -550,12 +551,23 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return (irqstr);
 }
 
+#include "acpiprt.h"
+#if NACPIPRT > 0
+void	acpiprt_route_interrupt(int bus, int dev, int pin);
+#endif
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *what)
 {
 	void *ret;
+	int bus, dev;
 	int l = ih.line & APIC_INT_LINE_MASK;
+
+	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
+#if NACPIPRT > 0
+	acpiprt_route_interrupt(bus, dev, ih.pin);
+#endif
 
 #if NIOAPIC > 0
 	if (l != -1 && ih.line & APIC_INT_VIA_APIC)

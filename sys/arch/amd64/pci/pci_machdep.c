@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.18 2008/12/06 19:59:38 tedu Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.19 2008/12/07 14:33:26 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -517,12 +517,23 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return (irqstr);
 }
 
+#include "acpiprt.h"
+#if NACPIPRT > 0
+void	acpiprt_route_interrupt(int bus, int dev, int pin);
+#endif
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *what)
 {
 	int pin, irq;
+	int bus, dev;
 	struct pic *pic;
+
+	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
+#if NACPIPRT > 0
+	acpiprt_route_interrupt(bus, dev, ih.pin);
+#endif
 
 	pic = &i8259_pic;
 	pin = irq = ih.line;
