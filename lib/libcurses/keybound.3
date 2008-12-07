@@ -1,4 +1,4 @@
-.\" $OpenBSD: keybound.3,v 1.1 1999/02/24 06:31:07 millert Exp $
+.\" $OpenBSD: keybound.3,v 1.2 2008/12/07 08:59:22 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -31,14 +31,14 @@
 .\" Author: Thomas E. Dickey <dickey@clark.net> 1999
 .\"
 .\" $From: keybound.3x,v 1.1 1999/02/19 11:59:24 tom Exp $
-.TH keyok 3 ""
+.TH keybound 3 ""
 .SH NAME
 \fBkeybound\fP \- return definition of keycode
 ..
 .SH SYNOPSIS
 \fB#include <curses.h>\fP
 
-\fBint keybound(int keycode, int count);\fP
+\fBchar * keybound(int keycode, int count);\fP
 ..
 .SH DESCRIPTION
 This is an extension to the curses library.
