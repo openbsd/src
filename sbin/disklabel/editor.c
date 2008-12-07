@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.172 2008/12/07 01:11:50 cnst Exp $	*/
+/*	$OpenBSD: editor.c,v 1.173 2008/12/07 18:31:29 cnst Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.172 2008/12/07 01:11:50 cnst Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.173 2008/12/07 18:31:29 cnst Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1344,11 +1344,6 @@ free_chunks(struct disklabel *lp)
 void
 find_bounds(struct disklabel *lp)
 {
-#ifdef DOSLABEL
-	struct partition *pp = &lp->d_partitions[RAW_PART];
-	u_int64_t new_end;
-	int i;
-#endif
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
 	starting_sector = 0;
@@ -1359,7 +1354,11 @@ find_bounds(struct disklabel *lp)
 	 * If we have an MBR, use values from the OpenBSD partition.
 	 */
 	if (dosdp) {
-	    if (dosdp->dp_typ == DOSPTYP_OPENBSD) {
+		if (dosdp->dp_typ == DOSPTYP_OPENBSD) {
+			struct partition *pp;
+			u_int64_t new_end;
+			int i;
+
 			/* Set start and end based on fdisk partition bounds */
 			starting_sector = letoh32(dosdp->dp_start);
 			ending_sector = starting_sector + letoh32(dosdp->dp_size);
