@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.21 2008/12/06 23:49:40 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.22 2008/12/07 16:00:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -848,7 +848,6 @@ delroot:
 int
 queue_record_incoming_envelope(struct message *message)
 {
-	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 	char evpname[MAXPATHLEN];
 	char message_uid[MAXPATHLEN];
@@ -858,12 +857,8 @@ queue_record_incoming_envelope(struct message *message)
 	FILE *fp;
 	int ret;
 
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
-	    message->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
-		fatal("queue_record_incoming_envelope: snprintf");
-
-	spret = snprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES);
+	spret = snprintf(evpdir, MAXPATHLEN, "%s/%s%s", PATH_INCOMING,
+	    message->message_id, PATH_ENVELOPES);
 	if (spret == -1 || spret >= MAXPATHLEN)
 		fatal("queue_record_incoming_envelope: snprintf");
 
