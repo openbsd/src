@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.3 2008/12/07 01:55:41 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.4 2008/12/07 03:14:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -673,6 +673,11 @@ runner_batch_resolved(struct smtpd *env, struct batch *lookup)
  */
 
 	switch (batchp->getaddrinfo_error) {
+	case 0:
+		batchp->flags |= F_BATCH_RESOLVED;
+		for (i = 0; i < batchp->mx_cnt; ++i)
+			batchp->mxarray[i].ss = lookup->mxarray[i].ss;
+		break;
 	case EAI_ADDRFAMILY:
 	case EAI_BADFLAGS:
 	case EAI_BADHINTS:
@@ -704,9 +709,7 @@ runner_batch_resolved(struct smtpd *env, struct batch *lookup)
 		return 0;
 
 	default:
-		batchp->flags |= F_BATCH_RESOLVED;
-		for (i = 0; i < batchp->mx_cnt; ++i)
-			batchp->mxarray[i].ss = lookup->mxarray[i].ss;
+		fatalx("runner_batch_resolved: unknown getaddrinfo error.");
 	}
 	return 1;
 }
