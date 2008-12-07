@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.74 2008/12/02 08:41:32 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.75 2008/12/07 07:46:05 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 2 2008 $
+.Dd $Mdocdate: December 7 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -342,9 +342,11 @@ Display kernel
 statistics similar to the output of
 .Cm vmstat Fl m .
 Available orderings are:
-.Ic name
+.Ic name ,
+.Ic requests ,
+.Ic size
 and
-.Ic requests .
+.Ic number of pages .
 .It Ic queues
 Display statistics about the active
 .Xr altq 9

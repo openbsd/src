@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.3 2008/11/05 16:03:02 chl Exp $	*/
+/*	$OpenBSD: pool.c,v 1.4 2008/12/07 07:46:05 canacar Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -34,6 +34,8 @@ void showpool(int k);
 /* qsort callbacks */
 int sort_name_callback(const void *s1, const void *s2);
 int sort_req_callback(const void *s1, const void *s2);
+int sort_psize_callback(const void *s1, const void *s2);
+int sort_npage_callback(const void *s1, const void *s2);
 
 struct pool_info {
 	char name[32];
@@ -86,6 +88,8 @@ field_def *view_pool_0[] = {
 order_type pool_order_list[] = {
 	{"name", "name", 'N', sort_name_callback},
 	{"requests", "requests", 'Q', sort_req_callback},
+	{"size", "size", 'Z', sort_psize_callback},
+	{"npages", "npages", 'P', sort_npage_callback},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -124,6 +128,43 @@ sort_req_callback(const void *s1, const void *s2)
 		return -sortdir;
 
 	return sort_name_callback(s1, s2);
+}
+
+int
+sort_npage_callback(const void *s1, const void *s2)
+{
+	struct pool_info *p1, *p2;
+	p1 = (struct pool_info *)s1;
+	p2 = (struct pool_info *)s2;
+
+	if (p1->pool.pr_npages <  p2->pool.pr_npages)
+		return sortdir;
+	if (p1->pool.pr_npages >  p2->pool.pr_npages)
+		return -sortdir;
+
+	return sort_name_callback(s1, s2);
+}
+
+int
+sort_psize_callback(const void *s1, const void *s2)
+{
+	struct pool_info *p1, *p2;
+	size_t ps1, ps2;
+
+	p1 = (struct pool_info *)s1;
+	p2 = (struct pool_info *)s2;
+
+	ps1  = (size_t)(p1->pool.pr_nget - p1->pool.pr_nput) *
+	    (size_t)p1->pool.pr_size;
+	ps2  = (size_t)(p2->pool.pr_nget - p2->pool.pr_nput) *
+	    (size_t)p2->pool.pr_size;
+
+	if (ps1 <  ps2)
+		return sortdir;
+	if (ps1 >  ps2)
+		return -sortdir;
+
+	return sort_npage_callback(s1, s2);
 }
 
 void
