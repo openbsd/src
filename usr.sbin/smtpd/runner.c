@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.2 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.3 2008/12/07 01:55:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -718,7 +718,7 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	struct message *messagep;
 
 	if ((batchp->type & (T_MDA_BATCH|T_MTA_BATCH)) == 0)
-		fatal("batch_send: unknown batch type");
+		fatal("runner_batch_dispatch: unknown batch type");
 
 	if (batchp->type & T_MDA_BATCH)
 		proctype = PROC_MDA;
