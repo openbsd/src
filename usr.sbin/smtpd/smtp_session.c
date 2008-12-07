@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.25 2008/12/07 15:38:35 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.26 2008/12/07 15:41:16 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -174,6 +174,7 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
 	    0, 0, -1, &req, sizeof(req));
+	bufferevent_disable(s->s_bev, EV_READ);
 
 	return 1;
 }
