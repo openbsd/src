@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.21 2008/06/12 22:26:01 canacar Exp $	*/
+/*	$OpenBSD: swap.c,v 1.22 2008/12/07 02:56:06 canacar Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -176,11 +176,11 @@ initswap(void)
 static void
 showswap(int i)
 {
-	int div, used, xsize;
+	int d, used, xsize;
 	struct	swapent *sep;
 	char	*p;
 
-	div = blocksize / 512;
+	d = blocksize / 512;
 
 	sep = &swap_devices[i];
 
@@ -192,8 +192,8 @@ showswap(int i)
 	xsize = sep->se_nblks;
 	used = sep->se_inuse;
 
-	print_fld_uint(FLD_SW_BLOCKS, xsize / div);
-	print_fld_uint(FLD_SW_USED, used / div);
+	print_fld_uint(FLD_SW_BLOCKS, xsize / d);
+	print_fld_uint(FLD_SW_USED, used / d);
 	print_fld_bar(FLD_SW_BAR, 100 * used / xsize);
 
 	end_line();
@@ -203,22 +203,22 @@ static void
 showtotal(void)
 {
 	struct	swapent *sep;
-	int	div, i, avail, used, xsize, free;
+	int	d, i, avail, used, xsize, mfree;
 
-	div = blocksize / 512;
-	free = avail = 0;
+	d = blocksize / 512;
+	mfree = avail = 0;
 
 	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
 		xsize = sep->se_nblks;
 		used = sep->se_inuse;
 		avail += xsize;
-		free += xsize - used;
+		mfree += xsize - used;
 	}
-	used = avail - free;
+	used = avail - mfree;
 
 	print_fld_str(FLD_SW_NAME, "Total");
-	print_fld_uint(FLD_SW_BLOCKS, avail / div);
-	print_fld_uint(FLD_SW_USED, used / div);
+	print_fld_uint(FLD_SW_BLOCKS, avail / d);
+	print_fld_uint(FLD_SW_USED, used / d);
 	print_fld_bar(FLD_SW_BAR, 100 * used / avail);
 
 	end_line();

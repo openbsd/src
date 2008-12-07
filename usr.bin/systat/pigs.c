@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.22 2008/06/12 22:26:01 canacar Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.23 2008/12/07 02:56:06 canacar Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ int
 read_pg(void)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
-	long ctime[CPUSTATES];
+	long ctimes[CPUSTATES];
 	double t;
 	int i, k;
 	size_t size;
@@ -186,25 +186,25 @@ read_pg(void)
 	/*
 	 * and for the imaginary "idle" process
 	 */
-	size = sizeof(ctime);
-	sysctl(cp_time_mib, 2, &ctime, &size, NULL, 0);
+	size = sizeof(ctimes);
+	sysctl(cp_time_mib, 2, &ctimes, &size, NULL, 0);
 
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		t += ctime[i] - stime[i];
+		t += ctimes[i] - stime[i];
 	if (t == 0.0)
 		t = 1.0;
 
-	procbase[nproc].p_pctcpu = (ctime[CP_IDLE] - stime[CP_IDLE]) / t / pctdouble(1);
+	procbase[nproc].p_pctcpu = (ctimes[CP_IDLE] - stime[CP_IDLE]) / t / pctdouble(1);
 	for (i = 0; i < CPUSTATES; i++)
-		stime[i] = ctime[i];
+		stime[i] = ctimes[i];
 
 	qsort(pb_indices, nproc + 1, sizeof (int), compar);
 
 	pigs_cnt = 0;
 	for (k = 0; k < nproc + 1; k++) {
-		int i = pb_indices[k];
-		if (pctdouble(procbase[i].p_pctcpu) < 0.01)
+		int j = pb_indices[k];
+		if (pctdouble(procbase[j].p_pctcpu) < 0.01)
 			break;
 		pigs_cnt++;
 	}

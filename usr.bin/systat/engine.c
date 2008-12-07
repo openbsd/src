@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.6 2008/12/01 18:03:06 naddy Exp $	 */
+/* $Id: engine.c,v 1.7 2008/12/07 02:56:06 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -203,7 +203,7 @@ rawaddstr(char *s)
 void
 print_fld_str(field_def *fld, const char *str)
 {
-	int len, move;
+	int len, offset;
 	char *cpos;
 
 	if (str == NULL || fld == NULL)
@@ -227,15 +227,15 @@ print_fld_str(field_def *fld, const char *str)
 			break;
 		case FLD_ALIGN_COLUMN:
 			if ((cpos = strchr(str, ':')) == NULL) {
-				move = (fld->width - len) / 2;
+				offset = (fld->width - len) / 2;
 			} else {
-				move = (fld->width / 2) - (cpos - str);
-				if (move < 0)
-					move = 0;
-				else if (move > (fld->width - len))
-					move = fld->width - len;
+				offset = (fld->width / 2) - (cpos - str);
+				if (offset < 0)
+					offset = 0;
+				else if (offset > (fld->width - len))
+					offset = fld->width - len;
 			}
-			move_horiz(fld->start + move);
+			move_horiz(fld->start + offset);
 			break;
 		default:
 			move_horiz(fld->start);
@@ -249,7 +249,7 @@ void
 print_bar_title(field_def *fld)
 {
 	char buf[16];
-	int len, div, i, tr, tw, val, pos, cur;
+	int len, i, d, tr, tw, val, pos, cur;
 
 	int divs[] = {20, 10, 5, 4, 3, 2, 1, 0};
 
@@ -269,26 +269,26 @@ print_bar_title(field_def *fld)
 		return;
 	}
 
-	div = divs[i];
+	d = divs[i];
 
 	val = 0;
 	pos = 0;
-	tr = fld->arg % div;
-	tw = fld->width % div;
+	tr = fld->arg % d;
+	tw = fld->width % d;
 
 	tb_start();
 	cur = 0;
-	for(i = 0; i < div; i++) {
+	for(i = 0; i < d; i++) {
 		tw += fld->width;
 		tr += fld->arg;
 
-		while (tr >= div) {
+		while (tr >= d) {
 			val++;
-			tr -= div;
+			tr -= d;
 		}
-		while (tw >= div) {
+		while (tw >= d) {
 			pos++;
-			tw -= div;
+			tw -= d;
 		}
 
 		len = snprintf(buf, sizeof(buf), "%d\\", val);
@@ -658,7 +658,7 @@ print_fld_age(field_def *fld, unsigned int age)
 }
 
 void
-print_fld_sdiv(field_def *fld, u_int64_t size, int div)
+print_fld_sdiv(field_def *fld, u_int64_t size, int d)
 {
 	int len;
 
@@ -674,28 +674,28 @@ print_fld_sdiv(field_def *fld, u_int64_t size, int div)
 		goto ok;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lluK", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lluM", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lluG", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lluT", size) <= len)
 		goto ok;
 	
@@ -715,7 +715,7 @@ print_fld_size(field_def *fld, u_int64_t size)
 }
 
 void
-print_fld_ssdiv(field_def *fld, int64_t size, int div)
+print_fld_ssdiv(field_def *fld, int64_t size, int d)
 {
 	int len;
 
@@ -731,28 +731,28 @@ print_fld_ssdiv(field_def *fld, int64_t size, int div)
 		goto ok;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lldK", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lldM", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lldG", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
-	size /= div;
+	size /= d;
 	if (tbprintf("%lldT", size) <= len)
 		goto ok;
 
@@ -933,7 +933,7 @@ read_view(void)
 int
 disp_update(void)
 {
-	int lines;
+	int li;
 
 	if (maxprint < 0)
 		dispstart = 0;
@@ -950,12 +950,11 @@ disp_update(void)
 		curr_line = 0;
 
 		if (curr_mgr->header_fn != NULL) {
-			lines = curr_mgr->header_fn();
-			if (lines < 0)
+			li = curr_mgr->header_fn();
+			if (li < 0)
 				return (1);
-//			home_line = lines++;
-			curr_line = ++lines;
-			home_line = lines + maxprint + 1;
+			curr_line = ++li;
+			home_line = li + maxprint + 1;
 		}
 
 		print_title();
@@ -976,19 +975,19 @@ sort_view(void)
 }
 
 void
-sig_close(int signal)
+sig_close(int sig)
 {
 	gotsig_close = 1;
 }
 
 void
-sig_resize(int signal)
+sig_resize(int sig)
 {
 	gotsig_resize = 1;
 }
 
 void
-sig_alarm(int signal)
+sig_alarm(int sig)
 {
 	gotsig_alarm = 1;
 }

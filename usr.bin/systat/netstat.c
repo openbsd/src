@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.31 2008/06/12 22:26:01 canacar Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.32 2008/12/07 02:56:06 canacar Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -450,19 +450,19 @@ static const char *
 inetname(struct in_addr in)
 {
 	static char line[NI_MAXHOST];
-	struct sockaddr_in sin;
+	struct sockaddr_in si;
 	int flags, e;
 
 	flags = nflag ? NI_NUMERICHOST : 0;
 	if (in.s_addr == INADDR_ANY)
 		return "*";
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(struct sockaddr_in);
-	sin.sin_addr = in;
+	memset(&si, 0, sizeof(si));
+	si.sin_family = AF_INET;
+	si.sin_len = sizeof(struct sockaddr_in);
+	si.sin_addr = in;
 
-	e = getnameinfo((struct sockaddr *)&sin, sin.sin_len,
+	e = getnameinfo((struct sockaddr *)&si, si.sin_len,
 			line, sizeof(line), NULL, 0, flags);
 
 	if (e == 0)

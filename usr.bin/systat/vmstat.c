@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.66 2008/11/01 00:56:25 canacar Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.67 2008/12/07 02:56:06 canacar Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.66 2008/11/01 00:56:25 canacar Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.67 2008/12/07 02:56:06 canacar Exp $";
 #endif /* not lint */
 
 /*
@@ -493,15 +493,15 @@ vm_keyboard_callback(int ch)
 static float
 cputime(int indx)
 {
-	double t;
+	double tm;
 	int i;
 
-	t = 0;
+	tm = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		t += s.time[i];
-	if (t == 0.0)
-		t = 1.0;
-	return (s.time[indx] * 100.0 / t);
+		tm += s.time[i];
+	if (tm == 0.0)
+		tm = 1.0;
+	return (s.time[indx] * 100.0 / tm);
 }
 
 void
@@ -565,7 +565,7 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 }
 
 static void
-getinfo(struct Info *s)
+getinfo(struct Info *si)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
@@ -581,43 +581,43 @@ getinfo(struct Info *s)
 		mib[1] = KERN_INTRCNT;
 		mib[2] = KERN_INTRCNT_CNT;
 		mib[3] = i;
-		size = sizeof(s->intrcnt[i]);
-		if (sysctl(mib, 4, &s->intrcnt[i], &size, NULL, 0) < 0) {
-			s->intrcnt[i] = 0;
+		size = sizeof(si->intrcnt[i]);
+		if (sysctl(mib, 4, &si->intrcnt[i], &size, NULL, 0) < 0) {
+			si->intrcnt[i] = 0;
 		}
 	}
 
-	size = sizeof(s->time);
-	if (sysctl(cp_time_mib, 2, &s->time, &size, NULL, 0) < 0) {
+	size = sizeof(si->time);
+	if (sysctl(cp_time_mib, 2, &si->time, &size, NULL, 0) < 0) {
 		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
-		bzero(&s->time, sizeof(s->time));
+		bzero(&si->time, sizeof(si->time));
 	}
 
-	size = sizeof(s->nchstats);
-	if (sysctl(nchstats_mib, 2, &s->nchstats, &size, NULL, 0) < 0) {
+	size = sizeof(si->nchstats);
+	if (sysctl(nchstats_mib, 2, &si->nchstats, &size, NULL, 0) < 0) {
 		error("Can't get KERN_NCHSTATS: %s\n", strerror(errno));
-		bzero(&s->nchstats, sizeof(s->nchstats));
+		bzero(&si->nchstats, sizeof(si->nchstats));
 	}
 
-	size = sizeof(s->uvmexp);
-	if (sysctl(uvmexp_mib, 2, &s->uvmexp, &size, NULL, 0) < 0) {
+	size = sizeof(si->uvmexp);
+	if (sysctl(uvmexp_mib, 2, &si->uvmexp, &size, NULL, 0) < 0) {
 		error("Can't get VM_UVMEXP: %s\n", strerror(errno));
-		bzero(&s->uvmexp, sizeof(s->uvmexp));
+		bzero(&si->uvmexp, sizeof(si->uvmexp));
 	}
 
-	size = sizeof(s->Total);
-	if (sysctl(vmtotal_mib, 2, &s->Total, &size, NULL, 0) < 0) {
+	size = sizeof(si->Total);
+	if (sysctl(vmtotal_mib, 2, &si->Total, &size, NULL, 0) < 0) {
 		error("Can't get VM_METER: %s\n", strerror(errno));
-		bzero(&s->Total, sizeof(s->Total));
+		bzero(&si->Total, sizeof(si->Total));
 	}
 }
 
 static void
-allocinfo(struct Info *s)
+allocinfo(struct Info *si)
 {
-	memset(s, 0, sizeof(*s));
-	s->intrcnt = (u_quad_t *) calloc(nintr, sizeof(u_quad_t));
-	if (s->intrcnt == NULL)
+	memset(si, 0, sizeof(*si));
+	si->intrcnt = (u_quad_t *) calloc(nintr, sizeof(u_quad_t));
+	if (si->intrcnt == NULL)
 		errx(2, "out of memory");
 }
 

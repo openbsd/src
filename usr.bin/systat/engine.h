@@ -1,4 +1,4 @@
-/* $Id: engine.h,v 1.4 2008/12/01 18:03:06 naddy Exp $	 */
+/* $Id: engine.h,v 1.5 2008/12/07 02:56:06 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -105,18 +105,18 @@ int tbprintf(char *format, ...) GCC_PRINTFLIKE(1,2);
 void end_line(void);
 void end_page(void);
 
-void print_fld_str(field_def *fld, const char *str);
-void print_fld_age(field_def *fld, unsigned int age);
-void print_fld_sdiv(field_def *fld, u_int64_t size, int div);
-void print_fld_size(field_def *fld, u_int64_t size);
-void print_fld_ssdiv(field_def *fld, int64_t size, int div);
-void print_fld_ssize(field_def *fld, int64_t size);
-void print_fld_bw(field_def *fld, double bw);
-void print_fld_rate(field_def *fld, double rate);
-void print_fld_uint(field_def *fld, unsigned int size);
-void print_fld_float(field_def *fld, double f, int prec);
-void print_fld_bar(field_def *fld, int value);
-void print_fld_tb(field_def *fld);
+void print_fld_str(field_def *, const char *);
+void print_fld_age(field_def *, unsigned int);
+void print_fld_sdiv(field_def *, u_int64_t, int);
+void print_fld_size(field_def *, u_int64_t);
+void print_fld_ssdiv(field_def *, int64_t, int);
+void print_fld_ssize(field_def *, int64_t);
+void print_fld_bw(field_def *, double);
+void print_fld_rate(field_def *, double);
+void print_fld_uint(field_def *, unsigned int);
+void print_fld_float(field_def *, double, int);
+void print_fld_bar(field_def *, int);
+void print_fld_tb(field_def *);
 
 void print_title(void);
 

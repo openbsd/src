@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.34 2008/12/01 18:03:06 naddy Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.35 2008/12/07 02:56:06 canacar Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ print_io(void)
 {
 	int n, count = 0;
 
-	int i, curr;
+	int curr;
 	etime = naptime;
 
 	/* XXX engine internals: save and restore curr_line for bcache */
@@ -227,8 +227,6 @@ showdrive(int dn)
 void
 showbcache(void)
 {
-	int count = 0;
-
 	print_fld_str(FLD_IO_SSTR, "numbufs");
 	print_fld_ssize(FLD_IO_SVAL, bccur.numbufs);
 	end_line();
