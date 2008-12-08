@@ -1431,6 +1431,7 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
+./usr/share/man/cat4/inteldrm.0
 ./usr/share/man/cat4/iop.0
 ./usr/share/man/cat4/iophy.0
 ./usr/share/man/cat4/ioprbs.0
@@ -1649,6 +1650,7 @@
 ./usr/share/man/cat4/puc.0
 ./usr/share/man/cat4/pwdog.0
 ./usr/share/man/cat4/qsphy.0
+./usr/share/man/cat4/radeondrm.0
 ./usr/share/man/cat4/radio.0
 ./usr/share/man/cat4/raid.0
 ./usr/share/man/cat4/ral.0
