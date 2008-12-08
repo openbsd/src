@@ -192,12 +192,9 @@ sudo_file_lookup(nss, validated, pwflag)
 		    if ((pwcheck == any && nopass != TRUE) ||
 			(pwcheck == all && nopass != FALSE))
 			nopass = cs->tags.nopasswd;
-		    if (match == ALLOW)
-			goto matched_pseudo;
 		}
 	    }
 	}
-	matched_pseudo:
 	if (match == ALLOW || user_uid == 0) {
 	    /* User has an entry for this host. */
 	    SET(validated, VALIDATE_OK);
