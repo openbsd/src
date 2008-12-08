@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c24x0_intr.h,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c24x0_intr.h,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
 /*	$NetBSD: s3c24x0_intr.h,v 1.8 2008/04/27 18:58:45 matt Exp $ */
 
 /*
@@ -39,16 +39,10 @@
 #define	SI_TO_IRQBIT(si)  (1<<(si))
 
 /* no room for softinterrupts in intr_mask. */
-extern int volatile soft_intr_mask;
-extern int s3c24x0_soft_imask[];
-
-#define	get_pending_softint()	(softint_pending & soft_intr_mask)
-#define	update_softintr_mask()	\
-	(soft_intr_mask = s3c24x0_soft_imask[curcpl()])
+extern int s3c24x0_smask[];
 #endif
 
-#define	s3c2xx0_update_hw_mask() \
-	(*s3c2xx0_intr_mask_reg = ~(intr_mask & global_intr_mask))
+void s3c2xx0_update_hw_mask(void);
 
 #include <arm/s3c2xx0/s3c2xx0_intr.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_intr.c,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2xx0_intr.c,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
 /* $NetBSD: s3c2xx0_intr.c,v 1.13 2008/04/27 18:58:45 matt Exp $ */
 
 /*
@@ -92,12 +92,13 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.13 2008/04/27 18:58:45 matt Exp $
 #include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 volatile uint32_t *s3c2xx0_intr_mask_reg;
-extern volatile int intr_mask;
 extern volatile int global_intr_mask;
 
 int s3c2xx0_cpl;
 
+#if 0
 #define SI_TO_IRQBIT(x) (1 << (x))
+#endif
 
 int
 s3c2xx0_curcpl()
@@ -255,11 +256,7 @@ void
 s3c2xx0_setipl(int new)
 {
 	s3c2xx0_set_curcpl(new);
-	intr_mask = s3c2xx0_imask[s3c2xx0_curcpl()];
 	s3c2xx0_update_hw_mask();
-#ifdef __HAVE_FAST_SOFTINTS
-	update_softintr_mask();
-#endif
 }
 
 
@@ -273,7 +270,7 @@ s3c2xx0_splx(int new)
 	restore_interrupts(psw);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	cpu_dosoftints();
+	s3c2xx0_irq_do_pending();
 #endif
 }
 
@@ -304,9 +301,8 @@ s3c2xx0_spllower(int ipl)
 }
 
 /* XXX */
-void s3c2xx0_do_pending(void);
 
-int softint_pending;
+volatile int softint_pending;
 void
 s3c2xx0_setsoftintr(int si)
 {
@@ -318,12 +314,12 @@ s3c2xx0_setsoftintr(int si)
  
 	/* Process unmasked pending soft interrupts. */
 	if (softint_pending & s3c2xx0_smask[s3c2xx0_curcpl()])
-		s3c2xx0_do_pending();
+		s3c2xx0_irq_do_pending();
 }
 
 
 void
-s3c2xx0_do_pending(void)
+s3c2xx0_irq_do_pending(void)
 {
 	static int processing = 0;
 	int oldirqstate, spl_save;
@@ -360,4 +356,3 @@ s3c2xx0_do_pending(void)
 	processing = 0;
 	restore_interrupts(oldirqstate);
 }
-

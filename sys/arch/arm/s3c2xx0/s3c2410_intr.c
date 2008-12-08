@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2410_intr.c,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2410_intr.c,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
 /* $NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $ */
 
 /*
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp
 
 #include <arm/s3c2xx0/s3c2410reg.h>
 #include <arm/s3c2xx0/s3c2410var.h>
+#include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 /*
  * interrupt dispatch table.
@@ -59,11 +60,6 @@ struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
 extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-volatile int intr_mask;
-#ifdef __HAVE_FAST_SOFTINTS
-volatile int softint_pending;
-volatile int soft_intr_mask;
-#endif
 volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
@@ -83,7 +79,9 @@ vaddr_t intctl_base;		/* interrupt controller registers */
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[] = {
+#ifdef SI_SOFTBIO
 	[SI_SOFTBIO]	= IPL_SOFTBIO,
+#endif
 	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
 	[SI_SOFTNET]	= IPL_SOFTNET,
 	[SI_SOFTSERIAL] = IPL_SOFTSERIAL,
@@ -92,10 +90,23 @@ static const int si_to_ipl[] = {
 
 #define PENDING_CLEAR_MASK	(~0)
 
+int debug_update_hw;
+void
+s3c2xx0_update_hw_mask(void)
+{
+	if (debug_update_hw != NULL)
+		printf("setting irq mask to ~(%x & %x) = %x\n",
+		    s3c2xx0_imask[s3c2xx0_curcpl()], global_intr_mask,
+		    ~(s3c2xx0_imask[s3c2xx0_curcpl()] & global_intr_mask));
+	(*s3c2xx0_intr_mask_reg =
+	    ~(s3c2xx0_imask[s3c2xx0_curcpl()] & global_intr_mask));
+}
+
 /*
  * called from irq_entry.
  */
 void s3c2410_irq_handler(struct clockframe *);
+
 void
 s3c2410_irq_handler(struct clockframe *frame)
 {
@@ -145,7 +156,11 @@ s3c2410_irq_handler(struct clockframe *frame)
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
+#if 0
 	cpu_dosoftints();
+#else
+	s3c2xx0_irq_do_pending();
+#endif
 #endif
 }
 
@@ -265,32 +280,6 @@ init_interrupt_masks(void)
 	for (i=0; i < NIPL; ++i)
 		s3c2xx0_imask[i] = 0;
 
-#ifdef __HAVE_FAST_SOFTINTS
-	s3c24x0_soft_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
-		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
-		SI_TO_IRQBIT(SI_SOFT);
-
-	s3c24x0_soft_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
-		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	s3c24x0_soft_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
-		SI_TO_IRQBIT(SI_SOFTNET);
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	s3c24x0_soft_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
-		s3c24x0_soft_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-#endif
 }
 
 void

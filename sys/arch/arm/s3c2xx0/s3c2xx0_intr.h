@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_intr.h,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2xx0_intr.h,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
 /*	$NetBSD: s3c2xx0_intr.h,v 1.13 2008/11/19 06:35:55 matt Exp $ */
 
 /*
@@ -121,7 +121,6 @@ typedef int (* s3c2xx0_irq_handler_t)(void *);
 
 extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-extern volatile int intr_mask;
 extern volatile int global_intr_mask;
 #ifdef __HAVE_FAST_SOFTINTS
 extern volatile int softint_pending;
@@ -131,75 +130,6 @@ extern int s3c2xx0_ilevel[];
 
 void s3c2xx0_update_intr_masks( int, int );
 
-static inline void
-s3c2xx0_mask_interrupts(int mask)
-{
-	int save = disable_interrupts(I32_bit);
-	global_intr_mask &= ~mask;
-	s3c2xx0_update_hw_mask();
-	restore_interrupts(save);
-}
-
-static inline void
-s3c2xx0_unmask_interrupts(int mask)
-{
-	int save = disable_interrupts(I32_bit);
-	global_intr_mask |= mask;
-	s3c2xx0_update_hw_mask();
-	restore_interrupts(save);
-}
-
-static inline void
-s3c2xx0_setipl(int new)
-{
-	set_curcpl(new);
-	intr_mask = s3c2xx0_imask[curcpl()];
-	s3c2xx0_update_hw_mask();
-#ifdef __HAVE_FAST_SOFTINTS
-	update_softintr_mask();
-#endif
-}
-
-
-static inline void
-s3c2xx0_splx(int new)
-{
-	int psw;
-
-	psw = disable_interrupts(I32_bit);
-	s3c2xx0_setipl(new);
-	restore_interrupts(psw);
-
-#ifdef __HAVE_FAST_SOFTINTS
-	cpu_dosoftints();
-#endif
-}
-
-
-static inline int
-s3c2xx0_splraise(int ipl)
-{
-	int	old, psw;
-
-	old = curcpl();
-	if( ipl > old ){
-		psw = disable_interrupts(I32_bit);
-		s3c2xx0_setipl(ipl);
-		restore_interrupts(psw);
-	}
-
-	return (old);
-}
-
-static inline int
-s3c2xx0_spllower(int ipl)
-{
-	int old = curcpl();
-	int psw = disable_interrupts(I32_bit);
-	s3c2xx0_splx(ipl);
-	restore_interrupts(psw);
-	return(old);
-}
 
 int	_splraise(int);
 int	_spllower(int);
@@ -262,5 +192,7 @@ void s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch *, int );
    address during bootstrap */
 void s3c2xx0_intr_bootstrap(vaddr_t);
 #endif
+
+void s3c2xx0_irq_do_pending(void);
 
 #endif /* _S3C2XX0_INTR_H_ */

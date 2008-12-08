@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2410_intr.h,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2410_intr.h,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
 /*	$NetBSD: s3c2410_intr.h,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*
@@ -34,6 +34,7 @@
 #define	_S3C2410_INTR_H_
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(s3c2410_irq_handler)
+#define __HAVE_FAST_SOFTINTS
 
 #include <arm/s3c2xx0/s3c24x0_intr.h>
 

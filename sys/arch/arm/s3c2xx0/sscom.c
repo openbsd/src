@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.3 2008/11/27 11:38:02 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.4 2008/12/08 20:50:20 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -154,6 +154,9 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $");
 #endif
 #include <arm/s3c2xx0/sscom_var.h>
 #include <dev/cons.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 dev_type_open(sscomopen);
 dev_type_close(sscomclose);
@@ -172,7 +175,6 @@ void	sscomcnpollc	(dev_t, int);
 void 	sscomsoft	(void *);
 
 void sscom_rxsoft	(struct sscom_softc *, struct tty *);
-void sscom_txsoft	(struct sscom_softc *, struct tty *);
 void sscom_stsoft	(struct sscom_softc *, struct tty *);
 void sscom_schedrx	(struct sscom_softc *);
 
@@ -1385,25 +1387,6 @@ sscomstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-#if 0
-	if (!ttypull(tp))
-		goto out;
-
-	/* Grab the first contiguous region of buffer space. */
-	{
-		u_char *tba;
-		int tbc;
-
-		tba = tp->t_outq.c_cf;
-		tbc = ndqb(&tp->t_outq, 0);
-
-		(void)splserial();
-		SSCOM_LOCK(sc);
-
-		sc->sc_tba = tba;
-		sc->sc_tbc = tbc;
-	}
-#else
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
@@ -1413,20 +1396,20 @@ sscomstart(struct tty *tp)
 			goto out;
 		selwakeup(&tp->t_wsel);
 	}
-#endif
 
 	SET(tp->t_state, TS_BUSY);
 	sc->sc_tx_busy = 1;
 
-	/* Output the first chunk of the contiguous buffer. */
+	/* Output the first fifo worth of the buffer. */
 	sscom_output_chunk(sc);
 
-	/* Enable transmit completion interrupts if necessary. */
-	if ((sc->sc_hwflags & SSCOM_HW_TXINT) == 0)
-		sscom_enable_txint(sc);
-
-	SSCOM_UNLOCK(sc);
 out:
+	/* Enable transmit completion interrupts if necessary. */
+	if (tp->t_outq.c_cc != 0)
+		sscom_enable_txint(sc);
+	else 
+		sscom_disable_txint(sc); /* track state in software? */
+
 	splx(s);
 	return;
 }
@@ -1511,7 +1494,9 @@ sscom_rxsoft(struct sscom_softc *sc, struct tty *tp)
 			if (ISSET(rsr, UERSTAT_PARITY))
 				SET(code, TTY_PE);
 		}
-                (*linesw[tp->t_line].l_rint)(rsr << 8 | code, tp);
+//                (*linesw[tp->t_line].l_rint)(rsr << 8 | code, tp);
+		/* what to do with rsr?, -> TTY_PE, TTYFE, or both */
+                (*linesw[tp->t_line].l_rint)(code, tp);
 
 #if 0
 		if ((*rint)(code, tp) == -1) {
@@ -1576,19 +1561,6 @@ sscom_rxsoft(struct sscom_softc *sc, struct tty *tp)
 }
 
 void
-sscom_txsoft(struct sscom_softc *sc, struct tty *tp)
-{
-
-	CLR(tp->t_state, TS_BUSY);
-	if (ISSET(tp->t_state, TS_FLUSH))
-		CLR(tp->t_state, TS_FLUSH);
-	else
-		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
-
-}
-
-void
 sscom_stsoft(struct sscom_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
@@ -1613,9 +1585,11 @@ sscom_stsoft(struct sscom_softc *sc, struct tty *tp)
 	if (ISSET(delta, sc->sc_msr_cts)) {
 		/* Block or unblock output according to flow control. */
 		if (ISSET(msr, sc->sc_msr_cts)) {
+			struct tty *tp = sc->sc_tty;
 			sc->sc_tx_stopped = 0;
 			(*linesw[tp->t_line].l_start)(tp);
 		} else {
+			printf("txstopped\n");
 			sc->sc_tx_stopped = 1;
 		}
 	}
@@ -1646,11 +1620,6 @@ sscomsoft(void *arg)
 		if (sc->sc_st_check) {
 			sc->sc_st_check = 0;
 			sscom_stsoft(sc, tp);
-		}
-
-		if (sc->sc_tx_done) {
-			sc->sc_tx_done = 0;
-			sscom_txsoft(sc, tp);
 		}
 	}
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -1684,13 +1653,14 @@ sscomrxintr(void *arg)
 
 	do {
 		u_char	msts, delta;
-		u_char  uerstat;
 		uint16_t ufstat;
+		uint8_t utrstat, uerstat;
 
 		ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
 
 		/* XXX: break interrupt with no character? */
 
+#if 0
 		if ( (ufstat & (UFSTAT_RXCOUNT|UFSTAT_RXFULL)) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 
@@ -1768,6 +1738,68 @@ sscomrxintr(void *arg)
 				bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 			}
 		}
+#else
+		utrstat = bus_space_read_2(iot, ioh, SSCOM_UTRSTAT);
+		if (utrstat & UTRSTAT_RXREADY) {
+			uerstat = bus_space_read_1((iot), (ioh), SSCOM_UERSTAT);
+			if (uerstat & UERSTAT_BREAK) {
+#if defined(DDB)
+				if (db_console)
+					Debugger();
+#endif
+				goto next;
+
+			}
+			/* xxx overflow */
+			put[0] = bus_space_read_1((iot), (ioh),
+			    SSCOM_URXH);
+			put[1] = uerstat;
+			put += 2;
+			if (put >= end)
+				put = sc->sc_rbuf;
+			cc--;
+next:
+			ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+		}
+			/*
+			 * Current string of incoming characters ended because
+			 * no more data was available or we ran out of space.
+			 * Schedule a receive event if any data was received.
+			 * If we're out of space, turn off receive interrupts.
+			 */
+			sc->sc_rbput = put;
+			sc->sc_rbavail = cc;
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+				sc->sc_rx_ready = 1;
+
+			/*
+			 * See if we are in danger of overflowing a buffer. If
+			 * so, use hardware flow control to ease the pressure.
+			 */
+			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
+			    cc < sc->sc_r_hiwat) {
+				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+				sscom_hwiflow(sc);
+			}
+
+			/*
+			 * If we're out of space, disable receive interrupts
+			 * until the queue has drained a bit.
+			 */
+			if (!cc) {
+				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				sscom_disable_rxint(sc);
+				sc->sc_ucon &= ~UCON_ERRINT;
+				bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
+			}
+#endif
+		if (sc->sc_rbput != put) {
+			sc->sc_rx_ready = 1;
+			softintr_schedule(sc->sc_si);
+			sc->sc_st_check = 1;
+		}
+		sc->sc_rbput = put;
+		sc->sc_rbavail = cc;
 
 
 		msts = sc->read_modem_status(sc);
@@ -1928,24 +1960,16 @@ sscomtxintr(void *arg)
 			 */
 			if (sc->sc_hwflags & SSCOM_HW_TXINT)
 				sscom_disable_txint(sc);
-			if (sc->sc_tx_busy) {
-				sc->sc_tx_busy = 0;
-				sc->sc_tx_done = 1;
-			}
 		}
 #else
 		if ( sc->sc_tty->t_outq.c_cc > 0) {
-			__sscom_output_chunk(sc, ufstat);
-		} else {
-			/*
-			 * Disable transmit sscompletion
-			 * interrupts.
-			 */
-			sscom_disable_txint(sc);
-			if (sc->sc_tx_busy) {
-				sc->sc_tx_busy = 0;
-				sc->sc_tx_done = 1;
+			struct tty *tp = sc->sc_tty;
+			if (ISSET(tp->t_state, TS_BUSY)) {
+				CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			}
+			(*linesw[tp->t_line].l_start)(tp);
+		} else {
+			sscom_disable_txint(sc);
 		}
 #endif
 	}
