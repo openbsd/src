@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.27 2008/03/18 16:57:58 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.28 2008/12/08 11:34:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -26,6 +26,7 @@
 #include <sys/utsname.h>
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
+#include <sys/sched.h>
 #include <sys/mount.h>
 
 #include <net/if.h>
@@ -323,6 +324,8 @@ mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 int	 mib_hrmemory(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrstorage(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrdevice(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrprocessor(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrswrun(struct oid *, struct ber_oid *, struct ber_element **);
 
 int	 kinfo_proc_comp(const void *, const void *);
@@ -331,7 +334,6 @@ int	 kinfo_args(struct kinfo_proc2 *, char **);
 
 static struct oid hr_mib[] = {
 	{ MIB(host),				OID_MIB },
-	{ MIB(hrStorage),			OID_MIB },
 	{ MIB(hrMemorySize),			OID_RD,	mib_hrmemory },
 	{ MIB(hrStorageIndex),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageType),			OID_TRD, mib_hrstorage },
@@ -340,7 +342,14 @@ static struct oid hr_mib[] = {
 	{ MIB(hrStorageSize),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageUsed),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageAllocationFailures),	OID_TRD, mib_hrstorage },
-	{ MIB(hrSWRun),				OID_MIB },
+	{ MIB(hrDeviceIndex),			OID_TRD, mib_hrdevice },
+	{ MIB(hrDeviceType),			OID_TRD, mib_hrdevice },
+	{ MIB(hrDeviceDescr),			OID_TRD, mib_hrdevice },
+	{ MIB(hrDeviceID),			OID_TRD, mib_hrdevice },
+	{ MIB(hrDeviceStatus),			OID_TRD, mib_hrdevice },
+	{ MIB(hrDeviceErrors),			OID_TRD, mib_hrdevice },
+	{ MIB(hrProcessorFrwID),		OID_TRD, mib_hrprocessor },
+	{ MIB(hrProcessorLoad),			OID_TRD, mib_hrprocessor },
 	{ MIB(hrSWRunIndex),			OID_TRD, mib_hrswrun },
 	{ MIB(hrSWRunName),			OID_TRD, mib_hrswrun },
 	{ MIB(hrSWRunID),			OID_TRD, mib_hrswrun },
@@ -371,49 +380,221 @@ int
 mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct ber_element	*ber = *elm;
-	static struct ber_oid	 so = { { MIB_hrStorageFixedDisk } };
 	u_int32_t		 idx;
 	struct statfs		*mntbuf, *mnt;
-	int			 mntsize;
+	int			 mntsize, maxsize;
+	u_int32_t		 units, size, used, fail = 0;
+	const char		*descr = NULL;
+	int			 mib[] = { CTL_HW, 0 };
+	u_int64_t		 physmem, realmem;
+	struct uvmexp		 uvm;
+	struct vmtotal		 vm;
+	size_t			 len;
+	static struct ber_oid	*sop, so[] = {
+		{ { MIB_hrStorageOther } },
+		{ { MIB_hrStorageRam } },
+		{ { MIB_hrStorageVirtualMemory } },
+		{ { MIB_hrStorageFixedDisk } }
+	};
 
-	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
-	if (mntsize == 0)
+	/* Physical memory, real memory, swap */
+	mib[1] = HW_PHYSMEM64;
+	len = sizeof(physmem);
+	if (sysctl(mib, sizeofa(mib), &physmem, &len, NULL, 0) == -1)
 		return (-1);
+	mib[1] = HW_USERMEM64;
+	len = sizeof(realmem);
+	if (sysctl(mib, sizeofa(mib), &realmem, &len, NULL, 0) == -1)
+		return (-1);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	len = sizeof(uvm);
+	if (sysctl(mib, sizeofa(mib), &uvm, &len, NULL, 0) == -1)
+		return (-1);
+	mib[1] = VM_METER;
+	len = sizeof(vm);
+	if (sysctl(mib, sizeofa(mib), &vm, &len, NULL, 0) == -1)
+		return (-1);
+	maxsize = 10;
 
-	/* Get and verify the current row index */
+	/* Disks */
+	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
+	if (mntsize)
+		maxsize = 30 + mntsize;
+
+	/*
+	 * Get and verify the current row index.
+	 *
+	 * We use a special mapping here that is inspired by other SNMP
+	 * agents: index 1 + 2 for RAM, index 10 for swap, index 31 and
+	 * higher for disk storage.
+	 */
 	idx = o->bo_id[OIDIDX_hrStorageEntry];
-	if ((int)idx > mntsize)
+	if (idx > (u_int)maxsize)
 		return (1);
+	else if (idx > 2 && idx < 10)
+		idx = 10;
+	else if (idx > 10 && idx < 31)
+		idx = 31;
+
+	sop = &so[0];
+	switch (idx) {
+	case 1:
+		descr = "Physical memory";
+		units = uvm.pagesize;
+		size = physmem / uvm.pagesize;
+		used = size - vm.t_free;
+		sop = &so[1];
+		break;
+	case 2:
+		descr = "Real memory";
+		units = uvm.pagesize;
+		size = realmem / uvm.pagesize;
+		used = size - uvm.free;
+		sop = &so[1];
+		break;
+	case 10:
+		descr = "Swap space";
+		units = uvm.pagesize;
+		size = uvm.swpages;
+		used = uvm.swpginuse;
+		sop = &so[2];
+		break;
+	default:
+		mnt = &mntbuf[idx - 31];
+		descr = mnt->f_mntonname;
+		units = mnt->f_bsize;
+		size = mnt->f_blocks;
+		used = mnt->f_blocks - mnt->f_bfree;
+		sop = &so[3];
+		break;
+	}
 
 	/* Tables need to prepend the OID on their own */
 	o->bo_id[OIDIDX_hrStorageEntry] = idx;
 	ber = ber_add_oid(ber, o);
-
-	mnt = &mntbuf[idx - 1];
 
 	switch (o->bo_id[OIDIDX_hrStorage]) {
 	case 1: /* hrStorageIndex */
 		ber = ber_add_integer(ber, idx);
 		break;
 	case 2: /* hrStorageType */
-		smi_oidlen(&so);
-		ber = ber_add_oid(ber, &so);
+		smi_oidlen(sop);
+		ber = ber_add_oid(ber, sop);
 		break;
 	case 3: /* hrStorageDescr */
-		ber = ber_add_string(ber, mnt->f_mntonname);
+		ber = ber_add_string(ber, descr);
 		break;
 	case 4: /* hrStorageAllocationUnits */
-		ber = ber_add_integer(ber, mnt->f_bsize);
+		ber = ber_add_integer(ber, units);
 		break;
 	case 5: /* hrStorageSize */
-		ber = ber_add_integer(ber, mnt->f_blocks);
+		ber = ber_add_integer(ber, size);
 		break;
 	case 6: /* hrStorageUsed */
-		ber = ber_add_integer(ber, mnt->f_blocks - mnt->f_bfree);
+		ber = ber_add_integer(ber, used);
 		break;
 	case 7: /* hrStorageAllocationFailures */
-		ber = ber_add_integer(ber, 0);
+		ber = ber_add_integer(ber, fail);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_hrdevice(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	u_int32_t		 idx, fail = 0;
+	int			 status;
+	int			 mib[] = { CTL_HW, HW_MODEL };
+	size_t			 len;
+	char			 descr[BUFSIZ];
+	static struct ber_oid	*sop, so[] = {
+		{ { MIB_hrDeviceProcessor } },
+	};
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_hrDeviceEntry];
+	if (idx > (u_int)env->sc_ncpu)
+		return (1);
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_hrDeviceEntry] = idx;
+	ber = ber_add_oid(ber, o);
+
+	len = sizeof(descr);
+	if (sysctl(mib, sizeofa(mib), &descr, &len, NULL, 0) == -1)
+		return (-1);
+	/* unknown(1), running(2), warning(3), testing(4), down(5) */
+	status = 2;
+	sop = &so[0];
+
+	switch (o->bo_id[OIDIDX_hrDevice]) {
+	case 1: /* hrDeviceIndex */
+		ber = ber_add_integer(ber, idx);
+		break;
+	case 2: /* hrDeviceType */
+		smi_oidlen(sop);
+		ber = ber_add_oid(ber, sop);
+		break;
+	case 3: /* hrDeviceDescr */
+		ber = ber_add_string(ber, descr);
+		break;
+	case 4: /* hrDeviceID */
+		ber = ber_add_oid(ber, &zerodotzero);
+		break;
+	case 5: /* hrDeviceStatus */
+		ber = ber_add_integer(ber, status);
+		break;
+	case 6: /* hrDeviceErrors */
+		ber = ber_add_integer(ber, fail);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_hrprocessor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	u_int32_t		 idx;
+	int64_t			*cptime2, val;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_hrDeviceEntry];
+	if (idx > (u_int)env->sc_ncpu)
+		return (1);
+	else if (idx < 1)
+		idx = 1;
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_hrDeviceEntry] = idx;
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_hrDevice]) {
+	case 1: /* hrProcessorFrwID */
+		ber = ber_add_oid(ber, &zerodotzero);
+		break;
+	case 2: /* hrProcessorLoad */
+		/*
+		 * The percentage of time that the system was not
+		 * idle during the last minute.
+		 */
+		if (env->sc_cpustates == NULL)
+			return (-1);
+		cptime2 = env->sc_cpustates + (CPUSTATES * (idx - 1));
+		val = 100 -
+		    (cptime2[CP_IDLE] > 1000 ? 1000 : (cptime2[CP_IDLE] / 10));
+		ber = ber_add_integer(ber, val);
 		break;
 	default:
 		return (-1);

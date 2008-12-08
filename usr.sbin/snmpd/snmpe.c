@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.22 2008/12/05 12:34:01 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.23 2008/12/08 11:34:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -160,6 +160,7 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 
 	kr_init();
 	trap_init();
+	timer_init();
 
 	event_dispatch();
 
