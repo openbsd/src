@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.101 2008/12/08 18:33:24 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.102 2008/12/08 18:54:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3039,8 +3039,8 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 	usbd_status error;
 	uint8_t *ucode;
 	size_t ucode_size;
-	uint8_t buf;
-	uint16_t len, addr;
+	uint8_t buf, len;
+	uint16_t addr;
 	int offset, remain;
 
 	/* get device microcode status */
@@ -3063,7 +3063,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 		DPRINTF(1, "%s: microcode not loaded\n", DEVNAME(sc));
 	}
 
-	/* open ucode file */
+	/* open microcode file */
 	error = loadfirmware(sc->sc_ucode->ucode_name, &ucode, &ucode_size);
 	if (error != 0) {
 		printf("%s: loadfirmware error=%d!\n", DEVNAME(sc), error);
