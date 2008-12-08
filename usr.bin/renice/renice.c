@@ -1,144 +1,175 @@
-/*	$OpenBSD: renice.c,v 1.12 2007/03/16 16:36:06 jmc Exp $	*/
+/*	$OpenBSD: renice.c,v 1.13 2008/12/08 21:23:10 millert Exp $	*/
 
 /*
- * Copyright (c) 1983, 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
-#else
-static char rcsid[] = "$OpenBSD: renice.c,v 1.12 2007/03/16 16:36:06 jmc Exp $";
-#endif
+static const char rcsid[] = "$OpenBSD: renice.c,v 1.13 2008/12/08 21:23:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
-#include <err.h>
-#include <errno.h>
+
+struct renice_param {
+	int pri;
+	int type;
+	id_t id;
+};
 
 int main(int, char **);
-int donice(int, uid_t, int);
-void usage(void);
+static int renice(struct renice_param *, struct renice_param *);
+__dead void usage(void);
 
-/*
- * Change the priority (nice) of processes
- * or groups of processes which are already
- * running.
- */
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	int which = PRIO_PROCESS;
-	int errs = 0;
-	long prio, who = 0;
-	char *ep;
+	struct renice_param *params, *p;
+	struct passwd *pw;
+	int ch, type = PRIO_PROCESS;
+	int nflag = 0, pri = 0;
+	char *ep, *idstr;
+	const char *errstr;
+	long l;
 
-	argc--, argv++;
-	if (argc < 2)
+	if (argc < 3)
 		usage();
-	prio = strtol(*argv, &ep, 10);
-	if (*ep != NULL)
-		usage();
-	argc--, argv++;
-	if (prio > PRIO_MAX)
-		prio = PRIO_MAX;
-	if (prio < PRIO_MIN)
-		prio = PRIO_MIN;
-	for (; argc > 0; argc--, argv++) {
-		if (strcmp(*argv, "-g") == 0) {
-			which = PRIO_PGRP;
-			continue;
-		}
-		if (strcmp(*argv, "-u") == 0) {
-			which = PRIO_USER;
-			continue;
-		}
-		if (strcmp(*argv, "-p") == 0) {
-			which = PRIO_PROCESS;
-			continue;
-		}
-		if (which == PRIO_USER) {
-			struct passwd *pwd = getpwnam(*argv);
-			
-			if (pwd == NULL) {
-				warnx("%s: unknown user", *argv);
+
+	/* Allocate enough space for the worst case. */
+	params = p = calloc(argc - 1, sizeof(*params));
+	if (params == NULL)
+		err(1, NULL);
+
+	/* Backwards compatibility: first arg may be priority. */
+	if (isdigit((unsigned char)argv[1][0])) {
+		argv[0] = "-n";
+		argc++;
+		argv--;
+	}
+
+	/*
+	 * Slightly tricky getopt() usage since it is legal to have
+	 * option flags interleaved with arguments.
+	 */
+	for (;;) {
+		if ((ch = getopt(argc, argv, "g:n:p:u:")) != -1) {
+			switch (ch) {
+			case 'g':
+				type = PRIO_PGRP;
+				idstr = optarg;
+				break;
+			case 'n':
+				l = strtol(optarg, &ep, 10);
+				if (*ep != '\0' || ep == optarg) {
+					warnx("invalid increment %s", optarg);
+					usage();
+				}
+				pri = l > PRIO_MAX ? PRIO_MAX :
+				    l < PRIO_MIN ? PRIO_MIN : (int)l;
+
+				/* Set priority for previous entries? */
+				if (!nflag) {
+					struct renice_param *pp;
+					for (pp = params; pp != p; pp++) {
+						pp->pri = pri;
+					}
+				}
+				nflag = 1;
 				continue;
+			case 'p':
+				type = PRIO_PROCESS;
+				idstr = optarg;
+				break;
+			case 'u':
+				type = PRIO_USER;
+				idstr = optarg;
+				break;
+			default:
+				usage();
+				break;
 			}
-			who = pwd->pw_uid;
 		} else {
-			who = strtol(*argv, &ep, 10);
-			if (*ep != NULL || who < 0) {
-				warnx("%s: bad value", *argv);
+			idstr = argv[optind++];
+			if (idstr == NULL)
+				break;
+		}
+		p->type = type;
+		p->pri = pri;
+		if (type == PRIO_USER) {
+			if ((pw = getpwnam(idstr)) == NULL) {
+				uid_t id = strtonum(idstr, 0, UID_MAX, &errstr);
+				if (!errstr)
+					pw = getpwuid(id);
+			}
+			if (pw == NULL) {
+				warnx("unknown user %s", idstr);
+				continue;
+			}
+			p->id = pw->pw_uid;
+		} else {
+			p->id = strtonum(idstr, 0, UINT_MAX, &errstr);
+			if (errstr) {
+				warnx("%s is %s", idstr, errstr);
 				continue;
 			}
 		}
-		errs += donice(which, (uid_t)who, (int)prio);
+		p++;
 	}
-	exit(errs != 0);
+	if (!nflag)
+		usage();
+	exit(renice(params, p));
 }
 
-int
-donice(int which, uid_t who, int prio)
+static int
+renice(struct renice_param *p, struct renice_param *end)
 {
-	int oldprio;
+	int old, errors = 0;
 
-	errno = 0, oldprio = getpriority(which, who);
-	if (oldprio == -1 && errno) {
-		warn("getpriority: %d", who);
-		return (1);
+	for (; p < end; p++) {
+		errno = 0;
+		old = getpriority(p->type, p->id);
+		if (errno) {
+			warn("getpriority: %d", p->id);
+			errors++;
+			continue;
+		}
+		if (setpriority(p->type, p->id, p->pri) == -1) {
+			warn("setpriority: %d", p->id);
+			errors++;
+			continue;
+		}
+		printf("%d: old priority %d, new priority %d\n",
+		    p->id, old, p->pri);
 	}
-	if (setpriority(which, who, prio) < 0) {
-		warn("setpriority: %d", who);
-		return (1);
-	}
-	printf("%d: old priority %d, new priority %d\n", who, oldprio, prio);
-	return (0);
+	return (errors);
 }
 
-void
+__dead void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s priority [[-g] pgrp ...] [[-p] pid ...] "
-	    "[[-u] user ...]\n", __progname);
+	fprintf(stderr, "usage: renice -n increment [[-g] pgrp ...] "
+	    "[[-p] pid ...] [[-u] user ...]\n");
 	exit(1);
 }
