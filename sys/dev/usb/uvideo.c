@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.100 2008/12/06 20:06:39 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.101 2008/12/08 18:33:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -64,6 +64,7 @@ int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
 int		uvideo_close(void *);
 int             uvideo_match(struct device *, void *, void *);
 void            uvideo_attach(struct device *, struct device *, void *);
+void		uvideo_attach_hook(void *);
 int             uvideo_detach(struct device *, int);
 int             uvideo_activate(struct device *, enum devact);
 
@@ -190,6 +191,13 @@ caddr_t		uvideo_mappage(void *, off_t, int);
 int		uvideo_get_bufsize(void *);
 int		uvideo_start_read(void *);
 
+/*
+ * Firmware
+ */
+int		uvideo_ucode_match(struct uvideo_softc *,
+		    struct usb_attach_arg *);
+usbd_status	uvideo_ucode_loader_ricoh(struct uvideo_softc *);
+
 struct cfdriver uvideo_cd = {
 	NULL, "uvideo", DV_DULL
 };
@@ -226,6 +234,21 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_mappage,		/* mmap */
 	uvideo_get_bufsize,	/* read */
 	uvideo_start_read	/* start stream for read */
+};
+
+struct uvideo_ucode {
+	int		vendor;
+	int		product;
+	char		ucode_name[64];
+	usbd_status	(*ucode_loader)(struct uvideo_softc *);
+} uvideo_ucode_devs[] = {
+	{
+	    USB_VENDOR_RICOH,
+	    USB_PRODUCT_RICOH_VGPVCC7,
+	    "r5u87x-05ca-183a.fw",
+	    uvideo_ucode_loader_ricoh
+	},
+	{ 0, 0, "", NULL }
 };
 
 /*
@@ -372,6 +395,27 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	error = uvideo_vs_parse_desc(sc, uaa, cdesc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
+
+	/* if the device needs ucode do mountroothook */
+	sc->sc_flags |= uvideo_ucode_match(sc, uaa);
+
+	if (sc->sc_flags & UVIDEO_FLAGS_NEED_UCODE && rootvp == NULL)
+		mountroothook_establish(uvideo_attach_hook, sc);
+	else
+		uvideo_attach_hook(sc);
+}
+
+void
+uvideo_attach_hook(void *arg)
+{
+	struct uvideo_softc *sc = arg;
+	usbd_status error;
+
+	if (sc->sc_flags & UVIDEO_FLAGS_NEED_UCODE) {
+		error = (sc->sc_ucode->ucode_loader)(sc);
+		if (error != USBD_NORMAL_COMPLETION)
+			return;
+	}
 
 	/* set default video stream interface */
 	error = usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
@@ -2967,4 +3011,113 @@ uvideo_start_read(void *v)
 		uvideo_vs_start_isoc(sc);
 
 	return (0);
+}
+
+int
+uvideo_ucode_match(struct uvideo_softc *sc, struct usb_attach_arg *uaa)
+{
+	usb_device_descriptor_t *dd;
+	int i;
+
+	dd = usbd_get_device_descriptor(uaa->device);
+
+	for (i = 0; uvideo_ucode_devs[i].vendor != 0; i++) {
+		if (UGETW(dd->idVendor) == uvideo_ucode_devs[i].vendor &&
+		    UGETW(dd->idProduct) == uvideo_ucode_devs[i].product) {
+			sc->sc_ucode = &uvideo_ucode_devs[i];
+			return (UVIDEO_FLAGS_NEED_UCODE);
+		}
+	}
+
+	return (0);
+}
+
+usbd_status
+uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
+{
+	usb_device_request_t req;
+	usbd_status error;
+	uint8_t *ucode;
+	size_t ucode_size;
+	uint8_t buf;
+	uint16_t len, addr;
+	int offset, remain;
+
+	/* get device microcode status */
+	req.bmRequestType = UT_READ_VENDOR_DEVICE;
+	req.bRequest = 0xa4;
+	USETW(req.wIndex, 0);
+	USETW(req.wValue, 0);
+	USETW(req.wLength, 1);
+	buf = 0;
+	error = usbd_do_request(sc->sc_udev, &req, &buf);
+	if (error != USBD_NORMAL_COMPLETION) {
+		printf("%s: ucode status error=%s!\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		return (USBD_INVAL);
+	}
+	if (buf) {
+		DPRINTF(1, "%s: microcode already loaded\n", DEVNAME(sc));
+		return (USBD_NORMAL_COMPLETION);
+	} else {
+		DPRINTF(1, "%s: microcode not loaded\n", DEVNAME(sc));
+	}
+
+	/* open ucode file */
+	error = loadfirmware(sc->sc_ucode->ucode_name, &ucode, &ucode_size);
+	if (error != 0) {
+		printf("%s: loadfirmware error=%d!\n", DEVNAME(sc), error);
+		return (USBD_INVAL);
+	}
+
+	/* upload microcode */
+	offset = 0;
+	remain = ucode_size;
+	while (remain > 0) {
+		if (remain < 3) {
+			printf("%s: ucode file incomplete!\n", DEVNAME(sc));
+			return (USBD_INVAL);
+		}
+
+		len = ucode[offset];
+		addr = ucode[offset + 1] | (ucode[offset + 2] << 8);
+		offset += 3;
+		remain -= 3;
+
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+		req.bRequest = 0xa0;
+		USETW(req.wIndex, 0);
+		USETW(req.wValue, addr);
+		USETW(req.wLength, len);
+		error = usbd_do_request(sc->sc_udev, &req, &ucode[offset]);
+		if (error != USBD_NORMAL_COMPLETION) {
+			printf("%s: ucode upload error=%s!\n",
+			    DEVNAME(sc), usbd_errstr(error));
+			free(ucode, M_DEVBUF);
+			return (USBD_INVAL);
+		}
+		DPRINTF(1, "%s: uploaded %d bytes ucode to addr 0x%x\n",
+		    DEVNAME(sc), len, addr);
+
+		offset += len;
+		remain -= len;
+	}
+	free(ucode, M_DEVBUF);
+
+	/* activate microcode */
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = 0xa1;
+	USETW(req.wIndex, 0);
+	USETW(req.wValue, 0);
+	USETW(req.wLength, 1);
+	buf = 0;
+	error = usbd_do_request(sc->sc_udev, &req, &buf);
+	if (error != USBD_NORMAL_COMPLETION) {
+		printf("%s: ucode activate error=%s!\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		return (USBD_INVAL);
+	}
+	DPRINTF(1, "%s: ucode activated\n", DEVNAME(sc));
+
+	return (USBD_NORMAL_COMPLETION);
 }
