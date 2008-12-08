@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.35 2008/12/04 17:13:20 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.36 2008/12/08 10:59:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,6 +49,7 @@ struct pfdata {
 int	 transaction_init(struct relayd *, const char *);
 int	 transaction_commit(struct relayd *);
 void	 kill_tables(struct relayd *);
+int	 kill_srcnodes(struct relayd *, struct table *);
 
 void
 init_filter(struct relayd *env)
@@ -156,7 +157,7 @@ kill_tables(struct relayd *env) {
 void
 sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 {
-	int			 i;
+	int			 i, cnt = 0;
 	struct pfioc_table	 io;
 	struct pfr_addr		*addlist;
 	struct sockaddr_in	*sain;
@@ -224,22 +225,67 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 
 	if (ioctl(env->sc_pf->dev, DIOCRSETADDRS, &io) == -1)
 		fatal("sync_table: cannot set address list");
-	if (rdr->conf.flags & F_STICKY) {
-		if (ioctl(env->sc_pf->dev, DIOCCLRSRCNODES, 0) == -1)
-			fatal("sync_table: cannot clear the tree of "
-			    "source tracking nodes");
-	}
+	if (rdr->conf.flags & F_STICKY)
+		cnt = kill_srcnodes(env, table);
 	free(addlist);
 
 	if (env->sc_opts & RELAYD_OPT_LOGUPDATE)
 		log_info("table %s: %d added, %d deleted, "
-		    "%d changed",
-		    io.pfrio_table.pfrt_name,
-		    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
+		    "%d changed, %d killed", io.pfrio_table.pfrt_name,
+		    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange, cnt);
 	return;
 
  toolong:
 	fatal("sync_table: name too long");
+}
+
+int
+kill_srcnodes(struct relayd *env, struct table *table)
+{
+	struct host			*host;
+	struct pfioc_src_node_kill	 psnk;
+	int				 cnt = 0;
+	struct sockaddr_in		*sain;
+	struct sockaddr_in6		*sain6;
+
+	bzero(&psnk, sizeof(psnk));
+
+	/* Only match the destination address, source mask will be zero */
+	memset(&psnk.psnk_dst.addr.v.a.mask, 0xff,
+	    sizeof(psnk.psnk_dst.addr.v.a.mask));
+
+	TAILQ_FOREACH(host, &table->hosts, entry) {
+		if (host->up != HOST_DOWN)
+			continue;
+
+		switch (host->conf.ss.ss_family) {
+		case AF_INET:
+		sain = (struct sockaddr_in *)&host->conf.ss;   
+			bcopy(&sain->sin_addr,
+			    &psnk.psnk_dst.addr.v.a.addr.v4, 
+			    sizeof(psnk.psnk_dst.addr.v.a.addr.v4));
+			break;
+		case AF_INET6:
+			sain6 = (struct sockaddr_in6 *)&host->conf.ss;
+			bcopy(&sain6->sin6_addr,
+			    &psnk.psnk_dst.addr.v.a.addr.v6,
+			    sizeof(psnk.psnk_dst.addr.v.a.addr.v6));
+			break;   
+		default:
+			fatalx("kill_srcnodes: unknown address family");
+			break;
+		}
+			
+		psnk.psnk_af = host->conf.ss.ss_family;
+		psnk.psnk_killed = 0;
+
+		if (ioctl(env->sc_pf->dev,
+		    DIOCKILLSRCNODES, &psnk) == -1)
+			fatal("kill_srcnodes: cannot kill src nodes");
+		cnt += psnk.psnk_killed;
+	}
+
+	return (cnt);
 }
 
 void
