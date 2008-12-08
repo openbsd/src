@@ -167,6 +167,8 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mmio space\n");
 		return;
 	}
+	/* XXX map interrupt */
+	printf("\n");
 
 	/* XXX pcie */
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,

@@ -78,6 +78,8 @@ tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 	struct tdfxdrm_softc	*dev_priv = (struct tdfxdrm_softc *)self;
 	struct pci_attach_args	*pa = aux;
 
+	printf("\n");
+
 	/* never agp */
 	dev_priv->drmdev = drm_attach_pci(&tdfxdrm_driver, pa, 0, self);
 }

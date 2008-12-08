@@ -173,6 +173,7 @@ savagedrm_attach(struct device *parent, struct device *self, void *aux)
 
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 	    NULL, NULL);
+	printf("\n");
 
 	dev_priv->drmdev = drm_attach_pci(&savagedrm_driver, pa, is_agp, self);
 }

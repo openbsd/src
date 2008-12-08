@@ -123,6 +123,7 @@ machdrm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't map interrupt\n");
 		return;
 	}
+	printf(": %s\n", pci_intr_string(pa->pa_pc, dev_priv->ih));
 
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 	    NULL, NULL);

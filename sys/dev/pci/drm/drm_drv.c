@@ -76,13 +76,12 @@ drm_attach_pci(const struct drm_driver_info *driver, struct pci_attach_args *pa,
 	arg.busid_len = 20;
 	arg.busid = malloc(arg.busid_len + 1, M_DRM, M_NOWAIT);
 	if (arg.busid == NULL) {
-		printf(": no memory for drm\n");
+		printf("%s: no memory for drm\n", dev->dv_xname);
 		return (NULL);
 	}
 	snprintf(arg.busid, arg.busid_len, "pci:%04x:%02x:%02x.%1x",
 	    pa->pa_domain, pa->pa_bus, pa->pa_device, pa->pa_function);
 
-	printf("\n");
 	return (config_found(dev, &arg, drmprint));
 }
 
