@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.103 2008/12/08 22:02:39 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.104 2008/12/09 06:01:41 brad Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2481,6 +2481,11 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 			(void)strlcpy(fmtdesc->description, "NV12",
 			    sizeof(fmtdesc->description));
 			fmtdesc->pixelformat = V4L2_PIX_FMT_NV12;
+		} else if (sc->sc_fmtgrp[idx].pixelformat ==
+		    V4L2_PIX_FMT_UYVY) {
+			(void)strlcpy(fmtdesc->description, "UYVY",
+			    sizeof(fmtdesc->description));
+			fmtdesc->pixelformat = V4L2_PIX_FMT_UYVY;
 		} else {
 			(void)strlcpy(fmtdesc->description, "Unknown UC Format",
 			    sizeof(fmtdesc->description));
