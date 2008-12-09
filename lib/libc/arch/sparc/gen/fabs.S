@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: fabs.S,v 1.6 2008/12/09 20:21:07 martynas Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,6 +36,7 @@
 
 #include "DEFS.h"
 
+WEAK_ALIAS(fabsl, fabs)
 ENTRY(fabs)
 	std	%o0, [%sp + 32]		! return value => %f0:f1
 	ldd	[%sp + 32], %f0		! (via kernel %o0/%o1 slot)
