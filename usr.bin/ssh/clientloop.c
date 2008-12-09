@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.205 2008/12/02 19:01:07 markus Exp $ */
+/* $OpenBSD: clientloop.c,v 1.206 2008/12/09 02:38:18 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1033,7 +1033,6 @@ process_escapes(Channel *c, Buffer *bin, Buffer *bout, Buffer *berr,
 Supported escape sequences:\r\n\
   %c.  - terminate session\r\n\
   %cB  - send a BREAK to the remote system\r\n\
-  %cC  - open a command line\r\n\
   %cR  - Request rekey (SSH protocol 2 only)\r\n\
   %c#  - list forwarded connections\r\n\
   %c?  - this message\r\n\
@@ -1042,8 +1041,7 @@ Supported escape sequences:\r\n\
 					    escape_char, escape_char,
 					    escape_char, escape_char,
 					    escape_char, escape_char,
-					    escape_char, escape_char,
-					    escape_char);
+					    escape_char, escape_char);
 				} else {
 					snprintf(string, sizeof string,
 "%c?\r\n\
@@ -1078,6 +1076,8 @@ Supported escape sequences:\r\n\
 				continue;
 
 			case 'C':
+				if (c && c->ctl_fd != -1)
+					goto noescape;
 				process_cmdline();
 				continue;
 
