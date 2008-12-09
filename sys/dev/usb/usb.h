@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.33 2008/08/09 22:59:20 mglocker Exp $ */
+/*	$OpenBSD: usb.h,v 1.34 2008/12/09 03:08:07 yuo Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -653,7 +653,7 @@ struct usb_event {
 
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
-#define USB_SETDEBUG		_IOW ('U', 2, int)
+#define USB_SETDEBUG		_IOW ('U', 2, unsigned int)
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)

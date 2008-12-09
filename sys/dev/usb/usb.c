@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.57 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: usb.c,v 1.58 2008/12/09 03:08:07 yuo Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 
 #include "ohci.h"
 #include "uhci.h"
+#include "ehci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +75,9 @@ extern int	uhcidebug;
 #endif
 #if defined(OHCI_DEBUG) && NOHCI > 0
 extern int	ohcidebug;
+#endif
+#if defined(EHCI_DEBUG) && NEHCI > 0
+extern int	ehcidebug;
 #endif
 /*
  * 0  - do usual exploration
@@ -453,6 +457,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
+	int error;
 
 	if (unit == USB_DEV_MINOR) {
 		switch (cmd) {
@@ -477,17 +482,24 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (sc->sc_dying)
 		return (EIO);
 
+	error = 0;
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
+		/* only root can access to these debug flags */
+		if ((error = suser(curproc, 0)) != 0)
+			return (error);
 		if (!(flag & FWRITE))
 			return (EBADF);
-		usbdebug  = ((*(int *)data) & 0x000000ff);
+		usbdebug  = ((*(unsigned int *)data) & 0x000000ff);
 #if defined(UHCI_DEBUG) && NUHCI > 0
-		uhcidebug = ((*(int *)data) & 0x0000ff00) >> 8;
+		uhcidebug = ((*(unsigned int *)data) & 0x0000ff00) >> 8;
 #endif
 #if defined(OHCI_DEBUG) && NOHCI > 0
-		ohcidebug = ((*(int *)data) & 0x00ff0000) >> 16;
+		ohcidebug = ((*(unsigned int *)data) & 0x00ff0000) >> 16;
+#endif
+#if defined(EHCI_DEBUG) && NEHCI > 0
+		ehcidebug = ((*(unsigned int *)data) & 0xff000000) >> 24;
 #endif
 		break;
 #endif /* USB_DEBUG */
