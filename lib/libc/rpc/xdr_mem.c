@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_mem.c,v 1.13 2006/03/31 18:28:55 deraadt Exp $ */
+/*	$OpenBSD: xdr_mem.c,v 1.14 2008/12/09 19:40:10 otto Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -39,11 +39,12 @@
  *
  */
 
+#include <sys/types.h>
+#include <netinet/in.h>
 #include <string.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-#include <netinet/in.h>
 
 static bool_t	xdrmem_getlong_aligned(XDR *, long *);
 static bool_t	xdrmem_putlong_aligned(XDR *, long *);
@@ -65,7 +66,8 @@ static struct	xdr_ops xdrmem_ops_aligned = {
 	xdrmem_getpos,
 	xdrmem_setpos,
 	xdrmem_inline_aligned,
-	xdrmem_destroy
+	xdrmem_destroy,
+	NULL,	/* xdrmem_control */
 };
 
 static struct	xdr_ops xdrmem_ops_unaligned = {
@@ -76,7 +78,8 @@ static struct	xdr_ops xdrmem_ops_unaligned = {
 	xdrmem_getpos,
 	xdrmem_setpos,
 	xdrmem_inline_unaligned,
-	xdrmem_destroy
+	xdrmem_destroy,
+	NULL,	/* xdrmem_control */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.11 2007/09/17 16:04:24 blambert Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.12 2008/12/09 19:40:10 otto Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,8 +38,8 @@
  * from the stream.
  */
 
-#include <rpc/types.h>
 #include <stdio.h>
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 
 static bool_t	xdrstdio_getlong(XDR *, long *);
@@ -62,7 +62,8 @@ static struct xdr_ops	xdrstdio_ops = {
 	xdrstdio_getpos,	/* get offset in the stream */
 	xdrstdio_setpos,	/* set offset in the stream */
 	xdrstdio_inline,	/* prime stream for inline macros */
-	xdrstdio_destroy	/* destroy stream */
+	xdrstdio_destroy,	/* destroy stream */
+	NULL,			/* xdrstdio_control */
 };
 
 /*

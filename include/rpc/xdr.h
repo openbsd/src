@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.10 2008/06/13 21:12:11 sturm Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.11 2008/12/09 19:40:10 otto Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ typedef struct __rpc_xdr {
 		int32_t	*(*x_inline)(struct __rpc_xdr *, unsigned int);
 		/* free privates of this xdr_stream */
 		void	(*x_destroy)(struct __rpc_xdr *);
+		bool_t	(*x_control)(struct __rpc_xdr *, int, void *);
 	} *x_ops;
 	caddr_t 	x_public;	/* users' data */
 	caddr_t		x_private;	/* pointer to private data */
