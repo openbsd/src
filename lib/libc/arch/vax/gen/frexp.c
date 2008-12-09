@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: frexp.c,v 1.6 2008/12/09 20:32:06 martynas Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,6 +28,7 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/cdefs.h>
 #include <sys/types.h>
 #include <math.h>
 
@@ -57,3 +58,9 @@ frexp(value, eptr)
 		return((double)0);
 	}
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(frexpl, frexp);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

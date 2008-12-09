@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: fabs.S,v 1.5 2008/12/09 20:32:06 martynas Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,7 @@
 
 #include "DEFS.h"
 
+WEAK_ALIAS(fabsl, fabs)
 ENTRY(fabs)
 	fmoved	sp@(4),fp0
 	fjnlt	L1

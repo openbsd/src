@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.S,v 1.2 2004/02/08 17:29:57 deraadt Exp $	*/
+/*	$OpenBSD: fabs.S,v 1.3 2008/12/09 20:32:06 martynas Exp $	*/
 /*	$NetBSD: fabs.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 #include <machine/asm.h>
@@ -8,6 +8,7 @@
  * the FP stack directly?
  */
 
+WEAK_ALIAS(fabsl, fabs)
 ENTRY(fabs)
 	movsd	%xmm0, -8(%rsp)
 	fldl	-8(%rsp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.3 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.4 2008/12/09 20:32:06 martynas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/types.h>
+#include <machine/cdefs.h>
 #include <machine/ieee.h>
 #include <errno.h>
 
@@ -138,3 +139,5 @@ ldexp(val, exp)
 	u.s.dbl_exp = newexp;
 	return (u.v);
 }
+
+__weak_alias(ldexpl, ldexp);
