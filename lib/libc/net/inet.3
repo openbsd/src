@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.21 2007/06/12 16:50:06 jmc Exp $
+.\"	$OpenBSD: inet.3,v 1.22 2008/12/09 19:38:38 otto Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 12 2007 $
+.Dd $Mdocdate: December 9 2008 $
 .Dt INET 3
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Ft char *
 .Fn inet_ntoa "struct in_addr in"
 .Ft const char *
-.Fn inet_ntop "int af" "const void *src" "char *dst" "size_t size"
+.Fn inet_ntop "int af" "const void *src" "char *dst" "socklen_t size"
 .Ft int
 .Fn inet_pton "int af" "const char *src" "void *dst"
 .Sh DESCRIPTION
