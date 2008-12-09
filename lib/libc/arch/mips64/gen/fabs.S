@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.4 2008/12/09 20:32:06 martynas Exp $ */
+/* $OpenBSD: fabs.S,v 1.5 2008/12/09 20:54:02 martynas Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,6 @@
  *
  * Return absolute value of x.
  */
-WEAK_ALIAS(fabsl, fabs)
 LEAF(fabs, 0)
 	.set	noreorder
 	j	ra
