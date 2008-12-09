@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2008/10/27 00:26:33 ratchov Exp $
+#	$OpenBSD: Makefile,v 1.2 2008/12/09 23:10:37 ratchov Exp $
 
-SUBDIR+= play rec fd cap
+SUBDIR+= play rec fd cap vol
 
 .include <bsd.subdir.mk>
