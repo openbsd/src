@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.11 2008/11/29 18:32:18 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.12 2008/12/09 22:49:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1045,5 +1045,5 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 int
 envy_get_props(void *self)
 {
-	return AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
 }
