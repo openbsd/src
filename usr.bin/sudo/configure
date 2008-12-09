@@ -12058,6 +12058,10 @@ done
 		: ${mansectsu='1m'}
 		: ${mansectform='4'}
 
+		# HP-UX bundled compiler can't generate shared objects
+		if test "x$ac_cv_prog_cc_c89" = "xno"; then
+		    with_noexec=no
+		fi
 		case "$host" in
 			*-*-hpux1-8.*)
 			    cat >>confdefs.h <<\_ACEOF
@@ -24760,8 +24764,6 @@ echo "$as_me: You will need to customize sample.pam and install it as /etc/pam.d
 	    ;;
     esac
 fi
-
-
 
 
 

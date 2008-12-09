@@ -46,7 +46,7 @@
 #include "lbuf.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: lbuf.c,v 1.6 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: lbuf.c,v 1.7 2008/12/09 20:55:49 millert Exp $";
 #endif /* lint */
 
 #if !defined(TIOCGSIZE) && defined(TIOCGWINSZ)
@@ -106,7 +106,7 @@ void
 #ifdef __STDC__
 lbuf_append_quoted(struct lbuf *lbuf, const char *set, ...)
 #else
-lbuf_append_quoted(lbuf, va_alist)
+lbuf_append_quoted(lbuf, set, va_alist)
 	struct lbuf *lbuf;
 	const char *set;
 	va_dcl

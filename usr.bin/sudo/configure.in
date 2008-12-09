@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.535 2008/10/23 16:06:22 millert Exp $
+dnl $Sudo: configure.in,v 1.538 2008/12/09 21:13:01 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1350,6 +1350,10 @@ case "$host" in
 		: ${mansectsu='1m'}
 		: ${mansectform='4'}
 
+		# HP-UX bundled compiler can't generate shared objects
+		if test "x$ac_cv_prog_cc_c89" = "xno"; then
+		    with_noexec=no
+		fi
 		case "$host" in
 			*-*-hpux[1-8].*)
 			    AC_DEFINE(BROKEN_SYSLOG)
@@ -2567,7 +2571,6 @@ AH_TEMPLATE(HAVE_PAM, [Define to 1 if you use PAM authentication.])
 AH_TEMPLATE(HAVE_PROJECT_H, [Define to 1 if you have the <project.h> header file.])
 AH_TEMPLATE(HAVE_SECURID, [Define to 1 if you use SecurID for authentication.])
 AH_TEMPLATE(HAVE_SELINUX, [Define to 1 to enable SELinux RBAC support.])
-AH_TEMPLATE(HAVE_SIA, [Define to 1 if you use SIA authentication.])
 AH_TEMPLATE(HAVE_SIGACTION_T, [Define to 1 if <signal.h> has the sigaction_t typedef.])
 AH_TEMPLATE(HAVE_SKEY, [Define to 1 if you use S/Key.])
 AH_TEMPLATE(HAVE_SKEYACCESS, [Define to 1 if your S/Key library has skeyaccess().])

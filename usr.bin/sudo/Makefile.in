@@ -21,7 +21,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.325 2008/11/03 18:19:14 millert Exp $
+# $Sudo: Makefile.in,v 1.326 2008/12/03 20:40:47 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -435,8 +435,7 @@ check:
 	@echo nothing to check
 
 clean:
-	-rm -f *.o *.lo $(PROGS) testsudoers core sudo.core visudo.core \
-	       testsudoers.core
+	-rm -f *.o *.lo stamp-* $(PROGS) testsudoers core *.core core.*
 
 mostlyclean: clean
 

@@ -71,7 +71,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.125 2008/11/25 17:01:34 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.126 2008/12/09 20:55:49 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -115,7 +115,7 @@ static volatile sig_atomic_t signo;
 
 static void handler __P((int));
 static char *getln __P((int, char *, size_t));
-static char *sudo_askpass(const char *);
+static char *sudo_askpass __P((const char *));
 
 /*
  * Like getpass(3) but with timeout and echo flags.
