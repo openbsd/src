@@ -49,7 +49,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.236 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.238 2008/12/09 13:49:55 millert Exp $";
 #endif /* lint */
 
 /* Characters that must be quoted in sudoers */
@@ -167,30 +167,31 @@ sudo_file_lookup(nss, validated, pwflag)
      * Always check the host and user.
      */
     if (pwflag) {
-	int nopass = UNSPEC;
+	int nopass;
 	enum def_tupple pwcheck;
 
 	pwcheck = (pwflag == -1) ? never : sudo_defs_table[pwflag].sd_un.tuple;
+	nopass = (pwcheck == all) ? TRUE : FALSE;
 
 	if (list_pw == NULL)
 	    SET(validated, FLAG_NO_CHECK);
 	CLR(validated, FLAG_NO_USER);
 	CLR(validated, FLAG_NO_HOST);
 	match = DENY;
-	tq_foreach_rev(&userspecs, us) {
+	tq_foreach_fwd(&userspecs, us) {
 	    if (userlist_matches(sudo_user.pw, &us->users) != ALLOW)
 		continue;
-	    tq_foreach_rev(&us->privileges, priv) {
+	    tq_foreach_fwd(&us->privileges, priv) {
 		if (hostlist_matches(&priv->hostlist) != ALLOW)
 		    continue;
-		tq_foreach_rev(&priv->cmndlist, cs) {
+		tq_foreach_fwd(&priv->cmndlist, cs) {
 		    /* Only check the command when listing another user. */
 		    if (user_uid == 0 || list_pw == NULL ||
 			user_uid == list_pw->pw_uid ||
 			cmnd_matches(cs->cmnd) == ALLOW)
 			    match = ALLOW;
-		    if ((pwcheck == any && nopass != TRUE) ||
-			(pwcheck == all && nopass != FALSE))
+		    if ((pwcheck == any && cs->tags.nopasswd == TRUE) ||
+			(pwcheck == all && cs->tags.nopasswd != TRUE))
 			nopass = cs->tags.nopasswd;
 		}
 	    }
