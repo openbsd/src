@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan.c,v 1.5 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_atan.c,v 1.6 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_atan.c,v 1.1 1995/10/10 23:36:36 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,8 @@ static char sccsid[] = "@(#)atan.c	8.1 (Berkeley) 6/4/93";
  *	0.85 ulps.
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <math.h>
 
 double
 atan(double x)
@@ -85,3 +86,7 @@ atan(double x)
 	double one=1.0;
 	return(atan2(x,one));
 }
+
+#ifdef __weak_alias
+__weak_alias(atanl, atan);
+#endif /* __weak_alias */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.9 2008/07/17 15:36:28 martynas Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.10 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -107,7 +107,9 @@ static char sccsid[] = "@(#)atan2.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <math.h>
+
 #include "mathimpl.h"
 
 vc(athfhi, 4.6364760900080611433E-1  ,6338,3fed,da7b,2b0d,  -1, .ED63382B0DDA7B)
@@ -281,3 +283,7 @@ begin:
 
 	return(copysign((signx>zero)?z:PI-z,signy));
 }
+
+#ifdef __weak_alias
+__weak_alias(atan2l, atan2);
+#endif /* __weak_alias */

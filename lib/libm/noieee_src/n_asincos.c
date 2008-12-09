@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asincos.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_asincos.c,v 1.8 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_asincos.c,v 1.1 1995/10/10 23:36:34 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -85,7 +85,9 @@ static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
  *      1.99 ulps.
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <math.h>
+
 #include "mathimpl.h"
 
 double
@@ -103,6 +105,10 @@ asin(double x)
 	    { t=one-s; s=t+t; return(atan2(x,sqrt(s-t*t))); }
 
 }
+
+#ifdef __weak_alias
+__weak_alias(asinl, asin);
+#endif /* __weak_alias */
 
 /* ACOS(X)
  * RETURNS ARC COS OF X
@@ -170,3 +176,7 @@ acos(double x)
 	    t=atan2(one,0.0);	/* t = PI/2 */
 	return(t+t);
 }
+
+#ifdef __weak_alias
+__weak_alias(acosl, acos);
+#endif /* __weak_alias */

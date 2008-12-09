@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sqrt.S,v 1.5 2008/09/16 22:13:12 martynas Exp $	*/
+/*	$OpenBSD: n_sqrt.S,v 1.6 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -44,6 +44,10 @@
  *
  * entry points: sqrt		double arg is on the stack
  */
+
+.weak sqrtl
+	sqrtl = sqrt
+
 ENTRY(sqrt, R2|R3|R4|R5)
 	movq    4(ap),r0
 dsqrt2:	bicw3	$0x807f,r0,r2	# check exponent of input

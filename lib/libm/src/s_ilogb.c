@@ -20,7 +20,10 @@ static char rcsid[] = "$NetBSD: s_ilogb.c,v 1.9 1995/05/10 20:47:28 jtc Exp $";
  * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 int
@@ -45,3 +48,9 @@ ilogb(double x)
 	else if (hx<0x7ff00000) return (hx>>20)-1023;
 	else return 0x7fffffff;
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(ilogbl, ilogb);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

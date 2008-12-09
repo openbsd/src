@@ -84,7 +84,10 @@ static char rcsid[] = "$NetBSD: e_sqrt.c,v 1.8 1995/05/10 20:46:17 jtc Exp $";
  *---------------
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static	const double	one	= 1.0, tiny=1.0e-300;
@@ -442,4 +445,9 @@ B.  sqrt(x) by Reciproot Iteration
     (4)	Special cases (see (4) of Section A).	
  
  */
- 
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(sqrtl, sqrt);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

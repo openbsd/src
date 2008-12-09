@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_atan2.S,v 1.4 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_atan2.S,v 1.1 1995/10/10 23:40:25 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -72,6 +72,9 @@
  * Accuracy:
  *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded. 
  */
+
+.weak atan2l
+	atan2l = atan2
 
 ENTRY(atan2, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	movq	4(ap),r2		# r2 = y

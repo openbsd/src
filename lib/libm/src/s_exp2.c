@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2.c,v 1.1 2008/07/24 09:40:16 martynas Exp $	*/
+/*	$OpenBSD: s_exp2.c,v 1.2 2008/12/09 20:00:35 martynas Exp $	*/
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -27,8 +27,8 @@
 
 #include <sys/cdefs.h>
 #include <float.h>
+#include <math.h>
 
-#include "math.h"
 #include "math_private.h"
 
 #define	TBLBITS	8
@@ -389,3 +389,9 @@ exp2(double x)
 		return (r * twopkp1000 * twom1000);
 	}
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(exp2l, exp2);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

@@ -38,7 +38,10 @@ static char rcsid[] = "$NetBSD: e_acos.c,v 1.9 1995/05/12 04:57:13 jtc Exp $";
  * Function needed: sqrt
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double 
@@ -101,3 +104,9 @@ acos(double x)
 	    return 2.0*(df+w);
 	}
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(acosl, acos);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

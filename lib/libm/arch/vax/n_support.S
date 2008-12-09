@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.13 2008/11/20 23:21:37 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.14 2008/12/09 20:00:35 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -40,7 +40,6 @@
  * logb(x),
  * logbf(x),
  * scalbn(x,N),
- * finite(x),
  * remainder(x,y),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
  * Revised by K.C. Ng on 4/9/85.
@@ -51,6 +50,9 @@
  * double
  * copysign(double x, double y)
  */
+
+.weak copysignl
+	copysignl = copysign
 
 ENTRY(copysign, R2)
 	movq	4(ap),r0		# load x into r0
@@ -79,6 +81,9 @@ Fz:	ret
  * double
  * logb(double x)
  */
+
+.weak logbl
+	logbl = logb
 
 ENTRY(logb, 0)
 	bicl3	$0xffff807f,4(ap),r0	# mask off the exponent of x
@@ -110,23 +115,12 @@ Fn:	movl	4(ap),r0		# r0:1 = x (zero or reserved op)
 1:	ret
 
 /*
- * long
- * finite(double x)
- */
-
-ENTRY(finite, 0)
-	bicw3	$0x7f,4(ap),r0		# mask off the mantissa
-	cmpw	r0,$0x8000		# to see if x is the reserved op
-	beql	1f			# if so, return FALSE (0)
-	movl	$1,r0			# else return TRUE (1)
-	ret
-1:	clrl	r0
-	ret
-
-/*
  * double
  * scalbn(double x, int N)
  */
+
+.weak scalbnl
+	scalbnl = scalbn
 
 ENTRY(scalbn, R2|R3)
 	movq	4(ap),r0

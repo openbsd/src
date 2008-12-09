@@ -1,5 +1,5 @@
+#  $OpenBSD: Makefile,v 1.59 2008/12/09 20:00:35 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.58 2008/10/07 22:25:53 martynas Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -26,8 +26,9 @@ ARCH_SRCS = s_copysign.S s_copysignf.S
 .PATH:	${.CURDIR}/arch/i387
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
+	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
+	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
 	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_rint.S s_rintf.S\
 	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S \
@@ -37,8 +38,9 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 CPPFLAGS+=-I${.CURDIR}/arch/amd64
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
+	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
+	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
 	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
@@ -46,7 +48,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 	    e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S s_ceil.S \
-	    s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S s_log1p.S \
+	    s_copysign.S s_cos.S s_expm1.S s_floor.S s_log1p.S \
 	    s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
 .elif (${MACHINE_ARCH} == "hppa")
 .PATH:	${.CURDIR}/arch/hppa
@@ -86,8 +88,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_cproj.c s_cprojf.c s_creal.c s_crealf.c s_csin.c s_csinf.c s_csinh.c \
 	s_csinhf.c s_csqrt.c s_csqrtf.c s_ctan.c s_ctanf.c s_ctanh.c \
 	s_ctanhf.c s_erf.c s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c \
-	s_fabsf.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c s_finite.c \
-	s_finitef.c \
+	s_fabsf.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_ldexpf.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
@@ -98,6 +99,13 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_sin.c s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c \
 	s_truncf.c w_drem.c w_dremf.c w_gamma.c w_gamma_r.c w_gammaf.c \
 	w_gammaf_r.c w_lgamma.c w_lgammaf.c
+
+LONG_SRCS = e_acosl.c e_asinl.c e_atan2l.c e_sqrtl.c \
+	invtrig.c \
+	k_cosl.c k_sinl.c k_tanl.c \
+	s_atanl.c s_copysignl.c s_cosl.c s_exp2l.c s_fabsl.c s_fmaxl.c \
+	s_fminl.c s_frexpl.c s_ilogbl.c s_logbl.c s_nanl.c s_rintl.c \
+	s_scalbnl.c s_sinl.c s_tanl.c
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
@@ -120,6 +128,18 @@ SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
 MAN+=	infnan.3
 .else
 SRCS=	${COMMON_SRCS}
+.if (${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "m88k")
+.PATH:		${.CURDIR}/src/ld80
+CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld80
+SRCS+=		${LONG_SRCS}
+.endif
+.if (${MACHINE_ARCH} == "hppa64") || (${MACHINE_ARCH} == "mips64") || \
+	(${MACHINE_ARCH} == "sparc64")
+.PATH:		${.CURDIR}/src/ld128
+CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
+SRCS+=		${LONG_SRCS}
+.endif
 .endif
 
 # Substitute common sources with any arch specific sources 
@@ -230,6 +250,5 @@ MLINKS+=trunc.3 truncf.3
 #e_acos.o: 
 #	cpp \
 #	/usr/src/lib/libm/arch/mc68881/e_acos.S |  as -o e_acos.o
-
 
 .include <bsd.lib.mk>

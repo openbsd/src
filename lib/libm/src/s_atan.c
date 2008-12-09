@@ -34,7 +34,10 @@ static char rcsid[] = "$NetBSD: s_atan.c,v 1.8 1995/05/10 20:46:45 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double atanhi[] = {
@@ -117,3 +120,9 @@ atan(double x)
 	    return (hx<0)? -z:z;
 	}
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(atanl, atan);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fdim.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_fdim.c,v 1.2 2008/12/09 20:00:35 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/cdefs.h>
+#include <float.h>
 #include <math.h>
 
 #define	DECL(type, fn)			\
@@ -41,4 +43,9 @@ fn(type x, type y)			\
 
 DECL(double, fdim)
 DECL(float, fdimf)
-DECL(long double, fdiml)
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(fdiml, fdim);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

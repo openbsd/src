@@ -14,9 +14,12 @@
 static char rcsid[] = "$NetBSD: s_ldexp.c,v 1.6 1995/05/10 20:47:40 jtc Exp $";
 #endif
 
-#include "math.h"
-#include "math_private.h"
+#include <machine/cdefs.h>
 #include <errno.h>
+#include <float.h>
+#include <math.h>
+
+#include "math_private.h"
 
 double
 ldexp(double value, int exp)
@@ -26,3 +29,9 @@ ldexp(double value, int exp)
 	if(!finite(value)||value==0.0) errno = ERANGE;
 	return value;
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(ldexpl, ldexp);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

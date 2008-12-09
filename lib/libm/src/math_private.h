@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.10 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.11 2008/12/09 20:00:35 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -199,7 +199,7 @@ do {								\
  */
 #if FLT_EVAL_METHOD == 0 || __GNUC__ == 0
 #define	STRICT_ASSIGN(type, lval, rval)	((lval) = (rval))
-#else
+#else /* FLT_EVAL_METHOD == 0 || __GNUC__ == 0 */
 #define	STRICT_ASSIGN(type, lval, rval) do {	\
 	volatile type __lval;			\
 						\
@@ -210,15 +210,15 @@ do {								\
 		(lval) = __lval;		\
 	}					\
 } while (0)
-#endif
-#endif
+#endif /* FLT_EVAL_METHOD == 0 || __GNUC__ == 0 */
+#endif /* FLT_EVAL_METHOD */
 
 /* fdlibm kernel function */
 extern int    __ieee754_rem_pio2(double,double*);
 extern double __kernel_sin(double,double,int);
 extern double __kernel_cos(double,double);
 extern double __kernel_tan(double,double,int);
-extern int    __kernel_rem_pio2(double*,double*,int,int,int,const int*);
+extern int    __kernel_rem_pio2(double*,double*,int,int,int);
 
 /* float versions of fdlibm kernel functions */
 extern int   __ieee754_rem_pio2f(float,float*);
@@ -226,6 +226,16 @@ extern float __kernel_sinf(float,float,int);
 extern float __kernel_cosf(float,float);
 extern float __kernel_tanf(float,float,int);
 extern int   __kernel_rem_pio2f(float*,float*,int,int,int,const int*);
+
+/* long double precision kernel functions */
+long double __kernel_sinl(long double, long double, int);
+long double __kernel_cosl(long double, long double);
+long double __kernel_tanl(long double, long double, int);
+
+/*
+ * Common routine to process the arguments to nan(), nanf(), and nanl().
+ */
+void _scan_nan(uint32_t *__words, int __num_words, const char *__s);
 
 /*
  * TRUNC() is a macro that sets the trailing 27 bits in the mantissa

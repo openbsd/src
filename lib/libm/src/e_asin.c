@@ -44,8 +44,10 @@ static char rcsid[] = "$NetBSD: e_asin.c,v 1.9 1995/05/12 04:57:22 jtc Exp $";
  *
  */
 
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
 
-#include "math.h"
 #include "math_private.h"
 
 static const double 
@@ -110,3 +112,9 @@ asin(double x)
 	}    
 	if(hx>0) return t; else return -t;    
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(asinl, asin);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

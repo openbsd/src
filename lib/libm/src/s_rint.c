@@ -24,7 +24,10 @@ static char rcsid[] = "$NetBSD: s_rint.c,v 1.8 1995/05/10 20:48:04 jtc Exp $";
  *	Inexact flag raised if x not equal to rint(x).
  */
 
-#include "math.h"
+#include <machine/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -76,3 +79,9 @@ rint(double x)
 	w = TWO52[sx]+x;
 	return w-TWO52[sx];
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(rintl, rint);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */
