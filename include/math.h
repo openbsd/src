@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.22 2008/09/09 20:42:55 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.23 2008/12/09 20:02:02 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -34,7 +34,11 @@ extern char __infinity[];
 typedef	__double_t	double_t;
 typedef	__float_t	float_t;
 
+#ifdef __vax__
+#define	HUGE_VALF	(*(float *)(void *)__infinityf)
+#else /* __vax__ */
 #define	HUGE_VALF	((float)HUGE_VAL)
+#endif /* __vax__ */
 #define	HUGE_VALL	((long double)HUGE_VAL)
 #define	INFINITY	HUGE_VALF
 #ifndef __vax__
@@ -87,13 +91,13 @@ extern char __nan[];
 
 #define isinf(x) \
 	((sizeof (x) == sizeof (float)) ? \
-		isinff(x) \
+		__isinff(x) \
 	: (sizeof (x) == sizeof (double)) ? \
 		__isinf(x) \
 	:	__isinfl(x))
 #define isnan(x) \
 	((sizeof (x) == sizeof (float)) ? \
-		isnanf(x) \
+		__isnanf(x) \
 	: (sizeof (x) == sizeof (double)) ? \
 		__isnan(x) \
 	:	__isnanl(x))
@@ -372,7 +376,6 @@ extern float significandf(float);
  * Long double versions of C99 functions
  */
 #if __ISO_C_VISIBLE >= 1999
-#if 0
 extern long double acosl(long double);
 extern long double asinl(long double);
 extern long double atanl(long double);
@@ -381,63 +384,90 @@ extern long double cosl(long double);
 extern long double sinl(long double);
 extern long double tanl(long double);
 
+#if 0
 extern long double acoshl(long double);
 extern long double asinhl(long double);
 extern long double atanhl(long double);
 extern long double coshl(long double);
 extern long double sinhl(long double);
 extern long double tanhl(long double);
+#endif
 
+#if 0
 extern long double expl(long double);
+#endif
 extern long double exp2l(long double);
+#if 0
 extern long double expm1l(long double);
+#endif
 extern long double frexpl(long double, int *);
 extern int ilogbl(long double);
 extern long double ldexpl(long double, int);
+#if 0
 extern long double logl(long double);
 extern long double log10l(long double);
 extern long double log1pl(long double);
 extern long double log2l(long double);
+#endif
 extern long double logbl(long double);
+#if 0
 extern long double modfl(long double, long double *);
+#endif
 extern long double scalbnl(long double, int);
+#if 0
 extern long double scalblnl(long double, long int);
+#endif
 
+#if 0
 extern long double cbrtl(long double);
+#endif
 extern long double fabsl(long double);
+#if 0
 extern long double hypotl(long double, long double);
 extern long double powl(long double, long double);
+#endif
 extern long double sqrtl(long double);
 
+#if 0
 extern long double erfl(long double);
 extern long double erfcl(long double);
 extern long double lgammal(long double);
 extern long double tgammal(long double);
+#endif
 
+#if 0
 extern long double ceill(long double);
 extern long double floorl(long double);
 extern long double nearbyintl(long double);
+#endif
 extern long double rintl(long double);
+#if 0
 extern long int lrintl(long double);
 extern long long int llrintl(long double);
 extern long double roundl(long double);
 extern long int lroundl(long double);
 extern long long int llroundl(long double);
 extern long double truncl(long double);
+#endif
 
+#if 0
 extern long double fmodl(long double, long double);
 extern long double remainderl(long double, long double);
 extern long double remquol(long double, long double, int *);
+#endif
 
 extern long double copysignl(long double, long double);
 extern long double nanl(const char *);
+#if 0
 extern long double nextafterl(long double, long double);
 extern long double nexttowardl(long double, long double);
+#endif
 
 extern long double fdiml(long double, long double);
 extern long double fmaxl(long double, long double);
 extern long double fminl(long double, long double);
 
+#if 0
 extern long double fmal(long double, long double, long double);
 #endif
 #endif /* __ISO_C_VISIBLE >= 1999 */
@@ -452,8 +482,10 @@ extern int __isfinite(double);
 extern int __isfinitef(float);
 extern int __isfinitel(long double);
 extern int __isinf(double);
+extern int __isinff(float);
 extern int __isinfl(long double);
 extern int __isnan(double);
+extern int __isnanf(float);
 extern int __isnanl(long double);
 extern int __isnormal(double);
 extern int __isnormalf(float);
