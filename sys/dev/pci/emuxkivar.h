@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.9 2008/10/29 22:39:44 jakemsr Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.10 2008/12/09 12:30:12 brad Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -220,13 +220,6 @@ struct emuxki_stream {
 struct emuxki_softc {
 	struct device   sc_dev;
 	struct audio_device sc_audv;
-	enum {
-		EMUXKI_SBLIVE = 0x00, EMUXKI_AUDIGY = 0x01, EMUXKI_AUDIGY2 = 0x02,
-		EMUXKI_LIVE_5_1 = 0x04, EMUXKI_APS = 0x08
-	} sc_type;
-	enum {
-		EMUXKI_CA0108_CHIP = 0x01, EMUXKI_CA0151_CHIP = 0x02
-	} sc_details;
 
 	/* Autoconfig parameters */
 	bus_space_tag_t 	sc_iot;
@@ -257,6 +250,15 @@ struct emuxki_softc {
 	struct device		*sc_audev;
 
 	struct emuxki_voice	*pvoice, *rvoice, *lvoice;
+
+	int			sc_flags;
+#define EMUXKI_SBLIVE		0x0001
+#define EMUXKI_AUDIGY		0x0002
+#define EMUXKI_AUDIGY2		0x0004
+#define EMUXKI_SBLIVE51		0x0008
+#define EMUXKI_APS		0x0010
+#define EMUXKI_CA0108		0x0020
+#define EMUXKI_CA0151		0x0040
 };
 
 #endif				/* !_DEV_PCI_EMU10K1VAR_H_ */
