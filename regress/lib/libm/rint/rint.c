@@ -1,4 +1,4 @@
-/*	$OpenBSD: rint.c,v 1.6 2005/11/17 20:16:26 otto Exp $	*/
+/*	$OpenBSD: rint.c,v 1.7 2008/12/09 20:35:13 martynas Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
@@ -37,6 +37,8 @@ main(int argc, char *argv[])
 		errx(1, "rint");
 	if (rintf(8.6F) != 9)
 		errx(1, "rintf");
+	if (rintl(8.6L) != 9)
+		errx(1, "rintl");
  	if (lrint(8.6) != 9L)
  		errx(1, "lrint");
  	if (lrintf(8.6F) != 9L)
