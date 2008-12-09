@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnormal.c,v 1.2 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: isnormal.c,v 1.3 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -16,7 +16,10 @@
  */
 
 #include <sys/types.h>
+#include <machine/cdefs.h>
 #include <machine/ieee.h>
+#include <float.h>
+#include <math.h>
 
 int
 __isnormal(double d)
@@ -33,3 +36,9 @@ __isnormalf(float f)
 
 	return (p->sng_exp != 0 && p->sng_exp != SNG_EXP_INFNAN);
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(__isnormall, __isnormal);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnan.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: isnan.c,v 1.2 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) Martynas Venckus <martynas@openbsd.org>
  *
@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <machine/cdefs.h>
+#include <math.h>
+
 /* ARGSUSED */
 int
 __isnan(double d)
@@ -28,3 +31,15 @@ isnanf(float f)
 {
 	return(0);
 }
+
+#ifdef __weak_alias
+__weak_alias(__isnanl, __isnan);
+#endif /* __weak_alias */
+
+/*
+ * 3BSD compatibility aliases.
+ */
+#ifdef __weak_alias
+__weak_alias(isnan, __isnan);
+__weak_alias(isnanf, __isnanf);
+#endif /* __weak_alias */

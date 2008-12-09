@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnanl.c,v 1.1 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: isnanl.c,v 1.2 2008/12/09 19:52:33 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 int
 __isnanl(long double e)

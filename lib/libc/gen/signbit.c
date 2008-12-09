@@ -1,4 +1,4 @@
-/*	$OpenBSD: signbit.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: signbit.c,v 1.2 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -16,7 +16,10 @@
  */
 
 #include <sys/types.h>
+#include <machine/cdefs.h>
 #include <machine/ieee.h>
+#include <float.h>
+#include <math.h>
 
 int
 __signbit(double d)
@@ -34,12 +37,8 @@ __signbitf(float f)
 	return p->sng_sign;
 }
 
-#if 0	/* XXX */
-int
-__signbitl(long double e)
-{
-	struct ieee_ext *p = (struct ieee_ext *)&e;
-
-	return p->ext_sign;
-}
-#endif	/* XXX */
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(__signbitl, __signbit);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */

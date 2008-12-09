@@ -1,4 +1,4 @@
-/*	$OpenBSD: isfinite.c,v 1.2 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: isfinite.c,v 1.3 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -16,7 +16,10 @@
  */
 
 #include <sys/types.h>
+#include <machine/cdefs.h>
 #include <machine/ieee.h>
+#include <float.h>
+#include <math.h>
 
 int
 __isfinite(double d)
@@ -33,3 +36,17 @@ __isfinitef(float f)
 
 	return (p->sng_exp != SNG_EXP_INFNAN);
 }
+
+#if LDBL_MANT_DIG == 53
+#ifdef __weak_alias
+__weak_alias(__isfinitel, __isfinite);
+#endif /* __weak_alias */
+#endif /* LDBL_MANT_DIG == 53 */
+
+/* 
+ * 3BSD compatibility aliases.
+ */
+#ifdef __weak_alias
+__weak_alias(finite, __isfinite);
+__weak_alias(finitef, __isfinitef);
+#endif /* __weak_alias */

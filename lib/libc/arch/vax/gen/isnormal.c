@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnormal.c,v 1.1 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: isnormal.c,v 1.2 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -15,7 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <machine/cdefs.h>
 #include <machine/vaxfp.h>
+#include <math.h>
 
 int
 __isnormal(double d)
@@ -32,3 +34,7 @@ __isnormalf(float f)
 
 	return (p->fflt_exp != 0);
 }
+
+#ifdef __weak_alias
+__weak_alias(__isnormall, __isnormal);
+#endif /* __weak_alias */

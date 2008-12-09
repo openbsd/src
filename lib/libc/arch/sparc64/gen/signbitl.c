@@ -1,4 +1,4 @@
-/*	$OpenBSD: isfinitel.c,v 1.2 2008/12/09 19:52:33 martynas Exp $	*/
+/*	$OpenBSD: signbitl.c,v 1.1 2008/12/09 19:52:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -20,9 +20,9 @@
 #include <math.h>
 
 int
-__isfinitel(long double e)
+__signbitl(long double e)
 {
 	struct ieee_ext *p = (struct ieee_ext *)&e;
 
-	return (p->ext_exp != EXT_EXP_INFNAN);
+	return p->ext_sign;
 }

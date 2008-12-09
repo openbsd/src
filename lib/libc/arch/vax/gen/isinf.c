@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.7 2008/07/24 09:31:07 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.8 2008/12/09 19:52:34 martynas Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/cdefs.h>
+#include <math.h>
+
 /* ARGSUSED */
 int
 __isinf(double d)
@@ -42,3 +45,15 @@ isinff(float f)
 {
 	return(0);
 }
+
+#ifdef __weak_alias
+__weak_alias(__isinfl, __isinf);
+#endif /* __weak_alias */
+
+/*
+ * 3BSD compatibility aliases.
+ */
+#ifdef __weak_alias
+__weak_alias(isinf, __isinf);
+__weak_alias(isinff, __isinff);
+#endif /* __weak_alias */
