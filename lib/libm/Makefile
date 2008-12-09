@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.59 2008/12/09 20:00:35 martynas Exp $
+#  $OpenBSD: Makefile,v 1.60 2008/12/09 23:13:31 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -56,6 +56,7 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
 	    s_ceil.c s_ceilf.c s_floor.c s_floorf.c s_rint.c s_rintf.c
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
+CPPFLAGS+= -D__STDC__
 NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
 ARCH_SRCS = n_atan2.S n_cbrt.S n_hypot.S n_sincos.S n_support.S n_tan.S
 .endif
