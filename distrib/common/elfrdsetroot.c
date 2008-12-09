@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.19 2008/12/02 03:20:38 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.20 2008/12/09 18:57:41 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -50,10 +50,11 @@
 #else
 #define ELFSIZE 32
 #endif
-
 #include <sys/exec_elf.h>
+Elf_Ehdr head;
+Elf_Phdr *ph;
 
-char *file;
+char	*file;
 
 /* Virtual addresses of the symbols we frob. */
 long	rd_root_image_va, rd_root_size_va;
@@ -68,10 +69,10 @@ off_t	rd_root_size_val;
 char	*dataseg;
 
 /* parameters to mmap digged out from program header */
-off_t	mmap_offs;
+off_t	mmap_off;
 size_t	mmap_size;
 
-int	find_rd_root_image(char *, Elf_Ehdr *, Elf_Phdr *, int);
+int	find_rd_root_image(char *, Elf_Phdr *, int);
 __dead void usage(void);
 
 int	debug;
@@ -79,13 +80,12 @@ int	debug;
 int
 main(int argc, char *argv[])
 {
-	int ch, fd, n, xflag = 0, found = 0, phsize, fsd;
+	int ch, fd, n, xflag = 0, fsd;
+	int found = 0, phsize;
 	char *fs = NULL;
 	u_int32_t *ip;
-	Elf_Ehdr eh;
-	Elf_Phdr *ph;
 
-	while ((ch = getopt(argc, argv, "xd")) != -1) {
+	while ((ch = getopt(argc, argv, "dx")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -130,28 +130,28 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	n = read(fd, &eh, sizeof(eh));
-	if (n < sizeof(eh)) {
+	n = read(fd, &head, sizeof(head));
+	if (n < sizeof(head)) {
 		fprintf(stderr, "%s: reading header\n", file);
 		exit(1);
 	}
 
-	if (!IS_ELF(eh)) {
-		fprintf(stderr, "%s: not elf\n", file);
+	if (!IS_ELF(head)) {
+		fprintf(stderr, "%s: bad magic number\n", file);
 		exit(1);
 	}
 
-	phsize = eh.e_phnum * sizeof(Elf_Phdr);
+	phsize = head.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize);
-	lseek(fd, eh.e_phoff, SEEK_SET);
+	lseek(fd, head.e_phoff, SEEK_SET);
 	if (read(fd, (char *)ph, phsize) != phsize) {
 		fprintf(stderr, "%s: can't read phdr area\n", file);
 		exit(1);
 	}
 
-	for (n = 0; n < eh.e_phnum && !found; n++) {
+	for (n = 0; n < head.e_phnum && !found; n++) {
 		if (ph[n].p_type == PT_LOAD)
-			found = find_rd_root_image(file, &eh, &ph[n], n);
+			found = find_rd_root_image(file, &ph[n], n);
 	}
 	if (!found) {
 		fprintf(stderr, "%s: can't locate space for rd_root_image!\n",
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 	 */
 	dataseg = mmap(NULL, mmap_size,
 	    xflag ? PROT_READ : PROT_READ | PROT_WRITE,
-	    MAP_SHARED, fd, mmap_offs);
+	    MAP_SHARED, fd, mmap_off);
 	if (dataseg == MAP_FAILED) {
 		fprintf(stderr, "%s: can not map data seg\n", file);
 		perror(file);
@@ -175,21 +175,22 @@ main(int argc, char *argv[])
 	/*
 	 * Find value in the location: rd_root_size
 	 */
-	ip = (u_int32_t*) (dataseg + rd_root_size_off);
+	ip = (u_int32_t *) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 	if (debug)
-		fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
-		    (u_int32_t)rd_root_size_val,
-		    (u_int32_t)(rd_root_size_val >> 9));
+		fprintf(stderr, "rd_root_size  val: 0x%llx (%lld blocks)\n",
+		    (unsigned long long)rd_root_size_val,
+		    (unsigned long long)rd_root_size_val >> 9);
 
 	/*
 	 * Copy the symbol table and string table.
 	 */
 	if (debug)
 		fprintf(stderr, "copying root image...\n");
+
 	if (xflag) {
 		n = write(fsd, dataseg + rd_root_image_off,
-		    rd_root_size_val);
+		    (size_t)rd_root_size_val);
 		if (n != rd_root_size_val) {
 			perror("write");
 			exit(1);
@@ -203,12 +204,13 @@ main(int argc, char *argv[])
 		}
 		if (S_ISREG(sstat.st_mode) &&
 		    sstat.st_size > rd_root_size_val) {
-			fprintf(stderr, "ramdisk too small 0x%x 0x%x\n",
-			    (long)sstat.st_size, rd_root_size_val);
+			fprintf(stderr, "ramdisk too small 0x%llx 0x%llx\n",
+			    (unsigned long long)sstat.st_size,
+			    (unsigned long long)rd_root_size_val);
 			exit(1);
 		}
 		n = read(fsd, dataseg + rd_root_image_off,
-		    rd_root_size_val);
+		    (size_t)rd_root_size_val);
 		if (n < 0) {
 			perror("read");
 			exit(1);
@@ -233,7 +235,7 @@ struct nlist wantsyms[] = {
 };
 
 int
-find_rd_root_image(char *file, Elf_Ehdr *eh, Elf_Phdr *ph, int segment)
+find_rd_root_image(char *file, Elf_Phdr *ph, int segment)
 {
 	unsigned long kernel_start, kernel_size;
 
@@ -244,10 +246,10 @@ find_rd_root_image(char *file, Elf_Ehdr *eh, Elf_Phdr *ph, int segment)
 	kernel_start = ph->p_paddr;
 	kernel_size = ph->p_filesz;
 
-	rd_root_size_off	= wantsyms[0].n_value - kernel_start;
-	rd_root_size_off	-= (ph->p_vaddr - ph->p_paddr);
-	rd_root_image_off	= wantsyms[1].n_value - kernel_start;
-	rd_root_image_off	-= (ph->p_vaddr - ph->p_paddr);
+	rd_root_size_off = wantsyms[0].n_value - kernel_start;
+	rd_root_size_off -= (ph->p_vaddr - ph->p_paddr);
+	rd_root_image_off = wantsyms[1].n_value - kernel_start;
+	rd_root_image_off -= (ph->p_vaddr - ph->p_paddr);
 
 	if (debug) {
 		fprintf(stderr, "segment %d rd_root_size_off = 0x%x\n", segment,
@@ -270,7 +272,7 @@ find_rd_root_image(char *file, Elf_Ehdr *eh, Elf_Phdr *ph, int segment)
 		    file);
 		return(0);
 	}
-	mmap_offs = ph->p_offset;
+	mmap_off = ph->p_offset;
 	mmap_size = kernel_size;
 	return(1);
 }

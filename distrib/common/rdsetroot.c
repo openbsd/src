@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.18 2008/12/02 03:20:38 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.19 2008/12/09 18:57:42 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -41,9 +41,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <a.out.h>
+#include <nlist.h>
 
+#include <a.out.h>
 struct	exec head;
+
 char	*file;
 
 /* Virtual addresses of the symbols we frob. */
@@ -53,17 +55,17 @@ long	rd_root_image_va, rd_root_size_va;
 long	rd_root_image_off, rd_root_size_off;
 
 /* value in the location at rd_root_size_off */
-int	rd_root_size_val;
+off_t	rd_root_size_val;
 
 /* pointers to pieces of mapped file */
 char	*dataseg;
 
 /* and lengths */
 int	data_len;
-int	data_off;
+off_t	mmap_off;
 int	data_pgoff;
 
-void	find_rd_root_image(char *);
+int	find_rd_root_image(char *);
 __dead void usage(void);
 
 int	debug;
@@ -73,7 +75,7 @@ main(int argc, char *argv[])
 {
 	int ch, fd, n, xflag = 0, fsd;
 	char *fs = NULL;
-	int *ip;
+	u_int32_t *ip;
 
 	while ((ch = getopt(argc, argv, "dx")) != -1) {
 		switch (ch) {
@@ -156,7 +158,7 @@ main(int argc, char *argv[])
 	 * Map in the whole data segment.
 	 * The file offset needs to be page aligned.
 	 */
-	data_off = N_DATOFF(head);
+	mmap_off = N_DATOFF(head);
 
 #ifdef BROKEN_NMAGIC
 	/*
@@ -164,19 +166,19 @@ main(int argc, char *argv[])
 	 * the data segment ends up one page too far into the file.
 	 */
 	if (N_GETMAGIC(head) == NMAGIC)
-		data_off += __LDPGSZ;
+		mmap_off += __LDPGSZ;
 #endif
 
 	data_len = head.a_data;
 	/* align... */
 	data_pgoff = N_PAGSIZ(head) - 1;
-	data_pgoff &= data_off;
-	data_off -= data_pgoff;
+	data_pgoff &= mmap_off;
+	mmap_off -= data_pgoff;
 	data_len += data_pgoff;
 	/* map in in... */
 	dataseg = mmap(NULL, data_len,
 	    xflag ? PROT_READ : PROT_READ | PROT_WRITE,
-	    MAP_SHARED, fd, data_off);
+	    MAP_SHARED, fd, mmap_off);
 	if (dataseg == MAP_FAILED) {
 		fprintf(stderr, "%s: can not map data seg\n", file);
 		perror(file);
@@ -187,11 +189,12 @@ main(int argc, char *argv[])
 	/*
 	 * Find value in the location: rd_root_size
 	 */
-	ip = (int*) (dataseg + rd_root_size_off);
+	ip = (u_int32_t *) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 	if (debug)
-		fprintf(stderr, "rd_root_size  val: 0x%08X (%d blocks)\n",
-		    rd_root_size_val, (rd_root_size_val >> 9));
+		fprintf(stderr, "rd_root_size  val: 0x%llx (%lld blocks)\n",
+		    (unsigned long long)rd_root_size_val,
+		    (unsigned long long)rd_root_size_val >> 9);
 
 	/*
 	 * Copy the symbol table and string table.
@@ -201,7 +204,7 @@ main(int argc, char *argv[])
 
 	if (xflag) {
 		n = write(fsd, dataseg + rd_root_image_off,
-		    rd_root_size_val);
+		    (size_t)rd_root_size_val);
 		if (n != rd_root_size_val) {
 			perror("write");
 			exit(1);
@@ -215,11 +218,13 @@ main(int argc, char *argv[])
 		}
 		if (S_ISREG(sstat.st_mode) &&
 		    sstat.st_size > rd_root_size_val) {
-			fprintf(stderr, "ramdisk too small\n");
+			fprintf(stderr, "ramdisk too small 0x%llx 0x%llx\n",
+			    (unsigned long long)sstat.st_size,
+			    (unsigned long long)rd_root_size_val);
 			exit(1);
 		}
 		n = read(fsd, dataseg + rd_root_image_off,
-		    rd_root_size_val);
+		    (size_t)rd_root_size_val);
 		if (n < 0) {
 			perror("read");
 			exit(1);
@@ -229,7 +234,7 @@ main(int argc, char *argv[])
 	}
 
 	if (debug)
-		fprintf(stderr, "copied %d bytes\n", n);
+		fprintf(stderr, "...copied %d bytes\n", n);
 	exit(0);
 }
 
@@ -243,7 +248,7 @@ struct nlist wantsyms[] = {
 	{ NULL, 0 }
 };
 
-void
+int
 find_rd_root_image(char *file)
 {
 	int data_va, std_entry;
@@ -258,7 +263,7 @@ find_rd_root_image(char *file)
 		fprintf(stderr,
 		    "%s: warning: non-standard entry point: 0x%08x\n", file,
 		    head.a_entry);
-		fprintf(stderr, "\texpecting entry=0x%X\n", std_entry);
+		fprintf(stderr, "\texpecting entry=0x%x\n", std_entry);
 		data_va += (head.a_entry - std_entry);
 	}
 
@@ -266,11 +271,11 @@ find_rd_root_image(char *file)
 	rd_root_image_off = wantsyms[1].n_value - data_va;
 
 	if (debug) {
-		fprintf(stderr, "data segment  va: 0x%08X\n", data_va);
-		fprintf(stderr, "rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-		fprintf(stderr, "rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-		fprintf(stderr, "rd_root_size  off: 0x%08X\n", rd_root_size_off);
-		fprintf(stderr, "rd_root_image off: 0x%08X\n", rd_root_image_off);
+		fprintf(stderr, "data segment  va: 0x%x\n", data_va);
+		fprintf(stderr, "rd_root_size   va: 0x%x\n", wantsyms[0].n_value);
+		fprintf(stderr, "rd_root_image  va: 0x%x\n", wantsyms[1].n_value);
+		fprintf(stderr, "rd_root_size  off: 0x%x\n", rd_root_size_off);
+		fprintf(stderr, "rd_root_image off: 0x%x\n", rd_root_image_off);
 	}
 
 	/*
@@ -284,6 +289,7 @@ find_rd_root_image(char *file)
 		fprintf(stderr, "%s: rd_root_size not in data segment?\n", file);
 		exit(1);
 	}
+	return (1);
 }
 
 __dead void
