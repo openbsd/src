@@ -151,7 +151,7 @@ THIS SOFTWARE.
  *	dtoa.  You may do so whether or not MULTIPLE_THREADS is #defined.
  * #define IMPRECISE_INEXACT if you do not care about the setting of
  *	the STRTOG_Inexact bits in the special case of doing IEEE double
- *	precision conversions (which could also be done by the strtog in
+ *	precision conversions (which could also be done by the strtod in
  *	dtoa.c).
  * #define NO_HEX_FP to disable recognition of C9x's hexadecimal
  *	floating-point constants.
@@ -175,6 +175,9 @@ THIS SOFTWARE.
 
 #include "gdtoa.h"
 #include "gd_qnan.h"
+#ifdef Honor_FLT_ROUNDS
+#include <fenv.h>
+#endif
 
 #ifdef DEBUG
 #include "stdio.h"
@@ -580,13 +583,13 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern int cmp ANSI((Bigint*, Bigint*));
  extern void copybits ANSI((ULong*, int, Bigint*));
  extern Bigint *d2b ANSI((double, int*, int*));
- extern int decrement ANSI((Bigint*));
+ extern void decrement ANSI((Bigint*));
  extern Bigint *diff ANSI((Bigint*, Bigint*));
  extern char *dtoa ANSI((double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve));
  extern char *gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
-			  int mode, int ndigits, int *decpt, char **rve));
- extern char *g__fmt ANSI((char*, char*, char*, int, ULong));
+ 			int mode, int ndigits, int *decpt, char **rve));
+ extern char *g__fmt ANSI((char*, char*, char*, int, ULong, size_t));
  extern int gethex ANSI((CONST char**, FPI*, Long*, Bigint**, int));
  extern void hexdig_init_D2A(Void);
  extern int hexnan ANSI((CONST char**, FPI*, ULong*));
