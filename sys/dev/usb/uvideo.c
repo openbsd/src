@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.105 2008/12/10 08:19:23 yuo Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.106 2008/12/10 11:43:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -255,7 +255,8 @@ struct uvideo_devs {
 	    NULL, NULL
 	}
 };
-#define uvideo_lookup(v, p) ((struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
+#define uvideo_lookup(v, p) \
+	((struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
 
 int
 uvideo_enable(void *v)
