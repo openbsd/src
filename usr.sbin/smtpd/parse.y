@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2008/12/06 14:23:47 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2008/12/10 23:04:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -348,6 +348,15 @@ map		: MAP STRING			{
 				free(map);
 				map = NULL;
 				YYERROR;
+			}
+			if (strcmp(map->m_name, "aliases") == 0 ||
+			    strcmp(map->m_name, "virtual") == 0) {
+				if (map->m_src != S_DB) {
+					yyerror("map source must be db");
+					free(map);
+					map = NULL;
+					YYERROR;
+				}
 			}
 			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			map = NULL;

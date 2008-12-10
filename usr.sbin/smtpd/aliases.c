@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.9 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.10 2008/12/10 23:04:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -60,11 +60,6 @@ aliases_exist(struct smtpd *env, char *username)
 	if (map == NULL)
 		return 0;
 
-	if (map->m_src != S_DB) {
-		log_info("map source for \"aliases\" must be \"db\".");
-		return 0;
-	}
-
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL)
 		return 0;
@@ -97,11 +92,6 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 	map = map_findbyname(env, "aliases");
 	if (map == NULL)
 		return 0;
-
-	if (map->m_src != S_DB) {
-		log_info("map source for \"aliases\" must be \"db\".");
-		return 0;
-	}
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL)
@@ -154,11 +144,6 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
 		return 0;
-
-	if (map->m_src != S_DB) {
-		log_info("map source for \"virtual\" must be \"db\".");
-		return 0;
-	}
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL)
@@ -213,11 +198,6 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
 		return 0;
-
-	if (map->m_src != S_DB) {
-		log_info("map source for \"virtual\" must be \"db\".");
-		return 0;
-	}
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL)
