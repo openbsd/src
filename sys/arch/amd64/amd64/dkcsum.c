@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.14 2008/06/12 06:58:33 deraadt Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.15 2008/12/10 23:41:19 krw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -63,6 +63,10 @@ dkcsumattach(void)
 
 	/* do nothing if no diskinfo passed from /boot, or a bad length */
 	if (bios_diskinfo == NULL || bios_cksumlen * DEV_BSIZE > MAXBSIZE)
+		return;
+
+	/* Do nothing if bootdev is a CD drive. */
+	if (B_TYPE(bootdev) == 6)
 		return;
 
 #ifdef DEBUG

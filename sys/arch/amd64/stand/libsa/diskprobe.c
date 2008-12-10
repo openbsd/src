@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.5 2007/06/18 22:11:20 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.6 2008/12/10 23:41:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -232,7 +232,7 @@ cdprobe(void)
 	dip->bios_info.flags |= BDI_GOODLABEL | BDI_EL_TORITO;
 	dip->bios_info.checksum = 0;		 /* just in case */
 	dip->bios_info.bsd_dev =
-	    MAKEBOOTDEV(0, 0, 0, 0xff, RAW_PART);
+	    MAKEBOOTDEV(6, 0, 0, 0, RAW_PART);
 
 	/* Create an imaginary disk label */
 	dip->disklabel.d_secsize = 2048;
