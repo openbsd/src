@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.106 2008/12/10 11:43:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.107 2008/12/10 21:20:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1565,7 +1565,7 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	/* calculate optimal isoc xfer size */
 	if (strncmp(sc->sc_udev->bus->bdev.dv_xname, "ohci", 4) == 0) {
 		/* ohci workaround */
-		sc->sc_nframes = 6400 / sc->sc_vs_cur->psize;
+		sc->sc_nframes = 8;
 	} else {
 		dwMaxVideoFrameSize =
 		    UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
