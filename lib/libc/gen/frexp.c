@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.3 2008/12/09 20:32:06 martynas Exp $	*/
+/*	$OpenBSD: frexp.c,v 1.4 2008/12/10 01:15:02 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <machine/ieee.h>
 #include <float.h>
 #include <math.h>

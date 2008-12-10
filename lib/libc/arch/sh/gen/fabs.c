@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.c,v 1.5 2008/12/09 20:21:06 martynas Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.6 2008/12/10 01:15:02 martynas Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #if !defined(__SH4__) || defined(__SH4_NOFPU__)
 #include <sys/types.h>
 #include <machine/ieee.h>

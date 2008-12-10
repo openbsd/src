@@ -1,4 +1,4 @@
-/*	$OpenBSD: signbit.c,v 1.2 2008/12/09 19:52:34 martynas Exp $	*/
+/*	$OpenBSD: signbit.c,v 1.3 2008/12/10 01:15:02 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <machine/ieee.h>
 #include <float.h>
 #include <math.h>

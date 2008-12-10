@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.6 2008/12/09 20:32:06 martynas Exp $ */
+/*	$OpenBSD: frexp.c,v 1.7 2008/12/10 01:15:02 martynas Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <math.h>
 
