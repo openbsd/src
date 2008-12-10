@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.135 2008/12/06 13:18:12 sobrado Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.136 2008/12/10 23:57:10 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1186,8 +1186,8 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 		case ATTR_AGGREGATOR:
 			memcpy(&as, data, sizeof(as));
 			memcpy(&id, data + sizeof(as), sizeof(id));
-			printf("    Aggregator: %s [%s]\n", log_as(as),
-			   inet_ntoa(id));
+			printf("    Aggregator: %s [%s]\n", 
+			    log_as(htonl(as)), inet_ntoa(id));
 			break;
 		case ATTR_ORIGINATOR_ID:
 			memcpy(&id, data, sizeof(id));
