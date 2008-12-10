@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.104 2008/12/09 06:01:41 brad Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.105 2008/12/10 08:19:23 yuo Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -966,6 +966,10 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
+	/* store max value */
+	if (UGETDW(d->dwMaxVideoFrameBufferSize) > sc->sc_max_fbuf_size)
+		sc->sc_max_fbuf_size = UGETDW(d->dwMaxVideoFrameBufferSize);
+
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -998,6 +1002,10 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	if (d->bFrameIndex ==
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
+
+	/* store max value */
+	if (UGETDW(d->dwMaxVideoFrameBufferSize) > sc->sc_max_fbuf_size)
+		sc->sc_max_fbuf_size = UGETDW(d->dwMaxVideoFrameBufferSize);
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -2975,20 +2983,6 @@ int
 uvideo_get_bufsize(void *v)
 {
 	struct uvideo_softc *sc = v;
-	struct usb_video_probe_commit *pc;
-	uint8_t probe_data[34];
-	usbd_status error;
-
-	pc = (struct usb_video_probe_commit *)probe_data;
-
-	/* find the maximum frame size */
-	bzero(probe_data, sizeof(probe_data));
-	error = uvideo_vs_get_probe(sc, probe_data, GET_MAX);
-	if (error != USBD_NORMAL_COMPLETION) {
-		return (EINVAL);
-	}
-
-	sc->sc_max_fbuf_size = UGETDW(pc->dwMaxVideoFrameSize);
 
 	return (sc->sc_max_fbuf_size);
 }
