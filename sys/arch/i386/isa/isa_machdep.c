@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.64 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.65 2008/12/10 20:26:56 oga Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -890,15 +890,14 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			panic("_isa_bus_dmamap_sync: bad length");
 	}
 #endif
+#ifdef DIAGNOSTIC
+	if ((op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (op & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("_isa_bus_dmamap_sync: mix PRE and POST");
+#endif /* DIAGNOSTIC */
 
-	switch (op) {
-	case BUS_DMASYNC_PREREAD:
-		/*
-		 * Nothing to do for pre-read.
-		 */
-		break;
-
-	case BUS_DMASYNC_PREWRITE:
+	/* PREREAD and POSTWRITE are no-ops */
+	if (op & BUS_DMASYNC_PREWRITE) {
 		/*
 		 * If we're bouncing this transfer, copy the
 		 * caller's buffer to the bounce buffer.
@@ -907,9 +906,7 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			bcopy((char *)cookie->id_origbuf + offset,
 			    cookie->id_bouncebuf + offset,
 			    len);
-		break;
-
-	case BUS_DMASYNC_POSTREAD:
+	} else if (op & BUS_DMASYNC_POSTREAD) {
 		/*
 		 * If we're bouncing this transfer, copy the
 		 * bounce buffer to the caller's buffer.
@@ -918,13 +915,6 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			bcopy((char *)cookie->id_bouncebuf + offset,
 			    cookie->id_origbuf + offset,
 			    len);
-		break;
-
-	case BUS_DMASYNC_POSTWRITE:
-		/*
-		 * Nothing to do for post-write.
-		 */
-		break;
 	}
 
 #if 0
