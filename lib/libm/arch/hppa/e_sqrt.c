@@ -3,10 +3,10 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: e_sqrt.c,v 1.3 2008/12/09 20:00:35 martynas Exp $";
+static char rcsid[] = "$OpenBSD: e_sqrt.c,v 1.4 2008/12/10 01:08:24 martynas Exp $";
 #endif
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.16 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.17 2008/12/10 01:08:24 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -68,7 +68,7 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 1/22/85, 2/13/85, 3/24/85.
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <math.h>
 
 #include "mathimpl.h"

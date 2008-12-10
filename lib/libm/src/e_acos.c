@@ -38,7 +38,7 @@ static char rcsid[] = "$NetBSD: e_acos.c,v 1.9 1995/05/12 04:57:13 jtc Exp $";
  * Function needed: sqrt
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

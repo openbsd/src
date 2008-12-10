@@ -20,7 +20,7 @@ static char rcsid[] = "$NetBSD: s_ilogb.c,v 1.9 1995/05/10 20:47:28 jtc Exp $";
  * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

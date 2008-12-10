@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.9 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.10 2008/12/10 01:08:24 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -33,7 +33,7 @@
 static char sccsid[] = "@(#)floor.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <math.h>
 
 #include "mathimpl.h"

@@ -44,7 +44,7 @@ static char rcsid[] = "$NetBSD: s_tan.c,v 1.7 1995/05/10 20:48:18 jtc Exp $";
  *	TRIG(x) returns trig(x) nearly rounded 
  */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

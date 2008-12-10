@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.7 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.8 2008/12/10 01:08:24 martynas Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -33,7 +33,7 @@
 static char sccsid[] = "@(#)tan.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 #include <math.h>
 
 #include "mathimpl.h"
