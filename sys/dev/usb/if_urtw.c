@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.2 2008/12/03 10:44:17 jsg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.3 2008/12/10 01:31:31 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -1821,31 +1821,27 @@ fail:
 uint16_t
 urtw_rate2rtl(int rate)
 {
-#define N(a)	(sizeof(a) / sizeof((a)[0]))
 	int i;
 
-	for (i = 0; i < N(urtw_ratetable); i++) {
+	for (i = 0; i < nitems(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].reg)
 			return urtw_ratetable[i].val;
 	}
 
 	return (3);
-#undef N
 }
 
 uint16_t
 urtw_rtl2rate(int rate)
 {
-#define N(a)	(sizeof(a) / sizeof((a)[0]))
 	int i;
 
-	for (i = 0; i < N(urtw_ratetable); i++) {
+	for (i = 0; i < nitems(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].val)
 			return urtw_ratetable[i].reg;
 	}
 
 	return (0);
-#undef N
 }
 
 usbd_status
@@ -2636,7 +2632,6 @@ fail:
 usbd_status
 urtw_8225_rf_init(struct urtw_softc *sc)
 {
-#define N(a)	(sizeof(a) / sizeof((a)[0]))
 	int i;
 	uint16_t data;
 	usbd_status error;
@@ -2667,7 +2662,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 		goto fail;
 	usbd_delay_ms(sc->sc_udev, 1000);
 
-	for (i = 0; i < N(urtw_8225_rf_part1); i++) {
+	for (i = 0; i < nitems(urtw_8225_rf_part1); i++) {
 		urtw_8225_write(sc, urtw_8225_rf_part1[i].reg,
 		    urtw_8225_rf_part1[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -2694,7 +2689,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 		usbd_delay_ms(sc->sc_udev, 1);
 	}
 
-	for (i = 0; i < N(urtw_8225_rf_part2); i++) {
+	for (i = 0; i < nitems(urtw_8225_rf_part2); i++) {
 		urtw_8187_write_phy_ofdm(sc, urtw_8225_rf_part2[i].reg,
 		    urtw_8225_rf_part2[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -2704,7 +2699,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	if (error)
 		goto fail;
 
-	for (i = 0; i < N(urtw_8225_rf_part3); i++) {
+	for (i = 0; i < nitems(urtw_8225_rf_part3); i++) {
 		urtw_8187_write_phy_cck(sc, urtw_8225_rf_part3[i].reg,
 		    urtw_8225_rf_part3[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -2730,7 +2725,6 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	error = urtw_8225_rf_set_chan(sc, 1);
 fail:
 	return (error);
-#undef N
 }
 
 usbd_status
@@ -3011,7 +3005,6 @@ fail:
 usbd_status
 urtw_8225v2_rf_init(struct urtw_softc *sc)
 {
-#define N(a)	(sizeof(a) / sizeof((a)[0]))
 	int i;
 	uint16_t data;
 	uint32_t data32;
@@ -3044,7 +3037,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 
 	usbd_delay_ms(sc->sc_udev, 1000);
 
-	for (i = 0; i < N(urtw_8225v2_rf_part1); i++) {
+	for (i = 0; i < nitems(urtw_8225v2_rf_part1); i++) {
 		urtw_8225_write(sc, urtw_8225v2_rf_part1[i].reg,
 		    urtw_8225v2_rf_part1[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -3100,7 +3093,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	}
 	usbd_delay_ms(sc->sc_udev, 1);
 
-	for (i = 0; i < N(urtw_8225v2_rf_part2); i++) {
+	for (i = 0; i < nitems(urtw_8225v2_rf_part2); i++) {
 		urtw_8187_write_phy_ofdm(sc, urtw_8225v2_rf_part2[i].reg,
 		    urtw_8225v2_rf_part2[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -3110,7 +3103,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	if (error)
 		goto fail;
 
-	for (i = 0; i < N(urtw_8225v2_rf_part3); i++) {
+	for (i = 0; i < nitems(urtw_8225v2_rf_part3); i++) {
 		urtw_8187_write_phy_cck(sc, urtw_8225v2_rf_part3[i].reg,
 		    urtw_8225v2_rf_part3[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
@@ -3136,7 +3129,6 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	error = urtw_8225_rf_set_chan(sc, 1);
 fail:
 	return (error);
-#undef N
 }
 
 usbd_status
