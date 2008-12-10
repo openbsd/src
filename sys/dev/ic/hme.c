@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.53 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.54 2008/12/10 20:37:48 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -725,7 +725,7 @@ hme_start(ifp)
 
  drop:
 	IFQ_DEQUEUE(&ifp->if_snd, m);
-	m_free(m);
+	m_freem(m);
 	ifp->if_oerrors++;
 }
 

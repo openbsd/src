@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.84 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.85 2008/12/10 20:37:48 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1713,6 +1713,6 @@ gem_start(struct ifnet *ifp)
 
  drop:
 	IFQ_DEQUEUE(&ifp->if_snd, m);
-	m_free(m);
+	m_freem(m);
 	ifp->if_oerrors++;
 }
