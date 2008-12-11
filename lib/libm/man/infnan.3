@@ -1,4 +1,4 @@
-.\"	$OpenBSD: infnan.3,v 1.10 2008/07/16 15:04:09 martynas Exp $
+.\"	$OpenBSD: infnan.3,v 1.11 2008/12/11 09:05:34 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)infnan.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 16 2008 $
+.Dd $Mdocdate: December 11 2008 $
 .Dt INFNAN 3
 .Os
 .Sh NAME
@@ -169,18 +169,6 @@ infnan(int iarg)
 .Xr intro 2 ,
 .Xr math 3 ,
 .Xr signal 3
-.Pp
-.Dv ERANGE
-and
-.Dv EDOM
-are defined in
-.Aq Pa errno.h .
-(See
-.Xr intro 2
-for explanation of
-.Dv EDOM
-and
-.Dv ERANGE . )
 .Sh HISTORY
 The
 .Fn infnan
