@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.10 2008/12/10 23:04:24 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.11 2008/12/11 23:04:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -139,7 +139,6 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	DB *aliasesdb;
 	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
-	int spret;
 
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
@@ -149,8 +148,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	if (aliasesdb == NULL)
 		return 0;
 
-	spret = snprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user, path->domain);
-	if (spret == -1 || spret >= MAX_LINE_SIZE) {
+	if (! bsnprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user,
+		path->domain)) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -160,8 +159,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		spret = snprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain);
-		if (spret == -1 || spret >= MAX_LINE_SIZE) {
+		if (! bsnprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -193,7 +191,6 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	struct alias *nextalias;
 	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
-	int spret;
 
 	map = map_findbyname(env, "virtual");
 	if (map == NULL)
@@ -203,8 +200,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	if (aliasesdb == NULL)
 		return 0;
 
-	spret = snprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user, path->domain);
-	if (spret == -1 || spret >= MAX_LINE_SIZE) {
+	if (! bsnprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user,
+		path->domain)) {
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -214,8 +211,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		spret = snprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain);
-		if (spret == -1 || spret >= MAX_LINE_SIZE) {
+		if (! bsnprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
