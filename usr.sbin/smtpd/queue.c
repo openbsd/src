@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.22 2008/12/07 16:00:07 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.23 2008/12/11 23:17:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -749,13 +749,11 @@ message_by_id(struct smtpd *env, struct batch *batchp, u_int64_t id)
 int
 queue_create_incoming_layout(char *message_id)
 {
-	int spret;
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
-	    PATH_INCOMING, time(NULL));
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
+		PATH_INCOMING, time(NULL)))
 		return -1;
 
 	if (mkdtemp(rootdir) == NULL)
@@ -765,9 +763,8 @@ queue_create_incoming_layout(char *message_id)
 	    >= MAXPATHLEN)
 		goto badroot;
 	
-	spret = snprintf(evpdir, MAXPATHLEN, "%s%s",
-	    rootdir, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! snprintf(evpdir, MAXPATHLEN, "%s%s",
+		rootdir, PATH_ENVELOPES))
 		goto badroot;
 
 	if (mkdir(evpdir, 0700) == -1)
@@ -785,7 +782,6 @@ badroot:
 void
 queue_delete_incoming_message(char *message_id)
 {
-	int spret;
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 	char evppath[MAXPATHLEN];
@@ -793,18 +789,15 @@ queue_delete_incoming_message(char *message_id)
 	DIR *dirp;
 	struct dirent *dp;
 	
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
-	    message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
+		message_id))
 		fatal("queue_delete_incoming_message: snprintf");
 
-	spret = snprintf(evpdir, MAXPATHLEN, "%s%s",
-	    rootdir, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
+		rootdir, PATH_ENVELOPES))
 		fatal("queue_delete_incoming_message: snprintf");
 	
-	spret = snprintf(msgpath, MAXPATHLEN, "%s/message", rootdir);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
 		fatal("queue_delete_incoming_message: snprintf");
 
 	if (unlink(msgpath) == -1) {
@@ -822,8 +815,7 @@ queue_delete_incoming_message(char *message_id)
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
-		spret = snprintf(evppath, MAXPATHLEN, "%s/%s", evpdir, dp->d_name);
-		if (spret == -1 || spret >= MAXPATHLEN)
+		if (! bsnprintf(evppath, MAXPATHLEN, "%s/%s", evpdir, dp->d_name))
 			fatal("queue_delete_incoming_message: snprintf");
 
 		if (unlink(evppath) == -1) {
@@ -853,19 +845,16 @@ queue_record_incoming_envelope(struct message *message)
 	char message_uid[MAXPATHLEN];
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
-	int spret;
 	FILE *fp;
 	int ret;
 
-	spret = snprintf(evpdir, MAXPATHLEN, "%s/%s%s", PATH_INCOMING,
-	    message->message_id, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s/%s%s", PATH_INCOMING,
+		message->message_id, PATH_ENVELOPES))
 		fatal("queue_record_incoming_envelope: snprintf");
 
 	for (;;) {
-		spret = snprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
-		    message->message_id, (u_int64_t)arc4random());
-		if (spret == -1 || spret >= MAXPATHLEN)
+		if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
+			message->message_id, (u_int64_t)arc4random()))
 			fatal("queue_record_incoming_envelope: snprintf");
 
 		(void)strlcpy(message_uid, evpname + strlen(evpdir) + 1, MAXPATHLEN);
@@ -909,13 +898,11 @@ queue_update_incoming_envelope(struct message *messagep)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	int spret;
 	FILE *fp;
 	mode_t mode = O_RDWR;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
-	    messagep->message_id, PATH_ENVELOPES, messagep->message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
+		messagep->message_id, PATH_ENVELOPES, messagep->message_uid))
 		fatal("queue_update_incoming_envelope: snprintf");
 
 	if ((fd = open(pathname, mode)) == -1)
@@ -941,11 +928,9 @@ int
 queue_remove_incoming_envelope(struct message *message)
 {
 	char pathname[MAXPATHLEN];
-	int spret;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
-	    message->message_id, PATH_ENVELOPES, message->message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
+		message->message_id, PATH_ENVELOPES, message->message_uid))
 		fatal("queue_remove_incoming_envelope: snprintf");
 
 	if (unlink(pathname) == -1)
@@ -958,20 +943,17 @@ queue_remove_incoming_envelope(struct message *message)
 int
 queue_commit_incoming_message(struct message *messagep)
 {
-	int spret;
 	char rootdir[MAXPATHLEN];
 	char queuedir[MAXPATHLEN];
 	u_int16_t hval;
 	
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
-	    messagep->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
+		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 
 	hval = queue_message_hash(messagep);
 
-	spret = snprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
 		fatal("queue_commit_message_incoming: snprintf");
 
 	if (mkdir(queuedir, 0700) == -1) {
@@ -981,9 +963,8 @@ queue_commit_incoming_message(struct message *messagep)
 			fatal("queue_commit_message_incoming: mkdir");
 	}
 
-	spret = snprintf(queuedir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE, hval,
-		messagep->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE, hval,
+		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 	
 
@@ -997,12 +978,10 @@ int
 queue_open_incoming_message_file(struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
-	int spret;
 	mode_t mode = O_CREAT|O_EXCL|O_RDWR;
-
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%s/message", PATH_INCOMING,
-	    messagep->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s/message", PATH_INCOMING,
+		messagep->message_id))
 		fatal("queue_open_incoming_message_file: snprintf");
 
 	return open(pathname, mode, 0600);
@@ -1017,31 +996,26 @@ queue_record_envelope(struct message *messagep)
 	char message_uid[MAXPATHLEN];
 	int fd;
 	int mode = O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_SYNC;
-	int spret;
 	FILE *fp;
 	int ret;
 	u_int16_t hval;
 
-	spret = snprintf(queuedir, MAXPATHLEN, "%s/%s", PATH_QUEUE,
-	    messagep->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%s", PATH_QUEUE,
+		messagep->message_id))
 		fatal("queue_record_envelope: snprintf");
 
 	hval = queue_message_hash(messagep);
 
-	spret = snprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
 		fatal("queue_record_envelope: snprintf");
 
-	spret = snprintf(evpdir, MAXPATHLEN, "%s/%s%s", queuedir, messagep->message_id,
-	    PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s/%s%s", queuedir,
+		messagep->message_id, PATH_ENVELOPES))
 		fatal("queue_record_envelope: snprintf");
 
 	for (;;) {
-		spret = snprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
-		    messagep->message_id, (u_int64_t)arc4random());
-		if (spret == -1 || spret >= MAXPATHLEN)
+		if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
+			messagep->message_id, (u_int64_t)arc4random()))
 			fatal("queue_record_envelope: snprintf");
 
 		(void)strlcpy(message_uid, evpname + strlen(evpdir) + 1, MAXPATHLEN);
@@ -1087,21 +1061,19 @@ queue_remove_envelope(struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
 	u_int16_t hval;
-	int spret;
 
 	hval = queue_message_hash(messagep);
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-	    hval, messagep->message_id, PATH_ENVELOPES, messagep->message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+		hval, messagep->message_id, PATH_ENVELOPES,
+		messagep->message_uid))
 		fatal("queue_remove_incoming_envelope: snprintf");
 
 	if (unlink(pathname) == -1)
 		fatal("queue_remove_incoming_envelope: unlink");
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE,
-	    hval, messagep->message_id, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE,
+		hval, messagep->message_id, PATH_ENVELOPES))
 		fatal("queue_remove_incoming_envelope: snprintf");
 
 	if (rmdir(pathname) != -1)
@@ -1115,16 +1087,14 @@ queue_update_envelope(struct message *messagep)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	int spret;
 	FILE *fp;
 	mode_t mode = O_RDWR;
 	u_int16_t hval;
 
 	hval = queue_message_hash(messagep);
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-	    hval, messagep->message_id, PATH_ENVELOPES, messagep->message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+		hval, messagep->message_id, PATH_ENVELOPES, messagep->message_uid))
 		fatal("queue_update_envelope: snprintf");
 
 	if ((fd = open(pathname, mode)) == -1)
@@ -1149,7 +1119,6 @@ queue_update_envelope(struct message *messagep)
 int
 queue_load_envelope(struct message *messagep, char *evpid)
 {
-	int spret;
 	char pathname[MAXPATHLEN];
 	u_int16_t hval;
 	FILE *fp;
@@ -1159,8 +1128,9 @@ queue_load_envelope(struct message *messagep, char *evpid)
 	*strrchr(msgid, '.') = '\0';
 
 	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-	    hval, msgid, PATH_ENVELOPES, evpid);
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+		hval, msgid, PATH_ENVELOPES, evpid))
+		return 0;
 
 	fp = fopen(pathname, "r");
 	if (fp == NULL)
@@ -1179,15 +1149,13 @@ queue_open_message_file(struct batch *batchp)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	int spret;
 	mode_t mode = O_RDONLY;
 	u_int16_t hval;
 
 	hval = hash(batchp->message_id, strlen(batchp->message_id)) % DIRHASH_BUCKETS;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/%d/%s/message", PATH_QUEUE,
-	    hval, batchp->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s/message", PATH_QUEUE,
+		hval, batchp->message_id))
 		fatal("queue_open_message_file: snprintf");
 
 	if ((fd = open(pathname, mode)) == -1)
@@ -1199,25 +1167,21 @@ queue_open_message_file(struct batch *batchp)
 void
 queue_delete_message(char *msgid)
 {
-	int spret;
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 	char msgpath[MAXPATHLEN];
 	u_int16_t hval;
 
 	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE,
-	    hval, msgid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE,
+		hval, msgid))
 		fatal("queue_delete_message: snprintf");
 
-	spret = snprintf(evpdir, MAXPATHLEN, "%s%s",
-	    rootdir, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
+		rootdir, PATH_ENVELOPES))
 		fatal("queue_delete_message: snprintf");
 	
-	spret = snprintf(msgpath, MAXPATHLEN, "%s/message", rootdir);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
 		fatal("queue_delete_message: snprintf");
 
 	if (unlink(msgpath) == -1)
@@ -1232,9 +1196,8 @@ queue_delete_message(char *msgid)
 		if (errno != ENOENT)
 			fatal("queue_delete_message: rmdir");
 
-	spret = snprintf(rootdir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
-	    hval);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
+		hval))
 		fatal("queue_delete_message: snprintf");
 
 	rmdir(rootdir);
