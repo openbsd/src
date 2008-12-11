@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.4 2008/12/07 03:14:24 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.5 2008/12/11 22:32:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -476,7 +476,7 @@ runner_process_bucket(struct smtpd *env, u_int16_t bucket)
 
 	dirp = opendir(bucketpath);
 	if (dirp == NULL)
-		fatal("queue_process_bucket: opendir");
+		return;
 
 	while ((dp = readdir(dirp)) != NULL) {
 
@@ -508,7 +508,7 @@ runner_process_message(struct smtpd *env, char *messageid)
 
 	dirp = opendir(evppath);
 	if (dirp == NULL)
-		fatal("queue_process_message: opendir");
+		return;
 
 	while ((dp = readdir(dirp)) != NULL) {
 
@@ -533,10 +533,8 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 	u_int16_t hval;
 	struct stat sb;
 
-	if (! queue_load_envelope(&message, evpid)) {
-		log_debug("failed to load envelope: %s", evpid);
+	if (! queue_load_envelope(&message, evpid))
 		return;
-	}
 
 	tm = time(NULL);
 
@@ -598,7 +596,6 @@ runner_process_runqueue(struct smtpd *env)
 		unlink(pathname);
 
 		if (! queue_load_envelope(&message, dp->d_name)) {
-			log_debug("failed to load envelope");
 			continue;
 		}
 
