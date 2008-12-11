@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.8 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.9 2008/12/11 17:07:14 oga Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.2 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ extern struct bus_dma_tag isa_bus_dma_tag;
  * Cookie used by ISA dma.  A pointer to one of these it stashed in
  * the DMA map.
  */
-struct x86_isa_dma_cookie {
+struct isa_dma_cookie {
 	int	id_flags;		/* flags; see below */
 
 	void	*id_origbuf;		/* pointer to orig buffer if
