@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.9 2008/11/29 08:57:10 jakemsr Exp $	*/
+/*	$OpenBSD: rip.c,v 1.10 2008/12/11 10:59:49 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -503,8 +503,10 @@ play_next_track(struct track_info *info)
 	return (NXTRACK_OK);
 
 bad:
-	sio_close(info->hdl);
-	info->hdl = NULL;
+	if (info->hdl != NULL) {
+		sio_close(info->hdl);
+		info->hdl = NULL;
+	}
 	return (NXTRACK_FAIL);
 }
 
