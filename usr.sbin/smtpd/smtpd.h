@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.23 2008/12/07 15:38:35 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.24 2008/12/11 22:18:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -791,3 +791,6 @@ int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 /* smtpd.c */
 struct map	*map_find(struct smtpd *, objid_t);
 struct map	*map_findbyname(struct smtpd *, const char *);
+
+/* util.c */
+int		bsnprintf(char *, size_t, const char *, ...);
