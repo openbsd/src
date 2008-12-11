@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.4 2008/12/06 13:18:13 sobrado Exp $
+.\" $OpenBSD: smtpctl.8,v 1.5 2008/12/11 22:19:39 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2008 $
+.Dd $Mdocdate: December 11 2008 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -32,6 +32,12 @@ program controls
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm showqueue
+displays informations concerning envelopes
+that are currently in queue.
+.It Cm showrunqueue
+displays informations concerning envelopes
+that are scheduled for delivery.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXX" -compact
