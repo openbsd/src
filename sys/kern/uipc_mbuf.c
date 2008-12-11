@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.108 2008/12/04 23:40:44 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.109 2008/12/11 16:45:45 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -267,6 +267,101 @@ m_getclr(int nowait, int type)
 		return (NULL);
 	memset(mtod(m, caddr_t), 0, MLEN);
 	return (m);
+}
+
+void
+m_clinitifp(struct ifnet *ifp)
+{
+	struct mclpool *mclp = ifp->if_data.ifi_mclpool;
+	extern u_int mclsizes[];
+	int i;
+
+	/* Initialize high water marks for use of cluster pools */
+	for (i = 0; i < MCLPOOLS; i++) {
+		mclp[i].mcl_hwm = MAX(4, mclp[i].mcl_lwm);
+		mclp[i].mcl_size = mclsizes[i];
+	}
+}
+
+void
+m_clsetlwm(struct ifnet *ifp, u_int pktlen, u_int lwm)
+{
+	extern u_int mclsizes[];
+	int i;
+
+	for (i = 0; i < MCLPOOLS; i++) {
+                if (pktlen <= mclsizes[i])
+			break;
+        }
+	if (i >= MCLPOOLS)
+		return;
+
+	ifp->if_data.ifi_mclpool[i].mcl_lwm = lwm;
+}
+
+extern int m_clticks;
+int m_livelock;
+
+int
+m_cldrop(struct ifnet *ifp, int pi)
+{
+	static int liveticks;
+	struct mclpool *mclp;
+	extern int ticks;
+	int i;
+
+	if (m_livelock == 0 && ticks - m_clticks > 2) {
+		struct ifnet *aifp;
+
+		/*
+		 * Timeout did not run, so we are in some kind of livelock.
+		 * Decrease the cluster allocation high water marks on all
+		 * interfaces and prevent them from growth for the very near
+		 * future.
+		 */
+		m_livelock = 1;
+		ifp->if_data.ifi_livelocks++;
+		liveticks = ticks;
+		TAILQ_FOREACH(aifp, &ifnet, if_list) {
+			mclp = aifp->if_data.ifi_mclpool;
+			for (i = 0; i < nitems(mclp); i++)
+				mclp[i].mcl_hwm =
+				    max(mclp[i].mcl_hwm / 2,mclp[i].mcl_lwm);
+		}
+	} else if (m_livelock && ticks - liveticks > 5)
+		m_livelock = 0;	/* Let the high water marks grow again */
+
+	mclp = ifp->if_data.ifi_mclpool;
+	if (mclp[pi].mcl_alive <= 2 && mclp[pi].mcl_hwm < 32768 &&
+	    ISSET(ifp->if_flags, IFF_RUNNING) && m_livelock == 0) {
+		/* About to run out, so increase the watermark */
+		mclp[pi].mcl_hwm++;
+	} else if (mclp[pi].mcl_alive >= mclp[pi].mcl_hwm)
+		return (1);		/* No more packets given */
+
+	return (0);
+}
+
+void
+m_clcount(struct ifnet *ifp, int pi)
+{
+	ifp->if_data.ifi_mclpool[pi].mcl_alive++;
+}
+
+void
+m_cluncount(struct mbuf *m, int all)
+{
+	struct mbuf_ext *me;
+
+	do {
+		me = &m->m_ext;
+		if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
+		    (me->ext_ifp == NULL))
+			continue;
+
+		me->ext_ifp->if_data.ifi_mclpool[me->ext_backend].mcl_alive--;
+		me->ext_ifp = NULL;
+	} while (all && (m = m->m_next));
 }
 
 void

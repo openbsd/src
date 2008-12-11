@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.100 2008/11/30 00:14:42 brad Exp $	*/
+/*	$OpenBSD: if.h,v 1.101 2008/12/11 16:45:45 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -104,6 +104,15 @@ struct if_clonereq {
 	char	*ifcr_buffer;		/* buffer for cloner names */
 };
 
+#define MCLPOOLS	7		/* number of cluster pools */
+
+struct mclpool {
+	u_short	mcl_alive;
+	u_short mcl_hwm;
+	u_short mcl_size;
+	u_short mcl_lwm;
+};
+
 /*
  * Structure defining statistics and other data kept regarding a network
  * interface.
@@ -131,6 +140,9 @@ struct	if_data {
 	u_int64_t	ifi_iqdrops;		/* dropped on input, this interface */
 	u_int64_t	ifi_noproto;		/* destined for unsupported protocol */
 	struct	timeval ifi_lastchange;	/* last operational state change */
+
+	struct mclpool	ifi_mclpool[MCLPOOLS];
+	u_int64_t	ifi_livelocks;		/* livelocks migitaged */
 };
 
 /*
@@ -144,17 +156,6 @@ struct	ifqueue {
 	int	ifq_maxlen;
 	int	ifq_drops;
 	struct	timeout *ifq_congestion;
-};
-
-#define MCLPOOLS	7		/* number of cluster pools */
-
-struct	mclstat {
-	struct {
-		u_short	mcl_alive;
-		u_short mcl_hwm;
-		u_short mcl_size;
-		u_short mcl_lwm;
-	}	mclpool[MCLPOOLS];
 };
 
 /*
@@ -235,8 +236,6 @@ struct ifnet {				/* and the entries */
 	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 
 	void	*if_afdata[AF_MAX];
-
-	struct mclstat if_mclstat;	/* mbuf cluster pool stats */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

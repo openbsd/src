@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.183 2008/11/26 19:07:33 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.184 2008/12/11 16:45:45 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -147,14 +147,12 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
 
-void	m_clinitifp(struct ifnet *);
-
 TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
-int m_clticks;
 struct timeout m_cltick_tmo;
+int m_clticks;
 
 /*
  * Record when the last timeout has been run.  If the delta is
@@ -165,6 +163,7 @@ static void
 m_cltick(void *arg)
 {
 	extern int ticks;
+	extern void m_cltick(void *);
 
 	m_clticks = ticks;
 	timeout_add(&m_cltick_tmo, 1);
@@ -2034,97 +2033,4 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-void
-m_clinitifp(struct ifnet *ifp)
-{
-	extern u_int mclsizes[];
-	int i;
-
-	/* Initialize high water marks for use of cluster pools */
-	for (i = 0; i < MCLPOOLS; i++) {
-		ifp->if_mclstat.mclpool[i].mcl_hwm = MAX(4,
-		    ifp->if_mclstat.mclpool[i].mcl_lwm);
-		ifp->if_mclstat.mclpool[i].mcl_size = mclsizes[i];
-	}
-}
-
-void
-m_clsetlwm(struct ifnet *ifp, u_int pktlen, u_int lwm)
-{
-	extern u_int mclsizes[];
-	int i;
-
-	for (i = 0; i < MCLPOOLS; i++) {
-                if (pktlen <= mclsizes[i])
-			break;
-        }
-	if (i >= MCLPOOLS)
-		return;
-
-	ifp->if_mclstat.mclpool[i].mcl_lwm = lwm;
-}
-
-int
-m_cldrop(struct ifnet *ifp, int pi)
-{
-	static int livelock, liveticks;
-	struct mclstat *mcls;
-	extern int ticks;
-	int i;
-
-	if (livelock == 0 && ticks - m_clticks > 2) {
-		struct ifnet *aifp;
-
-		/*
-		 * Timeout did not run, so we are in some kind of livelock.
-		 * Decrease the cluster allocation high water marks on all
-		 * interfaces and prevent them from growth for the very near
-		 * future.
-		 */
-		livelock = 1;
-		liveticks = ticks;
-		TAILQ_FOREACH(aifp, &ifnet, if_list) {
-			mcls = &aifp->if_mclstat;
-			for (i = 0; i < nitems(mcls->mclpool); i++)
-				mcls->mclpool[i].mcl_hwm =
-				    max(mcls->mclpool[i].mcl_hwm / 2,
-				    mcls->mclpool[i].mcl_lwm);
-		}
-	} else if (livelock && ticks - liveticks > 5)
-		livelock = 0;	/* Let the high water marks grow again */
-
-	mcls = &ifp->if_mclstat;
-	if (mcls->mclpool[pi].mcl_alive <= 2 &&
-	    mcls->mclpool[pi].mcl_hwm < 32768 &&
-	    ISSET(ifp->if_flags, IFF_RUNNING) && livelock == 0) {
-		/* About to run out, so increase the watermark */
-		mcls->mclpool[pi].mcl_hwm++;
-	} else if (mcls->mclpool[pi].mcl_alive >= mcls->mclpool[pi].mcl_hwm)
-		return (1);		/* No more packets given */
-
-	return (0);
-}
-
-void
-m_clcount(struct ifnet *ifp, int pi)
-{
-	ifp->if_mclstat.mclpool[pi].mcl_alive++;
-}
-
-void
-m_cluncount(struct mbuf *m, int all)
-{
-	struct mbuf_ext *me;
-
-	do {
-		me = &m->m_ext;
-		if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
-		    (me->ext_ifp == NULL))
-			continue;
-
-		me->ext_ifp->if_mclstat.mclpool[me->ext_backend].mcl_alive--;
-		me->ext_ifp = NULL;
-	} while (all && (m = m->m_next));
 }
