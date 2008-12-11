@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.13 2008/12/05 02:51:32 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.14 2008/12/11 23:10:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -633,10 +633,8 @@ setup_spool(uid_t uid, gid_t gid)
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
 	int		 ret;
-	int spret;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s", PATH_SPOOL);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s", PATH_SPOOL))
 		fatal("snprintf");
 
 	if (stat(pathname, &sb) == -1) {
@@ -681,9 +679,8 @@ setup_spool(uid_t uid, gid_t gid)
 
 	ret = 1;
 	for (n = 0; n < sizeof(paths)/sizeof(paths[0]); n++) {
-		spret = snprintf(pathname, MAXPATHLEN, "%s%s", PATH_SPOOL,
-		    paths[n]);
-		if (spret == -1 || spret >= MAXPATHLEN)
+		if (! bsnprintf(pathname, MAXPATHLEN, "%s%s", PATH_SPOOL,
+			paths[n]))
 			fatal("snprintf");
 
 		if (stat(pathname, &sb) == -1) {
@@ -756,16 +753,14 @@ parent_open_message_file(struct batch *batchp)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	int spret;
 	u_int16_t hval;
 	struct message *messagep;
 
 	messagep = &batchp->message;
 	hval = queue_message_hash(messagep);
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s%s/%d/%s/message",
-	    PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id);
-	if (spret == -1 || spret >= MAXPATHLEN) {
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s%s/%d/%s/message",
+		PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id)) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
 	}
@@ -780,7 +775,6 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	int fd;
 	struct passwd *pw;
 	char pathname[MAXPATHLEN];
-	int spret;
 	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
 	pw = getpwnam(path->pw_name);
@@ -789,8 +783,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path))
 		return -1;
 
 	fd = open(pathname, mode, 0600);
@@ -836,7 +829,6 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 	int fd;
 	struct passwd *pw;
 	char pathname[MAXPATHLEN];
-	int spret;
 	mode_t mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
 	pw = getpwnam(path->pw_name);
@@ -845,8 +837,7 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path))
 		return -1;
 
 	if (! parent_maildir_init(pw, pathname)) {
@@ -854,10 +845,8 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s/tmp/%s",
-	    pathname, batchp->message.message_uid);
-
-	if (spret == -1 || spret >= MAXPATHLEN) {
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/tmp/%s",
+		pathname, batchp->message.message_uid)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
@@ -885,11 +874,9 @@ parent_maildir_init(struct passwd *pw, char *root)
 	u_int8_t i;
 	char pathname[MAXPATHLEN];
 	char *subdir[] = { "/", "/tmp", "/cur", "/new" };
-	int spret;
 
 	for (i = 0; i < sizeof (subdir) / sizeof (char *); ++i) {
-		spret = snprintf(pathname, MAXPATHLEN, "%s%s", root, subdir[i]);
-		if (spret == -1 || spret >= MAXPATHLEN)
+		if (! bsnprintf(pathname, MAXPATHLEN, "%s%s", root, subdir[i]))
 			return 0;
 		if (mkdir(pathname, 0700) == -1)
 			if (errno != EEXIST)
@@ -907,7 +894,6 @@ parent_rename_mailfile(struct batch *batchp)
 	char srcpath[MAXPATHLEN];
 	char dstpath[MAXPATHLEN];
 	struct path *path;
-	int spret;
 
 	if (batchp->type & T_DAEMON_BATCH) {
 		path = &batchp->message.sender;
@@ -922,14 +908,10 @@ parent_rename_mailfile(struct batch *batchp)
 		return 0;
 	}
 
-	spret = snprintf(srcpath, MAXPATHLEN, "%s/tmp/%s",
-	    path->rule.r_value.path, batchp->message.message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
-		return 0;
-
-	spret = snprintf(dstpath, MAXPATHLEN, "%s/new/%s",
-	    path->rule.r_value.path, batchp->message.message_uid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(srcpath, MAXPATHLEN, "%s/tmp/%s",
+		path->rule.r_value.path, batchp->message.message_uid) ||
+	    ! bsnprintf(dstpath, MAXPATHLEN, "%s/new/%s",
+		path->rule.r_value.path, batchp->message.message_uid))
 		return 0;
 
 	if (rename(srcpath, dstpath) == -1) {
@@ -1006,11 +988,9 @@ parent_open_filename(struct batch *batchp, struct path *path)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	int spret;
 	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
-	spret = snprintf(pathname, MAXPATHLEN, "%s", path->u.filename);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->u.filename))
 		return -1;
 
 	fd = open(pathname, mode, 0600);

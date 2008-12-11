@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2008/12/10 23:04:24 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2008/12/11 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -460,7 +460,6 @@ mapref		: STRING			{
 			int bits;
 			struct sockaddr_in ssin;
 			struct sockaddr_in6 ssin6;
-			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -470,8 +469,7 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= MAX_LINE_SIZE)
+			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
@@ -534,7 +532,6 @@ mapref		: STRING			{
 		}
 		| '('				{
 			struct map	*m;
-			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -545,8 +542,7 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= MAX_LINE_SIZE)
+			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_LIST;
@@ -561,7 +557,6 @@ mapref		: STRING			{
 		}
 		| '{'				{
 			struct map	*m;
-			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -572,8 +567,7 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= MAX_LINE_SIZE)
+			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_HASH;
@@ -694,7 +688,6 @@ from		: FROM mapref			{
 			struct mapel	*me;
 			struct sockaddr_in *ssin;
 			struct sockaddr_in6 *ssin6;
-			int spret;
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -704,8 +697,7 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			spret = snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id);
-			if (spret == -1 || spret >= MAX_LINE_SIZE)
+			if (! snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
