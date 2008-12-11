@@ -398,7 +398,6 @@ extern void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state);
 extern int radeon_irq_emit(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
-extern void radeon_do_release(struct drm_device * dev);
 extern u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int radeon_enable_vblank(struct drm_device *dev, int crtc);
 extern void radeon_disable_vblank(struct drm_device *dev, int crtc);

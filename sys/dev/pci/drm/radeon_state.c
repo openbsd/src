@@ -3226,8 +3226,8 @@ int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file
  *
  * DRM infrastructure takes care of reclaiming dma buffers.
  */
-void radeon_driver_close(struct drm_device *dev,
-			    struct drm_file *file_priv)
+void
+radeon_driver_close(struct drm_device *dev, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -3238,18 +3238,8 @@ void radeon_driver_close(struct drm_device *dev,
 		radeon_surfaces_release(file_priv, dev_priv);
 }
 
-void radeon_driver_lastclose(struct drm_device *dev)
-{
-	drm_radeon_private_t *dev_priv = dev->dev_private;
-
-	if (dev_priv->sarea_priv &&
-	    dev_priv->sarea_priv->pfCurrentPage != 0)
-		radeon_cp_dispatch_flip(dev);
-
-	radeon_do_release(dev);
-}
-
-int radeon_driver_open(struct drm_device *dev, struct drm_file *file_priv)
+int
+radeon_driver_open(struct drm_device *dev, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	struct drm_radeon_file *radeon_priv =

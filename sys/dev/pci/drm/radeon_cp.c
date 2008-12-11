@@ -1462,7 +1462,7 @@ radeon_cp_stop(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 void
-radeon_do_release(struct drm_device *dev)
+radeon_driver_lastclose(struct drm_device *dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	int i, ret;
