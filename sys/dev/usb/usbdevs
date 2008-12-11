@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.398 2008/12/10 18:09:45 deraadt Exp $
+$OpenBSD: usbdevs,v 1.399 2008/12/11 10:43:38 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2351,6 +2351,7 @@ product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 
 /* Qualcomm(3) products */
 product QUALCOMM3 CDMA_MSM	0x0001	CDMA Technologies MSM modem
+product QUALCOMM3 AC8700	0xfffe	AC8700 CDMA USB modem
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
