@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.5 2008/12/11 22:32:27 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.6 2008/12/11 22:59:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -465,13 +465,11 @@ runner_process_queue(struct smtpd *env)
 void
 runner_process_bucket(struct smtpd *env, u_int16_t bucket)
 {
-	int spret;
 	DIR *dirp = NULL;
 	struct dirent *dp;
 	char bucketpath[MAXPATHLEN];
 
-	spret = snprintf(bucketpath, MAXPATHLEN, "%s/%d", PATH_QUEUE, bucket);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(bucketpath, MAXPATHLEN, "%s/%d", PATH_QUEUE, bucket))
 		fatal("queue_process_bucket: snprintf");
 
 	dirp = opendir(bucketpath);
@@ -493,7 +491,6 @@ runner_process_bucket(struct smtpd *env, u_int16_t bucket)
 void
 runner_process_message(struct smtpd *env, char *messageid)
 {
-	int spret;
 	DIR *dirp = NULL;
 	struct dirent *dp;
 	char evppath[MAXPATHLEN];
@@ -501,9 +498,8 @@ runner_process_message(struct smtpd *env, char *messageid)
 
 	hval = hash(messageid, strlen(messageid)) % DIRHASH_BUCKETS;
 
-	spret = snprintf(evppath, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE, hval,
-	    messageid, PATH_ENVELOPES);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE, hval,
+		messageid, PATH_ENVELOPES))
 		fatal("queue_process_message: snprintf");
 
 	dirp = opendir(evppath);
@@ -525,7 +521,6 @@ runner_process_message(struct smtpd *env, char *messageid)
 void
 runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 {
-	int spret;
 	struct message message;
 	time_t tm;
 	char evppath[MAXPATHLEN];
@@ -550,13 +545,11 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 	queue_update_envelope(&message);
 
 	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
-	spret = snprintf(evppath, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE, hval,
-	    msgid, PATH_ENVELOPES, evpid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE, hval,
+		msgid, PATH_ENVELOPES, evpid))
 		fatal("queue_process_envelope: snprintf");
 
-	spret = snprintf(rqpath, MAXPATHLEN, "%s/%s", PATH_RUNQUEUE, evpid);
-	if (spret == -1 || spret >= MAXPATHLEN)
+	if (! bsnprintf(rqpath, MAXPATHLEN, "%s/%s", PATH_RUNQUEUE, evpid))
 		fatal("queue_process_envelope: snprintf");
 
 	if (stat(rqpath, &sb) == -1) {

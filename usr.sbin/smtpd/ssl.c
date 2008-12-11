@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.3 2008/11/10 00:57:35 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.4 2008/12/11 23:01:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -285,7 +285,6 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 	struct ssl	*s;
 	struct ssl	 key;
 	char		 certfile[PATH_MAX];
-	int spret;
 
 	if (strlcpy(key.ssl_name, name, sizeof(key.ssl_name))
 	    >= sizeof(key.ssl_name)) {
@@ -302,9 +301,8 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 
 	(void)strlcpy(s->ssl_name, key.ssl_name, sizeof(s->ssl_name));
 
-	spret = snprintf(certfile, sizeof(certfile),
-	    "/etc/mail/certs/%s.crt", name);
-	if (spret == -1 || spret >= (int)sizeof(certfile)) {
+	if (! bsnprintf(certfile, sizeof(certfile),
+		"/etc/mail/certs/%s.crt", name)) {
 		free(s);
 		return (-1);
 	}
@@ -314,9 +312,8 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 		return (-1);
 	}
 
-	spret = snprintf(certfile, sizeof(certfile),
-	    "/etc/mail/certs/%s.key", name);
-	if (spret == -1 || spret >= (int)sizeof(certfile)) {
+	if (! bsnprintf(certfile, sizeof(certfile),
+		"/etc/mail/certs/%s.key", name)) {
 		free(s->ssl_cert);
 		free(s);
 		return -1;
