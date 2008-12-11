@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.11 2008/11/23 17:07:36 jmc Exp $
+# $OpenBSD: mdoclint,v 1.12 2008/12/11 14:49:02 espie Exp $
 # $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
@@ -31,9 +31,10 @@
 use strict;
 use warnings;
 
-use Getopt::Std;
-
 $| = 1;
+
+package Parser;
+use Getopt::Std;
 
 use vars qw(
 	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_m
@@ -41,10 +42,9 @@ use vars qw(
 	$opt_X $opt_x
 );
 
-my $fn;
-my $file;
-my $line;
+
 my $arch=`uname -m`;
+chomp($arch);
 my $options="aDdeFfHhmnoPprSsvXx";
 
 sub usage {
@@ -72,8 +72,9 @@ usage:	mdoclint [-$options] file ...
 	-x	warn about cross-references with missing targets
 Default is -aDdfHmnoPprSsXx if no flag is specified.
 EOF
-    exit(0);
+	exit(0);
 }
+
 
 my %short = (
     "Free" => ".Fx",
@@ -97,80 +98,112 @@ my %sections = (
 		"AUTHORS" => 13,
 		"CAVEATS" => 14,
 		"BUGS" => 15
-		);
+);
 
-sub debug {
-    print STDOUT "debug: $fn:$line: $_[0]\n" if $opt_v;
+sub debug 
+{
+	my $self = shift;
+    	print STDOUT "debug: $self->{fn}:$self->{ln}: @_\n" if $opt_v;
 }
 
-sub warning {
-    print STDOUT "$fn:$line: $_[0]\n";
+sub warning 
+{
+	my $self = shift;
+	print STDOUT "$self->{fn}:$self->{ln}: @_\n";
 }
 
-sub handle_options {
-    getopts($options);
-    $opt_h and usage();
+sub handle_options 
+{
+	getopts($options);
+	$opt_h and usage();
 
-    # default to all warnings if no flag is set
-    unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H or $opt_m
-	or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r or $opt_S or $opt_s
-	or $opt_X or $opt_x) {
-	$opt_a = $opt_D = $opt_d = $opt_f = $opt_H = $opt_m = $opt_n =
-	    $opt_o = $opt_P = $opt_p = $opt_r = $opt_S = $opt_s = $opt_X =
-	    $opt_x = 1;
-    }
+	# default to all warnings if no flag is set
+	unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H 
+	    or $opt_m or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r 
+	    or $opt_S or $opt_s or $opt_X or $opt_x) {
+		$opt_a = $opt_D = $opt_d = $opt_f = $opt_H = $opt_m = 
+		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S = 
+		    $opt_s = $opt_X = $opt_x = 1;
+	}
 }
 
-sub verify_xref {
-    # try to find corresponding man page
-    my $xreftarget = "/usr/share/man/cat$_[2]/$_[1].0";
-    my $xreftarget2 = "/usr/share/man/cat$_[2]/$arch/$_[1].0";
-    my $xreftarget3 = "./$_[1].$_[2]";
-    my $xreftarget4 = "/usr/X11R6/man/cat$_[2]/$_[1].0";
-    my $xreftarget5 = "/usr/X11R6/man/man$_[2]/$_[1].$_[2]";
-    if ("$_[1].$_[2]" eq $fn) {
-	warning("Xref to itself (use .Nm instead)");
-    }
-    if (not -f $xreftarget and not -f $xreftarget2
-	and not -f $xreftarget3
-	and not -f $xreftarget4 and not -f $xreftarget5) {
-	warning("$_[0]trailing Xref to $_[1]($_[2])$_[3]");
+
+sub verify_xref 
+{
+	my ($self, $page, $section, $pre, $post) = @_;
+	if ("$page.$section" eq $self->{fn}) {
+		$self->warning("Xref to itself (use .Nm instead)");
+	}
+	# try to find corresponding man page
+	for my $dir ("/usr/share/man", "/usr/X11R6/man") {
+		for my $a ("", $arch) {
+			for my $page ("cat$section/$a/$page.0", 
+			    "man$section/$a/$page.$section") {
+				return 1 if -f "$dir/$page";
+			}
+		}
+	}
+	return 1 if -f "./$page.$section";
+
+	$self->warning($pre."trailing Xref to $page($section)$post");
 	return 0;
-    }
-    return 1;
 }
 
-sub handle_file {
-    my $mandoc_p = 1;
-    my $destruct;
-    my $all = "";
-    my $last = "";
-    my $changes = 0;
-    my $rcsidseen = 0;
-#    my $section = 0;
-    my $lastsh = 0;
-    my $saname = "";
-    my $sasection = 0;
-    my $sarest = ",";
-    my $insa = 0;
-    my $inliteral = 0;
-    my %shseen = ();
-    my $last_error_name = "";
-    my $current_section = "";
+sub new
+{
+	my ($class, $fn) = @_;
 
-    $line = 0;
-    $fn = $_[0];
-    open INPUT, $_[0] or die "can't open input file $_[0]";
+	my $o = {
+		mandoc_p => 1,
+		all => '',
+		lastline => '',
+		changes => 0,
+		rcsidseen => 0,
+		lastsh => 0,
+		sasection => 0,
+		saname => '',
+		sarest => ',',
+		insa => 0,
+		inliteral => 0,
+		shseen => {},
+		last_error_name => '',
+		current_section => '',
+		fn => $fn
+	};
+	open my $input, '<', $fn or die "can't open input file $fn";
+	$o->{file} = $input;
+	$o->{ln} = 0;
+	bless $o, $class;
+}
 
-    while (<INPUT>) {
-	$line++;
-	chomp();
+sub next_line
+{
+	my ($self) = @_;
+
+	my $l = readline($self->{file});
+	if (defined $l) {
+		$self->{ln}++;
+	}
+	return $l;
+}
+
+sub close
+{
+	my ($self) = @_;
+
+	close($self->{file});
+}
+
+sub process_line
+{
+	my ($s, $_) = @_;
+	chomp;
 	if (/\$OpenBSD\b.*\$/o) {
-	    $rcsidseen = 1;
+	    $s->{rcsidseen} = 1;
 	}
 	if (/^\.TH\s+/o) {
-	    warning("not mandoc") if $opt_m;
-	    $mandoc_p = 0;
+	    $s->warning("not mandoc") if $opt_m;
+	    $s->{mandoc_p} = 0;
 #	    /^.TH\s*[\w-_".]+\s*([1-9])/;
 #	    $section = $1;
 	}
@@ -179,85 +212,85 @@ sub handle_file {
 #	}
 	if ($opt_D and /^\.Dt\s+/o) {
 	    if (! /^\.Dt\s+(?:[A-Z\d._-]+)\s+[1-9](?:\s+(?:alpha|amd64|arm|armish|aviion|cats|hp300|hppa|hppa64|i386|landisk|luna88k|mac68k|macppc|mvme68k|mvme88k|sgi|socppc|sparc|sparc64|vax|zaurus))?$/o)  {
-		warning("bad .Dt: `$_'");
+		$s->warning("bad .Dt: `$_'");
 	    }
 	}
 
 	if ($opt_a) {
-	    if ($insa eq 0) {
+	    if ($s->{insa} == 0) {
 		if (/^\.Sh\s+SEE ALSO$/o) {
-		    $insa = 1;
+		    $s->{insa} = 1;
 		}
-	    } elsif ($insa eq 1) {
+	    } elsif ($s->{insa} == 1) {
 		if (/^\.Sh\s+/o) {
-		    if (not $sarest eq "") {
-			warning("unneeded characters at end of SEE ".
-				"ALSO: `$sarest'");
+		    if (not $s->{sarest} eq "") {
+			$s->warning("unneeded characters at end of SEE ALSO:".
+				"`$s->{sarest}'");
 			# to avoid a second warning at EOF
-			$sarest = "";
+			$s->{sarest} = "";
 		    }
 		    # finished SEE ALSO section
-		    $insa = 2;
+		    $s->{insa} = 2;
 		}
 		if (/^\.Xr\s+(\S+)\s+(3p|[1-9])\s?(.*)?$/o) {
-		    my ($newsaname, $newsasection, $newsarest) = ($1, $2, $3);
-		    $newsaname =~ s/^\\&//o;
-		    if ($sasection gt $newsasection
-			or ($sasection eq $newsasection and
-			    ($saname cmp $newsaname) > 0)) {
-			warning("SEE ALSO: `.Xr $saname $sasection' should "
-				. "be after `.Xr $newsaname $newsasection'");
+		    my ($saname, $sasection, $sarest) = ($1, $2, $3);
+		    $saname =~ s/^\\&//o;
+		    if ($s->{sasection} gt $sasection
+			or ($s->{sasection} eq $sasection and
+			    ($s->{saname} cmp $saname) > 0)) {
+			$s->warning("SEE ALSO: `.Xr $s->{saname} $s->{sasection}' should "
+				. "be after `.Xr $saname $sasection'");
 		    }
-		    if ($sarest ne ",") {
-			warning("SEE ALSO: .Xr not separated by ".
-				"comma, but `$sarest'");
+		    if ($s->{sarest} ne ",") {
+			$s->warning("SEE ALSO: .Xr not separated by ".
+				"comma, but `$s->{sarest}'");
 		    }
-		    $saname = $newsaname;
-		    $sasection = $newsasection;
-		    $sarest = $newsarest;
+		    $s->{saname} = $saname;
+		    $s->{sasection} = $sasection;
+		    $s->{sarest} = $sarest;
 		}
 		if (/^\.Rs(?:\s+|$)/o) {
-		    if ($sarest ne "") {
-			warning("SEE ALSO: Not necessary to separate".
-				" .Xr from .Rs by `$sarest'");
+		    if ($s->{sarest} ne "") {
+			$s->warning("SEE ALSO: Not necessary to separate".
+				" .Xr from .Rs by `$s->{sarest}'");
 		    }
-		    $sarest = "";
+		    $s->{sarest} = "";
 		}
 	    }
 	}
 
 	if ($opt_f and /^\.Fn.*,.+/o) {
-	    warning("possible .Fn misuse: `$_'");
+	    $s->warning("possible .Fn misuse: `$_'");
 	}
 	if ($opt_H and not /^\.\\\"/o and (/^(?:[<>])/o or /[^\\][<>]/o)) {
-	    warning("use \*(Lt \*(Gt (or .Aq) instead of < >: `$_'");
+	    $s->warning("use \*(Lt \*(Gt (or .Aq) instead of < >: `$_'");
 	}
 	if ($opt_S) {
 	    if (/^\.Sh\s+(.*)\s*$/o) {
 		if (not $sections{$1}) {
-		    warning("unknown section header: `$1'");
+		    $s->warning("unknown section header: `$1'");
 		} else {
-		    if ($lastsh >= $sections{$1}) {
-			warning("section header `$1' in wrong order");
+		    if ($s->{lastsh} >= $sections{$1}) {
+			$s->warning("section header `$1' in wrong order");
 		    }
-		    $shseen{$1} = 1;
-		    $lastsh = $sections{$1};
+		    $s->{shseen}->{$1} = 1;
+		    $s->{lastsh} = $sections{$1};
 		}
 	    }
 	}
 
 	if ($opt_s) {
 	    if (/\s+$/o) {
-		warning("trailing space: `$_'");
+		$s->warning("trailing space: `$_'");
 		if ($opt_F) {
 		    s/\s+$//o;
-		    $changes = 1;
+		    $s->{changes} = 1;
 		}
 	    }
 # this check only bought us something for phantasia.6
 #	    # we don't want to match at BOF
 #	    if (/.\.\t/) {
-#		warning("tab after dot (`.') -- probably malformatting: $_");
+#		$s->warning("tab after dot (`.') -- probably malformatting: $_");
 #	    }
 	}
 	if ($opt_X) {
@@ -266,60 +299,60 @@ sub handle_file {
 		and not /\bOpenBSD\::.*3p\b/o
 		and not /\/pub\/OpenBSD\//o
 		and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
-		warning("verbose mention of `$1BSD' instead of "
+		$s->warning("verbose mention of `$1BSD' instead of "
 			. "`$short{$1}': `$_'");
 	    }
 	    if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
-		warning("`.Bx $1' found -- use $short{$1} instead");
+		$s->warning("`.Bx $1' found -- use $short{$1} instead");
 	    }
 	}
 	if ($opt_o) {
 	    if (/^\.Os/o && !/^\.Os\s*$/o) {
 		/^\.Os(.*)/o;
-		warning(".Os used with argument `$1'");
+		$s->warning(".Os used with argument `$1'");
 	    }
 	}
 
 	if ($opt_n) {
 	    if (/^\.Nd/o and /\.\s*$/o) {
-		warning(".Nd ends with a dot: `$_'");
+		$s->warning(".Nd ends with a dot: `$_'");
 	    }
 	}
 	if ($opt_p) {
 	    if (not /^\.\\\"/o and /\w\w\.\s+[A-Z]/o) {
-		warning("new sentence, new line: `$_'");
+		$s->warning("new sentence, new line: `$_'");
 	    }
 	    if (not /^\.\\\"/o and /^\... .*[^\s][\.();,\[\]\{\}:]$/o
 		and not /\s\.\.\.$/o and not /\\&.$/o) {
-		warning("punctuation in format string without space: `$_'");
+		$s->warning("punctuation in format string without space: `$_'");
 	    }
 	    if (not /^\.\\\"/o and /^\./o and /Ns [\.();,\[\]\{\}:]/o) {
-		warning("possible Ns abuse: `$_'");
+		$s->warning("possible Ns abuse: `$_'");
 	    }
 	    if (/(\w+)\(\)/o) {
-		warning("use .Fn or .Xr for functions: `$1()'");
+		$s->warning("use .Fn or .Xr for functions: `$1()'");
 	    }
 	}
 	if ($opt_x) {
-	    if ($mandoc_p) {
-		$destruct = $_;
+	    if ($s->{mandoc_p}) {
+		my $destruct = $_;
 		$destruct =~ s/\\\&([\w\.])/$1/o;
 		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+(3p|[0-9])(.*)/o) {
-		    debug("Xref to $1($2) found: `$_'");
-		    verify_xref("", $1, $2, "");
+		    $s->debug("Xref to $1($2) found: `$_'");
+		    $s->verify_xref($1, $2, "", "");
 		    if ($3 =~ /^\S/o) {
-			warning("No space after section number in Xref: `$_'");
+			$s->warning("No space after section number in Xref: `$_'");
 		    }
 		} elsif ($destruct =~ /^\.Xr/o) {
-		    warning("Weird Xref found: `$_'");
+		    $s->warning("Weird Xref found: `$_'");
 		}
 	    } else {
-		$destruct = $_;
+		my $destruct = $_;
 		$destruct =~ s/\\f.//go;
 		if ($destruct !~ /^\.\\\"/o) {
 		    while ($destruct =~ s/([-\w.]+)\s*\((3p|[0-9])\)//o) {
-			debug("possible Xref to $1($2) found: `$_'");
-			verify_xref("possible ", $1, $2, ": `$_'");
+			$s->debug("possible Xref to $1($2) found: `$_'");
+			$s->verify_xref($1, $2, "possible ", ": `$_'");
 			# so that we have a chance to find more than one
 			# per line
 			$destruct =~ s/(\w+)\s*\((3p|[0-9])\)//o;
@@ -329,27 +362,27 @@ sub handle_file {
 	}
 	if ($opt_d) {
 	    if (/^\.Dd/o and not /^\.Dd [\$]Mdocdate\b/o) {
-		warning("Invalid date found: `$_'");
+		$s->warning("Invalid date found: `$_'");
 	    }
 	}
 
 	if ($opt_P) {
 	    if (/^\.Bd\b.*-literal/o) {
-		$inliteral = 1;
+		$s->{inliteral} = 1;
 	    }
-	    if ($inliteral eq 1) {
+	    if ($s->{inliteral} == 1) {
 		if (/^\.Ed\b/o) {
-		    $inliteral = 0;
+		    $s->{inliteral} = 0;
 		}
 	    } elsif (/^$/o) {
-		warning("Paragraph problem: empty line -- use .Pp for".
+		$s->warning("Paragraph problem: empty line -- use .Pp for".
 			" paragraphs");
 	    }
-	    if ($last =~ /^\.Pp/o and (/^(\.S[sh])/o or /^(\.Pp)/o)) {
-		warning("Paragraph problem: $1 after .Pp");
+	    if ($s->{lastline} =~ /^\.Pp/o and (/^(\.S[sh])/o or /^(\.Pp)/o)) {
+		$s->warning("Paragraph problem: $1 after .Pp");
 	    }
-	    if (/^\.Pp/o and $last =~ /^(\.S[sh])/o) {
-		warning("Paragraph problem: .Pp after $1");
+	    if (/^\.Pp/o and $s->{lastline} =~ /^(\.S[sh])/o) {
+		$s->warning("Paragraph problem: .Pp after $1");
 	    }
 	}
 
@@ -357,67 +390,83 @@ sub handle_file {
 	# sorted alphabetically.
 	#
 	if ($opt_e) {
-		/^\.Sh\s+(.*)$/o and $current_section = $1;
+		/^\.Sh\s+(.*)$/o and $s->{current_section} = $1;
 
 		# Error names should not be sorted across different lists.
 		# (see bind(2) for an example.)
 		#
-		/^\.Bl\s+/o and $last_error_name = "";
+		/^\.Bl\s+/o and $s->{last_error_name} = "";
 
-		if ($current_section eq "ERRORS" and
+		if ($s->{current_section} eq "ERRORS" and
 		    /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/o) {
 			my $current_error_name = $1;
 
-			if ($last_error_name eq $current_error_name) {
-				warning("Duplicate item for "
+			if ($s->{last_error_name} eq $current_error_name) {
+				$s->warning("Duplicate item for "
 					. "$current_error_name.");
-			} elsif ($current_error_name lt $last_error_name) {
-				warning("$last_error_name and "
+			} elsif ($current_error_name lt $s->{last_error_name}) {
+				$s->warning("$s->{last_error_name} and "
 					. "$current_error_name are not in "
 					. "alphabetical order.");
 			}
-			$last_error_name = $current_error_name;
+			$s->{last_error_name} = $current_error_name;
 		}
 	}
 
-	$last = $_;
-	$all .= "$_\n";
-    }
-
-    if ($opt_r and not $rcsidseen) {
-	warning("Missing RCS Id");
-    }
-
-    if ($opt_P and $last =~ /^\.Pp/o) {
-	warning("Paragraph problem: .Pp at EOF");
-    }
-
-    if ($opt_a and $insa > 0 and not $sarest eq "") {
-	warning("unneeded characters at end of SEE ALSO: `$sarest'");
-    }
-
-#    if (not ($fn =~ /$section$/)) {
-#	warning("section doesn't match (internal value: $section)");
-#    }
-    close INPUT;
-    if ($opt_F and $changes) {
-	open OUT, ">$_[0].new" or die "can't open output file `$_[0].new'";
-	print OUT $all;
-	close OUT;
-	system("mv -i $_[0].new $_[0]");
-    }
-
-    if ($mandoc_p and $opt_S) {
-	foreach my $i (qw (NAME SYNOPSIS DESCRIPTION)) {
-	    if (not ($shseen{$i})) {
-		warning("missing $i section");
-	    }
-	}
-    }
+	$s->{lastline} = $_;
+	$s->{all} .= "$_\n";
 }
 
-chomp($arch);
-handle_options();
-foreach $file (@ARGV) {
+sub finish
+{
+	my ($s) = @_;
+
+	if ($opt_r and not $s->{rcsidseen}) {
+	    $s->warning("Missing RCS Id");
+	}
+
+	if ($opt_P and $s->{lastline} =~ /^\.Pp/o) {
+	    $s->warning("Paragraph problem: .Pp at EOF");
+	}
+
+	if ($opt_a and $s->{insa} > 0 and not $s->{sarest} eq "") {
+	    $s->warning("unneeded characters at end of SEE ALSO: `$s->{sarest}'");
+	}
+
+#    	if (not ($fn =~ /$section$/)) {
+#		$s->warning("section doesn't match (internal value: $section)");
+#    	}
+	if ($s->{mandoc_p} and $opt_S) {
+	    foreach my $i (qw (NAME SYNOPSIS DESCRIPTION)) {
+		if (not ($s->{shseen}{$i})) {
+		    $s->warning("missing $i section");
+		}
+	    }
+	}
+}
+
+package main;
+
+sub handle_file 
+{
+	my $parser = Parser->new($_[0]);
+
+	while (my $_ = $parser->next_line) {
+		$parser->process_line($_);
+	}
+
+	$parser->finish;
+	$parser->close;
+	if ($Parser::opt_F and $parser->{changes}) {
+		open OUT, ">$_[0].new" or 
+		    die "can't open output file `$_[0].new'";
+		print OUT $parser->{all};
+		close OUT;
+		system("mv -i $_[0].new $_[0]");
+	}
+}
+
+Parser->handle_options;
+foreach my $file (@ARGV) {
     handle_file($file);
 }
