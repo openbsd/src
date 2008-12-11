@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2008/12/11 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2008/12/11 23:19:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -697,7 +697,7 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			if (! snprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;

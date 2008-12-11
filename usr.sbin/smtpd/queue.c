@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.23 2008/12/11 23:17:25 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.24 2008/12/11 23:19:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -763,7 +763,7 @@ queue_create_incoming_layout(char *message_id)
 	    >= MAXPATHLEN)
 		goto badroot;
 	
-	if (! snprintf(evpdir, MAXPATHLEN, "%s%s",
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
 		rootdir, PATH_ENVELOPES))
 		goto badroot;
 
