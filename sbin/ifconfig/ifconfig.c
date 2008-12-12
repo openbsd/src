@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.208 2008/11/24 04:30:32 stevesk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.209 2008/12/12 22:09:26 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
 void	trunk_status(void);
+void	setpriority(const char *, int);
 int	main(int, char *[]);
 int	prefix(void *val, int);
 
@@ -317,6 +318,7 @@ const struct	cmd {
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
+	{ "priority",	NEXTARG,	0,		setpriority },
 #ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
@@ -725,6 +727,7 @@ getinfo(struct ifreq *ifr, int create)
 		mtu = 0;
 	else
 		mtu = ifr->ifr_mtu;
+
 	return (0);
 }
 
@@ -2578,6 +2581,9 @@ status(int link, struct sockaddr_dl *sdl)
 		printf("\tdescription: %s\n", ifrdesc.ifr_data);
 
 #ifndef SMALL
+	if (ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0)
+		printf("\tpriority: %d\n", ifrdesc.ifr_metric);
+
 	vlan_status();
 	carp_status();
 	pfsync_status();
@@ -4212,6 +4218,25 @@ trunk_status(void)
 		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
 }
 #endif /* SMALL */
+
+void
+setpriority(const char *id, int param)
+{
+#ifndef SMALL
+	const char *errmsg = NULL;
+	u_char *cp;
+	int prio;
+
+	prio = strtonum(id, 0, 15, &errmsg);
+	if (errmsg)
+		errx(1, "priority %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_metric = prio;
+	if (ioctl(s, SIOCSIFPRIORITY, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFPRIORITY");
+#endif
+}
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
 struct sockaddr_in *sintab[] = {
