@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.120 2008/09/15 20:12:11 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.121 2008/12/12 20:26:30 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ flushroutes(int argc, char **argv)
 			print_rtmsg(rtm, rtm->rtm_msglen);
 		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
 			continue;
-		sa = (struct sockaddr *)(rtm + 1);
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		if (af && sa->sa_family != af)
 			continue;
 		if (sa->sa_family == AF_KEY)
@@ -296,7 +296,8 @@ flushroutes(int argc, char **argv)
 		if (verbose)
 			print_rtmsg(rtm, rlen);
 		else {
-			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
+			struct sockaddr *sa = (struct sockaddr *)(next +
+			    rtm->rtm_hdrlen);
 			printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
 			    routename(sa) : netname(sa, NULL)); /* XXX extract
 								   netmask */
@@ -1052,6 +1053,7 @@ rtmsg(int cmd, int flags, int fmask, u_short prio)
 	rtm.rtm_inits = rtm_inits;
 	rtm.rtm_tableid = tableid;
 	rtm.rtm_priority = prio;
+	rtm.rtm_hdrlen = sizeof(rtm);
 
 	if (rtm_addrs & RTA_NETMASK)
 		mask_addr(&so_dst, &so_mask, RTA_DST);
@@ -1211,14 +1213,14 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    get_linkstate(ifm->ifm_data.ifi_type,
 		    ifm->ifm_data.ifi_link_state));
 		bprintf(stdout, ifm->ifm_flags, ifnetflags);
-		pmsg_addrs((char *)(ifm + 1), ifm->ifm_addrs);
+		pmsg_addrs((char *)ifm + ifm->ifm_hdrlen, ifm->ifm_addrs);
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
 		printf("metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
-		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
+		pmsg_addrs((char *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
 		break;
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
@@ -1296,7 +1298,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    strerror(rtm->rtm_errno), rtm->rtm_errno);
 		return;
 	}
-	cp = ((char *)(rtm + 1));
+	cp = ((char *)rtm + rtm->rtm_hdrlen);
 	if (rtm->rtm_addrs)
 		for (i = 1; i; i <<= 1)
 			if (i & rtm->rtm_addrs) {
@@ -1380,7 +1382,7 @@ pmsg_common(struct rt_msghdr *rtm)
 	bprintf(stdout, rtm->rtm_rmx.rmx_locks, metricnames);
 	printf(" inits: ");
 	bprintf(stdout, rtm->rtm_inits, metricnames);
-	pmsg_addrs(((char *)(rtm + 1)), rtm->rtm_addrs);
+	pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen), rtm->rtm_addrs);
 }
 
 void
