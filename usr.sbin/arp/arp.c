@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.44 2008/03/12 23:18:59 sobrado Exp $ */
+/*	$OpenBSD: arp.c,v 1.45 2008/12/12 20:23:20 claudio Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -370,7 +370,7 @@ tryagain:
 		warn("%s", host);
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)(rtm + 1);
+	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr)
 		if (sdl->sdl_family == AF_LINK &&
@@ -437,7 +437,7 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
-		sin = (struct sockaddr_inarp *)(rtm + 1);
+		sin = (struct sockaddr_inarp *)(next + rtm->rtm_hdrlen);
 		sdl = (struct sockaddr_dl *)(sin + 1);
 		if (addr) {
 			if (addr != sin->sin_addr.s_addr)
@@ -543,6 +543,7 @@ rtmsg(int cmd)
 	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
+	rtm->rtm_hdrlen = sizeof(*rtm);
 
 	switch (cmd) {
 	default:
