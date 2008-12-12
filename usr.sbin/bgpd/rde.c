@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.232 2008/06/15 10:03:46 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.233 2008/12/12 16:02:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1168,14 +1168,14 @@ bad_len:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
 bad_flags:
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS,
-			    op, attr_len);
+			    op, len);
 			return (-1);
 		}
 
 		UPD_READ(&a->origin, p, plen, 1);
 		if (a->origin > ORIGIN_INCOMPLETE) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
-			    op, attr_len);
+			    op, len);
 			return (-1);
 		}
 		if (a->flags & F_ATTR_ORIGIN)
@@ -1222,7 +1222,7 @@ bad_flags:
 		tmp32 = ntohl(nexthop.v4.s_addr);
 		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32)) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
-			    op, attr_len);
+			    op, len);
 			return (-1);
 		}
 		a->nexthop = nexthop_get(&nexthop);
@@ -1348,8 +1348,8 @@ bad_flags:
 			goto bad_flags;
 		if (aspath_verify(p, attr_len, 1) != 0) {
 			/* XXX draft does not specify how to handle errors */
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
-			    NULL, 0);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    op, len);
 			return (-1);
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
