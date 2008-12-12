@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.136 2008/12/10 23:57:10 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.137 2008/12/12 23:15:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -738,7 +738,7 @@ show_fib_head(void)
 	printf("flags: * = valid, B = BGP, C = Connected, S = Static\n");
 	printf("       N = BGP Nexthop reachable via this route\n");
 	printf("       r = reject route, b = blackhole route\n\n");
-	printf("flags destination          gateway\n");
+	printf("flags prio destination          gateway\n");
 }
 
 void
@@ -801,7 +801,7 @@ show_fib_msg(struct imsg *imsg)
 		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
 		    -1)
 			err(1, NULL);
-		printf("%-20s ", p);
+		printf("%4i %-20s ", k->priority, p);
 		free(p);
 
 		if (k->nexthop.s_addr)
@@ -822,7 +822,7 @@ show_fib_msg(struct imsg *imsg)
 		if (asprintf(&p, "%s/%u", log_in6addr(&k6->prefix),
 		    k6->prefixlen) == -1)
 			err(1, NULL);
-		printf("%-20s ", p);
+		printf("%4i %-20s ", k6->priority, p);
 		free(p);
 
 		if (!IN6_IS_ADDR_UNSPECIFIED(&k6->nexthop))
