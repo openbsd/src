@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.21 2008/12/12 20:58:48 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.22 2008/12/12 21:18:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1029,7 +1029,7 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 			 * that it works only because we do not allow rate
 			 * fallback from OFDM to CCK.
 			 */
-			mcs = (stat >> RT2860_TXQ_MCS_SHIFT) & 0xffff;
+			mcs = (stat >> RT2860_TXQ_MCS_SHIFT) & 0x7f;
 			pid = (stat >> RT2860_TXQ_PID_SHIFT) & 0xf;
 			if (mcs + 1 != pid)
 				amn->amn_retrycnt++;
