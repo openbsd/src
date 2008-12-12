@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.9 2008/07/21 19:41:44 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.10 2008/12/12 20:58:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -786,6 +786,29 @@ struct rt2860_rxwi {
 #define RT2860_EEPROM_RPWR		0x6f
 #define RT2860_EEPROM_BBP_BASE		0x78
 
+#define RT2860_RIDX_CCK1	 0
+#define RT2860_RIDX_OFDM6	 4
+#define RT2860_RIDX_MAX		11
+static const struct rt2860_rate {
+	uint8_t		rate;
+	uint8_t		mcs;
+	enum		ieee80211_phytype phy;
+	uint16_t	sp_ack_dur;
+	uint16_t	lp_ack_dur;
+} rt2860_rates[] = {
+	{   2, 0, IEEE80211_T_DS,   304, 304 },
+	{   4, 1, IEEE80211_T_DS,   248, 152 },
+	{  11, 2, IEEE80211_T_DS,   213, 117 },
+	{  22, 3, IEEE80211_T_DS,   203, 107 },
+	{  12, 0, IEEE80211_T_OFDM,  50,  50 },
+	{  18, 1, IEEE80211_T_OFDM,  42,  42 },
+	{  24, 2, IEEE80211_T_OFDM,  38,  38 },
+	{  36, 3, IEEE80211_T_OFDM,  34,  34 },
+	{  48, 4, IEEE80211_T_OFDM,  34,  34 },
+	{  72, 5, IEEE80211_T_OFDM,  30,  30 },
+	{  96, 6, IEEE80211_T_OFDM,  30,  30 },
+	{ 108, 7, IEEE80211_T_OFDM,  30,  30 }
+};
 
 /*
  * Control and status registers access macros.
@@ -827,7 +850,7 @@ RAL_READ(struct rt2860_softc *sc, bus_size_t reg)
 	{ RT2860_HT_BASIC_RATE,		0x00008003 },	\
 	{ RT2860_MAC_SYS_CTRL,		0x00000000 },	\
 	{ RT2860_BKOFF_SLOT_CFG,	0x00000209 },	\
-	{ RT2860_TX_SW_CFG0,		0x00040a06 },	\
+	{ RT2860_TX_SW_CFG0,		0x00000000 },	\
 	{ RT2860_TX_SW_CFG1,		0x00080606 },	\
 	{ RT2860_TX_LINK_CFG,		0x00001020 },	\
 	{ RT2860_TX_TIMEOUT_CFG,	0x000a2090 },	\
@@ -858,15 +881,17 @@ RAL_READ(struct rt2860_softc *sc, bus_size_t reg)
 	{  65, 0x2c },	\
 	{  66, 0x38 },	\
 	{  69, 0x12 },	\
+	{  70, 0x0a },	\
 	{  73, 0x10 },	\
 	{  81, 0x37 },	\
 	{  82, 0x62 },	\
 	{  83, 0x6a },	\
-	{  84, 0x19 },	\
+	{  84, 0x99 },	\
 	{  86, 0x00 },	\
 	{  91, 0x04 },	\
 	{  92, 0x00 },	\
-	{ 105, 0x01 }
+	{ 103, 0x00 },	\
+	{ 105, 0x05 }
 
 /*
  * Default settings for RF registers; values derived from the reference driver.

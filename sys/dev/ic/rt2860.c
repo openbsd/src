@@ -1,7 +1,7 @@
-/*	$OpenBSD: rt2860.c,v 1.20 2008/11/25 21:43:57 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.21 2008/12/12 20:58:48 damien Exp $	*/
 
 /*-
- * Copyright (c) 2007,2008
+ * Copyright (c) 2007, 2008
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -67,6 +67,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/rndvar.h>
+
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2860_debug >= (n)) printf x; } while (0)
@@ -90,6 +92,7 @@ void		rt2860_reset_rx_ring(struct rt2860_softc *,
 		    struct rt2860_rx_ring *);
 void		rt2860_free_rx_ring(struct rt2860_softc *,
 		    struct rt2860_rx_ring *);
+struct		ieee80211_node *rt2860_node_alloc(struct ieee80211com *);
 int		rt2860_media_change(struct ifnet *);
 void		rt2860_next_scan(void *);
 void		rt2860_iter_func(void *, struct ieee80211_node *);
@@ -102,11 +105,8 @@ uint16_t	rt2860_eeprom_read(struct rt2860_softc *, uint8_t);
 void		rt2860_drain_stats_fifo(struct rt2860_softc *);
 void		rt2860_tx_intr(struct rt2860_softc *, int);
 void		rt2860_rx_intr(struct rt2860_softc *);
-int		rt2860_ack_rate(struct ieee80211com *, int);
-uint16_t	rt2860_txtime(int, int, uint32_t);
-uint8_t		rt2860_rate2mcs(uint8_t);
-int		rt2860_tx_data(struct rt2860_softc *, struct mbuf *,
-		    struct ieee80211_node *, int);
+int		rt2860_tx(struct rt2860_softc *, struct mbuf *,
+		    struct ieee80211_node *);
 void		rt2860_start(struct ifnet *);
 void		rt2860_watchdog(struct ifnet *);
 int		rt2860_ioctl(struct ifnet *, u_long, caddr_t);
@@ -201,7 +201,7 @@ rt2860_attach(void *xsc, int id)
 	/* retrieve RF rev. no and various other things from EEPROM */
 	rt2860_read_eeprom(sc);
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
-	printf("%s: MAC/BBP RT%X (rev 0x%04X), RF %s (%dT%dR)\n",
+	printf("%s: MAC/BBP RT%X (rev 0x%04X), RF %s (MIMO %dT%dR)\n",
 	    sc->sc_dev.dv_xname, sc->mac_rev >> 16, sc->mac_rev & 0xffff,
 	    rt2860_get_rf(sc->rf_rev), sc->ntxchains, sc->nrxchains);
 
@@ -289,6 +289,7 @@ rt2860_attach(void *xsc, int id)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_node_alloc = rt2860_node_alloc;
 	ic->ic_newassoc = rt2860_newassoc;
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
@@ -693,14 +694,33 @@ rt2860_free_rx_ring(struct rt2860_softc *sc, struct rt2860_rx_ring *ring)
 	}
 }
 
+struct ieee80211_node *
+rt2860_node_alloc(struct ieee80211com *ic)
+{
+	return malloc(sizeof (struct rt2860_node), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+}
+
 int
 rt2860_media_change(struct ifnet *ifp)
 {
+	struct rt2860_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t rate, ridx;
 	int error;
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
 		return error;
+
+	if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
+		for (ridx = 0; ridx <= RT2860_RIDX_MAX; ridx++)
+			if (rt2860_rates[ridx].rate == rate)
+				break;
+		sc->fixed_ridx = ridx;
+	}
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
 		rt2860_init(ifp);
@@ -780,8 +800,10 @@ void
 rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
-	uint8_t wcid = 0;
-	int i;
+	struct rt2860_node *rn = (void *)ni;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	uint8_t rate, wcid = 0;
+	int ridx, i, j;
 
 	if (isnew && ni->ni_associd != 0) {
 		/* only interested in true associations */
@@ -791,17 +813,60 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 		RAL_WRITE_REGION_1(sc, RT2860_WCID_ENTRY(wcid),
 		    ni->ni_macaddr, IEEE80211_ADDR_LEN);
 	}
+	DPRINTF(("new assoc isnew=%d addr=%s WCID=%d\n",
+	    isnew, ether_sprintf(ni->ni_macaddr), wcid));
+
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn[wcid]);
+	/* start at lowest available bit-rate, AMRR will raise */
+	ni->ni_txrate = 0;
 
-	/* set rate to some reasonable initial value */
-	for (i = ni->ni_rates.rs_nrates - 1;
-	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
-	     i--);
-	ni->ni_txrate = i;
-
-	DPRINTF(("new assoc isnew=%d addr=%s WCID=%d, initial rate=%d\n",
-	    isnew, ether_sprintf(ni->ni_macaddr), wcid,
-	    ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL));
+	for (i = 0; i < rs->rs_nrates; i++) {
+		rate = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		/* convert 802.11 rate to hardware rate index */
+		for (ridx = 0; ridx <= RT2860_RIDX_MAX; ridx++)
+			if (rt2860_rates[ridx].rate == rate)
+				break;
+		rn->ridx[i] = ridx;
+		/* determine rate of control response frames */
+		for (j = i; j >= 0; j--) {
+			if ((rs->rs_rates[j] & IEEE80211_RATE_BASIC) &&
+			    rt2860_rates[rn->ridx[i]].phy ==
+			    rt2860_rates[rn->ridx[j]].phy)
+				break;
+		}
+		if (j < 0) {
+			/* no basic rate found, use mandatory one */
+			/* XXX ugly, need to be reworked! */
+			switch (rate) {
+			case 4:
+			case 11:
+			case 22:
+				rn->ctl_ridx[i] =
+				    (ic->ic_curmode == IEEE80211_MODE_11B) ?
+				    0 : rn->ridx[i];
+				break;
+			case 12:
+			case 18:
+				rn->ctl_ridx[i] = 4;
+				break;
+			case 24:
+			case 36:
+				rn->ctl_ridx[i] = 6;
+				break;
+			case 48:
+			case 72:
+			case 96:
+			case 108:
+				rn->ctl_ridx[i] = 8;
+				break;
+			default:
+				rn->ctl_ridx[i] = 0;
+			}
+		} else
+			rn->ctl_ridx[i] = rn->ridx[j];
+		DPRINTF(("rate=0x%02x ridx=%d ctl_ridx=%d\n",
+		    rs->rs_rates[i], rn->ridx[i], rn->ctl_ridx[i]));
+	}
 }
 
 int
@@ -855,7 +920,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS)
-			rt2860_setup_beacon(sc);
+			(void)rt2860_setup_beacon(sc);
 #endif
 
 		if (ic->ic_opmode == IEEE80211_M_STA) {
@@ -948,7 +1013,7 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 	while ((stat = RAL_READ(sc, RT2860_TX_STAT_FIFO)) & RT2860_TXQ_VLD) {
 		DPRINTFN(4, ("tx stat 0x%08x\n", stat));
 
-		wcid = (stat >> 8) & 0xff;
+		wcid = (stat >> RT2860_TXQ_WCID_SHIFT) & 0xff;
 
 		/* if no ACK was requested, no feedback is available */
 		if (!(stat & RT2860_TXQ_ACKREQ) || wcid == 0xff)
@@ -964,7 +1029,7 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 			 * that it works only because we do not allow rate
 			 * fallback from OFDM to CCK.
 			 */
-			mcs = (stat >> RT2860_TXQ_MCS_SHIFT) & 0x7f;
+			mcs = (stat >> RT2860_TXQ_MCS_SHIFT) & 0xffff;
 			pid = (stat >> RT2860_TXQ_PID_SHIFT) & 0xf;
 			if (mcs + 1 != pid)
 				amn->amn_retrycnt++;
@@ -1016,6 +1081,8 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	}
 
 	sc->sc_tx_timer = 0;
+	if (ring->queued < RT2860_TX_RING_COUNT)
+		sc->qfullmsk &= ~(1 << qid);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	rt2860_start(ifp);
 }
@@ -1028,7 +1095,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
-	struct mbuf *m, *mnew;
+	struct mbuf *m, *m1;
 	uint8_t ant, rssi;
 	int error;
 #if NBPFILTER > 0
@@ -1063,14 +1130,14 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			goto skip;
 		}
 
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
-		MCLGET(mnew, M_DONTWAIT);
-		if (!(mnew->m_flags & M_EXT)) {
-			m_freem(mnew);
+		MCLGET(m1, M_DONTWAIT);
+		if (!(m1->m_flags & M_EXT)) {
+			m_freem(m1);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -1080,9 +1147,9 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    mtod(m1, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
 		if (error != 0) {
-			m_freem(mnew);
+			m_freem(m1);
 
 			/* try to reload the old mbuf */
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
@@ -1103,7 +1170,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		 * processing.
 		 */
 		m = data->m;
-		data->m = mnew;
+		data->m = m1;
 		rxd->sdp0 = htole32(data->map->dm_segs[0].ds_addr);
 
 		rxwi = mtod(m, struct rt2860_rxwi *);
@@ -1247,15 +1314,13 @@ rt2860_intr(void *arg)
 	if (r & RT2860_TX_DONE_INT0)
 		rt2860_tx_intr(sc, 0);
 
-#ifndef IEEE80211_STA_ONLY
-	if (r & RT2860_MAC_INT_1) {	/* pre-TBTT */
-		if ((sc->sc_flags & RT2860_UPD_BEACON) &&
-		    rt2860_setup_beacon(sc) == 0)
-			sc->sc_flags &= ~RT2860_UPD_BEACON;
-	}
-#endif
 	if (r & RT2860_MAC_INT_0) {	/* TBTT */
 		struct ieee80211com *ic = &sc->sc_ic;
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS)
+			(void)rt2860_setup_beacon(sc);
+#endif
 		/* check if protection mode has changed */
 		if ((sc->sc_ic_flags ^ ic->ic_flags) & IEEE80211_F_USEPROT) {
 			rt2860_updateprot(ic);
@@ -1269,138 +1334,65 @@ rt2860_intr(void *arg)
 	return 1;
 }
 
-/* quickly determine if a given rate is CCK or OFDM */
-#define RAL_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
-
-#define RAL_ACK_SIZE	14	/* 10 + 4(FCS) */
-#define RAL_SIFS_TIME	10
-
-/*
- * Return the expected ack rate for a frame transmitted at rate `rate'.
- */
 int
-rt2860_ack_rate(struct ieee80211com *ic, int rate)
-{
-	switch (rate) {
-	/* CCK rates */
-	case 2:
-		return 2;
-	case 4:
-	case 11:
-	case 22:
-		return (ic->ic_curmode == IEEE80211_MODE_11B) ? 4 : rate;
-
-	/* OFDM rates */
-	case 12:
-	case 18:
-		return 12;
-	case 24:
-	case 36:
-		return 24;
-	case 48:
-	case 72:
-	case 96:
-	case 108:
-		return 48;
-	}
-
-	/* default to 1Mbps */
-	return 2;
-}
-
-/*
- * Compute the duration (in us) needed to transmit `len' bytes at rate `rate'.
- * The function automatically determines the operating mode depending on the
- * given rate. `flags' indicates whether short preamble is in use or not.
- */
-uint16_t
-rt2860_txtime(int len, int rate, uint32_t flags)
-{
-	uint16_t txtime;
-
-	if (RAL_RATE_IS_OFDM(rate)) {
-		/* IEEE Std 802.11g-2003, pp. 44 */
-		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
-		txtime = 16 + 4 + 4 * txtime + 6;
-	} else {
-		/* IEEE Std 802.11b-1999, pp. 28 */
-		txtime = (16 * len + rate - 1) / rate;
-		if (rate != 2 && (flags & IEEE80211_F_SHPREAMBLE))
-			txtime +=  72 + 24;
-		else
-			txtime += 144 + 48;
-	}
-	return txtime;
-}
-
-uint8_t
-rt2860_rate2mcs(uint8_t rate)
-{
-	switch (rate) {
-	/* CCK rates */
-	case 2:		return 0;
-	case 4:		return 1;
-	case 11:	return 2;
-	case 22:	return 3;
-	/* OFDM rates */
-	case 12:	return 0;
-	case 18:	return 1;
-	case 24:	return 2;
-	case 36:	return 3;
-	case 48:	return 4;
-	case 72:	return 5;
-	case 96:	return 6;
-	case 108:	return 7;
-	}
-	return 0;	/* shouldn't get there */
-}
-
-int
-rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
-    struct ieee80211_node *ni, int qid)
+rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct rt2860_tx_ring *ring = &sc->txq[qid];
+	struct rt2860_node *rn = (void *)ni;
+	struct rt2860_tx_ring *ring;
 	struct rt2860_tx_data *data;
 	struct rt2860_txd *txd;
 	struct rt2860_txwi *txwi;
 	struct ieee80211_frame *wh;
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
-	uint16_t dur;
-	uint8_t type, qsel, mcs, pid;
-	int nsegs, ntxds, rate, error;
+	uint16_t qos, dur;
+	uint8_t type, qsel, mcs, pid, tid, qid;
+	int nsegs, ntxds, hasqos, ridx, ctl_ridx, error;
 
 	/* the data pool contains at least one element, pick the first */
 	data = SLIST_FIRST(&sc->data_pool);
 
-	wh = mtod(m0, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	/* pickup a rate */
-	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    type != IEEE80211_FC0_TYPE_DATA)
-		rate = ni->ni_rates.rs_rates[0];
-	else if (ic->ic_fixed_rate != -1)
-		rate = ic->ic_sup_rates[ic->ic_curmode].
-		    rs_rates[ic->ic_fixed_rate];
-	else
-		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	rate &= IEEE80211_RATE_VAL;
+	if ((hasqos = ieee80211_has_qos(wh))) {
+		qos = ieee80211_get_qos(wh);
+		tid = qos & IEEE80211_QOS_TID;
+		qid = ieee80211_up_to_ac(ic, tid);
+	} else {
+		tid = 0;
+		qid = (type == IEEE80211_FC0_TYPE_MGT) ?
+		    sc->mgtqid : EDCA_AC_BE;
+	}
+	ring = &sc->txq[qid];
 
-	/* get MCS code from rate */
-	mcs = rt2860_rate2mcs(rate);
+	/* pickup a rate index */
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    type != IEEE80211_FC0_TYPE_DATA) {
+		ctl_ridx = ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+		    RT2860_RIDX_OFDM6 : RT2860_RIDX_CCK1;
+	} else if (ic->ic_fixed_rate != -1) {
+		ctl_ridx = ridx = sc->fixed_ridx;	/* XXX ctl_ridx */
+	} else {
+		ridx = rn->ridx[ni->ni_txrate];
+		ctl_ridx = rn->ctl_ridx[ni->ni_txrate];
+	}
+
+	/* get MCS code from rate index */
+	mcs = rt2860_rates[ridx].mcs;
 
 	/* setup TX Wireless Information */
 	txwi = data->txwi;
 	memset(txwi, 0, sizeof (struct rt2860_txwi));
 	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
 	    RT2860_AID2WCID(ni->ni_associd) : 0xff;
-	txwi->len = htole16(m0->m_pkthdr.len);
-	if (!RAL_RATE_IS_OFDM(rate)) {
+	txwi->len = htole16(m->m_pkthdr.len);
+	if (rt2860_rates[ridx].phy == IEEE80211_T_DS) {
 		txwi->phy = htole16(RT2860_PHY_CCK);
-		if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+		if (ridx != RT2860_RIDX_CCK1 &&
+		    (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
 			mcs |= RT2860_PHY_SHPRE;
 	} else
 		txwi->phy = htole16(RT2860_PHY_OFDM);
@@ -1418,18 +1410,24 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 
 	/* check if RTS/CTS or CTS-to-self protection is required */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
-	     ((ic->ic_flags & IEEE80211_F_USEPROT) && RAL_RATE_IS_OFDM(rate))))
+	    (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
+	     ((ic->ic_flags & IEEE80211_F_USEPROT) &&
+	      rt2860_rates[ridx].phy == IEEE80211_T_OFDM)))
 		txwi->txop = RT2860_TX_TXOP_HT;
 	else
 		txwi->txop = RT2860_TX_TXOP_BACKOFF;
 
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) >>
+	     IEEE80211_QOS_ACK_POLICY_SHIFT !=
+	     IEEE80211_QOS_ACK_POLICY_NOACK)) {
 		txwi->xflags |= RT2860_TX_ACK;
 
-		dur = rt2860_txtime(RAL_ACK_SIZE, rt2860_ack_rate(ic, rate),
-		    ic->ic_flags) + sc->sifs;
-		*(uint16_t *)wh->i_dur = htole16(dur);
+		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+			dur = rt2860_rates[ctl_ridx].sp_ack_dur;
+		else
+			dur = rt2860_rates[ctl_ridx].lp_ack_dur;
+		*(uint16_t *)wh->i_dur = htole16(dur + sc->sifs);
 	}
 #ifndef IEEE80211_STA_ONLY
 	/* ask MAC to insert timestamp into probe responses */
@@ -1446,7 +1444,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		struct mbuf mb;
 
 		tap->wt_flags = 0;
-		tap->wt_rate = rate;
+		tap->wt_rate = rt2860_rates[ridx].rate;
 		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_hwqueue = qid;
@@ -1455,7 +1453,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
+		mb.m_next = m;
 		mb.m_nextpkt = NULL;   
 		mb.m_type = 0;
 		mb.m_flags = 0;
@@ -1465,14 +1463,14 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 
 	/* copy and trim 802.11 header */
 	memcpy(&txwi->wh, wh, hdrlen);
-	m_adj(m0, hdrlen);
+	m_adj(m, hdrlen);
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		m_freem(m0);
+		m_freem(m);
 		return error;
 	}
 	if (error == 0) {
@@ -1486,16 +1484,16 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		}
 	}
 	if (error != 0) {	/* too many fragments, linearize */
-		if (m_defrag(m0, M_DONTWAIT) != 0) {
-			m_freem(m0);
+		if (m_defrag(m, M_DONTWAIT) != 0) {
+			m_freem(m);
 			return ENOMEM;
 		}
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
-			m_freem(m0);
+			m_freem(m);
 			return error;
 		}
 
@@ -1503,9 +1501,9 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 		ntxds = 1 + (data->map->dm_nsegs / 2);
 
 		if (ring->queued + ntxds >= RT2860_TX_RING_COUNT) {
-			/* this is an hopeless case, drop the mbuf! */
+			/* this is a hopeless case, drop the mbuf! */
 			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(m0);
+			m_freem(m);
 			return ENOMEM;
 		}
 	}
@@ -1543,7 +1541,7 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 
 	/* remove from the free pool and link it into the SW Tx slot */
 	SLIST_REMOVE_HEAD(&sc->data_pool, next);
-	data->m = m0;
+	data->m = m;
 	data->ni = ni;
 	ring->data[ring->cur] = data;
 
@@ -1555,11 +1553,13 @@ rt2860_tx_data(struct rt2860_softc *sc, struct mbuf *m0,
 	bus_dmamap_sync(sc->sc_dmat, ring->map, 0, ring->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(4, ("sending frame qid=%d wcid=%d nsegs=%d rate=%d\n",
-	    qid, txwi->wcid, data->map->dm_nsegs, rate));
+	DPRINTFN(4, ("sending frame qid=%d wcid=%d nsegs=%d ridx=%d\n",
+	    qid, txwi->wcid, data->map->dm_nsegs, ridx));
 
-	ring->queued += ntxds;
 	ring->cur = (ring->cur + 1) % RT2860_TX_RING_COUNT;
+	ring->queued += ntxds;
+	if (ring->queued >= RT2860_TX_RING_COUNT)
+		sc->qfullmsk |= 1 << qid;
 
 	/* kick Tx */
 	RAL_WRITE(sc, RT2860_TX_CTX_IDX(qid), ring->cur);
@@ -1573,65 +1573,51 @@ rt2860_start(struct ifnet *ifp)
 	struct rt2860_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
-	struct mbuf *m0;
+	struct mbuf *m;
 
-	/*
-	 * net80211 may still try to send management frames even if the
-	 * IFF_RUNNING flag is not set...
-	 */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
-		if (m0 != NULL) {
-			if (SLIST_EMPTY(&sc->data_pool) ||
-			    sc->txq[sc->mgtqid].queued >=
-			    RT2860_TX_RING_COUNT) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
+		if (SLIST_EMPTY(&sc->data_pool) || sc->qfullmsk != 0) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+		/* send pending management frames first */
+		IF_DEQUEUE(&ic->ic_mgtq, m);
+		if (m != NULL) {
+			ni = (void *)m->m_pkthdr.rcvif;
+			goto sendit;
+		}
+		if (ic->ic_state != IEEE80211_S_RUN)
+			break;
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
-#if NBPFILTER > 0
-			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
-#endif
-			if (rt2860_tx_data(sc, m0, ni, sc->mgtqid) != 0)
-				break;
+		/* send buffered frames for power-save mode */
+		IF_DEQUEUE(&ic->ic_pwrsaveq, m);
+		if (m != NULL) {
+			ni = (void *)m->m_pkthdr.rcvif;
+			goto sendit;
+		}
 
-		} else {
-			if (ic->ic_state != IEEE80211_S_RUN)
-				break;
-			IFQ_POLL(&ifp->if_snd, m0);
-			if (m0 == NULL)
-				break;
-			if (SLIST_EMPTY(&sc->data_pool) ||
-			    sc->txq[EDCA_AC_BE].queued >=
-			    RT2860_TX_RING_COUNT) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+		/* encapsulate and send data frames */
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 #if NBPFILTER > 0
-			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-			m0 = ieee80211_encap(ifp, m0, &ni);
-			if (m0 == NULL)
-				continue;
+		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL)
+			continue;
+sendit:
 #if NBPFILTER > 0
-			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-			if (rt2860_tx_data(sc, m0, ni, EDCA_AC_BE) != 0) {
-				if (ni != NULL)
-					ieee80211_release_node(ic, ni);
-				ifp->if_oerrors++;
-				break;
-			}
+		if (rt2860_tx(sc, m, ni) != 0) {
+			ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
+			continue;
 		}
 
 		sc->sc_tx_timer = 5;
@@ -2031,11 +2017,6 @@ rt2860_updateslot(struct ieee80211com *ic)
 	struct rt2860_softc *sc = ic->ic_softc;
 	uint32_t tmp;
 
-#ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		sc->sc_flags |= RT2860_UPD_BEACON;
-#endif
-
 	tmp = RAL_READ(sc, RT2860_BKOFF_SLOT_CFG);
 	tmp &= ~0xff;
 	tmp |= (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
@@ -2131,54 +2112,41 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
-		/* install group key */
+		wcid = 0;	/* NB: update WCID0 for group keys */
 		base = RT2860_SKEY(0, k->k_id);
-		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
-			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
-#ifndef IEEE80211_STA_ONLY
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-				RAL_WRITE_REGION_1(sc, base + 16,
-				    &k->k_key[16], 8);
-				RAL_WRITE_REGION_1(sc, base + 24,
-				    &k->k_key[24], 8);
-			} else
-#endif
-			{
-				RAL_WRITE_REGION_1(sc, base + 16,
-				    &k->k_key[24], 8);
-				RAL_WRITE_REGION_1(sc, base + 24,
-				    &k->k_key[16], 8);
-			}
-		} else
-			RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
-		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
-		attr &= ~(0xf << (k->k_id * 4));
-		attr |= mode << (k->k_id * 4);
-		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
-
 	} else {
-		/* install pairwise key */
 		wcid = RT2860_AID2WCID(ni->ni_associd);
 		base = RT2860_PKEY(wcid);
-		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
-			RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
+	}
+
+	if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
+		RAL_WRITE_REGION_1(sc, base, k->k_key, 16);
 #ifndef IEEE80211_STA_ONLY
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-				RAL_WRITE_REGION_1(sc, base + 16,
-				    &k->k_key[16], 8);
-				RAL_WRITE_REGION_1(sc, base + 24,
-				    &k->k_key[24], 8);
-			} else
-#endif
-			{
-				RAL_WRITE_REGION_1(sc, base + 16,
-				    &k->k_key[24], 8);
-				RAL_WRITE_REGION_1(sc, base + 24,
-				    &k->k_key[16], 8);
-			}
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			RAL_WRITE_REGION_1(sc, base + 16, &k->k_key[16], 8);
+			RAL_WRITE_REGION_1(sc, base + 24, &k->k_key[24], 8);
 		} else
-			RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
-		/* set initial packet number in IV+EIV */
+#endif
+		{
+			RAL_WRITE_REGION_1(sc, base + 16, &k->k_key[24], 8);
+			RAL_WRITE_REGION_1(sc, base + 24, &k->k_key[16], 8);
+		}
+	} else
+		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
+
+	/* set initial packet number in IV+EIV */
+	if (k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+	    k->k_cipher == IEEE80211_CIPHER_WEP104) {
+		uint32_t val = arc4random();
+		/* skip weak IVs from Fluhrer/Mantin/Shamir */
+		if (val >= 0x03ff00 && (val & 0xf8ff00) == 0x00ff00)
+			val += 0x000100;
+		iv[0] = val;
+		iv[1] = val >> 8;
+		iv[2] = val >> 16;
+		iv[3] = k->k_id << 6;
+		iv[4] = iv[5] = iv[6] = iv[7] = 0;
+	} else {
 		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
 			iv[0] = k->k_tsc >> 8;
 			iv[1] = (iv[0] | 0x20) & 0x7f;
@@ -2193,8 +2161,17 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		iv[5] = k->k_tsc >> 24;
 		iv[6] = k->k_tsc >> 32;
 		iv[7] = k->k_tsc >> 40;
-		RAL_WRITE_REGION_1(sc, RT2860_IVEIV(wcid), iv, 8);
+	}
+	RAL_WRITE_REGION_1(sc, RT2860_IVEIV(wcid), iv, 8);
 
+	if (k->k_flags & IEEE80211_KEY_GROUP) {
+		/* install group key */
+		attr = RAL_READ(sc, RT2860_SKEY_MODE_0_7);
+		attr &= ~(0xf << (k->k_id * 4));
+		attr |= mode << (k->k_id * 4);
+		RAL_WRITE(sc, RT2860_SKEY_MODE_0_7, attr);
+	} else {
+		/* install pairwise key */
 		attr = RAL_READ(sc, RT2860_WCID_ATTR(wcid));
 		attr = (attr & ~0xf) | (mode << 1) | RT2860_RX_PKEY_EN;
 		RAL_WRITE(sc, RT2860_WCID_ATTR(wcid), attr);
@@ -2584,6 +2561,10 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 		    rt2860_def_bbp[i].val);
 	}
 
+	/* fix BBP84 for RT2860E */
+	if ((sc->mac_rev & 0xffff) != 0x0101)
+		rt2860_mcu_bbp_write(sc, 84, 0x19);
+
 	/* fix BBP69 and BBP73 for RT2860C */
 	if (sc->mac_rev == 0x28600100) {
 		rt2860_mcu_bbp_write(sc, 69, 0x16);
@@ -2878,11 +2859,10 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, 0);
 
 	/* reset Tx and Rx rings (and reclaim TXWIs) */
+	sc->qfullmsk = 0;
 	for (qid = 0; qid < 6; qid++)
 		rt2860_reset_tx_ring(sc, &sc->txq[qid]);
 	rt2860_reset_rx_ring(sc, &sc->rxq);
-
-	sc->sc_flags &= ~RT2860_UPD_BEACON;
 
 	/* for CardBus, power down the socket */
 	if (disable && sc->sc_disable != NULL) {
@@ -2986,7 +2966,7 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rt2860_txwi txwi;
 	struct mbuf *m;
-	int rate;
+	int ridx;
 
 	if ((m = ieee80211_beacon_alloc(ic, ic->ic_bss)) == NULL)
 		return ENOBUFS;
@@ -2995,15 +2975,16 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	txwi.wcid = 0xff;
 	txwi.len = htole16(m->m_pkthdr.len);
 	/* send beacons at the lowest available rate */
-	rate = (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2;
-	txwi.phy = htole16(rt2860_rate2mcs(rate));
-	if (rate == 12)
+	ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    RT2860_RIDX_OFDM6 : RT2860_RIDX_CCK1;
+	txwi.phy = htole16(rt2860_rates[ridx].mcs);
+	if (rt2860_rates[ridx].phy == IEEE80211_T_OFDM)
 		txwi.phy |= htole16(RT2860_PHY_OFDM);
 	txwi.txop = RT2860_TX_TXOP_HT;
 	txwi.flags = RT2860_TX_TS;
 
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0),
-	    (u_int8_t *)&txwi, 16);
+	    (uint8_t *)&txwi, 16);
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0) + 16,
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 

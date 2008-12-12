@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.8 2008/07/21 19:41:44 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.9 2008/12/12 20:58:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -95,6 +95,12 @@ struct rt2860_rx_ring {
 	struct rt2860_rx_data	data[RT2860_RX_RING_COUNT];
 };
 
+struct rt2860_node {
+	struct ieee80211_node	ni;
+	uint8_t			ridx[IEEE80211_RATE_MAXSIZE];
+	uint8_t			ctl_ridx[IEEE80211_RATE_MAXSIZE];
+};
+
 struct rt2860_softc {
 	struct device			sc_dev;
 
@@ -117,10 +123,10 @@ struct rt2860_softc {
 	int				sc_flags;
 #define RT2860_ENABLED		(1 << 0)
 #define RT2860_FWLOADED		(1 << 1)
-#define RT2860_UPD_BEACON	(1 << 2)
-#define RT2860_ADVANCED_PS	(1 << 3)
+#define RT2860_ADVANCED_PS	(1 << 2)
 
 	uint32_t			sc_ic_flags;
+	int				fixed_ridx;
 
 	struct rt2860_tx_ring		txq[6];
 	struct rt2860_rx_ring		rxq;
@@ -134,6 +140,7 @@ struct rt2860_softc {
 	int				sc_tx_timer;
 	int				mgtqid;
 	int				sifs;
+	uint8_t				qfullmsk;
 
 	uint32_t			mac_rev;
 	uint8_t				rf_rev;
