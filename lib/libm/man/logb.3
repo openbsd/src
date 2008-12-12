@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logb.3,v 1.3 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: logb.3,v 1.4 2008/12/12 00:10:26 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt IEEE_TEST 3
 .Os
 .Sh NAME
 .Nm logb ,
 .Nm logbf ,
+.Nm logbl ,
 .Nm scalb ,
 .Nm scalbf ,
 .Nm significand ,
@@ -45,6 +46,8 @@
 .Fn logb "double x"
 .Ft float
 .Fn logbf "float x"
+.Ft long double
+.Fn logbl "long double x"
 .Ft double
 .Fn scalb "double x" "double n"
 .Ft float
@@ -69,6 +72,9 @@ a signed integer converted to double\-precision floating\-point.
 = -\*(If with a division by zero exception.
 .Fn logbf
 is the single precision form of
+.Fn logb .
+.Fn logbl
+is the extended precision form of
 .Fn logb .
 .Pp
 .Fn scalb x n

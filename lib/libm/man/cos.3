@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cos.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: cos.3,v 1.12 2008/12/12 00:10:26 martynas Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)cos.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt COS 3
 .Os
 .Sh NAME
 .Nm cos ,
-.Nm cosf
+.Nm cosf ,
+.Nm cosl
 .Nd cosine functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -41,6 +42,8 @@
 .Fn cos "double x"
 .Ft float
 .Fn cosf "float x"
+.Ft long double
+.Fn cosl "long double x"
 .Sh DESCRIPTION
 The
 .Fn cos
@@ -51,15 +54,20 @@ The
 .Fn cosf
 function is a single precision version of
 .Fn cos .
+The
+.Fn cosl
+function is an extended precision version of
+.Fn cos .
 A large magnitude argument may yield a result with little or no
 significance.
 For a discussion of error due to roundoff, see
 .Xr math 3 .
 .Sh RETURN VALUES
 The
-.Fn cos
-and
+.Fn cos ,
 .Fn cosf
+and
+.Fn cosl
 functions return the cosine value.
 .Sh SEE ALSO
 .Xr acos 3 ,

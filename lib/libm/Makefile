@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.60 2008/12/09 23:13:31 martynas Exp $
+#  $OpenBSD: Makefile,v 1.61 2008/12/12 00:10:26 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -235,6 +235,24 @@ MLINKS+=sqrt.3 sqrtf.3
 MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 MLINKS+=trunc.3 truncf.3
+
+# long double versions
+MLINKS+=acos.3 acosl.3
+MLINKS+=asin.3 asinl.3
+MLINKS+=atan.3 atanl.3
+MLINKS+=atan2.3 atan2l.3
+MLINKS+=cos.3 cosl.3
+MLINKS+=exp.3 exp2l.3
+MLINKS+=fabs.3 fabsl.3
+MLINKS+=ieee.3 copysignl.3
+MLINKS+=ieee.3 ilogbl.3
+MLINKS+=ieee.3 scalbnl.3
+MLINKS+=logb.3 logbl.3
+MLINKS+=nan.3 nanl.3
+MLINKS+=rint.3 rintl.3
+MLINKS+=sin.3 sinl.3
+MLINKS+=sqrt.3 sqrtl.3
+MLINKS+=tan.3 tanl.3
 
 #.if (${MACHINE_ARCH} == "i386")
 #LINKS=	${LIBDIR}/libm.a ${LIBDIR}/libm_i387.a

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fabs.3,v 1.9 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: fabs.3,v 1.10 2008/12/12 00:10:26 martynas Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,12 +29,13 @@
 .\"
 .\"     from: @(#)fabs.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt FABS 3
 .Os
 .Sh NAME
 .Nm fabs ,
-.Nm fabsf
+.Nm fabsf ,
+.Nm fabsl
 .Nd floating-point absolute value functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -42,6 +43,8 @@
 .Fn fabs "double x"
 .Ft float
 .Fn fabsf "float x"
+.Ft long double
+.Fn fabsl "long double x"
 .Sh DESCRIPTION
 The
 .Fn fabs
@@ -51,11 +54,16 @@ The
 .Fn fabsf
 function is a single precision version of
 .Fn fabs .
+The
+.Fn fabsl
+function is an extended precision version of
+.Fn fabs .
 .Sh RETURN VALUES
 The
-.Fn fabs
-and
+.Fn fabs ,
 .Fn fabsf
+and
+.Fn fabsl
 functions return the absolute value of
 .Fa x .
 .Sh SEE ALSO

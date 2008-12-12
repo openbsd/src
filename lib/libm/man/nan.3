@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nan.3,v 1.2 2008/07/30 08:02:35 jmc Exp $
+.\"	$OpenBSD: nan.3,v 1.3 2008/12/12 00:10:26 martynas Exp $
 .\"
 .\" Copyright (c) 2007 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,12 +26,13 @@
 .\"
 .\" $FreeBSD: src/lib/msun/man/nan.3,v 1.1 2007/12/16 21:19:28 das Exp $
 .\"
-.Dd $Mdocdate: July 30 2008 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt NAN 3
 .Os
 .Sh NAME
 .Nm nan ,
-.Nm nanf
+.Nm nanf ,
+.Nm nanl
 .Nd quiet \*(Nas
 .Sh SYNOPSIS
 .In math.h
@@ -39,14 +40,17 @@
 .Fn nan "const char *s"
 .Ft float
 .Fn nanf "const char *s"
+.Ft long double
+.Fn nanl "const char *s"
 .Sh DESCRIPTION
 The
 .Dv NAN
 macro expands to a quiet \*(Na (Not A Number).
 Similarly both the
-.Fn nan
-and
+.Fn nan ,
 .Fn nanf
+and
+.Fn nanl
 functions generate a quiet \*(Na value without raising an invalid exception.
 The argument
 .Fa s
@@ -84,9 +88,10 @@ macro instead.
 .Xr strtod 3
 .Sh STANDARDS
 The
-.Fn nan
-and
+.Fn nan ,
 .Fn nanf
+and
+.Fn nanl
 functions and the
 .Dv NAN
 macro conform to
