@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.78 2008/11/22 22:34:11 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.79 2008/12/12 21:52:04 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -254,6 +254,9 @@ route_output(struct mbuf *m, ...)
 			goto flush;
 		}
 	}
+
+	/* make sure that kernel only bits are not set */
+	rtm->rtm_priority &= RTP_MASK;
 
 	if (rtm->rtm_priority != 0) {
 		if (rtm->rtm_priority > RTP_MAX) {
