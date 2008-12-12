@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.54 2008/11/24 12:53:53 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.55 2008/12/12 22:07:33 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -158,12 +158,12 @@ struct rtentry {
 /* Routing priorities used by the different routing protocols */
 #define RTP_NONE	0	/* unset priority use sane default */
 #define RTP_CONNECTED	4	/* directly connected routes */
-#define RTP_STATIC	8	/* static routes */
-#define RTP_OSPF	16	/* OSPF routes */
-#define RTP_ISIS	20	/* IS-IS routes */
-#define RTP_RIP		24	/* RIP routes */
-#define RTP_BGP		32	/* BGP routes */
-#define RTP_DEFAULT	48	/* routes that have nothing set */
+#define RTP_STATIC	8	/* static routes base priority */
+#define RTP_OSPF	32	/* OSPF routes */
+#define RTP_ISIS	36	/* IS-IS routes */
+#define RTP_RIP		40	/* RIP routes */
+#define RTP_BGP		48	/* BGP routes */
+#define RTP_DEFAULT	56	/* routes that have nothing set */
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
 #define RTP_MASK	0x7f

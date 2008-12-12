@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.99 2008/11/24 12:53:53 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.100 2008/12/12 22:07:33 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -816,6 +816,8 @@ makeroute:
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = info->rti_flags;
+		if (prio == 0)
+			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 		rt->rt_priority = prio;	/* init routing priority */
 		if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
 		    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN) &&

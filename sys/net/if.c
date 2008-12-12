@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.184 2008/12/11 16:45:45 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.185 2008/12/12 22:07:33 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1379,6 +1379,18 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			rtlabel_unref(ifp->if_rtlabelid);
 			ifp->if_rtlabelid = rtlabel_name2id(ifrtlabelbuf);
 		}
+		break;
+
+	case SIOCGIFPRIORITY:
+		ifr->ifr_metric = ifp->if_priority;
+		break;
+
+	case SIOCSIFPRIORITY:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15)
+			return (EINVAL);
+		ifp->if_priority = ifr->ifr_metric;
 		break;
 
 	case SIOCAIFGROUP:

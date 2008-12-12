@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.101 2008/12/11 16:45:45 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.102 2008/12/12 22:07:33 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -217,6 +217,7 @@ struct ifnet {				/* and the entries */
 	int	if_capabilities;	/* interface capabilities */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
+	u_int8_t if_priority;
 
 	/* procedure handles */
 					/* output routine (enqueue) */
