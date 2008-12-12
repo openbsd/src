@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.62 2008/11/01 19:56:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.63 2008/12/12 16:05:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -617,7 +617,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	u_char		*pdata;
 	u_int32_t	 tmp32;
 	in_addr_t	 nexthop;
-	int		 r, ismp = 0, neednewpath = 0;
+	int		 flags, r, ismp = 0, neednewpath = 0;
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0, plen;
 	u_int8_t	 l;
 
@@ -768,19 +768,23 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		else
 			pdata = aspath_prepend(a->aspath, rde_local_as(), 1,
 			    &plen);
+		flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+		if (!(a->flags & F_PREFIX_ANNOUNCED))
+			flags |= ATTR_PARTIAL;
 		if (plen == 0)
 			r = 0;
-		else if ((r = attr_write(up_attr_buf + wlen, len,
-		    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_NEW_ASPATH,
-		    pdata, plen)) == -1)
+		else if ((r = attr_write(up_attr_buf + wlen, len, flags,
+		    ATTR_NEW_ASPATH, pdata, plen)) == -1)
 			return (-1);
 		wlen += r; len -= r;
 		free(pdata);
 	}
 	if (newaggr) {
-		if ((r = attr_write(up_attr_buf + wlen, len,
-		    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_NEW_AGGREGATOR,
-		    newaggr->data, newaggr->len)) == -1)
+		flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+		if (!(a->flags & F_PREFIX_ANNOUNCED))
+			flags |= ATTR_PARTIAL;
+		if ((r = attr_write(up_attr_buf + wlen, len, flags,
+		    ATTR_NEW_AGGREGATOR, newaggr->data, newaggr->len)) == -1)
 			return (-1);
 		wlen += r; len -= r;
 	}
