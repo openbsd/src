@@ -1,4 +1,4 @@
-.\"	$OpenBSD: frexp.3,v 1.8 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: frexp.3,v 1.9 2008/12/12 00:12:47 martynas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,16 +31,22 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt FREXP 3
 .Os
 .Sh NAME
-.Nm frexp
+.Nm frexp ,
+.Nm frexpf ,
+.Nm frexpl
 .Nd convert floating-point number to fractional and integral components
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
 .Fn frexp "double value" "int *exp"
+.Ft float
+.Fn frexpf "float value" "int *exp"
+.Ft long double
+.Fn frexpl "long double value" "int *exp"
 .Sh DESCRIPTION
 The
 .Fn frexp
@@ -50,10 +56,21 @@ It stores the integer in the
 .Li int
 object pointed to by
 .Fa exp .
+The
+.Fn frexpf
+function is a single precision version of
+.Fn frexp .
+The
+.Fn frexpl
+function is an extended precision version of
+.Fn frexp .
 .Sh RETURN VALUES
 The
-.Fn frexp
-function returns the value
+.Fn frexp ,
+.Fn frexpf
+and
+.Fn frexpl
+functions return the value
 .Li x ,
 such that
 .Li x
