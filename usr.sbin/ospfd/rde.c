@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.74 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.75 2008/12/12 22:43:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -585,12 +585,10 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	static struct area	*narea;
 	struct iface		*niface;
 	struct imsg		 imsg;
-	struct kroute		 kr;
 	struct rroute		 rr;
 	struct imsgbuf		*ibuf = bula;
 	struct lsa		*lsa;
 	struct vertex		*v;
-	struct rt_node		*rn;
 	ssize_t			 n;
 	int			 shut = 0;
 
@@ -651,22 +649,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				if (v)
 					lsa_merge(nbrself, lsa, v);
 			}
-			break;
-		case IMSG_KROUTE_GET:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("rde_dispatch_parent: "
-				    "wrong imsg len");
-				break;
-			}
-			memcpy(&kr, imsg.data, sizeof(kr));
-
-			if ((rn = rt_find(kr.prefix.s_addr, kr.prefixlen,
-			    DT_NET)) != NULL)
-				rde_send_change_kroute(rn);
-			else
-				/* should not happen */
-				imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0,
-				    0, &kr, sizeof(kr));
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==

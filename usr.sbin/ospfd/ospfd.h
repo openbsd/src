@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.72 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.73 2008/12/12 22:43:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -51,7 +51,6 @@
 
 #define	F_OSPFD_INSERTED	0x0001
 #define	F_KERNEL		0x0002
-#define	F_BGPD_INSERTED		0x0004
 #define	F_CONNECTED		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
@@ -121,7 +120,6 @@ enum imsg_type {
 	IMSG_CTL_END,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
-	IMSG_KROUTE_GET,
 	IMSG_IFINFO,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
@@ -417,11 +415,12 @@ struct ospfd_conf {
 struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
+	u_int32_t	ext_tag;
 	u_int16_t	flags;
 	u_int16_t	rtlabel;
-	u_int32_t	ext_tag;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
+	u_int8_t	priority;
 };
 
 struct rroute {
