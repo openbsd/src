@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.72 2008/05/09 13:01:01 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.73 2008/12/12 08:05:54 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 9 2008 $
+.Dd $Mdocdate: December 12 2008 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -175,13 +175,11 @@ system libraries to run.
 .It /stand/
 Programs used in a stand-alone environment.
 .It /tmp/
-Temporary files;
-the contents
-of
-.Pa /tmp
-are
+Temporary files that are
 .Em not
-preserved across a system reboot.
+preserved between system reboots.
+Periodically cleaned by
+.Xr daily 8 .
 .It /usr/
 Contains the majority of user utilities and applications.
 .Pp
@@ -691,6 +689,8 @@ Commonly ~uucp; public uucp temporary directory.
 .Pp
 .It tmp/
 Temporary files that are kept between system reboots.
+Periodically cleaned by
+.Xr daily 8 .
 .It www/
 ServerRoot point for
 .Xr httpd 8 .
