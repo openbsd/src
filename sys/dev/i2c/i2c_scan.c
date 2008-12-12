@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.128 2008/11/13 17:57:15 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.129 2008/12/12 23:38:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -927,10 +927,12 @@ char *
 iic_probe_eeprom(struct device *self, u_int8_t addr)
 {
 	int reg, csum = 0;
+	u_int8_t size;
 	char *name = NULL;
 
 	/* SPD EEPROMs should only set lower nibble for size (ie <= 32K) */
-	if ((iicprobe(0x01) & 0xf0) != 0)
+	size = iicprobe(0x01);
+	if (((size & 0xf0) != 0) || size == 0)
 		return (name);
 
 	for (reg = 0; reg < 0x3f; reg++)
