@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.S,v 1.6 2008/12/09 20:21:07 martynas Exp $	*/
+/*	$OpenBSD: n_tan.S,v 1.7 2008/12/12 19:30:17 martynas Exp $	*/
 /*	$NetBSD: n_tan.S,v 1.1 1995/10/10 23:40:31 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@
  * S. McDonald, April 4,  1985
  */
 
-WEAK_ALIAS(tanl, tan)
+WEAK_ALIAS(tanl,tan)
 ENTRY(tan, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	movq	4(ap),r0
 	bicw3	$0x807f,r0,r2

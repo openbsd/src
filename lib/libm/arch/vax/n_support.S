@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.15 2008/12/09 20:21:07 martynas Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.16 2008/12/12 19:30:17 martynas Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -51,7 +51,7 @@
  * copysign(double x, double y)
  */
 
-WEAK_ALIAS(copysignl, copysign)
+WEAK_ALIAS(copysignl,copysign)
 ENTRY(copysign, R2)
 	movq	4(ap),r0		# load x into r0
 	bicw3	$0x807f,r0,r2		# mask off the exponent of x
@@ -80,7 +80,7 @@ Fz:	ret
  * logb(double x)
  */
 
-WEAK_ALIAS(logbl, logb)
+WEAK_ALIAS(logbl,logb)
 ENTRY(logb, 0)
 	bicl3	$0xffff807f,4(ap),r0	# mask off the exponent of x
 	beql    Ln
@@ -115,7 +115,7 @@ Fn:	movl	4(ap),r0		# r0:1 = x (zero or reserved op)
  * scalbn(double x, int N)
  */
 
-WEAK_ALIAS(scalbnl, scalbn)
+WEAK_ALIAS(scalbnl,scalbn)
 ENTRY(scalbn, R2|R3)
 	movq	4(ap),r0
 	bicl3	$0xffff807f,r0,r3

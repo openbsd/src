@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.S,v 1.5 2008/12/09 20:21:07 martynas Exp $	*/
+/*	$OpenBSD: n_atan2.S,v 1.6 2008/12/12 19:30:17 martynas Exp $	*/
 /*	$NetBSD: n_atan2.S,v 1.1 1995/10/10 23:40:25 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -73,7 +73,7 @@
  *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded. 
  */
 
-WEAK_ALIAS(atan2l, atan2)
+WEAK_ALIAS(atan2l,atan2)
 ENTRY(atan2, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	movq	4(ap),r2		# r2 = y
 	movq	12(ap),r4		# r4 = x
