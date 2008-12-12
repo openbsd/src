@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.42 2008/12/03 17:17:08 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.43 2008/12/12 17:15:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2367,6 +2367,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	uint32_t flags;
 	uint16_t qos;
 	u_int hdrlen;
+	bus_dma_segment_t *seg;
 	uint8_t *ivp, tid, ridx, txant, type;
 	int i, totlen, hasqos, error, pad;
 
@@ -2537,7 +2538,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		flags |= IWN_TX_LINKQ;	/* enable MRR */
 	}
 	/* Set physical address of "scratch area". */
-	tx->loaddr = htole32(data->scratch_paddr);
+	tx->loaddr = htole32(IWN_LOADDR(data->scratch_paddr));
+	tx->hiaddr = IWN_HIADDR(data->scratch_paddr);
 
 	/* Copy 802.11 header in TX command. */
 	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
@@ -2601,14 +2603,18 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	    ring->qid, ring->cur, m->m_pkthdr.len, data->map->dm_nsegs));
 
 	/* Fill TX descriptor. */
-	IWN_SET_DESC_NSEGS(desc, 1 + data->map->dm_nsegs);
+	desc->nsegs = 1 + data->map->dm_nsegs;
 	/* First DMA segment is used by the TX command. */
-	IWN_SET_DESC_SEG(desc, 0, data->cmd_paddr,
-	    4 + sizeof (*tx) + hdrlen + pad);
+	desc->segs[0].addr = htole32(IWN_LOADDR(data->cmd_paddr));
+	desc->segs[0].len  = htole16(IWN_HIADDR(data->cmd_paddr) |
+	    (4 + sizeof (*tx) + hdrlen + pad) << 4);
 	/* Other DMA segments are for data payload. */
+	seg = data->map->dm_segs;
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
-		IWN_SET_DESC_SEG(desc, i, data->map->dm_segs[i - 1].ds_addr,
-		    data->map->dm_segs[i - 1].ds_len);
+		desc->segs[i].addr = htole32(IWN_LOADDR(seg->ds_addr));
+		desc->segs[i].len  = htole16(IWN_HIADDR(seg->ds_addr) |
+		    seg->ds_len << 4);
+		seg++;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
@@ -2832,8 +2838,9 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	cmd->idx = ring->cur;
 	memcpy(cmd->data, buf, size);
 
-	IWN_SET_DESC_NSEGS(desc, 1);
-	IWN_SET_DESC_SEG(desc, 0, paddr, totlen);
+	desc->nsegs = 1;
+	desc->segs[0].addr = htole32(IWN_LOADDR(paddr));
+	desc->segs[0].len  = htole16(IWN_HIADDR(paddr) | totlen << 4);
 
 	if (size > sizeof cmd->data) {
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0, totlen,
@@ -4684,8 +4691,10 @@ iwn5000_load_firmware_section(struct iwn_softc *sc, uint32_t dst,
 	    IWN_FH_TX_CONFIG_DMA_PAUSE);
 
 	IWN_WRITE(sc, IWN_FH_SRAM_ADDR(IWN_SRVC_CHNL), dst);
-	IWN_WRITE(sc, IWN_FH_TFBD_CTRL0(IWN_SRVC_CHNL), dma->paddr);
-	IWN_WRITE(sc, IWN_FH_TFBD_CTRL1(IWN_SRVC_CHNL), size);
+	IWN_WRITE(sc, IWN_FH_TFBD_CTRL0(IWN_SRVC_CHNL),
+	    IWN_LOADDR(dma->paddr));
+	IWN_WRITE(sc, IWN_FH_TFBD_CTRL1(IWN_SRVC_CHNL),
+	    IWN_HIADDR(dma->paddr) << 28 | size);
 	IWN_WRITE(sc, IWN_FH_TXBUF_STATUS(IWN_SRVC_CHNL),
 	    IWN_FH_TXBUF_STATUS_TBNUM(1) |
 	    IWN_FH_TXBUF_STATUS_TBIDX(1) |
