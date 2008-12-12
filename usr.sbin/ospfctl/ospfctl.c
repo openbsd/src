@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.42 2008/12/06 13:18:12 sobrado Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.43 2008/12/12 22:44:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1103,7 +1103,7 @@ void
 show_fib_head(void)
 {
 	printf("flags: * = valid, O = OSPF, C = Connected, S = Static\n");
-	printf("%-6s %-20s %-17s\n", "Flags", "Destination", "Nexthop");
+	printf("%-6s %-4s %-20s %-17s\n", "Flags", "Prio", "Destination", "Nexthop");
 }
 
 int
@@ -1133,6 +1133,7 @@ show_fib_msg(struct imsg *imsg)
 			printf(" ");
 
 		printf("     ");
+		printf("%4d ", k->priority);
 		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
 		    -1)
 			err(1, NULL);
