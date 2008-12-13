@@ -127,8 +127,6 @@ parse_entry(char *line, size_t len, size_t lineno)
 	char *delim;
 	char *rcpt;
 	char *subrcpt;
-	struct alias alias;
-	int ret;
 	DBT key;
 	DBT val;
 
@@ -150,7 +148,10 @@ parse_entry(char *line, size_t len, size_t lineno)
 		goto bad;
 
 	/* At this point, name points to nul-terminate name */
-	for (; (subrcpt = strsep(&rcpt, ",")) != NULL;) {
+	while ((subrcpt = strsep(&rcpt, ",")) != NULL) {
+		struct alias	 alias;
+		void		*p;
+
 		while (*subrcpt && isspace(*subrcpt))
 			++subrcpt;
 		if (*subrcpt == '\0')
@@ -160,54 +161,35 @@ parse_entry(char *line, size_t len, size_t lineno)
 		while (isspace(*delim))
 			*delim-- = '\0';
 
+		if (! alias_parse(&alias, subrcpt))
+			goto bad;
+
 		key.data = name;
 		key.size = strlen(name) + 1;
-
-		if ((ret = db->get(db, &key, &val, 0)) == -1) {
+		val.data = NULL;
+		val.size = 0;
+		if (db->get(db, &key, &val, 0) == -1) {
 			warn("dbget");
 			return 0;
 		}
 
-		if (ret == 1) {
-			val.data = NULL;
-			val.size = 0;
+		p = calloc(1, val.size + sizeof(struct alias));
+		if (p == NULL) {
+			warn("calloc");
+			return 0;
 		}
+		memcpy(p, val.data, val.size);
+		memcpy((u_int8_t *)p + val.size, &alias, sizeof(struct alias));
 
-		if (! alias_parse(&alias, subrcpt))
-			goto bad;
-
-		if (val.size == 0) {
-			val.size = sizeof(struct alias);
-			val.data = &alias;
-
-			if ((ret = db->put(db, &key, &val, 0)) == -1) {
-				warn("dbput");
-				return 0;
-			}
-		}
-		else {
-			void *p;
-
-			p = calloc(val.size + sizeof(alias), 1);
-			if (p == NULL) {
-				warn("calloc");
-				return 0;
-			}
-			memcpy(p, val.data, val.size);
-			memcpy((u_int8_t *)p + val.size, &alias, sizeof(alias));
-
-			val.data = p;
-			val.size += sizeof(alias);
-
-			if ((ret = db->put(db, &key, &val, 0)) == -1) {
-				warn("dbput");
-				return 0;
-			}
-
+		val.data = p;
+		val.size += sizeof(struct alias);
+		if (db->put(db, &key, &val, 0) == -1) {
+			warn("dbput");
 			free(p);
+			return 0;
 		}
 
-		db->sync(db, 0);
+		free(p);
 	}
 
 	return 1;
