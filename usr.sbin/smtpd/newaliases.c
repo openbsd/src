@@ -44,8 +44,6 @@ static int usage(void);
 int parse_aliases(const char *);
 int parse_entry(char *, size_t, size_t);
 
-int alias_parse(struct alias *, char *, size_t);
-
 DB *db;
 static int dflag;
 
@@ -197,7 +195,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 			val.size = 0;
 		}
 
-		if (! alias_parse(&alias, subrcpt, strlen(subrcpt)))
+		if (! alias_parse(&alias, subrcpt))
 			goto bad;
 
 		if (val.size == 0) {
