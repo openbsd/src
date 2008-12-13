@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.153 2008/08/17 14:25:19 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.154 2008/12/13 23:39:30 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8869,8 +8869,8 @@ ENTRY(cecc_catch)
  */
 ENTRY(send_softint)
 	rdpr	%pstate, %g1
-	andn	%g1, PSTATE_IE, %g1
-	wrpr	%g1, 0, %pstate
+	andn	%g1, PSTATE_IE, %o3
+	wrpr	%o3, 0, %pstate
 
 	brz,pn	%o2, 1f
 	 add	%g7, CI_INTRPENDING, %o3
