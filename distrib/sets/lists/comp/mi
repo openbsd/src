@@ -3037,6 +3037,7 @@
 ./usr/share/man/cat3/acosf.0
 ./usr/share/man/cat3/acosh.0
 ./usr/share/man/cat3/acoshf.0
+./usr/share/man/cat3/acosl.0
 ./usr/share/man/cat3/acss.0
 ./usr/share/man/cat3/acss_setkey.0
 ./usr/share/man/cat3/addch.0
@@ -3062,15 +3063,18 @@
 ./usr/share/man/cat3/asinf.0
 ./usr/share/man/cat3/asinh.0
 ./usr/share/man/cat3/asinhf.0
+./usr/share/man/cat3/asinl.0
 ./usr/share/man/cat3/asprintf.0
 ./usr/share/man/cat3/assert.0
 ./usr/share/man/cat3/assume_default_colors.0
 ./usr/share/man/cat3/atan.0
 ./usr/share/man/cat3/atan2.0
 ./usr/share/man/cat3/atan2f.0
+./usr/share/man/cat3/atan2l.0
 ./usr/share/man/cat3/atanf.0
 ./usr/share/man/cat3/atanh.0
 ./usr/share/man/cat3/atanhf.0
+./usr/share/man/cat3/atanl.0
 ./usr/share/man/cat3/atexit.0
 ./usr/share/man/cat3/atob8.0
 ./usr/share/man/cat3/atof.0
@@ -3279,11 +3283,13 @@
 ./usr/share/man/cat3/confstr.0
 ./usr/share/man/cat3/copysign.0
 ./usr/share/man/cat3/copysignf.0
+./usr/share/man/cat3/copysignl.0
 ./usr/share/man/cat3/copywin.0
 ./usr/share/man/cat3/cos.0
 ./usr/share/man/cat3/cosf.0
 ./usr/share/man/cat3/cosh.0
 ./usr/share/man/cat3/coshf.0
+./usr/share/man/cat3/cosl.0
 ./usr/share/man/cat3/crc32.0
 ./usr/share/man/cat3/crc32_combine.0
 ./usr/share/man/cat3/creat.0
@@ -3554,12 +3560,14 @@
 ./usr/share/man/cat3/exp.0
 ./usr/share/man/cat3/exp2.0
 ./usr/share/man/cat3/exp2f.0
+./usr/share/man/cat3/exp2l.0
 ./usr/share/man/cat3/expf.0
 ./usr/share/man/cat3/expm1.0
 ./usr/share/man/cat3/expm1f.0
 ./usr/share/man/cat3/f.0
 ./usr/share/man/cat3/fabs.0
 ./usr/share/man/cat3/fabsf.0
+./usr/share/man/cat3/fabsl.0
 ./usr/share/man/cat3/fclose.0
 ./usr/share/man/cat3/fcvt.0
 ./usr/share/man/cat3/fdopen.0
@@ -3665,6 +3673,8 @@
 ./usr/share/man/cat3/freerrset.0
 ./usr/share/man/cat3/freopen.0
 ./usr/share/man/cat3/frexp.0
+./usr/share/man/cat3/frexpf.0
+./usr/share/man/cat3/frexpl.0
 ./usr/share/man/cat3/fropen.0
 ./usr/share/man/cat3/fscanf.0
 ./usr/share/man/cat3/fseek.0
@@ -3914,6 +3924,7 @@
 ./usr/share/man/cat3/if_nametoindex.0
 ./usr/share/man/cat3/ilogb.0
 ./usr/share/man/cat3/ilogbf.0
+./usr/share/man/cat3/ilogbl.0
 ./usr/share/man/cat3/imaxabs.0
 ./usr/share/man/cat3/imaxdiv.0
 ./usr/share/man/cat3/immedok.0
@@ -4599,6 +4610,8 @@
 ./usr/share/man/cat3/labs.0
 ./usr/share/man/cat3/lcong48.0
 ./usr/share/man/cat3/ldexp.0
+./usr/share/man/cat3/ldexpf.0
+./usr/share/man/cat3/ldexpl.0
 ./usr/share/man/cat3/ldiv.0
 ./usr/share/man/cat3/leaveok.0
 ./usr/share/man/cat3/letoh16.0
@@ -4643,6 +4656,7 @@
 ./usr/share/man/cat3/log1pf.0
 ./usr/share/man/cat3/logb.0
 ./usr/share/man/cat3/logbf.0
+./usr/share/man/cat3/logbl.0
 ./usr/share/man/cat3/logf.0
 ./usr/share/man/cat3/login.0
 ./usr/share/man/cat3/login_cap.0
@@ -4731,6 +4745,7 @@
 ./usr/share/man/cat3/mktemp.0
 ./usr/share/man/cat3/mktime.0
 ./usr/share/man/cat3/modf.0
+./usr/share/man/cat3/modff.0
 ./usr/share/man/cat3/moncontrol.0
 ./usr/share/man/cat3/monstartup.0
 ./usr/share/man/cat3/mouse_trafo.0
@@ -4800,6 +4815,7 @@
 ./usr/share/man/cat3/mvwvline.0
 ./usr/share/man/cat3/nan.0
 ./usr/share/man/cat3/nanf.0
+./usr/share/man/cat3/nanl.0
 ./usr/share/man/cat3/napms.0
 ./usr/share/man/cat3/ncurses.0
 ./usr/share/man/cat3/ndbm.0
@@ -5103,6 +5119,7 @@
 ./usr/share/man/cat3/rindex.0
 ./usr/share/man/cat3/rint.0
 ./usr/share/man/cat3/rintf.0
+./usr/share/man/cat3/rintl.0
 ./usr/share/man/cat3/rip.0
 ./usr/share/man/cat3/ripoffline.0
 ./usr/share/man/cat3/rmd160.0
@@ -5135,6 +5152,7 @@
 ./usr/share/man/cat3/scalbf.0
 ./usr/share/man/cat3/scalbn.0
 ./usr/share/man/cat3/scalbnf.0
+./usr/share/man/cat3/scalbnl.0
 ./usr/share/man/cat3/scale_form.0
 ./usr/share/man/cat3/scale_menu.0
 ./usr/share/man/cat3/scan_scaled.0
@@ -5303,6 +5321,7 @@
 ./usr/share/man/cat3/sinf.0
 ./usr/share/man/cat3/sinh.0
 ./usr/share/man/cat3/sinhf.0
+./usr/share/man/cat3/sinl.0
 ./usr/share/man/cat3/sio_close.0
 ./usr/share/man/cat3/sio_eof.0
 ./usr/share/man/cat3/sio_getcap.0
@@ -5356,6 +5375,7 @@
 ./usr/share/man/cat3/sqr.0
 ./usr/share/man/cat3/sqrt.0
 ./usr/share/man/cat3/sqrtf.0
+./usr/share/man/cat3/sqrtl.0
 ./usr/share/man/cat3/sradixsort.0
 ./usr/share/man/cat3/srand.0
 ./usr/share/man/cat3/srand48.0
@@ -5467,6 +5487,7 @@
 ./usr/share/man/cat3/tanf.0
 ./usr/share/man/cat3/tanh.0
 ./usr/share/man/cat3/tanhf.0
+./usr/share/man/cat3/tanl.0
 ./usr/share/man/cat3/tcdrain.0
 ./usr/share/man/cat3/tcflow.0
 ./usr/share/man/cat3/tcflush.0
