@@ -147,6 +147,15 @@ parse_entry(char *line, size_t len, size_t lineno)
 	while (name < endp && isspace(*endp))
 		*endp-- = '\0';
 
+	/* Check for dups. */
+	key.data = name;
+	key.size = strlen(name) + 1;
+	if (db->get(db, &key, &val, 0) == 0) {
+		warnx("%s:%zd: duplicate entry for %s", PATH_ALIASES, lineno,
+		    key.data);
+		return 0;
+	}
+
 	/* At this point name and rcpt are non-zero nul-terminated strings. */
 	while ((subrcpt = strsep(&rcpt, ",")) != NULL) {
 		struct alias	 alias;
