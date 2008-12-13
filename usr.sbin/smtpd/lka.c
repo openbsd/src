@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.6 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.7 2008/12/13 23:19:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -163,7 +163,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_LOOKUP_MAIL: {
+		case IMSG_LKA_MAIL: {
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
@@ -175,12 +175,12 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				if (lka_verify_mail(env, &ss->u.path))
 					ss->code = 250;
 
-			imsg_compose(ibuf, IMSG_MFA_LOOKUP_MAIL, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_LKA_MAIL, 0, 0, -1,
 				ss, sizeof(*ss));
 
 			break;
 		}
-		case IMSG_LKA_LOOKUP_RCPT: {
+		case IMSG_LKA_RCPT: {
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
@@ -189,7 +189,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			if (lka_verify_rcpt(env, &ss->u.path, &ss->ss))
 				ss->code = 250;
 
-			imsg_compose(ibuf, IMSG_MFA_LOOKUP_RCPT, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
 			    ss, sizeof(*ss));
 
 			break;
@@ -240,7 +240,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_HOSTNAME_LOOKUP: {
+		case IMSG_LKA_HOST: {
 
 			struct sockaddr *sa = NULL;
 			socklen_t salen;
@@ -266,9 +266,10 @@ lka_dispatch_smtp(int sig, short event, void *p)
 				hints.ai_flags = AI_NUMERICHOST;
 				if (getaddrinfo(addr, "0", &hints, &res) == 0) {
 					freeaddrinfo(res);
-					strlcpy(s->s_hostname, "<bogus>", MAXHOSTNAMELEN);
-					imsg_compose(ibuf, IMSG_SMTP_HOSTNAME_ANSWER, 0, 0, -1,
-					    s, sizeof(struct session));
+					strlcpy(s->s_hostname, "<bogus>",
+					    MAXHOSTNAMELEN);
+					imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0,
+					    -1, s, sizeof(struct session));
 					break;
 				}
 			} else {
@@ -276,7 +277,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 				    NULL, 0, NI_NUMERICHOST);
 			}
 			strlcpy(s->s_hostname, addr, MAXHOSTNAMELEN);
-			imsg_compose(ibuf, IMSG_SMTP_HOSTNAME_ANSWER, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1,
 			    s, sizeof(struct session));
 			break;
 		}
@@ -327,7 +328,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 
-		case IMSG_LKA_ALIAS_LOOKUP: {
+		case IMSG_LKA_ALIAS: {
 			struct message *messagep;
 			struct alias *alias;
 			struct alias *remalias;
@@ -410,7 +411,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 			TAILQ_FOREACH(alias, &aliases, entry) {
 				struct message message = *messagep;
 				lka_resolve_alias(env, ibuf, &message, alias);
-				imsg_compose(ibuf, IMSG_LKA_ALIAS_RESULT, 0, 0, -1,
+				imsg_compose(ibuf, IMSG_LKA_ALIAS, 0, 0, -1,
 				    &message, sizeof(struct message));
 			}
 
@@ -424,7 +425,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 
-		case IMSG_LKA_FORWARD_LOOKUP: {
+		case IMSG_LKA_FORWARD: {
 			struct message *messagep;
 			struct aliaseslist aliases;
 			struct alias *alias;
@@ -444,9 +445,10 @@ lka_dispatch_queue(int sig, short event, void *p)
 			TAILQ_INIT(&aliases);
 			if (! forwards_get(&aliases, messagep->recipient.pw_name)) {
 				messagep->recipient.flags |= F_NOFORWARD;
-				imsg_compose(ibuf, IMSG_LKA_FORWARD_LOOKUP, 0, 0, -1, messagep, sizeof(struct message));
-				imsg_compose(ibuf, IMSG_QUEUE_REMOVE_SUBMISSION, 0, 0, -1, messagep,
-				    sizeof(struct message));
+				imsg_compose(ibuf, IMSG_LKA_FORWARD, 0, 0, -1,
+				    messagep, sizeof(struct message));
+				imsg_compose(ibuf, IMSG_QUEUE_REMOVE_SUBMISSION,
+				    0, 0, -1, messagep, sizeof(struct message));
 				break;
 			}
 
@@ -457,10 +459,12 @@ lka_dispatch_queue(int sig, short event, void *p)
 
 					message.recipient.flags |= F_FORWARDED;
 				}
-				imsg_compose(ibuf, IMSG_LKA_FORWARD_LOOKUP, 0, 0, -1, &message, sizeof(struct message));
+				imsg_compose(ibuf, IMSG_LKA_FORWARD, 0, 0, -1,
+				    &message, sizeof(struct message));
 			}
 
-			imsg_compose(ibuf, IMSG_QUEUE_REMOVE_SUBMISSION, 0, 0, -1, messagep, sizeof(struct message));
+			imsg_compose(ibuf, IMSG_QUEUE_REMOVE_SUBMISSION, 0, 0,
+			    -1, messagep, sizeof(struct message));
 
 			while ((alias = TAILQ_FIRST(&aliases))) {
 				TAILQ_REMOVE(&aliases, alias, entry);
@@ -516,7 +520,7 @@ lka_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX_LOOKUP: {
+		case IMSG_LKA_MX: {
 			struct batch *batchp;
 			struct addrinfo hints, *res, *resp;
 			char **mx = NULL;
@@ -584,7 +588,8 @@ lka_dispatch_runner(int sig, short event, void *p)
 			batchp->getaddrinfo_error = 0;
 			if (j == 0)
 				batchp->getaddrinfo_error = error;
-			imsg_compose(ibuf, IMSG_LKA_MX_LOOKUP, 0, 0, -1, batchp, sizeof(*batchp));
+			imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, batchp,
+			    sizeof(*batchp));
 
 			if (mx != lmx)
 				free(mx);

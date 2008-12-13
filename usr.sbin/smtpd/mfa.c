@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.3 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -138,7 +138,7 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_RPATH_SUBMIT: {
+		case IMSG_MFA_MAIL: {
 			struct message		*m;
 			struct submit_status	 ss;
 
@@ -148,11 +148,11 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			ss.code = 250;
 			ss.u.path = m->sender;
 
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_LOOKUP_MAIL, 0, 0, -1,
-				&ss, sizeof(ss));
+			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
+			    0, -1, &ss, sizeof(ss));
 			break;
 		}
-		case IMSG_MFA_RCPT_SUBMIT: {
+		case IMSG_MFA_RCPT: {
 			struct message_recipient *mr;
 			struct submit_status	 ss;
 
@@ -163,12 +163,10 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			ss.u.path = mr->path;
 			ss.ss = mr->ss;
 
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_LOOKUP_RCPT, 0, 0, -1,
-				&ss, sizeof(ss));
+			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0,
+			    0, -1, &ss, sizeof(ss));
 			break;
 		}
-		case IMSG_MFA_DATA_SUBMIT:
-			break;
 		default:
 			log_debug("mfa_dispatch_smtp: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -215,20 +213,20 @@ mfa_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_LOOKUP_MAIL: {
+		case IMSG_LKA_MAIL: {
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RPATH_SUBMIT, 0, 0, -1,
-			    ss, sizeof(*ss));
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL,
+			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
-		case IMSG_MFA_LOOKUP_RCPT: {
+		case IMSG_LKA_RCPT: {
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT_SUBMIT, 0, 0, -1,
-			    ss, sizeof(*ss));
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
+			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
 		default:

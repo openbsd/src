@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.26 2008/12/07 15:41:16 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.27 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -347,7 +347,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	log_debug("session_mail_handler: sending notification to mfa");
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RPATH_SUBMIT,
+	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_MAIL,
 	    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
@@ -386,7 +386,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	s->s_state = S_RCPTREQUEST;
 	mr.ss = s->s_ss;
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT_SUBMIT,
+	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT,
 	    0, 0, -1, &mr, sizeof(mr));
 	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
@@ -645,7 +645,7 @@ session_init(struct listener *l, struct session *s)
 
 	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOSTNAME_LOOKUP,
+	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST,
 	    0, 0, -1, s, sizeof(struct session));
 
 	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,

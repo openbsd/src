@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.8 2008/12/03 17:58:00 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.9 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -228,8 +228,8 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_RCPT_SUBMIT:
-		case IMSG_MFA_RPATH_SUBMIT: {
+		case IMSG_MFA_MAIL:
+		case IMSG_MFA_RCPT: {
 			struct submit_status	*ss;
 			struct session		*s;
 			struct session		 key;
@@ -294,7 +294,7 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SMTP_HOSTNAME_ANSWER: {
+		case IMSG_LKA_HOST: {
 			struct session		 key;
 			struct session		*s;
 			struct session		*ss;
@@ -358,7 +358,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SMTP_MESSAGE_ID: {
+		case IMSG_QUEUE_CREATE_MESSAGE: {
 			struct submit_status	*ss;
 			struct session		*s;
 			struct session		 key;
@@ -379,7 +379,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			session_pickup(s, ss);
 			break;
 		}
-		case IMSG_SMTP_MESSAGE_FILE: {
+		case IMSG_QUEUE_MESSAGE_FILE: {
 			struct submit_status	*ss;
 			struct session		*s;
 			struct session		 key;
@@ -410,7 +410,8 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			break;
 		}
-		case IMSG_SMTP_SUBMIT_ACK: {
+		case IMSG_QUEUE_SUBMIT_ENVELOPE:
+		case IMSG_QUEUE_COMMIT_MESSAGE: {
 			struct submit_status	*ss;
 			struct session		*s;
 			struct session		 key;

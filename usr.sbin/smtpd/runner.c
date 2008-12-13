@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.6 2008/12/11 22:59:14 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.7 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -309,7 +309,7 @@ runner_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX_LOOKUP: {
+		case IMSG_LKA_MX: {
 			runner_batch_resolved(env, imsg.data);
 			break;
 		}
@@ -718,7 +718,7 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	else if (batchp->type & T_MTA_BATCH)
 		proctype = PROC_MTA;
 
-	imsg_compose(env->sc_ibufs[proctype], IMSG_CREATE_BATCH, 0, 0, -1,
+	imsg_compose(env->sc_ibufs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
 	    batchp, sizeof (struct batch));
 
 	while ((messagep = TAILQ_FIRST(&batchp->messages))) {
@@ -827,8 +827,8 @@ batch_record(struct smtpd *env, struct message *messagep)
 		}
 		else {
 			batchp->type |= T_MTA_BATCH;
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX_LOOKUP, 0, 0, -1,
-			    batchp, sizeof(struct batch));
+			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX,
+			    0, 0, -1, batchp, sizeof(struct batch));
 		}
 	}
 

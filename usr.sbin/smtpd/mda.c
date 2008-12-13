@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.4 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.5 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -264,7 +264,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_CREATE_BATCH: {
+		case IMSG_BATCH_CREATE: {
 			struct batch	*batchp;
 
 			batchp = calloc(1, sizeof (struct batch));

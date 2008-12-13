@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.24 2008/12/11 23:19:00 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.25 2008/12/13 23:19:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -190,7 +190,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			if (! queue_create_incoming_layout(ss.u.msgid))
 				ss.code = 421;
 
-			imsg_compose(ibuf, IMSG_SMTP_MESSAGE_ID, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
 			    &ss, sizeof(ss));
 			break;
 		}
@@ -221,12 +221,12 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			/* Write to disk */
 			if (! queue_record_incoming_envelope(messagep)) {
 				ss.code = 421;
-				imsg_compose(ibuf, IMSG_SMTP_SUBMIT_ACK, 0, 0, -1,
-				    &ss, sizeof(ss));
+				imsg_compose(ibuf, IMSG_QUEUE_SUBMIT_ENVELOPE,
+				    0, 0, -1, &ss, sizeof(ss));
 				break;
 			}
 
-			imsg_compose(ibuf, IMSG_SMTP_SUBMIT_ACK, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
 			    &ss, sizeof(ss));
 
 			if (messagep->type & T_MTA_MESSAGE) {
@@ -235,17 +235,19 @@ queue_dispatch_smtp(int sig, short event, void *p)
 
 			if ((messagep->recipient.flags & (F_ALIAS|F_VIRTUAL)) == 0) {
 				/* not an alias, perform ~/.forward resolution */
-				imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_FORWARD_LOOKUP, 0, 0, -1,
-				    messagep, sizeof(struct message));
+				imsg_compose(env->sc_ibufs[PROC_LKA],
+				    IMSG_LKA_FORWARD, 0, 0, -1, messagep,
+				    sizeof(struct message));
 				break;
 			}
 
 			/* Recipient is an alias, proceed to resolving it.
-			 * ~/.forward will be handled by the IMSG_LKA_ALIAS_RESULT
+			 * ~/.forward will be handled by the IMSG_LKA_ALIAS
 			 * dispatch case.
 			 */
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_ALIAS_LOOKUP, 0, 0, -1,
-			    messagep, sizeof (struct message));
+			imsg_compose(env->sc_ibufs[PROC_LKA],
+			    IMSG_LKA_ALIAS, 0, 0, -1, messagep,
+			    sizeof (struct message));
 
 			break;
 		}
@@ -259,7 +261,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			if (! queue_commit_incoming_message(messagep))
 				ss.code = 421;
 
-			imsg_compose(ibuf, IMSG_SMTP_SUBMIT_ACK, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
 			    &ss, sizeof(ss));
 
 			break;
@@ -276,7 +278,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			if (fd == -1)
 				ss.code = 421;
 
-			imsg_compose(ibuf, IMSG_SMTP_MESSAGE_FILE, 0, 0, fd,
+			imsg_compose(ibuf, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
 			    &ss, sizeof(ss));
 			break;
 		}
@@ -506,7 +508,7 @@ queue_dispatch_lka(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 
-		case IMSG_LKA_ALIAS_RESULT: {
+		case IMSG_LKA_ALIAS: {
 			struct message *messagep;
 
 			messagep = imsg.data;
@@ -515,13 +517,13 @@ queue_dispatch_lka(int sig, short event, void *p)
 			queue_record_incoming_envelope(messagep);
 
 			if (messagep->type & T_MDA_MESSAGE) {
-				imsg_compose(ibuf, IMSG_LKA_FORWARD_LOOKUP, 0, 0, -1,
+				imsg_compose(ibuf, IMSG_LKA_FORWARD, 0, 0, -1,
 				    messagep, sizeof(struct message));
 			}
 			break;
 		}
 
-		case IMSG_LKA_FORWARD_LOOKUP: {
+		case IMSG_LKA_FORWARD: {
 			struct message *messagep;
 
 			messagep = (struct message *)imsg.data;
