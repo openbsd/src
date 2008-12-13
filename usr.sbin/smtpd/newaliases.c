@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -40,12 +39,11 @@
 
 extern char *__progname;
 
-static int usage(void);
-int parse_aliases(const char *);
-int parse_entry(char *, size_t, size_t);
+__dead void	usage(void);
+int		parse_aliases(const char *);
+int		parse_entry(char *, size_t, size_t);
 
 DB *db;
-static int dflag;
 
 int
 main(int argc, char *argv[])
@@ -54,21 +52,8 @@ main(int argc, char *argv[])
 	char pathname[MAXPATHLEN];
 	char dbname[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "dh")) != -1) {
-		switch (ch) {
-		case 'd':
-			dflag = 1;
-			break;
-		case 'h':
-		default:
-			return usage();
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc != 0)
-		return usage();
+	if (argc != 1)
+		usage();
 
 	bzero(pathname, MAXPATHLEN);
 	snprintf(pathname, MAXPATHLEN, "/etc/mail/aliases.XXXXX");
@@ -102,7 +87,7 @@ main(int argc, char *argv[])
 	if (rmdir(pathname) == -1)
 		err(1, "rmdir");
 
-	return EX_OK;
+	return 0;
 bad:
 	if (dbname[0] != '\0')
 		if (unlink(dbname) == -1)
@@ -110,13 +95,6 @@ bad:
 	if (rmdir(pathname) == -1)
 		err(1, "rmdir: %s", pathname);
 	return 1;
-}
-
-static int
-usage(void)
-{
-	fprintf(stderr, "usage: %s filename\n", __progname);
-	return EX_USAGE;
 }
 
 int
@@ -231,4 +209,11 @@ parse_entry(char *line, size_t len, size_t lineno)
 bad:
 	warnx("line %zd: invalid entry: %s", lineno, line);
 	return 0;
+}
+
+void
+usage(void)
+{
+	fprintf(stderr, "usage: %s\n", __progname);
+	exit(1);
 }
