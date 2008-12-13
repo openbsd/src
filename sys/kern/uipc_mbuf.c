@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.109 2008/12/11 16:45:45 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.110 2008/12/13 00:18:46 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ m_cldrop(struct ifnet *ifp, int pi)
 		liveticks = ticks;
 		TAILQ_FOREACH(aifp, &ifnet, if_list) {
 			mclp = aifp->if_data.ifi_mclpool;
-			for (i = 0; i < nitems(mclp); i++)
+			for (i = 0; i < nitems(aifp->if_data.ifi_mclpool); i++)
 				mclp[i].mcl_hwm =
 				    max(mclp[i].mcl_hwm / 2,mclp[i].mcl_lwm);
 		}
