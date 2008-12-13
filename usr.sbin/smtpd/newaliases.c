@@ -124,42 +124,44 @@ int
 parse_entry(char *line, size_t len, size_t lineno)
 {
 	char *name;
-	char *delim;
 	char *rcpt;
+	char *endp;
 	char *subrcpt;
 	DBT key;
 	DBT val;
 
 	name = line;
-	while (*name && isspace(*name))
+	rcpt = strchr(line, ':');
+	if (rcpt == NULL)
+		goto bad;
+	*rcpt++ = '\0';
+
+	/* name: strip initial whitespace. */
+	while (isspace(*name))
 		++name;
-
-	rcpt = delim = strchr(name, ':');
-	if (name == rcpt)
-		goto bad;
-	*delim-- = 0;
-	rcpt++;
-	while (isspace(*delim))
-		*delim-- = '\0';
-	rcpt++;
-	while (*rcpt && isspace(*rcpt))
-		++rcpt;
-	if (*rcpt == '\0')
+	if (*name == '\0')
 		goto bad;
 
-	/* At this point, name points to nul-terminate name */
+	/* name: strip trailing whitespace. */
+	endp = name + strlen(name) - 1;
+	while (name < endp && isspace(*endp))
+		*endp-- = '\0';
+
+	/* At this point name and rcpt are non-zero nul-terminated strings. */
 	while ((subrcpt = strsep(&rcpt, ",")) != NULL) {
 		struct alias	 alias;
 		void		*p;
 
-		while (*subrcpt && isspace(*subrcpt))
+		/* subrcpt: strip initial whitespace. */
+		while (isspace(*subrcpt))
 			++subrcpt;
 		if (*subrcpt == '\0')
-			continue;
-		delim = subrcpt + strlen(subrcpt);
-		delim--;
-		while (isspace(*delim))
-			*delim-- = '\0';
+			goto bad;
+
+		/* subrcpt: strip trailing whitespace. */
+		endp = subrcpt + strlen(subrcpt) - 1;
+		while (subrcpt < endp && isspace(*endp))
+			*endp-- = '\0';
 
 		if (! alias_parse(&alias, subrcpt))
 			goto bad;
@@ -195,7 +197,8 @@ parse_entry(char *line, size_t len, size_t lineno)
 	return 1;
 
 bad:
-	warnx("line %zd: invalid entry: %s", lineno, line);
+	/* The actual line is not printed; it may be mangled by above code. */
+	warnx("%s:%zd: invalid entry", PATH_ALIASES, lineno);
 	return 0;
 }
 
