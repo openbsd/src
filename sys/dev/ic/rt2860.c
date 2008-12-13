@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.22 2008/12/12 21:18:36 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.23 2008/12/13 12:07:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1316,6 +1316,7 @@ rt2860_intr(void *arg)
 
 	if (r & RT2860_MAC_INT_0) {	/* TBTT */
 		struct ieee80211com *ic = &sc->sc_ic;
+
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS)
@@ -2134,35 +2135,38 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	} else
 		RAL_WRITE_REGION_1(sc, base, k->k_key, k->k_len);
 
-	/* set initial packet number in IV+EIV */
-	if (k->k_cipher == IEEE80211_CIPHER_WEP40 ||
-	    k->k_cipher == IEEE80211_CIPHER_WEP104) {
-		uint32_t val = arc4random();
-		/* skip weak IVs from Fluhrer/Mantin/Shamir */
-		if (val >= 0x03ff00 && (val & 0xf8ff00) == 0x00ff00)
-			val += 0x000100;
-		iv[0] = val;
-		iv[1] = val >> 8;
-		iv[2] = val >> 16;
-		iv[3] = k->k_id << 6;
-		iv[4] = iv[5] = iv[6] = iv[7] = 0;
-	} else {
-		if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
-			iv[0] = k->k_tsc >> 8;
-			iv[1] = (iv[0] | 0x20) & 0x7f;
-			iv[2] = k->k_tsc;
-		} else /* CCMP */ {
-			iv[0] = k->k_tsc;
-			iv[1] = k->k_tsc >> 8;
-			iv[2] = 0;
+	if (!(k->k_flags & IEEE80211_KEY_GROUP) ||
+	    (k->k_flags & IEEE80211_KEY_TX)) {
+		/* set initial packet number in IV+EIV */
+		if (k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+		    k->k_cipher == IEEE80211_CIPHER_WEP104) {
+			uint32_t val = arc4random();
+			/* skip weak IVs from Fluhrer/Mantin/Shamir */
+			if (val >= 0x03ff00 && (val & 0xf8ff00) == 0x00ff00)
+				val += 0x000100;
+			iv[0] = val;
+			iv[1] = val >> 8;
+			iv[2] = val >> 16;
+			iv[3] = k->k_id << 6;
+			iv[4] = iv[5] = iv[6] = iv[7] = 0;
+		} else {
+			if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
+				iv[0] = k->k_tsc >> 8;
+				iv[1] = (iv[0] | 0x20) & 0x7f;
+				iv[2] = k->k_tsc;
+			} else /* CCMP */ {
+				iv[0] = k->k_tsc;
+				iv[1] = k->k_tsc >> 8;
+				iv[2] = 0;
+			}
+			iv[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
+			iv[4] = k->k_tsc >> 16;
+			iv[5] = k->k_tsc >> 24;
+			iv[6] = k->k_tsc >> 32;
+			iv[7] = k->k_tsc >> 40;
 		}
-		iv[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
-		iv[4] = k->k_tsc >> 16;
-		iv[5] = k->k_tsc >> 24;
-		iv[6] = k->k_tsc >> 32;
-		iv[7] = k->k_tsc >> 40;
+		RAL_WRITE_REGION_1(sc, RT2860_IVEIV(wcid), iv, 8);
 	}
-	RAL_WRITE_REGION_1(sc, RT2860_IVEIV(wcid), iv, 8);
 
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
 		/* install group key */
@@ -2675,6 +2679,19 @@ rt2860_init(struct ifnet *ifp)
 		return error;
 	}
 
+	/* clear RX WCID search table */
+	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(0), 0, 512);
+	/* clear pairwise key table */
+	RAL_SET_REGION_4(sc, RT2860_PKEY(0), 0, 2048);
+	/* clear IV/EIV table */
+	RAL_SET_REGION_4(sc, RT2860_IVEIV(0), 0, 512);
+	/* clear WCID attribute table */
+	RAL_SET_REGION_4(sc, RT2860_WCID_ATTR(0), 0, 256);
+	/* clear shared key table */
+	RAL_SET_REGION_4(sc, RT2860_SKEY(0, 0), 0, 8 * 32);
+	/* clear shared key mode */
+	RAL_SET_REGION_4(sc, RT2860_SKEY_MODE_0_7, 0, 4);
+
 	/* init Tx rings (4 EDCAs + HCCA + Mgt) */
 	for (qid = 0; qid < 6; qid++) {
 		RAL_WRITE(sc, RT2860_TX_BASE_PTR(qid), sc->txq[qid].paddr);
@@ -2832,19 +2849,6 @@ rt2860_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
-
-	/* clear RX WCID search table */
-	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(0), 0, 512);
-	/* clear pairwise key table */
-	RAL_SET_REGION_4(sc, RT2860_PKEY(0), 0, 2048);
-	/* clear IV/EIV table */
-	RAL_SET_REGION_4(sc, RT2860_IVEIV(0), 0, 512);
-	/* clear WCID attribute table */
-	RAL_SET_REGION_4(sc, RT2860_WCID_ATTR(0), 0, 256);
-	/* clear shared key table */
-	RAL_SET_REGION_4(sc, RT2860_SKEY(0, 0), 0, 8 * 32);
-	/* clear shared key mode */
-	RAL_SET_REGION_4(sc, RT2860_SKEY_MODE_0_7, 0, 4);
 
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2860_INT_MASK, 0);
