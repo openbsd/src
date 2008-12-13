@@ -66,10 +66,8 @@ main(int argc, char *argv[])
 		goto bad;
 	}
 
-	if (! parse_aliases(PATH_ALIASES)) {
-		warnx("syntax error in aliases file");
+	if (! parse_aliases(PATH_ALIASES))
 		goto bad;
-	}
 
 	if (db->close(db) == -1) {
 		warn("dbclose: %s", dbname);
@@ -102,14 +100,19 @@ parse_aliases(const char *filename)
 	char delim[] = { '\\', '\\', '#' };
 
 	fp = fopen(filename, "r");
-	if (fp == NULL)
-		errx(1, "failed to open aliases file");
-
+	if (fp == NULL) {
+		warn("%s", filename);
+		return 0;
+	}
 
 	while ((line = fparseln(fp, &len, &lineno, delim, 0)) != NULL) {
 		if (len == 0)
 			continue;
-		parse_entry(line, len, lineno);
+		if (! parse_entry(line, len, lineno)) {
+			free(line);
+			fclose(fp);
+			return 0;
+		}
 		free(line);
 	}
 
@@ -160,8 +163,10 @@ parse_entry(char *line, size_t len, size_t lineno)
 		key.data = name;
 		key.size = strlen(name) + 1;
 
-		if ((ret = db->get(db, &key, &val, 0)) == -1)
-			errx(1, "db->get()");
+		if ((ret = db->get(db, &key, &val, 0)) == -1) {
+			warn("dbget");
+			return 0;
+		}
 
 		if (ret == 1) {
 			val.data = NULL;
@@ -175,23 +180,29 @@ parse_entry(char *line, size_t len, size_t lineno)
 			val.size = sizeof(struct alias);
 			val.data = &alias;
 
-			if ((ret = db->put(db, &key, &val, 0)) == -1)
-				errx(1, "db->get()");
+			if ((ret = db->put(db, &key, &val, 0)) == -1) {
+				warn("dbput");
+				return 0;
+			}
 		}
 		else {
 			void *p;
 
 			p = calloc(val.size + sizeof(alias), 1);
-			if (p == NULL)
-				errx(1, "calloc: memory exhausted");
+			if (p == NULL) {
+				warn("calloc");
+				return 0;
+			}
 			memcpy(p, val.data, val.size);
 			memcpy((u_int8_t *)p + val.size, &alias, sizeof(alias));
 
 			val.data = p;
 			val.size += sizeof(alias);
 
-			if ((ret = db->put(db, &key, &val, 0)) == -1)
-				errx(1, "db->get()");
+			if ((ret = db->put(db, &key, &val, 0)) == -1) {
+				warn("dbput");
+				return 0;
+			}
 
 			free(p);
 		}
