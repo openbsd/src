@@ -48,24 +48,21 @@ DB *db;
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	char pathname[MAXPATHLEN];
 	char dbname[MAXPATHLEN];
+	int ch;
 
 	if (argc != 1)
 		usage();
 
-	bzero(pathname, MAXPATHLEN);
-	snprintf(pathname, MAXPATHLEN, "/etc/mail/aliases.XXXXX");
-	if (mkdtemp(pathname) == NULL)
-		errx(1, "failed to create temporary directory");
+	if (strlcpy(dbname, PATH_ALIASESDB ".XXXXXXXXXXX", MAXPATHLEN)
+	    >= MAXPATHLEN)
+		errx(1, "path truncation");
+	if (mkstemp(dbname) == -1)
+		err(1, "mkstemp");
 
-	bzero(dbname, MAXPATHLEN);
-	snprintf(dbname, MAXPATHLEN, "%s/aliases.db", pathname);
-	db = dbopen(dbname, O_CREAT|O_EXLOCK|O_RDWR|O_SYNC, 0644, DB_HASH,
-		NULL);
+	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, DB_HASH, NULL);
 	if (db == NULL) {
-		warn("dbopen");
+		warn("dbopen: %s", dbname);
 		goto bad;
 	}
 
@@ -74,26 +71,24 @@ main(int argc, char *argv[])
 		goto bad;
 	}
 
-	db->close(db);
+	if (db->close(db) == -1) {
+		warn("dbclose: %s", dbname);
+		goto bad;
+	}
+
+	if (chmod(dbname, 0644) == -1) {
+		warn("chmod: %s", dbname);
+		goto bad;
+	}
 
 	if (rename(dbname, PATH_ALIASESDB) == -1) {
 		warn("rename");
 		goto bad;
 	}
 
-	if (chmod(PATH_ALIASESDB, 0644) == -1)
-		err(1, "chmod");
-
-	if (rmdir(pathname) == -1)
-		err(1, "rmdir");
-
 	return 0;
 bad:
-	if (dbname[0] != '\0')
-		if (unlink(dbname) == -1)
-			err(1, "unlink: %s", dbname);
-	if (rmdir(pathname) == -1)
-		err(1, "rmdir: %s", pathname);
+	unlink(dbname);
 	return 1;
 }
 
