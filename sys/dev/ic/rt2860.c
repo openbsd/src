@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.23 2008/12/13 12:07:40 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.24 2008/12/13 14:35:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -94,9 +94,8 @@ void		rt2860_free_rx_ring(struct rt2860_softc *,
 		    struct rt2860_rx_ring *);
 struct		ieee80211_node *rt2860_node_alloc(struct ieee80211com *);
 int		rt2860_media_change(struct ifnet *);
-void		rt2860_next_scan(void *);
 void		rt2860_iter_func(void *, struct ieee80211_node *);
-void		rt2860_updatestats(void *);
+void		rt2860_updatestats(struct rt2860_softc *);
 void		rt2860_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 int		rt2860_newstate(struct ieee80211com *, enum ieee80211_state,
@@ -105,6 +104,7 @@ uint16_t	rt2860_eeprom_read(struct rt2860_softc *, uint8_t);
 void		rt2860_drain_stats_fifo(struct rt2860_softc *);
 void		rt2860_tx_intr(struct rt2860_softc *, int);
 void		rt2860_rx_intr(struct rt2860_softc *);
+void		rt2860_gp_intr(struct rt2860_softc *);
 int		rt2860_tx(struct rt2860_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		rt2860_start(struct ifnet *);
@@ -121,6 +121,7 @@ void		rt2860_select_chan_group(struct rt2860_softc *, int);
 void		rt2860_set_chan(struct rt2860_softc *,
 		    struct ieee80211_channel *);
 void		rt2860_set_leds(struct rt2860_softc *, uint16_t);
+void		rt2860_set_gp_timer(struct rt2860_softc *, int);
 void		rt2860_set_bssid(struct rt2860_softc *, const uint8_t *);
 void		rt2860_set_macaddr(struct rt2860_softc *, const uint8_t *);
 void		rt2860_updateslot(struct ieee80211com *);
@@ -177,8 +178,6 @@ rt2860_attach(void *xsc, int id)
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
-	timeout_set(&sc->amrr_to, rt2860_updatestats, sc);
-	timeout_set(&sc->scan_to, rt2860_next_scan, sc);
 
 	/* wait for NIC to initialize */
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -341,9 +340,6 @@ rt2860_detach(void *xsc)
 	struct rt2860_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int qid;
-
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->amrr_to);
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
@@ -728,24 +724,6 @@ rt2860_media_change(struct ifnet *ifp)
 	return 0;
 }
 
-/*
- * This function is called periodically (every 200ms) during scanning to
- * switch from one channel to another.
- */
-void
-rt2860_next_scan(void *arg)
-{
-	struct rt2860_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	int s;
-
-	s = splnet();
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		ieee80211_next_scan(ifp);
-	splx(s);
-}
-
 void
 rt2860_iter_func(void *arg, struct ieee80211_node *ni)
 {
@@ -757,11 +735,9 @@ rt2860_iter_func(void *arg, struct ieee80211_node *ni)
 }
 
 void
-rt2860_updatestats(void *arg)
+rt2860_updatestats(struct rt2860_softc *sc)
 {
-	struct rt2860_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int s;
 
 #ifndef IEEE80211_STA_ONLY
 	/*
@@ -783,17 +759,12 @@ rt2860_updatestats(void *arg)
 		}
 	}
 #endif
-
-	s = splnet();
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		rt2860_iter_func(sc, ic->ic_bss);
 #ifndef IEEE80211_STA_ONLY
 	else
-		ieee80211_iterate_nodes(ic, rt2860_iter_func, arg);
+		ieee80211_iterate_nodes(ic, rt2860_iter_func, sc);
 #endif
-	splx(s);
-
-	timeout_add(&sc->amrr_to, hz / 2);
 }
 
 void
@@ -834,36 +805,12 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 			    rt2860_rates[rn->ridx[j]].phy)
 				break;
 		}
-		if (j < 0) {
-			/* no basic rate found, use mandatory one */
-			/* XXX ugly, need to be reworked! */
-			switch (rate) {
-			case 4:
-			case 11:
-			case 22:
-				rn->ctl_ridx[i] =
-				    (ic->ic_curmode == IEEE80211_MODE_11B) ?
-				    0 : rn->ridx[i];
-				break;
-			case 12:
-			case 18:
-				rn->ctl_ridx[i] = 4;
-				break;
-			case 24:
-			case 36:
-				rn->ctl_ridx[i] = 6;
-				break;
-			case 48:
-			case 72:
-			case 96:
-			case 108:
-				rn->ctl_ridx[i] = 8;
-				break;
-			default:
-				rn->ctl_ridx[i] = 0;
-			}
-		} else
+		if (j >= 0) {
 			rn->ctl_ridx[i] = rn->ridx[j];
+		} else {
+			/* no basic rate found, use mandatory one */
+			rn->ctl_ridx[i] = rt2860_rates[ridx].ctl_ridx;
+		}
 		DPRINTF(("rate=0x%02x ridx=%d ctl_ridx=%d\n",
 		    rs->rs_rates[i], rn->ridx[i], rn->ctl_ridx[i]));
 	}
@@ -877,8 +824,6 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	uint32_t tmp;
 
 	ostate = ic->ic_state;
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->amrr_to);
 
 	if (ostate == IEEE80211_S_RUN) {
 		/* turn link LED off */
@@ -894,19 +839,23 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    tmp & ~(RT2860_BCN_TX_EN | RT2860_TSF_TIMER_EN |
 			    RT2860_TBTT_TIMER_EN));
 		}
+		rt2860_set_gp_timer(sc, 0);
 		break;
 
 	case IEEE80211_S_SCAN:
 		rt2860_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		if (ostate != IEEE80211_S_SCAN)
+			rt2860_set_gp_timer(sc, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
+		rt2860_set_gp_timer(sc, 0);
 		rt2860_set_chan(sc, ic->ic_bss->ni_chan);
 		break;
 
 	case IEEE80211_S_RUN:
+		rt2860_set_gp_timer(sc, 0);
 		rt2860_set_chan(sc, ic->ic_bss->ni_chan);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
@@ -930,7 +879,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			rt2860_enable_tsf_sync(sc);
-			timeout_add(&sc->amrr_to, hz / 2);
+			rt2860_set_gp_timer(sc, 500);
 		}
 
 		/* turn link LED on */
@@ -1269,6 +1218,19 @@ skip:		rxd->sdl0 &= ~htole16(RT2860_RX_DDONE);
 	    (sc->rxq.cur - 1) % RT2860_RX_RING_COUNT);
 }
 
+void
+rt2860_gp_intr(struct rt2860_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	DPRINTFN(2, ("GP timeout state=%d\n", ic->ic_state));
+
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ieee80211_next_scan(&ic->ic_if);
+	else if (ic->ic_state == IEEE80211_S_RUN)
+		rt2860_updatestats(sc);
+}
+
 int
 rt2860_intr(void *arg)
 {
@@ -1332,6 +1294,9 @@ rt2860_intr(void *arg)
 	if (r & RT2860_MAC_INT_3)
 		/* TBD wakeup */;
 
+	if (r & RT2860_MAC_INT_4)
+		rt2860_gp_intr(sc);
+
 	return 1;
 }
 
@@ -1372,10 +1337,12 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* pickup a rate index */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA) {
-		ctl_ridx = ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+		ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 		    RT2860_RIDX_OFDM6 : RT2860_RIDX_CCK1;
+		ctl_ridx = rt2860_rates[ridx].ctl_ridx;
 	} else if (ic->ic_fixed_rate != -1) {
-		ctl_ridx = ridx = sc->fixed_ridx;	/* XXX ctl_ridx */
+		ridx = sc->fixed_ridx;
+		ctl_ridx = rt2860_rates[ridx].ctl_ridx;
 	} else {
 		ridx = rn->ridx[ni->ni_txrate];
 		ctl_ridx = rn->ctl_ridx[ni->ni_txrate];
@@ -1992,6 +1959,32 @@ rt2860_set_leds(struct rt2860_softc *sc, uint16_t which)
 {
 	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LEDS,
 	    which | (sc->leds & 0x7f));
+}
+
+/*
+ * Hardware has a general-purpose programmable timer interrupt that can
+ * periodically raise MAC_INT_4.
+ */
+void
+rt2860_set_gp_timer(struct rt2860_softc *sc, int ms)
+{
+	uint32_t tmp;
+
+	/* disable GP timer before reprogramming it */
+	tmp = RAL_READ(sc, RT2860_INT_TIMER_EN);
+	RAL_WRITE(sc, RT2860_INT_TIMER_EN, tmp & ~RT2860_GP_TIMER_EN);
+
+	if (ms == 0)
+		return;
+
+	tmp = RAL_READ(sc, RT2860_INT_TIMER_CFG);
+	ms *= 16;	/* Unit: 64us */
+	tmp = (tmp & 0xffff) | ms << RT2860_GP_TIMER_SHIFT;
+	RAL_WRITE(sc, RT2860_INT_TIMER_CFG, tmp);
+
+	/* enable GP timer */
+	tmp = RAL_READ(sc, RT2860_INT_TIMER_EN);
+	RAL_WRITE(sc, RT2860_INT_TIMER_EN, tmp  | RT2860_GP_TIMER_EN);
 }
 
 void
@@ -2852,6 +2845,9 @@ rt2860_stop(struct ifnet *ifp, int disable)
 
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2860_INT_MASK, 0);
+
+	/* disable GP timer */
+	rt2860_set_gp_timer(sc, 0);
 
 	/* disable Rx */
 	tmp = RAL_READ(sc, RT2860_MAC_SYS_CTRL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.10 2008/12/12 20:58:48 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.11 2008/12/13 14:35:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -793,21 +793,22 @@ static const struct rt2860_rate {
 	uint8_t		rate;
 	uint8_t		mcs;
 	enum		ieee80211_phytype phy;
+	uint8_t		ctl_ridx;
 	uint16_t	sp_ack_dur;
 	uint16_t	lp_ack_dur;
 } rt2860_rates[] = {
-	{   2, 0, IEEE80211_T_DS,   304, 304 },
-	{   4, 1, IEEE80211_T_DS,   248, 152 },
-	{  11, 2, IEEE80211_T_DS,   213, 117 },
-	{  22, 3, IEEE80211_T_DS,   203, 107 },
-	{  12, 0, IEEE80211_T_OFDM,  50,  50 },
-	{  18, 1, IEEE80211_T_OFDM,  42,  42 },
-	{  24, 2, IEEE80211_T_OFDM,  38,  38 },
-	{  36, 3, IEEE80211_T_OFDM,  34,  34 },
-	{  48, 4, IEEE80211_T_OFDM,  34,  34 },
-	{  72, 5, IEEE80211_T_OFDM,  30,  30 },
-	{  96, 6, IEEE80211_T_OFDM,  30,  30 },
-	{ 108, 7, IEEE80211_T_OFDM,  30,  30 }
+	{   2, 0, IEEE80211_T_DS,   0, 304, 304 },
+	{   4, 1, IEEE80211_T_DS,   1, 248, 152 },
+	{  11, 2, IEEE80211_T_DS,   2, 213, 117 },
+	{  22, 3, IEEE80211_T_DS,   3, 203, 107 },
+	{  12, 0, IEEE80211_T_OFDM, 4,  50,  50 },
+	{  18, 1, IEEE80211_T_OFDM, 4,  42,  42 },
+	{  24, 2, IEEE80211_T_OFDM, 6,  38,  38 },
+	{  36, 3, IEEE80211_T_OFDM, 6,  34,  34 },
+	{  48, 4, IEEE80211_T_OFDM, 8,  34,  34 },
+	{  72, 5, IEEE80211_T_OFDM, 8,  30,  30 },
+	{  96, 6, IEEE80211_T_OFDM, 8,  30,  30 },
+	{ 108, 7, IEEE80211_T_OFDM, 8,  30,  30 }
 };
 
 /*

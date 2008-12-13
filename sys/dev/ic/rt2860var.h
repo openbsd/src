@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.9 2008/12/12 20:58:48 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.10 2008/12/13 14:35:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -116,9 +116,6 @@ struct rt2860_softc {
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
-
-	struct timeout			scan_to;
-	struct timeout			amrr_to;
 
 	int				sc_flags;
 #define RT2860_ENABLED		(1 << 0)
