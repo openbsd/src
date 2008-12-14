@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.110 2008/12/13 00:18:46 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.111 2008/12/14 22:31:46 kettenis Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -278,6 +278,8 @@ m_clinitifp(struct ifnet *ifp)
 
 	/* Initialize high water marks for use of cluster pools */
 	for (i = 0; i < MCLPOOLS; i++) {
+		if (mclp[i].mcl_lwm == 0)
+			mclp[i].mcl_lwm = 2;
 		mclp[i].mcl_hwm = MAX(4, mclp[i].mcl_lwm);
 		mclp[i].mcl_size = mclsizes[i];
 	}
@@ -326,7 +328,7 @@ m_cldrop(struct ifnet *ifp, int pi)
 			mclp = aifp->if_data.ifi_mclpool;
 			for (i = 0; i < nitems(aifp->if_data.ifi_mclpool); i++)
 				mclp[i].mcl_hwm =
-				    max(mclp[i].mcl_hwm / 2,mclp[i].mcl_lwm);
+				    max(mclp[i].mcl_hwm / 2, mclp[i].mcl_lwm);
 		}
 	} else if (m_livelock && ticks - liveticks > 5)
 		m_livelock = 0;	/* Let the high water marks grow again */
