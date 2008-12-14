@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.1 2008/04/09 19:49:55 robert Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.2 2008/12/14 07:38:41 ray Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -394,7 +394,7 @@ struct v4l2_frmsizeenum {
 	union {			/* Frame size */
 		struct v4l2_frmsize_discrete discrete;
 		struct v4l2_frmsize_stepwise stepwise;
-	};
+	} size;
 
 	__u32           reserved[2];	/* Reserved space for future use */
 };
@@ -424,7 +424,7 @@ struct v4l2_frmivalenum {
 	union {			/* Frame interval */
 		struct v4l2_fract discrete;
 		struct v4l2_frmival_stepwise stepwise;
-	};
+	} interval;
 
 	__u32           reserved[2];	/* Reserved space for future use */
 };
@@ -873,7 +873,7 @@ struct v4l2_ext_control {
 		__s32           value;
 		__s64           value64;
 		void           *reserved;
-	};
+	} value;
 }               __attribute__((packed));
 
 struct v4l2_ext_controls {
@@ -1273,7 +1273,7 @@ struct v4l2_encoder_cmd {
 		struct {
 			__u32           data[8];
 		}               raw;
-	};
+	} raw;
 };
 
 #endif
