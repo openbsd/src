@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.28 2008/12/14 19:24:42 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.29 2008/12/14 19:27:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -868,16 +868,13 @@ queue_record_incoming_envelope(struct message *message)
 			return 0;
 		}
 
-		if (flock(fd, LOCK_EX) == -1)
-			fatal("queue_record_submission: flock");
-
 		fp = fdopen(fd, "w");
 		if (fp == NULL)
 			fatal("fdopen");
 
 		if (strlcpy(message->message_uid, message_uid, MAXPATHLEN)
 		    >= MAXPATHLEN)
-			fatal("queue_record_submission: strlcpy");
+			fatal("queue_record_incoming_envelope: strlcpy");
 
 		message->creation = time(NULL);
 
@@ -909,9 +906,6 @@ queue_update_incoming_envelope(struct message *messagep)
 
 	if ((fd = open(pathname, mode)) == -1)
 		fatal("queue_update_incoming_envelope: open");
-
-	if (flock(fd, LOCK_EX) == -1)
-		fatal("queue_update_incoming_envelope: flock");
 
 	fp = fdopen(fd, "w");
 	if (fp == NULL)
