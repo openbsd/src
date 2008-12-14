@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.62 2008/12/14 23:04:06 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.63 2008/12/14 23:08:52 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -977,7 +977,7 @@ trunk_enqueue(struct ifnet *ifp, struct mbuf *m)
 u_int32_t
 trunk_hashmbuf(struct mbuf *m, u_int32_t key)
 {
-	u_int16_t etype;
+	u_int16_t etype, ether_vtag;
 	u_int32_t p = 0;
 	u_int16_t *vlan, vlanbuf[2];
 	int off;
@@ -999,7 +999,10 @@ trunk_hashmbuf(struct mbuf *m, u_int32_t key)
 	p = hash32_buf(&eh->ether_dhost, ETHER_ADDR_LEN, p);
 
 	/* Special handling for encapsulating VLAN frames */
-	if (etype == ETHERTYPE_VLAN) {
+	if (m->m_flags & M_VLANTAG) {
+		ether_vtag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
+		p = hash32_buf(&ether_vtag, sizeof(ether_vtag), p);
+	} else if (etype == ETHERTYPE_VLAN) {
 		if ((vlan = (u_int16_t *)
 		    trunk_gethdr(m, off, EVL_ENCAPLEN, &vlanbuf)) == NULL)
 			return (p);
