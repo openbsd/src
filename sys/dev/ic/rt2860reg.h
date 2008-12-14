@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.12 2008/12/14 10:23:08 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.13 2008/12/14 18:41:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -282,7 +282,7 @@
 #define RT2860_NULL0_MODE	(1 << 15)
 #define RT2860_NULL1_MODE	(1 << 14)
 #define RT2860_RX_DROP_MODE	(1 << 13)
-#define RT2860_TX0Q_MANUAL	(1 << 12)	
+#define RT2860_TX0Q_MANUAL	(1 << 12)
 #define RT2860_TX1Q_MANUAL	(1 << 11)
 #define RT2860_TX2Q_MANUAL	(1 << 10)
 #define RT2860_RX0Q_MANUAL	(1 <<  9)
@@ -787,6 +787,7 @@ struct rt2860_rxwi {
 #define RT2860_EEPROM_BBP_BASE		0x78
 
 #define RT2860_RIDX_CCK1	 0
+#define RT2860_RIDX_CCK11	 3
 #define RT2860_RIDX_OFDM6	 4
 #define RT2860_RIDX_MAX		11
 static const struct rt2860_rate {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.25 2008/12/14 10:23:08 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.26 2008/12/14 18:41:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -418,8 +418,6 @@ rt2860_reset_tx_ring(struct rt2860_softc *sc, struct rt2860_tx_ring *ring)
 	int i;
 
 	for (i = 0; i < RT2860_TX_RING_COUNT; i++) {
-		ring->txd[i].sdl0 &= ~htole16(RT2860_TX_DDONE);
-
 		if ((data = ring->data[i]) == NULL)
 			continue;	/* nothing mapped in this slot */
 
@@ -433,9 +431,6 @@ rt2860_reset_tx_ring(struct rt2860_softc *sc, struct rt2860_tx_ring *ring)
 		SLIST_INSERT_HEAD(&sc->data_pool, data, next);
 		ring->data[i] = NULL;
 	}
-
-	bus_dmamap_sync(sc->sc_dmat, ring->map, 0, ring->map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
 
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
@@ -1025,7 +1020,6 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 
 	hw = RAL_READ(sc, RT2860_TX_DTX_IDX(qid));
 	while (ring->next != hw) {
-		struct rt2860_txd *txd = &ring->txd[ring->next];
 		struct rt2860_tx_data *data = ring->data[ring->next];
 
 		if (data != NULL) {
@@ -1042,13 +1036,6 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 
 			ifp->if_opackets++;
 		}
-
-		txd->sdl0 &= ~htole16(RT2860_TX_DDONE);
-
-		bus_dmamap_sync(sc->sc_dmat, ring->map,
-		    ring->next * sizeof (struct rt2860_txd),
-		    sizeof (struct rt2860_txd), BUS_DMASYNC_PREWRITE);
-
 		ring->queued--;
 		ring->next = (ring->next + 1) % RT2860_TX_RING_COUNT;
 	}
@@ -1392,7 +1379,8 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* setup TX Wireless Information */
 	txwi = data->txwi;
-	memset(txwi, 0, sizeof (struct rt2860_txwi));
+	txwi->flags = 0;
+	txwi->xflags = 0;
 	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
 	    RT2860_AID2WCID(ni->ni_associd) : 0xff;
 	txwi->len = htole16(m->m_pkthdr.len);
@@ -1446,7 +1434,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 #if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
+	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct rt2860_tx_radiotap_header *tap = &sc->sc_txtap;
 		struct mbuf mb;
 
@@ -1461,7 +1449,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m;
-		mb.m_nextpkt = NULL;   
+		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
@@ -1474,13 +1462,13 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT);
-	if (error != 0 && error != EFBIG) {
+	if (__predict_false(error != 0 && error != EFBIG)) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
 		m_freem(m);
 		return error;
 	}
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		/* determine how many TXDs are required */
 		ntxds = 1 + (data->map->dm_nsegs / 2);
 
@@ -1490,14 +1478,15 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			error = EFBIG;
 		}
 	}
-	if (error != 0) {	/* too many fragments, linearize */
+	if (__predict_false(error != 0)) {
+		/* too many fragments, linearize */
 		if (m_defrag(m, M_DONTWAIT) != 0) {
 			m_freem(m);
 			return ENOBUFS;
 		}
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
-		if (error != 0) {
+		if (__predict_false(error != 0)) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
 			m_freem(m);
@@ -2067,7 +2056,9 @@ rt2860_updateprot(struct ieee80211com *ic)
 
 	tmp = RT2860_RTSTH_EN | RT2860_PROT_NAV_SHORT | RT2860_TXOP_ALLOW_ALL;
 	/* setup protection frame rate (MCS code) */
-	tmp |= (ic->ic_curmode == IEEE80211_MODE_11A) ? 0 : 3;
+	tmp |= (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    rt2860_rates[RT2860_RIDX_OFDM6].mcs :
+	    rt2860_rates[RT2860_RIDX_CCK11].mcs;
 
 	/* CCK frames don't require protection */
 	RAL_WRITE(sc, RT2860_CCK_PROT_CFG, tmp);
@@ -2636,7 +2627,7 @@ rt2860_txrx_enable(struct rt2860_softc *sc)
 
 	DELAY(50);
 
-	tmp |= RT2860_TX_WB_DDONE | RT2860_RX_DMA_EN | RT2860_TX_DMA_EN |
+	tmp |= RT2860_RX_DMA_EN | RT2860_TX_DMA_EN |
 	    RT2860_WPDMA_BT_SIZE64 << RT2860_WPDMA_BT_SIZE_SHIFT;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
@@ -2681,7 +2672,7 @@ rt2860_init(struct ifnet *ifp)
 
 	tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
 	tmp &= 0xff0;
-	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp | RT2860_TX_WB_DDONE);
+	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
 	RAL_WRITE(sc, RT2860_WPDMA_RST_IDX, 0xffffffff);
 
@@ -2723,7 +2714,7 @@ rt2860_init(struct ifnet *ifp)
 		return ETIMEDOUT;
 	}
 	tmp &= 0xff0;
-	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp | RT2860_TX_WB_DDONE);
+	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
 	/* reset Rx ring and all 6 Tx rings */
 	RAL_WRITE(sc, RT2860_WPDMA_RST_IDX, 0x1003f);
@@ -2752,7 +2743,7 @@ rt2860_init(struct ifnet *ifp)
 		rt2860_stop(ifp, 1);
 		return ETIMEDOUT;
 	}
-	
+
 	/* clear Host to MCU mailbox */
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, 0);
 	RAL_WRITE(sc, RT2860_H2M_MAILBOX, 0);
@@ -2804,7 +2795,7 @@ rt2860_init(struct ifnet *ifp)
 		return ETIMEDOUT;
 	}
 	tmp &= 0xff0;
-	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp | RT2860_TX_WB_DDONE);
+	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
 	/* disable interrupts mitigation */
 	RAL_WRITE(sc, RT2860_DELAY_INT_CFG, 0);
