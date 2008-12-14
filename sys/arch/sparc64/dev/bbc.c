@@ -1,4 +1,4 @@
-/*	$OpenBSD: bbc.c,v 1.2 2007/08/21 19:01:38 kettenis Exp $	*/
+/*	$OpenBSD: bbc.c,v 1.3 2008/12/14 17:10:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -25,8 +25,15 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
+
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
+
+/* Agent ID */
+#define BBC_AID			0x00000
 
 /* Watchdog Action */
 #define BBC_WATCHDOG_ACTION	0x00004
@@ -34,10 +41,15 @@
 /* Perform system reset when watchdog timer expires. */
 #define	BBC_WATCHDOG_RESET	0x01
 
+/* Soft_XIR_GEN */
+#define BBC_SOFT_XIR_GEN	0x00007
+
 struct bbc_softc {
 	struct device		sc_dv;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	int			sc_aid;
 };
 
 int	bbc_match(struct device *, void *, void *);
@@ -50,6 +62,10 @@ struct cfattach bbc_ca = {
 struct cfdriver bbc_cd = {
 	NULL, "bbc", DV_DULL
 };
+
+#ifdef DDB
+void	bbc_xir(void *, int);
+#endif
 
 int
 bbc_match(struct device *parent, void *cf, void *aux)
@@ -88,7 +104,8 @@ bbc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
+	sc->sc_aid = bus_space_read_1(sc->sc_iot, sc->sc_ioh, BBC_AID);
+	printf(": AID 0x%02x\n", sc->sc_aid);
 
 	/*
 	 * Make sure we actually reset the system when the watchdog
@@ -96,4 +113,27 @@ bbc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    BBC_WATCHDOG_ACTION, BBC_WATCHDOG_RESET);
+
+#ifdef DDB
+	db_register_xir(bbc_xir, sc);
+#endif
 }
+
+#ifdef DDB
+void
+bbc_xir(void *arg, int cpu)
+{
+	struct bbc_softc *sc = arg;
+
+	/* Redirect a request to reset all processors to Processor 0. */
+	if (cpu == -1)
+		cpu = 0;
+
+	/* Check whether we're handling the requested processor. */
+	if ((cpu & ~0x7) != sc->sc_aid)
+		return;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    BBC_SOFT_XIR_GEN, 1 << (cpu & 0x7));
+}
+#endif

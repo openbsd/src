@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.26 2008/03/13 23:29:46 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.27 2008/12/14 17:10:44 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -227,6 +228,7 @@ void db_traptrace(db_expr_t, int, db_expr_t, char *);
 void db_dump_buf(db_expr_t, int, db_expr_t, char *);
 void db_dump_espcmd(db_expr_t, int, db_expr_t, char *);
 void db_watch(db_expr_t, int, db_expr_t, char *);
+void db_xir(db_expr_t, int, db_expr_t, char *);
 
 static void db_dump_pmap(struct pmap*);
 static void db_print_trace_entry(struct traptrace *, int);
@@ -1028,6 +1030,46 @@ db_watch(addr, have_addr, count, modif)
 	}
 }
 
+/*
+ * Provide a way to trigger an External Initiated Reset (XIR).  Some
+ * systems can target individual processors, others can only target
+ * all processors at once.
+ */
+
+struct xirhand {
+	void (*xh_fun)(void *, int);
+	void *xh_arg;
+	SIMPLEQ_ENTRY(xirhand) xh_list;
+};
+
+SIMPLEQ_HEAD(, xirhand) db_xh = SIMPLEQ_HEAD_INITIALIZER(db_xh);
+
+void
+db_xir(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	struct xirhand *xh;
+
+	if (!have_addr)
+		addr = -1;
+
+	SIMPLEQ_FOREACH(xh, &db_xh, xh_list) {
+		xh->xh_fun(xh->xh_arg, addr);
+	}
+}
+
+void
+db_register_xir(void (*fun)(void *, int), void *arg)
+{
+	struct xirhand *xh;
+
+	xh = malloc(sizeof(*xh), M_DEVBUF, M_NOWAIT);
+	if (xh == NULL)
+		panic("db_register_xir");
+	xh->xh_fun = fun;
+	xh->xh_arg = arg;
+	SIMPLEQ_INSERT_TAIL(&db_xh, xh, xh_list);
+}
+
 
 #include <uvm/uvm.h>
 
@@ -1080,6 +1122,7 @@ struct db_command db_machine_command_table[] = {
 #endif
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
+	{ "xir",	db_xir,		0,	0 },
 	{ (char *)0, }
 };
 
