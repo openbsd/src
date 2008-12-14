@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.24 2008/12/13 14:35:19 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.25 2008/12/14 10:23:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -101,9 +101,11 @@ void		rt2860_newassoc(struct ieee80211com *, struct ieee80211_node *,
 int		rt2860_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 uint16_t	rt2860_eeprom_read(struct rt2860_softc *, uint8_t);
+void		rt2860_intr_coherent(struct rt2860_softc *);
 void		rt2860_drain_stats_fifo(struct rt2860_softc *);
 void		rt2860_tx_intr(struct rt2860_softc *, int);
 void		rt2860_rx_intr(struct rt2860_softc *);
+void		rt2860_tbtt_intr(struct rt2860_softc *);
 void		rt2860_gp_intr(struct rt2860_softc *);
 int		rt2860_tx(struct rt2860_softc *, struct mbuf *,
 		    struct ieee80211_node *);
@@ -137,6 +139,7 @@ uint8_t		rt2860_maxrssi_chain(struct rt2860_softc *,
 const char *	rt2860_get_rf(uint8_t);
 int		rt2860_read_eeprom(struct rt2860_softc *);
 int		rt2860_bbp_init(struct rt2860_softc *);
+int		rt2860_txrx_enable(struct rt2860_softc *);
 int		rt2860_init(struct ifnet *);
 void		rt2860_stop(struct ifnet *, int);
 int		rt2860_load_microcode(struct rt2860_softc *);
@@ -240,8 +243,10 @@ rt2860_attach(void *xsc, int id)
 #ifndef IEEE80211_STA_ONLY
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_HOSTAP |	/* HostAP mode supported */
+#ifdef notyet
+	    IEEE80211_C_APPMGT |	/* HostAP power management */
 #endif
-	    IEEE80211_C_TXPMGT |	/* tx power management */
+#endif
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_WEP |		/* s/w WEP */
@@ -615,19 +620,20 @@ rt2860_alloc_rx_ring(struct rt2860_softc *sc, struct rt2860_rx_ring *ring)
 		if (data->m == NULL) {
 			printf("%s: could not allocate Rx mbuf\n",
 			    sc->sc_dev.dv_xname);
-			error = ENOMEM;
+			error = ENOBUFS;
 			goto fail;
 		}
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
 			printf("%s: could not allocate Rx mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
-			error = ENOMEM;
+			error = ENOBUFS;
 			goto fail;
 		}
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    mtod(data->m, void *), MCLBYTES, NULL,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not load DMA map\n",
 			    sc->sc_dev.dv_xname);
@@ -753,6 +759,7 @@ rt2860_updatestats(struct rt2860_softc *sc)
 			/* ..and reset MAC/BBP for a while.. */
 			DPRINTF(("CTS-to-self livelock detected\n"));
 			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_SRST);
+			RAL_BARRIER_WRITE(sc);
 			DELAY(1);
 			RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
 			    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
@@ -845,7 +852,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		rt2860_set_chan(sc, ic->ic_bss->ni_chan);
 		if (ostate != IEEE80211_S_SCAN)
-			rt2860_set_gp_timer(sc, 200);
+			rt2860_set_gp_timer(sc, 150);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -951,6 +958,23 @@ rt2860_eeprom_read(struct rt2860_softc *sc, uint8_t addr)
 }
 
 void
+rt2860_intr_coherent(struct rt2860_softc *sc)
+{
+	uint32_t tmp;
+
+	/* DMA finds data coherent event when checking the DDONE bit */
+
+	DPRINTF(("Tx/Rx Coherent interrupt\n"));
+
+	/* restart DMA engine */
+	tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
+	tmp &= ~(RT2860_TX_WB_DDONE | RT2860_RX_DMA_EN | RT2860_TX_DMA_EN);
+	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
+
+	(void)rt2860_txrx_enable(sc);
+}
+
+void
 rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1048,7 +1072,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	uint8_t ant, rssi;
 	int error;
 #if NBPFILTER > 0
-	struct rt2860_rx_radiotap_header *tap = &sc->sc_rxtap;
+	struct rt2860_rx_radiotap_header *tap;
 	struct mbuf mb;
 	uint16_t phy;
 #endif
@@ -1065,13 +1089,13 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		if (!(rxd->sdl0 & htole16(RT2860_RX_DDONE)))
 			break;
 
-		if (rxd->flags &
-		    htole32(RT2860_RX_CRCERR | RT2860_RX_ICVERR)) {
+		if (__predict_false(rxd->flags &
+		    htole32(RT2860_RX_CRCERR | RT2860_RX_ICVERR))) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
 
-		if (rxd->flags & htole32(RT2860_RX_MICERR)) {
+		if (__predict_false(rxd->flags & htole32(RT2860_RX_MICERR))) {
 			/* report MIC failures to net80211 for TKIP */
 			ic->ic_stats.is_rx_locmicfail++;
 			ieee80211_michael_mic_failure(ic, 0/* XXX */);
@@ -1080,12 +1104,12 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		}
 
 		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (__predict_false(m1 == NULL)) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
 		MCLGET(m1, M_DONTWAIT);
-		if (!(m1->m_flags & M_EXT)) {
+		if (__predict_false(!(m1->m_flags & M_EXT))) {
 			m_freem(m1);
 			ifp->if_ierrors++;
 			goto skip;
@@ -1096,15 +1120,16 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(m1, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error != 0) {
+		    mtod(m1, void *), MCLBYTES, NULL,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		if (__predict_false(error != 0)) {
 			m_freem(m1);
 
 			/* try to reload the old mbuf */
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
 			    mtod(data->m, void *), MCLBYTES, NULL,
-			    BUS_DMA_NOWAIT);
-			if (error != 0) {
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
+			if (__predict_false(error != 0)) {
 				panic("%s: could not load old rx mbuf",
 				    sc->sc_dev.dv_xname);
 			}
@@ -1149,9 +1174,10 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		rssi = rxwi->rssi[ant];
 
 #if NBPFILTER > 0
-		if (sc->sc_drvbpf == NULL)
+		if (__predict_true(sc->sc_drvbpf == NULL))
 			goto skipbpf;
 
+		tap = &sc->sc_rxtap;
 		tap->wr_flags = 0;
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
@@ -1219,6 +1245,34 @@ skip:		rxd->sdl0 &= ~htole16(RT2860_RX_DDONE);
 }
 
 void
+rt2860_tbtt_intr(struct rt2860_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		/* one less beacon until next DTIM */
+		if (ic->ic_dtim_count == 0)
+			ic->ic_dtim_count = ic->ic_dtim_period - 1;
+		else
+			ic->ic_dtim_count--;
+
+		/* update dynamic parts of beacon */
+		rt2860_setup_beacon(sc);
+
+		/* flush buffered multicast frames */
+		if (ic->ic_dtim_count == 0)
+			ieee80211_notify_dtim(ic);
+	}
+#endif
+	/* check if protection mode has changed */
+	if ((sc->sc_ic_flags ^ ic->ic_flags) & IEEE80211_F_USEPROT) {
+		rt2860_updateprot(ic);
+		sc->sc_ic_flags = ic->ic_flags;
+	}
+}
+
+void
 rt2860_gp_intr(struct rt2860_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1238,7 +1292,7 @@ rt2860_intr(void *arg)
 	uint32_t r;
 
 	r = RAL_READ(sc, RT2860_INT_STATUS);
-	if (r == 0xffffffff)
+	if (__predict_false(r == 0xffffffff))
 		return 0;	/* device likely went away */
 	if (r == 0)
 		return 0;	/* not for us */
@@ -1246,13 +1300,10 @@ rt2860_intr(void *arg)
 	/* acknowledge interrupts */
 	RAL_WRITE(sc, RT2860_INT_STATUS, r);
 
-	if (r & RT2860_TX_COHERENT)
-		/* TBD */;
+	if (r & RT2860_TX_RX_COHERENT)
+		rt2860_intr_coherent(sc);
 
-	if (r & RT2860_RX_COHERENT)
-		/* TBD */;
-
-	if (r & RT2860_MAC_INT_2)
+	if (r & RT2860_MAC_INT_2)	/* TX status */
 		rt2860_drain_stats_fifo(sc);
 
 	if (r & RT2860_TX_DONE_INT5)
@@ -1276,25 +1327,13 @@ rt2860_intr(void *arg)
 	if (r & RT2860_TX_DONE_INT0)
 		rt2860_tx_intr(sc, 0);
 
-	if (r & RT2860_MAC_INT_0) {	/* TBTT */
-		struct ieee80211com *ic = &sc->sc_ic;
+	if (r & RT2860_MAC_INT_0)	/* TBTT */
+		rt2860_tbtt_intr(sc);
 
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
-		    ic->ic_opmode == IEEE80211_M_IBSS)
-			(void)rt2860_setup_beacon(sc);
-#endif
-		/* check if protection mode has changed */
-		if ((sc->sc_ic_flags ^ ic->ic_flags) & IEEE80211_F_USEPROT) {
-			rt2860_updateprot(ic);
-			sc->sc_ic_flags = ic->ic_flags;
-		}
-	}
-
-	if (r & RT2860_MAC_INT_3)
+	if (r & RT2860_MAC_INT_3)	/* Auto wakeup */
 		/* TBD wakeup */;
 
-	if (r & RT2860_MAC_INT_4)
+	if (r & RT2860_MAC_INT_4)	/* GP timer */
 		rt2860_gp_intr(sc);
 
 	return 1;
@@ -1454,7 +1493,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	if (error != 0) {	/* too many fragments, linearize */
 		if (m_defrag(m, M_DONTWAIT) != 0) {
 			m_freem(m);
-			return ENOMEM;
+			return ENOBUFS;
 		}
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
@@ -1472,7 +1511,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			/* this is a hopeless case, drop the mbuf! */
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(m);
-			return ENOMEM;
+			return ENOBUFS;
 		}
 	}
 
@@ -1709,6 +1748,7 @@ rt2860_mcu_bbp_write(struct rt2860_softc *sc, uint8_t reg, uint8_t val)
 
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, RT2860_BBP_RW_PARALLEL |
 	    RT2860_BBP_CSR_KICK | reg << 8 | val);
+	RAL_BARRIER_WRITE(sc);
 
 	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
 	DELAY(1000);
@@ -1733,6 +1773,7 @@ rt2860_mcu_bbp_read(struct rt2860_softc *sc, uint8_t reg)
 
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, RT2860_BBP_RW_PARALLEL |
 	    RT2860_BBP_CSR_KICK | RT2860_BBP_CSR_READ | reg << 8);
+	RAL_BARRIER_WRITE(sc);
 
 	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
 	DELAY(1000);
@@ -1792,6 +1833,7 @@ rt2860_mcu_cmd(struct rt2860_softc *sc, uint8_t cmd, uint16_t arg)
 
 	RAL_WRITE(sc, RT2860_H2M_MAILBOX,
 	    RT2860_H2M_BUSY | RT2860_TOKEN_NO_INTR << 16 | arg);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_HOST_CMD, cmd);
 
 	return 0;
@@ -2572,6 +2614,51 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 }
 
 int
+rt2860_txrx_enable(struct rt2860_softc *sc)
+{
+	uint32_t tmp;
+	int ntries;
+
+	/* enable Tx/Rx DMA engine */
+	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_TX_EN);
+	RAL_BARRIER_READ_WRITE(sc);
+	for (ntries = 0; ntries < 200; ntries++) {
+		tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
+		if ((tmp & (RT2860_TX_DMA_BUSY | RT2860_RX_DMA_BUSY)) == 0)
+			break;
+		DELAY(1000);
+	}
+	if (ntries == 200) {
+		printf("%s: timeout waiting for DMA engine\n",
+		    sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
+	}
+
+	DELAY(50);
+
+	tmp |= RT2860_TX_WB_DDONE | RT2860_RX_DMA_EN | RT2860_TX_DMA_EN |
+	    RT2860_WPDMA_BT_SIZE64 << RT2860_WPDMA_BT_SIZE_SHIFT;
+	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
+
+	/* set Rx filter */
+	tmp = RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR;
+	if (sc->sc_ic.ic_opmode != IEEE80211_M_MONITOR) {
+		tmp |= RT2860_DROP_UC_NOME | RT2860_DROP_DUPL |
+		    RT2860_DROP_CTS | RT2860_DROP_BA | RT2860_DROP_ACK |
+		    RT2860_DROP_VER_ERR | RT2860_DROP_CTRL_RSV |
+		    RT2860_DROP_CFACK | RT2860_DROP_CFEND;
+		if (sc->sc_ic.ic_opmode == IEEE80211_M_STA)
+			tmp |= RT2860_DROP_RTS | RT2860_DROP_PSPOLL;
+	}
+	RAL_WRITE(sc, RT2860_RX_FILTR_CFG, tmp);
+
+	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
+	    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
+
+	return 0;
+}
+
+int
 rt2860_init(struct ifnet *ifp)
 {
 	struct rt2860_softc *sc = ifp->if_softc;
@@ -2600,6 +2687,7 @@ rt2860_init(struct ifnet *ifp)
 
 	/* PBF hardware reset */
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe1f);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe00);
 
 	if (!(sc->sc_flags & RT2860_FWLOADED)) {
@@ -2642,9 +2730,11 @@ rt2860_init(struct ifnet *ifp)
 
 	/* PBF hardware reset */
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe1f);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe00);
 
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_BBP_HRST | RT2860_MAC_SRST);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, 0);
 
 	for (i = 0; i < nitems(rt2860_def_mac); i++)
@@ -2762,27 +2852,6 @@ rt2860_init(struct ifnet *ifp)
 	sc->sc_ic_flags = ic->ic_flags;
 	rt2860_updateprot(ic);
 
-	/* enable Tx/Rx DMA engine */
-	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_TX_EN);
-	for (ntries = 0; ntries < 200; ntries++) {
-		tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
-		if ((tmp & (RT2860_TX_DMA_BUSY | RT2860_RX_DMA_BUSY)) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (ntries == 200) {
-		printf("%s: timeout waiting for DMA engine\n",
-		    sc->sc_dev.dv_xname);
-		rt2860_stop(ifp, 1);
-		return ETIMEDOUT;
-	}
-
-	DELAY(50);
-
-	tmp |= RT2860_TX_WB_DDONE | RT2860_RX_DMA_EN | RT2860_TX_DMA_EN |
-	    RT2860_WPDMA_BT_SIZE64 << RT2860_WPDMA_BT_SIZE_SHIFT;
-	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
-
 	/* turn radio LED on */
 	rt2860_set_leds(sc, RT2860_LED_RADIO);
 
@@ -2792,20 +2861,11 @@ rt2860_init(struct ifnet *ifp)
 			(void)rt2860_set_key(ic, NULL, &ic->ic_nw_keys[i]);
 	}
 
-	/* set Rx filter */
-	tmp = RT2860_DROP_CRC_ERR | RT2860_DROP_PHY_ERR;
-	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		tmp |= RT2860_DROP_UC_NOME | RT2860_DROP_DUPL |
-		    RT2860_DROP_CTS | RT2860_DROP_BA | RT2860_DROP_ACK |
-		    RT2860_DROP_VER_ERR | RT2860_DROP_CTRL_RSV |
-		    RT2860_DROP_CFACK | RT2860_DROP_CFEND;
-		if (ic->ic_opmode == IEEE80211_M_STA)
-			tmp |= RT2860_DROP_RTS | RT2860_DROP_PSPOLL;
+	/* enable Tx/Rx DMA engine */
+	if ((error = rt2860_txrx_enable(sc)) != 0) {
+		rt2860_stop(ifp, 1);
+		return error;
 	}
-	RAL_WRITE(sc, RT2860_RX_FILTR_CFG, tmp);
-
-	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL,
-	    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
 
 	/* clear pending interrupts */
 	RAL_WRITE(sc, RT2860_INT_STATUS, 0xffffffff);
@@ -2856,6 +2916,7 @@ rt2860_stop(struct ifnet *ifp, int disable)
 
 	/* reset adapter */
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_BBP_HRST | RT2860_MAC_SRST);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, 0);
 
 	/* reset Tx and Rx rings (and reclaim TXWIs) */
@@ -2892,6 +2953,7 @@ rt2860_load_microcode(struct rt2860_softc *sc)
 	RAL_WRITE_REGION_1(sc, RT2860_FW_BASE, ucode, size);
 	/* kick microcontroller unit */
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0);
+	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_SYS_CTRL, RT2860_MCU_RESET);
 
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, 0);
@@ -2900,6 +2962,7 @@ rt2860_load_microcode(struct rt2860_softc *sc)
 	free(ucode, M_DEVBUF);
 
 	/* wait until microcontroller is ready */
+	RAL_BARRIER_READ_WRITE(sc);
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (RAL_READ(sc, RT2860_SYS_CTRL) & RT2860_MCU_READY)
 			break;
@@ -3044,13 +3107,13 @@ rt2860_power(int why, void *arg)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		rt2860_stop(ifp, 1);
-		sc->sc_flags &= ~RT2860_FWLOADED; 
+		sc->sc_flags &= ~RT2860_FWLOADED;
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;
 	case PWR_RESUME:
 		if (ifp->if_flags & IFF_UP) {
-			rt2860_init(ifp);	
+			rt2860_init(ifp);
 			if (sc->sc_power != NULL)
 				(*sc->sc_power)(sc, why);
 			if (ifp->if_flags & IFF_RUNNING)

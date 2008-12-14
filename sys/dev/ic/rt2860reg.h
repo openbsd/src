@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.11 2008/12/13 14:35:19 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.12 2008/12/14 10:23:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -814,17 +814,19 @@ static const struct rt2860_rate {
 /*
  * Control and status registers access macros.
  */
-static inline u_int32_t
-RAL_READ(struct rt2860_softc *sc, bus_size_t reg)
-{
-	(void)bus_space_read_4(sc->sc_st, sc->sc_sh, RT2860_ASIC_VER_ID);
-	return bus_space_read_4(sc->sc_st, sc->sc_sh, reg);
-}
+#define RAL_READ(sc, reg)						\
+	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
-#define RAL_WRITE(sc, reg, val)	do {					\
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, RT2860_ASIC_VER_ID);	\
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val));	\
-} while (/* CONSTCOND */0)
+#define RAL_WRITE(sc, reg, val)						\
+	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+
+#define RAL_BARRIER_WRITE(sc)						\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, 0x1800,		\
+	    BUS_SPACE_BARRIER_WRITE)
+
+#define RAL_BARRIER_READ_WRITE(sc)					\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, 0x1800,		\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 #define RAL_WRITE_REGION_1(sc, offset, datap, count)			\
 	bus_space_write_region_1((sc)->sc_st, (sc)->sc_sh, (offset),	\
@@ -835,10 +837,11 @@ RAL_READ(struct rt2860_softc *sc, bus_size_t reg)
 	    (val), (count))
 
 /*
- * EEPROM access macro
+ * EEPROM access macro.
  */
 #define RT2860_EEPROM_CTL(sc, val) do {					\
 	RAL_WRITE((sc), RT2860_PCI_EECTRL, (val));			\
+	RAL_BARRIER_READ_WRITE((sc));					\
 	DELAY(RT2860_EEPROM_DELAY);					\
 } while (/* CONSTCOND */0)
 
