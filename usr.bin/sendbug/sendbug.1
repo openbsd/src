@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.16 2007/05/31 19:20:16 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.17 2008/12/14 07:46:24 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 14 2008 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -12,7 +12,7 @@
 .Ox
 .Sh SYNOPSIS
 .Nm
-.Op Fl DLPV
+.Op Fl DPV
 .Sh DESCRIPTION
 .Nm
 is used to submit problem reports (PRs) to the
@@ -62,8 +62,6 @@ The
 output is very helpful in reports,
 but may contain sensitive information about the sender.
 This flag helps protect users' privacy in those cases.
-.It Fl L
-Print the list of available categories.
 .It Fl P
 Generate and print the template with system information filled out.
 .It Fl V
