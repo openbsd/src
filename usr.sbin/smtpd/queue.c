@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.25 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.26 2008/12/14 19:16:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -756,10 +756,10 @@ queue_create_incoming_layout(char *message_id)
 
 	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
 		PATH_INCOMING, time(NULL)))
-		return -1;
+		fatalx("queue_create_incoming_layout: snprintf");
 
 	if (mkdtemp(rootdir) == NULL)
-		return -1;
+		return 0;
 
 	if (strlcpy(message_id, rootdir + strlen(PATH_INCOMING) + 1, MAXPATHLEN)
 	    >= MAXPATHLEN)
