@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.19 2008/11/07 18:03:52 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.20 2008/12/14 21:31:50 kettenis Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -175,6 +175,7 @@ struct gem_softc {
 	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 
 	struct gem_rxsoft sc_rxsoft[GEM_NRXDESC];
+	u_int32_t sc_rx_cnt, sc_rx_prod, sc_rx_cons;
 
 	/*
 	 * Control data structures.
@@ -191,7 +192,6 @@ struct gem_softc {
 
 	u_int32_t		sc_setup_fsls;	/* FS|LS on setup descriptor */
 
-	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
 	int			sc_rxfifosize;
 
 	/* ========== */
@@ -262,7 +262,6 @@ do {									\
 	struct gem_desc *__rxd = &sc->sc_rxdescs[(x)];			\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 									\
-	__m->m_data = __m->m_ext.ext_buf;				\
 	__rxd->gd_addr =						\
 	    GEM_DMA_WRITE((sc), __rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
 	__rxd->gd_flags =						\
