@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.55 2008/09/08 19:35:25 martynas Exp $ */
+/*	$OpenBSD: ugen.c,v 1.56 2008/12/14 16:48:04 fgsch Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -504,6 +504,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
 			error = tsleep(sce, PZERO | PCATCH, "ugenri",
 			    (sce->timeout * hz) / 1000);
+			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
@@ -511,10 +512,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				error = 0;
 				break;
 			}
-			if (error) {
-				sce->state &= ~UGEN_ASLP;
+			if (error)
 				break;
-			}
 		}
 		splx(s);
 
@@ -571,14 +570,18 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
-			error = tsleep(sce, PZERO | PCATCH, "ugenri", 0);
+			error = tsleep(sce, PZERO | PCATCH, "ugenri",
+			    (sce->timeout * hz) / 1000);
+			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
-			if (error) {
-				sce->state &= ~UGEN_ASLP;
+			if (error == EWOULDBLOCK) {	/* timeout, return 0 */
+				error = 0;
 				break;
 			}
+			if (error)
+				break;
 		}
 
 		while (sce->cur != sce->fill && uio->uio_resid > 0 && !error) {
@@ -1021,11 +1024,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		return (0);
 	case USB_SET_TIMEOUT:
 		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL
-		    /* XXX this shouldn't happen, but the distinction between
-		       input and output pipes isn't clear enough.
-		       || sce->pipeh == NULL */
-			)
+		if (sce == NULL)
+			return (EINVAL);
+		sce->timeout = *(int *)addr;
+		sce = &sc->sc_endpoints[endpt][OUT];
+		if (sce == NULL)
 			return (EINVAL);
 		sce->timeout = *(int *)addr;
 		return (0);
