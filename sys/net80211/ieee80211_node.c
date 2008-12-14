@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.48 2008/10/23 16:21:21 mk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.49 2008/12/14 10:17:24 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1567,6 +1567,37 @@ ieee80211_set_tim(struct ieee80211com *ic, int aid, int set)
 		setbit(ic->ic_tim_bitmap, aid & ~0xc000);
 	else
 		clrbit(ic->ic_tim_bitmap, aid & ~0xc000);
+}
+
+/*
+ * This function shall be called by drivers immediately after every DTIM.
+ * Transmit all group addressed MSDUs buffered at the AP.
+ */
+void
+ieee80211_notify_dtim(struct ieee80211com *ic)
+{
+	/* NB: group addressed MSDUs are buffered in ic_bss */
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_frame *wh;
+	struct mbuf *m;
+
+	KASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP);
+
+	for (;;) {
+		IF_DEQUEUE(&ni->ni_savedq, m);
+		if (m == NULL)
+			break;
+		if (!IF_IS_EMPTY(&ni->ni_savedq)) {
+			/* more queued frames, set the more data bit */
+			wh = mtod(m, struct ieee80211_frame *);
+			wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
+		}
+		IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+		(*ifp->if_start)(ifp);
+	}
+	/* XXX assumes everything has been sent */
+	ic->ic_tim_mcast_pending = 0;
 }
 #endif	/* IEEE80211_STA_ONLY */
 
