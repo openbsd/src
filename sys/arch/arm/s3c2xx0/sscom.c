@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.4 2008/12/08 20:50:20 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.5 2008/12/15 22:30:17 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -1217,7 +1217,7 @@ sscomparam(struct tty *tp, struct termios *t)
 	sc->sc_ubrdiv = ospeed;
 
 	/* And copy to tty. */
-	tp->t_ispeed = 0;
+	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
@@ -1407,8 +1407,12 @@ out:
 	/* Enable transmit completion interrupts if necessary. */
 	if (tp->t_outq.c_cc != 0)
 		sscom_enable_txint(sc);
-	else 
+	else  {
+		if (ISSET(tp->t_state, TS_BUSY)) {
+			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+		}
 		sscom_disable_txint(sc); /* track state in software? */
+	}
 
 	splx(s);
 	return;
@@ -1969,6 +1973,10 @@ sscomtxintr(void *arg)
 			}
 			(*linesw[tp->t_line].l_start)(tp);
 		} else {
+			struct tty *tp = sc->sc_tty;
+			if (ISSET(tp->t_state, TS_BUSY)) {
+				CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+			}
 			sscom_disable_txint(sc);
 		}
 #endif
