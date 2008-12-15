@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.24 2008/11/18 14:29:30 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.25 2008/12/15 11:50:10 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 18 2008 $
+.Dd $Mdocdate: December 15 2008 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -73,6 +73,7 @@ and the Marker Protocol
 to increase link speed and provide redundancy.
 LACP trunk groups are composed of ports of the same speed,
 set to full-duplex operation.
+This protocol requires a switch which supports LACP.
 .It Ic loadbalance
 Distributes outgoing traffic through all active ports
 and accepts incoming traffic from any active port.
@@ -134,17 +135,12 @@ The trunk protocols
 .Ic loadbalance
 and
 .Ic roundrobin
-require a switch which supports IEEE 802.3ad link aggregation;
+require a switch which supports IEEE 802.3ad static link aggregation;
 otherwise protocols
 such as
 .Xr inet6 4
 duplicate address detection (DAD)
 cannot properly deal with duplicate packets.
-The trunk protocol
-.Ic lacp
-requires a switch which supports
-the IEEE 802.3ad Link Aggregation Control Protocol (LACP)
-to work at all.
 .Pp
 There is no way to configure LACP administrative variables, including
 system and port priorities.
