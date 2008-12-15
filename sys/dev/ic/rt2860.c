@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.26 2008/12/14 18:41:57 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.27 2008/12/15 18:35:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -134,8 +134,6 @@ int		rt2860_set_key(struct ieee80211com *, struct ieee80211_node *,
 void		rt2860_delete_key(struct ieee80211com *,
 		    struct ieee80211_node *, struct ieee80211_key *);
 int8_t		rt2860_rssi2dbm(struct rt2860_softc *, uint8_t, uint8_t);
-uint8_t		rt2860_maxrssi_chain(struct rt2860_softc *,
-		    const struct rt2860_rxwi *);
 const char *	rt2860_get_rf(uint8_t);
 int		rt2860_read_eeprom(struct rt2860_softc *);
 int		rt2860_bbp_init(struct rt2860_softc *);
@@ -1047,6 +1045,24 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	rt2860_start(ifp);
 }
 
+/*
+ * Return the Rx chain with the highest RSSI for a given frame.
+ */
+static __inline uint8_t
+rt2860_maxrssi_chain(struct rt2860_softc *sc, const struct rt2860_rxwi *rxwi)
+{
+	uint8_t rxchain = 0;
+
+	if (sc->nrxchains > 1) {
+		if (rxwi->rssi[1] > rxwi->rssi[rxchain])
+			rxchain = 1;
+		if (sc->nrxchains > 2)
+			if (rxwi->rssi[2] > rxwi->rssi[rxchain])
+				rxchain = 2;
+	}
+	return rxchain;
+}
+
 void
 rt2860_rx_intr(struct rt2860_softc *sc)
 {
@@ -1056,6 +1072,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *m1;
+	uint32_t hw;
 	uint8_t ant, rssi;
 	int error;
 #if NBPFILTER > 0
@@ -1064,7 +1081,8 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	uint16_t phy;
 #endif
 
-	for (;;) {
+	hw = RAL_READ(sc, RT2860_FS_DRX_IDX) & 0xfff;
+	while (sc->rxq.cur != hw) {
 		struct rt2860_rx_data *data = &sc->rxq.data[sc->rxq.cur];
 		struct rt2860_rxd *rxd = &sc->rxq.rxd[sc->rxq.cur];
 		struct rt2860_rxwi *rxwi;
@@ -1073,8 +1091,10 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		    sc->rxq.cur * sizeof (struct rt2860_rxd),
 		    sizeof (struct rt2860_rxd), BUS_DMASYNC_POSTREAD);
 
-		if (!(rxd->sdl0 & htole16(RT2860_RX_DDONE)))
-			break;
+		if (__predict_false(!(rxd->sdl0 & htole16(RT2860_RX_DDONE)))) {
+			DPRINTF(("RXD DDONE bit not set!\n"));
+			break;	/* should not happen */
+		}
 
 		if (__predict_false(rxd->flags &
 		    htole32(RT2860_RX_CRCERR | RT2860_RX_ICVERR))) {
@@ -2254,24 +2274,6 @@ rt2860_rssi2dbm(struct rt2860_softc *sc, uint8_t rssi, uint8_t rxchain)
 		delta = sc->rssi_2ghz[rxchain] - sc->lna[0];
 
 	return -12 - delta - rssi;
-}
-
-/*
- * Return the Rx chain with the highest RSSI for a given frame.
- */
-uint8_t
-rt2860_maxrssi_chain(struct rt2860_softc *sc, const struct rt2860_rxwi *rxwi)
-{
-	uint8_t rxchain = 0;
-
-	if (sc->nrxchains > 1)
-		if (rxwi->rssi[1] > rxwi->rssi[rxchain])
-			rxchain = 1;
-	if (sc->nrxchains > 2)
-		if (rxwi->rssi[2] > rxwi->rssi[rxchain])
-			rxchain = 2;
-
-	return rxchain;
 }
 
 /*
