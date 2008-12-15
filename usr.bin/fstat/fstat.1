@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.39 2008/10/07 02:20:12 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.40 2008/12/15 09:49:59 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: October 7 2008 $
+.Dd $Mdocdate: December 15 2008 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -197,9 +197,8 @@ Displays total number of Kbytes written and read to the file.
 .El
 .Sh SOCKETS
 The formatting of open sockets depends on the protocol domain.
-In all cases the first field is the domain name, the second field
-is the socket type (stream, dgram, etc), and the third is the socket
-flags field (in hex).
+In all cases the first field is the domain name
+and the second field is the socket type (stream, dgram, etc).
 The remaining fields are protocol dependent.
 For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
 For Unix domain sockets, it's the address of the socket pcb and the address
