@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.70 2008/10/26 16:16:37 espie Exp $
+# $OpenBSD: pkg_info,v 1.71 2008/12/15 15:56:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -411,7 +411,7 @@ unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
 	} else {
-		$opt_c = $opt_d = $opt_R = 1;
+		$opt_c = $opt_d = $opt_M = $opt_R = 1;
 	}
 }
 
