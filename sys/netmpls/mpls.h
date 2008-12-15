@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.14 2008/11/01 16:37:55 michele Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.15 2008/12/15 16:13:55 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -87,22 +87,13 @@ struct shim_hdr {
 struct sockaddr_mpls {
 	u_int8_t	smpls_len;		/* length */
 	u_int8_t	smpls_family;		/* AF_MPLS */
-	u_int8_t	smpls_operation;
-	u_int8_t	smpls_out_exp;		/* outgoing exp value */
 	u_int32_t	smpls_out_label;	/* outgoing MPLS label */
-	u_int16_t	smpls_out_ifindex;
-	u_int16_t	smpls_in_ifindex;
 	u_int32_t	smpls_in_label;		/* MPLS label 20 bits*/
-#if MPLS_MCAST
-	u_int8_t smpls_mcexp;
-	u_int8_t smpls_pad2[2];
-	u_int32_t smpls_mclabel;
-#endif
 };
 
-#define MPLS_OP_POP		1
-#define MPLS_OP_PUSH		2
-#define MPLS_OP_SWAP		3
+#define MPLS_OP_POP		RTF_PROTO1
+#define MPLS_OP_PUSH		RTF_PROTO2
+#define MPLS_OP_SWAP		RTF_PROTO3
 
 #define MPLS_INKERNEL_LOOP_MAX	16
 

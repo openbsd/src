@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_shim.c,v 1.3 2008/05/02 12:37:08 claudio Exp $	*/
+/*	$OpenBSD: mpls_shim.c,v 1.4 2008/12/15 16:13:55 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -77,7 +77,7 @@ mpls_shim_swap(struct mbuf *m, struct sockaddr_mpls *smplsp)
 		u_int32_t	t;
 
 		shim->shim_label &= ~MPLS_EXP_MASK;
-		t = smplsp->smpls_out_exp << MPLS_EXP_OFFSET;
+		t = 0;
 		shim->shim_label |= htonl(t) & MPLS_EXP_MASK;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.2 2008/11/06 19:32:51 michele Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.3 2008/12/15 16:13:55 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -66,14 +66,13 @@ mpls_output(struct mbuf *m)
 		smpls = &sa_mpls;
 		smpls->smpls_family = AF_MPLS;
 		smpls->smpls_len = sizeof(*smpls);
-		smpls->smpls_in_ifindex = ifp->if_index;
 		smpls->smpls_in_label = shim->shim_label & MPLS_LABEL_MASK;
 
 #ifdef MPLS_DEBUG
 		printf("smpls af %d len %d in_label %d in_ifindex %d\n",
 		    smpls->smpls_family, smpls->smpls_len,
 		    MPLS_LABEL_GET(smpls->smpls_in_label),
-		    smpls->smpls_in_ifindex);
+		    ifp->if_index);
 #endif
 
 		rt = rtalloc1(smplstosa(smpls), 1, 0);
@@ -94,14 +93,12 @@ mpls_output(struct mbuf *m)
 		printf("route af %d len %d in_label %d in_ifindex %d\n",
 		    smpls->smpls_family, smpls->smpls_len,
 		    MPLS_LABEL_GET(smpls->smpls_in_label),
-		    smpls->smpls_in_ifindex);
-		printf("\top %d out_label %d out_ifindex %d\n",
-		    smpls->smpls_operation,
-		    MPLS_LABEL_GET(smpls->smpls_out_label),
-		    smpls->smpls_out_ifindex);
+		    ifp->if_index);
 #endif
 
-		switch (smpls->smpls_operation) {
+		switch (rt->rt_flags & (MPLS_OP_PUSH | MPLS_OP_POP |
+		    MPLS_OP_SWAP)) {
+
 		case MPLS_OP_POP:
 			if (MPLS_BOS_ISSET(shim->shim_label)) {
 				/* drop to avoid loops */
@@ -129,7 +126,7 @@ mpls_output(struct mbuf *m)
 		shim = mtod(m, struct shim_hdr *);
 		ifp = rt->rt_ifp;
 
-		if (smpls->smpls_out_ifindex)
+		if (ifp != NULL)
 			break;
 
 		RTFREE(rt);
