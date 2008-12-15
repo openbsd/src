@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.202 2008/12/06 11:39:38 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.203 2008/12/15 02:33:04 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -261,8 +261,13 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	em_identify_hardware(sc);
 
 	/* Parameters (to be read from user) */
-	sc->num_tx_desc = EM_MIN_TXD;
-	sc->num_rx_desc = EM_MIN_RXD;
+	if (sc->hw.mac_type >= em_82544) {
+		sc->num_tx_desc = EM_MAX_TXD;
+		sc->num_rx_desc = EM_MAX_RXD;
+	} else {
+		sc->num_tx_desc = EM_MAX_TXD_82543;
+		sc->num_rx_desc = EM_MAX_RXD_82543;
+	}
 	sc->tx_int_delay = EM_TIDV;
 	sc->tx_abs_int_delay = EM_TADV;
 	sc->rx_int_delay = EM_RDTR;
@@ -662,20 +667,6 @@ em_init(void *arg)
 	INIT_DEBUGOUT("em_init: begin");
 
 	em_stop(sc);
-
-	if (ifp->if_flags & IFF_UP) {
-		if (sc->hw.mac_type >= em_82544) {
-		    sc->num_tx_desc = EM_MAX_TXD;
-		    sc->num_rx_desc = EM_MAX_RXD;
-		} else {
-		    sc->num_tx_desc = EM_MAX_TXD_82543;
-		    sc->num_rx_desc = EM_MAX_RXD_82543;
-		}
-	} else {
-		sc->num_tx_desc = EM_MIN_TXD;
-		sc->num_rx_desc = EM_MIN_RXD;
-	}
-	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	/*
 	 * Packet Buffer Allocation (PBA)

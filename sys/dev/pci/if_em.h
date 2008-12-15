@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.42 2008/12/05 00:08:17 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.43 2008/12/15 02:33:04 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -94,7 +94,6 @@ POSSIBILITY OF SUCH DAMAGE.
  *   desscriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
-#define EM_MIN_TXD			12
 #define EM_MAX_TXD_82543		256
 #define EM_MAX_TXD			512
 
@@ -111,7 +110,6 @@ POSSIBILITY OF SUCH DAMAGE.
  *   desscriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
-#define EM_MIN_RXD			12
 #define EM_MAX_RXD_82543		256
 #define EM_MAX_RXD			256
 
