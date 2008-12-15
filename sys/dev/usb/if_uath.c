@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.37 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.38 2008/12/15 17:01:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -124,7 +124,6 @@ static const struct uath_type {
 	UATH_DEV_UG(NETGEAR3,		WG111T),
 	UATH_DEV_UG(NETGEAR3,		WPN111),
 	UATH_DEV_UG(PHILIPS,		SNU6500),
-	UATH_DEV_UG(UMEDIA,		AR5523_1),
 	UATH_DEV_UX(UMEDIA,		AR5523_2),
 	UATH_DEV_UG(UMEDIA,		TEW444UBEU),
 	UATH_DEV_UG(WISTRONNEWEB,	AR5523_1),
