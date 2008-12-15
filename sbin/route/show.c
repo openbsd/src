@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.72 2008/12/12 20:26:30 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.73 2008/12/15 16:14:57 michele Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
-char	*label_print_op(u_int8_t);
+char	*label_print_op(u_int32_t);
 char	*label_print(struct sockaddr *);
 
 extern int nflag;
@@ -300,6 +300,7 @@ p_rtentry(struct rt_msghdr *rtm)
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family));
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family));
+
 	p_flags(rtm->rtm_flags, "%-6.6s ");
 	printf("%5u %8llu ", rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
@@ -514,6 +515,16 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 			cp = netname((struct sockaddr *)sa6, mask);
 		break;
 	    }
+	case AF_MPLS:
+		if (flags & RTF_HOST || mask == NULL)
+			cp = routename(sa);
+		else
+			cp = netname(sa, mask);
+
+		snprintf(cp, MAXHOSTNAMELEN, "%s %s", cp,
+		    label_print_op(flags));
+
+		break;
 	default:
 		if ((flags & RTF_HOST) || mask == NULL)
 			cp = routename(sa);
@@ -855,9 +866,9 @@ link_print(struct sockaddr *sa)
 }
 
 char *
-label_print_op(u_int8_t type)
+label_print_op(u_int32_t type)
 {
-	switch (type) {
+	switch (type & (MPLS_OP_PUSH | MPLS_OP_POP | MPLS_OP_SWAP)) {
 	case MPLS_OP_POP:
 		return ("POP");
 	case MPLS_OP_SWAP:
@@ -878,18 +889,16 @@ label_print(struct sockaddr *sa)
 	char			*in_label;
 	char			*out_label;
 
-	if (asprintf(&in_label, "%u%%%s",
-	    ntohl(smpls->smpls_in_label) >> MPLS_LABEL_OFFSET,
-	    if_indextoname(smpls->smpls_in_ifindex, ifname_in)) == -1)
+	if (asprintf(&in_label, "%u",
+	    ntohl(smpls->smpls_in_label) >> MPLS_LABEL_OFFSET) == -1)
 		err(1, NULL);
 
 	if (asprintf(&out_label, "%u",
 	    ntohl(smpls->smpls_out_label) >> MPLS_LABEL_OFFSET) == -1)
 		err(1, NULL);
 
-	(void)snprintf(line, sizeof(line), "%-16s %-10s %-6s", in_label,
-	    smpls->smpls_operation == MPLS_OP_POP ? "-" : out_label,
-	    label_print_op(smpls->smpls_operation));
+	(void)snprintf(line, sizeof(line), "%-16s %-10s", in_label,
+	    out_label);
 
 	free(in_label);
 	free(out_label);

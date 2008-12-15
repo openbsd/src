@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.121 2008/12/12 20:26:30 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.122 2008/12/15 16:14:57 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -400,17 +400,17 @@ newroute(int argc, char **argv)
 			case K_POP:
 				if (af != AF_MPLS)
 					errx(1, "-pop requires -mpls");
-				so_dst.smpls.smpls_operation = MPLS_OP_POP;
+				flags |= MPLS_OP_POP;
 				break;
 			case K_PUSH:
 				if (af != AF_MPLS)
 					errx(1, "-push requires -mpls");
-				so_dst.smpls.smpls_operation = MPLS_OP_PUSH;
+				flags |= MPLS_OP_PUSH;
 				break;
 			case K_SWAP:
 				if (af != AF_MPLS)
 					errx(1, "-swap requires -mpls");
-				so_dst.smpls.smpls_operation = MPLS_OP_SWAP;
+				flags |= MPLS_OP_SWAP;
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
@@ -879,31 +879,20 @@ getmplslabel(char *s, int in)
 {
 	sup su = NULL;
 	const char *errstr;
-	char *ifname;
 	u_int32_t label;
-	u_int16_t ifindex = 0;
 
 	rtm_addrs |= RTA_DST;
 	su = &so_dst;
 	su->sa.sa_len = aflen;
 	su->sa.sa_family = af;
 
-	ifname = strchr(s, SCOPE_DELIMITER);
-	if (ifname) {
-		*ifname++ = '\0';
-		ifindex = if_nametoindex(ifname);
-	}
-
 	label = strtonum(s, 0, 0x000fffff, &errstr);
 	if (errstr)
 		errx(1, "bad label: %s is %s", s, errstr);
-	if (in) {
+	if (in)
 		su->smpls.smpls_in_label = htonl(label << MPLS_LABEL_OFFSET);
-		su->smpls.smpls_in_ifindex = ifindex;
-	} else {
+	else
 		su->smpls.smpls_out_label = htonl(label << MPLS_LABEL_OFFSET);
-		su->smpls.smpls_out_ifindex = ifindex;
-	}
 }
 
 int
