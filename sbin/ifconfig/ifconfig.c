@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.209 2008/12/12 22:09:26 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.210 2008/12/15 15:50:30 fgsch Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3740,7 +3740,6 @@ unsetpflow_sender(const char *val, int d)
 void
 setpflow_receiver(const char *val, int d)
 {
-	const char *errmsg = NULL;
 	struct pflowreq preq;
 	struct addrinfo hints, *receiver;
 	int ecode;
@@ -4224,7 +4223,6 @@ setpriority(const char *id, int param)
 {
 #ifndef SMALL
 	const char *errmsg = NULL;
-	u_char *cp;
 	int prio;
 
 	prio = strtonum(id, 0, 15, &errmsg);
