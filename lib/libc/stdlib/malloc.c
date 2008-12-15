@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.110 2008/11/20 09:05:15 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.111 2008/12/15 19:47:49 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -319,7 +319,7 @@ malloc_dump(int fd)
 static void
 malloc_exit(void)
 {
-	const char q[] = "malloc() warning: Couldn't dump stats\n";
+	static const char q[] = "malloc() warning: Couldn't dump stats\n";
 	int save_errno = errno, fd;
 
 	fd = open("malloc.out", O_RDWR|O_APPEND);
@@ -638,7 +638,7 @@ omalloc_init(struct dir_info *d)
 				malloc_zero = 1;
 				break;
 			default: {
-				const char q[] = "malloc() warning: "
+				static const char q[] = "malloc() warning: "
 				    "unknown char in MALLOC_OPTIONS\n";
 				write(STDERR_FILENO, q, sizeof(q) - 1);
 				break;
@@ -656,7 +656,7 @@ omalloc_init(struct dir_info *d)
 
 #ifdef MALLOC_STATS
 	if (malloc_stats && (atexit(malloc_exit) == -1)) {
-		const char q[] = "malloc() warning: atexit(2) failed."
+		static const char q[] = "malloc() warning: atexit(2) failed."
 		    " Will not be able to dump stats on exit\n";
 		write(STDERR_FILENO, q, sizeof(q) - 1);
 	}
