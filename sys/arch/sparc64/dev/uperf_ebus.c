@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.4 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.5 2008/12/15 22:33:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -43,6 +43,10 @@
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
+
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 #include <dev/sun/uperfio.h>
@@ -72,6 +76,10 @@ int uperf_ebus_getcnt(void *, int, u_int32_t *, u_int32_t *);
 int uperf_ebus_clrcnt(void *, int);
 int uperf_ebus_getcntsrc(void *, int, u_int *, u_int *);
 int uperf_ebus_setcntsrc(void *, int, u_int, u_int);
+
+#ifdef DDB
+void uperf_ebus_xir(void *, int);
+#endif
 
 struct uperf_src uperf_ebus_srcs[] = {
 	{ UPERFSRC_SDVRA, UPERF_CNT0|UPERF_CNT1, PSY_PMCRSEL_SDVRA },
@@ -153,6 +161,10 @@ uperf_ebus_attach(parent, self, aux)
 	    (id & USC_ID_IMPL_M) >> USC_ID_IMPL_S,
 	    (id & USC_ID_VERS_M) >> USC_ID_VERS_S,
 	    (id & USC_ID_UPANUM_M) >> USC_ID_UPANUM_S);
+
+#ifdef DDB
+	db_register_xir(uperf_ebus_xir, sc);
+#endif
 }
 
 /*
@@ -311,3 +323,13 @@ uperf_ebus_getcnt(vsc, flags, cntp0, cntp1)
 		*cntp1 = c1;
 	return (0);
 }
+
+#ifdef DDB
+void
+uperf_ebus_xir(void *arg, int cpu)
+{
+	struct uperf_ebus_softc *sc = arg;
+
+	uperf_ebus_write_reg(sc, USC_CTRL, USC_CTRL_XIR);
+}
+#endif
