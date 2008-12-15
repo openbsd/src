@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.25 2008/09/17 08:04:17 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.26 2008/12/15 15:54:55 fgsch Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -70,7 +70,7 @@ do_pre() {
 			SRCDIR=/usr/src
 		else
 			echo " *** ERROR: please specify a valid path to src or (x)etcXX.tgz"
-			exit 1
+			error_rm_wrkdir
 		fi
 	fi
 
@@ -105,8 +105,7 @@ do_pre() {
 				echo ""
 				;;
 			*)
-				rm -rf ${WRKDIR} 2> /dev/null
-				exit 1
+				error_rm_wrkdir
 				;;
 		esac
 	fi
@@ -362,7 +361,7 @@ diff_loop() {
 do_compare() {
 	echo "===> Starting comparison"
 
-	cd ${TEMPROOT} || exit 1
+	cd ${TEMPROOT} || error_rm_wrkdir
 
 	# use -size +0 to avoid comparing empty log files and device nodes
 	for COMPFILE in `find . -type f -size +0`; do
