@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.98 2008/11/24 19:02:38 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.99 2008/12/15 06:00:38 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -381,18 +381,6 @@ struct random_bucket {
 struct random_bucket random_state;
 struct mutex rndlock;
 
-/* Rotate bits in word 'w' by 'i' positions */
-static __inline u_int32_t roll(u_int32_t w, int i)
-{
-	/* XXX amd64 too? */
-#ifdef i386
-	__asm ("roll %%cl, %0" : "+r" (w) : "c" (i));
-#else
-	w = (w << i) | (w >> (32 - i));
-#endif
-	return w;
-}
-
 /*
  * This function adds a byte into the entropy pool.  It does not
  * update the entropy estimate.  The caller must do this if appropriate.
@@ -416,7 +404,8 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 	};
 
 	for (; n--; buf++) {
-		u_int32_t w = roll(*buf, random_state.input_rotate);
+		u_int32_t w = (*buf << random_state.input_rotate) |
+		    (*buf >> (32 - random_state.input_rotate));
 		u_int i = random_state.add_ptr =
 		    (random_state.add_ptr - 1) & POOLMASK;
 		/*
