@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.14 2008/09/15 20:13:10 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.15 2008/12/15 20:16:20 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -605,8 +605,10 @@ routename(struct sockaddr *sa)
 
 	case AF_LINK:
 		return (link_print(sa));
+#if 0
 	case AF_MPLS:
 		return (label_print(sa));
+#endif
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
 			static char name[RTLABEL_LEN];
@@ -813,8 +815,10 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 		    (struct sockaddr_in6 *)mask);
 	case AF_LINK:
 		return (link_print(sa));
+#if 0
 	case AF_MPLS:
 		return (label_print(sa));
+#endif
 	default:
 		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
@@ -863,6 +867,7 @@ link_print(struct sockaddr *sa)
 	}
 }
 
+#if 0
 char *
 label_print_op(u_int8_t type)
 {
@@ -905,6 +910,7 @@ label_print(struct sockaddr *sa)
 
 	return (line);
 }
+#endif
 
 void
 index_pfk(struct sadb_msg *msg, void **headers)
