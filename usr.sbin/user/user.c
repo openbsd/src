@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.73 2008/10/09 21:10:08 miod Exp $ */
+/* $OpenBSD: user.c,v 1.74 2008/12/16 05:25:55 guenther Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -911,6 +911,7 @@ scantime(time_t *tp, char *s)
 	*tp = 0;
 	if (s != NULL) {
 		(void) memset(&tm, 0, sizeof(tm));
+		tm.tm_isdst = -1;
 		if (strptime(s, "%c", &tm) != NULL) {
 			*tp = mktime(&tm);
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
