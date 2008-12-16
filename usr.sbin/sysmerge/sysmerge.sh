@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.26 2008/12/15 15:54:55 fgsch Exp $
+# $OpenBSD: sysmerge.sh,v 1.27 2008/12/16 22:23:55 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -28,8 +28,10 @@ umask 0022
 
 WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
-PAGER="${PAGER:=/usr/bin/more}"
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
+
+EDITOR="${EDITOR:=/usr/bin/vi}"
+PAGER="${PAGER:=/usr/bin/more}"
 
 # clean leftovers created by make in src
 clean_src() {
@@ -204,7 +206,8 @@ merge_loop() {
 		INSTALL_MERGED=v
 		while [ "${INSTALL_MERGED}" = "v" ]; do
 			echo ""
-			echo "  Use 'i' to install merged file"
+			echo "  Use 'e' to edit the merged file"
+			echo "  Use 'i' to install the merged file"
 			echo "  Use 'n' to view a diff between the merged and new files"
 			echo "  Use 'o' to view a diff between the old and merged files"
 			echo "  Use 'r' to re-do the merge"
@@ -214,6 +217,20 @@ merge_loop() {
 			echo -n "===> How should I deal with the merged file? [Leave it for later] "
 			read INSTALL_MERGED
 			case "${INSTALL_MERGED}" in
+			[eE])
+				echo "editing merged file...\n"
+				if [ -z "${VISUAL}" ]; then
+					EDIT="${EDITOR}"
+				else
+					EDIT="${VISUAL}"
+				fi
+				if which ${EDIT} > /dev/null 2>&1; then
+					${EDIT} ${COMPFILE}.merged
+				else
+					echo " *** ERROR: ${EDIT} can not be found or is not executable"
+				fi
+				INSTALL_MERGED=v
+				;;
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
 				echo ""
