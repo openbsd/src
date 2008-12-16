@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.20 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.21 2008/12/16 22:11:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -271,6 +271,7 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 				break;
 			ibuf = LIST_FIRST(&ibuf->rproc->obuflist);
 		}
+		*sibuf = ibuf;
 	}
 	if (sobuf) {
 		obuf = *sobuf;
@@ -283,6 +284,7 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 				break;
 			obuf = LIST_FIRST(&obuf->wproc->ibuflist);
 		}
+		*sobuf = obuf;
 	}
 	return 1;
 }
@@ -445,12 +447,13 @@ dev_attach(char *name,
 void
 dev_setvol(struct abuf *ibuf, int vol)
 {
+	DPRINTF("dev_setvol: %p\n", ibuf);
 	if (!dev_getep(&ibuf, NULL)) {
 		DPRINTF("dev_setvol: not connected yet\n");
 		return;
 	}
 	ibuf->mixvol = vol;
-	DPRINTF("dev_setvol: %d\n", vol);
+	DPRINTF("dev_setvol: %p -> %d\n", ibuf, vol);
 }
 
 /*
